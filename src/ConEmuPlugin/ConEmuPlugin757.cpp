@@ -317,9 +317,9 @@ void UpdateConEmuTabsW757(int event, bool losingFocus, bool editorSave)
 			AddTab(tabs, tabCount, losingFocus, editorSave, 
 				WInfo.Type, WInfo.Name, editorSave ? ei.FileName : NULL, 
 				WInfo.Current, WInfo.Modified);
+		InfoW757->AdvControl(InfoW757->ModuleNumber, ACTL_FREEWINDOWINFO, (void*)&WInfo);
 	}
 	
-	InfoW757->AdvControl(InfoW757->ModuleNumber, ACTL_FREEWINDOWINFO, (void*)&WInfo);
 	if (editorSave) 
 		InfoW757->EditorControl(ECTL_FREEINFO, &ei);
 

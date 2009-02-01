@@ -1604,6 +1604,17 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         
     AllocConsole();
     hConWnd = GetConsoleWindow();
+	DWORD dwStyle = 0;
+	dwStyle = GetWindowLong(hConWnd, GWL_STYLE);
+	dwStyle &= ~(WS_OVERLAPPEDWINDOW|WS_OVERLAPPED);
+	dwStyle |= WS_POPUPWINDOW;
+	SetWindowLong(hConWnd, GWL_STYLE, dwStyle);
+
+	dwStyle = GetWindowLong(hConWnd, GWL_EXSTYLE);
+	dwStyle &= ~(WS_EX_OVERLAPPEDWINDOW|WS_EX_APPWINDOW);
+	dwStyle |= WS_EX_TOOLWINDOW;
+	SetWindowLong(hConWnd, GWL_EXSTYLE, dwStyle);
+
 	// Если в свойствах ярлыка указано "Максимизировано" - консоль разворачивается, а FAR при 
 	// старте сам меняет размер буфера, в результате - ошибочно устанавливается размер окна
 	if (nCmdShow != SW_SHOWNORMAL) ShowWindow(hConWnd, SW_SHOWNORMAL);
