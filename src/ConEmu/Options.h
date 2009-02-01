@@ -1,0 +1,34 @@
+#pragma once
+
+struct gSettings
+{
+    TCHAR Cmd[MAX_PATH], pBgImage[MAX_PATH];
+
+    DWORD FontSizeX;
+    DWORD FontSizeX2;
+    bool isShowBgImage, isBackgroundImageValid;
+    bool isFullScreen;
+    bool isFixFarBorders;
+    bool isCursorV;
+    bool isCursorColor;
+    char isRClickSendKey;
+    bool isSentAltEnter;
+    bool isForceMonospace;
+    bool isConMan;
+    bool isDnD;
+    char isDefCopy;
+    bool isGUIpb;
+    char isTabs;
+    DWORD wndWidth, wndHeight;
+    int wndX, wndY;
+    u8 bgImageDarker;
+    bool isConVisible;
+    DWORD nSlideShowElapse;
+    DWORD nIconID;
+};
+
+bool LoadImageFrom(TCHAR *inPath);
+BOOL CALLBACK wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
+void LoadSettings();
+
+extern HWND hOpWnd;

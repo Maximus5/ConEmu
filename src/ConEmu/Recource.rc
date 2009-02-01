@@ -1,0 +1,243 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// Russian resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_RUS)
+#ifdef _WIN32
+LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
+#pragma code_page(1251)
+#endif //_WIN32
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_DIALOG1 DIALOGEX 0, 0, 307, 320
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_TOPMOST
+CAPTION "Settings..."
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "&OK",IDOK,258,302,42,14
+    GROUPBOX        "Colors (""red green blue"")",IDC_STATIC,6,6,176,122
+    LTEXT           "0.",IDC_STATIC,12,21,8,8
+    LTEXT           "",c0,24,18,12,12,SS_NOTIFY | SS_SUNKEN
+    LTEXT           "1.",IDC_STATIC,12,34,8,8
+    LTEXT           "",c1,24,31,12,12,SS_NOTIFY | SS_SUNKEN
+    LTEXT           "2.",IDC_STATIC,12,47,8,8
+    LTEXT           "",c2,24,44,12,12,SS_NOTIFY | SS_SUNKEN
+    LTEXT           "3.",IDC_STATIC,12,60,8,8
+    LTEXT           "",c3,24,57,12,12,SS_NOTIFY | SS_SUNKEN
+    LTEXT           "4.",IDC_STATIC,12,73,8,8
+    LTEXT           "",c4,24,70,12,12,SS_NOTIFY | SS_SUNKEN
+    LTEXT           "5.",IDC_STATIC,12,86,8,8
+    LTEXT           "",c5,24,83,12,12,SS_NOTIFY | SS_SUNKEN
+    LTEXT           "6.",IDC_STATIC,12,99,8,8
+    LTEXT           "",c6,24,96,12,12,SS_NOTIFY | SS_SUNKEN
+    LTEXT           "7.",IDC_STATIC,12,112,8,8
+    LTEXT           "",c7,24,109,12,12,SS_NOTIFY | SS_SUNKEN
+    EDITTEXT        tc0,37,18,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,WS_EX_STATICEDGE
+    EDITTEXT        tc1,37,31,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,WS_EX_STATICEDGE
+    EDITTEXT        tc2,37,44,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,WS_EX_STATICEDGE
+    EDITTEXT        tc3,37,57,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,WS_EX_STATICEDGE
+    EDITTEXT        tc4,37,70,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,WS_EX_STATICEDGE
+    EDITTEXT        tc5,37,83,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,WS_EX_STATICEDGE
+    EDITTEXT        tc6,37,96,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,WS_EX_STATICEDGE
+    EDITTEXT        tc7,37,109,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,WS_EX_STATICEDGE
+    LTEXT           "8.",IDC_STATIC,102,21,8,8
+    LTEXT           "",c8,114,18,12,12,SS_NOTIFY | SS_SUNKEN
+    LTEXT           "9.",IDC_STATIC,102,34,8,8
+    LTEXT           "",c9,114,31,12,12,SS_NOTIFY | SS_SUNKEN
+    RTEXT           "10.",IDC_STATIC,95,47,13,8
+    LTEXT           "",c10,114,44,12,12,SS_NOTIFY | SS_SUNKEN
+    LTEXT           "",c11,114,57,12,12,SS_NOTIFY | SS_SUNKEN
+    LTEXT           "",c12,114,70,12,12,SS_NOTIFY | SS_SUNKEN
+    LTEXT           "",c13,114,83,12,12,SS_NOTIFY | SS_SUNKEN
+    LTEXT           "",c14,114,96,12,12,SS_NOTIFY | SS_SUNKEN
+    LTEXT           "",c15,114,109,12,12,SS_NOTIFY | SS_SUNKEN
+    EDITTEXT        tc8,127,18,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,WS_EX_STATICEDGE
+    EDITTEXT        tc9,127,31,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,WS_EX_STATICEDGE
+    EDITTEXT        tc10,127,44,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,WS_EX_STATICEDGE
+    EDITTEXT        tc11,127,57,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,WS_EX_STATICEDGE
+    EDITTEXT        tc12,127,70,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,WS_EX_STATICEDGE
+    EDITTEXT        tc13,127,83,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,WS_EX_STATICEDGE
+    EDITTEXT        tc14,127,96,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,WS_EX_STATICEDGE
+    EDITTEXT        tc15,127,109,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,WS_EX_STATICEDGE
+    RTEXT           "11.",IDC_STATIC,95,60,13,8
+    RTEXT           "12.",IDC_STATIC,95,73,13,8
+    RTEXT           "13.",IDC_STATIC,95,86,13,8
+    RTEXT           "14.",IDC_STATIC,95,99,13,8
+    RTEXT           "15.",IDC_STATIC,95,112,13,8
+    GROUPBOX        "Anti-aliasing",IDC_STATIC,6,130,60,45,WS_GROUP
+    CONTROL         "&None",rNoneAA,"Button",BS_AUTORADIOBUTTON | WS_GROUP,12,142,48,8
+    CONTROL         "&Standard",rStandardAA,"Button",BS_AUTORADIOBUTTON,12,151,48,8
+    CONTROL         "&Clear Type",rCTAA,"Button",BS_AUTORADIOBUTTON,12,160,48,8
+    GROUPBOX        "Cursor",IDC_STATIC2,72,130,110,45
+    CONTROL         "&Vertical (like in GUI)",rCursorV,"Button",BS_AUTORADIOBUTTON | WS_GROUP,78,142,90,8
+    CONTROL         "&Horizontal (like in console)",rCursorH,"Button",BS_AUTORADIOBUTTON,78,151,96,8
+    CONTROL         "Co&lor",cbCursorColor,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,78,162,96,8
+    LTEXT           "Command Line:",IDC_STATIC,8,287,54,8
+    EDITTEXT        tCmdLine,66,286,234,12,ES_AUTOHSCROLL | NOT WS_BORDER,WS_EX_STATICEDGE
+    GROUPBOX        "",IDC_STATIC,6,232,294,50
+    CONTROL         "Back&ground image (bmp):",cbBgImage2,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,232,96,8
+    EDITTEXT        tBgImage,36,244,258,12,ES_AUTOHSCROLL | NOT WS_BORDER,WS_EX_STATICEDGE
+    PUSHBUTTON      "Save settings",bSaveSettings,184,302,70,14
+    COMBOBOX        tFontFace,192,18,102,72,CBS_DROPDOWN | CBS_AUTOHSCROLL | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        tFontSizeY,212,36,34,66,CBS_DROPDOWN | CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        tFontSizeX,258,36,36,66,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        tFontCharset,228,54,66,67,CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "&Bold",cbBold,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,192,69,30,8
+    CONTROL         "&Italic",cbItalic,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,192,80,30,8
+    CONTROL         "&Fix Far borders",cbFixFarBorders,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,118,186,64,8
+    GROUPBOX        "Window",IDC_STATIC3,186,107,114,46
+    CONTROL         "Normal",rNormal,"Button",BS_AUTORADIOBUTTON | WS_GROUP,192,118,36,8
+    CONTROL         "Maximized",rMaximized,"Button",BS_AUTORADIOBUTTON,192,129,48,8
+    CONTROL         "Full screen",rFullScreen,"Button",BS_AUTORADIOBUTTON,192,141,96,8
+    CONTROL         "Resolution:",IDC_CHECK2,"Button",BS_AUTOCHECKBOX | NOT WS_VISIBLE | WS_DISABLED | WS_TABSTOP,252,0,48,8
+    EDITTEXT        IDC_EDIT1,258,0,39,12,ES_AUTOHSCROLL | NOT WS_VISIBLE | WS_DISABLED
+    CONTROL         "&RightClick for context menu",cbRClick,"Button",BS_AUTO3STATE | WS_TABSTOP,12,185,99,8
+    GROUPBOX        "Font",IDC_STATIC,186,6,114,98
+    LTEXT           "Size:",IDC_STATIC,192,39,18,8
+    CTEXT           "x",IDC_STATIC,248,39,8,8
+    LTEXT           "Charset:",IDC_STATIC,192,57,30,8
+    LTEXT           "Render time:",IDC_STATIC,187,162,48,8
+    EDITTEXT        tRender,234,159,54,12,ES_AUTOHSCROLL | ES_READONLY
+    EDITTEXT        tWndWidth,246,117,18,12,ES_AUTOHSCROLL | ES_NUMBER | NOT WS_BORDER,WS_EX_STATICEDGE
+    EDITTEXT        tWndHeight,275,117,18,12,ES_AUTOHSCROLL | ES_NUMBER | NOT WS_BORDER,WS_EX_STATICEDGE
+    CTEXT           "x",IDC_STATIC,266,118,8,8
+    CONTROL         "Force monospace",cbMonospace,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,192,91,70,8
+    CONTROL         "Always update con. handle (ConMan support)",cbIsConMan,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,6,305,168,8
+    LTEXT           "Path:",IDC_STATIC,12,244,18,8
+    LTEXT           "Darkening:",IDC_STATIC,12,263,36,8
+    CONTROL         "",slDarker,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,54,262,204,12
+    EDITTEXT        tDarker,264,262,30,12,ES_AUTOHSCROLL | ES_NUMBER | NOT WS_BORDER,WS_EX_STATICEDGE
+    CONTROL         "&Send AltEnter to application",cbSendAE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,199,100,8
+    CONTROL         "Enable Drag'n'Drop",cbDnD,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,212,73,8
+    CONTROL         "Enable Tabs",cbTabs,"Button",BS_AUTO3STATE | WS_TABSTOP,118,199,52,8
+    GROUPBOX        "Far hacks",IDC_STATIC,6,175,294,55
+    CONTROL         "Enable GUI progress bars",cbGUIpb,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,198,185,94,8
+    CONTROL         "Copy by default",cbDnDCopy,"Button",BS_AUTO3STATE | WS_TABSTOP,90,212,73,8
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO 
+BEGIN
+    IDD_DIALOG1, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 300
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 360
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDI_ICON1               ICON                    "ConEmu.ico"
+IDI_ICON2               ICON                    "Far.ico"
+IDI_ICON3               ICON                    "Far2.ico"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 2009,2,1,0
+ PRODUCTVERSION 0,0,0,0
+ FILEFLAGSMASK 0x17L
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x4L
+ FILETYPE 0x1L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "041904b0"
+        BEGIN
+            VALUE "FileDescription", "Console Emulator"
+            VALUE "FileVersion", "2009, 2, 1, 0"
+            VALUE "LegalCopyright", "Copyright (C) 2006-2008, Zoin"
+            VALUE "OriginalFilename", "ConEmu.exe"
+            VALUE "ProductVersion", "0, 0, 0, 0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x419, 1200
+    END
+END
+
+#endif    // Russian resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

@@ -1,0 +1,91 @@
+NAME
+	ConEmu.exe
+
+SYNOPSIS
+	Represents console as customizable GUI window with various features
+
+SYNTAX
+	ConEmu [/CT] [/FS] [/Font ..] [/Size ..] [/FontFile ..] [/Config ..] [/BufferHeight ..]
+	       [/SetParent | /DontSetParent] [/Cmd ..]
+
+PARAMETERS
+	/?
+	Shows help screen.
+
+	/CT
+	ClearType anti-aliasing.
+
+	/FS
+	Full screen mode.
+
+	/Font <fontname>
+	Specifies the font name.
+
+	/Size <fontsize>
+	Specifies the font size.
+
+	/FontFile <fontfilename> - Loads fonts from file.
+
+	/Config <configname>
+	Tells to use an existing or create a new configuration with the specified
+	name. Each configuration keeps its own individual data in the registry.
+
+	/BufferHeight <height>
+	Sets console buffer height and tells to use keys CtrlUp, CtrlDn, CtrlPgUp,
+	CtrlPgDn for vertical scrolling. This mode should not be used for programs
+	like FAR where buffer and window height are equal.
+
+	/SetParent | /DontSetParent
+	One of them may be used to change or not parent for invisible console
+	window. Default is "/DontSetParent". You may use /SetParent with ConMan.
+
+	/Cmd <commandline>
+	Command line to start. This is the last switch, the rest is treated as a
+	command to start and its parameters. By default ConEmu uses a command from
+	saved configuration, if any, otherwise it tries to starts Far in normal
+	mode or Cmd in /BufferHeight mode.
+
+
+DESCRIPTION
+	ConEmu starts a console program, hides its console window and provides an
+	alternative customizable GUI window with various features:
+
+	- smooth window resizing;
+	- normal, maximized and full screen window modes;
+	- window font anti-aliasing: standard or clear type;
+	- window fonts: family, height, width, bold, italic, etc.;
+	- cursor: standard console (horisontal) or GUI (vertical);
+	- for /BufferHeight mode: vertical scrolling using keyboard;
+	- and more, see Settings dialog...
+
+	All settings are read from the registry (depending on a configuration) and
+	after that the command line parameters are applied. Parameters /Config and
+	/BufferHeight are only for command line. Some settings are changed only in
+	the Settings dialog, not from the command line.
+
+
+COMMAND LINE EXAMPLES
+	ConEmu.exe /CT /Font "Lucida Console" /Size 16 /Cmd Far.exe "c:\1 2\"
+	ConEmu.exe /Config ScrollMode /BufferHeight 9999 /Cmd PowerShell.exe
+
+
+ALTERNATIVE BORDER FONT
+	This is needed sometimes if you use the option "Fix borders". There are two
+	options FontName2 and FontSizeX2 that can be set in the registry manually:
+
+	[HKEY_CURRENT_USER\Software\ConEmu]
+	"FontName2"="Courier New"
+	"FontSizeX2"=hex:0b,00,00,00
+
+	or
+	[HKEY_CURRENT_USER\Software\ConEmu\<Config>]
+	...
+
+	FontName2 is an alternative border font. Default is "Lucida Console",
+	perfect in many cases. But for some main fonts, for example "Consolas",
+	"Lucida Console" special symbols are wider than needed. In this particular
+	case "Courier New" is usually better as FontName2.
+
+	Sometimes even better appearance is possible. FontSizeX2 may help, for
+	example: if main font is "Consolas" 16 x 10, then for border font "Courier
+	New" FontSizeX2 11 (0xB) is perhaps better.

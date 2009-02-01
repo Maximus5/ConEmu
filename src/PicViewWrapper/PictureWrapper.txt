@@ -1,0 +1,13 @@
+SYNOPSIS
+
+  This is a Wrapper for PictureView plugin for using with 
+  ConEmu.Maximus5.090123 and higher (090124 recommended).
+
+DESCRIPTION
+
+  This Wrapper enforce PictureView plugin to use ConEmu window
+  (when FAR is running under ConEmu only) as holder (parent) for
+  picture displaying, instead of standard far console window.
+
+  Some extra feature - Wrapper automatically disable PictureView,
+  when FAR is running under Telnet. Hereof message is displayed.
