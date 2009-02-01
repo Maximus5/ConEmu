@@ -517,11 +517,12 @@ void ForceShowTabs()
     {
         TabBar.Activate();
         lbNeedInval = TRUE;
-		ConEmuTab tab;
+		ConEmuTab tab; memset(&tab, 0, sizeof(tab));
 		tab.Pos=0;
 		tab.Current=1;
-		_tcscpy(tab.Name, L"Panels");
+		tab.Type = 1;
 		TabBar.Update(&tab, 1);
+		gbPostUpdateWindowSize = true;
     }
     //ConEmuTab* tabs = (ConEmuTab*)cds->lpData;
     //TabBar.Update(tabs, cds->dwData);

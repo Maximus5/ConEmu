@@ -10,6 +10,7 @@
 //#include <tchar.h>
 #include "..\common\common.hpp"
 #include "..\common\pluginW684.hpp"
+#include "PluginHeader.h"
 
 #ifndef FORWARD_WM_COPYDATA
 #define FORWARD_WM_COPYDATA(hwnd, hwndFrom, pcds, fn) \
@@ -46,10 +47,10 @@ extern HWND AtoH(WCHAR *Str, int Len);
 extern void UpdateConEmuTabsW(int event, bool losingFocus, bool editorSave);
 
 
-const WCHAR *GetMsgW684(int CompareLng)
+/*const WCHAR *GetMsgW684(int CompareLng)
 {
 	return InfoW684->GetMsg(InfoW684->ModuleNumber, CompareLng);
-}
+}*/
 
 
 void ProcessDragFrom684()
@@ -302,15 +303,8 @@ int ProcessViewerEventW684(int Event, void *Param)
 
 void UpdateConEmuTabsW684(int event, bool losingFocus, bool editorSave)
 {
-	if (ConEmuHwnd == NULL)
-	{
-		//return;
-	}
 	WindowInfo WInfo;
-	
-//	int nLenOfWideCharStr;
 
-	// Пока что PluginStartupInfo по версиям не различается...
 	int windowCount = (int)InfoW684->AdvControl(InfoW684->ModuleNumber, ACTL_GETWINDOWCOUNT, NULL);
 	int maxTabCount = windowCount + 1;
 
@@ -319,79 +313,25 @@ void UpdateConEmuTabsW684(int event, bool losingFocus, bool editorSave)
 	EditorInfo ei;
 	if (editorSave)
 	{
-		// Пока что PluginStartupInfo по версиям не различается...
 		InfoW684->EditorControl(ECTL_GETINFO, &ei);
 	}
-
-	// default "Panels" tab
-	tabs[0].Current = 0;
-	lstrcpyn(tabs[0].Name, GetMsgW684(0), CONEMUTABMAX-1);
-	tabs[0].Pos = 0;
-	tabs[0].Type = WTYPE_PANELS;
 
 	int tabCount = 1;
 	for (int i = 0; i < windowCount; i++)
 	{
 		WInfo.Pos = i;
 		InfoW684->AdvControl(InfoW684->ModuleNumber, ACTL_GETWINDOWINFO, (void*)&WInfo);
-		if (WInfo.Type == WTYPE_EDITOR || WInfo.Type == WTYPE_VIEWER)
-		{
-			bool Editor;
-			int Modified;
-			// when receiving losing focus event receiver is still reported as current
-			tabs[tabCount].Type = WInfo.Type;
-			tabs[tabCount].Current = losingFocus ? 0 : WInfo.Current;
-			// when receiving saving event receiver is still reported as modified
-			if (editorSave && FSFW684->LStricmp(ei.FileName, WInfo.Name) == 0)
-			{
-				Modified = 0;
-			} 
-			else
-			{
-				Modified = WInfo.Modified;
-			}
-
-			if (tabs[tabCount].Current != 0)
-			{
-				lastModifiedStateW = Modified != 0 ? 1 : 0;
-			}
-			else
-			{
-				lastModifiedStateW = -1;
-			}
-
-			Editor=(WInfo.Type == WTYPE_EDITOR);
-
-			//wsprintf(tabs[tabCount].Name, L"%s%s%s", WInfo.Name, Editor?GetMsgW(1):GetMsgW(2), Modified?GetMsgW(3):L"");
-			int nLen=min(lstrlen(WInfo.Name),(CONEMUTABMAX-100)), nCurLen=0;
-			lstrcpyn(tabs[tabCount].Name, WInfo.Name, nLen+1);
-			nCurLen+=nLen;
-			LPCWSTR psz = Editor?GetMsgW684(1):GetMsgW684(2); nLen=lstrlen(psz);
-			lstrcpy(tabs[tabCount].Name+nCurLen, psz);
-			nCurLen+=nLen;
-			psz = Modified?GetMsgW684(3):L""; nLen=lstrlen(psz);
-			lstrcpy(tabs[tabCount].Name+nCurLen, psz);
-
-			tabs[tabCount].Pos = tabCount;
-			tabCount++;
-		}
+		if (WInfo.Type == WTYPE_EDITOR || WInfo.Type == WTYPE_VIEWER || WInfo.Type == WTYPE_PANELS)
+			AddTab(tabs, tabCount, losingFocus, editorSave, 
+				WInfo.Type, WInfo.Name, editorSave ? ei.FileName : NULL, 
+				WInfo.Current, WInfo.Modified);
 	}
 	
 	InfoW684->AdvControl(InfoW684->ModuleNumber, ACTL_FREEWINDOWINFO, (void*)&WInfo);
 	if (editorSave) 
 		InfoW684->EditorControl(ECTL_FREEINFO, &ei);
 
-	if (losingFocus)
-	{
-		tabs[0].Current = 1;
-	}
-
-	COPYDATASTRUCT cds;
-	cds.dwData = tabCount;
-	cds.cbData = maxTabCount * sizeof(ConEmuTab);
-	cds.lpData = tabs;
-	FORWARD_WM_COPYDATA(ConEmuHwnd, FarHwnd, &cds, SendMessage);
-	free(tabs);
+	SendTabs(tabs, tabCount);
 }
 
 void ExitFARW684(void)

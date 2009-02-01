@@ -25,6 +25,13 @@ struct gSettings
     bool isConVisible;
     DWORD nSlideShowElapse;
     DWORD nIconID;
+
+	// Заголовки табов
+	TCHAR szTabPanels[32];
+	TCHAR szTabEditor[32];
+	TCHAR szTabEditorModified[32];
+	TCHAR szTabViewer[32];
+	DWORD nTabLenMax;
 };
 
 bool LoadImageFrom(TCHAR *inPath);

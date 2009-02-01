@@ -6,6 +6,7 @@ struct ConEmuTab
 	int  Pos;
 	int  Current;
 	int  Type;
+	int  Modified;
 	wchar_t Name[CONEMUTABMAX];
 //	int  Modified;
 //	int isEditor;

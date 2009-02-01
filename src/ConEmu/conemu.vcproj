@@ -62,7 +62,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="comctl32.lib UxTheme.lib"
-				OutputFile="F:\VCProject\FarPlugin\FAR180\trunk\unicode_far\Debug.32.vc\ConEmu.exe"
+				OutputFile="F:\VCProject\FarPlugin\#FAR180\ConEmu.exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
 				SubSystem="2"
@@ -75,6 +75,7 @@
 			/>
 			<Tool
 				Name="VCManifestTool"
+				AdditionalManifestFiles="conemu.manifest"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
@@ -153,6 +154,7 @@
 			/>
 			<Tool
 				Name="VCManifestTool"
+				AdditionalManifestFiles="conemu.manifest"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
@@ -231,6 +233,7 @@
 			/>
 			<Tool
 				Name="VCManifestTool"
+				AdditionalManifestFiles="conemu.manifest"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
@@ -304,6 +307,7 @@
 			/>
 			<Tool
 				Name="VCManifestTool"
+				AdditionalManifestFiles="conemu.manifest"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"

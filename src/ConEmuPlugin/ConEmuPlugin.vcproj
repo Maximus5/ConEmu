@@ -459,6 +459,10 @@
 				RelativePath="..\common\common.hpp"
 				>
 			</File>
+			<File
+				RelativePath=".\PluginHeader.h"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Resource Files"

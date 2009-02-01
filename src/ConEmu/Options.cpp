@@ -93,6 +93,11 @@ void LoadSettings()
     gSet.nSlideShowElapse = 2500;
     gSet.nIconID = IDI_ICON1;
     gSet.isRClickSendKey = 2;
+	_tcscpy(gSet.szTabPanels, _T("Panels"));
+	_tcscpy(gSet.szTabEditor, _T("[%s]"));
+	_tcscpy(gSet.szTabEditorModified, _T("[%s] *"));
+	_tcscpy(gSet.szTabViewer, _T("{%s}"));
+	gSet.nTabLenMax = 20;
 
 //------------------------------------------------------------------------
 ///| Loading from registry |//////////////////////////////////////////////
@@ -132,6 +137,11 @@ void LoadSettings()
         reg.Load(_T("ConVisible"), &gSet.isConVisible);
         reg.Load(_T("SlideShowElapse"), &gSet.nSlideShowElapse);
         reg.Load(_T("IconID"), &gSet.nIconID);
+		reg.Load(_T("TabPanels"), &gSet.szTabPanels);
+		reg.Load(_T("TabEditor"), &gSet.szTabEditor);
+		reg.Load(_T("TabEditorModified"), &gSet.szTabEditorModified);
+		reg.Load(_T("TabViewer"), &gSet.szTabViewer);
+		reg.Load(_T("TabLenMax"), &gSet.nTabLenMax);
         reg.CloseKey();
     }
 

@@ -99,22 +99,47 @@ void TabBarClass::Update(ConEmuTab* tabs, int tabsCount)
 	for (int i = 0; i < tabsCount; i++)
 	{
 		// get file name
-		TCHAR dummy[MAX_PATH];
-		wchar_t* tFileName=NULL; //--Maximus
-		GetFullPathName(tabs[i].Name, MAX_PATH, dummy, &tFileName);
+		TCHAR dummy[MAX_PATH*2];
 		TCHAR fileName[MAX_PATH+4];
-		if (tFileName)
-			_tcscpy(fileName, tFileName);
-		else
-			_tcscpy(fileName, tabs[i].Name);
+		TCHAR szFormat[32];
+		wchar_t* tFileName=NULL; //--Maximus
+		if (tabs[i].Name[0]==0 || tabs[i].Type == 1/*WTYPE_PANELS*/) {
+			_tcscpy(tabs[i].Name, gSet.szTabPanels);
+			tFileName = tabs[i].Name;
+			_tcscpy(szFormat, _T("%s"));
+		} else {
+			GetFullPathName(tabs[i].Name, MAX_PATH*2, dummy, &tFileName);
+			if (!tFileName)
+				tFileName = tabs[i].Name;
+
+			if (tabs[i].Type == 3/*WTYPE_EDITOR*/) {
+				if (tabs[i].Modified)
+					_tcscpy(szFormat, gSet.szTabEditorModified);
+				else
+					_tcscpy(szFormat, gSet.szTabEditor);
+			} 
+			else if (tabs[i].Type == 2/*WTYPE_VIEWER*/)
+				_tcscpy(szFormat, gSet.szTabViewer);
+		}
 		// restrict length
-		int origLength = _tcslen(fileName);
-		if (origLength > 20)
+		int origLength = _tcslen(tFileName);
+		int nMaxLen = gSet.nTabLenMax - _tcslen(szFormat) + 2/* %s */;
+		if (nMaxLen<15) nMaxLen=15; else
+			if (nMaxLen>=MAX_PATH) nMaxLen=MAX_PATH-1;
+		if (origLength > nMaxLen)
 		{
-			_tcsnset(fileName, _T('\0'), MAX_PATH);
+			/*_tcsnset(fileName, _T('\0'), MAX_PATH);
 			_tcsncat(fileName, tFileName, 10);
 			_tcsncat(fileName, _T("..."), 3);
-			_tcsncat(fileName, tFileName + origLength - 10, 10);
+			_tcsncat(fileName, tFileName + origLength - 10, 10);*/
+			int nSplit = nMaxLen*2/3;
+			TCHAR szEllip[MAX_PATH+1];
+			_tcsncpy(szEllip, tFileName, nSplit); szEllip[nSplit]=0;
+			_tcscat(szEllip, _T("..."));
+			_tcscat(szEllip, tFileName + origLength - (nMaxLen - nSplit));
+			wsprintf(fileName, szFormat, szEllip);
+		} else {
+			wsprintf(fileName, szFormat, tFileName);
 		}
 
 		AddTab(fileName, i);

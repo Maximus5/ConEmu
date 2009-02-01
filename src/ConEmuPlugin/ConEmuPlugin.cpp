@@ -14,6 +14,7 @@
 //#include <tchar.h>
 #include "..\common\common.hpp"
 #include "..\common\pluginW757.hpp"
+#include "PluginHeader.h"
 
 #ifndef FORWARD_WM_COPYDATA
 #define FORWARD_WM_COPYDATA(hwnd, hwndFrom, pcds, fn) \
@@ -99,15 +100,15 @@ VOID CALLBACK ConEmuCheckTimerProc(
 
 void UpdateConEmuTabsW(int event, bool losingFocus, bool editorSave);
 
-extern const WCHAR *GetMsgW684(int CompareLng);
+/*extern const WCHAR *GetMsgW684(int CompareLng);
 extern const WCHAR *GetMsgW757(int CompareLng);
-/*static*/ const WCHAR *GetMsgW(int CompareLng)
+const WCHAR *GetMsgW(int CompareLng)
 {
 	if (gFarVersion.dwBuild>=757)
 		return GetMsgW757(CompareLng);
 	else
 		return GetMsgW684(CompareLng);
-}
+}*/
 
 
 extern void ProcessDragFrom684();
@@ -199,9 +200,6 @@ void SetStartupInfoW684(void *aInfo);
 void SetStartupInfoW757(void *aInfo);
 void WINAPI _export SetStartupInfoW(void *aInfo)
 {
-#ifdef _DEBUG
-	//MessageBox(0,L"Debug",L"ConEmu plugin",0);
-#endif
 	LoadFarVersion();
 
 	if (gFarVersion.dwBuild>=757)
@@ -276,6 +274,11 @@ void WINAPI _export SetStartupInfoW(void *aInfo)
 	}
 
 	free(pipename);
+
+#ifdef _DEBUG
+	MessageBox(ConEmuHwnd,L"Debug",L"ConEmu plugin",MB_SETFOREGROUND);
+#endif
+
 }
 
 void UpdateConEmuTabsW684(int event, bool losingFocus, bool editorSave);
@@ -286,6 +289,64 @@ void UpdateConEmuTabsW(int event, bool losingFocus, bool editorSave)
 		UpdateConEmuTabsW757(event, losingFocus, editorSave);
 	else
 		UpdateConEmuTabsW684(event, losingFocus, editorSave);
+}
+
+void AddTab(ConEmuTab* tabs, int &tabCount, bool losingFocus, bool editorSave, 
+			int Type, LPCWSTR Name, LPCWSTR FileName, int Current, int Modified)
+{
+	if (Type == WTYPE_PANELS) {
+		tabs[0].Current = losingFocus ? 1 : 0;
+		//lstrcpyn(tabs[0].Name, GetMsgW757(0), CONEMUTABMAX-1);
+		tabs[0].Name[0] = 0;
+		tabs[0].Pos = 0;
+		tabs[0].Type = WTYPE_PANELS;
+	} else
+	if (Type == WTYPE_EDITOR || Type == WTYPE_VIEWER)
+	{
+		// when receiving losing focus event receiver is still reported as current
+		tabs[tabCount].Type = Type;
+		tabs[tabCount].Current = losingFocus ? 0 : Current;
+		// when receiving saving event receiver is still reported as modified
+		if (editorSave && lstrcmpi(FileName, Name) == 0)
+			Modified = 0;
+		tabs[tabCount].Modified = Modified;
+
+		if (tabs[tabCount].Current != 0)
+		{
+			lastModifiedStateW = Modified != 0 ? 1 : 0;
+		}
+		else
+		{
+			lastModifiedStateW = -1;
+		}
+
+		int nLen=min(lstrlen(Name),(CONEMUTABMAX-1));
+		lstrcpyn(tabs[tabCount].Name, Name, nLen+1);
+		tabs[tabCount].Name[nLen]=0;
+
+		tabs[tabCount].Pos = tabCount;
+		tabCount++;
+	}
+}
+
+void SendTabs(ConEmuTab* tabs, int &tabCount)
+{
+	if (ConEmuHwnd && IsWindow(ConEmuHwnd)) {
+		COPYDATASTRUCT cds;
+		if (tabs[0].Type == WTYPE_PANELS) {
+			cds.dwData = tabCount;
+			cds.lpData = tabs;
+		} else {
+			// Панелей нет - фар был открыт в режиме редактора!
+			cds.dwData = --tabCount;
+			cds.lpData = tabs+1;
+		}
+		if (tabCount) {
+			cds.cbData = tabCount * sizeof(ConEmuTab);
+			FORWARD_WM_COPYDATA(ConEmuHwnd, FarHwnd, &cds, SendMessage);
+		}
+	}
+	free(tabs);
 }
 
 // watch non-modified -> modified editor status change

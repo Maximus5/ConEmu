@@ -11,6 +11,7 @@
 //#include <tchar.h>
 #include "..\common\common.hpp"
 #include "..\common\pluginA.hpp"
+#include "PluginHeader.h"
 
 #ifndef FORWARD_WM_COPYDATA
 #define FORWARD_WM_COPYDATA(hwnd, hwndFrom, pcds, fn) \
@@ -50,8 +51,8 @@ HANDLE hPipe=NULL;
 HANDLE hThread=NULL;*/
 
 
-#define MessagesMax 5
-WCHAR MessagesA[MessagesMax][64];
+/*#define MessagesMax 5
+WCHAR MessagesA[MessagesMax][64];*/
 
 extern 
 VOID CALLBACK ConEmuCheckTimerProc(
@@ -63,7 +64,7 @@ VOID CALLBACK ConEmuCheckTimerProc(
 
 void UpdateConEmuTabsA(int event, bool losingFocus, bool editorSave);
 
-/*static*/ const WCHAR *GetMsgA(int CompareLng)
+/* const WCHAR *GetMsgA(int CompareLng)
 {
 	if (CompareLng<0 || CompareLng>=MessagesMax)
 		return L"";
@@ -77,7 +78,7 @@ void UpdateConEmuTabsA(int event, bool losingFocus, bool editorSave);
 	}
 
 	return MessagesA[CompareLng];
-}
+}*/
 
 
 DWORD WINAPI ThreadProcA(LPVOID lpParameter)
@@ -335,8 +336,8 @@ void WINAPI _export SetStartupInfo(struct PluginStartupInfo *aInfo)
 //			(const char *const *)"ConEmu plugin\nPlugin loaded as ANSI", 0, 0);
 //#endif
 
-	for (int i=0; i<=MessagesMax; i++)
-		MessagesA[i][0]=0;
+	/*for (int i=0; i<=MessagesMax; i++)
+		MessagesA[i][0]=0;*/
 
 	ConEmuHwnd = NULL;
 	FarHwnd = (HWND)InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETFARHWND, 0);
@@ -395,9 +396,9 @@ void WINAPI _export SetStartupInfo(struct PluginStartupInfo *aInfo)
 		hThread=CreateThread(NULL, 0, &ThreadProcA, 0, 0, 0);
 	} else {
 	#ifdef _DEBUG
-		char Msg[255]; lstrcpyA(Msg, InfoA->GetMsg(InfoA->ModuleNumber,4));
-		InfoA->Message(InfoA->ModuleNumber, FMSG_WARNING|FMSG_ERRORTYPE|FMSG_MB_OK|FMSG_ALLINONE, NULL, 
-			(const char *const *)Msg, 0, 0);
+		//char Msg[255]; lstrcpyA(Msg, InfoA->GetMsg(InfoA->ModuleNumber,4));
+		//InfoA->Message(InfoA->ModuleNumber, FMSG_WARNING|FMSG_ERRORTYPE|FMSG_MB_OK|FMSG_ALLINONE, NULL, 
+		//	(const char *const *)Msg, 0, 0);
 	#endif
 	}
 	free(pipename);
@@ -421,6 +422,8 @@ void WINAPI _export GetPluginInfo(struct PluginInfo *pi)
 // watch non-modified -> modified editor status change
 int WINAPI _export ProcessEditorInput(const INPUT_RECORD *Rec)
 {
+	if (!ConEmuHwnd)
+		return 0; // Если мы не под эмулятором - ничего
 	// only key events with virtual codes > 0 are likely to cause status change (?)
 	if (Rec->EventType == KEY_EVENT && Rec->Event.KeyEvent.wVirtualKeyCode > 0  && Rec->Event.KeyEvent.bKeyDown)
 	{
@@ -438,6 +441,8 @@ int WINAPI _export ProcessEditorInput(const INPUT_RECORD *Rec)
 
 int WINAPI _export ProcessEditorEvent(int Event, void *Param)
 {
+	if (!ConEmuHwnd)
+		return 0; // Если мы не под эмулятором - ничего
 	switch (Event)
 	{
 	case EE_CLOSE:
@@ -455,6 +460,8 @@ int WINAPI _export ProcessEditorEvent(int Event, void *Param)
 
 int WINAPI _export ProcessViewerEvent(int Event, void *Param)
 {
+	if (!ConEmuHwnd)
+		return 0; // Если мы не под эмулятором - ничего
 	switch (Event)
 	{
 	case VE_CLOSE:
@@ -471,13 +478,8 @@ int WINAPI _export ProcessViewerEvent(int Event, void *Param)
 
 void UpdateConEmuTabsA(int event, bool losingFocus, bool editorSave)
 {
-	if (ConEmuHwnd == NULL)
-	{
-		//return;
-	}
 	WindowInfo WInfo;
-	
-//	int nLenOfWideCharStr;
+	WCHAR* pszName = (WCHAR*)calloc(CONEMUTABMAX, sizeof(WCHAR));
 
 	int windowCount = (int)InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETWINDOWCOUNT, NULL);
 	int maxTabCount = windowCount + 1;
@@ -485,76 +487,33 @@ void UpdateConEmuTabsA(int event, bool losingFocus, bool editorSave)
 	ConEmuTab* tabs = (ConEmuTab*) calloc(maxTabCount, sizeof(ConEmuTab));
 
 	EditorInfo ei;
+	WCHAR* pszFileName = NULL;
 	if (editorSave)
 	{
 		InfoA->EditorControl(ECTL_GETINFO, &ei);
+		pszFileName = (WCHAR*)calloc(CONEMUTABMAX, sizeof(WCHAR));
+		if (ei.FileName)
+			MultiByteToWideChar(CP_OEMCP, 0, ei.FileName, lstrlenA(ei.FileName)+1, pszFileName, CONEMUTABMAX);
 	}
-
-	// default "Panels" tab
-	tabs[0].Current = 0;
-	lstrcpyn(tabs[0].Name, GetMsgA(0), CONEMUTABMAX-1);
-	tabs[0].Pos = 0;
-	tabs[0].Type = WTYPE_PANELS;
 
 	int tabCount = 1;
 	for (int i = 0; i < windowCount; i++)
 	{
 		WInfo.Pos = i;
 		InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETWINDOWINFO, (void*)&WInfo);
-		if (WInfo.Type == WTYPE_EDITOR || WInfo.Type == WTYPE_VIEWER)
+		if (WInfo.Type == WTYPE_EDITOR || WInfo.Type == WTYPE_VIEWER || WInfo.Type == WTYPE_PANELS)
 		{
-			bool Editor;
-			int Modified;
-			// when receiving losing focus event receiver is still reported as current
-			tabs[tabCount].Type = WInfo.Type;
-			tabs[tabCount].Current = losingFocus ? 0 : WInfo.Current;
-			// when receiving saving event receiver is still reported as modified
-			if (editorSave && FSFA->LStricmp(ei.FileName, WInfo.Name) == 0)
-			{
-				Modified = 0;
-			} 
-			else
-			{
-				Modified = WInfo.Modified;
-			}
-
-			if (tabs[tabCount].Current != 0)
-			{
-				lastModifiedStateA = Modified != 0 ? 1 : 0;
-			}
-			else
-			{
-				lastModifiedStateA = -1;
-			}
-
-			Editor=(WInfo.Type == WTYPE_EDITOR);
-
-			//wsprintf(tabs[tabCount].Name, L"%s%s%s", WInfo.Name, Editor?GetMsgA(1):GetMsgA(2), Modified?GetMsgA(3):L"");
-			int nLen=min(lstrlenA(WInfo.Name),(CONEMUTABMAX-100)), nCurLen=0;
-			MultiByteToWideChar(CP_OEMCP,0,WInfo.Name,nLen+1,tabs[tabCount].Name,nLen+1);
-			nCurLen+=nLen;
-			LPCWSTR psz = Editor?GetMsgA(1):GetMsgA(2); nLen=lstrlen(psz);
-			lstrcpy(tabs[tabCount].Name+nCurLen, psz);
-			nCurLen+=nLen;
-			psz = Modified?GetMsgA(3):L""; nLen=lstrlen(psz);
-			lstrcpy(tabs[tabCount].Name+nCurLen, psz);
-
-			tabs[tabCount].Pos = tabCount;
-			tabCount++;
+			MultiByteToWideChar(CP_OEMCP, 0, WInfo.Name, lstrlenA(WInfo.Name)+1, pszName, CONEMUTABMAX);
+			AddTab(tabs, tabCount, losingFocus, editorSave, 
+				WInfo.Type, pszName, editorSave ? pszFileName : NULL, 
+				WInfo.Current, WInfo.Modified);
 		}
 	}
 
-	if (losingFocus)
-	{
-		tabs[0].Current = 1;
-	}
+	if (pszFileName) free(pszFileName);
+	if (pszName) free(pszName);
 
-	COPYDATASTRUCT cds;
-	cds.dwData = tabCount;
-	cds.cbData = maxTabCount * sizeof(ConEmuTab);
-	cds.lpData = tabs;
-	FORWARD_WM_COPYDATA(ConEmuHwnd, FarHwnd, &cds, SendMessage);
-	free(tabs);
+	SendTabs(tabs, tabCount);
 }
 
 void   WINAPI _export ExitFAR(void)
