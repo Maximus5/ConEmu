@@ -42,8 +42,26 @@ BOOL APIENTRY DllMain( HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
 	return TRUE;
 }
 
+
+#ifdef _DEBUG
+char gsz_MDEBUG_TRAP_MSG[3000];
+char gsz_MDEBUG_TRAP_MSG_APPEND[2000];
+HWND gh_MDEBUG_TRAP_PARENT_WND = NULL;
+int __stdcall _MDEBUG_TRAP(LPCSTR asFile, int anLine)
+{
+    wsprintfA(gsz_MDEBUG_TRAP_MSG, "MDEBUG_TRAP\r\n%s(%i)\r\n", asFile, anLine);
+    if (gsz_MDEBUG_TRAP_MSG_APPEND[0])
+        lstrcatA(gsz_MDEBUG_TRAP_MSG,gsz_MDEBUG_TRAP_MSG_APPEND);
+	MessageBoxA(ConEmuHwnd ? ConEmuHwnd : FarHwnd,gsz_MDEBUG_TRAP_MSG,"MDEBUG_TRAP",MB_OK|MB_ICONSTOP);
+    return 0;
+}
+int MDEBUG_CHK = TRUE;
+#endif
+
+
 HWND WINAPI _export GetFarHWND()
 {
+    MCHKHEAP
 	if (ConEmuHwnd) {
 		if (IsWindow(ConEmuHwnd))
 			return ConEmuHwnd;
@@ -62,6 +80,7 @@ void WINAPI _export GetFarVersion ( FarVersion* pfv )
 
 BOOL LoadFarVersion()
 {
+    MCHKHEAP
     BOOL lbRc=FALSE;
     WCHAR FarPath[MAX_PATH+1];
     if (GetModuleFileName(0,FarPath,MAX_PATH)) {
@@ -81,6 +100,7 @@ BOOL LoadFarVersion()
 			free(pVerData);
 		}
 	}
+	MCHKHEAP
 
 	if (!lbRc) {
 		gFarVersion.dwVerMajor = 2;
@@ -121,6 +141,7 @@ DWORD WINAPI ThreadProcW(LPVOID lpParameter)
 	{
 		if (hPipeEvent && ConEmuHwnd) {
 			DWORD dwWait = WaitForSingleObject(hPipeEvent, 1000);
+			MCHKHEAP
 
 		    if (ConEmuHwnd && FarHwnd) {
 			    if (!IsWindow(ConEmuHwnd)) {
@@ -154,6 +175,7 @@ DWORD WINAPI ThreadProcW(LPVOID lpParameter)
 		}
 
 		if (hPipeEvent) ResetEvent(hPipeEvent);
+		MCHKHEAP
 	
 		PipeCmd cmd;
 		DWORD cout;
@@ -162,18 +184,22 @@ DWORD WINAPI ThreadProcW(LPVOID lpParameter)
 		{
 			case DragFrom:
 			{
+				MCHKHEAP
 				if (gFarVersion.dwBuild>=757)
 					ProcessDragFrom757();
 				else
 					ProcessDragFrom684();
+				MCHKHEAP
 				break;
 			}
 			case DragTo:
 			{
+				MCHKHEAP
 				if (gFarVersion.dwBuild>=757)
 					ProcessDragTo757();
 				else
 					ProcessDragTo684();
+				MCHKHEAP
 				break;
 			}
 		}
@@ -193,6 +219,7 @@ HWND AtoH(WCHAR *Str, int Len)
     else if (*Str>=L'A' && *Str<=L'F')
       (Ret*=16)+=(*Str-L'A'+10);
   }
+  MCHKHEAP
   return (HWND)Ret;
 }
 
@@ -202,12 +229,14 @@ void WINAPI _export SetStartupInfoW(void *aInfo)
 {
 	LoadFarVersion();
 
+	MCHKHEAP
 	if (gFarVersion.dwBuild>=757)
 		SetStartupInfoW757(aInfo);
 	else
 		SetStartupInfoW684(aInfo);
 
 	WCHAR *pipename = (WCHAR*)calloc(MAX_PATH,sizeof(WCHAR));
+	MCHKHEAP
 
 	if (!ConEmuHwnd) {
 		if (GetEnvironmentVariable(L"ConEmuHWND", pipename, MAX_PATH)) {
@@ -247,6 +276,7 @@ void WINAPI _export SetStartupInfoW(void *aInfo)
 			}
 		}
 	}
+	MCHKHEAP
 	
 	// Если мы не под эмулятором - больше ничего делать не нужно
 	if (ConEmuHwnd) {
@@ -272,34 +302,40 @@ void WINAPI _export SetStartupInfoW(void *aInfo)
 			hThread=CreateThread(NULL, 0, &ThreadProcW, 0, 0, 0);
 		}
 	}
+	MCHKHEAP
 
 	free(pipename);
 
 #ifdef _DEBUG
-	MessageBox(ConEmuHwnd,L"Debug",L"ConEmu plugin",MB_SETFOREGROUND);
+	//MessageBox(ConEmuHwnd,L"Debug",L"ConEmu plugin",MB_SETFOREGROUND);
 #endif
 
+    MCHKHEAP
 }
 
 void UpdateConEmuTabsW684(int event, bool losingFocus, bool editorSave);
 void UpdateConEmuTabsW757(int event, bool losingFocus, bool editorSave);
 void UpdateConEmuTabsW(int event, bool losingFocus, bool editorSave)
 {
+    MCHKHEAP
 	if (gFarVersion.dwBuild>=757)
 		UpdateConEmuTabsW757(event, losingFocus, editorSave);
 	else
 		UpdateConEmuTabsW684(event, losingFocus, editorSave);
+    MCHKHEAP
 }
 
 void AddTab(ConEmuTab* tabs, int &tabCount, bool losingFocus, bool editorSave, 
 			int Type, LPCWSTR Name, LPCWSTR FileName, int Current, int Modified)
 {
+    MCHKHEAP
 	if (Type == WTYPE_PANELS) {
 		tabs[0].Current = losingFocus ? 1 : 0;
 		//lstrcpyn(tabs[0].Name, GetMsgW757(0), CONEMUTABMAX-1);
 		tabs[0].Name[0] = 0;
 		tabs[0].Pos = 0;
 		tabs[0].Type = WTYPE_PANELS;
+		MCHKHEAP
 	} else
 	if (Type == WTYPE_EDITOR || Type == WTYPE_VIEWER)
 	{
@@ -326,11 +362,13 @@ void AddTab(ConEmuTab* tabs, int &tabCount, bool losingFocus, bool editorSave,
 
 		tabs[tabCount].Pos = tabCount;
 		tabCount++;
+		MCHKHEAP
 	}
 }
 
 void SendTabs(ConEmuTab* tabs, int &tabCount)
 {
+    MCHKHEAP
 	if (ConEmuHwnd && IsWindow(ConEmuHwnd)) {
 		COPYDATASTRUCT cds;
 		if (tabs[0].Type == WTYPE_PANELS) {
@@ -344,9 +382,11 @@ void SendTabs(ConEmuTab* tabs, int &tabCount)
 		if (tabCount) {
 			cds.cbData = tabCount * sizeof(ConEmuTab);
 			FORWARD_WM_COPYDATA(ConEmuHwnd, FarHwnd, &cds, SendMessage);
+			MCHKHEAP
 		}
 	}
 	free(tabs);
+	MCHKHEAP
 }
 
 // watch non-modified -> modified editor status change
@@ -357,10 +397,14 @@ int WINAPI _export ProcessEditorInputW(LPCVOID Rec)
 {
 	if (!ConEmuHwnd)
 		return 0; // Если мы не под эмулятором - ничего
+    MCHKHEAP
+    int liRc = 0;
 	if (gFarVersion.dwBuild>=757)
-		return ProcessEditorInputW757(Rec);
+		liRc = ProcessEditorInputW757(Rec);
 	else
-		return ProcessEditorInputW684(Rec);
+		liRc = ProcessEditorInputW684(Rec);
+	MCHKHEAP
+	return liRc;
 }
 
 extern int ProcessEditorEventW684(int Event, void *Param);
@@ -369,10 +413,14 @@ int WINAPI _export ProcessEditorEventW(int Event, void *Param)
 {
 	if (!ConEmuHwnd)
 		return 0; // Если мы не под эмулятором - ничего
+	MCHKHEAP
+	int liRc = 0;
 	if (gFarVersion.dwBuild>=757)
-		return ProcessEditorEventW757(Event,Param);
+		liRc = ProcessEditorEventW757(Event,Param);
 	else
-		return ProcessEditorEventW684(Event,Param);
+		liRc = ProcessEditorEventW684(Event,Param);
+	MCHKHEAP
+	return liRc;
 }
 
 extern int ProcessViewerEventW684(int Event, void *Param);
@@ -381,18 +429,23 @@ int WINAPI _export ProcessViewerEventW(int Event, void *Param)
 {
 	if (!ConEmuHwnd)
 		return 0; // Если мы не под эмулятором - ничего
+	int liRc = 0;
 	if (gFarVersion.dwBuild>=757)
-		return ProcessViewerEventW757(Event,Param);
+		liRc = ProcessViewerEventW757(Event,Param);
 	else
-		return ProcessViewerEventW684(Event,Param);
+		liRc = ProcessViewerEventW684(Event,Param);
+	MCHKHEAP
+	return liRc;
 }
 
 extern void ExitFARW684(void);
 extern void ExitFARW757(void);
 void   WINAPI _export ExitFARW(void)
 {
+    MCHKHEAP
 	if (gFarVersion.dwBuild>=757)
-		return ExitFARW757();
+		ExitFARW757();
 	else
-		return ExitFARW684();
+		ExitFARW684();
+	MCHKHEAP
 }

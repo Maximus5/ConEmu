@@ -117,9 +117,9 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop (IDataObject * pDataObject,DWORD grfKe
 					*pdwEffect = DROPEFFECT_NONE;
 					return S_OK;
 				}
-				PostMessage(hWnd, WM_KEYDOWN, vk, 0x01510001); // было Send
+				PostMessage(ghWnd, WM_KEYDOWN, vk, 0x01510001); // было Send
 
-				//SendMessage(hConWnd, WM_KEYUP, VK_NEXT, 0xc1510001);
+				//SendMessage(ghConWnd, WM_KEYUP, VK_NEXT, 0xc1510001);
 				return S_OK; // Тащим внутри ФАРа
 			}*/
 			if (!*pfpi->pszPassivePath) return 1;

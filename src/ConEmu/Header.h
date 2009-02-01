@@ -12,7 +12,7 @@
 
 #define MBox(rt) (int)MessageBox(NULL, rt, Title, MB_SYSTEMMODAL | MB_ICONINFORMATION)
 #define MBoxA(rt) (int)MessageBox(NULL, rt, _T("ConEmu"), MB_SYSTEMMODAL | MB_ICONINFORMATION)
-#define isMeForeground() (GetForegroundWindow() == hWnd || GetForegroundWindow() == hOpWnd)
+#define isMeForeground() (GetForegroundWindow() == ghWnd || GetForegroundWindow() == ghOpWnd)
 #define isPressed(inp) HIBYTE(GetKeyState(inp))
 
 #pragma warning (disable : 4005)
@@ -145,4 +145,3 @@ Maximus5: PictureView support, some bugfixes and customizations.\n\
 (based on console emulator by SEt)";
 
 //extern VirtualConsole *pVCon;
-

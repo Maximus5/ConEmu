@@ -1,6 +1,6 @@
 //#pragma once
 
-extern HWND hWnd, hConWnd;
+extern HWND ghWnd, ghConWnd;
 
 
 #define WM_TRAYNOTIFY WM_USER+1
@@ -21,3 +21,5 @@ extern HWND hWnd, hConWnd;
 void SyncConsoleToWindowRect(const RECT& rect);
 void SetConsoleWindowSize(const COORD& size, bool updateInfo);
 bool isPictureView();
+LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
+LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);

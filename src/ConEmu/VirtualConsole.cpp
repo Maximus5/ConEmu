@@ -242,7 +242,7 @@ bool VirtualConsole::Update(bool isForce)
 
 	// start timer before ReadConsoleOutput* calls, they do take time
 	i64 tick, tick2;
-	if (hOpWnd)
+	if (ghOpWnd)
 		QueryPerformanceCounter((LARGE_INTEGER*)&tick);
 
 	// Get attributes (first) and text (second)
@@ -561,11 +561,11 @@ done:
 			memcpy(ConAttr + TextLen, ConAttr, TextLen * 2);
 		}
 
-		if (hOpWnd)
+		if (ghOpWnd)
 		{
 			QueryPerformanceCounter((LARGE_INTEGER *)&tick2);
 			wsprintf(temp, _T("%i"), (tick2-tick)/100);
-			SetDlgItemText(hOpWnd, tRender, temp);
+			SetDlgItemText(ghOpWnd, tRender, temp);
 		}
 	}
 

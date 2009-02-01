@@ -87,6 +87,7 @@ DWORD WINAPI ThreadProcA(LPVOID lpParameter)
 	{
 		if (hPipeEvent && ConEmuHwnd) {
 			DWORD dwWait = WaitForSingleObject(hPipeEvent, 1000);
+			MCHKHEAP
 
 		    if (ConEmuHwnd && FarHwnd) {
 			    if (!IsWindow(ConEmuHwnd)) {
@@ -138,6 +139,7 @@ DWORD WINAPI ThreadProcA(LPVOID lpParameter)
 			}*/
 			case DragFrom:
 			{
+				MCHKHEAP
 				WindowInfo WInfo;				
 			    WInfo.Pos=0;
 				InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETWINDOWINFO, (void*)&WInfo);
@@ -147,9 +149,11 @@ DWORD WINAPI ThreadProcA(LPVOID lpParameter)
 					WriteFile(hPipe, &ItemsCount, sizeof(int), &cout, NULL);				
 					break;
 				}
+				MCHKHEAP
 
 				PanelInfo PInfo;
 				InfoA->Control(INVALID_HANDLE_VALUE, FCTL_GETPANELINFO, &PInfo);
+				MCHKHEAP
 				if ((PInfo.PanelType == PTYPE_FILEPANEL || PInfo.PanelType == PTYPE_TREEPANEL) && PInfo.Visible)
 				{
 					int nDirLen=0, nDirNoSlash=0;
@@ -160,10 +164,12 @@ DWORD WINAPI ThreadProcA(LPVOID lpParameter)
 							if (PInfo.CurDir[nDirLen-1]!='\\')
 								nDirNoSlash=1;
 					}
+					MCHKHEAP
 
 					//Maximus5 - новый формат передачи
 					int nNull=0;
 					WriteFile(hPipe, &nNull/*ItemsCount*/, sizeof(int), &cout, NULL);
+					MCHKHEAP
 					
 					if (PInfo.SelectedItemsNumber>0)
 					{
@@ -181,8 +187,10 @@ DWORD WINAPI ThreadProcA(LPVOID lpParameter)
 							nWholeLen += (nLen+1);
 						}
 						WriteFile(hPipe, &nWholeLen, sizeof(int), &cout, NULL);
+						MCHKHEAP
 
 						WCHAR* Path=new WCHAR[nMaxLen+1];
+						MCHKHEAP
 
 						for (i=0;i<ItemsCount;i++)
 						{
@@ -194,6 +202,7 @@ DWORD WINAPI ThreadProcA(LPVOID lpParameter)
 
 							int nLen=nDirLen+nDirNoSlash;
 							nLen += lstrlenA(PInfo.SelectedItems[i].FindData.cFileName);
+							MCHKHEAP
 
 							if (nDirLen>0) {
 								MultiByteToWideChar(CP_OEMCP/*???*/,0,
@@ -204,17 +213,21 @@ DWORD WINAPI ThreadProcA(LPVOID lpParameter)
 									Path[nDirLen+1]=0;
 								}
 							}
+							MCHKHEAP
 							int nFLen = lstrlenA(PInfo.SelectedItems[i].FindData.cFileName)+1;
 							MultiByteToWideChar(CP_OEMCP/*???*/, 0,
 								PInfo.SelectedItems[i].FindData.cFileName,nFLen,Path+nDirLen+nDirNoSlash,nFLen);
 							//lstrcpy(Path+nDirLen+nDirNoSlash, PInfo.SelectedItems[i].FindData.cFileName);
+							MCHKHEAP
 
 							nLen++;
 							WriteFile(hPipe, &nLen, sizeof(int), &cout, NULL);
 							WriteFile(hPipe, Path, sizeof(WCHAR)*nLen, &cout, NULL);
 						}
+						MCHKHEAP
 
 						delete Path; Path=NULL;
+						MCHKHEAP
 
 						// Конец списка
 						WriteFile(hPipe, &nNull/*ItemsCount*/, sizeof(int), &cout, NULL);
@@ -225,6 +238,7 @@ DWORD WINAPI ThreadProcA(LPVOID lpParameter)
 					int ItemsCount=0;
 					WriteFile(hPipe, &ItemsCount, sizeof(int), &cout, NULL);
 					WriteFile(hPipe, &ItemsCount, sizeof(int), &cout, NULL); // смена формата
+					MCHKHEAP
 				}
 				break;
 			}
@@ -232,7 +246,9 @@ DWORD WINAPI ThreadProcA(LPVOID lpParameter)
 			{
 				WindowInfo WInfo;				
 			    WInfo.Pos=0;
+			    MCHKHEAP
 				InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETWINDOWINFO, (void*)&WInfo);
+				MCHKHEAP
 				if (!WInfo.Current)
 				{
 					int ItemsCount=0;
@@ -241,9 +257,11 @@ DWORD WINAPI ThreadProcA(LPVOID lpParameter)
 				}
 				PanelInfo PAInfo, PPInfo;
 				ForwardedPanelInfo *pfpi=NULL;
+				MCHKHEAP
 				int nStructSize = sizeof(ForwardedPanelInfo)+4; // потом увеличим на длину строк
 				//ZeroMemory(&fpi, sizeof(fpi));
 				BOOL lbAOK=FALSE, lbPOK=FALSE;
+				MCHKHEAP
 				
                 //Maximus5 - к сожалению, В FAR2 FCTL_GETPANELSHORTINFO не возвращает CurDir :-(
 
@@ -251,13 +269,17 @@ DWORD WINAPI ThreadProcA(LPVOID lpParameter)
                     lbAOK=InfoA->Control(INVALID_HANDLE_VALUE, FCTL_GETPANELINFO, &PAInfo);
 				if (lbAOK && PAInfo.CurDir)
 					nStructSize += (lstrlenA(PAInfo.CurDir))*sizeof(WCHAR);
+				MCHKHEAP
 
                 if (!(lbPOK=InfoA->Control(INVALID_HANDLE_VALUE, FCTL_GETANOTHERPANELSHORTINFO, &PPInfo)))
                     lbPOK=InfoA->Control(INVALID_HANDLE_VALUE, FCTL_GETANOTHERPANELINFO, &PPInfo);
+                MCHKHEAP
 				if (lbPOK && PPInfo.CurDir)
 					nStructSize += (lstrlenA(PPInfo.CurDir))*sizeof(WCHAR); // Именно WCHAR! не TCHAR
+				MCHKHEAP
 
 				pfpi = (ForwardedPanelInfo*)calloc(nStructSize,1);
+				MCHKHEAP
 
 
 				pfpi->ActivePathShift = sizeof(ForwardedPanelInfo);
@@ -265,17 +287,20 @@ DWORD WINAPI ThreadProcA(LPVOID lpParameter)
 
 				pfpi->PassivePathShift = pfpi->ActivePathShift+2; // если ActivePath заполнится - увеличим
 
+				MCHKHEAP
 				if (lbAOK)
 				{
 					pfpi->ActiveRect=PAInfo.PanelRect;
 					if ((PAInfo.PanelType == PTYPE_FILEPANEL || PAInfo.PanelType == PTYPE_TREEPANEL) && PAInfo.Visible)
 					{
 						if (PAInfo.CurDir != NULL) {
+							MCHKHEAP
 							int nLen = lstrlenA(PAInfo.CurDir)+1;
 							MultiByteToWideChar(CP_OEMCP/*??? проверить*/,0,
 								PAInfo.CurDir, nLen, pfpi->pszActivePath, nLen);
 							//lstrcpyW(pfpi->pszActivePath, PAInfo.CurDir);
 							pfpi->PassivePathShift += (nLen-1)*2;
+							MCHKHEAP
 						}
 					}
 				}
@@ -292,6 +317,7 @@ DWORD WINAPI ThreadProcA(LPVOID lpParameter)
 							MultiByteToWideChar(CP_OEMCP/*??? проверить*/,0,
 								PPInfo.CurDir, nLen, pfpi->pszPassivePath, nLen);
 							//lstrcpyW(pfpi->pszPassivePath, PPInfo.CurDir);
+							MCHKHEAP
 						}		
 					}
 				}
@@ -299,11 +325,13 @@ DWORD WINAPI ThreadProcA(LPVOID lpParameter)
 				// Собственно, пересылка информации
 				WriteFile(hPipe, &nStructSize, sizeof(nStructSize), &cout, NULL);
 				WriteFile(hPipe, pfpi, nStructSize, &cout, NULL);
+				MCHKHEAP
 
 				free(pfpi); pfpi=NULL;
 				break;
 			}
 		}
+		MCHKHEAP
 		Sleep(1);
 	}
 }
@@ -325,11 +353,13 @@ extern HWND AtoH(WCHAR *Str, int Len);
 
 void WINAPI _export SetStartupInfo(struct PluginStartupInfo *aInfo)
 {
+    MCHKHEAP
 	::InfoA = (PluginStartupInfo*)calloc(sizeof(PluginStartupInfo),1);
 	::FSFA = (FarStandardFunctions*)calloc(sizeof(FarStandardFunctions),1);
 	*::InfoA = *aInfo;
 	*::FSFA = *aInfo->FSF;
 	::InfoA->FSF = ::FSFA;
+	MCHKHEAP
 	
 //#ifdef _DEBUG
 //	InfoA->Message(InfoA->ModuleNumber, FMSG_MB_OK|FMSG_ALLINONE, NULL, 
@@ -354,6 +384,7 @@ void WINAPI _export SetStartupInfo(struct PluginStartupInfo *aInfo)
 			bWasSetParent = TRUE;
 		}
 	}
+	MCHKHEAP
 	
 	WCHAR *pipename=(WCHAR*)calloc(MAX_PATH,sizeof(WCHAR));
 
@@ -374,6 +405,7 @@ void WINAPI _export SetStartupInfo(struct PluginStartupInfo *aInfo)
 			}
 		}
 	}
+	MCHKHEAP
 	
 	//wsprintf(pipename, L"\\\\.\\pipe\\ConEmu%h", ConEmuHwnd);
 	//DWORD dwFarProcID = GetCurrentProcessId();
@@ -402,6 +434,7 @@ void WINAPI _export SetStartupInfo(struct PluginStartupInfo *aInfo)
 	#endif
 	}
 	free(pipename);
+	MCHKHEAP
 }
 
 void WINAPI _export GetPluginInfo(struct PluginInfo *pi)
@@ -416,6 +449,7 @@ void WINAPI _export GetPluginInfo(struct PluginInfo *pi)
 	pi->PluginConfigStringsNumber = 0;
 	pi->CommandPrefix = NULL;
 	pi->Reserved = 0;	
+	MCHKHEAP
 }
 
 /*static*/ int lastModifiedStateA = -1;
@@ -432,8 +466,10 @@ int WINAPI _export ProcessEditorInput(const INPUT_RECORD *Rec)
 		int currentModifiedState = ei.CurState == ECSTATE_MODIFIED ? 1 : 0;
 		if (lastModifiedStateA != currentModifiedState)
 		{
+			MCHKHEAP
 			UpdateConEmuTabsA(0, false, false);
 			lastModifiedStateA = currentModifiedState;
+			MCHKHEAP
 		}
 	}
 	return 0;
@@ -451,7 +487,9 @@ int WINAPI _export ProcessEditorEvent(int Event, void *Param)
 	case EE_SAVE:
 	case EE_READ:
 		{
+			MCHKHEAP
 			UpdateConEmuTabsA(Event, Event == EE_KILLFOCUS, Event == EE_SAVE);
+			MCHKHEAP
 			break;
 		}
 	}
@@ -469,7 +507,9 @@ int WINAPI _export ProcessViewerEvent(int Event, void *Param)
 	case VE_KILLFOCUS:
 	case VE_GOTFOCUS:
 		{
+			MCHKHEAP
 			UpdateConEmuTabsA(Event, Event == VE_KILLFOCUS, false);
+			MCHKHEAP
 		}
 	}
 
@@ -484,6 +524,7 @@ void UpdateConEmuTabsA(int event, bool losingFocus, bool editorSave)
 	int windowCount = (int)InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETWINDOWCOUNT, NULL);
 	int maxTabCount = windowCount + 1;
 
+	MCHKHEAP
 	ConEmuTab* tabs = (ConEmuTab*) calloc(maxTabCount, sizeof(ConEmuTab));
 
 	EditorInfo ei;
@@ -495,11 +536,13 @@ void UpdateConEmuTabsA(int event, bool losingFocus, bool editorSave)
 		if (ei.FileName)
 			MultiByteToWideChar(CP_OEMCP, 0, ei.FileName, lstrlenA(ei.FileName)+1, pszFileName, CONEMUTABMAX);
 	}
+	MCHKHEAP
 
 	int tabCount = 1;
 	for (int i = 0; i < windowCount; i++)
 	{
 		WInfo.Pos = i;
+		MCHKHEAP
 		InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETWINDOWINFO, (void*)&WInfo);
 		if (WInfo.Type == WTYPE_EDITOR || WInfo.Type == WTYPE_VIEWER || WInfo.Type == WTYPE_PANELS)
 		{
@@ -507,17 +550,20 @@ void UpdateConEmuTabsA(int event, bool losingFocus, bool editorSave)
 			AddTab(tabs, tabCount, losingFocus, editorSave, 
 				WInfo.Type, pszName, editorSave ? pszFileName : NULL, 
 				WInfo.Current, WInfo.Modified);
+			MCHKHEAP
 		}
 	}
 
 	if (pszFileName) free(pszFileName);
 	if (pszName) free(pszName);
+	MCHKHEAP
 
 	SendTabs(tabs, tabCount);
 }
 
 void   WINAPI _export ExitFAR(void)
 {
+    MCHKHEAP
 	if (InfoA) {
 		free(InfoA);
 		InfoA=NULL;
@@ -526,4 +572,5 @@ void   WINAPI _export ExitFAR(void)
 		free(FSFA);
 		FSFA=NULL;
 	}
+	MCHKHEAP
 }

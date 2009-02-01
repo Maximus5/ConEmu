@@ -38,4 +38,4 @@ bool LoadImageFrom(TCHAR *inPath);
 BOOL CALLBACK wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
 void LoadSettings();
 
-extern HWND hOpWnd;
+extern HWND ghOpWnd;

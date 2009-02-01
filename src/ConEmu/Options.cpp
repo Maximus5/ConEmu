@@ -3,8 +3,8 @@
 #include "commctrl.h"
 
 const u8 chSetsNums[19] = {0, 178, 186, 136, 1, 238, 134, 161, 177, 129, 130, 77, 255, 204, 128, 2, 222, 162, 163};
-int upToFontHeight;
-HWND hOpWnd;
+int upToFontHeight=0;
+HWND ghOpWnd=NULL;
 
 extern void ForceShowTabs();
 
@@ -24,9 +24,9 @@ void SaveSettings()
 
       if (reg.OpenKey(pVCon->Config, KEY_WRITE)) // NightRoman
         {
-            GetDlgItemText(hOpWnd, tCmdLine, gSet.Cmd, MAX_PATH);
+            GetDlgItemText(ghOpWnd, tCmdLine, gSet.Cmd, MAX_PATH);
             RECT rect;
-            GetWindowRect(hWnd, &rect);
+            GetWindowRect(ghWnd, &rect);
             gSet.wndX = rect.left;
             gSet.wndY = rect.top;
 
@@ -38,7 +38,7 @@ void SaveSettings()
             reg.Save(_T("FontSizeX"), gSet.FontSizeX);
             reg.Save(_T("FontCharSet"), pVCon->LogFont.lfCharSet);
             reg.Save(_T("Anti-aliasing"), pVCon->LogFont.lfQuality);
-            reg.Save(_T("WindowMode"), gSet.isFullScreen ? rFullScreen : IsZoomed(hWnd) ? rMaximized : rNormal);
+            reg.Save(_T("WindowMode"), gSet.isFullScreen ? rFullScreen : IsZoomed(ghWnd) ? rMaximized : rNormal);
             reg.Save(_T("CursorType"), gSet.isCursorV);
             reg.Save(_T("CursorColor"), gSet.isCursorColor);
             reg.Save(_T("Experimental"), gSet.isFixFarBorders);
@@ -63,12 +63,12 @@ void SaveSettings()
             
             if (gSet.isTabs==1) ForceShowTabs();
             
-            MessageBoxA(hOpWnd, "Saved.", "Information", MB_ICONINFORMATION);
+            MessageBoxA(ghOpWnd, "Saved.", "Information", MB_ICONINFORMATION);
             return;
         }
     }
 
-    MessageBoxA(hOpWnd, "Failed", "Information", MB_ICONERROR);
+    MessageBoxA(ghOpWnd, "Failed", "Information", MB_ICONERROR);
 }
 
 void LoadSettings()
@@ -154,9 +154,9 @@ void LoadSettings()
     {
         COORD b = {gSet.wndWidth, gSet.wndHeight};
       SetConsoleWindowSize(b,false); // Maximus5 - по аналогии с NightRoman
-      //MoveWindow(hConWnd, 0, 0, 1, 1, 0);
+      //MoveWindow(ghConWnd, 0, 0, 1, 1, 0);
       //SetConsoleScreenBufferSize(pVCon->hConOut(), b);
-      //MoveWindow(hConWnd, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), 0);
+      //MoveWindow(ghConWnd, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), 0);
     }
 
     pVCon->LogFont.lfHeight = inSize;
@@ -209,7 +209,7 @@ BOOL CALLBACK EnumFamCallBack(LPLOGFONT lplf, LPNEWTEXTMETRIC lpntm, DWORD FontT
     else
         aiFontCount[1]++;
 
-    SendDlgItemMessage(hOpWnd, tFontFace, CB_ADDSTRING, 0, (LPARAM) lplf->lfFaceName);
+    SendDlgItemMessage(ghOpWnd, tFontFace, CB_ADDSTRING, 0, (LPARAM) lplf->lfFaceName);
 
     if (aiFontCount[0] || aiFontCount[1] || aiFontCount[2])
         return TRUE;
@@ -225,12 +225,21 @@ BOOL CALLBACK wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
     switch (messg)
     {
     case WM_INITDIALOG:
-        hOpWnd = hWnd2;
+        ghOpWnd = hWnd2;
         {
-            HDC hdc = GetDC(hOpWnd);
+            HDC hdc = GetDC(ghOpWnd);
             int aFontCount[] = { 0, 0, 0 };
             EnumFontFamilies(hdc, (LPCTSTR) NULL, (FONTENUMPROC) EnumFamCallBack, (LPARAM) aFontCount);
             DeleteDC(hdc);
+            
+            TCHAR szTitle[MAX_PATH]; szTitle[0]=0;
+            int nConfLen = _tcslen(pVCon->Config);
+            int nStdLen = strlen("Software\\ConEmu");
+            if (nConfLen>(nStdLen+1))
+	            wsprintf(szTitle, _T("Settings (%s)..."), (pVCon->Config+nStdLen+1));
+	        else
+		        _tcscpy(szTitle, _T("Settings..."));
+            SetWindowText ( ghOpWnd, szTitle );
         }
 
         SendDlgItemMessage(hWnd2, tFontFace, CB_SELECTSTRING, -1, (LPARAM)pVCon->LogFont.lfFaceName);
@@ -241,8 +250,8 @@ BOOL CALLBACK wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
             {
                 wsprintf(temp, _T("%i"), FSizes[i]);
                 if (i > 0)
-                    SendDlgItemMessage(hOpWnd, tFontSizeY, CB_ADDSTRING, 0, (LPARAM) temp);
-                SendDlgItemMessage(hOpWnd, tFontSizeX, CB_ADDSTRING, 0, (LPARAM) temp);
+                    SendDlgItemMessage(ghOpWnd, tFontSizeY, CB_ADDSTRING, 0, (LPARAM) temp);
+                SendDlgItemMessage(ghOpWnd, tFontSizeX, CB_ADDSTRING, 0, (LPARAM) temp);
             }
 
             wsprintf(temp, _T("%i"), pVCon->LogFont.lfHeight);
@@ -263,10 +272,10 @@ BOOL CALLBACK wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
             u8 num = 4;
             for (uint i=0; i < 19; i++)
             {
-                SendDlgItemMessageA(hOpWnd, tFontCharset, CB_ADDSTRING, 0, (LPARAM) ChSets[i]);
+                SendDlgItemMessageA(ghOpWnd, tFontCharset, CB_ADDSTRING, 0, (LPARAM) ChSets[i]);
                 if (chSetsNums[i] == pVCon->LogFont.lfCharSet) num = i;
             }
-            SendDlgItemMessage(hOpWnd, tFontCharset, CB_SETCURSEL, num, 0);
+            SendDlgItemMessage(ghOpWnd, tFontCharset, CB_SETCURSEL, num, 0);
         }
 
         SetDlgItemText(hWnd2, tCmdLine, gSet.Cmd);
@@ -309,10 +318,10 @@ BOOL CALLBACK wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
         if (gSet.isDnD)
         {
             CheckDlgButton(hWnd2, cbDnD, BST_CHECKED);
-            EnableWindow(GetDlgItem(hOpWnd, cbDnDCopy), true);
+            EnableWindow(GetDlgItem(ghOpWnd, cbDnDCopy), true);
         }
         else
-            EnableWindow(GetDlgItem(hOpWnd, cbDnDCopy), false);
+            EnableWindow(GetDlgItem(ghOpWnd, cbDnDCopy), false);
         if (gSet.isDefCopy) CheckDlgButton(hWnd2, cbDnDCopy, (gSet.isDefCopy==1) ? BST_CHECKED : BST_INDETERMINATE);
 
         if (gSet.isGUIpb) CheckDlgButton(hWnd2, cbGUIpb, BST_CHECKED);
@@ -330,11 +339,11 @@ BOOL CALLBACK wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
         if (pVCon->LogFont.lfItalic)            CheckDlgButton(hWnd2, cbItalic, BST_CHECKED);
 
         if (gSet.isFullScreen)
-            CheckRadioButton(hOpWnd, rNormal, rFullScreen, rFullScreen);
-        else if (IsZoomed(hWnd))
-            CheckRadioButton(hOpWnd, rNormal, rFullScreen, rMaximized);
+            CheckRadioButton(ghOpWnd, rNormal, rFullScreen, rFullScreen);
+        else if (IsZoomed(ghWnd))
+            CheckRadioButton(ghOpWnd, rNormal, rFullScreen, rMaximized);
         else
-            CheckRadioButton(hOpWnd, rNormal, rFullScreen, rNormal);
+            CheckRadioButton(ghOpWnd, rNormal, rFullScreen, rNormal);
 
         wsprintf(temp, _T("%i"), gSet.wndWidth);
         SetDlgItemText(hWnd2, tWndWidth, temp);
@@ -344,16 +353,16 @@ BOOL CALLBACK wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
         SetDlgItemText(hWnd2, tWndHeight, temp);
         SendDlgItemMessage(hWnd2, tWndHeight, EM_SETLIMITTEXT, 3, 0);
 
-        if (!gSet.isFullScreen && !IsZoomed(hWnd))
+        if (!gSet.isFullScreen && !IsZoomed(ghWnd))
         {
-            EnableWindow(GetDlgItem(hOpWnd, tWndWidth), true);
-            EnableWindow(GetDlgItem(hOpWnd, tWndHeight), true);
+            EnableWindow(GetDlgItem(ghOpWnd, tWndWidth), true);
+            EnableWindow(GetDlgItem(ghOpWnd, tWndHeight), true);
 
         }
         else
         {
-            EnableWindow(GetDlgItem(hOpWnd, tWndWidth), false);
-            EnableWindow(GetDlgItem(hOpWnd, tWndHeight), false);
+            EnableWindow(GetDlgItem(ghOpWnd, tWndWidth), false);
+            EnableWindow(GetDlgItem(ghOpWnd, tWndHeight), false);
 
         }
 
@@ -401,7 +410,7 @@ BOOL CALLBACK wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
                     SetDlgItemText(hWnd2, tDarker, tmp);
                     LoadImageFrom(gSet.pBgImage);
                     pVCon->Update(true);
-                    InvalidateRect(hWnd, NULL, FALSE);
+                    InvalidateRect(ghWnd, NULL, FALSE);
                 }
             }
             break;
@@ -427,7 +436,7 @@ BOOL CALLBACK wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
                     pVCon->hFont = 0;
                     pVCon->LogFont.lfWidth = gSet.FontSizeX;
                     pVCon->Update(true);
-                    InvalidateRect(hWnd, NULL, FALSE);
+                    InvalidateRect(ghWnd, NULL, FALSE);
                     break;
 
                 case bSaveSettings:
@@ -444,14 +453,14 @@ BOOL CALLBACK wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
                     gSet.isFixFarBorders = !gSet.isFixFarBorders;
 
                     pVCon->Update(true);
-                    InvalidateRect(hWnd, NULL, FALSE);
+                    InvalidateRect(ghWnd, NULL, FALSE);
                     break;
 
                 case cbCursorColor:
                     gSet.isCursorColor = !gSet.isCursorColor;
 
                     pVCon->Update(true);
-                    InvalidateRect(hWnd, NULL, FALSE);
+                    InvalidateRect(ghWnd, NULL, FALSE);
                     break;
 
                 case cbBold:
@@ -470,18 +479,18 @@ BOOL CALLBACK wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
                             pVCon->hFont = hFont;
 
                             pVCon->Update(true);
-                            if (!gSet.isFullScreen && !IsZoomed(hWnd))
+                            if (!gSet.isFullScreen && !IsZoomed(ghWnd))
                                 SyncWindowToConsole();
                             else
                                 SyncConsoleToWindow();
-                            InvalidateRect(hWnd, 0, 0);
+                            InvalidateRect(ghWnd, 0, 0);
                         }
                     }
                     break;
 
                 case cbBgImage:
                     gSet.isShowBgImage = SendDlgItemMessage(hWnd2, cbBgImage, BM_GETCHECK, BST_CHECKED, 0) == BST_CHECKED ? true : false;
-                    EnableWindow(GetDlgItem(hOpWnd, tBgImage), gSet.isShowBgImage);
+                    EnableWindow(GetDlgItem(ghOpWnd, tBgImage), gSet.isShowBgImage);
                     EnableWindow(GetDlgItem(hWnd2, tDarker), gSet.isShowBgImage);
                     EnableWindow(GetDlgItem(hWnd2, slDarker), gSet.isShowBgImage);
 
@@ -491,7 +500,7 @@ BOOL CALLBACK wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
                         SetBkMode(pVCon->hDC, OPAQUE);
 
                     pVCon->Update(true);
-                    InvalidateRect(hWnd, NULL, FALSE);
+                    InvalidateRect(ghWnd, NULL, FALSE);
                     break;
 
                 case cbRClick:
@@ -547,14 +556,14 @@ BOOL CALLBACK wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
                     gSet.isForceMonospace = !gSet.isForceMonospace;
 
                     pVCon->Update(true);
-                    InvalidateRect(hWnd, NULL, FALSE);
+                    InvalidateRect(ghWnd, NULL, FALSE);
                     break;
 
                 case cbIsConMan:
                     gSet.isConMan = !gSet.isConMan;
 
                     pVCon->Update(true);
-                    InvalidateRect(hWnd, NULL, FALSE);
+                    InvalidateRect(ghWnd, NULL, FALSE);
                     break;
 
                 case rCursorH:
@@ -565,7 +574,7 @@ BOOL CALLBACK wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
                         gSet.isCursorV = false;
 
                     pVCon->Update(true);
-                    InvalidateRect(hWnd, NULL, FALSE);
+                    InvalidateRect(ghWnd, NULL, FALSE);
                     break;
 
                 default:
@@ -580,7 +589,7 @@ BOOL CALLBACK wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
                             InvalidateRect(GetDlgItem(hWnd2, CB), 0, 1);
 
                             pVCon->Update(true);
-                            InvalidateRect(hWnd, NULL, FALSE);
+                            InvalidateRect(ghWnd, NULL, FALSE);
                         }
                     }
                 }
@@ -607,7 +616,7 @@ BOOL CALLBACK wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
                             {
                                 pVCon->Colors[TB - 1100] = RGB(r, g, b);
                                 pVCon->Update(true);
-                                InvalidateRect(hWnd, 0, 1);
+                                InvalidateRect(ghWnd, 0, 1);
                                 InvalidateRect(GetDlgItem(hWnd2, TB - 100), 0, 1);
                             }
                         }
@@ -615,7 +624,7 @@ BOOL CALLBACK wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
                 }
                 else if (TB == tBgImage)
                 {
-                    GetDlgItemText(hOpWnd, tBgImage, temp, MAX_PATH);
+                    GetDlgItemText(ghOpWnd, tBgImage, temp, MAX_PATH);
                     if( LoadImageFrom(temp) )
                     {
                         if (gSet.isShowBgImage && gSet.isBackgroundImageValid)
@@ -624,7 +633,7 @@ BOOL CALLBACK wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
                             SetBkMode(pVCon->hDC, OPAQUE);
 
                         pVCon->Update(true);
-                        InvalidateRect(hWnd, NULL, FALSE);
+                        InvalidateRect(ghWnd, NULL, FALSE);
                     }
                 }
                 else if ( (TB == tWndWidth || TB == tWndHeight) && IsDlgButtonChecked(hWnd2, rNormal) == BST_CHECKED )
@@ -642,9 +651,9 @@ BOOL CALLBACK wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
 
                         COORD b = {gSet.wndWidth, gSet.wndHeight};
                   SetConsoleWindowSize(b, false);  // NightRoman
-                  //MoveWindow(hConWnd, 0, 0, 1, 1, 0);
+                  //MoveWindow(ghConWnd, 0, 0, 1, 1, 0);
                   //SetConsoleScreenBufferSize(pVCon->hConOut(), b);
-                  //MoveWindow(hConWnd, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), 0);
+                  //MoveWindow(ghConWnd, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), 0);
                     }
 
                 }
@@ -660,7 +669,7 @@ BOOL CALLBACK wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
                         SendDlgItemMessage(hWnd2, slDarker, TBM_SETPOS, (WPARAM) true, (LPARAM) gSet.bgImageDarker);
                         LoadImageFrom(gSet.pBgImage);
                         pVCon->Update(true);
-                        InvalidateRect(hWnd, NULL, FALSE);
+                        InvalidateRect(ghWnd, NULL, FALSE);
                     }
                 }
 
@@ -695,11 +704,11 @@ BOOL CALLBACK wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
                         pVCon->hFont = hFont;
 
                         pVCon->Update(true);
-                        if (!gSet.isFullScreen && !IsZoomed(hWnd))
+                        if (!gSet.isFullScreen && !IsZoomed(ghWnd))
                             SyncWindowToConsole();
                         else
                             SyncConsoleToWindow();
-                        InvalidateRect(hWnd, 0, 0);
+                        InvalidateRect(ghWnd, 0, 0);
 
                         wsprintf(temp, _T("%i"), pVCon->LogFont.lfHeight);
                         SetDlgItemText(hWnd2, tFontSizeY, temp);
@@ -740,11 +749,11 @@ BOOL CALLBACK wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
                             pVCon->hFont = hFont;
 
                             pVCon->Update(true);
-                            if (!gSet.isFullScreen && !IsZoomed(hWnd))
+                            if (!gSet.isFullScreen && !IsZoomed(ghWnd))
                                 SyncWindowToConsole();
                             else
                                 SyncConsoleToWindow();
-                            InvalidateRect(hWnd, 0, 0);
+                            InvalidateRect(ghWnd, 0, 0);
                         }
                     }
                 }
@@ -753,7 +762,7 @@ BOOL CALLBACK wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
         case WM_CLOSE:
         case WM_DESTROY:
             EndDialog(hWnd2, TRUE);
-            hOpWnd = 0;
+            ghOpWnd = 0;
             break;
         default:
             return 0;

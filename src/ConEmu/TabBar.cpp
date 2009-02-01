@@ -29,10 +29,10 @@ char TabBarClass::FarTabShortcut(int tabIndex)
 
 void TabBarClass::FarSendChangeTab(int tabIndex)
 {
-	PostMessage(hConWnd, WM_KEYDOWN, VK_F14, 0);
-	PostMessage(hConWnd, WM_KEYUP, VK_F14, 0);
-	PostMessage(hConWnd, WM_KEYDOWN, FarTabShortcut(tabIndex), 0);
-	PostMessage(hConWnd, WM_KEYUP, FarTabShortcut(tabIndex), 0);
+	PostMessage(ghConWnd, WM_KEYDOWN, VK_F14, 0);
+	PostMessage(ghConWnd, WM_KEYUP, VK_F14, 0);
+	PostMessage(ghConWnd, WM_KEYDOWN, FarTabShortcut(tabIndex), 0);
+	PostMessage(ghConWnd, WM_KEYUP, FarTabShortcut(tabIndex), 0);
 }
 
 static LRESULT CALLBACK TabProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -71,10 +71,10 @@ int TabBarClass::Height()
 void TabBarClass::Activate()
 {
 	RECT rcClient; 
-	GetClientRect(hWnd, &rcClient); 
+	GetClientRect(ghWnd, &rcClient); 
 	InitCommonControls(); 
 	_hwndTab = CreateWindow(WC_TABCONTROL, NULL, WS_CHILD | WS_CLIPSIBLINGS | WS_VISIBLE | TCS_FOCUSNEVER, 0, 0, 
-		rcClient.right, 0, hWnd, NULL, g_hInstance, NULL);
+		rcClient.right, 0, ghWnd, NULL, g_hInstance, NULL);
 	if (_hwndTab == NULL)
 	{ 
 		return; 
@@ -154,7 +154,7 @@ void TabBarClass::Update(ConEmuTab* tabs, int tabsCount)
 	if (_tabHeight == NULL)
 	{
 		RECT rcClient; 
-		GetClientRect(hWnd, &rcClient); 
+		GetClientRect(ghWnd, &rcClient); 
 		TabCtrl_AdjustRect(_hwndTab, FALSE, &rcClient);
 		_tabHeight = rcClient.top;
 		UpdatePosition();
@@ -168,7 +168,7 @@ void TabBarClass::UpdatePosition()
 		return;
 	}
 	RECT client;
-	GetClientRect(hWnd, &client);
+	GetClientRect(ghWnd, &client);
 	MoveWindow(_hwndTab, 0, 0, client.right, _tabHeight, 1);
 }
 
@@ -179,7 +179,7 @@ bool TabBarClass::OnNotify(LPNMHDR nmhdr)
 		return false;
 	}
 
-	SetFocus(hWnd);
+	SetFocus(ghWnd);
 	if (nmhdr->code == TCN_SELCHANGING)
 	{
 		_prevTab = TabCtrl_GetCurSel(_hwndTab); 
@@ -224,7 +224,7 @@ void TabBarClass::OnMouse(int message, int x, int y)
 		return;
 	}
 
-	SetFocus(hWnd);
+	SetFocus(ghWnd);
 	if (message == WM_MBUTTONUP)
 	{
 		TCHITTESTINFO htInfo;
@@ -235,8 +235,8 @@ void TabBarClass::OnMouse(int message, int x, int y)
 		{
 			FarSendChangeTab(iPage);
 			Sleep(50); // TODO
-			PostMessage(hConWnd, WM_KEYDOWN, VK_F10, 0);
-			PostMessage(hConWnd, WM_KEYUP, VK_F10, 0);
+			PostMessage(ghConWnd, WM_KEYDOWN, VK_F10, 0);
+			PostMessage(ghConWnd, WM_KEYUP, VK_F10, 0);
 		}
 	}
 }	

@@ -38,7 +38,9 @@ WCHAR *LogFilePath=NULL;
 
 //externs
 VirtualConsole *pVCon=NULL;
-HWND hWnd=NULL, hConWnd=NULL;
+HWND ghWnd=NULL, ghWndDC=NULL, ghConWnd=NULL;
+#define HDCWND (gbUseChildWindow ? ghWndDC : ghWnd)
+bool gbUseChildWindow = false;
 TCHAR temp[MAX_PATH];
 TCHAR szIconPath[MAX_PATH];
 uint cBlinkNext=0;
@@ -73,11 +75,13 @@ ForwardedFileInfo *Files=NULL;
 bool ffiresieved=false;
 int ffiCount=0;
 
-TCHAR Title[0x400];
+#define MAX_TITLE_SIZE 0x400
+TCHAR Title[MAX_TITLE_SIZE], TitleCmp[MAX_TITLE_SIZE];
 
 POINT cwShift; // difference between window size and client area size for main ConEmu window
-POINT cwConsoleShift; // difference between window size and client area size for hConWnd
+POINT cwConsoleShift; // difference between window size and client area size for ghConWnd
 COORD srctWindowLast; // console size after last resize (in columns and lines)
+RECT  dcWindowLast; // Последний размер дочернего окна
 uint cBlinkShift=0; // cursor blink counter threshold
 
 
@@ -90,18 +94,18 @@ public:
 
     void HideWindowToTray()
     {
-        GetWindowText(hWnd, IconData.szTip, 127);
+        GetWindowText(ghWnd, IconData.szTip, 127);
         Shell_NotifyIcon(NIM_ADD, &IconData);
-        ShowWindow(hWnd, SW_HIDE);
+        ShowWindow(ghWnd, SW_HIDE);
         isWindowInTray = true;
     }
 
     void RestoreWindowFromTray()
     {
-        ShowWindow(hWnd, SW_SHOW); 
-        SetForegroundWindow(hWnd);
+        ShowWindow(ghWnd, SW_SHOW); 
+        SetForegroundWindow(ghWnd);
         Shell_NotifyIcon(NIM_DELETE, &IconData);
-        EnableMenuItem(GetSystemMenu(hWnd, false), ID_TOTRAY, MF_BYCOMMAND | MF_ENABLED);
+        EnableMenuItem(GetSystemMenu(ghWnd, false), ID_TOTRAY, MF_BYCOMMAND | MF_ENABLED);
         isWindowInTray = false;
     }
 
@@ -204,9 +208,9 @@ void SyncWindowToConsole()
     DEBUGLOGFILE("SyncWindowToConsole\n");
     
     RECT wndR;
-    GetWindowRect(hWnd, &wndR);
+    GetWindowRect(ghWnd, &wndR);
     POINT p;
-    GetCWShift(hWnd, &p);
+    GetCWShift(ghWnd, &p);
     RECT consoleRect = ConsoleOffsetRect();
 
     #ifdef MSGLOGGER
@@ -214,7 +218,7 @@ void SyncWindowToConsole()
         DEBUGLOGFILE(szDbg);
     #endif
     
-    MOVEWINDOW(hWnd, wndR.left, wndR.top, pVCon->Width + p.x + consoleRect.left, pVCon->Height + p.y + consoleRect.top, 1);
+    MOVEWINDOW(ghWnd, wndR.left, wndR.top, pVCon->Width + p.x + consoleRect.left, pVCon->Height + p.y + consoleRect.top, 1);
 }
 
 /* -- Maximus5. Вернул код из сборки alex_itd
@@ -222,7 +226,7 @@ void SyncConsoleToWindow()
 {
     SetConsoleWindowSize(ConsoleSizeFromWindow(), true);
     RECT rect;
-    GetClientRect(hWnd, &rect);
+    GetClientRect(ghWnd, &rect);
     SyncConsoleToWindowRect(rect);
 }
 
@@ -241,7 +245,7 @@ COORD ConsoleSizeFromWindow(RECT* arect = NULL, bool rectInWindow = false)
     RECT rect;
     if (arect == NULL)
     {
-        GetClientRect(hWnd, &rect);
+        GetClientRect(ghWnd, &rect);
     } 
     else
     {
@@ -292,23 +296,23 @@ void SetConsoleWindowSize(const COORD& size, bool updateInfo)
     }
 
     // update size info
-    if (updateInfo && !gSet.isFullScreen && !IsZoomed(hWnd))
+    if (updateInfo && !gSet.isFullScreen && !IsZoomed(ghWnd))
     {
         gSet.wndWidth = size.X;
         wsprintf(temp, _T("%i"), gSet.wndWidth);
-        SetDlgItemText(hOpWnd, tWndWidth, temp);
+        SetDlgItemText(ghOpWnd, tWndWidth, temp);
 
         gSet.wndHeight = size.Y;
         wsprintf(temp, _T("%i"), gSet.wndHeight);
-        SetDlgItemText(hOpWnd, tWndHeight, temp);
+        SetDlgItemText(ghOpWnd, tWndHeight, temp);
     }
 
     // case: simple mode
     if (pVCon->BufferHeight == 0)
     {
-        MOVEWINDOW(hConWnd, 0, 0, 1, 1, 0);
+        MOVEWINDOW(ghConWnd, 0, 0, 1, 1, 0);
         SETCONSOLESCREENBUFFERSIZE(pVCon->hConOut(), size);
-        MOVEWINDOW(hConWnd, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), 0);
+        MOVEWINDOW(ghConWnd, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), 0);
         return;
     }
 
@@ -337,7 +341,7 @@ void SetConsoleWindowSize(const COORD& size, bool updateInfo)
             // y-scroll: buffer height = old buffer height
             csbi.dwSize.Y = max(csbi.dwSize.Y, size.Y);
     }
-    MOVEWINDOW(hConWnd, 0, 0, 1, 1, 0);
+    MOVEWINDOW(ghConWnd, 0, 0, 1, 1, 0);
     SETCONSOLESCREENBUFFERSIZE(pVCon->hConOut(), csbi.dwSize);
     
     // set console window
@@ -382,11 +386,11 @@ bool SetWindowMode(uint inMode)
         {
          LONG style = pVCon->BufferHeight ? WS_VSCROLL : 0; // NightRoman
             style |= WS_OVERLAPPEDWINDOW | WS_VISIBLE;
-            SetWindowLongPtr(hWnd, GWL_STYLE, style);
-            SETWINDOWPOS(hWnd, HWND_TOP, wndNotFS.left, wndNotFS.top, wndNotFS.right - wndNotFS.left, wndNotFS.bottom - wndNotFS.top, SWP_FRAMECHANGED | SWP_SHOWWINDOW);
+            SetWindowLongPtr(ghWnd, GWL_STYLE, style);
+            SETWINDOWPOS(ghWnd, HWND_TOP, wndNotFS.left, wndNotFS.top, wndNotFS.right - wndNotFS.left, wndNotFS.bottom - wndNotFS.top, SWP_FRAMECHANGED | SWP_SHOWWINDOW);
         }
         gSet.isFullScreen = false;
-        SendMessage(hWnd, WM_SYSCOMMAND, inMode == rNormal ? SC_RESTORE : SC_MAXIMIZE, 0);
+        SendMessage(ghWnd, WM_SYSCOMMAND, inMode == rNormal ? SC_RESTORE : SC_MAXIMIZE, 0);
         break;
 
     case rFullScreen:
@@ -394,25 +398,25 @@ bool SetWindowMode(uint inMode)
         if (!gSet.isFullScreen)
         {
             gSet.isFullScreen = true;
-            isWndNotFSMaximized = IsZoomed(hWnd);
+            isWndNotFSMaximized = IsZoomed(ghWnd);
          if (isWndNotFSMaximized) // в сборке NightRoman эти две строки закомментарены
-                SendMessage(hWnd, WM_SYSCOMMAND, SC_RESTORE, 0);
+                SendMessage(ghWnd, WM_SYSCOMMAND, SC_RESTORE, 0);
 
-            GetWindowRect(hWnd, &wndNotFS);
+            GetWindowRect(ghWnd, &wndNotFS);
 
             LONG style = pVCon->BufferHeight ? WS_VSCROLL : 0;
             style |= WS_POPUP | WS_MAXIMIZEBOX | WS_MINIMIZEBOX | WS_VISIBLE;
-            SetWindowLongPtr(hWnd, GWL_STYLE, style);
-            SETWINDOWPOS(hWnd, HWND_TOP, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), SWP_FRAMECHANGED | SWP_SHOWWINDOW);
+            SetWindowLongPtr(ghWnd, GWL_STYLE, style);
+            SETWINDOWPOS(ghWnd, HWND_TOP, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), SWP_FRAMECHANGED | SWP_SHOWWINDOW);
 
-            CheckRadioButton(hOpWnd, rNormal, rFullScreen, rFullScreen);
+            CheckRadioButton(ghOpWnd, rNormal, rFullScreen, rFullScreen);
         }
         break;
     }
 
     bool canEditWindowSizes = inMode == rNormal;
-    EnableWindow(GetDlgItem(hOpWnd, tWndWidth), canEditWindowSizes);
-    EnableWindow(GetDlgItem(hOpWnd, tWndHeight), canEditWindowSizes);
+    EnableWindow(GetDlgItem(ghOpWnd, tWndWidth), canEditWindowSizes);
+    EnableWindow(GetDlgItem(ghOpWnd, tWndHeight), canEditWindowSizes);
     SyncConsoleToWindow();
     return true;
 }
@@ -427,7 +431,7 @@ bool isPictureView()
 	    hPictureView = NULL;
 	
 	if (!hPictureView)
-		hPictureView = FindWindowEx(hWnd, NULL, L"FarPictureViewControlClass", NULL);
+		hPictureView = FindWindowEx(HDCWND, NULL, L"FarPictureViewControlClass", NULL);
 
 	lbRc = hPictureView!=NULL;
 
@@ -531,10 +535,11 @@ void ForceShowTabs()
         SyncConsoleToWindow();
         //RECT rc = ConsoleOffsetRect();
         //rc.bottom = rc.top; rc.top = 0;
-        InvalidateRect(hWnd, NULL, FALSE);
+        InvalidateRect(HDCWND, NULL, FALSE);
 		//InvalidateRect(TabBar._hwndTab, NULL, FALSE);
     }
 }
+
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 {
@@ -562,8 +567,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
             SyncConsoleToWindow();
             RECT rc = ConsoleOffsetRect();
             rc.bottom = rc.top; rc.top = 0;
-            InvalidateRect(hWnd, &rc, FALSE);
-			if (!gSet.isFullScreen && !IsZoomed(hWnd)) {
+            InvalidateRect(HDCWND, &rc, FALSE);
+            if (!gSet.isFullScreen && !IsZoomed(ghWnd)) {
 				//SyncWindowToConsole(); -- это делать нельзя, т.к. FAR еще не отработал изменение консоли!
 				gbPostUpdateWindowSize = true;
 			}
@@ -575,6 +580,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
     {
         if (isPictureView())
         {
+				// TODO: если PictureView распахнуто не на все окно - отрисовать видимую часть консоли!
             if (messg) result = DefWindowProc(hWnd, messg, wParam, lParam);
             break;
         }
@@ -608,44 +614,20 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
     {
         switch (wParam)
         {
-        //case 1:
-        //  POSTMESSAGE(hConWnd, WM_LBUTTONDOWN, MK_LBUTTON, MAKELPARAM( RBDownNewX, RBDownNewY ));
-        //  POSTMESSAGE(hConWnd, WM_LBUTTONUP, 0, MAKELPARAM( RBDownNewX, RBDownNewY ));
-        //
-        //  POSTMESSAGE(hConWnd, WM_KEYDOWN, VK_APPS, 0);
-        //  KillTimer(hWnd, 1);
-        //  isRBDown=false;
-        //  pVCon->Update(true);
-        //  InvalidateRect(hWnd, NULL, FALSE);
-        //  break;
-        /*case 3:
-            {
-                // SlideShow in PictureView
-                KillTimer(hWnd, 3);
-                if (hPictureView && IsWindow(hPictureView)) {
-                    SendMessage(hConWnd, WM_KEYDOWN, VK_NEXT, 0x01510001);
-                    SendMessage(hConWnd, WM_KEYUP, VK_NEXT, 0xc1510001);
-                    
-                    // Опять запустить...
-                    SetTimer(hWnd, 3, gSet.nSlideShowElapse, NULL);
-                }
-            }
-            break;*/
-            
         case 0:
             HWND foreWnd = GetForegroundWindow();
             if (!isShowConsole && !gSet.isConVisible)
             {
-                /*if (foreWnd == hConWnd)
+                /*if (foreWnd == ghConWnd)
                     SetForegroundWindow(hWnd);*/
-                if (IsWindowVisible(hConWnd))
-	                ShowWindow(hConWnd, SW_HIDE);
+                if (IsWindowVisible(ghConWnd))
+	                ShowWindow(ghConWnd, SW_HIDE);
             }
 
-			// Hack
-			DWORD dwStyle = GetWindowLong(hWnd, GWL_STYLE);
+			//Maximus5. Hack - если какая-то зараза задизеблила окно
+			DWORD dwStyle = GetWindowLong(ghWnd, GWL_STYLE);
 			if (dwStyle & WS_DISABLED)
-				EnableWindow(hWnd, TRUE);
+				EnableWindow(ghWnd, TRUE);
 
 			BOOL lbIsPicView = isPictureView();
             if (bPicViewSlideShow) {
@@ -656,8 +638,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
                     if (IsWindow(hPictureView)) {
                         //
                         bPicViewSlideShow = false;
-                        SendMessage(hConWnd, WM_KEYDOWN, VK_NEXT, 0x01510001);
-                        SendMessage(hConWnd, WM_KEYUP, VK_NEXT, 0xc1510001);
+                        SendMessage(ghConWnd, WM_KEYDOWN, VK_NEXT, 0x01510001);
+                        SendMessage(ghConWnd, WM_KEYUP, VK_NEXT, 0xc1510001);
 
                         // Окно могло измениться?
                         isPictureView();
@@ -674,7 +656,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
             if (cBlinkNext++ >= cBlinkShift)
             {
                 cBlinkNext = 0;
-                if (foreWnd == hWnd || foreWnd == hOpWnd)
+                if (foreWnd == ghWnd || foreWnd == ghOpWnd)
                     // switch cursor
                     pVCon->Cursor.isVisible = !pVCon->Cursor.isVisible;
                 else
@@ -685,16 +667,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
             DWORD ProcList[2];
             if(GetConsoleProcessList(ProcList,2)==1)
             {
-              DestroyWindow(hWnd);
+              DestroyWindow(ghWnd);
               break;
             }
 
-            TCHAR nCapt[0x200]; // статиком его что-ли сделать, чтобы стек не дергался?
-            GetWindowText(hConWnd, nCapt, 0x200);
-            if (wcscmp(Title, nCapt))
+            GetWindowText(ghConWnd, TitleCmp, 1024);
+            if (wcscmp(Title, TitleCmp))
             {
-                wcscpy(Title, nCapt);
-                SetWindowText(hWnd, Title);
+                wcscpy(Title, TitleCmp);
+                SetWindowText(ghWnd, Title);
             }
 
             TabBar.OnTimer();
@@ -705,7 +686,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
             {
                 bool lbOK = true;
                 if (!setParent) {
-                    HWND hPicView = FindWindowEx(hConWnd, NULL, L"FarPictureViewControlClass", NULL);
+                    // Проверка, может PictureView создался в консоли, а не в ConEmu?
+                    HWND hPicView = FindWindowEx(ghConWnd, NULL, L"FarPictureViewControlClass", NULL);
                     if (!hPicView) {
                         lbOK = false; // смысла нет, все равно ничего не увидим
                     }
@@ -713,7 +695,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
                 if (lbOK) {
                     isPiewUpdate = true;
                     if (pVCon->Update(false))
-                        InvalidateRect(hWnd, NULL, FALSE);
+                        InvalidateRect(HDCWND, NULL, FALSE);
                     break;
                 }
             } else 
@@ -721,7 +703,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
             {	// После скрытия/закрытия PictureView нужно передернуть консоль - ее размер мог измениться
                 isPiewUpdate = false;
                 SyncConsoleToWindow();
-                InvalidateRect(hWnd, NULL, FALSE);
+                InvalidateRect(HDCWND, NULL, FALSE);
             }
 
             // Проверить, может в консоли размер съехал? (хрен его знает из-за чего...)
@@ -730,10 +712,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
                 GetConsoleScreenBufferInfo(pVCon->hConOut(), &inf);
                 if (inf.dwSize.X>(inf.srWindow.Right-inf.srWindow.Left+1)) {
                     DEBUGLOGFILE("Wrong screen buffer width\n");
-                    MOVEWINDOW(hConWnd, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), 0);
+                    MOVEWINDOW(ghConWnd, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), 0);
                 } else if ((pVCon->BufferHeight == 0) && (inf.dwSize.Y>(inf.srWindow.Bottom-inf.srWindow.Top+1))) {
                     DEBUGLOGFILE("Wrong screen buffer height\n");
-                    MOVEWINDOW(hConWnd, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), 0);
+                    MOVEWINDOW(ghConWnd, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), 0);
                 }
             }
 
@@ -743,13 +725,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
                 if (gbPostUpdateWindowSize || c.X != pVCon->TextWidth || c.Y != pVCon->TextHeight)
                 {
 					gbPostUpdateWindowSize = false;
-                    if (!gSet.isFullScreen && !IsZoomed(hWnd))
+                    if (!gSet.isFullScreen && !IsZoomed(ghWnd))
                         SyncWindowToConsole();
                     else
                         SyncConsoleToWindow();
                 }
 
-                InvalidateRect(hWnd, NULL, FALSE);
+                InvalidateRect(HDCWND, NULL, FALSE);
 
                 // update scrollbar
                 if (pVCon->BufferHeight)
@@ -758,8 +740,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
                     ZeroMemory(&si, sizeof(si));
                     si.cbSize = sizeof(si);
                     si.fMask = SIF_PAGE | SIF_POS | SIF_RANGE | SIF_TRACKPOS;
-                    if (GetScrollInfo(hConWnd, SB_VERT, &si))
-                        SetScrollInfo(hWnd, SB_VERT, &si, true);
+                    if (GetScrollInfo(ghConWnd, SB_VERT, &si))
+                        SetScrollInfo(HDCWND, SB_VERT, &si, true);
                 }
           //} -- в сборке NightRoman (isPiewUpdate) проверяется всегда
 
@@ -784,6 +766,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 
         RECT *pRect = (RECT*)lParam;
         COORD srctWindow = ConsoleSizeFromWindow(pRect, true /* rectInWindow */);
+        // Минимально допустимые размеры консоли
+		if (srctWindow.X<28) srctWindow.X=28;
+		if (srctWindow.Y<9)  srctWindow.Y=9;
 
         if ((srctWindowLast.X != srctWindow.X || srctWindowLast.Y != srctWindow.Y) && !isNotFullDrag)
         {
@@ -836,18 +821,19 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
     }
     case WM_SIZE:
     {
-        BOOL lbIsPicView = FALSE;
-        if (isPictureView())
+        BOOL lbIsPicView = isPictureView();
+        if (lbIsPicView)
         {
             if (hPictureView) {
                 lbIsPicView = TRUE;
                 isPiewUpdate = true;
-                RECT rcClient; GetClientRect(hWnd, &rcClient);
+                RECT rcClient; GetClientRect(HDCWND, &rcClient);
                 MoveWindow(hPictureView, 0,0,rcClient.right,rcClient.bottom, 1);
-                InvalidateRect(hWnd, NULL, FALSE);
-                SetFocus(hPictureView);
+                InvalidateRect(HDCWND, NULL, FALSE);
+                //SetFocus(hPictureView); -- все равно фокус в другой процесс не передастся
             }
         }
+        
         if (!lbIsPicView)
         {
             if (isNotFullDrag)
@@ -865,18 +851,22 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 
             {
                 static bool wPrevSizeMax = false;
-                if ((wParam == SIZE_MAXIMIZED || (wParam == SIZE_RESTORED && wPrevSizeMax)) && hConWnd)
+                if ((wParam == SIZE_MAXIMIZED || (wParam == SIZE_RESTORED && wPrevSizeMax)) && ghConWnd)
                 {
                     wPrevSizeMax = wParam == SIZE_MAXIMIZED;
 
                     RECT pRect;
-                    GetWindowRect(hWnd, &pRect);
+                    GetWindowRect(ghWnd, &pRect);
                     pRect.right = LOWORD(lParam) + pRect.left + cwShift.x;
                     pRect.bottom = HIWORD(lParam) + pRect.top + cwShift.y;
                     
+                    //TODO: есть подозрение, что этот фейк вызывает глюк с левым кликом по рамке...
                     // fake WM_SIZING event to adjust console size to new window size after Maximize or Restore Down 
-                    SendMessage(hWnd, WM_SIZING, WMSZ_TOP, (LPARAM)&pRect);
-                    SendMessage(hWnd, WM_SIZING, WMSZ_RIGHT, (LPARAM)&pRect);
+                    //SendMessage(hWnd, WM_SIZING, WMSZ_TOP, (LPARAM)&pRect);
+                    //SendMessage(hWnd, WM_SIZING, WMSZ_RIGHT, (LPARAM)&pRect);
+                    //Заменил на WndProc!
+                    WndProc ( ghWnd, WM_SIZING, WMSZ_TOP, (LPARAM)&pRect );
+                    WndProc ( ghWnd, WM_SIZING, WMSZ_RIGHT, (LPARAM)&pRect );
                 }
 
                 if (TabBar.IsActive())
@@ -887,6 +877,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
         }
         break;
     }
+
     case WM_KEYDOWN:
     case WM_KEYUP:
 
@@ -955,35 +946,35 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
             switch(wParam)
             {
             case VK_DOWN:
-                POSTMESSAGE(hConWnd, WM_VSCROLL, SB_LINEDOWN, NULL, FALSE);
+                POSTMESSAGE(ghConWnd, WM_VSCROLL, SB_LINEDOWN, NULL, FALSE);
                 break;
             case VK_UP:
-                POSTMESSAGE(hConWnd, WM_VSCROLL, SB_LINEUP, NULL, FALSE);
+                POSTMESSAGE(ghConWnd, WM_VSCROLL, SB_LINEUP, NULL, FALSE);
                 break;
             case VK_NEXT:
-                POSTMESSAGE(hConWnd, WM_VSCROLL, SB_PAGEDOWN, NULL, FALSE);
+                POSTMESSAGE(ghConWnd, WM_VSCROLL, SB_PAGEDOWN, NULL, FALSE);
                 break;
             case VK_PRIOR:
-                POSTMESSAGE(hConWnd, WM_VSCROLL, SB_PAGEUP, NULL, FALSE);
+                POSTMESSAGE(ghConWnd, WM_VSCROLL, SB_PAGEUP, NULL, FALSE);
                 break;
             }
         }
 
         if (messg == WM_KEYDOWN && wParam == VK_SPACE && isPressed(VK_CONTROL) && isPressed(VK_LWIN) && isPressed(VK_MENU))
         {
-            if (!IsWindowVisible(hConWnd))
+            if (!IsWindowVisible(ghConWnd))
             {
                 isShowConsole = true;
-                ShowWindow(hConWnd, SW_SHOWNORMAL);
-                if (setParent) SetParent(hConWnd, 0);
-                EnableWindow(hConWnd, true);
+                ShowWindow(ghConWnd, SW_SHOWNORMAL);
+                if (setParent) SetParent(ghConWnd, 0);
+                EnableWindow(ghConWnd, true);
             }
             else
             {
                 isShowConsole = false;
-                if (!gSet.isConVisible) ShowWindow(hConWnd, SW_HIDE);
-                if (setParent) SetParent(hConWnd, hWnd);
-                if (!gSet.isConVisible) EnableWindow(hConWnd, false);
+                if (!gSet.isConVisible) ShowWindow(ghConWnd, SW_HIDE);
+                if (setParent) SetParent(ghConWnd, HDCWND);
+                if (!gSet.isConVisible) EnableWindow(ghConWnd, false);
             }
             break;
         }
@@ -1002,10 +993,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
             {
                 if (gSet.isSentAltEnter)
                 {
-                    POSTMESSAGE(hConWnd, WM_KEYDOWN, VK_MENU, 0, TRUE);
-                    POSTMESSAGE(hConWnd, WM_KEYDOWN, VK_RETURN, 0, TRUE);
-                    POSTMESSAGE(hConWnd, WM_KEYUP, VK_RETURN, 0, TRUE);
-                    POSTMESSAGE(hConWnd, WM_KEYUP, VK_MENU, 0, TRUE);
+                    POSTMESSAGE(ghConWnd, WM_KEYDOWN, VK_MENU, 0, TRUE);
+                    POSTMESSAGE(ghConWnd, WM_KEYDOWN, VK_RETURN, 0, TRUE);
+                    POSTMESSAGE(ghConWnd, WM_KEYUP, VK_RETURN, 0, TRUE);
+                    POSTMESSAGE(ghConWnd, WM_KEYUP, VK_MENU, 0, TRUE);
                 }
                 else
                 {
@@ -1018,22 +1009,22 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
                         SetWindowMode(isWndNotFSMaximized ? rMaximized : rNormal);
 
                     isSkipNextAltUp = true;
-                    //POSTMESSAGE(hConWnd, messg, wParam, lParam);
+                    //POSTMESSAGE(ghConWnd, messg, wParam, lParam);
                 }
             }
             else if (messg == WM_SYSKEYDOWN && wParam == VK_SPACE && lParam & 29 && !isPressed(VK_SHIFT))
             {
                 RECT rect, cRect;
-                GetWindowRect(hWnd, &rect);
-                GetClientRect(hWnd, &cRect);
-                WINDOWINFO wInfo;   GetWindowInfo(hWnd, &wInfo);
-                ShowSysmenu(hWnd, hWnd, rect.right - cRect.right - wInfo.cxWindowBorders, rect.bottom - cRect.bottom - wInfo.cyWindowBorders);
+                GetWindowRect(ghWnd, &rect);
+                GetClientRect(ghWnd, &cRect);
+                WINDOWINFO wInfo;   GetWindowInfo(ghWnd, &wInfo);
+                ShowSysmenu(ghWnd, ghWnd, rect.right - cRect.right - wInfo.cxWindowBorders, rect.bottom - cRect.bottom - wInfo.cyWindowBorders);
             }
             else if (messg == WM_KEYUP && wParam == VK_MENU && isSkipNextAltUp) isSkipNextAltUp = false;
             else if (messg == WM_SYSKEYDOWN && wParam == VK_F9 && lParam & 29 && !isPressed(VK_SHIFT))
-                SetWindowMode(IsZoomed(hWnd) ? rNormal : rMaximized);
+                SetWindowMode(IsZoomed(ghWnd) ? rNormal : rMaximized);
             else
-                POSTMESSAGE(hConWnd, messg, wParam, lParam, FALSE);
+                POSTMESSAGE(ghConWnd, messg, wParam, lParam, FALSE);
         }
         break;
 
@@ -1049,7 +1040,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
     case WM_RBUTTONDBLCLK:
     {
         RECT conRect;
-        GetClientRect(hConWnd, &conRect);
+        GetClientRect(ghConWnd, &conRect);
         short winX = GET_X_LPARAM(lParam);
         short winY = GET_Y_LPARAM(lParam);
         RECT consoleRect = ConsoleOffsetRect();
@@ -1065,13 +1056,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
         {
            // buffer mode: cheat the console window: adjust its position exactly to the cursor
            RECT win;
-           GetWindowRect(hWnd, &win);
+           GetWindowRect(ghWnd, &win);
            short x = win.left + winX - newX;
            short y = win.top + winY - newY;
            RECT con;
-           GetWindowRect(hConWnd, &con);
+           GetWindowRect(ghConWnd, &con);
            if (con.left != x || con.top != y)
-              MOVEWINDOW(hConWnd, x, y, con.right - con.left + 1, con.bottom - con.top + 1, TRUE);
+              MOVEWINDOW(ghConWnd, x, y, con.right - con.left + 1, con.bottom - con.top + 1, TRUE);
         }
         else if (messg == WM_MOUSEMOVE)
         {
@@ -1093,10 +1084,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 		            break;
 	            }
                 // Иначе иногда срабатывает FAR'овский D'n'D
-                //SENDMESSAGE(hConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( newX, newY ));     //посылаем консоли отпускание
+                //SENDMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( newX, newY ));     //посылаем консоли отпускание
                 DragDrop->Drag(); //сдвинулись при зажатой левой
 				//isDragProcessed=false; -- убрал, иначе при бросании в пассивную панель больших файлов дроп может вызваться еще раз???
-                POSTMESSAGE(hConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( newX, newY ), TRUE);     //посылаем консоли отпускание
+                POSTMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( newX, newY ), TRUE);     //посылаем консоли отпускание
                 break;
             }
             else if (gSet.isRClickSendKey && isRBDown)
@@ -1106,7 +1097,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
                 if (!PTDIFFTEST(Rcursor, RCLICKAPPSDELTA))
                 {
                     isRBDown=false;
-                    POSTMESSAGE(hConWnd, WM_RBUTTONDOWN, 0, MAKELPARAM( RBDownNewX, RBDownNewY ), TRUE);
+                    POSTMESSAGE(ghConWnd, WM_RBUTTONDOWN, 0, MAKELPARAM( RBDownNewX, RBDownNewY ), TRUE);
                 }
                 break;
             }
@@ -1114,7 +1105,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
                 // Чтобы при выделении правой кнопкой файлы не пропускались
                 if ((newY-RBDownNewY)>5) {// пока попробуем для режима сверху вниз
                     for (short y=RBDownNewY;y<newY;y+=5)
-                        POSTMESSAGE(hConWnd, WM_MOUSEMOVE, wParam, MAKELPARAM( RBDownNewX, y ), TRUE);
+                        POSTMESSAGE(ghConWnd, WM_MOUSEMOVE, wParam, MAKELPARAM( RBDownNewX, y ), TRUE);
                 }
                 RBDownNewX=newX; RBDownNewY=newY;
             }*/
@@ -1127,12 +1118,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
                 isLBDown=false;
                 if (!isConSelectMode() && isFilePanel())
                 {
-                    SetCapture(hWnd);
+                    SetCapture(ghWnd);
                     cursor.x = LOWORD(lParam);
                     cursor.y = HIWORD(lParam); 
                     isLBDown=true;
                     isDragProcessed=false;
-                    POSTMESSAGE(hConWnd, messg, wParam, MAKELPARAM( newX, newY ), FALSE); // было SEND
+                    POSTMESSAGE(ghConWnd, messg, wParam, MAKELPARAM( newX, newY ), FALSE); // было SEND
                     break;
                 }
             }
@@ -1184,20 +1175,20 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
                             (dwDelta>RCLICKAPPSTIMEOUT && dwDelta<10000))
                         {
                             // Сначала выделить файл под курсором
-                            POSTMESSAGE(hConWnd, WM_LBUTTONDOWN, MK_LBUTTON, MAKELPARAM( RBDownNewX, RBDownNewY ), TRUE);
-                            POSTMESSAGE(hConWnd, WM_LBUTTONUP, 0, MAKELPARAM( RBDownNewX, RBDownNewY ), TRUE);
+                            POSTMESSAGE(ghConWnd, WM_LBUTTONDOWN, MK_LBUTTON, MAKELPARAM( RBDownNewX, RBDownNewY ), TRUE);
+                            POSTMESSAGE(ghConWnd, WM_LBUTTONUP, 0, MAKELPARAM( RBDownNewX, RBDownNewY ), TRUE);
                         
                             pVCon->Update(true);
-                            InvalidateRect(hWnd, NULL, FALSE);
+                            InvalidateRect(HDCWND, NULL, FALSE);
 
                             // А теперь можно и Apps нажать
 							ibSkilRDblClk=true; // чтобы пока FAR думает в консоль не проскочило мышиное сообщение
-                            POSTMESSAGE(hConWnd, WM_KEYDOWN, VK_APPS, 0, TRUE);
+                            POSTMESSAGE(ghConWnd, WM_KEYDOWN, VK_APPS, 0, TRUE);
                             break;
                         }
                     }
                     // Иначе нужно сначала послать WM_RBUTTONDOWN
-                    POSTMESSAGE(hConWnd, WM_RBUTTONDOWN, wParam, MAKELPARAM( newX, newY ), TRUE);
+                    POSTMESSAGE(ghConWnd, WM_RBUTTONDOWN, wParam, MAKELPARAM( newX, newY ), TRUE);
                 }
                 isRBDown=false; // чтобы не осталось случайно
             }
@@ -1210,16 +1201,17 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
         }
 
 //      заменим даблклик вторым обычным
-        POSTMESSAGE(hConWnd, messg == WM_RBUTTONDBLCLK ? WM_RBUTTONDOWN : messg, wParam, MAKELPARAM( newX, newY ), FALSE);
+        POSTMESSAGE(ghConWnd, messg == WM_RBUTTONDBLCLK ? WM_RBUTTONDOWN : messg, wParam, MAKELPARAM( newX, newY ), FALSE);
         break;
     }
 
     case WM_CLOSE:
-        Icon.Delete();
-        SENDMESSAGE(hConWnd, WM_CLOSE, 0, 0);
+        //Icon.Delete(); - перенес в WM_DESTROY
+        SENDMESSAGE(ghConWnd, WM_CLOSE, 0, 0);
         break;
 
     case WM_CREATE:
+			ghWnd = hWnd; // ставим сразу, чтобы функции могли пользоваться
         Icon.LoadIcon(hWnd, gSet.nIconID/*IDI_ICON1*/);
         break;
 
@@ -1230,7 +1222,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
             DialogBox((HINSTANCE)GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_DIALOG1), 0, wndOpProc);
             break;
         case ID_HELP:
-            MessageBoxA(hOpWnd, pHelp, "About ConEmu...", MB_ICONQUESTION);
+            MessageBoxA(ghOpWnd, pHelp, "About ConEmu...", MB_ICONQUESTION);
             break;
         case ID_TOTRAY:
             Icon.HideWindowToTray();
@@ -1238,7 +1230,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
         case ID_CONPROP:
             #ifdef _DEBUG
             {
-                HMENU hMenu = GetSystemMenu(hConWnd, FALSE);
+                HMENU hMenu = GetSystemMenu(ghConWnd, FALSE);
                 MENUITEMINFO mii; TCHAR szText[255];
                 for (int i=0; i<15; i++) {
                     memset(&mii, 0, sizeof(mii));
@@ -1251,7 +1243,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
                 }
             }
             #endif
-            POSTMESSAGE(hConWnd, WM_SYSCOMMAND, 65527, 0, TRUE);
+            POSTMESSAGE(ghConWnd, WM_SYSCOMMAND, 65527, 0, TRUE);
             break;
         }
 
@@ -1265,20 +1257,20 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
             break;
         case SC_CLOSE:
             Icon.Delete();
-            SENDMESSAGE(hConWnd, WM_CLOSE, 0, 0);
+            SENDMESSAGE(ghConWnd, WM_CLOSE, 0, 0);
             break;
 
         case SC_MAXIMIZE:
             if (wParam == SC_MAXIMIZE)
-                CheckRadioButton(hOpWnd, rNormal, rFullScreen, rMaximized);
+                CheckRadioButton(ghOpWnd, rNormal, rFullScreen, rMaximized);
         case SC_RESTORE:
             if (wParam == SC_RESTORE)
-                CheckRadioButton(hOpWnd, rNormal, rFullScreen, rNormal);
+                CheckRadioButton(ghOpWnd, rNormal, rFullScreen, rNormal);
 
         default:
             if (wParam != 0xF100)
             {
-                POSTMESSAGE(hConWnd, messg, wParam, lParam, FALSE);
+                POSTMESSAGE(ghConWnd, messg, wParam, lParam, FALSE);
                 result = DefWindowProc(hWnd, messg, wParam, lParam);
             }
         }
@@ -1316,7 +1308,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
     case WM_INPUTLANGCHANGEREQUEST:
     case WM_IME_NOTIFY:
     case WM_VSCROLL:
-        POSTMESSAGE(hConWnd, messg, wParam, lParam, FALSE);
+        POSTMESSAGE(ghConWnd, messg, wParam, lParam, FALSE);
+        
     default:
         if (messg) result = DefWindowProc(hWnd, messg, wParam, lParam);
     }
@@ -1482,12 +1475,12 @@ void DebugLogPos(HWND hw, int x, int y, int w, int h)
         GetLocalTime(&st);
         wsprintfA(szPos, "%02i:%02i.%03i ChangeWindowPos(%s, %i,%i,%i,%i)\n",
             st.wMinute, st.wSecond, st.wMilliseconds,
-            (hw==hConWnd) ? "Con" : "Emu", x,y,w,h);
+            (hw==ghConWnd) ? "Con" : "Emu", x,y,w,h);
 
         OutputDebugStringA(szPos);
     } else if (bSendToFile) {
         wsprintfA(szPos, "ChangeWindowPos(%s, %i,%i,%i,%i)\n",
-            (hw==hConWnd) ? "Con" : "Emu", x,y,w,h);
+            (hw==ghConWnd) ? "Con" : "Emu", x,y,w,h);
 
         DebugLogFile(szPos);
     }
@@ -1554,7 +1547,7 @@ int __stdcall _MDEBUG_TRAP(LPCSTR asFile, int anLine)
     wsprintfA(gsz_MDEBUG_TRAP_MSG, "MDEBUG_TRAP\r\n%s(%i)\r\n", asFile, anLine);
     if (gsz_MDEBUG_TRAP_MSG_APPEND[0])
         lstrcatA(gsz_MDEBUG_TRAP_MSG,gsz_MDEBUG_TRAP_MSG_APPEND);
-    MessageBoxA(hWnd,gsz_MDEBUG_TRAP_MSG,"MDEBUG_TRAP",MB_OK|MB_ICONSTOP);
+    MessageBoxA(ghWnd,gsz_MDEBUG_TRAP_MSG,"MDEBUG_TRAP",MB_OK|MB_ICONSTOP);
     return 0;
 }
 int MDEBUG_CHK = TRUE;
@@ -1603,24 +1596,24 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
         
     AllocConsole();
-    hConWnd = GetConsoleWindow();
-	DWORD dwStyle = 0;
-	dwStyle = GetWindowLong(hConWnd, GWL_STYLE);
+    ghConWnd = GetConsoleWindow();
+    /*DWORD dwStyle = 0;
+	dwStyle = GetWindowLong(ghConWnd, GWL_STYLE);
 	dwStyle &= ~(WS_OVERLAPPEDWINDOW|WS_OVERLAPPED);
 	dwStyle |= WS_POPUPWINDOW;
-	SetWindowLong(hConWnd, GWL_STYLE, dwStyle);
+	SetWindowLong(ghConWnd, GWL_STYLE, dwStyle);
 
-	dwStyle = GetWindowLong(hConWnd, GWL_EXSTYLE);
+	dwStyle = GetWindowLong(ghConWnd, GWL_EXSTYLE);
 	dwStyle &= ~(WS_EX_OVERLAPPEDWINDOW|WS_EX_APPWINDOW);
 	dwStyle |= WS_EX_TOOLWINDOW;
-	SetWindowLong(hConWnd, GWL_EXSTYLE, dwStyle);
+    SetWindowLong(ghConWnd, GWL_EXSTYLE, dwStyle);*/
 
 	// Если в свойствах ярлыка указано "Максимизировано" - консоль разворачивается, а FAR при 
 	// старте сам меняет размер буфера, в результате - ошибочно устанавливается размер окна
-	if (nCmdShow != SW_SHOWNORMAL) ShowWindow(hConWnd, SW_SHOWNORMAL);
-    ShowWindow(hConWnd, SW_HIDE);
-    EnableWindow(hConWnd, FALSE); // NightRoman
-    SetConsoleSizeTo(hConWnd, 4, 6);
+	if (nCmdShow != SW_SHOWNORMAL) ShowWindow(ghConWnd, SW_SHOWNORMAL);
+    ShowWindow(ghConWnd, SW_HIDE);
+    EnableWindow(ghConWnd, FALSE); // NightRoman
+    SetConsoleSizeTo(ghConWnd, 4, 6);
 
 
 //------------------------------------------------------------------------
@@ -1770,8 +1763,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     LoadSettings();
 
     if (gSet.isConVisible) {
-        ShowWindow(hConWnd, SW_SHOWNA);
-        EnableWindow(hConWnd, true);
+        ShowWindow(ghConWnd, SW_SHOWNA);
+        EnableWindow(ghConWnd, true);
     }
 
     // set other parameters after settings (i.e. parameters overwrite default)
@@ -1803,7 +1796,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 //------------------------------------------------------------------------
 
     RECT cRect;
-    GetWindowRect(hConWnd, &cRect);
+    GetWindowRect(ghConWnd, &cRect);
 
     //!!!ICON
     //TCHAR* lpszFilePart=NULL;
@@ -1842,17 +1835,19 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		//hClassIconSm = LoadIcon(GetModuleHandle(NULL), (LPCTSTR)MAKEINTRESOURCE(gSet.nIconID)/*IDI_ICON1*/);
     }
     WNDCLASSEX wc = {sizeof(WNDCLASSEX), CS_DBLCLKS, WndProc, 0, 0, 
-		    hInstance, hClassIcon, LoadCursor(NULL, IDC_ARROW), 
+		    g_hInstance, hClassIcon, LoadCursor(NULL, IDC_ARROW), 
 		    NULL /*(HBRUSH)COLOR_BACKGROUND/**/, 
 		    NULL, szClassName, hClassIconSm};// | CS_DROPSHADOW
     if (!RegisterClassEx(&wc))
         return -1;
-    //hWnd = CreateWindow(szClassName, 0, WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN, gSet.wndX, gSet.wndY, cRect.right - cRect.left - 4, cRect.bottom - cRect.top - 4, NULL, NULL, (HINSTANCE)hInstance, NULL);
-    DWORD style = pVCon->BufferHeight ? WS_VSCROLL : WS_CLIPCHILDREN;
-    style |= WS_OVERLAPPEDWINDOW;
-    hWnd = CreateWindow(szClassName, 0, style, gSet.wndX, gSet.wndY, cRect.right - cRect.left - 4, cRect.bottom - cRect.top - 4, NULL, NULL, (HINSTANCE)hInstance, NULL);
-    if (!hWnd)
+    //ghWnd = CreateWindow(szClassName, 0, WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN, gSet.wndX, gSet.wndY, cRect.right - cRect.left - 4, cRect.bottom - cRect.top - 4, NULL, NULL, (HINSTANCE)g_hInstance, NULL);
+    DWORD style = (pVCon->BufferHeight && !gbUseChildWindow) ? WS_VSCROLL : 0 ;
+    style |= WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN | WS_CLIPSIBLINGS;
+    ghWnd = CreateWindow(szClassName, 0, style, gSet.wndX, gSet.wndY, cRect.right - cRect.left - 4, cRect.bottom - cRect.top - 4, NULL, NULL, (HINSTANCE)hInstance, NULL);
+	if (!ghWnd) {
+		if (!ghWndDC) MBoxA(_T("Can't create main window!"));
         return -1;
+	}
 
     // set parent window of the console window:
     // *) it is used by ConMan and some FAR plugins, set it for standard mode or if /SetParent switch is set
@@ -1860,9 +1855,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     // WARP ItSelf опытным путем выяснил, что SetParent валит ConEmu в Windows7
     //if (!setParentDisabled && (setParent || pVCon->BufferHeight == 0))
     if (setParent)
-        SetParent(hConWnd, hWnd); // в сборке alex_itd выполнялся всегда
+        SetParent(ghConWnd, HDCWND); // в сборке alex_itd выполнялся всегда
 
-    HMENU hwndMain = GetSystemMenu(hWnd, FALSE);
+    HMENU hwndMain = GetSystemMenu(ghWnd, FALSE);
     InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_TOTRAY, _T("Hide to &tray"));
     InsertMenu(hwndMain, 0, MF_BYPOSITION, MF_SEPARATOR, 0);
     InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_HELP, _T("&About"));
@@ -1884,7 +1879,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     WCHAR pipename[MAX_PATH];
     //Maximus5 - теперь имя пайпа - по ИД процесса FAR'а
-    wsprintf(pipename, _T("\\\\.\\pipe\\ConEmuP%u"), /*hWnd*/ hConWnd );
+    wsprintf(pipename, _T("\\\\.\\pipe\\ConEmuP%u"), /*ghWnd*/ ghConWnd );
     hPipe = CreateNamedPipe( 
       pipename,             // pipe name 
       PIPE_ACCESS_DUPLEX,       // read/write access 
@@ -1898,19 +1893,19 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
       NULL);                    // default security attribute 
     if (hPipe == INVALID_HANDLE_VALUE) 
     {
-      MessageBox(hWnd, _T("CreatePipe failed"), NULL, 0); 
+      MessageBox(ghWnd, _T("CreatePipe failed"), NULL, 0); 
       return 100;
     }
-    wsprintf(pipename, _T("ConEmuPEvent%u"), /*hWnd*/ hConWnd );
+    wsprintf(pipename, _T("ConEmuPEvent%u"), /*ghWnd*/ ghConWnd );
     hPipeEvent = CreateEvent(NULL, TRUE, FALSE, pipename);
     if ((hPipeEvent==NULL) || (hPipeEvent==INVALID_HANDLE_VALUE))
     {
       CloseHandle(hPipe);
-      MessageBox(hWnd, _T("CreatePipe failed"), NULL, 0); 
+      MessageBox(ghWnd, _T("CreatePipe failed"), NULL, 0); 
       return 100;
     }
     // Установить переменную среды с дескриптором окна
-    wsprintf(pipename, L"0x%08x", hWnd);
+    wsprintf(pipename, L"0x%08x", HDCWND);
     SetEnvironmentVariable(L"ConEmuHWND", pipename);
     
 
@@ -2010,7 +2005,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     OleInitialize (NULL); // как бы попробовать включать Ole только во время драга. кажется что из-за него глючит переключалка языка
 
     SetConsoleCtrlHandler((PHANDLER_ROUTINE)HandlerRoutine, true);
-    SetTimer(hWnd, 0, 10, NULL);
+    SetTimer(ghWnd, 0, 10, NULL);
 
     Registry reg;
     if (reg.OpenKey(_T("Control Panel\\Desktop"), KEY_READ))
@@ -2024,20 +2019,20 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     DWORD cbWritten=0;
     WriteFile(hPipe, &cmd, sizeof(cmd), &cbWritten, NULL); 
     //SetEvent(hPipeEvent);
-    WriteFile(hPipe, &hWnd, sizeof(hWnd), &cbWritten, NULL);*/
+    WriteFile(hPipe, &ghWnd, sizeof(ghWnd), &cbWritten, NULL);*/
     
 
-    DragDrop=new CDragDrop(hWnd);
-    ProgressBars=new CProgressBars(hWnd, hInstance);
+    DragDrop=new CDragDrop(HDCWND);
+    ProgressBars=new CProgressBars(HDCWND, g_hInstance);
 
     isRBDown=false;
     isLBDown=false;
 
-    SetForegroundWindow(hWnd);
+    SetForegroundWindow(ghWnd);
 
-    SetParent(hWnd, GetParent(GetShellWindow()));
-    GetCWShift(hWnd, &cwShift);
-    GetCWShift(hConWnd, &cwConsoleShift);
+    SetParent(ghWnd, GetParent(GetShellWindow()));
+    GetCWShift(ghWnd, &cwShift);
+    GetCWShift(ghConWnd, &cwConsoleShift);
     pVCon->InitDC();
     SyncWindowToConsole();
 
@@ -2049,7 +2044,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         TranslateMessage(&lpMsg);
         DispatchMessage(&lpMsg);
     }
-    KillTimer(hWnd, 0);
+    KillTimer(ghWnd, 0);
     delete pVCon;
     //CloseHandle(hChildProcess); -- он более не требуется
 

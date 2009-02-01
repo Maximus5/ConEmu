@@ -4,11 +4,11 @@
 #include "header.h"
 
 
-CProgressBars::CProgressBars(HWND hWnd, HINSTANCE g_hInstance)
+CProgressBars::CProgressBars(HWND hWnd, HINSTANCE hInstance)
 {
 	this->hWnd=hWnd;
-	Progressbar1 = CreateWindow(PROGRESS_CLASS, NULL, PBS_SMOOTH | WS_CHILD | TCS_FOCUSNEVER, 0, 0, 100, 10, hWnd, NULL, g_hInstance, NULL);
-	Progressbar2 = CreateWindow(PROGRESS_CLASS, NULL, PBS_SMOOTH | WS_CHILD | TCS_FOCUSNEVER, 0, 0, 100, 10, hWnd, NULL, g_hInstance, NULL);
+	Progressbar1 = CreateWindow(PROGRESS_CLASS, NULL, PBS_SMOOTH | WS_CHILD | TCS_FOCUSNEVER, 0, 0, 100, 10, hWnd, NULL, hInstance, NULL);
+	Progressbar2 = CreateWindow(PROGRESS_CLASS, NULL, PBS_SMOOTH | WS_CHILD | TCS_FOCUSNEVER, 0, 0, 100, 10, hWnd, NULL, hInstance, NULL);
 
 	SendMessage(Progressbar1, PBM_SETRANGE, 0, (LPARAM) MAKELPARAM (0, 100));
 	SendMessage(Progressbar2, PBM_SETRANGE, 0, (LPARAM) MAKELPARAM (0, 100));		
