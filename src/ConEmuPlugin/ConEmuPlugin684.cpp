@@ -233,7 +233,7 @@ void SetStartupInfoW684(void *aInfo)
 		WCHAR className[100];
 		GetClassName(ConEmuHwnd, (LPWSTR)className, 100);
 		if (FSFW684->LStricmp(className, L"VirtualConsoleClass") != 0 &&
-			FSFW684->LStricmp(className, L"VirtualConsoleClassDC") != 0)
+			FSFW684->LStricmp(className, L"VirtualConsoleClassMain") != 0)
 		{
 			ConEmuHwnd = NULL;
 		} else {

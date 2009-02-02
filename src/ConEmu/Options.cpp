@@ -154,9 +154,9 @@ void LoadSettings()
     {
         COORD b = {gSet.wndWidth, gSet.wndHeight};
       SetConsoleWindowSize(b,false); // Maximus5 - по аналогии с NightRoman
-      //MoveWindow(ghConWnd, 0, 0, 1, 1, 0);
+      //MoveWindow(hConWnd, 0, 0, 1, 1, 0);
       //SetConsoleScreenBufferSize(pVCon->hConOut(), b);
-      //MoveWindow(ghConWnd, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), 0);
+      //MoveWindow(hConWnd, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), 0);
     }
 
     pVCon->LogFont.lfHeight = inSize;
@@ -651,9 +651,9 @@ BOOL CALLBACK wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
 
                         COORD b = {gSet.wndWidth, gSet.wndHeight};
                   SetConsoleWindowSize(b, false);  // NightRoman
-                  //MoveWindow(ghConWnd, 0, 0, 1, 1, 0);
+                  //MoveWindow(hConWnd, 0, 0, 1, 1, 0);
                   //SetConsoleScreenBufferSize(pVCon->hConOut(), b);
-                  //MoveWindow(ghConWnd, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), 0);
+                  //MoveWindow(hConWnd, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), 0);
                     }
 
                 }

@@ -40,7 +40,13 @@ WCHAR *LogFilePath=NULL;
 VirtualConsole *pVCon=NULL;
 HWND ghWnd=NULL, ghWndDC=NULL, ghConWnd=NULL;
 #define HDCWND (gbUseChildWindow ? ghWndDC : ghWnd)
+#ifndef _DEBUG
 bool gbUseChildWindow = false;
+#else
+bool gbUseChildWindow = true;
+#endif
+const TCHAR *const szClassName = _T("VirtualConsoleClass");
+const TCHAR *const szClassNameParent = _T("VirtualConsoleClassMain");
 TCHAR temp[MAX_PATH];
 TCHAR szIconPath[MAX_PATH];
 uint cBlinkNext=0;
@@ -192,7 +198,10 @@ HFONT CreateFontIndirectMy(LOGFONT *inFont)
 RECT ConsoleOffsetRect()
 {
     RECT rect;
-    rect.top = TabBar.IsActive()?TabBar.Height():0;
+	/*if (gbUseChildWindow)
+		rect.top = 0;
+	else*/
+	rect.top = TabBar.IsActive()?TabBar.Height():0;
     rect.left = 0;
     rect.bottom = 0;
     rect.right = 0;
@@ -200,6 +209,21 @@ RECT ConsoleOffsetRect()
     //  char szDbg[100]; wsprintfA(szDbg, "   ConsoleOffsetRect={%i,%i,%i,%i}\n", rect.left,rect.top,rect.right,rect.bottom);
     //  DEBUGLOGFILE(szDbg);
     //#endif
+    return rect;
+}
+
+RECT DCClientRect(RECT* pClient=NULL)
+{
+    RECT rect;
+	if (pClient)
+		rect = *pClient;
+	else
+		GetClientRect(ghWnd, &rect);
+	if (TabBar.IsActive())
+		rect.top += TabBar.Height();
+
+	if (pClient)
+		*pClient = rect;
     return rect;
 }
 
@@ -245,13 +269,17 @@ COORD ConsoleSizeFromWindow(RECT* arect = NULL, bool rectInWindow = false)
     RECT rect;
     if (arect == NULL)
     {
-        GetClientRect(ghWnd, &rect);
+        GetClientRect(HDCWND, &rect);
     } 
     else
     {
         rect = *arect;
     }
-    RECT consoleRect = ConsoleOffsetRect();
+    RECT consoleRect;
+	if (gbUseChildWindow)
+		memset(&consoleRect, 0, sizeof(consoleRect));
+	else
+		consoleRect = ConsoleOffsetRect();
     COORD size;
     size.X = (rect.right - rect.left - (rectInWindow ? cwShift.x : 0) - consoleRect.left) / pVCon->LogFont.lfWidth;
     size.Y = (rect.bottom - rect.top - (rectInWindow ? cwShift.y : 0) - consoleRect.top) / pVCon->LogFont.lfHeight;
@@ -565,9 +593,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
         if (lbNeedInval)
         {
             SyncConsoleToWindow();
-            RECT rc = ConsoleOffsetRect();
-            rc.bottom = rc.top; rc.top = 0;
-            InvalidateRect(HDCWND, &rc, FALSE);
+            //RECT rc = ConsoleOffsetRect();
+            //rc.bottom = rc.top; rc.top = 0;
+            InvalidateRect(ghWnd, NULL/*&rc*/, FALSE);
             if (!gSet.isFullScreen && !IsZoomed(ghWnd)) {
 				//SyncWindowToConsole(); -- это делать нельзя, т.к. FAR еще не отработал изменение консоли!
 				gbPostUpdateWindowSize = true;
@@ -575,41 +603,47 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
         }
         break;
     }
-
-    case WM_PAINT:
-    {
-        if (isPictureView())
-        {
+    
+	case WM_PAINT:
+	{
+		if (gbUseChildWindow) {
+			result = DefWindowProc(hWnd, messg, wParam, lParam);
+			break;
+		} else {
+	        if (isPictureView())
+	        {
 				// TODO: если PictureView распахнуто не на все окно - отрисовать видимую часть консоли!
-            if (messg) result = DefWindowProc(hWnd, messg, wParam, lParam);
-            break;
-        }
+	            if (messg) result = DefWindowProc(hWnd, messg, wParam, lParam);
+	            break;
+	        }
 
-        PAINTSTRUCT ps;
-        HDC hDc = BeginPaint(hWnd, &ps);
+	        PAINTSTRUCT ps;
+	        HDC hDc = BeginPaint(hWnd, &ps);
 
-        RECT rect;
-        HBRUSH hBrush = CreateSolidBrush(pVCon->Colors[0]); SelectObject(hDc, hBrush);
-        GetClientRect(hWnd, &rect);
+	        RECT rect;
+	        HBRUSH hBrush = CreateSolidBrush(pVCon->Colors[0]); SelectObject(hDc, hBrush);
+	        GetClientRect(hWnd, &rect);
 
         RECT consoleRect = ConsoleOffsetRect();
 
-        // paint gaps between console and window client area with first color (actual for maximized and fullscreen modes)
+	        // paint gaps between console and window client area with first color (actual for maximized and fullscreen modes)
         rect.top = consoleRect.top; // right 
         rect.left = pVCon->Width + consoleRect.left;
-        FillRect(hDc, &rect, hBrush);
+	        FillRect(hDc, &rect, hBrush);
 
         rect.top = pVCon->Height + consoleRect.top; // bottom
-        rect.left = 0; 
+	        rect.left = 0; 
         rect.right = pVCon->Width + consoleRect.left;
-        FillRect(hDc, &rect, hBrush);
+	        FillRect(hDc, &rect, hBrush);
 
-        DeleteObject(hBrush);
+	        DeleteObject(hBrush);
 
         BitBlt(hDc, consoleRect.left, consoleRect.top, pVCon->Width, pVCon->Height, pVCon->hDC, 0, 0, SRCCOPY);
-        EndPaint(hWnd, &ps);
-        break;
-    }
+	        EndPaint(hWnd, &ps);
+	        break;
+	    }
+	}
+	
     case WM_TIMER:
     {
         switch (wParam)
@@ -776,7 +810,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
             srctWindowLast = srctWindow;
         }
 
-        RECT consoleRect = ConsoleOffsetRect();
+        //RECT consoleRect = ConsoleOffsetRect();
         RECT wndSizeRect = WindowSizeFromConsole(srctWindow, true /* rectInWindow */);
         RECT restrictRect;
         restrictRect.right = pRect->left + wndSizeRect.right;
@@ -822,10 +856,19 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
     case WM_SIZE:
     {
         BOOL lbIsPicView = isPictureView();
-        if (lbIsPicView)
+        
+        if (gbUseChildWindow)
+		{
+	        RECT rcNewCon; memset(&rcNewCon, 0, sizeof(rcNewCon));
+			rcNewCon.right = LOWORD(lParam);
+			rcNewCon.bottom = HIWORD(lParam);
+			DCClientRect(&rcNewCon);
+	        MoveWindow(ghWndDC, rcNewCon.left, rcNewCon.top, rcNewCon.right - rcNewCon.left, rcNewCon.bottom - rcNewCon.top, 0);
+	        dcWindowLast = rcNewCon;
+        }
+        else
         {
-            if (hPictureView) {
-                lbIsPicView = TRUE;
+            if (lbIsPicView) {
                 isPiewUpdate = true;
                 RECT rcClient; GetClientRect(HDCWND, &rcClient);
                 MoveWindow(hPictureView, 0,0,rcClient.right,rcClient.bottom, 1);
@@ -859,7 +902,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
                     GetWindowRect(ghWnd, &pRect);
                     pRect.right = LOWORD(lParam) + pRect.left + cwShift.x;
                     pRect.bottom = HIWORD(lParam) + pRect.top + cwShift.y;
-                    
+
                     //TODO: есть подозрение, что этот фейк вызывает глюк с левым кликом по рамке...
                     // fake WM_SIZING event to adjust console size to new window size after Maximize or Restore Down 
                     //SendMessage(hWnd, WM_SIZING, WMSZ_TOP, (LPARAM)&pRect);
@@ -934,6 +977,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
     case WM_KILLFOCUS:
     case WM_SETFOCUS:
 
+	    if (messg == WM_SETFOCUS) {
+			if (ghWndDC && IsWindow(ghWndDC))
+				SetFocus(ghWndDC);
+		}
+    
         /*if (messg == WM_SETFOCUS || messg == WM_KILLFOCUS) {
             if (hPictureView && IsWindow(hPictureView)) {
                 break; // в FAR не пересылать
@@ -1043,7 +1091,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
         GetClientRect(ghConWnd, &conRect);
         short winX = GET_X_LPARAM(lParam);
         short winY = GET_Y_LPARAM(lParam);
-        RECT consoleRect = ConsoleOffsetRect();
+        RECT consoleRect;
+		if (gbUseChildWindow)
+			memset(&consoleRect, 0, sizeof(consoleRect));
+		else
+			consoleRect = ConsoleOffsetRect();
         winX -= consoleRect.left;
         winY -= consoleRect.top;
         short newX = MulDiv(winX, conRect.right, klMax<uint>(1, pVCon->Width));
@@ -1085,7 +1137,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 	            }
                 // Иначе иногда срабатывает FAR'овский D'n'D
                 //SENDMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( newX, newY ));     //посылаем консоли отпускание
-                DragDrop->Drag(); //сдвинулись при зажатой левой
+				if (DragDrop)
+					DragDrop->Drag(); //сдвинулись при зажатой левой
 				//isDragProcessed=false; -- убрал, иначе при бросании в пассивную панель больших файлов дроп может вызваться еще раз???
                 POSTMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( newX, newY ), TRUE);     //посылаем консоли отпускание
                 break;
@@ -1211,8 +1264,31 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
         break;
 
     case WM_CREATE:
+		{
 			ghWnd = hWnd; // ставим сразу, чтобы функции могли пользоваться
-        Icon.LoadIcon(hWnd, gSet.nIconID/*IDI_ICON1*/);
+			Icon.LoadIcon(hWnd, gSet.nIconID/*IDI_ICON1*/);
+
+			if (gbUseChildWindow) {
+				WNDCLASS wc = {CS_OWNDC|CS_DBLCLKS|CS_SAVEBITS, ChildWndProc, 0, 0, 
+						g_hInstance, NULL, LoadCursor(NULL, IDC_ARROW), 
+						NULL /*(HBRUSH)COLOR_BACKGROUND/**/, 
+						NULL, szClassName};// | CS_DROPSHADOW
+				if (!RegisterClass(&wc)) {
+					ghWndDC = (HWND)-1; // чтобы родитель не ругался
+					MBoxA(_T("Can't register DC window class!"));
+					return -1;
+				}
+				DWORD style = WS_VISIBLE | WS_CHILD | WS_CLIPSIBLINGS /*| WS_CLIPCHILDREN*/ | (pVCon->BufferHeight ? WS_VSCROLL : 0);
+				RECT rc = DCClientRect();
+				ghWndDC = CreateWindow(szClassName, 0, style, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, hWnd, NULL, (HINSTANCE)g_hInstance, NULL);
+				if (!ghWndDC) {
+					ghWndDC = (HWND)-1; // чтобы родитель не ругался
+					MBoxA(_T("Can't create DC window!"));
+					return -1; //
+				}
+				dcWindowLast = rc; //TODO!!!
+			}
+		}
         break;
 
     case WM_SYSCOMMAND:
@@ -1301,9 +1377,17 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 
     case WM_DESTROY:
         Icon.Delete();
+        if (DragDrop) {
+	        delete DragDrop;
+	        DragDrop = NULL;
+        }
+        if (ProgressBars) {
+	        delete ProgressBars;
+	        ProgressBars = NULL;
+        }
         PostQuitMessage(0);
         break;
-
+    
     case WM_INPUTLANGCHANGE:
     case WM_INPUTLANGCHANGEREQUEST:
     case WM_IME_NOTIFY:
@@ -1315,6 +1399,109 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
     }
     return result;
 }
+
+LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
+{
+    LRESULT result = 0;
+    switch (messg)
+    {
+    case WM_COPYDATA:
+		// если уж пришло сюда - передадим куда надо
+		return WndProc ( ghWnd, messg, wParam, lParam );
+
+    case WM_PAINT:
+    {
+        if (isPictureView())
+        {
+			// TODO: если PictureView распахнуто не на все окно - отрисовать видимую часть консоли!
+            if (messg) result = DefWindowProc(hWnd, messg, wParam, lParam);
+            break;
+        }
+
+        PAINTSTRUCT ps;
+        HDC hDc = BeginPaint(hWnd, &ps);
+
+        RECT rect;
+        HBRUSH hBrush = CreateSolidBrush(pVCon->Colors[0]); SelectObject(hDc, hBrush);
+        GetClientRect(hWnd, &rect);
+
+        //RECT consoleRect = ConsoleOffsetRect();
+
+        // paint gaps between console and window client area with first color (actual for maximized and fullscreen modes)
+        //rect.top = consoleRect.top; -- это не нужно, т.к. DC теперь рисуется в дочернем окне
+        rect.left = pVCon->Width; //+ consoleRect.left;
+        FillRect(hDc, &rect, hBrush);
+
+        rect.top = 0; //pVCon->Height + consoleRect.top; // bottom
+        rect.left = 0; 
+        rect.right = pVCon->Width; //+ consoleRect.left;
+        FillRect(hDc, &rect, hBrush);
+
+        DeleteObject(hBrush);
+
+        BitBlt(hDc, 0, 0, pVCon->Width, pVCon->Height, pVCon->hDC, 0, 0, SRCCOPY);
+        EndPaint(hWnd, &ps);
+        break;
+    }
+
+    case WM_SIZE:
+    {
+        BOOL lbIsPicView = FALSE;
+
+		RECT rcNewClient; GetClientRect(hWnd,&rcNewClient);
+        
+        if (isPictureView())
+        {
+            if (hPictureView) {
+                lbIsPicView = TRUE;
+                isPiewUpdate = true;
+                RECT rcClient; GetClientRect(hWnd, &rcClient);
+                //TODO: а ведь PictureView может и в QuickView активироваться...
+                MoveWindow(hPictureView, 0,0,rcClient.right,rcClient.bottom, 1);
+                InvalidateRect(hWnd, NULL, FALSE);
+                //SetFocus(hPictureView); -- все равно на другой процесс фокус передать нельзя...
+            }
+        }
+        break;
+    }
+    
+
+    case WM_CREATE:
+        break;
+
+    case WM_KEYDOWN:
+    case WM_KEYUP:
+    case WM_SYSKEYDOWN:
+    case WM_SYSKEYUP:
+    case WM_MOUSEWHEEL:
+    case WM_ACTIVATE:
+    case WM_ACTIVATEAPP:
+    case WM_KILLFOCUS:
+    case WM_SETFOCUS:
+    case WM_MOUSEMOVE:
+    case WM_RBUTTONDOWN:
+    case WM_RBUTTONUP:
+    case WM_MBUTTONDOWN:
+    case WM_MBUTTONUP:
+    case WM_LBUTTONDOWN:
+    case WM_LBUTTONUP:
+    case WM_LBUTTONDBLCLK:
+    case WM_MBUTTONDBLCLK:
+    case WM_RBUTTONDBLCLK:
+    case WM_INPUTLANGCHANGE:
+    case WM_INPUTLANGCHANGEREQUEST:
+    case WM_IME_NOTIFY:
+    case WM_VSCROLL:
+        // Вся обработка в родителе
+        result = WndProc(hWnd, messg, wParam, lParam);
+        return result;
+
+    default:
+        if (messg) result = DefWindowProc(hWnd, messg, wParam, lParam);
+    }
+    return result;
+}
+
 
 BOOL WINAPI HandlerRoutine(DWORD dwCtrlType)
 {
@@ -1565,9 +1752,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     g_hInstance = hInstance;
 
     pVCon = NULL;
-    const TCHAR *const szClassName = _T("VirtualConsoleClass");
-    const TCHAR *const szClassNameDC = _T("VirtualConsoleClassDC");
-    //TCHAR cmdLine[MAX_PATH], *curCommand;
+    Title[0]=0; TitleCmp[0]=0;
+
     bool setParentDisabled=false;
     bool ClearTypePrm = false;
     bool FontPrm = false; TCHAR* FontVal;
@@ -1838,12 +2024,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		    g_hInstance, hClassIcon, LoadCursor(NULL, IDC_ARROW), 
 		    NULL /*(HBRUSH)COLOR_BACKGROUND/**/, 
 		    NULL, szClassName, hClassIconSm};// | CS_DROPSHADOW
+	if (gbUseChildWindow) wc.lpszClassName = szClassNameParent;
     if (!RegisterClassEx(&wc))
         return -1;
     //ghWnd = CreateWindow(szClassName, 0, WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN, gSet.wndX, gSet.wndY, cRect.right - cRect.left - 4, cRect.bottom - cRect.top - 4, NULL, NULL, (HINSTANCE)g_hInstance, NULL);
     DWORD style = (pVCon->BufferHeight && !gbUseChildWindow) ? WS_VSCROLL : 0 ;
     style |= WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN | WS_CLIPSIBLINGS;
-    ghWnd = CreateWindow(szClassName, 0, style, gSet.wndX, gSet.wndY, cRect.right - cRect.left - 4, cRect.bottom - cRect.top - 4, NULL, NULL, (HINSTANCE)hInstance, NULL);
+	ghWnd = CreateWindow(gbUseChildWindow ? szClassNameParent : szClassName, 0, style, gSet.wndX, gSet.wndY, cRect.right - cRect.left - 4, cRect.bottom - cRect.top - 4, NULL, NULL, (HINSTANCE)g_hInstance, NULL);
 	if (!ghWnd) {
 		if (!ghWndDC) MBoxA(_T("Can't create main window!"));
         return -1;
@@ -2023,7 +2210,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     
 
     DragDrop=new CDragDrop(HDCWND);
-    ProgressBars=new CProgressBars(HDCWND, g_hInstance);
+    ProgressBars=new CProgressBars(ghWnd, g_hInstance);
 
     isRBDown=false;
     isLBDown=false;

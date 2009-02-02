@@ -119,7 +119,7 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop (IDataObject * pDataObject,DWORD grfKe
 				}
 				PostMessage(ghWnd, WM_KEYDOWN, vk, 0x01510001); // было Send
 
-				//SendMessage(ghConWnd, WM_KEYUP, VK_NEXT, 0xc1510001);
+				//SendMessage(hConWnd, WM_KEYUP, VK_NEXT, 0xc1510001);
 				return S_OK; // Тащим внутри ФАРа
 			}*/
 			if (!*pfpi->pszPassivePath) return 1;
