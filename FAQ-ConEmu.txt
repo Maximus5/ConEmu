@@ -14,3 +14,29 @@ Q. В Windows Vista зависают другие консольные процессы.
 A. "Виноват" процесс ConIme.exe. Прибивайте его. Запускается он автоматически и
    ConEmu никак на это повлиять не может. Попробуйте перезагрузиться в безопасном
    режиме и удалить этот файл из Windows\System32
+LoadConIme
+
+HKCU\Console 
+ Data type 	Range 	Default value 
+
+REG_DWORD	
+0 | 1	
+1
+
+Description
+
+Specifies whether the IME proxy process for the Windows Server 2003 console (Conime.exe) loads automatically when you log on to Windows Server 2003.
+ Value 	Meaning 
+
+0	
+Do not load Conime.exe automatically.
+
+1	
+Load Conime.exe automatically when Windows Server 2003 starts.
+
+Activation Method
+
+To make changes to this entry effective, you must log off of Windows Server 2003, and then log on again.
+
+Note
+This entry is used only when the locale of the computer is set to 932 (Japanese), 936 (Chinese), 949 (Korean Unified Hangul), or 950 (Chinese Big5 Extended).

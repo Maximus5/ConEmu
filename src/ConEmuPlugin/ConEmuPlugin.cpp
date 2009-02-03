@@ -273,12 +273,18 @@ void InitHWND(HWND ahFarHwnd)
 						} else {
 							DWORD *ProcList = (DWORD*)calloc(1000,sizeof(DWORD));
 							DWORD dwCount = 0;
-#if defined(_MSC_VER)
-							dwCount = GetConsoleProcessList(ProcList,1000);
-#else
-	                        //TODO!!!
-	                        dwCount = 1001;
+#if !defined(_MSC_VER)
+							typedef DWORD (APIENTRY *FGetConsoleProcessList)(LPDWORD,DWORD);
+							FGetConsoleProcessList GetConsoleProcessList = 
+								(FGetConsoleProcessList)GetProcAddress(
+									GetModuleHandle(L"kernel32.dll"),
+									"GetConsoleProcessList");
+	                        if (!GetConsoleProcessList)
+		                        dwCount = 1001;
+		                    else
 #endif
+                                dwCount = GetConsoleProcessList(ProcList,1000);
+                                
 							if(dwCount>1000) {
 								// Ошибка, в консоли слишком много процессов
 							} else {
