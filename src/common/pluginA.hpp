@@ -10,7 +10,9 @@
   Copyright (c) 2000-2008 FAR group
 */
 
+#if defined(_MSC_VER)
 #pragma message ("Using plugin.hpp for FAR Manager 1.75 build 2479")
+#endif
 
 #define FARMANAGERVERSION_MAJOR 1
 #define FARMANAGERVERSION_MINOR 75

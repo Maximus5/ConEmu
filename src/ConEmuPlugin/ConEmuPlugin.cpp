@@ -35,13 +35,39 @@ HWND FarHwnd=NULL;
 HANDLE hPipe=NULL, hPipeEvent=NULL;
 HANDLE hThread=NULL;
 FarVersion gFarVersion;
-WCHAR gszDir1[0x400], gszDir2[0x400];
+WCHAR gszDir1[CONEMUTABMAX], gszDir2[CONEMUTABMAX];
 //UINT_PTR uTimerID=0;
+int maxTabCount = 0, lastWindowCount = 0;
+ConEmuTab* tabs = NULL; //(ConEmuTab*) calloc(maxTabCount, sizeof(ConEmuTab));
 
+#if defined(_MSC_VER)
 BOOL APIENTRY DllMain( HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved )
 {
 	return TRUE;
 }
+#endif
+
+#if defined(__GNUC__)
+#ifdef __cplusplus
+extern "C"{
+#endif
+  BOOL WINAPI DllMainCRTStartup(HANDLE hDll,DWORD dwReason,LPVOID lpReserved);
+  HWND WINAPI GetFarHWND();
+  void WINAPI GetFarVersion ( FarVersion* pfv );
+  int  WINAPI ProcessEditorInputW(void* Rec);
+  void WINAPI  SetStartupInfoW(void *aInfo);
+#ifdef __cplusplus
+};
+#endif
+
+BOOL WINAPI DllMainCRTStartup(HANDLE hDll,DWORD dwReason,LPVOID lpReserved)
+{
+  (void) lpReserved;
+  (void) dwReason;
+  (void) hDll;
+  return TRUE;
+}
+#endif
 
 HWND WINAPI _export GetFarHWND()
 {
@@ -73,7 +99,8 @@ BOOL LoadFarVersion()
 			VS_FIXEDFILEINFO *lvs = NULL;
 			UINT nLen = sizeof(lvs);
 			if (GetFileVersionInfo(FarPath, 0, dwSize, pVerData)) {
-				if (VerQueryValue ((void*)pVerData, L"\\", (void**)&lvs, &nLen)) {
+				if (VerQueryValue ((void*)pVerData, 
+						L"\\", (void**)&lvs, &nLen)) {
 					gFarVersion.dwVer = lvs->dwFileVersionMS;
 					gFarVersion.dwBuild = lvs->dwFileVersionLS;
 					lbRc = TRUE;
@@ -112,10 +139,6 @@ const WCHAR *GetMsgW(int CompareLng)
 }*/
 
 
-extern void ProcessDragFrom684();
-extern void ProcessDragFrom757();
-extern void ProcessDragTo684();
-extern void ProcessDragTo757();
 DWORD WINAPI ThreadProcW(LPVOID lpParameter)
 {
 	while (true)
@@ -161,6 +184,8 @@ DWORD WINAPI ThreadProcW(LPVOID lpParameter)
 		ReadFile(hPipe, &cmd, sizeof(PipeCmd), &cout, NULL);
 		switch (cmd)
 		{
+		    case SetTabs:
+			    break;
 			case DragFrom:
 			{
 				if (gFarVersion.dwBuild>=757)
@@ -197,8 +222,7 @@ HWND AtoH(WCHAR *Str, int Len)
   return (HWND)Ret;
 }
 
-void SetStartupInfoW684(void *aInfo);
-void SetStartupInfoW757(void *aInfo);
+
 void WINAPI _export SetStartupInfoW(void *aInfo)
 {
 	LoadFarVersion();
@@ -207,8 +231,27 @@ void WINAPI _export SetStartupInfoW(void *aInfo)
 		SetStartupInfoW757(aInfo);
 	else
 		SetStartupInfoW684(aInfo);
+}
 
-	WCHAR *pipename = (WCHAR*)calloc(MAX_PATH,sizeof(WCHAR));
+void InitHWND(HWND ahFarHwnd)
+{
+	ConEmuHwnd = NULL;
+	FarHwnd = ahFarHwnd;
+	ConEmuHwnd = GetAncestor(FarHwnd, GA_PARENT);
+	if (ConEmuHwnd != NULL)
+	{
+		WCHAR className[100];
+		GetClassNameW(ConEmuHwnd, className, 100);
+		if (lstrcmpi(className, L"VirtualConsoleClass") != 0 &&
+			lstrcmpi(className, L"VirtualConsoleClassMain") != 0)
+		{
+			ConEmuHwnd = NULL;
+		} else {
+			bWasSetParent = TRUE;
+		}
+	}
+
+	WCHAR *pipename = gszDir1;
 
 	if (!ConEmuHwnd) {
 		if (GetEnvironmentVariable(L"ConEmuHWND", pipename, MAX_PATH)) {
@@ -225,11 +268,17 @@ void WINAPI _export SetStartupInfoW(void *aInfo)
 						// Нужно проверить, что консоль принадлежит процессу ConEmu
 						DWORD dwEmuPID = 0;
 						GetWindowThreadProcessId(ConEmuHwnd, &dwEmuPID);
-						if (dwEmuPID = 0) {
+						if (dwEmuPID == 0) {
 							// Ошибка, не удалось получить код процесса ConEmu
 						} else {
 							DWORD *ProcList = (DWORD*)calloc(1000,sizeof(DWORD));
-							DWORD dwCount = GetConsoleProcessList(ProcList,1000);
+							DWORD dwCount = 0;
+#if defined(_MSC_VER)
+							dwCount = GetConsoleProcessList(ProcList,1000);
+#else
+	                        //TODO!!!
+	                        dwCount = 1001;
+#endif
 							if(dwCount>1000) {
 								// Ошибка, в консоли слишком много процессов
 							} else {
@@ -274,7 +323,7 @@ void WINAPI _export SetStartupInfoW(void *aInfo)
 		}
 	}
 
-	free(pipename);
+	//free(pipename);
 
 #ifdef _DEBUG
 	//MessageBox(ConEmuHwnd,L"Debug",L"ConEmu plugin",MB_SETFOREGROUND);
@@ -282,8 +331,6 @@ void WINAPI _export SetStartupInfoW(void *aInfo)
 
 }
 
-void UpdateConEmuTabsW684(int event, bool losingFocus, bool editorSave);
-void UpdateConEmuTabsW757(int event, bool losingFocus, bool editorSave);
 void UpdateConEmuTabsW(int event, bool losingFocus, bool editorSave)
 {
 	if (gFarVersion.dwBuild>=757)
@@ -292,10 +339,31 @@ void UpdateConEmuTabsW(int event, bool losingFocus, bool editorSave)
 		UpdateConEmuTabsW684(event, losingFocus, editorSave);
 }
 
-void AddTab(ConEmuTab* tabs, int &tabCount, bool losingFocus, bool editorSave, 
+BOOL CreateTabs(int windowCount)
+{
+	if ((tabs==NULL) || (maxTabCount <= (windowCount + 1)))
+	{
+		maxTabCount = windowCount + 10; // с запасом
+		if (tabs) {
+			free(tabs); tabs = NULL;
+		}
+		
+		tabs = (ConEmuTab*) calloc(maxTabCount, sizeof(ConEmuTab));
+	}
+	
+	lastWindowCount = windowCount;
+	
+	return tabs!=NULL;
+}
+
+BOOL AddTab(ConEmuTab* tabs, int &tabCount, bool losingFocus, bool editorSave, 
 			int Type, LPCWSTR Name, LPCWSTR FileName, int Current, int Modified)
 {
+    BOOL lbCh = FALSE;
+    
 	if (Type == WTYPE_PANELS) {
+	    lbCh = (tabs[0].Current != (losingFocus ? 1 : 0)) ||
+	           (tabs[0].Type != WTYPE_PANELS);
 		tabs[0].Current = losingFocus ? 1 : 0;
 		//lstrcpyn(tabs[0].Name, GetMsgW757(0), CONEMUTABMAX-1);
 		tabs[0].Name[0] = 0;
@@ -304,12 +372,18 @@ void AddTab(ConEmuTab* tabs, int &tabCount, bool losingFocus, bool editorSave,
 	} else
 	if (Type == WTYPE_EDITOR || Type == WTYPE_VIEWER)
 	{
-		// when receiving losing focus event receiver is still reported as current
-		tabs[tabCount].Type = Type;
-		tabs[tabCount].Current = losingFocus ? 0 : Current;
 		// when receiving saving event receiver is still reported as modified
 		if (editorSave && lstrcmpi(FileName, Name) == 0)
 			Modified = 0;
+	
+	    lbCh = (tabs[tabCount].Current != (losingFocus ? 0 : Current)) ||
+	           (tabs[tabCount].Type != Type) ||
+	           (tabs[tabCount].Modified != Modified) ||
+	           (lstrcmp(tabs[tabCount].Name, Name) != 0);
+	
+		// when receiving losing focus event receiver is still reported as current
+		tabs[tabCount].Type = Type;
+		tabs[tabCount].Current = losingFocus ? 0 : Current;
 		tabs[tabCount].Modified = Modified;
 
 		if (tabs[tabCount].Current != 0)
@@ -328,6 +402,8 @@ void AddTab(ConEmuTab* tabs, int &tabCount, bool losingFocus, bool editorSave,
 		tabs[tabCount].Pos = tabCount;
 		tabCount++;
 	}
+	
+	return lbCh;
 }
 
 void SendTabs(ConEmuTab* tabs, int &tabCount)
@@ -347,25 +423,23 @@ void SendTabs(ConEmuTab* tabs, int &tabCount)
 			FORWARD_WM_COPYDATA(ConEmuHwnd, FarHwnd, &cds, SendMessage);
 		}
 	}
-	free(tabs);
+	//free(tabs); - освобождается в ExitFARW
 }
 
 // watch non-modified -> modified editor status change
-extern int ProcessEditorInputW684(LPCVOID Rec);
-extern int ProcessEditorInputW757(LPCVOID Rec);
+
 int lastModifiedStateW = -1;
-int WINAPI _export ProcessEditorInputW(LPCVOID Rec)
+
+int WINAPI _export ProcessEditorInputW(void* Rec)
 {
 	if (!ConEmuHwnd)
 		return 0; // Если мы не под эмулятором - ничего
 	if (gFarVersion.dwBuild>=757)
-		return ProcessEditorInputW757(Rec);
+		return ProcessEditorInputW757((LPCVOID)Rec);
 	else
-		return ProcessEditorInputW684(Rec);
+		return ProcessEditorInputW684((LPCVOID)Rec);
 }
 
-extern int ProcessEditorEventW684(int Event, void *Param);
-extern int ProcessEditorEventW757(int Event, void *Param);
 int WINAPI _export ProcessEditorEventW(int Event, void *Param)
 {
 	if (!ConEmuHwnd)
@@ -376,8 +450,6 @@ int WINAPI _export ProcessEditorEventW(int Event, void *Param)
 		return ProcessEditorEventW684(Event,Param);
 }
 
-extern int ProcessViewerEventW684(int Event, void *Param);
-extern int ProcessViewerEventW757(int Event, void *Param);
 int WINAPI _export ProcessViewerEventW(int Event, void *Param)
 {
 	if (!ConEmuHwnd)
@@ -388,10 +460,13 @@ int WINAPI _export ProcessViewerEventW(int Event, void *Param)
 		return ProcessViewerEventW684(Event,Param);
 }
 
-extern void ExitFARW684(void);
-extern void ExitFARW757(void);
 void   WINAPI _export ExitFARW(void)
 {
+    if (tabs) {
+	    free(tabs);
+	    tabs = NULL;
+    }
+    
 	if (gFarVersion.dwBuild>=757)
 		return ExitFARW757();
 	else

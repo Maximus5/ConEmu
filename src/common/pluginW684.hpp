@@ -7,7 +7,9 @@
   Plugin API for FAR Manager 2.0 build 684
 */
 
+#if defined(_MSC_VER)
 #pragma message ("Using plugin.hpp for FAR Manager 2.0 build 684")
+#endif
 
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -1825,7 +1827,7 @@ HANDLE WINAPI _export OpenFilePluginW(const wchar_t *Name,const unsigned char *D
 HANDLE WINAPI _export OpenPluginW(int OpenFrom,INT_PTR Item);
 int    WINAPI _export ProcessDialogEventW(int Event,void *Param);
 int    WINAPI _export ProcessEditorEventW(int Event,void *Param);
-int    WINAPI _export ProcessEditorInputW(const INPUT_RECORD *Rec);
+//int    WINAPI _export ProcessEditorInputW(const INPUT_RECORD *Rec);
 int    WINAPI _export ProcessEventW(HANDLE hPlugin,int Event,void *Param);
 int    WINAPI _export ProcessHostFileW(HANDLE hPlugin,struct PluginPanelItem *PanelItem,int ItemsNumber,int OpMode);
 int    WINAPI _export ProcessKeyW(HANDLE hPlugin,int Key,unsigned int ControlState);
@@ -1833,7 +1835,7 @@ int    WINAPI _export ProcessViewerEventW(int Event,void *Param);
 int    WINAPI _export PutFilesW(HANDLE hPlugin,struct PluginPanelItem *PanelItem,int ItemsNumber,int Move,int OpMode);
 int    WINAPI _export SetDirectoryW(HANDLE hPlugin,const wchar_t *Dir,int OpMode);
 int    WINAPI _export SetFindListW(HANDLE hPlugin,const struct PluginPanelItem *PanelItem,int ItemsNumber);
-void   WINAPI _export SetStartupInfoW(const struct PluginStartupInfo *Info);
+//void   WINAPI _export SetStartupInfoW(const struct PluginStartupInfo *Info);
 
 #ifdef __cplusplus
 };

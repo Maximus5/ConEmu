@@ -50,7 +50,7 @@ void ProcessDragFrom757()
 	}
 
 	PanelInfo PInfo;
-	WCHAR *szCurDir=gszDir1; //(WCHAR*)calloc(0x400,sizeof(WCHAR));
+	WCHAR *szCurDir=gszDir1; szCurDir[0]=0; //(WCHAR*)calloc(0x400,sizeof(WCHAR));
 	InfoW757->Control(PANEL_ACTIVE, FCTL_GETPANELINFO, NULL, (LONG_PTR)&PInfo);
 	if ((PInfo.PanelType == PTYPE_FILEPANEL || PInfo.PanelType == PTYPE_TREEPANEL) && PInfo.Visible)
 	{
@@ -157,8 +157,8 @@ void ProcessDragTo757()
 	int nStructSize = sizeof(ForwardedPanelInfo)+4; // потом увеличим на длину строк
 	//ZeroMemory(&fpi, sizeof(fpi));
 	BOOL lbAOK=FALSE, lbPOK=FALSE;
-	WCHAR *szPDir=gszDir1; //(WCHAR*)calloc(0x400,sizeof(WCHAR));
-	WCHAR *szADir=gszDir2; //(WCHAR*)calloc(0x400,sizeof(WCHAR));
+	WCHAR *szPDir=gszDir1; szPDir[0]=0; //(WCHAR*)calloc(0x400,sizeof(WCHAR));
+	WCHAR *szADir=gszDir2; szADir[0]=0; //(WCHAR*)calloc(0x400,sizeof(WCHAR));
 	
 	//if (!(lbAOK=InfoW757->Control(PANEL_ACTIVE, FCTL_GETPANELSHORTINFO, &PAInfo)))
 	lbAOK=InfoW757->Control(PANEL_ACTIVE, FCTL_GETPANELINFO, 0, (LONG_PTR)&PAInfo) &&
@@ -219,21 +219,22 @@ void SetStartupInfoW757(void *aInfo)
 	*::FSFW757 = *((struct PluginStartupInfo*)aInfo)->FSF;
 	::InfoW757->FSF = ::FSFW757;
 	
-	ConEmuHwnd = NULL;
-	FarHwnd = (HWND)InfoW757->AdvControl(InfoW757->ModuleNumber, ACTL_GETFARHWND, 0);
-	ConEmuHwnd = GetAncestor(FarHwnd, GA_PARENT);
-	if (ConEmuHwnd != NULL)
-	{
-		WCHAR className[100];
-		GetClassName(ConEmuHwnd, (LPWSTR)className, 100);
-		if (FSFW757->LStricmp(className, L"VirtualConsoleClass") != 0 &&
-			FSFW757->LStricmp(className, L"VirtualConsoleClassMain") != 0)
-		{
-			ConEmuHwnd = NULL;
-		} else {
-			bWasSetParent = TRUE;
-		}
-	}
+	InitHWND((HWND)InfoW757->AdvControl(InfoW757->ModuleNumber, ACTL_GETFARHWND, 0));	
+	//ConEmuHwnd = NULL;
+	//FarHwnd = (HWND)InfoW757->AdvControl(InfoW757->ModuleNumber, ACTL_GETFARHWND, 0);
+	//ConEmuHwnd = GetAncestor(FarHwnd, GA_PARENT);
+	//if (ConEmuHwnd != NULL)
+	//{
+	//	WCHAR className[100];
+	//	GetClassName(ConEmuHwnd, (LPWSTR)className, 100);
+	//	if (FSFW757->LStricmp(className, L"VirtualConsoleClass") != 0 &&
+	//		FSFW757->LStricmp(className, L"VirtualConsoleClassMain") != 0)
+	//	{
+	//		ConEmuHwnd = NULL;
+	//	} else {
+	//		bWasSetParent = TRUE;
+	//	}
+	//}
 }
 
 extern int lastModifiedStateW;
@@ -295,12 +296,14 @@ int ProcessViewerEventW757(int Event, void *Param)
 
 void UpdateConEmuTabsW757(int event, bool losingFocus, bool editorSave)
 {
+    BOOL lbCh = FALSE;
 	WindowInfo WInfo;
 
 	int windowCount = (int)InfoW757->AdvControl(InfoW757->ModuleNumber, ACTL_GETWINDOWCOUNT, NULL);
-	int maxTabCount = windowCount + 1;
-
-	ConEmuTab* tabs = (ConEmuTab*) calloc(maxTabCount, sizeof(ConEmuTab));
+	lbCh = (lastWindowCount != windowCount);
+	
+	if (!CreateTabs ( windowCount ))
+		return;
 
 	EditorInfo ei;
 	if (editorSave)
@@ -314,7 +317,7 @@ void UpdateConEmuTabsW757(int event, bool losingFocus, bool editorSave)
 		WInfo.Pos = i;
 		InfoW757->AdvControl(InfoW757->ModuleNumber, ACTL_GETWINDOWINFO, (void*)&WInfo);
 		if (WInfo.Type == WTYPE_EDITOR || WInfo.Type == WTYPE_VIEWER || WInfo.Type == WTYPE_PANELS)
-			AddTab(tabs, tabCount, losingFocus, editorSave, 
+			lbCh |= AddTab(tabs, tabCount, losingFocus, editorSave, 
 				WInfo.Type, WInfo.Name, editorSave ? ei.FileName : NULL, 
 				WInfo.Current, WInfo.Modified);
 		InfoW757->AdvControl(InfoW757->ModuleNumber, ACTL_FREEWINDOWINFO, (void*)&WInfo);
@@ -323,7 +326,8 @@ void UpdateConEmuTabsW757(int event, bool losingFocus, bool editorSave)
 	if (editorSave) 
 		InfoW757->EditorControl(ECTL_FREEINFO, &ei);
 
-	SendTabs(tabs, tabCount);
+	if (lbCh)
+		SendTabs(tabs, tabCount);
 }
 
 /*extern "C"

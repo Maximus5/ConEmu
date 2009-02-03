@@ -128,14 +128,9 @@ DWORD WINAPI ThreadProcA(LPVOID lpParameter)
 		ReadFile(hPipe, &cmd, sizeof(PipeCmd), &cout, NULL);     
 		switch (cmd)
 		{
-			/*case SetConEmuHwnd:
-			{
-				HWND hWnd = NULL;
-				ReadFile(hPipe, &hWnd, sizeof(hWnd), &cout, NULL);
-				if (hWnd && IsWindow(hWnd))
-					ConEmuHwnd = hWnd;
+			case SetTabs:
 				break;
-			}*/
+				
 			case DragFrom:
 			{
 				WindowInfo WInfo;				
@@ -323,8 +318,20 @@ extern HWND AtoH(WCHAR *Str, int Len);
   return (HWND)Ret;
 }*/
 
-void WINAPI _export SetStartupInfo(struct PluginStartupInfo *aInfo)
+#if defined(__GNUC__)
+#ifdef __cplusplus
+extern "C"{
+#endif
+	void WINAPI SetStartupInfo(const struct PluginStartupInfo *aInfo);
+#ifdef __cplusplus
+};
+#endif
+#endif
+
+void WINAPI _export SetStartupInfo(const struct PluginStartupInfo *aInfo)
 {
+    //LoadFarVersion - уже вызван в GetStartupInfo
+    
 	::InfoA = (PluginStartupInfo*)calloc(sizeof(PluginStartupInfo),1);
 	::FSFA = (FarStandardFunctions*)calloc(sizeof(FarStandardFunctions),1);
 	*::InfoA = *aInfo;
@@ -338,70 +345,72 @@ void WINAPI _export SetStartupInfo(struct PluginStartupInfo *aInfo)
 
 	/*for (int i=0; i<=MessagesMax; i++)
 		MessagesA[i][0]=0;*/
+		
+    InitHWND((HWND)InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETFARHWND, 0));
 
-	ConEmuHwnd = NULL;
-	FarHwnd = (HWND)InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETFARHWND, 0);
-	ConEmuHwnd = GetAncestor(FarHwnd, GA_PARENT);
-	if (ConEmuHwnd != NULL)
-	{
-		char className[100];
-		GetClassNameA(ConEmuHwnd, (LPSTR)className, 100);
-		if (FSFA->LStricmp(className, "VirtualConsoleClass") != 0 &&
-			FSFA->LStricmp(className, "VirtualConsoleClassMain") != 0)
-		{
-			ConEmuHwnd = NULL;
-		} else {
-			bWasSetParent = TRUE;
-		}
-	}
-	
-	WCHAR *pipename=(WCHAR*)calloc(MAX_PATH,sizeof(WCHAR));
-
-	if (!ConEmuHwnd) {
-		//MessageBoxA(0,"Debug","Debug",0);
-		if (GetEnvironmentVariable(L"ConEmuHWND", pipename, MAX_PATH)) {
-			if (pipename[0]==L'0' && pipename[1]==L'x') {
-				ConEmuHwnd = AtoH(pipename+2, 8);
-				if (ConEmuHwnd) {
-                    char className[100];
-                    GetClassNameA(ConEmuHwnd, (LPSTR)className, 100);
-                    if (FSFA->LStricmp(className, "VirtualConsoleClass") != 0 &&
-						FSFA->LStricmp(className, "VirtualConsoleClassMain") != 0)
-					{
-						ConEmuHwnd = NULL;
-					}
-				}
-			}
-		}
-	}
-	
-	//wsprintf(pipename, L"\\\\.\\pipe\\ConEmu%h", ConEmuHwnd);
-	//DWORD dwFarProcID = GetCurrentProcessId();
-	wsprintf(pipename, L"\\\\.\\pipe\\ConEmuP%u", FarHwnd);
-	hPipe = CreateFile( 
-		 pipename,   // pipe name 
-		 GENERIC_READ |  // read and write access 
-		 GENERIC_WRITE, 
-		 0,              // no sharing 
-		 NULL,           // default security attributes
-		 OPEN_EXISTING,  // opens existing pipe 
-		 0,              // default attributes 
-		 NULL);          // no template file 
-	if (hPipe && hPipe!=INVALID_HANDLE_VALUE)
-	{
-		wsprintf(pipename, L"ConEmuPEvent%u", /*hWnd*/ FarHwnd );
-		hPipeEvent = OpenEvent(EVENT_ALL_ACCESS, FALSE, pipename);
-		if (hPipeEvent==INVALID_HANDLE_VALUE) hPipeEvent=NULL;
-	
-		hThread=CreateThread(NULL, 0, &ThreadProcA, 0, 0, 0);
-	} else {
-	#ifdef _DEBUG
-		//char Msg[255]; lstrcpyA(Msg, InfoA->GetMsg(InfoA->ModuleNumber,4));
-		//InfoA->Message(InfoA->ModuleNumber, FMSG_WARNING|FMSG_ERRORTYPE|FMSG_MB_OK|FMSG_ALLINONE, NULL, 
-		//	(const char *const *)Msg, 0, 0);
-	#endif
-	}
-	free(pipename);
+	//ConEmuHwnd = NULL;
+	//FarHwnd = (HWND)InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETFARHWND, 0);
+	//ConEmuHwnd = GetAncestor(FarHwnd, GA_PARENT);
+	//if (ConEmuHwnd != NULL)
+	//{
+	//	char className[100];
+	//	GetClassNameA(ConEmuHwnd, (LPSTR)className, 100);
+	//	if (FSFA->LStricmp(className, "VirtualConsoleClass") != 0 &&
+	//		FSFA->LStricmp(className, "VirtualConsoleClassMain") != 0)
+	//	{
+	//		ConEmuHwnd = NULL;
+	//	} else {
+	//		bWasSetParent = TRUE;
+	//	}
+	//}
+	//
+	//WCHAR *pipename=(WCHAR*)calloc(MAX_PATH,sizeof(WCHAR));
+	//
+	//if (!ConEmuHwnd) {
+	//	//MessageBoxA(0,"Debug","Debug",0);
+	//	if (GetEnvironmentVariable(L"ConEmuHWND", pipename, MAX_PATH)) {
+	//		if (pipename[0]==L'0' && pipename[1]==L'x') {
+	//			ConEmuHwnd = AtoH(pipename+2, 8);
+	//			if (ConEmuHwnd) {
+    //                char className[100];
+    //                GetClassNameA(ConEmuHwnd, (LPSTR)className, 100);
+    //                if (FSFA->LStricmp(className, "VirtualConsoleClass") != 0 &&
+	//					FSFA->LStricmp(className, "VirtualConsoleClassMain") != 0)
+	//				{
+	//					ConEmuHwnd = NULL;
+	//				}
+	//			}
+	//		}
+	//	}
+	//}
+	//
+	////wsprintf(pipename, L"\\\\.\\pipe\\ConEmu%h", ConEmuHwnd);
+	////DWORD dwFarProcID = GetCurrentProcessId();
+	//wsprintf(pipename, L"\\\\.\\pipe\\ConEmuP%u", FarHwnd);
+	//hPipe = CreateFile( 
+	//	 pipename,   // pipe name 
+	//	 GENERIC_READ |  // read and write access 
+	//	 GENERIC_WRITE, 
+	//	 0,              // no sharing 
+	//	 NULL,           // default security attributes
+	//	 OPEN_EXISTING,  // opens existing pipe 
+	//	 0,              // default attributes 
+	//	 NULL);          // no template file 
+	//if (hPipe && hPipe!=INVALID_HANDLE_VALUE)
+	//{
+	//	wsprintf(pipename, L"ConEmuPEvent%u", /*hWnd*/ FarHwnd );
+	//	hPipeEvent = OpenEvent(EVENT_ALL_ACCESS, FALSE, pipename);
+	//	if (hPipeEvent==INVALID_HANDLE_VALUE) hPipeEvent=NULL;
+	//
+	//	hThread=CreateThread(NULL, 0, &ThreadProcA, 0, 0, 0);
+	//} else {
+	//#ifdef _DEBUG
+	//	//char Msg[255]; lstrcpyA(Msg, InfoA->GetMsg(InfoA->ModuleNumber,4));
+	//	//InfoA->Message(InfoA->ModuleNumber, FMSG_WARNING|FMSG_ERRORTYPE|FMSG_MB_OK|FMSG_ALLINONE, NULL, 
+	//	//	(const char *const *)Msg, 0, 0);
+	//#endif
+	//}
+	//free(pipename);
 }
 
 void WINAPI _export GetPluginInfo(struct PluginInfo *pi)
@@ -478,20 +487,23 @@ int WINAPI _export ProcessViewerEvent(int Event, void *Param)
 
 void UpdateConEmuTabsA(int event, bool losingFocus, bool editorSave)
 {
+    BOOL lbCh = FALSE;
 	WindowInfo WInfo;
-	WCHAR* pszName = (WCHAR*)calloc(CONEMUTABMAX, sizeof(WCHAR));
+	WCHAR* pszName = gszDir1; pszName[0] = 0; //(WCHAR*)calloc(CONEMUTABMAX, sizeof(WCHAR));
 
 	int windowCount = (int)InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETWINDOWCOUNT, NULL);
-	int maxTabCount = windowCount + 1;
-
-	ConEmuTab* tabs = (ConEmuTab*) calloc(maxTabCount, sizeof(ConEmuTab));
+	lbCh = (lastWindowCount != windowCount);
+	
+	if (!CreateTabs ( windowCount ))
+		return;
 
 	EditorInfo ei;
 	WCHAR* pszFileName = NULL;
 	if (editorSave)
 	{
 		InfoA->EditorControl(ECTL_GETINFO, &ei);
-		pszFileName = (WCHAR*)calloc(CONEMUTABMAX, sizeof(WCHAR));
+		//pszFileName = (WCHAR*)calloc(CONEMUTABMAX, sizeof(WCHAR));
+		pszFileName = gszDir2; pszFileName[0] = 0;
 		if (ei.FileName)
 			MultiByteToWideChar(CP_OEMCP, 0, ei.FileName, lstrlenA(ei.FileName)+1, pszFileName, CONEMUTABMAX);
 	}
@@ -504,16 +516,17 @@ void UpdateConEmuTabsA(int event, bool losingFocus, bool editorSave)
 		if (WInfo.Type == WTYPE_EDITOR || WInfo.Type == WTYPE_VIEWER || WInfo.Type == WTYPE_PANELS)
 		{
 			MultiByteToWideChar(CP_OEMCP, 0, WInfo.Name, lstrlenA(WInfo.Name)+1, pszName, CONEMUTABMAX);
-			AddTab(tabs, tabCount, losingFocus, editorSave, 
+			lbCh |= AddTab(tabs, tabCount, losingFocus, editorSave, 
 				WInfo.Type, pszName, editorSave ? pszFileName : NULL, 
 				WInfo.Current, WInfo.Modified);
 		}
 	}
 
-	if (pszFileName) free(pszFileName);
-	if (pszName) free(pszName);
+	//if (pszFileName) free(pszFileName);
+	//if (pszName) free(pszName);
 
-	SendTabs(tabs, tabCount);
+	if (lbCh)
+		SendTabs(tabs, tabCount);
 }
 
 void   WINAPI _export ExitFAR(void)

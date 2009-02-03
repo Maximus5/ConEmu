@@ -224,22 +224,23 @@ void SetStartupInfoW684(void *aInfo)
 	*::InfoW684 = *((struct PluginStartupInfo*)aInfo);
 	*::FSFW684 = *((struct PluginStartupInfo*)aInfo)->FSF;
 	::InfoW684->FSF = ::FSFW684;
-	
-	ConEmuHwnd = NULL;
-	FarHwnd = (HWND)InfoW684->AdvControl(InfoW684->ModuleNumber, ACTL_GETFARHWND, 0);
-	ConEmuHwnd = GetAncestor(FarHwnd, GA_PARENT);
-	if (ConEmuHwnd != NULL)
-	{
-		WCHAR className[100];
-		GetClassName(ConEmuHwnd, (LPWSTR)className, 100);
-		if (FSFW684->LStricmp(className, L"VirtualConsoleClass") != 0 &&
-			FSFW684->LStricmp(className, L"VirtualConsoleClassMain") != 0)
-		{
-			ConEmuHwnd = NULL;
-		} else {
-			bWasSetParent = TRUE;
-		}
-	}
+
+	InitHWND((HWND)InfoW684->AdvControl(InfoW684->ModuleNumber, ACTL_GETFARHWND, 0));	
+	//ConEmuHwnd = NULL;
+	//FarHwnd = (HWND)InfoW684->AdvControl(InfoW684->ModuleNumber, ACTL_GETFARHWND, 0);
+	//ConEmuHwnd = GetAncestor(FarHwnd, GA_PARENT);
+	//if (ConEmuHwnd != NULL)
+	//{
+	//	WCHAR className[100];
+	//	GetClassName(ConEmuHwnd, (LPWSTR)className, 100);
+	//	if (FSFW684->LStricmp(className, L"VirtualConsoleClass") != 0 &&
+	//		FSFW684->LStricmp(className, L"VirtualConsoleClassMain") != 0)
+	//	{
+	//		ConEmuHwnd = NULL;
+	//	} else {
+	//		bWasSetParent = TRUE;
+	//	}
+	//}
 }
 
 extern int lastModifiedStateW;
@@ -303,12 +304,14 @@ int ProcessViewerEventW684(int Event, void *Param)
 
 void UpdateConEmuTabsW684(int event, bool losingFocus, bool editorSave)
 {
+    BOOL lbCh = FALSE;
 	WindowInfo WInfo;
 
 	int windowCount = (int)InfoW684->AdvControl(InfoW684->ModuleNumber, ACTL_GETWINDOWCOUNT, NULL);
-	int maxTabCount = windowCount + 1;
-
-	ConEmuTab* tabs = (ConEmuTab*) calloc(maxTabCount, sizeof(ConEmuTab));
+	lbCh = (lastWindowCount != windowCount);
+	
+	if (!CreateTabs ( windowCount ))
+		return;
 
 	EditorInfo ei;
 	if (editorSave)
@@ -322,7 +325,7 @@ void UpdateConEmuTabsW684(int event, bool losingFocus, bool editorSave)
 		WInfo.Pos = i;
 		InfoW684->AdvControl(InfoW684->ModuleNumber, ACTL_GETWINDOWINFO, (void*)&WInfo);
 		if (WInfo.Type == WTYPE_EDITOR || WInfo.Type == WTYPE_VIEWER || WInfo.Type == WTYPE_PANELS)
-			AddTab(tabs, tabCount, losingFocus, editorSave, 
+			lbCh |= AddTab(tabs, tabCount, losingFocus, editorSave, 
 				WInfo.Type, WInfo.Name, editorSave ? ei.FileName : NULL, 
 				WInfo.Current, WInfo.Modified);
 		InfoW684->AdvControl(InfoW684->ModuleNumber, ACTL_FREEWINDOWINFO, (void*)&WInfo);
@@ -331,7 +334,8 @@ void UpdateConEmuTabsW684(int event, bool losingFocus, bool editorSave)
 	if (editorSave) 
 		InfoW684->EditorControl(ECTL_FREEINFO, &ei);
 
-	SendTabs(tabs, tabCount);
+	if (lbCh)
+		SendTabs(tabs, tabCount);
 }
 
 void ExitFARW684(void)

@@ -40,10 +40,9 @@ struct ForwardedFileInfo
 
 enum PipeCmd
 {
-	SetTabs,
+	SetTabs=0,
 	DragFrom,
-	DragTo,
-	SetConEmuHwnd
+	DragTo
 };
 
 // ConEmu.dll экспортирует следующие функции
