@@ -50,7 +50,7 @@ void ProcessDragFrom757()
 	}
 
 	PanelInfo PInfo;
-	WCHAR *szCurDir=(WCHAR*)calloc(0x400,sizeof(WCHAR));
+	WCHAR *szCurDir=gszDir1; //(WCHAR*)calloc(0x400,sizeof(WCHAR));
 	InfoW757->Control(PANEL_ACTIVE, FCTL_GETPANELINFO, NULL, (LONG_PTR)&PInfo);
 	if ((PInfo.PanelType == PTYPE_FILEPANEL || PInfo.PanelType == PTYPE_TREEPANEL) && PInfo.Visible)
 	{
@@ -134,7 +134,7 @@ void ProcessDragFrom757()
 		WriteFile(hPipe, &ItemsCount, sizeof(int), &cout, NULL);
 		WriteFile(hPipe, &ItemsCount, sizeof(int), &cout, NULL); // смена формата
 	}
-	free(szCurDir);
+	//free(szCurDir);
 }
 
 void ProcessDragTo757()
@@ -157,8 +157,8 @@ void ProcessDragTo757()
 	int nStructSize = sizeof(ForwardedPanelInfo)+4; // потом увеличим на длину строк
 	//ZeroMemory(&fpi, sizeof(fpi));
 	BOOL lbAOK=FALSE, lbPOK=FALSE;
-	WCHAR *szPDir=(WCHAR*)calloc(0x400,sizeof(WCHAR));
-	WCHAR *szADir=(WCHAR*)calloc(0x400,sizeof(WCHAR));
+	WCHAR *szPDir=gszDir1; //(WCHAR*)calloc(0x400,sizeof(WCHAR));
+	WCHAR *szADir=gszDir2; //(WCHAR*)calloc(0x400,sizeof(WCHAR));
 	
 	//if (!(lbAOK=InfoW757->Control(PANEL_ACTIVE, FCTL_GETPANELSHORTINFO, &PAInfo)))
 	lbAOK=InfoW757->Control(PANEL_ACTIVE, FCTL_GETPANELINFO, 0, (LONG_PTR)&PAInfo) &&
@@ -207,8 +207,8 @@ void ProcessDragTo757()
 	WriteFile(hPipe, pfpi, nStructSize, &cout, NULL);
 
 	free(pfpi); pfpi=NULL;
-	free(szADir);
-	free(szPDir);
+	//free(szADir);
+	//free(szPDir);
 }
 
 void SetStartupInfoW757(void *aInfo)

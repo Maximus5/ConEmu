@@ -35,6 +35,7 @@ HWND FarHwnd=NULL;
 HANDLE hPipe=NULL, hPipeEvent=NULL;
 HANDLE hThread=NULL;
 FarVersion gFarVersion;
+WCHAR gszDir1[0x400], gszDir2[0x400];
 //UINT_PTR uTimerID=0;
 
 BOOL APIENTRY DllMain( HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved )

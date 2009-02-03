@@ -39,7 +39,6 @@ WCHAR *LogFilePath=NULL;
 //externs
 VirtualConsole *pVCon=NULL;
 HWND ghWnd=NULL, ghWndDC=NULL, ghConWnd=NULL;
-#define HDCWND (gbUseChildWindow ? ghWndDC : ghWnd)
 #ifndef _DEBUG
 bool gbUseChildWindow = false;
 #else
@@ -604,6 +603,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
         break;
     }
     
+    case WM_ERASEBKGND:
+		return 0;
+		
 	case WM_PAINT:
 	{
 		if (gbUseChildWindow) {
@@ -619,27 +621,29 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 
 	        PAINTSTRUCT ps;
 	        HDC hDc = BeginPaint(hWnd, &ps);
+	        //HDC hDc = GetDC(hWnd);
 
 	        RECT rect;
 	        HBRUSH hBrush = CreateSolidBrush(pVCon->Colors[0]); SelectObject(hDc, hBrush);
 	        GetClientRect(hWnd, &rect);
 
-        RECT consoleRect = ConsoleOffsetRect();
+	        RECT consoleRect = ConsoleOffsetRect();
 
 	        // paint gaps between console and window client area with first color (actual for maximized and fullscreen modes)
-        rect.top = consoleRect.top; // right 
-        rect.left = pVCon->Width + consoleRect.left;
+	        rect.top = consoleRect.top; // right 
+	        rect.left = pVCon->Width + consoleRect.left;
 	        FillRect(hDc, &rect, hBrush);
 
-        rect.top = pVCon->Height + consoleRect.top; // bottom
+	        rect.top = pVCon->Height + consoleRect.top; // bottom
 	        rect.left = 0; 
-        rect.right = pVCon->Width + consoleRect.left;
+	        rect.right = pVCon->Width + consoleRect.left;
 	        FillRect(hDc, &rect, hBrush);
 
 	        DeleteObject(hBrush);
 
-        BitBlt(hDc, consoleRect.left, consoleRect.top, pVCon->Width, pVCon->Height, pVCon->hDC, 0, 0, SRCCOPY);
+	        BitBlt(hDc, consoleRect.left, consoleRect.top, pVCon->Width, pVCon->Height, pVCon->hDC, 0, 0, SRCCOPY);
 	        EndPaint(hWnd, &ps);
+	        //ReleaseDC(hWnd, hDc);
 	        break;
 	    }
 	}
@@ -1409,6 +1413,9 @@ LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 		// если уж пришло сюда - передадим куда надо
 		return WndProc ( ghWnd, messg, wParam, lParam );
 
+    case WM_ERASEBKGND:
+		return 0;
+		
     case WM_PAINT:
     {
         if (isPictureView())
@@ -1420,6 +1427,7 @@ LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 
         PAINTSTRUCT ps;
         HDC hDc = BeginPaint(hWnd, &ps);
+        //HDC hDc = GetDC(hWnd);
 
         RECT rect;
         HBRUSH hBrush = CreateSolidBrush(pVCon->Colors[0]); SelectObject(hDc, hBrush);
@@ -1441,6 +1449,7 @@ LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 
         BitBlt(hDc, 0, 0, pVCon->Width, pVCon->Height, pVCon->hDC, 0, 0, SRCCOPY);
         EndPaint(hWnd, &ps);
+        //ReleaseDC(hWnd, hDc);
         break;
     }
 

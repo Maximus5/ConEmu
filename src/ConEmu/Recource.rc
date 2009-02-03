@@ -197,7 +197,7 @@ IDI_ICON3               ICON                    "Far2.ico"
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2009,2,2,0
+ FILEVERSION 2009,2,3,0
  PRODUCTVERSION 0,0,0,0
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
@@ -214,7 +214,7 @@ BEGIN
         BLOCK "041904b0"
         BEGIN
             VALUE "FileDescription", "Console Emulator"
-            VALUE "FileVersion", "2009, 2, 2, 0"
+            VALUE "FileVersion", "2009, 2, 3, 0"
             VALUE "LegalCopyright", "Copyright (C) 2006-2008, Zoin"
             VALUE "OriginalFilename", "ConEmu.exe"
             VALUE "ProductVersion", "0, 0, 0, 0"

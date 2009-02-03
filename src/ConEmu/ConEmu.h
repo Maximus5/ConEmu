@@ -1,6 +1,8 @@
-//#pragma once
+#pragma once
 
-extern HWND ghWnd, ghConWnd;
+extern HWND ghWnd, ghConWnd, ghWndDC;
+extern bool gbUseChildWindow;
+#define HDCWND (gbUseChildWindow ? ghWndDC : ghWnd)
 
 
 #define WM_TRAYNOTIFY WM_USER+1

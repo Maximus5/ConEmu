@@ -1,4 +1,6 @@
+
 #include "Header.h"
+
 
 HANDLE VirtualConsole::hConOut()
 {
@@ -127,8 +129,8 @@ bool VirtualConsole::InitDC(void)
 	SelectionInfo.dwFlags = 0;
 
 	hSelectedFont = NULL;
-	const HDC hScreenDC = GetDC(0);
-	if (hDC = CreateCompatibleDC(hScreenDC))
+	const HDC hScreenDC = GetDC(HDCWND); //Maximus5 - был 0
+	if (hDC = CreateCompatibleDC(0/*hScreenDC*/))
 	{
 		SelectObject(hDC, hFont);
 		TEXTMETRIC tm;

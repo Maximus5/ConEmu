@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="windows-1251"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9,00"
+	Version="9.00"
 	Name="ConEmuPlugin"
 	ProjectGUID="{21152801-8744-4787-83F4-BE4564A367B4}"
 	RootNamespace="ConEmuPlugin"
@@ -306,89 +306,6 @@
 				GenerateMapFile="true"
 				MapExports="true"
 				SubSystem="2"
-				TargetMachine="1"
-			/>
-			<Tool
-				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCManifestTool"
-			/>
-			<Tool
-				Name="VCXDCMakeTool"
-			/>
-			<Tool
-				Name="VCBscMakeTool"
-			/>
-			<Tool
-				Name="VCFxCopTool"
-			/>
-			<Tool
-				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCPostBuildEventTool"
-			/>
-		</Configuration>
-		<Configuration
-			Name="ReleaseL|Win32"
-			OutputDirectory="E:\Temp\VCProject\ConEmuDll\$(ConfigurationName)"
-			IntermediateDirectory="E:\Temp\VCProject\ConEmuDll\$(ConfigurationName)"
-			ConfigurationType="2"
-			CharacterSet="1"
-			WholeProgramOptimization="1"
-			>
-			<Tool
-				Name="VCPreBuildEventTool"
-			/>
-			<Tool
-				Name="VCCustomBuildTool"
-			/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"
-			/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"
-			/>
-			<Tool
-				Name="VCMIDLTool"
-			/>
-			<Tool
-				Name="VCCLCompilerTool"
-				Optimization="2"
-				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories=""
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
-				ExceptionHandling="0"
-				RuntimeLibrary="0"
-				StructMemberAlignment="2"
-				BufferSecurityCheck="false"
-				EnableFunctionLevelLinking="true"
-				RuntimeTypeInfo="false"
-				UsePrecompiledHeader="0"
-				WarningLevel="3"
-				DebugInformationFormat="0"
-			/>
-			<Tool
-				Name="VCManagedResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCPreLinkEventTool"
-			/>
-			<Tool
-				Name="VCLinkerTool"
-				AdditionalDependencies="kernel32.lib user32.lib version.lib \VCProject\MLib\LIBCTINY.LIB"
-				OutputFile="..\..\plugins\ConEmu\conemu.dll"
-				LinkIncremental="1"
-				IgnoreAllDefaultLibraries="true"
-				ModuleDefinitionFile="export.def"
-				GenerateDebugInformation="false"
-				SubSystem="2"
-				OptimizeReferences="2"
-				EnableCOMDATFolding="2"
 				TargetMachine="1"
 			/>
 			<Tool
