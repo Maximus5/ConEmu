@@ -8,8 +8,8 @@
 class CDragDrop :public CBaseDropTarget
 {
 public:
-	CDragDrop::CDragDrop(HWND hwnd);
-	CDragDrop::~CDragDrop();
+	CDragDrop(HWND hwnd);
+	~CDragDrop();
 	virtual HRESULT __stdcall Drop (IDataObject * pDataObject,DWORD grfKeyState,POINTL pt,DWORD * pdwEffect);
 	virtual HRESULT __stdcall DragOver(DWORD grfKeyState,POINTL pt,DWORD * pdwEffect);
 	virtual HRESULT __stdcall DragEnter(IDataObject * pDataObject,DWORD grfKeyState,POINTL pt,DWORD * pdwEffect);

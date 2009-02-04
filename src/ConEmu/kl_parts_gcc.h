@@ -23,7 +23,7 @@ typedef unsigned __int64 u64;
 typedef DWORD u32;
 
 #if defined(__GNUC__)
-#define __forceinline __inline__
+#define __forceinline
 #endif
 template <class T>__forceinline const T& klMin(const T &a, const T &b) {return a < b ? a : b;}
 template <class T>__forceinline const T& klMax(const T &a, const T &b) {return a > b ? a : b;}
@@ -99,14 +99,10 @@ __forceinline void klSplitCommandLine(wchar_t *str, uint *n)
 
 __forceinline u32 __cdecl klMulDivU32(u32 a, u32 b, u32 c)
 {
-#if !defined(__GNUC__)
 	__asm{
 		mov	eax, a
 			mul	b
 			div	c
 	}
-#else
-    __asm ( "mov %eax
-#endif
 }
 

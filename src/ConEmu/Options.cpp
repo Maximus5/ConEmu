@@ -8,7 +8,7 @@ HWND ghOpWnd=NULL;
 
 extern void ForceShowTabs();
 
-void SaveSettings()
+BOOL SaveSettings()
 {
     Registry reg;
     if (reg.OpenKey(_T("Console"), KEY_WRITE))
@@ -64,11 +64,12 @@ void SaveSettings()
             if (gSet.isTabs==1) ForceShowTabs();
             
             MessageBoxA(ghOpWnd, "Saved.", "Information", MB_ICONINFORMATION);
-            return;
+            return TRUE;
         }
     }
 
     MessageBoxA(ghOpWnd, "Failed", "Information", MB_ICONERROR);
+	return FALSE;
 }
 
 void LoadSettings()
@@ -422,9 +423,9 @@ BOOL CALLBACK wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
                 switch(wParam)
                 {
                 case IDOK:
-					if (gSet.isTabs==1) ForceShowTabs();
                 case IDCANCEL:
                 case IDCLOSE:
+					if (gSet.isTabs==1) ForceShowTabs();
                     SendMessage(hWnd2, WM_CLOSE, 0, 0);
                     break;
 
@@ -440,7 +441,8 @@ BOOL CALLBACK wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
                     break;
 
                 case bSaveSettings:
-                    SaveSettings();
+                    if (SaveSettings())
+						CloseWindow(hWnd2);
                     break;
 
                 case rNormal:

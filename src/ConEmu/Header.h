@@ -15,8 +15,12 @@
 #define isMeForeground() (GetForegroundWindow() == ghWnd || GetForegroundWindow() == ghOpWnd)
 #define isPressed(inp) HIBYTE(GetKeyState(inp))
 
+
+#if !defined(__GNUC__)
 #pragma warning (disable : 4005)
 #define _WIN32_WINNT 0x0502
+#endif
+
 
 #ifdef KL_MEM
 #include "c:\\lang\\kl.h"
@@ -30,6 +34,7 @@
 ///| Code optimizing |////////////////////////////////////////////////////
 //------------------------------------------------------------------------
 
+#if !defined(__GNUC__)
 #include <intrin.h>
 #pragma function(memset, memcpy)
 __forceinline void *memset(void *_Dst, int _Val, size_t _Size)
@@ -42,6 +47,7 @@ __forceinline void *memcpy(void *_Dst, const void *_Src, size_t _Size)
 	__movsb((unsigned char*)_Dst, (unsigned const char*)_Src, _Size);
 	return _Dst;
 }
+#endif
 
 void __forceinline DisplayLastError()
 {

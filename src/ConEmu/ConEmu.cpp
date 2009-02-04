@@ -42,7 +42,7 @@ HWND ghWnd=NULL, ghWndDC=NULL, ghConWnd=NULL;
 #ifndef _DEBUG
 bool gbUseChildWindow = false;
 #else
-bool gbUseChildWindow = true;
+bool gbUseChildWindow = false;
 #endif
 const TCHAR *const szClassName = _T("VirtualConsoleClass");
 const TCHAR *const szClassNameParent = _T("VirtualConsoleClassMain");
@@ -73,6 +73,9 @@ POINT cursor, Rcursor;
 WPARAM lastMMW=-1;
 LPARAM lastMML=-1;
 OSVERSIONINFO osver;
+//bool gbInvalidating = false, gbInPaint = false;
+#define INVALIDATE() InvalidateRect(HDCWND, NULL, FALSE)
+//if (!gbInvalidating) {gbInvalidating=true; InvalidateRect(HDCWND, NULL, FALSE);}
 
 CDragDrop *DragDrop=NULL;
 CProgressBars *ProgressBars=NULL;
@@ -263,22 +266,24 @@ void SyncConsoleToWindowRect(const RECT& rect)
 */
 
 // returns console size in columns and lines calculated from current window size
+// rectInWindow - если true - с рамкой, false - только клиент
 COORD ConsoleSizeFromWindow(RECT* arect = NULL, bool rectInWindow = false)
 {
-    RECT rect;
+    RECT rect, consoleRect;
     if (arect == NULL)
     {
         GetClientRect(HDCWND, &rect);
+		if (gbUseChildWindow)
+			memset(&consoleRect, 0, sizeof(consoleRect));
+		else
+			consoleRect = ConsoleOffsetRect();
     } 
     else
     {
         rect = *arect;
-    }
-    RECT consoleRect;
-	if (gbUseChildWindow)
-		memset(&consoleRect, 0, sizeof(consoleRect));
-	else
 		consoleRect = ConsoleOffsetRect();
+    }
+    
     COORD size;
     size.X = (rect.right - rect.left - (rectInWindow ? cwShift.x : 0) - consoleRect.left) / pVCon->LogFont.lfWidth;
     size.Y = (rect.bottom - rect.top - (rectInWindow ? cwShift.y : 0) - consoleRect.top) / pVCon->LogFont.lfHeight;
@@ -543,27 +548,32 @@ BOOL SetFocusRemote(HWND hwnd)
 
 void ForceShowTabs()
 {
-    BOOL lbNeedInval = FALSE;
     if (!TabBar.IsActive() && gSet.isTabs)
     {
         TabBar.Activate();
-        lbNeedInval = TRUE;
 		ConEmuTab tab; memset(&tab, 0, sizeof(tab));
 		tab.Pos=0;
 		tab.Current=1;
 		tab.Type = 1;
 		TabBar.Update(&tab, 1);
 		gbPostUpdateWindowSize = true;
-    }
-    //ConEmuTab* tabs = (ConEmuTab*)cds->lpData;
-    //TabBar.Update(tabs, cds->dwData);
-    if (lbNeedInval && pVCon->LogFont.lfWidth)
-    {
-        SyncConsoleToWindow();
-        //RECT rc = ConsoleOffsetRect();
-        //rc.bottom = rc.top; rc.top = 0;
-        InvalidateRect(HDCWND, NULL, FALSE);
-		//InvalidateRect(TabBar._hwndTab, NULL, FALSE);
+
+		if (gbUseChildWindow) {
+	        RECT rcNewCon; GetClientRect(ghWnd, &rcNewCon);
+			DCClientRect(&rcNewCon);
+	        MoveWindow(ghWndDC, rcNewCon.left, rcNewCon.top, rcNewCon.right - rcNewCon.left, rcNewCon.bottom - rcNewCon.top, 0);
+	        dcWindowLast = rcNewCon;
+	    }
+		
+	    if (pVCon->LogFont.lfWidth)
+	    {
+	        SyncConsoleToWindow();
+	        //RECT rc = ConsoleOffsetRect();
+	        //rc.bottom = rc.top; rc.top = 0;
+	        if (!gbUseChildWindow) {
+		        InvalidateRect(ghWnd, NULL, FALSE);
+	        }
+		}
     }
 }
 
@@ -644,6 +654,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 	        BitBlt(hDc, consoleRect.left, consoleRect.top, pVCon->Width, pVCon->Height, pVCon->hDC, 0, 0, SRCCOPY);
 	        EndPaint(hWnd, &ps);
 	        //ReleaseDC(hWnd, hDc);
+	        //gbInvalidating = false;
 	        break;
 	    }
 	}
@@ -733,7 +744,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
                 if (lbOK) {
                     isPiewUpdate = true;
                     if (pVCon->Update(false))
-                        InvalidateRect(HDCWND, NULL, FALSE);
+                        INVALIDATE(); //InvalidateRect(HDCWND, NULL, FALSE);
                     break;
                 }
             } else 
@@ -741,7 +752,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
             {	// После скрытия/закрытия PictureView нужно передернуть консоль - ее размер мог измениться
                 isPiewUpdate = false;
                 SyncConsoleToWindow();
-                InvalidateRect(HDCWND, NULL, FALSE);
+                INVALIDATE(); //InvalidateRect(HDCWND, NULL, FALSE);
             }
 
             // Проверить, может в консоли размер съехал? (хрен его знает из-за чего...)
@@ -757,6 +768,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
                 }
             }
 
+            //if (!gbInvalidating && !gbInPaint)
             if (pVCon->Update(false))
             {
                 COORD c = ConsoleSizeFromWindow();
@@ -769,7 +781,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
                         SyncConsoleToWindow();
                 }
 
-                InvalidateRect(HDCWND, NULL, FALSE);
+                INVALIDATE(); //InvalidateRect(HDCWND, NULL, FALSE);
 
                 // update scrollbar
                 if (pVCon->BufferHeight)
@@ -787,7 +799,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
                 {
                     isPiewUpdate = false;
                     SyncConsoleToWindow();
-                    InvalidateRect(hWnd, NULL, FALSE);
+                    INVALIDATE(); //InvalidateRect(hWnd, NULL, FALSE);
                 }*/
             }
         }
@@ -802,7 +814,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
             return TRUE;
         }*/
 
-        RECT *pRect = (RECT*)lParam;
+        RECT *pRect = (RECT*)lParam; // с рамкой
         COORD srctWindow = ConsoleSizeFromWindow(pRect, true /* rectInWindow */);
         // Минимально допустимые размеры консоли
 		if (srctWindow.X<28) srctWindow.X=28;
@@ -876,7 +888,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
                 isPiewUpdate = true;
                 RECT rcClient; GetClientRect(HDCWND, &rcClient);
                 MoveWindow(hPictureView, 0,0,rcClient.right,rcClient.bottom, 1);
-                InvalidateRect(HDCWND, NULL, FALSE);
+                INVALIDATE(); //InvalidateRect(HDCWND, NULL, FALSE);
                 //SetFocus(hPictureView); -- все равно фокус в другой процесс не передастся
             }
         }
@@ -885,6 +897,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
         {
             if (isNotFullDrag)
             {
+				// только клиентская часть
                 RECT pRect = {0, 0, LOWORD(lParam), HIWORD(lParam)};
 
                 COORD srctWindow = ConsoleSizeFromWindow(&pRect);
@@ -1236,7 +1249,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
                             POSTMESSAGE(ghConWnd, WM_LBUTTONUP, 0, MAKELPARAM( RBDownNewX, RBDownNewY ), TRUE);
                         
                             pVCon->Update(true);
-                            InvalidateRect(HDCWND, NULL, FALSE);
+                            INVALIDATE(); //InvalidateRect(HDCWND, NULL, FALSE);
 
                             // А теперь можно и Apps нажать
 							ibSkilRDblClk=true; // чтобы пока FAR думает в консоль не проскочило мышиное сообщение
@@ -1275,7 +1288,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 			if (gbUseChildWindow) {
 				WNDCLASS wc = {CS_OWNDC|CS_DBLCLKS|CS_SAVEBITS, ChildWndProc, 0, 0, 
 						g_hInstance, NULL, LoadCursor(NULL, IDC_ARROW), 
-						NULL /*(HBRUSH)COLOR_BACKGROUND/**/, 
+						NULL /*(HBRUSH)COLOR_BACKGROUND*/, 
 						NULL, szClassName};// | CS_DROPSHADOW
 				if (!RegisterClass(&wc)) {
 					ghWndDC = (HWND)-1; // чтобы родитель не ругался
@@ -1418,12 +1431,17 @@ LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 		
     case WM_PAINT:
     {
+	    //if (gbInPaint)
+		//    break;
+    
         if (isPictureView())
         {
 			// TODO: если PictureView распахнуто не на все окно - отрисовать видимую часть консоли!
             if (messg) result = DefWindowProc(hWnd, messg, wParam, lParam);
             break;
         }
+        
+        //gbInPaint = true;
 
         PAINTSTRUCT ps;
         HDC hDc = BeginPaint(hWnd, &ps);
@@ -1440,7 +1458,7 @@ LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
         rect.left = pVCon->Width; //+ consoleRect.left;
         FillRect(hDc, &rect, hBrush);
 
-        rect.top = 0; //pVCon->Height + consoleRect.top; // bottom
+        rect.top = pVCon->Height; //pVCon->Height + consoleRect.top; // bottom
         rect.left = 0; 
         rect.right = pVCon->Width; //+ consoleRect.left;
         FillRect(hDc, &rect, hBrush);
@@ -1448,8 +1466,19 @@ LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
         DeleteObject(hBrush);
 
         BitBlt(hDc, 0, 0, pVCon->Width, pVCon->Height, pVCon->hDC, 0, 0, SRCCOPY);
+        //int nH = 50;
+        //for (int nY=0; nY<pVCon->Height; nY+=nH) {
+        //    if (pVCon->Height<=(nY+nH))
+	    //        nH = pVCon->Height - nY;
+	    //    BitBlt(hDc, 0, nY, pVCon->Width, nH, pVCon->hDC, 0, nY, SRCCOPY);
+	    //    //MBoxA(L"Part");
+	    //    Sleep(200);
+	    //}
         EndPaint(hWnd, &ps);
+        //MBoxA(L"Child painted");
         //ReleaseDC(hWnd, hDc);
+        //gbInvalidating = false;
+        //gbInPaint = false;
         break;
     }
 
@@ -1467,7 +1496,7 @@ LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
                 RECT rcClient; GetClientRect(hWnd, &rcClient);
                 //TODO: а ведь PictureView может и в QuickView активироваться...
                 MoveWindow(hPictureView, 0,0,rcClient.right,rcClient.bottom, 1);
-                InvalidateRect(hWnd, NULL, FALSE);
+                INVALIDATE(); //InvalidateRect(hWnd, NULL, FALSE);
                 //SetFocus(hPictureView); -- все равно на другой процесс фокус передать нельзя...
             }
         }
@@ -2031,7 +2060,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     }
     WNDCLASSEX wc = {sizeof(WNDCLASSEX), CS_DBLCLKS, WndProc, 0, 0, 
 		    g_hInstance, hClassIcon, LoadCursor(NULL, IDC_ARROW), 
-		    NULL /*(HBRUSH)COLOR_BACKGROUND/**/, 
+		    NULL /*(HBRUSH)COLOR_BACKGROUND*/, 
 		    NULL, szClassName, hClassIconSm};// | CS_DROPSHADOW
 	if (gbUseChildWindow) wc.lpszClassName = szClassNameParent;
     if (!RegisterClassEx(&wc))
