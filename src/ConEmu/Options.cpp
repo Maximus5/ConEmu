@@ -442,7 +442,7 @@ BOOL CALLBACK wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
 
                 case bSaveSettings:
                     if (SaveSettings())
-						CloseWindow(hWnd2);
+						SendMessage(hWnd2,WM_COMMAND,IDOK,0);
                     break;
 
                 case rNormal:
