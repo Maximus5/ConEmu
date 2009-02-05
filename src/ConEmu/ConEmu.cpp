@@ -1830,7 +1830,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     pVCon = NULL;
     Title[0]=0; TitleCmp[0]=0;
-    memset(&gSet, 0, sizeof(gSet)); // дабы мусора в дебаге не оставалось
 
     bool setParentDisabled=false;
     bool ClearTypePrm = false;

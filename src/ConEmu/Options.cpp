@@ -90,7 +90,6 @@ void LoadSettings()
     _tcscpy(gSet.pBgImage, _T("c:\\back.bmp"));
     _tcscpy(inFont, _T("Lucida Console"));
     _tcscpy(inFont2, _T("Lucida Console"));
-    gSet.isFixFarBorders = true;
     gSet.bgImageDarker = 0;
     gSet.wndHeight = 25; // NightRoman
     gSet.wndWidth = 80;  // NightRoman
