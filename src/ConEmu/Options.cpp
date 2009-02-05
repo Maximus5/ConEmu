@@ -36,7 +36,7 @@ BOOL SaveSettings()
             reg.Save(_T("bgImageDarker"), gSet.bgImageDarker);
             reg.Save(_T("FontSize"), pVCon->LogFont.lfHeight);
             reg.Save(_T("FontSizeX"), gSet.FontSizeX);
-			//reg.Save(_T("FontSizeX3"), gSet.FontSizeX3);
+			reg.Save(_T("FontSizeX3"), gSet.FontSizeX3);
             reg.Save(_T("FontCharSet"), pVCon->LogFont.lfCharSet);
             reg.Save(_T("Anti-aliasing"), pVCon->LogFont.lfQuality);
             reg.Save(_T("WindowMode"), gSet.isFullScreen ? rFullScreen : IsZoomed(ghWnd) ? rMaximized : rNormal);
@@ -67,7 +67,7 @@ BOOL SaveSettings()
             
             if (gSet.isTabs==1) ForceShowTabs();
             
-            MessageBoxA(ghOpWnd, "Saved.", "Information", MB_ICONINFORMATION);
+            //MessageBoxA(ghOpWnd, "Saved.", "Information", MB_ICONINFORMATION);
             return TRUE;
         }
     }
@@ -90,6 +90,7 @@ void LoadSettings()
     _tcscpy(gSet.pBgImage, _T("c:\\back.bmp"));
     _tcscpy(inFont, _T("Lucida Console"));
     _tcscpy(inFont2, _T("Lucida Console"));
+    gSet.isFixFarBorders = true;
     gSet.bgImageDarker = 0;
     gSet.wndHeight = 25; // NightRoman
     gSet.wndWidth = 80;  // NightRoman
@@ -262,6 +263,7 @@ BOOL CALLBACK wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
                 if (i > 0)
                     SendDlgItemMessage(ghOpWnd, tFontSizeY, CB_ADDSTRING, 0, (LPARAM) temp);
                 SendDlgItemMessage(ghOpWnd, tFontSizeX, CB_ADDSTRING, 0, (LPARAM) temp);
+				SendDlgItemMessage(ghOpWnd, tFontSizeX3, CB_ADDSTRING, 0, (LPARAM) temp);
             }
 
             wsprintf(temp, _T("%i"), pVCon->LogFont.lfHeight);
@@ -272,6 +274,10 @@ BOOL CALLBACK wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
             wsprintf(temp, _T("%i"), gSet.FontSizeX);
             if( SendDlgItemMessage(hWnd2, tFontSizeX, CB_SELECTSTRING, -1, (LPARAM)temp) == CB_ERR )
                 SetDlgItemText(hWnd2, tFontSizeX, temp);
+
+            wsprintf(temp, _T("%i"), gSet.FontSizeX3);
+            if( SendDlgItemMessage(hWnd2, tFontSizeX3, CB_SELECTSTRING, -1, (LPARAM)temp) == CB_ERR )
+                SetDlgItemText(hWnd2, tFontSizeX3, temp);
         }
 
         {
@@ -725,10 +731,10 @@ BOOL CALLBACK wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
                         SetDlgItemText(hWnd2, tFontSizeY, temp);
                     }
                 }
-                else if (LOWORD(wParam) == tFontSizeY || LOWORD(wParam) == tFontSizeX || LOWORD(wParam) == tFontCharset)
+                else if (LOWORD(wParam) == tFontSizeY || LOWORD(wParam) == tFontSizeX || LOWORD(wParam) == tFontSizeX3 || LOWORD(wParam) == tFontCharset)
                 {
                     int newSize;
-                    if (LOWORD(wParam) == tFontSizeY || LOWORD(wParam) == tFontSizeX)
+                    if (LOWORD(wParam) == tFontSizeY || LOWORD(wParam) == tFontSizeX || LOWORD(wParam) == tFontSizeX3)
                     {
                         if (HIWORD(wParam) == CBN_EDITCHANGE)
                             GetDlgItemText(hWnd2, LOWORD(wParam), temp, MAX_PATH);
@@ -744,6 +750,8 @@ BOOL CALLBACK wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
                             pVCon->LogFont.lfHeight = upToFontHeight = newSize;
                         else if (LOWORD(wParam) == tFontSizeX)
                             gSet.FontSizeX = newSize;
+                        else if (LOWORD(wParam) == tFontSizeX3)
+                            gSet.FontSizeX3 = newSize;
                         else if (LOWORD(wParam) == tFontCharset)
                         {
                             int newCharSet = SendDlgItemMessage(hWnd2, tFontCharset, CB_GETCURSEL, 0, 0);

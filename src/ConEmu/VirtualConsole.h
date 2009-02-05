@@ -41,7 +41,7 @@ struct VirtualConsole
 	bool InitFont(void);
 	bool InitDC(void);
 	void Free(bool bFreeFont = true);
-	bool Update(bool isForce = false);
+	bool Update(bool isForce = false, HDC *ahDc=NULL);
 	void SelectFont(HFONT hNew);
 };
 

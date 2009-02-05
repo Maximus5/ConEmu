@@ -214,41 +214,35 @@ static bool CheckSelection(const CONSOLE_SELECTION_INFO& select, SHORT row, SHOR
 	return true;
 }
 
-/*#ifdef _DEBUG
+#ifdef _DEBUG
 class DcDebug {
 public:
-	DcDebug() {mb_Attached=FALSE; mh_OrigDc=NULL; mh_DcVar=NULL; mh_Dc=NULL;};
+	DcDebug(HDC* ahDcVar, HDC* ahPaintDC) {
+	    mb_Attached=FALSE; mh_OrigDc=NULL; mh_DcVar=NULL; mh_Dc=NULL;
+		if (!ahDcVar || !ahPaintDC) return;
+		mh_DcVar = ahDcVar;
+		mh_OrigDc = *ahDcVar;
+		mh_Dc = *ahPaintDC;
+		*mh_DcVar = mh_Dc;
+	};
 	~DcDebug() {
 		if (mb_Attached && mh_DcVar) {
 			mb_Attached = FALSE;
-			if (mh_Dc) {
-				ReleaseDC(HDCWND, mh_Dc);
-				mh_Dc = NULL;
-			}
 			*mh_DcVar = mh_OrigDc;
 		}
-	};
-	void Attach(HDC* ahDcVar) {
-		if (!ahDcVar) return;
-		mh_DcVar = ahDcVar;
-		mh_OrigDc = *ahDcVar;
-		mh_Dc = GetDC(HDCWND);
-		*ahDcVar = mh_Dc;
 	};
 protected:
 	BOOL mb_Attached;
 	HDC mh_OrigDc, mh_Dc;
 	HDC* mh_DcVar;
 };
-#endif*/
+#endif
 
-bool VirtualConsole::Update(bool isForce)
+bool VirtualConsole::Update(bool isForce, HDC *ahDc)
 {
-	/*#ifdef _DEBUG
-	DcDebug dbg;
-	if (gbNoDblBuffer)
-		dbg.Attach(&hDC);
-	#endif*/
+    #ifdef _DEBUG
+	DcDebug dbg(&hDC, ahDc); // для отладки - рисуем сразу на канвасе окна
+	#endif
 
 	bool lRes = false;
 	CONSOLE_SCREEN_BUFFER_INFO csbi;
@@ -263,7 +257,7 @@ bool VirtualConsole::Update(bool isForce)
 		csbi.dwCursorPosition.X >= 0 && csbi.dwCursorPosition.Y >= 0 &&
 		csbi.dwCursorPosition.X < winSize.X && csbi.dwCursorPosition.Y < winSize.Y;
 
-	if (isForce || !hDC || TextWidth != winSize.X || TextHeight != winSize.Y)
+	if (!ahDc && (isForce || !hDC || TextWidth != winSize.X || TextHeight != winSize.Y))
 		InitDC();
 
 	// use and reset additional force flag
@@ -272,6 +266,8 @@ bool VirtualConsole::Update(bool isForce)
 		isForce = IsForceUpdate;
 		IsForceUpdate = false;
 	}
+	if (ahDc)
+		isForce = true;
 
 	const bool drawImage = gSet.isShowBgImage && gSet.isBackgroundImageValid;
 	const uint TextLen = TextWidth * TextHeight;
@@ -365,6 +361,8 @@ bool VirtualConsole::Update(bool isForce)
 	{
 		lRes = true;
 
+		BOOL lbCurFont2 = FALSE;
+
 		// counters
 		TCHAR* ConCharLine;
 		WORD* ConAttrLine;
@@ -441,7 +439,8 @@ bool VirtualConsole::Update(bool isForce)
 			for (int j2=0; j < end; j = j2)
 			{
 				const WORD attr = ConAttrLine[j];
-				const bool isUnicode = isCharUnicode(ConCharLine[j]);
+				WCHAR c = ConCharLine[j];
+				const bool isUnicode = isCharUnicode(c/*ConCharLine[j]*/);
 
 				WORD attrFore = attr & 0x0F;
 				WORD attrBack = attr >> 4 & 0x0F;
@@ -462,7 +461,17 @@ bool VirtualConsole::Update(bool isForce)
 					//for (j2 = j + 1; j2 < end && ConAttrLine[j2] == ConAttrLine[j2 - 1]; j2++);
 					//TextOut(hDC, j * LogFont.lfWidth, pos, ConCharLine + j, j2 - j);
 					j2 = j + 1;
-					/**/WCHAR c = ConCharLine[j];
+					/// ** /WCHAR c = ConCharLine[j];
+
+					if (gSet.isFixFarBorders) {
+						if (!isUnicode && lbCurFont2) {
+							SelectObject(hDC, hFont);
+							lbCurFont2 = FALSE;
+						} else if (isUnicode && !lbCurFont2) {
+							SelectObject(hDC, hFont2);
+							lbCurFont2 = TRUE;
+						}
+					}
 
 					/*
 					Maximus - вообще закомментарил. нахрена это было сделано?
@@ -481,24 +490,29 @@ bool VirtualConsole::Update(bool isForce)
 						BlitPictureTo(this, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top);
 
 					UINT nFlags = ETO_CLIPPED | ETO_OPAQUE;
-					if (c != 0x20) {
+					if (c != 0x20 && !isUnicode) {
+						#ifdef _DEBUG
 						if (c == L't')
 							c = c;
+						#endif
 						ABC abc;
-						GetCharABCWidths(hDC, c, c, &abc);
-						int nShift = 0;
-						if (abc.abcA<0) {
-							// иначе символ наверное налезет на предыдущий?
-							nShift = -abc.abcA;
-						} else if (abc.abcA<(((int)LogFont.lfWidth-(int)abc.abcB-1)/2)) {
-							// символ I, i, и др. очень тонкие - рисуем посередине
-							nShift = ((LogFont.lfWidth-abc.abcB)/2)-abc.abcA;
-						}
-						if (nShift>0) {
-							ExtTextOut(hDC, rect.left, rect.top, nFlags, &rect, L" ", 1, 0);
-							rect.left += nShift;
-							rect.right += nShift;
-							//nFlags = ETO_OPAQUE;
+						//This function succeeds only with TrueType fonts
+						if (GetCharABCWidths(hDC, c, c, &abc))
+						{
+							int nShift = 0;
+							if (abc.abcA<0) {
+								// иначе символ наверное налезет на предыдущий?
+								nShift = -abc.abcA;
+							} else if (abc.abcA<(((int)LogFont.lfWidth-(int)abc.abcB-1)/2)) {
+								// символ I, i, и др. очень тонкие - рисуем посередине
+								nShift = ((LogFont.lfWidth-abc.abcB)/2)-abc.abcA;
+							}
+							if (nShift>0) {
+								ExtTextOut(hDC, rect.left, rect.top, nFlags, &rect, L" ", 1, 0);
+								rect.left += nShift;
+								rect.right += nShift;
+								//nFlags = ETO_OPAQUE;
+							}
 						}
 					}
 
@@ -514,33 +528,39 @@ bool VirtualConsole::Update(bool isForce)
 					otm->otmSize = sizeof(*otm);
 					GetOutlineTextMetrics(hDC, sizeof(otm), otm);
 
-					WCHAR xchar = 0;
+					/*WCHAR xchar = 0;
 
 					switch (ConCharLine[j])
 					{
-					case 0x255F: xchar = 0x2500; break;
+					case 0x255F:
+						xchar = 0x2500; break;
 					case 0x2554:
 					case 0x255A:
 					case 0x2564:
 					case 0x2566:
 					case 0x2567:
 					case 0x2569:
-					case 0x2550: xchar = 0x2550; break;
+					case 0x2550:
+						xchar = 0x2550; break;
 					case 0x2557:
 					case 0x255D:
 					case 0x2562:
-					case 0x2551: xchar = 0x0020; break;
-					case 0x2591: xchar = 0x2591; break;
-					case 0x2592: xchar = 0x2592; break;
-					case 0x2593: xchar = 0x2593; break;
+					case 0x2551:
+						xchar = 0x0020; break;
+					case 0x2591:
+						xchar = 0x2591; break;
+					case 0x2592:
+						xchar = 0x2592; break;
+					case 0x2593:
+						xchar = 0x2593; break;
 					}
 					if (xchar)
 					{
 						RECT rect = {j * LogFont.lfWidth + LogFont.lfWidth/2, pos, j2 * LogFont.lfWidth, pos + LogFont.lfHeight};
 						ExtTextOut(hDC, rect.left, rect.top, ETO_CLIPPED | ETO_OPAQUE, &rect, &xchar, 1, 0);
 
-						//TextOut(hDC, j * LogFont.lfWidth + LogFont.lfWidth/2, pos, &xchar, 1);/**/
-					}
+						//TextOut(hDC, j * LogFont.lfWidth + LogFont.lfWidth/2, pos, &xchar, 1);
+					}*/
 				}
 				else if (!isUnicode)
 				{
@@ -618,6 +638,10 @@ bool VirtualConsole::Update(bool isForce)
 			}
 		}
 done:
+
+		if (lbCurFont2) {
+			SelectObject(hDC, hFont2);
+		}
 
 		// now copy the data for future comparison
 		if (updateText)

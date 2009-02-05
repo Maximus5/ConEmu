@@ -55,6 +55,7 @@
 #define cbDnDCopy                       1053
 #define cbTabs                          1054
 #define cbGUIpb                         1055
+#define tFontSizeX3                     1056
 #define tc0                             1100
 #define tc1                             1101
 #define tc2                             1102

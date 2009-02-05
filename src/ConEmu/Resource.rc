@@ -147,6 +147,7 @@ BEGIN
     EDITTEXT        tWndHeight,275,117,18,12,ES_AUTOHSCROLL | ES_NUMBER | NOT WS_BORDER,WS_EX_STATICEDGE
     CTEXT           "x",IDC_STATIC,266,118,8,8
     CONTROL         "Force monospace",cbMonospace,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,192,91,70,8
+	COMBOBOX        tFontSizeX3,270,88,24,66,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
     CONTROL         "Always update con. handle (ConMan support)",cbIsConMan,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,6,305,168,8
     LTEXT           "Path:",IDC_STATIC,12,244,18,8

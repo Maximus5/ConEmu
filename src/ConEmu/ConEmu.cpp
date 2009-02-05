@@ -41,10 +41,10 @@ VirtualConsole *pVCon=NULL;
 HWND ghWnd=NULL, ghWndDC=NULL, ghConWnd=NULL;
 #ifndef _DEBUG
 bool gbUseChildWindow = false;
-//bool gbNoDblBuffer = false;
+bool gbNoDblBuffer = false;
 #else
-bool gbUseChildWindow = false;
-//bool gbNoDblBuffer = true;
+bool gbUseChildWindow = true;
+bool gbNoDblBuffer = true;
 #endif
 const TCHAR *const szClassName = _T("VirtualConsoleClass");
 const TCHAR *const szClassNameParent = _T("VirtualConsoleClassMain");
@@ -642,6 +642,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 
 				RECT consoleRect = ConsoleOffsetRect();
 
+				#ifdef _DEBUG
+				if (gbNoDblBuffer)
+					FillRect(hDc, &rect, hBrush); // -- если захочется на "чистую" рисовать
+				#else
+
 				// paint gaps between console and window client area with first color (actual for maximized and fullscreen modes)
 				rect.top = consoleRect.top; // right 
 				rect.left = pVCon->Width + consoleRect.left;
@@ -651,10 +656,18 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 				rect.left = 0; 
 				rect.right = pVCon->Width + consoleRect.left;
 				FillRect(hDc, &rect, hBrush);
+				#endif
 
 				DeleteObject(hBrush);
 
+				#ifdef _DEBUG
+				if (gbNoDblBuffer)
+					pVCon->Update(false, &hDc);
+				else
+					BitBlt(hDc, consoleRect.left, consoleRect.top, pVCon->Width, pVCon->Height, pVCon->hDC, 0, 0, SRCCOPY);
+				#else
 				BitBlt(hDc, consoleRect.left, consoleRect.top, pVCon->Width, pVCon->Height, pVCon->hDC, 0, 0, SRCCOPY);
+				#endif
 			}
 	        EndPaint(hWnd, &ps);
 	        //ReleaseDC(hWnd, hDc);
@@ -1462,6 +1475,11 @@ LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 			HBRUSH hBrush = CreateSolidBrush(pVCon->Colors[0]); SelectObject(hDc, hBrush);
 			GetClientRect(hWnd, &rect);
 
+			#ifdef _DEBUG
+			if (gbNoDblBuffer)
+				FillRect(hDc, &rect, hBrush); // -- если захочется на "чистую" рисовать
+			#else
+
 			//RECT consoleRect = ConsoleOffsetRect();
 
 			// paint gaps between console and window client area with first color (actual for maximized and fullscreen modes)
@@ -1474,9 +1492,18 @@ LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 			rect.right = pVCon->Width; //+ consoleRect.left;
 			FillRect(hDc, &rect, hBrush);
 
+			#endif
+
 			DeleteObject(hBrush);
 
+			#ifdef _DEBUG
+			if (gbNoDblBuffer)
+				pVCon->Update(false, &hDc);
+			else
+				BitBlt(hDc, 0, 0, pVCon->Width, pVCon->Height, pVCon->hDC, 0, 0, SRCCOPY);
+			#else
 			BitBlt(hDc, 0, 0, pVCon->Width, pVCon->Height, pVCon->hDC, 0, 0, SRCCOPY);
+			#endif
 			//int nH = 50;
 			//for (int nY=0; nY<pVCon->Height; nY+=nH) {
 			//    if (pVCon->Height<=(nY+nH))
@@ -1803,6 +1830,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     pVCon = NULL;
     Title[0]=0; TitleCmp[0]=0;
+    memset(&gSet, 0, sizeof(gSet)); // дабы мусора в дебаге не оставалось
 
     bool setParentDisabled=false;
     bool ClearTypePrm = false;
