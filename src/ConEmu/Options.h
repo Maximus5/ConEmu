@@ -6,6 +6,7 @@ struct gSettings
 
     DWORD FontSizeX;
     DWORD FontSizeX2;
+	DWORD FontSizeX3;
     bool isShowBgImage, isBackgroundImageValid;
     bool isFullScreen;
     bool isFixFarBorders;
@@ -25,6 +26,8 @@ struct gSettings
     bool isConVisible;
     DWORD nSlideShowElapse;
     DWORD nIconID;
+    bool isScrollTitle;
+    DWORD ScrollTitleLen;
 
 	// Заголовки табов
 	TCHAR szTabPanels[32];

@@ -2,6 +2,7 @@
 
 extern HWND ghWnd, ghConWnd, ghWndDC;
 extern bool gbUseChildWindow;
+//extern bool gbNoDblBuffer;
 #define HDCWND (gbUseChildWindow ? ghWndDC : ghWnd)
 
 

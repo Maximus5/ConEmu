@@ -136,7 +136,8 @@ bool VirtualConsole::InitDC(void)
 		TEXTMETRIC tm;
 		GetTextMetrics(hDC, &tm);
 		if (gSet.isForceMonospace)
-			LogFont.lfWidth = tm.tmMaxCharWidth;
+			//Maximus - у Arial'а например MaxWidth слишком большой
+			LogFont.lfWidth = gSet.FontSizeX3 ? gSet.FontSizeX3 : tm.tmMaxCharWidth;
 		else
 			LogFont.lfWidth = tm.tmAveCharWidth;
 		LogFont.lfHeight = tm.tmHeight;
@@ -213,8 +214,42 @@ static bool CheckSelection(const CONSOLE_SELECTION_INFO& select, SHORT row, SHOR
 	return true;
 }
 
+/*#ifdef _DEBUG
+class DcDebug {
+public:
+	DcDebug() {mb_Attached=FALSE; mh_OrigDc=NULL; mh_DcVar=NULL; mh_Dc=NULL;};
+	~DcDebug() {
+		if (mb_Attached && mh_DcVar) {
+			mb_Attached = FALSE;
+			if (mh_Dc) {
+				ReleaseDC(HDCWND, mh_Dc);
+				mh_Dc = NULL;
+			}
+			*mh_DcVar = mh_OrigDc;
+		}
+	};
+	void Attach(HDC* ahDcVar) {
+		if (!ahDcVar) return;
+		mh_DcVar = ahDcVar;
+		mh_OrigDc = *ahDcVar;
+		mh_Dc = GetDC(HDCWND);
+		*ahDcVar = mh_Dc;
+	};
+protected:
+	BOOL mb_Attached;
+	HDC mh_OrigDc, mh_Dc;
+	HDC* mh_DcVar;
+};
+#endif*/
+
 bool VirtualConsole::Update(bool isForce)
 {
+	/*#ifdef _DEBUG
+	DcDebug dbg;
+	if (gbNoDblBuffer)
+		dbg.Attach(&hDC);
+	#endif*/
+
 	bool lRes = false;
 	CONSOLE_SCREEN_BUFFER_INFO csbi;
 	if (!GetConsoleScreenBufferInfo(hConOut(), &csbi))
@@ -403,7 +438,7 @@ bool VirtualConsole::Update(bool isForce)
 
 			// *) Now draw as much as possible in a row even if some symbols are not changed.
 			// More calls for the sake of fewer symbols is slower, e.g. in panel status lines.
-			for (int j2; j < end; j = j2)
+			for (int j2=0; j < end; j = j2)
 			{
 				const WORD attr = ConAttrLine[j];
 				const bool isUnicode = isCharUnicode(ConCharLine[j]);
@@ -429,23 +464,51 @@ bool VirtualConsole::Update(bool isForce)
 					j2 = j + 1;
 					/**/WCHAR c = ConCharLine[j];
 
-					if (c == 0x20 || !c)
-						c = 0x3000;//0x2003;
-					else if (c <= 0x7E && c >= 0x21)
-						c += 0xFF01 - 0x21;
+					/*
+					Maximus - вообще закомментарил. нахрена это было сделано?
+					if (c == 0x20 || !c) {
+						//c = 0x3000;//0x2003; -- А это что за изврат?
+					} else if (c <= 0x7E && c >= 0x21) {
+						// Мля, и нахрена поднимать код.таблицу для нижней половины ASCII символов?
+						//c += 0xFF01 - 0x21;
+					}
+					*/
 
 					RECT rect = {j * LogFont.lfWidth, pos, j2 * LogFont.lfWidth, pos + LogFont.lfHeight};
 					if (! (drawImage && (attrBack) < 2))
 						SetBkColor(hDC, Colors[attrBack]);
 					else if (drawImage)
 						BlitPictureTo(this, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top);
-					ExtTextOut(hDC, rect.left, rect.top, ETO_CLIPPED | ETO_OPAQUE, &rect, &c, 1, 0);
+
+					UINT nFlags = ETO_CLIPPED | ETO_OPAQUE;
+					if (c != 0x20) {
+						if (c == L't')
+							c = c;
+						ABC abc;
+						GetCharABCWidths(hDC, c, c, &abc);
+						int nShift = 0;
+						if (abc.abcA<0) {
+							// иначе символ наверное налезет на предыдущий?
+							nShift = -abc.abcA;
+						} else if (abc.abcA<(((int)LogFont.lfWidth-(int)abc.abcB-1)/2)) {
+							// символ I, i, и др. очень тонкие - рисуем посередине
+							nShift = ((LogFont.lfWidth-abc.abcB)/2)-abc.abcA;
+						}
+						if (nShift>0) {
+							ExtTextOut(hDC, rect.left, rect.top, nFlags, &rect, L" ", 1, 0);
+							rect.left += nShift;
+							rect.right += nShift;
+							//nFlags = ETO_OPAQUE;
+						}
+					}
+
+					ExtTextOut(hDC, rect.left, rect.top, nFlags, &rect, &c, 1, 0);
 
 					//TextOut(hDC, j * LogFont.lfWidth, pos, &c, 1);
-					ABC abc;
-					GetCharABCWidths(hDC, c, c, &abc);
-					if (abc.abcA<0 || abc.abcC<0)
-						c = c;
+					//ABC abc;
+					//GetCharABCWidths(hDC, c, c, &abc); // зашибись, вообще не использовалось
+					//if (abc.abcA<0 || abc.abcC<0)
+					//	c = c;
 					OUTLINETEXTMETRIC otm[2];
 					ZeroMemory(otm, sizeof(otm));
 					otm->otmSize = sizeof(*otm);

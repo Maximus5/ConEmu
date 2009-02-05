@@ -41,8 +41,10 @@ VirtualConsole *pVCon=NULL;
 HWND ghWnd=NULL, ghWndDC=NULL, ghConWnd=NULL;
 #ifndef _DEBUG
 bool gbUseChildWindow = false;
+//bool gbNoDblBuffer = false;
 #else
 bool gbUseChildWindow = false;
+//bool gbNoDblBuffer = true;
 #endif
 const TCHAR *const szClassName = _T("VirtualConsoleClass");
 const TCHAR *const szClassNameParent = _T("VirtualConsoleClassMain");
@@ -632,26 +634,28 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 	        PAINTSTRUCT ps;
 	        HDC hDc = BeginPaint(hWnd, &ps);
 	        //HDC hDc = GetDC(hWnd);
+			//if (!gbNoDblBuffer)
+			{
+				RECT rect;
+				HBRUSH hBrush = CreateSolidBrush(pVCon->Colors[0]); SelectObject(hDc, hBrush);
+				GetClientRect(hWnd, &rect);
 
-	        RECT rect;
-	        HBRUSH hBrush = CreateSolidBrush(pVCon->Colors[0]); SelectObject(hDc, hBrush);
-	        GetClientRect(hWnd, &rect);
+				RECT consoleRect = ConsoleOffsetRect();
 
-	        RECT consoleRect = ConsoleOffsetRect();
+				// paint gaps between console and window client area with first color (actual for maximized and fullscreen modes)
+				rect.top = consoleRect.top; // right 
+				rect.left = pVCon->Width + consoleRect.left;
+				FillRect(hDc, &rect, hBrush);
 
-	        // paint gaps between console and window client area with first color (actual for maximized and fullscreen modes)
-	        rect.top = consoleRect.top; // right 
-	        rect.left = pVCon->Width + consoleRect.left;
-	        FillRect(hDc, &rect, hBrush);
+				rect.top = pVCon->Height + consoleRect.top; // bottom
+				rect.left = 0; 
+				rect.right = pVCon->Width + consoleRect.left;
+				FillRect(hDc, &rect, hBrush);
 
-	        rect.top = pVCon->Height + consoleRect.top; // bottom
-	        rect.left = 0; 
-	        rect.right = pVCon->Width + consoleRect.left;
-	        FillRect(hDc, &rect, hBrush);
+				DeleteObject(hBrush);
 
-	        DeleteObject(hBrush);
-
-	        BitBlt(hDc, consoleRect.left, consoleRect.top, pVCon->Width, pVCon->Height, pVCon->hDC, 0, 0, SRCCOPY);
+				BitBlt(hDc, consoleRect.left, consoleRect.top, pVCon->Width, pVCon->Height, pVCon->hDC, 0, 0, SRCCOPY);
+			}
 	        EndPaint(hWnd, &ps);
 	        //ReleaseDC(hWnd, hDc);
 	        //gbInvalidating = false;
@@ -769,7 +773,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
             }
 
             //if (!gbInvalidating && !gbInPaint)
-            if (pVCon->Update(false))
+            if (pVCon->Update(false/*gbNoDblBuffer*/))
             {
                 COORD c = ConsoleSizeFromWindow();
                 if (gbPostUpdateWindowSize || c.X != pVCon->TextWidth || c.Y != pVCon->TextHeight)
@@ -1312,6 +1316,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
         switch(LOWORD(wParam))
         {
         case ID_SETTINGS:
+	        if (ghOpWnd && IsWindow(ghOpWnd)) {
+		        ShowWindow ( ghOpWnd, SW_SHOWNORMAL );
+		        SetFocus ( ghOpWnd );
+		        break; // А то открывались несколько окон диалогов :)
+		    }
             DialogBox((HINSTANCE)GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_DIALOG1), 0, wndOpProc);
             break;
         case ID_HELP:
@@ -1447,33 +1456,36 @@ LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
         HDC hDc = BeginPaint(hWnd, &ps);
         //HDC hDc = GetDC(hWnd);
 
-        RECT rect;
-        HBRUSH hBrush = CreateSolidBrush(pVCon->Colors[0]); SelectObject(hDc, hBrush);
-        GetClientRect(hWnd, &rect);
+		//if (!gbNoDblBuffer)
+		{
+			RECT rect;
+			HBRUSH hBrush = CreateSolidBrush(pVCon->Colors[0]); SelectObject(hDc, hBrush);
+			GetClientRect(hWnd, &rect);
 
-        //RECT consoleRect = ConsoleOffsetRect();
+			//RECT consoleRect = ConsoleOffsetRect();
 
-        // paint gaps between console and window client area with first color (actual for maximized and fullscreen modes)
-        //rect.top = consoleRect.top; -- это не нужно, т.к. DC теперь рисуется в дочернем окне
-        rect.left = pVCon->Width; //+ consoleRect.left;
-        FillRect(hDc, &rect, hBrush);
+			// paint gaps between console and window client area with first color (actual for maximized and fullscreen modes)
+			//rect.top = consoleRect.top; -- это не нужно, т.к. DC теперь рисуется в дочернем окне
+			rect.left = pVCon->Width; //+ consoleRect.left;
+			FillRect(hDc, &rect, hBrush);
 
-        rect.top = pVCon->Height; //pVCon->Height + consoleRect.top; // bottom
-        rect.left = 0; 
-        rect.right = pVCon->Width; //+ consoleRect.left;
-        FillRect(hDc, &rect, hBrush);
+			rect.top = pVCon->Height; //pVCon->Height + consoleRect.top; // bottom
+			rect.left = 0; 
+			rect.right = pVCon->Width; //+ consoleRect.left;
+			FillRect(hDc, &rect, hBrush);
 
-        DeleteObject(hBrush);
+			DeleteObject(hBrush);
 
-        BitBlt(hDc, 0, 0, pVCon->Width, pVCon->Height, pVCon->hDC, 0, 0, SRCCOPY);
-        //int nH = 50;
-        //for (int nY=0; nY<pVCon->Height; nY+=nH) {
-        //    if (pVCon->Height<=(nY+nH))
-	    //        nH = pVCon->Height - nY;
-	    //    BitBlt(hDc, 0, nY, pVCon->Width, nH, pVCon->hDC, 0, nY, SRCCOPY);
-	    //    //MBoxA(L"Part");
-	    //    Sleep(200);
-	    //}
+			BitBlt(hDc, 0, 0, pVCon->Width, pVCon->Height, pVCon->hDC, 0, 0, SRCCOPY);
+			//int nH = 50;
+			//for (int nY=0; nY<pVCon->Height; nY+=nH) {
+			//    if (pVCon->Height<=(nY+nH))
+			//        nH = pVCon->Height - nY;
+			//    BitBlt(hDc, 0, nY, pVCon->Width, nH, pVCon->hDC, 0, nY, SRCCOPY);
+			//    //MBoxA(L"Part");
+			//    Sleep(200);
+			//}
+		}
         EndPaint(hWnd, &ps);
         //MBoxA(L"Child painted");
         //ReleaseDC(hWnd, hDc);

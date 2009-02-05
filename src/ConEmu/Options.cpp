@@ -36,6 +36,7 @@ BOOL SaveSettings()
             reg.Save(_T("bgImageDarker"), gSet.bgImageDarker);
             reg.Save(_T("FontSize"), pVCon->LogFont.lfHeight);
             reg.Save(_T("FontSizeX"), gSet.FontSizeX);
+			//reg.Save(_T("FontSizeX3"), gSet.FontSizeX3);
             reg.Save(_T("FontCharSet"), pVCon->LogFont.lfCharSet);
             reg.Save(_T("Anti-aliasing"), pVCon->LogFont.lfQuality);
             reg.Save(_T("WindowMode"), gSet.isFullScreen ? rFullScreen : IsZoomed(ghWnd) ? rMaximized : rNormal);
@@ -59,6 +60,9 @@ BOOL SaveSettings()
             reg.Save(_T("ConWnd X"), gSet.wndX);
             reg.Save(_T("ConWnd Y"), gSet.wndY);
 
+			reg.Save(_T("ScrollTitle"), gSet.isScrollTitle);
+			reg.Save(_T("ScrollTitleLen"), gSet.ScrollTitleLen);
+            
             reg.CloseKey();
             
             if (gSet.isTabs==1) ForceShowTabs();
@@ -99,6 +103,8 @@ void LoadSettings()
 	_tcscpy(gSet.szTabEditorModified, _T("[%s] *"));
 	_tcscpy(gSet.szTabViewer, _T("{%s}"));
 	gSet.nTabLenMax = 20;
+    gSet.isScrollTitle = true;
+    gSet.ScrollTitleLen = 22;
 
 //------------------------------------------------------------------------
 ///| Loading from registry |//////////////////////////////////////////////
@@ -113,6 +119,7 @@ void LoadSettings()
         reg.Load(_T("bgImageDarker"), &gSet.bgImageDarker);
         reg.Load(_T("FontSize"), &inSize);
         reg.Load(_T("FontSizeX"), &gSet.FontSizeX);
+		reg.Load(_T("FontSizeX3"), &gSet.FontSizeX3);
         reg.Load(_T("FontSizeX2"), &gSet.FontSizeX2);
         reg.Load(_T("FontCharSet"), &FontCharSet);
         reg.Load(_T("Anti-aliasing"), &Quality);
@@ -143,6 +150,8 @@ void LoadSettings()
 		reg.Load(_T("TabEditorModified"), &gSet.szTabEditorModified);
 		reg.Load(_T("TabViewer"), &gSet.szTabViewer);
 		reg.Load(_T("TabLenMax"), &gSet.nTabLenMax);
+		reg.Load(_T("ScrollTitle"), &gSet.isScrollTitle);
+		reg.Load(_T("ScrollTitleLen"), &gSet.ScrollTitleLen);
         reg.CloseKey();
     }
 
@@ -764,7 +773,7 @@ BOOL CALLBACK wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
         case WM_CLOSE:
         case WM_DESTROY:
             EndDialog(hWnd2, TRUE);
-            ghOpWnd = 0;
+            ghOpWnd = NULL;
             break;
         default:
             return 0;
