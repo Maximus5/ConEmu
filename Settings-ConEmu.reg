@@ -1,37 +1,44 @@
 REGEDIT4
 
 [HKEY_CURRENT_USER\Software\ConEmu]
-"CmdLine"="far.exe"
-"FontName"="Fixedsys"
+"CmdLine"="Far.exe"
+
+"BackGround Image show"=hex:00
 "BackGround Image"="c:\\back.bmp"
-"bgImageDarker"=hex:00
-"FontSize"=hex:10,00,00,00
+"bgImageDarker"=hex:46
+
+;;Основной шрифт консоли
+"FontName"="Lucida Console"
+"FontSize"=hex:14,00,00,00
 "FontSizeX"=hex:00,00,00,00
-"FontCharSet"=hex:01
+
+;;Ширина для 'Force monospace'
+;"FontSizeX3"=hex:0c,00,00,00
+"ForceMonospace"=hex:00
+
+;;Включить 'исправление' рамок в FAR
+"Experimental"=hex:01
+;"FontName2"="Lucida Console"
+;"FontSizeX2"=hex:00,00,00,00
+
+"FontCharSet"=hex:cc
 "Anti-aliasing"=hex:04
-"WindowMode"=hex:1f,05,00,00
+"WindowMode"=hex:20,05,00,00
 "CursorType"=hex:01
 "CursorColor"=hex:00
-"Experimental"=hex:01
-"RightClick opens context menu"=hex:00
-"BackGround Image show"=hex:00
+"RightClick opens context menu"=hex:02
 "FontBold"=hex:00
 "FontItalic"=hex:00
-"ForceMonospace"=hex:00
 "Update Console handle"=hex:00
-"ConWnd Width"=hex:7a,00,00,00
-"ConWnd Height"=hex:21,00,00,00
-"ConWnd X"=hex:77,00,00,00
-"ConWnd Y"=hex:73,00,00,00
+"ConWnd Width"=hex:4b,00,00,00
+"ConWnd Height"=hex:16,00,00,00
+"ConWnd X"=hex:fc,ff,ff,ff
+"ConWnd Y"=hex:fc,ff,ff,ff
 "AltEnter"=hex:00
 "Dnd"=hex:01
 "GUIpb"=hex:00
+"Tabs"=hex:02
+"ConVisible"=hex:00
 "DefCopy"=hex:01
-"IconID"=dword:00000003
-"ConVisible"=hex:01
-"Tabs"=hex:01
-"TabPanels"="Panels"
-"TabEditor"="[%s]"
-"TabEditorModified"="[%s] *"
-"TabViewer"="{%s}"
-"TabLenMax"=dword:00000014
+"ScrollTitle"=hex:01
+"ScrollTitleLen"=hex:16,00,00,00
