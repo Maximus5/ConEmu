@@ -2,6 +2,13 @@
 
 struct gSettings
 {
+	TCHAR Config[MAX_PATH];
+
+	int BufferHeight;
+	
+	LOGFONT LogFont, LogFont2;
+	COLORREF Colors[0x10];
+	
     TCHAR Cmd[MAX_PATH], pBgImage[MAX_PATH];
 
     DWORD FontSizeX;
@@ -40,5 +47,6 @@ struct gSettings
 bool LoadImageFrom(TCHAR *inPath);
 BOOL CALLBACK wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
 void LoadSettings();
+void InitSettings();
 
 extern HWND ghOpWnd;

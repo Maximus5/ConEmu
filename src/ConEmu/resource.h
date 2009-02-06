@@ -1,6 +1,6 @@
 //{{NO_DEPENDENCIES}}
-// Microsoft Visual C++ generated include file.
-// Used by Recource.rc
+// Microsoft Developer Studio generated include file.
+// Used by Resource.rc
 //
 #define IDI_ICON1                       1
 #define IDI_ICON2                       2
@@ -28,9 +28,8 @@
 #define tFontFace                       1028
 #define tFontSizeY                      1029
 #define tFontCharset                    1030
+#define tFontFace2                      1031
 #define cbRClick                        1034
-#define IDC_CHECK2                      1035
-#define IDC_EDIT1                       1036
 #define tBgImage                        1037
 #define tDarker                         1038
 #define cbBgImage                       1039
@@ -47,6 +46,7 @@
 #define IDC_CHECK1                      1048
 #define cbIsConMan                      1048
 #define IDC_CHECK3                      1049
+#define tFontSizeX2                     1049
 #define slDark                          1050
 #define slDarker                        1050
 #define cbSendAE                        1051

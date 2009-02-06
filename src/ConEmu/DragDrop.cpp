@@ -85,8 +85,8 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop (IDataObject * pDataObject,DWORD grfKe
 		fop.pTo=NULL; //new TCHAR[MAX_PATH+3]; -- Maximus5
 
 		ScreenToClient(m_hWnd, (LPPOINT)&pt);
-		pt.x/=pVCon->LogFont.lfWidth;
-		pt.y/=pVCon->LogFont.lfHeight;
+		pt.x/=gSet.LogFont.lfWidth;
+		pt.y/=gSet.LogFont.lfHeight;
 
 		if (pfpi==NULL) {
 			//delete fop.pTo;
@@ -159,8 +159,8 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragOver(DWORD grfKeyState,POINTL pt,DWORD 
 		return -1;
 
 	ScreenToClient(m_hWnd, (LPPOINT)&pt);
-	pt.x/=pVCon->LogFont.lfWidth;
-	pt.y/=pVCon->LogFont.lfHeight;
+	pt.x/=gSet.LogFont.lfWidth;
+	pt.y/=gSet.LogFont.lfHeight;
 
 	if (pfpi==NULL)
 		*pdwEffect=DROPEFFECT_NONE;

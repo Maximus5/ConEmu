@@ -6,10 +6,6 @@ struct VirtualConsole
 	bool IsForceUpdate;
 	uint TextWidth, TextHeight;
 	uint Width, Height;
-	LOGFONT LogFont, LogFont2;
-	COLORREF Colors[0x10];
-	int BufferHeight;
-	TCHAR Config[MAX_PATH];
 
 	struct
 	{
@@ -35,7 +31,7 @@ struct VirtualConsole
 	WORD  *ConAttr;
 	CONSOLE_SELECTION_INFO SelectionInfo;
 
-	VirtualConsole(HANDLE hConsoleOutput = NULL);
+	VirtualConsole(/*HANDLE hConsoleOutput = NULL*/);
 	~VirtualConsole();
 
 	bool InitFont(void);

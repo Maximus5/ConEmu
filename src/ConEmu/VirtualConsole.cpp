@@ -11,16 +11,15 @@ HANDLE VirtualConsole::hConOut()
 
 		hConOut_ = CreateFile(_T("CONOUT$"), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_READ,
 			0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+	} else if (hConOut_==NULL) {
+		hConOut_ = GetStdHandle(STD_OUTPUT_HANDLE);
 	}
 	return hConOut_;
 }
 
-VirtualConsole::VirtualConsole(HANDLE hConsoleOutput)
+VirtualConsole::VirtualConsole(/*HANDLE hConsoleOutput*/)
 {
-	if (gSet.isConMan)
-		hConOut_ = 0;
-	else
-		hConOut_ = hConsoleOutput ? hConsoleOutput : GetStdHandle(STD_OUTPUT_HANDLE);
+	hConOut_ = NULL;
 
 	TextWidth = TextHeight = Width = Height = 0;
 	hDC = NULL;
@@ -28,38 +27,44 @@ VirtualConsole::VirtualConsole(HANDLE hConsoleOutput)
 	hFont = NULL;
 	ConChar = NULL;
 	ConAttr = NULL;
-	BufferHeight = 0;
-	_tcscpy(Config, _T("Software\\ConEmu"));
+	
+    if (gSet.wndWidth)
+        TextWidth = gSet.wndWidth;
+    if (gSet.wndHeight)
+        TextHeight = gSet.wndHeight;
+	
+	//BufferHeight = 0;
+	//_tcscpy(gSet.Config, _T("Software\\ConEmu"));
+	//
+	//gSet.LogFont.lfHeight = 16;
+	//gSet.LogFont.lfWidth = 0;
+	//gSet.LogFont.lfEscapement = gSet.LogFont.lfOrientation = 0;
+	//gSet.LogFont.lfWeight = FW_NORMAL;
+	//gSet.LogFont.lfItalic = gSet.LogFont.lfUnderline = gSet.LogFont.lfStrikeOut = FALSE;
+	//gSet.LogFont.lfCharSet = DEFAULT_CHARSET;
+	//gSet.LogFont.lfOutPrecision = OUT_TT_PRECIS;
+	//gSet.LogFont.lfClipPrecision = CLIP_DEFAULT_PRECIS;
+	//gSet.LogFont.lfQuality = ANTIALIASED_QUALITY;
+	//gSet.LogFont.lfPitchAndFamily = FIXED_PITCH | FF_MODERN;
+	//_tcscpy(gSet.LogFont.lfFaceName, _T("Lucida Console"));
 
-	LogFont.lfHeight = 16;
-	LogFont.lfWidth = 0;
-	LogFont.lfEscapement = LogFont.lfOrientation = 0;
-	LogFont.lfWeight = FW_NORMAL;
-	LogFont.lfItalic = LogFont.lfUnderline = LogFont.lfStrikeOut = FALSE;
-	LogFont.lfCharSet = DEFAULT_CHARSET;
-	LogFont.lfOutPrecision = OUT_TT_PRECIS;
-	LogFont.lfClipPrecision = CLIP_DEFAULT_PRECIS;
-	LogFont.lfQuality = ANTIALIASED_QUALITY;
-	LogFont.lfPitchAndFamily = FIXED_PITCH | FF_MODERN;
-	_tcscpy(LogFont.lfFaceName, _T("Lucida Console"));
-
-	Registry RegConColors, RegConDef;
-	if (RegConColors.OpenKey(_T("Console"), KEY_READ))
-	{
-		RegConDef.OpenKey(HKEY_USERS, _T(".DEFAULT\\Console"), KEY_READ);
-
-		TCHAR ColorName[] = _T("ColorTable00");
-		for (uint i = 0x10; i--;)
-		{
-			ColorName[10] = i/10 + '0';
-			ColorName[11] = i%10 + '0';
-			if (!RegConColors.Load(ColorName, (DWORD *)&Colors[i]))
-				RegConDef.Load(ColorName, (DWORD *)&Colors[i]);
-		}
-
-		RegConDef.CloseKey();
-		RegConColors.CloseKey();
-	}
+	//Registry RegConColors, RegConDef;
+	//if (RegConColors.OpenKey(_T("Console"), KEY_READ))
+	//{
+	//	RegConDef.OpenKey(HKEY_USERS, _T(".DEFAULT\\Console"), KEY_READ);
+	//
+	//	TCHAR ColorName[] = _T("ColorTable00");
+	//	for (uint i = 0x10; i--;)
+	//	{
+	//		ColorName[10] = i/10 + '0';
+	//		ColorName[11] = i%10 + '0';
+	//		if (!RegConColors.Load(ColorName, (DWORD *)&gSet.Colors[i]))
+	//			RegConDef.Load(ColorName, (DWORD *)&gSet.Colors[i]);
+	//	}
+	//
+	//	RegConDef.CloseKey();
+	//	RegConColors.CloseKey();
+	//}
 }
 
 VirtualConsole::~VirtualConsole()
@@ -101,7 +106,7 @@ void VirtualConsole::Free(bool bFreeFont)
 bool VirtualConsole::InitFont(void)
 {
 	Free(true);
-	hFont = CreateFontIndirectMy(&LogFont);
+	hFont = CreateFontIndirectMy(&gSet.LogFont);
 	return hFont != NULL;
 }
 
@@ -137,13 +142,13 @@ bool VirtualConsole::InitDC(void)
 		GetTextMetrics(hDC, &tm);
 		if (gSet.isForceMonospace)
 			//Maximus - у Arial'а например MaxWidth слишком большой
-			LogFont.lfWidth = gSet.FontSizeX3 ? gSet.FontSizeX3 : tm.tmMaxCharWidth;
+			gSet.LogFont.lfWidth = gSet.FontSizeX3 ? gSet.FontSizeX3 : tm.tmMaxCharWidth;
 		else
-			LogFont.lfWidth = tm.tmAveCharWidth;
-		LogFont.lfHeight = tm.tmHeight;
+			gSet.LogFont.lfWidth = tm.tmAveCharWidth;
+		gSet.LogFont.lfHeight = tm.tmHeight;
 
-		Width = TextWidth * LogFont.lfWidth;
-		Height = TextHeight * LogFont.lfHeight;
+		Width = TextWidth * gSet.LogFont.lfWidth;
+		Height = TextHeight * gSet.LogFont.lfHeight;
 
 		hBitmap = CreateCompatibleBitmap(hScreenDC, Width, Height);
 		SelectObject(hDC, hBitmap);
@@ -183,7 +188,7 @@ void BlitPictureTo(VirtualConsole *vc, int inX, int inY, int inWidth, int inHeig
 	BitBlt(vc->hDC, inX, inY, inWidth, inHeight, vc->hBgDc, inX, inY, SRCCOPY);
 	if (vc->bgBmp.cx < (int)inWidth || vc->bgBmp.cy < (int)inHeight)
 	{
-		HBRUSH hBrush = CreateSolidBrush(vc->Colors[0]); SelectObject(vc->hDC, hBrush);
+		HBRUSH hBrush = CreateSolidBrush(gSet.Colors[0]); SelectObject(vc->hDC, hBrush);
 		RECT rect = {vc->bgBmp.cx, inY, inWidth, inHeight};
 		FillRect(vc->hDC, &rect, hBrush);
 
@@ -311,7 +316,7 @@ bool VirtualConsole::Update(bool isForce, HDC *ahDc)
 
 	// get selection info in buffer mode
 	CONSOLE_SELECTION_INFO select1, select2;
-	bool doSelect = pVCon->BufferHeight > 0;
+	bool doSelect = gSet.BufferHeight > 0;
 	if (doSelect)
 	{
 		select1 = SelectionInfo;
@@ -370,13 +375,13 @@ bool VirtualConsole::Update(bool isForce, HDC *ahDc)
 		if (updateText)
 		{
 			i = TextLen - TextWidth;
-			pos = Height - LogFont.lfHeight;
+			pos = Height - gSet.LogFont.lfHeight;
 			row = TextHeight - 1;
 		}
 		else
 		{
 			i = TextWidth * Cursor.y;
-			pos = LogFont.lfHeight * Cursor.y;
+			pos = gSet.LogFont.lfHeight * Cursor.y;
 			row = Cursor.y;
 		}
 		ConCharLine = ConChar + i;
@@ -389,7 +394,7 @@ bool VirtualConsole::Update(bool isForce, HDC *ahDc)
 
 		// rows
 		const bool skipNotChanged = !isForce && !gSet.isForceMonospace;
-		for (; pos >= 0; ConCharLine -= TextWidth, ConAttrLine -= TextWidth, pos -= LogFont.lfHeight, --row)
+		for (; pos >= 0; ConCharLine -= TextWidth, ConAttrLine -= TextWidth, pos -= gSet.LogFont.lfHeight, --row)
 		{
 			// the line
 			const WORD* const ConAttrLine2 = ConAttrLine + TextLen;
@@ -451,15 +456,15 @@ bool VirtualConsole::Update(bool isForce, HDC *ahDc)
 					attrBack = tmp;
 				}
 
-				SetTextColor(hDC, Colors[attrFore]);
+				SetTextColor(hDC, gSet.Colors[attrFore]);
 
 				if (gSet.isForceMonospace)
 				{
-					SetTextColor(hDC, Colors[attrFore]);
-					SetBkColor(hDC, Colors[attrBack]);
+					SetTextColor(hDC, gSet.Colors[attrFore]);
+					SetBkColor(hDC, gSet.Colors[attrBack]);
 
 					//for (j2 = j + 1; j2 < end && ConAttrLine[j2] == ConAttrLine[j2 - 1]; j2++);
-					//TextOut(hDC, j * LogFont.lfWidth, pos, ConCharLine + j, j2 - j);
+					//TextOut(hDC, j * gSet.LogFont.lfWidth, pos, ConCharLine + j, j2 - j);
 					j2 = j + 1;
 					/// ** /WCHAR c = ConCharLine[j];
 
@@ -483,9 +488,9 @@ bool VirtualConsole::Update(bool isForce, HDC *ahDc)
 					}
 					*/
 
-					RECT rect = {j * LogFont.lfWidth, pos, j2 * LogFont.lfWidth, pos + LogFont.lfHeight};
+					RECT rect = {j * gSet.LogFont.lfWidth, pos, j2 * gSet.LogFont.lfWidth, pos + gSet.LogFont.lfHeight};
 					if (! (drawImage && (attrBack) < 2))
-						SetBkColor(hDC, Colors[attrBack]);
+						SetBkColor(hDC, gSet.Colors[attrBack]);
 					else if (drawImage)
 						BlitPictureTo(this, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top);
 
@@ -503,9 +508,9 @@ bool VirtualConsole::Update(bool isForce, HDC *ahDc)
 							if (abc.abcA<0) {
 								// иначе символ наверное налезет на предыдущий?
 								nShift = -abc.abcA;
-							} else if (abc.abcA<(((int)LogFont.lfWidth-(int)abc.abcB-1)/2)) {
+							} else if (abc.abcA<(((int)gSet.LogFont.lfWidth-(int)abc.abcB-1)/2)) {
 								// символ I, i, и др. очень тонкие - рисуем посередине
-								nShift = ((LogFont.lfWidth-abc.abcB)/2)-abc.abcA;
+								nShift = ((gSet.LogFont.lfWidth-abc.abcB)/2)-abc.abcA;
 							}
 							if (nShift>0) {
 								ExtTextOut(hDC, rect.left, rect.top, nFlags, &rect, L" ", 1, 0);
@@ -518,7 +523,7 @@ bool VirtualConsole::Update(bool isForce, HDC *ahDc)
 
 					ExtTextOut(hDC, rect.left, rect.top, nFlags, &rect, &c, 1, 0);
 
-					//TextOut(hDC, j * LogFont.lfWidth, pos, &c, 1);
+					//TextOut(hDC, j * gSet.LogFont.lfWidth, pos, &c, 1);
 					//ABC abc;
 					//GetCharABCWidths(hDC, c, c, &abc); // зашибись, вообще не использовалось
 					//if (abc.abcA<0 || abc.abcC<0)
@@ -556,10 +561,10 @@ bool VirtualConsole::Update(bool isForce, HDC *ahDc)
 					}
 					if (xchar)
 					{
-						RECT rect = {j * LogFont.lfWidth + LogFont.lfWidth/2, pos, j2 * LogFont.lfWidth, pos + LogFont.lfHeight};
+						RECT rect = {j * gSet.LogFont.lfWidth + gSet.LogFont.lfWidth/2, pos, j2 * gSet.LogFont.lfWidth, pos + gSet.LogFont.lfHeight};
 						ExtTextOut(hDC, rect.left, rect.top, ETO_CLIPPED | ETO_OPAQUE, &rect, &xchar, 1, 0);
 
-						//TextOut(hDC, j * LogFont.lfWidth + LogFont.lfWidth/2, pos, &xchar, 1);
+						//TextOut(hDC, j * gSet.LogFont.lfWidth + gSet.LogFont.lfWidth/2, pos, &xchar, 1);
 					}*/
 				}
 				else if (!isUnicode)
@@ -593,13 +598,13 @@ bool VirtualConsole::Update(bool isForce, HDC *ahDc)
 
 				if (!gSet.isForceMonospace)
 				{
-					RECT rect = {j * LogFont.lfWidth, pos, j2 * LogFont.lfWidth, pos + LogFont.lfHeight};
+					RECT rect = {j * gSet.LogFont.lfWidth, pos, j2 * gSet.LogFont.lfWidth, pos + gSet.LogFont.lfHeight};
 					if (! (drawImage && (attrBack) < 2))
-						SetBkColor(hDC, Colors[attrBack]);
+						SetBkColor(hDC, gSet.Colors[attrBack]);
 					else if (drawImage)
 						BlitPictureTo(this, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top);
 
-					if (LogFont.lfCharSet == OEM_CHARSET && !isUnicode)
+					if (gSet.LogFont.lfCharSet == OEM_CHARSET && !isUnicode)
 					{
 						char *tmp = new char[end+5];
 						WideCharToMultiByte(CP_OEMCP, 0, ConCharLine + j, j2 - j, tmp, end + 4, 0, 0);
@@ -674,9 +679,9 @@ done:
 		int CurChar = csbi.dwCursorPosition.Y * TextWidth + csbi.dwCursorPosition.X;
 		Cursor.ch[0] = ConChar[CurChar];
 		Cursor.ch[1] = 0;
-		Cursor.foreColor = Colors[ConAttr[CurChar] >> 4 & 0x0F];
+		Cursor.foreColor = gSet.Colors[ConAttr[CurChar] >> 4 & 0x0F];
 		Cursor.foreColorNum = ConAttr[CurChar] >> 4 & 0x0F;
-		Cursor.bgColor = Colors[ConAttr[CurChar] & 0x0F];
+		Cursor.bgColor = gSet.Colors[ConAttr[CurChar] & 0x0F];
 		Cursor.isVisiblePrev = Cursor.isVisible;
 		Cursor.x = csbi.dwCursorPosition.X;
 		Cursor.y = csbi.dwCursorPosition.Y;
@@ -691,13 +696,13 @@ done:
 			else
 			{
 				SetTextColor(hDC, Cursor.foreColor);
-				SetBkColor(hDC, Cursor.foreColorNum < 5 ? Colors[15] : Colors[0]);
+				SetBkColor(hDC, Cursor.foreColorNum < 5 ? gSet.Colors[15] : gSet.Colors[0]);
 			}
 		}
 		else
 		{
 			if (drawImage)
-				BlitPictureTo(this, Cursor.x * LogFont.lfWidth, Cursor.y * LogFont.lfHeight, LogFont.lfWidth, LogFont.lfHeight);
+				BlitPictureTo(this, Cursor.x * gSet.LogFont.lfWidth, Cursor.y * gSet.LogFont.lfHeight, gSet.LogFont.lfWidth, gSet.LogFont.lfHeight);
 
 			SetTextColor(hDC, Cursor.bgColor);
 			SetBkColor(hDC, Cursor.foreColor);
@@ -707,27 +712,27 @@ done:
 		RECT rect;
 		if (!gSet.isCursorV)
 		{
-			rect.left = Cursor.x * LogFont.lfWidth;
-			rect.top = (Cursor.y+1) * LogFont.lfHeight - MulDiv(LogFont.lfHeight, cinf.dwSize, 100);
-			rect.right = (Cursor.x+1) * LogFont.lfWidth;
-			rect.bottom = (Cursor.y+1) * LogFont.lfHeight;
+			rect.left = Cursor.x * gSet.LogFont.lfWidth;
+			rect.top = (Cursor.y+1) * gSet.LogFont.lfHeight - MulDiv(gSet.LogFont.lfHeight, cinf.dwSize, 100);
+			rect.right = (Cursor.x+1) * gSet.LogFont.lfWidth;
+			rect.bottom = (Cursor.y+1) * gSet.LogFont.lfHeight;
 		}
 		else
 		{
-			rect.left = Cursor.x * LogFont.lfWidth;
-			rect.top = Cursor.y * LogFont.lfHeight;
-			rect.right = Cursor.x * LogFont.lfWidth + klMax(1, MulDiv(LogFont.lfWidth, cinf.dwSize, 100) + (cinf.dwSize > 10 ? 1 : 0));
-			rect.bottom = (Cursor.y+1) * LogFont.lfHeight;
+			rect.left = Cursor.x * gSet.LogFont.lfWidth;
+			rect.top = Cursor.y * gSet.LogFont.lfHeight;
+			rect.right = Cursor.x * gSet.LogFont.lfWidth + klMax(1, MulDiv(gSet.LogFont.lfWidth, cinf.dwSize, 100) + (cinf.dwSize > 10 ? 1 : 0));
+			rect.bottom = (Cursor.y+1) * gSet.LogFont.lfHeight;
 		}
 
-		if (LogFont.lfCharSet == OEM_CHARSET && !isCharUnicode(Cursor.ch[0]))
+		if (gSet.LogFont.lfCharSet == OEM_CHARSET && !isCharUnicode(Cursor.ch[0]))
 		{
 			if (gSet.isFixFarBorders)
 				SelectFont(hFont);
 
 			char tmp[2];
 			WideCharToMultiByte(CP_OEMCP, 0, Cursor.ch, 1, tmp, 1, 0, 0);
-			ExtTextOutA(hDC, Cursor.x * LogFont.lfWidth, Cursor.y * LogFont.lfHeight,
+			ExtTextOutA(hDC, Cursor.x * gSet.LogFont.lfWidth, Cursor.y * gSet.LogFont.lfHeight,
 				ETO_CLIPPED | ((drawImage && (Cursor.foreColorNum < 2) &&
 				!Cursor.isVisible) ? 0 : ETO_OPAQUE),&rect, tmp, 1, 0);
 		}
@@ -738,7 +743,7 @@ done:
 			else
 				SelectFont(hFont);
 
-			ExtTextOut(hDC, Cursor.x * LogFont.lfWidth, Cursor.y * LogFont.lfHeight,
+			ExtTextOut(hDC, Cursor.x * gSet.LogFont.lfWidth, Cursor.y * gSet.LogFont.lfHeight,
 				ETO_CLIPPED | ((drawImage && (Cursor.foreColorNum < 2) &&
 				!Cursor.isVisible) ? 0 : ETO_OPAQUE),&rect, Cursor.ch, 1, 0);
 		}

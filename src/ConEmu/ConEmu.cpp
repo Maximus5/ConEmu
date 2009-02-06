@@ -38,18 +38,20 @@ WCHAR *LogFilePath=NULL;
 
 //externs
 VirtualConsole *pVCon=NULL;
-HWND ghWnd=NULL, ghWndDC=NULL, ghConWnd=NULL;
+HWND ghWnd=NULL, ghWndDC=NULL, ghConWnd=NULL, ghApp=NULL;
 #ifndef _DEBUG
 bool gbUseChildWindow = false;
 bool gbNoDblBuffer = false;
 #else
 bool gbUseChildWindow = true;
-bool gbNoDblBuffer = true;
+bool gbNoDblBuffer = false;
 #endif
 const TCHAR *const szClassName = _T("VirtualConsoleClass");
 const TCHAR *const szClassNameParent = _T("VirtualConsoleClassMain");
+const TCHAR *const szClassNameApp = _T("VirtualConsoleClassApp");
 TCHAR temp[MAX_PATH];
 TCHAR szIconPath[MAX_PATH];
+HICON hClassIcon = NULL, hClassIconSm = NULL;
 uint cBlinkNext=0;
 DWORD WindowMode=0;
 gSettings gSet;
@@ -194,7 +196,7 @@ HFONT CreateFontIndirectMy(LOGFONT *inFont)
 
     int width = gSet.FontSizeX2 ? gSet.FontSizeX2 : inFont->lfWidth;
     pVCon->hFont2 = CreateFont(abs(inFont->lfHeight), abs(width), 0, 0, FW_NORMAL,
-        0, 0, 0, DEFAULT_CHARSET, OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS, ANTIALIASED_QUALITY, 0, pVCon->LogFont2.lfFaceName);
+        0, 0, 0, DEFAULT_CHARSET, OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS, ANTIALIASED_QUALITY, 0, gSet.LogFont2.lfFaceName);
 
     return CreateFontIndirect(inFont);
 }
@@ -261,8 +263,8 @@ void SyncConsoleToWindow()
 void SyncConsoleToWindowRect(const RECT& rect)
 {
     COORD size;
-    size.X = (rect.right - rect.left) / pVCon->LogFont.lfWidth;
-    size.Y = (rect.bottom - rect.top) / pVCon->LogFont.lfHeight;
+    size.X = (rect.right - rect.left) / gSet.LogFont.lfWidth;
+    size.Y = (rect.bottom - rect.top) / gSet.LogFont.lfHeight;
     SetConsoleWindowSize(size, true);
 }
 */
@@ -287,8 +289,8 @@ COORD ConsoleSizeFromWindow(RECT* arect = NULL, bool rectInWindow = false)
     }
     
     COORD size;
-    size.X = (rect.right - rect.left - (rectInWindow ? cwShift.x : 0) - consoleRect.left) / pVCon->LogFont.lfWidth;
-    size.Y = (rect.bottom - rect.top - (rectInWindow ? cwShift.y : 0) - consoleRect.top) / pVCon->LogFont.lfHeight;
+    size.X = (rect.right - rect.left - (rectInWindow ? cwShift.x : 0) - consoleRect.left) / gSet.LogFont.lfWidth;
+    size.Y = (rect.bottom - rect.top - (rectInWindow ? cwShift.y : 0) - consoleRect.top) / gSet.LogFont.lfHeight;
     #ifdef MSGLOGGER
         char szDbg[100]; wsprintfA(szDbg, "   ConsoleSizeFromWindow={%i,%i}\n", size.X, size.Y);
         DEBUGLOGFILE(szDbg);
@@ -303,8 +305,8 @@ RECT WindowSizeFromConsole(COORD consoleSize, bool rectInWindow = false)
     rect.top = 0;   
     rect.left = 0;
     RECT consoleRect = ConsoleOffsetRect();
-    rect.bottom = consoleSize.Y * pVCon->LogFont.lfHeight + (rectInWindow ? cwShift.y : 0) + consoleRect.top;
-    rect.right = consoleSize.X * pVCon->LogFont.lfWidth + (rectInWindow ? cwShift.x : 0) + consoleRect.left;
+    rect.bottom = consoleSize.Y * gSet.LogFont.lfHeight + (rectInWindow ? cwShift.y : 0) + consoleRect.top;
+    rect.right = consoleSize.X * gSet.LogFont.lfWidth + (rectInWindow ? cwShift.x : 0) + consoleRect.left;
     #ifdef MSGLOGGER
         char szDbg[100]; wsprintfA(szDbg, "   WindowSizeFromConsole={%i,%i}\n", rect.right,rect.bottom);
         DEBUGLOGFILE(szDbg);
@@ -342,7 +344,7 @@ void SetConsoleWindowSize(const COORD& size, bool updateInfo)
     }
 
     // case: simple mode
-    if (pVCon->BufferHeight == 0)
+    if (gSet.BufferHeight == 0)
     {
         MOVEWINDOW(ghConWnd, 0, 0, 1, 1, 0);
         SETCONSOLESCREENBUFFERSIZE(pVCon->hConOut(), size);
@@ -364,7 +366,7 @@ void SetConsoleWindowSize(const COORD& size, bool updateInfo)
     {
         // first call: buffer height = from settings
         s_isFirstCall = false;
-        csbi.dwSize.Y = max(pVCon->BufferHeight, size.Y);
+        csbi.dwSize.Y = max(gSet.BufferHeight, size.Y);
     }
     else
     {
@@ -418,7 +420,7 @@ bool SetWindowMode(uint inMode)
         DEBUGLOGFILE("SetWindowMode(rMaximized)\n");
         if (gSet.isFullScreen)
         {
-         LONG style = pVCon->BufferHeight ? WS_VSCROLL : 0; // NightRoman
+         LONG style = gSet.BufferHeight ? WS_VSCROLL : 0; // NightRoman
             style |= WS_OVERLAPPEDWINDOW | WS_VISIBLE;
             SetWindowLongPtr(ghWnd, GWL_STYLE, style);
             SETWINDOWPOS(ghWnd, HWND_TOP, wndNotFS.left, wndNotFS.top, wndNotFS.right - wndNotFS.left, wndNotFS.bottom - wndNotFS.top, SWP_FRAMECHANGED | SWP_SHOWWINDOW);
@@ -438,7 +440,7 @@ bool SetWindowMode(uint inMode)
 
             GetWindowRect(ghWnd, &wndNotFS);
 
-            LONG style = pVCon->BufferHeight ? WS_VSCROLL : 0;
+            LONG style = gSet.BufferHeight ? WS_VSCROLL : 0;
             style |= WS_POPUP | WS_MAXIMIZEBOX | WS_MINIMIZEBOX | WS_VISIBLE;
             SetWindowLongPtr(ghWnd, GWL_STYLE, style);
             SETWINDOWPOS(ghWnd, HWND_TOP, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), SWP_FRAMECHANGED | SWP_SHOWWINDOW);
@@ -567,7 +569,7 @@ void ForceShowTabs()
 	        dcWindowLast = rcNewCon;
 	    }
 		
-	    if (pVCon->LogFont.lfWidth)
+	    if (gSet.LogFont.lfWidth)
 	    {
 	        SyncConsoleToWindow();
 	        //RECT rc = ConsoleOffsetRect();
@@ -579,6 +581,19 @@ void ForceShowTabs()
     }
 }
 
+
+LRESULT CALLBACK AppWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
+{
+    LRESULT result = 0;
+    switch (messg)
+    {
+    case WM_COMMAND:
+	    break;
+    default:
+        if (messg) result = DefWindowProc(hWnd, messg, wParam, lParam);
+    }
+    return result;
+}
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 {
@@ -637,7 +652,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 			//if (!gbNoDblBuffer)
 			{
 				RECT rect;
-				HBRUSH hBrush = CreateSolidBrush(pVCon->Colors[0]); SelectObject(hDc, hBrush);
+				HBRUSH hBrush = CreateSolidBrush(gSet.Colors[0]); SelectObject(hDc, hBrush);
 				GetClientRect(hWnd, &rect);
 
 				RECT consoleRect = ConsoleOffsetRect();
@@ -779,7 +794,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
                 if (inf.dwSize.X>(inf.srWindow.Right-inf.srWindow.Left+1)) {
                     DEBUGLOGFILE("Wrong screen buffer width\n");
                     MOVEWINDOW(ghConWnd, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), 0);
-                } else if ((pVCon->BufferHeight == 0) && (inf.dwSize.Y>(inf.srWindow.Bottom-inf.srWindow.Top+1))) {
+                } else if ((gSet.BufferHeight == 0) && (inf.dwSize.Y>(inf.srWindow.Bottom-inf.srWindow.Top+1))) {
                     DEBUGLOGFILE("Wrong screen buffer height\n");
                     MOVEWINDOW(ghConWnd, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), 0);
                 }
@@ -801,7 +816,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
                 INVALIDATE(); //InvalidateRect(HDCWND, NULL, FALSE);
 
                 // update scrollbar
-                if (pVCon->BufferHeight)
+                if (gSet.BufferHeight)
                 {
                     SCROLLINFO si;
                     ZeroMemory(&si, sizeof(si));
@@ -858,29 +873,29 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
         case WMSZ_BOTTOM:
         case WMSZ_BOTTOMRIGHT:
          pRect->right = restrictRect.right; // NightRoman
-        //  pRect->right =  srctWindow.X * pVCon->LogFont.lfWidth  + cwShift.x + pRect->left;
+        //  pRect->right =  srctWindow.X * gSet.LogFont.lfWidth  + cwShift.x + pRect->left;
          pRect->bottom = restrictRect.bottom; // NightRoman
-        //  pRect->bottom = srctWindow.Y * pVCon->LogFont.lfHeight + cwShift.y + pRect->top;
+        //  pRect->bottom = srctWindow.Y * gSet.LogFont.lfHeight + cwShift.y + pRect->top;
             break;
         case WMSZ_LEFT:
         case WMSZ_TOP:
         case WMSZ_TOPLEFT:
          pRect->left = restrictRect.left; // NightRoman
-        //  pRect->left =  pRect->right - srctWindow.X * pVCon->LogFont.lfWidth  - cwShift.x;
+        //  pRect->left =  pRect->right - srctWindow.X * gSet.LogFont.lfWidth  - cwShift.x;
          pRect->top = restrictRect.top; // NightRoman
-        //  pRect->top  = pRect->bottom - srctWindow.Y * pVCon->LogFont.lfHeight - cwShift.y;
+        //  pRect->top  = pRect->bottom - srctWindow.Y * gSet.LogFont.lfHeight - cwShift.y;
             break;
         case WMSZ_TOPRIGHT:
          pRect->right = restrictRect.right; // NightRoman
-        //  pRect->right =  srctWindow.X * pVCon->LogFont.lfWidth  + cwShift.x + pRect->left;
+        //  pRect->right =  srctWindow.X * gSet.LogFont.lfWidth  + cwShift.x + pRect->left;
          pRect->top = restrictRect.top; // NightRoman
-        //  pRect->top  = pRect->bottom - srctWindow.Y * pVCon->LogFont.lfHeight - cwShift.y;
+        //  pRect->top  = pRect->bottom - srctWindow.Y * gSet.LogFont.lfHeight - cwShift.y;
             break;
         case WMSZ_BOTTOMLEFT:
          pRect->left = restrictRect.left; // NightRoman
-        //  pRect->left =  pRect->right - srctWindow.X * pVCon->LogFont.lfWidth  - cwShift.x;
+        //  pRect->left =  pRect->right - srctWindow.X * gSet.LogFont.lfWidth  - cwShift.x;
          pRect->bottom = restrictRect.bottom; // NightRoman
-        //  pRect->bottom = srctWindow.Y * pVCon->LogFont.lfHeight + cwShift.y + pRect->top;
+        //  pRect->bottom = srctWindow.Y * gSet.LogFont.lfHeight + cwShift.y + pRect->top;
             break;
         }
         result = true;
@@ -1023,7 +1038,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
         }*/
 
       // buffer mode: scroll with keys  -- NightRoman
-        if (pVCon->BufferHeight && messg == WM_KEYDOWN && isPressed(VK_CONTROL))
+        if (gSet.BufferHeight && messg == WM_KEYDOWN && isPressed(VK_CONTROL))
         {
             switch(wParam)
             {
@@ -1138,7 +1153,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
         if (newY<0 || newX<0)
             break;
 
-        if (pVCon->BufferHeight)
+        if (gSet.BufferHeight)
         {
            // buffer mode: cheat the console window: adjust its position exactly to the cursor
            RECT win;
@@ -1312,7 +1327,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 					MBoxA(_T("Can't register DC window class!"));
 					return -1;
 				}
-				DWORD style = WS_VISIBLE | WS_CHILD | WS_CLIPSIBLINGS /*| WS_CLIPCHILDREN*/ | (pVCon->BufferHeight ? WS_VSCROLL : 0);
+				DWORD style = WS_VISIBLE | WS_CHILD | WS_CLIPSIBLINGS /*| WS_CLIPCHILDREN*/ | (gSet.BufferHeight ? WS_VSCROLL : 0);
 				RECT rc = DCClientRect();
 				ghWndDC = CreateWindow(szClassName, 0, style, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, hWnd, NULL, (HINSTANCE)g_hInstance, NULL);
 				if (!ghWndDC) {
@@ -1472,7 +1487,7 @@ LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 		//if (!gbNoDblBuffer)
 		{
 			RECT rect;
-			HBRUSH hBrush = CreateSolidBrush(pVCon->Colors[0]); SelectObject(hDc, hBrush);
+			HBRUSH hBrush = CreateSolidBrush(gSet.Colors[0]); SelectObject(hDc, hBrush);
 			GetClientRect(hWnd, &rect);
 
 			#ifdef _DEBUG
@@ -1817,6 +1832,76 @@ int __stdcall _MDEBUG_TRAP(LPCSTR asFile, int anLine)
 int MDEBUG_CHK = TRUE;
 #endif
 
+// Нужно вызывать после загрузки настроек!
+void LoadIcons()
+{
+    if (hClassIcon)
+	    return; // Уже загружены
+	    
+    if (GetModuleFileName(0, szIconPath, MAX_PATH))
+    {
+	    TCHAR *lpszExt = _tcsrchr(szIconPath, _T('.'));
+	    if (!lpszExt)
+		    szIconPath[0] = 0;
+		else {
+			_tcscpy(lpszExt, _T(".ico"));
+	        DWORD dwAttr = GetFileAttributes(szIconPath);
+	        if (dwAttr==-1 || (dwAttr & FILE_ATTRIBUTE_DIRECTORY))
+	            szIconPath[0]=0;
+	    }
+    } else {
+        szIconPath[0]=0;
+    }
+    
+    if (szIconPath[0]) {
+	    hClassIcon = (HICON)LoadImage(0, szIconPath, IMAGE_ICON, 
+		    GetSystemMetrics(SM_CXICON), GetSystemMetrics(SM_CYICON), LR_DEFAULTCOLOR|LR_LOADFROMFILE);
+	    hClassIconSm = (HICON)LoadImage(0, szIconPath, IMAGE_ICON, 
+		    GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), LR_DEFAULTCOLOR|LR_LOADFROMFILE);
+	}
+    if (!hClassIcon) {
+	    szIconPath[0]=0;
+	    
+	    hClassIcon = (HICON)LoadImage(GetModuleHandle(0), 
+		    MAKEINTRESOURCE(gSet.nIconID), IMAGE_ICON, 
+		    GetSystemMetrics(SM_CXICON), GetSystemMetrics(SM_CYICON), LR_DEFAULTCOLOR);
+		    
+	    if (hClassIconSm) DestroyIcon(hClassIconSm);
+	    hClassIconSm = (HICON)LoadImage(GetModuleHandle(0), 
+		    MAKEINTRESOURCE(gSet.nIconID), IMAGE_ICON, 
+		    GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), LR_DEFAULTCOLOR);
+    }
+}
+
+BOOL CreateAppWindow()
+{
+    return TRUE;
+}
+
+BOOL CreateMainWindow()
+{
+    //!!!ICON
+    LoadIcons();
+    
+    WNDCLASSEX wc = {sizeof(WNDCLASSEX), CS_DBLCLKS, WndProc, 0, 0, 
+		    g_hInstance, hClassIcon, LoadCursor(NULL, IDC_ARROW), 
+		    NULL /*(HBRUSH)COLOR_BACKGROUND*/, 
+		    NULL, szClassName, hClassIconSm};// | CS_DROPSHADOW
+	if (gbUseChildWindow) wc.lpszClassName = szClassNameParent;
+    if (!RegisterClassEx(&wc))
+        return -1;
+    //ghWnd = CreateWindow(szClassName, 0, WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN, gSet.wndX, gSet.wndY, cRect.right - cRect.left - 4, cRect.bottom - cRect.top - 4, NULL, NULL, (HINSTANCE)g_hInstance, NULL);
+    DWORD style = (gSet.BufferHeight && !gbUseChildWindow) ? WS_VSCROLL : 0 ;
+    style |= WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN | WS_CLIPSIBLINGS;
+    int nWidth=CW_USEDEFAULT, nHeight=CW_USEDEFAULT;
+    // cRect.right - cRect.left - 4, cRect.bottom - cRect.top - 4; -- все равно это было не правильно
+	ghWnd = CreateWindow(gbUseChildWindow ? szClassNameParent : szClassName, 0, style, gSet.wndX, gSet.wndY, nWidth, nHeight, NULL, NULL, (HINSTANCE)g_hInstance, NULL);
+	if (!ghWnd) {
+		if (!ghWndDC) MBoxA(_T("Can't create main window!"));
+        return FALSE;
+	}
+	return TRUE;
+}
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
@@ -1830,7 +1915,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     pVCon = NULL;
     Title[0]=0; TitleCmp[0]=0;
-    memset(&gSet, 0, sizeof(gSet)); // дабы мусора в дебаге не оставалось
 
     bool setParentDisabled=false;
     bool ClearTypePrm = false;
@@ -1853,31 +1937,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     {
         setParentDisabled = true;
     }
-
-//------------------------------------------------------------------------
-///| Allocating console |/////////////////////////////////////////////////
-//------------------------------------------------------------------------
-
-        
-    AllocConsole();
-    ghConWnd = GetConsoleWindow();
-    /*DWORD dwStyle = 0;
-	dwStyle = GetWindowLong(ghConWnd, GWL_STYLE);
-	dwStyle &= ~(WS_OVERLAPPEDWINDOW|WS_OVERLAPPED);
-	dwStyle |= WS_POPUPWINDOW;
-	SetWindowLong(ghConWnd, GWL_STYLE, dwStyle);
-
-	dwStyle = GetWindowLong(ghConWnd, GWL_EXSTYLE);
-	dwStyle &= ~(WS_EX_OVERLAPPEDWINDOW|WS_EX_APPWINDOW);
-	dwStyle |= WS_EX_TOOLWINDOW;
-    SetWindowLong(ghConWnd, GWL_EXSTYLE, dwStyle);*/
-
-	// Если в свойствах ярлыка указано "Максимизировано" - консоль разворачивается, а FAR при 
-	// старте сам меняет размер буфера, в результате - ошибочно устанавливается размер окна
-	if (nCmdShow != SW_SHOWNORMAL) ShowWindow(ghConWnd, SW_SHOWNORMAL);
-    ShowWindow(ghConWnd, SW_HIDE);
-    EnableWindow(ghConWnd, FALSE); // NightRoman
-    SetConsoleSizeTo(ghConWnd, 4, 6);
+    
+    InitSettings();
 
 
 //------------------------------------------------------------------------
@@ -2005,120 +2066,105 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     }
     if (setParentDisabled && setParent)
         setParent=false;
-    
+        
+        
 //------------------------------------------------------------------------
-///| Create VirtualConsole, load settings and apply parameters |//////////
+///| load settings and apply parameters |/////////////////////////////////
 //------------------------------------------------------------------------
-
-#undef pVCon
-    // create console
-    pVCon = new VirtualConsole(0);
-
+        
     // set config name before settings (i.e. where to load from)
     if (ConfigPrm)
     {
-        _tcscat(pVCon->Config, _T("\\"));
-        _tcscat(pVCon->Config, ConfigVal);
+        _tcscat(gSet.Config, _T("\\"));
+        _tcscat(gSet.Config, ConfigVal);
     }
 
-    if (FontFilePrm) AddFontResourceEx(FontFile, FR_PRIVATE, NULL); //ADD fontname; by Mors
-
-    // load
+    // load settings from registry
     LoadSettings();
 
-    if (gSet.isConVisible) {
-        ShowWindow(ghConWnd, SW_SHOWNA);
-        EnableWindow(ghConWnd, true);
-    }
-
-    // set other parameters after settings (i.e. parameters overwrite default)
+    // Установка параметров из командной строки
     if (cmdNew)
         _tcscpy(gSet.Cmd, cmdNew);
     if (ClearTypePrm)
-        pVCon->LogFont.lfQuality = CLEARTYPE_NATURAL_QUALITY;
+        gSet.LogFont.lfQuality = CLEARTYPE_NATURAL_QUALITY;
     if (FontPrm)
-        _tcscpy(pVCon->LogFont.lfFaceName, FontVal);
+        _tcscpy(gSet.LogFont.lfFaceName, FontVal);
     if (SizePrm)
-        pVCon->LogFont.lfHeight = SizeVal;
+        gSet.LogFont.lfHeight = SizeVal;
     if (BufferHeightPrm)
-        pVCon->BufferHeight = BufferHeightVal;
+        gSet.BufferHeight = BufferHeightVal;
 	if (!WindowPrm) {
 		if (nCmdShow == SW_SHOWMAXIMIZED)
 			WindowMode = rMaximized;
 	}
 
+//------------------------------------------------------------------------
+///| Create VirtualConsole |//////////////////////////////////////////////
+//------------------------------------------------------------------------
+
+	#undef pVCon
+    // create console
+    pVCon = new VirtualConsole();
+
+//------------------------------------------------------------------------
+///| Allocating console |/////////////////////////////////////////////////
+//------------------------------------------------------------------------
+
+        
+    AllocConsole();
+    ghConWnd = GetConsoleWindow();
+	// Если в свойствах ярлыка указано "Максимизировано" - консоль разворачивается, а FAR при 
+	// старте сам меняет размер буфера, в результате - ошибочно устанавливается размер окна
+	if (nCmdShow != SW_SHOWNORMAL) ShowWindow(ghConWnd, SW_SHOWNORMAL);
+    if (!gSet.isConVisible) {
+	    ShowWindow(ghConWnd, SW_HIDE);
+	    EnableWindow(ghConWnd, FALSE); // NightRoman
+	}
+    SetConsoleSizeTo(ghConWnd, 4, 6);
+    
     // set quick edit mode for buffer mode
-    if (pVCon->BufferHeight > 0)
+    if (gSet.BufferHeight > 0)
     {
         DWORD mode;
         if (GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), &mode) && (mode & 0x0040) == 0)
             SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), (mode | 0x0040));
     }
 
+    if (gSet.wndHeight && gSet.wndWidth)
+    {
+        COORD b = {gSet.wndWidth, gSet.wndHeight};
+	    SetConsoleWindowSize(b,false); // Maximus5 - по аналогии с NightRoman
+		//MoveWindow(hConWnd, 0, 0, 1, 1, 0);
+		//SetConsoleScreenBufferSize(pVCon->hConOut(), b);
+		//MoveWindow(hConWnd, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), 0);
+    }
+
+//------------------------------------------------------------------------
+///| Create MainWindow (todo) |///////////////////////////////////////////
+//------------------------------------------------------------------------
+    
+    if (FontFilePrm) AddFontResourceEx(FontFile, FR_PRIVATE, NULL); //ADD fontname; by Mors
+    
+
+
+
+
 //------------------------------------------------------------------------
 ///| Creating window |////////////////////////////////////////////////////
 //------------------------------------------------------------------------
 
-    RECT cRect;
-    GetWindowRect(ghConWnd, &cRect);
-
     //!!!ICON
-    //TCHAR* lpszFilePart=NULL;
-    //if (GetFullPathName(_T(".\\ConEmu.ico"), MAX_PATH, szIconPath, &lpszFilePart)>0)
-    if (GetModuleFileName(0, szIconPath, MAX_PATH))
-    {
-	    TCHAR *lpszExt = _tcsrchr(szIconPath, _T('.'));
-	    if (!lpszExt)
-		    szIconPath[0] = 0;
-		else {
-			_tcscpy(lpszExt, _T(".ico"));
-	        DWORD dwAttr = GetFileAttributes(szIconPath);
-	        if (dwAttr==-1 || (dwAttr & FILE_ATTRIBUTE_DIRECTORY))
-	            szIconPath[0]=0;
-	    }
-    } else {
-        szIconPath[0]=0;
-    }
+    LoadIcons();
     
-    HICON hClassIcon = NULL, hClassIconSm = NULL;
-    if (szIconPath[0]) {
-	    hClassIcon = (HICON)LoadImage(0, szIconPath, IMAGE_ICON, 
-		    GetSystemMetrics(SM_CXICON), GetSystemMetrics(SM_CYICON), LR_DEFAULTCOLOR|LR_LOADFROMFILE);
-	    hClassIconSm = (HICON)LoadImage(0, szIconPath, IMAGE_ICON, 
-		    GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), LR_DEFAULTCOLOR|LR_LOADFROMFILE);
-	}
-    if (!hClassIcon) {
-	    //hClassIcon = LoadIcon(GetModuleHandle(NULL), (LPCTSTR)MAKEINTRESOURCE(gSet.nIconID)/*IDI_ICON1*/);
-	    hClassIcon = (HICON)LoadImage(GetModuleHandle(0), 
-		    MAKEINTRESOURCE(gSet.nIconID), IMAGE_ICON, 
-		    GetSystemMetrics(SM_CXICON), GetSystemMetrics(SM_CYICON), LR_DEFAULTCOLOR);
-	    if (hClassIconSm) DestroyIcon(hClassIconSm);
-	    hClassIconSm = (HICON)LoadImage(GetModuleHandle(0), 
-		    MAKEINTRESOURCE(gSet.nIconID), IMAGE_ICON, 
-		    GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), LR_DEFAULTCOLOR);
-		//hClassIconSm = LoadIcon(GetModuleHandle(NULL), (LPCTSTR)MAKEINTRESOURCE(gSet.nIconID)/*IDI_ICON1*/);
-    }
-    WNDCLASSEX wc = {sizeof(WNDCLASSEX), CS_DBLCLKS, WndProc, 0, 0, 
-		    g_hInstance, hClassIcon, LoadCursor(NULL, IDC_ARROW), 
-		    NULL /*(HBRUSH)COLOR_BACKGROUND*/, 
-		    NULL, szClassName, hClassIconSm};// | CS_DROPSHADOW
-	if (gbUseChildWindow) wc.lpszClassName = szClassNameParent;
-    if (!RegisterClassEx(&wc))
-        return -1;
-    //ghWnd = CreateWindow(szClassName, 0, WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN, gSet.wndX, gSet.wndY, cRect.right - cRect.left - 4, cRect.bottom - cRect.top - 4, NULL, NULL, (HINSTANCE)g_hInstance, NULL);
-    DWORD style = (pVCon->BufferHeight && !gbUseChildWindow) ? WS_VSCROLL : 0 ;
-    style |= WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN | WS_CLIPSIBLINGS;
-	ghWnd = CreateWindow(gbUseChildWindow ? szClassNameParent : szClassName, 0, style, gSet.wndX, gSet.wndY, cRect.right - cRect.left - 4, cRect.bottom - cRect.top - 4, NULL, NULL, (HINSTANCE)g_hInstance, NULL);
-	if (!ghWnd) {
-		if (!ghWndDC) MBoxA(_T("Can't create main window!"));
-        return -1;
-	}
+    if (!CreateMainWindow())
+	    return -1;
+	    
 
     // set parent window of the console window:
     // *) it is used by ConMan and some FAR plugins, set it for standard mode or if /SetParent switch is set
     // *) do not set it by default for buffer mode because it causes unwanted selection jumps
     // WARP ItSelf опытным путем выяснил, что SetParent валит ConEmu в Windows7
-    //if (!setParentDisabled && (setParent || pVCon->BufferHeight == 0))
+    //if (!setParentDisabled && (setParent || gSet.BufferHeight == 0))
     if (setParent)
         SetParent(ghConWnd, HDCWND); // в сборке alex_itd выполнялся всегда
 
@@ -2213,7 +2259,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	        if (psz[_tcslen(psz)-1]!=_T('\n')) _tcscat(psz, _T("\r\n"));
 	        _tcscat(psz, gSet.Cmd);
 	        _tcscat(psz, _T("\r\n\r\n"));
-	        _tcscat(psz, pVCon->BufferHeight == 0 ? _T("Do You want to simply start far?") : _T("Do You want to simply start cmd?"));
+	        _tcscat(psz, gSet.BufferHeight == 0 ? _T("Do You want to simply start far?") : _T("Do You want to simply start cmd?"));
 	        //MBoxA(psz);
 	        int nBrc = MessageBox(NULL, psz, _T("ConEmu"), MB_YESNO|MB_ICONEXCLAMATION|MB_SETFOREGROUND);
 	        free(psz); free(pszErr);
@@ -2227,8 +2273,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     {
         // *) simple mode: try to start FAR and then cmd;
         // *) buffer mode: FAR is nonsense, try to start cmd only.
-        _tcscpy(temp, pVCon->BufferHeight == 0 ? _T("far") : _T("cmd"));
-        if (!CreateProcess(NULL, temp, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi) && pVCon->BufferHeight == 0)
+        _tcscpy(temp, gSet.BufferHeight == 0 ? _T("far") : _T("cmd"));
+        if (!CreateProcess(NULL, temp, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi) && gSet.BufferHeight == 0)
         {
             _tcscpy(temp, _T("cmd"));
             if (!CreateProcess(NULL, temp, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
@@ -2279,13 +2325,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         reg.CloseKey();
     }
 
-    
-    /*PipeCmd cmd=SetConEmuHwnd;
-    DWORD cbWritten=0;
-    WriteFile(hPipe, &cmd, sizeof(cmd), &cbWritten, NULL); 
-    //SetEvent(hPipeEvent);
-    WriteFile(hPipe, &ghWnd, sizeof(ghWnd), &cbWritten, NULL);*/
-    
 
     DragDrop=new CDragDrop(HDCWND);
     ProgressBars=new CProgressBars(ghWnd, g_hInstance);
@@ -2303,12 +2342,22 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     SetWindowMode(WindowMode);
 
+    
+//------------------------------------------------------------------------
+///| Main message loop |//////////////////////////////////////////////////
+//------------------------------------------------------------------------
+    
     MSG lpMsg;
     while (GetMessage(&lpMsg, NULL, 0, 0))
     {
         TranslateMessage(&lpMsg);
         DispatchMessage(&lpMsg);
     }
+    
+//------------------------------------------------------------------------
+///| Deinitialization |///////////////////////////////////////////////////
+//------------------------------------------------------------------------
+    
     KillTimer(ghWnd, 0);
     delete pVCon;
     //CloseHandle(hChildProcess); -- он более не требуется
