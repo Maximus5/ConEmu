@@ -1,8 +1,5 @@
 #pragma once
 
-extern HWND ghWnd, ghConWnd, ghWndDC;
-extern bool gbUseChildWindow;
-//extern bool gbNoDblBuffer;
 #define HDCWND (gbUseChildWindow ? ghWndDC : ghWnd)
 
 
@@ -21,8 +18,75 @@ extern bool gbUseChildWindow;
 #define GET_X_LPARAM(inPx) ((int)(short)LOWORD(inPx))
 #define GET_Y_LPARAM(inPy) ((int)(short)HIWORD(inPy))
 
-void SyncConsoleToWindowRect(const RECT& rect);
-void SetConsoleWindowSize(const COORD& size, bool updateInfo);
-bool isPictureView();
-LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
-LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
+#define RCLICKAPPSTIMEOUT 300
+#define RCLICKAPPSDELTA 3
+#define DRAG_DELTA 5
+#define MAX_TITLE_SIZE 0x400
+
+class CConEmuChild;
+
+class CConEmuMain
+{
+public:
+	CConEmuChild m_Child;
+	POINT cwShift; // difference between window size and client area size for main ConEmu window
+	POINT cwConsoleShift; // difference between window size and client area size for ghConWnd
+	DWORD gnLastProcessCount;
+	uint cBlinkNext;
+	DWORD WindowMode;
+	HANDLE hPipe;
+	HANDLE hPipeEvent;
+	bool isWndNotFSMaximized;
+	bool isShowConsole;
+	bool isNotFullDrag;
+	bool isLBDown, /*isInDrag,*/ isDragProcessed;
+	bool isRBDown, ibSkilRDblClk; DWORD dwRBDownTick;
+	bool isPiewUpdate;
+	bool gbPostUpdateWindowSize;
+	HWND hPictureView; bool bPicViewSlideShow; DWORD dwLastSlideShowTick;
+	bool gb_ConsoleSelectMode;
+	bool setParent;
+	int RBDownNewX, RBDownNewY;
+	POINT cursor, Rcursor;
+	WPARAM lastMMW;
+	LPARAM lastMML;
+	CDragDrop *DragDrop;
+	CProgressBars *ProgressBars;
+	TCHAR Title[MAX_TITLE_SIZE], TitleCmp[MAX_TITLE_SIZE];
+	COORD srctWindowLast; // console size after last resize (in columns and lines)
+	RECT  dcWindowLast; // Последний размер дочернего окна
+	uint cBlinkShift; // cursor blink counter threshold
+
+public:
+	CConEmuMain();
+	~CConEmuMain();
+
+public:
+	void SetConsoleWindowSize(const COORD& size, bool updateInfo);
+	bool isPictureView();
+	static LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
+	void ForceShowTabs(BOOL abShow);
+
+	RECT WindowSizeFromConsole(COORD consoleSize, bool rectInWindow = false, bool clientOnly = false);
+	COORD ConsoleSizeFromWindow(RECT* arect = NULL, bool frameIncluded = false, bool alreadyClient = false);
+	void PaintGaps(HDC hDC=NULL);
+	void CheckBufferSize();
+	RECT DCClientRect(RECT* pClient=NULL);
+	void SyncWindowToConsole();
+	static BOOL WINAPI HandlerRoutine(DWORD dwCtrlType);
+	void LoadIcons();
+	void CConEmuMain::GetCWShift(HWND inWnd, POINT *outShift);
+	void CConEmuMain::ShowSysmenu(HWND Wnd, HWND Owner, int x, int y);
+	RECT CConEmuMain::ConsoleOffsetRect();
+	bool CConEmuMain::SetWindowMode(uint inMode);
+	void CConEmuMain::SyncConsoleToWindow();
+	bool CConEmuMain::isFilePanel();
+	bool CConEmuMain::isConSelectMode();
+public:
+	LRESULT OnPaint(WPARAM wParam, LPARAM lParam);
+	LRESULT OnSize(WPARAM wParam, LPARAM lParam);
+	LRESULT OnSizing(WPARAM wParam, LPARAM lParam);
+	LRESULT OnTimer(WPARAM wParam, LPARAM lParam);
+	LRESULT OnCopyData(PCOPYDATASTRUCT cds);
+	LRESULT OnGetMinMaxInfo(LPMINMAXINFO pInfo);
+};

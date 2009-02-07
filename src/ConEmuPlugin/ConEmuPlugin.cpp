@@ -40,12 +40,18 @@ WCHAR gszDir1[CONEMUTABMAX], gszDir2[CONEMUTABMAX];
 int maxTabCount = 0, lastWindowCount = 0;
 ConEmuTab* tabs = NULL; //(ConEmuTab*) calloc(maxTabCount, sizeof(ConEmuTab));
 
-#if defined(_MSC_VER)
 BOOL APIENTRY DllMain( HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved )
 {
+	switch (ul_reason_for_call) {
+		case DLL_PROCESS_ATTACH:
+			{
+				HWND hConWnd = GetConsoleWindow();
+				InitHWND(hConWnd);
+			}
+			break;
+	}
 	return TRUE;
 }
-#endif
 
 #if defined(__GNUC__)
 #ifdef __cplusplus
@@ -62,10 +68,10 @@ extern "C"{
 
 BOOL WINAPI DllMainCRTStartup(HANDLE hDll,DWORD dwReason,LPVOID lpReserved)
 {
-  (void) lpReserved;
+  /*(void) lpReserved;
   (void) dwReason;
-  (void) hDll;
-  return TRUE;
+  (void) hDll;*/
+  return DllMain(hDll, dwReason,lpReserved);
 }
 #endif
 
@@ -327,6 +333,12 @@ void InitHWND(HWND ahFarHwnd)
 		
 			hThread=CreateThread(NULL, 0, &ThreadProcW, 0, 0, 0);
 		}
+
+		// дернуть табы, если они нужны
+		int tabCount = 0;
+		CreateTabs(1);
+		AddTab(tabCount, true, false, WTYPE_PANELS, NULL, NULL, 0, 0);
+		SendTabs(tabCount=1, TRUE);
 	}
 
 	//free(pipename);
@@ -362,7 +374,7 @@ BOOL CreateTabs(int windowCount)
 	return tabs!=NULL;
 }
 
-BOOL AddTab(ConEmuTab* tabs, int &tabCount, bool losingFocus, bool editorSave, 
+BOOL AddTab(int &tabCount, bool losingFocus, bool editorSave, 
 			int Type, LPCWSTR Name, LPCWSTR FileName, int Current, int Modified)
 {
     BOOL lbCh = FALSE;
@@ -412,7 +424,7 @@ BOOL AddTab(ConEmuTab* tabs, int &tabCount, bool losingFocus, bool editorSave,
 	return lbCh;
 }
 
-void SendTabs(ConEmuTab* tabs, int &tabCount)
+void SendTabs(int &tabCount, BOOL abForce/*=FALSE*/)
 {
 	if (ConEmuHwnd && IsWindow(ConEmuHwnd)) {
 		COPYDATASTRUCT cds;
@@ -424,7 +436,7 @@ void SendTabs(ConEmuTab* tabs, int &tabCount)
 			cds.dwData = --tabCount;
 			cds.lpData = tabs+1;
 		}
-		if (tabCount) {
+		if (tabCount || abForce) {
 			cds.cbData = tabCount * sizeof(ConEmuTab);
 			FORWARD_WM_COPYDATA(ConEmuHwnd, FarHwnd, &cds, SendMessage);
 		}
@@ -468,6 +480,8 @@ int WINAPI _export ProcessViewerEventW(int Event, void *Param)
 
 void   WINAPI _export ExitFARW(void)
 {
+	CloseTabs();
+
     if (tabs) {
 	    free(tabs);
 	    tabs = NULL;
@@ -477,4 +491,15 @@ void   WINAPI _export ExitFARW(void)
 		return ExitFARW757();
 	else
 		return ExitFARW684();
+}
+
+void CloseTabs()
+{
+	if (ConEmuHwnd && IsWindow(ConEmuHwnd)) {
+		COPYDATASTRUCT cds;
+		cds.dwData = 0;
+		cds.lpData = &cds.dwData;
+		cds.cbData = sizeof(cds.dwData);
+		SendMessage(ConEmuHwnd, WM_COPYDATA, (WPARAM)FarHwnd, (LPARAM)&cds);
+	}
 }

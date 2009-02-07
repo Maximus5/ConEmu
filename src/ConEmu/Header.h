@@ -1,19 +1,51 @@
 #pragma once
 
+#include <windows.h>
+
+#ifdef KL_MEM
+#include "c:\\lang\\kl.h"
+#else
+#include "kl_parts.h"
+#endif
 
 #include "globals.h"
 #include "VirtualConsole.h"
 #include "options.h"
 #include "DragDrop.h"
 #include "progressbars.h"
+#include "TrayIcon.h"
+#include "ConEmuChild.h"
 #include "ConEmu.h"
+#include "ConEmuApp.h"
 #include "tabbar.h"
+#include "TrayIcon.h"
 
 
 #define MBox(rt) (int)MessageBox(NULL, rt, Title, MB_SYSTEMMODAL | MB_ICONINFORMATION)
 #define MBoxA(rt) (int)MessageBox(NULL, rt, _T("ConEmu"), MB_SYSTEMMODAL | MB_ICONINFORMATION)
 #define isMeForeground() (GetForegroundWindow() == ghWnd || GetForegroundWindow() == ghOpWnd)
 #define isPressed(inp) HIBYTE(GetKeyState(inp))
+
+#define PTDIFFTEST(C,D) (((abs(C.x-LOWORD(lParam)))<D) && ((abs(C.y-HIWORD(lParam)))<D))
+
+#define INVALIDATE() InvalidateRect(HDCWND, NULL, FALSE)
+
+
+#ifdef MSGLOGGER
+#define POSTMESSAGE(h,m,w,l,e) {MCHKHEAP; DebugLogMessage(h,m,w,l,TRUE,e); PostMessage(h,m,w,l);}
+#define SENDMESSAGE(h,m,w,l) {MCHKHEAP;  DebugLogMessage(h,m,w,l,FALSE,FALSE); SendMessage(h,m,w,l);}
+#define SETWINDOWPOS(hw,hp,x,y,w,h,f) {MCHKHEAP; DebugLogPos(hw,x,y,w,h); SetWindowPos(hw,hp,x,y,w,h,f);}
+#define MOVEWINDOW(hw,x,y,w,h,r) {MCHKHEAP; DebugLogPos(hw,x,y,w,h); MoveWindow(hw,x,y,w,h,r);}
+#define SETCONSOLESCREENBUFFERSIZE(h,s) {MCHKHEAP; DebugLogBufSize(h,s); SetConsoleScreenBufferSize(h,s);}
+#define DEBUGLOGFILE(m) DebugLogFile(m)
+#else
+#define POSTMESSAGE(h,m,w,l,e) PostMessage(h,m,w,l)
+#define SENDMESSAGE(h,m,w,l) SendMessage(h,m,w,l)
+#define SETWINDOWPOS(hw,hp,x,y,w,h,f) SetWindowPos(hw,hp,x,y,w,h,f)
+#define MOVEWINDOW(hw,x,y,w,h,r) MoveWindow(hw,x,y,w,h,r)
+#define SETCONSOLESCREENBUFFERSIZE(h,s) SetConsoleScreenBufferSize(h,s)
+#define DEBUGLOGFILE(m)
+#endif
 
 
 #if !defined(__GNUC__)
@@ -22,11 +54,6 @@
 #endif
 
 
-#ifdef KL_MEM
-#include "c:\\lang\\kl.h"
-#else
-#include "kl_parts.h"
-#endif
 
 #include "resource.h"
 
@@ -150,4 +177,3 @@ Mors: loading font from file\n\
 Maximus5: PictureView support, some bugfixes and customizations.\n\
 (based on console emulator by SEt)";
 
-//extern VirtualConsole *pVCon;

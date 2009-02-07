@@ -1,7 +1,11 @@
 #pragma once
 
-struct gSettings
+class CSettings
 {
+public:
+	CSettings();
+	~CSettings();
+
 	TCHAR Config[MAX_PATH];
 
 	int BufferHeight;
@@ -42,11 +46,15 @@ struct gSettings
 	TCHAR szTabEditorModified[32];
 	TCHAR szTabViewer[32];
 	DWORD nTabLenMax;
+
+	bool LoadImageFrom(TCHAR *inPath);
+	static BOOL CALLBACK wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
+	void LoadSettings();
+	void InitSettings();
+	BOOL SaveSettings();
+	bool ShowColorDialog(HWND HWndOwner, COLORREF *inColor);
+	static BOOL CALLBACK EnumFamCallBack(LPLOGFONT lplf, LPNEWTEXTMETRIC lpntm, DWORD FontType, LPVOID aFontCount);
 };
 
-bool LoadImageFrom(TCHAR *inPath);
-BOOL CALLBACK wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
-void LoadSettings();
-void InitSettings();
 
-extern HWND ghOpWnd;
+

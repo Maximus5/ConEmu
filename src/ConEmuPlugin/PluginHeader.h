@@ -14,10 +14,10 @@ extern ConEmuTab* tabs; //(ConEmuTab*) calloc(maxTabCount, sizeof(ConEmuTab));
 
 BOOL CreateTabs(int windowCount);
 
-BOOL AddTab(ConEmuTab* tabs, int &tabCount, bool losingFocus, bool editorSave, 
+BOOL AddTab(int &tabCount, bool losingFocus, bool editorSave, 
 			int Type, LPCWSTR Name, LPCWSTR FileName, int Current, int Modified);
 
-void SendTabs(ConEmuTab* tabs, int &tabCount);
+void SendTabs(int &tabCount, BOOL abForce=FALSE);
 
 void InitHWND(HWND ahFarHwnd);
 
@@ -37,3 +37,5 @@ void ProcessDragFrom684();
 void ProcessDragFrom757();
 void ProcessDragTo684();
 void ProcessDragTo757();
+
+void CloseTabs();

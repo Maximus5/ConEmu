@@ -219,7 +219,7 @@ void SetStartupInfoW757(void *aInfo)
 	*::FSFW757 = *((struct PluginStartupInfo*)aInfo)->FSF;
 	::InfoW757->FSF = ::FSFW757;
 	
-	InitHWND((HWND)InfoW757->AdvControl(InfoW757->ModuleNumber, ACTL_GETFARHWND, 0));	
+	//InitHWND((HWND)InfoW757->AdvControl(InfoW757->ModuleNumber, ACTL_GETFARHWND, 0));	
 	//ConEmuHwnd = NULL;
 	//FarHwnd = (HWND)InfoW757->AdvControl(InfoW757->ModuleNumber, ACTL_GETFARHWND, 0);
 	//ConEmuHwnd = GetAncestor(FarHwnd, GA_PARENT);
@@ -317,7 +317,7 @@ void UpdateConEmuTabsW757(int event, bool losingFocus, bool editorSave)
 		WInfo.Pos = i;
 		InfoW757->AdvControl(InfoW757->ModuleNumber, ACTL_GETWINDOWINFO, (void*)&WInfo);
 		if (WInfo.Type == WTYPE_EDITOR || WInfo.Type == WTYPE_VIEWER || WInfo.Type == WTYPE_PANELS)
-			lbCh |= AddTab(tabs, tabCount, losingFocus, editorSave, 
+			lbCh |= AddTab(tabCount, losingFocus, editorSave, 
 				WInfo.Type, WInfo.Name, editorSave ? ei.FileName : NULL, 
 				WInfo.Current, WInfo.Modified);
 		InfoW757->AdvControl(InfoW757->ModuleNumber, ACTL_FREEWINDOWINFO, (void*)&WInfo);
@@ -327,7 +327,7 @@ void UpdateConEmuTabsW757(int event, bool losingFocus, bool editorSave)
 		InfoW757->EditorControl(ECTL_FREEINFO, &ei);
 
 	if (lbCh)
-		SendTabs(tabs, tabCount);
+		SendTabs(tabCount);
 }
 
 /*extern "C"

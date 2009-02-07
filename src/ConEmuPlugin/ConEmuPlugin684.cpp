@@ -225,7 +225,7 @@ void SetStartupInfoW684(void *aInfo)
 	*::FSFW684 = *((struct PluginStartupInfo*)aInfo)->FSF;
 	::InfoW684->FSF = ::FSFW684;
 
-	InitHWND((HWND)InfoW684->AdvControl(InfoW684->ModuleNumber, ACTL_GETFARHWND, 0));	
+	//InitHWND((HWND)InfoW684->AdvControl(InfoW684->ModuleNumber, ACTL_GETFARHWND, 0));	
 	//ConEmuHwnd = NULL;
 	//FarHwnd = (HWND)InfoW684->AdvControl(InfoW684->ModuleNumber, ACTL_GETFARHWND, 0);
 	//ConEmuHwnd = GetAncestor(FarHwnd, GA_PARENT);
@@ -325,7 +325,7 @@ void UpdateConEmuTabsW684(int event, bool losingFocus, bool editorSave)
 		WInfo.Pos = i;
 		InfoW684->AdvControl(InfoW684->ModuleNumber, ACTL_GETWINDOWINFO, (void*)&WInfo);
 		if (WInfo.Type == WTYPE_EDITOR || WInfo.Type == WTYPE_VIEWER || WInfo.Type == WTYPE_PANELS)
-			lbCh |= AddTab(tabs, tabCount, losingFocus, editorSave, 
+			lbCh |= AddTab(tabCount, losingFocus, editorSave, 
 				WInfo.Type, WInfo.Name, editorSave ? ei.FileName : NULL, 
 				WInfo.Current, WInfo.Modified);
 		InfoW684->AdvControl(InfoW684->ModuleNumber, ACTL_FREEWINDOWINFO, (void*)&WInfo);
@@ -335,7 +335,7 @@ void UpdateConEmuTabsW684(int event, bool losingFocus, bool editorSave)
 		InfoW684->EditorControl(ECTL_FREEINFO, &ei);
 
 	if (lbCh)
-		SendTabs(tabs, tabCount);
+		SendTabs(tabCount);
 }
 
 void ExitFARW684(void)

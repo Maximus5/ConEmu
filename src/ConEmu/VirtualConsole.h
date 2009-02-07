@@ -39,6 +39,8 @@ struct VirtualConsole
 	void Free(bool bFreeFont = true);
 	bool Update(bool isForce = false, HDC *ahDc=NULL);
 	void SelectFont(HFONT hNew);
+	HFONT CreateFontIndirectMy(LOGFONT *inFont);
+	bool isCharUnicode(WCHAR inChar);
+	void BlitPictureTo(VirtualConsole *vc, int inX, int inY, int inWidth, int inHeight);
+	bool CheckSelection(const CONSOLE_SELECTION_INFO& select, SHORT row, SHORT col);
 };
-
-extern VirtualConsole *pVCon;

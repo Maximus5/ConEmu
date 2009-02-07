@@ -68,6 +68,18 @@ int TabBarClass::Height()
 	return _tabHeight;
 }
 
+BOOL TabBarClass::IsAllowed()
+{
+	BOOL lbTabsAllowed = TRUE;
+	if (gSet.BufferHeight) {
+        CONSOLE_SCREEN_BUFFER_INFO inf; memset(&inf, 0, sizeof(inf));
+        GetConsoleScreenBufferInfo(pVCon->hConOut(), &inf);
+        if (inf.dwSize.Y>(inf.srWindow.Bottom-inf.srWindow.Top+1))
+			lbTabsAllowed = FALSE;
+	}
+	return lbTabsAllowed;
+}
+
 void TabBarClass::Activate()
 {
 	RECT rcClient; 
@@ -83,9 +95,19 @@ void TabBarClass::Activate()
 		CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_SWISS, TAB_FONT_FACE);
 	SendMessage(_hwndTab, WM_SETFONT, WPARAM (hFont), TRUE);
 	
+#pragma warning (disable : 4312)
 	_defaultTabProc = (WNDPROC)SetWindowLongPtr(_hwndTab, GWL_WNDPROC, (LONG_PTR)TabProc);
 
 	_active = true;
+}
+
+void TabBarClass::Deactivate()
+{
+	if (!_active /*|| !_tabHeight*/)
+		return;
+
+	_tabHeight = 0;
+	UpdatePosition();
 }
 
 void TabBarClass::Update(ConEmuTab* tabs, int tabsCount)
@@ -169,6 +191,21 @@ void TabBarClass::UpdatePosition()
 	}
 	RECT client;
 	GetClientRect(ghWnd, &client);
+	if (ghWndDC) {
+		RECT rc = client;
+		rc.top = _tabHeight;
+		RECT rcChild = gConEmu.WindowSizeFromConsole(
+				gConEmu.ConsoleSizeFromWindow(&rc, false /* rectInWindow */, true /* alreadyClient */), 
+			false /* rectInWindow */, true /* clientOnly */);
+		
+		MoveWindow(ghWndDC, rcChild.left, rcChild.top+_tabHeight, rcChild.right-rcChild.left, rcChild.bottom-rcChild.top, 1);
+
+		gConEmu.SyncConsoleToWindow();
+		//SyncWindowToConsole();
+
+		//InvalidateRect(ghWnd, NULL, FALSE);
+		gConEmu.PaintGaps();
+	}
 	MoveWindow(_hwndTab, 0, 0, client.right, _tabHeight, 1);
 }
 
@@ -188,7 +225,7 @@ bool TabBarClass::OnNotify(LPNMHDR nmhdr)
 
 	if (nmhdr->code == TCN_SELCHANGE)
 	{ 
-		_tcscpy(_lastTitle, Title);
+		_tcscpy(_lastTitle, gConEmu.Title);
 		FarSendChangeTab(TabCtrl_GetCurSel(_hwndTab));
 		// start waiting for title to change
 		_titleShouldChange = true;
@@ -208,7 +245,7 @@ void TabBarClass::OnTimer()
 	if (_titleShouldChange)
 	{
 		// title hasn't changed - tab switching was unsuccessful - return to the previous selected tab
-		if (_tcscmp(_lastTitle, Title) == 0)
+		if (_tcscmp(_lastTitle, gConEmu.Title) == 0)
 		{
 			SelectTab(_prevTab);
 		}

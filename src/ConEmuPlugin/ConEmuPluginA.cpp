@@ -346,7 +346,7 @@ void WINAPI _export SetStartupInfo(const struct PluginStartupInfo *aInfo)
 	/*for (int i=0; i<=MessagesMax; i++)
 		MessagesA[i][0]=0;*/
 		
-    InitHWND((HWND)InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETFARHWND, 0));
+    //InitHWND((HWND)InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETFARHWND, 0));
 
 	//ConEmuHwnd = NULL;
 	//FarHwnd = (HWND)InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETFARHWND, 0);
@@ -516,7 +516,7 @@ void UpdateConEmuTabsA(int event, bool losingFocus, bool editorSave)
 		if (WInfo.Type == WTYPE_EDITOR || WInfo.Type == WTYPE_VIEWER || WInfo.Type == WTYPE_PANELS)
 		{
 			MultiByteToWideChar(CP_OEMCP, 0, WInfo.Name, lstrlenA(WInfo.Name)+1, pszName, CONEMUTABMAX);
-			lbCh |= AddTab(tabs, tabCount, losingFocus, editorSave, 
+			lbCh |= AddTab(tabCount, losingFocus, editorSave, 
 				WInfo.Type, pszName, editorSave ? pszFileName : NULL, 
 				WInfo.Current, WInfo.Modified);
 		}
@@ -526,11 +526,13 @@ void UpdateConEmuTabsA(int event, bool losingFocus, bool editorSave)
 	//if (pszName) free(pszName);
 
 	if (lbCh)
-		SendTabs(tabs, tabCount);
+		SendTabs(tabCount);
 }
 
 void   WINAPI _export ExitFAR(void)
 {
+	CloseTabs();
+
 	if (InfoA) {
 		free(InfoA);
 		InfoA=NULL;

@@ -158,8 +158,19 @@ bool VirtualConsole::InitDC(void)
 	return hBitmap != NULL;
 }
 
+HFONT VirtualConsole::CreateFontIndirectMy(LOGFONT *inFont)
+{
+    DeleteObject(pVCon->hFont2);
+
+    int width = gSet.FontSizeX2 ? gSet.FontSizeX2 : inFont->lfWidth;
+    pVCon->hFont2 = CreateFont(abs(inFont->lfHeight), abs(width), 0, 0, FW_NORMAL,
+        0, 0, 0, DEFAULT_CHARSET, OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS, ANTIALIASED_QUALITY, 0, gSet.LogFont2.lfFaceName);
+
+    return CreateFontIndirect(inFont);
+}
+
 //#define isCharUnicode(inChar) (inChar <= 0x2668 ? 0 : 1)
-bool isCharUnicode(WCHAR inChar)
+bool VirtualConsole::isCharUnicode(WCHAR inChar)
 {
 	//if (inChar <= 0x2668)
 	if (gSet.isFixFarBorders)
@@ -183,7 +194,7 @@ bool isCharUnicode(WCHAR inChar)
 	}
 }
 
-void BlitPictureTo(VirtualConsole *vc, int inX, int inY, int inWidth, int inHeight)
+void VirtualConsole::BlitPictureTo(VirtualConsole *vc, int inX, int inY, int inWidth, int inHeight)
 {
 	BitBlt(vc->hDC, inX, inY, inWidth, inHeight, vc->hBgDc, inX, inY, SRCCOPY);
 	if (vc->bgBmp.cx < (int)inWidth || vc->bgBmp.cy < (int)inHeight)
@@ -208,7 +219,7 @@ void VirtualConsole::SelectFont(HFONT hNew)
 	}
 }
 
-static bool CheckSelection(const CONSOLE_SELECTION_INFO& select, SHORT row, SHORT col)
+bool VirtualConsole::CheckSelection(const CONSOLE_SELECTION_INFO& select, SHORT row, SHORT col)
 {
 	if ((select.dwFlags & CONSOLE_SELECTION_NOT_EMPTY) == 0)
 		return false;
@@ -570,9 +581,13 @@ bool VirtualConsole::Update(bool isForce, HDC *ahDc)
 				else if (!isUnicode)
 				{
 					j2 = j + 1;
-					if (!doSelect)
+					if (!doSelect) {
+#ifndef _DEBUG
+						// пока убрал
 						while(j2 < end && ConAttrLine[j2] == attr && !isCharUnicode(*(ConCharLine+j2)))
 							++j2;
+#endif
+					}
 					if (gSet.isFixFarBorders)
 						SelectFont(hFont);
 				}
@@ -615,6 +630,9 @@ bool VirtualConsole::Update(bool isForce, HDC *ahDc)
 					else
 					{
 						ExtTextOut(hDC, rect.left, rect.top, ETO_CLIPPED | ((drawImage && (attrBack) < 2) ? 0 : ETO_OPAQUE), &rect, ConCharLine + j, j2 - j, 0);
+#ifdef _DEBUG
+						GdiFlush();
+#endif
 					}
 				}
 			
@@ -673,7 +691,7 @@ done:
 		if ((Cursor.x != csbi.dwCursorPosition.X || Cursor.y != csbi.dwCursorPosition.Y))
 		{
 			Cursor.isVisible = isMeForeground();
-			cBlinkNext = 0;
+			gConEmu.cBlinkNext = 0;
 		}
 
 		int CurChar = csbi.dwCursorPosition.Y * TextWidth + csbi.dwCursorPosition.X;

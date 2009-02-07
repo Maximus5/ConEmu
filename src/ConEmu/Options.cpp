@@ -1,14 +1,22 @@
 
 #include "Header.h"
-#include "commctrl.h"
+#include <commctrl.h>
+#include "ConEmu.h"
 
 const u8 chSetsNums[19] = {0, 178, 186, 136, 1, 238, 134, 161, 177, 129, 130, 77, 255, 204, 128, 2, 222, 162, 163};
 int upToFontHeight=0;
 HWND ghOpWnd=NULL;
 
-extern void ForceShowTabs();
+CSettings::CSettings()
+{
+	InitSettings();
+}
 
-void InitSettings()
+CSettings::~CSettings()
+{
+}
+
+void CSettings::InitSettings()
 {
     memset(&gSet, 0, sizeof(gSet)); // дабы мусора в дебаге не оставалось
 
@@ -71,14 +79,14 @@ void InitSettings()
     gSet.ScrollTitleLen = 22;
 }
 
-void LoadSettings()
+void CSettings::LoadSettings()
 {
     DWORD inSize = gSet.LogFont.lfHeight;
     TCHAR inFont[MAX_PATH], inFont2[MAX_PATH];
     _tcscpy(inFont, gSet.LogFont.lfFaceName);
     _tcscpy(inFont2, gSet.LogFont2.lfFaceName);
     DWORD Quality = gSet.LogFont.lfQuality;
-    WindowMode = rMaximized;
+    gConEmu.WindowMode = rMaximized;
     DWORD FontCharSet = gSet.LogFont.lfCharSet;
     bool isBold = (gSet.LogFont.lfWeight>=FW_BOLD), isItalic = (gSet.LogFont.lfItalic!=FALSE);
     
@@ -99,7 +107,7 @@ void LoadSettings()
         reg.Load(_T("FontSizeX2"), &gSet.FontSizeX2);
         reg.Load(_T("FontCharSet"), &FontCharSet);
         reg.Load(_T("Anti-aliasing"), &Quality);
-        reg.Load(_T("WindowMode"), &WindowMode);
+        reg.Load(_T("WindowMode"), &gConEmu.WindowMode);
         reg.Load(_T("ConWnd X"), &gSet.wndX);
         reg.Load(_T("ConWnd Y"), &gSet.wndY);
         reg.Load(_T("ConWnd Width"), &gSet.wndWidth);
@@ -160,7 +168,7 @@ void LoadSettings()
         LoadImageFrom(gSet.pBgImage);
 }
 
-BOOL SaveSettings()
+BOOL CSettings::SaveSettings()
 {
     Registry reg;
     if (reg.OpenKey(_T("Console"), KEY_WRITE))
@@ -219,7 +227,7 @@ BOOL SaveSettings()
             
             reg.CloseKey();
             
-            if (gSet.isTabs==1) ForceShowTabs();
+            //if (gSet.isTabs==1) ForceShowTabs();
             
             //MessageBoxA(ghOpWnd, "Saved.", "Information", MB_ICONINFORMATION);
             return TRUE;
@@ -231,7 +239,7 @@ BOOL SaveSettings()
 }
 
 
-bool ShowColorDialog(HWND HWndOwner, COLORREF *inColor)
+bool CSettings::ShowColorDialog(HWND HWndOwner, COLORREF *inColor)
 {
     CHOOSECOLOR cc;                 // common dialog box structure
     //static COLORREF acrCustClr[16]; // array of custom colors
@@ -252,7 +260,7 @@ bool ShowColorDialog(HWND HWndOwner, COLORREF *inColor)
     return false;
 }
 
-BOOL CALLBACK EnumFamCallBack(LPLOGFONT lplf, LPNEWTEXTMETRIC lpntm, DWORD FontType, LPVOID aFontCount)
+BOOL CALLBACK CSettings::EnumFamCallBack(LPLOGFONT lplf, LPNEWTEXTMETRIC lpntm, DWORD FontType, LPVOID aFontCount)
 {
     int far * aiFontCount = (int far *) aFontCount;
 
@@ -278,7 +286,7 @@ BOOL CALLBACK EnumFamCallBack(LPLOGFONT lplf, LPNEWTEXTMETRIC lpntm, DWORD FontT
     UNREFERENCED_PARAMETER( lpntm );
 }
 
-BOOL CALLBACK wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
+BOOL CALLBACK CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
 {
     switch (messg)
     {
@@ -311,6 +319,7 @@ BOOL CALLBACK wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
                 if (i > 0)
                     SendDlgItemMessage(ghOpWnd, tFontSizeY, CB_ADDSTRING, 0, (LPARAM) temp);
                 SendDlgItemMessage(ghOpWnd, tFontSizeX, CB_ADDSTRING, 0, (LPARAM) temp);
+				SendDlgItemMessage(ghOpWnd, tFontSizeX2, CB_ADDSTRING, 0, (LPARAM) temp);
 				SendDlgItemMessage(ghOpWnd, tFontSizeX3, CB_ADDSTRING, 0, (LPARAM) temp);
             }
 
@@ -322,6 +331,10 @@ BOOL CALLBACK wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
             wsprintf(temp, _T("%i"), gSet.FontSizeX);
             if( SendDlgItemMessage(hWnd2, tFontSizeX, CB_SELECTSTRING, -1, (LPARAM)temp) == CB_ERR )
                 SetDlgItemText(hWnd2, tFontSizeX, temp);
+
+            wsprintf(temp, _T("%i"), gSet.FontSizeX2);
+            if( SendDlgItemMessage(hWnd2, tFontSizeX2, CB_SELECTSTRING, -1, (LPARAM)temp) == CB_ERR )
+                SetDlgItemText(hWnd2, tFontSizeX2, temp);
 
             wsprintf(temp, _T("%i"), gSet.FontSizeX3);
             if( SendDlgItemMessage(hWnd2, tFontSizeX3, CB_SELECTSTRING, -1, (LPARAM)temp) == CB_ERR )
@@ -472,7 +485,7 @@ BOOL CALLBACK wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
                     TCHAR tmp[10];
                     wsprintf(tmp, _T("%i"), gSet.bgImageDarker);
                     SetDlgItemText(hWnd2, tDarker, tmp);
-                    LoadImageFrom(gSet.pBgImage);
+                    gSet.LoadImageFrom(gSet.pBgImage);
                     pVCon->Update(true);
                     InvalidateRect(ghWnd, NULL, FALSE);
                 }
@@ -488,7 +501,8 @@ BOOL CALLBACK wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
                 case IDOK:
                 case IDCANCEL:
                 case IDCLOSE:
-					if (gSet.isTabs==1) ForceShowTabs();
+					if (gSet.isTabs==1) gConEmu.ForceShowTabs(TRUE); else
+					if (gSet.isTabs==0) gConEmu.ForceShowTabs(FALSE); // там еще есть '==2', но его здесь не обрабатываем
                     SendMessage(hWnd2, WM_CLOSE, 0, 0);
                     break;
 
@@ -504,14 +518,14 @@ BOOL CALLBACK wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
                     break;
 
                 case bSaveSettings:
-                    if (SaveSettings())
+                    if (gSet.SaveSettings())
 						SendMessage(hWnd2,WM_COMMAND,IDOK,0);
                     break;
 
                 case rNormal:
                 case rFullScreen:
                 case rMaximized:
-                    SetWindowMode(wParam);
+                    gConEmu.SetWindowMode(wParam);
                     break;
 
                 case cbFixFarBorders:
@@ -537,7 +551,7 @@ BOOL CALLBACK wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
                             gSet.LogFont.lfItalic = SendDlgItemMessage(hWnd2, cbItalic, BM_GETCHECK, BST_CHECKED, 0) == BST_CHECKED ? true : false;
 
                         gSet.LogFont.lfWidth = gSet.FontSizeX;
-                        HFONT hFont = CreateFontIndirectMy(&gSet.LogFont);
+                        HFONT hFont = pVCon->CreateFontIndirectMy(&gSet.LogFont);
                         if (hFont)
                         {
                             DeleteObject(pVCon->hFont);
@@ -545,9 +559,9 @@ BOOL CALLBACK wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
 
                             pVCon->Update(true);
                             if (!gSet.isFullScreen && !IsZoomed(ghWnd))
-                                SyncWindowToConsole();
+                                gConEmu.SyncWindowToConsole();
                             else
-                                SyncConsoleToWindow();
+                                gConEmu.SyncConsoleToWindow();
                             InvalidateRect(ghWnd, 0, 0);
                         }
                     }
@@ -646,7 +660,7 @@ BOOL CALLBACK wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
                     if (CB >= 1000 && CB <= 1015)
                     {
                         COLORREF color = gSet.Colors[CB - 1000];
-                        if( ShowColorDialog(hWnd2, &color) )
+                        if( gSet.ShowColorDialog(hWnd2, &color) )
                         {
                             gSet.Colors[CB - 1000] = color;
                             wsprintf(temp, _T("%i %i %i"), getR(color), getG(color), getB(color));
@@ -690,7 +704,7 @@ BOOL CALLBACK wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
                 else if (TB == tBgImage)
                 {
                     GetDlgItemText(ghOpWnd, tBgImage, temp, MAX_PATH);
-                    if( LoadImageFrom(temp) )
+                    if( gSet.LoadImageFrom(temp) )
                     {
                         if (gSet.isShowBgImage && gSet.isBackgroundImageValid)
                             SetBkMode(pVCon->hDC, TRANSPARENT);
@@ -715,7 +729,7 @@ BOOL CALLBACK wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
                         gSet.wndHeight = newY;
 
                         COORD b = {gSet.wndWidth, gSet.wndHeight};
-                  SetConsoleWindowSize(b, false);  // NightRoman
+                  gConEmu.SetConsoleWindowSize(b, false);  // NightRoman
                   //MoveWindow(hConWnd, 0, 0, 1, 1, 0);
                   //SetConsoleScreenBufferSize(pVCon->hConOut(), b);
                   //MoveWindow(hConWnd, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), 0);
@@ -732,7 +746,7 @@ BOOL CALLBACK wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
                     {
                         gSet.bgImageDarker = newV;
                         SendDlgItemMessage(hWnd2, slDarker, TBM_SETPOS, (WPARAM) true, (LPARAM) gSet.bgImageDarker);
-                        LoadImageFrom(gSet.pBgImage);
+                        gSet.LoadImageFrom(gSet.pBgImage);
                         pVCon->Update(true);
                         InvalidateRect(ghWnd, NULL, FALSE);
                     }
@@ -764,7 +778,7 @@ BOOL CALLBACK wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
                     BYTE qWas = pLogFont->lfQuality;
                     pLogFont->lfHeight = upToFontHeight;
                     pLogFont->lfWidth = gSet.FontSizeX;
-                    HFONT hFont = CreateFontIndirectMy(&gSet.LogFont);
+                    HFONT hFont = pVCon->CreateFontIndirectMy(&gSet.LogFont);
                     if (hFont)
                     {
 	                    if (LOWORD(wParam) == tFontFace) {
@@ -777,9 +791,9 @@ BOOL CALLBACK wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
 
                         pVCon->Update(true);
                         if (!gSet.isFullScreen && !IsZoomed(ghWnd))
-                            SyncWindowToConsole();
+                            gConEmu.SyncWindowToConsole();
                         else
-                            SyncConsoleToWindow();
+                            gConEmu.SyncConsoleToWindow();
                         InvalidateRect(ghWnd, 0, 0);
 
                         if (LOWORD(wParam) == tFontFace) {
@@ -788,10 +802,12 @@ BOOL CALLBACK wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
 	                    }
                     }
                 }
-                else if (LOWORD(wParam) == tFontSizeY || LOWORD(wParam) == tFontSizeX || LOWORD(wParam) == tFontSizeX3 || LOWORD(wParam) == tFontCharset)
+                else if (LOWORD(wParam) == tFontSizeY || LOWORD(wParam) == tFontSizeX || 
+					LOWORD(wParam) == tFontSizeX2 || LOWORD(wParam) == tFontSizeX3 || LOWORD(wParam) == tFontCharset)
                 {
-                    int newSize;
-                    if (LOWORD(wParam) == tFontSizeY || LOWORD(wParam) == tFontSizeX || LOWORD(wParam) == tFontSizeX3)
+                    int newSize = 0;
+                    if (LOWORD(wParam) == tFontSizeY || LOWORD(wParam) == tFontSizeX || 
+						LOWORD(wParam) == tFontSizeX2 || LOWORD(wParam) == tFontSizeX3)
                     {
                         if (HIWORD(wParam) == CBN_EDITCHANGE)
                             GetDlgItemText(hWnd2, LOWORD(wParam), temp, MAX_PATH);
@@ -807,6 +823,8 @@ BOOL CALLBACK wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
                             gSet.LogFont.lfHeight = upToFontHeight = newSize;
                         else if (LOWORD(wParam) == tFontSizeX)
                             gSet.FontSizeX = newSize;
+                        else if (LOWORD(wParam) == tFontSizeX2)
+                            gSet.FontSizeX2 = newSize;
                         else if (LOWORD(wParam) == tFontSizeX3)
                             gSet.FontSizeX3 = newSize;
                         else if (LOWORD(wParam) == tFontCharset)
@@ -818,7 +836,7 @@ BOOL CALLBACK wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
                         }
                         gSet.LogFont.lfWidth = gSet.FontSizeX;
 
-                        HFONT hFont = CreateFontIndirectMy(&gSet.LogFont);
+                        HFONT hFont = pVCon->CreateFontIndirectMy(&gSet.LogFont);
                         if (hFont)
                         {
                             DeleteObject(pVCon->hFont);
@@ -826,9 +844,9 @@ BOOL CALLBACK wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
 
                             pVCon->Update(true);
                             if (!gSet.isFullScreen && !IsZoomed(ghWnd))
-                                SyncWindowToConsole();
+                                gConEmu.SyncWindowToConsole();
                             else
-                                SyncConsoleToWindow();
+                                gConEmu.SyncConsoleToWindow();
                             InvalidateRect(ghWnd, 0, 0);
                         }
                     }
@@ -846,7 +864,7 @@ BOOL CALLBACK wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
     return 0;
 }
 
-bool LoadImageFrom(TCHAR *inPath)
+bool CSettings::LoadImageFrom(TCHAR *inPath)
 {
     TCHAR exPath[MAX_PATH + 2];
     if (!ExpandEnvironmentStrings(inPath, exPath, MAX_PATH))

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="windows-1251"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9.00"
+	Version="9,00"
 	Name="conemu"
 	ProjectGUID="{EEE25AC6-D94D-472D-8D4A-3C6C382CFD3D}"
 	RootNamespace="conemu"
@@ -47,7 +47,7 @@
 				RuntimeLibrary="3"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
-				Detect64BitPortabilityProblems="true"
+				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="4"
 			/>
 			<Tool
@@ -343,6 +343,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\ConEmuApp.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ConEmuChild.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\DragDrop.cpp"
 				>
 			</File>
@@ -363,6 +371,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\TrayIcon.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\VirtualConsole.cpp"
 				>
 			</File>
@@ -378,6 +390,14 @@
 			</File>
 			<File
 				RelativePath=".\ConEmu.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ConEmuApp.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ConEmuChild.h"
 				>
 			</File>
 			<File
@@ -410,6 +430,10 @@
 			</File>
 			<File
 				RelativePath=".\TabBar.h"
+				>
+			</File>
+			<File
+				RelativePath=".\TrayIcon.h"
 				>
 			</File>
 			<File

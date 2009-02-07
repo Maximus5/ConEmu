@@ -1,5 +1,4 @@
 #pragma once
-#include "header.h"
 
 class TabBarClass
 {
@@ -16,8 +15,10 @@ class TabBarClass
 public:
 	TabBarClass();
 	bool IsActive();
+	BOOL IsAllowed();
 	int Height();
 	void Activate();
+	void Deactivate();
 	void Update(ConEmuTab* tabs, int tabsCount);
 	void UpdatePosition();
 	bool OnNotify(LPNMHDR nmhdr);
@@ -25,4 +26,3 @@ public:
 	void OnTimer();
 };
 
-extern TabBarClass TabBar;

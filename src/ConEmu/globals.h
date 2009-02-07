@@ -1,28 +1,43 @@
 #pragma once
-#include "DragDrop.h"
-#include "VirtualConsole.h"
-#include "options.h"
 
+extern const TCHAR *const szClassName;
+extern const TCHAR *const szClassNameParent;
+extern const TCHAR *const szClassNameApp;
+
+struct VirtualConsole;
 extern VirtualConsole *pVCon;
 extern HINSTANCE g_hInstance;
-extern TCHAR Title[0x400];
-extern bool isLBDown, /*isInDrag,*/ isDragProcessed;
+class CConEmuMain;
+extern CConEmuMain gConEmu;
+//extern TCHAR Title[0x400];
+//extern bool isLBDown, /*isInDrag,*/ isDragProcessed;
+extern HWND ghWnd, ghConWnd, ghWndDC, ghOpWnd;;
+extern bool gbUseChildWindow;
+class TabBarClass;
+extern TabBarClass TabBar;
 
-extern HANDLE hPipe, hPipeEvent;
 
-extern gSettings gSet;
+extern TCHAR szIconPath[MAX_PATH];
+extern HICON hClassIcon, hClassIconSm;
+
+class CSettings;
+extern CSettings gSet;
+class TrayIcon;
+extern TrayIcon Icon;
 extern TCHAR temp[MAX_PATH];
-extern uint cBlinkNext;
-extern DWORD WindowMode;
+
+extern bool gbUseChildWindow, gbNoDblBuffer;
+
+#ifdef _DEBUG
+extern char gsz_MDEBUG_TRAP_MSG[3000];
+extern char gsz_MDEBUG_TRAP_MSG_APPEND[2000];
+extern HWND gh_MDEBUG_TRAP_PARENT_WND;
+#endif
 
 
-bool SetWindowMode(uint inMode);
-HFONT CreateFontIndirectMy(LOGFONT *inFont);
-
-void SyncWindowToConsole();
-void SyncConsoleToWindow();
-
-void SetConsoleSizeTo(HWND inConWnd, int inSizeX, int inSizeY);
+#ifdef MSGLOGGER
+	extern bool bBlockDebugLog, bSendToDebugger, bSendToFile;
+#endif
 
 #ifdef _DEBUG
     int __stdcall _MDEBUG_TRAP(LPCSTR asFile, int anLine);

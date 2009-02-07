@@ -70,9 +70,9 @@ void CProgressBars::OnTimer()
 
 bool CProgressBars::isCoping()
 {
-	wchar_t *a = wcsstr(Title, _T("Копирование"));
-	wchar_t *b = wcsstr(Title, _T("Copying"));
-	wchar_t *c = wcsstr(Title, _T("Перенос"));
-	wchar_t *d = wcsstr(Title, _T("Moving"));
+	wchar_t *a = wcsstr(gConEmu.Title, _T("Копирование"));
+	wchar_t *b = wcsstr(gConEmu.Title, _T("Copying"));
+	wchar_t *c = wcsstr(gConEmu.Title, _T("Перенос"));
+	wchar_t *d = wcsstr(gConEmu.Title, _T("Moving"));
 	return (a || b || c || d);// && (Title[0] == '{');
 }

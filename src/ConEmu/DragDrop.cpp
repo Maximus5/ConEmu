@@ -63,13 +63,13 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop (IDataObject * pDataObject,DWORD grfKe
 	{
 		SHFILEOPSTRUCT fop;
 
-		if ((grfKeyState & MK_CONTROL) && isDragProcessed) {
+		if ((grfKeyState & MK_CONTROL) && gConEmu.isDragProcessed) {
 			// Запретить бросать при нажатом контроле, если тащат с другой панели
 			// По хорошему, нужно бы и другие кнопки запрещать (Alt, Shift,...)
 			*pdwEffect = DROPEFFECT_NONE;
 			return S_OK;
 		} else
-		if ((grfKeyState & MK_CONTROL)==0 || isDragProcessed) {
+		if ((grfKeyState & MK_CONTROL)==0 || gConEmu.isDragProcessed) {
 			if (gSet.isDefCopy)
 				fop.wFunc=FO_COPY;
 			else
@@ -93,7 +93,7 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop (IDataObject * pDataObject,DWORD grfKe
 			return S_OK; //1;
 		} else if (pt.x>pfpi->ActiveRect.left && pt.x<pfpi->ActiveRect.right && pt.y>pfpi->ActiveRect.top && pt.y<pfpi->ActiveRect.bottom && pfpi->pszActivePath[0]) 
 		{
-			if (isDragProcessed) {
+			if (gConEmu.isDragProcessed) {
 				*pdwEffect = DROPEFFECT_NONE;
 				return S_OK; // Тащат внутри одной копии FAR с активной на активную, т.е. ничего не двигается
 			}
@@ -185,12 +185,12 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragOver(DWORD grfKeyState,POINTL pt,DWORD 
 				*pdwEffect=DROPEFFECT_COPY;
 			else
 				*pdwEffect=DROPEFFECT_MOVE;*/
-		if ((grfKeyState & MK_CONTROL) && isDragProcessed) {
+		if ((grfKeyState & MK_CONTROL) && gConEmu.isDragProcessed) {
 			// Запретить бросать при нажатом контроле, если тащат с другой панели
 			// По хорошему, нужно бы и другие кнопки запрещать (Alt, Shift,...)
 			*pdwEffect = DROPEFFECT_NONE;
 		} else
-		if ((grfKeyState & MK_CONTROL)==0 || isDragProcessed) {
+		if ((grfKeyState & MK_CONTROL)==0 || gConEmu.isDragProcessed) {
 			if (gSet.isDefCopy)
 				*pdwEffect=DROPEFFECT_COPY;
 			else
@@ -215,17 +215,17 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragEnter(IDataObject * pDataObject,DWORD g
 		selfdrag=(pDataObject == this->pDataObject);
 		PipeCmd cmd=DragTo;
 		DWORD cbWritten=0;
-		WriteFile(hPipe, &cmd, sizeof(cmd), &cbWritten, NULL); 
-		SetEvent(hPipeEvent);
+		WriteFile(gConEmu.hPipe, &cmd, sizeof(cmd), &cbWritten, NULL); 
+		SetEvent(gConEmu.hPipeEvent);
 
 		DWORD cbBytesRead=0;
 		int cbStructSize=0;
 		if (pfpi) {free(pfpi); pfpi=NULL;}
-		ReadFile(hPipe, &cbStructSize, sizeof(int), &cbBytesRead, NULL);
+		ReadFile(gConEmu.hPipe, &cbStructSize, sizeof(int), &cbBytesRead, NULL);
 		if (cbStructSize>sizeof(ForwardedPanelInfo)) {
 			pfpi = (ForwardedPanelInfo*)calloc(cbStructSize, 1);
 
-			ReadFile(hPipe, pfpi, cbStructSize, &cbBytesRead, NULL); 
+			ReadFile(gConEmu.hPipe, pfpi, cbStructSize, &cbBytesRead, NULL); 
 
 			pfpi->pszActivePath = (WCHAR*)(((char*)pfpi)+pfpi->ActivePathShift);
 			pfpi->pszPassivePath = (WCHAR*)(((char*)pfpi)+pfpi->PassivePathShift);
@@ -241,21 +241,21 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragLeave(void)
 
 void CDragDrop::Drag()
 {
-	if (!gSet.isDnD /*|| isInDrag */|| isDragProcessed)
+	if (!gSet.isDnD /*|| isInDrag */|| gConEmu.isDragProcessed)
 		return;
 
 	//isInDrag=true; // return в теле не допускать - нужно сбросить в конце
-	isDragProcessed=true; // чтобы не сработало два раза на один драг
+	gConEmu.isDragProcessed=true; // чтобы не сработало два раза на один драг
 
 	PipeCmd cmd=DragFrom;
 	DWORD cbWritten=0;
-	WriteFile(hPipe, &cmd, sizeof(cmd), &cbWritten, NULL); 
-	SetEvent(hPipeEvent);
+	WriteFile(gConEmu.hPipe, &cmd, sizeof(cmd), &cbWritten, NULL); 
+	SetEvent(gConEmu.hPipeEvent);
 	DWORD cbBytesRead=0;
 	int nWholeSize=0;
-	ReadFile(hPipe, &nWholeSize, sizeof(nWholeSize), &cbBytesRead, NULL); 
+	ReadFile(gConEmu.hPipe, &nWholeSize, sizeof(nWholeSize), &cbBytesRead, NULL); 
 	if (nWholeSize==0) // защита смены формата
-		ReadFile(hPipe, &nWholeSize, sizeof(nWholeSize), &cbBytesRead, NULL); 
+		ReadFile(gConEmu.hPipe, &nWholeSize, sizeof(nWholeSize), &cbBytesRead, NULL); 
 	else
 		nWholeSize=0;
 
@@ -269,10 +269,10 @@ void CDragDrop::Drag()
 		for (;;)
 		{
 			int nCurSize=0;
-			ReadFile(hPipe, &nCurSize, sizeof(nCurSize), &cbBytesRead, NULL); 
+			ReadFile(gConEmu.hPipe, &nCurSize, sizeof(nCurSize), &cbBytesRead, NULL); 
 			if (nCurSize==0) break;
 
-			ReadFile(hPipe, curr, sizeof(WCHAR)*nCurSize, &cbBytesRead, NULL); 
+			ReadFile(gConEmu.hPipe, curr, sizeof(WCHAR)*nCurSize, &cbBytesRead, NULL); 
 
 			curr+=wcslen(curr)+1;
 		}
