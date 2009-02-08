@@ -464,7 +464,27 @@
 			</File>
 		</Filter>
 		<File
-			RelativePath=".\License.txt"
+			RelativePath=".\!Todo.txt"
+			>
+		</File>
+		<File
+			RelativePath="..\..\About-ConEmu.txt"
+			>
+		</File>
+		<File
+			RelativePath="..\..\FAQ-ConEmu.txt"
+			>
+		</File>
+		<File
+			RelativePath="..\..\License-ConEmu.txt"
+			>
+		</File>
+		<File
+			RelativePath="..\..\Settings-ConEmu.reg"
+			>
+		</File>
+		<File
+			RelativePath="..\..\WhatsNew-ConEmu.txt"
 			>
 		</File>
 	</Files>

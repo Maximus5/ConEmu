@@ -5,10 +5,8 @@ bool bBlockDebugLog=false, bSendToDebugger=false, bSendToFile=true;
 WCHAR *LogFilePath=NULL;
 #endif
 #ifndef _DEBUG
-bool gbUseChildWindow = false;
 bool gbNoDblBuffer = false;
 #else
-bool gbUseChildWindow = true;
 bool gbNoDblBuffer = false;
 #endif
 
@@ -277,16 +275,15 @@ BOOL CreateMainWindow()
 	WNDCLASSEX wc = {sizeof(WNDCLASSEX), CS_DBLCLKS, CConEmuMain::WndProc, 0, 0, 
 		    g_hInstance, hClassIcon, LoadCursor(NULL, IDC_ARROW), 
 		    NULL /*(HBRUSH)COLOR_BACKGROUND*/, 
-		    NULL, szClassName, hClassIconSm};// | CS_DROPSHADOW
-	if (gbUseChildWindow) wc.lpszClassName = szClassNameParent;
+		    NULL, szClassNameParent, hClassIconSm};// | CS_DROPSHADOW
     if (!RegisterClassEx(&wc))
         return -1;
     //ghWnd = CreateWindow(szClassName, 0, WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN, gSet.wndX, gSet.wndY, cRect.right - cRect.left - 4, cRect.bottom - cRect.top - 4, NULL, NULL, (HINSTANCE)g_hInstance, NULL);
-    DWORD style = (gSet.BufferHeight && !gbUseChildWindow) ? WS_VSCROLL : 0 ;
+    DWORD style = 0;
     style |= WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN | WS_CLIPSIBLINGS;
     int nWidth=CW_USEDEFAULT, nHeight=CW_USEDEFAULT;
     // cRect.right - cRect.left - 4, cRect.bottom - cRect.top - 4; -- все равно это было не правильно
-	ghWnd = CreateWindow(gbUseChildWindow ? szClassNameParent : szClassName, 0, style, gSet.wndX, gSet.wndY, nWidth, nHeight, NULL, NULL, (HINSTANCE)g_hInstance, NULL);
+	ghWnd = CreateWindow(szClassNameParent, 0, style, gSet.wndX, gSet.wndY, nWidth, nHeight, NULL, NULL, (HINSTANCE)g_hInstance, NULL);
 	if (!ghWnd) {
 		if (!ghWndDC) MBoxA(_T("Can't create main window!"));
         return FALSE;
@@ -728,7 +725,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     Registry reg;
     if (reg.OpenKey(_T("Control Panel\\Desktop"), KEY_READ))
     {
-        reg.Load(_T("DragFullWindows"), &gConEmu.isNotFullDrag);
+		WCHAR szValue[MAX_PATH];
+        if (reg.Load(_T("DragFullWindows"), szValue))
+			gConEmu.mb_FullWindowDrag = szValue[0]==L'1';
         reg.CloseKey();
     }
 

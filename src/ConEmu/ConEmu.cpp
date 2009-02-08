@@ -7,9 +7,10 @@ CConEmuMain::CConEmuMain()
 	WindowMode=0;
 	hPipe=NULL;
 	hPipeEvent=NULL;
+	mb_InSizing = false;
 	isWndNotFSMaximized=false;
 	isShowConsole=false;
-	isNotFullDrag=false;
+	mb_FullWindowDrag=false;
 	isLBDown=false;
 	isDragProcessed=false;
 	isRBDown=false;
@@ -89,18 +90,13 @@ void CConEmuMain::ShowSysmenu(HWND Wnd, HWND Owner, int x, int y)
 RECT CConEmuMain::ConsoleOffsetRect()
 {
     RECT rect;
-	/*if (gbUseChildWindow)
-		rect.top = 0;
-	else*/
+
 	rect.top = TabBar.IsActive()?TabBar.Height():0;
     rect.left = 0;
     rect.bottom = 0;
     rect.right = 0;
-    //#ifdef MSGLOGGER
-    //  char szDbg[100]; wsprintfA(szDbg, "   ConsoleOffsetRect={%i,%i,%i,%i}\n", rect.left,rect.top,rect.right,rect.bottom);
-    //  DEBUGLOGFILE(szDbg);
-    //#endif
-    return rect;
+
+	return rect;
 }
 
 RECT CConEmuMain::DCClientRect(RECT* pClient/*=NULL*/)
@@ -135,6 +131,7 @@ void CConEmuMain::SyncWindowToConsole()
     
     MOVEWINDOW(ghWnd, wndR.left, wndR.top, pVCon->Width + p.x + consoleRect.left, pVCon->Height + p.y + consoleRect.top, 1);
 }
+
 // returns console size in columns and lines calculated from current window size
 // rectInWindow - если true - с рамкой, false - только клиент
 COORD CConEmuMain::ConsoleSizeFromWindow(RECT* arect /*= NULL*/, bool frameIncluded /*= false*/, bool alreadyClient /*= false*/)
@@ -152,11 +149,9 @@ COORD CConEmuMain::ConsoleSizeFromWindow(RECT* arect /*= NULL*/, bool frameInclu
     RECT rect, consoleRect;
     if (arect == NULL)
     {
-        GetClientRect(HDCWND, &rect);
-		if (gbUseChildWindow)
-			memset(&consoleRect, 0, sizeof(consoleRect));
-		else
-			consoleRect = ConsoleOffsetRect();
+		frameIncluded = false;
+        GetClientRect(ghWnd, &rect);
+	    consoleRect = ConsoleOffsetRect();
     } 
     else
     {
@@ -228,9 +223,9 @@ void CConEmuMain::SetConsoleWindowSize(const COORD& size, bool updateInfo)
     // case: simple mode
     if (gSet.BufferHeight == 0)
     {
-        MOVEWINDOW(ghConWnd, 0, 0, 1, 1, 0);
+        MOVEWINDOW(ghConWnd, 0, 0, 1, 1, 1);
         SETCONSOLESCREENBUFFERSIZE(pVCon->hConOut(), size);
-        MOVEWINDOW(ghConWnd, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), 0);
+        MOVEWINDOW(ghConWnd, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), 1);
         return;
     }
 
@@ -259,7 +254,7 @@ void CConEmuMain::SetConsoleWindowSize(const COORD& size, bool updateInfo)
             // y-scroll: buffer height = old buffer height
             csbi.dwSize.Y = max(csbi.dwSize.Y, size.Y);
     }
-    MOVEWINDOW(ghConWnd, 0, 0, 1, 1, 0);
+    MOVEWINDOW(ghConWnd, 0, 0, 1, 1, 1);
     SETCONSOLESCREENBUFFERSIZE(pVCon->hConOut(), csbi.dwSize);
     
     // set console window
@@ -285,10 +280,25 @@ void CConEmuMain::SetConsoleWindowSize(const COORD& size, bool updateInfo)
     SetConsoleWindowInfo(pVCon->hConOut(), TRUE, &rect);
 }
 
+// Изменить размер консоли по размеру окна (главного)
 void CConEmuMain::SyncConsoleToWindow()
 {
-   DEBUGLOGFILE("SyncConsoleToWindow\n");
-   SetConsoleWindowSize(ConsoleSizeFromWindow(), true);
+	DEBUGLOGFILE("SyncConsoleToWindow\n");
+
+	// Посчитать нужный размер консоли
+	COORD newConSize = ConsoleSizeFromWindow();
+	// Получить текущий размер консольного окна
+    CONSOLE_SCREEN_BUFFER_INFO inf; memset(&inf, 0, sizeof(inf));
+    GetConsoleScreenBufferInfo(pVCon->hConOut(), &inf);
+
+	// Если нужно менять - ...
+	if (newConSize.X != (inf.srWindow.Right-inf.srWindow.Left+1) ||
+		newConSize.Y != (inf.srWindow.Bottom-inf.srWindow.Top+1))
+	{
+		SetConsoleWindowSize(newConSize, true);
+		if (pVCon)
+			pVCon->InitDC();
+	}
 }
 
 bool CConEmuMain::SetWindowMode(uint inMode)
@@ -454,22 +464,16 @@ void CConEmuMain::ForceShowTabs(BOOL abShow)
 	}
 
 	if (gbPostUpdateWindowSize) { // значит мы что-то поменяли
-		if (gbUseChildWindow) {
-	        RECT rcNewCon; GetClientRect(ghWnd, &rcNewCon);
-			DCClientRect(&rcNewCon);
-	        MoveWindow(ghWndDC, rcNewCon.left, rcNewCon.top, rcNewCon.right - rcNewCon.left, rcNewCon.bottom - rcNewCon.top, 0);
-	        dcWindowLast = rcNewCon;
-	    }
+		ReSize();
+        /*RECT rcNewCon; GetClientRect(ghWnd, &rcNewCon);
+		DCClientRect(&rcNewCon);
+        MoveWindow(ghWndDC, rcNewCon.left, rcNewCon.top, rcNewCon.right - rcNewCon.left, rcNewCon.bottom - rcNewCon.top, 0);
+        dcWindowLast = rcNewCon;
 		
 	    if (gSet.LogFont.lfWidth)
 	    {
 	        SyncConsoleToWindow();
-	        //RECT rc = ConsoleOffsetRect();
-	        //rc.bottom = rc.top; rc.top = 0;
-	        if (!gbUseChildWindow) {
-		        InvalidateRect(ghWnd, NULL, FALSE);
-	        }
-		}
+		}*/
     }
 }
 
@@ -480,7 +484,7 @@ void CConEmuMain::PaintGaps(HDC hDC/*=NULL*/)
 	if (hDC==NULL)
 		hDC = GetDC(ghWnd); // Главное окно!
 
-	HBRUSH hBrush = CreateSolidBrush(gSet.Colors[0]); SelectObject(hDC, hBrush);
+	HBRUSH hBrush = CreateSolidBrush(gSet.Colors[0]);
 
 	RECT rcClient;
 	GetClientRect(ghWnd, &rcClient); // Клиентская часть главного окна
@@ -534,6 +538,8 @@ void CConEmuMain::PaintGaps(HDC hDC/*=NULL*/)
 	GdiFlush();
 #endif
 
+	DeleteObject(hBrush);
+
 	if (lbOurDc)
 		ReleaseDC(ghWnd, hDC);
 }
@@ -554,11 +560,11 @@ void CConEmuMain::CheckBufferSize()
     if (inf.dwSize.X>(inf.srWindow.Right-inf.srWindow.Left+1)) {
         DEBUGLOGFILE("Wrong screen buffer width\n");
 		// Окошко консоли почему-то схлопнулось по горизонтали
-        MOVEWINDOW(ghConWnd, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), 0);
+        MOVEWINDOW(ghConWnd, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), 1);
     } else if ((gSet.BufferHeight == 0) && (inf.dwSize.Y>(inf.srWindow.Bottom-inf.srWindow.Top+1))) {
         DEBUGLOGFILE("Wrong screen buffer height\n");
 		// Окошко консоли почему-то схлопнулось по вертикали
-        MOVEWINDOW(ghConWnd, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), 0);
+        MOVEWINDOW(ghConWnd, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), 1);
     }
 
 	// При выходе из FAR -> CMD с BufferHeight - смена QuickEdit режима
@@ -612,7 +618,7 @@ LRESULT CALLBACK CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPAR
         break;
 
 	case WM_SIZE:
-		result = gConEmu.OnSize(wParam, lParam);
+		result = gConEmu.OnSize(wParam, LOWORD(lParam), HIWORD(lParam));
         break;
 
 	case WM_GETMINMAXINFO:
@@ -793,10 +799,7 @@ LRESULT CALLBACK CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPAR
         short winX = GET_X_LPARAM(lParam);
         short winY = GET_Y_LPARAM(lParam);
         RECT consoleRect;
-		if (gbUseChildWindow)
-			memset(&consoleRect, 0, sizeof(consoleRect));
-		else
-			consoleRect = gConEmu.ConsoleOffsetRect();
+		memset(&consoleRect, 0, sizeof(consoleRect));
         winX -= consoleRect.left;
         winY -= consoleRect.top;
         short newX = MulDiv(winX, conRect.right, klMax<uint>(1, pVCon->Width));
@@ -830,7 +833,7 @@ LRESULT CALLBACK CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPAR
                                cursor.y-HIWORD(lParam)>DRAG_DELTA || 
                                cursor.y-HIWORD(lParam)<-DRAG_DELTA))*/
             if (gConEmu.isLBDown && !PTDIFFTEST(gConEmu.cursor,DRAG_DELTA) 
-				&& !gConEmu.isDragProcessed)
+				&& !gConEmu.isDragProcessed && !gConEmu.mb_InSizing)
             {
 	            // Если сначала фокус был на файловой панели, но после LClick он попал на НЕ файловую - отменить ShellDrag
 	            if (!gConEmu.isFilePanel()) {
@@ -873,7 +876,7 @@ LRESULT CALLBACK CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPAR
                 gConEmu.isLBDown=false;
                 if (!gConEmu.isConSelectMode() && gConEmu.isFilePanel())
                 {
-                    SetCapture(ghWnd);
+                    SetCapture(ghWndDC);
                     gConEmu.cursor.x = LOWORD(lParam);
                     gConEmu.cursor.y = HIWORD(lParam); 
                     gConEmu.isLBDown=true;
@@ -970,26 +973,24 @@ LRESULT CALLBACK CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPAR
 			ghWnd = hWnd; // ставим сразу, чтобы функции могли пользоваться
 			Icon.LoadIcon(hWnd, gSet.nIconID/*IDI_ICON1*/);
 
-			if (gbUseChildWindow) {
-				WNDCLASS wc = {CS_OWNDC|CS_DBLCLKS|CS_SAVEBITS, CConEmuChild::ChildWndProc, 0, 0, 
-						g_hInstance, NULL, LoadCursor(NULL, IDC_ARROW), 
-						NULL /*(HBRUSH)COLOR_BACKGROUND*/, 
-						NULL, szClassName};// | CS_DROPSHADOW
-				if (!RegisterClass(&wc)) {
-					ghWndDC = (HWND)-1; // чтобы родитель не ругался
-					MBoxA(_T("Can't register DC window class!"));
-					return -1;
-				}
-				DWORD style = WS_VISIBLE | WS_CHILD | WS_CLIPSIBLINGS /*| WS_CLIPCHILDREN*/ | (gSet.BufferHeight ? WS_VSCROLL : 0);
-				RECT rc = gConEmu.DCClientRect();
-				ghWndDC = CreateWindow(szClassName, 0, style, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, hWnd, NULL, (HINSTANCE)g_hInstance, NULL);
-				if (!ghWndDC) {
-					ghWndDC = (HWND)-1; // чтобы родитель не ругался
-					MBoxA(_T("Can't create DC window!"));
-					return -1; //
-				}
-				gConEmu.dcWindowLast = rc; //TODO!!!
+			WNDCLASS wc = {CS_OWNDC|CS_DBLCLKS|CS_SAVEBITS, CConEmuChild::ChildWndProc, 0, 0, 
+					g_hInstance, NULL, LoadCursor(NULL, IDC_ARROW), 
+					NULL /*(HBRUSH)COLOR_BACKGROUND*/, 
+					NULL, szClassName};// | CS_DROPSHADOW
+			if (!RegisterClass(&wc)) {
+				ghWndDC = (HWND)-1; // чтобы родитель не ругался
+				MBoxA(_T("Can't register DC window class!"));
+				return -1;
 			}
+			DWORD style = WS_VISIBLE | WS_CHILD | WS_CLIPSIBLINGS /*| WS_CLIPCHILDREN*/ | (gSet.BufferHeight ? WS_VSCROLL : 0);
+			RECT rc = gConEmu.DCClientRect();
+			ghWndDC = CreateWindow(szClassName, 0, style, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, hWnd, NULL, (HINSTANCE)g_hInstance, NULL);
+			if (!ghWndDC) {
+				ghWndDC = (HWND)-1; // чтобы родитель не ругался
+				MBoxA(_T("Can't create DC window!"));
+				return -1; //
+			}
+			gConEmu.dcWindowLast = rc; //TODO!!!
 		}
         break;
 
@@ -1058,6 +1059,11 @@ LRESULT CALLBACK CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPAR
             }
         }
         break;
+
+	case WM_NCLBUTTONDOWN:
+		gConEmu.mb_InSizing = (messg==WM_NCLBUTTONDOWN);
+		result = DefWindowProc(hWnd, messg, wParam, lParam);
+		break;
 
     case WM_NCRBUTTONUP:
         Icon.HideWindowToTray();
@@ -1158,138 +1164,107 @@ LRESULT CConEmuMain::OnPaint(WPARAM wParam, LPARAM lParam)
 {
 	LRESULT result = 0;
 
-	if (gbUseChildWindow) {
-        PAINTSTRUCT ps;
-        HDC hDc = BeginPaint(ghWnd, &ps);
+    PAINTSTRUCT ps;
+    HDC hDc = BeginPaint(ghWnd, &ps);
 
-		gConEmu.PaintGaps(hDc);
+	PaintGaps(hDc);
 
-		EndPaint(ghWnd, &ps);
-		result = DefWindowProc(ghWnd, WM_PAINT, wParam, lParam);
-
-	} else {
-        if (gConEmu.isPictureView())
-        {
-			// TODO: если PictureView распахнуто не на все окно - отрисовать видимую часть консоли!
-            result = DefWindowProc(ghWnd, WM_PAINT, wParam, lParam);
-
-		} else {
-			PAINTSTRUCT ps;
-			HDC hDc = BeginPaint(ghWnd, &ps);
-			//HDC hDc = GetDC(ghWnd);
-			//if (!gbNoDblBuffer)
-			{
-				RECT rect;
-				HBRUSH hBrush = CreateSolidBrush(gSet.Colors[0]); SelectObject(hDc, hBrush);
-				GetClientRect(ghWnd, &rect);
-
-				RECT consoleRect = gConEmu.ConsoleOffsetRect();
-
-				#ifdef _DEBUG
-				if (gbNoDblBuffer)
-					FillRect(hDc, &rect, hBrush); // -- если захочется на "чистую" рисовать
-				#else
-
-				// paint gaps between console and window client area with first color (actual for maximized and fullscreen modes)
-				rect.top = consoleRect.top; // right 
-				rect.left = pVCon->Width + consoleRect.left;
-				FillRect(hDc, &rect, hBrush);
-
-				rect.top = pVCon->Height + consoleRect.top; // bottom
-				rect.left = 0; 
-				rect.right = pVCon->Width + consoleRect.left;
-				FillRect(hDc, &rect, hBrush);
-				#endif
-
-				DeleteObject(hBrush);
-
-				#ifdef _DEBUG
-				if (gbNoDblBuffer)
-					pVCon->Update(false, &hDc);
-				else
-					BitBlt(hDc, consoleRect.left, consoleRect.top, pVCon->Width, pVCon->Height, pVCon->hDC, 0, 0, SRCCOPY);
-				#else
-				BitBlt(hDc, consoleRect.left, consoleRect.top, pVCon->Width, pVCon->Height, pVCon->hDC, 0, 0, SRCCOPY);
-				#endif
-			}
-			EndPaint(ghWnd, &ps);
-			//ReleaseDC(ghWnd, hDc);
-			//gbInvalidating = false;
-		}
-    }
+	EndPaint(ghWnd, &ps);
+	result = DefWindowProc(ghWnd, WM_PAINT, wParam, lParam);
 
 	return result;
 }
 
-LRESULT CConEmuMain::OnSize(WPARAM wParam, LPARAM lParam)
+void CConEmuMain::ReSize()
+{
+	if (IsIconic(ghWnd))
+		return;
+
+	RECT client; GetClientRect(ghWnd, &client);
+
+	OnSize(IsZoomed(ghWnd) ? SIZE_MAXIMIZED : SIZE_RESTORED,
+		client.right, client.bottom);
+}
+
+LRESULT CConEmuMain::OnSize(WPARAM wParam, WORD newClientWidth, WORD newClientHeight)
 {
 	LRESULT result = 0;
 
-    BOOL lbIsPicView = gConEmu.isPictureView();
-    
-    if (gbUseChildWindow)
-	{
-        RECT rcNewCon; memset(&rcNewCon, 0, sizeof(rcNewCon));
-		rcNewCon.right = LOWORD(lParam);
-		rcNewCon.bottom = HIWORD(lParam);
-		gConEmu.DCClientRect(&rcNewCon);
-        MoveWindow(ghWndDC, rcNewCon.left, rcNewCon.top, rcNewCon.right - rcNewCon.left, rcNewCon.bottom - rcNewCon.top, 0);
-        gConEmu.dcWindowLast = rcNewCon;
-    }
-    else
-    {
-        if (lbIsPicView) {
-            gConEmu.isPiewUpdate = true;
-            RECT rcClient; GetClientRect(HDCWND, &rcClient);
-            MoveWindow(gConEmu.hPictureView, 0,0,rcClient.right,rcClient.bottom, 1);
-            INVALIDATE(); //InvalidateRect(HDCWND, NULL, FALSE);
-            //SetFocus(hPictureView); -- все равно фокус в другой процесс не передастся
-        }
-    }
-    
-    if (!lbIsPicView)
-    {
-        if (gConEmu.isNotFullDrag)
-        {
-			// только клиентская часть
-            RECT pRect = {0, 0, LOWORD(lParam), HIWORD(lParam)};
+	if (TabBar.IsActive())
+        TabBar.UpdateWidth();
 
-            COORD srctWindow = gConEmu.ConsoleSizeFromWindow(&pRect);
+	if (!gConEmu.mb_InSizing || gConEmu.mb_FullWindowDrag) {
+		BOOL lbIsPicView = isPictureView();
 
-            if ((gConEmu.srctWindowLast.X != srctWindow.X 
-				|| gConEmu.srctWindowLast.Y != srctWindow.Y))
-            {
-                gConEmu.SetConsoleWindowSize(srctWindow, true);
-                gConEmu.srctWindowLast = srctWindow;
-            }
-        }
+		SyncConsoleToWindow();
+	    
+		RECT client; memset(&client, 0, sizeof(client));
+		client.right = newClientWidth;
+		client.bottom = newClientHeight;
+		DCClientRect(&client);
 
-        {
-            static bool wPrevSizeMax = false;
-            if ((wParam == SIZE_MAXIMIZED || (wParam == SIZE_RESTORED && wPrevSizeMax)) && ghConWnd)
-            {
-                wPrevSizeMax = wParam == SIZE_MAXIMIZED;
+		RECT rcNewCon; memset(&rcNewCon,0,sizeof(rcNewCon));
+		if (pVCon && pVCon->Width && pVCon->Height) {
+			if (gSet.isTryToCenter && (IsZoomed(ghWnd) || gSet.isFullScreen)) {
+				rcNewCon.left = (client.right+client.left-(int)pVCon->Width)/2;
+				rcNewCon.top = (client.bottom+client.top-(int)pVCon->Height)/2;
+			}
 
-                RECT pRect;
-                GetWindowRect(ghWnd, &pRect);
-                pRect.right = LOWORD(lParam) + pRect.left + gConEmu.cwShift.x;
-                pRect.bottom = HIWORD(lParam) + pRect.top + gConEmu.cwShift.y;
+			if (rcNewCon.left<client.left) rcNewCon.left=client.left;
+			if (rcNewCon.top<client.top) rcNewCon.top=client.top;
 
-                //TODO: есть подозрение, что этот фейк вызывает глюк с левым кликом по рамке...
-                // fake WM_SIZING event to adjust console size to new window size after Maximize or Restore Down 
-                //SendMessage(ghWnd, WM_SIZING, WMSZ_TOP, (LPARAM)&pRect);
-                //SendMessage(ghWnd, WM_SIZING, WMSZ_RIGHT, (LPARAM)&pRect);
-                //Заменил на WndProc!
-                WndProc ( ghWnd, WM_SIZING, WMSZ_TOP, (LPARAM)&pRect );
-                WndProc ( ghWnd, WM_SIZING, WMSZ_RIGHT, (LPARAM)&pRect );
-            }
+			rcNewCon.right = rcNewCon.left + pVCon->Width;
+				if (rcNewCon.right>client.right) rcNewCon.right=client.right;
+			rcNewCon.bottom = rcNewCon.top + pVCon->Height;
+				if (rcNewCon.bottom>client.bottom) rcNewCon.bottom=client.bottom;
+		} else {
+			rcNewCon = client;
+		}
+		MoveWindow(ghWndDC, rcNewCon.left, rcNewCon.top, rcNewCon.right - rcNewCon.left, rcNewCon.bottom - rcNewCon.top, 1);
+		//PaintGaps();
+		dcWindowLast = rcNewCon;
+		//InvalidateRect(ghWnd, NULL, FALSE);
+	    
+		if (!lbIsPicView)
+		{
+			/*if (mb_FullWindowDrag)
+			{
+				// только клиентская часть
+				RECT pRect = {0, 0, newClientWidth, newClientHeight};
 
-            if (TabBar.IsActive())
-            {
-                TabBar.UpdatePosition();
-            }
-        }
-    }
+				COORD srctWindow = ConsoleSizeFromWindow(&pRect);
+
+				if ((srctWindowLast.X != srctWindow.X 
+					|| srctWindowLast.Y != srctWindow.Y))
+				{
+					SetConsoleWindowSize(srctWindow, true);
+					srctWindowLast = srctWindow;
+				}
+			}*/
+
+			{
+				/*static bool wPrevSizeMax = false;
+				if ((wParam == SIZE_MAXIMIZED || (wParam == SIZE_RESTORED && wPrevSizeMax)) && ghConWnd)
+				{
+					wPrevSizeMax = wParam == SIZE_MAXIMIZED;
+
+					RECT pRect;
+					GetWindowRect(ghWnd, &pRect);
+					pRect.right = newClientWidth + pRect.left + cwShift.x;
+					pRect.bottom = newClientHeight + pRect.top + cwShift.y;
+
+					//TODO: есть подозрение, что этот фейк вызывает глюк с левым кликом по рамке...
+					// fake WM_SIZING event to adjust console size to new window size after Maximize or Restore Down 
+					//SendMessage(ghWnd, WM_SIZING, WMSZ_TOP, (LPARAM)&pRect);
+					//SendMessage(ghWnd, WM_SIZING, WMSZ_RIGHT, (LPARAM)&pRect);
+					//Заменил на WndProc!
+					WndProc ( ghWnd, WM_SIZING, WMSZ_TOP, (LPARAM)&pRect );
+					WndProc ( ghWnd, WM_SIZING, WMSZ_RIGHT, (LPARAM)&pRect );
+				}*/
+
+			}
+		}
+	}
 
 	return result;
 }
@@ -1298,63 +1273,67 @@ LRESULT CConEmuMain::OnSizing(WPARAM wParam, LPARAM lParam)
 {
 	LRESULT result = true;
 
-#ifdef OnSizingENABLED
-    RECT *pRect = (RECT*)lParam; // с рамкой
-    COORD srctWindow = gConEmu.ConsoleSizeFromWindow(pRect, true /* rectInWindow */);
-    // Минимально допустимые размеры консоли
-	if (srctWindow.X<28) srctWindow.X=28;
-	if (srctWindow.Y<9)  srctWindow.Y=9;
+	if (!gSet.isFullScreen && !IsZoomed(ghWnd)) {
+		COORD srctWindow;
+		RECT wndSizeRect, restrictRect;
+		RECT *pRect = (RECT*)lParam; // с рамкой
 
-    if ((gConEmu.srctWindowLast.X != srctWindow.X 
-		|| gConEmu.srctWindowLast.Y != srctWindow.Y) 
-		&& !gConEmu.isNotFullDrag)
-    {
-        gConEmu.SetConsoleWindowSize(srctWindow, true);
-        gConEmu.srctWindowLast = srctWindow;
-    }
+		wndSizeRect = *pRect;
+		// Для красивости рамки под мышкой
+		if (gSet.LogFont.lfWidth && gSet.LogFont.lfHeight) {
+			wndSizeRect.right += (gSet.LogFont.lfWidth-1)/2;
+			wndSizeRect.bottom += (gSet.LogFont.lfHeight-1)/2;
+		}
 
-    //RECT consoleRect = ConsoleOffsetRect();
-    RECT wndSizeRect = gConEmu.WindowSizeFromConsole(srctWindow, true /* rectInWindow */);
-    RECT restrictRect;
-    restrictRect.right = pRect->left + wndSizeRect.right;
-    restrictRect.bottom = pRect->top + wndSizeRect.bottom;
-    restrictRect.left = pRect->right - wndSizeRect.right;
-    restrictRect.top = pRect->bottom - wndSizeRect.bottom;
-    
+		// Рассчитать желаемый размер консоли
+		srctWindow = ConsoleSizeFromWindow(&wndSizeRect, true /* frameIncluded */);
 
-    switch(wParam)
-    {
-    case WMSZ_RIGHT:
-    case WMSZ_BOTTOM:
-    case WMSZ_BOTTOMRIGHT:
-     pRect->right = restrictRect.right; // NightRoman
-    //  pRect->right =  srctWindow.X * gSet.LogFont.lfWidth  + cwShift.x + pRect->left;
-     pRect->bottom = restrictRect.bottom; // NightRoman
-    //  pRect->bottom = srctWindow.Y * gSet.LogFont.lfHeight + cwShift.y + pRect->top;
-        break;
-    case WMSZ_LEFT:
-    case WMSZ_TOP:
-    case WMSZ_TOPLEFT:
-     pRect->left = restrictRect.left; // NightRoman
-    //  pRect->left =  pRect->right - srctWindow.X * gSet.LogFont.lfWidth  - cwShift.x;
-     pRect->top = restrictRect.top; // NightRoman
-    //  pRect->top  = pRect->bottom - srctWindow.Y * gSet.LogFont.lfHeight - cwShift.y;
-        break;
-    case WMSZ_TOPRIGHT:
-     pRect->right = restrictRect.right; // NightRoman
-    //  pRect->right =  srctWindow.X * gSet.LogFont.lfWidth  + cwShift.x + pRect->left;
-     pRect->top = restrictRect.top; // NightRoman
-    //  pRect->top  = pRect->bottom - srctWindow.Y * gSet.LogFont.lfHeight - cwShift.y;
-        break;
-    case WMSZ_BOTTOMLEFT:
-     pRect->left = restrictRect.left; // NightRoman
-    //  pRect->left =  pRect->right - srctWindow.X * gSet.LogFont.lfWidth  - cwShift.x;
-     pRect->bottom = restrictRect.bottom; // NightRoman
-    //  pRect->bottom = srctWindow.Y * gSet.LogFont.lfHeight + cwShift.y + pRect->top;
-        break;
-    }
-    result = true;
-#endif
+		// Минимально допустимые размеры консоли
+		if (srctWindow.X<28) srctWindow.X=28;
+		if (srctWindow.Y<9)  srctWindow.Y=9;
+
+		/*if ((srctWindowLast.X != srctWindow.X 
+			|| srctWindowLast.Y != srctWindow.Y) 
+			&& !mb_FullWindowDrag)
+		{
+			SetConsoleWindowSize(srctWindow, true);
+			srctWindowLast = srctWindow;
+		}*/
+
+		//RECT consoleRect = ConsoleOffsetRect();
+		wndSizeRect = WindowSizeFromConsole(srctWindow, true /* rectInWindow */);
+
+		restrictRect.right = pRect->left + wndSizeRect.right;
+		restrictRect.bottom = pRect->top + wndSizeRect.bottom;
+		restrictRect.left = pRect->right - wndSizeRect.right;
+		restrictRect.top = pRect->bottom - wndSizeRect.bottom;
+	    
+
+		switch(wParam)
+		{
+		case WMSZ_RIGHT:
+		case WMSZ_BOTTOM:
+		case WMSZ_BOTTOMRIGHT:
+			pRect->right = restrictRect.right;
+			pRect->bottom = restrictRect.bottom;
+			break;
+		case WMSZ_LEFT:
+		case WMSZ_TOP:
+		case WMSZ_TOPLEFT:
+			pRect->left = restrictRect.left;
+			pRect->top = restrictRect.top;
+			break;
+		case WMSZ_TOPRIGHT:
+			pRect->right = restrictRect.right;
+			pRect->top = restrictRect.top;
+			break;
+		case WMSZ_BOTTOMLEFT:
+			pRect->left = restrictRect.left;
+			pRect->bottom = restrictRect.bottom;
+			break;
+		}
+	}
+
 	return result;
 }
 
@@ -1366,7 +1345,7 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
     {
     case 0:
         HWND foreWnd = GetForegroundWindow();
-        if (!gConEmu.isShowConsole && !gSet.isConVisible)
+        if (!isShowConsole && !gSet.isConVisible)
         {
             /*if (foreWnd == ghConWnd)
                 SetForegroundWindow(ghWnd);*/
@@ -1379,33 +1358,33 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 		if (dwStyle & WS_DISABLED)
 			EnableWindow(ghWnd, TRUE);
 
-		BOOL lbIsPicView = gConEmu.isPictureView();
-        if (gConEmu.bPicViewSlideShow) {
+		BOOL lbIsPicView = isPictureView();
+        if (bPicViewSlideShow) {
             DWORD dwTicks = GetTickCount();
-            DWORD dwElapse = dwTicks - gConEmu.dwLastSlideShowTick;
+            DWORD dwElapse = dwTicks - dwLastSlideShowTick;
             if (dwElapse > gSet.nSlideShowElapse)
             {
-                if (IsWindow(gConEmu.hPictureView)) {
+                if (IsWindow(hPictureView)) {
                     //
-                    gConEmu.bPicViewSlideShow = false;
+                    bPicViewSlideShow = false;
                     SendMessage(ghConWnd, WM_KEYDOWN, VK_NEXT, 0x01510001);
                     SendMessage(ghConWnd, WM_KEYUP, VK_NEXT, 0xc1510001);
 
                     // Окно могло измениться?
-                    gConEmu.isPictureView();
+                    isPictureView();
 
-                    gConEmu.dwLastSlideShowTick = GetTickCount();
-                    gConEmu.bPicViewSlideShow = true;
+                    dwLastSlideShowTick = GetTickCount();
+                    bPicViewSlideShow = true;
                 } else {
-                    gConEmu.hPictureView = NULL;
-                    gConEmu.bPicViewSlideShow = false;
+                    hPictureView = NULL;
+                    bPicViewSlideShow = false;
                 }
             }
         }
 
-        if (gConEmu.cBlinkNext++ >= gConEmu.cBlinkShift)
+        if (cBlinkNext++ >= cBlinkShift)
         {
-            gConEmu.cBlinkNext = 0;
+            cBlinkNext = 0;
             if (foreWnd == ghWnd || foreWnd == ghOpWnd)
                 // switch cursor
                 pVCon->Cursor.isVisible = !pVCon->Cursor.isVisible;
@@ -1421,21 +1400,27 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
           break;
         }*/
 
-        GetWindowText(ghConWnd, gConEmu.TitleCmp, 1024);
-        if (wcscmp(gConEmu.Title, gConEmu.TitleCmp))
+        GetWindowText(ghConWnd, TitleCmp, 1024);
+        if (wcscmp(Title, TitleCmp))
         {
-            wcscpy(gConEmu.Title, gConEmu.TitleCmp);
-            SetWindowText(ghWnd, gConEmu.Title);
+            wcscpy(Title, TitleCmp);
+            SetWindowText(ghWnd, Title);
         }
 
         TabBar.OnTimer();
-        gConEmu.ProgressBars->OnTimer();
+        ProgressBars->OnTimer();
 
         
+		if (mb_InSizing && !isPressed(VK_LBUTTON)) {
+			mb_InSizing = FALSE;
+			if (!mb_FullWindowDrag)
+				ReSize();
+		}
+
         if (lbIsPicView)
         {
             bool lbOK = true;
-            if (!gConEmu.setParent) {
+            if (!setParent) {
                 // Проверка, может PictureView создался в консоли, а не в ConEmu?
                 HWND hPicView = FindWindowEx(ghConWnd, NULL, L"FarPictureViewControlClass", NULL);
                 if (!hPicView) {
@@ -1443,22 +1428,22 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
                 }
             }
             if (lbOK) {
-                gConEmu.isPiewUpdate = true;
+                isPiewUpdate = true;
                 if (pVCon->Update(false))
                     INVALIDATE(); //InvalidateRect(HDCWND, NULL, FALSE);
                 break;
             }
         } else 
-        if (gConEmu.isPiewUpdate)
+        if (isPiewUpdate)
         {	// После скрытия/закрытия PictureView нужно передернуть консоль - ее размер мог измениться
-            gConEmu.isPiewUpdate = false;
-            gConEmu.SyncConsoleToWindow();
+            isPiewUpdate = false;
+            SyncConsoleToWindow();
             INVALIDATE(); //InvalidateRect(HDCWND, NULL, FALSE);
         }
 
         // Проверить, может в консоли размер съехал? (хрен его знает из-за чего...)
-		gConEmu.CheckBufferSize();
-		if (gConEmu.gnLastProcessCount == 1) {
+		CheckBufferSize();
+		if (gnLastProcessCount == 1) {
 			DestroyWindow(ghWnd);
 			break;
 		}
@@ -1466,15 +1451,15 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
         //if (!gbInvalidating && !gbInPaint)
         if (pVCon->Update(false/*gbNoDblBuffer*/))
         {
-            COORD c = gConEmu.ConsoleSizeFromWindow();
-            if (gConEmu.gbPostUpdateWindowSize 
-				|| c.X != pVCon->TextWidth || c.Y != pVCon->TextHeight)
+            COORD c = ConsoleSizeFromWindow();
+            if ((mb_FullWindowDrag || !mb_InSizing) &&
+				(gbPostUpdateWindowSize || c.X != pVCon->TextWidth || c.Y != pVCon->TextHeight))
             {
-				gConEmu.gbPostUpdateWindowSize = false;
+				gbPostUpdateWindowSize = false;
                 if (!gSet.isFullScreen && !IsZoomed(ghWnd))
-                    gConEmu.SyncWindowToConsole();
+                    SyncWindowToConsole();
                 else
-                    gConEmu.SyncConsoleToWindow();
+                    SyncConsoleToWindow();
             }
 
             INVALIDATE(); //InvalidateRect(HDCWND, NULL, FALSE);
@@ -1509,7 +1494,8 @@ LRESULT CConEmuMain::OnCopyData(PCOPYDATASTRUCT cds)
 	LRESULT result = 0;
     
 	if (cds->dwData == 0) {
-		gConEmu.ForceShowTabs(FALSE);
+		// Приходит из плагина по ExitFAR
+		ForceShowTabs(FALSE);
 
 		//CONSOLE_SCREEN_BUFFER_INFO inf; memset(&inf, 0, sizeof(inf));
 		//GetConsoleScreenBufferInfo(pVCon->hConOut(), &inf);
@@ -1545,13 +1531,13 @@ LRESULT CConEmuMain::OnCopyData(PCOPYDATASTRUCT cds)
 		TabBar.Update(tabs, cds->dwData);
 		if (lbNeedInval)
 		{
-			gConEmu.SyncConsoleToWindow();
+			SyncConsoleToWindow();
 			//RECT rc = ConsoleOffsetRect();
 			//rc.bottom = rc.top; rc.top = 0;
 			InvalidateRect(ghWnd, NULL/*&rc*/, FALSE);
 			if (!gSet.isFullScreen && !IsZoomed(ghWnd)) {
 				//SyncWindowToConsole(); -- это делать нельзя, т.к. FAR еще не отработал изменение консоли!
-				gConEmu.gbPostUpdateWindowSize = true;
+				gbPostUpdateWindowSize = true;
 			}
 		}
 	}
@@ -1563,7 +1549,7 @@ LRESULT CConEmuMain::OnGetMinMaxInfo(LPMINMAXINFO pInfo)
 {
 	LRESULT result = 0;
 
-    POINT p = gConEmu.cwShift;
+    POINT p = cwShift;
     RECT shiftRect = ConsoleOffsetRect();
 
     // Минимально допустимые размеры консоли

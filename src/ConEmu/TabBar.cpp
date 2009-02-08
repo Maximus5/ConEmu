@@ -82,21 +82,23 @@ BOOL TabBarClass::IsAllowed()
 
 void TabBarClass::Activate()
 {
-	RECT rcClient; 
-	GetClientRect(ghWnd, &rcClient); 
-	InitCommonControls(); 
-	_hwndTab = CreateWindow(WC_TABCONTROL, NULL, WS_CHILD | WS_CLIPSIBLINGS | WS_VISIBLE | TCS_FOCUSNEVER, 0, 0, 
-		rcClient.right, 0, ghWnd, NULL, g_hInstance, NULL);
-	if (_hwndTab == NULL)
-	{ 
-		return; 
+	if (!_hwndTab) {
+		RECT rcClient; 
+		GetClientRect(ghWnd, &rcClient); 
+		InitCommonControls(); 
+		_hwndTab = CreateWindow(WC_TABCONTROL, NULL, WS_CHILD | WS_CLIPSIBLINGS | /*WS_VISIBLE |*/ TCS_FOCUSNEVER, 0, 0, 
+			rcClient.right, 0, ghWnd, NULL, g_hInstance, NULL);
+		if (_hwndTab == NULL)
+		{ 
+			return; 
+		}
+		HFONT hFont = CreateFont(TAB_FONT_HEIGTH, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, ANSI_CHARSET, OUT_DEFAULT_PRECIS, 
+			CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_SWISS, TAB_FONT_FACE);
+		SendMessage(_hwndTab, WM_SETFONT, WPARAM (hFont), TRUE);
+		
+		#pragma warning (disable : 4312)
+		_defaultTabProc = (WNDPROC)SetWindowLongPtr(_hwndTab, GWL_WNDPROC, (LONG_PTR)TabProc);
 	}
-	HFONT hFont = CreateFont(TAB_FONT_HEIGTH, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, ANSI_CHARSET, OUT_DEFAULT_PRECIS, 
-		CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_SWISS, TAB_FONT_FACE);
-	SendMessage(_hwndTab, WM_SETFONT, WPARAM (hFont), TRUE);
-	
-#pragma warning (disable : 4312)
-	_defaultTabProc = (WNDPROC)SetWindowLongPtr(_hwndTab, GWL_WNDPROC, (LONG_PTR)TabProc);
 
 	_active = true;
 }
@@ -108,6 +110,7 @@ void TabBarClass::Deactivate()
 
 	_tabHeight = 0;
 	UpdatePosition();
+	_active = false;
 }
 
 void TabBarClass::Update(ConEmuTab* tabs, int tabsCount)
@@ -173,6 +176,10 @@ void TabBarClass::Update(ConEmuTab* tabs, int tabsCount)
 			SelectTab(i);
 		}
 	}
+	if (_tabHeight && tabsCount==1 && tabs[0].Type == 1/*WTYPE_PANELS*/ && gSet.isTabs==2) {
+		// Автоскрытие табов (все редакторы/вьюверы закрыты)
+		Deactivate();
+	} else
 	if (_tabHeight == NULL)
 	{
 		RECT rcClient; 
@@ -189,23 +196,42 @@ void TabBarClass::UpdatePosition()
 	{
 		return;
 	}
-	RECT client;
+	RECT client, self;
 	GetClientRect(ghWnd, &client);
-	if (ghWndDC) {
-		RECT rc = client;
-		rc.top = _tabHeight;
-		RECT rcChild = gConEmu.WindowSizeFromConsole(
-				gConEmu.ConsoleSizeFromWindow(&rc, false /* rectInWindow */, true /* alreadyClient */), 
-			false /* rectInWindow */, true /* clientOnly */);
-		
-		MoveWindow(ghWndDC, rcChild.left, rcChild.top+_tabHeight, rcChild.right-rcChild.left, rcChild.bottom-rcChild.top, 1);
-
-		gConEmu.SyncConsoleToWindow();
-		//SyncWindowToConsole();
-
-		//InvalidateRect(ghWnd, NULL, FALSE);
-		gConEmu.PaintGaps();
+	GetWindowRect(_hwndTab, &self);
+	//if (ghWndDC && IsRectEmpty(&self)) {
+	//	RECT rc = client;
+	//	rc.top = _tabHeight;
+	//	RECT rcChild = gConEmu.WindowSizeFromConsole(
+	//			gConEmu.ConsoleSizeFromWindow(&rc, false /* rectInWindow */, true /* alreadyClient */), 
+	//		false /* rectInWindow */, true /* clientOnly */);
+	//	
+	//	MoveWindow(ghWndDC, rcChild.left, rcChild.top+_tabHeight, rcChild.right-rcChild.left, rcChild.bottom-rcChild.top, 1);
+	//
+	//	gConEmu.SyncConsoleToWindow();
+	//	//SyncWindowToConsole();
+	//
+	//	//InvalidateRect(ghWnd, NULL, FALSE);
+	//	gConEmu.PaintGaps();
+	//}
+	gConEmu.ReSize();
+	if (_tabHeight>0) {
+		ShowWindow(_hwndTab, SW_SHOW);
+		MoveWindow(_hwndTab, 0, 0, client.right, _tabHeight, 1);
+	} else {
+		ShowWindow(_hwndTab, SW_HIDE);
 	}
+}
+
+void TabBarClass::UpdateWidth()
+{
+	if (!_active)
+	{
+		return;
+	}
+	RECT client, self;
+	GetClientRect(ghWnd, &client);
+	GetWindowRect(_hwndTab, &self);
 	MoveWindow(_hwndTab, 0, 0, client.right, _tabHeight, 1);
 }
 

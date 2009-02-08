@@ -38,6 +38,7 @@ void CSettings::InitSettings()
 	gSet.LogFont.lfPitchAndFamily = FIXED_PITCH | FF_MODERN;
     _tcscpy(gSet.LogFont.lfFaceName, _T("Lucida Console"));
     _tcscpy(gSet.LogFont2.lfFaceName, _T("Lucida Console"));
+    isTryToCenter = false;
 	
 	Registry RegConColors, RegConDef;
 	if (RegConColors.OpenKey(_T("Console"), KEY_READ))
@@ -136,6 +137,7 @@ void CSettings::LoadSettings()
 		reg.Load(_T("TabLenMax"), &gSet.nTabLenMax);
 		reg.Load(_T("ScrollTitle"), &gSet.isScrollTitle);
 		reg.Load(_T("ScrollTitleLen"), &gSet.ScrollTitleLen);
+		reg.Load(_T("TryToCenter"), &gSet.isTryToCenter);
         reg.CloseKey();
     }
 
@@ -164,7 +166,8 @@ void CSettings::LoadSettings()
     if (isItalic)
         gSet.LogFont.lfItalic = true;
 
-    if (gSet.isShowBgImage)
+	// pVCon еще не создано!
+    if (gSet.isShowBgImage && pVCon)
         LoadImageFrom(gSet.pBgImage);
 }
 
@@ -286,589 +289,589 @@ BOOL CALLBACK CSettings::EnumFamCallBack(LPLOGFONT lplf, LPNEWTEXTMETRIC lpntm, 
     UNREFERENCED_PARAMETER( lpntm );
 }
 
-BOOL CALLBACK CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
+LRESULT CSettings::OnInitDialog()
 {
-    switch (messg)
+	{
+		HDC hdc = GetDC(ghOpWnd);
+		int aFontCount[] = { 0, 0, 0 };
+		EnumFontFamilies(hdc, (LPCTSTR) NULL, (FONTENUMPROC) EnumFamCallBack, (LPARAM) aFontCount);
+		DeleteDC(hdc);
+	    
+		TCHAR szTitle[MAX_PATH]; szTitle[0]=0;
+		int nConfLen = _tcslen(gSet.Config);
+		int nStdLen = strlen("Software\\ConEmu");
+		if (nConfLen>(nStdLen+1))
+			wsprintf(szTitle, _T("Settings (%s)..."), (gSet.Config+nStdLen+1));
+		else
+			_tcscpy(szTitle, _T("Settings..."));
+		SetWindowText ( ghOpWnd, szTitle );
+	}
+
+	SendDlgItemMessage(ghOpWnd, tFontFace, CB_SELECTSTRING, -1, (LPARAM)gSet.LogFont.lfFaceName);
+	SendDlgItemMessage(ghOpWnd, tFontFace2, CB_SELECTSTRING, -1, (LPARAM)gSet.LogFont2.lfFaceName);
+
+	{
+		const BYTE FSizes[] = {0, 8, 10, 12, 14, 16, 18, 20, 24, 26, 28, 30, 32, 34, 36, 40, 46, 50, 52, 72};
+		for (uint i=0; i < sizeofarray(FSizes); i++)
+		{
+			wsprintf(temp, _T("%i"), FSizes[i]);
+			if (i > 0)
+				SendDlgItemMessage(ghOpWnd, tFontSizeY, CB_ADDSTRING, 0, (LPARAM) temp);
+			SendDlgItemMessage(ghOpWnd, tFontSizeX, CB_ADDSTRING, 0, (LPARAM) temp);
+			SendDlgItemMessage(ghOpWnd, tFontSizeX2, CB_ADDSTRING, 0, (LPARAM) temp);
+			SendDlgItemMessage(ghOpWnd, tFontSizeX3, CB_ADDSTRING, 0, (LPARAM) temp);
+		}
+
+		wsprintf(temp, _T("%i"), gSet.LogFont.lfHeight);
+		upToFontHeight = gSet.LogFont.lfHeight;
+		if( SendDlgItemMessage(ghOpWnd, tFontSizeY, CB_SELECTSTRING, -1, (LPARAM)temp) == CB_ERR )
+			SetDlgItemText(ghOpWnd, tFontSizeY, temp);
+
+		wsprintf(temp, _T("%i"), gSet.FontSizeX);
+		if( SendDlgItemMessage(ghOpWnd, tFontSizeX, CB_SELECTSTRING, -1, (LPARAM)temp) == CB_ERR )
+			SetDlgItemText(ghOpWnd, tFontSizeX, temp);
+
+		wsprintf(temp, _T("%i"), gSet.FontSizeX2);
+		if( SendDlgItemMessage(ghOpWnd, tFontSizeX2, CB_SELECTSTRING, -1, (LPARAM)temp) == CB_ERR )
+			SetDlgItemText(ghOpWnd, tFontSizeX2, temp);
+
+		wsprintf(temp, _T("%i"), gSet.FontSizeX3);
+		if( SendDlgItemMessage(ghOpWnd, tFontSizeX3, CB_SELECTSTRING, -1, (LPARAM)temp) == CB_ERR )
+			SetDlgItemText(ghOpWnd, tFontSizeX3, temp);
+	}
+
+	{
+		const char *ChSets[] = {"ANSI", "Arabic", "Baltic", "Chinese Big 5", "Default", "East Europe",
+			"GB 2312", "Greek", "Hebrew", "Hangul", "Johab", "Mac", "OEM", "Russian", "Shiftjis",
+			"Symbol", "Thai", "Turkish", "Vietnamese"};
+
+		u8 num = 4;
+		for (uint i=0; i < 19; i++)
+		{
+			SendDlgItemMessageA(ghOpWnd, tFontCharset, CB_ADDSTRING, 0, (LPARAM) ChSets[i]);
+			if (chSetsNums[i] == gSet.LogFont.lfCharSet) num = i;
+		}
+		SendDlgItemMessage(ghOpWnd, tFontCharset, CB_SETCURSEL, num, 0);
+	}
+
+	SetDlgItemText(ghOpWnd, tCmdLine, gSet.Cmd);
+	SetDlgItemText(ghOpWnd, tBgImage, gSet.pBgImage);
+	CheckDlgButton(ghOpWnd, rBgSimple, BST_CHECKED);
+
+	TCHAR tmp[10];
+	wsprintf(tmp, _T("%i"), gSet.bgImageDarker);
+	SendDlgItemMessage(ghOpWnd, tDarker, EM_SETLIMITTEXT, 3, 0);
+	SetDlgItemText(ghOpWnd, tDarker, tmp);
+
+	SendDlgItemMessage(ghOpWnd, slDarker, TBM_SETRANGE, (WPARAM) true, (LPARAM) MAKELONG(0, 255));
+	SendDlgItemMessage(ghOpWnd, slDarker, TBM_SETPOS  , (WPARAM) true, (LPARAM) gSet.bgImageDarker);
+
+	if (gSet.isShowBgImage)
+		CheckDlgButton(ghOpWnd, cbBgImage, BST_CHECKED);
+	else
+	{
+		EnableWindow(GetDlgItem(ghOpWnd, tBgImage), false);
+		EnableWindow(GetDlgItem(ghOpWnd, tDarker), false);
+		EnableWindow(GetDlgItem(ghOpWnd, slDarker), false);
+		EnableWindow(GetDlgItem(ghOpWnd, bBgImage), false);
+	}
+
+	switch(gSet.LogFont.lfQuality)
+	{
+	case NONANTIALIASED_QUALITY:
+		CheckDlgButton(ghOpWnd, rNoneAA, BST_CHECKED);
+		break;
+	case ANTIALIASED_QUALITY:
+		CheckDlgButton(ghOpWnd, rStandardAA, BST_CHECKED);
+		break;
+	case CLEARTYPE_NATURAL_QUALITY:
+		CheckDlgButton(ghOpWnd, rCTAA, BST_CHECKED);
+		break;
+	}
+	if (gSet.isFixFarBorders)   CheckDlgButton(ghOpWnd, cbFixFarBorders, BST_CHECKED);
+	if (gSet.isCursorColor) CheckDlgButton(ghOpWnd, cbCursorColor, BST_CHECKED);
+	if (gSet.isRClickSendKey) CheckDlgButton(ghOpWnd, cbRClick, (gSet.isRClickSendKey==1) ? BST_CHECKED : BST_INDETERMINATE);
+	if (gSet.isSentAltEnter) CheckDlgButton(ghOpWnd, cbSendAE, BST_CHECKED);
+
+	if (gSet.isDnD)
+	{
+		CheckDlgButton(ghOpWnd, cbDnD, BST_CHECKED);
+		EnableWindow(GetDlgItem(ghOpWnd, cbDnDCopy), true);
+	}
+	else
+		EnableWindow(GetDlgItem(ghOpWnd, cbDnDCopy), false);
+	if (gSet.isDefCopy) CheckDlgButton(ghOpWnd, cbDnDCopy, (gSet.isDefCopy==1) ? BST_CHECKED : BST_INDETERMINATE);
+
+	if (gSet.isGUIpb) CheckDlgButton(ghOpWnd, cbGUIpb, BST_CHECKED);
+	if (gSet.isTabs) CheckDlgButton(ghOpWnd, cbTabs, (gSet.isTabs==1) ? BST_CHECKED : BST_INDETERMINATE);
+	if (gSet.isCursorV)
+		CheckDlgButton(ghOpWnd, rCursorV, BST_CHECKED);
+	else
+		CheckDlgButton(ghOpWnd, rCursorH, BST_CHECKED);
+	if (gSet.isForceMonospace)
+		CheckDlgButton(ghOpWnd, cbMonospace, BST_CHECKED);
+	if (gSet.isConMan)
+		CheckDlgButton(ghOpWnd, cbIsConMan, BST_CHECKED);
+
+	if (gSet.LogFont.lfWeight == FW_BOLD) CheckDlgButton(ghOpWnd, cbBold, BST_CHECKED);
+	if (gSet.LogFont.lfItalic)            CheckDlgButton(ghOpWnd, cbItalic, BST_CHECKED);
+
+	if (gSet.isFullScreen)
+		CheckRadioButton(ghOpWnd, rNormal, rFullScreen, rFullScreen);
+	else if (IsZoomed(ghWnd))
+		CheckRadioButton(ghOpWnd, rNormal, rFullScreen, rMaximized);
+	else
+		CheckRadioButton(ghOpWnd, rNormal, rFullScreen, rNormal);
+
+	wsprintf(temp, _T("%i"), gSet.wndWidth);
+	SetDlgItemText(ghOpWnd, tWndWidth, temp);
+	SendDlgItemMessage(ghOpWnd, tWndWidth, EM_SETLIMITTEXT, 3, 0);
+
+	wsprintf(temp, _T("%i"), gSet.wndHeight);
+	SetDlgItemText(ghOpWnd, tWndHeight, temp);
+	SendDlgItemMessage(ghOpWnd, tWndHeight, EM_SETLIMITTEXT, 3, 0);
+
+	if (!gSet.isFullScreen && !IsZoomed(ghWnd))
+	{
+		EnableWindow(GetDlgItem(ghOpWnd, tWndWidth), true);
+		EnableWindow(GetDlgItem(ghOpWnd, tWndHeight), true);
+
+	}
+	else
+	{
+		EnableWindow(GetDlgItem(ghOpWnd, tWndWidth), false);
+		EnableWindow(GetDlgItem(ghOpWnd, tWndHeight), false);
+
+	}
+
+	#define getR(inColorref) (byte)inColorref
+	#define getG(inColorref) (byte)(inColorref >> 8)
+	#define getB(inColorref) (byte)(inColorref >> 16)
+
+	for (uint i = 0; i < 16; i++)
+	{
+		SendDlgItemMessage(ghOpWnd, 1100 + i, EM_SETLIMITTEXT, 11, 0);
+		wsprintf(temp, _T("%i %i %i"), getR(gSet.Colors[i]), getG(gSet.Colors[i]), getB(gSet.Colors[i]));
+		SetDlgItemText(ghOpWnd, 1100 + i, temp);
+	}
+
+	{
+		RECT rect;
+		GetWindowRect(ghOpWnd, &rect);
+		MoveWindow(ghOpWnd, GetSystemMetrics(SM_CXSCREEN)/2 - (rect.right - rect.left)/2, GetSystemMetrics(SM_CYSCREEN)/2 - (rect.bottom - rect.top)/2, rect.right - rect.left, rect.bottom - rect.top, false);
+	}
+
+	return 0;
+}
+
+LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
+{
+    WORD CB = LOWORD(wParam);
+    switch(wParam)
     {
-    case WM_INITDIALOG:
-        ghOpWnd = hWnd2;
-        {
-            HDC hdc = GetDC(ghOpWnd);
-            int aFontCount[] = { 0, 0, 0 };
-            EnumFontFamilies(hdc, (LPCTSTR) NULL, (FONTENUMPROC) EnumFamCallBack, (LPARAM) aFontCount);
-            DeleteDC(hdc);
-            
-            TCHAR szTitle[MAX_PATH]; szTitle[0]=0;
-            int nConfLen = _tcslen(gSet.Config);
-            int nStdLen = strlen("Software\\ConEmu");
-            if (nConfLen>(nStdLen+1))
-	            wsprintf(szTitle, _T("Settings (%s)..."), (gSet.Config+nStdLen+1));
-	        else
-		        _tcscpy(szTitle, _T("Settings..."));
-            SetWindowText ( ghOpWnd, szTitle );
-        }
+    case IDOK:
+    case IDCANCEL:
+    case IDCLOSE:
+		if (gSet.isTabs==1) gConEmu.ForceShowTabs(TRUE); else
+		if (gSet.isTabs==0) gConEmu.ForceShowTabs(FALSE); // там еще есть '==2', но его здесь не обрабатываем
+        SendMessage(ghOpWnd, WM_CLOSE, 0, 0);
+        break;
 
-        SendDlgItemMessage(hWnd2, tFontFace, CB_SELECTSTRING, -1, (LPARAM)gSet.LogFont.lfFaceName);
-        SendDlgItemMessage(hWnd2, tFontFace2, CB_SELECTSTRING, -1, (LPARAM)gSet.LogFont2.lfFaceName);
+    case rNoneAA:
+    case rStandardAA:
+    case rCTAA:
+        gSet.LogFont.lfQuality = wParam == rNoneAA ? NONANTIALIASED_QUALITY : wParam == rStandardAA ? ANTIALIASED_QUALITY : CLEARTYPE_NATURAL_QUALITY;
+        DeleteObject(pVCon->hFont);
+        pVCon->hFont = 0;
+        gSet.LogFont.lfWidth = gSet.FontSizeX;
+        pVCon->Update(true);
+        InvalidateRect(ghWnd, NULL, FALSE);
+        break;
 
+    case bSaveSettings:
+        if (gSet.SaveSettings())
+			SendMessage(ghOpWnd,WM_COMMAND,IDOK,0);
+        break;
+
+    case rNormal:
+    case rFullScreen:
+    case rMaximized:
+        gConEmu.SetWindowMode(wParam);
+        break;
+
+    case cbFixFarBorders:
+        gSet.isFixFarBorders = !gSet.isFixFarBorders;
+
+        pVCon->Update(true);
+        InvalidateRect(ghWnd, NULL, FALSE);
+        break;
+
+    case cbCursorColor:
+        gSet.isCursorColor = !gSet.isCursorColor;
+
+        pVCon->Update(true);
+        InvalidateRect(ghWnd, NULL, FALSE);
+        break;
+
+    case cbBold:
+    case cbItalic:
         {
-            const BYTE FSizes[] = {0, 8, 10, 12, 14, 16, 18, 20, 24, 26, 28, 30, 32, 34, 36, 40, 46, 50, 52, 72};
-            for (uint i=0; i < sizeofarray(FSizes); i++)
+            if (wParam == cbBold)
+                gSet.LogFont.lfWeight = SendDlgItemMessage(ghOpWnd, cbBold, BM_GETCHECK, BST_CHECKED, 0) == BST_CHECKED ? FW_BOLD : FW_NORMAL;
+            else if (wParam == cbItalic)
+                gSet.LogFont.lfItalic = SendDlgItemMessage(ghOpWnd, cbItalic, BM_GETCHECK, BST_CHECKED, 0) == BST_CHECKED ? true : false;
+
+            gSet.LogFont.lfWidth = gSet.FontSizeX;
+            HFONT hFont = pVCon->CreateFontIndirectMy(&gSet.LogFont);
+            if (hFont)
             {
-                wsprintf(temp, _T("%i"), FSizes[i]);
-                if (i > 0)
-                    SendDlgItemMessage(ghOpWnd, tFontSizeY, CB_ADDSTRING, 0, (LPARAM) temp);
-                SendDlgItemMessage(ghOpWnd, tFontSizeX, CB_ADDSTRING, 0, (LPARAM) temp);
-				SendDlgItemMessage(ghOpWnd, tFontSizeX2, CB_ADDSTRING, 0, (LPARAM) temp);
-				SendDlgItemMessage(ghOpWnd, tFontSizeX3, CB_ADDSTRING, 0, (LPARAM) temp);
+                DeleteObject(pVCon->hFont);
+                pVCon->hFont = hFont;
+
+                pVCon->Update(true);
+				if (!gSet.isFullScreen && !IsZoomed(ghWnd))
+                    gConEmu.SyncWindowToConsole();
+				else
+                    gConEmu.SyncConsoleToWindow();
+				gConEmu.ReSize();
+                InvalidateRect(ghWnd, 0, 0);
             }
-
-            wsprintf(temp, _T("%i"), gSet.LogFont.lfHeight);
-            upToFontHeight = gSet.LogFont.lfHeight;
-            if( SendDlgItemMessage(hWnd2, tFontSizeY, CB_SELECTSTRING, -1, (LPARAM)temp) == CB_ERR )
-                SetDlgItemText(hWnd2, tFontSizeY, temp);
-
-            wsprintf(temp, _T("%i"), gSet.FontSizeX);
-            if( SendDlgItemMessage(hWnd2, tFontSizeX, CB_SELECTSTRING, -1, (LPARAM)temp) == CB_ERR )
-                SetDlgItemText(hWnd2, tFontSizeX, temp);
-
-            wsprintf(temp, _T("%i"), gSet.FontSizeX2);
-            if( SendDlgItemMessage(hWnd2, tFontSizeX2, CB_SELECTSTRING, -1, (LPARAM)temp) == CB_ERR )
-                SetDlgItemText(hWnd2, tFontSizeX2, temp);
-
-            wsprintf(temp, _T("%i"), gSet.FontSizeX3);
-            if( SendDlgItemMessage(hWnd2, tFontSizeX3, CB_SELECTSTRING, -1, (LPARAM)temp) == CB_ERR )
-                SetDlgItemText(hWnd2, tFontSizeX3, temp);
-        }
-
-        {
-            const char *ChSets[] = {"ANSI", "Arabic", "Baltic", "Chinese Big 5", "Default", "East Europe",
-                "GB 2312", "Greek", "Hebrew", "Hangul", "Johab", "Mac", "OEM", "Russian", "Shiftjis",
-                "Symbol", "Thai", "Turkish", "Vietnamese"};
-
-            u8 num = 4;
-            for (uint i=0; i < 19; i++)
-            {
-                SendDlgItemMessageA(ghOpWnd, tFontCharset, CB_ADDSTRING, 0, (LPARAM) ChSets[i]);
-                if (chSetsNums[i] == gSet.LogFont.lfCharSet) num = i;
-            }
-            SendDlgItemMessage(ghOpWnd, tFontCharset, CB_SETCURSEL, num, 0);
-        }
-
-        SetDlgItemText(hWnd2, tCmdLine, gSet.Cmd);
-        SetDlgItemText(hWnd2, tBgImage, gSet.pBgImage);
-
-        TCHAR tmp[10];
-        wsprintf(tmp, _T("%i"), gSet.bgImageDarker);
-        SendDlgItemMessage(hWnd2, tDarker, EM_SETLIMITTEXT, 3, 0);
-        SetDlgItemText(hWnd2, tDarker, tmp);
-
-        SendDlgItemMessage(hWnd2, slDarker, TBM_SETRANGE, (WPARAM) true, (LPARAM) MAKELONG(0, 255));
-        SendDlgItemMessage(hWnd2, slDarker, TBM_SETPOS  , (WPARAM) true, (LPARAM) gSet.bgImageDarker);
-
-        if (gSet.isShowBgImage)
-            CheckDlgButton(hWnd2, cbBgImage, BST_CHECKED);
-        else
-        {
-            EnableWindow(GetDlgItem(hWnd2, tBgImage), false);
-            EnableWindow(GetDlgItem(hWnd2, tDarker), false);
-            EnableWindow(GetDlgItem(hWnd2, slDarker), false);
-        }
-
-        switch(gSet.LogFont.lfQuality)
-        {
-        case NONANTIALIASED_QUALITY:
-            CheckDlgButton(hWnd2, rNoneAA, BST_CHECKED);
-            break;
-        case ANTIALIASED_QUALITY:
-            CheckDlgButton(hWnd2, rStandardAA, BST_CHECKED);
-            break;
-        case CLEARTYPE_NATURAL_QUALITY:
-            CheckDlgButton(hWnd2, rCTAA, BST_CHECKED);
-            break;
-        }
-        if (gSet.isFixFarBorders)   CheckDlgButton(hWnd2, cbFixFarBorders, BST_CHECKED);
-        if (gSet.isCursorColor) CheckDlgButton(hWnd2, cbCursorColor, BST_CHECKED);
-        if (gSet.isRClickSendKey) CheckDlgButton(hWnd2, cbRClick, (gSet.isRClickSendKey==1) ? BST_CHECKED : BST_INDETERMINATE);
-        if (gSet.isSentAltEnter) CheckDlgButton(hWnd2, cbSendAE, BST_CHECKED);
-        
-        if (gSet.isDnD)
-        {
-            CheckDlgButton(hWnd2, cbDnD, BST_CHECKED);
-            EnableWindow(GetDlgItem(ghOpWnd, cbDnDCopy), true);
-        }
-        else
-            EnableWindow(GetDlgItem(ghOpWnd, cbDnDCopy), false);
-        if (gSet.isDefCopy) CheckDlgButton(hWnd2, cbDnDCopy, (gSet.isDefCopy==1) ? BST_CHECKED : BST_INDETERMINATE);
-
-        if (gSet.isGUIpb) CheckDlgButton(hWnd2, cbGUIpb, BST_CHECKED);
-        if (gSet.isTabs) CheckDlgButton(hWnd2, cbTabs, (gSet.isTabs==1) ? BST_CHECKED : BST_INDETERMINATE);
-        if (gSet.isCursorV)
-            CheckDlgButton(hWnd2, rCursorV, BST_CHECKED);
-        else
-            CheckDlgButton(hWnd2, rCursorH, BST_CHECKED);
-        if (gSet.isForceMonospace)
-            CheckDlgButton(hWnd2, cbMonospace, BST_CHECKED);
-        if (gSet.isConMan)
-            CheckDlgButton(hWnd2, cbIsConMan, BST_CHECKED);
-
-        if (gSet.LogFont.lfWeight == FW_BOLD) CheckDlgButton(hWnd2, cbBold, BST_CHECKED);
-        if (gSet.LogFont.lfItalic)            CheckDlgButton(hWnd2, cbItalic, BST_CHECKED);
-
-        if (gSet.isFullScreen)
-            CheckRadioButton(ghOpWnd, rNormal, rFullScreen, rFullScreen);
-        else if (IsZoomed(ghWnd))
-            CheckRadioButton(ghOpWnd, rNormal, rFullScreen, rMaximized);
-        else
-            CheckRadioButton(ghOpWnd, rNormal, rFullScreen, rNormal);
-
-        wsprintf(temp, _T("%i"), gSet.wndWidth);
-        SetDlgItemText(hWnd2, tWndWidth, temp);
-        SendDlgItemMessage(hWnd2, tWndWidth, EM_SETLIMITTEXT, 3, 0);
-
-        wsprintf(temp, _T("%i"), gSet.wndHeight);
-        SetDlgItemText(hWnd2, tWndHeight, temp);
-        SendDlgItemMessage(hWnd2, tWndHeight, EM_SETLIMITTEXT, 3, 0);
-
-        if (!gSet.isFullScreen && !IsZoomed(ghWnd))
-        {
-            EnableWindow(GetDlgItem(ghOpWnd, tWndWidth), true);
-            EnableWindow(GetDlgItem(ghOpWnd, tWndHeight), true);
-
-        }
-        else
-        {
-            EnableWindow(GetDlgItem(ghOpWnd, tWndWidth), false);
-            EnableWindow(GetDlgItem(ghOpWnd, tWndHeight), false);
-
-        }
-
-#define getR(inColorref) (byte)inColorref
-#define getG(inColorref) (byte)(inColorref >> 8)
-#define getB(inColorref) (byte)(inColorref >> 16)
-
-        for (uint i = 0; i < 16; i++)
-        {
-            SendDlgItemMessage(hWnd2, 1100 + i, EM_SETLIMITTEXT, 11, 0);
-            wsprintf(temp, _T("%i %i %i"), getR(gSet.Colors[i]), getG(gSet.Colors[i]), getB(gSet.Colors[i]));
-            SetDlgItemText(hWnd2, 1100 + i, temp);
-        }
-
-        {
-            RECT rect;
-            GetWindowRect(hWnd2, &rect);
-            MoveWindow(hWnd2, GetSystemMetrics(SM_CXSCREEN)/2 - (rect.right - rect.left)/2, GetSystemMetrics(SM_CYSCREEN)/2 - (rect.bottom - rect.top)/2, rect.right - rect.left, rect.bottom - rect.top, false);
         }
         break;
 
-        case WM_CTLCOLORSTATIC:
-            for (uint i = 1000; i < 1016; i++)
-                if (GetDlgItem(hWnd2, i) == (HWND)lParam)
-                {
-                    static HBRUSH KillBrush;
-                    DeleteObject(KillBrush);
-                    KillBrush = CreateSolidBrush(gSet.Colors[i-1000]);
-                    return (BOOL)KillBrush;
-                }
-                break;
-        case WM_KEYDOWN:
-            if (wParam == VK_ESCAPE)
-                SendMessage(hWnd2, WM_CLOSE, 0, 0);
-            break;
+    case cbBgImage:
+        gSet.isShowBgImage = SendDlgItemMessage(ghOpWnd, cbBgImage, BM_GETCHECK, BST_CHECKED, 0) == BST_CHECKED ? true : false;
+        EnableWindow(GetDlgItem(ghOpWnd, tBgImage), gSet.isShowBgImage);
+        EnableWindow(GetDlgItem(ghOpWnd, tDarker), gSet.isShowBgImage);
+        EnableWindow(GetDlgItem(ghOpWnd, slDarker), gSet.isShowBgImage);
+		EnableWindow(GetDlgItem(ghOpWnd, bBgImage), gSet.isShowBgImage);
 
-        case WM_HSCROLL:
+        if (gSet.isShowBgImage && gSet.isBackgroundImageValid)
+            SetBkMode(pVCon->hDC, TRANSPARENT);
+        else
+            SetBkMode(pVCon->hDC, OPAQUE);
+
+        pVCon->Update(true);
+        InvalidateRect(ghWnd, NULL, FALSE);
+        break;
+
+    case cbRClick:
+        //gSet.isRClickSendKey = !gSet.isRClickSendKey;
+        switch(IsDlgButtonChecked(ghOpWnd, cbRClick)) {
+            case BST_UNCHECKED:
+                gSet.isRClickSendKey=0; break;
+            case BST_CHECKED:
+                gSet.isRClickSendKey=1; break;
+            case BST_INDETERMINATE:
+                gSet.isRClickSendKey=2; break;
+        }
+        break;
+
+    case cbSendAE:
+        gSet.isSentAltEnter = !gSet.isSentAltEnter;
+        break;
+
+    case cbDnD:
+        gSet.isDnD = !gSet.isDnD;
+        EnableWindow(GetDlgItem(ghOpWnd, cbDnDCopy), gSet.isDnD);
+        break;
+    
+    case cbDnDCopy:
+        switch(IsDlgButtonChecked(ghOpWnd, cbDnDCopy)) {
+            case BST_UNCHECKED:
+                gSet.isDefCopy=0; break;
+            case BST_CHECKED:
+                gSet.isDefCopy=1; break;
+            case BST_INDETERMINATE:
+                gSet.isDefCopy=2; break;
+        }
+        //gSet.isDefCopy = !gSet.isDefCopy;
+        break;
+    
+    case cbGUIpb:
+        gSet.isGUIpb = !gSet.isGUIpb;
+        break;
+    
+    case cbTabs:
+        switch(IsDlgButtonChecked(ghOpWnd, cbTabs)) {
+            case BST_UNCHECKED:
+                gSet.isTabs=0; break;
+            case BST_CHECKED:
+                gSet.isTabs=1; break;
+            case BST_INDETERMINATE:
+                gSet.isTabs=2; break;
+        }
+        //gSet.isTabs = !gSet.isTabs;
+        break;
+
+    case cbMonospace:
+        gSet.isForceMonospace = !gSet.isForceMonospace;
+
+        pVCon->Update(true);
+        InvalidateRect(ghWnd, NULL, FALSE);
+        break;
+
+    case cbIsConMan:
+        gSet.isConMan = !gSet.isConMan;
+
+        pVCon->Update(true);
+        InvalidateRect(ghWnd, NULL, FALSE);
+        break;
+
+    case rCursorH:
+    case rCursorV:
+        if (wParam == rCursorV)
+            gSet.isCursorV = true;
+        else
+            gSet.isCursorV = false;
+
+        pVCon->Update(true);
+        InvalidateRect(ghWnd, NULL, FALSE);
+        break;
+
+	case bBgImage:
+		{
+			GetDlgItemText(ghOpWnd, tBgImage, temp, MAX_PATH);
+			OPENFILENAME ofn; memset(&ofn,0,sizeof(ofn));
+			ofn.lStructSize=sizeof(ofn);
+			ofn.hwndOwner = ghOpWnd;
+			ofn.lpstrFilter = _T("Bitmap images (*.bmp)\0*.bmp\0\0");
+			ofn.nFilterIndex = 1;
+			ofn.lpstrFile = temp;
+			ofn.nMaxFile = MAX_PATH;
+			ofn.lpstrTitle = _T("Choose background image");
+			ofn.Flags = OFN_ENABLESIZING|OFN_NOCHANGEDIR
+					| OFN_PATHMUSTEXIST|OFN_EXPLORER|OFN_HIDEREADONLY|OFN_FILEMUSTEXIST;
+			if (GetOpenFileName(&ofn))
+				SetDlgItemText(ghOpWnd, tBgImage, temp);
+		}
+		break;
+
+    default:
+        if (CB >= 1000 && CB <= 1015)
+        {
+            COLORREF color = gSet.Colors[CB - 1000];
+            if( gSet.ShowColorDialog(ghOpWnd, &color) )
             {
-                int newV = SendDlgItemMessage(hWnd2, slDarker, TBM_GETPOS, 0, 0);
-                if (newV != gSet.bgImageDarker)
-                {
-                    gSet.bgImageDarker = newV;
-                    TCHAR tmp[10];
-                    wsprintf(tmp, _T("%i"), gSet.bgImageDarker);
-                    SetDlgItemText(hWnd2, tDarker, tmp);
-                    gSet.LoadImageFrom(gSet.pBgImage);
-                    pVCon->Update(true);
-                    InvalidateRect(ghWnd, NULL, FALSE);
-                }
+                gSet.Colors[CB - 1000] = color;
+                wsprintf(temp, _T("%i %i %i"), getR(color), getG(color), getB(color));
+                SetDlgItemText(ghOpWnd, CB + 100, temp);
+                InvalidateRect(GetDlgItem(ghOpWnd, CB), 0, 1);
+
+                pVCon->Update(true);
+                InvalidateRect(ghWnd, NULL, FALSE);
             }
-            break;
-
-        case WM_COMMAND:
-            if (HIWORD(wParam) == BN_CLICKED)
-            {
-                WORD CB = LOWORD(wParam);
-                switch(wParam)
-                {
-                case IDOK:
-                case IDCANCEL:
-                case IDCLOSE:
-					if (gSet.isTabs==1) gConEmu.ForceShowTabs(TRUE); else
-					if (gSet.isTabs==0) gConEmu.ForceShowTabs(FALSE); // там еще есть '==2', но его здесь не обрабатываем
-                    SendMessage(hWnd2, WM_CLOSE, 0, 0);
-                    break;
-
-                case rNoneAA:
-                case rStandardAA:
-                case rCTAA:
-                    gSet.LogFont.lfQuality = wParam == rNoneAA ? NONANTIALIASED_QUALITY : wParam == rStandardAA ? ANTIALIASED_QUALITY : CLEARTYPE_NATURAL_QUALITY;
-                    DeleteObject(pVCon->hFont);
-                    pVCon->hFont = 0;
-                    gSet.LogFont.lfWidth = gSet.FontSizeX;
-                    pVCon->Update(true);
-                    InvalidateRect(ghWnd, NULL, FALSE);
-                    break;
-
-                case bSaveSettings:
-                    if (gSet.SaveSettings())
-						SendMessage(hWnd2,WM_COMMAND,IDOK,0);
-                    break;
-
-                case rNormal:
-                case rFullScreen:
-                case rMaximized:
-                    gConEmu.SetWindowMode(wParam);
-                    break;
-
-                case cbFixFarBorders:
-                    gSet.isFixFarBorders = !gSet.isFixFarBorders;
-
-                    pVCon->Update(true);
-                    InvalidateRect(ghWnd, NULL, FALSE);
-                    break;
-
-                case cbCursorColor:
-                    gSet.isCursorColor = !gSet.isCursorColor;
-
-                    pVCon->Update(true);
-                    InvalidateRect(ghWnd, NULL, FALSE);
-                    break;
-
-                case cbBold:
-                case cbItalic:
-                    {
-                        if (wParam == cbBold)
-                            gSet.LogFont.lfWeight = SendDlgItemMessage(hWnd2, cbBold, BM_GETCHECK, BST_CHECKED, 0) == BST_CHECKED ? FW_BOLD : FW_NORMAL;
-                        else if (wParam == cbItalic)
-                            gSet.LogFont.lfItalic = SendDlgItemMessage(hWnd2, cbItalic, BM_GETCHECK, BST_CHECKED, 0) == BST_CHECKED ? true : false;
-
-                        gSet.LogFont.lfWidth = gSet.FontSizeX;
-                        HFONT hFont = pVCon->CreateFontIndirectMy(&gSet.LogFont);
-                        if (hFont)
-                        {
-                            DeleteObject(pVCon->hFont);
-                            pVCon->hFont = hFont;
-
-                            pVCon->Update(true);
-                            if (!gSet.isFullScreen && !IsZoomed(ghWnd))
-                                gConEmu.SyncWindowToConsole();
-                            else
-                                gConEmu.SyncConsoleToWindow();
-                            InvalidateRect(ghWnd, 0, 0);
-                        }
-                    }
-                    break;
-
-                case cbBgImage:
-                    gSet.isShowBgImage = SendDlgItemMessage(hWnd2, cbBgImage, BM_GETCHECK, BST_CHECKED, 0) == BST_CHECKED ? true : false;
-                    EnableWindow(GetDlgItem(ghOpWnd, tBgImage), gSet.isShowBgImage);
-                    EnableWindow(GetDlgItem(hWnd2, tDarker), gSet.isShowBgImage);
-                    EnableWindow(GetDlgItem(hWnd2, slDarker), gSet.isShowBgImage);
-
-                    if (gSet.isShowBgImage && gSet.isBackgroundImageValid)
-                        SetBkMode(pVCon->hDC, TRANSPARENT);
-                    else
-                        SetBkMode(pVCon->hDC, OPAQUE);
-
-                    pVCon->Update(true);
-                    InvalidateRect(ghWnd, NULL, FALSE);
-                    break;
-
-                case cbRClick:
-                    //gSet.isRClickSendKey = !gSet.isRClickSendKey;
-                    switch(IsDlgButtonChecked(hWnd2, cbRClick)) {
-                        case BST_UNCHECKED:
-                            gSet.isRClickSendKey=0; break;
-                        case BST_CHECKED:
-                            gSet.isRClickSendKey=1; break;
-                        case BST_INDETERMINATE:
-                            gSet.isRClickSendKey=2; break;
-                    }
-                    break;
-
-                case cbSendAE:
-                    gSet.isSentAltEnter = !gSet.isSentAltEnter;
-                    break;
-
-                case cbDnD:
-                    gSet.isDnD = !gSet.isDnD;
-                    EnableWindow(GetDlgItem(hWnd2, cbDnDCopy), gSet.isDnD);
-                    break;
-                
-                case cbDnDCopy:
-                    switch(IsDlgButtonChecked(hWnd2, cbDnDCopy)) {
-                        case BST_UNCHECKED:
-                            gSet.isDefCopy=0; break;
-                        case BST_CHECKED:
-                            gSet.isDefCopy=1; break;
-                        case BST_INDETERMINATE:
-                            gSet.isDefCopy=2; break;
-                    }
-                    //gSet.isDefCopy = !gSet.isDefCopy;
-                    break;
-                
-                case cbGUIpb:
-                    gSet.isGUIpb = !gSet.isGUIpb;
-                    break;
-                
-                case cbTabs:
-                    switch(IsDlgButtonChecked(hWnd2, cbTabs)) {
-                        case BST_UNCHECKED:
-                            gSet.isTabs=0; break;
-                        case BST_CHECKED:
-                            gSet.isTabs=1; break;
-                        case BST_INDETERMINATE:
-                            gSet.isTabs=2; break;
-                    }
-                    //gSet.isTabs = !gSet.isTabs;
-                    break;
-
-                case cbMonospace:
-                    gSet.isForceMonospace = !gSet.isForceMonospace;
-
-                    pVCon->Update(true);
-                    InvalidateRect(ghWnd, NULL, FALSE);
-                    break;
-
-                case cbIsConMan:
-                    gSet.isConMan = !gSet.isConMan;
-
-                    pVCon->Update(true);
-                    InvalidateRect(ghWnd, NULL, FALSE);
-                    break;
-
-                case rCursorH:
-                case rCursorV:
-                    if (wParam == rCursorV)
-                        gSet.isCursorV = true;
-                    else
-                        gSet.isCursorV = false;
-
-                    pVCon->Update(true);
-                    InvalidateRect(ghWnd, NULL, FALSE);
-                    break;
-
-                default:
-                    if (CB >= 1000 && CB <= 1015)
-                    {
-                        COLORREF color = gSet.Colors[CB - 1000];
-                        if( gSet.ShowColorDialog(hWnd2, &color) )
-                        {
-                            gSet.Colors[CB - 1000] = color;
-                            wsprintf(temp, _T("%i %i %i"), getR(color), getG(color), getB(color));
-                            SetDlgItemText(hWnd2, CB + 100, temp);
-                            InvalidateRect(GetDlgItem(hWnd2, CB), 0, 1);
-
-                            pVCon->Update(true);
-                            InvalidateRect(ghWnd, NULL, FALSE);
-                        }
-                    }
-                }
-            }
-            else if (HIWORD(wParam) == EN_CHANGE)
-            {
-                WORD TB = LOWORD(wParam);
-                if (TB >= 1100 && TB <= 1115)
-                {
-                    int r, g, b;
-                    GetDlgItemText(hWnd2, TB, temp, MAX_PATH);
-                    TCHAR *sp1 = _tcschr(temp, ' '), *sp2;
-                    if (sp1 && *(sp1+1) && *(sp1+1) != ' ')
-                    {
-                        sp2 = _tcschr(sp1+1, ' ');
-                        if (sp2 && *(sp2+1) && *(sp2+1) != ' ')
-                        {
-                            *sp1 = 0;
-                            sp1++;
-                            *sp2 = 0;
-                            sp2++;
-                            r = klatoi(temp); g = klatoi(sp1), b = klatoi(sp2);
-                            if (r >= 0 && r <= 255 && g >= 0 && g <= 255 && b >= 0 && b <= 255 && gSet.Colors[TB - 1100] != RGB(r, g, b))
-                            {
-                                gSet.Colors[TB - 1100] = RGB(r, g, b);
-                                if (pVCon) pVCon->Update(true);
-                                if (ghWnd) InvalidateRect(ghWnd, 0, 1);
-                                InvalidateRect(GetDlgItem(hWnd2, TB - 100), 0, 1);
-                            }
-                        }
-                    }
-                }
-                else if (TB == tBgImage)
-                {
-                    GetDlgItemText(ghOpWnd, tBgImage, temp, MAX_PATH);
-                    if( gSet.LoadImageFrom(temp) )
-                    {
-                        if (gSet.isShowBgImage && gSet.isBackgroundImageValid)
-                            SetBkMode(pVCon->hDC, TRANSPARENT);
-                        else
-                            SetBkMode(pVCon->hDC, OPAQUE);
-
-                        pVCon->Update(true);
-                        InvalidateRect(ghWnd, NULL, FALSE);
-                    }
-                }
-                else if ( (TB == tWndWidth || TB == tWndHeight) && IsDlgButtonChecked(hWnd2, rNormal) == BST_CHECKED )
-                {
-                    DWORD newX, newY;
-                    GetDlgItemText(hWnd2, tWndWidth, temp, MAX_PATH);
-                    newX = klatoi(temp);
-                    GetDlgItemText(hWnd2, tWndHeight, temp, MAX_PATH);
-                    newY = klatoi(temp);
-
-                    if (newX > 24 && newY > 7)
-                    {
-                        gSet.wndWidth = newX;
-                        gSet.wndHeight = newY;
-
-                        COORD b = {gSet.wndWidth, gSet.wndHeight};
-                  gConEmu.SetConsoleWindowSize(b, false);  // NightRoman
-                  //MoveWindow(hConWnd, 0, 0, 1, 1, 0);
-                  //SetConsoleScreenBufferSize(pVCon->hConOut(), b);
-                  //MoveWindow(hConWnd, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), 0);
-                    }
-
-                }
-                else if (TB == tDarker)
-                {
-                    DWORD newV;
-                    TCHAR tmp[10];
-                    GetDlgItemText(hWnd2, tDarker, tmp, 10);
-                    newV = klatoi(tmp);
-                    if (newV < 256 && newV != gSet.bgImageDarker)
-                    {
-                        gSet.bgImageDarker = newV;
-                        SendDlgItemMessage(hWnd2, slDarker, TBM_SETPOS, (WPARAM) true, (LPARAM) gSet.bgImageDarker);
-                        gSet.LoadImageFrom(gSet.pBgImage);
-                        pVCon->Update(true);
-                        InvalidateRect(ghWnd, NULL, FALSE);
-                    }
-                }
-
-            }
-            else if (HIWORD(wParam) == CBN_EDITCHANGE || HIWORD(wParam) == CBN_SELCHANGE)
-            {
-                if (LOWORD(wParam) == tFontFace || LOWORD(wParam) == tFontFace2)
-                {
-	                LOGFONT* pLogFont = (LOWORD(wParam) == tFontFace) ? &gSet.LogFont : &gSet.LogFont2;
-	                int nID = (LOWORD(wParam) == tFontFace) ? tFontFace : tFontFace2;
-                    _tcscpy(temp, pLogFont->lfFaceName);
-                    if (HIWORD(wParam) == CBN_EDITCHANGE)
-                        GetDlgItemText(hWnd2, nID, pLogFont->lfFaceName, LF_FACESIZE);
-                    else
-                        SendDlgItemMessage(hWnd2, nID, CB_GETLBTEXT, SendDlgItemMessage(hWnd2, nID, CB_GETCURSEL, 0, 0), (LPARAM)pLogFont->lfFaceName);
-
-                    if (HIWORD(wParam) == CBN_EDITCHANGE)
-                    {
-                        LRESULT a = SendDlgItemMessage(hWnd2, nID, CB_FINDSTRINGEXACT, -1, (LPARAM)pLogFont->lfFaceName);
-                        if(a == CB_ERR)
-                        {
-                            _tcscpy(pLogFont->lfFaceName, temp);
-                            break;
-                        }
-                    }
-
-                    BYTE qWas = pLogFont->lfQuality;
-                    pLogFont->lfHeight = upToFontHeight;
-                    pLogFont->lfWidth = gSet.FontSizeX;
-                    HFONT hFont = pVCon->CreateFontIndirectMy(&gSet.LogFont);
-                    if (hFont)
-                    {
-	                    if (LOWORD(wParam) == tFontFace) {
-	                        DeleteObject(pVCon->hFont);
-	                        pVCon->hFont = hFont;
-	                    } else {
-	                        DeleteObject(pVCon->hFont2);
-	                        pVCon->hFont2 = hFont;
-	                    }
-
-                        pVCon->Update(true);
-                        if (!gSet.isFullScreen && !IsZoomed(ghWnd))
-                            gConEmu.SyncWindowToConsole();
-                        else
-                            gConEmu.SyncConsoleToWindow();
-                        InvalidateRect(ghWnd, 0, 0);
-
-                        if (LOWORD(wParam) == tFontFace) {
-	                        wsprintf(temp, _T("%i"), pLogFont->lfHeight);
-	                        SetDlgItemText(hWnd2, tFontSizeY, temp);
-	                    }
-                    }
-                }
-                else if (LOWORD(wParam) == tFontSizeY || LOWORD(wParam) == tFontSizeX || 
-					LOWORD(wParam) == tFontSizeX2 || LOWORD(wParam) == tFontSizeX3 || LOWORD(wParam) == tFontCharset)
-                {
-                    int newSize = 0;
-                    if (LOWORD(wParam) == tFontSizeY || LOWORD(wParam) == tFontSizeX || 
-						LOWORD(wParam) == tFontSizeX2 || LOWORD(wParam) == tFontSizeX3)
-                    {
-                        if (HIWORD(wParam) == CBN_EDITCHANGE)
-                            GetDlgItemText(hWnd2, LOWORD(wParam), temp, MAX_PATH);
-                        else
-                            SendDlgItemMessage(hWnd2, LOWORD(wParam), CB_GETLBTEXT, SendDlgItemMessage(hWnd2, LOWORD(wParam), CB_GETCURSEL, 0, 0), (LPARAM)temp);
-
-                        newSize = klatoi(temp);
-                    }
-
-                    if (newSize > 4 && newSize < 200 || (newSize == 0 && *temp == '0') || LOWORD(wParam) == tFontCharset)
-                    {
-                        if (LOWORD(wParam) == tFontSizeY)
-                            gSet.LogFont.lfHeight = upToFontHeight = newSize;
-                        else if (LOWORD(wParam) == tFontSizeX)
-                            gSet.FontSizeX = newSize;
-                        else if (LOWORD(wParam) == tFontSizeX2)
-                            gSet.FontSizeX2 = newSize;
-                        else if (LOWORD(wParam) == tFontSizeX3)
-                            gSet.FontSizeX3 = newSize;
-                        else if (LOWORD(wParam) == tFontCharset)
-                        {
-                            int newCharSet = SendDlgItemMessage(hWnd2, tFontCharset, CB_GETCURSEL, 0, 0);
-                            if (newCharSet != CB_ERR && newCharSet >= 0 && newCharSet < 19)
-                                gSet.LogFont.lfCharSet = chSetsNums[newCharSet];
-                            gSet.LogFont.lfHeight = upToFontHeight;
-                        }
-                        gSet.LogFont.lfWidth = gSet.FontSizeX;
-
-                        HFONT hFont = pVCon->CreateFontIndirectMy(&gSet.LogFont);
-                        if (hFont)
-                        {
-                            DeleteObject(pVCon->hFont);
-                            pVCon->hFont = hFont;
-
-                            pVCon->Update(true);
-                            if (!gSet.isFullScreen && !IsZoomed(ghWnd))
-                                gConEmu.SyncWindowToConsole();
-                            else
-                                gConEmu.SyncConsoleToWindow();
-                            InvalidateRect(ghWnd, 0, 0);
-                        }
-                    }
-                }
-            }
-            break;
-        case WM_CLOSE:
-        case WM_DESTROY:
-            EndDialog(hWnd2, TRUE);
-            ghOpWnd = NULL;
-            break;
-        default:
-            return 0;
+        }
     }
-    return 0;
+
+	return 0;
 }
 
-bool CSettings::LoadImageFrom(TCHAR *inPath)
+LRESULT CSettings::OnEditChanged(WPARAM wParam, LPARAM lParam)
 {
+    WORD TB = LOWORD(wParam);
+    if (TB >= 1100 && TB <= 1115)
+    {
+        int r, g, b;
+        GetDlgItemText(ghOpWnd, TB, temp, MAX_PATH);
+        TCHAR *sp1 = _tcschr(temp, ' '), *sp2;
+        if (sp1 && *(sp1+1) && *(sp1+1) != ' ')
+        {
+            sp2 = _tcschr(sp1+1, ' ');
+            if (sp2 && *(sp2+1) && *(sp2+1) != ' ')
+            {
+                *sp1 = 0;
+                sp1++;
+                *sp2 = 0;
+                sp2++;
+                r = klatoi(temp); g = klatoi(sp1), b = klatoi(sp2);
+                if (r >= 0 && r <= 255 && g >= 0 && g <= 255 && b >= 0 && b <= 255 && gSet.Colors[TB - 1100] != RGB(r, g, b))
+                {
+                    gSet.Colors[TB - 1100] = RGB(r, g, b);
+                    if (pVCon) pVCon->Update(true);
+                    if (ghWnd) InvalidateRect(ghWnd, 0, 1);
+                    InvalidateRect(GetDlgItem(ghOpWnd, TB - 100), 0, 1);
+                }
+            }
+        }
+    }
+    else if (TB == tBgImage)
+    {
+        GetDlgItemText(ghOpWnd, tBgImage, temp, MAX_PATH);
+        if( LoadImageFrom(temp, true) )
+        {
+            if (gSet.isShowBgImage && gSet.isBackgroundImageValid)
+                SetBkMode(pVCon->hDC, TRANSPARENT);
+            else
+                SetBkMode(pVCon->hDC, OPAQUE);
+
+            pVCon->Update(true);
+            InvalidateRect(ghWnd, NULL, FALSE);
+        }
+    }
+    else if ( (TB == tWndWidth || TB == tWndHeight) && IsDlgButtonChecked(ghOpWnd, rNormal) == BST_CHECKED )
+    {
+        DWORD newX, newY;
+        GetDlgItemText(ghOpWnd, tWndWidth, temp, MAX_PATH);
+        newX = klatoi(temp);
+        GetDlgItemText(ghOpWnd, tWndHeight, temp, MAX_PATH);
+        newY = klatoi(temp);
+
+        if (newX > 24 && newY > 7)
+        {
+            gSet.wndWidth = newX;
+            gSet.wndHeight = newY;
+
+            COORD b = {gSet.wndWidth, gSet.wndHeight};
+      gConEmu.SetConsoleWindowSize(b, false);  // NightRoman
+      //MoveWindow(hConWnd, 0, 0, 1, 1, 0);
+      //SetConsoleScreenBufferSize(pVCon->hConOut(), b);
+      //MoveWindow(hConWnd, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), 0);
+        }
+
+    }
+    else if (TB == tDarker)
+    {
+        DWORD newV;
+        TCHAR tmp[10];
+        GetDlgItemText(ghOpWnd, tDarker, tmp, 10);
+        newV = klatoi(tmp);
+        if (newV < 256 && newV != gSet.bgImageDarker)
+        {
+            gSet.bgImageDarker = newV;
+            SendDlgItemMessage(ghOpWnd, slDarker, TBM_SETPOS, (WPARAM) true, (LPARAM) gSet.bgImageDarker);
+            gSet.LoadImageFrom(gSet.pBgImage);
+            pVCon->Update(true);
+            InvalidateRect(ghWnd, NULL, FALSE);
+        }
+    }
+
+	return 0;
+}
+
+LRESULT CSettings::OnComboBox(WPARAM wParam, LPARAM lParam)
+{
+    if (LOWORD(wParam) == tFontFace || LOWORD(wParam) == tFontFace2)
+    {
+        LOGFONT* pLogFont = (LOWORD(wParam) == tFontFace) ? &gSet.LogFont : &gSet.LogFont2;
+        int nID = (LOWORD(wParam) == tFontFace) ? tFontFace : tFontFace2;
+        _tcscpy(temp, pLogFont->lfFaceName);
+        if (HIWORD(wParam) == CBN_EDITCHANGE)
+            GetDlgItemText(ghOpWnd, nID, pLogFont->lfFaceName, LF_FACESIZE);
+        else
+            SendDlgItemMessage(ghOpWnd, nID, CB_GETLBTEXT, SendDlgItemMessage(ghOpWnd, nID, CB_GETCURSEL, 0, 0), (LPARAM)pLogFont->lfFaceName);
+
+        if (HIWORD(wParam) == CBN_EDITCHANGE)
+        {
+            LRESULT a = SendDlgItemMessage(ghOpWnd, nID, CB_FINDSTRINGEXACT, -1, (LPARAM)pLogFont->lfFaceName);
+            if(a == CB_ERR)
+            {
+                _tcscpy(pLogFont->lfFaceName, temp);
+                return -1;
+            }
+        }
+
+        BYTE qWas = pLogFont->lfQuality;
+        pLogFont->lfHeight = upToFontHeight;
+        pLogFont->lfWidth = gSet.FontSizeX;
+        HFONT hFont = pVCon->CreateFontIndirectMy(&gSet.LogFont);
+        if (hFont)
+        {
+            if (LOWORD(wParam) == tFontFace) {
+                DeleteObject(pVCon->hFont);
+                pVCon->hFont = hFont;
+            } else {
+                DeleteObject(pVCon->hFont2);
+                pVCon->hFont2 = hFont;
+            }
+
+            pVCon->Update(true);
+            if (!gSet.isFullScreen && !IsZoomed(ghWnd))
+                gConEmu.SyncWindowToConsole();
+            else
+                gConEmu.SyncConsoleToWindow();
+			gConEmu.ReSize();
+            InvalidateRect(ghWnd, 0, 0);
+
+            if (LOWORD(wParam) == tFontFace) {
+                wsprintf(temp, _T("%i"), pLogFont->lfHeight);
+                SetDlgItemText(ghOpWnd, tFontSizeY, temp);
+            }
+        }
+    }
+    else if (LOWORD(wParam) == tFontSizeY || LOWORD(wParam) == tFontSizeX || 
+		LOWORD(wParam) == tFontSizeX2 || LOWORD(wParam) == tFontSizeX3 || LOWORD(wParam) == tFontCharset)
+    {
+        int newSize = 0;
+        if (LOWORD(wParam) == tFontSizeY || LOWORD(wParam) == tFontSizeX || 
+			LOWORD(wParam) == tFontSizeX2 || LOWORD(wParam) == tFontSizeX3)
+        {
+            if (HIWORD(wParam) == CBN_EDITCHANGE)
+                GetDlgItemText(ghOpWnd, LOWORD(wParam), temp, MAX_PATH);
+            else
+                SendDlgItemMessage(ghOpWnd, LOWORD(wParam), CB_GETLBTEXT, SendDlgItemMessage(ghOpWnd, LOWORD(wParam), CB_GETCURSEL, 0, 0), (LPARAM)temp);
+
+            newSize = klatoi(temp);
+        }
+
+        if (newSize > 4 && newSize < 200 || (newSize == 0 && *temp == '0') || LOWORD(wParam) == tFontCharset)
+        {
+            if (LOWORD(wParam) == tFontSizeY)
+                gSet.LogFont.lfHeight = upToFontHeight = newSize;
+            else if (LOWORD(wParam) == tFontSizeX)
+                gSet.FontSizeX = newSize;
+            else if (LOWORD(wParam) == tFontSizeX2)
+                gSet.FontSizeX2 = newSize;
+            else if (LOWORD(wParam) == tFontSizeX3)
+                gSet.FontSizeX3 = newSize;
+            else if (LOWORD(wParam) == tFontCharset)
+            {
+                int newCharSet = SendDlgItemMessage(ghOpWnd, tFontCharset, CB_GETCURSEL, 0, 0);
+                if (newCharSet != CB_ERR && newCharSet >= 0 && newCharSet < 19)
+                    gSet.LogFont.lfCharSet = chSetsNums[newCharSet];
+                gSet.LogFont.lfHeight = upToFontHeight;
+            }
+            gSet.LogFont.lfWidth = gSet.FontSizeX;
+
+            HFONT hFont = pVCon->CreateFontIndirectMy(&gSet.LogFont);
+            if (hFont)
+            {
+                DeleteObject(pVCon->hFont);
+                pVCon->hFont = hFont;
+
+                pVCon->Update(true);
+                if (!gSet.isFullScreen && !IsZoomed(ghWnd))
+                    gConEmu.SyncWindowToConsole();
+                else
+                    gConEmu.SyncConsoleToWindow();
+				gConEmu.ReSize();
+                InvalidateRect(ghWnd, 0, 0);
+            }
+        }
+	}
+	return 0;
+}
+
+
+bool CSettings::LoadImageFrom(TCHAR *inPath, bool abShowErrors)
+{
+	if (!inPath || _tcslen(inPath)>=MAX_PATH) {
+		if (abShowErrors)
+			MBoxA(_T("Invalid 'inPath' in CSettings::LoadImageFrom"));
+		return false;
+	}
+
     TCHAR exPath[MAX_PATH + 2];
-    if (!ExpandEnvironmentStrings(inPath, exPath, MAX_PATH))
+	if (!ExpandEnvironmentStrings(inPath, exPath, MAX_PATH)) {
+		if (abShowErrors) {
+			TCHAR szError[MAX_PATH*2];
+			DWORD dwErr = GetLastError();
+			swprintf(szError, _T("Can't expand environment strings:\r\n%s\r\nError code=0x%08X\r\nImage loading failed"),
+				inPath, dwErr);
+			MBoxA(szError);
+		}
         return false;
+	}
 
     bool lRes = false;
     klFile file;
@@ -887,8 +890,8 @@ bool CSettings::LoadImageFrom(TCHAR *inPath)
             {
                 if(hNewBgBitmap = (HBITMAP)LoadImage(NULL, exPath, IMAGE_BITMAP,0,0,LR_LOADFROMFILE))
                 {
-                    DeleteObject(pVCon->hBgBitmap);
-                    DeleteDC(pVCon->hBgDc);
+					if (pVCon->hBgBitmap) { DeleteObject(pVCon->hBgBitmap); pVCon->hBgBitmap=NULL; }
+					if (pVCon->hBgDc) { DeleteDC(pVCon->hBgDc); pVCon->hBgDc=NULL; }
 
                     pVCon->hBgDc = hNewBgDc;
                     pVCon->hBgBitmap = hNewBgBitmap;
@@ -898,6 +901,8 @@ bool CSettings::LoadImageFrom(TCHAR *inPath)
                         gSet.isBackgroundImageValid = true;
                         pVCon->bgBmp.cx = *(u32*)(pBuf + 0x12);
                         pVCon->bgBmp.cy = *(i32*)(pBuf + 0x16);
+						// Равняем на границу 4-х пикселов (WinXP SP2)
+						int nCxFixed = ((pVCon->bgBmp.cx+3)>>2)<<2;
                         if (klstricmp(gSet.pBgImage, inPath))
                         {
                             lRes = true;
@@ -911,33 +916,45 @@ bool CSettings::LoadImageFrom(TCHAR *inPath)
                             u8 r;
                         };
 
-                        bColor *bArray = new bColor[pVCon->bgBmp.cx * pVCon->bgBmp.cy];
+						MCHKHEAP
+							//GetDIBits памяти не хватает 
+                        bColor *bArray = new bColor[(nCxFixed+10) * pVCon->bgBmp.cy];
+						MCHKHEAP
 
-                        BITMAPINFO bInfo;
+                        BITMAPINFO bInfo; memset(&bInfo, 0, sizeof(bInfo));
                         bInfo.bmiHeader.biSize = sizeof(BITMAPINFO);
-                        bInfo.bmiHeader.biWidth = pVCon->bgBmp.cx;
+                        bInfo.bmiHeader.biWidth = nCxFixed/*pVCon->bgBmp.cx*/;
                         bInfo.bmiHeader.biHeight = pVCon->bgBmp.cy;
                         bInfo.bmiHeader.biPlanes = 1;
                         bInfo.bmiHeader.biBitCount = 24;
                         bInfo.bmiHeader.biCompression = BI_RGB;
 
+						MCHKHEAP
                         if (!GetDIBits(pVCon->hBgDc, pVCon->hBgBitmap, 0, pVCon->bgBmp.cy, bArray, &bInfo, DIB_RGB_COLORS))
                             //MBoxA(_T("!")); //Maximus5 - Да, это очень информативно
                             MBoxA(_T("!GetDIBits"));
 
 
-                        for (int i = 0; i < pVCon->bgBmp.cx * pVCon->bgBmp.cy; i++)
-                        {
-                            bArray[i].r = klMulDivU32(bArray[i].r, gSet.bgImageDarker, 255);
-                            bArray[i].g = klMulDivU32(bArray[i].g, gSet.bgImageDarker, 255);
-                            bArray[i].b = klMulDivU32(bArray[i].b, gSet.bgImageDarker, 255);
-                        }
+						MCHKHEAP
+						for (int y=0; y<pVCon->bgBmp.cy; y++)
+						{
+							int i = y*nCxFixed;
+							for (int x=0; x<pVCon->bgBmp.cx; x++, i++)
+							//for (int i = 0; i < pVCon->bgBmp.cx * pVCon->bgBmp.cy; i++)
+							{
+								bArray[i].r = klMulDivU32(bArray[i].r, gSet.bgImageDarker, 255);
+								bArray[i].g = klMulDivU32(bArray[i].g, gSet.bgImageDarker, 255);
+								bArray[i].b = klMulDivU32(bArray[i].b, gSet.bgImageDarker, 255);
+							}
+						}
 
-
+						MCHKHEAP
                         if (!SetDIBits(pVCon->hBgDc, pVCon->hBgBitmap, 0, pVCon->bgBmp.cy, bArray, &bInfo, DIB_RGB_COLORS))
                             MBoxA(_T("!SetDIBits"));
 
+						MCHKHEAP
                         delete[] bArray;
+						MCHKHEAP
                     }
                 }
                 else
@@ -945,9 +962,85 @@ bool CSettings::LoadImageFrom(TCHAR *inPath)
             }
 
             ReleaseDC(0, hScreenDC);
+		} else {
+			if (abShowErrors)
+				MBoxA(_T("Only BMP files supported as background!"));
         }
         file.Close();
     }
 
     return lRes;
+}
+
+BOOL CALLBACK CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
+{
+    switch (messg)
+    {
+    case WM_INITDIALOG:
+        ghOpWnd = hWnd2;
+		gSet.OnInitDialog();
+        break;
+
+	case WM_GETICON:
+		if (wParam==ICON_BIG) {
+			SetWindowLong(hWnd2, DWL_MSGRESULT, (LRESULT)hClassIcon);
+		} else {
+			SetWindowLong(hWnd2, DWL_MSGRESULT, (LRESULT)hClassIconSm);
+		}
+		return 1;
+
+    case WM_CTLCOLORSTATIC:
+        for (uint i = 1000; i < 1016; i++)
+            if (GetDlgItem(hWnd2, i) == (HWND)lParam)
+            {
+                static HBRUSH KillBrush;
+                DeleteObject(KillBrush);
+                KillBrush = CreateSolidBrush(gSet.Colors[i-1000]);
+                return (BOOL)KillBrush;
+            }
+            break;
+    case WM_KEYDOWN:
+        if (wParam == VK_ESCAPE)
+            SendMessage(hWnd2, WM_CLOSE, 0, 0);
+        break;
+
+    case WM_HSCROLL:
+        {
+            int newV = SendDlgItemMessage(hWnd2, slDarker, TBM_GETPOS, 0, 0);
+            if (newV != gSet.bgImageDarker)
+            {
+                gSet.bgImageDarker = newV;
+                TCHAR tmp[10];
+                wsprintf(tmp, _T("%i"), gSet.bgImageDarker);
+                SetDlgItemText(hWnd2, tDarker, tmp);
+                gSet.LoadImageFrom(gSet.pBgImage);
+                pVCon->Update(true);
+                InvalidateRect(ghWnd, NULL, FALSE);
+            }
+        }
+        break;
+
+    case WM_COMMAND:
+        if (HIWORD(wParam) == BN_CLICKED)
+        {
+			gSet.OnButtonClicked(wParam, lParam);
+        }
+        else if (HIWORD(wParam) == EN_CHANGE)
+        {
+			gSet.OnEditChanged(wParam, lParam);
+        }
+        else if (HIWORD(wParam) == CBN_EDITCHANGE || HIWORD(wParam) == CBN_SELCHANGE)
+        {
+			gSet.OnComboBox(wParam, lParam);
+        }
+        break;
+    case WM_CLOSE:
+    case WM_DESTROY:
+        EndDialog(hWnd2, TRUE);
+        ghOpWnd = NULL;
+        break;
+    default:
+        return 0;
+    }
+    return 0;
 }

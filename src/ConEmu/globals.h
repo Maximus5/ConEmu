@@ -12,7 +12,6 @@ extern CConEmuMain gConEmu;
 //extern TCHAR Title[0x400];
 //extern bool isLBDown, /*isInDrag,*/ isDragProcessed;
 extern HWND ghWnd, ghConWnd, ghWndDC, ghOpWnd;;
-extern bool gbUseChildWindow;
 class TabBarClass;
 extern TabBarClass TabBar;
 
@@ -26,7 +25,7 @@ class TrayIcon;
 extern TrayIcon Icon;
 extern TCHAR temp[MAX_PATH];
 
-extern bool gbUseChildWindow, gbNoDblBuffer;
+extern bool gbNoDblBuffer;
 
 #ifdef _DEBUG
 extern char gsz_MDEBUG_TRAP_MSG[3000];

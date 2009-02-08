@@ -346,7 +346,8 @@ void WINAPI _export SetStartupInfo(const struct PluginStartupInfo *aInfo)
 	/*for (int i=0; i<=MessagesMax; i++)
 		MessagesA[i][0]=0;*/
 		
-    //InitHWND((HWND)InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETFARHWND, 0));
+    if (!FarHwnd)
+		InitHWND((HWND)InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETFARHWND, 0));
 
 	//ConEmuHwnd = NULL;
 	//FarHwnd = (HWND)InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETFARHWND, 0);

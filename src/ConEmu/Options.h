@@ -39,6 +39,7 @@ public:
     DWORD nIconID;
     bool isScrollTitle;
     DWORD ScrollTitleLen;
+    bool isTryToCenter;
 
 	// Заголовки табов
 	TCHAR szTabPanels[32];
@@ -47,13 +48,18 @@ public:
 	TCHAR szTabViewer[32];
 	DWORD nTabLenMax;
 
-	bool LoadImageFrom(TCHAR *inPath);
+	bool LoadImageFrom(TCHAR *inPath, bool abShowErrors=false);
 	static BOOL CALLBACK wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
 	void LoadSettings();
 	void InitSettings();
 	BOOL SaveSettings();
 	bool ShowColorDialog(HWND HWndOwner, COLORREF *inColor);
 	static BOOL CALLBACK EnumFamCallBack(LPLOGFONT lplf, LPNEWTEXTMETRIC lpntm, DWORD FontType, LPVOID aFontCount);
+public:
+	LRESULT OnInitDialog();
+	LRESULT OnButtonClicked(WPARAM wParam, LPARAM lParam);
+	LRESULT OnEditChanged(WPARAM wParam, LPARAM lParam);
+	LRESULT OnComboBox(WPARAM wParam, LPARAM lParam);
 };
 
 

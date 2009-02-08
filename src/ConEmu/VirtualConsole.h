@@ -24,8 +24,9 @@ struct VirtualConsole
     HANDLE  hConOut();
 	HDC     hDC, hBgDc;
 	HBITMAP hBitmap, hBgBitmap;
+	HBRUSH  hBrush0, hOldBrush, hSelectedBrush;
 	SIZE	bgBmp;
-	HFONT   hFont, hFont2, hSelectedFont;
+	HFONT   hFont, hFont2, hSelectedFont, hOldFont;
 
 	TCHAR *ConChar;
 	WORD  *ConAttr;
@@ -39,6 +40,7 @@ struct VirtualConsole
 	void Free(bool bFreeFont = true);
 	bool Update(bool isForce = false, HDC *ahDc=NULL);
 	void SelectFont(HFONT hNew);
+	void SelectBrush(HBRUSH hNew);
 	HFONT CreateFontIndirectMy(LOGFONT *inFont);
 	bool isCharUnicode(WCHAR inChar);
 	void BlitPictureTo(VirtualConsole *vc, int inX, int inY, int inWidth, int inHeight);

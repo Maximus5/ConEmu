@@ -1,6 +1,6 @@
 #pragma once
 
-#define HDCWND (gbUseChildWindow ? ghWndDC : ghWnd)
+#define HDCWND ghWndDC
 
 
 #define WM_TRAYNOTIFY WM_USER+1
@@ -38,8 +38,8 @@ public:
 	HANDLE hPipeEvent;
 	bool isWndNotFSMaximized;
 	bool isShowConsole;
-	bool isNotFullDrag;
-	bool isLBDown, /*isInDrag,*/ isDragProcessed;
+	bool mb_FullWindowDrag;
+	bool isLBDown, /*isInDrag,*/ isDragProcessed, mb_InSizing;
 	bool isRBDown, ibSkilRDblClk; DWORD dwRBDownTick;
 	bool isPiewUpdate;
 	bool gbPostUpdateWindowSize;
@@ -84,9 +84,10 @@ public:
 	bool CConEmuMain::isConSelectMode();
 public:
 	LRESULT OnPaint(WPARAM wParam, LPARAM lParam);
-	LRESULT OnSize(WPARAM wParam, LPARAM lParam);
+	LRESULT OnSize(WPARAM wParam, WORD newClientWidth, WORD newClientHeight);
 	LRESULT OnSizing(WPARAM wParam, LPARAM lParam);
 	LRESULT OnTimer(WPARAM wParam, LPARAM lParam);
 	LRESULT OnCopyData(PCOPYDATASTRUCT cds);
 	LRESULT OnGetMinMaxInfo(LPMINMAXINFO pInfo);
+	void ReSize();
 };

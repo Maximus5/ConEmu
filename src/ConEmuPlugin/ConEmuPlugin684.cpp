@@ -225,7 +225,8 @@ void SetStartupInfoW684(void *aInfo)
 	*::FSFW684 = *((struct PluginStartupInfo*)aInfo)->FSF;
 	::InfoW684->FSF = ::FSFW684;
 
-	//InitHWND((HWND)InfoW684->AdvControl(InfoW684->ModuleNumber, ACTL_GETFARHWND, 0));	
+	if (!FarHwnd)
+		InitHWND((HWND)InfoW684->AdvControl(InfoW684->ModuleNumber, ACTL_GETFARHWND, 0));	
 	//ConEmuHwnd = NULL;
 	//FarHwnd = (HWND)InfoW684->AdvControl(InfoW684->ModuleNumber, ACTL_GETFARHWND, 0);
 	//ConEmuHwnd = GetAncestor(FarHwnd, GA_PARENT);

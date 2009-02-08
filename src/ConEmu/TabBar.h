@@ -21,6 +21,7 @@ public:
 	void Deactivate();
 	void Update(ConEmuTab* tabs, int tabsCount);
 	void UpdatePosition();
+	void UpdateWidth();
 	bool OnNotify(LPNMHDR nmhdr);
 	void OnMouse(int message, int x, int y);
 	void OnTimer();
