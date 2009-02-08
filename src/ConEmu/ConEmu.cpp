@@ -484,7 +484,7 @@ void CConEmuMain::PaintGaps(HDC hDC/*=NULL*/)
 	if (hDC==NULL)
 		hDC = GetDC(ghWnd); // Главное окно!
 
-	HBRUSH hBrush = CreateSolidBrush(gSet.Colors[0]);
+	HBRUSH hBrush = CreateSolidBrush(gSet.Colors[0]); SelectObject(hDC, hBrush);
 
 	RECT rcClient;
 	GetClientRect(ghWnd, &rcClient); // Клиентская часть главного окна
@@ -537,8 +537,6 @@ void CConEmuMain::PaintGaps(HDC hDC/*=NULL*/)
 #ifdef _DEBUG
 	GdiFlush();
 #endif
-
-	DeleteObject(hBrush);
 
 	if (lbOurDc)
 		ReleaseDC(ghWnd, hDC);
@@ -1205,7 +1203,7 @@ LRESULT CConEmuMain::OnSize(WPARAM wParam, WORD newClientWidth, WORD newClientHe
 
 		RECT rcNewCon; memset(&rcNewCon,0,sizeof(rcNewCon));
 		if (pVCon && pVCon->Width && pVCon->Height) {
-			if (gSet.isTryToCenter && (IsZoomed(ghWnd) || gSet.isFullScreen)) {
+			if (IsZoomed(ghWnd) || gSet.isFullScreen) {
 				rcNewCon.left = (client.right+client.left-(int)pVCon->Width)/2;
 				rcNewCon.top = (client.bottom+client.top-(int)pVCon->Height)/2;
 			}
@@ -1494,7 +1492,6 @@ LRESULT CConEmuMain::OnCopyData(PCOPYDATASTRUCT cds)
 	LRESULT result = 0;
     
 	if (cds->dwData == 0) {
-		// Приходит из плагина по ExitFAR
 		ForceShowTabs(FALSE);
 
 		//CONSOLE_SCREEN_BUFFER_INFO inf; memset(&inf, 0, sizeof(inf));

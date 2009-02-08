@@ -42,6 +42,3 @@ REGEDIT4
 "DefCopy"=hex:01
 "ScrollTitle"=hex:01
 "ScrollTitleLen"=hex:16,00,00,00
-
-;; Центрировать 'консоль' в полноэкранном и развернутом режиме
-"TryToCenter"=hex:01

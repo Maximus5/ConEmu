@@ -39,7 +39,6 @@ public:
     DWORD nIconID;
     bool isScrollTitle;
     DWORD ScrollTitleLen;
-    bool isTryToCenter;
 
 	// Заголовки табов
 	TCHAR szTabPanels[32];
@@ -48,7 +47,7 @@ public:
 	TCHAR szTabViewer[32];
 	DWORD nTabLenMax;
 
-	bool LoadImageFrom(TCHAR *inPath, bool abShowErrors=false);
+	bool LoadImageFrom(TCHAR *inPath);
 	static BOOL CALLBACK wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
 	void LoadSettings();
 	void InitSettings();

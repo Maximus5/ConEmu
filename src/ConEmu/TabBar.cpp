@@ -176,10 +176,6 @@ void TabBarClass::Update(ConEmuTab* tabs, int tabsCount)
 			SelectTab(i);
 		}
 	}
-	if (_tabHeight && tabsCount==1 && tabs[0].Type == 1/*WTYPE_PANELS*/ && gSet.isTabs==2) {
-		// Автоскрытие табов (все редакторы/вьюверы закрыты)
-		Deactivate();
-	} else
 	if (_tabHeight == NULL)
 	{
 		RECT rcClient; 

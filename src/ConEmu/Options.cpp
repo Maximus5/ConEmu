@@ -38,7 +38,6 @@ void CSettings::InitSettings()
 	gSet.LogFont.lfPitchAndFamily = FIXED_PITCH | FF_MODERN;
     _tcscpy(gSet.LogFont.lfFaceName, _T("Lucida Console"));
     _tcscpy(gSet.LogFont2.lfFaceName, _T("Lucida Console"));
-    isTryToCenter = false;
 	
 	Registry RegConColors, RegConDef;
 	if (RegConColors.OpenKey(_T("Console"), KEY_READ))
@@ -137,7 +136,6 @@ void CSettings::LoadSettings()
 		reg.Load(_T("TabLenMax"), &gSet.nTabLenMax);
 		reg.Load(_T("ScrollTitle"), &gSet.isScrollTitle);
 		reg.Load(_T("ScrollTitleLen"), &gSet.ScrollTitleLen);
-		reg.Load(_T("TryToCenter"), &gSet.isTryToCenter);
         reg.CloseKey();
     }
 
@@ -166,8 +164,7 @@ void CSettings::LoadSettings()
     if (isItalic)
         gSet.LogFont.lfItalic = true;
 
-	// pVCon еще не создано!
-    if (gSet.isShowBgImage && pVCon)
+    if (gSet.isShowBgImage)
         LoadImageFrom(gSet.pBgImage);
 }
 
@@ -356,7 +353,6 @@ LRESULT CSettings::OnInitDialog()
 
 	SetDlgItemText(ghOpWnd, tCmdLine, gSet.Cmd);
 	SetDlgItemText(ghOpWnd, tBgImage, gSet.pBgImage);
-	CheckDlgButton(ghOpWnd, rBgSimple, BST_CHECKED);
 
 	TCHAR tmp[10];
 	wsprintf(tmp, _T("%i"), gSet.bgImageDarker);
@@ -373,7 +369,6 @@ LRESULT CSettings::OnInitDialog()
 		EnableWindow(GetDlgItem(ghOpWnd, tBgImage), false);
 		EnableWindow(GetDlgItem(ghOpWnd, tDarker), false);
 		EnableWindow(GetDlgItem(ghOpWnd, slDarker), false);
-		EnableWindow(GetDlgItem(ghOpWnd, bBgImage), false);
 	}
 
 	switch(gSet.LogFont.lfQuality)
@@ -544,7 +539,6 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
         EnableWindow(GetDlgItem(ghOpWnd, tBgImage), gSet.isShowBgImage);
         EnableWindow(GetDlgItem(ghOpWnd, tDarker), gSet.isShowBgImage);
         EnableWindow(GetDlgItem(ghOpWnd, slDarker), gSet.isShowBgImage);
-		EnableWindow(GetDlgItem(ghOpWnd, bBgImage), gSet.isShowBgImage);
 
         if (gSet.isShowBgImage && gSet.isBackgroundImageValid)
             SetBkMode(pVCon->hDC, TRANSPARENT);
@@ -629,24 +623,6 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
         InvalidateRect(ghWnd, NULL, FALSE);
         break;
 
-	case bBgImage:
-		{
-			GetDlgItemText(ghOpWnd, tBgImage, temp, MAX_PATH);
-			OPENFILENAME ofn; memset(&ofn,0,sizeof(ofn));
-			ofn.lStructSize=sizeof(ofn);
-			ofn.hwndOwner = ghOpWnd;
-			ofn.lpstrFilter = _T("Bitmap images (*.bmp)\0*.bmp\0\0");
-			ofn.nFilterIndex = 1;
-			ofn.lpstrFile = temp;
-			ofn.nMaxFile = MAX_PATH;
-			ofn.lpstrTitle = _T("Choose background image");
-			ofn.Flags = OFN_ENABLESIZING|OFN_NOCHANGEDIR
-					| OFN_PATHMUSTEXIST|OFN_EXPLORER|OFN_HIDEREADONLY|OFN_FILEMUSTEXIST;
-			if (GetOpenFileName(&ofn))
-				SetDlgItemText(ghOpWnd, tBgImage, temp);
-		}
-		break;
-
     default:
         if (CB >= 1000 && CB <= 1015)
         {
@@ -698,7 +674,7 @@ LRESULT CSettings::OnEditChanged(WPARAM wParam, LPARAM lParam)
     else if (TB == tBgImage)
     {
         GetDlgItemText(ghOpWnd, tBgImage, temp, MAX_PATH);
-        if( LoadImageFrom(temp, true) )
+        if( gSet.LoadImageFrom(temp) )
         {
             if (gSet.isShowBgImage && gSet.isBackgroundImageValid)
                 SetBkMode(pVCon->hDC, TRANSPARENT);
@@ -853,25 +829,11 @@ LRESULT CSettings::OnComboBox(WPARAM wParam, LPARAM lParam)
 }
 
 
-bool CSettings::LoadImageFrom(TCHAR *inPath, bool abShowErrors)
+bool CSettings::LoadImageFrom(TCHAR *inPath)
 {
-	if (!inPath || _tcslen(inPath)>=MAX_PATH) {
-		if (abShowErrors)
-			MBoxA(_T("Invalid 'inPath' in CSettings::LoadImageFrom"));
-		return false;
-	}
-
     TCHAR exPath[MAX_PATH + 2];
-	if (!ExpandEnvironmentStrings(inPath, exPath, MAX_PATH)) {
-		if (abShowErrors) {
-			TCHAR szError[MAX_PATH*2];
-			DWORD dwErr = GetLastError();
-			swprintf(szError, _T("Can't expand environment strings:\r\n%s\r\nError code=0x%08X\r\nImage loading failed"),
-				inPath, dwErr);
-			MBoxA(szError);
-		}
+    if (!ExpandEnvironmentStrings(inPath, exPath, MAX_PATH))
         return false;
-	}
 
     bool lRes = false;
     klFile file;
@@ -890,8 +852,8 @@ bool CSettings::LoadImageFrom(TCHAR *inPath, bool abShowErrors)
             {
                 if(hNewBgBitmap = (HBITMAP)LoadImage(NULL, exPath, IMAGE_BITMAP,0,0,LR_LOADFROMFILE))
                 {
-					if (pVCon->hBgBitmap) { DeleteObject(pVCon->hBgBitmap); pVCon->hBgBitmap=NULL; }
-					if (pVCon->hBgDc) { DeleteDC(pVCon->hBgDc); pVCon->hBgDc=NULL; }
+                    DeleteObject(pVCon->hBgBitmap);
+                    DeleteDC(pVCon->hBgDc);
 
                     pVCon->hBgDc = hNewBgDc;
                     pVCon->hBgBitmap = hNewBgBitmap;
@@ -901,8 +863,6 @@ bool CSettings::LoadImageFrom(TCHAR *inPath, bool abShowErrors)
                         gSet.isBackgroundImageValid = true;
                         pVCon->bgBmp.cx = *(u32*)(pBuf + 0x12);
                         pVCon->bgBmp.cy = *(i32*)(pBuf + 0x16);
-						// Равняем на границу 4-х пикселов (WinXP SP2)
-						int nCxFixed = ((pVCon->bgBmp.cx+3)>>2)<<2;
                         if (klstricmp(gSet.pBgImage, inPath))
                         {
                             lRes = true;
@@ -916,45 +876,33 @@ bool CSettings::LoadImageFrom(TCHAR *inPath, bool abShowErrors)
                             u8 r;
                         };
 
-						MCHKHEAP
-							//GetDIBits памяти не хватает 
-                        bColor *bArray = new bColor[(nCxFixed+10) * pVCon->bgBmp.cy];
-						MCHKHEAP
+                        bColor *bArray = new bColor[pVCon->bgBmp.cx * pVCon->bgBmp.cy];
 
-                        BITMAPINFO bInfo; memset(&bInfo, 0, sizeof(bInfo));
+                        BITMAPINFO bInfo;
                         bInfo.bmiHeader.biSize = sizeof(BITMAPINFO);
-                        bInfo.bmiHeader.biWidth = nCxFixed/*pVCon->bgBmp.cx*/;
+                        bInfo.bmiHeader.biWidth = pVCon->bgBmp.cx;
                         bInfo.bmiHeader.biHeight = pVCon->bgBmp.cy;
                         bInfo.bmiHeader.biPlanes = 1;
                         bInfo.bmiHeader.biBitCount = 24;
                         bInfo.bmiHeader.biCompression = BI_RGB;
 
-						MCHKHEAP
                         if (!GetDIBits(pVCon->hBgDc, pVCon->hBgBitmap, 0, pVCon->bgBmp.cy, bArray, &bInfo, DIB_RGB_COLORS))
                             //MBoxA(_T("!")); //Maximus5 - Да, это очень информативно
                             MBoxA(_T("!GetDIBits"));
 
 
-						MCHKHEAP
-						for (int y=0; y<pVCon->bgBmp.cy; y++)
-						{
-							int i = y*nCxFixed;
-							for (int x=0; x<pVCon->bgBmp.cx; x++, i++)
-							//for (int i = 0; i < pVCon->bgBmp.cx * pVCon->bgBmp.cy; i++)
-							{
-								bArray[i].r = klMulDivU32(bArray[i].r, gSet.bgImageDarker, 255);
-								bArray[i].g = klMulDivU32(bArray[i].g, gSet.bgImageDarker, 255);
-								bArray[i].b = klMulDivU32(bArray[i].b, gSet.bgImageDarker, 255);
-							}
-						}
+                        for (int i = 0; i < pVCon->bgBmp.cx * pVCon->bgBmp.cy; i++)
+                        {
+                            bArray[i].r = klMulDivU32(bArray[i].r, gSet.bgImageDarker, 255);
+                            bArray[i].g = klMulDivU32(bArray[i].g, gSet.bgImageDarker, 255);
+                            bArray[i].b = klMulDivU32(bArray[i].b, gSet.bgImageDarker, 255);
+                        }
 
-						MCHKHEAP
+
                         if (!SetDIBits(pVCon->hBgDc, pVCon->hBgBitmap, 0, pVCon->bgBmp.cy, bArray, &bInfo, DIB_RGB_COLORS))
                             MBoxA(_T("!SetDIBits"));
 
-						MCHKHEAP
                         delete[] bArray;
-						MCHKHEAP
                     }
                 }
                 else
@@ -962,9 +910,6 @@ bool CSettings::LoadImageFrom(TCHAR *inPath, bool abShowErrors)
             }
 
             ReleaseDC(0, hScreenDC);
-		} else {
-			if (abShowErrors)
-				MBoxA(_T("Only BMP files supported as background!"));
         }
         file.Close();
     }
@@ -981,66 +926,58 @@ BOOL CALLBACK CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM
 		gSet.OnInitDialog();
         break;
 
-	case WM_GETICON:
-		if (wParam==ICON_BIG) {
-			SetWindowLong(hWnd2, DWL_MSGRESULT, (LRESULT)hClassIcon);
-		} else {
-			SetWindowLong(hWnd2, DWL_MSGRESULT, (LRESULT)hClassIconSm);
-		}
-		return 1;
+        case WM_CTLCOLORSTATIC:
+            for (uint i = 1000; i < 1016; i++)
+                if (GetDlgItem(hWnd2, i) == (HWND)lParam)
+                {
+                    static HBRUSH KillBrush;
+                    DeleteObject(KillBrush);
+                    KillBrush = CreateSolidBrush(gSet.Colors[i-1000]);
+                    return (BOOL)KillBrush;
+                }
+                break;
+        case WM_KEYDOWN:
+            if (wParam == VK_ESCAPE)
+                SendMessage(hWnd2, WM_CLOSE, 0, 0);
+            break;
 
-    case WM_CTLCOLORSTATIC:
-        for (uint i = 1000; i < 1016; i++)
-            if (GetDlgItem(hWnd2, i) == (HWND)lParam)
+        case WM_HSCROLL:
             {
-                static HBRUSH KillBrush;
-                DeleteObject(KillBrush);
-                KillBrush = CreateSolidBrush(gSet.Colors[i-1000]);
-                return (BOOL)KillBrush;
+                int newV = SendDlgItemMessage(hWnd2, slDarker, TBM_GETPOS, 0, 0);
+                if (newV != gSet.bgImageDarker)
+                {
+                    gSet.bgImageDarker = newV;
+                    TCHAR tmp[10];
+                    wsprintf(tmp, _T("%i"), gSet.bgImageDarker);
+                    SetDlgItemText(hWnd2, tDarker, tmp);
+                    gSet.LoadImageFrom(gSet.pBgImage);
+                    pVCon->Update(true);
+                    InvalidateRect(ghWnd, NULL, FALSE);
+                }
             }
             break;
-    case WM_KEYDOWN:
-        if (wParam == VK_ESCAPE)
-            SendMessage(hWnd2, WM_CLOSE, 0, 0);
-        break;
 
-    case WM_HSCROLL:
-        {
-            int newV = SendDlgItemMessage(hWnd2, slDarker, TBM_GETPOS, 0, 0);
-            if (newV != gSet.bgImageDarker)
+        case WM_COMMAND:
+            if (HIWORD(wParam) == BN_CLICKED)
             {
-                gSet.bgImageDarker = newV;
-                TCHAR tmp[10];
-                wsprintf(tmp, _T("%i"), gSet.bgImageDarker);
-                SetDlgItemText(hWnd2, tDarker, tmp);
-                gSet.LoadImageFrom(gSet.pBgImage);
-                pVCon->Update(true);
-                InvalidateRect(ghWnd, NULL, FALSE);
+				gSet.OnButtonClicked(wParam, lParam);
             }
-        }
-        break;
-
-    case WM_COMMAND:
-        if (HIWORD(wParam) == BN_CLICKED)
-        {
-			gSet.OnButtonClicked(wParam, lParam);
-        }
-        else if (HIWORD(wParam) == EN_CHANGE)
-        {
-			gSet.OnEditChanged(wParam, lParam);
-        }
-        else if (HIWORD(wParam) == CBN_EDITCHANGE || HIWORD(wParam) == CBN_SELCHANGE)
-        {
-			gSet.OnComboBox(wParam, lParam);
-        }
-        break;
-    case WM_CLOSE:
-    case WM_DESTROY:
-        EndDialog(hWnd2, TRUE);
-        ghOpWnd = NULL;
-        break;
-    default:
-        return 0;
+            else if (HIWORD(wParam) == EN_CHANGE)
+            {
+				gSet.OnEditChanged(wParam, lParam);
+            }
+            else if (HIWORD(wParam) == CBN_EDITCHANGE || HIWORD(wParam) == CBN_SELCHANGE)
+            {
+				gSet.OnComboBox(wParam, lParam);
+            }
+            break;
+        case WM_CLOSE:
+        case WM_DESTROY:
+            EndDialog(hWnd2, TRUE);
+            ghOpWnd = NULL;
+            break;
+        default:
+            return 0;
     }
     return 0;
 }

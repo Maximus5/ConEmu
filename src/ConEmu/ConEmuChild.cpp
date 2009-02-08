@@ -81,9 +81,9 @@ LRESULT CConEmuChild::OnPaint(WPARAM wParam, LPARAM lParam)
 	    
 		//gbInPaint = true;
 		RECT client; GetClientRect(ghWndDC, &client);
-		if (((ULONG)client.right)>pVCon->Width)
+		if (client.right>pVCon->Width)
 			client.right = pVCon->Width;
-		if (((ULONG)client.bottom)>pVCon->Height)
+		if (client.bottom>pVCon->Height)
 			client.bottom = pVCon->Height;
 
 		PAINTSTRUCT ps;
@@ -99,12 +99,10 @@ LRESULT CConEmuChild::OnPaint(WPARAM wParam, LPARAM lParam)
 				BitBlt(hDc, 0, 0, client.right, client.bottom, pVCon->hDC, 0, 0, SRCCOPY);
 			} else {
 				RECT rect;
-				HBRUSH hBrush = CreateSolidBrush(gSet.Colors[0]);
-				HBRUSH hOldBrush = (HBRUSH)SelectObject(hDc, hBrush);
+				HBRUSH hBrush = CreateSolidBrush(gSet.Colors[0]); SelectObject(hDc, hBrush);
 				GetClientRect(ghWndDC, &rect);
 				GdiSetBatchLimit(1); // отключить буферизацию вывода для текущей нити
 				FillRect(hDc, &rect, hBrush); // -- если захочется на "чистую" рисовать
-				SelectObject(hDc, hOldBrush);
 				DeleteObject(hBrush);
 
 				GdiFlush();
