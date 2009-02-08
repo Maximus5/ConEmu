@@ -1203,7 +1203,7 @@ LRESULT CConEmuMain::OnSize(WPARAM wParam, WORD newClientWidth, WORD newClientHe
 
 		RECT rcNewCon; memset(&rcNewCon,0,sizeof(rcNewCon));
 		if (pVCon && pVCon->Width && pVCon->Height) {
-			if (IsZoomed(ghWnd) || gSet.isFullScreen) {
+			if (gSet.isTryToCenter && (IsZoomed(ghWnd) || gSet.isFullScreen)) {
 				rcNewCon.left = (client.right+client.left-(int)pVCon->Width)/2;
 				rcNewCon.top = (client.bottom+client.top-(int)pVCon->Height)/2;
 			}

@@ -39,6 +39,7 @@ public:
     DWORD nIconID;
     bool isScrollTitle;
     DWORD ScrollTitleLen;
+    bool isTryToCenter;
 
 	// Заголовки табов
 	TCHAR szTabPanels[32];

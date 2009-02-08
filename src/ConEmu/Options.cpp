@@ -38,6 +38,7 @@ void CSettings::InitSettings()
 	gSet.LogFont.lfPitchAndFamily = FIXED_PITCH | FF_MODERN;
     _tcscpy(gSet.LogFont.lfFaceName, _T("Lucida Console"));
     _tcscpy(gSet.LogFont2.lfFaceName, _T("Lucida Console"));
+    isTryToCenter = false;
 	
 	Registry RegConColors, RegConDef;
 	if (RegConColors.OpenKey(_T("Console"), KEY_READ))
@@ -136,6 +137,7 @@ void CSettings::LoadSettings()
 		reg.Load(_T("TabLenMax"), &gSet.nTabLenMax);
 		reg.Load(_T("ScrollTitle"), &gSet.isScrollTitle);
 		reg.Load(_T("ScrollTitleLen"), &gSet.ScrollTitleLen);
+		reg.Load(_T("TryToCenter"), &gSet.isTryToCenter);
         reg.CloseKey();
     }
 
