@@ -48,7 +48,7 @@ public:
 	TCHAR szTabViewer[32];
 	DWORD nTabLenMax;
 
-	bool LoadImageFrom(TCHAR *inPath);
+	bool LoadImageFrom(TCHAR *inPath, bool abShowErrors=false);
 	static BOOL CALLBACK wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
 	void LoadSettings();
 	void InitSettings();

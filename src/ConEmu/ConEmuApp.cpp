@@ -725,9 +725,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     Registry reg;
     if (reg.OpenKey(_T("Control Panel\\Desktop"), KEY_READ))
     {
-		WCHAR szValue;
-        if (reg.Load(_T("DragFullWindows"), &szValue))
-			gConEmu.mb_FullWindowDrag = szValue==L'1';
+		WCHAR szValue[MAX_PATH];
+        if (reg.Load(_T("DragFullWindows"), szValue))
+			gConEmu.mb_FullWindowDrag = szValue[0]==L'1';
         reg.CloseKey();
     }
 

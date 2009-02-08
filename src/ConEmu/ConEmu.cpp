@@ -484,7 +484,7 @@ void CConEmuMain::PaintGaps(HDC hDC/*=NULL*/)
 	if (hDC==NULL)
 		hDC = GetDC(ghWnd); // Главное окно!
 
-	HBRUSH hBrush = CreateSolidBrush(gSet.Colors[0]); SelectObject(hDC, hBrush);
+	HBRUSH hBrush = CreateSolidBrush(gSet.Colors[0]);
 
 	RECT rcClient;
 	GetClientRect(ghWnd, &rcClient); // Клиентская часть главного окна
@@ -537,6 +537,8 @@ void CConEmuMain::PaintGaps(HDC hDC/*=NULL*/)
 #ifdef _DEBUG
 	GdiFlush();
 #endif
+
+	DeleteObject(hBrush);
 
 	if (lbOurDc)
 		ReleaseDC(ghWnd, hDC);
@@ -1492,6 +1494,7 @@ LRESULT CConEmuMain::OnCopyData(PCOPYDATASTRUCT cds)
 	LRESULT result = 0;
     
 	if (cds->dwData == 0) {
+		// Приходит из плагина по ExitFAR
 		ForceShowTabs(FALSE);
 
 		//CONSOLE_SCREEN_BUFFER_INFO inf; memset(&inf, 0, sizeof(inf));

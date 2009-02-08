@@ -144,7 +144,7 @@ BEGIN
     GROUPBOX        "",IDC_STATIC,6,232,294,50
     CONTROL         "Back&ground image (bmp):",cbBgImage2,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,12,232,96,8
-    EDITTEXT        tBgImage,36,244,258,12,ES_AUTOHSCROLL | NOT WS_BORDER,
+    EDITTEXT        tBgImage,36,244,187,12,ES_AUTOHSCROLL | NOT WS_BORDER,
                     WS_EX_STATICEDGE
     COMBOBOX        tFontFace,192,18,102,72,CBS_DROPDOWN | CBS_AUTOHSCROLL | 
                     CBS_SORT | WS_VSCROLL | WS_TABSTOP
@@ -189,8 +189,8 @@ BEGIN
     LTEXT           "Path:",IDC_STATIC,12,244,18,8
     LTEXT           "Darkening:",IDC_STATIC,12,263,36,8
     CONTROL         "",slDarker,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | 
-                    WS_TABSTOP,54,262,204,12
-    EDITTEXT        tDarker,264,262,30,12,ES_AUTOHSCROLL | ES_NUMBER | NOT 
+                    WS_TABSTOP,54,262,157,12
+    EDITTEXT        tDarker,215,262,30,12,ES_AUTOHSCROLL | ES_NUMBER | NOT 
                     WS_BORDER,WS_EX_STATICEDGE
     CONTROL         "&Send AltEnter to application",cbSendAE,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,12,213,100,8
@@ -208,6 +208,14 @@ BEGIN
     COMBOBOX        tFontSizeX2,270,105,24,66,CBS_DROPDOWN | WS_VSCROLL | 
                     WS_TABSTOP
     CTEXT           "x",IDC_STATIC,260,107,8,8
+    PUSHBUTTON      "...",bBgImage,229,244,16,12
+    CONTROL         "Stretch",rBgStretch,"Button",BS_AUTORADIOBUTTON | 
+                    WS_DISABLED,255,255,39,10
+    CONTROL         "Tile",rBgTile,"Button",BS_AUTORADIOBUTTON | WS_DISABLED,
+                    255,267,39,10
+    CONTROL         "UpLeft",rBgSimple,"Button",BS_AUTORADIOBUTTON,255,242,
+                    39,10
+    GROUPBOX        "Placement",IDC_STATIC,251,232,48,50
 END
 
 
@@ -229,7 +237,7 @@ IDI_ICON3               ICON    DISCARDABLE     "Far2.ico"
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2009,2,6,0
+ FILEVERSION 2009,2,8,0
  PRODUCTVERSION 0,0,0,0
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
@@ -248,9 +256,9 @@ BEGIN
             VALUE "Comments", "\0"
             VALUE "CompanyName", "\0"
             VALUE "FileDescription", "Console Emulator\0"
-            VALUE "FileVersion", "2009, 2, 6, 0\0"
+            VALUE "FileVersion", "2009, 2, 8, 0\0"
             VALUE "InternalName", "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2006-2008, Zoin; 2009, Far community :)\0"
+            VALUE "LegalCopyright", "Copyright (C) 2006-2008, Zoin; (C) 2009, Far community :)\0"
             VALUE "LegalTrademarks", "\0"
             VALUE "OriginalFilename", "ConEmu.exe\0"
             VALUE "PrivateBuild", "\0"
