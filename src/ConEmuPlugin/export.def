@@ -16,3 +16,4 @@ EXPORTS
 	ExitFAR              @17
 	GetFarVersion        @98
 	GetFarHWND           @99
+	GetFarHWND2          @97

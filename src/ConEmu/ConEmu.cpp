@@ -358,8 +358,15 @@ bool CConEmuMain::isPictureView()
     if (hPictureView && !IsWindow(hPictureView))
 	    hPictureView = NULL;
 	
-	if (!hPictureView)
-		hPictureView = FindWindowEx(HDCWND, NULL, L"FarPictureViewControlClass", NULL);
+	if (!hPictureView) {
+		hPictureView = FindWindowEx(ghWnd, NULL, L"FarPictureViewControlClass", NULL);
+		if (!hPictureView)
+			hPictureView = FindWindowEx(ghWndDC, NULL, L"FarPictureViewControlClass", NULL);
+		if (!hPictureView) { // FullScreen?
+			hPictureView = FindWindowEx(NULL, NULL, L"FarPictureViewControlClass", NULL);
+			// Хорошо бы конечно процесс окна проверить... но он может не совпадать с нашим запущенным
+		}
+	}
 
 	lbRc = hPictureView!=NULL;
 

@@ -30,6 +30,7 @@ int WINAPI _export GetMinFarVersionW(void)
 
 
 HWND ConEmuHwnd=NULL;
+BOOL TerminalMode = FALSE;
 BOOL bWasSetParent=FALSE;
 HWND FarHwnd=NULL;
 HANDLE hPipe=NULL, hPipeEvent=NULL;
@@ -45,6 +46,10 @@ BOOL APIENTRY DllMain( HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
 	switch (ul_reason_for_call) {
 		case DLL_PROCESS_ATTACH:
 			{
+				#ifdef _DEBUG
+				if (!IsDebuggerPresent())
+					MessageBoxA(NULL, "ConEmu.dll loaded", "ConEmu", 0);
+				#endif
 				#if defined(__GNUC__)
 				typedef HWND (APIENTRY *FGetConsoleWindow)();
 				FGetConsoleWindow GetConsoleWindow = 
@@ -54,6 +59,16 @@ BOOL APIENTRY DllMain( HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
 				#endif
 				HWND hConWnd = GetConsoleWindow();
 				InitHWND(hConWnd);
+				
+			    // Check Terminal mode
+			    TCHAR szVarValue[MAX_PATH];
+			    szVarValue[0] = 0;
+			    if (GetEnvironmentVariable(L"TERM", szVarValue, 63)) {
+				    TerminalMode = TRUE;
+			        //lstrcpy(gsTermMsg, _T("PictureView wrapper\nPicture viewing is not available\nin terminal mode ("));
+			        //lstrcat(gsTermMsg, szVarValue);
+			        //lstrcat(gsTermMsg, _T(")"));
+			    }
 			}
 			break;
 	}
@@ -66,9 +81,11 @@ extern "C"{
 #endif
   BOOL WINAPI DllMainCRTStartup(HANDLE hDll,DWORD dwReason,LPVOID lpReserved);
   HWND WINAPI GetFarHWND();
+  HWND WINAPI GetFarHWND2(BOOL abConEmuOnly);
   void WINAPI GetFarVersion ( FarVersion* pfv );
   int  WINAPI ProcessEditorInputW(void* Rec);
-  void WINAPI  SetStartupInfoW(void *aInfo);
+  void WINAPI SetStartupInfoW(void *aInfo);
+  BOOL WINAPI IsTerminalMode();
 #ifdef __cplusplus
 };
 #endif
@@ -82,14 +99,26 @@ BOOL WINAPI DllMainCRTStartup(HANDLE hDll,DWORD dwReason,LPVOID lpReserved)
 }
 #endif
 
-HWND WINAPI _export GetFarHWND()
+HWND WINAPI GetFarHWND2(BOOL abConEmuOnly)
 {
 	if (ConEmuHwnd) {
 		if (IsWindow(ConEmuHwnd))
 			return ConEmuHwnd;
 		ConEmuHwnd = NULL;
 	}
+	if (abConEmuOnly)
+		return NULL;
 	return FarHwnd;
+}
+
+HWND WINAPI _export GetFarHWND()
+{
+    return GetFarHWND2(FALSE);
+}
+
+BOOL WINAPI IsTerminalMode()
+{
+    return TerminalMode;
 }
 
 void WINAPI _export GetFarVersion ( FarVersion* pfv )

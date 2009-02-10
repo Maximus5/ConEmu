@@ -302,4 +302,4 @@ void TabBarClass::OnMouse(int message, int x, int y)
 			PostMessage(ghConWnd, WM_KEYUP, VK_F10, 0);
 		}
 	}
-}	
+}

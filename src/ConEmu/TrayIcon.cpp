@@ -37,8 +37,9 @@ void TrayIcon::LoadIcon(HWND inWnd, int inIconResource)
     IconData.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP;
     IconData.uCallbackMessage = WM_TRAYNOTIFY;
     //!!!ICON
-    IconData.hIcon = (HICON)LoadImage(GetModuleHandle(0), MAKEINTRESOURCE(inIconResource), IMAGE_ICON, 
-        GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), LR_DEFAULTCOLOR);
+    IconData.hIcon = hClassIconSm;
+    //(HICON)LoadImage(GetModuleHandle(0), MAKEINTRESOURCE(inIconResource), IMAGE_ICON, 
+    //    GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), LR_DEFAULTCOLOR);
 }
 
 void TrayIcon::Delete()

@@ -1,0 +1,56 @@
+;; FarCTL
+13FE7AFF  call        dword ptr ds:[13FF0218h] 
+; FarWnd
+13FE7B05  mov         ebx,eax 
+//13FE7B07  push        1    
+//13FE7B09  push        ebx  
+; store FarWnd
+//13FE7B0A  mov         dword ptr [esp+28h],ebx 
+13FE7B0A  mov         dword ptr [esp+20h],ebx 
+//13FE7B0E  call        dword ptr ds:[13FE10B4h] 
+13FE7B14  mov         edi,eax 
+;; дл€ главного окна - равно
+13FE7B16  cmp         edi,dword ptr ds:[13FEF21Ch] 
+13FE7B1C  jne         13FE7B20 
+;; переходим сюда
+13FE7B1E  mov         edi,ebx ;; main wnd
+13FE7B20  mov         edx,dword ptr ds:[13FEF22Ch] 
+13FE7B26  lea         ecx,[esp+30h] 
+13FE7B2A  push        ecx  
+13FE7B2B  push        edx  
+13FE7B2C  call        dword ptr ds:[13FE1018h] 
+13FE7B32  test        eax,eax 
+13FE7B34  je          13FE7CFA 
+13FE7B3A  lea         eax,[esp+10h] 
+13FE7B3E  push        eax  
+13FE7B3F  push        edi  
+13FE7B40  call        dword ptr ds:[13FE10B8h] 
+13FE7B46  test        eax,eax 
+13FE7B48  je          13FE7CFA 
+13FE7B4E  movsx       ecx,word ptr [esp+3Eh] 
+13FE7B53  mov         eax,esi 
+
+
+
+
+
+; GA_PARENT
+13FEBDC6  push        1    
+13FEBDC8  push        eax  
+; хендл окна ‘ј–/ онЁму
+** 13FEBDC9  mov         dword ptr ds:[13FEF218h],eax 
+; GetAncestor
+13FEBDCE  call        dword ptr ds:[13FE10B4h] 
+13FEBDD4  mov         cl,byte ptr ds:[13FEF25Ch] 
+; содержит хендл DESKTOP
+>> 13FEBDDA  mov         edx,dword ptr ds:[13FEF21Ch] 
+13FEBDE0  test        cl,cl 
+13FEBDE2  mov         ecx,dword ptr ds:[13FEF218h] 
+>> убрать -- 13FEBDE8  jne         13FEBDEC 
+>> убрать -- 13FEBDEA  mov         ecx,edx 
+13FEBDEC  cmp         eax,edx 
+13FEBDEE  mov         dword ptr ds:[13FEF214h],ecx 
+13FEBDF4  je          13FEBDFB 
+13FEBDF6  mov         dword ptr ds:[13FEF218h],eax 
+13FEBDFB  mov         edx,dword ptr ds:[13FF00BCh] 
+

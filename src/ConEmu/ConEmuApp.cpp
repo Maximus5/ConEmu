@@ -282,6 +282,20 @@ BOOL CreateMainWindow()
     DWORD style = 0;
     style |= WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN | WS_CLIPSIBLINGS;
     int nWidth=CW_USEDEFAULT, nHeight=CW_USEDEFAULT;
+    
+    if (gSet.wndWidth && gSet.wndHeight)
+    {
+	    if (gSet.LogFont.lfWidth==0)
+		    pVCon->InitDC(FALSE); // инициализировать ширину шрифта по умолчанию
+		    
+	    COORD conSize; conSize.X=gSet.wndWidth; conSize.Y=gSet.wndHeight;
+	    int nShiftX = GetSystemMetrics(SM_CXSIZEFRAME)*2;
+	    int nShiftY = GetSystemMetrics(SM_CYSIZEFRAME)*2 + GetSystemMetrics(SM_CYCAPTION);
+	    nWidth  = conSize.X * gSet.LogFont.lfWidth + nShiftX;
+	    //TODO: Default height
+	    nHeight = conSize.Y * gSet.LogFont.lfHeight + nShiftY + 0/*TabBar.DefaultHeight()*/;
+    }
+    
     // cRect.right - cRect.left - 4, cRect.bottom - cRect.top - 4; -- все равно это было не правильно
 	ghWnd = CreateWindow(szClassNameParent, 0, style, gSet.wndX, gSet.wndY, nWidth, nHeight, NULL, NULL, (HINSTANCE)g_hInstance, NULL);
 	if (!ghWnd) {
@@ -338,6 +352,21 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     if ((osver.dwMajorVersion>6) || (osver.dwMajorVersion==6 && osver.dwMinorVersion>=1))
     {
         setParentDisabled = true;
+    }
+    if (osver.dwMajorVersion>=6)
+    {
+	    DWORD dwValue=1;
+	    Registry reg;
+	    if (reg.OpenKey(_T("Console"), KEY_READ))
+	    {
+	        if (!reg.Load(_T("LoadConIme"), &dwValue))
+				dwValue = 1;
+	        reg.CloseKey();
+	        if (dwValue!=0)
+		        MBoxA(_T("Unwanter value of 'LoadConIme' registry parameter!\r\nTake a look at 'FAQ-ConEmu.txt'"));
+	    } else {
+		    MBoxA(_T("Can't determine a value of 'LoadConIme' registry parameter!\r\nTake a look at 'FAQ-ConEmu.txt'"));
+	    }
     }
     
     gSet.InitSettings();
@@ -657,15 +686,19 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	        
 		    nLen += _tcslen(pszErr);
 	        TCHAR* psz=(TCHAR*)calloc(nLen+100,sizeof(TCHAR));
+	        int nButtons = MB_OK|MB_ICONEXCLAMATION|MB_SETFOREGROUND;
 	        
 	        _tcscpy(psz, _T("Cannot execute the command.\r\n"));
 	        _tcscat(psz, pszErr);
 	        if (psz[_tcslen(psz)-1]!=_T('\n')) _tcscat(psz, _T("\r\n"));
 	        _tcscat(psz, gSet.Cmd);
-	        _tcscat(psz, _T("\r\n\r\n"));
-	        _tcscat(psz, gSet.BufferHeight == 0 ? _T("Do You want to simply start far?") : _T("Do You want to simply start cmd?"));
+	        if (StrStrI(gSet.Cmd, gSet.BufferHeight == 0 ? _T("far.exe") : _T("cmd.exe"))==NULL) {
+		        _tcscat(psz, _T("\r\n\r\n"));
+		        _tcscat(psz, gSet.BufferHeight == 0 ? _T("Do You want to simply start far?") : _T("Do You want to simply start cmd?"));
+		        nButtons |= MB_YESNO;
+		    }
 	        //MBoxA(psz);
-	        int nBrc = MessageBox(NULL, psz, _T("ConEmu"), MB_YESNO|MB_ICONEXCLAMATION|MB_SETFOREGROUND);
+	        int nBrc = MessageBox(NULL, psz, _T("ConEmu"), nButtons);
 	        free(psz); free(pszErr);
 	        if (nBrc!=IDYES)
 	            return -1;

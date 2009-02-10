@@ -75,13 +75,13 @@ public:
 	void SyncWindowToConsole();
 	static BOOL WINAPI HandlerRoutine(DWORD dwCtrlType);
 	void LoadIcons();
-	void CConEmuMain::GetCWShift(HWND inWnd, POINT *outShift);
-	void CConEmuMain::ShowSysmenu(HWND Wnd, HWND Owner, int x, int y);
-	RECT CConEmuMain::ConsoleOffsetRect();
-	bool CConEmuMain::SetWindowMode(uint inMode);
-	void CConEmuMain::SyncConsoleToWindow();
-	bool CConEmuMain::isFilePanel();
-	bool CConEmuMain::isConSelectMode();
+	void GetCWShift(HWND inWnd, POINT *outShift);
+	void ShowSysmenu(HWND Wnd, HWND Owner, int x, int y);
+	RECT ConsoleOffsetRect();
+	bool SetWindowMode(uint inMode);
+	void SyncConsoleToWindow();
+	bool isFilePanel();
+	bool isConSelectMode();
 public:
 	LRESULT OnPaint(WPARAM wParam, LPARAM lParam);
 	LRESULT OnSize(WPARAM wParam, WORD newClientWidth, WORD newClientHeight);

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <windows.h>
+#include <Shlwapi.h>
 
 #ifdef KL_MEM
 #include "c:\\lang\\kl.h"

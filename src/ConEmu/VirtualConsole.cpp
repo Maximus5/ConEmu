@@ -89,32 +89,36 @@ bool VirtualConsole::InitFont(void)
 	return hFont != NULL;
 }
 
-bool VirtualConsole::InitDC(void)
+bool VirtualConsole::InitDC(BOOL abFull/*=TRUE*/)
 {
 	if (hFont)
 		Free(false);
 	else
 		if (!InitFont())
 			return false;
-	CONSOLE_SCREEN_BUFFER_INFO csbi;
-	if (!GetConsoleScreenBufferInfo(hConOut(), &csbi))
-		return false;
+			
+    if (abFull)
+    {
+		CONSOLE_SCREEN_BUFFER_INFO csbi;
+		if (!GetConsoleScreenBufferInfo(hConOut(), &csbi))
+			return false;
 
-	IsForceUpdate = true;
-	TextWidth = csbi.srWindow.Right - csbi.srWindow.Left + 1;
-	TextHeight = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
-	if ((int)TextWidth < csbi.dwSize.X)
-		TextWidth = csbi.dwSize.X;
+		IsForceUpdate = true;
+		TextWidth = csbi.srWindow.Right - csbi.srWindow.Left + 1;
+		TextHeight = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
+		if ((int)TextWidth < csbi.dwSize.X)
+			TextWidth = csbi.dwSize.X;
 
-	ConChar = new TCHAR[TextWidth * TextHeight * 2];
-	ConAttr = new WORD [TextWidth * TextHeight * 2];
-	if (!ConChar || !ConAttr)
-		return false;
+		ConChar = new TCHAR[TextWidth * TextHeight * 2];
+		ConAttr = new WORD [TextWidth * TextHeight * 2];
+		if (!ConChar || !ConAttr)
+			return false;
+	}
 	SelectionInfo.dwFlags = 0;
 
 	hSelectedFont = NULL;
-	const HDC hScreenDC = GetDC(HDCWND); //Maximus5 - был 0
-	if (hDC = CreateCompatibleDC(0/*hScreenDC*/))
+	const HDC hScreenDC = GetDC(0);
+	if (hDC = CreateCompatibleDC(hScreenDC))
 	{
 		SelectFont(hFont);
 		TEXTMETRIC tm;
@@ -126,11 +130,14 @@ bool VirtualConsole::InitDC(void)
 			gSet.LogFont.lfWidth = tm.tmAveCharWidth;
 		gSet.LogFont.lfHeight = tm.tmHeight;
 
-		Width = TextWidth * gSet.LogFont.lfWidth;
-		Height = TextHeight * gSet.LogFont.lfHeight;
+		if (abFull)
+		{
+			Width = TextWidth * gSet.LogFont.lfWidth;
+			Height = TextHeight * gSet.LogFont.lfHeight;
 
-		hBitmap = CreateCompatibleBitmap(hScreenDC, Width, Height);
-		SelectObject(hDC, hBitmap);
+			hBitmap = CreateCompatibleBitmap(hScreenDC, Width, Height);
+			SelectObject(hDC, hBitmap);
+		}
 	}
 	ReleaseDC(0, hScreenDC);
 

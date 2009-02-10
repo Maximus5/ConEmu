@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../common/pluginA.hpp"
+#include "../../common/pluginA.hpp"
 
 extern PluginStartupInfo psi;
 extern FarStandardFunctions fsf;
