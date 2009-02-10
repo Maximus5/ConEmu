@@ -69,15 +69,24 @@ LRESULT CALLBACK CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam
 LRESULT CConEmuChild::OnPaint(WPARAM wParam, LPARAM lParam)
 {
 	LRESULT result = 0;
+	BOOL lbSkipDraw = FALSE;
     //if (gbInPaint)
 	//    break;
 
     if (gConEmu.isPictureView())
     {
-		// TODO: если PictureView распахнуто не на все окно - отрисовать видимую часть консоли!
-        result = DefWindowProc(ghWndDC, WM_PAINT, wParam, lParam);
-
-	} else {
+		// если PictureView распахнуто не на все окно - отрисовать видимую часть консоли!
+		RECT rcPic, rcClient;
+		GetClientRect(gConEmu.hPictureView, &rcPic);
+		GetClientRect(ghWndDC, &rcClient);
+		
+		if (rcPic.right>=rcClient.right) {
+			lbSkipDraw = TRUE;
+	        result = DefWindowProc(ghWndDC, WM_PAINT, wParam, lParam);
+        }
+	}
+	if (!lbSkipDraw)
+	{
 	    
 		//gbInPaint = true;
 		RECT client; GetClientRect(ghWndDC, &client);
