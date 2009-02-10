@@ -150,7 +150,7 @@ public:
 //------------------------------------------------------------------------
 
 
-const char pHelp[] = "\
+const wchar_t pHelp[] = L"\
 Console emulation program.\n\
 By default this program launches \"Far.exe\" from the same directory it is in.\n\
 \n\

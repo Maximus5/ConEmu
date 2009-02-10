@@ -1,4 +1,0 @@
-SYNOPSIS
-
-  This is a Wrapper for FarHints(unicode) plugin for using with 
-  ConEmu.Maximus5.090123 and higher (090124 recommended).

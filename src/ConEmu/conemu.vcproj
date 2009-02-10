@@ -61,7 +61,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="comctl32.lib UxTheme.lib Shlwapi.lib"
+				AdditionalDependencies="comctl32.lib UxTheme.lib Shlwapi.lib version.lib"
 				OutputFile="F:\VCProject\FarPlugin\#FAR180\ConEmu.exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
@@ -139,7 +139,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="comctl32.lib UxTheme.lib Shlwapi.lib"
+				AdditionalDependencies="comctl32.lib UxTheme.lib Shlwapi.lib version.lib"
 				OutputFile="..\..\ConEmu.exe"
 				LinkIncremental="1"
 				GenerateDebugInformation="false"
@@ -218,7 +218,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="comctl32.lib UxTheme.lib Shlwapi.lib"
+				AdditionalDependencies="comctl32.lib UxTheme.lib Shlwapi.lib version.lib"
 				OutputFile="C:\Utils\Far180\ConEmu.exe"
 				LinkIncremental="1"
 				GenerateDebugInformation="true"
@@ -295,7 +295,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="comctl32.lib UxTheme.lib Shlwapi.lib"
+				AdditionalDependencies="comctl32.lib UxTheme.lib Shlwapi.lib version.lib"
 				OutputFile="F:\VCProject\FarPlugin\#FAR1705\ConEmu.exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"

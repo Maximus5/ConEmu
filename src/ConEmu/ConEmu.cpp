@@ -2,6 +2,7 @@
 
 CConEmuMain::CConEmuMain()
 {
+    wcscpy(szConEmuVersion, L"?.?.?.?");
 	gnLastProcessCount=0;
 	cBlinkNext=0;
 	WindowMode=0;
@@ -1013,7 +1014,11 @@ LRESULT CALLBACK CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPAR
 			DialogBox((HINSTANCE)GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_DIALOG1), 0, CSettings::wndOpProc);
             break;
         case ID_HELP:
-            MessageBoxA(ghOpWnd, pHelp, "About ConEmu...", MB_ICONQUESTION);
+	        {
+		        WCHAR szTitle[255];
+		        wsprintf(szTitle, L"About ConEmu (%s)...", gConEmu.szConEmuVersion);
+	            MessageBox(ghOpWnd, pHelp, szTitle, MB_ICONQUESTION);
+	        }
             break;
         case ID_TOTRAY:
             Icon.HideWindowToTray();
@@ -1125,6 +1130,49 @@ BOOL WINAPI CConEmuMain::HandlerRoutine(DWORD dwCtrlType)
     return (dwCtrlType == CTRL_C_EVENT || dwCtrlType == CTRL_BREAK_EVENT ? true : false);
 }
 
+bool CConEmuMain::LoadVersionInfo(wchar_t* pFullPath)
+{
+    LPBYTE pBuffer=NULL;
+    wchar_t* pVersion=NULL;
+    wchar_t* pDesc=NULL;
+    
+    const wchar_t WSFI[] = L"StringFileInfo";
+
+    DWORD size = GetFileVersionInfoSizeW(pFullPath, &size);
+    if(!size) return false;
+    pBuffer = new BYTE[size];
+    GetFileVersionInfoW((wchar_t*)pFullPath, 0, size, pBuffer);
+
+    //Find StringFileInfo
+    DWORD ofs;
+    for(ofs = 92; ofs < size; ofs += *(WORD*)(pBuffer+ofs) )
+        if(!lstrcmpiW((wchar_t*)(pBuffer+ofs+6), WSFI))
+            break;
+    if(ofs >= size) {
+        delete pBuffer;
+        return false;
+    }
+    TCHAR *langcode;
+    langcode = (TCHAR*)(pBuffer + ofs + 42);
+
+    TCHAR blockname[48];
+    unsigned dsize;
+
+    wsprintf(blockname, _T("\\%s\\%s\\FileVersion"), WSFI, langcode);
+    if(!VerQueryValue(pBuffer, blockname, (void**)&pVersion, &dsize))
+        pVersion = 0;
+    else {
+       if (dsize>=31) pVersion[31]=0;
+       wcscpy(szConEmuVersion, pVersion);
+       pVersion = wcsrchr(szConEmuVersion, L',');
+       if (pVersion && wcscmp(pVersion, L", 0")==0)
+	       *pVersion = 0;
+    }
+    
+    delete pBuffer;
+    
+    return true;
+}
 
 // Нужно вызывать после загрузки настроек!
 void CConEmuMain::LoadIcons()
@@ -1134,6 +1182,8 @@ void CConEmuMain::LoadIcons()
 	    
     if (GetModuleFileName(0, szIconPath, MAX_PATH))
     {
+        this->LoadVersionInfo(szIconPath);
+        
 	    TCHAR *lpszExt = _tcsrchr(szIconPath, _T('.'));
 	    if (!lpszExt)
 		    szIconPath[0] = 0;

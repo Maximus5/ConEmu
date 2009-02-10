@@ -56,6 +56,7 @@ public:
 	COORD srctWindowLast; // console size after last resize (in columns and lines)
 	RECT  dcWindowLast; // Последний размер дочернего окна
 	uint cBlinkShift; // cursor blink counter threshold
+	TCHAR szConEmuVersion[32];
 
 public:
 	CConEmuMain();
@@ -82,6 +83,7 @@ public:
 	void SyncConsoleToWindow();
 	bool isFilePanel();
 	bool isConSelectMode();
+	bool LoadVersionInfo(wchar_t* pFullPath);
 public:
 	LRESULT OnPaint(WPARAM wParam, LPARAM lParam);
 	LRESULT OnSize(WPARAM wParam, WORD newClientWidth, WORD newClientHeight);

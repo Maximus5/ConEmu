@@ -262,6 +262,7 @@ int MDEBUG_CHK = TRUE;
 #endif
 
 
+
 BOOL CreateAppWindow()
 {
     return TRUE;
@@ -490,7 +491,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             }
             else if ( !klstricmp(curCommand, _T("/?")))
             {
-                MessageBoxA(NULL, pHelp, "About ConEmu...", MB_ICONQUESTION);
+                MessageBox(NULL, pHelp, L"About ConEmu...", MB_ICONQUESTION);
                 return -1; // NightRoman
             }
         }
