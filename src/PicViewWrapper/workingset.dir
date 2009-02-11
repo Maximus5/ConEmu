@@ -1,13 +1,13 @@
- Volume in drive E is WORK
- Volume Serial Number is E48A-BF13
+ Volume in drive C is BOOT
+ Volume Serial Number is A80C-E797
 
- Directory of E:\Far\Unicode\Plugins\PictureView
+ Directory of C:\Utils\Far180\Plugins\PictureView
 
-11.02.2009  17:06    <DIR>          .
-11.02.2009  17:06    <DIR>          ..
-10.02.2009  18:03             6ÿ656 0PictureView.dll
+12.02.2009  01:51    <DIR>          .
+12.02.2009  01:51    <DIR>          ..
+12.02.2009  01:42             8ÿ192 0PictureView.dll
 09.02.2009  17:39            62ÿ756 0PictureView.dl_
-10.02.2009  18:33             9ÿ216 EmuPic.dll
+12.02.2009  01:42            11ÿ776 EmuPic.dll
 14.03.2007  20:35             2ÿ289 History.txt
 26.11.2008  16:51         2ÿ243ÿ040 IDE_ACDStd.apl
 09.11.2006  18:03           486ÿ048 IDE_JP2.apl
@@ -18,5 +18,5 @@
 14.03.2007  20:55             8ÿ102 PictureView_ru.hlf
 07.01.2006  14:01             1ÿ055 PictureView_ru.lng
 14.03.2007  20:55             9ÿ093 Readme.txt
-              13 File(s)      3ÿ840ÿ444 bytes
-               2 Dir(s)  30ÿ248ÿ472ÿ576 bytes free
+              13 File(s)      3ÿ844ÿ540 bytes
+               2 Dir(s)  13ÿ045ÿ764ÿ096 bytes free

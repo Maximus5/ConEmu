@@ -32,6 +32,7 @@ CConEmuMain::CConEmuMain()
 	ProgressBars=NULL;
 	cBlinkShift=0;
 	Title[0]=0; TitleCmp[0]=0;
+	//mb_InClose = FALSE;
 }
 
 CConEmuMain::~CConEmuMain()
@@ -612,6 +613,10 @@ void CConEmuMain::CheckBufferSize()
 LRESULT CALLBACK CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 {
     LRESULT result = 0;
+
+	if (messg == WM_SYSCHAR)
+		return TRUE;
+
     switch (messg)
     {
     case WM_NOTIFY:
@@ -988,33 +993,13 @@ LRESULT CALLBACK CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPAR
 
     case WM_CLOSE:
         //Icon.Delete(); - перенес в WM_DESTROY
+		//gConEmu.mb_InClose = TRUE;
         SENDMESSAGE(ghConWnd, WM_CLOSE, 0, 0);
+		//gConEmu.mb_InClose = FALSE;
         break;
 
     case WM_CREATE:
-		{
-			ghWnd = hWnd; // ставим сразу, чтобы функции могли пользоваться
-			Icon.LoadIcon(hWnd, gSet.nIconID/*IDI_ICON1*/);
-
-			WNDCLASS wc = {CS_OWNDC|CS_DBLCLKS|CS_SAVEBITS, CConEmuChild::ChildWndProc, 0, 0, 
-					g_hInstance, NULL, LoadCursor(NULL, IDC_ARROW), 
-					NULL /*(HBRUSH)COLOR_BACKGROUND*/, 
-					NULL, szClassName};// | CS_DROPSHADOW
-			if (!RegisterClass(&wc)) {
-				ghWndDC = (HWND)-1; // чтобы родитель не ругался
-				MBoxA(_T("Can't register DC window class!"));
-				return -1;
-			}
-			DWORD style = WS_VISIBLE | WS_CHILD | WS_CLIPSIBLINGS /*| WS_CLIPCHILDREN*/ | (gSet.BufferHeight ? WS_VSCROLL : 0);
-			RECT rc = gConEmu.DCClientRect();
-			ghWndDC = CreateWindow(szClassName, 0, style, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, hWnd, NULL, (HINSTANCE)g_hInstance, NULL);
-			if (!ghWndDC) {
-				ghWndDC = (HWND)-1; // чтобы родитель не ругался
-				MBoxA(_T("Can't create DC window!"));
-				return -1; //
-			}
-			gConEmu.dcWindowLast = rc; //TODO!!!
-		}
+		result = gConEmu.OnCreate(hWnd);
         break;
 
     case WM_SYSCOMMAND:
@@ -1264,6 +1249,7 @@ LRESULT CConEmuMain::OnSize(WPARAM wParam, WORD newClientWidth, WORD newClientHe
 
 	if (TabBar.IsActive())
         TabBar.UpdateWidth();
+	m_Back.Resize();
 
 	if (!gConEmu.mb_InSizing || gConEmu.mb_FullWindowDrag) {
 		BOOL lbIsPicView = isPictureView();
@@ -1566,19 +1552,26 @@ LRESULT CConEmuMain::OnCopyData(PCOPYDATASTRUCT cds)
 	LRESULT result = 0;
     
 	if (cds->dwData == 0) {
-		// Приходит из плагина по ExitFAR
-		ForceShowTabs(FALSE);
+		BOOL lbInClose = FALSE;
+		DWORD ProcList[2], ProcCount=0;
+	    ProcCount = GetConsoleProcessList(ProcList,2);
+		if (ProcCount<=2)
+			lbInClose = TRUE;
 
-		//CONSOLE_SCREEN_BUFFER_INFO inf; memset(&inf, 0, sizeof(inf));
-		//GetConsoleScreenBufferInfo(pVCon->hConOut(), &inf);
-		if ((gSet.BufferHeight > 0) /*&& (inf.dwSize.Y==(inf.srWindow.Bottom-inf.srWindow.Top+1))*/)
-		{
-			DWORD mode = 0;
-			BOOL lb = GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), &mode);
-			mode |= ENABLE_QUICK_EDIT_MODE|ENABLE_INSERT_MODE|ENABLE_EXTENDED_FLAGS;
-			lb = SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), mode);
+		if (!lbInClose) { // Чтобы табы не прыгали при щелчке по крестику
+			// Приходит из плагина по ExitFAR
+			ForceShowTabs(FALSE);
+
+			//CONSOLE_SCREEN_BUFFER_INFO inf; memset(&inf, 0, sizeof(inf));
+			//GetConsoleScreenBufferInfo(pVCon->hConOut(), &inf);
+			if ((gSet.BufferHeight > 0) /*&& (inf.dwSize.Y==(inf.srWindow.Bottom-inf.srWindow.Top+1))*/)
+			{
+				DWORD mode = 0;
+				BOOL lb = GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), &mode);
+				mode |= ENABLE_QUICK_EDIT_MODE|ENABLE_INSERT_MODE|ENABLE_EXTENDED_FLAGS;
+				lb = SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), mode);
+			}
 		}
-
 	} else {
 		BOOL lbNeedInval=FALSE;
 		ConEmuTab* tabs = (ConEmuTab*)cds->lpData;
@@ -1634,4 +1627,17 @@ LRESULT CConEmuMain::OnGetMinMaxInfo(LPMINMAXINFO pInfo)
 		+ p.y + shiftRect.top + shiftRect.bottom;
 
 	return result;
+}
+
+LRESULT CConEmuMain::OnCreate(HWND hWnd)
+{
+	ghWnd = hWnd; // ставим сразу, чтобы функции могли пользоваться
+	Icon.LoadIcon(hWnd, gSet.nIconID/*IDI_ICON1*/);
+
+	gConEmu.m_Back.Create();
+
+	if (!gConEmu.m_Child.Create())
+		return -1;
+
+	return 0;
 }

@@ -39,6 +39,7 @@ void CSettings::InitSettings()
     _tcscpy(gSet.LogFont.lfFaceName, _T("Lucida Console"));
     _tcscpy(gSet.LogFont2.lfFaceName, _T("Lucida Console"));
     isTryToCenter = false;
+	isTabFrame = true;
 	
 	Registry RegConColors, RegConDef;
 	if (RegConColors.OpenKey(_T("Console"), KEY_READ))
@@ -127,6 +128,8 @@ void CSettings::LoadSettings()
         reg.Load(_T("DefCopy"), &gSet.isDefCopy);
         reg.Load(_T("GUIpb"), &gSet.isGUIpb);
         reg.Load(_T("Tabs"), &gSet.isTabs);
+		reg.Load(_T("TabFrame"), &gSet.isTabFrame);
+		reg.Load(_T("TabMargins"), &gSet.rcTabMargins);
         reg.Load(_T("ConVisible"), &gSet.isConVisible);
         reg.Load(_T("SlideShowElapse"), &gSet.nSlideShowElapse);
         reg.Load(_T("IconID"), &gSet.nIconID);
@@ -169,6 +172,21 @@ void CSettings::LoadSettings()
 	// pVCon еще не создано!
     if (gSet.isShowBgImage && pVCon)
         LoadImageFrom(gSet.pBgImage);
+}
+
+void CSettings::UpdateMargins(RECT arcMargins)
+{
+	if (memcmp(&arcMargins, &rcTabMargins, sizeof(rcTabMargins))==0)
+		return;
+
+	rcTabMargins = arcMargins;
+
+	Registry reg;
+	if (reg.OpenKey(gSet.Config, KEY_WRITE))
+	{
+		reg.Save(_T("TabMargins"), gSet.rcTabMargins);
+		reg.CloseKey();
+	}
 }
 
 BOOL CSettings::SaveSettings()
@@ -657,6 +675,8 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
                 wsprintf(temp, _T("%i %i %i"), getR(color), getG(color), getB(color));
                 SetDlgItemText(ghOpWnd, CB + 100, temp);
                 InvalidateRect(GetDlgItem(ghOpWnd, CB), 0, 1);
+
+				gConEmu.m_Back.Refresh();
 
                 pVCon->Update(true);
                 InvalidateRect(ghWnd, NULL, FALSE);

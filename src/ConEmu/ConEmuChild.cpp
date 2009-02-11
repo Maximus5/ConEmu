@@ -8,9 +8,37 @@ CConEmuChild::~CConEmuChild()
 {
 }
 
+HWND CConEmuChild::Create()
+{
+	WNDCLASS wc = {CS_OWNDC|CS_DBLCLKS/*|CS_SAVEBITS*/, CConEmuChild::ChildWndProc, 0, 0, 
+			g_hInstance, NULL, LoadCursor(NULL, IDC_ARROW), 
+			NULL /*(HBRUSH)COLOR_BACKGROUND*/, 
+			NULL, szClassName};// | CS_DROPSHADOW
+	if (!RegisterClass(&wc)) {
+		ghWndDC = (HWND)-1; // чтобы родитель не ругался
+		MBoxA(_T("Can't register DC window class!"));
+		return NULL;
+	}
+	DWORD style = WS_VISIBLE | WS_CHILD | WS_CLIPSIBLINGS /*| WS_CLIPCHILDREN*/ | (gSet.BufferHeight ? WS_VSCROLL : 0);
+	RECT rc = gConEmu.DCClientRect();
+	ghWndDC = CreateWindow(szClassName, 0, style, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, ghWnd, NULL, (HINSTANCE)g_hInstance, NULL);
+	if (!ghWndDC) {
+		ghWndDC = (HWND)-1; // чтобы родитель не ругался
+		MBoxA(_T("Can't create DC window!"));
+		return NULL; //
+	}
+	SetWindowPos(ghWndDC, HWND_TOP, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
+	gConEmu.dcWindowLast = rc; //TODO!!!
+	return ghWndDC;
+}
+
 LRESULT CALLBACK CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 {
     LRESULT result = 0;
+
+	if (messg == WM_SYSCHAR)
+		return TRUE;
+
     switch (messg)
     {
     case WM_COPYDATA:
@@ -153,4 +181,112 @@ LRESULT CConEmuChild::OnSize(WPARAM wParam, LPARAM lParam)
     }
 
 	return result;
+}
+
+
+
+
+
+
+
+
+
+
+
+CConEmuBack::CConEmuBack()
+{
+	mh_Wnd = NULL;
+	mh_BackBrush = NULL;
+	mn_LastColor = -1;
+}
+
+CConEmuBack::~CConEmuBack()
+{
+}
+
+HWND CConEmuBack::Create()
+{
+	mn_LastColor = gSet.Colors[0];
+	mh_BackBrush = CreateSolidBrush(mn_LastColor);
+
+	DWORD dwLastError = 0;
+	WNDCLASS wc = {CS_OWNDC/*|CS_SAVEBITS*/, CConEmuBack::BackWndProc, 0, 0, 
+			g_hInstance, NULL, LoadCursor(NULL, IDC_ARROW), 
+			mh_BackBrush, 
+			NULL, szClassNameBack};
+	if (!RegisterClass(&wc)) {
+		dwLastError = GetLastError();
+		mh_Wnd = (HWND)-1; // чтобы родитель не ругался
+		MBoxA(_T("Can't register background window class!"));
+		return NULL;
+	}
+	DWORD style = WS_VISIBLE | WS_CHILD | WS_CLIPSIBLINGS ;
+	RECT rc = gConEmu.ConsoleOffsetRect();
+	RECT rcClient; GetClientRect(ghWnd, &rcClient);
+
+	mh_Wnd = CreateWindow(szClassNameBack, 0, style, 
+		rc.left, rc.top,
+		rcClient.right - rc.right - rc.left,
+		rcClient.bottom - rc.bottom - rc.top,
+		ghWnd, NULL, (HINSTANCE)g_hInstance, NULL);
+	if (!mh_Wnd) {
+		dwLastError = GetLastError();
+		mh_Wnd = (HWND)-1; // чтобы родитель не ругался
+		MBoxA(_T("Can't create background window!"));
+		return NULL; //
+	}
+
+	return mh_Wnd;
+}
+
+LRESULT CALLBACK CConEmuBack::BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
+{
+    LRESULT result = 0;
+
+	if (messg == WM_SYSCHAR)
+		return TRUE;
+
+	switch (messg) {
+		case WM_CREATE:
+			gConEmu.m_Back.mh_Wnd = hWnd;
+			break;
+		case WM_DESTROY:
+			DeleteObject(gConEmu.m_Back.mh_BackBrush);
+			break;
+	}
+
+    result = DefWindowProc(hWnd, messg, wParam, lParam);
+
+	return result;
+}
+
+void CConEmuBack::Resize()
+{
+	if (!mh_Wnd || !IsWindow(mh_Wnd)) 
+		return;
+
+	RECT rc = gConEmu.ConsoleOffsetRect();
+	RECT rcClient; GetClientRect(ghWnd, &rcClient);
+
+	MoveWindow(mh_Wnd, 
+		rc.left, rc.top,
+		rcClient.right - rc.right - rc.left,
+		rcClient.bottom - rc.bottom - rc.top,
+		1);
+}
+
+void CConEmuBack::Refresh()
+{
+	if (mn_LastColor == gSet.Colors[0])
+		return;
+
+	mn_LastColor = gSet.Colors[0];
+	HBRUSH hNewBrush = CreateSolidBrush(mn_LastColor);
+
+	SetClassLong(mh_Wnd, GCL_HBRBACKGROUND, (LONG)hNewBrush);
+	DeleteObject(mh_BackBrush);
+	mh_BackBrush = hNewBrush;
+
+	RECT rc; GetClientRect(mh_Wnd, &rc);
+	InvalidateRect(mh_Wnd, &rc, TRUE);
 }

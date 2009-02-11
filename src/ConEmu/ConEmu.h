@@ -29,6 +29,7 @@ class CConEmuMain
 {
 public:
 	CConEmuChild m_Child;
+	CConEmuBack  m_Back;
 	POINT cwShift; // difference between window size and client area size for main ConEmu window
 	POINT cwConsoleShift; // difference between window size and client area size for ghConWnd
 	DWORD gnLastProcessCount;
@@ -46,6 +47,7 @@ public:
 	HWND hPictureView; bool bPicViewSlideShow; DWORD dwLastSlideShowTick;
 	bool gb_ConsoleSelectMode;
 	bool setParent;
+	//BOOL mb_InClose;
 	int RBDownNewX, RBDownNewY;
 	POINT cursor, Rcursor;
 	WPARAM lastMMW;
@@ -92,4 +94,5 @@ public:
 	LRESULT OnCopyData(PCOPYDATASTRUCT cds);
 	LRESULT OnGetMinMaxInfo(LPMINMAXINFO pInfo);
 	void ReSize();
+	LRESULT OnCreate(HWND hWnd);
 };

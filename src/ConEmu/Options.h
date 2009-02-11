@@ -40,6 +40,8 @@ public:
     bool isScrollTitle;
     DWORD ScrollTitleLen;
     bool isTryToCenter;
+	RECT rcTabMargins;
+	bool isTabFrame;
 
 	// Заголовки табов
 	TCHAR szTabPanels[32];
@@ -55,6 +57,7 @@ public:
 	BOOL SaveSettings();
 	bool ShowColorDialog(HWND HWndOwner, COLORREF *inColor);
 	static BOOL CALLBACK EnumFamCallBack(LPLOGFONT lplf, LPNEWTEXTMETRIC lpntm, DWORD FontType, LPVOID aFontCount);
+	void UpdateMargins(RECT arcMargins);
 public:
 	LRESULT OnInitDialog();
 	LRESULT OnButtonClicked(WPARAM wParam, LPARAM lParam);

@@ -1,3 +1,11 @@
+Maximus5 - 2009.02.11
+
+    * При нажатии Alt+кнопка раздавался писк.
+    * Врапперу PictureView опять не нужен ConEmu.dll.
+    * Табы теперь отображаются с рамкой. Если хотите как раньше - только заголовки:
+	[HKEY_CURRENT_USER\Software\ConEmu]
+	"TabFrame"=hex:00
+
 Maximus5 - 2009.02.10
 
     * SlideShow для PictureView мог не работать (особенно в FullScreen).

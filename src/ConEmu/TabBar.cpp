@@ -86,10 +86,7 @@ void TabBarClass::Activate()
 		RECT rcClient; 
 		GetClientRect(ghWnd, &rcClient); 
 		InitCommonControls(); 
-		DWORD nPlacement = 0;
-#ifdef _DEBUG
-		nPlacement = TCS_SINGLELINE;
-#endif
+		DWORD nPlacement = TCS_SINGLELINE;
 		_hwndTab = CreateWindow(WC_TABCONTROL, NULL, nPlacement | WS_CHILD | WS_CLIPSIBLINGS | TCS_FOCUSNEVER, 0, 0, 
 			rcClient.right, 0, ghWnd, NULL, g_hInstance, NULL);
 		if (_hwndTab == NULL)
@@ -193,11 +190,13 @@ void TabBarClass::Update(ConEmuTab* tabs, int tabsCount)
 		_tabHeight = rcClient.top;
 
 		m_Margins.top = rcClient.top;
-#ifdef _DEBUG
-		m_Margins.left = rcClient.left;
-		m_Margins.right = rcWnd.right-rcClient.right;
-		m_Margins.bottom = rcWnd.bottom-rcClient.bottom;
-#endif
+		if (gSet.isTabFrame)
+		{
+			m_Margins.left = rcClient.left;
+			m_Margins.right = rcWnd.right-rcClient.right;
+			m_Margins.bottom = rcWnd.bottom-rcClient.bottom;
+		}
+		gSet.UpdateMargins(m_Margins);
 
 		UpdatePosition();
 	}
@@ -235,11 +234,10 @@ void TabBarClass::UpdatePosition()
 	gConEmu.ReSize();
 	if (_tabHeight>0) {
 		ShowWindow(_hwndTab, SW_SHOW);
-#ifdef _DEBUG
-		MoveWindow(_hwndTab, 0, 0, client.right, client.bottom, 1);
-#else
-		MoveWindow(_hwndTab, 0, 0, client.right, _tabHeight, 1);
-#endif
+		if (gSet.isTabFrame)
+			MoveWindow(_hwndTab, 0, 0, client.right, client.bottom, 1);
+		else
+			MoveWindow(_hwndTab, 0, 0, client.right, _tabHeight, 1);
 	} else {
 		ShowWindow(_hwndTab, SW_HIDE);
 	}
@@ -254,11 +252,10 @@ void TabBarClass::UpdateWidth()
 	RECT client, self;
 	GetClientRect(ghWnd, &client);
 	GetWindowRect(_hwndTab, &self);
-#ifdef _DEBUG
-	MoveWindow(_hwndTab, 0, 0, client.right, client.bottom, 1);
-#else
-	MoveWindow(_hwndTab, 0, 0, client.right, _tabHeight, 1);
-#endif
+	if (gSet.isTabFrame)
+		MoveWindow(_hwndTab, 0, 0, client.right, client.bottom, 1);
+	else
+		MoveWindow(_hwndTab, 0, 0, client.right, _tabHeight, 1);
 }
 
 bool TabBarClass::OnNotify(LPNMHDR nmhdr)

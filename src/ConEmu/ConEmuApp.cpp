@@ -24,6 +24,7 @@ HICON hClassIcon = NULL, hClassIconSm = NULL;
 const TCHAR *const szClassName = _T("VirtualConsoleClass");
 const TCHAR *const szClassNameParent = _T("VirtualConsoleClassMain");
 const TCHAR *const szClassNameApp = _T("VirtualConsoleClassApp");
+const TCHAR *const szClassNameBack = _T("VirtualConsoleClassBack");
 
 
 OSVERSIONINFO osver;
@@ -292,9 +293,8 @@ BOOL CreateMainWindow()
 	    COORD conSize; conSize.X=gSet.wndWidth; conSize.Y=gSet.wndHeight;
 	    int nShiftX = GetSystemMetrics(SM_CXSIZEFRAME)*2;
 	    int nShiftY = GetSystemMetrics(SM_CYSIZEFRAME)*2 + GetSystemMetrics(SM_CYCAPTION);
-	    nWidth  = conSize.X * gSet.LogFont.lfWidth + nShiftX;
-	    //TODO: Default height
-	    nHeight = conSize.Y * gSet.LogFont.lfHeight + nShiftY + 0/*TabBar.DefaultHeight()*/;
+		nWidth  = conSize.X * gSet.LogFont.lfWidth + nShiftX + gSet.rcTabMargins.left+gSet.rcTabMargins.right;
+	    nHeight = conSize.Y * gSet.LogFont.lfHeight + nShiftY + gSet.rcTabMargins.top+gSet.rcTabMargins.bottom;
     }
     
     // cRect.right - cRect.left - 4, cRect.bottom - cRect.top - 4; -- все равно это было не правильно

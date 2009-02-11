@@ -51,8 +51,8 @@ BOOL APIENTRY DllMain( HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
 		case DLL_PROCESS_ATTACH:
 			{
 				#ifdef _DEBUG
-				if (!IsDebuggerPresent())
-					MessageBoxA(NULL, "ConEmu.dll loaded", "ConEmu", 0);
+				//if (!IsDebuggerPresent())
+				//	MessageBoxA(NULL, "ConEmu.dll loaded", "ConEmu", 0);
 				#endif
 				#if defined(__GNUC__)
 				typedef HWND (APIENTRY *FGetConsoleWindow)();
