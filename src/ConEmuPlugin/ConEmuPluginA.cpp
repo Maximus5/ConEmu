@@ -41,7 +41,7 @@ int WINAPI _export GetMinFarVersion(void)
 /*static*/ struct PluginStartupInfo *InfoA=NULL;
 struct FarStandardFunctions *FSFA=NULL;
 extern HWND ConEmuHwnd;
-extern BOOL bWasSetParent;
+//extern BOOL bWasSetParent;
 extern HWND FarHwnd;
 extern HANDLE hPipe, hPipeEvent;
 extern HANDLE hThread;
@@ -101,9 +101,9 @@ DWORD WINAPI ThreadProcA(LPVOID lpParameter)
 					}
 					else 
 					{
-						if (bWasSetParent) {
-							SetParent(FarHwnd, NULL);
-						}
+						//if (bWasSetParent) { -- все равно уже не поможет, если она была дочерней - сдохла
+						//	SetParent(FarHwnd, NULL);
+						//}
 					    
 						ShowWindowAsync(FarHwnd, SW_SHOWNORMAL);
 						EnableWindow(FarHwnd, true);

@@ -38,7 +38,7 @@ void WINAPI _export GetPluginInfoW(struct PluginInfo *pi)
 struct PluginStartupInfo *InfoW684=NULL;
 struct FarStandardFunctions *FSFW684=NULL;
 extern HWND ConEmuHwnd;
-extern BOOL bWasSetParent;
+//extern BOOL bWasSetParent;
 extern HWND FarHwnd;
 extern HANDLE hPipe, hPipeEvent;
 extern HANDLE hThread;

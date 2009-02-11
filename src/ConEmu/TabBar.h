@@ -6,6 +6,7 @@ class TabBarClass
 	HWND _hwndTab;
 	int _tabHeight;
 	TCHAR _lastTitle[MAX_PATH];
+	RECT m_Margins;
 	bool _titleShouldChange;
 	int _prevTab;
 	void AddTab(wchar_t* text, int i);
@@ -16,7 +17,8 @@ public:
 	TabBarClass();
 	bool IsActive();
 	BOOL IsAllowed();
-	int Height();
+	//int Height();
+	RECT GetMargins();
 	void Activate();
 	void Deactivate();
 	void Update(ConEmuTab* tabs, int tabsCount);

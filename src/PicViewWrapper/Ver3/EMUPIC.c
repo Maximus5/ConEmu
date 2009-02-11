@@ -34,7 +34,7 @@ typedef UINT_PTR WPARAM;
 typedef LONG_PTR LPARAM;
 typedef LONG_PTR LRESULT;
 typedef long LONG;
-typedef unsigned long DWORD;
+typedef unsigned long DWORD, *LPDWORD;
 typedef void *LPVOID;
 typedef long HWND;
 typedef long HCURSOR;
@@ -122,8 +122,8 @@ WINBASEAPI DWORD GetEnvironmentVariableA(LPCSTR lpName,LPSTR lpBuffer,DWORD nSiz
 EXTCEND
 
 // True user32 forwards
-typedef int (WINAPI* FGetClassNameA)(HWND,LPSTR,int);
-FGetClassNameA fGetClassNameA=NULL;
+//typedef int (WINAPI* FGetClassNameA)(HWND,LPSTR,int);
+//FGetClassNameA fGetClassNameA=NULL;
 typedef BOOL (WINAPI* FIsWindow)(HWND);
 FIsWindow fIsWindow=NULL;
 typedef BOOL (WINAPI* FIsWindowVisible)(HWND);
@@ -143,6 +143,8 @@ BOOL gbTerminalMode=FALSE;
 // === Forwards ===
 void InitConEmu();
 BOOL GetConEmuShift(LPRECT lprcShift);
+
+#include "../../common/ConEmuCheck.h"
 
 //EXTCSTART
     //BOOL DllMain(HINSTANCE hinstDLL,DWORD fdwReason,LPVOID lpvReserved);
@@ -244,6 +246,13 @@ BOOL DllMain(HINSTANCE hinstDLL,DWORD fdwReason,LPVOID lpvReserved)
 #define ENDDECLV \
     return; \
 }
+
+
+DECLUSER2(DWORD,GetWindowThreadProcessId,HWND,hwnd,LPDWORD,lpdwProcessId)
+ENDDECL
+
+DECLUSER3(int,GetClassNameA,HWND,hwnd,LPSTR,lpsClass,int,nMaxSize)
+ENDDECL
 
 DECLUSER3(BOOL,InvalidateRect,HWND,hwnd,LPCRECT,lpRect,BOOL,bErase)
 ENDDECL
@@ -442,8 +451,8 @@ ENDDECL
 
 
 
-typedef HWND (WINAPI* FGetFarHWND2)();
-FGetFarHWND2 GetFarHWND2=NULL;
+//typedef HWND (WINAPI* FGetFarHWND2)();
+//FGetFarHWND2 GetFarHWND2=NULL;
 
 BOOL GetConEmuShift(LPRECT lprcShift)
 {
@@ -479,6 +488,7 @@ void InitConEmu()
 {
     HMODULE hUser32=NULL;
     char szClass[64];
+    int nChk = 0;
     
     gbInitialized=TRUE;
     
@@ -536,18 +546,19 @@ void InitConEmu()
     ghConsole = GetConsoleWindow();
     
     
-    ghConEmuDll = GetModuleHandleA("ConEmu.dll");
-    if (!ghConEmuDll) return;
-    GetFarHWND2 = (FGetFarHWND2)GetProcAddress(ghConEmuDll,"GetFarHWND2");
-    if (!GetFarHWND2) {
-        // видимо старый ConEmu? не будем обрабатывать
-        //if (!gbTerminalMode)
-	    //    fMessageBoxA(ghConChild, "ConEmu old version detected!\r\nPlease upgrade!", "PictureView wrapper", MB_ICONSTOP);
-        return;
-    }
+    //ghConEmuDll = GetModuleHandleA("ConEmu.dll");
+    //if (!ghConEmuDll) return;
+    //GetFarHWND2 = (FGetFarHWND2)GetProcAddress(ghConEmuDll,"GetFarHWND2");
+    //if (!GetFarHWND2) {
+    //    // видимо старый ConEmu? не будем обрабатывать
+    //    //if (!gbTerminalMode)
+	//    //    fMessageBoxA(ghConChild, "ConEmu old version detected!\r\nPlease upgrade!", "PictureView wrapper", MB_ICONSTOP);
+    //    return;
+    //}
 
-    ghConChild = GetFarHWND2(TRUE);
-    if (!ghConChild)
+    //ghConChild = GetFarHWND2(TRUE);
+    nChk = ConEmuCheck ( &ghConChild );
+    if (nChk!=0 || !ghConChild)
 	    return;
     
     ghConEmu = fGetAncestor(ghConChild, GA_PARENT);

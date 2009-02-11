@@ -16,6 +16,10 @@
 #include "..\common\pluginW757.hpp"
 #include "PluginHeader.h"
 
+extern "C" {
+#include "../common/ConEmuCheck.h"
+}
+
 #ifndef FORWARD_WM_COPYDATA
 #define FORWARD_WM_COPYDATA(hwnd, hwndFrom, pcds, fn) \
     (BOOL)(UINT)(DWORD)(fn)((hwnd), WM_COPYDATA, (WPARAM)(hwndFrom), (LPARAM)(pcds))
@@ -31,7 +35,7 @@ int WINAPI _export GetMinFarVersionW(void)
 
 HWND ConEmuHwnd=NULL;
 BOOL TerminalMode = FALSE;
-BOOL bWasSetParent=FALSE;
+//BOOL bWasSetParent=FALSE;
 HWND FarHwnd=NULL;
 HANDLE hPipe=NULL, hPipeEvent=NULL;
 HANDLE hThread=NULL;
@@ -199,9 +203,9 @@ DWORD WINAPI ThreadProcW(LPVOID lpParameter)
 					}
 					else 
 					{
-						if (bWasSetParent) {
-							SetParent(FarHwnd, NULL);
-						}
+						//if (bWasSetParent) { -- все равно уже не поможет, если она была дочерней - сдохла
+						//	SetParent(FarHwnd, NULL);
+						//}
 					    
 						ShowWindowAsync(FarHwnd, SW_SHOWNORMAL);
 						EnableWindow(FarHwnd, true);
@@ -249,22 +253,6 @@ DWORD WINAPI ThreadProcW(LPVOID lpParameter)
 	}
 }
 
-HWND AtoH(WCHAR *Str, int Len)
-{
-  DWORD Ret=0;
-  for (; Len && *Str; Len--, Str++)
-  {
-    if (*Str>=L'0' && *Str<=L'9')
-      (Ret*=16)+=*Str-L'0';
-    else if (*Str>=L'a' && *Str<=L'f')
-      (Ret*=16)+=(*Str-L'a'+10);
-    else if (*Str>=L'A' && *Str<=L'F')
-      (Ret*=16)+=(*Str-L'A'+10);
-  }
-  return (HWND)Ret;
-}
-
-
 void WINAPI _export SetStartupInfoW(void *aInfo)
 {
 	LoadFarVersion();
@@ -279,72 +267,75 @@ void InitHWND(HWND ahFarHwnd)
 {
 	ConEmuHwnd = NULL;
 	FarHwnd = ahFarHwnd;
-	ConEmuHwnd = GetAncestor(FarHwnd, GA_PARENT);
-	if (ConEmuHwnd != NULL)
-	{
-		WCHAR className[100];
-		GetClassNameW(ConEmuHwnd, className, 100);
-		if (lstrcmpi(className, L"VirtualConsoleClass") != 0 &&
-			lstrcmpi(className, L"VirtualConsoleClassMain") != 0)
-		{
-			ConEmuHwnd = NULL;
-		} else {
-			bWasSetParent = TRUE;
-		}
-	}
+	
+	int nChk = 0;
+	ConEmuHwnd = GetConEmuHWND ( &nChk );
+	//ConEmuHwnd = GetAncestor(FarHwnd, GA_PARENT);
+	//if (ConEmuHwnd != NULL)
+	//{
+	//	WCHAR className[100];
+	//	GetClassNameW(ConEmuHwnd, className, 100);
+	//	if (lstrcmpi(className, L"VirtualConsoleClass") != 0 &&
+	//		lstrcmpi(className, L"VirtualConsoleClassMain") != 0)
+	//	{
+	//		ConEmuHwnd = NULL;
+	//	} else {
+	//		bWasSetParent = TRUE;
+	//	}
+	//}
 
 	WCHAR *pipename = gszDir1;
 
-	if (!ConEmuHwnd) {
-		if (GetEnvironmentVariable(L"ConEmuHWND", pipename, MAX_PATH)) {
-			if (pipename[0]==L'0' && pipename[1]==L'x') {
-				ConEmuHwnd = AtoH(pipename+2, 8);
-				if (ConEmuHwnd) {
-					WCHAR className[100];
-					GetClassName(ConEmuHwnd, (LPWSTR)className, 100);
-					if (lstrcmpiW(className, L"VirtualConsoleClass") != 0 &&
-						lstrcmpiW(className, L"VirtualConsoleClassMain") != 0)
-					{
-						ConEmuHwnd = NULL;
-					} else {
-						// Нужно проверить, что консоль принадлежит процессу ConEmu
-						DWORD dwEmuPID = 0;
-						GetWindowThreadProcessId(ConEmuHwnd, &dwEmuPID);
-						if (dwEmuPID == 0) {
-							// Ошибка, не удалось получить код процесса ConEmu
-						} else {
-							DWORD *ProcList = (DWORD*)calloc(1000,sizeof(DWORD));
-							DWORD dwCount = 0;
-#if !defined(_MSC_VER)
-							typedef DWORD (APIENTRY *FGetConsoleProcessList)(LPDWORD,DWORD);
-							FGetConsoleProcessList GetConsoleProcessList = 
-								(FGetConsoleProcessList)GetProcAddress(
-									GetModuleHandle(L"kernel32.dll"),
-									"GetConsoleProcessList");
-	                        if (!GetConsoleProcessList)
-		                        dwCount = 1001;
-		                    else
-#endif
-                                dwCount = GetConsoleProcessList(ProcList,1000);
-                                
-							if(dwCount>1000) {
-								// Ошибка, в консоли слишком много процессов
-							} else {
-								for (DWORD dw=0; dw<dwCount; dw++) {
-									if (dwEmuPID == ProcList[dw]) {
-										dwEmuPID = 0; break;
-									}
-								}
-								if (dwEmuPID)
-									ConEmuHwnd = NULL; // Консоль не принадлежит ConEmu
-							}
-							free(ProcList);
-						}
-					}
-				}
-			}
-		}
-	}
+	//if (!ConEmuHwnd) {
+	//	if (GetEnvironmentVariable(L"ConEmuHWND", pipename, MAX_PATH)) {
+	//		if (pipename[0]==L'0' && pipename[1]==L'x') {
+	//			ConEmuHwnd = AtoH(pipename+2, 8);
+	//			if (ConEmuHwnd) {
+	//				WCHAR className[100];
+	//				GetClassName(ConEmuHwnd, (LPWSTR)className, 100);
+	//				if (lstrcmpiW(className, L"VirtualConsoleClass") != 0 &&
+	//					lstrcmpiW(className, L"VirtualConsoleClassMain") != 0)
+	//				{
+	//					ConEmuHwnd = NULL;
+	//				} else {
+	//					// Нужно проверить, что консоль принадлежит процессу ConEmu
+	//					DWORD dwEmuPID = 0;
+	//					GetWindowThreadProcessId(ConEmuHwnd, &dwEmuPID);
+	//					if (dwEmuPID == 0) {
+	//						// Ошибка, не удалось получить код процесса ConEmu
+	//					} else {
+	//						DWORD *ProcList = (DWORD*)calloc(1000,sizeof(DWORD));
+	//						DWORD dwCount = 0;
+//#if !defined(_MSC_VER)
+	//						typedef DWORD (APIENTRY *FGetConsoleProcessList)(LPDWORD,DWORD);
+	//						FGetConsoleProcessList GetConsoleProcessList = 
+	//							(FGetConsoleProcessList)GetProcAddress(
+	//								GetModuleHandle(L"kernel32.dll"),
+	//								"GetConsoleProcessList");
+	//                        if (!GetConsoleProcessList)
+	//	                        dwCount = 1001;
+	//	                    else
+//#endif
+    //                            dwCount = GetConsoleProcessList(ProcList,1000);
+    //                            
+	//						if(dwCount>1000) {
+	//							// Ошибка, в консоли слишком много процессов
+	//						} else {
+	//							for (DWORD dw=0; dw<dwCount; dw++) {
+	//								if (dwEmuPID == ProcList[dw]) {
+	//									dwEmuPID = 0; break;
+	//								}
+	//							}
+	//							if (dwEmuPID)
+	//								ConEmuHwnd = NULL; // Консоль не принадлежит ConEmu
+	//						}
+	//						free(ProcList);
+	//					}
+	//				}
+	//			}
+	//		}
+	//	}
+	//}
 	
 	// Если мы не под эмулятором - больше ничего делать не нужно
 	if (ConEmuHwnd) {

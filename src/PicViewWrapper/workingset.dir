@@ -1,13 +1,13 @@
- Том в устройстве C не имеет метки.
- Серийный номер тома: F47A-5AFE
+ Volume in drive E is WORK
+ Volume Serial Number is E48A-BF13
 
- Содержимое папки C:\Utils\Far\Plugins\PictureView
+ Directory of E:\Far\Unicode\Plugins\PictureView
 
-11.02.2009  00:45    <DIR>          .
-11.02.2009  00:45    <DIR>          ..
-10.02.2009  23:35             6 656 0PictureView.dll
+11.02.2009  17:06    <DIR>          .
+11.02.2009  17:06    <DIR>          ..
+10.02.2009  18:03             6 656 0PictureView.dll
 09.02.2009  17:39            62 756 0PictureView.dl_
-10.02.2009  23:35             9 216 EmuPic.dll
+10.02.2009  18:33             9 216 EmuPic.dll
 14.03.2007  20:35             2 289 History.txt
 26.11.2008  16:51         2 243 040 IDE_ACDStd.apl
 09.11.2006  18:03           486 048 IDE_JP2.apl
@@ -18,7 +18,5 @@
 14.03.2007  20:55             8 102 PictureView_ru.hlf
 07.01.2006  14:01             1 055 PictureView_ru.lng
 14.03.2007  20:55             9 093 Readme.txt
-11.02.2009  00:45                 0 workingset.dir
-10.02.2009  17:09               531 Wrapper-WhatsNew.txt
-              15 файлов      3 840 975 байт
-               2 папок   1 558 872 064 байт свободно
+              13 File(s)      3 840 444 bytes
+               2 Dir(s)  30 248 472 576 bytes free

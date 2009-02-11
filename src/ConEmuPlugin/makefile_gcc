@@ -2,7 +2,8 @@ NAME = ConEmu
 SRCS = ConEmuPlugin.cpp \
        ConEmuPlugin684.cpp \
        ConEmuPlugin757.cpp \
-       ConEmuPluginA.cpp
+       ConEmuPluginA.cpp \
+       ../common/ConEmuCheck.c
 
 USERLIBS = -lversion
 
@@ -91,29 +92,34 @@ CCFLAGS = -mno-cygwin -I $(COMMON) -I $(COMINC) -Wall -Os -funsigned-char -fomit
 LNKFLAGS = -mno-cygwin -mdll -s $(NOSTART) $(NODEFLIBS) -lgcc $(USERLIBSFIRST) $(COMMONLIB) -luser32 -lkernel32 -ladvapi32 -lshell32 $(USERLIBS)
 RCFLAGS = -I $(COMINC) $(RCWIDE) $(USERRC)
 
-OBJS = $(patsubst %.cpp,$(OBJDIR)/%.o,$(filter %.cpp,$(SRCS)))
+OBJS = $(patsubst %.cpp,$(OBJDIR)/%.o,$(filter %.cpp,$(SRCS))) $(patsubst %.c,$(OBJDIR)/%.o,$(filter %.c,$(SRCS)))
 # $(RES)
-ifndef DISABLEAUTODEPS
-DEPS = $(patsubst %.cpp,$(OBJDIR)/%.d,$(filter %.cpp,$(SRCS)))
-endif
+#ifndef DISABLEAUTODEPS
+#DEPS = $(patsubst %.cpp,$(OBJDIR)/%.d,$(filter %.cpp,$(SRCS)))
+#endif
 MAP = $(patsubst %.$(EXT),%.map,$(DLLFULLNAME))
 
 
 
 all: $(DLLFULLNAME)
 
-ifndef DISABLEAUTODEPS
-$(OBJDIR)/%.d: %.cpp
-	@echo making depends for $<
-	@$(MKDIR) -p $(@D)
-	@$(SHELL) -ec '$(CXX) -c -MM $(CXXFLAGS) $< \
-                | sed '\''s/\($*\)\.o[ :]*/$(REOBJDIR)\1.o $(REOBJDIR)\1.d: /g'\'' > $@; [ -s $@ ] || $(RM) $@'
-endif
+#ifndef DISABLEAUTODEPS
+#$(OBJDIR)/%.d: %.cpp
+#	@echo making depends for $<
+#	@$(MKDIR) -p $(@D)
+#	@$(SHELL) -ec '$(CXX) -c -MM $(CXXFLAGS) $< \
+#                | sed '\''s/\($*\)\.o[ :]*/$(REOBJDIR)\1.o $(REOBJDIR)\1.d: /g'\'' > $@; [ -s $@ ] || $(RM) $@'
+#endif
 
 $(OBJDIR)/%.o: %.cpp
 	@echo compiling $<
 	@$(MKDIR) -p $(@D)
 	@$(CXX) $(CXXFLAGS) -c -o $@ $<
+
+$(OBJDIR)/%.o: %.c
+	@echo compiling $<
+	@$(MKDIR) -p $(@D)
+	@$(CC) $(CCFLAGS) -c -o $@ $<
 
 #$(RES): $(RC_NAME) $(COMINC)/farversion.hpp $(COMINC)/plugin.hpp
 #	@echo compiling $<

@@ -90,12 +90,15 @@ void CConEmuMain::ShowSysmenu(HWND Wnd, HWND Owner, int x, int y)
 
 RECT CConEmuMain::ConsoleOffsetRect()
 {
-    RECT rect;
+    RECT rect; memset(&rect, 0, sizeof(rect));
 
-	rect.top = TabBar.IsActive()?TabBar.Height():0;
+	if (TabBar.IsActive())
+		rect = TabBar.GetMargins();
+
+	/*rect.top = TabBar.IsActive()?TabBar.Height():0;
     rect.left = 0;
     rect.bottom = 0;
-    rect.right = 0;
+    rect.right = 0;*/
 
 	return rect;
 }
@@ -107,8 +110,14 @@ RECT CConEmuMain::DCClientRect(RECT* pClient/*=NULL*/)
 		rect = *pClient;
 	else
 		GetClientRect(ghWnd, &rect);
-	if (TabBar.IsActive())
-		rect.top += TabBar.Height();
+	if (TabBar.IsActive()) {
+		RECT mr = TabBar.GetMargins();
+		//rect.top += TabBar.Height();
+		rect.top += mr.top;
+		rect.left += mr.left;
+		rect.right -= mr.right;
+		rect.bottom -= mr.bottom;
+	}
 
 	if (pClient)
 		*pClient = rect;
@@ -130,7 +139,10 @@ void CConEmuMain::SyncWindowToConsole()
         DEBUGLOGFILE(szDbg);
     #endif
     
-    MOVEWINDOW(ghWnd, wndR.left, wndR.top, pVCon->Width + p.x + consoleRect.left, pVCon->Height + p.y + consoleRect.top, 1);
+    MOVEWINDOW(ghWnd, wndR.left, wndR.top, 
+		pVCon->Width + p.x + consoleRect.left + consoleRect.right, 
+		pVCon->Height + p.y + consoleRect.top + consoleRect.bottom, 
+		1);
 }
 
 // returns console size in columns and lines calculated from current window size
@@ -163,8 +175,10 @@ COORD CConEmuMain::ConsoleSizeFromWindow(RECT* arect /*= NULL*/, bool frameInclu
 			consoleRect = ConsoleOffsetRect();
     }
     
-    size.X = (rect.right - rect.left - (frameIncluded ? cwShift.x : 0) - consoleRect.left) / gSet.LogFont.lfWidth;
-    size.Y = (rect.bottom - rect.top - (frameIncluded ? cwShift.y : 0) - consoleRect.top) / gSet.LogFont.lfHeight;
+    size.X = (rect.right - rect.left - (frameIncluded ? cwShift.x : 0) - consoleRect.left - consoleRect.right)
+		/ gSet.LogFont.lfWidth;
+    size.Y = (rect.bottom - rect.top - (frameIncluded ? cwShift.y : 0) - consoleRect.top - consoleRect.bottom)
+		/ gSet.LogFont.lfHeight;
     #ifdef MSGLOGGER
         char szDbg[100]; wsprintfA(szDbg, "   ConsoleSizeFromWindow={%i,%i}\n", size.X, size.Y);
         DEBUGLOGFILE(szDbg);
@@ -183,8 +197,8 @@ RECT CConEmuMain::WindowSizeFromConsole(COORD consoleSize, bool rectInWindow /*=
 		memset(&offsetRect, 0, sizeof(RECT));
 	else
 		offsetRect = ConsoleOffsetRect();
-    rect.bottom = consoleSize.Y * gSet.LogFont.lfHeight + (rectInWindow ? cwShift.y : 0) + offsetRect.top;
-    rect.right = consoleSize.X * gSet.LogFont.lfWidth + (rectInWindow ? cwShift.x : 0) + offsetRect.left;
+    rect.bottom = consoleSize.Y * gSet.LogFont.lfHeight + (rectInWindow ? cwShift.y : 0) + offsetRect.top + offsetRect.bottom;
+    rect.right = consoleSize.X * gSet.LogFont.lfWidth + (rectInWindow ? cwShift.x : 0) + offsetRect.left + offsetRect.right;
     #ifdef MSGLOGGER
         char szDbg[100]; wsprintfA(szDbg, "   WindowSizeFromConsole={%i,%i}\n", rect.right,rect.bottom);
         DEBUGLOGFILE(szDbg);
@@ -506,6 +520,7 @@ void CConEmuMain::PaintGaps(HDC hDC/*=NULL*/)
 
 	RECT rect;
 
+	//TODO:!!!
 	// top
 	rect = rcClient;
 	rect.top += offsetRect.top;
@@ -1613,10 +1628,10 @@ LRESULT CConEmuMain::OnGetMinMaxInfo(LPMINMAXINFO pInfo)
     COORD srctWindow; srctWindow.X=28; srctWindow.Y=9;
 
 	pInfo->ptMinTrackSize.x = srctWindow.X * (gSet.LogFont.lfWidth ? gSet.LogFont.lfWidth : 4)
-		+ p.x + shiftRect.left;
+		+ p.x + shiftRect.left + shiftRect.right;
 
 	pInfo->ptMinTrackSize.y = srctWindow.Y * (gSet.LogFont.lfHeight ? gSet.LogFont.lfHeight : 6)
-		+ p.y + shiftRect.top;
+		+ p.y + shiftRect.top + shiftRect.bottom;
 
 	return result;
 }

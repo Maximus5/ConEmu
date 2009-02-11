@@ -55,7 +55,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /machine:I386
-# ADD LINK32 kernel32.lib user32.lib /nologo /dll /machine:I386 /out:"0PictureView.dll"
+# ADD LINK32 kernel32.lib user32.lib /nologo /dll /machine:I386 /out:"../0PictureView.dll"
 
 !ELSEIF  "$(CFG)" == "PicViewWrapper - Win32 Debug"
 
@@ -82,7 +82,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /debug /machine:I386 /out:"F:\VCProject\FarPlugin\FAR180\trunk\unicode_far\Debug.32.vc\plugins\PictureView\0PictureView.dll" /pdbtype:sept
+# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /debug /machine:I386 /out:"E:\Source\FARUnicode\trunk\unicode_far\Debug.32.vc\plugins\PictureView\0PictureView.dll" /pdbtype:sept
 
 !ELSEIF  "$(CFG)" == "PicViewWrapper - Win32 ReleaseL"
 
@@ -110,8 +110,8 @@ BSC32=bscmake.exe
 # ADD BASE BSC32 /nologo
 # ADD BSC32 /nologo
 LINK32=link.exe
-# ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /machine:I386 /out:"0PictureView.dll"
-# ADD LINK32 F:\VCProject\MLib\LIBCTINY.LIB kernel32.lib user32.lib /nologo /dll /machine:I386 /nodefaultlib /out:"0PictureView.dll"
+# ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /machine:I386 /out:"../0PictureView.dll"
+# ADD LINK32 F:\VCProject\MLib\LIBCTINY.LIB kernel32.lib user32.lib /nologo /dll /machine:I386 /nodefaultlib /out:"../0PictureView.dll"
 
 !ENDIF 
 
@@ -123,6 +123,10 @@ LINK32=link.exe
 # Begin Group "Source Files"
 
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
+# Begin Source File
+
+SOURCE=..\..\common\ConEmuCheck.c
+# End Source File
 # Begin Source File
 
 SOURCE=.\export.def
@@ -141,11 +145,11 @@ SOURCE=.\resource.rc
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
 # Begin Source File
 
-SOURCE=.\PicViewWrapper.h
+SOURCE=..\..\common\ConEmuCheck.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\plugin.hpp
+SOURCE=.\PicViewWrapper.h
 # End Source File
 # End Group
 # Begin Group "Resource Files"

@@ -21,7 +21,7 @@
 struct PluginStartupInfo *InfoW757=NULL;
 struct FarStandardFunctions *FSFW757=NULL;
 extern HWND ConEmuHwnd;
-extern BOOL bWasSetParent;
+//extern BOOL bWasSetParent;
 extern HWND FarHwnd;
 extern HANDLE hPipe, hPipeEvent;
 extern HANDLE hThread;

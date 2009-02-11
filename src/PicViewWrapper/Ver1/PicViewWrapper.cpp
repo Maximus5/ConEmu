@@ -5,6 +5,10 @@
 #include <TCHAR.H>
 #include "PicViewWrapper.h"
 
+extern "C" {
+#include "../../common/ConEmuCheck.h"
+}
+
 /* FAR */
 PluginStartupInfo psi;
 FarStandardFunctions fsf;
@@ -29,10 +33,12 @@ TCHAR gsTermMsg[255];
 
 /* ConEmu */
 HWND ghConEmu = NULL;
-HMODULE ghConEmuDll=NULL;
-typedef HWND (WINAPI* FGetFarHWND2)(BOOL abConEmuOnly);
-FGetFarHWND2 GetFarHWND2=NULL;
-BOOL gbOldConEmu=TRUE;
+//HMODULE ghConEmuDll=NULL;
+//typedef HWND (WINAPI* FGetFarHWND2)(BOOL abConEmuOnly);
+//FGetFarHWND2 GetFarHWND2=NULL;
+BOOL gbOldConEmu=FALSE;
+BOOL gbConEmuChecked=FALSE, gbOldConEmuWarned=FALSE;
+BOOL IsOldConEmu();
 //typedef HWND (WINAPI* FIsTerminalMode)();
 //FIsTerminalMode IsTerminalMode=NULL;
 
@@ -48,43 +54,49 @@ BOOL APIENTRY DllMain( HANDLE hModule,
             // Init variables
             ghInstance = (HINSTANCE)hModule;
             gsTermMsg[0] = 0;
+            memset(&psi, 0, sizeof(psi));
+            memset(&fsf, 0, sizeof(fsf));
 
-            //#ifdef _DEBUG
-            //if (!IsDebuggerPresent())
-            //    MessageBox(0,_T("Process Attach"), _T("PictureView wrapper"), MB_SETFOREGROUND);
-            //#endif
-
-            
-            ghConEmuDll = GetModuleHandleA("ConEmu.dll");
-            if (ghConEmuDll) {
-                GetFarHWND2 = (FGetFarHWND2)GetProcAddress(ghConEmuDll,"GetFarHWND2");
-                if (GetFarHWND2) {
-                    ghConEmu = GetFarHWND2(TRUE);
-                    gbOldConEmu = FALSE;
-                }
-            }
+            // Инициализировать хэндл КонЕму и проверить "свежесть"
+            IsOldConEmu();
             
             // Check Terminal mode
             TCHAR szVarValue[MAX_PATH];
-            szVarValue[0] = 0;
+            szVarValue[0] = 0; gsTermMsg[0] = 0;
             if (GetEnvironmentVariable(_T("TERM"), szVarValue, 63)) {
                 lstrcpy(gsTermMsg, _T("PictureView wrapper\nPicture viewing is not available\nin terminal mode ("));
                 lstrcat(gsTermMsg, szVarValue);
                 lstrcat(gsTermMsg, _T(")"));
             }
 
-
+            
             // Init PictureView plugin
             if (!hPicViewDll) {
                 TCHAR szModulePath[MAX_PATH+1];
                 int nLen = 0;
                 if ((nLen=GetModuleFileName(ghInstance, szModulePath, MAX_PATH))>0) {
-                    if (szModulePath[nLen-1]!=_T('L') && szModulePath[nLen-1]!=_T('l'))
+                    if (szModulePath[nLen-1]!=_T('L') && szModulePath[nLen-1]!=_T('l')) {
+	                    if (!gsTermMsg[0]) {
+		                    TCHAR szError[400];
+		                    DWORD dwErr;
+		                    dwErr = GetLastError();
+		                    wsprintf(szError, "Invalid file name!\r\n%s\r\n*.dll expected", szModulePath);
+	                        MessageBox(ghConEmu, szError, _T("PictureView wrapper"), MB_ICONSTOP);
+	                    }
                         return FALSE;
+                    }
                     szModulePath[nLen-1] = '_';
                     hPicViewDll = LoadLibrary(szModulePath);
-                    if (!hPicViewDll)
+                    if (!hPicViewDll) {
+	                    if (!gsTermMsg[0]) {
+		                    TCHAR szError[400];
+		                    DWORD dwErr;
+		                    dwErr = GetLastError();
+		                    wsprintf(szError, "Can't load library!\r\n%s\r\nLastError=0x%08X", szModulePath, dwErr);
+	                        MessageBox(ghConEmu, szError, _T("PictureView wrapper"), MB_ICONSTOP);
+	                    }
                         return FALSE;
+                    }
                 }
             }
             if (hPicViewDll) {
@@ -126,7 +138,7 @@ int WINAPI Configure(
   int ItemNumber
 )
 {
-    if (!gbOldConEmu && hPicViewDll && fConfigure)
+    if (/*!gbOldConEmu &&*/ hPicViewDll && fConfigure)
         return fConfigure(ItemNumber);
     return FALSE;
 }
@@ -159,7 +171,7 @@ HANDLE WINAPI OpenFilePlugin(
 )
 {
     HANDLE hRc = INVALID_HANDLE_VALUE;
-    if (!gbOldConEmu && hPicViewDll && fOpenFilePlugin) {
+    if (/*!gbOldConEmu &&*/ hPicViewDll && fOpenFilePlugin) {
         if (gsTermMsg[0]) {
             TCHAR *pszExt = NULL;
             // PicView может использоваться и на Enter/CtrlPgDn, будем ругаться только на "известные" файлы, остальные просто игнорировать
@@ -180,7 +192,7 @@ HANDLE WINAPI OpenFilePlugin(
                 }
 
             }
-            if (pszExt) {
+            if (pszExt && psi.Message) {
                 psi.Message(psi.ModuleNumber, FMSG_MB_OK|FMSG_ALLINONE, NULL, 
                     (const TCHAR *const *)gsTermMsg, 0, 0);
             }
@@ -197,8 +209,8 @@ HANDLE WINAPI OpenPlugin(
 )
 {
     HANDLE hRc = INVALID_HANDLE_VALUE;
-    if (!gbOldConEmu && hPicViewDll && fOpenPlugin) {
-        if (gsTermMsg[0])
+    if (/*!gbOldConEmu &&*/ hPicViewDll && fOpenPlugin) {
+        if (gsTermMsg[0] && psi.Message)
             psi.Message(psi.ModuleNumber, FMSG_MB_OK|FMSG_ALLINONE, NULL, 
                 (const TCHAR *const *)gsTermMsg, 0, 0);
         else
@@ -212,7 +224,7 @@ int WINAPI ProcessEditorEvent(
   void *Param
 )
 {
-    if (!gbOldConEmu && hPicViewDll && fProcessEditorEvent)
+    if (/*!gbOldConEmu &&*/ hPicViewDll && fProcessEditorEvent)
         return fProcessEditorEvent(Event, Param);
     return FALSE;
 }
@@ -222,7 +234,7 @@ int WINAPI ProcessViewerEvent(
   void *Param
 )
 {
-    if (!gbOldConEmu && hPicViewDll && fProcessViewerEvent)
+    if (/*!gbOldConEmu &&*/ hPicViewDll && fProcessViewerEvent)
         return fProcessViewerEvent(Event, Param);
     return FALSE;
 }
@@ -234,10 +246,10 @@ void WINAPI SetStartupInfo(
     ::psi = *Info;
     ::fsf = *(Info->FSF);
     
-    if (gbOldConEmu) {
-        psi.Message(psi.ModuleNumber, FMSG_MB_OK|FMSG_ALLINONE, NULL, 
-            (const TCHAR *const *)"PictureView wrapper\nConEmu old version detected!\nPlease upgrade!", 0, 0);
-    }
+    //if (IsOldConEmu) {
+    //    psi.Message(psi.ModuleNumber, FMSG_MB_OK|FMSG_ALLINONE, NULL, 
+    //        (const TCHAR *const *)"PictureView wrapper\nConEmu old version detected!\nPlease upgrade!", 0, 0);
+    //}
 
     fWrapperAdvControl = psi.AdvControl;
     psi.AdvControl = WrapperAdvControl;
@@ -253,7 +265,7 @@ INT_PTR WINAPI WrapperAdvControl(int ModuleNumber,int Command,void *Param)
     if (!fWrapperAdvControl)
         return 0;
 
-    if (Command==ACTL_GETFARHWND && ghConEmu) {
+    if (Command==ACTL_GETFARHWND && !IsOldConEmu() && ghConEmu) {
         HWND hFarWnd = (HWND)fWrapperAdvControl(ModuleNumber, ACTL_GETFARHWND, NULL);
         //if (IsWindowVisible(hFarWnd))
         //    return (INT_PTR)hFarWnd;
@@ -268,17 +280,42 @@ INT_PTR WINAPI WrapperAdvControl(int ModuleNumber,int Command,void *Param)
     return fWrapperAdvControl(ModuleNumber, Command, Param);
 }
 
-HWND AtoH(TCHAR *Str, int Len)
+//HWND AtoH(TCHAR *Str, int Len)
+//{
+//    DWORD Ret=0;
+//    for (; Len && *Str; Len--, Str++)
+//    {
+//        if (*Str>=_T('0') && *Str<=_T('9'))
+//            (Ret*=16)+=*Str-_T('0');
+//        else if (*Str>=_T('a') && *Str<=_T('f'))
+//            (Ret*=16)+=(*Str-_T('a')+10);
+//        else if (*Str>=_T('A') && *Str<=_T('F'))
+//            (Ret*=16)+=(*Str-_T('A')+10);
+//    }
+//    return (HWND)Ret;
+//}
+
+BOOL IsOldConEmu()
 {
-    DWORD Ret=0;
-    for (; Len && *Str; Len--, Str++)
-    {
-        if (*Str>=_T('0') && *Str<=_T('9'))
-            (Ret*=16)+=*Str-_T('0');
-        else if (*Str>=_T('a') && *Str<=_T('f'))
-            (Ret*=16)+=(*Str-_T('a')+10);
-        else if (*Str>=_T('A') && *Str<=_T('F'))
-            (Ret*=16)+=(*Str-_T('A')+10);
+    if (!gbConEmuChecked) {
+	    int nRc = -1;
+	    
+	    gbConEmuChecked = TRUE;
+	    
+	    ghConEmu = NULL;
+	    nRc = ConEmuCheck(&ghConEmu);
+		// 0 -- All OK (ConEmu found, Version OK)
+		// 1 -- NO ConEmu (simple console mode)
+		// 2 -- ConEmu found, but old version
+	    if (ghConEmu && nRc==2)
+		    gbOldConEmu = TRUE;
     }
-    return (HWND)Ret;
+
+    if (gbOldConEmu && !gbOldConEmuWarned && psi.Message)
+    {
+	    gbOldConEmuWarned = TRUE;
+        psi.Message(psi.ModuleNumber, FMSG_MB_OK|FMSG_ALLINONE, NULL, 
+            (const TCHAR *const *)"PictureView wrapper\nConEmu old version detected!\nPlease upgrade!", 0, 0);
+    }
+    return gbOldConEmu;
 }

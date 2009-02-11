@@ -356,6 +356,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\common\ConEmuCheck.c"
+				>
+			</File>
+			<File
 				RelativePath=".\export.def"
 				>
 				<FileConfiguration
@@ -374,6 +378,10 @@
 			>
 			<File
 				RelativePath="..\common\common.hpp"
+				>
+			</File>
+			<File
+				RelativePath="..\common\ConEmuCheck.h"
 				>
 			</File>
 			<File

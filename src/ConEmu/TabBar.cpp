@@ -53,7 +53,7 @@ TabBarClass::TabBarClass()
 {
 	_active = false;
 	_hwndTab = NULL;
-	_tabHeight = NULL;
+	_tabHeight = NULL; memset(&m_Margins, 0, sizeof(m_Margins));
 	_titleShouldChange = false;
 	_prevTab = 0;
 }
@@ -63,10 +63,10 @@ bool TabBarClass::IsActive()
 	return _active;
 }
 
-int TabBarClass::Height()
+/*int TabBarClass::Height()
 {
 	return _tabHeight;
-}
+}*/
 
 BOOL TabBarClass::IsAllowed()
 {
@@ -86,7 +86,11 @@ void TabBarClass::Activate()
 		RECT rcClient; 
 		GetClientRect(ghWnd, &rcClient); 
 		InitCommonControls(); 
-		_hwndTab = CreateWindow(WC_TABCONTROL, NULL, WS_CHILD | WS_CLIPSIBLINGS | /*WS_VISIBLE |*/ TCS_FOCUSNEVER, 0, 0, 
+		DWORD nPlacement = 0;
+#ifdef _DEBUG
+		nPlacement = TCS_SINGLELINE;
+#endif
+		_hwndTab = CreateWindow(WC_TABCONTROL, NULL, nPlacement | WS_CHILD | WS_CLIPSIBLINGS | TCS_FOCUSNEVER, 0, 0, 
 			rcClient.right, 0, ghWnd, NULL, g_hInstance, NULL);
 		if (_hwndTab == NULL)
 		{ 
@@ -108,7 +112,7 @@ void TabBarClass::Deactivate()
 	if (!_active /*|| !_tabHeight*/)
 		return;
 
-	_tabHeight = 0;
+	_tabHeight = 0; memset(&m_Margins, 0, sizeof(m_Margins));
 	UpdatePosition();
 	_active = false;
 }
@@ -182,12 +186,26 @@ void TabBarClass::Update(ConEmuTab* tabs, int tabsCount)
 	} else
 	if (_tabHeight == NULL)
 	{
-		RECT rcClient; 
+		RECT rcClient, rcWnd;
 		GetClientRect(ghWnd, &rcClient); 
+		rcWnd = rcClient;
 		TabCtrl_AdjustRect(_hwndTab, FALSE, &rcClient);
 		_tabHeight = rcClient.top;
+
+		m_Margins.top = rcClient.top;
+#ifdef _DEBUG
+		m_Margins.left = rcClient.left;
+		m_Margins.right = rcWnd.right-rcClient.right;
+		m_Margins.bottom = rcWnd.bottom-rcClient.bottom;
+#endif
+
 		UpdatePosition();
 	}
+}
+
+RECT TabBarClass::GetMargins()
+{
+	return m_Margins;
 }
 
 void TabBarClass::UpdatePosition()
@@ -217,7 +235,11 @@ void TabBarClass::UpdatePosition()
 	gConEmu.ReSize();
 	if (_tabHeight>0) {
 		ShowWindow(_hwndTab, SW_SHOW);
+#ifdef _DEBUG
+		MoveWindow(_hwndTab, 0, 0, client.right, client.bottom, 1);
+#else
 		MoveWindow(_hwndTab, 0, 0, client.right, _tabHeight, 1);
+#endif
 	} else {
 		ShowWindow(_hwndTab, SW_HIDE);
 	}
@@ -232,7 +254,11 @@ void TabBarClass::UpdateWidth()
 	RECT client, self;
 	GetClientRect(ghWnd, &client);
 	GetWindowRect(_hwndTab, &self);
+#ifdef _DEBUG
+	MoveWindow(_hwndTab, 0, 0, client.right, client.bottom, 1);
+#else
 	MoveWindow(_hwndTab, 0, 0, client.right, _tabHeight, 1);
+#endif
 }
 
 bool TabBarClass::OnNotify(LPNMHDR nmhdr)

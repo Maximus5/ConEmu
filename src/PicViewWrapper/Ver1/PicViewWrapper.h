@@ -39,5 +39,5 @@ void WINAPI SetStartupInfo(const struct PluginStartupInfo *Info);
 typedef INT_PTR (WINAPI* FWrapperAdvControl)(int ModuleNumber,int Command,void *Param);
 INT_PTR WINAPI WrapperAdvControl(int ModuleNumber,int Command,void *Param);
 
-// Service
-HWND AtoH(TCHAR *Str, int Len);
+//// Service
+//HWND AtoH(char *Str, int Len);
