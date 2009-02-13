@@ -40,6 +40,12 @@ CConEmuMain::~CConEmuMain()
 {
 }
 
+void CConEmuMain::Destroy()
+{
+	if (ghWnd)
+		DestroyWindow(ghWnd);
+}
+
 // returns difference between window size and client area size of inWnd in outShift->x, outShift->y
 void CConEmuMain::GetCWShift(HWND inWnd, POINT *outShift)
 {
@@ -372,8 +378,10 @@ bool CConEmuMain::isPictureView()
 {
     bool lbRc = false;
     
-    if (hPictureView && !IsWindow(hPictureView))
+	if (hPictureView && !IsWindow(hPictureView)) {
+		InvalidateAll();
 	    hPictureView = NULL;
+	}
 	
 	if (!hPictureView) {
 		hPictureView = FindWindowEx(ghWnd, NULL, L"FarPictureViewControlClass", NULL);
@@ -1539,7 +1547,8 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
         {	// После скрытия/закрытия PictureView нужно передернуть консоль - ее размер мог измениться
             isPiewUpdate = false;
             SyncConsoleToWindow();
-            INVALIDATE(); //InvalidateRect(HDCWND, NULL, FALSE);
+            //INVALIDATE(); //InvalidateRect(HDCWND, NULL, FALSE);
+			InvalidateAll();
         }
 
         // Проверить, может в консоли размер съехал? (хрен его знает из-за чего...)
@@ -1676,6 +1685,9 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd)
 {
 	ghWnd = hWnd; // ставим сразу, чтобы функции могли пользоваться
 	Icon.LoadIcon(hWnd, gSet.nIconID/*IDI_ICON1*/);
+	
+	// Чтобы можно было найти хэндл окна по хэндлу консоли
+	SetWindowLong(hWnd, GWL_USERDATA, (LONG)ghConWnd);
 
 	gConEmu.m_Back.Create();
 
@@ -1696,4 +1708,12 @@ void CConEmuMain::SetConParent()
     //TODO: ConMan? попробуем на родительское окно SetParent делать
     if (setParent)
         SetParent(ghConWnd, setParent2 ? ghWnd : ghWndDC);
+}
+
+void CConEmuMain::InvalidateAll()
+{
+	InvalidateRect(ghWnd, NULL, TRUE);
+	InvalidateRect(ghWndDC, NULL, TRUE);
+	InvalidateRect(m_Back.mh_Wnd, NULL, TRUE);
+	TabBar.Invalidate();
 }

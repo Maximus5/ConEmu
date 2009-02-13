@@ -3,7 +3,7 @@
 
 
 #ifdef MSGLOGGER
-bool bBlockDebugLog=false, bSendToDebugger=false, bSendToFile=true;
+bool bBlockDebugLog=true, bSendToDebugger=false, bSendToFile=false;
 WCHAR *LogFilePath=NULL;
 #endif
 #ifndef _DEBUG
@@ -221,6 +221,8 @@ void DebugLogBufSize(HANDLE h, COORD sz)
 }
 void DebugLogFile(LPCSTR asMessage)
 {
+	if (!bSendToFile)
+		return;
     HANDLE hLogFile = INVALID_HANDLE_VALUE;
 
     if (LogFilePath==NULL) {
@@ -438,6 +440,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     //Maximus5 - размер командной строки может быть и поболе...
     //_tcsncpy(cmdLine, GetCommandLine(), 0x1000); cmdLine[0x1000-1]=0;
     TCHAR *cmdLine = _tcsdup(GetCommandLine());
+	cmdNew = _tcschr(cmdLine, _T('/'));
+	if (!cmdNew) cmdNew=(TCHAR*)"";
+    SetEnvironmentVariableW(L"ConEmuArgs", cmdNew);
+	cmdNew = NULL;
 
     {
         cmdNew = _tcsstr(cmdLine, _T("/cmd"));
@@ -541,7 +547,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	                    wsprintf(psz, _T("Too long /Config name (%i chars).\r\n"), nLen);
 	                    _tcscat(psz, curCommand);
                         MBoxA(psz);
-                        free(psz);
+                        free(psz); free(cmdLine);
                         return -1;
                     }
                     ConfigVal = curCommand;
@@ -550,6 +556,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             else if ( !klstricmp(curCommand, _T("/?")))
             {
                 MessageBox(NULL, pHelp, L"About ConEmu...", MB_ICONQUESTION);
+                free(cmdLine);
                 return -1; // NightRoman
             }
         }
@@ -588,6 +595,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		if (nCmdShow == SW_SHOWMAXIMIZED)
 			gConEmu.WindowMode = rMaximized;
 	}
+	// Если запускается conman - принудительно включить флажок "Обновлять handle"
+	//cmdNew = gSet.Cmd;
+	//while (*cmdNew==L' ' || *cmdNew==L'"')
+	if (StrStrI(gSet.Cmd, L"conman.exe"))
+		gSet.isConMan = TRUE;
 
 //------------------------------------------------------------------------
 ///| Create VirtualConsole |//////////////////////////////////////////////
@@ -649,8 +661,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     //!!!ICON
     gConEmu.LoadIcons();
     
-    if (!CreateMainWindow())
+    if (!CreateMainWindow()) {
+	    free(cmdLine);
 	    return -1;
+	}
 	    
 
     // set parent window of the console window:
@@ -697,7 +711,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
       NULL);                    // default security attribute 
     if (gConEmu.hPipe == INVALID_HANDLE_VALUE) 
     {
-      MessageBox(ghWnd, _T("CreatePipe failed"), NULL, 0); 
+      MessageBox(ghWnd, _T("CreatePipe failed"), NULL, 0);
+      gConEmu.Destroy(); free(cmdLine);
       return 100;
     }
     wsprintf(pipename, _T("ConEmuPEvent%u"), /*ghWnd*/ ghConWnd );
@@ -706,6 +721,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     {
       CloseHandle(gConEmu.hPipe);
       MessageBox(ghWnd, _T("CreatePipe failed"), NULL, 0); 
+      gConEmu.Destroy(); free(cmdLine);
       return 100;
     }
     // Установить переменную среды с дескриптором окна
@@ -760,8 +776,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	        //MBoxA(psz);
 	        int nBrc = MessageBox(NULL, psz, _T("ConEmu"), nButtons);
 	        free(psz); free(pszErr);
-	        if (nBrc!=IDYES)
+	        if (nBrc!=IDYES) {
+	            gConEmu.Destroy();
+	            free(cmdLine);
 	            return -1;
+	        }
 	        *gSet.Cmd = 0; // Выполнить стандартную команду...
         }
     }
@@ -797,6 +816,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		        _tcscat(psz, gSet.Cmd);
 		        MBoxA(psz);
 		        free(psz); free(pszErr);
+		        gConEmu.Destroy(); free(cmdLine);
 	            return -1;
             }
         }
@@ -864,5 +884,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     if (FontFilePrm) RemoveFontResourceEx(FontFile, FR_PRIVATE, NULL); //ADD fontname; by Mors
 
     FreeConsole();
+    free(cmdLine);
     return 0;
 }

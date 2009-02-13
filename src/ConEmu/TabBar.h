@@ -15,6 +15,7 @@ class TabBarClass
 	void FarSendChangeTab(int tabIndex);
 public:
 	TabBarClass();
+	void Invalidate();
 	bool IsActive();
 	BOOL IsAllowed();
 	//int Height();

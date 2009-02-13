@@ -22,4 +22,4 @@ int ConEmuCheck(HWND* ahConEmuWnd);
 //         2 -- console is child of Main ConEmu window (why?)
 //         3 -- same as 2, but ConEmu DC window - absent (old conemu version?)
 //         4 -- same as 0, but ConEmu DC window - absent (old conemu version?)
-HWND GetConEmuHWND(int* pnConsoleIsChild/*=NULL*/);
+HWND GetConEmuHWND(BOOL abRoot, int* pnConsoleIsChild/*=NULL*/);

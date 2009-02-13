@@ -326,3 +326,9 @@ void TabBarClass::OnMouse(int message, int x, int y)
 		}
 	}
 }
+
+void TabBarClass::Invalidate()
+{
+	if (TabBar.IsActive())
+		InvalidateRect(_hwndTab, NULL, TRUE);
+}

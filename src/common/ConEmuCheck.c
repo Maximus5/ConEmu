@@ -24,7 +24,7 @@ int ConEmuCheck(HWND* ahConEmuWnd)
     int nChk = -1;
     HWND ConEmuWnd = NULL;
     
-    ConEmuWnd = GetConEmuHWND(&nChk);
+    ConEmuWnd = GetConEmuHWND(FALSE, &nChk);
 
     // Если хотели узнать хэндл - возвращаем его
     if (ahConEmuWnd) *ahConEmuWnd = ConEmuWnd;
@@ -100,17 +100,18 @@ HWND CheckConEmuChild(HWND ConEmuHwnd, int* pnConsoleIsChild/*=NULL*/)
 //         2 -- console is child of Main ConEmu window (why?)
 //         3 -- same as 2, but ConEmu DC window - absent (old conemu version?)
 //         4 -- same as 0, but ConEmu DC window - absent (old conemu version?)
-HWND GetConEmuHWND(int* pnConsoleIsChild/*=NULL*/)
+HWND GetConEmuHWND(BOOL abRoot, int* pnConsoleIsChild/*=NULL*/)
 {
-	HWND FarHwnd=NULL, ConEmuHwnd=NULL;
+	HWND FarHwnd=NULL, ConEmuHwnd=NULL, ConEmuRoot=NULL;
 	FGetConsoleWindow fGetConsoleWindow = NULL;
+	int nChk = -1;
 	
 	fGetConsoleWindow = (FGetConsoleWindow)GetProcAddress( GetModuleHandleA("kernel32.dll"), "GetConsoleWindow" );
 
 	if (fGetConsoleWindow)
 		FarHwnd = fGetConsoleWindow();
 	// начальный сброс
-	if (pnConsoleIsChild) *pnConsoleIsChild = -1;
+	if (pnConsoleIsChild) *pnConsoleIsChild = nChk;
 
 	// Если удалось получить хэндл окна консоли - проверяем его родителя
 	if (FarHwnd)
@@ -118,7 +119,7 @@ HWND GetConEmuHWND(int* pnConsoleIsChild/*=NULL*/)
 	if (ConEmuHwnd != NULL)
 	{
 		// Теоретически, если был сделан SetParent - то в дочернее окно с отрисовкой, но фиг его знает. проверим
-		ConEmuHwnd = CheckConEmuChild(ConEmuHwnd, pnConsoleIsChild);
+		ConEmuHwnd = CheckConEmuChild(ConEmuHwnd, &nChk);
 	}
 
 
@@ -169,15 +170,20 @@ HWND GetConEmuHWND(int* pnConsoleIsChild/*=NULL*/)
 					}
 				}
 				// Проверить "правильность" хэндла
-				ConEmuHwnd = CheckConEmuChild(ConEmuHwnd, pnConsoleIsChild);
-				if (pnConsoleIsChild) {
-					// Если мы дошли сюда, значит консоль не дочернее окно, и возвращать нужно 4
-					if (*pnConsoleIsChild==3) *pnConsoleIsChild=4;
-				}
+				ConEmuHwnd = CheckConEmuChild(ConEmuHwnd, &nChk);
+				// Если мы дошли сюда, значит консоль не дочернее окно, и возвращать нужно 4
+				if (nChk==3) nChk=4;
 			}
 		}
 	}
+
+    if (abRoot && ConEmuHwnd && (nChk>=3))
+	    ConEmuRoot = GetAncestor(ConEmuHwnd, GA_PARENT);
 	
+	if (pnConsoleIsChild) *pnConsoleIsChild = nChk;
+	
+	if (abRoot)
+		return ConEmuRoot;
 	return ConEmuHwnd;
 }
 

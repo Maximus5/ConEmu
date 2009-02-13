@@ -269,7 +269,7 @@ void InitHWND(HWND ahFarHwnd)
 	FarHwnd = ahFarHwnd;
 	
 	int nChk = 0;
-	ConEmuHwnd = GetConEmuHWND ( &nChk );
+	ConEmuHwnd = GetConEmuHWND ( FALSE, &nChk );
 	//ConEmuHwnd = GetAncestor(FarHwnd, GA_PARENT);
 	//if (ConEmuHwnd != NULL)
 	//{

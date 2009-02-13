@@ -407,7 +407,7 @@ BOOL MoveWindow(HWND hWnd,int X,int Y,int nWidth,int nHeight,BOOL bRepaint)
 			Y += grcShift.top;
 		}
     }
-    result = fMoveWindow(hWnd,X,Y,nWidth,nHeight,bRepaint);
+    result = fMoveWindow(hWnd,X,Y,nWidth,nHeight,TRUE/*bRepaint*/);
     return result;
 }
   

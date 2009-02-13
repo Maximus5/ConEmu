@@ -64,6 +64,8 @@ public:
 public:
 	CConEmuMain();
 	~CConEmuMain();
+	void Destroy();
+	void InvalidateAll();
 
 public:
 	void SetConsoleWindowSize(const COORD& size, bool updateInfo);
