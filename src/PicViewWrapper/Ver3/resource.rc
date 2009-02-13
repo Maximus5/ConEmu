@@ -27,8 +27,8 @@ LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,9,2,11
- PRODUCTVERSION 1,9,2,11
+ FILEVERSION 1,9,2,13
+ PRODUCTVERSION 1,9,2,13
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -46,14 +46,14 @@ BEGIN
             VALUE "Comments", "mailto: MaxMoysyuk@mtu-net.ru\0"
             VALUE "CompanyName", "\0"
             VALUE "FileDescription", "Part of PictureView wrapper for ConEmu.Maximus5\0"
-            VALUE "FileVersion", "1, 9, 2, 11\0"
+            VALUE "FileVersion", "1, 9, 2, 13\0"
             VALUE "InternalName", "EmuPic\0"
             VALUE "LegalCopyright", "Copyright © 2009, Maxim Moysyuk\0"
             VALUE "LegalTrademarks", "\0"
             VALUE "OriginalFilename", "EmuPic.dll\0"
             VALUE "PrivateBuild", "\0"
             VALUE "ProductName", "\0"
-            VALUE "ProductVersion", "1, 9, 2, 11\0"
+            VALUE "ProductVersion", "1, 9, 2, 13\0"
             VALUE "SpecialBuild", "\0"
         END
     END

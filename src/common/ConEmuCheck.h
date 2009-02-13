@@ -1,5 +1,10 @@
 #pragma once
 
+#define VirtualConsoleClass _T("VirtualConsoleClass")
+#define VirtualConsoleClassMain _T("VirtualConsoleClass")
+#define VirtualConsoleClassApp _T("VirtualConsoleClassApp")
+#define VirtualConsoleClassBack _T("VirtualConsoleClassBack")
+
 // Service function
 HWND AtoH(char *Str, int Len);
 

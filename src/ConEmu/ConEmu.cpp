@@ -23,7 +23,7 @@ CConEmuMain::CConEmuMain()
 	bPicViewSlideShow = false; 
 	dwLastSlideShowTick = 0;
 	gb_ConsoleSelectMode=false;
-	setParent = false;
+	setParent = false; setParent2 = false;
 	RBDownNewX=0; RBDownNewY=0;
 	cursor.x=0; cursor.y=0; Rcursor=cursor;
 	lastMMW=-1;
@@ -33,6 +33,7 @@ CConEmuMain::CConEmuMain()
 	cBlinkShift=0;
 	Title[0]=0; TitleCmp[0]=0;
 	//mb_InClose = FALSE;
+	memset(m_ProcList, 0, 1000*sizeof(DWORD)); m_ProcCount=0;
 }
 
 CConEmuMain::~CConEmuMain()
@@ -572,11 +573,25 @@ void CConEmuMain::CheckBufferSize()
 {
 	// Высота буфера могла измениться после смены списка процессов
 	BOOL  lbProcessChanged = FALSE;
-    DWORD ProcList[2], ProcCount=0;
-    ProcCount = GetConsoleProcessList(ProcList,2);
-	if (gnLastProcessCount && ProcCount!=gnLastProcessCount)
+    m_ProcCount = GetConsoleProcessList(m_ProcList,1000);
+	if (gnLastProcessCount && m_ProcCount!=gnLastProcessCount)
 		lbProcessChanged = TRUE;
-	gnLastProcessCount = ProcCount;
+	gnLastProcessCount = m_ProcCount;
+	
+	#ifdef _DEBUG
+	if (lbProcessChanged) {
+		char szTitleDbg[512], *psz=szTitleDbg; szTitleDbg[0]=0;
+		for (DWORD n=0; n<m_ProcCount; n++) {
+			if (n) strcpy(psz++,",");
+		   wsprintfA(psz, "%i", m_ProcList[n]);
+		   psz+=strlen(psz);
+		}
+		OutputDebugStringA("Process list was changed!\n");
+		OutputDebugStringA(szTitleDbg);
+		OutputDebugStringA("\n");
+    }
+	//SetWindowText(ghWnd, szTitleDbg);
+	#endif
 
 
     CONSOLE_SCREEN_BUFFER_INFO inf; memset(&inf, 0, sizeof(inf));
@@ -614,8 +629,26 @@ LRESULT CALLBACK CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPAR
 {
     LRESULT result = 0;
 
-	if (messg == WM_SYSCHAR)
+	if (messg == WM_SYSCHAR) {
+        #ifdef _DEBUG
+        {
+	        TCHAR szDbg[32];
+	        wsprintf(szDbg, _T("SysChar - %c (%i)"),
+		        (TCHAR)wParam, wParam);
+		    SetWindowText(ghWnd, szDbg);
+        }
+        #endif
 		return TRUE;
+    } else if (messg == WM_CHAR) {
+        #ifdef _DEBUG
+        {
+	        TCHAR szDbg[32];
+	        wsprintf(szDbg, _T("Char - %c (%i)"),
+		        (TCHAR)wParam, wParam);
+		    SetWindowText(ghWnd, szDbg);
+        }
+        #endif
+    }
 
     switch (messg)
     {
@@ -658,6 +691,16 @@ LRESULT CALLBACK CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPAR
 
     case WM_KEYDOWN:
     case WM_KEYUP:
+    
+        //#ifdef _DEBUG
+        //{
+	    //    TCHAR szDbg[32];
+	    //    wsprintf(szDbg, _T("%s - %c (%i)"),
+		//        ((messg == WM_KEYDOWN) ? _T("Dn") : _T("Up")),
+		//        (TCHAR)wParam, wParam);
+		//    SetWindowText(ghWnd, szDbg);
+        //}
+        //#endif
 
         if (wParam == VK_PAUSE && !isPressed(VK_CONTROL)) {
             if (gConEmu.isPictureView()) {
@@ -749,14 +792,14 @@ LRESULT CALLBACK CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPAR
             {
                 gConEmu.isShowConsole = true;
                 ShowWindow(ghConWnd, SW_SHOWNORMAL);
-                if (gConEmu.setParent) SetParent(ghConWnd, 0);
+                //if (gConEmu.setParent) SetParent(ghConWnd, 0);
                 EnableWindow(ghConWnd, true);
             }
             else
             {
                 gConEmu.isShowConsole = false;
                 if (!gSet.isConVisible) ShowWindow(ghConWnd, SW_HIDE);
-                if (gConEmu.setParent) SetParent(ghConWnd, HDCWND);
+                //if (gConEmu.setParent) SetParent(ghConWnd, HDCWND);
                 if (!gSet.isConVisible) EnableWindow(ghConWnd, false);
             }
             break;
@@ -1113,9 +1156,9 @@ LRESULT CALLBACK CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPAR
         PostQuitMessage(0);
         break;
     
-    case WM_INPUTLANGCHANGE:
+    /*case WM_INPUTLANGCHANGE:
     case WM_INPUTLANGCHANGEREQUEST:
-    case WM_IME_NOTIFY:
+    case WM_IME_NOTIFY:*/
     case WM_VSCROLL:
         POSTMESSAGE(ghConWnd, messg, wParam, lParam, FALSE);
         
@@ -1640,4 +1683,17 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd)
 		return -1;
 
 	return 0;
+}
+
+void CConEmuMain::SetConParent()
+{
+    // set parent window of the console window:
+    // *) it is used by ConMan and some FAR plugins, set it for standard mode or if /SetParent switch is set
+    // *) do not set it by default for buffer mode because it causes unwanted selection jumps
+    // WARP ItSelf опытным путем выяснил, что SetParent валит ConEmu в Windows7
+    //if (!setParentDisabled && (setParent || gSet.BufferHeight == 0))
+    
+    //TODO: ConMan? попробуем на родительское окно SetParent делать
+    if (setParent)
+        SetParent(ghConWnd, setParent2 ? ghWnd : ghWndDC);
 }

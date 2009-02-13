@@ -1,4 +1,6 @@
 #include "Header.h"
+#include "../common/ConEmuCheck.h"
+
 
 #ifdef MSGLOGGER
 bool bBlockDebugLog=false, bSendToDebugger=false, bSendToFile=true;
@@ -21,10 +23,11 @@ TCHAR temp[MAX_PATH];
 TCHAR szIconPath[MAX_PATH];
 HICON hClassIcon = NULL, hClassIconSm = NULL;
 
-const TCHAR *const szClassName = _T("VirtualConsoleClass");
-const TCHAR *const szClassNameParent = _T("VirtualConsoleClassMain");
-const TCHAR *const szClassNameApp = _T("VirtualConsoleClassApp");
-const TCHAR *const szClassNameBack = _T("VirtualConsoleClassBack");
+
+const TCHAR *const szClassName = VirtualConsoleClass;
+const TCHAR *const szClassNameParent = VirtualConsoleClassMain;
+const TCHAR *const szClassNameApp = VirtualConsoleClassApp;
+const TCHAR *const szClassNameBack = VirtualConsoleClassBack;
 
 
 OSVERSIONINFO osver;
@@ -262,7 +265,26 @@ int __stdcall _MDEBUG_TRAP(LPCSTR asFile, int anLine)
 int MDEBUG_CHK = TRUE;
 #endif
 
+LRESULT CALLBACK MainWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
+{
+    LRESULT result = 0;
+    
+	if (messg == WM_CREATE) {
+		if (ghWnd == NULL)
+			ghWnd = hWnd; // ставим сразу, чтобы функции могли пользоватьс€
+		else if (ghWndDC == NULL)
+			ghWndDC = hWnd; // ставим сразу, чтобы функции могли пользоватьс€
+	}
+	
+	if (hWnd == ghWnd)
+		result = gConEmu.WndProc(hWnd, messg, wParam, lParam);
+    else if (hWnd == ghWndDC)
+	    result = gConEmu.m_Child.ChildWndProc(hWnd, messg, wParam, lParam);
+	else if (messg)
+		result = DefWindowProc(hWnd, messg, wParam, lParam);
 
+    return result;
+}
 
 BOOL CreateAppWindow()
 {
@@ -271,10 +293,16 @@ BOOL CreateAppWindow()
 
 BOOL CreateMainWindow()
 {
+    if (_tcscmp(VirtualConsoleClass,VirtualConsoleClassMain)) {
+	    MBoxA(_T("Error: class names must be equal!"));
+	    return FALSE;
+    }
+
+
     //!!!ICON
     gConEmu.LoadIcons();
     
-	WNDCLASSEX wc = {sizeof(WNDCLASSEX), CS_DBLCLKS, CConEmuMain::WndProc, 0, 0, 
+	WNDCLASSEX wc = {sizeof(WNDCLASSEX), CS_DBLCLKS|CS_OWNDC, MainWndProc, 0, 0, 
 		    g_hInstance, hClassIcon, LoadCursor(NULL, IDC_ARROW), 
 		    NULL /*(HBRUSH)COLOR_BACKGROUND*/, 
 		    NULL, szClassNameParent, hClassIconSm};// | CS_DROPSHADOW
@@ -303,6 +331,43 @@ BOOL CreateMainWindow()
 		if (!ghWndDC) MBoxA(_T("Can't create main window!"));
         return FALSE;
 	}
+	return TRUE;
+}
+
+BOOL CheckConIme()
+{
+    BOOL  lbStopWarning = FALSE;
+    DWORD dwValue=1;
+    Registry reg;
+    if (reg.OpenKey(_T("Software\\ConEmu"), KEY_READ)) {
+	    if (!reg.Load(_T("StopWarningConIme"), &lbStopWarning))
+		    lbStopWarning = FALSE;
+		reg.CloseKey();
+    }
+    if (!lbStopWarning)
+    {
+	    if (reg.OpenKey(_T("Console"), KEY_READ))
+	    {
+	        if (!reg.Load(_T("LoadConIme"), &dwValue))
+				dwValue = 1;
+	        reg.CloseKey();
+	        if (dwValue!=0) {
+		        if (IDCANCEL==MessageBox(0,_T("Unwanted value of 'LoadConIme' registry parameter!\r\nPress 'Cancel' to stop this message.\r\nTake a look at 'FAQ-ConEmu.txt'"), _T("ConEmu"),MB_OKCANCEL|MB_ICONEXCLAMATION))
+			        lbStopWarning = TRUE;
+		    }
+	    } else {
+		    if (IDCANCEL==MessageBox(0,_T("Can't determine a value of 'LoadConIme' registry parameter!\r\nPress 'Cancel' to stop this message.\r\nTake a look at 'FAQ-ConEmu.txt'"), _T("ConEmu"),MB_OKCANCEL|MB_ICONEXCLAMATION))
+		        lbStopWarning = TRUE;
+	    }
+	    if (lbStopWarning)
+	    {
+		    if (reg.OpenKey(_T("Software\\ConEmu"), KEY_WRITE)) {
+			    reg.Save(_T("StopWarningConIme"), lbStopWarning);
+				reg.CloseKey();
+		    }
+		}
+	}
+	
 	return TRUE;
 }
 
@@ -356,18 +421,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     }
     if (osver.dwMajorVersion>=6)
     {
-	    DWORD dwValue=1;
-	    Registry reg;
-	    if (reg.OpenKey(_T("Console"), KEY_READ))
-	    {
-	        if (!reg.Load(_T("LoadConIme"), &dwValue))
-				dwValue = 1;
-	        reg.CloseKey();
-	        if (dwValue!=0)
-		        MBoxA(_T("Unwanter value of 'LoadConIme' registry parameter!\r\nTake a look at 'FAQ-ConEmu.txt'"));
-	    } else {
-		    MBoxA(_T("Can't determine a value of 'LoadConIme' registry parameter!\r\nTake a look at 'FAQ-ConEmu.txt'"));
-	    }
+	    CheckConIme();
     }
     
     gSet.InitSettings();
@@ -455,6 +509,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             {
                 gConEmu.setParent = true;
             }
+            else if ( !klstricmp(curCommand, _T("/SetParent2")) )
+            {
+                gConEmu.setParent = true; gConEmu.setParent2 = true;
+            }
             else if (!klstricmp(curCommand, _T("/BufferHeight")) && i + 1 < params)
             {
                 curCommand += _tcslen(curCommand) + 1;
@@ -496,8 +554,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             }
         }
     }
-    if (setParentDisabled && gConEmu.setParent)
-        gConEmu.setParent=false;
+    if (setParentDisabled && (gConEmu.setParent || gConEmu.setParent2)) {
+        gConEmu.setParent=false; gConEmu.setParent2=false;
+    }
         
         
 //------------------------------------------------------------------------
@@ -599,8 +658,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     // *) do not set it by default for buffer mode because it causes unwanted selection jumps
     // WARP ItSelf опытным путем вы€снил, что SetParent валит ConEmu в Windows7
     //if (!setParentDisabled && (setParent || gSet.BufferHeight == 0))
-    if (gConEmu.setParent)
-        SetParent(ghConWnd, HDCWND); // в сборке alex_itd выполн€лс€ всегда
+    gConEmu.SetConParent();
+
 
     HMENU hwndMain = GetSystemMenu(ghWnd, FALSE);
     InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_TOTRAY, _T("Hide to &tray"));

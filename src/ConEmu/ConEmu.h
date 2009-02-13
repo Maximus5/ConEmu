@@ -46,7 +46,7 @@ public:
 	bool gbPostUpdateWindowSize;
 	HWND hPictureView; bool bPicViewSlideShow; DWORD dwLastSlideShowTick;
 	bool gb_ConsoleSelectMode;
-	bool setParent;
+	bool setParent, setParent2;
 	//BOOL mb_InClose;
 	int RBDownNewX, RBDownNewY;
 	POINT cursor, Rcursor;
@@ -59,6 +59,7 @@ public:
 	RECT  dcWindowLast; // Последний размер дочернего окна
 	uint cBlinkShift; // cursor blink counter threshold
 	TCHAR szConEmuVersion[32];
+	DWORD m_ProcList[1000], m_ProcCount;
 
 public:
 	CConEmuMain();
@@ -67,7 +68,7 @@ public:
 public:
 	void SetConsoleWindowSize(const COORD& size, bool updateInfo);
 	bool isPictureView();
-	static LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
+	LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 	void ForceShowTabs(BOOL abShow);
 
 	RECT WindowSizeFromConsole(COORD consoleSize, bool rectInWindow = false, bool clientOnly = false);
@@ -86,6 +87,7 @@ public:
 	bool isFilePanel();
 	bool isConSelectMode();
 	bool LoadVersionInfo(wchar_t* pFullPath);
+	void SetConParent();
 public:
 	LRESULT OnPaint(WPARAM wParam, LPARAM lParam);
 	LRESULT OnSize(WPARAM wParam, WORD newClientWidth, WORD newClientHeight);

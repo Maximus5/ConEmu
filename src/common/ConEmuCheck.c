@@ -1,5 +1,6 @@
 
 #include <windows.h>
+#define _T(s) s
 #include "ConEmuCheck.h"
 
 typedef HWND (APIENTRY *FGetConsoleWindow)();
@@ -57,8 +58,8 @@ HWND CheckConEmuChild(HWND ConEmuHwnd, int* pnConsoleIsChild/*=NULL*/)
 
 	
 	GetClassNameA(ConEmuHwnd, className, 100);
-	if (lstrcmpiA(className, "VirtualConsoleClass") != 0 &&
-		lstrcmpiA(className, "VirtualConsoleClassMain") != 0)
+	if (lstrcmpiA(className, VirtualConsoleClass) != 0 &&
+		lstrcmpiA(className, VirtualConsoleClassMain) != 0)
 	{   // Родитель консоли - НЕ КонЭму
 		ConEmuHwnd = NULL; // будем определять его дальше
 	} else {
@@ -69,7 +70,7 @@ HWND CheckConEmuChild(HWND ConEmuHwnd, int* pnConsoleIsChild/*=NULL*/)
 		if (hParent) {
 		    // Должен быть таким
 			GetClassNameA(hParent, className, 100);
-			if (lstrcmpiA(className, "VirtualConsoleClassMain") == 0) {
+			if (lstrcmpiA(className, VirtualConsoleClassMain) == 0) {
 				if (pnConsoleIsChild) *pnConsoleIsChild = 1; // console is child of ConEmu DC window
 			} else {
 				hParent = NULL; // непорядок, имя класса неправильное, значит консоль в основном окне ConEmu
@@ -79,7 +80,7 @@ HWND CheckConEmuChild(HWND ConEmuHwnd, int* pnConsoleIsChild/*=NULL*/)
 			// 2 -- console is child of Main ConEmu window (why?)
 			if (pnConsoleIsChild) *pnConsoleIsChild = 2;
 			hParent = ConEmuHwnd;
-			ConEmuHwnd = FindWindowExA(hParent, NULL, "VirtualConsoleClass", NULL);
+			ConEmuHwnd = FindWindowExA(hParent, NULL, VirtualConsoleClass, NULL);
 			if (ConEmuHwnd==NULL) {
 			    // same as 2, but ConEmu DC windows - absent (old conemu version?)
 				if (pnConsoleIsChild) *pnConsoleIsChild = 3;
@@ -131,7 +132,7 @@ HWND GetConEmuHWND(int* pnConsoleIsChild/*=NULL*/)
 				if (ConEmuHwnd) {
 					
 					GetClassNameA(ConEmuHwnd, className, 100);
-					if (lstrcmpiA(className, "VirtualConsoleClass") != 0)
+					if (lstrcmpiA(className, VirtualConsoleClass) != 0)
 					{
 						ConEmuHwnd = NULL;
 					} else {

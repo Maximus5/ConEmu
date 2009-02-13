@@ -144,6 +144,7 @@ BOOL gbTerminalMode=FALSE;
 void InitConEmu();
 BOOL GetConEmuShift(LPRECT lprcShift);
 
+#define _T(s) s
 #include "../../common/ConEmuCheck.h"
 
 //EXTCSTART
@@ -564,7 +565,7 @@ void InitConEmu()
     ghConEmu = fGetAncestor(ghConChild, GA_PARENT);
     if (!ghConEmu) return;
     fGetClassNameA(ghConEmu, szClass, 63);
-    if (lstrcmpA(szClass, "VirtualConsoleClassMain")!=0) {
+    if (lstrcmpA(szClass, VirtualConsoleClassMain)!=0) {
         // видимо старый ConEmu? не будем обрабатывать
         //if (!gbTerminalMode)
 	    //    fMessageBoxA(ghConChild, "ConEmu old version detected!\r\nPlease upgrade!", "PictureView wrapper", MB_ICONSTOP);

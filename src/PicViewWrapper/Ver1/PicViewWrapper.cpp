@@ -29,7 +29,8 @@ FSetStartupInfo fSetStartupInfo=NULL;
 
 /* Local */
 HINSTANCE ghInstance = NULL;
-TCHAR gsTermMsg[255];
+TCHAR gsTermMsg[40];
+TCHAR gsLoadMsg[320];
 
 /* ConEmu */
 HWND ghConEmu = NULL;
@@ -53,7 +54,7 @@ BOOL APIENTRY DllMain( HANDLE hModule,
         {
             // Init variables
             ghInstance = (HINSTANCE)hModule;
-            gsTermMsg[0] = 0;
+            gsTermMsg[0] = 0; gsLoadMsg[0] = 0;
             memset(&psi, 0, sizeof(psi));
             memset(&fsf, 0, sizeof(fsf));
 
@@ -77,25 +78,23 @@ BOOL APIENTRY DllMain( HANDLE hModule,
                 if ((nLen=GetModuleFileName(ghInstance, szModulePath, MAX_PATH))>0) {
                     if (szModulePath[nLen-1]!=_T('L') && szModulePath[nLen-1]!=_T('l')) {
 	                    if (!gsTermMsg[0]) {
-		                    TCHAR szError[400];
 		                    DWORD dwErr;
 		                    dwErr = GetLastError();
-		                    wsprintf(szError, "Invalid file name!\r\n%s\r\n*.dll expected", szModulePath);
-	                        MessageBox(ghConEmu, szError, _T("PictureView wrapper"), MB_ICONSTOP);
+		                    wsprintf(gsLoadMsg, "PictureView wrapper\nInvalid file name!\n%s\n*.dll expected", szModulePath);
+	                        //MessageBox(ghConEmu, szError, _T("PictureView wrapper"), MB_ICONSTOP);
 	                    }
-                        return FALSE;
+                        return TRUE; // иначе FAR в Windows7 иногда не загружался вообще
                     }
                     szModulePath[nLen-1] = '_';
                     hPicViewDll = LoadLibrary(szModulePath);
                     if (!hPicViewDll) {
 	                    if (!gsTermMsg[0]) {
-		                    TCHAR szError[400];
 		                    DWORD dwErr;
 		                    dwErr = GetLastError();
-		                    wsprintf(szError, "Can't load library!\r\n%s\r\nLastError=0x%08X", szModulePath, dwErr);
-	                        MessageBox(ghConEmu, szError, _T("PictureView wrapper"), MB_ICONSTOP);
+		                    wsprintf(gsLoadMsg, "PictureView wrapper\nCan't load library!\n%s\nLastError=0x%08X", szModulePath, dwErr);
+	                        //MessageBox(ghConEmu, szError, _T("PictureView wrapper"), MB_ICONSTOP);
 	                    }
-                        return FALSE;
+                        return TRUE; // иначе FAR в Windows7 иногда не загружался вообще
                     }
                 }
             }
@@ -250,6 +249,10 @@ void WINAPI SetStartupInfo(
     //    psi.Message(psi.ModuleNumber, FMSG_MB_OK|FMSG_ALLINONE, NULL, 
     //        (const TCHAR *const *)"PictureView wrapper\nConEmu old version detected!\nPlease upgrade!", 0, 0);
     //}
+    if (gsLoadMsg[0] && psi.Message) {
+        psi.Message(psi.ModuleNumber, FMSG_MB_OK|FMSG_ALLINONE, NULL, 
+            (const TCHAR *const *)gsLoadMsg, 0, 0);
+    }
 
     fWrapperAdvControl = psi.AdvControl;
     psi.AdvControl = WrapperAdvControl;

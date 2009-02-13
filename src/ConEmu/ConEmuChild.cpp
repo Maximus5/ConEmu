@@ -10,15 +10,15 @@ CConEmuChild::~CConEmuChild()
 
 HWND CConEmuChild::Create()
 {
-	WNDCLASS wc = {CS_OWNDC|CS_DBLCLKS/*|CS_SAVEBITS*/, CConEmuChild::ChildWndProc, 0, 0, 
-			g_hInstance, NULL, LoadCursor(NULL, IDC_ARROW), 
-			NULL /*(HBRUSH)COLOR_BACKGROUND*/, 
-			NULL, szClassName};// | CS_DROPSHADOW
-	if (!RegisterClass(&wc)) {
-		ghWndDC = (HWND)-1; // чтобы родитель не ругался
-		MBoxA(_T("Can't register DC window class!"));
-		return NULL;
-	}
+	//WNDCLASS wc = {CS_OWNDC|CS_DBLCLKS/*|CS_SAVEBITS*/, CConEmuChild::ChildWndProc, 0, 0, 
+	//		g_hInstance, NULL, LoadCursor(NULL, IDC_ARROW), 
+	//		NULL /*(HBRUSH)COLOR_BACKGROUND*/, 
+	//		NULL, szClassName};// | CS_DROPSHADOW
+	//if (!RegisterClass(&wc)) {
+	//	ghWndDC = (HWND)-1; // чтобы родитель не ругался
+	//	MBoxA(_T("Can't register DC window class!"));
+	//	return NULL;
+	//}
 	DWORD style = WS_VISIBLE | WS_CHILD | WS_CLIPSIBLINGS /*| WS_CLIPCHILDREN*/ | (gSet.BufferHeight ? WS_VSCROLL : 0);
 	RECT rc = gConEmu.DCClientRect();
 	ghWndDC = CreateWindow(szClassName, 0, style, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, ghWnd, NULL, (HINSTANCE)g_hInstance, NULL);
@@ -80,13 +80,34 @@ LRESULT CALLBACK CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam
     case WM_LBUTTONDBLCLK:
     case WM_MBUTTONDBLCLK:
     case WM_RBUTTONDBLCLK:
-    case WM_INPUTLANGCHANGE:
-    case WM_INPUTLANGCHANGEREQUEST:
-    case WM_IME_NOTIFY:
+    //case WM_INPUTLANGCHANGE:
+    //case WM_INPUTLANGCHANGEREQUEST:
+    //case WM_IME_NOTIFY:
     case WM_VSCROLL:
         // Вся обработка в родителе
         result = gConEmu.WndProc(hWnd, messg, wParam, lParam);
         return result;
+
+    case WM_INPUTLANGCHANGE:
+    case WM_INPUTLANGCHANGEREQUEST:
+    case WM_IME_NOTIFY:
+		{
+			//POSTMESSAGE(ghConWnd, messg, wParam, lParam, FALSE);
+			result = DefWindowProc(hWnd, messg, wParam, lParam);
+			
+			//#ifndef _DEBUG
+			//POSTMESSAGE(ghConWnd, messg, wParam, lParam, FALSE);
+			//#else
+			POSTMESSAGE(ghConWnd, messg, wParam, lParam, FALSE); // с SEND - точно работало
+			POSTMESSAGE(ghConWnd, WM_SETFOCUS, 0,0,1);
+			POSTMESSAGE(ghWnd, WM_SETFOCUS, 0,0,1);
+			//#endif
+			/*if (messg == WM_INPUTLANGCHANGE) {
+				//wParam Specifies the character set of the new locale. 
+				ActivateKeyboardLayout((HKL)lParam, 0);
+			}*/
+			return result;
+		}
 
     default:
         if (messg) result = DefWindowProc(hWnd, messg, wParam, lParam);
@@ -253,6 +274,13 @@ LRESULT CALLBACK CConEmuBack::BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, 
 		case WM_DESTROY:
 			DeleteObject(gConEmu.m_Back.mh_BackBrush);
 			break;
+		case WM_SETFOCUS:
+
+			if (messg == WM_SETFOCUS) {
+				if (ghWndDC && IsWindow(ghWndDC))
+					SetFocus(ghWndDC);
+			}
+			return 0;
 	}
 
     result = DefWindowProc(hWnd, messg, wParam, lParam);
