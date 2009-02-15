@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="windows-1251"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9.00"
+	Version="9,00"
 	Name="ConEmuPlugin"
 	ProjectGUID="{21152801-8744-4787-83F4-BE4564A367B4}"
 	RootNamespace="ConEmuPlugin"
@@ -65,11 +65,14 @@
 				AdditionalDependencies="version.lib"
 				OutputFile="F:\VCProject\FarPlugin\#FAR180\plugins\conEmu\conemu.dll"
 				LinkIncremental="2"
+				GenerateManifest="true"
 				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"
 				GenerateMapFile="true"
 				MapExports="true"
 				SubSystem="2"
+				TurnOffAssemblyGeneration="false"
+				ImportLibrary=""
 				TargetMachine="1"
 			/>
 			<Tool
@@ -340,6 +343,10 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
+				RelativePath="..\common\ConEmuCheck.c"
+				>
+			</File>
+			<File
 				RelativePath=".\ConEmuPlugin.cpp"
 				>
 			</File>
@@ -353,10 +360,6 @@
 			</File>
 			<File
 				RelativePath=".\ConEmuPluginA.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\common\ConEmuCheck.c"
 				>
 			</File>
 			<File

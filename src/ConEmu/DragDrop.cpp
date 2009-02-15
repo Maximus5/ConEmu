@@ -212,23 +212,45 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragEnter(IDataObject * pDataObject,DWORD g
 {
 	if (gSet.isDnD)
 	{
-		selfdrag=(pDataObject == this->pDataObject);
-		PipeCmd cmd=DragTo;
-		DWORD cbWritten=0;
-		WriteFile(gConEmu.hPipe, &cmd, sizeof(cmd), &cbWritten, NULL); 
-		SetEvent(gConEmu.hPipeEvent);
+		CConEmuPipe pipe;
 
-		DWORD cbBytesRead=0;
-		int cbStructSize=0;
-		if (pfpi) {free(pfpi); pfpi=NULL;}
-		ReadFile(gConEmu.hPipe, &cbStructSize, sizeof(int), &cbBytesRead, NULL);
-		if (cbStructSize>sizeof(ForwardedPanelInfo)) {
-			pfpi = (ForwardedPanelInfo*)calloc(cbStructSize, 1);
+		if (pipe.Init())
+		{
+			selfdrag=(pDataObject == this->pDataObject);
+			//PipeCmd cmd=DragTo;
+			DWORD cbWritten=0;
+			//WriteFile(pipe.hPipe, &cmd, sizeof(cmd), &cbWritten, NULL); 
+			SetEvent(pipe.hEventCmd[CMD_DRAGTO]);
 
-			ReadFile(gConEmu.hPipe, pfpi, cbStructSize, &cbBytesRead, NULL); 
+			// ѕодождем немножко, проверим что плагин живой
+			cbWritten = WaitForSingleObject(pipe.hEventAlive, CONEMUALIVETIMEOUT);
+			if (cbWritten!=WAIT_OBJECT_0) {
+				TCHAR szErr[MAX_PATH];
+				wsprintf(szErr, _T("ConEmu plugin is not active!\r\nProcessID=%i"), pipe.nPID);
+				MBoxA(szErr);
+			} else {
+				cbWritten = WaitForSingleObject(pipe.hEventReady, CONEMUREADYTIMEOUT);
+				if (cbWritten!=WAIT_OBJECT_0) {
+					TCHAR szErr[MAX_PATH];
+					wsprintf(szErr, _T("Command waiting time exceeds!\r\nConEmu plugin is locked?\r\nProcessID=%i"), pipe.nPID);
+					MBoxA(szErr);
+				} else {
+					DWORD cbBytesRead=0;
+					int cbStructSize=0;
+					if (pfpi) {free(pfpi); pfpi=NULL;}
+					if (pipe.Read(&cbStructSize, sizeof(int), &cbBytesRead))
+					{
+						if (cbStructSize>sizeof(ForwardedPanelInfo)) {
+							pfpi = (ForwardedPanelInfo*)calloc(cbStructSize, 1);
 
-			pfpi->pszActivePath = (WCHAR*)(((char*)pfpi)+pfpi->ActivePathShift);
-			pfpi->pszPassivePath = (WCHAR*)(((char*)pfpi)+pfpi->PassivePathShift);
+							pipe.Read(pfpi, cbStructSize, &cbBytesRead);
+
+							pfpi->pszActivePath = (WCHAR*)(((char*)pfpi)+pfpi->ActivePathShift);
+							pfpi->pszPassivePath = (WCHAR*)(((char*)pfpi)+pfpi->PassivePathShift);
+						}
+					}
+				}
+			}
 		}
 	}
 	return 0;
@@ -244,89 +266,111 @@ void CDragDrop::Drag()
 	if (!gSet.isDnD /*|| isInDrag */|| gConEmu.isDragProcessed)
 		return;
 
-	//isInDrag=true; // return в теле не допускать - нужно сбросить в конце
 	gConEmu.isDragProcessed=true; // чтобы не сработало два раза на один драг
 
-	PipeCmd cmd=DragFrom;
-	DWORD cbWritten=0;
-	WriteFile(gConEmu.hPipe, &cmd, sizeof(cmd), &cbWritten, NULL); 
-	SetEvent(gConEmu.hPipeEvent);
-	DWORD cbBytesRead=0;
-	int nWholeSize=0;
-	ReadFile(gConEmu.hPipe, &nWholeSize, sizeof(nWholeSize), &cbBytesRead, NULL); 
-	if (nWholeSize==0) // защита смены формата
-		ReadFile(gConEmu.hPipe, &nWholeSize, sizeof(nWholeSize), &cbBytesRead, NULL); 
-	else
-		nWholeSize=0;
-
-	if (nWholeSize>0)
+	CConEmuPipe pipe;
+	if (pipe.Init())
 	{
-		wchar_t *szDraggedPath=NULL; //ASCIIZZ
-		szDraggedPath=new wchar_t[nWholeSize/*(MAX_PATH+1)*FilesCount*/+1];	
-		ZeroMemory(szDraggedPath, /*((MAX_PATH+1)*FilesCount+1)*/(nWholeSize+1)*sizeof(wchar_t));
-		wchar_t  *curr=szDraggedPath;
-		
-		for (;;)
-		{
-			int nCurSize=0;
-			ReadFile(gConEmu.hPipe, &nCurSize, sizeof(nCurSize), &cbBytesRead, NULL); 
-			if (nCurSize==0) break;
+		//isInDrag=true; // return в теле не допускать - нужно сбросить в конце
 
-			ReadFile(gConEmu.hPipe, curr, sizeof(WCHAR)*nCurSize, &cbBytesRead, NULL); 
+		//PipeCmd cmd=DragFrom;
+		DWORD cbWritten=0;
+		//WriteFile(pipe.hPipe, &cmd, sizeof(cmd), &cbWritten, NULL); 
+		SetEvent(pipe.hEventCmd[CMD_DRAGFROM]);
 
-			curr+=wcslen(curr)+1;
-		}
-	//		int size = MakeDropWord(szDraggedPath);// ƒлинна null,null строки
-	//		if (size <= 1) return;
-		int size=(curr-szDraggedPath)*sizeof(wchar_t)+2;
-	    
-	    
-		IDropSource *pDropSource;
-
-		DROPFILES drop_struct = { sizeof(drop_struct), { 0, 0 }, 0, 1 };
-	    
-		HGLOBAL drop_data = GlobalAlloc(0, size+sizeof(drop_struct));
-		ZeroMemory(drop_data, size+sizeof(drop_struct));
-
-		wchar_t* clip_data = reinterpret_cast<wchar_t*>(drop_data);
-		memcpy(drop_data, &drop_struct, sizeof(drop_struct));
-
-		memcpy((byte*)drop_data + sizeof(drop_struct), szDraggedPath, size);
-		//Maximus5 - а пам€ть освобождать кто будет?
-		delete szDraggedPath; szDraggedPath=NULL;
-
-		DWORD           dwEffect;
-		DWORD           dwResult;
-		FORMATETC       fmtetc = { CF_HDROP, 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
-		STGMEDIUM       stgmed = { TYMED_HGLOBAL, { 0 }, 0 };
-		stgmed.hGlobal = drop_data ;
-	//		stgmed.lpszFileName=szDraggedPath;
-		CreateDropSource(&pDropSource);
-		CreateDataObject(&fmtetc, &stgmed, 1, &pDataObject) ;//   |   ѕосмотреть ниже... 
-		DWORD dwAllowedEffects = DROPEFFECT_LINK;
-		unsigned short stateControl = GetAsyncKeyState(VK_CONTROL);
-		if (gSet.isDefCopy==1) {
-			//  опирование по умолчанию
-			if (stateControl & 0x8000) // но нажат Ctrl
-				dwAllowedEffects |= DROPEFFECT_MOVE;
-			else
-				dwAllowedEffects |= DROPEFFECT_COPY;
-		} else if (gSet.isDefCopy==0) {
-			// ѕеремещение по умолчанию
-			if (stateControl & 0x8000) // но нажат Ctrl
-				dwAllowedEffects |= DROPEFFECT_COPY;
-			else
-				dwAllowedEffects |= DROPEFFECT_MOVE;
+		// ѕодождем немножко, проверим что плагин живой
+		cbWritten = WaitForSingleObject(pipe.hEventAlive, CONEMUALIVETIMEOUT);
+		if (cbWritten!=WAIT_OBJECT_0) {
+			TCHAR szErr[MAX_PATH];
+			wsprintf(szErr, _T("ConEmu plugin is not active!\r\nProcessID=%i"), pipe.nPID);
+			MBoxA(szErr);
 		} else {
-			// "—тандартное" поведение
-			dwAllowedEffects |= DROPEFFECT_COPY|DROPEFFECT_MOVE;
-		}
-		dwResult = DoDragDrop(pDataObject, pDropSource, dwAllowedEffects, &dwEffect);
-		pDataObject->Release();
-		pDropSource->Release();		
-		//isLBDown=false; -- а ReleaseCapture кто будет делать?
-	}
+			cbWritten = WaitForSingleObject(pipe.hEventReady, CONEMUREADYTIMEOUT);
+			if (cbWritten!=WAIT_OBJECT_0) {
+				TCHAR szErr[MAX_PATH];
+				wsprintf(szErr, _T("Command waiting time exceeds!\r\nConEmu plugin is locked?\r\nProcessID=%i"), pipe.nPID);
+				MBoxA(szErr);
+			} else {
+				DWORD cbBytesRead=0;
+				int nWholeSize=0;
+				pipe.Read(&nWholeSize, sizeof(nWholeSize), &cbBytesRead); 
+				if (nWholeSize==0) { // защита смены формата
+					if (!pipe.Read(&nWholeSize, sizeof(nWholeSize), &cbBytesRead))
+						nWholeSize = 0;
+				} else {
+					nWholeSize=0;
+				}
 
+				if (nWholeSize>0)
+				{
+					wchar_t *szDraggedPath=NULL; //ASCIIZZ
+					szDraggedPath=new wchar_t[nWholeSize/*(MAX_PATH+1)*FilesCount*/+1];	
+					ZeroMemory(szDraggedPath, /*((MAX_PATH+1)*FilesCount+1)*/(nWholeSize+1)*sizeof(wchar_t));
+					wchar_t  *curr=szDraggedPath;
+					
+					for (;;)
+					{
+						int nCurSize=0;
+						if (!pipe.Read(&nCurSize, sizeof(nCurSize), &cbBytesRead)) break;
+						if (nCurSize==0) break;
+
+						pipe.Read(curr, sizeof(WCHAR)*nCurSize, &cbBytesRead); 
+
+						curr+=wcslen(curr)+1;
+					}
+				//		int size = MakeDropWord(szDraggedPath);// ƒлинна null,null строки
+				//		if (size <= 1) return;
+					int size=(curr-szDraggedPath)*sizeof(wchar_t)+2;
+				    
+				    
+					IDropSource *pDropSource;
+
+					DROPFILES drop_struct = { sizeof(drop_struct), { 0, 0 }, 0, 1 };
+				    
+					HGLOBAL drop_data = GlobalAlloc(0, size+sizeof(drop_struct));
+					ZeroMemory(drop_data, size+sizeof(drop_struct));
+
+					wchar_t* clip_data = reinterpret_cast<wchar_t*>(drop_data);
+					memcpy(drop_data, &drop_struct, sizeof(drop_struct));
+
+					memcpy((byte*)drop_data + sizeof(drop_struct), szDraggedPath, size);
+					//Maximus5 - а пам€ть освобождать кто будет?
+					delete szDraggedPath; szDraggedPath=NULL;
+
+					DWORD           dwEffect;
+					DWORD           dwResult;
+					FORMATETC       fmtetc = { CF_HDROP, 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
+					STGMEDIUM       stgmed = { TYMED_HGLOBAL, { 0 }, 0 };
+					stgmed.hGlobal = drop_data ;
+				//		stgmed.lpszFileName=szDraggedPath;
+					CreateDropSource(&pDropSource);
+					CreateDataObject(&fmtetc, &stgmed, 1, &pDataObject) ;//   |   ѕосмотреть ниже... 
+					DWORD dwAllowedEffects = DROPEFFECT_LINK;
+					unsigned short stateControl = GetAsyncKeyState(VK_CONTROL);
+					if (gSet.isDefCopy==1) {
+						//  опирование по умолчанию
+						if (stateControl & 0x8000) // но нажат Ctrl
+							dwAllowedEffects |= DROPEFFECT_MOVE;
+						else
+							dwAllowedEffects |= DROPEFFECT_COPY;
+					} else if (gSet.isDefCopy==0) {
+						// ѕеремещение по умолчанию
+						if (stateControl & 0x8000) // но нажат Ctrl
+							dwAllowedEffects |= DROPEFFECT_COPY;
+						else
+							dwAllowedEffects |= DROPEFFECT_MOVE;
+					} else {
+						// "—тандартное" поведение
+						dwAllowedEffects |= DROPEFFECT_COPY|DROPEFFECT_MOVE;
+					}
+					dwResult = DoDragDrop(pDataObject, pDropSource, dwAllowedEffects, &dwEffect);
+					pDataObject->Release();
+					pDropSource->Release();		
+					//isLBDown=false; -- а ReleaseCapture кто будет делать?
+				}
+			}
+		}
+	}
 	//isInDrag=false;
 	//isDragProcessed=false; -- иначе при бросании в пассивную панель больших файлов дроп может вызватьс€ еще раз???
 }

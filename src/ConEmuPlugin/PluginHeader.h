@@ -5,12 +5,17 @@
 #include <tchar.h>
 #endif
 
-
+#define SafeCloseHandle(h) { if ((h)!=NULL) { HANDLE hh = (h); (h) = NULL; if (hh!=INVALID_HANDLE_VALUE) CloseHandle(hh); } }
 
 extern int lastModifiedStateW;
 extern WCHAR gszDir1[CONEMUTABMAX], gszDir2[CONEMUTABMAX];
 extern int maxTabCount, lastWindowCount;
 extern ConEmuTab* tabs; //(ConEmuTab*) calloc(maxTabCount, sizeof(ConEmuTab));
+extern HWND ConEmuHwnd;
+extern HWND FarHwnd;
+extern FarVersion gFarVersion;
+extern int lastModifiedStateW;
+extern HANDLE hEventCmd[MAXCMDCOUNT];
 
 BOOL CreateTabs(int windowCount);
 
@@ -35,7 +40,26 @@ void SetStartupInfoW684(void *aInfo);
 void SetStartupInfoW757(void *aInfo);
 void ProcessDragFrom684();
 void ProcessDragFrom757();
+void ProcessDragFromA();
 void ProcessDragTo684();
 void ProcessDragTo757();
+void ProcessDragToA();
 
 void CloseTabs();
+
+HWND AtoH(WCHAR *Str, int Len);
+void UpdateConEmuTabsW(int event, bool losingFocus, bool editorSave);
+
+BOOL LoadFarVersion();
+
+BOOL OutDataAlloc(DWORD anSize); // необязательно
+BOOL OutDataWrite(LPVOID apData, DWORD anSize);
+
+void CheckMacro();
+int ShowMessage(int aiMsg, int aiButtons);
+int ShowMessageA(int aiMsg, int aiButtons);
+int ShowMessage684(int aiMsg, int aiButtons);
+int ShowMessage757(int aiMsg, int aiButtons);
+void ReloadMacroA();
+void ReloadMacro684();
+void ReloadMacro757();

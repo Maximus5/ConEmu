@@ -46,3 +46,23 @@ void TrayIcon::Delete()
 {
     Shell_NotifyIcon(NIM_DELETE, &IconData);
 }
+
+LRESULT TrayIcon::OnTryIcon(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
+{
+    switch(lParam)
+    {
+    case WM_LBUTTONUP:
+        Icon.RestoreWindowFromTray();
+        break;
+    case WM_RBUTTONUP:
+        {
+        POINT mPos;
+        GetCursorPos(&mPos);
+        SetForegroundWindow(hWnd);
+        gConEmu.ShowSysmenu(hWnd, hWnd, mPos.x, mPos.y);
+        PostMessage(hWnd, WM_NULL, 0, 0);
+        }
+        break;
+    } 
+	return 0;
+}

@@ -110,8 +110,8 @@ void CSettings::LoadSettings()
         reg.Load(_T("FontCharSet"), &FontCharSet);
         reg.Load(_T("Anti-aliasing"), &Quality);
         reg.Load(_T("WindowMode"), &gConEmu.WindowMode);
-        reg.Load(_T("ConWnd X"), &gSet.wndX);
-        reg.Load(_T("ConWnd Y"), &gSet.wndY);
+        reg.Load(_T("ConWnd X"), &gSet.wndX); if (gSet.wndX<-10) gSet.wndX = 0;
+        reg.Load(_T("ConWnd Y"), &gSet.wndY); if (gSet.wndY<-10) gSet.wndY = 0;
         reg.Load(_T("ConWnd Width"), &gSet.wndWidth);
         reg.Load(_T("ConWnd Height"), &gSet.wndHeight);
         reg.Load(_T("CursorType"), &gSet.isCursorV);
@@ -206,10 +206,13 @@ BOOL CSettings::SaveSettings()
       if (reg.OpenKey(gSet.Config, KEY_WRITE)) // NightRoman
         {
             GetDlgItemText(ghOpWnd, tCmdLine, gSet.Cmd, MAX_PATH);
-            RECT rect;
-            GetWindowRect(ghWnd, &rect);
-            gSet.wndX = rect.left;
-            gSet.wndY = rect.top;
+			WINDOWPLACEMENT wpl; wpl.length = sizeof(wpl);
+            GetWindowPlacement(ghWnd, &wpl);
+			if (wpl.showCmd == SW_SHOWNORMAL)
+			{
+				gSet.wndX = wpl.rcNormalPosition.left;
+				gSet.wndY = wpl.rcNormalPosition.top;
+			}
 
             reg.Save(_T("CmdLine"), gSet.Cmd);
             reg.Save(_T("FontName"), gSet.LogFont.lfFaceName);
@@ -998,6 +1001,10 @@ BOOL CALLBACK CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM
     {
     case WM_INITDIALOG:
         ghOpWnd = hWnd2;
+		#ifdef _DEBUG
+		if (IsDebuggerPresent())
+			SetWindowPos(ghOpWnd, HWND_NOTOPMOST, 0,0,0,0, SWP_NOSIZE|SWP_NOMOVE);
+		#endif
 		gSet.OnInitDialog();
         break;
 

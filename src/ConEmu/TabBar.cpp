@@ -7,6 +7,31 @@ const int TAB_FONT_HEIGTH = 16;
 wchar_t TAB_FONT_FACE[] = L"Tahoma";
 WNDPROC _defaultTabProc = NULL;
 
+TabBarClass::TabBarClass()
+{
+	_active = false;
+	_hwndTab = NULL;
+	_tabHeight = NULL; memset(&m_Margins, 0, sizeof(m_Margins));
+	_titleShouldChange = false;
+	_prevTab = -1;
+	mb_ChangeAllowed = FALSE;
+	mb_Enabled = TRUE;
+}
+
+void TabBarClass::Enable(BOOL abEnabled)
+{
+	if (_hwndTab && mb_Enabled!=abEnabled)
+	{
+		EnableWindow(_hwndTab, abEnabled);
+		mb_Enabled = abEnabled;
+	}
+}
+
+void TabBarClass::Refresh(BOOL abFarActive)
+{
+	Enable(abFarActive);
+}
+
 void TabBarClass::AddTab(wchar_t* text, int i)
 {
 	TCITEM tie;
@@ -14,12 +39,18 @@ void TabBarClass::AddTab(wchar_t* text, int i)
 	tie.iImage = -1; 
 	tie.pszText = text ;
 
-	TabCtrl_InsertItem(_hwndTab, i, &tie);
+	int nCurCount = TabCtrl_GetItemCount(_hwndTab);
+	if (i>=nCurCount)
+		TabCtrl_InsertItem(_hwndTab, i, &tie);
+	else
+		TabCtrl_SetItem(_hwndTab, i, &tie);
 }
 
 void TabBarClass::SelectTab(int i)
 {
+    mb_ChangeAllowed = TRUE;
 	TabCtrl_SetCurSel(_hwndTab, i);
+	mb_ChangeAllowed = FALSE;
 }
 
 char TabBarClass::FarTabShortcut(int tabIndex)
@@ -40,6 +71,7 @@ static LRESULT CALLBACK TabProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 	switch (uMsg)
 	{
 	case WM_MBUTTONUP:
+	case WM_RBUTTONUP:
 		{
 			TabBar.OnMouse(uMsg, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
 			break;
@@ -48,15 +80,6 @@ static LRESULT CALLBACK TabProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 	return CallWindowProc(_defaultTabProc, hwnd, uMsg, wParam, lParam);
 }
 
-
-TabBarClass::TabBarClass()
-{
-	_active = false;
-	_hwndTab = NULL;
-	_tabHeight = NULL; memset(&m_Margins, 0, sizeof(m_Margins));
-	_titleShouldChange = false;
-	_prevTab = 0;
-}
 
 bool TabBarClass::IsActive()
 {
@@ -120,9 +143,10 @@ void TabBarClass::Update(ConEmuTab* tabs, int tabsCount)
 	{
 		return;
 	}
-
-	TabCtrl_DeleteAllItems(_hwndTab);
-	for (int i = 0; i < tabsCount; i++)
+	
+	int i;
+	//TabCtrl_DeleteAllItems(_hwndTab);
+	for (i = 0; i < tabsCount; i++)
 	{
 		// get file name
 		TCHAR dummy[MAX_PATH*2];
@@ -170,13 +194,24 @@ void TabBarClass::Update(ConEmuTab* tabs, int tabsCount)
 
 		AddTab(fileName, i);
 	}
-	for (int i = 0; i < tabsCount; i++)
-	{
-		if (tabs[i].Current != 0)
+	
+	// удалить лишние закладки
+	int nCurCount = TabCtrl_GetItemCount(_hwndTab);
+	for (i=tabsCount; i<nCurCount; i++)
+		TabCtrl_DeleteItem(_hwndTab, i);
+
+	if (tabsCount) {
+		int ncur = 0;
+		for (i = tabsCount; i >= 0; i--)
 		{
-			SelectTab(i);
+			if (tabs[i].Current)
+			{
+				ncur = i; break;
+			}
 		}
+		SelectTab(ncur);
 	}
+	
 	if (_tabHeight && tabsCount==1 && tabs[0].Type == 1/*WTYPE_PANELS*/ && gSet.isTabs==2) {
 		// Автоскрытие табов (все редакторы/вьюверы закрыты)
 		Deactivate();
@@ -268,14 +303,28 @@ bool TabBarClass::OnNotify(LPNMHDR nmhdr)
 	SetFocus(ghWnd);
 	if (nmhdr->code == TCN_SELCHANGING)
 	{
+		//if (mb_ChangeAllowed) {
+		//	return FALSE;
+		//}
 		_prevTab = TabCtrl_GetCurSel(_hwndTab); 
-		return false;
+		return FALSE; // разрешаем
 	}
 
 	if (nmhdr->code == TCN_SELCHANGE)
-	{ 
+	{
+		int lnNewTab = TabCtrl_GetCurSel(_hwndTab);
 		_tcscpy(_lastTitle, gConEmu.Title);
-		FarSendChangeTab(TabCtrl_GetCurSel(_hwndTab));
+		
+		if (_prevTab>=0) {
+			SelectTab(_prevTab);
+			_prevTab = -1;
+		}
+		
+		if (mb_ChangeAllowed) {
+			return FALSE;
+		}
+		
+		FarSendChangeTab(lnNewTab);
 		// start waiting for title to change
 		_titleShouldChange = true;
 		return true;
@@ -287,19 +336,19 @@ bool TabBarClass::OnNotify(LPNMHDR nmhdr)
 
 void TabBarClass::OnTimer()
 {
-	if (!_active)
-	{
-		return;
-	}
-	if (_titleShouldChange)
-	{
-		// title hasn't changed - tab switching was unsuccessful - return to the previous selected tab
-		if (_tcscmp(_lastTitle, gConEmu.Title) == 0)
-		{
-			SelectTab(_prevTab);
-		}
-		_titleShouldChange = false;
-	}
+	//if (!_active)
+	//{
+	//	return;
+	//}
+	//if (_titleShouldChange)
+	//{
+	//	// title hasn't changed - tab switching was unsuccessful - return to the previous selected tab
+	//	if (_tcscmp(_lastTitle, gConEmu.Title) == 0)
+	//	{
+	//		SelectTab(_prevTab);
+	//	}
+	//	_titleShouldChange = false;
+	//}
 	return;
 }
 
@@ -310,8 +359,8 @@ void TabBarClass::OnMouse(int message, int x, int y)
 		return;
 	}
 
-	SetFocus(ghWnd);
-	if (message == WM_MBUTTONUP)
+	//SetFocus(ghWnd);
+	if (message == WM_MBUTTONUP || message == WM_RBUTTONUP)
 	{
 		TCHITTESTINFO htInfo;
 		htInfo.pt.x = x;

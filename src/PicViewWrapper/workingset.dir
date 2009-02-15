@@ -1,22 +1,24 @@
- Volume in drive C is BOOT
- Volume Serial Number is A80C-E797
+ Том в устройстве C не имеет метки.
+ Серийный номер тома: F47A-5AFE
 
- Directory of C:\Utils\Far180\Plugins\PictureView
+ Содержимое папки C:\Utils\Far\Plugins\PictureView
 
-12.02.2009  01:51    <DIR>          .
-12.02.2009  01:51    <DIR>          ..
-12.02.2009  01:42             8 192 0PictureView.dll
+14.02.2009  19:37    <DIR>          .
+14.02.2009  19:37    <DIR>          ..
+14.02.2009  19:37             8 192 0PictureView.dll
 09.02.2009  17:39            62 756 0PictureView.dl_
-12.02.2009  01:42            11 776 EmuPic.dll
+14.02.2009  01:53            11 776 EmuPic.dll
 14.03.2007  20:35             2 289 History.txt
 26.11.2008  16:51         2 243 040 IDE_ACDStd.apl
 09.11.2006  18:03           486 048 IDE_JP2.apl
 27.08.2008  16:50           616 928 IDE_PSD.apl
 14.12.2006  15:18           129 728 ID_ICO.apl
 15.11.2007  12:13           264 672 ID_PSP.apl
+21.11.2008  23:06         1 769 296 IMG_3292.JPG
 07.01.2006  14:02               861 PictureView_en.lng
 14.03.2007  20:55             8 102 PictureView_ru.hlf
 07.01.2006  14:01             1 055 PictureView_ru.lng
 14.03.2007  20:55             9 093 Readme.txt
-              13 File(s)      3 844 540 bytes
-               2 Dir(s)  13 045 764 096 bytes free
+10.02.2009  17:09               531 Wrapper-WhatsNew.txt
+              15 файлов      5 614 367 байт
+               2 папок   1 543 905 280 байт свободно

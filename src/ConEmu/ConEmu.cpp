@@ -6,8 +6,8 @@ CConEmuMain::CConEmuMain()
 	gnLastProcessCount=0;
 	cBlinkNext=0;
 	WindowMode=0;
-	hPipe=NULL;
-	hPipeEvent=NULL;
+	//hPipe=NULL;
+	//hPipeEvent=NULL;
 	mb_InSizing = false;
 	isWndNotFSMaximized=false;
 	isShowConsole=false;
@@ -34,6 +34,26 @@ CConEmuMain::CConEmuMain()
 	Title[0]=0; TitleCmp[0]=0;
 	//mb_InClose = FALSE;
 	memset(m_ProcList, 0, 1000*sizeof(DWORD)); m_ProcCount=0;
+	mn_TopProcessID = 0; ms_TopProcess[0] = 0; mb_FarActive = FALSE;
+
+	mh_Psapi = NULL;
+	GetModuleFileNameEx= NULL;
+}
+
+BOOL CConEmuMain::Init()
+{
+	mh_Psapi = LoadLibrary(_T("psapi.dll"));
+	if (mh_Psapi) {
+		GetModuleFileNameEx = (FGetModuleFileNameEx)GetProcAddress(mh_Psapi, "GetModuleFileNameExW");
+		if (GetModuleFileNameEx)
+			return TRUE;
+	}
+
+	DWORD dwErr = GetLastError();
+	TCHAR szErr[255];
+	wsprintf(szErr, _T("Can't initialize psapi!\r\nLastError = 0x%08x"), dwErr);
+	MBoxA(szErr);
+	return FALSE;
 }
 
 CConEmuMain::~CConEmuMain()
@@ -438,42 +458,6 @@ bool CConEmuMain::isConSelectMode()
     return gb_ConsoleSelectMode;
 }
 
-/*
-BOOL SetFocusRemote(HWND hwnd)
-{
-    DWORD   dwOwnerPid, dwCurProcId;
-    HANDLE  hProcess=NULL;
-    DWORD   dwLastError=0;
-    
-    //
-    //  Open the process which "owns" the window
-    //  
-    dwCurProcId = GetCurrentProcessId();
-    GetWindowThreadProcessId(hwnd, &dwOwnerPid);
-    if (dwOwnerPid == dwCurProcId) {
-        SetFocus(hwnd);
-        return TRUE;
-    }
-
-    
-    hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, dwOwnerPid);
-    dwLastError = GetLastError();
-    //OpenProcess не дает себя открыть? GetLastError возвращает 5
-    if (hProcess==NULL) {
-        return FALSE;
-    }
-
-    BOOL lbRc = TRUE;
-    HANDLE  hThread=NULL;
-    hThread = CreateRemoteThread(hProcess, 0, 0, (LPTHREAD_START_ROUTINE)SetFocus, hwnd, 0, 0);
-    if (hThread) CloseHandle(hThread); else lbRc = FALSE;
-
-    if ((dwOwnerPid!=dwCurProcId) && hProcess)
-        CloseHandle(hProcess);
-
-    return TRUE;
-}*/
-
 void CConEmuMain::ForceShowTabs(BOOL abShow)
 {
 	if (!pVCon)
@@ -577,31 +561,57 @@ void CConEmuMain::PaintGaps(HDC hDC/*=NULL*/)
 		ReleaseDC(ghWnd, hDC);
 }
 
-void CConEmuMain::CheckBufferSize()
+DWORD CConEmuMain::CheckProcesses()
 {
 	// Высота буфера могла измениться после смены списка процессов
 	BOOL  lbProcessChanged = FALSE;
     m_ProcCount = GetConsoleProcessList(m_ProcList,1000);
-	if (gnLastProcessCount && m_ProcCount!=gnLastProcessCount)
+	if (m_ProcCount && (!gnLastProcessCount || m_ProcCount!=gnLastProcessCount))
+		lbProcessChanged = TRUE;
+	else if (m_ProcCount && m_ProcList[0]!=mn_TopProcessID)
 		lbProcessChanged = TRUE;
 	gnLastProcessCount = m_ProcCount;
 	
-	#ifdef _DEBUG
 	if (lbProcessChanged) {
-		char szTitleDbg[512], *psz=szTitleDbg; szTitleDbg[0]=0;
-		for (DWORD n=0; n<m_ProcCount; n++) {
-			if (n) strcpy(psz++,",");
-		   wsprintfA(psz, "%i", m_ProcList[n]);
-		   psz+=strlen(psz);
+		if (m_ProcList[0]==mn_TopProcessID) {
+			// не менялось
+			mb_FarActive = _tcscmp(ms_TopProcess, _T("far.exe"))==0;
+		} else
+		if (m_ProcList[0]!=GetCurrentProcessId())
+		{
+			// Получить информацию о верхнем процессе
+			DWORD dwErr = 0;
+			HANDLE hProcess = OpenProcess(PROCESS_VM_READ|PROCESS_QUERY_INFORMATION, FALSE, m_ProcList[0]);
+			if (!hProcess)
+				dwErr = GetLastError();
+			else
+			{
+				TCHAR szFilePath[MAX_PATH+1];
+				if (!GetModuleFileNameEx(hProcess, 0, szFilePath, MAX_PATH))
+					dwErr = GetLastError();
+				else
+				{
+					TCHAR* pszSlash = _tcsrchr(szFilePath, _T('\\'));
+					if (pszSlash) pszSlash++; else pszSlash=szFilePath;
+					int nLen = _tcslen(pszSlash);
+					if (nLen>MAX_PATH) pszSlash[MAX_PATH]=0;
+					_tcscpy(ms_TopProcess, pszSlash);
+					_tcslwr(ms_TopProcess);
+					mb_FarActive = _tcscmp(ms_TopProcess, _T("far.exe"))==0;
+					mn_TopProcessID = m_ProcList[0];
+				}
+				CloseHandle(hProcess); hProcess = NULL;
+			}
+
 		}
-		OutputDebugStringA("Process list was changed!\n");
-		OutputDebugStringA(szTitleDbg);
-		OutputDebugStringA("\n");
+		TabBar.Refresh(mb_FarActive);
     }
-	//SetWindowText(ghWnd, szTitleDbg);
-	#endif
 
+	return m_ProcCount;
+}
 
+void CConEmuMain::CheckBufferSize()
+{
     CONSOLE_SCREEN_BUFFER_INFO inf; memset(&inf, 0, sizeof(inf));
     GetConsoleScreenBufferInfo(pVCon->hConOut(), &inf);
     if (inf.dwSize.X>(inf.srWindow.Right-inf.srWindow.Left+1)) {
@@ -639,36 +649,37 @@ LRESULT CALLBACK CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPAR
 
 	if (messg == WM_SYSCHAR) {
         #ifdef _DEBUG
-        {
+        /*{
 	        TCHAR szDbg[32];
 	        wsprintf(szDbg, _T("SysChar - %c (%i)"),
 		        (TCHAR)wParam, wParam);
 		    SetWindowText(ghWnd, szDbg);
-        }
+        }*/
         #endif
 		return TRUE;
     } else if (messg == WM_CHAR) {
         #ifdef _DEBUG
-        {
+        /*{
 	        TCHAR szDbg[32];
 	        wsprintf(szDbg, _T("Char - %c (%i)"),
 		        (TCHAR)wParam, wParam);
 		    SetWindowText(ghWnd, szDbg);
-        }
+        }*/
         #endif
     }
 
     switch (messg)
     {
     case WM_NOTIFY:
-        {
-            result = TabBar.OnNotify((LPNMHDR)lParam);
-            break;
-        }
+    {
+        result = TabBar.OnNotify((LPNMHDR)lParam);
+        break;
+    }
+
     case WM_COPYDATA:
     {
         PCOPYDATASTRUCT cds = PCOPYDATASTRUCT(lParam);
-		result = gConEmu.OnCopyData(cds);
+		result = OnCopyData(cds);
         break;
     }
     
@@ -693,176 +704,26 @@ LRESULT CALLBACK CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPAR
 	case WM_GETMINMAXINFO:
 		{
 			LPMINMAXINFO pInfo = (LPMINMAXINFO)lParam;
-			result = gConEmu.OnGetMinMaxInfo(pInfo);
+			result = OnGetMinMaxInfo(pInfo);
 			break;
 		}
 
     case WM_KEYDOWN:
     case WM_KEYUP:
-    
-        //#ifdef _DEBUG
-        //{
-	    //    TCHAR szDbg[32];
-	    //    wsprintf(szDbg, _T("%s - %c (%i)"),
-		//        ((messg == WM_KEYDOWN) ? _T("Dn") : _T("Up")),
-		//        (TCHAR)wParam, wParam);
-		//    SetWindowText(ghWnd, szDbg);
-        //}
-        //#endif
-
-        if (wParam == VK_PAUSE && !isPressed(VK_CONTROL)) {
-            if (gConEmu.isPictureView()) {
-                if (messg == WM_KEYUP) {
-                    gConEmu.bPicViewSlideShow = !gConEmu.bPicViewSlideShow;
-                    if (gConEmu.bPicViewSlideShow) {
-                        if (gSet.nSlideShowElapse<=500) gSet.nSlideShowElapse=500;
-                        //SetTimer(hWnd, 3, gSet.nSlideShowElapse, NULL);
-                        gConEmu.dwLastSlideShowTick = GetTickCount() - gSet.nSlideShowElapse;
-                    //} else {
-                    //  KillTimer(hWnd, 3);
-                    }
-                }
-                break;
-            }
-        } else if (gConEmu.bPicViewSlideShow) {
-            //KillTimer(hWnd, 3);
-            if (wParam==0xbd/* -_ */ || wParam==0xbb/* =+ */) {
-                if (messg == WM_KEYDOWN) {
-                    if (wParam==0xbb)
-                        gSet.nSlideShowElapse = 1.2 * gSet.nSlideShowElapse;
-                    else {
-                        gSet.nSlideShowElapse = gSet.nSlideShowElapse / 1.2;
-                        if (gSet.nSlideShowElapse<=500) gSet.nSlideShowElapse=500;
-                    }
-                }
-            } else {
-                gConEmu.bPicViewSlideShow = false; // отмена слайдшоу
-            }
-        } else if (messg == WM_KEYDOWN && wParam == VK_NEXT) {
-            lParam = lParam;
-        } else if (messg == WM_KEYUP && wParam == VK_NEXT) {
-            lParam = lParam;
-        }
-
     case WM_SYSKEYDOWN:
     case WM_SYSKEYUP:
-
-    case WM_MOUSEWHEEL:
-
-        /*if (hPictureView && IsWindow(hPictureView)) {
-            HWND hFocus = GetFocus(), hFocus1=NULL;
-            if (hFocus != hPictureView) {
-                SetFocusRemote(hPictureView);
-                hFocus1 = GetFocus();
-            }
-            hFocus = hFocus1;
-        }*/
+		result = OnKeyboard(hWnd, messg, wParam, lParam);
+		break;
 
     case WM_ACTIVATE:
     case WM_ACTIVATEAPP:
     case WM_KILLFOCUS:
     case WM_SETFOCUS:
-
-	    if (messg == WM_SETFOCUS) {
-			if (ghWndDC && IsWindow(ghWndDC))
-				SetFocus(ghWndDC);
-		}
-    
-        /*if (messg == WM_SETFOCUS || messg == WM_KILLFOCUS) {
-            if (hPictureView && IsWindow(hPictureView)) {
-                break; // в FAR не пересылать
-            }
-        }*/
-
-      // buffer mode: scroll with keys  -- NightRoman
-        if (gSet.BufferHeight && messg == WM_KEYDOWN && isPressed(VK_CONTROL))
-        {
-            switch(wParam)
-            {
-            case VK_DOWN:
-                POSTMESSAGE(ghConWnd, WM_VSCROLL, SB_LINEDOWN, NULL, FALSE);
-                break;
-            case VK_UP:
-                POSTMESSAGE(ghConWnd, WM_VSCROLL, SB_LINEUP, NULL, FALSE);
-                break;
-            case VK_NEXT:
-                POSTMESSAGE(ghConWnd, WM_VSCROLL, SB_PAGEDOWN, NULL, FALSE);
-                break;
-            case VK_PRIOR:
-                POSTMESSAGE(ghConWnd, WM_VSCROLL, SB_PAGEUP, NULL, FALSE);
-                break;
-            }
-        }
-
-        if (messg == WM_KEYDOWN && wParam == VK_SPACE && isPressed(VK_CONTROL) && isPressed(VK_LWIN) && isPressed(VK_MENU))
-        {
-            if (!IsWindowVisible(ghConWnd))
-            {
-                gConEmu.isShowConsole = true;
-                ShowWindow(ghConWnd, SW_SHOWNORMAL);
-                //if (gConEmu.setParent) SetParent(ghConWnd, 0);
-                EnableWindow(ghConWnd, true);
-            }
-            else
-            {
-                gConEmu.isShowConsole = false;
-                if (!gSet.isConVisible) ShowWindow(ghConWnd, SW_HIDE);
-                //if (gConEmu.setParent) SetParent(ghConWnd, HDCWND);
-                if (!gSet.isConVisible) EnableWindow(ghConWnd, false);
-            }
-            break;
-        }
-
-        if (gConEmu.gb_ConsoleSelectMode && messg == WM_KEYDOWN && ((wParam == VK_ESCAPE) || (wParam == VK_RETURN)))
-            gConEmu.gb_ConsoleSelectMode = false; //TODO: может как-то по другому определять?
-
-        // Основная обработка 
-        {
-            if (messg == WM_SYSKEYDOWN) 
-                if (wParam == VK_INSERT && lParam & 29)
-                    gConEmu.gb_ConsoleSelectMode = true;
-
-            static bool isSkipNextAltUp = false;
-            if (messg == WM_SYSKEYDOWN && wParam == VK_RETURN && lParam & 29)
-            {
-                if (gSet.isSentAltEnter)
-                {
-                    POSTMESSAGE(ghConWnd, WM_KEYDOWN, VK_MENU, 0, TRUE);
-                    POSTMESSAGE(ghConWnd, WM_KEYDOWN, VK_RETURN, 0, TRUE);
-                    POSTMESSAGE(ghConWnd, WM_KEYUP, VK_RETURN, 0, TRUE);
-                    POSTMESSAGE(ghConWnd, WM_KEYUP, VK_MENU, 0, TRUE);
-                }
-                else
-                {
-                    if (isPressed(VK_SHIFT))
-                        break;
-
-                    if (!gSet.isFullScreen)
-                        gConEmu.SetWindowMode(rFullScreen);
-                    else
-                        gConEmu.SetWindowMode(gConEmu.isWndNotFSMaximized ? rMaximized : rNormal);
-
-                    isSkipNextAltUp = true;
-                    //POSTMESSAGE(ghConWnd, messg, wParam, lParam);
-                }
-            }
-            else if (messg == WM_SYSKEYDOWN && wParam == VK_SPACE && lParam & 29 && !isPressed(VK_SHIFT))
-            {
-                RECT rect, cRect;
-                GetWindowRect(ghWnd, &rect);
-                GetClientRect(ghWnd, &cRect);
-                WINDOWINFO wInfo;   GetWindowInfo(ghWnd, &wInfo);
-                gConEmu.ShowSysmenu(ghWnd, ghWnd, rect.right - cRect.right - wInfo.cxWindowBorders, rect.bottom - cRect.bottom - wInfo.cyWindowBorders);
-            }
-            else if (messg == WM_KEYUP && wParam == VK_MENU && isSkipNextAltUp) isSkipNextAltUp = false;
-            else if (messg == WM_SYSKEYDOWN && wParam == VK_F9 && lParam & 29 && !isPressed(VK_SHIFT))
-                gConEmu.SetWindowMode(IsZoomed(ghWnd) ? rNormal : rMaximized);
-            else
-                POSTMESSAGE(ghConWnd, messg, wParam, lParam, FALSE);
-        }
-        break;
+		result = OnFocus(hWnd, messg, wParam, lParam);
+		break;
 
     case WM_MOUSEMOVE:
+    case WM_MOUSEWHEEL:
     case WM_RBUTTONDOWN:
     case WM_RBUTTONUP:
     case WM_MBUTTONDOWN:
@@ -872,255 +733,19 @@ LRESULT CALLBACK CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPAR
     case WM_LBUTTONDBLCLK:
     case WM_MBUTTONDBLCLK:
     case WM_RBUTTONDBLCLK:
-    {
-        RECT conRect;
-        GetClientRect(ghConWnd, &conRect);
-        short winX = GET_X_LPARAM(lParam);
-        short winY = GET_Y_LPARAM(lParam);
-        RECT consoleRect;
-		memset(&consoleRect, 0, sizeof(consoleRect));
-        winX -= consoleRect.left;
-        winY -= consoleRect.top;
-        short newX = MulDiv(winX, conRect.right, klMax<uint>(1, pVCon->Width));
-        short newY = MulDiv(winY, conRect.bottom, klMax<uint>(1, pVCon->Height));
-
-        if (newY<0 || newX<0)
-            break;
-
-        if (gSet.BufferHeight)
-        {
-           // buffer mode: cheat the console window: adjust its position exactly to the cursor
-           RECT win;
-           GetWindowRect(ghWnd, &win);
-           short x = win.left + winX - newX;
-           short y = win.top + winY - newY;
-           RECT con;
-           GetWindowRect(ghConWnd, &con);
-           if (con.left != x || con.top != y)
-              MOVEWINDOW(ghConWnd, x, y, con.right - con.left + 1, con.bottom - con.top + 1, TRUE);
-        }
-        else if (messg == WM_MOUSEMOVE)
-        {
-            // WM_MOUSEMOVE вроде бы слишком часто вызывается даже при условии что курсор не двигается...
-            if (wParam==gConEmu.lastMMW && lParam==gConEmu.lastMML) {
-                break;
-            }
-            gConEmu.lastMMW=wParam; gConEmu.lastMML=lParam;
-
-            /*if (isLBDown &&   (cursor.x-LOWORD(lParam)>DRAG_DELTA || 
-                               cursor.x-LOWORD(lParam)<-DRAG_DELTA || 
-                               cursor.y-HIWORD(lParam)>DRAG_DELTA || 
-                               cursor.y-HIWORD(lParam)<-DRAG_DELTA))*/
-            if (gConEmu.isLBDown && !PTDIFFTEST(gConEmu.cursor,DRAG_DELTA) 
-				&& !gConEmu.isDragProcessed && !gConEmu.mb_InSizing)
-            {
-	            // Если сначала фокус был на файловой панели, но после LClick он попал на НЕ файловую - отменить ShellDrag
-	            if (!gConEmu.isFilePanel()) {
-		            gConEmu.isLBDown = false;
-		            break;
-	            }
-                // Иначе иногда срабатывает FAR'овский D'n'D
-                //SENDMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( newX, newY ));     //посылаем консоли отпускание
-				if (gConEmu.DragDrop)
-					gConEmu.DragDrop->Drag(); //сдвинулись при зажатой левой
-				//isDragProcessed=false; -- убрал, иначе при бросании в пассивную панель больших файлов дроп может вызваться еще раз???
-                POSTMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( newX, newY ), TRUE);     //посылаем консоли отпускание
-                break;
-            }
-            else if (gSet.isRClickSendKey && gConEmu.isRBDown)
-            {
-                //Если двинули мышкой, а была включена опция RClick - не вызывать
-                //контекстное меню - просто послать правый клик
-                if (!PTDIFFTEST(gConEmu.Rcursor, RCLICKAPPSDELTA))
-                {
-                    gConEmu.isRBDown=false;
-                    POSTMESSAGE(ghConWnd, WM_RBUTTONDOWN, 0, MAKELPARAM( gConEmu.RBDownNewX, gConEmu.RBDownNewY ), TRUE);
-                }
-                break;
-            }
-            /*if (!isRBDown && (wParam==MK_RBUTTON)) {
-                // Чтобы при выделении правой кнопкой файлы не пропускались
-                if ((newY-RBDownNewY)>5) {// пока попробуем для режима сверху вниз
-                    for (short y=RBDownNewY;y<newY;y+=5)
-                        POSTMESSAGE(ghConWnd, WM_MOUSEMOVE, wParam, MAKELPARAM( RBDownNewX, y ), TRUE);
-                }
-                RBDownNewX=newX; RBDownNewY=newY;
-            }*/
-        } else {
-            gConEmu.lastMMW=-1; gConEmu.lastMML=-1;
-
-            if (messg == WM_LBUTTONDOWN)
-            {
-                if (gConEmu.isLBDown) ReleaseCapture(); // Вдруг сглючило?
-                gConEmu.isLBDown=false;
-                if (!gConEmu.isConSelectMode() && gConEmu.isFilePanel())
-                {
-                    SetCapture(ghWndDC);
-                    gConEmu.cursor.x = LOWORD(lParam);
-                    gConEmu.cursor.y = HIWORD(lParam); 
-                    gConEmu.isLBDown=true;
-                    gConEmu.isDragProcessed=false;
-                    POSTMESSAGE(ghConWnd, messg, wParam, MAKELPARAM( newX, newY ), FALSE); // было SEND
-                    break;
-                }
-            }
-            else if (messg == WM_LBUTTONUP)
-            {
-                if (gConEmu.isLBDown) {
-                    gConEmu.isLBDown=false;
-                    ReleaseCapture();
-                }
-            }
-            else if (messg == WM_RBUTTONDOWN)
-            {
-                gConEmu.Rcursor.x = LOWORD(lParam);
-                gConEmu.Rcursor.y = HIWORD(lParam);
-                gConEmu.RBDownNewX=newX;
-                gConEmu.RBDownNewY=newY;
-                gConEmu.isRBDown=false;
-
-                // Если ничего лишнего не нажато!
-                if (gSet.isRClickSendKey && !(wParam&(MK_CONTROL|MK_LBUTTON|MK_MBUTTON|MK_SHIFT|MK_XBUTTON1|MK_XBUTTON2)))
-                {
-                    //TCHAR *BrF = _tcschr(Title, '{'), *BrS = _tcschr(Title, '}'), *Slash = _tcschr(Title, '\\');
-                    //if (BrF && BrS && Slash && BrF == Title && (Slash == Title+1 || Slash == Title+3))
-                    if (gConEmu.isFilePanel()) // Maximus5
-                    {
-                        //заведем таймер на .3
-                        //если больше - пошлем apps
-                        gConEmu.isRBDown=true; gConEmu.ibSkilRDblClk=false;
-                        //SetTimer(hWnd, 1, 300, 0); -- Maximus5, откажемся от таймера
-                        gConEmu.dwRBDownTick = GetTickCount();
-                        break;
-                    }
-                }
-            }
-            else if (messg == WM_RBUTTONUP)
-            {
-                if (gSet.isRClickSendKey && gConEmu.isRBDown)
-                {
-                    gConEmu.isRBDown=false; // сразу сбросим!
-                    if (PTDIFFTEST(gConEmu.Rcursor,RCLICKAPPSDELTA))
-                    {
-                        //держали зажатой <.3
-                        //убьем таймер, кликнием правой кнопкой
-                        //KillTimer(hWnd, 1); -- Maximus5, таймер более не используется
-                        DWORD dwCurTick=GetTickCount();
-                        DWORD dwDelta=dwCurTick-gConEmu.dwRBDownTick;
-                        // Если держали дольше .3с, но не слишком долго :)
-                        if ((gSet.isRClickSendKey==1) ||
-                            (dwDelta>RCLICKAPPSTIMEOUT && dwDelta<10000))
-                        {
-                            // Сначала выделить файл под курсором
-                            POSTMESSAGE(ghConWnd, WM_LBUTTONDOWN, MK_LBUTTON, MAKELPARAM( gConEmu.RBDownNewX, gConEmu.RBDownNewY ), TRUE);
-                            POSTMESSAGE(ghConWnd, WM_LBUTTONUP, 0, MAKELPARAM( gConEmu.RBDownNewX, gConEmu.RBDownNewY ), TRUE);
-                        
-                            pVCon->Update(true);
-                            INVALIDATE(); //InvalidateRect(HDCWND, NULL, FALSE);
-
-                            // А теперь можно и Apps нажать
-							gConEmu.ibSkilRDblClk=true; // чтобы пока FAR думает в консоль не проскочило мышиное сообщение
-                            POSTMESSAGE(ghConWnd, WM_KEYDOWN, VK_APPS, 0, TRUE);
-                            break;
-                        }
-                    }
-                    // Иначе нужно сначала послать WM_RBUTTONDOWN
-                    POSTMESSAGE(ghConWnd, WM_RBUTTONDOWN, wParam, MAKELPARAM( newX, newY ), TRUE);
-                }
-                gConEmu.isRBDown=false; // чтобы не осталось случайно
-            }
-			else if (messg == WM_RBUTTONDBLCLK) {
-				if (gConEmu.ibSkilRDblClk) {
-					gConEmu.ibSkilRDblClk = false;
-					break; // не обрабатывать, сейчас висит контекстное меню
-				}
-			}
-        }
-
-//      заменим даблклик вторым обычным
-        POSTMESSAGE(ghConWnd, messg == WM_RBUTTONDBLCLK ? WM_RBUTTONDOWN : messg, wParam, MAKELPARAM( newX, newY ), FALSE);
-        break;
-    }
+		result = OnMouse(hWnd, messg, wParam, lParam);
+		break;
 
     case WM_CLOSE:
-        //Icon.Delete(); - перенес в WM_DESTROY
-		//gConEmu.mb_InClose = TRUE;
-        SENDMESSAGE(ghConWnd, WM_CLOSE, 0, 0);
-		//gConEmu.mb_InClose = FALSE;
+		result = OnClose(hWnd);
         break;
 
     case WM_CREATE:
-		result = gConEmu.OnCreate(hWnd);
+		result = OnCreate(hWnd);
         break;
 
     case WM_SYSCOMMAND:
-        switch(LOWORD(wParam))
-        {
-        case ID_SETTINGS:
-	        if (ghOpWnd && IsWindow(ghOpWnd)) {
-		        ShowWindow ( ghOpWnd, SW_SHOWNORMAL );
-		        SetFocus ( ghOpWnd );
-		        break; // А то открывались несколько окон диалогов :)
-		    }
-			DialogBox((HINSTANCE)GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_DIALOG1), 0, CSettings::wndOpProc);
-            break;
-        case ID_HELP:
-	        {
-		        WCHAR szTitle[255];
-		        wsprintf(szTitle, L"About ConEmu (%s)...", gConEmu.szConEmuVersion);
-	            MessageBox(ghOpWnd, pHelp, szTitle, MB_ICONQUESTION);
-	        }
-            break;
-        case ID_TOTRAY:
-            Icon.HideWindowToTray();
-            break;
-        case ID_CONPROP:
-            #ifdef _DEBUG
-            {
-                HMENU hMenu = GetSystemMenu(ghConWnd, FALSE);
-                MENUITEMINFO mii; TCHAR szText[255];
-                for (int i=0; i<15; i++) {
-                    memset(&mii, 0, sizeof(mii));
-                    mii.cbSize = sizeof(mii); mii.dwTypeData=szText; mii.cch=255;
-                    mii.fMask = MIIM_ID|MIIM_STRING;
-                    if (GetMenuItemInfo(hMenu, i, TRUE, &mii)) {
-                        mii.cbSize = sizeof(mii);
-                    } else
-                        break;
-                }
-            }
-            #endif
-            POSTMESSAGE(ghConWnd, WM_SYSCOMMAND, 65527, 0, TRUE);
-            break;
-        }
-
-        switch(wParam)
-        {
-        case SC_MAXIMIZE_SECRET:
-            gConEmu.SetWindowMode(rMaximized);
-            break;
-        case SC_RESTORE_SECRET:
-            gConEmu.SetWindowMode(rNormal);
-            break;
-        case SC_CLOSE:
-            Icon.Delete();
-            SENDMESSAGE(ghConWnd, WM_CLOSE, 0, 0);
-            break;
-
-        case SC_MAXIMIZE:
-            if (wParam == SC_MAXIMIZE)
-                CheckRadioButton(ghOpWnd, rNormal, rFullScreen, rMaximized);
-        case SC_RESTORE:
-            if (wParam == SC_RESTORE)
-                CheckRadioButton(ghOpWnd, rNormal, rFullScreen, rNormal);
-
-        default:
-            if (wParam != 0xF100)
-            {
-                POSTMESSAGE(ghConWnd, messg, wParam, lParam, FALSE);
-                result = DefWindowProc(hWnd, messg, wParam, lParam);
-            }
-        }
+		result = OnSysCommand(hWnd, wParam, lParam);
         break;
 
 	case WM_NCLBUTTONDOWN:
@@ -1133,35 +758,12 @@ LRESULT CALLBACK CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPAR
         break;
 
     case WM_TRAYNOTIFY:
-        switch(lParam)
-        {
-        case WM_LBUTTONUP:
-            Icon.RestoreWindowFromTray();
-            break;
-        case WM_RBUTTONUP:
-            {
-            POINT mPos;
-            GetCursorPos(&mPos);
-            SetForegroundWindow(hWnd);
-            gConEmu.ShowSysmenu(hWnd, hWnd, mPos.x, mPos.y);
-            PostMessage(hWnd, WM_NULL, 0, 0);
-            }
-            break;
-        } 
+		result = Icon.OnTryIcon(hWnd, messg, wParam, lParam);
         break; 
 
 
     case WM_DESTROY:
-        Icon.Delete();
-        if (gConEmu.DragDrop) {
-	        delete gConEmu.DragDrop;
-	        gConEmu.DragDrop = NULL;
-        }
-        if (gConEmu.ProgressBars) {
-	        delete gConEmu.ProgressBars;
-	        gConEmu.ProgressBars = NULL;
-        }
-        PostQuitMessage(0);
+		result = OnDestroy(hWnd);
         break;
     
     /*case WM_INPUTLANGCHANGE:
@@ -1174,6 +776,474 @@ LRESULT CALLBACK CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPAR
         if (messg) result = DefWindowProc(hWnd, messg, wParam, lParam);
     }
     return result;
+}
+
+
+LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
+{
+	/*
+    case WM_ACTIVATE:
+    case WM_ACTIVATEAPP:
+    case WM_KILLFOCUS:
+    case WM_SETFOCUS:
+	*/
+
+
+    /*if (messg == WM_SETFOCUS) {
+	    //TODO: проверка Options
+		if (ghOpWnd) {
+			TCHAR szClass[128], szTitle[255], szMsg[1024];
+
+			GetClassName(hWnd, szClass, 64);
+			GetWindowText(hWnd, szTitle, 255);
+
+			wsprintf(szMsg, _T("WM_SETFOCUS to (HWND=0x%08x)\r\n%s - %s\r\n"),
+				(DWORD)hWnd, szClass, szTitle);
+
+			if (!wParam)
+				wParam = (WPARAM)GetFocus();
+			if (wParam) {
+				GetClassName((HWND)wParam, szClass, 64);
+				GetWindowText((HWND)wParam, szTitle, 255);
+				wsprintf(szMsg+_tcslen(szMsg), _T("from (HWND=0x%08x)\r\n%s - %s\r\n"),
+					(DWORD)hWnd, szClass, szTitle);
+			}
+			MBoxA(szMsg);
+		}
+		else if (ghWndDC && IsWindow(ghWndDC)) {
+			SetFocus(ghWndDC);
+		}
+	}*/
+
+    /*if (messg == WM_SETFOCUS || messg == WM_KILLFOCUS) {
+        if (hPictureView && IsWindow(hPictureView)) {
+            break; // в FAR не пересылать
+        }
+    }*/
+
+    POSTMESSAGE(ghConWnd, messg, wParam, lParam, FALSE);
+	return 0;
+}
+
+LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
+{
+	LRESULT result = 0;
+    switch(LOWORD(wParam))
+    {
+    case ID_SETTINGS:
+        if (ghOpWnd && IsWindow(ghOpWnd)) {
+	        ShowWindow ( ghOpWnd, SW_SHOWNORMAL );
+	        SetFocus ( ghOpWnd );
+	        break; // А то открывались несколько окон диалогов :)
+	    }
+		DialogBox((HINSTANCE)GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_DIALOG1), 0, CSettings::wndOpProc);
+        break;
+    case ID_HELP:
+        {
+	        WCHAR szTitle[255];
+	        wsprintf(szTitle, L"About ConEmu (%s)...", gConEmu.szConEmuVersion);
+            MessageBox(ghOpWnd, pHelp, szTitle, MB_ICONQUESTION);
+        }
+        break;
+    case ID_TOTRAY:
+        Icon.HideWindowToTray();
+        break;
+    case ID_CONPROP:
+        #ifdef _DEBUG
+        {
+            HMENU hMenu = GetSystemMenu(ghConWnd, FALSE);
+            MENUITEMINFO mii; TCHAR szText[255];
+            for (int i=0; i<15; i++) {
+                memset(&mii, 0, sizeof(mii));
+                mii.cbSize = sizeof(mii); mii.dwTypeData=szText; mii.cch=255;
+                mii.fMask = MIIM_ID|MIIM_STRING;
+                if (GetMenuItemInfo(hMenu, i, TRUE, &mii)) {
+                    mii.cbSize = sizeof(mii);
+                } else
+                    break;
+            }
+        }
+        #endif
+        POSTMESSAGE(ghConWnd, WM_SYSCOMMAND, 65527, 0, TRUE);
+        break;
+    }
+
+    switch(wParam)
+    {
+    case SC_MAXIMIZE_SECRET:
+        gConEmu.SetWindowMode(rMaximized);
+        break;
+    case SC_RESTORE_SECRET:
+        gConEmu.SetWindowMode(rNormal);
+        break;
+    case SC_CLOSE:
+        Icon.Delete();
+        SENDMESSAGE(ghConWnd, WM_CLOSE, 0, 0);
+        break;
+
+    case SC_MAXIMIZE:
+        if (wParam == SC_MAXIMIZE)
+            CheckRadioButton(ghOpWnd, rNormal, rFullScreen, rMaximized);
+    case SC_RESTORE:
+        if (wParam == SC_RESTORE)
+            CheckRadioButton(ghOpWnd, rNormal, rFullScreen, rNormal);
+
+    default:
+        if (wParam != 0xF100)
+        {
+            POSTMESSAGE(ghConWnd, WM_SYSCOMMAND, wParam, lParam, FALSE);
+            result = DefWindowProc(hWnd, WM_SYSCOMMAND, wParam, lParam);
+        }
+    }
+	return result;
+}
+
+LRESULT CConEmuMain::OnClose(HWND hWnd)
+{
+    //Icon.Delete(); - перенес в WM_DESTROY
+	//gConEmu.mb_InClose = TRUE;
+    SENDMESSAGE(ghConWnd, WM_CLOSE, 0, 0);
+	//gConEmu.mb_InClose = FALSE;
+	return 0;
+}
+
+LRESULT CConEmuMain::OnDestroy(HWND hWnd)
+{
+    Icon.Delete();
+    if (gConEmu.DragDrop) {
+        delete gConEmu.DragDrop;
+        gConEmu.DragDrop = NULL;
+    }
+    if (gConEmu.ProgressBars) {
+        delete gConEmu.ProgressBars;
+        gConEmu.ProgressBars = NULL;
+    }
+    PostQuitMessage(0);
+
+	return 0;
+}
+
+LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
+{
+	LRESULT result = 0;
+
+    //#ifdef _DEBUG
+    //{
+    //    TCHAR szDbg[32];
+    //    wsprintf(szDbg, _T("%s - %c (%i)"),
+	//        ((messg == WM_KEYDOWN) ? _T("Dn") : _T("Up")),
+	//        (TCHAR)wParam, wParam);
+	//    SetWindowText(ghWnd, szDbg);
+    //}
+    //#endif
+
+	if (messg == WM_KEYDOWN || messg == WM_KEYUP)
+	{
+		if (wParam == VK_PAUSE && !isPressed(VK_CONTROL)) {
+			if (gConEmu.isPictureView()) {
+				if (messg == WM_KEYUP) {
+					gConEmu.bPicViewSlideShow = !gConEmu.bPicViewSlideShow;
+					if (gConEmu.bPicViewSlideShow) {
+						if (gSet.nSlideShowElapse<=500) gSet.nSlideShowElapse=500;
+						//SetTimer(hWnd, 3, gSet.nSlideShowElapse, NULL);
+						gConEmu.dwLastSlideShowTick = GetTickCount() - gSet.nSlideShowElapse;
+					//} else {
+					//  KillTimer(hWnd, 3);
+					}
+				}
+				return 0;
+			}
+		} else if (gConEmu.bPicViewSlideShow) {
+			//KillTimer(hWnd, 3);
+			if (wParam==0xbd/* -_ */ || wParam==0xbb/* =+ */) {
+				if (messg == WM_KEYDOWN) {
+					if (wParam==0xbb)
+						gSet.nSlideShowElapse = 1.2 * gSet.nSlideShowElapse;
+					else {
+						gSet.nSlideShowElapse = gSet.nSlideShowElapse / 1.2;
+						if (gSet.nSlideShowElapse<=500) gSet.nSlideShowElapse=500;
+					}
+				}
+				return 0;
+			} else {
+				gConEmu.bPicViewSlideShow = false; // отмена слайдшоу
+			}
+		}
+	}
+
+
+  // buffer mode: scroll with keys  -- NightRoman
+    if (gSet.BufferHeight && messg == WM_KEYDOWN && isPressed(VK_CONTROL))
+    {
+        switch(wParam)
+        {
+        case VK_DOWN:
+            POSTMESSAGE(ghConWnd, WM_VSCROLL, SB_LINEDOWN, NULL, FALSE);
+            return 0;
+        case VK_UP:
+            POSTMESSAGE(ghConWnd, WM_VSCROLL, SB_LINEUP, NULL, FALSE);
+            return 0;
+        case VK_NEXT:
+            POSTMESSAGE(ghConWnd, WM_VSCROLL, SB_PAGEDOWN, NULL, FALSE);
+            return 0;
+        case VK_PRIOR:
+            POSTMESSAGE(ghConWnd, WM_VSCROLL, SB_PAGEUP, NULL, FALSE);
+            return 0;
+        }
+    }
+
+    if (messg == WM_KEYDOWN && wParam == VK_SPACE && isPressed(VK_CONTROL) && isPressed(VK_LWIN) && isPressed(VK_MENU))
+    {
+        if (!IsWindowVisible(ghConWnd))
+        {
+            gConEmu.isShowConsole = true;
+            ShowWindow(ghConWnd, SW_SHOWNORMAL);
+            //if (gConEmu.setParent) SetParent(ghConWnd, 0);
+            EnableWindow(ghConWnd, true);
+        }
+        else
+        {
+            gConEmu.isShowConsole = false;
+            if (!gSet.isConVisible) ShowWindow(ghConWnd, SW_HIDE);
+            //if (gConEmu.setParent) SetParent(ghConWnd, HDCWND);
+            if (!gSet.isConVisible) EnableWindow(ghConWnd, false);
+        }
+        return 0;
+    }
+
+    if (gConEmu.gb_ConsoleSelectMode && messg == WM_KEYDOWN && ((wParam == VK_ESCAPE) || (wParam == VK_RETURN)))
+        gConEmu.gb_ConsoleSelectMode = false; //TODO: может как-то по другому определять?
+
+    // Основная обработка 
+    {
+        if (messg == WM_SYSKEYDOWN) 
+            if (wParam == VK_INSERT && lParam & 29)
+                gConEmu.gb_ConsoleSelectMode = true;
+
+        static bool isSkipNextAltUp = false;
+        if (messg == WM_SYSKEYDOWN && wParam == VK_RETURN && lParam & 29)
+        {
+            if (gSet.isSentAltEnter)
+            {
+                POSTMESSAGE(ghConWnd, WM_KEYDOWN, VK_MENU, 0, TRUE);
+                POSTMESSAGE(ghConWnd, WM_KEYDOWN, VK_RETURN, 0, TRUE);
+                POSTMESSAGE(ghConWnd, WM_KEYUP, VK_RETURN, 0, TRUE);
+                POSTMESSAGE(ghConWnd, WM_KEYUP, VK_MENU, 0, TRUE);
+            }
+            else
+            {
+                if (isPressed(VK_SHIFT))
+                    return 0;
+
+                if (!gSet.isFullScreen)
+                    gConEmu.SetWindowMode(rFullScreen);
+                else
+                    gConEmu.SetWindowMode(gConEmu.isWndNotFSMaximized ? rMaximized : rNormal);
+
+                isSkipNextAltUp = true;
+                //POSTMESSAGE(ghConWnd, messg, wParam, lParam);
+            }
+        }
+        else if (messg == WM_SYSKEYDOWN && wParam == VK_SPACE && lParam & 29 && !isPressed(VK_SHIFT))
+        {
+            RECT rect, cRect;
+            GetWindowRect(ghWnd, &rect);
+            GetClientRect(ghWnd, &cRect);
+            WINDOWINFO wInfo;   GetWindowInfo(ghWnd, &wInfo);
+            gConEmu.ShowSysmenu(ghWnd, ghWnd, rect.right - cRect.right - wInfo.cxWindowBorders, rect.bottom - cRect.bottom - wInfo.cyWindowBorders);
+        }
+        else if (messg == WM_KEYUP && wParam == VK_MENU && isSkipNextAltUp) isSkipNextAltUp = false;
+        else if (messg == WM_SYSKEYDOWN && wParam == VK_F9 && lParam & 29 && !isPressed(VK_SHIFT))
+            gConEmu.SetWindowMode(IsZoomed(ghWnd) ? rNormal : rMaximized);
+        else
+            POSTMESSAGE(ghConWnd, messg, wParam, lParam, FALSE);
+    }
+
+	return 0;
+}
+
+LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
+{
+    short winX = GET_X_LPARAM(lParam);
+    short winY = GET_Y_LPARAM(lParam);
+
+    RECT conRect, consoleRect;
+	POINT ptCur;
+
+	// Иначе в консоль проваливаются щелчки по незанятому полю таба...
+	if (messg==WM_LBUTTONDOWN || messg==WM_RBUTTONDOWN || messg==WM_MBUTTONDOWN || 
+		messg==WM_LBUTTONDBLCLK || messg==WM_RBUTTONDBLCLK || messg==WM_MBUTTONDBLCLK)
+	{
+		GetCursorPos(&ptCur);
+		GetWindowRect(ghWndDC, &consoleRect);
+		if (!PtInRect(&consoleRect, ptCur))
+			return 0;
+	}
+
+    GetClientRect(ghConWnd, &conRect);
+
+	memset(&consoleRect, 0, sizeof(consoleRect));
+    winX -= consoleRect.left;
+    winY -= consoleRect.top;
+    short newX = MulDiv(winX, conRect.right, klMax<uint>(1, pVCon->Width));
+    short newY = MulDiv(winY, conRect.bottom, klMax<uint>(1, pVCon->Height));
+
+    if (newY<0 || newX<0)
+        return 0;
+
+    if (gSet.BufferHeight)
+    {
+       // buffer mode: cheat the console window: adjust its position exactly to the cursor
+       RECT win;
+       GetWindowRect(ghWnd, &win);
+       short x = win.left + winX - newX;
+       short y = win.top + winY - newY;
+       RECT con;
+       GetWindowRect(ghConWnd, &con);
+       if (con.left != x || con.top != y)
+          MOVEWINDOW(ghConWnd, x, y, con.right - con.left + 1, con.bottom - con.top + 1, TRUE);
+    }
+    else if (messg == WM_MOUSEMOVE)
+    {
+        // WM_MOUSEMOVE вроде бы слишком часто вызывается даже при условии что курсор не двигается...
+        if (wParam==gConEmu.lastMMW && lParam==gConEmu.lastMML) {
+            return 0;
+        }
+        gConEmu.lastMMW=wParam; gConEmu.lastMML=lParam;
+
+        /*if (isLBDown &&   (cursor.x-LOWORD(lParam)>DRAG_DELTA || 
+                           cursor.x-LOWORD(lParam)<-DRAG_DELTA || 
+                           cursor.y-HIWORD(lParam)>DRAG_DELTA || 
+                           cursor.y-HIWORD(lParam)<-DRAG_DELTA))*/
+        if (gConEmu.isLBDown && !PTDIFFTEST(gConEmu.cursor,DRAG_DELTA) 
+			&& !gConEmu.isDragProcessed && !gConEmu.mb_InSizing)
+        {
+            // Если сначала фокус был на файловой панели, но после LClick он попал на НЕ файловую - отменить ShellDrag
+            if (!gConEmu.isFilePanel()) {
+	            gConEmu.isLBDown = false;
+	            return 0;
+            }
+            // Иначе иногда срабатывает FAR'овский D'n'D
+            //SENDMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( newX, newY ));     //посылаем консоли отпускание
+			if (gConEmu.DragDrop)
+				gConEmu.DragDrop->Drag(); //сдвинулись при зажатой левой
+			//isDragProcessed=false; -- убрал, иначе при бросании в пассивную панель больших файлов дроп может вызваться еще раз???
+            POSTMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( newX, newY ), TRUE);     //посылаем консоли отпускание
+            return 0;
+        }
+        else if (gSet.isRClickSendKey && gConEmu.isRBDown)
+        {
+            //Если двинули мышкой, а была включена опция RClick - не вызывать
+            //контекстное меню - просто послать правый клик
+            if (!PTDIFFTEST(gConEmu.Rcursor, RCLICKAPPSDELTA))
+            {
+                gConEmu.isRBDown=false;
+                POSTMESSAGE(ghConWnd, WM_RBUTTONDOWN, 0, MAKELPARAM( gConEmu.RBDownNewX, gConEmu.RBDownNewY ), TRUE);
+            }
+            return 0;
+        }
+        /*if (!isRBDown && (wParam==MK_RBUTTON)) {
+            // Чтобы при выделении правой кнопкой файлы не пропускались
+            if ((newY-RBDownNewY)>5) {// пока попробуем для режима сверху вниз
+                for (short y=RBDownNewY;y<newY;y+=5)
+                    POSTMESSAGE(ghConWnd, WM_MOUSEMOVE, wParam, MAKELPARAM( RBDownNewX, y ), TRUE);
+            }
+            RBDownNewX=newX; RBDownNewY=newY;
+        }*/
+    } else {
+        gConEmu.lastMMW=-1; gConEmu.lastMML=-1;
+
+        if (messg == WM_LBUTTONDOWN)
+        {
+            if (gConEmu.isLBDown) ReleaseCapture(); // Вдруг сглючило?
+            gConEmu.isLBDown=false;
+            if (!gConEmu.isConSelectMode() && gConEmu.isFilePanel())
+            {
+                SetCapture(ghWndDC);
+                gConEmu.cursor.x = LOWORD(lParam);
+                gConEmu.cursor.y = HIWORD(lParam); 
+                gConEmu.isLBDown=true;
+                gConEmu.isDragProcessed=false;
+                POSTMESSAGE(ghConWnd, messg, wParam, MAKELPARAM( newX, newY ), FALSE); // было SEND
+                return 0;
+            }
+        }
+        else if (messg == WM_LBUTTONUP)
+        {
+            if (gConEmu.isLBDown) {
+                gConEmu.isLBDown=false;
+                ReleaseCapture();
+            }
+        }
+        else if (messg == WM_RBUTTONDOWN)
+        {
+            gConEmu.Rcursor.x = LOWORD(lParam);
+            gConEmu.Rcursor.y = HIWORD(lParam);
+            gConEmu.RBDownNewX=newX;
+            gConEmu.RBDownNewY=newY;
+            gConEmu.isRBDown=false;
+
+            // Если ничего лишнего не нажато!
+            if (gSet.isRClickSendKey && !(wParam&(MK_CONTROL|MK_LBUTTON|MK_MBUTTON|MK_SHIFT|MK_XBUTTON1|MK_XBUTTON2)))
+            {
+                //TCHAR *BrF = _tcschr(Title, '{'), *BrS = _tcschr(Title, '}'), *Slash = _tcschr(Title, '\\');
+                //if (BrF && BrS && Slash && BrF == Title && (Slash == Title+1 || Slash == Title+3))
+                if (gConEmu.isFilePanel()) // Maximus5
+                {
+                    //заведем таймер на .3
+                    //если больше - пошлем apps
+                    gConEmu.isRBDown=true; gConEmu.ibSkilRDblClk=false;
+                    //SetTimer(hWnd, 1, 300, 0); -- Maximus5, откажемся от таймера
+                    gConEmu.dwRBDownTick = GetTickCount();
+                    return 0;
+                }
+            }
+        }
+        else if (messg == WM_RBUTTONUP)
+        {
+            if (gSet.isRClickSendKey && gConEmu.isRBDown)
+            {
+                gConEmu.isRBDown=false; // сразу сбросим!
+                if (PTDIFFTEST(gConEmu.Rcursor,RCLICKAPPSDELTA))
+                {
+                    //держали зажатой <.3
+                    //убьем таймер, кликнием правой кнопкой
+                    //KillTimer(hWnd, 1); -- Maximus5, таймер более не используется
+                    DWORD dwCurTick=GetTickCount();
+                    DWORD dwDelta=dwCurTick-gConEmu.dwRBDownTick;
+                    // Если держали дольше .3с, но не слишком долго :)
+                    if ((gSet.isRClickSendKey==1) ||
+                        (dwDelta>RCLICKAPPSTIMEOUT && dwDelta<10000))
+                    {
+                        // Сначала выделить файл под курсором
+                        POSTMESSAGE(ghConWnd, WM_LBUTTONDOWN, MK_LBUTTON, MAKELPARAM( gConEmu.RBDownNewX, gConEmu.RBDownNewY ), TRUE);
+                        POSTMESSAGE(ghConWnd, WM_LBUTTONUP, 0, MAKELPARAM( gConEmu.RBDownNewX, gConEmu.RBDownNewY ), TRUE);
+                    
+                        pVCon->Update(true);
+                        INVALIDATE(); //InvalidateRect(HDCWND, NULL, FALSE);
+
+                        // А теперь можно и Apps нажать
+						gConEmu.ibSkilRDblClk=true; // чтобы пока FAR думает в консоль не проскочило мышиное сообщение
+                        POSTMESSAGE(ghConWnd, WM_KEYDOWN, VK_APPS, 0, TRUE);
+                        return 0;
+                    }
+                }
+                // Иначе нужно сначала послать WM_RBUTTONDOWN
+                POSTMESSAGE(ghConWnd, WM_RBUTTONDOWN, wParam, MAKELPARAM( newX, newY ), TRUE);
+            }
+            gConEmu.isRBDown=false; // чтобы не осталось случайно
+        }
+		else if (messg == WM_RBUTTONDBLCLK) {
+			if (gConEmu.ibSkilRDblClk) {
+				gConEmu.ibSkilRDblClk = false;
+				return 0; // не обрабатывать, сейчас висит контекстное меню
+			}
+		}
+    }
+
+	// заменим даблклик вторым обычным
+    POSTMESSAGE(ghConWnd, messg == WM_RBUTTONDBLCLK ? WM_RBUTTONDOWN : messg, wParam, MAKELPARAM( newX, newY ), FALSE);
+    return 0;
 }
 
 BOOL WINAPI CConEmuMain::HandlerRoutine(DWORD dwCtrlType)
@@ -1467,6 +1537,13 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 		if (dwStyle & WS_DISABLED)
 			EnableWindow(ghWnd, TRUE);
 
+		CheckProcesses();
+		if (gnLastProcessCount == 1) {
+			DestroyWindow(ghWnd);
+			break;
+		}
+
+
 		BOOL lbIsPicView = isPictureView();
         if (bPicViewSlideShow) {
             DWORD dwTicks = GetTickCount();
@@ -1553,10 +1630,6 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 
         // Проверить, может в консоли размер съехал? (хрен его знает из-за чего...)
 		CheckBufferSize();
-		if (gnLastProcessCount == 1) {
-			DestroyWindow(ghWnd);
-			break;
-		}
 
         //if (!gbInvalidating && !gbInPaint)
         if (pVCon->Update(false/*gbNoDblBuffer*/))
@@ -1610,6 +1683,7 @@ LRESULT CConEmuMain::OnCopyData(PCOPYDATASTRUCT cds)
 		if (ProcCount<=2)
 			lbInClose = TRUE;
 
+		// хотя в последнем плагине и не приходит...
 		if (!lbInClose) { // Чтобы табы не прыгали при щелчке по крестику
 			// Приходит из плагина по ExitFAR
 			ForceShowTabs(FALSE);

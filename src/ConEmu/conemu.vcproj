@@ -330,7 +330,7 @@
 	</References>
 	<Files>
 		<Filter
-			Name="Source Files"
+			Name="0 - Source Files"
 			Filter="cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx"
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
@@ -348,6 +348,10 @@
 			</File>
 			<File
 				RelativePath=".\ConEmuChild.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ConEmuPipe.cpp"
 				>
 			</File>
 			<File
@@ -398,6 +402,10 @@
 			</File>
 			<File
 				RelativePath=".\ConEmuChild.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ConEmuPipe.h"
 				>
 			</File>
 			<File

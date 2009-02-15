@@ -295,6 +295,9 @@ BOOL CreateAppWindow()
 
 BOOL CreateMainWindow()
 {
+	if (!gConEmu.Init())
+		return FALSE; // Ошибка уже показана
+
     if (_tcscmp(VirtualConsoleClass,VirtualConsoleClassMain)) {
 	    MBoxA(_T("Error: class names must be equal!"));
 	    return FALSE;
@@ -695,9 +698,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 ///| создадим pipe для общения с плагином |///////////////////////////////
 //------------------------------------------------------------------------
 
-    WCHAR pipename[MAX_PATH];
+    /*WCHAR pipename[MAX_PATH];
     //Maximus5 - теперь имя пайпа - по ИД процесса FAR'а
-    wsprintf(pipename, _T("\\\\.\\pipe\\ConEmuP%u"), /*ghWnd*/ ghConWnd );
+    wsprintf(pipename, CONEMUPIPE, ghConWnd );
     gConEmu.hPipe = CreateNamedPipe( 
       pipename,             // pipe name 
       PIPE_ACCESS_DUPLEX,       // read/write access 
@@ -714,8 +717,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
       MessageBox(ghWnd, _T("CreatePipe failed"), NULL, 0);
       gConEmu.Destroy(); free(cmdLine);
       return 100;
-    }
-    wsprintf(pipename, _T("ConEmuPEvent%u"), /*ghWnd*/ ghConWnd );
+    }*/
+	/*wsprintf(pipename, _T("ConEmuPEvent%u"), / *ghWnd* / ghConWnd );
     gConEmu.hPipeEvent = CreateEvent(NULL, TRUE, FALSE, pipename);
     if ((gConEmu.hPipeEvent==NULL) || (gConEmu.hPipeEvent==INVALID_HANDLE_VALUE))
     {
@@ -723,10 +726,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
       MessageBox(ghWnd, _T("CreatePipe failed"), NULL, 0); 
       gConEmu.Destroy(); free(cmdLine);
       return 100;
-    }
+    }*/
     // Установить переменную среды с дескриптором окна
-    wsprintf(pipename, L"0x%08x", HDCWND);
-    SetEnvironmentVariable(L"ConEmuHWND", pipename);
+	WCHAR szVar[32];
+    wsprintf(szVar, L"0x%08x", HDCWND);
+    SetEnvironmentVariable(L"ConEmuHWND", szVar);
     
 
 //------------------------------------------------------------------------

@@ -1,5 +1,21 @@
 #include <windows.h>
 
+//#define CONEMUPIPE      L"\\\\.\\pipe\\ConEmuPipe%u"
+//#define CONEMUEVENTIN   L"ConEmuInEvent%u"
+//#define CONEMUEVENTOUT  L"ConEmuOutEvent%u"
+//#define CONEMUEVENTPIPE L"ConEmuPipeEvent%u"
+
+#define CONEMUMAPPING    L"ConEmuPluginData%u"
+#define CONEMUDRAGFROM   L"ConEmuDragFrom%u"
+#define CONEMUDRAGTO     L"ConEmuDragTo%u"
+#define CONEMUEXIT       L"ConEmuExit%u"
+#define CONEMUALIVE      L"ConEmuAlive%u"
+#define CONEMUREADY      L"ConEmuReady%u"
+#define CMD_DRAGFROM     0
+#define CMD_DRAGTO       1
+#define CMD_EXIT         2
+#define MAXCMDCOUNT      3
+
 #define CONEMUTABMAX 0x400
 struct ConEmuTab
 {
@@ -38,12 +54,12 @@ struct ForwardedFileInfo
 	WCHAR Path[MAX_PATH+1];
 };
 
-enum PipeCmd
+/*enum PipeCmd
 {
 	SetTabs=0,
 	DragFrom,
 	DragTo
-};
+};*/
 
 // ConEmu.dll экспортирует следующие функции
 //HWND WINAPI GetFarHWND();

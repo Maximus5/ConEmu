@@ -16,6 +16,7 @@ FWrapperAdvControl fWrapperAdvControl=NULL;
 
 /* PictureView */
 HMODULE hPicViewDll=NULL;
+HMODULE hEmuPicDll=NULL;
 FClosePlugin fClosePlugin=NULL;
 FConfigure fConfigure=NULL;
 FExitFAR fExitFAR=NULL;
@@ -73,9 +74,26 @@ BOOL APIENTRY DllMain( HANDLE hModule,
             
             // Init PictureView plugin
             if (!hPicViewDll) {
-                TCHAR szModulePath[MAX_PATH+1];
+                TCHAR szModulePath[MAX_PATH+1], szEmuPic[MAX_PATH+1], *pszSlash;
                 int nLen = 0;
-                if ((nLen=GetModuleFileName(ghInstance, szModulePath, MAX_PATH))>0) {
+                if ((nLen=GetModuleFileName(ghInstance, szModulePath, MAX_PATH))>0)
+                {
+	                // Под UnderScrore 0PictureView.dl_ не может подлинковаться к EmuPic.dll
+	                _tcscpy(szEmuPic, szModulePath);
+	                pszSlash = szEmuPic+nLen-1;
+	                while (pszSlash>szEmuPic && *(pszSlash-1)!=_T('\\')) pszSlash--;
+	                _tcscpy(pszSlash, _T("EmuPic.dll"));
+	                hEmuPicDll = LoadLibrary ( szEmuPic );
+	                if (!hEmuPicDll) {
+	                    if (!gsTermMsg[0]) {
+		                    DWORD dwErr;
+		                    dwErr = GetLastError();
+		                    wsprintf(gsLoadMsg, "PictureView wrapper\nCan't load library!\n%s\nLastError=0x%08x", szEmuPic, dwErr);
+	                        //MessageBox(ghConEmu, szError, _T("PictureView wrapper"), MB_ICONSTOP);
+	                    }
+                        return TRUE; // иначе FAR в Windows7 иногда не загружался вообще
+	                }
+	                
                     if (szModulePath[nLen-1]!=_T('L') && szModulePath[nLen-1]!=_T('l')) {
 	                    if (!gsTermMsg[0]) {
 		                    DWORD dwErr;

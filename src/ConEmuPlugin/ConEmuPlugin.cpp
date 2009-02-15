@@ -20,10 +20,6 @@ extern "C" {
 #include "../common/ConEmuCheck.h"
 }
 
-#ifndef FORWARD_WM_COPYDATA
-#define FORWARD_WM_COPYDATA(hwnd, hwndFrom, pcds, fn) \
-    (BOOL)(UINT)(DWORD)(fn)((hwnd), WM_COPYDATA, (WPARAM)(hwndFrom), (LPARAM)(pcds))
-#endif
 #define MAKEFARVERSION(major,minor,build) ( ((major)<<8) | (minor) | ((build)<<16))
 
 // minimal(?) FAR version 2.0 alpha build 748
@@ -35,15 +31,16 @@ int WINAPI _export GetMinFarVersionW(void)
 
 HWND ConEmuHwnd=NULL;
 BOOL TerminalMode = FALSE;
-//BOOL bWasSetParent=FALSE;
 HWND FarHwnd=NULL;
-HANDLE hPipe=NULL, hPipeEvent=NULL;
+HANDLE hEventCmd[MAXCMDCOUNT], hEventAlive=NULL, hEventReady=NULL;
 HANDLE hThread=NULL;
 FarVersion gFarVersion;
 WCHAR gszDir1[CONEMUTABMAX], gszDir2[CONEMUTABMAX];
-//UINT_PTR uTimerID=0;
 int maxTabCount = 0, lastWindowCount = 0;
 ConEmuTab* tabs = NULL; //(ConEmuTab*) calloc(maxTabCount, sizeof(ConEmuTab));
+LPBYTE gpData=NULL, gpCursor=NULL;
+DWORD  gnDataSize=0;
+HANDLE ghMapping = NULL;
 
 BOOL APIENTRY DllMain( HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved )
 {
@@ -52,7 +49,7 @@ BOOL APIENTRY DllMain( HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
 			{
 				#ifdef _DEBUG
 				//if (!IsDebuggerPresent())
-				//	MessageBoxA(NULL, "ConEmu.dll loaded", "ConEmu", 0);
+				//	MessageBoxA(GetForegroundWindow(), "ConEmu.dll loaded", "ConEmu", 0);
 				#endif
 				#if defined(__GNUC__)
 				typedef HWND (APIENTRY *FGetConsoleWindow)();
@@ -69,9 +66,6 @@ BOOL APIENTRY DllMain( HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
 			    szVarValue[0] = 0;
 			    if (GetEnvironmentVariable(L"TERM", szVarValue, 63)) {
 				    TerminalMode = TRUE;
-			        //lstrcpy(gsTermMsg, _T("PictureView wrapper\nPicture viewing is not available\nin terminal mode ("));
-			        //lstrcat(gsTermMsg, szVarValue);
-			        //lstrcat(gsTermMsg, _T(")"));
 			    }
 			}
 			break;
@@ -165,83 +159,75 @@ BOOL LoadFarVersion()
 	return lbRc;
 }
 
-VOID CALLBACK ConEmuCheckTimerProc(
-  HWND hwnd,         // handle to window
-  UINT uMsg,         // WM_TIMER message
-  UINT_PTR idEvent,  // timer identifier
-  DWORD dwTime       // current system time
-);
-
-void UpdateConEmuTabsW(int event, bool losingFocus, bool editorSave);
-
-/*extern const WCHAR *GetMsgW684(int CompareLng);
-extern const WCHAR *GetMsgW757(int CompareLng);
-const WCHAR *GetMsgW(int CompareLng)
-{
-	if (gFarVersion.dwBuild>=757)
-		return GetMsgW757(CompareLng);
-	else
-		return GetMsgW684(CompareLng);
-}*/
-
 
 DWORD WINAPI ThreadProcW(LPVOID lpParameter)
 {
+	DWORD dwProcId = GetCurrentProcessId();
+
 	while (true)
 	{
-		if (hPipeEvent && ConEmuHwnd) {
-			DWORD dwWait = WaitForSingleObject(hPipeEvent, 1000);
+		DWORD dwWait = 0;
+		DWORD dwTimeout = 1000;
+		/*#ifdef _DEBUG
+		dwTimeout = INFINITE;
+		#endif*/
 
-		    if (ConEmuHwnd && FarHwnd) {
-			    if (!IsWindow(ConEmuHwnd)) {
-				    ConEmuHwnd = NULL;
+		dwWait = WaitForMultipleObjects(MAXCMDCOUNT, hEventCmd, FALSE, dwTimeout);
 
-					if (!IsWindow(FarHwnd))
-					{
-						MessageBox(0, L"ConEmu was abnormally termintated!\r\nExiting from FAR", L"ConEmu plugin", MB_OK|MB_ICONSTOP|MB_SETFOREGROUND);
-						TerminateProcess(GetCurrentProcess(), 100);
-					}
-					else 
-					{
-						//if (bWasSetParent) { -- все равно уже не поможет, если она была дочерней - сдохла
-						//	SetParent(FarHwnd, NULL);
-						//}
-					    
-						ShowWindowAsync(FarHwnd, SW_SHOWNORMAL);
-						EnableWindow(FarHwnd, true);
-					}
+	    if (ConEmuHwnd && FarHwnd && (dwWait>=(WAIT_OBJECT_0+MAXCMDCOUNT))) {
+		    if (!IsWindow(ConEmuHwnd)) {
+			    ConEmuHwnd = NULL;
+
+				if (!IsWindow(FarHwnd))
+				{
+					MessageBox(0, L"ConEmu was abnormally termintated!\r\nExiting from FAR", L"ConEmu plugin", MB_OK|MB_ICONSTOP|MB_SETFOREGROUND);
+					TerminateProcess(GetCurrentProcess(), 100);
+				}
+				else 
+				{
+					//if (bWasSetParent) { -- все равно уже не поможет, если она была дочерней - сдохла
+					//	SetParent(FarHwnd, NULL);
+					//}
 				    
-				    CloseHandle(hPipe); hPipe=NULL;
-				    CloseHandle(hPipeEvent); hPipeEvent=NULL;
-				    
-				    return 0; // Эта нить более не требуется
-			    }
+					ShowWindowAsync(FarHwnd, SW_SHOWNORMAL);
+					EnableWindow(FarHwnd, true);
+				}
+			    
+				goto closethread;
 		    }
+	    }
 
-			if (dwWait!=WAIT_OBJECT_0) {
-				continue;
-			}
+		if (dwWait == (WAIT_OBJECT_0+CMD_EXIT))
+		{
+			goto closethread;
 		}
 
-		if (hPipeEvent) ResetEvent(hPipeEvent);
-	
-		PipeCmd cmd;
-		DWORD cout;
-		ReadFile(hPipe, &cmd, sizeof(PipeCmd), &cout, NULL);
-		switch (cmd)
+		if (dwWait>=(WAIT_OBJECT_0+MAXCMDCOUNT))
 		{
-		    case SetTabs:
-			    break;
-			case DragFrom:
+			continue;
+		}
+
+		SafeCloseHandle(ghMapping);
+		// Поставим флажок, что мы приступили к обработке
+		SetEvent(hEventAlive);
+
+
+		switch (dwWait)
+		{
+			case (WAIT_OBJECT_0+CMD_DRAGFROM):
 			{
-				if (gFarVersion.dwBuild>=757)
+				if (gFarVersion.dwVerMajor==1)
+					ProcessDragFromA();
+				else if (gFarVersion.dwBuild>=757)
 					ProcessDragFrom757();
 				else
 					ProcessDragFrom684();
 				break;
 			}
-			case DragTo:
+			case (WAIT_OBJECT_0+CMD_DRAGTO):
 			{
+				if (gFarVersion.dwVerMajor==1)
+					ProcessDragToA();
 				if (gFarVersion.dwBuild>=757)
 					ProcessDragTo757();
 				else
@@ -249,117 +235,91 @@ DWORD WINAPI ThreadProcW(LPVOID lpParameter)
 				break;
 			}
 		}
-		Sleep(1);
+
+		// Подготовиться к передаче данных
+		wsprintf(gszDir1, CONEMUMAPPING, dwProcId);
+		gnDataSize = (gpCursor - gpData);
+		ghMapping = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, gnDataSize+4, gszDir1);
+		if (ghMapping) {
+			LPBYTE lpMap = (LPBYTE)MapViewOfFile(ghMapping, FILE_MAP_ALL_ACCESS, 0,0,0);
+			if (!lpMap) {
+				// Ошибка
+				SafeCloseHandle(ghMapping);
+			} else {
+				// copy data
+				if (gpData && gnDataSize) {
+					*((DWORD*)lpMap) = gnDataSize+4;
+					memcpy(lpMap+4, gpData, gnDataSize);
+				} else {
+					*((DWORD*)lpMap) = 0;
+				}
+
+				//unmaps a mapped view of a file from the calling process's address space
+				UnmapViewOfFile(lpMap);
+			}
+		}
+
+		// Поставим флажок, что плагин жив и закончил
+		SetEvent(hEventReady);
+
+		//Sleep(1);
 	}
+
+
+closethread:
+	// Закрываем все хэндлы и выходим
+	for (int i=0; i<MAXCMDCOUNT; i++)
+		SafeCloseHandle(hEventCmd[i]);
+	SafeCloseHandle(hEventAlive);
+	SafeCloseHandle(hEventReady);
+	SafeCloseHandle(ghMapping);
+
+	return 0;
 }
 
 void WINAPI _export SetStartupInfoW(void *aInfo)
 {
-	LoadFarVersion();
+	if (!gFarVersion.dwVerMajor) LoadFarVersion();
 
 	if (gFarVersion.dwBuild>=757)
 		SetStartupInfoW757(aInfo);
 	else
 		SetStartupInfoW684(aInfo);
+
+	CheckMacro();
 }
 
+#define CREATEEVENT(fmt,h) \
+		wsprintf(szEventName, fmt, dwCurProcId ); \
+		h = CreateEvent(NULL, FALSE, FALSE, szEventName); \
+		if (h==INVALID_HANDLE_VALUE) h=NULL;
+	
 void InitHWND(HWND ahFarHwnd)
 {
+	LoadFarVersion(); // пригодится уже здесь!
+
 	ConEmuHwnd = NULL;
 	FarHwnd = ahFarHwnd;
+
+	memset(hEventCmd, 0, sizeof(HANDLE)*MAXCMDCOUNT);
 	
 	int nChk = 0;
 	ConEmuHwnd = GetConEmuHWND ( FALSE, &nChk );
-	//ConEmuHwnd = GetAncestor(FarHwnd, GA_PARENT);
-	//if (ConEmuHwnd != NULL)
-	//{
-	//	WCHAR className[100];
-	//	GetClassNameW(ConEmuHwnd, className, 100);
-	//	if (lstrcmpi(className, L"VirtualConsoleClass") != 0 &&
-	//		lstrcmpi(className, L"VirtualConsoleClassMain") != 0)
-	//	{
-	//		ConEmuHwnd = NULL;
-	//	} else {
-	//		bWasSetParent = TRUE;
-	//	}
-	//}
 
-	WCHAR *pipename = gszDir1;
-
-	//if (!ConEmuHwnd) {
-	//	if (GetEnvironmentVariable(L"ConEmuHWND", pipename, MAX_PATH)) {
-	//		if (pipename[0]==L'0' && pipename[1]==L'x') {
-	//			ConEmuHwnd = AtoH(pipename+2, 8);
-	//			if (ConEmuHwnd) {
-	//				WCHAR className[100];
-	//				GetClassName(ConEmuHwnd, (LPWSTR)className, 100);
-	//				if (lstrcmpiW(className, L"VirtualConsoleClass") != 0 &&
-	//					lstrcmpiW(className, L"VirtualConsoleClassMain") != 0)
-	//				{
-	//					ConEmuHwnd = NULL;
-	//				} else {
-	//					// Нужно проверить, что консоль принадлежит процессу ConEmu
-	//					DWORD dwEmuPID = 0;
-	//					GetWindowThreadProcessId(ConEmuHwnd, &dwEmuPID);
-	//					if (dwEmuPID == 0) {
-	//						// Ошибка, не удалось получить код процесса ConEmu
-	//					} else {
-	//						DWORD *ProcList = (DWORD*)calloc(1000,sizeof(DWORD));
-	//						DWORD dwCount = 0;
-//#if !defined(_MSC_VER)
-	//						typedef DWORD (APIENTRY *FGetConsoleProcessList)(LPDWORD,DWORD);
-	//						FGetConsoleProcessList GetConsoleProcessList = 
-	//							(FGetConsoleProcessList)GetProcAddress(
-	//								GetModuleHandle(L"kernel32.dll"),
-	//								"GetConsoleProcessList");
-	//                        if (!GetConsoleProcessList)
-	//	                        dwCount = 1001;
-	//	                    else
-//#endif
-    //                            dwCount = GetConsoleProcessList(ProcList,1000);
-    //                            
-	//						if(dwCount>1000) {
-	//							// Ошибка, в консоли слишком много процессов
-	//						} else {
-	//							for (DWORD dw=0; dw<dwCount; dw++) {
-	//								if (dwEmuPID == ProcList[dw]) {
-	//									dwEmuPID = 0; break;
-	//								}
-	//							}
-	//							if (dwEmuPID)
-	//								ConEmuHwnd = NULL; // Консоль не принадлежит ConEmu
-	//						}
-	//						free(ProcList);
-	//					}
-	//				}
-	//			}
-	//		}
-	//	}
-	//}
 	
 	// Если мы не под эмулятором - больше ничего делать не нужно
 	if (ConEmuHwnd) {
-		//Maximus5 - теперь имя пайпа - по хэндлу окна FAR'а
-		//wsprintf(pipename, L"\\\\.\\pipe\\ConEmu%h", ConEmuHwnd);
-		//DWORD dwFarProcID = GetCurrentProcessId();
-		wsprintf(pipename, L"\\\\.\\pipe\\ConEmuP%u", FarHwnd);
-		hPipe = CreateFile( 
-			 pipename,   // pipe name 
-			 GENERIC_READ |  // read and write access 
-			 GENERIC_WRITE, 
-			 0,              // no sharing 
-			 NULL,           // default security attributes
-			 OPEN_EXISTING,  // opens existing pipe 
-			 0,              // default attributes 
-			 NULL);          // no template file 
-		if (hPipe && hPipe!=INVALID_HANDLE_VALUE)
-		{
-			wsprintf(pipename, L"ConEmuPEvent%u", /*hWnd*/ FarHwnd );
-			hPipeEvent = OpenEvent(EVENT_ALL_ACCESS, FALSE, pipename);
-			if (hPipeEvent==INVALID_HANDLE_VALUE) hPipeEvent=NULL;
+		WCHAR szEventName[128];
+		DWORD dwCurProcId = GetCurrentProcessId();
+
 		
-			hThread=CreateThread(NULL, 0, &ThreadProcW, 0, 0, 0);
-		}
+		CREATEEVENT(CONEMUDRAGFROM, hEventCmd[CMD_DRAGFROM]);
+		CREATEEVENT(CONEMUDRAGTO, hEventCmd[CMD_DRAGTO]);
+		CREATEEVENT(CONEMUEXIT, hEventCmd[CMD_EXIT]);
+		CREATEEVENT(CONEMUALIVE, hEventAlive);
+		CREATEEVENT(CONEMUREADY, hEventReady);
+
+		hThread=CreateThread(NULL, 0, &ThreadProcW, 0, 0, 0);
 
 		// дернуть табы, если они нужны
 		int tabCount = 0;
@@ -367,12 +327,99 @@ void InitHWND(HWND ahFarHwnd)
 		AddTab(tabCount, true, false, WTYPE_PANELS, NULL, NULL, 0, 0);
 		SendTabs(tabCount=1, TRUE);
 	}
+}
 
-	//free(pipename);
+void CheckMacro()
+{
+	// Если мы не под эмулятором - больше ничего делать не нужно
+	if (ConEmuHwnd)
+	{
+		// Проверка наличия макроса
+		BOOL lbMacroAdded = FALSE, lbNeedMacro = FALSE;
+		HKEY hkey=NULL;
+		char szValue[1024], szMacroKey[128], szCheckKey[16];
+		DWORD dwSize = 0;
+		bool lbMacroDontCheck = false;
 
-#ifdef _DEBUG
-	//MessageBox(ConEmuHwnd,L"Debug",L"ConEmu plugin",MB_SETFOREGROUND);
-#endif
+		if (gFarVersion.dwVerMajor==2) {
+			lstrcpyA(szCheckKey, "F14DontCheck2");
+			lstrcpyA(szMacroKey, "Software\\Far2\\KeyMacros\\Common\\F14");
+		} else {
+			lstrcpyA(szCheckKey, "F14DontCheck2");
+			lstrcpyA(szMacroKey, "Software\\Far\\KeyMacros\\Common\\F14");
+		}
+
+		if (0==RegOpenKeyExA(HKEY_CURRENT_USER, "Software\\ConEmu", 0, KEY_ALL_ACCESS, &hkey))
+		{
+
+			if (RegQueryValueExA(hkey, szCheckKey, 0, 0, (LPBYTE)&lbMacroDontCheck, &(dwSize=sizeof(lbMacroDontCheck))))
+				lbMacroDontCheck = false;
+			RegCloseKey(hkey); hkey=NULL;
+		}
+
+		if (!lbMacroDontCheck)
+		{
+			if (0==RegOpenKeyExA(HKEY_CURRENT_USER, szMacroKey, 0, KEY_ALL_ACCESS, &hkey))
+			{
+				if (0!=RegQueryValueExA(hkey, "Sequence", 0, 0, (LPBYTE)szValue, &(dwSize=1022))) {
+					lbNeedMacro = TRUE; // Значение отсутсвует
+				} else {
+					szValue[dwSize]=0;
+					if (strstr(szValue, " F12 ")==0)
+						lbNeedMacro = TRUE; // Значение некорректное
+				}
+				RegCloseKey(hkey); hkey=NULL;
+			} else {
+				lbNeedMacro = TRUE;
+			}
+
+			if (lbNeedMacro) {
+				int nBtn = ShowMessage(0, 3);
+				if (nBtn == 1) { // Don't disturb
+					DWORD disp=0;
+					lbMacroDontCheck = true;
+					if (0==RegCreateKeyExA(HKEY_CURRENT_USER, "Software\\ConEmu", 0, 0, 
+						0, KEY_ALL_ACCESS, 0, &hkey, &disp))
+					{
+						RegSetValueExA(hkey, szCheckKey, 0, REG_BINARY, (LPBYTE)&lbMacroDontCheck, (dwSize=sizeof(lbMacroDontCheck)));
+						RegCloseKey(hkey); hkey=NULL;
+					}
+				} else if (nBtn == 0) {
+					DWORD disp=0;
+					lbMacroAdded = TRUE;
+					if (0==RegCreateKeyExA(HKEY_CURRENT_USER, szMacroKey, 0, 0, 
+						0, KEY_ALL_ACCESS, 0, &hkey, &disp))
+					{
+						lstrcpyA(szValue, 
+							"ConEmu tab switching support");
+						RegSetValueExA(hkey, "", 0, REG_SZ, (LPBYTE)szValue, (dwSize=strlen(szValue)+1));
+
+						lstrcpyA(szValue, 
+							"$If (Shell || Info || QView || Tree || Viewer || Editor) F12 $Else waitkey(100) $End");
+						RegSetValueExA(hkey, "Sequence", 0, REG_SZ, (LPBYTE)szValue, (dwSize=strlen(szValue)+1));
+
+						lstrcpyA(szValue, 
+							"For ConEmu - eats next key if changing screen is impossible");
+						RegSetValueExA(hkey, "Description", 0, REG_SZ, (LPBYTE)szValue, (dwSize=strlen(szValue)+1));
+
+						RegSetValueExA(hkey, "DisableOutput", 0, REG_DWORD, (LPBYTE)&(disp=1), (dwSize=4));
+
+						RegCloseKey(hkey); hkey=NULL;
+					}
+				}
+			}
+
+			// Перечитать макросы в FAR?
+			if (lbMacroAdded) {
+				if (gFarVersion.dwVerMajor==1)
+					ReloadMacroA();
+				else if (gFarVersion.dwBuild>=757)
+					ReloadMacro757();
+				else
+					ReloadMacro684();
+			}
+		}
+	}
 
 }
 
@@ -465,7 +512,7 @@ void SendTabs(int &tabCount, BOOL abForce/*=FALSE*/)
 		}
 		if (tabCount || abForce) {
 			cds.cbData = tabCount * sizeof(ConEmuTab);
-			FORWARD_WM_COPYDATA(ConEmuHwnd, FarHwnd, &cds, SendMessage);
+			SendMessage(ConEmuHwnd, WM_COPYDATA, (WPARAM)FarHwnd, (LPARAM)&cds);
 		}
 	}
 	//free(tabs); - освобождается в ExitFARW
@@ -507,8 +554,10 @@ int WINAPI _export ProcessViewerEventW(int Event, void *Param)
 
 void   WINAPI _export ExitFARW(void)
 {
-	CloseTabs();
-
+	if (hEventCmd[CMD_EXIT])
+		SetEvent(hEventCmd[CMD_EXIT]); // Завершить нить
+	//CloseTabs(); -- ConEmu само разберется
+	
     if (tabs) {
 	    free(tabs);
 	    tabs = NULL;
@@ -529,4 +578,74 @@ void CloseTabs()
 		cds.cbData = sizeof(cds.dwData);
 		SendMessage(ConEmuHwnd, WM_COPYDATA, (WPARAM)FarHwnd, (LPARAM)&cds);
 	}
+}
+
+// Если не вызывать - буфер увеличивается автоматически. Размер в БАЙТАХ
+// Возвращает FALSE при ошибках выделения памяти
+BOOL OutDataAlloc(DWORD anSize)
+{
+	gpData = (LPBYTE)calloc(anSize,1);
+	if (!gpData)
+		return FALSE;
+
+	gnDataSize = anSize;
+	gpCursor = gpData;
+
+	return TRUE;
+}
+
+// Размер в БАЙТАХ. вызывается автоматически из OutDataWrite
+// Возвращает FALSE при ошибках выделения памяти
+BOOL OutDataRealloc(DWORD anNewSize)
+{
+	if (!gpData)
+		return OutDataAlloc(anNewSize);
+
+	if (anNewSize < gnDataSize)
+		return FALSE; // нельзя выделять меньше памяти, чем уже есть
+
+	// realloc иногда не работает, так что даже и не пытаемся
+	LPBYTE lpNewData = (LPBYTE)calloc(anNewSize,1);
+	if (!lpNewData)
+		return FALSE;
+
+	// скопировать существующие данные
+	memcpy(lpNewData, gpData, gnDataSize);
+	// запомнить новую позицию курсора
+	gpCursor = lpNewData + (gpCursor - gpData);
+	// И новый буфер с размером
+	free(gpData);
+	gpData = lpNewData;
+	gnDataSize = anNewSize;
+
+	return TRUE;
+}
+
+// Размер в БАЙТАХ
+// Возвращает FALSE при ошибках выделения памяти
+BOOL OutDataWrite(LPVOID apData, DWORD anSize)
+{
+	if (!gpData) {
+		if (!OutDataAlloc(max(1024, (anSize+128))))
+			return FALSE;
+	} else if (((gpCursor-gpData)+anSize)>gnDataSize) {
+		if (!OutDataRealloc(gnDataSize+max(1024, (anSize+128))))
+			return FALSE;
+	}
+
+	// Скопировать данные
+	memcpy(gpCursor, apData, anSize);
+	gpCursor += anSize;
+
+	return TRUE;
+}
+
+int ShowMessage(int aiMsg, int aiButtons)
+{
+	if (gFarVersion.dwVerMajor==1)
+		return ShowMessageA(aiMsg, aiButtons);
+	else if (gFarVersion.dwBuild>=757)
+		return ShowMessage757(aiMsg, aiButtons);
+	else
+		return ShowMessage684(aiMsg, aiButtons);
 }

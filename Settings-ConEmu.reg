@@ -1,8 +1,10 @@
 REGEDIT4
 
 [HKEY_CURRENT_USER\Software\ConEmu]
+;; 'default' command line. May be empty
 "CmdLine"="Far.exe"
 
+;; 
 "BackGround Image show"=hex:00
 "BackGround Image"="c:\\back.bmp"
 "bgImageDarker"=hex:46
@@ -24,27 +26,58 @@ REGEDIT4
 "FontCharSet"=hex:cc
 "Anti-aliasing"=hex:04
 "WindowMode"=hex:20,05,00,00
-"CursorType"=hex:01
-"CursorColor"=hex:00
-"RightClick opens context menu"=hex:02
 "FontBold"=hex:00
 "FontItalic"=hex:00
+
+;; 1 - Vertical cursor
+"CursorType"=hex:01
+"CursorColor"=hex:00
+
+;; 0 - don't handle - always send RClick to console
+;; 1 - always send 'Apps' to console
+;; 2 - ShortClick - send RClick, LongClick - send 'Apps'
+;; Needs EMenu & macro on 'Apps' button
+"RightClick opens context menu"=hex:02
+
+;; Поддержка ConMan. По идее должна активироваться и автоматически
 "Update Console handle"=hex:00
+
+;; Ширина консоли в символах
 "ConWnd Width"=hex:4b,00,00,00
 "ConWnd Height"=hex:16,00,00,00
+
+;; Положение UpperLeft в пикселах (int)
 "ConWnd X"=hex:fc,ff,ff,ff
 "ConWnd Y"=hex:fc,ff,ff,ff
+
+;; 1 - Посылать Alt+Enter в консоль. Режим FullScreen будет недоступен
 "AltEnter"=hex:00
-"Dnd"=hex:01
+
+;; Графические градусники
 "GUIpb"=hex:00
-"Tabs"=hex:02
+
+;; Debug. 1 - Don't hide console window
 "ConVisible"=hex:00
+
+;; Drag'n'Drop
+"Dnd"=hex:01
 "DefCopy"=hex:01
+
+;; Прокручивать заголовок в кнопке на панели задач (пока не работает)
 "ScrollTitle"=hex:01
 "ScrollTitleLen"=hex:16,00,00,00
 
 ;; Центрировать 'консоль' в полноэкранном и развернутом режиме
 "TryToCenter"=hex:01
 
+;; === Далее идут настройки табов ===
+;; 0 - не отображать, 1 - всегда, 2 - авто
+"Tabs"=hex:02
 ;; Тип отображения 'табов'. 0 - только закладки, 1 - с рамкой
 "TabFrame"=hex:01
+;; Форматирование заголовков
+"TabPanels"="Panels"
+"TabEditor"="[%s]"
+"TabEditorModified"="[%s] *"
+"TabViewer"="{%s}"
+"TabLenMax"=dword:00000014

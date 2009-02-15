@@ -1,13 +1,4 @@
-/* ****************************************** 
-   Changes history 
-   Maximus5: убрал все static
-****************************************** */
-
-//#include <stdio.h>
 #include <windows.h>
-//#include <windowsx.h>
-//#include <string.h>
-//#include <tchar.h>
 #include "..\common\common.hpp"
 #include "..\common\pluginW757.hpp"
 #include "PluginHeader.h"
@@ -20,32 +11,21 @@
 
 struct PluginStartupInfo *InfoW757=NULL;
 struct FarStandardFunctions *FSFW757=NULL;
-extern HWND ConEmuHwnd;
-//extern BOOL bWasSetParent;
-extern HWND FarHwnd;
-extern HANDLE hPipe, hPipeEvent;
-extern HANDLE hThread;
-
-extern HWND AtoH(WCHAR *Str, int Len);
-extern void UpdateConEmuTabsW(int event, bool losingFocus, bool editorSave);
 
 
-/*const WCHAR *GetMsgW757(int CompareLng)
-{
-	return InfoW757->GetMsg(InfoW757->ModuleNumber, CompareLng);
-}*/
 
 
 void ProcessDragFrom757()
 {
-	DWORD cout;
 	WindowInfo WInfo;				
     WInfo.Pos=0;
 	InfoW757->AdvControl(InfoW757->ModuleNumber, ACTL_GETSHORTWINDOWINFO, (void*)&WInfo);
 	if (!WInfo.Current)
 	{
 		int ItemsCount=0;
-		WriteFile(hPipe, &ItemsCount, sizeof(int), &cout, NULL);				
+		//WriteFile(hPipe, &ItemsCount, sizeof(int), &cout, NULL);				
+		OutDataAlloc(sizeof(ItemsCount));
+		OutDataWrite(&ItemsCount,sizeof(ItemsCount));
 		return;
 	}
 
@@ -64,9 +44,12 @@ void ProcessDragFrom757()
 					nDirNoSlash=1;
 		}
 
+		OutDataAlloc(sizeof(int)+PInfo.SelectedItemsNumber*((MAX_PATH+2)+sizeof(int)));
+
 		//Maximus5 - новый формат передачи
 		int nNull=0; // ItemsCount
-		WriteFile(hPipe, &nNull, sizeof(int), &cout, NULL);
+		//WriteFile(hPipe, &nNull, sizeof(int), &cout, NULL);
+		OutDataWrite(&nNull/*ItemsCount*/, sizeof(int));
 		
 		if (PInfo.SelectedItemsNumber>0)
 		{
@@ -87,7 +70,8 @@ void ProcessDragFrom757()
 					nMaxLen = nLen;
 				nWholeLen += (nLen+1);
 			}
-			WriteFile(hPipe, &nWholeLen, sizeof(int), &cout, NULL);
+			//WriteFile(hPipe, &nWholeLen, sizeof(int), &cout, NULL);
+			OutDataWrite(&nWholeLen, sizeof(int));
 
 			WCHAR* Path=new WCHAR[nMaxLen+1];
 
@@ -112,8 +96,10 @@ void ProcessDragFrom757()
 				lstrcpy(Path+nDirLen+nDirNoSlash, pi[i].FindData.lpwszFileName);
 
 				nLen++;
-				WriteFile(hPipe, &nLen, sizeof(int), &cout, NULL);
-				WriteFile(hPipe, Path, sizeof(WCHAR)*nLen, &cout, NULL);
+				//WriteFile(hPipe, &nLen, sizeof(int), &cout, NULL);
+				OutDataWrite(&nLen, sizeof(int));
+				//WriteFile(hPipe, Path, sizeof(WCHAR)*nLen, &cout, NULL);
+				OutDataWrite(Path, sizeof(WCHAR)*nLen);
 			}
 
 			for (i=0;i<ItemsCount;i++)
@@ -125,21 +111,21 @@ void ProcessDragFrom757()
 			delete Path; Path=NULL;
 
 			//  онец списка
-			WriteFile(hPipe, &nNull, sizeof(int), &cout, NULL);
+			//WriteFile(hPipe, &nNull, sizeof(int), &cout, NULL);
+			OutDataWrite(&nNull, sizeof(int));
 		}
 	}
 	else
 	{
 		int ItemsCount=0;
-		WriteFile(hPipe, &ItemsCount, sizeof(int), &cout, NULL);
-		WriteFile(hPipe, &ItemsCount, sizeof(int), &cout, NULL); // смена формата
+		OutDataWrite(&ItemsCount, sizeof(int));
+		OutDataWrite(&ItemsCount, sizeof(int)); // смена формата
 	}
 	//free(szCurDir);
 }
 
 void ProcessDragTo757()
 {
-	DWORD cout;
 	WindowInfo WInfo;				
     WInfo.Pos=0;
 	InfoW757->AdvControl(InfoW757->ModuleNumber, ACTL_GETSHORTWINDOWINFO, (void*)&WInfo);
@@ -147,7 +133,9 @@ void ProcessDragTo757()
 	{
 		//InfoW757->AdvControl(InfoW757->ModuleNumber, ACTL_FREEWINDOWINFO, (void*)&WInfo);
 		int ItemsCount=0;
-		WriteFile(hPipe, &ItemsCount, sizeof(int), &cout, NULL);				
+		//WriteFile(hPipe, &ItemsCount, sizeof(int), &cout, NULL);				
+		OutDataAlloc(sizeof(ItemsCount));
+		OutDataWrite(&ItemsCount,sizeof(ItemsCount));
 		return;
 	}
 	//InfoW757->AdvControl(InfoW757->ModuleNumber, ACTL_FREEWINDOWINFO, (void*)&WInfo);
@@ -203,12 +191,13 @@ void ProcessDragTo757()
 	}
 
 	// —обственно, пересылка информации
-	WriteFile(hPipe, &nStructSize, sizeof(nStructSize), &cout, NULL);
-	WriteFile(hPipe, pfpi, nStructSize, &cout, NULL);
+	//WriteFile(hPipe, &nStructSize, sizeof(nStructSize), &cout, NULL);
+	//WriteFile(hPipe, pfpi, nStructSize, &cout, NULL);
+	OutDataAlloc(nStructSize+4);
+	OutDataWrite(&nStructSize, sizeof(nStructSize));
+	OutDataWrite(pfpi, nStructSize);
 
 	free(pfpi); pfpi=NULL;
-	//free(szADir);
-	//free(szPDir);
 }
 
 void SetStartupInfoW757(void *aInfo)
@@ -219,23 +208,8 @@ void SetStartupInfoW757(void *aInfo)
 	*::FSFW757 = *((struct PluginStartupInfo*)aInfo)->FSF;
 	::InfoW757->FSF = ::FSFW757;
 	
-	if (!FarHwnd)
-		InitHWND((HWND)InfoW757->AdvControl(InfoW757->ModuleNumber, ACTL_GETFARHWND, 0));	
-	//ConEmuHwnd = NULL;
-	//FarHwnd = (HWND)InfoW757->AdvControl(InfoW757->ModuleNumber, ACTL_GETFARHWND, 0);
-	//ConEmuHwnd = GetAncestor(FarHwnd, GA_PARENT);
-	//if (ConEmuHwnd != NULL)
-	//{
-	//	WCHAR className[100];
-	//	GetClassName(ConEmuHwnd, (LPWSTR)className, 100);
-	//	if (FSFW757->LStricmp(className, L"VirtualConsoleClass") != 0 &&
-	//		FSFW757->LStricmp(className, L"VirtualConsoleClassMain") != 0)
-	//	{
-	//		ConEmuHwnd = NULL;
-	//	} else {
-	//		bWasSetParent = TRUE;
-	//	}
-	//}
+	/*if (!FarHwnd)
+		InitHWND((HWND)InfoW757->AdvControl(InfoW757->ModuleNumber, ACTL_GETFARHWND, 0));*/
 }
 
 extern int lastModifiedStateW;
@@ -331,13 +305,6 @@ void UpdateConEmuTabsW757(int event, bool losingFocus, bool editorSave)
 		SendTabs(tabCount);
 }
 
-/*extern "C"
-{
-void _chkstk()
-{
-}
-}*/
-
 void ExitFARW757(void)
 {
 	if (InfoW757) {
@@ -348,4 +315,22 @@ void ExitFARW757(void)
 		free(FSFW757);
 		FSFW757=NULL;
 	}
+}
+
+int ShowMessage757(int aiMsg, int aiButtons)
+{
+	if (!InfoW757 || !InfoW757->Message)
+		return -1;
+	return InfoW757->Message(InfoW757->ModuleNumber, FMSG_ALLINONE, NULL, 
+		(const wchar_t * const *)InfoW757->GetMsg(InfoW757->ModuleNumber,aiMsg), 0, aiButtons);
+}
+
+void ReloadMacro757()
+{
+	if (!InfoW757 || !InfoW757->AdvControl)
+		return;
+
+	ActlKeyMacro command;
+	command.Command=MCMD_LOADALL;
+	InfoW757->AdvControl(InfoW757->ModuleNumber,ACTL_KEYMACRO,&command);
 }

@@ -20,6 +20,7 @@
 #include "ConEmuApp.h"
 #include "tabbar.h"
 #include "TrayIcon.h"
+#include "ConEmuPipe.h"
 
 
 #define MBox(rt) (int)MessageBox(NULL, rt, Title, MB_SYSTEMMODAL | MB_ICONINFORMATION)
@@ -31,6 +32,7 @@
 
 #define INVALIDATE() InvalidateRect(HDCWND, NULL, FALSE)
 
+#define SafeCloseHandle(h) { if ((h)!=NULL) { HANDLE hh = (h); (h) = NULL; if (hh!=INVALID_HANDLE_VALUE) CloseHandle(hh); } }
 
 #ifdef MSGLOGGER
 #define POSTMESSAGE(h,m,w,l,e) {MCHKHEAP; DebugLogMessage(h,m,w,l,TRUE,e); PostMessage(h,m,w,l);}

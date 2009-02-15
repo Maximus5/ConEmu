@@ -9,12 +9,15 @@ class TabBarClass
 	RECT m_Margins;
 	bool _titleShouldChange;
 	int _prevTab;
+	BOOL mb_ChangeAllowed, mb_Enabled;
 	void AddTab(wchar_t* text, int i);
 	void SelectTab(int i);
 	char FarTabShortcut(int tabIndex);
 	void FarSendChangeTab(int tabIndex);
 public:
 	TabBarClass();
+	void Enable(BOOL abEnabled);
+	void Refresh(BOOL abFarActive);
 	void Invalidate();
 	bool IsActive();
 	BOOL IsAllowed();

@@ -23,10 +23,17 @@
 #define DRAG_DELTA 5
 #define MAX_TITLE_SIZE 0x400
 
+typedef DWORD (WINAPI* FGetModuleFileNameEx)(HANDLE hProcess,HMODULE hModule,LPWSTR lpFilename,DWORD nSize);
+
+
 class CConEmuChild;
+class CConEmuBack;
 
 class CConEmuMain
 {
+public:
+	HMODULE mh_Psapi;
+	FGetModuleFileNameEx GetModuleFileNameEx;
 public:
 	CConEmuChild m_Child;
 	CConEmuBack  m_Back;
@@ -35,8 +42,8 @@ public:
 	DWORD gnLastProcessCount;
 	uint cBlinkNext;
 	DWORD WindowMode;
-	HANDLE hPipe;
-	HANDLE hPipeEvent;
+	//HANDLE hPipe;
+	//HANDLE hPipeEvent;
 	bool isWndNotFSMaximized;
 	bool isShowConsole;
 	bool mb_FullWindowDrag;
@@ -60,10 +67,13 @@ public:
 	uint cBlinkShift; // cursor blink counter threshold
 	TCHAR szConEmuVersion[32];
 	DWORD m_ProcList[1000], m_ProcCount;
+	DWORD mn_TopProcessID; BOOL mb_FarActive;
+	TCHAR ms_TopProcess[MAX_PATH+1];
 
 public:
 	CConEmuMain();
 	~CConEmuMain();
+	BOOL Init();
 	void Destroy();
 	void InvalidateAll();
 
@@ -76,6 +86,7 @@ public:
 	RECT WindowSizeFromConsole(COORD consoleSize, bool rectInWindow = false, bool clientOnly = false);
 	COORD ConsoleSizeFromWindow(RECT* arect = NULL, bool frameIncluded = false, bool alreadyClient = false);
 	void PaintGaps(HDC hDC=NULL);
+	DWORD CheckProcesses();
 	void CheckBufferSize();
 	RECT DCClientRect(RECT* pClient=NULL);
 	void SyncWindowToConsole();
@@ -99,4 +110,10 @@ public:
 	LRESULT OnGetMinMaxInfo(LPMINMAXINFO pInfo);
 	void ReSize();
 	LRESULT OnCreate(HWND hWnd);
+	LRESULT OnClose(HWND hWnd);
+	LRESULT OnDestroy(HWND hWnd);
+	LRESULT OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
+	LRESULT OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
+	LRESULT OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
+	LRESULT OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam);
 };

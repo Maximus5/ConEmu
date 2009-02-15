@@ -173,8 +173,26 @@ HWND GetConEmuHWND(BOOL abRoot, int* pnConsoleIsChild/*=NULL*/)
 				ConEmuHwnd = CheckConEmuChild(ConEmuHwnd, &nChk);
 				// Если мы дошли сюда, значит консоль не дочернее окно, и возвращать нужно 4
 				if (nChk==3) nChk=4;
+				else if (nChk==1 || nChk==2) nChk=0;
 			}
 		}
+	}
+
+	if (!ConEmuHwnd && FarHwnd) {
+		while((ConEmuHwnd = FindWindowExA(NULL, ConEmuHwnd, VirtualConsoleClassMain, NULL))!=NULL)
+		{
+			HWND hCheck = (HWND)GetWindowLong(ConEmuHwnd, GWL_USERDATA);
+			if (hCheck == FarHwnd) {
+				// Нашли нужный ConEmu
+				// Проверить "правильность" хэндла
+				ConEmuHwnd = CheckConEmuChild(ConEmuHwnd, &nChk);
+				// Если мы дошли сюда, значит консоль не дочернее окно, и возвращать нужно 4
+				if (nChk==3) nChk=4;
+				else if (nChk==1 || nChk==2) nChk=0;
+				break;
+			}
+		}
+		
 	}
 
     if (abRoot && ConEmuHwnd && (nChk>=3))
