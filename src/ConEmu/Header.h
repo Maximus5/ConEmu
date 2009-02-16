@@ -2,6 +2,7 @@
 
 #include <windows.h>
 #include <Shlwapi.h>
+#include <vector>
 
 #ifdef KL_MEM
 #include "c:\\lang\\kl.h"
@@ -10,6 +11,7 @@
 #endif
 
 #include "globals.h"
+#include "resource.h"
 #include "VirtualConsole.h"
 #include "options.h"
 #include "DragDrop.h"
@@ -25,6 +27,7 @@
 
 #define MBox(rt) (int)MessageBox(NULL, rt, Title, MB_SYSTEMMODAL | MB_ICONINFORMATION)
 #define MBoxA(rt) (int)MessageBox(NULL, rt, _T("ConEmu"), MB_SYSTEMMODAL | MB_ICONINFORMATION)
+#define MBoxAssert(V) if ((V)==FALSE) { TCHAR szAMsg[MAX_PATH*2]; wsprintf(szAMsg, _T("Assertion(%s) at\n%s:%i"), #V, __FILE__, __LINE__); MBoxA(szAMsg); }
 #define isMeForeground() (GetForegroundWindow() == ghWnd || GetForegroundWindow() == ghOpWnd)
 #define isPressed(inp) HIBYTE(GetKeyState(inp))
 
@@ -58,7 +61,6 @@
 
 
 
-#include "resource.h"
 
 //------------------------------------------------------------------------
 ///| Code optimizing |////////////////////////////////////////////////////
@@ -79,14 +81,32 @@ __forceinline void *memcpy(void *_Dst, const void *_Src, size_t _Size)
 }
 #endif
 
-void __forceinline DisplayLastError()
+void __forceinline DisplayLastError(LPCTSTR asLabel)
 {
-	TCHAR out[200];
+	TCHAR out[0x200];
 	DWORD dw = GetLastError();
 	LPVOID lpMsgBuf;
 	FormatMessage( FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, NULL, dw, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR) &lpMsgBuf, 0, NULL );
-	wsprintf(out, _T("Error code ''%d'':\n%s"), dw, lpMsgBuf);
-	MessageBox(0, out, _T("Error occurred"), MB_SYSTEMMODAL | MB_ICONERROR);
+	wsprintf(out, _T("%s\nError code ''0x%08X'':\n%s"), asLabel, dw, lpMsgBuf);
+	MessageBox(ghWnd, out, gConEmu.GetTitle(), MB_SYSTEMMODAL | MB_ICONERROR);
+}
+
+COORD __forceinline MakeCoord(int W,int H)
+{
+	COORD rc; rc.X=W; rc.Y=H;
+	return rc;
+}
+
+RECT __forceinline MakeRect(int W,int H)
+{
+	RECT rc; rc.left=0; rc.top=0; rc.right=W; rc.bottom=H;
+	return rc;
+}
+
+RECT __forceinline MakeRect(int X1, int Y1,int X2,int Y2)
+{
+	RECT rc; rc.left=X1; rc.top=Y1; rc.right=X2; rc.bottom=Y2;
+	return rc;
 }
 
 #pragma warning(disable: 4311) // 'type cast' : pointer truncation from 'HBRUSH' to 'BOOL'
@@ -121,7 +141,7 @@ public:
 	template <class T> void Save(const TCHAR *regKey, T value)
 	{
 		DWORD len = sizeof(T);
-		RegSetValueEx(regMy, regKey, NULL, REG_BINARY, (LPBYTE)(&value), len); 
+		RegSetValueEx(regMy, regKey, NULL, (len == 4) ? REG_DWORD : REG_BINARY, (LPBYTE)(&value), len); 
 	}
 	void Save(const TCHAR *regKey, const TCHAR *value)
 	{

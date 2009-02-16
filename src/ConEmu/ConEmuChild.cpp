@@ -2,6 +2,7 @@
 
 CConEmuChild::CConEmuChild()
 {
+	mn_MsgTabChanged = RegisterWindowMessage(CONEMUTABCHANGED);
 }
 
 CConEmuChild::~CConEmuChild()
@@ -19,8 +20,10 @@ HWND CConEmuChild::Create()
 	//	MBoxA(_T("Can't register DC window class!"));
 	//	return NULL;
 	//}
-	DWORD style = WS_VISIBLE | WS_CHILD | WS_CLIPSIBLINGS /*| WS_CLIPCHILDREN*/ | (gSet.BufferHeight ? WS_VSCROLL : 0);
-	RECT rc = gConEmu.DCClientRect();
+	DWORD style = WS_VISIBLE | WS_CHILD | WS_CLIPSIBLINGS /*| WS_CLIPCHILDREN | (gSet.Buffer Height ? WS_VSCROLL : 0)*/;
+	//RECT rc = gConEmu.DCClientRect();
+	RECT rcMain; GetClientRect(ghWnd, &rcMain);
+	RECT rc = gConEmu.CalcRect(CER_DC, rcMain, CER_MAINCLIENT);
 	ghWndDC = CreateWindow(szClassName, 0, style, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, ghWnd, NULL, (HINSTANCE)g_hInstance, NULL);
 	if (!ghWndDC) {
 		ghWndDC = (HWND)-1; // чтобы родитель не ругался
@@ -28,7 +31,7 @@ HWND CConEmuChild::Create()
 		return NULL; //
 	}
 	SetWindowPos(ghWndDC, HWND_TOP, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
-	gConEmu.dcWindowLast = rc; //TODO!!!
+	//gConEmu.dcWindowLast = rc; //TODO!!!
 	return ghWndDC;
 }
 
@@ -99,8 +102,10 @@ LRESULT CALLBACK CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam
 			//POSTMESSAGE(ghConWnd, messg, wParam, lParam, FALSE);
 			//#else
 			POSTMESSAGE(ghConWnd, messg, wParam, lParam, FALSE); // с SEND - точно работало
+			//if (gSet.isAdvLangChange) {
 			POSTMESSAGE(ghConWnd, WM_SETFOCUS, 0,0,1);
 			POSTMESSAGE(ghWnd, WM_SETFOCUS, 0,0,1);
+			//}
 			//#endif
 			/*if (messg == WM_INPUTLANGCHANGE) {
 				//wParam Specifies the character set of the new locale. 
@@ -110,6 +115,14 @@ LRESULT CALLBACK CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam
 		}
 
     default:
+		if (messg == mn_MsgTabChanged) {
+			//изменились табы, их нужно перечитать
+			#ifdef _DEBUG
+				WCHAR szDbg[128]; swprintf(szDbg, L"Tabs:Notified(%i)\n", wParam);
+				OutputDebugStringW(szDbg);
+			#endif
+			TabBar.Retrieve();
+		}
         if (messg) result = DefWindowProc(hWnd, messg, wParam, lParam);
     }
     return result;
@@ -121,6 +134,9 @@ LRESULT CConEmuChild::OnPaint(WPARAM wParam, LPARAM lParam)
 	BOOL lbSkipDraw = FALSE;
     //if (gbInPaint)
 	//    break;
+
+	gSet.Performance(tPerfBlt, FALSE);
+
 
     if (gConEmu.isPictureView())
     {
@@ -148,35 +164,32 @@ LRESULT CConEmuChild::OnPaint(WPARAM wParam, LPARAM lParam)
 		HDC hDc = BeginPaint(ghWndDC, &ps);
 		//HDC hDc = GetDC(hWnd);
 
-		#ifndef _DEBUG
-			// Release режим
+		if (!gbNoDblBuffer) {
+			// Обычный режим
 			BitBlt(hDc, 0, 0, client.right, client.bottom, pVCon->hDC, 0, 0, SRCCOPY);
-		#else
-			if (!gbNoDblBuffer) {
-				// Обычный режим
-				BitBlt(hDc, 0, 0, client.right, client.bottom, pVCon->hDC, 0, 0, SRCCOPY);
-			} else {
-				RECT rect;
-				HBRUSH hBrush = CreateSolidBrush(gSet.Colors[0]);
-				HBRUSH hOldBrush = (HBRUSH)SelectObject(hDc, hBrush);
-				GetClientRect(ghWndDC, &rect);
-				GdiSetBatchLimit(1); // отключить буферизацию вывода для текущей нити
-				FillRect(hDc, &rect, hBrush); // -- если захочется на "чистую" рисовать
-				SelectObject(hDc, hOldBrush);
-				DeleteObject(hBrush);
+		} else {
+			GdiSetBatchLimit(1); // отключить буферизацию вывода для текущей нити
 
-				GdiFlush();
-				// Рисуем сразу на канвасе, без буферизации
-				pVCon->Update(false, &hDc);
-			}
-		#endif
+			/*
+			HBRUSH hBrush = CreateSolidBrush(gSet.Colors[0]);
+			HBRUSH hOldBrush = (HBRUSH)SelectObject(hDc, hBrush);
+			RECT rect; GetClientRect(ghWndDC, &rect);
+			FillRect(hDc, &rect, hBrush); // -- если захочется на "чистую" рисовать
+			SelectObject(hDc, hOldBrush);
+			DeleteObject(hBrush);
+			*/
+
+			GdiFlush();
+			// Рисуем сразу на канвасе, без буферизации
+			pVCon->Update(true, &hDc);
+		}
 
 		EndPaint(ghWndDC, &ps);
 
-		#ifdef _DEBUG
 		if (gbNoDblBuffer) GdiSetBatchLimit(0); // вернуть стандартный режим
-		#endif
 	}
+
+	gSet.Performance(tPerfBlt, TRUE);
 
     return result;
 }
@@ -242,8 +255,9 @@ HWND CConEmuBack::Create()
 		return NULL;
 	}
 	DWORD style = WS_VISIBLE | WS_CHILD | WS_CLIPSIBLINGS ;
-	RECT rc = gConEmu.ConsoleOffsetRect();
+	//RECT rc = gConEmu.ConsoleOffsetRect();
 	RECT rcClient; GetClientRect(ghWnd, &rcClient);
+	RECT rc = gConEmu.CalcRect(CER_BACK, rcClient, CER_MAINCLIENT);
 
 	mh_Wnd = CreateWindow(szClassNameBack, 0, style, 
 		rc.left, rc.top,
@@ -274,13 +288,16 @@ LRESULT CALLBACK CConEmuBack::BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, 
 		case WM_DESTROY:
 			DeleteObject(gConEmu.m_Back.mh_BackBrush);
 			break;
-		case WM_SETFOCUS:
-
-			if (messg == WM_SETFOCUS) {
-				if (ghWndDC && IsWindow(ghWndDC))
-					SetFocus(ghWndDC);
-			}
-			return 0;
+		//case WM_SETFOCUS:
+		//
+		//	if (messg == WM_SETFOCUS) {
+		//		if (ghWndDC && IsWindow(ghWndDC))
+		//			SetFocus(ghWndDC);
+		//	}
+		//	return 0;
+	    case WM_VSCROLL:
+	        POSTMESSAGE(ghConWnd, messg, wParam, lParam, FALSE);
+	        break;
 	}
 
     result = DefWindowProc(hWnd, messg, wParam, lParam);
@@ -293,13 +310,14 @@ void CConEmuBack::Resize()
 	if (!mh_Wnd || !IsWindow(mh_Wnd)) 
 		return;
 
-	RECT rc = gConEmu.ConsoleOffsetRect();
+	//RECT rc = gConEmu.ConsoleOffsetRect();
 	RECT rcClient; GetClientRect(ghWnd, &rcClient);
+	RECT rc = gConEmu.CalcRect(CER_BACK, rcClient, CER_MAINCLIENT);
 
 	MoveWindow(mh_Wnd, 
 		rc.left, rc.top,
-		rcClient.right - rc.right - rc.left,
-		rcClient.bottom - rc.bottom - rc.top,
+		rc.right - rc.left,
+		rc.bottom - rc.top,
 		1);
 }
 

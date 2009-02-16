@@ -5,16 +5,19 @@ extern const TCHAR *const szClassNameParent;
 extern const TCHAR *const szClassNameApp;
 extern const TCHAR *const szClassNameBack;
 
-struct VirtualConsole;
-extern VirtualConsole *pVCon;
+class CVirtualConsole;
+extern CVirtualConsole *pVCon;
 extern HINSTANCE g_hInstance;
 class CConEmuMain;
 extern CConEmuMain gConEmu;
 //extern TCHAR Title[0x400];
 //extern bool isLBDown, /*isInDrag,*/ isDragProcessed;
-extern HWND ghWnd, ghConWnd, ghWndDC, ghOpWnd;
+extern HWND ghWnd, ghConWnd, ghWndDC, ghOpWnd, ghWndApp;
 class TabBarClass;
 extern TabBarClass TabBar;
+
+extern const int TAB_FONT_HEIGTH;
+extern wchar_t TAB_FONT_FACE[];
 
 
 extern TCHAR szIconPath[MAX_PATH];

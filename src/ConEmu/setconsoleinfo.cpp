@@ -10,9 +10,10 @@
 //
 //	www.catch22.net
 //
-#include "Header.h"
-//#include <stdio.h>
+
+#include <windows.h>
 #include <stdarg.h>
+#include "kl_parts.h"
 
 // only in Win2k+  (use FindWindow for NT4)
 //HWND WINAPI GetConsoleWindow();
@@ -79,7 +80,11 @@ BOOL SetConsoleInfo(HWND hwndConsole, CONSOLE_INFO *pci)
 	//	Open the process which "owns" the console
 	//	
 	dwCurProcId = GetCurrentProcessId();
-	GetWindowThreadProcessId(hwndConsole, &dwConsoleOwnerPid);
+	dwConsoleOwnerPid = dwCurProcId;
+	hProcess = GetCurrentProcess();
+	
+	// Если уж мы к консоли подцепились - считаем ее своей!
+	/*GetWindowThreadProcessId(hwndConsole, &dwConsoleOwnerPid);
 	
 	hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, dwConsoleOwnerPid);
 	dwLastError = GetLastError();
@@ -92,7 +97,7 @@ BOOL SetConsoleInfo(HWND hwndConsole, CONSOLE_INFO *pci)
 			MessageBox(NULL, ErrText, L"ConEmu", MB_OK|MB_ICONSTOP|MB_SETFOREGROUND);
 			return FALSE;
 		}
-	}
+	}*/
 
 	//
 	// Create a SECTION object backed by page-file, then map a view of
@@ -132,8 +137,11 @@ BOOL SetConsoleInfo(HWND hwndConsole, CONSOLE_INFO *pci)
 
 			} else {
 				//  Send console window the "update" message
-				DWORD dwConInfoRc = SendMessage(hwndConsole, WM_SETCONSOLEINFO, (WPARAM)hDupSection, 0);
-				DWORD dwConInfoErr = GetLastError();
+				DWORD dwConInfoRc = 0;
+				DWORD dwConInfoErr = 0;
+				
+				dwConInfoRc = SendMessage(hwndConsole, WM_SETCONSOLEINFO, (WPARAM)hDupSection, 0);
+				dwConInfoErr = GetLastError();
 			}
 		}
 	}
@@ -195,6 +203,7 @@ static void GetConsoleSizeInfo(CONSOLE_INFO *pci)
 //	0x000000ff, 0x00ff00ff,	0x0000ffff, 0x00ffffff
 // };
 //
+#if !defined(__GNUC__)
 VOID WINAPI SetConsolePalette(COLORREF palette[16])
 {
 	CONSOLE_INFO ci = { sizeof(ci) };
@@ -235,6 +244,13 @@ VOID WINAPI SetConsolePalette(COLORREF palette[16])
 
 	SetConsoleInfo(hwndConsole, &ci);
 }
+#endif
+
+#if defined(__GNUC__)
+#define __in
+#define __out
+#undef ENABLE_AUTO_POSITION
+#endif
 
 //VISTA support:
 #ifndef ENABLE_AUTO_POSITION
@@ -248,11 +264,12 @@ typedef struct _CONSOLE_FONT_INFOEX {
 } CONSOLE_FONT_INFOEX, *PCONSOLE_FONT_INFOEX;
 #endif
 
+
 typedef BOOL (WINAPI *PGetCurrentConsoleFontEx)(__in HANDLE hConsoleOutput,__in BOOL bMaximumWindow,__out PCONSOLE_FONT_INFOEX lpConsoleCurrentFontEx);
 typedef BOOL (WINAPI *PSetCurrentConsoleFontEx)(__in HANDLE hConsoleOutput,__in BOOL bMaximumWindow,__out PCONSOLE_FONT_INFOEX lpConsoleCurrentFontEx);
 
 
-void SetConsoleSizeTo(HWND inConWnd, int inSizeX, int inSizeY)
+void SetConsoleFontSizeTo(HWND inConWnd, int inSizeX, int inSizeY)
 {
 	PGetCurrentConsoleFontEx GetCurrentConsoleFontEx = (PGetCurrentConsoleFontEx)
 		GetProcAddress(GetModuleHandle(_T("kernel32.dll")), "GetCurrentConsoleFontEx");
@@ -262,9 +279,11 @@ void SetConsoleSizeTo(HWND inConWnd, int inSizeX, int inSizeY)
 	if (GetCurrentConsoleFontEx && SetCurrentConsoleFontEx) // We have Vista
 	{
 		CONSOLE_FONT_INFOEX cfi = {sizeof(CONSOLE_FONT_INFOEX)};
-		GetCurrentConsoleFontEx(GetStdHandle(STD_OUTPUT_HANDLE), FALSE, &cfi);
+		//GetCurrentConsoleFontEx(GetStdHandle(STD_OUTPUT_HANDLE), FALSE, &cfi);
 		cfi.dwFontSize.X = inSizeX;
 		cfi.dwFontSize.Y = inSizeY;
+		//TODO: А Люциду кто ставить будет???
+		_tcscpy(cfi.FaceName, _T("Lucida Console"));
 		SetCurrentConsoleFontEx(GetStdHandle(STD_OUTPUT_HANDLE), FALSE, &cfi);
 	}
 	else // We have other NT

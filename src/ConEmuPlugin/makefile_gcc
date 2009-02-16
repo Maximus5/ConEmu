@@ -1,8 +1,9 @@
 NAME = ConEmu
 SRCS = ConEmuPlugin.cpp \
-       ConEmuPlugin684.cpp \
+       ConEmuPlugin789.cpp \
        ConEmuPlugin757.cpp \
        ConEmuPluginA.cpp \
+       ../ConEmu/setconsoleinfo.cpp \
        ../common/ConEmuCheck.c
 
 USERLIBS = -lversion
@@ -58,8 +59,8 @@ EXT = dll
 DLLNAME = $(NAME).$(EXT)
 DLLFULLNAME = $(DLLDIR)/$(DLLNAME)
 DEF = export.gcc.def
-#RC_NAME = $(NAME).rc
-#RES = $(OBJDIR)/$(NAME).res.o
+RC_NAME = $(NAME).rc
+RES = $(OBJDIR)/$(NAME).res.o
 
 NOSTART = -nostartfiles
 ifdef NEEDENTRY
@@ -92,8 +93,7 @@ CCFLAGS = -mno-cygwin -I $(COMMON) -I $(COMINC) -Wall -Os -funsigned-char -fomit
 LNKFLAGS = -mno-cygwin -mdll -s $(NOSTART) $(NODEFLIBS) -lgcc $(USERLIBSFIRST) $(COMMONLIB) -luser32 -lkernel32 -ladvapi32 -lshell32 $(USERLIBS)
 RCFLAGS = -I $(COMINC) $(RCWIDE) $(USERRC)
 
-OBJS = $(patsubst %.cpp,$(OBJDIR)/%.o,$(filter %.cpp,$(SRCS))) $(patsubst %.c,$(OBJDIR)/%.o,$(filter %.c,$(SRCS)))
-# $(RES)
+OBJS = $(patsubst %.cpp,$(OBJDIR)/%.o,$(filter %.cpp,$(SRCS))) $(patsubst %.c,$(OBJDIR)/%.o,$(filter %.c,$(SRCS))) $(RES)
 #ifndef DISABLEAUTODEPS
 #DEPS = $(patsubst %.cpp,$(OBJDIR)/%.d,$(filter %.cpp,$(SRCS)))
 #endif
@@ -102,6 +102,7 @@ MAP = $(patsubst %.$(EXT),%.map,$(DLLFULLNAME))
 
 
 all: $(DLLFULLNAME)
+
 
 #ifndef DISABLEAUTODEPS
 #$(OBJDIR)/%.d: %.cpp
@@ -121,10 +122,10 @@ $(OBJDIR)/%.o: %.c
 	@$(MKDIR) -p $(@D)
 	@$(CC) $(CCFLAGS) -c -o $@ $<
 
-#$(RES): $(RC_NAME) $(COMINC)/farversion.hpp $(COMINC)/plugin.hpp
-#	@echo compiling $<
-#	@$(MKDIR) -p $(@D)
-#	@$(WINDRES) $(RCFLAGS) -i $< -o $@
+$(RES): $(RC_NAME)
+	@echo compiling resources $<
+	@$(MKDIR) -p $(@D)
+	@$(WINDRES) $(RCFLAGS) -i $< -o $@
 
 $(DLLFULLNAME): $(OBJS) $(DEF)
 	@echo linking $@
@@ -135,10 +136,10 @@ $(DLLFULLNAME): $(OBJS) $(DEF)
 	@$(MV) $(DLLNAME) $(DLLDIR)
 	@$(RM) $(DLLNAME).base
 	@$(RM) $(DLLNAME).exp
-ifdef DOCS
-	@$(CP) $(DOCS) $(DLLDIR)
-endif
+#ifdef DOCS
+#	@$(CP) $(DOCS) $(DLLDIR)
+#endif
 
-ifndef DISABLEAUTODEPS
--include $(DEPS)
-endif
+#ifndef DISABLEAUTODEPS
+#-include $(DEPS)
+#endif

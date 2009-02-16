@@ -1,24 +1,22 @@
 #pragma once
 
-#ifdef _DEBUG
-	#define CONEMUALIVETIMEOUT INFINITE
-	#define CONEMUREADYTIMEOUT INFINITE
-#else
-	#define CONEMUALIVETIMEOUT 1000 // Живость плагина ждем секунду
-	#define CONEMUREADYTIMEOUT 10000 // А на выполнение команды - 10s max
-#endif
-
 class CConEmuPipe
 {
+protected:
+   HANDLE hEventCmd[MAXCMDCOUNT];
 public:
-   HANDLE hEventCmd[MAXCMDCOUNT], hEventAlive, hEventReady, hMapping;
+   HANDLE hEventAlive, hEventReady;
+   static HANDLE hMapping;
    LPBYTE lpMap, lpCursor;
    DWORD  dwMaxDataSize, nPID;
    WCHAR  sMapName[MAX_PATH];
 public:
    CConEmuPipe();
    ~CConEmuPipe();
+   void Close();
    
-   BOOL Init();
+   BOOL Init(BOOL abSilent=FALSE);
+   BOOL Execute(int nCmd);
    BOOL Read(LPVOID pData, DWORD nSize, DWORD* nRead);
+   LPBYTE GetPtr();
 };

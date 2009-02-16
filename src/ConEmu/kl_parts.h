@@ -106,7 +106,7 @@ __forceinline u32 __cdecl klMulDivU32(u32 a, u32 b, u32 c)
 			div	c
 	}
 #else
-    __asm ( "mov %eax
+    return (a*b/c);
 #endif
 }
 

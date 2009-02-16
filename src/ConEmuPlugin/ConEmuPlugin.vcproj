@@ -42,7 +42,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories=""
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_CRT_NON_CONFORMING_SWPRINTFS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -125,7 +125,7 @@
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
 				AdditionalIncludeDirectories=""
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_CRT_NON_CONFORMING_SWPRINTFS"
 				RuntimeLibrary="0"
 				StructMemberAlignment="2"
 				EnableFunctionLevelLinking="true"
@@ -224,7 +224,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="version.lib"
-				OutputFile="C:\Utils\Far180\Plugins\ConEmu\conemu.dll"
+				OutputFile="J:\Maks\Desktop\FAR_EMPTY\plugins\ConEmu\ConEmu.dll"
 				LinkIncremental="1"
 				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"
@@ -302,7 +302,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="version.lib"
-				OutputFile="F:\VCProject\FarPlugin\#FAR1705\Plugins\ConEmu\conemu.dll"
+				OutputFile="E:\Source\FARUnicode\trunk\unicode_far\Debug.32.vc\plugins\conEmu\ConEmu.dll"
 				LinkIncremental="2"
 				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"
@@ -338,7 +338,7 @@
 	</References>
 	<Files>
 		<Filter
-			Name="Source Files"
+			Name="0 - Source Files"
 			Filter="cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx"
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
@@ -351,11 +351,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\ConEmuPlugin684.cpp"
+				RelativePath=".\ConEmuPlugin757.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\ConEmuPlugin757.cpp"
+				RelativePath=".\ConEmuPlugin789.cpp"
 				>
 			</File>
 			<File
@@ -372,6 +372,10 @@
 						Name="VCCustomBuildTool"
 					/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\ConEmu\setconsoleinfo.cpp"
+				>
 			</File>
 		</Filter>
 		<Filter
