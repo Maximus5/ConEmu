@@ -20,14 +20,6 @@ int WINAPI _export GetMinFarVersion(void)
 	return MAKEFARVERSION(1,71,2470);
 }
 
-HANDLE WINAPI _export OpenPlugin(int OpenFrom,INT_PTR Item)
-{
-	if (gnReqCommand != (DWORD)-1) {
-		ProcessCommand(gnReqCommand, FALSE/*bReqMainThread*/);
-	}
-	return INVALID_HANDLE_VALUE;
-}
-
 
 struct PluginStartupInfo *InfoA=NULL;
 struct FarStandardFunctions *FSFA=NULL;
@@ -244,21 +236,19 @@ void WINAPI _export SetStartupInfo(const struct PluginStartupInfo *aInfo)
 	*::FSFA = *aInfo->FSF;
 	::InfoA->FSF = ::FSFA;
 
+    /*if (!FarHwnd)
+		InitHWND((HWND)InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETFARHWND, 0));*/
 	CheckMacro();
 }
 
 void WINAPI _export GetPluginInfo(struct PluginInfo *pi)
 {
-    static char *szMenu[1], szMenu1[15];
-	szMenu[0]=szMenu1; lstrcpyA(szMenu[0], "[&\xCC] ConEmu");
-    //szMenu[0][2] = (char)0xCC;
-
 	pi->StructSize = sizeof(struct PluginInfo);
-	pi->Flags = PF_EDITOR | PF_VIEWER | PF_DIALOG | PF_PRELOAD;
+	pi->Flags = PF_EDITOR | PF_VIEWER | PF_PRELOAD;
 	pi->DiskMenuStrings = NULL;
 	pi->DiskMenuNumbers = 0;
-	pi->PluginMenuStrings = szMenu;
-	pi->PluginMenuStringsNumber = 1;
+	pi->PluginMenuStrings = NULL;
+	pi->PluginMenuStringsNumber =0;
 	pi->PluginConfigStrings = NULL;
 	pi->PluginConfigStringsNumber = 0;
 	pi->CommandPrefix = NULL;
@@ -295,7 +285,7 @@ int WINAPI _export ProcessEditorEvent(int Event, void *Param)
 	case EE_GOTFOCUS:
 	case EE_KILLFOCUS:
 	case EE_SAVE:
-	//case EE_READ:
+	case EE_READ:
 		{
 			UpdateConEmuTabsA(Event, Event == EE_KILLFOCUS, Event == EE_SAVE);
 			break;
@@ -311,7 +301,7 @@ int WINAPI _export ProcessViewerEvent(int Event, void *Param)
 	switch (Event)
 	{
 	case VE_CLOSE:
-	//case VE_READ:
+	case VE_READ:
 	case VE_KILLFOCUS:
 	case VE_GOTFOCUS:
 		{
@@ -359,12 +349,15 @@ void UpdateConEmuTabsA(int event, bool losingFocus, bool editorSave)
 		}
 	}
 
-	SendTabs(tabCount);
+	if (lbCh)
+		SendTabs(tabCount);
 }
 
 void   WINAPI _export ExitFAR(void)
 {
-	StopThread();
+	if (hEventCmd[CMD_EXIT])
+		SetEvent(hEventCmd[CMD_EXIT]); // Завершить нить
+	//CloseTabs(); -- ConEmu само разберется
 
 	if (InfoA) {
 		free(InfoA);
@@ -392,22 +385,4 @@ void ReloadMacroA()
 	ActlKeyMacro command;
 	command.Command=MCMD_LOADALL;
 	InfoA->AdvControl(InfoA->ModuleNumber,ACTL_KEYMACRO,&command);
-}
-
-void SetWindowA(int nTab)
-{
-	if (!InfoA || !InfoA->AdvControl)
-		return;
-
-	if (InfoA->AdvControl(InfoA->ModuleNumber, ACTL_SETCURRENTWINDOW, (void*)nTab))
-		InfoA->AdvControl(InfoA->ModuleNumber, ACTL_COMMIT, 0);
-}
-
-void PostMacroA(char* asMacro)
-{
-	ActlKeyMacro mcr;
-	mcr.Command = MCMD_POSTMACROSTRING;
-	mcr.Param.PlainText.SequenceText = asMacro;
-	mcr.Param.PlainText.Flags = KSFLAGS_DISABLEOUTPUT;
-	InfoA->AdvControl(InfoA->ModuleNumber, ACTL_KEYMACRO, (void*)&mcr);
 }

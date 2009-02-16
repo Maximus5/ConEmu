@@ -59,8 +59,8 @@ EXT = exe
 EXENAME = $(NAME).$(EXT)
 EXEFULLNAME = $(EXEDIR)/$(EXENAME)
 #DEF = export.gcc.def
-RC_NAME = Resource.rc
-RES = $(OBJDIR)/$(NAME).res.o
+#RC_NAME = $(NAME).rc
+#RES = $(OBJDIR)/$(NAME).res.o
 
 NOSTART = -nostartfiles
 ifdef NEEDENTRY
@@ -93,7 +93,8 @@ CCFLAGS = -mno-cygwin -I $(COMMON) -I $(COMINC) -Wall -Os -funsigned-char -fomit
 LNKFLAGS = -mno-cygwin -mdll -s $(NOSTART) $(NODEFLIBS) -lgcc $(USERLIBSFIRST) $(COMMONLIB) -luser32 -lkernel32 -ladvapi32 -lshell32 $(USERLIBS)
 RCFLAGS = -I $(COMINC) $(RCWIDE) $(USERRC)
 
-OBJS = $(patsubst %.cpp,$(OBJDIR)/%.o,$(filter %.cpp,$(SRCS))) $(RES)
+OBJS = $(patsubst %.cpp,$(OBJDIR)/%.o,$(filter %.cpp,$(SRCS)))
+# $(RES)
 ifndef DISABLEAUTODEPS
 DEPS = $(patsubst %.cpp,$(OBJDIR)/%.d,$(filter %.cpp,$(SRCS)))
 endif
@@ -116,10 +117,10 @@ $(OBJDIR)/%.o: %.cpp
 	@$(MKDIR) -p $(@D)
 	@$(CXX) $(CXXFLAGS) -c -o $@ $<
 
-$(RES): $(RC_NAME)
-	@echo compiling $<
-	@$(MKDIR) -p $(@D)
-	@$(WINDRES) $(RCFLAGS) -i $< -o $@
+#$(RES): $(RC_NAME) $(COMINC)/farversion.hpp $(COMINC)/plugin.hpp
+#	@echo compiling $<
+#	@$(MKDIR) -p $(@D)
+#	@$(WINDRES) $(RCFLAGS) -i $< -o $@
 
 $(EXEFULLNAME): $(OBJS) $(DEF)
 	@echo linking $@
@@ -134,9 +135,9 @@ $(EXEFULLNAME): $(OBJS) $(DEF)
 #	@$(MV) $(DLLNAME) $(DLLDIR)
 #	@$(RM) $(DLLNAME).base
 #	@$(RM) $(DLLNAME).exp
-#ifdef DOCS
-#	@$(CP) $(DOCS) $(EXEDIR)
-#endif
+ifdef DOCS
+	@$(CP) $(DOCS) $(EXEDIR)
+endif
 
 ifndef DISABLEAUTODEPS
 -include $(DEPS)

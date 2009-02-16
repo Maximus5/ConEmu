@@ -79,13 +79,9 @@ void CProgressBars::OnTimer()
 
 bool CProgressBars::isCoping()
 {
-	//TODO: Локализация
-	LPCTSTR pszTitle = gConEmu.GetTitle();
-	if (wcsstr(pszTitle, _T("Копирование"))
-		|| wcsstr(pszTitle, _T("Copying"))
-		|| wcsstr(pszTitle, _T("Перенос"))
-		|| wcsstr(pszTitle, _T("Moving"))
-		)
-		return true;
-	return false;
+	wchar_t *a = wcsstr(gConEmu.Title, _T("Копирование"));
+	wchar_t *b = wcsstr(gConEmu.Title, _T("Copying"));
+	wchar_t *c = wcsstr(gConEmu.Title, _T("Перенос"));
+	wchar_t *d = wcsstr(gConEmu.Title, _T("Moving"));
+	return (a || b || c || d);// && (Title[0] == '{');
 }

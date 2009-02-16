@@ -1,14 +1,12 @@
 #include "header.h"
 
-HANDLE CConEmuPipe::hMapping=NULL;
-
 CConEmuPipe::CConEmuPipe()
 {
 	for (int i=0; i<MAXCMDCOUNT; i++)
 		hEventCmd[i] = NULL;
 	hEventAlive=NULL;
 	hEventReady=NULL;
-	//hMapping=NULL;
+	hMapping=NULL;
 	dwMaxDataSize = 0;
 	lpMap = NULL;
 	lpCursor = NULL;
@@ -17,11 +15,6 @@ CConEmuPipe::CConEmuPipe()
 }
 
 CConEmuPipe::~CConEmuPipe()
-{
-	Close();
-}
-
-void CConEmuPipe::Close()
 {
 	for (int i=0; i<MAXCMDCOUNT; i++)
 		SafeCloseHandle(hEventCmd[i]);
@@ -37,18 +30,10 @@ void CConEmuPipe::Close()
 		h = OpenEvent(EVENT_ALL_ACCESS, FALSE, szEventName); \
 		if (h==INVALID_HANDLE_VALUE) h=NULL;
 
-//#pragma message("warning: добавить аргумент abSilent, вдруг плагин еще не загружен?")
-BOOL CConEmuPipe::Init(BOOL abSilent)
+BOOL CConEmuPipe::Init()
 {
-	if (hMapping) {
-		MBoxA(_T("Last operation was not finished!"));
-		return FALSE;
-	}
-
-    if (!gConEmu.isFar() && !gConEmu.mn_TopProcessID) {
-	    gConEmu.DnDstep(_T("Pipe: FAR not active"));
+    if (!gConEmu.mb_FarActive)
 	    return FALSE;
-	}
 
 	// —формируем »ћя сразу, а то вдруг процесс переключитс€?
 	DWORD dwCurProcId = gConEmu.mn_TopProcessID;
@@ -59,48 +44,19 @@ BOOL CConEmuPipe::Init(BOOL abSilent)
 
 	CREATEEVENT(CONEMUDRAGFROM, hEventCmd[CMD_DRAGFROM]);
 	CREATEEVENT(CONEMUDRAGTO, hEventCmd[CMD_DRAGTO]);
-	CREATEEVENT(CONEMUREQTABS, hEventCmd[CMD_REQTABS]);
-	CREATEEVENT(CONEMUSETWINDOW, hEventCmd[CMD_SETWINDOW]);
-	CREATEEVENT(CONEMUPOSTMACRO, hEventCmd[CMD_POSTMACRO]);
 	CREATEEVENT(CONEMUEXIT, hEventCmd[CMD_EXIT]);
 	CREATEEVENT(CONEMUALIVE, hEventAlive);
 	CREATEEVENT(CONEMUREADY, hEventReady);
 
 
 	if (!hEventAlive || !hEventReady || 
-		!hEventCmd[CMD_DRAGFROM] || !hEventCmd[CMD_DRAGTO] || 
-		!hEventCmd[CMD_REQTABS] || !hEventCmd[CMD_SETWINDOW] || 
-		!hEventCmd[CMD_POSTMACRO] || !hEventCmd[CMD_EXIT] )
+		!hEventCmd[CMD_DRAGFROM] || !hEventCmd[CMD_DRAGTO] || !hEventCmd[CMD_EXIT] )
 	{
-		if (!abSilent)
-			MBoxA(_T("CreateEvent failed"));
+		MBoxA(_T("CreateEvent failed"));
 		return FALSE;
 	}
 
 	return TRUE;
-}
-
-BOOL CConEmuPipe::Execute(int nCmd)
-{
-	if (nCmd<0 || nCmd>MAXCMDCOUNT) {
-		TCHAR szError[128];
-		swprintf(szError, _T("Invalid command id (%i)!"), nCmd);
-		MBoxA(szError);
-		return FALSE;
-	}
-	if (!hEventCmd[nCmd]) {
-		TCHAR szError[128];
-		swprintf(szError, _T("Command %i was not created by plugin!"), nCmd);
-		MBoxA(szError);
-		return FALSE;
-	}
-	SetEvent(hEventCmd[nCmd]);
-	return TRUE;
-}
-
-LPBYTE CConEmuPipe::GetPtr()
-{
-	return lpCursor;
 }
 
 BOOL CConEmuPipe::Read(LPVOID pData, DWORD nSize, DWORD* nRead)
@@ -128,13 +84,11 @@ BOOL CConEmuPipe::Read(LPVOID pData, DWORD nSize, DWORD* nRead)
 		dwMaxDataSize = *((DWORD*)lpMap);
 		lpCursor = lpMap+4;
 	}
-	if (hMapping==INVALID_HANDLE_VALUE || !hMapping) {
+	if (hMapping==INVALID_HANDLE_VALUE) {
 		if (nRead) *nRead=0;
 		return FALSE;
 	}
 
-	if (!dwMaxDataSize)
-		nSize = 0; else
 	if ((lpCursor-lpMap+nSize)>dwMaxDataSize)
 		nSize = dwMaxDataSize - (lpCursor-lpMap);
 

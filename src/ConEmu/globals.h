@@ -5,8 +5,8 @@ extern const TCHAR *const szClassNameParent;
 extern const TCHAR *const szClassNameApp;
 extern const TCHAR *const szClassNameBack;
 
-class CVirtualConsole;
-extern CVirtualConsole *pVCon;
+struct VirtualConsole;
+extern VirtualConsole *pVCon;
 extern HINSTANCE g_hInstance;
 class CConEmuMain;
 extern CConEmuMain gConEmu;
@@ -15,9 +15,6 @@ extern CConEmuMain gConEmu;
 extern HWND ghWnd, ghConWnd, ghWndDC, ghOpWnd, ghWndApp;
 class TabBarClass;
 extern TabBarClass TabBar;
-
-extern const int TAB_FONT_HEIGTH;
-extern wchar_t TAB_FONT_FACE[];
 
 
 extern TCHAR szIconPath[MAX_PATH];

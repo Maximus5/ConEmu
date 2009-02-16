@@ -4,10 +4,12 @@
 /*
   plugin.hpp
 
-  Plugin API for FAR Manager 2.0 build 789
+  Plugin API for FAR Manager 2.0 build 684
 */
 
-#pragma message ("Using plugin.hpp for FAR Manager 2.0 build 789")
+#if defined(_MSC_VER)
+#pragma message ("Using plugin.hpp for FAR Manager 2.0 build 684")
+#endif
 
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -43,7 +45,7 @@ other possible license with no implications from the above license on them.
 
 #define FARMANAGERVERSION_MAJOR 2
 #define FARMANAGERVERSION_MINOR 0
-#define FARMANAGERVERSION_BUILD 789
+#define FARMANAGERVERSION_BUILD 684
 
 #ifndef RC_INVOKED
 
@@ -630,6 +632,10 @@ enum FARMENUFLAGS{
   FMENU_REVERSEAUTOHIGHLIGHT = 0x00000008,
   FMENU_USEEXT               = 0x00000020,
   FMENU_CHANGECONSOLETITLE   = 0x00000040,
+
+  FMENU_TRUNCPATH            = 0x10000000,
+  FMENU_TRUNCSTR             = 0x20000000,
+  FMENU_TRUNCSTREND          = 0x30000000,
 };
 
 typedef int (WINAPI *FARAPIMENU)(
@@ -703,13 +709,18 @@ struct PanelInfo
   int PanelType;
   int Plugin;
   RECT PanelRect;
+  struct PluginPanelItem *PanelItems;
   int ItemsNumber;
+  struct PluginPanelItem **SelectedItems;
   int SelectedItemsNumber;
   int CurrentItem;
   int TopPanelItem;
   int Visible;
   int Focus;
   int ViewMode;
+  wchar_t *lpwszColumnTypes;
+  wchar_t *lpwszColumnWidths;
+  wchar_t *lpwszCurDir;
   int ShortNames;
   int SortMode;
   DWORD Flags;
@@ -752,23 +763,18 @@ enum FILE_CONTROL_COMMANDS{
   FCTL_GETCMDLINESELECTEDTEXT,
   FCTL_SETCMDLINESELECTION,
   FCTL_GETCMDLINESELECTION,
+  FCTL_GETPANELSHORTINFO,
   FCTL_CHECKPANELSEXIST,
   FCTL_SETNUMERICSORT,
+  FCTL_FREEPANELINFO,
   FCTL_GETUSERSCREEN,
   FCTL_ISACTIVEPANEL,
-	FCTL_GETPANELITEM,
-	FCTL_GETSELECTEDPANELITEM,
-	FCTL_GETCURRENTPANELITEM,
-	FCTL_GETCURRENTDIRECTORY,
-	FCTL_GETCOLUMNTYPES,
-	FCTL_GETCOLUMNWIDTHS,
 };
 
 typedef int (WINAPI *FARAPICONTROL)(
   HANDLE hPlugin,
   int Command,
-	int Param1,
-	LONG_PTR Param2
+  void *Param
 );
 
 typedef void (WINAPI *FARAPITEXT)(
@@ -1438,7 +1444,7 @@ typedef wchar_t   *(WINAPI *FARSTDTRUNCSTR)(wchar_t *Str,int MaxLength);
 typedef wchar_t   *(WINAPI *FARSTDTRUNCPATHSTR)(wchar_t *Str,int MaxLength);
 typedef wchar_t   *(WINAPI *FARSTDQUOTESPACEONLY)(wchar_t *Str);
 typedef const wchar_t*   (WINAPI *FARSTDPOINTTONAME)(const wchar_t *Path);
-typedef int     (WINAPI *FARSTDGETPATHROOT)(const wchar_t *Path,wchar_t *Root, int DestSize);
+typedef void    (WINAPI *FARSTDGETPATHROOT)(const wchar_t *Path,wchar_t *Root);
 typedef BOOL    (WINAPI *FARSTDADDENDSLASH)(wchar_t *Path);
 typedef int     (WINAPI *FARSTDCOPYTOCLIPBOARD)(const wchar_t *Data);
 typedef wchar_t *(WINAPI *FARSTDPASTEFROMCLIPBOARD)(void);
@@ -1505,8 +1511,8 @@ enum MKLINKOP{
   FLINK_DONOTUPDATEPANEL = 0x20000,
 };
 typedef int     (WINAPI *FARSTDMKLINK)(const wchar_t *Src,const wchar_t *Dest,DWORD Flags);
-typedef int     (WINAPI *FARCONVERTNAMETOREAL)(const wchar_t *Src, wchar_t *Dest, int DestSize);
-typedef int     (WINAPI *FARGETREPARSEPOINTINFO)(const wchar_t *Src, wchar_t *Dest,int DestSize);
+typedef int     (WINAPI *FARCONVERTNAMETOREAL)(const char *Src,char *Dest, int DestSize);
+typedef int     (WINAPI *FARGETREPARSEPOINTINFO)(const char *Src,char *Dest,int DestSize);
 
 typedef struct FarStandardFunctions
 {

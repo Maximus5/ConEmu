@@ -8,31 +8,13 @@
 #define CONEMUMAPPING    L"ConEmuPluginData%u"
 #define CONEMUDRAGFROM   L"ConEmuDragFrom%u"
 #define CONEMUDRAGTO     L"ConEmuDragTo%u"
-#define CONEMUREQTABS    L"ConEmuReqTabs%u"
-#define CONEMUSETWINDOW  L"ConEmuSetWindow%u"
-#define CONEMUPOSTMACRO  L"ConEmuPostMacro%u"
 #define CONEMUEXIT       L"ConEmuExit%u"
 #define CONEMUALIVE      L"ConEmuAlive%u"
 #define CONEMUREADY      L"ConEmuReady%u"
-#define CONEMUTABCHANGED L"ConEmuTabsChanged"
 #define CMD_DRAGFROM     0
 #define CMD_DRAGTO       1
-#define CMD_REQTABS      2
-#define CMD_SETWINDOW    3
-#define CMD_POSTMACRO    4
-// +2
-#define MAXCMDCOUNT      6
-#define CMD_EXIT         MAXCMDCOUNT-1
-
-#ifdef _DEBUG
-	#define CONEMUALIVETIMEOUT INFINITE
-	#define CONEMUREADYTIMEOUT INFINITE
-	#define CONEMUFARTIMEOUT   10000 // Сколько ожидать, пока ФАР среагирует на вызов плагина
-#else
-	#define CONEMUALIVETIMEOUT 1000  // Живость плагина ждем секунду
-	#define CONEMUREADYTIMEOUT 10000 // А на выполнение команды - 10s max
-	#define CONEMUFARTIMEOUT   10000 // Сколько ожидать, пока ФАР среагирует на вызов плагина
-#endif
+#define CMD_EXIT         2
+#define MAXCMDCOUNT      3
 
 #define CONEMUTABMAX 0x400
 struct ConEmuTab

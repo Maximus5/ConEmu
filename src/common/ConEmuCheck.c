@@ -116,8 +116,6 @@ HWND GetConEmuHWND(BOOL abRoot, int* pnConsoleIsChild/*=NULL*/)
 	// Если удалось получить хэндл окна консоли - проверяем его родителя
 	if (FarHwnd)
 		ConEmuHwnd = GetAncestor(FarHwnd, GA_PARENT);
-	if (ConEmuHwnd == (HWND)0x10014)
-		ConEmuHwnd = NULL; else
 	if (ConEmuHwnd != NULL)
 	{
 		// Теоретически, если был сделан SetParent - то в дочернее окно с отрисовкой, но фиг его знает. проверим
@@ -125,7 +123,6 @@ HWND GetConEmuHWND(BOOL abRoot, int* pnConsoleIsChild/*=NULL*/)
 	}
 
 
-#ifndef CONMANSERVER
 	if (!ConEmuHwnd) {
 		char className[100];
 		if (GetEnvironmentVariableA("ConEmuHWND", className, 99)) {
@@ -180,7 +177,6 @@ HWND GetConEmuHWND(BOOL abRoot, int* pnConsoleIsChild/*=NULL*/)
 			}
 		}
 	}
-#endif
 
 	if (!ConEmuHwnd && FarHwnd) {
 		while((ConEmuHwnd = FindWindowExA(NULL, ConEmuHwnd, VirtualConsoleClassMain, NULL))!=NULL)
@@ -199,7 +195,7 @@ HWND GetConEmuHWND(BOOL abRoot, int* pnConsoleIsChild/*=NULL*/)
 		
 	}
 
-    if (abRoot && ConEmuHwnd && (nChk<3))
+    if (abRoot && ConEmuHwnd && (nChk>=3))
 	    ConEmuRoot = GetAncestor(ConEmuHwnd, GA_PARENT);
 	
 	if (pnConsoleIsChild) *pnConsoleIsChild = nChk;
