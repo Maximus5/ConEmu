@@ -1024,9 +1024,10 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
         if (!IsWindowVisible(ghConWnd))
         {
             gConEmu.isShowConsole = true;
-            ShowWindow(ghConWnd, SW_SHOWNORMAL);
+            ShowWindow(ghConWnd, SW_SHOWNA);
             //if (gConEmu.setParent) SetParent(ghConWnd, 0);
             EnableWindow(ghConWnd, true);
+            //SetFocus(ghWnd);
         }
         else
         {
