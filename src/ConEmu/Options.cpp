@@ -78,6 +78,7 @@ void CSettings::InitSettings()
 	_tcscpy(gSet.szTabViewer, _T("{%s}"));
 	gSet.nTabLenMax = 20;
 	
+	isAllowDetach = 0;
 	isCreateAppWindow = false;
     gSet.isScrollTitle = true;
     gSet.ScrollTitleLen = 22;
@@ -143,6 +144,8 @@ void CSettings::LoadSettings()
 		reg.Load(_T("ScrollTitle"), &gSet.isScrollTitle);
 		reg.Load(_T("ScrollTitleLen"), &gSet.ScrollTitleLen);
 		reg.Load(_T("TryToCenter"), &gSet.isTryToCenter);
+		reg.Load(_T("CreateAppWindow"), &gSet.isCreateAppWindow);
+		reg.Load(_T("AllowDetach"), &gSet.isAllowDetach);
         reg.CloseKey();
     }
 

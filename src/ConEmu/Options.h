@@ -48,6 +48,7 @@ public:
 	TCHAR szTabViewer[32];
 	DWORD nTabLenMax;
 
+	char isAllowDetach;
 	bool isCreateAppWindow;	
     bool isScrollTitle;
     DWORD ScrollTitleLen;

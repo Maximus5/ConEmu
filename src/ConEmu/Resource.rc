@@ -184,7 +184,7 @@ BEGIN
                     WS_TABSTOP,192,81,70,8
     COMBOBOX        tFontSizeX3,270,78,24,66,CBS_DROPDOWN | WS_VSCROLL | 
                     WS_TABSTOP
-    CONTROL         "Always update con. handle (ConMan support)",cbIsConMan,
+    CONTROL         "Always update con. handle (ConMan, Telnet)",cbIsConMan,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,6,305,168,8
     LTEXT           "Path:",IDC_STATIC,12,244,18,8
     LTEXT           "Darkening:",IDC_STATIC,12,263,36,8

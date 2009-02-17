@@ -36,11 +36,17 @@ HANDLE hEventCmd[MAXCMDCOUNT], hEventAlive=NULL, hEventReady=NULL;
 HANDLE hThread=NULL;
 FarVersion gFarVersion;
 WCHAR gszDir1[CONEMUTABMAX], gszDir2[CONEMUTABMAX];
-int maxTabCount = 0, lastWindowCount = 0;
+int maxTabCount = 0, lastWindowCount = 0, gnCurTabCount = 0;
 ConEmuTab* tabs = NULL; //(ConEmuTab*) calloc(maxTabCount, sizeof(ConEmuTab));
 LPBYTE gpData=NULL, gpCursor=NULL;
 DWORD  gnDataSize=0;
 HANDLE ghMapping = NULL;
+
+#if defined(__GNUC__)
+typedef HWND (APIENTRY *FGetConsoleWindow)();
+FGetConsoleWindow GetConsoleWindow = NULL;
+#endif
+extern void SetConsoleFontSizeTo(HWND inConWnd, int inSizeX, int inSizeY);
 
 BOOL APIENTRY DllMain( HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved )
 {
@@ -52,11 +58,7 @@ BOOL APIENTRY DllMain( HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
 				//	MessageBoxA(GetForegroundWindow(), "ConEmu.dll loaded", "ConEmu", 0);
 				#endif
 				#if defined(__GNUC__)
-				typedef HWND (APIENTRY *FGetConsoleWindow)();
-				FGetConsoleWindow GetConsoleWindow = 
-					(FGetConsoleWindow)GetProcAddress(
-						GetModuleHandle(L"kernel32.dll"),
-						"GetConsoleWindow");
+				GetConsoleWindow = (FGetConsoleWindow)GetProcAddress(GetModuleHandle(L"kernel32.dll"),"GetConsoleWindow");
 				#endif
 				HWND hConWnd = GetConsoleWindow();
 				InitHWND(hConWnd);
@@ -174,14 +176,85 @@ DWORD WINAPI ThreadProcW(LPVOID lpParameter)
 
 		dwWait = WaitForMultipleObjects(MAXCMDCOUNT, hEventCmd, FALSE, dwTimeout);
 
+		// Теоретически, нить обработки может запуститься и без ConEmuHwnd (под телнетом)
 	    if (ConEmuHwnd && FarHwnd && (dwWait>=(WAIT_OBJECT_0+MAXCMDCOUNT))) {
-		    if (!IsWindow(ConEmuHwnd)) {
+			// Мог быть сделан Detach! (CtrlAltTab)
+			HWND hConWnd = GetConsoleWindow();
+			
+		    if (!IsWindow(ConEmuHwnd) || hConWnd!=FarHwnd) {
 			    ConEmuHwnd = NULL;
 
-				if (!IsWindow(FarHwnd))
+				if (hConWnd!=FarHwnd || !IsWindow(FarHwnd))
 				{
-					MessageBox(0, L"ConEmu was abnormally termintated!\r\nExiting from FAR", L"ConEmu plugin", MB_OK|MB_ICONSTOP|MB_SETFOREGROUND);
-					TerminateProcess(GetCurrentProcess(), 100);
+					if (hConWnd != FarHwnd && IsWindow(hConWnd)) {
+						FarHwnd = hConWnd;
+						int nBtn = ShowMessage(1, 2);
+						if (nBtn == 0) {
+							// Create process, with flag /Attach GetCurrentProcessId()
+							// Sleep for sometimes, try InitHWND(hConWnd); several times
+							WCHAR  szExe[0x200];
+							WCHAR  szCurArgs[0x600];
+							
+							PROCESS_INFORMATION pi; memset(&pi, 0, sizeof(pi));
+							STARTUPINFO si; memset(&si, 0, sizeof(si));
+							si.cb = sizeof(si);
+							
+							//TODO: ConEmu.exe
+							int nLen = 0;
+							if ((nLen=GetModuleFileName(0, szExe, 0x190))==0) {
+								goto closethread;
+							}
+							WCHAR* pszSlash = szExe+nLen-1;
+			                while (pszSlash>szExe && *(pszSlash-1)!=L'\\') pszSlash--;
+			                lstrcpyW(pszSlash, L"ConEmu.exe");
+			                
+							DWORD dwPID = GetCurrentProcessId();
+							wsprintf(szCurArgs, _T("\"%s\" /Attach %i "), szExe, dwPID);
+							
+							GetEnvironmentVariableW(L"ConEmuArgs", szCurArgs+lstrlenW(szCurArgs), 0x380);
+			                
+							
+							if (!CreateProcess(NULL, szCurArgs, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL,
+									NULL, &si, &pi))
+							{
+								// Хорошо бы ошибку показать?
+								goto closethread;
+							}
+							
+							// Ждем
+							while (TRUE)
+							{
+								dwWait = WaitForSingleObject(hEventCmd[CMD_EXIT], 200);
+								// ФАР закрывается
+								if (dwWait == WAIT_OBJECT_0) {
+									CloseHandle(pi.hProcess); CloseHandle(pi.hThread);
+									goto closethread;
+								}
+								if (!GetExitCodeProcess(pi.hProcess, &dwPID) || dwPID!=STILL_ACTIVE) {
+									CloseHandle(pi.hProcess); CloseHandle(pi.hThread);
+									goto closethread;
+								}
+								InitHWND(hConWnd);
+								if (ConEmuHwnd) {
+									// Справились, но шрифт ConEmu скорее всего поменять не смог...
+									SetConsoleFontSizeTo(FarHwnd, 4, 6);
+									break;
+								}
+							}
+							
+							// Закрыть хэндлы
+							CloseHandle(pi.hProcess); CloseHandle(pi.hThread);
+							// Хорошо бы сразу Табы обновить...
+							SendTabs(gnCurTabCount, FALSE/*abForce*/);
+							continue;
+						} else {
+							// Пользователь отказался, выходим из нити обработки
+							goto closethread;
+						}
+					} else {
+						MessageBox(0, L"ConEmu was abnormally termintated!\r\nExiting from FAR", L"ConEmu plugin", MB_OK|MB_ICONSTOP|MB_SETFOREGROUND);
+						TerminateProcess(GetCurrentProcess(), 100);
+					}
 				}
 				else 
 				{
@@ -498,8 +571,9 @@ BOOL AddTab(int &tabCount, bool losingFocus, bool editorSave,
 	return lbCh;
 }
 
-void SendTabs(int &tabCount, BOOL abForce/*=FALSE*/)
+void SendTabs(int tabCount, BOOL abForce/*=FALSE*/)
 {
+    gnCurTabCount = tabCount;
 	if (ConEmuHwnd && IsWindow(ConEmuHwnd)) {
 		COPYDATASTRUCT cds;
 		if (tabs[0].Type == WTYPE_PANELS) {
