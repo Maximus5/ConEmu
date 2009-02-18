@@ -209,7 +209,7 @@ DWORD WINAPI ThreadProcW(LPVOID lpParameter)
 			                lstrcpyW(pszSlash, L"ConEmu.exe");
 			                
 							DWORD dwPID = GetCurrentProcessId();
-							wsprintf(szCurArgs, _T("\"%s\" /Attach %i "), szExe, dwPID);
+							wsprintf(szCurArgs, L"\"%s\" /Attach %i ", szExe, dwPID);
 							
 							GetEnvironmentVariableW(L"ConEmuArgs", szCurArgs+lstrlenW(szCurArgs), 0x380);
 			                

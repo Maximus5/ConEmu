@@ -373,6 +373,10 @@
 					/>
 				</FileConfiguration>
 			</File>
+			<File
+				RelativePath="..\ConEmu\setconsoleinfo.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"

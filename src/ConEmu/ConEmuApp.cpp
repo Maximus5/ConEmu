@@ -424,6 +424,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     klInit();
 #else
 	//MessageBox(0,L"Started",L"ConEmu",0);
+	nCmdShow = SW_SHOWMAXIMIZED;
 #endif
 
     g_hInstance = hInstance;

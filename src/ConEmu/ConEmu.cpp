@@ -336,24 +336,28 @@ void CConEmuMain::SyncConsoleToWindow()
 
 bool CConEmuMain::SetWindowMode(uint inMode)
 {
-    static RECT wndNotFS;
+	WINDOWPLACEMENT wpl; memset(&wpl, 0, sizeof(wpl)); wpl.length=sizeof(wpl);
+	GetWindowPlacement(ghWnd, &wpl);
+	COORD consoleSize = {gSet.wndWidth, gSet.wndHeight};
+
     switch(inMode)
     {
     case rNormal:
-        DEBUGLOGFILE("SetWindowMode(rNormal)\n");
+		{
+			DEBUGLOGFILE("SetWindowMode(rNormal)\n");
+			wpl.showCmd = SW_SHOWNORMAL;
+			wpl.rcNormalPosition = WindowSizeFromConsole(consoleSize, true, false);
+
+			gSet.isFullScreen = false;
+		} break;
     case rMaximized:
-        DEBUGLOGFILE("SetWindowMode(rMaximized)\n");
-        if (gSet.isFullScreen)
         {
-	        // Со стилями больше не играемся
-			//LONG style = gSet.BufferHeight ? WS_VSCROLL : 0; // NightRoman
-			//   style |= WS_OVERLAPPEDWINDOW | WS_VISIBLE;
-			//   SetWindowLongPtr(ghWnd, GWL_STYLE, style);
-            SETWINDOWPOS(ghWnd, HWND_TOP, wndNotFS.left, wndNotFS.top, wndNotFS.right - wndNotFS.left, wndNotFS.bottom - wndNotFS.top, SWP_FRAMECHANGED | SWP_SHOWWINDOW);
-        }
-        gSet.isFullScreen = false;
-        SendMessage(ghWnd, WM_SYSCOMMAND, inMode == rNormal ? SC_RESTORE : SC_MAXIMIZE, 0);
-        break;
+	        DEBUGLOGFILE("SetWindowMode(rMaximized)\n");
+			wpl.showCmd = SW_SHOWMAXIMIZED;
+			wpl.rcNormalPosition = WindowSizeFromConsole(consoleSize, true, false);
+
+            gSet.isFullScreen = false;
+        } break;
 
     case rFullScreen:
         DEBUGLOGFILE("SetWindowMode(rFullScreen)\n");
@@ -361,28 +365,36 @@ bool CConEmuMain::SetWindowMode(uint inMode)
         {
             gSet.isFullScreen = true;
             isWndNotFSMaximized = IsZoomed(ghWnd);
-			if (isWndNotFSMaximized) // в сборке NightRoman эти две строки закомментарены
-			    SendMessage(ghWnd, WM_SYSCOMMAND, SC_RESTORE, 0);
+			//if (isWndNotFSMaximized) // в сборке NightRoman эти две строки закомментарены
+			//    SendMessage(ghWnd, WM_SYSCOMMAND, SC_RESTORE, 0);
 
-            GetWindowRect(ghWnd, &wndNotFS);
+            //GetWindowRect(ghWnd, &wndNotFS);
             
             RECT rcShift;
             GetCWShift(ghWnd, &rcShift); // Обновить, на всякий случай
 
+			//TODO: Для текущего монитора!
 			ptFullScreenSize.x = GetSystemMetrics(SM_CXSCREEN)-rcShift.left+rcShift.right;
 			ptFullScreenSize.y = GetSystemMetrics(SM_CYSCREEN)-rcShift.top+rcShift.bottom;
+
+			wpl.showCmd = SW_SHOWNORMAL;
+			wpl.rcNormalPosition = rcShift;
+			wpl.rcNormalPosition.right = ptFullScreenSize.x;
+			wpl.rcNormalPosition.bottom = ptFullScreenSize.y;
 
             // Со стилями больше не играемся
             //LONG style = gSet.BufferHeight ? WS_VSCROLL : 0;
             //style |= WS_POPUP | WS_MAXIMIZEBOX | WS_MINIMIZEBOX | WS_VISIBLE;
             //SetWindowLongPtr(ghWnd, GWL_STYLE, style);
             //TODO: Заменить везде SM_C(X|Y)SCREEN на GetDeviceCaps(xxx, HORZRES|VERTRES)
-            SETWINDOWPOS(ghWnd, HWND_TOP, rcShift.left, rcShift.top, ptFullScreenSize.x, ptFullScreenSize.y, SWP_SHOWWINDOW);
+            //SETWINDOWPOS(ghWnd, HWND_TOP, rcShift.left, rcShift.top, ptFullScreenSize.x, ptFullScreenSize.y, SWP_SHOWWINDOW);
 
             CheckRadioButton(ghOpWnd, rNormal, rFullScreen, rFullScreen);
         }
         break;
     }
+
+	SetWindowPlacement(ghWnd, &wpl);
 
     bool canEditWindowSizes = inMode == rNormal;
     EnableWindow(GetDlgItem(ghOpWnd, tWndWidth), canEditWindowSizes);

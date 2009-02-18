@@ -30,7 +30,7 @@ FSetStartupInfo fSetStartupInfo=NULL;
 
 /* Local */
 HINSTANCE ghInstance = NULL;
-TCHAR gsTermMsg[40];
+TCHAR gsTermMsg[128];
 TCHAR gsLoadMsg[320];
 
 /* ConEmu */
