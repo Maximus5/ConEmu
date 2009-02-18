@@ -81,6 +81,45 @@ CConEmuMain::~CConEmuMain()
 	}
 #endif
 
+/*!!!static!!*/
+RECT CConEmuMain::CalcMargins(enum ConEmuMargins mg, RECT* prFrom/*=NULL*/, BOOL bFrameIncluded/*=FALSE*/)
+{
+	RECT rc;
+	
+	switch (mg)
+	{
+	case CEM_FRAME: // –азница между размером всего окна и клиентской области окна (рамка + заголовок)
+	{
+		RECT cRect, wRect;
+		if (!ghWnd) {
+			rc.left = rc.right = GetSystemMetrics(SM_CXSIZEFRAME);
+			rc.bottom = GetSystemMetrics(SM_CYSIZEFRAME);
+			rc.top = rc.bottom + GetSystemMetrics(SM_CYCAPTION);
+		} else {
+		    GetClientRect(ghWnd, &cRect); // The left and top members are zero. The right and bottom members contain the width and height of the window.
+		    MapWindowPoints(ghWnd, NULL, (LPPOINT)&cRect, 2);
+		    GetWindowRect(ghWnd, &wRect); // screen coordinates of the upper-left and lower-right corners of the window
+		    rc.top = cRect.top - wRect.top;          // >0
+		    rc.left = cRect.left - wRect.left;       // >0
+		    rc.bottom = wRect.bottom - cRect.bottom; // >0
+		    rc.right = wRect.right - cRect.right;    // >0
+		}
+	}	break;
+	// ƒалее все отступы считаютс€ в клиентской части (дочерние окна)!
+	case CEM_DC:    // ќтступы до окна отрисовки
+	{
+	}	break;
+	case CEM_TAB:   // ќтступы до контрола с закладками
+	{
+	}	break;
+	case CEM_BACK:  // ќтступы до окна фона (с прокруткой)
+	{
+	}	break;
+	}
+	
+	return rc;
+}
+
 // returns difference between window size and client area size of inWnd in outShift->x, outShift->y
 void CConEmuMain::GetCWShift(HWND inWnd, POINT *outShift)
 {
@@ -149,7 +188,6 @@ void CConEmuMain::SyncWindowToConsole()
     DEBUGLOGFILE("SyncWindowToConsole\n");
     
     GetCWShift(ghWnd, &cwShift);
-    GetCWShift(ghConWnd, &cwConsoleShift);
     
     RECT wndR; GetWindowRect(ghWnd, &wndR);
     

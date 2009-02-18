@@ -29,6 +29,14 @@ typedef DWORD (WINAPI* FGetModuleFileNameEx)(HANDLE hProcess,HMODULE hModule,LPW
 class CConEmuChild;
 class CConEmuBack;
 
+enum ConEmuMargins {
+	CEM_FRAME = 0, // Разница между размером всего окна и клиентской области окна (рамка + заголовок)
+	// Далее все отступы считаются в клиентской части (дочерние окна)!
+	CEM_DC,        // Отступы до окна отрисовки
+	CEM_TAB,       // Отступы до контрола с закладками
+	CEM_BACK       // Отсутпы до окна фона (с прокруткой)
+};
+
 class CConEmuMain
 {
 public:
@@ -38,7 +46,6 @@ public:
 	CConEmuChild m_Child;
 	CConEmuBack  m_Back;
 	POINT cwShift; // difference between window size and client area size for main ConEmu window
-	POINT cwConsoleShift; // difference between window size and client area size for ghConWnd
 	POINT ptFullScreenSize; // size for GetMinMaxInfo in Fullscreen mode
 	DWORD gnLastProcessCount;
 	uint cBlinkNext;
@@ -74,48 +81,48 @@ public:
 public:
 	CConEmuMain();
 	~CConEmuMain();
-	BOOL Init();
-	void Destroy();
-	void InvalidateAll();
 
 public:
-	void SetConsoleWindowSize(const COORD& size, bool updateInfo);
-	bool isPictureView();
-	LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
-	void ForceShowTabs(BOOL abShow);
-
-	RECT WindowSizeFromConsole(COORD consoleSize, bool rectInWindow = false, bool clientOnly = false);
-	COORD ConsoleSizeFromWindow(RECT* arect = NULL, bool frameIncluded = false, bool alreadyClient = false);
-	void PaintGaps(HDC hDC=NULL);
+	static RECT CalcMargins(enum ConEmuMargins mg, RECT* prFrom=NULL, BOOL bFrameIncluded=FALSE);
 	DWORD CheckProcesses();
 	void CheckBufferSize();
+	COORD ConsoleSizeFromWindow(RECT* arect = NULL, bool frameIncluded = false, bool alreadyClient = false);
+	RECT ConsoleOffsetRect();
+	void Destroy();
 	RECT DCClientRect(RECT* pClient=NULL);
-	void SyncWindowToConsole();
-	static BOOL WINAPI HandlerRoutine(DWORD dwCtrlType);
-	void LoadIcons();
+	void ForceShowTabs(BOOL abShow);
 	void GetCWShift(HWND inWnd, POINT *outShift);
 	void GetCWShift(HWND inWnd, RECT *outShift);
-	void ShowSysmenu(HWND Wnd, HWND Owner, int x, int y);
-	RECT ConsoleOffsetRect();
-	bool SetWindowMode(uint inMode);
-	void SyncConsoleToWindow();
-	bool isFilePanel();
+	static BOOL WINAPI HandlerRoutine(DWORD dwCtrlType);
+	BOOL Init();
+	void InvalidateAll();
 	bool isConSelectMode();
+	bool isFilePanel();
+	bool isPictureView();
+	void LoadIcons();
 	bool LoadVersionInfo(wchar_t* pFullPath);
+	void PaintGaps(HDC hDC=NULL);
+	void ReSize();
 	void SetConParent();
+	void SetConsoleWindowSize(const COORD& size, bool updateInfo);
+	bool SetWindowMode(uint inMode);
+	void ShowSysmenu(HWND Wnd, HWND Owner, int x, int y);
+	void SyncConsoleToWindow();
+	void SyncWindowToConsole();
+	RECT WindowSizeFromConsole(COORD consoleSize, bool rectInWindow = false, bool clientOnly = false);
+	LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 public:
+	LRESULT OnClose(HWND hWnd);
+	LRESULT OnCopyData(PCOPYDATASTRUCT cds);
+	LRESULT OnCreate(HWND hWnd);
+	LRESULT OnDestroy(HWND hWnd);
+	LRESULT OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
+	LRESULT OnGetMinMaxInfo(LPMINMAXINFO pInfo);
+	LRESULT OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
+	LRESULT OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnPaint(WPARAM wParam, LPARAM lParam);
 	LRESULT OnSize(WPARAM wParam, WORD newClientWidth, WORD newClientHeight);
 	LRESULT OnSizing(WPARAM wParam, LPARAM lParam);
-	LRESULT OnTimer(WPARAM wParam, LPARAM lParam);
-	LRESULT OnCopyData(PCOPYDATASTRUCT cds);
-	LRESULT OnGetMinMaxInfo(LPMINMAXINFO pInfo);
-	void ReSize();
-	LRESULT OnCreate(HWND hWnd);
-	LRESULT OnClose(HWND hWnd);
-	LRESULT OnDestroy(HWND hWnd);
-	LRESULT OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
-	LRESULT OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
-	LRESULT OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam);
+	LRESULT OnTimer(WPARAM wParam, LPARAM lParam);
 };
