@@ -54,7 +54,7 @@ public:
 public:
 	CConEmuChild m_Child;
 	CConEmuBack  m_Back;
-	POINT cwShift; // difference between window size and client area size for main ConEmu window
+	//POINT cwShift; // difference between window size and client area size for main ConEmu window
 	POINT ptFullScreenSize; // size for GetMinMaxInfo in Fullscreen mode
 	DWORD gnLastProcessCount;
 	uint cBlinkNext;
@@ -97,13 +97,13 @@ public:
 	static RECT CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFrom, RECT* prDC=NULL);
 	DWORD CheckProcesses();
 	void CheckBufferSize();
-	COORD ConsoleSizeFromWindow(RECT* arect = NULL, bool frameIncluded = false, bool alreadyClient = false);
-	RECT ConsoleOffsetRect();
+	//COORD ConsoleSizeFromWindow(RECT* arect = NULL, bool frameIncluded = false, bool alreadyClient = false);
+	//RECT ConsoleOffsetRect();
 	void Destroy();
-	RECT DCClientRect(RECT* pClient=NULL);
+	//RECT DCClientRect(RECT* pClient=NULL);
 	void ForceShowTabs(BOOL abShow);
-	void GetCWShift(HWND inWnd, POINT *outShift);
-	void GetCWShift(HWND inWnd, RECT *outShift);
+	//void GetCWShift(HWND inWnd, POINT *outShift);
+	//void GetCWShift(HWND inWnd, RECT *outShift);
 	static BOOL WINAPI HandlerRoutine(DWORD dwCtrlType);
 	BOOL Init();
 	void InvalidateAll();
@@ -121,7 +121,7 @@ public:
 	void ShowSysmenu(HWND Wnd, HWND Owner, int x, int y);
 	void SyncConsoleToWindow();
 	void SyncWindowToConsole();
-	RECT WindowSizeFromConsole(COORD consoleSize, bool rectInWindow = false, bool clientOnly = false);
+	//RECT WindowSizeFromConsole(COORD consoleSize, bool rectInWindow = false, bool clientOnly = false);
 	LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 public:
 	LRESULT OnClose(HWND hWnd);

@@ -82,7 +82,7 @@ CConEmuMain::~CConEmuMain()
 #endif
 
 /*!!!static!!*/
-void CConEmuMain::AddMargins(RECT& rc, RECT& rcAddShift, BOOL abExpand=FALSE)
+void CConEmuMain::AddMargins(RECT& rc, RECT& rcAddShift, BOOL abExpand/*=FALSE*/)
 {
 	if (!abExpand)
 	{
@@ -167,7 +167,7 @@ RECT CConEmuMain::CalcMargins(enum ConEmuMargins mg)
 /*!!!static!!*/
 // ƒл€ приблизительного расчета размеров - нужен только (размер главного окна)|(размер консоли)
 // ƒл€ точного расчета размеров - требуетс€ (размер главного окна) и (размер окна отрисовки) дл€ корректировки
-RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFrom, RECT* prDC=NULL)
+RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFrom, RECT* prDC/*=NULL*/)
 {
     RECT rc = rFrom; // инициализаци€, если уж не получитс€...
     RECT rcShift = MakeRect(0,0);
@@ -335,148 +335,154 @@ RECT CConEmuMain::MapRect(RECT rFrom, BOOL bFrame2Client)
 	return rFrom;
 }
 
-// returns difference between window size and client area size of inWnd in outShift->x, outShift->y
-void CConEmuMain::GetCWShift(HWND inWnd, POINT *outShift)
-{
-    RECT cRect;
-    
-    GetCWShift ( inWnd, &cRect );
-    
-    outShift->x = cRect.right  - cRect.left;
-    outShift->y = cRect.bottom - cRect.top;
-}
+//// returns difference between window size and client area size of inWnd in outShift->x, outShift->y
+//void CConEmuMain::GetCWShift(HWND inWnd, POINT *outShift)
+//{
+//    RECT cRect;
+//    
+//    GetCWShift ( inWnd, &cRect );
+//    
+//    outShift->x = cRect.right  - cRect.left;
+//    outShift->y = cRect.bottom - cRect.top;
+//}
+//
+//// returns margins between window frame and client area
+//void CConEmuMain::GetCWShift(HWND inWnd, RECT *outShift)
+//{
+//    RECT cRect, wRect;
+//    GetClientRect(inWnd, &cRect); // The left and top members are zero. The right and bottom members contain the width and height of the window.
+//    MapWindowPoints(inWnd, NULL, (LPPOINT)&cRect, 2);
+//    GetWindowRect(inWnd, &wRect); // screen coordinates of the upper-left and lower-right corners of the window
+//    outShift->top = wRect.top - cRect.top;          // <0
+//    outShift->left = wRect.left - cRect.left;       // <0
+//    outShift->bottom = wRect.bottom - cRect.bottom; // >0
+//    outShift->right = wRect.right - cRect.right;    // >0
+//}
 
-// returns margins between window frame and client area
-void CConEmuMain::GetCWShift(HWND inWnd, RECT *outShift)
-{
-    RECT cRect, wRect;
-    GetClientRect(inWnd, &cRect); // The left and top members are zero. The right and bottom members contain the width and height of the window.
-    MapWindowPoints(inWnd, NULL, (LPPOINT)&cRect, 2);
-    GetWindowRect(inWnd, &wRect); // screen coordinates of the upper-left and lower-right corners of the window
-    outShift->top = wRect.top - cRect.top;          // <0
-    outShift->left = wRect.left - cRect.left;       // <0
-    outShift->bottom = wRect.bottom - cRect.bottom; // >0
-    outShift->right = wRect.right - cRect.right;    // >0
-}
+//// ¬ернуть отступы со всех сторон от краев клиентской части главного окна до краев окна отрисовки
+//RECT CConEmuMain::ConsoleOffsetRect()
+//{
+//    RECT rect; memset(&rect, 0, sizeof(rect));
+//
+//	if (TabBar.IsActive())
+//		rect = TabBar.GetMargins();
+//
+//	/*rect.top = TabBar.IsActive()?TabBar.Height():0;
+//    rect.left = 0;
+//    rect.bottom = 0;
+//    rect.right = 0;*/
+//
+//	return rect;
+//}
 
-// ¬ернуть отступы со всех сторон от краев клиентской части главного окна до краев окна отрисовки
-RECT CConEmuMain::ConsoleOffsetRect()
-{
-    RECT rect; memset(&rect, 0, sizeof(rect));
-
-	if (TabBar.IsActive())
-		rect = TabBar.GetMargins();
-
-	/*rect.top = TabBar.IsActive()?TabBar.Height():0;
-    rect.left = 0;
-    rect.bottom = 0;
-    rect.right = 0;*/
-
-	return rect;
-}
-
-// ѕоложение дочернего окна отрисовки
-RECT CConEmuMain::DCClientRect(RECT* pClient/*=NULL*/)
-{
-    RECT rect;
-	if (pClient)
-		rect = *pClient;
-	else
-		GetClientRect(ghWnd, &rect);
-	if (TabBar.IsActive()) {
-		RECT mr = TabBar.GetMargins();
-		//rect.top += TabBar.Height();
-		rect.top += mr.top;
-		rect.left += mr.left;
-		rect.right -= mr.right;
-		rect.bottom -= mr.bottom;
-	}
-
-	if (pClient)
-		*pClient = rect;
-    return rect;
-}
+//// ѕоложение дочернего окна отрисовки
+//RECT CConEmuMain::DCClientRect(RECT* pClient/*=NULL*/)
+//{
+//    RECT rect;
+//	if (pClient)
+//		rect = *pClient;
+//	else
+//		GetClientRect(ghWnd, &rect);
+//	if (TabBar.IsActive()) {
+//		RECT mr = TabBar.GetMargins();
+//		//rect.top += TabBar.Height();
+//		rect.top += mr.top;
+//		rect.left += mr.left;
+//		rect.right -= mr.right;
+//		rect.bottom -= mr.bottom;
+//	}
+//
+//	if (pClient)
+//		*pClient = rect;
+//    return rect;
+//}
 
 // ”становить размер основного окна по текущему размеру pVCon
 void CConEmuMain::SyncWindowToConsole()
 {
     DEBUGLOGFILE("SyncWindowToConsole\n");
-    
-    GetCWShift(ghWnd, &cwShift);
-    
-    RECT wndR; GetWindowRect(ghWnd, &wndR);
-    
-    RECT consoleRect = ConsoleOffsetRect();
 
-    #ifdef MSGLOGGER
-        char szDbg[100]; wsprintfA(szDbg, "   pVCon:Size={%i,%i}\n", pVCon->Width,pVCon->Height);
-        DEBUGLOGFILE(szDbg);
-    #endif
+	RECT rcDC = MakeRect(pVCon->Width, pVCon->Height);
+
+	RECT rcWnd = CalcRect(CER_MAIN, rcDC, CER_DC); // размеры окна
     
-    MOVEWINDOW ( ghWnd, wndR.left, wndR.top, pVCon->Width + cwShift.x + consoleRect.left + consoleRect.right, pVCon->Height + cwShift.y + consoleRect.top + consoleRect.bottom, 1);
+    //GetCWShift(ghWnd, &cwShift);
+    
+    RECT wndR; GetWindowRect(ghWnd, &wndR); // текущий XY
+
+	MOVEWINDOW ( ghWnd, wndR.left, wndR.top, rcWnd.right, rcWnd.bottom, 1);
+    
+    //RECT consoleRect = ConsoleOffsetRect();
+
+    //#ifdef MSGLOGGER
+    //    char szDbg[100]; wsprintfA(szDbg, "   pVCon:Size={%i,%i}\n", pVCon->Width,pVCon->Height);
+    //    DEBUGLOGFILE(szDbg);
+    //#endif
+    //
+    //MOVEWINDOW ( ghWnd, wndR.left, wndR.top, pVCon->Width + cwShift.x + consoleRect.left + consoleRect.right, pVCon->Height + cwShift.y + consoleRect.top + consoleRect.bottom, 1);
 }
 
-// returns console size in columns and lines calculated from current window size
-// rectInWindow - если true - с рамкой, false - только клиент
-COORD CConEmuMain::ConsoleSizeFromWindow(RECT* arect /*= NULL*/, bool frameIncluded /*= false*/, bool alreadyClient /*= false*/)
-{
-    COORD size;
+//// returns console size in columns and lines calculated from current window size
+//// rectInWindow - если true - с рамкой, false - только клиент
+//COORD CConEmuMain::ConsoleSizeFromWindow(RECT* arect /*= NULL*/, bool frameIncluded /*= false*/, bool alreadyClient /*= false*/)
+//{
+//    COORD size;
+//
+//	if (!gSet.LogFont.lfWidth || !gSet.LogFont.lfHeight) {
+//		MBoxAssert(FALSE);
+//		// размер шрифта еще не инициализирован! вернем текущий размер консоли! TODO:
+//		CONSOLE_SCREEN_BUFFER_INFO inf; memset(&inf, 0, sizeof(inf));
+//		GetConsoleScreenBufferInfo(pVCon->hConOut(), &inf);
+//		size = inf.dwSize;
+//		return size; 
+//	}
+//
+//    RECT rect, consoleRect;
+//    if (arect == NULL)
+//    {
+//		frameIncluded = false;
+//        GetClientRect(ghWnd, &rect);
+//	    consoleRect = ConsoleOffsetRect();
+//    } 
+//    else
+//    {
+//        rect = *arect;
+//		if (alreadyClient)
+//			memset(&consoleRect, 0, sizeof(consoleRect));
+//		else
+//			consoleRect = ConsoleOffsetRect();
+//    }
+//    
+//    size.X = (rect.right - rect.left - (frameIncluded ? cwShift.x : 0) - consoleRect.left - consoleRect.right)
+//		/ gSet.LogFont.lfWidth;
+//    size.Y = (rect.bottom - rect.top - (frameIncluded ? cwShift.y : 0) - consoleRect.top - consoleRect.bottom)
+//		/ gSet.LogFont.lfHeight;
+//    #ifdef MSGLOGGER
+//        char szDbg[100]; wsprintfA(szDbg, "   ConsoleSizeFromWindow={%i,%i}\n", size.X, size.Y);
+//        DEBUGLOGFILE(szDbg);
+//    #endif
+//    return size;
+//}
 
-	if (!gSet.LogFont.lfWidth || !gSet.LogFont.lfHeight) {
-		MBoxAssert(FALSE);
-		// размер шрифта еще не инициализирован! вернем текущий размер консоли! TODO:
-		CONSOLE_SCREEN_BUFFER_INFO inf; memset(&inf, 0, sizeof(inf));
-		GetConsoleScreenBufferInfo(pVCon->hConOut(), &inf);
-		size = inf.dwSize;
-		return size; 
-	}
-
-    RECT rect, consoleRect;
-    if (arect == NULL)
-    {
-		frameIncluded = false;
-        GetClientRect(ghWnd, &rect);
-	    consoleRect = ConsoleOffsetRect();
-    } 
-    else
-    {
-        rect = *arect;
-		if (alreadyClient)
-			memset(&consoleRect, 0, sizeof(consoleRect));
-		else
-			consoleRect = ConsoleOffsetRect();
-    }
-    
-    size.X = (rect.right - rect.left - (frameIncluded ? cwShift.x : 0) - consoleRect.left - consoleRect.right)
-		/ gSet.LogFont.lfWidth;
-    size.Y = (rect.bottom - rect.top - (frameIncluded ? cwShift.y : 0) - consoleRect.top - consoleRect.bottom)
-		/ gSet.LogFont.lfHeight;
-    #ifdef MSGLOGGER
-        char szDbg[100]; wsprintfA(szDbg, "   ConsoleSizeFromWindow={%i,%i}\n", size.X, size.Y);
-        DEBUGLOGFILE(szDbg);
-    #endif
-    return size;
-}
-
-// return window size in pixels calculated from console size
-RECT CConEmuMain::WindowSizeFromConsole(COORD consoleSize, bool rectInWindow /*= false*/, bool clientOnly /*= false*/)
-{
-    RECT rect;
-    rect.top = 0;   
-    rect.left = 0;
-    RECT offsetRect;
-	if (clientOnly)
-		memset(&offsetRect, 0, sizeof(RECT));
-	else
-		offsetRect = ConsoleOffsetRect();
-    rect.bottom = consoleSize.Y * gSet.LogFont.lfHeight + (rectInWindow ? cwShift.y : 0) + offsetRect.top + offsetRect.bottom;
-    rect.right = consoleSize.X * gSet.LogFont.lfWidth + (rectInWindow ? cwShift.x : 0) + offsetRect.left + offsetRect.right;
-    #ifdef MSGLOGGER
-        char szDbg[100]; wsprintfA(szDbg, "   WindowSizeFromConsole={%i,%i}\n", rect.right,rect.bottom);
-        DEBUGLOGFILE(szDbg);
-    #endif
-    return rect;
-}
+//// return window size in pixels calculated from console size
+//RECT CConEmuMain::WindowSizeFromConsole(COORD consoleSize, bool rectInWindow /*= false*/, bool clientOnly /*= false*/)
+//{
+//    RECT rect;
+//    rect.top = 0;   
+//    rect.left = 0;
+//    RECT offsetRect;
+//	if (clientOnly)
+//		memset(&offsetRect, 0, sizeof(RECT));
+//	else
+//		offsetRect = ConsoleOffsetRect();
+//    rect.bottom = consoleSize.Y * gSet.LogFont.lfHeight + (rectInWindow ? cwShift.y : 0) + offsetRect.top + offsetRect.bottom;
+//    rect.right = consoleSize.X * gSet.LogFont.lfWidth + (rectInWindow ? cwShift.x : 0) + offsetRect.left + offsetRect.right;
+//    #ifdef MSGLOGGER
+//        char szDbg[100]; wsprintfA(szDbg, "   WindowSizeFromConsole={%i,%i}\n", rect.right,rect.bottom);
+//        DEBUGLOGFILE(szDbg);
+//    #endif
+//    return rect;
+//}
 
 // size in columns and lines
 void CConEmuMain::SetConsoleWindowSize(const COORD& size, bool updateInfo)
@@ -572,17 +578,22 @@ void CConEmuMain::SyncConsoleToWindow()
 {
 	DEBUGLOGFILE("SyncConsoleToWindow\n");
 
+	RECT rcClient; GetClientRect(ghWnd, &rcClient);
+
 	// ѕосчитать нужный размер консоли
-	COORD newConSize = ConsoleSizeFromWindow();
+	RECT newCon = CalcRect(CER_CONSOLE, rcClient, CER_MAINCLIENT);
+
+	// ѕосчитать нужный размер консоли
+	//COORD newConSize = ConsoleSizeFromWindow();
 	// ѕолучить текущий размер консольного окна
     CONSOLE_SCREEN_BUFFER_INFO inf; memset(&inf, 0, sizeof(inf));
     GetConsoleScreenBufferInfo(pVCon->hConOut(), &inf);
 
 	// ≈сли нужно мен€ть - ...
-	if (newConSize.X != (inf.srWindow.Right-inf.srWindow.Left+1) ||
-		newConSize.Y != (inf.srWindow.Bottom-inf.srWindow.Top+1))
+	if (newCon.right != (inf.srWindow.Right-inf.srWindow.Left+1) ||
+		newCon.bottom != (inf.srWindow.Bottom-inf.srWindow.Top+1))
 	{
-		SetConsoleWindowSize(newConSize, true);
+		SetConsoleWindowSize(MakeCoord(newCon.right,newCon.bottom), true);
 		if (pVCon)
 			pVCon->InitDC();
 	}
@@ -592,7 +603,8 @@ bool CConEmuMain::SetWindowMode(uint inMode)
 {
 	WINDOWPLACEMENT wpl; memset(&wpl, 0, sizeof(wpl)); wpl.length=sizeof(wpl);
 	GetWindowPlacement(ghWnd, &wpl);
-	COORD consoleSize = {gSet.wndWidth, gSet.wndHeight};
+	//COORD consoleSize = {gSet.wndWidth, gSet.wndHeight};
+	RECT consoleSize = MakeRect(gSet.wndWidth, gSet.wndHeight);
 
     switch(inMode)
     {
@@ -600,7 +612,8 @@ bool CConEmuMain::SetWindowMode(uint inMode)
 		{
 			DEBUGLOGFILE("SetWindowMode(rNormal)\n");
 			wpl.showCmd = SW_SHOWNORMAL;
-			wpl.rcNormalPosition = WindowSizeFromConsole(consoleSize, true, false);
+			//wpl.rcNormalPosition = WindowSizeFromConsole(consoleSize, true, false);
+			wpl.rcNormalPosition = CalcRect(CER_MAIN, consoleSize, CER_CONSOLE);
 
 			gSet.isFullScreen = false;
 		} break;
@@ -608,7 +621,8 @@ bool CConEmuMain::SetWindowMode(uint inMode)
         {
 	        DEBUGLOGFILE("SetWindowMode(rMaximized)\n");
 			wpl.showCmd = SW_SHOWMAXIMIZED;
-			wpl.rcNormalPosition = WindowSizeFromConsole(consoleSize, true, false);
+			//wpl.rcNormalPosition = WindowSizeFromConsole(consoleSize, true, false);
+			wpl.rcNormalPosition = CalcRect(CER_MAIN, consoleSize, CER_CONSOLE);
 
             gSet.isFullScreen = false;
         } break;
@@ -624,17 +638,15 @@ bool CConEmuMain::SetWindowMode(uint inMode)
 
             //GetWindowRect(ghWnd, &wndNotFS);
             
-            RECT rcShift;
-            GetCWShift(ghWnd, &rcShift); // ќбновить, на вс€кий случай
+            RECT rcShift = CalcMargins(CEM_FRAME);
+            //GetCWShift(ghWnd, &rcShift); // ќбновить, на вс€кий случай
 
 			//TODO: ƒл€ текущего монитора!
-			ptFullScreenSize.x = GetSystemMetrics(SM_CXSCREEN)-rcShift.left+rcShift.right;
-			ptFullScreenSize.y = GetSystemMetrics(SM_CYSCREEN)-rcShift.top+rcShift.bottom;
+			ptFullScreenSize.x = GetSystemMetrics(SM_CXSCREEN)+rcShift.left+rcShift.right;
+			ptFullScreenSize.y = GetSystemMetrics(SM_CYSCREEN)+rcShift.top+rcShift.bottom;
 
 			wpl.showCmd = SW_SHOWNORMAL;
-			wpl.rcNormalPosition = rcShift;
-			wpl.rcNormalPosition.right = ptFullScreenSize.x;
-			wpl.rcNormalPosition.bottom = ptFullScreenSize.y;
+			wpl.rcNormalPosition = MakeRect(-rcShift.left,-rcShift.top,ptFullScreenSize.x,ptFullScreenSize.y);
 
             // —о стил€ми больше не играемс€
             //LONG style = gSet.BufferHeight ? WS_VSCROLL : 0;
@@ -750,8 +762,11 @@ LRESULT CConEmuMain::OnSize(WPARAM wParam, WORD newClientWidth, WORD newClientHe
 
 		SyncConsoleToWindow();
 	    
-		RECT client = MakeRect(newClientWidth,newClientHeight);
-		DCClientRect(&client);
+		RECT mainClient = MakeRect(newClientWidth,newClientHeight);
+		//RECT dcSize; GetClientRect(ghWndDC, &dcSize);
+		RECT dcSize = CalcRect(CER_DC, mainClient, CER_MAINCLIENT);
+		//DCClientRect(&client);
+		RECT client = CalcRect(CER_DC, mainClient, CER_MAINCLIENT, &dcSize);
 
 		RECT rcNewCon; memset(&rcNewCon,0,sizeof(rcNewCon));
 		if (pVCon && pVCon->Width && pVCon->Height) {
@@ -783,7 +798,7 @@ LRESULT CConEmuMain::OnSizing(WPARAM wParam, LPARAM lParam)
 	LRESULT result = true;
 
 	if (!gSet.isFullScreen && !IsZoomed(ghWnd)) {
-		COORD srctWindow;
+		RECT srctWindow;
 		RECT wndSizeRect, restrictRect;
 		RECT *pRect = (RECT*)lParam; // с рамкой
 
@@ -795,11 +810,13 @@ LRESULT CConEmuMain::OnSizing(WPARAM wParam, LPARAM lParam)
 		}
 
 		// –ассчитать желаемый размер консоли
-		srctWindow = ConsoleSizeFromWindow(&wndSizeRect, true /* frameIncluded */);
+		//srctWindow = ConsoleSizeFromWindow(&wndSizeRect, true /* frameIncluded */);
+		srctWindow = CalcRect(CER_CONSOLE, wndSizeRect, CER_MAIN);
+
 
 		// ћинимально допустимые размеры консоли
-		if (srctWindow.X<28) srctWindow.X=28;
-		if (srctWindow.Y<9)  srctWindow.Y=9;
+		if (srctWindow.right<28) srctWindow.right=28;
+		if (srctWindow.bottom<9)  srctWindow.bottom=9;
 
 		/*if ((srctWindowLast.X != srctWindow.X 
 			|| srctWindowLast.Y != srctWindow.Y) 
@@ -810,7 +827,8 @@ LRESULT CConEmuMain::OnSizing(WPARAM wParam, LPARAM lParam)
 		}*/
 
 		//RECT consoleRect = ConsoleOffsetRect();
-		wndSizeRect = WindowSizeFromConsole(srctWindow, true /* rectInWindow */);
+		//wndSizeRect = WindowSizeFromConsole(srctWindow, true /* rectInWindow */);
+		wndSizeRect = CalcRect(CER_MAIN, srctWindow, CER_CONSOLE);
 
 		restrictRect.right = pRect->left + wndSizeRect.right;
 		restrictRect.bottom = pRect->top + wndSizeRect.bottom;
@@ -1102,6 +1120,7 @@ LRESULT CConEmuMain::OnPaint(WPARAM wParam, LPARAM lParam)
 
 void CConEmuMain::PaintGaps(HDC hDC/*=NULL*/)
 {
+	//TODO: !!! “ут раньше были margins, а теперь DC rect
 	BOOL lbOurDc = (hDC==NULL);
     
 	if (hDC==NULL)
@@ -1115,7 +1134,11 @@ void CConEmuMain::PaintGaps(HDC hDC/*=NULL*/)
 	WINDOWPLACEMENT wpl; memset(&wpl, 0, sizeof(wpl)); wpl.length = sizeof(wpl);
 	GetWindowPlacement(ghWndDC, &wpl); // ѕоложение окна, в котором идет отрисовка
 
-	RECT offsetRect = ConsoleOffsetRect(); // смещение с учетом табов
+	//RECT offsetRect = ConsoleOffsetRect(); // смещение с учетом табов
+	RECT dcRect; GetClientRect(ghWndDC, &dcRect);
+	RECT offsetRect = dcRect;
+	MapWindowPoints(ghWndDC, ghWnd, (LPPOINT)&offsetRect, 2);
+	
 
 	// paint gaps between console and window client area with first color
 
@@ -1420,17 +1443,23 @@ LRESULT CConEmuMain::OnGetMinMaxInfo(LPMINMAXINFO pInfo)
 {
 	LRESULT result = 0;
 
-    POINT p = cwShift;
-    RECT shiftRect = ConsoleOffsetRect();
+	//RECT rcFrame = CalcMargins(CEM_FRAME);
+    //POINT p = cwShift;
+    //RECT shiftRect = ConsoleOffsetRect();
+	//RECT shiftRect = ConsoleOffsetRect();
 
     // ћинимально допустимые размеры консоли
-    COORD srctWindow; srctWindow.X=28; srctWindow.Y=9;
+    //COORD srctWindow; srctWindow.X=28; srctWindow.Y=9;
+	RECT rcFrame = CalcRect(CER_MAIN, MakeRect(28,9), CER_CONSOLE);
 
-	pInfo->ptMinTrackSize.x = srctWindow.X * (gSet.LogFont.lfWidth ? gSet.LogFont.lfWidth : 4)
-		+ p.x + shiftRect.left + shiftRect.right;
+	pInfo->ptMinTrackSize.x = rcFrame.right;
+	pInfo->ptMinTrackSize.y = rcFrame.bottom;
 
-	pInfo->ptMinTrackSize.y = srctWindow.Y * (gSet.LogFont.lfHeight ? gSet.LogFont.lfHeight : 6)
-		+ p.y + shiftRect.top + shiftRect.bottom;
+	//pInfo->ptMinTrackSize.x = srctWindow.X * (gSet.LogFont.lfWidth ? gSet.LogFont.lfWidth : 4)
+	//	+ p.x + shiftRect.left + shiftRect.right;
+
+	//pInfo->ptMinTrackSize.y = srctWindow.Y * (gSet.LogFont.lfHeight ? gSet.LogFont.lfHeight : 6)
+	//	+ p.y + shiftRect.top + shiftRect.bottom;
 
 	if (gSet.isFullScreen) {
 		pInfo->ptMaxTrackSize = ptFullScreenSize;
@@ -1950,9 +1979,11 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
         //if (!gbInvalidating && !gbInPaint)
         if (pVCon->Update(false/*gbNoDblBuffer*/))
         {
-            COORD c = ConsoleSizeFromWindow();
+            //COORD c = ConsoleSizeFromWindow();
+			RECT client; GetClientRect(ghWnd, &client);
+			RECT c = CalcRect(CER_CONSOLE, client, CER_MAINCLIENT);
             if ((mb_FullWindowDrag || !mb_InSizing) &&
-				(gbPostUpdateWindowSize || c.X != pVCon->TextWidth || c.Y != pVCon->TextHeight))
+				(gbPostUpdateWindowSize || c.right != pVCon->TextWidth || c.bottom != pVCon->TextHeight))
             {
 				gbPostUpdateWindowSize = false;
                 if (!gSet.isFullScreen && !IsZoomed(ghWnd))

@@ -90,6 +90,12 @@ void __forceinline DisplayLastError()
 	MessageBox(0, out, _T("Error occurred"), MB_SYSTEMMODAL | MB_ICONERROR);
 }
 
+COORD __forceinline MakeCoord(int W,int H)
+{
+	COORD rc; rc.X=W; rc.Y=H;
+	return rc;
+}
+
 RECT __forceinline MakeRect(int W,int H)
 {
 	RECT rc; rc.left=0; rc.top=0; rc.right=W; rc.bottom=H;

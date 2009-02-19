@@ -20,7 +20,9 @@ HWND CConEmuChild::Create()
 	//	return NULL;
 	//}
 	DWORD style = WS_VISIBLE | WS_CHILD | WS_CLIPSIBLINGS /*| WS_CLIPCHILDREN*/ | (gSet.BufferHeight ? WS_VSCROLL : 0);
-	RECT rc = gConEmu.DCClientRect();
+	//RECT rc = gConEmu.DCClientRect();
+	RECT rcMain; GetClientRect(ghWnd, &rcMain);
+	RECT rc = gConEmu.CalcRect(CER_DC, rcMain, CER_MAINCLIENT);
 	ghWndDC = CreateWindow(szClassName, 0, style, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, ghWnd, NULL, (HINSTANCE)g_hInstance, NULL);
 	if (!ghWndDC) {
 		ghWndDC = (HWND)-1; // чтобы родитель не ругался
@@ -242,8 +244,9 @@ HWND CConEmuBack::Create()
 		return NULL;
 	}
 	DWORD style = WS_VISIBLE | WS_CHILD | WS_CLIPSIBLINGS ;
-	RECT rc = gConEmu.ConsoleOffsetRect();
+	//RECT rc = gConEmu.ConsoleOffsetRect();
 	RECT rcClient; GetClientRect(ghWnd, &rcClient);
+	RECT rc = gConEmu.CalcRect(CER_BACK, rcClient, CER_MAINCLIENT);
 
 	mh_Wnd = CreateWindow(szClassNameBack, 0, style, 
 		rc.left, rc.top,
@@ -293,8 +296,9 @@ void CConEmuBack::Resize()
 	if (!mh_Wnd || !IsWindow(mh_Wnd)) 
 		return;
 
-	RECT rc = gConEmu.ConsoleOffsetRect();
+	//RECT rc = gConEmu.ConsoleOffsetRect();
 	RECT rcClient; GetClientRect(ghWnd, &rcClient);
+	RECT rc = gConEmu.CalcRect(CER_BACK, rcClient, CER_MAINCLIENT);
 
 	MoveWindow(mh_Wnd, 
 		rc.left, rc.top,
