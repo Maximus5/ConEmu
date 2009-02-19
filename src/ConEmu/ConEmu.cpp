@@ -82,42 +82,257 @@ CConEmuMain::~CConEmuMain()
 #endif
 
 /*!!!static!!*/
-RECT CConEmuMain::CalcMargins(enum ConEmuMargins mg, RECT* prFrom/*=NULL*/, BOOL bFrameIncluded/*=FALSE*/)
+void CConEmuMain::AddMargins(RECT& rc, RECT& rcAddShift, BOOL abExpand=FALSE)
+{
+	if (!abExpand)
+	{
+		if (rcAddShift.left)
+			rc.left += rcAddShift.left;
+		if (rcAddShift.top)
+			rc.top += rcAddShift.top;
+		if (rcAddShift.right)
+			rc.right -= rcAddShift.right;
+		if (rcAddShift.bottom)
+			rc.bottom -= rcAddShift.bottom;
+	} else {
+		if (rcAddShift.right || rcAddShift.left)
+			rc.right += rcAddShift.right + rcAddShift.left;
+		if (rcAddShift.bottom || rcAddShift.top)
+			rc.bottom += rcAddShift.bottom + rcAddShift.top;
+	}
+}
+
+
+/*!!!static!!*/
+// Функция расчитывает 
+RECT CConEmuMain::CalcMargins(enum ConEmuMargins mg)
 {
 	RECT rc;
 	
 	switch (mg)
 	{
-	case CEM_FRAME: // Разница между размером всего окна и клиентской области окна (рамка + заголовок)
-	{
-		RECT cRect, wRect;
-		if (!ghWnd) {
-			rc.left = rc.right = GetSystemMetrics(SM_CXSIZEFRAME);
-			rc.bottom = GetSystemMetrics(SM_CYSIZEFRAME);
-			rc.top = rc.bottom + GetSystemMetrics(SM_CYCAPTION);
-		} else {
-		    GetClientRect(ghWnd, &cRect); // The left and top members are zero. The right and bottom members contain the width and height of the window.
-		    MapWindowPoints(ghWnd, NULL, (LPPOINT)&cRect, 2);
-		    GetWindowRect(ghWnd, &wRect); // screen coordinates of the upper-left and lower-right corners of the window
-		    rc.top = cRect.top - wRect.top;          // >0
-		    rc.left = cRect.left - wRect.left;       // >0
-		    rc.bottom = wRect.bottom - cRect.bottom; // >0
-		    rc.right = wRect.right - cRect.right;    // >0
-		}
-	}	break;
-	// Далее все отступы считаются в клиентской части (дочерние окна)!
-	case CEM_DC:    // Отступы до окна отрисовки
-	{
-	}	break;
-	case CEM_TAB:   // Отступы до контрола с закладками
-	{
-	}	break;
-	case CEM_BACK:  // Отступы до окна фона (с прокруткой)
-	{
-	}	break;
+		case CEM_FRAME: // Разница между размером всего окна и клиентской области окна (рамка + заголовок)
+		{
+			RECT cRect, wRect;
+			if (!ghWnd) {
+				rc.left = rc.right = GetSystemMetrics(SM_CXSIZEFRAME);
+				rc.bottom = GetSystemMetrics(SM_CYSIZEFRAME);
+				rc.top = rc.bottom + GetSystemMetrics(SM_CYCAPTION);
+			} else {
+			    GetClientRect(ghWnd, &cRect); // The left and top members are zero. The right and bottom members contain the width and height of the window.
+			    MapWindowPoints(ghWnd, NULL, (LPPOINT)&cRect, 2);
+			    GetWindowRect(ghWnd, &wRect); // screen coordinates of the upper-left and lower-right corners of the window
+			    rc.top = cRect.top - wRect.top;          // >0
+			    rc.left = cRect.left - wRect.left;       // >0
+			    rc.bottom = wRect.bottom - cRect.bottom; // >0
+			    rc.right = wRect.right - cRect.right;    // >0
+			}
+		}	break;
+		// Далее все отступы считаются в клиентской части (дочерние окна)!
+		case CEM_TAB:   // Отступы от краев таба (если он видим) до окна фона (с прокруткой)
+		{
+			if (ghWnd) {
+				// Главное окно уже создано, наличие таба определено
+				if (TabBar.IsActive()) { //TODO: + IsAllowed()?
+					rc = TabBar.GetMargins();
+				} else {
+					rc = MakeRect(0,0); // раз таба нет - значит дополнительные отступы не нужны
+				}
+			} else {
+				// Иначе нужно смотреть по настройкам
+				if (gSet.isTabs == 1) {
+					rc = gSet.rcTabMargins; // умолчательные отступы таба
+					if (!gSet.isTabFrame) {
+						// От таба остается только заголовок (закладки)
+						rc.left=0; rc.right=0; rc.bottom=0;
+					}
+				} else {
+					rc = MakeRect(0,0); // раз таба нет - значит дополнительные отступы не нужны
+				}
+			}
+		}	break;
+		case CEM_BACK:  // Отступы от краев окна фона (с прокруткой) до окна с отрисовкой (DC)
+		{
+			if (gSet.BufferHeight) { //TODO: а показывается ли сейчас прокрутка?
+				rc = MakeRect(0, GetSystemMetrics(SM_CXVSCROLL));
+			} else {
+				rc = MakeRect(0,0); // раз прокрутки нет - значит дополнительные отступы не нужны
+			}
+		}	break;
 	}
 	
 	return rc;
+}
+
+/*!!!static!!*/
+// Для приблизительного расчета размеров - нужен только (размер главного окна)|(размер консоли)
+// Для точного расчета размеров - требуется (размер главного окна) и (размер окна отрисовки) для корректировки
+RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFrom, RECT* prDC=NULL)
+{
+    RECT rc = rFrom; // инициализация, если уж не получится...
+    RECT rcShift = MakeRect(0,0);
+    
+	switch (tFrom)
+	{
+		case CER_MAIN:
+			// Нужно отныть отступы рамки и заголовка!
+			{
+				rcShift = CalcMargins(CEM_FRAME);
+				rc.right = (rFrom.right-rFrom.left) - (rcShift.left+rcShift.right);
+				rc.bottom = (rFrom.bottom-rFrom.top) - (rcShift.top+rcShift.bottom);
+				rc.left = 0;
+				rc.top = 0; // Получили клиентскую область
+			}
+			break;
+		case CER_MAINCLIENT:
+			{
+				MBoxAssert(!(rFrom.left || rFrom.top));
+			}
+			break;
+		case CER_DC:
+			{   // Размер окна отрисовки в пикселах!
+				MBoxAssert(!(rFrom.left || rFrom.top));
+				
+				switch (tWhat)
+				{
+					case CER_MAIN:
+					{
+						rcShift = CalcMargins(CEM_BACK);
+						AddMargins(rc, rcShift, TRUE/*abExpand*/);
+						rcShift = CalcMargins(CEM_TAB);
+						AddMargins(rc, rcShift, TRUE/*abExpand*/);
+						rcShift = CalcMargins(CEM_FRAME);
+						AddMargins(rc, rcShift, TRUE/*abExpand*/);
+					} break;
+					case CER_MAINCLIENT:
+					{
+						rcShift = CalcMargins(CEM_BACK);
+						AddMargins(rc, rcShift, TRUE/*abExpand*/);
+						rcShift = CalcMargins(CEM_TAB);
+						AddMargins(rc, rcShift, TRUE/*abExpand*/);
+					} break;
+					case CER_TAB:
+					{
+						rcShift = CalcMargins(CEM_BACK);
+						AddMargins(rc, rcShift, TRUE/*abExpand*/);
+						rcShift = CalcMargins(CEM_TAB);
+						AddMargins(rc, rcShift, TRUE/*abExpand*/);
+					} break;
+					case CER_BACK:
+					{
+						rcShift = CalcMargins(CEM_BACK);
+						AddMargins(rc, rcShift, TRUE/*abExpand*/);
+					} break;
+					default:
+						MBoxAssert(FALSE); // Недопустимо
+						return rc;
+				}
+			}
+			return rc;
+		case CER_CONSOLE:
+			{   // Размер консоли в символах!
+				MBoxAssert(!(rFrom.left || rFrom.top));
+				MBoxAssert(tWhat!=CER_CONSOLE);
+				
+			    if (gSet.LogFont.lfWidth==0) {
+				    MBoxAssert(pVCon!=NULL);
+				    pVCon->InitDC(FALSE); // инициализировать ширину шрифта по умолчанию
+				}
+				
+				// ЭТО размер окна отрисовки DC
+				rc = MakeRect(rFrom.right * gSet.LogFont.lfWidth, rFrom.bottom * gSet.LogFont.lfHeight);
+				
+				if (tWhat != CER_DC)
+					rc = CalcRect(tWhat, rc, CER_DC);
+			}
+			return rc;
+		default:
+			MBoxAssert(FALSE); // Недопустимо
+			return rc;
+	};
+
+	RECT rcAddShift = MakeRect(0,0);
+		
+	if (prDC) {
+		// Если передали реальный размер окна отрисовки - нужно посчитать дополнительные сдвиги
+		RECT rcCalcDC = CalcRect(CER_DC, rFrom, CER_MAINCLIENT, NULL /*prDC*/);
+		// расчетный НЕ ДОЛЖЕН быть меньше переданного
+		_ASSERTE((rcCalcDC.right - rcCalcDC.left)>=(prDC->right - prDC->left));
+		_ASSERTE((rcCalcDC.bottom - rcCalcDC.top)>=(prDC->bottom - prDC->top));
+		// считаем доп.сдвиги. ТОЧНО
+		if ((rcCalcDC.right - rcCalcDC.left)!=(prDC->right - prDC->left))
+		{
+			rcAddShift.left = (rcCalcDC.right - rcCalcDC.left - (prDC->right - prDC->left))/2;
+			rcAddShift.right = rcCalcDC.right - rcCalcDC.left - rcAddShift.left;
+		}
+		if ((rcCalcDC.bottom - rcCalcDC.top)!=(prDC->bottom - prDC->top))
+		{
+			rcAddShift.top = (rcCalcDC.bottom - rcCalcDC.top - (prDC->bottom - prDC->top))/2;
+			rcAddShift.bottom = rcCalcDC.bottom - rcCalcDC.top - rcAddShift.top;
+		}
+	}
+	
+	// если мы дошли сюда - значит tFrom==CER_MAINCLIENT
+	
+	switch (tWhat)
+	{
+		case CER_TAB:
+		{
+			// Отступы ДО таба могут появиться только от корректировки
+		} break;
+		case CER_BACK:
+		{
+			rcShift = CalcMargins(CEM_TAB);
+			AddMargins(rc, rcShift);
+		} break;
+		case CER_DC:
+		case CER_CONSOLE:
+		{
+			rcShift = CalcMargins(CEM_TAB);
+			AddMargins(rc, rcShift);
+			rcShift = CalcMargins(CEM_BACK);
+			AddMargins(rc, rcShift);
+			
+			// Если нужен размер консоли в символах сразу делим и выходим
+			if (tWhat == CER_CONSOLE) {
+				MBoxAssert((gSet.LogFont.lfWidth!=0) && (gSet.LogFont.lfHeight!=0));
+			    if (gSet.LogFont.lfWidth==0 || gSet.LogFont.lfHeight==0)
+				    pVCon->InitDC(FALSE); // инициализировать ширину шрифта по умолчанию
+				
+			    rc.right = (rc.right - rc.left) / gSet.LogFont.lfWidth;
+			    rc.bottom = (rc.bottom - rc.top) / gSet.LogFont.lfHeight;
+			    rc.left = 0; rc.top = 0;
+			    
+			    return rc;
+			}
+		} break;
+		default:
+			MBoxAssert(FALSE); // Недопустимо
+			return rc;
+	}
+	
+	AddMargins(rc, rcAddShift);
+	
+	return rc; // Посчитали, возвращаем
+}
+
+/*!!!static!!*/
+// Получить размер (правый нижний угол) окна по его клиентской области и наоборот
+RECT CConEmuMain::MapRect(RECT rFrom, BOOL bFrame2Client)
+{
+	RECT rcShift = CalcMargins(CEM_FRAME);
+	if (bFrame2Client) {
+		//rFrom.left -= rcShift.left;
+		//rFrom.top -= rcShift.top;
+		rFrom.right -= (rcShift.right+rcShift.left);
+		rFrom.bottom -= (rcShift.bottom+rcShift.top);
+	} else {
+		//rFrom.left += rcShift.left;
+		//rFrom.top += rcShift.top;
+		rFrom.right += (rcShift.right+rcShift.left);
+		rFrom.bottom += (rcShift.bottom+rcShift.top);
+	}
+	return rFrom;
 }
 
 // returns difference between window size and client area size of inWnd in outShift->x, outShift->y
@@ -208,6 +423,7 @@ COORD CConEmuMain::ConsoleSizeFromWindow(RECT* arect /*= NULL*/, bool frameInclu
     COORD size;
 
 	if (!gSet.LogFont.lfWidth || !gSet.LogFont.lfHeight) {
+		MBoxAssert(FALSE);
 		// размер шрифта еще не инициализирован! вернем текущий размер консоли! TODO:
 		CONSOLE_SCREEN_BUFFER_INFO inf; memset(&inf, 0, sizeof(inf));
 		GetConsoleScreenBufferInfo(pVCon->hConOut(), &inf);
@@ -534,9 +750,7 @@ LRESULT CConEmuMain::OnSize(WPARAM wParam, WORD newClientWidth, WORD newClientHe
 
 		SyncConsoleToWindow();
 	    
-		RECT client; memset(&client, 0, sizeof(client));
-		client.right = newClientWidth;
-		client.bottom = newClientHeight;
+		RECT client = MakeRect(newClientWidth,newClientHeight);
 		DCClientRect(&client);
 
 		RECT rcNewCon; memset(&rcNewCon,0,sizeof(rcNewCon));

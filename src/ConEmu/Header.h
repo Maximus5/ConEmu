@@ -25,6 +25,7 @@
 
 #define MBox(rt) (int)MessageBox(NULL, rt, Title, MB_SYSTEMMODAL | MB_ICONINFORMATION)
 #define MBoxA(rt) (int)MessageBox(NULL, rt, _T("ConEmu"), MB_SYSTEMMODAL | MB_ICONINFORMATION)
+#define MBoxAssert(V) if ((V)==FALSE) { TCHAR szAMsg[MAX_PATH*2]; wsprintf(szAMsg, _T("Assertion(%s) at\n%s:%i"), #V, __FILE__, __LINE__); MBoxA(szAMsg); }
 #define isMeForeground() (GetForegroundWindow() == ghWnd || GetForegroundWindow() == ghOpWnd)
 #define isPressed(inp) HIBYTE(GetKeyState(inp))
 
@@ -87,6 +88,18 @@ void __forceinline DisplayLastError()
 	FormatMessage( FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, NULL, dw, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR) &lpMsgBuf, 0, NULL );
 	wsprintf(out, _T("Error code ''%d'':\n%s"), dw, lpMsgBuf);
 	MessageBox(0, out, _T("Error occurred"), MB_SYSTEMMODAL | MB_ICONERROR);
+}
+
+RECT __forceinline MakeRect(int W,int H)
+{
+	RECT rc; rc.left=0; rc.top=0; rc.right=W; rc.bottom=H;
+	return rc;
+}
+
+RECT __forceinline MakeRect(int X, int Y,int W,int H)
+{
+	RECT rc; rc.left=X; rc.top=Y; rc.right=W; rc.bottom=H;
+	return rc;
 }
 
 #pragma warning(disable: 4311) // 'type cast' : pointer truncation from 'HBRUSH' to 'BOOL'

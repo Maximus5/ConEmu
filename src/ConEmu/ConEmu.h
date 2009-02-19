@@ -32,9 +32,18 @@ class CConEmuBack;
 enum ConEmuMargins {
 	CEM_FRAME = 0, // –азница между размером всего окна и клиентской области окна (рамка + заголовок)
 	// ƒалее все отступы считаютс€ в клиентской части (дочерние окна)!
-	CEM_DC,        // ќтступы до окна отрисовки
-	CEM_TAB,       // ќтступы до контрола с закладками
-	CEM_BACK       // ќтсутпы до окна фона (с прокруткой)
+	CEM_TAB,       // ќтступы от краев таба (если он видим) до окна фона (с прокруткой)
+	CEM_BACK       // ќтступы от краев окна фона (с прокруткой) до окна с отрисовкой (DC)
+};
+
+enum ConEmuRect {
+	CER_MAIN = 0,   // ѕолный размер окна
+	// ƒалее все координаты считаютс€ относительно клиенсткой области {0,0}
+	CER_MAINCLIENT, // клиентска€ область главного окна
+	CER_TAB,        // положение контрола с закладками (всего)
+	CER_BACK,       // положение окна с прокруткой
+	CER_DC,         // положение окна отрисовки
+	CER_CONSOLE     // !!! _ размер в символах _ !!!
 };
 
 class CConEmuMain
@@ -81,12 +90,11 @@ public:
 public:
 	CConEmuMain();
 	~CConEmuMain();
-	BOOL Init();
-	void Destroy();
-	void InvalidateAll();
 
 public:
-	static RECT CalcMargins(enum ConEmuMargins mg, RECT* prFrom=NULL, BOOL bFrameIncluded=FALSE);
+	static void AddMargins(RECT& rc, RECT& rcAddShift, BOOL abExpand=FALSE);
+	static RECT CalcMargins(enum ConEmuMargins mg);
+	static RECT CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFrom, RECT* prDC=NULL);
 	DWORD CheckProcesses();
 	void CheckBufferSize();
 	COORD ConsoleSizeFromWindow(RECT* arect = NULL, bool frameIncluded = false, bool alreadyClient = false);
@@ -104,6 +112,7 @@ public:
 	bool isPictureView();
 	void LoadIcons();
 	bool LoadVersionInfo(wchar_t* pFullPath);
+	static RECT MapRect(RECT rFrom, BOOL bFrame2Client);
 	void PaintGaps(HDC hDC=NULL);
 	void ReSize();
 	void SetConParent();
