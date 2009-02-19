@@ -116,6 +116,8 @@ HWND GetConEmuHWND(BOOL abRoot, int* pnConsoleIsChild/*=NULL*/)
 	// Если удалось получить хэндл окна консоли - проверяем его родителя
 	if (FarHwnd)
 		ConEmuHwnd = GetAncestor(FarHwnd, GA_PARENT);
+	if (ConEmuHwnd == (HWND)0x10014)
+		ConEmuHwnd = NULL; else
 	if (ConEmuHwnd != NULL)
 	{
 		// Теоретически, если был сделан SetParent - то в дочернее окно с отрисовкой, но фиг его знает. проверим

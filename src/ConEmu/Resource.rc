@@ -160,26 +160,26 @@ BEGIN
                     228,70,30,8
     CONTROL         "&Fix Far borders",cbFixFarBorders,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,192,94,64,8
-    GROUPBOX        "Window",IDC_STATIC3,186,128,114,46
+    GROUPBOX        "Window",IDC_STATIC3,186,128,114,41
     CONTROL         "Normal",rNormal,"Button",BS_AUTORADIOBUTTON | WS_GROUP,
-                    192,139,36,8
+                    192,140,36,8
     CONTROL         "Maximized",rMaximized,"Button",BS_AUTORADIOBUTTON,192,
-                    150,48,8
+                    154,48,8
     CONTROL         "Full screen",rFullScreen,"Button",BS_AUTORADIOBUTTON,
-                    192,162,96,8
+                    244,154,52,8
     CONTROL         "&RightClick for context menu",cbRClick,"Button",
                     BS_AUTO3STATE | WS_TABSTOP,12,199,99,8
     GROUPBOX        "Font",IDC_STATIC,186,6,114,120
     LTEXT           "Size:",IDC_STATIC,192,39,18,8
     CTEXT           "x",IDC_STATIC,248,39,8,8
     LTEXT           "Charset:",IDC_STATIC,192,57,30,8
-    LTEXT           "Render time:",IDC_STATIC,195,179,48,8
-    EDITTEXT        tRender,246,177,54,12,ES_AUTOHSCROLL | ES_READONLY
-    EDITTEXT        tWndWidth,246,138,18,12,ES_AUTOHSCROLL | ES_NUMBER | NOT 
+    RTEXT           "Render time:",IDC_STATIC,13,179,48,8
+    EDITTEXT        tRender,66,177,54,12,ES_AUTOHSCROLL | ES_READONLY
+    EDITTEXT        tWndWidth,244,139,18,10,ES_AUTOHSCROLL | ES_NUMBER | NOT 
                     WS_BORDER,WS_EX_STATICEDGE
-    EDITTEXT        tWndHeight,275,138,18,12,ES_AUTOHSCROLL | ES_NUMBER | 
+    EDITTEXT        tWndHeight,273,139,18,10,ES_AUTOHSCROLL | ES_NUMBER | 
                     NOT WS_BORDER,WS_EX_STATICEDGE
-    CTEXT           "x",IDC_STATIC,266,138,8,8
+    CTEXT           "x",IDC_STATIC,264,139,8,8
     CONTROL         "Force monospace",cbMonospace,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,192,81,70,8
     COMBOBOX        tFontSizeX3,270,78,24,66,CBS_DROPDOWN | WS_VSCROLL | 
@@ -216,6 +216,15 @@ BEGIN
     CONTROL         "UpLeft",rBgSimple,"Button",BS_AUTORADIOBUTTON,255,242,
                     39,10
     GROUPBOX        "Placement",IDC_STATIC,251,232,48,50
+    EDITTEXT        tWndX,245,173,18,10,ES_AUTOHSCROLL | ES_NUMBER | NOT 
+                    WS_BORDER,WS_EX_STATICEDGE
+    EDITTEXT        tWndY,275,173,18,10,ES_AUTOHSCROLL | ES_NUMBER | NOT 
+                    WS_BORDER,WS_EX_STATICEDGE
+    CTEXT           "x",IDC_STATIC,265,173,8,8
+    GROUPBOX        "",IDC_STATIC,186,128,113,61
+    CONTROL         "Position",cbPosFixed,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,192,173,44,10
+    EDITTEXT        tRender2,127,177,54,12,ES_AUTOHSCROLL | ES_READONLY
 END
 
 
