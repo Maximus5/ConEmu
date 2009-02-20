@@ -7,6 +7,8 @@
 #define IDI_ICON3                       3
 #define bSaveSettings                   4
 #define IDD_DIALOG1                     101
+#define IDD_DIALOG2                     103
+#define IDD_DIALOGM                     104
 #define c0                              1000
 #define c1                              1001
 #define c2                              1002
@@ -64,6 +66,7 @@
 #define tWndY                           1062
 #define tRender2                        1063
 #define cbPosFixed                      1064
+#define IDC_TAB1                        1066
 #define tc0                             1100
 #define tc1                             1101
 #define tc2                             1102
@@ -99,9 +102,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        103
+#define _APS_NEXT_RESOURCE_VALUE        105
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1066
+#define _APS_NEXT_CONTROL_VALUE         1067
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

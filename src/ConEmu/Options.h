@@ -52,20 +52,26 @@ public:
 	bool isCreateAppWindow;	
     bool isScrollTitle;
     DWORD ScrollTitleLen;
+    
+    HWND hMain, hColors;
 
 	bool LoadImageFrom(TCHAR *inPath, bool abShowErrors=false);
 	static BOOL CALLBACK wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
+	static BOOL CALLBACK mainOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
+	static BOOL CALLBACK colorOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
 	void LoadSettings();
 	void InitSettings();
 	BOOL SaveSettings();
 	bool ShowColorDialog(HWND HWndOwner, COLORREF *inColor);
 	static BOOL CALLBACK EnumFamCallBack(LPLOGFONT lplf, LPNEWTEXTMETRIC lpntm, DWORD FontType, LPVOID aFontCount);
 	void UpdateMargins(RECT arcMargins);
+	static void Dialog();
 public:
 	LRESULT OnInitDialog();
 	LRESULT OnButtonClicked(WPARAM wParam, LPARAM lParam);
 	LRESULT OnEditChanged(WPARAM wParam, LPARAM lParam);
 	LRESULT OnComboBox(WPARAM wParam, LPARAM lParam);
+	LRESULT OnTab(LPNMHDR phdr);
 };
 
 

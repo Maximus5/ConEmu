@@ -101,6 +101,14 @@ void CSettings::LoadSettings()
     Registry reg;
     if (reg.OpenKey(Config, KEY_READ)) // NightRoman
     {
+		TCHAR ColorName[] = _T("ColorTable00");
+		for (uint i = 0x10; i--;)
+		{
+			ColorName[10] = i/10 + '0';
+			ColorName[11] = i%10 + '0';
+			reg.Load(ColorName, (DWORD *)&Colors[i]);
+		}
+    
         reg.Load(_T("FontName"), inFont);
         reg.Load(_T("FontName2"), inFont2);
         reg.Load(_T("CmdLine"), Cmd);
@@ -197,23 +205,31 @@ void CSettings::UpdateMargins(RECT arcMargins)
 BOOL CSettings::SaveSettings()
 {
     Registry reg;
-    if (reg.OpenKey(_T("Console"), KEY_WRITE))
-    {
-        TCHAR ColorName[] = _T("ColorTable00");
-        for (uint i = 0x10; i--;)
-        {
-            ColorName[10] = i/10 + '0';
-            ColorName[11] = i%10 + '0';
-            reg.Save(ColorName, (DWORD)Colors[i]);
-        }
-        reg.CloseKey();
+    //if (reg.OpenKey(_T("Console"), KEY_WRITE))
+    //{
+    //    TCHAR ColorName[] = _T("ColorTable00");
+    //    for (uint i = 0x10; i--;)
+    //    {
+    //        ColorName[10] = i/10 + '0';
+    //        ColorName[11] = i%10 + '0';
+    //        reg.Save(ColorName, (DWORD)Colors[i]);
+    //    }
+    //    reg.CloseKey();
 
       if (reg.OpenKey(Config, KEY_WRITE)) // NightRoman
         {
+	        TCHAR ColorName[] = _T("ColorTable00");
+	        for (uint i = 0x10; i--;)
+	        {
+	            ColorName[10] = i/10 + '0';
+	            ColorName[11] = i%10 + '0';
+	            reg.Save(ColorName, (DWORD)Colors[i]);
+	        }
+        
             GetDlgItemText(ghOpWnd, tCmdLine, Cmd, MAX_PATH);
 			WINDOWPLACEMENT wpl; wpl.length = sizeof(wpl);
             GetWindowPlacement(ghWnd, &wpl);
-			if (wpl.showCmd == SW_SHOWNORMAL)
+			if (wpl.showCmd == SW_SHOWNORMAL && !isFullScreen)
 			{
 				wndX = wpl.rcNormalPosition.left;
 				wndY = wpl.rcNormalPosition.top;
@@ -261,7 +277,7 @@ BOOL CSettings::SaveSettings()
             //MessageBoxA(ghOpWnd, "Saved.", "Information", MB_ICONINFORMATION);
             return TRUE;
         }
-    }
+    //}
 
     MessageBoxA(ghOpWnd, "Failed", "Information", MB_ICONERROR);
 	return FALSE;
@@ -317,6 +333,35 @@ BOOL CALLBACK CSettings::EnumFamCallBack(LPLOGFONT lplf, LPNEWTEXTMETRIC lpntm, 
 
 LRESULT CSettings::OnInitDialog()
 {
+	{
+		TCITEM tie;
+		HWND _hwndTab = GetDlgItem(ghOpWnd, IDC_TAB1);
+		tie.mask = TCIF_TEXT;
+		tie.iImage = -1; 
+		tie.pszText = _T("Main");
+		TabCtrl_InsertItem(_hwndTab, 0, &tie);
+		tie.pszText = _T("Colors");
+		TabCtrl_InsertItem(_hwndTab, 1, &tie);
+		
+		HFONT hFont = CreateFont(TAB_FONT_HEIGTH, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, ANSI_CHARSET, OUT_DEFAULT_PRECIS, 
+			CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_SWISS, TAB_FONT_FACE);
+		SendMessage(_hwndTab, WM_SETFONT, WPARAM (hFont), TRUE);
+		
+		RECT rcClient; GetWindowRect(_hwndTab, &rcClient);
+		MapWindowPoints(NULL, ghOpWnd, (LPPOINT)&rcClient, 2);
+		TabCtrl_AdjustRect(_hwndTab, FALSE, &rcClient);
+		
+		hMain = CreateDialog((HINSTANCE)GetModuleHandle(NULL), 
+			MAKEINTRESOURCE(IDD_DIALOG1), ghOpWnd, mainOpProc);
+		MoveWindow(hMain, rcClient.left, rcClient.top, rcClient.right-rcClient.left, rcClient.bottom-rcClient.top, 0);
+		hColors = CreateDialog((HINSTANCE)GetModuleHandle(NULL), 
+			MAKEINTRESOURCE(IDD_DIALOG2), ghOpWnd, colorOpProc);
+		MoveWindow(hColors, rcClient.left, rcClient.top, rcClient.right-rcClient.left, rcClient.bottom-rcClient.top, 0);
+
+		ShowWindow(hMain, SW_SHOW);
+	}
+	
+
 	{
 		HDC hdc = GetDC(ghOpWnd);
 		int aFontCount[] = { 0, 0, 0 };
@@ -880,6 +925,27 @@ LRESULT CSettings::OnComboBox(WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
+LRESULT CSettings::OnTab(LPNMHDR phdr)
+{
+	switch (phdr->code) {
+		case TCN_SELCHANGE:
+			{
+				int nSel = TabCtrl_GetCurSel(phdr->hwndFrom);
+
+				if (nSel==0) {
+					ShowWindow(hMain, SW_SHOW);
+					ShowWindow(hColors, SW_HIDE);
+					SetFocus(hMain);
+				} else {
+					ShowWindow(hColors, SW_SHOW);
+					ShowWindow(hMain, SW_HIDE);
+					SetFocus(hColors);
+				}
+			}
+			break;
+	}
+	return 0;
+}
 
 bool CSettings::LoadImageFrom(TCHAR *inPath, bool abShowErrors)
 {
@@ -1000,6 +1066,11 @@ bool CSettings::LoadImageFrom(TCHAR *inPath, bool abShowErrors)
     return lRes;
 }
 
+void CSettings::Dialog()
+{
+	DialogBox((HINSTANCE)GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_DIALOGM), 0, wndOpProc);
+}
+
 BOOL CALLBACK CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
 {
     switch (messg)
@@ -1066,10 +1137,132 @@ BOOL CALLBACK CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM
 			gSet.OnComboBox(wParam, lParam);
         }
         break;
+	case WM_NOTIFY:
+		{
+			LPNMHDR phdr = (LPNMHDR)lParam;
+			if (phdr->idFrom == IDC_TAB1)
+				gSet.OnTab(phdr);
+		} break;
     case WM_CLOSE:
     case WM_DESTROY:
         EndDialog(hWnd2, TRUE);
         ghOpWnd = NULL;
+        break;
+    default:
+        return 0;
+    }
+    return 0;
+}
+
+BOOL CALLBACK CSettings::mainOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
+{
+    switch (messg)
+    {
+    case WM_INITDIALOG:
+        break;
+
+    case WM_CTLCOLORSTATIC:
+        for (uint i = 1000; i < 1016; i++)
+            if (GetDlgItem(hWnd2, i) == (HWND)lParam)
+            {
+                static HBRUSH KillBrush;
+                DeleteObject(KillBrush);
+                KillBrush = CreateSolidBrush(gSet.Colors[i-1000]);
+                return (BOOL)KillBrush;
+            }
+            break;
+    case WM_KEYDOWN:
+        if (wParam == VK_ESCAPE)
+            SendMessage(hWnd2, WM_CLOSE, 0, 0);
+        break;
+
+    case WM_HSCROLL:
+        {
+            int newV = SendDlgItemMessage(hWnd2, slDarker, TBM_GETPOS, 0, 0);
+            if (newV != gSet.bgImageDarker)
+            {
+                gSet.bgImageDarker = newV;
+                TCHAR tmp[10];
+                wsprintf(tmp, _T("%i"), gSet.bgImageDarker);
+                SetDlgItemText(hWnd2, tDarker, tmp);
+                gSet.LoadImageFrom(gSet.pBgImage);
+                pVCon->Update(true);
+                InvalidateRect(ghWnd, NULL, FALSE);
+            }
+        }
+        break;
+
+    case WM_COMMAND:
+        if (HIWORD(wParam) == BN_CLICKED)
+        {
+			gSet.OnButtonClicked(wParam, lParam);
+        }
+        else if (HIWORD(wParam) == EN_CHANGE)
+        {
+			gSet.OnEditChanged(wParam, lParam);
+        }
+        else if (HIWORD(wParam) == CBN_EDITCHANGE || HIWORD(wParam) == CBN_SELCHANGE)
+        {
+			gSet.OnComboBox(wParam, lParam);
+        }
+        break;
+    default:
+        return 0;
+    }
+    return 0;
+}
+
+BOOL CALLBACK CSettings::colorOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
+{
+    switch (messg)
+    {
+    case WM_INITDIALOG:
+        break;
+
+    case WM_CTLCOLORSTATIC:
+        for (uint i = 1000; i < 1016; i++)
+            if (GetDlgItem(hWnd2, i) == (HWND)lParam)
+            {
+                static HBRUSH KillBrush;
+                DeleteObject(KillBrush);
+                KillBrush = CreateSolidBrush(gSet.Colors[i-1000]);
+                return (BOOL)KillBrush;
+            }
+            break;
+    case WM_KEYDOWN:
+        if (wParam == VK_ESCAPE)
+            SendMessage(hWnd2, WM_CLOSE, 0, 0);
+        break;
+
+    case WM_HSCROLL:
+        {
+            int newV = SendDlgItemMessage(hWnd2, slDarker, TBM_GETPOS, 0, 0);
+            if (newV != gSet.bgImageDarker)
+            {
+                gSet.bgImageDarker = newV;
+                TCHAR tmp[10];
+                wsprintf(tmp, _T("%i"), gSet.bgImageDarker);
+                SetDlgItemText(hWnd2, tDarker, tmp);
+                gSet.LoadImageFrom(gSet.pBgImage);
+                pVCon->Update(true);
+                InvalidateRect(ghWnd, NULL, FALSE);
+            }
+        }
+        break;
+
+    case WM_COMMAND:
+        if (HIWORD(wParam) == BN_CLICKED)
+        {
+			gSet.OnButtonClicked(wParam, lParam);
+        }
+        else if (HIWORD(wParam) == EN_CHANGE)
+        {
+			gSet.OnEditChanged(wParam, lParam);
+        }
+        else if (HIWORD(wParam) == CBN_EDITCHANGE || HIWORD(wParam) == CBN_SELCHANGE)
+        {
+			gSet.OnComboBox(wParam, lParam);
+        }
         break;
     default:
         return 0;

@@ -1803,7 +1803,8 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	        SetFocus ( ghOpWnd );
 	        break; // ј то открывались несколько окон диалогов :)
 	    }
-		DialogBox((HINSTANCE)GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_DIALOG1), 0, CSettings::wndOpProc);
+		//DialogBox((HINSTANCE)GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_DIALOG1), 0, CSettings::wndOpProc);
+		CSettings::Dialog();
         break;
     case ID_HELP:
         {
