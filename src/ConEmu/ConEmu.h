@@ -86,6 +86,7 @@ public:
 	DWORD m_ProcList[1000], m_ProcCount;
 	DWORD mn_TopProcessID; BOOL mb_FarActive;
 	TCHAR ms_TopProcess[MAX_PATH+1];
+	TCHAR ms_EditorRus[16], ms_ViewerRus[16];
 
 public:
 	CConEmuMain();
@@ -104,12 +105,15 @@ public:
 	void ForceShowTabs(BOOL abShow);
 	//void GetCWShift(HWND inWnd, POINT *outShift);
 	//void GetCWShift(HWND inWnd, RECT *outShift);
+	LPTSTR GetTitleStart();
 	static BOOL WINAPI HandlerRoutine(DWORD dwCtrlType);
 	BOOL Init();
 	void InvalidateAll();
 	bool isConSelectMode();
+	bool isEditor();
 	bool isFilePanel();
 	bool isPictureView();
+	bool isViewer();
 	void LoadIcons();
 	bool LoadVersionInfo(wchar_t* pFullPath);
 	static RECT MapRect(RECT rFrom, BOOL bFrame2Client);

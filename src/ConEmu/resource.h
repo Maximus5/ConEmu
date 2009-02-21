@@ -83,6 +83,12 @@
 #define cbPosFixed                      1064
 #define IDC_TAB1                        1066
 #define lbExtendIdx                     1067
+#define cbVisualizer                    1068
+#define lbVisNormal                     1069
+#define lbVisTab                        1070
+#define lbVisEOL                        1071
+#define lbVisEOF                        1072
+#define lbVisFore                       1073
 #define tc0                             1100
 #define tc1                             1101
 #define tc2                             1102
@@ -136,7 +142,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        105
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1068
+#define _APS_NEXT_CONTROL_VALUE         1074
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

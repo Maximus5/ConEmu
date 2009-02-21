@@ -50,6 +50,10 @@ public:
 	TCHAR szTabViewer[32];
 	DWORD nTabLenMax;
 
+	bool isVisualizer;
+	char nVizNormal, nVizFore, nVizTab, nVizEOL, nVizEOF;
+	wchar_t cVizTab, cVizEOL, cVizEOF;
+
 	char isAllowDetach;
 	bool isCreateAppWindow;	
     bool isScrollTitle;

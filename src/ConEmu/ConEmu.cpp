@@ -38,6 +38,14 @@ CConEmuMain::CConEmuMain()
 
 	mh_Psapi = NULL;
 	GetModuleFileNameEx= NULL;
+
+#ifdef _UNICODE
+	MultiByteToWideChar(CP_ACP, 0, "редактирование ", -1, ms_EditorRus, 16);
+	MultiByteToWideChar(CP_ACP, 0, "просмотр ", -1, ms_ViewerRus, 16);
+#else
+	strcpy(ms_EditorRus, "редактирование ");
+	strcpy(ms_ViewerRus, "просмотр ");
+#endif
 }
 
 BOOL CConEmuMain::Init()
@@ -1267,6 +1275,20 @@ void CConEmuMain::PaintGaps(HDC hDC/*=NULL*/)
 	}
 #endif
 
+LPTSTR CConEmuMain::GetTitleStart()
+{
+    TCHAR* pszTitle=Title;
+    if (Title[0]==_T('[') && isdigit(Title[1]) && (Title[2]==_T('/') || Title[3]==_T('/'))) {
+	    // ConMan
+	    pszTitle = _tcschr(Title, _T(']'));
+	    if (!pszTitle)
+		    return NULL;
+		while (*pszTitle && *pszTitle!=_T('{'))
+			pszTitle++;
+    }
+	return pszTitle;
+}
+
 bool CConEmuMain::isConSelectMode()
 {
     //TODO: По курсору, что-ли попробовать определять?
@@ -1275,15 +1297,8 @@ bool CConEmuMain::isConSelectMode()
 
 bool CConEmuMain::isFilePanel()
 {
-    TCHAR* pszTitle=Title;
-    if (Title[0]==_T('[') && isdigit(Title[1]) && (Title[2]==_T('/') || Title[3]==_T('/'))) {
-	    // ConMan
-	    pszTitle = _tcschr(Title, _T(']'));
-	    if (!pszTitle)
-		    return false;
-		while (*pszTitle && *pszTitle!=_T('{'))
-			pszTitle++;
-    }
+    TCHAR* pszTitle=GetTitleStart();
+    if (!pszTitle) return false;
     
     if ((_tcsncmp(pszTitle, _T("{\\\\"), 3)==0) ||
 	    (pszTitle[0] == _T('{') && isalpha(pszTitle[1]) && pszTitle[2] == _T(':') && pszTitle[3] == _T('\\')))
@@ -1295,6 +1310,28 @@ bool CConEmuMain::isFilePanel()
     //TCHAR *BrF = _tcschr(Title, '{'), *BrS = _tcschr(Title, '}'), *Slash = _tcschr(Title, '\\');
     //if (BrF && BrS && Slash && BrF == Title && (Slash == Title+1 || Slash == Title+3))
     //    return true;
+    return false;
+}
+
+bool CConEmuMain::isEditor()
+{
+    TCHAR* pszTitle=GetTitleStart();
+    if (!pszTitle) return false;
+    
+	if (_tcsncmp(pszTitle, _T("edit "), 5)==0 || _tcsncmp(pszTitle, ms_EditorRus, _tcslen(ms_EditorRus))==0)
+		return true;
+
+    return false;
+}
+
+bool CConEmuMain::isViewer()
+{
+    TCHAR* pszTitle=GetTitleStart();
+    if (!pszTitle) return false;
+    
+	if (_tcsncmp(pszTitle, _T("view "), 5)==0 || _tcsncmp(pszTitle, ms_ViewerRus, _tcslen(ms_ViewerRus))==0)
+		return true;
+
     return false;
 }
 

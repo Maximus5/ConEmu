@@ -16,7 +16,7 @@ struct VirtualConsole
 		short y;
 		COLORREF foreColor;
 		COLORREF bgColor;
-		BYTE foreColorNum;
+		BYTE foreColorNum, bgColorNum;
 		TCHAR ch[2];
 	} Cursor;
 
@@ -27,6 +27,9 @@ struct VirtualConsole
 	HBRUSH  hBrush0, hOldBrush, hSelectedBrush;
 	SIZE	bgBmp;
 	HFONT   hFont, hFont2, hSelectedFont, hOldFont;
+
+	bool isEditor;
+	BYTE attrBackLast;
 
 	TCHAR *ConChar;
 	WORD  *ConAttr;
@@ -45,4 +48,5 @@ struct VirtualConsole
 	bool isCharUnicode(WCHAR inChar);
 	void BlitPictureTo(VirtualConsole *vc, int inX, int inY, int inWidth, int inHeight);
 	bool CheckSelection(const CONSOLE_SELECTION_INFO& select, SHORT row, SHORT col);
+	bool GetCharAttr(TCHAR ch, WORD atr, TCHAR& rch, BYTE& foreColorNum, BYTE& backColorNum);
 };

@@ -83,4 +83,24 @@ REGEDIT4
 "TabLenMax"=dword:00000014
 
 ;; Debug. 1 - Create 'app' window on taskbar
-"CreateAppWindow"=hex:00
+;"CreateAppWindow"=hex:00 - пока не работает
+
+;; Расширение возможностей плагина Visualizer
+"Visualizer"=hex:01
+"VizNormal"=hex:01
+"VizFore"=hex:0f
+"VizTab"=hex:0f
+"VizEol"=hex:08
+"VizEof"=hex:0c
+"VizTabCh"=hex:92,21
+"VizEolCh"=hex:93,21
+"VizEofCh"=hex:40,26
+
+;; Цвета консоли (16..31 используется при ExtendColors=01)
+;"ColorTable00"=hex:ff,ff,ff,00
+;...
+;"ColorTable31"=hex:ff,ff,ff,00
+;; Extend foreground colors
+"ExtendColors"=hex:00
+;; with background (color index)
+"ExtendColorIdx"=hex:0e

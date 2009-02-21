@@ -55,7 +55,7 @@ END
 IDD_DIALOG1 DIALOGEX 0, 0, 305, 258
 STYLE DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_TOPMOST
-FONT 8, "MS Shell Dlg"
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     GROUPBOX        "Anti-aliasing",IDC_STATIC,240,4,60,45,WS_GROUP
     CONTROL         "&None",rNoneAA,"Button",BS_AUTORADIOBUTTON | WS_GROUP,
@@ -158,27 +158,27 @@ BEGIN
     GROUPBOX        "Command Line",IDC_STATIC,6,223,294,30
 END
 
-IDD_DIALOG2 DIALOGEX 0, 0, 330, 162
+IDD_DIALOG2 DIALOGEX 0, 0, 330, 246
 STYLE DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_TOPMOST
-FONT 8, "MS Shell Dlg", 0, 0, 0x1
+FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        "Colors (""red green blue"")",-1,4,4,319,67
-    RTEXT           "0.",-1,12,18,8,8
+    GROUPBOX        "Colors (""red green blue"")",IDC_STATIC,4,4,319,67
+    RTEXT           "0.",IDC_STATIC,12,18,8,8
     LTEXT           "",c0,24,15,12,12,SS_NOTIFY | SS_SUNKEN
-    RTEXT           "1.",-1,12,31,8,8
+    RTEXT           "1.",IDC_STATIC,12,31,8,8
     LTEXT           "",c1,24,28,12,12,SS_NOTIFY | SS_SUNKEN
-    RTEXT           "2.",-1,12,44,8,8
+    RTEXT           "2.",IDC_STATIC,12,44,8,8
     LTEXT           "",c2,24,41,12,12,SS_NOTIFY | SS_SUNKEN
-    RTEXT           "3.",-1,12,57,8,8
+    RTEXT           "3.",IDC_STATIC,12,57,8,8
     LTEXT           "",c3,24,54,12,12,SS_NOTIFY | SS_SUNKEN
-    RTEXT           "4.",-1,89,18,8,8
+    RTEXT           "4.",IDC_STATIC,89,18,8,8
     LTEXT           "",c4,101,15,12,12,SS_NOTIFY | SS_SUNKEN
-    RTEXT           "5.",-1,89,31,8,8
+    RTEXT           "5.",IDC_STATIC,89,31,8,8
     LTEXT           "",c5,101,28,12,12,SS_NOTIFY | SS_SUNKEN
-    RTEXT           "6.",-1,89,44,8,8
+    RTEXT           "6.",IDC_STATIC,89,44,8,8
     LTEXT           "",c6,101,41,12,12,SS_NOTIFY | SS_SUNKEN
-    RTEXT           "7.",-1,89,57,8,8
+    RTEXT           "7.",IDC_STATIC,89,57,8,8
     LTEXT           "",c7,101,54,12,12,SS_NOTIFY | SS_SUNKEN
     EDITTEXT        tc0,37,15,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,
                     WS_EX_STATICEDGE
@@ -196,11 +196,11 @@ BEGIN
                     WS_EX_STATICEDGE
     EDITTEXT        tc7,115,54,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,
                     WS_EX_STATICEDGE
-    RTEXT           "8.",-1,167,18,8,8
+    RTEXT           "8.",IDC_STATIC,167,18,8,8
     LTEXT           "",c8,179,15,12,12,SS_NOTIFY | SS_SUNKEN
-    RTEXT           "9.",-1,167,31,8,8
+    RTEXT           "9.",IDC_STATIC,167,31,8,8
     LTEXT           "",c9,179,28,12,12,SS_NOTIFY | SS_SUNKEN
-    RTEXT           "10.",-1,162,44,13,8
+    RTEXT           "10.",IDC_STATIC,162,44,13,8
     LTEXT           "",c10,179,41,12,12,SS_NOTIFY | SS_SUNKEN
     LTEXT           "",c11,179,54,12,12,SS_NOTIFY | SS_SUNKEN
     LTEXT           "",c12,259,15,12,12,SS_NOTIFY | SS_SUNKEN
@@ -223,28 +223,28 @@ BEGIN
                     WS_EX_STATICEDGE
     EDITTEXT        tc15,271,54,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,
                     WS_EX_STATICEDGE
-    RTEXT           "11.",-1,162,57,13,8
-    RTEXT           "12.",-1,239,18,13,8
-    RTEXT           "13.",-1,239,31,13,8
-    RTEXT           "14.",-1,239,44,13,8
-    RTEXT           "15.",-1,239,57,13,8
-    GROUPBOX        "Extended foreground colors (""red green blue"")",-1,4,
-                    74,319,83
-    RTEXT           "16.",-1,7,103,13,8
+    RTEXT           "11.",IDC_STATIC,162,57,13,8
+    RTEXT           "12.",IDC_STATIC,239,18,13,8
+    RTEXT           "13.",IDC_STATIC,239,31,13,8
+    RTEXT           "14.",IDC_STATIC,239,44,13,8
+    RTEXT           "15.",IDC_STATIC,239,57,13,8
+    GROUPBOX        "Extended foreground colors (""red green blue"")",
+                    IDC_STATIC,4,74,319,83
+    RTEXT           "16.",IDC_STATIC,7,103,13,8
     LTEXT           "",c16,24,100,12,12,SS_NOTIFY | SS_SUNKEN
-    RTEXT           "17.",-1,7,116,13,8
+    RTEXT           "17.",IDC_STATIC,7,116,13,8
     LTEXT           "",c17,24,113,12,12,SS_NOTIFY | SS_SUNKEN
-    RTEXT           "18.",-1,7,129,13,8
+    RTEXT           "18.",IDC_STATIC,7,129,13,8
     LTEXT           "",c18,24,126,12,12,SS_NOTIFY | SS_SUNKEN
-    RTEXT           "19.",-1,7,142,13,8
+    RTEXT           "19.",IDC_STATIC,7,142,13,8
     LTEXT           "",c19,24,139,12,12,SS_NOTIFY | SS_SUNKEN
-    RTEXT           "20.",-1,84,103,13,8
+    RTEXT           "20.",IDC_STATIC,84,103,13,8
     LTEXT           "",c20,102,100,12,12,SS_NOTIFY | SS_SUNKEN
-    RTEXT           "21.",-1,84,116,13,8
+    RTEXT           "21.",IDC_STATIC,84,116,13,8
     LTEXT           "",c21,102,113,12,12,SS_NOTIFY | SS_SUNKEN
-    RTEXT           "22.",-1,84,129,13,8
+    RTEXT           "22.",IDC_STATIC,84,129,13,8
     LTEXT           "",c22,102,126,12,12,SS_NOTIFY | SS_SUNKEN
-    RTEXT           "23.",-1,84,142,13,8
+    RTEXT           "23.",IDC_STATIC,84,142,13,8
     LTEXT           "",c23,102,139,12,12,SS_NOTIFY | SS_SUNKEN
     EDITTEXT        tc16,38,100,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,
                     WS_EX_STATICEDGE
@@ -262,11 +262,11 @@ BEGIN
                     WS_EX_STATICEDGE
     EDITTEXT        tc23,116,139,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,
                     WS_EX_STATICEDGE
-    RTEXT           "24.",-1,162,103,13,8
+    RTEXT           "24.",IDC_STATIC,162,103,13,8
     LTEXT           "",c24,180,100,12,12,SS_NOTIFY | SS_SUNKEN
-    RTEXT           "25.",-1,162,116,13,8
+    RTEXT           "25.",IDC_STATIC,162,116,13,8
     LTEXT           "",c25,180,113,12,12,SS_NOTIFY | SS_SUNKEN
-    RTEXT           "26.",-1,162,129,13,8
+    RTEXT           "26.",IDC_STATIC,162,129,13,8
     LTEXT           "",c26,180,126,12,12,SS_NOTIFY | SS_SUNKEN
     LTEXT           "",c27,180,139,12,12,SS_NOTIFY | SS_SUNKEN
     LTEXT           "",c28,260,100,12,12,SS_NOTIFY | SS_SUNKEN
@@ -289,15 +289,33 @@ BEGIN
                     WS_EX_STATICEDGE
     EDITTEXT        tc31,272,139,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,
                     WS_EX_STATICEDGE
-    RTEXT           "27.",-1,162,142,13,8
-    RTEXT           "28.",-1,240,103,13,8
-    RTEXT           "29.",-1,240,116,13,8
-    RTEXT           "30.",-1,240,129,13,8
-    RTEXT           "31.",-1,240,142,13,8
+    RTEXT           "27.",IDC_STATIC,162,142,13,8
+    RTEXT           "28.",IDC_STATIC,240,103,13,8
+    RTEXT           "29.",IDC_STATIC,240,116,13,8
+    RTEXT           "30.",IDC_STATIC,240,129,13,8
+    RTEXT           "31.",IDC_STATIC,240,142,13,8
     CONTROL         "Extend foreground colors with background",
                     cbExtendColors,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,26,
                     84,161,10
     COMBOBOX        lbExtendIdx,192,82,45,30,CBS_DROPDOWNLIST | CBS_SORT | 
+                    WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        "",IDC_STATIC,4,164,319,28
+    CONTROL         "Extend visualizer (editor plugin)",cbVisualizer,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,10,163,113,10
+    RTEXT           "Normal:",IDC_STATIC,9,177,25,8
+    COMBOBOX        lbVisNormal,37,175,32,30,CBS_DROPDOWNLIST | CBS_SORT | 
+                    WS_VSCROLL | WS_TABSTOP
+    RTEXT           "Tab:",IDC_STATIC,144,177,18,8
+    COMBOBOX        lbVisTab,166,175,32,30,CBS_DROPDOWNLIST | CBS_SORT | 
+                    WS_VSCROLL | WS_TABSTOP
+    RTEXT           "EOL:",IDC_STATIC,198,177,22,8
+    COMBOBOX        lbVisEOL,224,175,32,30,CBS_DROPDOWNLIST | CBS_SORT | 
+                    WS_VSCROLL | WS_TABSTOP
+    RTEXT           "EOF:",IDC_STATIC,259,177,22,8
+    COMBOBOX        lbVisEOF,286,175,32,30,CBS_DROPDOWNLIST | CBS_SORT | 
+                    WS_VSCROLL | WS_TABSTOP
+    CTEXT           "/",IDC_STATIC,71,177,8,8
+    COMBOBOX        lbVisFore,83,175,32,30,CBS_DROPDOWNLIST | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
 END
 
@@ -351,7 +369,7 @@ BEGIN
             VALUE "Comments", "\0"
             VALUE "CompanyName", "\0"
             VALUE "FileDescription", "Console Emulator\0"
-            VALUE "FileVersion", "2009.2.21b\0"
+            VALUE "FileVersion", "2009.2.21c\0"
             VALUE "InternalName", "\0"
             VALUE "LegalCopyright", "Copyright (C) 2006-2008 - Zoin; (C) 2009 - Far community :)\0"
             VALUE "LegalTrademarks", "\0"
@@ -382,6 +400,11 @@ BEGIN
     IDD_DIALOG1, DIALOG
     BEGIN
         BOTTOMMARGIN, 242
+    END
+
+    IDD_DIALOG2, DIALOG
+    BEGIN
+        BOTTOMMARGIN, 162
     END
 END
 #endif    // APSTUDIO_INVOKED

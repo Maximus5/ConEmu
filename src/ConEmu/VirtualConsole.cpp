@@ -31,6 +31,7 @@ VirtualConsole::VirtualConsole(/*HANDLE hConsoleOutput*/)
 	memset(&SelectionInfo, 0, sizeof(SelectionInfo));
 	IsForceUpdate = false;
 	hBrush0 = NULL; hSelectedBrush = NULL; hOldBrush = NULL;
+	isEditor = false;
 
 	hOldBrush = NULL;
 	hOldFont = NULL;
@@ -274,13 +275,45 @@ protected:
 };
 #endif
 
+// Возвращает true, если процедура изменила отображаемый символ
+bool VirtualConsole::GetCharAttr(TCHAR ch, WORD atr, TCHAR& rch, BYTE& foreColorNum, BYTE& backColorNum)
+{
+	bool bChanged = false;
+	foreColorNum = atr & 0x0F;
+	backColorNum = atr >> 4 & 0x0F;
+	rch = ch; // по умолчанию!
+	if (isEditor && gSet.isVisualizer && ch==L' ' &&
+		(backColorNum==gSet.nVizTab || backColorNum==gSet.nVizEOL || backColorNum==gSet.nVizEOF))
+	{
+		if (backColorNum==gSet.nVizTab)
+			rch = gSet.cVizTab; else
+		if (backColorNum==gSet.nVizEOL)
+			rch = gSet.cVizEOL; else
+		if (backColorNum==gSet.nVizEOF)
+			rch = gSet.cVizEOF;
+		backColorNum = gSet.nVizNormal;
+		foreColorNum = gSet.nVizFore;
+		bChanged = true;
+	} else
+	if (gSet.isExtendColors) {
+		if (backColorNum==gSet.nExtendColor) {
+			backColorNum = attrBackLast;
+			foreColorNum += 0x10;
+		} else {
+			attrBackLast = backColorNum;
+		}
+	}
+	return bChanged;
+}
+
 bool VirtualConsole::Update(bool isForce, HDC *ahDc)
 {
     #ifdef _DEBUG
 	DcDebug dbg(&hDC, ahDc); // для отладки - рисуем сразу на канвасе окна
 	#endif
 
-	WORD attrBackLast = 0;
+	attrBackLast = 0;
+	isEditor = gConEmu.isEditor();
 
 	bool lRes = false;
 	CONSOLE_SCREEN_BUFFER_INFO csbi;
@@ -478,18 +511,13 @@ bool VirtualConsole::Update(bool isForce, HDC *ahDc)
 				{
 					const WORD attr = ConAttrLine[j];
 					WCHAR c = ConCharLine[j];
-					const bool isUnicode = isCharUnicode(c/*ConCharLine[j]*/);
+					BYTE attrFore, attrBack;
+					bool isUnicode = isCharUnicode(c/*ConCharLine[j]*/);
 
-					WORD attrFore = attr & 0x0F;
-					WORD attrBack = attr >> 4 & 0x0F;
-					if (gSet.isExtendColors) {
-						if (attrBack==gSet.nExtendColor) {
-							attrBack = attrBackLast;
-							attrFore += 0x10;
-						} else {
-							attrBackLast = attrBack;
-						}
-					}
+					if (GetCharAttr(c, attr, c, attrFore, attrBack))
+						isUnicode = true;
+
+					// Возможно это тоже нужно вынести в GetCharAttr?
 					if (doSelect && CheckSelection(select2, row, j))
 					{
 						WORD tmp = attrFore;
@@ -656,7 +684,12 @@ bool VirtualConsole::Update(bool isForce, HDC *ahDc)
 						}
 						else
 						{
-							ExtTextOut(hDC, rect.left, rect.top, ETO_CLIPPED | ((drawImage && (attrBack) < 2) ? 0 : ETO_OPAQUE), &rect, ConCharLine + j, j2 - j, 0);
+							if ((j2-j)==1) // support visualizer change
+							ExtTextOut(hDC, rect.left, rect.top, ETO_CLIPPED | ((drawImage && (attrBack) < 2) ? 0 : ETO_OPAQUE), &rect,
+								&c/*ConCharLine + j*/, 1, 0);
+							else
+							ExtTextOut(hDC, rect.left, rect.top, ETO_CLIPPED | ((drawImage && (attrBack) < 2) ? 0 : ETO_OPAQUE), &rect,
+								ConCharLine + j, j2 - j, 0);
 	#ifdef _DEBUG
 							GdiFlush();
 	#endif
@@ -702,7 +735,7 @@ bool VirtualConsole::Update(bool isForce, HDC *ahDc)
 			{
 				QueryPerformanceCounter((LARGE_INTEGER *)&tick2);
 				wsprintf(temp, _T("%i"), (tick2-tick)/100);
-				SetDlgItemText(ghOpWnd, tRender, temp);
+				SetDlgItemText(gSet.hMain, tRender, temp);
 			}
 		}
 
@@ -720,11 +753,16 @@ bool VirtualConsole::Update(bool isForce, HDC *ahDc)
 			}
 
 			int CurChar = csbi.dwCursorPosition.Y * TextWidth + csbi.dwCursorPosition.X;
-			Cursor.ch[0] = ConChar[CurChar];
 			Cursor.ch[1] = 0;
+			GetCharAttr(ConChar[CurChar], ConAttr[CurChar], Cursor.ch[0], Cursor.bgColorNum, Cursor.foreColorNum);
+			Cursor.foreColor = gSet.Colors[Cursor.foreColorNum];
+			Cursor.bgColor = gSet.Colors[Cursor.bgColorNum];
+
+			/*Cursor.ch[0] = ConChar[CurChar];
 			Cursor.foreColor = gSet.Colors[ConAttr[CurChar] >> 4 & 0x0F];
 			Cursor.foreColorNum = ConAttr[CurChar] >> 4 & 0x0F;
-			Cursor.bgColor = gSet.Colors[ConAttr[CurChar] & 0x0F];
+			Cursor.bgColor = gSet.Colors[ConAttr[CurChar] & 0x0F];*/
+
 			Cursor.isVisiblePrev = Cursor.isVisible;
 			Cursor.x = csbi.dwCursorPosition.X;
 			Cursor.y = csbi.dwCursorPosition.Y;
