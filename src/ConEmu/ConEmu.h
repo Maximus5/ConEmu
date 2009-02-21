@@ -132,6 +132,7 @@ public:
 	LRESULT OnGetMinMaxInfo(LPMINMAXINFO pInfo);
 	LRESULT OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
+	LRESULT OnMove(int xPos, int yPos);
 	LRESULT OnPaint(WPARAM wParam, LPARAM lParam);
 	LRESULT OnSize(WPARAM wParam, WORD newClientWidth, WORD newClientHeight);
 	LRESULT OnSizing(WPARAM wParam, LPARAM lParam);

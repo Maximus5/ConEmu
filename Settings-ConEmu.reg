@@ -84,7 +84,3 @@ REGEDIT4
 
 ;; Debug. 1 - Create 'app' window on taskbar
 "CreateAppWindow"=hex:00
-
-;; Allow detach (Ctrl-Alt-Tab)
-;; 0 - disabled, 1 - allow, 2 - create new ConEmu and attach to new console
-"AllowDetach"=hex:00

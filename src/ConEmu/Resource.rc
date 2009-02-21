@@ -351,7 +351,7 @@ BEGIN
             VALUE "Comments", "\0"
             VALUE "CompanyName", "\0"
             VALUE "FileDescription", "Console Emulator\0"
-            VALUE "FileVersion", "2009.2.21a\0"
+            VALUE "FileVersion", "2009.2.21b\0"
             VALUE "InternalName", "\0"
             VALUE "LegalCopyright", "Copyright (C) 2006-2008 - Zoin; (C) 2009 - Far community :)\0"
             VALUE "LegalTrademarks", "\0"

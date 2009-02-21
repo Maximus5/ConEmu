@@ -128,8 +128,8 @@ void CSettings::LoadSettings()
         reg.Load(_T("FontCharSet"), &FontCharSet);
         reg.Load(_T("Anti-aliasing"), &Quality);
         reg.Load(_T("WindowMode"), &gConEmu.WindowMode);
-        reg.Load(_T("ConWnd X"), &wndX); if (wndX<-10) wndX = 0;
-        reg.Load(_T("ConWnd Y"), &wndY); if (wndY<-10) wndY = 0;
+        reg.Load(_T("ConWnd X"), &wndX); /*if (wndX<-10) wndX = 0;*/
+        reg.Load(_T("ConWnd Y"), &wndY); /*if (wndY<-10) wndY = 0;*/
         reg.Load(_T("ConWnd Width"), &wndWidth);
         reg.Load(_T("ConWnd Height"), &wndHeight);
         reg.Load(_T("CursorType"), &isCursorV);
@@ -159,7 +159,7 @@ void CSettings::LoadSettings()
 		reg.Load(_T("ScrollTitle"), &isScrollTitle);
 		reg.Load(_T("ScrollTitleLen"), &ScrollTitleLen);
 		reg.Load(_T("TryToCenter"), &isTryToCenter);
-		reg.Load(_T("CreateAppWindow"), &isCreateAppWindow);
+		//reg.Load(_T("CreateAppWindow"), &isCreateAppWindow);
 		reg.Load(_T("AllowDetach"), &isAllowDetach);
         reg.CloseKey();
     }
@@ -236,13 +236,12 @@ BOOL CSettings::SaveSettings()
 			reg.Save(_T("ExtendColorIdx"), nExtendColor);
         
             GetDlgItemText(hMain, tCmdLine, Cmd, MAX_PATH);
-			WINDOWPLACEMENT wpl; wpl.length = sizeof(wpl);
-            GetWindowPlacement(ghWnd, &wpl);
-			if (wpl.showCmd == SW_SHOWNORMAL && !isFullScreen)
+			/*if (!isFullScreen && !IsZoomed(ghWnd) && !IsIconic(ghWnd))
 			{
-				wndX = wpl.rcNormalPosition.left;
-				wndY = wpl.rcNormalPosition.top;
-			}
+				RECT rcPos; GetWindowRect(ghWnd, &rcPos);
+				wndX = rcPos.left;
+				wndY = rcPos.top;
+			}*/
 
             reg.Save(_T("CmdLine"), Cmd);
             reg.Save(_T("FontName"), LogFont.lfFaceName);
