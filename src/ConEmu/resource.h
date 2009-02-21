@@ -25,12 +25,26 @@
 #define c13                             1013
 #define c14                             1014
 #define c15                             1015
-#define IDC_STATIC2                     1026
-#define IDC_STATIC3                     1027
+#define c16                             1016
+#define c17                             1017
+#define c18                             1018
+#define c19                             1019
+#define c20                             1020
+#define c21                             1021
+#define c22                             1022
+#define c23                             1023
+#define c24                             1024
+#define c25                             1025
+#define c26                             1026
+#define c27                             1027
 #define tFontFace                       1028
+#define c28                             1028
 #define tFontSizeY                      1029
+#define c29                             1029
 #define tFontCharset                    1030
+#define c30                             1030
 #define tFontFace2                      1031
+#define c31                             1031
 #define cbRClick                        1034
 #define tBgImage                        1037
 #define tDarker                         1038
@@ -47,6 +61,7 @@
 #define cbMonospace                     1047
 #define IDC_CHECK1                      1048
 #define cbIsConMan                      1048
+#define cbExtendColors                  1048
 #define IDC_CHECK3                      1049
 #define tFontSizeX2                     1049
 #define slDark                          1050
@@ -67,6 +82,7 @@
 #define tRender2                        1063
 #define cbPosFixed                      1064
 #define IDC_TAB1                        1066
+#define lbExtendIdx                     1067
 #define tc0                             1100
 #define tc1                             1101
 #define tc2                             1102
@@ -84,6 +100,22 @@
 #define tc14                            1114
 #define tc15                            1115
 #define tCmdLine                        1116
+#define tc16                            1116
+#define tc17                            1117
+#define tc18                            1118
+#define tc19                            1119
+#define tc20                            1120
+#define tc21                            1121
+#define tc22                            1122
+#define tc23                            1123
+#define tc24                            1124
+#define tc25                            1125
+#define tc26                            1126
+#define tc27                            1127
+#define tc28                            1128
+#define tc29                            1129
+#define tc30                            1130
+#define tc31                            1131
 #define bChooseFont                     1201
 #define rNoneAA                         1202
 #define rStandardAA                     1203
@@ -104,7 +136,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        105
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1067
+#define _APS_NEXT_CONTROL_VALUE         1068
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

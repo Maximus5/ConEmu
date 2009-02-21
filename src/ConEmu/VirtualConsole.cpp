@@ -280,6 +280,8 @@ bool VirtualConsole::Update(bool isForce, HDC *ahDc)
 	DcDebug dbg(&hDC, ahDc); // для отладки - рисуем сразу на канвасе окна
 	#endif
 
+	WORD attrBackLast = 0;
+
 	bool lRes = false;
 	CONSOLE_SCREEN_BUFFER_INFO csbi;
 	if (GetConsoleScreenBufferInfo(hConOut(), &csbi))
@@ -480,6 +482,14 @@ bool VirtualConsole::Update(bool isForce, HDC *ahDc)
 
 					WORD attrFore = attr & 0x0F;
 					WORD attrBack = attr >> 4 & 0x0F;
+					if (gSet.isExtendColors) {
+						if (attrBack==gSet.nExtendColor) {
+							attrBack = attrBackLast;
+							attrFore += 0x10;
+						} else {
+							attrBackLast = attrBack;
+						}
+					}
 					if (doSelect && CheckSelection(select2, row, j))
 					{
 						WORD tmp = attrFore;
@@ -491,7 +501,7 @@ bool VirtualConsole::Update(bool isForce, HDC *ahDc)
 
 					if (gSet.isForceMonospace)
 					{
-						SetTextColor(hDC, gSet.Colors[attrFore]);
+						//SetTextColor(hDC, gSet.Colors[attrFore]);
 						SetBkColor(hDC, gSet.Colors[attrBack]);
 
 						//for (j2 = j + 1; j2 < end && ConAttrLine[j2] == ConAttrLine[j2 - 1]; j2++);

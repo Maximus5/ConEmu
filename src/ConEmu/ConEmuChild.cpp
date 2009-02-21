@@ -302,8 +302,8 @@ void CConEmuBack::Resize()
 
 	MoveWindow(mh_Wnd, 
 		rc.left, rc.top,
-		rcClient.right - rc.right - rc.left,
-		rcClient.bottom - rc.bottom - rc.top,
+		rc.right - rc.left,
+		rc.bottom - rc.top,
 		1);
 }
 

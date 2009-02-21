@@ -11,7 +11,9 @@ public:
 	int BufferHeight;
 	
 	LOGFONT LogFont, LogFont2;
-	COLORREF Colors[0x10];
+	COLORREF Colors[0x20];
+	bool isExtendColors;
+	char nExtendColor;
 	
     TCHAR Cmd[MAX_PATH], pBgImage[MAX_PATH];
 
@@ -69,10 +71,12 @@ public:
 public:
 	LRESULT OnInitDialog();
 	LRESULT OnButtonClicked(WPARAM wParam, LPARAM lParam);
+	LRESULT OnColorButtonClicked(WPARAM wParam, LPARAM lParam);
 	LRESULT OnEditChanged(WPARAM wParam, LPARAM lParam);
+	LRESULT OnColorEditChanged(WPARAM wParam, LPARAM lParam);
 	LRESULT OnComboBox(WPARAM wParam, LPARAM lParam);
+	LRESULT OnColorComboBox(WPARAM wParam, LPARAM lParam);
 	LRESULT OnTab(LPNMHDR phdr);
+private:
+	COLORREF acrCustClr[16]; // array of custom colors
 };
-
-
-

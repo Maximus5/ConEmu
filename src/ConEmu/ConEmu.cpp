@@ -257,8 +257,10 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tF
 		// Если передали реальный размер окна отрисовки - нужно посчитать дополнительные сдвиги
 		RECT rcCalcDC = CalcRect(CER_DC, rFrom, CER_MAINCLIENT, NULL /*prDC*/);
 		// расчетный НЕ ДОЛЖЕН быть меньше переданного
+		#ifdef _DEBUG
 		_ASSERTE((rcCalcDC.right - rcCalcDC.left)>=(prDC->right - prDC->left));
 		_ASSERTE((rcCalcDC.bottom - rcCalcDC.top)>=(prDC->bottom - prDC->top));
+		#endif
 		// считаем доп.сдвиги. ТОЧНО
 		if ((rcCalcDC.right - rcCalcDC.left)!=(prDC->right - prDC->left))
 		{
@@ -606,6 +608,11 @@ bool CConEmuMain::SetWindowMode(uint inMode)
 	//COORD consoleSize = {gSet.wndWidth, gSet.wndHeight};
 	RECT consoleSize = MakeRect(gSet.wndWidth, gSet.wndHeight);
 
+	if (!gSet.isFullScreen && !IsZoomed(ghWnd)) {
+		gSet.wndX = wpl.rcNormalPosition.left;
+		gSet.wndY = wpl.rcNormalPosition.top;
+	}
+
     switch(inMode)
     {
     case rNormal:
@@ -614,6 +621,10 @@ bool CConEmuMain::SetWindowMode(uint inMode)
 			wpl.showCmd = SW_SHOWNORMAL;
 			//wpl.rcNormalPosition = WindowSizeFromConsole(consoleSize, true, false);
 			wpl.rcNormalPosition = CalcRect(CER_MAIN, consoleSize, CER_CONSOLE);
+			wpl.rcNormalPosition.left += gSet.wndX;
+			wpl.rcNormalPosition.right += gSet.wndX;
+			wpl.rcNormalPosition.top += gSet.wndY;
+			wpl.rcNormalPosition.bottom += gSet.wndY;
 
 			gSet.isFullScreen = false;
 		} break;

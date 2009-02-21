@@ -52,27 +52,26 @@ END
 // Dialog
 //
 
-IDD_DIALOG1 DIALOGEX 0, 0, 307, 243
+IDD_DIALOG1 DIALOGEX 0, 0, 305, 258
 STYLE DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_TOPMOST
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        "Anti-aliasing",IDC_STATIC,126,4,60,45,WS_GROUP
+    GROUPBOX        "Anti-aliasing",IDC_STATIC,240,4,60,45,WS_GROUP
     CONTROL         "&None",rNoneAA,"Button",BS_AUTORADIOBUTTON | WS_GROUP,
-                    132,15,48,8
-    CONTROL         "&Standard",rStandardAA,"Button",BS_AUTORADIOBUTTON,132,
+                    246,14,48,8
+    CONTROL         "&Standard",rStandardAA,"Button",BS_AUTORADIOBUTTON,246,
                     25,48,8
-    CONTROL         "&Clear Type",rCTAA,"Button",BS_AUTORADIOBUTTON,132,34,
+    CONTROL         "&Clear Type",rCTAA,"Button",BS_AUTORADIOBUTTON,246,36,
                     48,8
-    GROUPBOX        "Cursor",IDC_STATIC2,192,4,110,45
+    GROUPBOX        "Cursor",IDC_STATIC,124,4,110,45
     CONTROL         "&Vertical (like in GUI)",rCursorV,"Button",
-                    BS_AUTORADIOBUTTON | WS_GROUP,198,15,90,8
+                    BS_AUTORADIOBUTTON | WS_GROUP,130,14,90,8
     CONTROL         "&Horizontal (like in console)",rCursorH,"Button",
-                    BS_AUTORADIOBUTTON,198,25,96,8
+                    BS_AUTORADIOBUTTON,130,25,96,8
     CONTROL         "Co&lor",cbCursorColor,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,198,36,96,8
-    LTEXT           "Command Line:",IDC_STATIC,8,227,54,8
-    EDITTEXT        tCmdLine,66,226,234,12,ES_AUTOHSCROLL | NOT WS_BORDER,
+                    WS_TABSTOP,130,36,96,8
+    EDITTEXT        tCmdLine,11,234,282,12,ES_AUTOHSCROLL | NOT WS_BORDER,
                     WS_EX_STATICEDGE
     GROUPBOX        "",IDC_STATIC,6,172,294,50
     CONTROL         "Back&ground image (bmp):",cbBgImage2,"Button",
@@ -93,26 +92,26 @@ BEGIN
                     48,68,30,8
     CONTROL         "&Fix Far borders",cbFixFarBorders,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,12,92,64,8
-    GROUPBOX        "Window size",IDC_STATIC3,126,52,101,49
+    GROUPBOX        "Window size",IDC_STATIC,124,54,110,47
     CONTROL         "Normal",rNormal,"Button",BS_AUTORADIOBUTTON | WS_GROUP,
-                    132,64,36,8
-    CONTROL         "Maximized",rMaximized,"Button",BS_AUTORADIOBUTTON,132,
-                    76,48,8
+                    128,65,47,8
+    CONTROL         "Maximized",rMaximized,"Button",BS_AUTORADIOBUTTON,128,
+                    77,48,8
     CONTROL         "Full screen",rFullScreen,"Button",BS_AUTORADIOBUTTON,
-                    132,88,52,8
+                    128,89,49,8
     CONTROL         "&RightClick for context menu",cbRClick,"Button",
                     BS_AUTO3STATE | WS_TABSTOP,12,139,99,8
     GROUPBOX        "Font",IDC_STATIC,6,4,114,120
     LTEXT           "Size:",IDC_STATIC,12,37,18,8
     CTEXT           "x",IDC_STATIC,68,37,8,8
     LTEXT           "Charset:",IDC_STATIC,12,55,30,8
-    RTEXT           "Render time:",IDC_STATIC,133,109,48,8
-    EDITTEXT        tRender,186,107,54,12,ES_AUTOHSCROLL | ES_READONLY
-    EDITTEXT        tWndWidth,174,63,18,10,ES_AUTOHSCROLL | ES_NUMBER | NOT 
+    RTEXT           "Render time:",IDC_STATIC,133,112,48,8
+    EDITTEXT        tRender,186,110,54,12,ES_AUTOHSCROLL | ES_READONLY
+    EDITTEXT        tWndWidth,178,65,18,12,ES_AUTOHSCROLL | ES_NUMBER | NOT 
                     WS_BORDER,WS_EX_STATICEDGE
-    EDITTEXT        tWndHeight,204,63,18,10,ES_AUTOHSCROLL | ES_NUMBER | NOT 
+    EDITTEXT        tWndHeight,208,65,18,12,ES_AUTOHSCROLL | ES_NUMBER | NOT 
                     WS_BORDER,WS_EX_STATICEDGE
-    CTEXT           "x",IDC_STATIC,194,63,8,8
+    CTEXT           "x",IDC_STATIC,198,65,8,8
     CONTROL         "Force monospace",cbMonospace,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,12,79,70,8
     COMBOBOX        tFontSizeX3,90,76,24,66,CBS_DROPDOWN | WS_VSCROLL | 
@@ -147,99 +146,171 @@ BEGIN
     CONTROL         "UpLeft",rBgSimple,"Button",BS_AUTORADIOBUTTON,255,182,
                     39,10
     GROUPBOX        "Placement",IDC_STATIC,251,172,48,50
-    EDITTEXT        tWndX,240,79,18,10,ES_AUTOHSCROLL | ES_NUMBER | NOT 
-                    WS_BORDER,WS_EX_STATICEDGE
-    EDITTEXT        tWndY,270,79,18,10,ES_AUTOHSCROLL | ES_NUMBER | NOT 
-                    WS_BORDER,WS_EX_STATICEDGE
-    CTEXT           "x",IDC_STATIC,260,79,8,8
-    GROUPBOX        "Window position",IDC_STATIC,230,52,71,49
-    CONTROL         "Restore",cbPosFixed,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,239,62,51,10
-    EDITTEXT        tRender2,247,107,54,12,ES_AUTOHSCROLL | ES_READONLY
+    EDITTEXT        tWndX,246,78,18,12,ES_AUTOHSCROLL | ES_NUMBER | 
+                    WS_DISABLED | NOT WS_BORDER,WS_EX_STATICEDGE
+    EDITTEXT        tWndY,276,78,18,12,ES_AUTOHSCROLL | ES_NUMBER | 
+                    WS_DISABLED | NOT WS_BORDER,WS_EX_STATICEDGE
+    CTEXT           "x",IDC_STATIC,266,78,8,8,WS_DISABLED
+    GROUPBOX        "Position",IDC_STATIC,240,54,60,47,WS_DISABLED
+    CONTROL         "Cascade",cbPosFixed,"Button",BS_AUTOCHECKBOX | 
+                    WS_DISABLED | WS_TABSTOP,246,65,46,10
+    EDITTEXT        tRender2,246,110,54,12,ES_AUTOHSCROLL | ES_READONLY
+    GROUPBOX        "Command Line",IDC_STATIC,6,223,294,30
 END
 
-IDD_DIALOG2 DIALOGEX 0, 0, 271, 224
+IDD_DIALOG2 DIALOGEX 0, 0, 330, 162
 STYLE DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_TOPMOST
-FONT 8, "MS Shell Dlg"
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Colors (""red green blue"")",-1,6,6,176,122
-    LTEXT           "0.",-1,12,21,8,8
-    LTEXT           "",c0,24,18,12,12,SS_NOTIFY | SS_SUNKEN
-    LTEXT           "1.",-1,12,34,8,8
-    LTEXT           "",c1,24,31,12,12,SS_NOTIFY | SS_SUNKEN
-    LTEXT           "2.",-1,12,47,8,8
-    LTEXT           "",c2,24,44,12,12,SS_NOTIFY | SS_SUNKEN
-    LTEXT           "3.",-1,12,60,8,8
-    LTEXT           "",c3,24,57,12,12,SS_NOTIFY | SS_SUNKEN
-    LTEXT           "4.",-1,12,73,8,8
-    LTEXT           "",c4,24,70,12,12,SS_NOTIFY | SS_SUNKEN
-    LTEXT           "5.",-1,12,86,8,8
-    LTEXT           "",c5,24,83,12,12,SS_NOTIFY | SS_SUNKEN
-    LTEXT           "6.",-1,12,99,8,8
-    LTEXT           "",c6,24,96,12,12,SS_NOTIFY | SS_SUNKEN
-    LTEXT           "7.",-1,12,112,8,8
-    LTEXT           "",c7,24,109,12,12,SS_NOTIFY | SS_SUNKEN
-    EDITTEXT        tc0,37,18,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,
+    GROUPBOX        "Colors (""red green blue"")",-1,4,4,319,67
+    RTEXT           "0.",-1,12,18,8,8
+    LTEXT           "",c0,24,15,12,12,SS_NOTIFY | SS_SUNKEN
+    RTEXT           "1.",-1,12,31,8,8
+    LTEXT           "",c1,24,28,12,12,SS_NOTIFY | SS_SUNKEN
+    RTEXT           "2.",-1,12,44,8,8
+    LTEXT           "",c2,24,41,12,12,SS_NOTIFY | SS_SUNKEN
+    RTEXT           "3.",-1,12,57,8,8
+    LTEXT           "",c3,24,54,12,12,SS_NOTIFY | SS_SUNKEN
+    RTEXT           "4.",-1,89,18,8,8
+    LTEXT           "",c4,101,15,12,12,SS_NOTIFY | SS_SUNKEN
+    RTEXT           "5.",-1,89,31,8,8
+    LTEXT           "",c5,101,28,12,12,SS_NOTIFY | SS_SUNKEN
+    RTEXT           "6.",-1,89,44,8,8
+    LTEXT           "",c6,101,41,12,12,SS_NOTIFY | SS_SUNKEN
+    RTEXT           "7.",-1,89,57,8,8
+    LTEXT           "",c7,101,54,12,12,SS_NOTIFY | SS_SUNKEN
+    EDITTEXT        tc0,37,15,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,
                     WS_EX_STATICEDGE
-    EDITTEXT        tc1,37,31,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,
+    EDITTEXT        tc1,37,28,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,
                     WS_EX_STATICEDGE
-    EDITTEXT        tc2,37,44,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,
+    EDITTEXT        tc2,37,41,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,
                     WS_EX_STATICEDGE
-    EDITTEXT        tc3,37,57,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,
+    EDITTEXT        tc3,37,54,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,
                     WS_EX_STATICEDGE
-    EDITTEXT        tc4,37,70,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,
+    EDITTEXT        tc4,115,15,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,
                     WS_EX_STATICEDGE
-    EDITTEXT        tc5,37,83,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,
+    EDITTEXT        tc5,115,28,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,
                     WS_EX_STATICEDGE
-    EDITTEXT        tc6,37,96,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,
+    EDITTEXT        tc6,115,41,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,
                     WS_EX_STATICEDGE
-    EDITTEXT        tc7,37,109,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,
+    EDITTEXT        tc7,115,54,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,
                     WS_EX_STATICEDGE
-    LTEXT           "8.",-1,102,21,8,8
-    LTEXT           "",c8,114,18,12,12,SS_NOTIFY | SS_SUNKEN
-    LTEXT           "9.",-1,102,34,8,8
-    LTEXT           "",c9,114,31,12,12,SS_NOTIFY | SS_SUNKEN
-    RTEXT           "10.",-1,95,47,13,8
-    LTEXT           "",c10,114,44,12,12,SS_NOTIFY | SS_SUNKEN
-    LTEXT           "",c11,114,57,12,12,SS_NOTIFY | SS_SUNKEN
-    LTEXT           "",c12,114,70,12,12,SS_NOTIFY | SS_SUNKEN
-    LTEXT           "",c13,114,83,12,12,SS_NOTIFY | SS_SUNKEN
-    LTEXT           "",c14,114,96,12,12,SS_NOTIFY | SS_SUNKEN
-    LTEXT           "",c15,114,109,12,12,SS_NOTIFY | SS_SUNKEN
-    EDITTEXT        tc8,127,18,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,
+    RTEXT           "8.",-1,167,18,8,8
+    LTEXT           "",c8,179,15,12,12,SS_NOTIFY | SS_SUNKEN
+    RTEXT           "9.",-1,167,31,8,8
+    LTEXT           "",c9,179,28,12,12,SS_NOTIFY | SS_SUNKEN
+    RTEXT           "10.",-1,162,44,13,8
+    LTEXT           "",c10,179,41,12,12,SS_NOTIFY | SS_SUNKEN
+    LTEXT           "",c11,179,54,12,12,SS_NOTIFY | SS_SUNKEN
+    LTEXT           "",c12,259,15,12,12,SS_NOTIFY | SS_SUNKEN
+    LTEXT           "",c13,259,28,12,12,SS_NOTIFY | SS_SUNKEN
+    LTEXT           "",c14,259,41,12,12,SS_NOTIFY | SS_SUNKEN
+    LTEXT           "",c15,259,54,12,12,SS_NOTIFY | SS_SUNKEN
+    EDITTEXT        tc8,192,15,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,
                     WS_EX_STATICEDGE
-    EDITTEXT        tc9,127,31,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,
+    EDITTEXT        tc9,192,28,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,
                     WS_EX_STATICEDGE
-    EDITTEXT        tc10,127,44,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,
+    EDITTEXT        tc10,192,41,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,
                     WS_EX_STATICEDGE
-    EDITTEXT        tc11,127,57,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,
+    EDITTEXT        tc11,192,54,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,
                     WS_EX_STATICEDGE
-    EDITTEXT        tc12,127,70,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,
+    EDITTEXT        tc12,271,15,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,
                     WS_EX_STATICEDGE
-    EDITTEXT        tc13,127,83,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,
+    EDITTEXT        tc13,271,28,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,
                     WS_EX_STATICEDGE
-    EDITTEXT        tc14,127,96,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,
+    EDITTEXT        tc14,271,41,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,
                     WS_EX_STATICEDGE
-    EDITTEXT        tc15,127,109,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,
+    EDITTEXT        tc15,271,54,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,
                     WS_EX_STATICEDGE
-    RTEXT           "11.",-1,95,60,13,8
-    RTEXT           "12.",-1,95,73,13,8
-    RTEXT           "13.",-1,95,86,13,8
-    RTEXT           "14.",-1,95,99,13,8
-    RTEXT           "15.",-1,95,112,13,8
+    RTEXT           "11.",-1,162,57,13,8
+    RTEXT           "12.",-1,239,18,13,8
+    RTEXT           "13.",-1,239,31,13,8
+    RTEXT           "14.",-1,239,44,13,8
+    RTEXT           "15.",-1,239,57,13,8
+    GROUPBOX        "Extended foreground colors (""red green blue"")",-1,4,
+                    74,319,83
+    RTEXT           "16.",-1,7,103,13,8
+    LTEXT           "",c16,24,100,12,12,SS_NOTIFY | SS_SUNKEN
+    RTEXT           "17.",-1,7,116,13,8
+    LTEXT           "",c17,24,113,12,12,SS_NOTIFY | SS_SUNKEN
+    RTEXT           "18.",-1,7,129,13,8
+    LTEXT           "",c18,24,126,12,12,SS_NOTIFY | SS_SUNKEN
+    RTEXT           "19.",-1,7,142,13,8
+    LTEXT           "",c19,24,139,12,12,SS_NOTIFY | SS_SUNKEN
+    RTEXT           "20.",-1,84,103,13,8
+    LTEXT           "",c20,102,100,12,12,SS_NOTIFY | SS_SUNKEN
+    RTEXT           "21.",-1,84,116,13,8
+    LTEXT           "",c21,102,113,12,12,SS_NOTIFY | SS_SUNKEN
+    RTEXT           "22.",-1,84,129,13,8
+    LTEXT           "",c22,102,126,12,12,SS_NOTIFY | SS_SUNKEN
+    RTEXT           "23.",-1,84,142,13,8
+    LTEXT           "",c23,102,139,12,12,SS_NOTIFY | SS_SUNKEN
+    EDITTEXT        tc16,38,100,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,
+                    WS_EX_STATICEDGE
+    EDITTEXT        tc17,38,113,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,
+                    WS_EX_STATICEDGE
+    EDITTEXT        tc18,38,126,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,
+                    WS_EX_STATICEDGE
+    EDITTEXT        tc19,38,139,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,
+                    WS_EX_STATICEDGE
+    EDITTEXT        tc20,116,100,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,
+                    WS_EX_STATICEDGE
+    EDITTEXT        tc21,116,113,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,
+                    WS_EX_STATICEDGE
+    EDITTEXT        tc22,116,126,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,
+                    WS_EX_STATICEDGE
+    EDITTEXT        tc23,116,139,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,
+                    WS_EX_STATICEDGE
+    RTEXT           "24.",-1,162,103,13,8
+    LTEXT           "",c24,180,100,12,12,SS_NOTIFY | SS_SUNKEN
+    RTEXT           "25.",-1,162,116,13,8
+    LTEXT           "",c25,180,113,12,12,SS_NOTIFY | SS_SUNKEN
+    RTEXT           "26.",-1,162,129,13,8
+    LTEXT           "",c26,180,126,12,12,SS_NOTIFY | SS_SUNKEN
+    LTEXT           "",c27,180,139,12,12,SS_NOTIFY | SS_SUNKEN
+    LTEXT           "",c28,260,100,12,12,SS_NOTIFY | SS_SUNKEN
+    LTEXT           "",c29,260,113,12,12,SS_NOTIFY | SS_SUNKEN
+    LTEXT           "",c30,260,126,12,12,SS_NOTIFY | SS_SUNKEN
+    LTEXT           "",c31,260,139,12,12,SS_NOTIFY | SS_SUNKEN
+    EDITTEXT        tc24,192,100,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,
+                    WS_EX_STATICEDGE
+    EDITTEXT        tc25,192,113,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,
+                    WS_EX_STATICEDGE
+    EDITTEXT        tc26,192,126,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,
+                    WS_EX_STATICEDGE
+    EDITTEXT        tc27,192,139,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,
+                    WS_EX_STATICEDGE
+    EDITTEXT        tc28,272,100,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,
+                    WS_EX_STATICEDGE
+    EDITTEXT        tc29,272,113,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,
+                    WS_EX_STATICEDGE
+    EDITTEXT        tc30,272,126,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,
+                    WS_EX_STATICEDGE
+    EDITTEXT        tc31,272,139,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,
+                    WS_EX_STATICEDGE
+    RTEXT           "27.",-1,162,142,13,8
+    RTEXT           "28.",-1,240,103,13,8
+    RTEXT           "29.",-1,240,116,13,8
+    RTEXT           "30.",-1,240,129,13,8
+    RTEXT           "31.",-1,240,142,13,8
+    CONTROL         "Extend foreground colors with background",
+                    cbExtendColors,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,26,
+                    84,161,10
+    COMBOBOX        lbExtendIdx,192,82,45,30,CBS_DROPDOWNLIST | CBS_SORT | 
+                    WS_VSCROLL | WS_TABSTOP
 END
 
-IDD_DIALOGM DIALOGEX 0, 0, 329, 321
+IDD_DIALOGM DIALOGEX 0, 0, 336, 294
 STYLE DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 EXSTYLE WS_EX_TOPMOST
 CAPTION "Settings..."
-FONT 8, "MS Shell Dlg"
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    DEFPUSHBUTTON   "Save settings",bSaveSettings,230,302,70,14
+    DEFPUSHBUTTON   "Save settings",bSaveSettings,266,280,70,14
     CONTROL         "Always update con. handle (ConMan, Telnet)",cbIsConMan,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,6,305,168,8
-    CONTROL         "Tab1",IDC_TAB1,"SysTabControl32",0x0,2,2,322,297
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,6,282,168,8
+    CONTROL         "Tab1",IDC_TAB1,"SysTabControl32",0x0,2,2,334,276
 END
 
 
@@ -261,7 +332,7 @@ IDI_ICON3               ICON    DISCARDABLE     "Far2.ico"
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2009,2,19,0
+ FILEVERSION 2009,2,21,0
  PRODUCTVERSION 0,0,0,0
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
@@ -280,7 +351,7 @@ BEGIN
             VALUE "Comments", "\0"
             VALUE "CompanyName", "\0"
             VALUE "FileDescription", "Console Emulator\0"
-            VALUE "FileVersion", "2009.2.19\0"
+            VALUE "FileVersion", "2009.2.21a\0"
             VALUE "InternalName", "\0"
             VALUE "LegalCopyright", "Copyright (C) 2006-2008 - Zoin; (C) 2009 - Far community :)\0"
             VALUE "LegalTrademarks", "\0"
@@ -298,6 +369,22 @@ BEGIN
 END
 
 #endif    // !_MAC
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO DISCARDABLE 
+BEGIN
+    IDD_DIALOG1, DIALOG
+    BEGIN
+        BOTTOMMARGIN, 242
+    END
+END
+#endif    // APSTUDIO_INVOKED
 
 #endif    // Russian resources
 /////////////////////////////////////////////////////////////////////////////
