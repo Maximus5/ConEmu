@@ -21,7 +21,7 @@ void CSettings::InitSettings()
     //memset(&gSet, 0, sizeof(gSet)); // -- Class!!! лучше делать все ручками!
 
 //------------------------------------------------------------------------
-///| Moved from VirtualConsole |//////////////////////////////////////////
+///| Moved from CVirtualConsole |/////////////////////////////////////////
 //------------------------------------------------------------------------
 	_tcscpy(Config, _T("Software\\ConEmu"));
 
@@ -40,6 +40,7 @@ void CSettings::InitSettings()
     _tcscpy(LogFont2.lfFaceName, _T("Lucida Console"));
     isTryToCenter = false;
 	isTabFrame = true;
+	isForceMonospace = false; isTTF = false;
 	
 	Registry RegConColors, RegConDef;
 	if (RegConColors.OpenKey(_T("Console"), KEY_READ))
@@ -145,6 +146,7 @@ void CSettings::LoadSettings()
         reg.Load(_T("FontBold"), &isBold);
         reg.Load(_T("FontItalic"), &isItalic);
         reg.Load(_T("ForceMonospace"), &isForceMonospace);
+		reg.Load(_T("Proportional"), &isTTF);
         reg.Load(_T("Update Console handle"), &isConMan);
         reg.Load(_T("Dnd"), &isDnD);
         reg.Load(_T("DefCopy"), &isDefCopy);
@@ -283,6 +285,7 @@ BOOL CSettings::SaveSettings()
             reg.Save(_T("FontBold"), LogFont.lfWeight == FW_BOLD);
             reg.Save(_T("FontItalic"), LogFont.lfItalic);
             reg.Save(_T("ForceMonospace"), isForceMonospace);
+			reg.Save(_T("Proportional"), isTTF);
             reg.Save(_T("Update Console handle"), isConMan);
 
             reg.Save(_T("ConWnd Width"), wndWidth);
@@ -516,6 +519,8 @@ LRESULT CSettings::OnInitDialog()
 		CheckDlgButton(hMain, rCursorH, BST_CHECKED);
 	if (isForceMonospace)
 		CheckDlgButton(hMain, cbMonospace, BST_CHECKED);
+	if (isTTF)
+		CheckDlgButton(hMain, cbTTF, BST_CHECKED);
 	if (isConMan)
 		CheckDlgButton(ghOpWnd, cbIsConMan, BST_CHECKED);
 
@@ -747,6 +752,13 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
                 isTabs=2; break;
         }
         //isTabs = !isTabs;
+        break;
+
+    case cbTTF:
+        isTTF = !isTTF;
+
+        pVCon->Update(true);
+        InvalidateRect(ghWnd, NULL, FALSE);
         break;
 
     case cbMonospace:

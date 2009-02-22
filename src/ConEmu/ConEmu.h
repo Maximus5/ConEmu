@@ -111,7 +111,7 @@ public:
 	void InvalidateAll();
 	bool isConSelectMode();
 	bool isEditor();
-	bool isFilePanel();
+	bool isFilePanel(bool abPluginAllowed=false);
 	bool isPictureView();
 	bool isViewer();
 	void LoadIcons();

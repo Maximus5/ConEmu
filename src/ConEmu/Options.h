@@ -27,7 +27,7 @@ public:
     bool isCursorColor;
     char isRClickSendKey;
     bool isSentAltEnter;
-    bool isForceMonospace;
+    bool isForceMonospace, isTTF;
     bool isConMan;
     bool isDnD;
     char isDefCopy;

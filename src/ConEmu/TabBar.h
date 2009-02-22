@@ -2,6 +2,7 @@
 
 class TabBarClass
 {
+private:
 	bool _active;
 	HWND _hwndTab;
 	int _tabHeight;
@@ -20,6 +21,7 @@ public:
 	void Refresh(BOOL abFarActive);
 	void Invalidate();
 	bool IsActive();
+	bool IsShown();
 	BOOL IsAllowed();
 	//int Height();
 	RECT GetMargins();

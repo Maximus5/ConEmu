@@ -86,6 +86,11 @@ bool TabBarClass::IsActive()
 	return _active;
 }
 
+bool TabBarClass::IsShown()
+{
+	return _active && IsWindowVisible(_hwndTab);
+}
+
 /*int TabBarClass::Height()
 {
 	return _tabHeight;

@@ -54,8 +54,8 @@ END
 
 IDD_DIALOG1 DIALOGEX 0, 0, 305, 258
 STYLE DS_FIXEDSYS | DS_CONTROL | WS_CHILD
-EXSTYLE WS_EX_TOPMOST
-FONT 8, "MS Shell Dlg", 0, 0, 0x1
+EXSTYLE WS_EX_TOPMOST | WS_EX_CONTROLPARENT
+FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        "Anti-aliasing",IDC_STATIC,240,4,60,45,WS_GROUP
     CONTROL         "&None",rNoneAA,"Button",BS_AUTORADIOBUTTON | WS_GROUP,
@@ -87,9 +87,9 @@ BEGIN
     COMBOBOX        tFontCharset,48,52,66,67,CBS_DROPDOWNLIST | 
                     CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
     CONTROL         "&Bold",cbBold,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,
-                    68,30,8
+                    68,31,8
     CONTROL         "&Italic",cbItalic,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
-                    48,68,30,8
+                    46,68,31,8
     CONTROL         "&Fix Far borders",cbFixFarBorders,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,12,92,64,8
     GROUPBOX        "Window size",IDC_STATIC,124,54,110,47
@@ -113,8 +113,8 @@ BEGIN
                     WS_BORDER,WS_EX_STATICEDGE
     CTEXT           "x",IDC_STATIC,198,65,8,8
     CONTROL         "Force monospace",cbMonospace,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,12,79,70,8
-    COMBOBOX        tFontSizeX3,90,76,24,66,CBS_DROPDOWN | WS_VSCROLL | 
+                    WS_TABSTOP,12,80,70,8
+    COMBOBOX        tFontSizeX3,90,79,24,66,CBS_DROPDOWN | WS_VSCROLL | 
                     WS_TABSTOP
     LTEXT           "Path:",IDC_STATIC,12,184,18,8
     LTEXT           "Darkening:",IDC_STATIC,12,203,36,8
@@ -156,11 +156,13 @@ BEGIN
                     WS_DISABLED | WS_TABSTOP,246,65,46,10
     EDITTEXT        tRender2,246,110,54,12,ES_AUTOHSCROLL | ES_READONLY
     GROUPBOX        "Command Line",IDC_STATIC,6,223,294,30
+    CONTROL         "TTF",cbTTF,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,81,68,
+                    31,10
 END
 
 IDD_DIALOG2 DIALOGEX 0, 0, 330, 246
 STYLE DS_FIXEDSYS | DS_CONTROL | WS_CHILD
-EXSTYLE WS_EX_TOPMOST
+EXSTYLE WS_EX_TOPMOST | WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        "Colors (""red green blue"")",IDC_STATIC,4,4,319,67
@@ -323,12 +325,12 @@ IDD_DIALOGM DIALOGEX 0, 0, 336, 294
 STYLE DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 EXSTYLE WS_EX_TOPMOST
 CAPTION "Settings..."
-FONT 8, "MS Shell Dlg", 0, 0, 0x1
+FONT 8, "MS Shell Dlg"
 BEGIN
     DEFPUSHBUTTON   "Save settings",bSaveSettings,266,280,70,14
     CONTROL         "Always update con. handle (ConMan, Telnet)",cbIsConMan,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,6,282,168,8
-    CONTROL         "Tab1",IDC_TAB1,"SysTabControl32",0x0,2,2,334,276
+    CONTROL         "Tab1",IDC_TAB1,"SysTabControl32",WS_TABSTOP,2,2,334,276
 END
 
 

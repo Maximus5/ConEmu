@@ -80,14 +80,14 @@ __forceinline void *memcpy(void *_Dst, const void *_Src, size_t _Size)
 }
 #endif
 
-void __forceinline DisplayLastError()
+void __forceinline DisplayLastError(LPCTSTR asLabel)
 {
-	TCHAR out[200];
+	TCHAR out[0x200];
 	DWORD dw = GetLastError();
 	LPVOID lpMsgBuf;
 	FormatMessage( FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, NULL, dw, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR) &lpMsgBuf, 0, NULL );
-	wsprintf(out, _T("Error code ''%d'':\n%s"), dw, lpMsgBuf);
-	MessageBox(0, out, _T("Error occurred"), MB_SYSTEMMODAL | MB_ICONERROR);
+	wsprintf(out, _T("%s\nError code ''%d'':\n%s"), asLabel, dw, lpMsgBuf);
+	MessageBox(0, out, gConEmu.Title[0] ? gConEmu.Title : _T("ConEmu"), MB_SYSTEMMODAL | MB_ICONERROR);
 }
 
 COORD __forceinline MakeCoord(int W,int H)

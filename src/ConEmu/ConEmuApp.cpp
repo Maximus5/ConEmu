@@ -17,7 +17,7 @@ bool gbNoDblBuffer = false;
 HINSTANCE g_hInstance=NULL;
 HWND ghWnd=NULL, ghWndDC=NULL, ghConWnd=NULL, ghWndApp=NULL;
 CConEmuMain gConEmu;
-VirtualConsole *pVCon=NULL;
+CVirtualConsole *pVCon=NULL;
 CSettings gSet;
 TCHAR temp[MAX_PATH];
 TCHAR szIconPath[MAX_PATH];
@@ -258,6 +258,8 @@ char gsz_MDEBUG_TRAP_MSG_APPEND[2000];
 HWND gh_MDEBUG_TRAP_PARENT_WND = NULL;
 int __stdcall _MDEBUG_TRAP(LPCSTR asFile, int anLine)
 {
+	//__debugbreak();
+	__asm int 3;
     wsprintfA(gsz_MDEBUG_TRAP_MSG, "MDEBUG_TRAP\r\n%s(%i)\r\n", asFile, anLine);
     if (gsz_MDEBUG_TRAP_MSG_APPEND[0])
         lstrcatA(gsz_MDEBUG_TRAP_MSG,gsz_MDEBUG_TRAP_MSG_APPEND);
@@ -643,12 +645,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		
 
 //------------------------------------------------------------------------
-///| Create VirtualConsole |//////////////////////////////////////////////
+///| Create CVirtualConsole |/////////////////////////////////////////////
 //------------------------------------------------------------------------
 
 	#undef pVCon
     // create console
-    pVCon = new VirtualConsole();
+    pVCon = new CVirtualConsole();
 
     
     

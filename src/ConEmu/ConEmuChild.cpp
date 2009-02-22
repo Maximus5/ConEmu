@@ -124,6 +124,11 @@ LRESULT CConEmuChild::OnPaint(WPARAM wParam, LPARAM lParam)
     //if (gbInPaint)
 	//    break;
 
+	i64 tick, tick2;
+	if (ghOpWnd)
+		QueryPerformanceCounter((LARGE_INTEGER*)&tick);
+
+
     if (gConEmu.isPictureView())
     {
 		// если PictureView распахнуто не на все окно - отрисовать видимую часть консоли!
@@ -150,34 +155,36 @@ LRESULT CConEmuChild::OnPaint(WPARAM wParam, LPARAM lParam)
 		HDC hDc = BeginPaint(ghWndDC, &ps);
 		//HDC hDc = GetDC(hWnd);
 
-		#ifndef _DEBUG
-			// Release режим
+		if (!gbNoDblBuffer) {
+			// Обычный режим
 			BitBlt(hDc, 0, 0, client.right, client.bottom, pVCon->hDC, 0, 0, SRCCOPY);
-		#else
-			if (!gbNoDblBuffer) {
-				// Обычный режим
-				BitBlt(hDc, 0, 0, client.right, client.bottom, pVCon->hDC, 0, 0, SRCCOPY);
-			} else {
-				RECT rect;
-				HBRUSH hBrush = CreateSolidBrush(gSet.Colors[0]);
-				HBRUSH hOldBrush = (HBRUSH)SelectObject(hDc, hBrush);
-				GetClientRect(ghWndDC, &rect);
-				GdiSetBatchLimit(1); // отключить буферизацию вывода для текущей нити
-				FillRect(hDc, &rect, hBrush); // -- если захочется на "чистую" рисовать
-				SelectObject(hDc, hOldBrush);
-				DeleteObject(hBrush);
+		} else {
+			GdiSetBatchLimit(1); // отключить буферизацию вывода для текущей нити
 
-				GdiFlush();
-				// Рисуем сразу на канвасе, без буферизации
-				pVCon->Update(false, &hDc);
-			}
-		#endif
+			/*
+			HBRUSH hBrush = CreateSolidBrush(gSet.Colors[0]);
+			HBRUSH hOldBrush = (HBRUSH)SelectObject(hDc, hBrush);
+			RECT rect; GetClientRect(ghWndDC, &rect);
+			FillRect(hDc, &rect, hBrush); // -- если захочется на "чистую" рисовать
+			SelectObject(hDc, hOldBrush);
+			DeleteObject(hBrush);
+			*/
+
+			GdiFlush();
+			// Рисуем сразу на канвасе, без буферизации
+			pVCon->Update(true, &hDc);
+		}
 
 		EndPaint(ghWndDC, &ps);
 
-		#ifdef _DEBUG
 		if (gbNoDblBuffer) GdiSetBatchLimit(0); // вернуть стандартный режим
-		#endif
+	}
+
+	if (ghOpWnd)
+	{
+		QueryPerformanceCounter((LARGE_INTEGER *)&tick2);
+		wsprintf(temp, _T("%i"), (tick2-tick)/100);
+		SetDlgItemText(gSet.hMain, tRender2, temp);
 	}
 
     return result;

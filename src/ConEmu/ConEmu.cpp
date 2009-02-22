@@ -737,7 +737,7 @@ void CConEmuMain::ForceShowTabs(BOOL abShow)
 
 	BOOL lbTabsAllowed = abShow && TabBar.IsAllowed();
 
-    if (abShow /*&& !TabBar.IsActive()*/ && gSet.isTabs && lbTabsAllowed)
+    if (abShow && !TabBar.IsShown() && gSet.isTabs && lbTabsAllowed)
     {
         TabBar.Activate();
 		ConEmuTab tab; memset(&tab, 0, sizeof(tab));
@@ -1295,12 +1295,18 @@ bool CConEmuMain::isConSelectMode()
     return gb_ConsoleSelectMode;
 }
 
-bool CConEmuMain::isFilePanel()
+bool CConEmuMain::isFilePanel(bool abPluginAllowed/*=false*/)
 {
     TCHAR* pszTitle=GetTitleStart();
     if (!pszTitle) return false;
+
+	if (abPluginAllowed) {
+		if (isEditor() || isViewer())
+			return false;
+	}
     
-    if ((_tcsncmp(pszTitle, _T("{\\\\"), 3)==0) ||
+    if ((abPluginAllowed && pszTitle[0]==_T('{')) ||
+		(_tcsncmp(pszTitle, _T("{\\\\"), 3)==0) ||
 	    (pszTitle[0] == _T('{') && isalpha(pszTitle[1]) && pszTitle[2] == _T(':') && pszTitle[3] == _T('\\')))
     {
 	    TCHAR *Br = _tcsrchr(pszTitle, _T('}'));
@@ -1700,7 +1706,7 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
         }
         else if (messg == WM_KEYUP && wParam == VK_MENU && isSkipNextAltUp) isSkipNextAltUp = false;
         else if (messg == WM_SYSKEYDOWN && wParam == VK_F9 && lParam & 29 && !isPressed(VK_SHIFT))
-            gConEmu.SetWindowMode(IsZoomed(ghWnd) ? rNormal : rMaximized);
+			gConEmu.SetWindowMode((IsZoomed(ghWnd)||(gSet.isFullScreen&&isWndNotFSMaximized)) ? rNormal : rMaximized);
         else
             POSTMESSAGE(ghConWnd, messg, wParam, lParam, FALSE);
     }
@@ -2023,7 +2029,11 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
         if (cBlinkNext++ >= cBlinkShift)
         {
             cBlinkNext = 0;
-            if (foreWnd == ghWnd || foreWnd == ghOpWnd)
+            if (foreWnd == ghWnd || foreWnd == ghOpWnd
+				#ifdef _DEBUG
+				|| gbNoDblBuffer
+				#endif
+				)
                 // switch cursor
                 pVCon->Cursor.isVisible = !pVCon->Cursor.isVisible;
             else
