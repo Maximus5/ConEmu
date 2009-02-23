@@ -1898,10 +1898,6 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 		//DialogBox((HINSTANCE)GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_DIALOG1), 0, CSettings::wndOpProc);
 		CSettings::Dialog();
         break;
-    case ID_DUMPCONSOLE:
-	    if (pVCon)
-		    pVCon->DumpConsole();
-		break;
     case ID_HELP:
         {
 	        WCHAR szTitle[255];
