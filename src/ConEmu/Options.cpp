@@ -803,7 +803,7 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
 			GetDlgItemText(hMain, tBgImage, temp, MAX_PATH);
 			OPENFILENAME ofn; memset(&ofn,0,sizeof(ofn));
 			ofn.lStructSize=sizeof(ofn);
-			ofn.hwndOwner = hMain;
+			ofn.hwndOwner = ghOpWnd;
 			ofn.lpstrFilter = _T("Bitmap images (*.bmp)\0*.bmp\0\0");
 			ofn.nFilterIndex = 1;
 			ofn.lpstrFile = temp;

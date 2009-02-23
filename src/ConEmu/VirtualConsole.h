@@ -45,6 +45,7 @@ public:
 
 	bool InitFont(void);
 	bool InitDC(BOOL abFull=TRUE);
+	void DumpConsole();
 	void Free(bool bFreeFont = true);
 	bool Update(bool isForce = false, HDC *ahDc=NULL);
 	void SelectFont(HFONT hNew);

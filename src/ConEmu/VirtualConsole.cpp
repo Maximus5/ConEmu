@@ -170,6 +170,36 @@ bool CVirtualConsole::InitDC(BOOL abFull/*=TRUE*/)
 	return hBitmap != NULL;
 }
 
+void CVirtualConsole::DumpConsole()
+{
+	OPENFILENAME ofn; memset(&ofn,0,sizeof(ofn));
+	ofn.lStructSize=sizeof(ofn);
+	ofn.hwndOwner = ghWnd;
+	ofn.lpstrFilter = _T("ConEmu dumps (*.con)\0*.con\0\0");
+	ofn.nFilterIndex = 1;
+	ofn.lpstrFile = temp;
+	ofn.nMaxFile = MAX_PATH;
+	ofn.lpstrTitle = _T("Dump console...");
+	ofn.Flags = OFN_ENABLESIZING|OFN_NOCHANGEDIR
+			| OFN_PATHMUSTEXIST|OFN_EXPLORER|OFN_HIDEREADONLY|OFN_OVERWRITEPROMPT;
+	if (!GetSaveFileName(&ofn))
+		return;
+		
+	HANDLE hFile = CreateFile(temp, GENERIC_WRITE, FILE_SHARE_READ,
+		NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+	if (hFile == INVALID_HANDLE_VALUE) {
+		DisplayLastError(_T("Can't create file!"));
+		return;
+	}
+	DWORD dw;
+	WriteFile(hFile, gConEmu.Title, _tcslen(gConEmu.Title)*sizeof(TCHAR), &dw, NULL);
+	swprintf(temp, _T("\r\nSize: %ix%i\r\n"), TextWidth, TextHeight);
+	WriteFile(hFile, temp, _tcslen(temp)*sizeof(TCHAR), &dw, NULL);
+	WriteFile(hFile, ConChar, TextWidth * TextHeight * 2, &dw, NULL);
+	WriteFile(hFile, ConAttr, TextWidth * TextHeight * 2, &dw, NULL);
+	CloseHandle(hFile);
+}
+
 HFONT CVirtualConsole::CreateFontIndirectMy(LOGFONT *inFont)
 {
 	memset(FontWidth, 0, sizeof(*FontWidth)*0x10000);
