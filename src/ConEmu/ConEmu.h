@@ -4,10 +4,11 @@
 
 
 #define WM_TRAYNOTIFY WM_USER+1
+#define ID_DUMPCONSOLE 0xABCB
+#define ID_CONPROP 0xABCC
 #define ID_SETTINGS 0xABCD
 #define ID_HELP 0xABCE
 #define ID_TOTRAY 0xABCF
-#define ID_CONPROP 0xABCC
 
 #define SC_RESTORE_SECRET 0x0000f122
 #define SC_MAXIMIZE_SECRET 0x0000f032
@@ -136,7 +137,6 @@ public:
 	LRESULT OnGetMinMaxInfo(LPMINMAXINFO pInfo);
 	LRESULT OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
-	LRESULT OnMove(int xPos, int yPos);
 	LRESULT OnPaint(WPARAM wParam, LPARAM lParam);
 	LRESULT OnSize(WPARAM wParam, WORD newClientWidth, WORD newClientHeight);
 	LRESULT OnSizing(WPARAM wParam, LPARAM lParam);

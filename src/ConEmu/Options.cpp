@@ -10,6 +10,8 @@ HWND ghOpWnd=NULL;
 CSettings::CSettings()
 {
 	InitSettings();
+	mb_IgnoreEditChanged = FALSE;
+	mb_IgnoreTtfChange = TRUE;
 }
 
 CSettings::~CSettings()
@@ -519,8 +521,8 @@ LRESULT CSettings::OnInitDialog()
 		CheckDlgButton(hMain, rCursorH, BST_CHECKED);
 	if (isForceMonospace)
 		CheckDlgButton(hMain, cbMonospace, BST_CHECKED);
-	if (isTTF)
-		CheckDlgButton(hMain, cbTTF, BST_CHECKED);
+	if (!isTTF)
+		CheckDlgButton(hMain, cbNonProportional, BST_CHECKED);
 	if (isConMan)
 		CheckDlgButton(ghOpWnd, cbIsConMan, BST_CHECKED);
 
@@ -534,26 +536,35 @@ LRESULT CSettings::OnInitDialog()
 	else
 		CheckRadioButton(hMain, rNormal, rFullScreen, rNormal);
 
-	wsprintf(temp, _T("%i"), wndWidth);
-	SetDlgItemText(hMain, tWndWidth, temp);
+	//wsprintf(temp, _T("%i"), wndWidth);	SetDlgItemText(hMain, tWndWidth, temp);
 	SendDlgItemMessage(hMain, tWndWidth, EM_SETLIMITTEXT, 3, 0);
-
-	wsprintf(temp, _T("%i"), wndHeight);
-	SetDlgItemText(hMain, tWndHeight, temp);
+	//wsprintf(temp, _T("%i"), wndHeight);	SetDlgItemText(hMain, tWndHeight, temp);
 	SendDlgItemMessage(hMain, tWndHeight, EM_SETLIMITTEXT, 3, 0);
+	UpdateSize(wndWidth, wndHeight);
+
+	SendDlgItemMessage(hMain, tWndX, EM_SETLIMITTEXT, 6, 0);
+	SendDlgItemMessage(hMain, tWndY, EM_SETLIMITTEXT, 6, 0);
+	
 
 	if (!isFullScreen && !IsZoomed(ghWnd))
 	{
 		EnableWindow(GetDlgItem(hMain, tWndWidth), true);
 		EnableWindow(GetDlgItem(hMain, tWndHeight), true);
-
+		EnableWindow(GetDlgItem(hMain, tWndX), true);
+		EnableWindow(GetDlgItem(hMain, tWndY), true);
+		if (!IsIconic(ghWnd)) {
+			RECT rc; GetWindowRect(ghWnd, &rc);
+			wndX = rc.left; wndY = rc.top;
+		}
 	}
 	else
 	{
 		EnableWindow(GetDlgItem(hMain, tWndWidth), false);
 		EnableWindow(GetDlgItem(hMain, tWndHeight), false);
-
+		EnableWindow(GetDlgItem(hMain, tWndX), false);
+		EnableWindow(GetDlgItem(hMain, tWndY), false);
 	}
+	UpdatePos(wndX, wndY);
 
 	#define getR(inColorref) (byte)inColorref
 	#define getG(inColorref) (byte)(inColorref >> 8)
@@ -754,11 +765,12 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
         //isTabs = !isTabs;
         break;
 
-    case cbTTF:
+    case cbNonProportional:
         isTTF = !isTTF;
-
+		mb_IgnoreEditChanged = TRUE;
         pVCon->Update(true);
         InvalidateRect(ghWnd, NULL, FALSE);
+		mb_IgnoreEditChanged = FALSE;
         break;
 
     case cbMonospace:
@@ -791,7 +803,7 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
 			GetDlgItemText(hMain, tBgImage, temp, MAX_PATH);
 			OPENFILENAME ofn; memset(&ofn,0,sizeof(ofn));
 			ofn.lStructSize=sizeof(ofn);
-			ofn.hwndOwner = hMain;
+			ofn.hwndOwner = ghOpWnd;
 			ofn.lpstrFilter = _T("Bitmap images (*.bmp)\0*.bmp\0\0");
 			ofn.nFilterIndex = 1;
 			ofn.lpstrFile = temp;
@@ -893,6 +905,9 @@ LRESULT CSettings::OnColorEditChanged(WPARAM wParam, LPARAM lParam)
 
 LRESULT CSettings::OnEditChanged(WPARAM wParam, LPARAM lParam)
 {
+	if (mb_IgnoreEditChanged)
+		return 0;
+
     WORD TB = LOWORD(wParam);
     if (TB == tBgImage)
     {
@@ -918,14 +933,14 @@ LRESULT CSettings::OnEditChanged(WPARAM wParam, LPARAM lParam)
 
         if (newX > 24 && newY > 7)
         {
-            wndWidth = newX;
-            wndHeight = newY;
+			wndWidth = newX;
+			wndHeight = newY;
 
-            COORD b = {wndWidth, wndHeight};
-      gConEmu.SetConsoleWindowSize(b, false);  // NightRoman
-      //MoveWindow(hConWnd, 0, 0, 1, 1, 0);
-      //SetConsoleScreenBufferSize(pVCon->hConOut(), b);
-      //MoveWindow(hConWnd, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), 0);
+			COORD b = {wndWidth, wndHeight};
+			gConEmu.SetConsoleWindowSize(b, false);  // NightRoman
+			//MoveWindow(hConWnd, 0, 0, 1, 1, 0);
+			//SetConsoleScreenBufferSize(pVCon->hConOut(), b);
+			//MoveWindow(hConWnd, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), 0);
         }
 
     }
@@ -993,6 +1008,9 @@ LRESULT CSettings::OnComboBox(WPARAM wParam, LPARAM lParam)
             }
         }
 
+		if (LOWORD(wParam) == tFontFace)
+			mb_IgnoreTtfChange = FALSE;
+
         BYTE qWas = pLogFont->lfQuality;
         pLogFont->lfHeight = upToFontHeight;
         pLogFont->lfWidth = FontSizeX;
@@ -1020,6 +1038,7 @@ LRESULT CSettings::OnComboBox(WPARAM wParam, LPARAM lParam)
                 SetDlgItemText(hMain, tFontSizeY, temp);
             }
         }
+		mb_IgnoreTtfChange = TRUE;
     }
     else if (LOWORD(wParam) == tFontSizeY || LOWORD(wParam) == tFontSizeX || 
 		LOWORD(wParam) == tFontSizeX2 || LOWORD(wParam) == tFontSizeX3 || LOWORD(wParam) == tFontCharset)
@@ -1230,16 +1249,19 @@ BOOL CALLBACK CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM
 		if (IsDebuggerPresent())
 			SetWindowPos(ghOpWnd, HWND_NOTOPMOST, 0,0,0,0, SWP_NOSIZE|SWP_NOMOVE);
 		#endif
+		SetClassLong(hWnd2, GCL_HICON, (LONG)hClassIcon);
 		gSet.OnInitDialog();
         break;
 
 	case WM_GETICON:
 		if (wParam==ICON_BIG) {
-			SetWindowLong(hWnd2, DWL_MSGRESULT, (LRESULT)hClassIcon);
+			/*SetWindowLong(hWnd2, DWL_MSGRESULT, (LRESULT)hClassIcon);
+			return 1;*/
 		} else {
 			SetWindowLong(hWnd2, DWL_MSGRESULT, (LRESULT)hClassIconSm);
+			return 1;
 		}
-		return 1;
+		return 0;
 
     case WM_CTLCOLORSTATIC:
         for (uint i = 1000; i < 1016; i++)
@@ -1398,3 +1420,58 @@ BOOL CALLBACK CSettings::colorOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPAR
     }
     return 0;
 }
+
+void CSettings::UpdatePos(int x, int y)
+{
+	TCHAR temp[32];
+
+	gSet.wndX = x;
+	gSet.wndY = y;
+    
+    if (ghOpWnd) 
+	{
+		mb_IgnoreEditChanged = TRUE;
+
+		wsprintf(temp, _T("%i"), gSet.wndX);
+		SetDlgItemText(hMain, tWndX, temp);
+
+		wsprintf(temp, _T("%i"), gSet.wndY);
+		SetDlgItemText(hMain, tWndY, temp);
+
+		mb_IgnoreEditChanged = FALSE;
+	}
+}
+
+void CSettings::UpdateSize(UINT w, UINT h)
+{
+	TCHAR temp[32];
+
+	if (w<29 || h<9)
+		return;
+	if (w!=wndWidth || h!=wndHeight) {
+		gSet.wndWidth = w;
+		gSet.wndHeight = h;
+	}
+
+	if (ghOpWnd) {
+		mb_IgnoreEditChanged = TRUE;
+
+		wsprintf(temp, _T("%i"), gSet.wndWidth);
+		SetDlgItemText(hMain, tWndWidth, temp);
+
+		wsprintf(temp, _T("%i"), gSet.wndHeight);
+		SetDlgItemText(hMain, tWndHeight, temp);
+
+		mb_IgnoreEditChanged = FALSE;
+	}
+}
+
+void CSettings::UpdateTTF(BOOL bNewTTF)
+{
+	if (mb_IgnoreTtfChange) return;
+
+	isTTF = bNewTTF;
+	CheckDlgButton(hMain, cbNonProportional, 
+		gSet.isTTF ? BST_UNCHECKED : BST_CHECKED);
+}
+

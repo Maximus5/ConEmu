@@ -512,15 +512,9 @@ void CConEmuMain::SetConsoleWindowSize(const COORD& size, bool updateInfo)
     }
 
     // update size info
-    if (updateInfo && !gSet.isFullScreen && !IsZoomed(ghWnd))
+    if (updateInfo && !gSet.isFullScreen && !IsZoomed(ghWnd) && !IsIconic(ghWnd))
     {
-        gSet.wndWidth = size.X;
-        wsprintf(temp, _T("%i"), gSet.wndWidth);
-        SetDlgItemText(ghOpWnd, tWndWidth, temp);
-
-        gSet.wndHeight = size.Y;
-        wsprintf(temp, _T("%i"), gSet.wndHeight);
-        SetDlgItemText(ghOpWnd, tWndHeight, temp);
+		gSet.UpdateSize(size.X, size.Y);
     }
 
     // case: simple mode
@@ -664,7 +658,8 @@ bool CConEmuMain::SetWindowMode(uint inMode)
 	        DEBUGLOGFILE("SetWindowMode(rMaximized)\n");
 
 			// Обновить коордианты в gSet, если требуется
-			OnMove(rcWnd.left, rcWnd.top);
+			if (!gSet.isFullScreen && !IsZoomed(ghWnd) && !IsIconic(ghWnd))
+				gSet.UpdatePos(rcWnd.left, rcWnd.top);
 
 			if (!IsZoomed(ghWnd))
 				ShowWindow(ghWnd, SW_SHOWMAXIMIZED);
@@ -682,7 +677,8 @@ bool CConEmuMain::SetWindowMode(uint inMode)
         if (!gSet.isFullScreen)
         {
 			// Обновить коордианты в gSet, если требуется
-			OnMove(rcWnd.left, rcWnd.top);
+			if (!gSet.isFullScreen && !IsZoomed(ghWnd) && !IsIconic(ghWnd))
+				gSet.UpdatePos(rcWnd.left, rcWnd.top);
 
             gSet.isFullScreen = true;
             isWndNotFSMaximized = IsZoomed(ghWnd);
@@ -807,16 +803,6 @@ void CConEmuMain::ReSize()
 
 	OnSize(IsZoomed(ghWnd) ? SIZE_MAXIMIZED : SIZE_RESTORED,
 		client.right, client.bottom);
-}
-
-LRESULT CConEmuMain::OnMove(int xPos, int yPos)
-{
-	if (!gSet.isFullScreen && !IsZoomed(ghWnd) && !IsIconic(ghWnd))
-	{
-		gSet.wndX = xPos;
-		gSet.wndY = yPos;
-	}
-	return 0;
 }
 
 LRESULT CConEmuMain::OnSize(WPARAM wParam, WORD newClientWidth, WORD newClientHeight)
@@ -1912,6 +1898,10 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 		//DialogBox((HINSTANCE)GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_DIALOG1), 0, CSettings::wndOpProc);
 		CSettings::Dialog();
         break;
+    case ID_DUMPCONSOLE:
+	    if (pVCon)
+		    pVCon->DumpConsole();
+		break;
     case ID_HELP:
         {
 	        WCHAR szTitle[255];
@@ -1952,8 +1942,9 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
         break;
     case SC_CLOSE:
         Icon.Delete();
-        SENDMESSAGE(ghConWnd, WM_CLOSE, 0, 0);
-        break;
+		//SENDMESSAGE(ghConWnd, WM_SYSCOMMAND, SC_CLOSE, 0);
+        SENDMESSAGE(ghConWnd, WM_CLOSE, 0, 0); // ?? фар не ловит сообщение, ExitFAR не вызываются
+        return 0;
 
     case SC_MAXIMIZE:
         if (wParam == SC_MAXIMIZE)
@@ -2189,7 +2180,13 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 
 	case WM_MOVE:
 		// вызывается когда не надо...
-		//if (hWnd == ghWnd) result = gConEmu.OnMove((short) LOWORD(lParam), (short) HIWORD(lParam));
+		if (hWnd == ghWnd && ghOpWnd) {
+			if (!gSet.isFullScreen && !IsZoomed(ghWnd) && !IsIconic(ghWnd))
+			{
+				RECT rc; GetWindowRect(ghWnd, &rc);
+				gSet.UpdatePos(rc.left, rc.top);
+			}
+		}
 		break;
 
 	case WM_GETMINMAXINFO:

@@ -355,9 +355,7 @@ void UpdateConEmuTabsA(int event, bool losingFocus, bool editorSave)
 
 void   WINAPI _export ExitFAR(void)
 {
-	if (hEventCmd[CMD_EXIT])
-		SetEvent(hEventCmd[CMD_EXIT]); // Завершить нить
-	//CloseTabs(); -- ConEmu само разберется
+	StopThread();
 
 	if (InfoA) {
 		free(InfoA);

@@ -133,7 +133,7 @@ bool CVirtualConsole::InitDC(BOOL abFull/*=TRUE*/)
 		ConAttr = (WORD*)calloc((TextWidth * TextHeight * 2), sizeof(*ConAttr));
 		ConCharX = (DWORD*)calloc((TextWidth * TextHeight), sizeof(*ConCharX));
 		tmpOem = (char*)calloc((TextWidth + 5), sizeof(*tmpOem));
-		TextParts = (struct _TextParts*)calloc((TextWidth + 1), sizeof(*TextParts));
+		TextParts = (struct _TextParts*)calloc((TextWidth + 2), sizeof(*TextParts));
 		if (!ConChar || !ConAttr || !ConCharX || !tmpOem || !TextParts)
 			return false;
 	}
@@ -155,6 +155,9 @@ bool CVirtualConsole::InitDC(BOOL abFull/*=TRUE*/)
 
 		if (abFull)
 		{
+			if (ghOpWnd) // устанавливать только при листании шрифта в настройке
+				gSet.UpdateTTF ( (tm.tmMaxCharWidth - tm.tmAveCharWidth)>2 );
+
 			Width = TextWidth * gSet.LogFont.lfWidth;
 			Height = TextHeight * gSet.LogFont.lfHeight;
 
@@ -165,6 +168,36 @@ bool CVirtualConsole::InitDC(BOOL abFull/*=TRUE*/)
 	ReleaseDC(0, hScreenDC);
 
 	return hBitmap != NULL;
+}
+
+void CVirtualConsole::DumpConsole()
+{
+	OPENFILENAME ofn; memset(&ofn,0,sizeof(ofn));
+	ofn.lStructSize=sizeof(ofn);
+	ofn.hwndOwner = ghWnd;
+	ofn.lpstrFilter = _T("ConEmu dumps (*.con)\0*.con\0\0");
+	ofn.nFilterIndex = 1;
+	ofn.lpstrFile = temp;
+	ofn.nMaxFile = MAX_PATH;
+	ofn.lpstrTitle = _T("Dump console...");
+	ofn.Flags = OFN_ENABLESIZING|OFN_NOCHANGEDIR
+			| OFN_PATHMUSTEXIST|OFN_EXPLORER|OFN_HIDEREADONLY|OFN_OVERWRITEPROMPT;
+	if (!GetSaveFileName(&ofn))
+		return;
+		
+	HANDLE hFile = CreateFile(temp, GENERIC_WRITE, FILE_SHARE_READ,
+		NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+	if (hFile == INVALID_HANDLE_VALUE) {
+		DisplayLastError(_T("Can't create file!"));
+		return;
+	}
+	DWORD dw;
+	WriteFile(hFile, gConEmu.Title, _tcslen(gConEmu.Title)*sizeof(TCHAR), &dw, NULL);
+	swprintf(temp, _T("\r\nSize: %ix%i\r\n"), TextWidth, TextHeight);
+	WriteFile(hFile, temp, _tcslen(temp)*sizeof(TCHAR), &dw, NULL);
+	WriteFile(hFile, ConChar, TextWidth * TextHeight * 2, &dw, NULL);
+	WriteFile(hFile, ConAttr, TextWidth * TextHeight * 2, &dw, NULL);
+	CloseHandle(hFile);
 }
 
 HFONT CVirtualConsole::CreateFontIndirectMy(LOGFONT *inFont)
@@ -606,6 +639,121 @@ void CVirtualConsole::UpdatePrepare(bool isForce, HDC *ahDc)
 			}
 		}
 	}
+}
+
+enum CVirtualConsole::_PartType CVirtualConsole::GetCharType(TCHAR ch)
+{
+	enum _PartType cType = pNull;
+
+	if (ch == L' ')
+		cType = pSpace;
+	//else if (ch == L'_')
+	//	cType = pUnderscore;
+	else if (isCharBorder(ch)) {
+		if (isCharBorderVertical(ch))
+			cType = pVBorder;
+		else
+			cType = pBorder;
+	}
+	else if (isFilePanel && ch == L'}')
+		cType = pRBracket;
+	else
+		cType = pText;
+
+	return cType;
+}
+
+// row - 0-based
+void CVirtualConsole::ParseLine(int row, TCHAR *ConCharLine, WORD *ConAttrLine)
+{
+	UINT idx = 0;
+	struct _TextParts *pStart=TextParts, *pEnd=TextParts;
+	enum _PartType cType1, cType2;
+	UINT i1=0, i2=0;
+	
+	pEnd->partType = pNull; // сразу ограничим строку
+	
+	TCHAR ch1, ch2;
+	BYTE af1, ab1, af2, ab2;
+	DWORD pixels;
+	while (i1<TextWidth)
+	{
+		GetCharAttr(ConCharLine[i1], ConAttrLine[i1], ch1, af1, ab1);
+		cType1 = GetCharType(ch1);
+		if (cType1 == pRBracket) {
+			if (!(row>=2 && isCharBorderVertical(ConChar[TextWidth+i1]))
+				&& (((UINT)row)<=(TextHeight-4)))
+				cType1 = pText;
+		}
+		pixels = CharWidth(ch1);
+
+		i2 = i1+1;
+		// в режиме Force Monospace отрисовка идет по одному символу
+		if (!gSet.isForceMonospace && i2 < TextWidth && 
+			(cType1 != pVBorder && cType1 != pRBracket))
+		{
+			GetCharAttr(ConCharLine[i2], ConAttrLine[i2], ch2, af2, ab2);
+			// Получить блок символов с аналогичными цветами
+			while (i2 < TextWidth && af2 == af1 && ab2 == ab1) {
+				// если символ отличается от первого
+
+				cType2 = GetCharType(ch2);
+				if ((ch2 = ConCharLine[i2]) != ch1) {
+					if (cType2 == pRBracket) {
+						if (!(row>=2 && isCharBorderVertical(ConChar[TextWidth+i2]))
+							&& (((UINT)row)<=(TextHeight-4)))
+							cType2 = pText;
+					}
+
+					// и он вообще из другой группы
+					if (cType2 != cType1)
+						break; // то завершаем поиск
+				}
+				pixels += CharWidth(ch2); // добавить ширину символа в пикселях
+				i2++; // следующий символ
+				GetCharAttr(ConCharLine[i2], ConAttrLine[i2], ch2, af2, ab2);
+				if (cType2 == pRBracket) {
+					if (!(row>=2 && isCharBorderVertical(ConChar[TextWidth+i2]))
+						&& (((UINT)row)<=(TextHeight-4)))
+						cType2 = pText;
+				}
+			}
+		}
+
+		// при разборе строки будем смотреть, если нашли pText,pSpace,pText то pSpace,pText добавить в первый pText
+		if (cType1 == pText && (pEnd - pStart) >= 2) {
+			if (pEnd[-1].partType == pSpace && pEnd[-2].partType == pText &&
+				pEnd[-1].attrBack == ab1 && pEnd[-1].attrFore == af1 &&
+				pEnd[-2].attrBack == ab1 && pEnd[-2].attrFore == af1
+				)
+			{	
+				pEnd -= 2;
+				pEnd->i2 = i2 - 1;
+				pEnd->iwidth = i2 - pEnd->i1;
+				pEnd->width += pEnd[1].width + pixels;
+				pEnd ++;
+				i1 = i2;
+				continue;
+			}
+		}
+		pEnd->i1 = i1; pEnd->i2 = i2 - 1; // конец "включая"
+		pEnd->partType = cType1;
+		pEnd->attrBack = ab1; pEnd->attrFore = af1;
+		pEnd->iwidth = i2 - i1;
+		pEnd->width = pixels;
+		if (gSet.isForceMonospace ||
+			(gSet.isTTF && (cType1 == pVBorder || cType1 == pRBracket)))
+		{
+			pEnd->x1 = i1 * gSet.LogFont.lfWidth;
+		} else {
+			pEnd->x1 = -1;
+		}
+
+		pEnd ++; // блоков не может быть больше количества символов в строке, так что с размерностью все ОК
+		i1 = i2;
+	}
+	// пока поставим конец блоков, потом, если ширины не хватит - добавим pDummy
+	pEnd->partType = pNull;
 }
 
 void CVirtualConsole::UpdateText(bool isForce, bool updateText, bool updateCursor)

@@ -72,6 +72,9 @@ public:
 	static BOOL CALLBACK EnumFamCallBack(LPLOGFONT lplf, LPNEWTEXTMETRIC lpntm, DWORD FontType, LPVOID aFontCount);
 	void UpdateMargins(RECT arcMargins);
 	static void Dialog();
+	void UpdatePos(int x, int y);
+	void UpdateSize(UINT w, UINT h);
+	void UpdateTTF(BOOL bNewTTF);
 public:
 	LRESULT OnInitDialog();
 	LRESULT OnButtonClicked(WPARAM wParam, LPARAM lParam);
@@ -83,4 +86,5 @@ public:
 	LRESULT OnTab(LPNMHDR phdr);
 private:
 	COLORREF acrCustClr[16]; // array of custom colors
+	BOOL mb_IgnoreEditChanged, mb_IgnoreTtfChange;
 };

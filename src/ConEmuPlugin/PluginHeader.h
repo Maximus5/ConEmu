@@ -16,6 +16,7 @@ extern HWND FarHwnd;
 extern FarVersion gFarVersion;
 extern int lastModifiedStateW;
 extern HANDLE hEventCmd[MAXCMDCOUNT];
+extern HANDLE hThread;
 
 BOOL CreateTabs(int windowCount);
 
@@ -32,6 +33,7 @@ int ProcessEditorEventW684(int Event, void *Param);
 int ProcessEditorEventW757(int Event, void *Param);
 int ProcessViewerEventW684(int Event, void *Param);
 int ProcessViewerEventW757(int Event, void *Param);
+void StopThread(void);
 void ExitFARW684(void);
 void ExitFARW757(void);
 void UpdateConEmuTabsW684(int event, bool losingFocus, bool editorSave);

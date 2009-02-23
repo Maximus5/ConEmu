@@ -8,6 +8,7 @@
 // Generated from the TEXTINCLUDE 2 resource.
 //
 #include "afxres.h"
+#include "version.h"
 
 /////////////////////////////////////////////////////////////////////////////
 #undef APSTUDIO_READONLY_SYMBOLS
@@ -35,6 +36,7 @@ END
 2 TEXTINCLUDE MOVEABLE PURE 
 BEGIN
     "#include ""afxres.h""\r\n"
+    "#include ""version.h""\r\n"
     "\0"
 END
 
@@ -52,118 +54,120 @@ END
 // Dialog
 //
 
-IDD_DIALOG1 DIALOGEX 0, 0, 305, 258
+IDD_DIALOG1 DIALOGEX 0, 0, 328, 258
 STYLE DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_TOPMOST | WS_EX_CONTROLPARENT
-FONT 8, "MS Shell Dlg"
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Anti-aliasing",IDC_STATIC,240,4,60,45,WS_GROUP
+    GROUPBOX        "Anti-aliasing",IDC_STATIC,263,4,60,45,WS_GROUP
     CONTROL         "&None",rNoneAA,"Button",BS_AUTORADIOBUTTON | WS_GROUP,
-                    246,14,48,8
-    CONTROL         "&Standard",rStandardAA,"Button",BS_AUTORADIOBUTTON,246,
+                    269,14,48,8
+    CONTROL         "&Standard",rStandardAA,"Button",BS_AUTORADIOBUTTON,269,
                     25,48,8
-    CONTROL         "&Clear Type",rCTAA,"Button",BS_AUTORADIOBUTTON,246,36,
+    CONTROL         "&Clear Type",rCTAA,"Button",BS_AUTORADIOBUTTON,269,36,
                     48,8
-    GROUPBOX        "Cursor",IDC_STATIC,124,4,110,45
+    GROUPBOX        "Cursor",IDC_STATIC,147,4,110,45
     CONTROL         "&Vertical (like in GUI)",rCursorV,"Button",
-                    BS_AUTORADIOBUTTON | WS_GROUP,130,14,90,8
+                    BS_AUTORADIOBUTTON | WS_GROUP,153,14,90,8
     CONTROL         "&Horizontal (like in console)",rCursorH,"Button",
-                    BS_AUTORADIOBUTTON,130,25,96,8
+                    BS_AUTORADIOBUTTON,153,25,96,8
     CONTROL         "Co&lor",cbCursorColor,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,130,36,96,8
-    EDITTEXT        tCmdLine,11,234,282,12,ES_AUTOHSCROLL | NOT WS_BORDER,
-                    WS_EX_STATICEDGE
-    GROUPBOX        "",IDC_STATIC,6,172,294,50
+                    WS_TABSTOP,153,36,96,8
+    GROUPBOX        "",IDC_STATIC,4,172,319,50
     CONTROL         "Back&ground image (bmp):",cbBgImage2,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,12,172,96,8
-    EDITTEXT        tBgImage,36,184,187,12,ES_AUTOHSCROLL | NOT WS_BORDER,
+                    BS_AUTOCHECKBOX | WS_TABSTOP,10,172,96,8
+    EDITTEXT        tBgImage,34,184,209,11,ES_AUTOHSCROLL | NOT WS_BORDER,
                     WS_EX_STATICEDGE
-    COMBOBOX        tFontFace,12,16,102,72,CBS_DROPDOWN | CBS_AUTOHSCROLL | 
+    COMBOBOX        tFontFace,10,16,123,72,CBS_DROPDOWN | CBS_AUTOHSCROLL | 
                     CBS_SORT | WS_VSCROLL | WS_TABSTOP
-    COMBOBOX        tFontSizeY,32,34,34,66,CBS_DROPDOWN | CBS_AUTOHSCROLL | 
+    COMBOBOX        tFontSizeY,47,34,38,66,CBS_DROPDOWN | CBS_AUTOHSCROLL | 
                     WS_VSCROLL | WS_TABSTOP
-    COMBOBOX        tFontSizeX,78,34,36,66,CBS_DROPDOWN | WS_VSCROLL | 
+    COMBOBOX        tFontSizeX,97,34,36,66,CBS_DROPDOWN | WS_VSCROLL | 
                     WS_TABSTOP
-    COMBOBOX        tFontCharset,48,52,66,67,CBS_DROPDOWNLIST | 
+    COMBOBOX        tFontCharset,47,50,86,67,CBS_DROPDOWNLIST | 
                     CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "&Bold",cbBold,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,
-                    68,31,8
+    CONTROL         "&Bold",cbBold,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,
+                    67,31,8
     CONTROL         "&Italic",cbItalic,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
-                    46,68,31,8
+                    44,67,31,8
+    CONTROL         "&Monospace",cbNonProportional,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,79,67,54,8
     CONTROL         "&Fix Far borders",cbFixFarBorders,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,12,92,64,8
-    GROUPBOX        "Window size",IDC_STATIC,124,54,110,47
+                    BS_AUTOCHECKBOX | WS_TABSTOP,10,96,64,8
+    GROUPBOX        "Window size",IDC_STATIC,147,53,110,50
     CONTROL         "Normal",rNormal,"Button",BS_AUTORADIOBUTTON | WS_GROUP,
-                    128,65,47,8
-    CONTROL         "Maximized",rMaximized,"Button",BS_AUTORADIOBUTTON,128,
+                    151,64,47,8
+    CONTROL         "Maximized",rMaximized,"Button",BS_AUTORADIOBUTTON,151,
                     77,48,8
     CONTROL         "Full screen",rFullScreen,"Button",BS_AUTORADIOBUTTON,
-                    128,89,49,8
+                    151,90,49,8
     CONTROL         "&RightClick for context menu",cbRClick,"Button",
-                    BS_AUTO3STATE | WS_TABSTOP,12,139,99,8
-    GROUPBOX        "Font",IDC_STATIC,6,4,114,120
-    LTEXT           "Size:",IDC_STATIC,12,37,18,8
-    CTEXT           "x",IDC_STATIC,68,37,8,8
-    LTEXT           "Charset:",IDC_STATIC,12,55,30,8
-    RTEXT           "Render time:",IDC_STATIC,133,112,48,8
-    EDITTEXT        tRender,186,110,54,12,ES_AUTOHSCROLL | ES_READONLY
-    EDITTEXT        tWndWidth,178,65,18,12,ES_AUTOHSCROLL | ES_NUMBER | NOT 
+                    BS_AUTO3STATE | WS_TABSTOP,10,139,117,8
+    GROUPBOX        "Font",IDC_STATIC,4,4,136,122
+    RTEXT           "Size:",IDC_STATIC,9,37,32,8
+    CTEXT           "x",IDC_STATIC,87,35,8,8
+    RTEXT           "Charset:",IDC_STATIC,9,53,32,8
+    RTEXT           "Render time:",IDC_STATIC,157,116,48,8
+    EDITTEXT        tRender,208,114,54,11,ES_AUTOHSCROLL | ES_READONLY
+    EDITTEXT        tRender2,266,114,54,11,ES_AUTOHSCROLL | ES_READONLY
+    EDITTEXT        tWndWidth,201,63,18,11,ES_AUTOHSCROLL | ES_NUMBER | NOT 
                     WS_BORDER,WS_EX_STATICEDGE
-    EDITTEXT        tWndHeight,208,65,18,12,ES_AUTOHSCROLL | ES_NUMBER | NOT 
+    EDITTEXT        tWndHeight,231,63,18,11,ES_AUTOHSCROLL | ES_NUMBER | NOT 
                     WS_BORDER,WS_EX_STATICEDGE
-    CTEXT           "x",IDC_STATIC,198,65,8,8
+    CTEXT           "x",IDC_STATIC,221,63,8,8
     CONTROL         "Force monospace",cbMonospace,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,12,80,70,8
-    COMBOBOX        tFontSizeX3,90,79,24,66,CBS_DROPDOWN | WS_VSCROLL | 
+                    WS_TABSTOP,10,83,70,8
+    COMBOBOX        tFontSizeX3,109,81,24,66,CBS_DROPDOWN | WS_VSCROLL | 
                     WS_TABSTOP
-    LTEXT           "Path:",IDC_STATIC,12,184,18,8
-    LTEXT           "Darkening:",IDC_STATIC,12,203,36,8
+    LTEXT           "Path:",IDC_STATIC,10,184,18,8
+    LTEXT           "Darkening:",IDC_STATIC,10,203,36,8
     CONTROL         "",slDarker,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | 
-                    WS_TABSTOP,54,202,157,12
-    EDITTEXT        tDarker,215,202,30,12,ES_AUTOHSCROLL | ES_NUMBER | NOT 
+                    WS_TABSTOP,52,202,177,12
+    EDITTEXT        tDarker,233,202,30,11,ES_AUTOHSCROLL | ES_NUMBER | NOT 
                     WS_BORDER,WS_EX_STATICEDGE
     CONTROL         "&Send AltEnter to application",cbSendAE,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,12,153,100,8
+                    BS_AUTOCHECKBOX | WS_TABSTOP,10,153,116,8
     CONTROL         "Enable Drag'n'Drop",cbDnD,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,217,139,73,8
+                    WS_TABSTOP,225,139,87,8
     CONTROL         "Enable Tabs",cbTabs,"Button",BS_AUTO3STATE | WS_TABSTOP,
-                    131,139,52,8
-    GROUPBOX        "Far hacks",IDC_STATIC,6,129,294,39
+                    129,139,72,8
+    GROUPBOX        "Far hacks",IDC_STATIC,4,129,319,39
     CONTROL         "GUI progress bars",cbGUIpb,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,131,153,86,8
+                    WS_TABSTOP,129,153,86,8
     CONTROL         "Copy by default",cbDnDCopy,"Button",BS_AUTO3STATE | 
-                    WS_TABSTOP,228,153,65,8
-    COMBOBOX        tFontFace2,11,103,67,72,CBS_DROPDOWN | CBS_AUTOHSCROLL | 
+                    WS_TABSTOP,236,153,76,8
+    COMBOBOX        tFontFace2,9,107,88,72,CBS_DROPDOWN | CBS_AUTOHSCROLL | 
                     CBS_SORT | WS_VSCROLL | WS_TABSTOP
-    COMBOBOX        tFontSizeX2,90,103,24,66,CBS_DROPDOWN | WS_VSCROLL | 
+    COMBOBOX        tFontSizeX2,109,107,24,66,CBS_DROPDOWN | WS_VSCROLL | 
                     WS_TABSTOP
-    CTEXT           "x",IDC_STATIC,80,105,8,8
-    PUSHBUTTON      "...",bBgImage,229,184,16,12
+    CTEXT           "x",IDC_STATIC,99,109,8,8
+    PUSHBUTTON      "...",bBgImage,247,184,16,12
     CONTROL         "Stretch",rBgStretch,"Button",BS_AUTORADIOBUTTON | 
-                    WS_DISABLED,255,195,39,10
+                    WS_DISABLED,278,195,39,10
     CONTROL         "Tile",rBgTile,"Button",BS_AUTORADIOBUTTON | WS_DISABLED,
-                    255,207,39,10
-    CONTROL         "UpLeft",rBgSimple,"Button",BS_AUTORADIOBUTTON,255,182,
+                    278,207,39,10
+    CONTROL         "UpLeft",rBgSimple,"Button",BS_AUTORADIOBUTTON,278,182,
                     39,10
-    GROUPBOX        "Placement",IDC_STATIC,251,172,48,50
-    EDITTEXT        tWndX,246,78,18,12,ES_AUTOHSCROLL | ES_NUMBER | 
-                    WS_DISABLED | NOT WS_BORDER,WS_EX_STATICEDGE
-    EDITTEXT        tWndY,276,78,18,12,ES_AUTOHSCROLL | ES_NUMBER | 
-                    WS_DISABLED | NOT WS_BORDER,WS_EX_STATICEDGE
-    CTEXT           "x",IDC_STATIC,266,78,8,8,WS_DISABLED
-    GROUPBOX        "Position",IDC_STATIC,240,54,60,47,WS_DISABLED
-    CONTROL         "Cascade",cbPosFixed,"Button",BS_AUTOCHECKBOX | 
-                    WS_DISABLED | WS_TABSTOP,246,65,46,10
-    EDITTEXT        tRender2,246,110,54,12,ES_AUTOHSCROLL | ES_READONLY
-    GROUPBOX        "Command Line",IDC_STATIC,6,223,294,30
-    CONTROL         "TTF",cbTTF,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,81,68,
-                    31,10
+    GROUPBOX        "Placement",IDC_STATIC,270,172,53,50
+    EDITTEXT        tWndX,268,75,18,11,ES_AUTOHSCROLL | ES_NUMBER | NOT 
+                    WS_BORDER,WS_EX_STATICEDGE
+    EDITTEXT        tWndY,296,75,18,11,ES_AUTOHSCROLL | ES_NUMBER | NOT 
+                    WS_BORDER,WS_EX_STATICEDGE
+    CTEXT           "x",IDC_STATIC,287,76,8,8
+    GROUPBOX        "Position",IDC_STATIC,263,53,60,50,WS_DISABLED
+    CONTROL         "Cascade",rCascade,"Button",BS_AUTORADIOBUTTON,268,90,44,
+                    10
+    CONTROL         "Fixed",rFixed,"Button",BS_AUTORADIOBUTTON,268,64,33,10
+    CTEXT           "x",IDC_STATIC,99,82,8,8
+    GROUPBOX        "Command Line",IDC_STATIC,4,223,319,30
+    EDITTEXT        tCmdLine,9,234,306,11,ES_AUTOHSCROLL | NOT WS_BORDER,
+                    WS_EX_STATICEDGE
 END
 
-IDD_DIALOG2 DIALOGEX 0, 0, 330, 246
+IDD_DIALOG2 DIALOGEX 0, 0, 328, 246
 STYLE DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_TOPMOST | WS_EX_CONTROLPARENT
-FONT 8, "MS Shell Dlg"
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     GROUPBOX        "Colors (""red green blue"")",IDC_STATIC,4,4,319,67
     RTEXT           "0.",IDC_STATIC,12,18,8,8
@@ -321,16 +325,16 @@ BEGIN
                     WS_VSCROLL | WS_TABSTOP
 END
 
-IDD_DIALOGM DIALOGEX 0, 0, 336, 294
+IDD_DIALOGM DIALOGEX 0, 0, 341, 300
 STYLE DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 EXSTYLE WS_EX_TOPMOST
 CAPTION "Settings..."
 FONT 8, "MS Shell Dlg"
 BEGIN
-    DEFPUSHBUTTON   "Save settings",bSaveSettings,266,280,70,14
+    DEFPUSHBUTTON   "Save settings",bSaveSettings,268,283,70,14
     CONTROL         "Always update con. handle (ConMan, Telnet)",cbIsConMan,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,6,282,168,8
-    CONTROL         "Tab1",IDC_TAB1,"SysTabControl32",WS_TABSTOP,2,2,334,276
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,285,168,8
+    CONTROL         "Tab1",IDC_TAB1,"SysTabControl32",WS_TABSTOP,4,4,334,276
 END
 
 
@@ -352,7 +356,7 @@ IDI_ICON3               ICON    DISCARDABLE     "Far2.ico"
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2009,2,21,0
+ FILEVERSION CONEMUVERN
  PRODUCTVERSION 0,0,0,0
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
@@ -371,7 +375,7 @@ BEGIN
             VALUE "Comments", "\0"
             VALUE "CompanyName", "\0"
             VALUE "FileDescription", "Console Emulator\0"
-            VALUE "FileVersion", "2009.2.21c\0"
+            VALUE "FileVersion", CONEMUVERS
             VALUE "InternalName", "\0"
             VALUE "LegalCopyright", "Copyright (C) 2006-2008 - Zoin; (C) 2009 - Far community :)\0"
             VALUE "LegalTrademarks", "\0"

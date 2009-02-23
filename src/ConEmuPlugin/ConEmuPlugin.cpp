@@ -626,21 +626,31 @@ int WINAPI _export ProcessViewerEventW(int Event, void *Param)
 		return ProcessViewerEventW684(Event,Param);
 }
 
-void   WINAPI _export ExitFARW(void)
+void StopThread(void)
 {
 	if (hEventCmd[CMD_EXIT])
 		SetEvent(hEventCmd[CMD_EXIT]); // Завершить нить
 	//CloseTabs(); -- ConEmu само разберется
+	if (hThread) { // подождем чуть-чуть, или принудительно прибъем нить ожидания
+		if (WaitForSingleObject(hThread,1000))
+			TerminateThread(hThread, 100);
+		CloseHandle(hThread); hThread = NULL;
+	}
 	
     if (tabs) {
 	    free(tabs);
 	    tabs = NULL;
     }
-    
+}
+
+void   WINAPI _export ExitFARW(void)
+{
+	StopThread();
+
 	if (gFarVersion.dwBuild>=757)
-		return ExitFARW757();
+		ExitFARW757();
 	else
-		return ExitFARW684();
+		ExitFARW684();
 }
 
 void CloseTabs()

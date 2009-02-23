@@ -45,6 +45,7 @@ public:
 
 	bool InitFont(void);
 	bool InitDC(BOOL abFull=TRUE);
+	void DumpConsole();
 	void Free(bool bFreeFont = true);
 	bool Update(bool isForce = false, HDC *ahDc=NULL);
 	void SelectFont(HFONT hNew);
@@ -57,18 +58,25 @@ public:
 	bool GetCharAttr(TCHAR ch, WORD atr, TCHAR& rch, BYTE& foreColorNum, BYTE& backColorNum);
 
 protected:
+	enum _PartType{
+		pNull,  // конец строки/последний, неотображаемый элемент
+		pSpace, // при разборе строки будем смотреть, если нашли pText,pSpace,pText то pSpace,pText добавить в первый pText
+		pUnderscore, // '_' прочерк. их тоже будем чикать в угоду тексту
+		pBorder,
+		pVBorder, // символы вертикальных рамок, которые нельзя сдвигать
+		pRBracket, // символом '}' фар помечает файлы, вылезшие из колонки
+		pText,
+		pDummy  // дополнительные "пробелы", которые нужно отрисовать после конца строки
+	};
+	enum _PartType GetCharType(TCHAR ch);
 	struct _TextParts {
-		enum {
-			pNull,  // конец строки/последний, неотображаемый элемент
-			pSpace, // при разборе строки будем смотреть, если нашли pText,pSpace,pText то pSpace,pText добавить в первый pText
-			pBorder,
-			pVBorder,
-			pText
-		} partType;
+		enum _PartType partType;
 		BYTE attrFore, attrBack; // однотипными должны быть не только символы, но и совпадать атрибуты!
 		WORD i1,i2;  // индексы в текущей строке, 0-based
+		WORD iwidth; // количество символов в блоке
+		DWORD width; // ширина текста в символах. для pSpace & pBorder может обрезаться в пользу pText/pVBorder
 
-		DWORD x,width; // координаты в пикселях (скорректированные)
+		int x1; // координата в пикселях (скорректированные)
 	} *TextParts;
 	CONSOLE_SCREEN_BUFFER_INFO csbi;
 	CONSOLE_CURSOR_INFO	cinf;
@@ -83,4 +91,5 @@ protected:
 	void UpdateText(bool isForce, bool updateText, bool updateCursor);
 	WORD CharWidth(TCHAR ch);
 	bool CheckChangedTextAttr();
+	void ParseLine(int row, TCHAR *ConCharLine, WORD *ConAttrLine);
 };
