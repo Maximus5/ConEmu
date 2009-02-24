@@ -1020,10 +1020,13 @@ LRESULT CSettings::OnComboBox(WPARAM wParam, LPARAM lParam)
             if (LOWORD(wParam) == tFontFace) {
                 DeleteObject(pVCon->hFont);
                 pVCon->hFont = hFont;
-            } else {
-                DeleteObject(pVCon->hFont2);
-                pVCon->hFont2 = hFont;
-            }
+			} else {
+				DeleteObject(hFont); hFont = NULL;
+			}
+			// else { -- pVCon->hFont2 удаляется и создается автоматически в функции CreateFontIndirectMy
+            //    DeleteObject(pVCon->hFont2);
+            //    pVCon->hFont2 = hFont;
+            //}
 
             pVCon->Update(true);
             if (!isFullScreen && !IsZoomed(ghWnd))

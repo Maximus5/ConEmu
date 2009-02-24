@@ -6,7 +6,7 @@ private:
 	bool _active;
 	HWND _hwndTab;
 	int _tabHeight;
-	TCHAR _lastTitle[MAX_PATH];
+	//TCHAR _lastTitle[MAX_PATH];
 	RECT m_Margins;
 	bool _titleShouldChange;
 	int _prevTab;

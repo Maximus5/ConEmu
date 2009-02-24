@@ -83,6 +83,8 @@ void ProcessDragFrom757()
 				//wsprintf(Path, L"%s\\%s", szCurDir, PInfo.SelectedItems[i]->FindData.lpwszFileName);
 				Path[0]=0;
 
+				if (!pi[i].FindData.lpwszFileName) continue; //этот элемент получить не удалось
+
 				int nLen=nDirLen+nDirNoSlash;
 				nLen += lstrlen(pi[i].FindData.lpwszFileName);
 

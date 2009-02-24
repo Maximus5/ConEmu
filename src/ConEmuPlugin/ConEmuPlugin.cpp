@@ -13,7 +13,7 @@
 //#include <string.h>
 //#include <tchar.h>
 #include "..\common\common.hpp"
-#include "..\common\pluginW757.hpp"
+#include "..\common\pluginW789.hpp"
 #include "PluginHeader.h"
 
 extern "C" {
@@ -22,11 +22,27 @@ extern "C" {
 
 #define MAKEFARVERSION(major,minor,build) ( ((major)<<8) | (minor) | ((build)<<16))
 
-// minimal(?) FAR version 2.0 alpha build 748
+// minimal(?) FAR version 2.0 alpha build 757
 int WINAPI _export GetMinFarVersionW(void)
 {
-	return MAKEFARVERSION(2,0,748);
+	return MAKEFARVERSION(2,0,757);
 }
+
+/* COMMON - пока структуры не различаются */
+void WINAPI _export GetPluginInfoW(struct PluginInfo *pi)
+{
+	pi->StructSize = sizeof(struct PluginInfo);
+	pi->Flags = PF_EDITOR | PF_VIEWER | PF_PRELOAD;
+	pi->DiskMenuStrings = NULL;
+	pi->DiskMenuNumbers = 0;
+	pi->PluginMenuStrings = NULL;
+	pi->PluginMenuStringsNumber =0;
+	pi->PluginConfigStrings = NULL;
+	pi->PluginConfigStringsNumber = 0;
+	pi->CommandPrefix = NULL;
+	pi->Reserved = 0;	
+}
+/* COMMON - end */
 
 
 HWND ConEmuHwnd=NULL;
@@ -155,7 +171,7 @@ BOOL LoadFarVersion()
 	if (!lbRc) {
 		gFarVersion.dwVerMajor = 2;
 		gFarVersion.dwVerMinor = 0;
-		gFarVersion.dwBuild = 757;
+		gFarVersion.dwBuild = 789;
 	}
 
 	return lbRc;
@@ -291,20 +307,20 @@ DWORD WINAPI ThreadProcW(LPVOID lpParameter)
 			{
 				if (gFarVersion.dwVerMajor==1)
 					ProcessDragFromA();
-				else if (gFarVersion.dwBuild>=757)
-					ProcessDragFrom757();
+				else if (gFarVersion.dwBuild>=789)
+					ProcessDragFrom789();
 				else
-					ProcessDragFrom684();
+					ProcessDragFrom757();
 				break;
 			}
 			case (WAIT_OBJECT_0+CMD_DRAGTO):
 			{
 				if (gFarVersion.dwVerMajor==1)
 					ProcessDragToA();
-				if (gFarVersion.dwBuild>=757)
-					ProcessDragTo757();
+				if (gFarVersion.dwBuild>=789)
+					ProcessDragTo789();
 				else
-					ProcessDragTo684();
+					ProcessDragTo757();
 				break;
 			}
 		}
@@ -354,10 +370,10 @@ void WINAPI _export SetStartupInfoW(void *aInfo)
 {
 	if (!gFarVersion.dwVerMajor) LoadFarVersion();
 
-	if (gFarVersion.dwBuild>=757)
-		SetStartupInfoW757(aInfo);
+	if (gFarVersion.dwBuild>=789)
+		SetStartupInfoW789(aInfo);
 	else
-		SetStartupInfoW684(aInfo);
+		SetStartupInfoW757(aInfo);
 
 	CheckMacro();
 }
@@ -486,10 +502,10 @@ void CheckMacro()
 			if (lbMacroAdded) {
 				if (gFarVersion.dwVerMajor==1)
 					ReloadMacroA();
-				else if (gFarVersion.dwBuild>=757)
-					ReloadMacro757();
+				else if (gFarVersion.dwBuild>=789)
+					ReloadMacro789();
 				else
-					ReloadMacro684();
+					ReloadMacro757();
 			}
 		}
 	}
@@ -498,10 +514,10 @@ void CheckMacro()
 
 void UpdateConEmuTabsW(int event, bool losingFocus, bool editorSave)
 {
-	if (gFarVersion.dwBuild>=757)
-		UpdateConEmuTabsW757(event, losingFocus, editorSave);
+	if (gFarVersion.dwBuild>=789)
+		UpdateConEmuTabsW789(event, losingFocus, editorSave);
 	else
-		UpdateConEmuTabsW684(event, losingFocus, editorSave);
+		UpdateConEmuTabsW757(event, losingFocus, editorSave);
 }
 
 BOOL CreateTabs(int windowCount)
@@ -530,7 +546,7 @@ BOOL AddTab(int &tabCount, bool losingFocus, bool editorSave,
 	    lbCh = (tabs[0].Current != (losingFocus ? 1 : 0)) ||
 	           (tabs[0].Type != WTYPE_PANELS);
 		tabs[0].Current = losingFocus ? 1 : 0;
-		//lstrcpyn(tabs[0].Name, GetMsgW757(0), CONEMUTABMAX-1);
+		//lstrcpyn(tabs[0].Name, GetMsgW789(0), CONEMUTABMAX-1);
 		tabs[0].Name[0] = 0;
 		tabs[0].Pos = 0;
 		tabs[0].Type = WTYPE_PANELS;
@@ -600,30 +616,30 @@ int WINAPI _export ProcessEditorInputW(void* Rec)
 {
 	if (!ConEmuHwnd)
 		return 0; // Если мы не под эмулятором - ничего
-	if (gFarVersion.dwBuild>=757)
-		return ProcessEditorInputW757((LPCVOID)Rec);
+	if (gFarVersion.dwBuild>=789)
+		return ProcessEditorInputW789((LPCVOID)Rec);
 	else
-		return ProcessEditorInputW684((LPCVOID)Rec);
+		return ProcessEditorInputW757((LPCVOID)Rec);
 }
 
 int WINAPI _export ProcessEditorEventW(int Event, void *Param)
 {
 	if (!ConEmuHwnd)
 		return 0; // Если мы не под эмулятором - ничего
-	if (gFarVersion.dwBuild>=757)
-		return ProcessEditorEventW757(Event,Param);
+	if (gFarVersion.dwBuild>=789)
+		return ProcessEditorEventW789(Event,Param);
 	else
-		return ProcessEditorEventW684(Event,Param);
+		return ProcessEditorEventW757(Event,Param);
 }
 
 int WINAPI _export ProcessViewerEventW(int Event, void *Param)
 {
 	if (!ConEmuHwnd)
 		return 0; // Если мы не под эмулятором - ничего
-	if (gFarVersion.dwBuild>=757)
-		return ProcessViewerEventW757(Event,Param);
+	if (gFarVersion.dwBuild>=789)
+		return ProcessViewerEventW789(Event,Param);
 	else
-		return ProcessViewerEventW684(Event,Param);
+		return ProcessViewerEventW757(Event,Param);
 }
 
 void StopThread(void)
@@ -647,10 +663,10 @@ void   WINAPI _export ExitFARW(void)
 {
 	StopThread();
 
-	if (gFarVersion.dwBuild>=757)
-		ExitFARW757();
+	if (gFarVersion.dwBuild>=789)
+		ExitFARW789();
 	else
-		ExitFARW684();
+		ExitFARW757();
 }
 
 void CloseTabs()
@@ -728,8 +744,8 @@ int ShowMessage(int aiMsg, int aiButtons)
 {
 	if (gFarVersion.dwVerMajor==1)
 		return ShowMessageA(aiMsg, aiButtons);
-	else if (gFarVersion.dwBuild>=757)
-		return ShowMessage757(aiMsg, aiButtons);
+	else if (gFarVersion.dwBuild>=789)
+		return ShowMessage789(aiMsg, aiButtons);
 	else
-		return ShowMessage684(aiMsg, aiButtons);
+		return ShowMessage757(aiMsg, aiButtons);
 }

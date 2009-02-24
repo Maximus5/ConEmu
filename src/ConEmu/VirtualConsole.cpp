@@ -192,7 +192,8 @@ void CVirtualConsole::DumpConsole()
 		return;
 	}
 	DWORD dw;
-	WriteFile(hFile, gConEmu.Title, _tcslen(gConEmu.Title)*sizeof(TCHAR), &dw, NULL);
+	LPCTSTR pszTitle = gConEmu.GetTitle();
+	WriteFile(hFile, pszTitle, _tcslen(pszTitle)*sizeof(*pszTitle), &dw, NULL);
 	swprintf(temp, _T("\r\nSize: %ix%i\r\n"), TextWidth, TextHeight);
 	WriteFile(hFile, temp, _tcslen(temp)*sizeof(TCHAR), &dw, NULL);
 	WriteFile(hFile, ConChar, TextWidth * TextHeight * 2, &dw, NULL);
@@ -205,7 +206,7 @@ HFONT CVirtualConsole::CreateFontIndirectMy(LOGFONT *inFont)
 	memset(FontWidth, 0, sizeof(*FontWidth)*0x10000);
 	memset(Font2Width, 0, sizeof(*Font2Width)*0x10000);
 
-    DeleteObject(pVCon->hFont2);
+    DeleteObject(pVCon->hFont2); pVCon->hFont2 = NULL;
 
     int width = gSet.FontSizeX2 ? gSet.FontSizeX2 : inFont->lfWidth;
     pVCon->hFont2 = CreateFont(abs(inFont->lfHeight), abs(width), 0, 0, FW_NORMAL,

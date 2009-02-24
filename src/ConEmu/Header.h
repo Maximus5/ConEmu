@@ -87,7 +87,7 @@ void __forceinline DisplayLastError(LPCTSTR asLabel)
 	LPVOID lpMsgBuf;
 	FormatMessage( FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, NULL, dw, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR) &lpMsgBuf, 0, NULL );
 	wsprintf(out, _T("%s\nError code ''%d'':\n%s"), asLabel, dw, lpMsgBuf);
-	MessageBox(0, out, gConEmu.Title[0] ? gConEmu.Title : _T("ConEmu"), MB_SYSTEMMODAL | MB_ICONERROR);
+	MessageBox(0, out, gConEmu.GetTitle(), MB_SYSTEMMODAL | MB_ICONERROR);
 }
 
 COORD __forceinline MakeCoord(int W,int H)

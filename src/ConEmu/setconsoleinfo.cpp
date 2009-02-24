@@ -279,11 +279,12 @@ void SetConsoleFontSizeTo(HWND inConWnd, int inSizeX, int inSizeY)
 	if (GetCurrentConsoleFontEx && SetCurrentConsoleFontEx) // We have Vista
 	{
 		CONSOLE_FONT_INFOEX cfi = {sizeof(CONSOLE_FONT_INFOEX)};
-		GetCurrentConsoleFontEx(GetStdHandle(STD_OUTPUT_HANDLE), FALSE, &cfi);
+		//GetCurrentConsoleFontEx(GetStdHandle(STD_OUTPUT_HANDLE), FALSE, &cfi);
 		cfi.dwFontSize.X = inSizeX;
 		cfi.dwFontSize.Y = inSizeY;
-		SetCurrentConsoleFontEx(GetStdHandle(STD_OUTPUT_HANDLE), FALSE, &cfi);
 		//TODO: А Люциду кто ставить будет???
+		_tcscpy(cfi.FaceName, _T("Lucida Console"));
+		SetCurrentConsoleFontEx(GetStdHandle(STD_OUTPUT_HANDLE), FALSE, &cfi);
 	}
 	else // We have other NT
 	{

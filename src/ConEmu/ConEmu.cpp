@@ -1,5 +1,17 @@
 #include "Header.h"
 
+#define CES_CONMANACTIVE 0x01
+#define CES_TELNETACTIVE 0x02
+#define CES_FARACTIVE 0x04
+#define CES_FILEPANEL 0x10
+#define CES_TEMPPANEL 0x20
+#define CES_PLUGINPANEL 0x40
+#define CES_EDITOR 0x100
+#define CES_VIEWER 0x200
+#define CES_COPYING 0x400
+#define CES_MOVING 0x800
+//... and so on
+
 CConEmuMain::CConEmuMain()
 {
     wcscpy(szConEmuVersion, L"?.?.?.?");
@@ -35,6 +47,7 @@ CConEmuMain::CConEmuMain()
 	//mb_InClose = FALSE;
 	memset(m_ProcList, 0, 1000*sizeof(DWORD)); m_ProcCount=0;
 	mn_TopProcessID = 0; ms_TopProcess[0] = 0; mb_FarActive = FALSE;
+	mn_ActiveStatus = 0;
 
 	mh_Psapi = NULL;
 	GetModuleFileNameEx= NULL;
@@ -1261,6 +1274,30 @@ void CConEmuMain::PaintGaps(HDC hDC/*=NULL*/)
 	}
 #endif
 
+LPCTSTR CConEmuMain::GetTitle()
+{
+	if (!Title[0])
+		return _T("ConEmu");
+	return Title;
+}
+
+void CConEmuMain::UpdateTitle(LPCTSTR asNewTitle)
+{
+    wcscpy(Title, asNewTitle);
+    SetWindowText(ghWnd, Title);
+    if (ghWndApp)
+		SetWindowText(ghWndApp, Title);
+
+	LPTSTR pszTitle = GetTitleStart();
+	mn_ActiveStatus = 0;
+
+	// далее идут взаимоисключающие флаги
+	if (_tcsncmp(pszTitle, _T("edit "), 5)==0 || _tcsncmp(pszTitle, ms_EditorRus, _tcslen(ms_EditorRus))==0)
+		mn_ActiveStatus |= CES_EDITOR;
+	else if (_tcsncmp(pszTitle, _T("view "), 5)==0 || _tcsncmp(pszTitle, ms_ViewerRus, _tcslen(ms_ViewerRus))==0)
+		mn_ActiveStatus |= CES_VIEWER;
+}
+
 LPTSTR CConEmuMain::GetTitleStart()
 {
     TCHAR* pszTitle=Title;
@@ -1269,7 +1306,8 @@ LPTSTR CConEmuMain::GetTitleStart()
 	    pszTitle = _tcschr(Title, _T(']'));
 	    if (!pszTitle)
 		    return NULL;
-		while (*pszTitle && *pszTitle!=_T('{'))
+		pszTitle++; // пропустить ']' и последующие пробелы
+		while (*pszTitle==L' ' /*&& *pszTitle!=_T('{')*/)
 			pszTitle++;
     }
 	return pszTitle;
@@ -1307,24 +1345,12 @@ bool CConEmuMain::isFilePanel(bool abPluginAllowed/*=false*/)
 
 bool CConEmuMain::isEditor()
 {
-    TCHAR* pszTitle=GetTitleStart();
-    if (!pszTitle) return false;
-    
-	if (_tcsncmp(pszTitle, _T("edit "), 5)==0 || _tcsncmp(pszTitle, ms_EditorRus, _tcslen(ms_EditorRus))==0)
-		return true;
-
-    return false;
+	return mn_ActiveStatus & CES_EDITOR;
 }
 
 bool CConEmuMain::isViewer()
 {
-    TCHAR* pszTitle=GetTitleStart();
-    if (!pszTitle) return false;
-    
-	if (_tcsncmp(pszTitle, _T("view "), 5)==0 || _tcsncmp(pszTitle, ms_ViewerRus, _tcslen(ms_ViewerRus))==0)
-		return true;
-
-    return false;
+	return mn_ActiveStatus & CES_VIEWER;
 }
 
 // «аголовок окна дл€ PictureView вообще может пользователем настраиватьс€, так что
@@ -2034,11 +2060,7 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 
         GetWindowText(ghConWnd, TitleCmp, 1024);
         if (wcscmp(Title, TitleCmp))
-        {
-            wcscpy(Title, TitleCmp);
-            SetWindowText(ghWnd, Title);
-            SetWindowText(ghWndApp, Title);
-        }
+			UpdateTitle(TitleCmp);
 
         TabBar.OnTimer();
         ProgressBars->OnTimer();

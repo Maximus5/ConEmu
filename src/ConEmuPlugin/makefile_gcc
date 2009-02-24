@@ -1,6 +1,6 @@
 NAME = ConEmu
 SRCS = ConEmuPlugin.cpp \
-       ConEmuPlugin684.cpp \
+       ConEmuPlugin789.cpp \
        ConEmuPlugin757.cpp \
        ConEmuPluginA.cpp \
        ../ConEmu/setconsoleinfo.cpp \
@@ -103,6 +103,7 @@ MAP = $(patsubst %.$(EXT),%.map,$(DLLFULLNAME))
 
 all: $(DLLFULLNAME)
 
+
 #ifndef DISABLEAUTODEPS
 #$(OBJDIR)/%.d: %.cpp
 #	@echo making depends for $<
@@ -122,7 +123,7 @@ $(OBJDIR)/%.o: %.c
 	@$(CC) $(CCFLAGS) -c -o $@ $<
 
 $(RES): $(RC_NAME)
-	@echo compiling $<
+	@echo compiling resources $<
 	@$(MKDIR) -p $(@D)
 	@$(WINDRES) $(RCFLAGS) -i $< -o $@
 

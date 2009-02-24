@@ -1,6 +1,6 @@
 #include <windows.h>
 #include "..\common\common.hpp"
-#include "..\common\pluginW684.hpp"
+#include "..\common\pluginW789.hpp"
 #include "PluginHeader.h"
 
 #ifndef FORWARD_WM_COPYDATA
@@ -8,66 +8,52 @@
     (BOOL)(UINT)(DWORD)(fn)((hwnd), WM_COPYDATA, (WPARAM)(hwndFrom), (LPARAM)(pcds))
 #endif
 
-/* COMMON - пока структуры не различаются */
-void WINAPI _export GetPluginInfoW(struct PluginInfo *pi)
-{
-	pi->StructSize = sizeof(struct PluginInfo);
-	pi->Flags = PF_EDITOR | PF_VIEWER | PF_PRELOAD;
-	pi->DiskMenuStrings = NULL;
-	pi->DiskMenuNumbers = 0;
-	pi->PluginMenuStrings = NULL;
-	pi->PluginMenuStringsNumber =0;
-	pi->PluginConfigStrings = NULL;
-	pi->PluginConfigStringsNumber = 0;
-	pi->CommandPrefix = NULL;
-	pi->Reserved = 0;	
-}
-/* COMMON - end */
+
+struct PluginStartupInfo *InfoW789=NULL;
+struct FarStandardFunctions *FSFW789=NULL;
 
 
 
-struct PluginStartupInfo *InfoW684=NULL;
-struct FarStandardFunctions *FSFW684=NULL;
 
-
-void ProcessDragFrom684()
+void ProcessDragFrom789()
 {
 	WindowInfo WInfo;				
     WInfo.Pos=0;
-	InfoW684->AdvControl(InfoW684->ModuleNumber, ACTL_GETSHORTWINDOWINFO, (void*)&WInfo);
+	InfoW789->AdvControl(InfoW789->ModuleNumber, ACTL_GETSHORTWINDOWINFO, (void*)&WInfo);
 	if (!WInfo.Current)
 	{
-		//InfoW684->AdvControl(InfoW684->ModuleNumber, ACTL_FREEWINDOWINFO, (void*)&WInfo);
 		int ItemsCount=0;
 		//WriteFile(hPipe, &ItemsCount, sizeof(int), &cout, NULL);				
 		OutDataAlloc(sizeof(ItemsCount));
 		OutDataWrite(&ItemsCount,sizeof(ItemsCount));
 		return;
 	}
-	//InfoW684->AdvControl(InfoW684->ModuleNumber, ACTL_FREEWINDOWINFO, (void*)&WInfo);
 
 	PanelInfo PInfo;
-	InfoW684->Control(PANEL_ACTIVE, FCTL_GETPANELINFO, &PInfo);
+	WCHAR *szCurDir=gszDir1; szCurDir[0]=0; //(WCHAR*)calloc(0x400,sizeof(WCHAR));
+	InfoW789->Control(PANEL_ACTIVE, FCTL_GETPANELINFO, NULL, (LONG_PTR)&PInfo);
 	if ((PInfo.PanelType == PTYPE_FILEPANEL || PInfo.PanelType == PTYPE_TREEPANEL) && PInfo.Visible)
 	{
+		InfoW789->Control(PANEL_ACTIVE, FCTL_GETCURRENTDIRECTORY, 0x400, (LONG_PTR)szCurDir);
 		int nDirLen=0, nDirNoSlash=0;
-		if (PInfo.lpwszCurDir && *PInfo.lpwszCurDir)
+		if (szCurDir[0])
 		{
-			nDirLen=lstrlen(PInfo.lpwszCurDir);
+			nDirLen=lstrlen(szCurDir);
 			if (nDirLen>0)
-				if (PInfo.lpwszCurDir[nDirLen-1]!=L'\\')
+				if (szCurDir[nDirLen-1]!=L'\\')
 					nDirNoSlash=1;
 		}
 
 		OutDataAlloc(sizeof(int)+PInfo.SelectedItemsNumber*((MAX_PATH+2)+sizeof(int)));
 
 		//Maximus5 - новый формат передачи
-		int nNull=0;
-		//WriteFile(hPipe, &nNull/*ItemsCount*/, sizeof(int), &cout, NULL);
+		int nNull=0; // ItemsCount
+		//WriteFile(hPipe, &nNull, sizeof(int), &cout, NULL);
 		OutDataWrite(&nNull/*ItemsCount*/, sizeof(int));
 		
 		if (PInfo.SelectedItemsNumber>0)
 		{
+			PluginPanelItem **pi = (PluginPanelItem**)calloc(PInfo.SelectedItemsNumber, sizeof(PluginPanelItem*));
 			int ItemsCount=PInfo.SelectedItemsNumber, i;
 
 			int nMaxLen=MAX_PATH+1, nWholeLen=1;
@@ -75,12 +61,20 @@ void ProcessDragFrom684()
 			// сначала посчитать максимальную длину буфера
 			for (i=0;i<ItemsCount;i++)
 			{
+				size_t sz = InfoW789->Control(PANEL_ACTIVE, FCTL_GETSELECTEDPANELITEM, i, NULL);
+				if (!sz)
+					continue;
+				pi[i] = (PluginPanelItem*)calloc(sz, 1); // размер возвращается в байтах
+				if (!InfoW789->Control(PANEL_ACTIVE, FCTL_GETSELECTEDPANELITEM, i, (LONG_PTR)&(pi[i])))
+					continue;
+
 				int nLen=nDirLen+nDirNoSlash;
-				nLen += lstrlen(PInfo.SelectedItems[i]->FindData.lpwszFileName);
+				nLen += lstrlen(pi[i]->FindData.lpwszFileName);
 				if (nLen>nMaxLen)
 					nMaxLen = nLen;
 				nWholeLen += (nLen+1);
 			}
+			//WriteFile(hPipe, &nWholeLen, sizeof(int), &cout, NULL);
 			OutDataWrite(&nWholeLen, sizeof(int));
 
 			WCHAR* Path=new WCHAR[nMaxLen+1];
@@ -90,30 +84,41 @@ void ProcessDragFrom684()
 				//WCHAR Path[MAX_PATH+1];
 				//ZeroMemory(Path, MAX_PATH+1);
 				//Maximus5 - засада с корнем диска и возможностью overflow
-				//wsprintf(Path, L"%s\\%s", PInfo.lpwszCurDir, PInfo.SelectedItems[i]->FindData.lpwszFileName);
+				//wsprintf(Path, L"%s\\%s", szCurDir, PInfo.SelectedItems[i]->FindData.lpwszFileName);
 				Path[0]=0;
 
+				if (!pi[i] || !pi[i]->FindData.lpwszFileName) continue; //этот элемент получить не удалось
+
 				int nLen=nDirLen+nDirNoSlash;
-				nLen += lstrlen(PInfo.SelectedItems[i]->FindData.lpwszFileName);
+				nLen += lstrlen(pi[i]->FindData.lpwszFileName);
 
 				if (nDirLen>0) {
-					lstrcpy(Path, PInfo.lpwszCurDir);
+					lstrcpy(Path, szCurDir);
 					if (nDirNoSlash) {
 						Path[nDirLen]=L'\\';
 						Path[nDirLen+1]=0;
 					}
 				}
-				lstrcpy(Path+nDirLen+nDirNoSlash, PInfo.SelectedItems[i]->FindData.lpwszFileName);
+				lstrcpy(Path+nDirLen+nDirNoSlash, pi[i]->FindData.lpwszFileName);
 
 				nLen++;
+				//WriteFile(hPipe, &nLen, sizeof(int), &cout, NULL);
 				OutDataWrite(&nLen, sizeof(int));
+				//WriteFile(hPipe, Path, sizeof(WCHAR)*nLen, &cout, NULL);
 				OutDataWrite(Path, sizeof(WCHAR)*nLen);
 			}
+
+			for (i=0;i<ItemsCount;i++)
+			{
+				if (pi[i]) free(pi[i]);
+			}
+			free ( pi ); pi = NULL;
 
 			delete Path; Path=NULL;
 
 			// Конец списка
-			OutDataWrite(&nNull/*ItemsCount*/, sizeof(int));
+			//WriteFile(hPipe, &nNull, sizeof(int), &cout, NULL);
+			OutDataWrite(&nNull, sizeof(int));
 		}
 	}
 	else
@@ -122,42 +127,43 @@ void ProcessDragFrom684()
 		OutDataWrite(&ItemsCount, sizeof(int));
 		OutDataWrite(&ItemsCount, sizeof(int)); // смена формата
 	}
-	InfoW684->Control(PANEL_ACTIVE, FCTL_FREEPANELINFO, &PInfo);
+	//free(szCurDir);
 }
 
-void ProcessDragTo684()
+void ProcessDragTo789()
 {
 	WindowInfo WInfo;				
     WInfo.Pos=0;
-	InfoW684->AdvControl(InfoW684->ModuleNumber, ACTL_GETSHORTWINDOWINFO, (void*)&WInfo);
+	InfoW789->AdvControl(InfoW789->ModuleNumber, ACTL_GETSHORTWINDOWINFO, (void*)&WInfo);
 	if (!WInfo.Current)
 	{
-		//InfoW684->AdvControl(InfoW684->ModuleNumber, ACTL_FREEWINDOWINFO, (void*)&WInfo);
+		//InfoW789->AdvControl(InfoW789->ModuleNumber, ACTL_FREEWINDOWINFO, (void*)&WInfo);
 		int ItemsCount=0;
 		//WriteFile(hPipe, &ItemsCount, sizeof(int), &cout, NULL);				
 		OutDataAlloc(sizeof(ItemsCount));
 		OutDataWrite(&ItemsCount,sizeof(ItemsCount));
 		return;
 	}
-	//InfoW684->AdvControl(InfoW684->ModuleNumber, ACTL_FREEWINDOWINFO, (void*)&WInfo);
+	//InfoW789->AdvControl(InfoW789->ModuleNumber, ACTL_FREEWINDOWINFO, (void*)&WInfo);
 	
 	PanelInfo PAInfo, PPInfo;
 	ForwardedPanelInfo *pfpi=NULL;
 	int nStructSize = sizeof(ForwardedPanelInfo)+4; // потом увеличим на длину строк
 	//ZeroMemory(&fpi, sizeof(fpi));
 	BOOL lbAOK=FALSE, lbPOK=FALSE;
+	WCHAR *szPDir=gszDir1; szPDir[0]=0; //(WCHAR*)calloc(0x400,sizeof(WCHAR));
+	WCHAR *szADir=gszDir2; szADir[0]=0; //(WCHAR*)calloc(0x400,sizeof(WCHAR));
 	
-	//Maximus5 - к сожалению, FCTL_GETPANELSHORTINFO не возвращает lpwszCurDir :-(
+	//if (!(lbAOK=InfoW789->Control(PANEL_ACTIVE, FCTL_GETPANELSHORTINFO, &PAInfo)))
+	lbAOK=InfoW789->Control(PANEL_ACTIVE, FCTL_GETPANELINFO, 0, (LONG_PTR)&PAInfo) &&
+		  InfoW789->Control(PANEL_ACTIVE, FCTL_GETCURRENTDIRECTORY, 0x400, (LONG_PTR)szADir);
+	if (lbAOK && szADir)
+		nStructSize += (lstrlen(szADir))*sizeof(WCHAR);
 
-	//if (!(lbAOK=InfoW684->Control(PANEL_ACTIVE, FCTL_GETPANELSHORTINFO, &PAInfo)))
-	lbAOK=InfoW684->Control(PANEL_ACTIVE, FCTL_GETPANELINFO, &PAInfo);
-	if (lbAOK && PAInfo.lpwszCurDir)
-		nStructSize += (lstrlen(PAInfo.lpwszCurDir))*sizeof(WCHAR);
-
-	//if (!(lbPOK=InfoW684->Control(PANEL_PASSIVE, FCTL_GETPANELSHORTINFO, &PPInfo)))
-	lbPOK=InfoW684->Control(PANEL_PASSIVE, FCTL_GETPANELINFO, &PPInfo);
-	if (lbPOK && PPInfo.lpwszCurDir)
-		nStructSize += (lstrlen(PPInfo.lpwszCurDir))*sizeof(WCHAR); // Именно WCHAR! не TCHAR
+	lbPOK=InfoW789->Control(PANEL_PASSIVE, FCTL_GETPANELINFO, 0, (LONG_PTR)&PPInfo) &&
+		  InfoW789->Control(PANEL_PASSIVE, FCTL_GETCURRENTDIRECTORY, 0x400, (LONG_PTR)szPDir);
+	if (lbPOK && szPDir)
+		nStructSize += (lstrlen(szPDir))*sizeof(WCHAR); // Именно WCHAR! не TCHAR
 
 	pfpi = (ForwardedPanelInfo*)calloc(nStructSize,1);
 
@@ -172,8 +178,8 @@ void ProcessDragTo684()
 		pfpi->ActiveRect=PAInfo.PanelRect;
 		if ((PAInfo.PanelType == PTYPE_FILEPANEL || PAInfo.PanelType == PTYPE_TREEPANEL) && PAInfo.Visible)
 		{
-			if (PAInfo.lpwszCurDir != NULL) {
-				lstrcpyW(pfpi->pszActivePath, PAInfo.lpwszCurDir);
+			if (szADir[0]) {
+				lstrcpyW(pfpi->pszActivePath, szADir);
 				pfpi->PassivePathShift += lstrlenW(pfpi->pszActivePath)*2;
 			}
 		}
@@ -185,8 +191,8 @@ void ProcessDragTo684()
 		pfpi->PassiveRect=PPInfo.PanelRect;
 		if ((PPInfo.PanelType == PTYPE_FILEPANEL || PPInfo.PanelType == PTYPE_TREEPANEL) && PPInfo.Visible)
 		{
-			if (PPInfo.lpwszCurDir != NULL)
-				lstrcpyW(pfpi->pszPassivePath, PPInfo.lpwszCurDir);
+			if (szPDir[0])
+				lstrcpyW(pfpi->pszPassivePath, szPDir);
 		}
 	}
 
@@ -198,35 +204,32 @@ void ProcessDragTo684()
 	OutDataWrite(pfpi, nStructSize);
 
 	free(pfpi); pfpi=NULL;
-	InfoW684->Control(PANEL_ACTIVE, FCTL_FREEPANELINFO, &PAInfo);
-	InfoW684->Control(PANEL_ACTIVE, FCTL_FREEPANELINFO, &PPInfo);
 }
 
-void SetStartupInfoW684(void *aInfo)
+void SetStartupInfoW789(void *aInfo)
 {
-	::InfoW684 = (PluginStartupInfo*)calloc(sizeof(PluginStartupInfo),1);
-	::FSFW684 = (FarStandardFunctions*)calloc(sizeof(FarStandardFunctions),1);
-	*::InfoW684 = *((struct PluginStartupInfo*)aInfo);
-	*::FSFW684 = *((struct PluginStartupInfo*)aInfo)->FSF;
-	::InfoW684->FSF = ::FSFW684;
-
+	::InfoW789 = (PluginStartupInfo*)calloc(sizeof(PluginStartupInfo),1);
+	::FSFW789 = (FarStandardFunctions*)calloc(sizeof(FarStandardFunctions),1);
+	*::InfoW789 = *((struct PluginStartupInfo*)aInfo);
+	*::FSFW789 = *((struct PluginStartupInfo*)aInfo)->FSF;
+	::InfoW789->FSF = ::FSFW789;
+	
 	/*if (!FarHwnd)
-		InitHWND((HWND)InfoW684->AdvControl(InfoW684->ModuleNumber, ACTL_GETFARHWND, 0));*/
+		InitHWND((HWND)InfoW789->AdvControl(InfoW789->ModuleNumber, ACTL_GETFARHWND, 0));*/
 }
 
-
+extern int lastModifiedStateW;
 // watch non-modified -> modified editor status change
-int ProcessEditorInputW684(LPCVOID aRec)
+int ProcessEditorInputW789(LPCVOID aRec)
 {
 	const INPUT_RECORD *Rec = (const INPUT_RECORD*)aRec;
 	// only key events with virtual codes > 0 are likely to cause status change (?)
 	if (Rec->EventType == KEY_EVENT && Rec->Event.KeyEvent.wVirtualKeyCode > 0  && Rec->Event.KeyEvent.bKeyDown)
 	{
 		EditorInfo ei;
-		// Пока что PluginStartupInfo по версиям не различается...
-		InfoW684->EditorControl(ECTL_GETINFO, &ei);
+		InfoW789->EditorControl(ECTL_GETINFO, &ei);
 		int currentModifiedState = ei.CurState == ECSTATE_MODIFIED ? 1 : 0;
-		InfoW684->EditorControl(ECTL_FREEINFO, &ei);
+		InfoW789->EditorControl(ECTL_FREEINFO, &ei);
 		if (lastModifiedStateW != currentModifiedState)
 		{
 			// !!! Именно UpdateConEmuTabsW, без версии !!!
@@ -237,7 +240,7 @@ int ProcessEditorInputW684(LPCVOID aRec)
 	return 0;
 }
 
-int ProcessEditorEventW684(int Event, void *Param)
+int ProcessEditorEventW789(int Event, void *Param)
 {
 	switch (Event)
 	{
@@ -255,7 +258,7 @@ int ProcessEditorEventW684(int Event, void *Param)
 	return 0;
 }
 
-int ProcessViewerEventW684(int Event, void *Param)
+int ProcessViewerEventW789(int Event, void *Param)
 {
 	switch (Event)
 	{
@@ -268,17 +271,16 @@ int ProcessViewerEventW684(int Event, void *Param)
 			UpdateConEmuTabsW(Event, Event == VE_KILLFOCUS, false);
 		}
 	}
-
 	return 0;
 }
 
 
-void UpdateConEmuTabsW684(int event, bool losingFocus, bool editorSave)
+void UpdateConEmuTabsW789(int event, bool losingFocus, bool editorSave)
 {
     BOOL lbCh = FALSE;
 	WindowInfo WInfo;
 
-	int windowCount = (int)InfoW684->AdvControl(InfoW684->ModuleNumber, ACTL_GETWINDOWCOUNT, NULL);
+	int windowCount = (int)InfoW789->AdvControl(InfoW789->ModuleNumber, ACTL_GETWINDOWCOUNT, NULL);
 	lbCh = (lastWindowCount != windowCount);
 	
 	if (!CreateTabs ( windowCount ))
@@ -287,54 +289,54 @@ void UpdateConEmuTabsW684(int event, bool losingFocus, bool editorSave)
 	EditorInfo ei;
 	if (editorSave)
 	{
-		InfoW684->EditorControl(ECTL_GETINFO, &ei);
+		InfoW789->EditorControl(ECTL_GETINFO, &ei);
 	}
 
 	int tabCount = 1;
 	for (int i = 0; i < windowCount; i++)
 	{
 		WInfo.Pos = i;
-		InfoW684->AdvControl(InfoW684->ModuleNumber, ACTL_GETWINDOWINFO, (void*)&WInfo);
+		InfoW789->AdvControl(InfoW789->ModuleNumber, ACTL_GETWINDOWINFO, (void*)&WInfo);
 		if (WInfo.Type == WTYPE_EDITOR || WInfo.Type == WTYPE_VIEWER || WInfo.Type == WTYPE_PANELS)
 			lbCh |= AddTab(tabCount, losingFocus, editorSave, 
 				WInfo.Type, WInfo.Name, editorSave ? ei.FileName : NULL, 
 				WInfo.Current, WInfo.Modified);
-		InfoW684->AdvControl(InfoW684->ModuleNumber, ACTL_FREEWINDOWINFO, (void*)&WInfo);
+		InfoW789->AdvControl(InfoW789->ModuleNumber, ACTL_FREEWINDOWINFO, (void*)&WInfo);
 	}
 	
 	if (editorSave) 
-		InfoW684->EditorControl(ECTL_FREEINFO, &ei);
+		InfoW789->EditorControl(ECTL_FREEINFO, &ei);
 
 	if (lbCh)
 		SendTabs(tabCount);
 }
 
-void ExitFARW684(void)
+void ExitFARW789(void)
 {
-	if (InfoW684) {
-		free(InfoW684);
-		InfoW684=NULL;
+	if (InfoW789) {
+		free(InfoW789);
+		InfoW789=NULL;
 	}
-	if (FSFW684) {
-		free(FSFW684);
-		FSFW684=NULL;
+	if (FSFW789) {
+		free(FSFW789);
+		FSFW789=NULL;
 	}
 }
 
-int ShowMessage684(int aiMsg, int aiButtons)
+int ShowMessage789(int aiMsg, int aiButtons)
 {
-	if (!InfoW684 || !InfoW684->Message)
+	if (!InfoW789 || !InfoW789->Message)
 		return -1;
-	return InfoW684->Message(InfoW684->ModuleNumber, FMSG_ALLINONE, NULL, 
-		(const wchar_t * const *)InfoW684->GetMsg(InfoW684->ModuleNumber,aiMsg), 0, aiButtons);
+	return InfoW789->Message(InfoW789->ModuleNumber, FMSG_ALLINONE, NULL, 
+		(const wchar_t * const *)InfoW789->GetMsg(InfoW789->ModuleNumber,aiMsg), 0, aiButtons);
 }
 
-void ReloadMacro684()
+void ReloadMacro789()
 {
-	if (!InfoW684 || !InfoW684->AdvControl)
+	if (!InfoW789 || !InfoW789->AdvControl)
 		return;
 
 	ActlKeyMacro command;
 	command.Command=MCMD_LOADALL;
-	InfoW684->AdvControl(InfoW684->ModuleNumber,ACTL_KEYMACRO,&command);
+	InfoW789->AdvControl(InfoW789->ModuleNumber,ACTL_KEYMACRO,&command);
 }

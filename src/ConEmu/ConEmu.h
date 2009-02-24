@@ -79,7 +79,6 @@ public:
 	LPARAM lastMML;
 	CDragDrop *DragDrop;
 	CProgressBars *ProgressBars;
-	TCHAR Title[MAX_TITLE_SIZE], TitleCmp[MAX_TITLE_SIZE];
 	COORD srctWindowLast; // console size after last resize (in columns and lines)
 	RECT  dcWindowLast; // Последний размер дочернего окна
 	uint cBlinkShift; // cursor blink counter threshold
@@ -88,6 +87,12 @@ public:
 	DWORD mn_TopProcessID; BOOL mb_FarActive;
 	TCHAR ms_TopProcess[MAX_PATH+1];
 	TCHAR ms_EditorRus[16], ms_ViewerRus[16];
+protected:
+	TCHAR Title[MAX_TITLE_SIZE], TitleCmp[MAX_TITLE_SIZE];
+	void UpdateTitle(LPCTSTR asNewTitle);
+	DWORD mn_ActiveStatus;
+public:
+	LPCTSTR GetTitle();
 
 public:
 	CConEmuMain();

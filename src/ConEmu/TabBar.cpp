@@ -306,7 +306,7 @@ bool TabBarClass::OnNotify(LPNMHDR nmhdr)
 	if (nmhdr->code == TCN_SELCHANGE)
 	{
 		int lnNewTab = TabCtrl_GetCurSel(_hwndTab);
-		_tcscpy(_lastTitle, gConEmu.Title);
+		//_tcscpy(_lastTitle, gConEmu.Title);
 		
 		if (_prevTab>=0) {
 			SelectTab(_prevTab);
