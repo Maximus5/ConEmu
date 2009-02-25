@@ -3,6 +3,8 @@
 #define CES_CONMANACTIVE 0x01
 #define CES_TELNETACTIVE 0x02
 #define CES_FARACTIVE 0x04
+#define CES_PROGRAMS 0x0F
+
 #define CES_FILEPANEL 0x10
 #define CES_TEMPPANEL 0x20
 #define CES_PLUGINPANEL 0x40
@@ -15,7 +17,7 @@
 CConEmuMain::CConEmuMain()
 {
     wcscpy(szConEmuVersion, L"?.?.?.?");
-	gnLastProcessCount=0;
+	//gnLastProcessCount=0;
 	cBlinkNext=0;
 	WindowMode=0;
 	//hPipe=NULL;
@@ -45,9 +47,10 @@ CConEmuMain::CConEmuMain()
 	cBlinkShift=0;
 	Title[0]=0; TitleCmp[0]=0;
 	//mb_InClose = FALSE;
-	memset(m_ProcList, 0, 1000*sizeof(DWORD)); m_ProcCount=0;
-	mn_TopProcessID = 0; ms_TopProcess[0] = 0; mb_FarActive = FALSE;
-	mn_ActiveStatus = 0;
+	//memset(m_ProcList, 0, 1000*sizeof(DWORD)); 
+	m_ProcCount=0;
+	mn_TopProcessID = 0; //ms_TopProcess[0] = 0; mb_FarActive = FALSE;
+	mn_ActiveStatus = 0; m_ActiveConmanIDX = 0;
 
 	mh_Psapi = NULL;
 	GetModuleFileNameEx= NULL;
@@ -966,34 +969,64 @@ void CConEmuMain::SetConParent()
 	}
 #endif
 
-DWORD CConEmuMain::CheckProcesses()
+DWORD CConEmuMain::CheckProcesses(DWORD nConmanIDX/*=0*/)
 {
 	// Высота буфера могла измениться после смены списка процессов
 	BOOL  lbProcessChanged = FALSE;
 	int   nTopIdx = 0;
-    m_ProcCount = GetConsoleProcessList(m_ProcList,1000);
-    if (m_ProcCount>=2) {
-	    if (m_ProcList[0]==GetCurrentProcessId())
-		    nTopIdx++;
-    }
-	if (m_ProcCount && (!gnLastProcessCount || m_ProcCount!=gnLastProcessCount))
-		lbProcessChanged = TRUE;
-	else if (m_ProcCount && m_ProcList[nTopIdx]!=mn_TopProcessID)
-		lbProcessChanged = TRUE;
-	gnLastProcessCount = m_ProcCount;
-	
-	if (lbProcessChanged) {
-		if (m_ProcList[nTopIdx]==mn_TopProcessID) {
-			// не менялось
-			mb_FarActive = _tcscmp(ms_TopProcess, _T("far.exe"))==0;
-		} else
-		if (m_ProcList[nTopIdx]!=GetCurrentProcessId())
-		{
-			// Получить информацию о верхнем процессе
+	DWORD dwProcList[2], nProcCount;
+    nProcCount = GetConsoleProcessList(dwProcList,2);
+    // Дополнительные телодвижения делаем только если в консоли изменился
+    // список процессов
+    if (nProcCount != m_ProcCount && nProcCount > 1) {
+	    DWORD *dwFullProcList = new DWORD[nProcCount+10];
+	    nProcCount = GetConsoleProcessList(dwFullProcList,nProcCount+10);
+	    
+	    int i, j;
+	    std::vector<struct ConProcess>::iterator iter;
+	    struct ConProcess ConPrc;
+	    bool bActive;
+	    DWORD dwPID, dwTopPID, nTopIdx = 0, dwCurPID;
+	    
+	    dwCurPID = GetCurrentProcessId();
+	    // Какой процесс был запущен последним?
+	    if (dwFullProcList[0] == dwCurPID)
+		    nTopIdx ++;
+		dwTopPID = dwFullProcList[nTopIdx];
+	    // Сначала пробежаться по тому, что мы уже запомнили, 
+	    // и удалить то что завершилось
+	    iter = m_Processes.begin();
+	    while (iter != m_Processes.end())
+	    {
+		    bActive = false; dwPID = iter->ProcessID;
+		    for (i=0; i<(int)nProcCount; i++) {
+			    if (dwFullProcList[i] == dwPID) {
+				    bActive = true; j = i; break;
+			    }
+		    }
+		    if (!bActive)
+			    iter = m_Processes.erase(iter);
+			else {
+				iter ++; dwFullProcList[j] = 0; // чтобы не добавить дубль
+			}
+	    }
+	    // Теперь, добавить новые процессы (скорее всего это только dwTopPID)
+	    for (i=0; i<(int)nProcCount; i++)
+	    {
+		    if (!dwFullProcList[i]) continue; // это НЕ новый процесс
+		    if (dwFullProcList[i] == dwCurPID) continue; // Это сам ConEmu
+		    
+			ConPrc.ProcessID = dwFullProcList[i];
+			//TODO: теоретически, индекс конмана для верхнего процесса может отличаться, если заголовок консоли мигает (конман создает новую консоль)
+			ConPrc.ConmanIDX = nConmanIDX;
+			// Определить имя exe-шника
+			ConPrc.Name[0] = 0; ConPrc.NameChecked = false;
 			DWORD dwErr = 0;
-			HANDLE hProcess = OpenProcess(PROCESS_VM_READ|PROCESS_QUERY_INFORMATION, FALSE, m_ProcList[nTopIdx]);
-			if (!hProcess)
+			HANDLE hProcess = OpenProcess(PROCESS_VM_READ|PROCESS_QUERY_INFORMATION, FALSE, ConPrc.ProcessID);
+			if (!hProcess) {
 				dwErr = GetLastError();
+				swprintf(ConPrc.Name, _T("LastError=0x%08X"), dwErr);
+			}
 			else
 			{
 				TCHAR szFilePath[MAX_PATH+1];
@@ -1004,18 +1037,92 @@ DWORD CConEmuMain::CheckProcesses()
 					TCHAR* pszSlash = _tcsrchr(szFilePath, _T('\\'));
 					if (pszSlash) pszSlash++; else pszSlash=szFilePath;
 					int nLen = _tcslen(pszSlash);
-					if (nLen>MAX_PATH) pszSlash[MAX_PATH]=0;
-					_tcscpy(ms_TopProcess, pszSlash);
-					_tcslwr(ms_TopProcess);
-					mb_FarActive = _tcscmp(ms_TopProcess, _T("far.exe"))==0;
-					mn_TopProcessID = m_ProcList[nTopIdx];
+					if (nLen>=31) pszSlash[31]=0;
+					_tcscpy(ConPrc.Name, pszSlash);
+					ConPrc.IsFar = lstrcmpi(pszSlash, _T("far.exe"))==0;
+					ConPrc.IsTelnet = lstrcmpi(pszSlash, _T("telnet.exe"))==0;
+					ConPrc.NameChecked = true;
+					//mn_TopProcessID = m_ProcList[nTopIdx]; -- потом, когда будем искать активный процесс
 				}
 				CloseHandle(hProcess); hProcess = NULL;
 			}
-
-		}
-		TabBar.Refresh(mb_FarActive);
+			// Если это НЕ фар - наверное индекс конмана нас не интересует?
+			if (!ConPrc.IsFar /* && ConPrc.NameChecked */)
+				ConPrc.ConmanIDX = 0;
+			// Запомнить
+			m_Processes.push_back(ConPrc);
+	    }
+	    // Осталось выяснить, какой процесс сейчас "сверху"
+	    // Идем с конца списка, т.к. новые процессы консоли добавляются в конец
+	    mn_ActiveStatus &= ~CES_PROGRAMS;
+	    mn_TopProcessID = 0;
+	    for (i=m_Processes.size()-1; i>=0; i--)
+	    {
+		    if (m_Processes[i].ConmanIDX == nConmanIDX) {
+			    // скорее всего это искомый процесс
+			    mn_TopProcessID = m_Processes[i].ProcessID;
+			    if (m_Processes[i].IsFar)
+				    mn_ActiveStatus |= CES_FARACTIVE;
+			    if (m_Processes[i].IsTelnet)
+				    mn_ActiveStatus |= CES_TELNETACTIVE;
+				if (nConmanIDX)
+					mn_ActiveStatus |= CES_CONMANACTIVE;
+			    break;
+		    }
+	    }
+	    delete dwFullProcList;
     }
+    
+    m_ProcCount = nProcCount;
+    m_ActiveConmanIDX = nConmanIDX;
+    
+    TabBar.Refresh(mn_ActiveStatus & CES_FARACTIVE);
+    
+    
+    //if (m_ProcCount>=2) {
+	//    if (m_ProcList[0]==GetCurrentProcessId())
+	//	    nTopIdx++;
+    //}
+	//if (m_ProcCount && (!gnLastProcessCount || m_ProcCount!=gnLastProcessCount))
+	//	lbProcessChanged = TRUE;
+	//else if (m_ProcCount && m_ProcList[nTopIdx]!=mn_TopProcessID)
+	//	lbProcessChanged = TRUE;
+	//gnLastProcessCount = m_ProcCount;
+	//
+	//if (lbProcessChanged) {
+	//	if (m_ProcList[nTopIdx]==mn_TopProcessID) {
+	//		// не менялось
+	//		mb_FarActive = _tcscmp(ms_TopProcess, _T("far.exe"))==0;
+	//	} else
+	//	if (m_ProcList[nTopIdx]!=GetCurrentProcessId())
+	//	{
+	//		// Получить информацию о верхнем процессе
+	//		DWORD dwErr = 0;
+	//		HANDLE hProcess = OpenProcess(PROCESS_VM_READ|PROCESS_QUERY_INFORMATION, FALSE, m_ProcList[nTopIdx]);
+	//		if (!hProcess)
+	//			dwErr = GetLastError();
+	//		else
+	//		{
+	//			TCHAR szFilePath[MAX_PATH+1];
+	//			if (!GetModuleFileNameEx(hProcess, 0, szFilePath, MAX_PATH))
+	//				dwErr = GetLastError();
+	//			else
+	//			{
+	//				TCHAR* pszSlash = _tcsrchr(szFilePath, _T('\\'));
+	//				if (pszSlash) pszSlash++; else pszSlash=szFilePath;
+	//				int nLen = _tcslen(pszSlash);
+	//				if (nLen>MAX_PATH) pszSlash[MAX_PATH]=0;
+	//				_tcscpy(ms_TopProcess, pszSlash);
+	//				_tcslwr(ms_TopProcess);
+	//				mb_FarActive = _tcscmp(ms_TopProcess, _T("far.exe"))==0;
+	//				mn_TopProcessID = m_ProcList[nTopIdx];
+	//			}
+	//			CloseHandle(hProcess); hProcess = NULL;
+	//		}
+	//
+	//	}
+	//	TabBar.Refresh(mb_FarActive);
+    //}
 
 	return m_ProcCount;
 }
@@ -1281,6 +1388,7 @@ LPCTSTR CConEmuMain::GetTitle()
 	return Title;
 }
 
+// !!!Warning!!! Никаких return. в конце функции вызывается необходимый CheckProcesses
 void CConEmuMain::UpdateTitle(LPCTSTR asNewTitle)
 {
     wcscpy(Title, asNewTitle);
@@ -1288,20 +1396,30 @@ void CConEmuMain::UpdateTitle(LPCTSTR asNewTitle)
     if (ghWndApp)
 		SetWindowText(ghWndApp, Title);
 
-	LPTSTR pszTitle = GetTitleStart();
-	mn_ActiveStatus = 0;
+	DWORD dwConmanIDX=0;
+	LPTSTR pszTitle = GetTitleStart(&dwConmanIDX);
+	mn_ActiveStatus &= CES_PROGRAMS; // оставляем только флаги текущей программы
 
-	// далее идут взаимоисключающие флаги
+	// далее идут взаимоисключающие флаги режимов текущей программы
 	if (_tcsncmp(pszTitle, _T("edit "), 5)==0 || _tcsncmp(pszTitle, ms_EditorRus, _tcslen(ms_EditorRus))==0)
 		mn_ActiveStatus |= CES_EDITOR;
 	else if (_tcsncmp(pszTitle, _T("view "), 5)==0 || _tcsncmp(pszTitle, ms_ViewerRus, _tcslen(ms_ViewerRus))==0)
 		mn_ActiveStatus |= CES_VIEWER;
+		
+	// Под конец - проверить список процессов консоли
+	CheckProcesses(dwConmanIDX);
 }
 
-LPTSTR CConEmuMain::GetTitleStart()
+LPTSTR CConEmuMain::GetTitleStart(DWORD* rnConmanIDX/*=NULL*/)
 {
     TCHAR* pszTitle=Title;
-    if (Title[0]==_T('[') && isdigit(Title[1]) && (Title[2]==_T('/') || Title[3]==_T('/'))) {
+    if (rnConmanIDX) *rnConmanIDX = 0; // 0 - значит нету. Конманы начинаются с 1-цы
+    if (Title[0]==_T('[') && 
+        isdigit(Title[1]) && 
+        (Title[2]==_T('/') || Title[3]==_T('/'))) 
+    {
+	    if (rnConmanIDX)
+		    *rnConmanIDX = _wtoi(Title+1); //TODO: проверить, работает ли?
 	    // ConMan
 	    pszTitle = _tcschr(Title, _T(']'));
 	    if (!pszTitle)
@@ -1346,6 +1464,11 @@ bool CConEmuMain::isFilePanel(bool abPluginAllowed/*=false*/)
 bool CConEmuMain::isEditor()
 {
 	return mn_ActiveStatus & CES_EDITOR;
+}
+
+bool CConEmuMain::isFar()
+{
+	return mn_ActiveStatus & CES_FARACTIVE;
 }
 
 bool CConEmuMain::isViewer()
@@ -2012,8 +2135,12 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 		if (dwStyle & WS_DISABLED)
 			EnableWindow(ghWnd, TRUE);
 
-		CheckProcesses();
-		if (gnLastProcessCount == 1) {
+        GetWindowText(ghConWnd, TitleCmp, 1024);
+        if (wcscmp(Title, TitleCmp))
+			UpdateTitle(TitleCmp);
+		else
+			CheckProcesses();
+		if (m_ProcCount == 1) {
 			Destroy();
 			break;
 		}
@@ -2057,10 +2184,6 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
                 // turn cursor off
                 pVCon->Cursor.isVisible = false;
         }
-
-        GetWindowText(ghConWnd, TitleCmp, 1024);
-        if (wcscmp(Title, TitleCmp))
-			UpdateTitle(TitleCmp);
 
         TabBar.OnTimer();
         ProgressBars->OnTimer();

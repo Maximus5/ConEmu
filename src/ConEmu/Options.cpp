@@ -599,6 +599,13 @@ LRESULT CSettings::OnInitDialog()
 	SendDlgItemMessage(hColors, lbVisEOL, CB_SETCURSEL, nVizEOL, 0);
 	SendDlgItemMessage(hColors, lbVisEOF, CB_SETCURSEL, nVizEOF, 0);
 	OnColorButtonClicked(cbVisualizer, 0);
+	
+	// Performance
+	i64 tick2;
+	QueryPerformanceCounter((LARGE_INTEGER *)&tick2);
+	swprintf(temp, _T("%.3g"), (double)(tick2)/*/1000000000.0*/);
+	SetDlgItemText(gSet.hMain, tRender3, temp);
+	
 
 
 	{

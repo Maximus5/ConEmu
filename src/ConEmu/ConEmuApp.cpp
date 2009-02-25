@@ -309,6 +309,10 @@ LRESULT CALLBACK AppWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 
 BOOL CreateAppWindow()
 {
+	DWORD dwAffinity = 1;
+	SetThreadAffinityMask(GetCurrentThread(), 1);
+	SetProcessAffinityMask(GetCurrentThread(), 1);
+
     //!!!ICON
     gConEmu.LoadIcons();
     

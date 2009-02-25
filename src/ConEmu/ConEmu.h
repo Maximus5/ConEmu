@@ -57,7 +57,7 @@ public:
 	CConEmuBack  m_Back;
 	//POINT cwShift; // difference between window size and client area size for main ConEmu window
 	POINT ptFullScreenSize; // size for GetMinMaxInfo in Fullscreen mode
-	DWORD gnLastProcessCount;
+	//DWORD gnLastProcessCount;
 	uint cBlinkNext;
 	DWORD WindowMode;
 	//HANDLE hPipe;
@@ -83,14 +83,29 @@ public:
 	RECT  dcWindowLast; // Последний размер дочернего окна
 	uint cBlinkShift; // cursor blink counter threshold
 	TCHAR szConEmuVersion[32];
-	DWORD m_ProcList[1000], m_ProcCount;
-	DWORD mn_TopProcessID; BOOL mb_FarActive;
-	TCHAR ms_TopProcess[MAX_PATH+1];
+	//DWORD m_ProcList[1000], 
+	DWORD m_ProcCount, m_ActiveConmanIDX;
+	DWORD mn_ActiveStatus;
+	DWORD mn_TopProcessID; 
+	//BOOL mb_FarActive;
+	//TCHAR ms_TopProcess[MAX_PATH+1];
 	TCHAR ms_EditorRus[16], ms_ViewerRus[16];
 protected:
 	TCHAR Title[MAX_TITLE_SIZE], TitleCmp[MAX_TITLE_SIZE];
 	void UpdateTitle(LPCTSTR asNewTitle);
-	DWORD mn_ActiveStatus;
+	struct ConProcess {
+		DWORD ProcessID;
+		BYTE  ConmanIDX;
+		//bool  Alive;
+		bool  IsFar;
+		bool  IsTelnet; // может быть включен ВМЕСТЕ с IsFar, если удалось подцепится к фару через сетевой пайп
+		bool  NameChecked;
+		TCHAR Name[32];
+	};
+	std::vector<struct ConProcess> m_Processes;
+	DWORD CheckProcesses(DWORD nConmanIDX=0);
+	LPTSTR GetTitleStart(DWORD* rnConmanIDX=NULL);
+	
 public:
 	LPCTSTR GetTitle();
 
@@ -102,7 +117,6 @@ public:
 	static void AddMargins(RECT& rc, RECT& rcAddShift, BOOL abExpand=FALSE);
 	static RECT CalcMargins(enum ConEmuMargins mg);
 	static RECT CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFrom, RECT* prDC=NULL);
-	DWORD CheckProcesses();
 	void CheckBufferSize();
 	//COORD ConsoleSizeFromWindow(RECT* arect = NULL, bool frameIncluded = false, bool alreadyClient = false);
 	//RECT ConsoleOffsetRect();
@@ -111,12 +125,12 @@ public:
 	void ForceShowTabs(BOOL abShow);
 	//void GetCWShift(HWND inWnd, POINT *outShift);
 	//void GetCWShift(HWND inWnd, RECT *outShift);
-	LPTSTR GetTitleStart();
 	static BOOL WINAPI HandlerRoutine(DWORD dwCtrlType);
 	BOOL Init();
 	void InvalidateAll();
 	bool isConSelectMode();
 	bool isEditor();
+	bool isFar();
 	bool isFilePanel(bool abPluginAllowed=false);
 	bool isPictureView();
 	bool isViewer();

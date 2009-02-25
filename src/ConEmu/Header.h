@@ -2,6 +2,7 @@
 
 #include <windows.h>
 #include <Shlwapi.h>
+#include <vector>
 
 #ifdef KL_MEM
 #include "c:\\lang\\kl.h"

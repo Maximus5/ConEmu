@@ -82,6 +82,7 @@
 #define tWndY                           1062
 #define tRender2                        1063
 #define cbPosFixed                      1064
+#define tRender3                        1064
 #define IDC_TAB1                        1066
 #define lbExtendIdx                     1067
 #define cbVisualizer                    1068
