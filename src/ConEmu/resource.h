@@ -9,6 +9,7 @@
 #define IDD_DIALOG1                     101
 #define IDD_DIALOG2                     103
 #define IDD_DIALOGM                     104
+#define IDD_DIALOG3                     105
 #define c0                              1000
 #define c1                              1001
 #define c2                              1002
@@ -57,8 +58,11 @@
 #define cbItalic                        1043
 #define tRender                         1044
 #define tWndWidth                       1045
+#define tsConManIdx                     1045
 #define tWndHeight                      1046
+#define tsTopPID                        1046
 #define cbMonospace                     1047
+#define tRender4                        1047
 #define IDC_CHECK1                      1048
 #define cbExtendColors                  1048
 #define cbTTF                           1048
@@ -94,6 +98,14 @@
 #define cbIsConMan                      1074
 #define rCascade                        1075
 #define rFixed                          1076
+#define cbsConManActive                 1078
+#define cbsTelnetActive                 1079
+#define cbsFarActive                    1080
+#define cbsFilePanel                    1081
+#define cbsPlugin                       1082
+#define cbsEditor                       1083
+#define cbsViewer                       1084
+#define lbProcesses                     1085
 #define tc0                             1100
 #define tc1                             1101
 #define tc2                             1102
@@ -145,9 +157,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        105
+#define _APS_NEXT_RESOURCE_VALUE        106
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1078
+#define _APS_NEXT_CONTROL_VALUE         1086
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

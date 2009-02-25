@@ -309,9 +309,10 @@ LRESULT CALLBACK AppWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 
 BOOL CreateAppWindow()
 {
-	DWORD dwAffinity = 1;
+	// На тормоза - не влияет. Но вроде бы на многопроцессорных из-зп глюков
+	// в железе могут быть ошибки подсчета производительности, если этого не сделать
+	SetProcessAffinityMask(GetCurrentProcess(), 1);
 	SetThreadAffinityMask(GetCurrentThread(), 1);
-	SetProcessAffinityMask(GetCurrentThread(), 1);
 
     //!!!ICON
     gConEmu.LoadIcons();
@@ -911,7 +912,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     OleInitialize (NULL); // как бы попробовать включать Ole только во время драга. кажется что из-за него глючит переключалка языка
 
     SetConsoleCtrlHandler((PHANDLER_ROUTINE)CConEmuMain::HandlerRoutine, true);
-    SetTimer(ghWnd, 0, 10, NULL);
+    SetTimer(ghWnd, 0, gSet.nMainTimerElapse, NULL);
 
     Registry reg;
     if (reg.OpenKey(_T("Control Panel\\Desktop"), KEY_READ))

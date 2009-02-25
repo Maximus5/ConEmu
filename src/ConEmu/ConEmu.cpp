@@ -50,7 +50,7 @@ CConEmuMain::CConEmuMain()
 	//memset(m_ProcList, 0, 1000*sizeof(DWORD)); 
 	m_ProcCount=0;
 	mn_TopProcessID = 0; //ms_TopProcess[0] = 0; mb_FarActive = FALSE;
-	mn_ActiveStatus = 0; m_ActiveConmanIDX = 0;
+	mn_ActiveStatus = 0; m_ActiveConmanIDX = 0; mn_NeedRetryName = 0;
 
 	mh_Psapi = NULL;
 	GetModuleFileNameEx= NULL;
@@ -658,9 +658,7 @@ bool CConEmuMain::SetWindowMode(uint inMode)
 				if (rcNew.top<0) rcNew.top=0;
 			}
 
-			SetWindowPos(ghWnd, NULL, 
-				rcNew.left, rcNew.top, nWidth, nHeight,
-				SWP_NOZORDER);
+			SetWindowPos(ghWnd, NULL, rcNew.left, rcNew.top, nWidth, nHeight, SWP_NOZORDER);
 
             if (ghOpWnd)
 				CheckRadioButton(gSet.hMain, rNormal, rFullScreen, rNormal);
@@ -720,8 +718,9 @@ bool CConEmuMain::SetWindowMode(uint inMode)
 
 			// for virtual screend mi.rcMonitor. may contains negative values...
 
-			SetWindowPos(ghWnd, NULL,
-				-rcShift.left+mi.rcMonitor.left,-rcShift.top+mi.rcMonitor.top,ptFullScreenSize.x,ptFullScreenSize.y,
+			/* */ SetWindowPos(ghWnd, NULL,
+				-rcShift.left+mi.rcMonitor.left,-rcShift.top+mi.rcMonitor.top,
+				ptFullScreenSize.x,ptFullScreenSize.y,
 				SWP_NOZORDER);
 
             if (ghOpWnd)
@@ -969,18 +968,24 @@ void CConEmuMain::SetConParent()
 	}
 #endif
 
-DWORD CConEmuMain::CheckProcesses(DWORD nConmanIDX/*=0*/)
+DWORD CConEmuMain::CheckProcesses(DWORD nConmanIDX, BOOL bTitleChanged)
 {
 	// Высота буфера могла измениться после смены списка процессов
-	BOOL  lbProcessChanged = FALSE;
+	BOOL  lbProcessChanged = FALSE, lbAllowRetry = TRUE;
 	int   nTopIdx = 0;
 	DWORD dwProcList[2], nProcCount;
     nProcCount = GetConsoleProcessList(dwProcList,2);
+
+	//Warning! Новый Процесс появляется в консоли до того, как успеет измениться заголовок окна
+	//Попробовать через infsys
+
     // Дополнительные телодвижения делаем только если в консоли изменился
     // список процессов
     if (nProcCount != m_ProcCount && nProcCount > 1) {
 	    DWORD *dwFullProcList = new DWORD[nProcCount+10];
 	    nProcCount = GetConsoleProcessList(dwFullProcList,nProcCount+10);
+		lbProcessChanged = TRUE;
+	    mn_ActiveStatus &= ~CES_FARACTIVE; //CES_EDITOR и др. устанавливаются в SetTitle, а он вызывается перед этой функцией!
 	    
 	    int i, j;
 	    std::vector<struct ConProcess>::iterator iter;
@@ -1015,52 +1020,44 @@ DWORD CConEmuMain::CheckProcesses(DWORD nConmanIDX/*=0*/)
 	    {
 		    if (!dwFullProcList[i]) continue; // это НЕ новый процесс
 		    if (dwFullProcList[i] == dwCurPID) continue; // Это сам ConEmu
-		    
+
+		    memset(&ConPrc, 0, sizeof(ConPrc));
 			ConPrc.ProcessID = dwFullProcList[i];
 			//TODO: теоретически, индекс конмана для верхнего процесса может отличаться, если заголовок консоли мигает (конман создает новую консоль)
 			ConPrc.ConmanIDX = nConmanIDX;
 			// Определить имя exe-шника
-			ConPrc.Name[0] = 0; ConPrc.NameChecked = false;
 			DWORD dwErr = 0;
-			HANDLE hProcess = OpenProcess(PROCESS_VM_READ|PROCESS_QUERY_INFORMATION, FALSE, ConPrc.ProcessID);
-			if (!hProcess) {
-				dwErr = GetLastError();
-				swprintf(ConPrc.Name, _T("LastError=0x%08X"), dwErr);
+			if (ConPrc.NameChecked = GetProcessFileName(ConPrc.ProcessID, ConPrc.Name, &dwErr)) {
+				ConPrc.IsFar = lstrcmpi(ConPrc.Name, _T("far.exe"))==0;
+				if (ConPrc.IsTelnet = lstrcmpi(ConPrc.Name, _T("telnet.exe"))==0)
+					mn_ActiveStatus |= CES_TELNETACTIVE;
+				if (ConPrc.IsConman = lstrcmpi(ConPrc.Name, _T("conman.exe"))==0)
+					mn_ActiveStatus |= CES_CONMANACTIVE;
+				ConPrc.NameChecked = true;
+				// Теоретически - это может быть багом (если из одного фара запустили другой, но заголовок не поменялся?
+				if (nConmanIDX && (bTitleChanged || (nConmanIDX != m_ActiveConmanIDX)))
+					ConPrc.ConmanChecked = true;
+			} else if (dwErr == 6) {
+				ConPrc.RetryName = true;
+				lbAllowRetry = FALSE;
+				mn_NeedRetryName ++;
 			}
-			else
-			{
-				TCHAR szFilePath[MAX_PATH+1];
-				if (!GetModuleFileNameEx(hProcess, 0, szFilePath, MAX_PATH))
-					dwErr = GetLastError();
-				else
-				{
-					TCHAR* pszSlash = _tcsrchr(szFilePath, _T('\\'));
-					if (pszSlash) pszSlash++; else pszSlash=szFilePath;
-					int nLen = _tcslen(pszSlash);
-					if (nLen>=31) pszSlash[31]=0;
-					_tcscpy(ConPrc.Name, pszSlash);
-					ConPrc.IsFar = lstrcmpi(pszSlash, _T("far.exe"))==0;
-					ConPrc.IsTelnet = lstrcmpi(pszSlash, _T("telnet.exe"))==0;
-					ConPrc.NameChecked = true;
-					//mn_TopProcessID = m_ProcList[nTopIdx]; -- потом, когда будем искать активный процесс
-				}
-				CloseHandle(hProcess); hProcess = NULL;
-			}
-			// Если это НЕ фар - наверное индекс конмана нас не интересует?
-			if (!ConPrc.IsFar /* && ConPrc.NameChecked */)
-				ConPrc.ConmanIDX = 0;
+			// Если это НЕ фар - наверное индекс конмана нас не интересует? интересует. а то как узнать, что фар команды выполняет...
+			//if (!ConPrc.IsFar /* && ConPrc.NameChecked */)
+			//	ConPrc.ConmanIDX = 0;
 			// Запомнить
 			m_Processes.push_back(ConPrc);
 	    }
 	    // Осталось выяснить, какой процесс сейчас "сверху"
 	    // Идем с конца списка, т.к. новые процессы консоли добавляются в конец
-	    mn_ActiveStatus &= ~CES_PROGRAMS;
 	    mn_TopProcessID = 0;
 	    for (i=m_Processes.size()-1; i>=0; i--)
 	    {
 		    if (m_Processes[i].ConmanIDX == nConmanIDX) {
 			    // скорее всего это искомый процесс
-			    mn_TopProcessID = m_Processes[i].ProcessID;
+			    if (m_Processes[i].IsFar)
+				    mn_TopProcessID = m_Processes[i].ProcessID;
+				    
 			    if (m_Processes[i].IsFar)
 				    mn_ActiveStatus |= CES_FARACTIVE;
 			    if (m_Processes[i].IsTelnet)
@@ -1072,10 +1069,68 @@ DWORD CConEmuMain::CheckProcesses(DWORD nConmanIDX/*=0*/)
 	    }
 	    delete dwFullProcList;
     }
+
+    if (mn_NeedRetryName>0 && lbAllowRetry) {
+	    for (int i=m_Processes.size()-1; i>=0; i--)
+	    {
+			if (!m_Processes[i].RetryName) continue;
+		    DWORD dwErr = 0;
+			if (m_Processes[i].NameChecked = GetProcessFileName(m_Processes[i].ProcessID, m_Processes[i].Name, &dwErr)) {
+				m_Processes[i].IsFar = lstrcmpi(m_Processes[i].Name, _T("far.exe"))==0;
+				if (m_Processes[i].IsTelnet = lstrcmpi(m_Processes[i].Name, _T("telnet.exe"))==0)
+					mn_ActiveStatus |= CES_TELNETACTIVE;
+				if (m_Processes[i].IsConman = lstrcmpi(m_Processes[i].Name, _T("conman.exe"))==0)
+					mn_ActiveStatus |= CES_CONMANACTIVE;
+				m_Processes[i].NameChecked = true;
+				m_Processes[i].RetryName = false;
+				mn_NeedRetryName --;
+			} else {
+				lbAllowRetry = FALSE;
+			}
+		}
+    }
+
+	// попытаться обновить номер ConMan для необработанных процессо
+	if (nConmanIDX && (/*bTitleChanged ||*/ (nConmanIDX != m_ActiveConmanIDX)))
+	{
+		mn_TopProcessID = 0;
+	    for (int i=m_Processes.size()-1; i>=0; i--)
+	    {
+		    // 0-консоль - типа сам Конман
+		    if (m_Processes[i].IsConman /*|| !m_Processes[i].IsFar*/) continue;
+			if (!m_Processes[i].ConmanChecked || !m_Processes[i].ConmanIDX) {
+				// Обновляем. Скорее всего номер уже правильный
+				m_Processes[i].ConmanIDX = nConmanIDX;
+				m_Processes[i].ConmanChecked = true;
+			}
+			if (!mn_TopProcessID && m_Processes[i].IsFar && (m_Processes[i].ConmanIDX == nConmanIDX)) {
+				mn_TopProcessID = m_Processes[i].ProcessID;
+			}
+	    }
+	}
+    
+    if (!lbProcessChanged)
+	    lbProcessChanged = m_ActiveConmanIDX != nConmanIDX;
+	    
+	if (lbProcessChanged) {
+		TabBar.Reset();
+		if (mn_TopProcessID) {
+			swprintf(temp, CONEMUREQTABS, mn_TopProcessID);
+			HANDLE hEvent = OpenEvent(EVENT_ALL_ACCESS, FALSE, temp);
+			if (hEvent) {
+				SetEvent(hEvent);
+				SafeCloseHandle(hEvent);
+			}
+		}
+	}
     
     m_ProcCount = nProcCount;
     m_ActiveConmanIDX = nConmanIDX;
-    
+
+    if (ghOpWnd) {
+		UpdateProcessDisplay(lbProcessChanged);
+	}
+
     TabBar.Refresh(mn_ActiveStatus & CES_FARACTIVE);
     
     
@@ -1125,6 +1180,60 @@ DWORD CConEmuMain::CheckProcesses(DWORD nConmanIDX/*=0*/)
     //}
 
 	return m_ProcCount;
+}
+
+bool CConEmuMain::GetProcessFileName(DWORD dwPID, TCHAR* rsName/*[32]*/, DWORD *pdwErr)
+{
+	bool lbRc = false;
+	DWORD dwErr = 0;
+	HANDLE hProcess = OpenProcess(PROCESS_VM_READ|PROCESS_QUERY_INFORMATION, FALSE, dwPID);
+	if (!hProcess || hProcess==INVALID_HANDLE_VALUE) {
+		dwErr = GetLastError();
+		if (pdwErr) *pdwErr = dwErr;
+		swprintf(rsName, _T("OpenProcess(%i).Err=0x%08X"), dwPID, dwErr);
+	}
+	else
+	{
+		TCHAR szFilePath[MAX_PATH+1];
+		if (!GetModuleFileNameEx(hProcess, 0, szFilePath, MAX_PATH))
+		{
+			dwErr = GetLastError();
+			if (pdwErr) *pdwErr = dwErr;
+			swprintf(rsName, _T("FileNameEx(0x%08X).Err=0x%08X"), (DWORD)hProcess, dwErr);
+		}
+		else
+		{
+			TCHAR* pszSlash = _tcsrchr(szFilePath, _T('\\'));
+			if (pszSlash) pszSlash++; else pszSlash=szFilePath;
+			int nLen = _tcslen(pszSlash);
+			if (nLen>=31) pszSlash[31]=0;
+			_tcscpy(rsName, pszSlash);
+			lbRc = true;
+		}
+		CloseHandle(hProcess); hProcess = NULL;
+	}
+	return lbRc;
+}
+
+LPTSTR CConEmuMain::GetTitleStart(DWORD* rnConmanIDX/*=NULL*/)
+{
+    TCHAR* pszTitle=Title;
+    if (rnConmanIDX) *rnConmanIDX = 0; // 0 - значит нету. Конманы начинаются с 1-цы
+    if (Title[0]==_T('[') && 
+        isdigit(Title[1]) && 
+        (Title[2]==_T('/') || Title[3]==_T('/'))) 
+    {
+	    if (rnConmanIDX)
+		    *rnConmanIDX = _wtoi(Title+1); //TODO: проверить, работает ли?
+	    // ConMan
+	    pszTitle = _tcschr(Title, _T(']'));
+	    if (!pszTitle)
+		    return NULL;
+		pszTitle++; // пропустить ']' и последующие пробелы
+		while (*pszTitle==L' ' /*&& *pszTitle!=_T('{')*/)
+			pszTitle++;
+    }
+	return pszTitle;
 }
 
 BOOL CConEmuMain::HandlerRoutine(DWORD dwCtrlType)
@@ -1259,6 +1368,62 @@ void CConEmuMain::ShowSysmenu(HWND Wnd, HWND Owner, int x, int y)
         PostMessage(Wnd, WM_SYSCOMMAND, (WPARAM)command, 0);
 }
 
+void CConEmuMain::UpdateProcessDisplay(BOOL abForce)
+{
+	if (!ghOpWnd)
+		return;
+
+    CheckDlgButton(gSet.hInfo, cbsConManActive, (mn_ActiveStatus&CES_CONMANACTIVE) ? BST_CHECKED : BST_UNCHECKED);
+    SetDlgItemText(gSet.hInfo, tsConManIdx, _itow(m_ActiveConmanIDX, temp, 10));
+    CheckDlgButton(gSet.hInfo, cbsTelnetActive, (mn_ActiveStatus&CES_TELNETACTIVE) ? BST_CHECKED : BST_UNCHECKED);
+    CheckDlgButton(gSet.hInfo, cbsFarActive, (mn_ActiveStatus&CES_FARACTIVE) ? BST_CHECKED : BST_UNCHECKED);
+    CheckDlgButton(gSet.hInfo, cbsFilePanel, (mn_ActiveStatus&CES_FILEPANEL) ? BST_CHECKED : BST_UNCHECKED);
+    //CheckDlgButton(gSet.hInfo, cbsPlugin, (mn_ActiveStatus&CES_CONMANACTIVE) ? BST_CHECKED : BST_UNCHECKED);
+    CheckDlgButton(gSet.hInfo, cbsEditor, (mn_ActiveStatus&CES_EDITOR) ? BST_CHECKED : BST_UNCHECKED);
+    CheckDlgButton(gSet.hInfo, cbsViewer, (mn_ActiveStatus&CES_VIEWER) ? BST_CHECKED : BST_UNCHECKED);
+    SetDlgItemText(gSet.hInfo, tsTopPID, _itow(mn_TopProcessID, temp, 10));
+
+	if (!abForce)
+		return;
+
+	SendDlgItemMessage(gSet.hInfo, lbProcesses, LB_RESETCONTENT, 0, 0);
+    for (int i=m_Processes.size()-1; i>=0; i--)
+    {
+	    
+		if (m_Processes[i].ConmanIDX == m_ActiveConmanIDX)
+			_tcscpy(temp, _T("(*) "));
+		else
+			temp[0] = 0;
+
+	    swprintf(temp+_tcslen(temp), _T("[%i] %s - PID:%i"),
+		    m_Processes[i].ConmanIDX, m_Processes[i].Name, m_Processes[i].ProcessID);
+		SendDlgItemMessage(gSet.hInfo, lbProcesses, LB_ADDSTRING, 0, (LPARAM)temp);
+    }
+}
+
+// !!!Warning!!! Никаких return. в конце функции вызывается необходимый CheckProcesses
+void CConEmuMain::UpdateTitle(LPCTSTR asNewTitle)
+{
+    wcscpy(Title, asNewTitle);
+    SetWindowText(ghWnd, Title);
+    if (ghWndApp)
+		SetWindowText(ghWndApp, Title);
+
+	DWORD dwConmanIDX=0;
+	LPTSTR pszTitle = GetTitleStart(&dwConmanIDX);
+	mn_ActiveStatus &= CES_PROGRAMS; // оставляем только флаги текущей программы
+
+	// далее идут взаимоисключающие флаги режимов текущей программы
+	if (_tcsncmp(pszTitle, _T("edit "), 5)==0 || _tcsncmp(pszTitle, ms_EditorRus, _tcslen(ms_EditorRus))==0)
+		mn_ActiveStatus |= CES_EDITOR;
+	else if (_tcsncmp(pszTitle, _T("view "), 5)==0 || _tcsncmp(pszTitle, ms_ViewerRus, _tcslen(ms_ViewerRus))==0)
+		mn_ActiveStatus |= CES_VIEWER;
+		
+	// Под конец - проверить список процессов консоли
+	CheckProcesses(dwConmanIDX, TRUE);
+}
+
+
 
 /* ****************************************************** */
 /*                                                        */
@@ -1388,49 +1553,6 @@ LPCTSTR CConEmuMain::GetTitle()
 	return Title;
 }
 
-// !!!Warning!!! Никаких return. в конце функции вызывается необходимый CheckProcesses
-void CConEmuMain::UpdateTitle(LPCTSTR asNewTitle)
-{
-    wcscpy(Title, asNewTitle);
-    SetWindowText(ghWnd, Title);
-    if (ghWndApp)
-		SetWindowText(ghWndApp, Title);
-
-	DWORD dwConmanIDX=0;
-	LPTSTR pszTitle = GetTitleStart(&dwConmanIDX);
-	mn_ActiveStatus &= CES_PROGRAMS; // оставляем только флаги текущей программы
-
-	// далее идут взаимоисключающие флаги режимов текущей программы
-	if (_tcsncmp(pszTitle, _T("edit "), 5)==0 || _tcsncmp(pszTitle, ms_EditorRus, _tcslen(ms_EditorRus))==0)
-		mn_ActiveStatus |= CES_EDITOR;
-	else if (_tcsncmp(pszTitle, _T("view "), 5)==0 || _tcsncmp(pszTitle, ms_ViewerRus, _tcslen(ms_ViewerRus))==0)
-		mn_ActiveStatus |= CES_VIEWER;
-		
-	// Под конец - проверить список процессов консоли
-	CheckProcesses(dwConmanIDX);
-}
-
-LPTSTR CConEmuMain::GetTitleStart(DWORD* rnConmanIDX/*=NULL*/)
-{
-    TCHAR* pszTitle=Title;
-    if (rnConmanIDX) *rnConmanIDX = 0; // 0 - значит нету. Конманы начинаются с 1-цы
-    if (Title[0]==_T('[') && 
-        isdigit(Title[1]) && 
-        (Title[2]==_T('/') || Title[3]==_T('/'))) 
-    {
-	    if (rnConmanIDX)
-		    *rnConmanIDX = _wtoi(Title+1); //TODO: проверить, работает ли?
-	    // ConMan
-	    pszTitle = _tcschr(Title, _T(']'));
-	    if (!pszTitle)
-		    return NULL;
-		pszTitle++; // пропустить ']' и последующие пробелы
-		while (*pszTitle==L' ' /*&& *pszTitle!=_T('{')*/)
-			pszTitle++;
-    }
-	return pszTitle;
-}
-
 bool CConEmuMain::isConSelectMode()
 {
     //TODO: По курсору, что-ли попробовать определять?
@@ -1468,7 +1590,8 @@ bool CConEmuMain::isEditor()
 
 bool CConEmuMain::isFar()
 {
-	return mn_ActiveStatus & CES_FARACTIVE;
+	// FAR с текущей консоли конмана может быть, Но сверху может быть CMD...
+	return (mn_ActiveStatus & CES_FARACTIVE) && mn_TopProcessID;
 }
 
 bool CConEmuMain::isViewer()
@@ -2139,7 +2262,7 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
         if (wcscmp(Title, TitleCmp))
 			UpdateTitle(TitleCmp);
 		else
-			CheckProcesses();
+			CheckProcesses(m_ActiveConmanIDX, FALSE/*bTitleChanged*/);
 		if (m_ProcCount == 1) {
 			Destroy();
 			break;

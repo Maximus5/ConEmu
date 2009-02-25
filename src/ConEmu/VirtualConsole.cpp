@@ -16,6 +16,7 @@ CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
 	hBrush0 = NULL; hSelectedBrush = NULL; hOldBrush = NULL;
 	isEditor = false;
 	memset(&csbi, 0, sizeof(csbi));
+	m_LastMaxReadCnt = 0; m_LastMaxReadTick = 0;
 
 	nSpaceCount = 1000;
 	Spaces = (TCHAR*)malloc(nSpaceCount*sizeof(TCHAR));
@@ -480,6 +481,18 @@ bool CVirtualConsole::Update(bool isForce, HDC *ahDc)
 	//------------------------------------------------------------------------
 	UpdatePrepare(isForce, ahDc);
 
+	if (ghOpWnd)
+	{
+		QueryPerformanceCounter((LARGE_INTEGER *)&tick2);
+		i64 t = (tick2-tick)/100;
+		if (m_LastMaxReadCnt<t || (GetTickCount()-m_LastMaxReadTick)>10000) {
+			m_LastMaxReadCnt = t;
+			wsprintf(temp, _T("%i"), (DWORD)m_LastMaxReadCnt);
+			SetDlgItemText(gSet.hInfo, tRender4, temp);
+			m_LastMaxReadTick = GetTickCount();
+		}
+		tick = tick2;
+	}
 
 	//------------------------------------------------------------------------
 	///| Drawing text (if there were changes in console) |////////////////////
@@ -532,8 +545,8 @@ bool CVirtualConsole::Update(bool isForce, HDC *ahDc)
 		if (ghOpWnd)
 		{
 			QueryPerformanceCounter((LARGE_INTEGER *)&tick2);
-			wsprintf(temp, _T("%i"), (tick2-tick)/100);
-			SetDlgItemText(gSet.hMain, tRender, temp);
+			wsprintf(temp, _T("%i"), (DWORD)((tick2-tick)/100));
+			SetDlgItemText(gSet.hInfo, tRender, temp);
 		}
 	}
 

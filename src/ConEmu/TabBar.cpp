@@ -32,6 +32,20 @@ void TabBarClass::Refresh(BOOL abFarActive)
 	Enable(abFarActive);
 }
 
+void TabBarClass::Reset()
+{
+	if (!_active)
+	{
+		return;
+	}
+
+	ConEmuTab tab; memset(&tab, 0, sizeof(tab));
+	tab.Pos=0;
+	tab.Current=1;
+	tab.Type = 1;
+	TabBar.Update(&tab, 1);
+}
+
 void TabBarClass::AddTab(wchar_t* text, int i)
 {
 	TCITEM tie;
@@ -207,7 +221,7 @@ void TabBarClass::Update(ConEmuTab* tabs, int tabsCount)
 
 	if (tabsCount) {
 		int ncur = 0;
-		for (i = tabsCount; i >= 0; i--)
+		for (i = tabsCount-1; i >= 0; i--)
 		{
 			if (tabs[i].Current)
 			{

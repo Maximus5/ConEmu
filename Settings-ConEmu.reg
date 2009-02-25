@@ -104,3 +104,6 @@ REGEDIT4
 "ExtendColors"=hex:00
 ;; with background (color index)
 "ExtendColorIdx"=hex:0e
+
+;; »нтервал в милисекундах между чтени€ми консоли
+;"MainTimerElapse"=dword:0000000A

@@ -49,6 +49,18 @@ END
 
 #endif    // APSTUDIO_INVOKED
 
+#endif    // Russian resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+/////////////////////////////////////////////////////////////////////////////
+// English (U.S.) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+#endif //_WIN32
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -58,7 +70,7 @@ END
 IDD_DIALOG1 DIALOGEX 0, 0, 328, 258
 STYLE DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_TOPMOST | WS_EX_CONTROLPARENT
-FONT 8, "MS Shell Dlg"
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     GROUPBOX        "Anti-aliasing",IDC_STATIC,263,4,60,45,WS_GROUP
     CONTROL         "&None",rNoneAA,"Button",BS_AUTORADIOBUTTON | WS_GROUP,
@@ -108,9 +120,6 @@ BEGIN
     RTEXT           "Size:",IDC_STATIC,9,37,32,8
     CTEXT           "x",IDC_STATIC,87,35,8,8
     RTEXT           "Charset:",IDC_STATIC,9,53,32,8
-    RTEXT           "Render time:",IDC_STATIC,142,116,46,8
-    EDITTEXT        tRender,191,114,41,11,ES_AUTOHSCROLL | ES_READONLY
-    EDITTEXT        tRender2,236,114,41,11,ES_AUTOHSCROLL | ES_READONLY
     EDITTEXT        tWndWidth,201,63,18,11,ES_AUTOHSCROLL | ES_NUMBER | NOT 
                     WS_BORDER,WS_EX_STATICEDGE
     EDITTEXT        tWndHeight,231,63,18,11,ES_AUTOHSCROLL | ES_NUMBER | NOT 
@@ -163,7 +172,6 @@ BEGIN
     GROUPBOX        "Command Line",IDC_STATIC,4,223,319,30
     EDITTEXT        tCmdLine,9,234,306,11,ES_AUTOHSCROLL | NOT WS_BORDER,
                     WS_EX_STATICEDGE
-    EDITTEXT        tRender3,281,114,41,11,ES_AUTOHSCROLL | ES_READONLY
 END
 
 IDD_DIALOG2 DIALOGEX 0, 0, 328, 246
@@ -339,6 +347,40 @@ BEGIN
     CONTROL         "Tab1",IDC_TAB1,"SysTabControl32",WS_TABSTOP,4,4,334,276
 END
 
+IDD_DIALOG3 DIALOGEX 0, 0, 328, 246
+STYLE DS_FIXEDSYS | DS_CONTROL | WS_CHILD
+EXSTYLE WS_EX_TOPMOST | WS_EX_CONTROLPARENT
+FONT 8, "MS Shell Dlg"
+BEGIN
+    GROUPBOX        "Performance counters",IDC_STATIC,4,4,319,30
+    RTEXT           "Render:",IDC_STATIC,85,17,27,8
+    EDITTEXT        tRender,115,16,39,11,ES_AUTOHSCROLL | ES_READONLY
+    EDITTEXT        tRender2,176,16,39,11,ES_AUTOHSCROLL | ES_READONLY
+    EDITTEXT        tRender3,268,16,48,11,ES_AUTOHSCROLL | ES_READONLY
+    RTEXT           "Blt:",IDC_STATIC,158,17,15,8
+    RTEXT           "In second:",IDC_STATIC,224,17,41,8
+    GROUPBOX        "Console states",IDC_STATIC,4,39,319,30
+    CHECKBOX        "ConMan",cbsConManActive,11,51,43,10,NOT WS_TABSTOP
+    EDITTEXT        tsConManIdx,55,51,18,11,ES_AUTOHSCROLL | ES_READONLY | 
+                    NOT WS_TABSTOP
+    CHECKBOX        "Telnet",cbsTelnetActive,79,51,35,10,NOT WS_TABSTOP
+    CHECKBOX        "Far",cbsFarActive,119,51,25,10,NOT WS_TABSTOP
+    CHECKBOX        "Panel",cbsFilePanel,176,51,32,10,WS_DISABLED | NOT 
+                    WS_TABSTOP
+    CHECKBOX        "Plugin",cbsPlugin,211,51,35,10,WS_DISABLED | NOT 
+                    WS_TABSTOP
+    CHECKBOX        "Editor",cbsEditor,247,51,34,10,NOT WS_TABSTOP
+    CHECKBOX        "Viewer",cbsViewer,282,51,37,10,NOT WS_TABSTOP
+    GROUPBOX        "Processes",IDC_STATIC,4,74,319,166
+    LISTBOX         lbProcesses,9,86,307,146,NOT LBS_NOTIFY | 
+                    LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_HSCROLL | 
+                    WS_TABSTOP
+    EDITTEXT        tsTopPID,146,51,26,11,ES_AUTOHSCROLL | ES_READONLY | NOT 
+                    WS_TABSTOP
+    RTEXT           "Read:",IDC_STATIC,9,17,25,8
+    EDITTEXT        tRender4,39,16,39,11,ES_AUTOHSCROLL | ES_READONLY
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -350,7 +392,6 @@ END
 IDI_ICON1               ICON    DISCARDABLE     "ConEmu.ico"
 IDI_ICON2               ICON    DISCARDABLE     "Far.ico"
 IDI_ICON3               ICON    DISCARDABLE     "Far2.ico"
-
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -369,10 +410,15 @@ BEGIN
     BEGIN
         BOTTOMMARGIN, 162
     END
+
+    IDD_DIALOG3, DIALOG
+    BEGIN
+        BOTTOMMARGIN, 162
+    END
 END
 #endif    // APSTUDIO_INVOKED
 
-#endif    // Russian resources
+#endif    // English (U.S.) resources
 /////////////////////////////////////////////////////////////////////////////
 
 

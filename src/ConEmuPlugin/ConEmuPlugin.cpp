@@ -70,8 +70,8 @@ BOOL APIENTRY DllMain( HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
 		case DLL_PROCESS_ATTACH:
 			{
 				#ifdef _DEBUG
-				//if (!IsDebuggerPresent())
-				//	MessageBoxA(GetForegroundWindow(), "ConEmu.dll loaded", "ConEmu", 0);
+				if (!IsDebuggerPresent())
+					MessageBoxA(GetForegroundWindow(), "ConEmu.dll loaded", "ConEmu", 0);
 				#endif
 				#if defined(__GNUC__)
 				GetConsoleWindow = (FGetConsoleWindow)GetProcAddress(GetModuleHandle(L"kernel32.dll"),"GetConsoleWindow");
@@ -323,6 +323,16 @@ DWORD WINAPI ThreadProcW(LPVOID lpParameter)
 					ProcessDragTo757();
 				break;
 			}
+			case (WAIT_OBJECT_0+CMD_REQTABS):
+			{
+				if (!gnCurTabCount || !tabs) {
+					CreateTabs(1);
+					int nTabs=0;
+					AddTab(nTabs, false, false, WTYPE_PANELS, 0,0,1,0); 
+				}
+				SendTabs(gnCurTabCount, TRUE);
+				break;
+			}
 		}
 
 		// Подготовиться к передаче данных
@@ -401,9 +411,9 @@ void InitHWND(HWND ahFarHwnd)
 		WCHAR szEventName[128];
 		DWORD dwCurProcId = GetCurrentProcessId();
 
-		
 		CREATEEVENT(CONEMUDRAGFROM, hEventCmd[CMD_DRAGFROM]);
 		CREATEEVENT(CONEMUDRAGTO, hEventCmd[CMD_DRAGTO]);
+		CREATEEVENT(CONEMUREQTABS, hEventCmd[CMD_REQTABS]);
 		CREATEEVENT(CONEMUEXIT, hEventCmd[CMD_EXIT]);
 		CREATEEVENT(CONEMUALIVE, hEventAlive);
 		CREATEEVENT(CONEMUREADY, hEventReady);

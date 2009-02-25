@@ -32,7 +32,7 @@ CConEmuPipe::~CConEmuPipe()
 
 BOOL CConEmuPipe::Init()
 {
-    if (!gConEmu.isFar())
+    if (!gConEmu.isFar() && !gConEmu.mn_TopProcessID)
 	    return FALSE;
 
 	// Сформируем ИМЯ сразу, а то вдруг процесс переключится?

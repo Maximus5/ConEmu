@@ -19,6 +19,7 @@ public:
 	TabBarClass();
 	void Enable(BOOL abEnabled);
 	void Refresh(BOOL abFarActive);
+	void Reset();
 	void Invalidate();
 	bool IsActive();
 	bool IsShown();

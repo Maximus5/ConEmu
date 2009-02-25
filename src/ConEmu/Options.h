@@ -59,12 +59,15 @@ public:
     bool isScrollTitle;
     DWORD ScrollTitleLen;
     
-    HWND hMain, hColors;
+    UINT nMainTimerElapse;
+    
+    HWND hMain, hColors, hInfo;
 
 	bool LoadImageFrom(TCHAR *inPath, bool abShowErrors=false);
 	static BOOL CALLBACK wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
 	static BOOL CALLBACK mainOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
 	static BOOL CALLBACK colorOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
+	static BOOL CALLBACK infoOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
 	void LoadSettings();
 	void InitSettings();
 	BOOL SaveSettings();

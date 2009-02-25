@@ -183,8 +183,8 @@ LRESULT CConEmuChild::OnPaint(WPARAM wParam, LPARAM lParam)
 	if (ghOpWnd)
 	{
 		QueryPerformanceCounter((LARGE_INTEGER *)&tick2);
-		wsprintf(temp, _T("%i"), (tick2-tick)/100);
-		SetDlgItemText(gSet.hMain, tRender2, temp);
+		wsprintf(temp, _T("%i"), (DWORD)((tick2-tick)/100));
+		SetDlgItemText(gSet.hInfo, tRender2, temp);
 	}
 
     return result;

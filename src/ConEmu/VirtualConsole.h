@@ -58,6 +58,7 @@ public:
 	bool GetCharAttr(TCHAR ch, WORD atr, TCHAR& rch, BYTE& foreColorNum, BYTE& backColorNum);
 
 protected:
+	i64 m_LastMaxReadCnt; DWORD m_LastMaxReadTick;
 	enum _PartType{
 		pNull,  // конец строки/последний, неотображаемый элемент
 		pSpace, // при разборе строки будем смотреть, если нашли pText,pSpace,pText то pSpace,pText добавить в первый pText

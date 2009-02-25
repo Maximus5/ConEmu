@@ -12,6 +12,7 @@ CSettings::CSettings()
 	InitSettings();
 	mb_IgnoreEditChanged = FALSE;
 	mb_IgnoreTtfChange = TRUE;
+	hMain = NULL; hColors = NULL; hInfo = NULL;
 }
 
 CSettings::~CSettings()
@@ -27,6 +28,7 @@ void CSettings::InitSettings()
 //------------------------------------------------------------------------
 	_tcscpy(Config, _T("Software\\ConEmu"));
 
+	nMainTimerElapse = 10;
 	BufferHeight = 0;
 	LogFont.lfHeight = 16;
 	LogFont.lfWidth = 0;
@@ -179,6 +181,8 @@ void CSettings::LoadSettings()
 		reg.Load(_T("VizTabCh"), (WORD*)&cVizTab);
 		reg.Load(_T("VizEolCh"), (WORD*)&cVizEOL);
 		reg.Load(_T("VizEofCh"), (WORD*)&cVizEOF);
+		
+		reg.Load(_T("MainTimerElapse"), &nMainTimerElapse);
 		
         reg.CloseKey();
     }
@@ -382,6 +386,8 @@ LRESULT CSettings::OnInitDialog()
 		TabCtrl_InsertItem(_hwndTab, 0, &tie);
 		tie.pszText = _T("Colors");
 		TabCtrl_InsertItem(_hwndTab, 1, &tie);
+		tie.pszText = _T("Info");
+		TabCtrl_InsertItem(_hwndTab, 2, &tie);
 		
 		HFONT hFont = CreateFont(TAB_FONT_HEIGTH, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, ANSI_CHARSET, OUT_DEFAULT_PRECIS, 
 			CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_SWISS, TAB_FONT_FACE);
@@ -397,6 +403,9 @@ LRESULT CSettings::OnInitDialog()
 		hColors = CreateDialog((HINSTANCE)GetModuleHandle(NULL), 
 			MAKEINTRESOURCE(IDD_DIALOG2), ghOpWnd, colorOpProc);
 		MoveWindow(hColors, rcClient.left, rcClient.top, rcClient.right-rcClient.left, rcClient.bottom-rcClient.top, 0);
+		hInfo = CreateDialog((HINSTANCE)GetModuleHandle(NULL), 
+			MAKEINTRESOURCE(IDD_DIALOG3), ghOpWnd, infoOpProc);
+		MoveWindow(hInfo, rcClient.left, rcClient.top, rcClient.right-rcClient.left, rcClient.bottom-rcClient.top, 0);
 
 		ShowWindow(hMain, SW_SHOW);
 	}
@@ -602,10 +611,13 @@ LRESULT CSettings::OnInitDialog()
 	
 	// Performance
 	i64 tick2;
-	QueryPerformanceCounter((LARGE_INTEGER *)&tick2);
-	swprintf(temp, _T("%.3g"), (double)(tick2)/*/1000000000.0*/);
-	SetDlgItemText(gSet.hMain, tRender3, temp);
+	QueryPerformanceFrequency((LARGE_INTEGER *)&tick2);
+	//swprintf(temp, _T("%.3g"), (double)(tick2)/*/1000000000.0*/);
+	swprintf(temp, _T("%I64i"), (tick2)/100);
+	SetDlgItemText(hInfo, tRender3, temp);
 	
+
+	gConEmu.UpdateProcessDisplay(TRUE);
 
 
 	{
@@ -1113,11 +1125,18 @@ LRESULT CSettings::OnTab(LPNMHDR phdr)
 				if (nSel==0) {
 					ShowWindow(hMain, SW_SHOW);
 					ShowWindow(hColors, SW_HIDE);
+					ShowWindow(hInfo, SW_HIDE);
 					SetFocus(hMain);
-				} else {
+				} else if (nSel==1) {
 					ShowWindow(hColors, SW_SHOW);
 					ShowWindow(hMain, SW_HIDE);
+					ShowWindow(hInfo, SW_HIDE);
 					SetFocus(hColors);
+				} else {
+					ShowWindow(hInfo, SW_SHOW);
+					ShowWindow(hMain, SW_HIDE);
+					ShowWindow(hColors, SW_HIDE);
+					SetFocus(hInfo);
 				}
 			}
 			break;
@@ -1425,6 +1444,19 @@ BOOL CALLBACK CSettings::colorOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPAR
 			gSet.OnColorComboBox(wParam, lParam);
         }
         break;
+    default:
+        return 0;
+    }
+    return 0;
+}
+
+BOOL CALLBACK CSettings::infoOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
+{
+    switch (messg)
+    {
+    case WM_INITDIALOG:
+        break;
+
     default:
         return 0;
     }

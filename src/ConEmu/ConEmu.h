@@ -97,17 +97,21 @@ protected:
 		DWORD ProcessID;
 		BYTE  ConmanIDX;
 		//bool  Alive;
+		bool  IsConman;
 		bool  IsFar;
 		bool  IsTelnet; // может быть включен ВМЕСТЕ с IsFar, если удалось подцепится к фару через сетевой пайп
-		bool  NameChecked;
-		TCHAR Name[32];
+		bool  NameChecked, ConmanChecked, RetryName;
+		TCHAR Name[64]; // чтобы полная инфа об ошибке влезала
 	};
+	int mn_NeedRetryName;
 	std::vector<struct ConProcess> m_Processes;
-	DWORD CheckProcesses(DWORD nConmanIDX=0);
+	DWORD CheckProcesses(DWORD nConmanIDX, BOOL bTitleChanged);
 	LPTSTR GetTitleStart(DWORD* rnConmanIDX=NULL);
+	bool GetProcessFileName(DWORD dwPID, TCHAR* rsName/*[32]*/, DWORD *pdwErr);
 	
 public:
 	LPCTSTR GetTitle();
+	void UpdateProcessDisplay(BOOL abForce);
 
 public:
 	CConEmuMain();

@@ -8,13 +8,15 @@
 #define CONEMUMAPPING    L"ConEmuPluginData%u"
 #define CONEMUDRAGFROM   L"ConEmuDragFrom%u"
 #define CONEMUDRAGTO     L"ConEmuDragTo%u"
+#define CONEMUREQTABS    L"ConEmuReqTabs%u"
 #define CONEMUEXIT       L"ConEmuExit%u"
 #define CONEMUALIVE      L"ConEmuAlive%u"
 #define CONEMUREADY      L"ConEmuReady%u"
 #define CMD_DRAGFROM     0
 #define CMD_DRAGTO       1
-#define CMD_EXIT         2
-#define MAXCMDCOUNT      3
+#define CMD_REQTABS      2
+#define CMD_EXIT         3
+#define MAXCMDCOUNT      4
 
 #define CONEMUTABMAX 0x400
 struct ConEmuTab
