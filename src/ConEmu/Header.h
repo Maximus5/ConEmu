@@ -11,6 +11,7 @@
 #endif
 
 #include "globals.h"
+#include "resource.h"
 #include "VirtualConsole.h"
 #include "options.h"
 #include "DragDrop.h"
@@ -60,7 +61,6 @@
 
 
 
-#include "resource.h"
 
 //------------------------------------------------------------------------
 ///| Code optimizing |////////////////////////////////////////////////////

@@ -108,6 +108,7 @@ protected:
 	DWORD CheckProcesses(DWORD nConmanIDX, BOOL bTitleChanged);
 	LPTSTR GetTitleStart(DWORD* rnConmanIDX=NULL);
 	bool GetProcessFileName(DWORD dwPID, TCHAR* rsName/*[32]*/, DWORD *pdwErr);
+	BOOL mb_InTimer;
 	
 public:
 	LPCTSTR GetTitle();

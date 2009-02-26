@@ -46,6 +46,7 @@ CConEmuMain::CConEmuMain()
 	ProgressBars=NULL;
 	cBlinkShift=0;
 	Title[0]=0; TitleCmp[0]=0;
+	mb_InTimer = FALSE;
 	//mb_InClose = FALSE;
 	//memset(m_ProcList, 0, 1000*sizeof(DWORD)); 
 	m_ProcCount=0;
@@ -2438,7 +2439,12 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		result = gConEmu.OnPaint(wParam, lParam);
 	
     case WM_TIMER:
+	    if (mb_InTimer) break; // чтобы ненароком два раза в одно событие не вошел (хотя не должен)
+	    gSet.Performance(tPerfInterval, TRUE); // именно обратный отсчет. Мы смотрим на промежуток МЕЖДУ таймерами
+	    mb_InTimer = TRUE;
 		result = gConEmu.OnTimer(wParam, lParam);
+		mb_InTimer = FALSE;
+		gSet.Performance(tPerfInterval, FALSE);
         break;
 
     case WM_SIZING:

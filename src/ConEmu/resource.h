@@ -56,18 +56,21 @@
 #define tFontSizeX                      1042
 #define cbBold2                         1043
 #define cbItalic                        1043
-#define tPerfRender                     1044
 #define tWndWidth                       1045
 #define tsConManIdx                     1045
 #define tWndHeight                      1046
 #define tsTopPID                        1046
 #define cbMonospace                     1047
-#define tPerfRead                       1047
-#define IDC_CHECK1                      1048
+
+#define gbPerformance                   1400
+#define tPerfRead                       1401
+#define tPerfRender                     1402
+#define tPerfBlt                        1403
+#define tPerfInterval                   1404
+
 #define cbExtendColors                  1048
 #define cbTTF                           1048
 #define cbNonProportional               1048
-#define IDC_CHECK3                      1049
 #define tFontSizeX2                     1049
 #define slDark                          1050
 #define slDarker                        1050
@@ -84,11 +87,8 @@
 #define rBgSimple                       1060
 #define tWndX                           1061
 #define tWndY                           1062
-#define tPerfBlt                        1063
 #define cbPosFixed                      1064
-#define tPerfInSecond                        1064
-#define tPerfTimer                        1065
-#define IDC_TAB1                        1066
+#define tabMain                         1066
 #define lbExtendIdx                     1067
 #define cbVisualizer                    1068
 #define lbVisNormal                     1069
@@ -160,7 +160,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        106
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1086
+#define _APS_NEXT_CONTROL_VALUE         1500
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

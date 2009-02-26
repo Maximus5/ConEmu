@@ -471,8 +471,7 @@ bool CVirtualConsole::Update(bool isForce, HDC *ahDc)
 	}
 
 	// start timer before ReadConsoleOutput* calls, they do take time
-	if (ghOpWnd)
-		QueryPerformanceCounter((LARGE_INTEGER*)&tick);
+	gSet.Performance(tPerfRead, FALSE);
 
 	//if (gbNoDblBuffer) isForce = TRUE; // Debug, dblbuffer
 
@@ -480,19 +479,10 @@ bool CVirtualConsole::Update(bool isForce, HDC *ahDc)
 	///| Read console output and cursor info... |/////////////////////////////
 	//------------------------------------------------------------------------
 	UpdatePrepare(isForce, ahDc);
+	
+	gSet.Performance(tPerfRead, TRUE);
 
-	if (ghOpWnd)
-	{
-		QueryPerformanceCounter((LARGE_INTEGER *)&tick2);
-		i64 t = (tick2-tick)/100;
-		if (m_LastMaxReadCnt<t || (GetTickCount()-m_LastMaxReadTick)>10000) {
-			m_LastMaxReadCnt = t;
-			wsprintf(temp, _T("%i"), (DWORD)m_LastMaxReadCnt);
-			SetDlgItemText(gSet.hInfo, tPerfRead, temp);
-			m_LastMaxReadTick = GetTickCount();
-		}
-		tick = tick2;
-	}
+	gSet.Performance(tPerfRender, FALSE);
 
 	//------------------------------------------------------------------------
 	///| Drawing text (if there were changes in console) |////////////////////
@@ -542,12 +532,7 @@ bool CVirtualConsole::Update(bool isForce, HDC *ahDc)
 		}
 
 		MCHKHEAP
-		if (ghOpWnd)
-		{
-			QueryPerformanceCounter((LARGE_INTEGER *)&tick2);
-			wsprintf(temp, _T("%i"), (DWORD)((tick2-tick)/100));
-			SetDlgItemText(gSet.hInfo, tPerfRender, temp);
-		}
+		gSet.Performance(tPerfRender, TRUE);
 	}
 
 	MCHKHEAP

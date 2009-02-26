@@ -126,9 +126,7 @@ LRESULT CConEmuChild::OnPaint(WPARAM wParam, LPARAM lParam)
     //if (gbInPaint)
 	//    break;
 
-	i64 tick, tick2;
-	if (ghOpWnd)
-		QueryPerformanceCounter((LARGE_INTEGER*)&tick);
+	gSet.Performance(tPerfBlt, FALSE);
 
 
     if (gConEmu.isPictureView())
@@ -182,12 +180,7 @@ LRESULT CConEmuChild::OnPaint(WPARAM wParam, LPARAM lParam)
 		if (gbNoDblBuffer) GdiSetBatchLimit(0); // вернуть стандартный режим
 	}
 
-	if (ghOpWnd)
-	{
-		QueryPerformanceCounter((LARGE_INTEGER *)&tick2);
-		wsprintf(temp, _T("%i"), (DWORD)((tick2-tick)/100));
-		SetDlgItemText(gSet.hInfo, tPerfBlt, temp);
-	}
+	gSet.Performance(tPerfBlt, TRUE);
 
     return result;
 }

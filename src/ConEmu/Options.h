@@ -93,4 +93,8 @@ public:
 private:
 	COLORREF acrCustClr[16]; // array of custom colors
 	BOOL mb_IgnoreEditChanged, mb_IgnoreTtfChange;
+	i64 mn_Freq;
+	i64 mn_Counter[tPerfInterval-gbPerformance];
+	i64 mn_CounterMax[tPerfInterval-gbPerformance];
+	DWORD mn_CounterTick[tPerfInterval-gbPerformance];
 };

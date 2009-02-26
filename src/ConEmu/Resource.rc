@@ -344,7 +344,7 @@ BEGIN
     DEFPUSHBUTTON   "Save settings",bSaveSettings,268,283,70,14
     CONTROL         "Always update con. handle (ConMan, Telnet)",cbIsConMan,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,285,168,8
-    CONTROL         "Tab1",IDC_TAB1,"SysTabControl32",WS_TABSTOP,4,4,334,276
+    CONTROL         "Tab1",tabMain,"SysTabControl32",WS_TABSTOP,4,4,334,276
 END
 
 IDD_DIALOG3 DIALOGEX 0, 0, 328, 246
@@ -352,13 +352,11 @@ STYLE DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_TOPMOST | WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        "Performance counters",IDC_STATIC,4,4,319,30
-    RTEXT           "Render:",IDC_STATIC,67,17,27,8
-    EDITTEXT        tPerfRender,97,16,32,11,ES_AUTOHSCROLL | ES_READONLY
-    EDITTEXT        tPerfBlt,147,16,32,11,ES_AUTOHSCROLL | ES_READONLY
-    EDITTEXT        tPerfInSecond,221,16,45,11,ES_AUTOHSCROLL | ES_READONLY
-    RTEXT           "Blt:",IDC_STATIC,132,17,12,8
-    RTEXT           "In second:",IDC_STATIC,184,17,35,8
+    GROUPBOX        "Performance counters",gbPerformance,4,4,319,30
+    RTEXT           "Render:",IDC_STATIC,92,17,27,8
+    EDITTEXT        tPerfRender,121,16,43,11,ES_AUTOHSCROLL | ES_READONLY
+    EDITTEXT        tPerfBlt,190,16,43,11,ES_AUTOHSCROLL | ES_READONLY
+    RTEXT           "Blt:",IDC_STATIC,176,17,12,8
     GROUPBOX        "Console states",IDC_STATIC,4,39,319,30
     CHECKBOX        "ConMan",cbsConManActive,11,51,43,10,NOT WS_TABSTOP
     EDITTEXT        tsConManIdx,55,51,18,11,ES_AUTOHSCROLL | ES_READONLY | 
@@ -377,10 +375,10 @@ BEGIN
                     WS_TABSTOP
     EDITTEXT        tsTopPID,146,51,26,11,ES_AUTOHSCROLL | ES_READONLY | NOT 
                     WS_TABSTOP
-    RTEXT           "Read:",IDC_STATIC,9,17,21,8
-    EDITTEXT        tPerfRead,33,16,32,11,ES_AUTOHSCROLL | ES_READONLY
-    EDITTEXT        tPerfTimer,285,16,32,11,ES_AUTOHSCROLL | ES_READONLY
-    RTEXT           "[---]",IDC_STATIC,269,17,13,8
+    RTEXT           "Read:",IDC_STATIC,9,17,23,8
+    EDITTEXT        tPerfRead,36,16,43,11,ES_AUTOHSCROLL | ES_READONLY
+    EDITTEXT        tPerfInterval,274,16,43,11,ES_AUTOHSCROLL | ES_READONLY
+    RTEXT           "Interval:",IDC_STATIC,240,17,31,8
 END
 
 

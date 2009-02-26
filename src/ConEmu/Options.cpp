@@ -3,6 +3,8 @@
 #include <commctrl.h>
 #include "ConEmu.h"
 
+#define COUNTER_REFRESH 5000
+
 const u8 chSetsNums[19] = {0, 178, 186, 136, 1, 238, 134, 161, 177, 129, 130, 77, 255, 204, 128, 2, 222, 162, 163};
 int upToFontHeight=0;
 HWND ghOpWnd=NULL;
@@ -13,6 +15,10 @@ CSettings::CSettings()
 	mb_IgnoreEditChanged = FALSE;
 	mb_IgnoreTtfChange = TRUE;
 	hMain = NULL; hColors = NULL; hInfo = NULL;
+	QueryPerformanceFrequency((LARGE_INTEGER *)&mn_Freq);
+	memset(mn_Counter, 0, sizeof(*mn_Counter)*(tPerfInterval-gbPerformance));
+	memset(mn_CounterMax, 0, sizeof(*mn_CounterMax)*(tPerfInterval-gbPerformance));
+	memset(mn_CounterTick, 0, sizeof(*mn_CounterTick)*(tPerfInterval-gbPerformance));
 }
 
 CSettings::~CSettings()
@@ -383,7 +389,7 @@ LRESULT CSettings::OnInitDialog()
 {
 	{
 		TCITEM tie;
-		HWND _hwndTab = GetDlgItem(ghOpWnd, IDC_TAB1);
+		HWND _hwndTab = GetDlgItem(ghOpWnd, tabMain);
 		tie.mask = TCIF_TEXT;
 		tie.iImage = -1; 
 		tie.pszText = _T("Main");
@@ -614,7 +620,7 @@ LRESULT CSettings::OnInitDialog()
 	OnColorButtonClicked(cbVisualizer, 0);
 	
 	// Performance
-	Performance(tPerfInSecond, TRUE);
+	Performance(gbPerformance, TRUE);
 	
 
 	gConEmu.UpdateProcessDisplay(TRUE);
@@ -1340,7 +1346,7 @@ BOOL CALLBACK CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM
 	case WM_NOTIFY:
 		{
 			LPNMHDR phdr = (LPNMHDR)lParam;
-			if (phdr->idFrom == IDC_TAB1)
+			if (phdr->idFrom == tabMain)
 				gSet.OnTab(phdr);
 		} break;
     case WM_CLOSE:
@@ -1513,23 +1519,54 @@ void CSettings::UpdateTTF(BOOL bNewTTF)
 	if (mb_IgnoreTtfChange) return;
 
 	isTTF = bNewTTF;
-	CheckDlgButton(hMain, cbNonProportional, 
+	/* */ CheckDlgButton(hMain, cbNonProportional, 
 		gSet.isTTF ? BST_UNCHECKED : BST_CHECKED);
 }
 
 void CSettings::Performance(UINT nID, BOOL bEnd)
 {
-	switch (nID)
+	if (nID == gbPerformance)
 	{
-		case tPerfInSecond:
-		{
-			if (ghOpWnd) {
-				// Performance
-				i64 tick2;
-				QueryPerformanceFrequency((LARGE_INTEGER *)&tick2);
-				swprintf(temp, _T("%I64i"), (tick2)/100);
-				SetDlgItemText(hInfo, nID, temp);
+		if (ghOpWnd) {
+			// Performance
+			wchar_t sTemp[128];
+			swprintf(sTemp, _T("Performance counters (%I64i)"), ((i64)(mn_Freq/1000)));
+			SetDlgItemText(hInfo, nID, sTemp);
+			
+			for (nID=tPerfRead; mn_Freq && nID<=tPerfInterval; nID++) {
+				//swprintf(sTemp, _T("%I64i"), mn_CounterMax[nID-tPerfRead]);
+				double v = (mn_CounterMax[nID-tPerfRead]/(double)mn_Freq)*1000;
+				swprintf(sTemp, _T("%.1f"), v);
+				SetDlgItemText(hInfo, nID, sTemp);
 			}
-		} break;
+		}
+		return;
+	}
+	if (nID<tPerfRead || nID>tPerfInterval)
+		return;
+
+	if (!bEnd) {
+		QueryPerformanceCounter((LARGE_INTEGER *)&(mn_Counter[nID-tPerfRead]));
+		return;
+	} else if (!mn_Counter[nID-tPerfRead] || !mn_Freq) {
+		return;
+	}
+	
+	i64 tick2;
+	QueryPerformanceCounter((LARGE_INTEGER *)&tick2);
+	i64 t = (tick2-mn_Counter[nID-tPerfRead]);
+	
+	if (mn_CounterMax[nID-tPerfRead]<t || 
+		(GetTickCount()-mn_CounterTick[nID-tPerfRead])>COUNTER_REFRESH)
+	{
+		mn_CounterMax[nID-tPerfRead] = t;
+		mn_CounterTick[nID-tPerfRead] = GetTickCount();
+		
+		if (ghOpWnd) {
+			wchar_t sTemp[64];
+			double v = (mn_CounterMax[nID-tPerfRead]/(double)mn_Freq)*1000;
+			swprintf(sTemp, _T("%.1f"), v);
+			SetDlgItemText(gSet.hInfo, nID, sTemp);
+		}
 	}
 }
