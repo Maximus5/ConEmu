@@ -59,7 +59,9 @@ public:
     bool isScrollTitle;
     DWORD ScrollTitleLen;
     
-    UINT nMainTimerElapse;
+    UINT nMainTimerElapse; // периодичность, с которой из консоли считывается текст
+    //bool isAdvLangChange; // в Висте без ConIme в самой консоли не меняется язык, пока не послать WM_SETFOCUS. Но при этом исчезает диалог быстрого поиска
+	//bool isSkipFocusEvents;
     
     HWND hMain, hColors, hInfo;
 
@@ -78,6 +80,7 @@ public:
 	void UpdatePos(int x, int y);
 	void UpdateSize(UINT w, UINT h);
 	void UpdateTTF(BOOL bNewTTF);
+	void Performance(UINT nID, BOOL bEnd);
 public:
 	LRESULT OnInitDialog();
 	LRESULT OnButtonClicked(WPARAM wParam, LPARAM lParam);

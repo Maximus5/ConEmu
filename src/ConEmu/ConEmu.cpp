@@ -1799,6 +1799,9 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
         }
     }*/
 
+	//if (gSet.isSkipFocusEvents)
+	//	return 0;
+
     POSTMESSAGE(ghConWnd, messg, wParam, lParam, FALSE);
 	return 0;
 }

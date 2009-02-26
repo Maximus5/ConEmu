@@ -302,7 +302,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="version.lib"
-				OutputFile="F:\VCProject\FarPlugin\#FAR1705\Plugins\ConEmu\conemu.dll"
+				OutputFile="E:\Source\FARUnicode\trunk\unicode_far\Debug.32.vc\plugins\conEmu\ConEmu.dll"
 				LinkIncremental="2"
 				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"

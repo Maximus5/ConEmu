@@ -488,7 +488,7 @@ bool CVirtualConsole::Update(bool isForce, HDC *ahDc)
 		if (m_LastMaxReadCnt<t || (GetTickCount()-m_LastMaxReadTick)>10000) {
 			m_LastMaxReadCnt = t;
 			wsprintf(temp, _T("%i"), (DWORD)m_LastMaxReadCnt);
-			SetDlgItemText(gSet.hInfo, tRender4, temp);
+			SetDlgItemText(gSet.hInfo, tPerfRead, temp);
 			m_LastMaxReadTick = GetTickCount();
 		}
 		tick = tick2;
@@ -546,7 +546,7 @@ bool CVirtualConsole::Update(bool isForce, HDC *ahDc)
 		{
 			QueryPerformanceCounter((LARGE_INTEGER *)&tick2);
 			wsprintf(temp, _T("%i"), (DWORD)((tick2-tick)/100));
-			SetDlgItemText(gSet.hInfo, tRender, temp);
+			SetDlgItemText(gSet.hInfo, tPerfRender, temp);
 		}
 	}
 

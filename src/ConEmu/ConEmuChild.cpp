@@ -101,8 +101,10 @@ LRESULT CALLBACK CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam
 			//POSTMESSAGE(ghConWnd, messg, wParam, lParam, FALSE);
 			//#else
 			POSTMESSAGE(ghConWnd, messg, wParam, lParam, FALSE); // с SEND - точно работало
+			//if (gSet.isAdvLangChange) {
 			POSTMESSAGE(ghConWnd, WM_SETFOCUS, 0,0,1);
 			POSTMESSAGE(ghWnd, WM_SETFOCUS, 0,0,1);
+			//}
 			//#endif
 			/*if (messg == WM_INPUTLANGCHANGE) {
 				//wParam Specifies the character set of the new locale. 
@@ -184,7 +186,7 @@ LRESULT CConEmuChild::OnPaint(WPARAM wParam, LPARAM lParam)
 	{
 		QueryPerformanceCounter((LARGE_INTEGER *)&tick2);
 		wsprintf(temp, _T("%i"), (DWORD)((tick2-tick)/100));
-		SetDlgItemText(gSet.hInfo, tRender2, temp);
+		SetDlgItemText(gSet.hInfo, tPerfBlt, temp);
 	}
 
     return result;

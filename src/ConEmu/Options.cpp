@@ -29,6 +29,8 @@ void CSettings::InitSettings()
 	_tcscpy(Config, _T("Software\\ConEmu"));
 
 	nMainTimerElapse = 10;
+	//isAdvLangChange = true;
+	//isSkipFocusEvents = false;
 	BufferHeight = 0;
 	LogFont.lfHeight = 16;
 	LogFont.lfWidth = 0;
@@ -83,7 +85,7 @@ void CSettings::InitSettings()
 	_tcscpy(szTabPanels, _T("Panels"));
 	_tcscpy(szTabEditor, _T("[%s]"));
 	_tcscpy(szTabEditorModified, _T("[%s] *"));
-	_tcscpy(szTabViewer, _T("{%s}"));
+	/* */ _tcscpy(szTabViewer, _T("{%s}"));
 	nTabLenMax = 20;
 	
 	isVisualizer = false;
@@ -183,6 +185,8 @@ void CSettings::LoadSettings()
 		reg.Load(_T("VizEofCh"), (WORD*)&cVizEOF);
 		
 		reg.Load(_T("MainTimerElapse"), &nMainTimerElapse);
+		//reg.Load(_T("AdvLangChange"), &isAdvLangChange);
+		//reg.Load(_T("SkipFocusEvents"), &isSkipFocusEvents);
 		
         reg.CloseKey();
     }
@@ -610,11 +614,7 @@ LRESULT CSettings::OnInitDialog()
 	OnColorButtonClicked(cbVisualizer, 0);
 	
 	// Performance
-	i64 tick2;
-	QueryPerformanceFrequency((LARGE_INTEGER *)&tick2);
-	//swprintf(temp, _T("%.3g"), (double)(tick2)/*/1000000000.0*/);
-	swprintf(temp, _T("%I64i"), (tick2)/100);
-	SetDlgItemText(hInfo, tRender3, temp);
+	Performance(tPerfInSecond, TRUE);
 	
 
 	gConEmu.UpdateProcessDisplay(TRUE);
@@ -1517,3 +1517,19 @@ void CSettings::UpdateTTF(BOOL bNewTTF)
 		gSet.isTTF ? BST_UNCHECKED : BST_CHECKED);
 }
 
+void CSettings::Performance(UINT nID, BOOL bEnd)
+{
+	switch (nID)
+	{
+		case tPerfInSecond:
+		{
+			if (ghOpWnd) {
+				// Performance
+				i64 tick2;
+				QueryPerformanceFrequency((LARGE_INTEGER *)&tick2);
+				swprintf(temp, _T("%I64i"), (tick2)/100);
+				SetDlgItemText(hInfo, nID, temp);
+			}
+		} break;
+	}
+}
