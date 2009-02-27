@@ -15,6 +15,8 @@ private:
 	void SelectTab(int i);
 	char FarTabShortcut(int tabIndex);
 	void FarSendChangeTab(int tabIndex);
+	void CreateToolbar();
+	HWND mh_ToolbarParent, mh_Toolbar;
 public:
 	TabBarClass();
 	void Enable(BOOL abEnabled);

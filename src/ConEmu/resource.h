@@ -10,6 +10,7 @@
 #define IDD_DIALOG2                     103
 #define IDD_DIALOGM                     104
 #define IDD_DIALOG3                     105
+#define IDB_CONMAN                      106
 #define c0                              1000
 #define c1                              1001
 #define c2                              1002
@@ -61,13 +62,6 @@
 #define tWndHeight                      1046
 #define tsTopPID                        1046
 #define cbMonospace                     1047
-
-#define gbPerformance                   1400
-#define tPerfRead                       1401
-#define tPerfRender                     1402
-#define tPerfBlt                        1403
-#define tPerfInterval                   1404
-
 #define cbExtendColors                  1048
 #define cbTTF                           1048
 #define cbNonProportional               1048
@@ -153,12 +147,17 @@
 #define rNormal                         1311
 #define rMaximized                      1312
 #define rFullScreen                     1313
+#define gbPerformance                   1400
+#define tPerfRead                       1401
+#define tPerfRender                     1402
+#define tPerfBlt                        1403
+#define tPerfInterval                   1404
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        106
+#define _APS_NEXT_RESOURCE_VALUE        107
 #define _APS_NEXT_COMMAND_VALUE         40001
 #define _APS_NEXT_CONTROL_VALUE         1500
 #define _APS_NEXT_SYMED_VALUE           101
