@@ -17,6 +17,8 @@ TabBarClass::TabBarClass()
 	mb_ChangeAllowed = FALSE;
 	mb_Enabled = TRUE;
 	mh_ToolbarParent = NULL; mh_Toolbar = NULL;
+	GetConsolesTitles = NULL;
+	ActivateConsole = NULL;
 }
 
 void TabBarClass::Enable(BOOL abEnabled)
@@ -284,8 +286,6 @@ void TabBarClass::UpdatePosition()
 			MoveWindow(_hwndTab, 0, 0, client.right, client.bottom, 1);
 		else
 			MoveWindow(_hwndTab, 0, 0, client.right, _tabHeight, 1);
-		if (mh_ToolbarParent)
-			SetWindowPos(mh_ToolbarParent, HWND_TOP, 0,0,0,0, SWP_NOSIZE|SWP_NOMOVE);
 	} else {
 		ShowWindow(_hwndTab, SW_HIDE);
 	}
@@ -304,6 +304,19 @@ void TabBarClass::UpdateWidth()
 		MoveWindow(_hwndTab, 0, 0, client.right, client.bottom, 1);
 	} else {
 		MoveWindow(_hwndTab, 0, 0, client.right, _tabHeight, 1);
+	}
+	if (mh_ToolbarParent) {
+		//SetWindowPos(mh_ToolbarParent, HWND_TOP, 0,0,0,0, SWP_NOSIZE|SWP_NOMOVE);
+		   SIZE sz; 
+		   SendMessage(mh_Toolbar, TB_GETMAXSIZE, 0, (LPARAM)&sz);
+		   RECT rcClient;
+		   GetWindowRect(_hwndTab, &rcClient);
+		   MapWindowPoints(NULL, ghWnd, (LPPOINT)&rcClient, 2);
+		   //int nbWidth = SendMessage(mh_Toolbar, TB_GETBUTTONSIZE, 0, 0) & 0xFFFF;
+		   //int nHidden = 10;
+		   SetWindowPos(mh_ToolbarParent, HWND_TOP, 
+			   rcClient.right - sz.cx - 2, 0,
+			   sz.cx, sz.cy, 0);
 	}
 }
 
@@ -396,19 +409,68 @@ void TabBarClass::Invalidate()
 		InvalidateRect(_hwndTab, NULL, TRUE);
 }
 
+LRESULT TabBarClass::ToolWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
+{
+	switch (messg) {
+		case WM_COMMAND:
+			{
+				if (!gConEmu.isConman())
+					break;
+				if (!gConEmu.mh_Infis) {
+					gConEmu.mh_Infis = LoadLibrary ( gConEmu.ms_InfisPath );
+					if (gConEmu.mh_Infis == NULL) {
+						gConEmu.mh_Infis = (HMODULE)INVALID_HANDLE_VALUE;
+						DisplayLastError(_T("Can't load infis.dll! Old ConMan version?"));
+					}
+				}
+				if (!gConEmu.mh_Infis || gConEmu.mh_Infis==INVALID_HANDLE_VALUE)
+					break;
+
+				if (!TabBar.GetConsolesTitles)
+					TabBar.GetConsolesTitles =
+						(GetConsolesTitles_t*)GetProcAddress( gConEmu.mh_Infis, "GetConsolesTitles" );
+				if (!TabBar.ActivateConsole)
+					TabBar.ActivateConsole =
+						(ActivateConsole_t*)GetProcAddress( gConEmu.mh_Infis, "ActivateConsole" );
+				if (!TabBar.GetConsolesTitles || !TabBar.ActivateConsole)
+					break;
+
+				switch (wParam)
+				{
+				case 1: case 2: case 3: case 4: case 5: case 6:
+				case 7: case 8: case 9: case 10: case 11: case 12:
+					// активировать консоль №
+					TabBar.ActivateConsole(wParam);
+					break; 
+				case 13:
+					// Создать новую консоль
+					break;
+				case 14:
+					// переключение между альтернативной консолью
+					break;
+				}
+			}
+			break;
+	}
+	return DefWindowProc(hWnd, messg, wParam, lParam);
+}
+
 void TabBarClass::CreateToolbar()
 {
 	if (mh_Toolbar) return;
 	
-	mh_ToolbarParent = CreateWindow(_T("Static"), _T(""), WS_VISIBLE|WS_CHILD, 
-			300,0,280,22, ghWnd, 0, 0, 0);
+	WNDCLASS wc = {CS_DBLCLKS, (WNDPROC)TabBarClass::ToolWndProc, 0, 0, 
+		    g_hInstance, 0, LoadCursor(NULL, IDC_ARROW), 
+		    (HBRUSH)(COLOR_BTNFACE+1), 
+		    NULL, _T("VirtualConsoleClassConMan")};
+    if (!RegisterClass(&wc))
+        return;
+
+	
+	mh_ToolbarParent = CreateWindow(_T("VirtualConsoleClassConMan"), _T(""), 
+			WS_VISIBLE|WS_CHILD, 300,0,340,22, ghWnd, 0, 0, 0);
 	if (!mh_ToolbarParent) return;
 	
-   HWND hwndTB; 
-   TBADDBITMAP tbab; 
-   TBBUTTON tbb[3]; 
-   char szBuf[16]; 
-   int iCut, iCopy, iPaste;
    INITCOMMONCONTROLSEX icex;
     
 // Ensure that the common control DLL is loaded. 
@@ -417,82 +479,48 @@ void TabBarClass::CreateToolbar()
    InitCommonControlsEx(&icex);
  
 // Create a toolbar. 
-	TBBUTTON buttons[14] = {
+	TBBUTTON buttons[16] = {
 		{0, 1, TBSTATE_ENABLED, TBSTYLE_CHECKGROUP/*|TBSTYLE_TRANSPARENT*/},
-		{1, 2, TBSTATE_ENABLED, TBSTYLE_CHECKGROUP/*|TBSTYLE_TRANSPARENT*/},
+		{1, 2, TBSTATE_ENABLED|TBSTATE_HIDDEN, TBSTYLE_CHECKGROUP/*|TBSTYLE_TRANSPARENT*/},
 		{2, 3, TBSTATE_ENABLED, TBSTYLE_CHECKGROUP/*|TBSTYLE_TRANSPARENT*/},
-		{3, 4, TBSTATE_ENABLED, TBSTYLE_CHECKGROUP/*|TBSTYLE_TRANSPARENT*/},
-		{4, 5, TBSTATE_ENABLED, TBSTYLE_CHECKGROUP/*|TBSTYLE_TRANSPARENT*/},
-		{5, 6, TBSTATE_ENABLED, TBSTYLE_CHECKGROUP/*|TBSTYLE_TRANSPARENT*/},
-		{6, 7, TBSTATE_ENABLED, TBSTYLE_CHECKGROUP/*|TBSTYLE_TRANSPARENT*/},
-		{7, 8, TBSTATE_ENABLED, TBSTYLE_CHECKGROUP/*|TBSTYLE_TRANSPARENT*/},
-		{8, 9, TBSTATE_ENABLED, TBSTYLE_CHECKGROUP/*|TBSTYLE_TRANSPARENT*/},
-		{9, 10, TBSTATE_ENABLED, TBSTYLE_CHECKGROUP/*|TBSTYLE_TRANSPARENT*/},
-		{10, 11, TBSTATE_ENABLED, TBSTYLE_CHECKGROUP/*|TBSTYLE_TRANSPARENT*/},
-		{11, 12, TBSTATE_ENABLED, TBSTYLE_CHECKGROUP/*|TBSTYLE_TRANSPARENT*/},
+		{3, 4, TBSTATE_ENABLED|TBSTATE_HIDDEN, TBSTYLE_CHECKGROUP/*|TBSTYLE_TRANSPARENT*/},
+		{4, 5, TBSTATE_ENABLED|TBSTATE_HIDDEN, TBSTYLE_CHECKGROUP/*|TBSTYLE_TRANSPARENT*/},
+		{5, 6, TBSTATE_ENABLED|TBSTATE_HIDDEN, TBSTYLE_CHECKGROUP/*|TBSTYLE_TRANSPARENT*/},
+		{6, 7, TBSTATE_ENABLED|TBSTATE_HIDDEN, TBSTYLE_CHECKGROUP/*|TBSTYLE_TRANSPARENT*/},
+		{7, 8, TBSTATE_ENABLED|TBSTATE_HIDDEN, TBSTYLE_CHECKGROUP/*|TBSTYLE_TRANSPARENT*/},
+		{8, 9, TBSTATE_ENABLED|TBSTATE_HIDDEN, TBSTYLE_CHECKGROUP/*|TBSTYLE_TRANSPARENT*/},
+		{9, 10, TBSTATE_ENABLED|TBSTATE_HIDDEN, TBSTYLE_CHECKGROUP/*|TBSTYLE_TRANSPARENT*/},
+		{10, 11, TBSTATE_ENABLED|TBSTATE_HIDDEN, TBSTYLE_CHECKGROUP/*|TBSTYLE_TRANSPARENT*/},
+		{11, 12, TBSTATE_ENABLED|TBSTATE_HIDDEN, TBSTYLE_CHECKGROUP/*|TBSTYLE_TRANSPARENT*/},
 		{0, 0, TBSTATE_ENABLED, TBSTYLE_SEP},
-		{12, 13, TBSTATE_ENABLED, TBSTYLE_CHECK/*|TBSTYLE_TRANSPARENT*/}
+		{12, 13, TBSTATE_ENABLED, BTNS_BUTTON/*|TBSTYLE_TRANSPARENT*/},
+		{0, 0, TBSTATE_ENABLED, TBSTYLE_SEP},
+		{13, 14, TBSTATE_ENABLED, TBSTYLE_CHECK/*|TBSTYLE_TRANSPARENT*/}
 		};
 
-	//mh_Toolbar = CreateToolbarEx(mh_ToolbarParent, WS_CHILD|WS_VISIBLE|TBSTYLE_FLAT, 101, 
-	//	13, g_hInstance, IDB_CONMAN, buttons, 13, 18,18, 16,16, sizeof(TBBUTTON));
 	mh_Toolbar = CreateWindowEx(0, TOOLBARCLASSNAME, NULL, 
         WS_CHILD|WS_VISIBLE|TBSTYLE_FLAT|CCS_NODIVIDER/*|TBSTYLE_TRANSPARENT*/, 0, 0, 0, 0, mh_ToolbarParent, 
         NULL, NULL, NULL); 
  
-// Send the TB_BUTTONSTRUCTSIZE message, which is required for 
-// backward compatibility. 
    SendMessage(mh_Toolbar, TB_BUTTONSTRUCTSIZE, (WPARAM) sizeof(TBBUTTON), 0); 
    SendMessage(mh_Toolbar, TB_SETBITMAPSIZE, 0, MAKELONG(16,16)); 
-   TBADDBITMAP bmp = {g_hInstance,IDB_CONMAN};
-   SendMessage(mh_Toolbar, TB_ADDBITMAP, 2, (LPARAM)&bmp);
-   SendMessage(mh_Toolbar, TB_ADDBUTTONS, 2, (LPARAM)&buttons);
-   
-	 
-//// Add the button strings to the toolbar's internal string list. 
-//   LoadString(g_hinst, IDS_CUT, szBuf, MAX_LEN-1); 
-////Save room for second null terminator.
-//   szBuf[lstrlen(szBuf) + 1] = 0;  //Double-null terminate. 
-   //iCut = SendMessage(hwndTB, TB_ADDSTRING, 0, (LPARAM) (LPSTR) szBuf); 
-//   LoadString(g_hinst, IDS_COPY, szBuf, MAX_LEN-1);  
-////Save room for second null terminator. 
-//   szBuf[lstrlen(szBuf) + 1] = 0;  //Double-null terminate. 
-//   iCopy = SendMessage(hwndTB, TB_ADDSTRING, (WPARAM) 0, 
-//       (LPARAM) (LPSTR) szBuf); 
-//   LoadString(g_hinst, IDS_PASTE, szBuf, MAX_LEN-1);  
-////Save room for second null terminator.
-//   szBuf[lstrlen(szBuf) + 1] = 0;  //Double-null terminate.  
-//   iPaste = SendMessage(hwndTB, TB_ADDSTRING, (WPARAM) 0, 
-//        (LPARAM) (LPSTR) szBuf); 
-// 
-//// Fill the TBBUTTON array with button information, and add the 
-//// buttons to the toolbar. The buttons on this toolbar have text 
-//// but do not have bitmap images. 
-//   tbb[0].iBitmap = -1; 
-//   tbb[0].idCommand = IDS_CUT; 
-//   tbb[0].fsState = TBSTATE_ENABLED; 
-//   tbb[0].fsStyle = BTNS_BUTTON; 
-//   tbb[0].dwData = 0; 
-//   tbb[0].iString = iCut; 
-// 
-//   tbb[1].iBitmap = -1; 
-//   tbb[1].idCommand = IDS_COPY; 
-//   tbb[1].fsState = TBSTATE_ENABLED; 
-//   tbb[1].fsStyle = BTNS_BUTTON; 
-//   tbb[1].dwData = 0; 
-//   tbb[1].iString = iCopy; 
-// 
-//   tbb[2].iBitmap = -1; 
-//   tbb[2].idCommand = IDS_PASTE; 
-//   tbb[2].fsState = TBSTATE_ENABLED; 
-//   tbb[2].fsStyle = BTNS_BUTTON; 
-//   tbb[2].dwData = 0; 
-//   tbb[2].iString = iPaste; 
-// 
-//   SendMessage(hwndTB, TB_ADDBUTTONS, (WPARAM) NUM_BUTTONS, 
-//        (LPARAM) (LPTBBUTTON) &tbb); 
-// 
+   TBADDBITMAP bmp = {g_hInstance,IDB_CONMAN1};
+   int nFirst = SendMessage(mh_Toolbar, TB_ADDBITMAP, 14, (LPARAM)&bmp);
+   //buttons
+   SendMessage(mh_Toolbar, TB_ADDBUTTONS, 16, (LPARAM)&buttons);
+
    SendMessage(mh_Toolbar, TB_AUTOSIZE, 0, 0); 
+   SIZE sz; 
+   SendMessage(mh_Toolbar, TB_GETMAXSIZE, 0, (LPARAM)&sz);
+   RECT rcClient;
+   GetWindowRect(_hwndTab, &rcClient);
+   MapWindowPoints(NULL, ghWnd, (LPPOINT)&rcClient, 2);
+   //int nbWidth = SendMessage(mh_Toolbar, TB_GETBUTTONSIZE, 0, 0) & 0xFFFF;
+   //int nHidden = 10;
+   SetWindowPos(mh_ToolbarParent, HWND_TOP, 
+	   rcClient.right - sz.cx - 2, 0,
+	   sz.cx, sz.cy, 0);
+   
 
    //ShowWindow(hwndTB, SW_SHOW); 
    return;

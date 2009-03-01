@@ -297,7 +297,8 @@ DWORD WINAPI ThreadProcW(LPVOID lpParameter)
 
 		SafeCloseHandle(ghMapping);
 		// Поставим флажок, что мы приступили к обработке
-		SetEvent(hEventAlive);
+		if (dwWait != (WAIT_OBJECT_0+CMD_REQTABS)) // исключение - запрос табов. он асинхронный
+			SetEvent(hEventAlive);
 
 
 		switch (dwWait)
@@ -330,7 +331,8 @@ DWORD WINAPI ThreadProcW(LPVOID lpParameter)
 					AddTab(nTabs, false, false, WTYPE_PANELS, 0,0,1,0); 
 				}
 				SendTabs(gnCurTabCount, TRUE);
-				break;
+				// исключение - запрос табов. он асинхронный
+				continue;
 			}
 		}
 

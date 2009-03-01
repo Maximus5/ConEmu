@@ -314,6 +314,11 @@ BOOL CreateAppWindow()
 	SetProcessAffinityMask(GetCurrentProcess(), 1);
 	SetThreadAffinityMask(GetCurrentThread(), 1);
 
+	/*DWORD dwErr = 0;
+	HMODULE hInf = LoadLibrary(L"infis.dll");
+	if (!hInf)
+		dwErr = GetLastError();*/
+
     //!!!ICON
     gConEmu.LoadIcons();
     
@@ -446,6 +451,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	bool FontFilePrm = false; TCHAR* FontFile; //ADD fontname; by Mors
 	bool WindowPrm = false;
 	bool AttachPrm = false; LONG AttachVal=0;
+	bool ConManPrm = false;
 
     gConEmu.cBlinkShift = GetCaretBlinkTime()/15;
 
@@ -508,7 +514,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         for (uint i = 1; i < params; i++)
         {
             curCommand += _tcslen(curCommand) + 1;
-            if ( !klstricmp(curCommand, _T("/ct")) || !klstricmp(curCommand, _T("/cleartype")) )
+			if ( !klstricmp(curCommand, _T("/conman")) ) {
+				ConManPrm = true;
+			}
+            else if ( !klstricmp(curCommand, _T("/ct")) || !klstricmp(curCommand, _T("/cleartype")) )
             {
                 ClearTypePrm = true;
             }
@@ -815,94 +824,102 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     if (!AttachPrm)
     {
-	    STARTUPINFO si;
-	    PROCESS_INFORMATION pi;
+		if (ConManPrm) {
+			if (!gConEmu.InitConMan(*gSet.Cmd ? gSet.Cmd : L"")) {
+				gConEmu.Destroy();
+				free(cmdLine);
+				return -1;
+			}
+		} else {
+			STARTUPINFO si;
+			PROCESS_INFORMATION pi;
 
-	    ZeroMemory( &si, sizeof(si) );
-	    si.cb = sizeof(si);
-	    ZeroMemory( &pi, sizeof(pi) );
+			ZeroMemory( &si, sizeof(si) );
+			si.cb = sizeof(si);
+			ZeroMemory( &pi, sizeof(pi) );
 
-	    if (*gSet.Cmd)
-	    {
-	        if (!CreateProcess(NULL, gSet.Cmd, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
-	        {
-	            //MBoxA("Cannot execute the command.");
-		        DWORD dwLastError = GetLastError();
-	            int nLen = _tcslen(gSet.Cmd);
-		        TCHAR* pszErr=(TCHAR*)calloc(nLen+100,sizeof(TCHAR));
-		        
-			    if (0==FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-			        NULL, dwLastError, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
-			        pszErr, 1024, NULL))
-			    {
-				    wsprintf(pszErr, _T("Unknown system error: 0x%x"), dwLastError);
-			    }
-		        
-			    nLen += _tcslen(pszErr);
-		        TCHAR* psz=(TCHAR*)calloc(nLen+100,sizeof(TCHAR));
-		        int nButtons = MB_OK|MB_ICONEXCLAMATION|MB_SETFOREGROUND;
-		        
-		        _tcscpy(psz, _T("Cannot execute the command.\r\n"));
-		        _tcscat(psz, pszErr);
-		        if (psz[_tcslen(psz)-1]!=_T('\n')) _tcscat(psz, _T("\r\n"));
-		        _tcscat(psz, gSet.Cmd);
-		        if (StrStrI(gSet.Cmd, gSet.BufferHeight == 0 ? _T("far.exe") : _T("cmd.exe"))==NULL) {
-			        _tcscat(psz, _T("\r\n\r\n"));
-			        _tcscat(psz, gSet.BufferHeight == 0 ? _T("Do You want to simply start far?") : _T("Do You want to simply start cmd?"));
-			        nButtons |= MB_YESNO;
-			    }
-		        //MBoxA(psz);
-		        int nBrc = MessageBox(NULL, psz, _T("ConEmu"), nButtons);
-		        free(psz); free(pszErr);
-		        if (nBrc!=IDYES) {
-		            gConEmu.Destroy();
-		            free(cmdLine);
-		            return -1;
-		        }
-		        *gSet.Cmd = 0; // Выполнить стандартную команду...
-	        }
-	    }
-	    
-	    if (!*gSet.Cmd)
-	    {
-	        // *) simple mode: try to start FAR and then cmd;
-	        // *) buffer mode: FAR is nonsense, try to start cmd only.
-	        _tcscpy(temp, gSet.BufferHeight == 0 ? _T("far") : _T("cmd"));
-	        if (!CreateProcess(NULL, temp, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi) && gSet.BufferHeight == 0)
-	        {
-	            _tcscpy(temp, _T("cmd"));
-	            if (!CreateProcess(NULL, temp, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
-	            {
-	                //MBoxA("Cannot start Far or Cmd.");
-			        DWORD dwLastError = GetLastError();
-		            int nLen = _tcslen(gSet.Cmd);
-			        TCHAR* pszErr=(TCHAR*)calloc(nLen+100,sizeof(TCHAR));
+			if (*gSet.Cmd)
+			{
+				if (!CreateProcess(NULL, gSet.Cmd, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
+				{
+					//MBoxA("Cannot execute the command.");
+					DWORD dwLastError = GetLastError();
+					int nLen = _tcslen(gSet.Cmd);
+					TCHAR* pszErr=(TCHAR*)calloc(nLen+100,sizeof(TCHAR));
 			        
-				    if (0==FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-				        NULL, dwLastError, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
-				        pszErr, 1024, NULL))
-				    {
-					    wsprintf(pszErr, _T("Unknown system error: 0x%x"), dwLastError);
-				    }
+					if (0==FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+						NULL, dwLastError, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
+						pszErr, 1024, NULL))
+					{
+						wsprintf(pszErr, _T("Unknown system error: 0x%x"), dwLastError);
+					}
 			        
-				    nLen += _tcslen(pszErr);
-			        TCHAR* psz=(TCHAR*)calloc(nLen+100,sizeof(TCHAR));
+					nLen += _tcslen(pszErr);
+					TCHAR* psz=(TCHAR*)calloc(nLen+100,sizeof(TCHAR));
+					int nButtons = MB_OK|MB_ICONEXCLAMATION|MB_SETFOREGROUND;
 			        
-			        _tcscpy(psz, _T("Cannot start Far or Cmd.\r\n"));
-			        _tcscat(psz, pszErr);
-			        if (psz[_tcslen(psz)-1]!=_T('\n')) _tcscat(psz, _T("\r\n"));
-			        _tcscat(psz, gSet.Cmd);
-			        MBoxA(psz);
-			        free(psz); free(pszErr);
-			        gConEmu.Destroy(); free(cmdLine);
-		            return -1;
-	            }
-	        }
-	    }
+					_tcscpy(psz, _T("Cannot execute the command.\r\n"));
+					_tcscat(psz, pszErr);
+					if (psz[_tcslen(psz)-1]!=_T('\n')) _tcscat(psz, _T("\r\n"));
+					_tcscat(psz, gSet.Cmd);
+					if (StrStrI(gSet.Cmd, gSet.BufferHeight == 0 ? _T("far.exe") : _T("cmd.exe"))==NULL) {
+						_tcscat(psz, _T("\r\n\r\n"));
+						_tcscat(psz, gSet.BufferHeight == 0 ? _T("Do You want to simply start far?") : _T("Do You want to simply start cmd?"));
+						nButtons |= MB_YESNO;
+					}
+					//MBoxA(psz);
+					int nBrc = MessageBox(NULL, psz, _T("ConEmu"), nButtons);
+					free(psz); free(pszErr);
+					if (nBrc!=IDYES) {
+						gConEmu.Destroy();
+						free(cmdLine);
+						return -1;
+					}
+					*gSet.Cmd = 0; // Выполнить стандартную команду...
+				}
+			}
+		    
+			if (!*gSet.Cmd)
+			{
+				// *) simple mode: try to start FAR and then cmd;
+				// *) buffer mode: FAR is nonsense, try to start cmd only.
+				_tcscpy(temp, gSet.BufferHeight == 0 ? _T("far") : _T("cmd"));
+				if (!CreateProcess(NULL, temp, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi) && gSet.BufferHeight == 0)
+				{
+					_tcscpy(temp, _T("cmd"));
+					if (!CreateProcess(NULL, temp, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
+					{
+						//MBoxA("Cannot start Far or Cmd.");
+						DWORD dwLastError = GetLastError();
+						int nLen = _tcslen(gSet.Cmd);
+						TCHAR* pszErr=(TCHAR*)calloc(nLen+100,sizeof(TCHAR));
+				        
+						if (0==FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+							NULL, dwLastError, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
+							pszErr, 1024, NULL))
+						{
+							wsprintf(pszErr, _T("Unknown system error: 0x%x"), dwLastError);
+						}
+				        
+						nLen += _tcslen(pszErr);
+						TCHAR* psz=(TCHAR*)calloc(nLen+100,sizeof(TCHAR));
+				        
+						_tcscpy(psz, _T("Cannot start Far or Cmd.\r\n"));
+						_tcscat(psz, pszErr);
+						if (psz[_tcslen(psz)-1]!=_T('\n')) _tcscat(psz, _T("\r\n"));
+						_tcscat(psz, gSet.Cmd);
+						MBoxA(psz);
+						free(psz); free(pszErr);
+						gConEmu.Destroy(); free(cmdLine);
+						return -1;
+					}
+				}
+			}
 
-	    CloseHandle(pi.hThread); pi.hThread = NULL;
-	    CloseHandle(pi.hProcess); pi.hProcess = NULL;
-	    //hChildProcess = pi.hProcess;
+			CloseHandle(pi.hThread); pi.hThread = NULL;
+			CloseHandle(pi.hProcess); pi.hProcess = NULL;
+			//hChildProcess = pi.hProcess;
+		}
 	}
 
 //------------------------------------------------------------------------

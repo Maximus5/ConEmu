@@ -424,7 +424,7 @@ END
 // Bitmap
 //
 
-IDB_CONMAN              BITMAP  DISCARDABLE     "toolbarx.bmp"
+IDB_CONMAN1              BITMAP  DISCARDABLE     "toolbar1.bmp"
 #endif    // English (U.S.) resources
 /////////////////////////////////////////////////////////////////////////////
 

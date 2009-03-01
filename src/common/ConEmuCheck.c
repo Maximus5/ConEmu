@@ -125,6 +125,7 @@ HWND GetConEmuHWND(BOOL abRoot, int* pnConsoleIsChild/*=NULL*/)
 	}
 
 
+#ifndef CONMANSERVER
 	if (!ConEmuHwnd) {
 		char className[100];
 		if (GetEnvironmentVariableA("ConEmuHWND", className, 99)) {
@@ -179,6 +180,7 @@ HWND GetConEmuHWND(BOOL abRoot, int* pnConsoleIsChild/*=NULL*/)
 			}
 		}
 	}
+#endif
 
 	if (!ConEmuHwnd && FarHwnd) {
 		while((ConEmuHwnd = FindWindowExA(NULL, ConEmuHwnd, VirtualConsoleClassMain, NULL))!=NULL)
@@ -197,7 +199,7 @@ HWND GetConEmuHWND(BOOL abRoot, int* pnConsoleIsChild/*=NULL*/)
 		
 	}
 
-    if (abRoot && ConEmuHwnd && (nChk>=3))
+    if (abRoot && ConEmuHwnd && (nChk<3))
 	    ConEmuRoot = GetAncestor(ConEmuHwnd, GA_PARENT);
 	
 	if (pnConsoleIsChild) *pnConsoleIsChild = nChk;

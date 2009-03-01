@@ -84,7 +84,8 @@ public:
 	uint cBlinkShift; // cursor blink counter threshold
 	TCHAR szConEmuVersion[32];
 	//DWORD m_ProcList[1000], 
-	DWORD m_ProcCount, m_ActiveConmanIDX;
+	DWORD m_ProcCount, m_ActiveConmanIDX, mn_ConmanPID;
+	HMODULE mh_Infis; TCHAR ms_InfisPath[MAX_PATH*2];
 	DWORD mn_ActiveStatus;
 	DWORD mn_TopProcessID; 
 	//BOOL mb_FarActive;
@@ -94,7 +95,7 @@ protected:
 	TCHAR Title[MAX_TITLE_SIZE], TitleCmp[MAX_TITLE_SIZE];
 	void UpdateTitle(LPCTSTR asNewTitle);
 	struct ConProcess {
-		DWORD ProcessID;
+		DWORD ProcessID, ParentPID;
 		BYTE  ConmanIDX;
 		//bool  Alive;
 		bool  IsConman;
@@ -103,12 +104,19 @@ protected:
 		bool  NameChecked, ConmanChecked, RetryName;
 		TCHAR Name[64]; // чтобы полная инфа об ошибке влезала
 	};
-	int mn_NeedRetryName;
+	//int mn_NeedRetryName;
 	std::vector<struct ConProcess> m_Processes;
+	void CheckProcessName(struct ConProcess &ConPrc, LPCTSTR asFullFileName);
 	DWORD CheckProcesses(DWORD nConmanIDX, BOOL bTitleChanged);
 	LPTSTR GetTitleStart(DWORD* rnConmanIDX=NULL);
-	bool GetProcessFileName(DWORD dwPID, TCHAR* rsName/*[32]*/, DWORD *pdwErr);
+	//bool GetProcessFileName(DWORD dwPID, TCHAR* rsName/*[32]*/, DWORD *pdwErr);
 	BOOL mb_InTimer;
+	BOOL mb_ProcessCreated; DWORD mn_StartTick;
+	HMODULE mh_ConMan;
+	typedef int (_cdecl * ConMan_MainProc_t)(LPCWSTR asCommandLine, BOOL abStandalone);
+	ConMan_MainProc_t ConMan_MainProc;
+	typedef void (_cdecl * ConMan_LookForKeyboard_t)();
+	ConMan_LookForKeyboard_t ConMan_LookForKeyboard;
 	
 public:
 	LPCTSTR GetTitle();
@@ -132,7 +140,9 @@ public:
 	//void GetCWShift(HWND inWnd, RECT *outShift);
 	static BOOL WINAPI HandlerRoutine(DWORD dwCtrlType);
 	BOOL Init();
+	BOOL InitConMan(LPCWSTR asCommandLine);
 	void InvalidateAll();
+	bool isConman();
 	bool isConSelectMode();
 	bool isEditor();
 	bool isFar();

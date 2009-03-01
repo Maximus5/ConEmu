@@ -87,8 +87,8 @@ void __forceinline DisplayLastError(LPCTSTR asLabel)
 	DWORD dw = GetLastError();
 	LPVOID lpMsgBuf;
 	FormatMessage( FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, NULL, dw, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR) &lpMsgBuf, 0, NULL );
-	wsprintf(out, _T("%s\nError code ''%d'':\n%s"), asLabel, dw, lpMsgBuf);
-	MessageBox(0, out, gConEmu.GetTitle(), MB_SYSTEMMODAL | MB_ICONERROR);
+	wsprintf(out, _T("%s\nError code ''0x%08X'':\n%s"), asLabel, dw, lpMsgBuf);
+	MessageBox(ghWnd, out, gConEmu.GetTitle(), MB_SYSTEMMODAL | MB_ICONERROR);
 }
 
 COORD __forceinline MakeCoord(int W,int H)

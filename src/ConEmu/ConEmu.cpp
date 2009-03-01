@@ -1,4 +1,5 @@
 #include "Header.h"
+#include <Tlhelp32.h>
 
 #define CES_CONMANACTIVE 0x01
 #define CES_TELNETACTIVE 0x02
@@ -13,6 +14,8 @@
 #define CES_COPYING 0x400
 #define CES_MOVING 0x800
 //... and so on
+
+#define PROCESS_WAIT_START_TIME 1000
 
 CConEmuMain::CConEmuMain()
 {
@@ -49,9 +52,12 @@ CConEmuMain::CConEmuMain()
 	mb_InTimer = FALSE;
 	//mb_InClose = FALSE;
 	//memset(m_ProcList, 0, 1000*sizeof(DWORD)); 
-	m_ProcCount=0;
+	m_ProcCount=0; mn_ConmanPID = 0; mh_Infis = NULL; ms_InfisPath[0] = 0;
 	mn_TopProcessID = 0; //ms_TopProcess[0] = 0; mb_FarActive = FALSE;
-	mn_ActiveStatus = 0; m_ActiveConmanIDX = 0; mn_NeedRetryName = 0;
+	mn_ActiveStatus = 0; m_ActiveConmanIDX = 0; //mn_NeedRetryName = 0;
+	mb_ProcessCreated = FALSE; mn_StartTick = 0;
+	mh_ConMan = NULL;
+	ConMan_MainProc = NULL; ConMan_LookForKeyboard = NULL;
 
 	mh_Psapi = NULL;
 	GetModuleFileNameEx= NULL;
@@ -81,6 +87,40 @@ BOOL CConEmuMain::Init()
 	return FALSE;
 }
 
+BOOL CConEmuMain::InitConMan(LPCWSTR asCommandLine)
+{
+	mh_ConMan = LoadLibrary(_T("conman.dll"));
+	if (!mh_ConMan) {
+		DisplayLastError(_T("Can't load ConMain.dll!"));
+		return FALSE;
+	}
+
+	ConMan_MainProc = (ConMan_MainProc_t)GetProcAddress(mh_ConMan, "MainProc");
+	ConMan_LookForKeyboard = (ConMan_LookForKeyboard_t)GetProcAddress(mh_ConMan, "LookForKeyboard");
+	// TODO: остальные необходимые функции
+	if (!ConMan_MainProc || !ConMan_LookForKeyboard)
+	{
+		ConMan_MainProc = NULL;
+		ConMan_LookForKeyboard = NULL;
+		DisplayLastError(_T("ConMan function not found! Old ConMan.dll version?"));
+		return FALSE;
+	}
+
+	int nRc = ConMan_MainProc(asCommandLine, FALSE);
+	if (nRc != 0) {
+		TCHAR szErr[255];
+		wsprintf(szErr, _T("Can't initialize ConMan.dll!\r\nErrorCode = %i"), nRc);
+		MBoxA(szErr);
+		return FALSE;
+	}
+	
+	ConMan_LookForKeyboard();
+
+	mn_ActiveStatus |= CES_CONMANACTIVE;
+
+	return TRUE;
+}
+
 void CConEmuMain::Destroy()
 {
 	if (ghWnd)
@@ -89,6 +129,9 @@ void CConEmuMain::Destroy()
 
 CConEmuMain::~CConEmuMain()
 {
+	if (mh_Infis && mh_Infis!=INVALID_HANDLE_VALUE)
+		FreeLibrary(mh_Infis);
+	mh_Infis = NULL;
 }
 
 
@@ -969,16 +1012,45 @@ void CConEmuMain::SetConParent()
 	}
 #endif
 
+void CConEmuMain::CheckProcessName(struct CConEmuMain::ConProcess &ConPrc, LPCTSTR asFullFileName)
+{
+	ConPrc.IsFar = lstrcmpi(ConPrc.Name, _T("far.exe"))==0;
+	if (ConPrc.IsTelnet = lstrcmpi(ConPrc.Name, _T("telnet.exe"))==0) {
+		mn_ActiveStatus |= CES_TELNETACTIVE;
+	}
+	if (ConPrc.IsConman = lstrcmpi(ConPrc.Name, _T("conman.exe"))==0) {
+		mn_ConmanPID = ConPrc.ProcessID;
+		mn_ActiveStatus |= CES_CONMANACTIVE;
+
+		if (mh_Infis==NULL && asFullFileName) {
+			_tcscpy(ms_InfisPath, asFullFileName);
+			TCHAR* pszSlash = _tcsrchr(ms_InfisPath, _T('\\'));
+			if (pszSlash) {
+				pszSlash++;
+				_tcscpy(pszSlash, _T("infis.dll"));
+			} else {
+				if (!SearchPath(NULL, _T("infis.dll"), NULL, MAX_PATH*2, ms_InfisPath, &pszSlash))
+					_tcscpy(ms_InfisPath, _T("infis.dll"));
+			}
+		}
+	}
+	ConPrc.NameChecked = true;
+}
+
 DWORD CConEmuMain::CheckProcesses(DWORD nConmanIDX, BOOL bTitleChanged)
 {
 	// Высота буфера могла измениться после смены списка процессов
-	BOOL  lbProcessChanged = FALSE, lbAllowRetry = TRUE;
+	BOOL  lbProcessChanged = FALSE; //, lbAllowRetry = TRUE;
 	int   nTopIdx = 0;
 	DWORD dwProcList[2], nProcCount;
     nProcCount = GetConsoleProcessList(dwProcList,2);
 
 	//Warning! Новый Процесс появляется в консоли до того, как успеет измениться заголовок окна
 	//Попробовать через infsys
+	
+	// Смену списка процессов хорошо бы еще отслеживать по последнему Top процессу
+	// А то при пакетной компиляции процессы меняются, но количество
+	// может оставаться неизменным
 
     // Дополнительные телодвижения делаем только если в консоли изменился
     // список процессов
@@ -986,7 +1058,8 @@ DWORD CConEmuMain::CheckProcesses(DWORD nConmanIDX, BOOL bTitleChanged)
 	    DWORD *dwFullProcList = new DWORD[nProcCount+10];
 	    nProcCount = GetConsoleProcessList(dwFullProcList,nProcCount+10);
 		lbProcessChanged = TRUE;
-	    mn_ActiveStatus &= ~CES_FARACTIVE; //CES_EDITOR и др. устанавливаются в SetTitle, а он вызывается перед этой функцией!
+		//CES_EDITOR и др. устанавливаются в SetTitle, а он вызывается перед этой функцией!
+	    mn_ActiveStatus &= ~CES_FARACTIVE;
 	    
 	    int i, j;
 	    std::vector<struct ConProcess>::iterator iter;
@@ -1000,7 +1073,7 @@ DWORD CConEmuMain::CheckProcesses(DWORD nConmanIDX, BOOL bTitleChanged)
 		    nTopIdx ++;
 		dwTopPID = dwFullProcList[nTopIdx];
 	    // Сначала пробежаться по тому, что мы уже запомнили, 
-	    // и удалить то что завершилось
+	    // и удалить то что завершилось, да и сбросить коды уже известных процессов
 	    iter = m_Processes.begin();
 	    while (iter != m_Processes.end())
 	    {
@@ -1017,6 +1090,7 @@ DWORD CConEmuMain::CheckProcesses(DWORD nConmanIDX, BOOL bTitleChanged)
 			}
 	    }
 	    // Теперь, добавить новые процессы (скорее всего это только dwTopPID)
+	    BOOL bWasNewProcess = FALSE;
 	    for (i=0; i<(int)nProcCount; i++)
 	    {
 		    if (!dwFullProcList[i]) continue; // это НЕ новый процесс
@@ -1024,30 +1098,76 @@ DWORD CConEmuMain::CheckProcesses(DWORD nConmanIDX, BOOL bTitleChanged)
 
 		    memset(&ConPrc, 0, sizeof(ConPrc));
 			ConPrc.ProcessID = dwFullProcList[i];
-			//TODO: теоретически, индекс конмана для верхнего процесса может отличаться, если заголовок консоли мигает (конман создает новую консоль)
-			ConPrc.ConmanIDX = nConmanIDX;
-			// Определить имя exe-шника
-			DWORD dwErr = 0;
-			if (ConPrc.NameChecked = GetProcessFileName(ConPrc.ProcessID, ConPrc.Name, &dwErr)) {
-				ConPrc.IsFar = lstrcmpi(ConPrc.Name, _T("far.exe"))==0;
-				if (ConPrc.IsTelnet = lstrcmpi(ConPrc.Name, _T("telnet.exe"))==0)
-					mn_ActiveStatus |= CES_TELNETACTIVE;
-				if (ConPrc.IsConman = lstrcmpi(ConPrc.Name, _T("conman.exe"))==0)
-					mn_ActiveStatus |= CES_CONMANACTIVE;
-				ConPrc.NameChecked = true;
-				// Теоретически - это может быть багом (если из одного фара запустили другой, но заголовок не поменялся?
-				if (nConmanIDX && (bTitleChanged || (nConmanIDX != m_ActiveConmanIDX)))
-					ConPrc.ConmanChecked = true;
-			} else if (dwErr == 6) {
-				ConPrc.RetryName = true;
-				lbAllowRetry = FALSE;
-				mn_NeedRetryName ++;
-			}
+			////TODO: теоретически, индекс конмана для верхнего процесса может отличаться, если заголовок консоли мигает (конман создает новую консоль)
+			//ConPrc.ConmanIDX = nConmanIDX;
+			//// Определить имя exe-шника
+			//DWORD dwErr = 0;
+			//if (ConPrc.NameChecked = GetProcessFileName(ConPrc.ProcessID, ConPrc.Name, &dwErr)) {
+			//	CheckProcessName(ConPrc); //far, telnet, conman
+			//	// Теоретически - это может быть багом (если из одного фара запустили другой, но заголовок не поменялся?
+			//	if (nConmanIDX && (bTitleChanged || (nConmanIDX != m_ActiveConmanIDX)))
+			//		ConPrc.ConmanChecked = true;
+			//} else if (dwErr == 6) {
+			//	ConPrc.RetryName = true;
+			//	lbAllowRetry = FALSE;
+			//	mn_NeedRetryName ++;
+			//}
 			// Если это НЕ фар - наверное индекс конмана нас не интересует? интересует. а то как узнать, что фар команды выполняет...
 			//if (!ConPrc.IsFar /* && ConPrc.NameChecked */)
 			//	ConPrc.ConmanIDX = 0;
+			
 			// Запомнить
+			if (!bWasNewProcess) bWasNewProcess = TRUE;
 			m_Processes.push_back(ConPrc);
+	    }
+	    // Через Process32First/Process32Next получить информацию обо всех добавленных PID
+	    if (bWasNewProcess) {
+		    HANDLE h = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS,0);
+		    if (h==INVALID_HANDLE_VALUE) {
+			    DWORD dwErr = GetLastError();
+			    iter = m_Processes.begin();
+			    while (iter != m_Processes.end())
+			    {
+				    if (iter->Name[0] == 0) {
+					    swprintf(iter->Name, L"CreateToolhelp32Snapshot failed. 0x%08X", dwErr);
+				    }
+					iter ++;
+			    }
+		    } else {
+			    PROCESSENTRY32 p; memset(&p, 0, sizeof(p)); p.dwSize = sizeof(p);
+			    if (Process32First(h, &p)) 
+			    {
+				    do {
+					    // Перебираем процессы - нужно сохранить имя
+						iter = m_Processes.begin();
+					    while (iter != m_Processes.end())
+					    {
+						    if (!iter->NameChecked && iter->ProcessID == p.th32ProcessID)
+						    {
+								TCHAR* pszSlash = _tcsrchr(p.szExeFile, _T('\\'));
+								if (pszSlash) pszSlash++; else pszSlash=p.szExeFile;
+								int nLen = _tcslen(pszSlash);
+								if (nLen>=63) pszSlash[63]=0;
+								_tcscpy(iter->Name, pszSlash);
+								CheckProcessName(*iter, p.szExeFile); //far, telnet, conman
+								// запомнить родителя
+								iter->ParentPID = p.th32ParentProcessID;
+						    }
+							iter ++;
+					    }
+					    // Следущий процесс
+				    } while (Process32Next(h, &p));
+			    }
+			    // Пометить процессы, которых уже нет (и когда успели?)
+			    iter = m_Processes.begin();
+			    while (iter != m_Processes.end())
+			    {
+				    if (iter->Name[0] == 0) {
+					    swprintf(iter->Name, L"Process %i not found in snapshoot", iter->ProcessID);
+				    }
+					iter ++;
+			    }
+		    }
 	    }
 	    // Осталось выяснить, какой процесс сейчас "сверху"
 	    // Идем с конца списка, т.к. новые процессы консоли добавляются в конец
@@ -1071,43 +1191,95 @@ DWORD CConEmuMain::CheckProcesses(DWORD nConmanIDX, BOOL bTitleChanged)
 	    delete dwFullProcList;
     }
 
-    if (mn_NeedRetryName>0 && lbAllowRetry) {
-	    for (int i=m_Processes.size()-1; i>=0; i--)
-	    {
-			if (!m_Processes[i].RetryName) continue;
-		    DWORD dwErr = 0;
-			if (m_Processes[i].NameChecked = GetProcessFileName(m_Processes[i].ProcessID, m_Processes[i].Name, &dwErr)) {
-				m_Processes[i].IsFar = lstrcmpi(m_Processes[i].Name, _T("far.exe"))==0;
-				if (m_Processes[i].IsTelnet = lstrcmpi(m_Processes[i].Name, _T("telnet.exe"))==0)
-					mn_ActiveStatus |= CES_TELNETACTIVE;
-				if (m_Processes[i].IsConman = lstrcmpi(m_Processes[i].Name, _T("conman.exe"))==0)
-					mn_ActiveStatus |= CES_CONMANACTIVE;
-				m_Processes[i].NameChecked = true;
-				m_Processes[i].RetryName = false;
-				mn_NeedRetryName --;
-			} else {
-				lbAllowRetry = FALSE;
-			}
-		}
-    }
+    //if (mn_NeedRetryName>0 && lbAllowRetry) {
+	//    for (int i=m_Processes.size()-1; i>=0; i--)
+	//    {
+	//		if (!m_Processes[i].RetryName) continue;
+	//	    DWORD dwErr = 0;
+	//		if (m_Processes[i].NameChecked = GetProcessFileName(m_Processes[i].ProcessID, m_Processes[i].Name, &dwErr)) {
+	//			m_Processes[i].IsFar = lstrcmpi(m_Processes[i].Name, _T("far.exe"))==0;
+	//			if (m_Processes[i].IsTelnet = lstrcmpi(m_Processes[i].Name, _T("telnet.exe"))==0)
+	//				mn_ActiveStatus |= CES_TELNETACTIVE;
+	//			if (m_Processes[i].IsConman = lstrcmpi(m_Processes[i].Name, _T("conman.exe"))==0)
+	//				mn_ActiveStatus |= CES_CONMANACTIVE;
+	//			m_Processes[i].NameChecked = true;
+	//			m_Processes[i].RetryName = false;
+	//			mn_NeedRetryName --;
+	//		} else {
+	//			lbAllowRetry = FALSE;
+	//		}
+	//	}
+    //}
 
-	// попытаться обновить номер ConMan для необработанных процессо
-	if (nConmanIDX && (/*bTitleChanged ||*/ (nConmanIDX != m_ActiveConmanIDX)))
+	// попытаться обновить номер ConMan для необработанных КОРНЕВЫХ процессов
+	if (mn_ConmanPID && nConmanIDX && (bTitleChanged || (nConmanIDX != m_ActiveConmanIDX)))
 	{
-		mn_TopProcessID = 0;
 	    for (int i=m_Processes.size()-1; i>=0; i--)
 	    {
 		    // 0-консоль - типа сам Конман
 		    if (m_Processes[i].IsConman /*|| !m_Processes[i].IsFar*/) continue;
-			if (!m_Processes[i].ConmanChecked || !m_Processes[i].ConmanIDX) {
+			if ((m_Processes[i].ParentPID == mn_ConmanPID) &&
+			    (!m_Processes[i].ConmanChecked || !m_Processes[i].ConmanIDX))
+			{
 				// Обновляем. Скорее всего номер уже правильный
 				m_Processes[i].ConmanIDX = nConmanIDX;
 				m_Processes[i].ConmanChecked = true;
 			}
-			if (!mn_TopProcessID && m_Processes[i].IsFar && (m_Processes[i].ConmanIDX == nConmanIDX)) {
+	    }
+	}
+	
+	// Получить номер Конмана для процессов второго уровня
+	if (mn_ConmanPID) {
+	    for (int i=m_Processes.size()-1; i>=0; i--)
+	    {
+		    // 0-консоль - типа сам Конман
+		    if (m_Processes[i].IsConman ||
+			    m_Processes[i].ConmanChecked ||
+		        m_Processes[i].ParentPID == mn_ConmanPID ||
+		        m_Processes[i].ParentPID == 0 /* ? */
+		        )
+		    continue; // эти процессы уже обработаны и нас не интересуют
+		    
+		    // Нужно найти корневой процесс
+		    DWORD nParentPID = m_Processes[i].ParentPID;
+			std::vector<struct ConProcess>::iterator iter;
+		    iter = m_Processes.begin();
+		    while (iter != m_Processes.end()) {
+			    if (iter->ProcessID == nParentPID) {
+				    nParentPID = iter->ParentPID;
+				    if (!nParentPID) break;
+				    if (nParentPID == mn_ConmanPID) {
+					    if (!iter->ConmanChecked)
+						    break; // Индекс конмана для корневого процесса пока не определен!
+						// Обновляем 
+						m_Processes[i].ConmanIDX = iter->ConmanIDX;
+						m_Processes[i].ConmanChecked = true;
+						break; // OK
+				    }
+				    iter = m_Processes.begin();
+				    continue;
+			    }
+			    iter ++;
+		    }
+		}
+	}
+	
+	// Получить код текущего "верхнего" процесса
+	if (lbProcessChanged) {
+		mn_TopProcessID = 0;
+	    for (int i=m_Processes.size()-1; !mn_TopProcessID && i>=0; i--)
+	    {
+		    // 0-консоль - типа сам Конман
+		    if (m_Processes[i].IsConman /*|| !m_Processes[i].IsFar*/) continue;
+		    
+			if (m_Processes[i].IsFar && (m_Processes[i].ConmanIDX == nConmanIDX)) {
 				mn_TopProcessID = m_Processes[i].ProcessID;
+				break;
 			}
 	    }
+	}
+	if (mn_TopProcessID) {
+		mn_ActiveStatus |= CES_FARACTIVE;
 	}
     
     if (!lbProcessChanged)
@@ -1116,6 +1288,7 @@ DWORD CConEmuMain::CheckProcesses(DWORD nConmanIDX, BOOL bTitleChanged)
 	if (lbProcessChanged) {
 		TabBar.Reset();
 		if (mn_TopProcessID) {
+			// Дернуть событие для этого процесса фара - он перешлет текущие табы
 			swprintf(temp, CONEMUREQTABS, mn_TopProcessID);
 			HANDLE hEvent = OpenEvent(EVENT_ALL_ACCESS, FALSE, temp);
 			if (hEvent) {
@@ -1183,38 +1356,38 @@ DWORD CConEmuMain::CheckProcesses(DWORD nConmanIDX, BOOL bTitleChanged)
 	return m_ProcCount;
 }
 
-bool CConEmuMain::GetProcessFileName(DWORD dwPID, TCHAR* rsName/*[32]*/, DWORD *pdwErr)
-{
-	bool lbRc = false;
-	DWORD dwErr = 0;
-	HANDLE hProcess = OpenProcess(PROCESS_VM_READ|PROCESS_QUERY_INFORMATION, FALSE, dwPID);
-	if (!hProcess || hProcess==INVALID_HANDLE_VALUE) {
-		dwErr = GetLastError();
-		if (pdwErr) *pdwErr = dwErr;
-		swprintf(rsName, _T("OpenProcess(%i).Err=0x%08X"), dwPID, dwErr);
-	}
-	else
-	{
-		TCHAR szFilePath[MAX_PATH+1];
-		if (!GetModuleFileNameEx(hProcess, 0, szFilePath, MAX_PATH))
-		{
-			dwErr = GetLastError();
-			if (pdwErr) *pdwErr = dwErr;
-			swprintf(rsName, _T("FileNameEx(0x%08X).Err=0x%08X"), (DWORD)hProcess, dwErr);
-		}
-		else
-		{
-			TCHAR* pszSlash = _tcsrchr(szFilePath, _T('\\'));
-			if (pszSlash) pszSlash++; else pszSlash=szFilePath;
-			int nLen = _tcslen(pszSlash);
-			if (nLen>=31) pszSlash[31]=0;
-			_tcscpy(rsName, pszSlash);
-			lbRc = true;
-		}
-		CloseHandle(hProcess); hProcess = NULL;
-	}
-	return lbRc;
-}
+//bool CConEmuMain::GetProcessFileName(DWORD dwPID, TCHAR* rsName/*[32]*/, DWORD *pdwErr)
+//{
+//	bool lbRc = false;
+//	DWORD dwErr = 0;
+//	HANDLE hProcess = OpenProcess(PROCESS_VM_READ|PROCESS_QUERY_INFORMATION, FALSE, dwPID);
+//	if (!hProcess || hProcess==INVALID_HANDLE_VALUE) {
+//		dwErr = GetLastError();
+//		if (pdwErr) *pdwErr = dwErr;
+//		swprintf(rsName, _T("OpenProcess(%i).Err=0x%08X"), dwPID, dwErr);
+//	}
+//	else
+//	{
+//		TCHAR szFilePath[MAX_PATH+1];
+//		if (!GetModuleFileNameEx(hProcess, 0, szFilePath, MAX_PATH))
+//		{
+//			dwErr = GetLastError();
+//			if (pdwErr) *pdwErr = dwErr;
+//			swprintf(rsName, _T("FileNameEx(0x%08X).Err=0x%08X"), (DWORD)hProcess, dwErr);
+//		}
+//		else
+//		{
+//			TCHAR* pszSlash = _tcsrchr(szFilePath, _T('\\'));
+//			if (pszSlash) pszSlash++; else pszSlash=szFilePath;
+//			int nLen = _tcslen(pszSlash);
+//			if (nLen>=31) pszSlash[31]=0;
+//			_tcscpy(rsName, pszSlash);
+//			lbRc = true;
+//		}
+//		CloseHandle(hProcess); hProcess = NULL;
+//	}
+//	return lbRc;
+//}
 
 LPTSTR CConEmuMain::GetTitleStart(DWORD* rnConmanIDX/*=NULL*/)
 {
@@ -1554,6 +1727,11 @@ LPCTSTR CConEmuMain::GetTitle()
 	return Title;
 }
 
+bool CConEmuMain::isConman()
+{
+	return (gConEmu.mn_ActiveStatus & CES_CONMANACTIVE);
+}
+
 bool CConEmuMain::isConSelectMode()
 {
     //TODO: По курсору, что-ли попробовать определять?
@@ -1738,6 +1916,8 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd)
 
 	if (!gConEmu.m_Child.Create())
 		return -1;
+
+	mn_StartTick = GetTickCount();
 
 	return 0;
 }
@@ -2256,6 +2436,10 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
                 ShowWindow(ghConWnd, SW_HIDE);
             //#endif
         }
+        
+        //CONMAN.DLL
+        if (ConMan_LookForKeyboard)
+	        ConMan_LookForKeyboard();
 
 		//Maximus5. Hack - если какая-то зараза задизеблила окно
 		DWORD dwStyle = GetWindowLong(ghWnd, GWL_STYLE);
@@ -2268,8 +2452,14 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 		else
 			CheckProcesses(m_ActiveConmanIDX, FALSE/*bTitleChanged*/);
 		if (m_ProcCount == 1) {
-			Destroy();
-			break;
+			// При ошибках запуска консольного приложения хотя бы можно будет увидеть, что оно написало...
+			if (mb_ProcessCreated) {
+				Destroy();
+				break;
+			}
+		} else if (m_ProcCount>1) {
+			if ((GetTickCount() - mn_StartTick)>PROCESS_WAIT_START_TIME)
+				mb_ProcessCreated = TRUE;
 		}
 
 

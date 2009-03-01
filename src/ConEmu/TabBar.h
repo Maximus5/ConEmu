@@ -16,7 +16,12 @@ private:
 	char FarTabShortcut(int tabIndex);
 	void FarSendChangeTab(int tabIndex);
 	void CreateToolbar();
+	static LRESULT CALLBACK ToolWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 	HWND mh_ToolbarParent, mh_Toolbar;
+	typedef BOOL _cdecl GetConsolesTitles_t( void* titles, DWORD* number );
+	typedef BOOL _cdecl ActivateConsole_t( DWORD number );
+	GetConsolesTitles_t* GetConsolesTitles;
+	ActivateConsole_t* ActivateConsole;
 public:
 	TabBarClass();
 	void Enable(BOOL abEnabled);
