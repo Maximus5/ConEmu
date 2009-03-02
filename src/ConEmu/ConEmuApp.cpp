@@ -356,7 +356,7 @@ BOOL CreateMainWindow()
 	    return FALSE;
     }
     
-	WNDCLASSEX wc = {sizeof(WNDCLASSEX), CS_DBLCLKS|CS_OWNDC, MainWndProc, 0, 0, 
+	WNDCLASSEX wc = {sizeof(WNDCLASSEX), CS_DBLCLKS|CS_OWNDC|CS_SAVEBITS, MainWndProc, 0, 0, 
 		    g_hInstance, hClassIcon, LoadCursor(NULL, IDC_ARROW), 
 		    NULL /*(HBRUSH)COLOR_BACKGROUND*/, 
 		    NULL, szClassNameParent, hClassIconSm};// | CS_DROPSHADOW

@@ -65,7 +65,7 @@ void ProcessDragFrom789()
 				if (!sz)
 					continue;
 				pi[i] = (PluginPanelItem*)calloc(sz, 1); // размер возвращается в байтах
-				if (!InfoW789->Control(PANEL_ACTIVE, FCTL_GETSELECTEDPANELITEM, i, (LONG_PTR)&(pi[i])))
+				if (!InfoW789->Control(PANEL_ACTIVE, FCTL_GETSELECTEDPANELITEM, i, (LONG_PTR)(pi[i])))
 					continue;
 
 				int nLen=nDirLen+nDirNoSlash;

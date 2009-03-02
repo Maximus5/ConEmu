@@ -1221,8 +1221,9 @@ DWORD CConEmuMain::CheckProcesses(DWORD nConmanIDX, BOOL bTitleChanged)
     //}
 
 	// попытаться обновить номер ConMan для необработанных КОРНЕВЫХ процессов
-	if (mn_ConmanPID && nConmanIDX && (bTitleChanged || (nConmanIDX != m_ActiveConmanIDX) || ConMan_ProcessCommand))
+	if (mn_ConmanPID && nConmanIDX && (bTitleChanged || (nConmanIDX != m_ActiveConmanIDX)))
 	{
+		lbProcessChanged = TRUE; // чтобы дальше "верхний" процесс определился
 	    for (int i=m_Processes.size()-1; i>=0; i--)
 	    {
 		    // 0-консоль - типа сам Конман
@@ -1238,7 +1239,7 @@ DWORD CConEmuMain::CheckProcesses(DWORD nConmanIDX, BOOL bTitleChanged)
 	}
 	
 	// Получить номер Конмана для процессов второго уровня
-	if (mn_ConmanPID) {
+	if (mn_ConmanPID && lbProcessChanged) {
 	    for (int i=m_Processes.size()-1; i>=0; i--)
 	    {
 		    // 0-консоль - типа сам Конман
@@ -2242,7 +2243,8 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
             
             // Чтобы сам фар не дергался на MouseMove...
             gConEmu.isLBDown = false;
-            POSTMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( newX, newY ), TRUE);     //посылаем консоли отпускание
+            // вроде валится, если перед Drag
+            //POSTMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( newX, newY ), TRUE);     //посылаем консоли отпускание
             
             // Иначе иногда срабатывает FAR'овский D'n'D
             //SENDMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( newX, newY ));     //посылаем консоли отпускание
@@ -2253,6 +2255,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			} else {
 				DnDstep(_T("DnD: DragDrop is null"));
 			}
+			POSTMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( newX, newY ), TRUE);     //посылаем консоли отпускание
 			//isDragProcessed=false; -- убрал, иначе при бросании в пассивную панель больших файлов дроп может вызваться еще раз???
             return 0;
         }
