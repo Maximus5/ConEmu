@@ -62,6 +62,8 @@ REGEDIT4
 ;; Drag'n'Drop
 "Dnd"=hex:01
 "DefCopy"=hex:01
+;; Отображать в заголовке окна шаги Drag'n'Drop
+;"DndSteps"=hex:01
 
 ;; Прокручивать заголовок в кнопке на панели задач (пока не работает)
 "ScrollTitle"=hex:01

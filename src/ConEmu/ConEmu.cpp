@@ -52,12 +52,12 @@ CConEmuMain::CConEmuMain()
 	mb_InTimer = FALSE;
 	//mb_InClose = FALSE;
 	//memset(m_ProcList, 0, 1000*sizeof(DWORD)); 
-	m_ProcCount=0; mn_ConmanPID = 0; mh_Infis = NULL; ms_InfisPath[0] = 0;
+	m_ProcCount=0; mn_ConmanPID = 0; //mh_Infis = NULL; ms_InfisPath[0] = 0;
 	mn_TopProcessID = 0; //ms_TopProcess[0] = 0; mb_FarActive = FALSE;
 	mn_ActiveStatus = 0; m_ActiveConmanIDX = 0; //mn_NeedRetryName = 0;
 	mb_ProcessCreated = FALSE; mn_StartTick = 0;
 	mh_ConMan = NULL;
-	ConMan_MainProc = NULL; ConMan_LookForKeyboard = NULL;
+	ConMan_MainProc = NULL; ConMan_LookForKeyboard = NULL; ConMan_ProcessCommand = NULL;
 
 	mh_Psapi = NULL;
 	GetModuleFileNameEx= NULL;
@@ -97,11 +97,14 @@ BOOL CConEmuMain::InitConMan(LPCWSTR asCommandLine)
 
 	ConMan_MainProc = (ConMan_MainProc_t)GetProcAddress(mh_ConMan, "MainProc");
 	ConMan_LookForKeyboard = (ConMan_LookForKeyboard_t)GetProcAddress(mh_ConMan, "LookForKeyboard");
+	ConMan_ProcessCommand = (ConMan_ProcessCommand_t)GetProcAddress(mh_ConMan, "ProcessCommand");
 	// TODO: остальные необходимые функции
-	if (!ConMan_MainProc || !ConMan_LookForKeyboard)
+	if (!ConMan_MainProc || !ConMan_LookForKeyboard || !ConMan_ProcessCommand)
 	{
 		ConMan_MainProc = NULL;
 		ConMan_LookForKeyboard = NULL;
+		ConMan_ProcessCommand = NULL;
+		FreeLibrary(mh_ConMan); mh_ConMan = (HMODULE)INVALID_HANDLE_VALUE;
 		DisplayLastError(_T("ConMan function not found! Old ConMan.dll version?"));
 		return FALSE;
 	}
@@ -113,10 +116,14 @@ BOOL CConEmuMain::InitConMan(LPCWSTR asCommandLine)
 		MBoxA(szErr);
 		return FALSE;
 	}
+
+	mn_ConmanPID = GetCurrentProcessId();
 	
 	ConMan_LookForKeyboard();
 
 	mn_ActiveStatus |= CES_CONMANACTIVE;
+
+	TabBar.CreateToolbar();
 
 	return TRUE;
 }
@@ -129,9 +136,9 @@ void CConEmuMain::Destroy()
 
 CConEmuMain::~CConEmuMain()
 {
-	if (mh_Infis && mh_Infis!=INVALID_HANDLE_VALUE)
-		FreeLibrary(mh_Infis);
-	mh_Infis = NULL;
+	if (mh_ConMan && mh_ConMan!=INVALID_HANDLE_VALUE)
+		FreeLibrary(mh_ConMan);
+	mh_ConMan = NULL;
 }
 
 
@@ -1022,7 +1029,7 @@ void CConEmuMain::CheckProcessName(struct CConEmuMain::ConProcess &ConPrc, LPCTS
 		mn_ConmanPID = ConPrc.ProcessID;
 		mn_ActiveStatus |= CES_CONMANACTIVE;
 
-		if (mh_Infis==NULL && asFullFileName) {
+		/*if (mh_Infis==NULL && asFullFileName) {
 			_tcscpy(ms_InfisPath, asFullFileName);
 			TCHAR* pszSlash = _tcsrchr(ms_InfisPath, _T('\\'));
 			if (pszSlash) {
@@ -1032,7 +1039,7 @@ void CConEmuMain::CheckProcessName(struct CConEmuMain::ConProcess &ConPrc, LPCTS
 				if (!SearchPath(NULL, _T("infis.dll"), NULL, MAX_PATH*2, ms_InfisPath, &pszSlash))
 					_tcscpy(ms_InfisPath, _T("infis.dll"));
 			}
-		}
+		}*/
 	}
 	ConPrc.NameChecked = true;
 }
@@ -1045,8 +1052,6 @@ DWORD CConEmuMain::CheckProcesses(DWORD nConmanIDX, BOOL bTitleChanged)
 	DWORD dwProcList[2], nProcCount;
     nProcCount = GetConsoleProcessList(dwProcList,2);
 
-	//Warning! Новый Процесс появляется в консоли до того, как успеет измениться заголовок окна
-	//Попробовать через infsys
 	
 	// Смену списка процессов хорошо бы еще отслеживать по последнему Top процессу
 	// А то при пакетной компиляции процессы меняются, но количество
@@ -1055,6 +1060,10 @@ DWORD CConEmuMain::CheckProcesses(DWORD nConmanIDX, BOOL bTitleChanged)
     // Дополнительные телодвижения делаем только если в консоли изменился
     // список процессов
     if (nProcCount != m_ProcCount && nProcCount > 1) {
+		if (ConMan_ProcessCommand) {
+			nConmanIDX = ConMan_ProcessCommand(46/*GET_ACTIVENUM*/,0,0);
+		}
+
 	    DWORD *dwFullProcList = new DWORD[nProcCount+10];
 	    nProcCount = GetConsoleProcessList(dwFullProcList,nProcCount+10);
 		lbProcessChanged = TRUE;
@@ -1212,7 +1221,7 @@ DWORD CConEmuMain::CheckProcesses(DWORD nConmanIDX, BOOL bTitleChanged)
     //}
 
 	// попытаться обновить номер ConMan для необработанных КОРНЕВЫХ процессов
-	if (mn_ConmanPID && nConmanIDX && (bTitleChanged || (nConmanIDX != m_ActiveConmanIDX)))
+	if (mn_ConmanPID && nConmanIDX && (bTitleChanged || (nConmanIDX != m_ActiveConmanIDX) || ConMan_ProcessCommand))
 	{
 	    for (int i=m_Processes.size()-1; i>=0; i--)
 	    {
@@ -1297,9 +1306,15 @@ DWORD CConEmuMain::CheckProcesses(DWORD nConmanIDX, BOOL bTitleChanged)
 			}
 		}
 	}
-    
+
+    //TODO: Alternative console?
+	if (m_ActiveConmanIDX != nConmanIDX || lbProcessChanged) {
+		TabBar.OnConman ( m_ActiveConmanIDX, FALSE );
+	}
+
     m_ProcCount = nProcCount;
     m_ActiveConmanIDX = nConmanIDX;
+    
 
     if (ghOpWnd) {
 		UpdateProcessDisplay(lbProcessChanged);
@@ -1388,6 +1403,12 @@ DWORD CConEmuMain::CheckProcesses(DWORD nConmanIDX, BOOL bTitleChanged)
 //	}
 //	return lbRc;
 //}
+
+void CConEmuMain::DnDstep(LPCTSTR asMsg)
+{
+	if (gSet.isDnDsteps && ghWnd)
+		SetWindowText(ghWnd, asMsg);
+}
 
 LPTSTR CConEmuMain::GetTitleStart(DWORD* rnConmanIDX/*=NULL*/)
 {
@@ -2205,24 +2226,34 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
         }
         gConEmu.lastMMW=wParam; gConEmu.lastMML=lParam;
 
-        /*if (isLBDown &&   (cursor.x-LOWORD(lParam)>DRAG_DELTA || 
-                           cursor.x-LOWORD(lParam)<-DRAG_DELTA || 
-                           cursor.y-HIWORD(lParam)>DRAG_DELTA || 
-                           cursor.y-HIWORD(lParam)<-DRAG_DELTA))*/
+
+        //TODO: вроде бы иногда mb_InSizing не сбрасывается?
         if (gConEmu.isLBDown && !PTDIFFTEST(gConEmu.cursor,DRAG_DELTA) 
 			&& !gConEmu.isDragProcessed && !gConEmu.mb_InSizing)
         {
             // Если сначала фокус был на файловой панели, но после LClick он попал на НЕ файловую - отменить ShellDrag
             if (!gConEmu.isFilePanel()) {
+	            DnDstep(_T("DnD: not file panel"));
 	            gConEmu.isLBDown = false;
+	            POSTMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( newX, newY ), TRUE);     //посылаем консоли отпускание
+	            ReleaseCapture();
 	            return 0;
             }
+            
+            // Чтобы сам фар не дергался на MouseMove...
+            gConEmu.isLBDown = false;
+            POSTMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( newX, newY ), TRUE);     //посылаем консоли отпускание
+            
             // Иначе иногда срабатывает FAR'овский D'n'D
             //SENDMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( newX, newY ));     //посылаем консоли отпускание
-			if (gConEmu.DragDrop)
+			if (gConEmu.DragDrop) {
+				DnDstep(_T("DnD: DragDrop starting"));
 				gConEmu.DragDrop->Drag(); //сдвинулись при зажатой левой
+				DnDstep(Title); // вернуть заголовок
+			} else {
+				DnDstep(_T("DnD: DragDrop is null"));
+			}
 			//isDragProcessed=false; -- убрал, иначе при бросании в пассивную панель больших файлов дроп может вызваться еще раз???
-            POSTMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( newX, newY ), TRUE);     //посылаем консоли отпускание
             return 0;
         }
         else if (gSet.isRClickSendKey && gConEmu.isRBDown)

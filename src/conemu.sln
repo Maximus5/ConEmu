@@ -1,11 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 10.00
-# Visual C++ Express 2008
+# Visual Studio 2008
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "conemu", "ConEmu\conemu.vcproj", "{EEE25AC6-D94D-472D-8D4A-3C6C382CFD3D}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ConEmuPlugin", "ConEmuPlugin\ConEmuPlugin.vcproj", "{21152801-8744-4787-83F4-BE4564A367B4}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "infis", "..\..\..\ConMan\infis\infis.vcproj", "{10BE2A3A-C86A-4D47-A08C-6126BAE6260B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -30,14 +28,6 @@ Global
 		{21152801-8744-4787-83F4-BE4564A367B4}.Pseudo_Debug|Win32.ActiveCfg = Pseudo_Debug|Win32
 		{21152801-8744-4787-83F4-BE4564A367B4}.Pseudo_Debug|Win32.Build.0 = Pseudo_Debug|Win32
 		{21152801-8744-4787-83F4-BE4564A367B4}.Release|Win32.ActiveCfg = Release|Win32
-		{10BE2A3A-C86A-4D47-A08C-6126BAE6260B}.Debug|Win32.ActiveCfg = Debug|Win32
-		{10BE2A3A-C86A-4D47-A08C-6126BAE6260B}.Debug|Win32.Build.0 = Debug|Win32
-		{10BE2A3A-C86A-4D47-A08C-6126BAE6260B}.DebugA|Win32.ActiveCfg = Debug|Win32
-		{10BE2A3A-C86A-4D47-A08C-6126BAE6260B}.DebugA|Win32.Build.0 = Debug|Win32
-		{10BE2A3A-C86A-4D47-A08C-6126BAE6260B}.Pseudo_Debug|Win32.ActiveCfg = Debug|Win32
-		{10BE2A3A-C86A-4D47-A08C-6126BAE6260B}.Pseudo_Debug|Win32.Build.0 = Debug|Win32
-		{10BE2A3A-C86A-4D47-A08C-6126BAE6260B}.Release|Win32.ActiveCfg = Release|Win32
-		{10BE2A3A-C86A-4D47-A08C-6126BAE6260B}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -17,8 +17,9 @@ TabBarClass::TabBarClass()
 	mb_ChangeAllowed = FALSE;
 	mb_Enabled = TRUE;
 	mh_ToolbarParent = NULL; mh_Toolbar = NULL;
-	GetConsolesTitles = NULL;
-	ActivateConsole = NULL;
+	//GetConsolesTitles = NULL;
+	//ActivateConsole = NULL;
+	ConMan_KeyAction = NULL;
 }
 
 void TabBarClass::Enable(BOOL abEnabled)
@@ -145,9 +146,8 @@ void TabBarClass::Activate()
 		#pragma warning (disable : 4312)
 		_defaultTabProc = (WNDPROC)SetWindowLongPtr(_hwndTab, GWL_WNDPROC, (LONG_PTR)TabProc);
 
-		#ifdef _DEBUG	
-		CreateToolbar();
-		#endif
+		if (gConEmu.mh_ConMan)
+			CreateToolbar();
 	}
 
 	_active = true;
@@ -305,6 +305,12 @@ void TabBarClass::UpdateWidth()
 	} else {
 		MoveWindow(_hwndTab, 0, 0, client.right, _tabHeight, 1);
 	}
+
+	UpdateToolbarPos();
+}
+
+void TabBarClass::UpdateToolbarPos()
+{
 	if (mh_ToolbarParent) {
 		//SetWindowPos(mh_ToolbarParent, HWND_TOP, 0,0,0,0, SWP_NOSIZE|SWP_NOMOVE);
 		   SIZE sz; 
@@ -409,44 +415,79 @@ void TabBarClass::Invalidate()
 		InvalidateRect(_hwndTab, NULL, TRUE);
 }
 
+void TabBarClass::OnConman(int nConNumber, BOOL bAlternative)
+{
+	if (!mh_Toolbar) return;
+
+	if (gConEmu.ConMan_ProcessCommand) {
+		int nGrpCount = gConEmu.ConMan_ProcessCommand(11/*GET_STATUS*/,0,0);
+		FarTitle title; memset(&title, 0, sizeof(title));
+		BOOL bPresent[12]; memset(bPresent, 0, sizeof(bPresent));
+		MCHKHEAP
+		for (int i=1; i<=nGrpCount; i++) {
+			if (gConEmu.ConMan_ProcessCommand(45/*GET_TITLEBYIDX*/,i,(int)&title)) {
+				if (title.num>=1 && title.num<=12)
+					bPresent[title.num-1] = TRUE;
+			}
+		}
+
+		SendMessage(mh_Toolbar, WM_SETREDRAW, 0, 0);
+		for (int i=1; i<=12; i++) {
+			SendMessage(mh_Toolbar, TB_HIDEBUTTON, i, !bPresent[i-1]);
+		}
+
+		UpdateToolbarPos();
+		SendMessage(mh_Toolbar, WM_SETREDRAW, 1, 0);
+
+		nConNumber = gConEmu.ConMan_ProcessCommand(46/*GET_ACTIVENUM*/,0,0);
+	}
+	
+	if (nConNumber>=1 && nConNumber<=12) {
+		SendMessage(mh_Toolbar, TB_CHECKBUTTON, nConNumber, 1);
+	} else {
+		for (int i=1; i<=12; i++)
+			SendMessage(mh_Toolbar, TB_CHECKBUTTON, i, 0);
+	}
+	SendMessage(mh_Toolbar, TB_CHECKBUTTON, 14, bAlternative);
+}
+
 LRESULT TabBarClass::ToolWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 {
 	switch (messg) {
 		case WM_COMMAND:
 			{
-				if (!gConEmu.isConman())
-					break;
-				if (!gConEmu.mh_Infis) {
-					gConEmu.mh_Infis = LoadLibrary ( gConEmu.ms_InfisPath );
-					if (gConEmu.mh_Infis == NULL) {
-						gConEmu.mh_Infis = (HMODULE)INVALID_HANDLE_VALUE;
-						DisplayLastError(_T("Can't load infis.dll! Old ConMan version?"));
-					}
-				}
-				if (!gConEmu.mh_Infis || gConEmu.mh_Infis==INVALID_HANDLE_VALUE)
+				if (!gConEmu.isConman() || !gConEmu.mh_ConMan || gConEmu.mh_ConMan==INVALID_HANDLE_VALUE)
 					break;
 
-				if (!TabBar.GetConsolesTitles)
-					TabBar.GetConsolesTitles =
-						(GetConsolesTitles_t*)GetProcAddress( gConEmu.mh_Infis, "GetConsolesTitles" );
-				if (!TabBar.ActivateConsole)
-					TabBar.ActivateConsole =
-						(ActivateConsole_t*)GetProcAddress( gConEmu.mh_Infis, "ActivateConsole" );
-				if (!TabBar.GetConsolesTitles || !TabBar.ActivateConsole)
+				//if (!TabBar.GetConsolesTitles)
+				//	TabBar.GetConsolesTitles =
+				//		(GetConsolesTitles_t*)GetProcAddress( gConEmu.mh_Infis, "GetConsolesTitles" );
+				//if (!TabBar.ActivateConsole)
+				//	TabBar.ActivateConsole =
+				//		(ActivateConsole_t*)GetProcAddress( gConEmu.mh_Infis, "ActivateConsole" );
+				if (!TabBar.ConMan_KeyAction)
+					TabBar.ConMan_KeyAction = (ConMan_KeyAction_t)GetProcAddress( gConEmu.mh_ConMan, "_KeyAction_" );
+				if (!TabBar.ConMan_KeyAction)
 					break;
 
+				RegShortcut cmd; memset(&cmd, 0, sizeof(cmd));
 				switch (wParam)
 				{
 				case 1: case 2: case 3: case 4: case 5: case 6:
 				case 7: case 8: case 9: case 10: case 11: case 12:
 					// активировать консоль №
-					TabBar.ActivateConsole(wParam);
+					cmd.action = wParam - 1;
+					TabBar.ConMan_KeyAction ( &cmd );
 					break; 
 				case 13:
 					// Создать новую консоль
+					cmd.action = 20;
+					TabBar.ConMan_KeyAction ( &cmd );
 					break;
 				case 14:
 					// переключение между альтернативной консолью
+					cmd.action = 15;
+					TabBar.ConMan_KeyAction ( &cmd );
 					break;
 				}
 			}
@@ -457,7 +498,10 @@ LRESULT TabBarClass::ToolWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lP
 
 void TabBarClass::CreateToolbar()
 {
-	if (mh_Toolbar) return;
+	if (!_hwndTab)
+		return; // нет табов - нет и тулбара
+	if (mh_Toolbar)
+		return; // Уже создали
 	
 	WNDCLASS wc = {CS_DBLCLKS, (WNDPROC)TabBarClass::ToolWndProc, 0, 0, 
 		    g_hInstance, 0, LoadCursor(NULL, IDC_ARROW), 
@@ -482,7 +526,7 @@ void TabBarClass::CreateToolbar()
 	TBBUTTON buttons[16] = {
 		{0, 1, TBSTATE_ENABLED, TBSTYLE_CHECKGROUP/*|TBSTYLE_TRANSPARENT*/},
 		{1, 2, TBSTATE_ENABLED|TBSTATE_HIDDEN, TBSTYLE_CHECKGROUP/*|TBSTYLE_TRANSPARENT*/},
-		{2, 3, TBSTATE_ENABLED, TBSTYLE_CHECKGROUP/*|TBSTYLE_TRANSPARENT*/},
+		{2, 3, TBSTATE_ENABLED|TBSTATE_HIDDEN, TBSTYLE_CHECKGROUP/*|TBSTYLE_TRANSPARENT*/},
 		{3, 4, TBSTATE_ENABLED|TBSTATE_HIDDEN, TBSTYLE_CHECKGROUP/*|TBSTYLE_TRANSPARENT*/},
 		{4, 5, TBSTATE_ENABLED|TBSTATE_HIDDEN, TBSTYLE_CHECKGROUP/*|TBSTYLE_TRANSPARENT*/},
 		{5, 6, TBSTATE_ENABLED|TBSTATE_HIDDEN, TBSTYLE_CHECKGROUP/*|TBSTYLE_TRANSPARENT*/},
@@ -520,7 +564,9 @@ void TabBarClass::CreateToolbar()
    SetWindowPos(mh_ToolbarParent, HWND_TOP, 
 	   rcClient.right - sz.cx - 2, 0,
 	   sz.cx, sz.cy, 0);
-   
+
+   if (gConEmu.ConMan_ProcessCommand)
+	   OnConman(0, FALSE);
 
    //ShowWindow(hwndTB, SW_SHOW); 
    return;

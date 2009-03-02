@@ -654,7 +654,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	// Если запускается conman - принудительно включить флажок "Обновлять handle"
 	//cmdNew = gSet.Cmd;
 	//while (*cmdNew==L' ' || *cmdNew==L'"')
-	if (StrStrI(gSet.Cmd, L"conman.exe"))
+	if (ConManPrm || StrStrI(gSet.Cmd, L"conman.exe"))
 		gSet.isConMan = TRUE;
 		
 

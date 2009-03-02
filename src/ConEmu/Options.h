@@ -31,6 +31,7 @@ public:
     bool isConMan;
     bool isDnD;
     char isDefCopy;
+    bool isDnDsteps;
     bool isGUIpb;
     char isTabs;
     DWORD wndWidth, wndHeight;

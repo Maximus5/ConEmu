@@ -32,8 +32,10 @@ CConEmuPipe::~CConEmuPipe()
 
 BOOL CConEmuPipe::Init()
 {
-    if (!gConEmu.isFar() && !gConEmu.mn_TopProcessID)
+    if (!gConEmu.isFar() && !gConEmu.mn_TopProcessID) {
+	    gConEmu.DnDstep(_T("Pipe: FAR not active"));
 	    return FALSE;
+	}
 
 	// Сформируем ИМЯ сразу, а то вдруг процесс переключится?
 	DWORD dwCurProcId = gConEmu.mn_TopProcessID;

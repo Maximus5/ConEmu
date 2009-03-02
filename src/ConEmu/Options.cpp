@@ -84,7 +84,6 @@ void CSettings::InitSettings()
     wndHeight = 25; // NightRoman
     wndWidth = 80;  // NightRoman
     isConVisible = false;
-    isDefCopy = 2;
     nSlideShowElapse = 2500;
     nIconID = IDI_ICON1;
     isRClickSendKey = 2;
@@ -102,6 +101,8 @@ void CSettings::InitSettings()
 	isCreateAppWindow = false;
     isScrollTitle = true;
     ScrollTitleLen = 22;
+    
+    isDnD = false; isDnDsteps = false; isDefCopy = 2;
 }
 
 void CSettings::LoadSettings()
@@ -162,6 +163,7 @@ void CSettings::LoadSettings()
         reg.Load(_T("Update Console handle"), &isConMan);
         reg.Load(_T("Dnd"), &isDnD);
         reg.Load(_T("DefCopy"), &isDefCopy);
+        reg.Load(_T("DndSteps"), &isDnDsteps);
         reg.Load(_T("GUIpb"), &isGUIpb);
         reg.Load(_T("Tabs"), &isTabs);
 		reg.Load(_T("TabFrame"), &isTabFrame);

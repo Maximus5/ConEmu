@@ -85,7 +85,8 @@ public:
 	TCHAR szConEmuVersion[32];
 	//DWORD m_ProcList[1000], 
 	DWORD m_ProcCount, m_ActiveConmanIDX, mn_ConmanPID;
-	HMODULE mh_Infis; TCHAR ms_InfisPath[MAX_PATH*2];
+	HMODULE mh_ConMan;
+	//HMODULE mh_Infis; TCHAR ms_InfisPath[MAX_PATH*2];
 	DWORD mn_ActiveStatus;
 	DWORD mn_TopProcessID; 
 	//BOOL mb_FarActive;
@@ -112,11 +113,13 @@ protected:
 	//bool GetProcessFileName(DWORD dwPID, TCHAR* rsName/*[32]*/, DWORD *pdwErr);
 	BOOL mb_InTimer;
 	BOOL mb_ProcessCreated; DWORD mn_StartTick;
-	HMODULE mh_ConMan;
+public:
 	typedef int (_cdecl * ConMan_MainProc_t)(LPCWSTR asCommandLine, BOOL abStandalone);
 	ConMan_MainProc_t ConMan_MainProc;
 	typedef void (_cdecl * ConMan_LookForKeyboard_t)();
 	ConMan_LookForKeyboard_t ConMan_LookForKeyboard;
+	typedef int (_cdecl * ConMan_ProcessCommand_t)( DWORD nCmd, int Param1, int Param2 );
+	ConMan_ProcessCommand_t ConMan_ProcessCommand;
 	
 public:
 	LPCTSTR GetTitle();
@@ -134,6 +137,7 @@ public:
 	//COORD ConsoleSizeFromWindow(RECT* arect = NULL, bool frameIncluded = false, bool alreadyClient = false);
 	//RECT ConsoleOffsetRect();
 	void Destroy();
+	void DnDstep(LPCTSTR asMsg);
 	//RECT DCClientRect(RECT* pClient=NULL);
 	void ForceShowTabs(BOOL abShow);
 	//void GetCWShift(HWND inWnd, POINT *outShift);

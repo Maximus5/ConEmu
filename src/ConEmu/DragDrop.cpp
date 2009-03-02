@@ -26,6 +26,8 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop (IDataObject * pDataObject,DWORD grfKe
 	int iQuantity = DragQueryFile(hDrop,0xFFFFFFFF,NULL,NULL);
 	ZeroMemory(szStr,sizeof(WCHAR)*MAX_PATH);
 
+	gConEmu.DnDstep(_T("DnD: Drop starting"));
+
 	if ((grfKeyState & 32/*MK_XBUTTON1*/) == 32/*MK_XBUTTON1*/)
 	{
 /*		IShellLink* pLink;
@@ -146,6 +148,7 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop (IDataObject * pDataObject,DWORD grfKe
 			DragQueryFile(hDrop,i,curr,MAX_DROP_PATH);
 			curr+=wcslen(curr)+1;
 		}
+		gConEmu.DnDstep(_T("DnD: Shell operation starting"));
 		SHFileOperation(&fop);
 		if (fop.pTo) //Maximus5
 			delete fop.pTo;
@@ -157,6 +160,8 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragOver(DWORD grfKeyState,POINTL pt,DWORD 
 {
 	if (!gSet.isDnD)
 		return -1;
+
+	gConEmu.DnDstep(_T("DnD: DragOver starting"));
 
 	ScreenToClient(m_hWnd, (LPPOINT)&pt);
 	pt.x/=gSet.LogFont.lfWidth;
@@ -205,6 +210,8 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragOver(DWORD grfKeyState,POINTL pt,DWORD 
 	}
 	else
 		*pdwEffect=DROPEFFECT_NONE;
+
+	gConEmu.DnDstep(_T("DnD: DragOver ok"));
 	return 0;
 }
 
@@ -214,6 +221,8 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragEnter(IDataObject * pDataObject,DWORD g
 	{
 		CConEmuPipe pipe;
 
+		gConEmu.DnDstep(_T("DnD: DragEnter starting"));
+
 		if (pipe.Init())
 		{
 			selfdrag=(pDataObject == this->pDataObject);
@@ -222,6 +231,7 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragEnter(IDataObject * pDataObject,DWORD g
 			//WriteFile(pipe.hPipe, &cmd, sizeof(cmd), &cbWritten, NULL); 
 			SetEvent(pipe.hEventCmd[CMD_DRAGTO]);
 
+			gConEmu.DnDstep(_T("DnD: Checking for plugin (1 sec)"));
 			// Подождем немножко, проверим что плагин живой
 			cbWritten = WaitForSingleObject(pipe.hEventAlive, CONEMUALIVETIMEOUT);
 			if (cbWritten!=WAIT_OBJECT_0) {
@@ -229,6 +239,7 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragEnter(IDataObject * pDataObject,DWORD g
 				wsprintf(szErr, _T("ConEmu plugin is not active!\r\nProcessID=%i"), pipe.nPID);
 				MBoxA(szErr);
 			} else {
+				gConEmu.DnDstep(_T("DnD: Checking for plugin (10 sec)"));
 				cbWritten = WaitForSingleObject(pipe.hEventReady, CONEMUREADYTIMEOUT);
 				if (cbWritten!=WAIT_OBJECT_0) {
 					TCHAR szErr[MAX_PATH];
@@ -252,6 +263,7 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragEnter(IDataObject * pDataObject,DWORD g
 				}
 			}
 		}
+		gConEmu.DnDstep(_T("DnD: DragEnter ok"));
 	}
 	return 0;
 }
@@ -263,8 +275,10 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragLeave(void)
 
 void CDragDrop::Drag()
 {
-	if (!gSet.isDnD /*|| isInDrag */|| gConEmu.isDragProcessed)
+	if (!gSet.isDnD /*|| isInDrag */|| gConEmu.isDragProcessed) {
+		gConEmu.DnDstep(_T("DnD: DragDrop disabled"));
 		return;
+	}
 
 	gConEmu.isDragProcessed=true; // чтобы не сработало два раза на один драг
 
@@ -278,6 +292,7 @@ void CDragDrop::Drag()
 		//WriteFile(pipe.hPipe, &cmd, sizeof(cmd), &cbWritten, NULL); 
 		SetEvent(pipe.hEventCmd[CMD_DRAGFROM]);
 
+		gConEmu.DnDstep(_T("DnD: Checking for plugin (1 sec)"));
 		// Подождем немножко, проверим что плагин живой
 		cbWritten = WaitForSingleObject(pipe.hEventAlive, CONEMUALIVETIMEOUT);
 		if (cbWritten!=WAIT_OBJECT_0) {
@@ -285,12 +300,14 @@ void CDragDrop::Drag()
 			wsprintf(szErr, _T("ConEmu plugin is not active!\r\nProcessID=%i"), pipe.nPID);
 			MBoxA(szErr);
 		} else {
+			gConEmu.DnDstep(_T("DnD: Waiting for result (10 sec)"));
 			cbWritten = WaitForSingleObject(pipe.hEventReady, CONEMUREADYTIMEOUT);
 			if (cbWritten!=WAIT_OBJECT_0) {
 				TCHAR szErr[MAX_PATH];
 				wsprintf(szErr, _T("Command waiting time exceeds!\r\nConEmu plugin is locked?\r\nProcessID=%i"), pipe.nPID);
 				MBoxA(szErr);
 			} else {
+				gConEmu.DnDstep(_T("DnD: Recieving data"));
 				DWORD cbBytesRead=0;
 				int nWholeSize=0;
 				pipe.Read(&nWholeSize, sizeof(nWholeSize), &cbBytesRead); 
@@ -301,8 +318,12 @@ void CDragDrop::Drag()
 					nWholeSize=0;
 				}
 
-				if (nWholeSize>0)
+				if (nWholeSize<=0) {
+					gConEmu.DnDstep(_T("DnD: Data is empty"));
+				}
+				else
 				{
+					gConEmu.DnDstep(_T("DnD: Recieving data..."));
 					wchar_t *szDraggedPath=NULL; //ASCIIZZ
 					szDraggedPath=new wchar_t[nWholeSize/*(MAX_PATH+1)*FilesCount*/+1];	
 					ZeroMemory(szDraggedPath, /*((MAX_PATH+1)*FilesCount+1)*/(nWholeSize+1)*sizeof(wchar_t));
@@ -363,6 +384,8 @@ void CDragDrop::Drag()
 						// "Стандартное" поведение
 						dwAllowedEffects |= DROPEFFECT_COPY|DROPEFFECT_MOVE;
 					}
+					
+					gConEmu.DnDstep(_T("DnD: Finally, DoDragDrop"));
 					dwResult = DoDragDrop(pDataObject, pDropSource, dwAllowedEffects, &dwEffect);
 					pDataObject->Release();
 					pDropSource->Release();		
