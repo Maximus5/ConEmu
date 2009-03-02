@@ -34,7 +34,7 @@ public:
 
 	TCHAR *ConChar;
 	WORD  *ConAttr;
-	WORD  FontWidth[0x10000], Font2Width[0x10000];
+	WORD  FontWidth[0x10000]; //, Font2Width[0x10000];
 	DWORD *ConCharX;
 	TCHAR *Spaces; WORD nSpaceCount;
 

@@ -205,7 +205,7 @@ void CVirtualConsole::DumpConsole()
 HFONT CVirtualConsole::CreateFontIndirectMy(LOGFONT *inFont)
 {
 	memset(FontWidth, 0, sizeof(*FontWidth)*0x10000);
-	memset(Font2Width, 0, sizeof(*Font2Width)*0x10000);
+	//memset(Font2Width, 0, sizeof(*Font2Width)*0x10000);
 
     DeleteObject(pVCon->hFont2); pVCon->hFont2 = NULL;
 
@@ -389,30 +389,31 @@ WORD CVirtualConsole::CharWidth(TCHAR ch)
 		return gSet.LogFont.lfWidth;
 
 	WORD nWidth = gSet.LogFont.lfWidth;
-	bool isBorder = false, isVBorder = false;
+	bool isBorder = false; //, isVBorder = false;
 
 	if (gSet.isFixFarBorders) {
 		isBorder = isCharBorder(ch);
-		if (isBorder) {
-			isVBorder = ch == 0x2551 /*Light Vertical*/ || ch == 0x2502 /*Double Vertical*/;
-		}
+		//if (isBorder) {
+		//	isVBorder = ch == 0x2551 /*Light Vertical*/ || ch == 0x2502 /*Double Vertical*/;
+		//}
 	}
 
-	if (isBorder) {
-		if (!Font2Width[ch]) {
-			if (!isVBorder) {
-				Font2Width[ch] = gSet.LogFont.lfWidth;
-			} else {
-				SelectFont(hFont2);
-				SIZE sz;
-				if (GetTextExtentPoint32(hDC, &ch, 1, &sz) && sz.cx)
-					Font2Width[ch] = sz.cx;
-				else
-					Font2Width[ch] = gSet.LogFont2.lfWidth;
-			}
-		}
-		nWidth = Font2Width[ch];
-	} else {
+	//if (isBorder) {
+		//if (!Font2Width[ch]) {
+		//	if (!isVBorder) {
+		//		Font2Width[ch] = gSet.LogFont.lfWidth;
+		//	} else {
+		//		SelectFont(hFont2);
+		//		SIZE sz;
+		//		if (GetTextExtentPoint32(hDC, &ch, 1, &sz) && sz.cx)
+		//			Font2Width[ch] = sz.cx;
+		//		else
+		//			Font2Width[ch] = gSet.LogFont2.lfWidth;
+		//	}
+		//}
+		//nWidth = Font2Width[ch];
+	//} else {
+	if (!isBorder) {
 		if (!FontWidth[ch]) {
 			SelectFont(hFont);
 			SIZE sz;
