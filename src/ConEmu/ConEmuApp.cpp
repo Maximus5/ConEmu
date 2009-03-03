@@ -3,7 +3,7 @@
 
 
 #ifdef MSGLOGGER
-bool bBlockDebugLog=true, bSendToDebugger=false, bSendToFile=false;
+bool bBlockDebugLog=false, bSendToDebugger=true, bSendToFile=false;
 WCHAR *LogFilePath=NULL;
 #endif
 #ifndef _DEBUG
