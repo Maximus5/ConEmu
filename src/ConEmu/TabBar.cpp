@@ -454,6 +454,33 @@ void TabBarClass::OnConman(int nConNumber, BOOL bAlternative)
 LRESULT TabBarClass::ToolWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 {
 	switch (messg) {
+		case WM_NOTIFY:
+			{
+				LPNMHDR pHdr = (LPNMHDR)lParam;
+				switch (pHdr->code) {
+					case TBN_GETINFOTIP:
+					{
+						if (!gConEmu.isConman() || !gConEmu.ConMan_ProcessCommand)
+							break;
+						LPNMTBGETINFOTIP pDisp = (LPNMTBGETINFOTIP)lParam;
+						if (pDisp->iItem>=1 && pDisp->iItem<=12) {
+							if (!pDisp->pszText || !pDisp->cchTextMax) break;
+							FarTitle title; memset(&title, 0, sizeof(title));
+							if (gConEmu.ConMan_ProcessCommand(44/*GET_TITLEBYNUM*/,pDisp->iItem,(int)&title)) {
+								lstrcpyn(pDisp->pszText, title.title, pDisp->cchTextMax);
+							}
+						} else
+						if (pDisp->iItem>=13) {
+							lstrcpyn(pDisp->pszText, _T("Create new console"), pDisp->cchTextMax);
+						} else
+						if (pDisp->iItem>=14) {
+							lstrcpyn(pDisp->pszText, _T("Alternative console"), pDisp->cchTextMax);
+						}
+					}
+					break;
+				}
+			}
+			break;
 		case WM_COMMAND:
 			{
 				if (!gConEmu.isConman() || !gConEmu.mh_ConMan || gConEmu.mh_ConMan==INVALID_HANDLE_VALUE)
@@ -471,24 +498,23 @@ LRESULT TabBarClass::ToolWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lP
 					break;
 
 				RegShortcut cmd; memset(&cmd, 0, sizeof(cmd));
-				switch (wParam)
+				if (wParam>=1 && wParam<=12)
 				{
-				case 1: case 2: case 3: case 4: case 5: case 6:
-				case 7: case 8: case 9: case 10: case 11: case 12:
 					// активировать консоль №
 					cmd.action = wParam - 1;
 					TabBar.ConMan_KeyAction ( &cmd );
-					break; 
-				case 13:
+				} else
+				if (wParam==13)
+				{
 					// Создать новую консоль
 					cmd.action = 20;
 					TabBar.ConMan_KeyAction ( &cmd );
-					break;
-				case 14:
+				} else
+				if (wParam==14)
+				{
 					// переключение между альтернативной консолью
 					cmd.action = 15;
 					TabBar.ConMan_KeyAction ( &cmd );
-					break;
 				}
 			}
 			break;
@@ -524,8 +550,8 @@ void TabBarClass::CreateToolbar()
  
 // Create a toolbar. 
 	TBBUTTON buttons[16] = {
-		{0, 1, TBSTATE_ENABLED, TBSTYLE_CHECKGROUP/*|TBSTYLE_TRANSPARENT*/},
-		{1, 2, TBSTATE_ENABLED|TBSTATE_HIDDEN, TBSTYLE_CHECKGROUP/*|TBSTYLE_TRANSPARENT*/},
+		{0, 1, TBSTATE_ENABLED, TBSTYLE_CHECKGROUP},
+		{1, 2, TBSTATE_ENABLED|TBSTATE_HIDDEN, TBSTYLE_CHECKGROUP},
 		{2, 3, TBSTATE_ENABLED|TBSTATE_HIDDEN, TBSTYLE_CHECKGROUP/*|TBSTYLE_TRANSPARENT*/},
 		{3, 4, TBSTATE_ENABLED|TBSTATE_HIDDEN, TBSTYLE_CHECKGROUP/*|TBSTYLE_TRANSPARENT*/},
 		{4, 5, TBSTATE_ENABLED|TBSTATE_HIDDEN, TBSTYLE_CHECKGROUP/*|TBSTYLE_TRANSPARENT*/},
@@ -537,13 +563,13 @@ void TabBarClass::CreateToolbar()
 		{10, 11, TBSTATE_ENABLED|TBSTATE_HIDDEN, TBSTYLE_CHECKGROUP/*|TBSTYLE_TRANSPARENT*/},
 		{11, 12, TBSTATE_ENABLED|TBSTATE_HIDDEN, TBSTYLE_CHECKGROUP/*|TBSTYLE_TRANSPARENT*/},
 		{0, 0, TBSTATE_ENABLED, TBSTYLE_SEP},
-		{12, 13, TBSTATE_ENABLED, BTNS_BUTTON/*|TBSTYLE_TRANSPARENT*/},
+		{12, 13, TBSTATE_ENABLED, BTNS_BUTTON},
 		{0, 0, TBSTATE_ENABLED, TBSTYLE_SEP},
-		{13, 14, TBSTATE_ENABLED, TBSTYLE_CHECK/*|TBSTYLE_TRANSPARENT*/}
+		{13, 14, TBSTATE_ENABLED, TBSTYLE_CHECK}
 		};
 
 	mh_Toolbar = CreateWindowEx(0, TOOLBARCLASSNAME, NULL, 
-        WS_CHILD|WS_VISIBLE|TBSTYLE_FLAT|CCS_NODIVIDER/*|TBSTYLE_TRANSPARENT*/, 0, 0, 0, 0, mh_ToolbarParent, 
+        WS_CHILD|WS_VISIBLE|TBSTYLE_FLAT|CCS_NODIVIDER|TBSTYLE_TOOLTIPS, 0, 0, 0, 0, mh_ToolbarParent, 
         NULL, NULL, NULL); 
  
    SendMessage(mh_Toolbar, TB_BUTTONSTRUCTSIZE, (WPARAM) sizeof(TBBUTTON), 0); 
