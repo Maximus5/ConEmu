@@ -13,7 +13,7 @@ private:
 	BOOL mb_ChangeAllowed, mb_Enabled;
 	void AddTab(wchar_t* text, int i);
 	void SelectTab(int i);
-	char FarTabShortcut(int tabIndex);
+	//char FarTabShortcut(int tabIndex);
 	void FarSendChangeTab(int tabIndex);
 	static LRESULT CALLBACK ToolWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 	HWND mh_ToolbarParent, mh_Toolbar;
@@ -38,10 +38,14 @@ private:
 	} FarTitle;
 	void UpdateToolbarPos();
 
+protected:
+	static LRESULT CALLBACK TabProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+
 public:
 	TabBarClass();
 	void Enable(BOOL abEnabled);
 	void Refresh(BOOL abFarActive);
+	void Retrieve();
 	void Reset();
 	void Invalidate();
 	bool IsActive();

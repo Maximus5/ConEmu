@@ -309,10 +309,11 @@ LRESULT CALLBACK AppWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 
 BOOL CreateAppWindow()
 {
+	//2009-03-05 - нельзя этого делать. а то дочерние процессы с тем же Affinity запускаются...
 	// На тормоза - не влияет. Но вроде бы на многопроцессорных из-зп глюков
 	// в железе могут быть ошибки подсчета производительности, если этого не сделать
-	SetProcessAffinityMask(GetCurrentProcess(), 1);
-	SetThreadAffinityMask(GetCurrentThread(), 1);
+	//SetProcessAffinityMask(GetCurrentProcess(), 1);
+	//SetThreadAffinityMask(GetCurrentThread(), 1);
 
 	/*DWORD dwErr = 0;
 	HMODULE hInf = LoadLibrary(L"infis.dll");
@@ -356,7 +357,7 @@ BOOL CreateMainWindow()
 	    return FALSE;
     }
     
-	WNDCLASSEX wc = {sizeof(WNDCLASSEX), CS_DBLCLKS|CS_OWNDC|CS_SAVEBITS, MainWndProc, 0, 0, 
+	WNDCLASSEX wc = {sizeof(WNDCLASSEX), CS_DBLCLKS|CS_OWNDC|CS_SAVEBITS, MainWndProc, 0, 16, 
 		    g_hInstance, hClassIcon, LoadCursor(NULL, IDC_ARROW), 
 		    NULL /*(HBRUSH)COLOR_BACKGROUND*/, 
 		    NULL, szClassNameParent, hClassIconSm};// | CS_DROPSHADOW

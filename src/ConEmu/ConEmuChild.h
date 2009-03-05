@@ -11,6 +11,9 @@ public:
 	LRESULT OnPaint(WPARAM wParam, LPARAM lParam);
 	LRESULT OnSize(WPARAM wParam, LPARAM lParam);
 	HWND Create();
+
+protected:
+	UINT mn_MsgTabChanged;
 };
 
 class CConEmuBack

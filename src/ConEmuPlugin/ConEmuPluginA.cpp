@@ -20,6 +20,14 @@ int WINAPI _export GetMinFarVersion(void)
 	return MAKEFARVERSION(1,71,2470);
 }
 
+HANDLE WINAPI _export OpenPlugin(int OpenFrom,INT_PTR Item)
+{
+	if (gnReqCommand != -1) {
+		ProcessCommand(gnReqCommand, FALSE/*bReqMainThread*/);
+	}
+	return INVALID_HANDLE_VALUE;
+}
+
 
 struct PluginStartupInfo *InfoA=NULL;
 struct FarStandardFunctions *FSFA=NULL;
@@ -236,19 +244,21 @@ void WINAPI _export SetStartupInfo(const struct PluginStartupInfo *aInfo)
 	*::FSFA = *aInfo->FSF;
 	::InfoA->FSF = ::FSFA;
 
-    /*if (!FarHwnd)
-		InitHWND((HWND)InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETFARHWND, 0));*/
 	CheckMacro();
 }
 
 void WINAPI _export GetPluginInfo(struct PluginInfo *pi)
 {
+    static char *szMenu[1], szMenu1[15];
+	szMenu[0]=szMenu1; lstrcpyA(szMenu[0], "[&¦] ConEmu");
+    szMenu[0][2] = (char)0xCC;
+
 	pi->StructSize = sizeof(struct PluginInfo);
 	pi->Flags = PF_EDITOR | PF_VIEWER | PF_PRELOAD;
 	pi->DiskMenuStrings = NULL;
 	pi->DiskMenuNumbers = 0;
-	pi->PluginMenuStrings = NULL;
-	pi->PluginMenuStringsNumber =0;
+	pi->PluginMenuStrings = szMenu;
+	pi->PluginMenuStringsNumber = 1;
 	pi->PluginConfigStrings = NULL;
 	pi->PluginConfigStringsNumber = 0;
 	pi->CommandPrefix = NULL;
@@ -383,4 +393,13 @@ void ReloadMacroA()
 	ActlKeyMacro command;
 	command.Command=MCMD_LOADALL;
 	InfoA->AdvControl(InfoA->ModuleNumber,ACTL_KEYMACRO,&command);
+}
+
+void SetWindowA(int nTab)
+{
+	if (!InfoA || !InfoA->AdvControl)
+		return;
+
+	if (InfoA->AdvControl(InfoA->ModuleNumber, ACTL_SETCURRENTWINDOW, (void*)nTab))
+		InfoA->AdvControl(InfoA->ModuleNumber, ACTL_COMMIT, 0);
 }

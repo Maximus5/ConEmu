@@ -46,6 +46,9 @@ void ProcessDragFromA();
 void ProcessDragTo789();
 void ProcessDragTo757();
 void ProcessDragToA();
+void SetWindowA(int nTab);
+void SetWindow789(int nTab);
+void SetWindow757(int nTab);
 
 void CloseTabs();
 
@@ -65,3 +68,6 @@ int ShowMessage757(int aiMsg, int aiButtons);
 void ReloadMacroA();
 void ReloadMacro789();
 void ReloadMacro757();
+
+extern DWORD gnReqCommand;
+void ProcessCommand(DWORD nCmd, BOOL bReqMainThread);

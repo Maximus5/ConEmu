@@ -161,7 +161,7 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragOver(DWORD grfKeyState,POINTL pt,DWORD 
 	if (!gSet.isDnD)
 		return -1;
 
-	gConEmu.DnDstep(_T("DnD: DragOver starting"));
+	//gConEmu.DnDstep(_T("DnD: DragOver starting"));
 
 	ScreenToClient(m_hWnd, (LPPOINT)&pt);
 	pt.x/=gSet.LogFont.lfWidth;
@@ -211,7 +211,7 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragOver(DWORD grfKeyState,POINTL pt,DWORD 
 	else
 		*pdwEffect=DROPEFFECT_NONE;
 
-	gConEmu.DnDstep(_T("DnD: DragOver ok"));
+	//gConEmu.DnDstep(_T("DnD: DragOver ok"));
 	return 0;
 }
 

@@ -46,19 +46,26 @@ BOOL CConEmuPipe::Init()
 
 	CREATEEVENT(CONEMUDRAGFROM, hEventCmd[CMD_DRAGFROM]);
 	CREATEEVENT(CONEMUDRAGTO, hEventCmd[CMD_DRAGTO]);
+	CREATEEVENT(CONEMUSETWINDOW, hEventCmd[CMD_SETWINDOW]);
 	CREATEEVENT(CONEMUEXIT, hEventCmd[CMD_EXIT]);
 	CREATEEVENT(CONEMUALIVE, hEventAlive);
 	CREATEEVENT(CONEMUREADY, hEventReady);
 
 
 	if (!hEventAlive || !hEventReady || 
-		!hEventCmd[CMD_DRAGFROM] || !hEventCmd[CMD_DRAGTO] || !hEventCmd[CMD_EXIT] )
+		!hEventCmd[CMD_DRAGFROM] || !hEventCmd[CMD_DRAGTO] || 
+		!hEventCmd[CMD_SETWINDOW] || !hEventCmd[CMD_EXIT] )
 	{
 		MBoxA(_T("CreateEvent failed"));
 		return FALSE;
 	}
 
 	return TRUE;
+}
+
+LPBYTE CConEmuPipe::GetPtr()
+{
+	return lpCursor;
 }
 
 BOOL CConEmuPipe::Read(LPVOID pData, DWORD nSize, DWORD* nRead)
@@ -86,11 +93,13 @@ BOOL CConEmuPipe::Read(LPVOID pData, DWORD nSize, DWORD* nRead)
 		dwMaxDataSize = *((DWORD*)lpMap);
 		lpCursor = lpMap+4;
 	}
-	if (hMapping==INVALID_HANDLE_VALUE) {
+	if (hMapping==INVALID_HANDLE_VALUE || !hMapping) {
 		if (nRead) *nRead=0;
 		return FALSE;
 	}
 
+	if (!dwMaxDataSize)
+		nSize = 0; else
 	if ((lpCursor-lpMap+nSize)>dwMaxDataSize)
 		nSize = dwMaxDataSize - (lpCursor-lpMap);
 

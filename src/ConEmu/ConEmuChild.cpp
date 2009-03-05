@@ -2,6 +2,7 @@
 
 CConEmuChild::CConEmuChild()
 {
+	mn_MsgTabChanged = RegisterWindowMessage(CONEMUTABCHANGED);
 }
 
 CConEmuChild::~CConEmuChild()
@@ -114,6 +115,9 @@ LRESULT CALLBACK CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam
 		}
 
     default:
+		if (messg == mn_MsgTabChanged) {
+#pragma message("ERROR: Todo : if (messg == mn_MsgTabChanged) {")
+		}
         if (messg) result = DefWindowProc(hWnd, messg, wParam, lParam);
     }
     return result;

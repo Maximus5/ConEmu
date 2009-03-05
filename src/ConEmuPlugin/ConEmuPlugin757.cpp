@@ -336,3 +336,12 @@ void ReloadMacro757()
 	command.Command=MCMD_LOADALL;
 	InfoW757->AdvControl(InfoW757->ModuleNumber,ACTL_KEYMACRO,&command);
 }
+
+void SetWindow757(int nTab)
+{
+	if (!InfoW757 || !InfoW757->AdvControl)
+		return;
+
+	if (InfoW757->AdvControl(InfoW757->ModuleNumber, ACTL_SETCURRENTWINDOW, (void*)nTab))
+		InfoW757->AdvControl(InfoW757->ModuleNumber, ACTL_COMMIT, 0);
+}

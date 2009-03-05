@@ -1299,12 +1299,13 @@ DWORD CConEmuMain::CheckProcesses(DWORD nConmanIDX, BOOL bTitleChanged)
 		TabBar.Reset();
 		if (mn_TopProcessID) {
 			// Дернуть событие для этого процесса фара - он перешлет текущие табы
-			swprintf(temp, CONEMUREQTABS, mn_TopProcessID);
+			TabBar.Retrieve();
+			/*swprintf(temp, CONEMUREQTABS, mn_TopProcessID);
 			HANDLE hEvent = OpenEvent(EVENT_ALL_ACCESS, FALSE, temp);
 			if (hEvent) {
 				SetEvent(hEvent);
 				SafeCloseHandle(hEvent);
-			}
+			}*/
 		}
 	}
 

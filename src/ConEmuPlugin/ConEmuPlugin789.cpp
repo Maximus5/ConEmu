@@ -340,3 +340,12 @@ void ReloadMacro789()
 	command.Command=MCMD_LOADALL;
 	InfoW789->AdvControl(InfoW789->ModuleNumber,ACTL_KEYMACRO,&command);
 }
+
+void SetWindow789(int nTab)
+{
+	if (!InfoW789 || !InfoW789->AdvControl)
+		return;
+
+	if (InfoW789->AdvControl(InfoW789->ModuleNumber, ACTL_SETCURRENTWINDOW, (void*)nTab))
+		InfoW789->AdvControl(InfoW789->ModuleNumber, ACTL_COMMIT, 0);
+}

@@ -31,16 +31,28 @@ int WINAPI _export GetMinFarVersionW(void)
 /* COMMON - пока структуры не различаются */
 void WINAPI _export GetPluginInfoW(struct PluginInfo *pi)
 {
+    static WCHAR *szMenu[1], szMenu1[15];
+    szMenu[0]=szMenu1; lstrcpyW(szMenu[0], L"[&¦] ConEmu");
+    szMenu[0][2] = 0x2560;
+
 	pi->StructSize = sizeof(struct PluginInfo);
 	pi->Flags = PF_EDITOR | PF_VIEWER | PF_PRELOAD;
 	pi->DiskMenuStrings = NULL;
 	pi->DiskMenuNumbers = 0;
-	pi->PluginMenuStrings = NULL;
-	pi->PluginMenuStringsNumber =0;
+	pi->PluginMenuStrings = szMenu;
+	pi->PluginMenuStringsNumber = 1;
 	pi->PluginConfigStrings = NULL;
 	pi->PluginConfigStringsNumber = 0;
 	pi->CommandPrefix = NULL;
 	pi->Reserved = 0;	
+}
+
+HANDLE WINAPI _export OpenPluginW(int OpenFrom,INT_PTR Item)
+{
+	if (gnReqCommand != -1) {
+		ProcessCommand(gnReqCommand, FALSE/*bReqMainThread*/);
+	}
+	return INVALID_HANDLE_VALUE;
 }
 /* COMMON - end */
 
@@ -57,6 +69,9 @@ ConEmuTab* tabs = NULL; //(ConEmuTab*) calloc(maxTabCount, sizeof(ConEmuTab));
 LPBYTE gpData=NULL, gpCursor=NULL;
 DWORD  gnDataSize=0;
 HANDLE ghMapping = NULL;
+DWORD gnReqCommand = -1;
+HANDLE ghReqCommandEvent = NULL;
+UINT gnMsgTabChanged = 0;
 
 #if defined(__GNUC__)
 typedef HWND (APIENTRY *FGetConsoleWindow)();
@@ -70,7 +85,7 @@ BOOL APIENTRY DllMain( HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
 		case DLL_PROCESS_ATTACH:
 			{
 				#ifdef _DEBUG
-				//if (!IsDebuggerPresent()) MessageBoxA(GetForegroundWindow(), "ConEmu.dll loaded", "ConEmu", 0);
+				if (!IsDebuggerPresent()) MessageBoxA(GetForegroundWindow(), "ConEmu.dll loaded", "ConEmu", 0);
 				#endif
 				#if defined(__GNUC__)
 				GetConsoleWindow = (FGetConsoleWindow)GetProcAddress(GetModuleHandle(L"kernel32.dll"),"GetConsoleWindow");
@@ -176,6 +191,67 @@ BOOL LoadFarVersion()
 	return lbRc;
 }
 
+void ProcessCommand(DWORD nCmd, BOOL bReqMainThread)
+{
+	if (gpData) free(gpData); gpData = NULL; gpCursor = NULL;
+
+	if (bReqMainThread) {
+		gnReqCommand = nCmd;
+		if (!ghReqCommandEvent)
+			ghReqCommandEvent = CreateEvent(NULL,FALSE,FALSE,NULL);
+		ResetEvent(ghReqCommandEvent);
+		
+		// Нужен вызов плагина в остновной нити
+		SendMessage(FarHwnd, WM_KEYDOWN, VK_F14, 0);
+		SendMessage(FarHwnd, WM_KEYUP, VK_F14, (LPARAM)(3<<30));
+		
+		HANDLE hEvents[2] = {ghReqCommandEvent, hEventCmd[CMD_EXIT]};
+		DuplicateHandle(GetCurrentProcess(), ghReqCommandEvent, GetCurrentProcess(), hEvents, 0, 0, DUPLICATE_SAME_ACCESS);
+		DWORD dwWait = WaitForMultipleObjects ( 2, hEvents, FALSE, CONEMUFARTIMEOUT );
+		if (dwWait) ResetEvent(ghReqCommandEvent); // Сразу сбросим, вдруг не дождались?
+		CloseHandle(hEvents[0]);
+		
+		gnReqCommand = -1;
+		return;
+	}
+	switch (nCmd)
+	{
+		case (CMD_DRAGFROM):
+		{
+			if (gFarVersion.dwVerMajor==1)
+				ProcessDragFromA();
+			else if (gFarVersion.dwBuild>=789)
+				ProcessDragFrom789();
+			else
+				ProcessDragFrom757();
+			break;
+		}
+		case (CMD_DRAGTO):
+		{
+			if (gFarVersion.dwVerMajor==1)
+				ProcessDragToA();
+			if (gFarVersion.dwBuild>=789)
+				ProcessDragTo789();
+			else
+				ProcessDragTo757();
+			break;
+		}
+		case (CMD_SETWINDOW):
+		{
+			int nTab = GetWindowLong(ConEmuHwnd, 0);
+			if (gFarVersion.dwVerMajor==1)
+				SetWindowA(nTab);
+			if (gFarVersion.dwBuild>=789)
+				SetWindow789(nTab);
+			else
+				SetWindow757(nTab);
+			break;
+		}
+	}
+
+	if (ghReqCommandEvent)
+		SetEvent(ghReqCommandEvent);
+}
 
 DWORD WINAPI ThreadProcW(LPVOID lpParameter)
 {
@@ -303,26 +379,6 @@ DWORD WINAPI ThreadProcW(LPVOID lpParameter)
 
 		switch (dwWait)
 		{
-			case (WAIT_OBJECT_0+CMD_DRAGFROM):
-			{
-				if (gFarVersion.dwVerMajor==1)
-					ProcessDragFromA();
-				else if (gFarVersion.dwBuild>=789)
-					ProcessDragFrom789();
-				else
-					ProcessDragFrom757();
-				break;
-			}
-			case (WAIT_OBJECT_0+CMD_DRAGTO):
-			{
-				if (gFarVersion.dwVerMajor==1)
-					ProcessDragToA();
-				if (gFarVersion.dwBuild>=789)
-					ProcessDragTo789();
-				else
-					ProcessDragTo757();
-				break;
-			}
 			case (WAIT_OBJECT_0+CMD_REQTABS):
 			{
 				if (!gnCurTabCount || !tabs) {
@@ -334,6 +390,10 @@ DWORD WINAPI ThreadProcW(LPVOID lpParameter)
 				// исключение - запрос табов. он асинхронный
 				continue;
 			}
+			
+			default:
+			// Все остальные команды нужно выполнять в нити FAR'а
+			ProcessCommand(dwWait/*nCmd*/, TRUE/*bReqMainThread*/);
 		}
 
 		// Подготовиться к передаче данных
@@ -357,6 +417,9 @@ DWORD WINAPI ThreadProcW(LPVOID lpParameter)
 				//unmaps a mapped view of a file from the calling process's address space
 				UnmapViewOfFile(lpMap);
 			}
+		}
+		if (gpData) {
+			free(gpData); gpData = NULL; gpCursor = NULL;
 		}
 
 		// Поставим флажок, что плагин жив и закончил
@@ -406,6 +469,8 @@ void InitHWND(HWND ahFarHwnd)
 	int nChk = 0;
 	ConEmuHwnd = GetConEmuHWND ( FALSE, &nChk );
 
+	gnMsgTabChanged = RegisterWindowMessage(CONEMUTABCHANGED);
+
 	
 	// Если мы не под эмулятором - больше ничего делать не нужно
 	if (ConEmuHwnd) {
@@ -415,6 +480,7 @@ void InitHWND(HWND ahFarHwnd)
 		CREATEEVENT(CONEMUDRAGFROM, hEventCmd[CMD_DRAGFROM]);
 		CREATEEVENT(CONEMUDRAGTO, hEventCmd[CMD_DRAGTO]);
 		CREATEEVENT(CONEMUREQTABS, hEventCmd[CMD_REQTABS]);
+		CREATEEVENT(CONEMUSETWINDOW, hEventCmd[CMD_SETWINDOW]);
 		CREATEEVENT(CONEMUEXIT, hEventCmd[CMD_EXIT]);
 		CREATEEVENT(CONEMUALIVE, hEventAlive);
 		CREATEEVENT(CONEMUREADY, hEventReady);
@@ -437,27 +503,27 @@ void CheckMacro()
 		// Проверка наличия макроса
 		BOOL lbMacroAdded = FALSE, lbNeedMacro = FALSE;
 		HKEY hkey=NULL;
-		char szValue[1024], szMacroKey[128], szCheckKey[16];
+		char szValue[1024], szMacroKey[128]/*, szCheckKey[16]*/;
 		DWORD dwSize = 0;
 		bool lbMacroDontCheck = false;
 
 		if (gFarVersion.dwVerMajor==2) {
-			lstrcpyA(szCheckKey, "F14DontCheck2");
+			//lstrcpyA(szCheckKey, "F14DontCheck2");
 			lstrcpyA(szMacroKey, "Software\\Far2\\KeyMacros\\Common\\F14");
 		} else {
-			lstrcpyA(szCheckKey, "F14DontCheck2");
+			//lstrcpyA(szCheckKey, "F14DontCheck2");
 			lstrcpyA(szMacroKey, "Software\\Far\\KeyMacros\\Common\\F14");
 		}
 
-		if (0==RegOpenKeyExA(HKEY_CURRENT_USER, "Software\\ConEmu", 0, KEY_ALL_ACCESS, &hkey))
-		{
+		//if (0==RegOpenKeyExA(HKEY_CURRENT_USER, "Software\\ConEmu", 0, KEY_ALL_ACCESS, &hkey))
+		//{
+		//
+		//	if (RegQueryValueExA(hkey, szCheckKey, 0, 0, (LPBYTE)&lbMacroDontCheck, &(dwSize=sizeof(lbMacroDontCheck))))
+		//		lbMacroDontCheck = false;
+		//	RegCloseKey(hkey); hkey=NULL;
+		//}
 
-			if (RegQueryValueExA(hkey, szCheckKey, 0, 0, (LPBYTE)&lbMacroDontCheck, &(dwSize=sizeof(lbMacroDontCheck))))
-				lbMacroDontCheck = false;
-			RegCloseKey(hkey); hkey=NULL;
-		}
-
-		if (!lbMacroDontCheck)
+		//if (!lbMacroDontCheck)
 		{
 			if (0==RegOpenKeyExA(HKEY_CURRENT_USER, szMacroKey, 0, KEY_ALL_ACCESS, &hkey))
 			{
@@ -465,7 +531,8 @@ void CheckMacro()
 					lbNeedMacro = TRUE; // Значение отсутсвует
 				} else {
 					szValue[dwSize]=0;
-					if (strstr(szValue, " F12 ")==0)
+					#pragma message("ERROR: нужна проверка. В Ansi и Unicode это разные строки!")
+					//if (strcmpW(szValue, "F11 \xCC")==0)
 						lbNeedMacro = TRUE; // Значение некорректное
 				}
 				RegCloseKey(hkey); hkey=NULL;
@@ -474,17 +541,18 @@ void CheckMacro()
 			}
 
 			if (lbNeedMacro) {
-				int nBtn = ShowMessage(0, 3);
-				if (nBtn == 1) { // Don't disturb
-					DWORD disp=0;
-					lbMacroDontCheck = true;
-					if (0==RegCreateKeyExA(HKEY_CURRENT_USER, "Software\\ConEmu", 0, 0, 
-						0, KEY_ALL_ACCESS, 0, &hkey, &disp))
-					{
-						RegSetValueExA(hkey, szCheckKey, 0, REG_BINARY, (LPBYTE)&lbMacroDontCheck, (dwSize=sizeof(lbMacroDontCheck)));
-						RegCloseKey(hkey); hkey=NULL;
-					}
-				} else if (nBtn == 0) {
+				//int nBtn = ShowMessage(0, 3);
+				//if (nBtn == 1) { // Don't disturb
+				//	DWORD disp=0;
+				//	lbMacroDontCheck = true;
+				//	if (0==RegCreateKeyExA(HKEY_CURRENT_USER, "Software\\ConEmu", 0, 0, 
+				//		0, KEY_ALL_ACCESS, 0, &hkey, &disp))
+				//	{
+				//		RegSetValueExA(hkey, szCheckKey, 0, REG_BINARY, (LPBYTE)&lbMacroDontCheck, (dwSize=sizeof(lbMacroDontCheck)));
+				//		RegCloseKey(hkey); hkey=NULL;
+				//	}
+				//} else if (nBtn == 0) 
+				{
 					DWORD disp=0;
 					lbMacroAdded = TRUE;
 					if (0==RegCreateKeyExA(HKEY_CURRENT_USER, szMacroKey, 0, 0, 
@@ -494,9 +562,19 @@ void CheckMacro()
 							"ConEmu tab switching support");
 						RegSetValueExA(hkey, "", 0, REG_SZ, (LPBYTE)szValue, (dwSize=strlen(szValue)+1));
 
-						lstrcpyA(szValue, 
-							"$If (Shell || Info || QView || Tree || Viewer || Editor) F12 $Else waitkey(100) $End");
-						RegSetValueExA(hkey, "Sequence", 0, REG_SZ, (LPBYTE)szValue, (dwSize=strlen(szValue)+1));
+						//lstrcpyA(szValue, 
+						//	"$If (Shell || Info || QView || Tree || Viewer || Editor) F12 $Else waitkey(100) $End");
+						//RegSetValueExA(hkey, "Sequence", 0, REG_SZ, (LPBYTE)szValue, (dwSize=strlen(szValue)+1));
+						
+						if (gFarVersion.dwVerMajor==1) {
+							lstrcpyA(szValue, "F11 |");
+							szValue[4] = (char)0xCC;
+							RegSetValueExA(hkey, "Sequence", 0, REG_SZ, (LPBYTE)szValue, (dwSize=strlen(szValue)+1));
+						} else {
+							lstrcpyW((WCHAR*)szValue, L"F11 |");
+							((WCHAR*)szValue)[4] = 0x2560;
+							RegSetValueExW(hkey, L"Sequence", 0, REG_SZ, (LPBYTE)szValue, (dwSize=2*(wcslen((WCHAR*)szValue)+1)));
+						}
 
 						lstrcpyA(szValue, 
 							"For ConEmu - eats next key if changing screen is impossible");
@@ -612,8 +690,11 @@ void SendTabs(int tabCount, BOOL abForce/*=FALSE*/)
 			cds.lpData = tabs+1;
 		}
 		if (tabCount || abForce) {
-			cds.cbData = tabCount * sizeof(ConEmuTab);
-			SendMessage(ConEmuHwnd, WM_COPYDATA, (WPARAM)FarHwnd, (LPARAM)&cds);
+			//cds.cbData = tabCount * sizeof(ConEmuTab);
+			//SendMessage(ConEmuHwnd, WM_COPYDATA, (WPARAM)FarHwnd, (LPARAM)&cds);
+#pragma message("ERROR: видимо только по параметру? PostMessage(ConEmuHwnd, gnMsgTabChanged, 0, 0);")
+			// Это нужно делать только если инициировано ФАРОМ. Если запрос прислал ConEmu - не посылать...
+			PostMessage(ConEmuHwnd, gnMsgTabChanged, 0, 0);
 		}
 	}
 	//free(tabs); - освобождается в ExitFARW
@@ -667,6 +748,10 @@ void StopThread(void)
     if (tabs) {
 	    free(tabs);
 	    tabs = NULL;
+    }
+    
+    if (ghReqCommandEvent) {
+	    CloseHandle(ghReqCommandEvent); ghReqCommandEvent = NULL;
     }
 }
 

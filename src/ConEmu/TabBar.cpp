@@ -50,6 +50,47 @@ void TabBarClass::Reset()
 	TabBar.Update(&tab, 1);
 }
 
+void TabBarClass::Retrieve()
+{
+	CConEmuPipe pipe;
+	if (pipe.Init())
+	{
+		DWORD cbWritten=0;
+		SetEvent(pipe.hEventCmd[CMD_REQTABS]);
+
+		gConEmu.DnDstep(_T("Tabs: Checking for plugin (1 sec)"));
+		// Подождем немножко, проверим что плагин живой
+		cbWritten = WaitForSingleObject(pipe.hEventAlive, CONEMUALIVETIMEOUT);
+		if (cbWritten!=WAIT_OBJECT_0) {
+			TCHAR szErr[MAX_PATH];
+			wsprintf(szErr, _T("ConEmu plugin is not active!\r\nProcessID=%i"), pipe.nPID);
+			MBoxA(szErr);
+		} else {
+			gConEmu.DnDstep(_T("DnD: Waiting for result (10 sec)"));
+			cbWritten = WaitForSingleObject(pipe.hEventReady, CONEMUREADYTIMEOUT);
+			if (cbWritten!=WAIT_OBJECT_0) {
+				TCHAR szErr[MAX_PATH];
+				wsprintf(szErr, _T("Command waiting time exceeds!\r\nConEmu plugin is locked?\r\nProcessID=%i"), pipe.nPID);
+				MBoxA(szErr);
+			} else {
+				gConEmu.DnDstep(_T("DnD: Recieving data"));
+				DWORD cbBytesRead=0;
+				int nWholeSize=0;
+				pipe.Read(&nWholeSize, sizeof(nWholeSize), &cbBytesRead);
+
+				if (nWholeSize>0) {
+					COPYDATASTRUCT cds = {0};
+					
+					pipe.Read(&cds.dwData, sizeof(cds.dwData), &cbBytesRead);
+					cds.lpData = pipe.GetPtr(); // хвост
+
+					gConEmu.OnCopyData(&cds);
+				}
+			}
+		}
+	}
+}
+
 void TabBarClass::AddTab(wchar_t* text, int i)
 {
 	TCITEM tie;
@@ -71,20 +112,52 @@ void TabBarClass::SelectTab(int i)
 	mb_ChangeAllowed = FALSE;
 }
 
-char TabBarClass::FarTabShortcut(int tabIndex)
+/*char TabBarClass::FarTabShortcut(int tabIndex)
 {
 	return tabIndex < 10 ? '0' + tabIndex : 'A' + tabIndex - 10;
-}
+}*/
 
 void TabBarClass::FarSendChangeTab(int tabIndex)
 {
-	PostMessage(ghConWnd, WM_KEYDOWN, VK_F14, 0);
-	PostMessage(ghConWnd, WM_KEYUP, VK_F14, 0);
-	PostMessage(ghConWnd, WM_KEYDOWN, FarTabShortcut(tabIndex), 0);
-	PostMessage(ghConWnd, WM_KEYUP, FarTabShortcut(tabIndex), 0);
+	SetWindowLong(ghWndDC, 0, tabIndex);
+	//PostMessage(ghConWnd, WM_KEYDOWN, VK_F14, 0);
+	//PostMessage(ghConWnd, WM_KEYUP, VK_F14, 0);
+	//PostMessage(ghConWnd, WM_KEYDOWN, FarTabShortcut(tabIndex), 0);
+	//PostMessage(ghConWnd, WM_KEYUP, FarTabShortcut(tabIndex), 0);
+
+	CConEmuPipe pipe;
+	if (pipe.Init())
+	{
+		DWORD cbWritten = 0;
+		SetEvent(pipe.hEventCmd[CMD_SETWINDOW]);
+
+		gConEmu.DnDstep(_T("Tab: Checking for plugin (1 sec)"));
+		// Подождем немножко, проверим что плагин живой
+		cbWritten = WaitForSingleObject(pipe.hEventAlive, CONEMUALIVETIMEOUT);
+		if (cbWritten!=WAIT_OBJECT_0) {
+			TCHAR szErr[MAX_PATH];
+			wsprintf(szErr, _T("ConEmu plugin is not active!\r\nProcessID=%i"), pipe.nPID);
+			MBoxA(szErr);
+		} else {
+			gConEmu.DnDstep(_T("Tab: Waiting for result (10 sec)"));
+			cbWritten = WaitForSingleObject(pipe.hEventReady, CONEMUREADYTIMEOUT);
+			if (cbWritten!=WAIT_OBJECT_0) {
+				TCHAR szErr[MAX_PATH];
+				wsprintf(szErr, _T("Command waiting time exceeds!\r\nConEmu plugin is locked?\r\nProcessID=%i"), pipe.nPID);
+				MBoxA(szErr);
+			} else {
+				gConEmu.DnDstep(_T("Tab: Recieving data"));
+				DWORD cbBytesRead=0;
+				int nWholeSize=0;
+				pipe.Read(&nWholeSize, sizeof(nWholeSize), &cbBytesRead); 
+
+#pragma message("ERROR: TODO: результат смены табов - это COPYDATASTRUCT, если nWholeSize")
+			}
+		}
+	}
 }
 
-static LRESULT CALLBACK TabProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK TabBarClass::TabProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	switch (uMsg)
 	{
