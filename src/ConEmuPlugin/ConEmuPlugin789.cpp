@@ -248,7 +248,7 @@ int ProcessEditorEventW789(int Event, void *Param)
 	case EE_GOTFOCUS:
 	case EE_KILLFOCUS:
 	case EE_SAVE:
-	case EE_READ:
+	//case EE_READ: -- в этот момент количество окон еще не изменилось
 		{
 			// !!! Именно UpdateConEmuTabsW, без версии !!!
 			UpdateConEmuTabsW(Event, Event == EE_KILLFOCUS, Event == EE_SAVE);
@@ -307,8 +307,12 @@ void UpdateConEmuTabsW789(int event, bool losingFocus, bool editorSave)
 	if (editorSave) 
 		InfoW789->EditorControl(ECTL_FREEINFO, &ei);
 
-	if (lbCh)
-		SendTabs(tabCount);
+#ifdef _DEBUG
+	WCHAR szDbg[128]; wsprintfW(szDbg, L"Event: %i, count %i\n", event, tabCount);
+	OutputDebugStringW(szDbg);
+#endif
+
+	SendTabs(tabCount);
 }
 
 void ExitFARW789(void)

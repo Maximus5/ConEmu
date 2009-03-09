@@ -2,8 +2,10 @@
 
 class CConEmuPipe
 {
+protected:
+   HANDLE hEventCmd[MAXCMDCOUNT];
 public:
-   HANDLE hEventCmd[MAXCMDCOUNT], hEventAlive, hEventReady, hMapping;
+   HANDLE hEventAlive, hEventReady, hMapping;
    LPBYTE lpMap, lpCursor;
    DWORD  dwMaxDataSize, nPID;
    WCHAR  sMapName[MAX_PATH];
@@ -11,7 +13,8 @@ public:
    CConEmuPipe();
    ~CConEmuPipe();
    
-   BOOL Init();
+   BOOL Init(BOOL abSilent=FALSE);
+   BOOL Execute(int nCmd);
    BOOL Read(LPVOID pData, DWORD nSize, DWORD* nRead);
    LPBYTE GetPtr();
 };

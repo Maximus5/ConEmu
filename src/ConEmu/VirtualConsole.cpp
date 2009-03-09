@@ -1,5 +1,7 @@
 #include "Header.h"
 
+#define VCURSORWIDTH 2
+#define HCURSORWIDTH 2
 
 CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
 {
@@ -90,13 +92,14 @@ void CVirtualConsole::Free(bool bFreeFont)
 
 HANDLE CVirtualConsole::hConOut()
 {
-	if (gSet.isConMan)
+	if (gSet.isUpdConHandle)
 	{
 		if(hConOut_)
 			CloseHandle(hConOut_);
 
 		hConOut_ = CreateFile(_T("CONOUT$"), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_READ,
 			0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+
 	} else if (hConOut_==NULL) {
 		hConOut_ = GetStdHandle(STD_OUTPUT_HANDLE);
 	}
@@ -618,7 +621,7 @@ void CVirtualConsole::UpdatePrepare(bool isForce, HDC *ahDc)
 
 	// get selection info in buffer mode
 	
-	doSelect = gSet.BufferHeight > 0;
+	doSelect = gConEmu.BufferHeight > 0;
 	if (doSelect)
 	{
 		select1 = SelectionInfo;
@@ -1002,7 +1005,7 @@ void CVirtualConsole::UpdateText(bool isForce, bool updateText, bool updateCurso
 			else if (gSet.isTTF && c==L' ')
 			{
 				j2 = j + 1; MCHKHEAP
-				if (!doSelect) // doSelect инициализируетс€ только дл€ gSet.BufferHeight>0
+				if (!doSelect) // doSelect инициализируетс€ только дл€ gConEmu.BufferHeight>0
 				{
 					TCHAR ch;
 					while(j2 < end && ConAttrLine[j2] == attr && (ch=ConCharLine[j2]) == L' ')
@@ -1031,7 +1034,7 @@ void CVirtualConsole::UpdateText(bool isForce, bool updateText, bool updateCurso
 			else if (!isUnicode)
 			{
 				j2 = j + 1; MCHKHEAP
-				if (!doSelect) // doSelect инициализируетс€ только дл€ gSet.BufferHeight>0
+				if (!doSelect) // doSelect инициализируетс€ только дл€ gConEmu.BufferHeight>0
 				{
 					#ifndef DRAWEACHCHAR
 					// ≈сли этого не делать - в пропорциональных шрифтах буквы будут наезжать одна на другую
@@ -1052,7 +1055,7 @@ void CVirtualConsole::UpdateText(bool isForce, bool updateText, bool updateCurso
 			else //Border and specials
 			{
 				j2 = j + 1; MCHKHEAP
-				if (!doSelect) // doSelect инициализируетс€ только дл€ gSet.BufferHeight>0
+				if (!doSelect) // doSelect инициализируетс€ только дл€ gConEmu.BufferHeight>0
 				{
 					if (!gSet.isFixFarBorders)
 					{
@@ -1227,23 +1230,35 @@ void CVirtualConsole::UpdateCursor(bool& lRes)
 				rect.left = Cursor.x * gSet.LogFont.lfWidth;
 				rect.right = (Cursor.x+1) * gSet.LogFont.lfWidth;
 			}
-			rect.top = (Cursor.y+1) * gSet.LogFont.lfHeight - MulDiv(gSet.LogFont.lfHeight, cinf.dwSize, 100);
+			//rect.top = (Cursor.y+1) * gSet.LogFont.lfHeight - MulDiv(gSet.LogFont.lfHeight, cinf.dwSize, 100);
 			rect.bottom = (Cursor.y+1) * gSet.LogFont.lfHeight;
+			rect.top = (Cursor.y * gSet.LogFont.lfHeight) + 1;
+			if (cinf.dwSize<50)
+				rect.top = max(rect.top, (rect.bottom-HCURSORWIDTH));
 		}
 		else
 		{
 			if (gSet.isTTF) {
 				rect.left = pix.X; /*Cursor.x * gSet.LogFont.lfWidth;*/
-				rect.right = rect.left/*Cursor.x * gSet.LogFont.lfWidth*/ //TODO: а ведь позици€ следующего символа известна!
-					+ klMax(1, MulDiv(gSet.LogFont.lfWidth, cinf.dwSize, 100) + (cinf.dwSize > 10 ? 1 : 0));
+				//rect.right = rect.left/*Cursor.x * gSet.LogFont.lfWidth*/ //TODO: а ведь позици€ следующего символа известна!
+				//	+ klMax(1, MulDiv(gSet.LogFont.lfWidth, cinf.dwSize, 100) 
+				//	+ (cinf.dwSize > 10 ? 1 : 0));
 			} else {
 				rect.left = Cursor.x * gSet.LogFont.lfWidth;
-				rect.right = Cursor.x * gSet.LogFont.lfWidth
-					+ klMax(1, MulDiv(gSet.LogFont.lfWidth, cinf.dwSize, 100) + (cinf.dwSize > 10 ? 1 : 0));
+				//rect.right = Cursor.x * gSet.LogFont.lfWidth
+				//	+ klMax(1, MulDiv(gSet.LogFont.lfWidth, cinf.dwSize, 100) 
+				//	+ (cinf.dwSize > 10 ? 1 : 0));
 			}
 			rect.top = Cursor.y * gSet.LogFont.lfHeight;
-			rect.right = rect.left/*Cursor.x * gSet.LogFont.lfWidth*/ //TODO: а ведь позици€ следующего символа известна!
-					+ klMax(1, MulDiv(gSet.LogFont.lfWidth, cinf.dwSize, 100) + (cinf.dwSize > 10 ? 1 : 0));
+			int nR = (gSet.isTTF && ConCharX[CurChar]) // права€ граница
+				? ConCharX[CurChar] : ((Cursor.x+1) * gSet.LogFont.lfWidth);
+			if (cinf.dwSize>=50)
+				rect.right = nR;
+			else
+				rect.right = min(nR, (rect.left+VCURSORWIDTH));
+			//rect.right = rect.left/*Cursor.x * gSet.LogFont.lfWidth*/ //TODO: а ведь позици€ следующего символа известна!
+			//		+ klMax(1, MulDiv(gSet.LogFont.lfWidth, cinf.dwSize, 100) 
+			//		+ (cinf.dwSize > 10 ? 1 : 0));
 			rect.bottom = (Cursor.y+1) * gSet.LogFont.lfHeight;
 		}
 

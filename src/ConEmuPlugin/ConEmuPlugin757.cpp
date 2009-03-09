@@ -244,7 +244,7 @@ int ProcessEditorEventW757(int Event, void *Param)
 	case EE_GOTFOCUS:
 	case EE_KILLFOCUS:
 	case EE_SAVE:
-	case EE_READ:
+	//case EE_READ:
 		{
 			// !!! Именно UpdateConEmuTabsW, без версии !!!
 			UpdateConEmuTabsW(Event, Event == EE_KILLFOCUS, Event == EE_SAVE);
@@ -303,8 +303,7 @@ void UpdateConEmuTabsW757(int event, bool losingFocus, bool editorSave)
 	if (editorSave) 
 		InfoW757->EditorControl(ECTL_FREEINFO, &ei);
 
-	if (lbCh)
-		SendTabs(tabCount);
+	SendTabs(tabCount);
 }
 
 void ExitFARW757(void)

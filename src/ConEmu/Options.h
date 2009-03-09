@@ -28,13 +28,13 @@ public:
     char isRClickSendKey;
     bool isSentAltEnter;
     bool isForceMonospace, isTTF;
-    bool isConMan;
+    bool isUpdConHandle;
     bool isDnD;
     char isDefCopy;
     bool isDnDsteps;
     bool isGUIpb;
     char isTabs;
-    DWORD wndWidth, wndHeight;
+    DWORD wndWidth, wndHeight, ntvdmHeight;
     int wndX, wndY;
     u8 bgImageDarker;
     bool isConVisible;
@@ -63,6 +63,8 @@ public:
     UINT nMainTimerElapse; // периодичность, с которой из консоли считывается текст
     //bool isAdvLangChange; // в Висте без ConIme в самой консоли не меняется язык, пока не послать WM_SETFOCUS. Но при этом исчезает диалог быстрого поиска
 	//bool isSkipFocusEvents;
+	
+	DWORD nAffinity;
     
     HWND hMain, hColors, hInfo;
 

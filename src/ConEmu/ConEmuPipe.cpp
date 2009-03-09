@@ -30,7 +30,8 @@ CConEmuPipe::~CConEmuPipe()
 		h = OpenEvent(EVENT_ALL_ACCESS, FALSE, szEventName); \
 		if (h==INVALID_HANDLE_VALUE) h=NULL;
 
-BOOL CConEmuPipe::Init()
+//#pragma message("warning: добавить аргумент abSilent, вдруг плагин еще не загружен?")
+BOOL CConEmuPipe::Init(BOOL abSilent)
 {
     if (!gConEmu.isFar() && !gConEmu.mn_TopProcessID) {
 	    gConEmu.DnDstep(_T("Pipe: FAR not active"));
@@ -46,6 +47,7 @@ BOOL CConEmuPipe::Init()
 
 	CREATEEVENT(CONEMUDRAGFROM, hEventCmd[CMD_DRAGFROM]);
 	CREATEEVENT(CONEMUDRAGTO, hEventCmd[CMD_DRAGTO]);
+	CREATEEVENT(CONEMUREQTABS, hEventCmd[CMD_REQTABS]);
 	CREATEEVENT(CONEMUSETWINDOW, hEventCmd[CMD_SETWINDOW]);
 	CREATEEVENT(CONEMUEXIT, hEventCmd[CMD_EXIT]);
 	CREATEEVENT(CONEMUALIVE, hEventAlive);
@@ -54,12 +56,32 @@ BOOL CConEmuPipe::Init()
 
 	if (!hEventAlive || !hEventReady || 
 		!hEventCmd[CMD_DRAGFROM] || !hEventCmd[CMD_DRAGTO] || 
+		!hEventCmd[CMD_REQTABS] ||
 		!hEventCmd[CMD_SETWINDOW] || !hEventCmd[CMD_EXIT] )
 	{
-		MBoxA(_T("CreateEvent failed"));
+		if (!abSilent)
+			MBoxA(_T("CreateEvent failed"));
 		return FALSE;
 	}
 
+	return TRUE;
+}
+
+BOOL CConEmuPipe::Execute(int nCmd)
+{
+	if (nCmd<0 || nCmd>MAXCMDCOUNT) {
+		TCHAR szError[128];
+		swprintf(szError, _T("Invalid command id (%i)!"), nCmd);
+		MBoxA(szError);
+		return FALSE;
+	}
+	if (!hEventCmd[nCmd]) {
+		TCHAR szError[128];
+		swprintf(szError, _T("Command %i was not created by plugin!"), nCmd);
+		MBoxA(szError);
+		return FALSE;
+	}
+	SetEvent(hEventCmd[nCmd]);
 	return TRUE;
 }
 

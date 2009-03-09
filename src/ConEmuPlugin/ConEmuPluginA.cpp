@@ -22,7 +22,7 @@ int WINAPI _export GetMinFarVersion(void)
 
 HANDLE WINAPI _export OpenPlugin(int OpenFrom,INT_PTR Item)
 {
-	if (gnReqCommand != -1) {
+	if (gnReqCommand != (DWORD)-1) {
 		ProcessCommand(gnReqCommand, FALSE/*bReqMainThread*/);
 	}
 	return INVALID_HANDLE_VALUE;
@@ -254,7 +254,7 @@ void WINAPI _export GetPluginInfo(struct PluginInfo *pi)
     szMenu[0][2] = (char)0xCC;
 
 	pi->StructSize = sizeof(struct PluginInfo);
-	pi->Flags = PF_EDITOR | PF_VIEWER | PF_PRELOAD;
+	pi->Flags = PF_EDITOR | PF_VIEWER | PF_DIALOG | PF_PRELOAD;
 	pi->DiskMenuStrings = NULL;
 	pi->DiskMenuNumbers = 0;
 	pi->PluginMenuStrings = szMenu;
@@ -295,7 +295,7 @@ int WINAPI _export ProcessEditorEvent(int Event, void *Param)
 	case EE_GOTFOCUS:
 	case EE_KILLFOCUS:
 	case EE_SAVE:
-	case EE_READ:
+	//case EE_READ:
 		{
 			UpdateConEmuTabsA(Event, Event == EE_KILLFOCUS, Event == EE_SAVE);
 			break;
@@ -359,8 +359,7 @@ void UpdateConEmuTabsA(int event, bool losingFocus, bool editorSave)
 		}
 	}
 
-	if (lbCh)
-		SendTabs(tabCount);
+	SendTabs(tabCount);
 }
 
 void   WINAPI _export ExitFAR(void)

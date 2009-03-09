@@ -6,13 +6,17 @@
 #define CES_FARACTIVE 0x04
 #define CES_PROGRAMS 0x0F
 
-#define CES_FILEPANEL 0x10
-#define CES_TEMPPANEL 0x20
-#define CES_PLUGINPANEL 0x40
-#define CES_EDITOR 0x100
-#define CES_VIEWER 0x200
-#define CES_COPYING 0x400
-#define CES_MOVING 0x800
+#define CES_NTVDM 0x10
+#define CES_PROGRAMS2 0xFF
+
+#define CES_FILEPANEL 0x100
+#define CES_TEMPPANEL 0x200
+#define CES_PLUGINPANEL 0x400
+#define CES_EDITOR 0x1000
+#define CES_VIEWER 0x2000
+#define CES_COPYING 0x4000
+#define CES_MOVING 0x8000
+#define CES_FARFLAGS 0xFFFF00
 //... and so on
 
 #define PROCESS_WAIT_START_TIME 1000
@@ -43,6 +47,7 @@ CConEmuMain::CConEmuMain()
 	setParent = false; setParent2 = false;
 	RBDownNewX=0; RBDownNewY=0;
 	cursor.x=0; cursor.y=0; Rcursor=cursor;
+	m_LastConSize = MakeCoord(0,0);
 	lastMMW=-1;
 	lastMML=-1;
 	DragDrop=NULL;
@@ -62,6 +67,8 @@ CConEmuMain::CConEmuMain()
 	mh_Psapi = NULL;
 	GetModuleFileNameEx= NULL;
 
+	mh_WinHook = NULL;
+
 #ifdef _UNICODE
 	MultiByteToWideChar(CP_ACP, 0, "редактирование ", -1, ms_EditorRus, 16);
 	MultiByteToWideChar(CP_ACP, 0, "просмотр ", -1, ms_ViewerRus, 16);
@@ -73,6 +80,9 @@ CConEmuMain::CConEmuMain()
 
 BOOL CConEmuMain::Init()
 {
+	mh_WinHook = SetWinEventHook(EVENT_CONSOLE_START_APPLICATION,EVENT_CONSOLE_END_APPLICATION,
+		NULL, CConEmuMain::WinEventProc, 0,0, WINEVENT_OUTOFCONTEXT);
+
 	mh_Psapi = LoadLibrary(_T("psapi.dll"));
 	if (mh_Psapi) {
 		GetModuleFileNameEx = (FGetModuleFileNameEx)GetProcAddress(mh_Psapi, "GetModuleFileNameExW");
@@ -139,6 +149,11 @@ CConEmuMain::~CConEmuMain()
 	if (mh_ConMan && mh_ConMan!=INVALID_HANDLE_VALUE)
 		FreeLibrary(mh_ConMan);
 	mh_ConMan = NULL;
+
+	if (mh_WinHook) {
+		UnhookWinEvent(mh_WinHook);
+		mh_WinHook = NULL;
+	}
 }
 
 
@@ -228,8 +243,8 @@ RECT CConEmuMain::CalcMargins(enum ConEmuMargins mg)
 		}	break;
 		case CEM_BACK:  // Отступы от краев окна фона (с прокруткой) до окна с отрисовкой (DC)
 		{
-			if (gSet.BufferHeight) { //TODO: а показывается ли сейчас прокрутка?
-				rc = MakeRect(0, GetSystemMetrics(SM_CXVSCROLL));
+			if (gConEmu.BufferHeight) { //TODO: а показывается ли сейчас прокрутка?
+				rc = MakeRect(0,0,GetSystemMetrics(SM_CXVSCROLL),0);
 			} else {
 				rc = MakeRect(0,0); // раз прокрутки нет - значит дополнительные отступы не нужны
 			}
@@ -369,18 +384,43 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tF
 			AddMargins(rc, rcShift);
 			rcShift = CalcMargins(CEM_BACK);
 			AddMargins(rc, rcShift);
-			
+
+			if (gConEmu.isNtvdm()) {
+				//TODO: а перезагрузить не нужно?
+				//NTVDM почему-то отказывается менять ВЫСОТУ экранного буфера...
+				RECT rc1 = MakeRect(pVCon->TextWidth*gSet.LogFont.lfWidth,
+					gSet.ntvdmHeight/*pVCon->TextHeight*/*gSet.LogFont.lfHeight);
+				int nS = rc.right - rc.left - rc1.right;
+				if (nS>=0) {
+					rcShift.left = nS / 2;
+					rcShift.right = nS - rcShift.left;
+				} else {
+					rcShift.left = 0;
+					rcShift.right = -nS;
+				}
+				nS = rc.bottom - rc.top - rc1.bottom;
+				if (nS>=0) {
+					rcShift.top = nS / 2;
+					rcShift.bottom = nS - rcShift.top;
+				} else {
+					rcShift.top = 0;
+					rcShift.bottom = -nS;
+				}
+				AddMargins(rc, rcShift);
+				//rc = rc1;
+			}
+				
 			// Если нужен размер консоли в символах сразу делим и выходим
 			if (tWhat == CER_CONSOLE) {
 				MBoxAssert((gSet.LogFont.lfWidth!=0) && (gSet.LogFont.lfHeight!=0));
-			    if (gSet.LogFont.lfWidth==0 || gSet.LogFont.lfHeight==0)
-				    pVCon->InitDC(FALSE); // инициализировать ширину шрифта по умолчанию
+				if (gSet.LogFont.lfWidth==0 || gSet.LogFont.lfHeight==0)
+					pVCon->InitDC(FALSE); // инициализировать ширину шрифта по умолчанию
 				
-			    rc.right = (rc.right - rc.left) / gSet.LogFont.lfWidth;
-			    rc.bottom = (rc.bottom - rc.top) / gSet.LogFont.lfHeight;
-			    rc.left = 0; rc.top = 0;
+				rc.right = (rc.right - rc.left) / gSet.LogFont.lfWidth;
+				rc.bottom = (rc.bottom - rc.top) / gSet.LogFont.lfHeight;
+				rc.left = 0; rc.top = 0;
 			    
-			    return rc;
+				return rc;
 			}
 		} break;
 		default:
@@ -474,31 +514,6 @@ RECT CConEmuMain::MapRect(RECT rFrom, BOOL bFrame2Client)
 //    return rect;
 //}
 
-// Установить размер основного окна по текущему размеру pVCon
-void CConEmuMain::SyncWindowToConsole()
-{
-    DEBUGLOGFILE("SyncWindowToConsole\n");
-
-	RECT rcDC = MakeRect(pVCon->Width, pVCon->Height);
-
-	RECT rcWnd = CalcRect(CER_MAIN, rcDC, CER_DC); // размеры окна
-    
-    //GetCWShift(ghWnd, &cwShift);
-    
-    RECT wndR; GetWindowRect(ghWnd, &wndR); // текущий XY
-
-	MOVEWINDOW ( ghWnd, wndR.left, wndR.top, rcWnd.right, rcWnd.bottom, 1);
-    
-    //RECT consoleRect = ConsoleOffsetRect();
-
-    //#ifdef MSGLOGGER
-    //    char szDbg[100]; wsprintfA(szDbg, "   pVCon:Size={%i,%i}\n", pVCon->Width,pVCon->Height);
-    //    DEBUGLOGFILE(szDbg);
-    //#endif
-    //
-    //MOVEWINDOW ( ghWnd, wndR.left, wndR.top, pVCon->Width + cwShift.x + consoleRect.left + consoleRect.right, pVCon->Height + cwShift.y + consoleRect.top + consoleRect.bottom, 1);
-}
-
 //// returns console size in columns and lines calculated from current window size
 //// rectInWindow - если true - с рамкой, false - только клиент
 //COORD CConEmuMain::ConsoleSizeFromWindow(RECT* arect /*= NULL*/, bool frameIncluded /*= false*/, bool alreadyClient /*= false*/)
@@ -564,14 +579,20 @@ void CConEmuMain::SyncWindowToConsole()
 // size in columns and lines
 void CConEmuMain::SetConsoleWindowSize(const COORD& size, bool updateInfo)
 {
+	// Это не совсем корректно... ntvdm.exe не выгружается после выхода из 16бит приложения
+	if (isNtvdm()) {
+		//if (size.X == 80 && size.Y>25 && lastSize1.X != size.X && size.Y == lastSize1.Y) {
+			#pragma message("Ntvdm почему-то не всегда устанавливает ВЫСОТУ консоли в 25 символов...")
+		//}
+		return; // запрет изменения размеров консоли для 16бит приложений 
+	}
+
     #ifdef MSGLOGGER
-        static COORD lastSize1;
-        if (lastSize1.Y>size.Y)
-            lastSize1.Y=size.Y; //DEBUG
-        lastSize1 = size;
         char szDbg[100]; wsprintfA(szDbg, "SetConsoleWindowSize({%i,%i},%i)\n", size.X, size.Y, updateInfo);
         DEBUGLOGFILE(szDbg);
     #endif
+
+	m_LastConSize = size;
 
     if (isPictureView()) {
         isPiewUpdate = true;
@@ -585,7 +606,7 @@ void CConEmuMain::SetConsoleWindowSize(const COORD& size, bool updateInfo)
     }
 
     // case: simple mode
-    if (gSet.BufferHeight == 0)
+    if (BufferHeight == 0)
     {
         MOVEWINDOW(ghConWnd, 0, 0, 1, 1, 1);
         SETCONSOLESCREENBUFFERSIZE(pVCon->hConOut(), size);
@@ -607,7 +628,7 @@ void CConEmuMain::SetConsoleWindowSize(const COORD& size, bool updateInfo)
     {
         // first call: buffer height = from settings
         s_isFirstCall = false;
-        csbi.dwSize.Y = max(gSet.BufferHeight, size.Y);
+        csbi.dwSize.Y = max(BufferHeight, size.Y);
     }
     else
     {
@@ -647,6 +668,9 @@ void CConEmuMain::SetConsoleWindowSize(const COORD& size, bool updateInfo)
 // Изменить размер консоли по размеру окна (главного)
 void CConEmuMain::SyncConsoleToWindow()
 {
+	if (isNtvdm())
+		return;
+
 	DEBUGLOGFILE("SyncConsoleToWindow\n");
 
 	RECT rcClient; GetClientRect(ghWnd, &rcClient);
@@ -668,6 +692,40 @@ void CConEmuMain::SyncConsoleToWindow()
 		if (pVCon)
 			pVCon->InitDC();
 	}
+}
+
+void CConEmuMain::SyncNtvdm()
+{
+	//COORD sz = {pVCon->TextWidth, pVCon->TextHeight};
+	//SetConsoleWindowSize(sz, false);
+
+	RECT client; GetClientRect(ghWnd, &client);
+	OnSize(0, client.right, client.bottom);
+}
+
+// Установить размер основного окна по текущему размеру pVCon
+void CConEmuMain::SyncWindowToConsole()
+{
+    DEBUGLOGFILE("SyncWindowToConsole\n");
+
+	RECT rcDC = MakeRect(pVCon->Width, pVCon->Height);
+
+	RECT rcWnd = CalcRect(CER_MAIN, rcDC, CER_DC); // размеры окна
+    
+    //GetCWShift(ghWnd, &cwShift);
+    
+    RECT wndR; GetWindowRect(ghWnd, &wndR); // текущий XY
+
+	MOVEWINDOW ( ghWnd, wndR.left, wndR.top, rcWnd.right, rcWnd.bottom, 1);
+    
+    //RECT consoleRect = ConsoleOffsetRect();
+
+    //#ifdef MSGLOGGER
+    //    char szDbg[100]; wsprintfA(szDbg, "   pVCon:Size={%i,%i}\n", pVCon->Width,pVCon->Height);
+    //    DEBUGLOGFILE(szDbg);
+    //#endif
+    //
+    //MOVEWINDOW ( ghWnd, wndR.left, wndR.top, pVCon->Width + cwShift.x + consoleRect.left + consoleRect.right, pVCon->Height + cwShift.y + consoleRect.top + consoleRect.bottom, 1);
 }
 
 bool CConEmuMain::SetWindowMode(uint inMode)
@@ -827,24 +885,64 @@ void CConEmuMain::ForceShowTabs(BOOL abShow)
     }
 }
 
-void CConEmuMain::CheckBufferSize()
+bool CConEmuMain::CheckBufferSize()
 {
+	bool lbForceUpdate = false;
+	
     CONSOLE_SCREEN_BUFFER_INFO inf; memset(&inf, 0, sizeof(inf));
     GetConsoleScreenBufferInfo(pVCon->hConOut(), &inf);
     if (inf.dwSize.X>(inf.srWindow.Right-inf.srWindow.Left+1)) {
         DEBUGLOGFILE("Wrong screen buffer width\n");
 		// Окошко консоли почему-то схлопнулось по горизонтали
         MOVEWINDOW(ghConWnd, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), 1);
-    } else if ((gSet.BufferHeight == 0) && (inf.dwSize.Y>(inf.srWindow.Bottom-inf.srWindow.Top+1))) {
-        DEBUGLOGFILE("Wrong screen buffer height\n");
-		// Окошко консоли почему-то схлопнулось по вертикали
-        MOVEWINDOW(ghConWnd, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), 1);
+    } else {
+		// может меняться и из плагина, во время работы фара...
+	    /*if (mn_ActiveStatus & CES_FARACTIVE) {
+		    if (BufferHeight) {
+			    BufferHeight = 0; // сброс на время активности фара
+				lbForceUpdate = true;
+			}
+	    } else*/
+		if ( (inf.dwSize.Y<(inf.srWindow.Bottom-inf.srWindow.Top+10)) && BufferHeight &&
+			 !gSet.BufferHeight /*&& (BufferHeight != inf.dwSize.Y)*/)
+		{
+		    // может быть консольная программа увеличила буфер самостоятельно?
+		    // TODO: отключить прокрутку!!!
+		    BufferHeight = 0;
+
+            SCROLLINFO si;
+            ZeroMemory(&si, sizeof(si));
+            si.cbSize = sizeof(si);
+            si.fMask = SIF_PAGE | SIF_POS | SIF_RANGE | SIF_TRACKPOS;
+            if (GetScrollInfo(ghConWnd, SB_VERT, &si))
+				SetScrollInfo(m_Back.mh_Wnd, SB_VERT, &si, true);
+
+		    lbForceUpdate = true;
+	    } else 
+		if ( (inf.dwSize.Y>(inf.srWindow.Bottom-inf.srWindow.Top+10)) ||
+			 (BufferHeight && (BufferHeight != inf.dwSize.Y)) )
+		{
+		    // может быть консольная программа увеличила буфер самостоятельно?
+		    if (BufferHeight != inf.dwSize.Y) {
+			    // TODO: Включить прокрутку!!!
+			    BufferHeight = inf.dwSize.Y;
+			    lbForceUpdate = true;
+		    }
+	    }
+	    
+	    if ((BufferHeight == 0) && (inf.dwSize.Y>(inf.srWindow.Bottom-inf.srWindow.Top+1))) {
+			#pragma message("TODO: это может быть консольная программа увеличила буфер самостоятельно!")
+	        DEBUGLOGFILE("Wrong screen buffer height\n");
+			// Окошко консоли почему-то схлопнулось по вертикали
+	        MOVEWINDOW(ghConWnd, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), 1);
+	    }
     }
 
 	// При выходе из FAR -> CMD с BufferHeight - смена QuickEdit режима
 	DWORD mode = 0;
 	BOOL lb = FALSE;
-	if (gSet.BufferHeight) {
+	if (BufferHeight) {
+		//TODO: похоже, что для BufferHeight это вызывается постоянно?
 		lb = GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), &mode);
 
 		if (inf.dwSize.Y>(inf.srWindow.Bottom-inf.srWindow.Top+1)) {
@@ -858,6 +956,8 @@ void CConEmuMain::CheckBufferSize()
 
 		lb = SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), mode);
 	}
+	
+	return lbForceUpdate;
 }
 
 void CConEmuMain::ReSize()
@@ -893,7 +993,9 @@ LRESULT CConEmuMain::OnSize(WPARAM wParam, WORD newClientWidth, WORD newClientHe
 
 		RECT rcNewCon; memset(&rcNewCon,0,sizeof(rcNewCon));
 		if (pVCon && pVCon->Width && pVCon->Height) {
-			if (gSet.isTryToCenter && (IsZoomed(ghWnd) || gSet.isFullScreen)) {
+			if ((gSet.isTryToCenter || isNtvdm()) && 
+				(IsZoomed(ghWnd) || gSet.isFullScreen)) 
+			{
 				rcNewCon.left = (client.right+client.left-(int)pVCon->Width)/2;
 				rcNewCon.top = (client.bottom+client.top-(int)pVCon->Height)/2;
 			}
@@ -910,7 +1012,7 @@ LRESULT CConEmuMain::OnSize(WPARAM wParam, WORD newClientWidth, WORD newClientHe
 		}
 		MoveWindow(ghWndDC, rcNewCon.left, rcNewCon.top, rcNewCon.right - rcNewCon.left, rcNewCon.bottom - rcNewCon.top, 1);
 
-		dcWindowLast = rcNewCon;
+		//dcWindowLast = rcNewCon;
 	}
 
 	return result;
@@ -920,6 +1022,9 @@ LRESULT CConEmuMain::OnSizing(WPARAM wParam, LPARAM lParam)
 {
 	LRESULT result = true;
 
+	if (isNtvdm()) {
+		// не менять для 16бит приложений
+	} else
 	if (!gSet.isFullScreen && !IsZoomed(ghWnd)) {
 		RECT srctWindow;
 		RECT wndSizeRect, restrictRect;
@@ -993,7 +1098,7 @@ void CConEmuMain::SetConParent()
     // *) it is used by ConMan and some FAR plugins, set it for standard mode or if /SetParent switch is set
     // *) do not set it by default for buffer mode because it causes unwanted selection jumps
     // WARP ItSelf опытным путем выяснил, что SetParent валит ConEmu в Windows7
-    //if (!setParentDisabled && (setParent || gSet.BufferHeight == 0))
+    //if (!setParentDisabled && (setParent || BufferHeight == 0))
     
     //TODO: ConMan? попробуем на родительское окно SetParent делать
     if (setParent)
@@ -1022,9 +1127,13 @@ void CConEmuMain::SetConParent()
 void CConEmuMain::CheckProcessName(struct CConEmuMain::ConProcess &ConPrc, LPCTSTR asFullFileName)
 {
 	ConPrc.IsFar = lstrcmpi(ConPrc.Name, _T("far.exe"))==0;
-	if (ConPrc.IsTelnet = lstrcmpi(ConPrc.Name, _T("telnet.exe"))==0) {
+
+	ConPrc.IsNtvdm = lstrcmpi(ConPrc.Name, _T("ntvdm.exe"))==0;
+	//mn_ActiveStatus |= CES_NTVDM; - это делает WinHook
+
+	if (ConPrc.IsTelnet = lstrcmpi(ConPrc.Name, _T("telnet.exe"))==0)
 		mn_ActiveStatus |= CES_TELNETACTIVE;
-	}
+
 	if (ConPrc.IsConman = lstrcmpi(ConPrc.Name, _T("conman.exe"))==0) {
 		mn_ConmanPID = ConPrc.ProcessID;
 		mn_ActiveStatus |= CES_CONMANACTIVE;
@@ -1068,7 +1177,8 @@ DWORD CConEmuMain::CheckProcesses(DWORD nConmanIDX, BOOL bTitleChanged)
 	    nProcCount = GetConsoleProcessList(dwFullProcList,nProcCount+10);
 		lbProcessChanged = TRUE;
 		//CES_EDITOR и др. устанавливаются в SetTitle, а он вызывается перед этой функцией!
-	    mn_ActiveStatus &= ~CES_FARACTIVE;
+	    //mn_ActiveStatus &= ~(CES_FARACTIVE|CES_NTVDM);
+		mn_ActiveStatus &= ~CES_PROGRAMS;
 	    
 	    int i, j;
 	    std::vector<struct ConProcess>::iterator iter;
@@ -1221,7 +1331,7 @@ DWORD CConEmuMain::CheckProcesses(DWORD nConmanIDX, BOOL bTitleChanged)
     //}
 
 	// попытаться обновить номер ConMan для необработанных КОРНЕВЫХ процессов
-	if (mn_ConmanPID && nConmanIDX && (bTitleChanged || (nConmanIDX != m_ActiveConmanIDX)))
+	if (mn_ConmanPID && nConmanIDX && (/*bTitleChanged ||*/ (nConmanIDX != m_ActiveConmanIDX)))
 	{
 		lbProcessChanged = TRUE; // чтобы дальше "верхний" процесс определился
 	    for (int i=m_Processes.size()-1; i>=0; i--)
@@ -1409,7 +1519,7 @@ DWORD CConEmuMain::CheckProcesses(DWORD nConmanIDX, BOOL bTitleChanged)
 void CConEmuMain::DnDstep(LPCTSTR asMsg)
 {
 	if (gSet.isDnDsteps && ghWnd)
-		SetWindowText(ghWnd, asMsg);
+		SetWindowText(ghWnd, asMsg ? asMsg : Title);
 }
 
 LPTSTR CConEmuMain::GetTitleStart(DWORD* rnConmanIDX/*=NULL*/)
@@ -1573,6 +1683,7 @@ void CConEmuMain::UpdateProcessDisplay(BOOL abForce)
     CheckDlgButton(gSet.hInfo, cbsConManActive, (mn_ActiveStatus&CES_CONMANACTIVE) ? BST_CHECKED : BST_UNCHECKED);
     SetDlgItemText(gSet.hInfo, tsConManIdx, _itow(m_ActiveConmanIDX, temp, 10));
     CheckDlgButton(gSet.hInfo, cbsTelnetActive, (mn_ActiveStatus&CES_TELNETACTIVE) ? BST_CHECKED : BST_UNCHECKED);
+    CheckDlgButton(gSet.hInfo, cbsNtvdmActive, isNtvdm() ? BST_CHECKED : BST_UNCHECKED);
     CheckDlgButton(gSet.hInfo, cbsFarActive, (mn_ActiveStatus&CES_FARACTIVE) ? BST_CHECKED : BST_UNCHECKED);
     CheckDlgButton(gSet.hInfo, cbsFilePanel, (mn_ActiveStatus&CES_FILEPANEL) ? BST_CHECKED : BST_UNCHECKED);
     //CheckDlgButton(gSet.hInfo, cbsPlugin, (mn_ActiveStatus&CES_CONMANACTIVE) ? BST_CHECKED : BST_UNCHECKED);
@@ -1608,18 +1719,49 @@ void CConEmuMain::UpdateTitle(LPCTSTR asNewTitle)
 
 	DWORD dwConmanIDX=0;
 	LPTSTR pszTitle = GetTitleStart(&dwConmanIDX);
-	mn_ActiveStatus &= CES_PROGRAMS; // оставляем только флаги текущей программы
+	mn_ActiveStatus &= CES_PROGRAMS2; // оставляем только флаги текущей программы
 
 	// далее идут взаимоисключающие флаги режимов текущей программы
 	if (_tcsncmp(pszTitle, _T("edit "), 5)==0 || _tcsncmp(pszTitle, ms_EditorRus, _tcslen(ms_EditorRus))==0)
 		mn_ActiveStatus |= CES_EDITOR;
 	else if (_tcsncmp(pszTitle, _T("view "), 5)==0 || _tcsncmp(pszTitle, ms_ViewerRus, _tcslen(ms_ViewerRus))==0)
 		mn_ActiveStatus |= CES_VIEWER;
-		
+	else if (isFilePanel(true))
+		mn_ActiveStatus |= CES_FILEPANEL;
+
 	// Под конец - проверить список процессов консоли
 	CheckProcesses(dwConmanIDX, TRUE);
 }
 
+VOID CConEmuMain::WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime)
+{
+	switch(event)
+	{
+	case EVENT_CONSOLE_START_APPLICATION:
+		if (idChild == CONSOLE_APPLICATION_16BIT) {
+			DWORD ntvdmPID = idObject;
+			for (size_t i=0; i<gConEmu.m_Processes.size(); i++) {
+				DWORD dwPID = gConEmu.m_Processes[i].ProcessID;
+				if (dwPID == ntvdmPID) {
+					gConEmu.mn_ActiveStatus |= CES_NTVDM;
+				}
+			}
+		}
+		break;
+	case EVENT_CONSOLE_END_APPLICATION:
+		if (idChild == CONSOLE_APPLICATION_16BIT) {
+			DWORD ntvdmPID = idObject;
+			for (size_t i=0; i<gConEmu.m_Processes.size(); i++) {
+				DWORD dwPID = gConEmu.m_Processes[i].ProcessID;
+				if (dwPID == ntvdmPID) {
+					gConEmu.gbPostUpdateWindowSize = true;
+					gConEmu.mn_ActiveStatus &= ~CES_NTVDM;
+				}
+			}
+		}
+		break;
+	}
+}
 
 
 /* ****************************************************** */
@@ -1796,6 +1938,20 @@ bool CConEmuMain::isFar()
 	return (mn_ActiveStatus & CES_FARACTIVE) && mn_TopProcessID;
 }
 
+bool CConEmuMain::isNtvdm()
+{
+	if (mn_ActiveStatus & CES_NTVDM) {
+		if (mn_ActiveStatus & CES_FARFLAGS) {
+			//mn_ActiveStatus &= ~CES_NTVDM;
+		} else if (isFilePanel()) {
+			//mn_ActiveStatus &= ~CES_NTVDM;
+		} else {
+			return true;
+		}
+	}
+	return false;
+}
+
 bool CConEmuMain::isViewer()
 {
 	return mn_ActiveStatus & CES_VIEWER;
@@ -1881,7 +2037,7 @@ LRESULT CConEmuMain::OnCopyData(PCOPYDATASTRUCT cds)
 
 			//CONSOLE_SCREEN_BUFFER_INFO inf; memset(&inf, 0, sizeof(inf));
 			//GetConsoleScreenBufferInfo(pVCon->hConOut(), &inf);
-			if ((gSet.BufferHeight > 0) /*&& (inf.dwSize.Y==(inf.srWindow.Bottom-inf.srWindow.Top+1))*/)
+			if ((BufferHeight > 0) /*&& (inf.dwSize.Y==(inf.srWindow.Bottom-inf.srWindow.Top+1))*/)
 			{
 				DWORD mode = 0;
 				BOOL lb = GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), &mode);
@@ -1896,7 +2052,7 @@ LRESULT CConEmuMain::OnCopyData(PCOPYDATASTRUCT cds)
 		// Это сообщение посылает плагин ConEmu при изменениях и входе в FAR
 		if (!TabBar.IsActive() && gSet.isTabs && (cds->dwData>1 || tabs[0].Type!=1/*WTYPE_PANELS*/ || gSet.isTabs==1))
 		{
-			if ((gSet.BufferHeight > 0) /*&& (inf.dwSize.Y==(inf.srWindow.Bottom-inf.srWindow.Top+1))*/)
+			if ((BufferHeight > 0) /*&& (inf.dwSize.Y==(inf.srWindow.Bottom-inf.srWindow.Top+1))*/)
 			{
 				//CONSOLE_SCREEN_BUFFER_INFO inf; memset(&inf, 0, sizeof(inf));
 				//GetConsoleScreenBufferInfo(pVCon->hConOut(), &inf);
@@ -2090,7 +2246,7 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 
 
   // buffer mode: scroll with keys  -- NightRoman
-    if (gSet.BufferHeight && messg == WM_KEYDOWN && isPressed(VK_CONTROL))
+    if (BufferHeight && messg == WM_KEYDOWN && isPressed(VK_CONTROL))
     {
         switch(wParam)
         {
@@ -2208,7 +2364,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
     if (newY<0 || newX<0)
         return 0;
 
-    if (gSet.BufferHeight)
+    if (BufferHeight)
     {
        // buffer mode: cheat the console window: adjust its position exactly to the cursor
        RECT win;
@@ -2573,10 +2729,10 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
         }
 
         // Проверить, может в консоли размер съехал? (хрен его знает из-за чего...)
-		CheckBufferSize();
+		bool lbForceUpdate = CheckBufferSize();
 
         //if (!gbInvalidating && !gbInPaint)
-        if (pVCon->Update(false/*gbNoDblBuffer*/))
+        if (pVCon->Update(lbForceUpdate))
         {
             //COORD c = ConsoleSizeFromWindow();
 			RECT client; GetClientRect(ghWnd, &client);
@@ -2585,24 +2741,35 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 				(gbPostUpdateWindowSize || c.right != pVCon->TextWidth || c.bottom != pVCon->TextHeight))
             {
 				gbPostUpdateWindowSize = false;
-                if (!gSet.isFullScreen && !IsZoomed(ghWnd))
-                    SyncWindowToConsole();
-                else
-                    SyncConsoleToWindow();
-            }
+				if (isNtvdm())
+					SyncNtvdm();
+				else {
+					if (!gSet.isFullScreen && !IsZoomed(ghWnd))
+						SyncWindowToConsole();
+					else
+						SyncConsoleToWindow();
+					OnSize(0, client.right, client.bottom);
+				}
+				m_LastConSize = MakeCoord(pVCon->TextWidth,pVCon->TextHeight);
+			} else if (m_LastConSize.X != pVCon->TextWidth || m_LastConSize.Y != pVCon->TextHeight) {
+				// По идее, сюда мы попадаем только для 16-бит приложений
+				if (isNtvdm())
+					SyncNtvdm();
+				m_LastConSize = MakeCoord(pVCon->TextWidth,pVCon->TextHeight);
+			}
 
             INVALIDATE(); //InvalidateRect(HDCWND, NULL, FALSE);
 
             // update scrollbar
-            if (gSet.BufferHeight)
+            if (BufferHeight)
             {
                 SCROLLINFO si;
                 ZeroMemory(&si, sizeof(si));
                 si.cbSize = sizeof(si);
                 si.fMask = SIF_PAGE | SIF_POS | SIF_RANGE | SIF_TRACKPOS;
                 if (GetScrollInfo(ghConWnd, SB_VERT, &si))
-                    SetScrollInfo(HDCWND, SB_VERT, &si, true);
-            }
+					SetScrollInfo(m_Back.mh_Wnd, SB_VERT, &si, true);
+			}
       //} -- в сборке NightRoman (isPiewUpdate) проверяется всегда
 
             /*if (!lbIsPicView && isPiewUpdate)

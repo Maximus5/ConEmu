@@ -103,9 +103,9 @@ RECT __forceinline MakeRect(int W,int H)
 	return rc;
 }
 
-RECT __forceinline MakeRect(int X, int Y,int W,int H)
+RECT __forceinline MakeRect(int X1, int Y1,int X2,int Y2)
 {
-	RECT rc; rc.left=X; rc.top=Y; rc.right=W; rc.bottom=H;
+	RECT rc; rc.left=X1; rc.top=Y1; rc.right=X2; rc.bottom=Y2;
 	return rc;
 }
 

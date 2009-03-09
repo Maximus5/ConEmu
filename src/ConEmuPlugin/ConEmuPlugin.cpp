@@ -32,11 +32,12 @@ int WINAPI _export GetMinFarVersionW(void)
 void WINAPI _export GetPluginInfoW(struct PluginInfo *pi)
 {
     static WCHAR *szMenu[1], szMenu1[15];
-    szMenu[0]=szMenu1; lstrcpyW(szMenu[0], L"[&¦] ConEmu");
+    szMenu[0]=szMenu1; lstrcpyW(szMenu[0], L"[__] ConEmu");
+    szMenu[0][1] = L'&';
     szMenu[0][2] = 0x2560;
 
 	pi->StructSize = sizeof(struct PluginInfo);
-	pi->Flags = PF_EDITOR | PF_VIEWER | PF_PRELOAD;
+	pi->Flags = PF_EDITOR | PF_VIEWER | PF_DIALOG | PF_PRELOAD;
 	pi->DiskMenuStrings = NULL;
 	pi->DiskMenuNumbers = 0;
 	pi->PluginMenuStrings = szMenu;
@@ -49,7 +50,7 @@ void WINAPI _export GetPluginInfoW(struct PluginInfo *pi)
 
 HANDLE WINAPI _export OpenPluginW(int OpenFrom,INT_PTR Item)
 {
-	if (gnReqCommand != -1) {
+	if (gnReqCommand != (DWORD)-1) {
 		ProcessCommand(gnReqCommand, FALSE/*bReqMainThread*/);
 	}
 	return INVALID_HANDLE_VALUE;
@@ -72,6 +73,7 @@ HANDLE ghMapping = NULL;
 DWORD gnReqCommand = -1;
 HANDLE ghReqCommandEvent = NULL;
 UINT gnMsgTabChanged = 0;
+CRITICAL_SECTION csTabs;
 
 #if defined(__GNUC__)
 typedef HWND (APIENTRY *FGetConsoleWindow)();
@@ -85,7 +87,7 @@ BOOL APIENTRY DllMain( HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
 		case DLL_PROCESS_ATTACH:
 			{
 				#ifdef _DEBUG
-				if (!IsDebuggerPresent()) MessageBoxA(GetForegroundWindow(), "ConEmu.dll loaded", "ConEmu", 0);
+				//if (!IsDebuggerPresent()) MessageBoxA(GetForegroundWindow(), "ConEmu.dll loaded", "ConEmu", 0);
 				#endif
 				#if defined(__GNUC__)
 				GetConsoleWindow = (FGetConsoleWindow)GetProcAddress(GetModuleHandle(L"kernel32.dll"),"GetConsoleWindow");
@@ -336,7 +338,7 @@ DWORD WINAPI ThreadProcW(LPVOID lpParameter)
 							// Закрыть хэндлы
 							CloseHandle(pi.hProcess); CloseHandle(pi.hThread);
 							// Хорошо бы сразу Табы обновить...
-							SendTabs(gnCurTabCount, FALSE/*abForce*/);
+							SendTabs(gnCurTabCount, TRUE);
 							continue;
 						} else {
 							// Пользователь отказался, выходим из нити обработки
@@ -373,22 +375,25 @@ DWORD WINAPI ThreadProcW(LPVOID lpParameter)
 
 		SafeCloseHandle(ghMapping);
 		// Поставим флажок, что мы приступили к обработке
-		if (dwWait != (WAIT_OBJECT_0+CMD_REQTABS)) // исключение - запрос табов. он асинхронный
-			SetEvent(hEventAlive);
+		// Хоть табы и не загружаются из фара, а пересылаются в текущем виде, но делается это обычным образом
+		//if (dwWait != (WAIT_OBJECT_0+CMD_REQTABS)) // исключение - запрос табов. он асинхронный
+		SetEvent(hEventAlive);
 
 
 		switch (dwWait)
 		{
 			case (WAIT_OBJECT_0+CMD_REQTABS):
 			{
-				if (!gnCurTabCount || !tabs) {
+				/*if (!gnCurTabCount || !tabs) {
 					CreateTabs(1);
-					int nTabs=0;
+					int nTabs=0; --низзя! это теперь идет через CriticalSection
 					AddTab(nTabs, false, false, WTYPE_PANELS, 0,0,1,0); 
-				}
+				}*/
 				SendTabs(gnCurTabCount, TRUE);
-				// исключение - запрос табов. он асинхронный
-				continue;
+				// пересылка тоже обычным образом
+				//// исключение - запрос табов. он асинхронный
+				//continue;
+				break;
 			}
 			
 			default:
@@ -459,6 +464,7 @@ void WINAPI _export SetStartupInfoW(void *aInfo)
 	
 void InitHWND(HWND ahFarHwnd)
 {
+	InitializeCriticalSection(&csTabs);
 	LoadFarVersion(); // пригодится уже здесь!
 
 	ConEmuHwnd = NULL;
@@ -491,7 +497,7 @@ void InitHWND(HWND ahFarHwnd)
 		int tabCount = 0;
 		CreateTabs(1);
 		AddTab(tabCount, true, false, WTYPE_PANELS, NULL, NULL, 0, 0);
-		SendTabs(tabCount=1, TRUE);
+		SendTabs(tabCount=1);
 	}
 }
 
@@ -503,15 +509,15 @@ void CheckMacro()
 		// Проверка наличия макроса
 		BOOL lbMacroAdded = FALSE, lbNeedMacro = FALSE;
 		HKEY hkey=NULL;
-		char szValue[1024], szMacroKey[128]/*, szCheckKey[16]*/;
+		char szValue[1024], szMacroKey[128], szCheckKey[16];
 		DWORD dwSize = 0;
 		bool lbMacroDontCheck = false;
 
 		if (gFarVersion.dwVerMajor==2) {
-			//lstrcpyA(szCheckKey, "F14DontCheck2");
+			lstrcpyA(szCheckKey, "F14DontCheck2");
 			lstrcpyA(szMacroKey, "Software\\Far2\\KeyMacros\\Common\\F14");
 		} else {
-			//lstrcpyA(szCheckKey, "F14DontCheck2");
+			lstrcpyA(szCheckKey, "F14DontCheck2");
 			lstrcpyA(szMacroKey, "Software\\Far\\KeyMacros\\Common\\F14");
 		}
 
@@ -527,14 +533,25 @@ void CheckMacro()
 		{
 			if (0==RegOpenKeyExA(HKEY_CURRENT_USER, szMacroKey, 0, KEY_ALL_ACCESS, &hkey))
 			{
-				if (0!=RegQueryValueExA(hkey, "Sequence", 0, 0, (LPBYTE)szValue, &(dwSize=1022))) {
-					lbNeedMacro = TRUE; // Значение отсутсвует
+				if (gFarVersion.dwVerMajor==1) {
+					if (0!=RegQueryValueExA(hkey, "Sequence", 0, 0, (LPBYTE)szValue, &(dwSize=1022))) {
+						lbNeedMacro = TRUE; // Значение отсутсвует
+					} else {
+						lbNeedMacro = lstrcmpA(szValue, "F11 \xCC")!=0;
+					}
 				} else {
-					szValue[dwSize]=0;
-					#pragma message("ERROR: нужна проверка. В Ansi и Unicode это разные строки!")
-					//if (strcmpW(szValue, "F11 \xCC")==0)
-						lbNeedMacro = TRUE; // Значение некорректное
+					if (0!=RegQueryValueExW(hkey, L"Sequence", 0, 0, (LPBYTE)szValue, &(dwSize=1022))) {
+						lbNeedMacro = TRUE; // Значение отсутсвует
+					} else {
+						//TODO: проверить, как себя ведет VC & GCC на 2х байтовых символах?
+						lbNeedMacro = lstrcmpW((WCHAR*)szValue, L"F11 \x2560")!=0;
+					}
 				}
+				//	szValue[dwSize]=0;
+				//	#pragma message("ERROR: нужна проверка. В Ansi и Unicode это разные строки!")
+				//	//if (strcmpW(szValue, "F11 \xCC")==0)
+				//		lbNeedMacro = TRUE; // Значение некорректное
+				//}
 				RegCloseKey(hkey); hkey=NULL;
 			} else {
 				lbNeedMacro = TRUE;
@@ -559,7 +576,7 @@ void CheckMacro()
 						0, KEY_ALL_ACCESS, 0, &hkey, &disp))
 					{
 						lstrcpyA(szValue, 
-							"ConEmu tab switching support");
+							"ConEmu support");
 						RegSetValueExA(hkey, "", 0, REG_SZ, (LPBYTE)szValue, (dwSize=strlen(szValue)+1));
 
 						//lstrcpyA(szValue, 
@@ -573,11 +590,11 @@ void CheckMacro()
 						} else {
 							lstrcpyW((WCHAR*)szValue, L"F11 |");
 							((WCHAR*)szValue)[4] = 0x2560;
-							RegSetValueExW(hkey, L"Sequence", 0, REG_SZ, (LPBYTE)szValue, (dwSize=2*(wcslen((WCHAR*)szValue)+1)));
+							RegSetValueExW(hkey, L"Sequence", 0, REG_SZ, (LPBYTE)szValue, (dwSize=2*(lstrlenW((WCHAR*)szValue)+1)));
 						}
 
 						lstrcpyA(szValue, 
-							"For ConEmu - eats next key if changing screen is impossible");
+							"For ConEmu - plugin activation from listening thread");
 						RegSetValueExA(hkey, "Description", 0, REG_SZ, (LPBYTE)szValue, (dwSize=strlen(szValue)+1));
 
 						RegSetValueExA(hkey, "DisableOutput", 0, REG_DWORD, (LPBYTE)&(disp=1), (dwSize=4));
@@ -611,6 +628,8 @@ void UpdateConEmuTabsW(int event, bool losingFocus, bool editorSave)
 
 BOOL CreateTabs(int windowCount)
 {
+	EnterCriticalSection(&csTabs);
+
 	if ((tabs==NULL) || (maxTabCount <= (windowCount + 1)))
 	{
 		maxTabCount = windowCount + 10; // с запасом
@@ -623,6 +642,8 @@ BOOL CreateTabs(int windowCount)
 	
 	lastWindowCount = windowCount;
 	
+	if (!tabs)
+		LeaveCriticalSection(&csTabs);
 	return tabs!=NULL;
 }
 
@@ -676,9 +697,11 @@ BOOL AddTab(int &tabCount, bool losingFocus, bool editorSave,
 	return lbCh;
 }
 
-void SendTabs(int tabCount, BOOL abForce/*=FALSE*/)
+void SendTabs(int tabCount, BOOL abWritePipe/*=FALSE*/)
 {
-    gnCurTabCount = tabCount;
+	if (abWritePipe) {
+		EnterCriticalSection(&csTabs);
+	}
 	if (ConEmuHwnd && IsWindow(ConEmuHwnd)) {
 		COPYDATASTRUCT cds;
 		if (tabs[0].Type == WTYPE_PANELS) {
@@ -689,15 +712,24 @@ void SendTabs(int tabCount, BOOL abForce/*=FALSE*/)
 			cds.dwData = --tabCount;
 			cds.lpData = tabs+1;
 		}
-		if (tabCount || abForce) {
+		if (abWritePipe) {
+			cds.cbData = cds.dwData * sizeof(ConEmuTab);
+			OutDataAlloc(sizeof(cds.dwData) + cds.cbData);
+			OutDataWrite(&cds.dwData, sizeof(cds.dwData));
+			OutDataWrite(cds.lpData, cds.cbData);
+		} else
+		//TODO: возможно, что при переключении окон командой из конэму нужно сразу переслать табы?
+		if (tabCount && gnReqCommand==(DWORD)-1) {
 			//cds.cbData = tabCount * sizeof(ConEmuTab);
 			//SendMessage(ConEmuHwnd, WM_COPYDATA, (WPARAM)FarHwnd, (LPARAM)&cds);
-#pragma message("ERROR: видимо только по параметру? PostMessage(ConEmuHwnd, gnMsgTabChanged, 0, 0);")
 			// Это нужно делать только если инициировано ФАРОМ. Если запрос прислал ConEmu - не посылать...
-			PostMessage(ConEmuHwnd, gnMsgTabChanged, 0, 0);
+			if (gnCurTabCount != tabCount || tabCount > 1)
+				PostMessage(ConEmuHwnd, gnMsgTabChanged, tabCount, 0);
 		}
 	}
 	//free(tabs); - освобождается в ExitFARW
+    gnCurTabCount = tabCount;
+	LeaveCriticalSection(&csTabs);
 }
 
 // watch non-modified -> modified editor status change

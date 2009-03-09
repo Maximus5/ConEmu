@@ -79,8 +79,9 @@ public:
 	LPARAM lastMML;
 	CDragDrop *DragDrop;
 	CProgressBars *ProgressBars;
-	COORD srctWindowLast; // console size after last resize (in columns and lines)
-	RECT  dcWindowLast; // Последний размер дочернего окна
+	COORD m_LastConSize; // console size after last resize (in columns and lines)
+	int BufferHeight; // в отличие от gSet - может изменяться текущей консольной программой
+	//RECT  dcWindowLast; // Последний размер дочернего окна
 	uint cBlinkShift; // cursor blink counter threshold
 	TCHAR szConEmuVersion[32];
 	//DWORD m_ProcList[1000], 
@@ -102,6 +103,7 @@ protected:
 		bool  IsConman;
 		bool  IsFar;
 		bool  IsTelnet; // может быть включен ВМЕСТЕ с IsFar, если удалось подцепится к фару через сетевой пайп
+		bool  IsNtvdm; // 16bit приложения
 		bool  NameChecked, ConmanChecked, RetryName;
 		TCHAR Name[64]; // чтобы полная инфа об ошибке влезала
 	};
@@ -113,6 +115,8 @@ protected:
 	//bool GetProcessFileName(DWORD dwPID, TCHAR* rsName/*[32]*/, DWORD *pdwErr);
 	BOOL mb_InTimer;
 	BOOL mb_ProcessCreated; DWORD mn_StartTick;
+	HWINEVENTHOOK mh_WinHook;
+	static VOID CALLBACK WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime);
 public:
 	typedef int (_cdecl * ConMan_MainProc_t)(LPCWSTR asCommandLine, BOOL abStandalone);
 	ConMan_MainProc_t ConMan_MainProc;
@@ -133,7 +137,7 @@ public:
 	static void AddMargins(RECT& rc, RECT& rcAddShift, BOOL abExpand=FALSE);
 	static RECT CalcMargins(enum ConEmuMargins mg);
 	static RECT CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFrom, RECT* prDC=NULL);
-	void CheckBufferSize();
+	bool CheckBufferSize();
 	//COORD ConsoleSizeFromWindow(RECT* arect = NULL, bool frameIncluded = false, bool alreadyClient = false);
 	//RECT ConsoleOffsetRect();
 	void Destroy();
@@ -151,6 +155,7 @@ public:
 	bool isEditor();
 	bool isFar();
 	bool isFilePanel(bool abPluginAllowed=false);
+	bool isNtvdm();
 	bool isPictureView();
 	bool isViewer();
 	void LoadIcons();
@@ -163,6 +168,7 @@ public:
 	bool SetWindowMode(uint inMode);
 	void ShowSysmenu(HWND Wnd, HWND Owner, int x, int y);
 	void SyncConsoleToWindow();
+	void SyncNtvdm();
 	void SyncWindowToConsole();
 	//RECT WindowSizeFromConsole(COORD consoleSize, bool rectInWindow = false, bool clientOnly = false);
 	LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);

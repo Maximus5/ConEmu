@@ -312,7 +312,7 @@ BOOL CreateAppWindow()
 	//2009-03-05 - нельзя этого делать. а то дочерние процессы с тем же Affinity запускаются...
 	// На тормоза - не влияет. Но вроде бы на многопроцессорных из-зп глюков
 	// в железе могут быть ошибки подсчета производительности, если этого не сделать
-	//SetProcessAffinityMask(GetCurrentProcess(), 1);
+	SetProcessAffinityMask(GetCurrentProcess(), gSet.nAffinity);
 	//SetThreadAffinityMask(GetCurrentThread(), 1);
 
 	/*DWORD dwErr = 0;
@@ -646,8 +646,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         _tcscpy(gSet.LogFont.lfFaceName, FontVal);
     if (SizePrm)
         gSet.LogFont.lfHeight = SizeVal;
-    if (BufferHeightPrm)
+    if (BufferHeightPrm) {
         gSet.BufferHeight = BufferHeightVal;
+        gConEmu.BufferHeight = BufferHeightVal;
+    }
 	if (!WindowPrm) {
 		if (nCmdShow == SW_SHOWMAXIMIZED)
 			gConEmu.WindowMode = rMaximized;
@@ -656,7 +658,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	//cmdNew = gSet.Cmd;
 	//while (*cmdNew==L' ' || *cmdNew==L'"')
 	if (ConManPrm || StrStrI(gSet.Cmd, L"conman.exe"))
-		gSet.isConMan = TRUE;
+		gSet.isUpdConHandle = TRUE;
 		
 
 //------------------------------------------------------------------------
@@ -707,7 +709,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     SetConsoleFontSizeTo(ghConWnd, 4, 6);
     
     // set quick edit mode for buffer mode
-    if (gSet.BufferHeight > 0)
+    if (gConEmu.BufferHeight > 0)
     {
         DWORD mode=0;
 		if (GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), &mode)) {
@@ -755,7 +757,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     // *) it is used by ConMan and some FAR plugins, set it for standard mode or if /SetParent switch is set
     // *) do not set it by default for buffer mode because it causes unwanted selection jumps
     // WARP ItSelf опытным путем выяснил, что SetParent валит ConEmu в Windows7
-    //if (!setParentDisabled && (setParent || gSet.BufferHeight == 0))
+    //if (!setParentDisabled && (setParent || gConEmu.BufferHeight == 0))
     gConEmu.SetConParent();
 
 

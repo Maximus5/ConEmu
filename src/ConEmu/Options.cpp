@@ -35,6 +35,7 @@ void CSettings::InitSettings()
 	_tcscpy(Config, _T("Software\\ConEmu"));
 
 	nMainTimerElapse = 10;
+	nAffinity = 3;
 	//isAdvLangChange = true;
 	//isSkipFocusEvents = false;
 	BufferHeight = 0;
@@ -81,7 +82,7 @@ void CSettings::InitSettings()
     _tcscpy(pBgImage, _T("c:\\back.bmp"));
     isFixFarBorders = true;
     bgImageDarker = 0;
-    wndHeight = 25; // NightRoman
+    wndHeight = ntvdmHeight = 25; // NightRoman
     wndWidth = 80;  // NightRoman
     isConVisible = false;
     nSlideShowElapse = 2500;
@@ -150,6 +151,7 @@ void CSettings::LoadSettings()
         reg.Load(_T("ConWnd Y"), &wndY); /*if (wndY<-10) wndY = 0;*/
         reg.Load(_T("ConWnd Width"), &wndWidth);
         reg.Load(_T("ConWnd Height"), &wndHeight);
+		reg.Load(_T("16it Height"), &ntvdmHeight); if (ntvdmHeight<20) ntvdmHeight = 20;
         reg.Load(_T("CursorType"), &isCursorV);
         reg.Load(_T("CursorColor"), &isCursorColor);
         reg.Load(_T("Experimental"), &isFixFarBorders);
@@ -160,7 +162,7 @@ void CSettings::LoadSettings()
         reg.Load(_T("FontItalic"), &isItalic);
         reg.Load(_T("ForceMonospace"), &isForceMonospace);
 		reg.Load(_T("Proportional"), &isTTF);
-        reg.Load(_T("Update Console handle"), &isConMan);
+        reg.Load(_T("Update Console handle"), &isUpdConHandle);
         reg.Load(_T("Dnd"), &isDnD);
         reg.Load(_T("DefCopy"), &isDefCopy);
         reg.Load(_T("DndSteps"), &isDnDsteps);
@@ -193,6 +195,7 @@ void CSettings::LoadSettings()
 		reg.Load(_T("VizEofCh"), (WORD*)&cVizEOF);
 		
 		reg.Load(_T("MainTimerElapse"), &nMainTimerElapse);
+		reg.Load(_T("AffinityMask"), &nAffinity);
 		//reg.Load(_T("AdvLangChange"), &isAdvLangChange);
 		//reg.Load(_T("SkipFocusEvents"), &isSkipFocusEvents);
 		
@@ -304,7 +307,7 @@ BOOL CSettings::SaveSettings()
             reg.Save(_T("FontItalic"), LogFont.lfItalic);
             reg.Save(_T("ForceMonospace"), isForceMonospace);
 			reg.Save(_T("Proportional"), isTTF);
-            reg.Save(_T("Update Console handle"), isConMan);
+            reg.Save(_T("Update Console handle"), isUpdConHandle);
 
             reg.Save(_T("ConWnd Width"), wndWidth);
             reg.Save(_T("ConWnd Height"), wndHeight);
@@ -544,7 +547,7 @@ LRESULT CSettings::OnInitDialog()
 		CheckDlgButton(hMain, cbMonospace, BST_CHECKED);
 	if (!isTTF)
 		CheckDlgButton(hMain, cbNonProportional, BST_CHECKED);
-	if (isConMan)
+	if (isUpdConHandle)
 		CheckDlgButton(ghOpWnd, cbIsConMan, BST_CHECKED);
 
 	if (LogFont.lfWeight == FW_BOLD) CheckDlgButton(hMain, cbBold, BST_CHECKED);
@@ -808,7 +811,7 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
         break;
 
     case cbIsConMan:
-        isConMan = !isConMan;
+        isUpdConHandle = !isUpdConHandle;
 
         pVCon->Update(true);
         InvalidateRect(ghWnd, NULL, FALSE);

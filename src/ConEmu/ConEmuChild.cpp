@@ -20,7 +20,7 @@ HWND CConEmuChild::Create()
 	//	MBoxA(_T("Can't register DC window class!"));
 	//	return NULL;
 	//}
-	DWORD style = WS_VISIBLE | WS_CHILD | WS_CLIPSIBLINGS /*| WS_CLIPCHILDREN*/ | (gSet.BufferHeight ? WS_VSCROLL : 0);
+	DWORD style = WS_VISIBLE | WS_CHILD | WS_CLIPSIBLINGS /*| WS_CLIPCHILDREN | (gSet.Buffer Height ? WS_VSCROLL : 0)*/;
 	//RECT rc = gConEmu.DCClientRect();
 	RECT rcMain; GetClientRect(ghWnd, &rcMain);
 	RECT rc = gConEmu.CalcRect(CER_DC, rcMain, CER_MAINCLIENT);
@@ -31,7 +31,7 @@ HWND CConEmuChild::Create()
 		return NULL; //
 	}
 	SetWindowPos(ghWndDC, HWND_TOP, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
-	gConEmu.dcWindowLast = rc; //TODO!!!
+	//gConEmu.dcWindowLast = rc; //TODO!!!
 	return ghWndDC;
 }
 
@@ -116,7 +116,12 @@ LRESULT CALLBACK CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam
 
     default:
 		if (messg == mn_MsgTabChanged) {
-#pragma message("ERROR: Todo : if (messg == mn_MsgTabChanged) {")
+			//изменились табы, их нужно перечитать
+			#ifdef _DEBUG
+				WCHAR szDbg[128]; swprintf(szDbg, L"mn_MsgTabChanged(%i)\n", wParam);
+				OutputDebugStringW(szDbg);
+			#endif
+			TabBar.Retrieve();
 		}
         if (messg) result = DefWindowProc(hWnd, messg, wParam, lParam);
     }

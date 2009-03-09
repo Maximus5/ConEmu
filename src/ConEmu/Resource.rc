@@ -350,35 +350,36 @@ END
 IDD_DIALOG3 DIALOGEX 0, 0, 328, 246
 STYLE DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_TOPMOST | WS_EX_CONTROLPARENT
-FONT 8, "MS Shell Dlg", 0, 0, 0x1
+FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        "Performance counters",gbPerformance,4,4,319,30
     RTEXT           "Render:",IDC_STATIC,92,17,27,8
     EDITTEXT        tPerfRender,121,16,43,11,ES_AUTOHSCROLL | ES_READONLY
     EDITTEXT        tPerfBlt,190,16,43,11,ES_AUTOHSCROLL | ES_READONLY
     RTEXT           "Blt:",IDC_STATIC,176,17,12,8
-    GROUPBOX        "Console states",IDC_STATIC,4,39,319,30
+    GROUPBOX        "Console states",IDC_STATIC,4,39,319,47
     CHECKBOX        "ConMan",cbsConManActive,11,51,43,10,NOT WS_TABSTOP
     EDITTEXT        tsConManIdx,55,51,18,11,ES_AUTOHSCROLL | ES_READONLY | 
                     NOT WS_TABSTOP
     CHECKBOX        "Telnet",cbsTelnetActive,79,51,35,10,NOT WS_TABSTOP
-    CHECKBOX        "Far",cbsFarActive,119,51,25,10,NOT WS_TABSTOP
-    CHECKBOX        "Panel",cbsFilePanel,176,51,32,10,WS_DISABLED | NOT 
+    CHECKBOX        "Far",cbsFarActive,11,67,25,10,NOT WS_TABSTOP
+    CHECKBOX        "Panel",cbsFilePanel,68,67,32,10,WS_DISABLED | NOT 
                     WS_TABSTOP
-    CHECKBOX        "Plugin",cbsPlugin,211,51,35,10,WS_DISABLED | NOT 
+    CHECKBOX        "Plugin",cbsPlugin,103,67,35,10,WS_DISABLED | NOT 
                     WS_TABSTOP
-    CHECKBOX        "Editor",cbsEditor,247,51,34,10,NOT WS_TABSTOP
-    CHECKBOX        "Viewer",cbsViewer,282,51,37,10,NOT WS_TABSTOP
-    GROUPBOX        "Processes",IDC_STATIC,4,74,319,166
-    LISTBOX         lbProcesses,9,86,307,146,NOT LBS_NOTIFY | 
+    CHECKBOX        "Editor",cbsEditor,139,67,34,10,NOT WS_TABSTOP
+    CHECKBOX        "Viewer",cbsViewer,174,67,37,10,NOT WS_TABSTOP
+    GROUPBOX        "Processes",IDC_STATIC,4,90,319,150
+    LISTBOX         lbProcesses,9,100,307,132,NOT LBS_NOTIFY | 
                     LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_HSCROLL | 
                     WS_TABSTOP
-    EDITTEXT        tsTopPID,146,51,26,11,ES_AUTOHSCROLL | ES_READONLY | NOT 
+    EDITTEXT        tsTopPID,38,67,26,11,ES_AUTOHSCROLL | ES_READONLY | NOT 
                     WS_TABSTOP
     RTEXT           "Read:",IDC_STATIC,9,17,23,8
     EDITTEXT        tPerfRead,36,16,43,11,ES_AUTOHSCROLL | ES_READONLY
     EDITTEXT        tPerfInterval,274,16,43,11,ES_AUTOHSCROLL | ES_READONLY
     RTEXT           "Interval:",IDC_STATIC,240,17,31,8
+    CHECKBOX        "Ntvdm",cbsNtvdmActive,119,51,35,10,NOT WS_TABSTOP
 END
 
 
@@ -424,7 +425,7 @@ END
 // Bitmap
 //
 
-IDB_CONMAN1              BITMAP  DISCARDABLE     "toolbar1.bmp"
+IDB_CONMAN1             BITMAP  DISCARDABLE     "toolbar1.bmp"
 #endif    // English (U.S.) resources
 /////////////////////////////////////////////////////////////////////////////
 

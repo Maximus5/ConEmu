@@ -6,7 +6,7 @@ SYNOPSIS
 
 SYNTAX
 	ConEmu [/CT] [/FS] [/Font ..] [/Size ..] [/FontFile ..] [/Config ..] [/BufferHeight ..]
-	       [/SetParent | /DontSetParent] [/Cmd ..]
+	       [/SetParent | /DontSetParent] [/ConMan] [/Cmd ..]
 
 PARAMETERS
 	/?
@@ -38,6 +38,9 @@ PARAMETERS
 	/SetParent | /DontSetParent
 	One of them may be used to change or not parent for invisible console
 	window. Default is "/DontSetParent". You may use /SetParent with ConMan.
+
+	/ConMan
+	It's recommended to use this switch, instead of standalone 'ConMan.exe'.
 
 	/Cmd <commandline>
 	Command line to start. This is the last switch, the rest is treated as a
