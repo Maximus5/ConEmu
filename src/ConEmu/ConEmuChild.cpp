@@ -288,13 +288,16 @@ LRESULT CALLBACK CConEmuBack::BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, 
 		case WM_DESTROY:
 			DeleteObject(gConEmu.m_Back.mh_BackBrush);
 			break;
-		case WM_SETFOCUS:
-
-			if (messg == WM_SETFOCUS) {
-				if (ghWndDC && IsWindow(ghWndDC))
-					SetFocus(ghWndDC);
-			}
-			return 0;
+		//case WM_SETFOCUS:
+		//
+		//	if (messg == WM_SETFOCUS) {
+		//		if (ghWndDC && IsWindow(ghWndDC))
+		//			SetFocus(ghWndDC);
+		//	}
+		//	return 0;
+	    case WM_VSCROLL:
+	        POSTMESSAGE(ghConWnd, messg, wParam, lParam, FALSE);
+	        break;
 	}
 
     result = DefWindowProc(hWnd, messg, wParam, lParam);

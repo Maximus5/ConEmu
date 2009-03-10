@@ -1232,7 +1232,7 @@ void CVirtualConsole::UpdateCursor(bool& lRes)
 			}
 			//rect.top = (Cursor.y+1) * gSet.LogFont.lfHeight - MulDiv(gSet.LogFont.lfHeight, cinf.dwSize, 100);
 			rect.bottom = (Cursor.y+1) * gSet.LogFont.lfHeight;
-			rect.top = (Cursor.y * gSet.LogFont.lfHeight) + 1;
+			rect.top = (Cursor.y * gSet.LogFont.lfHeight) /*+ 1*/;
 			if (cinf.dwSize<50)
 				rect.top = max(rect.top, (rect.bottom-HCURSORWIDTH));
 		}

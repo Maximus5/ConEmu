@@ -313,6 +313,7 @@ BOOL CreateAppWindow()
 	// На тормоза - не влияет. Но вроде бы на многопроцессорных из-зп глюков
 	// в железе могут быть ошибки подсчета производительности, если этого не сделать
 	SetProcessAffinityMask(GetCurrentProcess(), gSet.nAffinity);
+	//SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_ABOVE_NORMAL);
 	//SetThreadAffinityMask(GetCurrentThread(), 1);
 
 	/*DWORD dwErr = 0;

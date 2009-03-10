@@ -4,7 +4,7 @@
 #define CES_CONMANACTIVE 0x01
 #define CES_TELNETACTIVE 0x02
 #define CES_FARACTIVE 0x04
-#define CES_PROGRAMS 0x0F
+#define CES_PROGRAMS (0x0F - CES_CONMANACTIVE)
 
 #define CES_NTVDM 0x10
 #define CES_PROGRAMS2 0xFF
@@ -1302,8 +1302,7 @@ DWORD CConEmuMain::CheckProcesses(DWORD nConmanIDX, BOOL bTitleChanged)
 				    mn_ActiveStatus |= CES_FARACTIVE;
 			    if (m_Processes[i].IsTelnet)
 				    mn_ActiveStatus |= CES_TELNETACTIVE;
-				if (nConmanIDX)
-					mn_ActiveStatus |= CES_CONMANACTIVE;
+				//if (nConmanIDX) mn_ActiveStatus |= CES_CONMANACTIVE;
 			    break;
 		    }
 	    }
@@ -1744,6 +1743,8 @@ VOID CConEmuMain::WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hw
 				DWORD dwPID = gConEmu.m_Processes[i].ProcessID;
 				if (dwPID == ntvdmPID) {
 					gConEmu.mn_ActiveStatus |= CES_NTVDM;
+					//TODO: их могут запускать и в разных консолях...
+					SetPriorityClass(GetCurrentProcess(), HIGH_PRIORITY_CLASS);
 				}
 			}
 		}
@@ -1756,6 +1757,7 @@ VOID CConEmuMain::WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hw
 				if (dwPID == ntvdmPID) {
 					gConEmu.gbPostUpdateWindowSize = true;
 					gConEmu.mn_ActiveStatus &= ~CES_NTVDM;
+					SetPriorityClass(GetCurrentProcess(), NORMAL_PRIORITY_CLASS);
 				}
 			}
 		}
@@ -2926,8 +2928,8 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
     /*case WM_INPUTLANGCHANGE:
     case WM_INPUTLANGCHANGEREQUEST:
     case WM_IME_NOTIFY:*/
-    case WM_VSCROLL:
-        POSTMESSAGE(ghConWnd, messg, wParam, lParam, FALSE);
+    //case WM_VSCROLL:
+    //    POSTMESSAGE(ghConWnd, messg, wParam, lParam, FALSE);
         
     default:
         if (messg) result = DefWindowProc(hWnd, messg, wParam, lParam);
