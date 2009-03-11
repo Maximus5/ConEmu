@@ -717,7 +717,6 @@ void SendTabs(int tabCount, BOOL abWritePipe/*=FALSE*/)
 			cds.dwData = --tabCount;
 			cds.lpData = tabs+1;
 		}
-		gnCurTabCount = tabCount; // сразу запомним!, А то при ретриве табов количество еще старым будет...
 		if (abWritePipe) {
 			cds.cbData = cds.dwData * sizeof(ConEmuTab);
 			OutDataAlloc(sizeof(cds.dwData) + cds.cbData);
@@ -730,6 +729,7 @@ void SendTabs(int tabCount, BOOL abWritePipe/*=FALSE*/)
 			//SendMessage(ConEmuHwnd, WM_COPYDATA, (WPARAM)FarHwnd, (LPARAM)&cds);
 			// Это нужно делать только если инициировано ФАРОМ. Если запрос прислал ConEmu - не посылать...
 			if (gnCurTabCount != tabCount || tabCount > 1) {
+				gnCurTabCount = tabCount; // сразу запомним!, А то при ретриве табов количество еще старым будет...
 				PostMessage(ConEmuHwnd, gnMsgTabChanged, tabCount, 0);
 			}
 		}

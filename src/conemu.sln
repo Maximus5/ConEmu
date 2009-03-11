@@ -28,6 +28,7 @@ Global
 		{21152801-8744-4787-83F4-BE4564A367B4}.Pseudo_Debug|Win32.ActiveCfg = Pseudo_Debug|Win32
 		{21152801-8744-4787-83F4-BE4564A367B4}.Pseudo_Debug|Win32.Build.0 = Pseudo_Debug|Win32
 		{21152801-8744-4787-83F4-BE4564A367B4}.Release|Win32.ActiveCfg = Release|Win32
+		{21152801-8744-4787-83F4-BE4564A367B4}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
