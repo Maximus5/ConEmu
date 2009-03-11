@@ -6,6 +6,11 @@
 #endif
 
 #define SafeCloseHandle(h) { if ((h)!=NULL) { HANDLE hh = (h); (h) = NULL; if (hh!=INVALID_HANDLE_VALUE) CloseHandle(hh); } }
+#ifdef _DEBUG
+#define OUTPUTDEBUGSTRING(m) OutputDebugString(m)
+#else
+#define OUTPUTDEBUGSTRING(m)
+#endif
 
 extern int lastModifiedStateW;
 extern WCHAR gszDir1[CONEMUTABMAX], gszDir2[CONEMUTABMAX];

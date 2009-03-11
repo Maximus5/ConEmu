@@ -236,30 +236,33 @@ int ProcessEditorInputW757(LPCVOID aRec)
 	return 0;
 }
 
-int ProcessEditorEventW757(int Event, void *Param)
+/*int ProcessEditorEventW757(int Event, void *Param)
 {
 	switch (Event)
 	{
 	case EE_CLOSE:
+		OUTPUTDEBUGSTRING(L"EE_CLOSE"); break;
 	case EE_GOTFOCUS:
+		OUTPUTDEBUGSTRING(L"EE_GOTFOCUS"); break;
 	case EE_KILLFOCUS:
+		OUTPUTDEBUGSTRING(L"EE_KILLFOCUS"); break;
 	case EE_SAVE:
-	//case EE_READ:
-		{
-			// !!! Именно UpdateConEmuTabsW, без версии !!!
-			UpdateConEmuTabsW(Event, Event == EE_KILLFOCUS, Event == EE_SAVE);
-			break;
-		}
+		OUTPUTDEBUGSTRING(L"EE_SAVE"); break;
+	//case EE_READ: -- в этот момент количество окон еще не изменилось
+	default:
+		return 0;
 	}
+	// !!! Именно UpdateConEmuTabsW, без версии !!!
+	UpdateConEmuTabsW(Event, Event == EE_KILLFOCUS, Event == EE_SAVE);
 	return 0;
-}
+}*/
 
-int ProcessViewerEventW757(int Event, void *Param)
+/*int ProcessViewerEventW757(int Event, void *Param)
 {
 	switch (Event)
 	{
 	case VE_CLOSE:
-	case VE_READ:
+	//case VE_READ:
 	case VE_KILLFOCUS:
 	case VE_GOTFOCUS:
 		{
@@ -268,7 +271,7 @@ int ProcessViewerEventW757(int Event, void *Param)
 		}
 	}
 	return 0;
-}
+}*/
 
 
 void UpdateConEmuTabsW757(int event, bool losingFocus, bool editorSave)

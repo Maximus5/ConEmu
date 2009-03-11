@@ -118,7 +118,7 @@ LRESULT CALLBACK CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam
 		if (messg == mn_MsgTabChanged) {
 			//изменились табы, их нужно перечитать
 			#ifdef _DEBUG
-				WCHAR szDbg[128]; swprintf(szDbg, L"mn_MsgTabChanged(%i)\n", wParam);
+				WCHAR szDbg[128]; swprintf(szDbg, L"Tabs:Notified(%i)\n", wParam);
 				OutputDebugStringW(szDbg);
 			#endif
 			TabBar.Retrieve();

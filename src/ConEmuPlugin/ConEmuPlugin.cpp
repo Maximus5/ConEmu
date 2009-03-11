@@ -702,6 +702,11 @@ void SendTabs(int tabCount, BOOL abWritePipe/*=FALSE*/)
 	if (abWritePipe) {
 		EnterCriticalSection(&csTabs);
 	}
+#ifdef _DEBUG
+	WCHAR szDbg[100]; wsprintf(szDbg, L"-SendTabs(%i,%s), prev=%i\n", tabCount, 
+		abWritePipe ? L"Transfer" : L"Post", gnCurTabCount);
+	OutputDebugString(szDbg);
+#endif
 	if (ConEmuHwnd && IsWindow(ConEmuHwnd)) {
 		COPYDATASTRUCT cds;
 		if (tabs[0].Type == WTYPE_PANELS) {
@@ -712,6 +717,7 @@ void SendTabs(int tabCount, BOOL abWritePipe/*=FALSE*/)
 			cds.dwData = --tabCount;
 			cds.lpData = tabs+1;
 		}
+		gnCurTabCount = tabCount; // сразу запомним!, А то при ретриве табов количество еще старым будет...
 		if (abWritePipe) {
 			cds.cbData = cds.dwData * sizeof(ConEmuTab);
 			OutDataAlloc(sizeof(cds.dwData) + cds.cbData);
@@ -723,8 +729,9 @@ void SendTabs(int tabCount, BOOL abWritePipe/*=FALSE*/)
 			//cds.cbData = tabCount * sizeof(ConEmuTab);
 			//SendMessage(ConEmuHwnd, WM_COPYDATA, (WPARAM)FarHwnd, (LPARAM)&cds);
 			// Это нужно делать только если инициировано ФАРОМ. Если запрос прислал ConEmu - не посылать...
-			if (gnCurTabCount != tabCount || tabCount > 1)
+			if (gnCurTabCount != tabCount || tabCount > 1) {
 				PostMessage(ConEmuHwnd, gnMsgTabChanged, tabCount, 0);
+			}
 		}
 	}
 	//free(tabs); - освобождается в ExitFARW
@@ -750,20 +757,55 @@ int WINAPI _export ProcessEditorEventW(int Event, void *Param)
 {
 	if (!ConEmuHwnd)
 		return 0; // Если мы не под эмулятором - ничего
-	if (gFarVersion.dwBuild>=789)
+	/*if (gFarVersion.dwBuild>=789)
 		return ProcessEditorEventW789(Event,Param);
 	else
-		return ProcessEditorEventW757(Event,Param);
+		return ProcessEditorEventW757(Event,Param);*/
+	// Вроде коды событий не различаются, да и от ANSI не отличаются...
+	switch (Event)
+	{
+	case EE_CLOSE:
+		OUTPUTDEBUGSTRING(L"EE_CLOSE"); break;
+	case EE_GOTFOCUS:
+		OUTPUTDEBUGSTRING(L"EE_GOTFOCUS"); break;
+	case EE_KILLFOCUS:
+		OUTPUTDEBUGSTRING(L"EE_KILLFOCUS"); break;
+	case EE_SAVE:
+		OUTPUTDEBUGSTRING(L"EE_SAVE"); break;
+	//case EE_READ: -- в этот момент количество окон еще не изменилось
+	default:
+		return 0;
+	}
+	// !!! Именно UpdateConEmuTabsW, без версии !!!
+	UpdateConEmuTabsW(Event, Event == EE_KILLFOCUS, Event == EE_SAVE);
+	return 0;
 }
 
 int WINAPI _export ProcessViewerEventW(int Event, void *Param)
 {
 	if (!ConEmuHwnd)
 		return 0; // Если мы не под эмулятором - ничего
-	if (gFarVersion.dwBuild>=789)
+	/*if (gFarVersion.dwBuild>=789)
 		return ProcessViewerEventW789(Event,Param);
 	else
-		return ProcessViewerEventW757(Event,Param);
+		return ProcessViewerEventW757(Event,Param);*/
+	// Вроде коды событий не различаются, да и от ANSI не отличаются...
+	switch (Event)
+	{
+	case VE_CLOSE:
+		OUTPUTDEBUGSTRING(L"VE_CLOSE"); break;
+	//case VE_READ:
+	//	OUTPUTDEBUGSTRING(L"VE_CLOSE"); break;
+	case VE_KILLFOCUS:
+		OUTPUTDEBUGSTRING(L"VE_KILLFOCUS"); break;
+	case VE_GOTFOCUS:
+		OUTPUTDEBUGSTRING(L"VE_GOTFOCUS"); break;
+	default:
+		return 0;
+	}
+	// !!! Именно UpdateConEmuTabsW, без версии !!!
+	UpdateConEmuTabsW(Event, Event == VE_KILLFOCUS, false);
+	return 0;
 }
 
 void StopThread(void)

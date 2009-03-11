@@ -1,7 +1,0 @@
-REGEDIT4
-
-[HKEY_CURRENT_USER\Software\Far\KeyMacros\Common\F14]
-"Sequence"="$If (Shell || Info || QView || Tree || Viewer || Editor) F12 $Else waitkey(100) $End"
-"DisableOutput"=dword:00000001
-"Description"="For ConEmu - eats next key if changing screen is impossible"
-@="ConEmu tab switching support"

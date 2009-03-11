@@ -33,7 +33,7 @@ CConEmuMain::CConEmuMain()
 	isWndNotFSMaximized=false;
 	isShowConsole=false;
 	mb_FullWindowDrag=false;
-	isLBDown=false;
+	isLBDown=false; mb_IgnoreMouseMove = false;
 	isDragProcessed=false;
 	isRBDown=false;
 	ibSkilRDblClk=false; 
@@ -2024,6 +2024,11 @@ LRESULT CConEmuMain::OnClose(HWND hWnd)
 LRESULT CConEmuMain::OnCopyData(PCOPYDATASTRUCT cds)
 {
 	LRESULT result = 0;
+
+	#ifdef _DEBUG
+		WCHAR szDbg[128]; swprintf(szDbg, L"Tabs:Retrieved(%i)\n", cds->dwData);
+		OutputDebugStringW(szDbg);
+	#endif
     
 	if (cds->dwData == 0) {
 		BOOL lbInClose = FALSE;
@@ -2269,6 +2274,15 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 
     if (messg == WM_KEYDOWN && wParam == VK_SPACE && isPressed(VK_CONTROL) && isPressed(VK_LWIN) && isPressed(VK_MENU))
     {
+	    static DWORD dwLastSpaceTick;
+	    if ((dwLastSpaceTick-GetTickCount())<1000) {
+		    if (hWnd == ghWndDC) MBoxA(_T("Space bounce recieved from DC")); else
+		    if (hWnd == ghWnd) MBoxA(_T("Space bounce recieved from MainWindow")); else
+		    if (hWnd == m_Back.mh_Wnd) MBoxA(_T("Space bounce recieved from BackWindow")); else
+		    MBoxA(_T("Space bounce recieved from unknown window"));
+		    return 0;
+	    }
+	    dwLastSpaceTick = GetTickCount();
         if (!IsWindowVisible(ghConWnd))
         {
             gConEmu.isShowConsole = true;
@@ -2358,8 +2372,8 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
     GetClientRect(ghConWnd, &conRect);
 
 	memset(&consoleRect, 0, sizeof(consoleRect));
-    winX -= consoleRect.left;
-    winY -= consoleRect.top;
+    //winX -= consoleRect.left; -- супер. "-0"
+    //winY -= consoleRect.top;
     short newX = MulDiv(winX, conRect.right, klMax<uint>(1, pVCon->Width));
     short newY = MulDiv(winY, conRect.bottom, klMax<uint>(1, pVCon->Height));
 
@@ -2388,35 +2402,43 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 
 
         //TODO: вроде бы иногда mb_InSizing не сбрасывается?
-        if (gConEmu.isLBDown && !PTDIFFTEST(gConEmu.cursor,DRAG_DELTA) 
-			&& !gConEmu.isDragProcessed && !gConEmu.mb_InSizing)
+        if (gSet.isDnD && gConEmu.isLBDown)
         {
-            // Если сначала фокус был на файловой панели, но после LClick он попал на НЕ файловую - отменить ShellDrag
-            if (!gConEmu.isFilePanel()) {
-	            DnDstep(_T("DnD: not file panel"));
+	        mb_IgnoreMouseMove = true;
+	        
+	        BOOL lbDiffTest = PTDIFFTEST(cursor,DRAG_DELTA); // TRUE - если курсор НЕ двигался (далеко)
+	        if (!lbDiffTest && !gConEmu.isDragProcessed && !gConEmu.mb_InSizing)
+	        {
+	            // Если сначала фокус был на файловой панели, но после LClick он попал на НЕ файловую - отменить ShellDrag
+	            if (!gConEmu.isFilePanel()) {
+		            DnDstep(_T("DnD: not file panel"));
+		            gConEmu.isLBDown = false; mb_IgnoreMouseMove = false;
+		            POSTMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( newX, newY ), TRUE);     //посылаем консоли отпускание
+		            ReleaseCapture();
+		            return 0;
+	            }
+	            
+	            // Чтобы сам фар не дергался на MouseMove...
 	            gConEmu.isLBDown = false;
-	            POSTMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( newX, newY ), TRUE);     //посылаем консоли отпускание
-	            ReleaseCapture();
+	            // вроде валится, если перед Drag
+	            //POSTMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( newX, newY ), TRUE);     //посылаем консоли отпускание
+	            
+	            // Иначе иногда срабатывает FAR'овский D'n'D
+	            //SENDMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( newX, newY ));     //посылаем консоли отпускание
+				if (gConEmu.DragDrop) {
+					DnDstep(_T("DnD: DragDrop starting"));
+					gConEmu.DragDrop->Drag(); //сдвинулись при зажатой левой
+					DnDstep(Title); // вернуть заголовок
+				} else {
+					DnDstep(_T("DnD: DragDrop is null"));
+				}
+	            mb_IgnoreMouseMove = false;
+			    newX = MulDiv(cursor.x, conRect.right, klMax<uint>(1, pVCon->Width));
+			    newY = MulDiv(cursor.y, conRect.bottom, klMax<uint>(1, pVCon->Height));
+				POSTMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( newX, newY ), TRUE);     //посылаем консоли отпускание
+				//isDragProcessed=false; -- убрал, иначе при бросании в пассивную панель больших файлов дроп может вызваться еще раз???
 	            return 0;
-            }
-            
-            // Чтобы сам фар не дергался на MouseMove...
-            gConEmu.isLBDown = false;
-            // вроде валится, если перед Drag
-            //POSTMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( newX, newY ), TRUE);     //посылаем консоли отпускание
-            
-            // Иначе иногда срабатывает FAR'овский D'n'D
-            //SENDMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( newX, newY ));     //посылаем консоли отпускание
-			if (gConEmu.DragDrop) {
-				DnDstep(_T("DnD: DragDrop starting"));
-				gConEmu.DragDrop->Drag(); //сдвинулись при зажатой левой
-				DnDstep(Title); // вернуть заголовок
-			} else {
-				DnDstep(_T("DnD: DragDrop is null"));
-			}
-			POSTMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( newX, newY ), TRUE);     //посылаем консоли отпускание
-			//isDragProcessed=false; -- убрал, иначе при бросании в пассивную панель больших файлов дроп может вызваться еще раз???
-            return 0;
+	        }
         }
         else if (gSet.isRClickSendKey && gConEmu.isRBDown)
         {
@@ -2437,38 +2459,52 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
             }
             RBDownNewX=newX; RBDownNewY=newY;
         }*/
+        
+        if (mb_IgnoreMouseMove)
+	        return 0;
+        
     } else {
         gConEmu.lastMMW=-1; gConEmu.lastMML=-1;
 
         if (messg == WM_LBUTTONDOWN)
         {
-            if (gConEmu.isLBDown) ReleaseCapture(); // Вдруг сглючило?
-            gConEmu.isLBDown=false;
+            if (isLBDown) ReleaseCapture(); // Вдруг сглючило?
+            isLBDown = false;
+            mb_IgnoreMouseMove = false;
             if (!gConEmu.isConSelectMode() && gConEmu.isFilePanel())
             {
                 SetCapture(ghWndDC);
-                gConEmu.cursor.x = LOWORD(lParam);
-                gConEmu.cursor.y = HIWORD(lParam); 
-                gConEmu.isLBDown=true;
-                gConEmu.isDragProcessed=false;
+                cursor.x = LOWORD(lParam);
+                cursor.y = HIWORD(lParam); 
+                isLBDown=true;
+                isDragProcessed=false;
+                //if (gSet.isDnD) mb_IgnoreMouseMove = true;
                 POSTMESSAGE(ghConWnd, messg, wParam, MAKELPARAM( newX, newY ), FALSE); // было SEND
                 return 0;
             }
         }
         else if (messg == WM_LBUTTONUP)
         {
-            if (gConEmu.isLBDown) {
-                gConEmu.isLBDown=false;
+            if (isLBDown) {
+                isLBDown=false;
                 ReleaseCapture();
             }
+            if (mb_IgnoreMouseMove) {
+	            mb_IgnoreMouseMove = false;
+			    newX = MulDiv(cursor.x, conRect.right, klMax<uint>(1, pVCon->Width));
+			    newY = MulDiv(cursor.y, conRect.bottom, klMax<uint>(1, pVCon->Height));
+			    POSTMESSAGE(ghConWnd, messg, wParam, MAKELPARAM( newX, newY ), FALSE);
+		        return 0;
+		    }
         }
         else if (messg == WM_RBUTTONDOWN)
         {
-            gConEmu.Rcursor.x = LOWORD(lParam);
-            gConEmu.Rcursor.y = HIWORD(lParam);
-            gConEmu.RBDownNewX=newX;
-            gConEmu.RBDownNewY=newY;
-            gConEmu.isRBDown=false;
+            Rcursor.x = LOWORD(lParam);
+            Rcursor.y = HIWORD(lParam);
+            RBDownNewX=newX;
+            RBDownNewY=newY;
+            isRBDown=false;
+            mb_IgnoreMouseMove = false;
 
             // Если ничего лишнего не нажато!
             if (gSet.isRClickSendKey && !(wParam&(MK_CONTROL|MK_LBUTTON|MK_MBUTTON|MK_SHIFT|MK_XBUTTON1|MK_XBUTTON2)))
@@ -2527,6 +2563,11 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			}
 		}
     }
+
+#ifdef _DEBUG
+	if (messg == WM_MOUSEMOVE)
+		messg = WM_MOUSEMOVE;
+#endif
 
 	// заменим даблклик вторым обычным
     POSTMESSAGE(ghConWnd, messg == WM_RBUTTONDBLCLK ? WM_RBUTTONDOWN : messg, wParam, MAKELPARAM( newX, newY ), FALSE);
@@ -2734,7 +2775,7 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 		bool lbForceUpdate = CheckBufferSize();
 
         //if (!gbInvalidating && !gbInPaint)
-        if (pVCon->Update(lbForceUpdate))
+        if (pVCon->Update(lbForceUpdate) && !IsIconic(ghWnd))
         {
             //COORD c = ConsoleSizeFromWindow();
 			RECT client; GetClientRect(ghWnd, &client);
@@ -2842,11 +2883,13 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
         break;
 
     case WM_SIZING:
-		result = gConEmu.OnSizing(wParam, lParam);
+		if (!IsIconic(ghWnd))
+			result = gConEmu.OnSizing(wParam, lParam);
         break;
 
 	case WM_SIZE:
-		result = gConEmu.OnSize(wParam, LOWORD(lParam), HIWORD(lParam));
+		if (!IsIconic(ghWnd))
+			result = gConEmu.OnSize(wParam, LOWORD(lParam), HIWORD(lParam));
         break;
 
 	case WM_MOVE:

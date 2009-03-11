@@ -554,10 +554,10 @@ LRESULT TabBarClass::ToolWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lP
 								lstrcpyn(pDisp->pszText, title.title, pDisp->cchTextMax);
 							}
 						} else
-						if (pDisp->iItem>=13) {
+						if (pDisp->iItem==13) {
 							lstrcpyn(pDisp->pszText, _T("Create new console"), pDisp->cchTextMax);
 						} else
-						if (pDisp->iItem>=14) {
+						if (pDisp->iItem==14) {
 							lstrcpyn(pDisp->pszText, _T("Alternative console"), pDisp->cchTextMax);
 						}
 					}

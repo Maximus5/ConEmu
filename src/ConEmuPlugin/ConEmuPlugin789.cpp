@@ -240,39 +240,46 @@ int ProcessEditorInputW789(LPCVOID aRec)
 	return 0;
 }
 
-int ProcessEditorEventW789(int Event, void *Param)
+/*int ProcessEditorEventW789(int Event, void *Param)
 {
 	switch (Event)
 	{
 	case EE_CLOSE:
+		OUTPUTDEBUGSTRING(L"EE_CLOSE"); break;
 	case EE_GOTFOCUS:
+		OUTPUTDEBUGSTRING(L"EE_GOTFOCUS"); break;
 	case EE_KILLFOCUS:
+		OUTPUTDEBUGSTRING(L"EE_KILLFOCUS"); break;
 	case EE_SAVE:
+		OUTPUTDEBUGSTRING(L"EE_SAVE"); break;
 	//case EE_READ: -- в этот момент количество окон еще не изменилось
-		{
-			// !!! Именно UpdateConEmuTabsW, без версии !!!
-			UpdateConEmuTabsW(Event, Event == EE_KILLFOCUS, Event == EE_SAVE);
-			break;
-		}
+	default:
+		return 0;
 	}
+	// !!! Именно UpdateConEmuTabsW, без версии !!!
+	UpdateConEmuTabsW(Event, Event == EE_KILLFOCUS, Event == EE_SAVE);
 	return 0;
-}
+}*/
 
-int ProcessViewerEventW789(int Event, void *Param)
+/*int ProcessViewerEventW789(int Event, void *Param)
 {
 	switch (Event)
 	{
 	case VE_CLOSE:
-	case VE_READ:
+		OUTPUTDEBUGSTRING(L"VE_CLOSE"); break;
+	//case VE_READ:
+	//	OUTPUTDEBUGSTRING(L"VE_CLOSE"); break;
 	case VE_KILLFOCUS:
+		OUTPUTDEBUGSTRING(L"VE_KILLFOCUS"); break;
 	case VE_GOTFOCUS:
-		{
-			// !!! Именно UpdateConEmuTabsW, без версии !!!
-			UpdateConEmuTabsW(Event, Event == VE_KILLFOCUS, false);
-		}
+		OUTPUTDEBUGSTRING(L"VE_GOTFOCUS"); break;
+	default:
+		return 0;
 	}
+	// !!! Именно UpdateConEmuTabsW, без версии !!!
+	UpdateConEmuTabsW(Event, Event == VE_KILLFOCUS, false);
 	return 0;
-}
+}*/
 
 
 void UpdateConEmuTabsW789(int event, bool losingFocus, bool editorSave)
@@ -308,8 +315,8 @@ void UpdateConEmuTabsW789(int event, bool losingFocus, bool editorSave)
 		InfoW789->EditorControl(ECTL_FREEINFO, &ei);
 
 #ifdef _DEBUG
-	WCHAR szDbg[128]; wsprintfW(szDbg, L"Event: %i, count %i\n", event, tabCount);
-	OutputDebugStringW(szDbg);
+	//WCHAR szDbg[128]; wsprintfW(szDbg, L"Event: %i, count %i\n", event, tabCount);
+	//OutputDebugStringW(szDbg);
 #endif
 
 	SendTabs(tabCount);

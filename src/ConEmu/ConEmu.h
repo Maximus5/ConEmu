@@ -65,7 +65,7 @@ public:
 	bool isWndNotFSMaximized;
 	bool isShowConsole;
 	bool mb_FullWindowDrag;
-	bool isLBDown, /*isInDrag,*/ isDragProcessed, mb_InSizing;
+	bool isLBDown, /*isInDrag,*/ isDragProcessed, mb_InSizing, mb_IgnoreMouseMove;
 	bool isRBDown, ibSkilRDblClk; DWORD dwRBDownTick;
 	bool isPiewUpdate;
 	bool gbPostUpdateWindowSize;

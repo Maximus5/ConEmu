@@ -311,7 +311,7 @@ int WINAPI _export ProcessViewerEvent(int Event, void *Param)
 	switch (Event)
 	{
 	case VE_CLOSE:
-	case VE_READ:
+	//case VE_READ:
 	case VE_KILLFOCUS:
 	case VE_GOTFOCUS:
 		{
