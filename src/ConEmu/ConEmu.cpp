@@ -62,7 +62,7 @@ CConEmuMain::CConEmuMain()
 	mn_ActiveStatus = 0; m_ActiveConmanIDX = 0; //mn_NeedRetryName = 0;
 	mb_ProcessCreated = FALSE; mn_StartTick = 0;
 	mh_ConMan = NULL;
-	ConMan_MainProc = NULL; ConMan_LookForKeyboard = NULL; ConMan_ProcessCommand = NULL;
+	ConMan_MainProc = NULL; ConMan_LookForKeyboard = NULL; ConMan_ProcessCommand = NULL; mb_IgnoreSizeChange = false;
 
 	mh_Psapi = NULL;
 	GetModuleFileNameEx= NULL;
@@ -1634,6 +1634,47 @@ bool CConEmuMain::LoadVersionInfo(wchar_t* pFullPath)
     return true;
 }
 
+void CConEmuMain::PostMacro(LPCWSTR asMacro)
+{
+	if (!asMacro || !*asMacro)
+		return;
+		
+	HKEY hKey = NULL;
+	if (0==RegOpenKeyEx(HKEY_CURRENT_USER, L"Software\\ConEmu", 0, KEY_ALL_ACCESS, &hKey))
+	{
+		DWORD dwSize = (wcslen(asMacro)+1)*2;
+		if (0==RegSetValueEx(hKey, L"PostMacroString", NULL, REG_SZ, (LPBYTE)asMacro, dwSize)) {
+			CConEmuPipe pipe;
+			if (pipe.Init(TRUE))
+			{
+				DWORD cbWritten=0;
+				if (pipe.Execute(CMD_POSTMACRO))
+				{
+					gConEmu.DnDstep(_T("Macro: Checking for plugin (1 sec)"));
+					// Подождем немножко, проверим что плагин живой
+					cbWritten = WaitForSingleObject(pipe.hEventAlive, CONEMUALIVETIMEOUT);
+					if (cbWritten!=WAIT_OBJECT_0) {
+						TCHAR szErr[MAX_PATH];
+						wsprintf(szErr, _T("ConEmu plugin is not active!\r\nProcessID=%i"), pipe.nPID);
+						MBoxA(szErr);
+					} else {
+						gConEmu.DnDstep(_T("Macro: Waiting for result (10 sec)"));
+						cbWritten = WaitForSingleObject(pipe.hEventReady, CONEMUREADYTIMEOUT);
+						if (cbWritten!=WAIT_OBJECT_0) {
+							TCHAR szErr[MAX_PATH];
+							wsprintf(szErr, _T("Command waiting time exceeds!\r\nConEmu plugin is locked?\r\nProcessID=%i"), pipe.nPID);
+							MBoxA(szErr);
+						} else {
+							gConEmu.DnDstep(NULL);
+						}
+					}
+				}
+			}
+		}
+		RegCloseKey(hKey);
+	}
+}
+
 void CConEmuMain::ShowSysmenu(HWND Wnd, HWND Owner, int x, int y)
 {
     bool iconic = IsIconic(Wnd);
@@ -2402,7 +2443,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 
 
         //TODO: вроде бы иногда mb_InSizing не сбрасывается?
-        if (gSet.isDnD && gConEmu.isLBDown)
+        if (gSet.isDragEnabled && gConEmu.isLBDown)
         {
 	        mb_IgnoreMouseMove = true;
 	        
@@ -2478,7 +2519,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
                 cursor.y = HIWORD(lParam); 
                 isLBDown=true;
                 isDragProcessed=false;
-                //if (gSet.isDnD) mb_IgnoreMouseMove = true;
+                //if (gSet.is DnD) mb_IgnoreMouseMove = true;
                 POSTMESSAGE(ghConWnd, messg, wParam, MAKELPARAM( newX, newY ), FALSE); // было SEND
                 return 0;
             }
@@ -2775,7 +2816,7 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 		bool lbForceUpdate = CheckBufferSize();
 
         //if (!gbInvalidating && !gbInPaint)
-        if (pVCon->Update(lbForceUpdate) && !IsIconic(ghWnd))
+        if (!mb_IgnoreSizeChange && pVCon->Update(lbForceUpdate) && !IsIconic(ghWnd))
         {
             //COORD c = ConsoleSizeFromWindow();
 			RECT client; GetClientRect(ghWnd, &client);

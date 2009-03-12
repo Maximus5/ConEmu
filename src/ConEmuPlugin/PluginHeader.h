@@ -73,6 +73,10 @@ int ShowMessage757(int aiMsg, int aiButtons);
 void ReloadMacroA();
 void ReloadMacro789();
 void ReloadMacro757();
+void PostMacro(wchar_t* asMacro);
+void PostMacroA(char* asMacro);
+void PostMacro789(wchar_t* asMacro);
+void PostMacro757(wchar_t* asMacro);
 
 extern DWORD gnReqCommand;
 void ProcessCommand(DWORD nCmd, BOOL bReqMainThread);

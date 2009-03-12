@@ -10,6 +10,7 @@
 #define CONEMUDRAGTO     L"ConEmuDragTo%u"
 #define CONEMUREQTABS    L"ConEmuReqTabs%u"
 #define CONEMUSETWINDOW  L"ConEmuSetWindow%u"
+#define CONEMUPOSTMACRO  L"ConEmuPostMacro%u"
 #define CONEMUEXIT       L"ConEmuExit%u"
 #define CONEMUALIVE      L"ConEmuAlive%u"
 #define CONEMUREADY      L"ConEmuReady%u"
@@ -18,8 +19,9 @@
 #define CMD_DRAGTO       1
 #define CMD_REQTABS      2
 #define CMD_SETWINDOW    3
+#define CMD_POSTMACRO    4
 // +2
-#define MAXCMDCOUNT      5
+#define MAXCMDCOUNT      6
 #define CMD_EXIT         MAXCMDCOUNT-1
 
 #ifdef _DEBUG

@@ -360,3 +360,12 @@ void SetWindow789(int nTab)
 	if (InfoW789->AdvControl(InfoW789->ModuleNumber, ACTL_SETCURRENTWINDOW, (void*)nTab))
 		InfoW789->AdvControl(InfoW789->ModuleNumber, ACTL_COMMIT, 0);
 }
+
+void PostMacro789(wchar_t* asMacro)
+{
+	ActlKeyMacro mcr;
+	mcr.Command = MCMD_POSTMACROSTRING;
+	mcr.Param.PlainText.SequenceText = asMacro;
+	mcr.Param.PlainText.Flags = KSFLAGS_DISABLEOUTPUT;
+	InfoW789->AdvControl(InfoW789->ModuleNumber, ACTL_KEYMACRO, (void*)&mcr);
+}

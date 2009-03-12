@@ -69,8 +69,7 @@
 #define slDark                          1050
 #define slDarker                        1050
 #define cbSendAE                        1051
-#define cbDnD                           1052
-#define cbDnD2                          1053
+#define cbDragEnabled                   1052
 #define cbDnDCopy                       1053
 #define cbTabs                          1054
 #define cbGUIpb                         1055
@@ -153,6 +152,8 @@
 #define tPerfRender                     1402
 #define tPerfBlt                        1403
 #define tPerfInterval                   1404
+#define lbDragKey                       1501
+#define cbDropEnabled                   1502
 
 // Next default values for new objects
 // 
@@ -160,7 +161,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        108
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1501
+#define _APS_NEXT_CONTROL_VALUE         1503
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

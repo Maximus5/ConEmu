@@ -249,6 +249,23 @@ void ProcessCommand(DWORD nCmd, BOOL bReqMainThread)
 				SetWindow757(nTab);
 			break;
 		}
+		case (CMD_POSTMACRO):
+		{
+			HKEY hKey = NULL;
+			if (0==RegOpenKeyEx(HKEY_CURRENT_USER, L"Software\\ConEmu", 0, KEY_ALL_ACCESS, &hKey))
+			{
+				DWORD dwSize = 0;
+				if (0==RegQueryValueEx(hKey, L"PostMacroString", NULL, NULL, NULL, &dwSize)) {
+					wchar_t* pszMacro = (wchar_t*)calloc(dwSize+2,1);
+					if (0==RegQueryValueEx(hKey, L"PostMacroString", NULL, NULL, (LPBYTE)pszMacro, &dwSize)) {
+						PostMacro(pszMacro);
+					}
+					RegDeleteValue(hKey, L"PostMacroString");
+				}
+				RegCloseKey(hKey);
+			}
+			break;
+		}
 	}
 
 	if (ghReqCommandEvent)
@@ -487,6 +504,7 @@ void InitHWND(HWND ahFarHwnd)
 		CREATEEVENT(CONEMUDRAGTO, hEventCmd[CMD_DRAGTO]);
 		CREATEEVENT(CONEMUREQTABS, hEventCmd[CMD_REQTABS]);
 		CREATEEVENT(CONEMUSETWINDOW, hEventCmd[CMD_SETWINDOW]);
+		CREATEEVENT(CONEMUPOSTMACRO, hEventCmd[CMD_POSTMACRO]);
 		CREATEEVENT(CONEMUEXIT, hEventCmd[CMD_EXIT]);
 		CREATEEVENT(CONEMUALIVE, hEventAlive);
 		CREATEEVENT(CONEMUREADY, hEventReady);
@@ -918,4 +936,24 @@ int ShowMessage(int aiMsg, int aiButtons)
 		return ShowMessage789(aiMsg, aiButtons);
 	else
 		return ShowMessage757(aiMsg, aiButtons);
+}
+
+void PostMacro(wchar_t* asMacro)
+{
+	if (!asMacro || !*asMacro)
+		return;
+		
+	if (gFarVersion.dwVerMajor==1) {
+		int nLen = lstrlenW(asMacro);
+		char* pszMacro = (char*)calloc(nLen+1,1);
+		if (pszMacro) {
+			WideCharToMultiByte(CP_OEMCP,0,asMacro,nLen+1,pszMacro,nLen+1,0,0);
+			PostMacroA(pszMacro);
+			free(pszMacro);
+		}
+	} else if (gFarVersion.dwBuild>=789) {
+		PostMacro789(asMacro);
+	} else {
+		PostMacro757(asMacro);
+	}
 }

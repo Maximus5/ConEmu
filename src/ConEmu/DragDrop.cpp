@@ -110,20 +110,13 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop (IDataObject * pDataObject,DWORD grfKe
 		else if (pt.x>pfpi->PassiveRect.left && pt.x<pfpi->PassiveRect.right && pt.y>pfpi->PassiveRect.top && pt.y<pfpi->PassiveRect.bottom && pfpi->pszPassivePath[0])
 		{
 			// Пока подвисает...
-			/*if (isDragProcessed) {
-				WPARAM vk = (fop.wFunc==FO_COPY) ? VK_F5 : VK_F6;
+			if (gConEmu.isDragProcessed) {
+				wchar_t* mcr = (fop.wFunc==FO_COPY) ? L"F5" : L"F6";
 
-				if ((grfKeyState & MK_CONTROL)==MK_CONTROL) // "Убрать" нажатие Ctrl
-				{
-					//keybd_event ( VK_CONTROL, 0, KEYEVENTF_KEYUP, 0 );
-					*pdwEffect = DROPEFFECT_NONE;
-					return S_OK;
-				}
-				PostMessage(ghWnd, WM_KEYDOWN, vk, 0x01510001); // было Send
+				gConEmu.PostMacro(mcr);
 
-				//SendMessage(hConWnd, WM_KEYUP, VK_NEXT, 0xc1510001);
 				return S_OK; // Тащим внутри ФАРа
-			}*/
+			}
 			if (!*pfpi->pszPassivePath) return 1;
 			if (pfpi->pszPassivePath[lstrlen(pfpi->pszPassivePath)-1]==_T('\\'))
 				pfpi->pszPassivePath[lstrlen(pfpi->pszPassivePath)-1] = 0;
@@ -158,8 +151,10 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop (IDataObject * pDataObject,DWORD grfKe
 
 HRESULT STDMETHODCALLTYPE CDragDrop::DragOver(DWORD grfKeyState,POINTL pt,DWORD * pdwEffect)
 {
-	if (!gSet.isDnD)
+	if (!gSet.isDropEnabled && !gConEmu.isDragProcessed) {
+		gConEmu.DnDstep(_T("DnD: Drop disabled"));
 		return -1;
+	}
 
 	//gConEmu.DnDstep(_T("DnD: DragOver starting"));
 
@@ -217,7 +212,7 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragOver(DWORD grfKeyState,POINTL pt,DWORD 
 
 HRESULT STDMETHODCALLTYPE CDragDrop::DragEnter(IDataObject * pDataObject,DWORD grfKeyState,POINTL pt,DWORD * pdwEffect)
 {
-	if (gSet.isDnD)
+	if (gSet.isDropEnabled || gConEmu.isDragProcessed)
 	{
 		CConEmuPipe pipe;
 
@@ -264,7 +259,9 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragEnter(IDataObject * pDataObject,DWORD g
 				}
 			}
 		}
-		gConEmu.DnDstep(_T("DnD: DragEnter fin"));
+		gConEmu.DnDstep(NULL);
+	} else {
+		gConEmu.DnDstep(_T("DnD: Drop disabled"));
 	}
 	return 0;
 }
@@ -276,8 +273,8 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragLeave(void)
 
 void CDragDrop::Drag()
 {
-	if (!gSet.isDnD /*|| isInDrag */|| gConEmu.isDragProcessed) {
-		gConEmu.DnDstep(_T("DnD: DragDrop disabled"));
+	if (!gSet.isDragEnabled /*|| isInDrag */|| gConEmu.isDragProcessed) {
+		gConEmu.DnDstep(_T("DnD: Drag disabled"));
 		return;
 	}
 

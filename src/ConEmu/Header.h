@@ -141,7 +141,7 @@ public:
 	template <class T> void Save(const TCHAR *regKey, T value)
 	{
 		DWORD len = sizeof(T);
-		RegSetValueEx(regMy, regKey, NULL, REG_BINARY, (LPBYTE)(&value), len); 
+		RegSetValueEx(regMy, regKey, NULL, (len == 4) ? REG_DWORD : REG_BINARY, (LPBYTE)(&value), len); 
 	}
 	void Save(const TCHAR *regKey, const TCHAR *value)
 	{

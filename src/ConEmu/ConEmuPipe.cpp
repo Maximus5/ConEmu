@@ -49,6 +49,7 @@ BOOL CConEmuPipe::Init(BOOL abSilent)
 	CREATEEVENT(CONEMUDRAGTO, hEventCmd[CMD_DRAGTO]);
 	CREATEEVENT(CONEMUREQTABS, hEventCmd[CMD_REQTABS]);
 	CREATEEVENT(CONEMUSETWINDOW, hEventCmd[CMD_SETWINDOW]);
+	CREATEEVENT(CONEMUPOSTMACRO, hEventCmd[CMD_POSTMACRO]);
 	CREATEEVENT(CONEMUEXIT, hEventCmd[CMD_EXIT]);
 	CREATEEVENT(CONEMUALIVE, hEventAlive);
 	CREATEEVENT(CONEMUREADY, hEventReady);
@@ -56,8 +57,8 @@ BOOL CConEmuPipe::Init(BOOL abSilent)
 
 	if (!hEventAlive || !hEventReady || 
 		!hEventCmd[CMD_DRAGFROM] || !hEventCmd[CMD_DRAGTO] || 
-		!hEventCmd[CMD_REQTABS] ||
-		!hEventCmd[CMD_SETWINDOW] || !hEventCmd[CMD_EXIT] )
+		!hEventCmd[CMD_REQTABS] || !hEventCmd[CMD_SETWINDOW] || 
+		!hEventCmd[CMD_POSTMACRO] || !hEventCmd[CMD_EXIT] )
 	{
 		if (!abSilent)
 			MBoxA(_T("CreateEvent failed"));

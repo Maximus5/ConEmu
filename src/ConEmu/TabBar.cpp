@@ -586,7 +586,12 @@ LRESULT TabBarClass::ToolWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lP
 				{
 					// активировать консоль №
 					cmd.action = wParam - 1;
+					gConEmu.mb_IgnoreSizeChange = true;
+					COORD sz = {pVCon->TextWidth, pVCon->TextHeight};
 					TabBar.ConMan_KeyAction ( &cmd );
+					// Установить размер консоли!
+					gConEmu.SetConsoleWindowSize(sz, false);
+					gConEmu.mb_IgnoreSizeChange = false;
 				} else
 				if (wParam==13)
 				{

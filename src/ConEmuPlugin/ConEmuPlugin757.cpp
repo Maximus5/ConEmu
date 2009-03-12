@@ -347,3 +347,12 @@ void SetWindow757(int nTab)
 	if (InfoW757->AdvControl(InfoW757->ModuleNumber, ACTL_SETCURRENTWINDOW, (void*)nTab))
 		InfoW757->AdvControl(InfoW757->ModuleNumber, ACTL_COMMIT, 0);
 }
+
+void PostMacro757(wchar_t* asMacro)
+{
+	ActlKeyMacro mcr;
+	mcr.Command = MCMD_POSTMACROSTRING;
+	mcr.Param.PlainText.SequenceText = asMacro;
+	mcr.Param.PlainText.Flags = KSFLAGS_DISABLEOUTPUT;
+	InfoW757->AdvControl(InfoW757->ModuleNumber, ACTL_KEYMACRO, (void*)&mcr);
+}

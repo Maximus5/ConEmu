@@ -402,3 +402,12 @@ void SetWindowA(int nTab)
 	if (InfoA->AdvControl(InfoA->ModuleNumber, ACTL_SETCURRENTWINDOW, (void*)nTab))
 		InfoA->AdvControl(InfoA->ModuleNumber, ACTL_COMMIT, 0);
 }
+
+void PostMacroA(char* asMacro)
+{
+	ActlKeyMacro mcr;
+	mcr.Command = MCMD_POSTMACROSTRING;
+	mcr.Param.PlainText.SequenceText = asMacro;
+	mcr.Param.PlainText.Flags = KSFLAGS_DISABLEOUTPUT;
+	InfoA->AdvControl(InfoA->ModuleNumber, ACTL_KEYMACRO, (void*)&mcr);
+}

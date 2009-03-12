@@ -9,6 +9,12 @@ const u8 chSetsNums[19] = {0, 178, 186, 136, 1, 238, 134, 161, 177, 129, 130, 77
 int upToFontHeight=0;
 HWND ghOpWnd=NULL;
 
+namespace Settings {
+	const WCHAR* szKeys[] = {L"<None>", L"Left Ctrl", L"Right Ctrl", L"Left Alt", L"Right Alt", L"Left Shift", L"Right Shift"};
+	const DWORD  nKeys[] =  {0,         VK_LCONTROL,  VK_RCONTROL,   VK_LMENU,    VK_RMENU,     VK_LSHIFT,     VK_RSHIFT};
+	const BYTE   FSizes[] = {0, 8, 10, 12, 14, 16, 18, 20, 24, 26, 28, 30, 32, 34, 36, 40, 46, 50, 52, 72};
+};
+
 CSettings::CSettings()
 {
 	InitSettings();
@@ -94,6 +100,10 @@ void CSettings::InitSettings()
 	/* */ _tcscpy(szTabViewer, _T("{%s}"));
 	nTabLenMax = 20;
 	
+	isCursorV = true;
+	
+	isTabs = 1;
+	
 	isVisualizer = false;
 	nVizNormal = 1; nVizFore = 15; nVizTab = 15; nVizEOL = 8; nVizEOF = 12;
 	cVizTab = 0x2192; cVizEOL = 0x2193; cVizEOF = 0x2640;
@@ -103,7 +113,7 @@ void CSettings::InitSettings()
     isScrollTitle = true;
     ScrollTitleLen = 22;
     
-    isDnD = false; isDnDsteps = false; isDefCopy = 2;
+    isDragEnabled = true; isDropEnabled = true; nDragKey = 0; isDnDsteps = false; isDefCopy = 2;
 }
 
 void CSettings::LoadSettings()
@@ -163,7 +173,9 @@ void CSettings::LoadSettings()
         reg.Load(_T("ForceMonospace"), &isForceMonospace);
 		reg.Load(_T("Proportional"), &isTTF);
         reg.Load(_T("Update Console handle"), &isUpdConHandle);
-        reg.Load(_T("Dnd"), &isDnD);
+        reg.Load(_T("Dnd"), &isDragEnabled); isDropEnabled = isDragEnabled; // ранее "DndDrop" не было
+        reg.Load(_T("DndKey"), &nDragKey);
+        reg.Load(_T("DndDrop"), &isDropEnabled);
         reg.Load(_T("DefCopy"), &isDefCopy);
         reg.Load(_T("DndSteps"), &isDnDsteps);
         reg.Load(_T("GUIpb"), &isGUIpb);
@@ -298,7 +310,9 @@ BOOL CSettings::SaveSettings()
             reg.Save(_T("Experimental"), isFixFarBorders);
             reg.Save(_T("RightClick opens context menu"), isRClickSendKey);
             reg.Save(_T("AltEnter"), isSentAltEnter);
-            reg.Save(_T("Dnd"), isDnD);
+            reg.Save(_T("Dnd"), isDragEnabled);
+            reg.Save(_T("DndKey"), nDragKey);
+            reg.Save(_T("DndDrop"), isDropEnabled);
             reg.Save(_T("DefCopy"), isDefCopy);
             reg.Save(_T("GUIpb"), isGUIpb);
             reg.Save(_T("Tabs"), isTabs);
@@ -446,10 +460,9 @@ LRESULT CSettings::OnInitDialog()
 	SendDlgItemMessage(hMain, tFontFace2, CB_SELECTSTRING, -1, (LPARAM)LogFont2.lfFaceName);
 
 	{
-		const BYTE FSizes[] = {0, 8, 10, 12, 14, 16, 18, 20, 24, 26, 28, 30, 32, 34, 36, 40, 46, 50, 52, 72};
-		for (uint i=0; i < sizeofarray(FSizes); i++)
+		for (uint i=0; i < sizeofarray(Settings::FSizes); i++)
 		{
-			wsprintf(temp, _T("%i"), FSizes[i]);
+			wsprintf(temp, _T("%i"), Settings::FSizes[i]);
 			if (i > 0)
 				SendDlgItemMessage(hMain, tFontSizeY, CB_ADDSTRING, 0, (LPARAM) temp);
 			SendDlgItemMessage(hMain, tFontSizeX, CB_ADDSTRING, 0, (LPARAM) temp);
@@ -528,14 +541,20 @@ LRESULT CSettings::OnInitDialog()
 	if (isRClickSendKey) CheckDlgButton(hMain, cbRClick, (isRClickSendKey==1) ? BST_CHECKED : BST_INDETERMINATE);
 	if (isSentAltEnter) CheckDlgButton(hMain, cbSendAE, BST_CHECKED);
 
-	if (isDnD)
-	{
-		CheckDlgButton(hMain, cbDnD, BST_CHECKED);
-		EnableWindow(GetDlgItem(hMain, cbDnDCopy), true);
-	}
-	else
-		EnableWindow(GetDlgItem(hMain, cbDnDCopy), false);
+	CheckDlgButton(hMain, cbDragEnabled, isDragEnabled ? BST_CHECKED : BST_UNCHECKED);
+	CheckDlgButton(hMain, cbDropEnabled, isDropEnabled ? BST_CHECKED : BST_UNCHECKED);
 	if (isDefCopy) CheckDlgButton(hMain, cbDnDCopy, (isDefCopy==1) ? BST_CHECKED : BST_INDETERMINATE);
+	{
+		uint nKeyCount = sizeofarray(Settings::szKeys);
+		u8 num = 0;
+		for (uint i=0; i<nKeyCount; i++) {
+			SendDlgItemMessage(hMain, lbDragKey, CB_ADDSTRING, 0, (LPARAM) Settings::szKeys[i]);
+			if (Settings::nKeys[i] == nDragKey) num = i;
+		}
+		if (!num) nDragKey = 0; // если код клавиши неизвестен?
+		SendDlgItemMessage(hMain, lbDragKey, CB_SETCURSEL, num, 0);
+	}
+	
 
 	if (isGUIpb) CheckDlgButton(hMain, cbGUIpb, BST_CHECKED);
 	if (isTabs) CheckDlgButton(hMain, cbTabs, (isTabs==1) ? BST_CHECKED : BST_INDETERMINATE);
@@ -762,11 +781,12 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
         isSentAltEnter = !isSentAltEnter;
         break;
 
-    case cbDnD:
-        isDnD = !isDnD;
-        EnableWindow(GetDlgItem(hMain, cbDnDCopy), isDnD);
+    case cbDragEnabled:
+        isDragEnabled = !isDragEnabled;
         break;
-    
+    case cbDropEnabled:
+        isDropEnabled = !isDropEnabled;
+        break;
     case cbDnDCopy:
         switch(IsDlgButtonChecked(hMain, cbDnDCopy)) {
             case BST_UNCHECKED:
@@ -1122,6 +1142,17 @@ LRESULT CSettings::OnComboBox(WPARAM wParam, LPARAM lParam)
                 InvalidateRect(ghWnd, 0, 0);
             }
         }
+	} else 
+	if (LOWORD(wParam) == lbDragKey) {
+		int num = SendDlgItemMessage(hMain, lbDragKey, CB_GETCURSEL, 0, 0);
+		int nKeyCount = sizeofarray(Settings::szKeys);
+		if (num>=0 && num<nKeyCount) {
+			nDragKey = Settings::nKeys[num];
+		} else {
+			nDragKey = 0;
+			if (num) // Invalid index?
+				SendDlgItemMessage(hMain, lbDragKey, CB_SETCURSEL, num=0, 0);
+		}
 	}
 	return 0;
 }

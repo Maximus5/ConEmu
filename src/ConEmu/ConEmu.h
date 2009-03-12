@@ -80,6 +80,7 @@ public:
 	CDragDrop *DragDrop;
 	CProgressBars *ProgressBars;
 	COORD m_LastConSize; // console size after last resize (in columns and lines)
+	bool mb_IgnoreSizeChange; // на время переключения в конмане...
 	int BufferHeight; // в отличие от gSet - может изменяться текущей консольной программой
 	//RECT  dcWindowLast; // Последний размер дочернего окна
 	uint cBlinkShift; // cursor blink counter threshold
@@ -162,6 +163,7 @@ public:
 	bool LoadVersionInfo(wchar_t* pFullPath);
 	static RECT MapRect(RECT rFrom, BOOL bFrame2Client);
 	void PaintGaps(HDC hDC=NULL);
+	void PostMacro(LPCWSTR asMacro);
 	void ReSize();
 	void SetConParent();
 	void SetConsoleWindowSize(const COORD& size, bool updateInfo);

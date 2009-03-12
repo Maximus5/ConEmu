@@ -70,7 +70,7 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 IDD_DIALOG1 DIALOGEX 0, 0, 328, 258
 STYLE DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_TOPMOST | WS_EX_CONTROLPARENT
-FONT 8, "MS Shell Dlg", 0, 0, 0x1
+FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        "Anti-aliasing",IDC_STATIC,263,4,60,45,WS_GROUP
     CONTROL         "&None",rNoneAA,"Button",BS_AUTORADIOBUTTON | WS_GROUP,
@@ -107,24 +107,24 @@ BEGIN
                     WS_TABSTOP,79,67,54,8
     CONTROL         "&Fix Far borders",cbFixFarBorders,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,10,96,64,8
-    GROUPBOX        "Window size",IDC_STATIC,147,53,110,50
+    GROUPBOX        "Window size",IDC_STATIC,147,50,110,50
     CONTROL         "Normal",rNormal,"Button",BS_AUTORADIOBUTTON | WS_GROUP,
-                    151,64,47,8
+                    151,61,47,8
     CONTROL         "Maximized",rMaximized,"Button",BS_AUTORADIOBUTTON,151,
-                    77,48,8
+                    74,48,8
     CONTROL         "Full screen",rFullScreen,"Button",BS_AUTORADIOBUTTON,
-                    151,90,49,8
+                    151,87,49,8
     CONTROL         "&RightClick for context menu",cbRClick,"Button",
-                    BS_AUTO3STATE | WS_TABSTOP,10,139,117,8
+                    BS_AUTO3STATE | WS_TABSTOP,10,139,125,8
     GROUPBOX        "Font",IDC_STATIC,4,4,136,122
     RTEXT           "Size:",IDC_STATIC,9,37,32,8
     CTEXT           "x",IDC_STATIC,87,35,8,8
     RTEXT           "Charset:",IDC_STATIC,9,53,32,8
-    EDITTEXT        tWndWidth,201,63,18,11,ES_AUTOHSCROLL | ES_NUMBER | NOT 
+    EDITTEXT        tWndWidth,201,60,18,11,ES_AUTOHSCROLL | ES_NUMBER | NOT 
                     WS_BORDER,WS_EX_STATICEDGE
-    EDITTEXT        tWndHeight,231,63,18,11,ES_AUTOHSCROLL | ES_NUMBER | NOT 
+    EDITTEXT        tWndHeight,231,60,18,11,ES_AUTOHSCROLL | ES_NUMBER | NOT 
                     WS_BORDER,WS_EX_STATICEDGE
-    CTEXT           "x",IDC_STATIC,221,63,8,8
+    CTEXT           "x",IDC_STATIC,221,60,8,8
     CONTROL         "Force monospace",cbMonospace,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,10,83,70,8
     COMBOBOX        tFontSizeX3,109,81,24,66,CBS_DROPDOWN | WS_VSCROLL | 
@@ -136,16 +136,16 @@ BEGIN
     EDITTEXT        tDarker,233,202,30,11,ES_AUTOHSCROLL | ES_NUMBER | NOT 
                     WS_BORDER,WS_EX_STATICEDGE
     CONTROL         "&Send AltEnter to application",cbSendAE,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,10,153,116,8
-    CONTROL         "Enable Drag'n'Drop",cbDnD,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,225,139,87,8
+                    BS_AUTOCHECKBOX | WS_TABSTOP,10,153,125,8
+    CONTROL         "Enable 'Drag'",cbDragEnabled,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,154,139,67,8
     CONTROL         "Enable Tabs",cbTabs,"Button",BS_AUTO3STATE | WS_TABSTOP,
-                    129,139,72,8
-    GROUPBOX        "Far hacks",IDC_STATIC,4,129,319,39
+                    154,112,72,8
+    GROUPBOX        "Keyboard and mouse",IDC_STATIC,4,129,136,39
     CONTROL         "GUI progress bars",cbGUIpb,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,129,153,86,8
+                    WS_TABSTOP,229,112,86,8
     CONTROL         "Copy by default",cbDnDCopy,"Button",BS_AUTO3STATE | 
-                    WS_TABSTOP,236,153,76,8
+                    WS_TABSTOP,240,153,76,8
     COMBOBOX        tFontFace2,9,107,88,72,CBS_DROPDOWN | CBS_AUTOHSCROLL | 
                     CBS_SORT | WS_VSCROLL | WS_TABSTOP
     COMBOBOX        tFontSizeX2,109,107,24,66,CBS_DROPDOWN | WS_VSCROLL | 
@@ -159,19 +159,25 @@ BEGIN
     CONTROL         "UpLeft",rBgSimple,"Button",BS_AUTORADIOBUTTON,278,182,
                     39,10
     GROUPBOX        "Placement",IDC_STATIC,270,172,53,50
-    EDITTEXT        tWndX,268,75,18,11,ES_AUTOHSCROLL | ES_NUMBER | NOT 
+    EDITTEXT        tWndX,268,72,18,11,ES_AUTOHSCROLL | ES_NUMBER | NOT 
                     WS_BORDER,WS_EX_STATICEDGE
-    EDITTEXT        tWndY,296,75,18,11,ES_AUTOHSCROLL | ES_NUMBER | NOT 
+    EDITTEXT        tWndY,296,72,18,11,ES_AUTOHSCROLL | ES_NUMBER | NOT 
                     WS_BORDER,WS_EX_STATICEDGE
-    CTEXT           "x",IDC_STATIC,287,76,8,8
-    GROUPBOX        "Position",IDC_STATIC,263,53,60,50,WS_DISABLED
-    CONTROL         "Cascade",rCascade,"Button",BS_AUTORADIOBUTTON,268,90,44,
+    CTEXT           "x",IDC_STATIC,287,73,8,8
+    GROUPBOX        "Position",IDC_STATIC,263,50,60,50,WS_DISABLED
+    CONTROL         "Cascade",rCascade,"Button",BS_AUTORADIOBUTTON,268,87,44,
                     10
-    CONTROL         "Fixed",rFixed,"Button",BS_AUTORADIOBUTTON,268,64,33,10
+    CONTROL         "Fixed",rFixed,"Button",BS_AUTORADIOBUTTON,268,61,33,10
     CTEXT           "x",IDC_STATIC,99,82,8,8
     GROUPBOX        "Command Line",IDC_STATIC,4,223,319,30
     EDITTEXT        tCmdLine,9,234,306,11,ES_AUTOHSCROLL | NOT WS_BORDER,
                     WS_EX_STATICEDGE
+    GROUPBOX        "Graphic enhancement",IDC_STATIC,147,101,176,25
+    GROUPBOX        "Drag and drop (Shell style)",IDC_STATIC,147,129,176,39
+    COMBOBOX        lbDragKey,154,150,71,30,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    CONTROL         "Enable 'Drop'",cbDropEnabled,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,240,139,73,10
 END
 
 IDD_DIALOG2 DIALOGEX 0, 0, 328, 246
@@ -350,7 +356,7 @@ END
 IDD_DIALOG3 DIALOGEX 0, 0, 328, 246
 STYLE DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_TOPMOST | WS_EX_CONTROLPARENT
-FONT 8, "MS Shell Dlg"
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     GROUPBOX        "Performance counters",gbPerformance,4,4,319,30
     RTEXT           "Render:",IDC_STATIC,92,17,27,8
