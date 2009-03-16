@@ -111,7 +111,6 @@ protected:
 	//int mn_NeedRetryName;
 	std::vector<struct ConProcess> m_Processes;
 	void CheckProcessName(struct ConProcess &ConPrc, LPCTSTR asFullFileName);
-	DWORD CheckProcesses(DWORD nConmanIDX, BOOL bTitleChanged);
 	LPTSTR GetTitleStart(DWORD* rnConmanIDX=NULL);
 	//bool GetProcessFileName(DWORD dwPID, TCHAR* rsName/*[32]*/, DWORD *pdwErr);
 	BOOL mb_InTimer;
@@ -119,6 +118,7 @@ protected:
 	HWINEVENTHOOK mh_WinHook;
 	static VOID CALLBACK WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime);
 public:
+	DWORD CheckProcesses(DWORD nConmanIDX, BOOL bTitleChanged);
 	typedef int (_cdecl * ConMan_MainProc_t)(LPCWSTR asCommandLine, BOOL abStandalone);
 	ConMan_MainProc_t ConMan_MainProc;
 	typedef void (_cdecl * ConMan_LookForKeyboard_t)();

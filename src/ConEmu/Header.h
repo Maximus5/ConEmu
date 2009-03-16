@@ -81,13 +81,13 @@ __forceinline void *memcpy(void *_Dst, const void *_Src, size_t _Size)
 }
 #endif
 
-void __forceinline DisplayLastError(LPCTSTR asLabel)
+void __forceinline DisplayLastError(LPCTSTR asLabel, DWORD dwError=0)
 {
 	TCHAR out[0x200];
-	DWORD dw = GetLastError();
+	DWORD dw = dwError ? dwError : GetLastError();
 	LPVOID lpMsgBuf;
 	FormatMessage( FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, NULL, dw, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR) &lpMsgBuf, 0, NULL );
-	wsprintf(out, _T("%s\nError code ''0x%08X'':\n%s"), asLabel, dw, lpMsgBuf);
+	wsprintf(out, _T("%s\nLastError=0x%08X\n%s"), asLabel, dw, lpMsgBuf);
 	MessageBox(ghWnd, out, gConEmu.GetTitle(), MB_SYSTEMMODAL | MB_ICONERROR);
 }
 

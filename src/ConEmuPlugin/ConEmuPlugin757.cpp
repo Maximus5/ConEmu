@@ -23,7 +23,7 @@ void ProcessDragFrom757()
 	if (!WInfo.Current)
 	{
 		int ItemsCount=0;
-		//WriteFile(hPipe, &ItemsCount, sizeof(int), &cout, NULL);				
+		//WriteFile(hPipe, &ItemsCount, sizeof(int), &cout, NULL);
 		OutDataAlloc(sizeof(ItemsCount));
 		OutDataWrite(&ItemsCount,sizeof(ItemsCount));
 		return;

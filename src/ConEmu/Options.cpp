@@ -113,7 +113,7 @@ void CSettings::InitSettings()
     isScrollTitle = true;
     ScrollTitleLen = 22;
     
-    isDragEnabled = true; isDropEnabled = true; nDragKey = 0; isDnDsteps = false; isDefCopy = 2;
+    isDragEnabled = true; isDropEnabled = (char)2; nDragKey = 0; isDnDsteps = false; isDefCopy = 2;
 }
 
 void CSettings::LoadSettings()
@@ -173,7 +173,7 @@ void CSettings::LoadSettings()
         reg.Load(_T("ForceMonospace"), &isForceMonospace);
 		reg.Load(_T("Proportional"), &isTTF);
         reg.Load(_T("Update Console handle"), &isUpdConHandle);
-        reg.Load(_T("Dnd"), &isDragEnabled); isDropEnabled = isDragEnabled; // ранее "DndDrop" не было
+		reg.Load(_T("Dnd"), &isDragEnabled); isDropEnabled = (char)(isDragEnabled ? 2 : 0); // ранее "DndDrop" не было
         reg.Load(_T("DndKey"), &nDragKey);
         reg.Load(_T("DndDrop"), &isDropEnabled);
         reg.Load(_T("DefCopy"), &isDefCopy);
@@ -542,7 +542,7 @@ LRESULT CSettings::OnInitDialog()
 	if (isSentAltEnter) CheckDlgButton(hMain, cbSendAE, BST_CHECKED);
 
 	CheckDlgButton(hMain, cbDragEnabled, isDragEnabled ? BST_CHECKED : BST_UNCHECKED);
-	CheckDlgButton(hMain, cbDropEnabled, isDropEnabled ? BST_CHECKED : BST_UNCHECKED);
+	if (isDropEnabled) CheckDlgButton(hMain, cbDropEnabled, (isDropEnabled==1) ? BST_CHECKED : BST_INDETERMINATE);
 	if (isDefCopy) CheckDlgButton(hMain, cbDnDCopy, (isDefCopy==1) ? BST_CHECKED : BST_INDETERMINATE);
 	{
 		uint nKeyCount = sizeofarray(Settings::szKeys);
@@ -785,7 +785,15 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
         isDragEnabled = !isDragEnabled;
         break;
     case cbDropEnabled:
-        isDropEnabled = !isDropEnabled;
+        //isDropEnabled = !isDropEnabled;
+        switch(IsDlgButtonChecked(hMain, cbDropEnabled)) {
+            case BST_UNCHECKED:
+                isDropEnabled=0; break;
+            case BST_CHECKED:
+                isDropEnabled=1; break;
+            case BST_INDETERMINATE:
+                isDropEnabled=2; break;
+        }
         break;
     case cbDnDCopy:
         switch(IsDlgButtonChecked(hMain, cbDnDCopy)) {

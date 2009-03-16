@@ -11,6 +11,7 @@
 #define CONEMUREQTABS    L"ConEmuReqTabs%u"
 #define CONEMUSETWINDOW  L"ConEmuSetWindow%u"
 #define CONEMUPOSTMACRO  L"ConEmuPostMacro%u"
+#define CONEMUDEFFONT    L"ConEmuDefFont%u"
 #define CONEMUEXIT       L"ConEmuExit%u"
 #define CONEMUALIVE      L"ConEmuAlive%u"
 #define CONEMUREADY      L"ConEmuReady%u"
@@ -20,8 +21,9 @@
 #define CMD_REQTABS      2
 #define CMD_SETWINDOW    3
 #define CMD_POSTMACRO    4
+#define CMD_DEFFONT      5
 // +2
-#define MAXCMDCOUNT      6
+#define MAXCMDCOUNT      7
 #define CMD_EXIT         MAXCMDCOUNT-1
 
 #ifdef _DEBUG

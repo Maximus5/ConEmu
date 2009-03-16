@@ -1,12 +1,14 @@
 #include "header.h"
 
+HANDLE CConEmuPipe::hMapping=NULL;
+
 CConEmuPipe::CConEmuPipe()
 {
 	for (int i=0; i<MAXCMDCOUNT; i++)
 		hEventCmd[i] = NULL;
 	hEventAlive=NULL;
 	hEventReady=NULL;
-	hMapping=NULL;
+	//hMapping=NULL;
 	dwMaxDataSize = 0;
 	lpMap = NULL;
 	lpCursor = NULL;
@@ -15,6 +17,11 @@ CConEmuPipe::CConEmuPipe()
 }
 
 CConEmuPipe::~CConEmuPipe()
+{
+	Close();
+}
+
+void CConEmuPipe::Close()
 {
 	for (int i=0; i<MAXCMDCOUNT; i++)
 		SafeCloseHandle(hEventCmd[i]);
@@ -33,6 +40,11 @@ CConEmuPipe::~CConEmuPipe()
 //#pragma message("warning: добавить аргумент abSilent, вдруг плагин еще не загружен?")
 BOOL CConEmuPipe::Init(BOOL abSilent)
 {
+	if (hMapping) {
+		MBoxA(_T("Last operation was not finished!"));
+		return FALSE;
+	}
+
     if (!gConEmu.isFar() && !gConEmu.mn_TopProcessID) {
 	    gConEmu.DnDstep(_T("Pipe: FAR not active"));
 	    return FALSE;
@@ -50,6 +62,7 @@ BOOL CConEmuPipe::Init(BOOL abSilent)
 	CREATEEVENT(CONEMUREQTABS, hEventCmd[CMD_REQTABS]);
 	CREATEEVENT(CONEMUSETWINDOW, hEventCmd[CMD_SETWINDOW]);
 	CREATEEVENT(CONEMUPOSTMACRO, hEventCmd[CMD_POSTMACRO]);
+	CREATEEVENT(CONEMUDEFFONT, hEventCmd[CMD_DEFFONT]);
 	CREATEEVENT(CONEMUEXIT, hEventCmd[CMD_EXIT]);
 	CREATEEVENT(CONEMUALIVE, hEventAlive);
 	CREATEEVENT(CONEMUREADY, hEventReady);
@@ -57,8 +70,9 @@ BOOL CConEmuPipe::Init(BOOL abSilent)
 
 	if (!hEventAlive || !hEventReady || 
 		!hEventCmd[CMD_DRAGFROM] || !hEventCmd[CMD_DRAGTO] || 
-		!hEventCmd[CMD_REQTABS] || !hEventCmd[CMD_SETWINDOW] || 
-		!hEventCmd[CMD_POSTMACRO] || !hEventCmd[CMD_EXIT] )
+		!hEventCmd[CMD_REQTABS] || !hEventCmd[CMD_SETWINDOW] ||
+		!hEventCmd[CMD_POSTMACRO] || !hEventCmd[CMD_DEFFONT] || 
+		!hEventCmd[CMD_EXIT] )
 	{
 		if (!abSilent)
 			MBoxA(_T("CreateEvent failed"));
@@ -68,6 +82,7 @@ BOOL CConEmuPipe::Init(BOOL abSilent)
 	return TRUE;
 }
 
+// Ќе интересуетс€ результатом команды!
 BOOL CConEmuPipe::Execute(int nCmd)
 {
 	if (nCmd<0 || nCmd>MAXCMDCOUNT) {

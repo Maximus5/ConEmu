@@ -250,8 +250,8 @@ void WINAPI _export SetStartupInfo(const struct PluginStartupInfo *aInfo)
 void WINAPI _export GetPluginInfo(struct PluginInfo *pi)
 {
     static char *szMenu[1], szMenu1[15];
-	szMenu[0]=szMenu1; lstrcpyA(szMenu[0], "[&¦] ConEmu");
-    szMenu[0][2] = (char)0xCC;
+	szMenu[0]=szMenu1; lstrcpyA(szMenu[0], "[&\xCC] ConEmu");
+    //szMenu[0][2] = (char)0xCC;
 
 	pi->StructSize = sizeof(struct PluginInfo);
 	pi->Flags = PF_EDITOR | PF_VIEWER | PF_DIALOG | PF_PRELOAD;

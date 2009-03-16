@@ -3,7 +3,7 @@
 
 
 #ifdef MSGLOGGER
-bool bBlockDebugLog=false, bSendToDebugger=false, bSendToFile=false;
+bool bBlockDebugLog=false, bSendToDebugger=false, bSendToFile=true;
 WCHAR *LogFilePath=NULL;
 #endif
 #ifndef _DEBUG
@@ -513,7 +513,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
         // Parse parameters.
         // Duplicated parameters are permitted, the first value is used.
-        for (uint i = 1; i < params; i++)
+		//Блин. Ну если уж в params учитывается и имя исполняемого модуля - i начинать надо с 2-х
+        for (uint i = 2; i < params; i++)
         {
             curCommand += _tcslen(curCommand) + 1;
 			if ( !klstricmp(curCommand, _T("/conman")) ) {
@@ -541,13 +542,20 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
                     SizeVal = klatoi(curCommand);
                 }
             }
-            else if ( !klstricmp(curCommand, _T("/attach")) && i + 1 < params)
+            else if ( !klstricmp(curCommand, _T("/attach")) /*&& i + 1 < params*/)
             {
-                curCommand += _tcslen(curCommand) + 1;
+                //curCommand += _tcslen(curCommand) + 1;
                 if (!AttachPrm)
                 {
-                    AttachPrm = true;
-                    AttachVal = klatoi(curCommand);
+                    AttachPrm = true; AttachVal = -1;
+                    if ((i + 1) < params)
+                    {
+	                    TCHAR *nextCommand = curCommand + _tcslen(curCommand) + 1;
+	                    if (*nextCommand != _T('/')) {
+		                    curCommand = nextCommand;
+		                    AttachVal = klatoi(curCommand);
+		                }
+	                }
                 }
             }
             //Start ADD fontname; by Mors
@@ -683,13 +691,36 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		    return 100;
 	    }
 	    if (!AttachConsole(AttachVal)) {
+			BOOL lbFailed = TRUE;
 		    DWORD dwErr = GetLastError();
-		    TCHAR szErr[255];
-		    wsprintf(szErr, _T("AttachConsole failed!\r\nLastError=0x%08x"), dwErr);
-		    MBoxA(szErr);
-		    delete pVCon;
-		    return 100;
+			if (dwErr == 0x1F) {
+				// Если ConEmu запускается из FAR'а батником - то родительский процесс - CMD.EXE, а он уже скорее всего закрыт. то есть подцепиться не удастся
+				HWND hConsole = FindWindowEx(NULL,NULL,_T("ConsoleWindowClass"),NULL);
+				if (hConsole && IsWindowVisible(hConsole)) {
+					DWORD dwPID = 0;
+					if (GetWindowThreadProcessId(hConsole,  &dwPID)) {
+						if (AttachConsole(dwPID))
+							lbFailed = FALSE;
+					}
+				}
+			}
+			if (lbFailed) {
+				TCHAR szErr[255];
+				wsprintf(szErr, _T("AttachConsole failed (PID=%i)!"), AttachVal);
+				//MBoxA(szErr);
+				DisplayLastError(szErr, dwErr);
+				delete pVCon;
+				return 100;
+			}
 	    }
+	    // Попытаться дернуть плагин для установки шрифта.
+	    CConEmuPipe pipe;
+		//DWORD nLastStat = gConEmu.mn_ActiveStatus;
+		//gConEmu.mn_ActiveStatus = CES_FARACTIVE;
+		//mn_TopProcessID
+		gConEmu.CheckProcesses(0,TRUE);
+	    if (pipe.Init(TRUE))
+		    pipe.Execute(CMD_DEFFONT);
     } else {
 	    AllocConsole();
     }

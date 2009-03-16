@@ -29,7 +29,8 @@ public:
     bool isSentAltEnter;
     bool isForceMonospace, isTTF;
     bool isUpdConHandle;
-    bool isDragEnabled, isDropEnabled;
+    bool isDragEnabled;
+	char isDropEnabled;
     DWORD nDragKey;
     char isDefCopy;
     bool isDnDsteps;

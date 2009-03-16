@@ -32,9 +32,9 @@ int WINAPI _export GetMinFarVersionW(void)
 void WINAPI _export GetPluginInfoW(struct PluginInfo *pi)
 {
     static WCHAR *szMenu[1], szMenu1[15];
-    szMenu[0]=szMenu1; lstrcpyW(szMenu[0], L"[__] ConEmu");
-    szMenu[0][1] = L'&';
-    szMenu[0][2] = 0x2560;
+    szMenu[0]=szMenu1; lstrcpyW(szMenu[0], L"[&\x2560] ConEmu");
+    //szMenu[0][1] = L'&';
+    //szMenu[0][2] = 0x2560;
 
 	pi->StructSize = sizeof(struct PluginInfo);
 	pi->Flags = PF_EDITOR | PF_VIEWER | PF_DIALOG | PF_PRELOAD;
@@ -73,7 +73,7 @@ HANDLE ghMapping = NULL;
 DWORD gnReqCommand = -1;
 HANDLE ghReqCommandEvent = NULL;
 UINT gnMsgTabChanged = 0;
-CRITICAL_SECTION csTabs;
+CRITICAL_SECTION csTabs, csData;
 
 #if defined(__GNUC__)
 typedef HWND (APIENTRY *FGetConsoleWindow)();
@@ -216,6 +216,9 @@ void ProcessCommand(DWORD nCmd, BOOL bReqMainThread)
 		gnReqCommand = -1;
 		return;
 	}
+
+	EnterCriticalSection(&csData);
+
 	switch (nCmd)
 	{
 		case (CMD_DRAGFROM):
@@ -267,6 +270,8 @@ void ProcessCommand(DWORD nCmd, BOOL bReqMainThread)
 			break;
 		}
 	}
+
+	LeaveCriticalSection(&csData);
 
 	if (ghReqCommandEvent)
 		SetEvent(ghReqCommandEvent);
@@ -348,6 +353,7 @@ DWORD WINAPI ThreadProcW(LPVOID lpParameter)
 								if (ConEmuHwnd) {
 									// Справились, но шрифт ConEmu скорее всего поменять не смог...
 									SetConsoleFontSizeTo(FarHwnd, 4, 6);
+									MoveWindow(FarHwnd, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), 1); // чтобы убрать возможные полосы прокрутки...
 									break;
 								}
 							}
@@ -413,15 +419,28 @@ DWORD WINAPI ThreadProcW(LPVOID lpParameter)
 				break;
 			}
 			
+			case (WAIT_OBJECT_0+CMD_DEFFONT):
+			{
+				// исключение - асинхронный, результат не требуется
+				ResetEvent(hEventAlive);
+				SetConsoleFontSizeTo(FarHwnd, 4, 6);
+				MoveWindow(FarHwnd, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), 1); // чтобы убрать возможные полосы прокрутки...
+				continue;
+			}
+			
 			default:
 			// Все остальные команды нужно выполнять в нити FAR'а
 			ProcessCommand(dwWait/*nCmd*/, TRUE/*bReqMainThread*/);
 		}
 
 		// Подготовиться к передаче данных
+		EnterCriticalSection(&csData);
 		wsprintf(gszDir1, CONEMUMAPPING, dwProcId);
-		gnDataSize = (gpCursor - gpData);
+		gnDataSize = gpData ? (gpCursor - gpData) : 0;
+		int nSize = gnDataSize; // чего-то там происходит...
+		SetLastError(0);
 		ghMapping = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, gnDataSize+4, gszDir1);
+		DWORD dwCreateError = GetLastError();
 		if (ghMapping) {
 			LPBYTE lpMap = (LPBYTE)MapViewOfFile(ghMapping, FILE_MAP_ALL_ACCESS, 0,0,0);
 			if (!lpMap) {
@@ -431,7 +450,13 @@ DWORD WINAPI ThreadProcW(LPVOID lpParameter)
 				// copy data
 				if (gpData && gnDataSize) {
 					*((DWORD*)lpMap) = gnDataSize+4;
+					#ifdef _DEBUG
+					LPBYTE dst=lpMap+4; LPBYTE src=gpData;
+					for (DWORD n=gnDataSize;n>0;n--)
+						*(dst++) = *(src++);
+					#else
 					memcpy(lpMap+4, gpData, gnDataSize);
+					#endif
 				} else {
 					*((DWORD*)lpMap) = 0;
 				}
@@ -443,6 +468,7 @@ DWORD WINAPI ThreadProcW(LPVOID lpParameter)
 		if (gpData) {
 			free(gpData); gpData = NULL; gpCursor = NULL;
 		}
+		LeaveCriticalSection(&csData);
 
 		// Поставим флажок, что плагин жив и закончил
 		SetEvent(hEventReady);
@@ -482,6 +508,7 @@ void WINAPI _export SetStartupInfoW(void *aInfo)
 void InitHWND(HWND ahFarHwnd)
 {
 	InitializeCriticalSection(&csTabs);
+	InitializeCriticalSection(&csData);
 	LoadFarVersion(); // пригодится уже здесь!
 
 	ConEmuHwnd = NULL;
@@ -494,23 +521,24 @@ void InitHWND(HWND ahFarHwnd)
 
 	gnMsgTabChanged = RegisterWindowMessage(CONEMUTABCHANGED);
 
-	
+	// Даже если мы не в ConEmu - все равно запустить нить, т.к. в ConEmu теперь есть возможность /Attach!
+	WCHAR szEventName[128];
+	DWORD dwCurProcId = GetCurrentProcessId();
+
+	CREATEEVENT(CONEMUDRAGFROM, hEventCmd[CMD_DRAGFROM]);
+	CREATEEVENT(CONEMUDRAGTO, hEventCmd[CMD_DRAGTO]);
+	CREATEEVENT(CONEMUREQTABS, hEventCmd[CMD_REQTABS]);
+	CREATEEVENT(CONEMUSETWINDOW, hEventCmd[CMD_SETWINDOW]);
+	CREATEEVENT(CONEMUPOSTMACRO, hEventCmd[CMD_POSTMACRO]);
+	CREATEEVENT(CONEMUDEFFONT, hEventCmd[CMD_DEFFONT]);
+	CREATEEVENT(CONEMUEXIT, hEventCmd[CMD_EXIT]);
+	CREATEEVENT(CONEMUALIVE, hEventAlive);
+	CREATEEVENT(CONEMUREADY, hEventReady);
+
+	hThread=CreateThread(NULL, 0, &ThreadProcW, 0, 0, 0);
+
 	// Если мы не под эмулятором - больше ничего делать не нужно
 	if (ConEmuHwnd) {
-		WCHAR szEventName[128];
-		DWORD dwCurProcId = GetCurrentProcessId();
-
-		CREATEEVENT(CONEMUDRAGFROM, hEventCmd[CMD_DRAGFROM]);
-		CREATEEVENT(CONEMUDRAGTO, hEventCmd[CMD_DRAGTO]);
-		CREATEEVENT(CONEMUREQTABS, hEventCmd[CMD_REQTABS]);
-		CREATEEVENT(CONEMUSETWINDOW, hEventCmd[CMD_SETWINDOW]);
-		CREATEEVENT(CONEMUPOSTMACRO, hEventCmd[CMD_POSTMACRO]);
-		CREATEEVENT(CONEMUEXIT, hEventCmd[CMD_EXIT]);
-		CREATEEVENT(CONEMUALIVE, hEventAlive);
-		CREATEEVENT(CONEMUREADY, hEventReady);
-
-		hThread=CreateThread(NULL, 0, &ThreadProcW, 0, 0, 0);
-
 		// дернуть табы, если они нужны
 		int tabCount = 0;
 		CreateTabs(1);
@@ -522,118 +550,127 @@ void InitHWND(HWND ahFarHwnd)
 void CheckMacro()
 {
 	// Если мы не под эмулятором - больше ничего делать не нужно
-	if (ConEmuHwnd)
-	{
-		// Проверка наличия макроса
-		BOOL lbMacroAdded = FALSE, lbNeedMacro = FALSE;
-		HKEY hkey=NULL;
-		char szValue[1024], szMacroKey[128], szCheckKey[16];
-		DWORD dwSize = 0;
-		bool lbMacroDontCheck = false;
+	if (!ConEmuHwnd)
+		return;
 
-		if (gFarVersion.dwVerMajor==2) {
-			lstrcpyA(szCheckKey, "F14DontCheck2");
-			lstrcpyA(szMacroKey, "Software\\Far2\\KeyMacros\\Common\\F14");
-		} else {
-			lstrcpyA(szCheckKey, "F14DontCheck2");
-			lstrcpyA(szMacroKey, "Software\\Far\\KeyMacros\\Common\\F14");
+
+	// Проверка наличия макроса
+	BOOL lbMacroAdded = FALSE, lbNeedMacro = FALSE;
+	HKEY hkey=NULL;
+	#define MODCOUNT 4
+	int n;
+	char szValue[1024], szMacroKey[MODCOUNT][128], szCheckKey[32];
+	DWORD dwSize = 0;
+	//bool lbMacroDontCheck = false;
+
+	for (n=0; n<MODCOUNT; n++) {
+		switch(n){
+			case 0: lstrcpyA(szCheckKey, "F14"); break;
+			case 1: lstrcpyA(szCheckKey, "CtrlF14"); break;
+			case 2: lstrcpyA(szCheckKey, "AltF14"); break;
+			case 3: lstrcpyA(szCheckKey, "ShiftF14"); break;
 		}
+		wsprintfA(szMacroKey[n], "Software\\%s\\KeyMacros\\Common\\%s",
+			(gFarVersion.dwVerMajor==2) ? "FAR2" : "FAR", szCheckKey);
+	}
+	//lstrcpyA(szCheckKey, "F14DontCheck2");
 
-		//if (0==RegOpenKeyExA(HKEY_CURRENT_USER, "Software\\ConEmu", 0, KEY_ALL_ACCESS, &hkey))
-		//{
-		//
-		//	if (RegQueryValueExA(hkey, szCheckKey, 0, 0, (LPBYTE)&lbMacroDontCheck, &(dwSize=sizeof(lbMacroDontCheck))))
-		//		lbMacroDontCheck = false;
-		//	RegCloseKey(hkey); hkey=NULL;
-		//}
+	//if (0==RegOpenKeyExA(HKEY_CURRENT_USER, "Software\\ConEmu", 0, KEY_ALL_ACCESS, &hkey))
+	//{
+	//
+	//	if (RegQueryValueExA(hkey, szCheckKey, 0, 0, (LPBYTE)&lbMacroDontCheck, &(dwSize=sizeof(lbMacroDontCheck))))
+	//		lbMacroDontCheck = false;
+	//	RegCloseKey(hkey); hkey=NULL;
+	//}
 
-		//if (!lbMacroDontCheck)
+	//if (!lbMacroDontCheck)
+	for (n=0; n<MODCOUNT && !lbNeedMacro; n++)
+	{
+		if (0==RegOpenKeyExA(HKEY_CURRENT_USER, szMacroKey[n], 0, KEY_ALL_ACCESS, &hkey))
 		{
-			if (0==RegOpenKeyExA(HKEY_CURRENT_USER, szMacroKey, 0, KEY_ALL_ACCESS, &hkey))
-			{
-				if (gFarVersion.dwVerMajor==1) {
-					if (0!=RegQueryValueExA(hkey, "Sequence", 0, 0, (LPBYTE)szValue, &(dwSize=1022))) {
-						lbNeedMacro = TRUE; // Значение отсутсвует
-					} else {
-						lbNeedMacro = lstrcmpA(szValue, "F11 \xCC")!=0;
-					}
+			if (gFarVersion.dwVerMajor==1) {
+				if (0!=RegQueryValueExA(hkey, "Sequence", 0, 0, (LPBYTE)szValue, &(dwSize=1022))) {
+					lbNeedMacro = TRUE; // Значение отсутсвует
 				} else {
-					if (0!=RegQueryValueExW(hkey, L"Sequence", 0, 0, (LPBYTE)szValue, &(dwSize=1022))) {
-						lbNeedMacro = TRUE; // Значение отсутсвует
-					} else {
-						//TODO: проверить, как себя ведет VC & GCC на 2х байтовых символах?
-						lbNeedMacro = lstrcmpW((WCHAR*)szValue, L"F11 \x2560")!=0;
-					}
+					lbNeedMacro = lstrcmpA(szValue, "F11 \xCC")!=0;
 				}
-				//	szValue[dwSize]=0;
-				//	#pragma message("ERROR: нужна проверка. В Ansi и Unicode это разные строки!")
-				//	//if (strcmpW(szValue, "F11 \xCC")==0)
-				//		lbNeedMacro = TRUE; // Значение некорректное
-				//}
-				RegCloseKey(hkey); hkey=NULL;
 			} else {
-				lbNeedMacro = TRUE;
-			}
-
-			if (lbNeedMacro) {
-				//int nBtn = ShowMessage(0, 3);
-				//if (nBtn == 1) { // Don't disturb
-				//	DWORD disp=0;
-				//	lbMacroDontCheck = true;
-				//	if (0==RegCreateKeyExA(HKEY_CURRENT_USER, "Software\\ConEmu", 0, 0, 
-				//		0, KEY_ALL_ACCESS, 0, &hkey, &disp))
-				//	{
-				//		RegSetValueExA(hkey, szCheckKey, 0, REG_BINARY, (LPBYTE)&lbMacroDontCheck, (dwSize=sizeof(lbMacroDontCheck)));
-				//		RegCloseKey(hkey); hkey=NULL;
-				//	}
-				//} else if (nBtn == 0) 
-				{
-					DWORD disp=0;
-					lbMacroAdded = TRUE;
-					if (0==RegCreateKeyExA(HKEY_CURRENT_USER, szMacroKey, 0, 0, 
-						0, KEY_ALL_ACCESS, 0, &hkey, &disp))
-					{
-						lstrcpyA(szValue, 
-							"ConEmu support");
-						RegSetValueExA(hkey, "", 0, REG_SZ, (LPBYTE)szValue, (dwSize=strlen(szValue)+1));
-
-						//lstrcpyA(szValue, 
-						//	"$If (Shell || Info || QView || Tree || Viewer || Editor) F12 $Else waitkey(100) $End");
-						//RegSetValueExA(hkey, "Sequence", 0, REG_SZ, (LPBYTE)szValue, (dwSize=strlen(szValue)+1));
-						
-						if (gFarVersion.dwVerMajor==1) {
-							lstrcpyA(szValue, "F11 |");
-							szValue[4] = (char)0xCC;
-							RegSetValueExA(hkey, "Sequence", 0, REG_SZ, (LPBYTE)szValue, (dwSize=strlen(szValue)+1));
-						} else {
-							lstrcpyW((WCHAR*)szValue, L"F11 |");
-							((WCHAR*)szValue)[4] = 0x2560;
-							RegSetValueExW(hkey, L"Sequence", 0, REG_SZ, (LPBYTE)szValue, (dwSize=2*(lstrlenW((WCHAR*)szValue)+1)));
-						}
-
-						lstrcpyA(szValue, 
-							"For ConEmu - plugin activation from listening thread");
-						RegSetValueExA(hkey, "Description", 0, REG_SZ, (LPBYTE)szValue, (dwSize=strlen(szValue)+1));
-
-						RegSetValueExA(hkey, "DisableOutput", 0, REG_DWORD, (LPBYTE)&(disp=1), (dwSize=4));
-
-						RegCloseKey(hkey); hkey=NULL;
-					}
+				if (0!=RegQueryValueExW(hkey, L"Sequence", 0, 0, (LPBYTE)szValue, &(dwSize=1022))) {
+					lbNeedMacro = TRUE; // Значение отсутсвует
+				} else {
+					//TODO: проверить, как себя ведет VC & GCC на 2х байтовых символах?
+					lbNeedMacro = lstrcmpW((WCHAR*)szValue, L"F11 \x2560")!=0;
 				}
 			}
+			//	szValue[dwSize]=0;
+			//	#pragma message("ERROR: нужна проверка. В Ansi и Unicode это разные строки!")
+			//	//if (strcmpW(szValue, "F11 \xCC")==0)
+			//		lbNeedMacro = TRUE; // Значение некорректное
+			//}
+			RegCloseKey(hkey); hkey=NULL;
+		} else {
+			lbNeedMacro = TRUE;
+		}
+	}
 
-			// Перечитать макросы в FAR?
-			if (lbMacroAdded) {
-				if (gFarVersion.dwVerMajor==1)
-					ReloadMacroA();
-				else if (gFarVersion.dwBuild>=789)
-					ReloadMacro789();
-				else
-					ReloadMacro757();
+	if (lbNeedMacro) {
+		//int nBtn = ShowMessage(0, 3);
+		//if (nBtn == 1) { // Don't disturb
+		//	DWORD disp=0;
+		//	lbMacroDontCheck = true;
+		//	if (0==RegCreateKeyExA(HKEY_CURRENT_USER, "Software\\ConEmu", 0, 0, 
+		//		0, KEY_ALL_ACCESS, 0, &hkey, &disp))
+		//	{
+		//		RegSetValueExA(hkey, szCheckKey, 0, REG_BINARY, (LPBYTE)&lbMacroDontCheck, (dwSize=sizeof(lbMacroDontCheck)));
+		//		RegCloseKey(hkey); hkey=NULL;
+		//	}
+		//} else if (nBtn == 0) 
+		for (n=0; n<MODCOUNT; n++)
+		{
+			DWORD disp=0;
+			lbMacroAdded = TRUE;
+			if (0==RegCreateKeyExA(HKEY_CURRENT_USER, szMacroKey[n], 0, 0, 
+				0, KEY_ALL_ACCESS, 0, &hkey, &disp))
+			{
+				lstrcpyA(szValue, 
+					"ConEmu support");
+				RegSetValueExA(hkey, "", 0, REG_SZ, (LPBYTE)szValue, (dwSize=strlen(szValue)+1));
+
+				//lstrcpyA(szValue, 
+				//	"$If (Shell || Info || QView || Tree || Viewer || Editor) F12 $Else waitkey(100) $End");
+				//RegSetValueExA(hkey, "Sequence", 0, REG_SZ, (LPBYTE)szValue, (dwSize=strlen(szValue)+1));
+				
+				if (gFarVersion.dwVerMajor==1) {
+					lstrcpyA(szValue, "F11 \xCC");
+					//szValue[4] = (char)0xCC;
+					RegSetValueExA(hkey, "Sequence", 0, REG_SZ, (LPBYTE)szValue, (dwSize=strlen(szValue)+1));
+				} else {
+					lstrcpyW((WCHAR*)szValue, L"F11 \x2560");
+					//((WCHAR*)szValue)[4] = 0x2560;
+					RegSetValueExW(hkey, L"Sequence", 0, REG_SZ, (LPBYTE)szValue, (dwSize=2*(lstrlenW((WCHAR*)szValue)+1)));
+				}
+
+				lstrcpyA(szValue, 
+					"For ConEmu - plugin activation from listening thread");
+				RegSetValueExA(hkey, "Description", 0, REG_SZ, (LPBYTE)szValue, (dwSize=strlen(szValue)+1));
+
+				RegSetValueExA(hkey, "DisableOutput", 0, REG_DWORD, (LPBYTE)&(disp=1), (dwSize=4));
+
+				RegCloseKey(hkey); hkey=NULL;
 			}
 		}
 	}
 
+
+	// Перечитать макросы в FAR?
+	if (lbMacroAdded) {
+		if (gFarVersion.dwVerMajor==1)
+			ReloadMacroA();
+		else if (gFarVersion.dwBuild>=789)
+			ReloadMacro789();
+		else
+			ReloadMacro757();
+	}
 }
 
 void UpdateConEmuTabsW(int event, bool losingFocus, bool editorSave)
@@ -737,9 +774,11 @@ void SendTabs(int tabCount, BOOL abWritePipe/*=FALSE*/)
 		}
 		if (abWritePipe) {
 			cds.cbData = cds.dwData * sizeof(ConEmuTab);
+			EnterCriticalSection(&csData);
 			OutDataAlloc(sizeof(cds.dwData) + cds.cbData);
 			OutDataWrite(&cds.dwData, sizeof(cds.dwData));
 			OutDataWrite(cds.lpData, cds.cbData);
+			LeaveCriticalSection(&csData);
 		} else
 		//TODO: возможно, что при переключении окон командой из конэму нужно сразу переслать табы?
 		if (tabCount && gnReqCommand==(DWORD)-1) {
@@ -845,6 +884,9 @@ void StopThread(void)
     if (ghReqCommandEvent) {
 	    CloseHandle(ghReqCommandEvent); ghReqCommandEvent = NULL;
     }
+
+	DeleteCriticalSection(&csTabs); memset(&csTabs,0,sizeof(csTabs));
+	DeleteCriticalSection(&csData); memset(&csData,0,sizeof(csData));
 }
 
 void   WINAPI _export ExitFARW(void)

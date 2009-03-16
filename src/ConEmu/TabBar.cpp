@@ -156,7 +156,11 @@ void TabBarClass::FarSendChangeTab(int tabIndex)
 					int nWholeSize=0;
 					pipe.Read(&nWholeSize, sizeof(nWholeSize), &cbBytesRead); 
 
-	#pragma message("TODO: результат смены табов - это COPYDATASTRUCT, если nWholeSize")
+					#pragma message("TODO: результат смены табов - это COPYDATASTRUCT, если nWholeSize")
+					gConEmu.DnDstep(NULL);
+
+					pipe.Close();
+					Retrieve();//TODO: хорошо бы как-то оптимизировать...
 				}
 			}
 		}

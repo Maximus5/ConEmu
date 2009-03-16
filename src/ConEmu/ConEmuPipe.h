@@ -5,13 +5,15 @@ class CConEmuPipe
 protected:
    HANDLE hEventCmd[MAXCMDCOUNT];
 public:
-   HANDLE hEventAlive, hEventReady, hMapping;
+   HANDLE hEventAlive, hEventReady;
+   static HANDLE hMapping;
    LPBYTE lpMap, lpCursor;
    DWORD  dwMaxDataSize, nPID;
    WCHAR  sMapName[MAX_PATH];
 public:
    CConEmuPipe();
    ~CConEmuPipe();
+   void Close();
    
    BOOL Init(BOOL abSilent=FALSE);
    BOOL Execute(int nCmd);

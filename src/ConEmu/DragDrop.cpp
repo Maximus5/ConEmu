@@ -16,6 +16,11 @@ CDragDrop::~CDragDrop()
 
 HRESULT STDMETHODCALLTYPE CDragDrop::Drop (IDataObject * pDataObject,DWORD grfKeyState,POINTL pt,DWORD * pdwEffect)
 {
+	if (!gSet.isDropEnabled) {
+		*pdwEffect = DROPEFFECT_NONE;
+		return S_OK;
+	}
+
 	WCHAR szStr[MAX_PATH];
 	STGMEDIUM stgMedium;
 	FORMATETC fmtetc = { CF_HDROP, 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
@@ -65,7 +70,7 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop (IDataObject * pDataObject,DWORD grfKe
 	{
 		SHFILEOPSTRUCT fop;
 
-		if ((grfKeyState & MK_CONTROL) && gConEmu.isDragProcessed) {
+		if ((grfKeyState & MK_CONTROL) && gConEmu.isDragProcessed && gSet.isDropEnabled!=2) {
 			// Запретить бросать при нажатом контроле, если тащат с другой панели
 			// По хорошему, нужно бы и другие кнопки запрещать (Alt, Shift,...)
 			*pdwEffect = DROPEFFECT_NONE;
@@ -110,8 +115,9 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop (IDataObject * pDataObject,DWORD grfKe
 		else if (pt.x>pfpi->PassiveRect.left && pt.x<pfpi->PassiveRect.right && pt.y>pfpi->PassiveRect.top && pt.y<pfpi->PassiveRect.bottom && pfpi->pszPassivePath[0])
 		{
 			// Пока подвисает...
-			if (gConEmu.isDragProcessed) {
-				wchar_t* mcr = (fop.wFunc==FO_COPY) ? L"F5" : L"F6";
+			if (gConEmu.isDragProcessed && gSet.isDropEnabled==2) {
+				//wchar_t* mcr = (fop.wFunc==FO_COPY) ? L"F5" : L"F6";
+				wchar_t* mcr = (grfKeyState & MK_CONTROL) ? L"F5" : L"F6";
 
 				gConEmu.PostMacro(mcr);
 
@@ -185,7 +191,7 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragOver(DWORD grfKeyState,POINTL pt,DWORD 
 				*pdwEffect=DROPEFFECT_COPY;
 			else
 				*pdwEffect=DROPEFFECT_MOVE;*/
-		if ((grfKeyState & MK_CONTROL) && gConEmu.isDragProcessed) {
+		if ((grfKeyState & MK_CONTROL) && gConEmu.isDragProcessed && gSet.isDropEnabled!=2) {
 			// Запретить бросать при нажатом контроле, если тащат с другой панели
 			// По хорошему, нужно бы и другие кнопки запрещать (Alt, Shift,...)
 			*pdwEffect = DROPEFFECT_NONE;
