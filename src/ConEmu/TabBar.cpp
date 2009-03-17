@@ -53,7 +53,7 @@ void TabBarClass::Reset()
 void TabBarClass::Retrieve()
 {
 	CConEmuPipe pipe;
-	if (pipe.Init(TRUE))
+	if (pipe.Init(_T("TabBarClass::Retrieve"), TRUE))
 	{
 		DWORD cbWritten=0;
 		if (pipe.Execute(CMD_REQTABS))
@@ -131,7 +131,7 @@ void TabBarClass::FarSendChangeTab(int tabIndex)
 	//PostMessage(ghConWnd, WM_KEYUP, FarTabShortcut(tabIndex), 0);
 
 	CConEmuPipe pipe;
-	if (pipe.Init())
+	if (pipe.Init(_T("TabBarClass::FarSendChangeTab")))
 	{
 		DWORD cbWritten = 0;
 		if (pipe.Execute(CMD_SETWINDOW))

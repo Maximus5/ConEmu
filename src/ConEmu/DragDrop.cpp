@@ -70,13 +70,13 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop (IDataObject * pDataObject,DWORD grfKe
 	{
 		SHFILEOPSTRUCT fop;
 
-		if ((grfKeyState & MK_CONTROL) && gConEmu.isDragProcessed && gSet.isDropEnabled!=2) {
+		if ((grfKeyState & MK_CONTROL) && gConEmu.isDragging() && gSet.isDropEnabled!=2) {
 			// «апретить бросать при нажатом контроле, если тащат с другой панели
 			// ѕо хорошему, нужно бы и другие кнопки запрещать (Alt, Shift,...)
 			*pdwEffect = DROPEFFECT_NONE;
 			return S_OK;
 		} else
-		if ((grfKeyState & MK_CONTROL)==0 || gConEmu.isDragProcessed) {
+		if ((grfKeyState & MK_CONTROL)==0 || gConEmu.isDragging()) {
 			if (gSet.isDefCopy)
 				fop.wFunc=FO_COPY;
 			else
@@ -100,7 +100,7 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop (IDataObject * pDataObject,DWORD grfKe
 			return S_OK; //1;
 		} else if (pt.x>pfpi->ActiveRect.left && pt.x<pfpi->ActiveRect.right && pt.y>pfpi->ActiveRect.top && pt.y<pfpi->ActiveRect.bottom && pfpi->pszActivePath[0]) 
 		{
-			if (gConEmu.isDragProcessed) {
+			if (gConEmu.isDragging()) {
 				*pdwEffect = DROPEFFECT_NONE;
 				return S_OK; // “ащат внутри одной копии FAR с активной на активную, т.е. ничего не двигаетс€
 			}
@@ -115,9 +115,9 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop (IDataObject * pDataObject,DWORD grfKe
 		else if (pt.x>pfpi->PassiveRect.left && pt.x<pfpi->PassiveRect.right && pt.y>pfpi->PassiveRect.top && pt.y<pfpi->PassiveRect.bottom && pfpi->pszPassivePath[0])
 		{
 			// ѕока подвисает...
-			if (gConEmu.isDragProcessed && gSet.isDropEnabled==2) {
+			if (gConEmu.isDragging() && gSet.isDropEnabled==2) {
 				//wchar_t* mcr = (fop.wFunc==FO_COPY) ? L"F5" : L"F6";
-				wchar_t* mcr = (grfKeyState & MK_CONTROL) ? L"F5" : L"F6";
+				wchar_t* mcr = (grfKeyState & MK_CONTROL) ? L"F6" : L"F5";
 
 				gConEmu.PostMacro(mcr);
 
@@ -157,7 +157,7 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop (IDataObject * pDataObject,DWORD grfKe
 
 HRESULT STDMETHODCALLTYPE CDragDrop::DragOver(DWORD grfKeyState,POINTL pt,DWORD * pdwEffect)
 {
-	if (!gSet.isDropEnabled && !gConEmu.isDragProcessed) {
+	if (!gSet.isDropEnabled && !gConEmu.isDragging()) {
 		gConEmu.DnDstep(_T("DnD: Drop disabled"));
 		return -1;
 	}
@@ -191,12 +191,16 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragOver(DWORD grfKeyState,POINTL pt,DWORD 
 				*pdwEffect=DROPEFFECT_COPY;
 			else
 				*pdwEffect=DROPEFFECT_MOVE;*/
-		if ((grfKeyState & MK_CONTROL) && gConEmu.isDragProcessed && gSet.isDropEnabled!=2) {
+		if ((grfKeyState & MK_CONTROL) && gConEmu.isDragging() /*&& gSet.isDropEnabled!=2*/) {
+			if (gSet.isDefCopy)
+				*pdwEffect=DROPEFFECT_MOVE;
+			else
+				*pdwEffect=DROPEFFECT_COPY;
 			// «апретить бросать при нажатом контроле, если тащат с другой панели
 			// ѕо хорошему, нужно бы и другие кнопки запрещать (Alt, Shift,...)
-			*pdwEffect = DROPEFFECT_NONE;
+			//*pdwEffect = DROPEFFECT_NONE;
 		} else
-		if ((grfKeyState & MK_CONTROL)==0 || gConEmu.isDragProcessed) {
+		if ((grfKeyState & MK_CONTROL)==0 || gConEmu.isDragging()) {
 			if (gSet.isDefCopy)
 				*pdwEffect=DROPEFFECT_COPY;
 			else
@@ -218,13 +222,13 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragOver(DWORD grfKeyState,POINTL pt,DWORD 
 
 HRESULT STDMETHODCALLTYPE CDragDrop::DragEnter(IDataObject * pDataObject,DWORD grfKeyState,POINTL pt,DWORD * pdwEffect)
 {
-	if (gSet.isDropEnabled || gConEmu.isDragProcessed)
+	if (gSet.isDropEnabled || gConEmu.isDragging())
 	{
 		CConEmuPipe pipe;
 
 		gConEmu.DnDstep(_T("DnD: DragEnter starting"));
 
-		if (pipe.Init())
+		if (pipe.Init(_T("CDragDrop::DragEnter")))
 		{
 			selfdrag=(pDataObject == this->pDataObject);
 			//PipeCmd cmd=DragTo;
@@ -279,15 +283,16 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragLeave(void)
 
 void CDragDrop::Drag()
 {
-	if (!gSet.isDragEnabled /*|| isInDrag */|| gConEmu.isDragProcessed) {
+	if (!gSet.isDragEnabled /*|| isInDrag */|| gConEmu.isDragging()) {
 		gConEmu.DnDstep(_T("DnD: Drag disabled"));
 		return;
 	}
 
-	gConEmu.isDragProcessed=true; // чтобы не сработало два раза на один драг
+	//gConEmu.isDragProcessed=true; // чтобы не сработало два раза на один драг
+	gConEmu.mouse.state |= (gConEmu.mouse.state & DRAG_R_ALLOWED) ? DRAG_R_STARTED : DRAG_L_STARTED;
 
 	CConEmuPipe pipe;
-	if (pipe.Init())
+	if (pipe.Init(_T("CDragDrop::Drag")))
 	{
 		//isInDrag=true; // return в теле не допускать - нужно сбросить в конце
 
@@ -371,7 +376,7 @@ void CDragDrop::Drag()
 						CreateDropSource(&pDropSource);
 						CreateDataObject(&fmtetc, &stgmed, 1, &pDataObject) ;//   |   ѕосмотреть ниже... 
 						DWORD dwAllowedEffects = DROPEFFECT_LINK;
-						unsigned short stateControl = GetAsyncKeyState(VK_CONTROL);
+						/*unsigned short stateControl = GetAsyncKeyState(VK_CONTROL);
 						if (gSet.isDefCopy==1) {
 							//  опирование по умолчанию
 							if (stateControl & 0x8000) // но нажат Ctrl
@@ -384,11 +389,14 @@ void CDragDrop::Drag()
 								dwAllowedEffects |= DROPEFFECT_COPY;
 							else
 								dwAllowedEffects |= DROPEFFECT_MOVE;
-						} else {
+						} 
+						else */
+						{
 							// "—тандартное" поведение
 							dwAllowedEffects |= DROPEFFECT_COPY|DROPEFFECT_MOVE;
 						}
 						
+						pipe.Close();
 						gConEmu.DnDstep(_T("DnD: Finally, DoDragDrop"));
 						dwResult = DoDragDrop(pDataObject, pDropSource, dwAllowedEffects, &dwEffect);
 						pDataObject->Release();

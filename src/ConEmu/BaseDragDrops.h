@@ -53,6 +53,8 @@ public:
 	
 private:
 
+	HCURSOR mh_CurCopy, mh_CurMove, mh_CurLink;
+
     //
 	// private members and functions
 	//

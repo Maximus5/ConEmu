@@ -137,15 +137,15 @@ BEGIN
                     WS_BORDER,WS_EX_STATICEDGE
     CONTROL         "&Send AltEnter to application",cbSendAE,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,10,153,125,8
-    CONTROL         "Enable 'Drag'",cbDragEnabled,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,154,139,67,8
+    CONTROL         "Allow 'Drag'",cbDragEnabled,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,154,139,53,8
     CONTROL         "Enable Tabs",cbTabs,"Button",BS_AUTO3STATE | WS_TABSTOP,
                     154,112,72,8
     GROUPBOX        "Keyboard and mouse",IDC_STATIC,4,129,136,39
     CONTROL         "GUI progress bars",cbGUIpb,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,229,112,86,8
-    CONTROL         "Copy by default",cbDnDCopy,"Button",BS_AUTO3STATE | 
-                    WS_TABSTOP,240,153,76,8
+    CONTROL         "Copy by default",cbDnDCopy,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,232,153,72,8
     COMBOBOX        tFontFace2,9,107,88,72,CBS_DROPDOWN | CBS_AUTOHSCROLL | 
                     CBS_SORT | WS_VSCROLL | WS_TABSTOP
     COMBOBOX        tFontSizeX2,109,107,24,66,CBS_DROPDOWN | WS_VSCROLL | 
@@ -176,8 +176,12 @@ BEGIN
     GROUPBOX        "Drag and drop (Shell style)",IDC_STATIC,147,129,176,39
     COMBOBOX        lbDragKey,154,150,71,30,CBS_DROPDOWNLIST | WS_VSCROLL | 
                     WS_TABSTOP
-    CONTROL         "Enable 'Drop'",cbDropEnabled,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,240,139,73,10
+    CONTROL         "Allow 'Drop'",cbDropEnabled,"Button",BS_AUTO3STATE | 
+                    WS_TABSTOP,260,139,57,10
+    CONTROL         "L",cbDragL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,209,
+                    139,17,10
+    CONTROL         "R",cbDragR,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,232,
+                    139,21,10
 END
 
 IDD_DIALOG2 DIALOGEX 0, 0, 328, 246
@@ -432,6 +436,15 @@ END
 //
 
 IDB_CONMAN1             BITMAP  DISCARDABLE     "toolbar1.bmp"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Cursor
+//
+
+IDC_COPY                CURSOR  DISCARDABLE     "DRAGCOPY.CUR"
+IDC_LINK                CURSOR  DISCARDABLE     "DRAGLINK.CUR"
+IDC_MOVE                CURSOR  DISCARDABLE     "DRAGMOVE.CUR"
 #endif    // English (U.S.) resources
 /////////////////////////////////////////////////////////////////////////////
 

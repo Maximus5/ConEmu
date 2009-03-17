@@ -25,6 +25,14 @@
 #include "ConEmuPipe.h"
 
 
+#define DRAG_L_ALLOWED 0x01
+#define DRAG_R_ALLOWED 0x02
+#define DRAG_L_STARTED 0x10
+#define DRAG_R_STARTED 0x20
+#define MOUSE_SIZING   0x40
+#define MOUSE_R_LOCKED 0x80
+
+
 #define MBox(rt) (int)MessageBox(NULL, rt, Title, MB_SYSTEMMODAL | MB_ICONINFORMATION)
 #define MBoxA(rt) (int)MessageBox(NULL, rt, _T("ConEmu"), MB_SYSTEMMODAL | MB_ICONINFORMATION)
 #define MBoxAssert(V) if ((V)==FALSE) { TCHAR szAMsg[MAX_PATH*2]; wsprintf(szAMsg, _T("Assertion(%s) at\n%s:%i"), #V, __FILE__, __LINE__); MBoxA(szAMsg); }

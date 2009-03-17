@@ -113,7 +113,7 @@ void CSettings::InitSettings()
     isScrollTitle = true;
     ScrollTitleLen = 22;
     
-    isDragEnabled = true; isDropEnabled = (char)2; nDragKey = 0; isDnDsteps = false; isDefCopy = 2;
+    isDragEnabled = DRAG_L_ALLOWED; isDropEnabled = (char)2; nDragKey = 0; isDnDsteps = false; isDefCopy = true;
 }
 
 void CSettings::LoadSettings()
@@ -541,9 +541,13 @@ LRESULT CSettings::OnInitDialog()
 	if (isRClickSendKey) CheckDlgButton(hMain, cbRClick, (isRClickSendKey==1) ? BST_CHECKED : BST_INDETERMINATE);
 	if (isSentAltEnter) CheckDlgButton(hMain, cbSendAE, BST_CHECKED);
 
-	CheckDlgButton(hMain, cbDragEnabled, isDragEnabled ? BST_CHECKED : BST_UNCHECKED);
+	if (isDragEnabled) {
+		CheckDlgButton(hMain, cbDragEnabled, BST_CHECKED);
+		if (isDragEnabled & DRAG_L_ALLOWED) CheckDlgButton(hMain, cbDragL, BST_CHECKED);
+		if (isDragEnabled & DRAG_R_ALLOWED) CheckDlgButton(hMain, cbDragR, BST_CHECKED);
+	}
 	if (isDropEnabled) CheckDlgButton(hMain, cbDropEnabled, (isDropEnabled==1) ? BST_CHECKED : BST_INDETERMINATE);
-	if (isDefCopy) CheckDlgButton(hMain, cbDnDCopy, (isDefCopy==1) ? BST_CHECKED : BST_INDETERMINATE);
+	if (isDefCopy) CheckDlgButton(hMain, cbDnDCopy, BST_CHECKED);
 	{
 		uint nKeyCount = sizeofarray(Settings::szKeys);
 		u8 num = 0;
@@ -782,7 +786,23 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
         break;
 
     case cbDragEnabled:
-        isDragEnabled = !isDragEnabled;
+	    if (IsDlgButtonChecked(hMain, cbDragEnabled) == BST_UNCHECKED) {
+		    if (IsDlgButtonChecked(hMain, cbDragL)==BST_CHECKED) 
+			    CheckDlgButton(hMain, cbDragL, BST_UNCHECKED);
+		    if (IsDlgButtonChecked(hMain, cbDragR)==BST_CHECKED) 
+			    CheckDlgButton(hMain, cbDragR, BST_UNCHECKED);
+	    } else {
+		    if (IsDlgButtonChecked(hMain, cbDragL)!=BST_CHECKED) 
+			    CheckDlgButton(hMain, cbDragL, BST_CHECKED);
+	    }
+    case cbDragL:
+    case cbDragR:
+        //isDragEnabled = !isDragEnabled;
+        isDragEnabled = 
+	        ((IsDlgButtonChecked(hMain, cbDragL)==BST_CHECKED) ? DRAG_L_ALLOWED : 0) |
+	        ((IsDlgButtonChecked(hMain, cbDragR)==BST_CHECKED) ? DRAG_R_ALLOWED : 0);
+	    if ( (isDragEnabled == 0) != (IsDlgButtonChecked(hMain, cbDragEnabled) == BST_UNCHECKED) )
+		    CheckDlgButton(hMain, cbDragEnabled, (isDragEnabled == 0) ? BST_UNCHECKED : BST_CHECKED);
         break;
     case cbDropEnabled:
         //isDropEnabled = !isDropEnabled;
@@ -796,15 +816,15 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
         }
         break;
     case cbDnDCopy:
-        switch(IsDlgButtonChecked(hMain, cbDnDCopy)) {
-            case BST_UNCHECKED:
-                isDefCopy=0; break;
-            case BST_CHECKED:
-                isDefCopy=1; break;
-            case BST_INDETERMINATE:
-                isDefCopy=2; break;
-        }
-        //isDefCopy = !isDefCopy;
+        //switch(IsDlgButtonChecked(hMain, cbDnDCopy)) {
+        //    case BST_UNCHECKED:
+        //        isDefCopy=0; break;
+        //    case BST_CHECKED:
+        //        isDefCopy=1; break;
+        //    case BST_INDETERMINATE:
+        //        isDefCopy=2; break;
+        //}
+        isDefCopy = !isDefCopy;
         break;
     
     case cbGUIpb:

@@ -11,6 +11,9 @@
 #define IDD_DIALOG2                     103
 #define IDD_DIALOGM                     104
 #define IDD_DIALOG3                     105
+#define IDC_COPY                        108
+#define IDC_LINK                        109
+#define IDC_MOVE                        110
 #define c0                              1000
 #define c1                              1001
 #define c2                              1002
@@ -154,14 +157,16 @@
 #define tPerfInterval                   1404
 #define lbDragKey                       1501
 #define cbDropEnabled                   1502
+#define cbDragL                         1504
+#define cbDragR                         1505
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        108
+#define _APS_NEXT_RESOURCE_VALUE        111
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1503
+#define _APS_NEXT_CONTROL_VALUE         1505
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

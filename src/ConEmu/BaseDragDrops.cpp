@@ -1,7 +1,9 @@
 //#include "StdAfx.h"
 #include ".\basedragdrops.h"
+#include "resource.h"
 #include <tchar.h>
 
+extern HINSTANCE g_hInstance;
 
 CBaseDropTarget::CBaseDropTarget(HWND hwnd) : m_hWnd(hwnd), m_lRefCount(1)
 {
@@ -89,6 +91,7 @@ ULONG __stdcall CBaseDropTarget::Release(void)
 CDropSource::CDropSource() 
 {
 	m_lRefCount = 1;
+	mh_CurCopy = NULL; mh_CurMove = NULL; mh_CurLink = NULL;
 }
 
 //
@@ -172,7 +175,30 @@ HRESULT __stdcall CDropSource::QueryContinueDrag(BOOL fEscapePressed, DWORD grfK
 //
 HRESULT __stdcall CDropSource::GiveFeedback(DWORD dwEffect)
 {
-	return DRAGDROP_S_USEDEFAULTCURSORS;
+	HRESULT hr = DRAGDROP_S_USEDEFAULTCURSORS;
+	if (dwEffect & DROPEFFECT_COPY) {
+		if (!mh_CurCopy) mh_CurCopy = LoadCursor(g_hInstance, MAKEINTRESOURCE(IDC_COPY));
+		if (mh_CurCopy) {
+			SetCursor(mh_CurCopy);
+			hr = S_OK;
+		}
+
+	} else if (dwEffect & DROPEFFECT_MOVE) {
+		if (!mh_CurMove) mh_CurMove = LoadCursor(g_hInstance, MAKEINTRESOURCE(IDC_MOVE));
+		if (mh_CurMove) {
+			SetCursor(mh_CurMove);
+			hr = S_OK;
+		}
+
+	} else if (dwEffect & DROPEFFECT_LINK) {
+		if (!mh_CurLink) mh_CurLink = LoadCursor(g_hInstance, MAKEINTRESOURCE(IDC_LINK));
+		if (mh_CurLink) {
+			SetCursor(mh_CurLink);
+			hr = S_OK;
+		}
+
+	}
+	return hr;
 }
 
 //

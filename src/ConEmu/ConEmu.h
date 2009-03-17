@@ -65,18 +65,34 @@ public:
 	bool isWndNotFSMaximized;
 	bool isShowConsole;
 	bool mb_FullWindowDrag;
-	bool isLBDown, /*isInDrag,*/ isDragProcessed, mb_InSizing, mb_IgnoreMouseMove;
-	bool isRBDown, ibSkilRDblClk; DWORD dwRBDownTick;
+	//bool isLBDown, /*isInDrag,*/ isDragProcessed, 
+	//mb_InSizing, -> state&MOUSE_SIZING
+	//mb_IgnoreMouseMove;
+	//bool isRBDown, ibSkipRDblClk; DWORD dwRBDownTick;
+	struct {
+		BYTE  state;
+		bool  bSkipRDblClk;
+		bool  bIgnoreMouseMove;
+		
+		COORD LClkDC, LClkCon;
+		DWORD LClkTick;
+		COORD RClkDC, RClkCon;
+		DWORD RClkTick;
+
+		// „тобы не слать в консоль бесконечные WM_MOUSEMOVE
+		WPARAM lastMMW;
+		LPARAM lastMML;
+	} mouse;
 	bool isPiewUpdate;
 	bool gbPostUpdateWindowSize;
 	HWND hPictureView; bool bPicViewSlideShow; DWORD dwLastSlideShowTick;
 	bool gb_ConsoleSelectMode;
 	bool setParent, setParent2;
 	//BOOL mb_InClose;
-	int RBDownNewX, RBDownNewY;
+	//int RBDownNewX, RBDownNewY;
 	POINT cursor, Rcursor;
-	WPARAM lastMMW;
-	LPARAM lastMML;
+	//WPARAM lastMMW;
+	//LPARAM lastMML;
 	CDragDrop *DragDrop;
 	CProgressBars *ProgressBars;
 	COORD m_LastConSize; // console size after last resize (in columns and lines)
@@ -153,11 +169,14 @@ public:
 	void InvalidateAll();
 	bool isConman();
 	bool isConSelectMode();
+	bool isDragging();
 	bool isEditor();
 	bool isFar();
 	bool isFilePanel(bool abPluginAllowed=false);
+	bool isLBDown();
 	bool isNtvdm();
 	bool isPictureView();
+	bool isSizing();
 	bool isViewer();
 	void LoadIcons();
 	bool LoadVersionInfo(wchar_t* pFullPath);

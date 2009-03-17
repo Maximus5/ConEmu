@@ -29,10 +29,10 @@ public:
     bool isSentAltEnter;
     bool isForceMonospace, isTTF;
     bool isUpdConHandle;
-    bool isDragEnabled;
-	char isDropEnabled;
+    BYTE isDragEnabled;
+	BYTE isDropEnabled;
     DWORD nDragKey;
-    char isDefCopy;
+    bool isDefCopy;
     bool isDnDsteps;
     bool isGUIpb;
     char isTabs;

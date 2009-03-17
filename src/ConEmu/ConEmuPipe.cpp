@@ -1,6 +1,7 @@
 #include "header.h"
 
 HANDLE CConEmuPipe::hMapping=NULL;
+TCHAR  CConEmuPipe::sLastOp[64] = _T("");
 
 CConEmuPipe::CConEmuPipe()
 {
@@ -29,7 +30,11 @@ void CConEmuPipe::Close()
 	SafeCloseHandle(hEventReady);
 	if (lpMap)
 		UnmapViewOfFile(lpMap);
-	SafeCloseHandle(hMapping);
+	if (hMapping) {
+		SafeCloseHandle(hMapping);
+		ms_LastOp[0] = 0;
+		sLastOp[0] = 0;
+	}
 }
 
 #define CREATEEVENT(fmt,h) \
@@ -38,10 +43,12 @@ void CConEmuPipe::Close()
 		if (h==INVALID_HANDLE_VALUE) h=NULL;
 
 //#pragma message("warning: добавить аргумент abSilent, вдруг плагин еще не загружен?")
-BOOL CConEmuPipe::Init(BOOL abSilent)
+BOOL CConEmuPipe::Init(LPCTSTR asOp, BOOL abSilent)
 {
 	if (hMapping) {
-		MBoxA(_T("Last operation was not finished!"));
+		TCHAR szMsg[0x400];
+		wsprintf(szMsg, _T("Can't start '%s'\nLast operation '%s' was not finished!"), asOp, sLastOp);
+		MBoxA(szMsg);
 		return FALSE;
 	}
 
@@ -49,6 +56,8 @@ BOOL CConEmuPipe::Init(BOOL abSilent)
 	    gConEmu.DnDstep(_T("Pipe: FAR not active"));
 	    return FALSE;
 	}
+	
+	lstrcpyn(ms_LastOp, asOp, 64);
 
 	// Сформируем ИМЯ сразу, а то вдруг процесс переключится?
 	DWORD dwCurProcId = gConEmu.mn_TopProcessID;
@@ -112,6 +121,9 @@ BOOL CConEmuPipe::Read(LPVOID pData, DWORD nSize, DWORD* nRead)
 
 	if (hMapping==NULL) {
 		// Нужно инициализировать FileMapping
+		
+		lstrcpy(sLastOp, ms_LastOp);
+		
 		
 		hMapping = OpenFileMapping(FILE_MAP_ALL_ACCESS, // Read/write permission. 
 			FALSE,                             // Do not inherit the name

@@ -208,10 +208,10 @@ void ProcessCommand(DWORD nCmd, BOOL bReqMainThread)
 		SendMessage(FarHwnd, WM_KEYUP, VK_F14, (LPARAM)(3<<30));
 		
 		HANDLE hEvents[2] = {ghReqCommandEvent, hEventCmd[CMD_EXIT]};
-		DuplicateHandle(GetCurrentProcess(), ghReqCommandEvent, GetCurrentProcess(), hEvents, 0, 0, DUPLICATE_SAME_ACCESS);
+		//DuplicateHandle(GetCurrentProcess(), ghReqCommandEvent, GetCurrentProcess(), hEvents, 0, 0, DUPLICATE_SAME_ACCESS);
 		DWORD dwWait = WaitForMultipleObjects ( 2, hEvents, FALSE, CONEMUFARTIMEOUT );
 		if (dwWait) ResetEvent(ghReqCommandEvent); // Сразу сбросим, вдруг не дождались?
-		CloseHandle(hEvents[0]);
+		//CloseHandle(hEvents[0]);
 		
 		gnReqCommand = -1;
 		return;

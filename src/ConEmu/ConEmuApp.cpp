@@ -719,7 +719,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		//gConEmu.mn_ActiveStatus = CES_FARACTIVE;
 		//mn_TopProcessID
 		gConEmu.CheckProcesses(0,TRUE);
-	    if (pipe.Init(TRUE))
+	    if (pipe.Init(_T("DefFont.in.attach"), TRUE))
 		    pipe.Execute(CMD_DEFFONT);
     } else {
 	    AllocConsole();
@@ -979,8 +979,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     gConEmu.DragDrop=new CDragDrop(HDCWND);
     gConEmu.ProgressBars=new CProgressBars(ghWnd, g_hInstance);
 
-    gConEmu.isRBDown=false;
-    gConEmu.isLBDown=false;
+    //gConEmu.isRBDown=false;
+    //gConEmu.isLBDown=false;
 
     SetForegroundWindow(ghWnd);
 
