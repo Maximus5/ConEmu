@@ -160,6 +160,7 @@ void TabBarClass::FarSendChangeTab(int tabIndex)
 					gConEmu.DnDstep(NULL);
 
 					pipe.Close();
+
 					Retrieve();//TODO: хорошо бы как-то оптимизировать...
 				}
 			}

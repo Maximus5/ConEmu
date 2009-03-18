@@ -70,11 +70,15 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop (IDataObject * pDataObject,DWORD grfKe
 	{
 		SHFILEOPSTRUCT fop;
 
-		if ((grfKeyState & MK_CONTROL) && gConEmu.isDragging() && gSet.isDropEnabled!=2) {
+		if ((grfKeyState & MK_CONTROL) && gConEmu.isDragging() /*&& gSet.isDropEnabled!=2*/) {
+			if (gSet.isDefCopy)
+				*pdwEffect=DROPEFFECT_MOVE;
+			else
+				*pdwEffect=DROPEFFECT_COPY;
 			// Запретить бросать при нажатом контроле, если тащат с другой панели
 			// По хорошему, нужно бы и другие кнопки запрещать (Alt, Shift,...)
-			*pdwEffect = DROPEFFECT_NONE;
-			return S_OK;
+			//*pdwEffect = DROPEFFECT_NONE;
+			//return S_OK;
 		} else
 		if ((grfKeyState & MK_CONTROL)==0 || gConEmu.isDragging()) {
 			if (gSet.isDefCopy)
@@ -115,9 +119,11 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop (IDataObject * pDataObject,DWORD grfKe
 		else if (pt.x>pfpi->PassiveRect.left && pt.x<pfpi->PassiveRect.right && pt.y>pfpi->PassiveRect.top && pt.y<pfpi->PassiveRect.bottom && pfpi->pszPassivePath[0])
 		{
 			// Пока подвисает...
-			if (gConEmu.isDragging() && gSet.isDropEnabled==2) {
+			if (gConEmu.isDragging() /*&& gSet.isDropEnabled==2*/) {
 				//wchar_t* mcr = (fop.wFunc==FO_COPY) ? L"F5" : L"F6";
-				wchar_t* mcr = (grfKeyState & MK_CONTROL) ? L"F6" : L"F5";
+				wchar_t mcr[16];
+				lstrcpyW(mcr, (grfKeyState & MK_CONTROL) ? L"F6" : L"F5");
+				if (gSet.isDropEnabled==2) lstrcatW(mcr, L" Enter");
 
 				gConEmu.PostMacro(mcr);
 
@@ -391,6 +397,7 @@ void CDragDrop::Drag()
 								dwAllowedEffects |= DROPEFFECT_MOVE;
 						} 
 						else */
+						if (!isPressed(VK_RBUTTON))
 						{
 							// "Стандартное" поведение
 							dwAllowedEffects |= DROPEFFECT_COPY|DROPEFFECT_MOVE;

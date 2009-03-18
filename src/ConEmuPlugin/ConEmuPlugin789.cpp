@@ -213,6 +213,13 @@ void SetStartupInfoW789(void *aInfo)
 	*::InfoW789 = *((struct PluginStartupInfo*)aInfo);
 	*::FSFW789 = *((struct PluginStartupInfo*)aInfo)->FSF;
 	::InfoW789->FSF = ::FSFW789;
+
+	lstrcpynW(gszRootKey, InfoW789->RootKey, MAX_PATH);
+	WCHAR* pszSlash = gszRootKey+lstrlenW(gszRootKey)-1;
+	if (*pszSlash == L'\\') *(pszSlash--) = 0;
+	while (pszSlash>gszRootKey && *pszSlash!=L'\\') pszSlash--;
+	*pszSlash = 0;
+
 	
 	/*if (!FarHwnd)
 		InitHWND((HWND)InfoW789->AdvControl(InfoW789->ModuleNumber, ACTL_GETFARHWND, 0));*/

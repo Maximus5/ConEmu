@@ -137,15 +137,13 @@ BEGIN
                     WS_BORDER,WS_EX_STATICEDGE
     CONTROL         "&Send AltEnter to application",cbSendAE,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,10,153,125,8
-    CONTROL         "Allow 'Drag'",cbDragEnabled,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,154,139,53,8
     CONTROL         "Enable Tabs",cbTabs,"Button",BS_AUTO3STATE | WS_TABSTOP,
                     154,112,72,8
     GROUPBOX        "Keyboard and mouse",IDC_STATIC,4,129,136,39
     CONTROL         "GUI progress bars",cbGUIpb,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,229,112,86,8
     CONTROL         "Copy by default",cbDnDCopy,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,232,153,72,8
+                    WS_TABSTOP,252,154,66,8
     COMBOBOX        tFontFace2,9,107,88,72,CBS_DROPDOWN | CBS_AUTOHSCROLL | 
                     CBS_SORT | WS_VSCROLL | WS_TABSTOP
     COMBOBOX        tFontSizeX2,109,107,24,66,CBS_DROPDOWN | WS_VSCROLL | 
@@ -174,14 +172,16 @@ BEGIN
                     WS_EX_STATICEDGE
     GROUPBOX        "Graphic enhancement",IDC_STATIC,147,101,176,25
     GROUPBOX        "Drag and drop (Shell style)",IDC_STATIC,147,129,176,39
-    COMBOBOX        lbDragKey,154,150,71,30,CBS_DROPDOWNLIST | WS_VSCROLL | 
+    COMBOBOX        lbLDragKey,192,138,56,30,CBS_DROPDOWNLIST | WS_VSCROLL | 
                     WS_TABSTOP
     CONTROL         "Allow 'Drop'",cbDropEnabled,"Button",BS_AUTO3STATE | 
-                    WS_TABSTOP,260,139,57,10
-    CONTROL         "L",cbDragL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,209,
-                    139,17,10
-    CONTROL         "R",cbDragR,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,232,
-                    139,21,10
+                    WS_TABSTOP,252,139,53,10
+    CONTROL         "LDrag",cbDragL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
+                    154,139,36,10
+    CONTROL         "RDrag",cbDragR,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
+                    154,154,36,10
+    COMBOBOX        lbRDragKey,192,152,56,30,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
 END
 
 IDD_DIALOG2 DIALOGEX 0, 0, 328, 246

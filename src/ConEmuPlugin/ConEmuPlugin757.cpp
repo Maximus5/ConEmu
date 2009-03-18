@@ -210,6 +210,12 @@ void SetStartupInfoW757(void *aInfo)
 	*::FSFW757 = *((struct PluginStartupInfo*)aInfo)->FSF;
 	::InfoW757->FSF = ::FSFW757;
 	
+	lstrcpynW(gszRootKey, InfoW757->RootKey, MAX_PATH);
+	WCHAR* pszSlash = gszRootKey+lstrlenW(gszRootKey)-1;
+	if (*pszSlash == L'\\') *(pszSlash--) = 0;
+	while (pszSlash>gszRootKey && *pszSlash!=L'\\') pszSlash--;
+	*pszSlash = 0;
+
 	/*if (!FarHwnd)
 		InitHWND((HWND)InfoW757->AdvControl(InfoW757->ModuleNumber, ACTL_GETFARHWND, 0));*/
 }

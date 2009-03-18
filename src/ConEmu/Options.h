@@ -31,7 +31,7 @@ public:
     bool isUpdConHandle;
     BYTE isDragEnabled;
 	BYTE isDropEnabled;
-    DWORD nDragKey;
+    DWORD nLDragKey, nRDragKey;
     bool isDefCopy;
     bool isDnDsteps;
     bool isGUIpb;

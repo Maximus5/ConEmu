@@ -72,7 +72,6 @@
 #define slDark                          1050
 #define slDarker                        1050
 #define cbSendAE                        1051
-#define cbDragEnabled                   1052
 #define cbDnDCopy                       1053
 #define cbTabs                          1054
 #define cbGUIpb                         1055
@@ -155,8 +154,9 @@
 #define tPerfRender                     1402
 #define tPerfBlt                        1403
 #define tPerfInterval                   1404
-#define lbDragKey                       1501
+#define lbLDragKey                      1501
 #define cbDropEnabled                   1502
+#define lbRDragKey                      1503
 #define cbDragL                         1504
 #define cbDragR                         1505
 

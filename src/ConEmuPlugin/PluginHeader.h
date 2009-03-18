@@ -13,7 +13,7 @@
 #endif
 
 extern int lastModifiedStateW;
-extern WCHAR gszDir1[CONEMUTABMAX], gszDir2[CONEMUTABMAX];
+extern WCHAR gszDir1[CONEMUTABMAX], gszDir2[CONEMUTABMAX], gszRootKey[MAX_PATH];
 extern int maxTabCount, lastWindowCount;
 extern ConEmuTab* tabs; //(ConEmuTab*) calloc(maxTabCount, sizeof(ConEmuTab));
 extern HWND ConEmuHwnd;

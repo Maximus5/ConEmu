@@ -446,11 +446,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     bool setParentDisabled=false;
     bool ClearTypePrm = false;
-    bool FontPrm = false; TCHAR* FontVal;
+    bool FontPrm = false; TCHAR* FontVal = NULL;
     bool SizePrm = false; LONG SizeVal;
     bool BufferHeightPrm = false; int BufferHeightVal;
-    bool ConfigPrm = false; TCHAR* ConfigVal;
-	bool FontFilePrm = false; TCHAR* FontFile; //ADD fontname; by Mors
+    bool ConfigPrm = false; TCHAR* ConfigVal = NULL;
+	bool FontFilePrm = false; TCHAR* FontFile = NULL; //ADD fontname; by Mors
 	bool WindowPrm = false;
 	bool AttachPrm = false; LONG AttachVal=0;
 	bool ConManPrm = false;
@@ -513,10 +513,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
         // Parse parameters.
         // Duplicated parameters are permitted, the first value is used.
-		//Ѕлин. Ќу если уж в params учитываетс€ и им€ исполн€емого модул€ - i начинать надо с 2-х
-        for (uint i = 2; i < params; i++)
+		// ¬ зависимости от "стил€" запуска в командной строке может быть им€ conemu, а может и нет...
+        for (uint i = 0; i < params; i++)
         {
-            curCommand += _tcslen(curCommand) + 1;
 			if ( !klstricmp(curCommand, _T("/conman")) ) {
 				ConManPrm = true;
 			}
@@ -625,6 +624,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
                 free(cmdLine);
                 return -1; // NightRoman
             }
+
+			curCommand += _tcslen(curCommand) + 1;
         }
     }
     if (setParentDisabled && (gConEmu.setParent || gConEmu.setParent2)) {

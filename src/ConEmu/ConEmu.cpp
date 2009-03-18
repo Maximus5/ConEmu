@@ -2559,7 +2559,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
                 //isLBDown=true;
                 //isDragProcessed=false;
 				if (gSet.isDragEnabled & DRAG_L_ALLOWED) {
-					if (!gSet.nDragKey || isPressed(gSet.nDragKey))
+					if (!gSet.nLDragKey || isPressed(gSet.nLDragKey))
 						mouse.state = DRAG_L_ALLOWED;
 				}
                 //if (gSet.is DnD) mouse.bIgnoreMouseMove = true;
@@ -2595,7 +2595,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
             if (gConEmu.isFilePanel()) // Maximus5
             {
 				if (gSet.isDragEnabled & DRAG_R_ALLOWED) {
-					if (!gSet.nDragKey || isPressed(gSet.nDragKey))
+					if (!gSet.nRDragKey || isPressed(gSet.nRDragKey))
 						mouse.state = DRAG_R_ALLOWED;
 				}
 				// Если ничего лишнего не нажато!

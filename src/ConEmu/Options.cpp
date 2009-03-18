@@ -113,7 +113,8 @@ void CSettings::InitSettings()
     isScrollTitle = true;
     ScrollTitleLen = 22;
     
-    isDragEnabled = DRAG_L_ALLOWED; isDropEnabled = (char)2; nDragKey = 0; isDnDsteps = false; isDefCopy = true;
+    isDragEnabled = DRAG_L_ALLOWED; isDropEnabled = (char)2; 
+	nLDragKey = 0; nRDragKey = 0; isDnDsteps = false; isDefCopy = true;
 }
 
 void CSettings::LoadSettings()
@@ -174,7 +175,8 @@ void CSettings::LoadSettings()
 		reg.Load(_T("Proportional"), &isTTF);
         reg.Load(_T("Update Console handle"), &isUpdConHandle);
 		reg.Load(_T("Dnd"), &isDragEnabled); isDropEnabled = (char)(isDragEnabled ? 2 : 0); // ранее "DndDrop" не было
-        reg.Load(_T("DndKey"), &nDragKey);
+        reg.Load(_T("DndLKey"), &nLDragKey);
+		reg.Load(_T("DndRKey"), &nRDragKey);
         reg.Load(_T("DndDrop"), &isDropEnabled);
         reg.Load(_T("DefCopy"), &isDefCopy);
         reg.Load(_T("DndSteps"), &isDnDsteps);
@@ -311,7 +313,8 @@ BOOL CSettings::SaveSettings()
             reg.Save(_T("RightClick opens context menu"), isRClickSendKey);
             reg.Save(_T("AltEnter"), isSentAltEnter);
             reg.Save(_T("Dnd"), isDragEnabled);
-            reg.Save(_T("DndKey"), nDragKey);
+            reg.Save(_T("DndLKey"), nLDragKey);
+			reg.Save(_T("DndRKey"), nRDragKey);
             reg.Save(_T("DndDrop"), isDropEnabled);
             reg.Save(_T("DefCopy"), isDefCopy);
             reg.Save(_T("GUIpb"), isGUIpb);
@@ -542,7 +545,7 @@ LRESULT CSettings::OnInitDialog()
 	if (isSentAltEnter) CheckDlgButton(hMain, cbSendAE, BST_CHECKED);
 
 	if (isDragEnabled) {
-		CheckDlgButton(hMain, cbDragEnabled, BST_CHECKED);
+		//CheckDlgButton(hMain, cbDragEnabled, BST_CHECKED);
 		if (isDragEnabled & DRAG_L_ALLOWED) CheckDlgButton(hMain, cbDragL, BST_CHECKED);
 		if (isDragEnabled & DRAG_R_ALLOWED) CheckDlgButton(hMain, cbDragR, BST_CHECKED);
 	}
@@ -550,13 +553,17 @@ LRESULT CSettings::OnInitDialog()
 	if (isDefCopy) CheckDlgButton(hMain, cbDnDCopy, BST_CHECKED);
 	{
 		uint nKeyCount = sizeofarray(Settings::szKeys);
-		u8 num = 0;
+		u8 numL = 0, numR = 0;
 		for (uint i=0; i<nKeyCount; i++) {
-			SendDlgItemMessage(hMain, lbDragKey, CB_ADDSTRING, 0, (LPARAM) Settings::szKeys[i]);
-			if (Settings::nKeys[i] == nDragKey) num = i;
+			SendDlgItemMessage(hMain, lbLDragKey, CB_ADDSTRING, 0, (LPARAM) Settings::szKeys[i]);
+			SendDlgItemMessage(hMain, lbRDragKey, CB_ADDSTRING, 0, (LPARAM) Settings::szKeys[i]);
+			if (Settings::nKeys[i] == nLDragKey) numL = i;
+			if (Settings::nKeys[i] == nRDragKey) numR = i;
 		}
-		if (!num) nDragKey = 0; // если код клавиши неизвестен?
-		SendDlgItemMessage(hMain, lbDragKey, CB_SETCURSEL, num, 0);
+		if (!numL) nLDragKey = 0; // если код клавиши неизвестен?
+		if (!numR) nRDragKey = 0; // если код клавиши неизвестен?
+		SendDlgItemMessage(hMain, lbLDragKey, CB_SETCURSEL, numL, 0);
+		SendDlgItemMessage(hMain, lbRDragKey, CB_SETCURSEL, numR, 0);
 	}
 	
 
@@ -785,7 +792,7 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
         isSentAltEnter = !isSentAltEnter;
         break;
 
-    case cbDragEnabled:
+    /*case cbDragEnabled:
 	    if (IsDlgButtonChecked(hMain, cbDragEnabled) == BST_UNCHECKED) {
 		    if (IsDlgButtonChecked(hMain, cbDragL)==BST_CHECKED) 
 			    CheckDlgButton(hMain, cbDragL, BST_UNCHECKED);
@@ -794,15 +801,15 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
 	    } else {
 		    if (IsDlgButtonChecked(hMain, cbDragL)!=BST_CHECKED) 
 			    CheckDlgButton(hMain, cbDragL, BST_CHECKED);
-	    }
+	    }*/
     case cbDragL:
     case cbDragR:
         //isDragEnabled = !isDragEnabled;
         isDragEnabled = 
 	        ((IsDlgButtonChecked(hMain, cbDragL)==BST_CHECKED) ? DRAG_L_ALLOWED : 0) |
 	        ((IsDlgButtonChecked(hMain, cbDragR)==BST_CHECKED) ? DRAG_R_ALLOWED : 0);
-	    if ( (isDragEnabled == 0) != (IsDlgButtonChecked(hMain, cbDragEnabled) == BST_UNCHECKED) )
-		    CheckDlgButton(hMain, cbDragEnabled, (isDragEnabled == 0) ? BST_UNCHECKED : BST_CHECKED);
+	    //if ( (isDragEnabled == 0) != (IsDlgButtonChecked(hMain, cbDragEnabled) == BST_UNCHECKED) )
+		//    CheckDlgButton(hMain, cbDragEnabled, (isDragEnabled == 0) ? BST_UNCHECKED : BST_CHECKED);
         break;
     case cbDropEnabled:
         //isDropEnabled = !isDropEnabled;
@@ -1066,10 +1073,11 @@ LRESULT CSettings::OnColorComboBox(WPARAM wParam, LPARAM lParam)
 
 LRESULT CSettings::OnComboBox(WPARAM wParam, LPARAM lParam)
 {
-    if (LOWORD(wParam) == tFontFace || LOWORD(wParam) == tFontFace2)
+	WORD wId = LOWORD(wParam);
+    if (wId == tFontFace || wId == tFontFace2)
     {
-        LOGFONT* pLogFont = (LOWORD(wParam) == tFontFace) ? &LogFont : &LogFont2;
-        int nID = (LOWORD(wParam) == tFontFace) ? tFontFace : tFontFace2;
+        LOGFONT* pLogFont = (wId == tFontFace) ? &LogFont : &LogFont2;
+        int nID = (wId == tFontFace) ? tFontFace : tFontFace2;
         _tcscpy(temp, pLogFont->lfFaceName);
         if (HIWORD(wParam) == CBN_EDITCHANGE)
             GetDlgItemText(hMain, nID, pLogFont->lfFaceName, LF_FACESIZE);
@@ -1086,7 +1094,7 @@ LRESULT CSettings::OnComboBox(WPARAM wParam, LPARAM lParam)
             }
         }
 
-		if (LOWORD(wParam) == tFontFace)
+		if (wId == tFontFace)
 			mb_IgnoreTtfChange = FALSE;
 
         BYTE qWas = pLogFont->lfQuality;
@@ -1095,7 +1103,7 @@ LRESULT CSettings::OnComboBox(WPARAM wParam, LPARAM lParam)
         HFONT hFont = pVCon->CreateFontIndirectMy(&LogFont);
         if (hFont)
         {
-            if (LOWORD(wParam) == tFontFace) {
+            if (wId == tFontFace) {
                 DeleteObject(pVCon->hFont);
                 pVCon->hFont = hFont;
 			} else {
@@ -1114,39 +1122,39 @@ LRESULT CSettings::OnComboBox(WPARAM wParam, LPARAM lParam)
 			gConEmu.ReSize();
             InvalidateRect(ghWnd, 0, 0);
 
-            if (LOWORD(wParam) == tFontFace) {
+            if (wId == tFontFace) {
                 wsprintf(temp, _T("%i"), pLogFont->lfHeight);
                 SetDlgItemText(hMain, tFontSizeY, temp);
             }
         }
 		mb_IgnoreTtfChange = TRUE;
     }
-    else if (LOWORD(wParam) == tFontSizeY || LOWORD(wParam) == tFontSizeX || 
-		LOWORD(wParam) == tFontSizeX2 || LOWORD(wParam) == tFontSizeX3 || LOWORD(wParam) == tFontCharset)
+    else if (wId == tFontSizeY || wId == tFontSizeX || 
+		wId == tFontSizeX2 || wId == tFontSizeX3 || wId == tFontCharset)
     {
         int newSize = 0;
-        if (LOWORD(wParam) == tFontSizeY || LOWORD(wParam) == tFontSizeX || 
-			LOWORD(wParam) == tFontSizeX2 || LOWORD(wParam) == tFontSizeX3)
+        if (wId == tFontSizeY || wId == tFontSizeX || 
+			wId == tFontSizeX2 || wId == tFontSizeX3)
         {
             if (HIWORD(wParam) == CBN_EDITCHANGE)
-                GetDlgItemText(hMain, LOWORD(wParam), temp, MAX_PATH);
+                GetDlgItemText(hMain, wId, temp, MAX_PATH);
             else
-                SendDlgItemMessage(hMain, LOWORD(wParam), CB_GETLBTEXT, SendDlgItemMessage(hMain, LOWORD(wParam), CB_GETCURSEL, 0, 0), (LPARAM)temp);
+                SendDlgItemMessage(hMain, wId, CB_GETLBTEXT, SendDlgItemMessage(hMain, wId, CB_GETCURSEL, 0, 0), (LPARAM)temp);
 
             newSize = klatoi(temp);
         }
 
-        if (newSize > 4 && newSize < 200 || (newSize == 0 && *temp == '0') || LOWORD(wParam) == tFontCharset)
+        if (newSize > 4 && newSize < 200 || (newSize == 0 && *temp == '0') || wId == tFontCharset)
         {
-            if (LOWORD(wParam) == tFontSizeY)
+            if (wId == tFontSizeY)
                 LogFont.lfHeight = upToFontHeight = newSize;
-            else if (LOWORD(wParam) == tFontSizeX)
+            else if (wId == tFontSizeX)
                 FontSizeX = newSize;
-            else if (LOWORD(wParam) == tFontSizeX2)
+            else if (wId == tFontSizeX2)
                 FontSizeX2 = newSize;
-            else if (LOWORD(wParam) == tFontSizeX3)
+            else if (wId == tFontSizeX3)
                 FontSizeX3 = newSize;
-            else if (LOWORD(wParam) == tFontCharset)
+            else if (wId == tFontCharset)
             {
                 int newCharSet = SendDlgItemMessage(hMain, tFontCharset, CB_GETCURSEL, 0, 0);
                 if (newCharSet != CB_ERR && newCharSet >= 0 && newCharSet < 19)
@@ -1171,15 +1179,21 @@ LRESULT CSettings::OnComboBox(WPARAM wParam, LPARAM lParam)
             }
         }
 	} else 
-	if (LOWORD(wParam) == lbDragKey) {
-		int num = SendDlgItemMessage(hMain, lbDragKey, CB_GETCURSEL, 0, 0);
+	if (wId == lbLDragKey || wId == lbRDragKey) {
+		int num = SendDlgItemMessage(hMain, wId, CB_GETCURSEL, 0, 0);
 		int nKeyCount = sizeofarray(Settings::szKeys);
 		if (num>=0 && num<nKeyCount) {
-			nDragKey = Settings::nKeys[num];
+			if (wId == lbLDragKey)
+				nLDragKey = Settings::nKeys[num];
+			else
+				nRDragKey = Settings::nKeys[num];
 		} else {
-			nDragKey = 0;
+			if (wId == lbLDragKey)
+				nLDragKey = 0;
+			else
+				nRDragKey = 0;
 			if (num) // Invalid index?
-				SendDlgItemMessage(hMain, lbDragKey, CB_SETCURSEL, num=0, 0);
+				SendDlgItemMessage(hMain, wId, CB_SETCURSEL, num=0, 0);
 		}
 	}
 	return 0;

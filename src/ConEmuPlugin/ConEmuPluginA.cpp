@@ -244,6 +244,12 @@ void WINAPI _export SetStartupInfo(const struct PluginStartupInfo *aInfo)
 	*::FSFA = *aInfo->FSF;
 	::InfoA->FSF = ::FSFA;
 
+	MultiByteToWideChar(CP_ACP,0,InfoA->RootKey,lstrlenA(InfoA->RootKey)+1,gszRootKey,MAX_PATH);
+	WCHAR* pszSlash = gszRootKey+lstrlenW(gszRootKey)-1;
+	if (*pszSlash == L'\\') *(pszSlash--) = 0;
+	while (pszSlash>gszRootKey && *pszSlash!=L'\\') pszSlash--;
+	*pszSlash = 0;
+
 	CheckMacro();
 }
 

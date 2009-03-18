@@ -65,6 +65,7 @@ HANDLE hEventCmd[MAXCMDCOUNT], hEventAlive=NULL, hEventReady=NULL;
 HANDLE hThread=NULL;
 FarVersion gFarVersion;
 WCHAR gszDir1[CONEMUTABMAX], gszDir2[CONEMUTABMAX];
+WCHAR gszRootKey[MAX_PATH];
 int maxTabCount = 0, lastWindowCount = 0, gnCurTabCount = 0;
 ConEmuTab* tabs = NULL; //(ConEmuTab*) calloc(maxTabCount, sizeof(ConEmuTab));
 LPBYTE gpData=NULL, gpCursor=NULL;
@@ -511,6 +512,9 @@ void InitHWND(HWND ahFarHwnd)
 	InitializeCriticalSection(&csData);
 	LoadFarVersion(); // пригодитс€ уже здесь!
 
+	// начальна€ инициализаци€. в SetStartupInfo поправим
+	wsprintfW(gszRootKey, L"Software\\%s\\", (gFarVersion.dwVerMajor==2) ? L"FAR2" : L"FAR");
+
 	ConEmuHwnd = NULL;
 	FarHwnd = ahFarHwnd;
 
@@ -549,9 +553,9 @@ void InitHWND(HWND ahFarHwnd)
 
 void CheckMacro()
 {
-	// ≈сли мы не под эмул€тором - больше ничего делать не нужно
-	if (!ConEmuHwnd)
-		return;
+	// и не под эмул€тором нужно провер€ть макросы, иначе потом активаци€ не сработает...
+	//// ≈сли мы не под эмул€тором - больше ничего делать не нужно
+	//if (!ConEmuHwnd) return;
 
 
 	// ѕроверка наличи€ макроса
@@ -559,19 +563,20 @@ void CheckMacro()
 	HKEY hkey=NULL;
 	#define MODCOUNT 4
 	int n;
-	char szValue[1024], szMacroKey[MODCOUNT][128], szCheckKey[32];
+	char szValue[1024];
+	WCHAR szMacroKey[MODCOUNT][128], szCheckKey[32];
 	DWORD dwSize = 0;
 	//bool lbMacroDontCheck = false;
 
 	for (n=0; n<MODCOUNT; n++) {
 		switch(n){
-			case 0: lstrcpyA(szCheckKey, "F14"); break;
-			case 1: lstrcpyA(szCheckKey, "CtrlF14"); break;
-			case 2: lstrcpyA(szCheckKey, "AltF14"); break;
-			case 3: lstrcpyA(szCheckKey, "ShiftF14"); break;
+			case 0: lstrcpyW(szCheckKey, L"F14"); break;
+			case 1: lstrcpyW(szCheckKey, L"CtrlF14"); break;
+			case 2: lstrcpyW(szCheckKey, L"AltF14"); break;
+			case 3: lstrcpyW(szCheckKey, L"ShiftF14"); break;
 		}
-		wsprintfA(szMacroKey[n], "Software\\%s\\KeyMacros\\Common\\%s",
-			(gFarVersion.dwVerMajor==2) ? "FAR2" : "FAR", szCheckKey);
+		wsprintfW(szMacroKey[n], L"%s\\KeyMacros\\Common\\%s",
+			gszRootKey, szCheckKey);
 	}
 	//lstrcpyA(szCheckKey, "F14DontCheck2");
 
@@ -586,7 +591,7 @@ void CheckMacro()
 	//if (!lbMacroDontCheck)
 	for (n=0; n<MODCOUNT && !lbNeedMacro; n++)
 	{
-		if (0==RegOpenKeyExA(HKEY_CURRENT_USER, szMacroKey[n], 0, KEY_ALL_ACCESS, &hkey))
+		if (0==RegOpenKeyExW(HKEY_CURRENT_USER, szMacroKey[n], 0, KEY_ALL_ACCESS, &hkey))
 		{
 			if (gFarVersion.dwVerMajor==1) {
 				if (0!=RegQueryValueExA(hkey, "Sequence", 0, 0, (LPBYTE)szValue, &(dwSize=1022))) {
@@ -629,7 +634,7 @@ void CheckMacro()
 		{
 			DWORD disp=0;
 			lbMacroAdded = TRUE;
-			if (0==RegCreateKeyExA(HKEY_CURRENT_USER, szMacroKey[n], 0, 0, 
+			if (0==RegCreateKeyExW(HKEY_CURRENT_USER, szMacroKey[n], 0, 0, 
 				0, KEY_ALL_ACCESS, 0, &hkey, &disp))
 			{
 				lstrcpyA(szValue, 
