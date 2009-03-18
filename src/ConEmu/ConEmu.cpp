@@ -2469,6 +2469,10 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
             return 0;
         }
         mouse.lastMMW=wParam; mouse.lastMML=lParam;
+        
+        // 18.03.2009 Maks - Если уже тащим - мышь не слать
+        if (isDragging())
+	        return 0;
 
 
         //TODO: вроде бы иногда isSizing() не сбрасывается?
@@ -2477,24 +2481,25 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
         {
 	        mouse.bIgnoreMouseMove = true;
 
-			if (mouse.state & MOUSE_R_LOCKED)
+			if (mouse.state & MOUSE_R_LOCKED) // чтобы при RightUp не ушел APPS
 				mouse.state &= ~MOUSE_R_LOCKED;
 	        
 	        BOOL lbDiffTest = PTDIFFTEST(cursor,DRAG_DELTA); // TRUE - если курсор НЕ двигался (далеко)
-	        if (!lbDiffTest && !gConEmu.isDragging() && !isSizing())
+	        if (!lbDiffTest && !isDragging() && !isSizing())
 	        {
 	            // Если сначала фокус был на файловой панели, но после LClick он попал на НЕ файловую - отменить ShellDrag
-				bool bFilePanel = gConEmu.isFilePanel();
+				bool bFilePanel = isFilePanel();
 	            if (!bFilePanel) {
 		            DnDstep(_T("DnD: not file panel"));
 		            //isLBDown = false; 
-					mouse.state &= ~(DRAG_L_ALLOWED | DRAG_L_STARTED);
+					mouse.state &= ~(DRAG_L_ALLOWED | DRAG_L_STARTED | DRAG_R_ALLOWED | DRAG_R_STARTED);
 					mouse.bIgnoreMouseMove = false;
 		            POSTMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( newX, newY ), TRUE);     //посылаем консоли отпускание
 		            //ReleaseCapture(); --2009-03-14
 		            return 0;
 	            }
 	            
+	            BOOL lbLeftDrag = (mouse.state & DRAG_L_ALLOWED) == DRAG_L_ALLOWED;
 	            // Чтобы сам фар не дергался на MouseMove...
 	            //isLBDown = false;
 				mouse.state &= ~(DRAG_L_ALLOWED | DRAG_L_STARTED);
@@ -2513,7 +2518,9 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	            mouse.bIgnoreMouseMove = false;
 			    newX = MulDiv(cursor.x, conRect.right, klMax<uint>(1, pVCon->Width));
 			    newY = MulDiv(cursor.y, conRect.bottom, klMax<uint>(1, pVCon->Height));
-				POSTMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( newX, newY ), TRUE);     //посылаем консоли отпускание
+			    
+			    if (lbLeftDrag)
+					POSTMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( newX, newY ), TRUE);     //посылаем консоли отпускание
 				//isDragProcessed=false; -- убрал, иначе при бросании в пассивную панель больших файлов дроп может вызваться еще раз???
 	            return 0;
 	        }
@@ -2595,8 +2602,10 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
             if (gConEmu.isFilePanel()) // Maximus5
             {
 				if (gSet.isDragEnabled & DRAG_R_ALLOWED) {
-					if (!gSet.nRDragKey || isPressed(gSet.nRDragKey))
+					if (!gSet.nRDragKey || isPressed(gSet.nRDragKey)) {
 						mouse.state = DRAG_R_ALLOWED;
+						return 0;
+					}
 				}
 				// Если ничего лишнего не нажато!
 				if (gSet.isRClickSendKey && !(wParam&(MK_CONTROL|MK_LBUTTON|MK_MBUTTON|MK_SHIFT|MK_XBUTTON1|MK_XBUTTON2)))

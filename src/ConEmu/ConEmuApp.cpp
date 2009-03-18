@@ -508,9 +508,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         uint params; klSplitCommandLine(curCommand, &params);
 #endif
 
-        if(params < 2)
+		if(params < 2) {
             curCommand = NULL;
-
+		} else
         // Parse parameters.
         // Duplicated parameters are permitted, the first value is used.
 		// В зависимости от "стиля" запуска в командной строке может быть имя conemu, а может и нет...

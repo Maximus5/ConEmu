@@ -20,7 +20,7 @@ CSettings::CSettings()
 	InitSettings();
 	mb_IgnoreEditChanged = FALSE;
 	mb_IgnoreTtfChange = TRUE;
-	hMain = NULL; hColors = NULL; hInfo = NULL;
+	hMain = NULL; hColors = NULL; hInfo = NULL; hwndTip = NULL;
 	QueryPerformanceFrequency((LARGE_INTEGER *)&mn_Freq);
 	memset(mn_Counter, 0, sizeof(*mn_Counter)*(tPerfInterval-gbPerformance));
 	memset(mn_CounterMax, 0, sizeof(*mn_CounterMax)*(tPerfInterval-gbPerformance));
@@ -681,6 +681,10 @@ LRESULT CSettings::OnInitDialog()
 		if (!lbCentered)
 			MoveWindow(ghOpWnd, GetSystemMetrics(SM_CXSCREEN)/2 - (rect.right - rect.left)/2, GetSystemMetrics(SM_CYSCREEN)/2 - (rect.bottom - rect.top)/2, rect.right - rect.left, rect.bottom - rect.top, false);
 	}
+	
+	RegisterTipsFor(hMain);
+	RegisterTipsFor(hColors);
+	RegisterTipsFor(hInfo);
 
 	return 0;
 }
@@ -1647,4 +1651,46 @@ void CSettings::Performance(UINT nID, BOOL bEnd)
 			SetDlgItemText(gSet.hInfo, nID, sTemp);
 		}
 	}
+}
+
+void CSettings::RegisterTipsFor(HWND hChildDlg)
+{
+    // Create the ToolTip.
+	if (!hwndTip) {
+		hwndTip = CreateWindowEx(WS_EX_TOPMOST, TOOLTIPS_CLASS, NULL,
+                              WS_POPUP | TTS_ALWAYSTIP | TTS_BALLOON | TTS_NOPREFIX,
+                              CW_USEDEFAULT, CW_USEDEFAULT,
+                              CW_USEDEFAULT, CW_USEDEFAULT,
+							  ghOpWnd, NULL, 
+                              g_hInstance, NULL);
+		SetWindowPos(hwndTip, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE);
+	}
+	if (!hwndTip) return; // не смогли создать
+
+	HWND hChild = NULL;
+	
+	BOOL lbRc = FALSE;
+	TCHAR szText[0x200];
+	while ((hChild = FindWindowEx(hChildDlg, hChild, NULL, NULL)) != NULL)
+	{
+		LONG wID = GetWindowLong(hChild, GWL_ID);
+		if (wID == -1) continue;
+		
+		if (LoadString(g_hInstance, wID, szText, 0x200)) {
+			// Associate the ToolTip with the tool.
+			TOOLINFO toolInfo = { 0 };
+			toolInfo.cbSize = 44; //sizeof(toolInfo);
+			//GetWindowRect(hChild, &toolInfo.rect); MapWindowPoints(NULL, hChildDlg, (LPPOINT)&toolInfo.rect, 2);
+			GetClientRect(hChild, &toolInfo.rect);
+			toolInfo.hwnd = hChild; //hChildDlg;
+			toolInfo.uFlags = TTF_IDISHWND | TTF_SUBCLASS;
+			toolInfo.uId = (UINT_PTR)hChild;
+			toolInfo.lpszText = szText;
+			//toolInfo.hinst = g_hInstance;
+			//toolInfo.lpszText = (LPTSTR)wID;
+			lbRc = SendMessage(hwndTip, TTM_ADDTOOL, 0, (LPARAM)&toolInfo);
+		}
+	}
+
+	SendMessage(hwndTip, TTM_SETMAXTIPWIDTH, 0, (LPARAM)300);
 }

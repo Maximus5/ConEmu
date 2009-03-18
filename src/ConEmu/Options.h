@@ -102,4 +102,6 @@ private:
 	i64 mn_Counter[tPerfInterval-gbPerformance];
 	i64 mn_CounterMax[tPerfInterval-gbPerformance];
 	DWORD mn_CounterTick[tPerfInterval-gbPerformance];
+	HWND hwndTip;
+	void RegisterTipsFor(HWND hChildDlg);
 };

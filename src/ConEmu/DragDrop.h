@@ -15,7 +15,10 @@ public:
 	virtual HRESULT __stdcall DragEnter(IDataObject * pDataObject,DWORD grfKeyState,POINTL pt,DWORD * pdwEffect);
 	virtual HRESULT __stdcall DragLeave(void);
 	void Drag();
-	IDataObject *pDataObject;
-	bool selfdrag;
-	ForwardedPanelInfo *pfpi;
+	IDataObject *mp_DataObject;
+	bool mb_selfdrag;
+	ForwardedPanelInfo *m_pfpi;
+	HRESULT CreateLink(LPCTSTR lpszPathObj, LPCTSTR lpszPathLink, LPCTSTR lpszDesc);
+protected:
+	void RetrieveDragToInfo(IDataObject * pDataObject);
 };

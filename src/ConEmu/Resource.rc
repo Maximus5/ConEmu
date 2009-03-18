@@ -70,7 +70,7 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 IDD_DIALOG1 DIALOGEX 0, 0, 328, 258
 STYLE DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_TOPMOST | WS_EX_CONTROLPARENT
-FONT 8, "MS Shell Dlg"
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     GROUPBOX        "Anti-aliasing",IDC_STATIC,263,4,60,45,WS_GROUP
     CONTROL         "&None",rNoneAA,"Button",BS_AUTORADIOBUTTON | WS_GROUP,
@@ -445,6 +445,22 @@ IDB_CONMAN1             BITMAP  DISCARDABLE     "toolbar1.bmp"
 IDC_COPY                CURSOR  DISCARDABLE     "DRAGCOPY.CUR"
 IDC_LINK                CURSOR  DISCARDABLE     "DRAGLINK.CUR"
 IDC_MOVE                CURSOR  DISCARDABLE     "DRAGMOVE.CUR"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    cbDropEnabled "Off - ConEmu will NOT receive files or folders\nOn - Drops allowed (FAR confirmation dialog)\n3s - same as 'On', but w/o confirmation"
+    lbLDragKey "Drag with left mouse button, only when pressed..."
+    lbRDragKey "Drag with right mouse button, only when pressed..."
+    cbDragL "Allow drag with left mouse button"
+    cbDragR "Allow drag with right mouse button"
+    cbDnDCopy "Forced 'Copy' action as default,\nYou can use Ctrl or Shift to change\naction, when drag is active"
+END
+
 #endif    // English (U.S.) resources
 /////////////////////////////////////////////////////////////////////////////
 

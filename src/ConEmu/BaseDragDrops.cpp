@@ -1,9 +1,26 @@
 //#include "StdAfx.h"
 #include ".\basedragdrops.h"
 #include "resource.h"
+#include "header.h"
 #include <tchar.h>
 
 extern HINSTANCE g_hInstance;
+
+/*
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Interface\{000214E4-0000-0000-C000-000000000046}]
+@="IContextMenu"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Interface\{000214F4-0000-0000-C000-000000000046}]
+@="IContextMenu2"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Interface\{0811AEBE-0B87-4C54-9E72-548CF649016B}]
+@="IContextMenuSite"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Interface\{15F936F5-A3FA-11D2-AEC3-00C04F79D1EB}]
+@="IContextNotify"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Interface\{15F936F6-A3FA-11D2-AEC3-00C04F79D1EB}]
+@="IContextRegisterNotify"
+
+
+*/
+
 
 CBaseDropTarget::CBaseDropTarget(HWND hwnd) : m_hWnd(hwnd), m_lRefCount(1)
 {
@@ -158,10 +175,17 @@ HRESULT __stdcall CDropSource::QueryContinueDrag(BOOL fEscapePressed, DWORD grfK
 	// if the <Escape> key has been pressed since the last call, cancel the drop
 	if(fEscapePressed == TRUE)
 		return DRAGDROP_S_CANCEL;	
+		
+	DWORD nDragKey = ((gConEmu.mouse.state & DRAG_L_STARTED) == DRAG_L_STARTED) ? MK_LBUTTON : MK_RBUTTON;
+	DWORD nOtherKey = ((nDragKey & MK_LBUTTON) == MK_LBUTTON) ? (MK_RBUTTON|MK_MBUTTON) : (MK_LBUTTON|MK_MBUTTON);
 
 	// if the <LeftMouse> button has been released, then do the drop!
-	if((grfKeyState & MK_LBUTTON) == 0)
+	if((grfKeyState & nDragKey) == 0)
 		return DRAGDROP_S_DROP;
+		
+	// Если юзер нажимает другую мышиную кнопку
+	if((grfKeyState & nOtherKey) == nOtherKey)
+		return DRAGDROP_S_CANCEL;
 
 	// continue with the drag-drop
 	return S_OK;

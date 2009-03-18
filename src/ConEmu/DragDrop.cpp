@@ -5,13 +5,15 @@ CDragDrop::CDragDrop(HWND hWnd)
 {
 	m_hWnd=hWnd;
 	m_lRefCount = 1;
-	pfpi = NULL;
+	m_pfpi = NULL;
+	mp_DataObject = NULL;
+	mb_selfdrag = NULL;
 	RegisterDragDrop(hWnd, this);
 }
 
 CDragDrop::~CDragDrop()
 {
-	if (pfpi) free(pfpi); pfpi=NULL;
+	if (m_pfpi) free(m_pfpi); m_pfpi=NULL;
 }
 
 HRESULT STDMETHODCALLTYPE CDragDrop::Drop (IDataObject * pDataObject,DWORD grfKeyState,POINTL pt,DWORD * pdwEffect)
@@ -99,41 +101,41 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop (IDataObject * pDataObject,DWORD grfKe
 		pt.x/=gSet.LogFont.lfWidth;
 		pt.y/=gSet.LogFont.lfHeight;
 
-		if (pfpi==NULL) {
+		if (m_pfpi==NULL) {
 			//delete fop.pTo;
 			return S_OK; //1;
-		} else if (pt.x>pfpi->ActiveRect.left && pt.x<pfpi->ActiveRect.right && pt.y>pfpi->ActiveRect.top && pt.y<pfpi->ActiveRect.bottom && pfpi->pszActivePath[0]) 
+		} else if (pt.x>m_pfpi->ActiveRect.left && pt.x<m_pfpi->ActiveRect.right && pt.y>m_pfpi->ActiveRect.top && pt.y<m_pfpi->ActiveRect.bottom && m_pfpi->pszActivePath[0]) 
 		{
 			if (gConEmu.isDragging()) {
 				*pdwEffect = DROPEFFECT_NONE;
 				return S_OK; // Тащат внутри одной копии FAR с активной на активную, т.е. ничего не двигается
 			}
 				
-			if (!*pfpi->pszActivePath)
+			if (!*m_pfpi->pszActivePath)
 				return S_OK;
-			if (pfpi->pszActivePath[lstrlen(pfpi->pszActivePath)-1]==_T('\\'))
-				pfpi->pszActivePath[lstrlen(pfpi->pszActivePath)-1] = 0;
-			fop.pTo=new WCHAR[lstrlenW(pfpi->pszActivePath)+3];
-			wsprintf((LPWSTR)fop.pTo, _T("%s\\\0\0"), pfpi->pszActivePath);
+			if (m_pfpi->pszActivePath[lstrlen(m_pfpi->pszActivePath)-1]==_T('\\'))
+				m_pfpi->pszActivePath[lstrlen(m_pfpi->pszActivePath)-1] = 0;
+			fop.pTo=new WCHAR[lstrlenW(m_pfpi->pszActivePath)+3];
+			wsprintf((LPWSTR)fop.pTo, _T("%s\\\0\0"), m_pfpi->pszActivePath);
 		}
-		else if (pt.x>pfpi->PassiveRect.left && pt.x<pfpi->PassiveRect.right && pt.y>pfpi->PassiveRect.top && pt.y<pfpi->PassiveRect.bottom && pfpi->pszPassivePath[0])
+		else if (pt.x>m_pfpi->PassiveRect.left && pt.x<m_pfpi->PassiveRect.right && pt.y>m_pfpi->PassiveRect.top && pt.y<m_pfpi->PassiveRect.bottom && m_pfpi->pszPassivePath[0])
 		{
 			// Пока подвисает...
 			if (gConEmu.isDragging() /*&& gSet.isDropEnabled==2*/) {
 				//wchar_t* mcr = (fop.wFunc==FO_COPY) ? L"F5" : L"F6";
 				wchar_t mcr[16];
 				lstrcpyW(mcr, (grfKeyState & MK_CONTROL) ? L"F6" : L"F5");
-				if (gSet.isDropEnabled==2) lstrcatW(mcr, L" Enter");
+				if (gSet.isDropEnabled==1) lstrcatW(mcr, L" Enter");
 
 				gConEmu.PostMacro(mcr);
 
 				return S_OK; // Тащим внутри ФАРа
 			}
-			if (!*pfpi->pszPassivePath) return 1;
-			if (pfpi->pszPassivePath[lstrlen(pfpi->pszPassivePath)-1]==_T('\\'))
-				pfpi->pszPassivePath[lstrlen(pfpi->pszPassivePath)-1] = 0;
-			fop.pTo=new WCHAR[lstrlenW(pfpi->pszPassivePath)+3];
-			wsprintf((LPWSTR)fop.pTo, _T("%s\\\0\0"), pfpi->pszPassivePath);
+			if (!*m_pfpi->pszPassivePath) return 1;
+			if (m_pfpi->pszPassivePath[lstrlen(m_pfpi->pszPassivePath)-1]==_T('\\'))
+				m_pfpi->pszPassivePath[lstrlen(m_pfpi->pszPassivePath)-1] = 0;
+			fop.pTo=new WCHAR[lstrlenW(m_pfpi->pszPassivePath)+3];
+			wsprintf((LPWSTR)fop.pTo, _T("%s\\\0\0"), m_pfpi->pszPassivePath);
 		}
 		else 
 		{
@@ -174,29 +176,13 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragOver(DWORD grfKeyState,POINTL pt,DWORD 
 	pt.x/=gSet.LogFont.lfWidth;
 	pt.y/=gSet.LogFont.lfHeight;
 
-	if (pfpi==NULL)
+	if (m_pfpi==NULL)
 		*pdwEffect=DROPEFFECT_NONE;
 	else
-	if ((pt.x>pfpi->ActiveRect.left && pt.x<pfpi->ActiveRect.right && pt.y>pfpi->ActiveRect.top && pt.y<pfpi->ActiveRect.bottom && pfpi->pszActivePath[0] && !selfdrag) ||
-		(pt.x>pfpi->PassiveRect.left && pt.x<pfpi->PassiveRect.right && pt.y>pfpi->PassiveRect.top && pt.y<pfpi->PassiveRect.bottom && pfpi->pszPassivePath[0]))
+	if ((pt.x>m_pfpi->ActiveRect.left && pt.x<m_pfpi->ActiveRect.right && pt.y>m_pfpi->ActiveRect.top && pt.y<m_pfpi->ActiveRect.bottom && m_pfpi->pszActivePath[0] && !mb_selfdrag) ||
+		(pt.x>m_pfpi->PassiveRect.left && pt.x<m_pfpi->PassiveRect.right && pt.y>m_pfpi->PassiveRect.top && pt.y<m_pfpi->PassiveRect.bottom && m_pfpi->pszPassivePath[0]))
 	{
-/*		if ((grfKeyState & 32) == 32)
-			*pdwEffect=DROPEFFECT_LINK;
-		else if ((grfKeyState & MK_CONTROL)==MK_CONTROL)
-			*pdwEffect=DROPEFFECT_COPY;
-		else
-			*pdwEffect=DROPEFFECT_MOVE;*/
 
-/*		if ((grfKeyState & MK_CONTROL)==MK_CONTROL)
-			if (gSet.isDefCopy)
-				*pdwEffect=DROPEFFECT_MOVE;
-			else
-				*pdwEffect=DROPEFFECT_COPY;
-		else
-			if (gSet.isDefCopy)
-				*pdwEffect=DROPEFFECT_COPY;
-			else
-				*pdwEffect=DROPEFFECT_MOVE;*/
 		if ((grfKeyState & MK_CONTROL) && gConEmu.isDragging() /*&& gSet.isDropEnabled!=2*/) {
 			if (gSet.isDefCopy)
 				*pdwEffect=DROPEFFECT_MOVE;
@@ -228,63 +214,167 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragOver(DWORD grfKeyState,POINTL pt,DWORD 
 
 HRESULT STDMETHODCALLTYPE CDragDrop::DragEnter(IDataObject * pDataObject,DWORD grfKeyState,POINTL pt,DWORD * pdwEffect)
 {
-	if (gSet.isDropEnabled || gConEmu.isDragging())
-	{
-		CConEmuPipe pipe;
+	mb_selfdrag = (pDataObject == mp_DataObject);
 
-		gConEmu.DnDstep(_T("DnD: DragEnter starting"));
+#ifdef _DEBUG
+	if (!mb_selfdrag) {
+		HRESULT hr = S_OK;
+		IEnumFORMATETC *pEnum = NULL;
+		FORMATETC fmt[20];
+		STGMEDIUM stg[20];
+		LPCWSTR psz[20];
+		TCHAR szName[MAX_PATH];
+		ULONG nCnt = sizeof(fmt)/sizeof(*fmt);
+		UINT i;
 
-		if (pipe.Init(_T("CDragDrop::DragEnter")))
-		{
-			selfdrag=(pDataObject == this->pDataObject);
-			//PipeCmd cmd=DragTo;
-			DWORD cbWritten=0;
-			//WriteFile(pipe.hPipe, &cmd, sizeof(cmd), &cbWritten, NULL); 
-			if (pipe.Execute(CMD_DRAGTO))
-			{
-				gConEmu.DnDstep(_T("DnD: Checking for plugin (1 sec)"));
-				// Подождем немножко, проверим что плагин живой
-				cbWritten = WaitForSingleObject(pipe.hEventAlive, CONEMUALIVETIMEOUT);
-				if (cbWritten!=WAIT_OBJECT_0) {
-					TCHAR szErr[MAX_PATH];
-					wsprintf(szErr, _T("ConEmu plugin is not active!\r\nProcessID=%i"), pipe.nPID);
-					MBoxA(szErr);
-				} else {
-					gConEmu.DnDstep(_T("DnD: Checking for plugin (10 sec)"));
-					cbWritten = WaitForSingleObject(pipe.hEventReady, CONEMUREADYTIMEOUT);
-					if (cbWritten!=WAIT_OBJECT_0) {
-						TCHAR szErr[MAX_PATH];
-						wsprintf(szErr, _T("Command waiting time exceeds!\r\nConEmu plugin is locked?\r\nProcessID=%i"), pipe.nPID);
-						MBoxA(szErr);
-					} else {
-						DWORD cbBytesRead=0;
-						int cbStructSize=0;
-						if (pfpi) {free(pfpi); pfpi=NULL;}
-						if (pipe.Read(&cbStructSize, sizeof(int), &cbBytesRead))
-						{
-							if (cbStructSize>sizeof(ForwardedPanelInfo)) {
-								pfpi = (ForwardedPanelInfo*)calloc(cbStructSize, 1);
+			memset(fmt, 0, sizeof(fmt));
+			memset(stg, 0, sizeof(stg));
+			memset(psz, 0, sizeof(psz));
 
-								pipe.Read(pfpi, cbStructSize, &cbBytesRead);
+		hr = pDataObject->EnumFormatEtc(DATADIR_GET,&pEnum);
+		if (hr==S_OK) {
+			
+			
+			hr = pEnum->Next(nCnt, fmt, &nCnt);
 
-								pfpi->pszActivePath = (WCHAR*)(((char*)pfpi)+pfpi->ActivePathShift);
-								pfpi->pszPassivePath = (WCHAR*)(((char*)pfpi)+pfpi->PassivePathShift);
-							}
-						}
-					}
-				}
+			pEnum->Release();
+
+			/*
+			CFSTR_PREFERREDDROPEFFECT ?
+			*/
+			for (i=0; i<nCnt; i++) {
+				szName[0] = 0;
+				if (!GetClipboardFormatName(fmt[i].cfFormat, szName, MAX_PATH))
+					wsprintf(szName, L"ClipFormatID=%i", fmt[i].cfFormat);
+					
+				stg[i].tymed = TYMED_HGLOBAL;
+				hr = pDataObject->GetData(fmt+i, stg+i);
+				if (hr == S_OK && stg[i].hGlobal)
+					psz[i] = (LPCWSTR)GlobalLock(stg[i].hGlobal);
+			}
+			
+			for (i=0; i<nCnt; i++) {
+				if (psz[i] && stg[i].hGlobal)
+					GlobalUnlock(stg[i].hGlobal);
 			}
 		}
-		gConEmu.DnDstep(NULL);
+		hr = S_OK;
+	}
+#endif
+
+	if (gSet.isDropEnabled || gConEmu.isDragging())
+	{
+		if (!gConEmu.isDragging()) // при "своем" драге - информация уже получена
+			RetrieveDragToInfo(pDataObject);
 	} else {
 		gConEmu.DnDstep(_T("DnD: Drop disabled"));
 	}
 	return 0;
 }
+	
+void CDragDrop::RetrieveDragToInfo(IDataObject * pDataObject)
+{
+	CConEmuPipe pipe;
+
+	gConEmu.DnDstep(_T("DnD: DragEnter starting"));
+
+	if (pipe.Init(_T("CDragDrop::DragEnter")))
+	{
+		//PipeCmd cmd=DragTo;
+		DWORD cbWritten=0;
+		//WriteFile(pipe.hPipe, &cmd, sizeof(cmd), &cbWritten, NULL); 
+		if (pipe.Execute(CMD_DRAGTO))
+		{
+			gConEmu.DnDstep(_T("DnD: Checking for plugin (1 sec)"));
+			// Подождем немножко, проверим что плагин живой
+			cbWritten = WaitForSingleObject(pipe.hEventAlive, CONEMUALIVETIMEOUT);
+			if (cbWritten!=WAIT_OBJECT_0) {
+				TCHAR szErr[MAX_PATH];
+				wsprintf(szErr, _T("ConEmu plugin is not active!\r\nProcessID=%i"), pipe.nPID);
+				MBoxA(szErr);
+			} else {
+				gConEmu.DnDstep(_T("DnD: Checking for plugin (10 sec)"));
+				cbWritten = WaitForSingleObject(pipe.hEventReady, CONEMUREADYTIMEOUT);
+				if (cbWritten!=WAIT_OBJECT_0) {
+					TCHAR szErr[MAX_PATH];
+					wsprintf(szErr, _T("Command waiting time exceeds!\r\nConEmu plugin is locked?\r\nProcessID=%i"), pipe.nPID);
+					MBoxA(szErr);
+				} else {
+					DWORD cbBytesRead=0;
+					int cbStructSize=0;
+					if (m_pfpi) {free(m_pfpi); m_pfpi=NULL;}
+					if (pipe.Read(&cbStructSize, sizeof(int), &cbBytesRead))
+					{
+						if (cbStructSize>sizeof(ForwardedPanelInfo)) {
+							m_pfpi = (ForwardedPanelInfo*)calloc(cbStructSize, 1);
+
+							pipe.Read(m_pfpi, cbStructSize, &cbBytesRead);
+
+							m_pfpi->pszActivePath = (WCHAR*)(((char*)m_pfpi)+m_pfpi->ActivePathShift);
+							m_pfpi->pszPassivePath = (WCHAR*)(((char*)m_pfpi)+m_pfpi->PassivePathShift);
+						}
+					}
+				}
+			}
+		}
+	}
+	gConEmu.DnDstep(NULL);
+}
 
 HRESULT STDMETHODCALLTYPE CDragDrop::DragLeave(void)
 {
 	return 0;
+}
+
+// CreateLink - uses the Shell's IShellLink and IPersistFile interfaces 
+//              to create and store a shortcut to the specified object. 
+//
+// Returns the result of calling the member functions of the interfaces. 
+//
+// Parameters:
+// lpszPathObj  - address of a buffer containing the path of the object. 
+// lpszPathLink - address of a buffer containing the path where the 
+//                Shell link is to be stored. 
+// lpszDesc     - address of a buffer containing the description of the 
+//                Shell link. 
+
+HRESULT CDragDrop::CreateLink(LPCTSTR lpszPathObj, LPCTSTR lpszPathLink, LPCTSTR lpszDesc) 
+{ 
+    HRESULT hres = S_OK; 
+    IShellLink* psl; 
+ 
+    // Get a pointer to the IShellLink interface. 
+    hres = CoCreateInstance(CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER, 
+                            IID_IShellLink, (LPVOID*)&psl); 
+    if (SUCCEEDED(hres)) 
+    { 
+        IPersistFile* ppf; 
+ 
+        // Set the path to the shortcut target and add the description. 
+        psl->SetPath(lpszPathObj); 
+        psl->SetDescription(lpszDesc); 
+ 
+        // Query IShellLink for the IPersistFile interface for saving the 
+        // shortcut in persistent storage. 
+        hres = psl->QueryInterface(IID_IPersistFile, (LPVOID*)&ppf); 
+ 
+        if (SUCCEEDED(hres)) 
+        { 
+            //WCHAR wsz[MAX_PATH]; 
+ 
+            // Ensure that the string is Unicode. 
+            //MultiByteToWideChar(CP_ACP, 0, lpszPathLink, -1, wsz, MAX_PATH); 
+			
+            // Add code here to check return value from MultiByteWideChar 
+            // for success.
+ 
+            // Save the link by calling IPersistFile::Save. 
+            hres = ppf->Save(lpszPathLink, TRUE); 
+            ppf->Release(); 
+        } 
+        psl->Release(); 
+    }
+    return hres; 
 }
 
 void CDragDrop::Drag()
@@ -343,6 +433,7 @@ void CDragDrop::Drag()
 						szDraggedPath=new wchar_t[nWholeSize/*(MAX_PATH+1)*FilesCount*/+1];	
 						ZeroMemory(szDraggedPath, /*((MAX_PATH+1)*FilesCount+1)*/(nWholeSize+1)*sizeof(wchar_t));
 						wchar_t  *curr=szDraggedPath;
+						UINT nFilesCount = 0;
 						
 						for (;;)
 						{
@@ -353,61 +444,86 @@ void CDragDrop::Drag()
 							pipe.Read(curr, sizeof(WCHAR)*nCurSize, &cbBytesRead); 
 
 							curr+=wcslen(curr)+1;
+							nFilesCount ++;
 						}
+						// Сразу закроем
+						pipe.Close();
+						
 					//		int size = MakeDropWord(szDraggedPath);// Длинна null,null строки
 					//		if (size <= 1) return;
 						int size=(curr-szDraggedPath)*sizeof(wchar_t)+2;
+						
+						HGLOBAL file_nameW = NULL;
+						if (nFilesCount==1) {
+							file_nameW = GlobalAlloc(GPTR, sizeof(WCHAR)*(lstrlenW(szDraggedPath)+1));
+							lstrcpyW(((WCHAR*)file_nameW), szDraggedPath);
+						}
 					    
-					    
-						IDropSource *pDropSource;
+						IDropSource *pDropSource = NULL;
 
 						DROPFILES drop_struct = { sizeof(drop_struct), { 0, 0 }, 0, 1 };
 					    
-						HGLOBAL drop_data = GlobalAlloc(0, size+sizeof(drop_struct));
-						ZeroMemory(drop_data, size+sizeof(drop_struct));
-
-						wchar_t* clip_data = reinterpret_cast<wchar_t*>(drop_data);
+						HGLOBAL drop_data = GlobalAlloc(GPTR, size+sizeof(drop_struct));
 						memcpy(drop_data, &drop_struct, sizeof(drop_struct));
 
-						memcpy((byte*)drop_data + sizeof(drop_struct), szDraggedPath, size);
+						memcpy(((byte*)drop_data) + sizeof(drop_struct), szDraggedPath, size);
 						//Maximus5 - а память освобождать кто будет?
 						delete szDraggedPath; szDraggedPath=NULL;
+						
+						HGLOBAL drop_preferredeffect = GlobalAlloc(GPTR, sizeof(DWORD));
+						if (gConEmu.mouse.state & DRAG_R_STARTED)
+							*((DWORD*)drop_preferredeffect) = DROPEFFECT_LINK;
+						else if (gSet.isDefCopy)
+							*((DWORD*)drop_preferredeffect) = DROPEFFECT_COPY;
+						else
+							*((DWORD*)drop_preferredeffect) = DROPEFFECT_MOVE;
+
+							
+						HGLOBAL drag_loop = GlobalAlloc(GPTR, sizeof(DWORD));
+						*((DWORD*)drag_loop) = 1;
 
 						DWORD           dwEffect;
 						DWORD           dwResult;
-						FORMATETC       fmtetc = { CF_HDROP, 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
-						STGMEDIUM       stgmed = { TYMED_HGLOBAL, { 0 }, 0 };
-						stgmed.hGlobal = drop_data ;
-					//		stgmed.lpszFileName=szDraggedPath;
+						FORMATETC       fmtetc[] = {
+							{ CF_HDROP, 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL },
+							{ RegisterClipboardFormat(CFSTR_PREFERREDDROPEFFECT), 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL },
+							{ RegisterClipboardFormat(_T("InShellDragLoop")), 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL },
+							// Этот должен идти последним
+							{ RegisterClipboardFormat(_T("FileNameW")), 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL }
+						};
+						STGMEDIUM       stgmed[] = {
+							{ TYMED_HGLOBAL, { (HBITMAP)drop_data }, 0 }, //чтобы не морочиться с последующими присвоениями
+							{ TYMED_HGLOBAL, { (HBITMAP)drop_preferredeffect }, 0 },
+							{ TYMED_HGLOBAL, { (HBITMAP)drag_loop }, 0 },
+							// Этот должен идти последним
+							{ TYMED_HGLOBAL, { (HBITMAP)file_nameW }, 0 }
+						};
+						//stgmed.hGlobal = drop_data ;
+						//--stgmed.lpszFileName=szDraggedPath;
 						CreateDropSource(&pDropSource);
-						CreateDataObject(&fmtetc, &stgmed, 1, &pDataObject) ;//   |   Посмотреть ниже... 
-						DWORD dwAllowedEffects = DROPEFFECT_LINK;
-						/*unsigned short stateControl = GetAsyncKeyState(VK_CONTROL);
-						if (gSet.isDefCopy==1) {
-							// Копирование по умолчанию
-							if (stateControl & 0x8000) // но нажат Ctrl
-								dwAllowedEffects |= DROPEFFECT_MOVE;
-							else
-								dwAllowedEffects |= DROPEFFECT_COPY;
-						} else if (gSet.isDefCopy==0) {
-							// Перемещение по умолчанию
-							if (stateControl & 0x8000) // но нажат Ctrl
-								dwAllowedEffects |= DROPEFFECT_COPY;
-							else
-								dwAllowedEffects |= DROPEFFECT_MOVE;
-						} 
-						else */
-						if (!isPressed(VK_RBUTTON))
-						{
-							// "Стандартное" поведение
-							dwAllowedEffects |= DROPEFFECT_COPY|DROPEFFECT_MOVE;
-						}
 						
-						pipe.Close();
+						int nCount = sizeof(fmtetc)/sizeof(*fmtetc);
+						if (!file_nameW) nCount--;
+						CreateDataObject(fmtetc, stgmed, nCount, &mp_DataObject) ;//   |   Посмотреть ниже... 
+						
+						// Разрешаем все
+						DWORD dwAllowedEffects = DROPEFFECT_LINK|DROPEFFECT_COPY|DROPEFFECT_MOVE;
+						
+						
+
+						//CFSTR_PREFERREDDROPEFFECT, FD_LINKUI 
+						
+						// Сразу получим информацию о путях панелей...
+						RetrieveDragToInfo(mp_DataObject);
+						
 						gConEmu.DnDstep(_T("DnD: Finally, DoDragDrop"));
-						dwResult = DoDragDrop(pDataObject, pDropSource, dwAllowedEffects, &dwEffect);
-						pDataObject->Release();
+						
+						dwResult = DoDragDrop(mp_DataObject, pDropSource, dwAllowedEffects, &dwEffect);
+						mp_DataObject->Release(); mp_DataObject = NULL;
 						pDropSource->Release();		
+						//#ifdef _DEBUG
+						//DisplayLastError(_T("DoDragDrop returns"), dwResult);
+						//#endif
 						//isLBDown=false; -- а ReleaseCapture кто будет делать?
 					}
 				}
