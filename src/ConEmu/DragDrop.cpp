@@ -125,7 +125,8 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop (IDataObject * pDataObject,DWORD grfKe
 				//wchar_t* mcr = (fop.wFunc==FO_COPY) ? L"F5" : L"F6";
 				wchar_t mcr[16];
 				lstrcpyW(mcr, (grfKeyState & MK_CONTROL) ? L"F6" : L"F5");
-				if (gSet.isDropEnabled==1) lstrcatW(mcr, L" Enter");
+				if (gSet.isDropEnabled==2)
+					lstrcatW(mcr, L" Enter");
 
 				gConEmu.PostMacro(mcr);
 
@@ -223,7 +224,7 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragEnter(IDataObject * pDataObject,DWORD g
 		FORMATETC fmt[20];
 		STGMEDIUM stg[20];
 		LPCWSTR psz[20];
-		TCHAR szName[MAX_PATH];
+		TCHAR szName[20][MAX_PATH];
 		ULONG nCnt = sizeof(fmt)/sizeof(*fmt);
 		UINT i;
 
@@ -243,9 +244,9 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragEnter(IDataObject * pDataObject,DWORD g
 			CFSTR_PREFERREDDROPEFFECT ?
 			*/
 			for (i=0; i<nCnt; i++) {
-				szName[0] = 0;
-				if (!GetClipboardFormatName(fmt[i].cfFormat, szName, MAX_PATH))
-					wsprintf(szName, L"ClipFormatID=%i", fmt[i].cfFormat);
+				szName[i][0] = 0;
+				if (!GetClipboardFormatName(fmt[i].cfFormat, szName[i], MAX_PATH))
+					wsprintf(szName[i], L"ClipFormatID=%i", fmt[i].cfFormat);
 					
 				stg[i].tymed = TYMED_HGLOBAL;
 				hr = pDataObject->GetData(fmt+i, stg+i);
@@ -453,10 +454,69 @@ void CDragDrop::Drag()
 					//		if (size <= 1) return;
 						int size=(curr-szDraggedPath)*sizeof(wchar_t)+2;
 						
-						HGLOBAL file_nameW = NULL;
+						HGLOBAL file_nameW = NULL, file_PIDLs = NULL;
 						if (nFilesCount==1) {
 							file_nameW = GlobalAlloc(GPTR, sizeof(WCHAR)*(lstrlenW(szDraggedPath)+1));
 							lstrcpyW(((WCHAR*)file_nameW), szDraggedPath);
+
+							//TODO: обработка ошибок hr!
+							WCHAR* pszSlash = wcsrchr(szDraggedPath, L'\\');
+							if (pszSlash) {
+								// Сначала нужно получить PIDL для родительской папки
+								*pszSlash = 0; //TODO: проверить, а для папок у нас слэша на конце нет?
+								//SHParseDisplayName ?
+								SFGAOF tmp;
+								LPITEMIDLIST pParent=NULL, pItem=NULL;
+								DWORD nParentSize=0, nItemSize=0;
+								HRESULT hr = S_OK; //SHParseDisplayName(szDraggedPath, NULL, &pParent, 0, &tmp);
+								IShellFolder *pDesktop=NULL, *pFolder=NULL;
+
+								hr = SHGetDesktopFolder ( &pDesktop );
+
+								hr = SHParseDisplayName(szDraggedPath, NULL, &pParent, 0, &tmp);
+
+								hr = pDesktop->BindToObject(pParent, NULL, IID_IShellFolder, (void**)&pFolder);
+								pDesktop->Release(); pDesktop = NULL;
+								
+								// Потом и для собственно файла/папки...
+								*pszSlash = L'\\';
+								//hr = SHParseDisplayName(pszSlash+1, NULL, &pItem, 0, &tmp);
+								ULONG nEaten=0;
+								hr = pFolder->ParseDisplayName(ghWnd, NULL, pszSlash+1, &nEaten, &pItem, &(tmp=0));
+								pFolder->Release(); pFolder = NULL;
+
+								*pszSlash = L'\\';
+
+								SHITEMID *pCur = (SHITEMID*)pParent;
+								while (pCur->cb) {
+									pCur = (SHITEMID*)(((LPBYTE)pCur) + pCur->cb);
+								}
+								nParentSize = ((LPBYTE)pCur) - ((LPBYTE)pParent)+2;
+
+								pCur = (SHITEMID*)pItem;
+								while (pCur->cb) {
+									pCur = (SHITEMID*)(((LPBYTE)pCur) + pCur->cb);
+								}
+								nItemSize = ((LPBYTE)pCur) - ((LPBYTE)pItem)+2;
+
+								pCur = NULL;
+
+								file_PIDLs = GlobalAlloc(GPTR, 3*sizeof(UINT)+nParentSize+nItemSize);
+								CIDA* pida = (CIDA*)file_PIDLs;
+								pida->cidl = 1;
+								pida->aoffset[0] = 3*sizeof(UINT);
+								pida->aoffset[1] = pida->aoffset[0]+nParentSize;
+								memmove((((LPBYTE)pida)+(pida)->aoffset[0]), pParent, nParentSize);
+								memmove((((LPBYTE)pida)+(pida)->aoffset[1]), pItem, nItemSize);
+
+								LPMALLOC pMalloc=NULL;
+								hr = SHGetMalloc(&pMalloc);
+								if (pMalloc) {
+									pMalloc->Free(pParent);
+									pMalloc->Free(pItem);
+									pMalloc->Release();
+								}
+							}
 						}
 					    
 						IDropSource *pDropSource = NULL;
@@ -488,14 +548,16 @@ void CDragDrop::Drag()
 							{ CF_HDROP, 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL },
 							{ RegisterClipboardFormat(CFSTR_PREFERREDDROPEFFECT), 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL },
 							{ RegisterClipboardFormat(_T("InShellDragLoop")), 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL },
-							// Этот должен идти последним
+							// Эти должны идти последними
+							{ RegisterClipboardFormat(CFSTR_SHELLIDLIST), 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL},
 							{ RegisterClipboardFormat(_T("FileNameW")), 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL }
 						};
 						STGMEDIUM       stgmed[] = {
 							{ TYMED_HGLOBAL, { (HBITMAP)drop_data }, 0 }, //чтобы не морочиться с последующими присвоениями
 							{ TYMED_HGLOBAL, { (HBITMAP)drop_preferredeffect }, 0 },
 							{ TYMED_HGLOBAL, { (HBITMAP)drag_loop }, 0 },
-							// Этот должен идти последним
+							// Эти должны идти последними
+							{ TYMED_HGLOBAL, { (HBITMAP)file_PIDLs }, 0},
 							{ TYMED_HGLOBAL, { (HBITMAP)file_nameW }, 0 }
 						};
 						//stgmed.hGlobal = drop_data ;
@@ -503,11 +565,11 @@ void CDragDrop::Drag()
 						CreateDropSource(&pDropSource);
 						
 						int nCount = sizeof(fmtetc)/sizeof(*fmtetc);
-						if (!file_nameW) nCount--;
+						if (!file_PIDLs) nCount -= 2;
 						CreateDataObject(fmtetc, stgmed, nCount, &mp_DataObject) ;//   |   Посмотреть ниже... 
 						
 						// Разрешаем все
-						DWORD dwAllowedEffects = DROPEFFECT_LINK|DROPEFFECT_COPY|DROPEFFECT_MOVE;
+						DWORD dwAllowedEffects = (file_PIDLs ? DROPEFFECT_LINK : 0)|DROPEFFECT_COPY|DROPEFFECT_MOVE;
 						
 						
 
@@ -516,7 +578,8 @@ void CDragDrop::Drag()
 						// Сразу получим информацию о путях панелей...
 						RetrieveDragToInfo(mp_DataObject);
 						
-						gConEmu.DnDstep(_T("DnD: Finally, DoDragDrop"));
+						//gConEmu.DnDstep(_T("DnD: Finally, DoDragDrop"));
+						gConEmu.DnDstep(NULL);
 						
 						dwResult = DoDragDrop(mp_DataObject, pDropSource, dwAllowedEffects, &dwEffect);
 						mp_DataObject->Release(); mp_DataObject = NULL;

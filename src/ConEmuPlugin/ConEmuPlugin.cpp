@@ -32,9 +32,12 @@ int WINAPI _export GetMinFarVersionW(void)
 void WINAPI _export GetPluginInfoW(struct PluginInfo *pi)
 {
     static WCHAR *szMenu[1], szMenu1[15];
-    szMenu[0]=szMenu1; lstrcpyW(szMenu[0], L"[&\x2560] ConEmu");
+    szMenu[0]=szMenu1; //lstrcpyW(szMenu[0], L"[&\x2560] ConEmu");
     //szMenu[0][1] = L'&';
     //szMenu[0][2] = 0x2560;
+	if (gcPlugKey) szMenu1[0]=0; else lstrcpyW(szMenu1, L"[&\x2560] ");
+	lstrcatW(szMenu1, GetMsgW(2));
+
 
 	pi->StructSize = sizeof(struct PluginInfo);
 	pi->Flags = PF_EDITOR | PF_VIEWER | PF_DIALOG | PF_PRELOAD;
@@ -75,6 +78,7 @@ DWORD gnReqCommand = -1;
 HANDLE ghReqCommandEvent = NULL;
 UINT gnMsgTabChanged = 0;
 CRITICAL_SECTION csTabs, csData;
+WCHAR gcPlugKey=0;
 
 #if defined(__GNUC__)
 typedef HWND (APIENTRY *FGetConsoleWindow)();
@@ -564,9 +568,49 @@ void CheckMacro()
 	#define MODCOUNT 4
 	int n;
 	char szValue[1024];
-	WCHAR szMacroKey[MODCOUNT][128], szCheckKey[32];
+	WCHAR szMacroKey[MODCOUNT][MAX_PATH], szCheckKey[32];
 	DWORD dwSize = 0;
 	//bool lbMacroDontCheck = false;
+
+	//ѕрочитать назначенные плагинам клавиши, и если дл€ ConEmu.dll указана клавиша активации - запомнить ее
+	wsprintfW(szMacroKey[0], L"%s\\PluginHotkeys",
+			gszRootKey, szCheckKey);
+	if (0==RegOpenKeyExW(HKEY_CURRENT_USER, szMacroKey[0], 0, KEY_READ, &hkey))
+	{
+		DWORD dwIndex = 0, dwSize; FILETIME ft;
+		while (0==RegEnumKeyEx(hkey, dwIndex++, szMacroKey[1], &(dwSize=MAX_PATH), NULL, NULL, NULL, &ft)) {
+			WCHAR* pszSlash = szMacroKey[1]+lstrlenW(szMacroKey[1])-1;
+			while (pszSlash>szMacroKey[1] && *pszSlash!=L'/') pszSlash--;
+			if (lstrcmpiW(pszSlash, L"/conemu.dll")==0) {
+				WCHAR lsFullPath[MAX_PATH*2];
+				lstrcpy(lsFullPath, szMacroKey[0]);
+				lstrcat(lsFullPath, L"\\");
+				lstrcat(lsFullPath, szMacroKey[1]);
+
+				RegCloseKey(hkey); hkey=NULL;
+
+				if (0==RegOpenKeyExW(HKEY_CURRENT_USER, lsFullPath, 0, KEY_READ, &hkey)) {
+					dwSize = sizeof(szCheckKey);
+					if (0==RegQueryValueExW(hkey, L"Hotkey", NULL, NULL, (LPBYTE)szCheckKey, &dwSize)) {
+						if (gFarVersion.dwVerMajor==1) {
+							char cAnsi; // чтобы не возникло проблем с приведением к WCHAR
+							WideCharToMultiByte(CP_OEMCP, 0, szCheckKey, 1, &cAnsi, 1, 0,0);
+							gcPlugKey = cAnsi;
+						} else {
+							gcPlugKey = szCheckKey[0];
+						}
+					}
+				}
+				//
+				//
+				break;
+			}
+		}
+
+		// «акончили
+		if (hkey) {RegCloseKey(hkey); hkey=NULL;}
+	}
+
 
 	for (n=0; n<MODCOUNT; n++) {
 		switch(n){
@@ -588,23 +632,31 @@ void CheckMacro()
 	//	RegCloseKey(hkey); hkey=NULL;
 	//}
 
+	if (gFarVersion.dwVerMajor==1) {
+		lstrcpyA((char*)szCheckKey, "F11  ");
+		szCheckKey[4] = (char)(gcPlugKey & 0xFF);
+	} else {
+		lstrcpyW((wchar_t*)szCheckKey, L"F11  ");
+		szCheckKey[4] = gcPlugKey;
+	}
+
 	//if (!lbMacroDontCheck)
 	for (n=0; n<MODCOUNT && !lbNeedMacro; n++)
 	{
-		if (0==RegOpenKeyExW(HKEY_CURRENT_USER, szMacroKey[n], 0, KEY_ALL_ACCESS, &hkey))
+		if (0==RegOpenKeyExW(HKEY_CURRENT_USER, szMacroKey[n], 0, KEY_READ, &hkey))
 		{
 			if (gFarVersion.dwVerMajor==1) {
 				if (0!=RegQueryValueExA(hkey, "Sequence", 0, 0, (LPBYTE)szValue, &(dwSize=1022))) {
 					lbNeedMacro = TRUE; // «начение отсутсвует
 				} else {
-					lbNeedMacro = lstrcmpA(szValue, "F11 \xCC")!=0;
+					lbNeedMacro = lstrcmpA(szValue, (char*)szCheckKey)!=0;
 				}
 			} else {
 				if (0!=RegQueryValueExW(hkey, L"Sequence", 0, 0, (LPBYTE)szValue, &(dwSize=1022))) {
 					lbNeedMacro = TRUE; // «начение отсутсвует
 				} else {
 					//TODO: проверить, как себ€ ведет VC & GCC на 2х байтовых символах?
-					lbNeedMacro = lstrcmpW((WCHAR*)szValue, L"F11 \x2560")!=0;
+					lbNeedMacro = lstrcmpW((WCHAR*)szValue, szCheckKey)!=0;
 				}
 			}
 			//	szValue[dwSize]=0;
@@ -646,13 +698,9 @@ void CheckMacro()
 				//RegSetValueExA(hkey, "Sequence", 0, REG_SZ, (LPBYTE)szValue, (dwSize=strlen(szValue)+1));
 				
 				if (gFarVersion.dwVerMajor==1) {
-					lstrcpyA(szValue, "F11 \xCC");
-					//szValue[4] = (char)0xCC;
-					RegSetValueExA(hkey, "Sequence", 0, REG_SZ, (LPBYTE)szValue, (dwSize=strlen(szValue)+1));
+					RegSetValueExA(hkey, "Sequence", 0, REG_SZ, (LPBYTE)szCheckKey, (dwSize=strlen((char*)szCheckKey)+1));
 				} else {
-					lstrcpyW((WCHAR*)szValue, L"F11 \x2560");
-					//((WCHAR*)szValue)[4] = 0x2560;
-					RegSetValueExW(hkey, L"Sequence", 0, REG_SZ, (LPBYTE)szValue, (dwSize=2*(lstrlenW((WCHAR*)szValue)+1)));
+					RegSetValueExW(hkey, L"Sequence", 0, REG_SZ, (LPBYTE)szCheckKey, (dwSize=2*(lstrlenW((WCHAR*)szCheckKey)+1)));
 				}
 
 				lstrcpyA(szValue, 
@@ -983,6 +1031,16 @@ int ShowMessage(int aiMsg, int aiButtons)
 		return ShowMessage789(aiMsg, aiButtons);
 	else
 		return ShowMessage757(aiMsg, aiButtons);
+}
+
+LPCWSTR GetMsgW(int aiMsg)
+{
+	if (gFarVersion.dwVerMajor==1)
+		return L"";
+	else if (gFarVersion.dwBuild>=789)
+		return GetMsg789(aiMsg);
+	else
+		return GetMsg757(aiMsg);
 }
 
 void PostMacro(wchar_t* asMacro)

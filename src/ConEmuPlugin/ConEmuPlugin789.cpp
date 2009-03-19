@@ -343,10 +343,17 @@ void ExitFARW789(void)
 
 int ShowMessage789(int aiMsg, int aiButtons)
 {
-	if (!InfoW789 || !InfoW789->Message)
+	if (!InfoW789 || !InfoW789->Message || !InfoW789->GetMsg)
 		return -1;
 	return InfoW789->Message(InfoW789->ModuleNumber, FMSG_ALLINONE, NULL, 
 		(const wchar_t * const *)InfoW789->GetMsg(InfoW789->ModuleNumber,aiMsg), 0, aiButtons);
+}
+
+LPCWSTR GetMsg789(int aiMsg)
+{
+	if (!InfoW789 || !InfoW789->GetMsg)
+		return L"";
+	return InfoW789->GetMsg(InfoW789->ModuleNumber,aiMsg);
 }
 
 void ReloadMacro789()

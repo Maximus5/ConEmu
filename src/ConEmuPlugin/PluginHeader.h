@@ -22,6 +22,7 @@ extern FarVersion gFarVersion;
 extern int lastModifiedStateW;
 extern HANDLE hEventCmd[MAXCMDCOUNT];
 extern HANDLE hThread;
+extern WCHAR gcPlugKey;
 
 BOOL CreateTabs(int windowCount);
 
@@ -77,6 +78,9 @@ void PostMacro(wchar_t* asMacro);
 void PostMacroA(char* asMacro);
 void PostMacro789(wchar_t* asMacro);
 void PostMacro757(wchar_t* asMacro);
+LPCWSTR GetMsgW(int aiMsg);
+LPCWSTR GetMsg757(int aiMsg);
+LPCWSTR GetMsg789(int aiMsg);
 
 extern DWORD gnReqCommand;
 void ProcessCommand(DWORD nCmd, BOOL bReqMainThread);

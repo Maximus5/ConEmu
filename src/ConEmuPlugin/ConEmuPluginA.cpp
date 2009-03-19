@@ -253,11 +253,14 @@ void WINAPI _export SetStartupInfo(const struct PluginStartupInfo *aInfo)
 	CheckMacro();
 }
 
+extern WCHAR gcPlugKey; // Для ANSI far он инициализируется как (char)
+
 void WINAPI _export GetPluginInfo(struct PluginInfo *pi)
 {
     static char *szMenu[1], szMenu1[15];
-	szMenu[0]=szMenu1; lstrcpyA(szMenu[0], "[&\xCC] ConEmu");
-    //szMenu[0][2] = (char)0xCC;
+	szMenu[0]=szMenu1;
+	if (gcPlugKey) szMenu[0]=0; else lstrcpyA(szMenu1, "[&\xCC] ");
+	lstrcatA(szMenu1, InfoA->GetMsg(InfoA->ModuleNumber,2));
 
 	pi->StructSize = sizeof(struct PluginInfo);
 	pi->Flags = PF_EDITOR | PF_VIEWER | PF_DIALOG | PF_PRELOAD;

@@ -113,8 +113,8 @@ void CSettings::InitSettings()
     isScrollTitle = true;
     ScrollTitleLen = 22;
     
-    isDragEnabled = DRAG_L_ALLOWED; isDropEnabled = (char)2; 
-	nLDragKey = 0; nRDragKey = 0; isDnDsteps = false; isDefCopy = true;
+    isDragEnabled = DRAG_L_ALLOWED; isDropEnabled = (BYTE)1;
+	nLDragKey = 0; nRDragKey = 0; isDnDsteps = true; isDefCopy = true;
 }
 
 void CSettings::LoadSettings()
@@ -174,7 +174,8 @@ void CSettings::LoadSettings()
         reg.Load(_T("ForceMonospace"), &isForceMonospace);
 		reg.Load(_T("Proportional"), &isTTF);
         reg.Load(_T("Update Console handle"), &isUpdConHandle);
-		reg.Load(_T("Dnd"), &isDragEnabled); isDropEnabled = (char)(isDragEnabled ? 2 : 0); // ранее "DndDrop" не было
+		reg.Load(_T("Dnd"), &isDragEnabled); 
+		isDropEnabled = (BYTE)(isDragEnabled ? 1 : 0); // ранее "DndDrop" не было, поэтому ставим default
         reg.Load(_T("DndLKey"), &nLDragKey);
 		reg.Load(_T("DndRKey"), &nRDragKey);
         reg.Load(_T("DndDrop"), &isDropEnabled);

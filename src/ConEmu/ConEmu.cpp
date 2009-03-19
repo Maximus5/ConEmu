@@ -2471,8 +2471,16 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
         mouse.lastMMW=wParam; mouse.lastMML=lParam;
         
         // 18.03.2009 Maks - Если уже тащим - мышь не слать
-        if (isDragging())
-	        return 0;
+		if (isDragging()) {
+			// может флажок случайно остался?
+			if ((mouse.state & DRAG_L_STARTED) && ((wParam & MK_LBUTTON)==0))
+				mouse.state &= ~(DRAG_L_STARTED | DRAG_L_ALLOWED);
+			if ((mouse.state & DRAG_R_STARTED) && ((wParam & MK_RBUTTON)==0))
+				mouse.state &= ~(DRAG_R_STARTED | DRAG_R_ALLOWED);
+
+			if (mouse.state & (DRAG_L_STARTED | DRAG_R_STARTED))
+				return 0;
+		}
 
 
         //TODO: вроде бы иногда isSizing() не сбрасывается?
@@ -2502,9 +2510,17 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	            BOOL lbLeftDrag = (mouse.state & DRAG_L_ALLOWED) == DRAG_L_ALLOWED;
 	            // Чтобы сам фар не дергался на MouseMove...
 	            //isLBDown = false;
-				mouse.state &= ~(DRAG_L_ALLOWED | DRAG_L_STARTED);
+				mouse.state &= ~(DRAG_L_ALLOWED | DRAG_L_STARTED | DRAG_R_STARTED); // флажок поставит сам CDragDrop::Drag() по наличию DRAG_R_ALLOWED
 	            // вроде валится, если перед Drag
 	            //POSTMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( newX, newY ), TRUE);     //посылаем консоли отпускание
+
+				if (lbLeftDrag) { // сразу "отпустить" клавишу
+					POSTMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( mouse.LClkCon.X, mouse.LClkCon.Y ), TRUE);     //посылаем консоли отпускание
+				} else {
+					POSTMESSAGE(ghConWnd, WM_LBUTTONDOWN, wParam, MAKELPARAM( mouse.RClkCon.X, mouse.RClkCon.Y ), TRUE);     //посылаем консоли отпускание
+					POSTMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( mouse.RClkCon.X, mouse.RClkCon.Y ), TRUE);     //посылаем консоли отпускание
+				}
+
 	            
 	            // Иначе иногда срабатывает FAR'овский D'n'D
 	            //SENDMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( newX, newY ));     //посылаем консоли отпускание
@@ -2519,8 +2535,8 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			    newX = MulDiv(cursor.x, conRect.right, klMax<uint>(1, pVCon->Width));
 			    newY = MulDiv(cursor.y, conRect.bottom, klMax<uint>(1, pVCon->Height));
 			    
-			    if (lbLeftDrag)
-					POSTMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( newX, newY ), TRUE);     //посылаем консоли отпускание
+			    //if (lbLeftDrag)
+				//	POSTMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( newX, newY ), TRUE);     //посылаем консоли отпускание
 				//isDragProcessed=false; -- убрал, иначе при бросании в пассивную панель больших файлов дроп может вызваться еще раз???
 	            return 0;
 	        }
@@ -2558,6 +2574,8 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
             //isLBDown = false;
 			mouse.state &= ~(DRAG_L_ALLOWED | DRAG_L_STARTED);
             mouse.bIgnoreMouseMove = false;
+            mouse.LClkCon = MakeCoord(newX,newY);
+			mouse.LClkDC = MakeCoord(winX,winY);
             if (!gConEmu.isConSelectMode() && gConEmu.isFilePanel())
             {
                 //SetCapture(ghWndDC); --2009-03-14
@@ -2576,11 +2594,10 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
         }
         else if (messg == WM_LBUTTONUP)
         {
-            if (isLBDown()) {
-                //isLBDown=false;
-				mouse.state &= ~(DRAG_L_ALLOWED | DRAG_L_STARTED);
-                //ReleaseCapture(); --2009-03-14
-            }
+			BOOL lbLDrag = (mouse.state & DRAG_L_STARTED) == DRAG_L_STARTED;
+			mouse.state &= ~(DRAG_L_ALLOWED | DRAG_L_STARTED);
+			if (lbLDrag)
+				return 0; // кнопка уже "отпущена"
             if (mouse.bIgnoreMouseMove) {
 	            mouse.bIgnoreMouseMove = false;
 			    newX = MulDiv(cursor.x, conRect.right, klMax<uint>(1, pVCon->Width));
