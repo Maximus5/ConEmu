@@ -500,6 +500,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         }
     }
 
+		#ifdef _DEBUG
+		//if (!IsDebuggerPresent()) MBoxA(_T("/attach ?"));
+		#endif
+
     TCHAR *curCommand = cmdLine;
     {
 #ifdef KL_MEM
@@ -510,11 +514,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 		if(params < 2) {
             curCommand = NULL;
-		} else
+		}
         // Parse parameters.
         // Duplicated parameters are permitted, the first value is used.
-		// В зависимости от "стиля" запуска в командной строке может быть имя conemu, а может и нет...
-        for (uint i = 0; i < params; i++)
+		uint i = 0; // ммать... curCommand увеличивался, а i НЕТ
+        while (i < params && curCommand && *curCommand)
         {
 			if ( !klstricmp(curCommand, _T("/conman")) ) {
 				ConManPrm = true;
@@ -525,7 +529,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             }
             else if ( !klstricmp(curCommand, _T("/font")) && i + 1 < params)
             {
-                curCommand += _tcslen(curCommand) + 1;
+                curCommand += _tcslen(curCommand) + 1; i++;
                 if (!FontPrm)
                 {
                     FontPrm = true;
@@ -534,7 +538,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             }
             else if ( !klstricmp(curCommand, _T("/size")) && i + 1 < params)
             {
-                curCommand += _tcslen(curCommand) + 1;
+                curCommand += _tcslen(curCommand) + 1; i++;
                 if (!SizePrm)
                 {
                     SizePrm = true;
@@ -543,7 +547,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             }
             else if ( !klstricmp(curCommand, _T("/attach")) /*&& i + 1 < params*/)
             {
-                //curCommand += _tcslen(curCommand) + 1;
+                //curCommand += _tcslen(curCommand) + 1; i++;
                 if (!AttachPrm)
                 {
                     AttachPrm = true; AttachVal = -1;
@@ -551,7 +555,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
                     {
 	                    TCHAR *nextCommand = curCommand + _tcslen(curCommand) + 1;
 	                    if (*nextCommand != _T('/')) {
-		                    curCommand = nextCommand;
+		                    curCommand = nextCommand; i++;
 		                    AttachVal = klatoi(curCommand);
 		                }
 	                }
@@ -560,7 +564,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             //Start ADD fontname; by Mors
             else if ( !klstricmp(curCommand, _T("/fontfile")) && i + 1 < params)
             {
-                curCommand += _tcslen(curCommand) + 1;
+                curCommand += _tcslen(curCommand) + 1; i++;
                 if (!FontFilePrm)
                 {
                     FontFilePrm = true;
@@ -586,7 +590,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             }
             else if (!klstricmp(curCommand, _T("/BufferHeight")) && i + 1 < params)
             {
-                curCommand += _tcslen(curCommand) + 1;
+                curCommand += _tcslen(curCommand) + 1; i++;
                 if (!BufferHeightPrm)
                 {
                     BufferHeightPrm = true;
@@ -600,7 +604,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             }
             else if (!klstricmp(curCommand, _T("/Config")) && i + 1 < params)
             {
-                curCommand += _tcslen(curCommand) + 1;
+                curCommand += _tcslen(curCommand) + 1; i++;
                 if (!ConfigPrm)
                 {
                     ConfigPrm = true;
@@ -625,7 +629,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
                 return -1; // NightRoman
             }
 
-			curCommand += _tcslen(curCommand) + 1;
+			curCommand += _tcslen(curCommand) + 1; i++;
         }
     }
     if (setParentDisabled && (gConEmu.setParent || gConEmu.setParent2)) {
@@ -783,6 +787,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	    free(cmdLine);
 	    delete pVCon;
 	    return 100;
+	}
+
+	if (AttachPrm) {
+		// Заодно, вызвать определение нового окна ConEmu
+		TabBar.Retrieve();
+		/*CConEmuPipe pipe;
+	    if (pipe.Init(_T("Trigger ConEmuWnd find"), TRUE))
+		    pipe.Execute(CMD_DEFFONT);*/
 	}
 	    
 

@@ -1406,7 +1406,7 @@ DWORD CConEmuMain::CheckProcesses(DWORD nConmanIDX, BOOL bTitleChanged)
     if (!lbProcessChanged)
 	    lbProcessChanged = m_ActiveConmanIDX != nConmanIDX;
 	    
-	if (lbProcessChanged) {
+	if (lbProcessChanged && ghWnd) {
 		TabBar.Reset();
 		if (mn_TopProcessID) {
 			// Дернуть событие для этого процесса фара - он перешлет текущие табы

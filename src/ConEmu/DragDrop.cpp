@@ -22,6 +22,11 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop (IDataObject * pDataObject,DWORD grfKe
 		*pdwEffect = DROPEFFECT_NONE;
 		return S_OK;
 	}
+	
+	*pdwEffect = DROPEFFECT_NONE;
+	if (S_OK != DragOver(grfKeyState, pt, pdwEffect) ||  *pdwEffect == DROPEFFECT_NONE) {
+		return S_OK;
+	}
 
 	WCHAR szStr[MAX_PATH];
 	STGMEDIUM stgMedium;
@@ -35,68 +40,9 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop (IDataObject * pDataObject,DWORD grfKe
 
 	gConEmu.DnDstep(_T("DnD: Drop starting"));
 
-	if ((grfKeyState & 32/*MK_XBUTTON1*/) == 32/*MK_XBUTTON1*/)
 	{
-/*		IShellLink* pLink;
-		if(SUCCEEDED(CoInitialize(NULL)))
-		{
-			if(SUCCEEDED(CoCreateInstance(CLSID_ShellLink, NULL,
-										  CLSCTX_INPROC_SERVER,
-										  IID_IShellLink, (void **) &pLink)))
-			{
-				TCHAR curr[MAX_PATH+1];
-
-				for ( int i = 0 ; i < iQuantity; i++ )
-				{
-					DragQueryFile(hDrop,i,curr,MAX_PATH);
-					pLink->SetPath(curr);
-		//			pLink->SetDescription("Woo hoo, look at Homer's shortcut");
-					pLink->SetShowCmd(SW_SHOW);
-
-					if(SUCCEEDED(pLink->QueryInterface(IID_IPersistFile,
-													   (void **)&pPersistFile)))
-					{
-
-						WideString strShortCutLocation(DesktopDir);
-//						strShortCutLocation += "\\bcbshortcut.lnk";
-//						pPersistFile->Save(strShortCutLocation.c_bstr(), TRUE);
-						pPersistFile->Release();
-					}
-				}
-				pLink->Release();
-			}
-			CoUninitialize();
-		}*/
-	}
-	else
-	{
-		SHFILEOPSTRUCT fop;
-
-		if ((grfKeyState & MK_CONTROL) && gConEmu.isDragging() /*&& gSet.isDropEnabled!=2*/) {
-			if (gSet.isDefCopy)
-				*pdwEffect=DROPEFFECT_MOVE;
-			else
-				*pdwEffect=DROPEFFECT_COPY;
-			// Запретить бросать при нажатом контроле, если тащат с другой панели
-			// По хорошему, нужно бы и другие кнопки запрещать (Alt, Shift,...)
-			//*pdwEffect = DROPEFFECT_NONE;
-			//return S_OK;
-		} else
-		if ((grfKeyState & MK_CONTROL)==0 || gConEmu.isDragging()) {
-			if (gSet.isDefCopy)
-				fop.wFunc=FO_COPY;
-			else
-				fop.wFunc=FO_MOVE;
-		} else {
-			if (gSet.isDefCopy)
-				fop.wFunc=FO_MOVE;
-			else
-				fop.wFunc=FO_COPY;
-		}
-
-		fop.hwnd=m_hWnd;
-		fop.pTo=NULL; //new TCHAR[MAX_PATH+3]; -- Maximus5
-
+		SHFILEOPSTRUCT fop = {m_hWnd};
+		
 		ScreenToClient(m_hWnd, (LPPOINT)&pt);
 		pt.x/=gSet.LogFont.lfWidth;
 		pt.y/=gSet.LogFont.lfHeight;
@@ -104,9 +50,9 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop (IDataObject * pDataObject,DWORD grfKe
 		if (m_pfpi==NULL) {
 			//delete fop.pTo;
 			return S_OK; //1;
-		} else if (pt.x>m_pfpi->ActiveRect.left && pt.x<m_pfpi->ActiveRect.right && pt.y>m_pfpi->ActiveRect.top && pt.y<m_pfpi->ActiveRect.bottom && m_pfpi->pszActivePath[0]) 
+		} else if (PtInRect(&(m_pfpi->ActiveRect), *(LPPOINT)&pt) && m_pfpi->pszActivePath[0]) 
 		{
-			if (gConEmu.isDragging()) {
+			if (mb_selfdrag) {
 				*pdwEffect = DROPEFFECT_NONE;
 				return S_OK; // Тащат внутри одной копии FAR с активной на активную, т.е. ничего не двигается
 			}
@@ -118,13 +64,11 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop (IDataObject * pDataObject,DWORD grfKe
 			fop.pTo=new WCHAR[lstrlenW(m_pfpi->pszActivePath)+3];
 			wsprintf((LPWSTR)fop.pTo, _T("%s\\\0\0"), m_pfpi->pszActivePath);
 		}
-		else if (pt.x>m_pfpi->PassiveRect.left && pt.x<m_pfpi->PassiveRect.right && pt.y>m_pfpi->PassiveRect.top && pt.y<m_pfpi->PassiveRect.bottom && m_pfpi->pszPassivePath[0])
+		else if (PtInRect(&(m_pfpi->PassiveRect), *(LPPOINT)&pt) && m_pfpi->pszPassivePath[0])
 		{
-			// Пока подвисает...
-			if (gConEmu.isDragging() /*&& gSet.isDropEnabled==2*/) {
-				//wchar_t* mcr = (fop.wFunc==FO_COPY) ? L"F5" : L"F6";
+			if (mb_selfdrag /*&& gSet.isDropEnabled==2*/ && (*pdwEffect == DROPEFFECT_COPY || *pdwEffect == DROPEFFECT_MOVE)) {
 				wchar_t mcr[16];
-				lstrcpyW(mcr, (grfKeyState & MK_CONTROL) ? L"F6" : L"F5");
+				lstrcpyW(mcr, (*pdwEffect == DROPEFFECT_MOVE) ? L"F6" : L"F5");
 				if (gSet.isDropEnabled==2)
 					lstrcatW(mcr, L" Enter");
 
@@ -132,6 +76,7 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop (IDataObject * pDataObject,DWORD grfKe
 
 				return S_OK; // Тащим внутри ФАРа
 			}
+			
 			if (!*m_pfpi->pszPassivePath) return 1;
 			if (m_pfpi->pszPassivePath[lstrlen(m_pfpi->pszPassivePath)-1]==_T('\\'))
 				m_pfpi->pszPassivePath[lstrlen(m_pfpi->pszPassivePath)-1] = 0;
@@ -140,14 +85,13 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop (IDataObject * pDataObject,DWORD grfKe
 		}
 		else 
 		{
-			//delete fop.pTo;
-			return S_OK; //1;
+			*pdwEffect = DROPEFFECT_NONE;
+			return S_OK;
 		}
-	//	wsprintf((LPWSTR)fop.pTo, _T("%s\\\0\0"), _T("c:\\temp\\far"));
 
-		fop.fFlags=FOF_SIMPLEPROGRESS;
-		fop.pFrom=new WCHAR[MAX_DROP_PATH*iQuantity+iQuantity+1];
-		ZeroMemory((void*)fop.pFrom,sizeof(WCHAR)*MAX_DROP_PATH*iQuantity+iQuantity+1);
+		int nCount = MAX_DROP_PATH*iQuantity+iQuantity+1;
+		fop.pFrom=new WCHAR[nCount];
+		ZeroMemory((void*)fop.pFrom,sizeof(WCHAR)*nCount);
 
 		WCHAR *curr=(WCHAR *)fop.pFrom;
 
@@ -156,10 +100,55 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop (IDataObject * pDataObject,DWORD grfKe
 			DragQueryFile(hDrop,i,curr,MAX_DROP_PATH);
 			curr+=wcslen(curr)+1;
 		}
+		
+		
+		if (*pdwEffect == DROPEFFECT_MOVE)
+			fop.wFunc=FO_MOVE;
+		else if (*pdwEffect == DROPEFFECT_COPY)
+			fop.wFunc=FO_MOVE;
+		else {
+			LPCTSTR pszTitle = _tcsrchr(fop.pFrom, _T('\\'));
+			if (pszTitle) pszTitle++; else pszTitle = fop.pFrom;
+
+			int nLen = _tcslen(fop.pTo)+2+_tcslen(pszTitle)+4;
+			TCHAR *szLnkPath = new TCHAR[nLen];
+			_tcscpy(szLnkPath, fop.pTo);
+			if (szLnkPath[_tcslen(szLnkPath)-1] != _T('\\'))
+				_tcscat(szLnkPath, _T("\\"));
+			_tcscat(szLnkPath, pszTitle);
+			_tcscat(szLnkPath, _T(".lnk"));
+
+			try {
+				hr = CreateLink(fop.pFrom, szLnkPath, pszTitle);
+			} catch(...) {
+				hr = E_UNEXPECTED;
+			}
+			if (hr!=S_OK)
+				DisplayLastError(_T("Can't create link!"), hr);
+			
+			if (fop.pTo) delete fop.pTo;
+			if (fop.pFrom) delete fop.pFrom;
+			delete szLnkPath;
+			*pdwEffect = DROPEFFECT_NONE;
+			return S_OK;
+		}
+
+		//fop.fFlags=FOF_SIMPLEPROGRESS; -- пусть полностью показывает
 		gConEmu.DnDstep(_T("DnD: Shell operation starting"));
-		SHFileOperation(&fop);
-		if (fop.pTo) //Maximus5
-			delete fop.pTo;
+		
+		// Собственно операция копирования/перемещения...
+		try {
+			hr = SHFileOperation(&fop);
+		} catch(...) {
+			hr = E_UNEXPECTED;
+		}
+		if (hr != S_OK)
+			DisplayLastError(_T("Shell operation failed"), hr);
+		
+		if (fop.pTo) delete fop.pTo;
+		if (fop.pFrom) delete fop.pFrom;
+		
+		gConEmu.DnDstep(NULL);
 	}
 	return S_OK; //1;
 }
@@ -178,36 +167,25 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragOver(DWORD grfKeyState,POINTL pt,DWORD 
 	pt.y/=gSet.LogFont.lfHeight;
 
 	if (m_pfpi==NULL)
-		*pdwEffect=DROPEFFECT_NONE;
+		*pdwEffect = DROPEFFECT_NONE;
 	else
-	if ((pt.x>m_pfpi->ActiveRect.left && pt.x<m_pfpi->ActiveRect.right && pt.y>m_pfpi->ActiveRect.top && pt.y<m_pfpi->ActiveRect.bottom && m_pfpi->pszActivePath[0] && !mb_selfdrag) ||
-		(pt.x>m_pfpi->PassiveRect.left && pt.x<m_pfpi->PassiveRect.right && pt.y>m_pfpi->PassiveRect.top && pt.y<m_pfpi->PassiveRect.bottom && m_pfpi->pszPassivePath[0]))
+	if ((PtInRect(&(m_pfpi->ActiveRect), *(LPPOINT)&pt) && m_pfpi->pszActivePath[0] && !mb_selfdrag) ||
+		(PtInRect(&(m_pfpi->PassiveRect), *(LPPOINT)&pt) && m_pfpi->pszPassivePath[0]))
 	{
 
-		if ((grfKeyState & MK_CONTROL) && gConEmu.isDragging() /*&& gSet.isDropEnabled!=2*/) {
-			if (gSet.isDefCopy)
-				*pdwEffect=DROPEFFECT_MOVE;
-			else
-				*pdwEffect=DROPEFFECT_COPY;
-			// Запретить бросать при нажатом контроле, если тащат с другой панели
-			// По хорошему, нужно бы и другие кнопки запрещать (Alt, Shift,...)
-			//*pdwEffect = DROPEFFECT_NONE;
-		} else
-		if ((grfKeyState & MK_CONTROL)==0 || gConEmu.isDragging()) {
-			if (gSet.isDefCopy)
-				*pdwEffect=DROPEFFECT_COPY;
-			else
-				*pdwEffect=DROPEFFECT_MOVE;
-		} else {
-			if (gSet.isDefCopy)
-				*pdwEffect=DROPEFFECT_MOVE;
-			else
-				*pdwEffect=DROPEFFECT_COPY;
-		}
-
+		if (grfKeyState & MK_CONTROL)
+			*pdwEffect = DROPEFFECT_COPY;
+		else if (grfKeyState & MK_SHIFT)
+			*pdwEffect = DROPEFFECT_MOVE;
+		else if (grfKeyState & (MK_ALT | MK_RBUTTON))
+			*pdwEffect = DROPEFFECT_LINK;
+		else if (gConEmu.mouse.state & DRAG_R_STARTED)
+			*pdwEffect = DROPEFFECT_LINK; // при Drop - правая кнопка уже отпущена
+		else
+			*pdwEffect = (gSet.isDefCopy) ? DROPEFFECT_COPY : DROPEFFECT_MOVE;
 	}
 	else
-		*pdwEffect=DROPEFFECT_NONE;
+		*pdwEffect = DROPEFFECT_NONE;
 
 	//gConEmu.DnDstep(_T("DnD: DragOver ok"));
 	return 0;
@@ -352,8 +330,8 @@ HRESULT CDragDrop::CreateLink(LPCTSTR lpszPathObj, LPCTSTR lpszPathLink, LPCTSTR
         IPersistFile* ppf; 
  
         // Set the path to the shortcut target and add the description. 
-        psl->SetPath(lpszPathObj); 
-        psl->SetDescription(lpszDesc); 
+        hres = psl->SetPath(lpszPathObj); 
+        hres = psl->SetDescription(lpszDesc); 
  
         // Query IShellLink for the IPersistFile interface for saving the 
         // shortcut in persistent storage. 
@@ -469,21 +447,26 @@ void CDragDrop::Drag()
 								LPITEMIDLIST pParent=NULL, pItem=NULL;
 								DWORD nParentSize=0, nItemSize=0;
 								HRESULT hr = S_OK; //SHParseDisplayName(szDraggedPath, NULL, &pParent, 0, &tmp);
-								IShellFolder *pDesktop=NULL, *pFolder=NULL;
+								IShellFolder *pDesktop=NULL; //, *pFolder=NULL;
+								
+								hr = SHGetSpecialFolderLocation ( ghWnd, CSIDL_DESKTOP, &pParent );
 
 								hr = SHGetDesktopFolder ( &pDesktop );
 
-								hr = SHParseDisplayName(szDraggedPath, NULL, &pParent, 0, &tmp);
+								//hr = SHParseDisplayName(szDraggedPath, NULL, &pParent, 0, &tmp);
 
-								hr = pDesktop->BindToObject(pParent, NULL, IID_IShellFolder, (void**)&pFolder);
-								pDesktop->Release(); pDesktop = NULL;
+								//hr = pDesktop->BindToObject(pParent, NULL, IID_IShellFolder, (void**)&pFolder);
+								//pDesktop->Release(); pDesktop = NULL;
 								
 								// Потом и для собственно файла/папки...
 								*pszSlash = L'\\';
 								//hr = SHParseDisplayName(pszSlash+1, NULL, &pItem, 0, &tmp);
 								ULONG nEaten=0;
-								hr = pFolder->ParseDisplayName(ghWnd, NULL, pszSlash+1, &nEaten, &pItem, &(tmp=0));
-								pFolder->Release(); pFolder = NULL;
+								//hr = pFolder->ParseDisplayName(ghWnd, NULL, pszSlash+1, &nEaten, &pItem, &(tmp=0));
+								//hr = pFolder->ParseDisplayName(ghWnd, NULL, szDraggedPath, &nEaten, &pItem, &(tmp=0));
+								hr = pDesktop->ParseDisplayName(ghWnd, NULL, szDraggedPath, &nEaten, &pItem, &(tmp=0));
+								//pFolder->Release(); pFolder = NULL;
+								pDesktop->Release(); pDesktop = NULL;
 
 								*pszSlash = L'\\';
 

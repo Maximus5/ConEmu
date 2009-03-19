@@ -195,6 +195,7 @@ Command line switches:\n\
 /SetParent - force change parent of con.window\n\
 /DontSetParent - disable of changing parent (aka /Windows7)\n\
 /BufferHeight <lines> - may be used with cmd.exe\n\
+/Attach [PID] - intercept console of specified process\n\
 /cmd <commandline> - Command line to start. This must be the last used switch.\n\
 \n\
 Command line examples:\n\
@@ -206,6 +207,5 @@ dolzenko_: windows switching via GUI tabs\n\
 DrKnS: Update plugin support\n\
 alex_itd: Drag'n'Drop, RightClick, AltEnter and GUI bars.\n\
 Mors: loading font from file\n\
-Maximus5: PictureView support, some bugfixes and customizations.\n\
+Maximus5: PictureView support, bugfixes and customizations.\n\
 (based on console emulator by SEt)";
-

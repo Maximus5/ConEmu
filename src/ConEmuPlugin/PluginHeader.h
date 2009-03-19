@@ -66,7 +66,7 @@ BOOL LoadFarVersion();
 BOOL OutDataAlloc(DWORD anSize); // необязательно
 BOOL OutDataWrite(LPVOID apData, DWORD anSize);
 
-void CheckMacro();
+void CheckMacro(BOOL abAllowAPI);
 int ShowMessage(int aiMsg, int aiButtons);
 int ShowMessageA(int aiMsg, int aiButtons);
 int ShowMessage789(int aiMsg, int aiButtons);
@@ -84,3 +84,5 @@ LPCWSTR GetMsg789(int aiMsg);
 
 extern DWORD gnReqCommand;
 void ProcessCommand(DWORD nCmd, BOOL bReqMainThread);
+BOOL CheckPlugKey();
+void NotifyChangeKey();

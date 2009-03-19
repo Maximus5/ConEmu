@@ -1434,6 +1434,7 @@ BOOL CALLBACK CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM
 		} break;
     case WM_CLOSE:
     case WM_DESTROY:
+	    if (gSet.hwndTip) {DestroyWindow(gSet.hwndTip); gSet.hwndTip = NULL;}
         EndDialog(hWnd2, TRUE);
         ghOpWnd = NULL;
         break;
@@ -1657,7 +1658,7 @@ void CSettings::Performance(UINT nID, BOOL bEnd)
 void CSettings::RegisterTipsFor(HWND hChildDlg)
 {
     // Create the ToolTip.
-	if (!hwndTip) {
+	if (!hwndTip || !IsWindow(hwndTip)) {
 		hwndTip = CreateWindowEx(WS_EX_TOPMOST, TOOLTIPS_CLASS, NULL,
                               WS_POPUP | TTS_ALWAYSTIP | TTS_BALLOON | TTS_NOPREFIX,
                               CW_USEDEFAULT, CW_USEDEFAULT,

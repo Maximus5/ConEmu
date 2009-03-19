@@ -31,12 +31,12 @@ int WINAPI _export GetMinFarVersionW(void)
 /* COMMON - пока структуры не различаютс€ */
 void WINAPI _export GetPluginInfoW(struct PluginInfo *pi)
 {
-    static WCHAR *szMenu[1], szMenu1[15];
+    static WCHAR *szMenu[1], szMenu1[255];
     szMenu[0]=szMenu1; //lstrcpyW(szMenu[0], L"[&\x2560] ConEmu");
     //szMenu[0][1] = L'&';
     //szMenu[0][2] = 0x2560;
 	if (gcPlugKey) szMenu1[0]=0; else lstrcpyW(szMenu1, L"[&\x2560] ");
-	lstrcatW(szMenu1, GetMsgW(2));
+	lstrcpynW(szMenu1+lstrlenW(szMenu1), GetMsgW(2), 240);
 
 
 	pi->StructSize = sizeof(struct PluginInfo);
@@ -79,6 +79,8 @@ HANDLE ghReqCommandEvent = NULL;
 UINT gnMsgTabChanged = 0;
 CRITICAL_SECTION csTabs, csData;
 WCHAR gcPlugKey=0;
+BOOL  gbPlugKeyChanged=FALSE;
+HKEY  ghRegMonitorKey=NULL; HANDLE ghRegMonitorEvt=NULL;
 
 #if defined(__GNUC__)
 typedef HWND (APIENTRY *FGetConsoleWindow)();
@@ -208,9 +210,64 @@ void ProcessCommand(DWORD nCmd, BOOL bReqMainThread)
 			ghReqCommandEvent = CreateEvent(NULL,FALSE,FALSE,NULL);
 		ResetEvent(ghReqCommandEvent);
 		
-		// Ќужен вызов плагина в остновной нити
-		SendMessage(FarHwnd, WM_KEYDOWN, VK_F14, 0);
-		SendMessage(FarHwnd, WM_KEYUP, VK_F14, (LPARAM)(3<<30));
+		BOOL lbKeyChanged = FALSE;
+		if (ghRegMonitorEvt) {
+			if (WaitForSingleObject(ghRegMonitorEvt, 0) == WAIT_OBJECT_0) {
+				lbKeyChanged = CheckPlugKey();
+				if (lbKeyChanged) gbPlugKeyChanged = TRUE;
+			}
+		}
+		
+		if (gbPlugKeyChanged) {
+			// ¬ообще-то его бы вызывать в главной нити...
+			CheckMacro(TRUE);
+			gbPlugKeyChanged = FALSE;
+
+			//#pragma message("Warning: попытатьс€ послать в консоль последовательность VK_F11, gcPlugKey")
+			/*INPUT_RECORD rec[4] = {{KEY_EVENT}, {KEY_EVENT}, {KEY_EVENT}, {KEY_EVENT}};
+			
+			rec[0].Event.KeyEvent.bKeyDown = TRUE;
+			rec[0].Event.KeyEvent.wRepeatCount = 1;
+			rec[0].Event.KeyEvent.wVirtualKeyCode = VK_F11;
+			
+			rec[1].Event.KeyEvent.bKeyDown = FALSE;
+			rec[1].Event.KeyEvent.wRepeatCount = 1;
+			rec[1].Event.KeyEvent.wVirtualKeyCode = VK_F11;
+			
+		
+			rec[2].Event.KeyEvent.bKeyDown = TRUE;
+			rec[2].Event.KeyEvent.wRepeatCount = 1;
+			if (gFarVersion.dwVerMajor==1)
+				rec[2].Event.KeyEvent.uChar.AsciiChar = (char)(gcPlugKey & 0xFF);
+			else
+				rec[2].Event.KeyEvent.uChar.UnicodeChar = gcPlugKey;
+
+			rec[3].Event.KeyEvent.bKeyDown = FALSE;
+			rec[3].Event.KeyEvent.wRepeatCount = 1;
+			if (gFarVersion.dwVerMajor==1)
+				rec[3].Event.KeyEvent.uChar.AsciiChar = (char)(gcPlugKey & 0xFF);
+			else
+				rec[3].Event.KeyEvent.uChar.UnicodeChar = gcPlugKey;
+	
+			DWORD dwWritten = 0;
+			
+			if (!WriteConsoleInputW(GetStdHandle(STD_INPUT_HANDLE), rec, 4, &dwWritten)) {
+				MessageBoxA(ConEmuHwnd, "Can't send plugin key", "ConEmu plugin", MB_OK|MB_ICONSTOP);
+			}*/
+			
+			/*SendMessage(FarHwnd, WM_KEYDOWN, VK_F11, 0);
+			SendMessage(FarHwnd, WM_KEYUP, VK_F11, (LPARAM)(3<<30));
+
+			// теоретически - это облом дл€ русских букв
+			SendMessage(FarHwnd, WM_KEYDOWN, gcPlugKey, 0);
+			SendMessage(FarHwnd, WM_KEYUP, gcPlugKey, (LPARAM)(3<<30));*/
+		
+		} //else 
+		{
+			// Ќужен вызов плагина в остновной нити
+			SendMessage(FarHwnd, WM_KEYDOWN, VK_F14, 0);
+			SendMessage(FarHwnd, WM_KEYUP, VK_F14, (LPARAM)(3<<30));
+		}
 		
 		HANDLE hEvents[2] = {ghReqCommandEvent, hEventCmd[CMD_EXIT]};
 		//DuplicateHandle(GetCurrentProcess(), ghReqCommandEvent, GetCurrentProcess(), hEvents, 0, 0, DUPLICATE_SAME_ACCESS);
@@ -221,6 +278,12 @@ void ProcessCommand(DWORD nCmd, BOOL bReqMainThread)
 		gnReqCommand = -1;
 		return;
 	}
+	
+	/*if (gbPlugKeyChanged) {
+		gbPlugKeyChanged = FALSE;
+		CheckMacro(TRUE);
+		gbPlugKeyChanged = FALSE;
+	}*/
 
 	EnterCriticalSection(&csData);
 
@@ -401,6 +464,12 @@ DWORD WINAPI ThreadProcW(LPVOID lpParameter)
 			continue;
 		}
 
+		if (!ConEmuHwnd) {
+			// ConEmu могло подцепитьс€
+			int nChk = 0;
+			ConEmuHwnd = GetConEmuHWND ( FALSE, &nChk );
+		}
+
 		SafeCloseHandle(ghMapping);
 		// ѕоставим флажок, что мы приступили к обработке
 		// ’оть табы и не загружаютс€ из фара, а пересылаютс€ в текущем виде, но делаетс€ это обычным образом
@@ -502,7 +571,7 @@ void WINAPI _export SetStartupInfoW(void *aInfo)
 	else
 		SetStartupInfoW757(aInfo);
 
-	CheckMacro();
+	CheckMacro(TRUE);
 }
 
 #define CREATEEVENT(fmt,h) \
@@ -517,7 +586,7 @@ void InitHWND(HWND ahFarHwnd)
 	LoadFarVersion(); // пригодитс€ уже здесь!
 
 	// начальна€ инициализаци€. в SetStartupInfo поправим
-	wsprintfW(gszRootKey, L"Software\\%s\\", (gFarVersion.dwVerMajor==2) ? L"FAR2" : L"FAR");
+	wsprintfW(gszRootKey, L"Software\\%s", (gFarVersion.dwVerMajor==2) ? L"FAR2" : L"FAR");
 
 	ConEmuHwnd = NULL;
 	FarHwnd = ahFarHwnd;
@@ -555,26 +624,39 @@ void InitHWND(HWND ahFarHwnd)
 	}
 }
 
-void CheckMacro()
+void NotifyChangeKey()
 {
-	// и не под эмул€тором нужно провер€ть макросы, иначе потом активаци€ не сработает...
-	//// ≈сли мы не под эмул€тором - больше ничего делать не нужно
-	//if (!ConEmuHwnd) return;
+	if (ghRegMonitorKey) { RegCloseKey(ghRegMonitorKey); ghRegMonitorKey = NULL; }
+	if (ghRegMonitorEvt) ResetEvent(ghRegMonitorEvt);
+	
+	WCHAR szKeyName[MAX_PATH*2];
+	lstrcpyW(szKeyName, gszRootKey);
+	lstrcatW(szKeyName, L"\\PluginHotkeys");
+	//  люча может и не быть, если ни дл€ одного плагина не было зарегистрировано гор€чей клавиши
+	if (0 == RegOpenKeyEx(HKEY_CURRENT_USER, szKeyName, 0, KEY_NOTIFY, &ghRegMonitorKey)) {
+		if (!ghRegMonitorEvt) ghRegMonitorEvt = CreateEvent(NULL,FALSE,FALSE,NULL);
+		RegNotifyChangeKeyValue(ghRegMonitorKey, TRUE, REG_NOTIFY_CHANGE_LAST_SET, ghRegMonitorEvt, TRUE);
+		return;
+	}
+	// ≈сли их таки нет - пробуем подцепитьс€ к корневому ключу
+	if (0 == RegOpenKeyEx(HKEY_CURRENT_USER, gszRootKey, 0, KEY_NOTIFY, &ghRegMonitorKey)) {
+		if (!ghRegMonitorEvt) ghRegMonitorEvt = CreateEvent(NULL,FALSE,FALSE,NULL);
+		RegNotifyChangeKeyValue(ghRegMonitorKey, TRUE, REG_NOTIFY_CHANGE_LAST_SET, ghRegMonitorEvt, TRUE);
+		return;
+	}
+}
 
-
-	// ѕроверка наличи€ макроса
-	BOOL lbMacroAdded = FALSE, lbNeedMacro = FALSE;
+//abCompare=TRUE вызываетс€ после загрузки плагина, если юзер изменил гор€чую клавишу...
+BOOL CheckPlugKey()
+{
+	WCHAR cCurKey = gcPlugKey;
+	gcPlugKey = 0;
+	BOOL lbChanged = FALSE;
 	HKEY hkey=NULL;
-	#define MODCOUNT 4
-	int n;
-	char szValue[1024];
-	WCHAR szMacroKey[MODCOUNT][MAX_PATH], szCheckKey[32];
-	DWORD dwSize = 0;
-	//bool lbMacroDontCheck = false;
-
+	WCHAR szMacroKey[2][MAX_PATH], szCheckKey[32];
+	
 	//ѕрочитать назначенные плагинам клавиши, и если дл€ ConEmu.dll указана клавиша активации - запомнить ее
-	wsprintfW(szMacroKey[0], L"%s\\PluginHotkeys",
-			gszRootKey, szCheckKey);
+	wsprintfW(szMacroKey[0], L"%s\\PluginHotkeys", gszRootKey, szCheckKey);
 	if (0==RegOpenKeyExW(HKEY_CURRENT_USER, szMacroKey[0], 0, KEY_READ, &hkey))
 	{
 		DWORD dwIndex = 0, dwSize; FILETIME ft;
@@ -610,6 +692,68 @@ void CheckMacro()
 		// «акончили
 		if (hkey) {RegCloseKey(hkey); hkey=NULL;}
 	}
+	
+	lbChanged = (gcPlugKey != cCurKey);
+	
+	return lbChanged;
+}
+
+void CheckMacro(BOOL abAllowAPI)
+{
+	// и не под эмул€тором нужно провер€ть макросы, иначе потом активаци€ не сработает...
+	//// ≈сли мы не под эмул€тором - больше ничего делать не нужно
+	//if (!ConEmuHwnd) return;
+
+
+	// ѕроверка наличи€ макроса
+	BOOL lbMacroAdded = FALSE, lbNeedMacro = FALSE;
+	HKEY hkey=NULL;
+	#define MODCOUNT 4
+	int n;
+	char szValue[1024];
+	WCHAR szMacroKey[MODCOUNT][MAX_PATH], szCheckKey[32];
+	DWORD dwSize = 0;
+	//bool lbMacroDontCheck = false;
+
+	//ѕрочитать назначенные плагинам клавиши, и если дл€ ConEmu.dll указана клавиша активации - запомнить ее
+	CheckPlugKey();
+	//wsprintfW(szMacroKey[0], L"%s\\PluginHotkeys",
+	//		gszRootKey, szCheckKey);
+	//if (0==RegOpenKeyExW(HKEY_CURRENT_USER, szMacroKey[0], 0, KEY_READ, &hkey))
+	//{
+	//	DWORD dwIndex = 0, dwSize; FILETIME ft;
+	//	while (0==RegEnumKeyEx(hkey, dwIndex++, szMacroKey[1], &(dwSize=MAX_PATH), NULL, NULL, NULL, &ft)) {
+	//		WCHAR* pszSlash = szMacroKey[1]+lstrlenW(szMacroKey[1])-1;
+	//		while (pszSlash>szMacroKey[1] && *pszSlash!=L'/') pszSlash--;
+	//		if (lstrcmpiW(pszSlash, L"/conemu.dll")==0) {
+	//			WCHAR lsFullPath[MAX_PATH*2];
+	//			lstrcpy(lsFullPath, szMacroKey[0]);
+	//			lstrcat(lsFullPath, L"\\");
+	//			lstrcat(lsFullPath, szMacroKey[1]);
+	//
+	//			RegCloseKey(hkey); hkey=NULL;
+	//
+	//			if (0==RegOpenKeyExW(HKEY_CURRENT_USER, lsFullPath, 0, KEY_READ, &hkey)) {
+	//				dwSize = sizeof(szCheckKey);
+	//				if (0==RegQueryValueExW(hkey, L"Hotkey", NULL, NULL, (LPBYTE)szCheckKey, &dwSize)) {
+	//					if (gFarVersion.dwVerMajor==1) {
+	//						char cAnsi; // чтобы не возникло проблем с приведением к WCHAR
+	//						WideCharToMultiByte(CP_OEMCP, 0, szCheckKey, 1, &cAnsi, 1, 0,0);
+	//						gcPlugKey = cAnsi;
+	//					} else {
+	//						gcPlugKey = szCheckKey[0];
+	//					}
+	//				}
+	//			}
+	//			//
+	//			//
+	//			break;
+	//		}
+	//	}
+	//
+	//	// «акончили
+	//	if (hkey) {RegCloseKey(hkey); hkey=NULL;}
+	//}
 
 
 	for (n=0; n<MODCOUNT; n++) {
@@ -619,8 +763,7 @@ void CheckMacro()
 			case 2: lstrcpyW(szCheckKey, L"AltF14"); break;
 			case 3: lstrcpyW(szCheckKey, L"ShiftF14"); break;
 		}
-		wsprintfW(szMacroKey[n], L"%s\\KeyMacros\\Common\\%s",
-			gszRootKey, szCheckKey);
+		wsprintfW(szMacroKey[n], L"%s\\KeyMacros\\Common\\%s", gszRootKey, szCheckKey);
 	}
 	//lstrcpyA(szCheckKey, "F14DontCheck2");
 
@@ -634,10 +777,10 @@ void CheckMacro()
 
 	if (gFarVersion.dwVerMajor==1) {
 		lstrcpyA((char*)szCheckKey, "F11  ");
-		szCheckKey[4] = (char)(gcPlugKey & 0xFF);
+		szCheckKey[4] = (char)((gcPlugKey ? gcPlugKey : 0xCC) & 0xFF);
 	} else {
 		lstrcpyW((wchar_t*)szCheckKey, L"F11  ");
-		szCheckKey[4] = gcPlugKey;
+		szCheckKey[4] = (wchar_t)(gcPlugKey ? gcPlugKey : 0x2560);
 	}
 
 	//if (!lbMacroDontCheck)
@@ -689,8 +832,7 @@ void CheckMacro()
 			if (0==RegCreateKeyExW(HKEY_CURRENT_USER, szMacroKey[n], 0, 0, 
 				0, KEY_ALL_ACCESS, 0, &hkey, &disp))
 			{
-				lstrcpyA(szValue, 
-					"ConEmu support");
+				lstrcpyA(szValue, "ConEmu support");
 				RegSetValueExA(hkey, "", 0, REG_SZ, (LPBYTE)szValue, (dwSize=strlen(szValue)+1));
 
 				//lstrcpyA(szValue, 
@@ -703,8 +845,7 @@ void CheckMacro()
 					RegSetValueExW(hkey, L"Sequence", 0, REG_SZ, (LPBYTE)szCheckKey, (dwSize=2*(lstrlenW((WCHAR*)szCheckKey)+1)));
 				}
 
-				lstrcpyA(szValue, 
-					"For ConEmu - plugin activation from listening thread");
+				lstrcpyA(szValue, "For ConEmu - plugin activation from listening thread");
 				RegSetValueExA(hkey, "Description", 0, REG_SZ, (LPBYTE)szValue, (dwSize=strlen(szValue)+1));
 
 				RegSetValueExA(hkey, "DisableOutput", 0, REG_DWORD, (LPBYTE)&(disp=1), (dwSize=4));
@@ -716,13 +857,18 @@ void CheckMacro()
 
 
 	// ѕеречитать макросы в FAR?
-	if (lbMacroAdded) {
+	if (lbMacroAdded && abAllowAPI) {
 		if (gFarVersion.dwVerMajor==1)
 			ReloadMacroA();
 		else if (gFarVersion.dwBuild>=789)
 			ReloadMacro789();
 		else
 			ReloadMacro757();
+	}
+
+	// First call
+	if (abAllowAPI) {
+		NotifyChangeKey();
 	}
 }
 
@@ -815,7 +961,7 @@ void SendTabs(int tabCount, BOOL abWritePipe/*=FALSE*/)
 		abWritePipe ? L"Transfer" : L"Post", gnCurTabCount);
 	OutputDebugString(szDbg);
 #endif
-	if (ConEmuHwnd && IsWindow(ConEmuHwnd)) {
+	if (ConEmuHwnd && IsWindow(ConEmuHwnd) && tabs) {
 		COPYDATASTRUCT cds;
 		if (tabs[0].Type == WTYPE_PANELS) {
 			cds.dwData = tabCount;
@@ -940,6 +1086,9 @@ void StopThread(void)
 
 	DeleteCriticalSection(&csTabs); memset(&csTabs,0,sizeof(csTabs));
 	DeleteCriticalSection(&csData); memset(&csData,0,sizeof(csData));
+	
+	if (ghRegMonitorKey) { RegCloseKey(ghRegMonitorKey); ghRegMonitorKey = NULL; }
+	SafeCloseHandle(ghRegMonitorEvt);
 }
 
 void   WINAPI _export ExitFARW(void)
