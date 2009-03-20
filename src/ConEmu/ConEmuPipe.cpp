@@ -5,6 +5,7 @@ TCHAR  CConEmuPipe::sLastOp[64] = _T("");
 
 CConEmuPipe::CConEmuPipe()
 {
+	MCHKHEAP
 	for (int i=0; i<MAXCMDCOUNT; i++)
 		hEventCmd[i] = NULL;
 	hEventAlive=NULL;
@@ -15,6 +16,7 @@ CConEmuPipe::CConEmuPipe()
 	lpCursor = NULL;
 	sMapName[0] = 0;
 	nPID = 0;
+	MCHKHEAP
 }
 
 CConEmuPipe::~CConEmuPipe()
@@ -24,17 +26,20 @@ CConEmuPipe::~CConEmuPipe()
 
 void CConEmuPipe::Close()
 {
+	MCHKHEAP
 	for (int i=0; i<MAXCMDCOUNT; i++)
 		SafeCloseHandle(hEventCmd[i]);
 	SafeCloseHandle(hEventAlive);
 	SafeCloseHandle(hEventReady);
 	if (lpMap)
 		UnmapViewOfFile(lpMap);
+	MCHKHEAP
 	if (hMapping) {
 		SafeCloseHandle(hMapping);
 		ms_LastOp[0] = 0;
 		sLastOp[0] = 0;
 	}
+	MCHKHEAP
 }
 
 #define CREATEEVENT(fmt,h) \
@@ -45,6 +50,7 @@ void CConEmuPipe::Close()
 //#pragma message("warning: добавить аргумент abSilent, вдруг плагин еще не загружен?")
 BOOL CConEmuPipe::Init(LPCTSTR asOp, BOOL abSilent)
 {
+	MCHKHEAP
 	if (hMapping) {
 		TCHAR szMsg[0x400];
 		wsprintf(szMsg, _T("Can't start '%s'\nLast operation '%s' was not finished!"), asOp, sLastOp);
@@ -56,6 +62,8 @@ BOOL CConEmuPipe::Init(LPCTSTR asOp, BOOL abSilent)
 	    gConEmu.DnDstep(_T("Pipe: FAR not active"));
 	    return FALSE;
 	}
+	
+	MCHKHEAP
 	
 	lstrcpyn(ms_LastOp, asOp, 64);
 
@@ -76,6 +84,7 @@ BOOL CConEmuPipe::Init(LPCTSTR asOp, BOOL abSilent)
 	CREATEEVENT(CONEMUALIVE, hEventAlive);
 	CREATEEVENT(CONEMUREADY, hEventReady);
 
+	MCHKHEAP
 
 	if (!hEventAlive || !hEventReady || 
 		!hEventCmd[CMD_DRAGFROM] || !hEventCmd[CMD_DRAGTO] || 
@@ -94,6 +103,7 @@ BOOL CConEmuPipe::Init(LPCTSTR asOp, BOOL abSilent)
 // Не интересуется результатом команды!
 BOOL CConEmuPipe::Execute(int nCmd)
 {
+	MCHKHEAP
 	if (nCmd<0 || nCmd>MAXCMDCOUNT) {
 		TCHAR szError[128];
 		swprintf(szError, _T("Invalid command id (%i)!"), nCmd);
@@ -107,6 +117,7 @@ BOOL CConEmuPipe::Execute(int nCmd)
 		return FALSE;
 	}
 	SetEvent(hEventCmd[nCmd]);
+	MCHKHEAP
 	return TRUE;
 }
 
@@ -117,6 +128,7 @@ LPBYTE CConEmuPipe::GetPtr()
 
 BOOL CConEmuPipe::Read(LPVOID pData, DWORD nSize, DWORD* nRead)
 {
+	MCHKHEAP
 	if (nRead) *nRead = 0; // пока сбросим
 
 	if (hMapping==NULL) {
@@ -125,6 +137,7 @@ BOOL CConEmuPipe::Read(LPVOID pData, DWORD nSize, DWORD* nRead)
 		lstrcpy(sLastOp, ms_LastOp);
 		
 		
+		MCHKHEAP
 		hMapping = OpenFileMapping(FILE_MAP_ALL_ACCESS, // Read/write permission. 
 			FALSE,                             // Do not inherit the name
 			sMapName);            // of the mapping object. 
@@ -140,6 +153,7 @@ BOOL CConEmuPipe::Read(LPVOID pData, DWORD nSize, DWORD* nRead)
 			MessageBox(ghWnd, _T("Can't map view of file"), sMapName, MB_ICONSTOP);
 			return FALSE;
 		}
+		MCHKHEAP
 		dwMaxDataSize = *((DWORD*)lpMap);
 		lpCursor = lpMap+4;
 	}
@@ -148,13 +162,16 @@ BOOL CConEmuPipe::Read(LPVOID pData, DWORD nSize, DWORD* nRead)
 		return FALSE;
 	}
 
+	MCHKHEAP
 	if (!dwMaxDataSize)
 		nSize = 0; else
 	if ((lpCursor-lpMap+nSize)>dwMaxDataSize)
 		nSize = dwMaxDataSize - (lpCursor-lpMap);
 
+	MCHKHEAP
 	if (nSize) {
 		memmove(pData, lpCursor, nSize);
+		MCHKHEAP
 		lpCursor += nSize;
 	}
 	if (nRead) *nRead = nSize;

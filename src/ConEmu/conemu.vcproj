@@ -279,7 +279,7 @@
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;MSGLOGGER"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="3"
+				RuntimeLibrary="1"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				DebugInformationFormat="4"
@@ -296,7 +296,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="comctl32.lib UxTheme.lib Shlwapi.lib version.lib"
-				OutputFile="F:\VCProject\FarPlugin\FAR180\trunk\unicode_far\Debug.32.vc\ConEmu.exe"
+				OutputFile="J:\Maks\Desktop\FAR_EMPTY\ConEmu.exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
 				SubSystem="2"

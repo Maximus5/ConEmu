@@ -21,4 +21,5 @@ public:
 	HRESULT CreateLink(LPCTSTR lpszPathObj, LPCTSTR lpszPathLink, LPCTSTR lpszDesc);
 protected:
 	void RetrieveDragToInfo(IDataObject * pDataObject);
+	LPITEMIDLIST mp_DesktopID;
 };

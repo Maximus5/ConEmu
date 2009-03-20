@@ -9,11 +9,15 @@ CDragDrop::CDragDrop(HWND hWnd)
 	mp_DataObject = NULL;
 	mb_selfdrag = NULL;
 	RegisterDragDrop(hWnd, this);
+
+	mp_DesktopID = NULL;
+	HRESULT hr = SHGetFolderLocation ( ghWnd, CSIDL_DESKTOP, NULL, 0, &mp_DesktopID );
 }
 
 CDragDrop::~CDragDrop()
 {
 	if (m_pfpi) free(m_pfpi); m_pfpi=NULL;
+	CoTaskMemFree(mp_DesktopID);
 }
 
 HRESULT STDMETHODCALLTYPE CDragDrop::Drop (IDataObject * pDataObject,DWORD grfKeyState,POINTL pt,DWORD * pdwEffect)
@@ -320,7 +324,7 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragLeave(void)
 HRESULT CDragDrop::CreateLink(LPCTSTR lpszPathObj, LPCTSTR lpszPathLink, LPCTSTR lpszDesc) 
 { 
     HRESULT hres = S_OK; 
-    IShellLink* psl; 
+    IShellLink* psl = NULL;
  
     // Get a pointer to the IShellLink interface. 
     hres = CoCreateInstance(CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER, 
@@ -366,6 +370,8 @@ void CDragDrop::Drag()
 	//gConEmu.isDragProcessed=true; // чтобы не сработало два раза на один драг
 	gConEmu.mouse.state |= (gConEmu.mouse.state & DRAG_R_ALLOWED) ? DRAG_R_STARTED : DRAG_L_STARTED;
 
+	MCHKHEAP
+
 	CConEmuPipe pipe;
 	if (pipe.Init(_T("CDragDrop::Drag")))
 	{
@@ -402,6 +408,8 @@ void CDragDrop::Drag()
 						nWholeSize=0;
 					}
 
+					MCHKHEAP
+
 					if (nWholeSize<=0) {
 						gConEmu.DnDstep(_T("DnD: Data is empty"));
 					}
@@ -432,76 +440,80 @@ void CDragDrop::Drag()
 					//		if (size <= 1) return;
 						int size=(curr-szDraggedPath)*sizeof(wchar_t)+2;
 						
+						MCHKHEAP
+
 						HGLOBAL file_nameW = NULL, file_PIDLs = NULL;
-						if (nFilesCount==1) {
-							file_nameW = GlobalAlloc(GPTR, sizeof(WCHAR)*(lstrlenW(szDraggedPath)+1));
-							lstrcpyW(((WCHAR*)file_nameW), szDraggedPath);
+						if (nFilesCount==1)
+						{
+							try {
+								file_nameW = GlobalAlloc(GPTR, sizeof(WCHAR)*(lstrlenW(szDraggedPath)+1));
+								lstrcpyW(((WCHAR*)file_nameW), szDraggedPath);
 
-							//TODO: обработка ошибок hr!
-							WCHAR* pszSlash = wcsrchr(szDraggedPath, L'\\');
-							if (pszSlash) {
-								// Сначала нужно получить PIDL для родительской папки
-								*pszSlash = 0; //TODO: проверить, а для папок у нас слэша на конце нет?
-								//SHParseDisplayName ?
-								SFGAOF tmp;
-								LPITEMIDLIST pParent=NULL, pItem=NULL;
-								DWORD nParentSize=0, nItemSize=0;
-								HRESULT hr = S_OK; //SHParseDisplayName(szDraggedPath, NULL, &pParent, 0, &tmp);
-								IShellFolder *pDesktop=NULL; //, *pFolder=NULL;
-								
-								hr = SHGetSpecialFolderLocation ( ghWnd, CSIDL_DESKTOP, &pParent );
+								//TODO: обработка ошибок hr!
+								WCHAR* pszSlash = wcsrchr(szDraggedPath, L'\\');
+								if (pszSlash) {
+									// Сначала нужно получить PIDL для родительской папки
+									SFGAOF tmp;
+									LPITEMIDLIST pItem=NULL;
+									DWORD nParentSize=0, nItemSize=0;
+									HRESULT hr = S_OK;
+									IShellFolder *pDesktop=NULL;
+									
+									MCHKHEAP
 
-								hr = SHGetDesktopFolder ( &pDesktop );
+									//hr = SHGetSpecialFolderLocation ( ghWnd, CSIDL_DESKTOP, &pParent );
+									//hr = SHGetFolderLocation ( ghWnd, CSIDL_DESKTOP, NULL, 0, &pParent );
+									//hr = SHGetFolderLocation ( ghWnd, CSIDL_DESKTOP, NULL, 0, &pItem );
 
-								//hr = SHParseDisplayName(szDraggedPath, NULL, &pParent, 0, &tmp);
+									hr = SHGetDesktopFolder ( &pDesktop );
 
-								//hr = pDesktop->BindToObject(pParent, NULL, IID_IShellFolder, (void**)&pFolder);
-								//pDesktop->Release(); pDesktop = NULL;
-								
-								// Потом и для собственно файла/папки...
-								*pszSlash = L'\\';
-								//hr = SHParseDisplayName(pszSlash+1, NULL, &pItem, 0, &tmp);
-								ULONG nEaten=0;
-								//hr = pFolder->ParseDisplayName(ghWnd, NULL, pszSlash+1, &nEaten, &pItem, &(tmp=0));
-								//hr = pFolder->ParseDisplayName(ghWnd, NULL, szDraggedPath, &nEaten, &pItem, &(tmp=0));
-								hr = pDesktop->ParseDisplayName(ghWnd, NULL, szDraggedPath, &nEaten, &pItem, &(tmp=0));
-								//pFolder->Release(); pFolder = NULL;
-								pDesktop->Release(); pDesktop = NULL;
+									MCHKHEAP
+									
+									// Потом и для собственно файла/папки...
+									ULONG nEaten=0;
+									
+									hr = pDesktop->ParseDisplayName(ghWnd, NULL, szDraggedPath, &nEaten, &pItem, &(tmp=0));
+									pDesktop->Release(); pDesktop = NULL;
 
-								*pszSlash = L'\\';
+									SHITEMID *pCur = (SHITEMID*)mp_DesktopID;
+									while (pCur->cb) {
+										pCur = (SHITEMID*)(((LPBYTE)pCur) + pCur->cb);
+									}
+									nParentSize = ((LPBYTE)pCur) - ((LPBYTE)mp_DesktopID)+2;
 
-								SHITEMID *pCur = (SHITEMID*)pParent;
-								while (pCur->cb) {
-									pCur = (SHITEMID*)(((LPBYTE)pCur) + pCur->cb);
+									pCur = (SHITEMID*)pItem;
+									while (pCur->cb) {
+										pCur = (SHITEMID*)(((LPBYTE)pCur) + pCur->cb);
+									}
+									nItemSize = ((LPBYTE)pCur) - ((LPBYTE)pItem)+2;
+
+									pCur = NULL;
+
+									MCHKHEAP
+
+									file_PIDLs = GlobalAlloc(GPTR, 3*sizeof(UINT)+nParentSize+nItemSize);
+									CIDA* pida = (CIDA*)file_PIDLs;
+									pida->cidl = 1;
+									pida->aoffset[0] = 3*sizeof(UINT);
+									pida->aoffset[1] = pida->aoffset[0]+nParentSize;
+									memmove((((LPBYTE)pida)+(pida)->aoffset[0]), mp_DesktopID, nParentSize);
+									memmove((((LPBYTE)pida)+(pida)->aoffset[1]), pItem, nItemSize);
+
+									MCHKHEAP
+
+									CoTaskMemFree(pItem);
 								}
-								nParentSize = ((LPBYTE)pCur) - ((LPBYTE)pParent)+2;
-
-								pCur = (SHITEMID*)pItem;
-								while (pCur->cb) {
-									pCur = (SHITEMID*)(((LPBYTE)pCur) + pCur->cb);
-								}
-								nItemSize = ((LPBYTE)pCur) - ((LPBYTE)pItem)+2;
-
-								pCur = NULL;
-
-								file_PIDLs = GlobalAlloc(GPTR, 3*sizeof(UINT)+nParentSize+nItemSize);
-								CIDA* pida = (CIDA*)file_PIDLs;
-								pida->cidl = 1;
-								pida->aoffset[0] = 3*sizeof(UINT);
-								pida->aoffset[1] = pida->aoffset[0]+nParentSize;
-								memmove((((LPBYTE)pida)+(pida)->aoffset[0]), pParent, nParentSize);
-								memmove((((LPBYTE)pida)+(pida)->aoffset[1]), pItem, nItemSize);
-
-								LPMALLOC pMalloc=NULL;
-								hr = SHGetMalloc(&pMalloc);
-								if (pMalloc) {
-									pMalloc->Free(pParent);
-									pMalloc->Free(pItem);
-									pMalloc->Release();
-								}
+							} catch(...) {
+								hr = -1;
+							}
+							if (hr = -1) {
+								gConEmu.DnDstep(_T("DnD: Exception in shell"));
+								return;
 							}
 						}
 					    
+						MCHKHEAP
+
 						IDropSource *pDropSource = NULL;
 
 						DROPFILES drop_struct = { sizeof(drop_struct), { 0, 0 }, 0, 1 };
@@ -521,6 +533,7 @@ void CDragDrop::Drag()
 						else
 							*((DWORD*)drop_preferredeffect) = DROPEFFECT_MOVE;
 
+						MCHKHEAP
 							
 						HGLOBAL drag_loop = GlobalAlloc(GPTR, sizeof(DWORD));
 						*((DWORD*)drag_loop) = 1;
@@ -547,6 +560,8 @@ void CDragDrop::Drag()
 						//--stgmed.lpszFileName=szDraggedPath;
 						CreateDropSource(&pDropSource);
 						
+						MCHKHEAP
+
 						int nCount = sizeof(fmtetc)/sizeof(*fmtetc);
 						if (!file_PIDLs) nCount -= 2;
 						CreateDataObject(fmtetc, stgmed, nCount, &mp_DataObject) ;//   |   Посмотреть ниже... 
@@ -554,6 +569,7 @@ void CDragDrop::Drag()
 						// Разрешаем все
 						DWORD dwAllowedEffects = (file_PIDLs ? DROPEFFECT_LINK : 0)|DROPEFFECT_COPY|DROPEFFECT_MOVE;
 						
+						MCHKHEAP
 						
 
 						//CFSTR_PREFERREDDROPEFFECT, FD_LINKUI 
@@ -563,8 +579,13 @@ void CDragDrop::Drag()
 						
 						//gConEmu.DnDstep(_T("DnD: Finally, DoDragDrop"));
 						gConEmu.DnDstep(NULL);
+
+						MCHKHEAP
 						
 						dwResult = DoDragDrop(mp_DataObject, pDropSource, dwAllowedEffects, &dwEffect);
+
+						MCHKHEAP
+
 						mp_DataObject->Release(); mp_DataObject = NULL;
 						pDropSource->Release();		
 						//#ifdef _DEBUG

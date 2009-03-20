@@ -33,6 +33,7 @@ CSettings::~CSettings()
 
 void CSettings::InitSettings()
 {
+	MCHKHEAP
     //memset(&gSet, 0, sizeof(gSet)); // -- Class!!! лучше делать все ручками!
 
 //------------------------------------------------------------------------
@@ -115,10 +116,12 @@ void CSettings::InitSettings()
     
     isDragEnabled = DRAG_L_ALLOWED; isDropEnabled = (BYTE)1;
 	nLDragKey = 0; nRDragKey = 0; isDnDsteps = true; isDefCopy = true;
+	MCHKHEAP
 }
 
 void CSettings::LoadSettings()
 {
+	MCHKHEAP
     DWORD inSize = LogFont.lfHeight;
     TCHAR inFont[MAX_PATH], inFont2[MAX_PATH];
     _tcscpy(inFont, LogFont.lfFaceName);
@@ -245,6 +248,8 @@ void CSettings::LoadSettings()
 	// pVCon еще не создано!
     if (isShowBgImage && pVCon)
         LoadImageFrom(pBgImage);
+
+	MCHKHEAP
 }
 
 void CSettings::UpdateMargins(RECT arcMargins)
@@ -384,6 +389,7 @@ bool CSettings::ShowColorDialog(HWND HWndOwner, COLORREF *inColor)
 
 BOOL CALLBACK CSettings::EnumFamCallBack(LPLOGFONT lplf, LPNEWTEXTMETRIC lpntm, DWORD FontType, LPVOID aFontCount)
 {
+	MCHKHEAP
     int far * aiFontCount = (int far *) aFontCount;
 
     // Record the number of raster, TrueType, and vector
@@ -399,6 +405,7 @@ BOOL CALLBACK CSettings::EnumFamCallBack(LPLOGFONT lplf, LPNEWTEXTMETRIC lpntm, 
     SendDlgItemMessage(gSet.hMain, tFontFace, CB_ADDSTRING, 0, (LPARAM) lplf->lfFaceName);
     SendDlgItemMessage(gSet.hMain, tFontFace2, CB_ADDSTRING, 0, (LPARAM) lplf->lfFaceName);
 
+	MCHKHEAP
     if (aiFontCount[0] || aiFontCount[1] || aiFontCount[2])
         return TRUE;
     else
@@ -410,6 +417,7 @@ BOOL CALLBACK CSettings::EnumFamCallBack(LPLOGFONT lplf, LPNEWTEXTMETRIC lpntm, 
 
 LRESULT CSettings::OnInitDialog()
 {
+	MCHKHEAP
 	{
 		TCITEM tie;
 		HWND _hwndTab = GetDlgItem(ghOpWnd, tabMain);
@@ -443,6 +451,7 @@ LRESULT CSettings::OnInitDialog()
 		ShowWindow(hMain, SW_SHOW);
 	}
 	
+	MCHKHEAP
 
 	{
 		HDC hdc = GetDC(ghOpWnd);
@@ -505,6 +514,8 @@ LRESULT CSettings::OnInitDialog()
 		}
 		SendDlgItemMessage(hMain, tFontCharset, CB_SETCURSEL, num, 0);
 	}
+
+	MCHKHEAP
 
 	SetDlgItemText(hMain, tCmdLine, Cmd);
 	SetDlgItemText(hMain, tBgImage, pBgImage);
@@ -600,6 +611,7 @@ LRESULT CSettings::OnInitDialog()
 	SendDlgItemMessage(hMain, tWndX, EM_SETLIMITTEXT, 6, 0);
 	SendDlgItemMessage(hMain, tWndY, EM_SETLIMITTEXT, 6, 0);
 	
+	MCHKHEAP
 
 	if (!isFullScreen && !IsZoomed(ghWnd))
 	{
@@ -661,6 +673,7 @@ LRESULT CSettings::OnInitDialog()
 
 	gConEmu.UpdateProcessDisplay(TRUE);
 
+	MCHKHEAP
 
 	{
 		RECT rect;
@@ -686,6 +699,8 @@ LRESULT CSettings::OnInitDialog()
 	RegisterTipsFor(hMain);
 	RegisterTipsFor(hColors);
 	RegisterTipsFor(hInfo);
+
+	MCHKHEAP
 
 	return 0;
 }

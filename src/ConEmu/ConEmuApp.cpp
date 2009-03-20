@@ -975,6 +975,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 //------------------------------------------------------------------------
 
     OleInitialize (NULL); // как бы попробовать включать Ole только во время драга. кажется что из-за него глючит переключалка языка
+	//CoInitializeEx(NULL, COINIT_MULTITHREADED);
 
     SetConsoleCtrlHandler((PHANDLER_ROUTINE)CConEmuMain::HandlerRoutine, true);
     SetTimer(ghWnd, 0, gSet.nMainTimerElapse, NULL);
@@ -1028,5 +1029,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     FreeConsole();
     free(cmdLine);
+
+	//CoUninitialize();
+	OleUninitialize();
+
     return 0;
 }
