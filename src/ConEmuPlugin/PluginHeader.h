@@ -67,6 +67,7 @@ BOOL OutDataAlloc(DWORD anSize); // необязательно
 BOOL OutDataWrite(LPVOID apData, DWORD anSize);
 
 void CheckMacro(BOOL abAllowAPI);
+BOOL IsKeyChanged(BOOL abAllowReload);
 int ShowMessage(int aiMsg, int aiButtons);
 int ShowMessageA(int aiMsg, int aiButtons);
 int ShowMessage789(int aiMsg, int aiButtons);

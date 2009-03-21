@@ -22,4 +22,7 @@ public:
 protected:
 	void RetrieveDragToInfo(IDataObject * pDataObject);
 	LPITEMIDLIST mp_DesktopID;
+	DWORD mn_AllFiles, mn_CurFile; __int64 mn_CurWritten;
+	HANDLE FileStart(BOOL abActive, BOOL abWide, LPVOID asFileName);
+	HRESULT FileWrite(HANDLE ahFile, DWORD anSize, LPVOID apData);
 };

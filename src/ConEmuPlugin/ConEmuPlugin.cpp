@@ -35,6 +35,10 @@ void WINAPI _export GetPluginInfoW(struct PluginInfo *pi)
     szMenu[0]=szMenu1; //lstrcpyW(szMenu[0], L"[&\x2560] ConEmu");
     //szMenu[0][1] = L'&';
     //szMenu[0][2] = 0x2560;
+
+	// ѕроверить, не изменилась ли гор€ча€ клавиша плагина, и если да - пересоздать макросы
+	IsKeyChanged(TRUE);
+
 	if (gcPlugKey) szMenu1[0]=0; else lstrcpyW(szMenu1, L"[&\x2560] ");
 	lstrcpynW(szMenu1+lstrlenW(szMenu1), GetMsgW(2), 240);
 
@@ -200,6 +204,24 @@ BOOL LoadFarVersion()
 	return lbRc;
 }
 
+BOOL IsKeyChanged(BOOL abAllowReload)
+{
+	BOOL lbKeyChanged = FALSE;
+	if (ghRegMonitorEvt) {
+		if (WaitForSingleObject(ghRegMonitorEvt, 0) == WAIT_OBJECT_0) {
+			lbKeyChanged = CheckPlugKey();
+			if (lbKeyChanged) gbPlugKeyChanged = TRUE;
+		}
+	}
+
+	if (abAllowReload && gbPlugKeyChanged) {
+		// ¬ообще-то его бы вызывать в главной нити...
+		CheckMacro(TRUE);
+		gbPlugKeyChanged = FALSE;
+	}
+	return lbKeyChanged;
+}
+
 void ProcessCommand(DWORD nCmd, BOOL bReqMainThread)
 {
 	if (gpData) free(gpData); gpData = NULL; gpCursor = NULL;
@@ -210,64 +232,15 @@ void ProcessCommand(DWORD nCmd, BOOL bReqMainThread)
 			ghReqCommandEvent = CreateEvent(NULL,FALSE,FALSE,NULL);
 		ResetEvent(ghReqCommandEvent);
 		
-		BOOL lbKeyChanged = FALSE;
-		if (ghRegMonitorEvt) {
-			if (WaitForSingleObject(ghRegMonitorEvt, 0) == WAIT_OBJECT_0) {
-				lbKeyChanged = CheckPlugKey();
-				if (lbKeyChanged) gbPlugKeyChanged = TRUE;
-			}
-		}
-		
-		if (gbPlugKeyChanged) {
-			// ¬ообще-то его бы вызывать в главной нити...
-			CheckMacro(TRUE);
-			gbPlugKeyChanged = FALSE;
+		// ѕроверить, не изменилась ли гор€ча€ клавиша плагина, и если да - пересоздать макросы
+		IsKeyChanged(TRUE);
 
-			//#pragma message("Warning: попытатьс€ послать в консоль последовательность VK_F11, gcPlugKey")
-			/*INPUT_RECORD rec[4] = {{KEY_EVENT}, {KEY_EVENT}, {KEY_EVENT}, {KEY_EVENT}};
-			
-			rec[0].Event.KeyEvent.bKeyDown = TRUE;
-			rec[0].Event.KeyEvent.wRepeatCount = 1;
-			rec[0].Event.KeyEvent.wVirtualKeyCode = VK_F11;
-			
-			rec[1].Event.KeyEvent.bKeyDown = FALSE;
-			rec[1].Event.KeyEvent.wRepeatCount = 1;
-			rec[1].Event.KeyEvent.wVirtualKeyCode = VK_F11;
-			
-		
-			rec[2].Event.KeyEvent.bKeyDown = TRUE;
-			rec[2].Event.KeyEvent.wRepeatCount = 1;
-			if (gFarVersion.dwVerMajor==1)
-				rec[2].Event.KeyEvent.uChar.AsciiChar = (char)(gcPlugKey & 0xFF);
-			else
-				rec[2].Event.KeyEvent.uChar.UnicodeChar = gcPlugKey;
 
-			rec[3].Event.KeyEvent.bKeyDown = FALSE;
-			rec[3].Event.KeyEvent.wRepeatCount = 1;
-			if (gFarVersion.dwVerMajor==1)
-				rec[3].Event.KeyEvent.uChar.AsciiChar = (char)(gcPlugKey & 0xFF);
-			else
-				rec[3].Event.KeyEvent.uChar.UnicodeChar = gcPlugKey;
-	
-			DWORD dwWritten = 0;
-			
-			if (!WriteConsoleInputW(GetStdHandle(STD_INPUT_HANDLE), rec, 4, &dwWritten)) {
-				MessageBoxA(ConEmuHwnd, "Can't send plugin key", "ConEmu plugin", MB_OK|MB_ICONSTOP);
-			}*/
-			
-			/*SendMessage(FarHwnd, WM_KEYDOWN, VK_F11, 0);
-			SendMessage(FarHwnd, WM_KEYUP, VK_F11, (LPARAM)(3<<30));
 
-			// теоретически - это облом дл€ русских букв
-			SendMessage(FarHwnd, WM_KEYDOWN, gcPlugKey, 0);
-			SendMessage(FarHwnd, WM_KEYUP, gcPlugKey, (LPARAM)(3<<30));*/
-		
-		} //else 
-		{
-			// Ќужен вызов плагина в остновной нити
-			SendMessage(FarHwnd, WM_KEYDOWN, VK_F14, 0);
-			SendMessage(FarHwnd, WM_KEYUP, VK_F14, (LPARAM)(3<<30));
-		}
+		// Ќужен вызов плагина в остновной нити
+		SendMessage(FarHwnd, WM_KEYDOWN, VK_F14, 0);
+		SendMessage(FarHwnd, WM_KEYUP, VK_F14, (LPARAM)(3<<30));
+
 		
 		HANDLE hEvents[2] = {ghReqCommandEvent, hEventCmd[CMD_EXIT]};
 		//DuplicateHandle(GetCurrentProcess(), ghReqCommandEvent, GetCurrentProcess(), hEvents, 0, 0, DUPLICATE_SAME_ACCESS);
@@ -674,13 +647,7 @@ BOOL CheckPlugKey()
 				if (0==RegOpenKeyExW(HKEY_CURRENT_USER, lsFullPath, 0, KEY_READ, &hkey)) {
 					dwSize = sizeof(szCheckKey);
 					if (0==RegQueryValueExW(hkey, L"Hotkey", NULL, NULL, (LPBYTE)szCheckKey, &dwSize)) {
-						if (gFarVersion.dwVerMajor==1) {
-							char cAnsi; // чтобы не возникло проблем с приведением к WCHAR
-							WideCharToMultiByte(CP_OEMCP, 0, szCheckKey, 1, &cAnsi, 1, 0,0);
-							gcPlugKey = cAnsi;
-						} else {
-							gcPlugKey = szCheckKey[0];
-						}
+						gcPlugKey = szCheckKey[0];
 					}
 				}
 				//
@@ -775,33 +742,35 @@ void CheckMacro(BOOL abAllowAPI)
 	//	RegCloseKey(hkey); hkey=NULL;
 	//}
 
-	if (gFarVersion.dwVerMajor==1) {
+	/*if (gFarVersion.dwVerMajor==1) {
 		lstrcpyA((char*)szCheckKey, "F11  ");
-		szCheckKey[4] = (char)((gcPlugKey ? gcPlugKey : 0xCC) & 0xFF);
-	} else {
-		lstrcpyW((wchar_t*)szCheckKey, L"F11  ");
-		szCheckKey[4] = (wchar_t)(gcPlugKey ? gcPlugKey : 0x2560);
-	}
+		((char*)szCheckKey)[4] = (char)((gcPlugKey ? gcPlugKey : 0xCC) & 0xFF);
+		//lstrcpyW((wchar_t*)szCheckKey, L"F11  ");
+		//szCheckKey[4] = (wchar_t)(gcPlugKey ? gcPlugKey : 0xCC);
+	} else {*/
+	lstrcpyW((wchar_t*)szCheckKey, L"F11  "); //TODO: дл€ ANSI может другой код по умолчанию?
+	szCheckKey[4] = (wchar_t)(gcPlugKey ? gcPlugKey : ((gFarVersion.dwVerMajor==1) ? 0x41C/*0xCC - аналог дл€ OEM*/ : 0x2560));
+	//}
 
 	//if (!lbMacroDontCheck)
 	for (n=0; n<MODCOUNT && !lbNeedMacro; n++)
 	{
 		if (0==RegOpenKeyExW(HKEY_CURRENT_USER, szMacroKey[n], 0, KEY_READ, &hkey))
 		{
-			if (gFarVersion.dwVerMajor==1) {
+			/*if (gFarVersion.dwVerMajor==1) {
 				if (0!=RegQueryValueExA(hkey, "Sequence", 0, 0, (LPBYTE)szValue, &(dwSize=1022))) {
 					lbNeedMacro = TRUE; // «начение отсутсвует
 				} else {
 					lbNeedMacro = lstrcmpA(szValue, (char*)szCheckKey)!=0;
 				}
-			} else {
+			} else {*/
 				if (0!=RegQueryValueExW(hkey, L"Sequence", 0, 0, (LPBYTE)szValue, &(dwSize=1022))) {
 					lbNeedMacro = TRUE; // «начение отсутсвует
 				} else {
 					//TODO: проверить, как себ€ ведет VC & GCC на 2х байтовых символах?
 					lbNeedMacro = lstrcmpW((WCHAR*)szValue, szCheckKey)!=0;
 				}
-			}
+			//}
 			//	szValue[dwSize]=0;
 			//	#pragma message("ERROR: нужна проверка. ¬ Ansi и Unicode это разные строки!")
 			//	//if (strcmpW(szValue, "F11 \xCC")==0)
@@ -839,11 +808,11 @@ void CheckMacro(BOOL abAllowAPI)
 				//	"$If (Shell || Info || QView || Tree || Viewer || Editor) F12 $Else waitkey(100) $End");
 				//RegSetValueExA(hkey, "Sequence", 0, REG_SZ, (LPBYTE)szValue, (dwSize=strlen(szValue)+1));
 				
-				if (gFarVersion.dwVerMajor==1) {
+				/*if (gFarVersion.dwVerMajor==1) {
 					RegSetValueExA(hkey, "Sequence", 0, REG_SZ, (LPBYTE)szCheckKey, (dwSize=strlen((char*)szCheckKey)+1));
-				} else {
+				} else {*/
 					RegSetValueExW(hkey, L"Sequence", 0, REG_SZ, (LPBYTE)szCheckKey, (dwSize=2*(lstrlenW((WCHAR*)szCheckKey)+1)));
-				}
+				//}
 
 				lstrcpyA(szValue, "For ConEmu - plugin activation from listening thread");
 				RegSetValueExA(hkey, "Description", 0, REG_SZ, (LPBYTE)szValue, (dwSize=strlen(szValue)+1));

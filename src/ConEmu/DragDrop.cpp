@@ -20,6 +20,126 @@ CDragDrop::~CDragDrop()
 	CoTaskMemFree(mp_DesktopID);
 }
 
+
+HANDLE CDragDrop::FileStart(BOOL abActive, BOOL abWide, LPVOID asFileName)
+{
+	if (!asFileName ||
+		(abWide && ((wchar_t*)asFileName)[0] == 0) ||
+		(!abWide && ((char*)asFileName)[0] == 0))
+	{
+		MBoxA(_T("Can't drop file! Filename is empty!"));
+		return INVALID_HANDLE_VALUE;
+	}
+
+	wchar_t *pszFullName = NULL;
+	wchar_t* pszNameW = (wchar_t*)asFileName;
+	char* pszNameA = (char*)asFileName;
+	int nSize = 0;
+
+	if (abActive) nSize = wcslen(m_pfpi->pszActivePath)+1; else nSize = wcslen(m_pfpi->pszPassivePath)+1;
+	int nPathLen = nSize;
+
+	if (abWide) {
+		wchar_t* pszSlash = wcsrchr(pszNameW, L'\\');
+		if (pszSlash) pszNameW = pszSlash+1;
+		if (!*pszNameW) {
+			MBoxA(_T("Can't drop file! Filename is empty (W)!"));
+			return INVALID_HANDLE_VALUE;
+		}
+		nSize += wcslen(pszNameW)+1;
+	} else {
+		char* pszSlash = strrchr(pszNameA, '\\');
+		if (pszSlash) pszNameA = pszSlash+1;
+		if (!*pszNameA) {
+			MBoxA(_T("Can't drop file! Filename is empty (A)!"));
+			return INVALID_HANDLE_VALUE;
+		}
+		nSize += strlen(pszNameA)+1;
+	}
+	pszFullName = (wchar_t*)calloc(nSize, 2);
+	wcscpy(pszFullName, abActive ? m_pfpi->pszActivePath : m_pfpi->pszPassivePath);
+	wcscat(pszFullName, L"\\");
+	if (abWide) {
+		wcscpy(pszFullName+nPathLen, pszNameW);
+	} else {
+		MultiByteToWideChar(CP_ACP, 0, pszNameA, -1, pszFullName+nPathLen, nSize - nPathLen);
+	}
+
+	// Путь готов, проверяем наличие файла?
+	WIN32_FIND_DATAW fnd = {0};
+	HANDLE hFind = FindFirstFile(pszFullName, &fnd);
+	if (hFind != INVALID_HANDLE_VALUE) {
+		FindClose(hFind);
+
+		wchar_t* pszMsg = NULL;
+		if (fnd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+			pszMsg = (wchar_t*)calloc(nSize + 100,2);
+			wcscpy(pszMsg, L"Can't create file! Same name folder exists!\n");
+			wcscat(pszMsg, pszFullName);
+			MessageBox(ghWnd, pszMsg, L"ConEmu", MB_ICONSTOP);
+			free(pszMsg);
+			return INVALID_HANDLE_VALUE;
+		} else {
+			pszMsg = (wchar_t*)calloc(nSize + 255,2);
+			LARGE_INTEGER liSize;
+			liSize.LowPart = fnd.nFileSizeLow; liSize.HighPart = fnd.nFileSizeHigh;
+			FILETIME ftl;
+			FileTimeToLocalFileTime(&fnd.ftLastWriteTime, &ftl);
+			SYSTEMTIME st; FileTimeToSystemTime(&ftl, &st);
+			wsprintf(pszMsg, L"File already exists!\n\n%s\nSize: %I64i\nDate: %02i.%02i.%i %02i:%02i:%02i\n\nOverwrite?",
+				pszFullName, liSize.QuadPart, st.wDay, st.wMonth, st.wYear, st.wHour, st.wMinute, st.wSecond);
+			int nRc = MessageBox(ghWnd, pszMsg, L"ConEmu", MB_ICONEXCLAMATION|MB_YESNO);
+			free(pszMsg);
+
+			if (nRc != IDYES)
+				return INVALID_HANDLE_VALUE;
+
+			// сброс ReadOnly, при необходимости
+			if (fnd.dwFileAttributes & (FILE_ATTRIBUTE_HIDDEN|FILE_ATTRIBUTE_SYSTEM|FILE_ATTRIBUTE_READONLY))
+				SetFileAttributes(pszFullName, FILE_ATTRIBUTE_NORMAL);
+		}
+	}
+
+	// Создаем файл
+	hFind = CreateFile(pszFullName, GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+	if (hFind == INVALID_HANDLE_VALUE) {
+		DWORD dwErr = GetLastError();
+		wchar_t* pszMsg = (wchar_t*)calloc(nSize + 100,2);
+		wcscpy(pszMsg, L"Can't create file!\n");
+		wcscat(pszMsg, pszFullName);
+		DisplayLastError(pszMsg, dwErr);
+		free(pszMsg);
+		return INVALID_HANDLE_VALUE;
+	}
+
+	mn_CurWritten = 0;
+	return hFind;
+}
+
+HRESULT CDragDrop::FileWrite(HANDLE ahFile, DWORD anSize, LPVOID apData)
+{
+	DWORD dwWrite = 0;
+	if (!WriteFile(ahFile, apData, anSize, &dwWrite, NULL) || dwWrite!=anSize) {
+		DWORD dwLastError = GetLastError();
+		if (!dwLastError) dwLastError = E_UNEXPECTED;
+		return dwLastError;
+	}
+
+	mn_CurWritten += anSize;
+	wchar_t KM = L'K';
+	__int64 nPrepared = mn_CurWritten / 1000;
+	if (nPrepared > 9999) {
+		nPrepared /= 1000; KM = L'M';
+		if (nPrepared > 9999) {
+			nPrepared /= 1000; KM = L'G';
+		}
+	}
+
+	wsprintf(temp, L"Copying %i of %i (%u%c)", (mn_CurFile+1), mn_AllFiles, (DWORD)nPrepared, KM);
+	SetWindowText(ghWnd, temp);
+	return S_OK;
+}
+
 HRESULT STDMETHODCALLTYPE CDragDrop::Drop (IDataObject * pDataObject,DWORD grfKeyState,POINTL pt,DWORD * pdwEffect)
 {
 	if (!gSet.isDropEnabled) {
@@ -32,12 +152,132 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop (IDataObject * pDataObject,DWORD grfKe
 		return S_OK;
 	}
 
+	ScreenToClient(m_hWnd, (LPPOINT)&pt);
+	pt.x/=gSet.LogFont.lfWidth;
+	pt.y/=gSet.LogFont.lfHeight;
+
+	BOOL lbActive = FALSE;
+	if (m_pfpi==NULL) {
+		//delete fop.pTo;
+		return S_OK; //1;
+	} else if (PtInRect(&(m_pfpi->ActiveRect), *(LPPOINT)&pt) && m_pfpi->pszActivePath[0]) 
+	{
+		lbActive = TRUE;
+
+		if (mb_selfdrag) {
+			*pdwEffect = DROPEFFECT_NONE;
+			return S_OK; // Тащат внутри одной копии FAR с активной на активную, т.е. ничего не двигается
+		}
+			
+		if (!*m_pfpi->pszActivePath)
+			return S_OK;
+		if (m_pfpi->pszActivePath[lstrlen(m_pfpi->pszActivePath)-1]==_T('\\'))
+			m_pfpi->pszActivePath[lstrlen(m_pfpi->pszActivePath)-1] = 0;
+	}
+	else if (PtInRect(&(m_pfpi->PassiveRect), *(LPPOINT)&pt) && m_pfpi->pszPassivePath[0])
+	{
+		lbActive = FALSE;
+
+		if (!*m_pfpi->pszPassivePath) return 1;
+		if (m_pfpi->pszPassivePath[lstrlen(m_pfpi->pszPassivePath)-1]==_T('\\'))
+			m_pfpi->pszPassivePath[lstrlen(m_pfpi->pszPassivePath)-1] = 0;
+	}
+	else 
+	{
+		*pdwEffect = DROPEFFECT_NONE;
+		return S_OK;
+	}
+
+
 	WCHAR szStr[MAX_PATH];
-	STGMEDIUM stgMedium;
+	STGMEDIUM stgMedium = { 0 };
 	FORMATETC fmtetc = { CF_HDROP, 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
 	HRESULT hr = pDataObject->GetData(&fmtetc, &stgMedium);
+	HDROP hDrop = NULL;
 
-	HDROP hDrop = (HDROP)stgMedium.hGlobal;
+	if (hr != S_OK || !stgMedium.hGlobal) {
+		HANDLE hFile = NULL;
+		#define BufferSize 0x10000
+		BYTE cBuffer[BufferSize];
+		DWORD dwRead = 0;
+		BOOL lbWide = FALSE;
+
+		// CF_HDROP в структуре отсутсвует!
+		fmtetc.cfFormat = RegisterClipboardFormat(CFSTR_FILEDESCRIPTORW);
+		if (S_OK == pDataObject->GetData(&fmtetc, &stgMedium)) {
+			lbWide = TRUE;
+			HGLOBAL hDesc = stgMedium.hGlobal;
+			FILEGROUPDESCRIPTORW *pDesc = (FILEGROUPDESCRIPTORW*)GlobalLock(hDesc);
+			fmtetc.cfFormat = RegisterClipboardFormat(CFSTR_FILECONTENTS);
+
+			mn_AllFiles = pDesc->cItems;
+			
+			for (mn_CurFile = 0; mn_CurFile<mn_AllFiles; mn_CurFile++) {
+				fmtetc.lindex = mn_CurFile;
+
+				fmtetc.tymed = TYMED_ISTREAM; // Сначала пробуем IStream
+				if (S_OK == pDataObject->GetData(&fmtetc, &stgMedium) || !stgMedium.pstm) {
+					IStream* pFile = stgMedium.pstm;
+
+					hFile = FileStart(lbActive, lbWide, pDesc->fgd[mn_CurFile].cFileName);
+					if (hFile != INVALID_HANDLE_VALUE) {
+						while ((hr = pFile->Read(cBuffer, BufferSize, &dwRead)) == S_OK && dwRead) {
+							if (FileWrite(hFile, dwRead, cBuffer) != S_OK)
+								break;
+						}
+						SafeCloseHandle(hFile);
+						if (FAILED(hr))
+							DisplayLastError(_T("Can't read medium!"), hr);
+					}
+					continue;
+				}
+				MBoxA(_T("Drag object does not contains known medium!"));
+			}
+			GlobalUnlock(hDesc);
+			gConEmu.DnDstep(NULL);
+			return S_OK;
+		}
+		// Outlook 2k передает ANSI!
+		fmtetc.cfFormat = RegisterClipboardFormat(CFSTR_FILEDESCRIPTORA);
+		if (S_OK == pDataObject->GetData(&fmtetc, &stgMedium)) {
+			lbWide = FALSE;
+			HGLOBAL hDesc = stgMedium.hGlobal;
+			FILEGROUPDESCRIPTORA *pDesc = (FILEGROUPDESCRIPTORA*)GlobalLock(hDesc);
+			fmtetc.cfFormat = RegisterClipboardFormat(CFSTR_FILECONTENTS);
+
+			mn_AllFiles = pDesc->cItems;
+			
+			for (mn_CurFile = 0; mn_CurFile<mn_AllFiles; mn_CurFile++) {
+				fmtetc.lindex = mn_CurFile;
+
+				fmtetc.tymed = TYMED_ISTREAM; // Сначала пробуем IStream
+				if (S_OK == pDataObject->GetData(&fmtetc, &stgMedium) || !stgMedium.pstm) {
+					IStream* pFile = stgMedium.pstm;
+
+					hFile = FileStart(lbActive, lbWide, pDesc->fgd[mn_CurFile].cFileName);
+					if (hFile != INVALID_HANDLE_VALUE) {
+						while ((hr = pFile->Read(cBuffer, BufferSize, &dwRead)) == S_OK && dwRead) {
+							if (FileWrite(hFile, dwRead, cBuffer) != S_OK)
+								break;
+						}
+						SafeCloseHandle(hFile);
+						if (FAILED(hr))
+							DisplayLastError(_T("Can't read medium!"), hr);
+					}
+					continue;
+				}
+				MBoxA(_T("Drag object does not contains known medium!"));
+			}
+			GlobalUnlock(hDesc);
+			gConEmu.DnDstep(NULL);
+			return S_OK;
+		}
+
+		MBoxA(_T("Drag object does not contains known formats!"));
+		return S_OK;
+	}
+
+	hDrop = (HDROP)stgMedium.hGlobal;
 
 	int iQuantity = DragQueryFile(hDrop,0xFFFFFFFF,NULL,NULL);
 	ZeroMemory(szStr,sizeof(WCHAR)*MAX_PATH);
@@ -45,16 +285,13 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop (IDataObject * pDataObject,DWORD grfKe
 	gConEmu.DnDstep(_T("DnD: Drop starting"));
 
 	{
-		SHFILEOPSTRUCT fop = {m_hWnd};
+		SHFILEOPSTRUCT fop  = {m_hWnd};
 		
 		ScreenToClient(m_hWnd, (LPPOINT)&pt);
 		pt.x/=gSet.LogFont.lfWidth;
 		pt.y/=gSet.LogFont.lfHeight;
 
-		if (m_pfpi==NULL) {
-			//delete fop.pTo;
-			return S_OK; //1;
-		} else if (PtInRect(&(m_pfpi->ActiveRect), *(LPPOINT)&pt) && m_pfpi->pszActivePath[0]) 
+		if (lbActive) 
 		{
 			if (mb_selfdrag) {
 				*pdwEffect = DROPEFFECT_NONE;
@@ -68,7 +305,7 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop (IDataObject * pDataObject,DWORD grfKe
 			fop.pTo=new WCHAR[lstrlenW(m_pfpi->pszActivePath)+3];
 			wsprintf((LPWSTR)fop.pTo, _T("%s\\\0\0"), m_pfpi->pszActivePath);
 		}
-		else if (PtInRect(&(m_pfpi->PassiveRect), *(LPPOINT)&pt) && m_pfpi->pszPassivePath[0])
+		else
 		{
 			if (mb_selfdrag /*&& gSet.isDropEnabled==2*/ && (*pdwEffect == DROPEFFECT_COPY || *pdwEffect == DROPEFFECT_MOVE)) {
 				wchar_t mcr[16];
@@ -86,11 +323,6 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop (IDataObject * pDataObject,DWORD grfKe
 				m_pfpi->pszPassivePath[lstrlen(m_pfpi->pszPassivePath)-1] = 0;
 			fop.pTo=new WCHAR[lstrlenW(m_pfpi->pszPassivePath)+3];
 			wsprintf((LPWSTR)fop.pTo, _T("%s\\\0\0"), m_pfpi->pszPassivePath);
-		}
-		else 
-		{
-			*pdwEffect = DROPEFFECT_NONE;
-			return S_OK;
 		}
 
 		int nCount = MAX_DROP_PATH*iQuantity+iQuantity+1;
@@ -445,6 +677,7 @@ void CDragDrop::Drag()
 						HGLOBAL file_nameW = NULL, file_PIDLs = NULL;
 						if (nFilesCount==1)
 						{
+							HRESULT hr = S_OK;
 							try {
 								file_nameW = GlobalAlloc(GPTR, sizeof(WCHAR)*(lstrlenW(szDraggedPath)+1));
 								lstrcpyW(((WCHAR*)file_nameW), szDraggedPath);
@@ -456,7 +689,6 @@ void CDragDrop::Drag()
 									SFGAOF tmp;
 									LPITEMIDLIST pItem=NULL;
 									DWORD nParentSize=0, nItemSize=0;
-									HRESULT hr = S_OK;
 									IShellFolder *pDesktop=NULL;
 									
 									MCHKHEAP

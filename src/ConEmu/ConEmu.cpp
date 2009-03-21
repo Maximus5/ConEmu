@@ -1519,7 +1519,7 @@ DWORD CConEmuMain::CheckProcesses(DWORD nConmanIDX, BOOL bTitleChanged)
 
 void CConEmuMain::DnDstep(LPCTSTR asMsg)
 {
-	if (gSet.isDnDsteps && ghWnd)
+	if ((gSet.isDnDsteps && ghWnd) || !asMsg)
 		SetWindowText(ghWnd, asMsg ? asMsg : Title);
 }
 
