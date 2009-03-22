@@ -40,6 +40,8 @@ void CSettings::InitSettings()
 ///| Moved from CVirtualConsole |/////////////////////////////////////////
 //------------------------------------------------------------------------
 	_tcscpy(Config, _T("Software\\ConEmu"));
+	
+	Cmd[0] = 0; isConMan = false;
 
 	nMainTimerElapse = 10;
 	nAffinity = 3;
@@ -152,6 +154,7 @@ void CSettings::LoadSettings()
         reg.Load(_T("FontName"), inFont);
         reg.Load(_T("FontName2"), inFont2);
         reg.Load(_T("CmdLine"), Cmd);
+        reg.Load(_T("ConMan"), &isConMan);
         reg.Load(_T("BackGround Image"), pBgImage);
         reg.Load(_T("bgImageDarker"), &bgImageDarker);
         reg.Load(_T("FontSize"), &inSize);
@@ -302,6 +305,7 @@ BOOL CSettings::SaveSettings()
 			}*/
 
             reg.Save(_T("CmdLine"), Cmd);
+            reg.Save(_T("ConMan"), isConMan);
             reg.Save(_T("FontName"), LogFont.lfFaceName);
             reg.Save(_T("FontName2"), LogFont2.lfFaceName);
             reg.Save(_T("BackGround Image"), pBgImage);
@@ -752,6 +756,10 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
 
         pVCon->Update(true);
         InvalidateRect(ghWnd, NULL, FALSE);
+        break;
+        
+    case cbConMan:
+        isConMan = !isConMan;
         break;
 
     case cbBold:

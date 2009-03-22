@@ -70,7 +70,7 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 IDD_DIALOG1 DIALOGEX 0, 0, 328, 258
 STYLE DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_TOPMOST | WS_EX_CONTROLPARENT
-FONT 8, "MS Shell Dlg", 0, 0, 0x1
+FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        "Anti-aliasing",IDC_STATIC,263,4,60,45,WS_GROUP
     CONTROL         "&None",rNoneAA,"Button",BS_AUTORADIOBUTTON | WS_GROUP,
@@ -168,7 +168,7 @@ BEGIN
     CONTROL         "Fixed",rFixed,"Button",BS_AUTORADIOBUTTON,268,61,33,10
     CTEXT           "x",IDC_STATIC,99,82,8,8
     GROUPBOX        "Command Line",IDC_STATIC,4,223,319,30
-    EDITTEXT        tCmdLine,9,234,306,11,ES_AUTOHSCROLL | NOT WS_BORDER,
+    EDITTEXT        tCmdLine,9,234,258,11,ES_AUTOHSCROLL | NOT WS_BORDER,
                     WS_EX_STATICEDGE
     GROUPBOX        "Graphic enhancement",IDC_STATIC,147,101,176,25
     GROUPBOX        "Drag and drop (Shell style)",IDC_STATIC,147,129,176,39
@@ -182,6 +182,8 @@ BEGIN
                     154,154,36,10
     COMBOBOX        lbRDragKey,192,152,56,30,CBS_DROPDOWNLIST | WS_VSCROLL | 
                     WS_TABSTOP
+    CONTROL         "ConMan",cbConMan,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
+                    274,235,43,10
 END
 
 IDD_DIALOG2 DIALOGEX 0, 0, 328, 246
@@ -453,14 +455,27 @@ IDC_MOVE                CURSOR  DISCARDABLE     "CursorDragMove.cur"
 
 STRINGTABLE DISCARDABLE 
 BEGIN
-    cbDropEnabled "Off - ConEmu will NOT receive external drops\nOn - Drops allowed (FAR confirmation dialog)\n3s - same as 'On', but w/o confirmation"
-    lbLDragKey "Drag with left mouse button, only when pressed..."
-    lbRDragKey "Drag with right mouse button, only when pressed..."
-    cbDragL "Allow drag with left mouse button"
-    cbDragR "Allow drag with right mouse button"
-    cbDnDCopy "Forced 'Copy' action as default,\nYou can use Ctrl, Shift or Alt\nduring drag to change action"
-    cbRClick "Off - all RClicks passed to console\nOn - Apps passed to console instead of RClick\n3s - Short RClick passed, Long RClick -> Apps"
-    cbSendAE "When is on, You can't enter fullscreen mode from keyboard,\nbut You can use 'AltEnter' for macros in FAR"
+    lbLDragKey              "Drag with left mouse button, only when pressed..."
+    cbDropEnabled           "Off - ConEmu will NOT receive external drops\nOn - Drops allowed (FAR confirmation dialog)\n3s - same as 'On', but w/o confirmation"
+    lbRDragKey              "Drag with right mouse button, only when pressed..."
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    cbDragL                 "Allow drag with left mouse button"
+    cbDragR                 "Allow drag with right mouse button"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    cbSendAE                "When is on, You can't enter fullscreen mode from keyboard,\nbut You can use 'AltEnter' for macros in FAR"
+    cbDnDCopy               "Forced 'Copy' action as default,\nYou can use Ctrl, Shift or Alt\nduring drag to change action"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    cbRClick                "Off - all RClicks passed to console\nOn - Apps passed to console instead of RClick\n3s - Short RClick passed, Long RClick -> Apps"
+    cbConMan "Turn on ConMan features (multiwindow,\ntoolbar, alternative console)\nconman.dll, hook.dll, infis.dll required\nConEmu restart required"
 END
 
 #endif    // English (U.S.) resources

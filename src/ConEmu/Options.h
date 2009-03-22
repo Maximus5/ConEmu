@@ -45,6 +45,7 @@ public:
     bool isTryToCenter;
 	RECT rcTabMargins;
 	bool isTabFrame;
+	bool isConMan;
 
 	// Заголовки табов
 	TCHAR szTabPanels[32];

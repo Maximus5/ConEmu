@@ -159,6 +159,7 @@
 #define lbRDragKey                      1503
 #define cbDragL                         1504
 #define cbDragR                         1505
+#define cbConMan                        1506
 
 // Next default values for new objects
 // 
@@ -166,7 +167,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        111
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1505
+#define _APS_NEXT_CONTROL_VALUE         1507
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif
