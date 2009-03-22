@@ -1,3 +1,7 @@
+Maximus5 - 2009.03.21
+
+    * Не срабатывал Drag.
+
 Maximus5 - 2009.03.20
 
     * Плагин вис в FAR 1.7x ('...Waiting for result (10 sec)').

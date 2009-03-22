@@ -738,7 +738,7 @@ void CDragDrop::Drag()
 							} catch(...) {
 								hr = -1;
 							}
-							if (hr = -1) {
+							if (hr == -1) {
 								gConEmu.DnDstep(_T("DnD: Exception in shell"));
 								return;
 							}
