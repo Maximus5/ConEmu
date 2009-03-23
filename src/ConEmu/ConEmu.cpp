@@ -82,6 +82,7 @@ CConEmuMain::CConEmuMain()
 
 BOOL CConEmuMain::Init()
 {
+	//#pragma message("Win2k: EVENT_CONSOLE_START_APPLICATION, EVENT_CONSOLE_END_APPLICATION")
 	mh_WinHook = SetWinEventHook(EVENT_CONSOLE_START_APPLICATION,EVENT_CONSOLE_END_APPLICATION,
 		NULL, CConEmuMain::WinEventProc, 0,0, WINEVENT_OUTOFCONTEXT);
 
@@ -1161,6 +1162,10 @@ DWORD CConEmuMain::CheckProcesses(DWORD nConmanIDX, BOOL bTitleChanged)
 	BOOL  lbProcessChanged = FALSE; //, lbAllowRetry = TRUE;
 	int   nTopIdx = 0;
 	DWORD dwProcList[2], nProcCount;
+	#pragma message("Win2k: GetConsoleProcessList")
+	// Для Win2k можно бежать по TH32CS_SNAPPROCESS и использовать th32ParentProcessID для определения
+	// наш ли это процесс. Учесть, что часть процессов цепочки может быть убита. Пример:
+	// {ConEmu} -> {FAR} -> {CMD - убит} -> {PID1} -> {PID2} ...
     nProcCount = GetConsoleProcessList(dwProcList,2);
 
 	
@@ -1780,6 +1785,7 @@ VOID CConEmuMain::WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hw
 	switch(event)
 	{
 	case EVENT_CONSOLE_START_APPLICATION:
+		//#pragma message("Win2k: CONSOLE_APPLICATION_16BIT")
 		if (idChild == CONSOLE_APPLICATION_16BIT) {
 			DWORD ntvdmPID = idObject;
 			for (size_t i=0; i<gConEmu.m_Processes.size(); i++) {
@@ -2092,7 +2098,9 @@ LRESULT CConEmuMain::OnCopyData(PCOPYDATASTRUCT cds)
 	if (cds->dwData == 0) {
 		BOOL lbInClose = FALSE;
 		DWORD ProcList[2], ProcCount=0;
-	    ProcCount = GetConsoleProcessList(ProcList,2);
+	    //ProcCount = GetConsoleProcessList(ProcList,2);
+	    #pragma message("TODO: хорошо бы разнести загрузку списка процессов и обработку загруженных по ConMan")
+	    ProcCount = CheckProcesses(m_ActiveConmanIDX, FALSE);
 		if (ProcCount<=2)
 			lbInClose = TRUE;
 

@@ -91,7 +91,7 @@
 #define lbVisEOL                        1071
 #define lbVisEOF                        1072
 #define lbVisFore                       1073
-#define cbIsConMan                      1074
+#define cbAutoConHandle                      1074
 #define rCascade                        1075
 #define rFixed                          1076
 #define cbsConManActive                 1078

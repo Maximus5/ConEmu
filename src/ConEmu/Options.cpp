@@ -594,7 +594,9 @@ LRESULT CSettings::OnInitDialog()
 	if (!isTTF)
 		CheckDlgButton(hMain, cbNonProportional, BST_CHECKED);
 	if (isUpdConHandle)
-		CheckDlgButton(ghOpWnd, cbIsConMan, BST_CHECKED);
+		CheckDlgButton(ghOpWnd, cbAutoConHandle, BST_CHECKED);
+	if (isConMan)
+		CheckDlgButton(hMain, cbConMan, BST_CHECKED);
 
 	if (LogFont.lfWeight == FW_BOLD) CheckDlgButton(hMain, cbBold, BST_CHECKED);
 	if (LogFont.lfItalic)            CheckDlgButton(hMain, cbItalic, BST_CHECKED);
@@ -893,7 +895,7 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
         InvalidateRect(ghWnd, NULL, FALSE);
         break;
 
-    case cbIsConMan:
+    case cbAutoConHandle:
         isUpdConHandle = !isUpdConHandle;
 
         pVCon->Update(true);

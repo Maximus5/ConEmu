@@ -12,11 +12,24 @@ CProgressBars::CProgressBars(HWND hWnd, HINSTANCE hInstance)
 
 	SendMessage(Progressbar1, PBM_SETRANGE, 0, (LPARAM) MAKELPARAM (0, 100));
 	SendMessage(Progressbar2, PBM_SETRANGE, 0, (LPARAM) MAKELPARAM (0, 100));		
-	
-	SetWindowTheme(Progressbar1, _T(" "), _T(" "));
-	SetWindowTheme(Progressbar2, _T(" "), _T(" "));
+
+	mh_Uxtheme = LoadLibrary(_T("UxTheme.dll"));
+	if (mh_Uxtheme) {
+		SetWindowThemeF = (SetWindowThemeT)GetProcAddress(mh_Uxtheme, "SetWindowTheme");
+		if (SetWindowThemeF) {
+			SetWindowThemeF(Progressbar1, _T(" "), _T(" "));
+			SetWindowThemeF(Progressbar2, _T(" "), _T(" "));
+		}
+	}
 
 //	COL_DIALOGTEXT
+}
+
+CProgressBars::~CProgressBars()
+{
+	if (mh_Uxtheme) {
+		FreeLibrary(mh_Uxtheme); mh_Uxtheme = NULL;
+	}
 }
 
 void CProgressBars::OnTimer()

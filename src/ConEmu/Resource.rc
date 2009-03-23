@@ -127,6 +127,7 @@ BEGIN
     CTEXT           "x",IDC_STATIC,221,60,8,8
     CONTROL         "Force monospace",cbMonospace,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,10,83,70,8
+    CTEXT           "x",IDC_STATIC,99,83,8,8
     COMBOBOX        tFontSizeX3,109,81,24,66,CBS_DROPDOWN | WS_VSCROLL | 
                     WS_TABSTOP
     LTEXT           "Path:",IDC_STATIC,10,184,18,8
@@ -157,16 +158,15 @@ BEGIN
     CONTROL         "UpLeft",rBgSimple,"Button",BS_AUTORADIOBUTTON,278,182,
                     39,10
     GROUPBOX        "Placement",IDC_STATIC,270,172,53,50
+    GROUPBOX        "Position",IDC_STATIC,263,50,60,50,WS_DISABLED
+    CONTROL         "Cascade",rCascade,"Button",BS_AUTORADIOBUTTON | WS_DISABLED,268,87,44,
+                    10
+    CONTROL         "Fixed",rFixed,"Button",BS_AUTORADIOBUTTON | WS_DISABLED,268,61,33,10
     EDITTEXT        tWndX,268,72,18,11,ES_AUTOHSCROLL | ES_NUMBER | NOT 
                     WS_BORDER,WS_EX_STATICEDGE
     EDITTEXT        tWndY,296,72,18,11,ES_AUTOHSCROLL | ES_NUMBER | NOT 
                     WS_BORDER,WS_EX_STATICEDGE
     CTEXT           "x",IDC_STATIC,287,73,8,8
-    GROUPBOX        "Position",IDC_STATIC,263,50,60,50,WS_DISABLED
-    CONTROL         "Cascade",rCascade,"Button",BS_AUTORADIOBUTTON,268,87,44,
-                    10
-    CONTROL         "Fixed",rFixed,"Button",BS_AUTORADIOBUTTON,268,61,33,10
-    CTEXT           "x",IDC_STATIC,99,82,8,8
     GROUPBOX        "Command Line",IDC_STATIC,4,223,319,30
     EDITTEXT        tCmdLine,9,234,258,11,ES_AUTOHSCROLL | NOT WS_BORDER,
                     WS_EX_STATICEDGE
@@ -354,7 +354,7 @@ CAPTION "Settings..."
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     DEFPUSHBUTTON   "Save settings",bSaveSettings,268,283,70,14
-    CONTROL         "Always update con. handle (ConMan, Telnet)",cbIsConMan,
+    CONTROL         "Always update con. handle (ConMan, Telnet)",cbAutoConHandle,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,285,168,8
     CONTROL         "Tab1",tabMain,"SysTabControl32",WS_TABSTOP,4,4,334,276
 END
@@ -476,6 +476,10 @@ STRINGTABLE DISCARDABLE
 BEGIN
     cbRClick                "Off - all RClicks passed to console\nOn - Apps passed to console instead of RClick\n3s - Short RClick passed, Long RClick -> Apps"
     cbConMan "Turn on ConMan features (multiwindow,\ntoolbar, alternative console)\nconman.dll, hook.dll, infis.dll required\nConEmu restart required"
+    tWndX "Upper left corner of ConEmu in Normal mode\nThis is in pixels"
+    tWndY "Upper left corner of ConEmu in Normal mode\nThis is in pixels"
+    tWndWidth "Width of console window\nThis is in characters"
+    tWndHeight "Height of console window\nThis is in characters"
 END
 
 #endif    // English (U.S.) resources

@@ -33,6 +33,22 @@
 #define MOUSE_R_LOCKED 0x80
 
 
+#ifndef CLEARTYPE_NATURAL_QUALITY
+#define CLEARTYPE_QUALITY       5
+#define CLEARTYPE_NATURAL_QUALITY       6
+#endif
+
+#ifndef EVENT_CONSOLE_START_APPLICATION
+#define EVENT_CONSOLE_START_APPLICATION 0x4006
+#define EVENT_CONSOLE_END_APPLICATION   0x4007
+#if defined(_WIN64)
+#define CONSOLE_APPLICATION_16BIT       0x0000
+#else
+#define CONSOLE_APPLICATION_16BIT       0x0001
+#endif
+#endif
+
+
 #define MBox(rt) (int)MessageBox(NULL, rt, Title, MB_SYSTEMMODAL | MB_ICONINFORMATION)
 #define MBoxA(rt) (int)MessageBox(NULL, rt, _T("ConEmu"), MB_SYSTEMMODAL | MB_ICONINFORMATION)
 #define MBoxAssert(V) if ((V)==FALSE) { TCHAR szAMsg[MAX_PATH*2]; wsprintf(szAMsg, _T("Assertion(%s) at\n%s:%i"), #V, __FILE__, __LINE__); MBoxA(szAMsg); }

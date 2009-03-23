@@ -654,6 +654,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     // Установка параметров из командной строки
     if (cmdNew)
         _tcscpy(gSet.Cmd, cmdNew);
+	//#pragma message("Win2k: CLEARTYPE_NATURAL_QUALITY")
     if (ClearTypePrm)
         gSet.LogFont.lfQuality = CLEARTYPE_NATURAL_QUALITY;
     if (FontPrm)
