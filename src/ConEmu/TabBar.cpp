@@ -495,7 +495,7 @@ void TabBarClass::OnMouse(int message, int x, int y)
 			FarSendChangeTab(iPage);
 			Sleep(50); // TODO
 			PostMessage(ghConWnd, WM_KEYDOWN, VK_F10, 0);
-			PostMessage(ghConWnd, WM_KEYUP, VK_F10, 0);
+			PostMessage(ghConWnd, WM_KEYUP, VK_F10, (LPARAM)(3<<30));
 		}
 	}
 }

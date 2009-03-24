@@ -150,7 +150,7 @@ bool CVirtualConsole::InitDC(bool abNoDc)
 		const HDC hScreenDC = GetDC(0);
 		if (hDC = CreateCompatibleDC(hScreenDC))
 		{
-			SelectFont(gSet.hFont);
+			SelectFont(gSet.mh_Font);
 			TEXTMETRIC tm;
 			GetTextMetrics(hDC, &tm);
 			if (gSet.isForceMonospace)
@@ -422,7 +422,7 @@ WORD CVirtualConsole::CharWidth(TCHAR ch)
 	//} else {
 	if (!isBorder) {
 		if (!gSet.FontWidth[ch]) {
-			SelectFont(gSet.hFont);
+			SelectFont(gSet.mh_Font);
 			SIZE sz;
 			if (GetTextExtentPoint32(hDC, &ch, 1, &sz) && sz.cx)
 				gSet.FontWidth[ch] = sz.cx;
@@ -773,7 +773,7 @@ void CVirtualConsole::ParseLine(int row, TCHAR *ConCharLine, WORD *ConAttrLine)
 
 void CVirtualConsole::UpdateText(bool isForce, bool updateText, bool updateCursor)
 {
-	SelectFont(gSet.hFont);
+	SelectFont(gSet.mh_Font);
 
 	// pointers
 	TCHAR* ConCharLine;
@@ -960,9 +960,9 @@ void CVirtualConsole::UpdateText(bool isForce, bool updateText, bool updateCurso
 
 				if (gSet.isFixFarBorders) {
 					if (!isUnicode)
-						SelectFont(gSet.hFont);
+						SelectFont(gSet.mh_Font);
 					else if (isUnicode)
-						SelectFont(gSet.hFont2);
+						SelectFont(gSet.mh_Font2);
 				}
 
 
@@ -1041,7 +1041,7 @@ void CVirtualConsole::UpdateText(bool isForce, bool updateText, bool updateCurso
 					} MCHKHEAP
 				}
 				if (gSet.isFixFarBorders)
-					SelectFont(gSet.hFont);
+					SelectFont(gSet.mh_Font);
 			}
 			else if (!isUnicode)
 			{
@@ -1061,7 +1061,7 @@ void CVirtualConsole::UpdateText(bool isForce, bool updateText, bool updateCurso
 					#endif
 				}
 				if (gSet.isFixFarBorders)
-					SelectFont(gSet.hFont);
+					SelectFont(gSet.mh_Font);
 				MCHKHEAP
 			}
 			else //Border and specials
@@ -1090,7 +1090,7 @@ void CVirtualConsole::UpdateText(bool isForce, bool updateText, bool updateCurso
 					}
 				}
 				if (gSet.isFixFarBorders)
-					SelectFont(gSet.hFont2);
+					SelectFont(gSet.mh_Font2);
 				MCHKHEAP
 			}
 
@@ -1180,7 +1180,7 @@ void CVirtualConsole::UpdateCursor(bool& lRes)
 	{
 		lRes = true;
 
-		SelectFont(gSet.hFont);
+		SelectFont(gSet.mh_Font);
 
 		if ((Cursor.x != csbi.dwCursorPosition.X || Cursor.y != csbi.dwCursorPosition.Y))
 		{
@@ -1277,7 +1277,7 @@ void CVirtualConsole::UpdateCursor(bool& lRes)
 		if (gSet.LogFont.lfCharSet == OEM_CHARSET && !isCharBorder(Cursor.ch[0]))
 		{
 			if (gSet.isFixFarBorders)
-				SelectFont(gSet.hFont);
+				SelectFont(gSet.mh_Font);
 
 			char tmp[2];
 			WideCharToMultiByte(CP_OEMCP, 0, Cursor.ch, 1, tmp, 1, 0, 0);
@@ -1288,9 +1288,9 @@ void CVirtualConsole::UpdateCursor(bool& lRes)
 		else
 		{
 			if (gSet.isFixFarBorders && isCharBorder(Cursor.ch[0]))
-				SelectFont(gSet.hFont2);
+				SelectFont(gSet.mh_Font2);
 			else
-				SelectFont(gSet.hFont);
+				SelectFont(gSet.mh_Font);
 
 			ExtTextOut(hDC, pix.X, pix.Y,
 				ETO_CLIPPED | ((drawImage && (Cursor.foreColorNum < 2) &&

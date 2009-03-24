@@ -646,6 +646,9 @@ void CConEmuMain::SyncConsoleToWindow()
 	if (isNtvdm())
 		return;
 
+	if (!pVCon)
+		return; //TODO: может это как-то в отложенном режиме делать... pVCon при старте еще не существует
+
 	DEBUGLOGFILE("SyncConsoleToWindow\n");
 
 	RECT rcClient; GetClientRect(ghWnd, &rcClient);
@@ -827,8 +830,8 @@ bool CConEmuMain::SetWindowMode(uint inMode)
 
 void CConEmuMain::ForceShowTabs(BOOL abShow)
 {
-	if (!pVCon)
-		return;
+	//if (!pVCon)
+	//	return;
 
 	BOOL lbTabsAllowed = abShow && TabBar.IsAllowed();
 
@@ -2211,7 +2214,7 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd)
 	mn_StartTick = GetTickCount();
 
 
-    gConEmu.DragDrop = new CDragDrop(HDCWND);
+    //gConEmu.DragDrop = new CDragDrop(HDCWND);
     gConEmu.ProgressBars = new CProgressBars(ghWnd, g_hInstance);
 
     // ”становить переменную среды с дескриптором окна
@@ -2235,6 +2238,30 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd)
 	CreateCon();
 
 	return 0;
+}
+
+void CConEmuMain::PostCreate()
+{
+    OleInitialize (NULL); // как бы попробовать включать Ole только во врем€ драга. кажетс€ что из-за него глючит переключалка €зыка
+	//CoInitializeEx(NULL, COINIT_MULTITHREADED);
+
+	if (!DragDrop)
+		DragDrop = new CDragDrop(HDCWND);
+
+#pragma message("Warning: ≈сли консоль не создана - handler не установитс€!")
+
+    SetConsoleCtrlHandler((PHANDLER_ROUTINE)CConEmuMain::HandlerRoutine, true);
+
+    SetForegroundWindow(ghWnd);
+
+    SetParent(ghWnd, GetParent(GetShellWindow()));
+    
+    //pVCon->InitDC();
+    gConEmu.SyncWindowToConsole();
+
+    gConEmu.SetWindowMode(gConEmu.WindowMode);
+
+    SetTimer(ghWnd, 0, gSet.nMainTimerElapse, NULL);
 }
 
 LRESULT CConEmuMain::OnDestroy(HWND hWnd)
@@ -2415,9 +2442,13 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
         if (!IsWindowVisible(ghConWnd))
         {
             gConEmu.isShowConsole = true;
-            ShowWindow(ghConWnd, SW_SHOWNORMAL);
-            //if (gConEmu.setParent) SetParent(ghConWnd, 0);
+            //ShowWindow(ghConWnd, SW_SHOWNORMAL);
+            RECT rcCon, rcWnd; GetWindowRect(ghConWnd, &rcCon); GetWindowRect(ghWnd, &rcWnd);
+            SetWindowPos(ghConWnd, HWND_TOPMOST, 
+	            rcWnd.right-rcCon.right+rcCon.left,rcWnd.bottom-rcCon.bottom+rcCon.top,0,0, SWP_NOSIZE|SWP_SHOWWINDOW);
             EnableWindow(ghConWnd, true);
+            SetFocus(ghWnd);
+            //if (gConEmu.setParent) SetParent(ghConWnd, 0);
         }
         else
         {
@@ -2514,7 +2545,8 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
     }
 
     //if (BufferHeight) // 17.03.2009 Maks - теперь всегда, перед кликом (EMenu, etc.)
-    if (messg == WM_LBUTTONDOWN || messg == WM_RBUTTONDOWN || messg == WM_LBUTTONDBLCLK || messg == WM_RBUTTONDBLCLK)
+    if ((messg == WM_LBUTTONDOWN || messg == WM_RBUTTONDOWN || messg == WM_LBUTTONDBLCLK || messg == WM_RBUTTONDBLCLK) &&
+        !IsWindowVisible(ghConWnd))
     {
        // buffer mode: cheat the console window: adjust its position exactly to the cursor
        RECT win;

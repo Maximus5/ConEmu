@@ -190,6 +190,7 @@ public:
 	void PaintCon();
 	void PaintGaps(HDC hDC=NULL);
 	void PostMacro(LPCWSTR asMacro);
+	void PostCreate();
 	void ReSize();
 	void SetConParent();
 	void SetConsoleWindowSize(const COORD& size, bool updateInfo);

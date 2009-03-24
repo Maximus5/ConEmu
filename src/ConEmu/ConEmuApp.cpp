@@ -653,7 +653,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     // Установка параметров из командной строки
     if (cmdNew)
-        gSet.psCurCmd = cmdNew;
+        gSet.psCurCmd = _tcsdup(cmdNew);
 	//#pragma message("Win2k: CLEARTYPE_NATURAL_QUALITY")
     if (ClearTypePrm)
         gSet.LogFont.lfQuality = CLEARTYPE_NATURAL_QUALITY;
@@ -886,8 +886,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			int nStep = 1;
 			while (nStep <= 2)
 			{
-				if (*gSet.GetCmd()) {
-					gSet.psCurCmd = gSet.BufferHeight == 0 ? _T("far") : _T("cmd");
+				if (!*gSet.GetCmd()) {
+					gSet.psCurCmd = _tcsdup(gSet.BufferHeight == 0 ? _T("far") : _T("cmd"));
 					nStep ++;
 				}
 
@@ -929,7 +929,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 						return -1;
 					}
 					// Выполнить стандартную команду...
-					gSet.psCurCmd = gSet.BufferHeight == 0 ? _T("far") : _T("cmd");
+					gSet.psCurCmd = _tcsdup(gSet.BufferHeight == 0 ? _T("far") : _T("cmd"));
 					nStep ++;
 				}
 			}
@@ -944,23 +944,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 ///| Misc |///////////////////////////////////////////////////////////////
 //------------------------------------------------------------------------
 
-    OleInitialize (NULL); // как бы попробовать включать Ole только во время драга. кажется что из-за него глючит переключалка языка
-	//CoInitializeEx(NULL, COINIT_MULTITHREADED);
-
-    SetConsoleCtrlHandler((PHANDLER_ROUTINE)CConEmuMain::HandlerRoutine, true);
-    SetTimer(ghWnd, 0, gSet.nMainTimerElapse, NULL);
-
-
-
-
-    SetForegroundWindow(ghWnd);
-
-    SetParent(ghWnd, GetParent(GetShellWindow()));
-    
-    //pVCon->InitDC();
-    gConEmu.SyncWindowToConsole();
-
-    gConEmu.SetWindowMode(gConEmu.WindowMode);
+	gConEmu.PostCreate();
 
     
 //------------------------------------------------------------------------

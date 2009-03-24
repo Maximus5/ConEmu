@@ -3,15 +3,21 @@
 
 CDragDrop::CDragDrop(HWND hWnd)
 {
+	HRESULT hr = S_OK;
 	m_hWnd=hWnd;
 	m_lRefCount = 1;
 	m_pfpi = NULL;
 	mp_DataObject = NULL;
 	mb_selfdrag = NULL;
-	RegisterDragDrop(hWnd, this);
+
+	hr = RegisterDragDrop(hWnd, this);
+	if (hr != S_OK)
+		DisplayLastError(_T("Can't register Drop target"), hr);
 
 	mp_DesktopID = NULL;
-	HRESULT hr = SHGetFolderLocation ( ghWnd, CSIDL_DESKTOP, NULL, 0, &mp_DesktopID );
+	hr = SHGetFolderLocation ( ghWnd, CSIDL_DESKTOP, NULL, 0, &mp_DesktopID );
+	if (hr != S_OK)
+		DisplayLastError(_T("Can't get desktop folder"), hr);
 }
 
 CDragDrop::~CDragDrop()
@@ -341,7 +347,7 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop (IDataObject * pDataObject,DWORD grfKe
 		if (*pdwEffect == DROPEFFECT_MOVE)
 			fop.wFunc=FO_MOVE;
 		else if (*pdwEffect == DROPEFFECT_COPY)
-			fop.wFunc=FO_MOVE;
+			fop.wFunc=FO_COPY;
 		else {
 			LPCTSTR pszTitle = _tcsrchr(fop.pFrom, _T('\\'));
 			if (pszTitle) pszTitle++; else pszTitle = fop.pFrom;

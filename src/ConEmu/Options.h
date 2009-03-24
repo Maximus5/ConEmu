@@ -22,7 +22,7 @@ public:
 	/* Command Line (Registry) */
 	LPTSTR psCmd;
 	/* Command Line ("/cmd" arg) */
-	LPCTSTR psCurCmd;
+	LPTSTR psCurCmd;
 	/* "Active" command line */
 	LPCTSTR GetCmd();
 
@@ -81,7 +81,7 @@ public:
 	HBITMAP hBgBitmap;
 	COORD	bgBmp;
 	HDC     hBgDc;
-	HFONT   hFont, hFont2;
+	HFONT   mh_Font, mh_Font2;
 	WORD    FontWidth[0x10000]; //, Font2Width[0x10000];
 
     HWND hMain, hColors, hInfo;

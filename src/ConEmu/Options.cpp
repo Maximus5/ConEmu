@@ -25,14 +25,16 @@ CSettings::CSettings()
 	memset(mn_Counter, 0, sizeof(*mn_Counter)*(tPerfInterval-gbPerformance));
 	memset(mn_CounterMax, 0, sizeof(*mn_CounterMax)*(tPerfInterval-gbPerformance));
 	memset(mn_CounterTick, 0, sizeof(*mn_CounterTick)*(tPerfInterval-gbPerformance));
-	hBgBitmap = NULL; bgBmp = MakeCoord(0,0); hBgDc = NULL; hFont = NULL; hFont2 = NULL;
+	hBgBitmap = NULL; bgBmp = MakeCoord(0,0); hBgDc = NULL; mh_Font = NULL; mh_Font2 = NULL;
 	memset(FontWidth, 0, sizeof(FontWidth));
 }
 
 CSettings::~CSettings()
 {
-	if (hFont) { DeleteObject(hFont); hFont = NULL; }
-	if (hFont2) { DeleteObject(hFont2); hFont2 = NULL; }
+	if (mh_Font) { DeleteObject(mh_Font); mh_Font = NULL; }
+	if (mh_Font2) { DeleteObject(mh_Font2); mh_Font2 = NULL; }
+	if (psCmd) {free(psCmd); psCmd = NULL;}
+	if (psCurCmd) {free(psCurCmd); psCurCmd = NULL;}
 }
 
 void CSettings::InitSettings()
@@ -256,6 +258,8 @@ void CSettings::LoadSettings()
 	// pVCon еще не создано!
     /*if (isShowBgImage && pVCon)
         LoadImageFrom(pBgImage);*/
+
+	mh_Font = CreateFontIndirectMy(&LogFont);
 
 	MCHKHEAP
 }
@@ -742,8 +746,8 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
     case rStandardAA:
     case rCTAA:
         LogFont.lfQuality = wParam == rNoneAA ? NONANTIALIASED_QUALITY : wParam == rStandardAA ? ANTIALIASED_QUALITY : CLEARTYPE_NATURAL_QUALITY;
-        DeleteObject(hFont);
-        hFont = 0;
+        DeleteObject(mh_Font);
+		mh_Font = CreateFontIndirectMy(&LogFont);
         LogFont.lfWidth = FontSizeX;
         gConEmu.Update(true);
         break;
@@ -787,8 +791,8 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
             HFONT hFont = CreateFontIndirectMy(&LogFont);
             if (hFont)
             {
-                DeleteObject(hFont);
-                hFont = hFont;
+                DeleteObject(mh_Font);
+                mh_Font = hFont;
 
                 gConEmu.Update(true);
 				if (!isFullScreen && !IsZoomed(ghWnd))
@@ -1123,8 +1127,8 @@ LRESULT CSettings::OnComboBox(WPARAM wParam, LPARAM lParam)
         if (hFont)
         {
             if (wId == tFontFace) {
-                DeleteObject(hFont);
-                hFont = hFont;
+                DeleteObject(mh_Font);
+                mh_Font = hFont;
 			} else {
 				DeleteObject(hFont); hFont = NULL;
 			}
@@ -1185,8 +1189,8 @@ LRESULT CSettings::OnComboBox(WPARAM wParam, LPARAM lParam)
             HFONT hFont = CreateFontIndirectMy(&LogFont);
             if (hFont)
             {
-                DeleteObject(hFont);
-                hFont = hFont;
+                DeleteObject(mh_Font);
+                mh_Font = hFont;
 
                 gConEmu.Update(true);
                 if (!isFullScreen && !IsZoomed(ghWnd))
@@ -1713,10 +1717,10 @@ HFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 {
 	memset(FontWidth, 0, sizeof(*FontWidth)*0x10000);
 
-    DeleteObject(hFont2); hFont2 = NULL;
+    DeleteObject(mh_Font2); mh_Font2 = NULL;
 
     int width = gSet.FontSizeX2 ? gSet.FontSizeX2 : inFont->lfWidth;
-    hFont2 = CreateFont(abs(inFont->lfHeight), abs(width), 0, 0, FW_NORMAL,
+    mh_Font2 = CreateFont(abs(inFont->lfHeight), abs(width), 0, 0, FW_NORMAL,
         0, 0, 0, DEFAULT_CHARSET, OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS, ANTIALIASED_QUALITY, 0, gSet.LogFont2.lfFaceName);
 
     return CreateFontIndirect(inFont);

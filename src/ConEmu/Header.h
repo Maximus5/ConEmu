@@ -180,6 +180,7 @@ public:
 	}
 	void Save(const TCHAR *regKey, const TCHAR *value)
 	{
+		if (!value) value = _T(""); // сюда мог придти и NULL
 		RegSetValueEx(regMy, regKey, NULL, REG_SZ, (LPBYTE)(value), _tcslen(value) * sizeof(TCHAR));
 	}
 	void Save(const TCHAR *regKey, TCHAR *value)
