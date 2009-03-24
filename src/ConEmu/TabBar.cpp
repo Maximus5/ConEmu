@@ -203,7 +203,9 @@ BOOL TabBarClass::IsAllowed()
 	BOOL lbTabsAllowed = TRUE;
 	if (gConEmu.BufferHeight) {
         CONSOLE_SCREEN_BUFFER_INFO inf; memset(&inf, 0, sizeof(inf));
-        GetConsoleScreenBufferInfo(pVCon->hConOut(), &inf);
+		CVirtualConsole* pCon = gConEmu.ActiveCon();
+		if (!pCon) return FALSE;
+        GetConsoleScreenBufferInfo(pCon->hConOut(), &inf);
         if (inf.dwSize.Y>(inf.srWindow.Bottom-inf.srWindow.Top+1))
 			lbTabsAllowed = FALSE;
 	}
@@ -511,17 +513,17 @@ void TabBarClass::OnConman(int nConNumber, BOOL bAlternative)
 	if (gConEmu.ConMan_ProcessCommand) {
 		int nGrpCount = gConEmu.ConMan_ProcessCommand(11/*GET_STATUS*/,0,0);
 		FarTitle title; memset(&title, 0, sizeof(title));
-		BOOL bPresent[12]; memset(bPresent, 0, sizeof(bPresent));
+		BOOL bPresent[MAX_CONSOLE_COUNT]; memset(bPresent, 0, sizeof(bPresent));
 		MCHKHEAP
 		for (int i=1; i<=nGrpCount; i++) {
 			if (gConEmu.ConMan_ProcessCommand(45/*GET_TITLEBYIDX*/,i,(int)&title)) {
-				if (title.num>=1 && title.num<=12)
+				if (title.num>=1 && title.num<=MAX_CONSOLE_COUNT)
 					bPresent[title.num-1] = TRUE;
 			}
 		}
 
 		SendMessage(mh_Toolbar, WM_SETREDRAW, 0, 0);
-		for (int i=1; i<=12; i++) {
+		for (int i=1; i<=MAX_CONSOLE_COUNT; i++) {
 			SendMessage(mh_Toolbar, TB_HIDEBUTTON, i, !bPresent[i-1]);
 		}
 
@@ -531,10 +533,10 @@ void TabBarClass::OnConman(int nConNumber, BOOL bAlternative)
 		nConNumber = gConEmu.ConMan_ProcessCommand(46/*GET_ACTIVENUM*/,0,0);
 	}
 	
-	if (nConNumber>=1 && nConNumber<=12) {
+	if (nConNumber>=1 && nConNumber<=MAX_CONSOLE_COUNT) {
 		SendMessage(mh_Toolbar, TB_CHECKBUTTON, nConNumber, 1);
 	} else {
-		for (int i=1; i<=12; i++)
+		for (int i=1; i<=MAX_CONSOLE_COUNT; i++)
 			SendMessage(mh_Toolbar, TB_CHECKBUTTON, i, 0);
 	}
 	SendMessage(mh_Toolbar, TB_CHECKBUTTON, 14, bAlternative);
@@ -552,7 +554,7 @@ LRESULT TabBarClass::ToolWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lP
 						if (!gConEmu.isConman() || !gConEmu.ConMan_ProcessCommand)
 							break;
 						LPNMTBGETINFOTIP pDisp = (LPNMTBGETINFOTIP)lParam;
-						if (pDisp->iItem>=1 && pDisp->iItem<=12) {
+						if (pDisp->iItem>=1 && pDisp->iItem<=MAX_CONSOLE_COUNT) {
 							if (!pDisp->pszText || !pDisp->cchTextMax) break;
 							FarTitle title; memset(&title, 0, sizeof(title));
 							if (gConEmu.ConMan_ProcessCommand(44/*GET_TITLEBYNUM*/,pDisp->iItem,(int)&title)) {
@@ -587,16 +589,19 @@ LRESULT TabBarClass::ToolWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lP
 					break;
 
 				RegShortcut cmd; memset(&cmd, 0, sizeof(cmd));
-				if (wParam>=1 && wParam<=12)
+				if (wParam>=1 && wParam<=MAX_CONSOLE_COUNT)
 				{
 					// активировать консоль №
 					cmd.action = wParam - 1;
 					gConEmu.mb_IgnoreSizeChange = true;
-					COORD sz = {pVCon->TextWidth, pVCon->TextHeight};
-					TabBar.ConMan_KeyAction ( &cmd );
-					// Установить размер консоли!
-					gConEmu.SetConsoleWindowSize(sz, false);
-					gConEmu.mb_IgnoreSizeChange = false;
+					CVirtualConsole* pCon = gConEmu.ActiveCon();
+					if (pCon) {
+						COORD sz = {pCon->TextWidth, pCon->TextHeight};
+						TabBar.ConMan_KeyAction ( &cmd );
+						// Установить размер консоли!
+						gConEmu.SetConsoleWindowSize(sz, false);
+						gConEmu.mb_IgnoreSizeChange = false;
+					}
 				} else
 				if (wParam==13)
 				{

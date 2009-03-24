@@ -10,6 +10,10 @@
 #include "kl_parts.h"
 #endif
 
+// Array sizes
+#define MAX_CONSOLE_COUNT 12
+
+
 #include "globals.h"
 #include "resource.h"
 #include "VirtualConsole.h"
@@ -31,6 +35,7 @@
 #define DRAG_R_STARTED 0x20
 #define MOUSE_SIZING   0x40
 #define MOUSE_R_LOCKED 0x80
+
 
 
 #ifndef CLEARTYPE_NATURAL_QUALITY
@@ -194,6 +199,21 @@ public:
 		DWORD len = MAX_PATH * sizeof(TCHAR);
 		if (RegQueryValueEx(regMy, regKey, NULL, NULL, (LPBYTE)(value), &len) == ERROR_SUCCESS)
 			return true;
+		return false;
+	}
+	bool Load(const TCHAR *regKey, TCHAR **value)
+	{
+		DWORD len = 0;
+		if (*value) {free(*value); *value = NULL;}
+		if (RegQueryValueEx(regMy, regKey, NULL, NULL, NULL, &len) == ERROR_SUCCESS && len) {
+			*value = (TCHAR*)malloc(len); **value = 0;
+			if (RegQueryValueEx(regMy, regKey, NULL, NULL, (LPBYTE)(*value), &len) == ERROR_SUCCESS) {
+				return true;
+			}
+		} else {
+			*value = (TCHAR*)malloc(sizeof(TCHAR));
+			**value = 0;
+		}
 		return false;
 	}
 };

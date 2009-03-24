@@ -3,15 +3,30 @@
 #define VCURSORWIDTH 2
 #define HCURSORWIDTH 2
 
+CVirtualConsole* CVirtualConsole::Create()
+{
+	CVirtualConsole* pCon = new CVirtualConsole();
+	#pragma message("TODO: CVirtualConsole::Create - создать процесс")
+
+    if (gSet.wndHeight && gSet.wndWidth)
+    {
+        COORD b = {gSet.wndWidth, gSet.wndHeight};
+	    pCon->SetConsoleSize(b);
+	}
+
+	return pCon;
+}
+
 CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
 {
-	pVCon = this;
+	//pVCon = this;
 	hConOut_ = NULL;
 
 	TextWidth = TextHeight = Width = Height = 0;
 	hDC = NULL; hBitmap = NULL;
-	hBgDc = NULL; hBgBitmap = NULL; bgBmp.cx = 0; bgBmp.cy = 0;
-	hFont = NULL; hFont2 = NULL; hSelectedFont = NULL; hOldFont = NULL;
+	//hBgDc = NULL; hBgBitmap = NULL; gSet.bgBmp.X = 0; gSet.bgBmp.Y = 0;
+	//hFont = NULL; hFont2 = NULL; 
+	hSelectedFont = NULL; hOldFont = NULL;
 	ConChar = NULL; ConAttr = NULL; ConCharX = NULL; tmpOem = NULL; TextParts = NULL;
 	memset(&SelectionInfo, 0, sizeof(SelectionInfo));
 	IsForceUpdate = false;
@@ -34,17 +49,20 @@ CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
 	
 
     if (gSet.isShowBgImage)
-        gSet.LoadImageFrom(gSet.pBgImage);
+        gSet.LoadImageFrom(gSet.sBgImage);
+
+
+	InitDC(false);
 }
 
 CVirtualConsole::~CVirtualConsole()
 {
-	Free(true);
+	Free();
 	if (Spaces) free(Spaces); Spaces = NULL;  nSpaceCount = 0;
-	pVCon = NULL; //??? так на всякий случай
+	//pVCon = NULL; //??? так на всякий случай
 }
 
-void CVirtualConsole::Free(bool bFreeFont)
+void CVirtualConsole::Free()
 {
 	if (hDC)
 	{
@@ -55,13 +73,6 @@ void CVirtualConsole::Free(bool bFreeFont)
 	{
 		DeleteObject(hBitmap);
 		hBitmap = NULL;
-	}
-	if (bFreeFont && hFont)
-	{
-		DeleteObject(hFont);
-		DeleteObject(hFont2);
-		hFont2 = NULL;
-		hFont = NULL;
 	}
 	if (ConChar)
 	{
@@ -106,72 +117,65 @@ HANDLE CVirtualConsole::hConOut()
 	return hConOut_;
 }
 
-bool CVirtualConsole::InitFont(void)
+// InitDC вызывается только при критических изменениях (размеры, шрифт, и т.п.) когда нужно пересоздать DC и Bitmap
+bool CVirtualConsole::InitDC(bool abNoDc)
 {
-	Free(true);
-	hFont = CreateFontIndirectMy(&gSet.LogFont);
-	return hFont != NULL;
-}
+	Free();
 
-bool CVirtualConsole::InitDC(BOOL abFull/*=TRUE*/)
-{
-	if (hFont)
-		Free(false);
-	else
-		if (!InitFont())
-			return false;
-			
-    if (abFull)
-    {
-		CONSOLE_SCREEN_BUFFER_INFO csbi;
-		if (!GetConsoleScreenBufferInfo(hConOut(), &csbi))
-			return false;
+	CONSOLE_SCREEN_BUFFER_INFO csbi;
+	if (!GetConsoleScreenBufferInfo(hConOut(), &csbi))
+		return false;
 
-		IsForceUpdate = true;
-		TextWidth = csbi.srWindow.Right - csbi.srWindow.Left + 1;
-		TextHeight = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
-		if ((int)TextWidth < csbi.dwSize.X)
-			TextWidth = csbi.dwSize.X;
+	IsForceUpdate = true;
+	TextWidth = csbi.srWindow.Right - csbi.srWindow.Left + 1;
+	TextHeight = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
+	if ((int)TextWidth < csbi.dwSize.X)
+		TextWidth = csbi.dwSize.X;
 
-		ConChar = (TCHAR*)calloc((TextWidth * TextHeight * 2), sizeof(*ConChar));
-		ConAttr = (WORD*)calloc((TextWidth * TextHeight * 2), sizeof(*ConAttr));
-		ConCharX = (DWORD*)calloc((TextWidth * TextHeight), sizeof(*ConCharX));
-		tmpOem = (char*)calloc((TextWidth + 5), sizeof(*tmpOem));
-		TextParts = (struct _TextParts*)calloc((TextWidth + 2), sizeof(*TextParts));
-		if (!ConChar || !ConAttr || !ConCharX || !tmpOem || !TextParts)
-			return false;
-	}
+	ConChar = (TCHAR*)calloc((TextWidth * TextHeight * 2), sizeof(*ConChar));
+	ConAttr = (WORD*)calloc((TextWidth * TextHeight * 2), sizeof(*ConAttr));
+	ConCharX = (DWORD*)calloc((TextWidth * TextHeight), sizeof(*ConCharX));
+	tmpOem = (char*)calloc((TextWidth + 5), sizeof(*tmpOem));
+	TextParts = (struct _TextParts*)calloc((TextWidth + 2), sizeof(*TextParts));
+	if (!ConChar || !ConAttr || !ConCharX || !tmpOem || !TextParts)
+		return false;
+
 	SelectionInfo.dwFlags = 0;
 
 	hSelectedFont = NULL;
-	const HDC hScreenDC = GetDC(0);
-	if (hDC = CreateCompatibleDC(hScreenDC))
-	{
-		SelectFont(hFont);
-		TEXTMETRIC tm;
-		GetTextMetrics(hDC, &tm);
-		if (gSet.isForceMonospace)
-			//Maximus - у Arial'а например MaxWidth слишком большой
-			gSet.LogFont.lfWidth = gSet.FontSizeX3 ? gSet.FontSizeX3 : tm.tmMaxCharWidth;
-		else
-			gSet.LogFont.lfWidth = tm.tmAveCharWidth;
-		gSet.LogFont.lfHeight = tm.tmHeight;
 
-		if (abFull)
+	// Это может быть, если отключена буферизация (debug) и вывод идет сразу на экран
+	if (!abNoDc)
+	{
+		const HDC hScreenDC = GetDC(0);
+		if (hDC = CreateCompatibleDC(hScreenDC))
 		{
+			SelectFont(gSet.hFont);
+			TEXTMETRIC tm;
+			GetTextMetrics(hDC, &tm);
+			if (gSet.isForceMonospace)
+				//Maximus - у Arial'а например MaxWidth слишком большой
+				gSet.LogFont.lfWidth = gSet.FontSizeX3 ? gSet.FontSizeX3 : tm.tmMaxCharWidth;
+			else
+				gSet.LogFont.lfWidth = tm.tmAveCharWidth;
+			gSet.LogFont.lfHeight = tm.tmHeight;
+
 			if (ghOpWnd) // устанавливать только при листании шрифта в настройке
 				gSet.UpdateTTF ( (tm.tmMaxCharWidth - tm.tmAveCharWidth)>2 );
 
+			// Посчитать новый размер в пикселях
 			Width = TextWidth * gSet.LogFont.lfWidth;
 			Height = TextHeight * gSet.LogFont.lfHeight;
 
 			hBitmap = CreateCompatibleBitmap(hScreenDC, Width, Height);
 			SelectObject(hDC, hBitmap);
 		}
-	}
-	ReleaseDC(0, hScreenDC);
+		ReleaseDC(0, hScreenDC);
 
-	return hBitmap != NULL;
+		return hBitmap!=NULL;
+	}
+
+	return true;
 }
 
 void CVirtualConsole::DumpConsole()
@@ -205,19 +209,19 @@ void CVirtualConsole::DumpConsole()
 	CloseHandle(hFile);
 }
 
-HFONT CVirtualConsole::CreateFontIndirectMy(LOGFONT *inFont)
+/*HFONT CVirtualConsole::CreateFontIndirectMy(LOGFONT *inFont)
 {
 	memset(FontWidth, 0, sizeof(*FontWidth)*0x10000);
 	//memset(Font2Width, 0, sizeof(*Font2Width)*0x10000);
 
-    DeleteObject(pVCon->hFont2); pVCon->hFont2 = NULL;
+    DeleteObject(hFont2); hFont2 = NULL;
 
     int width = gSet.FontSizeX2 ? gSet.FontSizeX2 : inFont->lfWidth;
-    pVCon->hFont2 = CreateFont(abs(inFont->lfHeight), abs(width), 0, 0, FW_NORMAL,
+    hFont2 = CreateFont(abs(inFont->lfHeight), abs(width), 0, 0, FW_NORMAL,
         0, 0, 0, DEFAULT_CHARSET, OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS, ANTIALIASED_QUALITY, 0, gSet.LogFont2.lfFaceName);
 
     return CreateFontIndirect(inFont);
-}
+}*/
 
 // Это символы рамок и др. спец. символы
 //#define isCharBorder(inChar) (inChar>=0x2013 && inChar<=0x266B)
@@ -263,21 +267,21 @@ bool CVirtualConsole::isCharBorderVertical(WCHAR inChar)
 void CVirtualConsole::BlitPictureTo(int inX, int inY, int inWidth, int inHeight)
 {
 	// А вообще, имеет смысл отрисовывать?
-	if (bgBmp.cx>inX && bgBmp.cy>inY)
-		BitBlt(hDC, inX, inY, inWidth, inHeight, hBgDc, inX, inY, SRCCOPY);
-	if (bgBmp.cx<(inX+inWidth) || bgBmp.cy<(inY+inHeight))
+	if (gSet.bgBmp.X>inX && gSet.bgBmp.Y>inY)
+		BitBlt(hDC, inX, inY, inWidth, inHeight, gSet.hBgDc, inX, inY, SRCCOPY);
+	if (gSet.bgBmp.X<(inX+inWidth) || gSet.bgBmp.Y<(inY+inHeight))
 	{
 		if (hBrush0==NULL) {
 			hBrush0 = CreateSolidBrush(gSet.Colors[0]);
 			SelectBrush(hBrush0);
 		}
 
-		RECT rect = {max(inX,bgBmp.cx), inY, inX+inWidth, inY+inHeight};
+		RECT rect = {max(inX,gSet.bgBmp.X), inY, inX+inWidth, inY+inHeight};
 		if (!IsRectEmpty(&rect))
 			FillRect(hDC, &rect, hBrush0);
 
-		if (bgBmp.cx>inX) {
-			rect.left = inX; rect.top = max(inY,bgBmp.cy); rect.right = bgBmp.cx;
+		if (gSet.bgBmp.X>inX) {
+			rect.left = inX; rect.top = max(inY,gSet.bgBmp.Y); rect.right = gSet.bgBmp.X;
 			if (!IsRectEmpty(&rect))
 				FillRect(hDC, &rect, hBrush0);
 		}
@@ -417,15 +421,15 @@ WORD CVirtualConsole::CharWidth(TCHAR ch)
 		//nWidth = Font2Width[ch];
 	//} else {
 	if (!isBorder) {
-		if (!FontWidth[ch]) {
-			SelectFont(hFont);
+		if (!gSet.FontWidth[ch]) {
+			SelectFont(gSet.hFont);
 			SIZE sz;
 			if (GetTextExtentPoint32(hDC, &ch, 1, &sz) && sz.cx)
-				FontWidth[ch] = sz.cx;
+				gSet.FontWidth[ch] = sz.cx;
 			else
-				FontWidth[ch] = nWidth;
+				gSet.FontWidth[ch] = nWidth;
 		}
-		nWidth = FontWidth[ch];
+		nWidth = gSet.FontWidth[ch];
 	}
 	if (!nWidth) nWidth = 1; // на всякий случай, чтобы деления на 0 не возникло
 	return nWidth;
@@ -470,7 +474,7 @@ bool CVirtualConsole::Update(bool isForce, HDC *ahDc)
 	bool lRes = false;
 	
 	if (!GetConsoleScreenBufferInfo(hConOut(), &csbi)) {
-		DisplayLastError(_T("pVCon->Update:GetConsoleScreenBufferInfo"));
+		DisplayLastError(_T("Update:GetConsoleScreenBufferInfo"));
 		return lRes;
 	}
 
@@ -482,7 +486,10 @@ bool CVirtualConsole::Update(bool isForce, HDC *ahDc)
 	//------------------------------------------------------------------------
 	///| Read console output and cursor info... |/////////////////////////////
 	//------------------------------------------------------------------------
-	UpdatePrepare(isForce, ahDc);
+	if (!UpdatePrepare(isForce, ahDc)) {
+		gConEmu.DnDstep(_T("DC initialization failed!"));
+		return false;
+	}
 	
 	gSet.Performance(tPerfRead, TRUE);
 
@@ -558,7 +565,7 @@ bool CVirtualConsole::Update(bool isForce, HDC *ahDc)
 	return lRes;
 }
 
-void CVirtualConsole::UpdatePrepare(bool isForce, HDC *ahDc)
+bool CVirtualConsole::UpdatePrepare(bool isForce, HDC *ahDc)
 {
 	attrBackLast = 0;
 	isEditor = gConEmu.isEditor();
@@ -573,8 +580,11 @@ void CVirtualConsole::UpdatePrepare(bool isForce, HDC *ahDc)
 		csbi.dwCursorPosition.X >= 0 && csbi.dwCursorPosition.Y >= 0 &&
 		csbi.dwCursorPosition.X < winSize.X && csbi.dwCursorPosition.Y < winSize.Y;
 
-	if (!ahDc && (isForce || !hDC || TextWidth != winSize.X || TextHeight != winSize.Y))
-		InitDC();
+	// Первая инициализация, или 
+	if (isForce || !ConChar || TextWidth != winSize.X || TextHeight != winSize.Y) {
+		if (!InitDC(ahDc!=NULL))
+			return false;
+	}
 
 	// use and reset additional force flag
 	if (IsForceUpdate)
@@ -642,6 +652,8 @@ void CVirtualConsole::UpdatePrepare(bool isForce, HDC *ahDc)
 			}
 		}
 	}
+
+	return true;
 }
 
 enum CVirtualConsole::_PartType CVirtualConsole::GetCharType(TCHAR ch)
@@ -761,7 +773,7 @@ void CVirtualConsole::ParseLine(int row, TCHAR *ConCharLine, WORD *ConAttrLine)
 
 void CVirtualConsole::UpdateText(bool isForce, bool updateText, bool updateCursor)
 {
-	SelectFont(hFont);
+	SelectFont(gSet.hFont);
 
 	// pointers
 	TCHAR* ConCharLine;
@@ -948,9 +960,9 @@ void CVirtualConsole::UpdateText(bool isForce, bool updateText, bool updateCurso
 
 				if (gSet.isFixFarBorders) {
 					if (!isUnicode)
-						SelectFont(hFont);
+						SelectFont(gSet.hFont);
 					else if (isUnicode)
-						SelectFont(hFont2);
+						SelectFont(gSet.hFont2);
 				}
 
 
@@ -1029,7 +1041,7 @@ void CVirtualConsole::UpdateText(bool isForce, bool updateText, bool updateCurso
 					} MCHKHEAP
 				}
 				if (gSet.isFixFarBorders)
-					SelectFont(hFont);
+					SelectFont(gSet.hFont);
 			}
 			else if (!isUnicode)
 			{
@@ -1049,7 +1061,7 @@ void CVirtualConsole::UpdateText(bool isForce, bool updateText, bool updateCurso
 					#endif
 				}
 				if (gSet.isFixFarBorders)
-					SelectFont(hFont);
+					SelectFont(gSet.hFont);
 				MCHKHEAP
 			}
 			else //Border and specials
@@ -1078,7 +1090,7 @@ void CVirtualConsole::UpdateText(bool isForce, bool updateText, bool updateCurso
 					}
 				}
 				if (gSet.isFixFarBorders)
-					SelectFont(hFont2);
+					SelectFont(gSet.hFont2);
 				MCHKHEAP
 			}
 
@@ -1168,7 +1180,7 @@ void CVirtualConsole::UpdateCursor(bool& lRes)
 	{
 		lRes = true;
 
-		SelectFont(hFont);
+		SelectFont(gSet.hFont);
 
 		if ((Cursor.x != csbi.dwCursorPosition.X || Cursor.y != csbi.dwCursorPosition.Y))
 		{
@@ -1265,7 +1277,7 @@ void CVirtualConsole::UpdateCursor(bool& lRes)
 		if (gSet.LogFont.lfCharSet == OEM_CHARSET && !isCharBorder(Cursor.ch[0]))
 		{
 			if (gSet.isFixFarBorders)
-				SelectFont(hFont);
+				SelectFont(gSet.hFont);
 
 			char tmp[2];
 			WideCharToMultiByte(CP_OEMCP, 0, Cursor.ch, 1, tmp, 1, 0, 0);
@@ -1276,9 +1288,9 @@ void CVirtualConsole::UpdateCursor(bool& lRes)
 		else
 		{
 			if (gSet.isFixFarBorders && isCharBorder(Cursor.ch[0]))
-				SelectFont(hFont2);
+				SelectFont(gSet.hFont2);
 			else
-				SelectFont(hFont);
+				SelectFont(gSet.hFont);
 
 			ExtTextOut(hDC, pix.X, pix.Y,
 				ETO_CLIPPED | ((drawImage && (Cursor.foreColorNum < 2) &&
@@ -1291,4 +1303,66 @@ void CVirtualConsole::UpdateCursor(bool& lRes)
 		Cursor.x = csbi.dwCursorPosition.X;
 		Cursor.y = csbi.dwCursorPosition.Y;
 	}
+}
+
+void CVirtualConsole::SetConsoleSize(const COORD& size)
+{
+    // case: simple mode
+    if (gConEmu.BufferHeight == 0)
+    {
+        MOVEWINDOW(ghConWnd, 0, 0, 1, 1, 1);
+        SETCONSOLESCREENBUFFERSIZE(hConOut(), size);
+        MOVEWINDOW(ghConWnd, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), 1);
+        return;
+    }
+
+    // global flag of the first call which is:
+    // *) after getting all the settings
+    // *) before running the command
+    static bool s_isFirstCall = true;
+
+    // case: buffer mode: change buffer
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    if (!GetConsoleScreenBufferInfo(hConOut(), &csbi))
+        return;
+    csbi.dwSize.X = size.X;
+    if (s_isFirstCall)
+    {
+        // first call: buffer height = from settings
+        s_isFirstCall = false;
+        csbi.dwSize.Y = max(gConEmu.BufferHeight, size.Y);
+    }
+    else
+    {
+        if (csbi.dwSize.Y == csbi.srWindow.Bottom - csbi.srWindow.Top + 1)
+            // no y-scroll: buffer height = new window height
+            csbi.dwSize.Y = size.Y;
+        else
+            // y-scroll: buffer height = old buffer height
+            csbi.dwSize.Y = max(csbi.dwSize.Y, size.Y);
+    }
+    MOVEWINDOW(ghConWnd, 0, 0, 1, 1, 1);
+    SETCONSOLESCREENBUFFERSIZE(hConOut(), csbi.dwSize);
+    
+    // set console window
+    if (!GetConsoleScreenBufferInfo(hConOut(), &csbi))
+        return;
+    SMALL_RECT rect;
+    rect.Top = csbi.srWindow.Top;
+    rect.Left = csbi.srWindow.Left;
+    rect.Right = rect.Left + size.X - 1;
+    rect.Bottom = rect.Top + size.Y - 1;
+    if (rect.Right >= csbi.dwSize.X)
+    {
+        int shift = csbi.dwSize.X - 1 - rect.Right;
+        rect.Left += shift;
+        rect.Right += shift;
+    }
+    if (rect.Bottom >= csbi.dwSize.Y)
+    {
+        int shift = csbi.dwSize.Y - 1 - rect.Bottom;
+        rect.Top += shift;
+        rect.Bottom += shift;
+    }
+    SetConsoleWindowInfo(hConOut(), TRUE, &rect);
 }

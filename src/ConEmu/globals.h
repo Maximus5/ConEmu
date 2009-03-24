@@ -5,8 +5,8 @@ extern const TCHAR *const szClassNameParent;
 extern const TCHAR *const szClassNameApp;
 extern const TCHAR *const szClassNameBack;
 
-class CVirtualConsole;
-extern CVirtualConsole *pVCon;
+//class CVirtualConsole;
+//extern CVirtualConsole *pVCon;
 extern HINSTANCE g_hInstance;
 class CConEmuMain;
 extern CConEmuMain gConEmu;

@@ -78,6 +78,19 @@ CConEmuMain::CConEmuMain()
 	strcpy(ms_EditorRus, "редактирование ");
 	strcpy(ms_ViewerRus, "просмотр ");
 #endif
+
+
+    Registry reg;
+    if (reg.OpenKey(_T("Control Panel\\Desktop"), KEY_READ))
+    {
+		WCHAR szValue[MAX_PATH];
+        if (reg.Load(_T("DragFullWindows"), szValue))
+			mb_FullWindowDrag = szValue[0]==L'1';
+        reg.CloseKey();
+    }
+
+	mn_ActiveCon = -1; pVCon = NULL;
+	memset(mp_VCon, 0, sizeof(mp_VCon));
 }
 
 BOOL CConEmuMain::Init()
@@ -149,6 +162,12 @@ void CConEmuMain::Destroy()
 
 CConEmuMain::~CConEmuMain()
 {
+	for (int i=0; i<MAX_CONSOLE_COUNT; i++) {
+		if (mp_VCon[i]) {
+			delete mp_VCon[i]; mp_VCon[i] = NULL;
+		}
+	}
+
 	if (mh_ConMan && mh_ConMan!=INVALID_HANDLE_VALUE)
 		FreeLibrary(mh_ConMan);
 	mh_ConMan = NULL;
@@ -157,6 +176,15 @@ CConEmuMain::~CConEmuMain()
 		UnhookWinEvent(mh_WinHook);
 		mh_WinHook = NULL;
 	}
+
+	if (DragDrop) {
+		delete DragDrop;
+		DragDrop = NULL;
+	}
+    if (ProgressBars) {
+        delete ProgressBars;
+        ProgressBars = NULL;
+    }
 }
 
 
@@ -328,8 +356,8 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tF
 				MBoxAssert(tWhat!=CER_CONSOLE);
 				
 			    if (gSet.LogFont.lfWidth==0) {
-				    MBoxAssert(pVCon!=NULL);
-				    pVCon->InitDC(FALSE); // инициализировать ширину шрифта по умолчанию
+				    MBoxAssert(gConEmu.pVCon!=NULL);
+				    gConEmu.pVCon->InitDC(FALSE); // инициализировать ширину шрифта по умолчанию
 				}
 				
 				// ЭТО размер окна отрисовки DC
@@ -391,7 +419,7 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tF
 			if (gConEmu.isNtvdm()) {
 				//TODO: а перезагрузить не нужно?
 				//NTVDM почему-то отказывается менять ВЫСОТУ экранного буфера...
-				RECT rc1 = MakeRect(pVCon->TextWidth*gSet.LogFont.lfWidth,
+				RECT rc1 = MakeRect(gConEmu.pVCon->TextWidth*gSet.LogFont.lfWidth,
 					gSet.ntvdmHeight/*pVCon->TextHeight*/*gSet.LogFont.lfHeight);
 				int nS = rc.right - rc.left - rc1.right;
 				if (nS>=0) {
@@ -417,7 +445,7 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tF
 			if (tWhat == CER_CONSOLE) {
 				MBoxAssert((gSet.LogFont.lfWidth!=0) && (gSet.LogFont.lfHeight!=0));
 				if (gSet.LogFont.lfWidth==0 || gSet.LogFont.lfHeight==0)
-					pVCon->InitDC(FALSE); // инициализировать ширину шрифта по умолчанию
+					gConEmu.pVCon->InitDC(FALSE); // инициализировать ширину шрифта по умолчанию
 				
 				rc.right = (rc.right - rc.left) / gSet.LogFont.lfWidth;
 				rc.bottom = (rc.bottom - rc.top) / gSet.LogFont.lfHeight;
@@ -608,64 +636,8 @@ void CConEmuMain::SetConsoleWindowSize(const COORD& size, bool updateInfo)
 		gSet.UpdateSize(size.X, size.Y);
     }
 
-    // case: simple mode
-    if (BufferHeight == 0)
-    {
-        MOVEWINDOW(ghConWnd, 0, 0, 1, 1, 1);
-        SETCONSOLESCREENBUFFERSIZE(pVCon->hConOut(), size);
-        MOVEWINDOW(ghConWnd, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), 1);
-        return;
-    }
-
-    // global flag of the first call which is:
-    // *) after getting all the settings
-    // *) before running the command
-    static bool s_isFirstCall = true;
-
-    // case: buffer mode: change buffer
-    CONSOLE_SCREEN_BUFFER_INFO csbi;
-    if (!GetConsoleScreenBufferInfo(pVCon->hConOut(), &csbi))
-        return;
-    csbi.dwSize.X = size.X;
-    if (s_isFirstCall)
-    {
-        // first call: buffer height = from settings
-        s_isFirstCall = false;
-        csbi.dwSize.Y = max(BufferHeight, size.Y);
-    }
-    else
-    {
-        if (csbi.dwSize.Y == csbi.srWindow.Bottom - csbi.srWindow.Top + 1)
-            // no y-scroll: buffer height = new window height
-            csbi.dwSize.Y = size.Y;
-        else
-            // y-scroll: buffer height = old buffer height
-            csbi.dwSize.Y = max(csbi.dwSize.Y, size.Y);
-    }
-    MOVEWINDOW(ghConWnd, 0, 0, 1, 1, 1);
-    SETCONSOLESCREENBUFFERSIZE(pVCon->hConOut(), csbi.dwSize);
-    
-    // set console window
-    if (!GetConsoleScreenBufferInfo(pVCon->hConOut(), &csbi))
-        return;
-    SMALL_RECT rect;
-    rect.Top = csbi.srWindow.Top;
-    rect.Left = csbi.srWindow.Left;
-    rect.Right = rect.Left + size.X - 1;
-    rect.Bottom = rect.Top + size.Y - 1;
-    if (rect.Right >= csbi.dwSize.X)
-    {
-        int shift = csbi.dwSize.X - 1 - rect.Right;
-        rect.Left += shift;
-        rect.Right += shift;
-    }
-    if (rect.Bottom >= csbi.dwSize.Y)
-    {
-        int shift = csbi.dwSize.Y - 1 - rect.Bottom;
-        rect.Top += shift;
-        rect.Bottom += shift;
-    }
-    SetConsoleWindowInfo(pVCon->hConOut(), TRUE, &rect);
+	if (pVCon)
+		pVCon->SetConsoleSize(size);
 }
 
 // Изменить размер консоли по размеру окна (главного)
@@ -693,7 +665,7 @@ void CConEmuMain::SyncConsoleToWindow()
 	{
 		SetConsoleWindowSize(MakeCoord(newCon.right,newCon.bottom), true);
 		if (pVCon)
-			pVCon->InitDC();
+			pVCon->InitDC(false);
 	}
 }
 
@@ -1127,6 +1099,15 @@ void CConEmuMain::SetConParent()
 	}
 #endif
 
+CVirtualConsole* CConEmuMain::ActiveCon()
+{
+	if (mn_ActiveCon >= MAX_CONSOLE_COUNT)
+		mn_ActiveCon = -1;
+	if (mn_ActiveCon < 0)
+		return NULL;
+	return mp_VCon[mn_ActiveCon];
+}
+
 void CConEmuMain::CheckProcessName(struct CConEmuMain::ConProcess &ConPrc, LPCTSTR asFullFileName)
 {
 	ConPrc.IsFar = lstrcmpi(ConPrc.Name, _T("far.exe"))==0;
@@ -1489,6 +1470,30 @@ DWORD CConEmuMain::CheckProcesses(DWORD nConmanIDX, BOOL bTitleChanged)
 	return m_ProcCount;
 }
 
+CVirtualConsole* CConEmuMain::CreateCon()
+{
+	CVirtualConsole* pCon = NULL;
+	for (int i=0; i<MAX_CONSOLE_COUNT; i++) {
+		if (!mp_VCon[i]) {
+			pCon = CVirtualConsole::Create();
+			if (pCon) {
+				mp_VCon[i] = pCon;
+				pVCon = pCon;
+				mn_ActiveCon = i;
+
+				Update(true);
+			}
+			break;
+		}
+	}
+	return pCon;
+}
+
+/*int CConEmuMain::GetBufferHeight()
+{
+	return BufferHeight;
+}*/
+
 //bool CConEmuMain::GetProcessFileName(DWORD dwPID, TCHAR* rsName/*[32]*/, DWORD *pdwErr)
 //{
 //	bool lbRc = false;
@@ -1850,6 +1855,34 @@ LRESULT CConEmuMain::OnPaint(WPARAM wParam, LPARAM lParam)
 	return result;
 }
 
+void CConEmuMain::PaintCon()
+{
+	RECT client; GetClientRect(ghWndDC, &client);
+	if (((ULONG)client.right) > pVCon->Width)
+		client.right = pVCon->Width;
+	if (((ULONG)client.bottom) > pVCon->Height)
+		client.bottom = pVCon->Height;
+
+	PAINTSTRUCT ps;
+	HDC hDc = BeginPaint(ghWndDC, &ps);
+	//HDC hDc = GetDC(hWnd);
+
+	if (!gbNoDblBuffer) {
+		// Обычный режим
+		BitBlt(hDc, 0, 0, client.right, client.bottom, pVCon->hDC, 0, 0, SRCCOPY);
+	} else {
+		GdiSetBatchLimit(1); // отключить буферизацию вывода для текущей нити
+
+		GdiFlush();
+		// Рисуем сразу на канвасе, без буферизации
+		pVCon->Update(true, &hDc);
+	}
+
+	EndPaint(ghWndDC, &ps);
+
+	if (gbNoDblBuffer) GdiSetBatchLimit(0); // вернуть стандартный режим
+}
+
 void CConEmuMain::PaintGaps(HDC hDC/*=NULL*/)
 {
 	//TODO: !!! Тут раньше были margins, а теперь DC rect
@@ -1923,6 +1956,11 @@ void CConEmuMain::PaintGaps(HDC hDC/*=NULL*/)
 		ReleaseDC(ghWnd, hDC);
 }
 
+void CConEmuMain::Update(bool isForce /*= false*/)
+{
+    if (pVCon) pVCon->Update(isForce);
+	InvalidateAll();
+}
 
 /* ****************************************************** */
 /*                                                        */
@@ -2097,7 +2135,7 @@ LRESULT CConEmuMain::OnCopyData(PCOPYDATASTRUCT cds)
     
 	if (cds->dwData == 0) {
 		BOOL lbInClose = FALSE;
-		DWORD ProcList[2], ProcCount=0;
+		DWORD /*ProcList[2],*/ ProcCount=0;
 	    //ProcCount = GetConsoleProcessList(ProcList,2);
 	    #pragma message("TODO: хорошо бы разнести загрузку списка процессов и обработку загруженных по ConMan")
 	    ProcCount = CheckProcesses(m_ActiveConmanIDX, FALSE);
@@ -2172,19 +2210,43 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd)
 
 	mn_StartTick = GetTickCount();
 
+
+    gConEmu.DragDrop = new CDragDrop(HDCWND);
+    gConEmu.ProgressBars = new CProgressBars(ghWnd, g_hInstance);
+
+    // Установить переменную среды с дескриптором окна
+	WCHAR szVar[32];
+    wsprintf(szVar, L"0x%08x", HDCWND);
+    SetEnvironmentVariable(L"ConEmuHWND", szVar);
+
+
+    HMENU hwndMain = GetSystemMenu(ghWnd, FALSE);
+    InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_TOTRAY, _T("Hide to &tray"));
+    InsertMenu(hwndMain, 0, MF_BYPOSITION, MF_SEPARATOR, 0);
+    InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_HELP, _T("&About"));
+    InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_DUMPCONSOLE, _T("&Dump..."));
+    InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_CONPROP, _T("&Properties..."));
+    InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_SETTINGS, _T("S&ettings..."));
+
+
+    if (gSet.isTabs==1)
+	    gConEmu.ForceShowTabs(TRUE);
+
+	CreateCon();
+
 	return 0;
 }
 
 LRESULT CConEmuMain::OnDestroy(HWND hWnd)
 {
     Icon.Delete();
-    if (gConEmu.DragDrop) {
-        delete gConEmu.DragDrop;
-        gConEmu.DragDrop = NULL;
+    if (DragDrop) {
+        delete DragDrop;
+        DragDrop = NULL;
     }
-    if (gConEmu.ProgressBars) {
-        delete gConEmu.ProgressBars;
-        gConEmu.ProgressBars = NULL;
+    if (ProgressBars) {
+        delete ProgressBars;
+        ProgressBars = NULL;
     }
     PostQuitMessage(0);
 

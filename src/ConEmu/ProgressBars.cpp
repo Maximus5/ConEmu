@@ -36,44 +36,49 @@ void CProgressBars::OnTimer()
 {
 	if (gSet.isGUIpb && isCoping())
 	{
+		CVirtualConsole* pCon = gConEmu.ActiveCon();
+		uint TextWidth  = pCon->TextWidth;
+		uint TextHeight = pCon->TextHeight;
+		LPCTSTR ConChar = pCon->ConChar;
+
 		int delta=0;
-		if (pVCon->ConChar[((pVCon->TextHeight-2)/2)*pVCon->TextWidth + (pVCon->TextWidth-45)/2 + 45] == _T('%'))
+		if (ConChar[((TextHeight-2)/2)*TextWidth + (TextWidth-45)/2 + 45] == _T('%'))
 			delta=1; //нет общего индикатора
 
-		if (pVCon->ConChar[((pVCon->TextHeight-4)/2+delta)*pVCon->TextWidth + (pVCon->TextWidth-45)/2 + 45] == _T('%'))
+		if (ConChar[((TextHeight-4)/2+delta)*TextWidth + (TextWidth-45)/2 + 45] == _T('%'))
 		{
 			RECT rcShift; memset(&rcShift, 0, sizeof(RECT));
 			MapWindowPoints(ghWndDC, ghWnd, (LPPOINT)&rcShift, 2);
 
 			WCHAR tmp[4];
-			tmp[0]=pVCon->ConChar[((pVCon->TextHeight-4)/2+delta)*pVCon->TextWidth + (pVCon->TextWidth-45)/2 + 42];
-			tmp[1]=pVCon->ConChar[((pVCon->TextHeight-4)/2+delta)*pVCon->TextWidth + (pVCon->TextWidth-45)/2 + 43];
-			tmp[2]=pVCon->ConChar[((pVCon->TextHeight-4)/2+delta)*pVCon->TextWidth + (pVCon->TextWidth-45)/2 + 44];
+			tmp[0]=ConChar[((TextHeight-4)/2+delta)*TextWidth + (TextWidth-45)/2 + 42];
+			tmp[1]=ConChar[((TextHeight-4)/2+delta)*TextWidth + (TextWidth-45)/2 + 43];
+			tmp[2]=ConChar[((TextHeight-4)/2+delta)*TextWidth + (TextWidth-45)/2 + 44];
 			tmp[3]=0;
 			int perc;
 			swscanf_s(tmp, _T("%i"), &perc);
 
 			SendMessage(Progressbar1, PBM_SETPOS, perc, 0);
 			SetWindowPos(Progressbar1, 0, 
-				((pVCon->TextWidth-45)/2)*gSet.LogFont.lfWidth+rcShift.left, 
-				(pVCon->TextHeight-4+delta*2)/2*gSet.LogFont.lfHeight+rcShift.top/*TabBar.Height()*/, 
+				((TextWidth-45)/2)*gSet.LogFont.lfWidth+rcShift.left, 
+				(TextHeight-4+delta*2)/2*gSet.LogFont.lfHeight+rcShift.top/*TabBar.Height()*/, 
 				gSet.LogFont.lfWidth*41, gSet.LogFont.lfHeight, 0);
 			ShowWindow(Progressbar1, SW_SHOW);
 
-			if (pVCon->ConChar[((pVCon->TextHeight)/2)*pVCon->TextWidth + (pVCon->TextWidth-45)/2 + 45] == _T('%'))
+			if (ConChar[((TextHeight)/2)*TextWidth + (TextWidth-45)/2 + 45] == _T('%'))
 			{
 				WCHAR tmp[4];
-				tmp[0]=pVCon->ConChar[((pVCon->TextHeight)/2)*pVCon->TextWidth + (pVCon->TextWidth-45)/2 + 42];
-				tmp[1]=pVCon->ConChar[((pVCon->TextHeight)/2)*pVCon->TextWidth + (pVCon->TextWidth-45)/2 + 43];
-				tmp[2]=pVCon->ConChar[((pVCon->TextHeight)/2)*pVCon->TextWidth + (pVCon->TextWidth-45)/2 + 44];
+				tmp[0]=ConChar[((TextHeight)/2)*TextWidth + (TextWidth-45)/2 + 42];
+				tmp[1]=ConChar[((TextHeight)/2)*TextWidth + (TextWidth-45)/2 + 43];
+				tmp[2]=ConChar[((TextHeight)/2)*TextWidth + (TextWidth-45)/2 + 44];
 				tmp[3]=0;
 				int perc;
 				swscanf_s(tmp, _T("%i"), &perc);
 
 				SendMessage(Progressbar2, PBM_SETPOS, perc, 0);
 				SetWindowPos(Progressbar2, 0, 
-					((pVCon->TextWidth-45)/2)*gSet.LogFont.lfWidth+rcShift.left, 
-					(pVCon->TextHeight)/2*gSet.LogFont.lfHeight+rcShift.top/*TabBar.Height()*/, 
+					((TextWidth-45)/2)*gSet.LogFont.lfWidth+rcShift.left, 
+					(TextHeight)/2*gSet.LogFont.lfHeight+rcShift.top/*TabBar.Height()*/, 
 					gSet.LogFont.lfWidth*41, gSet.LogFont.lfHeight, 0);
 				ShowWindow(Progressbar2, SW_SHOW);
 			}

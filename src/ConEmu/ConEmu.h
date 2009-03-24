@@ -133,6 +133,9 @@ protected:
 	BOOL mb_ProcessCreated; DWORD mn_StartTick;
 	HWINEVENTHOOK mh_WinHook;
 	static VOID CALLBACK WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime);
+	CVirtualConsole *mp_VCon[MAX_CONSOLE_COUNT], *pVCon;
+	int mn_ActiveCon; // в планах - убить m_ActiveConmanIDX
+
 public:
 	DWORD CheckProcesses(DWORD nConmanIDX, BOOL bTitleChanged);
 	typedef int (_cdecl * ConMan_MainProc_t)(LPCWSTR asCommandLine, BOOL abStandalone);
@@ -151,10 +154,12 @@ public:
 	~CConEmuMain();
 
 public:
+	CVirtualConsole* ActiveCon();
 	static void AddMargins(RECT& rc, RECT& rcAddShift, BOOL abExpand=FALSE);
 	static RECT CalcMargins(enum ConEmuMargins mg);
 	static RECT CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFrom, RECT* prDC=NULL);
 	bool CheckBufferSize();
+	CVirtualConsole* CreateCon();
 	//COORD ConsoleSizeFromWindow(RECT* arect = NULL, bool frameIncluded = false, bool alreadyClient = false);
 	//RECT ConsoleOffsetRect();
 	void Destroy();
@@ -163,6 +168,7 @@ public:
 	void ForceShowTabs(BOOL abShow);
 	//void GetCWShift(HWND inWnd, POINT *outShift);
 	//void GetCWShift(HWND inWnd, RECT *outShift);
+	//int GetBufferHeight();
 	static BOOL WINAPI HandlerRoutine(DWORD dwCtrlType);
 	BOOL Init();
 	BOOL InitConMan(LPCWSTR asCommandLine);
@@ -181,6 +187,7 @@ public:
 	void LoadIcons();
 	bool LoadVersionInfo(wchar_t* pFullPath);
 	static RECT MapRect(RECT rFrom, BOOL bFrame2Client);
+	void PaintCon();
 	void PaintGaps(HDC hDC=NULL);
 	void PostMacro(LPCWSTR asMacro);
 	void ReSize();
@@ -191,6 +198,7 @@ public:
 	void SyncConsoleToWindow();
 	void SyncNtvdm();
 	void SyncWindowToConsole();
+	void Update(bool isForce = false);
 	//RECT WindowSizeFromConsole(COORD consoleSize, bool rectInWindow = false, bool clientOnly = false);
 	LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 public:

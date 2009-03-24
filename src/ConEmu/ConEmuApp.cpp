@@ -17,7 +17,7 @@ bool gbNoDblBuffer = false;
 HINSTANCE g_hInstance=NULL;
 HWND ghWnd=NULL, ghWndDC=NULL, ghConWnd=NULL, ghWndApp=NULL;
 CConEmuMain gConEmu;
-CVirtualConsole *pVCon=NULL;
+//CVirtualConsole *pVCon=NULL;
 CSettings gSet;
 TCHAR temp[MAX_PATH];
 TCHAR szIconPath[MAX_PATH];
@@ -374,8 +374,8 @@ BOOL CreateMainWindow()
     
     if (gSet.wndWidth && gSet.wndHeight)
     {
-	    if (gSet.LogFont.lfWidth==0)
-		    pVCon->InitDC(FALSE); // инициализировать ширину шрифта по умолчанию
+	    //if (gSet.LogFont.lfWidth==0)
+		//    pVCon->InitDC(FALSE); // инициализировать ширину шрифта по умолчанию
 		    
 	    COORD conSize; conSize.X=gSet.wndWidth; conSize.Y=gSet.wndHeight;
 	    int nShiftX = GetSystemMetrics(SM_CXSIZEFRAME)*2;
@@ -442,7 +442,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     g_hInstance = hInstance;
 
-    pVCon = NULL;
+    //pVCon = NULL;
 
     bool setParentDisabled=false;
     bool ClearTypePrm = false;
@@ -472,7 +472,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	    CheckConIme();
     }
     
-    gSet.InitSettings();
+    //gSet.InitSettings();
 
 
 //------------------------------------------------------------------------
@@ -653,7 +653,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     // Установка параметров из командной строки
     if (cmdNew)
-        _tcscpy(gSet.Cmd, cmdNew);
+        gSet.psCurCmd = cmdNew;
 	//#pragma message("Win2k: CLEARTYPE_NATURAL_QUALITY")
     if (ClearTypePrm)
         gSet.LogFont.lfQuality = CLEARTYPE_NATURAL_QUALITY;
@@ -674,7 +674,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	// Если запускается conman - принудительно включить флажок "Обновлять handle"
 	//cmdNew = gSet.Cmd;
 	//while (*cmdNew==L' ' || *cmdNew==L'"')
-	if (ConManPrm || StrStrI(gSet.Cmd, L"conman.exe"))
+	if (ConManPrm || StrStrI(gSet.GetCmd(), L"conman.exe"))
 		gSet.isUpdConHandle = TRUE;
 		
 
@@ -684,7 +684,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	#undef pVCon
     // create console
-    pVCon = new CVirtualConsole();
+    //pVCon = new CVirtualConsole();
 
     
     
@@ -692,10 +692,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 ///| Allocating console |/////////////////////////////////////////////////
 //------------------------------------------------------------------------
 
+	BOOL lbConsoleAllocated = FALSE;
     if (AttachPrm) {
 	    if (!AttachVal) {
 		    MBoxA(_T("Invalid <process id> specified in the /Attach argument"));
-		    delete pVCon;
+		    //delete pVCon;
 		    return 100;
 	    }
 	    if (!AttachConsole(AttachVal)) {
@@ -717,7 +718,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				wsprintf(szErr, _T("AttachConsole failed (PID=%i)!"), AttachVal);
 				//MBoxA(szErr);
 				DisplayLastError(szErr, dwErr);
-				delete pVCon;
+				//delete pVCon;
 				return 100;
 			}
 	    }
@@ -730,13 +731,17 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	    if (pipe.Init(_T("DefFont.in.attach"), TRUE))
 		    pipe.Execute(CMD_DEFFONT);
     } else {
-	    AllocConsole();
+		if (!AllocConsole()) {
+			DisplayLastError(_T("Can't alllocate console!"));
+			return false;
+		}
+		lbConsoleAllocated = TRUE;
     }
     
     ghConWnd = GetConsoleWindow();
     if (!ghConWnd) {
 	    MBoxA(_T("GetConsoleWindow failed!"));
-	    delete pVCon;
+	    //delete pVCon;
 	    return 100;
     }
 	// Если в свойствах ярлыка указано "Максимизировано" - консоль разворачивается, а FAR при 
@@ -758,14 +763,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		}
     }
 
-    if (gSet.wndHeight && gSet.wndWidth)
+    /*if (gSet.wndHeight && gSet.wndWidth)
     {
         COORD b = {gSet.wndWidth, gSet.wndHeight};
 	    gConEmu.SetConsoleWindowSize(b,false); // Maximus5 - по аналогии с NightRoman
 		//MoveWindow(hConWnd, 0, 0, 1, 1, 0);
 		//SetConsoleScreenBufferSize(pVCon->hConOut(), b);
 		//MoveWindow(hConWnd, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), 0);
-    }
+    }*/
 
 //------------------------------------------------------------------------
 ///| Create taskbar window |//////////////////////////////////////////////
@@ -773,7 +778,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     // Тут загружаются иконки, и создается кнопка на таскбаре (если надо)
     if (!CreateAppWindow()) {
-	    delete pVCon;
+	    //delete pVCon;
 	    return 100;
     }
 
@@ -788,7 +793,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     
     if (!CreateMainWindow()) {
 	    free(cmdLine);
-	    delete pVCon;
+	    //delete pVCon;
 	    return 100;
 	}
 
@@ -808,23 +813,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     //if (!setParentDisabled && (setParent || gConEmu.BufferHeight == 0))
     gConEmu.SetConParent();
 
-
-    HMENU hwndMain = GetSystemMenu(ghWnd, FALSE);
-    InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_TOTRAY, _T("Hide to &tray"));
-    InsertMenu(hwndMain, 0, MF_BYPOSITION, MF_SEPARATOR, 0);
-    InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_HELP, _T("&About"));
-    InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_DUMPCONSOLE, _T("&Dump..."));
-    InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_CONPROP, _T("&Properties..."));
-    InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_SETTINGS, _T("S&ettings..."));
-
     // adjust the console window and buffer to settings
     // *) after getting all the settings
     // *) before running the command
     COORD size = {gSet.wndWidth, gSet.wndHeight};
     gConEmu.SetConsoleWindowSize(size, false); // NightRoman
-    
-    if (gSet.isTabs==1)
-	    gConEmu.ForceShowTabs(TRUE);
     
 //------------------------------------------------------------------------
 ///| создадим pipe для общения с плагином |///////////////////////////////
@@ -859,10 +852,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
       gConEmu.Destroy(); free(cmdLine);
       return 100;
     }*/
-    // Установить переменную среды с дескриптором окна
-	WCHAR szVar[32];
-    wsprintf(szVar, L"0x%08x", HDCWND);
-    SetEnvironmentVariable(L"ConEmuHWND", szVar);
     
 
 //------------------------------------------------------------------------
@@ -876,12 +865,17 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     if (!AttachPrm)
     {
 		if (ConManPrm) {
-			if (!gConEmu.InitConMan(*gSet.Cmd ? gSet.Cmd : L"")) {
-				gConEmu.Destroy();
-				free(cmdLine);
-				return -1;
+			if (!gConEmu.InitConMan(gSet.GetCmd())) {
+				//gConEmu.Destroy();
+				//free(cmdLine);
+				//return -1;
+				// Иначе жестоко получается. ConEmu вообще будет сложно запустить...
+				ConManPrm = false;
 			}
-		} else {
+		} 
+		
+		if (!ConManPrm)
+		{
 			STARTUPINFO si;
 			PROCESS_INFORMATION pi;
 
@@ -889,13 +883,21 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			si.cb = sizeof(si);
 			ZeroMemory( &pi, sizeof(pi) );
 
-			if (*gSet.Cmd)
+			int nStep = 1;
+			while (nStep <= 2)
 			{
-				if (!CreateProcess(NULL, gSet.Cmd, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
+				if (*gSet.GetCmd()) {
+					gSet.psCurCmd = gSet.BufferHeight == 0 ? _T("far") : _T("cmd");
+					nStep ++;
+				}
+
+				if (CreateProcess(NULL, (LPTSTR)gSet.GetCmd(), NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
 				{
+					break; // OK, запустили
+				} else {
 					//MBoxA("Cannot execute the command.");
 					DWORD dwLastError = GetLastError();
-					int nLen = _tcslen(gSet.Cmd);
+					int nLen = _tcslen(gSet.GetCmd());
 					TCHAR* pszErr=(TCHAR*)calloc(nLen+100,sizeof(TCHAR));
 			        
 					if (0==FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
@@ -912,8 +914,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					_tcscpy(psz, _T("Cannot execute the command.\r\n"));
 					_tcscat(psz, pszErr);
 					if (psz[_tcslen(psz)-1]!=_T('\n')) _tcscat(psz, _T("\r\n"));
-					_tcscat(psz, gSet.Cmd);
-					if (StrStrI(gSet.Cmd, gSet.BufferHeight == 0 ? _T("far.exe") : _T("cmd.exe"))==NULL) {
+					_tcscat(psz, gSet.GetCmd());
+					if (StrStrI(gSet.GetCmd(), gSet.BufferHeight == 0 ? _T("far.exe") : _T("cmd.exe"))==NULL) {
 						_tcscat(psz, _T("\r\n\r\n"));
 						_tcscat(psz, gSet.BufferHeight == 0 ? _T("Do You want to simply start far?") : _T("Do You want to simply start cmd?"));
 						nButtons |= MB_YESNO;
@@ -926,44 +928,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 						free(cmdLine);
 						return -1;
 					}
-					*gSet.Cmd = 0; // Выполнить стандартную команду...
-				}
-			}
-		    
-			if (!*gSet.Cmd)
-			{
-				// *) simple mode: try to start FAR and then cmd;
-				// *) buffer mode: FAR is nonsense, try to start cmd only.
-				_tcscpy(temp, gSet.BufferHeight == 0 ? _T("far") : _T("cmd"));
-				if (!CreateProcess(NULL, temp, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi) && gSet.BufferHeight == 0)
-				{
-					_tcscpy(temp, _T("cmd"));
-					if (!CreateProcess(NULL, temp, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
-					{
-						//MBoxA("Cannot start Far or Cmd.");
-						DWORD dwLastError = GetLastError();
-						int nLen = _tcslen(gSet.Cmd);
-						TCHAR* pszErr=(TCHAR*)calloc(nLen+100,sizeof(TCHAR));
-				        
-						if (0==FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-							NULL, dwLastError, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
-							pszErr, 1024, NULL))
-						{
-							wsprintf(pszErr, _T("Unknown system error: 0x%x"), dwLastError);
-						}
-				        
-						nLen += _tcslen(pszErr);
-						TCHAR* psz=(TCHAR*)calloc(nLen+100,sizeof(TCHAR));
-				        
-						_tcscpy(psz, _T("Cannot start Far or Cmd.\r\n"));
-						_tcscat(psz, pszErr);
-						if (psz[_tcslen(psz)-1]!=_T('\n')) _tcscat(psz, _T("\r\n"));
-						_tcscat(psz, gSet.Cmd);
-						MBoxA(psz);
-						free(psz); free(pszErr);
-						gConEmu.Destroy(); free(cmdLine);
-						return -1;
-					}
+					// Выполнить стандартную команду...
+					gSet.psCurCmd = gSet.BufferHeight == 0 ? _T("far") : _T("cmd");
+					nStep ++;
 				}
 			}
 
@@ -983,27 +950,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     SetConsoleCtrlHandler((PHANDLER_ROUTINE)CConEmuMain::HandlerRoutine, true);
     SetTimer(ghWnd, 0, gSet.nMainTimerElapse, NULL);
 
-    Registry reg;
-    if (reg.OpenKey(_T("Control Panel\\Desktop"), KEY_READ))
-    {
-		WCHAR szValue[MAX_PATH];
-        if (reg.Load(_T("DragFullWindows"), szValue))
-			gConEmu.mb_FullWindowDrag = szValue[0]==L'1';
-        reg.CloseKey();
-    }
 
 
-    gConEmu.DragDrop=new CDragDrop(HDCWND);
-    gConEmu.ProgressBars=new CProgressBars(ghWnd, g_hInstance);
-
-    //gConEmu.isRBDown=false;
-    //gConEmu.isLBDown=false;
 
     SetForegroundWindow(ghWnd);
 
     SetParent(ghWnd, GetParent(GetShellWindow()));
     
-    pVCon->InitDC();
+    //pVCon->InitDC();
     gConEmu.SyncWindowToConsole();
 
     gConEmu.SetWindowMode(gConEmu.WindowMode);
@@ -1025,12 +979,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 //------------------------------------------------------------------------
     
     KillTimer(ghWnd, 0);
-    delete pVCon;
+    //delete pVCon;
     //CloseHandle(hChildProcess); -- он более не требуется
 
     if (FontFilePrm) RemoveFontResourceEx(FontFile, FR_PRIVATE, NULL); //ADD fontname; by Mors
 
-    FreeConsole();
+	if (lbConsoleAllocated)
+		FreeConsole();
+
     free(cmdLine);
 
 	//CoUninitialize();

@@ -14,13 +14,21 @@ public:
 	COLORREF Colors[0x20];
 	bool isExtendColors;
 	char nExtendColor;
-	
-    TCHAR Cmd[MAX_PATH], pBgImage[MAX_PATH];
+
+	/* Background image */
+    TCHAR sBgImage[MAX_PATH];
+	bool isShowBgImage, isBackgroundImageValid;
+
+	/* Command Line (Registry) */
+	LPTSTR psCmd;
+	/* Command Line ("/cmd" arg) */
+	LPCTSTR psCurCmd;
+	/* "Active" command line */
+	LPCTSTR GetCmd();
 
     DWORD FontSizeX;
     DWORD FontSizeX2;
 	DWORD FontSizeX3;
-    bool isShowBgImage, isBackgroundImageValid;
     bool isFullScreen;
     bool isFixFarBorders;
     bool isCursorV;
@@ -69,6 +77,13 @@ public:
 	
 	DWORD nAffinity;
     
+	// Working variables...
+	HBITMAP hBgBitmap;
+	COORD	bgBmp;
+	HDC     hBgDc;
+	HFONT   hFont, hFont2;
+	WORD    FontWidth[0x10000]; //, Font2Width[0x10000];
+
     HWND hMain, hColors, hInfo;
 
 	bool LoadImageFrom(TCHAR *inPath, bool abShowErrors=false);
@@ -105,4 +120,5 @@ private:
 	DWORD mn_CounterTick[tPerfInterval-gbPerformance];
 	HWND hwndTip;
 	void RegisterTipsFor(HWND hChildDlg);
+	HFONT CreateFontIndirectMy(LOGFONT *inFont);
 };

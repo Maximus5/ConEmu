@@ -25,10 +25,14 @@ CSettings::CSettings()
 	memset(mn_Counter, 0, sizeof(*mn_Counter)*(tPerfInterval-gbPerformance));
 	memset(mn_CounterMax, 0, sizeof(*mn_CounterMax)*(tPerfInterval-gbPerformance));
 	memset(mn_CounterTick, 0, sizeof(*mn_CounterTick)*(tPerfInterval-gbPerformance));
+	hBgBitmap = NULL; bgBmp = MakeCoord(0,0); hBgDc = NULL; hFont = NULL; hFont2 = NULL;
+	memset(FontWidth, 0, sizeof(FontWidth));
 }
 
 CSettings::~CSettings()
 {
+	if (hFont) { DeleteObject(hFont); hFont = NULL; }
+	if (hFont2) { DeleteObject(hFont2); hFont2 = NULL; }
 }
 
 void CSettings::InitSettings()
@@ -41,7 +45,8 @@ void CSettings::InitSettings()
 //------------------------------------------------------------------------
 	_tcscpy(Config, _T("Software\\ConEmu"));
 	
-	Cmd[0] = 0; isConMan = false;
+	psCmd = NULL; psCurCmd = NULL;
+	isConMan = false;
 
 	nMainTimerElapse = 10;
 	nAffinity = 3;
@@ -88,7 +93,7 @@ void CSettings::InitSettings()
 //------------------------------------------------------------------------
 ///| Default settings |///////////////////////////////////////////////////
 //------------------------------------------------------------------------
-    _tcscpy(pBgImage, _T("c:\\back.bmp"));
+    _tcscpy(sBgImage, _T("c:\\back.bmp"));
     isFixFarBorders = true;
     bgImageDarker = 0;
     wndHeight = ntvdmHeight = 25; // NightRoman
@@ -153,9 +158,9 @@ void CSettings::LoadSettings()
     
         reg.Load(_T("FontName"), inFont);
         reg.Load(_T("FontName2"), inFont2);
-        reg.Load(_T("CmdLine"), Cmd);
+        reg.Load(_T("CmdLine"), &psCmd);
         reg.Load(_T("ConMan"), &isConMan);
-        reg.Load(_T("BackGround Image"), pBgImage);
+        reg.Load(_T("BackGround Image"), sBgImage);
         reg.Load(_T("bgImageDarker"), &bgImageDarker);
         reg.Load(_T("FontSize"), &inSize);
         reg.Load(_T("FontSizeX"), &FontSizeX);
@@ -249,8 +254,8 @@ void CSettings::LoadSettings()
         LogFont.lfItalic = true;
 
 	// pVCon еще не создано!
-    if (isShowBgImage && pVCon)
-        LoadImageFrom(pBgImage);
+    /*if (isShowBgImage && pVCon)
+        LoadImageFrom(pBgImage);*/
 
 	MCHKHEAP
 }
@@ -295,8 +300,17 @@ BOOL CSettings::SaveSettings()
 	        }
 			reg.Save(_T("ExtendColors"), isExtendColors);
 			reg.Save(_T("ExtendColorIdx"), nExtendColor);
-        
-            GetDlgItemText(hMain, tCmdLine, Cmd, MAX_PATH);
+
+			int nLen = SendDlgItemMessage(hMain, tCmdLine, WM_GETTEXTLENGTH, 0, 0);
+			if (nLen<=0) {
+				if (psCmd) {free(psCmd); psCmd = NULL;}
+			} else {
+				if (nLen > (int)(psCmd ? _tcslen(psCmd) : 0)) {
+					if (psCmd) {free(psCmd); psCmd = NULL;}
+					psCmd = (TCHAR*)calloc(nLen+1, sizeof(TCHAR));
+				}
+				GetDlgItemText(hMain, tCmdLine, psCmd, nLen+1);
+			}
 			/*if (!isFullScreen && !IsZoomed(ghWnd) && !IsIconic(ghWnd))
 			{
 				RECT rcPos; GetWindowRect(ghWnd, &rcPos);
@@ -304,11 +318,11 @@ BOOL CSettings::SaveSettings()
 				wndY = rcPos.top;
 			}*/
 
-            reg.Save(_T("CmdLine"), Cmd);
+            reg.Save(_T("CmdLine"), psCmd);
             reg.Save(_T("ConMan"), isConMan);
             reg.Save(_T("FontName"), LogFont.lfFaceName);
             reg.Save(_T("FontName2"), LogFont2.lfFaceName);
-            reg.Save(_T("BackGround Image"), pBgImage);
+            reg.Save(_T("BackGround Image"), sBgImage);
             reg.Save(_T("bgImageDarker"), bgImageDarker);
             reg.Save(_T("FontSize"), LogFont.lfHeight);
             reg.Save(_T("FontSizeX"), FontSizeX);
@@ -521,8 +535,8 @@ LRESULT CSettings::OnInitDialog()
 
 	MCHKHEAP
 
-	SetDlgItemText(hMain, tCmdLine, Cmd);
-	SetDlgItemText(hMain, tBgImage, pBgImage);
+	SetDlgItemText(hMain, tCmdLine, psCmd ? psCmd : _T(""));
+	SetDlgItemText(hMain, tBgImage, sBgImage);
 	CheckDlgButton(hMain, rBgSimple, BST_CHECKED);
 
 	TCHAR tmp[10];
@@ -728,11 +742,10 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
     case rStandardAA:
     case rCTAA:
         LogFont.lfQuality = wParam == rNoneAA ? NONANTIALIASED_QUALITY : wParam == rStandardAA ? ANTIALIASED_QUALITY : CLEARTYPE_NATURAL_QUALITY;
-        DeleteObject(pVCon->hFont);
-        pVCon->hFont = 0;
+        DeleteObject(hFont);
+        hFont = 0;
         LogFont.lfWidth = FontSizeX;
-        pVCon->Update(true);
-        InvalidateRect(ghWnd, NULL, FALSE);
+        gConEmu.Update(true);
         break;
 
     case bSaveSettings:
@@ -749,15 +762,13 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
     case cbFixFarBorders:
         isFixFarBorders = !isFixFarBorders;
 
-        pVCon->Update(true);
-        InvalidateRect(ghWnd, NULL, FALSE);
+        gConEmu.Update(true);
         break;
 
     case cbCursorColor:
         isCursorColor = !isCursorColor;
 
-        pVCon->Update(true);
-        InvalidateRect(ghWnd, NULL, FALSE);
+        gConEmu.Update(true);
         break;
         
     case cbConMan:
@@ -773,19 +784,19 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
                 LogFont.lfItalic = SendDlgItemMessage(hMain, cbItalic, BM_GETCHECK, BST_CHECKED, 0) == BST_CHECKED ? true : false;
 
             LogFont.lfWidth = FontSizeX;
-            HFONT hFont = pVCon->CreateFontIndirectMy(&LogFont);
+            HFONT hFont = CreateFontIndirectMy(&LogFont);
             if (hFont)
             {
-                DeleteObject(pVCon->hFont);
-                pVCon->hFont = hFont;
+                DeleteObject(hFont);
+                hFont = hFont;
 
-                pVCon->Update(true);
+                gConEmu.Update(true);
 				if (!isFullScreen && !IsZoomed(ghWnd))
                     gConEmu.SyncWindowToConsole();
 				else
                     gConEmu.SyncConsoleToWindow();
 				gConEmu.ReSize();
-                InvalidateRect(ghWnd, 0, 0);
+                //InvalidateRect(ghWnd, 0, 0);
             }
         }
         break;
@@ -797,13 +808,7 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
         EnableWindow(GetDlgItem(hMain, slDarker), isShowBgImage);
 		EnableWindow(GetDlgItem(hMain, bBgImage), isShowBgImage);
 
-        if (isShowBgImage && isBackgroundImageValid)
-            SetBkMode(pVCon->hDC, TRANSPARENT);
-        else
-            SetBkMode(pVCon->hDC, OPAQUE);
-
-        pVCon->Update(true);
-        InvalidateRect(ghWnd, NULL, FALSE);
+        gConEmu.Update(true);
         break;
 
     case cbRClick:
@@ -883,23 +888,20 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
     case cbNonProportional:
         isTTF = !isTTF;
 		mb_IgnoreEditChanged = TRUE;
-        pVCon->Update(true);
-        InvalidateRect(ghWnd, NULL, FALSE);
+        gConEmu.Update(true);
 		mb_IgnoreEditChanged = FALSE;
         break;
 
     case cbMonospace:
         isForceMonospace = !isForceMonospace;
 
-        pVCon->Update(true);
-        InvalidateRect(ghWnd, NULL, FALSE);
+        gConEmu.Update(true);
         break;
 
     case cbAutoConHandle:
         isUpdConHandle = !isUpdConHandle;
 
-        pVCon->Update(true);
-        InvalidateRect(ghWnd, NULL, FALSE);
+        gConEmu.Update(true);
         break;
 
     case rCursorH:
@@ -909,8 +911,7 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
         else
             isCursorV = false;
 
-        pVCon->Update(true);
-        InvalidateRect(ghWnd, NULL, FALSE);
+        gConEmu.Update(true);
         break;
 
 	case bBgImage:
@@ -949,8 +950,7 @@ LRESULT CSettings::OnColorButtonClicked(WPARAM wParam, LPARAM lParam)
 			EnableWindow(GetDlgItem(hColors, 1100+i), isExtendColors);
 		EnableWindow(GetDlgItem(hColors, lbExtendIdx), isExtendColors);
 		if (lParam) {
-            pVCon->Update(true);
-            InvalidateRect(ghWnd, NULL, FALSE);
+            gConEmu.Update(true);
 		}
 		break;
 	case cbVisualizer:
@@ -961,8 +961,7 @@ LRESULT CSettings::OnColorButtonClicked(WPARAM wParam, LPARAM lParam)
 		EnableWindow(GetDlgItem(hColors, lbVisEOL), isVisualizer);
 		EnableWindow(GetDlgItem(hColors, lbVisEOF), isVisualizer);
 		if (lParam) {
-            pVCon->Update(true);
-            InvalidateRect(ghWnd, NULL, FALSE);
+            gConEmu.Update(true);
 		}
 		break;
 	default:
@@ -978,8 +977,7 @@ LRESULT CSettings::OnColorButtonClicked(WPARAM wParam, LPARAM lParam)
 
 				gConEmu.m_Back.Refresh();
 
-                pVCon->Update(true);
-                InvalidateRect(ghWnd, NULL, FALSE);
+				gConEmu.Update(true);
             }
         }
     }
@@ -1008,8 +1006,7 @@ LRESULT CSettings::OnColorEditChanged(WPARAM wParam, LPARAM lParam)
                 if (r >= 0 && r <= 255 && g >= 0 && g <= 255 && b >= 0 && b <= 255 && Colors[TB - 1100] != RGB(r, g, b))
                 {
                     Colors[TB - 1100] = RGB(r, g, b);
-                    if (pVCon) pVCon->Update(true);
-                    if (ghWnd) InvalidateRect(ghWnd, 0, 1);
+                    gConEmu.Update(true);
                     InvalidateRect(GetDlgItem(hColors, TB - 100), 0, 1);
                 }
             }
@@ -1029,13 +1026,7 @@ LRESULT CSettings::OnEditChanged(WPARAM wParam, LPARAM lParam)
         GetDlgItemText(hMain, tBgImage, temp, MAX_PATH);
         if( LoadImageFrom(temp, true) )
         {
-            if (isShowBgImage && isBackgroundImageValid)
-                SetBkMode(pVCon->hDC, TRANSPARENT);
-            else
-                SetBkMode(pVCon->hDC, OPAQUE);
-
-            pVCon->Update(true);
-            InvalidateRect(ghWnd, NULL, FALSE);
+            gConEmu.Update(true);
         }
     }
     else if ( (TB == tWndWidth || TB == tWndHeight) && IsDlgButtonChecked(hMain, rNormal) == BST_CHECKED )
@@ -1069,9 +1060,8 @@ LRESULT CSettings::OnEditChanged(WPARAM wParam, LPARAM lParam)
         {
             bgImageDarker = newV;
             SendDlgItemMessage(hMain, slDarker, TBM_SETPOS, (WPARAM) true, (LPARAM) bgImageDarker);
-            LoadImageFrom(pBgImage);
-            pVCon->Update(true);
-            InvalidateRect(ghWnd, NULL, FALSE);
+            LoadImageFrom(sBgImage);
+            gConEmu.Update(true);
         }
     }
 
@@ -1095,8 +1085,7 @@ LRESULT CSettings::OnColorComboBox(WPARAM wParam, LPARAM lParam)
 		nVizEOF = SendDlgItemMessage(hColors, wId, CB_GETCURSEL, 0, 0);
 	}
 	
-    pVCon->Update(true);
-    InvalidateRect(ghWnd, NULL, FALSE);
+    gConEmu.Update(true);
 
 	return 0;
 }
@@ -1130,27 +1119,27 @@ LRESULT CSettings::OnComboBox(WPARAM wParam, LPARAM lParam)
         BYTE qWas = pLogFont->lfQuality;
         pLogFont->lfHeight = upToFontHeight;
         pLogFont->lfWidth = FontSizeX;
-        HFONT hFont = pVCon->CreateFontIndirectMy(&LogFont);
+        HFONT hFont = CreateFontIndirectMy(&LogFont);
         if (hFont)
         {
             if (wId == tFontFace) {
-                DeleteObject(pVCon->hFont);
-                pVCon->hFont = hFont;
+                DeleteObject(hFont);
+                hFont = hFont;
 			} else {
 				DeleteObject(hFont); hFont = NULL;
 			}
-			// else { -- pVCon->hFont2 удаляется и создается автоматически в функции CreateFontIndirectMy
-            //    DeleteObject(pVCon->hFont2);
-            //    pVCon->hFont2 = hFont;
+			// else { -- hFont2 удаляется и создается автоматически в функции CreateFontIndirectMy
+            //    DeleteObject(hFont2);
+            //    hFont2 = hFont;
             //}
 
-            pVCon->Update(true);
+            gConEmu.Update(true);
             if (!isFullScreen && !IsZoomed(ghWnd))
                 gConEmu.SyncWindowToConsole();
             else
                 gConEmu.SyncConsoleToWindow();
 			gConEmu.ReSize();
-            InvalidateRect(ghWnd, 0, 0);
+            //InvalidateRect(ghWnd, 0, 0);
 
             if (wId == tFontFace) {
                 wsprintf(temp, _T("%i"), pLogFont->lfHeight);
@@ -1193,19 +1182,19 @@ LRESULT CSettings::OnComboBox(WPARAM wParam, LPARAM lParam)
             }
             LogFont.lfWidth = FontSizeX;
 
-            HFONT hFont = pVCon->CreateFontIndirectMy(&LogFont);
+            HFONT hFont = CreateFontIndirectMy(&LogFont);
             if (hFont)
             {
-                DeleteObject(pVCon->hFont);
-                pVCon->hFont = hFont;
+                DeleteObject(hFont);
+                hFont = hFont;
 
-                pVCon->Update(true);
+                gConEmu.Update(true);
                 if (!isFullScreen && !IsZoomed(ghWnd))
                     gConEmu.SyncWindowToConsole();
                 else
                     gConEmu.SyncConsoleToWindow();
 				gConEmu.ReSize();
-                InvalidateRect(ghWnd, 0, 0);
+                //InvalidateRect(ghWnd, 0, 0);
             }
         }
 	} else 
@@ -1295,23 +1284,23 @@ bool CSettings::LoadImageFrom(TCHAR *inPath, bool abShowErrors)
             {
                 if(hNewBgBitmap = (HBITMAP)LoadImage(NULL, exPath, IMAGE_BITMAP,0,0,LR_LOADFROMFILE))
                 {
-					if (pVCon->hBgBitmap) { DeleteObject(pVCon->hBgBitmap); pVCon->hBgBitmap=NULL; }
-					if (pVCon->hBgDc) { DeleteDC(pVCon->hBgDc); pVCon->hBgDc=NULL; }
+					if (hBgBitmap) { DeleteObject(hBgBitmap); hBgBitmap=NULL; }
+					if (hBgDc) { DeleteDC(hBgDc); hBgDc=NULL; }
 
-                    pVCon->hBgDc = hNewBgDc;
-                    pVCon->hBgBitmap = hNewBgBitmap;
+                    hBgDc = hNewBgDc;
+                    hBgBitmap = hNewBgBitmap;
 
-                    if(SelectObject(pVCon->hBgDc, pVCon->hBgBitmap))
+                    if(SelectObject(hBgDc, hBgBitmap))
                     {
                         isBackgroundImageValid = true;
-                        pVCon->bgBmp.cx = *(u32*)(pBuf + 0x12);
-                        pVCon->bgBmp.cy = *(i32*)(pBuf + 0x16);
+                        bgBmp.X = *(u32*)(pBuf + 0x12);
+                        bgBmp.Y = *(i32*)(pBuf + 0x16);
 						// Равняем на границу 4-х пикселов (WinXP SP2)
-						int nCxFixed = ((pVCon->bgBmp.cx+3)>>2)<<2;
-                        if (klstricmp(pBgImage, inPath))
+						int nCxFixed = ((bgBmp.X+3)>>2)<<2;
+                        if (klstricmp(sBgImage, inPath))
                         {
                             lRes = true;
-                            _tcscpy(pBgImage, inPath);
+                            _tcscpy(sBgImage, inPath);
                         }
 
                         struct bColor
@@ -1323,29 +1312,29 @@ bool CSettings::LoadImageFrom(TCHAR *inPath, bool abShowErrors)
 
 						MCHKHEAP
 							//GetDIBits памяти не хватает 
-                        bColor *bArray = new bColor[(nCxFixed+10) * pVCon->bgBmp.cy];
+                        bColor *bArray = new bColor[(nCxFixed+10) * bgBmp.Y];
 						MCHKHEAP
 
                         BITMAPINFO bInfo; memset(&bInfo, 0, sizeof(bInfo));
                         bInfo.bmiHeader.biSize = sizeof(BITMAPINFO);
-                        bInfo.bmiHeader.biWidth = nCxFixed/*pVCon->bgBmp.cx*/;
-                        bInfo.bmiHeader.biHeight = pVCon->bgBmp.cy;
+                        bInfo.bmiHeader.biWidth = nCxFixed/*bgBmp.X*/;
+                        bInfo.bmiHeader.biHeight = bgBmp.Y;
                         bInfo.bmiHeader.biPlanes = 1;
                         bInfo.bmiHeader.biBitCount = 24;
                         bInfo.bmiHeader.biCompression = BI_RGB;
 
 						MCHKHEAP
-                        if (!GetDIBits(pVCon->hBgDc, pVCon->hBgBitmap, 0, pVCon->bgBmp.cy, bArray, &bInfo, DIB_RGB_COLORS))
+                        if (!GetDIBits(hBgDc, hBgBitmap, 0, bgBmp.Y, bArray, &bInfo, DIB_RGB_COLORS))
                             //MBoxA(_T("!")); //Maximus5 - Да, это очень информативно
                             MBoxA(_T("!GetDIBits"));
 
 
 						MCHKHEAP
-						for (int y=0; y<pVCon->bgBmp.cy; y++)
+						for (int y=0; y<bgBmp.Y; y++)
 						{
 							int i = y*nCxFixed;
-							for (int x=0; x<pVCon->bgBmp.cx; x++, i++)
-							//for (int i = 0; i < pVCon->bgBmp.cx * pVCon->bgBmp.cy; i++)
+							for (int x=0; x<bgBmp.X; x++, i++)
+							//for (int i = 0; i < bgBmp.X * bgBmp.Y; i++)
 							{
 								bArray[i].r = klMulDivU32(bArray[i].r, bgImageDarker, 255);
 								bArray[i].g = klMulDivU32(bArray[i].g, bgImageDarker, 255);
@@ -1354,7 +1343,7 @@ bool CSettings::LoadImageFrom(TCHAR *inPath, bool abShowErrors)
 						}
 
 						MCHKHEAP
-                        if (!SetDIBits(pVCon->hBgDc, pVCon->hBgBitmap, 0, pVCon->bgBmp.cy, bArray, &bInfo, DIB_RGB_COLORS))
+                        if (!SetDIBits(hBgDc, hBgBitmap, 0, bgBmp.Y, bArray, &bInfo, DIB_RGB_COLORS))
                             MBoxA(_T("!SetDIBits"));
 
 						MCHKHEAP
@@ -1430,9 +1419,8 @@ BOOL CALLBACK CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM
                 TCHAR tmp[10];
                 wsprintf(tmp, _T("%i"), gSet.bgImageDarker);
                 SetDlgItemText(hWnd2, tDarker, tmp);
-                gSet.LoadImageFrom(gSet.pBgImage);
-                pVCon->Update(true);
-                InvalidateRect(ghWnd, NULL, FALSE);
+                gSet.LoadImageFrom(gSet.sBgImage);
+                gConEmu.Update(true);
             }
         }
         break;
@@ -1500,9 +1488,8 @@ BOOL CALLBACK CSettings::mainOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARA
                 TCHAR tmp[10];
                 wsprintf(tmp, _T("%i"), gSet.bgImageDarker);
                 SetDlgItemText(hWnd2, tDarker, tmp);
-                gSet.LoadImageFrom(gSet.pBgImage);
-                pVCon->Update(true);
-                InvalidateRect(ghWnd, NULL, FALSE);
+                gSet.LoadImageFrom(gSet.sBgImage);
+                gConEmu.Update(true);
             }
         }
         break;
@@ -1720,4 +1707,26 @@ void CSettings::RegisterTipsFor(HWND hChildDlg)
 	}
 
 	SendMessage(hwndTip, TTM_SETMAXTIPWIDTH, 0, (LPARAM)300);
+}
+
+HFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
+{
+	memset(FontWidth, 0, sizeof(*FontWidth)*0x10000);
+
+    DeleteObject(hFont2); hFont2 = NULL;
+
+    int width = gSet.FontSizeX2 ? gSet.FontSizeX2 : inFont->lfWidth;
+    hFont2 = CreateFont(abs(inFont->lfHeight), abs(width), 0, 0, FW_NORMAL,
+        0, 0, 0, DEFAULT_CHARSET, OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS, ANTIALIASED_QUALITY, 0, gSet.LogFont2.lfFaceName);
+
+    return CreateFontIndirect(inFont);
+}
+
+LPCTSTR CSettings::GetCmd()
+{
+	if (psCurCmd && *psCurCmd)
+		return psCurCmd;
+	if (psCmd && *psCmd)
+		return psCmd;
+	return _T("");
 }

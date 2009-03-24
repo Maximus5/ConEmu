@@ -23,18 +23,18 @@ public:
 
 	HANDLE  hConOut_;
     HANDLE  hConOut();
-	HDC     hDC, hBgDc;
-	HBITMAP hBitmap, hBgBitmap;
+	HDC     hDC; //, hBgDc;
+	HBITMAP hBitmap; //, hBgBitmap;
 	HBRUSH  hBrush0, hOldBrush, hSelectedBrush;
-	SIZE	bgBmp;
-	HFONT   hFont, hFont2, hSelectedFont, hOldFont;
+	//SIZE	bgBmp;
+	HFONT   /*hFont, hFont2,*/ hSelectedFont, hOldFont;
 
 	bool isEditor, isFilePanel;
 	BYTE attrBackLast;
 
 	TCHAR *ConChar;
 	WORD  *ConAttr;
-	WORD  FontWidth[0x10000]; //, Font2Width[0x10000];
+	//WORD  FontWidth[0x10000]; //, Font2Width[0x10000];
 	DWORD *ConCharX;
 	TCHAR *Spaces; WORD nSpaceCount;
 
@@ -42,20 +42,21 @@ public:
 
 	CVirtualConsole(/*HANDLE hConsoleOutput = NULL*/);
 	~CVirtualConsole();
+	static CVirtualConsole* Create();
 
-	bool InitFont(void);
-	bool InitDC(BOOL abFull=TRUE);
+	bool InitDC(bool abNoDc);
 	void DumpConsole();
-	void Free(bool bFreeFont = true);
+	void Free();
 	bool Update(bool isForce = false, HDC *ahDc=NULL);
 	void SelectFont(HFONT hNew);
 	void SelectBrush(HBRUSH hNew);
-	HFONT CreateFontIndirectMy(LOGFONT *inFont);
+	//HFONT CreateFontIndirectMy(LOGFONT *inFont);
 	bool isCharBorder(WCHAR inChar);
 	bool isCharBorderVertical(WCHAR inChar);
 	void BlitPictureTo(int inX, int inY, int inWidth, int inHeight);
 	bool CheckSelection(const CONSOLE_SELECTION_INFO& select, SHORT row, SHORT col);
 	bool GetCharAttr(TCHAR ch, WORD atr, TCHAR& rch, BYTE& foreColorNum, BYTE& backColorNum);
+	void SetConsoleSize(const COORD& size);
 
 protected:
 	i64 m_LastMaxReadCnt; DWORD m_LastMaxReadTick;
@@ -88,7 +89,7 @@ protected:
 	i64 tick, tick2;
 	char *tmpOem;
 	void UpdateCursor(bool& lRes);
-	void UpdatePrepare(bool isForce, HDC *ahDc);
+	bool UpdatePrepare(bool isForce, HDC *ahDc);
 	void UpdateText(bool isForce, bool updateText, bool updateCursor);
 	WORD CharWidth(TCHAR ch);
 	bool CheckChangedTextAttr();

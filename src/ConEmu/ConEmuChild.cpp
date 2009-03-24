@@ -152,41 +152,7 @@ LRESULT CConEmuChild::OnPaint(WPARAM wParam, LPARAM lParam)
 	}
 	if (!lbSkipDraw)
 	{
-	    
-		//gbInPaint = true;
-		RECT client; GetClientRect(ghWndDC, &client);
-		if (((ULONG)client.right)>pVCon->Width)
-			client.right = pVCon->Width;
-		if (((ULONG)client.bottom)>pVCon->Height)
-			client.bottom = pVCon->Height;
-
-		PAINTSTRUCT ps;
-		HDC hDc = BeginPaint(ghWndDC, &ps);
-		//HDC hDc = GetDC(hWnd);
-
-		if (!gbNoDblBuffer) {
-			// Обычный режим
-			BitBlt(hDc, 0, 0, client.right, client.bottom, pVCon->hDC, 0, 0, SRCCOPY);
-		} else {
-			GdiSetBatchLimit(1); // отключить буферизацию вывода для текущей нити
-
-			/*
-			HBRUSH hBrush = CreateSolidBrush(gSet.Colors[0]);
-			HBRUSH hOldBrush = (HBRUSH)SelectObject(hDc, hBrush);
-			RECT rect; GetClientRect(ghWndDC, &rect);
-			FillRect(hDc, &rect, hBrush); // -- если захочется на "чистую" рисовать
-			SelectObject(hDc, hOldBrush);
-			DeleteObject(hBrush);
-			*/
-
-			GdiFlush();
-			// Рисуем сразу на канвасе, без буферизации
-			pVCon->Update(true, &hDc);
-		}
-
-		EndPaint(ghWndDC, &ps);
-
-		if (gbNoDblBuffer) GdiSetBatchLimit(0); // вернуть стандартный режим
+		gConEmu.PaintCon();
 	}
 
 	gSet.Performance(tPerfBlt, TRUE);
