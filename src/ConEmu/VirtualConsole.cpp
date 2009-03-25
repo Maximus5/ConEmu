@@ -7,6 +7,20 @@ CVirtualConsole* CVirtualConsole::Create()
 {
 	CVirtualConsole* pCon = new CVirtualConsole();
 	#pragma message("TODO: CVirtualConsole::Create - создать процесс")
+	
+	if (gSet.nAttachPID) {
+		// Attach - only once
+		DWORD dwPID = gSet.nAttachPID; gSet.nAttachPID = 0;
+		if (!pCon->AttachPID(dwPID)) {
+			delete pCon;
+			return NULL;
+		}
+	} else {
+		if (!pCon->StartProcess()) {
+			delete pCon;
+			return NULL;
+		}
+	}
 
     if (gSet.wndHeight && gSet.wndWidth)
     {
@@ -1365,4 +1379,164 @@ void CVirtualConsole::SetConsoleSize(const COORD& size)
         rect.Bottom += shift;
     }
     SetConsoleWindowInfo(hConOut(), TRUE, &rect);
+}
+
+BOOL CVirtualConsole::AttachPID(DWORD dwPID)
+{
+	#ifdef _DEBUG
+		TCHAR szMsg[100]; wsprintf(szMsg, _T("Attach to process %i"), (int)dwPID);
+		OutputDebugString(szMsg);
+	#endif
+	BOOL lbRc = AttachConsole(dwPID);
+    if (!lbRc) {
+		OutputDebugString(_T(" - failed\n"));
+		BOOL lbFailed = TRUE;
+	    DWORD dwErr = GetLastError();
+		if (dwErr == 0x1F && dwPID == -1)
+		{
+			// Если ConEmu запускается из FAR'а батником - то родительский процесс - CMD.EXE, а он уже скорее всего закрыт. то есть подцепиться не удастся
+			HWND hConsole = FindWindowEx(NULL,NULL,_T("ConsoleWindowClass"),NULL);
+			if (hConsole && IsWindowVisible(hConsole)) {
+				DWORD dwCurPID = 0;
+				if (GetWindowThreadProcessId(hConsole,  &dwCurPID)) {
+					if (AttachConsole(dwCurPID))
+						lbFailed = FALSE;
+				}
+			}
+		}
+		if (lbFailed) {
+			TCHAR szErr[255];
+			wsprintf(szErr, _T("AttachConsole failed (PID=%i)!"), dwPID);
+			DisplayLastError(szErr, dwErr);
+			return FALSE;
+		}
+    }
+	OutputDebugString(_T(" - OK"));
+
+	hConWnd = GetConsoleWindow();
+	ghConWnd = hConWnd;
+
+    // Попытаться дернуть плагин для установки шрифта.
+    CConEmuPipe pipe;
+    
+	OutputDebugString(_T("CheckProcesses\n"));
+	gConEmu.CheckProcesses(0,TRUE);
+	
+    if (pipe.Init(_T("DefFont.in.attach"), TRUE))
+	    pipe.Execute(CMD_DEFFONT);
+
+	return TRUE;
+}
+
+BOOL CVirtualConsole::StartProcess()
+{
+	BOOL lbRc = FALSE;
+
+	if (ghConWnd) {
+		FreeConsole(); ghConWnd = NULL;
+	}
+
+	AllocConsole();
+	//TODO: инициализация буферов, хэндлера и т.п.
+	ghConWnd = GetConsoleWindow();
+
+	
+	if (gSet.isConMan) {
+		if (!gConEmu.InitConMan(gSet.GetCmd())) {
+			//gConEmu.Destroy();
+			//free(cmdLine);
+			//return -1;
+			// Иначе жестоко получается. ConEmu вообще будет сложно запустить...
+			gSet.isConMan = false;
+		} else {
+			return TRUE;
+		}
+	} 
+	
+	if (!gSet.isConMan)
+	{
+		STARTUPINFO si;
+		PROCESS_INFORMATION pi;
+
+		ZeroMemory( &si, sizeof(si) );
+		si.cb = sizeof(si);
+		ZeroMemory( &pi, sizeof(pi) );
+
+		int nStep = 1;
+		while (nStep <= 2)
+		{
+			if (!*gSet.GetCmd()) {
+				gSet.psCurCmd = _tcsdup(gSet.BufferHeight == 0 ? _T("far") : _T("cmd"));
+				nStep ++;
+			}
+
+			LPTSTR lpszCmd = (LPTSTR)gSet.GetCmd();
+			#ifdef _DEBUG
+			OutputDebugString(lpszCmd);OutputDebugString(_T("\n"));
+			#endif
+			try {
+				lbRc = CreateProcess(NULL, lpszCmd, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
+				OutputDebugString(_T("CreateProcess finished\n"));
+			} catch(...) {
+				lbRc = FALSE;
+			}
+			if (lbRc)
+			{
+				OutputDebugString(_T("CreateProcess OK\n"));
+				lbRc = TRUE;
+
+				/*if (!AttachPID(pi.dwProcessId)) {
+					OutputDebugString(_T("AttachPID failed\n"));
+					return FALSE;
+				}
+				OutputDebugString(_T("AttachPID OK\n"));*/
+
+				break; // OK, запустили
+			} else {
+				//MBoxA("Cannot execute the command.");
+				DWORD dwLastError = GetLastError();
+				OutputDebugString(_T("CreateProcess failed\n"));
+				int nLen = _tcslen(gSet.GetCmd());
+				TCHAR* pszErr=(TCHAR*)calloc(nLen+100,sizeof(TCHAR));
+		        
+				if (0==FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+					NULL, dwLastError, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
+					pszErr, 1024, NULL))
+				{
+					wsprintf(pszErr, _T("Unknown system error: 0x%x"), dwLastError);
+				}
+		        
+				nLen += _tcslen(pszErr);
+				TCHAR* psz=(TCHAR*)calloc(nLen+100,sizeof(TCHAR));
+				int nButtons = MB_OK|MB_ICONEXCLAMATION|MB_SETFOREGROUND;
+		        
+				_tcscpy(psz, _T("Cannot execute the command.\r\n"));
+				_tcscat(psz, pszErr);
+				if (psz[_tcslen(psz)-1]!=_T('\n')) _tcscat(psz, _T("\r\n"));
+				_tcscat(psz, gSet.GetCmd());
+				if (StrStrI(gSet.GetCmd(), gSet.BufferHeight == 0 ? _T("far.exe") : _T("cmd.exe"))==NULL) {
+					_tcscat(psz, _T("\r\n\r\n"));
+					_tcscat(psz, gSet.BufferHeight == 0 ? _T("Do You want to simply start far?") : _T("Do You want to simply start cmd?"));
+					nButtons |= MB_YESNO;
+				}
+				//MBoxA(psz);
+				int nBrc = MessageBox(NULL, psz, _T("ConEmu"), nButtons);
+				free(psz); free(pszErr);
+				if (nBrc!=IDYES) {
+					gConEmu.Destroy();
+					//free(cmdLine);
+					return FALSE;
+				}
+				// Выполнить стандартную команду...
+				gSet.psCurCmd = _tcsdup(gSet.BufferHeight == 0 ? _T("far") : _T("cmd"));
+				nStep ++;
+			}
+		}
+
+		//TODO: а делать ли это?
+		CloseHandle(pi.hThread); pi.hThread = NULL;
+		CloseHandle(pi.hProcess); pi.hProcess = NULL;
+	}
+	
+	return lbRc;
 }

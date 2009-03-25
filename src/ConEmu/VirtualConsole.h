@@ -23,6 +23,7 @@ public:
 
 	HANDLE  hConOut_;
     HANDLE  hConOut();
+	HWND    hConWnd;
 	HDC     hDC; //, hBgDc;
 	HBITMAP hBitmap; //, hBgBitmap;
 	HBRUSH  hBrush0, hOldBrush, hSelectedBrush;
@@ -94,4 +95,6 @@ protected:
 	WORD CharWidth(TCHAR ch);
 	bool CheckChangedTextAttr();
 	void ParseLine(int row, TCHAR *ConCharLine, WORD *ConAttrLine);
+	BOOL AttachPID(DWORD dwPID);
+	BOOL StartProcess();
 };

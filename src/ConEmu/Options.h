@@ -25,6 +25,8 @@ public:
 	LPTSTR psCurCmd;
 	/* "Active" command line */
 	LPCTSTR GetCmd();
+	/* If Attach to PID requested */
+	DWORD nAttachPID;
 
     DWORD FontSizeX;
     DWORD FontSizeX2;
@@ -111,6 +113,7 @@ public:
 	LRESULT OnComboBox(WPARAM wParam, LPARAM lParam);
 	LRESULT OnColorComboBox(WPARAM wParam, LPARAM lParam);
 	LRESULT OnTab(LPNMHDR phdr);
+	LRESULT OnEraseBackground(HWND hWnd);
 private:
 	COLORREF acrCustClr[16]; // array of custom colors
 	BOOL mb_IgnoreEditChanged, mb_IgnoreTtfChange;
@@ -121,4 +124,10 @@ private:
 	HWND hwndTip;
 	void RegisterTipsFor(HWND hChildDlg);
 	HFONT CreateFontIndirectMy(LOGFONT *inFont);
+	// Theming
+	HMODULE mh_Uxtheme;
+	typedef HRESULT (STDAPICALLTYPE *SetWindowThemeT)(HWND hwnd,LPCWSTR pszSubAppName,LPCWSTR pszSubIdList);
+	SetWindowThemeT SetWindowThemeF;
+	typedef HRESULT (STDAPICALLTYPE *EnableThemeDialogTextureT)(HWND hwnd,DWORD dwFlags);
+	EnableThemeDialogTextureT EnableThemeDialogTextureF;
 };
