@@ -686,9 +686,6 @@ void CConEmuMain::SyncWindowToConsole()
 {
     DEBUGLOGFILE("SyncWindowToConsole\n");
 
-	if (!pVCon)
-		return;
-
 	RECT rcDC = MakeRect(pVCon->Width, pVCon->Height);
 
 	RECT rcWnd = CalcRect(CER_MAIN, rcDC, CER_DC); // размеры окна
@@ -869,9 +866,6 @@ void CConEmuMain::ForceShowTabs(BOOL abShow)
 bool CConEmuMain::CheckBufferSize()
 {
 	bool lbForceUpdate = false;
-
-	if (!pVCon)
-		return false;
 	
     CONSOLE_SCREEN_BUFFER_INFO inf; memset(&inf, 0, sizeof(inf));
     GetConsoleScreenBufferInfo(pVCon->hConOut(), &inf);
@@ -1866,11 +1860,6 @@ LRESULT CConEmuMain::OnPaint(WPARAM wParam, LPARAM lParam)
 
 void CConEmuMain::PaintCon()
 {
-	if (!pVCon) {
-		// Залить не нужно?
-		return;
-	}
-
 	RECT client; GetClientRect(ghWndDC, &client);
 	if (((ULONG)client.right) > pVCon->Width)
 		client.right = pVCon->Width;
@@ -2246,19 +2235,13 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd)
     if (gSet.isTabs==1)
 	    gConEmu.ForceShowTabs(TRUE);
 
-	//CreateCon();
+	CreateCon();
 
 	return 0;
 }
 
 void CConEmuMain::PostCreate()
 {
-	ShowWindow(ghWnd, SW_SHOW);
-	UpdateWindow(ghWnd);
-	
-
-	CreateCon();
-
     OleInitialize (NULL); // как бы попробовать включать Ole только во время драга. кажется что из-за него глючит переключалка языка
 	//CoInitializeEx(NULL, COINIT_MULTITHREADED);
 
@@ -2532,9 +2515,6 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 {
     short winX = GET_X_LPARAM(lParam);
     short winY = GET_Y_LPARAM(lParam);
-
-	if (!pVCon)
-		return 0;
 
     RECT conRect, consoleRect;
 	POINT ptCur;
