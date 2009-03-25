@@ -3091,6 +3091,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		
 	case WM_PAINT:
 		result = gConEmu.OnPaint(wParam, lParam);
+		break;
 	
     case WM_TIMER:
 	    if (mb_InTimer) break; // чтобы ненароком два раза в одно событие не вошел (хотя не должен)

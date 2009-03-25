@@ -276,7 +276,7 @@ void ProcessCommand(DWORD nCmd, BOOL bReqMainThread)
 		{
 			if (gFarVersion.dwVerMajor==1)
 				ProcessDragToA();
-			if (gFarVersion.dwBuild>=789)
+			else if (gFarVersion.dwBuild>=789)
 				ProcessDragTo789();
 			else
 				ProcessDragTo757();
@@ -287,7 +287,7 @@ void ProcessCommand(DWORD nCmd, BOOL bReqMainThread)
 			int nTab = GetWindowLong(ConEmuHwnd, 0);
 			if (gFarVersion.dwVerMajor==1)
 				SetWindowA(nTab);
-			if (gFarVersion.dwBuild>=789)
+			else if (gFarVersion.dwBuild>=789)
 				SetWindow789(nTab);
 			else
 				SetWindow757(nTab);
