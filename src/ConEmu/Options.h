@@ -25,8 +25,6 @@ public:
 	LPTSTR psCurCmd;
 	/* "Active" command line */
 	LPCTSTR GetCmd();
-	/* If Attach to PID requested */
-	DWORD nAttachPID;
 
     DWORD FontSizeX;
     DWORD FontSizeX2;

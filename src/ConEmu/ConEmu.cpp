@@ -92,8 +92,6 @@ CConEmuMain::CConEmuMain()
 
 	mn_ActiveCon = -1; pVCon = NULL;
 	memset(mp_VCon, 0, sizeof(mp_VCon));
-	
-	mn_MsgPostCreate = RegisterWindowMessage(_T("ConEmuMain::PostCreate"));
 }
 
 BOOL CConEmuMain::Init()
@@ -689,9 +687,6 @@ void CConEmuMain::SyncWindowToConsole()
 {
     DEBUGLOGFILE("SyncWindowToConsole\n");
 
-	if (!pVCon)
-		return;
-
 	RECT rcDC = MakeRect(pVCon->Width, pVCon->Height);
 
 	RECT rcWnd = CalcRect(CER_MAIN, rcDC, CER_DC); // размеры окна
@@ -872,9 +867,6 @@ void CConEmuMain::ForceShowTabs(BOOL abShow)
 bool CConEmuMain::CheckBufferSize()
 {
 	bool lbForceUpdate = false;
-
-	if (!pVCon)
-		return false;
 	
     CONSOLE_SCREEN_BUFFER_INFO inf; memset(&inf, 0, sizeof(inf));
     GetConsoleScreenBufferInfo(pVCon->hConOut(), &inf);
@@ -1869,11 +1861,6 @@ LRESULT CConEmuMain::OnPaint(WPARAM wParam, LPARAM lParam)
 
 void CConEmuMain::PaintCon()
 {
-	if (!pVCon) {
-		// Залить не нужно?
-		return;
-	}
-
 	RECT client; GetClientRect(ghWndDC, &client);
 	if (((ULONG)client.right) > pVCon->Width)
 		client.right = pVCon->Width;
@@ -2253,42 +2240,33 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd)
     if (gSet.isTabs==1)
 	    gConEmu.ForceShowTabs(TRUE);
 
-	//CreateCon();
+	CreateCon();
 
 	return 0;
 }
 
-void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
+void CConEmuMain::PostCreate()
 {
-	if (!abRecieved) {
-		ShowWindow(ghWnd, SW_SHOW);
-		UpdateWindow(ghWnd);
-		
-		PostMessage(ghWnd, mn_MsgPostCreate, 0, 0);
-	} else {
-		CreateCon();
+    OleInitialize (NULL); // как бы попробовать включать Ole только во время драга. кажется что из-за него глючит переключалка языка
+	//CoInitializeEx(NULL, COINIT_MULTITHREADED);
 
-	    OleInitialize (NULL); // как бы попробовать включать Ole только во время драга. кажется что из-за него глючит переключалка языка
-		//CoInitializeEx(NULL, COINIT_MULTITHREADED);
+	if (!DragDrop)
+		DragDrop = new CDragDrop(HDCWND);
 
-		if (!DragDrop)
-			DragDrop = new CDragDrop(HDCWND);
+#pragma message("Warning: Если консоль не создана - handler не установится!")
 
-	#pragma message("Warning: Если консоль не создана - handler не установится!")
+    SetConsoleCtrlHandler((PHANDLER_ROUTINE)CConEmuMain::HandlerRoutine, true);
 
-	    //SetConsoleCtrlHandler((PHANDLER_ROUTINE)CConEmuMain::HandlerRoutine, true);
+    SetForegroundWindow(ghWnd);
 
-	    SetForegroundWindow(ghWnd);
+    SetParent(ghWnd, GetParent(GetShellWindow()));
+    
+    //pVCon->InitDC();
+    gConEmu.SyncWindowToConsole();
 
-	    SetParent(ghWnd, GetParent(GetShellWindow()));
-	    
-	    //pVCon->InitDC();
-	    gConEmu.SyncWindowToConsole();
+    gConEmu.SetWindowMode(gConEmu.WindowMode);
 
-	    gConEmu.SetWindowMode(gConEmu.WindowMode);
-
-	    SetTimer(ghWnd, 0, gSet.nMainTimerElapse, NULL);
-	}
+    SetTimer(ghWnd, 0, gSet.nMainTimerElapse, NULL);
 }
 
 LRESULT CConEmuMain::OnDestroy(HWND hWnd)
@@ -2542,9 +2520,6 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 {
     short winX = GET_X_LPARAM(lParam);
     short winY = GET_Y_LPARAM(lParam);
-
-	if (!pVCon)
-		return 0;
 
     RECT conRect, consoleRect;
 	POINT ptCur;
@@ -3226,10 +3201,6 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
     //    POSTMESSAGE(ghConWnd, messg, wParam, lParam, FALSE);
         
     default:
-	    if (messg == mn_MsgPostCreate) {
-		    gConEmu.PostCreate(TRUE);
-		    return 0;
-	    }
         if (messg) result = DefWindowProc(hWnd, messg, wParam, lParam);
     }
     return result;

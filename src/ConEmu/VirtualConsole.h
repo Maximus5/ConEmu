@@ -23,7 +23,6 @@ public:
 
 	HANDLE  hConOut_;
     HANDLE  hConOut();
-	HWND    hConWnd;
 	HDC     hDC; //, hBgDc;
 	HBITMAP hBitmap; //, hBgBitmap;
 	HBRUSH  hBrush0, hOldBrush, hSelectedBrush;
@@ -46,7 +45,6 @@ public:
 	static CVirtualConsole* Create();
 
 	bool InitDC(bool abNoDc);
-	void InitHandlers();
 	void DumpConsole();
 	void Free();
 	bool Update(bool isForce = false, HDC *ahDc=NULL);
@@ -96,17 +94,4 @@ protected:
 	WORD CharWidth(TCHAR ch);
 	bool CheckChangedTextAttr();
 	void ParseLine(int row, TCHAR *ConCharLine, WORD *ConAttrLine);
-	BOOL AttachPID(DWORD dwPID);
-	BOOL StartProcess();
-	typedef struct _ConExeProps {
-		BOOL  bKeyExists;
-		DWORD ScreenBufferSize; //Loword-Width, Hiword-Height
-		DWORD WindowSize;
-		DWORD WindowPosition;
-		DWORD FontSize;
-		DWORD FontFamily;
-		TCHAR *FaceName;
-		TCHAR *FullKeyName;
-	} ConExeProps;
-	void RegistryProps(BOOL abRollback, ConExeProps& props, LPCTSTR asExeName=NULL);
 };
