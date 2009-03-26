@@ -27,9 +27,9 @@
 #define CMD_EXIT         MAXCMDCOUNT-1
 
 #ifdef _DEBUG
-	#define CONEMUALIVETIMEOUT 1000 //INFINITE
-	#define CONEMUREADYTIMEOUT 3000 //INFINITE
-	#define CONEMUFARTIMEOUT   3000 // Сколько ожидать, пока ФАР среагирует на вызов плагина
+	#define CONEMUALIVETIMEOUT INFINITE
+	#define CONEMUREADYTIMEOUT INFINITE
+	#define CONEMUFARTIMEOUT   10000 // Сколько ожидать, пока ФАР среагирует на вызов плагина
 #else
 	#define CONEMUALIVETIMEOUT 1000  // Живость плагина ждем секунду
 	#define CONEMUREADYTIMEOUT 10000 // А на выполнение команды - 10s max
