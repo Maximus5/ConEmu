@@ -69,6 +69,7 @@ void ProcessDragFromA()
 					nDirNoSlash=1;
 		}
 
+		// Ёто только предполагаемый размер, при необходимости он будет увеличен
 		OutDataAlloc(sizeof(int)+PInfo.SelectedItemsNumber*((MAX_PATH+2)+sizeof(int)));
 
 		//Maximus5 - новый формат передачи
@@ -79,6 +80,7 @@ void ProcessDragFromA()
 		if (PInfo.SelectedItemsNumber>0)
 		{
 			int ItemsCount=PInfo.SelectedItemsNumber, i;
+			bool *bIsFull = (bool*)calloc(PInfo.SelectedItemsNumber, sizeof(bool));
 
 			int nMaxLen=MAX_PATH+1, nWholeLen=1;
 
@@ -86,6 +88,9 @@ void ProcessDragFromA()
 			for (i=0;i<ItemsCount;i++)
 			{
 				int nLen=nDirLen+nDirNoSlash;
+				if ((PInfo.SelectedItems[i].FindData.cFileName[0] == '\\' && PInfo.SelectedItems[i].FindData.cFileName[1] == '\\') ||
+				    (ISALPHA(PInfo.SelectedItems[i].FindData.cFileName[0]) && PInfo.SelectedItems[i].FindData.cFileName[1] == ':' && PInfo.SelectedItems[i].FindData.cFileName[2] == '\\'))
+				    { nLen = 0; bIsFull[i] = TRUE; } // это уже полный путь!
 				nLen += lstrlenA(PInfo.SelectedItems[i].FindData.cFileName);
 				if (nLen>nMaxLen)
 					nMaxLen = nLen;
@@ -104,22 +109,22 @@ void ProcessDragFromA()
 				//wsprintf(Path, L"%s\\%s", PInfo.CurDir, PInfo.SelectedItems[i]->FindData.cFileName);
 				Path[0]=0;
 
-				int nLen=nDirLen+nDirNoSlash;
-				nLen += lstrlenA(PInfo.SelectedItems[i].FindData.cFileName);
-
-				if (nDirLen>0) {
+				//begin	
+				int nLen=0;
+				if (nDirLen>0 && !bIsFull[i]) {
 					MultiByteToWideChar(CP_OEMCP/*???*/,0,
 						PInfo.CurDir, nDirLen+1, Path, nDirLen+1);
-					//lstrcpy(Path, PInfo.CurDir);
 					if (nDirNoSlash) {
 						Path[nDirLen]=L'\\';
 						Path[nDirLen+1]=0;
 					}
+					nLen = nDirLen+nDirNoSlash;
 				}
-				int nFLen = lstrlenA(PInfo.SelectedItems[i].FindData.cFileName)+1;
+				int nFLen = lstrlenA(PInfo.SelectedItems[i].FindData.cFileName);
 				MultiByteToWideChar(CP_OEMCP/*???*/, 0,
-					PInfo.SelectedItems[i].FindData.cFileName,nFLen,Path+nDirLen+nDirNoSlash,nFLen);
-				//lstrcpy(Path+nDirLen+nDirNoSlash, PInfo.SelectedItems[i].FindData.cFileName);
+					PInfo.SelectedItems[i].FindData.cFileName,nFLen+1,Path+nLen,nFLen+1);
+				nLen += nFLen;
+				//end
 
 				nLen++;
 				//WriteFile(hPipe, &nLen, sizeof(int), &cout, NULL);
@@ -128,6 +133,7 @@ void ProcessDragFromA()
 				OutDataWrite(Path, sizeof(WCHAR)*nLen);
 			}
 
+			free(bIsFull);
 			delete Path; Path=NULL;
 
 			//  онец списка
@@ -185,7 +191,7 @@ void ProcessDragToA()
 	if (lbAOK)
 	{
 		pfpi->ActiveRect=PAInfo.PanelRect;
-		if ((PAInfo.PanelType == PTYPE_FILEPANEL || PAInfo.PanelType == PTYPE_TREEPANEL) && PAInfo.Visible)
+		if (!PAInfo.Plugin && (PAInfo.PanelType == PTYPE_FILEPANEL || PAInfo.PanelType == PTYPE_TREEPANEL) && PAInfo.Visible)
 		{
 			if (PAInfo.CurDir != NULL) {
 				int nLen = lstrlenA(PAInfo.CurDir)+1;
@@ -201,7 +207,7 @@ void ProcessDragToA()
 	if (lbPOK)
 	{
 		pfpi->PassiveRect=PPInfo.PanelRect;
-		if ((PPInfo.PanelType == PTYPE_FILEPANEL || PPInfo.PanelType == PTYPE_TREEPANEL) && PPInfo.Visible)
+		if (!PPInfo.Plugin && (PPInfo.PanelType == PTYPE_FILEPANEL || PPInfo.PanelType == PTYPE_TREEPANEL) && PPInfo.Visible)
 		{
 			if (PPInfo.CurDir != NULL)
 			{

@@ -184,8 +184,8 @@ BOOL LoadFarVersion()
 			VS_FIXEDFILEINFO *lvs = NULL;
 			UINT nLen = sizeof(lvs);
 			if (GetFileVersionInfo(FarPath, 0, dwSize, pVerData)) {
-				if (VerQueryValue ((void*)pVerData, 
-						L"\\", (void**)&lvs, &nLen)) {
+				TCHAR szSlash[3]; lstrcpyW(szSlash, L"\\");
+				if (VerQueryValue ((void*)pVerData, szSlash, (void**)&lvs, &nLen)) {
 					gFarVersion.dwVer = lvs->dwFileVersionMS;
 					gFarVersion.dwBuild = lvs->dwFileVersionLS;
 					lbRc = TRUE;
@@ -484,10 +484,14 @@ DWORD WINAPI ThreadProcW(LPVOID lpParameter)
 		EnterCriticalSection(&csData);
 		wsprintf(gszDir1, CONEMUMAPPING, dwProcId);
 		gnDataSize = gpData ? (gpCursor - gpData) : 0;
+		#ifdef _DEBUG
 		int nSize = gnDataSize; // чего-то там происходит...
+		#endif
 		SetLastError(0);
 		ghMapping = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, gnDataSize+4, gszDir1);
+		#ifdef _DEBUG
 		DWORD dwCreateError = GetLastError();
+		#endif
 		if (ghMapping) {
 			LPBYTE lpMap = (LPBYTE)MapViewOfFile(ghMapping, FILE_MAP_ALL_ACCESS, 0,0,0);
 			if (!lpMap) {

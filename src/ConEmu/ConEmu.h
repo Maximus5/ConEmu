@@ -109,7 +109,7 @@ public:
 	DWORD mn_TopProcessID; 
 	//BOOL mb_FarActive;
 	//TCHAR ms_TopProcess[MAX_PATH+1];
-	TCHAR ms_EditorRus[16], ms_ViewerRus[16];
+	TCHAR ms_EditorRus[16], ms_ViewerRus[16], ms_TempPanel[32];
 protected:
 	TCHAR Title[MAX_TITLE_SIZE], TitleCmp[MAX_TITLE_SIZE];
 	void UpdateTitle(LPCTSTR asNewTitle);

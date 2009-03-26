@@ -78,6 +78,7 @@ CConEmuMain::CConEmuMain()
 	strcpy(ms_EditorRus, "редактирование ");
 	strcpy(ms_ViewerRus, "просмотр ");
 #endif
+	_tcscpy(ms_TempPanel, _T("{Temporary panel"));
 
 
     Registry reg;
@@ -2010,6 +2011,10 @@ bool CConEmuMain::isFilePanel(bool abPluginAllowed/*=false*/)
 			return false;
 	}
     
+	// нужно для DragDrop
+	if (_tcsncmp(pszTitle, ms_TempPanel, _tcslen(ms_TempPanel)) == 0)
+		return true;
+
     if ((abPluginAllowed && pszTitle[0]==_T('{')) ||
 		(_tcsncmp(pszTitle, _T("{\\\\"), 3)==0) ||
 	    (pszTitle[0] == _T('{') && isalpha(pszTitle[1]) && pszTitle[2] == _T(':') && pszTitle[3] == _T('\\')))

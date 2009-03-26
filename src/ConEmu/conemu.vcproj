@@ -445,10 +445,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\version.h"
-				>
-			</File>
-			<File
 				RelativePath=".\VirtualConsole.h"
 				>
 			</File>
@@ -697,6 +693,10 @@
 		</File>
 		<File
 			RelativePath="..\..\Settings-ConEmu.reg"
+			>
+		</File>
+		<File
+			RelativePath=".\version.h"
 			>
 		</File>
 		<File

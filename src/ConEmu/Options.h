@@ -121,4 +121,10 @@ private:
 	HWND hwndTip;
 	void RegisterTipsFor(HWND hChildDlg);
 	HFONT CreateFontIndirectMy(LOGFONT *inFont);
+	// Theming
+	HMODULE mh_Uxtheme;
+	typedef HRESULT (STDAPICALLTYPE *SetWindowThemeT)(HWND hwnd,LPCWSTR pszSubAppName,LPCWSTR pszSubIdList);
+	SetWindowThemeT SetWindowThemeF;
+	typedef HRESULT (STDAPICALLTYPE *EnableThemeDialogTextureT)(HWND hwnd,DWORD dwFlags);
+	EnableThemeDialogTextureT EnableThemeDialogTextureF;
 };

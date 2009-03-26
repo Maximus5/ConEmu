@@ -180,13 +180,17 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop (IDataObject * pDataObject,DWORD grfKe
 		if (m_pfpi->pszActivePath[lstrlen(m_pfpi->pszActivePath)-1]==_T('\\'))
 			m_pfpi->pszActivePath[lstrlen(m_pfpi->pszActivePath)-1] = 0;
 	}
-	else if (PtInRect(&(m_pfpi->PassiveRect), *(LPPOINT)&pt) && m_pfpi->pszPassivePath[0])
+	else if (PtInRect(&(m_pfpi->PassiveRect), *(LPPOINT)&pt) && (m_pfpi->pszPassivePath[0] || mb_selfdrag))
 	{
 		lbActive = FALSE;
 
-		if (!*m_pfpi->pszPassivePath) return 1;
-		if (m_pfpi->pszPassivePath[lstrlen(m_pfpi->pszPassivePath)-1]==_T('\\'))
-			m_pfpi->pszPassivePath[lstrlen(m_pfpi->pszPassivePath)-1] = 0;
+		if (!*m_pfpi->pszPassivePath) {
+			if (!(*pdwEffect == DROPEFFECT_COPY || *pdwEffect == DROPEFFECT_MOVE))
+				return 1;
+		} else {
+			if (m_pfpi->pszPassivePath[lstrlen(m_pfpi->pszPassivePath)-1]==_T('\\'))
+				m_pfpi->pszPassivePath[lstrlen(m_pfpi->pszPassivePath)-1] = 0;
+		}
 	}
 	else 
 	{
@@ -202,6 +206,11 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop (IDataObject * pDataObject,DWORD grfKe
 	HDROP hDrop = NULL;
 
 	if (hr != S_OK || !stgMedium.hGlobal) {
+		if (mb_selfdrag) {
+			MBoxA(_T("Drag object does not contains known formats!"));
+			return S_OK;
+		}
+
 		HANDLE hFile = NULL;
 		#define BufferSize 0x10000
 		BYTE cBuffer[BufferSize];
@@ -384,8 +393,12 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop (IDataObject * pDataObject,DWORD grfKe
 		} catch(...) {
 			hr = E_UNEXPECTED;
 		}
-		if (hr != S_OK)
-			DisplayLastError(_T("Shell operation failed"), hr);
+		if (hr != S_OK) {
+			if (hr == 7 || hr == ERROR_CANCELLED)
+				MBoxA(_T("Shell operation was cancelled"));
+			else
+				DisplayLastError(_T("Shell operation failed"), hr);
+		}
 		
 		if (fop.pTo) delete fop.pTo;
 		if (fop.pFrom) delete fop.pFrom;
@@ -408,11 +421,12 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragOver(DWORD grfKeyState,POINTL pt,DWORD 
 	pt.x/=gSet.LogFont.lfWidth;
 	pt.y/=gSet.LogFont.lfHeight;
 
+	BOOL lbActive = FALSE, lbPassive = FALSE;
 	if (m_pfpi==NULL)
 		*pdwEffect = DROPEFFECT_NONE;
 	else
-	if ((PtInRect(&(m_pfpi->ActiveRect), *(LPPOINT)&pt) && m_pfpi->pszActivePath[0] && !mb_selfdrag) ||
-		(PtInRect(&(m_pfpi->PassiveRect), *(LPPOINT)&pt) && m_pfpi->pszPassivePath[0]))
+	if (((lbActive = PtInRect(&(m_pfpi->ActiveRect), *(LPPOINT)&pt)) && m_pfpi->pszActivePath[0] && !mb_selfdrag) ||
+		((lbPassive = PtInRect(&(m_pfpi->PassiveRect), *(LPPOINT)&pt)) && (m_pfpi->pszPassivePath[0] || mb_selfdrag)))
 	{
 
 		if (grfKeyState & MK_CONTROL)
@@ -425,6 +439,9 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragOver(DWORD grfKeyState,POINTL pt,DWORD 
 			*pdwEffect = DROPEFFECT_LINK; // при Drop - правая кнопка уже отпущена
 		else
 			*pdwEffect = (gSet.isDefCopy) ? DROPEFFECT_COPY : DROPEFFECT_MOVE;
+
+		if (*pdwEffect == DROPEFFECT_LINK && lbPassive && m_pfpi->pszPassivePath[0] == 0)
+			*pdwEffect = DROPEFFECT_NONE;
 	}
 	else
 		*pdwEffect = DROPEFFECT_NONE;
@@ -681,7 +698,7 @@ void CDragDrop::Drag()
 						MCHKHEAP
 
 						HGLOBAL file_nameW = NULL, file_PIDLs = NULL;
-						if (nFilesCount==1)
+						if (nFilesCount==1 && mp_DesktopID)
 						{
 							HRESULT hr = S_OK;
 							try {
@@ -705,41 +722,49 @@ void CDragDrop::Drag()
 
 									hr = SHGetDesktopFolder ( &pDesktop );
 
-									MCHKHEAP
-									
-									// Потом и для собственно файла/папки...
-									ULONG nEaten=0;
-									
-									hr = pDesktop->ParseDisplayName(ghWnd, NULL, szDraggedPath, &nEaten, &pItem, &(tmp=0));
-									pDesktop->Release(); pDesktop = NULL;
+									if (hr == S_OK && pDesktop)
+									{
+										MCHKHEAP
+										
+										// Потом и для собственно файла/папки...
+										ULONG nEaten=0;
+										
+										hr = pDesktop->ParseDisplayName(ghWnd, NULL, szDraggedPath, &nEaten, &pItem, &(tmp=0));
+										pDesktop->Release(); pDesktop = NULL;
 
-									SHITEMID *pCur = (SHITEMID*)mp_DesktopID;
-									while (pCur->cb) {
-										pCur = (SHITEMID*)(((LPBYTE)pCur) + pCur->cb);
+										if (hr == S_OK && pItem && mp_DesktopID)
+										{
+											SHITEMID *pCur = (SHITEMID*)mp_DesktopID;
+											while (pCur->cb) {
+												pCur = (SHITEMID*)(((LPBYTE)pCur) + pCur->cb);
+											}
+											nParentSize = ((LPBYTE)pCur) - ((LPBYTE)mp_DesktopID)+2;
+
+											pCur = (SHITEMID*)pItem;
+											while (pCur->cb) {
+												pCur = (SHITEMID*)(((LPBYTE)pCur) + pCur->cb);
+											}
+											nItemSize = ((LPBYTE)pCur) - ((LPBYTE)pItem)+2;
+
+											pCur = NULL;
+
+											MCHKHEAP
+
+											file_PIDLs = GlobalAlloc(GPTR, 3*sizeof(UINT)+nParentSize+nItemSize);
+											if (file_PIDLs) {
+												CIDA* pida = (CIDA*)file_PIDLs;
+												pida->cidl = 1;
+												pida->aoffset[0] = 3*sizeof(UINT);
+												pida->aoffset[1] = pida->aoffset[0]+nParentSize;
+												memmove((((LPBYTE)pida)+(pida)->aoffset[0]), mp_DesktopID, nParentSize);
+												memmove((((LPBYTE)pida)+(pida)->aoffset[1]), pItem, nItemSize);
+											}
+
+											MCHKHEAP
+										}
+										if (pItem)
+											CoTaskMemFree(pItem);
 									}
-									nParentSize = ((LPBYTE)pCur) - ((LPBYTE)mp_DesktopID)+2;
-
-									pCur = (SHITEMID*)pItem;
-									while (pCur->cb) {
-										pCur = (SHITEMID*)(((LPBYTE)pCur) + pCur->cb);
-									}
-									nItemSize = ((LPBYTE)pCur) - ((LPBYTE)pItem)+2;
-
-									pCur = NULL;
-
-									MCHKHEAP
-
-									file_PIDLs = GlobalAlloc(GPTR, 3*sizeof(UINT)+nParentSize+nItemSize);
-									CIDA* pida = (CIDA*)file_PIDLs;
-									pida->cidl = 1;
-									pida->aoffset[0] = 3*sizeof(UINT);
-									pida->aoffset[1] = pida->aoffset[0]+nParentSize;
-									memmove((((LPBYTE)pida)+(pida)->aoffset[0]), mp_DesktopID, nParentSize);
-									memmove((((LPBYTE)pida)+(pida)->aoffset[1]), pItem, nItemSize);
-
-									MCHKHEAP
-
-									CoTaskMemFree(pItem);
 								}
 							} catch(...) {
 								hr = -1;

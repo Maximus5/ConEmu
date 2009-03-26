@@ -44,6 +44,7 @@ void ProcessDragFrom757()
 					nDirNoSlash=1;
 		}
 
+		// Ёто только предполагаемый размер, при необходимости он будет увеличен
 		OutDataAlloc(sizeof(int)+PInfo.SelectedItemsNumber*((MAX_PATH+2)+sizeof(int)));
 
 		//Maximus5 - новый формат передачи
@@ -54,6 +55,7 @@ void ProcessDragFrom757()
 		if (PInfo.SelectedItemsNumber>0)
 		{
 			PluginPanelItem *pi = (PluginPanelItem*)calloc(PInfo.SelectedItemsNumber, sizeof(PluginPanelItem));
+			bool *bIsFull = (bool*)calloc(PInfo.SelectedItemsNumber, sizeof(bool));
 			int ItemsCount=PInfo.SelectedItemsNumber, i;
 
 			int nMaxLen=MAX_PATH+1, nWholeLen=1;
@@ -65,7 +67,10 @@ void ProcessDragFrom757()
 					continue;
 
 				int nLen=nDirLen+nDirNoSlash;
-				nLen += lstrlen(pi[i].FindData.lpwszFileName);
+				if ((pi[i].FindData.lpwszFileName[0] == L'\\' && pi[i].FindData.lpwszFileName[1] == L'\\') ||
+				    (ISALPHA(pi[i].FindData.lpwszFileName[0]) && pi[i].FindData.lpwszFileName[1] == L':' && pi[i].FindData.lpwszFileName[2] == L'\\'))
+				    { nLen = 0; bIsFull[i] = TRUE; } // это уже полный путь!
+				nLen += lstrlenW(pi[i].FindData.lpwszFileName);
 				if (nLen>nMaxLen)
 					nMaxLen = nLen;
 				nWholeLen += (nLen+1);
@@ -85,17 +90,17 @@ void ProcessDragFrom757()
 
 				if (!pi[i].FindData.lpwszFileName) continue; //этот элемент получить не удалось
 
-				int nLen=nDirLen+nDirNoSlash;
-				nLen += lstrlen(pi[i].FindData.lpwszFileName);
-
-				if (nDirLen>0) {
+				int nLen=0;
+				if (nDirLen>0 && !bIsFull[i]) {
 					lstrcpy(Path, szCurDir);
 					if (nDirNoSlash) {
 						Path[nDirLen]=L'\\';
 						Path[nDirLen+1]=0;
 					}
+					nLen = nDirLen+nDirNoSlash;
 				}
-				lstrcpy(Path+nDirLen+nDirNoSlash, pi[i].FindData.lpwszFileName);
+				lstrcpy(Path+nLen, pi[i].FindData.lpwszFileName);
+				nLen += lstrlen(pi[i].FindData.lpwszFileName);
 
 				nLen++;
 				//WriteFile(hPipe, &nLen, sizeof(int), &cout, NULL);
@@ -110,6 +115,7 @@ void ProcessDragFrom757()
 			}
 			free ( pi ); pi = NULL;
 
+			free(bIsFull);
 			delete Path; Path=NULL;
 
 			//  онец списка
@@ -172,7 +178,7 @@ void ProcessDragTo757()
 	if (lbAOK)
 	{
 		pfpi->ActiveRect=PAInfo.PanelRect;
-		if ((PAInfo.PanelType == PTYPE_FILEPANEL || PAInfo.PanelType == PTYPE_TREEPANEL) && PAInfo.Visible)
+		if (!PAInfo.Plugin && (PAInfo.PanelType == PTYPE_FILEPANEL || PAInfo.PanelType == PTYPE_TREEPANEL) && PAInfo.Visible)
 		{
 			if (szADir[0]) {
 				lstrcpyW(pfpi->pszActivePath, szADir);
@@ -185,7 +191,7 @@ void ProcessDragTo757()
 	if (lbPOK)
 	{
 		pfpi->PassiveRect=PPInfo.PanelRect;
-		if ((PPInfo.PanelType == PTYPE_FILEPANEL || PPInfo.PanelType == PTYPE_TREEPANEL) && PPInfo.Visible)
+		if (!PPInfo.Plugin && (PPInfo.PanelType == PTYPE_FILEPANEL || PPInfo.PanelType == PTYPE_TREEPANEL) && PPInfo.Visible)
 		{
 			if (szPDir[0])
 				lstrcpyW(pfpi->pszPassivePath, szPDir);

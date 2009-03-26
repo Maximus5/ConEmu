@@ -27,6 +27,15 @@ CSettings::CSettings()
 	memset(mn_CounterTick, 0, sizeof(*mn_CounterTick)*(tPerfInterval-gbPerformance));
 	hBgBitmap = NULL; bgBmp = MakeCoord(0,0); hBgDc = NULL; mh_Font = NULL; mh_Font2 = NULL;
 	memset(FontWidth, 0, sizeof(FontWidth));
+
+	SetWindowThemeF = NULL;
+	mh_Uxtheme = LoadLibrary(_T("UxTheme.dll"));
+	if (mh_Uxtheme) {
+		SetWindowThemeF = (SetWindowThemeT)GetProcAddress(mh_Uxtheme, "SetWindowTheme");
+		EnableThemeDialogTextureF = (EnableThemeDialogTextureT)GetProcAddress(mh_Uxtheme, "EnableThemeDialogTexture");
+		//if (SetWindowThemeF) { SetWindowThemeF(Progressbar1, _T(" "), _T(" ")); }
+	}
+
 }
 
 CSettings::~CSettings()
@@ -35,6 +44,7 @@ CSettings::~CSettings()
 	if (mh_Font2) { DeleteObject(mh_Font2); mh_Font2 = NULL; }
 	if (psCmd) {free(psCmd); psCmd = NULL;}
 	if (psCurCmd) {free(psCurCmd); psCurCmd = NULL;}
+	if (mh_Uxtheme!=NULL) { FreeLibrary(mh_Uxtheme); mh_Uxtheme = NULL; }
 }
 
 void CSettings::InitSettings()
@@ -1466,6 +1476,8 @@ BOOL CALLBACK CSettings::mainOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARA
     switch (messg)
     {
     case WM_INITDIALOG:
+		if (gSet.EnableThemeDialogTextureF)
+			gSet.EnableThemeDialogTextureF(hWnd2, 6/*ETDT_ENABLETAB*/);
         break;
 
     case WM_CTLCOLORSTATIC:
@@ -1523,6 +1535,8 @@ BOOL CALLBACK CSettings::colorOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPAR
     switch (messg)
     {
     case WM_INITDIALOG:
+		if (gSet.EnableThemeDialogTextureF)
+			gSet.EnableThemeDialogTextureF(hWnd2, 6/*ETDT_ENABLETAB*/);
         break;
 
     case WM_CTLCOLORSTATIC:
@@ -1561,6 +1575,8 @@ BOOL CALLBACK CSettings::infoOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARA
     switch (messg)
     {
     case WM_INITDIALOG:
+		if (gSet.EnableThemeDialogTextureF)
+			gSet.EnableThemeDialogTextureF(hWnd2, 6/*ETDT_ENABLETAB*/);
         break;
 
     default:
