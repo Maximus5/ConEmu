@@ -135,6 +135,8 @@ protected:
 	static VOID CALLBACK WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime);
 	CVirtualConsole *mp_VCon[MAX_CONSOLE_COUNT], *pVCon;
 	int mn_ActiveCon; // в планах - убить m_ActiveConmanIDX
+	// Registered messages
+	UINT mn_MsgPostCopy;
 
 public:
 	DWORD CheckProcesses(DWORD nConmanIDX, BOOL bTitleChanged);
@@ -189,6 +191,7 @@ public:
 	static RECT MapRect(RECT rFrom, BOOL bFrame2Client);
 	void PaintCon();
 	void PaintGaps(HDC hDC=NULL);
+	void PostCopy(wchar_t* apszMacro, BOOL abRecieved=FALSE);
 	void PostMacro(LPCWSTR asMacro);
 	void PostCreate();
 	void ReSize();

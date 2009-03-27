@@ -92,6 +92,8 @@ CConEmuMain::CConEmuMain()
 
 	mn_ActiveCon = -1; pVCon = NULL;
 	memset(mp_VCon, 0, sizeof(mp_VCon));
+	
+	mn_MsgPostCopy = RegisterWindowMessage(_T("ConEmuMain::PostCopy"));
 }
 
 BOOL CConEmuMain::Init()
@@ -1650,6 +1652,16 @@ bool CConEmuMain::LoadVersionInfo(wchar_t* pFullPath)
     return true;
 }
 
+void CConEmuMain::PostCopy(wchar_t* apszMacro, BOOL abRecieved/*=FALSE*/)
+{
+	if (!abRecieved) {
+		PostMessage(ghWnd, mn_MsgPostCopy, 0, (LPARAM)apszMacro);
+	} else {
+		PostMacro(apszMacro);
+		free(apszMacro);
+	}
+}
+
 void CConEmuMain::PostMacro(LPCWSTR asMacro)
 {
 	if (!asMacro || !*asMacro)
@@ -3201,6 +3213,10 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
     //    POSTMESSAGE(ghConWnd, messg, wParam, lParam, FALSE);
         
     default:
+	    if (messg == mn_MsgPostCopy) {
+		    gConEmu.PostCopy((wchar_t*)lParam, TRUE);
+		    return 0;
+	    }
         if (messg) result = DefWindowProc(hWnd, messg, wParam, lParam);
     }
     return result;
