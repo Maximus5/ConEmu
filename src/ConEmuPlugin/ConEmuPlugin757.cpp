@@ -68,7 +68,7 @@ void ProcessDragFrom757()
 
 				int nLen=nDirLen+nDirNoSlash;
 				if ((pi[i].FindData.lpwszFileName[0] == L'\\' && pi[i].FindData.lpwszFileName[1] == L'\\') ||
-				    (iswalpha(pi[i].FindData.lpwszFileName[0]) && pi[i].FindData.lpwszFileName[1] == L':' && pi[i].FindData.lpwszFileName[2] == L'\\'))
+				    (ISALPHA(pi[i].FindData.lpwszFileName[0]) && pi[i].FindData.lpwszFileName[1] == L':' && pi[i].FindData.lpwszFileName[2] == L'\\'))
 				    { nLen = 0; bIsFull[i] = TRUE; } // это уже полный путь!
 				nLen += lstrlenW(pi[i].FindData.lpwszFileName);
 				if (nLen>nMaxLen)

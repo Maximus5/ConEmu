@@ -62,7 +62,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="comctl32.lib Shlwapi.lib version.lib"
-				OutputFile="F:\VCProject\FarPlugin\#FAR180\ConEmu.exe"
+				OutputFile="e:\far\ConEmu.exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
 				SubSystem="2"
@@ -296,7 +296,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="comctl32.lib UxTheme.lib Shlwapi.lib version.lib"
-				OutputFile="E:\FAR\ConEmu.exe"
+				OutputFile="E:\Source\FARUnicode\trunk\unicode_far\Debug.32.vc\ConEmu.exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
 				SubSystem="2"
@@ -442,10 +442,6 @@
 			</File>
 			<File
 				RelativePath=".\TrayIcon.h"
-				>
-			</File>
-			<File
-				RelativePath=".\version.h"
 				>
 			</File>
 			<File
@@ -697,6 +693,10 @@
 		</File>
 		<File
 			RelativePath="..\..\Settings-ConEmu.reg"
+			>
+		</File>
+		<File
+			RelativePath=".\version.h"
 			>
 		</File>
 		<File

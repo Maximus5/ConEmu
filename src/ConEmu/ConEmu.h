@@ -136,7 +136,6 @@ protected:
 	CVirtualConsole *mp_VCon[MAX_CONSOLE_COUNT], *pVCon;
 	int mn_ActiveCon; // в планах - убить m_ActiveConmanIDX
 	// Registered messages
-	UINT mn_MsgPostCreate;
 	UINT mn_MsgPostCopy;
 
 public:
@@ -194,7 +193,7 @@ public:
 	void PaintGaps(HDC hDC=NULL);
 	void PostCopy(wchar_t* apszMacro, BOOL abRecieved=FALSE);
 	void PostMacro(LPCWSTR asMacro);
-	void PostCreate(BOOL abRecieved=FALSE);
+	void PostCreate();
 	void ReSize();
 	void SetConParent();
 	void SetConsoleWindowSize(const COORD& size, bool updateInfo);

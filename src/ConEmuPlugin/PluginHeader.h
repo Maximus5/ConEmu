@@ -12,6 +12,8 @@
 #define OUTPUTDEBUGSTRING(m)
 #endif
 
+#define ISALPHA(c) ((((c) >= (BYTE)'c') && ((c) <= (BYTE)'z')) || (((c) >= (BYTE)'C') && ((c) <= (BYTE)'Z')))
+
 extern int lastModifiedStateW;
 extern WCHAR gszDir1[CONEMUTABMAX], gszDir2[CONEMUTABMAX], gszRootKey[MAX_PATH];
 extern int maxTabCount, lastWindowCount;
