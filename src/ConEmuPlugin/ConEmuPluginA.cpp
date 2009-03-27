@@ -89,7 +89,7 @@ void ProcessDragFromA()
 			{
 				int nLen=nDirLen+nDirNoSlash;
 				if ((PInfo.SelectedItems[i].FindData.cFileName[0] == '\\' && PInfo.SelectedItems[i].FindData.cFileName[1] == '\\') ||
-				    (ISALPHA(PInfo.SelectedItems[i].FindData.cFileName[0]) && PInfo.SelectedItems[i].FindData.cFileName[1] == ':' && PInfo.SelectedItems[i].FindData.cFileName[2] == '\\'))
+				    (isalpha(PInfo.SelectedItems[i].FindData.cFileName[0]) && PInfo.SelectedItems[i].FindData.cFileName[1] == ':' && PInfo.SelectedItems[i].FindData.cFileName[2] == '\\'))
 				    { nLen = 0; bIsFull[i] = TRUE; } // это уже полный путь!
 				nLen += lstrlenA(PInfo.SelectedItems[i].FindData.cFileName);
 				if (nLen>nMaxLen)

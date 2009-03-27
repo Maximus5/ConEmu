@@ -25,16 +25,4 @@ protected:
 	DWORD mn_AllFiles, mn_CurFile; __int64 mn_CurWritten;
 	HANDLE FileStart(BOOL abActive, BOOL abWide, LPVOID asFileName);
 	HRESULT FileWrite(HANDLE ahFile, DWORD anSize, LPVOID apData);
-	#ifdef _DEBUG
-	void EnumDragFormats(IDataObject * pDataObject);
-	#endif
-	HRESULT DropFromStream(IDataObject * pDataObject, BOOL abActive);
-	HRESULT DropLinks(HDROP hDrop, int iQuantity, BOOL abActive);
-	typedef struct _ThInfo {
-		HANDLE hThread;
-		DWORD  dwThreadId;
-	} ThInfo;
-	std::vector<ThInfo> m_OpThread;
-	CRITICAL_SECTION m_CrThreads;
-	static DWORD WINAPI ShellOpThreadProc(LPVOID lpParameter);
 };

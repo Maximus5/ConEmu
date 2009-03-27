@@ -79,7 +79,6 @@ CConEmuMain::CConEmuMain()
 	strcpy(ms_ViewerRus, "просмотр ");
 #endif
 	_tcscpy(ms_TempPanel, _T("{Temporary panel"));
-	MultiByteToWideChar(CP_ACP, 0, "{Временная панель", -1, ms_TempPanelRus, 32);
 
 
     Registry reg;
@@ -94,6 +93,7 @@ CConEmuMain::CConEmuMain()
 	mn_ActiveCon = -1; pVCon = NULL;
 	memset(mp_VCon, 0, sizeof(mp_VCon));
 	
+	mn_MsgPostCreate = RegisterWindowMessage(_T("ConEmuMain::PostCreate"));
 	mn_MsgPostCopy = RegisterWindowMessage(_T("ConEmuMain::PostCopy"));
 }
 
@@ -690,6 +690,9 @@ void CConEmuMain::SyncWindowToConsole()
 {
     DEBUGLOGFILE("SyncWindowToConsole\n");
 
+	if (!pVCon)
+		return;
+
 	RECT rcDC = MakeRect(pVCon->Width, pVCon->Height);
 
 	RECT rcWnd = CalcRect(CER_MAIN, rcDC, CER_DC); // размеры окна
@@ -870,6 +873,9 @@ void CConEmuMain::ForceShowTabs(BOOL abShow)
 bool CConEmuMain::CheckBufferSize()
 {
 	bool lbForceUpdate = false;
+
+	if (!pVCon)
+		return false;
 	
     CONSOLE_SCREEN_BUFFER_INFO inf; memset(&inf, 0, sizeof(inf));
     GetConsoleScreenBufferInfo(pVCon->hConOut(), &inf);
@@ -1874,6 +1880,11 @@ LRESULT CConEmuMain::OnPaint(WPARAM wParam, LPARAM lParam)
 
 void CConEmuMain::PaintCon()
 {
+	if (!pVCon) {
+		// Залить не нужно?
+		return;
+	}
+
 	RECT client; GetClientRect(ghWndDC, &client);
 	if (((ULONG)client.right) > pVCon->Width)
 		client.right = pVCon->Width;
@@ -2025,7 +2036,7 @@ bool CConEmuMain::isFilePanel(bool abPluginAllowed/*=false*/)
 	}
     
 	// нужно для DragDrop
-	if (_tcsncmp(pszTitle, ms_TempPanel, _tcslen(ms_TempPanel)) == 0 || _tcsncmp(pszTitle, ms_TempPanelRus, _tcslen(ms_TempPanelRus)) == 0)
+	if (_tcsncmp(pszTitle, ms_TempPanel, _tcslen(ms_TempPanel)) == 0)
 		return true;
 
     if ((abPluginAllowed && pszTitle[0]==_T('{')) ||
@@ -2253,33 +2264,42 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd)
     if (gSet.isTabs==1)
 	    gConEmu.ForceShowTabs(TRUE);
 
-	CreateCon();
+	//CreateCon();
 
 	return 0;
 }
 
-void CConEmuMain::PostCreate()
+void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
 {
-    OleInitialize (NULL); // как бы попробовать включать Ole только во время драга. кажется что из-за него глючит переключалка языка
-	//CoInitializeEx(NULL, COINIT_MULTITHREADED);
+	if (!abRecieved) {
+		ShowWindow(ghWnd, SW_SHOW);
+		UpdateWindow(ghWnd);
+		
+		PostMessage(ghWnd, mn_MsgPostCreate, 0, 0);
+	} else {
+		CreateCon();
 
-	if (!DragDrop)
-		DragDrop = new CDragDrop(HDCWND);
+	    OleInitialize (NULL); // как бы попробовать включать Ole только во время драга. кажется что из-за него глючит переключалка языка
+		//CoInitializeEx(NULL, COINIT_MULTITHREADED);
 
-#pragma message("Warning: Если консоль не создана - handler не установится!")
+		if (!DragDrop)
+			DragDrop = new CDragDrop(HDCWND);
 
-    SetConsoleCtrlHandler((PHANDLER_ROUTINE)CConEmuMain::HandlerRoutine, true);
+	#pragma message("Warning: Если консоль не создана - handler не установится!")
 
-    SetForegroundWindow(ghWnd);
+	    //SetConsoleCtrlHandler((PHANDLER_ROUTINE)CConEmuMain::HandlerRoutine, true);
 
-    SetParent(ghWnd, GetParent(GetShellWindow()));
-    
-    //pVCon->InitDC();
-    gConEmu.SyncWindowToConsole();
+	    SetForegroundWindow(ghWnd);
 
-    gConEmu.SetWindowMode(gConEmu.WindowMode);
+	    SetParent(ghWnd, GetParent(GetShellWindow()));
+	    
+	    //pVCon->InitDC();
+	    gConEmu.SyncWindowToConsole();
 
-    SetTimer(ghWnd, 0, gSet.nMainTimerElapse, NULL);
+	    gConEmu.SetWindowMode(gConEmu.WindowMode);
+
+	    SetTimer(ghWnd, 0, gSet.nMainTimerElapse, NULL);
+	}
 }
 
 LRESULT CConEmuMain::OnDestroy(HWND hWnd)
@@ -2533,6 +2553,9 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 {
     short winX = GET_X_LPARAM(lParam);
     short winY = GET_Y_LPARAM(lParam);
+
+	if (!pVCon)
+		return 0;
 
     RECT conRect, consoleRect;
 	POINT ptCur;
@@ -3214,6 +3237,10 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
     //    POSTMESSAGE(ghConWnd, messg, wParam, lParam, FALSE);
         
     default:
+	    if (messg == mn_MsgPostCreate) {
+		    gConEmu.PostCreate(TRUE);
+		    return 0;
+	    } else 
 	    if (messg == mn_MsgPostCopy) {
 		    gConEmu.PostCopy((wchar_t*)lParam, TRUE);
 		    return 0;

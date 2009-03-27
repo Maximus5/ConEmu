@@ -27,9 +27,7 @@ CProgressBars::CProgressBars(HWND hWnd, HINSTANCE hInstance)
 
 CProgressBars::~CProgressBars()
 {
-	if (mh_Uxtheme) {
-		FreeLibrary(mh_Uxtheme); mh_Uxtheme = NULL;
-	}
+	if (mh_Uxtheme) { FreeLibrary(mh_Uxtheme); mh_Uxtheme = NULL; }
 }
 
 void CProgressBars::OnTimer()

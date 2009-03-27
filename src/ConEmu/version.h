@@ -1,2 +1,2 @@
-#define CONEMUVERS "2009.3.27b\0"
-#define CONEMUVERN 2009,3,27,0
+#define CONEMUVERS "beta.3.24\0"
+#define CONEMUVERN 2009,3,24,0

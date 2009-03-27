@@ -9,7 +9,6 @@ CDragDrop::CDragDrop(HWND hWnd)
 	m_pfpi = NULL;
 	mp_DataObject = NULL;
 	mb_selfdrag = NULL;
-	InitializeCriticalSection(&m_CrThreads);
 
 	hr = RegisterDragDrop(hWnd, this);
 	if (hr != S_OK)
@@ -23,42 +22,8 @@ CDragDrop::CDragDrop(HWND hWnd)
 
 CDragDrop::~CDragDrop()
 {
-	TryEnterCriticalSection(&m_CrThreads);
-	if (!m_OpThread.empty()) {
-		LeaveCriticalSection(&m_CrThreads);
-		
-		if (MessageBox(ghWnd, _T("Not all shell operations was finished!\r\nDo You want to terminate them (it's may be harmful)?"), 
-			_T("ConEmu"), MB_YESNO|MB_ICONEXCLAMATION) == IDYES)
-		{
-			// Terminate all thread
-			TryEnterCriticalSection(&m_CrThreads);
-			std::vector<ThInfo>::iterator iter = m_OpThread.begin();
-			while (iter != m_OpThread.end())
-			{
-				HANDLE hThread = iter->hThread;
-				TerminateThread(hThread, 100);
-				iter = m_OpThread.erase ( iter );
-			}
-			LeaveCriticalSection(&m_CrThreads);
-		} else {
-			// Будем ждать до посинения
-			BOOL lbActive = TRUE;
-			while (TRUE) {
-				Sleep(100);
-				TryEnterCriticalSection(&m_CrThreads);
-				lbActive = !m_OpThread.empty();
-				LeaveCriticalSection(&m_CrThreads);
-			}
-		}
-	} else {
-		// незаконченных нитей нет
-		LeaveCriticalSection(&m_CrThreads);
-	}
-
 	if (m_pfpi) free(m_pfpi); m_pfpi=NULL;
-	if (mp_DesktopID) { CoTaskMemFree(mp_DesktopID); mp_DesktopID = NULL; }
-	
-	DeleteCriticalSection(&m_CrThreads);
+	CoTaskMemFree(mp_DesktopID);
 }
 
 
@@ -181,157 +146,60 @@ HRESULT CDragDrop::FileWrite(HANDLE ahFile, DWORD anSize, LPVOID apData)
 	return S_OK;
 }
 
-HRESULT CDragDrop::DropFromStream(IDataObject * pDataObject, BOOL abActive)
-{
-	STGMEDIUM stgMedium = { 0 };
-	FORMATETC fmtetc = { CF_HDROP, 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
-	
-	HANDLE hFile = NULL;
-	#define BufferSize 0x10000
-	BYTE cBuffer[BufferSize];
-	DWORD dwRead = 0;
-	BOOL lbWide = FALSE;
-	HRESULT hr = S_OK;
-
-	// CF_HDROP в структуре отсутсвует!
-	fmtetc.cfFormat = RegisterClipboardFormat(CFSTR_FILEDESCRIPTORW);
-	if (S_OK == pDataObject->GetData(&fmtetc, &stgMedium)) {
-		lbWide = TRUE;
-		HGLOBAL hDesc = stgMedium.hGlobal;
-		FILEGROUPDESCRIPTORW *pDesc = (FILEGROUPDESCRIPTORW*)GlobalLock(hDesc);
-		fmtetc.cfFormat = RegisterClipboardFormat(CFSTR_FILECONTENTS);
-
-		mn_AllFiles = pDesc->cItems;
-		
-		for (mn_CurFile = 0; mn_CurFile<mn_AllFiles; mn_CurFile++) {
-			fmtetc.lindex = mn_CurFile;
-
-			fmtetc.tymed = TYMED_ISTREAM; // Сначала пробуем IStream
-			if (S_OK == pDataObject->GetData(&fmtetc, &stgMedium) || !stgMedium.pstm) {
-				IStream* pFile = stgMedium.pstm;
-
-				hFile = FileStart(abActive, lbWide, pDesc->fgd[mn_CurFile].cFileName);
-				if (hFile != INVALID_HANDLE_VALUE) {
-					while ((hr = pFile->Read(cBuffer, BufferSize, &dwRead)) == S_OK && dwRead) {
-						if (FileWrite(hFile, dwRead, cBuffer) != S_OK)
-							break;
-					}
-					SafeCloseHandle(hFile);
-					if (FAILED(hr))
-						DisplayLastError(_T("Can't read medium!"), hr);
-				}
-				continue;
-			}
-			MBoxA(_T("Drag object does not contains known medium!"));
-		}
-		GlobalUnlock(hDesc);
-		gConEmu.DnDstep(NULL);
-		return S_OK;
-	}
-	// Outlook 2k передает ANSI!
-	fmtetc.cfFormat = RegisterClipboardFormat(CFSTR_FILEDESCRIPTORA);
-	if (S_OK == pDataObject->GetData(&fmtetc, &stgMedium)) {
-		lbWide = FALSE;
-		HGLOBAL hDesc = stgMedium.hGlobal;
-		FILEGROUPDESCRIPTORA *pDesc = (FILEGROUPDESCRIPTORA*)GlobalLock(hDesc);
-		fmtetc.cfFormat = RegisterClipboardFormat(CFSTR_FILECONTENTS);
-
-		mn_AllFiles = pDesc->cItems;
-		
-		for (mn_CurFile = 0; mn_CurFile<mn_AllFiles; mn_CurFile++) {
-			fmtetc.lindex = mn_CurFile;
-
-			fmtetc.tymed = TYMED_ISTREAM; // Сначала пробуем IStream
-			if (S_OK == pDataObject->GetData(&fmtetc, &stgMedium) || !stgMedium.pstm) {
-				IStream* pFile = stgMedium.pstm;
-
-				hFile = FileStart(abActive, lbWide, pDesc->fgd[mn_CurFile].cFileName);
-				if (hFile != INVALID_HANDLE_VALUE) {
-					while ((hr = pFile->Read(cBuffer, BufferSize, &dwRead)) == S_OK && dwRead) {
-						if (FileWrite(hFile, dwRead, cBuffer) != S_OK)
-							break;
-					}
-					SafeCloseHandle(hFile);
-					if (FAILED(hr))
-						DisplayLastError(_T("Can't read medium!"), hr);
-				}
-				continue;
-			}
-			MBoxA(_T("Drag object does not contains known medium!"));
-		}
-		GlobalUnlock(hDesc);
-		gConEmu.DnDstep(NULL);
-		return S_OK;
-	}
-
-	MBoxA(_T("Drag object does not contains known formats!"));
-	return S_OK;
-}
-
-HRESULT CDragDrop::DropLinks(HDROP hDrop, int iQuantity, BOOL abActive)
-{
-	TCHAR curr[MAX_DROP_PATH];
-	LPCTSTR pszTo = abActive ? m_pfpi->pszActivePath : m_pfpi->pszPassivePath;
-	int nToLen = _tcslen(pszTo);
-	HRESULT hr = S_OK;
-
-	for ( int i = 0 ; i < iQuantity; i++ )
-	{
-		DragQueryFile(hDrop,i,curr,MAX_DROP_PATH);
-
-		LPCTSTR pszTitle = _tcsrchr(curr, _T('\\'));
-		if (pszTitle) pszTitle++; else pszTitle = curr;
-
-		int nLen = nToLen+2+_tcslen(pszTitle)+4;
-		TCHAR *szLnkPath = new TCHAR[nLen];
-		_tcscpy(szLnkPath, pszTo);
-		if (szLnkPath[_tcslen(szLnkPath)-1] != _T('\\'))
-			_tcscat(szLnkPath, _T("\\"));
-		_tcscat(szLnkPath, pszTitle);
-		_tcscat(szLnkPath, _T(".lnk"));
-
-		try {
-			hr = CreateLink(curr, szLnkPath, pszTitle);
-		} catch(...) {
-			hr = E_UNEXPECTED;
-		}
-		if (hr!=S_OK)
-			DisplayLastError(_T("Can't create link!"), hr);
-		
-		delete szLnkPath;
-	}
-	
-	return S_OK;
-}
-
 HRESULT STDMETHODCALLTYPE CDragDrop::Drop (IDataObject * pDataObject,DWORD grfKeyState,POINTL pt,DWORD * pdwEffect)
 {
+	if (!gSet.isDropEnabled) {
+		*pdwEffect = DROPEFFECT_NONE;
+		return S_OK;
+	}
+	
 	*pdwEffect = DROPEFFECT_NONE;
 	if (S_OK != DragOver(grfKeyState, pt, pdwEffect) ||  *pdwEffect == DROPEFFECT_NONE) {
 		return S_OK;
 	}
 
-	// Определить, на какую панель бросаем
 	ScreenToClient(m_hWnd, (LPPOINT)&pt);
 	pt.x/=gSet.LogFont.lfWidth;
 	pt.y/=gSet.LogFont.lfHeight;
-	BOOL lbActive = PtInRect(&(m_pfpi->ActiveRect), *(LPPOINT)&pt);
 
-	
-	// Если тащат просто между панелями - сразу в FAR
-	if (!lbActive && mb_selfdrag && (*pdwEffect == DROPEFFECT_COPY || *pdwEffect == DROPEFFECT_MOVE))
+	BOOL lbActive = FALSE;
+	if (m_pfpi==NULL) {
+		//delete fop.pTo;
+		return S_OK; //1;
+	} else if (PtInRect(&(m_pfpi->ActiveRect), *(LPPOINT)&pt) && m_pfpi->pszActivePath[0]) 
 	{
-		wchar_t *mcr = (wchar_t*)calloc(16, sizeof(wchar_t));
-		lstrcpyW(mcr, (*pdwEffect == DROPEFFECT_MOVE) ? L"F6" : L"F5");
-		if (gSet.isDropEnabled==2)
-			lstrcatW(mcr, L" Enter");
+		lbActive = TRUE;
 
-		gConEmu.PostCopy(mcr);
-
-		return S_OK; // Тащим внутри ФАРа
+		if (mb_selfdrag) {
+			*pdwEffect = DROPEFFECT_NONE;
+			return S_OK; // Тащат внутри одной копии FAR с активной на активную, т.е. ничего не двигается
+		}
+			
+		if (!*m_pfpi->pszActivePath)
+			return S_OK;
+		if (m_pfpi->pszActivePath[lstrlen(m_pfpi->pszActivePath)-1]==_T('\\'))
+			m_pfpi->pszActivePath[lstrlen(m_pfpi->pszActivePath)-1] = 0;
 	}
-	
+	else if (PtInRect(&(m_pfpi->PassiveRect), *(LPPOINT)&pt) && (m_pfpi->pszPassivePath[0] || mb_selfdrag))
+	{
+		lbActive = FALSE;
 
+		if (!*m_pfpi->pszPassivePath) {
+			if (!(*pdwEffect == DROPEFFECT_COPY || *pdwEffect == DROPEFFECT_MOVE))
+				return 1;
+		} else {
+			if (m_pfpi->pszPassivePath[lstrlen(m_pfpi->pszPassivePath)-1]==_T('\\'))
+				m_pfpi->pszPassivePath[lstrlen(m_pfpi->pszPassivePath)-1] = 0;
+		}
+	}
+	else 
+	{
+		*pdwEffect = DROPEFFECT_NONE;
+		return S_OK;
+	}
+
+
+	WCHAR szStr[MAX_PATH];
 	STGMEDIUM stgMedium = { 0 };
 	FORMATETC fmtetc = { CF_HDROP, 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
 	HRESULT hr = pDataObject->GetData(&fmtetc, &stgMedium);
@@ -343,48 +211,140 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop (IDataObject * pDataObject,DWORD grfKe
 			return S_OK;
 		}
 
-		// Выполнить Drop из Outlook, и др. ShellExtensions (через IStream)
-		hr = DropFromStream(pDataObject, lbActive);
-		
-		return hr;
+		HANDLE hFile = NULL;
+		#define BufferSize 0x10000
+		BYTE cBuffer[BufferSize];
+		DWORD dwRead = 0;
+		BOOL lbWide = FALSE;
+
+		// CF_HDROP в структуре отсутсвует!
+		fmtetc.cfFormat = RegisterClipboardFormat(CFSTR_FILEDESCRIPTORW);
+		if (S_OK == pDataObject->GetData(&fmtetc, &stgMedium)) {
+			lbWide = TRUE;
+			HGLOBAL hDesc = stgMedium.hGlobal;
+			FILEGROUPDESCRIPTORW *pDesc = (FILEGROUPDESCRIPTORW*)GlobalLock(hDesc);
+			fmtetc.cfFormat = RegisterClipboardFormat(CFSTR_FILECONTENTS);
+
+			mn_AllFiles = pDesc->cItems;
+			
+			for (mn_CurFile = 0; mn_CurFile<mn_AllFiles; mn_CurFile++) {
+				fmtetc.lindex = mn_CurFile;
+
+				fmtetc.tymed = TYMED_ISTREAM; // Сначала пробуем IStream
+				if (S_OK == pDataObject->GetData(&fmtetc, &stgMedium) || !stgMedium.pstm) {
+					IStream* pFile = stgMedium.pstm;
+
+					hFile = FileStart(lbActive, lbWide, pDesc->fgd[mn_CurFile].cFileName);
+					if (hFile != INVALID_HANDLE_VALUE) {
+						while ((hr = pFile->Read(cBuffer, BufferSize, &dwRead)) == S_OK && dwRead) {
+							if (FileWrite(hFile, dwRead, cBuffer) != S_OK)
+								break;
+						}
+						SafeCloseHandle(hFile);
+						if (FAILED(hr))
+							DisplayLastError(_T("Can't read medium!"), hr);
+					}
+					continue;
+				}
+				MBoxA(_T("Drag object does not contains known medium!"));
+			}
+			GlobalUnlock(hDesc);
+			gConEmu.DnDstep(NULL);
+			return S_OK;
+		}
+		// Outlook 2k передает ANSI!
+		fmtetc.cfFormat = RegisterClipboardFormat(CFSTR_FILEDESCRIPTORA);
+		if (S_OK == pDataObject->GetData(&fmtetc, &stgMedium)) {
+			lbWide = FALSE;
+			HGLOBAL hDesc = stgMedium.hGlobal;
+			FILEGROUPDESCRIPTORA *pDesc = (FILEGROUPDESCRIPTORA*)GlobalLock(hDesc);
+			fmtetc.cfFormat = RegisterClipboardFormat(CFSTR_FILECONTENTS);
+
+			mn_AllFiles = pDesc->cItems;
+			
+			for (mn_CurFile = 0; mn_CurFile<mn_AllFiles; mn_CurFile++) {
+				fmtetc.lindex = mn_CurFile;
+
+				fmtetc.tymed = TYMED_ISTREAM; // Сначала пробуем IStream
+				if (S_OK == pDataObject->GetData(&fmtetc, &stgMedium) || !stgMedium.pstm) {
+					IStream* pFile = stgMedium.pstm;
+
+					hFile = FileStart(lbActive, lbWide, pDesc->fgd[mn_CurFile].cFileName);
+					if (hFile != INVALID_HANDLE_VALUE) {
+						while ((hr = pFile->Read(cBuffer, BufferSize, &dwRead)) == S_OK && dwRead) {
+							if (FileWrite(hFile, dwRead, cBuffer) != S_OK)
+								break;
+						}
+						SafeCloseHandle(hFile);
+						if (FAILED(hr))
+							DisplayLastError(_T("Can't read medium!"), hr);
+					}
+					continue;
+				}
+				MBoxA(_T("Drag object does not contains known medium!"));
+			}
+			GlobalUnlock(hDesc);
+			gConEmu.DnDstep(NULL);
+			return S_OK;
+		}
+
+		MBoxA(_T("Drag object does not contains known formats!"));
+		return S_OK;
 	}
 
 	hDrop = (HDROP)stgMedium.hGlobal;
 
 	int iQuantity = DragQueryFile(hDrop,0xFFFFFFFF,NULL,NULL);
-	if (iQuantity < 1) {
-		return S_OK; // ничего нет, выходим
-	}
+	ZeroMemory(szStr,sizeof(WCHAR)*MAX_PATH);
 
 	gConEmu.DnDstep(_T("DnD: Drop starting"));
-	
-	// Если создавать линки - делаем сразу и выходим
-	if (*pdwEffect == DROPEFFECT_LINK) {
-		hr = DropLinks(hDrop, iQuantity, lbActive);
-		return hr;
-	}
 
 	{
-		SHFILEOPSTRUCT *fop  = new SHFILEOPSTRUCT;
-		memset(fop, 0, sizeof(SHFILEOPSTRUCT));
-		fop->hwnd = ghWnd;
+		SHFILEOPSTRUCT fop  = {m_hWnd};
+		
+		ScreenToClient(m_hWnd, (LPPOINT)&pt);
+		pt.x/=gSet.LogFont.lfWidth;
+		pt.y/=gSet.LogFont.lfHeight;
 
 		if (lbActive) 
 		{
-			fop->pTo=new WCHAR[lstrlenW(m_pfpi->pszActivePath)+3];
-			wsprintf((LPWSTR)fop->pTo, _T("%s\\\0\0"), m_pfpi->pszActivePath);
+			if (mb_selfdrag) {
+				*pdwEffect = DROPEFFECT_NONE;
+				return S_OK; // Тащат внутри одной копии FAR с активной на активную, т.е. ничего не двигается
+			}
+				
+			if (!*m_pfpi->pszActivePath)
+				return S_OK;
+			if (m_pfpi->pszActivePath[lstrlen(m_pfpi->pszActivePath)-1]==_T('\\'))
+				m_pfpi->pszActivePath[lstrlen(m_pfpi->pszActivePath)-1] = 0;
+			fop.pTo=new WCHAR[lstrlenW(m_pfpi->pszActivePath)+3];
+			wsprintf((LPWSTR)fop.pTo, _T("%s\\\0\0"), m_pfpi->pszActivePath);
 		}
 		else
 		{
-			fop->pTo=new WCHAR[lstrlenW(m_pfpi->pszPassivePath)+3];
-			wsprintf((LPWSTR)fop->pTo, _T("%s\\\0\0"), m_pfpi->pszPassivePath);
+			if (mb_selfdrag /*&& gSet.isDropEnabled==2*/ && (*pdwEffect == DROPEFFECT_COPY || *pdwEffect == DROPEFFECT_MOVE)) {
+				wchar_t mcr[16];
+				lstrcpyW(mcr, (*pdwEffect == DROPEFFECT_MOVE) ? L"F6" : L"F5");
+				if (gSet.isDropEnabled==2)
+					lstrcatW(mcr, L" Enter");
+
+				gConEmu.PostMacro(mcr);
+
+				return S_OK; // Тащим внутри ФАРа
+			}
+			
+			if (!*m_pfpi->pszPassivePath) return 1;
+			if (m_pfpi->pszPassivePath[lstrlen(m_pfpi->pszPassivePath)-1]==_T('\\'))
+				m_pfpi->pszPassivePath[lstrlen(m_pfpi->pszPassivePath)-1] = 0;
+			fop.pTo=new WCHAR[lstrlenW(m_pfpi->pszPassivePath)+3];
+			wsprintf((LPWSTR)fop.pTo, _T("%s\\\0\0"), m_pfpi->pszPassivePath);
 		}
 
 		int nCount = MAX_DROP_PATH*iQuantity+iQuantity+1;
-		fop->pFrom=new WCHAR[nCount];
-		ZeroMemory((void*)fop->pFrom,sizeof(WCHAR)*nCount);
+		fop.pFrom=new WCHAR[nCount];
+		ZeroMemory((void*)fop.pFrom,sizeof(WCHAR)*nCount);
 
-		WCHAR *curr=(WCHAR *)fop->pFrom;
+		WCHAR *curr=(WCHAR *)fop.pFrom;
 
 		for ( int i = 0 ; i < iQuantity; i++ )
 		{
@@ -394,80 +354,65 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop (IDataObject * pDataObject,DWORD grfKe
 		
 		
 		if (*pdwEffect == DROPEFFECT_MOVE)
-			fop->wFunc=FO_MOVE;
-		else
-			fop->wFunc=FO_COPY;
+			fop.wFunc=FO_MOVE;
+		else if (*pdwEffect == DROPEFFECT_COPY)
+			fop.wFunc=FO_COPY;
+		else {
+			LPCTSTR pszTitle = _tcsrchr(fop.pFrom, _T('\\'));
+			if (pszTitle) pszTitle++; else pszTitle = fop.pFrom;
 
-		//fop->fFlags=FOF_SIMPLEPROGRESS; -- пусть полностью показывает
-		gConEmu.DnDstep(_T("DnD: Shell operation starting"));
+			int nLen = _tcslen(fop.pTo)+2+_tcslen(pszTitle)+4;
+			TCHAR *szLnkPath = new TCHAR[nLen];
+			_tcscpy(szLnkPath, fop.pTo);
+			if (szLnkPath[_tcslen(szLnkPath)-1] != _T('\\'))
+				_tcscat(szLnkPath, _T("\\"));
+			_tcscat(szLnkPath, pszTitle);
+			_tcscat(szLnkPath, _T(".lnk"));
 
-		ThInfo th;
-		th.hThread = CreateThread(NULL, 0, CDragDrop::ShellOpThreadProc, fop, 0, &th.dwThreadId);
-		if (th.hThread == NULL) {
-			DisplayLastError(_T("Can't create shell operation thread!"));
-		} else {
-			TryEnterCriticalSection(&m_CrThreads);
-			m_OpThread.push_back(th);
-			LeaveCriticalSection(&m_CrThreads);
+			try {
+				hr = CreateLink(fop.pFrom, szLnkPath, pszTitle);
+			} catch(...) {
+				hr = E_UNEXPECTED;
+			}
+			if (hr!=S_OK)
+				DisplayLastError(_T("Can't create link!"), hr);
+			
+			if (fop.pTo) delete fop.pTo;
+			if (fop.pFrom) delete fop.pFrom;
+			delete szLnkPath;
+			*pdwEffect = DROPEFFECT_NONE;
+			return S_OK;
 		}
+
+		//fop.fFlags=FOF_SIMPLEPROGRESS; -- пусть полностью показывает
+		gConEmu.DnDstep(_T("DnD: Shell operation starting"));
+		
+		// Собственно операция копирования/перемещения...
+		try {
+			hr = SHFileOperation(&fop);
+		} catch(...) {
+			hr = E_UNEXPECTED;
+		}
+		if (hr != S_OK) {
+			if (hr == 7 || hr == ERROR_CANCELLED)
+				MBoxA(_T("Shell operation was cancelled"));
+			else
+				DisplayLastError(_T("Shell operation failed"), hr);
+		}
+		
+		if (fop.pTo) delete fop.pTo;
+		if (fop.pFrom) delete fop.pFrom;
 		
 		gConEmu.DnDstep(NULL);
 	}
 	return S_OK; //1;
 }
 
-DWORD CDragDrop::ShellOpThreadProc(LPVOID lpParameter)
-{
-	DWORD dwThreadId = GetCurrentThreadId();
-	SHFILEOPSTRUCT *fop = (SHFILEOPSTRUCT *)lpParameter;
-	HRESULT hr = S_OK;
-	CDragDrop* pDragDrop = gConEmu.DragDrop;
-
-	// Собственно операция копирования/перемещения...
-	try {
-		fop->fFlags = 0; //FOF_SIMPLEPROGRESS; -- пусть полную инфу показывает
-
-		hr = SHFileOperation(fop);
-	} catch(...) {
-		hr = E_UNEXPECTED;
-	}
-	if (hr != S_OK) {
-		if (hr == 7 || hr == ERROR_CANCELLED)
-			MBoxA(_T("Shell operation was cancelled"));
-		else
-			DisplayLastError(_T("Shell operation failed"), hr);
-	}
-	
-	if (fop->pTo) delete fop->pTo;
-	if (fop->pFrom) delete fop->pFrom;
-	delete fop;
-	
-	TryEnterCriticalSection(&pDragDrop->m_CrThreads);
-	std::vector<ThInfo>::iterator iter = pDragDrop->m_OpThread.begin();
-	while (iter != pDragDrop->m_OpThread.end())
-	{
-		if (dwThreadId == iter->dwThreadId)
-		{
-			CloseHandle(iter->hThread);
-			iter = pDragDrop->m_OpThread.erase ( iter );
-			break;
-		}
-	}
-	LeaveCriticalSection(&pDragDrop->m_CrThreads);
-
-	return 0;
-}
-
 HRESULT STDMETHODCALLTYPE CDragDrop::DragOver(DWORD grfKeyState,POINTL pt,DWORD * pdwEffect)
 {
 	if (!gSet.isDropEnabled && !gConEmu.isDragging()) {
-		*pdwEffect = DROPEFFECT_NONE;
 		gConEmu.DnDstep(_T("DnD: Drop disabled"));
-		return S_FALSE;
-	}
-	if (m_pfpi==NULL) {
-		*pdwEffect = DROPEFFECT_NONE;
-		return S_OK;
+		return -1;
 	}
 
 	//gConEmu.DnDstep(_T("DnD: DragOver starting"));
@@ -477,6 +422,9 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragOver(DWORD grfKeyState,POINTL pt,DWORD 
 	pt.y/=gSet.LogFont.lfHeight;
 
 	BOOL lbActive = FALSE, lbPassive = FALSE;
+	if (m_pfpi==NULL)
+		*pdwEffect = DROPEFFECT_NONE;
+	else
 	if (((lbActive = PtInRect(&(m_pfpi->ActiveRect), *(LPPOINT)&pt)) && m_pfpi->pszActivePath[0] && !mb_selfdrag) ||
 		((lbPassive = PtInRect(&(m_pfpi->PassiveRect), *(LPPOINT)&pt)) && (m_pfpi->pszPassivePath[0] || mb_selfdrag)))
 	{
@@ -502,67 +450,59 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragOver(DWORD grfKeyState,POINTL pt,DWORD 
 	return 0;
 }
 
-#ifdef _DEBUG
-void CDragDrop::EnumDragFormats(IDataObject * pDataObject)
-{
-	if (!mb_selfdrag)
-		return;
-		
-	HRESULT hr = S_OK;
-	IEnumFORMATETC *pEnum = NULL;
-	FORMATETC fmt[20];
-	STGMEDIUM stg[20];
-	LPCWSTR psz[20];
-	TCHAR szName[20][MAX_PATH];
-	ULONG nCnt = sizeof(fmt)/sizeof(*fmt);
-	UINT i;
-
-		memset(fmt, 0, sizeof(fmt));
-		memset(stg, 0, sizeof(stg));
-		memset(psz, 0, sizeof(psz));
-
-	hr = pDataObject->EnumFormatEtc(DATADIR_GET,&pEnum);
-	if (hr==S_OK) {
-		
-		
-		hr = pEnum->Next(nCnt, fmt, &nCnt);
-
-		pEnum->Release();
-
-		/*
-		CFSTR_PREFERREDDROPEFFECT ?
-		*/
-		for (i=0; i<nCnt; i++) {
-			szName[i][0] = 0;
-			if (!GetClipboardFormatName(fmt[i].cfFormat, szName[i], MAX_PATH))
-				wsprintf(szName[i], L"ClipFormatID=%i", fmt[i].cfFormat);
-				
-			stg[i].tymed = TYMED_HGLOBAL;
-			hr = pDataObject->GetData(fmt+i, stg+i);
-			if (hr == S_OK && stg[i].hGlobal)
-				psz[i] = (LPCWSTR)GlobalLock(stg[i].hGlobal);
-		}
-		
-		for (i=0; i<nCnt; i++) {
-			if (psz[i] && stg[i].hGlobal)
-				GlobalUnlock(stg[i].hGlobal);
-		}
-	}
-	hr = S_OK;
-}
-#endif
-
 HRESULT STDMETHODCALLTYPE CDragDrop::DragEnter(IDataObject * pDataObject,DWORD grfKeyState,POINTL pt,DWORD * pdwEffect)
 {
 	mb_selfdrag = (pDataObject == mp_DataObject);
 
-	#ifdef _DEBUG
-	EnumDragFormats(pDataObject);
-	#endif
+#ifdef _DEBUG
+	if (!mb_selfdrag) {
+		HRESULT hr = S_OK;
+		IEnumFORMATETC *pEnum = NULL;
+		FORMATETC fmt[20];
+		STGMEDIUM stg[20];
+		LPCWSTR psz[20];
+		TCHAR szName[20][MAX_PATH];
+		ULONG nCnt = sizeof(fmt)/sizeof(*fmt);
+		UINT i;
 
-	if (gSet.isDropEnabled || mb_selfdrag)
+			memset(fmt, 0, sizeof(fmt));
+			memset(stg, 0, sizeof(stg));
+			memset(psz, 0, sizeof(psz));
+
+		hr = pDataObject->EnumFormatEtc(DATADIR_GET,&pEnum);
+		if (hr==S_OK) {
+			
+			
+			hr = pEnum->Next(nCnt, fmt, &nCnt);
+
+			pEnum->Release();
+
+			/*
+			CFSTR_PREFERREDDROPEFFECT ?
+			*/
+			for (i=0; i<nCnt; i++) {
+				szName[i][0] = 0;
+				if (!GetClipboardFormatName(fmt[i].cfFormat, szName[i], MAX_PATH))
+					wsprintf(szName[i], L"ClipFormatID=%i", fmt[i].cfFormat);
+					
+				stg[i].tymed = TYMED_HGLOBAL;
+				hr = pDataObject->GetData(fmt+i, stg+i);
+				if (hr == S_OK && stg[i].hGlobal)
+					psz[i] = (LPCWSTR)GlobalLock(stg[i].hGlobal);
+			}
+			
+			for (i=0; i<nCnt; i++) {
+				if (psz[i] && stg[i].hGlobal)
+					GlobalUnlock(stg[i].hGlobal);
+			}
+		}
+		hr = S_OK;
+	}
+#endif
+
+	if (gSet.isDropEnabled || gConEmu.isDragging())
 	{
-		if (!mb_selfdrag) // при "своем" драге - информация уже получена
+		if (!gConEmu.isDragging()) // при "своем" драге - информация уже получена
 			RetrieveDragToInfo(pDataObject);
 	} else {
 		gConEmu.DnDstep(_T("DnD: Drop disabled"));
@@ -609,16 +549,7 @@ void CDragDrop::RetrieveDragToInfo(IDataObject * pDataObject)
 							pipe.Read(m_pfpi, cbStructSize, &cbBytesRead);
 
 							m_pfpi->pszActivePath = (WCHAR*)(((char*)m_pfpi)+m_pfpi->ActivePathShift);
-							//Slash на конце нам не нужен
-							int nPathLen = lstrlenW( m_pfpi->pszActivePath );
-							if (nPathLen>0 && m_pfpi->pszActivePath[nPathLen-1]==_T('\\'))
-								m_pfpi->pszActivePath[nPathLen-1] = 0;
-							
 							m_pfpi->pszPassivePath = (WCHAR*)(((char*)m_pfpi)+m_pfpi->PassivePathShift);
-							//Slash на конце нам не нужен
-							nPathLen = lstrlenW( m_pfpi->pszPassivePath );
-							if (nPathLen>0 && m_pfpi->pszPassivePath[nPathLen-1]==_T('\\'))
-								m_pfpi->pszPassivePath[nPathLen-1] = 0;
 						}
 					}
 				}
@@ -695,8 +626,6 @@ void CDragDrop::Drag()
 	gConEmu.mouse.state |= (gConEmu.mouse.state & DRAG_R_ALLOWED) ? DRAG_R_STARTED : DRAG_L_STARTED;
 
 	MCHKHEAP
-	
-	if (m_pfpi) {free(m_pfpi); m_pfpi=NULL;}
 
 	CConEmuPipe pipe;
 	if (pipe.Init(_T("CDragDrop::Drag")))
