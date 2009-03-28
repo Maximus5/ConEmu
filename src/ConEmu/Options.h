@@ -35,6 +35,7 @@ public:
     bool isCursorColor;
     char isRClickSendKey;
     bool isSentAltEnter;
+	bool isMinToTray;
     bool isForceMonospace, isTTF;
     bool isUpdConHandle;
     BYTE isDragEnabled;

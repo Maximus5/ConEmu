@@ -29,7 +29,7 @@ class TrayIcon;
 extern TrayIcon Icon;
 extern TCHAR temp[MAX_PATH];
 
-extern bool gbNoDblBuffer;
+extern BOOL gbNoDblBuffer;
 
 #ifdef _DEBUG
 extern char gsz_MDEBUG_TRAP_MSG[3000];
@@ -39,7 +39,7 @@ extern HWND gh_MDEBUG_TRAP_PARENT_WND;
 
 
 #ifdef MSGLOGGER
-	extern bool bBlockDebugLog, bSendToDebugger, bSendToFile;
+	extern BOOL bBlockDebugLog, bSendToDebugger, bSendToFile;
 #endif
 
 #ifdef _DEBUG

@@ -136,8 +136,8 @@ BEGIN
                     WS_TABSTOP,52,202,177,12
     EDITTEXT        tDarker,233,202,30,11,ES_AUTOHSCROLL | ES_NUMBER | NOT 
                     WS_BORDER,WS_EX_STATICEDGE
-    CONTROL         "&Send AltEnter to application",cbSendAE,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,10,153,125,8
+    CONTROL         "AltEnter",cbSendAE,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,10,153,48,8
     CONTROL         "Enable Tabs",cbTabs,"Button",BS_AUTO3STATE | WS_TABSTOP,
                     154,112,72,8
     GROUPBOX        "Keyboard and mouse",IDC_STATIC,4,129,136,39
@@ -159,9 +159,10 @@ BEGIN
                     39,10
     GROUPBOX        "Placement",IDC_STATIC,270,172,53,50
     GROUPBOX        "Position",IDC_STATIC,263,50,60,50,WS_DISABLED
-    CONTROL         "Cascade",rCascade,"Button",BS_AUTORADIOBUTTON | WS_DISABLED,268,87,44,
-                    10
-    CONTROL         "Fixed",rFixed,"Button",BS_AUTORADIOBUTTON | WS_DISABLED,268,61,33,10
+    CONTROL         "Cascade",rCascade,"Button",BS_AUTORADIOBUTTON | 
+                    WS_DISABLED,268,87,44,10
+    CONTROL         "Fixed",rFixed,"Button",BS_AUTORADIOBUTTON | WS_DISABLED,
+                    268,61,33,10
     EDITTEXT        tWndX,268,72,18,11,ES_AUTOHSCROLL | ES_NUMBER | NOT 
                     WS_BORDER,WS_EX_STATICEDGE
     EDITTEXT        tWndY,296,72,18,11,ES_AUTOHSCROLL | ES_NUMBER | NOT 
@@ -184,6 +185,8 @@ BEGIN
                     WS_TABSTOP
     CONTROL         "ConMan",cbConMan,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
                     274,235,43,10
+    CONTROL         "Min 2 tray",cbMinToTray,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,67,153,47,10
 END
 
 IDD_DIALOG2 DIALOGEX 0, 0, 328, 246
@@ -354,8 +357,9 @@ CAPTION "Settings..."
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     DEFPUSHBUTTON   "Save settings",bSaveSettings,268,283,70,14
-    CONTROL         "Always update con. handle (ConMan, Telnet)",cbAutoConHandle,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,285,168,8
+    CONTROL         "Always update con. handle (ConMan, Telnet)",
+                    cbAutoConHandle,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,
+                    285,168,8
     CONTROL         "Tab1",tabMain,"SysTabControl32",WS_TABSTOP,4,4,334,276
 END
 
@@ -464,10 +468,13 @@ STRINGTABLE DISCARDABLE
 BEGIN
     cbDragL                 "Allow drag with left mouse button"
     cbDragR                 "Allow drag with right mouse button"
+    cbConMan                "Turn on ConMan features (multiwindow,\ntoolbar, alternative console)\nconman.dll, hook.dll, infis.dll required\nConEmu restart required"
 END
 
 STRINGTABLE DISCARDABLE 
 BEGIN
+    tWndWidth               "Width of console window\nThis is in characters"
+    tWndHeight              "Height of console window\nThis is in characters"
     cbSendAE                "When is on, You can't enter fullscreen mode from keyboard,\nbut You can use 'AltEnter' for macros in FAR"
     cbDnDCopy               "Forced 'Copy' action as default,\nYou can use Ctrl, Shift or Alt\nduring drag to change action"
 END
@@ -475,11 +482,13 @@ END
 STRINGTABLE DISCARDABLE 
 BEGIN
     cbRClick                "Off - all RClicks passed to console\nOn - Apps passed to console instead of RClick\n3s - Short RClick passed, Long RClick -> Apps"
-    cbConMan "Turn on ConMan features (multiwindow,\ntoolbar, alternative console)\nconman.dll, hook.dll, infis.dll required\nConEmu restart required"
-    tWndX "Upper left corner of ConEmu in Normal mode\nThis is in pixels"
-    tWndY "Upper left corner of ConEmu in Normal mode\nThis is in pixels"
-    tWndWidth "Width of console window\nThis is in characters"
-    tWndHeight "Height of console window\nThis is in characters"
+	cbMinToTray "Auto minimize to tray"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    tWndX                   "Upper left corner of ConEmu in Normal mode\nThis is in pixels"
+    tWndY                   "Upper left corner of ConEmu in Normal mode\nThis is in pixels"
 END
 
 #endif    // English (U.S.) resources

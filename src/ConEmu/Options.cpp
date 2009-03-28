@@ -80,6 +80,7 @@ void CSettings::InitSettings()
     isTryToCenter = false;
 	isTabFrame = true;
 	isForceMonospace = false; isTTF = false;
+	isMinToTray = false;
 	
 	Registry RegConColors, RegConDef;
 	if (RegConColors.OpenKey(_T("Console"), KEY_READ))
@@ -191,6 +192,7 @@ void CSettings::LoadSettings()
         reg.Load(_T("Experimental"), &isFixFarBorders);
         reg.Load(_T("RightClick opens context menu"), &isRClickSendKey);
         reg.Load(_T("AltEnter"), &isSentAltEnter);
+		reg.Load(_T("Min2Tray"), &isMinToTray);
         reg.Load(_T("BackGround Image show"), &isShowBgImage);
         reg.Load(_T("FontBold"), &isBold);
         reg.Load(_T("FontItalic"), &isItalic);
@@ -350,6 +352,7 @@ BOOL CSettings::SaveSettings()
             reg.Save(_T("Experimental"), isFixFarBorders);
             reg.Save(_T("RightClick opens context menu"), isRClickSendKey);
             reg.Save(_T("AltEnter"), isSentAltEnter);
+			reg.Save(_T("Min2Tray"), isMinToTray);
             reg.Save(_T("Dnd"), isDragEnabled);
             reg.Save(_T("DndLKey"), nLDragKey);
 			reg.Save(_T("DndRKey"), nRDragKey);
@@ -587,6 +590,7 @@ LRESULT CSettings::OnInitDialog()
 	if (isCursorColor) CheckDlgButton(hMain, cbCursorColor, BST_CHECKED);
 	if (isRClickSendKey) CheckDlgButton(hMain, cbRClick, (isRClickSendKey==1) ? BST_CHECKED : BST_INDETERMINATE);
 	if (isSentAltEnter) CheckDlgButton(hMain, cbSendAE, BST_CHECKED);
+	if (isMinToTray) CheckDlgButton(hMain, cbMinToTray, BST_CHECKED);
 
 	if (isDragEnabled) {
 		//CheckDlgButton(hMain, cbDragEnabled, BST_CHECKED);
@@ -840,6 +844,10 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
     case cbSendAE:
         isSentAltEnter = !isSentAltEnter;
         break;
+
+	case cbMinToTray:
+		isMinToTray = !isMinToTray;
+		break;
 
     /*case cbDragEnabled:
 	    if (IsDlgButtonChecked(hMain, cbDragEnabled) == BST_UNCHECKED) {

@@ -3,13 +3,13 @@
 
 
 #ifdef MSGLOGGER
-bool bBlockDebugLog=false, bSendToDebugger=false, bSendToFile=true;
+BOOL bBlockDebugLog=false, bSendToDebugger=false, bSendToFile=true;
 WCHAR *LogFilePath=NULL;
 #endif
 #ifndef _DEBUG
-bool gbNoDblBuffer = false;
+BOOL gbNoDblBuffer = false;
 #else
-bool gbNoDblBuffer = false;
+BOOL gbNoDblBuffer = false;
 #endif
 
 

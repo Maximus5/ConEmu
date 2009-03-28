@@ -91,7 +91,7 @@
 #define lbVisEOL                        1071
 #define lbVisEOF                        1072
 #define lbVisFore                       1073
-#define cbAutoConHandle                      1074
+#define cbAutoConHandle                 1074
 #define rCascade                        1075
 #define rFixed                          1076
 #define cbsConManActive                 1078
@@ -160,6 +160,7 @@
 #define cbDragL                         1504
 #define cbDragR                         1505
 #define cbConMan                        1506
+#define cbMinToTray                     1507
 
 // Next default values for new objects
 // 
@@ -167,7 +168,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        111
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1507
+#define _APS_NEXT_CONTROL_VALUE         1508
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

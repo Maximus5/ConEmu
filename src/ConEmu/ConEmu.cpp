@@ -79,6 +79,7 @@ CConEmuMain::CConEmuMain()
 	strcpy(ms_ViewerRus, "просмотр ");
 #endif
 	_tcscpy(ms_TempPanel, _T("{Temporary panel"));
+	MultiByteToWideChar(CP_ACP, 0, "{Временная панель", -1, ms_TempPanelRus, 32);
 
 
     Registry reg;
@@ -2024,7 +2025,7 @@ bool CConEmuMain::isFilePanel(bool abPluginAllowed/*=false*/)
 	}
     
 	// нужно для DragDrop
-	if (_tcsncmp(pszTitle, ms_TempPanel, _tcslen(ms_TempPanel)) == 0)
+	if (_tcsncmp(pszTitle, ms_TempPanel, _tcslen(ms_TempPanel)) == 0 || _tcsncmp(pszTitle, ms_TempPanelRus, _tcslen(ms_TempPanelRus)) == 0)
 		return true;
 
     if ((abPluginAllowed && pszTitle[0]==_T('{')) ||
@@ -2877,6 +2878,11 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
     case SC_RESTORE:
         if (wParam == SC_RESTORE)
             CheckRadioButton(ghOpWnd, rNormal, rFullScreen, rNormal);
+	case SC_MINIMIZE:
+		if (wParam == SC_MINIMIZE && gSet.isMinToTray) {
+			Icon.HideWindowToTray();
+			return 0;
+		}
 
     default:
         if (wParam != 0xF100)
