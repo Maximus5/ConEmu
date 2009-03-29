@@ -6,6 +6,21 @@
 typedef HWND (APIENTRY *FGetConsoleWindow)();
 typedef DWORD (APIENTRY *FGetConsoleProcessList)(LPDWORD,DWORD);
 
+#ifndef GA_PARENT
+/*
+ * The "real" ancestor window
+ */
+#define     GA_PARENT       1
+#define     GA_ROOT         2
+#define     GA_ROOTOWNER    3
+
+WINUSERAPI
+HWND
+WINAPI
+GetAncestor(
+    __in HWND hwnd,
+    __in UINT gaFlags);
+#endif
 
 //#if defined(__GNUC__)
 //extern "C" {
