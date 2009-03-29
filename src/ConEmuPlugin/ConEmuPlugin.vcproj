@@ -18,8 +18,8 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory="E:\Temp\VCProject\ConEmuDll\$(ConfigurationName)"
-			IntermediateDirectory="E:\Temp\VCProject\ConEmuDll\$(ConfigurationName)"
+			OutputDirectory="C:\Temp\VCProject\ConEmuDll\$(ConfigurationName)"
+			IntermediateDirectory="C:\Temp\VCProject\ConEmuDll\$(ConfigurationName)"
 			ConfigurationType="2"
 			CharacterSet="1"
 			>
@@ -257,8 +257,8 @@
 		</Configuration>
 		<Configuration
 			Name="DebugA|Win32"
-			OutputDirectory="E:\Temp\VCProject\ConEmuDll\$(ConfigurationName)"
-			IntermediateDirectory="E:\Temp\VCProject\ConEmuDll\$(ConfigurationName)"
+			OutputDirectory="c:\Temp\VCProject\ConEmuDll\$(ConfigurationName)"
+			IntermediateDirectory="c:\Temp\VCProject\ConEmuDll\$(ConfigurationName)"
 			ConfigurationType="2"
 			CharacterSet="1"
 			>
@@ -302,7 +302,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="version.lib"
-				OutputFile="E:\Source\FARUnicode\trunk\unicode_far\Debug.32.vc\plugins\conEmu\conemu.dll"
+				OutputFile="C:\Users\Maks\Desktop\#FAR180\plugins\conEmu\conemu.dll"
 				LinkIncremental="2"
 				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"

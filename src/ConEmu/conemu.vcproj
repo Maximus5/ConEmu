@@ -18,8 +18,8 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory="E:\Temp\VCProject\ConEmu\$(ConfigurationName)"
-			IntermediateDirectory="E:\Temp\VCProject\ConEmu\$(ConfigurationName)"
+			OutputDirectory="c:\Temp\VCProject\ConEmu\$(ConfigurationName)"
+			IntermediateDirectory="c:\Temp\VCProject\ConEmu\$(ConfigurationName)"
 			ConfigurationType="1"
 			CharacterSet="1"
 			>
@@ -253,8 +253,8 @@
 		</Configuration>
 		<Configuration
 			Name="DebugA|Win32"
-			OutputDirectory="E:\Temp\VCProject\ConEmu\$(ConfigurationName)"
-			IntermediateDirectory="E:\Temp\VCProject\ConEmu\$(ConfigurationName)"
+			OutputDirectory="C:\Temp\VCProject\ConEmu\$(ConfigurationName)"
+			IntermediateDirectory="C:\Temp\VCProject\ConEmu\$(ConfigurationName)"
 			ConfigurationType="1"
 			CharacterSet="1"
 			>
@@ -296,7 +296,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="comctl32.lib UxTheme.lib Shlwapi.lib version.lib"
-				OutputFile="E:\Source\FARUnicode\trunk\unicode_far\Debug.32.vc\ConEmu.exe"
+				OutputFile="C:\Users\Maks\Desktop\#FAR180\ConEmu.exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
 				SubSystem="2"

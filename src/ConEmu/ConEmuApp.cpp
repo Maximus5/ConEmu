@@ -3,7 +3,7 @@
 
 
 #ifdef MSGLOGGER
-BOOL bBlockDebugLog=false, bSendToDebugger=false, bSendToFile=true;
+BOOL bBlockDebugLog=false, bSendToDebugger=true, bSendToFile=false;
 WCHAR *LogFilePath=NULL;
 #endif
 #ifndef _DEBUG
@@ -92,8 +92,9 @@ void DebugLogMessage(HWND h, UINT m, WPARAM w, LPARAM l, BOOL posted, BOOL extra
         break;
     MSG1(WM_SETFOCUS);
     MSG2(WM_MOUSEMOVE);
-        wsprintfA(szLP, "%i:%i", GET_X_LPARAM(l), GET_Y_LPARAM(l));
-        break;
+        //wsprintfA(szLP, "%i:%i", GET_X_LPARAM(l), GET_Y_LPARAM(l));
+        //break;
+		return;
     MSG2(WM_RBUTTONDOWN);
         wsprintfA(szLP, "%i:%i", GET_X_LPARAM(l), GET_Y_LPARAM(l));
         break;

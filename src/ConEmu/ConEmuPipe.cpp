@@ -40,6 +40,8 @@ void CConEmuPipe::Close()
 		sLastOp[0] = 0;
 	}
 	MCHKHEAP
+
+	OutputDebugString(_T("Pipe::Close()\n"));
 }
 
 #define CREATEEVENT(fmt,h) \
@@ -60,6 +62,7 @@ BOOL CConEmuPipe::Init(LPCTSTR asOp, BOOL abSilent)
 
     if (!gConEmu.isFar() && !gConEmu.mn_TopProcessID) {
 	    gConEmu.DnDstep(_T("Pipe: FAR not active"));
+		OutputDebugString(_T("Pipe::FAR not active\n"));
 	    return FALSE;
 	}
 	
@@ -74,6 +77,18 @@ BOOL CConEmuPipe::Init(LPCTSTR asOp, BOOL abSilent)
 	
 	WCHAR szEventName[64];
 
+	CREATEEVENT(CONEMUALIVE, hEventAlive);
+	CREATEEVENT(CONEMUREADY, hEventReady);
+	if (!hEventAlive || !hEventReady) {
+		OutputDebugString(_T("ConEmu plugins is not installed\n"));
+		if (!abSilent) {
+			WCHAR szMsg[128];
+			swprintf(szMsg, _T("ConEmu plugin was not installed!\r\nFAR PID: %i"), nPID);
+			MBoxA(szMsg);
+		}
+		return FALSE;
+	}
+
 	CREATEEVENT(CONEMUDRAGFROM, hEventCmd[CMD_DRAGFROM]);
 	CREATEEVENT(CONEMUDRAGTO, hEventCmd[CMD_DRAGTO]);
 	CREATEEVENT(CONEMUREQTABS, hEventCmd[CMD_REQTABS]);
@@ -81,8 +96,6 @@ BOOL CConEmuPipe::Init(LPCTSTR asOp, BOOL abSilent)
 	CREATEEVENT(CONEMUPOSTMACRO, hEventCmd[CMD_POSTMACRO]);
 	CREATEEVENT(CONEMUDEFFONT, hEventCmd[CMD_DEFFONT]);
 	CREATEEVENT(CONEMUEXIT, hEventCmd[CMD_EXIT]);
-	CREATEEVENT(CONEMUALIVE, hEventAlive);
-	CREATEEVENT(CONEMUREADY, hEventReady);
 
 	MCHKHEAP
 
@@ -92,10 +105,13 @@ BOOL CConEmuPipe::Init(LPCTSTR asOp, BOOL abSilent)
 		!hEventCmd[CMD_POSTMACRO] || !hEventCmd[CMD_DEFFONT] || 
 		!hEventCmd[CMD_EXIT] )
 	{
+		OutputDebugString(_T("Create event failed\n"));
 		if (!abSilent)
 			MBoxA(_T("CreateEvent failed"));
 		return FALSE;
 	}
+
+	OutputDebugString(_T("Pipe:Initialized\n"));
 
 	return TRUE;
 }
@@ -116,6 +132,12 @@ BOOL CConEmuPipe::Execute(int nCmd)
 		MBoxA(szError);
 		return FALSE;
 	}
+
+	WCHAR szMsg[64]; swprintf(szMsg, _T("Pipe:Execute(%i)\n"), nCmd);
+	OutputDebugString(szMsg);
+
+	ResetEvent(hEventAlive);
+	ResetEvent(hEventReady);
 	SetEvent(hEventCmd[nCmd]);
 	MCHKHEAP
 	return TRUE;
@@ -133,6 +155,7 @@ BOOL CConEmuPipe::Read(LPVOID pData, DWORD nSize, DWORD* nRead)
 
 	if (hMapping==NULL) {
 		// Нужно инициализировать FileMapping
+		OutputDebugString(_T("Starts reading result\n"));
 		
 		lstrcpy(sLastOp, ms_LastOp);
 		
