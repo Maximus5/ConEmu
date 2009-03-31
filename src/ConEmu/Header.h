@@ -1,5 +1,8 @@
 #pragma once
 
+#define NEWRUNSTYLE
+//#undef NEWRUNSTYLE
+
 #include <windows.h>
 #include <Shlwapi.h>
 #include <vector>
@@ -54,9 +57,9 @@
 #endif
 
 
-#define MBox(rt) (int)MessageBox(NULL, rt, Title, MB_SYSTEMMODAL | MB_ICONINFORMATION)
-#define MBoxA(rt) (int)MessageBox(NULL, rt, _T("ConEmu"), MB_SYSTEMMODAL | MB_ICONINFORMATION)
-#define MBoxAssert(V) if ((V)==FALSE) { TCHAR szAMsg[MAX_PATH*2]; wsprintf(szAMsg, _T("Assertion(%s) at\n%s:%i"), #V, __FILE__, __LINE__); MBoxA(szAMsg); }
+#define MBox(rt) (int)MessageBox(gbMessagingStarted ? ghWnd : NULL, rt, Title, /*MB_SYSTEMMODAL |*/ MB_ICONINFORMATION)
+#define MBoxA(rt) (int)MessageBox(gbMessagingStarted ? ghWnd : NULL, rt, _T("ConEmu"), /*MB_SYSTEMMODAL |*/ MB_ICONINFORMATION)
+#define MBoxAssert(V) if ((V)==FALSE) { TCHAR szAMsg[MAX_PATH*2]; wsprintf(szAMsg, _T("Assertion (%s) at\n%s:%i"), _T(#V), _T(__FILE__), __LINE__); MBoxA(szAMsg); }
 #define isMeForeground() (GetForegroundWindow() == ghWnd || GetForegroundWindow() == ghOpWnd)
 #define isPressed(inp) HIBYTE(GetKeyState(inp))
 
@@ -119,7 +122,8 @@ void __forceinline DisplayLastError(LPCTSTR asLabel, DWORD dwError=0)
 	int nLen = _tcslen(asLabel)+64+(lpMsgBuf ? _tcslen((TCHAR*)lpMsgBuf) : 0);
 	TCHAR *out = new TCHAR[nLen];
 	wsprintf(out, _T("%s\nLastError=0x%08X\n%s"), asLabel, dw, lpMsgBuf);
-	MessageBox(ghWnd, out, gConEmu.GetTitle(), MB_SYSTEMMODAL | MB_ICONERROR);
+	if (gbMessagingStarted) SetForegroundWindow(ghWnd);
+	MessageBox(gbMessagingStarted ? ghWnd : NULL, out, gConEmu.GetTitle(), MB_SYSTEMMODAL | MB_ICONERROR);
 	MCHKHEAP
 	LocalFree(lpMsgBuf);
 	delete out;

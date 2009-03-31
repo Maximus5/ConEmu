@@ -13,6 +13,7 @@ extern CConEmuMain gConEmu;
 //extern TCHAR Title[0x400];
 //extern bool isLBDown, /*isInDrag,*/ isDragProcessed;
 extern HWND ghWnd, ghConWnd, ghWndDC, ghOpWnd, ghWndApp;
+extern BOOL gbMessagingStarted;
 class TabBarClass;
 extern TabBarClass TabBar;
 

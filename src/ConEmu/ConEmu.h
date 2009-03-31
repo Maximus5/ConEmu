@@ -136,6 +136,7 @@ protected:
 	CVirtualConsole *mp_VCon[MAX_CONSOLE_COUNT], *pVCon;
 	int mn_ActiveCon; // в планах - убить m_ActiveConmanIDX
 	// Registered messages
+	UINT mn_MsgPostCreate;
 	UINT mn_MsgPostCopy;
 
 public:
@@ -161,6 +162,7 @@ public:
 	static RECT CalcMargins(enum ConEmuMargins mg);
 	static RECT CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFrom, RECT* prDC=NULL);
 	bool CheckBufferSize();
+	void ConsoleCreated(HWND hConWnd);
 	CVirtualConsole* CreateCon();
 	//COORD ConsoleSizeFromWindow(RECT* arect = NULL, bool frameIncluded = false, bool alreadyClient = false);
 	//RECT ConsoleOffsetRect();
@@ -193,9 +195,8 @@ public:
 	void PaintGaps(HDC hDC=NULL);
 	void PostCopy(wchar_t* apszMacro, BOOL abRecieved=FALSE);
 	void PostMacro(LPCWSTR asMacro);
-	void PostCreate();
+	void PostCreate(BOOL abRecieved=FALSE);
 	void ReSize();
-	void SetConParent();
 	void SetConsoleWindowSize(const COORD& size, bool updateInfo);
 	bool SetWindowMode(uint inMode);
 	void ShowSysmenu(HWND Wnd, HWND Owner, int x, int y);

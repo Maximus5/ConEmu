@@ -1,19 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 10.00
-# Visual C++ Express 2008
+# Visual Studio 2008
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "conemu", "ConEmu\conemu.vcproj", "{EEE25AC6-D94D-472D-8D4A-3C6C382CFD3D}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ConEmuPlugin", "ConEmuPlugin\ConEmuPlugin.vcproj", "{21152801-8744-4787-83F4-BE4564A367B4}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "infis2008", "ConMan\infis\infis2008.vcproj", "{B5D9976D-DC73-4810-99C2-3A8637302E16}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "serverdll2008", "ConMan\server\serverdll2008.vcproj", "{870D7BC1-9799-48D8-B6A9-76EDDFD03A6F}"
-	ProjectSection(ProjectDependencies) = postProject
-		{B5D9976D-DC73-4810-99C2-3A8637302E16} = {B5D9976D-DC73-4810-99C2-3A8637302E16}
-		{1522D0B8-783D-4C78-9202-8C84089364F4} = {1522D0B8-783D-4C78-9202-8C84089364F4}
-	EndProjectSection
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "hook2008", "ConMan\hook\hook2008.vcproj", "{1522D0B8-783D-4C78-9202-8C84089364F4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -38,30 +28,6 @@ Global
 		{21152801-8744-4787-83F4-BE4564A367B4}.Pseudo_Debug|Win32.ActiveCfg = Pseudo_Debug|Win32
 		{21152801-8744-4787-83F4-BE4564A367B4}.Pseudo_Debug|Win32.Build.0 = Pseudo_Debug|Win32
 		{21152801-8744-4787-83F4-BE4564A367B4}.Release|Win32.ActiveCfg = Release|Win32
-		{B5D9976D-DC73-4810-99C2-3A8637302E16}.Debug|Win32.ActiveCfg = Debug|Win32
-		{B5D9976D-DC73-4810-99C2-3A8637302E16}.Debug|Win32.Build.0 = Debug|Win32
-		{B5D9976D-DC73-4810-99C2-3A8637302E16}.DebugA|Win32.ActiveCfg = Debug|Win32
-		{B5D9976D-DC73-4810-99C2-3A8637302E16}.DebugA|Win32.Build.0 = Debug|Win32
-		{B5D9976D-DC73-4810-99C2-3A8637302E16}.Pseudo_Debug|Win32.ActiveCfg = Debug|Win32
-		{B5D9976D-DC73-4810-99C2-3A8637302E16}.Pseudo_Debug|Win32.Build.0 = Debug|Win32
-		{B5D9976D-DC73-4810-99C2-3A8637302E16}.Release|Win32.ActiveCfg = Release|Win32
-		{B5D9976D-DC73-4810-99C2-3A8637302E16}.Release|Win32.Build.0 = Release|Win32
-		{870D7BC1-9799-48D8-B6A9-76EDDFD03A6F}.Debug|Win32.ActiveCfg = Debug|Win32
-		{870D7BC1-9799-48D8-B6A9-76EDDFD03A6F}.Debug|Win32.Build.0 = Debug|Win32
-		{870D7BC1-9799-48D8-B6A9-76EDDFD03A6F}.DebugA|Win32.ActiveCfg = Debug|Win32
-		{870D7BC1-9799-48D8-B6A9-76EDDFD03A6F}.DebugA|Win32.Build.0 = Debug|Win32
-		{870D7BC1-9799-48D8-B6A9-76EDDFD03A6F}.Pseudo_Debug|Win32.ActiveCfg = Debug|Win32
-		{870D7BC1-9799-48D8-B6A9-76EDDFD03A6F}.Pseudo_Debug|Win32.Build.0 = Debug|Win32
-		{870D7BC1-9799-48D8-B6A9-76EDDFD03A6F}.Release|Win32.ActiveCfg = Release|Win32
-		{870D7BC1-9799-48D8-B6A9-76EDDFD03A6F}.Release|Win32.Build.0 = Release|Win32
-		{1522D0B8-783D-4C78-9202-8C84089364F4}.Debug|Win32.ActiveCfg = Debug|Win32
-		{1522D0B8-783D-4C78-9202-8C84089364F4}.Debug|Win32.Build.0 = Debug|Win32
-		{1522D0B8-783D-4C78-9202-8C84089364F4}.DebugA|Win32.ActiveCfg = Debug|Win32
-		{1522D0B8-783D-4C78-9202-8C84089364F4}.DebugA|Win32.Build.0 = Debug|Win32
-		{1522D0B8-783D-4C78-9202-8C84089364F4}.Pseudo_Debug|Win32.ActiveCfg = Debug|Win32
-		{1522D0B8-783D-4C78-9202-8C84089364F4}.Pseudo_Debug|Win32.Build.0 = Debug|Win32
-		{1522D0B8-783D-4C78-9202-8C84089364F4}.Release|Win32.ActiveCfg = Release|Win32
-		{1522D0B8-783D-4C78-9202-8C84089364F4}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

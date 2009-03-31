@@ -27,6 +27,7 @@ CSettings::CSettings()
 	memset(mn_CounterTick, 0, sizeof(*mn_CounterTick)*(tPerfInterval-gbPerformance));
 	hBgBitmap = NULL; bgBmp = MakeCoord(0,0); hBgDc = NULL; mh_Font = NULL; mh_Font2 = NULL;
 	memset(FontWidth, 0, sizeof(FontWidth));
+	nAttachPID = 0;
 
 	SetWindowThemeF = NULL;
 	mh_Uxtheme = LoadLibrary(_T("UxTheme.dll"));
@@ -1743,11 +1744,39 @@ HFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 
     DeleteObject(mh_Font2); mh_Font2 = NULL;
 
-    int width = gSet.FontSizeX2 ? gSet.FontSizeX2 : inFont->lfWidth;
+    int width = FontSizeX2 ? FontSizeX2 : inFont->lfWidth;
     mh_Font2 = CreateFont(abs(inFont->lfHeight), abs(width), 0, 0, FW_NORMAL,
-        0, 0, 0, DEFAULT_CHARSET, OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS, ANTIALIASED_QUALITY, 0, gSet.LogFont2.lfFaceName);
+        0, 0, 0, DEFAULT_CHARSET, OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS, ANTIALIASED_QUALITY, 0, LogFont2.lfFaceName);
 
-    return CreateFontIndirect(inFont);
+	HFONT hFont = CreateFontIndirect(inFont);
+
+	if (hFont) {
+		HDC hScreenDC = GetDC(0);
+		HDC hDC = CreateCompatibleDC(hScreenDC);
+		MBoxAssert(hDC);
+		if (hDC)
+		{
+			HFONT hOldF = (HFONT)SelectObject(hDC, hFont);
+			#pragma message("TODO: Для пропорциональных шрифтов наверное имеет смысл сохранять в реестре оптимальный lfWidth")
+			TEXTMETRIC tm;
+			GetTextMetrics(hDC, &tm);
+			if (isForceMonospace)
+				//Maximus - у Arial'а например MaxWidth слишком большой
+				LogFont.lfWidth = FontSizeX3 ? FontSizeX3 : tm.tmMaxCharWidth;
+			else
+				LogFont.lfWidth = tm.tmAveCharWidth;
+			LogFont.lfHeight = tm.tmHeight;
+
+			if (ghOpWnd) // устанавливать только при листании шрифта в настройке
+				UpdateTTF ( (tm.tmMaxCharWidth - tm.tmAveCharWidth)>2 );
+
+			SelectObject(hDC, hOldF);
+			DeleteDC(hDC);
+		}
+		ReleaseDC(0, hScreenDC);
+	}
+
+	return hFont;
 }
 
 LPCTSTR CSettings::GetCmd()
