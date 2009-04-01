@@ -91,7 +91,7 @@ REGEDIT4
 ;; ƒл€ внутреннего использовани€ (определ€ет размеры Tab контрола)
 ;"TabMargins"=hex:04,00,00,00,19,00,00,00,04,00,00,00,04,00,00,00
 ;; ‘орматирование заголовков
-"TabPanels"="Panels"
+"TabPanels"="Panels|Console"
 "TabEditor"="[%s]"
 "TabEditorModified"="[%s] *"
 "TabViewer"="{%s}"

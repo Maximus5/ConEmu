@@ -93,8 +93,8 @@ void CSettings::InitSettings()
 		{
 			ColorName[10] = i/10 + '0';
 			ColorName[11] = i%10 + '0';
-			if (!RegConColors.Load(ColorName, (DWORD *)&Colors[i]))
-				RegConDef.Load(ColorName, (DWORD *)&Colors[i]);
+			if (!RegConColors.Load(ColorName, Colors[i]))
+				RegConDef.Load(ColorName, Colors[i]);
 			Colors[i+0x10] = Colors[i]; // Умолчания
 		}
 
@@ -117,6 +117,7 @@ void CSettings::InitSettings()
     nIconID = IDI_ICON1;
     isRClickSendKey = 2;
 	_tcscpy(szTabPanels, _T("Panels"));
+	pszTabConsole = _tcscpy(szTabPanels+_tcslen(szTabPanels)+1, _T("Console"));
 	_tcscpy(szTabEditor, _T("[%s]"));
 	_tcscpy(szTabEditorModified, _T("[%s] *"));
 	/* */ _tcscpy(szTabViewer, _T("{%s}"));
@@ -163,82 +164,89 @@ void CSettings::LoadSettings()
 		{
 			ColorName[10] = i/10 + '0';
 			ColorName[11] = i%10 + '0';
-			reg.Load(ColorName, (DWORD *)&Colors[i]);
+			reg.Load(ColorName, Colors[i]);
 		}
 		memmove(acrCustClr, Colors, sizeof(COLORREF)*16);
-		reg.Load(_T("ExtendColors"), &isExtendColors);
-		reg.Load(_T("ExtendColorIdx"), &nExtendColor);
+		reg.Load(_T("ExtendColors"), isExtendColors);
+		reg.Load(_T("ExtendColorIdx"), nExtendColor);
 			if (nExtendColor<0 || nExtendColor>15) nExtendColor=14;
     
         reg.Load(_T("FontName"), inFont);
         reg.Load(_T("FontName2"), inFont2);
-        reg.Load(_T("CmdLine"), &psCmd);
-        reg.Load(_T("ConMan"), &isConMan);
+        reg.Load(_T("CmdLine"), psCmd);
+        reg.Load(_T("ConMan"), isConMan);
         reg.Load(_T("BackGround Image"), sBgImage);
-        reg.Load(_T("bgImageDarker"), &bgImageDarker);
-        reg.Load(_T("FontSize"), &inSize);
-        reg.Load(_T("FontSizeX"), &FontSizeX);
-		reg.Load(_T("FontSizeX3"), &FontSizeX3);
-        reg.Load(_T("FontSizeX2"), &FontSizeX2);
-        reg.Load(_T("FontCharSet"), &FontCharSet);
-        reg.Load(_T("Anti-aliasing"), &Quality);
-        reg.Load(_T("WindowMode"), &gConEmu.WindowMode);
-        reg.Load(_T("ConWnd X"), &wndX); /*if (wndX<-10) wndX = 0;*/
-        reg.Load(_T("ConWnd Y"), &wndY); /*if (wndY<-10) wndY = 0;*/
-        reg.Load(_T("ConWnd Width"), &wndWidth);
-        reg.Load(_T("ConWnd Height"), &wndHeight);
-		reg.Load(_T("16it Height"), &ntvdmHeight); if (ntvdmHeight<20) ntvdmHeight = 20;
-        reg.Load(_T("CursorType"), &isCursorV);
-        reg.Load(_T("CursorColor"), &isCursorColor);
-        reg.Load(_T("Experimental"), &isFixFarBorders);
-        reg.Load(_T("RightClick opens context menu"), &isRClickSendKey);
-        reg.Load(_T("AltEnter"), &isSentAltEnter);
-		reg.Load(_T("Min2Tray"), &isMinToTray);
-        reg.Load(_T("BackGround Image show"), &isShowBgImage);
-        reg.Load(_T("FontBold"), &isBold);
-        reg.Load(_T("FontItalic"), &isItalic);
-        reg.Load(_T("ForceMonospace"), &isForceMonospace);
-		reg.Load(_T("Proportional"), &isTTF);
-        reg.Load(_T("Update Console handle"), &isUpdConHandle);
-		reg.Load(_T("Dnd"), &isDragEnabled); 
+        reg.Load(_T("bgImageDarker"), bgImageDarker);
+        reg.Load(_T("FontSize"), inSize);
+        reg.Load(_T("FontSizeX"), FontSizeX);
+		reg.Load(_T("FontSizeX3"), FontSizeX3);
+        reg.Load(_T("FontSizeX2"), FontSizeX2);
+        reg.Load(_T("FontCharSet"), FontCharSet);
+        reg.Load(_T("Anti-aliasing"), Quality);
+        reg.Load(_T("WindowMode"), gConEmu.WindowMode);
+        reg.Load(_T("ConWnd X"), wndX); /*if (wndX<-10) wndX = 0;*/
+        reg.Load(_T("ConWnd Y"), wndY); /*if (wndY<-10) wndY = 0;*/
+        reg.Load(_T("ConWnd Width"), wndWidth);
+        reg.Load(_T("ConWnd Height"), wndHeight);
+		reg.Load(_T("16it Height"), ntvdmHeight); if (ntvdmHeight<20) ntvdmHeight = 20;
+        reg.Load(_T("CursorType"), isCursorV);
+        reg.Load(_T("CursorColor"), isCursorColor);
+        reg.Load(_T("Experimental"), isFixFarBorders);
+        reg.Load(_T("RightClick opens context menu"), isRClickSendKey);
+        reg.Load(_T("AltEnter"), isSentAltEnter);
+		reg.Load(_T("Min2Tray"), isMinToTray);
+        reg.Load(_T("BackGround Image show"), isShowBgImage);
+        reg.Load(_T("FontBold"), isBold);
+        reg.Load(_T("FontItalic"), isItalic);
+        reg.Load(_T("ForceMonospace"), isForceMonospace);
+		reg.Load(_T("Proportional"), isTTF);
+        reg.Load(_T("Update Console handle"), isUpdConHandle);
+		reg.Load(_T("Dnd"), isDragEnabled); 
 		isDropEnabled = (BYTE)(isDragEnabled ? 1 : 0); // ранее "DndDrop" не было, поэтому ставим default
-        reg.Load(_T("DndLKey"), &nLDragKey);
-		reg.Load(_T("DndRKey"), &nRDragKey);
-        reg.Load(_T("DndDrop"), &isDropEnabled);
-        reg.Load(_T("DefCopy"), &isDefCopy);
-        reg.Load(_T("DndSteps"), &isDnDsteps);
-        reg.Load(_T("GUIpb"), &isGUIpb);
-        reg.Load(_T("Tabs"), &isTabs);
-		reg.Load(_T("TabFrame"), &isTabFrame);
-		reg.Load(_T("TabMargins"), &rcTabMargins);
-        reg.Load(_T("ConVisible"), &isConVisible);
-        reg.Load(_T("SlideShowElapse"), &nSlideShowElapse);
-        reg.Load(_T("IconID"), &nIconID);
-		reg.Load(_T("TabPanels"), &szTabPanels);
-		reg.Load(_T("TabEditor"), &szTabEditor);
-		reg.Load(_T("TabEditorModified"), &szTabEditorModified);
-		reg.Load(_T("TabViewer"), &szTabViewer);
-		reg.Load(_T("TabLenMax"), &nTabLenMax);
-		reg.Load(_T("ScrollTitle"), &isScrollTitle);
-		reg.Load(_T("ScrollTitleLen"), &ScrollTitleLen);
-		reg.Load(_T("TryToCenter"), &isTryToCenter);
-		//reg.Load(_T("CreateAppWindow"), &isCreateAppWindow);
-		//reg.Load(_T("AllowDetach"), &isAllowDetach);
+        reg.Load(_T("DndLKey"), nLDragKey);
+		reg.Load(_T("DndRKey"), nRDragKey);
+        reg.Load(_T("DndDrop"), isDropEnabled);
+        reg.Load(_T("DefCopy"), isDefCopy);
+        reg.Load(_T("DndSteps"), isDnDsteps);
+        reg.Load(_T("GUIpb"), isGUIpb);
+        reg.Load(_T("Tabs"), isTabs);
+		reg.Load(_T("TabFrame"), isTabFrame);
+		reg.Load(_T("TabMargins"), rcTabMargins);
+        reg.Load(_T("ConVisible"), isConVisible);
+        reg.Load(_T("SlideShowElapse"), nSlideShowElapse);
+        reg.Load(_T("IconID"), nIconID);
+		reg.Load(_T("TabPanels"), szTabPanels);
+			WCHAR* pszVert = wcschr(szTabPanels, L'|');
+			if (!pszVert) {
+				if (wcslen(szTabPanels)>54) szTabPanels[54] = 0;
+				pszVert = szTabPanels + wcslen(szTabPanels);
+				wcscpy(pszVert+1, L"Console");
+			}
+			*pszVert = 0; pszTabConsole = pszVert+1;
+		reg.Load(_T("TabEditor"), szTabEditor);
+		reg.Load(_T("TabEditorModified"), szTabEditorModified);
+		reg.Load(_T("TabViewer"), szTabViewer);
+		reg.Load(_T("TabLenMax"), nTabLenMax);
+		reg.Load(_T("ScrollTitle"), isScrollTitle);
+		reg.Load(_T("ScrollTitleLen"), ScrollTitleLen);
+		reg.Load(_T("TryToCenter"), isTryToCenter);
+		//reg.Load(_T("CreateAppWindow"), isCreateAppWindow);
+		//reg.Load(_T("AllowDetach"), isAllowDetach);
 		
-		reg.Load(_T("Visualizer"), &isVisualizer);
-		reg.Load(_T("VizNormal"), &nVizNormal);
-		reg.Load(_T("VizFore"), &nVizFore);
-		reg.Load(_T("VizTab"), &nVizTab);
-		reg.Load(_T("VizEol"), &nVizEOL);
-		reg.Load(_T("VizEof"), &nVizEOF);
-		reg.Load(_T("VizTabCh"), (WORD*)&cVizTab);
-		reg.Load(_T("VizEolCh"), (WORD*)&cVizEOL);
-		reg.Load(_T("VizEofCh"), (WORD*)&cVizEOF);
+		reg.Load(_T("Visualizer"), isVisualizer);
+		reg.Load(_T("VizNormal"), nVizNormal);
+		reg.Load(_T("VizFore"), nVizFore);
+		reg.Load(_T("VizTab"), nVizTab);
+		reg.Load(_T("VizEol"), nVizEOL);
+		reg.Load(_T("VizEof"), nVizEOF);
+		reg.Load(_T("VizTabCh"), cVizTab);
+		reg.Load(_T("VizEolCh"), cVizEOL);
+		reg.Load(_T("VizEofCh"), cVizEOF);
 		
-		reg.Load(_T("MainTimerElapse"), &nMainTimerElapse);
-		reg.Load(_T("AffinityMask"), &nAffinity);
-		//reg.Load(_T("AdvLangChange"), &isAdvLangChange);
-		//reg.Load(_T("SkipFocusEvents"), &isSkipFocusEvents);
+		reg.Load(_T("MainTimerElapse"), nMainTimerElapse);
+		reg.Load(_T("AffinityMask"), nAffinity);
+		//reg.Load(_T("AdvLangChange"), isAdvLangChange);
+		//reg.Load(_T("SkipFocusEvents"), isSkipFocusEvents);
 		
         reg.CloseKey();
     }
@@ -1785,5 +1793,7 @@ LPCTSTR CSettings::GetCmd()
 		return psCurCmd;
 	if (psCmd && *psCmd)
 		return psCmd;
-	return _T("");
+	if (psCurCmd) free(psCurCmd);
+	psCurCmd = _tcsdup(BufferHeight == 0 ? _T("far") : _T("cmd"));
+	return psCurCmd;
 }

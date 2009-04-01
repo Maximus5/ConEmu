@@ -62,6 +62,7 @@
 #define MBoxAssert(V) if ((V)==FALSE) { TCHAR szAMsg[MAX_PATH*2]; wsprintf(szAMsg, _T("Assertion (%s) at\n%s:%i"), _T(#V), _T(__FILE__), __LINE__); MBoxA(szAMsg); }
 #define isMeForeground() (GetForegroundWindow() == ghWnd || GetForegroundWindow() == ghOpWnd)
 #define isPressed(inp) HIBYTE(GetKeyState(inp))
+#define countof(a) (sizeof((a))/(sizeof(*(a))))
 
 #define PTDIFFTEST(C,D) (((abs(C.x-LOWORD(lParam)))<D) && ((abs(C.y-HIWORD(lParam)))<D))
 
@@ -192,21 +193,21 @@ public:
 		Save(regKey, (const TCHAR *)value);
 	}
 
-	template <class T> bool Load(const TCHAR *regKey, T *value)
+	template <class T> bool Load(const TCHAR *regKey, T &value)
 	{
 		DWORD len = sizeof(T);
-		if (RegQueryValueEx(regMy, regKey, NULL, NULL, (LPBYTE)(value), &len) == ERROR_SUCCESS)
+		if (RegQueryValueEx(regMy, regKey, NULL, NULL, (LPBYTE)&(value), &len) == ERROR_SUCCESS)
 			return true;
 		return false;
 	}
-	bool Load(const TCHAR *regKey, TCHAR *value)
+	/*bool Load(const TCHAR *regKey, TCHAR *value, UINT nMaxLen)
 	{
-		DWORD len = MAX_PATH * sizeof(TCHAR);
+		DWORD len = nMaxLen * sizeof(TCHAR);
 		if (RegQueryValueEx(regMy, regKey, NULL, NULL, (LPBYTE)(value), &len) == ERROR_SUCCESS)
 			return true;
 		return false;
-	}
-	bool Load(const TCHAR *regKey, TCHAR **value)
+	}*/
+	/*bool Load(const TCHAR *regKey, TCHAR **value)
 	{
 		DWORD len = 0;
 		if (*value) {free(*value); *value = NULL;}
@@ -220,7 +221,7 @@ public:
 			**value = 0;
 		}
 		return false;
-	}
+	}*/
 };
 
 //------------------------------------------------------------------------

@@ -1,7 +1,7 @@
 #include "Header.h"
 
 #define VCURSORWIDTH 2
-#define HCURSORWIDTH 2
+#define HCURSORHEIGHT 2
 
 CVirtualConsole* CVirtualConsole::Create()
 {
@@ -1261,8 +1261,10 @@ void CVirtualConsole::UpdateCursor(bool& lRes)
 			//rect.top = (Cursor.y+1) * gSet.LogFont.lfHeight - MulDiv(gSet.LogFont.lfHeight, cinf.dwSize, 100);
 			rect.bottom = (Cursor.y+1) * gSet.LogFont.lfHeight;
 			rect.top = (Cursor.y * gSet.LogFont.lfHeight) /*+ 1*/;
-			if (cinf.dwSize<50)
-				rect.top = max(rect.top, (rect.bottom-HCURSORWIDTH));
+			//if (cinf.dwSize<50)
+			int nHeight = MulDiv(gSet.LogFont.lfHeight, cinf.dwSize, 100);
+			//if (nHeight < HCURSORHEIGHT) nHeight = HCURSORHEIGHT;
+			rect.top = max(rect.top, (rect.bottom-nHeight));
 		}
 		else
 		{
@@ -1629,10 +1631,10 @@ BOOL CVirtualConsole::StartProcess()
 		int nStep = 1;
 		while (nStep <= 2)
 		{
-			if (!*gSet.GetCmd()) {
+			/*if (!*gSet.GetCmd()) {
 				gSet.psCurCmd = _tcsdup(gSet.BufferHeight == 0 ? _T("far") : _T("cmd"));
 				nStep ++;
-			}
+			}*/
 
 			LPTSTR lpszCmd = (LPTSTR)gSet.GetCmd();
 			#ifdef _DEBUG
@@ -1678,7 +1680,7 @@ BOOL CVirtualConsole::StartProcess()
 				_tcscat(psz, pszErr);
 				if (psz[_tcslen(psz)-1]!=_T('\n')) _tcscat(psz, _T("\r\n"));
 				_tcscat(psz, gSet.GetCmd());
-				if (StrStrI(gSet.GetCmd(), gSet.BufferHeight == 0 ? _T("far.exe") : _T("cmd.exe"))==NULL) {
+				if (!gSet.psCurCmd && StrStrI(gSet.GetCmd(), gSet.BufferHeight == 0 ? _T("far.exe") : _T("cmd.exe"))==NULL) {
 					_tcscat(psz, _T("\r\n\r\n"));
 					_tcscat(psz, gSet.BufferHeight == 0 ? _T("Do You want to simply start far?") : _T("Do You want to simply start cmd?"));
 					nButtons |= MB_YESNO;

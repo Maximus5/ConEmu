@@ -403,7 +403,7 @@ BOOL CheckConIme()
     DWORD dwValue=1;
     Registry reg;
     if (reg.OpenKey(_T("Software\\ConEmu"), KEY_READ)) {
-	    if (!reg.Load(_T("StopWarningConIme"), &lbStopWarning))
+	    if (!reg.Load(_T("StopWarningConIme"), lbStopWarning))
 		    lbStopWarning = FALSE;
 		reg.CloseKey();
     }
@@ -411,7 +411,7 @@ BOOL CheckConIme()
     {
 	    if (reg.OpenKey(_T("Console"), KEY_READ))
 	    {
-	        if (!reg.Load(_T("LoadConIme"), &dwValue))
+	        if (!reg.Load(_T("LoadConIme"), dwValue))
 				dwValue = 1;
 	        reg.CloseKey();
 	        if (dwValue!=0) {

@@ -2437,6 +2437,7 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
         {
             gConEmu.isShowConsole = true;
             //ShowWindow(ghConWnd, SW_SHOWNORMAL);
+			if (gConEmu.setParent) SetParent(ghConWnd, 0);
             RECT rcCon, rcWnd; GetWindowRect(ghConWnd, &rcCon); GetWindowRect(ghWnd, &rcWnd);
             SetWindowPos(ghConWnd, HWND_TOPMOST, 
 	            rcWnd.right-rcCon.right+rcCon.left,rcWnd.bottom-rcCon.bottom+rcCon.top,0,0, SWP_NOSIZE|SWP_SHOWWINDOW);
@@ -2449,7 +2450,9 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
             gConEmu.isShowConsole = false;
             if (!gSet.isConVisible) ShowWindow(ghConWnd, SW_HIDE);
             //if (gConEmu.setParent) SetParent(ghConWnd, HDCWND);
+			if (setParent) SetParent(ghConWnd, setParent2 ? ghWnd : ghWndDC);
             if (!gSet.isConVisible) EnableWindow(ghConWnd, false);
+			SetFocus(ghWnd);
         }
         return 0;
     }
