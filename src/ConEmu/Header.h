@@ -1,8 +1,5 @@
 #pragma once
 
-#define NEWRUNSTYLE
-//#undef NEWRUNSTYLE
-
 #include <windows.h>
 #include <Shlwapi.h>
 #include <vector>
@@ -193,20 +190,20 @@ public:
 		Save(regKey, (const TCHAR *)value);
 	}
 
-	template <class T> bool Load(const TCHAR *regKey, T &value)
+	template <class T> bool Load(const TCHAR *regKey, T *value)
 	{
 		DWORD len = sizeof(T);
-		if (RegQueryValueEx(regMy, regKey, NULL, NULL, (LPBYTE)&(value), &len) == ERROR_SUCCESS)
-			return true;
-		return false;
-	}
-	/*bool Load(const TCHAR *regKey, TCHAR *value, UINT nMaxLen)
-	{
-		DWORD len = nMaxLen * sizeof(TCHAR);
 		if (RegQueryValueEx(regMy, regKey, NULL, NULL, (LPBYTE)(value), &len) == ERROR_SUCCESS)
 			return true;
 		return false;
-	}*/
+	}
+	bool Load(const TCHAR *regKey, TCHAR *value)
+	{
+		DWORD len = MAX_PATH * sizeof(TCHAR);
+		if (RegQueryValueEx(regMy, regKey, NULL, NULL, (LPBYTE)(value), &len) == ERROR_SUCCESS)
+			return true;
+		return false;
+	}
 	bool Load(const TCHAR *regKey, TCHAR **value)
 	{
 		DWORD len = 0;

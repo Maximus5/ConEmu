@@ -58,7 +58,7 @@ public:
 	//POINT cwShift; // difference between window size and client area size for main ConEmu window
 	POINT ptFullScreenSize; // size for GetMinMaxInfo in Fullscreen mode
 	//DWORD gnLastProcessCount;
-	//uint cBlinkNext;
+	uint cBlinkNext;
 	DWORD WindowMode;
 	//HANDLE hPipe;
 	//HANDLE hPipeEvent;
@@ -99,7 +99,7 @@ public:
 	bool mb_IgnoreSizeChange; // на время переключения в конмане...
 	int BufferHeight; // в отличие от gSet - может изменяться текущей консольной программой
 	//RECT  dcWindowLast; // Последний размер дочернего окна
-	//uint cBlinkShift; // cursor blink counter threshold
+	uint cBlinkShift; // cursor blink counter threshold
 	TCHAR szConEmuVersion[32];
 	//DWORD m_ProcList[1000], 
 	DWORD m_ProcCount, m_ActiveConmanIDX, mn_ConmanPID;
@@ -136,7 +136,6 @@ protected:
 	CVirtualConsole *mp_VCon[MAX_CONSOLE_COUNT], *pVCon;
 	int mn_ActiveCon; // в планах - убить m_ActiveConmanIDX
 	// Registered messages
-	UINT mn_MsgPostCreate;
 	UINT mn_MsgPostCopy;
 
 public:
@@ -162,7 +161,6 @@ public:
 	static RECT CalcMargins(enum ConEmuMargins mg);
 	static RECT CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFrom, RECT* prDC=NULL);
 	bool CheckBufferSize();
-	void ConsoleCreated(HWND hConWnd);
 	CVirtualConsole* CreateCon();
 	//COORD ConsoleSizeFromWindow(RECT* arect = NULL, bool frameIncluded = false, bool alreadyClient = false);
 	//RECT ConsoleOffsetRect();
@@ -195,8 +193,9 @@ public:
 	void PaintGaps(HDC hDC=NULL);
 	void PostCopy(wchar_t* apszMacro, BOOL abRecieved=FALSE);
 	void PostMacro(LPCWSTR asMacro);
-	void PostCreate(BOOL abRecieved=FALSE);
+	void PostCreate();
 	void ReSize();
+	void SetConParent();
 	void SetConsoleWindowSize(const COORD& size, bool updateInfo);
 	bool SetWindowMode(uint inMode);
 	void ShowSysmenu(HWND Wnd, HWND Owner, int x, int y);

@@ -25,8 +25,6 @@ public:
 	LPTSTR psCurCmd;
 	/* "Active" command line */
 	LPCTSTR GetCmd();
-	/* If Attach to PID requested */
-	DWORD nAttachPID;
 
     DWORD FontSizeX;
     DWORD FontSizeX2;
@@ -59,10 +57,10 @@ public:
 	bool isConMan;
 
 	// Заголовки табов
-	WCHAR szTabPanels[64]; LPCWSTR pszTabConsole;
-	WCHAR szTabEditor[32];
-	WCHAR szTabEditorModified[32];
-	WCHAR szTabViewer[32];
+	TCHAR szTabPanels[32];
+	TCHAR szTabEditor[32];
+	TCHAR szTabEditorModified[32];
+	TCHAR szTabViewer[32];
 	DWORD nTabLenMax;
 
 	bool isVisualizer;
