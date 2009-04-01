@@ -42,34 +42,23 @@
 #define c25                             1025
 #define c26                             1026
 #define c27                             1027
-#define tFontFace                       1028
 #define c28                             1028
-#define tFontSizeY                      1029
 #define c29                             1029
-#define tFontCharset                    1030
 #define c30                             1030
-#define tFontFace2                      1031
 #define c31                             1031
 #define cbRClick                        1034
 #define tBgImage                        1037
 #define tDarker                         1038
 #define cbBgImage                       1039
 #define cbBgImage2                      1039
-#define cbRClick2                       1040
 #define cbBold                          1041
 #define tFontSizeX                      1042
-#define cbBold2                         1043
 #define cbItalic                        1043
 #define tWndWidth                       1045
-#define tsConManIdx                     1045
 #define tWndHeight                      1046
-#define tsTopPID                        1046
 #define cbMonospace                     1047
-#define cbExtendColors                  1048
-#define cbTTF                           1048
 #define cbNonProportional               1048
 #define tFontSizeX2                     1049
-#define slDark                          1050
 #define slDarker                        1050
 #define cbSendAE                        1051
 #define cbDnDCopy                       1053
@@ -91,7 +80,7 @@
 #define lbVisEOL                        1071
 #define lbVisEOF                        1072
 #define lbVisFore                       1073
-#define cbAutoConHandle                      1074
+#define cbAutoConHandle                 1074
 #define rCascade                        1075
 #define rFixed                          1076
 #define cbsConManActive                 1078
@@ -119,7 +108,6 @@
 #define tc13                            1113
 #define tc14                            1114
 #define tc15                            1115
-#define tCmdLine                        1116
 #define tc16                            1116
 #define tc17                            1117
 #define tc18                            1118
@@ -161,6 +149,15 @@
 #define cbDragR                         1505
 #define cbConMan                        1506
 #define cbMinToTray                     1507
+#define tCurCmdLine                     1508
+#define tsConManIdx                     1509
+#define tsTopPID                        1510
+#define tFontFace                       1511
+#define tFontSizeY                      1512
+#define tFontCharset                    1513
+#define tFontFace2                      1514
+#define cbExtendColors                  1515
+#define tCmdLine                        1516
 
 // Next default values for new objects
 // 
@@ -168,7 +165,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        111
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1508
+#define _APS_NEXT_CONTROL_VALUE         1520
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif
