@@ -7,6 +7,20 @@ CVirtualConsole* CVirtualConsole::Create()
 {
 	CVirtualConsole* pCon = new CVirtualConsole();
 	#pragma message("TODO: CVirtualConsole::Create - создать процесс")
+	
+	if (gSet.nAttachPID) {
+		// Attach - only once
+		DWORD dwPID = gSet.nAttachPID; gSet.nAttachPID = 0;
+		if (!pCon->AttachPID(dwPID)) {
+			delete pCon;
+			return NULL;
+		}
+	} else {
+		if (!pCon->StartProcess()) {
+			delete pCon;
+			return NULL;
+		}
+	}
 
     if (gSet.wndHeight && gSet.wndWidth)
     {
@@ -21,6 +35,9 @@ CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
 {
 	//pVCon = this;
 	hConOut_ = NULL;
+
+	memset(&Cursor, 0, sizeof(Cursor));
+	Cursor.nBlinkTime = GetCaretBlinkTime();
 
 	TextWidth = TextHeight = Width = Height = 0;
 	hDC = NULL; hBitmap = NULL;
@@ -150,7 +167,7 @@ bool CVirtualConsole::InitDC(bool abNoDc)
 		const HDC hScreenDC = GetDC(0);
 		if (hDC = CreateCompatibleDC(hScreenDC))
 		{
-			SelectFont(gSet.mh_Font);
+			/*SelectFont(gSet.mh_Font);
 			TEXTMETRIC tm;
 			GetTextMetrics(hDC, &tm);
 			if (gSet.isForceMonospace)
@@ -161,7 +178,9 @@ bool CVirtualConsole::InitDC(bool abNoDc)
 			gSet.LogFont.lfHeight = tm.tmHeight;
 
 			if (ghOpWnd) // устанавливать только при листании шрифта в настройке
-				gSet.UpdateTTF ( (tm.tmMaxCharWidth - tm.tmAveCharWidth)>2 );
+				gSet.UpdateTTF ( (tm.tmMaxCharWidth - tm.tmAveCharWidth)>2 );*/
+
+			MBoxAssert ( gSet.LogFont.lfWidth && gSet.LogFont.lfHeight );
 
 			// Посчитать новый размер в пикселях
 			Width = TextWidth * gSet.LogFont.lfWidth;
@@ -493,7 +512,7 @@ bool CVirtualConsole::Update(bool isForce, HDC *ahDc)
 	
 	gSet.Performance(tPerfRead, TRUE);
 
-	gSet.Performance(tPerfRender, FALSE);
+	//gSet.Performance(tPerfRender, FALSE);
 
 	//------------------------------------------------------------------------
 	///| Drawing text (if there were changes in console) |////////////////////
@@ -517,14 +536,17 @@ bool CVirtualConsole::Update(bool isForce, HDC *ahDc)
 		// Also, don't check foreground window here for the same reasons.
 		// If position is the same then check the cursor becomes hidden.
 		if (Cursor.x != csbi.dwCursorPosition.X || Cursor.y != csbi.dwCursorPosition.Y)
-			updateCursor = cinf.bVisible || Cursor.isVisible;
+			// сменилась позиция. обновляем если курсор видим
+			updateCursor = cinf.bVisible || Cursor.isVisible || Cursor.isVisiblePrevFromInfo;
 		else
 			updateCursor = Cursor.isVisiblePrevFromInfo && !cinf.bVisible;
 	}
 
-	if (updateText || updateCursor)
+	if (updateText /*|| updateCursor*/)
 	{
 		lRes = true;
+
+		gSet.Performance(tPerfRender, FALSE);
 
 		//------------------------------------------------------------------------
 		///| Drawing modified text |//////////////////////////////////////////////
@@ -536,7 +558,7 @@ bool CVirtualConsole::Update(bool isForce, HDC *ahDc)
 		//------------------------------------------------------------------------
 		///| Now, store data for further comparison |/////////////////////////////
 		//------------------------------------------------------------------------
-		if (updateText)
+		//if (updateText)
 		{
 			memcpy(ConChar + TextLen, ConChar, TextLen * sizeof(TCHAR));
 			memcpy(ConAttr + TextLen, ConAttr, TextLen * 2);
@@ -773,6 +795,9 @@ void CVirtualConsole::ParseLine(int row, TCHAR *ConCharLine, WORD *ConAttrLine)
 
 void CVirtualConsole::UpdateText(bool isForce, bool updateText, bool updateCursor)
 {
+	if (!updateText)
+		return;
+
 	SelectFont(gSet.mh_Font);
 
 	// pointers
@@ -780,23 +805,26 @@ void CVirtualConsole::UpdateText(bool isForce, bool updateText, bool updateCurso
 	WORD* ConAttrLine;
 	DWORD* ConCharXLine;
 	// counters
-	int i, pos, row;
-	if (updateText)
+	int pos, row;
 	{
-		i = TextLen - TextWidth; // TextLen = TextWidth/*80*/ * TextHeight/*25*/;
-		pos = Height - gSet.LogFont.lfHeight; // Height = TextHeight * gSet.LogFont.lfHeight;
-		row = TextHeight - 1;
+		int i;
+		if (updateText)
+		{
+			i = 0; //TextLen - TextWidth; // TextLen = TextWidth/*80*/ * TextHeight/*25*/;
+			pos = 0; //Height - gSet.LogFont.lfHeight; // Height = TextHeight * gSet.LogFont.lfHeight;
+			row = 0; //TextHeight - 1;
+		}
+		else
+		{ // по идее, сюда вообще не доходим
+			i = TextWidth * Cursor.y;
+			pos = gSet.LogFont.lfHeight * Cursor.y;
+			row = Cursor.y;
+		}
+		ConCharLine = ConChar + i;
+		ConAttrLine = ConAttr + i;
+		ConCharXLine = ConCharX + i;
 	}
-	else
-	{
-		i = TextWidth * Cursor.y;
-		pos = gSet.LogFont.lfHeight * Cursor.y;
-		row = Cursor.y;
-	}
-	ConCharLine = ConChar + i;
-	ConAttrLine = ConAttr + i;
-	ConCharXLine = ConCharX + i;
-	
+	int nMaxPos = Height - gSet.LogFont.lfHeight;
 
 	if (/*gSet.isForceMonospace ||*/ !drawImage)
 		SetBkMode(hDC, OPAQUE);
@@ -806,9 +834,9 @@ void CVirtualConsole::UpdateText(bool isForce, bool updateText, bool updateCurso
 	// rows
 	//TODO: а зачем в isForceMonospace принудительно перерисовывать все?
 	const bool skipNotChanged = !isForce /*&& !gSet.isForceMonospace*/;
-	for (; pos >= 0; 
-		ConCharLine -= TextWidth, ConAttrLine -= TextWidth, ConCharXLine -= TextWidth,
-		pos -= gSet.LogFont.lfHeight, --row)
+	for (; pos <= nMaxPos; 
+		ConCharLine += TextWidth, ConAttrLine += TextWidth, ConCharXLine += TextWidth,
+		pos += gSet.LogFont.lfHeight, row++)
 	{
 		// the line
 		const WORD* const ConAttrLine2 = ConAttrLine + TextLen;
@@ -1164,11 +1192,136 @@ void CVirtualConsole::UpdateText(bool isForce, bool updateText, bool updateCurso
 				}
 			}
 		}
+		if (!updateText)
+			break; // только обновление курсора? а нахрена тогда UpdateText вызывать...
 	}
 done:
 	return;
 }
 
+void CVirtualConsole::UpdateCursorDraw(COORD pos, BOOL vis)
+{
+	int CurChar = pos.Y * TextWidth + pos.X;
+	/*Cursor.ch[1] = 0;
+	GetCharAttr(ConChar[CurChar], ConAttr[CurChar], Cursor.ch[0], Cursor.bgColorNum, Cursor.foreColorNum);
+	Cursor.foreColor = gSet.Colors[Cursor.foreColorNum];
+	Cursor.bgColor = gSet.Colors[Cursor.bgColorNum];*/
+
+	/*Cursor.ch[0] = ConChar[CurChar];
+	Cursor.foreColor = gSet.Colors[ConAttr[CurChar] >> 4 & 0x0F];
+	Cursor.foreColorNum = ConAttr[CurChar] >> 4 & 0x0F;
+	Cursor.bgColor = gSet.Colors[ConAttr[CurChar] & 0x0F];*/
+
+	//Cursor.isVisiblePrev = Cursor.isVisible;
+	/*Cursor.x = csbi.dwCursorPosition.X;
+	Cursor.y = csbi.dwCursorPosition.Y;*/
+
+	COORD pix;
+	pix.X = pos.X * gSet.LogFont.lfWidth;
+	pix.Y = pos.Y * gSet.LogFont.lfHeight;
+	if (pos.X && ConCharX[CurChar-1])
+		pix.X = ConCharX[CurChar-1];
+
+	if (vis)
+	{
+		if (gSet.isCursorColor)
+		{
+			SetTextColor(hDC, Cursor.foreColor);
+			SetBkColor(hDC, Cursor.bgColor);
+		}
+		else
+		{
+			SetTextColor(hDC, Cursor.foreColor);
+			SetBkColor(hDC, Cursor.foreColorNum < 5 ? gSet.Colors[15] : gSet.Colors[0]);
+		}
+	}
+	else
+	{
+		if (drawImage)
+			BlitPictureTo(pix.X, pix.Y, gSet.LogFont.lfWidth, gSet.LogFont.lfHeight);
+
+		SetTextColor(hDC, Cursor.bgColor);
+		SetBkColor(hDC, Cursor.foreColor);
+		cinf.dwSize = 99;
+	}
+
+	RECT rect;
+	if (!gSet.isCursorV)
+	{
+		if (gSet.isTTF) {
+			rect.left = pix.X; /*Cursor.x * gSet.LogFont.lfWidth;*/
+			rect.right = pix.X + gSet.LogFont.lfWidth; /*(Cursor.x+1) * gSet.LogFont.lfWidth;*/ //TODO: а ведь позиция следующего символа известна!
+		} else {
+			rect.left = pos.X * gSet.LogFont.lfWidth;
+			rect.right = (pos.X+1) * gSet.LogFont.lfWidth;
+		}
+		//rect.top = (Cursor.y+1) * gSet.LogFont.lfHeight - MulDiv(gSet.LogFont.lfHeight, cinf.dwSize, 100);
+		rect.bottom = (pos.Y+1) * gSet.LogFont.lfHeight;
+		rect.top = (pos.Y * gSet.LogFont.lfHeight) /*+ 1*/;
+		//if (cinf.dwSize<50)
+		int nHeight = 0;
+		if (cinf.dwSize) {
+			nHeight = MulDiv(gSet.LogFont.lfHeight, cinf.dwSize, 100);
+			if (nHeight < HCURSORHEIGHT) nHeight = HCURSORHEIGHT;
+		}
+		//if (nHeight < HCURSORHEIGHT) nHeight = HCURSORHEIGHT;
+		rect.top = max(rect.top, (rect.bottom-nHeight));
+	}
+	else
+	{
+		if (gSet.isTTF) {
+			rect.left = pix.X; /*Cursor.x * gSet.LogFont.lfWidth;*/
+			//rect.right = rect.left/*Cursor.x * gSet.LogFont.lfWidth*/ //TODO: а ведь позиция следующего символа известна!
+			//	+ klMax(1, MulDiv(gSet.LogFont.lfWidth, cinf.dwSize, 100) 
+			//	+ (cinf.dwSize > 10 ? 1 : 0));
+		} else {
+			rect.left = pos.X * gSet.LogFont.lfWidth;
+			//rect.right = Cursor.x * gSet.LogFont.lfWidth
+			//	+ klMax(1, MulDiv(gSet.LogFont.lfWidth, cinf.dwSize, 100) 
+			//	+ (cinf.dwSize > 10 ? 1 : 0));
+		}
+		rect.top = pos.Y * gSet.LogFont.lfHeight;
+		int nR = (gSet.isTTF && ConCharX[CurChar]) // правая граница
+			? ConCharX[CurChar] : ((pos.X+1) * gSet.LogFont.lfWidth);
+		//if (cinf.dwSize>=50)
+		//	rect.right = nR;
+		//else
+		//	rect.right = min(nR, (rect.left+VCURSORWIDTH));
+		int nWidth = 0;
+		if (cinf.dwSize) {
+			nWidth = MulDiv((nR - rect.left), cinf.dwSize, 100);
+			if (nWidth < VCURSORWIDTH) nWidth = VCURSORWIDTH;
+		}
+		rect.right = min(nR, (rect.left+nWidth));
+		//rect.right = rect.left/*Cursor.x * gSet.LogFont.lfWidth*/ //TODO: а ведь позиция следующего символа известна!
+		//		+ klMax(1, MulDiv(gSet.LogFont.lfWidth, cinf.dwSize, 100) 
+		//		+ (cinf.dwSize > 10 ? 1 : 0));
+		rect.bottom = (pos.Y+1) * gSet.LogFont.lfHeight;
+	}
+
+	if (gSet.LogFont.lfCharSet == OEM_CHARSET && !isCharBorder(Cursor.ch[0]))
+	{
+		if (gSet.isFixFarBorders)
+			SelectFont(gSet.mh_Font);
+
+		char tmp[2];
+		WideCharToMultiByte(CP_OEMCP, 0, Cursor.ch, 1, tmp, 1, 0, 0);
+		ExtTextOutA(hDC, pix.X, pix.Y,
+			ETO_CLIPPED | ((drawImage && (Cursor.foreColorNum < 2) &&
+			!vis) ? 0 : ETO_OPAQUE),&rect, tmp, 1, 0);
+	}
+	else
+	{
+		if (gSet.isFixFarBorders && isCharBorder(Cursor.ch[0]))
+			SelectFont(gSet.mh_Font2);
+		else
+			SelectFont(gSet.mh_Font);
+
+		ExtTextOut(hDC, pix.X, pix.Y,
+			ETO_CLIPPED | ((drawImage && (Cursor.foreColorNum < 2) &&
+			!vis) ? 0 : ETO_OPAQUE),&rect, Cursor.ch, 1, 0);
+	}
+}
 
 void CVirtualConsole::UpdateCursor(bool& lRes)
 {
@@ -1176,6 +1329,20 @@ void CVirtualConsole::UpdateCursor(bool& lRes)
 	///| Drawing cursor |/////////////////////////////////////////////////////
 	//------------------------------------------------------------------------
 	Cursor.isVisiblePrevFromInfo = cinf.bVisible;
+
+	BOOL lbUpdateTick = FALSE;
+	if ((Cursor.x != csbi.dwCursorPosition.X) || (Cursor.y != csbi.dwCursorPosition.Y)) 
+	{
+		Cursor.isVisible = isMeForeground();
+		if (Cursor.isVisible) lRes = true; //force, pos changed
+		lbUpdateTick = TRUE;
+	} else
+	if ((GetTickCount() - Cursor.nLastBlink) > Cursor.nBlinkTime)
+	{
+		Cursor.isVisible = isMeForeground() && !Cursor.isVisible;
+		lbUpdateTick = TRUE;
+	}
+
 	if ((lRes || Cursor.isVisible != Cursor.isVisiblePrev) && cinf.bVisible && isCursorValid)
 	{
 		lRes = true;
@@ -1185,7 +1352,12 @@ void CVirtualConsole::UpdateCursor(bool& lRes)
 		if ((Cursor.x != csbi.dwCursorPosition.X || Cursor.y != csbi.dwCursorPosition.Y))
 		{
 			Cursor.isVisible = isMeForeground();
-			gConEmu.cBlinkNext = 0;
+			//gConEmu.cBlinkNext = 0;
+		}
+
+		///++++
+		if (Cursor.isVisiblePrev) {
+			UpdateCursorDraw(MakeCoord(Cursor.x, Cursor.y), false);
 		}
 
 		int CurChar = csbi.dwCursorPosition.Y * TextWidth + csbi.dwCursorPosition.X;
@@ -1194,127 +1366,17 @@ void CVirtualConsole::UpdateCursor(bool& lRes)
 		Cursor.foreColor = gSet.Colors[Cursor.foreColorNum];
 		Cursor.bgColor = gSet.Colors[Cursor.bgColorNum];
 
-		/*Cursor.ch[0] = ConChar[CurChar];
-		Cursor.foreColor = gSet.Colors[ConAttr[CurChar] >> 4 & 0x0F];
-		Cursor.foreColorNum = ConAttr[CurChar] >> 4 & 0x0F;
-		Cursor.bgColor = gSet.Colors[ConAttr[CurChar] & 0x0F];*/
+		UpdateCursorDraw(csbi.dwCursorPosition, Cursor.isVisible);
 
 		Cursor.isVisiblePrev = Cursor.isVisible;
-		Cursor.x = csbi.dwCursorPosition.X;
-		Cursor.y = csbi.dwCursorPosition.Y;
-
-		COORD pix;
-		pix.X = Cursor.x * gSet.LogFont.lfWidth;
-		pix.Y = Cursor.y * gSet.LogFont.lfHeight;
-		if (Cursor.x && ConCharX[CurChar-1])
-			pix.X = ConCharX[CurChar-1];
-
-		if (Cursor.isVisible)
-		{
-			if (gSet.isCursorColor)
-			{
-				SetTextColor(hDC, Cursor.foreColor);
-				SetBkColor(hDC, Cursor.bgColor);
-			}
-			else
-			{
-				SetTextColor(hDC, Cursor.foreColor);
-				SetBkColor(hDC, Cursor.foreColorNum < 5 ? gSet.Colors[15] : gSet.Colors[0]);
-			}
-		}
-		else
-		{
-			if (drawImage)
-				BlitPictureTo(pix.X, pix.Y, gSet.LogFont.lfWidth, gSet.LogFont.lfHeight);
-
-			SetTextColor(hDC, Cursor.bgColor);
-			SetBkColor(hDC, Cursor.foreColor);
-			cinf.dwSize = 99;
-		}
-
-		RECT rect;
-		if (!gSet.isCursorV)
-		{
-			if (gSet.isTTF) {
-				rect.left = pix.X; /*Cursor.x * gSet.LogFont.lfWidth;*/
-				rect.right = pix.X + gSet.LogFont.lfWidth; /*(Cursor.x+1) * gSet.LogFont.lfWidth;*/ //TODO: а ведь позиция следующего символа известна!
-			} else {
-				rect.left = Cursor.x * gSet.LogFont.lfWidth;
-				rect.right = (Cursor.x+1) * gSet.LogFont.lfWidth;
-			}
-			//rect.top = (Cursor.y+1) * gSet.LogFont.lfHeight - MulDiv(gSet.LogFont.lfHeight, cinf.dwSize, 100);
-			rect.bottom = (Cursor.y+1) * gSet.LogFont.lfHeight;
-			rect.top = (Cursor.y * gSet.LogFont.lfHeight) /*+ 1*/;
-			//if (cinf.dwSize<50)
-			int nHeight = 0;
-			if (cinf.dwSize) {
-				nHeight = MulDiv(gSet.LogFont.lfHeight, cinf.dwSize, 100);
-				if (nHeight < HCURSORHEIGHT) nHeight = HCURSORHEIGHT;
-			}
-			//if (nHeight < HCURSORHEIGHT) nHeight = HCURSORHEIGHT;
-			rect.top = max(rect.top, (rect.bottom-nHeight));
-		}
-		else
-		{
-			if (gSet.isTTF) {
-				rect.left = pix.X; /*Cursor.x * gSet.LogFont.lfWidth;*/
-				//rect.right = rect.left/*Cursor.x * gSet.LogFont.lfWidth*/ //TODO: а ведь позиция следующего символа известна!
-				//	+ klMax(1, MulDiv(gSet.LogFont.lfWidth, cinf.dwSize, 100) 
-				//	+ (cinf.dwSize > 10 ? 1 : 0));
-			} else {
-				rect.left = Cursor.x * gSet.LogFont.lfWidth;
-				//rect.right = Cursor.x * gSet.LogFont.lfWidth
-				//	+ klMax(1, MulDiv(gSet.LogFont.lfWidth, cinf.dwSize, 100) 
-				//	+ (cinf.dwSize > 10 ? 1 : 0));
-			}
-			rect.top = Cursor.y * gSet.LogFont.lfHeight;
-			int nR = (gSet.isTTF && ConCharX[CurChar]) // правая граница
-				? ConCharX[CurChar] : ((Cursor.x+1) * gSet.LogFont.lfWidth);
-			//if (cinf.dwSize>=50)
-			//	rect.right = nR;
-			//else
-			//	rect.right = min(nR, (rect.left+VCURSORWIDTH));
-			int nWidth = 0;
-			if (cinf.dwSize) {
-				nWidth = MulDiv((nR - rect.left), cinf.dwSize, 100);
-				if (nWidth < VCURSORWIDTH) nWidth = VCURSORWIDTH;
-			}
-			rect.right = min(nR, (rect.left+nWidth));
-			//rect.right = rect.left/*Cursor.x * gSet.LogFont.lfWidth*/ //TODO: а ведь позиция следующего символа известна!
-			//		+ klMax(1, MulDiv(gSet.LogFont.lfWidth, cinf.dwSize, 100) 
-			//		+ (cinf.dwSize > 10 ? 1 : 0));
-			rect.bottom = (Cursor.y+1) * gSet.LogFont.lfHeight;
-		}
-
-		if (gSet.LogFont.lfCharSet == OEM_CHARSET && !isCharBorder(Cursor.ch[0]))
-		{
-			if (gSet.isFixFarBorders)
-				SelectFont(gSet.mh_Font);
-
-			char tmp[2];
-			WideCharToMultiByte(CP_OEMCP, 0, Cursor.ch, 1, tmp, 1, 0, 0);
-			ExtTextOutA(hDC, pix.X, pix.Y,
-				ETO_CLIPPED | ((drawImage && (Cursor.foreColorNum < 2) &&
-				!Cursor.isVisible) ? 0 : ETO_OPAQUE),&rect, tmp, 1, 0);
-		}
-		else
-		{
-			if (gSet.isFixFarBorders && isCharBorder(Cursor.ch[0]))
-				SelectFont(gSet.mh_Font2);
-			else
-				SelectFont(gSet.mh_Font);
-
-			ExtTextOut(hDC, pix.X, pix.Y,
-				ETO_CLIPPED | ((drawImage && (Cursor.foreColorNum < 2) &&
-				!Cursor.isVisible) ? 0 : ETO_OPAQUE),&rect, Cursor.ch, 1, 0);
-		}
 	}
-	else
-	{
-		// update cursor anyway to avoid redundant updates
-		Cursor.x = csbi.dwCursorPosition.X;
-		Cursor.y = csbi.dwCursorPosition.Y;
-	}
+
+	// update cursor anyway to avoid redundant updates
+	Cursor.x = csbi.dwCursorPosition.X;
+	Cursor.y = csbi.dwCursorPosition.Y;
+
+	if (lbUpdateTick)
+		Cursor.nLastBlink = GetTickCount();
 }
 
 void CVirtualConsole::SetConsoleSize(const COORD& size)
@@ -1396,4 +1458,385 @@ void CVirtualConsole::SetConsoleSize(const COORD& size)
         rect.Bottom += shift;
     }
     SetConsoleWindowInfo(hConOut(), TRUE, &rect);
+}
+
+BOOL CVirtualConsole::AttachPID(DWORD dwPID)
+{
+	#ifdef _DEBUG
+		TCHAR szMsg[100]; wsprintf(szMsg, _T("Attach to process %i"), (int)dwPID);
+		OutputDebugString(szMsg);
+	#endif
+	BOOL lbRc = AttachConsole(dwPID);
+    if (!lbRc) {
+		OutputDebugString(_T(" - failed\n"));
+		BOOL lbFailed = TRUE;
+	    DWORD dwErr = GetLastError();
+		if (dwErr == 0x1F && dwPID == -1)
+		{
+			// Если ConEmu запускается из FAR'а батником - то родительский процесс - CMD.EXE, а он уже скорее всего закрыт. то есть подцепиться не удастся
+			HWND hConsole = FindWindowEx(NULL,NULL,_T("ConsoleWindowClass"),NULL);
+			if (hConsole && IsWindowVisible(hConsole)) {
+				DWORD dwCurPID = 0;
+				if (GetWindowThreadProcessId(hConsole,  &dwCurPID)) {
+					if (AttachConsole(dwCurPID))
+						lbFailed = FALSE;
+				}
+			}
+		}
+		if (lbFailed) {
+			TCHAR szErr[255];
+			wsprintf(szErr, _T("AttachConsole failed (PID=%i)!"), dwPID);
+			DisplayLastError(szErr, dwErr);
+			return FALSE;
+		}
+    }
+	OutputDebugString(_T(" - OK"));
+
+	hConWnd = GetConsoleWindow();
+	ghConWnd = hConWnd;
+	
+	InitHandlers();
+
+    // Попытаться дернуть плагин для установки шрифта.
+    CConEmuPipe pipe;
+    
+	OutputDebugString(_T("CheckProcesses\n"));
+	gConEmu.CheckProcesses(0,TRUE);
+	
+    if (pipe.Init(_T("DefFont.in.attach"), TRUE))
+	    pipe.Execute(CMD_DEFFONT);
+
+	return TRUE;
+}
+
+void CVirtualConsole::InitHandlers()
+{
+	SetConsoleCtrlHandler((PHANDLER_ROUTINE)CConEmuMain::HandlerRoutine, true);
+	
+    SetHandleInformation(GetStdHandle(STD_INPUT_HANDLE), HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT);
+    SetHandleInformation(GetStdHandle(STD_OUTPUT_HANDLE), HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT);
+    SetHandleInformation(GetStdHandle(STD_ERROR_HANDLE), HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT);
+    
+	ghConWnd = GetConsoleWindow();
+	gConEmu.ConsoleCreated(ghConWnd);
+}
+
+// asExeName может быть NULL, тогда ставим полный путь к ConEmu (F:_VCProject_FarPlugin_#FAR180_ConEmu.exe)
+// а может быть как просто именем "FAR", так и с расширением "FAR.EXE" (зависит от командной строки)
+void CVirtualConsole::RegistryProps(BOOL abRollback, ConExeProps& props, LPCTSTR asExeName/*=NULL*/)
+{
+	HKEY hkey = NULL;
+	DWORD dwDisp = 0;
+	TCHAR *pszExeName = NULL;
+	
+	if (!abRollback) {
+		memset(&props, 0, sizeof(props));
+		
+		if (asExeName && *asExeName) {
+			props.FullKeyName = (TCHAR*)calloc(_tcslen(asExeName)+10, sizeof(TCHAR));
+			_tcscpy(props.FullKeyName, _T("Console\\"));
+			pszExeName = props.FullKeyName+_tcslen(props.FullKeyName);
+			_tcscpy(pszExeName, asExeName);
+		} else {
+			props.FullKeyName = (TCHAR*)calloc(MAX_PATH+10, sizeof(TCHAR));
+			_tcscpy(props.FullKeyName, _T("Console\\"));
+			pszExeName = props.FullKeyName+_tcslen(props.FullKeyName);
+			if (!GetModuleFileName(NULL, pszExeName, MAX_PATH+1)) {
+				DisplayLastError(_T("Can't get module file name"));
+				if (props.FullKeyName) { free(props.FullKeyName); props.FullKeyName = NULL; }
+				return;
+			}
+		}
+		
+		for (TCHAR* psz=pszExeName; *psz; psz++) {
+			if (*psz == _T('\\')) *psz = _T('_');
+		}
+	} else if (!props.FullKeyName) {
+		return;
+	}
+	
+	
+	if (abRollback && !props.bKeyExists) {
+		// Просто удалить подключ pszExeName
+		if (0 == RegOpenKeyEx ( HKEY_CURRENT_USER, _T("Console"), NULL, DELETE , &hkey)) {
+			RegDeleteKey(hkey, pszExeName);
+			RegCloseKey(hkey);
+		}
+		if (props.FullKeyName) { free(props.FullKeyName); props.FullKeyName = NULL;}
+		if (props.FaceName) { free(props.FaceName); props.FaceName = NULL;}
+		return;
+	}
+	
+	if (0 == RegCreateKeyEx ( HKEY_CURRENT_USER, props.FullKeyName, NULL, NULL, NULL, KEY_ALL_ACCESS, NULL, &hkey, &dwDisp)) {
+		if (!abRollback) {
+			props.bKeyExists = (dwDisp == REG_OPENED_EXISTING_KEY);
+			// Считать значения
+			DWORD dwSize, dwVal;
+			if (0!=RegQueryValueEx(hkey, _T("ScreenBufferSize"), 0, NULL, (LPBYTE)&props.ScreenBufferSize, &(dwSize=sizeof(DWORD))))
+				props.ScreenBufferSize = -1;
+			if (0!=RegQueryValueEx(hkey, _T("WindowSize"), 0, NULL, (LPBYTE)&props.WindowSize, &(dwSize=sizeof(DWORD))))
+				props.WindowSize = -1;
+			if (0!=RegQueryValueEx(hkey, _T("WindowPosition"), 0, NULL, (LPBYTE)&props.WindowPosition, &(dwSize=sizeof(DWORD))))
+				props.WindowPosition = -1;
+			if (0!=RegQueryValueEx(hkey, _T("FontSize"), 0, NULL, (LPBYTE)&props.FontSize, &(dwSize=sizeof(DWORD))))
+				props.FontSize = -1;
+			if (0!=RegQueryValueEx(hkey, _T("FontFamily"), 0, NULL, (LPBYTE)&props.FontFamily, &(dwSize=sizeof(DWORD))))
+				props.FontFamily = -1;
+			props.FaceName = (TCHAR*)calloc(MAX_PATH+1,sizeof(TCHAR));
+			if (0!=RegQueryValueEx(hkey, _T("FaceName"), 0, NULL, (LPBYTE)props.FaceName, &(dwSize=(sizeof(TCHAR)*(MAX_PATH+1)))))
+				props.FaceName[0] = 0;
+			
+			// Установить требуемые умолчания
+			dwVal = (gSet.wndWidth) | (gSet.wndHeight<<16);
+			RegSetValueEx(hkey, _T("ScreenBufferSize"), 0, REG_DWORD, (LPBYTE)&dwVal, sizeof(DWORD));
+			RegSetValueEx(hkey, _T("WindowSize"), 0, REG_DWORD, (LPBYTE)&dwVal, sizeof(DWORD));
+			if (!ghWndDC) dwVal = 0; else {
+				RECT rcWnd; GetWindowRect(ghWndDC, &rcWnd);
+				rcWnd.left = max(0, (rcWnd.left & 0xFFFF));
+				rcWnd.top = max(0, (rcWnd.top & 0xFFFF));
+				dwVal = (rcWnd.left) | (rcWnd.top<<16);
+			}
+			RegSetValueEx(hkey, _T("WindowPosition"), 0, REG_DWORD, (LPBYTE)&dwVal, sizeof(DWORD));
+			dwVal = 0x00060000;
+			RegSetValueEx(hkey, _T("FontSize"), 0, REG_DWORD, (LPBYTE)&dwVal, sizeof(DWORD));
+			dwVal = 0x00000036;
+			RegSetValueEx(hkey, _T("FontFamily"), 0, REG_DWORD, (LPBYTE)&dwVal, sizeof(DWORD));
+			TCHAR szLucida[64]; _tcscpy(szLucida, _T("Lucida Console"));
+			RegSetValueEx(hkey, _T("FaceName"), 0, REG_SZ, (LPBYTE)szLucida, sizeof(TCHAR)*(_tcslen(szLucida)+1));
+		} else {
+			// Вернуть значения
+			if (props.ScreenBufferSize == -1)
+				RegDeleteValue(hkey, _T("ScreenBufferSize"));
+			else
+				RegSetValueEx(hkey, _T("ScreenBufferSize"), 0, REG_DWORD, (LPBYTE)&props.ScreenBufferSize, sizeof(DWORD));
+			if (props.WindowSize == -1)
+				RegDeleteValue(hkey, _T("WindowSize"));
+			else
+				RegSetValueEx(hkey, _T("WindowSize"), 0, REG_DWORD, (LPBYTE)&props.WindowSize, sizeof(DWORD));
+			if (props.WindowPosition == -1)
+				RegDeleteValue(hkey, _T("WindowPosition"));
+			else
+				RegSetValueEx(hkey, _T("WindowPosition"), 0, REG_DWORD, (LPBYTE)&props.WindowPosition, sizeof(DWORD));
+			if (props.FontSize == -1)
+				RegDeleteValue(hkey, _T("FontSize"));
+			else
+				RegSetValueEx(hkey, _T("FontSize"), 0, REG_DWORD, (LPBYTE)&props.FontSize, sizeof(DWORD));
+			if (props.FontFamily == -1)
+				RegDeleteValue(hkey, _T("FontFamily"));
+			else
+				RegSetValueEx(hkey, _T("FontFamily"), 0, REG_DWORD, (LPBYTE)&props.FontFamily, sizeof(DWORD));
+			if (props.FaceName && *props.FaceName)
+				RegSetValueEx(hkey, _T("FaceName"), 0, REG_SZ, (LPBYTE)props.FaceName, sizeof(TCHAR)*(_tcslen(props.FaceName)+1));
+			else
+				RegDeleteValue(hkey, _T("FaceName"));
+			
+			// и освободить буфера
+			if (props.FullKeyName) { free(props.FullKeyName); props.FullKeyName = NULL;}
+			if (props.FaceName) { free(props.FaceName); props.FaceName = NULL;}
+		}
+		RegCloseKey(hkey);
+	}
+}
+
+BOOL CVirtualConsole::StartProcess()
+{
+	BOOL lbRc = FALSE;
+
+	if (ghConWnd) {
+		// Сначала нужно отцепиться от текущей консоли
+		FreeConsole(); ghConWnd = NULL;
+	}
+	
+	ConExeProps props;
+	
+	RegistryProps(FALSE, props);
+
+	if (!gConEmu.isShowConsole && !gSet.isConVisible)
+		SetWindowPos(ghWnd, HWND_TOPMOST, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
+	AllocConsole();
+	//TODO: инициализация буферов, хэндлера и т.п.
+	ghConWnd = GetConsoleWindow();
+	if (!gConEmu.isShowConsole && !gSet.isConVisible)
+		SetWindowPos(ghWnd, HWND_NOTOPMOST, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
+	
+	RegistryProps(TRUE, props);
+	
+	InitHandlers();
+	
+	if (gSet.isConMan) {
+		if (!gConEmu.InitConMan(gSet.GetCmd())) {
+			//gConEmu.Destroy();
+			//free(cmdLine);
+			//return -1;
+			// Иначе жестоко получается. ConEmu вообще будет сложно запустить...
+			gSet.isConMan = false;
+		} else {
+			return TRUE;
+		}
+	} 
+	
+	if (!gSet.isConMan)
+	{
+		STARTUPINFO si;
+		PROCESS_INFORMATION pi;
+
+		ZeroMemory( &si, sizeof(si) );
+		si.cb = sizeof(si);
+		ZeroMemory( &pi, sizeof(pi) );
+
+		int nStep = 1;
+		while (nStep <= 2)
+		{
+			/*if (!*gSet.GetCmd()) {
+				gSet.psCurCmd = _tcsdup(gSet.BufferHeight == 0 ? _T("far") : _T("cmd"));
+				nStep ++;
+			}*/
+
+			LPTSTR lpszCmd = (LPTSTR)gSet.GetCmd();
+			#ifdef _DEBUG
+			OutputDebugString(lpszCmd);OutputDebugString(_T("\n"));
+			#endif
+			try {
+				lbRc = CreateProcess(NULL, lpszCmd, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
+				OutputDebugString(_T("CreateProcess finished\n"));
+			} catch(...) {
+				lbRc = FALSE;
+			}
+			if (lbRc)
+			{
+				OutputDebugString(_T("CreateProcess OK\n"));
+				lbRc = TRUE;
+
+				/*if (!AttachPID(pi.dwProcessId)) {
+					OutputDebugString(_T("AttachPID failed\n"));
+					return FALSE;
+				}
+				OutputDebugString(_T("AttachPID OK\n"));*/
+
+				break; // OK, запустили
+			} else {
+				//MBoxA("Cannot execute the command.");
+				DWORD dwLastError = GetLastError();
+				OutputDebugString(_T("CreateProcess failed\n"));
+				int nLen = _tcslen(gSet.GetCmd());
+				TCHAR* pszErr=(TCHAR*)calloc(nLen+100,sizeof(TCHAR));
+		        
+				if (0==FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+					NULL, dwLastError, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
+					pszErr, 1024, NULL))
+				{
+					wsprintf(pszErr, _T("Unknown system error: 0x%x"), dwLastError);
+				}
+		        
+				nLen += _tcslen(pszErr);
+				TCHAR* psz=(TCHAR*)calloc(nLen+100,sizeof(TCHAR));
+				int nButtons = MB_OK|MB_ICONEXCLAMATION|MB_SETFOREGROUND;
+		        
+				_tcscpy(psz, _T("Cannot execute the command.\r\n"));
+				_tcscat(psz, pszErr);
+				if (psz[_tcslen(psz)-1]!=_T('\n')) _tcscat(psz, _T("\r\n"));
+				_tcscat(psz, gSet.GetCmd());
+				if (!gSet.psCurCmd && StrStrI(gSet.GetCmd(), gSet.BufferHeight == 0 ? _T("far.exe") : _T("cmd.exe"))==NULL) {
+					_tcscat(psz, _T("\r\n\r\n"));
+					_tcscat(psz, gSet.BufferHeight == 0 ? _T("Do You want to simply start far?") : _T("Do You want to simply start cmd?"));
+					nButtons |= MB_YESNO;
+				}
+				//MBoxA(psz);
+				int nBrc = MessageBox(NULL, psz, _T("ConEmu"), nButtons);
+				free(psz); free(pszErr);
+				if (nBrc!=IDYES) {
+					gConEmu.Destroy();
+					//free(cmdLine);
+					return FALSE;
+				}
+				// Выполнить стандартную команду...
+				gSet.psCurCmd = _tcsdup(gSet.BufferHeight == 0 ? _T("far") : _T("cmd"));
+				nStep ++;
+			}
+		}
+
+		//TODO: а делать ли это?
+		CloseHandle(pi.hThread); pi.hThread = NULL;
+		CloseHandle(pi.hProcess); pi.hProcess = NULL;
+	}
+	
+	return lbRc;
+}
+
+bool CVirtualConsole::CheckBufferSize()
+{
+	bool lbForceUpdate = false;
+
+	if (!this)
+		return false;
+	
+    CONSOLE_SCREEN_BUFFER_INFO inf; memset(&inf, 0, sizeof(inf));
+    GetConsoleScreenBufferInfo(hConOut(), &inf);
+    if (inf.dwSize.X>(inf.srWindow.Right-inf.srWindow.Left+1)) {
+        DEBUGLOGFILE("Wrong screen buffer width\n");
+		// Окошко консоли почему-то схлопнулось по горизонтали
+        MOVEWINDOW(ghConWnd, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), 1);
+    } else {
+		// может меняться и из плагина, во время работы фара...
+	    /*if (mn_ActiveStatus & CES_FARACTIVE) {
+		    if (BufferHeight) {
+			    BufferHeight = 0; // сброс на время активности фара
+				lbForceUpdate = true;
+			}
+	    } else*/
+		if ( (inf.dwSize.Y<(inf.srWindow.Bottom-inf.srWindow.Top+10)) && gConEmu.BufferHeight &&
+			 !gSet.BufferHeight /*&& (gConEmu.BufferHeight != inf.dwSize.Y)*/)
+		{
+		    // может быть консольная программа увеличила буфер самостоятельно?
+		    // TODO: отключить прокрутку!!!
+		    gConEmu.BufferHeight = 0;
+
+            SCROLLINFO si;
+            ZeroMemory(&si, sizeof(si));
+            si.cbSize = sizeof(si);
+            si.fMask = SIF_PAGE | SIF_POS | SIF_RANGE | SIF_TRACKPOS;
+            if (GetScrollInfo(ghConWnd, SB_VERT, &si))
+				SetScrollInfo(gConEmu.m_Back.mh_Wnd, SB_VERT, &si, true);
+
+		    lbForceUpdate = true;
+	    } else 
+		if ( (inf.dwSize.Y>(inf.srWindow.Bottom-inf.srWindow.Top+10)) ||
+			 (gConEmu.BufferHeight && (gConEmu.BufferHeight != inf.dwSize.Y)) )
+		{
+		    // может быть консольная программа увеличила буфер самостоятельно?
+		    if (gConEmu.BufferHeight != inf.dwSize.Y) {
+			    // TODO: Включить прокрутку!!!
+			    gConEmu.BufferHeight = inf.dwSize.Y;
+			    lbForceUpdate = true;
+		    }
+	    }
+	    
+	    if ((gConEmu.BufferHeight == 0) && (inf.dwSize.Y>(inf.srWindow.Bottom-inf.srWindow.Top+1))) {
+			#pragma message("TODO: это может быть консольная программа увеличила буфер самостоятельно!")
+	        DEBUGLOGFILE("Wrong screen buffer height\n");
+			// Окошко консоли почему-то схлопнулось по вертикали
+	        MOVEWINDOW(ghConWnd, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), 1);
+	    }
+    }
+
+	// При выходе из FAR -> CMD с gConEmu.BufferHeight - смена QuickEdit режима
+	DWORD mode = 0;
+	BOOL lb = FALSE;
+	if (gConEmu.BufferHeight) {
+		//TODO: похоже, что для gConEmu.BufferHeight это вызывается постоянно?
+		lb = GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), &mode);
+
+		if (inf.dwSize.Y>(inf.srWindow.Bottom-inf.srWindow.Top+1)) {
+			// Буфер больше высоты окна
+			mode |= ENABLE_QUICK_EDIT_MODE|ENABLE_INSERT_MODE|ENABLE_EXTENDED_FLAGS;
+		} else {
+			// Буфер равен высоте окна (значит ФАР запустился)
+			mode &= ~(ENABLE_QUICK_EDIT_MODE|ENABLE_INSERT_MODE);
+			mode |= ENABLE_EXTENDED_FLAGS;
+		}
+
+		lb = SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), mode);
+	}
+	
+	return lbForceUpdate;
 }

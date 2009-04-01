@@ -378,7 +378,9 @@ BOOL CreateMainWindow()
     {
 	    //if (gSet.LogFont.lfWidth==0)
 		//    pVCon->InitDC(FALSE); // инициализировать ширину шрифта по умолчанию
-		    
+
+		MBoxAssert(gSet.LogFont.lfWidth && gSet.LogFont.lfHeight);
+
 	    COORD conSize; conSize.X=gSet.wndWidth; conSize.Y=gSet.wndHeight;
 	    int nShiftX = GetSystemMetrics(SM_CXSIZEFRAME)*2;
 	    int nShiftY = GetSystemMetrics(SM_CYSIZEFRAME)*2 + GetSystemMetrics(SM_CYCAPTION);
@@ -401,7 +403,7 @@ BOOL CheckConIme()
     DWORD dwValue=1;
     Registry reg;
     if (reg.OpenKey(_T("Software\\ConEmu"), KEY_READ)) {
-	    if (!reg.Load(_T("StopWarningConIme"), &lbStopWarning))
+	    if (!reg.Load(_T("StopWarningConIme"), lbStopWarning))
 		    lbStopWarning = FALSE;
 		reg.CloseKey();
     }
@@ -409,7 +411,7 @@ BOOL CheckConIme()
     {
 	    if (reg.OpenKey(_T("Console"), KEY_READ))
 	    {
-	        if (!reg.Load(_T("LoadConIme"), &dwValue))
+	        if (!reg.Load(_T("LoadConIme"), dwValue))
 				dwValue = 1;
 	        reg.CloseKey();
 	        if (dwValue!=0) {
@@ -434,6 +436,19 @@ BOOL CheckConIme()
 
 extern void SetConsoleFontSizeTo(HWND inConWnd, int inSizeX, int inSizeY);
 
+// Disables the IME for all threads in a current process.
+void DisableIME()
+{
+	typedef BOOL (WINAPI* ImmDisableIMEt)(DWORD idThread);
+	HMODULE hImm32 = LoadLibrary(_T("imm32.dll"));
+	if (hImm32) {
+		ImmDisableIMEt ImmDisableIMEf = (ImmDisableIMEt)GetProcAddress(hImm32, "ImmDisableIME");
+		if (ImmDisableIMEf) {
+			ImmDisableIMEf(-1);
+		}
+	}
+}
+
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
 #ifndef _DEBUG
@@ -455,13 +470,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	bool FontFilePrm = false; TCHAR* FontFile = NULL; //ADD fontname; by Mors
 	bool WindowPrm = false;
 	bool AttachPrm = false; LONG AttachVal=0;
-	bool ConManPrm = false;
+	bool ConManPrm = false, ConManValue = false;
 
-    gConEmu.cBlinkShift = GetCaretBlinkTime()/15;
+    //gConEmu.cBlinkShift = GetCaretBlinkTime()/15;
 
     memset(&osver, 0, sizeof(osver));
     osver.dwOSVersionInfoSize = sizeof(osver);
     GetVersionEx(&osver);
+    
+    DisableIME();
 
     //Windows7 - SetParent для консоли валится
     gConEmu.setParent = false; // PictureView теперь идет через Wrapper
@@ -523,7 +540,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         while (i < params && curCommand && *curCommand)
         {
 			if ( !klstricmp(curCommand, _T("/conman")) ) {
-				ConManPrm = true;
+				ConManValue = true; ConManPrm = true;
+			}
+			else if ( !klstricmp(curCommand, _T("/noconman")) ) {
+				ConManValue = false; ConManPrm = true;
 			}
             else if ( !klstricmp(curCommand, _T("/ct")) || !klstricmp(curCommand, _T("/cleartype")) )
             {
@@ -671,12 +691,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		if (nCmdShow == SW_SHOWMAXIMIZED)
 			gConEmu.WindowMode = rMaximized;
 	}
-	if (gSet.isConMan)
-		ConManPrm = true;
+	if (ConManPrm)
+		gSet.isConMan = ConManValue;
 	// Если запускается conman - принудительно включить флажок "Обновлять handle"
 	//cmdNew = gSet.Cmd;
 	//while (*cmdNew==L' ' || *cmdNew==L'"')
-	if (ConManPrm || StrStrI(gSet.GetCmd(), L"conman.exe"))
+	if (gSet.isConMan || StrStrI(gSet.GetCmd(), L"conman.exe"))
 		gSet.isUpdConHandle = TRUE;
 		
 
@@ -701,78 +721,36 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		    //delete pVCon;
 		    return 100;
 	    }
-	    if (!AttachConsole(AttachVal)) {
-			BOOL lbFailed = TRUE;
-		    DWORD dwErr = GetLastError();
-			if (dwErr == 0x1F) {
-				// Если ConEmu запускается из FAR'а батником - то родительский процесс - CMD.EXE, а он уже скорее всего закрыт. то есть подцепиться не удастся
-				HWND hConsole = FindWindowEx(NULL,NULL,_T("ConsoleWindowClass"),NULL);
-				if (hConsole && IsWindowVisible(hConsole)) {
-					DWORD dwPID = 0;
-					if (GetWindowThreadProcessId(hConsole,  &dwPID)) {
-						if (AttachConsole(dwPID))
-							lbFailed = FALSE;
-					}
-				}
-			}
-			if (lbFailed) {
-				TCHAR szErr[255];
-				wsprintf(szErr, _T("AttachConsole failed (PID=%i)!"), AttachVal);
-				//MBoxA(szErr);
-				DisplayLastError(szErr, dwErr);
-				//delete pVCon;
-				return 100;
-			}
-	    }
-	    // Попытаться дернуть плагин для установки шрифта.
-	    CConEmuPipe pipe;
-		//DWORD nLastStat = gConEmu.mn_ActiveStatus;
-		//gConEmu.mn_ActiveStatus = CES_FARACTIVE;
-		//mn_TopProcessID
-		gConEmu.CheckProcesses(0,TRUE);
-	    if (pipe.Init(_T("DefFont.in.attach"), TRUE))
-		    pipe.Execute(CMD_DEFFONT);
-    } else {
-		if (!AllocConsole()) {
-			DisplayLastError(_T("Can't alllocate console!"));
-			return false;
-		}
-		lbConsoleAllocated = TRUE;
+	    gSet.nAttachPID = AttachVal;
     }
     
-    ghConWnd = GetConsoleWindow();
-    if (!ghConWnd) {
-	    MBoxA(_T("GetConsoleWindow failed!"));
-	    //delete pVCon;
-	    return 100;
-    }
-	// Если в свойствах ярлыка указано "Максимизировано" - консоль разворачивается, а FAR при 
-	// старте сам меняет размер буфера, в результате - ошибочно устанавливается размер окна
-	if (nCmdShow != SW_SHOWNORMAL) ShowWindow(ghConWnd, SW_SHOWNORMAL);
-    if (!gSet.isConVisible) {
-	    ShowWindow(ghConWnd, SW_HIDE);
-	    EnableWindow(ghConWnd, FALSE); // NightRoman
-	}
-    SetConsoleFontSizeTo(ghConWnd, 4, 6);
+    //!!! TODO:
+    //ghConWnd = GetConsoleWindow();
+    //if (!ghConWnd) {
+	//    MBoxA(_T("GetConsoleWindow failed!"));
+	//    //delete pVCon;
+	//    return 100;
+    //}
+	//// Если в свойствах ярлыка указано "Максимизировано" - консоль разворачивается, а FAR при 
+	//// старте сам меняет размер буфера, в результате - ошибочно устанавливается размер окна
+	//if (nCmdShow != SW_SHOWNORMAL) ShowWindow(ghConWnd, SW_SHOWNORMAL);
+    //if (!gSet.isConVisible) {
+	//    ShowWindow(ghConWnd, SW_HIDE);
+	//    EnableWindow(ghConWnd, FALSE); // NightRoman
+	//}
+    //SetConsoleFontSizeTo(ghConWnd, 4, 6);
     
-    // set quick edit mode for buffer mode
-    if (gConEmu.BufferHeight > 0)
-    {
-        DWORD mode=0;
-		if (GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), &mode)) {
-			if ((mode & 0x0040) == 0)
-				SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), (mode | 0x0040));
-		}
-    }
+	//!!! TODO:
+    //// set quick edit mode for buffer mode
+    //if (gConEmu.BufferHeight > 0)
+    //{
+    //    DWORD mode=0;
+	//	if (GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), &mode)) {
+	//		if ((mode & 0x0040) == 0)
+	//			SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), (mode | 0x0040));
+	//	}
+    //}
 
-    /*if (gSet.wndHeight && gSet.wndWidth)
-    {
-        COORD b = {gSet.wndWidth, gSet.wndHeight};
-	    gConEmu.SetConsoleWindowSize(b,false); // Maximus5 - по аналогии с NightRoman
-		//MoveWindow(hConWnd, 0, 0, 1, 1, 0);
-		//SetConsoleScreenBufferSize(pVCon->hConOut(), b);
-		//MoveWindow(hConWnd, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), 0);
-    }*/
 
 //------------------------------------------------------------------------
 ///| Create taskbar window |//////////////////////////////////////////////
@@ -790,22 +768,16 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     if (FontFilePrm) AddFontResourceEx(FontFile, FR_PRIVATE, NULL); //ADD fontname; by Mors
 
-    //!!!ICON
-    gConEmu.LoadIcons();
-    
     if (!CreateMainWindow()) {
 	    free(cmdLine);
 	    //delete pVCon;
 	    return 100;
 	}
 
-	if (AttachPrm) {
-		// Заодно, вызвать определение нового окна ConEmu
-		TabBar.Retrieve();
-		/*CConEmuPipe pipe;
-	    if (pipe.Init(_T("Trigger ConEmuWnd find"), TRUE))
-		    pipe.Execute(CMD_DEFFONT);*/
-	}
+	//if (AttachPrm) {
+	//	// Заодно, вызвать определение нового окна ConEmu
+	//	TabBar.Retrieve();
+	//}
 	    
 
     // set parent window of the console window:
@@ -813,134 +785,27 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     // *) do not set it by default for buffer mode because it causes unwanted selection jumps
     // WARP ItSelf опытным путем выяснил, что SetParent валит ConEmu в Windows7
     //if (!setParentDisabled && (setParent || gConEmu.BufferHeight == 0))
-    gConEmu.SetConParent();
-
-    // adjust the console window and buffer to settings
-    // *) after getting all the settings
-    // *) before running the command
-    COORD size = {gSet.wndWidth, gSet.wndHeight};
-    gConEmu.SetConsoleWindowSize(size, false); // NightRoman
     
-//------------------------------------------------------------------------
-///| создадим pipe для общения с плагином |///////////////////////////////
-//------------------------------------------------------------------------
+    //gConEmu.SetConParent();
 
-    /*WCHAR pipename[MAX_PATH];
-    //Maximus5 - теперь имя пайпа - по ИД процесса FAR'а
-    wsprintf(pipename, CONEMUPIPE, ghConWnd );
-    gConEmu.hPipe = CreateNamedPipe( 
-      pipename,             // pipe name 
-      PIPE_ACCESS_DUPLEX,       // read/write access 
-      PIPE_TYPE_MESSAGE |       // message type pipe 
-      PIPE_READMODE_MESSAGE |   // message-read mode 
-      PIPE_WAIT,                // blocking mode 
-      PIPE_UNLIMITED_INSTANCES, // max. instances  
-      100,                  // output buffer size 
-      100,                  // input buffer size 
-      0,                        // client time-out 
-      NULL);                    // default security attribute 
-    if (gConEmu.hPipe == INVALID_HANDLE_VALUE) 
-    {
-      MessageBox(ghWnd, _T("CreatePipe failed"), NULL, 0);
-      gConEmu.Destroy(); free(cmdLine);
-      return 100;
-    }*/
-	/*wsprintf(pipename, _T("ConEmuPEvent%u"), / *ghWnd* / ghConWnd );
-    gConEmu.hPipeEvent = CreateEvent(NULL, TRUE, FALSE, pipename);
-    if ((gConEmu.hPipeEvent==NULL) || (gConEmu.hPipeEvent==INVALID_HANDLE_VALUE))
-    {
-      CloseHandle(gConEmu.hPipe);
-      MessageBox(ghWnd, _T("CreatePipe failed"), NULL, 0); 
-      gConEmu.Destroy(); free(cmdLine);
-      return 100;
-    }*/
+    //// adjust the console window and buffer to settings
+    //// *) after getting all the settings
+    //// *) before running the command
+    //!!! TODO:
+    //COORD size = {gSet.wndWidth, gSet.wndHeight};
+    //gConEmu.SetConsoleWindowSize(size, false); // NightRoman
+    
     
 
 //------------------------------------------------------------------------
 ///| Starting the process |///////////////////////////////////////////////
 //------------------------------------------------------------------------
 
-    SetHandleInformation(GetStdHandle(STD_INPUT_HANDLE), HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT);
-    SetHandleInformation(GetStdHandle(STD_OUTPUT_HANDLE), HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT);
-    SetHandleInformation(GetStdHandle(STD_ERROR_HANDLE), HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT);
+	//!!! TODO:
+    //SetHandleInformation(GetStdHandle(STD_INPUT_HANDLE), HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT);
+    //SetHandleInformation(GetStdHandle(STD_OUTPUT_HANDLE), HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT);
+    //SetHandleInformation(GetStdHandle(STD_ERROR_HANDLE), HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT);
 
-    if (!AttachPrm)
-    {
-		if (ConManPrm) {
-			if (!gConEmu.InitConMan(gSet.GetCmd())) {
-				//gConEmu.Destroy();
-				//free(cmdLine);
-				//return -1;
-				// Иначе жестоко получается. ConEmu вообще будет сложно запустить...
-				ConManPrm = false;
-			}
-		} 
-		
-		if (!ConManPrm)
-		{
-			STARTUPINFO si;
-			PROCESS_INFORMATION pi;
-
-			ZeroMemory( &si, sizeof(si) );
-			si.cb = sizeof(si);
-			ZeroMemory( &pi, sizeof(pi) );
-
-			int nStep = 1;
-			while (nStep <= 2)
-			{
-				if (!*gSet.GetCmd()) {
-					gSet.psCurCmd = _tcsdup(gSet.BufferHeight == 0 ? _T("far") : _T("cmd"));
-					nStep ++;
-				}
-
-				if (CreateProcess(NULL, (LPTSTR)gSet.GetCmd(), NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
-				{
-					break; // OK, запустили
-				} else {
-					//MBoxA("Cannot execute the command.");
-					DWORD dwLastError = GetLastError();
-					int nLen = _tcslen(gSet.GetCmd());
-					TCHAR* pszErr=(TCHAR*)calloc(nLen+100,sizeof(TCHAR));
-			        
-					if (0==FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-						NULL, dwLastError, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
-						pszErr, 1024, NULL))
-					{
-						wsprintf(pszErr, _T("Unknown system error: 0x%x"), dwLastError);
-					}
-			        
-					nLen += _tcslen(pszErr);
-					TCHAR* psz=(TCHAR*)calloc(nLen+100,sizeof(TCHAR));
-					int nButtons = MB_OK|MB_ICONEXCLAMATION|MB_SETFOREGROUND;
-			        
-					_tcscpy(psz, _T("Cannot execute the command.\r\n"));
-					_tcscat(psz, pszErr);
-					if (psz[_tcslen(psz)-1]!=_T('\n')) _tcscat(psz, _T("\r\n"));
-					_tcscat(psz, gSet.GetCmd());
-					if (StrStrI(gSet.GetCmd(), gSet.BufferHeight == 0 ? _T("far.exe") : _T("cmd.exe"))==NULL) {
-						_tcscat(psz, _T("\r\n\r\n"));
-						_tcscat(psz, gSet.BufferHeight == 0 ? _T("Do You want to simply start far?") : _T("Do You want to simply start cmd?"));
-						nButtons |= MB_YESNO;
-					}
-					//MBoxA(psz);
-					int nBrc = MessageBox(NULL, psz, _T("ConEmu"), nButtons);
-					free(psz); free(pszErr);
-					if (nBrc!=IDYES) {
-						gConEmu.Destroy();
-						free(cmdLine);
-						return -1;
-					}
-					// Выполнить стандартную команду...
-					gSet.psCurCmd = _tcsdup(gSet.BufferHeight == 0 ? _T("far") : _T("cmd"));
-					nStep ++;
-				}
-			}
-
-			CloseHandle(pi.hThread); pi.hThread = NULL;
-			CloseHandle(pi.hProcess); pi.hProcess = NULL;
-			//hChildProcess = pi.hProcess;
-		}
-	}
 
 //------------------------------------------------------------------------
 ///| Misc |///////////////////////////////////////////////////////////////
