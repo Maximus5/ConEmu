@@ -24,7 +24,8 @@ private:
 		UINT lastSize; // предыдущая высота курсора (в процентах)
 	} Cursor;
 public:
-    HANDLE  hConOut(BOOL abAllowRecreate=FALSE);
+	HANDLE  hConOut_;
+    HANDLE  hConOut();
 	HWND    hConWnd;
 	HDC     hDC; //, hBgDc;
 	HBITMAP hBitmap; //, hBgBitmap;
@@ -64,7 +65,6 @@ public:
 	bool CheckBufferSize();
 
 protected:
-	HANDLE  hConOut_;
 	i64 m_LastMaxReadCnt; DWORD m_LastMaxReadTick;
 	enum _PartType{
 		pNull,  // конец строки/последний, неотображаемый элемент

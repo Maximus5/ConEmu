@@ -62,7 +62,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="comctl32.lib Shlwapi.lib version.lib"
-				OutputFile="C:\Utils\Far180\ConEmu.exe"
+				OutputFile="F:\VCProject\FarPlugin\#FAR180\ConEmu.exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
 				SubSystem="2"

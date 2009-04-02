@@ -473,7 +473,7 @@ END
 
 STRINGTABLE DISCARDABLE 
 BEGIN
-    cbRClick                "Off - all RClicks passed to console\nOn - Apps passed to console instead of RClick\n3s - Short RClick passed, Long RClick -> Apps\nWarning! This may conflict with RDrag"
+    cbRClick                "Off - all RClicks passed to console\nOn - Apps passed to console instead of RClick\n3s - Short RClick passed, Long RClick -> Apps"
 END
 
 STRINGTABLE DISCARDABLE 

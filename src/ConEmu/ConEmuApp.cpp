@@ -179,12 +179,6 @@ void DebugLogMessage(HWND h, UINT m, WPARAM w, LPARAM l, BOOL posted, BOOL extra
 }
 void DebugLogPos(HWND hw, int x, int y, int w, int h)
 {
-	#ifdef _DEBUG
-	if (!x && !y && hw == ghConWnd) {
-		if (!IsDebuggerPresent() && !isPressed(VK_LBUTTON))
-			__asm int 3;
-	}
-	#endif
     if (bBlockDebugLog || (!bSendToFile && !IsDebuggerPresent()))
         return;
 
@@ -465,10 +459,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     g_hInstance = hInstance;
 
-	if (_tcsstr(GetCommandLine(), L"/debug")) {
-		if (!IsDebuggerPresent()) MBoxA(L"Conemu started");
-	}
-
     //pVCon = NULL;
 
     bool setParentDisabled=false;
@@ -481,7 +471,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	bool WindowPrm = false;
 	bool AttachPrm = false; LONG AttachVal=0;
 	bool ConManPrm = false, ConManValue = false;
-	bool VisPrm = false, VisValue = false;
 
     //gConEmu.cBlinkShift = GetCaretBlinkTime()/15;
 
@@ -555,9 +544,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			}
 			else if ( !klstricmp(curCommand, _T("/noconman")) ) {
 				ConManValue = false; ConManPrm = true;
-			}
-			else if ( !klstricmp(curCommand, _T("/visible")) ) {
-				VisValue = true; VisPrm = true;
 			}
             else if ( !klstricmp(curCommand, _T("/ct")) || !klstricmp(curCommand, _T("/cleartype")) )
             {
@@ -707,8 +693,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	}
 	if (ConManPrm)
 		gSet.isConMan = ConManValue;
-	if (VisValue)
-		gSet.isConVisible = VisPrm;
 	// Если запускается conman - принудительно включить флажок "Обновлять handle"
 	//cmdNew = gSet.Cmd;
 	//while (*cmdNew==L' ' || *cmdNew==L'"')

@@ -63,11 +63,7 @@
 //#ifdef _DEBUG
 //#define isMeForeground() TRUE
 //#else
-//#define isMeForeground() (GetForegroundWindow() == ghWnd || GetForegroundWindow() == ghOpWnd || ())
-__inline BOOL isMeForeground() {
-	HWND h = GetForegroundWindow();
-	return h && (h == ghWnd || h == ghOpWnd || h == ghConWnd);
-}
+#define isMeForeground() (GetForegroundWindow() == ghWnd || GetForegroundWindow() == ghOpWnd)
 //#endif
 #define isPressed(inp) HIBYTE(GetKeyState(inp))
 #define countof(a) (sizeof((a))/(sizeof(*(a))))

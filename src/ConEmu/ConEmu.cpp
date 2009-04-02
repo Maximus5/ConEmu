@@ -1418,13 +1418,6 @@ void CConEmuMain::ConsoleCreated(HWND hConWnd)
 	
 	if (!isShowConsole && !gSet.isConVisible) {
 		ShowWindow(ghConWnd, SW_HIDE);
-		EnableWindow(ghConWnd, false);
-	} else {
-		RECT rcWnd, rcCon;
-		GetWindowRect(ghWnd, &rcWnd); GetWindowRect(ghConWnd, &rcCon);
-        SetWindowPos(ghConWnd, HWND_TOPMOST, 
-            rcWnd.right-rcCon.right+rcCon.left,rcWnd.bottom-rcCon.bottom+rcCon.top,0,0, SWP_NOSIZE);
-        SetFocus(ghWnd);
 	}
 
     // set parent window of the console window:
@@ -2253,6 +2246,7 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
 
 	    SetForegroundWindow(ghWnd);
 
+		//2009-03-31 Maximus - зачем?
 	    //SetParent(ghWnd, GetParent(GetShellWindow()));
 	    
 	    //pVCon->InitDC();
@@ -2282,10 +2276,10 @@ LRESULT CConEmuMain::OnDestroy(HWND hWnd)
 
 LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 {
-//#ifdef _DEBUG
-//#pragma message("warning: OnFocus skipped")
-//return 0;
-//#endif
+#ifdef _DEBUG
+#pragma message("warning: OnFocus skipped")
+return 0;
+#endif
 
     POSTMESSAGE(ghConWnd, messg, wParam, lParam, FALSE);
 	return 0;
@@ -2417,11 +2411,10 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
         else
         {
             gConEmu.isShowConsole = false;
-            //if (!gSet.isConVisible)
-			ShowWindow(ghConWnd, SW_HIDE);
+            if (!gSet.isConVisible) ShowWindow(ghConWnd, SW_HIDE);
+            //if (gConEmu.setParent) SetParent(ghConWnd, HDCWND);
 			if (setParent) SetParent(ghConWnd, setParent2 ? ghWnd : ghWndDC);
-            //if (!gSet.isConVisible)
-			EnableWindow(ghConWnd, false);
+            if (!gSet.isConVisible) EnableWindow(ghConWnd, false);
 			SetFocus(ghWnd);
         }
         return 0;
@@ -2485,17 +2478,6 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 
 	if (!pVCon)
 		return 0;
-
-#ifdef _DEBUG
-	if (messg != WM_MOUSEMOVE) {
-		DWORD mode = 0;
-		BOOL lb = GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), &mode);
-		if (!(mode & ENABLE_MOUSE_INPUT)) {
-			mode |= ENABLE_MOUSE_INPUT;
-			lb = SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), mode);
-		}
-	}
-#endif
 
     RECT conRect, consoleRect;
 	POINT ptCur;
@@ -2850,11 +2832,7 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
     default:
         if (wParam != 0xF100)
         {
-			// иначе это приводит к потере фокуса и активации невидимой консоли,
-			// перехвате стрелок клавиатуры, и прочей фигни...
-			if (wParam<0xF000) {
-				POSTMESSAGE(ghConWnd, WM_SYSCOMMAND, wParam, lParam, FALSE);
-			}
+            POSTMESSAGE(ghConWnd, WM_SYSCOMMAND, wParam, lParam, FALSE);
             result = DefWindowProc(hWnd, WM_SYSCOMMAND, wParam, lParam);
         }
     }
@@ -3128,20 +3106,8 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		break;
 
     case WM_ACTIVATE:
-		#ifdef _DEBUG
-		result = OnFocus(hWnd, messg, wParam, lParam);
-		break;
-		#endif
     case WM_ACTIVATEAPP:
-		#ifdef _DEBUG
-		result = OnFocus(hWnd, messg, wParam, lParam);
-		break;
-		#endif
     case WM_KILLFOCUS:
-		#ifdef _DEBUG
-		result = OnFocus(hWnd, messg, wParam, lParam);
-		break;
-		#endif
     case WM_SETFOCUS:
 		result = OnFocus(hWnd, messg, wParam, lParam);
 		break;
