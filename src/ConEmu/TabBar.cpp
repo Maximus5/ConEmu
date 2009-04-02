@@ -271,7 +271,7 @@ void TabBarClass::Update(ConEmuTab* tabs, int tabsCount)
 		TCHAR szFormat[32];
 		wchar_t* tFileName=NULL; //--Maximus
 		if (tabs[i].Name[0]==0 || tabs[i].Type == 1/*WTYPE_PANELS*/) {
-			_tcscpy(tabs[i].Name, gConEmu.isFar() ? gSet.szTabPanels : gSet.pszTabConsole);
+			_tcscpy(tabs[i].Name, gSet.szTabPanels);
 			tFileName = tabs[i].Name;
 			_tcscpy(szFormat, _T("%s"));
 		} else {
@@ -424,7 +424,7 @@ bool TabBarClass::OnNotify(LPNMHDR nmhdr)
 		return false;
 	}
 
-	//SetFocus(ghWnd); // 02.04.2009 Maks - ?
+	SetFocus(ghWnd);
 	if (nmhdr->code == TCN_SELCHANGING)
 	{
 		//if (mb_ChangeAllowed) {

@@ -39,6 +39,9 @@ REGEDIT4
 ;; Needs EMenu & macro on 'Apps' button
 "RightClick opens context menu"=hex:02
 
+;; 1 - auto minimize to tray
+"Min2Tray"=hex:00
+
 ;; Поддержка ConMan. По идее должна активироваться и автоматически
 "Update Console handle"=hex:00
 
@@ -91,7 +94,7 @@ REGEDIT4
 ;; Для внутреннего использования (определяет размеры Tab контрола)
 ;"TabMargins"=hex:04,00,00,00,19,00,00,00,04,00,00,00,04,00,00,00
 ;; Форматирование заголовков
-"TabPanels"="Panels|Console"
+"TabPanels"="Panels"
 "TabEditor"="[%s]"
 "TabEditorModified"="[%s] *"
 "TabViewer"="{%s}"
