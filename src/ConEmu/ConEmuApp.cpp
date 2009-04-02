@@ -466,7 +466,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     g_hInstance = hInstance;
 
 	if (_tcsstr(GetCommandLine(), L"/debug")) {
-		if (!IsDebuggerPresent()) __asm int 3;
+		if (!IsDebuggerPresent()) MBoxA(L"Conemu started");
 	}
 
     //pVCon = NULL;

@@ -2282,10 +2282,10 @@ LRESULT CConEmuMain::OnDestroy(HWND hWnd)
 
 LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 {
-#ifdef _DEBUG
-#pragma message("warning: OnFocus skipped")
-return 0;
-#endif
+//#ifdef _DEBUG
+//#pragma message("warning: OnFocus skipped")
+//return 0;
+//#endif
 
     POSTMESSAGE(ghConWnd, messg, wParam, lParam, FALSE);
 	return 0;

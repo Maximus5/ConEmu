@@ -1676,6 +1676,7 @@ void CVirtualConsole::RegistryProps(BOOL abRollback, ConExeProps& props, LPCTSTR
     }
 }
 
+extern void SetConsoleFontSizeTo(HWND inConWnd, int inSizeX, int inSizeY);
 BOOL CVirtualConsole::StartProcess()
 {
     BOOL lbRc = FALSE;
@@ -1691,13 +1692,14 @@ BOOL CVirtualConsole::StartProcess()
     
     ConExeProps props;
     
+	// Если запускались с ярлыка - это нихрена не поможет... информация похоже в .lnk сохраняется...
     RegistryProps(FALSE, props);
 
     if (!gConEmu.isShowConsole && !gSet.isConVisible)
       SetWindowPos(ghWnd, HWND_TOPMOST, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
     AllocConsole();
-    //TODO: инициализация буферов, хэндлера и т.п.
     ghConWnd = GetConsoleWindow();
+	SetConsoleFontSizeTo(ghConWnd, 4, 6);
     if (!gConEmu.isShowConsole && !gSet.isConVisible)
       SetWindowPos(ghWnd, HWND_NOTOPMOST, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
     SetConsoleTitle(gSet.GetCmd());
