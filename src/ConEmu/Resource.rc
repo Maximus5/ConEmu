@@ -70,7 +70,7 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 IDD_DIALOG1 DIALOGEX 0, 0, 328, 258
 STYLE DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_TOPMOST | WS_EX_CONTROLPARENT
-FONT 8, "MS Shell Dlg", 0, 0, 0x1
+FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        "Anti-aliasing",IDC_STATIC,263,4,60,45,WS_GROUP
     CONTROL         "&None",rNoneAA,"Button",BS_AUTORADIOBUTTON | WS_GROUP,
@@ -108,7 +108,7 @@ BEGIN
                     BS_AUTOCHECKBOX | WS_TABSTOP,10,96,64,8
     GROUPBOX        "Window size",IDC_STATIC,147,50,110,50
     CONTROL         "Normal",rNormal,"Button",BS_AUTORADIOBUTTON | WS_GROUP,
-                    151,61,47,8
+                    151,61,38,8
     CONTROL         "Maximized",rMaximized,"Button",BS_AUTORADIOBUTTON,151,
                     74,48,8
     CONTROL         "Full screen",rFullScreen,"Button",BS_AUTORADIOBUTTON,
@@ -117,14 +117,14 @@ BEGIN
                     BS_AUTO3STATE | WS_TABSTOP,10,139,125,8
     GROUPBOX        "Font",IDC_STATIC,4,4,136,122
     RTEXT           "Size:",IDC_STATIC,9,37,32,8
-    CTEXT           "x",IDC_STATIC,87,35,8,8
+    CTEXT           "x",IDC_STATIC,89,35,6,8
     RTEXT           "Charset:",IDC_STATIC,9,53,32,8
-    EDITTEXT        tWndWidth,201,60,18,11,ES_AUTOHSCROLL | ES_NUMBER
-    EDITTEXT        tWndHeight,231,60,18,11,ES_AUTOHSCROLL | ES_NUMBER
-    CTEXT           "x",IDC_STATIC,221,60,8,8
+    EDITTEXT        tWndWidth,199,60,20,11,ES_AUTOHSCROLL | ES_NUMBER
+    EDITTEXT        tWndHeight,229,60,20,11,ES_AUTOHSCROLL | ES_NUMBER
+    CTEXT           "x",IDC_STATIC,221,61,6,8
     CONTROL         "Force monospace",cbMonospace,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,10,83,70,8
-    CTEXT           "x",IDC_STATIC,99,83,8,8
+    CTEXT           "x",IDC_STATIC,101,83,6,8
     COMBOBOX        tFontSizeX3,109,81,24,66,CBS_DROPDOWN | WS_VSCROLL | 
                     WS_TABSTOP
     LTEXT           "Path:",IDC_STATIC,10,184,18,8
@@ -145,7 +145,7 @@ BEGIN
                     CBS_SORT | WS_VSCROLL | WS_TABSTOP
     COMBOBOX        tFontSizeX2,109,107,24,66,CBS_DROPDOWN | WS_VSCROLL | 
                     WS_TABSTOP
-    CTEXT           "x",IDC_STATIC,99,109,8,8
+    CTEXT           "x",IDC_STATIC,101,109,6,8
     PUSHBUTTON      "...",bBgImage,247,184,16,12
     CONTROL         "Stretch",rBgStretch,"Button",BS_AUTORADIOBUTTON | 
                     WS_DISABLED,278,195,39,10
@@ -159,9 +159,9 @@ BEGIN
                     WS_DISABLED,268,87,44,10
     CONTROL         "Fixed",rFixed,"Button",BS_AUTORADIOBUTTON | WS_DISABLED,
                     268,61,33,10
-    EDITTEXT        tWndX,268,72,18,11,ES_AUTOHSCROLL | ES_NUMBER
-    EDITTEXT        tWndY,296,72,18,11,ES_AUTOHSCROLL | ES_NUMBER
-    CTEXT           "x",IDC_STATIC,287,73,8,8
+    EDITTEXT        tWndX,268,72,20,11,ES_AUTOHSCROLL | ES_NUMBER
+    EDITTEXT        tWndY,297,72,20,11,ES_AUTOHSCROLL | ES_NUMBER
+    CTEXT           "x",IDC_STATIC,290,73,6,8
     GROUPBOX        "Command Line",IDC_STATIC,4,223,319,30
     EDITTEXT        tCmdLine,9,234,258,12,ES_AUTOHSCROLL
     GROUPBOX        "Graphic enhancement",IDC_STATIC,147,101,176,25
@@ -359,7 +359,7 @@ END
 IDD_DIALOG3 DIALOGEX 0, 0, 328, 258
 STYLE DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_TOPMOST | WS_EX_CONTROLPARENT
-FONT 8, "MS Shell Dlg"
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     GROUPBOX        "Performance counters",gbPerformance,4,4,319,30
     RTEXT           "Render:",IDC_STATIC,92,17,27,8
@@ -367,14 +367,22 @@ BEGIN
     EDITTEXT        tPerfBlt,190,16,43,11,ES_AUTOHSCROLL | ES_READONLY
     RTEXT           "Blt:",IDC_STATIC,176,17,12,8
     GROUPBOX        "Console states",IDC_STATIC,4,39,319,47
-    CHECKBOX        "ConMan",cbsConManActive,11,51,43,10,WS_DISABLED | NOT WS_TABSTOP
-    CHECKBOX        "Telnet",cbsTelnetActive,79,51,35,10,WS_DISABLED | NOT WS_TABSTOP
-    CHECKBOX        "Ntvdm",cbsNtvdmActive,119,51,35,10,WS_DISABLED | NOT WS_TABSTOP
-    CHECKBOX        "Far",cbsFarActive,11,67,25,10,WS_DISABLED | NOT WS_TABSTOP
-    CHECKBOX        "Panel",cbsFilePanel,68,67,32,10,WS_DISABLED | NOT WS_TABSTOP
-    CHECKBOX        "Plugin",cbsPlugin,103,67,35,10,WS_DISABLED | NOT WS_TABSTOP
-    CHECKBOX        "Editor",cbsEditor,139,67,34,10,WS_DISABLED | NOT WS_TABSTOP
-    CHECKBOX        "Viewer",cbsViewer,174,67,37,10,WS_DISABLED | NOT WS_TABSTOP
+    CHECKBOX        "ConMan",cbsConManActive,11,51,43,10,WS_DISABLED | NOT 
+                    WS_TABSTOP
+    CHECKBOX        "Telnet",cbsTelnetActive,79,51,35,10,WS_DISABLED | NOT 
+                    WS_TABSTOP
+    CHECKBOX        "Ntvdm",cbsNtvdmActive,119,51,35,10,WS_DISABLED | NOT 
+                    WS_TABSTOP
+    CHECKBOX        "Far",cbsFarActive,11,67,25,10,WS_DISABLED | NOT 
+                    WS_TABSTOP
+    CHECKBOX        "Panel",cbsFilePanel,68,67,32,10,WS_DISABLED | NOT 
+                    WS_TABSTOP
+    CHECKBOX        "Plugin",cbsPlugin,103,67,35,10,WS_DISABLED | NOT 
+                    WS_TABSTOP
+    CHECKBOX        "Editor",cbsEditor,139,67,34,10,WS_DISABLED | NOT 
+                    WS_TABSTOP
+    CHECKBOX        "Viewer",cbsViewer,174,67,37,10,WS_DISABLED | NOT 
+                    WS_TABSTOP
     GROUPBOX        "Processes",IDC_STATIC,4,90,319,130
     EDITTEXT        tsConManIdx,55,51,18,11,ES_AUTOHSCROLL | ES_READONLY
     EDITTEXT        tsTopPID,38,67,26,11,ES_AUTOHSCROLL | ES_READONLY
@@ -416,12 +424,12 @@ BEGIN
 
     IDD_DIALOG2, DIALOG
     BEGIN
-        BOTTOMMARGIN, 162
+        BOTTOMMARGIN, 242
     END
 
     IDD_DIALOG3, DIALOG
     BEGIN
-        BOTTOMMARGIN, 162
+        BOTTOMMARGIN, 242
     END
 END
 #endif    // APSTUDIO_INVOKED
@@ -473,7 +481,7 @@ END
 
 STRINGTABLE DISCARDABLE 
 BEGIN
-    cbRClick                "Off - all RClicks passed to console\nOn - Apps passed to console instead of RClick\n3s - Short RClick passed, Long RClick -> Apps"
+    cbRClick                "Off - all RClicks passed to console\nOn - Apps passed to console instead of RClick\n3s - Short RClick passed, Long RClick -> Apps\nWarning! This may conflict with RDrag"
 END
 
 STRINGTABLE DISCARDABLE 

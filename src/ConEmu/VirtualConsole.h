@@ -7,7 +7,7 @@ public:
 	bool IsForceUpdate;
 	uint TextWidth, TextHeight;
 	uint Width, Height;
-
+private:
 	struct
 	{
 		bool isVisible;
@@ -19,10 +19,13 @@ public:
 		COLORREF bgColor;
 		BYTE foreColorNum, bgColorNum;
 		TCHAR ch[2];
+		DWORD nBlinkTime, nLastBlink;
+		RECT lastRect;
+		UINT lastSize; // предыдущая высота курсора (в процентах)
 	} Cursor;
-
-	HANDLE  hConOut_;
-    HANDLE  hConOut();
+public:
+    HANDLE  hConOut(BOOL abAllowRecreate=FALSE);
+	HWND    hConWnd;
 	HDC     hDC; //, hBgDc;
 	HBITMAP hBitmap; //, hBgBitmap;
 	HBRUSH  hBrush0, hOldBrush, hSelectedBrush;
@@ -45,6 +48,7 @@ public:
 	static CVirtualConsole* Create();
 
 	bool InitDC(bool abNoDc);
+	void InitHandlers();
 	void DumpConsole();
 	void Free();
 	bool Update(bool isForce = false, HDC *ahDc=NULL);
@@ -57,8 +61,10 @@ public:
 	bool CheckSelection(const CONSOLE_SELECTION_INFO& select, SHORT row, SHORT col);
 	bool GetCharAttr(TCHAR ch, WORD atr, TCHAR& rch, BYTE& foreColorNum, BYTE& backColorNum);
 	void SetConsoleSize(const COORD& size);
+	bool CheckBufferSize();
 
 protected:
+	HANDLE  hConOut_;
 	i64 m_LastMaxReadCnt; DWORD m_LastMaxReadTick;
 	enum _PartType{
 		pNull,  // конец строки/последний, неотображаемый элемент
@@ -89,9 +95,23 @@ protected:
 	i64 tick, tick2;
 	char *tmpOem;
 	void UpdateCursor(bool& lRes);
+	void UpdateCursorDraw(COORD pos, BOOL vis, UINT dwSize,  LPRECT prcLast=NULL);
 	bool UpdatePrepare(bool isForce, HDC *ahDc);
 	void UpdateText(bool isForce, bool updateText, bool updateCursor);
 	WORD CharWidth(TCHAR ch);
 	bool CheckChangedTextAttr();
 	void ParseLine(int row, TCHAR *ConCharLine, WORD *ConAttrLine);
+	BOOL AttachPID(DWORD dwPID);
+	BOOL StartProcess();
+	typedef struct _ConExeProps {
+		BOOL  bKeyExists;
+		DWORD ScreenBufferSize; //Loword-Width, Hiword-Height
+		DWORD WindowSize;
+		DWORD WindowPosition;
+		DWORD FontSize;
+		DWORD FontFamily;
+		TCHAR *FaceName;
+		TCHAR *FullKeyName;
+	} ConExeProps;
+	void RegistryProps(BOOL abRollback, ConExeProps& props, LPCTSTR asExeName=NULL);
 };

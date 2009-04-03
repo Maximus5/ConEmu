@@ -91,28 +91,29 @@ LRESULT CALLBACK CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam
         result = gConEmu.WndProc(hWnd, messg, wParam, lParam);
         return result;
 
-    case WM_INPUTLANGCHANGE:
-    case WM_INPUTLANGCHANGEREQUEST:
-    case WM_IME_NOTIFY:
-		{
-			//POSTMESSAGE(ghConWnd, messg, wParam, lParam, FALSE);
-			result = DefWindowProc(hWnd, messg, wParam, lParam);
-			
-			//#ifndef _DEBUG
-			//POSTMESSAGE(ghConWnd, messg, wParam, lParam, FALSE);
-			//#else
-			POSTMESSAGE(ghConWnd, messg, wParam, lParam, FALSE); // с SEND - точно работало
-			//if (gSet.isAdvLangChange) {
-			POSTMESSAGE(ghConWnd, WM_SETFOCUS, 0,0,1);
-			POSTMESSAGE(ghWnd, WM_SETFOCUS, 0,0,1);
-			//}
-			//#endif
-			/*if (messg == WM_INPUTLANGCHANGE) {
-				//wParam Specifies the character set of the new locale. 
-				ActivateKeyboardLayout((HKL)lParam, 0);
-			}*/
-			return result;
-		}
+    //case WM_INPUTLANGCHANGE:
+    //case WM_INPUTLANGCHANGEREQUEST:
+    ////case WM_IME_NOTIFY: // 02.04.2009 Maks - убрал
+	//	{
+	//		//POSTMESSAGE(ghConWnd, messg, wParam, lParam, FALSE);
+	//		result = DefWindowProc(hWnd, messg, wParam, lParam);
+	//		
+	//		//#ifndef _DEBUG
+	//		//POSTMESSAGE(ghConWnd, messg, wParam, lParam, FALSE);
+	//		//#else
+	//		POSTMESSAGE(ghConWnd, messg, wParam, lParam, FALSE); // с SEND - точно работало
+	//		//if (gSet.isAdvLangChange) {
+	//		if (messg == WM_INPUTLANGCHANGE) {
+	//			POSTMESSAGE(ghConWnd, WM_SETFOCUS, 0,0,1);
+	//			POSTMESSAGE(ghWnd, WM_SETFOCUS, 0,0,1);
+	//		}
+	//		//#endif
+	//		/*if (messg == WM_INPUTLANGCHANGE) {
+	//			//wParam Specifies the character set of the new locale. 
+	//			ActivateKeyboardLayout((HKL)lParam, 0);
+	//		}*/
+	//		return result;
+	//	}
 
     default:
 		if (messg == mn_MsgTabChanged) {

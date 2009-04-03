@@ -25,7 +25,7 @@ CConEmuMain::CConEmuMain()
 {
     wcscpy(szConEmuVersion, L"?.?.?.?");
 	//gnLastProcessCount=0;
-	cBlinkNext=0;
+	//cBlinkNext=0;
 	WindowMode=0;
 	//hPipe=NULL;
 	//hPipeEvent=NULL;
@@ -50,7 +50,7 @@ CConEmuMain::CConEmuMain()
 	m_LastConSize = MakeCoord(0,0);
 	DragDrop=NULL;
 	ProgressBars=NULL;
-	cBlinkShift=0;
+	//cBlinkShift=0;
 	Title[0]=0; TitleCmp[0]=0;
 	mb_InTimer = FALSE;
 	//mb_InClose = FALSE;
@@ -94,6 +94,7 @@ CConEmuMain::CConEmuMain()
 	mn_ActiveCon = -1; pVCon = NULL;
 	memset(mp_VCon, 0, sizeof(mp_VCon));
 	
+	mn_MsgPostCreate = RegisterWindowMessage(_T("ConEmuMain::PostCreate"));
 	mn_MsgPostCopy = RegisterWindowMessage(_T("ConEmuMain::PostCopy"));
 }
 
@@ -690,6 +691,9 @@ void CConEmuMain::SyncWindowToConsole()
 {
     DEBUGLOGFILE("SyncWindowToConsole\n");
 
+	if (!pVCon)
+		return;
+
 	RECT rcDC = MakeRect(pVCon->Width, pVCon->Height);
 
 	RECT rcWnd = CalcRect(CER_MAIN, rcDC, CER_DC); // размеры окна
@@ -757,6 +761,9 @@ bool CConEmuMain::SetWindowMode(uint inMode)
 
 			if (!IsWindowVisible(ghWnd))
 				ShowWindow(ghWnd, SW_SHOWNORMAL);
+			// Если это во время загрузки - то до первого ShowWindow - IsIconic возвращает FALSE
+			if (IsIconic(ghWnd) || IsZoomed(ghWnd))
+				ShowWindow(ghWnd, SW_SHOWNORMAL); // WM_SYSCOMMAND использовать не хочется...
 		} break;
     case rMaximized:
         {
@@ -870,74 +877,11 @@ void CConEmuMain::ForceShowTabs(BOOL abShow)
 bool CConEmuMain::CheckBufferSize()
 {
 	bool lbForceUpdate = false;
-	
-    CONSOLE_SCREEN_BUFFER_INFO inf; memset(&inf, 0, sizeof(inf));
-    GetConsoleScreenBufferInfo(pVCon->hConOut(), &inf);
-    if (inf.dwSize.X>(inf.srWindow.Right-inf.srWindow.Left+1)) {
-        DEBUGLOGFILE("Wrong screen buffer width\n");
-		// Окошко консоли почему-то схлопнулось по горизонтали
-        MOVEWINDOW(ghConWnd, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), 1);
-    } else {
-		// может меняться и из плагина, во время работы фара...
-	    /*if (mn_ActiveStatus & CES_FARACTIVE) {
-		    if (BufferHeight) {
-			    BufferHeight = 0; // сброс на время активности фара
-				lbForceUpdate = true;
-			}
-	    } else*/
-		if ( (inf.dwSize.Y<(inf.srWindow.Bottom-inf.srWindow.Top+10)) && BufferHeight &&
-			 !gSet.BufferHeight /*&& (BufferHeight != inf.dwSize.Y)*/)
-		{
-		    // может быть консольная программа увеличила буфер самостоятельно?
-		    // TODO: отключить прокрутку!!!
-		    BufferHeight = 0;
 
-            SCROLLINFO si;
-            ZeroMemory(&si, sizeof(si));
-            si.cbSize = sizeof(si);
-            si.fMask = SIF_PAGE | SIF_POS | SIF_RANGE | SIF_TRACKPOS;
-            if (GetScrollInfo(ghConWnd, SB_VERT, &si))
-				SetScrollInfo(m_Back.mh_Wnd, SB_VERT, &si, true);
+	if (!pVCon)
+		return false;
 
-		    lbForceUpdate = true;
-	    } else 
-		if ( (inf.dwSize.Y>(inf.srWindow.Bottom-inf.srWindow.Top+10)) ||
-			 (BufferHeight && (BufferHeight != inf.dwSize.Y)) )
-		{
-		    // может быть консольная программа увеличила буфер самостоятельно?
-		    if (BufferHeight != inf.dwSize.Y) {
-			    // TODO: Включить прокрутку!!!
-			    BufferHeight = inf.dwSize.Y;
-			    lbForceUpdate = true;
-		    }
-	    }
-	    
-	    if ((BufferHeight == 0) && (inf.dwSize.Y>(inf.srWindow.Bottom-inf.srWindow.Top+1))) {
-			#pragma message("TODO: это может быть консольная программа увеличила буфер самостоятельно!")
-	        DEBUGLOGFILE("Wrong screen buffer height\n");
-			// Окошко консоли почему-то схлопнулось по вертикали
-	        MOVEWINDOW(ghConWnd, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), 1);
-	    }
-    }
-
-	// При выходе из FAR -> CMD с BufferHeight - смена QuickEdit режима
-	DWORD mode = 0;
-	BOOL lb = FALSE;
-	if (BufferHeight) {
-		//TODO: похоже, что для BufferHeight это вызывается постоянно?
-		lb = GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), &mode);
-
-		if (inf.dwSize.Y>(inf.srWindow.Bottom-inf.srWindow.Top+1)) {
-			// Буфер больше высоты окна
-			mode |= ENABLE_QUICK_EDIT_MODE|ENABLE_INSERT_MODE|ENABLE_EXTENDED_FLAGS;
-		} else {
-			// Буфер равен высоте окна (значит ФАР запустился)
-			mode &= ~(ENABLE_QUICK_EDIT_MODE|ENABLE_INSERT_MODE);
-			mode |= ENABLE_EXTENDED_FLAGS;
-		}
-
-		lb = SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), mode);
-	}
+	lbForceUpdate = pVCon->CheckBufferSize();
 	
 	return lbForceUpdate;
 }
@@ -962,7 +906,7 @@ LRESULT CConEmuMain::OnSize(WPARAM wParam, WORD newClientWidth, WORD newClientHe
         
 	m_Back.Resize();
 
-	if (!gConEmu.isSizing() || gConEmu.mb_FullWindowDrag) {
+	if (!isSizing() || mb_FullWindowDrag) {
 		BOOL lbIsPicView = isPictureView();
 
 		SyncConsoleToWindow();
@@ -1074,18 +1018,6 @@ LRESULT CConEmuMain::OnSizing(WPARAM wParam, LPARAM lParam)
 	return result;
 }
 
-void CConEmuMain::SetConParent()
-{
-    // set parent window of the console window:
-    // *) it is used by ConMan and some FAR plugins, set it for standard mode or if /SetParent switch is set
-    // *) do not set it by default for buffer mode because it causes unwanted selection jumps
-    // WARP ItSelf опытным путем выяснил, что SetParent валит ConEmu в Windows7
-    //if (!setParentDisabled && (setParent || BufferHeight == 0))
-    
-    //TODO: ConMan? попробуем на родительское окно SetParent делать
-    if (setParent)
-        SetParent(ghConWnd, setParent2 ? ghWnd : ghWndDC);
-}
 
 
 
@@ -1477,6 +1409,40 @@ DWORD CConEmuMain::CheckProcesses(DWORD nConmanIDX, BOOL bTitleChanged)
 	return m_ProcCount;
 }
 
+void CConEmuMain::ConsoleCreated(HWND hConWnd)
+{
+	if (!hConWnd)
+		return;
+		
+	ghConWnd = hConWnd;
+
+	// Чтобы можно было найти хэндл окна по хэндлу консоли
+	SetWindowLong(ghWnd, GWL_USERDATA, (LONG)ghConWnd);
+	
+	if (!isShowConsole && !gSet.isConVisible) {
+		ShowWindow(ghConWnd, SW_HIDE);
+		EnableWindow(ghConWnd, false);
+	} else {
+		RECT rcWnd, rcCon;
+		GetWindowRect(ghWnd, &rcWnd); GetWindowRect(ghConWnd, &rcCon);
+        SetWindowPos(ghConWnd, HWND_TOPMOST, 
+            rcWnd.right-rcCon.right+rcCon.left,rcWnd.bottom-rcCon.bottom+rcCon.top,0,0, SWP_NOSIZE);
+        SetFocus(ghWnd);
+	}
+	
+	
+
+    // set parent window of the console window:
+    // *) it is used by ConMan and some FAR plugins, set it for standard mode or if /SetParent switch is set
+    // *) do not set it by default for buffer mode because it causes unwanted selection jumps
+    // WARP ItSelf опытным путем выяснил, что SetParent валит ConEmu в Windows7
+    //if (!setParentDisabled && (setParent || BufferHeight == 0))
+    
+    //TODO: ConMan? попробуем на родительское окно SetParent делать
+    if (setParent)
+        SetParent(ghConWnd, setParent2 ? ghWnd : ghWndDC);
+}
+
 CVirtualConsole* CConEmuMain::CreateCon()
 {
 	CVirtualConsole* pCon = NULL;
@@ -1679,7 +1645,7 @@ void CConEmuMain::PostMacro(LPCWSTR asMacro)
 				DWORD cbWritten=0;
 				if (pipe.Execute(CMD_POSTMACRO))
 				{
-					gConEmu.DnDstep(_T("Macro: Checking for plugin (1 sec)"));
+					DnDstep(_T("Macro: Checking for plugin (1 sec)"));
 					// Подождем немножко, проверим что плагин живой
 					cbWritten = WaitForSingleObject(pipe.hEventAlive, CONEMUALIVETIMEOUT);
 					if (cbWritten!=WAIT_OBJECT_0) {
@@ -1687,14 +1653,14 @@ void CConEmuMain::PostMacro(LPCWSTR asMacro)
 						wsprintf(szErr, _T("ConEmu plugin is not active!\r\nProcessID=%i"), pipe.nPID);
 						MBoxA(szErr);
 					} else {
-						gConEmu.DnDstep(_T("Macro: Waiting for result (10 sec)"));
+						DnDstep(_T("Macro: Waiting for result (10 sec)"));
 						cbWritten = WaitForSingleObject(pipe.hEventReady, CONEMUREADYTIMEOUT);
 						if (cbWritten!=WAIT_OBJECT_0) {
 							TCHAR szErr[MAX_PATH];
 							wsprintf(szErr, _T("Command waiting time exceeds!\r\nConEmu plugin is locked?\r\nProcessID=%i"), pipe.nPID);
 							MBoxA(szErr);
 						} else {
-							gConEmu.DnDstep(NULL);
+							DnDstep(NULL);
 						}
 					}
 				}
@@ -1874,6 +1840,18 @@ LRESULT CConEmuMain::OnPaint(WPARAM wParam, LPARAM lParam)
 
 void CConEmuMain::PaintCon()
 {
+	if (!pVCon) {
+		// Залить цветом 0
+		HBRUSH hBr = CreateSolidBrush(gSet.Colors[0]);
+		RECT rcClient; GetClientRect(ghWndDC, &rcClient);
+		PAINTSTRUCT ps;
+		HDC hDc = BeginPaint(ghWndDC, &ps);
+		FillRect(hDc, &rcClient, hBr);
+		DeleteObject(hBr);
+		EndPaint(ghWndDC, &ps);
+		return;
+	}
+
 	RECT client; GetClientRect(ghWndDC, &client);
 	if (((ULONG)client.right) > pVCon->Width)
 		client.right = pVCon->Width;
@@ -2000,7 +1978,7 @@ LPCTSTR CConEmuMain::GetTitle()
 
 bool CConEmuMain::isConman()
 {
-	return (gConEmu.mn_ActiveStatus & CES_CONMANACTIVE);
+	return (mn_ActiveStatus & CES_CONMANACTIVE);
 }
 
 bool CConEmuMain::isConSelectMode()
@@ -2139,9 +2117,9 @@ bool CConEmuMain::isSizing()
 LRESULT CConEmuMain::OnClose(HWND hWnd)
 {
     //Icon.Delete(); - перенес в WM_DESTROY
-	//gConEmu.mb_InClose = TRUE;
+	//mb_InClose = TRUE;
     SENDMESSAGE(ghConWnd, WM_CLOSE, 0, 0);
-	//gConEmu.mb_InClose = FALSE;
+	//mb_InClose = FALSE;
 	return 0;
 }
 
@@ -2222,18 +2200,18 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd)
 	Icon.LoadIcon(hWnd, gSet.nIconID/*IDI_ICON1*/);
 	
 	// Чтобы можно было найти хэндл окна по хэндлу консоли
-	SetWindowLong(hWnd, GWL_USERDATA, (LONG)ghConWnd);
+	SetWindowLong(hWnd, GWL_USERDATA, (LONG)ghConWnd); // 31.03.2009 Maximus - только нихрена оно еще не создано!
 
-	gConEmu.m_Back.Create();
+	m_Back.Create();
 
-	if (!gConEmu.m_Child.Create())
+	if (!m_Child.Create())
 		return -1;
 
 	mn_StartTick = GetTickCount();
 
 
-    //gConEmu.DragDrop = new CDragDrop(HDCWND);
-    gConEmu.ProgressBars = new CProgressBars(ghWnd, g_hInstance);
+    //DragDrop = new CDragDrop(HDCWND);
+    ProgressBars = new CProgressBars(ghWnd, g_hInstance);
 
     // Установить переменную среды с дескриптором окна
 	WCHAR szVar[32];
@@ -2251,35 +2229,55 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd)
 
 
     if (gSet.isTabs==1)
-	    gConEmu.ForceShowTabs(TRUE);
+	    ForceShowTabs(TRUE);
 
-	CreateCon();
+	//CreateCon();
 
 	return 0;
 }
 
-void CConEmuMain::PostCreate()
+void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
 {
-    OleInitialize (NULL); // как бы попробовать включать Ole только во время драга. кажется что из-за него глючит переключалка языка
-	//CoInitializeEx(NULL, COINIT_MULTITHREADED);
+	if (!abRecieved) {
+		//if (gConEmu.WindowMode == rFullScreen || gConEmu.WindowMode == rMaximized) {
+		#ifdef _DEBUG
+		WINDOWPLACEMENT wpl; memset(&wpl, 0, sizeof(wpl)); wpl.length = sizeof(wpl);
+		GetWindowPlacement(ghWnd, &wpl);
+		#endif
 
-	if (!DragDrop)
-		DragDrop = new CDragDrop(HDCWND);
+		SetWindowMode(WindowMode);
+		//} else {
+		//ShowWindow(ghWnd, SW_SHOW);
+		//UpdateWindow(ghWnd);
+		//}
+		
+		PostMessage(ghWnd, mn_MsgPostCreate, 0, 0);
+	} else {
+		CreateCon();
 
-#pragma message("Warning: Если консоль не создана - handler не установится!")
+	    OleInitialize (NULL); // как бы попробовать включать Ole только во время драга. кажется что из-за него глючит переключалка языка
+		//CoInitializeEx(NULL, COINIT_MULTITHREADED);
 
-    SetConsoleCtrlHandler((PHANDLER_ROUTINE)CConEmuMain::HandlerRoutine, true);
+		if (!DragDrop)
+			DragDrop = new CDragDrop(HDCWND);
 
-    SetForegroundWindow(ghWnd);
+	#pragma message("Warning: Если консоль не создана - handler не установится!")
 
-    SetParent(ghWnd, GetParent(GetShellWindow()));
-    
-    //pVCon->InitDC();
-    gConEmu.SyncWindowToConsole();
+	    //SetConsoleCtrlHandler((PHANDLER_ROUTINE)CConEmuMain::HandlerRoutine, true);
 
-    gConEmu.SetWindowMode(gConEmu.WindowMode);
+	    SetForegroundWindow(ghWnd);
 
-    SetTimer(ghWnd, 0, gSet.nMainTimerElapse, NULL);
+	    //SetParent(ghWnd, GetParent(GetShellWindow()));
+	    
+	    //pVCon->InitDC();
+		if (WindowMode == rNormal) {
+			SyncWindowToConsole();
+		}
+
+	    SetWindowMode(WindowMode);
+
+	    SetTimer(ghWnd, 0, gSet.nMainTimerElapse, NULL);
+	}
 }
 
 LRESULT CConEmuMain::OnDestroy(HWND hWnd)
@@ -2300,48 +2298,10 @@ LRESULT CConEmuMain::OnDestroy(HWND hWnd)
 
 LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 {
-	/*
-    case WM_ACTIVATE:
-    case WM_ACTIVATEAPP:
-    case WM_KILLFOCUS:
-    case WM_SETFOCUS:
-	*/
-
-
-    /*if (messg == WM_SETFOCUS) {
-	    //TODO: проверка Options
-		if (ghOpWnd) {
-			TCHAR szClass[128], szTitle[255], szMsg[1024];
-
-			GetClassName(hWnd, szClass, 64);
-			GetWindowText(hWnd, szTitle, 255);
-
-			wsprintf(szMsg, _T("WM_SETFOCUS to (HWND=0x%08x)\r\n%s - %s\r\n"),
-				(DWORD)hWnd, szClass, szTitle);
-
-			if (!wParam)
-				wParam = (WPARAM)GetFocus();
-			if (wParam) {
-				GetClassName((HWND)wParam, szClass, 64);
-				GetWindowText((HWND)wParam, szTitle, 255);
-				wsprintf(szMsg+_tcslen(szMsg), _T("from (HWND=0x%08x)\r\n%s - %s\r\n"),
-					(DWORD)hWnd, szClass, szTitle);
-			}
-			MBoxA(szMsg);
-		}
-		else if (ghWndDC && IsWindow(ghWndDC)) {
-			SetFocus(ghWndDC);
-		}
-	}*/
-
-    /*if (messg == WM_SETFOCUS || messg == WM_KILLFOCUS) {
-        if (hPictureView && IsWindow(hPictureView)) {
-            break; // в FAR не пересылать
-        }
-    }*/
-
-	//if (gSet.isSkipFocusEvents)
-	//	return 0;
+//#ifdef _DEBUG
+//#pragma message("warning: OnFocus skipped")
+//return 0;
+//#endif
 
     POSTMESSAGE(ghConWnd, messg, wParam, lParam, FALSE);
 	return 0;
@@ -2394,20 +2354,20 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 	if (messg == WM_KEYDOWN || messg == WM_KEYUP)
 	{
 		if (wParam == VK_PAUSE && !isPressed(VK_CONTROL)) {
-			if (gConEmu.isPictureView()) {
+			if (isPictureView()) {
 				if (messg == WM_KEYUP) {
-					gConEmu.bPicViewSlideShow = !gConEmu.bPicViewSlideShow;
-					if (gConEmu.bPicViewSlideShow) {
+					bPicViewSlideShow = !bPicViewSlideShow;
+					if (bPicViewSlideShow) {
 						if (gSet.nSlideShowElapse<=500) gSet.nSlideShowElapse=500;
 						//SetTimer(hWnd, 3, gSet.nSlideShowElapse, NULL);
-						gConEmu.dwLastSlideShowTick = GetTickCount() - gSet.nSlideShowElapse;
+						dwLastSlideShowTick = GetTickCount() - gSet.nSlideShowElapse;
 					//} else {
 					//  KillTimer(hWnd, 3);
 					}
 				}
 				return 0;
 			}
-		} else if (gConEmu.bPicViewSlideShow) {
+		} else if (bPicViewSlideShow) {
 			//KillTimer(hWnd, 3);
 			if (wParam==0xbd/* -_ */ || wParam==0xbb/* =+ */) {
 				if (messg == WM_KEYDOWN) {
@@ -2420,7 +2380,7 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 				}
 				return 0;
 			} else {
-				gConEmu.bPicViewSlideShow = false; // отмена слайдшоу
+				bPicViewSlideShow = false; // отмена слайдшоу
 			}
 		}
 	}
@@ -2446,6 +2406,7 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
         }
     }
 
+    //CtrlWinAltSpace
     if (messg == WM_KEYDOWN && wParam == VK_SPACE && isPressed(VK_CONTROL) && isPressed(VK_LWIN) && isPressed(VK_MENU))
     {
 	    static DWORD dwLastSpaceTick;
@@ -2459,36 +2420,37 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 	    dwLastSpaceTick = GetTickCount();
         if (!IsWindowVisible(ghConWnd))
         {
-            gConEmu.isShowConsole = true;
+            isShowConsole = true;
             //ShowWindow(ghConWnd, SW_SHOWNORMAL);
-			if (gConEmu.setParent) SetParent(ghConWnd, 0);
+			if (setParent) SetParent(ghConWnd, 0);
             RECT rcCon, rcWnd; GetWindowRect(ghConWnd, &rcCon); GetWindowRect(ghWnd, &rcWnd);
             SetWindowPos(ghConWnd, HWND_TOPMOST, 
 	            rcWnd.right-rcCon.right+rcCon.left,rcWnd.bottom-rcCon.bottom+rcCon.top,0,0, SWP_NOSIZE|SWP_SHOWWINDOW);
             EnableWindow(ghConWnd, true);
             SetFocus(ghWnd);
-            //if (gConEmu.setParent) SetParent(ghConWnd, 0);
+            //if (setParent) SetParent(ghConWnd, 0);
         }
         else
         {
-            gConEmu.isShowConsole = false;
-            if (!gSet.isConVisible) ShowWindow(ghConWnd, SW_HIDE);
-            //if (gConEmu.setParent) SetParent(ghConWnd, HDCWND);
+            isShowConsole = false;
+            //if (!gSet.isConVisible)
+			ShowWindow(ghConWnd, SW_HIDE);
 			if (setParent) SetParent(ghConWnd, setParent2 ? ghWnd : ghWndDC);
-            if (!gSet.isConVisible) EnableWindow(ghConWnd, false);
+            //if (!gSet.isConVisible)
+			EnableWindow(ghConWnd, false);
 			SetFocus(ghWnd);
         }
         return 0;
     }
 
-    if (gConEmu.gb_ConsoleSelectMode && messg == WM_KEYDOWN && ((wParam == VK_ESCAPE) || (wParam == VK_RETURN)))
-        gConEmu.gb_ConsoleSelectMode = false; //TODO: может как-то по другому определять?
+    if (gb_ConsoleSelectMode && messg == WM_KEYDOWN && ((wParam == VK_ESCAPE) || (wParam == VK_RETURN)))
+        gb_ConsoleSelectMode = false; //TODO: может как-то по другому определять?
 
     // Основная обработка 
     {
         if (messg == WM_SYSKEYDOWN) 
             if (wParam == VK_INSERT && lParam & 29)
-                gConEmu.gb_ConsoleSelectMode = true;
+                gb_ConsoleSelectMode = true;
 
         static bool isSkipNextAltUp = false;
         if (messg == WM_SYSKEYDOWN && wParam == VK_RETURN && lParam & 29)
@@ -2506,9 +2468,9 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
                     return 0;
 
                 if (!gSet.isFullScreen)
-                    gConEmu.SetWindowMode(rFullScreen);
+                    SetWindowMode(rFullScreen);
                 else
-                    gConEmu.SetWindowMode(gConEmu.isWndNotFSMaximized ? rMaximized : rNormal);
+                    SetWindowMode(isWndNotFSMaximized ? rMaximized : rNormal);
 
                 isSkipNextAltUp = true;
                 //POSTMESSAGE(ghConWnd, messg, wParam, lParam);
@@ -2520,11 +2482,11 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
             GetWindowRect(ghWnd, &rect);
             GetClientRect(ghWnd, &cRect);
             WINDOWINFO wInfo;   GetWindowInfo(ghWnd, &wInfo);
-            gConEmu.ShowSysmenu(ghWnd, ghWnd, rect.right - cRect.right - wInfo.cxWindowBorders, rect.bottom - cRect.bottom - wInfo.cyWindowBorders);
+            ShowSysmenu(ghWnd, ghWnd, rect.right - cRect.right - wInfo.cxWindowBorders, rect.bottom - cRect.bottom - wInfo.cyWindowBorders);
         }
         else if (messg == WM_KEYUP && wParam == VK_MENU && isSkipNextAltUp) isSkipNextAltUp = false;
         else if (messg == WM_SYSKEYDOWN && wParam == VK_F9 && lParam & 29 && !isPressed(VK_SHIFT))
-			gConEmu.SetWindowMode((IsZoomed(ghWnd)||(gSet.isFullScreen&&isWndNotFSMaximized)) ? rNormal : rMaximized);
+			SetWindowMode((IsZoomed(ghWnd)||(gSet.isFullScreen&&isWndNotFSMaximized)) ? rNormal : rMaximized);
         else
             POSTMESSAGE(ghConWnd, messg, wParam, lParam, FALSE);
     }
@@ -2536,6 +2498,20 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 {
     short winX = GET_X_LPARAM(lParam);
     short winY = GET_Y_LPARAM(lParam);
+
+	if (!pVCon)
+		return 0;
+
+#ifdef _DEBUG
+	if (messg != WM_MOUSEMOVE) {
+		DWORD mode = 0;
+		BOOL lb = GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), &mode);
+		if (!(mode & ENABLE_MOUSE_INPUT)) {
+			mode |= ENABLE_MOUSE_INPUT;
+			lb = SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), mode);
+		}
+	}
+#endif
 
     RECT conRect, consoleRect;
 	POINT ptCur;
@@ -2647,9 +2623,9 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	            
 	            // Иначе иногда срабатывает FAR'овский D'n'D
 	            //SENDMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( newX, newY ));     //посылаем консоли отпускание
-				if (gConEmu.DragDrop) {
+				if (DragDrop) {
 					DnDstep(_T("DnD: DragDrop starting"));
-					gConEmu.DragDrop->Drag(); //сдвинулись при зажатой левой
+					DragDrop->Drag(); //сдвинулись при зажатой левой
 					DnDstep(Title); // вернуть заголовок
 				} else {
 					DnDstep(_T("DnD: DragDrop is null"));
@@ -2668,7 +2644,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
         {
             //Если двинули мышкой, а была включена опция RClick - не вызывать
             //контекстное меню - просто послать правый клик
-            if (!PTDIFFTEST(gConEmu.Rcursor, RCLICKAPPSDELTA))
+            if (!PTDIFFTEST(Rcursor, RCLICKAPPSDELTA))
             {
                 //isRBDown=false;
 				mouse.state &= ~(DRAG_R_ALLOWED | DRAG_R_STARTED | MOUSE_R_LOCKED);
@@ -2699,7 +2675,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
             mouse.bIgnoreMouseMove = false;
             mouse.LClkCon = MakeCoord(newX,newY);
 			mouse.LClkDC = MakeCoord(winX,winY);
-            if (!gConEmu.isConSelectMode() && gConEmu.isFilePanel())
+            if (!isConSelectMode() && isFilePanel())
             {
                 //SetCapture(ghWndDC); --2009-03-14
                 cursor.x = LOWORD(lParam);
@@ -2739,7 +2715,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			mouse.state &= ~(DRAG_R_ALLOWED | DRAG_R_STARTED | MOUSE_R_LOCKED);
             mouse.bIgnoreMouseMove = false;
 
-            if (gConEmu.isFilePanel()) // Maximus5
+            if (isFilePanel()) // Maximus5
             {
 				if (gSet.isDragEnabled & DRAG_R_ALLOWED) {
 					if (!gSet.nRDragKey || isPressed(gSet.nRDragKey)) {
@@ -2765,7 +2741,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
             {
                 //isRBDown=false; // сразу сбросим!
 				mouse.state &= ~(DRAG_R_ALLOWED | DRAG_R_STARTED | MOUSE_R_LOCKED);
-                if (PTDIFFTEST(gConEmu.Rcursor,RCLICKAPPSDELTA))
+                if (PTDIFFTEST(Rcursor,RCLICKAPPSDELTA))
                 {
                     //держали зажатой <.3
                     //убьем таймер, кликнием правой кнопкой
@@ -2834,7 +2810,7 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
     case ID_HELP:
         {
 	        WCHAR szTitle[255];
-	        wsprintf(szTitle, L"About ConEmu (%s)...", gConEmu.szConEmuVersion);
+	        wsprintf(szTitle, L"About ConEmu (%s)...", szConEmuVersion);
             MessageBox(ghOpWnd, pHelp, szTitle, MB_ICONQUESTION);
         }
         break;
@@ -2864,10 +2840,10 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
     switch(wParam)
     {
     case SC_MAXIMIZE_SECRET:
-        gConEmu.SetWindowMode(rMaximized);
+        SetWindowMode(rMaximized);
         break;
     case SC_RESTORE_SECRET:
-        gConEmu.SetWindowMode(rNormal);
+        SetWindowMode(rNormal);
         break;
     case SC_CLOSE:
         Icon.Delete();
@@ -2890,7 +2866,11 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
     default:
         if (wParam != 0xF100)
         {
-            POSTMESSAGE(ghConWnd, WM_SYSCOMMAND, wParam, lParam, FALSE);
+			// иначе это приводит к потере фокуса и активации невидимой консоли,
+			// перехвате стрелок клавиатуры, и прочей фигни...
+			if (wParam<0xF000) {
+				POSTMESSAGE(ghConWnd, WM_SYSCOMMAND, wParam, lParam, FALSE);
+			}
             result = DefWindowProc(hWnd, WM_SYSCOMMAND, wParam, lParam);
         }
     }
@@ -2904,7 +2884,7 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
     switch (wParam)
     {
     case 0:
-        HWND foreWnd = GetForegroundWindow();
+        //HWND foreWnd = GetForegroundWindow();
         if (!isShowConsole && !gSet.isConVisible)
         {
             /*if (foreWnd == ghConWnd)
@@ -2924,8 +2904,8 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 		if (dwStyle & WS_DISABLED)
 			EnableWindow(ghWnd, TRUE);
 
-        GetWindowText(ghConWnd, TitleCmp, 1024);
-        if (wcscmp(Title, TitleCmp))
+        if (ghConWnd) GetWindowText(ghConWnd, TitleCmp, 1024);
+        if (ghConWnd && wcscmp(Title, TitleCmp))
 			UpdateTitle(TitleCmp);
 		else
 			CheckProcesses(m_ActiveConmanIDX, FALSE/*bTitleChanged*/);
@@ -2965,7 +2945,7 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
             }
         }
 
-        if (cBlinkNext++ >= cBlinkShift)
+        /*if (cBlinkNext++ >= cBlinkShift)
         {
             cBlinkNext = 0;
             if (foreWnd == ghWnd || foreWnd == ghOpWnd
@@ -2978,7 +2958,7 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
             else
                 // turn cursor off
                 pVCon->Cursor.isVisible = false;
-        }
+        }*/
 
         TabBar.OnTimer();
         ProgressBars->OnTimer();
@@ -3164,8 +3144,20 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		break;
 
     case WM_ACTIVATE:
+		#ifdef _DEBUG
+		result = OnFocus(hWnd, messg, wParam, lParam);
+		break;
+		#endif
     case WM_ACTIVATEAPP:
+		#ifdef _DEBUG
+		result = OnFocus(hWnd, messg, wParam, lParam);
+		break;
+		#endif
     case WM_KILLFOCUS:
+		#ifdef _DEBUG
+		result = OnFocus(hWnd, messg, wParam, lParam);
+		break;
+		#endif
     case WM_SETFOCUS:
 		result = OnFocus(hWnd, messg, wParam, lParam);
 		break;
@@ -3215,13 +3207,35 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		result = OnDestroy(hWnd);
         break;
     
-    /*case WM_INPUTLANGCHANGE:
+    case WM_INPUTLANGCHANGE:
     case WM_INPUTLANGCHANGEREQUEST:
-    case WM_IME_NOTIFY:*/
-    //case WM_VSCROLL:
-    //    POSTMESSAGE(ghConWnd, messg, wParam, lParam, FALSE);
+    //case WM_IME_NOTIFY: // 02.04.2009 Maks - убрал
+		{
+			//POSTMESSAGE(ghConWnd, messg, wParam, lParam, FALSE);
+			result = DefWindowProc(hWnd, messg, wParam, lParam);
+			
+			//#ifndef _DEBUG
+			//POSTMESSAGE(ghConWnd, messg, wParam, lParam, FALSE);
+			//#else
+			SENDMESSAGE(ghConWnd, messg, wParam, lParam);
+			//if (gSet.isAdvLangChange) {
+			if (messg == WM_INPUTLANGCHANGE) {
+				SENDMESSAGE(ghConWnd, WM_SETFOCUS, 0,0);
+				//SENDMESSAGE(ghWnd, WM_SETFOCUS, 0,0);
+			}
+			//#endif
+			/*if (messg == WM_INPUTLANGCHANGE) {
+				//wParam Specifies the character set of the new locale. 
+				ActivateKeyboardLayout((HKL)lParam, 0);
+			}*/
+			return result;
+		}
         
     default:
+	    if (messg == mn_MsgPostCreate) {
+		    gConEmu.PostCreate(TRUE);
+		    return 0;
+	    } else 
 	    if (messg == mn_MsgPostCopy) {
 		    gConEmu.PostCopy((wchar_t*)lParam, TRUE);
 		    return 0;
