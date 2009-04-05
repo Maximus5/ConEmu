@@ -593,6 +593,12 @@ void InitHWND(HWND ahFarHwnd)
 
 	// ≈сли мы не под эмул€тором - больше ничего делать не нужно
 	if (ConEmuHwnd) {
+		//
+		DWORD dwPID, dwThread;
+		dwThread = GetWindowThreadProcessId(ConEmuHwnd, &dwPID);
+		typedef BOOL (WINAPI* AllowSetForegroundWindowT)(DWORD);
+		AllowSetForegroundWindowT AllowSetForegroundWindowF = (AllowSetForegroundWindowT)GetProcAddress(GetModuleHandle(_T("user32.dll")), "AllowSetForegroundWindow");
+		if (AllowSetForegroundWindowF) AllowSetForegroundWindowF(dwPID);
 		// дернуть табы, если они нужны
 		int tabCount = 0;
 		CreateTabs(1);

@@ -120,9 +120,19 @@ BOOL CConEmuMain::Init()
 
 BOOL CConEmuMain::InitConMan(LPCWSTR asCommandLine)
 {
-	mh_ConMan = LoadLibrary(_T("conman.dll"));
+    TCHAR  ConMan[MAX_PATH];
+    TCHAR  ConEmu[MAX_PATH*2];
+    TCHAR* ConEmuName;
+    GetModuleFileName( 0, ConEmu, sizeof( ConEmu ) / sizeof( *ConEmu ) );
+    GetFullPathName( ConEmu, sizeof( ConMan ) / sizeof( *ConMan ), ConMan, &ConEmuName );
+    *ConEmuName = 0;
+    lstrcat( ConMan, _T("ConMan.dll" ) );
+
+	mh_ConMan = LoadLibrary(ConMan);
 	if (!mh_ConMan) {
-		DisplayLastError(_T("Can't load ConMain.dll!"));
+		DWORD dwLastErr = GetLastError();
+		wsprintf(ConEmu, _T("Can't load '%s'"), ConMan);
+		DisplayLastError(ConEmu, dwLastErr);
 		return FALSE;
 	}
 
@@ -1421,7 +1431,7 @@ void CConEmuMain::ConsoleCreated(HWND hConWnd)
 	
 	if (!isShowConsole && !gSet.isConVisible) {
 		ShowWindow(ghConWnd, SW_HIDE);
-		EnableWindow(ghConWnd, false);
+		//EnableWindow(ghConWnd, false);
 	} else {
 		RECT rcWnd, rcCon;
 		GetWindowRect(ghWnd, &rcWnd); GetWindowRect(ghConWnd, &rcCon);
@@ -1429,8 +1439,6 @@ void CConEmuMain::ConsoleCreated(HWND hConWnd)
             rcWnd.right-rcCon.right+rcCon.left,rcWnd.bottom-rcCon.bottom+rcCon.top,0,0, SWP_NOSIZE);
         SetFocus(ghWnd);
 	}
-	
-	
 
     // set parent window of the console window:
     // *) it is used by ConMan and some FAR plugins, set it for standard mode or if /SetParent switch is set
@@ -1441,6 +1449,14 @@ void CConEmuMain::ConsoleCreated(HWND hConWnd)
     //TODO: ConMan? попробуем на родительское окно SetParent делать
     if (setParent)
         SetParent(ghConWnd, setParent2 ? ghWnd : ghWndDC);
+
+	Update(true); // чтобы инициализировать DC, переменные, размеры и т.п.
+
+	if (WindowMode == rNormal) {
+		SyncWindowToConsole();
+	}
+
+    SetWindowMode(WindowMode);
 }
 
 CVirtualConsole* CConEmuMain::CreateCon()
@@ -2268,13 +2284,6 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
 	    SetForegroundWindow(ghWnd);
 
 	    //SetParent(ghWnd, GetParent(GetShellWindow()));
-	    
-	    //pVCon->InitDC();
-		if (WindowMode == rNormal) {
-			SyncWindowToConsole();
-		}
-
-	    SetWindowMode(WindowMode);
 
 	    SetTimer(ghWnd, 0, gSet.nMainTimerElapse, NULL);
 	}
@@ -2491,7 +2500,59 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
             POSTMESSAGE(ghConWnd, messg, wParam, lParam, FALSE);
     }
 
+	/*if (IsDebuggerPresent()) {
+		if (hWnd ==ghWnd)
+			OutputDebugString(L"   focused ghWnd\n"); else
+		if (hWnd ==ghConWnd)
+			OutputDebugString(L"   focused ghConWnd\n"); else
+		if (hWnd ==ghWndDC)
+			OutputDebugString(L"   focused ghWndDC\n"); 
+		else
+			OutputDebugString(L"   focused UNKNOWN\n"); 
+	}*/
+
 	return 0;
+}
+
+LRESULT CConEmuMain::OnLangChange(UINT messg, WPARAM wParam, LPARAM lParam)
+{
+	LRESULT result = 1;
+	#ifdef _DEBUG
+	{
+		WCHAR szMsg[128];
+		wsprintf(szMsg, L"%s(CP:%i, HKL:0x%08X)\n",
+			(messg == WM_INPUTLANGCHANGE) ? L"WM_INPUTLANGCHANGE" : L"WM_INPUTLANGCHANGEREQUEST",
+			wParam, lParam);
+		OutputDebugString(szMsg);
+
+	}
+	#endif
+	
+	//POSTMESSAGE(ghConWnd, messg, wParam, lParam, FALSE);
+
+	result = DefWindowProc(ghWnd, messg, wParam, lParam);
+		
+	//POSTMESSAGE(ghConWnd, messg, wParam, lParam, FALSE);
+	//SENDMESSAGE(ghConWnd, messg, wParam, lParam);
+
+	//if (messg == WM_INPUTLANGCHANGEREQUEST)
+	{
+		//wParam Specifies the character set of the new locale. 
+		//lParam - HKL
+		//ActivateKeyboardLayout((HKL)lParam, 0);
+
+		//POSTMESSAGE(ghConWnd, messg, wParam, lParam, FALSE);
+		SENDMESSAGE(ghConWnd, messg, wParam, lParam);
+	}
+
+	if (messg == WM_INPUTLANGCHANGE)
+	{
+		//SENDMESSAGE(ghConWnd, WM_SETFOCUS, 0,0);
+		POSTMESSAGE(ghConWnd, WM_SETFOCUS, 0,0, TRUE);
+		POSTMESSAGE(ghWnd, WM_SETFOCUS, 0,0, TRUE);
+	}
+
+	return result;
 }
 
 LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
@@ -3056,6 +3117,8 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 {
     LRESULT result = 0;
 
+	MCHKHEAP
+
 	if (messg == WM_SYSCHAR) {
         #ifdef _DEBUG
         /*{
@@ -3207,29 +3270,15 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		result = OnDestroy(hWnd);
         break;
     
+	case WM_IME_NOTIFY:
+		break;
     case WM_INPUTLANGCHANGE:
     case WM_INPUTLANGCHANGEREQUEST:
-    //case WM_IME_NOTIFY: // 02.04.2009 Maks - убрал
-		{
-			//POSTMESSAGE(ghConWnd, messg, wParam, lParam, FALSE);
-			result = DefWindowProc(hWnd, messg, wParam, lParam);
-			
-			//#ifndef _DEBUG
-			//POSTMESSAGE(ghConWnd, messg, wParam, lParam, FALSE);
-			//#else
-			SENDMESSAGE(ghConWnd, messg, wParam, lParam);
-			//if (gSet.isAdvLangChange) {
-			if (messg == WM_INPUTLANGCHANGE) {
-				SENDMESSAGE(ghConWnd, WM_SETFOCUS, 0,0);
-				//SENDMESSAGE(ghWnd, WM_SETFOCUS, 0,0);
-			}
-			//#endif
-			/*if (messg == WM_INPUTLANGCHANGE) {
-				//wParam Specifies the character set of the new locale. 
-				ActivateKeyboardLayout((HKL)lParam, 0);
-			}*/
-			return result;
-		}
+		if (hWnd == ghWnd)
+			result = gConEmu.OnLangChange(messg, wParam, lParam);
+		else
+			break;
+		break;
         
     default:
 	    if (messg == mn_MsgPostCreate) {

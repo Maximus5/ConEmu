@@ -20,13 +20,25 @@ CVirtualConsole* CVirtualConsole::Create()
             delete pCon;
             return NULL;
         }
+        // Вроде бы с запуском через нить клики мышкой в консоль начинают ходить сразу, но
+        // часто окно конэму вообще не активируется
+		/*DWORD dwID = 0;
+		HANDLE hThread = CreateThread(NULL, 0, StartProcessThread, (LPVOID)pCon, 0, &dwID);
+		if (hThread == NULL) {
+			if (!pCon->StartProcess()) {
+				delete pCon;
+				return NULL;
+			}
+		} else {
+			CloseHandle(hThread);
+		}*/
     }
 
-    if (gSet.wndHeight && gSet.wndWidth)
+    /*if (gSet.wndHeight && gSet.wndWidth)
     {
         COORD b = {gSet.wndWidth, gSet.wndHeight};
         pCon->SetConsoleSize(b);
-    }
+    }*/
 
     return pCon;
 }
@@ -505,6 +517,9 @@ bool CVirtualConsole::CheckChangedTextAttr()
 
 bool CVirtualConsole::Update(bool isForce, HDC *ahDc)
 {
+	if (!ghConWnd)
+		return false;
+
     #ifdef _DEBUG
     DcDebug dbg(&hDC, ahDc); // для отладки - рисуем сразу на канвасе окна
     #endif
@@ -1229,7 +1244,7 @@ done:
 void CVirtualConsole::UpdateCursorDraw(COORD pos, BOOL vis, UINT dwSize, LPRECT prcLast/*=NULL*/)
 {
     int CurChar = pos.Y * TextWidth + pos.X;
-	if (CurChar < 0 || CurChar>=(TextWidth * TextHeight))
+	if (CurChar < 0 || CurChar>=(int)(TextWidth * TextHeight))
 		return; // может быть или глюк - или размер консоли был резко уменьшен и предыдущая позиция курсора пропала с экрана
 	if (!ConCharX)
 		return; // защита
@@ -1569,10 +1584,17 @@ void CVirtualConsole::RegistryProps(BOOL abRollback, ConExeProps& props, LPCTSTR
         memset(&props, 0, sizeof(props));
 
         if (gSet.ourSI.lpTitle && *gSet.ourSI.lpTitle) {
-            props.FullKeyName = (TCHAR*)calloc(_tcslen(gSet.ourSI.lpTitle)+10, sizeof(TCHAR));
-            _tcscpy(props.FullKeyName, _T("Console\\"));
-            pszExeName = props.FullKeyName+_tcslen(props.FullKeyName);
-            _tcscpy(pszExeName, gSet.ourSI.lpTitle);
+	        int nLen = _tcslen(gSet.ourSI.lpTitle);
+	        if (nLen>4 && _tcsicmp(gSet.ourSI.lpTitle+nLen-4, _T(".lnk"))==0) {
+		        props.FullKeyName = (TCHAR*)calloc(10, sizeof(TCHAR));
+		        _tcscpy(props.FullKeyName, _T("Console"));
+		        pszExeName = props.FullKeyName+_tcslen(props.FullKeyName);
+	        } else {
+	            props.FullKeyName = (TCHAR*)calloc(nLen+10, sizeof(TCHAR));
+	            _tcscpy(props.FullKeyName, _T("Console\\"));
+	            pszExeName = props.FullKeyName+_tcslen(props.FullKeyName);
+	            _tcscpy(pszExeName, gSet.ourSI.lpTitle);
+	        }
         } else
         if (asExeName && *asExeName) {
             props.FullKeyName = (TCHAR*)calloc(_tcslen(asExeName)+10, sizeof(TCHAR));
@@ -1590,7 +1612,7 @@ void CVirtualConsole::RegistryProps(BOOL abRollback, ConExeProps& props, LPCTSTR
             }
         }
         
-        for (TCHAR* psz=pszExeName; *psz; psz++) {
+        for (TCHAR* psz=pszExeName; pszExeName && *psz; psz++) {
             if (*psz == _T('\\')) *psz = _T('_');
         }
     } else if (!props.FullKeyName) {
@@ -1680,6 +1702,13 @@ void CVirtualConsole::RegistryProps(BOOL abRollback, ConExeProps& props, LPCTSTR
     }
 }
 
+DWORD CVirtualConsole::StartProcessThread(LPVOID lpParameter)
+{
+	CVirtualConsole* pCon = (CVirtualConsole*)lpParameter;
+	DWORD dwRc = pCon->StartProcess();
+	return dwRc;
+}
+
 extern void SetConsoleFontSizeTo(HWND inConWnd, int inSizeX, int inSizeY);
 BOOL CVirtualConsole::StartProcess()
 {
@@ -1699,8 +1728,9 @@ BOOL CVirtualConsole::StartProcess()
 	// Если запускались с ярлыка - это нихрена не поможет... информация похоже в .lnk сохраняется...
     RegistryProps(FALSE, props);
 
-    if (!gConEmu.isShowConsole && !gSet.isConVisible)
-      SetWindowPos(ghWnd, HWND_TOPMOST, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
+#ifndef _DEBUG
+    if (!gConEmu.isShowConsole && !gSet.isConVisible) SetWindowPos(ghWnd, HWND_TOPMOST, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
+#endif
     AllocConsole();
     ghConWnd = GetConsoleWindow();
     //if ((gSet.outSI.wShowWindow & (SW_MINIMIZE|SW_SHOWMINIMIZED|SW_SHOWMINNOACTIVE))) {
@@ -1721,14 +1751,29 @@ BOOL CVirtualConsole::StartProcess()
 	    SetWindowPlacement(ghConWnd, &wplCon);
     }
 	SetConsoleFontSizeTo(ghConWnd, 4, 6);
-    if (!gConEmu.isShowConsole && !gSet.isConVisible)
-      SetWindowPos(ghWnd, HWND_NOTOPMOST, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
+	if (gSet.wndHeight && gSet.wndWidth)
+    {
+        COORD b = {gSet.wndWidth, gSet.wndHeight};
+        SetConsoleSize(b);
+    }
+	//клики мышкой не доходят до ФАРа, пока мы не переключимся в другое приложение и обратно
+	//HWND hOtherWnd = GetShellWindow();
+	//SetForegroundWindow(hOtherWnd);
+#ifndef _DEBUG
+    if (!gConEmu.isShowConsole && !gSet.isConVisible) SetWindowPos(ghWnd, HWND_NOTOPMOST, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
+#endif
     SetConsoleTitle(gSet.GetCmd());
     
     RegistryProps(TRUE, props);
-    
+
     InitHandlers();
-    
+
+	//SetFocus(NULL);
+	//SetFocus(ghWnd);
+	//SENDMESSAGE(ghConWnd, WM_NCACTIVATE, 1, 0);
+	//SENDMESSAGE(ghConWnd, WM_ACTIVATEAPP, TRUE, (LPARAM)GetCurrentThreadId());
+	//SENDMESSAGE(ghConWnd, WM_ACTIVATE, WA_ACTIVE, (LPARAM)ghWnd);
+
     if (gSet.isConMan) {
         if (!gConEmu.InitConMan(gSet.GetCmd())) {
             //gConEmu.Destroy();
@@ -1824,8 +1869,15 @@ BOOL CVirtualConsole::StartProcess()
         //TODO: а делать ли это?
         CloseHandle(pi.hThread); pi.hThread = NULL;
         CloseHandle(pi.hProcess); pi.hProcess = NULL;
+
+#ifdef _DEBUG
+		//SetForegroundWindow(ghWnd); Sleep(1000);
+		//SetForegroundWindow(ghConWnd); Sleep(1000);
+		//SetForegroundWindow(ghWnd); Sleep(1000);
+		//SetForegroundWindow(ghConWnd); Sleep(2000);
+#endif
     }
-    
+
     return lbRc;
 }
 

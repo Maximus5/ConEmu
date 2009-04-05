@@ -450,6 +450,7 @@ extern void SetConsoleFontSizeTo(HWND inConWnd, int inSizeX, int inSizeY);
 // Disables the IME for all threads in a current process.
 void DisableIME()
 {
+	return;
 	typedef BOOL (WINAPI* ImmDisableIMEt)(DWORD idThread);
 	HMODULE hImm32 = LoadLibrary(_T("imm32.dll"));
 	if (hImm32) {
@@ -541,6 +542,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		//if (!IsDebuggerPresent()) MBoxA(_T("/attach ?"));
 		#endif
 
+	TCHAR *psUnknown = NULL;
     TCHAR *curCommand = cmdLine;
     {
 #ifdef KL_MEM
@@ -557,7 +559,58 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		uint i = 0; // ммать... curCommand увеличивался, а i НЕТ
         while (i < params && curCommand && *curCommand)
         {
-			if ( !klstricmp(curCommand, _T("/conman")) ) {
+	        if ( !klstricmp(curCommand, _T("/autosetup")) ) {
+		        BOOL lbTurnOn = TRUE;
+		        if ((i + 1) >= params)
+			        return 101;
+	        
+		        curCommand += _tcslen(curCommand) + 1; i++;
+		        if (*curCommand == _T('0'))
+			        lbTurnOn = FALSE;
+			    else {
+			        if ((i + 1) >= params)
+				        return 101;
+				    curCommand += _tcslen(curCommand) + 1; i++;
+				    DWORD dwAttr = GetFileAttributes(curCommand);
+				    if (dwAttr == -1 || (dwAttr & FILE_ATTRIBUTE_DIRECTORY))
+					    return 102;
+			    }
+
+		        HKEY hk = NULL; DWORD dw;
+		        int nSetupRc = 100;
+		        if (0 != RegCreateKeyEx(HKEY_CURRENT_USER, _T("Software\\Microsoft\\Command Processor"),
+			        NULL, NULL, NULL, KEY_ALL_ACCESS, NULL, &hk, &dw))
+			        return 103;
+			    if (lbTurnOn) {
+				    BOOL bNeedFree = FALSE;
+				    if (*curCommand!=_T('"') && _tcschr(curCommand, _T(' '))) {
+					    TCHAR* psz = (TCHAR*)calloc(_tcslen(curCommand)+3, sizeof(TCHAR));
+					    *psz = _T('"');
+					    _tcscpy(psz+1, curCommand);
+					    _tcscat(psz, _T("\""));
+					    curCommand = psz;
+				    }
+				    if (0==RegSetValueEx(hk, _T("AutoRun"), NULL, REG_SZ, (LPBYTE)curCommand,
+						    sizeof(TCHAR)*(_tcslen(curCommand)+1)))
+					    nSetupRc = 1;
+					if (bNeedFree) 
+						free(curCommand);
+			    } else {
+				    if (0==RegDeleteValue(hk, _T("AutoRun")))
+					    nSetupRc = 1;
+			    }
+		        RegCloseKey(hk);
+		        // сбрость CreateInNewEnvironment для ConMan
+		        if (0 == RegCreateKeyEx(HKEY_CURRENT_USER, _T("Software\\HoopoePG_2x"),
+				        NULL, NULL, NULL, KEY_ALL_ACCESS, NULL, &hk, &dw))
+				{
+					RegSetValueEx(hk, _T("CreateInNewEnvironment"), NULL, REG_DWORD,
+						(LPBYTE)&(dw=0), 4);
+					RegCloseKey(hk);
+				}
+		        return nSetupRc;
+	        }
+			else if ( !klstricmp(curCommand, _T("/conman")) ) {
 				ConManValue = true; ConManPrm = true;
 			}
 			else if ( !klstricmp(curCommand, _T("/noconman")) ) {
@@ -600,6 +653,36 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	                    if (*nextCommand != _T('/')) {
 		                    curCommand = nextCommand; i++;
 		                    AttachVal = klatoi(curCommand);
+		                }
+	                }
+	                // интеллектуальный аттач - если к текущей консоли уже подцеплена другая копия
+	                if (AttachVal == -1) {
+		                HWND hCon = GetForegroundWindow();
+		                if (!hCon) {
+							// консоли нет
+							return 100;
+						} else {
+			                TCHAR sClass[128];
+			                if (GetClassName(hCon, sClass, 128)) {
+				                if (_tcscmp(sClass, VirtualConsoleClassMain)==0) {
+					                // Сверху УЖЕ другая копия ConEmu
+					                return 1;
+				                }
+				                if (_tcscmp(sClass, _T("ConsoleWindowClass"))==0) {
+					                // перебрать все ConEmu, может кто-то уже подцеплен?
+					                HWND hEmu = NULL;
+					                while (hEmu = FindWindowEx(NULL, hEmu, VirtualConsoleClassMain, NULL))
+					                {
+						                if (hCon == (HWND)GetWindowLong(hEmu, GWL_USERDATA)) {
+							                // к этой консоли уже подцеплен ConEmu
+							                return 1;
+						                }
+					                }
+								} else {
+									// верхнее окно - НЕ консоль
+									return 100;
+								}
+			                }
 		                }
 	                }
                 }
@@ -674,6 +757,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
                 MessageBox(NULL, pHelp, L"About ConEmu...", MB_ICONQUESTION);
                 free(cmdLine);
                 return -1; // NightRoman
+            } else if (i>0 && !psUnknown && *curCommand) {
+	            // ругнуться на неизвестную команду
+	            psUnknown = curCommand;
             }
 
 			curCommand += _tcslen(curCommand) + 1; i++;
@@ -681,6 +767,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     }
     if (setParentDisabled && (gConEmu.setParent || gConEmu.setParent2)) {
         gConEmu.setParent=false; gConEmu.setParent2=false;
+    }
+
+    if (psUnknown) {
+	    TCHAR* psMsg = (TCHAR*)calloc(_tcslen(psUnknown)+100,sizeof(TCHAR));
+	    _tcscpy(psMsg, _T("Unknown command specified:\r\n"));
+	    _tcscat(psMsg, psUnknown);
+	    MBoxA(psMsg);
+	    free(psMsg);
+	    return 100;
     }
         
         

@@ -114,4 +114,5 @@ protected:
 		TCHAR *FullKeyName;
 	} ConExeProps;
 	void RegistryProps(BOOL abRollback, ConExeProps& props, LPCTSTR asExeName=NULL);
+	static DWORD WINAPI StartProcessThread(LPVOID lpParameter);
 };

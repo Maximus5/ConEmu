@@ -214,6 +214,7 @@ public:
 	LRESULT OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnGetMinMaxInfo(LPMINMAXINFO pInfo);
 	LRESULT OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
+	LRESULT OnLangChange(UINT messg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnPaint(WPARAM wParam, LPARAM lParam);
 	LRESULT OnSize(WPARAM wParam, WORD newClientWidth, WORD newClientHeight);

@@ -11,14 +11,17 @@ CDragDrop::CDragDrop(HWND hWnd)
 	mb_selfdrag = NULL;
 	InitializeCriticalSection(&m_CrThreads);
 
-	hr = RegisterDragDrop(hWnd, this);
-	if (hr != S_OK)
-		DisplayLastError(_T("Can't register Drop target"), hr);
-
 	mp_DesktopID = NULL;
 	hr = SHGetFolderLocation ( ghWnd, CSIDL_DESKTOP, NULL, 0, &mp_DesktopID );
 	if (hr != S_OK)
 		DisplayLastError(_T("Can't get desktop folder"), hr);
+
+#ifdef _DEBUG
+	return;
+#endif
+	hr = RegisterDragDrop(hWnd, this);
+	if (hr != S_OK)
+		DisplayLastError(_T("Can't register Drop target"), hr);
 }
 
 CDragDrop::~CDragDrop()
@@ -321,10 +324,10 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop (IDataObject * pDataObject,DWORD grfKe
 	// ≈сли тащат просто между панел€ми - сразу в FAR
 	if (!lbActive && mb_selfdrag && (*pdwEffect == DROPEFFECT_COPY || *pdwEffect == DROPEFFECT_MOVE))
 	{
-		wchar_t *mcr = (wchar_t*)calloc(16, sizeof(wchar_t));
+		wchar_t *mcr = (wchar_t*)calloc(32, sizeof(wchar_t));
 		lstrcpyW(mcr, (*pdwEffect == DROPEFFECT_MOVE) ? L"F6" : L"F5");
 		if (gSet.isDropEnabled==2)
-			lstrcatW(mcr, L" Enter");
+			lstrcatW(mcr, L" Enter $MMode 1");
 
 		gConEmu.PostCopy(mcr);
 

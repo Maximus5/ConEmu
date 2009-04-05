@@ -30,6 +30,7 @@ HWND CConEmuChild::Create()
 		MBoxA(_T("Can't create DC window!"));
 		return NULL; //
 	}
+	SetClassLong(ghWndDC, GCL_HBRBACKGROUND, (LONG)gConEmu.m_Back.mh_BackBrush);
 	SetWindowPos(ghWndDC, HWND_TOP, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
 	//gConEmu.dcWindowLast = rc; //TODO!!!
 	return ghWndDC;
@@ -83,37 +84,26 @@ LRESULT CALLBACK CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam
     case WM_LBUTTONDBLCLK:
     case WM_MBUTTONDBLCLK:
     case WM_RBUTTONDBLCLK:
-    //case WM_INPUTLANGCHANGE:
-    //case WM_INPUTLANGCHANGEREQUEST:
-    //case WM_IME_NOTIFY:
     case WM_VSCROLL:
         // Вся обработка в родителе
         result = gConEmu.WndProc(hWnd, messg, wParam, lParam);
         return result;
 
-    //case WM_INPUTLANGCHANGE:
-    //case WM_INPUTLANGCHANGEREQUEST:
-    ////case WM_IME_NOTIFY: // 02.04.2009 Maks - убрал
-	//	{
-	//		//POSTMESSAGE(ghConWnd, messg, wParam, lParam, FALSE);
-	//		result = DefWindowProc(hWnd, messg, wParam, lParam);
-	//		
-	//		//#ifndef _DEBUG
-	//		//POSTMESSAGE(ghConWnd, messg, wParam, lParam, FALSE);
-	//		//#else
-	//		POSTMESSAGE(ghConWnd, messg, wParam, lParam, FALSE); // с SEND - точно работало
-	//		//if (gSet.isAdvLangChange) {
-	//		if (messg == WM_INPUTLANGCHANGE) {
-	//			POSTMESSAGE(ghConWnd, WM_SETFOCUS, 0,0,1);
-	//			POSTMESSAGE(ghWnd, WM_SETFOCUS, 0,0,1);
-	//		}
-	//		//#endif
-	//		/*if (messg == WM_INPUTLANGCHANGE) {
-	//			//wParam Specifies the character set of the new locale. 
-	//			ActivateKeyboardLayout((HKL)lParam, 0);
-	//		}*/
-	//		return result;
-	//	}
+	case WM_IME_NOTIFY:
+		break;
+    case WM_INPUTLANGCHANGE:
+    case WM_INPUTLANGCHANGEREQUEST:
+	{
+		if (IsDebuggerPresent()) {
+			WCHAR szMsg[128];
+			wsprintf(szMsg, L"InChild %s(CP:%i, HKL:0x%08X)\n",
+				(messg == WM_INPUTLANGCHANGE) ? L"WM_INPUTLANGCHANGE" : L"WM_INPUTLANGCHANGEREQUEST",
+				wParam, lParam);
+			OutputDebugString(szMsg);
+
+		}
+		result = DefWindowProc(hWnd, messg, wParam, lParam);
+	} break;
 
     default:
 		if (messg == mn_MsgTabChanged) {
@@ -122,6 +112,9 @@ LRESULT CALLBACK CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam
 				WCHAR szDbg[128]; swprintf(szDbg, L"Tabs:Notified(%i)\n", wParam);
 				OutputDebugStringW(szDbg);
 			#endif
+			#pragma message("TODO: здесь хорошо бы вместо OnTimer реально обновить mn_TopProcessID")
+			// иначе во время запуска PID фара еще может быть не известен...
+			//gConEmu.OnTimer(0,0); не получилось. индекс конмана не менялся, из-за этого индекс активного фара так и остался 0
 			TabBar.Retrieve();
 		}
         if (messg) result = DefWindowProc(hWnd, messg, wParam, lParam);

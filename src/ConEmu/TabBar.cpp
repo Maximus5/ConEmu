@@ -232,7 +232,8 @@ void TabBarClass::Activate()
 		#pragma warning (disable : 4312)
 		_defaultTabProc = (WNDPROC)SetWindowLongPtr(_hwndTab, GWL_WNDPROC, (LONG_PTR)TabProc);
 
-		if (gConEmu.mh_ConMan)
+		//if (gConEmu.mh_ConMan) // mh_ConMan может быть еще не инициализирован!
+		if (gSet.isConMan)
 			CreateToolbar();
 	}
 
