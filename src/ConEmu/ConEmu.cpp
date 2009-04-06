@@ -1272,7 +1272,7 @@ DWORD CConEmuMain::CheckProcesses(DWORD nConmanIDX, BOOL bTitleChanged)
 		lbProcessChanged = TRUE; // чтобы дальше "верхний" процесс определился
 	    for (int i=m_Processes.size()-1; i>=0; i--)
 	    {
-		    // 0-консоль - типа сам Конман
+		    // 0-консоль - типа сам Конман (или ConEmu)
 		    if (m_Processes[i].IsConman /*|| !m_Processes[i].IsFar*/) continue;
 			if ((m_Processes[i].ParentPID == mn_ConmanPID) &&
 			    (!m_Processes[i].ConmanChecked || !m_Processes[i].ConmanIDX))
@@ -1305,7 +1305,7 @@ DWORD CConEmuMain::CheckProcesses(DWORD nConmanIDX, BOOL bTitleChanged)
 				    nParentPID = iter->ParentPID;
 				    if (!nParentPID) break;
 				    if (nParentPID == mn_ConmanPID) {
-					    if (!iter->ConmanChecked)
+					    if (!iter->ConmanChecked || !iter->ConmanIDX)
 						    break; // Индекс конмана для корневого процесса пока не определен!
 						// Обновляем 
 						m_Processes[i].ConmanIDX = iter->ConmanIDX;
@@ -1431,7 +1431,7 @@ void CConEmuMain::ConsoleCreated(HWND hConWnd)
 	
 	if (!isShowConsole && !gSet.isConVisible) {
 		ShowWindow(ghConWnd, SW_HIDE);
-		//EnableWindow(ghConWnd, false);
+		EnableWindow(ghConWnd, false);
 	} else {
 		RECT rcWnd, rcCon;
 		GetWindowRect(ghWnd, &rcWnd); GetWindowRect(ghConWnd, &rcCon);
@@ -2307,12 +2307,30 @@ LRESULT CConEmuMain::OnDestroy(HWND hWnd)
 
 LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 {
-//#ifdef _DEBUG
-//#pragma message("warning: OnFocus skipped")
-//return 0;
-//#endif
+	if (gSet.isSkipFocusEvents)
+		return 0;
+		
+#ifdef _DEBUG
+	if (messg == WM_ACTIVATE && wParam == WA_INACTIVE) {
+		WCHAR szMsg[128]; wsprintf(szMsg, L"--Deactivating to 0x%08X\n", lParam);
+		OutputDebugString(szMsg);
+	}
+	switch (messg) {
+		case WM_SETFOCUS: 
+			{
+				OutputDebugString(L"--Get focus\n");
+				//return 0;
+			} break;
+		case WM_KILLFOCUS: 
+			{
+				OutputDebugString(L"--Loose focus\n");
+			} break;
+	}
+#endif
 
-    POSTMESSAGE(ghConWnd, messg, wParam, lParam, FALSE);
+	// есть подозрение, что ИНОГДА консоль перехватывает фокус при POST
+    //POSTMESSAGE(ghConWnd, messg, wParam, lParam, FALSE);
+	SENDMESSAGE(ghConWnd, messg, wParam, lParam);
 	return 0;
 }
 
@@ -2569,6 +2587,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		BOOL lb = GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), &mode);
 		if (!(mode & ENABLE_MOUSE_INPUT)) {
 			mode |= ENABLE_MOUSE_INPUT;
+			OutputDebugString(L"!!! Enabling mouse input in console\n");
 			lb = SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), mode);
 		}
 	}
@@ -2594,8 +2613,12 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	memset(&consoleRect, 0, sizeof(consoleRect));
     //winX -= consoleRect.left; -- супер. "-0"
     //winY -= consoleRect.top;
+    #ifdef NEWMOUSESTYLE
+    short newX = winX, newY = winY;
+    #else
     short newX = MulDiv(winX, conRect.right, klMax<uint>(1, pVCon->Width));
     short newY = MulDiv(winY, conRect.bottom, klMax<uint>(1, pVCon->Height));
+    #endif
 
     if (newY<0 || newX<0) {
 	    DEBUGLOGFILE("Mouse outside of upper-left");
@@ -2614,7 +2637,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
        RECT con;
        GetWindowRect(ghConWnd, &con);
        if (con.left != x || con.top != y)
-          MOVEWINDOW(ghConWnd, x, y, con.right - con.left + 1, con.bottom - con.top + 1, TRUE);
+           MOVEWINDOW(ghConWnd, x, y, con.right - con.left + 1, con.bottom - con.top + 1, TRUE);
     }
     
     if (!isFar()) {
@@ -2662,7 +2685,8 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		            //isLBDown = false; 
 					mouse.state &= ~(DRAG_L_ALLOWED | DRAG_L_STARTED | DRAG_R_ALLOWED | DRAG_R_STARTED);
 					mouse.bIgnoreMouseMove = false;
-		            POSTMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( newX, newY ), TRUE);     //посылаем консоли отпускание
+		            //POSTMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( newX, newY ), TRUE);     //посылаем консоли отпускание
+		            pVCon->SendMouseEvent(WM_LBUTTONUP, wParam, newX, newY);
 		            //ReleaseCapture(); --2009-03-14
 		            return 0;
 	            }
@@ -2675,10 +2699,13 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	            //POSTMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( newX, newY ), TRUE);     //посылаем консоли отпускание
 
 				if (lbLeftDrag) { // сразу "отпустить" клавишу
-					POSTMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( mouse.LClkCon.X, mouse.LClkCon.Y ), TRUE);     //посылаем консоли отпускание
+					//POSTMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( mouse.LClkCon.X, mouse.LClkCon.Y ), TRUE);     //посылаем консоли отпускание
+					pVCon->SendMouseEvent(WM_LBUTTONUP, wParam, mouse.LClkCon.X, mouse.LClkCon.Y);
 				} else {
-					POSTMESSAGE(ghConWnd, WM_LBUTTONDOWN, wParam, MAKELPARAM( mouse.RClkCon.X, mouse.RClkCon.Y ), TRUE);     //посылаем консоли отпускание
-					POSTMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( mouse.RClkCon.X, mouse.RClkCon.Y ), TRUE);     //посылаем консоли отпускание
+					//POSTMESSAGE(ghConWnd, WM_LBUTTONDOWN, wParam, MAKELPARAM( mouse.RClkCon.X, mouse.RClkCon.Y ), TRUE);     //посылаем консоли отпускание
+					pVCon->SendMouseEvent(WM_LBUTTONDOWN, wParam, mouse.RClkCon.X, mouse.RClkCon.Y);
+					//POSTMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( mouse.RClkCon.X, mouse.RClkCon.Y ), TRUE);     //посылаем консоли отпускание
+					pVCon->SendMouseEvent(WM_LBUTTONUP, wParam, mouse.RClkCon.X, mouse.RClkCon.Y);
 				}
 
 	            
@@ -2692,8 +2719,12 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 					DnDstep(_T("DnD: DragDrop is null"));
 				}
 	            mouse.bIgnoreMouseMove = false;
+	            #ifdef NEWMOUSESTYLE
+	            newX = cursor.x; newY = cursor.y;
+	            #else
 			    newX = MulDiv(cursor.x, conRect.right, klMax<uint>(1, pVCon->Width));
 			    newY = MulDiv(cursor.y, conRect.bottom, klMax<uint>(1, pVCon->Height));
+			    #endif
 			    
 			    //if (lbLeftDrag)
 				//	POSTMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( newX, newY ), TRUE);     //посылаем консоли отпускание
@@ -2709,7 +2740,8 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
             {
                 //isRBDown=false;
 				mouse.state &= ~(DRAG_R_ALLOWED | DRAG_R_STARTED | MOUSE_R_LOCKED);
-                POSTMESSAGE(ghConWnd, WM_RBUTTONDOWN, 0, MAKELPARAM( mouse.RClkCon.X, mouse.RClkCon.Y ), TRUE);
+                //POSTMESSAGE(ghConWnd, WM_RBUTTONDOWN, 0, MAKELPARAM( mouse.RClkCon.X, mouse.RClkCon.Y ), TRUE);
+                pVCon->SendMouseEvent(WM_RBUTTONDOWN, 0, mouse.RClkCon.X, mouse.RClkCon.Y);
             }
             return 0;
         }
@@ -2748,7 +2780,8 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 						mouse.state = DRAG_L_ALLOWED;
 				}
                 //if (gSet.is DnD) mouse.bIgnoreMouseMove = true;
-                POSTMESSAGE(ghConWnd, messg, wParam, MAKELPARAM( newX, newY ), FALSE); // было SEND
+                //POSTMESSAGE(ghConWnd, messg, wParam, MAKELPARAM( newX, newY ), FALSE); // было SEND
+                pVCon->SendMouseEvent(messg, wParam, newX, newY);
                 return 0;
             }
         }
@@ -2760,9 +2793,14 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 				return 0; // кнопка уже "отпущена"
             if (mouse.bIgnoreMouseMove) {
 	            mouse.bIgnoreMouseMove = false;
+	            #ifdef NEWMOUSESTYLE
+	            newX = cursor.x; newY = cursor.y;
+	            #else
 			    newX = MulDiv(cursor.x, conRect.right, klMax<uint>(1, pVCon->Width));
 			    newY = MulDiv(cursor.y, conRect.bottom, klMax<uint>(1, pVCon->Height));
-			    POSTMESSAGE(ghConWnd, messg, wParam, MAKELPARAM( newX, newY ), FALSE);
+			    #endif
+			    //POSTMESSAGE(ghConWnd, messg, wParam, MAKELPARAM( newX, newY ), FALSE);
+			    pVCon->SendMouseEvent(messg, wParam, newX, newY);
 		        return 0;
 		    }
         }
@@ -2814,8 +2852,10 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
                         (dwDelta>RCLICKAPPSTIMEOUT && dwDelta<10000))
                     {
                         // Сначала выделить файл под курсором
-                        POSTMESSAGE(ghConWnd, WM_LBUTTONDOWN, MK_LBUTTON, MAKELPARAM( mouse.RClkCon.X, mouse.RClkCon.Y ), TRUE);
-                        POSTMESSAGE(ghConWnd, WM_LBUTTONUP, 0, MAKELPARAM( mouse.RClkCon.X, mouse.RClkCon.Y ), TRUE);
+                        //POSTMESSAGE(ghConWnd, WM_LBUTTONDOWN, MK_LBUTTON, MAKELPARAM( mouse.RClkCon.X, mouse.RClkCon.Y ), TRUE);
+                        pVCon->SendMouseEvent(WM_LBUTTONDOWN, MK_LBUTTON, mouse.RClkCon.X, mouse.RClkCon.Y);
+                        //POSTMESSAGE(ghConWnd, WM_LBUTTONUP, 0, MAKELPARAM( mouse.RClkCon.X, mouse.RClkCon.Y ), TRUE);
+                        pVCon->SendMouseEvent(WM_LBUTTONUP, 0, mouse.RClkCon.X, mouse.RClkCon.Y);
                     
                         pVCon->Update(true);
                         INVALIDATE(); //InvalidateRect(HDCWND, NULL, FALSE);
@@ -2827,7 +2867,8 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
                     }
                 }
                 // Иначе нужно сначала послать WM_RBUTTONDOWN
-                POSTMESSAGE(ghConWnd, WM_RBUTTONDOWN, wParam, MAKELPARAM( newX, newY ), TRUE);
+                //POSTMESSAGE(ghConWnd, WM_RBUTTONDOWN, wParam, MAKELPARAM( newX, newY ), TRUE);
+                pVCon->SendMouseEvent(WM_RBUTTONDOWN, wParam, newX, newY);
             }
             //isRBDown=false; // чтобы не осталось случайно
 			mouse.state &= ~(DRAG_R_ALLOWED | DRAG_R_STARTED | MOUSE_R_LOCKED);
@@ -2846,7 +2887,8 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 #endif
 fin:
 	// заменим даблклик вторым обычным
-    POSTMESSAGE(ghConWnd, messg == WM_RBUTTONDBLCLK ? WM_RBUTTONDOWN : messg, wParam, MAKELPARAM( newX, newY ), FALSE);
+    //POSTMESSAGE(ghConWnd, messg == WM_RBUTTONDBLCLK ? WM_RBUTTONDOWN : messg, wParam, MAKELPARAM( newX, newY ), FALSE);
+    pVCon->SendMouseEvent(messg == WM_RBUTTONDBLCLK ? WM_RBUTTONDOWN : messg, wParam, newX, newY);
     return 0;
 }
 
@@ -2871,7 +2913,13 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
     case ID_HELP:
         {
 	        WCHAR szTitle[255];
-	        wsprintf(szTitle, L"About ConEmu (%s)...", szConEmuVersion);
+	        wsprintf(szTitle, 
+				#ifdef _DEBUG
+				L"About ConEmu (%s [DEBUG])", 
+				#else
+				L"About ConEmu (%s)", 
+				#endif
+				szConEmuVersion);
             MessageBox(ghOpWnd, pHelp, szTitle, MB_ICONQUESTION);
         }
         break;
@@ -3209,20 +3257,24 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
     case WM_ACTIVATE:
 		#ifdef _DEBUG
 		result = OnFocus(hWnd, messg, wParam, lParam);
+		result = DefWindowProc(hWnd, messg, wParam, lParam);
 		break;
 		#endif
     case WM_ACTIVATEAPP:
 		#ifdef _DEBUG
 		result = OnFocus(hWnd, messg, wParam, lParam);
+		result = DefWindowProc(hWnd, messg, wParam, lParam);
 		break;
 		#endif
     case WM_KILLFOCUS:
 		#ifdef _DEBUG
 		result = OnFocus(hWnd, messg, wParam, lParam);
+		result = DefWindowProc(hWnd, messg, wParam, lParam);
 		break;
 		#endif
     case WM_SETFOCUS:
 		result = OnFocus(hWnd, messg, wParam, lParam);
+		result = DefWindowProc(hWnd, messg, wParam, lParam);
 		break;
 
     case WM_MOUSEMOVE:

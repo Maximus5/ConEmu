@@ -16,9 +16,9 @@ CDragDrop::CDragDrop(HWND hWnd)
 	if (hr != S_OK)
 		DisplayLastError(_T("Can't get desktop folder"), hr);
 
-#ifdef _DEBUG
-	return;
-#endif
+	//#ifdef _DEBUG
+	//	return;
+	//#endif
 	hr = RegisterDragDrop(hWnd, this);
 	if (hr != S_OK)
 		DisplayLastError(_T("Can't register Drop target"), hr);

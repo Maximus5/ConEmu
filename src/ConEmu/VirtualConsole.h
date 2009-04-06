@@ -62,6 +62,7 @@ public:
 	bool GetCharAttr(TCHAR ch, WORD atr, TCHAR& rch, BYTE& foreColorNum, BYTE& backColorNum);
 	void SetConsoleSize(const COORD& size);
 	bool CheckBufferSize();
+	void SendMouseEvent(UINT messg, WPARAM wParam, int x, int y);
 
 protected:
 	HANDLE  hConOut_;

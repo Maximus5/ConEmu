@@ -155,9 +155,8 @@ BEGIN
                     39,10
     GROUPBOX        "Placement",IDC_STATIC,270,172,53,50
     GROUPBOX        "Position",IDC_STATIC,263,50,60,50,WS_DISABLED
-    CONTROL         "Cascade",rCascade,"Button",BS_AUTORADIOBUTTON | 
-                    WS_DISABLED,268,87,44,10
-    CONTROL         "Fixed",rFixed,"Button",BS_AUTORADIOBUTTON | WS_DISABLED,
+    CONTROL         "Cascade",rCascade,"Button",BS_AUTORADIOBUTTON,268,87,44,10
+    CONTROL         "Fixed",rFixed,"Button",BS_AUTORADIOBUTTON,
                     268,61,33,10
     EDITTEXT        tWndX,268,72,20,11,ES_AUTOHSCROLL | ES_NUMBER
     EDITTEXT        tWndY,297,72,20,11,ES_AUTOHSCROLL | ES_NUMBER

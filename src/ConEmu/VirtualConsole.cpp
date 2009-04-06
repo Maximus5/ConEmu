@@ -16,13 +16,13 @@ CVirtualConsole* CVirtualConsole::Create()
             return NULL;
         }
     } else {
-        if (!pCon->StartProcess()) {
+        /*if (!pCon->StartProcess()) {
             delete pCon;
             return NULL;
-        }
+        }*/
         // Вроде бы с запуском через нить клики мышкой в консоль начинают ходить сразу, но
         // часто окно конэму вообще не активируется
-		/*DWORD dwID = 0;
+		DWORD dwID = 0;
 		HANDLE hThread = CreateThread(NULL, 0, StartProcessThread, (LPVOID)pCon, 0, &dwID);
 		if (hThread == NULL) {
 			if (!pCon->StartProcess()) {
@@ -31,7 +31,7 @@ CVirtualConsole* CVirtualConsole::Create()
 			}
 		} else {
 			CloseHandle(hThread);
-		}*/
+		}
     }
 
     /*if (gSet.wndHeight && gSet.wndWidth)
@@ -1728,9 +1728,11 @@ BOOL CVirtualConsole::StartProcess()
 	// Если запускались с ярлыка - это нихрена не поможет... информация похоже в .lnk сохраняется...
     RegistryProps(FALSE, props);
 
-#ifndef _DEBUG
-    if (!gConEmu.isShowConsole && !gSet.isConVisible) SetWindowPos(ghWnd, HWND_TOPMOST, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
-#endif
+    if (!gConEmu.isShowConsole && !gSet.isConVisible
+		#ifdef _DEBUG
+		&& !IsDebuggerPresent()
+		#endif
+		) SetWindowPos(ghWnd, HWND_TOPMOST, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
     AllocConsole();
     ghConWnd = GetConsoleWindow();
     //if ((gSet.outSI.wShowWindow & (SW_MINIMIZE|SW_SHOWMINIMIZED|SW_SHOWMINNOACTIVE))) {
@@ -1759,9 +1761,13 @@ BOOL CVirtualConsole::StartProcess()
 	//клики мышкой не доходят до ФАРа, пока мы не переключимся в другое приложение и обратно
 	//HWND hOtherWnd = GetShellWindow();
 	//SetForegroundWindow(hOtherWnd);
-#ifndef _DEBUG
-    if (!gConEmu.isShowConsole && !gSet.isConVisible) SetWindowPos(ghWnd, HWND_NOTOPMOST, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
-#endif
+	//#ifndef _DEBUG
+    if (!gConEmu.isShowConsole && !gSet.isConVisible
+		#ifdef _DEBUG
+		&& !IsDebuggerPresent()
+		#endif
+		) SetWindowPos(ghWnd, HWND_NOTOPMOST, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
+	//#endif
     SetConsoleTitle(gSet.GetCmd());
     
     RegistryProps(TRUE, props);
@@ -1782,6 +1788,7 @@ BOOL CVirtualConsole::StartProcess()
             // Иначе жестоко получается. ConEmu вообще будет сложно запустить...
             gSet.isConMan = false;
         } else {
+	        SetForegroundWindow(ghWnd);
             return TRUE;
         }
     } 
@@ -1869,6 +1876,8 @@ BOOL CVirtualConsole::StartProcess()
         //TODO: а делать ли это?
         CloseHandle(pi.hThread); pi.hThread = NULL;
         CloseHandle(pi.hProcess); pi.hProcess = NULL;
+        
+        SetForegroundWindow(ghWnd);
 
 #ifdef _DEBUG
 		//SetForegroundWindow(ghWnd); Sleep(1000);
@@ -1957,4 +1966,58 @@ bool CVirtualConsole::CheckBufferSize()
     }
     
     return lbForceUpdate;
+}
+
+#ifndef WM_MOUSEHWHEEL
+#define WM_MOUSEHWHEEL                  0x020E
+#endif
+void CVirtualConsole::SendMouseEvent(UINT messg, WPARAM wParam, int x, int y)
+{
+	if (!this || !ghConWnd)
+		return;
+#ifdef NEWMOUSESTYLE
+	MBoxAssert ( gSet.LogFont.lfWidth && gSet.LogFont.lfHeight );
+	if (!gSet.LogFont.lfWidth | !gSet.LogFont.lfHeight)
+		return;
+	#pragma message("TODO: X координаты нам известны, так что можно бы более корректно позицию определять...")
+	
+	INPUT_RECORD r; memset(&r, 0, sizeof(r));
+	r.EventType = MOUSE_EVENT;
+	r.Event.MouseEvent.dwMousePosition = MakeCoord(x/gSet.LogFont.lfWidth, y/gSet.LogFont.lfHeight);
+	if (messg != WM_LBUTTONUP && (messg == WM_LBUTTONDOWN || messg == WM_LBUTTONDBLCLK || isPressed(VK_LBUTTON)))
+		r.Event.MouseEvent.dwButtonState |= FROM_LEFT_1ST_BUTTON_PRESSED;
+	if (messg != WM_RBUTTONUP && (messg == WM_RBUTTONDOWN || messg == WM_RBUTTONDBLCLK || isPressed(VK_RBUTTON)))
+		r.Event.MouseEvent.dwButtonState |= RIGHTMOST_BUTTON_PRESSED;
+	if (messg != WM_MBUTTONUP && (messg == WM_MBUTTONDOWN || messg == WM_MBUTTONDBLCLK || isPressed(VK_MBUTTON)))
+		r.Event.MouseEvent.dwButtonState |= FROM_LEFT_2ND_BUTTON_PRESSED;
+	//TODO: Keys -> dwControlKeyState : CAPSLOCK_ON, LEFT_ALT_PRESSED, LEFT_CTRL_PRESSED, NUMLOCK_ON,
+	//RIGHT_ALT_PRESSED, RIGHT_CTRL_PRESSED, SCROLLLOCK_ON, SHIFT_PRESSED
+	if (messg == WM_LBUTTONDBLCLK || messg == WM_RBUTTONDBLCLK || messg == WM_MBUTTONDBLCLK)
+		r.Event.MouseEvent.dwEventFlags = DOUBLE_CLICK;
+	else if (messg == WM_MOUSEMOVE)
+		r.Event.MouseEvent.dwEventFlags = MOUSE_MOVED;
+	else if (messg == WM_MOUSEWHEEL) {
+		r.Event.MouseEvent.dwEventFlags = MOUSE_WHEELED;
+		r.Event.MouseEvent.dwButtonState |= (0xFFFF0000 & wParam);
+	} else if (messg == WM_MOUSEHWHEEL) {
+		r.Event.MouseEvent.dwEventFlags = 8/*MOUSE_HWHEELED*/;
+		r.Event.MouseEvent.dwButtonState |= (0xFFFF0000 & wParam);
+	}
+	//Wheel: 
+	//  short zDelta = (short)HIWORD(rec->Event.MouseEvent.dwButtonState);
+	//  (zDelta>0)?KEY_MSWHEEL_UP:KEY_MSWHEEL_DOWN;
+	//HWheel:
+	//  short zDelta = (short)HIWORD(rec->Event.MouseEvent.dwButtonState);
+	//  (zDelta>0)?KEY_MSWHEEL_RIGHT:KEY_MSWHEEL_LEFT;
+	DWORD dwWritten = 0;
+	if (!WriteConsoleInput(GetStdHandle(STD_INPUT_HANDLE), &r, 1, &dwWritten)) {
+		DisplayLastError(L"SendMouseEvent failed!");
+	}
+#else
+	Если пересылать так - лезут глюки:
+	1) левый клик вообще не доходит до консоли
+	2) правый клик вызывает "левую" консольную менюшку
+	3) проблемы с активацией окна(?)
+	POSTMESSAGE(ghConWnd, messg, wParam, MAKELPARAM( x, y ), TRUE);
+#endif
 }

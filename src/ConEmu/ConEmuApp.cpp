@@ -177,7 +177,7 @@ void DebugLogMessage(HWND h, UINT m, WPARAM w, LPARAM l, BOOL posted, BOOL extra
         }
     }
 }
-void DebugLogPos(HWND hw, int x, int y, int w, int h)
+void DebugLogPos(HWND hw, int x, int y, int w, int h, LPCSTR asFunc)
 {
 	#ifdef _DEBUG
 	if (!x && !y && hw == ghConWnd) {
@@ -194,13 +194,14 @@ void DebugLogPos(HWND hw, int x, int y, int w, int h)
     if (bSendToDebugger) {
         static SYSTEMTIME st;
         GetLocalTime(&st);
-        wsprintfA(szPos, "%02i:%02i.%03i ChangeWindowPos(%s, %i,%i,%i,%i)\n",
-            st.wMinute, st.wSecond, st.wMilliseconds,
+        wsprintfA(szPos, "%02i:%02i.%03i %s(%s, %i,%i,%i,%i)\n",
+            st.wMinute, st.wSecond, st.wMilliseconds, asFunc,
             (hw==ghConWnd) ? "Con" : "Emu", x,y,w,h);
 
         OutputDebugStringA(szPos);
     } else if (bSendToFile) {
-        wsprintfA(szPos, "ChangeWindowPos(%s, %i,%i,%i,%i)\n",
+        wsprintfA(szPos, "%s(%s, %i,%i,%i,%i)\n",
+			asFunc,
             (hw==ghConWnd) ? "Con" : "Emu", x,y,w,h);
 
         DebugLogFile(szPos);
@@ -450,15 +451,16 @@ extern void SetConsoleFontSizeTo(HWND inConWnd, int inSizeX, int inSizeY);
 // Disables the IME for all threads in a current process.
 void DisableIME()
 {
-	return;
 	typedef BOOL (WINAPI* ImmDisableIMEt)(DWORD idThread);
+	BOOL lbDisabled = FALSE;
 	HMODULE hImm32 = LoadLibrary(_T("imm32.dll"));
 	if (hImm32) {
 		ImmDisableIMEt ImmDisableIMEf = (ImmDisableIMEt)GetProcAddress(hImm32, "ImmDisableIME");
 		if (ImmDisableIMEf) {
-			ImmDisableIMEf(-1);
+			lbDisabled = ImmDisableIMEf(-1);
 		}
 	}
+	return;
 }
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)

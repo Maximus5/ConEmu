@@ -1,7 +1,7 @@
 
 #include "Header.h"
 #include <commctrl.h>
-#include "ConEmu.h"
+#include "../common/ConEmuCheck.h"
 
 #define COUNTER_REFRESH 5000
 
@@ -71,7 +71,7 @@ void CSettings::InitSettings()
     nMainTimerElapse = 10;
     nAffinity = 3;
     //isAdvLangChange = true;
-    //isSkipFocusEvents = false;
+    isSkipFocusEvents = false;
     BufferHeight = 0;
     LogFont.lfHeight = 16;
     LogFont.lfWidth = 0;
@@ -119,6 +119,7 @@ void CSettings::InitSettings()
     bgImageDarker = 0;
     wndHeight = ntvdmHeight = 25; // NightRoman
     wndWidth = 80;  // NightRoman
+    wndX = 0; wndY = 0; wndCascade = true;
     isConVisible = false;
     nSlideShowElapse = 2500;
     nIconID = IDI_ICON1;
@@ -193,6 +194,16 @@ void CSettings::LoadSettings()
         reg.Load(_T("WindowMode"), gConEmu.WindowMode);
         reg.Load(_T("ConWnd X"), wndX); /*if (wndX<-10) wndX = 0;*/
         reg.Load(_T("ConWnd Y"), wndY); /*if (wndY<-10) wndY = 0;*/
+        reg.Load(_T("Cascaded"), wndCascade);
+        if (wndCascade) {
+	        HWND hPrev = FindWindow(VirtualConsoleClassMain, NULL);
+	        if (hPrev) {
+		        RECT rcWnd; GetWindowRect(hPrev, &rcWnd);
+		        int nShift = (GetSystemMetrics(SM_CYSIZEFRAME)+GetSystemMetrics(SM_CYCAPTION))*1.5;
+		        wndX = rcWnd.left + nShift;
+		        wndY = rcWnd.top + nShift;
+	        }
+        }
         reg.Load(_T("ConWnd Width"), wndWidth);
         reg.Load(_T("ConWnd Height"), wndHeight);
         reg.Load(_T("16it Height"), ntvdmHeight); if (ntvdmHeight<20) ntvdmHeight = 20;
@@ -253,7 +264,7 @@ void CSettings::LoadSettings()
         reg.Load(_T("MainTimerElapse"), nMainTimerElapse);
         reg.Load(_T("AffinityMask"), nAffinity);
         //reg.Load(_T("AdvLangChange"), isAdvLangChange);
-        //reg.Load(_T("SkipFocusEvents"), isSkipFocusEvents);
+        reg.Load(_T("SkipFocusEvents"), isSkipFocusEvents);
         
         reg.CloseKey();
     }
@@ -387,6 +398,7 @@ BOOL CSettings::SaveSettings()
             reg.Save(_T("ConWnd Height"), wndHeight);
             reg.Save(_T("ConWnd X"), wndX);
             reg.Save(_T("ConWnd Y"), wndY);
+            reg.Save(_T("Cascaded"), wndCascade);
 
             reg.Save(_T("ScrollTitle"), isScrollTitle);
             reg.Save(_T("ScrollTitleLen"), ScrollTitleLen);
@@ -687,6 +699,7 @@ LRESULT CSettings::OnInitDialog()
         EnableWindow(GetDlgItem(hMain, tWndY), false);
     }
     UpdatePos(wndX, wndY);
+    CheckDlgButton(hMain, wndCascade ? rCascade : rFixed, BST_CHECKED);
 
     #define getR(inColorref) (byte)inColorref
     #define getG(inColorref) (byte)(inColorref >> 8)
@@ -793,6 +806,11 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
     case rMaximized:
         gConEmu.SetWindowMode(wParam);
         break;
+        
+    case rCascade:
+    case rFixed:
+	    wndCascade = CB == rCascade;
+	    break;
 
     case cbFixFarBorders:
         isFixFarBorders = !isFixFarBorders;
