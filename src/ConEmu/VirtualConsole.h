@@ -50,7 +50,6 @@ public:
 	bool InitDC(bool abNoDc);
 	void InitHandlers();
 	void DumpConsole();
-	void Free();
 	bool Update(bool isForce = false, HDC *ahDc=NULL);
 	void SelectFont(HFONT hNew);
 	void SelectBrush(HBRUSH hNew);
@@ -63,6 +62,7 @@ public:
 	void SetConsoleSize(const COORD& size);
 	bool CheckBufferSize();
 	void SendMouseEvent(UINT messg, WPARAM wParam, int x, int y);
+	void StopThread();
 
 protected:
 	HANDLE  hConOut_;
@@ -93,7 +93,6 @@ protected:
 	CONSOLE_SELECTION_INFO select1, select2;
 	uint TextLen;
 	bool isCursorValid, drawImage, doSelect, textChanged, attrChanged;
-	i64 tick, tick2;
 	char *tmpOem;
 	void UpdateCursor(bool& lRes);
 	void UpdateCursorDraw(COORD pos, BOOL vis, UINT dwSize,  LPRECT prcLast=NULL);
@@ -116,4 +115,8 @@ protected:
 	} ConExeProps;
 	void RegistryProps(BOOL abRollback, ConExeProps& props, LPCTSTR asExeName=NULL);
 	static DWORD WINAPI StartProcessThread(LPVOID lpParameter);
+	HANDLE mh_Heap, mh_Thread, mh_TermEvent, mh_ForceReadEvent, mh_EndUpdateEvent;
+	DWORD mn_ThreadID;
+	LPVOID Alloc(size_t nCount, size_t nSize);
+	void Free(LPVOID ptr);
 };

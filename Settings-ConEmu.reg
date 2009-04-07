@@ -9,25 +9,26 @@ REGEDIT4
 "BackGround Image"="c:\\back.bmp"
 "bgImageDarker"=hex:46
 
-;;Основной шрифт консоли
+;; Main console font
 "FontName"="Lucida Console"
-"FontSize"=hex:14,00,00,00
-"FontSizeX"=hex:00,00,00,00
-
-;;Ширина для 'Force monospace'
-;"FontSizeX3"=hex:0c,00,00,00
-"ForceMonospace"=hex:00
-
-;;Включить 'исправление' рамок в FAR
-"Experimental"=hex:01
-;"FontName2"="Lucida Console"
-;"FontSizeX2"=hex:00,00,00,00
-
+"FontSize"=dword:00000014
+"FontSizeX"=dword:00000000
 "FontCharSet"=hex:cc
-"Anti-aliasing"=hex:04
-"WindowMode"=hex:20,05,00,00
 "FontBold"=hex:00
 "FontItalic"=hex:00
+
+;; 
+"Anti-aliasing"=hex:04
+
+;; Font width fot 'Force monospace' mode
+;"FontSizeX3"=dword:0000000c
+;; and the one
+"ForceMonospace"=hex:00
+
+;; Fix far borders
+"Experimental"=hex:01
+;"FontName2"="Lucida Console"
+;"FontSizeX2"=dword:00000000
 
 ;; 1 - Vertical cursor
 "CursorType"=hex:01
@@ -39,38 +40,47 @@ REGEDIT4
 ;; Needs EMenu & macro on 'Apps' button
 "RightClick opens context menu"=hex:02
 
-;; Поддержка ConMan. По идее должна активироваться и автоматически
+;; Turn on 'internal' conman feature
+"ConMan"=hex:00
+;; Some programs uses multiple console buffers (i.e. telnet, conman)
+;; Set 'hex:01' to support them (activated automatically for known applications)
 "Update Console handle"=hex:00
 
-;; Ширина консоли в символах
-"ConWnd Width"=hex:4b,00,00,00
-"ConWnd Height"=hex:16,00,00,00
-;; высота буфера для 16битных приложений
+;; Window mode. 51f - Normal, 520 - Maximized, 521 - Fullscreen
+"WindowMode"=dword:0000051f
+
+;; Console (real) width and height in characters
+"ConWnd Width"=dword:00000050
+"ConWnd Height"=dword:00000019
+
+;; Buffer height for 16bit applications
 ;"16bit Height"=dword:00000019
 
 ;; Положение UpperLeft в пикселах (int)
-"ConWnd X"=hex:fc,ff,ff,ff
-"ConWnd Y"=hex:fc,ff,ff,ff
+"ConWnd X"=dword:0000001a
+"ConWnd Y"=dword:00000060
+;; Cascaded, when WindowMode is Normal (51f)
+"Cascaded"=hex:01
 
 ;; 1 - Посылать Alt+Enter в консоль. Режим FullScreen будет недоступен
 "AltEnter"=hex:00
 
-;; Графические градусники
+;; GUI progress bars on Copy/Move
 "GUIpb"=hex:00
 
 ;; Debug. 1 - Don't hide console window
 "ConVisible"=hex:00
 
 ;; Drag'n'Drop
-;; 0 - Drag отключен, 1 - LDrag, 2 - RDrag, 3 - LDrag&RDrag
+;; 0 - Drag disabled, 1 - LDrag, 2 - RDrag, 3 - LDrag&RDrag
 "Dnd"=hex:03
-;; 1 - Действие по умолчанию - копирование, 0 - перемещение
+;; 1 - Default action - Copy, 0 - Move
 "DefCopy"=hex:01
-;; Клавиша-модификатор для драга левой кнопкой (см. Virtual Key Codes)
+;; Modifier-key for left mouse key drag (look 4 Virtual Key Codes)
 "DndLKey"=dword:00000000
-;; Клавиша-модификатор для драга правой кнопкой (см. Virtual Key Codes)
+;; Modifier-key for right mouse key drag (look 4 Virtual Key Codes)
 "DndRKey"=dword:000000a2
-;; 0 - Drop из внешних приложение запрещен, 1 - разрешен, 2 - разрешен без подтверждения
+;; 0 - Disable Drop from external apps, 1 - Allow, 2 - Allow w/o confirmation
 "DndDrop"=hex:01
 
 ;; 1- Отображать в заголовке окна процесс общения с плагином FAR; 0 - не отображать
@@ -80,17 +90,16 @@ REGEDIT4
 ;"ScrollTitle"=hex:01
 ;"ScrollTitleLen"=hex:16,00,00,00
 
-;; Центрировать 'консоль' в полноэкранном и развернутом режиме
+;; Center console in Fullscreen and Maximized modes
 "TryToCenter"=hex:01
 
-;; === Далее идут настройки табов ===
-;; 0 - не отображать, 1 - всегда, 2 - авто
+;; Tabs: 0 - don't show, 1 - always, 2 - auto
 "Tabs"=hex:02
-;; Тип отображения 'табов'. 0 - только закладки, 1 - с рамкой
+;; Tabs view style. 0 - Labels only, 1 - Labels & Frame
 "TabFrame"=hex:01
-;; Для внутреннего использования (определяет размеры Tab контрола)
+;; For internal use (Tab control sizes)
 ;"TabMargins"=hex:04,00,00,00,19,00,00,00,04,00,00,00,04,00,00,00
-;; Форматирование заголовков
+;; Tab labels formatting
 "TabPanels"="Panels|Console"
 "TabEditor"="[%s]"
 "TabEditorModified"="[%s] *"
@@ -98,9 +107,9 @@ REGEDIT4
 "TabLenMax"=dword:00000014
 
 ;; Debug. 1 - Create 'app' window on taskbar
-;"CreateAppWindow"=hex:00 - пока не работает
+;"CreateAppWindow"=hex:00 - does not working still
 
-;; Расширение возможностей плагина Visualizer
+;; Visualizer plugin extensions
 "Visualizer"=hex:01
 "VizNormal"=hex:01
 "VizFore"=hex:0f
@@ -125,3 +134,8 @@ REGEDIT4
 
 ;; Значение для SetProcessAffinityMask
 ;"AffinityMask"=dword:00000003
+
+
+;; You may uncomment this to 'Auto run' ConEmu with any batch file or Cmd.exe call
+;[HKEY_CURRENT_USER\Software\Microsoft\Command Processor]
+;"AutoRun"="C:\\Program Files\\FAR\\cmd_autorun.cmd\""

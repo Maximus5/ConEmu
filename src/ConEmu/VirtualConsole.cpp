@@ -22,15 +22,11 @@ CVirtualConsole* CVirtualConsole::Create()
         }*/
         // Вроде бы с запуском через нить клики мышкой в консоль начинают ходить сразу, но
         // часто окно конэму вообще не активируется
-		DWORD dwID = 0;
-		HANDLE hThread = CreateThread(NULL, 0, StartProcessThread, (LPVOID)pCon, 0, &dwID);
-		if (hThread == NULL) {
-			if (!pCon->StartProcess()) {
-				delete pCon;
-				return NULL;
-			}
-		} else {
-			CloseHandle(hThread);
+		pCon->mh_Thread = CreateThread(NULL, 0, StartProcessThread, (LPVOID)pCon, 0, &pCon->mn_ThreadID);
+		if (pCon->mh_Thread == NULL) {
+			DisplayLastError(_T("Can't create console thread!"));
+			delete pCon;
+			return NULL;
 		}
     }
 
@@ -45,6 +41,13 @@ CVirtualConsole* CVirtualConsole::Create()
 
 CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
 {
+	SIZE_T nMinHeapSize = (1000 + (200 * 90 * 2) * 6 + MAX_PATH*2)*2 + 210*sizeof(*TextParts);
+    mh_Heap = HeapCreate(HEAP_GENERATE_EXCEPTIONS, nMinHeapSize, 0);
+    mh_Thread = NULL; mn_ThreadID = 0;
+    mh_TermEvent = CreateEvent(NULL,FALSE,FALSE,NULL);
+    mh_ForceReadEvent = CreateEvent(NULL,FALSE,FALSE,NULL);
+    mh_EndUpdateEvent = CreateEvent(NULL,FALSE,FALSE,NULL);
+    
     //pVCon = this;
     hConOut_ = NULL;
 
@@ -63,6 +66,7 @@ CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
     isEditor = false;
     memset(&csbi, 0, sizeof(csbi));
     m_LastMaxReadCnt = 0; m_LastMaxReadTick = 0;
+	hConWnd = NULL;
 
     nSpaceCount = 1000;
     Spaces = (TCHAR*)malloc(nSpaceCount*sizeof(TCHAR));
@@ -82,53 +86,40 @@ CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
 
 
     // InitDC звать бессмысленно - консоль еще не создана
-    Free();
-    //InitDC(false);
+    hDC = NULL;
+    hBitmap = NULL;
+    ConChar = NULL;
+    ConAttr = NULL;
+    ConCharX = NULL;
+    tmpOem = NULL;
+    TextParts = NULL;
 }
 
 CVirtualConsole::~CVirtualConsole()
 {
-    Free();
-    if (Spaces) free(Spaces); Spaces = NULL;  nSpaceCount = 0;
-    //pVCon = NULL; //??? так на всякий случай
-}
-
-void CVirtualConsole::Free()
-{
+	StopThread();
+	
+	MCHKHEAP
     if (hDC)
-    {
-        DeleteDC(hDC);
-        hDC = NULL;
-    }
+	    { DeleteDC(hDC); hDC = NULL; }
     if (hBitmap)
-    {
-        DeleteObject(hBitmap);
-        hBitmap = NULL;
-    }
+    	{ DeleteObject(hBitmap); hBitmap = NULL; }
     if (ConChar)
-    {
-        free(ConChar);
-        ConChar = NULL;
-    }
+    	{ Free(ConChar); ConChar = NULL; }
     if (ConAttr)
-    {
-        free(ConAttr);
-        ConAttr = NULL;
-    }
+    	{ Free(ConAttr); ConAttr = NULL; }
     if (ConCharX)
-    {
-        free(ConCharX);
-        ConCharX = NULL;
-    }
+    	{ Free(ConCharX); ConCharX = NULL; }
     if (tmpOem)
-    {
-        free(tmpOem);
-        tmpOem = NULL;
-    }
+    	{ Free(tmpOem); tmpOem = NULL; }
     if (TextParts)
-    {
-        free(TextParts);
-        TextParts = NULL;
+    	{ Free(TextParts); TextParts = NULL; }
+    if (Spaces) 
+	    { Free(Spaces); Spaces = NULL; nSpaceCount = 0; }
+
+	// Куча больше не нужна
+    if (mh_Heap) {
+	    HeapDestroy(mh_Heap);
     }
 }
 
@@ -169,7 +160,20 @@ HANDLE CVirtualConsole::hConOut(BOOL abAllowRecreate/*=FALSE*/)
 // InitDC вызывается только при критических изменениях (размеры, шрифт, и т.п.) когда нужно пересоздать DC и Bitmap
 bool CVirtualConsole::InitDC(bool abNoDc)
 {
-    Free();
+    if (hDC)
+	    { DeleteDC(hDC); hDC = NULL; }
+    if (hBitmap)
+    	{ DeleteObject(hBitmap); hBitmap = NULL; }
+    if (ConChar)
+    	{ Free(ConChar); ConChar = NULL; }
+    if (ConAttr)
+    	{ Free(ConAttr); ConAttr = NULL; }
+    if (ConCharX)
+    	{ Free(ConCharX); ConCharX = NULL; }
+    if (tmpOem)
+    	{ Free(tmpOem); tmpOem = NULL; }
+    if (TextParts)
+    	{ Free(TextParts); TextParts = NULL; }
 
     CONSOLE_SCREEN_BUFFER_INFO csbi;
     if (!GetConsoleScreenBufferInfo(hConOut(), &csbi))
@@ -181,11 +185,13 @@ bool CVirtualConsole::InitDC(bool abNoDc)
     if ((int)TextWidth < csbi.dwSize.X)
         TextWidth = csbi.dwSize.X;
 
-    ConChar = (TCHAR*)calloc((TextWidth * TextHeight * 2), sizeof(*ConChar));
-    ConAttr = (WORD*)calloc((TextWidth * TextHeight * 2), sizeof(*ConAttr));
-    ConCharX = (DWORD*)calloc((TextWidth * TextHeight), sizeof(*ConCharX));
-    tmpOem = (char*)calloc((TextWidth + 5), sizeof(*tmpOem));
-    TextParts = (struct _TextParts*)calloc((TextWidth + 2), sizeof(*TextParts));
+    MCHKHEAP
+    ConChar = (TCHAR*)Alloc((TextWidth * TextHeight * 2), sizeof(*ConChar));
+    ConAttr = (WORD*)Alloc((TextWidth * TextHeight * 2), sizeof(*ConAttr));
+    ConCharX = (DWORD*)Alloc((TextWidth * TextHeight), sizeof(*ConCharX));
+    tmpOem = (char*)Alloc((TextWidth + 5), sizeof(*tmpOem));
+    TextParts = (struct _TextParts*)Alloc((TextWidth + 2), sizeof(*TextParts));
+    MCHKHEAP
     if (!ConChar || !ConAttr || !ConCharX || !tmpOem || !TextParts)
         return false;
 
@@ -610,6 +616,8 @@ bool CVirtualConsole::Update(bool isForce, HDC *ahDc)
     ///| Drawing cursor |/////////////////////////////////////////////////////
     //------------------------------------------------------------------------
     UpdateCursor(lRes);
+    
+    MCHKHEAP
 
     gSet.Performance(tPerfRender, TRUE);
 
@@ -659,6 +667,7 @@ bool CVirtualConsole::UpdatePrepare(bool isForce, HDC *ahDc)
     TextLen = TextWidth * TextHeight;
     coord.X = csbi.srWindow.Left; coord.Y = csbi.srWindow.Top;
 
+    MCHKHEAP
     // Get attributes (first) and text (second)
     // [Roman Kuzmin]
     // In FAR Manager source code this is mentioned as "fucked method". Yes, it is.
@@ -685,6 +694,8 @@ bool CVirtualConsole::UpdatePrepare(bool isForce, HDC *ahDc)
             ++coord.Y;
         }
     }
+    
+    MCHKHEAP
 
     // get cursor info
     GetConsoleCursorInfo(hConOut(), &cinf);
@@ -713,6 +724,7 @@ bool CVirtualConsole::UpdatePrepare(bool isForce, HDC *ahDc)
         }
     }
 
+    MCHKHEAP
     return true;
 }
 
@@ -1586,28 +1598,28 @@ void CVirtualConsole::RegistryProps(BOOL abRollback, ConExeProps& props, LPCTSTR
         if (gSet.ourSI.lpTitle && *gSet.ourSI.lpTitle) {
 	        int nLen = _tcslen(gSet.ourSI.lpTitle);
 	        if (nLen>4 && _tcsicmp(gSet.ourSI.lpTitle+nLen-4, _T(".lnk"))==0) {
-		        props.FullKeyName = (TCHAR*)calloc(10, sizeof(TCHAR));
+		        props.FullKeyName = (TCHAR*)Alloc(10, sizeof(TCHAR));
 		        _tcscpy(props.FullKeyName, _T("Console"));
 		        pszExeName = props.FullKeyName+_tcslen(props.FullKeyName);
 	        } else {
-	            props.FullKeyName = (TCHAR*)calloc(nLen+10, sizeof(TCHAR));
+	            props.FullKeyName = (TCHAR*)Alloc(nLen+10, sizeof(TCHAR));
 	            _tcscpy(props.FullKeyName, _T("Console\\"));
 	            pszExeName = props.FullKeyName+_tcslen(props.FullKeyName);
 	            _tcscpy(pszExeName, gSet.ourSI.lpTitle);
 	        }
         } else
         if (asExeName && *asExeName) {
-            props.FullKeyName = (TCHAR*)calloc(_tcslen(asExeName)+10, sizeof(TCHAR));
+            props.FullKeyName = (TCHAR*)Alloc(_tcslen(asExeName)+10, sizeof(TCHAR));
             _tcscpy(props.FullKeyName, _T("Console\\"));
             pszExeName = props.FullKeyName+_tcslen(props.FullKeyName);
             _tcscpy(pszExeName, asExeName);
         } else {
-            props.FullKeyName = (TCHAR*)calloc(MAX_PATH+10, sizeof(TCHAR));
+            props.FullKeyName = (TCHAR*)Alloc(MAX_PATH+10, sizeof(TCHAR));
             _tcscpy(props.FullKeyName, _T("Console\\"));
             pszExeName = props.FullKeyName+_tcslen(props.FullKeyName);
             if (!GetModuleFileName(NULL, pszExeName, MAX_PATH+1)) {
                 DisplayLastError(_T("Can't get module file name"));
-                if (props.FullKeyName) { free(props.FullKeyName); props.FullKeyName = NULL; }
+                if (props.FullKeyName) { Free(props.FullKeyName); props.FullKeyName = NULL; }
                 return;
             }
         }
@@ -1626,8 +1638,8 @@ void CVirtualConsole::RegistryProps(BOOL abRollback, ConExeProps& props, LPCTSTR
             RegDeleteKey(hkey, pszExeName);
             RegCloseKey(hkey);
         }
-        if (props.FullKeyName) { free(props.FullKeyName); props.FullKeyName = NULL;}
-        if (props.FaceName) { free(props.FaceName); props.FaceName = NULL;}
+        if (props.FullKeyName) { Free(props.FullKeyName); props.FullKeyName = NULL;}
+        if (props.FaceName) { Free(props.FaceName); props.FaceName = NULL;}
         return;
     }
     
@@ -1646,7 +1658,7 @@ void CVirtualConsole::RegistryProps(BOOL abRollback, ConExeProps& props, LPCTSTR
                 props.FontSize = -1;
             if (0!=RegQueryValueEx(hkey, _T("FontFamily"), 0, NULL, (LPBYTE)&props.FontFamily, &(dwSize=sizeof(DWORD))))
                 props.FontFamily = -1;
-            props.FaceName = (TCHAR*)calloc(MAX_PATH+1,sizeof(TCHAR));
+            props.FaceName = (TCHAR*)Alloc(MAX_PATH+1,sizeof(TCHAR));
             if (0!=RegQueryValueEx(hkey, _T("FaceName"), 0, NULL, (LPBYTE)props.FaceName, &(dwSize=(sizeof(TCHAR)*(MAX_PATH+1)))))
                 props.FaceName[0] = 0;
             
@@ -1695,8 +1707,8 @@ void CVirtualConsole::RegistryProps(BOOL abRollback, ConExeProps& props, LPCTSTR
                 RegDeleteValue(hkey, _T("FaceName"));
             
             // и освободить буфера
-            if (props.FullKeyName) { free(props.FullKeyName); props.FullKeyName = NULL;}
-            if (props.FaceName) { free(props.FaceName); props.FaceName = NULL;}
+            if (props.FullKeyName) { Free(props.FullKeyName); props.FullKeyName = NULL;}
+            if (props.FaceName) { Free(props.FaceName); props.FaceName = NULL;}
         }
         RegCloseKey(hkey);
     }
@@ -1705,8 +1717,15 @@ void CVirtualConsole::RegistryProps(BOOL abRollback, ConExeProps& props, LPCTSTR
 DWORD CVirtualConsole::StartProcessThread(LPVOID lpParameter)
 {
 	CVirtualConsole* pCon = (CVirtualConsole*)lpParameter;
-	DWORD dwRc = pCon->StartProcess();
-	return dwRc;
+	BOOL lbRc = pCon->StartProcess();
+	
+	//TODO: а тут мы будем читать консоль...
+	
+	
+	// Finalize
+	SafeCloseHandle(pCon->mh_Thread);
+	
+	return lbRc ? 0 : 100;
 }
 
 extern void SetConsoleFontSizeTo(HWND inConWnd, int inSizeX, int inSizeY);
@@ -1769,6 +1788,7 @@ BOOL CVirtualConsole::StartProcess()
 		) SetWindowPos(ghWnd, HWND_NOTOPMOST, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
 	//#endif
     SetConsoleTitle(gSet.GetCmd());
+    SetForegroundWindow(ghWnd);
     
     RegistryProps(TRUE, props);
 
@@ -1783,7 +1803,6 @@ BOOL CVirtualConsole::StartProcess()
     if (gSet.isConMan) {
         if (!gConEmu.InitConMan(gSet.GetCmd())) {
             //gConEmu.Destroy();
-            //free(cmdLine);
             //return -1;
             // Иначе жестоко получается. ConEmu вообще будет сложно запустить...
             gSet.isConMan = false;
@@ -1837,7 +1856,7 @@ BOOL CVirtualConsole::StartProcess()
                 DWORD dwLastError = GetLastError();
                 OutputDebugString(_T("CreateProcess failed\n"));
                 int nLen = _tcslen(gSet.GetCmd());
-                TCHAR* pszErr=(TCHAR*)calloc(nLen+100,sizeof(TCHAR));
+                TCHAR* pszErr=(TCHAR*)Alloc(nLen+100,sizeof(TCHAR));
                 
                 if (0==FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
                     NULL, dwLastError, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
@@ -1847,7 +1866,7 @@ BOOL CVirtualConsole::StartProcess()
                 }
                 
                 nLen += _tcslen(pszErr);
-                TCHAR* psz=(TCHAR*)calloc(nLen+100,sizeof(TCHAR));
+                TCHAR* psz=(TCHAR*)Alloc(nLen+100,sizeof(TCHAR));
                 int nButtons = MB_OK|MB_ICONEXCLAMATION|MB_SETFOREGROUND;
                 
                 _tcscpy(psz, _T("Cannot execute the command.\r\n"));
@@ -1861,10 +1880,9 @@ BOOL CVirtualConsole::StartProcess()
                 }
                 //MBoxA(psz);
                 int nBrc = MessageBox(NULL, psz, _T("ConEmu"), nButtons);
-                free(psz); free(pszErr);
+                Free(psz); Free(pszErr);
                 if (nBrc!=IDYES) {
                     gConEmu.Destroy();
-                    //free(cmdLine);
                     return FALSE;
                 }
                 // Выполнить стандартную команду...
@@ -1984,14 +2002,33 @@ void CVirtualConsole::SendMouseEvent(UINT messg, WPARAM wParam, int x, int y)
 	INPUT_RECORD r; memset(&r, 0, sizeof(r));
 	r.EventType = MOUSE_EVENT;
 	r.Event.MouseEvent.dwMousePosition = MakeCoord(x/gSet.LogFont.lfWidth, y/gSet.LogFont.lfHeight);
+	
+	// Mouse Buttons
 	if (messg != WM_LBUTTONUP && (messg == WM_LBUTTONDOWN || messg == WM_LBUTTONDBLCLK || isPressed(VK_LBUTTON)))
 		r.Event.MouseEvent.dwButtonState |= FROM_LEFT_1ST_BUTTON_PRESSED;
 	if (messg != WM_RBUTTONUP && (messg == WM_RBUTTONDOWN || messg == WM_RBUTTONDBLCLK || isPressed(VK_RBUTTON)))
 		r.Event.MouseEvent.dwButtonState |= RIGHTMOST_BUTTON_PRESSED;
 	if (messg != WM_MBUTTONUP && (messg == WM_MBUTTONDOWN || messg == WM_MBUTTONDBLCLK || isPressed(VK_MBUTTON)))
 		r.Event.MouseEvent.dwButtonState |= FROM_LEFT_2ND_BUTTON_PRESSED;
-	//TODO: Keys -> dwControlKeyState : CAPSLOCK_ON, LEFT_ALT_PRESSED, LEFT_CTRL_PRESSED, NUMLOCK_ON,
-	//RIGHT_ALT_PRESSED, RIGHT_CTRL_PRESSED, SCROLLLOCK_ON, SHIFT_PRESSED
+
+	// Key modifiers
+	if (GetKeyState(VK_CAPITAL) & 1)
+		r.Event.MouseEvent.dwControlKeyState |= CAPSLOCK_ON;
+	if (GetKeyState(VK_NUMLOCK) & 1)
+		r.Event.MouseEvent.dwControlKeyState |= NUMLOCK_ON;
+	if (GetKeyState(VK_SCROLL) & 1)
+		r.Event.MouseEvent.dwControlKeyState |= SCROLLLOCK_ON;
+	if (isPressed(VK_LMENU))
+		r.Event.MouseEvent.dwControlKeyState |= LEFT_ALT_PRESSED;
+	if (isPressed(VK_RMENU))
+		r.Event.MouseEvent.dwControlKeyState |= RIGHT_ALT_PRESSED;
+	if (isPressed(VK_LCONTROL))
+		r.Event.MouseEvent.dwControlKeyState |= LEFT_CTRL_PRESSED;
+	if (isPressed(VK_RCONTROL))
+		r.Event.MouseEvent.dwControlKeyState |= RIGHT_CTRL_PRESSED;
+	if (isPressed(VK_SHIFT))
+		r.Event.MouseEvent.dwControlKeyState |= SHIFT_PRESSED;
+
 	if (messg == WM_LBUTTONDBLCLK || messg == WM_RBUTTONDBLCLK || messg == WM_MBUTTONDBLCLK)
 		r.Event.MouseEvent.dwEventFlags = DOUBLE_CLICK;
 	else if (messg == WM_MOUSEMOVE)
@@ -2003,12 +2040,6 @@ void CVirtualConsole::SendMouseEvent(UINT messg, WPARAM wParam, int x, int y)
 		r.Event.MouseEvent.dwEventFlags = 8/*MOUSE_HWHEELED*/;
 		r.Event.MouseEvent.dwButtonState |= (0xFFFF0000 & wParam);
 	}
-	//Wheel: 
-	//  short zDelta = (short)HIWORD(rec->Event.MouseEvent.dwButtonState);
-	//  (zDelta>0)?KEY_MSWHEEL_UP:KEY_MSWHEEL_DOWN;
-	//HWheel:
-	//  short zDelta = (short)HIWORD(rec->Event.MouseEvent.dwButtonState);
-	//  (zDelta>0)?KEY_MSWHEEL_RIGHT:KEY_MSWHEEL_LEFT;
 	DWORD dwWritten = 0;
 	if (!WriteConsoleInput(GetStdHandle(STD_INPUT_HANDLE), &r, 1, &dwWritten)) {
 		DisplayLastError(L"SendMouseEvent failed!");
@@ -2020,4 +2051,27 @@ void CVirtualConsole::SendMouseEvent(UINT messg, WPARAM wParam, int x, int y)
 	3) проблемы с активацией окна(?)
 	POSTMESSAGE(ghConWnd, messg, wParam, MAKELPARAM( x, y ), TRUE);
 #endif
+}
+
+LPVOID CVirtualConsole::Alloc(size_t nCount, size_t nSize)
+{
+	LPVOID ptr = HeapAlloc ( mh_Heap, HEAP_GENERATE_EXCEPTIONS|HEAP_ZERO_MEMORY, nCount * nSize );
+	return ptr;
+}
+
+void CVirtualConsole::Free(LPVOID ptr)
+{
+	if (ptr)
+		HeapFree ( mh_Heap, 0, ptr );
+}
+
+void CVirtualConsole::StopThread()
+{
+	if (mh_Thread) {
+		//TODO: выставление флагов и завершение нити
+	}
+	
+	SafeCloseHandle(mh_TermEvent);
+	SafeCloseHandle(mh_ForceReadEvent);
+	SafeCloseHandle(mh_EndUpdateEvent);
 }
