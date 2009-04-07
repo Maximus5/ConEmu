@@ -30,7 +30,7 @@ HWND CConEmuChild::Create()
 		MBoxA(_T("Can't create DC window!"));
 		return NULL; //
 	}
-	SetClassLong(ghWndDC, GCL_HBRBACKGROUND, (LONG)gConEmu.m_Back.mh_BackBrush);
+	//SetClassLong(ghWndDC, GCL_HBRBACKGROUND, (LONG)gConEmu.m_Back.mh_BackBrush);
 	SetWindowPos(ghWndDC, HWND_TOP, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
 	//gConEmu.dcWindowLast = rc; //TODO!!!
 	return ghWndDC;
@@ -258,6 +258,15 @@ LRESULT CALLBACK CConEmuBack::BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, 
 	    case WM_VSCROLL:
 	        POSTMESSAGE(ghConWnd, messg, wParam, lParam, FALSE);
 	        break;
+		case WM_PAINT:
+			{
+				PAINTSTRUCT ps; memset(&ps, 0, sizeof(ps));
+				HDC hDc = BeginPaint(hWnd, &ps);
+				if (!IsRectEmpty(&ps.rcPaint))
+					FillRect(hDc, &ps.rcPaint, gConEmu.m_Back.mh_BackBrush);
+				EndPaint(hWnd, &ps);
+			}
+			return 0;
 	}
 
     result = DefWindowProc(hWnd, messg, wParam, lParam);
