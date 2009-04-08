@@ -62,6 +62,7 @@ public:
 	void SetConsoleSize(const COORD& size);
 	bool CheckBufferSize();
 	void SendMouseEvent(UINT messg, WPARAM wParam, int x, int y);
+	void StopSignal();
 	void StopThread();
 	void Paint();
 

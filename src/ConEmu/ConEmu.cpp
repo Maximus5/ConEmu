@@ -96,6 +96,7 @@ CConEmuMain::CConEmuMain()
 	
 	mn_MsgPostCreate = RegisterWindowMessage(_T("ConEmuMain::PostCreate"));
 	mn_MsgPostCopy = RegisterWindowMessage(_T("ConEmuMain::PostCopy"));
+	mn_MsgMyDestroy = RegisterWindowMessage(_T("ConEmuMain::Destroy"));
 }
 
 BOOL CConEmuMain::Init()
@@ -171,8 +172,18 @@ BOOL CConEmuMain::InitConMan(LPCWSTR asCommandLine)
 
 void CConEmuMain::Destroy()
 {
-	if (ghWnd)
-		DestroyWindow(ghWnd);
+	for (int i=0; i<MAX_CONSOLE_COUNT; i++) {
+		if (mp_VCon[i]) {
+			mp_VCon[i]->StopSignal();
+		}
+	}
+
+	if (ghWnd) {
+		//HWND hWnd = ghWnd;
+		//ghWnd = NULL;
+		//DestroyWindow(hWnd); -- может быть вызывано из другой нити
+		PostMessage(ghWnd, mn_MsgMyDestroy, GetCurrentThreadId(), 0);
+	}
 }
 
 CConEmuMain::~CConEmuMain()
@@ -2263,16 +2274,33 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
 
 LRESULT CConEmuMain::OnDestroy(HWND hWnd)
 {
-    Icon.Delete();
-    if (DragDrop) {
-        delete DragDrop;
-        DragDrop = NULL;
-    }
+	for (int i=0; i<MAX_CONSOLE_COUNT; i++) {
+		if (mp_VCon[i]) {
+			delete mp_VCon[i]; mp_VCon[i] = NULL;
+		}
+	}
+
+	if (mh_ConMan && mh_ConMan!=INVALID_HANDLE_VALUE)
+		FreeLibrary(mh_ConMan);
+	mh_ConMan = NULL;
+
+	if (mh_WinHook) {
+		UnhookWinEvent(mh_WinHook);
+		mh_WinHook = NULL;
+	}
+
+	if (DragDrop) {
+		delete DragDrop;
+		DragDrop = NULL;
+	}
     if (ProgressBars) {
         delete ProgressBars;
         ProgressBars = NULL;
     }
-    PostQuitMessage(0);
+
+    Icon.Delete();
+
+	PostQuitMessage(0);
 
 	return 0;
 }
@@ -3279,14 +3307,17 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		break;
         
     default:
-	    if (messg == mn_MsgPostCreate) {
+	    if (messg == gConEmu.mn_MsgPostCreate) {
 		    gConEmu.PostCreate(TRUE);
 		    return 0;
 	    } else 
-	    if (messg == mn_MsgPostCopy) {
+	    if (messg == gConEmu.mn_MsgPostCopy) {
 		    gConEmu.PostCopy((wchar_t*)lParam, TRUE);
 		    return 0;
-	    }
+	    } else
+		if (messg == gConEmu.mn_MsgMyDestroy) {
+			gConEmu.OnDestroy(hWnd);
+		}
         if (messg) result = DefWindowProc(hWnd, messg, wParam, lParam);
     }
     return result;

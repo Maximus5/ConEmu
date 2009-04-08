@@ -267,6 +267,9 @@ LRESULT CALLBACK CConEmuBack::BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, 
 				EndPaint(hWnd, &ps);
 			}
 			return 0;
+		case WM_SIZE:
+			result = DefWindowProc(hWnd, messg, wParam, lParam);
+			return result;
 	}
 
     result = DefWindowProc(hWnd, messg, wParam, lParam);
@@ -283,11 +286,17 @@ void CConEmuBack::Resize()
 	RECT rcClient; GetClientRect(ghWnd, &rcClient);
 	RECT rc = gConEmu.CalcRect(CER_BACK, rcClient, CER_MAINCLIENT);
 
+#ifdef _DEBUG
+	GetClientRect(mh_Wnd, &rcClient);
+#endif
 	MoveWindow(mh_Wnd, 
 		rc.left, rc.top,
 		rc.right - rc.left,
 		rc.bottom - rc.top,
 		1);
+#ifdef _DEBUG
+	GetClientRect(mh_Wnd, &rcClient);
+#endif
 }
 
 void CConEmuBack::Refresh()

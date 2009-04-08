@@ -72,7 +72,7 @@ CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
 	hConWnd = NULL;
 
     nSpaceCount = 1000;
-    Spaces = (TCHAR*)malloc(nSpaceCount*sizeof(TCHAR));
+    Spaces = (TCHAR*)Alloc(nSpaceCount,sizeof(TCHAR));
     for (UINT i=0; i<nSpaceCount; i++) Spaces[i]=L' ';
 
     hOldBrush = NULL;
@@ -123,6 +123,7 @@ CVirtualConsole::~CVirtualConsole()
 	// Куча больше не нужна
     if (mh_Heap) {
 	    HeapDestroy(mh_Heap);
+		mh_Heap = NULL;
     }
     
     DeleteCriticalSection(&csDC);
@@ -2089,18 +2090,41 @@ void CVirtualConsole::SendMouseEvent(UINT messg, WPARAM wParam, int x, int y)
 
 LPVOID CVirtualConsole::Alloc(size_t nCount, size_t nSize)
 {
-	LPVOID ptr = HeapAlloc ( mh_Heap, HEAP_GENERATE_EXCEPTIONS|HEAP_ZERO_MEMORY, nCount * nSize );
+#ifdef _DEBUG
+	HeapValidate(mh_Heap, 0, NULL);
+#endif
+	size_t nWhole = nCount * nSize;
+	LPVOID ptr = HeapAlloc ( mh_Heap, HEAP_GENERATE_EXCEPTIONS|HEAP_ZERO_MEMORY, nWhole );
+#ifdef _DEBUG
+		HeapValidate(mh_Heap, 0, NULL);
+#endif
 	return ptr;
 }
 
 void CVirtualConsole::Free(LPVOID ptr)
 {
-	if (ptr)
+	if (ptr && mh_Heap) {
+#ifdef _DEBUG
+		HeapValidate(mh_Heap, 0, NULL);
+#endif
 		HeapFree ( mh_Heap, 0, ptr );
+#ifdef _DEBUG
+		HeapValidate(mh_Heap, 0, NULL);
+#endif
+	}
+}
+
+void CVirtualConsole::StopSignal()
+{
+	SetEvent(mh_TermEvent);
 }
 
 void CVirtualConsole::StopThread()
 {
+#ifdef _DEBUG
+		HeapValidate(mh_Heap, 0, NULL);
+#endif
+
 	if (mh_Thread) {
 		// выставление флагов и завершение нити
 		SetEvent(mh_TermEvent);
@@ -2113,6 +2137,10 @@ void CVirtualConsole::StopThread()
 	SafeCloseHandle(mh_EndUpdateEvent);
 	
 	SafeCloseHandle(mh_Thread);
+
+#ifdef _DEBUG
+		HeapValidate(mh_Heap, 0, NULL);
+#endif
 }
 
 void CVirtualConsole::Paint()

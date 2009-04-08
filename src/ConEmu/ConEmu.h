@@ -138,6 +138,7 @@ protected:
 	// Registered messages
 	UINT mn_MsgPostCreate;
 	UINT mn_MsgPostCopy;
+	UINT mn_MsgMyDestroy;
 
 public:
 	DWORD CheckProcesses(DWORD nConmanIDX, BOOL bTitleChanged);
