@@ -129,7 +129,7 @@ REGEDIT4
 ;; with background (color index)
 "ExtendColorIdx"=hex:0e
 
-;; Интервал в милисекундах между чтениями консоли, реальный интервал может отличаться (на усмотрение Windows)
+;; Time interval between console read in ms (10..1000)
 ;"MainTimerElapse"=dword:0000000A
 
 ;; Значение для SetProcessAffinityMask

@@ -177,6 +177,7 @@ public:
 	BOOL Init();
 	BOOL InitConMan(LPCWSTR asCommandLine);
 	void InvalidateAll();
+	bool isActive(CVirtualConsole* apCon);
 	bool isConman();
 	bool isConSelectMode();
 	bool isDragging();
@@ -192,7 +193,7 @@ public:
 	bool LoadVersionInfo(wchar_t* pFullPath);
 	static RECT MapRect(RECT rFrom, BOOL bFrame2Client);
 	void PaintCon();
-	void PaintGaps(HDC hDC=NULL);
+	//void PaintGaps(HDC hDC=NULL);
 	void PostCopy(wchar_t* apszMacro, BOOL abRecieved=FALSE);
 	void PostMacro(LPCWSTR asMacro);
 	void PostCreate(BOOL abRecieved=FALSE);

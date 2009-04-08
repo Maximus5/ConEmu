@@ -393,7 +393,7 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tF
 		// Если передали реальный размер окна отрисовки - нужно посчитать дополнительные сдвиги
 		RECT rcCalcDC = CalcRect(CER_DC, rFrom, CER_MAINCLIENT, NULL /*prDC*/);
 		// расчетный НЕ ДОЛЖЕН быть меньше переданного
-		#ifdef _DEBUG
+		#ifdef MSGLOGGER
 		_ASSERTE((rcCalcDC.right - rcCalcDC.left)>=(prDC->right - prDC->left));
 		_ASSERTE((rcCalcDC.bottom - rcCalcDC.top)>=(prDC->bottom - prDC->top));
 		#endif
@@ -1846,7 +1846,7 @@ LRESULT CConEmuMain::OnPaint(WPARAM wParam, LPARAM lParam)
     PAINTSTRUCT ps;
     HDC hDc = BeginPaint(ghWnd, &ps);
 
-	PaintGaps(hDc);
+	//PaintGaps(hDc);
 
 	EndPaint(ghWnd, &ps);
 	result = DefWindowProc(ghWnd, WM_PAINT, wParam, lParam);
@@ -1856,121 +1856,76 @@ LRESULT CConEmuMain::OnPaint(WPARAM wParam, LPARAM lParam)
 
 void CConEmuMain::PaintCon()
 {
-	if (!pVCon) {
-		// Залить цветом 0
-		HBRUSH hBr = CreateSolidBrush(gSet.Colors[0]);
-		RECT rcClient; GetClientRect(ghWndDC, &rcClient);
-		PAINTSTRUCT ps;
-		HDC hDc = BeginPaint(ghWndDC, &ps);
-		FillRect(hDc, &rcClient, hBr);
-		DeleteObject(hBr);
-		EndPaint(ghWndDC, &ps);
-		return;
-	}
-
-	RECT client; GetClientRect(ghWndDC, &client);
-	if (((ULONG)client.right) > pVCon->Width)
-		client.right = pVCon->Width;
-	if (((ULONG)client.bottom) > pVCon->Height)
-		client.bottom = pVCon->Height;
-
-	PAINTSTRUCT ps;
-	HDC hDc = BeginPaint(ghWndDC, &ps);
-	//HDC hDc = GetDC(hWnd);
-
-	if (!gbNoDblBuffer) {
-		// Обычный режим
-		BitBlt(hDc, 0, 0, client.right, client.bottom, pVCon->hDC, 0, 0, SRCCOPY);
-	} else {
-		GdiSetBatchLimit(1); // отключить буферизацию вывода для текущей нити
-
-		GdiFlush();
-		// Рисуем сразу на канвасе, без буферизации
-		pVCon->Update(true, &hDc);
-	}
-
-	EndPaint(ghWndDC, &ps);
-
-	if (gbNoDblBuffer) GdiSetBatchLimit(0); // вернуть стандартный режим
+	pVCon->Paint();
 }
 
-void CConEmuMain::PaintGaps(HDC hDC/*=NULL*/)
-{
-	//TODO: !!! Тут раньше были margins, а теперь DC rect
-	BOOL lbOurDc = (hDC==NULL);
-    
-	if (hDC==NULL)
-		hDC = GetDC(ghWnd); // Главное окно!
-
-	HBRUSH hBrush = CreateSolidBrush(gSet.Colors[0]);
-
-	RECT rcClient;
-	GetClientRect(ghWnd, &rcClient); // Клиентская часть главного окна
-
-	WINDOWPLACEMENT wpl; memset(&wpl, 0, sizeof(wpl)); wpl.length = sizeof(wpl);
-	GetWindowPlacement(ghWndDC, &wpl); // Положение окна, в котором идет отрисовка
-
-	//RECT offsetRect = ConsoleOffsetRect(); // смещение с учетом табов
-	RECT dcRect; GetClientRect(ghWndDC, &dcRect);
-	RECT offsetRect = dcRect;
-	MapWindowPoints(ghWndDC, ghWnd, (LPPOINT)&offsetRect, 2);
-	
-
-	// paint gaps between console and window client area with first color
-
-	RECT rect;
-
-	//TODO:!!!
-	// top
-	rect = rcClient;
-	rect.top += offsetRect.top;
-	rect.bottom = wpl.rcNormalPosition.top;
-	if (!IsRectEmpty(&rect))
-		FillRect(hDC, &rect, hBrush);
-#ifdef _DEBUG
-	GdiFlush();
-#endif
-
-	// right
-	rect.left = wpl.rcNormalPosition.right;
-	rect.bottom = rcClient.bottom;
-	if (!IsRectEmpty(&rect))
-		FillRect(hDC, &rect, hBrush);
-#ifdef _DEBUG
-	GdiFlush();
-#endif
-
-	// left
-	rect.left = 0;
-	rect.right = wpl.rcNormalPosition.left;
-	rect.bottom = rcClient.bottom;
-	if (!IsRectEmpty(&rect))
-		FillRect(hDC, &rect, hBrush);
-#ifdef _DEBUG
-	GdiFlush();
-#endif
-
-	// bottom
-	rect.left = 0;
-	rect.right = rcClient.right;
-	rect.top = wpl.rcNormalPosition.bottom;
-	rect.bottom = rcClient.bottom;
-	if (!IsRectEmpty(&rect))
-		FillRect(hDC, &rect, hBrush);
-#ifdef _DEBUG
-	GdiFlush();
-#endif
-
-	DeleteObject(hBrush);
-
-	if (lbOurDc)
-		ReleaseDC(ghWnd, hDC);
-}
+//void CConEmuMain::PaintGaps(HDC hDC/*=NULL*/)
+//{
+//	//TODO: !!! Тут раньше были margins, а теперь DC rect
+//	BOOL lbOurDc = (hDC==NULL);
+//    
+//	if (hDC==NULL)
+//		hDC = GetDC(ghWnd); // Главное окно!
+//
+//	HBRUSH hBrush = CreateSolidBrush(gSet.Colors[0]);
+//
+//	RECT rcClient;
+//	GetClientRect(ghWnd, &rcClient); // Клиентская часть главного окна
+//
+//	WINDOWPLACEMENT wpl; memset(&wpl, 0, sizeof(wpl)); wpl.length = sizeof(wpl);
+//	GetWindowPlacement(ghWndDC, &wpl); // Положение окна, в котором идет отрисовка
+//
+//	//RECT offsetRect = ConsoleOffsetRect(); // смещение с учетом табов
+//	RECT dcRect; GetClientRect(ghWndDC, &dcRect);
+//	RECT offsetRect = dcRect;
+//	MapWindowPoints(ghWndDC, ghWnd, (LPPOINT)&offsetRect, 2);
+//	
+//
+//	// paint gaps between console and window client area with first color
+//
+//	RECT rect;
+//
+//	//TODO:!!!
+//	// top
+//	rect = rcClient;
+//	rect.top += offsetRect.top;
+//	rect.bottom = wpl.rcNormalPosition.top;
+//	if (!IsRectEmpty(&rect))
+//		FillRect(hDC, &rect, hBrush);
+//
+//	// right
+//	rect.left = wpl.rcNormalPosition.right;
+//	rect.bottom = rcClient.bottom;
+//	if (!IsRectEmpty(&rect))
+//		FillRect(hDC, &rect, hBrush);
+//
+//	// left
+//	rect.left = 0;
+//	rect.right = wpl.rcNormalPosition.left;
+//	rect.bottom = rcClient.bottom;
+//	if (!IsRectEmpty(&rect))
+//		FillRect(hDC, &rect, hBrush);
+//
+//	// bottom
+//	rect.left = 0;
+//	rect.right = rcClient.right;
+//	rect.top = wpl.rcNormalPosition.bottom;
+//	rect.bottom = rcClient.bottom;
+//	if (!IsRectEmpty(&rect))
+//		FillRect(hDC, &rect, hBrush);
+//
+//	DeleteObject(hBrush);
+//
+//	if (lbOurDc)
+//		ReleaseDC(ghWnd, hDC);
+//}
 
 void CConEmuMain::Update(bool isForce /*= false*/)
 {
-    if (pVCon) pVCon->Update(isForce);
-	InvalidateAll();
+    if (pVCon) {
+	    pVCon->Update(isForce);
+		InvalidateAll();
+	}
 }
 
 /* ****************************************************** */
@@ -1990,6 +1945,17 @@ LPCTSTR CConEmuMain::GetTitle()
 	if (!Title[0])
 		return _T("ConEmu");
 	return Title;
+}
+
+bool CConEmuMain::isActive(CVirtualConsole* apCon)
+{
+	if (!this)
+		return false;
+		
+	if (apCon == pVCon)
+		return true;
+		
+	return false;
 }
 
 bool CConEmuMain::isConman()
@@ -2077,7 +2043,7 @@ bool CConEmuMain::isPictureView()
 {
     bool lbRc = false;
     
-	if (hPictureView && !IsWindow(hPictureView)) {
+	if ((hPictureView && !IsWindow(hPictureView)) || !isFar()) {
 		InvalidateAll();
 	    hPictureView = NULL;
 	}
@@ -2088,14 +2054,20 @@ bool CConEmuMain::isPictureView()
 			hPictureView = FindWindowEx(ghWndDC, NULL, L"FarPictureViewControlClass", NULL);
 		if (!hPictureView) { // FullScreen?
 			hPictureView = FindWindowEx(NULL, NULL, L"FarPictureViewControlClass", NULL);
-			// Хорошо бы конечно процесс окна проверить... но он может не совпадать с нашим запущенным
+		}
+		if (hPictureView) {
+			// Проверить на принадлежность фару
+			DWORD dwPID, dwTID;
+			dwTID = GetWindowThreadProcessId ( hPictureView, &dwPID );
+			if (dwPID != mn_TopProcessID)
+				hPictureView = NULL;
 		}
 	}
 
 	lbRc = hPictureView!=NULL;
 
     // Если вызывали Help (F1) - окошко PictureView прячется
-    if (!IsWindowVisible(hPictureView)) {
+    if (hPictureView && !IsWindowVisible(hPictureView)) {
         lbRc = false;
         hPictureView = NULL;
     }
@@ -2143,7 +2115,7 @@ LRESULT CConEmuMain::OnCopyData(PCOPYDATASTRUCT cds)
 {
 	LRESULT result = 0;
 
-	#ifdef _DEBUG
+	#ifdef MSGLOGGER
 		WCHAR szDbg[128]; swprintf(szDbg, L"Tabs:Retrieved(%i)\n", cds->dwData);
 		OutputDebugStringW(szDbg);
 	#endif
@@ -2256,7 +2228,7 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
 {
 	if (!abRecieved) {
 		//if (gConEmu.WindowMode == rFullScreen || gConEmu.WindowMode == rMaximized) {
-		#ifdef _DEBUG
+		#ifdef MSGLOGGER
 		WINDOWPLACEMENT wpl; memset(&wpl, 0, sizeof(wpl)); wpl.length = sizeof(wpl);
 		GetWindowPlacement(ghWnd, &wpl);
 		#endif
@@ -2285,7 +2257,7 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
 
 	    //SetParent(ghWnd, GetParent(GetShellWindow()));
 
-	    SetTimer(ghWnd, 0, gSet.nMainTimerElapse, NULL);
+	    //SetTimer(ghWnd, 0, gSet.nMainTimerElapse, NULL);
 	}
 }
 
@@ -2310,7 +2282,7 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	if (gSet.isSkipFocusEvents)
 		return 0;
 		
-#ifdef _DEBUG
+#ifdef MSGLOGGER
 	if (messg == WM_ACTIVATE && wParam == WA_INACTIVE) {
 		WCHAR szMsg[128]; wsprintf(szMsg, L"--Deactivating to 0x%08X\n", lParam);
 		OutputDebugString(szMsg);
@@ -2368,7 +2340,7 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 {
 	LRESULT result = 0;
 
-    //#ifdef _DEBUG
+    //#ifdef MSGLOGGER
     //{
     //    TCHAR szDbg[32];
     //    wsprintf(szDbg, _T("%s - %c (%i)"),
@@ -2535,7 +2507,7 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 LRESULT CConEmuMain::OnLangChange(UINT messg, WPARAM wParam, LPARAM lParam)
 {
 	LRESULT result = 1;
-	#ifdef _DEBUG
+	#ifdef MSGLOGGER
 	{
 		WCHAR szMsg[128];
 		wsprintf(szMsg, L"%s(CP:%i, HKL:0x%08X)\n",
@@ -2581,7 +2553,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	if (!pVCon)
 		return 0;
 
-#ifdef _DEBUG
+#ifdef MSGLOGGER
 	if (messg != WM_MOUSEMOVE) {
 		DWORD mode = 0;
 		BOOL lb = GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), &mode);
@@ -2881,7 +2853,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		}
     }
 
-#ifdef _DEBUG
+#ifdef MSGLOGGER
 	if (messg == WM_MOUSEMOVE)
 		messg = WM_MOUSEMOVE;
 #endif
@@ -2927,7 +2899,7 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
         Icon.HideWindowToTray();
         break;
     case ID_CONPROP:
-        #ifdef _DEBUG
+        #ifdef MSGLOGGER
         {
             HMENU hMenu = GetSystemMenu(ghConWnd, FALSE);
             MENUITEMINFO mii; TCHAR szText[255];
@@ -2989,6 +2961,12 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 {
 	LRESULT result = 0;
+	
+    if (mb_InTimer) 
+	    return 0; // чтобы ненароком два раза в одно событие не вошел (хотя не должен)
+    gSet.Performance(tPerfInterval, TRUE); // именно обратный отсчет. Мы смотрим на промежуток МЕЖДУ таймерами
+    mb_InTimer = TRUE;
+	//result = gConEmu.OnTimer(wParam, lParam);
 
     switch (wParam)
     {
@@ -2998,10 +2976,8 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
         {
             /*if (foreWnd == ghConWnd)
                 SetForegroundWindow(ghWnd);*/
-            //#ifndef _DEBUG
             if (IsWindowVisible(ghConWnd))
                 ShowWindow(ghConWnd, SW_HIDE);
-            //#endif
         }
         
         //CONMAN.DLL
@@ -3053,21 +3029,6 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
                 }
             }
         }
-
-        /*if (cBlinkNext++ >= cBlinkShift)
-        {
-            cBlinkNext = 0;
-            if (foreWnd == ghWnd || foreWnd == ghOpWnd
-				#ifdef _DEBUG
-				|| gbNoDblBuffer
-				#endif
-				)
-                // switch cursor
-                pVCon->Cursor.isVisible = !pVCon->Cursor.isVisible;
-            else
-                // turn cursor off
-                pVCon->Cursor.isVisible = false;
-        }*/
 
         TabBar.OnTimer();
         ProgressBars->OnTimer();
@@ -3158,6 +3119,9 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
         }
     }
 
+	mb_InTimer = FALSE;
+	gSet.Performance(tPerfInterval, FALSE);
+
 	return result;
 }
 
@@ -3167,26 +3131,8 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 
 	MCHKHEAP
 
-	if (messg == WM_SYSCHAR) {
-        #ifdef _DEBUG
-        /*{
-	        TCHAR szDbg[32];
-	        wsprintf(szDbg, _T("SysChar - %c (%i)"),
-		        (TCHAR)wParam, wParam);
-		    SetWindowText(ghWnd, szDbg);
-        }*/
-        #endif
+	if (messg == WM_SYSCHAR)
 		return TRUE;
-    } else if (messg == WM_CHAR) {
-        #ifdef _DEBUG
-        /*{
-	        TCHAR szDbg[32];
-	        wsprintf(szDbg, _T("Char - %c (%i)"),
-		        (TCHAR)wParam, wParam);
-		    SetWindowText(ghWnd, szDbg);
-        }*/
-        #endif
-    }
 
     switch (messg)
     {
@@ -3210,14 +3156,14 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		result = gConEmu.OnPaint(wParam, lParam);
 		break;
 	
-    case WM_TIMER:
-	    if (mb_InTimer) break; // чтобы ненароком два раза в одно событие не вошел (хотя не должен)
-	    gSet.Performance(tPerfInterval, TRUE); // именно обратный отсчет. Мы смотрим на промежуток МЕЖДУ таймерами
-	    mb_InTimer = TRUE;
-		result = gConEmu.OnTimer(wParam, lParam);
-		mb_InTimer = FALSE;
-		gSet.Performance(tPerfInterval, FALSE);
-        break;
+    //case WM_TIMER:
+	//    if (mb_InTimer) break; // чтобы ненароком два раза в одно событие не вошел (хотя не должен)
+	//    gSet.Performance(tPerfInterval, TRUE); // именно обратный отсчет. Мы смотрим на промежуток МЕЖДУ таймерами
+	//    mb_InTimer = TRUE;
+	//	result = gConEmu.OnTimer(wParam, lParam);
+	//	mb_InTimer = FALSE;
+	//	gSet.Performance(tPerfInterval, FALSE);
+    //    break;
 
     case WM_SIZING:
 		if (!IsIconic(ghWnd))
@@ -3255,19 +3201,19 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		break;
 
     case WM_ACTIVATE:
-		#ifdef _DEBUG
+		#ifdef MSGLOGGER
 		result = OnFocus(hWnd, messg, wParam, lParam);
 		result = DefWindowProc(hWnd, messg, wParam, lParam);
 		break;
 		#endif
     case WM_ACTIVATEAPP:
-		#ifdef _DEBUG
+		#ifdef MSGLOGGER
 		result = OnFocus(hWnd, messg, wParam, lParam);
 		result = DefWindowProc(hWnd, messg, wParam, lParam);
 		break;
 		#endif
     case WM_KILLFOCUS:
-		#ifdef _DEBUG
+		#ifdef MSGLOGGER
 		result = OnFocus(hWnd, messg, wParam, lParam);
 		result = DefWindowProc(hWnd, messg, wParam, lParam);
 		break;

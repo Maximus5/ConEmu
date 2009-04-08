@@ -204,9 +204,9 @@ void CSettings::LoadSettings()
 		        wndY = rcWnd.top + nShift;
 	        }
         }
-        reg.Load(_T("ConWnd Width"), wndWidth);
-        reg.Load(_T("ConWnd Height"), wndHeight);
-        reg.Load(_T("16it Height"), ntvdmHeight); if (ntvdmHeight<20) ntvdmHeight = 20;
+        reg.Load(_T("ConWnd Width"), wndWidth); if (!wndWidth) wndWidth = 80; else if (wndWidth>1000) wndWidth = 1000;
+        reg.Load(_T("ConWnd Height"), wndHeight); if (!wndHeight) wndHeight = 25; else if (wndHeight>500) wndHeight = 500;
+        reg.Load(_T("16it Height"), ntvdmHeight); if (ntvdmHeight<20) ntvdmHeight = 20; else if (ntvdmHeight>100) ntvdmHeight = 100;
         reg.Load(_T("CursorType"), isCursorV);
         reg.Load(_T("CursorColor"), isCursorColor);
         reg.Load(_T("Experimental"), isFixFarBorders);
@@ -261,7 +261,7 @@ void CSettings::LoadSettings()
         reg.Load(_T("VizEolCh"), cVizEOL);
         reg.Load(_T("VizEofCh"), cVizEOF);
         
-        reg.Load(_T("MainTimerElapse"), nMainTimerElapse);
+        reg.Load(_T("MainTimerElapse"), nMainTimerElapse); if (nMainTimerElapse>1000) nMainTimerElapse = 1000;
         reg.Load(_T("AffinityMask"), nAffinity);
         //reg.Load(_T("AdvLangChange"), isAdvLangChange);
         reg.Load(_T("SkipFocusEvents"), isSkipFocusEvents);

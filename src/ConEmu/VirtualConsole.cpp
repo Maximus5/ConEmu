@@ -47,6 +47,9 @@ CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
     mh_TermEvent = CreateEvent(NULL,FALSE,FALSE,NULL);
     mh_ForceReadEvent = CreateEvent(NULL,FALSE,FALSE,NULL);
     mh_EndUpdateEvent = CreateEvent(NULL,FALSE,FALSE,NULL);
+
+    InitializeCriticalSection(&csDC);
+    InitializeCriticalSection(&csCON);
     
     //pVCon = this;
     hConOut_ = NULL;
@@ -121,6 +124,9 @@ CVirtualConsole::~CVirtualConsole()
     if (mh_Heap) {
 	    HeapDestroy(mh_Heap);
     }
+    
+    DeleteCriticalSection(&csDC);
+    DeleteCriticalSection(&csCON);
 }
 
 // Дабы избежать многоратных Recreate во время обновления - пересоздаем хэндл только в начале Update!
@@ -158,8 +164,11 @@ HANDLE CVirtualConsole::hConOut(BOOL abAllowRecreate/*=FALSE*/)
 }
 
 // InitDC вызывается только при критических изменениях (размеры, шрифт, и т.п.) когда нужно пересоздать DC и Bitmap
-bool CVirtualConsole::InitDC(bool abNoDc)
+bool CVirtualConsole::InitDC(bool abNoDc, bool abNoConSection)
 {
+	CSection SCON(abNoConSection ? NULL : &csCON);
+	CSection SDC(&csDC);
+	
     if (hDC)
 	    { DeleteDC(hDC); hDC = NULL; }
     if (hBitmap)
@@ -391,7 +400,7 @@ bool CVirtualConsole::CheckSelection(const CONSOLE_SELECTION_INFO& select, SHORT
     return true;
 }
 
-#ifdef _DEBUG
+#ifdef MSGLOGGER
 class DcDebug {
 public:
     DcDebug(HDC* ahDcVar, HDC* ahPaintDC) {
@@ -496,7 +505,7 @@ bool CVirtualConsole::CheckChangedTextAttr()
 {
     textChanged = 0!=memcmp(ConChar + TextLen, ConChar, TextLen * sizeof(*ConChar));
     attrChanged = 0!=memcmp(ConAttr + TextLen, ConAttr, TextLen * sizeof(*ConAttr));
-#ifdef _DEBUG
+#ifdef MSGLOGGER
     COORD ch;
     if (textChanged) {
         for (UINT i=0,j=TextLen; i<TextLen; i++,j++) {
@@ -526,7 +535,7 @@ bool CVirtualConsole::Update(bool isForce, HDC *ahDc)
 	if (!ghConWnd)
 		return false;
 
-    #ifdef _DEBUG
+    #ifdef MSGLOGGER
     DcDebug dbg(&hDC, ahDc); // для отладки - рисуем сразу на канвасе окна
     #endif
 
@@ -588,6 +597,7 @@ bool CVirtualConsole::Update(bool isForce, HDC *ahDc)
             updateCursor = Cursor.isVisiblePrevFromInfo && !cinf.bVisible;
     }
     
+    CSection SDC(&csDC);
     gSet.Performance(tPerfRender, FALSE);
 
     if (updateText /*|| updateCursor*/)
@@ -618,6 +628,8 @@ bool CVirtualConsole::Update(bool isForce, HDC *ahDc)
     UpdateCursor(lRes);
     
     MCHKHEAP
+    
+    SDC.Leave();
 
     gSet.Performance(tPerfRender, TRUE);
 
@@ -635,6 +647,8 @@ bool CVirtualConsole::Update(bool isForce, HDC *ahDc)
 
 bool CVirtualConsole::UpdatePrepare(bool isForce, HDC *ahDc)
 {
+	CSection S(&csCON);
+	
     attrBackLast = 0;
     isEditor = gConEmu.isEditor();
     isFilePanel = gConEmu.isFilePanel(true);
@@ -650,7 +664,7 @@ bool CVirtualConsole::UpdatePrepare(bool isForce, HDC *ahDc)
 
     // Первая инициализация, или 
     if (isForce || !ConChar || TextWidth != winSize.X || TextHeight != winSize.Y) {
-        if (!InitDC(ahDc!=NULL))
+        if (!InitDC(ahDc!=NULL, true/*секция уже инициализирована!*/))
             return false;
     }
 
@@ -1518,7 +1532,7 @@ void CVirtualConsole::SetConsoleSize(const COORD& size)
 
 BOOL CVirtualConsole::AttachPID(DWORD dwPID)
 {
-    #ifdef _DEBUG
+    #ifdef MSGLOGGER
         TCHAR szMsg[100]; wsprintf(szMsg, _T("Attach to process %i"), (int)dwPID);
         OutputDebugString(szMsg);
     #endif
@@ -1720,10 +1734,42 @@ DWORD CVirtualConsole::StartProcessThread(LPVOID lpParameter)
 	BOOL lbRc = pCon->StartProcess();
 	
 	//TODO: а тут мы будем читать консоль...
+	HANDLE hEvents[2] = {pCon->mh_TermEvent, pCon->mh_ForceReadEvent};
+	DWORD  nWait = 0;
+	BOOL   bLoop = TRUE, bIconic = FALSE;
 	
+	while (bLoop)
+	{
+		try {	
+			bIconic = IsIconic(ghWnd);
+			// в минимизированном режиме - сократить расходы
+			nWait = WaitForMultipleObjects(countof(hEvents), hEvents, FALSE, bIconic ? 1000 : gSet.nMainTimerElapse);
+		} catch(...) {
+			bLoop = FALSE;
+		}
+		if (nWait == WAIT_OBJECT_0 || !bLoop)
+			break; // требование завершения нити
+		
+		if (!gConEmu.isActive(pCon))
+			continue; // это не активная консоль
+
+		try {	
+			ResetEvent(pCon->mh_EndUpdateEvent);
+
+			//TODO: перенести вызов чтения собственно сюда
+			gConEmu.OnTimer(0,0);
+			
+			SetEvent(pCon->mh_EndUpdateEvent);
+		} catch(...) {
+			bLoop = FALSE;
+		}
+	}
+	
+	if (!bLoop)
+		MBoxA(_T("Exception triggered in CVirtualConsole::StartProcessThread"));
 	
 	// Finalize
-	SafeCloseHandle(pCon->mh_Thread);
+	//SafeCloseHandle(pCon->mh_Thread);
 	
 	return lbRc ? 0 : 100;
 }
@@ -1738,9 +1784,6 @@ BOOL CVirtualConsole::StartProcess()
         FreeConsole(); ghConWnd = NULL;
     }
     
-    #ifdef _DEBUG
-    //MBoxA(gSet.ourSI.lpTitle ? gSet.ourSI.lpTitle : L"Title was not specified");
-    #endif
     
     ConExeProps props;
     
@@ -1748,7 +1791,7 @@ BOOL CVirtualConsole::StartProcess()
     RegistryProps(FALSE, props);
 
     if (!gConEmu.isShowConsole && !gSet.isConVisible
-		#ifdef _DEBUG
+		#ifdef MSGLOGGER
 		&& !IsDebuggerPresent()
 		#endif
 		) SetWindowPos(ghWnd, HWND_TOPMOST, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
@@ -1780,9 +1823,9 @@ BOOL CVirtualConsole::StartProcess()
 	//клики мышкой не доходят до ФАРа, пока мы не переключимся в другое приложение и обратно
 	//HWND hOtherWnd = GetShellWindow();
 	//SetForegroundWindow(hOtherWnd);
-	//#ifndef _DEBUG
+	//#ifndef MSGLOGGER
     if (!gConEmu.isShowConsole && !gSet.isConVisible
-		#ifdef _DEBUG
+		#ifdef MSGLOGGER
 		&& !IsDebuggerPresent()
 		#endif
 		) SetWindowPos(ghWnd, HWND_NOTOPMOST, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
@@ -1807,7 +1850,7 @@ BOOL CVirtualConsole::StartProcess()
             // Иначе жестоко получается. ConEmu вообще будет сложно запустить...
             gSet.isConMan = false;
         } else {
-	        SetForegroundWindow(ghWnd);
+	        //SetForegroundWindow(ghWnd);
             return TRUE;
         }
     } 
@@ -1830,7 +1873,7 @@ BOOL CVirtualConsole::StartProcess()
             }*/
 
             LPTSTR lpszCmd = (LPTSTR)gSet.GetCmd();
-            #ifdef _DEBUG
+            #ifdef MSGLOGGER
             OutputDebugString(lpszCmd);OutputDebugString(_T("\n"));
             #endif
             try {
@@ -1894,15 +1937,6 @@ BOOL CVirtualConsole::StartProcess()
         //TODO: а делать ли это?
         CloseHandle(pi.hThread); pi.hThread = NULL;
         CloseHandle(pi.hProcess); pi.hProcess = NULL;
-        
-        SetForegroundWindow(ghWnd);
-
-#ifdef _DEBUG
-		//SetForegroundWindow(ghWnd); Sleep(1000);
-		//SetForegroundWindow(ghConWnd); Sleep(1000);
-		//SetForegroundWindow(ghWnd); Sleep(1000);
-		//SetForegroundWindow(ghConWnd); Sleep(2000);
-#endif
     }
 
     return lbRc;
@@ -2068,10 +2102,74 @@ void CVirtualConsole::Free(LPVOID ptr)
 void CVirtualConsole::StopThread()
 {
 	if (mh_Thread) {
-		//TODO: выставление флагов и завершение нити
+		// выставление флагов и завершение нити
+		SetEvent(mh_TermEvent);
+		if (WaitForSingleObject(mh_Thread, 300) != WAIT_OBJECT_0)
+			TerminateThread(mh_Thread, 1);
 	}
 	
 	SafeCloseHandle(mh_TermEvent);
 	SafeCloseHandle(mh_ForceReadEvent);
 	SafeCloseHandle(mh_EndUpdateEvent);
+	
+	SafeCloseHandle(mh_Thread);
+}
+
+void CVirtualConsole::Paint()
+{
+	if (!ghWndDC)
+		return;
+	
+	if (!this) {
+		// Залить цветом 0
+		HBRUSH hBr = CreateSolidBrush(gSet.Colors[0]);
+		RECT rcClient; GetClientRect(ghWndDC, &rcClient);
+		PAINTSTRUCT ps;
+		HDC hDc = BeginPaint(ghWndDC, &ps);
+		FillRect(hDc, &rcClient, hBr);
+		DeleteObject(hBr);
+		EndPaint(ghWndDC, &ps);
+		return;
+	}
+
+	BOOL lbExcept = FALSE;
+	RECT client;
+	PAINTSTRUCT ps;
+	HDC hPaintDc = NULL;
+
+	CSection S(&csDC);
+	
+	try {
+		GetClientRect(ghWndDC, &client);
+		if (((ULONG)client.right) > Width)
+			client.right = Width;
+		if (((ULONG)client.bottom) > Height)
+			client.bottom = Height;
+
+		hPaintDc = BeginPaint(ghWndDC, &ps);
+
+		if (!gbNoDblBuffer) {
+			// Обычный режим
+			BitBlt(hPaintDc, 0, 0, client.right, client.bottom, hDC, 0, 0, SRCCOPY);
+		} else {
+			GdiSetBatchLimit(1); // отключить буферизацию вывода для текущей нити
+
+			GdiFlush();
+			// Рисуем сразу на канвасе, без буферизации
+			Update(true, &hPaintDc);
+		}
+
+		if (gbNoDblBuffer) GdiSetBatchLimit(0); // вернуть стандартный режим
+	} catch(...) {
+		lbExcept = TRUE;
+	}
+	
+	S.Leave();
+	
+	if (lbExcept)
+		MBoxA(_T("Exception triggered in CVirtualConsole::Paint"));
+
+	if (hPaintDc && ghWndDC) {
+		EndPaint(ghWndDC, &ps);
+	}
 }

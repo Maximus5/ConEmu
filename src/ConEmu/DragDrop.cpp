@@ -16,9 +16,6 @@ CDragDrop::CDragDrop(HWND hWnd)
 	if (hr != S_OK)
 		DisplayLastError(_T("Can't get desktop folder"), hr);
 
-	//#ifdef _DEBUG
-	//	return;
-	//#endif
 	hr = RegisterDragDrop(hWnd, this);
 	if (hr != S_OK)
 		DisplayLastError(_T("Can't register Drop target"), hr);
@@ -505,7 +502,7 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragOver(DWORD grfKeyState,POINTL pt,DWORD 
 	return 0;
 }
 
-#ifdef _DEBUG
+#ifdef MSGLOGGER
 void CDragDrop::EnumDragFormats(IDataObject * pDataObject)
 {
 	if (!mb_selfdrag)
@@ -559,7 +556,7 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragEnter(IDataObject * pDataObject,DWORD g
 {
 	mb_selfdrag = (pDataObject == mp_DataObject);
 
-	#ifdef _DEBUG
+	#ifdef MSGLOGGER
 	EnumDragFormats(pDataObject);
 	#endif
 
@@ -925,9 +922,6 @@ void CDragDrop::Drag()
 
 						mp_DataObject->Release(); mp_DataObject = NULL;
 						pDropSource->Release();		
-						//#ifdef _DEBUG
-						//DisplayLastError(_T("DoDragDrop returns"), dwResult);
-						//#endif
 						//isLBDown=false; -- а ReleaseCapture кто будет делать?
 					}
 				}

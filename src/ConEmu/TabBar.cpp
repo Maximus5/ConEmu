@@ -257,7 +257,7 @@ void TabBarClass::Update(ConEmuTab* tabs, int tabsCount)
 		return;
 	}
 	
-#ifdef _DEBUG
+#ifdef MSGLOGGER
 	WCHAR szDbg[128]; swprintf(szDbg, L"TabBarClass::Update(%i)\n", tabsCount);
 	OutputDebugStringW(szDbg);
 #endif

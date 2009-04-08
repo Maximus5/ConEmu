@@ -47,7 +47,7 @@ public:
 	~CVirtualConsole();
 	static CVirtualConsole* Create();
 
-	bool InitDC(bool abNoDc);
+	bool InitDC(bool abNoDc, bool abNoConSection=false);
 	void InitHandlers();
 	void DumpConsole();
 	bool Update(bool isForce = false, HDC *ahDc=NULL);
@@ -63,6 +63,7 @@ public:
 	bool CheckBufferSize();
 	void SendMouseEvent(UINT messg, WPARAM wParam, int x, int y);
 	void StopThread();
+	void Paint();
 
 protected:
 	HANDLE  hConOut_;
@@ -119,4 +120,5 @@ protected:
 	DWORD mn_ThreadID;
 	LPVOID Alloc(size_t nCount, size_t nSize);
 	void Free(LPVOID ptr);
+	CRITICAL_SECTION csDC, csCON;
 };

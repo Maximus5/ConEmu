@@ -179,7 +179,7 @@ void DebugLogMessage(HWND h, UINT m, WPARAM w, LPARAM l, BOOL posted, BOOL extra
 }
 void DebugLogPos(HWND hw, int x, int y, int w, int h, LPCSTR asFunc)
 {
-	#ifdef _DEBUG
+	#ifdef MSGLOGGER
 	if (!x && !y && hw == ghConWnd) {
 		if (!IsDebuggerPresent() && !isPressed(VK_LBUTTON))
 			x = x;
@@ -449,28 +449,22 @@ BOOL CheckConIme()
 extern void SetConsoleFontSizeTo(HWND inConWnd, int inSizeX, int inSizeY);
 
 // Disables the IME for all threads in a current process.
-void DisableIME()
-{
-	typedef BOOL (WINAPI* ImmDisableIMEt)(DWORD idThread);
-	BOOL lbDisabled = FALSE;
-	HMODULE hImm32 = LoadLibrary(_T("imm32.dll"));
-	if (hImm32) {
-		ImmDisableIMEt ImmDisableIMEf = (ImmDisableIMEt)GetProcAddress(hImm32, "ImmDisableIME");
-		if (ImmDisableIMEf) {
-			lbDisabled = ImmDisableIMEf(-1);
-		}
-	}
-	return;
-}
+//void DisableIME()
+//{
+//	typedef BOOL (WINAPI* ImmDisableIMEt)(DWORD idThread);
+//	BOOL lbDisabled = FALSE;
+//	HMODULE hImm32 = LoadLibrary(_T("imm32.dll"));
+//	if (hImm32) {
+//		ImmDisableIMEt ImmDisableIMEf = (ImmDisableIMEt)GetProcAddress(hImm32, "ImmDisableIME");
+//		if (ImmDisableIMEf) {
+//			lbDisabled = ImmDisableIMEf(-1);
+//		}
+//	}
+//	return;
+//}
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
-#ifndef _DEBUG
-    klInit();
-#else
-	//MessageBox(0,L"Started",L"ConEmu",0);
-#endif
-
     g_hInstance = hInstance;
 
 	if (_tcsstr(GetCommandLine(), L"/debugi")) {
@@ -499,7 +493,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     osver.dwOSVersionInfoSize = sizeof(osver);
     GetVersionEx(&osver);
     
-    DisableIME();
+    //DisableIME();
 
     //Windows7 - SetParent для консоли валится
     gConEmu.setParent = false; // PictureView теперь идет через Wrapper
@@ -540,9 +534,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         }
     }
 
-		#ifdef _DEBUG
-		//if (!IsDebuggerPresent()) MBoxA(_T("/attach ?"));
-		#endif
 
 	TCHAR *psUnknown = NULL;
     TCHAR *curCommand = cmdLine;
@@ -957,7 +948,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 ///| Deinitialization |///////////////////////////////////////////////////
 //------------------------------------------------------------------------
     
-    KillTimer(ghWnd, 0);
+    //KillTimer(ghWnd, 0);
     //delete pVCon;
     //CloseHandle(hChildProcess); -- он более не требуется
 

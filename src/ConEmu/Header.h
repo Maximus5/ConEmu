@@ -61,10 +61,6 @@
 #define MBox(rt) (int)MessageBox(gbMessagingStarted ? ghWnd : NULL, rt, Title, /*MB_SYSTEMMODAL |*/ MB_ICONINFORMATION)
 #define MBoxA(rt) (int)MessageBox(gbMessagingStarted ? ghWnd : NULL, rt, _T("ConEmu"), /*MB_SYSTEMMODAL |*/ MB_ICONINFORMATION)
 #define MBoxAssert(V) if ((V)==FALSE) { TCHAR szAMsg[MAX_PATH*2]; wsprintf(szAMsg, _T("Assertion (%s) at\n%s:%i"), _T(#V), _T(__FILE__), __LINE__); MBoxA(szAMsg); }
-//#ifdef _DEBUG
-//#define isMeForeground() TRUE
-//#else
-//#define isMeForeground() (GetForegroundWindow() == ghWnd || GetForegroundWindow() == ghOpWnd || ())
 __inline BOOL isMeForeground() {
 	HWND h = GetForegroundWindow();
 	return h && (h == ghWnd || h == ghOpWnd || h == ghConWnd);
@@ -159,6 +155,40 @@ RECT __forceinline MakeRect(int X1, int Y1,int X2,int Y2)
 }
 
 #pragma warning(disable: 4311) // 'type cast' : pointer truncation from 'HBRUSH' to 'BOOL'
+
+
+//------------------------------------------------------------------------
+///| Section |////////////////////////////////////////////////////////////
+//------------------------------------------------------------------------
+class CSection
+{
+protected:
+	CRITICAL_SECTION* mp_cs;
+public:
+	void Leave()
+	{
+		if (mp_cs) {
+			LeaveCriticalSection(mp_cs);
+			mp_cs = NULL;
+		}
+	}
+	void Enter(CRITICAL_SECTION* pcs)
+	{
+		Leave(); // если было
+		mp_cs = pcs;
+		if (mp_cs)
+			EnterCriticalSection(mp_cs);
+	}
+	CSection (CRITICAL_SECTION* pcs) : mp_cs(NULL)
+	{
+		Enter(pcs);
+	}
+	~CSection()
+	{
+		Leave();
+	}
+};
+
 
 //------------------------------------------------------------------------
 ///| Registry |///////////////////////////////////////////////////////////
