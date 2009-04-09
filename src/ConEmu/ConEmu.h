@@ -219,7 +219,7 @@ public:
 	LRESULT OnLangChange(UINT messg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnPaint(WPARAM wParam, LPARAM lParam);
-	LRESULT OnSize(WPARAM wParam, WORD newClientWidth, WORD newClientHeight);
+	LRESULT OnSize(WPARAM wParam=0, WORD newClientWidth=(WORD)-1, WORD newClientHeight=(WORD)-1);
 	LRESULT OnSizing(WPARAM wParam, LPARAM lParam);
 	LRESULT OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam);
 	LRESULT OnTimer(WPARAM wParam, LPARAM lParam);

@@ -105,6 +105,21 @@ LRESULT CALLBACK CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam
 		result = DefWindowProc(hWnd, messg, wParam, lParam);
 	} break;
 
+#ifdef _DEBUG
+		case WM_WINDOWPOSCHANGING:
+			{
+			WINDOWPOS* pwp = (WINDOWPOS*)lParam;
+			result = DefWindowProc(hWnd, messg, wParam, lParam);
+			}
+			return result;
+		case WM_WINDOWPOSCHANGED:
+			{
+			WINDOWPOS* pwp = (WINDOWPOS*)lParam;
+			result = DefWindowProc(hWnd, messg, wParam, lParam);
+			}
+			return result;
+#endif
+
     default:
 		if (messg == mn_MsgTabChanged) {
 			//изменились табы, их нужно перечитать
@@ -267,9 +282,26 @@ LRESULT CALLBACK CConEmuBack::BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, 
 				EndPaint(hWnd, &ps);
 			}
 			return 0;
+#ifdef _DEBUG
 		case WM_SIZE:
+			{
+			UINT nW = LOWORD(lParam), nH = HIWORD(lParam);
 			result = DefWindowProc(hWnd, messg, wParam, lParam);
+			}
 			return result;
+		case WM_WINDOWPOSCHANGING:
+			{
+			WINDOWPOS* pwp = (WINDOWPOS*)lParam;
+			result = DefWindowProc(hWnd, messg, wParam, lParam);
+			}
+			return result;
+		case WM_WINDOWPOSCHANGED:
+			{
+			WINDOWPOS* pwp = (WINDOWPOS*)lParam;
+			result = DefWindowProc(hWnd, messg, wParam, lParam);
+			}
+			return result;
+#endif
 	}
 
     result = DefWindowProc(hWnd, messg, wParam, lParam);

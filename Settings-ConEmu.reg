@@ -49,6 +49,9 @@ REGEDIT4
 ;; Window mode. 51f - Normal, 520 - Maximized, 521 - Fullscreen
 "WindowMode"=dword:0000051f
 
+;; Center console in Fullscreen and Maximized modes
+"TryToCenter"=hex:01
+
 ;; Console (real) width and height in characters
 "ConWnd Width"=dword:00000050
 "ConWnd Height"=dword:00000019
@@ -89,9 +92,6 @@ REGEDIT4
 ;; Прокручивать заголовок в кнопке на панели задач (пока не работает)
 ;"ScrollTitle"=hex:01
 ;"ScrollTitleLen"=hex:16,00,00,00
-
-;; Center console in Fullscreen and Maximized modes
-"TryToCenter"=hex:01
 
 ;; Tabs: 0 - don't show, 1 - always, 2 - auto
 "Tabs"=hex:02

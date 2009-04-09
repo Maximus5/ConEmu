@@ -504,8 +504,6 @@ WORD CVirtualConsole::CharWidth(TCHAR ch)
 
 bool CVirtualConsole::CheckChangedTextAttr()
 {
-    textChanged = 0!=memcmp(ConChar + TextLen, ConChar, TextLen * sizeof(*ConChar));
-    attrChanged = 0!=memcmp(ConAttr + TextLen, ConAttr, TextLen * sizeof(*ConAttr));
 #ifdef MSGLOGGER
     COORD ch;
     if (textChanged) {
@@ -527,6 +525,9 @@ bool CVirtualConsole::CheckChangedTextAttr()
         }
     }
 #endif
+
+    textChanged = 0!=memcmp(ConChar + TextLen, ConChar, TextLen * sizeof(*ConChar));
+    attrChanged = 0!=memcmp(ConAttr + TextLen, ConAttr, TextLen * sizeof(*ConAttr));
 
     return textChanged || attrChanged;
 }
@@ -580,6 +581,8 @@ bool CVirtualConsole::Update(bool isForce, HDC *ahDc)
     }
     else
     {
+		CSection SCON(&csCON);
+
         // Do we have to update changed text?
         updateText = doSelect || CheckChangedTextAttr();
             //(textChanged = 0!=memcmp(ConChar + TextLen, ConChar, TextLen * sizeof(TCHAR))) || 

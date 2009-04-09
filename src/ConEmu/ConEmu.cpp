@@ -441,6 +441,7 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tF
 			AddMargins(rc, rcShift);
 			rcShift = CalcMargins(CEM_BACK);
 			AddMargins(rc, rcShift);
+			//TODO: покрутки нет, Однако остается незанятое поле (внизу и справа)
 
 			if (gConEmu.isNtvdm()) {
 				//TODO: а перезагрузить не нужно?
@@ -703,8 +704,7 @@ void CConEmuMain::SyncNtvdm()
 	//COORD sz = {pVCon->TextWidth, pVCon->TextHeight};
 	//SetConsoleWindowSize(sz, false);
 
-	RECT client; GetClientRect(ghWnd, &client);
-	OnSize(0, client.right, client.bottom);
+	OnSize();
 }
 
 // Установить размер основного окна по текущему размеру pVCon
@@ -794,15 +794,19 @@ bool CConEmuMain::SetWindowMode(uint inMode)
 			if (!gSet.isFullScreen && !IsZoomed(ghWnd) && !IsIconic(ghWnd))
 				gSet.UpdatePos(rcWnd.left, rcWnd.top);
 
-			if (!IsZoomed(ghWnd))
+			if (!IsZoomed(ghWnd)) {
 				ShowWindow(ghWnd, SW_SHOWMAXIMIZED);
+				OnSize();
+			}
 
             if (ghOpWnd)
 				CheckRadioButton(gSet.hMain, rNormal, rFullScreen, rMaximized);
             gSet.isFullScreen = false;
 
-			if (!IsWindowVisible(ghWnd))
+			if (!IsWindowVisible(ghWnd)) {
 				ShowWindow(ghWnd, SW_SHOWMAXIMIZED);
+				OnSize();
+			}
         } break;
 
     case rFullScreen:
@@ -845,8 +849,10 @@ bool CConEmuMain::SetWindowMode(uint inMode)
             if (ghOpWnd)
 				CheckRadioButton(gSet.hMain, rNormal, rFullScreen, rFullScreen);
         }
-		if (!IsWindowVisible(ghWnd))
+		if (!IsWindowVisible(ghWnd)) {
 			ShowWindow(ghWnd, SW_SHOWNORMAL);
+			OnSize();
+		}
         break;
     }
 
@@ -921,6 +927,12 @@ void CConEmuMain::ReSize()
 LRESULT CConEmuMain::OnSize(WPARAM wParam, WORD newClientWidth, WORD newClientHeight)
 {
 	LRESULT result = 0;
+
+	if (newClientWidth==(WORD)-1 || newClientHeight==(WORD)-1) {
+		RECT rcClient; GetClientRect(ghWnd, &rcClient);
+		newClientWidth = rcClient.right;
+		newClientHeight = rcClient.bottom;
+	}
 
 	if (TabBar.IsActive())
         TabBar.UpdateWidth();
