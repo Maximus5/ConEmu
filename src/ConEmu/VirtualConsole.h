@@ -65,6 +65,7 @@ public:
 	void StopSignal();
 	void StopThread();
 	void Paint();
+	void UpdateInfo();
 
 protected:
 	HANDLE  hConOut_;
@@ -121,5 +122,7 @@ protected:
 	DWORD mn_ThreadID;
 	LPVOID Alloc(size_t nCount, size_t nSize);
 	void Free(LPVOID ptr);
-	CRITICAL_SECTION csDC, csCON;
+	CRITICAL_SECTION csDC, csCON; //DWORD ncsTDC, ncsTCON;
+	int mn_BackColorIdx; //==0
+	void Box(LPCTSTR szText);
 };

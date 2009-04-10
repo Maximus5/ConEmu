@@ -133,4 +133,5 @@ private:
     SetWindowThemeT SetWindowThemeF;
     typedef HRESULT (STDAPICALLTYPE *EnableThemeDialogTextureT)(HWND hwnd,DWORD dwFlags);
     EnableThemeDialogTextureT EnableThemeDialogTextureF;
+	UINT mn_MsgUpdateCounter;
 };

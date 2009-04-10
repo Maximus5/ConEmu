@@ -44,6 +44,7 @@ CSettings::CSettings()
         //if (SetWindowThemeF) { SetWindowThemeF(Progressbar1, _T(" "), _T(" ")); }
     }
 
+	mn_MsgUpdateCounter = RegisterWindowMessage(_T("ConEmuSettings::Counter"));
 }
 
 CSettings::~CSettings()
@@ -740,6 +741,8 @@ LRESULT CSettings::OnInitDialog()
     
 
     gConEmu.UpdateProcessDisplay(TRUE);
+	gConEmu.UpdateSizes();
+
 
     MCHKHEAP
 
@@ -1623,6 +1626,15 @@ BOOL CALLBACK CSettings::infoOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARA
         break;
 
     default:
+		if (messg == gSet.mn_MsgUpdateCounter) {
+            wchar_t sTemp[64];
+			if (gSet.mn_Freq!=0) {
+				double v = (gSet.mn_CounterMax[wParam]/(double)gSet.mn_Freq)*1000;
+				swprintf(sTemp, _T("%.1f"), v);
+				SetDlgItemText(gSet.hInfo, wParam+tPerfRead, sTemp);
+			}
+			return TRUE;
+		}
         return 0;
     }
     return 0;
@@ -1686,6 +1698,9 @@ void CSettings::Performance(UINT nID, BOOL bEnd)
 {
     if (nID == gbPerformance)
     {
+		if (!gConEmu.isMainThread())
+			return;
+
         if (ghOpWnd) {
             // Performance
             wchar_t sTemp[128];
@@ -1694,9 +1709,7 @@ void CSettings::Performance(UINT nID, BOOL bEnd)
             
             for (nID=tPerfRead; mn_Freq && nID<=tPerfInterval; nID++) {
                 //swprintf(sTemp, _T("%I64i"), mn_CounterMax[nID-tPerfRead]);
-                double v = (mn_CounterMax[nID-tPerfRead]/(double)mn_Freq)*1000;
-                swprintf(sTemp, _T("%.1f"), v);
-                SetDlgItemText(hInfo, nID, sTemp);
+				SendMessage(gSet.hInfo, mn_MsgUpdateCounter, nID-tPerfRead, 0);
             }
         }
         return;
@@ -1722,10 +1735,7 @@ void CSettings::Performance(UINT nID, BOOL bEnd)
         mn_CounterTick[nID-tPerfRead] = GetTickCount();
         
         if (ghOpWnd) {
-            wchar_t sTemp[64];
-            double v = (mn_CounterMax[nID-tPerfRead]/(double)mn_Freq)*1000;
-            swprintf(sTemp, _T("%.1f"), v);
-            SetDlgItemText(gSet.hInfo, nID, sTemp);
+			PostMessage(gSet.hInfo, mn_MsgUpdateCounter, nID-tPerfRead, 0);
         }
     }
 }

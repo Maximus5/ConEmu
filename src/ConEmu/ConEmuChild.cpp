@@ -146,7 +146,6 @@ LRESULT CConEmuChild::OnPaint(WPARAM wParam, LPARAM lParam)
 
 	gSet.Performance(tPerfBlt, FALSE);
 
-
     if (gConEmu.isPictureView())
     {
 		// если PictureView распахнуто не на все окно - отрисовать видимую часть консоли!
@@ -165,6 +164,8 @@ LRESULT CConEmuChild::OnPaint(WPARAM wParam, LPARAM lParam)
 	}
 
 	gSet.Performance(tPerfBlt, TRUE);
+
+	gConEmu.UpdateSizes();
 
     return result;
 }
@@ -207,6 +208,11 @@ CConEmuBack::CConEmuBack()
 	mh_Wnd = NULL;
 	mh_BackBrush = NULL;
 	mn_LastColor = -1;
+#ifdef _DEBUG
+	mn_ColorIdx = 1;
+#else
+	mn_ColorIdx = 0;
+#endif
 }
 
 CConEmuBack::~CConEmuBack()
@@ -215,7 +221,7 @@ CConEmuBack::~CConEmuBack()
 
 HWND CConEmuBack::Create()
 {
-	mn_LastColor = gSet.Colors[0];
+	mn_LastColor = gSet.Colors[mn_ColorIdx];
 	mh_BackBrush = CreateSolidBrush(mn_LastColor);
 
 	DWORD dwLastError = 0;
@@ -333,10 +339,10 @@ void CConEmuBack::Resize()
 
 void CConEmuBack::Refresh()
 {
-	if (mn_LastColor == gSet.Colors[0])
+	if (mn_LastColor == gSet.Colors[mn_ColorIdx])
 		return;
 
-	mn_LastColor = gSet.Colors[0];
+	mn_LastColor = gSet.Colors[mn_ColorIdx];
 	HBRUSH hNewBrush = CreateSolidBrush(mn_LastColor);
 
 	SetClassLong(mh_Wnd, GCL_HBRBACKGROUND, (LONG)hNewBrush);

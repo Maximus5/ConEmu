@@ -154,8 +154,11 @@
 #define tsTopPID                        1510
 #define tFontFace                       1511
 #define tFontSizeY                      1512
+#define tConSizeChr                     1512
 #define tFontCharset                    1513
+#define tConSizePix                     1513
 #define tFontFace2                      1514
+#define tDCSize                         1514
 #define cbExtendColors                  1515
 #define tCmdLine                        1516
 

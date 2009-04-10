@@ -96,7 +96,7 @@ public:
 	CDragDrop *DragDrop;
 	CProgressBars *ProgressBars;
 	COORD m_LastConSize; // console size after last resize (in columns and lines)
-	bool mb_IgnoreSizeChange; // на время переключения в конмане...
+	bool mb_IgnoreSizeChange;
 	int BufferHeight; // в отличие от gSet - может изменяться текущей консольной программой
 	//RECT  dcWindowLast; // Последний размер дочернего окна
 	//uint cBlinkShift; // cursor blink counter threshold
@@ -136,9 +136,12 @@ protected:
 	CVirtualConsole *mp_VCon[MAX_CONSOLE_COUNT], *pVCon;
 	int mn_ActiveCon; // в планах - убить m_ActiveConmanIDX
 	// Registered messages
+	DWORD mn_MainThreadId;
 	UINT mn_MsgPostCreate;
 	UINT mn_MsgPostCopy;
 	UINT mn_MsgMyDestroy;
+	UINT mn_MsgUpdateSizes;
+	UINT mn_MsgSetWindowMode;
 
 public:
 	DWORD CheckProcesses(DWORD nConmanIDX, BOOL bTitleChanged);
@@ -152,6 +155,7 @@ public:
 public:
 	LPCTSTR GetTitle();
 	void UpdateProcessDisplay(BOOL abForce);
+	void UpdateSizes();
 
 public:
 	CConEmuMain();
@@ -186,6 +190,7 @@ public:
 	bool isFar();
 	bool isFilePanel(bool abPluginAllowed=false);
 	bool isLBDown();
+	bool isMainThread();
 	bool isNtvdm();
 	bool isPictureView();
 	bool isSizing();

@@ -23,6 +23,7 @@
 
 CConEmuMain::CConEmuMain()
 {
+	mn_MainThreadId = GetCurrentThreadId();
     wcscpy(szConEmuVersion, L"?.?.?.?");
 	//gnLastProcessCount=0;
 	//cBlinkNext=0;
@@ -97,6 +98,8 @@ CConEmuMain::CConEmuMain()
 	mn_MsgPostCreate = RegisterWindowMessage(_T("ConEmuMain::PostCreate"));
 	mn_MsgPostCopy = RegisterWindowMessage(_T("ConEmuMain::PostCopy"));
 	mn_MsgMyDestroy = RegisterWindowMessage(_T("ConEmuMain::Destroy"));
+	mn_MsgUpdateSizes = RegisterWindowMessage(_T("ConEmuMain::UpdateSizes"));
+	mn_MsgSetWindowMode = RegisterWindowMessage(_T("ConEmuMain::SetWindowMode"));
 }
 
 BOOL CConEmuMain::Init()
@@ -640,7 +643,7 @@ void CConEmuMain::SetConsoleWindowSize(const COORD& size, bool updateInfo)
 	// Это не совсем корректно... ntvdm.exe не выгружается после выхода из 16бит приложения
 	if (isNtvdm()) {
 		//if (size.X == 80 && size.Y>25 && lastSize1.X != size.X && size.Y == lastSize1.Y) {
-			#pragma message("Ntvdm почему-то не всегда устанавливает ВЫСОТУ консоли в 25 символов...")
+			#pragma message("Ntvdm почему-то не всегда устанавливает ВЫСОТУ консоли в 25/28 символов...")
 		//}
 		return; // запрет изменения размеров консоли для 16бит приложений 
 	}
@@ -737,6 +740,11 @@ void CConEmuMain::SyncWindowToConsole()
 
 bool CConEmuMain::SetWindowMode(uint inMode)
 {
+	if (!isMainThread()) {
+		PostMessage(ghWnd, mn_MsgSetWindowMode, inMode, 0);
+		return false;
+	}
+
 	//WindowPlacement -- использовать нельзя, т.к. он работает в координатах Workspace, а не Screen!
 	RECT rcWnd; GetWindowRect(ghWnd, &rcWnd);
 	RECT consoleSize = MakeRect(gSet.wndWidth, gSet.wndHeight);
@@ -747,8 +755,15 @@ bool CConEmuMain::SetWindowMode(uint inMode)
 		{
 			DEBUGLOGFILE("SetWindowMode(rNormal)\n");
 
-			if (IsIconic(ghWnd) || IsZoomed(ghWnd))
-				ShowWindow(ghWnd, SW_SHOWNORMAL); // WM_SYSCOMMAND использовать не хочется...
+			if (IsIconic(ghWnd) || IsZoomed(ghWnd)) {
+				//ShowWindow(ghWnd, SW_SHOWNORMAL); // WM_SYSCOMMAND использовать не хочется...
+				mb_IgnoreSizeChange = TRUE;
+				if (IsWindowVisible(ghWnd))
+					SendMessage(ghWnd, WM_SYSCOMMAND, SC_RESTORE, 0);
+				else
+					ShowWindow(ghWnd, SW_SHOWNORMAL);
+				mb_IgnoreSizeChange = FALSE;
+			}
 
 			RECT rcNew = CalcRect(CER_MAIN, consoleSize, CER_CONSOLE);
 			int nWidth = rcNew.right-rcNew.left;
@@ -928,6 +943,18 @@ LRESULT CConEmuMain::OnSize(WPARAM wParam, WORD newClientWidth, WORD newClientHe
 {
 	LRESULT result = 0;
 
+	if (mb_IgnoreSizeChange) {
+		// на время обработки WM_SYSCOMMAND
+		return 0;
+	}
+
+	if (mn_MainThreadId != GetCurrentThreadId()) {
+		//MBoxAssert(mn_MainThreadId == GetCurrentThreadId());
+		PostMessage(ghWnd, WM_SIZE, wParam, MAKELONG(newClientWidth,newClientHeight));
+		return 0;
+	}
+
+
 	if (newClientWidth==(WORD)-1 || newClientHeight==(WORD)-1) {
 		RECT rcClient; GetClientRect(ghWnd, &rcClient);
 		newClientWidth = rcClient.right;
@@ -942,7 +969,8 @@ LRESULT CConEmuMain::OnSize(WPARAM wParam, WORD newClientWidth, WORD newClientHe
 	if (!isSizing() || mb_FullWindowDrag) {
 		BOOL lbIsPicView = isPictureView();
 
-		SyncConsoleToWindow();
+		if (wParam != -1)
+			SyncConsoleToWindow();
 	    
 		RECT mainClient = MakeRect(newClientWidth,newClientHeight);
 		//RECT dcSize; GetClientRect(ghWndDC, &dcSize);
@@ -981,6 +1009,9 @@ LRESULT CConEmuMain::OnSizing(WPARAM wParam, LPARAM lParam)
 {
 	LRESULT result = true;
 
+	if (mb_IgnoreSizeChange) {
+		// на время обработки WM_SYSCOMMAND
+	} else
 	if (isNtvdm()) {
 		// не менять для 16бит приложений
 	} else
@@ -1783,6 +1814,26 @@ void CConEmuMain::UpdateProcessDisplay(BOOL abForce)
     }
 }
 
+void CConEmuMain::UpdateSizes()
+{
+	if (!ghOpWnd)
+		return;
+	if (!isMainThread()) {
+		PostMessage(ghWnd, mn_MsgUpdateSizes, 0, 0);
+		return;
+	}
+
+	if (pVCon)
+		pVCon->UpdateInfo();
+	else {
+		SetDlgItemText(gSet.hInfo, tConSizeChr, _T("?"));
+		SetDlgItemText(gSet.hInfo, tConSizePix, _T("?"));
+	}
+	RECT rcClient; GetClientRect(ghWndDC, &rcClient);
+	TCHAR szSize[32]; wsprintf(szSize, _T("%ix%i"), rcClient.right, rcClient.bottom);
+	SetDlgItemText(gSet.hInfo, tDCSize, szSize);
+}
+
 // !!!Warning!!! Никаких return. в конце функции вызывается необходимый CheckProcesses
 void CConEmuMain::UpdateTitle(LPCTSTR asNewTitle)
 {
@@ -2039,6 +2090,12 @@ bool CConEmuMain::isFar()
 bool CConEmuMain::isLBDown()
 {
 	return (mouse.state & DRAG_L_ALLOWED) == DRAG_L_ALLOWED;
+}
+
+bool CConEmuMain::isMainThread()
+{
+	DWORD dwTID = GetCurrentThreadId();
+	return dwTID == mn_MainThreadId;
 }
 
 bool CConEmuMain::isNtvdm()
@@ -3070,7 +3127,6 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
             }
         }
 
-        TabBar.OnTimer();
         ProgressBars->OnTimer();
 
         
@@ -3110,7 +3166,7 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 		bool lbForceUpdate = CheckBufferSize();
 
         //if (!gbInvalidating && !gbInPaint)
-        if (!mb_IgnoreSizeChange && pVCon->Update(lbForceUpdate) && !IsIconic(ghWnd))
+        if (/*!mb_IgnoreSizeChange &&*/ pVCon->Update(lbForceUpdate) && !IsIconic(ghWnd))
         {
             //COORD c = ConsoleSizeFromWindow();
 			RECT client; GetClientRect(ghWnd, &client);
@@ -3173,6 +3229,8 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 
 	if (messg == WM_SYSCHAR)
 		return TRUE;
+	//if (messg == WM_CHAR)
+	//	return TRUE;
 
     switch (messg)
     {
@@ -3329,6 +3387,13 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	    } else
 		if (messg == gConEmu.mn_MsgMyDestroy) {
 			gConEmu.OnDestroy(hWnd);
+			return 0;
+		} else if (messg == gConEmu.mn_MsgUpdateSizes) {
+			gConEmu.UpdateSizes();
+			return 0;
+		} else if (messg == gConEmu.mn_MsgSetWindowMode) {
+			gConEmu.SetWindowMode(wParam);
+			return 0;
 		}
         if (messg) result = DefWindowProc(hWnd, messg, wParam, lParam);
     }

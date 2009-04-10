@@ -3,6 +3,8 @@
 #define VCURSORWIDTH 2
 #define HCURSORHEIGHT 2
 
+#define Assert(V) if ((V)==FALSE) { TCHAR szAMsg[MAX_PATH*2]; wsprintf(szAMsg, _T("Assertion (%s) at\n%s:%i"), _T(#V), _T(__FILE__), __LINE__); Box(szAMsg); }
+
 CVirtualConsole* CVirtualConsole::Create()
 {
     CVirtualConsole* pCon = new CVirtualConsole();
@@ -48,12 +50,17 @@ CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
     mh_ForceReadEvent = CreateEvent(NULL,FALSE,FALSE,NULL);
     mh_EndUpdateEvent = CreateEvent(NULL,FALSE,FALSE,NULL);
 
-    InitializeCriticalSection(&csDC);
-    InitializeCriticalSection(&csCON);
-    
+    InitializeCriticalSection(&csDC); //ncsTDC = 0;
+    InitializeCriticalSection(&csCON); //ncsTCON = 0;
+	    
     //pVCon = this;
     hConOut_ = NULL;
 
+#ifdef _DEBUG
+	mn_BackColorIdx = 2;
+#else
+	mn_BackColorIdx = 0;
+#endif
     memset(&Cursor, 0, sizeof(Cursor));
     Cursor.nBlinkTime = GetCaretBlinkTime();
 
@@ -167,8 +174,8 @@ HANDLE CVirtualConsole::hConOut(BOOL abAllowRecreate/*=FALSE*/)
 // InitDC вызывается только при критических изменениях (размеры, шрифт, и т.п.) когда нужно пересоздать DC и Bitmap
 bool CVirtualConsole::InitDC(bool abNoDc, bool abNoConSection)
 {
-	CSection SCON(abNoConSection ? NULL : &csCON);
-	CSection SDC(&csDC);
+	CSection SCON(abNoConSection ? NULL : &csCON/*, &ncsTCON*/);
+	CSection SDC(&csDC/*, &ncsTDC*/);
 	
     if (hDC)
 	    { DeleteDC(hDC); hDC = NULL; }
@@ -192,6 +199,12 @@ bool CVirtualConsole::InitDC(bool abNoDc, bool abNoConSection)
     IsForceUpdate = true;
     TextWidth = csbi.srWindow.Right - csbi.srWindow.Left + 1;
     TextHeight = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
+
+	if (!TextWidth || !TextHeight) {
+		Assert(TextWidth && TextHeight);
+		return false;
+	}
+
     if ((int)TextWidth < csbi.dwSize.X)
         TextWidth = csbi.dwSize.X;
 
@@ -228,11 +241,19 @@ bool CVirtualConsole::InitDC(bool abNoDc, bool abNoConSection)
             if (ghOpWnd) // устанавливать только при листании шрифта в настройке
                 gSet.UpdateTTF ( (tm.tmMaxCharWidth - tm.tmAveCharWidth)>2 );*/
 
-            MBoxAssert ( gSet.LogFont.lfWidth && gSet.LogFont.lfHeight );
+            Assert ( gSet.LogFont.lfWidth && gSet.LogFont.lfHeight );
 
+			BOOL lbWasInitialized = TextWidth && TextHeight;
             // Посчитать новый размер в пикселях
             Width = TextWidth * gSet.LogFont.lfWidth;
             Height = TextHeight * gSet.LogFont.lfHeight;
+
+			if (ghOpWnd)
+				gConEmu.UpdateSizes();
+
+			//if (!lbWasInitialized) // если зовется InitDC значит размер консоли изменился
+			if (gConEmu.isActive(this))
+				gConEmu.OnSize(-1);
 
             hBitmap = CreateCompatibleBitmap(hScreenDC, Width, Height);
             SelectObject(hDC, hBitmap);
@@ -549,6 +570,9 @@ bool CVirtualConsole::Update(bool isForce, HDC *ahDc)
     MCHKHEAP
     bool lRes = false;
     
+	CSection SCON(&csCON/*, &ncsTCON*/);
+	CSection SDC(&csDC/*, &ncsTDC*/);
+
     if (!GetConsoleScreenBufferInfo(hConOut(), &csbi)) {
         DisplayLastError(_T("Update:GetConsoleScreenBufferInfo"));
         return lRes;
@@ -581,7 +605,6 @@ bool CVirtualConsole::Update(bool isForce, HDC *ahDc)
     }
     else
     {
-		CSection SCON(&csCON);
 
         // Do we have to update changed text?
         updateText = doSelect || CheckChangedTextAttr();
@@ -601,7 +624,6 @@ bool CVirtualConsole::Update(bool isForce, HDC *ahDc)
             updateCursor = Cursor.isVisiblePrevFromInfo && !cinf.bVisible;
     }
     
-    CSection SDC(&csDC);
     gSet.Performance(tPerfRender, FALSE);
 
     if (updateText /*|| updateCursor*/)
@@ -634,6 +656,7 @@ bool CVirtualConsole::Update(bool isForce, HDC *ahDc)
     MCHKHEAP
     
     SDC.Leave();
+	SCON.Leave();
 
     gSet.Performance(tPerfRender, TRUE);
 
@@ -651,7 +674,7 @@ bool CVirtualConsole::Update(bool isForce, HDC *ahDc)
 
 bool CVirtualConsole::UpdatePrepare(bool isForce, HDC *ahDc)
 {
-	CSection S(&csCON);
+	CSection S(&csCON/*, &ncsTCON*/);
 	
     attrBackLast = 0;
     isEditor = gConEmu.isEditor();
@@ -1456,7 +1479,7 @@ void CVirtualConsole::UpdateCursor(bool& lRes)
 void CVirtualConsole::SetConsoleSize(const COORD& size)
 {
     if (!ghConWnd) {
-        MBoxA(_T("Console was not created (CVirtualConsole::SetConsoleSize)"));
+        Box(_T("Console was not created (CVirtualConsole::SetConsoleSize)"));
         return; // консоль пока не создана?
     }
 
@@ -1474,7 +1497,18 @@ void CVirtualConsole::SetConsoleSize(const COORD& size)
         if (lbNeedChange) {
             MOVEWINDOW(ghConWnd, rcConPos.left, rcConPos.top, 1, 1, 1);
             SETCONSOLESCREENBUFFERSIZE(h, size);
-        }
+			#ifdef _DEBUG
+			CONSOLE_SCREEN_BUFFER_INFO csbi;
+			if (!GetConsoleScreenBufferInfo(h, &csbi))
+				__asm int 3;
+			else if (csbi.dwSize.X != size.X || csbi.dwSize.Y != size.Y)
+				__asm int 3;
+			#endif
+		} else {
+			#ifdef _DEBUG
+			lbNeedChange = lbNeedChange;
+			#endif
+		}
         MOVEWINDOW(ghConWnd, rcConPos.left, rcConPos.top, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), 1);
         return;
     }
@@ -1770,7 +1804,7 @@ DWORD CVirtualConsole::StartProcessThread(LPVOID lpParameter)
 	}
 	
 	if (!bLoop)
-		MBoxA(_T("Exception triggered in CVirtualConsole::StartProcessThread"));
+		pCon->Box(_T("Exception triggered in CVirtualConsole::StartProcessThread"));
 	
 	// Finalize
 	//SafeCloseHandle(pCon->mh_Thread);
@@ -1899,7 +1933,7 @@ BOOL CVirtualConsole::StartProcess()
 
                 break; // OK, запустили
             } else {
-                //MBoxA("Cannot execute the command.");
+                //Box("Cannot execute the command.");
                 DWORD dwLastError = GetLastError();
                 OutputDebugString(_T("CreateProcess failed\n"));
                 int nLen = _tcslen(gSet.GetCmd());
@@ -1925,7 +1959,7 @@ BOOL CVirtualConsole::StartProcess()
                     _tcscat(psz, gSet.BufferHeight == 0 ? _T("Do You want to simply start far?") : _T("Do You want to simply start cmd?"));
                     nButtons |= MB_YESNO;
                 }
-                //MBoxA(psz);
+                //Box(psz);
                 int nBrc = MessageBox(NULL, psz, _T("ConEmu"), nButtons);
                 Free(psz); Free(pszErr);
                 if (nBrc!=IDYES) {
@@ -2032,7 +2066,7 @@ void CVirtualConsole::SendMouseEvent(UINT messg, WPARAM wParam, int x, int y)
 	if (!this || !ghConWnd)
 		return;
 #ifdef NEWMOUSESTYLE
-	MBoxAssert ( gSet.LogFont.lfWidth && gSet.LogFont.lfHeight );
+	Assert ( gSet.LogFont.lfWidth && gSet.LogFont.lfHeight );
 	if (!gSet.LogFont.lfWidth | !gSet.LogFont.lfHeight)
 		return;
 	#pragma message("TODO: X координаты нам известны, так что можно бы более корректно позицию определять...")
@@ -2153,7 +2187,7 @@ void CVirtualConsole::Paint()
 	
 	if (!this) {
 		// Залить цветом 0
-		HBRUSH hBr = CreateSolidBrush(gSet.Colors[0]);
+		HBRUSH hBr = CreateSolidBrush(gSet.Colors[mn_BackColorIdx]);
 		RECT rcClient; GetClientRect(ghWndDC, &rcClient);
 		PAINTSTRUCT ps;
 		HDC hDc = BeginPaint(ghWndDC, &ps);
@@ -2168,16 +2202,29 @@ void CVirtualConsole::Paint()
 	PAINTSTRUCT ps;
 	HDC hPaintDc = NULL;
 
-	CSection S(&csDC);
+	CSection S(&csDC/*, &ncsTDC*/);
+	if (!S.isLocked())
+		return; // не удалось получить доступ к CS
 	
 	try {
-		GetClientRect(ghWndDC, &client);
-		if (((ULONG)client.right) > Width)
-			client.right = Width;
-		if (((ULONG)client.bottom) > Height)
-			client.bottom = Height;
-
 		hPaintDc = BeginPaint(ghWndDC, &ps);
+
+		HBRUSH hBr = NULL;
+		GetClientRect(ghWndDC, &client);
+		if (((ULONG)client.right) > Width) {
+			if (!hBr) hBr = CreateSolidBrush(gSet.Colors[mn_BackColorIdx]);
+			RECT rcFill = MakeRect(Width, 0, client.right, client.bottom);
+			FillRect(hPaintDc, &rcFill, hBr);
+			client.right = Width;
+		}
+		if (((ULONG)client.bottom) > Height) {
+			if (!hBr) hBr = CreateSolidBrush(gSet.Colors[mn_BackColorIdx]);
+			RECT rcFill = MakeRect(0, Height, client.right, client.bottom);
+			FillRect(hPaintDc, &rcFill, hBr);
+			client.bottom = Height;
+		}
+		if (hBr) { DeleteObject(hBr); hBr = NULL; }
+
 
 		if (!gbNoDblBuffer) {
 			// Обычный режим
@@ -2198,9 +2245,33 @@ void CVirtualConsole::Paint()
 	S.Leave();
 	
 	if (lbExcept)
-		MBoxA(_T("Exception triggered in CVirtualConsole::Paint"));
+		Box(_T("Exception triggered in CVirtualConsole::Paint"));
 
 	if (hPaintDc && ghWndDC) {
 		EndPaint(ghWndDC, &ps);
 	}
+}
+
+void CVirtualConsole::UpdateInfo()
+{
+	if (!ghOpWnd || !this)
+		return;
+
+	if (!gConEmu.isMainThread()) {
+		return;
+	}
+
+	TCHAR szSize[32];
+	wsprintf(szSize, _T("%ix%i"), TextWidth, TextHeight);
+	SetDlgItemText(gSet.hInfo, tConSizeChr, szSize);
+	wsprintf(szSize, _T("%ix%i"), Width, Height);
+	SetDlgItemText(gSet.hInfo, tConSizePix, szSize);
+}
+
+void CVirtualConsole::Box(LPCTSTR szText)
+{
+#ifdef _DEBUG
+	__asm int 3;
+#endif
+	MessageBox(NULL, szText, _T("ConEmu"), MB_ICONSTOP);
 }

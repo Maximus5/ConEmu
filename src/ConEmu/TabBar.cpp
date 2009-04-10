@@ -457,26 +457,6 @@ bool TabBarClass::OnNotify(LPNMHDR nmhdr)
 	return false;
 }
 
-
-
-void TabBarClass::OnTimer()
-{
-	//if (!_active)
-	//{
-	//	return;
-	//}
-	//if (_titleShouldChange)
-	//{
-	//	// title hasn't changed - tab switching was unsuccessful - return to the previous selected tab
-	//	if (_tcscmp(_lastTitle, gConEmu.Title) == 0)
-	//	{
-	//		SelectTab(_prevTab);
-	//	}
-	//	_titleShouldChange = false;
-	//}
-	return;
-}
-
 void TabBarClass::OnMouse(int message, int x, int y)
 {
 	if (!_active)
@@ -594,15 +574,15 @@ LRESULT TabBarClass::ToolWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lP
 				{
 					// активировать консоль №
 					cmd.action = wParam - 1;
-					gConEmu.mb_IgnoreSizeChange = true;
-					CVirtualConsole* pCon = gConEmu.ActiveCon();
-					if (pCon) {
-						COORD sz = {pCon->TextWidth, pCon->TextHeight};
+					//gConEmu.mb_IgnoreSizeChange = true;
+					//CVirtualConsole* pCon = gConEmu.ActiveCon();
+					//if (pCon) {
+					//	COORD sz = {pCon->TextWidth, pCon->TextHeight};
 						TabBar.ConMan_KeyAction ( &cmd );
-						// Установить размер консоли!
-						gConEmu.SetConsoleWindowSize(sz, false);
-						gConEmu.mb_IgnoreSizeChange = false;
-					}
+						//// Установить размер консоли!
+						//gConEmu.SetConsoleWindowSize(sz, false);
+						//gConEmu.mb_IgnoreSizeChange = false;
+					//}
 				} else
 				if (wParam==13)
 				{

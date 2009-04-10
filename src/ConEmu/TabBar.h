@@ -62,6 +62,5 @@ public:
 	void OnConman(int nConNumber, BOOL bAlternative);
 	bool OnNotify(LPNMHDR nmhdr);
 	void OnMouse(int message, int x, int y);
-	void OnTimer();
 };
 

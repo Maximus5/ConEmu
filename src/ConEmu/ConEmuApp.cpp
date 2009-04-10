@@ -397,6 +397,7 @@ BOOL CreateMainWindow()
     }
     
 	//if (gConEmu.WindowMode == rMaximized) style |= WS_MAXIMIZE;
+	//style |= WS_VISIBLE;
     // cRect.right - cRect.left - 4, cRect.bottom - cRect.top - 4; -- все равно это было не правильно
 	ghWnd = CreateWindow(szClassNameParent, gSet.GetCmd(), style, 
 		gSet.wndX, gSet.wndY, nWidth, nHeight, ghWndApp, NULL, (HINSTANCE)g_hInstance, NULL);

@@ -70,7 +70,7 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 IDD_DIALOG1 DIALOGEX 0, 0, 328, 258
 STYLE DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_TOPMOST | WS_EX_CONTROLPARENT
-FONT 8, "MS Shell Dlg"
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     GROUPBOX        "Anti-aliasing",IDC_STATIC,263,4,60,45,WS_GROUP
     CONTROL         "&None",rNoneAA,"Button",BS_AUTORADIOBUTTON | WS_GROUP,
@@ -155,9 +155,9 @@ BEGIN
                     39,10
     GROUPBOX        "Placement",IDC_STATIC,270,172,53,50
     GROUPBOX        "Position",IDC_STATIC,263,50,60,50,WS_DISABLED
-    CONTROL         "Cascade",rCascade,"Button",BS_AUTORADIOBUTTON,268,87,44,10
-    CONTROL         "Fixed",rFixed,"Button",BS_AUTORADIOBUTTON,
-                    268,61,33,10
+    CONTROL         "Cascade",rCascade,"Button",BS_AUTORADIOBUTTON,268,87,44,
+                    10
+    CONTROL         "Fixed",rFixed,"Button",BS_AUTORADIOBUTTON,268,61,33,10
     EDITTEXT        tWndX,268,72,20,11,ES_AUTOHSCROLL | ES_NUMBER
     EDITTEXT        tWndY,297,72,20,11,ES_AUTOHSCROLL | ES_NUMBER
     CTEXT           "x",IDC_STATIC,290,73,6,8
@@ -358,14 +358,14 @@ END
 IDD_DIALOG3 DIALOGEX 0, 0, 328, 258
 STYLE DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_TOPMOST | WS_EX_CONTROLPARENT
-FONT 8, "MS Shell Dlg", 0, 0, 0x1
+FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        "Performance counters",gbPerformance,4,4,319,30
     RTEXT           "Render:",IDC_STATIC,92,17,27,8
     EDITTEXT        tPerfRender,121,16,43,11,ES_AUTOHSCROLL | ES_READONLY
     EDITTEXT        tPerfBlt,190,16,43,11,ES_AUTOHSCROLL | ES_READONLY
     RTEXT           "Blt:",IDC_STATIC,176,17,12,8
-    GROUPBOX        "Console states",IDC_STATIC,4,39,319,47
+    GROUPBOX        "Console states",IDC_STATIC,4,39,319,43
     CHECKBOX        "ConMan",cbsConManActive,11,51,43,10,WS_DISABLED | NOT 
                     WS_TABSTOP
     CHECKBOX        "Telnet",cbsTelnetActive,79,51,35,10,WS_DISABLED | NOT 
@@ -382,10 +382,10 @@ BEGIN
                     WS_TABSTOP
     CHECKBOX        "Viewer",cbsViewer,174,67,37,10,WS_DISABLED | NOT 
                     WS_TABSTOP
-    GROUPBOX        "Processes",IDC_STATIC,4,90,319,130
+    GROUPBOX        "Processes",IDC_STATIC,4,114,319,106
     EDITTEXT        tsConManIdx,55,51,18,11,ES_AUTOHSCROLL | ES_READONLY
     EDITTEXT        tsTopPID,38,67,26,11,ES_AUTOHSCROLL | ES_READONLY
-    LISTBOX         lbProcesses,9,100,307,112,NOT LBS_NOTIFY | 
+    LISTBOX         lbProcesses,9,124,307,89,NOT LBS_NOTIFY | 
                     LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_HSCROLL | 
                     WS_TABSTOP
     RTEXT           "Read:",IDC_STATIC,9,17,23,8
@@ -394,6 +394,13 @@ BEGIN
     RTEXT           "Interval:",IDC_STATIC,240,17,31,8
     GROUPBOX        "Current command line",IDC_STATIC,4,223,319,30
     EDITTEXT        tCurCmdLine,9,234,307,12,ES_AUTOHSCROLL | ES_READONLY
+    GROUPBOX        "Sizes",IDC_STATIC,4,83,318,27
+    LTEXT           "Console (chars):",IDC_STATIC,9,94,52,8
+    EDITTEXT        tConSizeChr,67,93,54,11,ES_AUTOHSCROLL | ES_READONLY
+    RTEXT           "(pixels):",IDC_STATIC,123,94,30,8
+    EDITTEXT        tConSizePix,156,93,54,11,ES_AUTOHSCROLL | ES_READONLY
+    RTEXT           "DC window:",IDC_STATIC,215,94,45,8
+    EDITTEXT        tDCSize,263,93,54,11,ES_AUTOHSCROLL | ES_READONLY
 END
 
 

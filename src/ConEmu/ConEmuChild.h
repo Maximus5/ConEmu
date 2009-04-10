@@ -31,4 +31,6 @@ public:
 	void Refresh();
 
 	static LRESULT CALLBACK BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
+protected:
+	int mn_ColorIdx;
 };

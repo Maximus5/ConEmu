@@ -164,24 +164,35 @@ class CSection
 {
 protected:
 	CRITICAL_SECTION* mp_cs;
+	//DWORD* mp_TID;
 public:
 	void Leave()
 	{
 		if (mp_cs) {
+			//*mp_TID = 0;
+			//mp_TID = NULL;
 			LeaveCriticalSection(mp_cs);
 			mp_cs = NULL;
 		}
 	}
-	void Enter(CRITICAL_SECTION* pcs)
+	void Enter(CRITICAL_SECTION* pcs/*, DWORD* pTID*/)
 	{
 		Leave(); // если было
 		mp_cs = pcs;
-		if (mp_cs)
+		//mp_TID = pTID;
+		if (mp_cs) {
+			//DWORD dwTID = GetCurrentThreadId();
 			EnterCriticalSection(mp_cs);
+			//*mp_TID = dwTID;
+		}
 	}
-	CSection (CRITICAL_SECTION* pcs) : mp_cs(NULL)
+	bool isLocked()
 	{
-		Enter(pcs);
+		return mp_cs != NULL;
+	}
+	CSection (CRITICAL_SECTION* pcs/*, DWORD* pTID*/) : mp_cs(NULL)//, mp_TID(NULL)
+	{
+		Enter(pcs/*, pTID*/);
 	}
 	~CSection()
 	{
