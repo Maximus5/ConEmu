@@ -175,7 +175,7 @@ BOOL SetConsoleInfo(HWND hwndConsole, CONSOLE_INFO *pci)
 //	Fill the CONSOLE_INFO structure with information
 //  about the current console window
 //
-static void GetConsoleSizeInfo(CONSOLE_INFO *pci)
+void GetConsoleSizeInfo(CONSOLE_INFO *pci)
 {
 	CONSOLE_SCREEN_BUFFER_INFO csbi;
 

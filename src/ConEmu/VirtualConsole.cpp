@@ -54,7 +54,7 @@ CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
     InitializeCriticalSection(&csCON); //ncsTCON = 0;
 	    
     //pVCon = this;
-    hConOut_ = NULL;
+    mh_ConOut = NULL; mb_ConHandleCreated = FALSE;
 
 #ifdef _DEBUG
 	mn_BackColorIdx = 2;
@@ -132,6 +132,10 @@ CVirtualConsole::~CVirtualConsole()
 	    HeapDestroy(mh_Heap);
 		mh_Heap = NULL;
     }
+
+	if (mb_ConHandleCreated && mh_ConOut && mh_ConOut!=INVALID_HANDLE_VALUE)
+		CloseHandle(mh_ConOut);
+	mh_ConOut = NULL; mb_ConHandleCreated = FALSE;
     
     DeleteCriticalSection(&csDC);
     DeleteCriticalSection(&csCON);
@@ -140,35 +144,38 @@ CVirtualConsole::~CVirtualConsole()
 // Дабы избежать многоратных Recreate во время обновления - пересоздаем хэндл только в начале Update!
 HANDLE CVirtualConsole::hConOut(BOOL abAllowRecreate/*=FALSE*/)
 {
-    if(hConOut_ && hConOut_!=INVALID_HANDLE_VALUE && !abAllowRecreate) {
-        return hConOut_;
+    if(mh_ConOut && mh_ConOut!=INVALID_HANDLE_VALUE && !abAllowRecreate) {
+        return mh_ConOut;
     }
     
     if (gSet.isUpdConHandle)
     {
-        if(hConOut_ && hConOut_!=INVALID_HANDLE_VALUE) {
-            CloseHandle(hConOut_);
-            hConOut_ = NULL;
-        }
+        if(mh_ConOut && mh_ConOut!=INVALID_HANDLE_VALUE && mb_ConHandleCreated)
+            CloseHandle(mh_ConOut);
+		mh_ConOut = NULL; mb_ConHandleCreated = FALSE;
 
-        hConOut_ = CreateFile(_T("CONOUT$"), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_READ,
+        mh_ConOut = CreateFile(_T("CONOUT$"), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_READ,
             0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
-        if (hConOut_ == INVALID_HANDLE_VALUE) {
+        if (mh_ConOut == INVALID_HANDLE_VALUE) {
             // Наверное лучше вернуть текущий хэндл, нежели вообще завалиться...
-            hConOut_ = GetStdHandle(STD_OUTPUT_HANDLE);
-            //DisplayLastError(_T("CVirtualConsole::hConOut fails"));
-            //hConOut_ = NULL;
-        }
-    } else if (hConOut_==NULL) {
-        hConOut_ = GetStdHandle(STD_OUTPUT_HANDLE);
+            mh_ConOut = GetStdHandle(STD_OUTPUT_HANDLE);
+			#ifdef _DEBUG
+			__asm int 3;
+			#endif
+		} else {
+			mb_ConHandleCreated = TRUE; // OK
+		}
+    } else if (mh_ConOut==NULL) {
+        mh_ConOut = GetStdHandle(STD_OUTPUT_HANDLE);
+		mb_ConHandleCreated = FALSE;
     }
     
-    if (hConOut_ == INVALID_HANDLE_VALUE) {
-        hConOut_ = NULL;
+    if (mh_ConOut == INVALID_HANDLE_VALUE) {
+        mh_ConOut = NULL;
         DisplayLastError(_T("CVirtualConsole::hConOut fails"));
     }
     
-    return hConOut_;
+    return mh_ConOut;
 }
 
 // InitDC вызывается только при критических изменениях (размеры, шрифт, и т.п.) когда нужно пересоздать DC и Bitmap
@@ -555,7 +562,8 @@ bool CVirtualConsole::CheckChangedTextAttr()
 
 bool CVirtualConsole::Update(bool isForce, HDC *ahDc)
 {
-	if (!ghConWnd)
+	#pragma message("TODO: CVirtualConsole::Update - может только если hConWnd==ghConWnd?")
+	if (!hConWnd)
 		return false;
 
     #ifdef MSGLOGGER
@@ -1476,18 +1484,76 @@ void CVirtualConsole::UpdateCursor(bool& lRes)
         Cursor.nLastBlink = GetTickCount();
 }
 
-void CVirtualConsole::SetConsoleSize(const COORD& size)
+void CVirtualConsole::SetConsoleSizeInt(COORD size)
 {
-    if (!ghConWnd) {
+	const COLORREF DefaultColors[16] = 
+	{
+		0x00000000, 0x00800000, 0x00008000, 0x00808000,
+		0x00000080, 0x00800080, 0x00008080, 0x00c0c0c0, 
+		0x00808080,	0x00ff0000, 0x0000ff00, 0x00ffff00,
+		0x000000ff, 0x00ff00ff,	0x0000ffff, 0x00ffffff
+	};
+
+	CONSOLE_INFO ci = { sizeof(ci) };
+	int i;
+
+	// get current size/position settings rather than using defaults..
+	GetConsoleSizeInfo(&ci);
+	ci.ScreenBufferSize = size;
+	ci.WindowSize = size;
+
+	// set these to zero to keep current settings
+	ci.FontSize.X				= 4;
+	ci.FontSize.Y				= 6;
+	ci.FontFamily				= 0;//0x30;//FF_MODERN|FIXED_PITCH;//0x30;
+	ci.FontWeight				= 0;//0x400;
+	_tcscpy(ci.FaceName, _T("Lucida Console"));
+
+	ci.CursorSize				= 25;
+	ci.FullScreen				= FALSE;
+	ci.QuickEdit				= FALSE;
+	ci.AutoPosition				= 0x10000;
+	ci.InsertMode				= TRUE;
+	ci.ScreenColors				= MAKEWORD(0x7, 0x0);
+	ci.PopupColors				= MAKEWORD(0x5, 0xf);
+
+	ci.HistoryNoDup				= FALSE;
+	ci.HistoryBufferSize		= 50;
+	ci.NumberOfHistoryBuffers	= 4;
+
+	// color table
+	for(i = 0; i < 16; i++)
+		ci.ColorTable[i] = DefaultColors[i];
+
+	ci.CodePage					= GetConsoleOutputCP();//0;//0x352;
+	ci.Hwnd						= hConWnd;
+
+	*ci.ConsoleTitle = NULL;
+
+	//!!! чего-то не работает... а в
+    // F:\VCProject\FarPlugin\ConEmu\080703\ConEmu\setconsoleinfo.cpp
+	//вроде ок
+	SetConsoleInfo(&ci);
+}
+
+void CVirtualConsole::SetConsoleSize(COORD size)
+{
+    if (!hConWnd) {
         Box(_T("Console was not created (CVirtualConsole::SetConsoleSize)"));
         return; // консоль пока не создана?
     }
 
-    RECT rcConPos; GetWindowRect(ghConWnd, &rcConPos);
+	if (size.X<4) size.X = 4;
+	if (size.Y<3) size.Y = 3;
+
+	CSection SCON(&csCON);
+
+    RECT rcConPos; GetWindowRect(hConWnd, &rcConPos);
 
     // case: simple mode
     if (gConEmu.BufferHeight == 0)
     {
+		//HANDLE hConsoleOut = GetStdHandle(STD_OUTPUT_HANDLE);
         HANDLE h = hConOut();
         BOOL lbNeedChange = FALSE;
         CONSOLE_SCREEN_BUFFER_INFO csbi;
@@ -1495,10 +1561,25 @@ void CVirtualConsole::SetConsoleSize(const COORD& size)
             lbNeedChange = (csbi.dwSize.X != size.X) || (csbi.dwSize.Y != size.Y);
         }
         if (lbNeedChange) {
-            MOVEWINDOW(ghConWnd, rcConPos.left, rcConPos.top, 1, 1, 1);
-            SETCONSOLESCREENBUFFERSIZE(h, size);
+			BOOL lbWS = FALSE; DWORD dwErr = 0;
+            MOVEWINDOW(hConWnd, rcConPos.left, rcConPos.top, 1, 1, 1);
+            SETCONSOLESCREENBUFFERSIZERET(h, size, lbWS);
+			GetConsoleScreenBufferInfo(h, &csbi);
+			if (csbi.dwSize.X != size.X || csbi.dwSize.Y != size.Y) {
+				dwErr = GetLastError();
+
+				//SETCONSOLESCREENBUFFERSIZERET(hConsoleOut, size, lbWS);
+				//GetConsoleScreenBufferInfo(h, &csbi);
+
+				SetConsoleSizeInt(size);
+				GetConsoleScreenBufferInfo(h, &csbi);
+
+				//size.X--; size.Y--;
+				//SETCONSOLESCREENBUFFERSIZERET(h, csbi.dwSize, lbWS);
+				//size.X++; size.Y++;
+				//SETCONSOLESCREENBUFFERSIZERET(h, size, lbWS);
+			}
 			#ifdef _DEBUG
-			CONSOLE_SCREEN_BUFFER_INFO csbi;
 			if (!GetConsoleScreenBufferInfo(h, &csbi))
 				__asm int 3;
 			else if (csbi.dwSize.X != size.X || csbi.dwSize.Y != size.Y)
@@ -1509,7 +1590,7 @@ void CVirtualConsole::SetConsoleSize(const COORD& size)
 			lbNeedChange = lbNeedChange;
 			#endif
 		}
-        MOVEWINDOW(ghConWnd, rcConPos.left, rcConPos.top, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), 1);
+        MOVEWINDOW(hConWnd, rcConPos.left, rcConPos.top, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), 1);
         return;
     }
 
@@ -1538,11 +1619,11 @@ void CVirtualConsole::SetConsoleSize(const COORD& size)
             // y-scroll: buffer height = old buffer height
             csbi.dwSize.Y = max(csbi.dwSize.Y, size.Y);
     }
-    MOVEWINDOW(ghConWnd, rcConPos.left, rcConPos.top, 1, 1, 1);
+    MOVEWINDOW(hConWnd, rcConPos.left, rcConPos.top, 1, 1, 1);
     SETCONSOLESCREENBUFFERSIZE(hConOut(), csbi.dwSize);
     //окошко раздвигаем только по ширине!
-    GetWindowRect(ghConWnd, &rcConPos);
-    MOVEWINDOW(ghConWnd, rcConPos.left, rcConPos.top, GetSystemMetrics(SM_CXSCREEN), rcConPos.bottom-rcConPos.top, 1);
+    GetWindowRect(hConWnd, &rcConPos);
+    MOVEWINDOW(hConWnd, rcConPos.left, rcConPos.top, GetSystemMetrics(SM_CXSCREEN), rcConPos.bottom-rcConPos.top, 1);
 
     
     // set console window
@@ -1600,10 +1681,7 @@ BOOL CVirtualConsole::AttachPID(DWORD dwPID)
     }
     OutputDebugString(_T(" - OK"));
 
-    hConWnd = GetConsoleWindow();
-    ghConWnd = hConWnd;
-    
-    InitHandlers();
+    InitHandlers(FALSE);
 
     // Попытаться дернуть плагин для установки шрифта.
     CConEmuPipe pipe;
@@ -1617,10 +1695,13 @@ BOOL CVirtualConsole::AttachPID(DWORD dwPID)
     return TRUE;
 }
 
-void CVirtualConsole::InitHandlers()
+void CVirtualConsole::InitHandlers(BOOL abCreated)
 {
+	hConWnd = GetConsoleWindow();
+
     SetConsoleCtrlHandler((PHANDLER_ROUTINE)CConEmuMain::HandlerRoutine, true);
     
+	// наверное это имеет смысл только при создании консоли, а не при аттаче
     SetHandleInformation(GetStdHandle(STD_INPUT_HANDLE), HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT);
     SetHandleInformation(GetStdHandle(STD_OUTPUT_HANDLE), HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT);
     SetHandleInformation(GetStdHandle(STD_ERROR_HANDLE), HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT);
@@ -1631,9 +1712,40 @@ void CVirtualConsole::InitHandlers()
 	    mode |= ENABLE_MOUSE_INPUT;
 		lb = SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), mode);
 	}
-    
-    ghConWnd = GetConsoleWindow();
-    gConEmu.ConsoleCreated(ghConWnd);
+
+	hConOut();
+
+	if (abCreated) {
+		SetConsoleFontSizeTo(4, 6);
+
+		if (IsIconic(ghConWnd)) {
+			// окошко нужно развернуть!
+			WINDOWPLACEMENT wplMain, wplCon;
+			memset(&wplMain, 0, sizeof(wplMain)); wplMain.length = sizeof(wplMain);
+			memset(&wplCon, 0, sizeof(wplCon)); wplCon.length = sizeof(wplCon);
+			GetWindowPlacement(ghWnd, &wplMain);
+			GetWindowPlacement(ghConWnd, &wplCon);
+
+			int n = wplMain.rcNormalPosition.left - wplCon.rcNormalPosition.left;
+			wplCon.rcNormalPosition.left += n; wplCon.rcNormalPosition.right += n;
+			n = wplMain.rcNormalPosition.top - wplCon.rcNormalPosition.top;
+			wplCon.rcNormalPosition.top += n; wplCon.rcNormalPosition.bottom += n;
+			wplCon.showCmd = SW_RESTORE;
+			SetWindowPlacement(ghConWnd, &wplCon);
+		}
+
+		if (gSet.wndHeight && gSet.wndWidth)
+		{
+			COORD b = {gSet.wndWidth, gSet.wndHeight};
+			SetConsoleSize(b);
+		}
+
+		SetConsoleTitle(gSet.GetCmd());
+	} else {
+		SetConsoleFontSizeTo(4, 6);
+	}
+
+    gConEmu.ConsoleCreated(hConWnd);
 }
 
 // asExeName может быть NULL, тогда ставим полный путь к ConEmu (F:_VCProject_FarPlugin_#FAR180_ConEmu.exe)
@@ -1812,7 +1924,6 @@ DWORD CVirtualConsole::StartProcessThread(LPVOID lpParameter)
 	return lbRc ? 0 : 100;
 }
 
-extern void SetConsoleFontSizeTo(HWND inConWnd, int inSizeX, int inSizeY);
 BOOL CVirtualConsole::StartProcess()
 {
     BOOL lbRc = FALSE;
@@ -1834,57 +1945,21 @@ BOOL CVirtualConsole::StartProcess()
 		#endif
 		) SetWindowPos(ghWnd, HWND_TOPMOST, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
     AllocConsole();
-    ghConWnd = GetConsoleWindow();
-    //if ((gSet.outSI.wShowWindow & (SW_MINIMIZE|SW_SHOWMINIMIZED|SW_SHOWMINNOACTIVE))) {
-    if (IsIconic(ghConWnd)) {
-	    // окошко нужно развернуть!
-	    WINDOWPLACEMENT wplMain, wplCon;
-	    //memset(&wplMain, 0, sizeof(wplMain)); wplMain.length = sizeof(wplMain);
-	    memset(&wplCon, 0, sizeof(wplCon)); wplCon.length = sizeof(wplCon);
-	    GetWindowPlacement(ghWnd, &wplMain);
-	    GetWindowPlacement(ghConWnd, &wplCon);
-	    //wplCon = wplMain;
-		//ShowWindow(ghConWnd, SW_SHOWNORMAL);
-		int n = wplMain.rcNormalPosition.left - wplCon.rcNormalPosition.left;
-		wplCon.rcNormalPosition.left += n; wplCon.rcNormalPosition.right += n;
-		n = wplMain.rcNormalPosition.top - wplCon.rcNormalPosition.top;
-		wplCon.rcNormalPosition.top += n; wplCon.rcNormalPosition.bottom += n;
-	    wplCon.showCmd = SW_RESTORE;
-	    SetWindowPlacement(ghConWnd, &wplCon);
-    }
-	SetConsoleFontSizeTo(ghConWnd, 4, 6);
-	if (gSet.wndHeight && gSet.wndWidth)
-    {
-        COORD b = {gSet.wndWidth, gSet.wndHeight};
-        SetConsoleSize(b);
-    }
-	//клики мышкой не доходят до ФАРа, пока мы не переключимся в другое приложение и обратно
-	//HWND hOtherWnd = GetShellWindow();
-	//SetForegroundWindow(hOtherWnd);
-	//#ifndef MSGLOGGER
-    if (!gConEmu.isShowConsole && !gSet.isConVisible
+
+	InitHandlers(TRUE);
+
+	if (!gConEmu.isShowConsole && !gSet.isConVisible
 		#ifdef MSGLOGGER
 		&& !IsDebuggerPresent()
 		#endif
 		) SetWindowPos(ghWnd, HWND_NOTOPMOST, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
-	//#endif
-    SetConsoleTitle(gSet.GetCmd());
-    SetForegroundWindow(ghWnd);
+
+	SetForegroundWindow(ghWnd);
     
     RegistryProps(TRUE, props);
 
-    InitHandlers();
-
-	//SetFocus(NULL);
-	//SetFocus(ghWnd);
-	//SENDMESSAGE(ghConWnd, WM_NCACTIVATE, 1, 0);
-	//SENDMESSAGE(ghConWnd, WM_ACTIVATEAPP, TRUE, (LPARAM)GetCurrentThreadId());
-	//SENDMESSAGE(ghConWnd, WM_ACTIVATE, WA_ACTIVE, (LPARAM)ghWnd);
-
     if (gSet.isConMan) {
         if (!gConEmu.InitConMan(gSet.GetCmd())) {
-            //gConEmu.Destroy();
-            //return -1;
             // Иначе жестоко получается. ConEmu вообще будет сложно запустить...
             gSet.isConMan = false;
         } else {
@@ -1986,6 +2061,8 @@ bool CVirtualConsole::CheckBufferSize()
 
     if (!this)
         return false;
+
+	CSection SCON(&csCON);
     
     CONSOLE_SCREEN_BUFFER_INFO inf; memset(&inf, 0, sizeof(inf));
     GetConsoleScreenBufferInfo(hConOut(), &inf);
@@ -2274,4 +2351,235 @@ void CVirtualConsole::Box(LPCTSTR szText)
 	__asm int 3;
 #endif
 	MessageBox(NULL, szText, _T("ConEmu"), MB_ICONSTOP);
+}
+
+//
+//	Fill the CONSOLE_INFO structure with information
+//  about the current console window
+//
+void CVirtualConsole::GetConsoleSizeInfo(CONSOLE_INFO *pci)
+{
+	CSection SCON(&csCON);
+	CONSOLE_SCREEN_BUFFER_INFO csbi;
+
+	HANDLE hConsoleOut = hConOut(); //GetStdHandle(STD_OUTPUT_HANDLE);
+
+	GetConsoleScreenBufferInfo(hConsoleOut, &csbi);
+
+	pci->ScreenBufferSize = csbi.dwSize;
+	pci->WindowSize.X	  = csbi.srWindow.Right - csbi.srWindow.Left + 1;
+	pci->WindowSize.Y	  = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
+	pci->WindowPosX	      = csbi.srWindow.Left;
+	pci->WindowPosY		  = csbi.srWindow.Top;
+}
+
+//
+//	Wrapper around WM_SETCONSOLEINFO. We need to create the
+//  necessary section (file-mapping) object in the context of the
+//  process which owns the console, before posting the message
+//
+BOOL CVirtualConsole::SetConsoleInfo(CONSOLE_INFO *pci)
+{
+	DWORD   dwConsoleOwnerPid, dwCurProcId;
+	HANDLE  hProcess=NULL;
+	HANDLE	hSection=NULL, hDupSection=NULL;
+	PVOID   ptrView = 0;
+	DWORD   dwLastError=0;
+	WCHAR   ErrText[255];
+	
+	//
+	//	Open the process which "owns" the console
+	//	
+	dwCurProcId = GetCurrentProcessId();
+	dwConsoleOwnerPid = dwCurProcId;
+	hProcess = GetCurrentProcess();
+	
+	// Если уж мы к консоли подцепились - считаем ее своей!
+	/*GetWindowThreadProcessId(hwndConsole, &dwConsoleOwnerPid);
+	
+	hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, dwConsoleOwnerPid);
+	dwLastError = GetLastError();
+	//Какого черта OpenProcess не дает себя открыть? GetLastError возвращает 5
+	if (hProcess==NULL) {
+		if (dwConsoleOwnerPid == dwCurProcId) {
+			hProcess = GetCurrentProcess();
+		} else {
+			wsprintf(ErrText, L"Can't open console process. ErrCode=%i", dwLastError);
+			MessageBox(NULL, ErrText, L"ConEmu", MB_OK|MB_ICONSTOP|MB_SETFOREGROUND);
+			return FALSE;
+		}
+	}*/
+
+	//
+	// Create a SECTION object backed by page-file, then map a view of
+	// this section into the owner process so we can write the contents 
+	// of the CONSOLE_INFO buffer into it
+	//
+	hSection = CreateFileMapping(INVALID_HANDLE_VALUE, 0, PAGE_READWRITE, 0, pci->Length, 0);
+	if (!hSection) {
+		dwLastError = GetLastError();
+		wsprintf(ErrText, L"Can't CreateFileMapping. ErrCode=%i", dwLastError);
+		MessageBox(NULL, ErrText, L"ConEmu", MB_OK|MB_ICONSTOP|MB_SETFOREGROUND);
+
+	} else {
+		//
+		//	Copy our console structure into the section-object
+		//
+		ptrView = MapViewOfFile(hSection, FILE_MAP_WRITE|FILE_MAP_READ, 0, 0, pci->Length);
+		if (!ptrView) {
+			dwLastError = GetLastError();
+			wsprintf(ErrText, L"Can't MapViewOfFile. ErrCode=%i", dwLastError);
+			MessageBox(NULL, ErrText, L"ConEmu", MB_OK|MB_ICONSTOP|MB_SETFOREGROUND);
+
+		} else {
+			memcpy(ptrView, pci, pci->Length);
+
+			UnmapViewOfFile(ptrView);
+
+			//
+			//	Map the memory into owner process
+			//
+			if (!DuplicateHandle(GetCurrentProcess(), hSection, hProcess, &hDupSection, 0, FALSE, DUPLICATE_SAME_ACCESS)
+				|| !hDupSection)
+			{
+				dwLastError = GetLastError();
+				wsprintf(ErrText, L"Can't DuplicateHandle. ErrCode=%i", dwLastError);
+				MessageBox(NULL, ErrText, L"ConEmu", MB_OK|MB_ICONSTOP|MB_SETFOREGROUND);
+
+			} else {
+				//  Send console window the "update" message
+				DWORD dwConInfoRc = 0;
+				DWORD dwConInfoErr = 0;
+				
+				dwConInfoRc = SendMessage(hConWnd, WM_SETCONSOLEINFO, (WPARAM)hDupSection, 0);
+				dwConInfoErr = GetLastError();
+			}
+		}
+	}
+
+
+
+	//
+	// clean up
+	//
+
+	if (hDupSection) {
+		if (dwConsoleOwnerPid == dwCurProcId) {
+			// Если это наша консоль - зачем с нитями извращаться
+			CloseHandle(hDupSection);
+		} else {
+			HANDLE  hThread=NULL;
+			hThread = CreateRemoteThread(hProcess, 0, 0, (LPTHREAD_START_ROUTINE)CloseHandle, hDupSection, 0, 0);
+			if (hThread) CloseHandle(hThread);
+		}
+	}
+
+	if (hSection)
+		CloseHandle(hSection);
+	if ((dwConsoleOwnerPid!=dwCurProcId) && hProcess)
+		CloseHandle(hProcess);
+
+	return TRUE;
+}
+
+//VISTA support:
+#ifndef ENABLE_AUTO_POSITION
+typedef struct _CONSOLE_FONT_INFOEX {
+	ULONG cbSize;
+	DWORD nFont;
+	COORD dwFontSize;
+	UINT FontFamily;
+	UINT FontWeight;
+	WCHAR FaceName[LF_FACESIZE];
+} CONSOLE_FONT_INFOEX, *PCONSOLE_FONT_INFOEX;
+#endif
+
+
+typedef BOOL (WINAPI *PGetCurrentConsoleFontEx)(__in HANDLE hConsoleOutput,__in BOOL bMaximumWindow,__out PCONSOLE_FONT_INFOEX lpConsoleCurrentFontEx);
+typedef BOOL (WINAPI *PSetCurrentConsoleFontEx)(__in HANDLE hConsoleOutput,__in BOOL bMaximumWindow,__out PCONSOLE_FONT_INFOEX lpConsoleCurrentFontEx);
+
+
+void CVirtualConsole::SetConsoleFontSizeTo(int inSizeX, int inSizeY)
+{
+	PGetCurrentConsoleFontEx GetCurrentConsoleFontEx = (PGetCurrentConsoleFontEx)
+		GetProcAddress(GetModuleHandle(_T("kernel32.dll")), "GetCurrentConsoleFontEx");
+	PSetCurrentConsoleFontEx SetCurrentConsoleFontEx = (PSetCurrentConsoleFontEx)
+		GetProcAddress(GetModuleHandle(_T("kernel32.dll")), "SetCurrentConsoleFontEx");
+
+	if (GetCurrentConsoleFontEx && SetCurrentConsoleFontEx) // We have Vista
+	{
+		CONSOLE_FONT_INFOEX cfi = {sizeof(CONSOLE_FONT_INFOEX)};
+		//GetCurrentConsoleFontEx(GetStdHandle(STD_OUTPUT_HANDLE), FALSE, &cfi);
+		cfi.dwFontSize.X = inSizeX;
+		cfi.dwFontSize.Y = inSizeY;
+		//TODO: А Люциду кто ставить будет???
+		_tcscpy(cfi.FaceName, _T("Lucida Console"));
+		SetCurrentConsoleFontEx(hConOut()/*GetStdHandle(STD_OUTPUT_HANDLE)*/,
+			FALSE, &cfi);
+	}
+	else // We have other NT
+	{
+		const COLORREF DefaultColors[16] = 
+		{
+			0x00000000, 0x00800000, 0x00008000, 0x00808000,
+			0x00000080, 0x00800080, 0x00008080, 0x00c0c0c0, 
+			0x00808080,	0x00ff0000, 0x0000ff00, 0x00ffff00,
+			0x000000ff, 0x00ff00ff,	0x0000ffff, 0x00ffffff
+		};
+
+		CONSOLE_INFO ci = { sizeof(ci) };
+		int i;
+
+		// get current size/position settings rather than using defaults..
+		GetConsoleSizeInfo(&ci);
+
+		// set these to zero to keep current settings
+		ci.FontSize.X				= inSizeX;
+		ci.FontSize.Y				= inSizeY;
+		ci.FontFamily				= 0;//0x30;//FF_MODERN|FIXED_PITCH;//0x30;
+		ci.FontWeight				= 0;//0x400;
+		_tcscpy(ci.FaceName, _T("Lucida Console"));
+
+		ci.CursorSize				= 25;
+		ci.FullScreen				= FALSE;
+		ci.QuickEdit				= FALSE;
+		ci.AutoPosition				= 0x10000;
+		ci.InsertMode				= TRUE;
+		ci.ScreenColors				= MAKEWORD(0x7, 0x0);
+		ci.PopupColors				= MAKEWORD(0x5, 0xf);
+
+		ci.HistoryNoDup				= FALSE;
+		ci.HistoryBufferSize		= 50;
+		ci.NumberOfHistoryBuffers	= 4;
+
+		// color table
+		for(i = 0; i < 16; i++)
+			ci.ColorTable[i] = DefaultColors[i];
+
+		ci.CodePage					= GetConsoleOutputCP();//0;//0x352;
+		ci.Hwnd						= hConWnd;
+
+		*ci.ConsoleTitle = NULL;
+
+		//!!! чего-то не работает... а в
+        // F:\VCProject\FarPlugin\ConEmu\080703\ConEmu\setconsoleinfo.cpp
+		//вроде ок
+		SetConsoleInfo(&ci);
+	}
+}
+
+BOOL CVirtualConsole::isBufferHeight()
+{
+	if (!this)
+		return FALSE;
+
+	CSection SCON(&csCON);
+
+	BOOL lbScrollMode = FALSE;
+    CONSOLE_SCREEN_BUFFER_INFO inf; memset(&inf, 0, sizeof(inf));
+    GetConsoleScreenBufferInfo(hConOut(), &inf);
+    if (inf.dwSize.Y>(inf.srWindow.Bottom-inf.srWindow.Top+1))
+		lbScrollMode = TRUE;
+
+	return lbScrollMode;
 }

@@ -686,11 +686,14 @@ void CConEmuMain::SyncConsoleToWindow()
 	// Посчитать нужный размер консоли
 	RECT newCon = CalcRect(CER_CONSOLE, rcClient, CER_MAINCLIENT);
 
+	pVCon->SetConsoleSize(MakeCoord(newCon.right, newCon.bottom));
+
+	/*
 	// Посчитать нужный размер консоли
 	//COORD newConSize = ConsoleSizeFromWindow();
 	// Получить текущий размер консольного окна
     CONSOLE_SCREEN_BUFFER_INFO inf; memset(&inf, 0, sizeof(inf));
-    GetConsoleScreenBufferInfo(pVCon->hConOut(), &inf);
+    //GetConsoleScreenBufferInfo(pVCon->hConOut(), &inf);
 
 	// Если нужно менять - ...
 	if (newCon.right != (inf.srWindow.Right-inf.srWindow.Left+1) ||
@@ -700,6 +703,7 @@ void CConEmuMain::SyncConsoleToWindow()
 		if (pVCon)
 			pVCon->InitDC(false);
 	}
+	*/
 }
 
 void CConEmuMain::SyncNtvdm()
@@ -2123,7 +2127,7 @@ bool CConEmuMain::isPictureView()
 {
     bool lbRc = false;
     
-	if ((hPictureView && !IsWindow(hPictureView)) || !isFar()) {
+	if (hPictureView && (!IsWindow(hPictureView) || !isFar())) {
 		InvalidateAll();
 	    hPictureView = NULL;
 	}

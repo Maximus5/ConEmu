@@ -368,10 +368,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\setconsoleinfo.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\TabBar.cpp"
 				>
 			</File>

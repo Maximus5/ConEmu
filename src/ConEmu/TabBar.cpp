@@ -202,12 +202,11 @@ BOOL TabBarClass::IsAllowed()
 {
 	BOOL lbTabsAllowed = TRUE;
 	if (gConEmu.BufferHeight) {
-        CONSOLE_SCREEN_BUFFER_INFO inf; memset(&inf, 0, sizeof(inf));
 		CVirtualConsole* pCon = gConEmu.ActiveCon();
-		if (!pCon) return FALSE;
-        GetConsoleScreenBufferInfo(pCon->hConOut(), &inf);
-        if (inf.dwSize.Y>(inf.srWindow.Bottom-inf.srWindow.Top+1))
+		if (!pCon) 
 			lbTabsAllowed = FALSE;
+		else
+			lbTabsAllowed = !pCon->isBufferHeight();
 	}
 	return lbTabsAllowed;
 }

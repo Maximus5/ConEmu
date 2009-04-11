@@ -1,6 +1,50 @@
 #pragma once
 #include "kl_parts.h"
 
+// Undocumented console message
+#define WM_SETCONSOLEINFO			(WM_USER+201)
+
+#pragma pack(push, 1)
+
+//
+//	Structure to send console via WM_SETCONSOLEINFO
+//
+typedef struct _CONSOLE_INFO
+{
+	ULONG		Length;
+	COORD		ScreenBufferSize;
+	COORD		WindowSize;
+	ULONG		WindowPosX;
+	ULONG		WindowPosY;
+
+	COORD		FontSize;
+	ULONG		FontFamily;
+	ULONG		FontWeight;
+	WCHAR		FaceName[32];
+
+	ULONG		CursorSize;
+	ULONG		FullScreen;
+	ULONG		QuickEdit;
+	ULONG		AutoPosition;
+	ULONG		InsertMode;
+	
+	USHORT		ScreenColors;
+	USHORT		PopupColors;
+	ULONG		HistoryNoDup;
+	ULONG		HistoryBufferSize;
+	ULONG		NumberOfHistoryBuffers;
+	
+	COLORREF	ColorTable[16];
+
+	ULONG		CodePage;
+	HWND		Hwnd;
+
+	WCHAR		ConsoleTitle[0x100];
+
+} CONSOLE_INFO;
+
+#pragma pack(pop)
+
 class CVirtualConsole
 {
 public:
@@ -48,7 +92,7 @@ public:
 	static CVirtualConsole* Create();
 
 	bool InitDC(bool abNoDc, bool abNoConSection=false);
-	void InitHandlers();
+	void InitHandlers(BOOL abCreated);
 	void DumpConsole();
 	bool Update(bool isForce = false, HDC *ahDc=NULL);
 	void SelectFont(HFONT hNew);
@@ -59,16 +103,17 @@ public:
 	void BlitPictureTo(int inX, int inY, int inWidth, int inHeight);
 	bool CheckSelection(const CONSOLE_SELECTION_INFO& select, SHORT row, SHORT col);
 	bool GetCharAttr(TCHAR ch, WORD atr, TCHAR& rch, BYTE& foreColorNum, BYTE& backColorNum);
-	void SetConsoleSize(const COORD& size);
+	void SetConsoleSize(COORD size);
 	bool CheckBufferSize();
 	void SendMouseEvent(UINT messg, WPARAM wParam, int x, int y);
 	void StopSignal();
 	void StopThread();
 	void Paint();
 	void UpdateInfo();
+	BOOL isBufferHeight();
 
 protected:
-	HANDLE  hConOut_;
+	HANDLE  mh_ConOut; BOOL mb_ConHandleCreated;
 	i64 m_LastMaxReadCnt; DWORD m_LastMaxReadTick;
 	enum _PartType{
 		pNull,  // конец строки/последний, неотображаемый элемент
@@ -125,4 +170,8 @@ protected:
 	CRITICAL_SECTION csDC, csCON; //DWORD ncsTDC, ncsTCON;
 	int mn_BackColorIdx; //==0
 	void Box(LPCTSTR szText);
+	void SetConsoleSizeInt(COORD size);
+	void GetConsoleSizeInfo(CONSOLE_INFO *pci);
+	BOOL SetConsoleInfo(CONSOLE_INFO *pci);
+	void SetConsoleFontSizeTo(int inSizeX, int inSizeY);
 };
