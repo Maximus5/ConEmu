@@ -10,13 +10,12 @@ WNDPROC _defaultTabProc = NULL;
 TabBarClass::TabBarClass()
 {
 	_active = false;
-	_hwndTab = NULL;
 	_tabHeight = NULL; memset(&m_Margins, 0, sizeof(m_Margins));
 	_titleShouldChange = false;
 	_prevTab = -1;
 	mb_ChangeAllowed = FALSE;
 	mb_Enabled = TRUE;
-	mh_ToolbarParent = NULL; mh_Toolbar = NULL;
+	mh_ConmanToolbar = NULL; mh_Tabbar = NULL; mh_Rebar = NULL; mn_LastToolbarWidth = 0;
 	//GetConsolesTitles = NULL;
 	//ActivateConsole = NULL;
 	ConMan_KeyAction = NULL;
@@ -24,9 +23,9 @@ TabBarClass::TabBarClass()
 
 void TabBarClass::Enable(BOOL abEnabled)
 {
-	if (_hwndTab && mb_Enabled!=abEnabled)
+	if (mh_Tabbar && mb_Enabled!=abEnabled)
 	{
-		EnableWindow(_hwndTab, abEnabled);
+		//EnableWindow(mh_Tabbar, abEnabled);
 		mb_Enabled = abEnabled;
 	}
 }
@@ -103,17 +102,17 @@ void TabBarClass::AddTab(wchar_t* text, int i)
 	tie.iImage = -1; 
 	tie.pszText = text ;
 
-	int nCurCount = TabCtrl_GetItemCount(_hwndTab);
+	int nCurCount = TabCtrl_GetItemCount(mh_Tabbar);
 	if (i>=nCurCount)
-		TabCtrl_InsertItem(_hwndTab, i, &tie);
+		TabCtrl_InsertItem(mh_Tabbar, i, &tie);
 	else
-		TabCtrl_SetItem(_hwndTab, i, &tie);
+		TabCtrl_SetItem(mh_Tabbar, i, &tie);
 }
 
 void TabBarClass::SelectTab(int i)
 {
     mb_ChangeAllowed = TRUE;
-	TabCtrl_SetCurSel(_hwndTab, i);
+	TabCtrl_SetCurSel(mh_Tabbar, i);
 	mb_ChangeAllowed = FALSE;
 }
 
@@ -190,7 +189,7 @@ bool TabBarClass::IsActive()
 
 bool TabBarClass::IsShown()
 {
-	return _active && IsWindowVisible(_hwndTab);
+	return _active && IsWindowVisible(mh_Tabbar);
 }
 
 /*int TabBarClass::Height()
@@ -213,8 +212,9 @@ BOOL TabBarClass::IsAllowed()
 
 void TabBarClass::Activate()
 {
-	if (!_hwndTab) {
-		RECT rcClient; 
+	if (!mh_Rebar) {
+		CreateRebar();
+		/*RECT rcClient; 
 		GetClientRect(ghWnd, &rcClient); 
 		InitCommonControls(); 
 		DWORD nPlacement = TCS_SINGLELINE;
@@ -233,7 +233,7 @@ void TabBarClass::Activate()
 
 		//if (gConEmu.mh_ConMan) // mh_ConMan может быть еще не инициализирован!
 		if (gSet.isConMan)
-			CreateToolbar();
+			CreateToolbar();*/
 	}
 
 	_active = true;
@@ -255,14 +255,14 @@ void TabBarClass::Update(ConEmuTab* tabs, int tabsCount)
 	{
 		return;
 	}
-	
+
 #ifdef MSGLOGGER
 	WCHAR szDbg[128]; swprintf(szDbg, L"TabBarClass::Update(%i)\n", tabsCount);
 	OutputDebugStringW(szDbg);
 #endif
 
 	int i;
-	//TabCtrl_DeleteAllItems(_hwndTab);
+	//TabCtrl_DeleteAllItems(mh_Tabbar);
 	for (i = 0; i < tabsCount; i++)
 	{
 		// get file name
@@ -313,9 +313,9 @@ void TabBarClass::Update(ConEmuTab* tabs, int tabsCount)
 	}
 	
 	// удалить лишние закладки
-	int nCurCount = TabCtrl_GetItemCount(_hwndTab);
+	int nCurCount = TabCtrl_GetItemCount(mh_Tabbar);
 	for (i=tabsCount; i<nCurCount; i++)
-		TabCtrl_DeleteItem(_hwndTab, i);
+		TabCtrl_DeleteItem(mh_Tabbar, i);
 
 	if (tabsCount) {
 		int ncur = 0;
@@ -333,21 +333,28 @@ void TabBarClass::Update(ConEmuTab* tabs, int tabsCount)
 		// Автоскрытие табов (все редакторы/вьюверы закрыты)
 		Deactivate();
 	} else
+	if (mh_Rebar) {
+		RECT rcWnd; GetWindowRect(mh_Rebar, &rcWnd);
+		m_Margins.top = rcWnd.bottom - rcWnd.top;
+		m_Margins.left = 0;
+		m_Margins.right = 0;
+		m_Margins.bottom = 0;
+	} else
 	if (_tabHeight == NULL)
 	{
 		RECT rcClient, rcWnd;
 		GetClientRect(ghWnd, &rcClient); 
 		rcWnd = rcClient;
-		TabCtrl_AdjustRect(_hwndTab, FALSE, &rcClient);
+		TabCtrl_AdjustRect(mh_Tabbar, FALSE, &rcClient);
 		_tabHeight = rcClient.top;
 
 		m_Margins.top = rcClient.top;
-		if (gSet.isTabFrame)
+		/*if (gSet.isTabFrame)
 		{
 			m_Margins.left = rcClient.left;
 			m_Margins.right = rcWnd.right-rcClient.right;
 			m_Margins.bottom = rcWnd.bottom-rcClient.bottom;
-		}
+		}*/
 		gSet.UpdateMargins(m_Margins);
 
 		UpdatePosition();
@@ -365,20 +372,35 @@ void TabBarClass::UpdatePosition()
 	{
 		return;
 	}
-	RECT client, self;
-	GetClientRect(ghWnd, &client);
-	GetWindowRect(_hwndTab, &self);
+
 	
 	gConEmu.ReSize();
+
+	RECT client, self;
+	GetClientRect(ghWnd, &client);
+	GetWindowRect(mh_Tabbar, &self);
 	
 	if (_tabHeight>0) {
-		ShowWindow(_hwndTab, SW_SHOW);
-		if (gSet.isTabFrame)
-			MoveWindow(_hwndTab, 0, 0, client.right, client.bottom, 1);
-		else
-			MoveWindow(_hwndTab, 0, 0, client.right, _tabHeight, 1);
+		if (mh_Rebar) {
+			if (!IsWindowVisible(mh_Rebar))
+				ShowWindow(mh_Rebar, SW_SHOW);
+			MoveWindow(mh_Rebar, 0, 0, client.right, _tabHeight, 1);
+		} else {
+			if (!IsWindowVisible(mh_Tabbar))
+				ShowWindow(mh_Tabbar, SW_SHOW);
+			if (gSet.isTabFrame)
+				MoveWindow(mh_Tabbar, 0, 0, client.right, client.bottom, 1);
+			else
+				MoveWindow(mh_Tabbar, 0, 0, client.right, _tabHeight, 1);
+		}
 	} else {
-		ShowWindow(_hwndTab, SW_HIDE);
+		if (mh_Rebar) {
+			if (IsWindowVisible(mh_Rebar))
+				ShowWindow(mh_Rebar, SW_HIDE);
+		} else {
+			if (IsWindowVisible(mh_Tabbar))
+				ShowWindow(mh_Tabbar, SW_HIDE);
+		}
 	}
 }
 
@@ -390,11 +412,14 @@ void TabBarClass::UpdateWidth()
 	}
 	RECT client, self;
 	GetClientRect(ghWnd, &client);
-	GetWindowRect(_hwndTab, &self);
+	GetWindowRect(mh_Tabbar, &self);
+	if (mh_Rebar) {
+		MoveWindow(mh_Rebar, 0, 0, client.right, _tabHeight, 1);
+	} else
 	if (gSet.isTabFrame) {
-		MoveWindow(_hwndTab, 0, 0, client.right, client.bottom, 1);
+		MoveWindow(mh_Tabbar, 0, 0, client.right, client.bottom, 1);
 	} else {
-		MoveWindow(_hwndTab, 0, 0, client.right, _tabHeight, 1);
+		MoveWindow(mh_Tabbar, 0, 0, client.right, _tabHeight, 1);
 	}
 
 	UpdateToolbarPos();
@@ -402,18 +427,32 @@ void TabBarClass::UpdateWidth()
 
 void TabBarClass::UpdateToolbarPos()
 {
-	if (mh_ToolbarParent) {
-		//SetWindowPos(mh_ToolbarParent, HWND_TOP, 0,0,0,0, SWP_NOSIZE|SWP_NOMOVE);
-		   SIZE sz; 
-		   SendMessage(mh_Toolbar, TB_GETMAXSIZE, 0, (LPARAM)&sz);
-		   RECT rcClient;
-		   GetWindowRect(_hwndTab, &rcClient);
-		   MapWindowPoints(NULL, ghWnd, (LPPOINT)&rcClient, 2);
-		   //int nbWidth = SendMessage(mh_Toolbar, TB_GETBUTTONSIZE, 0, 0) & 0xFFFF;
-		   //int nHidden = 10;
-		   SetWindowPos(mh_ToolbarParent, HWND_TOP, 
+	if (mh_ConmanToolbar) {
+		SIZE sz; 
+		SendMessage(mh_ConmanToolbar, TB_GETMAXSIZE, 0, (LPARAM)&sz);
+		if (mh_Rebar) {
+			if (sz.cx > mn_LastToolbarWidth)
+			{
+				REBARBANDINFO rbBand={80}; // не используем size, т.к. приходит "новый" размер из висты и в XP обламываемся
+				rbBand.fMask  = RBBIM_SIZE | RBBIM_CHILDSIZE;
+				// Set values unique to the band with the toolbar.
+				rbBand.cx = rbBand.cxMinChild = rbBand.cxIdeal = mn_LastToolbarWidth = sz.cx;
+				rbBand.cyMinChild = sz.cy;
+
+				// Add the band that has the toolbar.
+				if (SendMessage(mh_Rebar, RB_SETBANDINFO, 1, (LPARAM)&rbBand)) {
+				}
+			}
+		} else {
+			RECT rcClient;
+			GetWindowRect(mh_Tabbar, &rcClient);
+			MapWindowPoints(NULL, ghWnd, (LPPOINT)&rcClient, 2);
+			//int nbWidth = SendMessage(mh_ConmanToolbar, TB_GETBUTTONSIZE, 0, 0) & 0xFFFF;
+			//int nHidden = 10;
+			/*SetWindowPos(mh_ConmanToolbarParent, HWND_TOP, 
 			   rcClient.right - sz.cx - 2, 0,
-			   sz.cx, sz.cy, 0);
+			   sz.cx, sz.cy, 0);*/
+		}
 	}
 }
 
@@ -430,13 +469,13 @@ bool TabBarClass::OnNotify(LPNMHDR nmhdr)
 		//if (mb_ChangeAllowed) {
 		//	return FALSE;
 		//}
-		_prevTab = TabCtrl_GetCurSel(_hwndTab); 
+		_prevTab = TabCtrl_GetCurSel(mh_Tabbar); 
 		return FALSE; // разрешаем
 	}
 
 	if (nmhdr->code == TCN_SELCHANGE)
 	{
-		int lnNewTab = TabCtrl_GetCurSel(_hwndTab);
+		int lnNewTab = TabCtrl_GetCurSel(mh_Tabbar);
 		//_tcscpy(_lastTitle, gConEmu.Title);
 		
 		if (_prevTab>=0) {
@@ -453,7 +492,76 @@ bool TabBarClass::OnNotify(LPNMHDR nmhdr)
 		_titleShouldChange = true;
 		return true;
 	} 
+
+	if (nmhdr->code == TBN_GETINFOTIP)
+	{
+		if (!gConEmu.isConman() || !gConEmu.ConMan_ProcessCommand)
+			return false;
+		LPNMTBGETINFOTIP pDisp = (LPNMTBGETINFOTIP)nmhdr;
+		if (pDisp->iItem>=1 && pDisp->iItem<=MAX_CONSOLE_COUNT) {
+			if (!pDisp->pszText || !pDisp->cchTextMax) return false;
+			FarTitle title; memset(&title, 0, sizeof(title));
+			if (gConEmu.ConMan_ProcessCommand(44/*GET_TITLEBYNUM*/,pDisp->iItem,(int)&title)) {
+				lstrcpyn(pDisp->pszText, title.title, pDisp->cchTextMax);
+			}
+		} else
+		if (pDisp->iItem==13) {
+			lstrcpyn(pDisp->pszText, _T("Create new console"), pDisp->cchTextMax);
+		} else
+		if (pDisp->iItem==14) {
+			lstrcpyn(pDisp->pszText, _T("Alternative console"), pDisp->cchTextMax);
+		}
+		return true;
+	}
+
 	return false;
+}
+
+void TabBarClass::OnCommand(WPARAM wParam, LPARAM lParam)
+{
+	if (mh_ConmanToolbar != (HWND)lParam)
+		return;
+	if (!gConEmu.isConman() || !gConEmu.mh_ConMan || gConEmu.mh_ConMan==INVALID_HANDLE_VALUE)
+		return;
+
+	//if (!TabBar.GetConsolesTitles)
+	//	TabBar.GetConsolesTitles =
+	//		(GetConsolesTitles_t*)GetProcAddress( gConEmu.mh_Infis, "GetConsolesTitles" );
+	//if (!TabBar.ActivateConsole)
+	//	TabBar.ActivateConsole =
+	//		(ActivateConsole_t*)GetProcAddress( gConEmu.mh_Infis, "ActivateConsole" );
+	if (!TabBar.ConMan_KeyAction)
+		TabBar.ConMan_KeyAction = (ConMan_KeyAction_t)GetProcAddress( gConEmu.mh_ConMan, "_KeyAction_" );
+	if (!TabBar.ConMan_KeyAction)
+		return;
+
+	RegShortcut cmd; memset(&cmd, 0, sizeof(cmd));
+	if (wParam>=1 && wParam<=MAX_CONSOLE_COUNT)
+	{
+		// активировать консоль №
+		cmd.action = wParam - 1;
+		//gConEmu.mb_IgnoreSizeChange = true;
+		//CVirtualConsole* pCon = gConEmu.ActiveCon();
+		//if (pCon) {
+		//	COORD sz = {pCon->TextWidth, pCon->TextHeight};
+			TabBar.ConMan_KeyAction ( &cmd );
+			//// Установить размер консоли!
+			//gConEmu.SetConsoleWindowSize(sz, false);
+			//gConEmu.mb_IgnoreSizeChange = false;
+		//}
+	} else
+	if (wParam==13)
+	{
+		// Создать новую консоль
+		cmd.action = 20;
+		TabBar.ConMan_KeyAction ( &cmd );
+	} else
+	if (wParam==14)
+	{
+		// переключение между альтернативной консолью
+		cmd.action = 15;
+		TabBar.ConMan_KeyAction ( &cmd );
+	}
 }
 
 void TabBarClass::OnMouse(int message, int x, int y)
@@ -469,7 +577,7 @@ void TabBarClass::OnMouse(int message, int x, int y)
 		TCHITTESTINFO htInfo;
 		htInfo.pt.x = x;
 		htInfo.pt.y = y;
-		int iPage = TabCtrl_HitTest(_hwndTab, &htInfo);
+		int iPage = TabCtrl_HitTest(mh_Tabbar, &htInfo);
 		if (iPage != -1)
 		{
 			FarSendChangeTab(iPage);
@@ -483,12 +591,12 @@ void TabBarClass::OnMouse(int message, int x, int y)
 void TabBarClass::Invalidate()
 {
 	if (TabBar.IsActive())
-		InvalidateRect(_hwndTab, NULL, TRUE);
+		InvalidateRect(mh_Rebar, NULL, TRUE);
 }
 
 void TabBarClass::OnConman(int nConNumber, BOOL bAlternative)
 {
-	if (!mh_Toolbar) return;
+	if (!mh_ConmanToolbar) return;
 
 	if (gConEmu.ConMan_ProcessCommand) {
 		int nGrpCount = gConEmu.ConMan_ProcessCommand(11/*GET_STATUS*/,0,0);
@@ -502,24 +610,24 @@ void TabBarClass::OnConman(int nConNumber, BOOL bAlternative)
 			}
 		}
 
-		SendMessage(mh_Toolbar, WM_SETREDRAW, 0, 0);
+		SendMessage(mh_ConmanToolbar, WM_SETREDRAW, 0, 0);
 		for (int i=1; i<=MAX_CONSOLE_COUNT; i++) {
-			SendMessage(mh_Toolbar, TB_HIDEBUTTON, i, !bPresent[i-1]);
+			SendMessage(mh_ConmanToolbar, TB_HIDEBUTTON, i, !bPresent[i-1]);
 		}
 
 		UpdateToolbarPos();
-		SendMessage(mh_Toolbar, WM_SETREDRAW, 1, 0);
+		SendMessage(mh_ConmanToolbar, WM_SETREDRAW, 1, 0);
 
 		nConNumber = gConEmu.ConMan_ProcessCommand(46/*GET_ACTIVENUM*/,0,0);
 	}
 	
 	if (nConNumber>=1 && nConNumber<=MAX_CONSOLE_COUNT) {
-		SendMessage(mh_Toolbar, TB_CHECKBUTTON, nConNumber, 1);
+		SendMessage(mh_ConmanToolbar, TB_CHECKBUTTON, nConNumber, 1);
 	} else {
 		for (int i=1; i<=MAX_CONSOLE_COUNT; i++)
-			SendMessage(mh_Toolbar, TB_CHECKBUTTON, i, 0);
+			SendMessage(mh_ConmanToolbar, TB_CHECKBUTTON, i, 0);
 	}
-	SendMessage(mh_Toolbar, TB_CHECKBUTTON, 14, bAlternative);
+	SendMessage(mh_ConmanToolbar, TB_CHECKBUTTON, 14, bAlternative);
 }
 
 LRESULT TabBarClass::ToolWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
@@ -601,32 +709,18 @@ LRESULT TabBarClass::ToolWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lP
 	return DefWindowProc(hWnd, messg, wParam, lParam);
 }
 
-void TabBarClass::CreateToolbar()
+HWND TabBarClass::CreateToolbar()
 {
-	if (!_hwndTab)
-		return; // нет табов - нет и тулбара
-	if (mh_Toolbar)
-		return; // Уже создали
-	
-	WNDCLASS wc = {CS_DBLCLKS, (WNDPROC)TabBarClass::ToolWndProc, 0, 0, 
-		    g_hInstance, 0, LoadCursor(NULL, IDC_ARROW), 
-		    (HBRUSH)(COLOR_BTNFACE+1), 
-		    NULL, _T("VirtualConsoleClassConMan")};
-    if (!RegisterClass(&wc))
-        return;
+	if (!mh_Rebar)
+		return NULL; // нет табов - нет и тулбара
+	if (mh_ConmanToolbar)
+		return mh_ConmanToolbar; // Уже создали
+
+	/*mh_ConmanToolbarP = CreateWindow(_T("VirtualConsoleClassBar"), _T(""), 
+			WS_VISIBLE|WS_CHILD, 0,0,340,22, ghWnd, 0, 0, 0);
+	if (!mh_ConmanToolbarP) return NULL;*/
 
 	
-	mh_ToolbarParent = CreateWindow(_T("VirtualConsoleClassConMan"), _T(""), 
-			WS_VISIBLE|WS_CHILD, 300,0,340,22, ghWnd, 0, 0, 0);
-	if (!mh_ToolbarParent) return;
-	
-   INITCOMMONCONTROLSEX icex;
-    
-// Ensure that the common control DLL is loaded. 
-   icex.dwSize = sizeof(INITCOMMONCONTROLSEX);
-   icex.dwICC  = ICC_BAR_CLASSES;
-   InitCommonControlsEx(&icex);
- 
 // Create a toolbar. 
 	TBBUTTON buttons[16] = {
 		{0, 1, TBSTATE_ENABLED, TBSTYLE_CHECKGROUP},
@@ -647,32 +741,196 @@ void TabBarClass::CreateToolbar()
 		{13, 14, TBSTATE_ENABLED, TBSTYLE_CHECK}
 		};
 
-	mh_Toolbar = CreateWindowEx(0, TOOLBARCLASSNAME, NULL, 
-        WS_CHILD|WS_VISIBLE|TBSTYLE_FLAT|CCS_NODIVIDER|TBSTYLE_TOOLTIPS, 0, 0, 0, 0, mh_ToolbarParent, 
+	mh_ConmanToolbar = CreateWindowEx(0, TOOLBARCLASSNAME, NULL, 
+        WS_CHILD|WS_VISIBLE|TBSTYLE_FLAT|CCS_NOPARENTALIGN|CCS_NORESIZE|CCS_NODIVIDER|TBSTYLE_TOOLTIPS|TBSTYLE_TRANSPARENT, 0, 0, 0, 0, mh_Rebar, 
         NULL, NULL, NULL); 
  
-   SendMessage(mh_Toolbar, TB_BUTTONSTRUCTSIZE, (WPARAM) sizeof(TBBUTTON), 0); 
-   SendMessage(mh_Toolbar, TB_SETBITMAPSIZE, 0, MAKELONG(16,16)); 
+   SendMessage(mh_ConmanToolbar, TB_BUTTONSTRUCTSIZE, (WPARAM) sizeof(TBBUTTON), 0); 
+   SendMessage(mh_ConmanToolbar, TB_SETBITMAPSIZE, 0, MAKELONG(16,16)); 
    TBADDBITMAP bmp = {g_hInstance,IDB_CONMAN1};
-   int nFirst = SendMessage(mh_Toolbar, TB_ADDBITMAP, 14, (LPARAM)&bmp);
+   int nFirst = SendMessage(mh_ConmanToolbar, TB_ADDBITMAP, 14, (LPARAM)&bmp);
    //buttons
-   SendMessage(mh_Toolbar, TB_ADDBUTTONS, 16, (LPARAM)&buttons);
+   SendMessage(mh_ConmanToolbar, TB_ADDBUTTONS, 16, (LPARAM)&buttons);
 
-   SendMessage(mh_Toolbar, TB_AUTOSIZE, 0, 0); 
+   SendMessage(mh_ConmanToolbar, TB_AUTOSIZE, 0, 0); 
    SIZE sz; 
-   SendMessage(mh_Toolbar, TB_GETMAXSIZE, 0, (LPARAM)&sz);
-   RECT rcClient;
-   GetWindowRect(_hwndTab, &rcClient);
+   SendMessage(mh_ConmanToolbar, TB_GETMAXSIZE, 0, (LPARAM)&sz);
+   /*RECT rcClient;
+   GetWindowRect(mh_Tabbar, &rcClient);
    MapWindowPoints(NULL, ghWnd, (LPPOINT)&rcClient, 2);
-   //int nbWidth = SendMessage(mh_Toolbar, TB_GETBUTTONSIZE, 0, 0) & 0xFFFF;
+   //int nbWidth = SendMessage(mh_ConmanToolbar, TB_GETBUTTONSIZE, 0, 0) & 0xFFFF;
    //int nHidden = 10;
-   SetWindowPos(mh_ToolbarParent, HWND_TOP, 
+   SetWindowPos(mh_ConmanToolbarParent, HWND_TOP, 
 	   rcClient.right - sz.cx - 2, 0,
-	   sz.cx, sz.cy, 0);
+	   sz.cx, sz.cy, 0);*/
 
    if (gConEmu.ConMan_ProcessCommand)
 	   OnConman(0, FALSE);
 
    //ShowWindow(hwndTB, SW_SHOW); 
-   return;
+   return mh_ConmanToolbar;
+}
+
+HWND TabBarClass::CreateTabbar()
+{
+	if (!mh_Rebar)
+		return NULL; // нет табов - нет и тулбара
+	if (mh_Tabbar)
+		return mh_Tabbar; // Уже создали
+	
+	/*mh_TabbarP = CreateWindow(_T("VirtualConsoleClassBar"), _T(""), 
+			WS_VISIBLE|WS_CHILD, 0,0,340,22, ghWnd, 0, 0, 0);
+	if (!mh_TabbarP) return NULL;*/
+
+		RECT rcClient;
+		GetClientRect(ghWnd, &rcClient); 
+		DWORD nPlacement = TCS_SINGLELINE|WS_VISIBLE|TCS_BUTTONS;
+		mh_Tabbar = CreateWindow(WC_TABCONTROL, NULL, nPlacement | WS_CHILD | WS_CLIPSIBLINGS | TCS_FOCUSNEVER, 0, 0, 
+			rcClient.right, 0, mh_Rebar, NULL, g_hInstance, NULL);
+		if (mh_Tabbar == NULL)
+		{ 
+			return NULL; 
+		}
+		HFONT hFont = CreateFont(TAB_FONT_HEIGTH, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, ANSI_CHARSET, OUT_DEFAULT_PRECIS, 
+			CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_SWISS, TAB_FONT_FACE);
+		SendMessage(mh_Tabbar, WM_SETFONT, WPARAM (hFont), TRUE);
+		
+		#pragma warning (disable : 4312)
+		_defaultTabProc = (WNDPROC)SetWindowLongPtr(mh_Tabbar, GWL_WNDPROC, (LONG_PTR)TabProc);
+
+
+ 
+// Create a toolbar. 
+	/*
+	TBBUTTON buttons[3] = {
+		{0, 1001, TBSTATE_ENABLED|TBSTATE_CHECKED|TBSTATE_MARKED, TBSTYLE_CHECKGROUP},
+		{0, 1002, TBSTATE_ENABLED, TBSTYLE_CHECKGROUP},
+		{0, 0, TBSTATE_ENABLED, BTNS_SEP}
+		};
+
+	mh_Tabbar = CreateWindowEx(0, TOOLBARCLASSNAME, NULL, 
+        WS_CHILD|WS_VISIBLE|CCS_NOPARENTALIGN|CCS_NORESIZE|CCS_NODIVIDER|TBSTYLE_TOOLTIPS|TBSTYLE_LIST, 0, 0, 0, 0, mh_Rebar, 
+        NULL, NULL, NULL); 
+ 
+	HFONT hFont = CreateFont(TAB_FONT_HEIGTH, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, ANSI_CHARSET, OUT_DEFAULT_PRECIS, 
+		CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_SWISS, TAB_FONT_FACE);
+	SendMessage(mh_Tabbar, WM_SETFONT, WPARAM (hFont), TRUE);
+
+   SendMessage(mh_Tabbar, TB_BUTTONSTRUCTSIZE, (WPARAM) sizeof(TBBUTTON), 0); 
+   SendMessage(mh_Tabbar, TB_SETEXTENDEDSTYLE, 0, TBSTYLE_EX_HIDECLIPPEDBUTTONS);
+
+   SendMessage(mh_Tabbar, TB_SETBITMAPSIZE, 0, MAKELONG(16,16)); 
+   SendMessage(mh_Tabbar, TB_SETBUTTONSIZE, 0, MAKELONG(200,16));
+   //SendMessage(mh_Tabbar, TB_SETPADDING, 0, MAKELONG(4,4));
+   //SendMessage(mh_Tabbar, TB_SETINDENT, 4, 0);
+   SendMessage(mh_Tabbar, TB_SETBUTTONWIDTH, 0, MAKELONG(100,200));
+   DWORD nStyle = DT_NOPREFIX|DT_CENTER|DT_VCENTER|DT_PATH_ELLIPSIS;
+   SendMessage(mh_Tabbar, TB_SETDRAWTEXTFLAGS, DT_CENTER, DT_CENTER);
+   TBMETRICS tbm = {sizeof(TBMETRICS)};
+   tbm.dwMask = TBMF_PAD|TBMF_BUTTONSPACING;
+   tbm.cxPad = 4; tbm.cyPad = 4;
+   tbm.cxButtonSpacing = 6; tbm.cyButtonSpacing = 4;
+   SendMessage(mh_Tabbar, TB_SETMETRICS, 0, (LPARAM)&tbm);
+
+
+
+   
+
+   buttons[0].iString = (INT_PTR)L"Console";
+   buttons[0].fsStyle = BTNS_CHECKGROUP|BTNS_AUTOSIZE|BTNS_NOPREFIX|BTNS_SHOWTEXT;
+   buttons[0].iBitmap = I_IMAGENONE;
+   buttons[1].iString = (INT_PTR)L"Panels";
+   buttons[1].fsStyle = BTNS_CHECKGROUP|BTNS_AUTOSIZE|BTNS_NOPREFIX|BTNS_SHOWTEXT;
+   buttons[1].iBitmap = I_IMAGENONE;
+
+   SendMessage(mh_Tabbar, TB_ADDBUTTONS, 2, (LPARAM)&buttons);
+
+   SendMessage(mh_Tabbar, TB_AUTOSIZE, 0, 0); */
+
+   return mh_Tabbar;
+}
+
+void TabBarClass::CreateRebar()
+{
+	INITCOMMONCONTROLSEX icex;
+	icex.dwSize = sizeof(INITCOMMONCONTROLSEX);
+	icex.dwICC   = ICC_COOL_CLASSES|ICC_BAR_CLASSES;
+	InitCommonControlsEx(&icex);
+
+
+	RECT rcWnd; GetClientRect(ghWnd, &rcWnd);
+
+
+	if (NULL == (mh_Rebar = CreateWindowEx(WS_EX_TOOLWINDOW, REBARCLASSNAME, NULL,
+				WS_VISIBLE |WS_CHILD|WS_VISIBLE|WS_CLIPSIBLINGS|WS_CLIPCHILDREN|
+				RBS_FIXEDORDER|RBS_AUTOSIZE|/*RBS_VARHEIGHT|*/CCS_NODIVIDER,
+				0,0,rcWnd.right,16, ghWnd, NULL, g_hInstance, NULL)))
+		return;
+
+	REBARINFO     rbi={sizeof(REBARINFO)};
+	REBARBANDINFO rbBand={80}; // не используем size, т.к. приходит "новый" размер из висты и в XP обламываемся
+
+	if(!SendMessage(mh_Rebar, RB_SETBARINFO, 0, (LPARAM)&rbi)) {
+		DisplayLastError(_T("Can't initialize rebar!"));
+		DestroyWindow(mh_Rebar);
+		mh_Rebar = NULL;
+		return;
+	}
+
+	rbBand.fMask  = RBBIM_SIZE | RBBIM_CHILD | RBBIM_CHILDSIZE | RBBIM_ID | RBBIM_STYLE | RBBIM_COLORS;
+	rbBand.fStyle = RBBS_CHILDEDGE | RBBS_FIXEDSIZE;
+	rbBand.clrBack = GetSysColor(COLOR_BTNFACE);
+	rbBand.clrFore = GetSysColor(COLOR_BTNTEXT);
+
+
+	SendMessage(mh_Rebar, RB_SETBKCOLOR, 0, GetSysColor(COLOR_BTNFACE));
+	SendMessage(mh_Rebar, RB_SETWINDOWTHEME, 0, (LPARAM)L" ");
+
+
+	CreateTabbar();
+	CreateToolbar();
+
+	SIZE sz = {0,0};
+	if (mh_ConmanToolbar)
+		SendMessage(mh_ConmanToolbar, TB_GETMAXSIZE, 0, (LPARAM)&sz);
+
+
+	if (mh_Tabbar)
+	{
+		// Set values unique to the band with the toolbar.
+		rbBand.wID          = 1;
+		rbBand.hwndChild  = mh_Tabbar;
+		rbBand.cxMinChild = 100;
+		rbBand.cx = rbBand.cxIdeal = rcWnd.right - sz.cx - 80;
+		rbBand.cyMinChild = sz.cy;
+
+		if (!SendMessage(mh_Rebar, RB_INSERTBAND, (WPARAM)-1, (LPARAM)&rbBand)) {
+			DisplayLastError(_T("Can't initialize rebar (tabbar)"));
+		}
+	}
+
+
+	if (mh_ConmanToolbar)
+	{
+		// Set values unique to the band with the toolbar.
+		rbBand.wID        = 2;
+		rbBand.hwndChild  = mh_ConmanToolbar;
+		rbBand.cx = rbBand.cxMinChild = rbBand.cxIdeal = mn_LastToolbarWidth = sz.cx;
+		rbBand.cyMinChild = sz.cy;
+
+		// Add the band that has the toolbar.
+		if (!SendMessage(mh_Rebar, RB_INSERTBAND, (WPARAM)-1, (LPARAM)&rbBand)) {
+			DisplayLastError(_T("Can't initialize rebar (toolbar)"));
+		}
+	}
+
+	RECT rc;
+	GetWindowRect(mh_Rebar, &rc);
+
+
+	//GetWindowRect(mh_Rebar, &rc);
+	m_Margins = MakeRect(0,rc.bottom-rc.top,0,0);
+	gSet.UpdateMargins(m_Margins);
+
+	//_hwndTab = mh_Rebar; // пока...
 }

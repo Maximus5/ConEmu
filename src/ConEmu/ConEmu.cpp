@@ -3244,6 +3244,13 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
         break;
     }
 
+	case WM_COMMAND:
+	{
+		TabBar.OnCommand(wParam, lParam);
+		result = 0;
+		break;
+	}
+
     case WM_COPYDATA:
     {
         PCOPYDATASTRUCT cds = PCOPYDATASTRUCT(lParam);

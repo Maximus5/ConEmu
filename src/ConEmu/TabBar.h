@@ -4,7 +4,7 @@ class TabBarClass
 {
 private:
 	bool _active;
-	HWND _hwndTab;
+	//HWND _hwndTab;
 	int _tabHeight;
 	//TCHAR _lastTitle[MAX_PATH];
 	RECT m_Margins;
@@ -16,7 +16,8 @@ private:
 	//char FarTabShortcut(int tabIndex);
 	void FarSendChangeTab(int tabIndex);
 	static LRESULT CALLBACK ToolWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
-	HWND mh_ToolbarParent, mh_Toolbar;
+	HWND mh_Tabbar, mh_ConmanToolbar, mh_Rebar;
+	LONG mn_LastToolbarWidth;
 	//typedef BOOL _cdecl GetConsolesTitles_t( void* titles, DWORD* number );
 	//typedef BOOL _cdecl ActivateConsole_t( DWORD number );
 	//GetConsolesTitles_t* GetConsolesTitles;
@@ -54,13 +55,16 @@ public:
 	//int Height();
 	RECT GetMargins();
 	void Activate();
-	void CreateToolbar();
+	HWND CreateToolbar();
+	HWND CreateTabbar();
+	void CreateRebar();
 	void Deactivate();
 	void Update(ConEmuTab* tabs, int tabsCount);
 	void UpdatePosition();
 	void UpdateWidth();
 	void OnConman(int nConNumber, BOOL bAlternative);
 	bool OnNotify(LPNMHDR nmhdr);
+	void OnCommand(WPARAM wParam, LPARAM lParam);
 	void OnMouse(int message, int x, int y);
 };
 

@@ -1562,7 +1562,7 @@ void CVirtualConsole::SetConsoleSize(COORD size)
         }
         if (lbNeedChange) {
 			BOOL lbWS = FALSE; DWORD dwErr = 0;
-            MOVEWINDOW(hConWnd, rcConPos.left, rcConPos.top, 1, 1, 1);
+            //MOVEWINDOW(hConWnd, rcConPos.left, rcConPos.top, 1, 1, 1); -- попробуем не дергатьс€?
             SETCONSOLESCREENBUFFERSIZERET(h, size, lbWS);
 			GetConsoleScreenBufferInfo(h, &csbi);
 			if (csbi.dwSize.X != size.X || csbi.dwSize.Y != size.Y) {
@@ -1585,6 +1585,15 @@ void CVirtualConsole::SetConsoleSize(COORD size)
 			else if (csbi.dwSize.X != size.X || csbi.dwSize.Y != size.Y)
 				__asm int 3;
 			#endif
+			// »ногда, хз по какой причине, до консольного приложени€ не доходит правильный размер. дернем?
+			INPUT_RECORD r = {WINDOW_BUFFER_SIZE_EVENT};
+			r.Event.WindowBufferSizeEvent.dwSize = size;
+			DWORD dwWritten = 0;
+			if (!WriteConsoleInput(GetStdHandle(STD_INPUT_HANDLE), &r, 1, &dwWritten)) {
+				#ifdef _DEBUG
+				DisplayLastError(L"WindowBufferSizeEvent failed!");
+				#endif
+			}
 		} else {
 			#ifdef _DEBUG
 			lbNeedChange = lbNeedChange;
@@ -2142,64 +2151,77 @@ void CVirtualConsole::SendMouseEvent(UINT messg, WPARAM wParam, int x, int y)
 {
 	if (!this || !ghConWnd)
 		return;
-#ifdef NEWMOUSESTYLE
-	Assert ( gSet.LogFont.lfWidth && gSet.LogFont.lfHeight );
-	if (!gSet.LogFont.lfWidth | !gSet.LogFont.lfHeight)
-		return;
-	#pragma message("TODO: X координаты нам известны, так что можно бы более корректно позицию определ€ть...")
-	
-	INPUT_RECORD r; memset(&r, 0, sizeof(r));
-	r.EventType = MOUSE_EVENT;
-	r.Event.MouseEvent.dwMousePosition = MakeCoord(x/gSet.LogFont.lfWidth, y/gSet.LogFont.lfHeight);
-	
-	// Mouse Buttons
-	if (messg != WM_LBUTTONUP && (messg == WM_LBUTTONDOWN || messg == WM_LBUTTONDBLCLK || isPressed(VK_LBUTTON)))
-		r.Event.MouseEvent.dwButtonState |= FROM_LEFT_1ST_BUTTON_PRESSED;
-	if (messg != WM_RBUTTONUP && (messg == WM_RBUTTONDOWN || messg == WM_RBUTTONDBLCLK || isPressed(VK_RBUTTON)))
-		r.Event.MouseEvent.dwButtonState |= RIGHTMOST_BUTTON_PRESSED;
-	if (messg != WM_MBUTTONUP && (messg == WM_MBUTTONDOWN || messg == WM_MBUTTONDBLCLK || isPressed(VK_MBUTTON)))
-		r.Event.MouseEvent.dwButtonState |= FROM_LEFT_2ND_BUTTON_PRESSED;
 
-	// Key modifiers
-	if (GetKeyState(VK_CAPITAL) & 1)
-		r.Event.MouseEvent.dwControlKeyState |= CAPSLOCK_ON;
-	if (GetKeyState(VK_NUMLOCK) & 1)
-		r.Event.MouseEvent.dwControlKeyState |= NUMLOCK_ON;
-	if (GetKeyState(VK_SCROLL) & 1)
-		r.Event.MouseEvent.dwControlKeyState |= SCROLLLOCK_ON;
-	if (isPressed(VK_LMENU))
-		r.Event.MouseEvent.dwControlKeyState |= LEFT_ALT_PRESSED;
-	if (isPressed(VK_RMENU))
-		r.Event.MouseEvent.dwControlKeyState |= RIGHT_ALT_PRESSED;
-	if (isPressed(VK_LCONTROL))
-		r.Event.MouseEvent.dwControlKeyState |= LEFT_CTRL_PRESSED;
-	if (isPressed(VK_RCONTROL))
-		r.Event.MouseEvent.dwControlKeyState |= RIGHT_CTRL_PRESSED;
-	if (isPressed(VK_SHIFT))
-		r.Event.MouseEvent.dwControlKeyState |= SHIFT_PRESSED;
+	BOOL lbStdMode = FALSE;
+	if (gConEmu.BufferHeight == 0)
+		lbStdMode = TRUE;
 
-	if (messg == WM_LBUTTONDBLCLK || messg == WM_RBUTTONDBLCLK || messg == WM_MBUTTONDBLCLK)
-		r.Event.MouseEvent.dwEventFlags = DOUBLE_CLICK;
-	else if (messg == WM_MOUSEMOVE)
-		r.Event.MouseEvent.dwEventFlags = MOUSE_MOVED;
-	else if (messg == WM_MOUSEWHEEL) {
-		r.Event.MouseEvent.dwEventFlags = MOUSE_WHEELED;
-		r.Event.MouseEvent.dwButtonState |= (0xFFFF0000 & wParam);
-	} else if (messg == WM_MOUSEHWHEEL) {
-		r.Event.MouseEvent.dwEventFlags = 8/*MOUSE_HWHEELED*/;
-		r.Event.MouseEvent.dwButtonState |= (0xFFFF0000 & wParam);
+	if (lbStdMode)
+	{
+		Assert ( gSet.LogFont.lfWidth && gSet.LogFont.lfHeight );
+		if (!gSet.LogFont.lfWidth | !gSet.LogFont.lfHeight)
+			return;
+		#pragma message("TODO: X координаты нам известны, так что можно бы более корректно позицию определ€ть...")
+		
+		INPUT_RECORD r; memset(&r, 0, sizeof(r));
+		r.EventType = MOUSE_EVENT;
+		r.Event.MouseEvent.dwMousePosition = MakeCoord(x/gSet.LogFont.lfWidth, y/gSet.LogFont.lfHeight);
+		
+		// Mouse Buttons
+		if (messg != WM_LBUTTONUP && (messg == WM_LBUTTONDOWN || messg == WM_LBUTTONDBLCLK || isPressed(VK_LBUTTON)))
+			r.Event.MouseEvent.dwButtonState |= FROM_LEFT_1ST_BUTTON_PRESSED;
+		if (messg != WM_RBUTTONUP && (messg == WM_RBUTTONDOWN || messg == WM_RBUTTONDBLCLK || isPressed(VK_RBUTTON)))
+			r.Event.MouseEvent.dwButtonState |= RIGHTMOST_BUTTON_PRESSED;
+		if (messg != WM_MBUTTONUP && (messg == WM_MBUTTONDOWN || messg == WM_MBUTTONDBLCLK || isPressed(VK_MBUTTON)))
+			r.Event.MouseEvent.dwButtonState |= FROM_LEFT_2ND_BUTTON_PRESSED;
+
+		// Key modifiers
+		if (GetKeyState(VK_CAPITAL) & 1)
+			r.Event.MouseEvent.dwControlKeyState |= CAPSLOCK_ON;
+		if (GetKeyState(VK_NUMLOCK) & 1)
+			r.Event.MouseEvent.dwControlKeyState |= NUMLOCK_ON;
+		if (GetKeyState(VK_SCROLL) & 1)
+			r.Event.MouseEvent.dwControlKeyState |= SCROLLLOCK_ON;
+		if (isPressed(VK_LMENU))
+			r.Event.MouseEvent.dwControlKeyState |= LEFT_ALT_PRESSED;
+		if (isPressed(VK_RMENU))
+			r.Event.MouseEvent.dwControlKeyState |= RIGHT_ALT_PRESSED;
+		if (isPressed(VK_LCONTROL))
+			r.Event.MouseEvent.dwControlKeyState |= LEFT_CTRL_PRESSED;
+		if (isPressed(VK_RCONTROL))
+			r.Event.MouseEvent.dwControlKeyState |= RIGHT_CTRL_PRESSED;
+		if (isPressed(VK_SHIFT))
+			r.Event.MouseEvent.dwControlKeyState |= SHIFT_PRESSED;
+
+		if (messg == WM_LBUTTONDBLCLK || messg == WM_RBUTTONDBLCLK || messg == WM_MBUTTONDBLCLK)
+			r.Event.MouseEvent.dwEventFlags = DOUBLE_CLICK;
+		else if (messg == WM_MOUSEMOVE)
+			r.Event.MouseEvent.dwEventFlags = MOUSE_MOVED;
+		else if (messg == WM_MOUSEWHEEL) {
+			r.Event.MouseEvent.dwEventFlags = MOUSE_WHEELED;
+			r.Event.MouseEvent.dwButtonState |= (0xFFFF0000 & wParam);
+		} else if (messg == WM_MOUSEHWHEEL) {
+			r.Event.MouseEvent.dwEventFlags = 8/*MOUSE_HWHEELED*/;
+			r.Event.MouseEvent.dwButtonState |= (0xFFFF0000 & wParam);
+		}
+		DWORD dwWritten = 0;
+		if (!WriteConsoleInput(GetStdHandle(STD_INPUT_HANDLE), &r, 1, &dwWritten)) {
+			DisplayLastError(L"SendMouseEvent failed!");
+		}
+	} else {
+		/*≈сли пересылать так - лезут глюки:
+		1) левый клик вообще не доходит до консоли
+		2) правый клик вызывает "левую" консольную менюшку
+		3) проблемы с активацией окна(?)*/
+		/* Ќќ! тогда в не работает выделение мышкой */
+
+		RECT conRect;
+		GetClientRect(hConWnd, &conRect);
+		short newX = MulDiv(x, conRect.right, klMax<uint>(1, Width));
+		short newY = MulDiv(y, conRect.bottom, klMax<uint>(1, Height));
+
+		POSTMESSAGE(hConWnd, messg, wParam, MAKELPARAM( newX, newY ), TRUE);
 	}
-	DWORD dwWritten = 0;
-	if (!WriteConsoleInput(GetStdHandle(STD_INPUT_HANDLE), &r, 1, &dwWritten)) {
-		DisplayLastError(L"SendMouseEvent failed!");
-	}
-#else
-	≈сли пересылать так - лезут глюки:
-	1) левый клик вообще не доходит до консоли
-	2) правый клик вызывает "левую" консольную менюшку
-	3) проблемы с активацией окна(?)
-	POSTMESSAGE(ghConWnd, messg, wParam, MAKELPARAM( x, y ), TRUE);
-#endif
 }
 
 LPVOID CVirtualConsole::Alloc(size_t nCount, size_t nSize)
@@ -2282,12 +2304,19 @@ void CVirtualConsole::Paint()
 	CSection S(&csDC/*, &ncsTDC*/);
 	if (!S.isLocked())
 		return; // не удалось получить доступ к CS
+
+	GetClientRect(ghWndDC, &client);
+
+	if (!gConEmu.isNtvdm()) {
+		// после глюков с ресайзом могут быть проблемы с размером окна DC
+		if (client.right < (LONG)Width || client.bottom < (LONG)Height)
+			gConEmu.OnSize();
+	}
 	
 	try {
 		hPaintDc = BeginPaint(ghWndDC, &ps);
 
 		HBRUSH hBr = NULL;
-		GetClientRect(ghWndDC, &client);
 		if (((ULONG)client.right) > Width) {
 			if (!hBr) hBr = CreateSolidBrush(gSet.Colors[mn_BackColorIdx]);
 			RECT rcFill = MakeRect(Width, 0, client.right, client.bottom);
