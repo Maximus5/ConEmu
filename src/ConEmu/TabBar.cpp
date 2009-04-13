@@ -784,7 +784,7 @@ HWND TabBarClass::CreateTabbar()
 
 		RECT rcClient;
 		GetClientRect(ghWnd, &rcClient); 
-		DWORD nPlacement = TCS_SINGLELINE|WS_VISIBLE|TCS_BUTTONS;
+		DWORD nPlacement = TCS_SINGLELINE|WS_VISIBLE/*|TCS_BUTTONS*/;
 		mh_Tabbar = CreateWindow(WC_TABCONTROL, NULL, nPlacement | WS_CHILD | WS_CLIPSIBLINGS | TCS_FOCUSNEVER, 0, 0, 
 			rcClient.right, 0, mh_Rebar, NULL, g_hInstance, NULL);
 		if (mh_Tabbar == NULL)
@@ -878,7 +878,7 @@ void TabBarClass::CreateRebar()
 	}
 
 	rbBand.fMask  = RBBIM_SIZE | RBBIM_CHILD | RBBIM_CHILDSIZE | RBBIM_ID | RBBIM_STYLE | RBBIM_COLORS;
-	rbBand.fStyle = RBBS_CHILDEDGE | RBBS_FIXEDSIZE;
+	rbBand.fStyle = /*RBBS_CHILDEDGE |*/ RBBS_FIXEDSIZE;
 	rbBand.clrBack = GetSysColor(COLOR_BTNFACE);
 	rbBand.clrFore = GetSysColor(COLOR_BTNTEXT);
 

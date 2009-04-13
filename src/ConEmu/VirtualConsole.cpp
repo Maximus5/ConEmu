@@ -1580,10 +1580,10 @@ void CVirtualConsole::SetConsoleSize(COORD size)
 				//SETCONSOLESCREENBUFFERSIZERET(h, size, lbWS);
 			}
 			#ifdef _DEBUG
-			if (!GetConsoleScreenBufferInfo(h, &csbi))
+			/*if (!GetConsoleScreenBufferInfo(h, &csbi))
 				__asm int 3;
 			else if (csbi.dwSize.X != size.X || csbi.dwSize.Y != size.Y)
-				__asm int 3;
+				__asm int 3;*/
 			#endif
 			// Иногда, хз по какой причине, до консольного приложения не доходит правильный размер. дернем?
 			INPUT_RECORD r = {WINDOW_BUFFER_SIZE_EVENT};
