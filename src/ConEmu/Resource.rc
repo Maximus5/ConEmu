@@ -368,6 +368,8 @@ BEGIN
     GROUPBOX        "Console states",IDC_STATIC,4,39,319,43
     CHECKBOX        "ConMan",cbsConManActive,11,51,43,10,WS_DISABLED | NOT 
                     WS_TABSTOP
+    CHECKBOX        "Alt",cbsAltActive,119,51,35,10,WS_DISABLED | NOT 
+                    WS_TABSTOP
     CHECKBOX        "Telnet",cbsTelnetActive,79,51,35,10,WS_DISABLED | NOT 
                     WS_TABSTOP
     CHECKBOX        "Ntvdm",cbsNtvdmActive,119,51,35,10,WS_DISABLED | NOT 

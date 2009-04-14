@@ -3,6 +3,16 @@
 
 // Undocumented console message
 #define WM_SETCONSOLEINFO			(WM_USER+201)
+// and others
+#define SC_RESTORE_SECRET 0x0000f122
+#define SC_MAXIMIZE_SECRET 0x0000f032
+#define SC_PROPERTIES_SECRET 0x0000fff7
+#define SC_MARK_SECRET 0x0000fff2
+#define SC_COPY_ENTER_SECRET 0x0000fff0
+#define SC_PASTE_SECRET 0x0000fff1
+#define SC_SELECTALL_SECRET 0x0000fff5
+#define SC_SCROLL_SECRET 0x0000fff3
+#define SC_FIND_SECRET 0x0000fff4
 
 #pragma pack(push, 1)
 

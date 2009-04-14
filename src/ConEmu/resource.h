@@ -162,6 +162,7 @@
 #define tDCSize                         1514
 #define cbExtendColors                  1515
 #define tCmdLine                        1516
+#define cbsAltActive                    1517
 
 // Next default values for new objects
 // 

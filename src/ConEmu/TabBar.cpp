@@ -878,7 +878,7 @@ void TabBarClass::CreateRebar()
 	}
 
 	rbBand.fMask  = RBBIM_SIZE | RBBIM_CHILD | RBBIM_CHILDSIZE | RBBIM_ID | RBBIM_STYLE | RBBIM_COLORS;
-	rbBand.fStyle = /*RBBS_CHILDEDGE |*/ RBBS_FIXEDSIZE;
+	rbBand.fStyle = RBBS_CHILDEDGE | RBBS_FIXEDSIZE;
 	rbBand.clrBack = GetSysColor(COLOR_BTNFACE);
 	rbBand.clrFore = GetSysColor(COLOR_BTNTEXT);
 

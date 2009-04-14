@@ -61,10 +61,10 @@
 #define MBox(rt) (int)MessageBox(gbMessagingStarted ? ghWnd : NULL, rt, Title, /*MB_SYSTEMMODAL |*/ MB_ICONINFORMATION)
 #define MBoxA(rt) (int)MessageBox(gbMessagingStarted ? ghWnd : NULL, rt, _T("ConEmu"), /*MB_SYSTEMMODAL |*/ MB_ICONINFORMATION)
 #define MBoxAssert(V) if ((V)==FALSE) { TCHAR szAMsg[MAX_PATH*2]; wsprintf(szAMsg, _T("Assertion (%s) at\n%s:%i"), _T(#V), _T(__FILE__), __LINE__); MBoxA(szAMsg); }
-__inline BOOL isMeForeground() {
-	HWND h = GetForegroundWindow();
-	return h && (h == ghWnd || h == ghOpWnd || h == ghConWnd);
-}
+//__inline BOOL isMeForeground() {
+//	HWND h = GetForegroundWindow();
+//	return h && (h == ghWnd || h == ghOpWnd || h == ghConWnd);
+//}
 //#endif
 #define isPressed(inp) HIBYTE(GetKeyState(inp))
 #define countof(a) (sizeof((a))/(sizeof(*(a))))

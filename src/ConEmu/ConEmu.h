@@ -10,10 +10,6 @@
 #define ID_HELP 0xABCE
 #define ID_TOTRAY 0xABCF
 
-#define SC_RESTORE_SECRET 0x0000f122
-#define SC_MAXIMIZE_SECRET 0x0000f032
-#define SC_PROPERTIES_SECRET 65527
-
 #define IID_IShellLink IID_IShellLinkW 
 
 #define GET_X_LPARAM(inPx) ((int)(short)LOWORD(inPx))
@@ -184,6 +180,7 @@ public:
 	void InvalidateAll();
 	bool isActive(CVirtualConsole* apCon);
 	bool isConman();
+	bool isConmanAlternative();
 	bool isConSelectMode();
 	bool isDragging();
 	bool isEditor();
@@ -191,6 +188,7 @@ public:
 	bool isFilePanel(bool abPluginAllowed=false);
 	bool isLBDown();
 	bool isMainThread();
+	bool isMeForeground();
 	bool isNtvdm();
 	bool isPictureView();
 	bool isSizing();
