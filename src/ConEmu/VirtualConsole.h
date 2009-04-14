@@ -113,7 +113,7 @@ public:
 	void BlitPictureTo(int inX, int inY, int inWidth, int inHeight);
 	bool CheckSelection(const CONSOLE_SELECTION_INFO& select, SHORT row, SHORT col);
 	bool GetCharAttr(TCHAR ch, WORD atr, TCHAR& rch, BYTE& foreColorNum, BYTE& backColorNum);
-	void SetConsoleSize(COORD size);
+	bool SetConsoleSize(COORD size);
 	bool CheckBufferSize();
 	void SendMouseEvent(UINT messg, WPARAM wParam, int x, int y);
 	void StopSignal();

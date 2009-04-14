@@ -1536,11 +1536,11 @@ void CVirtualConsole::SetConsoleSizeInt(COORD size)
     SetConsoleInfo(&ci);
 }
 
-void CVirtualConsole::SetConsoleSize(COORD size)
+bool CVirtualConsole::SetConsoleSize(COORD size)
 {
     if (!hConWnd) {
         Box(_T("Console was not created (CVirtualConsole::SetConsoleSize)"));
-        return; // консоль пока не создана?
+        return false; // консоль пока не создана?
     }
 
     if (size.X<4) size.X = 4;
@@ -1554,6 +1554,7 @@ void CVirtualConsole::SetConsoleSize(COORD size)
     if (gConEmu.BufferHeight == 0)
     {
         //HANDLE hConsoleOut = GetStdHandle(STD_OUTPUT_HANDLE);
+        bool lbRc = true;
         HANDLE h = hConOut();
         BOOL lbNeedChange = FALSE;
         CONSOLE_SCREEN_BUFFER_INFO csbi;
@@ -1567,12 +1568,14 @@ void CVirtualConsole::SetConsoleSize(COORD size)
             GetConsoleScreenBufferInfo(h, &csbi);
             if (csbi.dwSize.X != size.X || csbi.dwSize.Y != size.Y) {
                 dwErr = GetLastError();
+                
+                lbRc = false;
 
                 //SETCONSOLESCREENBUFFERSIZERET(hConsoleOut, size, lbWS);
                 //GetConsoleScreenBufferInfo(h, &csbi);
 
-                SetConsoleSizeInt(size);
-                GetConsoleScreenBufferInfo(h, &csbi);
+                //SetConsoleSizeInt(size); -- вроде бы если уж консоль сглючила - не помогает
+                //GetConsoleScreenBufferInfo(h, &csbi);
 
                 //size.X--; size.Y--;
                 //SETCONSOLESCREENBUFFERSIZERET(h, csbi.dwSize, lbWS);
@@ -1586,21 +1589,22 @@ void CVirtualConsole::SetConsoleSize(COORD size)
                 __asm int 3;*/
             #endif
             // Иногда, хз по какой причине, до консольного приложения не доходит правильный размер. дернем?
-            INPUT_RECORD r = {WINDOW_BUFFER_SIZE_EVENT};
+            /*INPUT_RECORD r = {WINDOW_BUFFER_SIZE_EVENT};
             r.Event.WindowBufferSizeEvent.dwSize = size;
             DWORD dwWritten = 0;
             if (!WriteConsoleInput(GetStdHandle(STD_INPUT_HANDLE), &r, 1, &dwWritten)) {
                 #ifdef _DEBUG
                 DisplayLastError(L"WindowBufferSizeEvent failed!");
                 #endif
-            }
+            }*/
         } else {
             #ifdef _DEBUG
             lbNeedChange = lbNeedChange;
             #endif
         }
+        //TODO: если правый нижний край вылезет за пределы экрана?
         MOVEWINDOW(hConWnd, rcConPos.left, rcConPos.top, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), 1);
-        return;
+        return lbRc;
     }
 
     // global flag of the first call which is:
@@ -1611,7 +1615,7 @@ void CVirtualConsole::SetConsoleSize(COORD size)
     // case: buffer mode: change buffer
     CONSOLE_SCREEN_BUFFER_INFO csbi;
     if (!GetConsoleScreenBufferInfo(hConOut(), &csbi))
-        return;
+        return false;
     csbi.dwSize.X = size.X;
     if (s_isFirstCall)
     {
@@ -1637,7 +1641,7 @@ void CVirtualConsole::SetConsoleSize(COORD size)
     
     // set console window
     if (!GetConsoleScreenBufferInfo(hConOut(), &csbi))
-        return;
+        return false;
     SMALL_RECT rect;
     rect.Top = csbi.srWindow.Top;
     rect.Left = csbi.srWindow.Left;
@@ -1656,6 +1660,7 @@ void CVirtualConsole::SetConsoleSize(COORD size)
         rect.Bottom += shift;
     }
     SetConsoleWindowInfo(hConOut(), TRUE, &rect);
+    return true;
 }
 
 BOOL CVirtualConsole::AttachPID(DWORD dwPID)

@@ -3,7 +3,7 @@ SRCS = ConEmuPlugin.cpp \
        ConEmuPlugin789.cpp \
        ConEmuPlugin757.cpp \
        ConEmuPluginA.cpp \
-       ../ConEmu/setconsoleinfo.cpp \
+       setconsoleinfo.cpp \
        ../common/ConEmuCheck.c
 
 USERLIBS = -lversion

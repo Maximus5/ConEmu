@@ -35,6 +35,7 @@ CConEmuMain::CConEmuMain()
     isWndNotFSMaximized=false;
     isShowConsole=false;
     mb_FullWindowDrag=false;
+    mb_SkipSyncSize=false;
     //isLBDown=false; //mouse.bIgnoreMouseMove = false;
     //isDragProcessed=false;
     //isRBDown=false;
@@ -674,11 +675,8 @@ void CConEmuMain::SetConsoleWindowSize(const COORD& size, bool updateInfo)
 // Изменить размер консоли по размеру окна (главного)
 void CConEmuMain::SyncConsoleToWindow()
 {
-    if (isNtvdm())
+    if (mb_SkipSyncSize || isNtvdm() || !pVCon)
         return;
-
-    if (!pVCon)
-        return; //TODO: может это как-то в отложенном режиме делать... pVCon при старте еще не существует
 
     DEBUGLOGFILE("SyncConsoleToWindow\n");
 
@@ -720,7 +718,7 @@ void CConEmuMain::SyncWindowToConsole()
 {
     DEBUGLOGFILE("SyncWindowToConsole\n");
 
-    if (!pVCon)
+    if (mb_SkipSyncSize || !pVCon)
         return;
 
     RECT rcDC = MakeRect(pVCon->Width, pVCon->Height);
@@ -754,6 +752,7 @@ bool CConEmuMain::SetWindowMode(uint inMode)
     RECT rcWnd; GetWindowRect(ghWnd, &rcWnd);
     RECT consoleSize = MakeRect(gSet.wndWidth, gSet.wndHeight);
 
+    //!!!
     switch(inMode)
     {
     case rNormal:
