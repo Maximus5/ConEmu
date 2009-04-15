@@ -358,7 +358,7 @@ END
 IDD_DIALOG3 DIALOGEX 0, 0, 328, 258
 STYLE DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_TOPMOST | WS_EX_CONTROLPARENT
-FONT 8, "MS Shell Dlg", 0, 0, 0x1
+FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        "Performance counters",gbPerformance,4,4,319,30
     RTEXT           "Render:",IDC_STATIC,92,17,27,8
@@ -384,10 +384,10 @@ BEGIN
                     WS_TABSTOP
     CHECKBOX        "Viewer",cbsViewer,174,67,37,10,WS_DISABLED | NOT 
                     WS_TABSTOP
-    GROUPBOX        "Processes",IDC_STATIC,4,114,319,106
+    GROUPBOX        "Processes",IDC_STATIC,4,128,319,92
     EDITTEXT        tsConManIdx,55,51,18,11,ES_AUTOHSCROLL | ES_READONLY
     EDITTEXT        tsTopPID,38,67,26,11,ES_AUTOHSCROLL | ES_READONLY
-    LISTBOX         lbProcesses,9,124,307,89,NOT LBS_NOTIFY | 
+    LISTBOX         lbProcesses,9,139,307,74,NOT LBS_NOTIFY | 
                     LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_HSCROLL | 
                     WS_TABSTOP
     RTEXT           "Read:",IDC_STATIC,9,17,23,8
@@ -396,26 +396,19 @@ BEGIN
     RTEXT           "Interval:",IDC_STATIC,240,17,31,8
     GROUPBOX        "Current command line",IDC_STATIC,4,223,319,30
     EDITTEXT        tCurCmdLine,9,234,307,12,ES_AUTOHSCROLL | ES_READONLY
-    GROUPBOX        "Sizes",IDC_STATIC,4,83,318,27
-    LTEXT           "Console (chars):",IDC_STATIC,9,94,52,8
+    GROUPBOX        "Sizes",IDC_STATIC,4,83,318,41
+    LTEXT           "Console (chars):",IDC_STATIC,9,94,55,8
     EDITTEXT        tConSizeChr,67,93,54,11,ES_AUTOHSCROLL | ES_READONLY
     RTEXT           "(pixels):",IDC_STATIC,123,94,30,8
     EDITTEXT        tConSizePix,156,93,54,11,ES_AUTOHSCROLL | ES_READONLY
     RTEXT           "DC window:",IDC_STATIC,215,94,45,8
     EDITTEXT        tDCSize,263,93,54,11,ES_AUTOHSCROLL | ES_READONLY
+    LTEXT           "Left:",IDC_STATIC,9,110,15,8
+    EDITTEXT        tPanelLeft,32,109,90,11,ES_AUTOHSCROLL | ES_READONLY
+    RTEXT           "Right:",IDC_STATIC,131,110,22,8
+    EDITTEXT        tPanelRight,156,109,90,11,ES_AUTOHSCROLL | ES_READONLY
 END
 
-
-/////////////////////////////////////////////////////////////////////////////
-//
-// Icon
-//
-
-// Icon with lowest ID value placed first to ensure application icon
-// remains consistent on all systems.
-IDI_ICON1               ICON    DISCARDABLE     "ConEmu.ico"
-IDI_ICON2               ICON    DISCARDABLE     "Far.ico"
-IDI_ICON3               ICON    DISCARDABLE     "Far2.ico"
 
 /////////////////////////////////////////////////////////////////////////////
 //

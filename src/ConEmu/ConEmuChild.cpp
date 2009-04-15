@@ -122,15 +122,17 @@ LRESULT CALLBACK CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam
 
     default:
 		if (messg == mn_MsgTabChanged) {
-			//изменились табы, их нужно перечитать
-			#ifdef MSGLOGGER
-				WCHAR szDbg[128]; swprintf(szDbg, L"Tabs:Notified(%i)\n", wParam);
-				OutputDebugStringW(szDbg);
-			#endif
-			#pragma message("TODO: здесь хорошо бы вместо OnTimer реально обновить mn_TopProcessID")
-			// иначе во время запуска PID фара еще может быть не известен...
-			//gConEmu.OnTimer(0,0); не получилось. индекс конмана не менялся, из-за этого индекс активного фара так и остался 0
-			TabBar.Retrieve();
+			if (gSet.isTabs) {
+				//изменились табы, их нужно перечитать
+				#ifdef MSGLOGGER
+					WCHAR szDbg[128]; swprintf(szDbg, L"Tabs:Notified(%i)\n", wParam);
+					OutputDebugStringW(szDbg);
+				#endif
+				#pragma message("TODO: здесь хорошо бы вместо OnTimer реально обновить mn_TopProcessID")
+				// иначе во время запуска PID фара еще может быть не известен...
+				//gConEmu.OnTimer(0,0); не получилось. индекс конмана не менялся, из-за этого индекс активного фара так и остался 0
+				TabBar.Retrieve();
+			}
 		}
         if (messg) result = DefWindowProc(hWnd, messg, wParam, lParam);
     }

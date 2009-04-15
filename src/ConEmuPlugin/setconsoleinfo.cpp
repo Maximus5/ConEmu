@@ -13,7 +13,7 @@
 
 #include <windows.h>
 #include <stdarg.h>
-#include "kl_parts.h"
+#include "../ConEmu/kl_parts.h"
 
 // only in Win2k+  (use FindWindow for NT4)
 //HWND WINAPI GetConsoleWindow();
@@ -272,9 +272,9 @@ typedef BOOL (WINAPI *PSetCurrentConsoleFontEx)(__in HANDLE hConsoleOutput,__in 
 void SetConsoleFontSizeTo(HWND inConWnd, int inSizeX, int inSizeY)
 {
 	PGetCurrentConsoleFontEx GetCurrentConsoleFontEx = (PGetCurrentConsoleFontEx)
-		GetProcAddress(GetModuleHandle(_T("kernel32.dll")), "GetCurrentConsoleFontEx");
+		GetProcAddress(GetModuleHandle(L"kernel32.dll"), "GetCurrentConsoleFontEx");
 	PSetCurrentConsoleFontEx SetCurrentConsoleFontEx = (PSetCurrentConsoleFontEx)
-		GetProcAddress(GetModuleHandle(_T("kernel32.dll")), "SetCurrentConsoleFontEx");
+		GetProcAddress(GetModuleHandle(L"kernel32.dll"), "SetCurrentConsoleFontEx");
 
 	if (GetCurrentConsoleFontEx && SetCurrentConsoleFontEx) // We have Vista
 	{
@@ -283,7 +283,7 @@ void SetConsoleFontSizeTo(HWND inConWnd, int inSizeX, int inSizeY)
 		cfi.dwFontSize.X = inSizeX;
 		cfi.dwFontSize.Y = inSizeY;
 		//TODO: А Люциду кто ставить будет???
-		_tcscpy(cfi.FaceName, _T("Lucida Console"));
+		lstrcpyW(cfi.FaceName, L"Lucida Console");
 		SetCurrentConsoleFontEx(GetStdHandle(STD_OUTPUT_HANDLE), FALSE, &cfi);
 	}
 	else // We have other NT
@@ -307,7 +307,7 @@ void SetConsoleFontSizeTo(HWND inConWnd, int inSizeX, int inSizeY)
 		ci.FontSize.Y				= inSizeY;
 		ci.FontFamily				= 0;//0x30;//FF_MODERN|FIXED_PITCH;//0x30;
 		ci.FontWeight				= 0;//0x400;
-		_tcscpy(ci.FaceName, _T("Lucida Console"));
+		lstrcpyW(ci.FaceName, L"Lucida Console");
 
 		ci.CursorSize				= 25;
 		ci.FullScreen				= FALSE;

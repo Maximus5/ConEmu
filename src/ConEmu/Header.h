@@ -156,6 +156,11 @@ RECT __forceinline MakeRect(int X1, int Y1,int X2,int Y2)
 	return rc;
 }
 
+BOOL __forceinline CoordInRect(COORD& c, RECT& r)
+{
+	return (c.X >= r.left && c.X <= r.right) && (c.Y >= r.top && c.Y <= r.bottom);
+}
+
 #pragma warning(disable: 4311) // 'type cast' : pointer truncation from 'HBRUSH' to 'BOOL'
 
 
@@ -301,11 +306,10 @@ Command line switches:\n\
 Command line examples:\n\
 ConEmu.exe /ct /font \"Lucida Console\" /size 16 /cmd far.exe \"c:\\1 2\\\"\n\
 \n\
-(c) 2006-2008, Zoin.\n\
-NightRoman: drawing process optimization, BufferHeight and other fixes.\n\
+(c) 2006-2008, Zoin (based on console emulator by SEt).\n\
+NightRoman: drawing process optimization, BufferHeight and other fixes\n\
 dolzenko_: windows switching via GUI tabs\n\
 DrKnS: Update plugin support\n\
-alex_itd: Drag'n'Drop, RightClick, AltEnter and GUI bars.\n\
+alex_itd: Drag'n'Drop, RightClick, AltEnter and GUI bars\n\
 Mors: loading font from file\n\
-Maximus5: PictureView support, bugfixes and customizations.\n\
-(based on console emulator by SEt)";
+Maximus5: PictureView support, bugfixes and customizations.";

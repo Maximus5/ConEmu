@@ -51,6 +51,9 @@ void TabBarClass::Reset()
 
 void TabBarClass::Retrieve()
 {
+	if (gSet.isTabs == 0)
+		return; // если табов нет ¬ќќЅў≈ - и читать ничего не нужно
+
 	CConEmuPipe pipe;
 	if (pipe.Init(_T("TabBarClass::Retrieve"), TRUE))
 	{
@@ -95,12 +98,12 @@ void TabBarClass::Retrieve()
 	}
 }
 
-void TabBarClass::AddTab(wchar_t* text, int i)
+void TabBarClass::AddTab(LPCWSTR text, int i)
 {
 	TCITEM tie;
 	tie.mask = TCIF_TEXT;
 	tie.iImage = -1; 
-	tie.pszText = text ;
+	tie.pszText = (LPWSTR)text ;
 
 	int nCurCount = TabCtrl_GetItemCount(mh_Tabbar);
 	if (i>=nCurCount)
@@ -302,7 +305,7 @@ void TabBarClass::Update(ConEmuTab* tabs, int tabsCount)
 			int nSplit = nMaxLen*2/3;
 			TCHAR szEllip[MAX_PATH+1];
 			_tcsncpy(szEllip, tFileName, nSplit); szEllip[nSplit]=0;
-			_tcscat(szEllip, _T("..."));
+			_tcscat(szEllip, _T("Е"));
 			_tcscat(szEllip, tFileName + origLength - (nMaxLen - nSplit));
 			wsprintf(fileName, szFormat, szEllip);
 		} else {
@@ -711,7 +714,7 @@ LRESULT TabBarClass::ToolWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lP
 
 HWND TabBarClass::CreateToolbar()
 {
-	if (!mh_Rebar)
+	if (!mh_Rebar || !gSet.isConMan)
 		return NULL; // нет табов - нет и тулбара
 	if (mh_ConmanToolbar)
 		return mh_ConmanToolbar; // ”же создали
@@ -799,6 +802,7 @@ HWND TabBarClass::CreateTabbar()
 		_defaultTabProc = (WNDPROC)SetWindowLongPtr(mh_Tabbar, GWL_WNDPROC, (LONG_PTR)TabProc);
 
 
+		AddTab(gConEmu.isFar() ? gSet.szTabPanels : gSet.pszTabConsole, 0);
  
 // Create a toolbar. 
 	/*
@@ -891,8 +895,14 @@ void TabBarClass::CreateRebar()
 	CreateToolbar();
 
 	SIZE sz = {0,0};
-	if (mh_ConmanToolbar)
+	if (mh_ConmanToolbar) {
 		SendMessage(mh_ConmanToolbar, TB_GETMAXSIZE, 0, (LPARAM)&sz);
+	} else {
+		RECT rcClient;
+		GetClientRect(ghWnd, &rcClient); 
+		TabCtrl_AdjustRect(mh_Tabbar, FALSE, &rcClient);
+		sz.cy = rcClient.top - 3;
+	}
 
 
 	if (mh_Tabbar)

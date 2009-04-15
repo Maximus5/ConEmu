@@ -1842,6 +1842,8 @@ void CConEmuMain::UpdateSizes()
     else {
         SetDlgItemText(gSet.hInfo, tConSizeChr, _T("?"));
         SetDlgItemText(gSet.hInfo, tConSizePix, _T("?"));
+        SetDlgItemText(gSet.hInfo, tPanelLeft, _T("?"));
+        SetDlgItemText(gSet.hInfo, tPanelRight, _T("?"));
     }
     RECT rcClient; GetClientRect(ghWndDC, &rcClient);
     TCHAR szSize[32]; wsprintf(szSize, _T("%ix%i"), rcClient.right, rcClient.bottom);
@@ -1856,25 +1858,33 @@ void CConEmuMain::UpdateTitle(LPCTSTR asNewTitle)
     if (ghWndApp)
         SetWindowText(ghWndApp, Title);
 
+	BOOL  lbTitleChanged = TRUE;
     DWORD dwConmanIDX=0;
-    BOOL lbPrevAlt = (mn_ActiveStatus & (CES_CONMANACTIVE|CES_CONALTERNATIVE))==(CES_CONMANACTIVE|CES_CONALTERNATIVE);
-    LPTSTR pszTitle = GetTitleStart(&dwConmanIDX);
-    BOOL lbCurAlt = (mn_ActiveStatus & (CES_CONMANACTIVE|CES_CONALTERNATIVE))==(CES_CONMANACTIVE|CES_CONALTERNATIVE);
-    if (lbCurAlt != lbPrevAlt)
-	    TabBar.OnConman ( m_ActiveConmanIDX, lbCurAlt );
-    
-    mn_ActiveStatus &= CES_PROGRAMS2; // оставляем только флаги текущей программы
+	if (*Title == 0 && gSet.isConMan) {
+		// Конман уведомляет о смене заголовка в другой консоли
+		dwConmanIDX = m_ActiveConmanIDX;
+		lbTitleChanged = FALSE;
+		// флаги редактора/вьювера и т.п. не сбрасывать, дождемся непустого заголовка!
+	} else {
+		BOOL lbPrevAlt = (mn_ActiveStatus & (CES_CONMANACTIVE|CES_CONALTERNATIVE))==(CES_CONMANACTIVE|CES_CONALTERNATIVE);
+		LPTSTR pszTitle = GetTitleStart(&dwConmanIDX);
+		BOOL lbCurAlt = (mn_ActiveStatus & (CES_CONMANACTIVE|CES_CONALTERNATIVE))==(CES_CONMANACTIVE|CES_CONALTERNATIVE);
+		if (lbCurAlt != lbPrevAlt)
+			TabBar.OnConman ( m_ActiveConmanIDX, lbCurAlt );
+	    
+		mn_ActiveStatus &= CES_PROGRAMS2; // оставляем только флаги текущей программы
 
-    // далее идут взаимоисключающие флаги режимов текущей программы
-    if (_tcsncmp(pszTitle, _T("edit "), 5)==0 || _tcsncmp(pszTitle, ms_EditorRus, _tcslen(ms_EditorRus))==0)
-        mn_ActiveStatus |= CES_EDITOR;
-    else if (_tcsncmp(pszTitle, _T("view "), 5)==0 || _tcsncmp(pszTitle, ms_ViewerRus, _tcslen(ms_ViewerRus))==0)
-        mn_ActiveStatus |= CES_VIEWER;
-    else if (isFilePanel(true))
-        mn_ActiveStatus |= CES_FILEPANEL;
+		// далее идут взаимоисключающие флаги режимов текущей программы
+		if (_tcsncmp(pszTitle, _T("edit "), 5)==0 || _tcsncmp(pszTitle, ms_EditorRus, _tcslen(ms_EditorRus))==0)
+			mn_ActiveStatus |= CES_EDITOR;
+		else if (_tcsncmp(pszTitle, _T("view "), 5)==0 || _tcsncmp(pszTitle, ms_ViewerRus, _tcslen(ms_ViewerRus))==0)
+			mn_ActiveStatus |= CES_VIEWER;
+		else if (isFilePanel(true))
+			mn_ActiveStatus |= CES_FILEPANEL;
+	}
 
     // Под конец - проверить список процессов консоли
-    CheckProcesses(dwConmanIDX, TRUE);
+    CheckProcesses(dwConmanIDX, lbTitleChanged);
 }
 
 VOID CConEmuMain::WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime)
@@ -2703,6 +2713,9 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
     if (!pVCon)
         return 0;
 
+    if (!gSet.LogFont.lfWidth || !gSet.LogFont.lfHeight)
+		return 0;
+
 #ifdef MSGLOGGER
     if (messg != WM_MOUSEMOVE) {
         DWORD mode = 0;
@@ -2735,14 +2748,17 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
     memset(&consoleRect, 0, sizeof(consoleRect));
     //winX -= consoleRect.left; -- супер. "-0"
     //winY -= consoleRect.top;
-    #ifdef NEWMOUSESTYLE
-    short newX = winX, newY = winY;
-    #else
-    short newX = MulDiv(winX, conRect.right, klMax<uint>(1, pVCon->Width));
-    short newY = MulDiv(winY, conRect.bottom, klMax<uint>(1, pVCon->Height));
-    #endif
+    //#ifdef NEWMOUSESTYLE
+    //short newX = winX, newY = winY;
+    //#else
+    //short newX = MulDiv(winX, conRect.right, klMax<uint>(1, pVCon->Width));
+    //short newY = MulDiv(winY, conRect.bottom, klMax<uint>(1, pVCon->Height));
+    //#endif
+	#pragma message("TODO: а здесь хорошо бы получать известные координаты символов, а не простым делением")
+    short conX = winX/gSet.LogFont.lfWidth;
+    short conY = winY/gSet.LogFont.lfHeight;
 
-    if (newY<0 || newX<0) {
+    if (conY<0 || conY<0) {
         DEBUGLOGFILE("Mouse outside of upper-left");
         return 0;
     }
@@ -2808,7 +2824,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
                     mouse.state &= ~(DRAG_L_ALLOWED | DRAG_L_STARTED | DRAG_R_ALLOWED | DRAG_R_STARTED);
                     mouse.bIgnoreMouseMove = false;
                     //POSTMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( newX, newY ), TRUE);     //посылаем консоли отпускание
-                    pVCon->SendMouseEvent(WM_LBUTTONUP, wParam, newX, newY);
+                    pVCon->SendMouseEvent(WM_LBUTTONUP, wParam, winX, winX);
                     //ReleaseCapture(); --2009-03-14
                     return 0;
                 }
@@ -2822,12 +2838,12 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 
                 if (lbLeftDrag) { // сразу "отпустить" клавишу
                     //POSTMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( mouse.LClkCon.X, mouse.LClkCon.Y ), TRUE);     //посылаем консоли отпускание
-                    pVCon->SendMouseEvent(WM_LBUTTONUP, wParam, mouse.LClkCon.X, mouse.LClkCon.Y);
+                    pVCon->SendMouseEvent(WM_LBUTTONUP, wParam, mouse.LClkDC.X, mouse.LClkDC.Y);
                 } else {
                     //POSTMESSAGE(ghConWnd, WM_LBUTTONDOWN, wParam, MAKELPARAM( mouse.RClkCon.X, mouse.RClkCon.Y ), TRUE);     //посылаем консоли отпускание
-                    pVCon->SendMouseEvent(WM_LBUTTONDOWN, wParam, mouse.RClkCon.X, mouse.RClkCon.Y);
+                    pVCon->SendMouseEvent(WM_LBUTTONDOWN, wParam, mouse.RClkDC.X, mouse.RClkDC.Y);
                     //POSTMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( mouse.RClkCon.X, mouse.RClkCon.Y ), TRUE);     //посылаем консоли отпускание
-                    pVCon->SendMouseEvent(WM_LBUTTONUP, wParam, mouse.RClkCon.X, mouse.RClkCon.Y);
+                    pVCon->SendMouseEvent(WM_LBUTTONUP, wParam, mouse.RClkDC.X, mouse.RClkDC.Y);
                 }
 
                 
@@ -2841,13 +2857,13 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
                     DnDstep(_T("DnD: DragDrop is null"));
                 }
                 mouse.bIgnoreMouseMove = false;
-                #ifdef NEWMOUSESTYLE
-                newX = cursor.x; newY = cursor.y;
-                #else
-                newX = MulDiv(cursor.x, conRect.right, klMax<uint>(1, pVCon->Width));
-                newY = MulDiv(cursor.y, conRect.bottom, klMax<uint>(1, pVCon->Height));
-                #endif
                 
+                //#ifdef NEWMOUSESTYLE
+                //newX = cursor.x; newY = cursor.y;
+                //#else
+                //newX = MulDiv(cursor.x, conRect.right, klMax<uint>(1, pVCon->Width));
+                //newY = MulDiv(cursor.y, conRect.bottom, klMax<uint>(1, pVCon->Height));
+                //#endif
                 //if (lbLeftDrag)
                 //  POSTMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( newX, newY ), TRUE);     //посылаем консоли отпускание
                 //isDragProcessed=false; -- убрал, иначе при бросании в пассивную панель больших файлов дроп может вызваться еще раз???
@@ -2863,7 +2879,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
                 //isRBDown=false;
                 mouse.state &= ~(DRAG_R_ALLOWED | DRAG_R_STARTED | MOUSE_R_LOCKED);
                 //POSTMESSAGE(ghConWnd, WM_RBUTTONDOWN, 0, MAKELPARAM( mouse.RClkCon.X, mouse.RClkCon.Y ), TRUE);
-                pVCon->SendMouseEvent(WM_RBUTTONDOWN, 0, mouse.RClkCon.X, mouse.RClkCon.Y);
+                pVCon->SendMouseEvent(WM_RBUTTONDOWN, 0, mouse.RClkDC.X, mouse.RClkDC.Y);
             }
             return 0;
         }
@@ -2888,9 +2904,10 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
             //isLBDown = false;
             mouse.state &= ~(DRAG_L_ALLOWED | DRAG_L_STARTED);
             mouse.bIgnoreMouseMove = false;
-            mouse.LClkCon = MakeCoord(newX,newY);
+            mouse.LClkCon = MakeCoord(conX,conY);
             mouse.LClkDC = MakeCoord(winX,winY);
-            if (!isConSelectMode() && isFilePanel())
+            if (!isConSelectMode() && isFilePanel() && pVCon &&
+                (CoordInRect(mouse.LClkCon,pVCon->mr_LeftPanel) || CoordInRect(mouse.LClkCon,pVCon->mr_RightPanel)))
             {
                 //SetCapture(ghWndDC); --2009-03-14
                 cursor.x = LOWORD(lParam);
@@ -2903,7 +2920,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
                 }
                 //if (gSet.is DnD) mouse.bIgnoreMouseMove = true;
                 //POSTMESSAGE(ghConWnd, messg, wParam, MAKELPARAM( newX, newY ), FALSE); // было SEND
-                pVCon->SendMouseEvent(messg, wParam, newX, newY);
+                pVCon->SendMouseEvent(messg, wParam, winX, winY);
                 return 0;
             }
         }
@@ -2915,14 +2932,14 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
                 return 0; // кнопка уже "отпущена"
             if (mouse.bIgnoreMouseMove) {
                 mouse.bIgnoreMouseMove = false;
-                #ifdef NEWMOUSESTYLE
-                newX = cursor.x; newY = cursor.y;
-                #else
-                newX = MulDiv(cursor.x, conRect.right, klMax<uint>(1, pVCon->Width));
-                newY = MulDiv(cursor.y, conRect.bottom, klMax<uint>(1, pVCon->Height));
-                #endif
+                //#ifdef NEWMOUSESTYLE
+                //newX = cursor.x; newY = cursor.y;
+                //#else
+                //newX = MulDiv(cursor.x, conRect.right, klMax<uint>(1, pVCon->Width));
+                //newY = MulDiv(cursor.y, conRect.bottom, klMax<uint>(1, pVCon->Height));
+                //#endif
                 //POSTMESSAGE(ghConWnd, messg, wParam, MAKELPARAM( newX, newY ), FALSE);
-                pVCon->SendMouseEvent(messg, wParam, newX, newY);
+                pVCon->SendMouseEvent(messg, wParam, cursor.x, cursor.y);
                 return 0;
             }
         }
@@ -2930,13 +2947,15 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
         {
             Rcursor.x = LOWORD(lParam);
             Rcursor.y = HIWORD(lParam);
-            mouse.RClkCon = MakeCoord(newX,newY);
+            mouse.RClkCon = MakeCoord(conX,conY);
             mouse.RClkDC = MakeCoord(winX,winY);
             //isRBDown=false;
             mouse.state &= ~(DRAG_R_ALLOWED | DRAG_R_STARTED | MOUSE_R_LOCKED);
             mouse.bIgnoreMouseMove = false;
 
-            if (isFilePanel()) // Maximus5
+            //if (isFilePanel()) // Maximus5
+            if (!isConSelectMode() && isFilePanel() && pVCon &&
+                (CoordInRect(mouse.RClkCon,pVCon->mr_LeftPanel) || CoordInRect(mouse.RClkCon,pVCon->mr_RightPanel)))
             {
                 if (gSet.isDragEnabled & DRAG_R_ALLOWED) {
                     if (!gSet.nRDragKey || isPressed(gSet.nRDragKey)) {
@@ -2975,9 +2994,9 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
                     {
                         // Сначала выделить файл под курсором
                         //POSTMESSAGE(ghConWnd, WM_LBUTTONDOWN, MK_LBUTTON, MAKELPARAM( mouse.RClkCon.X, mouse.RClkCon.Y ), TRUE);
-                        pVCon->SendMouseEvent(WM_LBUTTONDOWN, MK_LBUTTON, mouse.RClkCon.X, mouse.RClkCon.Y);
+                        pVCon->SendMouseEvent(WM_LBUTTONDOWN, MK_LBUTTON, mouse.RClkDC.X, mouse.RClkDC.Y);
                         //POSTMESSAGE(ghConWnd, WM_LBUTTONUP, 0, MAKELPARAM( mouse.RClkCon.X, mouse.RClkCon.Y ), TRUE);
-                        pVCon->SendMouseEvent(WM_LBUTTONUP, 0, mouse.RClkCon.X, mouse.RClkCon.Y);
+                        pVCon->SendMouseEvent(WM_LBUTTONUP, 0, mouse.RClkDC.X, mouse.RClkDC.Y);
                     
                         pVCon->Update(true);
                         INVALIDATE(); //InvalidateRect(HDCWND, NULL, FALSE);
@@ -2990,7 +3009,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
                 }
                 // Иначе нужно сначала послать WM_RBUTTONDOWN
                 //POSTMESSAGE(ghConWnd, WM_RBUTTONDOWN, wParam, MAKELPARAM( newX, newY ), TRUE);
-                pVCon->SendMouseEvent(WM_RBUTTONDOWN, wParam, newX, newY);
+                pVCon->SendMouseEvent(WM_RBUTTONDOWN, wParam, winX, winY);
             }
             //isRBDown=false; // чтобы не осталось случайно
             mouse.state &= ~(DRAG_R_ALLOWED | DRAG_R_STARTED | MOUSE_R_LOCKED);
@@ -3010,7 +3029,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 fin:
     // заменим даблклик вторым обычным
     //POSTMESSAGE(ghConWnd, messg == WM_RBUTTONDBLCLK ? WM_RBUTTONDOWN : messg, wParam, MAKELPARAM( newX, newY ), FALSE);
-    pVCon->SendMouseEvent(messg == WM_RBUTTONDBLCLK ? WM_RBUTTONDOWN : messg, wParam, newX, newY);
+    pVCon->SendMouseEvent(messg == WM_RBUTTONDBLCLK ? WM_RBUTTONDOWN : messg, wParam, winX, winY);
     return 0;
 }
 

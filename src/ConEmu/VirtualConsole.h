@@ -94,6 +94,9 @@ public:
 	//WORD  FontWidth[0x10000]; //, Font2Width[0x10000];
 	DWORD *ConCharX;
 	TCHAR *Spaces; WORD nSpaceCount;
+	
+	// координаты панелей в символах
+	RECT mr_LeftPanel, mr_RightPanel;
 
 	CONSOLE_SELECTION_INFO SelectionInfo;
 

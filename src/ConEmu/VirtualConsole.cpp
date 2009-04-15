@@ -55,6 +55,8 @@ CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
         
     //pVCon = this;
     mh_ConOut = NULL; mb_ConHandleCreated = FALSE;
+    
+    mr_LeftPanel = mr_RightPanel = MakeRect(-1,-1);
 
 #ifdef _DEBUG
     mn_BackColorIdx = 2;
@@ -745,6 +747,53 @@ bool CVirtualConsole::UpdatePrepare(bool isForce, HDC *ahDc)
     }
     
     MCHKHEAP
+    
+    // Определить координаты панелей
+    mr_LeftPanel = mr_RightPanel = MakeRect(-1,-1);
+    if (gConEmu.isFar() && TextHeight >= 7 && TextWidth >= 28)
+    {
+		uint nY = 0;
+		if (ConChar[0] == L' ')
+			nY ++; // скорее всего, первая строка - меню
+		else if (ConChar[0] == L'R' && ConChar[1] == L' ')
+			nY ++; // скорее всего, первая строка - меню, при включенной записи макроса
+			
+		uint nIdx = nY*TextWidth;
+		
+		if (( (ConChar[nIdx] == L'[' && (ConChar[nIdx+1]>=L'0' && ConChar[nIdx+1]<=L'9')) // открыто несколько редакторов/вьюверов
+		      || (ConChar[nIdx] == 0x2554 && ConChar[nIdx+1] == 0x2550) // доп.окон нет, только рамка
+		    ) && ConChar[nIdx+TextWidth] == 0x2551)
+		{
+			LPCWSTR pszCenter = ConChar + nIdx;
+			LPCWSTR pszLine = ConChar + nIdx;
+			uint nCenter = 0;
+			while ( (pszCenter = wcsstr(pszCenter+1, L"\x2557\x2554")) != NULL ) {
+				nCenter = pszCenter - pszLine;
+				if (ConChar[nIdx+TextWidth+nCenter] == 0x2551 && ConChar[nIdx+TextWidth+nCenter+1] == 0x2551) {
+					break; // нашли
+				}
+			}
+			
+			uint nBottom = TextHeight - 1;
+			while (nBottom > 4) {
+				if (ConChar[TextWidth*nBottom] == 0x255A && ConChar[TextWidth*(nBottom-1)] == 0x2551)
+					break;
+				nBottom --;
+			}
+			
+			if (pszCenter && nBottom > 4) {
+				mr_LeftPanel.left = 1;
+				mr_LeftPanel.top = nY + 2;
+				mr_LeftPanel.right = nCenter - 1;
+				mr_LeftPanel.bottom = nBottom - 3;
+				
+				mr_RightPanel.left = nCenter + 3;
+				mr_RightPanel.top = nY + 2;
+				mr_RightPanel.right = TextWidth - 2;
+				mr_RightPanel.bottom = mr_LeftPanel.bottom;
+			}
+		}
+	}
 
     // get cursor info
     GetConsoleCursorInfo(hConOut(), &cinf);
@@ -2170,6 +2219,7 @@ void CVirtualConsole::SendMouseEvent(UINT messg, WPARAM wParam, int x, int y)
         
         INPUT_RECORD r; memset(&r, 0, sizeof(r));
         r.EventType = MOUSE_EVENT;
+		#pragma message("TODO: а здесь хорошо бы получать известные координаты символов, а не простым делением")
         r.Event.MouseEvent.dwMousePosition = MakeCoord(x/gSet.LogFont.lfWidth, y/gSet.LogFont.lfHeight);
         
         // Mouse Buttons
@@ -2384,11 +2434,16 @@ void CVirtualConsole::UpdateInfo()
         return;
     }
 
-    TCHAR szSize[32];
+    TCHAR szSize[128];
     wsprintf(szSize, _T("%ix%i"), TextWidth, TextHeight);
     SetDlgItemText(gSet.hInfo, tConSizeChr, szSize);
     wsprintf(szSize, _T("%ix%i"), Width, Height);
     SetDlgItemText(gSet.hInfo, tConSizePix, szSize);
+
+    wsprintf(szSize, _T("(%i, %i)-(%i, %i), %ix%i"), mr_LeftPanel.left+1, mr_LeftPanel.top+1, mr_LeftPanel.right+1, mr_LeftPanel.bottom+1, mr_LeftPanel.right-mr_LeftPanel.left+1, mr_LeftPanel.bottom-mr_LeftPanel.top+1);
+    SetDlgItemText(gSet.hInfo, tPanelLeft, szSize);
+    wsprintf(szSize, _T("(%i, %i)-(%i, %i), %ix%i"), mr_RightPanel.left+1, mr_RightPanel.top+1, mr_RightPanel.right+1, mr_RightPanel.bottom+1, mr_RightPanel.right-mr_RightPanel.left+1, mr_RightPanel.bottom-mr_RightPanel.top+1);
+    SetDlgItemText(gSet.hInfo, tPanelRight, szSize);
 }
 
 void CVirtualConsole::Box(LPCTSTR szText)
