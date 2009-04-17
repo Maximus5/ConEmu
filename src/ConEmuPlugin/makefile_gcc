@@ -1,10 +1,11 @@
 NAME = ConEmu
 SRCS = ConEmuPlugin.cpp \
-       ConEmuPlugin789.cpp \
-       ConEmuPlugin757.cpp \
+       ConEmuPlugin995.cpp \
        ConEmuPluginA.cpp \
-       setconsoleinfo.cpp \
-       ../common/ConEmuCheck.c
+       ConEmuInjects.cpp \
+       ../common/SetHook.cpp \
+       ../common/Common.cpp \
+       ../common/ConEmuCheck.cpp
 
 USERLIBS = -lversion
 
@@ -47,10 +48,13 @@ USERLIBS = -lversion
 WIDE = 1
 DIRSURF = W
 RCWIDE = -D UNICODE -D _UNICODE
-CXXWIDE = -D UNICODE -D _UNICODE
-CCWIDE = -D UNICODE -D _UNICODE
+CXXWIDE = -D UNICODE -D _UNICODE -D
+CCWIDE = -D UNICODE -D _UNICODE -D
+WINVER = _WIN32_WINNT=0x0500 -D WINVER=0x0500
 
-OBJDIR = ../../gcc/plugin
+TMPDIR = ../../gcc
+OBJDIR = $(TMPDIR)/plugin
+COMDIR = $(TMPDIR)/common
 REOBJDIR = \.\.\/\.\.\/gcc\/plugin
 DLLDIR = ../../plugins/ConEmu
 COMMON = ../common
@@ -72,7 +76,7 @@ ifdef NEEDDEFLIB
 NODEFLIBS = 
 endif
 
-COMMONLIB = -L $(COMMON) -lCRT
+COMMONLIB = -L $(COMMON) 
 ifdef EXCLUDECRT
 COMMONLIB = 
 endif
@@ -81,6 +85,7 @@ CXX = g++
 CC = gcc
 DLLTOOL = dlltool
 RM = rm -f
+RMDIR = rmdir
 CP = cp -f
 M4 = m4 -P
 MV = mv -f
@@ -88,9 +93,9 @@ MKDIR = mkdir -p
 WINDRES = windres
 AR = ar
 RANLIB = ranlib
-CXXFLAGS = -mno-cygwin -I $(COMMON) -I $(COMINC) -Wall -Os -funsigned-char -fomit-frame-pointer -fstrict-aliasing -fno-rtti -fno-exceptions $(CXXWIDE) $(USERCPP)
-CCFLAGS = -mno-cygwin -I $(COMMON) -I $(COMINC) -Wall -Os -funsigned-char -fomit-frame-pointer -fstrict-aliasing -fno-exceptions $(CCWIDE) $(USERCPP)
-LNKFLAGS = -mno-cygwin -mdll -s $(NOSTART) $(NODEFLIBS) -lgcc $(USERLIBSFIRST) $(COMMONLIB) -luser32 -lkernel32 -ladvapi32 -lshell32 $(USERLIBS)
+CXXFLAGS = -mno-cygwin -I $(COMMON) -I $(COMINC) -Wall -Os -funsigned-char -fomit-frame-pointer -fstrict-aliasing -fno-rtti -fno-exceptions $(CXXWIDE) $(USERCPP) $(WINVER)
+CCFLAGS = -mno-cygwin -I $(COMMON) -I $(COMINC) -Wall -Os -funsigned-char -fomit-frame-pointer -fstrict-aliasing -fno-exceptions $(CCWIDE) $(USERCPP) $(WINVER)
+LNKFLAGS = -mdll -s -lgcc $(USERLIBSFIRST) $(COMMONLIB) -luser32 -lkernel32 -ladvapi32 -lshell32 $(USERLIBS)
 RCFLAGS = -I $(COMINC) $(RCWIDE) $(USERRC)
 
 OBJS = $(patsubst %.cpp,$(OBJDIR)/%.o,$(filter %.cpp,$(SRCS))) $(patsubst %.c,$(OBJDIR)/%.o,$(filter %.c,$(SRCS))) $(RES)
@@ -100,9 +105,21 @@ OBJS = $(patsubst %.cpp,$(OBJDIR)/%.o,$(filter %.cpp,$(SRCS))) $(patsubst %.c,$(
 MAP = $(patsubst %.$(EXT),%.map,$(DLLFULLNAME))
 
 
+.PHONY: all
+all: build
+#all: iclean build
+#	@$(MAKE) -f makefile_gcc build 
+# clean
 
-all: $(DLLFULLNAME)
+.PHONY: iclean
+iclean:
+	@echo prebuild cleaning
+	@$(RM) $(OBJDIR)/*.* $(COMDIR)/*.*
 
+.PHONY: build
+build: $(DLLFULLNAME)
+
+#all: $(DLLFULLNAME)
 
 #ifndef DISABLEAUTODEPS
 #$(OBJDIR)/%.d: %.cpp
@@ -143,3 +160,9 @@ $(DLLFULLNAME): $(OBJS) $(DEF)
 #ifndef DISABLEAUTODEPS
 #-include $(DEPS)
 #endif
+
+.PHONY: clean
+clean:
+	@echo final cleaning
+	@$(RM) $(OBJS)
+	@$(RMDIR) $(OBJDIR) $(COMDIR) $(TMPDIR)

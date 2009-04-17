@@ -1,5 +1,37 @@
+
+/*
+Copyright (c) 2009-2010 Maximus5
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+1. Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+3. The name of the authors may not be used to endorse or promote products
+   derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
+
 #include "Header.h"
+#include <commctrl.h>
 #include "../common/ConEmuCheck.h"
+
+#define DEBUGSTRMOVE(s) //DEBUGSTR(s)
 
 
 #ifdef MSGLOGGER
@@ -13,6 +45,10 @@ BOOL gbNoDblBuffer = false;
 #endif
 BOOL gbMessagingStarted = FALSE;
 
+#ifdef _DEBUG
+wchar_t gszDbgModLabel[6] = {0};
+#endif
+
 
 //externs
 HINSTANCE g_hInstance=NULL;
@@ -20,18 +56,20 @@ HWND ghWnd=NULL, ghWndDC=NULL, ghConWnd=NULL, ghWndApp=NULL;
 CConEmuMain gConEmu;
 //CVirtualConsole *pVCon=NULL;
 CSettings gSet;
-TCHAR temp[MAX_PATH];
-TCHAR szIconPath[MAX_PATH];
+//TCHAR temp[MAX_PATH]; -- низзя, очень велик шанс нарваться при многопоточности
 HICON hClassIcon = NULL, hClassIconSm = NULL;
+BOOL gbDontEnable = FALSE;
+BOOL gbDebugLogStarted = FALSE;
 
 
 const TCHAR *const szClassName = VirtualConsoleClass;
 const TCHAR *const szClassNameParent = VirtualConsoleClassMain;
 const TCHAR *const szClassNameApp = VirtualConsoleClassApp;
 const TCHAR *const szClassNameBack = VirtualConsoleClassBack;
+const TCHAR *const szClassNameScroll = VirtualConsoleClassScroll;
 
 
-OSVERSIONINFO osver;
+OSVERSIONINFO gOSVer;
 
 
 #ifdef MSGLOGGER
@@ -40,7 +78,7 @@ void DebugLogMessage(HWND h, UINT m, WPARAM w, LPARAM l, BOOL posted, BOOL extra
     if (bBlockDebugLog || (!bSendToFile && !IsDebuggerPresent()))
         return;
 
-    static char szMess[32], szWP[32], szLP[32], szWhole[255];
+    static char szMess[32], szWP[32], szLP[48], szWhole[255];
     //static SYSTEMTIME st;
     szMess[0]=0; szWP[0]=0; szLP[0]=0; szWhole[0]=0;
     
@@ -52,7 +90,6 @@ void DebugLogMessage(HWND h, UINT m, WPARAM w, LPARAM l, BOOL posted, BOOL extra
     switch (m)
     {
     MSG1(WM_NOTIFY);
-    MSG1(WM_COPYDATA);
     MSG1(WM_PAINT);
     MSG1(WM_TIMER);
     MSG2(WM_SIZING);
@@ -139,6 +176,7 @@ void DebugLogMessage(HWND h, UINT m, WPARAM w, LPARAM l, BOOL posted, BOOL extra
         WP1(SC_PROPERTIES_SECRET);
         WP1(ID_SETTINGS);
         WP1(ID_HELP);
+        WP1(ID_ABOUT);
         WP1(ID_TOTRAY);
         WP1(ID_CONPROP);
         }
@@ -159,7 +197,7 @@ void DebugLogMessage(HWND h, UINT m, WPARAM w, LPARAM l, BOOL posted, BOOL extra
     if (bSendToDebugger || bSendToFile) {
         if (!szMess[0]) wsprintfA(szMess, "%i", m);
         if (!szWP[0]) wsprintfA(szWP, "%i", w);
-        if (!szLP[0]) wsprintfA(szLP, "%i", l);
+        if (!szLP[0]) wsprintfA(szLP, "%i(0x%08X)", l, l);
         
 
         if (bSendToDebugger) {
@@ -183,23 +221,24 @@ void DebugLogPos(HWND hw, int x, int y, int w, int h, LPCSTR asFunc)
 	if (!x && !y && hw == ghConWnd) {
 		if (!IsDebuggerPresent() && !isPressed(VK_LBUTTON))
 			x = x;
-			//__asm int 3;
 	}
 	#endif
     if (bBlockDebugLog || (!bSendToFile && !IsDebuggerPresent()))
         return;
 
-    static char szPos[255];
+    
 
     if (bSendToDebugger) {
+		wchar_t szPos[255];
         static SYSTEMTIME st;
         GetLocalTime(&st);
-        wsprintfA(szPos, "%02i:%02i.%03i %s(%s, %i,%i,%i,%i)\n",
+        wsprintfW(szPos, L"%02i:%02i.%03i %s(%s, %i,%i,%i,%i)\n",
             st.wMinute, st.wSecond, st.wMilliseconds, asFunc,
-            (hw==ghConWnd) ? "Con" : "Emu", x,y,w,h);
+            (hw==ghConWnd) ? L"Con" : L"Emu", x,y,w,h);
 
-        OutputDebugStringA(szPos);
+        DEBUGSTRMOVE(szPos);
     } else if (bSendToFile) {
+		char szPos[255];
         wsprintfA(szPos, "%s(%s, %i,%i,%i,%i)\n",
 			asFunc,
             (hw==ghConWnd) ? "Con" : "Emu", x,y,w,h);
@@ -269,7 +308,7 @@ HWND gh_MDEBUG_TRAP_PARENT_WND = NULL;
 int __stdcall _MDEBUG_TRAP(LPCSTR asFile, int anLine)
 {
 	//__debugbreak();
-	__asm int 3;
+	_ASSERT(FALSE);
     wsprintfA(gsz_MDEBUG_TRAP_MSG, "MDEBUG_TRAP\r\n%s(%i)\r\n", asFile, anLine);
     if (gsz_MDEBUG_TRAP_MSG_APPEND[0])
         lstrcatA(gsz_MDEBUG_TRAP_MSG,gsz_MDEBUG_TRAP_MSG_APPEND);
@@ -279,26 +318,80 @@ int __stdcall _MDEBUG_TRAP(LPCSTR asFile, int anLine)
 int MDEBUG_CHK = TRUE;
 #endif
 
-LRESULT CALLBACK MainWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
-{
-    LRESULT result = 0;
-    
-	if (messg == WM_CREATE) {
-		if (ghWnd == NULL)
-			ghWnd = hWnd; // ставим сразу, чтобы функции могли пользоваться
-		else if (ghWndDC == NULL)
-			ghWndDC = hWnd; // ставим сразу, чтобы функции могли пользоваться
-	}
-	
-	if (hWnd == ghWnd)
-		result = gConEmu.WndProc(hWnd, messg, wParam, lParam);
-    else if (hWnd == ghWndDC)
-	    result = gConEmu.m_Child.ChildWndProc(hWnd, messg, wParam, lParam);
-	else if (messg)
-		result = DefWindowProc(hWnd, messg, wParam, lParam);
-
-    return result;
+/* Используются как extern в ConEmuCheck.cpp */
+LPVOID _calloc(size_t nCount,size_t nSize) {
+	return calloc(nCount,nSize);
 }
+LPVOID _malloc(size_t nCount) {
+	return malloc(nCount);
+}
+void   _free(LPVOID ptr) {
+	free(ptr);
+}
+
+
+COORD /*__forceinline*/ MakeCoord(int W,int H)
+{
+	COORD rc; rc.X=W; rc.Y=H;
+	return rc;
+}
+
+POINT /*__forceinline*/ MakePoint(int W,int H)
+{
+	POINT rc; rc.x=W; rc.y=H;
+	return rc;
+}
+
+RECT /*__forceinline*/ MakeRect(int W,int H)
+{
+	RECT rc; rc.left=0; rc.top=0; rc.right=W; rc.bottom=H;
+	return rc;
+}
+
+RECT /*__forceinline*/ MakeRect(int X1, int Y1,int X2,int Y2)
+{
+	RECT rc; rc.left=X1; rc.top=Y1; rc.right=X2; rc.bottom=Y2;
+	return rc;
+}
+
+BOOL /*__forceinline*/ CoordInRect(const COORD& c, const RECT& r)
+{
+	return (c.X >= r.left && c.X <= r.right) && (c.Y >= r.top && c.Y <= r.bottom);
+}
+
+BOOL IntersectSmallRect(RECT& rc1, SMALL_RECT& rc2)
+{
+	RECT frc2 = {rc2.Left, rc2.Top, rc2.Right, rc2.Bottom};
+	RECT tmp;
+	BOOL lb = IntersectRect(&tmp, &rc1, &frc2);
+	return lb;
+}
+
+wchar_t* GetDlgItemText(HWND hDlg, WORD nID)
+{
+	HWND hEdit;
+	if (nID)
+		hEdit = GetDlgItem(hDlg, nID);
+	else
+		hEdit = hDlg;
+		
+	if (!hEdit)
+		return NULL;
+	//
+	wchar_t* psz = NULL;
+	int nLen = GetWindowTextLength(hEdit);
+    if (nLen > 0) {
+        psz = (wchar_t*)calloc(nLen+1,2);
+        if (psz) {
+        	psz[0] = 0;
+            GetWindowText(hEdit, psz, nLen+1);
+        }
+    }
+    return psz;
+}
+
+
+
 
 LRESULT CALLBACK AppWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 {
@@ -320,11 +413,16 @@ LRESULT CALLBACK AppWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 BOOL CreateAppWindow()
 {
 	//2009-03-05 - нельзя этого делать. а то дочерние процессы с тем же Affinity запускаются...
-	// На тормоза - не влияет. Но вроде бы на многопроцессорных из-зп глюков
-	// в железе могут быть ошибки подсчета производительности, если этого не сделать
-	SetProcessAffinityMask(GetCurrentProcess(), gSet.nAffinity);
+	// На тормоза - не влияет. Но вроде бы на многопроцессорных из-за глюков в железе могут быть ошибки подсчета производительности, если этого не сделать
+	if (gSet.nAffinity)
+		SetProcessAffinityMask(GetCurrentProcess(), gSet.nAffinity);
 	//SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_ABOVE_NORMAL);
 	//SetThreadAffinityMask(GetCurrentThread(), 1);
+
+	INITCOMMONCONTROLSEX icex;
+	icex.dwSize = sizeof(INITCOMMONCONTROLSEX);
+	icex.dwICC   = ICC_COOL_CLASSES|ICC_BAR_CLASSES|ICC_TAB_CLASSES|ICC_PROGRESS_CLASS;
+	InitCommonControlsEx(&icex);
 
 	/*DWORD dwErr = 0;
 	HMODULE hInf = LoadLibrary(L"infis.dll");
@@ -358,96 +456,236 @@ BOOL CreateAppWindow()
 	return TRUE;
 }
 
-BOOL CreateMainWindow()
+
+
+int DisplayLastError(LPCTSTR asLabel, DWORD dwError /* =0 */, DWORD dwMsgFlags /* =0 */)
 {
-	if (!gConEmu.Init())
-		return FALSE; // Ошибка уже показана
-
-    if (_tcscmp(VirtualConsoleClass,VirtualConsoleClassMain)) {
-	    MBoxA(_T("Error: class names must be equal!"));
-	    return FALSE;
-    }
-    
-	WNDCLASSEX wc = {sizeof(WNDCLASSEX), CS_DBLCLKS|CS_OWNDC|CS_SAVEBITS, MainWndProc, 0, 16, 
-		    g_hInstance, hClassIcon, LoadCursor(NULL, IDC_ARROW), 
-		    NULL /*(HBRUSH)COLOR_BACKGROUND*/, 
-		    NULL, szClassNameParent, hClassIconSm};// | CS_DROPSHADOW
-    if (!RegisterClassEx(&wc))
-        return -1;
-    //ghWnd = CreateWindow(szClassName, 0, WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN, gSet.wndX, gSet.wndY, cRect.right - cRect.left - 4, cRect.bottom - cRect.top - 4, NULL, NULL, (HINSTANCE)g_hInstance, NULL);
-    DWORD style = WS_CLIPCHILDREN | WS_CLIPSIBLINGS;
-    if (ghWndApp)
-	    style |= WS_POPUPWINDOW | WS_CAPTION | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX;
-	else
-		style |= WS_OVERLAPPEDWINDOW;
-    int nWidth=CW_USEDEFAULT, nHeight=CW_USEDEFAULT;
-    
-    if (gSet.wndWidth && gSet.wndHeight)
-    {
-	    //if (gSet.LogFont.lfWidth==0)
-		//    pVCon->InitDC(FALSE); // инициализировать ширину шрифта по умолчанию
-
-		MBoxAssert(gSet.LogFont.lfWidth && gSet.LogFont.lfHeight);
-
-	    COORD conSize; conSize.X=gSet.wndWidth; conSize.Y=gSet.wndHeight;
-	    int nShiftX = GetSystemMetrics(SM_CXSIZEFRAME)*2;
-	    int nShiftY = GetSystemMetrics(SM_CYSIZEFRAME)*2 + GetSystemMetrics(SM_CYCAPTION);
-		nWidth  = conSize.X * gSet.LogFont.lfWidth + nShiftX + gSet.rcTabMargins.left+gSet.rcTabMargins.right;
-	    nHeight = conSize.Y * gSet.LogFont.lfHeight + nShiftY + gSet.rcTabMargins.top+gSet.rcTabMargins.bottom;
-    }
-    
-	//if (gConEmu.WindowMode == rMaximized) style |= WS_MAXIMIZE;
-	//style |= WS_VISIBLE;
-    // cRect.right - cRect.left - 4, cRect.bottom - cRect.top - 4; -- все равно это было не правильно
-	ghWnd = CreateWindow(szClassNameParent, gSet.GetCmd(), style, 
-		gSet.wndX, gSet.wndY, nWidth, nHeight, ghWndApp, NULL, (HINSTANCE)g_hInstance, NULL);
-	if (!ghWnd) {
-		if (!ghWndDC) MBoxA(_T("Can't create main window!"));
-        return FALSE;
-	}
-	//if (gConEmu.WindowMode == rFullScreen || gConEmu.WindowMode == rMaximized)
-	//	gConEmu.SetWindowMode(gConEmu.WindowMode);
-	return TRUE;
+	int nBtn = 0;
+	DWORD dw = dwError ? dwError : GetLastError();
+	wchar_t* lpMsgBuf = NULL;
+	MCHKHEAP
+		FormatMessage( FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, NULL, dw, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPWSTR)&lpMsgBuf, 0, NULL );
+	int nLen = _tcslen(asLabel)+64+(lpMsgBuf ? wcslen(lpMsgBuf) : 0);
+	wchar_t *out = new wchar_t[nLen];
+	wsprintf(out, _T("%s\nLastError=0x%08X\n%s"), asLabel, dw, lpMsgBuf);
+	if (gbMessagingStarted) SetForegroundWindow(ghWnd);
+	if (!dwMsgFlags) dwMsgFlags = MB_SYSTEMMODAL | MB_ICONERROR;
+	nBtn = MessageBox(gbMessagingStarted ? ghWnd : NULL, out, gConEmu.GetTitle(), dwMsgFlags);
+	MCHKHEAP
+		LocalFree(lpMsgBuf);
+	delete [] out;
+	MCHKHEAP
+	return nBtn;
 }
 
-BOOL CheckConIme()
-{
-    BOOL  lbStopWarning = FALSE;
-    DWORD dwValue=1;
-    Registry reg;
-    if (reg.OpenKey(_T("Software\\ConEmu"), KEY_READ)) {
-	    if (!reg.Load(_T("StopWarningConIme"), lbStopWarning))
-		    lbStopWarning = FALSE;
-		reg.CloseKey();
-    }
-    if (!lbStopWarning)
-    {
-	    if (reg.OpenKey(_T("Console"), KEY_READ))
-	    {
-	        if (!reg.Load(_T("LoadConIme"), dwValue))
-				dwValue = 1;
-	        reg.CloseKey();
-	        if (dwValue!=0) {
-		        if (IDCANCEL==MessageBox(0,_T("Unwanted value of 'LoadConIme' registry parameter!\r\nPress 'Cancel' to stop this message.\r\nTake a look at 'FAQ-ConEmu.txt'"), _T("ConEmu"),MB_OKCANCEL|MB_ICONEXCLAMATION))
-			        lbStopWarning = TRUE;
-		    }
-	    } else {
-		    if (IDCANCEL==MessageBox(0,_T("Can't determine a value of 'LoadConIme' registry parameter!\r\nPress 'Cancel' to stop this message.\r\nTake a look at 'FAQ-ConEmu.txt'"), _T("ConEmu"),MB_OKCANCEL|MB_ICONEXCLAMATION))
-		        lbStopWarning = TRUE;
-	    }
-	    if (lbStopWarning)
-	    {
-		    if (reg.OpenKey(_T("Software\\ConEmu"), KEY_WRITE)) {
-			    reg.Save(_T("StopWarningConIme"), lbStopWarning);
-				reg.CloseKey();
-		    }
-		}
-	}
-	
-	return TRUE;
-}
 
-extern void SetConsoleFontSizeTo(HWND inConWnd, int inSizeX, int inSizeY);
+
+//BOOL GetFontNameFromFile(LPCTSTR lpszFilePath, LPTSTR rsFontName)
+//{
+//	typedef struct _tagTT_OFFSET_TABLE{
+//		USHORT	uMajorVersion;
+//		USHORT	uMinorVersion;
+//		USHORT	uNumOfTables;
+//		USHORT	uSearchRange;
+//		USHORT	uEntrySelector;
+//		USHORT	uRangeShift;
+//	}TT_OFFSET_TABLE;
+//
+//	typedef struct _tagTT_TABLE_DIRECTORY{
+//		char	szTag[4];			//table name
+//		ULONG	uCheckSum;			//Check sum
+//		ULONG	uOffset;			//Offset from beginning of file
+//		ULONG	uLength;			//length of the table in bytes
+//	}TT_TABLE_DIRECTORY;
+//
+//	typedef struct _tagTT_NAME_TABLE_HEADER{
+//		USHORT	uFSelector;			//format selector. Always 0
+//		USHORT	uNRCount;			//Name Records count
+//		USHORT	uStorageOffset;		//Offset for strings storage, from start of the table
+//	}TT_NAME_TABLE_HEADER;
+//
+//	typedef struct _tagTT_NAME_RECORD{
+//		USHORT	uPlatformID;
+//		USHORT	uEncodingID;
+//		USHORT	uLanguageID;
+//		USHORT	uNameID;
+//		USHORT	uStringLength;
+//		USHORT	uStringOffset;	//from start of storage area
+//	}TT_NAME_RECORD;
+//
+//	#define SWAPWORD(x)		MAKEWORD(HIBYTE(x), LOBYTE(x))
+//	#define SWAPLONG(x)		MAKELONG(SWAPWORD(HIWORD(x)), SWAPWORD(LOWORD(x)))
+//
+//	BOOL lbRc = FALSE;
+//	HANDLE f = NULL;
+//	wchar_t szRetVal[MAX_PATH];
+//	DWORD dwRead;
+//
+//	//if(f.Open(lpszFilePath, CFile::modeRead|CFile::shareDenyWrite)){
+//	if ((f = CreateFile(lpszFilePath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL))!=INVALID_HANDLE_VALUE)
+//	{
+//		TT_OFFSET_TABLE ttOffsetTable;
+//		//f.Read(&ttOffsetTable, sizeof(TT_OFFSET_TABLE));
+//		if (ReadFile(f, &ttOffsetTable, sizeof(TT_OFFSET_TABLE), &(dwRead=0), NULL) && dwRead)
+//		{
+//			ttOffsetTable.uNumOfTables = SWAPWORD(ttOffsetTable.uNumOfTables);
+//			ttOffsetTable.uMajorVersion = SWAPWORD(ttOffsetTable.uMajorVersion);
+//			ttOffsetTable.uMinorVersion = SWAPWORD(ttOffsetTable.uMinorVersion);
+//
+//			//check is this is a true type font and the version is 1.0
+//			if(ttOffsetTable.uMajorVersion != 1 || ttOffsetTable.uMinorVersion != 0)
+//				return FALSE;
+//			
+//			TT_TABLE_DIRECTORY tblDir;
+//			BOOL bFound = FALSE;
+//			
+//			for(int i=0; i< ttOffsetTable.uNumOfTables; i++){
+//				//f.Read(&tblDir, sizeof(TT_TABLE_DIRECTORY));
+//				if (ReadFile(f, &tblDir, sizeof(TT_TABLE_DIRECTORY), &(dwRead=0), NULL) && dwRead)
+//				{
+//					//strncpy(szRetVal, tblDir.szTag, 4); szRetVal[4] = 0;
+//					//if(lstrcmpi(szRetVal, L"name") == 0)
+//					//if (memcmp(tblDir.szTag, "name", 4) == 0)
+//					if (strnicmp(tblDir.szTag, "name", 4) == 0)
+//					{
+//						bFound = TRUE;
+//						tblDir.uLength = SWAPLONG(tblDir.uLength);
+//						tblDir.uOffset = SWAPLONG(tblDir.uOffset);
+//						break;
+//					}
+//				}
+//			}
+//			
+//			if(bFound){
+//				if (SetFilePointer(f, tblDir.uOffset, NULL, FILE_BEGIN)!=INVALID_SET_FILE_POINTER)
+//				{
+//					TT_NAME_TABLE_HEADER ttNTHeader;
+//					//f.Read(&ttNTHeader, sizeof(TT_NAME_TABLE_HEADER));
+//					if (ReadFile(f, &ttNTHeader, sizeof(TT_NAME_TABLE_HEADER), &(dwRead=0), NULL) && dwRead)
+//					{
+//						ttNTHeader.uNRCount = SWAPWORD(ttNTHeader.uNRCount);
+//						ttNTHeader.uStorageOffset = SWAPWORD(ttNTHeader.uStorageOffset);
+//						TT_NAME_RECORD ttRecord;
+//						bFound = FALSE;
+//						
+//						for(int i=0; i<ttNTHeader.uNRCount; i++){
+//							//f.Read(&ttRecord, sizeof(TT_NAME_RECORD));
+//							if (ReadFile(f, &ttRecord, sizeof(TT_NAME_RECORD), &(dwRead=0), NULL) && dwRead)
+//							{
+//								ttRecord.uNameID = SWAPWORD(ttRecord.uNameID);
+//								if(ttRecord.uNameID == 1){
+//									ttRecord.uStringLength = SWAPWORD(ttRecord.uStringLength);
+//									ttRecord.uStringOffset = SWAPWORD(ttRecord.uStringOffset);
+//									//int nPos = f.GetPosition();
+//									DWORD nPos = SetFilePointer(f, 0, 0, FILE_CURRENT);
+//									//f.Seek(tblDir.uOffset + ttRecord.uStringOffset + ttNTHeader.uStorageOffset, CFile::begin);
+//									if (SetFilePointer(f, tblDir.uOffset + ttRecord.uStringOffset + ttNTHeader.uStorageOffset, 0, FILE_BEGIN)!=INVALID_SET_FILE_POINTER)
+//									{
+//										if ((ttRecord.uStringLength + 1) < 33)
+//										{
+//											//f.Read(csTemp.GetBuffer(ttRecord.uStringLength + 1), ttRecord.uStringLength);
+//											//csTemp.ReleaseBuffer();
+//											char szName[MAX_PATH]; szName[ttRecord.uStringLength + 1] = 0;
+//											if (ReadFile(f, szName, ttRecord.uStringLength + 1, &(dwRead=0), NULL) && dwRead)
+//											{
+//												//if(csTemp.GetLength() > 0){
+//												if (szName[0]) {
+//													szName[ttRecord.uStringLength + 1] = 0;
+//													for (int j = ttRecord.uStringLength; j >= 0 && szName[j] == ' '; j--)
+//														szName[j] = 0;
+//													if (szName[0]) {
+//														MultiByteToWideChar(CP_ACP, 0, szName, -1, szRetVal, 32);
+//														szRetVal[31] = 0;
+//														lbRc = TRUE;
+//													}
+//													break;
+//												}
+//											}
+//										}
+//									}
+//									//f.Seek(nPos, CFile::begin);
+//									SetFilePointer(f, nPos, 0, FILE_BEGIN);
+//								}
+//							}
+//						}
+//					}
+//				}			
+//			}
+//		}
+//		CloseHandle(f);
+//	}
+//	return lbRc;
+//}
+
+//BOOL FindFontInFolder(wchar_t* szTempFontFam)
+//{
+//	BOOL lbRc = FALSE;
+//
+//	typedef BOOL (WINAPI* FGetFontResourceInfo)(LPCTSTR lpszFilename,LPDWORD cbBuffer,LPVOID lpBuffer,DWORD dwQueryType);
+//	FGetFontResourceInfo GetFontResourceInfo = NULL;
+//	HMODULE hGdi = LoadLibrary(L"gdi32.dll");
+//	if (!hGdi) return FALSE;
+//	GetFontResourceInfo = (FGetFontResourceInfo)GetProcAddress(hGdi, "GetFontResourceInfoW");
+//	if (!GetFontResourceInfo) return FALSE;
+//
+//	WIN32_FIND_DATA fnd;
+//	wchar_t szFind[MAX_PATH]; wcscpy(szFind, gConEmu.ms_ConEmuExe);
+//	wchar_t *pszSlash = wcsrchr(szFind, L'\\');
+//
+//	if (pszSlash) {
+//		wcscpy(pszSlash, L"\\*.ttf");
+//		HANDLE hFind = FindFirstFile(szFind, &fnd);
+//		if (hFind != INVALID_HANDLE_VALUE) {
+//			do {
+//				if ((fnd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0) {
+//					lbRc = TRUE; break;
+//				}
+//			} while (FindNextFile(hFind, &fnd));
+//			FindClose(hFind);
+//		}
+//
+//		if (lbRc) {
+//			lbRc = FALSE;
+//			pszSlash[1] = 0;
+//			if ((wcslen(fnd.cFileName)+wcslen(szFind)) >= MAX_PATH) {
+//				TCHAR* psz=(TCHAR*)calloc(wcslen(fnd.cFileName)+100,sizeof(TCHAR));
+//				lstrcpyW(psz, L"Too long full pathname for font:\n");
+//				lstrcatW(psz, fnd.cFileName);
+//				MessageBox(NULL, psz, L"ConEmu", MB_OK|MB_ICONSTOP);
+//				free(psz);
+//			} else {
+//				wcscat(szFind, fnd.cFileName);
+//				// Теперь нужно определить имя шрифта
+//				DWORD dwSize = MAX_PATH;
+//				//if (!AddFontResourceEx(szFind, FR_PRIVATE, NULL)) //ADD fontname; by Mors
+//				//{
+//				//	TCHAR* psz=(TCHAR*)calloc(wcslen(szFind)+100,sizeof(TCHAR));
+//				//	lstrcpyW(psz, L"Can't register font:\n");
+//				//	lstrcatW(psz, szFind);
+//				//	MessageBox(NULL, psz, L"ConEmu", MB_OK|MB_ICONSTOP);
+//				//	free(psz);
+//				//} else
+//				//if (!GetFontResourceInfo(szFind, &dwSize, szTempFontFam, 1)) {
+//				if (!gSet.GetFontNameFromFile(szFind, szTempFontFam)) {
+//					DWORD dwErr = GetLastError();
+//					TCHAR* psz=(TCHAR*)calloc(wcslen(szFind)+100,sizeof(TCHAR));
+//					lstrcpyW(psz, L"Can't query font family for file:\n");
+//					lstrcatW(psz, szFind);
+//					wsprintf(psz+wcslen(psz), L"\nErrCode=0x%08X", dwErr);
+//					MessageBox(NULL, psz, L"ConEmu", MB_OK|MB_ICONSTOP);
+//					free(psz);
+//				} else {
+//					lstrcpynW(gSet.FontFile, szFind, countof(gSet.FontFile));
+//					lbRc = TRUE;
+//				}
+//			}
+//		}
+//	}
+//
+//	return lbRc;
+//}
+
+//extern void SetConsoleFontSizeTo(HWND inConWnd, int inSizeX, int inSizeY);
 
 // Disables the IME for all threads in a current process.
 //void DisableIME()
@@ -464,48 +702,237 @@ extern void SetConsoleFontSizeTo(HWND inConWnd, int inSizeX, int inSizeY);
 //	return;
 //}
 
+void MessageLoop()
+{
+	MSG Msg = {NULL};
+	gbMessagingStarted = TRUE;
+	while (GetMessage(&Msg, NULL, 0, 0))
+	{
+		BOOL lbDlgMsg = FALSE;
+		if (ghOpWnd) {
+			if (IsWindow(ghOpWnd))
+				lbDlgMsg = IsDialogMessage(ghOpWnd, &Msg);
+		}
+		if (!lbDlgMsg)
+		{
+			TranslateMessage(&Msg);
+			DispatchMessage(&Msg);
+		}
+	}
+	gbMessagingStarted = FALSE;
+}
+
+/* С командной строкой (GetCommandLineW) у нас засада */
+/*
+
+ShellExecute("open", "ShowArg.exe", "\"test1\" test2");
+GetCommandLineW(): "T:\XChange\VCProject\TestRunArg\ShowArg.exe" "test1" test2
+
+CreateProcess("ShowArg.exe", "\"test1\" test2");
+GetCommandLineW(): "test1" test2
+
+CreateProcess(NULL, "\"ShowArg.exe\" \"test1\" test2");
+GetCommandLineW(): "ShowArg.exe" "test1" test2
+
+*/
+
+void SplitCommandLine(wchar_t *str, uint *n)
+{
+	*n = 0;
+	wchar_t *dst = str, ts;
+	while (*str == ' ')
+		str++;
+	ts = ' ';
+	while (*str)
+	{
+		if (*str == '"')
+		{
+			ts ^= 2; // ' ' <-> '"'
+			str++;
+		}
+		while (*str && *str != '"' && *str != ts)
+			*dst++ = *str++;
+		if (*str == '"')
+			continue;
+		while (*str == ' ')
+			str++;
+		*dst++ = 0;
+		(*n)++;
+	}
+	return;
+}
+
+//Result:
+//  cmdLine - указатель на буфер с аргументами (!) он будет освобожден через free(cmdLine)
+//  cmdNew  - то что запускается (после аргумента /cmd)
+//  params  - количество аргументов 
+//            0 - ком.строка пустая
+//            ((uint)-1) - весь cmdNew должен быть ПРИКЛЕЕН к строке запуска по умолчанию
+BOOL PrepareCommandLine(TCHAR*& cmdLine, TCHAR*& cmdNew, uint& params)
+{
+	params = 0;
+    cmdNew = NULL;
+    LPCWSTR pszCmdLine = GetCommandLine();
+    int nInitLen = lstrlen(pszCmdLine);
+    cmdLine = _tcsdup(pszCmdLine);
+    
+	
+	// Имя исполняемого файла (conemu.exe)
+	const wchar_t* pszExeName = wcsrchr(gConEmu.ms_ConEmuExe, L'\\');
+	if (pszExeName) pszExeName++; else pszExeName = gConEmu.ms_ConEmuExe;
+	
+	wchar_t *pszNext = NULL, *pszStart = NULL, chSave = 0;
+	
+	if (*cmdLine == L' ') {
+		// Исполняемого файла нет - сразу начинаются аргументы
+		pszNext = NULL;
+	} else if (*cmdLine == L'"') {
+		// Имя между кавычками
+		pszStart = cmdLine+1;
+		pszNext = wcschr ( pszStart, L'"' );
+		if (!pszNext) {
+			MBoxA(L"Invalid command line: quates are not balanced");
+			return FALSE;
+		}
+		chSave = *pszNext;
+		*pszNext = 0;
+	} else {
+		pszStart = cmdLine;
+		pszNext = wcschr ( pszStart, L' ' );
+		if (!pszNext) pszNext = pszStart + lstrlen(pszStart);
+		chSave = *pszNext;
+		*pszNext = 0;
+	}
+	
+	if (pszNext) {
+		wchar_t* pszFN = wcsrchr(pszStart, L'\\');
+		if (pszFN) pszFN++; else pszFN = pszStart;
+		// Если первый параметр - наш conemu.exe или его путь - нужно его выбросить
+		if (!lstrcmpi(pszFN, pszExeName)) {
+			// Нужно отрезать
+			int nCopy = (nInitLen - (pszNext - cmdLine)) * sizeof(wchar_t);
+			TODO("Проверить, чтобы длину корректно посчитать");
+			if (nCopy > 0)
+				memmove(cmdLine, pszNext+1, nCopy);
+			else
+				*cmdLine = 0;
+		} else {
+			*pszNext = chSave;
+		}
+	}
+	
+	// AI. Если первый аргумент начинается НЕ с '/' - считаем что эта строка должна полностью передаваться в 
+	// запускаемую программу (прилепляться к концу ком.строки по умолчанию)
+	pszStart = cmdLine;
+	while (*pszStart == L' ' || *pszStart == L'"') pszStart++; // пропустить пробелы и кавычки
+	
+	if (*pszStart == 0) {
+		params = 0;
+		*cmdLine = 0;
+		cmdNew = NULL;
+		
+		// Эта переменная нужна для того, чтобы conemu можно было перезапустить
+		// из cmd файла с теми же аргументами (selfupdate)
+		SetEnvironmentVariableW(L"ConEmuArgs", L"");
+		
+	} else {
+		// Эта переменная нужна для того, чтобы conemu можно было перезапустить
+		// из cmd файла с теми же аргументами (selfupdate)
+		SetEnvironmentVariableW(L"ConEmuArgs", cmdLine);
+		
+		// Теперь проверяем наличие слеша
+		if (*pszStart != L'/') {
+			params = (uint)-1;
+			cmdNew = cmdLine;
+			
+		} else {
+			// Если ком.строка содержит "/cmd" - все что после него используется для создания нового процесса
+		    cmdNew = wcsstr(cmdLine, L"/cmd");
+		    if (cmdNew)
+		    {
+		        *cmdNew = 0;
+		        cmdNew += 5;
+		    }
+			// cmdLine готов к разбору
+			SplitCommandLine(cmdLine, &params);
+		}
+	}
+	
+	return TRUE;
+}
+
+void ResetConman()
+{
+	HKEY hk = 0;
+	DWORD dw = 0;
+    // сбрость CreateInNewEnvironment для ConMan
+    if (0 == RegCreateKeyEx(HKEY_CURRENT_USER, _T("Software\\HoopoePG_2x"),
+	        NULL, NULL, NULL, KEY_ALL_ACCESS, NULL, &hk, &dw))
+	{
+		RegSetValueEx(hk, _T("CreateInNewEnvironment"), NULL, REG_DWORD,
+			(LPBYTE)&(dw=0), 4);
+		RegCloseKey(hk);
+	}
+}
+
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
-    g_hInstance = hInstance;
+	/*int nCmp;
+	nCmp = StrCmpI(L" ", L"A"); // -1
+	nCmp = StrCmpI(L" ", L"+");
+	nCmp = StrCmpI(L" ", L"-");
+	nCmp = wcscmp(L" ", L"-");
+	nCmp = wcsicmp(L" ", L"-");
+	nCmp = lstrcmp(L" ", L"-");
+	nCmp = lstrcmpi(L" ", L"-");
+	nCmp = StrCmpI(L" ", L"\\");*/
 
+    g_hInstance = hInstance;
+    gpNullSecurity = NullSecurity();
+
+    #ifdef _DEBUG
 	if (_tcsstr(GetCommandLine(), L"/debugi")) {
-		if (!IsDebuggerPresent()) __asm int 3;
-	} else if (_tcsstr(GetCommandLine(), L"/debug")) {
+		if (!IsDebuggerPresent()) _ASSERT(FALSE);
+	} else
+	#endif
+	if (_tcsstr(GetCommandLine(), L"/debug")) {
 		if (!IsDebuggerPresent()) MBoxA(L"Conemu started");
 	}
+	
 
     //pVCon = NULL;
 
-    bool setParentDisabled=false;
+    //bool setParentDisabled=false;
     bool ClearTypePrm = false;
-    bool FontPrm = false; TCHAR* FontVal = NULL;
-    bool SizePrm = false; LONG SizeVal;
-    bool BufferHeightPrm = false; int BufferHeightVal;
+    bool FontPrm = false; TCHAR* FontVal = NULL; //wchar_t szTempFontFam[MAX_PATH];
+    bool SizePrm = false; LONG SizeVal = 0;
+    bool BufferHeightPrm = false; int BufferHeightVal = 0;
     bool ConfigPrm = false; TCHAR* ConfigVal = NULL;
-	bool FontFilePrm = false; TCHAR* FontFile = NULL; //ADD fontname; by Mors
+	//bool FontFilePrm = false; TCHAR* FontFile = NULL; //ADD fontname; by Mors
 	bool WindowPrm = false; int WindowModeVal = 0;
 	bool AttachPrm = false; LONG AttachVal=0;
-	bool ConManPrm = false, ConManValue = false;
+	bool MultiConPrm = false, MultiConValue = false;
 	bool VisPrm = false, VisValue = false;
+	bool SingleInstance = false;
 
     //gConEmu.cBlinkShift = GetCaretBlinkTime()/15;
 
-    memset(&osver, 0, sizeof(osver));
-    osver.dwOSVersionInfoSize = sizeof(osver);
-    GetVersionEx(&osver);
+    memset(&gOSVer, 0, sizeof(gOSVer));
+    gOSVer.dwOSVersionInfoSize = sizeof(gOSVer);
+    GetVersionEx(&gOSVer);
     
     //DisableIME();
 
     //Windows7 - SetParent для консоли валится
-    gConEmu.setParent = false; // PictureView теперь идет через Wrapper
-    if ((osver.dwMajorVersion>6) || (osver.dwMajorVersion==6 && osver.dwMinorVersion>=1))
-    {
-        setParentDisabled = true;
-    }
-    if (osver.dwMajorVersion>=6)
-    {
-	    CheckConIme();
-    }
+    //gConEmu.setParent = false; // PictureView теперь идет через Wrapper
+    //if ((gOSVer.dwMajorVersion>6) || (gOSVer.dwMajorVersion==6 && gOSVer.dwMinorVersion>=1))
+    //{
+    //    setParentDisabled = true;
+    //}
+    //if (gOSVer.dwMajorVersion>=6)
+    //{
+	//    CheckConIme();
+    //}
     
     //gSet.InitSettings();
 
@@ -515,39 +942,26 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 //------------------------------------------------------------------------
 
     TCHAR* cmdNew = NULL;
-    //STARTUPINFO stInf; -- Maximus5 - не используется
-    //GetStartupInfo(&stInf);
+    TCHAR *cmdLine = NULL;
+    TCHAR *psUnknown = NULL;
+    uint  params = 0;
+    
+    
+    
+    if (!PrepareCommandLine(/*OUT*/cmdLine, /*OUT*/cmdNew, /*OUT*/params))
+		return 100;
 
-    //Maximus5 - размер командной строки может быть и поболе...
-    //_tcsncpy(cmdLine, GetCommandLine(), 0x1000); cmdLine[0x1000-1]=0;
-    TCHAR *cmdLine = _tcsdup(GetCommandLine());
-	cmdNew = _tcschr(cmdLine, _T('/'));
-	if (!cmdNew) cmdNew=(TCHAR*)"";
-    SetEnvironmentVariableW(L"ConEmuArgs", cmdNew);
-	cmdNew = NULL;
-
+	
+    
+	if (params && params != (uint)-1)
     {
-        cmdNew = _tcsstr(cmdLine, _T("/cmd"));
-        if (cmdNew)
-        {
-            *cmdNew = 0;
-            cmdNew += 5;
-        }
-    }
+    	TCHAR *curCommand = cmdLine;
+		TODO("Если первый (после запускаемого файла) аргумент начинается НЕ с '/' - завершить разбор параметров и не заменять '""' на пробелы");
+        //uint params; SplitCommandLine(curCommand, &params);
 
-
-	TCHAR *psUnknown = NULL;
-    TCHAR *curCommand = cmdLine;
-    {
-#ifdef KL_MEM
-        uint params = klSplitCommandLine(curCommand);
-#else
-        uint params; klSplitCommandLine(curCommand, &params);
-#endif
-
-		if(params < 2) {
-            curCommand = NULL;
-		}
+		//if(params < 1) {
+        //    curCommand = NULL;
+		//}
         // Parse parameters.
         // Duplicated parameters are permitted, the first value is used.
 		uint i = 0; // ммать... curCommand увеличивался, а i НЕТ
@@ -566,7 +980,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				        return 101;
 				    curCommand += _tcslen(curCommand) + 1; i++;
 				    DWORD dwAttr = GetFileAttributes(curCommand);
-				    if (dwAttr == -1 || (dwAttr & FILE_ATTRIBUTE_DIRECTORY))
+				    if (dwAttr == (DWORD)-1 || (dwAttr & FILE_ATTRIBUTE_DIRECTORY))
 					    return 102;
 			    }
 
@@ -595,28 +1009,27 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			    }
 		        RegCloseKey(hk);
 		        // сбрость CreateInNewEnvironment для ConMan
-		        if (0 == RegCreateKeyEx(HKEY_CURRENT_USER, _T("Software\\HoopoePG_2x"),
-				        NULL, NULL, NULL, KEY_ALL_ACCESS, NULL, &hk, &dw))
-				{
-					RegSetValueEx(hk, _T("CreateInNewEnvironment"), NULL, REG_DWORD,
-						(LPBYTE)&(dw=0), 4);
-					RegCloseKey(hk);
-				}
+		        ResetConman();
 		        return nSetupRc;
 	        }
-			else if ( !klstricmp(curCommand, _T("/conman")) ) {
-				ConManValue = true; ConManPrm = true;
+			else if ( !klstricmp(curCommand, _T("/multi")) ) {
+				MultiConValue = true; MultiConPrm = true;
 			}
-			else if ( !klstricmp(curCommand, _T("/noconman")) ) {
-				ConManValue = false; ConManPrm = true;
+			else if ( !klstricmp(curCommand, _T("/nomulti")) ) {
+				MultiConValue = false; MultiConPrm = true;
 			}
 			else if ( !klstricmp(curCommand, _T("/visible")) ) {
 				VisValue = true; VisPrm = true;
+			}
+			else if ( !klstricmp(curCommand, _T("/detached")) ) {
+				gConEmu.mb_StartDetached = TRUE;
 			}
             else if ( !klstricmp(curCommand, _T("/ct")) || !klstricmp(curCommand, _T("/cleartype")) )
             {
                 ClearTypePrm = true;
             }
+
+			// имя шрифта
             else if ( !klstricmp(curCommand, _T("/font")) && i + 1 < params)
             {
                 curCommand += _tcslen(curCommand) + 1; i++;
@@ -626,6 +1039,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
                     FontVal = curCommand;
                 }
             }
+
+			// Высота шрифта
             else if ( !klstricmp(curCommand, _T("/size")) && i + 1 < params)
             {
                 curCommand += _tcslen(curCommand) + 1; i++;
@@ -662,12 +1077,20 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					                // Сверху УЖЕ другая копия ConEmu
 					                return 1;
 				                }
+								// Если на самом верху НЕ консоль - это может быть панель проводника, 
+								// или другое плавающее окошко... Поищем ВЕРХНЮЮ консоль
+								if (_tcscmp(sClass, _T("ConsoleWindowClass"))!=0) {
+									_tcscpy(sClass, _T("ConsoleWindowClass"));
+									hCon = FindWindow(_T("ConsoleWindowClass"), NULL);
+									if (!hCon)
+										return 100;
+								}
 				                if (_tcscmp(sClass, _T("ConsoleWindowClass"))==0) {
 					                // перебрать все ConEmu, может кто-то уже подцеплен?
 					                HWND hEmu = NULL;
-					                while (hEmu = FindWindowEx(NULL, hEmu, VirtualConsoleClassMain, NULL))
+					                while ((hEmu = FindWindowEx(NULL, hEmu, VirtualConsoleClassMain, NULL)) != NULL)
 					                {
-						                if (hCon == (HWND)GetWindowLong(hEmu, GWL_USERDATA)) {
+						                if (hCon == (HWND)GetWindowLongPtr(hEmu, GWLP_USERDATA)) {
 							                // к этой консоли уже подцеплен ConEmu
 							                return 1;
 						                }
@@ -678,6 +1101,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 								}
 			                }
 		                }
+						gSet.hAttachConWnd = hCon;
 	                }
                 }
             }
@@ -685,10 +1109,21 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             else if ( !klstricmp(curCommand, _T("/fontfile")) && i + 1 < params)
             {
                 curCommand += _tcslen(curCommand) + 1; i++;
-                if (!FontFilePrm)
+                //if (!FontFilePrm)
                 {
-                    FontFilePrm = true;
-                    FontFile = curCommand;
+                    //FontFilePrm = true;
+					int nLen = _tcslen(curCommand);
+					if (nLen >= MAX_PATH)
+					{
+						TCHAR* psz=(TCHAR*)calloc(nLen+100,sizeof(TCHAR));
+						wsprintf(psz, _T("Too long /FontFile name (%i chars).\r\n"), nLen);
+						_tcscat(psz, curCommand);
+						MBoxA(psz);
+						free(psz); free(cmdLine);
+						return 100;
+					}
+                    //FontFile = curCommand;
+                    gSet.RegisterFont(curCommand, TRUE);
                 }
             }
             //End ADD fontname; by Mors
@@ -700,18 +1135,34 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             {
                 WindowModeVal = rMaximized; WindowPrm = true;
             }
-            else if ( !klstricmp(curCommand, _T("/DontSetParent")) || !klstricmp(curCommand, _T("/Windows7")) )
+            else if ( !klstricmp(curCommand, L"/log") || !klstricmp(curCommand, L"/log0")  || !klstricmp(curCommand, L"/log1") )
             {
-                setParentDisabled = true;
-            }
-            else if ( !klstricmp(curCommand, _T("/SetParent")) )
+	            gSet.isAdvLogging = 1;
+	        }
+            else if ( !klstricmp(curCommand, _T("/log2")))
             {
-                gConEmu.setParent = true;
-            }
-            else if ( !klstricmp(curCommand, _T("/SetParent2")) )
+	            gSet.isAdvLogging = 2;
+	        }
+            else if ( !klstricmp(curCommand, _T("/log3")))
             {
-                gConEmu.setParent = true; gConEmu.setParent2 = true;
-            }
+	            gSet.isAdvLogging = 3;
+	        }
+	        else if ( !klstricmp(curCommand, _T("/single")) )
+	        {
+	        	SingleInstance = true;
+	        }
+            //else if ( !klstricmp(curCommand, _T("/DontSetParent")) || !klstricmp(curCommand, _T("/Windows7")) )
+            //{
+            //    setParentDisabled = true;
+            //}
+            //else if ( !klstricmp(curCommand, _T("/SetParent")) )
+            //{
+            //    gConEmu.setParent = true;
+            //}
+            //else if ( !klstricmp(curCommand, _T("/SetParent2")) )
+            //{
+            //    gConEmu.setParent = true; gConEmu.setParent2 = true;
+            //}
             else if (!klstricmp(curCommand, _T("/BufferHeight")) && i + 1 < params)
             {
                 curCommand += _tcslen(curCommand) + 1; i++;
@@ -741,7 +1192,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	                    _tcscat(psz, curCommand);
                         MBoxA(psz);
                         free(psz); free(cmdLine);
-                        return -1;
+                        return 100;
                     }
                     ConfigVal = curCommand;
                 }
@@ -759,9 +1210,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			curCommand += _tcslen(curCommand) + 1; i++;
         }
     }
-    if (setParentDisabled && (gConEmu.setParent || gConEmu.setParent2)) {
-        gConEmu.setParent=false; gConEmu.setParent2=false;
-    }
+    //if (setParentDisabled && (gConEmu.setParent || gConEmu.setParent2)) {
+    //    gConEmu.setParent=false; gConEmu.setParent2=false;
+    //}
 
     if (psUnknown) {
 	    TCHAR* psMsg = (TCHAR*)calloc(_tcslen(psUnknown)+100,sizeof(TCHAR));
@@ -771,7 +1222,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	    free(psMsg);
 	    return 100;
     }
-        
+
         
 //------------------------------------------------------------------------
 ///| load settings and apply parameters |/////////////////////////////////
@@ -787,19 +1238,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     // load settings from registry
     gSet.LoadSettings();
 
-    // Установка параметров из командной строки
-    if (cmdNew)
-        gSet.psCurCmd = _tcsdup(cmdNew);
 	//#pragma message("Win2k: CLEARTYPE_NATURAL_QUALITY")
-    if (ClearTypePrm)
-        gSet.LogFont.lfQuality = CLEARTYPE_NATURAL_QUALITY;
-    if (FontPrm)
-        _tcscpy(gSet.LogFont.lfFaceName, FontVal);
-    if (SizePrm)
-        gSet.LogFont.lfHeight = SizeVal;
+    //if (ClearTypePrm)
+    //    gSet.LogFont.lfQuality = CLEARTYPE_NATURAL_QUALITY;
+    //if (FontPrm)
+    //    _tcscpy(gSet.LogFont.lfFaceName, FontVal);
+    //if (SizePrm)
+    //    gSet.LogFont.lfHeight = SizeVal;
     if (BufferHeightPrm) {
-        gSet.BufferHeight = BufferHeightVal;
-        gConEmu.BufferHeight = BufferHeightVal;
+        gSet.SetArgBufferHeight ( BufferHeightVal );
     }
 	if (!WindowPrm) {
 		if (nCmdShow == SW_SHOWMAXIMIZED)
@@ -807,26 +1254,100 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	} else {
 		gConEmu.WindowMode = WindowModeVal;
 	}
-	if (ConManPrm)
-		gSet.isConMan = ConManValue;
+	if (MultiConPrm)
+		gSet.isMulti = MultiConValue;
 	if (VisValue)
 		gSet.isConVisible = VisPrm;
-	// Если запускается conman - принудительно включить флажок "Обновлять handle"
-	//cmdNew = gSet.Cmd;
-	//while (*cmdNew==L' ' || *cmdNew==L'"')
-	if (gSet.isConMan || StrStrI(gSet.GetCmd(), L"conman.exe"))
+	// Если запускается conman (нафига?) - принудительно включить флажок "Обновлять handle"
+	TODO("Deprecated: isUpdConHandle использоваться не должен");
+	if (gSet.isMulti || StrStrI(gSet.GetCmd(), L"conman.exe")) {
 		gSet.isUpdConHandle = TRUE;
+        // сбрость CreateInNewEnvironment для ConMan
+        ResetConman();
+	}
+
+
+    // Установка параметров из командной строки
+	if (cmdNew) {
+		MCHKHEAP
+		const wchar_t* pszDefCmd = NULL;
+		wchar_t* pszReady = NULL;
 		
+		int nLen = lstrlen(cmdNew)+1;
+		if (params == (uint)-1) {
+			pszDefCmd = gSet.GetCmd();
+			_ASSERTE(pszDefCmd && *pszDefCmd);
+			nLen += 3 + lstrlen(pszDefCmd);
+		}
+		
+		pszReady = (TCHAR*)malloc(nLen*sizeof(TCHAR));
+		_ASSERTE(pszReady);
+		
+		if (pszDefCmd) {
+			lstrcpy(pszReady, pszDefCmd);
+			lstrcat(pszReady, L" ");
+			lstrcat(pszReady, cmdNew);
+		} else {
+			lstrcpy(pszReady, cmdNew);
+		}
+		MCHKHEAP
+		
+		SafeFree(gSet.psCurCmd); // могло быть создано в gSet.GetCmd()
+		gSet.psCurCmd = pszReady; pszReady = NULL;
+	}
+		
+	//if (FontFilePrm) {
+	//	if (!AddFontResourceEx(FontFile, FR_PRIVATE, NULL)) //ADD fontname; by Mors
+	//	{
+	//		TCHAR* psz=(TCHAR*)calloc(wcslen(FontFile)+100,sizeof(TCHAR));
+	//		lstrcpyW(psz, L"Can't register font:\n");
+	//		lstrcatW(psz, FontFile);
+	//		MessageBox(NULL, psz, L"ConEmu", MB_OK|MB_ICONSTOP);
+	//		free(psz);
+	//		return 100;
+	//	}
+	//	lstrcpynW(gSet.FontFile, FontFile, countof(gSet.FontFile));
+	//}
+	// else if (gSet.isSearchForFont && gConEmu.ms_ConEmuExe[0]) {
+	//	if (FindFontInFolder(szTempFontFam)) {
+	//		// Шрифт уже зарегистрирован
+	//		FontFilePrm = true;
+	//		FontPrm = true;
+	//		FontVal = szTempFontFam;
+	//		FontFile = gSet.FontFile;
+	//	}
+	//}
+	
+	gSet.RegisterFonts();
 
-//------------------------------------------------------------------------
-///| Create CVirtualConsole |/////////////////////////////////////////////
-//------------------------------------------------------------------------
 
-	#undef pVCon
-    // create console
-    //pVCon = new CVirtualConsole();
+	gSet.InitFont(
+		FontPrm ? FontVal : NULL,
+		SizePrm ? SizeVal : -1,
+		ClearTypePrm ? CLEARTYPE_NATURAL_QUALITY : -1
+		);
 
-    
+		
+///////////////////////////////////
+
+	if (SingleInstance) {
+		// При запуске серии закладок из cmd файла второму экземпляру лучше чуть-чуть подождать
+		Sleep(1000);
+		// Поехали
+		DWORD dwStart = GetTickCount();
+		while (!gConEmu.isFirstInstance()) {
+			if (gConEmu.RunSingleInstance())
+				return 0; // командная строка успешно запущена в существующем экземпляре
+
+			// Если ожидание длится более 10 секунд - запускаемся самостоятельно
+			if ((GetTickCount() - dwStart) > 10*1000)
+				break;
+		}
+	} else {
+		// Иницилизировать событие все-равно нужно
+		gConEmu.isFirstInstance();
+	}
+ 
     
 //------------------------------------------------------------------------
 ///| Allocating console |/////////////////////////////////////////////////
@@ -841,33 +1362,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	    }
 	    gSet.nAttachPID = AttachVal;
     }
-    
-    //!!! TODO:
-    //ghConWnd = GetConsoleWindow();
-    //if (!ghConWnd) {
-	//    MBoxA(_T("GetConsoleWindow failed!"));
-	//    //delete pVCon;
-	//    return 100;
-    //}
-	//// Если в свойствах ярлыка указано "Максимизировано" - консоль разворачивается, а FAR при 
-	//// старте сам меняет размер буфера, в результате - ошибочно устанавливается размер окна
-	//if (nCmdShow != SW_SHOWNORMAL) ShowWindow(ghConWnd, SW_SHOWNORMAL);
-    //if (!gSet.isConVisible) {
-	//    ShowWindow(ghConWnd, SW_HIDE);
-	//    EnableWindow(ghConWnd, FALSE); // NightRoman
-	//}
-    //SetConsoleFontSizeTo(ghConWnd, 4, 6);
-    
-	//!!! TODO:
-    //// set quick edit mode for buffer mode
-    //if (gConEmu.BufferHeight > 0)
-    //{
-    //    DWORD mode=0;
-	//	if (GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), &mode)) {
-	//		if ((mode & 0x0040) == 0)
-	//			SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), (mode | 0x0040));
-	//	}
-    //}
 
 
 //------------------------------------------------------------------------
@@ -884,45 +1378,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 ///| Creating window |////////////////////////////////////////////////////
 //------------------------------------------------------------------------
 
-    if (FontFilePrm) AddFontResourceEx(FontFile, FR_PRIVATE, NULL); //ADD fontname; by Mors
-
-    if (!CreateMainWindow()) {
+    if (!gConEmu.CreateMainWindow()) {
 	    free(cmdLine);
 	    //delete pVCon;
 	    return 100;
 	}
-
-	//if (AttachPrm) {
-	//	// Заодно, вызвать определение нового окна ConEmu
-	//	TabBar.Retrieve();
-	//}
-	    
-
-    // set parent window of the console window:
-    // *) it is used by ConMan and some FAR plugins, set it for standard mode or if /SetParent switch is set
-    // *) do not set it by default for buffer mode because it causes unwanted selection jumps
-    // WARP ItSelf опытным путем выяснил, что SetParent валит ConEmu в Windows7
-    //if (!setParentDisabled && (setParent || gConEmu.BufferHeight == 0))
-    
-    //gConEmu.SetConParent();
-
-    //// adjust the console window and buffer to settings
-    //// *) after getting all the settings
-    //// *) before running the command
-    //!!! TODO:
-    //COORD size = {gSet.wndWidth, gSet.wndHeight};
-    //gConEmu.SetConsoleWindowSize(size, false); // NightRoman
     
     
-
-//------------------------------------------------------------------------
-///| Starting the process |///////////////////////////////////////////////
-//------------------------------------------------------------------------
-
-	//!!! TODO:
-    //SetHandleInformation(GetStdHandle(STD_INPUT_HANDLE), HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT);
-    //SetHandleInformation(GetStdHandle(STD_OUTPUT_HANDLE), HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT);
-    //SetHandleInformation(GetStdHandle(STD_ERROR_HANDLE), HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT);
 
 
 //------------------------------------------------------------------------
@@ -931,19 +1393,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	gConEmu.PostCreate();
 
-    
+   
 //------------------------------------------------------------------------
 ///| Main message loop |//////////////////////////////////////////////////
 //------------------------------------------------------------------------
-    
-    MSG lpMsg;
-    gbMessagingStarted = TRUE;
-    while (GetMessage(&lpMsg, NULL, 0, 0))
-    {
-        TranslateMessage(&lpMsg);
-        DispatchMessage(&lpMsg);
-    }
-    gbMessagingStarted = FALSE;
+
+	SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_ABOVE_NORMAL);
+
+	MessageLoop();
     
 //------------------------------------------------------------------------
 ///| Deinitialization |///////////////////////////////////////////////////
@@ -953,7 +1410,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     //delete pVCon;
     //CloseHandle(hChildProcess); -- он более не требуется
 
-    if (FontFilePrm) RemoveFontResourceEx(FontFile, FR_PRIVATE, NULL); //ADD fontname; by Mors
+    //if (FontFilePrm) RemoveFontResourceEx(FontFile, FR_PRIVATE, NULL); //ADD fontname; by Mors
+    
+    gSet.UnregisterFonts();
 
 	if (lbConsoleAllocated)
 		FreeConsole();

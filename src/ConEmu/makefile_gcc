@@ -1,14 +1,22 @@
 NAME = ConEmu
-SRCS =  BaseDragDrops.cpp \
-		ConEmu.cpp        \
-		DragDrop.cpp      \
-		Options.cpp       \
-		ProgressBars.cpp  \
-		setconsoleinfo.cpp \
+SRCS =  BaseDragDrops.cpp  \
+		ConEmu.cpp         \
+		ConEmuApp.cpp      \
+		ConEmuChild.cpp    \
+		ConEmuPipe.cpp     \
+		DragDrop.cpp       \
+		Options.cpp        \
+		RealConsole.cpp    \
+		Registry.cpp       \
+		ScreenDump.cpp     \
 		TabBar.cpp         \
-		VirtualConsole.cpp 
+		TrayIcon.cpp       \
+		VirtualConsole.cpp \
+		../common/Common.cpp \
+		../common/ConEmuCheck.cpp \
+		../common/RgnDetect.cpp
 
-USERLIBS = -lversion
+USERLIBS = -lversion -lshlwapi -loleaut32
 
 #The following variables can be set by the user:
 #
@@ -44,22 +52,32 @@ USERLIBS = -lversion
 #WIDE - set for a unicode build
 #
 
+ifndef DEBUG
+DEBUGFLAGS=
+DEBUGLINKFLAGS=-s
+else
+DEBUGFLAGS=-g
+DEBUGLINKFLAGS=
+endif                   
+
+
 WIDE = 1
 DIRSURF = W
 RCWIDE = -D UNICODE -D _UNICODE
-CXXWIDE = -D UNICODE -D _UNICODE
-CCWIDE = -D UNICODE -D _UNICODE
+CXXWIDE = -D UNICODE -D _UNICODE -D _WIN32_WINNT=0x0500 -D WINVER=0x0500 -D _WIN32_IE=0x0500
+CCWIDE = -D UNICODE -D _UNICODE -D _WIN32_WINNT=0x0500 -D WINVER=0x0500 -D _WIN32_IE=0x0500
 
 OBJDIR = ../../gcc/conemu
 REOBJDIR = \.\.\/\.\.\/gcc\/conemu
 EXEDIR = ../..
 COMMON = ../common
+#COMINC = "C:\Program Files\Microsoft SDKs\Windows\v7.0\Include"
 COMINC = $(COMMON)
 EXT = exe
 EXENAME = $(NAME).$(EXT)
 EXEFULLNAME = $(EXEDIR)/$(EXENAME)
 #DEF = export.gcc.def
-RC_NAME = Resource.rc
+RC_NAME = ConEmu.rc
 RES = $(OBJDIR)/$(NAME).res.o
 
 NOSTART = -nostartfiles
@@ -72,28 +90,29 @@ ifdef NEEDDEFLIB
 NODEFLIBS = 
 endif
 
-COMMONLIB = -L $(COMMON) -lCRT
+COMMONLIB = -L $(COMMON)
 ifdef EXCLUDECRT
 COMMONLIB = 
 endif
 
 CXX = g++
 CC = gcc
-#DLLTOOL = dlltool
 RM = rm -f
+RMDIR = rmdir
 CP = cp -f
-M4 = m4 -P
+M4 = tools/m4 -P -DFARBIT=$(DIRBIT)
+GAWK = tools/gawk
 MV = mv -f
 MKDIR = mkdir -p
 WINDRES = windres
 AR = ar
 RANLIB = ranlib
-CXXFLAGS = -mno-cygwin -I $(COMMON) -I $(COMINC) -Wall -Os -funsigned-char -fomit-frame-pointer -fstrict-aliasing -fno-rtti -fno-exceptions $(CXXWIDE) $(USERCPP) -D _WIN32_WINNT=0x502
-CCFLAGS = -mno-cygwin -I $(COMMON) -I $(COMINC) -Wall -Os -funsigned-char -fomit-frame-pointer -fstrict-aliasing -fno-exceptions $(CCWIDE) $(USERCPP)
-LNKFLAGS = -mno-cygwin -mdll -s $(NOSTART) $(NODEFLIBS) -lgcc $(USERLIBSFIRST) $(COMMONLIB) -luser32 -lkernel32 -ladvapi32 -lshell32 $(USERLIBS)
+CXXFLAGS = $(DEBUGFLAGS) -mwindows -fexceptions -I $(COMMON) -I $(COMINC) -Wall -Os -funsigned-char -fomit-frame-pointer -fstrict-aliasing -fno-rtti $(CXXWIDE) $(USERCPP) 
+CCFLAGS = $(DEBUGFLAGS) -mwindows -I $(COMMON) -I $(COMINC) -Wall -Os -funsigned-char -fomit-frame-pointer -fstrict-aliasing $(CCWIDE) $(USERCPP)
+LNKFLAGS = $(DEBUGLINKFLAGS) -mwindows $(USERLIBSFIRST) $(COMMONLIB) -luser32 -lkernel32 -ladvapi32 -lshell32 -lgdi32 -lcomdlg32 -lole32 -luuid -lcomctl32 $(USERLIBS)
 RCFLAGS = -I $(COMINC) $(RCWIDE) $(USERRC)
 
-OBJS = $(patsubst %.cpp,$(OBJDIR)/%.o,$(filter %.cpp,$(SRCS))) $(RES)
+OBJS = $(patsubst %.cpp,$(OBJDIR)/%.o,$(filter %.cpp,$(SRCS))) $(patsubst %.c,$(OBJDIR)/%.o,$(filter %.c,$(SRCS))) $(RES)
 ifndef DISABLEAUTODEPS
 DEPS = $(patsubst %.cpp,$(OBJDIR)/%.d,$(filter %.cpp,$(SRCS)))
 endif
@@ -103,18 +122,23 @@ MAP = $(patsubst %.$(EXT),%.map,$(EXEFULLNAME))
 
 all: $(EXEFULLNAME)
 
-ifndef DISABLEAUTODEPS
-$(OBJDIR)/%.d: %.cpp
-	@echo making depends for $<
-	@$(MKDIR) -p $(@D)
-	@$(SHELL) -ec '$(CXX) -c -MM $(CXXFLAGS) $< \
-                | sed '\''s/\($*\)\.o[ :]*/$(REOBJDIR)\1.o $(REOBJDIR)\1.d: /g'\'' > $@; [ -s $@ ] || $(RM) $@'
-endif
+#ifndef DISABLEAUTODEPS
+#$(OBJDIR)/%.d: %.cpp
+#	@echo making depends for $<
+#	@$(MKDIR) -p $(@D)
+#	@$(SHELL) -ec '$(CXX) -c -MM $(CXXFLAGS) $< \
+#                | sed '\''s/\($*\)\.o[ :]*/$(REOBJDIR)\1.o $(REOBJDIR)\1.d: /g'\'' > $@; [ -s $@ ] || $(RM) $@'
+#endif
 
 $(OBJDIR)/%.o: %.cpp
 	@echo compiling $<
 	@$(MKDIR) -p $(@D)
 	@$(CXX) $(CXXFLAGS) -c -o $@ $<
+
+$(OBJDIR)/%.o: %.c
+	@echo compiling $<
+	@$(MKDIR) -p $(@D)
+	@$(CC) $(CCFLAGS) -c -o $@ $<
 
 $(RES): $(RC_NAME)
 	@echo compiling $<
@@ -123,7 +147,7 @@ $(RES): $(RC_NAME)
 
 $(EXEFULLNAME): $(OBJS) $(DEF)
 	@echo linking $@
-	@$(CXX) -o $(EXENAME) $(OBJS) $(LNKFLAGS)
+	@$(CXX) -o $(EXENAME) $(OBJS) $(LNKFLAGS) -Xlinker -Map -Xlinker $(MAP)
 	@$(MV) $(EXENAME) $(EXEDIR)
 #$(EXEFULLNAME): $(OBJS) $(DEF)
 #	@echo linking $@
@@ -141,3 +165,9 @@ $(EXEFULLNAME): $(OBJS) $(DEF)
 ifndef DISABLEAUTODEPS
 -include $(DEPS)
 endif
+
+.PHONY: clean
+clean:
+	@echo final cleaning
+	@$(RM) $(OBJS)
+	@$(RMDIR) $(OBJDIR) ../../gcc/common ../../gcc/conemu ../../gcc/ConEmuPlugin ../../gcc

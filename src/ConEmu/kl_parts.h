@@ -2,6 +2,7 @@
 #include <windows.h>
 #include <tchar.h>
 
+#if !defined(__GNUC__)
 #pragma warning(disable: 4244) // convertion to lower size
 #pragma warning(disable: 4267) // conversion from 'size_t' to 'DWORD'
 #pragma warning(disable: 4146) // unary minus operator applied to unsigned type
@@ -9,6 +10,7 @@
 #pragma warning(disable: 4733) // Inline asm assigning to 'FS:0' : handler not registered as safe handler
 #pragma warning(disable: 4731) // frame pointer register 'ebp' modified by inline assembly code
 #pragma warning(disable: 4996) // ... was declared deprecated
+#endif
 
 typedef unsigned int uint;
 typedef unsigned __int8 byte;
@@ -41,12 +43,14 @@ template <class T>__forceinline const T& klMax(const T &a, const T &b) {return a
 #define sizeofarray(array) (sizeof(array)/sizeof(*array))
 #define klInit()
 
+
 struct klFile
 	// define KL_File_no_init to skip generation of constructors and destructors
 {
 	HANDLE hHandle;
 	u32 iCount;
-	i64 lSize;
+	//i64 lSize;
+	ULARGE_INTEGER lSize;
 	TCHAR Name[MAX_PATH];
 
 	void Close() {if (hHandle != INVALID_HANDLE_VALUE) {CloseHandle(hHandle); hHandle = INVALID_HANDLE_VALUE;}}
@@ -59,9 +63,9 @@ struct klFile
 		{
 			if (pName != Name)
 				klstrncpy(Name, pName, MAX_PATH);
-			*((u32*)&lSize) = GetFileSize(hHandle, ((u32*)&lSize) + 1);
-			if (((u32)lSize) == INVALID_FILE_SIZE && GetLastError() != NO_ERROR)
-				lSize = 0;
+			lSize.LowPart = ::GetFileSize(hHandle, &lSize.HighPart);
+			if (lSize.LowPart == INVALID_FILE_SIZE && GetLastError() != NO_ERROR)
+				lSize.QuadPart = 0;
 			return true;
 		}
 		else
@@ -71,35 +75,11 @@ struct klFile
 	bool Write(const void *buffer, u32 lSize) {return WriteFile(hHandle, buffer, lSize, &iCount, NULL) != 0;}
 };
 
-__forceinline void klSplitCommandLine(wchar_t *str, uint *n)
-{
-	*n = 0;
-	wchar_t *dst = str, ts;
-	while (*str == ' ')
-		str++;
-	ts = ' ';
-	while (*str)
-	{
-		if (*str == '"')
-		{
-			ts ^= 2; // ' ' <-> '"'
-			str++;
-		}
-		while (*str && *str != '"' && *str != ts)
-			*dst++ = *str++;
-		if (*str == '"')
-			continue;
-		while (*str == ' ')
-			str++;
-		*dst++ = 0;
-		(*n)++;
-	}
-	return;
-}
+
 
 __forceinline u32 __cdecl klMulDivU32(u32 a, u32 b, u32 c)
 {
-#if !defined(__GNUC__)
+#if !defined(__GNUC__) && !defined(WIN64)
 	__asm{
 		mov	eax, a
 			mul	b

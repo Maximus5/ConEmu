@@ -1,0 +1,310 @@
+#The following variables can be set by the user:
+#
+#DEBUG - set if a debug build is needed
+#
+#LINK_ULINK - set if you want to use ulink for linking
+#
+#VC - set Visual C++ version (VC=8 - 2005, VC=9 - 2008, VC=10 - 2010) (we try to autodetect if not set)
+#
+#AMD64 - set for x64 build
+#  or
+#CPU=AMD64 - for x64 build
+#
+#IA64 - set for IA64 build
+#  or
+#CPU=IA64 - for IA64 build
+#
+#(we try to autodetect if not set)
+#
+#
+#FARSYSLOG - for syslog
+#
+#DISABLE_WOW64_HOOK - set to disable the wow64 hook
+#
+#DEFFILE - name of user file to include
+#
+#EXCEPTION_TEST - set to generate Ctrl-Alt-Apps dialog in release
+#
+#NO_RELEASE_PDB - set to disable pdb generation for release
+#
+
+.SILENT:
+
+#include for user defines if needed
+!ifdef DEFFILE
+!include $(DEFFILE)
+!endif
+
+NAME = ConEmu
+
+!if defined(AMD64) || "$(CPU)" == "AMD64" || "$(PLATFORM)" == "x64"
+!undef CPU
+AMD64=1
+DIRBIT=64
+RCWIN64=/D_WIN64 /DWIN64
+RELEASEDIR=Release.x64
+!elseif defined(IA64) || "$(CPU)" == "IA64" || "$(PLATFORM)" == "Itanium"
+!undef CPU
+IA64=1
+DIRBIT=IA64
+RCWIN64=/D_WIN64 /DWIN64
+RELEASEDIR=Release.x64
+!else
+X86=1
+DIRBIT=32
+RCWIN64=
+RELEASEDIR=
+!endif
+
+!if !defined(VC) && defined(_NMAKE_VER)
+
+!if "$(_NMAKE_VER)">"9"
+VC=9
+!elseif "$(_NMAKE_VER)">"8"
+VC=8
+!elseif "$(_NMAKE_VER)">"10"
+VC=10
+!else
+#default
+VC=9
+!endif
+!endif
+
+!ifndef DEBUG
+DIRNAME=Release
+USEDEBUG=NDEBUG
+!else
+DIRNAME=Debug
+USEDEBUG=_DEBUG
+!endif
+
+#DEPFILE=far.vc.dep
+
+OUTDIR=$(DIRNAME).$(DIRBIT).vc
+
+#FARINCLUDE=Include
+
+LINK=link.exe
+ULINK=ulink.exe
+M4=tools\m4 -P -DFARBIT=$(DIRBIT)
+GAWK=tools\gawk
+
+INTDIR=$(OUTDIR)\obj
+!ifdef FARSYSLOG
+INTDIR=$(INTDIR)log
+!endif
+
+CODDIR=$(OUTDIR)\cod
+
+#DEF_FILE = ".\$(NAME).def"
+
+RES_FILE = "$(INTDIR)\$(NAME).res"
+
+#PCH_FILE = "$(INTDIR)\headers.pch"
+
+LINK_OBJS = \
+$(INTDIR)\BaseDragDrops.obj \
+$(INTDIR)\ConEmu.obj \
+$(INTDIR)\ConEmuApp.obj \
+$(INTDIR)\ConEmuChild.obj \
+$(INTDIR)\ConEmuPipe.obj \
+$(INTDIR)\DragDrop.obj \
+$(INTDIR)\Options.obj \
+$(INTDIR)\RealConsole.obj \
+$(INTDIR)\Registry.obj \
+$(INTDIR)\ScreenDump.obj \
+$(INTDIR)\TabBar.obj \
+$(INTDIR)\TrayIcon.obj \
+$(INTDIR)\VirtualConsole.obj \
+$(INTDIR)\Common.obj \
+$(INTDIR)\ConEmuCheck.obj \
+$(INTDIR)\RgnDetect.obj
+
+
+LINK_LIBS=kernel32.lib user32.lib winspool.lib advapi32.lib shell32.lib mpr.lib ole32.lib secur32.lib gdi32.lib version.lib shlwapi.lib comctl32.lib Comdlg32.lib Winmm.lib Oleaut32.lib
+
+DEFINES=\
+	/DUNICODE \
+	/D_UNICODE \
+	/D$(USEDEBUG) \
+	/DHIDE_TODO \
+	/DCRTPRINTF \
+	/D_CRT_SECURE_NO_WARNINGS \
+	/D_CRT_NON_CONFORMING_SWPRINTFS
+
+# common
+CPPFLAGS=/nologo $(MP) /W3 $(FARSYSLOG) /EHsc $(DEFINES) /GS- /GR- /Gy /GF /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /J /c /FAcs /Fa"$(CODDIR)\\"
+LINKFLAGS=/nologo /subsystem:WINDOWS /out:"$(OUTDIR)\$(NAME).exe" /map:"$(OUTDIR)\$(NAME).map" /pdb:"$(OUTDIR)\$(NAME).pdb" /release /nxcompat
+ULINKFLAGS=-q -m- -ap -Gz -O- -o- -Gh -Gh-
+#__GNUC__ чтобы манифест включился
+RFLAGS=$(RCWIN64) /D__GNUC__ /l 0x409 /fo"$(RES_FILE)" /d $(USEDEBUG)
+
+# config-cpecific
+!ifdef DEBUG
+CPPFLAGS=$(CPPFLAGS) /MTd /Od /Zi
+LINKFLAGS=$(LINKFLAGS) /debug
+ULINKFLAGS=$(ULINKFLAGS) -v
+!else
+CPPFLAGS=$(CPPFLAGS) /MT /O2 /Oy-
+!ifndef NO_RELEASE_PDB
+CPPFLAGS=$(CPPFLAGS) /Zi
+LINKFLAGS=$(LINKFLAGS) /debug
+!endif
+LINKFLAGS=$(LINKFLAGS) /incremental:no /OPT:REF /OPT:ICF
+!endif
+
+# platform-cpecific
+!ifdef X86
+CPPFLAGS=$(CPPFLAGS) /Zp4
+LINKFLAGS=$(LINKFLAGS) /machine:i386
+!elseifdef AMD64
+CPPFLAGS=$(CPPFLAGS) /Zp8 /D_WIN64 /DWIN64
+LINKFLAGS=$(LINKFLAGS) /machine:amd64
+ULINKFLAGS=$(ULINKFLAGS) -Tpe+
+!elseifdef IA64
+CPPFLAGS=$(CPPFLAGS) /Zp8 /D_WIN64 /DWIN64
+LINKFLAGS=$(LINKFLAGS) /machine:IA64
+!endif
+
+# compiler-cpecific
+!if "$(VC)"=="8"
+CPPFLAGS=$(CPPFLAGS) /Wp64
+LINKFLAGS=$(LINKFLAGS) /opt:nowin98
+!else
+RFLAGS=$(RFLAGS) /nologo
+!endif
+
+ALL: AllDirs build clean
+#ALL: AllDirs lng depfile
+#	$(MAKE) /nologo /f makefile_vc build USEDEPS=1
+
+#.PHONY: lng
+#lng: farlang.templ
+#	echo generating language files
+#	tools\lng.generator.exe -nc -i lang.ini -ol "$(OUTDIR)" farlang.templ
+
+#.PHONY: depfile
+#depfile:
+#	$(GAWK) -f .\scripts\mkdep.awk mkdep.list > $(DEPFILE)
+
+.PHONY: build
+build: "$(OUTDIR)\$(NAME).exe"
+
+.PHONY: AllDirs
+AllDirs:
+	if not exist "$(OUTDIR)\" mkdir "$(OUTDIR)"
+	if not exist "$(INTDIR)\" mkdir "$(INTDIR)"
+	if not exist "$(CODDIR)\" mkdir "$(CODDIR)"
+
+"$(OUTDIR)\$(NAME).exe": $(DEF_FILE) $(LINK_OBJS) $(RES_FILE) conemu.gcc.manifest
+	echo linking $@
+!ifndef LINK_ULINK
+	$(LINK) @<<
+	$(LINKFLAGS) $(LINK_OBJS) $(RES_FILE) $(LINK_LIBS)
+<<
+!else
+	$(ULINK) +- @+<<
+	$(ULINKFLAGS) $(LINK_OBJS)
+	,"$(OUTDIR)\$(NAME).exe","$(OUTDIR)\$(NAME).map"
+	,$(LINK_LIBS)
+	,"$(DEF_FILE)","$(RES_FILE)"
+<<
+!endif
+
+#$(PCH_FILE): headers.cpp headers.hpp
+#	echo making precompiled headers
+#	$(CPP) $(CPPFLAGS) headers.cpp /Yc /Fp"$(PCH_FILE)"
+
+#.c{$(INTDIR)}.obj::
+#	$(CPP) @<<
+#	$(CPPFLAGS) $<
+# << 
+
+.cpp{$(INTDIR)}.obj::
+	$(CPP) @<<
+	$(CPPFLAGS) $<
+<<
+
+{../common/}.cpp{$(INTDIR)}.obj::
+	$(CPP) @<<
+	$(CPPFLAGS) $<
+<<
+
+{../ConEmuPlugin/}.cpp{$(INTDIR)}.obj::
+	$(CPP) @<<
+	$(CPPFLAGS) $<
+<<
+
+#{UCD}.c{$(INTDIR)}.obj::
+#	$(CPP) @<<
+#	$(CPPFLAGS) $<
+# <<
+
+#{UCD}.cpp{$(INTDIR)}.obj::
+#	$(CPP) @<<
+#	$(CPPFLAGS) $<
+# <<
+
+$(RES_FILE): ConEmu.rc ..\ConEmu\Version.h
+	echo compiling resource file
+	$(RC) $(RFLAGS) ConEmu.rc
+
+#!ifdef USEDEPS
+#!include "$(DEPFILE)"
+#!endif
+
+MSG=echo generating $@
+
+#Far.exe.manifest: $@.m4 farversion.m4 tools.m4 vbuild.m4
+#	$(MSG)
+#	$(M4) $@.m4 > $@
+
+#ConEmuC.rc: $@.m4 farversion.m4 tools.m4 vbuild.m4 Far.exe.manifest res.hpp
+#	$(MSG)
+#	$(M4) $@.m4 > $@
+
+$(INTDIR)\BaseDragDrops.obj: BaseDragDrops.cpp
+
+$(INTDIR)\ConEmu.obj: ConEmu.cpp
+
+$(INTDIR)\ConEmuApp.obj: ConEmuApp.cpp
+
+$(INTDIR)\ConEmuChild.obj: ConEmuChild.cpp
+
+$(INTDIR)\ConEmuPipe.obj: ConEmuPipe.cpp
+
+$(INTDIR)\DragDrop.obj: DragDrop.cpp
+
+$(INTDIR)\Options.obj: Options.cpp
+
+$(INTDIR)\RealConsole.obj: RealConsole.cpp RealConsole.h  ..\common\Common.hpp
+
+$(INTDIR)\RealConsole.obj: RealConsole.cpp RealConsole.h
+
+$(INTDIR)\ScreenDump.obj: ScreenDump.cpp
+
+$(INTDIR)\TabBar.obj: TabBar.cpp
+
+$(INTDIR)\TrayIcon.obj: TrayIcon.cpp
+
+$(INTDIR)\VirtualConsole.obj: VirtualConsole.cpp
+
+$(INTDIR)\Common.obj: ..\common\Common.cpp ..\common\Common.hpp
+
+$(INTDIR)\ConEmuCheck.obj: ..\common\ConEmuCheck.cpp
+
+$(INTDIR)\RgnDetect.obj: ..\common\RgnDetect.cpp
+
+.PHONY: CLEAN
+CLEAN:
+	@echo copying release files
+	@move "$(OUTDIR)\$(NAME).exe" ..\..\$(RELEASEDIR)
+	@move "$(OUTDIR)\$(NAME).pdb" ..\..\$(RELEASEDIR)
+	@move "$(OUTDIR)\$(NAME).map" ..\..\$(RELEASEDIR)
+	@echo final cleaning
+	@del /Q $(CODDIR)\*.*
+	@del /Q $(INTDIR)\*.*
+	@del /Q $(OUTDIR)\*.*
+	@rd $(CODDIR)
+	@rd $(INTDIR)
+	@rd $(OUTDIR)

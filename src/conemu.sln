@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 10.00
-# Visual Studio 2008
+# Visual C++ Express 2008
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "conemu", "ConEmu\conemu.vcproj", "{EEE25AC6-D94D-472D-8D4A-3C6C382CFD3D}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ConEmuPlugin", "ConEmuPlugin\ConEmuPlugin.vcproj", "{21152801-8744-4787-83F4-BE4564A367B4}"
@@ -24,7 +24,6 @@ Global
 		{21152801-8744-4787-83F4-BE4564A367B4}.Debug|Win32.ActiveCfg = Debug|Win32
 		{21152801-8744-4787-83F4-BE4564A367B4}.Debug|Win32.Build.0 = Debug|Win32
 		{21152801-8744-4787-83F4-BE4564A367B4}.DebugA|Win32.ActiveCfg = DebugA|Win32
-		{21152801-8744-4787-83F4-BE4564A367B4}.DebugA|Win32.Build.0 = DebugA|Win32
 		{21152801-8744-4787-83F4-BE4564A367B4}.Pseudo_Debug|Win32.ActiveCfg = Pseudo_Debug|Win32
 		{21152801-8744-4787-83F4-BE4564A367B4}.Pseudo_Debug|Win32.Build.0 = Pseudo_Debug|Win32
 		{21152801-8744-4787-83F4-BE4564A367B4}.Release|Win32.ActiveCfg = Release|Win32

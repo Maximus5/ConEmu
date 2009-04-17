@@ -1,8 +1,37 @@
+
+/*
+Copyright (c) 2009-2010 Maximus5
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+1. Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+3. The name of the authors may not be used to endorse or promote products
+   derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
 #include <windows.h>
 #include "..\common\common.hpp"
 #include "..\common\pluginA.hpp"
 #include "PluginHeader.h"
 
+//#define SHOW_DEBUG_EVENTS
 
 // minimal(?) FAR version 1.71 alpha 4 build 2470
 int WINAPI _export GetMinFarVersion(void)
@@ -20,17 +49,68 @@ int WINAPI _export GetMinFarVersion(void)
 	return MAKEFARVERSION(1,71,2470);
 }
 
-HANDLE WINAPI _export OpenPlugin(int OpenFrom,INT_PTR Item)
-{
-	if (gnReqCommand != (DWORD)-1) {
-		ProcessCommand(gnReqCommand, FALSE/*bReqMainThread*/);
-	}
-	return INVALID_HANDLE_VALUE;
-}
-
 
 struct PluginStartupInfo *InfoA=NULL;
 struct FarStandardFunctions *FSFA=NULL;
+
+
+HANDLE WINAPI _export OpenPlugin(int OpenFrom,INT_PTR Item)
+{
+	if (InfoA == NULL)
+		return INVALID_HANDLE_VALUE;
+
+#ifdef _DEBUG
+	{
+		wchar_t szInfo[128]; wsprintf(szInfo, L"OpenPlugin[Ansi] (%i%s, Item=0x%X, gnReqCmd=%i%s)\n",
+			OpenFrom, (OpenFrom==OPEN_COMMANDLINE) ? L"[OPEN_COMMANDLINE]" :
+				(OpenFrom==OPEN_PLUGINSMENU) ? L"[OPEN_PLUGINSMENU]" : L"",
+			(DWORD)Item, 
+			(int)gnReqCommand,
+			(gnReqCommand == (DWORD)-1) ? L"" :
+			(gnReqCommand == CMD_REDRAWFAR) ? L"[CMD_REDRAWFAR]" :
+			(gnReqCommand == CMD_EMENU) ? L"[CMD_EMENU]" :
+			(gnReqCommand == CMD_SETWINDOW) ? L"[CMD_SETWINDOW]" :
+			(gnReqCommand == CMD_POSTMACRO) ? L"[CMD_POSTMACRO]" :
+			L"");
+		OutputDebugStringW(szInfo);
+	}
+#endif
+
+	if (OpenFrom == OPEN_COMMANDLINE && Item) {
+		ProcessCommandLineA((char*)Item);
+		return INVALID_HANDLE_VALUE;
+	}
+
+	if (gnReqCommand != (DWORD)-1) {
+		gnPluginOpenFrom = OpenFrom;
+		SHOWDBGINFO(L"*** Calling ProcessCommand\n");
+		ProcessCommand(gnReqCommand, FALSE/*bReqMainThread*/, gpReqCommandData);
+	} else {
+		//if (!gbCmdCallObsolete) {
+			SHOWDBGINFO(L"*** Calling ShowPluginMenu\n");
+			ShowPluginMenu();
+		//} else {
+		//	SHOWDBGINFO(L"!!! Plugin call is obsolete\n");
+		//	gbCmdCallObsolete = FALSE;
+		//}
+	}
+
+	#ifdef _DEBUG
+	if (gnReqCommand != (DWORD)-1) {
+		wchar_t szInfo[128]; wsprintf(szInfo, L"*** OpenPlugin[Ansi] post gnReqCmd=%i%s\n",
+			(int)gnReqCommand,
+			(gnReqCommand == (DWORD)-1) ? L"" :
+			(gnReqCommand == CMD_REDRAWFAR) ? L"CMD_REDRAWFAR" :
+			(gnReqCommand == CMD_EMENU) ? L"CMD_EMENU" :
+			(gnReqCommand == CMD_SETWINDOW) ? L"CMD_SETWINDOW" :
+			(gnReqCommand == CMD_POSTMACRO) ? L"CMD_POSTMACRO" :
+			L"");
+		OutputDebugStringW(szInfo);
+	}
+	#endif
+
+	return INVALID_HANDLE_VALUE;
+}
 
 
 extern 
@@ -41,10 +121,13 @@ VOID CALLBACK ConEmuCheckTimerProc(
   DWORD dwTime       // current system time
 );
 
-void UpdateConEmuTabsA(int event, bool losingFocus, bool editorSave);
+void UpdateConEmuTabsA(int event, bool losingFocus, bool editorSave, void *Param=NULL);
 
 void ProcessDragFromA()
 {
+	if (InfoA == NULL)
+		return;
+
 	WindowInfo WInfo;
     WInfo.Pos=0;
 	InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETWINDOWINFO, (void*)&WInfo);
@@ -77,8 +160,27 @@ void ProcessDragFromA()
 		//WriteFile(hPipe, &nNull/*ItemsCount*/, sizeof(int), &cout, NULL);
 		OutDataWrite(&nNull/*ItemsCount*/, sizeof(int));
 		
-		if (PInfo.SelectedItemsNumber>0)
-		{
+		if (PInfo.SelectedItemsNumber<=0) {
+			// Проверка того, что мы стоим на ".."
+			if (PInfo.CurrentItem == 0 && PInfo.ItemsNumber > 0)
+			{
+				if (!nDirNoSlash)
+					PInfo.CurDir[nDirLen-1] = 0;
+				else
+					nDirLen++;
+				WCHAR *szCurDir = new WCHAR[nDirLen];
+				MultiByteToWideChar(CP_OEMCP, 0, PInfo.CurDir, nDirLen, szCurDir, nDirLen);
+
+				int nWholeLen = nDirLen + 1;
+				OutDataWrite(&nWholeLen, sizeof(int));
+				OutDataWrite(&nDirLen, sizeof(int));
+				OutDataWrite(szCurDir, sizeof(WCHAR)*nDirLen);
+
+				delete [] szCurDir; szCurDir=NULL;
+			}
+			// Fin
+			OutDataWrite(&nNull/*ItemsCount*/, sizeof(int));
+		} else {
 			int ItemsCount=PInfo.SelectedItemsNumber, i;
 			bool *bIsFull = (bool*)calloc(PInfo.SelectedItemsNumber, sizeof(bool));
 
@@ -103,6 +205,13 @@ void ProcessDragFromA()
 
 			for (i=0;i<ItemsCount;i++)
 			{
+				if (i == 0
+					&& ((PInfo.SelectedItems[i].FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == FILE_ATTRIBUTE_DIRECTORY)
+					&& !lstrcmpA(PInfo.SelectedItems[i].FindData.cFileName, ".."))
+				{
+					continue;
+				}
+
 				//WCHAR Path[MAX_PATH+1];
 				//ZeroMemory(Path, MAX_PATH+1);
 				//Maximus5 - засада с корнем диска и возможностью overflow
@@ -134,7 +243,7 @@ void ProcessDragFromA()
 			}
 
 			free(bIsFull);
-			delete Path; Path=NULL;
+			delete [] Path; Path=NULL;
 
 			// Конец списка
 			//WriteFile(hPipe, &nNull/*ItemsCount*/, sizeof(int), &cout, NULL);
@@ -151,6 +260,9 @@ void ProcessDragFromA()
 }
 void ProcessDragToA()
 {
+	if (InfoA == NULL)
+		return;
+
 	WindowInfo WInfo;				
     WInfo.Pos=0;
 	InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETWINDOWINFO, (void*)&WInfo);
@@ -158,7 +270,8 @@ void ProcessDragToA()
 	{
 		int ItemsCount=0;
 		//WriteFile(hPipe, &ItemsCount, sizeof(int), &cout, NULL);				
-		OutDataAlloc(sizeof(ItemsCount));
+		if (gpCmdRet==NULL)
+			OutDataAlloc(sizeof(ItemsCount));
 		OutDataWrite(&ItemsCount,sizeof(ItemsCount));
 		return;
 	}
@@ -181,7 +294,14 @@ void ProcessDragToA()
 		nStructSize += (lstrlenA(PPInfo.CurDir))*sizeof(WCHAR); // Именно WCHAR! не TCHAR
 
 	pfpi = (ForwardedPanelInfo*)calloc(nStructSize,1);
-
+	if (!pfpi) {
+		int ItemsCount=0;
+		//WriteFile(hPipe, &ItemsCount, sizeof(int), &cout, NULL);				
+		if (gpCmdRet==NULL)
+			OutDataAlloc(sizeof(ItemsCount));
+		OutDataWrite(&ItemsCount,sizeof(ItemsCount));
+		return;
+	}
 
 	pfpi->ActivePathShift = sizeof(ForwardedPanelInfo);
 	pfpi->pszActivePath = (WCHAR*)(((char*)pfpi)+pfpi->ActivePathShift);
@@ -222,7 +342,8 @@ void ProcessDragToA()
 	// Собственно, пересылка информации
 	//WriteFile(hPipe, &nStructSize, sizeof(nStructSize), &cout, NULL);
 	//WriteFile(hPipe, pfpi, nStructSize, &cout, NULL);
-	OutDataAlloc(nStructSize+4);
+	if (gpCmdRet==NULL)
+		OutDataAlloc(nStructSize+4);
 	OutDataWrite(&nStructSize, sizeof(nStructSize));
 	OutDataWrite(pfpi, nStructSize);
 
@@ -246,6 +367,8 @@ void WINAPI _export SetStartupInfo(const struct PluginStartupInfo *aInfo)
     
 	::InfoA = (PluginStartupInfo*)calloc(sizeof(PluginStartupInfo),1);
 	::FSFA = (FarStandardFunctions*)calloc(sizeof(FarStandardFunctions),1);
+	if (::InfoA == NULL || ::FSFA == NULL)
+		return;
 	*::InfoA = *aInfo;
 	*::FSFA = *aInfo->FSF;
 	::InfoA->FSF = ::FSFA;
@@ -256,21 +379,26 @@ void WINAPI _export SetStartupInfo(const struct PluginStartupInfo *aInfo)
 	while (pszSlash>gszRootKey && *pszSlash!=L'\\') pszSlash--;
 	*pszSlash = 0;
 
-	CheckMacro(TRUE);
+	// Устарело. активация через [Read/Peek]ConsoleInput
+	//CheckMacro(TRUE);
+
+	if (gpConsoleInfo) //2010-03-04 Имеет смысл только при запуске из-под ConEmu
+		CheckResources(TRUE);
 }
 
-extern WCHAR gcPlugKey; // Для ANSI far он инициализируется как (char)
+//extern WCHAR gcPlugKey; // Для ANSI far он инициализируется как (char)
 
 void WINAPI _export GetPluginInfo(struct PluginInfo *pi)
 {
     static char *szMenu[1], szMenu1[255];
 	szMenu[0]=szMenu1;
 
-	// Проверить, не изменилась ли горячая клавиша плагина, и если да - пересоздать макросы
-	IsKeyChanged(TRUE);
+	// Устарело. активация через [Read/Peek]ConsoleInput
+	//// Проверить, не изменилась ли горячая клавиша плагина, и если да - пересоздать макросы
+	//IsKeyChanged(TRUE);
 
-	if (gcPlugKey) szMenu1[0]=0; else lstrcpyA(szMenu1, "[&\xCC] "); // а тут действительно OEM
-	lstrcpynA(szMenu1+lstrlenA(szMenu1), InfoA->GetMsg(InfoA->ModuleNumber,2), 240);
+	//if (gcPlugKey) szMenu1[0]=0; else lstrcpyA(szMenu1, "[&\xDC] "); // а тут действительно OEM
+	lstrcpynA(szMenu1/*+lstrlenA(szMenu1)*/, InfoA->GetMsg(InfoA->ModuleNumber,CEPluginName), 240);
 
 	pi->StructSize = sizeof(struct PluginInfo);
 	pi->Flags = PF_EDITOR | PF_VIEWER | PF_DIALOG | PF_PRELOAD;
@@ -280,25 +408,55 @@ void WINAPI _export GetPluginInfo(struct PluginInfo *pi)
 	pi->PluginMenuStringsNumber = 1;
 	pi->PluginConfigStrings = NULL;
 	pi->PluginConfigStringsNumber = 0;
-	pi->CommandPrefix = NULL;
+	pi->CommandPrefix = "ConEmu";
 	pi->Reserved = 0;	
+}
+
+DWORD GetEditorModifiedStateA()
+{
+	EditorInfo ei;
+	InfoA->EditorControl(ECTL_GETINFO, &ei);
+
+	#ifdef SHOW_DEBUG_EVENTS
+		char szDbg[255];
+		wsprintfA(szDbg, "Editor:State=%i\n", ei.CurState);
+		OutputDebugStringA(szDbg);
+	#endif
+
+	// Если он сохранен, то уже НЕ модифицирован
+	DWORD currentModifiedState = ((ei.CurState & (ECSTATE_MODIFIED|ECSTATE_SAVED)) == ECSTATE_MODIFIED) ? 1 : 0;
+
+	return currentModifiedState;
 }
 
 // watch non-modified -> modified editor status change
 int WINAPI _export ProcessEditorInput(const INPUT_RECORD *Rec)
 {
-	if (!ConEmuHwnd)
-		return 0; // Если мы не под эмулятором - ничего
+	if (/*!ConEmuHwnd ||*/ !InfoA) // иногда событие от QuickView приходит ДО инициализации плагина
+		return 0; // Даже если мы не под эмулятором - просто запомним текущее состояние
 	// only key events with virtual codes > 0 are likely to cause status change (?)
-	if (Rec->EventType == KEY_EVENT && Rec->Event.KeyEvent.wVirtualKeyCode > 0  && Rec->Event.KeyEvent.bKeyDown)
+
+
+
+	if ((Rec->EventType & 0xFF) == KEY_EVENT 
+		&& (Rec->Event.KeyEvent.wVirtualKeyCode || Rec->Event.KeyEvent.wVirtualScanCode || Rec->Event.KeyEvent.uChar.AsciiChar)
+		&& Rec->Event.KeyEvent.bKeyDown)
 	{
-		EditorInfo ei;
-		InfoA->EditorControl(ECTL_GETINFO, &ei);
-		int currentModifiedState = ei.CurState == ECSTATE_MODIFIED ? 1 : 0;
-		if (lastModifiedStateW != currentModifiedState)
+		#ifdef SHOW_DEBUG_EVENTS
+			char szDbg[255]; wsprintfA(szDbg, "ProcessEditorInput(E=%i, VK=%i, SC=%i, CH=%i, Down=%i)\n", Rec->EventType, Rec->Event.KeyEvent.wVirtualKeyCode, Rec->Event.KeyEvent.wVirtualScanCode, Rec->Event.KeyEvent.uChar.AsciiChar, Rec->Event.KeyEvent.bKeyDown);
+			OutputDebugStringA(szDbg);
+		#endif
+
+
+		DWORD currentModifiedState = GetEditorModifiedStateA();
+
+		if (lastModifiedStateW != (int)currentModifiedState)
 		{
 			UpdateConEmuTabsA(0, false, false);
 			lastModifiedStateW = currentModifiedState;
+		} else {
+			gbHandleOneRedraw = true;
+			//gbHandleOneRedrawCh = true;
 		}
 	}
 	return 0;
@@ -306,43 +464,95 @@ int WINAPI _export ProcessEditorInput(const INPUT_RECORD *Rec)
 
 int WINAPI _export ProcessEditorEvent(int Event, void *Param)
 {
-	if (!ConEmuHwnd)
-		return 0; // Если мы не под эмулятором - ничего
+	if (/*!ConEmuHwnd ||*/ !InfoA) // иногда событие от QuickView приходит ДО инициализации плагина
+		return 0; // Даже если мы не под эмулятором - просто запомним текущее состояние
+		
+	if (gbNeedPostTabSend && Event == EE_REDRAW) {
+		// Макрос завершился, нужно обновить табы
+		if (!IsMacroActive())
+			gbHandleOneRedraw = true;
+	}
+		
 	switch (Event)
 	{
+	case EE_READ: // в этот момент количество окон еще не изменилось
+		gbHandleOneRedraw = true;
+		//gbHandleOneRedrawCh = false;
+		return 0;
+	case EE_REDRAW:
+		if (!gbHandleOneRedraw)
+			return 0;
+		//if (!gbHandleOneRedrawCh)
+		//	gbHandleOneRedraw = false; //2009-08-17 - сбрасываем в UpdateConEmuTabsW т.к. на Input не сразу * появляется
+		gbHandleOneRedraw = false;
+		if (lastModifiedStateW == (int)GetEditorModifiedState())
+			return 0;
+		OUTPUTDEBUGSTRING(L"EE_REDRAW(HandleOneRedraw)\n");
+		break;
 	case EE_CLOSE:
 	case EE_GOTFOCUS:
 	case EE_KILLFOCUS:
 	case EE_SAVE:
-	//case EE_READ:
-		{
-			UpdateConEmuTabsA(Event, Event == EE_KILLFOCUS, Event == EE_SAVE);
-			break;
-		}
+		gbHandleOneRedraw = true;
+		break;
+	default:
+		return 0;
 	}
+	//2009-06-03 EE_KILLFOCUS при закрытии редактора не приходит. Только EE_CLOSE
+	bool loosingFocus = (Event == EE_KILLFOCUS) || (Event == EE_CLOSE);
+	UpdateConEmuTabsA(Event+100, loosingFocus, Event == EE_SAVE);
 	return 0;
 }
 
 int WINAPI _export ProcessViewerEvent(int Event, void *Param)
 {
-	if (!ConEmuHwnd)
-		return 0; // Если мы не под эмулятором - ничего
+	if (/*!ConEmuHwnd ||*/ !InfoA) // иногда событие от QuickView приходит ДО инициализации плагина
+		return 0; // Даже если мы не под эмулятором - просто запомним текущее состояние
+
 	switch (Event)
 	{
 	case VE_CLOSE:
+		OUTPUTDEBUGSTRING(L"VE_CLOSE"); break;
 	//case VE_READ:
+	//	OUTPUTDEBUGSTRING(L"VE_CLOSE"); break;
 	case VE_KILLFOCUS:
+		OUTPUTDEBUGSTRING(L"VE_KILLFOCUS"); break;
 	case VE_GOTFOCUS:
-		{
-			UpdateConEmuTabsA(Event, Event == VE_KILLFOCUS, false);
-		}
+		OUTPUTDEBUGSTRING(L"VE_GOTFOCUS"); break;
+	default:
+		return 0;
 	}
-
+	// !!! Именно UpdateConEmuTabsW, без версии !!!
+	//2009-06-03 VE_KILLFOCUS при закрытии редактора не приходит. Только VE_CLOSE
+	bool loosingFocus = (Event == VE_KILLFOCUS || Event == VE_CLOSE);
+	UpdateConEmuTabsA(Event+200, loosingFocus, false, Param);
 	return 0;
+
+	//switch (Event)
+	//{
+	//case VE_CLOSE:
+	////case VE_READ:
+	//case VE_KILLFOCUS:
+	//case VE_GOTFOCUS:
+	//	{
+	//		UpdateConEmuTabsA(Event+200, Event == VE_KILLFOCUS, false, Param);
+	//	}
+	//}
+
+	//return 0;
 }
 
-void UpdateConEmuTabsA(int event, bool losingFocus, bool editorSave)
+extern MSection *csTabs;
+
+void UpdateConEmuTabsA(int event, bool losingFocus, bool editorSave, void *Param/*=NULL*/)
 {
+	if (!InfoA) return;
+
+	if (ConEmuHwnd && FarHwnd)
+		CheckResources(FALSE);
+
+	MSectionLock SC; SC.Lock(csTabs);
+
     BOOL lbCh = FALSE;
 	WindowInfo WInfo;
 	WCHAR* pszName = gszDir1; pszName[0] = 0; //(WCHAR*)calloc(CONEMUTABMAX, sizeof(WCHAR));
@@ -353,36 +563,88 @@ void UpdateConEmuTabsA(int event, bool losingFocus, bool editorSave)
 	if (!CreateTabs ( windowCount ))
 		return;
 
-	EditorInfo ei;
+	EditorInfo ei = {0}; BOOL bEditorRetrieved = FALSE;
 	WCHAR* pszFileName = NULL;
 	if (editorSave)
 	{
 		InfoA->EditorControl(ECTL_GETINFO, &ei);
+		bEditorRetrieved = TRUE;
 		//pszFileName = (WCHAR*)calloc(CONEMUTABMAX, sizeof(WCHAR));
 		pszFileName = gszDir2; pszFileName[0] = 0;
 		if (ei.FileName)
 			MultiByteToWideChar(CP_OEMCP, 0, ei.FileName, lstrlenA(ei.FileName)+1, pszFileName, CONEMUTABMAX);
 	}
 
-	int tabCount = 1;
+	ViewerInfo vi = {sizeof(ViewerInfo)};
+	if (event == 206) {
+		if (Param)
+			vi.ViewerID = *(int*)Param;
+		InfoA->ViewerControl(VCTL_GETINFO, &vi);
+		pszFileName = gszDir2; pszFileName[0] = 0;
+		if (vi.FileName)
+			MultiByteToWideChar(CP_OEMCP, 0, vi.FileName, lstrlenA(vi.FileName)+1, pszFileName, CONEMUTABMAX);
+	}
+
+	int tabCount = 0;
+	BOOL lbActiveFound = FALSE;
 	for (int i = 0; i < windowCount; i++)
 	{
 		WInfo.Pos = i;
 		InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETWINDOWINFO, (void*)&WInfo);
 		if (WInfo.Type == WTYPE_EDITOR || WInfo.Type == WTYPE_VIEWER || WInfo.Type == WTYPE_PANELS)
 		{
+#ifdef SHOW_DEBUG_EVENTS
+			char szDbg[255]; wsprintfA(szDbg, "Window %i (Type=%i, Modified=%i)\n", i, WInfo.Type, WInfo.Modified);
+			OutputDebugStringA(szDbg);
+#endif
+			if (WInfo.Current) lbActiveFound = TRUE;
 			MultiByteToWideChar(CP_OEMCP, 0, WInfo.Name, lstrlenA(WInfo.Name)+1, pszName, CONEMUTABMAX);
 			lbCh |= AddTab(tabCount, losingFocus, editorSave, 
 				WInfo.Type, pszName, editorSave ? pszFileName : NULL, 
 				WInfo.Current, WInfo.Modified);
+			//if (WInfo.Type == WTYPE_EDITOR && WInfo.Current) //2009-08-17
+			//	lastModifiedStateW = WInfo.Modified;
 		}
 	}
 
-	SendTabs(tabCount);
+	// Viewer в FAR 2 build 9xx не попадает в список окон при событии VE_GOTFOCUS
+	if (!losingFocus && !editorSave && tabCount == 0 && event == 206) {
+		lbActiveFound = TRUE;
+		lbCh |= AddTab(tabCount, losingFocus, editorSave, 
+			WTYPE_VIEWER, pszFileName, NULL, 
+			1, 0);
+	}
+	
+	//// 2009-08-17
+	//if (gbHandleOneRedraw && gbHandleOneRedrawCh && lbCh) {
+	//	gbHandleOneRedraw = false;
+	//	gbHandleOneRedrawCh = false;
+	//}
+
+	// Скорее всего это модальный редактор (или вьювер?)
+	if (!lbActiveFound && !losingFocus) {
+		if (!bEditorRetrieved) { // Если информацию о редакторе еще не получили
+			InfoA->EditorControl(ECTL_GETINFO, &ei);
+			bEditorRetrieved = TRUE;
+			pszFileName = gszDir2; pszFileName[0] = 0;
+			if (ei.FileName)
+				MultiByteToWideChar(CP_OEMCP, 0, ei.FileName, lstrlenA(ei.FileName)+1, pszFileName, CONEMUTABMAX);
+		}
+		if (ei.CurState) {
+			tabCount = 0;
+			lbCh |= AddTab(tabCount, losingFocus, editorSave, 
+				WTYPE_EDITOR, pszFileName, NULL, 
+				1, (ei.CurState & (ECSTATE_MODIFIED|ECSTATE_SAVED)) == ECSTATE_MODIFIED);
+		}
+	}
+
+	SendTabs(tabCount, lbCh && (gnReqCommand==(DWORD)-1));
 }
 
 void   WINAPI _export ExitFAR(void)
 {
+	ShutdownHooks();
+	
 	StopThread();
 
 	if (InfoA) {
@@ -403,15 +665,15 @@ int ShowMessageA(int aiMsg, int aiButtons)
 		(const char * const *)InfoA->GetMsg(InfoA->ModuleNumber,aiMsg), 0, aiButtons);
 }
 
-void ReloadMacroA()
-{
-	if (!InfoA || !InfoA->AdvControl)
-		return;
-
-	ActlKeyMacro command;
-	command.Command=MCMD_LOADALL;
-	InfoA->AdvControl(InfoA->ModuleNumber,ACTL_KEYMACRO,&command);
-}
+//void ReloadMacroA()
+//{
+//	if (!InfoA || !InfoA->AdvControl)
+//		return;
+//
+//	ActlKeyMacro command;
+//	command.Command=MCMD_LOADALL;
+//	InfoA->AdvControl(InfoA->ModuleNumber,ACTL_KEYMACRO,&command);
+//}
 
 void SetWindowA(int nTab)
 {
@@ -422,11 +684,269 @@ void SetWindowA(int nTab)
 		InfoA->AdvControl(InfoA->ModuleNumber, ACTL_COMMIT, 0);
 }
 
+// Warning, напрямую НЕ вызывать. Пользоваться "общей" PostMacro
 void PostMacroA(char* asMacro)
 {
+	if (!InfoA || !InfoA->AdvControl) return;
+
 	ActlKeyMacro mcr;
 	mcr.Command = MCMD_POSTMACROSTRING;
+	mcr.Param.PlainText.Flags = 0; // По умолчанию - вывод на экран разрешен
+	if (*asMacro == '@' && asMacro[1] && asMacro[1] != ' ') {
+		mcr.Param.PlainText.Flags |= KSFLAGS_DISABLEOUTPUT;
+		asMacro ++;
+	}
 	mcr.Param.PlainText.SequenceText = asMacro;
-	mcr.Param.PlainText.Flags = KSFLAGS_DISABLEOUTPUT;
 	InfoA->AdvControl(InfoA->ModuleNumber, ACTL_KEYMACRO, (void*)&mcr);
+}
+
+int ShowPluginMenuA()
+{
+	if (!InfoA)
+		return -1;
+
+	FarMenuItemEx items[] = {
+		{MIF_USETEXTPTR|(ConEmuHwnd ? MIF_SELECTED : MIF_DISABLE)},
+		{MIF_USETEXTPTR|(ConEmuHwnd ? 0 : MIF_DISABLE)},
+		{MIF_SEPARATOR},
+		{MIF_USETEXTPTR|(ConEmuHwnd ? 0 : MIF_DISABLE)},
+		{MIF_USETEXTPTR|(ConEmuHwnd ? 0 : MIF_DISABLE)},
+		{MIF_USETEXTPTR|(ConEmuHwnd ? 0 : MIF_DISABLE)},
+		{MIF_USETEXTPTR|(ConEmuHwnd ? 0 : MIF_DISABLE)},
+		{MIF_SEPARATOR},
+		{MIF_USETEXTPTR|(ConEmuHwnd||IsTerminalMode() ? MIF_DISABLE : MIF_SELECTED)},
+		{MIF_SEPARATOR},
+		{MIF_USETEXTPTR|(IsDebuggerPresent()||IsTerminalMode() ? MIF_DISABLE : 0)}
+	};
+	items[0].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,CEMenuEditOutput);
+	items[1].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,CEMenuViewOutput);
+	items[3].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,CEMenuShowHideTabs);
+	items[4].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,CEMenuNextTab);
+	items[5].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,CEMenuPrevTab);
+	items[6].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,CEMenuCommitTab);
+	items[8].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,CEMenuAttach);
+	items[10].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,CEMenuDebug);
+
+	int nCount = sizeof(items)/sizeof(items[0]);
+
+	int nRc = InfoA->Menu(InfoA->ModuleNumber, -1,-1, 0, 
+		FMENU_USEEXT|FMENU_AUTOHIGHLIGHT|FMENU_CHANGECONSOLETITLE|FMENU_WRAPMODE,
+		InfoA->GetMsg(InfoA->ModuleNumber,CEPluginName),
+		NULL, NULL, NULL, NULL, (FarMenuItem*)items, nCount);
+
+	return nRc;
+}
+
+BOOL EditOutputA(LPCWSTR asFileName, BOOL abView)
+{
+	if (!InfoA)
+		return FALSE;
+
+	char szAnsi[MAX_PATH+1];
+	if (!WideCharToMultiByte(CP_ACP, 0, asFileName, -1, szAnsi, MAX_PATH+1, 0,0))
+		return FALSE;
+
+	BOOL lbRc = FALSE;
+	if (!abView) {
+		int iRc =
+		InfoA->Editor(szAnsi, InfoA->GetMsg(InfoA->ModuleNumber,CEConsoleOutput), 0,0,-1,-1, 
+			EF_NONMODAL|EF_IMMEDIATERETURN|EF_DELETEONLYFILEONCLOSE|EF_ENABLE_F6|EF_DISABLEHISTORY,
+			0, 1);
+		lbRc = (iRc != EEC_OPEN_ERROR);
+	} else {
+		#ifdef _DEBUG
+		int iRc =
+		#endif
+			InfoA->Viewer(szAnsi, InfoA->GetMsg(InfoA->ModuleNumber,CEConsoleOutput), 0,0,-1,-1, 
+			VF_NONMODAL|VF_IMMEDIATERETURN|VF_DELETEONLYFILEONCLOSE|VF_ENABLE_F6|VF_DISABLEHISTORY);
+		lbRc = TRUE;
+	}
+
+	return lbRc;
+}
+
+void GetMsgA(int aiMsg, wchar_t* rsMsg/*MAX_PATH*/)
+{
+	if (!rsMsg || !InfoA)
+		return;
+	LPCSTR pszMsg = InfoA->GetMsg(InfoA->ModuleNumber,aiMsg);
+	if (pszMsg && *pszMsg) {
+		int nLen = (int)lstrlenA(pszMsg);
+		if (nLen>=MAX_PATH) nLen = MAX_PATH - 1;
+		nLen = MultiByteToWideChar(CP_OEMCP, 0, pszMsg, nLen, rsMsg, MAX_PATH-1);
+		if (nLen>=0) rsMsg[nLen] = 0;
+	} else {
+		rsMsg[0] = 0;
+	}
+}
+
+BOOL IsMacroActiveA()
+{
+	if (!InfoA) return FALSE;
+
+	ActlKeyMacro akm = {MCMD_GETSTATE};
+	INT_PTR liRc = InfoA->AdvControl(InfoA->ModuleNumber, ACTL_KEYMACRO, &akm);
+	if (liRc == MACROSTATE_NOMACRO)
+		return FALSE;
+	return TRUE;
+}
+
+void RedrawAllA()
+{
+	if (!InfoA) return;
+	InfoA->AdvControl(InfoA->ModuleNumber, ACTL_REDRAWALL, NULL);
+}
+
+bool RunExternalProgramW(wchar_t* pszCommand, wchar_t* pszCurDir);
+
+bool RunExternalProgramA(char* pszCommand)
+{
+	char strTemp[MAX_PATH+1];;
+	
+	if (!pszCommand || !*pszCommand)
+	{
+		lstrcpyA(strTemp, "cmd");
+		if (!InfoA->InputBox("ConEmu", "Start console program", "ConEmu.CreateProcess", 
+			strTemp, strTemp, MAX_PATH, NULL, FIB_BUTTONS))
+			return false;
+		pszCommand = strTemp;
+	}
+
+	wchar_t strCurDir[MAX_PATH+1]; GetCurrentDirectory(MAX_PATH, strCurDir);
+	int nLen = lstrlenA(pszCommand)+1;
+	wchar_t* pwszCommand = (wchar_t*)calloc(nLen,2);
+	MultiByteToWideChar(CP_OEMCP, 0, pszCommand, nLen, pwszCommand, nLen);
+
+	InfoA->Control(INVALID_HANDLE_VALUE,FCTL_GETUSERSCREEN,0);
+
+	RunExternalProgramW(pwszCommand, strCurDir);
+
+	InfoA->Control(INVALID_HANDLE_VALUE,FCTL_SETUSERSCREEN,0);
+	InfoA->AdvControl(InfoA->ModuleNumber,ACTL_REDRAWALL,0);
+
+	free(pwszCommand);
+	return true;
+}
+
+bool ProcessCommandLineA(char* pszCommand)
+{
+	if (!InfoA || !FSFA) return false;
+
+	if (FSFA->LStrnicmp(pszCommand, "run:", 4)==0) {
+		RunExternalProgramA(pszCommand+4);
+		return true;
+	}
+
+	return false;
+}
+
+
+static void FarPanel2CePanel(PanelInfo* pFar, CEFAR_SHORT_PANEL_INFO* pCE)
+{
+	pCE->PanelType = pFar->PanelType;
+	pCE->Plugin = pFar->Plugin;
+	pCE->PanelRect = pFar->PanelRect;
+	pCE->ItemsNumber = pFar->ItemsNumber;
+	pCE->SelectedItemsNumber = pFar->SelectedItemsNumber;
+	pCE->CurrentItem = pFar->CurrentItem;
+	pCE->TopPanelItem = pFar->TopPanelItem;
+	pCE->Visible = pFar->Visible;
+	pCE->Focus = pFar->Focus;
+	pCE->ViewMode = pFar->ViewMode;
+	pCE->ShortNames = pFar->ShortNames;
+	pCE->SortMode = pFar->SortMode;
+	pCE->Flags = pFar->Flags;
+}
+
+BOOL ReloadFarInfoA(BOOL abFull)
+{
+	if (!InfoA || !FSFA) return FALSE;
+	
+	if (!gpFarInfo) {
+		_ASSERTE(gpFarInfo!=NULL);
+		return FALSE;
+	}
+
+	// Заполнить gpFarInfo->
+	//BYTE nFarColors[0x100]; // Массив цветов фара
+	//DWORD nFarInterfaceSettings;
+	//DWORD nFarPanelSettings;
+	//DWORD nFarConfirmationSettings;
+	//BOOL  bFarPanelAllowed, bFarLeftPanel, bFarRightPanel;   // FCTL_CHECKPANELSEXIST, FCTL_GETPANELSHORTINFO,...
+	//CEFAR_SHORT_PANEL_INFO FarLeftPanel, FarRightPanel;
+	
+	DWORD ldwConsoleMode = 0;	GetConsoleMode(/*ghConIn*/GetStdHandle(STD_INPUT_HANDLE), &ldwConsoleMode);
+	#ifdef _DEBUG
+	static DWORD ldwDbgMode = 0;
+	if (IsDebuggerPresent()) {
+		if (ldwDbgMode != ldwConsoleMode) {
+			wchar_t szDbg[128]; wsprintfW(szDbg, L"Far.ConEmuA: ConsoleMode(STD_INPUT_HANDLE)=0x%08X\n", ldwConsoleMode);
+			OutputDebugStringW(szDbg);
+			ldwDbgMode = ldwConsoleMode;
+		}
+	}
+	#endif
+	gpFarInfo->nFarConsoleMode = ldwConsoleMode;
+
+	INT_PTR nColorSize = InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETARRAYCOLOR, NULL);
+	if (nColorSize <= (INT_PTR)sizeof(gpFarInfo->nFarColors)) {
+		nColorSize = InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETARRAYCOLOR, gpFarInfo->nFarColors);
+	} else {
+		_ASSERTE(nColorSize <= sizeof(gpFarInfo->nFarColors));
+		BYTE* ptr = (BYTE*)calloc(nColorSize,1);
+		if (!ptr) {
+			memset(gpFarInfo->nFarColors, 7, sizeof(gpFarInfo->nFarColors));
+		} else {
+			nColorSize = InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETARRAYCOLOR, ptr);
+			memmove(gpFarInfo->nFarColors, ptr, sizeof(gpFarInfo->nFarColors));
+			free(ptr);
+		}
+	}
+	
+	gpFarInfo->nFarInterfaceSettings =
+		(DWORD)InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETINTERFACESETTINGS, 0);
+	gpFarInfo->nFarPanelSettings =
+		(DWORD)InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETPANELSETTINGS, 0);
+	gpFarInfo->nFarConfirmationSettings =
+		(DWORD)InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETCONFIRMATIONS, 0);
+
+	gpFarInfo->bFarPanelAllowed = InfoA->Control(INVALID_HANDLE_VALUE, FCTL_CHECKPANELSEXIST, 0);
+	gpFarInfo->bFarPanelInfoFilled = FALSE;
+	gpFarInfo->bFarLeftPanel = FALSE;
+	gpFarInfo->bFarRightPanel = FALSE;
+
+	// -- пока, во избежание глюков в FAR при неожиданных запросах информации о панелях
+	//if (FALSE == (gpFarInfo->bFarPanelAllowed)) {
+	//	gpConsoleInfo->bFarLeftPanel = FALSE;
+	//	gpConsoleInfo->bFarRightPanel = FALSE;
+	//} else {
+	//	PanelInfo piA = {0}, piP = {0};
+	//	BOOL lbActive  = InfoA->Control(INVALID_HANDLE_VALUE, FCTL_GETPANELSHORTINFO, &piA);
+	//	BOOL lbPassive = InfoA->Control(INVALID_HANDLE_VALUE, FCTL_GETANOTHERPANELSHORTINFO, &piP);
+	//	if (!lbActive && !lbPassive)
+	//	{
+	//		gpConsoleInfo->bFarLeftPanel = FALSE;
+	//		gpConsoleInfo->bFarRightPanel = FALSE;
+	//	} else {
+	//		PanelInfo *ppiL = NULL;
+	//		PanelInfo *ppiR = NULL;
+	//		if (lbActive) {
+	//			if (piA.Flags & PFLAGS_PANELLEFT) ppiL = &piA; else ppiR = &piA;
+	//		}
+	//		if (lbPassive) {
+	//			if (piP.Flags & PFLAGS_PANELLEFT) ppiL = &piP; else ppiR = &piP;
+	//		}
+	//		gpConsoleInfo->bFarLeftPanel = ppiL!=NULL;
+	//		gpConsoleInfo->bFarRightPanel = ppiR!=NULL;
+	//		if (ppiL) FarPanel2CePanel(ppiL, &(gpConsoleInfo->FarLeftPanel));
+	//		if (ppiR) FarPanel2CePanel(ppiR, &(gpConsoleInfo->FarRightPanel));
+	//	}
+	//}
+
+	return TRUE;
+}
+
+void ExecuteQuitFarA()
+{
+	PostMessage(FarHwnd, WM_CLOSE, 0, 0);
 }

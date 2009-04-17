@@ -1,0 +1,13 @@
+EXPORTS
+;
+	SetStartupInfoW      @1
+	GetPluginInfoW       @2
+	GetMinFarVersionW    @3
+	ExitFARW             @4
+	OpenPluginW          @5
+;
+;	SetStartupInfo       @21
+;	GetPluginInfo        @22
+;	GetMinFarVersion     @23
+;	ExitFAR              @24
+;	OpenPlugin           @25
