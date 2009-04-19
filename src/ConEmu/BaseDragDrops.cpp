@@ -1,6 +1,4 @@
-
 //#include "StdAfx.h"
-#include <shlobj.h>
 #include ".\basedragdrops.h"
 #include "resource.h"
 #include "header.h"
@@ -24,11 +22,9 @@ extern HINSTANCE g_hInstance;
 */
 
 
-//CBaseDropTarget::CBaseDropTarget(/*HWND hwnd*/)
-//{
-//	//m_hWnd = hwnd;
-//	m_lRefCount = 1;
-//}
+CBaseDropTarget::CBaseDropTarget(HWND hwnd) : m_hWnd(hwnd), m_lRefCount(1)
+{
+}
 
 CBaseDropTarget::CBaseDropTarget()
 {
@@ -51,7 +47,6 @@ HRESULT STDMETHODCALLTYPE CBaseDropTarget::DragOver(DWORD grfKeyState,POINTL pt,
 
 HRESULT STDMETHODCALLTYPE CBaseDropTarget::Drop (IDataObject * pDataObject,DWORD grfKeyState,POINTL pt,DWORD * pdwEffect)
 {
-	//gConEmu.SetDragCursor(NULL);
 	return 0;
 }
 
@@ -110,11 +105,10 @@ ULONG __stdcall CBaseDropTarget::Release(void)
 //
 //	Constructor
 //
-CDropSource::CDropSource(CBaseDropTarget* pCallback)
+CDropSource::CDropSource() 
 {
 	m_lRefCount = 1;
 	mh_CurCopy = NULL; mh_CurMove = NULL; mh_CurLink = NULL;
-	mp_Callback = pCallback;
 }
 
 //
@@ -179,28 +173,19 @@ HRESULT __stdcall CDropSource::QueryInterface(REFIID iid, void **ppvObject)
 HRESULT __stdcall CDropSource::QueryContinueDrag(BOOL fEscapePressed, DWORD grfKeyState)
 {
 	// if the <Escape> key has been pressed since the last call, cancel the drop
-	if(fEscapePressed == TRUE) {
-		if (mp_Callback)
-			mp_Callback->DragFeedBack((DWORD)-1);
+	if(fEscapePressed == TRUE)
 		return DRAGDROP_S_CANCEL;	
-	}
 		
 	DWORD nDragKey = ((gConEmu.mouse.state & DRAG_L_STARTED) == DRAG_L_STARTED) ? MK_LBUTTON : MK_RBUTTON;
 	DWORD nOtherKey = ((nDragKey & MK_LBUTTON) == MK_LBUTTON) ? (MK_RBUTTON|MK_MBUTTON) : (MK_LBUTTON|MK_MBUTTON);
 
 	// if the <LeftMouse> button has been released, then do the drop!
-	if((grfKeyState & nDragKey) == 0) {
-		if (mp_Callback)
-			mp_Callback->DragFeedBack((DWORD)-1);
+	if((grfKeyState & nDragKey) == 0)
 		return DRAGDROP_S_DROP;
-	}
-
+		
 	// Если юзер нажимает другую мышиную кнопку
-	if((grfKeyState & nOtherKey) == nOtherKey) {
-		if (mp_Callback)
-			mp_Callback->DragFeedBack((DWORD)-1);
+	if((grfKeyState & nOtherKey) == nOtherKey)
 		return DRAGDROP_S_CANCEL;
-	}
 
 	// continue with the drag-drop
 	return S_OK;
@@ -215,49 +200,40 @@ HRESULT __stdcall CDropSource::QueryContinueDrag(BOOL fEscapePressed, DWORD grfK
 HRESULT __stdcall CDropSource::GiveFeedback(DWORD dwEffect)
 {
 	HRESULT hr = DRAGDROP_S_USEDEFAULTCURSORS;
-	HCURSOR hCur = NULL;
-
-	if (dwEffect != DROPEFFECT_NONE)
-	{
-		if (dwEffect & DROPEFFECT_COPY) {
-			if (!mh_CurCopy) mh_CurCopy = LoadCursor(g_hInstance, MAKEINTRESOURCE(IDC_COPY));
-			hCur = mh_CurCopy;
-
-		} else if (dwEffect & DROPEFFECT_MOVE) {
-			if (!mh_CurMove) mh_CurMove = LoadCursor(g_hInstance, MAKEINTRESOURCE(IDC_MOVE));
-			hCur = mh_CurMove;
-
-		} else if (dwEffect & DROPEFFECT_LINK) {
-			if (!mh_CurLink) mh_CurLink = LoadCursor(g_hInstance, MAKEINTRESOURCE(IDC_LINK));
-			hCur = mh_CurLink;
-
+	if (dwEffect & DROPEFFECT_COPY) {
+		if (!mh_CurCopy) mh_CurCopy = LoadCursor(g_hInstance, MAKEINTRESOURCE(IDC_COPY));
+		if (mh_CurCopy) {
+			SetCursor(mh_CurCopy);
+			hr = S_OK;
 		}
-	} else {
-		hCur = LoadCursor(NULL, IDC_NO);
+
+	} else if (dwEffect & DROPEFFECT_MOVE) {
+		if (!mh_CurMove) mh_CurMove = LoadCursor(g_hInstance, MAKEINTRESOURCE(IDC_MOVE));
+		if (mh_CurMove) {
+			SetCursor(mh_CurMove);
+			hr = S_OK;
+		}
+
+	} else if (dwEffect & DROPEFFECT_LINK) {
+		if (!mh_CurLink) mh_CurLink = LoadCursor(g_hInstance, MAKEINTRESOURCE(IDC_LINK));
+		if (mh_CurLink) {
+			SetCursor(mh_CurLink);
+			hr = S_OK;
+		}
+
 	}
-	
-	gConEmu.SetDragCursor(hCur);
-
-	//if (hCur) {
-	//SetCursor(hCur);
-	hr = S_OK;
-	//}
-
-	if (mp_Callback)
-		mp_Callback->DragFeedBack(dwEffect);
-
 	return hr;
 }
 
 //
 //	Helper routine to create an IDropSource object
 //	
-HRESULT CreateDropSource(IDropSource **ppDropSource, CBaseDropTarget* pCallback)
+HRESULT CreateDropSource(IDropSource **ppDropSource)
 {
 	if(ppDropSource == 0)
 		return E_INVALIDARG;
 
-	*ppDropSource = new CDropSource(pCallback);
+	*ppDropSource = new CDropSource();
 
 	return (*ppDropSource) ? S_OK : E_OUTOFMEMORY;
 
@@ -278,11 +254,10 @@ HRESULT CreateDropSource(IDropSource **ppDropSource, CBaseDropTarget* pCallback)
 CDataObject::CDataObject(FORMATETC *fmtetc, STGMEDIUM *stgmed, int count) 
 {
 	m_lRefCount  = 1;
-	m_nMaxNumFormats = 32 + max(32,count);
 	m_nNumFormats = count;
 	
-	m_pFormatEtc  = new FORMATETC[m_nMaxNumFormats];
-	m_pStgMedium  = new STGMEDIUM[m_nMaxNumFormats];
+	m_pFormatEtc  = new FORMATETC[count];
+	m_pStgMedium  = new STGMEDIUM[count];
 
 	for(int i = 0; i < count; i++)
 	{
@@ -296,13 +271,11 @@ CDataObject::CDataObject(FORMATETC *fmtetc, STGMEDIUM *stgmed, int count)
 //
 CDataObject::~CDataObject()
 {
-	WARNING("Освобождать данные в m_pStgMedium.hGlobal, и т.п.?");
-
 	// cleanup
 	if(m_pFormatEtc) delete[] m_pFormatEtc;
 	if(m_pStgMedium) delete[] m_pStgMedium;
 
-	DEBUGSTR(L"oof\n");
+	OutputDebugString(_T("oof\n"));
 }
 
 //
@@ -461,36 +434,7 @@ HRESULT __stdcall CDataObject::GetCanonicalFormatEtc (FORMATETC *pFormatEct, FOR
 //
 HRESULT __stdcall CDataObject::SetData (FORMATETC *pFormatEtc, STGMEDIUM *pMedium,  BOOL fRelease)
 {
-	_ASSERTE(fRelease);
-
-	// Если нужно - увеличим размерность массивов
-	if (m_nNumFormats >= m_nMaxNumFormats) {
-		_ASSERTE(m_nNumFormats == m_nMaxNumFormats);
-		LONG nNewMaxNumFormats = m_nNumFormats + 32;
-		FORMATETC *pNewFormatEtc = new FORMATETC[nNewMaxNumFormats];
-		STGMEDIUM *pNewStgMedium = new STGMEDIUM[nNewMaxNumFormats];
-		if (!pNewFormatEtc || !pNewStgMedium) {
-			if(pNewFormatEtc) delete[] pNewFormatEtc;
-			if(pNewStgMedium) delete[] pNewStgMedium;
-			return E_OUTOFMEMORY;
-		}
-		for (LONG i = 0; i < m_nNumFormats; i++) {
-			pNewFormatEtc[i] = m_pFormatEtc[i];
-			pNewStgMedium[i] = m_pStgMedium[i];
-		}
-
-		m_nMaxNumFormats = nNewMaxNumFormats;
-		if(m_pFormatEtc) delete[] m_pFormatEtc;
-		m_pFormatEtc = pNewFormatEtc;
-		if(m_pStgMedium) delete[] m_pStgMedium;
-		m_pStgMedium = pNewStgMedium;
-	}
-
-	m_pFormatEtc[m_nNumFormats] = *pFormatEtc;
-	m_pStgMedium[m_nNumFormats] = *pMedium;
-	m_nNumFormats++;
-
-	return S_OK;
+	return E_NOTIMPL;
 }
 
 //

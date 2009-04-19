@@ -1,3 +1,4 @@
+LIBRARY	"ConEmu"
 EXPORTS
 	SetStartupInfoW      @1
 	GetPluginInfoW       @2
@@ -7,17 +8,14 @@ EXPORTS
 	GetMinFarVersionW    @6
 	ExitFARW             @7
 	OpenPluginW          @8
-	OpenFilePluginW      @9
-	SetStartupInfo       @21
-	GetPluginInfo        @22
-	ProcessEditorInput   @23
-	ProcessEditorEvent   @24
-	ProcessViewerEvent   @25
-	GetMinFarVersion     @26
-	ExitFAR              @27
-	OpenPlugin           @28
+	SetStartupInfo       @11
+	GetPluginInfo        @12
+	ProcessEditorInput   @13
+	ProcessEditorEvent   @14
+	ProcessViewerEvent   @15
+	GetMinFarVersion     @16
+	ExitFAR              @17
+	OpenPlugin           @18
 	GetFarVersion        @98
 	GetFarHWND           @99
 	GetFarHWND2          @97
-	IsConsoleActive      @96
-	RegisterPanelView    @95

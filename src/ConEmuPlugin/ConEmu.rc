@@ -49,6 +49,7 @@ END
 #endif    // APSTUDIO_INVOKED
 
 
+#ifndef _MAC
 /////////////////////////////////////////////////////////////////////////////
 //
 // Version
@@ -56,7 +57,7 @@ END
 
 VS_VERSION_INFO VERSIONINFO
  FILEVERSION CONEMUVERN
- PRODUCTVERSION CONEMUVERN
+ PRODUCTVERSION 1,0,0,1
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -71,12 +72,18 @@ BEGIN
     BEGIN
         BLOCK "000004b0"
         BEGIN
-            VALUE "FileDescription", "ConEmu plugin for FAR manager 1.7x and 2.x" CONEMUPLTFRM
+            VALUE "Comments", "\0"
+            VALUE "CompanyName", " \0"
+            VALUE "FileDescription", "ConEmu plugin for FAR manager 1.7x and 2.x\0"
             VALUE "FileVersion", CONEMUVERS
-            VALUE "LegalCopyright", "(C) 2009-2010 Maximus5"
-            VALUE "OriginalFilename", "ConEmu.dll"
-            VALUE "ProductName", "ConEmu"
-            VALUE "ProductVersion", CONEMUVERS
+            VALUE "InternalName", "\0"
+            VALUE "LegalCopyright", "2009\0"
+            VALUE "LegalTrademarks", "\0"
+            VALUE "OriginalFilename", "ConEmu.dll\0"
+            VALUE "PrivateBuild", "\0"
+            VALUE "ProductName", "ConEmu\0"
+            VALUE "ProductVersion", "1, 0, 0, 1\0"
+            VALUE "SpecialBuild", "\0"
         END
     END
     BLOCK "VarFileInfo"
@@ -85,6 +92,7 @@ BEGIN
     END
 END
 
+#endif    // !_MAC
 
 #endif    // Russian resources
 /////////////////////////////////////////////////////////////////////////////

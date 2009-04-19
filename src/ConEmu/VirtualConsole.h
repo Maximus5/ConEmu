@@ -1,265 +1,199 @@
-
-/*
-Copyright (c) 2009-2010 Maximus5
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions
-are met:
-1. Redistributions of source code must retain the above copyright
-   notice, this list of conditions and the following disclaimer.
-2. Redistributions in binary form must reproduce the above copyright
-   notice, this list of conditions and the following disclaimer in the
-   documentation and/or other materials provided with the distribution.
-3. The name of the authors may not be used to endorse or promote products
-   derived from this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
-IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
-OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
-INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
-NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
-THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
-
 #pragma once
 #include "kl_parts.h"
-#include "../Common/common.hpp"
 
-#include "Options.h"
-#include "RealConsole.h"
+// Undocumented console message
+#define WM_SETCONSOLEINFO			(WM_USER+201)
+// and others
+#define SC_RESTORE_SECRET 0x0000f122
+#define SC_MAXIMIZE_SECRET 0x0000f032
+#define SC_PROPERTIES_SECRET 0x0000fff7
+#define SC_MARK_SECRET 0x0000fff2
+#define SC_COPY_ENTER_SECRET 0x0000fff0
+#define SC_PASTE_SECRET 0x0000fff1
+#define SC_SELECTALL_SECRET 0x0000fff5
+#define SC_SCROLL_SECRET 0x0000fff3
+#define SC_FIND_SECRET 0x0000fff4
 
-#define MAX_COUNT_PART_BRUSHES 16*16*4
-#define MAX_SPACES 0x400
+#define MAX_TITLE_SIZE 0x400
+
+#pragma pack(push, 1)
+
+//
+//	Structure to send console via WM_SETCONSOLEINFO
+//
+typedef struct _CONSOLE_INFO
+{
+	ULONG		Length;
+	COORD		ScreenBufferSize;
+	COORD		WindowSize;
+	ULONG		WindowPosX;
+	ULONG		WindowPosY;
+
+	COORD		FontSize;
+	ULONG		FontFamily;
+	ULONG		FontWeight;
+	WCHAR		FaceName[32];
+
+	ULONG		CursorSize;
+	ULONG		FullScreen;
+	ULONG		QuickEdit;
+	ULONG		AutoPosition;
+	ULONG		InsertMode;
+	
+	USHORT		ScreenColors;
+	USHORT		PopupColors;
+	ULONG		HistoryNoDup;
+	ULONG		HistoryBufferSize;
+	ULONG		NumberOfHistoryBuffers;
+	
+	COLORREF	ColorTable[16];
+
+	ULONG		CodePage;
+	HWND		Hwnd;
+
+	WCHAR		ConsoleTitle[0x100];
+
+} CONSOLE_INFO;
+
+#pragma pack(pop)
 
 class CVirtualConsole
 {
-private:
-	// RealConsole
-	CRealConsole *mp_RCon;
 public:
-	CRealConsole *RCon() { if (this) return mp_RCon; return NULL; };
-	HWND GetView();
-public:
-    WARNING("Сделать protected!");
-	uint TextWidth, TextHeight; // размер в символах
+	bool IsForceUpdate;
+	uint TextWidth, TextHeight; // размер в символха
 	uint Width, Height; // размер в пикселях
-private:
-	uint nMaxTextWidth, nMaxTextHeight; // размер в символах
 private:
 	struct
 	{
 		bool isVisible;
 		bool isVisiblePrev;
 		bool isVisiblePrevFromInfo;
-		bool isPrevBackground;
 		short x;
 		short y;
 		COLORREF foreColor;
 		COLORREF bgColor;
 		BYTE foreColorNum, bgColorNum;
-		wchar_t ch;
+		TCHAR ch[2];
 		DWORD nBlinkTime, nLastBlink;
 		RECT lastRect;
 		UINT lastSize; // предыдущая высота курсора (в процентах)
 	} Cursor;
-	//
-	bool    mb_IsForceUpdate; // Это устанавливается в InitDC, чтобы случайно isForce не потерялся
-	bool    mb_RequiredForceUpdate; // Сменился шрифт, например...
-private:
-	HDC     hDC;
-	HBITMAP hBitmap;
-	HBRUSH  hBrush0, hOldBrush, hSelectedBrush;
-	HFONT   hSelectedFont, hOldFont;
-	#ifdef _DEBUG
-	BOOL    mb_DebugDumpDC;
-	#endif
-	BOOL    mb_ConDataChanged;
-	HRGN    mh_TransparentRgn;
-	//
-	bool InitDC(bool abNoDc, bool abNoWndResize);
-private:
-	enum _PartType{
-		pNull=0,     // конец строки/последний, неотображаемый элемент
-		pSpace,      // при разборе строки будем смотреть, если нашли pText,pSpace,pText то pSpace,pText добавить в первый pText
-		pBorder,     // символы, которые нужно рисовать шрифтом hFont2
-		pFills,      // Progressbars & Scrollbars
-		pText,       // Если шрифт НЕ OEM  (вывод через TextOutW)
-		pOemText,    // Если шрифт OEM-ный (вывод нужно делать через TextOutA)
-		pDummy  // дополнительные "пробелы", которые нужно отрисовать после конца строки
-		//pUnderscore, // '_' прочерк. их тоже будем чикать в угоду тексту
-	};
-	enum _PartType GetCharType(TCHAR ch);
-	typedef struct _TextParts {
-		enum _PartType partType;
-		int  nFontIdx;   // Индекс используемого шрифта
-		COLORREF crFore; // Цвет текста
-		COLORREF crBack; // !!! Используется только для отрисовки блочных симполов (прогрессов и пр.)
-		uint i;     // индекс в текущей строке (0-based)
-		uint n;     // количество символов в блоке
-		int  x;     // координата начала строки (may be >0)
-		uint width; // ширини символов блока в пикселях
-		
-		DWORD *pDX; // сдвиги для отрисовки (как-бы ширины знакомест). Это указатель на часть ConCharDX
-	} TEXTPARTS;
-	typedef struct _BgParts {
-		// индекс ячейки
-		uint i; // i строго больше 0 (0 - основной фон и он уже залит)
-		// и количество ячеек
-		uint n;
-		// Картинка или фон?
-		BOOL bBackIsPic;
-		COLORREF nBackRGB;
-	} BGPARTS;
-
-	// Working pointers
-	bool mb_PointersAllocated;
-	wchar_t  *mpsz_ConChar, *mpsz_ConCharSave;   // nMaxTextWidth * nMaxTextHeight
-	// CharAttr определен в RealConsole.h
-	CharAttr *mpn_ConAttrEx, *mpn_ConAttrExSave; // nMaxTextWidth * nMaxTextHeight
-	DWORD *ConCharX;      // nMaxTextWidth * nMaxTextHeight
-	DWORD *ConCharDX;     // nMaxTextWidth
-	char  *tmpOem;        // nMaxTextWidth
-	TEXTPARTS *TextParts; // nMaxTextWidth + 1
-	BGPARTS *BgParts;     // nMaxTextWidth
-	POLYTEXT  *PolyText;  // nMaxTextWidth
-	bool *pbLineChanged;  // nMaxTextHeight
-	bool *pbBackIsPic;    // nMaxTextHeight :: заполняется если *pbLineChanged
-	COLORREF* pnBackRGB;  // nMaxTextHeight :: заполняется если *pbLineChanged и НЕ *pbBackIsPic
-	
-	// функции выделения памяти
-	void PointersInit();
-	void PointersFree();
-	bool PointersAlloc();
-	void PointersZero();
-	
-	// *** Анализ строк ***
-	// Заливка измененных строк основным фоном и заполнение pbLineChanged, pbBackIsPic, pnBackRGB
-	void Update_CheckAndFill(bool isForce);
-	// Разбор строки на составляющие (возвращает true, если есть ячейки с НЕ основным фоном)
-	// Функция также производит распределение (заполнение координат и DX)
-	bool Update_ParseTextParts(uint row, const wchar_t* ConCharLine, const CharAttr* ConAttrLine);
-	// Заливка ячеек с НЕ основным фоном, отрисовка прогрессов и рамок
-	void Update_FillAlternate(uint row, uint nY);
-	// Вывод собственно текста (при необходимости Clipped)
-	void Update_DrawText(uint row, uint nY);
-
-	// распределение ширин
-	void DistributeSpaces(wchar_t* ConCharLine, CharAttr* ConAttrLine, DWORD* ConCharXLine, const int j, const int j2, const int end);
-	
-	// PanelViews
-	PanelViewInit m_LeftPanelView, m_RightPanelView;
-	BOOL mb_LeftPanelRedraw, mb_RightPanelRedraw;
-	SMALL_RECT mrc_LastDialogs[32]; int mn_LastDialogsCount;
-	BOOL UpdatePanelView(BOOL abLeftPanel);
-	BOOL UpdatePanelRgn(BOOL abLeftPanel);
-	HRGN CreateConsoleRgn(int x1, int y1, int x2, int y2);
-	BOOL CheckDialogsChanged();
-	
 public:
-	bool isEditor, isViewer, isFilePanel, isFade, isForeground;
+    HANDLE  hConOut(BOOL abAllowRecreate=FALSE);
+	HANDLE  hConIn();
+	HWND    hConWnd;
+	HDC     hDC; //, hBgDc;
+	HBITMAP hBitmap; //, hBgBitmap;
+	HBRUSH  hBrush0, hOldBrush, hSelectedBrush;
+	//SIZE	bgBmp;
+	HFONT   /*hFont, hFont2,*/ hSelectedFont, hOldFont;
+
+	bool isEditor, isFilePanel;
 	BYTE attrBackLast;
-	COLORREF *mp_Colors;
 
-	//TCHAR *Spaces; WORD nSpaceCount;
-	static wchar_t ms_Spaces[MAX_SPACES], ms_HorzDbl[MAX_SPACES], ms_HorzSingl[MAX_SPACES];
-	// Для ускорения получения индексов цвета
-	//BYTE  m_ForegroundColors[0x100], m_BackgroundColors[0x100];
-	//HFONT mh_FontByIndex[0x100]; // содержит ссылки (не копии) на шрифты normal/bold/italic
-	HFONT mh_FontByIndex[MAX_FONT_STYLES]; // ссылки на Normal/Bold/Italic/Bold&Italic/...Underline
+	TCHAR *ConChar;
+	WORD  *ConAttr;
+	//WORD  FontWidth[0x10000]; //, Font2Width[0x10000];
+	DWORD *ConCharX;
+	TCHAR *Spaces; WORD nSpaceCount;
 	
-	bool  mb_LastFadeFlag;
+	// координаты панелей в символах
+	RECT mr_LeftPanel, mr_RightPanel;
 
-	//CONSOLE_SELECTION_INFO SelectionInfo;
+	CONSOLE_SELECTION_INFO SelectionInfo;
 
 	CVirtualConsole(/*HANDLE hConsoleOutput = NULL*/);
 	~CVirtualConsole();
-	static CVirtualConsole* CreateVCon(RConStartArgs *args);
+	static CVirtualConsole* Create();
 
+	bool InitDC(bool abNoDc, bool abNoWndResize);
+	void InitHandlers(BOOL abCreated);
 	void DumpConsole();
-	BOOL Dump(LPCWSTR asFile);
 	bool Update(bool isForce = false, HDC *ahDc=NULL);
-	void UpdateCursor(bool& lRes);
 	void SelectFont(HFONT hNew);
 	void SelectBrush(HBRUSH hNew);
-	inline bool isCharBorder(WCHAR inChar);
-	static bool isCharBorderVertical(WCHAR inChar);
-	static bool isCharProgress(WCHAR inChar);
-	static bool isCharScroll(WCHAR inChar);
+	//HFONT CreateFontIndirectMy(LOGFONT *inFont);
+	bool isCharBorder(WCHAR inChar);
+	bool isCharBorderVertical(WCHAR inChar);
 	void BlitPictureTo(int inX, int inY, int inWidth, int inHeight);
 	bool CheckSelection(const CONSOLE_SELECTION_INFO& select, SHORT row, SHORT col);
-	//bool GetCharAttr(TCHAR ch, WORD atr, TCHAR& rch, BYTE& foreColorNum, BYTE& backColorNum, FONT* pFont);
-	void Paint(HDC hPaintDc, RECT rcClient);
+	bool GetCharAttr(TCHAR ch, WORD atr, TCHAR& rch, BYTE& foreColorNum, BYTE& backColorNum);
+	bool SetConsoleSize(COORD size);
+	bool CheckBufferSize();
+	void SendMouseEvent(UINT messg, WPARAM wParam, int x, int y);
+	void StopSignal();
+	void StopThread();
+	void Paint();
 	void UpdateInfo();
-	//void GetConsoleCursorInfo(CONSOLE_CURSOR_INFO *ci) { mp_RCon->GetConsoleCursorInfo(ci); };
-	//DWORD GetConsoleCP() { return mp_RCon->GetConsoleCP(); };
-	//DWORD GetConsoleOutputCP() { return mp_RCon->GetConsoleOutputCP(); };
-	//DWORD GetConsoleMode() { return mp_RCon->GetConsoleMode(); };
-	//void GetConsoleScreenBufferInfo(CONSOLE_SCREEN_BUFFER_INFO *sbi) { mp_RCon->GetConsoleScreenBufferInfo(sbi); };
-	RECT GetRect();
-	void OnFontChanged();
-	COORD ClientToConsole(LONG x, LONG y);
-	POINT ConsoleToClient(LONG x, LONG y);
-	void OnConsoleSizeChanged();
-	static void ClearPartBrushes();
-	HRGN GetExclusionRgn(bool abTestOnly=false);
-	COORD FindOpaqueCell();
-	void ShowPopupMenu(POINT ptCur);
-	BOOL RegisterPanelView(PanelViewInit* ppvi);
+	BOOL isBufferHeight();
+	LPCTSTR GetTitle();
 
 protected:
-	//inline void GetCharAttr(WORD atr, BYTE& foreColorNum, BYTE& backColorNum, HFONT* pFont);
-	wchar_t* mpsz_LogScreen; DWORD mn_LogScreenIdx;
-	CONSOLE_SCREEN_BUFFER_INFO csbi; DWORD mdw_LastError;
+	TCHAR Title[MAX_TITLE_SIZE+1], TitleCmp[MAX_TITLE_SIZE+1];
+	//HANDLE  mh_ConOut; BOOL mb_ConHandleCreated;
+	HANDLE mh_StdIn, mh_StdOut;
+	i64 m_LastMaxReadCnt; DWORD m_LastMaxReadTick;
+	enum _PartType{
+		pNull,  // конец строки/последний, неотображаемый элемент
+		pSpace, // при разборе строки будем смотреть, если нашли pText,pSpace,pText то pSpace,pText добавить в первый pText
+		pUnderscore, // '_' прочерк. их тоже будем чикать в угоду тексту
+		pBorder,
+		pVBorder, // символы вертикальных рамок, которые нельзя сдвигать
+		pRBracket, // символом '}' фар помечает файлы, вылезшие из колонки
+		pText,
+		pDummy  // дополнительные "пробелы", которые нужно отрисовать после конца строки
+	};
+	enum _PartType GetCharType(TCHAR ch);
+	struct _TextParts {
+		enum _PartType partType;
+		BYTE attrFore, attrBack; // однотипными должны быть не только символы, но и совпадать атрибуты!
+		WORD i1,i2;  // индексы в текущей строке, 0-based
+		WORD iwidth; // количество символов в блоке
+		DWORD width; // ширина текста в символах. для pSpace & pBorder может обрезаться в пользу pText/pVBorder
+
+		int x1; // координата в пикселях (скорректированные)
+	} *TextParts;
+	CONSOLE_SCREEN_BUFFER_INFO csbi;
 	CONSOLE_CURSOR_INFO	cinf;
 	COORD winSize, coord;
-	//CONSOLE_SELECTION_INFO select1, select2;
+	CONSOLE_SELECTION_INFO select1, select2;
 	uint TextLen;
-	bool isCursorValid, drawImage, textChanged, attrChanged;
-	void UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, UINT dwSize);
-	bool UpdatePrepare(bool isForce, HDC *ahDc, MSectionLock *pSDC);
-	void UpdateText(bool isForce); //, bool updateText, bool updateCursor);
-	BOOL CheckTransparentRgn();
+	bool isCursorValid, drawImage, doSelect, textChanged, attrChanged;
+	char *tmpOem;
+	void UpdateCursor(bool& lRes);
+	void UpdateCursorDraw(COORD pos, BOOL vis, UINT dwSize,  LPRECT prcLast=NULL);
+	bool UpdatePrepare(bool isForce, HDC *ahDc);
+	void UpdateText(bool isForce, bool updateText, bool updateCursor);
 	WORD CharWidth(TCHAR ch);
-	void CharABC(TCHAR ch, ABC *abc);
 	bool CheckChangedTextAttr();
-	//void ParseLine(int row, TCHAR *ConCharLine, WORD *ConAttrLine);
-	HANDLE mh_Heap;
+	void ParseLine(int row, TCHAR *ConCharLine, WORD *ConAttrLine);
+	BOOL AttachPID(DWORD dwPID);
+	BOOL StartProcess();
+	typedef struct _ConExeProps {
+		BOOL  bKeyExists;
+		DWORD ScreenBufferSize; //Loword-Width, Hiword-Height
+		DWORD WindowSize;
+		DWORD WindowPosition;
+		DWORD FontSize;
+		DWORD FontFamily;
+		TCHAR *FaceName;
+		TCHAR *FullKeyName;
+	} ConExeProps;
+	void RegistryProps(BOOL abRollback, ConExeProps& props, LPCTSTR asExeName=NULL);
+	static DWORD WINAPI StartProcessThread(LPVOID lpParameter);
+	HANDLE mh_Heap, mh_Thread;
+	HANDLE mh_TermEvent, mh_ForceReadEvent, mh_EndUpdateEvent;
+	//HANDLE mh_ReqSetSize, mh_ReqSetSizeEnd; COORD m_ReqSetSize;
+	DWORD mn_ThreadID;
 	LPVOID Alloc(size_t nCount, size_t nSize);
 	void Free(LPVOID ptr);
-	MSection csDC;  /*DWORD ncsTDC;*/ BOOL mb_PaintRequested; BOOL mb_PaintLocked;
-	MSection csCON; /*DWORD ncsTCON;*/
+	//CRITICAL_SECTION csDC;  DWORD ncsTDC;
+	CRITICAL_SECTION csCON; DWORD ncsTCON;
 	int mn_BackColorIdx; //==0
 	void Box(LPCTSTR szText);
-	static char mc_Uni2Oem[0x10000];
-	char Uni2Oem(wchar_t ch);
-	//BOOL RetrieveConsoleInfo(BOOL bShortOnly);
-	typedef struct tag_PARTBRUSHES {
-		wchar_t ch; // 0x2591 0x2592 0x2593 0x2588 - по увеличению плотности
-		COLORREF nBackCol;
-		COLORREF nForeCol;
-		HBRUSH  hBrush;
-	} PARTBRUSHES;
-	//std::vector<PARTBRUSHES> m_PartBrushes;
-	static PARTBRUSHES m_PartBrushes[MAX_COUNT_PART_BRUSHES];
-	//static HBRUSH PartBrush(wchar_t ch, SHORT nBackIdx, SHORT nForeIdx);
-	static HBRUSH PartBrush(wchar_t ch, COLORREF nBackCol, COLORREF nForeCol);
-	BOOL mb_InPaintCall;
-	//
-	BOOL FindChanges(int &j, int &end, const wchar_t* ConCharLine, const CharAttr* ConAttrLine, const wchar_t* ConCharLine2, const CharAttr* ConAttrLine2);
-	LONG nFontHeight, nFontWidth;
-	BYTE nFontCharSet;
-	BYTE nLastNormalBack;
-    bool bExtendFonts, bExtendColors;
-    BYTE nFontNormalColor, nFontBoldColor, nFontItalicColor, nExtendColor;
-	struct _TransparentInfo {
-		INT    nRectCount;
-		POINT *pAllPoints;
-		INT   *pAllCounts;
-	} TransparentInfo;
-	static HMENU mh_PopupMenu;
+	void SetConsoleSizeInt(COORD size);
+	void GetConsoleSizeInfo(CONSOLE_INFO *pci);
+	BOOL SetConsoleInfo(CONSOLE_INFO *pci);
+	void SetConsoleFontSizeTo(int inSizeX, int inSizeY);
 };

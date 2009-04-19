@@ -1,11 +1,16 @@
 #pragma once
 #include <windows.h>
 
+HRESULT CreateDropSource(IDropSource **ppDropSource);
+HRESULT CreateDataObject (FORMATETC *fmtetc, STGMEDIUM *stgmeds, UINT count, IDataObject **ppDataObject);
+HRESULT CreateEnumFormatEtc(UINT nNumFormats, FORMATETC *pFormatEtc, IEnumFORMATETC **ppEnumFormatEtc);
+HANDLE StringToHandle(char *szText, int nTextLen);
+
 
 class CBaseDropTarget : public IDropTarget
 {
 public:
-	//CBaseDropTarget(/*HWND hwnd*/);
+	CBaseDropTarget(HWND hwnd);
 	CBaseDropTarget();
 	~CBaseDropTarget();
 	// IUnknown implementation
@@ -20,10 +25,7 @@ public:
 	virtual HRESULT __stdcall Drop (IDataObject * pDataObject,DWORD grfKeyState,POINTL pt,DWORD * pdwEffect);
 
 	LONG	m_lRefCount;
-	//HWND	m_hWnd;
-
-public:
-	virtual void DragFeedBack(DWORD dwEffect) {};
+	HWND	m_hWnd;
 };
 
 
@@ -46,13 +48,12 @@ public:
 	//
     // Constructor / Destructor
 	//
-    CDropSource(CBaseDropTarget* pCallback);
+    CDropSource();
     ~CDropSource();
 	
 private:
 
 	HCURSOR mh_CurCopy, mh_CurMove, mh_CurLink;
-	CBaseDropTarget* mp_Callback;
 
     //
 	// private members and functions
@@ -104,7 +105,7 @@ private:
 	FORMATETC *m_pFormatEtc;
 	STGMEDIUM *m_pStgMedium;
 	LONG	   m_nNumFormats;
-	LONG       m_nMaxNumFormats;
+
 };
 
 
@@ -142,9 +143,3 @@ private:
 	ULONG		m_nNumFormats;		// number of FORMATETC members
 	FORMATETC * m_pFormatEtc;		// array of FORMATETC objects
 };
-
-
-HRESULT CreateDropSource(IDropSource **ppDropSource, CBaseDropTarget* pCallback);
-HRESULT CreateDataObject (FORMATETC *fmtetc, STGMEDIUM *stgmeds, UINT count, IDataObject **ppDataObject);
-HRESULT CreateEnumFormatEtc(UINT nNumFormats, FORMATETC *pFormatEtc, IEnumFORMATETC **ppEnumFormatEtc);
-HANDLE StringToHandle(char *szText, int nTextLen);

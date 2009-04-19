@@ -1,67 +1,25 @@
-
-/*
-Copyright (c) 2009-2010 Maximus5
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions
-are met:
-1. Redistributions of source code must retain the above copyright
-   notice, this list of conditions and the following disclaimer.
-2. Redistributions in binary form must reproduce the above copyright
-   notice, this list of conditions and the following disclaimer in the
-   documentation and/or other materials provided with the distribution.
-3. The name of the authors may not be used to endorse or promote products
-   derived from this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
-IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
-OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
-INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
-NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
-THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
-
-
 #pragma once
 
-#include "common.hpp"
-
-#define VirtualConsoleClass L"VirtualConsoleClass"
-#define VirtualConsoleClassMain L"VirtualConsoleClass"
-#define VirtualConsoleClassApp L"VirtualConsoleClassApp"
-#define VirtualConsoleClassBack L"VirtualConsoleClassBack"
-#define VirtualConsoleClassScroll L"VirtualConsoleClassScroll"
+#define VirtualConsoleClass _T("VirtualConsoleClass")
+#define VirtualConsoleClassMain _T("VirtualConsoleClass")
+#define VirtualConsoleClassApp _T("VirtualConsoleClassApp")
+#define VirtualConsoleClassBack _T("VirtualConsoleClassBack")
 
 // Service function
-//HWND AtoH(char *Str, int Len);
-
+HWND AtoH(char *Str, int Len);
 
 // 0 -- All OK (ConEmu found, Version OK)
 // 1 -- NO ConEmu (simple console mode)
+// 2 -- ConEmu found, but old version
 int ConEmuCheck(HWND* ahConEmuWnd);
 
 
-// Returns HWND of Gui console DC window (abRoot==FALSE),
-//              or Gui Main window (abRoot==TRUE)
-HWND GetConEmuHWND(BOOL abRoot);
-
-// hConEmuWnd - HWND с отрисовкой!
-void SetConEmuEnvVar(HWND hConEmuWnd);
-
-HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t* pszErr/*[MAX_PATH*2]*/, const wchar_t* szModule);
-CESERVER_REQ* ExecuteNewCmd(DWORD nCmd, DWORD nSize);
-void ExecutePrepareCmd(CESERVER_REQ* pIn, DWORD nCmd, DWORD nSize);
-CESERVER_REQ* ExecuteGuiCmd(HWND hConWnd, const CESERVER_REQ* pIn, HWND hOwner);
-CESERVER_REQ* ExecuteSrvCmd(DWORD dwSrvPID, const CESERVER_REQ* pIn, HWND hOwner);
-CESERVER_REQ* ExecuteCmd(const wchar_t* szGuiPipeName, const CESERVER_REQ* pIn, DWORD nWaitPipe, HWND hOwner);
-void ExecuteFreeResult(CESERVER_REQ* pOut);
-
-
-HWND myGetConsoleWindow();
-
-extern SECURITY_ATTRIBUTES* gpNullSecurity;
+// Returns HWND of Gui console DC window
+//     pnConsoleIsChild [out]
+//        -1 -- Non ConEmu mode
+//         0 -- console is standalone window
+//         1 -- console is child of ConEmu DC window
+//         2 -- console is child of Main ConEmu window (why?)
+//         3 -- same as 2, but ConEmu DC window - absent (old conemu version?)
+//         4 -- same as 0, but ConEmu DC window - absent (old conemu version?)
+HWND GetConEmuHWND(BOOL abRoot, int* pnConsoleIsChild/*=NULL*/);
