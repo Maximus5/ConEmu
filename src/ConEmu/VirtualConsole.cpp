@@ -234,6 +234,11 @@ bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize)
     TextWidth = csbi.srWindow.Right - csbi.srWindow.Left + 1;
     TextHeight = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
 
+#ifdef _DEBUG
+	if (TextHeight < 5)
+		__asm int 3;
+#endif
+
     if (!TextWidth || !TextHeight) {
         Assert(TextWidth && TextHeight);
         return false;
@@ -1878,7 +1883,7 @@ void CVirtualConsole::InitHandlers(BOOL abCreated)
 			rcWnd = gConEmu.CalcRect(CER_CORRECTED, rcWnd, gSet.isFullScreen ? CER_FULLSCREEN : CER_MAXIMIZED);
 			rcCon = gConEmu.CalcRect(CER_CONSOLE, rcWnd, CER_MAIN);
 			//
-			COORD b = {min(gSet.wndWidth,rcCon.right), min(gSet.wndHeight,rcCon.bottom)};
+			COORD b = {min(((int)gSet.wndWidth),rcCon.right), min(((int)gSet.wndHeight),rcCon.bottom)};
             SetConsoleSize(b);
         }
 
@@ -2141,6 +2146,9 @@ BOOL CVirtualConsole::StartProcess()
     SetForegroundWindow(ghWnd);
     
     RegistryProps(TRUE, props);
+
+#pragma message("error: почему-то консоль создалась схлопнутой по ширине/высоте, хотя ее размеры были нормальные!")
+	// TODO: перед Update нужно позвать установку размера консоли!
 
 	Update(true);
 

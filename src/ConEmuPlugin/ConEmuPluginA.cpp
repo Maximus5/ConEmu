@@ -269,7 +269,7 @@ void WINAPI _export GetPluginInfo(struct PluginInfo *pi)
 	// Проверить, не изменилась ли горячая клавиша плагина, и если да - пересоздать макросы
 	IsKeyChanged(TRUE);
 
-	if (gcPlugKey) szMenu1[0]=0; else lstrcpyA(szMenu1, "[&\xCC] "); // а тут действительно OEM
+	if (gcPlugKey) szMenu1[0]=0; else lstrcpyA(szMenu1, "[&\xDC] "); // а тут действительно OEM
 	lstrcpynA(szMenu1+lstrlenA(szMenu1), InfoA->GetMsg(InfoA->ModuleNumber,2), 240);
 
 	pi->StructSize = sizeof(struct PluginInfo);

@@ -64,9 +64,11 @@ BOOL CConEmuPipe::Init(LPCTSTR asOp, BOOL abSilent)
 	#endif
 
 	if (hMapping) {
-		TCHAR szMsg[0x400];
-		wsprintf(szMsg, _T("Can't start '%s'\nLast operation '%s' was not finished!"), asOp, sLastOp);
-		MBoxA(szMsg);
+		if (!abSilent) {
+			TCHAR szMsg[0x400];
+			wsprintf(szMsg, _T("Can't start '%s'\nLast operation '%s' was not finished!"), asOp, sLastOp);
+			MBoxA(szMsg);
+		}
 		return FALSE;
 	}
 
@@ -105,6 +107,7 @@ BOOL CConEmuPipe::Init(LPCTSTR asOp, BOOL abSilent)
 	CREATEEVENT(CONEMUSETWINDOW, hEventCmd[CMD_SETWINDOW]);
 	CREATEEVENT(CONEMUPOSTMACRO, hEventCmd[CMD_POSTMACRO]);
 	CREATEEVENT(CONEMUDEFFONT, hEventCmd[CMD_DEFFONT]);
+	CREATEEVENT(CONEMULANGCHANGE, hEventCmd[CMD_LANGCHANGE]);
 	CREATEEVENT(CONEMUEXIT, hEventCmd[CMD_EXIT]);
 
 	MCHKHEAP
@@ -113,7 +116,7 @@ BOOL CConEmuPipe::Init(LPCTSTR asOp, BOOL abSilent)
 		!hEventCmd[CMD_DRAGFROM] || !hEventCmd[CMD_DRAGTO] || 
 		!hEventCmd[CMD_REQTABS] || !hEventCmd[CMD_SETWINDOW] ||
 		!hEventCmd[CMD_POSTMACRO] || !hEventCmd[CMD_DEFFONT] || 
-		!hEventCmd[CMD_EXIT] )
+		!hEventCmd[CMD_LANGCHANGE] || !hEventCmd[CMD_EXIT] )
 	{
 		OutputDebugString(_T("Create event failed\n"));
 		if (!abSilent)

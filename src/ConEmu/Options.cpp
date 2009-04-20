@@ -73,6 +73,7 @@ void CSettings::InitSettings()
     nAffinity = 3;
     //isAdvLangChange = true;
     isSkipFocusEvents = false;
+    isLangChangeWsPlugin = false;
     BufferHeight = 0;
     LogFont.lfHeight = 16;
     LogFont.lfWidth = 0;
@@ -266,6 +267,7 @@ void CSettings::LoadSettings()
         reg.Load(_T("AffinityMask"), nAffinity);
         //reg.Load(_T("AdvLangChange"), isAdvLangChange);
         reg.Load(_T("SkipFocusEvents"), isSkipFocusEvents);
+        reg.Load(_T("LangChangeWsPlugin"), isLangChangeWsPlugin);
         
         reg.CloseKey();
     }

@@ -12,6 +12,7 @@
 #define CONEMUSETWINDOW  L"ConEmuSetWindow%u"
 #define CONEMUPOSTMACRO  L"ConEmuPostMacro%u"
 #define CONEMUDEFFONT    L"ConEmuDefFont%u"
+#define CONEMULANGCHANGE L"ConEmuLangChange%u"
 #define CONEMUEXIT       L"ConEmuExit%u"
 #define CONEMUALIVE      L"ConEmuAlive%u"
 #define CONEMUREADY      L"ConEmuReady%u"
@@ -22,9 +23,13 @@
 #define CMD_SETWINDOW    3
 #define CMD_POSTMACRO    4
 #define CMD_DEFFONT      5
+#define CMD_LANGCHANGE   6
 // +2
-#define MAXCMDCOUNT      7
+#define MAXCMDCOUNT      8
 #define CMD_EXIT         MAXCMDCOUNT-1
+
+#define GWL_TABINDEX     0
+#define GWL_LANGCHANGE   4
 
 #ifdef _DEBUG
 	#define CONEMUALIVETIMEOUT INFINITE

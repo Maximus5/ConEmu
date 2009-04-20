@@ -32,14 +32,14 @@ int WINAPI _export GetMinFarVersionW(void)
 void WINAPI _export GetPluginInfoW(struct PluginInfo *pi)
 {
     static WCHAR *szMenu[1], szMenu1[255];
-    szMenu[0]=szMenu1; //lstrcpyW(szMenu[0], L"[&\x2560] ConEmu");
+    szMenu[0]=szMenu1; //lstrcpyW(szMenu[0], L"[&\x2560] ConEmu"); -> 0x2584
     //szMenu[0][1] = L'&';
     //szMenu[0][2] = 0x2560;
 
 	// ѕроверить, не изменилась ли гор€ча€ клавиша плагина, и если да - пересоздать макросы
 	IsKeyChanged(TRUE);
 
-	if (gcPlugKey) szMenu1[0]=0; else lstrcpyW(szMenu1, L"[&\x2560] ");
+	if (gcPlugKey) szMenu1[0]=0; else lstrcpyW(szMenu1, L"[&\x2584] ");
 	lstrcpynW(szMenu1+lstrlenW(szMenu1), GetMsgW(2), 240);
 
 
@@ -284,7 +284,7 @@ void ProcessCommand(DWORD nCmd, BOOL bReqMainThread)
 		}
 		case (CMD_SETWINDOW):
 		{
-			int nTab = GetWindowLong(ConEmuHwnd, 0);
+			int nTab = GetWindowLong(ConEmuHwnd, GWL_TABINDEX);
 			if (gFarVersion.dwVerMajor==1)
 				SetWindowA(nTab);
 			else if (gFarVersion.dwBuild>=789)
@@ -475,6 +475,24 @@ DWORD WINAPI ThreadProcW(LPVOID lpParameter)
 				continue;
 			}
 			
+			case (WAIT_OBJECT_0+CMD_LANGCHANGE):
+			{
+				// исключение - асинхронный, результат не требуетс€
+				ResetEvent(hEventAlive);
+				HKL hkl = (HKL)GetWindowLong(ConEmuHwnd, GWL_LANGCHANGE);
+				if (hkl) {
+					DWORD dwLastError = 0;
+					WCHAR szLoc[10]; wsprintf(szLoc, L"%08x", (DWORD)(((DWORD)hkl) & 0xFFFF));
+					HKL hkl1 = LoadKeyboardLayout(szLoc, KLF_ACTIVATE|KLF_REORDER|KLF_SUBSTITUTE_OK|KLF_SETFORPROCESS);
+					HKL hkl2 = ActivateKeyboardLayout(hkl1, KLF_SETFORPROCESS|KLF_REORDER);
+					if (!hkl2) {
+						dwLastError = GetLastError();
+					}
+					dwLastError = dwLastError;
+				}
+				continue;
+			}
+			
 			default:
 			// ¬се остальные команды нужно выполн€ть в нити FAR'а
 			ProcessCommand(dwWait/*nCmd*/, TRUE/*bReqMainThread*/);
@@ -585,6 +603,7 @@ void InitHWND(HWND ahFarHwnd)
 	CREATEEVENT(CONEMUSETWINDOW, hEventCmd[CMD_SETWINDOW]);
 	CREATEEVENT(CONEMUPOSTMACRO, hEventCmd[CMD_POSTMACRO]);
 	CREATEEVENT(CONEMUDEFFONT, hEventCmd[CMD_DEFFONT]);
+	CREATEEVENT(CONEMULANGCHANGE, hEventCmd[CMD_LANGCHANGE]);
 	CREATEEVENT(CONEMUEXIT, hEventCmd[CMD_EXIT]);
 	CREATEEVENT(CONEMUALIVE, hEventAlive);
 	CREATEEVENT(CONEMUREADY, hEventReady);
@@ -759,7 +778,7 @@ void CheckMacro(BOOL abAllowAPI)
 		//szCheckKey[4] = (wchar_t)(gcPlugKey ? gcPlugKey : 0xCC);
 	} else {*/
 	lstrcpyW((wchar_t*)szCheckKey, L"F11  "); //TODO: дл€ ANSI может другой код по умолчанию?
-	szCheckKey[4] = (wchar_t)(gcPlugKey ? gcPlugKey : ((gFarVersion.dwVerMajor==1) ? 0x41C/*0xCC - аналог дл€ OEM*/ : 0x2560));
+	szCheckKey[4] = (wchar_t)(gcPlugKey ? gcPlugKey : ((gFarVersion.dwVerMajor==1) ? 0x42C/*0xDC - аналог дл€ OEM*/ : 0x2584));
 	//}
 
 	//if (!lbMacroDontCheck)

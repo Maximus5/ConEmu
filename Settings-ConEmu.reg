@@ -71,6 +71,9 @@ REGEDIT4
 ;; GUI progress bars on Copy/Move
 "GUIpb"=hex:00
 
+;; Disable language switch via ConEmu FAR plugin
+;"LangChangeWsPlugin"=hex:00
+
 ;; Debug. 1 - Don't hide console window
 "ConVisible"=hex:00
 

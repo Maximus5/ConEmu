@@ -487,6 +487,11 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tF
                 rc.right = (rc.right - rc.left) / gSet.LogFont.lfWidth;
                 rc.bottom = (rc.bottom - rc.top) / gSet.LogFont.lfHeight;
                 rc.left = 0; rc.top = 0;
+
+#ifdef _DEBUG
+				if (rc.bottom<5)
+					__asm int 3;
+#endif
                 
                 return rc;
             }
@@ -2817,7 +2822,29 @@ LRESULT CConEmuMain::OnLangChange(UINT messg, WPARAM wParam, LPARAM lParam)
     //POSTMESSAGE(ghConWnd, messg, wParam, lParam, FALSE);
 
     result = DefWindowProc(ghWnd, messg, wParam, lParam);
-        
+    
+    if (isFar() && gSet.isLangChangeWsPlugin)
+    {
+	    LONG lLastLang = GetWindowLong ( ghWndDC, GWL_LANGCHANGE );
+	    SetWindowLong ( ghWndDC, GWL_LANGCHANGE, lParam );
+	    
+	    if (lLastLang == lParam)
+		    return result;
+	    
+		CConEmuPipe pipe;
+		if (pipe.Init(_T("CConEmuMain::OnLangChange"), FALSE))
+		{
+			if (pipe.Execute(CMD_LANGCHANGE))
+			{
+				//gConEmu.DnDstep(_T("ConEmu: Switching language (1 sec)"));
+				// Подождем немножко, проверим что плагин живой
+				/*DWORD dwWait = WaitForSingleObject(pipe.hEventAlive, CONEMUALIVETIMEOUT);
+				if (dwWait == WAIT_OBJECT_0)*/
+					return result;
+			}
+		}
+    }
+
     //POSTMESSAGE(ghConWnd, messg, wParam, lParam, FALSE);
     //SENDMESSAGE(ghConWnd, messg, wParam, lParam);
 

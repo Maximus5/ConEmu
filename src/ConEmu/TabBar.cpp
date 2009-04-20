@@ -126,7 +126,7 @@ void TabBarClass::SelectTab(int i)
 
 void TabBarClass::FarSendChangeTab(int tabIndex)
 {
-	SetWindowLong(ghWndDC, 0, tabIndex);
+	SetWindowLong(ghWndDC, GWL_TABINDEX, tabIndex);
 	//PostMessage(ghConWnd, WM_KEYDOWN, VK_F14, 0);
 	//PostMessage(ghConWnd, WM_KEYUP, VK_F14, 0);
 	//PostMessage(ghConWnd, WM_KEYDOWN, FarTabShortcut(tabIndex), 0);
