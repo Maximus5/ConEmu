@@ -165,7 +165,7 @@
 #define tCmdLine                        1516
 #define tPanelRight                     1516
 #define cbsAltActive                    1517
-#define IDC_APPLYPOS                    1520
+#define cbApplyPos                      1520
 
 // Next default values for new objects
 // 

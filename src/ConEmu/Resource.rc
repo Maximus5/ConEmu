@@ -157,10 +157,10 @@ BEGIN
     GROUPBOX        "Position",IDC_STATIC,263,50,60,50,WS_DISABLED
     CONTROL         "Cascade",rCascade,"Button",BS_AUTORADIOBUTTON,268,87,44,
                     10
-    CONTROL         "Fixed",rFixed,"Button",BS_AUTORADIOBUTTON,268,61,33,10
-    EDITTEXT        tWndX,268,72,20,11,ES_AUTOHSCROLL | ES_NUMBER
-    EDITTEXT        tWndY,297,72,20,11,ES_AUTOHSCROLL | ES_NUMBER
-    CTEXT           "x",IDC_STATIC,290,73,6,8
+    CONTROL         "Fixed",rFixed,"Button",BS_AUTORADIOBUTTON,268,75,33,10
+    EDITTEXT        tWndX,268,60,20,11,ES_AUTOHSCROLL | ES_NUMBER
+    EDITTEXT        tWndY,297,60,20,11,ES_AUTOHSCROLL | ES_NUMBER
+    CTEXT           "x",IDC_STATIC,290,61,6,8
     GROUPBOX        "Command Line",IDC_STATIC,4,223,319,30
     EDITTEXT        tCmdLine,9,234,258,12,ES_AUTOHSCROLL
     GROUPBOX        "Graphic enhancement",IDC_STATIC,147,101,176,25
@@ -179,7 +179,7 @@ BEGIN
                     274,235,43,10
     CONTROL         "Min 2 tray",cbMinToTray,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,67,153,47,10
-    PUSHBUTTON      "Apply",IDC_APPLYPOS,214,83,36,12
+    PUSHBUTTON      "Apply",cbApplyPos,214,83,36,12
 END
 
 IDD_DIALOG2 DIALOGEX 0, 0, 328, 246

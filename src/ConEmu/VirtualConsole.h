@@ -128,6 +128,7 @@ public:
 	void UpdateInfo();
 	BOOL isBufferHeight();
 	LPCTSTR GetTitle();
+	BOOL GetConsoleScreenBufferInfo();
 
 protected:
 	TCHAR Title[MAX_TITLE_SIZE+1], TitleCmp[MAX_TITLE_SIZE+1];
@@ -154,7 +155,7 @@ protected:
 
 		int x1; // координата в пикселях (скорректированные)
 	} *TextParts;
-	CONSOLE_SCREEN_BUFFER_INFO csbi;
+	CONSOLE_SCREEN_BUFFER_INFO csbi; DWORD mdw_LastError;
 	CONSOLE_CURSOR_INFO	cinf;
 	COORD winSize, coord;
 	CONSOLE_SELECTION_INFO select1, select2;

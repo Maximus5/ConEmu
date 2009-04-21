@@ -677,6 +677,8 @@ LRESULT CSettings::OnInitDialog()
     //wsprintf(temp, _T("%i"), wndHeight);  SetDlgItemText(hMain, tWndHeight, temp);
     SendDlgItemMessage(hMain, tWndHeight, EM_SETLIMITTEXT, 3, 0);
     UpdateSize(wndWidth, wndHeight);
+    
+    EnableWindow(GetDlgItem(hMain, cbApplyPos), FALSE);
 
     SendDlgItemMessage(hMain, tWndX, EM_SETLIMITTEXT, 6, 0);
     SendDlgItemMessage(hMain, tWndY, EM_SETLIMITTEXT, 6, 0);
@@ -809,8 +811,32 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
     case rNormal:
     case rFullScreen:
     case rMaximized:
-        gConEmu.SetWindowMode(wParam);
+        //gConEmu.SetWindowMode(wParam);
+        EnableWindow(GetDlgItem(hMain, cbApplyPos), TRUE);
         break;
+        
+    case cbApplyPos:
+	    if (SendDlgItemMessage(hMain, rNormal, BM_GETCHECK, 0, 0) == BST_CHECKED) {
+	        DWORD newX, newY;
+	        GetDlgItemText(hMain, tWndWidth, temp, MAX_PATH);  newX = klatoi(temp);
+	        GetDlgItemText(hMain, tWndHeight, temp, MAX_PATH); newY = klatoi(temp);
+		    SetFocus(GetDlgItem(hMain, rNormal));
+		    if (IsZoomed(ghWnd) || IsIconic(ghWnd) || isFullScreen)
+			    gConEmu.SetWindowMode(rNormal);
+			// Установить размер
+	        gConEmu.SetConsoleWindowSize(MakeCoord(newX, newY), true);
+	    } else if (SendDlgItemMessage(hMain, rMaximized, BM_GETCHECK, 0, 0) == BST_CHECKED) {
+		    SetFocus(GetDlgItem(hMain, rMaximized));
+		    if (!IsZoomed(ghWnd))
+			    gConEmu.SetWindowMode(rMaximized);
+	    } else if (SendDlgItemMessage(hMain, rFullScreen, BM_GETCHECK, 0, 0) == BST_CHECKED) {
+		    SetFocus(GetDlgItem(hMain, rFullScreen));
+		    if (!isFullScreen)
+			    gConEmu.SetWindowMode(rFullScreen);
+	    }
+	    EnableWindow(GetDlgItem(hMain, cbApplyPos), FALSE);
+	    SetForegroundWindow(ghOpWnd);
+	    break;
         
     case rCascade:
     case rFixed:
@@ -837,9 +863,9 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
     case cbItalic:
         {
             if (wParam == cbBold)
-                LogFont.lfWeight = SendDlgItemMessage(hMain, cbBold, BM_GETCHECK, BST_CHECKED, 0) == BST_CHECKED ? FW_BOLD : FW_NORMAL;
+                LogFont.lfWeight = SendDlgItemMessage(hMain, cbBold, BM_GETCHECK, 0, 0) == BST_CHECKED ? FW_BOLD : FW_NORMAL;
             else if (wParam == cbItalic)
-                LogFont.lfItalic = SendDlgItemMessage(hMain, cbItalic, BM_GETCHECK, BST_CHECKED, 0) == BST_CHECKED ? true : false;
+                LogFont.lfItalic = SendDlgItemMessage(hMain, cbItalic, BM_GETCHECK, 0, 0) == BST_CHECKED ? true : false;
 
             LogFont.lfWidth = FontSizeX;
             HFONT hFont = CreateFontIndirectMy(&LogFont);
@@ -860,7 +886,7 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
         break;
 
     case cbBgImage:
-        isShowBgImage = SendDlgItemMessage(hMain, cbBgImage, BM_GETCHECK, BST_CHECKED, 0) == BST_CHECKED ? true : false;
+        isShowBgImage = SendDlgItemMessage(hMain, cbBgImage, BM_GETCHECK, 0, 0) == BST_CHECKED ? true : false;
         EnableWindow(GetDlgItem(hMain, tBgImage), isShowBgImage);
         EnableWindow(GetDlgItem(hMain, tDarker), isShowBgImage);
         EnableWindow(GetDlgItem(hMain, slDarker), isShowBgImage);
@@ -1007,7 +1033,7 @@ LRESULT CSettings::OnColorButtonClicked(WPARAM wParam, LPARAM lParam)
     switch(wParam)
     {
     case cbExtendColors:
-        isExtendColors = SendDlgItemMessage(hColors, cbExtendColors, BM_GETCHECK, BST_CHECKED, 0) == BST_CHECKED ? true : false;
+        isExtendColors = SendDlgItemMessage(hColors, cbExtendColors, BM_GETCHECK, 0, 0) == BST_CHECKED ? true : false;
         for (int i=16; i<32; i++)
             EnableWindow(GetDlgItem(hColors, 1100+i), isExtendColors);
         EnableWindow(GetDlgItem(hColors, lbExtendIdx), isExtendColors);
@@ -1016,7 +1042,7 @@ LRESULT CSettings::OnColorButtonClicked(WPARAM wParam, LPARAM lParam)
         }
         break;
     case cbVisualizer:
-        isVisualizer = SendDlgItemMessage(hColors, cbVisualizer, BM_GETCHECK, BST_CHECKED, 0) == BST_CHECKED ? true : false;
+        isVisualizer = SendDlgItemMessage(hColors, cbVisualizer, BM_GETCHECK, 0, 0) == BST_CHECKED ? true : false;
         EnableWindow(GetDlgItem(hColors, lbVisNormal), isVisualizer);
         EnableWindow(GetDlgItem(hColors, lbVisFore), isVisualizer);
         EnableWindow(GetDlgItem(hColors, lbVisTab), isVisualizer);
@@ -1093,6 +1119,8 @@ LRESULT CSettings::OnEditChanged(WPARAM wParam, LPARAM lParam)
     }
     else if ( (TB == tWndWidth || TB == tWndHeight) && IsDlgButtonChecked(hMain, rNormal) == BST_CHECKED )
     {
+	    EnableWindow(GetDlgItem(hMain, cbApplyPos), TRUE);
+        /*
         DWORD newX, newY;
         GetDlgItemText(hMain, tWndWidth, temp, MAX_PATH);
         newX = klatoi(temp);
@@ -1104,13 +1132,10 @@ LRESULT CSettings::OnEditChanged(WPARAM wParam, LPARAM lParam)
             wndWidth = newX;
             wndHeight = newY;
 
-            COORD b = {wndWidth, wndHeight};
-            gConEmu.SetConsoleWindowSize(b, false);  // NightRoman
-            //MoveWindow(hConWnd, 0, 0, 1, 1, 0);
-            //SetConsoleScreenBufferSize(pVCon->hConOut(), b);
-            //MoveWindow(hConWnd, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), 0);
+            COORD b = {};
+            gConEmu.SetConsoleWindowSize(MakeCoord(wndWidth, wndHeight), false);
         }
-
+        */
     }
     else if (TB == tDarker)
     {

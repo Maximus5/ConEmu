@@ -738,8 +738,18 @@ void CConEmuMain::SetConsoleWindowSize(const COORD& size, bool updateInfo)
         gSet.UpdateSize(size.X, size.Y);
     }
 
-    if (pVCon)
+	RECT rcCon;
+	if (pVCon) {
         pVCon->SetConsoleSize(size);
+		rcCon = MakeRect(pVCon->TextWidth,pVCon->TextHeight);
+	} else {
+		rcCon = MakeRect(size.X,size.Y);
+	}
+	RECT rcWnd = CalcRect(CER_MAIN, rcCon, CER_CONSOLE);
+
+    RECT wndR; GetWindowRect(ghWnd, &wndR); // текущий XY
+
+    MOVEWINDOW ( ghWnd, wndR.left, wndR.top, rcWnd.right, rcWnd.bottom, 1);
 }
 
 // Изменить размер консоли по размеру окна (главного)

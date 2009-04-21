@@ -81,7 +81,7 @@ CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
     IsForceUpdate = false;
     hBrush0 = NULL; hSelectedBrush = NULL; hOldBrush = NULL;
     isEditor = false;
-    memset(&csbi, 0, sizeof(csbi));
+    memset(&csbi, 0, sizeof(csbi)); mdw_LastError = 0;
     m_LastMaxReadCnt = 0; m_LastMaxReadTick = 0;
     hConWnd = NULL;
 
@@ -226,8 +226,8 @@ bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize)
     if (TextParts)
         { Free(TextParts); TextParts = NULL; }
 
-    CONSOLE_SCREEN_BUFFER_INFO csbi;
-    if (!GetConsoleScreenBufferInfo(hConOut(), &csbi))
+    //CONSOLE_SCREEN_BUFFER_INFO csbi;
+    if (!GetConsoleScreenBufferInfo())
         return false;
 
     IsForceUpdate = true;
@@ -622,7 +622,7 @@ bool CVirtualConsole::Update(bool isForce, HDC *ahDc)
     CSection SCON(&csCON, &ncsTCON);
     //CSection SDC(&csDC, &ncsTDC);
 
-    if (!GetConsoleScreenBufferInfo(hConOut(), &csbi)) {
+    if (!GetConsoleScreenBufferInfo()) {
         DisplayLastError(_T("Update:GetConsoleScreenBufferInfo"));
         return lRes;
     }
@@ -1131,14 +1131,16 @@ void CVirtualConsole::UpdateText(bool isForce, bool updateText, bool updateCurso
                 MCHKHEAP
                 DWORD nPrevX = ConCharXLine[j-1];
                 if (isCharBorderVertical(c)) {
-                    ConCharXLine[j-1] = (j-1) * gSet.LogFont.lfWidth;
+					//2009-04-21 было (j-1) * gSet.LogFont.lfWidth;
+                    ConCharXLine[j-1] = j * gSet.LogFont.lfWidth;
                 } else if (isFilePanel && c==L'}') {
                     // Символом } фар помечает имена файлов вылезшие за пределы колонки...
                     // Если сверху или снизу на той же позиции рамки (или тот же '}')
                     // корректируем позицию
                     if ((row>=2 && isCharBorderVertical(ConChar[TextWidth+j]))
                         && (((UINT)row)<=(TextHeight-4)))
-                     ConCharXLine[j-1] = (j-1) * gSet.LogFont.lfWidth;
+						//2009-04-21 было (j-1) * gSet.LogFont.lfWidth;
+						ConCharXLine[j-1] = j * gSet.LogFont.lfWidth;
                     //row = TextHeight - 1;
                 } MCHKHEAP
                 if (nPrevX < ConCharXLine[j-1]) {
@@ -1631,9 +1633,10 @@ bool CVirtualConsole::SetConsoleSize(COORD size)
     if (size.X<4) size.X = 4;
     if (size.Y<3) size.Y = 3;
     
+	//!!! нельзя. окошко может быть схлопнутым, хотя размер буфера правильный...
     // Для ускорения обработки - сравниваем с текущим известным размером
-    if (TextWidth == size.X && TextHeight == size.Y)
-	    return TRUE;
+    //if (TextWidth == size.X && TextHeight == size.Y)
+	//    return TRUE;
     
     /*if (GetCurrentThreadId() != mn_ThreadID) {
 	    m_ReqSetSize = size;
@@ -1663,9 +1666,13 @@ bool CVirtualConsole::SetConsoleSize(COORD size)
         //HANDLE hConsoleOut = hConOut();
         bool lbRc = true;
         HANDLE h = hConOut();
+		#ifdef _DEBUG
+		if (!h)
+			__asm int 3;
+		#endif
         BOOL lbNeedChange = FALSE;
-        CONSOLE_SCREEN_BUFFER_INFO csbi;
-        if (GetConsoleScreenBufferInfo(h, &csbi)) {
+        //CONSOLE_SCREEN_BUFFER_INFO csbi;
+        if (GetConsoleScreenBufferInfo()) {
             lbNeedChange = (csbi.dwSize.X != size.X) || (csbi.dwSize.Y != size.Y);
         }
         if (lbNeedChange) {
@@ -1675,7 +1682,7 @@ bool CVirtualConsole::SetConsoleSize(COORD size)
 			//specified width and height cannot be less than the width and height of the console screen buffer's window
             SETCONSOLESCREENBUFFERSIZERET(h, size, lbWS);
 			dwErr = GetLastError();
-            GetConsoleScreenBufferInfo(h, &csbi);
+            GetConsoleScreenBufferInfo();
             if (csbi.dwSize.X != size.X || csbi.dwSize.Y != size.Y) {
                 dwErr = GetLastError();
                 
@@ -1729,8 +1736,8 @@ bool CVirtualConsole::SetConsoleSize(COORD size)
     static bool s_isFirstCall = true;
 
     // case: buffer mode: change buffer
-    CONSOLE_SCREEN_BUFFER_INFO csbi;
-    if (!GetConsoleScreenBufferInfo(hConOut(), &csbi))
+    //CONSOLE_SCREEN_BUFFER_INFO csbi;
+    if (!GetConsoleScreenBufferInfo())
         return false;
     csbi.dwSize.X = size.X;
     if (s_isFirstCall)
@@ -1756,7 +1763,7 @@ bool CVirtualConsole::SetConsoleSize(COORD size)
 
     
     // set console window
-    if (!GetConsoleScreenBufferInfo(hConOut(), &csbi))
+    if (!GetConsoleScreenBufferInfo())
         return false;
     SMALL_RECT rect;
     rect.Top = csbi.srWindow.Top;
@@ -1828,6 +1835,7 @@ BOOL CVirtualConsole::AttachPID(DWORD dwPID)
 void CVirtualConsole::InitHandlers(BOOL abCreated)
 {
     hConWnd = GetConsoleWindow();
+	ghConWnd = hConWnd; // ставим сразу, чтобы было известно, к какой консоли мы сейчас подцеплены (иначе hConOut() вернет NULL)
 
     SetConsoleCtrlHandler((PHANDLER_ROUTINE)CConEmuMain::HandlerRoutine, true);
     
@@ -1875,16 +1883,21 @@ void CVirtualConsole::InitHandlers(BOOL abCreated)
             SetWindowPlacement(ghConWnd, &wplCon);
         }
 
-        if (gSet.wndHeight && gSet.wndWidth)
+        //if (gSet.wndHeight && gSet.wndWidth)
         {
-			// Скорректировать под размер экрана!
-			RECT rcCon = MakeRect(gSet.wndWidth, gSet.wndHeight);
-			RECT rcWnd = gConEmu.CalcRect(CER_MAIN, rcCon, CER_CONSOLE);
-			rcWnd = gConEmu.CalcRect(CER_CORRECTED, rcWnd, gSet.isFullScreen ? CER_FULLSCREEN : CER_MAXIMIZED);
-			rcCon = gConEmu.CalcRect(CER_CONSOLE, rcWnd, CER_MAIN);
+			//// Скорректировать под размер экрана!
+			//RECT rcCon = MakeRect(gSet.wndWidth, gSet.wndHeight);
+			//RECT rcWnd = gConEmu.CalcRect(CER_MAIN, rcCon, CER_CONSOLE);
+			//rcWnd = gConEmu.CalcRect(CER_CORRECTED, rcWnd, gSet.isFullScreen ? CER_FULLSCREEN : CER_MAXIMIZED);
+			//rcCon = gConEmu.CalcRect(CER_CONSOLE, rcWnd, CER_MAIN);
 			//
-			COORD b = {min(((int)gSet.wndWidth),rcCon.right), min(((int)gSet.wndHeight),rcCon.bottom)};
-            SetConsoleSize(b);
+			//COORD b = {min(((int)gSet.wndWidth),rcCon.right), min(((int)gSet.wndHeight),rcCon.bottom)};
+			//SetConsoleSize(b);
+
+			// Корректируем по размеру окна
+			RECT rcWnd; GetClientRect(ghWnd, &rcWnd);
+			RECT rcCon = gConEmu.CalcRect(CER_CONSOLE, rcWnd, CER_MAINCLIENT);
+			SetConsoleSize(MakeCoord(rcCon.right,rcCon.bottom));
         }
 
         SetConsoleTitle(gSet.GetCmd());
@@ -1974,7 +1987,9 @@ void CVirtualConsole::RegistryProps(BOOL abRollback, ConExeProps& props, LPCTSTR
                 props.FaceName[0] = 0;
             
             // Установить требуемые умолчания
-            dwVal = (gSet.wndWidth) | (gSet.wndHeight<<16);
+			RECT rcWnd; GetClientRect(ghWnd, &rcWnd);
+			RECT rcCon = gConEmu.CalcRect(CER_CONSOLE, rcWnd, CER_MAINCLIENT);
+			dwVal = (rcCon.right) | (rcCon.bottom<<16);
             RegSetValueEx(hkey, _T("ScreenBufferSize"), 0, REG_DWORD, (LPBYTE)&dwVal, sizeof(DWORD));
             RegSetValueEx(hkey, _T("WindowSize"), 0, REG_DWORD, (LPBYTE)&dwVal, sizeof(DWORD));
             if (!ghWndDC) dwVal = 0; else {
@@ -2147,7 +2162,16 @@ BOOL CVirtualConsole::StartProcess()
     
     RegistryProps(TRUE, props);
 
-#pragma message("error: почему-то консоль создалась схлопнутой по ширине/высоте, хотя ее размеры были нормальные!")
+#ifdef _DEBUG
+	Sleep(1000);
+#endif
+
+	// Уже должно быть сделано в InitHandlers
+	/*RECT rcWnd; GetClientRect(ghWnd, &rcWnd);
+	RECT rcCon = gConEmu.CalcRect(CER_CONSOLE, rcWnd, CER_MAINCLIENT);
+	SetConsoleSize(MakeCoord(rcCon.right,rcCon.bottom));*/
+
+//#pragma message("error: почему-то консоль создалась схлопнутой по ширине/высоте, хотя ее размеры были нормальные!")
 	// TODO: перед Update нужно позвать установку размера консоли!
 
 	Update(true);
@@ -2259,7 +2283,7 @@ bool CVirtualConsole::CheckBufferSize()
     CSection SCON(&csCON, &ncsTCON);
     
     //CONSOLE_SCREEN_BUFFER_INFO inf; memset(&inf, 0, sizeof(inf));
-    GetConsoleScreenBufferInfo(hConOut(), &csbi);
+    GetConsoleScreenBufferInfo();
     if (csbi.dwSize.X>(csbi.srWindow.Right-csbi.srWindow.Left+1)) {
         DEBUGLOGFILE("Wrong screen buffer width\n");
         // Окошко консоли почему-то схлопнулось по горизонтали
@@ -2598,11 +2622,11 @@ void CVirtualConsole::Box(LPCTSTR szText)
 void CVirtualConsole::GetConsoleSizeInfo(CONSOLE_INFO *pci)
 {
     CSection SCON(&csCON, &ncsTCON);
-    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    //CONSOLE_SCREEN_BUFFER_INFO csbi;
 
     HANDLE hConsoleOut = hConOut(); //hConOut();
 
-    GetConsoleScreenBufferInfo(hConsoleOut, &csbi);
+    GetConsoleScreenBufferInfo();
 
     pci->ScreenBufferSize = csbi.dwSize;
     pci->WindowSize.X     = csbi.srWindow.Right - csbi.srWindow.Left + 1;
@@ -2814,12 +2838,29 @@ BOOL CVirtualConsole::isBufferHeight()
     CSection SCON(&csCON, &ncsTCON);
 
     BOOL lbScrollMode = FALSE;
-    CONSOLE_SCREEN_BUFFER_INFO inf; memset(&inf, 0, sizeof(inf));
-    GetConsoleScreenBufferInfo(hConOut(), &inf);
-    if (inf.dwSize.Y>(inf.srWindow.Bottom-inf.srWindow.Top+1))
-        lbScrollMode = TRUE;
+    //CONSOLE_SCREEN_BUFFER_INFO inf; memset(&inf, 0, sizeof(inf));
+	if (GetConsoleScreenBufferInfo()) {
+		if (csbi.dwSize.Y>(csbi.srWindow.Bottom-csbi.srWindow.Top+1))
+			lbScrollMode = TRUE;
+	}
 
     return lbScrollMode;
+}
+
+BOOL CVirtualConsole::GetConsoleScreenBufferInfo()
+{
+	mdw_LastError = 0;
+	BOOL lbRc = FALSE;
+	HANDLE h = hConOut();
+	if (!h) {
+		mdw_LastError = ERROR_INVALID_HANDLE;
+	} else {
+		memset(&csbi, 0, sizeof(csbi));
+		lbRc = ::GetConsoleScreenBufferInfo(h, &csbi);
+		if (!lbRc)
+			mdw_LastError = GetLastError();
+	}
+	return lbRc;
 }
 
 LPCTSTR CVirtualConsole::GetTitle()
