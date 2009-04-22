@@ -68,7 +68,7 @@ public:
 	//mb_IgnoreMouseMove;
 	//bool isRBDown, ibSkipRDblClk; DWORD dwRBDownTick;
 	struct {
-		BYTE  state;
+		WORD  state;
 		bool  bSkipRDblClk;
 		bool  bIgnoreMouseMove;
 		
@@ -83,7 +83,7 @@ public:
 	} mouse;
 	bool isPiewUpdate;
 	bool gbPostUpdateWindowSize;
-	HWND hPictureView; bool bPicViewSlideShow; DWORD dwLastSlideShowTick;
+	HWND hPictureView; bool bPicViewSlideShow; DWORD dwLastSlideShowTick; RECT mrc_WndPosOnPicView;
 	bool gb_ConsoleSelectMode;
 	bool setParent, setParent2;
 	//BOOL mb_InClose;
@@ -132,7 +132,7 @@ protected:
 	static VOID CALLBACK WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime);
 	CVirtualConsole *mp_VCon[MAX_CONSOLE_COUNT], *pVCon;
 	int mn_ActiveCon; // в планах - убить m_ActiveConmanIDX
-	bool mb_SkipSyncSize;
+	bool mb_SkipSyncSize, mb_PassSysCommand;
 	// Registered messages
 	DWORD mn_MainThreadId;
 	UINT mn_MsgPostCreate;

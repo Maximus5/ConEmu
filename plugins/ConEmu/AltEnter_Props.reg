@@ -1,6 +1,8 @@
 REGEDIT4
 
 ; Show properties for current item
+; Checkbox 'AltEnter' in ConEmu settings must be On.
+; Plugin 'EMenu' must be installed.
 
 [HKEY_CURRENT_USER\Software\Far\KeyMacros\Shell\AltEnter]
 "Description"="Hotkey to execute properties command: Alt-Enter"

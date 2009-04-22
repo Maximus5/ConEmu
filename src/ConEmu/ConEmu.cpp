@@ -28,7 +28,7 @@ CConEmuMain::CConEmuMain()
     wcscpy(szConEmuVersion, L"?.?.?.?");
     //gnLastProcessCount=0;
     //cBlinkNext=0;
-    WindowMode=0;
+    WindowMode=0; mb_PassSysCommand = false;
     //hPipe=NULL;
     //hPipeEvent=NULL;
     //mb_InSizing = false;
@@ -43,7 +43,7 @@ CConEmuMain::CConEmuMain()
     //dwRBDownTick=0;
     isPiewUpdate = false; //true; --Maximus5
     gbPostUpdateWindowSize = false;
-    hPictureView = NULL; 
+    hPictureView = NULL;  mrc_WndPosOnPicView = MakeRect(0,0);
     bPicViewSlideShow = false; 
     dwLastSlideShowTick = 0;
     gb_ConsoleSelectMode=false;
@@ -836,7 +836,13 @@ bool CConEmuMain::SetWindowMode(uint inMode)
         return false;
     }
 
+	//2009-04-22 Если открыт PictureView - лучше не дергаться...
+	if (isPictureView())
+		return false;
+
 	SetCursor(LoadCursor(NULL,IDC_WAIT));
+
+	mb_PassSysCommand = true;
 
     //WindowPlacement -- использовать нельзя, т.к. он работает в координатах Workspace, а не Screen!
     RECT rcWnd; GetWindowRect(ghWnd, &rcWnd);
@@ -849,14 +855,16 @@ bool CConEmuMain::SetWindowMode(uint inMode)
         {
             DEBUGLOGFILE("SetWindowMode(rNormal)\n");
 
-			if (pVCon && !pVCon->SetConsoleSize(MakeCoord(gSet.wndWidth,gSet.wndHeight)))
+			if (pVCon && !pVCon->SetConsoleSize(MakeCoord(gSet.wndWidth,gSet.wndHeight))) {
+				mb_PassSysCommand = false;
 				return false;
+			}
 
             if (IsIconic(ghWnd) || IsZoomed(ghWnd)) {
                 //ShowWindow(ghWnd, SW_SHOWNORMAL); // WM_SYSCOMMAND использовать не хочется...
                 mb_IgnoreSizeChange = TRUE;
                 if (IsWindowVisible(ghWnd))
-                    SendMessage(ghWnd, WM_SYSCOMMAND, SC_RESTORE, 0);
+                    DefWindowProc(ghWnd, WM_SYSCOMMAND, SC_RESTORE, 0); //2009-04-22 Было SendMessage
                 else
                     ShowWindow(ghWnd, SW_SHOWNORMAL);
                 mb_IgnoreSizeChange = FALSE;
@@ -914,8 +922,10 @@ bool CConEmuMain::SetWindowMode(uint inMode)
 			rcMax.top -= GetSystemMetrics(SM_CYSIZEFRAME);
 			rcMax.bottom += GetSystemMetrics(SM_CYSIZEFRAME);
 			RECT rcCon = CalcRect(CER_CONSOLE, rcMax, CER_MAIN);
-			if (pVCon && !pVCon->SetConsoleSize(MakeCoord(rcCon.right,rcCon.bottom)))
+			if (pVCon && !pVCon->SetConsoleSize(MakeCoord(rcCon.right,rcCon.bottom))) {
+				mb_PassSysCommand = false;
 				return false;
+			}
 
             if (!IsZoomed(ghWnd)) {
                 ShowWindow(ghWnd, SW_SHOWMAXIMIZED);
@@ -946,8 +956,10 @@ bool CConEmuMain::SetWindowMode(uint inMode)
 
 			RECT rcMax = CalcRect(CER_FULLSCREEN, MakeRect(0,0), CER_FULLSCREEN);
 			RECT rcCon = CalcRect(CER_CONSOLE, rcMax, CER_MAINCLIENT);
-			if (pVCon && !pVCon->SetConsoleSize(MakeCoord(rcCon.right,rcCon.bottom)))
+			if (pVCon && !pVCon->SetConsoleSize(MakeCoord(rcCon.right,rcCon.bottom))) {
+				mb_PassSysCommand = false;
 				return false;
+			}
 
             gSet.isFullScreen = true;
             isWndNotFSMaximized = IsZoomed(ghWnd);
@@ -995,6 +1007,7 @@ bool CConEmuMain::SetWindowMode(uint inMode)
         EnableWindow(GetDlgItem(ghOpWnd, tWndHeight), canEditWindowSizes);
     }
     SyncConsoleToWindow();
+	mb_PassSysCommand = false;
     return true;
 }
 
@@ -1126,6 +1139,11 @@ LRESULT CConEmuMain::OnSizing(WPARAM wParam, LPARAM lParam)
 {
     LRESULT result = true;
 
+	if (isPictureView()) {
+		RECT *pRect = (RECT*)lParam; // с рамкой
+		pRect->right = pRect->left + (mrc_WndPosOnPicView.right-mrc_WndPosOnPicView.left);
+		pRect->bottom = pRect->top + (mrc_WndPosOnPicView.bottom-mrc_WndPosOnPicView.top);
+	} else
     if (mb_IgnoreSizeChange) {
         // на время обработки WM_SYSCOMMAND
     } else
@@ -1136,6 +1154,12 @@ LRESULT CConEmuMain::OnSizing(WPARAM wParam, LPARAM lParam)
         RECT srctWindow;
         RECT wndSizeRect, restrictRect;
         RECT *pRect = (RECT*)lParam; // с рамкой
+
+		if ((mouse.state & (MOUSE_SIZING_BEGIN|MOUSE_SIZING_TODO))==MOUSE_SIZING_BEGIN 
+			&& isPressed(VK_LBUTTON))
+		{
+			mouse.state |= MOUSE_SIZING_TODO;
+		}
 
         wndSizeRect = *pRect;
         // Для красивости рамки под мышкой
@@ -2337,6 +2361,8 @@ bool CConEmuMain::isPictureView()
         InvalidateAll();
         hPictureView = NULL;
     }
+
+	bool lbPrevPicView = (hPictureView != NULL);
     
     if (!hPictureView) {
         hPictureView = FindWindowEx(ghWnd, NULL, L"FarPictureViewControlClass", NULL);
@@ -2365,13 +2391,19 @@ bool CConEmuMain::isPictureView()
         bPicViewSlideShow=false;
     }
 
+	if (lbRc && !lbPrevPicView) {
+		GetWindowRect(ghWnd, &mrc_WndPosOnPicView);
+	} else if (!lbRc) {
+		memset(&mrc_WndPosOnPicView, 0, sizeof(mrc_WndPosOnPicView));
+	}
+
     return lbRc;
 }
 
 bool CConEmuMain::isSizing()
 {
     // Юзер тащит мышкой рамку окна
-    return (mouse.state & MOUSE_SIZING) == MOUSE_SIZING;
+    return (mouse.state & MOUSE_SIZING_BEGIN) == MOUSE_SIZING_BEGIN;
 }
 
 
@@ -2904,10 +2936,19 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
     RECT conRect, consoleRect;
     POINT ptCur;
 
+	if ((messg==WM_LBUTTONUP || messg==WM_MOUSEMOVE) && (gConEmu.mouse.state & MOUSE_SIZING_DBLCKL)) {
+		if (messg==WM_LBUTTONUP)
+			gConEmu.mouse.state &= ~MOUSE_SIZING_DBLCKL;
+		return 0; //2009-04-22 После DblCkl по заголовку в консоль мог проваливаться LBUTTONUP
+	}
+
     // Иначе в консоль проваливаются щелчки по незанятому полю таба...
     if (messg==WM_LBUTTONDOWN || messg==WM_RBUTTONDOWN || messg==WM_MBUTTONDOWN || 
         messg==WM_LBUTTONDBLCLK || messg==WM_RBUTTONDBLCLK || messg==WM_MBUTTONDBLCLK)
     {
+		if (gConEmu.mouse.state & MOUSE_SIZING_DBLCKL)
+			gConEmu.mouse.state &= ~MOUSE_SIZING_DBLCKL;
+
         GetCursorPos(&ptCur);
         GetWindowRect(ghWndDC, &consoleRect);
         if (!PtInRect(&consoleRect, ptCur)) {
@@ -3285,19 +3326,33 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
         Icon.Delete();
         //SENDMESSAGE(ghConWnd, WM_SYSCOMMAND, SC_CLOSE, 0);
         SENDMESSAGE(ghConWnd, WM_CLOSE, 0, 0); // ?? фар не ловит сообщение, ExitFAR не вызываются
-        return 0;
+        break;
 
     case SC_MAXIMIZE:
-        if (wParam == SC_MAXIMIZE)
-            CheckRadioButton(ghOpWnd, rNormal, rFullScreen, rMaximized);
+		if (!mb_PassSysCommand) {
+			if (isPictureView())
+				break;;
+			SetWindowMode(rMaximized);
+		} else {
+			result = DefWindowProc(hWnd, WM_SYSCOMMAND, wParam, lParam);
+		}
+		break;
     case SC_RESTORE:
-        if (wParam == SC_RESTORE)
-            CheckRadioButton(ghOpWnd, rNormal, rFullScreen, rNormal);
+		if (!mb_PassSysCommand) {
+			if (!IsIconic(ghWnd) && isPictureView())
+				break;
+			SetWindowMode(rNormal);
+		} else {
+			result = DefWindowProc(hWnd, WM_SYSCOMMAND, wParam, lParam);
+		}
+		break;
     case SC_MINIMIZE:
-        if (wParam == SC_MINIMIZE && gSet.isMinToTray) {
+        if (gSet.isMinToTray) {
             Icon.HideWindowToTray();
-            return 0;
+            break;
         }
+		result = DefWindowProc(hWnd, WM_SYSCOMMAND, wParam, lParam);
+		break;
 
     default:
         if (wParam != 0xF100)
@@ -3383,12 +3438,12 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
         }
 
         
-
-        if (lbIsPicView && !isPiewUpdate)
+		//2009-04-22 - вроде не требуется
+        /*if (lbIsPicView && !isPiewUpdate)
         {
 			// чтобы принудительно обновиться после закрытия PicView
 			isPiewUpdate = true; 
-        }
+        }*/
 
         if (!lbIsPicView && isPiewUpdate)
         {   // После скрытия/закрытия PictureView нужно передернуть консоль - ее размер мог измениться
@@ -3403,9 +3458,12 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 
         if (!IsIconic(ghWnd))
         {
+			// Было ли реальное изменение размеров?
+			BOOL lbSizingToDo  = (mouse.state & MOUSE_SIZING_TODO) == MOUSE_SIZING_TODO;
+
 			if (isSizing() && !isPressed(VK_LBUTTON)) {
-				mouse.state &= ~MOUSE_SIZING;
-				ReSize();
+				// Сборс всех флагов ресайза мышкой
+				mouse.state &= ~(MOUSE_SIZING_BEGIN|MOUSE_SIZING_TODO);
 			}
 
             //COORD c = ConsoleSizeFromWindow();
@@ -3414,7 +3472,8 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 			// чтобы не насиловать консоль лишний раз - реальное измененение ее размеров только
 			// при отпускании мышкой рамки окна
             if (!isSizing() &&
-                (gbPostUpdateWindowSize/*после появления/скрытия табов*/ || 
+                (lbSizingToDo /*после реального ресайза мышкой*/ ||
+				 gbPostUpdateWindowSize /*после появления/скрытия табов*/ || 
 				(c.right != pVCon->TextWidth || c.bottom != pVCon->TextHeight)))
             {
                 gbPostUpdateWindowSize = false;
@@ -3589,9 +3648,14 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 
     case WM_NCLBUTTONDOWN:
         //gConEmu.mb_InSizing = (messg==WM_NCLBUTTONDOWN);
-        gConEmu.mouse.state |= MOUSE_SIZING;
+        gConEmu.mouse.state |= MOUSE_SIZING_BEGIN;
         result = DefWindowProc(hWnd, messg, wParam, lParam);
         break;
+
+	case WM_NCLBUTTONDBLCLK:
+		gConEmu.mouse.state |= MOUSE_SIZING_DBLCKL;
+		result = DefWindowProc(hWnd, messg, wParam, lParam);
+		break;
 
     case WM_NCRBUTTONUP:
         Icon.HideWindowToTray();
