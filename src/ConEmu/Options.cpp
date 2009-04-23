@@ -159,7 +159,7 @@ void CSettings::LoadSettings()
     _tcscpy(inFont, LogFont.lfFaceName);
     _tcscpy(inFont2, LogFont2.lfFaceName);
     DWORD Quality = LogFont.lfQuality;
-    gConEmu.WindowMode = rMaximized;
+    //gConEmu.WindowMode = rMaximized;
     DWORD FontCharSet = LogFont.lfCharSet;
     bool isBold = (LogFont.lfWeight>=FW_BOLD), isItalic = (LogFont.lfItalic!=FALSE);
     
@@ -199,11 +199,16 @@ void CSettings::LoadSettings()
         reg.Load(_T("Cascaded"), wndCascade);
         if (wndCascade) {
 	        HWND hPrev = FindWindow(VirtualConsoleClassMain, NULL);
-	        if (hPrev) {
+	        while (hPrev) {
+				if (IsIconic(hPrev) || IsZoomed(hPrev)) {
+					hPrev = FindWindowEx(NULL, hPrev, VirtualConsoleClassMain, NULL);
+					continue;
+				}
 		        RECT rcWnd; GetWindowRect(hPrev, &rcWnd);
 		        int nShift = (GetSystemMetrics(SM_CYSIZEFRAME)+GetSystemMetrics(SM_CYCAPTION))*1.5;
 		        wndX = rcWnd.left + nShift;
 		        wndY = rcWnd.top + nShift;
+				break;
 	        }
         }
         reg.Load(_T("ConWnd Width"), wndWidth); if (!wndWidth) wndWidth = 80; else if (wndWidth>1000) wndWidth = 1000;

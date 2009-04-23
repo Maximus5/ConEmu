@@ -28,7 +28,7 @@ CConEmuMain::CConEmuMain()
     wcscpy(szConEmuVersion, L"?.?.?.?");
     //gnLastProcessCount=0;
     //cBlinkNext=0;
-    WindowMode=0; mb_PassSysCommand = false;
+    WindowMode=rNormal; mb_PassSysCommand = false;
     //hPipe=NULL;
     //hPipeEvent=NULL;
     //mb_InSizing = false;
@@ -540,8 +540,19 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tF
 				int nX = GetSystemMetrics(SM_CXSIZEFRAME), nY = GetSystemMetrics(SM_CYSIZEFRAME);
 				int nWidth = rc.right-rc.left;
 				int nHeight = rc.bottom-rc.top;
-				if (rc.left<(rcMon.left-nX)) rc.left=rcMon.left-nX;
-				if (rc.top<(rcMon.top-nX)) rc.top=rcMon.top-nX;
+				static bool bFirstCall = true;
+				if (bFirstCall) {
+					if (gSet.wndCascade) {
+						if ((rc.left+nWidth)>(rcMon.right+nX) ||
+							(rc.top+nHeight)>(rcMon.bottom+nY))
+						{
+							rc = MakeRect(rcMon.left,rcMon.top,rcMon.left+nWidth,rcMon.top+nHeight);
+						}
+					}
+					bFirstCall = false;
+				}
+				if (rc.left<(rcMon.left-nX)) { rc.left=rcMon.left-nX; rc.right=rc.left+nWidth; }
+				if (rc.top<(rcMon.top-nX)) { rc.top=rcMon.top-nX; rc.bottom=rc.top+nHeight; }
 				if ((rc.left+nWidth)>(rcMon.right+nX)) {
 					rc.left = max((rcMon.left-nX),(rcMon.right-nWidth));
 					nWidth = min(nWidth, (rcMon.right-rc.left+2*nX));
@@ -928,7 +939,9 @@ bool CConEmuMain::SetWindowMode(uint inMode)
 			}
 
             if (!IsZoomed(ghWnd)) {
+				mb_IgnoreSizeChange = TRUE;
                 ShowWindow(ghWnd, SW_SHOWMAXIMIZED);
+				mb_IgnoreSizeChange = FALSE;
                 OnSize();
             }
 
@@ -937,7 +950,9 @@ bool CConEmuMain::SetWindowMode(uint inMode)
             gSet.isFullScreen = false;
 
             if (!IsWindowVisible(ghWnd)) {
+				mb_IgnoreSizeChange = TRUE;
                 ShowWindow(ghWnd, SW_SHOWMAXIMIZED);
+				mb_IgnoreSizeChange = FALSE;
                 OnSize();
             }
         } break;
@@ -980,8 +995,11 @@ bool CConEmuMain::SetWindowMode(uint inMode)
                 }
             }
 
-            if (IsIconic(ghWnd) || IsZoomed(ghWnd))
+			if (IsIconic(ghWnd) || IsZoomed(ghWnd)) {
+				mb_IgnoreSizeChange = TRUE;
                 ShowWindow(ghWnd, SW_SHOWNORMAL);
+				mb_IgnoreSizeChange = FALSE;
+			}
 
             // for virtual screend mi.rcMonitor. may contains negative values...
 
@@ -994,11 +1012,15 @@ bool CConEmuMain::SetWindowMode(uint inMode)
                 CheckRadioButton(gSet.hMain, rNormal, rFullScreen, rFullScreen);
         }
         if (!IsWindowVisible(ghWnd)) {
+			mb_IgnoreSizeChange = TRUE;
             ShowWindow(ghWnd, SW_SHOWNORMAL);
+			mb_IgnoreSizeChange = FALSE;
             OnSize();
         }
         break;
     }
+    
+    WindowMode = inMode; // Запомним!
 
     bool canEditWindowSizes = inMode == rNormal;
     if (ghOpWnd)
@@ -1073,6 +1095,10 @@ LRESULT CConEmuMain::OnSize(WPARAM wParam, WORD newClientWidth, WORD newClientHe
 {
     LRESULT result = 0;
 
+	if (wParam == SIZE_MINIMIZED) {
+		return 0;
+	}
+
     if (mb_IgnoreSizeChange) {
         // на время обработки WM_SYSCOMMAND
         return 0;
@@ -1083,7 +1109,6 @@ LRESULT CConEmuMain::OnSize(WPARAM wParam, WORD newClientWidth, WORD newClientHe
         PostMessage(ghWnd, WM_SIZE, wParam, MAKELONG(newClientWidth,newClientHeight));
         return 0;
     }
-
 
     if (newClientWidth==(WORD)-1 || newClientHeight==(WORD)-1) {
         RECT rcClient; GetClientRect(ghWnd, &rcClient);
@@ -3341,7 +3366,7 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 		if (!mb_PassSysCommand) {
 			if (!IsIconic(ghWnd) && isPictureView())
 				break;
-			SetWindowMode(rNormal);
+			SetWindowMode(IsIconic(ghWnd) ? WindowMode : rNormal);
 		} else {
 			result = DefWindowProc(hWnd, WM_SYSCOMMAND, wParam, lParam);
 		}
@@ -3480,7 +3505,7 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
                 if (isNtvdm())
                     SyncNtvdm();
                 else {
-                    if (!gSet.isFullScreen && !IsZoomed(ghWnd))
+                    if (!gSet.isFullScreen && !IsZoomed(ghWnd) && !lbSizingToDo)
                         SyncWindowToConsole();
                     else
                         SyncConsoleToWindow();

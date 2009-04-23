@@ -1625,6 +1625,8 @@ void CVirtualConsole::SetConsoleSizeInt(COORD size)
 
 bool CVirtualConsole::SetConsoleSize(COORD size)
 {
+    CSection SCON(&csCON, &ncsTCON);
+
     if (!hConWnd) {
         Box(_T("Console was not created (CVirtualConsole::SetConsoleSize)"));
         return false; // консоль пока не создана?
@@ -1655,8 +1657,6 @@ bool CVirtualConsole::SetConsoleSize(COORD size)
 		// ƒождались окончани€, но результат?
 		return (TextWidth == size.X && TextHeight == size.Y);
 	}*/
-
-    CSection SCON(&csCON, &ncsTCON);
 
     RECT rcConPos; GetWindowRect(hConWnd, &rcConPos);
 
@@ -2132,6 +2132,8 @@ BOOL CVirtualConsole::StartProcess()
 {
     BOOL lbRc = FALSE;
 
+    CSection SCON(&csCON, &ncsTCON);
+
     if (ghConWnd) {
         // —начала нужно отцепитьс€ от текущей консоли
         FreeConsole(); ghConWnd = NULL;
@@ -2175,6 +2177,8 @@ BOOL CVirtualConsole::StartProcess()
 	// TODO: перед Update нужно позвать установку размера консоли!
 
 	Update(true);
+
+	SCON.Leave();
 
     /*if (gSet.isConMan) {
         if (!gConEmu.InitConMan(gSet.GetCmd())) {
