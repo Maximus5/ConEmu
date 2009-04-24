@@ -1,0 +1,134 @@
+NAME = ConEmuC
+SRCS = ConEmuC.cpp \
+       ../ConEmuPlugin/setconsoleinfo.cpp
+
+USERLIBS = 
+#-lversion
+
+
+
+#The following variables can be set by the user:
+#
+#NAME - the name of the plugin (project name|dll name).
+#
+#EXT - extension of the plugin executable (dll by default).
+#
+#ADDOUTDIR - you can set it to /dir if the target folder for the plugin
+#            is a folder inside the default target folder.
+#            This is used in multiarc for building *.fmt.
+#
+#USERCPP - user defined switches for the compiler (added after the default
+#          ones).
+#
+#USERLIBS - specify additional libs you need in the form -llib
+#           (added after the default ones).
+#
+#USERLIBSFIRST - same as USERLIBS but added before the default libs
+#                (libraries order is important for gcc).
+#
+#USERRC - user defined switches for windres
+#
+#NEEDENTRY - set if you want to disable the -nostartfiles link flag
+#
+#NEEDDEFLIB - set if you want to disable the -nodefaultlibs link flag
+#
+#EXCLUDECRT - set if you do not want to link with common/crt lib.
+#
+#SRCS - a list of the *.cpp source files.
+#
+#DOCS - a list of additional files that need to copied to the target folder.
+#
+#WIDE - set for a unicode build
+#
+
+WIDE = 1
+DIRSURF = W
+RCWIDE = -D UNICODE -D _UNICODE
+CXXWIDE = -D UNICODE -D _UNICODE
+CCWIDE = -D UNICODE -D _UNICODE
+
+OBJDIR = ../../gcc/conemuc
+REOBJDIR = \.\.\/\.\.\/gcc\/conemuc
+EXEDIR = ../../plugins/ConEmu
+COMMON = ../common
+COMINC = $(COMMON)
+EXT = exe
+EXENAME = $(NAME).$(EXT)
+EXEFULLNAME = $(EXEDIR)/$(EXENAME)
+DEF = ConEmuC.def
+RC_NAME = $(NAME).rc
+RES = $(OBJDIR)/$(NAME).res.o
+
+#NOSTART = -nostartfiles
+#ifdef NEEDENTRY
+NOSTART = 
+#endif
+
+#NODEFLIBS = -nodefaultlibs
+#ifdef NEEDDEFLIB
+NODEFLIBS = 
+#endif
+
+COMMONLIB = -L $(COMMON) -lCRT
+ifdef EXCLUDECRT
+COMMONLIB = 
+endif
+
+CXX = g++
+CC = gcc
+RM = rm -f
+CP = cp -f
+M4 = tools/m4 -P -DFARBIT=$(DIRBIT)
+GAWK = tools/gawk
+MV = mv -f
+MKDIR = mkdir -p
+WINDRES = windres -D__FARBIT__=$(DIRBIT)
+DEFINES = -D FAR_ALPHA_VERSION -D UNICODE -D _UNICODE
+CCFLAGS = -mno-cygwin -pipe -Os $(DEFINES) -funsigned-char -fomit-frame-pointer -fno-exceptions -fno-rtti -Wall -Wno-missing-braces -Wno-unknown-pragmas -Wno-switch
+CFLAGS = -mno-cygwin -pipe -Os $(DEFINES) -funsigned-char -fomit-frame-pointer -fno-exceptions -Wall -Wno-missing-braces -Wno-unknown-pragmas -Wno-switch
+LNKFLAGS = -mno-cygwin -s -lShlwapi
+
+OBJS = $(patsubst %.cpp,$(OBJDIR)/%.o,$(filter %.cpp,$(SRCS))) $(patsubst %.c,$(OBJDIR)/%.o,$(filter %.c,$(SRCS))) $(RES)
+#ifndef DISABLEAUTODEPS
+#DEPS = $(patsubst %.cpp,$(OBJDIR)/%.d,$(filter %.cpp,$(SRCS)))
+#endif
+MAP = $(patsubst %.$(EXT),%.map,$(EXEFULLNAME))
+
+
+
+all: $(EXEFULLNAME)
+
+
+#ifndef DISABLEAUTODEPS
+#$(OBJDIR)/%.d: %.cpp
+#	@echo making depends for $<
+#	@$(MKDIR) -p $(@D)
+#	@$(SHELL) -ec '$(CXX) -c -MM $(CXXFLAGS) $< \
+#                | sed '\''s/\($*\)\.o[ :]*/$(REOBJDIR)\1.o $(REOBJDIR)\1.d: /g'\'' > $@; [ -s $@ ] || $(RM) $@'
+#endif
+
+$(OBJDIR)/%.o: %.cpp
+	@echo compiling $<
+	@$(MKDIR) -p $(@D)
+	@$(CXX) $(CXXFLAGS) -c -o $@ $<
+
+$(OBJDIR)/%.o: %.c
+	@echo compiling $<
+	@$(MKDIR) -p $(@D)
+	@$(CC) $(CCFLAGS) -c -o $@ $<
+
+$(RES): $(RC_NAME)
+	@echo compiling resources $<
+	@$(MKDIR) -p $(@D)
+	@$(WINDRES) $(RCFLAGS) -i $< -o $@
+
+$(EXEFULLNAME): $(OBJS) $(DEF)
+	@echo linking $@
+	@$(CXX) -o $@ $(OBJS) $(LNKFLAGS) -Xlinker -Map -Xlinker $(MAP)
+#ifdef DOCS
+#	@$(CP) $(DOCS) $(DLLDIR)
+#endif
+
+#ifndef DISABLEAUTODEPS
+#-include $(DEPS)
+#endif
