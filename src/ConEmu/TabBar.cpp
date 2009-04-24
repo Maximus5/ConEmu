@@ -30,6 +30,21 @@ void TabBarClass::Enable(BOOL abEnabled)
 	}
 }
 
+void TabBarClass::RePaint()
+{
+	if (!mh_Rebar)
+		return;
+
+	RECT client, self;
+	GetClientRect(ghWnd, &client);
+	GetWindowRect(mh_Rebar, &self);
+	if (client.right != (self.right - self.left)) {
+		MoveWindow(mh_Rebar, 0, 0, client.right, self.bottom-self.top, 1);
+	}
+	
+	UpdateWindow(mh_Rebar);
+}
+
 void TabBarClass::Refresh(BOOL abFarActive)
 {
 	Enable(abFarActive);
@@ -221,7 +236,6 @@ void TabBarClass::Activate()
 		CreateRebar();
 		/*RECT rcClient; 
 		GetClientRect(ghWnd, &rcClient); 
-		InitCommonControls(); 
 		DWORD nPlacement = TCS_SINGLELINE;
 		_hwndTab = CreateWindow(WC_TABCONTROL, NULL, nPlacement | WS_CHILD | WS_CLIPSIBLINGS | TCS_FOCUSNEVER, 0, 0, 
 			rcClient.right, 0, ghWnd, NULL, g_hInstance, NULL);
@@ -378,12 +392,11 @@ void TabBarClass::UpdatePosition()
 		return;
 	}
 
-	
 	gConEmu.ReSize();
 
-	RECT client, self;
+	RECT client; //, self;
 	GetClientRect(ghWnd, &client);
-	GetWindowRect(mh_Tabbar, &self);
+	//GetWindowRect(mh_Tabbar, &self);
 	
 	if (_tabHeight>0) {
 		if (mh_Rebar) {
@@ -871,12 +884,6 @@ HWND TabBarClass::CreateTabbar()
 
 void TabBarClass::CreateRebar()
 {
-	INITCOMMONCONTROLSEX icex;
-	icex.dwSize = sizeof(INITCOMMONCONTROLSEX);
-	icex.dwICC   = ICC_COOL_CLASSES|ICC_BAR_CLASSES;
-	InitCommonControlsEx(&icex);
-
-
 	RECT rcWnd; GetClientRect(ghWnd, &rcWnd);
 
 

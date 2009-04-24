@@ -27,7 +27,7 @@ CSettings::CSettings()
     memset(mn_CounterTick, 0, sizeof(*mn_CounterTick)*(tPerfInterval-gbPerformance));
     hBgBitmap = NULL; bgBmp = MakeCoord(0,0); hBgDc = NULL; mh_Font = NULL; mh_Font2 = NULL;
     memset(FontWidth, 0, sizeof(FontWidth));
-    nAttachPID = 0;
+    nAttachPID = 0; hAttachConWnd = NULL;
     memset(&ourSI, 0, sizeof(ourSI));
     ourSI.cb = sizeof(ourSI);
     try {

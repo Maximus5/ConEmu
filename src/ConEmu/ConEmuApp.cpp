@@ -1,4 +1,5 @@
 #include "Header.h"
+#include <commctrl.h>
 #include "../common/ConEmuCheck.h"
 
 
@@ -183,7 +184,6 @@ void DebugLogPos(HWND hw, int x, int y, int w, int h, LPCSTR asFunc)
 	if (!x && !y && hw == ghConWnd) {
 		if (!IsDebuggerPresent() && !isPressed(VK_LBUTTON))
 			x = x;
-			//__asm int 3;
 	}
 	#endif
     if (bBlockDebugLog || (!bSendToFile && !IsDebuggerPresent()))
@@ -269,7 +269,7 @@ HWND gh_MDEBUG_TRAP_PARENT_WND = NULL;
 int __stdcall _MDEBUG_TRAP(LPCSTR asFile, int anLine)
 {
 	//__debugbreak();
-	__asm int 3;
+	_ASSERT(FALSE);
     wsprintfA(gsz_MDEBUG_TRAP_MSG, "MDEBUG_TRAP\r\n%s(%i)\r\n", asFile, anLine);
     if (gsz_MDEBUG_TRAP_MSG_APPEND[0])
         lstrcatA(gsz_MDEBUG_TRAP_MSG,gsz_MDEBUG_TRAP_MSG_APPEND);
@@ -325,6 +325,11 @@ BOOL CreateAppWindow()
 	SetProcessAffinityMask(GetCurrentProcess(), gSet.nAffinity);
 	//SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_ABOVE_NORMAL);
 	//SetThreadAffinityMask(GetCurrentThread(), 1);
+
+	INITCOMMONCONTROLSEX icex;
+	icex.dwSize = sizeof(INITCOMMONCONTROLSEX);
+	icex.dwICC   = ICC_COOL_CLASSES|ICC_BAR_CLASSES|ICC_TAB_CLASSES|ICC_PROGRESS_CLASS;
+	InitCommonControlsEx(&icex);
 
 	/*DWORD dwErr = 0;
 	HMODULE hInf = LoadLibrary(L"infis.dll");
@@ -469,7 +474,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     g_hInstance = hInstance;
 
 	if (_tcsstr(GetCommandLine(), L"/debugi")) {
-		if (!IsDebuggerPresent()) __asm int 3;
+		if (!IsDebuggerPresent()) _ASSERT(FALSE);
 	} else if (_tcsstr(GetCommandLine(), L"/debug")) {
 		if (!IsDebuggerPresent()) MBoxA(L"Conemu started");
 	}
@@ -662,6 +667,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					                // Сверху УЖЕ другая копия ConEmu
 					                return 1;
 				                }
+								// Если на самом верху НЕ консоль - это может быть панель проводника, 
+								// или другое плавающее окошко... Поищем ВЕРХНЮЮ консоль
+								if (_tcscmp(sClass, _T("ConsoleWindowClass"))!=0) {
+									_tcscpy(sClass, _T("ConsoleWindowClass"));
+									hCon = FindWindow(_T("ConsoleWindowClass"), NULL);
+									if (!hCon)
+										return 100;
+								}
 				                if (_tcscmp(sClass, _T("ConsoleWindowClass"))==0) {
 					                // перебрать все ConEmu, может кто-то уже подцеплен?
 					                HWND hEmu = NULL;
@@ -678,6 +691,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 								}
 			                }
 		                }
+						gSet.hAttachConWnd = hCon;
 	                }
                 }
             }

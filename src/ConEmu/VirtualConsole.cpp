@@ -18,18 +18,19 @@ CVirtualConsole* CVirtualConsole::Create()
             return NULL;
         }
     } else {
-        /*if (!pCon->StartProcess()) {
-            delete pCon;
-            return NULL;
-        }*/
-        // Вроде бы с запуском через нить клики мышкой в консоль начинают ходить сразу, но
-        // часто окно конэму вообще не активируется
-        pCon->mh_Thread = CreateThread(NULL, 0, StartProcessThread, (LPVOID)pCon, 0, &pCon->mn_ThreadID);
-        if (pCon->mh_Thread == NULL) {
-            DisplayLastError(_T("Can't create console thread!"));
+        if (!pCon->StartProcess()) {
             delete pCon;
             return NULL;
         }
+        // Вроде бы с запуском через нить клики мышкой в консоль начинают ходить сразу, но
+        // часто окно конэму вообще не активируется
+    }
+
+    pCon->mh_Thread = CreateThread(NULL, 0, StartProcessThread, (LPVOID)pCon, 0, &pCon->mn_ThreadID);
+    if (pCon->mh_Thread == NULL) {
+        DisplayLastError(_T("Can't create console thread!"));
+        delete pCon;
+        return NULL;
     }
 
     /*if (gSet.wndHeight && gSet.wndWidth)
@@ -186,7 +187,7 @@ HANDLE CVirtualConsole::hConOut(BOOL abAllowRecreate/*=FALSE*/)
             // Наверное лучше вернуть текущий хэндл, нежели вообще завалиться...
             mh_ConOut = hConOut();
             #ifdef _DEBUG
-            __asm int 3;
+            _ASSERT(FALSE);
             #endif
         } else {
             mb_ConHandleCreated = TRUE; // OK
@@ -235,8 +236,7 @@ bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize)
     TextHeight = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
 
 #ifdef _DEBUG
-	if (TextHeight < 5)
-		__asm int 3;
+	_ASSERT(TextHeight >= 5);
 #endif
 
     if (!TextWidth || !TextHeight) {
@@ -1625,7 +1625,8 @@ void CVirtualConsole::SetConsoleSizeInt(COORD size)
 
 bool CVirtualConsole::SetConsoleSize(COORD size)
 {
-    CSection SCON(&csCON, &ncsTCON);
+    //CSection SCON(&csCON, &ncsTCON);
+	CSection SCON(NULL,NULL);
 
     if (!hConWnd) {
         Box(_T("Console was not created (CVirtualConsole::SetConsoleSize)"));
@@ -1645,7 +1646,7 @@ bool CVirtualConsole::SetConsoleSize(COORD size)
 	    SetEvent ( mh_ReqSetSize );
 		#ifdef _DEBUG
 		if (WaitForSingleObject(mh_ReqSetSizeEnd, 2000)!=WAIT_OBJECT_0) {
-			__asm int 3;
+			_ASSERT(FALSE);
 		}
 		#endif
 	    if (WaitForSingleObject(mh_ReqSetSizeEnd, 10000)!=WAIT_OBJECT_0) {
@@ -1667,8 +1668,7 @@ bool CVirtualConsole::SetConsoleSize(COORD size)
         bool lbRc = true;
         HANDLE h = hConOut();
 		#ifdef _DEBUG
-		if (!h)
-			__asm int 3;
+		_ASSERT(h!=NULL);
 		#endif
         BOOL lbNeedChange = FALSE;
         //CONSOLE_SCREEN_BUFFER_INFO csbi;
@@ -1676,6 +1676,8 @@ bool CVirtualConsole::SetConsoleSize(COORD size)
             lbNeedChange = (csbi.dwSize.X != size.X) || (csbi.dwSize.Y != size.Y);
         }
         if (lbNeedChange) {
+			SCON.Enter(&csCON, &ncsTCON);
+
             BOOL lbWS = FALSE; DWORD dwErr = 0;
 			// Если этого не сделать - размер консоли нельзя УМЕНЬШИТЬ
             MOVEWINDOW(hConWnd, rcConPos.left, rcConPos.top, 1, 1, 1); // попробуем не дергаться?
@@ -1701,9 +1703,9 @@ bool CVirtualConsole::SetConsoleSize(COORD size)
             }
             #ifdef _DEBUG
             /*if (!GetConsoleScreenBufferInfo(h, &csbi))
-                __asm int 3;
+                _ASSERT(FALSE);
             else if (csbi.dwSize.X != size.X || csbi.dwSize.Y != size.Y)
-                __asm int 3;*/
+                _ASSERT(FALSE);*/
             #endif
             // Иногда, хз по какой причине, до консольного приложения не доходит правильный размер. дернем?
             /*INPUT_RECORD r = {WINDOW_BUFFER_SIZE_EVENT};
@@ -1721,7 +1723,7 @@ bool CVirtualConsole::SetConsoleSize(COORD size)
         }
         //TODO: если правый нижний край вылезет за пределы экрана?
         MOVEWINDOW(hConWnd, rcConPos.left, rcConPos.top, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), 1);
-        if (lbRc) {
+        if (lbRc && lbNeedChange) { //не было lbNeedChange
 	        // Если размер изменили сразу обновим информацию
 	        InitDC(false, true);
 			// И перечитать данные (выполняется в дополнительной нити)
@@ -1729,6 +1731,10 @@ bool CVirtualConsole::SetConsoleSize(COORD size)
         }
         return lbRc;
     }
+
+
+	// Начался ресайз для BufferHeight
+	SCON.Enter(&csCON, &ncsTCON);
 
     // global flag of the first call which is:
     // *) after getting all the settings
@@ -1797,15 +1803,19 @@ BOOL CVirtualConsole::AttachPID(DWORD dwPID)
         OutputDebugString(_T(" - failed\n"));
         BOOL lbFailed = TRUE;
         DWORD dwErr = GetLastError();
-        if (dwErr == 0x1F && dwPID == -1)
+        if (/*dwErr==0x1F || dwErr==6 &&*/ dwPID == -1)
         {
             // Если ConEmu запускается из FAR'а батником - то родительский процесс - CMD.EXE, а он уже скорее всего закрыт. то есть подцепиться не удастся
             HWND hConsole = FindWindowEx(NULL,NULL,_T("ConsoleWindowClass"),NULL);
             if (hConsole && IsWindowVisible(hConsole)) {
                 DWORD dwCurPID = 0;
                 if (GetWindowThreadProcessId(hConsole,  &dwCurPID)) {
+					HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS,FALSE,dwCurPID);
+					dwErr = GetLastError();
                     if (AttachConsole(dwCurPID))
                         lbFailed = FALSE;
+					else
+						dwErr = GetLastError();
                 }
             }
         }
@@ -2043,7 +2053,7 @@ void CVirtualConsole::RegistryProps(BOOL abRollback, ConExeProps& props, LPCTSTR
 DWORD CVirtualConsole::StartProcessThread(LPVOID lpParameter)
 {
     CVirtualConsole* pCon = (CVirtualConsole*)lpParameter;
-    BOOL lbRc = pCon->StartProcess();
+    //BOOL lbRc = pCon->StartProcess(); -- лучше так все-таки не делать. велика вероятность блокировки при изменении TOPMOST главного окна
     
     //TODO: а тут мы будем читать консоль...
     HANDLE hEvents[2] = {pCon->mh_TermEvent, 
@@ -2112,7 +2122,7 @@ DWORD CVirtualConsole::StartProcessThread(LPVOID lpParameter)
 
 		if (!bLoop) {
 			#ifdef _DEBUG
-			__asm int 3;
+			_ASSERT(FALSE);
 			#endif
 			pCon->Box(_T("Exception triggered in CVirtualConsole::StartProcessThread"));
 			bLoop = true;
@@ -2125,7 +2135,7 @@ DWORD CVirtualConsole::StartProcessThread(LPVOID lpParameter)
     // Finalize
     //SafeCloseHandle(pCon->mh_Thread);
     
-    return lbRc ? 0 : 100;
+    return 0;
 }
 
 BOOL CVirtualConsole::StartProcess()
@@ -2614,7 +2624,7 @@ void CVirtualConsole::UpdateInfo()
 void CVirtualConsole::Box(LPCTSTR szText)
 {
 #ifdef _DEBUG
-    __asm int 3;
+    _ASSERT(FALSE);
 #endif
     MessageBox(NULL, szText, _T("ConEmu"), MB_ICONSTOP);
 }

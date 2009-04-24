@@ -7,6 +7,7 @@
 #include <windows.h>
 #include <Shlwapi.h>
 #include <vector>
+#include <crtdbg.h>
 
 #ifdef KL_MEM
 #include "c:\\lang\\kl.h"
@@ -201,9 +202,19 @@ public:
 		mp_cs = pcs;
 		if (mp_cs) {
 			//OutputDebugString(_T("TryEnterCriticalSection\n"));
+			#ifdef _DEBUG
+			DWORD dwTryLockSectionStart = GetTickCount(), dwCurrentTick;
+			#endif
 			while (!TryEnterCriticalSection(mp_cs)) {
 				Sleep(50);
 				OutputDebugString(_T("TryEnterCriticalSection failed!!!\n"));
+				#ifdef _DEBUG
+				dwCurrentTick = GetTickCount();
+				if ((dwCurrentTick - dwTryLockSectionStart) > 3000) {
+					_ASSERTE((dwCurrentTick - dwTryLockSectionStart) <= 3000);
+					dwTryLockSectionStart = GetTickCount();
+				}
+				#endif
 			}
 			//EnterCriticalSection(mp_cs);
 			*mp_TID = dwTID;
@@ -223,7 +234,7 @@ public:
 	}
 	CSection (CRITICAL_SECTION* pcs, DWORD* pTID) : mp_cs(NULL), mp_TID(NULL)
 	{
-		Enter(pcs, pTID);
+		if (pcs) Enter(pcs, pTID);
 	}
 	~CSection()
 	{

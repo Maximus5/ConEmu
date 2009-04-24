@@ -205,6 +205,7 @@ public:
 	void PostCopy(wchar_t* apszMacro, BOOL abRecieved=FALSE);
 	void PostMacro(LPCWSTR asMacro);
 	void PostCreate(BOOL abRecieved=FALSE);
+	void RePaint();
 	void ReSize();
 	void SetConsoleWindowSize(const COORD& size, bool updateInfo);
 	bool SetWindowMode(uint inMode);

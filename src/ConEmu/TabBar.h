@@ -59,6 +59,7 @@ public:
 	HWND CreateTabbar();
 	void CreateRebar();
 	void Deactivate();
+	void RePaint();
 	void Update(ConEmuTab* tabs, int tabsCount);
 	void UpdatePosition();
 	void UpdateWidth();

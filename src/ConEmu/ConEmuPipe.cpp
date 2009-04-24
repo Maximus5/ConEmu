@@ -58,8 +58,7 @@ BOOL CConEmuPipe::Init(LPCTSTR asOp, BOOL abSilent)
 	if (ghWnd) {
 		DWORD dwPID=0, dwTID = GetWindowThreadProcessId(ghWnd, &dwPID);
 		DWORD dwCur = GetCurrentThreadId();
-		if (dwCur != dwTID)
-			__asm int 3;
+		_ASSERT(dwCur == dwTID);
 	}
 	#endif
 

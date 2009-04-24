@@ -28,7 +28,7 @@ public:
     /* OUR(!) startup info */
     STARTUPINFOW ourSI;
     /* If Attach to PID requested */
-    DWORD nAttachPID;
+    DWORD nAttachPID; HWND hAttachConWnd;
 
     DWORD FontSizeX;
     DWORD FontSizeX2;

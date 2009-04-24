@@ -84,9 +84,10 @@ MV = mv -f
 MKDIR = mkdir -p
 WINDRES = windres -D__FARBIT__=$(DIRBIT)
 DEFINES = -D FAR_ALPHA_VERSION -D UNICODE -D _UNICODE
-CCFLAGS = -mno-cygwin -pipe -Os $(DEFINES) -funsigned-char -fomit-frame-pointer -fno-exceptions -fno-rtti -Wall -Wno-missing-braces -Wno-unknown-pragmas -Wno-switch
-CFLAGS = -mno-cygwin -pipe -Os $(DEFINES) -funsigned-char -fomit-frame-pointer -fno-exceptions -Wall -Wno-missing-braces -Wno-unknown-pragmas -Wno-switch
+CXXFLAGS = -mno-cygwin -pipe -Os $(DEFINES) -funsigned-char -fomit-frame-pointer -fno-exceptions -fno-rtti -Wall -Wno-missing-braces -Wno-unknown-pragmas -Wno-switch $(CXXWIDE)
+CFLAGS = -mno-cygwin -pipe -Os $(DEFINES) -funsigned-char -fomit-frame-pointer -fno-exceptions -Wall -Wno-missing-braces -Wno-unknown-pragmas -Wno-switch $(CCWIDE)
 LNKFLAGS = -mno-cygwin -s -lShlwapi
+RCFLAGS = $(RCWIDE)
 
 OBJS = $(patsubst %.cpp,$(OBJDIR)/%.o,$(filter %.cpp,$(SRCS))) $(patsubst %.c,$(OBJDIR)/%.o,$(filter %.c,$(SRCS))) $(RES)
 #ifndef DISABLEAUTODEPS
@@ -115,7 +116,7 @@ $(OBJDIR)/%.o: %.cpp
 $(OBJDIR)/%.o: %.c
 	@echo compiling $<
 	@$(MKDIR) -p $(@D)
-	@$(CC) $(CCFLAGS) -c -o $@ $<
+	@$(CC) $(CFLAGS) -c -o $@ $<
 
 $(RES): $(RC_NAME)
 	@echo compiling resources $<

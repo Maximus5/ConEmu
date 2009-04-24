@@ -267,12 +267,12 @@ RECT CConEmuMain::CalcMargins(enum ConEmuMargins mg)
     {
         case CEM_FRAME: // –азница между размером всего окна и клиентской области окна (рамка + заголовок)
         {
-            RECT cRect, wRect;
-            if (!ghWnd) {
+            //RECT cRect, wRect;
+            //if (!ghWnd || IsIconic(ghWnd)) {
                 rc.left = rc.right = GetSystemMetrics(SM_CXSIZEFRAME);
                 rc.bottom = GetSystemMetrics(SM_CYSIZEFRAME);
                 rc.top = rc.bottom + GetSystemMetrics(SM_CYCAPTION);
-            } else {
+            /*} else {
                 GetClientRect(ghWnd, &cRect); // The left and top members are zero. The right and bottom members contain the width and height of the window.
                 MapWindowPoints(ghWnd, NULL, (LPPOINT)&cRect, 2);
                 GetWindowRect(ghWnd, &wRect); // screen coordinates of the upper-left and lower-right corners of the window
@@ -280,7 +280,7 @@ RECT CConEmuMain::CalcMargins(enum ConEmuMargins mg)
                 rc.left = cRect.left - wRect.left;       // >0
                 rc.bottom = wRect.bottom - cRect.bottom; // >0
                 rc.right = wRect.right - cRect.right;    // >0
-            }
+            }*/
         }   break;
         // ƒалее все отступы считаютс€ в клиентской части (дочерние окна)!
         case CEM_TAB:   // ќтступы от краев таба (если он видим) до окна фона (с прокруткой)
@@ -489,8 +489,7 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tF
                 rc.left = 0; rc.top = 0;
 
 #ifdef _DEBUG
-				if (rc.bottom<5)
-					__asm int 3;
+				_ASSERT(rc.bottom>=5);
 #endif
                 
                 return rc;
@@ -816,8 +815,7 @@ void CConEmuMain::SyncWindowToConsole()
         return;
 
 	#ifdef _DEBUG
-	if (GetCurrentThreadId() != mn_MainThreadId)
-		__asm int 3;
+	_ASSERT(GetCurrentThreadId() == mn_MainThreadId);
 	#endif
 
     RECT rcDC = MakeRect(pVCon->Width, pVCon->Height);
@@ -878,6 +876,7 @@ bool CConEmuMain::SetWindowMode(uint inMode)
                     DefWindowProc(ghWnd, WM_SYSCOMMAND, SC_RESTORE, 0); //2009-04-22 Ѕыло SendMessage
                 else
                     ShowWindow(ghWnd, SW_SHOWNORMAL);
+                //RePaint();
                 mb_IgnoreSizeChange = FALSE;
             }
 
@@ -940,8 +939,10 @@ bool CConEmuMain::SetWindowMode(uint inMode)
 
             if (!IsZoomed(ghWnd)) {
 				mb_IgnoreSizeChange = TRUE;
+				InvalidateAll();
                 ShowWindow(ghWnd, SW_SHOWMAXIMIZED);
 				mb_IgnoreSizeChange = FALSE;
+				RePaint();
                 OnSize();
             }
 
@@ -999,6 +1000,7 @@ bool CConEmuMain::SetWindowMode(uint inMode)
 				mb_IgnoreSizeChange = TRUE;
                 ShowWindow(ghWnd, SW_SHOWNORMAL);
 				mb_IgnoreSizeChange = FALSE;
+				RePaint();
 			}
 
             // for virtual screend mi.rcMonitor. may contains negative values...
@@ -1095,7 +1097,7 @@ LRESULT CConEmuMain::OnSize(WPARAM wParam, WORD newClientWidth, WORD newClientHe
 {
     LRESULT result = 0;
 
-	if (wParam == SIZE_MINIMIZED) {
+	if (wParam == SIZE_MINIMIZED || IsIconic(ghWnd)) {
 		return 0;
 	}
 
@@ -2158,6 +2160,14 @@ void CConEmuMain::PaintCon()
     pVCon->Paint();
 }
 
+void CConEmuMain::RePaint()
+{
+	TabBar.RePaint();
+	if (m_Back.mh_Wnd)
+		UpdateWindow(m_Back.mh_Wnd);
+	pVCon->Paint(); // если pVCon==NULL - будет просто выполнена заливка фоном.
+}
+
 //void CConEmuMain::PaintGaps(HDC hDC/*=NULL*/)
 //{
 //  //TODO: !!! “ут раньше были margins, а теперь DC rect
@@ -2453,7 +2463,11 @@ LRESULT CConEmuMain::OnClose(HWND hWnd)
 {
     //Icon.Delete(); - перенес в WM_DESTROY
     //mb_InClose = TRUE;
-    SENDMESSAGE(ghConWnd, WM_CLOSE, 0, 0);
+	if (ghConWnd) {
+		SENDMESSAGE(ghConWnd, WM_CLOSE, 0, 0);
+	} else {
+		Destroy();
+	}
     //mb_InClose = FALSE;
     return 0;
 }
@@ -3350,7 +3364,7 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
     case SC_CLOSE:
         Icon.Delete();
         //SENDMESSAGE(ghConWnd, WM_SYSCOMMAND, SC_CLOSE, 0);
-        SENDMESSAGE(ghConWnd, WM_CLOSE, 0, 0); // ?? фар не ловит сообщение, ExitFAR не вызываютс€
+		SENDMESSAGE(ghConWnd ? ghConWnd : ghWnd, WM_CLOSE, 0, 0); // ?? фар не ловит сообщение, ExitFAR не вызываютс€
         break;
 
     case SC_MAXIMIZE:
@@ -3496,10 +3510,13 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
             RECT c = CalcRect(CER_CONSOLE, client, CER_MAINCLIENT);
 			// чтобы не насиловать консоль лишний раз - реальное измененение ее размеров только
 			// при отпускании мышкой рамки окна
+			BOOL lbSizeChanged = FALSE;
+			if (pVCon)
+				lbSizeChanged = (c.right != pVCon->TextWidth || c.bottom != pVCon->TextHeight);
             if (!isSizing() &&
                 (lbSizingToDo /*после реального ресайза мышкой*/ ||
 				 gbPostUpdateWindowSize /*после по€влени€/скрыти€ табов*/ || 
-				(c.right != pVCon->TextWidth || c.bottom != pVCon->TextHeight)))
+				 lbSizeChanged /*или размер в виртуальной консоли не совпадает с расчетным*/))
             {
                 gbPostUpdateWindowSize = false;
                 if (isNtvdm())
@@ -3512,7 +3529,9 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
                     OnSize(0, client.right, client.bottom);
                 }
                 m_LastConSize = MakeCoord(pVCon->TextWidth,pVCon->TextHeight);
-            } else if (m_LastConSize.X != pVCon->TextWidth || m_LastConSize.Y != pVCon->TextHeight) {
+            }
+			else if (pVCon && (m_LastConSize.X != pVCon->TextWidth || m_LastConSize.Y != pVCon->TextHeight))
+			{
                 // ѕо идее, сюда мы попадаем только дл€ 16-бит приложений
                 if (isNtvdm())
                     SyncNtvdm();
