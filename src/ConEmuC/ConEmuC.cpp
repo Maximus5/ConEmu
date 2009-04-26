@@ -41,24 +41,37 @@ int main()
 		return 102;
 	}
 	
-	psNewCmd[0] = L'"';
-	lstrcpyW( psNewCmd+1, sComSpec );
-	lstrcatW( psNewCmd, L"\" /C " );
-	lstrcatW( psNewCmd, psCmdLine );
+	if (lstrcmpiW(psCmdLine, L"cmd")==0 || lstrcmpiW(psCmdLine, L"cmd ")==0 ||
+		lstrcmpiW(psCmdLine, L"cmd.exe")==0 || lstrcmpiW(psCmdLine, L"cmd.exe")==0)
+	{
+		lstrcpyW( psNewCmd, psCmdLine );
+	} else {
+		psNewCmd[0] = L'"';
+		lstrcpyW( psNewCmd+1, sComSpec );
+		lstrcatW( psNewCmd, L"\" /C " );
+		lstrcatW( psNewCmd, psCmdLine );
+	}
 	
 	PROCESS_INFORMATION pi; memset(&pi, 0, sizeof(pi));
 	STARTUPINFOW si; memset(&si, 0, sizeof(si));
 	
 	si.cb = sizeof(si);
 	
-	if (!CreateProcessW(NULL, psNewCmd, NULL,NULL, TRUE, NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi))
+	BOOL lbRc = CreateProcessW(NULL, psNewCmd, NULL,NULL, TRUE, NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi);
+	DWORD dwErr = GetLastError();
+	delete psNewCmd; psNewCmd = NULL;
+	if (!lbRc)
 	{
-		printf ("Can't create process!\n" );
-		delete psNewCmd;
+		printf ("Can't create process, ErrCode=0x%08X!\n", dwErr);
 		return 103;
 	}
-	 
-	
-	delete psNewCmd;
+
+	//TODO: Запустить нить обработки команд
+
+	// Ожидаем завершения процесса
+	WaitForSingleObject(pi.hProcess, INFINITE);
+
+	// Закрываем дескрипторы и выходим
+	CloseHandle(pi.hProcess); CloseHandle(pi.hThread);
     return 0;
 }

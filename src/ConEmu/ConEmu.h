@@ -19,7 +19,7 @@
 #define RCLICKAPPSDELTA 3
 #define DRAG_DELTA 5
 
-typedef DWORD (WINAPI* FGetModuleFileNameEx)(HANDLE hProcess,HMODULE hModule,LPWSTR lpFilename,DWORD nSize);
+//typedef DWORD (WINAPI* FGetModuleFileNameEx)(HANDLE hProcess,HMODULE hModule,LPWSTR lpFilename,DWORD nSize);
 
 
 class CConEmuChild;
@@ -48,8 +48,9 @@ enum ConEmuRect {
 class CConEmuMain
 {
 public:
-	HMODULE mh_Psapi;
-	FGetModuleFileNameEx GetModuleFileNameEx;
+	//HMODULE mh_Psapi;
+	//FGetModuleFileNameEx GetModuleFileNameEx;
+	wchar_t ms_ConEmuExe[MAX_PATH];
 public:
 	CConEmuChild m_Child;
 	CConEmuBack  m_Back;

@@ -70,8 +70,13 @@ CConEmuMain::CConEmuMain()
     mouse.lastMMW=-1;
     mouse.lastMML=-1;
 
-    mh_Psapi = NULL;
-    GetModuleFileNameEx= NULL;
+    //mh_Psapi = NULL;
+    //GetModuleFileNameEx= NULL;
+
+	if (!GetModuleFileName(NULL, ms_ConEmuExe, MAX_PATH)) {
+		DisplayLastError(L"GetModuleFileName failed");
+		TerminateProcess(GetCurrentProcess(), 100);
+	}
 
     mh_WinHook = NULL;
 
@@ -112,18 +117,20 @@ BOOL CConEmuMain::Init()
     mh_WinHook = SetWinEventHook(EVENT_CONSOLE_START_APPLICATION,EVENT_CONSOLE_END_APPLICATION,
         NULL, CConEmuMain::WinEventProc, 0,0, WINEVENT_OUTOFCONTEXT);
 
-    mh_Psapi = LoadLibrary(_T("psapi.dll"));
+    /*mh_Psapi = LoadLibrary(_T("psapi.dll"));
     if (mh_Psapi) {
         GetModuleFileNameEx = (FGetModuleFileNameEx)GetProcAddress(mh_Psapi, "GetModuleFileNameExW");
         if (GetModuleFileNameEx)
             return TRUE;
-    }
+    }*/
 
-    DWORD dwErr = GetLastError();
+    /*DWORD dwErr = GetLastError();
     TCHAR szErr[255];
     wsprintf(szErr, _T("Can't initialize psapi!\r\nLastError = 0x%08x"), dwErr);
     MBoxA(szErr);
-    return FALSE;
+    return FALSE;*/
+
+	return TRUE;
 }
 
 /*BOOL CConEmuMain::InitConMan(LPCWSTR asCommandLine)
@@ -1858,7 +1865,9 @@ bool CConEmuMain::LoadVersionInfo(wchar_t* pFullPath)
 
     DWORD size = GetFileVersionInfoSizeW(pFullPath, &size);
     if(!size) return false;
-    pBuffer = new BYTE[size];
+	MCHKHEAP
+	pBuffer = new BYTE[size];
+	MCHKHEAP
     GetFileVersionInfoW((wchar_t*)pFullPath, 0, size, pBuffer);
 
     //Find StringFileInfo

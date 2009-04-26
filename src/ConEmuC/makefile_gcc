@@ -49,7 +49,7 @@ CCWIDE = -D UNICODE -D _UNICODE
 
 OBJDIR = ../../gcc/conemuc
 REOBJDIR = \.\.\/\.\.\/gcc\/conemuc
-EXEDIR = ../../plugins/ConEmu
+EXEDIR = ../..
 COMMON = ../common
 COMINC = $(COMMON)
 EXT = exe
