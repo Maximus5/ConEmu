@@ -5,6 +5,19 @@
 //#define CONEMUEVENTOUT  L"ConEmuOutEvent%u"
 //#define CONEMUEVENTPIPE L"ConEmuPipeEvent%u"
 
+#define CESERVERPIPENAME L"\\\\%s\\pipe\\ConEmuSrv%u"
+#define CECMD_GETSHORTINFO  1
+#define CECMD_GETFULLINFO   2
+#define CECMD_SETSIZE       3
+#define CECMD_WRITEINPUT    4
+
+typedef struct tag_CESERVER_REQ {
+	DWORD   nSize;
+	DWORD   nCmd;
+	BYTE    Data[0x1000];
+} CESERVER_REQ;
+
+
 #define CONEMUMAPPING    L"ConEmuPluginData%u"
 #define CONEMUDRAGFROM   L"ConEmuDragFrom%u"
 #define CONEMUDRAGTO     L"ConEmuDragTo%u"
