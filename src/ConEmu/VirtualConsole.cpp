@@ -8,7 +8,7 @@
 CVirtualConsole* CVirtualConsole::Create()
 {
     CVirtualConsole* pCon = new CVirtualConsole();
-    #pragma message("TODO: CVirtualConsole::Create - создать процесс")
+    #pragma message (__FILE__ "(" STRING(__LINE__) "): TODO: CVirtualConsole::Create - создать процесс")
     
     if (gSet.nAttachPID) {
         // Attach - only once
@@ -596,7 +596,7 @@ bool CVirtualConsole::CheckChangedTextAttr()
 
 bool CVirtualConsole::Update(bool isForce, HDC *ahDc)
 {
-    #pragma message("TODO: CVirtualConsole::Update - может только если hConWnd==ghConWnd?")
+    #pragma message (__FILE__ "(" STRING(__LINE__) "): TODO: CVirtualConsole::Update - может только если hConWnd==ghConWnd?")
     if (!hConWnd)
         return false;
 
@@ -2338,7 +2338,7 @@ bool CVirtualConsole::CheckBufferSize()
         }
         
         if ((gConEmu.BufferHeight == 0) && (csbi.dwSize.Y>(csbi.srWindow.Bottom-csbi.srWindow.Top+1))) {
-            #pragma message("TODO: это может быть консольная программа увеличила буфер самостоятельно!")
+            #pragma message (__FILE__ "(" STRING(__LINE__) "): TODO: это может быть консольная программа увеличила буфер самостоятельно!")
             DEBUGLOGFILE("Wrong screen buffer height\n");
             // Окошко консоли почему-то схлопнулось по вертикали
             MOVEWINDOW(ghConWnd, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), 1);
@@ -2384,11 +2384,11 @@ void CVirtualConsole::SendMouseEvent(UINT messg, WPARAM wParam, int x, int y)
         Assert ( gSet.LogFont.lfWidth && gSet.LogFont.lfHeight );
         if (!gSet.LogFont.lfWidth | !gSet.LogFont.lfHeight)
             return;
-        #pragma message("TODO: X координаты нам известны, так что можно бы более корректно позицию определять...")
+        #pragma message (__FILE__ "(" STRING(__LINE__) "): TODO: X координаты нам известны, так что можно бы более корректно позицию определять...")
         
         INPUT_RECORD r; memset(&r, 0, sizeof(r));
         r.EventType = MOUSE_EVENT;
-		#pragma message("TODO: а здесь хорошо бы получать известные координаты символов, а не простым делением")
+		#pragma message (__FILE__ "(" STRING(__LINE__) "): TODO: а здесь хорошо бы получать известные координаты символов, а не простым делением")
         r.Event.MouseEvent.dwMousePosition = MakeCoord(x/gSet.LogFont.lfWidth, y/gSet.LogFont.lfHeight);
         
         // Mouse Buttons

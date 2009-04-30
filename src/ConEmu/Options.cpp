@@ -1833,7 +1833,7 @@ HFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
         if (hDC)
         {
             HFONT hOldF = (HFONT)SelectObject(hDC, hFont);
-            #pragma message("TODO: Для пропорциональных шрифтов наверное имеет смысл сохранять в реестре оптимальный lfWidth")
+            #pragma message (__FILE__ "(" STRING(__LINE__) "): TODO: Для пропорциональных шрифтов наверное имеет смысл сохранять в реестре оптимальный lfWidth")
             TEXTMETRIC tm;
             GetTextMetrics(hDC, &tm);
             if (isForceMonospace)

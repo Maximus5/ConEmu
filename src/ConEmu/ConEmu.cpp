@@ -732,7 +732,7 @@ void CConEmuMain::SetConsoleWindowSize(const COORD& size, bool updateInfo)
     // Это не совсем корректно... ntvdm.exe не выгружается после выхода из 16бит приложения
     if (isNtvdm()) {
         //if (size.X == 80 && size.Y>25 && lastSize1.X != size.X && size.Y == lastSize1.Y) {
-            #pragma message("Ntvdm почему-то не всегда устанавливает ВЫСОТУ консоли в 25/28 символов...")
+            #pragma message (__FILE__ "(" STRING(__LINE__) "): Ntvdm почему-то не всегда устанавливает ВЫСОТУ консоли в 25/28 символов...")
         //}
         return; // запрет изменения размеров консоли для 16бит приложений 
     }
@@ -1321,7 +1321,7 @@ DWORD CConEmuMain::CheckProcesses(DWORD nConmanIDX, BOOL bTitleChanged)
     BOOL  lbProcessChanged = FALSE; //, lbAllowRetry = TRUE;
     int   nTopIdx = 0;
     DWORD dwProcList[2], nProcCount;
-    #pragma message("Win2k: GetConsoleProcessList")
+    #pragma message (__FILE__ "(" STRING(__LINE__) "): Win2k: GetConsoleProcessList")
     // Для Win2k можно бежать по TH32CS_SNAPPROCESS и использовать th32ParentProcessID для определения
     // наш ли это процесс. Учесть, что часть процессов цепочки может быть убита. Пример:
     // {ConEmu} -> {FAR} -> {CMD - убит} -> {PID1} -> {PID2} ...
@@ -2494,7 +2494,7 @@ LRESULT CConEmuMain::OnCopyData(PCOPYDATASTRUCT cds)
         BOOL lbInClose = FALSE;
         DWORD /*ProcList[2],*/ ProcCount=0;
         //ProcCount = GetConsoleProcessList(ProcList,2);
-        #pragma message("TODO: хорошо бы разнести загрузку списка процессов и обработку загруженных по ConMan")
+        #pragma message (__FILE__ "(" STRING(__LINE__) "): TODO: хорошо бы разнести загрузку списка процессов и обработку загруженных по ConMan")
         ProcCount = CheckProcesses(m_ActiveConmanIDX, FALSE);
         if (ProcCount<=2)
             lbInClose = TRUE;
@@ -2619,7 +2619,7 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
         if (!DragDrop)
             DragDrop = new CDragDrop(HDCWND);
 
-    #pragma message("Warning: Если консоль не создана - handler не установится!")
+    #pragma message (__FILE__ "(" STRING(__LINE__) "): Warning: Если консоль не создана - handler не установится!")
 
         //SetConsoleCtrlHandler((PHANDLER_ROUTINE)CConEmuMain::HandlerRoutine, true);
 
@@ -3016,7 +3016,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
     //short newX = MulDiv(winX, conRect.right, klMax<uint>(1, pVCon->Width));
     //short newY = MulDiv(winY, conRect.bottom, klMax<uint>(1, pVCon->Height));
     //#endif
-	#pragma message("TODO: а здесь хорошо бы получать известные координаты символов, а не простым делением")
+	#pragma message (__FILE__ "(" STRING(__LINE__) "): TODO: а здесь хорошо бы получать известные координаты символов, а не простым делением")
     short conX = winX/gSet.LogFont.lfWidth;
     short conY = winY/gSet.LogFont.lfHeight;
 
