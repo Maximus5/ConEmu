@@ -1,13 +1,20 @@
 #include <Windows.h>
 #include <stdio.h>
 #include <Shlwapi.h>
-#include <crtdbg.h>
+#include "..\common\common.hpp"
+
+#if defined(__GNUC__)
+	//#include "assert.h"
+	#define _ASSERTE(x)
+#else
+	#include <crtdbg.h>
+#endif
 
 #define BUFSIZE 4096
  
-DWORD WINAPI InstanceThread(LPVOID); 
-DWORD WINAPI ServerThread(LPVOID lpvParam) 
-BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ* out); 
+DWORD WINAPI InstanceThread(LPVOID);
+DWORD WINAPI ServerThread(LPVOID lpvParam);
+BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out); 
 
 
 int main()
@@ -19,6 +26,11 @@ int main()
 	wchar_t* psNewCmd = NULL;
     DWORD dwThreadId; 
     HANDLE hThread; 
+	BOOL bViaCmdExe = TRUE;
+
+#ifdef _DEBUG
+	//if (!IsDebuggerPresent()) MessageBox(0,L"Loaded",L"ComEmuC",0);
+#endif
 	
 	if (!psCmdLine)
 	{
@@ -30,27 +42,41 @@ int main()
 		printf ("/C argument not found!\n" );
 		return 100;
 	}
-	psCmdLine += 2; // нас интересует все что ПОСЛЕ /C
-	
-	//TODO: Хорошо бы попробовать через переменную окружения "старый" процессор
-	//TODO: находить. Например, перед заменой можно сохранять ComSpec в ComSpecC
-	if (!SearchPathW(NULL, L"cmd.exe", NULL, MAX_PATH, sComSpec, &psFilePart))
-	{
-		printf ("Can't find cmd.exe!\n");
-		return 101;
+	if (wcsncmp(psCmdLine, L"/CMD", 4)==0) {
+		bViaCmdExe = FALSE; psCmdLine += 4;
+	} else {
+		psCmdLine += 2; // нас интересует все что ПОСЛЕ /C
+	}
+	while (*psCmdLine == L' ') psCmdLine++;
+	if (!bViaCmdExe) {
+		if (lstrcmpiW(psCmdLine, L"cmd")==0 || lstrcmpiW(psCmdLine, L"cmd ")==0 ||
+			lstrcmpiW(psCmdLine, L"cmd.exe")==0 || lstrcmpiW(psCmdLine, L"cmd.exe")==0) {
+			bViaCmdExe = FALSE;
+		}
+	}
+
+	if (!bViaCmdExe) {
+		nCmdLine += 10;
+	} else {
+		//TODO: Хорошо бы попробовать через переменную окружения "старый" процессор
+		//TODO: находить. Например, перед заменой можно сохранять ComSpec в ComSpecC
+		if (!SearchPathW(NULL, L"cmd.exe", NULL, MAX_PATH, sComSpec, &psFilePart))
+		{
+			printf ("Can't find cmd.exe!\n");
+			return 101;
+		}
+		
+		nCmdLine += lstrlenW(sComSpec)+10;
 	}
 	
-	nCmdLine += lstrlenW(sComSpec)+10;
-	
 	psNewCmd = new wchar_t[nCmdLine];
-	if (!psCmdLine)
+	if (!psNewCmd)
 	{
 		printf ("Can't allocate %i wchars!\n", nCmdLine);
 		return 102;
 	}
 	
-	if (lstrcmpiW(psCmdLine, L"cmd")==0 || lstrcmpiW(psCmdLine, L"cmd ")==0 ||
-		lstrcmpiW(psCmdLine, L"cmd.exe")==0 || lstrcmpiW(psCmdLine, L"cmd.exe")==0)
+	if (!bViaCmdExe)
 	{
 		lstrcpyW( psNewCmd, psCmdLine );
 	} else {
@@ -236,7 +262,7 @@ DWORD WINAPI InstanceThread(LPVOID lpvParam)
    return 1;
 }
 
-BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ* out)
+BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 {
 	BOOL lbRc = FALSE;
 

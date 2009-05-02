@@ -812,7 +812,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		wcscpy(gSet.psCurCmd, L"\"");
 		wcscat(gSet.psCurCmd, gConEmu.ms_ConEmuExe);
 		pszSlash = wcsrchr(gSet.psCurCmd, _T('\\'));
-		wcscpy(pszSlash+1, L"ConEmuC.exe\" /C ");
+		wcscpy(pszSlash+1, L"ConEmuC.exe\" /CMD ");
 		wcscat(gSet.psCurCmd, cmdNew);
 		MCHKHEAP
 	}
@@ -922,8 +922,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     gbMessagingStarted = TRUE;
     while (GetMessage(&lpMsg, NULL, 0, 0))
     {
-        TranslateMessage(&lpMsg);
-        DispatchMessage(&lpMsg);
+		if (!IsWindow(ghOpWnd) || !IsDialogMessage(ghOpWnd, &lpMsg))
+		{
+			TranslateMessage(&lpMsg);
+			DispatchMessage(&lpMsg);
+		}
     }
     gbMessagingStarted = FALSE;
     

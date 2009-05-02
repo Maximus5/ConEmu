@@ -129,6 +129,7 @@ public:
 	BOOL isBufferHeight();
 	LPCTSTR GetTitle();
 	BOOL GetConsoleScreenBufferInfo();
+	void SyncConsole2Window();
 
 protected:
 	TCHAR Title[MAX_TITLE_SIZE+1], TitleCmp[MAX_TITLE_SIZE+1];
@@ -184,7 +185,7 @@ protected:
 	void RegistryProps(BOOL abRollback, ConExeProps& props, LPCTSTR asExeName=NULL);
 	static DWORD WINAPI StartProcessThread(LPVOID lpParameter);
 	HANDLE mh_Heap, mh_Thread;
-	HANDLE mh_TermEvent, mh_ForceReadEvent, mh_EndUpdateEvent;
+	HANDLE mh_TermEvent, mh_ForceReadEvent, mh_EndUpdateEvent, mh_Sync2WindowEvent;
 	//HANDLE mh_ReqSetSize, mh_ReqSetSizeEnd; COORD m_ReqSetSize;
 	DWORD mn_ThreadID;
 	LPVOID Alloc(size_t nCount, size_t nSize);

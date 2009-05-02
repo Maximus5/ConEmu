@@ -51,6 +51,7 @@ CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
     mh_TermEvent = CreateEvent(NULL,FALSE,FALSE,NULL);
     mh_ForceReadEvent = CreateEvent(NULL,FALSE,FALSE,NULL);
     mh_EndUpdateEvent = CreateEvent(NULL,FALSE,FALSE,NULL);
+	mh_Sync2WindowEvent = CreateEvent(NULL,FALSE,FALSE,NULL);
     //mh_ReqSetSize = CreateEvent(NULL,FALSE,FALSE,NULL);
 	//mh_ReqSetSizeEnd = CreateEvent(NULL,FALSE,FALSE,NULL);
     //m_ReqSetSize = MakeCoord ( 0,0 );
@@ -1723,6 +1724,7 @@ bool CVirtualConsole::SetConsoleSize(COORD size)
         }
         //TODO: если правый нижний край вылезет за пределы экрана?
         MOVEWINDOW(hConWnd, rcConPos.left, rcConPos.top, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), 1);
+		SCON.Leave();
         if (lbRc && lbNeedChange) { //не было lbNeedChange
 	        // Если размер изменили сразу обновим информацию
 	        InitDC(false, true);
@@ -1790,6 +1792,34 @@ bool CVirtualConsole::SetConsoleSize(COORD size)
     }
     SetConsoleWindowInfo(hConOut(), TRUE, &rect);
     return true;
+}
+
+// Изменить размер консоли по размеру окна (главного)
+void CVirtualConsole::SyncConsole2Window()
+{
+    if (!this)
+        return;
+
+	if (GetCurrentThreadId() != mn_ThreadID) {
+		RECT rcClient; GetClientRect(ghWnd, &rcClient);
+		// Посчитать нужный размер консоли
+		RECT newCon = gConEmu.CalcRect(CER_CONSOLE, rcClient, CER_MAINCLIENT);
+
+		if (newCon.right==TextWidth && newCon.bottom==TextHeight)
+			return; // размеры не менялись
+
+		SetEvent(mh_Sync2WindowEvent);
+		return;
+	}
+
+    DEBUGLOGFILE("SyncConsoleToWindow\n");
+
+    RECT rcClient; GetClientRect(ghWnd, &rcClient);
+
+    // Посчитать нужный размер консоли
+    RECT newCon = gConEmu.CalcRect(CER_CONSOLE, rcClient, CER_MAINCLIENT);
+
+    SetConsoleSize(MakeCoord(newCon.right, newCon.bottom));
 }
 
 BOOL CVirtualConsole::AttachPID(DWORD dwPID)
@@ -2056,8 +2086,9 @@ DWORD CVirtualConsole::StartProcessThread(LPVOID lpParameter)
     //BOOL lbRc = pCon->StartProcess(); -- лучше так все-таки не делать. велика вероятность блокировки при изменении TOPMOST главного окна
     
     //TODO: а тут мы будем читать консоль...
-    HANDLE hEvents[2] = {pCon->mh_TermEvent, 
-                         pCon->mh_ForceReadEvent};
+    HANDLE hEvents[3] = {pCon->mh_TermEvent, 
+                         pCon->mh_ForceReadEvent,
+						 pCon->mh_Sync2WindowEvent};
 	DWORD  nEvents = countof(hEvents);
     DWORD  nWait = 0;
     BOOL   bLoop = TRUE, bIconic = FALSE;
@@ -2075,6 +2106,14 @@ DWORD CVirtualConsole::StartProcessThread(LPVOID lpParameter)
 		if (nWait == WAIT_OBJECT_0 /*|| !bLoop*/)
             break; // требование завершения нити
           
+        if (!gConEmu.isShowConsole && !gSet.isConVisible)
+        {
+            /*if (foreWnd == ghConWnd)
+                SetForegroundWindow(ghWnd);*/
+            if (IsWindowVisible(ghConWnd))
+                ShowWindow(ghConWnd, SW_HIDE);
+        }
+
 		// Размер консоли меняем в том треде, в котором это требуется. Иначе можем заблокироваться при Update (InitDC)
         // Требуется изменение размеров консоли
         /*if (nWait == (WAIT_OBJECT_0+2)) {
@@ -2090,6 +2129,9 @@ DWORD CVirtualConsole::StartProcessThread(LPVOID lpParameter)
         try {   
             ResetEvent(pCon->mh_EndUpdateEvent);
 
+			if (nWait == (WAIT_OBJECT_0+2)) {
+				pCon->SyncConsole2Window();
+			}
 
 			if (GetWindowText(pCon->hConWnd, pCon->TitleCmp, countof(pCon->TitleCmp)-2)
 				&& wcscmp(pCon->Title, pCon->TitleCmp))
@@ -2100,6 +2142,8 @@ DWORD CVirtualConsole::StartProcessThread(LPVOID lpParameter)
 			}
 
 			bool lbForceUpdate = pCon->CheckBufferSize();
+			if (lbForceUpdate && gConEmu.isActive(pCon)) // размер текущего консольного окна был изменен
+				PostMessage(ghWnd, WM_TIMER, 0, 0); // послать в главную нить запрос на обновление размера
 			if (!lbForceUpdate && (nWait == (WAIT_OBJECT_0+1)))
 				lbForceUpdate = true;
 
@@ -2507,6 +2551,7 @@ void CVirtualConsole::StopThread()
     SafeCloseHandle(mh_TermEvent);
     SafeCloseHandle(mh_ForceReadEvent);
     SafeCloseHandle(mh_EndUpdateEvent);
+	SafeCloseHandle(mh_Sync2WindowEvent);
     
     SafeCloseHandle(mh_Thread);
 

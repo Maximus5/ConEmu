@@ -166,7 +166,7 @@ public:
 	static void AddMargins(RECT& rc, RECT& rcAddShift, BOOL abExpand=FALSE);
 	static RECT CalcMargins(enum ConEmuMargins mg);
 	static RECT CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFrom, RECT* prDC=NULL);
-	bool CheckBufferSize();
+	//bool CheckBufferSize();
 	bool ConmanAction(int nCmd);
 	void ConsoleCreated(HWND hConWnd);
 	CVirtualConsole* CreateCon();

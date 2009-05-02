@@ -1460,7 +1460,16 @@ bool CSettings::LoadImageFrom(TCHAR *inPath, bool abShowErrors)
 
 void CSettings::Dialog()
 {
-    DialogBox((HINSTANCE)GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_DIALOGM), 0, wndOpProc);
+	//2009-05-03. DialogBox создает МОДАЛЬНЫЙ Диалог
+    //DialogBox((HINSTANCE)GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_DIALOGM), 0, wndOpProc);
+	SetCursor(LoadCursor(NULL,IDC_WAIT));
+    HWND hOpt = CreateDialog(g_hInstance, MAKEINTRESOURCE(IDD_DIALOGM), NULL, wndOpProc);
+	if (!hOpt) {
+		DisplayLastError(L"Can't create settings dialog!");
+	} else {
+		ShowWindow(hOpt, SW_SHOWNORMAL);
+		SetFocus ( hOpt );
+	}
 }
 
 BOOL CALLBACK CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
@@ -1538,9 +1547,12 @@ BOOL CALLBACK CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM
                 gSet.OnTab(phdr);
         } break;
     case WM_CLOSE:
+        if (gSet.hwndTip) {DestroyWindow(gSet.hwndTip); gSet.hwndTip = NULL;}
+		DestroyWindow(hWnd2);
+		break;
     case WM_DESTROY:
         if (gSet.hwndTip) {DestroyWindow(gSet.hwndTip); gSet.hwndTip = NULL;}
-        EndDialog(hWnd2, TRUE);
+        //EndDialog(hWnd2, TRUE);
         ghOpWnd = NULL;
         break;
     default:

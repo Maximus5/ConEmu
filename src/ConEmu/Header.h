@@ -100,6 +100,10 @@
 #define DEBUGLOGFILE(m)
 #endif
 
+// with line number
+#define STRING2(x) #x
+#define STRING(x) STRING2(x)
+#define FILE_LINE __FILE__ "(" STRING(__LINE__) "): TODO: "
 
 #if !defined(__GNUC__)
 #pragma warning (disable : 4005)
@@ -187,6 +191,9 @@ public:
 			mp_TID = NULL;
 			//OutputDebugString(_T("LeaveCriticalSection\n"));
 			LeaveCriticalSection(mp_cs);
+			#ifdef _DEBUG
+			_ASSERTE(mp_cs->LockCount==-1);
+			#endif
 			mp_cs = NULL;
 		}
 	}
@@ -196,7 +203,7 @@ public:
 
 		mp_TID = pTID;
 		DWORD dwTID = GetCurrentThreadId();
-		if (dwTID = *pTID)
+		if (dwTID == *pTID)
 			return; // в этой нити уже заблокировано
 
 		mp_cs = pcs;
