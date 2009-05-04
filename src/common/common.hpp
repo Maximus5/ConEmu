@@ -11,10 +11,13 @@
 #define CECMD_SETSIZE       3
 #define CECMD_WRITEINPUT    4
 
+#define CESERVER_REQ_VER    1
+
 typedef struct tag_CESERVER_REQ {
 	DWORD   nSize;
 	DWORD   nCmd;
-	BYTE    Data[0x1000];
+	DWORD   nVersion;
+	BYTE    Data[0x1000]; // вообще-то размер динамический
 } CESERVER_REQ;
 
 

@@ -16,6 +16,7 @@ DWORD WINAPI InstanceThread(LPVOID);
 DWORD WINAPI ServerThread(LPVOID lpvParam);
 BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out); 
 
+wchar_t szPipename[MAX_PATH];
 
 int main()
 {
@@ -24,7 +25,7 @@ int main()
 	wchar_t* psCmdLine = GetCommandLineW();
 	size_t nCmdLine = lstrlenW(psCmdLine);
 	wchar_t* psNewCmd = NULL;
-    DWORD dwThreadId; 
+    DWORD dwThreadId, dwPID;
     HANDLE hThread; 
 	BOOL bViaCmdExe = TRUE;
 
@@ -86,6 +87,10 @@ int main()
 		lstrcatW( psNewCmd, psCmdLine );
 	}
 
+	
+	dwPID = GetCurrentProcessId();
+	wsprintfW(szPipename, CESERVERPIPENAME, L".", dwPID);
+
 	// Запустить нить обработки команд	
 	hThread = CreateThread( 
 		NULL,              // no security attribute 
@@ -137,12 +142,9 @@ int main()
 DWORD WINAPI ServerThread(LPVOID lpvParam) 
 { 
    BOOL fConnected; 
-   DWORD dwThreadId, dwPID; 
+   DWORD dwThreadId;
    HANDLE hPipe, hThread; 
-   wchar_t szPipename[MAX_PATH];
    
-   dwPID = GetCurrentProcessId();
-   wsprintfW(szPipename, CESERVERPIPENAME, L".", dwPID);
  
 // The main loop creates an instance of the named pipe and 
 // then waits for a client to connect to it. When the client 
@@ -265,14 +267,94 @@ DWORD WINAPI InstanceThread(LPVOID lpvParam)
 BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 {
 	BOOL lbRc = FALSE;
+	HANDLE hConIn = NULL;
+	HANDLE hConOut = NULL;
 
 	switch (in.nCmd) {
-		case CECMD_GETSHORTINFO:
-		{
-			
-		} break;
 		case CECMD_GETFULLINFO:
 		{
+			DWORD dwAllSize = 0;
+			
+			hConOut = CreateFile(L"CONOUT$", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_READ,
+			            0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+			hConIn  = CreateFile(L"CONIN$", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_READ,
+			            0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+
+			HWND hWnd = GetConsoleWindow();
+			dwAllSize += sizeof(hWnd);
+			
+			DWORD dwSelRc = 0; CONSOLE_SELECTION_INFO sel = {0}; // GetConsoleSelectionInfo
+			if (!GetConsoleSelectionInfo(&sel)) { dwSelRc = GetLastError(); if (!dwSelRc) dwSelRc = -1; }
+			dwAllSize += sizeof(dwSelRc)+sizeof(sel);
+			
+			DWORD dwCiRc = 0; CONSOLE_CURSOR_INFO ci = {0}; // GetConsoleCursorInfo
+			if (!GetConsoleCursorInfo(hConOut, &ci)) { dwCiRc = GetLastError(); if (!dwCiRc) dwCiRc = -1; }
+			dwAllSize += sizeof(dwCiRc)+sizeof(ci);
+			
+			DWORD dwConsoleCP = GetConsoleCP();
+			DWORD dwConsoleOutputCP = GetConsoleOutputCP();
+			DWORD dwConsoleMode = GetConsoleMode(hConIn);
+			dwAllSize += 3*sizeof(DWORD);
+			
+			DWORD dwSbiRc = 0; CONSOLE_SCREEN_BUFFER_INFO sbi = {{0,0}}; // GetConsoleScreenBufferInfo
+			if (!GetConsoleScreenBufferInfo(hConOut, &sbi)) { dwSbiRc = GetLastError(); if (!dwSbiRc) dwSbiRc = -1; }
+			dwAllSize += sizeof(dwSbiRc)+sizeof(sbi);
+			
+			wchar_t* psChars = NULL;
+			WORD* pnAttrs = NULL;
+			DWORD dwOutputRc = 0;
+			dwAllSize += sizeof(DWORD);
+			
+			SHORT TextWidth=0, TextHeight=0;
+			DWORD TextLen=0;
+			COORD coord;
+			
+			if (dwSbiRc == 0) {
+				//TODO: а точно по srWindow ширину нужно смотреть?
+				TextWidth = max(csbi.dwSize.X, (csbi.srWindow.Right - csbi.srWindow.Left + 1));
+				TextHeight = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
+				TextLen = TextWidth * TextHeight;
+				//TODO: может все-таки из {0,csbi.srWindow.Top} начинать нужно?
+				coord.X = csbi.srWindow.Left; coord.Y = csbi.srWindow.Top;
+				
+				psChars = (wchar_t*)calloc(TextWidth*TextHeight,sizeof(wchar_t));
+				pnAttrs = (WORD*)calloc(TextWidth*TextHeight,sizeof(WORD));
+				if (psChars && pnAttrs) {
+					dwAllSize += TextWidth*TextHeight*4;
+					
+				    // Get attributes (first) and text (second)
+				    // [Roman Kuzmin]
+				    // In FAR Manager source code this is mentioned as "fucked method". Yes, it is.
+				    // Functions ReadConsoleOutput* fail if requested data size exceeds their buffer;
+				    // MSDN says 64K is max but it does not say how much actually we can request now.
+				    // Experiments show that this limit is floating and it can be much less than 64K.
+				    // The solution below is not optimal when a user sets small font and large window,
+				    // but it is safe and practically optimal, because most of users set larger fonts
+				    // for large window and ReadConsoleOutput works OK. More optimal solution for all
+				    // cases is not that difficult to develop but it will be increased complexity and
+				    // overhead often for nothing, not sure that we really should use it.
+				    DWORD nbActuallyRead;
+				    if (!ReadConsoleOutputAttribute(hConOut, pnAttrs, TextLen, coord, &nbActuallyRead) ||
+				        !ReadConsoleOutputCharacter(hConOut, psChars, TextLen, coord, &nbActuallyRead))
+				    {
+					    OutputDebugString(L"!!! Read from console Line-By-Line\n");
+					    
+				        WORD* ConAttrNow = pnAttrs;
+				        wchar_t* ConCharNow = psChars;
+				        for(int y = 0; y < (int)TextHeight; ++y)
+				        {
+				            ReadConsoleOutputAttribute(hConOut, ConAttrNow, TextWidth, coord, &nbActuallyRead);
+				            ReadConsoleOutputCharacter(hConOut, ConCharNow, TextWidth, coord, &nbActuallyRead);
+				            ConAttrNow += TextWidth;
+				            ConCharNow += TextWidth;
+				            ++coord.Y;
+				        }
+				    }
+				} else {
+					dwOutputRc = -1;
+				}
+			}
+			
 		} break;
 		case CECMD_SETSIZE:
 		{
@@ -280,6 +362,13 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 		case CECMD_WRITEINPUT:
 		{
 		} break;
+	}
+	
+	if (hConIn) {
+		CloseHandle(hConIn); hConIn = NULL;
+	}
+	if (hConOut) {
+		CloseHandle(hConOut); hConOut = NULL;
 	}
 	
 	return lbRc;
