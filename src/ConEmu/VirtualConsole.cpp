@@ -47,7 +47,7 @@ CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
 	memset(Title,0,sizeof(Title)); memset(TitleCmp,0,sizeof(TitleCmp));
     SIZE_T nMinHeapSize = (1000 + (200 * 90 * 2) * 6 + MAX_PATH*2)*2 + 210*sizeof(*TextParts);
     mh_Heap = HeapCreate(HEAP_GENERATE_EXCEPTIONS, nMinHeapSize, 0);
-    mh_Thread = NULL; mn_ThreadID = 0;
+    mh_Thread = NULL; mn_ThreadID = 0; mn_ConEmuC_PID = 0; mh_ConEmuC = NULL; ms_ConEmuC_Pipe[0] = 0;
     mh_TermEvent = CreateEvent(NULL,FALSE,FALSE,NULL);
     mh_ForceReadEvent = CreateEvent(NULL,FALSE,FALSE,NULL);
     mh_EndUpdateEvent = CreateEvent(NULL,FALSE,FALSE,NULL);
@@ -147,6 +147,8 @@ CVirtualConsole::~CVirtualConsole()
     //mh_ConOut = NULL; mb_ConHandleCreated = FALSE;
 	SafeCloseHandle(mh_StdIn); 
 	SafeCloseHandle(mh_StdOut);
+
+	SafeCloseHandle(mh_ConEmuC); mn_ConEmuC_PID = 0;
 
 	//SafeCloseHandle(mh_ReqSetSize);
 	//SafeCloseHandle(mh_ReqSetSizeEnd);
@@ -2262,11 +2264,23 @@ BOOL CVirtualConsole::StartProcess()
             }*/
 
             LPTSTR lpszCmd = (LPTSTR)gSet.GetCmd();
+
+			int nLen = _tcslen(lpszCmd);
+			TCHAR *pszSlash=NULL;
+			nLen += _tcslen(gConEmu.ms_ConEmuExe) + 20;
+			wchar_t* psCurCmd = (wchar_t*)malloc(nLen*sizeof(wchar_t));
+			_ASSERTE(psCurCmd);
+			wcscpy(psCurCmd, L"\"");
+			wcscat(psCurCmd, gConEmu.ms_ConEmuExe);
+			pszSlash = wcsrchr(gSet.psCurCmd, _T('\\'));
+			wcscpy(pszSlash+1, L"ConEmuC.exe\" /CMD ");
+			wcscat(psCurCmd, lpszCmd);
+
             #ifdef MSGLOGGER
-            OutputDebugString(lpszCmd);OutputDebugString(_T("\n"));
+            OutputDebugString(psCurCmd);OutputDebugString(_T("\n"));
             #endif
             try {
-                lbRc = CreateProcess(NULL, lpszCmd, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
+                lbRc = CreateProcess(NULL, psCurCmd, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
                 OutputDebugString(_T("CreateProcess finished\n"));
             } catch(...) {
                 lbRc = FALSE;
@@ -2287,7 +2301,7 @@ BOOL CVirtualConsole::StartProcess()
                 //Box("Cannot execute the command.");
                 DWORD dwLastError = GetLastError();
                 OutputDebugString(_T("CreateProcess failed\n"));
-                int nLen = _tcslen(gSet.GetCmd());
+                int nLen = _tcslen(psCurCmd);
                 TCHAR* pszErr=(TCHAR*)Alloc(nLen+100,sizeof(TCHAR));
                 
                 if (0==FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
@@ -2304,7 +2318,7 @@ BOOL CVirtualConsole::StartProcess()
                 _tcscpy(psz, _T("Cannot execute the command.\r\n"));
                 _tcscat(psz, pszErr);
                 if (psz[_tcslen(psz)-1]!=_T('\n')) _tcscat(psz, _T("\r\n"));
-                _tcscat(psz, gSet.GetCmd());
+                _tcscat(psz, gSet.psCurCmd);
                 if (!gSet.psCurCmd && StrStrI(gSet.GetCmd(), gSet.BufferHeight == 0 ? _T("far.exe") : _T("cmd.exe"))==NULL) {
                     _tcscat(psz, _T("\r\n\r\n"));
                     _tcscat(psz, gSet.BufferHeight == 0 ? _T("Do You want to simply start far?") : _T("Do You want to simply start cmd?"));
@@ -2320,12 +2334,18 @@ BOOL CVirtualConsole::StartProcess()
                 // ¬ыполнить стандартную команду...
                 gSet.psCurCmd = _tcsdup(gSet.BufferHeight == 0 ? _T("far") : _T("cmd"));
                 nStep ++;
+				if (psCurCmd) free(psCurCmd); psCurCmd = NULL;
             }
         }
 
+		if (psCurCmd) free(psCurCmd); psCurCmd = NULL;
+
         //TODO: а делать ли это?
         CloseHandle(pi.hThread); pi.hThread = NULL;
-        CloseHandle(pi.hProcess); pi.hProcess = NULL;
+        //CloseHandle(pi.hProcess); pi.hProcess = NULL;
+		mn_ConEmuC_PID = pi.dwProcessId;
+		mh_ConEmuC = pi.hProcess; pi.hProcess = NULL;
+		wsprintfW(ms_ConEmuC_Pipe, CESERVERPIPENAME, L".", mn_ConEmuC_PID);
     }
 
     return lbRc;
@@ -2931,23 +2951,19 @@ LPCTSTR CVirtualConsole::GetTitle()
  
 BOOL CVirtualConsole::RetrieveConsoleInfo()
 { 
+   BOOL lbRc = FALSE;
    HANDLE hPipe = NULL; 
-   LPTSTR lpszWrite = TEXT("Default message from client"); 
-   TCHAR chReadBuf[BUFSIZE]; 
-   BOOL fSuccess; 
+   CESERVER_REQ in={0}, *pOut=NULL;
+   BYTE cbReadBuf[BUFSIZE];
+   BOOL fSuccess;
    DWORD cbRead, dwMode; 
-   LPTSTR lpszPipename = TEXT("\\\\.\\pipe\\mynamedpipe"); 
 
-   if( argc > 1)
-   {
-      lpszWrite = argv[1]; 
-   }
  
    // Try to open a named pipe; wait for it, if necessary. 
-    while (1) 
+   while (1) 
    { 
       hPipe = CreateFile( 
-         lpszPipename,   // pipe name 
+         ms_ConEmuC_Pipe,// pipe name 
          GENERIC_READ |  // read and write access 
          GENERIC_WRITE, 
          0,              // no sharing 
@@ -2963,14 +2979,14 @@ BOOL CVirtualConsole::RetrieveConsoleInfo()
       // Exit if an error other than ERROR_PIPE_BUSY occurs. 
       if (GetLastError() != ERROR_PIPE_BUSY) 
       {
-         printf("Could not open pipe\n"); 
+         DisplayLastError(L"Could not open pipe"); 
          return 0;
       }
  
-      // All pipe instances are busy, so wait for 20 seconds. 
-      if (! WaitNamedPipe(lpszPipename, 20000) ) 
+      // All pipe instances are busy, so wait for 1 second.
+      if (! WaitNamedPipe(lpszPipename, 1000) ) 
       {
-         printf("Could not open pipe\n"); 
+         DisplayLastError(L"Could not open pipe"); 
          return 0;
       }
   } 
@@ -2984,29 +3000,44 @@ BOOL CVirtualConsole::RetrieveConsoleInfo()
       NULL);    // don't set maximum time 
    if (!fSuccess) 
    {
-      printf("SetNamedPipeHandleState failed\n"); 
+      DisplayLastError(L"SetNamedPipeHandleState failed");
       return 0;
    }
+
+   in.nSize = 8;
+   in.nCmd  = CECMD_GETFULLINFO;
  
    // Send a message to the pipe server and read the response. 
    fSuccess = TransactNamedPipe( 
       hPipe,                  // pipe handle 
-      lpszWrite,              // message to server
-      (lstrlen(lpszWrite)+1)*sizeof(TCHAR), // message length 
-      chReadBuf,              // buffer to receive reply
-      BUFSIZE*sizeof(TCHAR),  // size of read buffer
+      &in,                    // message to server
+	  in.nSize,               // message length 
+      cbReadBuf,              // buffer to receive reply
+      BUFSIZE*sizeof(BYTE),   // size of read buffer
       &cbRead,                // bytes read
       NULL);                  // not overlapped 
 
    if (!fSuccess && (GetLastError() != ERROR_MORE_DATA)) 
    {
-      printf("TransactNamedPipe failed\n"); 
+      DisplayLastError(L"TransactNamedPipe failed"); 
       return 0;
    }
+
+   int nAllSize = *((DWORD*)cbReadBuf);
+   if (nAllSize==0) {
+	   DisplayLastError(L"Empty data recieved from server", 0);
+	   return 0;
+   }
+   pOut = (CESERVER_REQ*)calloc(nAllSize,1);
+   _ASSERTE(pOut!=NULL);
+   memmove(pOut, cbReadBuf, cbRead);
+
+   LPBYTE ptrData = ((LPBYTE)pOut)+cbRead;
+   nAllSize -= cbRead;
  
-   while(1)
+   while(nAllSize>0)
    { 
-      _tprintf(TEXT("%s\n"), chReadBuf);
+      //_tprintf(TEXT("%s\n"), chReadBuf);
 
       // Break if TransactNamedPipe or ReadFile is successful
       if(fSuccess)
@@ -3015,20 +3046,23 @@ BOOL CVirtualConsole::RetrieveConsoleInfo()
       // Read from the pipe if there is more data in the message.
       fSuccess = ReadFile( 
          hPipe,      // pipe handle 
-         chReadBuf,  // buffer to receive reply 
-         BUFSIZE*sizeof(TCHAR),  // size of buffer 
-         &cbRead,  // number of bytes read 
-         NULL);    // not overlapped 
+         ptrData,    // buffer to receive reply 
+         nAllSize,   // size of buffer 
+         &cbRead,    // number of bytes read 
+         NULL);      // not overlapped 
 
       // Exit if an error other than ERROR_MORE_DATA occurs.
       if( !fSuccess && (GetLastError() != ERROR_MORE_DATA)) 
          break;
-      else _tprintf( TEXT("%s\n"), chReadBuf); 
+	  ptrData += cbRead;
+	  nAllSize -= cbRead;
    }
 
-   _getch(); 
+   _ASSERT(nAllSize==0);
 
-   CloseHandle(hPipe); 
+   CloseHandle(hPipe);
+
+   // “еперь нужно раскидать данные про структурам
  
    return 0; 
 }

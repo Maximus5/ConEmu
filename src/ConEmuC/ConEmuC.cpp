@@ -213,7 +213,7 @@ DWORD WINAPI ServerThread(LPVOID lpvParam)
  
 DWORD WINAPI InstanceThread(LPVOID lpvParam) 
 { 
-   CESERVER_REQ in, *pOut=NULL;
+   CESERVER_REQ in={0}, *pOut=NULL;
    DWORD cbBytesRead, cbWritten; 
    BOOL fSuccess; 
    HANDLE hPipe; 
@@ -233,8 +233,8 @@ DWORD WINAPI InstanceThread(LPVOID lpvParam)
          &cbBytesRead, // number of bytes read 
          NULL);        // not overlapped I/O 
 
-      if (!fSuccess || cbBytesRead == 0) 
-         break; 
+      if (!fSuccess || cbBytesRead < 8 || in.nSize < 8)
+         break;
          
       if (!GetAnswerToRequest(in, &pOut) || pOut==NULL)
 	     break;

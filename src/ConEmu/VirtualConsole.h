@@ -132,6 +132,7 @@ public:
 	void SyncConsole2Window();
 
 protected:
+	DWORD mn_ConEmuC_PID; HANDLE mh_ConEmuC; TCHAR ms_ConEmuC_Pipe[MAX_PATH];
 	TCHAR Title[MAX_TITLE_SIZE+1], TitleCmp[MAX_TITLE_SIZE+1];
 	//HANDLE  mh_ConOut; BOOL mb_ConHandleCreated;
 	HANDLE mh_StdIn, mh_StdOut;

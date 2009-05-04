@@ -804,16 +804,16 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     // Установка параметров из командной строки
 	if (cmdNew) {
 		MCHKHEAP
-		int nLen = _tcslen(cmdNew);
-		TCHAR *pszSlash=NULL;
-		nLen += _tcslen(gConEmu.ms_ConEmuExe) + 20;
+		int nLen = _tcslen(cmdNew)+1;
+		//TCHAR *pszSlash=NULL;
+		//nLen += _tcslen(gConEmu.ms_ConEmuExe) + 20;
 		gSet.psCurCmd = (TCHAR*)malloc(nLen*sizeof(TCHAR));
 		_ASSERTE(gSet.psCurCmd);
-		wcscpy(gSet.psCurCmd, L"\"");
-		wcscat(gSet.psCurCmd, gConEmu.ms_ConEmuExe);
-		pszSlash = wcsrchr(gSet.psCurCmd, _T('\\'));
-		wcscpy(pszSlash+1, L"ConEmuC.exe\" /CMD ");
-		wcscat(gSet.psCurCmd, cmdNew);
+		//wcscpy(gSet.psCurCmd, L"\"");
+		//wcscat(gSet.psCurCmd, gConEmu.ms_ConEmuExe);
+		//pszSlash = wcsrchr(gSet.psCurCmd, _T('\\'));
+		//wcscpy(pszSlash+1, L"ConEmuC.exe\" /CMD ");
+		wcscpy(gSet.psCurCmd, cmdNew);
 		MCHKHEAP
 	}
 	//#pragma message("Win2k: CLEARTYPE_NATURAL_QUALITY")
