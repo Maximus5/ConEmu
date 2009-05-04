@@ -199,4 +199,5 @@ protected:
 	void GetConsoleSizeInfo(CONSOLE_INFO *pci);
 	BOOL SetConsoleInfo(CONSOLE_INFO *pci);
 	void SetConsoleFontSizeTo(int inSizeX, int inSizeY);
+	BOOL RetrieveConsoleInfo();
 };

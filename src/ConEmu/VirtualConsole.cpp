@@ -2256,8 +2256,10 @@ BOOL CVirtualConsole::StartProcess()
         ZeroMemory( &pi, sizeof(pi) );
 
         int nStep = 1;
+		wchar_t* psCurCmd = NULL;
         while (nStep <= 2)
         {
+			MCHKHEAP
             /*if (!*gSet.GetCmd()) {
                 gSet.psCurCmd = _tcsdup(gSet.BufferHeight == 0 ? _T("far") : _T("cmd"));
                 nStep ++;
@@ -2268,13 +2270,15 @@ BOOL CVirtualConsole::StartProcess()
 			int nLen = _tcslen(lpszCmd);
 			TCHAR *pszSlash=NULL;
 			nLen += _tcslen(gConEmu.ms_ConEmuExe) + 20;
-			wchar_t* psCurCmd = (wchar_t*)malloc(nLen*sizeof(wchar_t));
+			psCurCmd = (wchar_t*)malloc(nLen*sizeof(wchar_t));
 			_ASSERTE(psCurCmd);
 			wcscpy(psCurCmd, L"\"");
 			wcscat(psCurCmd, gConEmu.ms_ConEmuExe);
-			pszSlash = wcsrchr(gSet.psCurCmd, _T('\\'));
+			pszSlash = wcsrchr(psCurCmd, _T('\\'));
+			MCHKHEAP
 			wcscpy(pszSlash+1, L"ConEmuC.exe\" /CMD ");
 			wcscat(psCurCmd, lpszCmd);
+			MCHKHEAP
 
             #ifdef MSGLOGGER
             OutputDebugString(psCurCmd);OutputDebugString(_T("\n"));
@@ -2324,6 +2328,7 @@ BOOL CVirtualConsole::StartProcess()
                     _tcscat(psz, gSet.BufferHeight == 0 ? _T("Do You want to simply start far?") : _T("Do You want to simply start cmd?"));
                     nButtons |= MB_YESNO;
                 }
+				MCHKHEAP
                 //Box(psz);
                 int nBrc = MessageBox(NULL, psz, _T("ConEmu"), nButtons);
                 Free(psz); Free(pszErr);
@@ -2334,11 +2339,14 @@ BOOL CVirtualConsole::StartProcess()
                 // ¬ыполнить стандартную команду...
                 gSet.psCurCmd = _tcsdup(gSet.BufferHeight == 0 ? _T("far") : _T("cmd"));
                 nStep ++;
+				MCHKHEAP
 				if (psCurCmd) free(psCurCmd); psCurCmd = NULL;
             }
         }
 
+		MCHKHEAP
 		if (psCurCmd) free(psCurCmd); psCurCmd = NULL;
+		MCHKHEAP
 
         //TODO: а делать ли это?
         CloseHandle(pi.hThread); pi.hThread = NULL;
@@ -2346,6 +2354,7 @@ BOOL CVirtualConsole::StartProcess()
 		mn_ConEmuC_PID = pi.dwProcessId;
 		mh_ConEmuC = pi.hProcess; pi.hProcess = NULL;
 		wsprintfW(ms_ConEmuC_Pipe, CESERVERPIPENAME, L".", mn_ConEmuC_PID);
+		MCHKHEAP
     }
 
     return lbRc;
@@ -2984,7 +2993,7 @@ BOOL CVirtualConsole::RetrieveConsoleInfo()
       }
  
       // All pipe instances are busy, so wait for 1 second.
-      if (! WaitNamedPipe(lpszPipename, 1000) ) 
+      if (! WaitNamedPipe(ms_ConEmuC_Pipe, 1000) ) 
       {
          DisplayLastError(L"Could not open pipe"); 
          return 0;
