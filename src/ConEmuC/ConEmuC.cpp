@@ -14,9 +14,11 @@
  
 DWORD WINAPI InstanceThread(LPVOID);
 DWORD WINAPI ServerThread(LPVOID lpvParam);
+DWORD WINAPI InputThread(LPVOID lpvParam);
 BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out); 
 
-wchar_t szPipename[MAX_PATH];
+wchar_t szPipename[MAX_PATH], szInputname[MAX_PATH];
+HANDLE  hConIn = NULL;
 
 int main()
 {
@@ -90,7 +92,11 @@ int main()
 	
 	dwPID = GetCurrentProcessId();
 	wsprintfW(szPipename, CESERVERPIPENAME, L".", dwPID);
+	wsprintfW(szInputname, CESERVERINPUTNAME, L".", dwPID);
 
+	hConIn  = CreateFile(L"CONIN$", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_READ,
+	            0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+	
 	// «апустить нить обработки команд	
 	hThread = CreateThread( 
 		NULL,              // no security attribute 
@@ -133,6 +139,10 @@ int main()
 	CloseHandle(pi.hProcess); CloseHandle(pi.hThread);
 	TerminateThread ( hThread, 100 ); //TODO: —делать корректное завершение
 	CloseHandle(hThread);
+	//
+	if (hConIn) {
+		CloseHandle(hConIn); hConIn = NULL;
+	}
     return 0;
 }
 
@@ -210,6 +220,83 @@ DWORD WINAPI ServerThread(LPVOID lpvParam)
    } 
    return 1; 
 } 
+
+DWORD WINAPI InputThread(LPVOID lpvParam) 
+{ 
+   BOOL fConnected, fSuccess; 
+   DWORD dwThreadId;
+   HANDLE hPipe; 
+   
+ 
+// The main loop creates an instance of the named pipe and 
+// then waits for a client to connect to it. When the client 
+// connects, a thread is created to handle communications 
+// with that client, and the loop is repeated. 
+ 
+   for (;;) 
+   { 
+      hPipe = CreateNamedPipe( 
+          szInputname,              // pipe name 
+          PIPE_ACCESS_INBOUND,      // goes from client to server only
+          PIPE_TYPE_MESSAGE |       // message type pipe 
+          PIPE_READMODE_MESSAGE |   // message-read mode 
+          PIPE_WAIT,                // blocking mode 
+          PIPE_UNLIMITED_INSTANCES, // max. instances  
+          sizeof(INPUT_RECORD),     // output buffer size 
+          sizeof(INPUT_RECORD),     // input buffer size 
+          0,                        // client time-out
+          NULL);                    // default security attribute 
+
+      _ASSERTE(hPipe != INVALID_HANDLE_VALUE);
+      
+      if (hPipe == INVALID_HANDLE_VALUE) 
+      {
+	      DWORD dwErr = GetLastError();
+          printf("CreatePipe failed, ErrCode=0x%08X\n"); 
+          Sleep(50);
+          //return 99;
+          continue;
+      }
+ 
+      // Wait for the client to connect; if it succeeds, 
+      // the function returns a nonzero value. If the function
+      // returns zero, GetLastError returns ERROR_PIPE_CONNECTED. 
+ 
+      fConnected = ConnectNamedPipe(hPipe, NULL) ? 
+         TRUE : (GetLastError() == ERROR_PIPE_CONNECTED); 
+ 
+      if (fConnected) 
+      { 
+	      //TODO:
+	      DWORD cbBytesRead, cbWritten;
+	      INPUT_RECORD iRec; memset(&iRec,0,sizeof(iRec));
+	      while (fSuccess = ReadFile( 
+	         hPipe,        // handle to pipe 
+	         &iRec,        // buffer to receive data 
+	         sizeof(iRec), // size of buffer 
+	         &cbBytesRead, // number of bytes read 
+	         NULL))        // not overlapped I/O 
+	      {
+		      // предусмотреть возможность завершени€ нити
+		      if (iRec.EventType == 0xFFFF) {
+			      CloseHandle(hPipe);
+			      break;
+		      }
+		      if (iRec.EventType) {
+		      
+			      fSuccess = WriteConsoleInput(hConIn, &iRec, 1, &cbWritten);
+			      _ASSERTE(fSuccess && cbWritten==1);
+		      }
+		      // next
+		      memset(&iRec,0,sizeof(iRec));
+	      }
+      } 
+      else 
+        // The client could not connect, so close the pipe. 
+         CloseHandle(hPipe);
+   } 
+   return 1; 
+} 
  
 DWORD WINAPI InstanceThread(LPVOID lpvParam) 
 { 
@@ -267,7 +354,6 @@ DWORD WINAPI InstanceThread(LPVOID lpvParam)
 BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 {
 	BOOL lbRc = FALSE;
-	HANDLE hConIn = NULL;
 	HANDLE hConOut = NULL;
 
 	switch (in.nCmd) {
@@ -276,8 +362,6 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 			DWORD dwAllSize = 0;
 			
 			hConOut = CreateFile(L"CONOUT$", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_READ,
-			            0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
-			hConIn  = CreateFile(L"CONIN$", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_READ,
 			            0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
 
 			HWND hWnd = GetConsoleWindow();
@@ -364,9 +448,6 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 		} break;
 	}
 	
-	if (hConIn) {
-		CloseHandle(hConIn); hConIn = NULL;
-	}
 	if (hConOut) {
 		CloseHandle(hConOut); hConOut = NULL;
 	}

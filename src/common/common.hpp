@@ -5,7 +5,8 @@
 //#define CONEMUEVENTOUT  L"ConEmuOutEvent%u"
 //#define CONEMUEVENTPIPE L"ConEmuPipeEvent%u"
 
-#define CESERVERPIPENAME L"\\\\%s\\pipe\\ConEmuSrv%u"
+#define CESERVERPIPENAME    L"\\\\%s\\pipe\\ConEmuSrv%u"
+#define CESERVERINPUTNAME   L"\\\\%s\\pipe\\ConEmuSrvInput%u"
 #define CECMD_GETSHORTINFO  1
 #define CECMD_GETFULLINFO   2
 #define CECMD_SETSIZE       3
