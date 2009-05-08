@@ -224,7 +224,7 @@ DWORD WINAPI ServerThread(LPVOID lpvParam)
 DWORD WINAPI InputThread(LPVOID lpvParam) 
 { 
    BOOL fConnected, fSuccess; 
-   DWORD dwThreadId;
+   //DWORD dwThreadId;
    HANDLE hPipe; 
    
  
@@ -377,7 +377,7 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 			
 			DWORD dwConsoleCP = GetConsoleCP();
 			DWORD dwConsoleOutputCP = GetConsoleOutputCP();
-			DWORD dwConsoleMode = GetConsoleMode(hConIn);
+			DWORD dwConsoleMode=0; GetConsoleMode(hConIn, &dwConsoleMode);
 			dwAllSize += 3*sizeof(DWORD);
 			
 			DWORD dwSbiRc = 0; CONSOLE_SCREEN_BUFFER_INFO sbi = {{0,0}}; // GetConsoleScreenBufferInfo
@@ -395,11 +395,11 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 			
 			if (dwSbiRc == 0) {
 				//TODO: а точно по srWindow ширину нужно смотреть?
-				TextWidth = max(csbi.dwSize.X, (csbi.srWindow.Right - csbi.srWindow.Left + 1));
-				TextHeight = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
+				TextWidth = max(sbi.dwSize.X, (sbi.srWindow.Right - sbi.srWindow.Left + 1));
+				TextHeight = sbi.srWindow.Bottom - sbi.srWindow.Top + 1;
 				TextLen = TextWidth * TextHeight;
-				//TODO: может все-таки из {0,csbi.srWindow.Top} начинать нужно?
-				coord.X = csbi.srWindow.Left; coord.Y = csbi.srWindow.Top;
+				//TODO: может все-таки из {0,sbi.srWindow.Top} начинать нужно?
+				coord.X = sbi.srWindow.Left; coord.Y = sbi.srWindow.Top;
 				
 				psChars = (wchar_t*)calloc(TextWidth*TextHeight,sizeof(wchar_t));
 				pnAttrs = (WORD*)calloc(TextWidth*TextHeight,sizeof(WORD));

@@ -2320,9 +2320,9 @@ BOOL CVirtualConsole::StartProcess()
                 int nButtons = MB_OK|MB_ICONEXCLAMATION|MB_SETFOREGROUND;
                 
                 _tcscpy(psz, _T("Cannot execute the command.\r\n"));
+				_tcscat(psz, psCurCmd); _tcscat(psz, _T("\r\n"));
                 _tcscat(psz, pszErr);
                 if (psz[_tcslen(psz)-1]!=_T('\n')) _tcscat(psz, _T("\r\n"));
-                _tcscat(psz, gSet.psCurCmd);
                 if (!gSet.psCurCmd && StrStrI(gSet.GetCmd(), gSet.BufferHeight == 0 ? _T("far.exe") : _T("cmd.exe"))==NULL) {
                     _tcscat(psz, _T("\r\n\r\n"));
                     _tcscat(psz, gSet.BufferHeight == 0 ? _T("Do You want to simply start far?") : _T("Do You want to simply start cmd?"));
