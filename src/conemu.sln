@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 10.00
-# Visual Studio 2008
+# Visual C++ Express 2008
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "conemu", "ConEmu\conemu.vcproj", "{EEE25AC6-D94D-472D-8D4A-3C6C382CFD3D}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ConEmuPlugin", "ConEmuPlugin\ConEmuPlugin.vcproj", "{21152801-8744-4787-83F4-BE4564A367B4}"
@@ -11,6 +11,7 @@ Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
 		DebugA|Win32 = DebugA|Win32
+		DebugEEE|Win32 = DebugEEE|Win32
 		Release|Win32 = Release|Win32
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
@@ -18,17 +19,23 @@ Global
 		{EEE25AC6-D94D-472D-8D4A-3C6C382CFD3D}.Debug|Win32.Build.0 = Debug|Win32
 		{EEE25AC6-D94D-472D-8D4A-3C6C382CFD3D}.DebugA|Win32.ActiveCfg = DebugA|Win32
 		{EEE25AC6-D94D-472D-8D4A-3C6C382CFD3D}.DebugA|Win32.Build.0 = DebugA|Win32
+		{EEE25AC6-D94D-472D-8D4A-3C6C382CFD3D}.DebugEEE|Win32.ActiveCfg = DebugEEE|Win32
+		{EEE25AC6-D94D-472D-8D4A-3C6C382CFD3D}.DebugEEE|Win32.Build.0 = DebugEEE|Win32
 		{EEE25AC6-D94D-472D-8D4A-3C6C382CFD3D}.Release|Win32.ActiveCfg = Release|Win32
 		{EEE25AC6-D94D-472D-8D4A-3C6C382CFD3D}.Release|Win32.Build.0 = Release|Win32
 		{21152801-8744-4787-83F4-BE4564A367B4}.Debug|Win32.ActiveCfg = Debug|Win32
 		{21152801-8744-4787-83F4-BE4564A367B4}.Debug|Win32.Build.0 = Debug|Win32
 		{21152801-8744-4787-83F4-BE4564A367B4}.DebugA|Win32.ActiveCfg = DebugA|Win32
 		{21152801-8744-4787-83F4-BE4564A367B4}.DebugA|Win32.Build.0 = DebugA|Win32
+		{21152801-8744-4787-83F4-BE4564A367B4}.DebugEEE|Win32.ActiveCfg = DebugEEE|Win32
+		{21152801-8744-4787-83F4-BE4564A367B4}.DebugEEE|Win32.Build.0 = DebugEEE|Win32
 		{21152801-8744-4787-83F4-BE4564A367B4}.Release|Win32.ActiveCfg = Release|Win32
 		{3939C0DF-8E00-440F-AC8A-CB579C56A5CB}.Debug|Win32.ActiveCfg = Debug|Win32
 		{3939C0DF-8E00-440F-AC8A-CB579C56A5CB}.Debug|Win32.Build.0 = Debug|Win32
 		{3939C0DF-8E00-440F-AC8A-CB579C56A5CB}.DebugA|Win32.ActiveCfg = DebugA|Win32
 		{3939C0DF-8E00-440F-AC8A-CB579C56A5CB}.DebugA|Win32.Build.0 = DebugA|Win32
+		{3939C0DF-8E00-440F-AC8A-CB579C56A5CB}.DebugEEE|Win32.ActiveCfg = DebugEEE|Win32
+		{3939C0DF-8E00-440F-AC8A-CB579C56A5CB}.DebugEEE|Win32.Build.0 = DebugEEE|Win32
 		{3939C0DF-8E00-440F-AC8A-CB579C56A5CB}.Release|Win32.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution

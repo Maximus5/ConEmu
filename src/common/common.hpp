@@ -5,6 +5,10 @@
 //#define CONEMUEVENTOUT  L"ConEmuOutEvent%u"
 //#define CONEMUEVENTPIPE L"ConEmuPipeEvent%u"
 
+#define CES_NTVDM 0x10
+
+#define CE_NEEDUPDATE       L"ConEmuNeedUpdate%u" // hConWnd - изменилось содержимое консольного окна
+
 #define CESERVERPIPENAME    L"\\\\%s\\pipe\\ConEmuSrv%u"
 #define CESERVERINPUTNAME   L"\\\\%s\\pipe\\ConEmuSrvInput%u"
 #define CECMD_GETSHORTINFO  1
@@ -18,7 +22,7 @@ typedef struct tag_CESERVER_REQ {
 	DWORD   nSize;
 	DWORD   nCmd;
 	DWORD   nVersion;
-	BYTE    Data[0x1000]; // вообще-то размер динамический
+	BYTE    Data[1]; // вообще-то размер динамический
 } CESERVER_REQ;
 
 
