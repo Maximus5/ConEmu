@@ -18,7 +18,7 @@ DWORD WINAPI InstanceThread(LPVOID);
 DWORD WINAPI ServerThread(LPVOID lpvParam);
 DWORD WINAPI InputThread(LPVOID lpvParam);
 BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out); 
-void WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime);
+void CALLBACK WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime);
 
 wchar_t szPipename[MAX_PATH], szInputname[MAX_PATH];
 HANDLE  hConIn = NULL;
@@ -53,9 +53,14 @@ int main()
 	STARTUPINFOW si; memset(&si, 0, sizeof(si)); si.cb = sizeof(si);
 	DWORD dwErr = 0;
 
+	dwPID = GetCurrentProcessId();
+	wsprintfW(szPipename, CESERVERPIPENAME, L".", dwPID);
+	wsprintfW(szInputname, CESERVERINPUTNAME, L".", dwPID);
+	
 	InitializeCriticalSection(&csConBuf);
 	InitializeCriticalSection(&csProc);
 	hConWnd = GetConsoleWindow();
+	_ASSERTE(hConWnd!=NULL);
 	if (!hConWnd) {
 		dwErr = GetLastError();
 		printf("hConWnd==NULL, ErrCode=0x%08X\n", dwErr); 
@@ -67,8 +72,9 @@ int main()
 		printf("CreateEvent() failed, ErrCode=0x%08X\n", dwErr); 
 		iRc=109; goto wrap;
 	}
-	wsprintfW(sName, CE_NEEDUPDATE, (DWORD)hConWnd);
+	wsprintfW(sName, CE_NEEDUPDATE, dwPID);
 	hGlblUpdateEvt = CreateEvent(NULL, FALSE, FALSE, sName);
+	_ASSERTE(hGlblUpdateEvt!=NULL);
 	if (!hGlblUpdateEvt) {
 		dwErr = GetLastError();
 		printf("CreateEvent(ConEmuNeedUpdate%u) failed, ErrCode=0x%08X\n", (DWORD)hConWnd, dwErr); 
@@ -134,9 +140,6 @@ int main()
 	}
 
 	
-	dwPID = GetCurrentProcessId();
-	wsprintfW(szPipename, CESERVERPIPENAME, L".", dwPID);
-	wsprintfW(szInputname, CESERVERINPUTNAME, L".", dwPID);
 
 	hConIn  = CreateFile(L"CONIN$", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_READ,
 	            0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
@@ -146,9 +149,17 @@ int main()
 		iRc=107; goto wrap;
 	}
 
+	TODO("Нити обработки команд и SetWinEventHook нужно выполнять только в корневом ConEmuC, а не в ComSpec");
 
-    hWinHook = SetWinEventHook(EVENT_CONSOLE_CARET,EVENT_CONSOLE_END_APPLICATION,
-        NULL, WinEventProc, 0,0, WINEVENT_OUTOFCONTEXT);
+	#ifdef _DEBUG
+		//if (!IsDebuggerPresent()) MessageBox(0,L"Debug",L"ConEmuC",0);
+	#endif
+	TODO("The client thread that calls SetWinEventHook must have a message loop in order to receive events.");
+	TODO("Вынести в отдельную нить!");
+	TODO("WINEVENT_SKIPOWNPROCESS?");
+    hWinHook = SetWinEventHook(EVENT_CONSOLE_START_APPLICATION/*EVENT_CONSOLE_CARET*/,EVENT_CONSOLE_END_APPLICATION,
+        NULL, WinEventProc, 0,0, WINEVENT_OUTOFCONTEXT /*| WINEVENT_SKIPOWNPROCESS ?*/);
+	dwErr = GetLastError();
 	if (!hWinHook) {
 		dwErr = GetLastError();
 		printf("SetWinEventHook failed, ErrCode=0x%08X\n", dwErr); 
@@ -225,9 +236,9 @@ wrap:
 
 DWORD WINAPI ServerThread(LPVOID lpvParam) 
 { 
-   BOOL fConnected; 
-   DWORD dwThreadId;
-   HANDLE hPipe, hThread; 
+   BOOL fConnected = FALSE;
+   DWORD dwThreadId = 0, dwErr = 0;
+   HANDLE hPipe = NULL, hThread = NULL;
    
  
 // The main loop creates an instance of the named pipe and 
@@ -545,6 +556,7 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 			dwAllSize += 3*sizeof(DWORD);
 			// 8
 			DWORD dwSbiRc = 0; CONSOLE_SCREEN_BUFFER_INFO sbi = {{0,0}}; // GetConsoleScreenBufferInfo
+			if (!GetConsoleScreenBufferInfo(hConOut, &sbi)) { dwSbiRc = GetLastError(); if (!dwSbiRc) dwSbiRc = -1; }
 			dwAllSize += sizeof(dwSbiRc)+sizeof(sbi);
 			// 9
 			DWORD OneBufferSize = 0;
@@ -612,13 +624,13 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 			dwConsoleOutputCP = GetConsoleOutputCP();
 			*((DWORD*)lpCur) = dwConsoleOutputCP; lpCur += sizeof(DWORD);
 			// 7
-			DWORD dwConsoleMode=0; GetConsoleMode(hConIn, &dwConsoleMode);
+			dwConsoleMode=0; GetConsoleMode(hConIn, &dwConsoleMode);
 			*((DWORD*)lpCur) = dwConsoleMode; lpCur += sizeof(DWORD);
 
 			// 8
-			if (!GetConsoleScreenBufferInfo(hConOut, &sbi)) { dwSbiRc = GetLastError(); if (!dwSbiRc) dwSbiRc = -1; }
+			//if (!GetConsoleScreenBufferInfo(hConOut, &sbi)) { dwSbiRc = GetLastError(); if (!dwSbiRc) dwSbiRc = -1; }
 			*((DWORD*)lpCur) = dwSbiRc; lpCur += sizeof(DWORD);
-			memmove(lpCur, &sbi, sizeof(sbi));
+			memmove(lpCur, &sbi, sizeof(sbi)); lpCur += sizeof(sbi);
 
 			// 9 - здесь будет 0, если текст в консоли не менялся
 			*((DWORD*)lpCur) = OneBufferSize; lpCur += sizeof(DWORD);
@@ -647,7 +659,7 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 
 //Minimum supported client Windows 2000 Professional 
 //Minimum supported server Windows 2000 Server 
-void WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime)
+void CALLBACK WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime)
 {
 	if (hwnd != hConWnd) {
 		_ASSERTE(hwnd); // по идее, тут должен быть хэндл консольного окна, проверим

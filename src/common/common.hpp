@@ -5,9 +5,15 @@
 //#define CONEMUEVENTOUT  L"ConEmuOutEvent%u"
 //#define CONEMUEVENTPIPE L"ConEmuPipeEvent%u"
 
-#define CES_NTVDM 0x10
+// with line number
+#define STRING2(x) #x
+#define STRING(x) STRING2(x)
+#define FILE_LINE __FILE__ "(" STRING(__LINE__) "): TODO: "
+#define TODO(s) __pragma(message (FILE_LINE s))
 
-#define CE_NEEDUPDATE       L"ConEmuNeedUpdate%u" // hConWnd - изменилось содержимое консольного окна
+#define CES_NTVDM 0x10
+#define CEC_INITTITLE       L"ConEmu"
+#define CE_NEEDUPDATE       L"ConEmuNeedUpdate%u" // ConEmuC_PID - изменилось содержимое консольного окна
 
 #define CESERVERPIPENAME    L"\\\\%s\\pipe\\ConEmuSrv%u"
 #define CESERVERINPUTNAME   L"\\\\%s\\pipe\\ConEmuSrvInput%u"

@@ -469,6 +469,8 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragOver(DWORD grfKeyState,POINTL pt,DWORD 
 		*pdwEffect = DROPEFFECT_NONE;
 		return S_OK;
 	}
+	
+	TODO("Если drop идет ПОД панели - впечатать путь в командную строку");
 
 	//gConEmu.DnDstep(_T("DnD: DragOver starting"));
 

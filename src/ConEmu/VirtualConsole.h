@@ -80,8 +80,18 @@ private:
 		UINT lastSize; // предыдущая высота курсора (в процентах)
 	} Cursor;
 public:
-    HANDLE  hConOut(BOOL abAllowRecreate=FALSE);
-	HANDLE  hConIn();
+	struct ConProcess {
+		DWORD ProcessID, ParentPID;
+		bool  IsFar;
+		bool  IsTelnet; // может быть включен ВМЕСТЕ с IsFar, если удалось подцепится к фару через сетевой пайп
+		bool  IsNtvdm;  // 16bit приложения
+		bool  NameChecked, RetryName;
+		TCHAR Name[64]; // чтобы полная инфа об ошибке влезала
+	};
+	std::vector<ConProcess> Processes;
+public:
+    //HANDLE  hConOut(BOOL abAllowRecreate=FALSE);
+	//HANDLE  hConIn();
 	HWND    hConWnd;
 	HDC     hDC; //, hBgDc;
 	HBITMAP hBitmap; //, hBgBitmap;
@@ -129,6 +139,12 @@ public:
 	BOOL isBufferHeight();
 	LPCTSTR GetTitle();
 	BOOL GetConsoleScreenBufferInfo();
+	void GetConsoleSelectionInfo(CONSOLE_SELECTION_INFO *sel) {	*sel = m_sel; };
+	void GetConsoleCursorInfo(CONSOLE_CURSOR_INFO *ci) { *ci = m_ci; };
+	DWORD GetConsoleCP() { return m_dwConsoleCP; };
+	DWORD GetConsoleOutputCP() { return m_dwConsoleOutputCP; };
+	DWORD GetConsoleMode() { return m_dwConsoleMode; };
+	DWORD GetConsoleScreenBufferInfo(CONSOLE_SCREEN_BUFFER_INFO *sbi) { *sbi = m_sbi; };
 	void SyncConsole2Window();
 
 protected:
@@ -186,7 +202,7 @@ protected:
 	void RegistryProps(BOOL abRollback, ConExeProps& props, LPCTSTR asExeName=NULL);
 	static DWORD WINAPI StartProcessThread(LPVOID lpParameter);
 	HANDLE mh_Heap, mh_Thread;
-	HANDLE mh_TermEvent, mh_ForceReadEvent, mh_EndUpdateEvent, mh_Sync2WindowEvent;
+	HANDLE mh_TermEvent, mh_ForceReadEvent, mh_EndUpdateEvent, mh_Sync2WindowEvent, mh_ConChanged;
 	//HANDLE mh_ReqSetSize, mh_ReqSetSizeEnd; COORD m_ReqSetSize;
 	DWORD mn_ThreadID;
 	LPVOID Alloc(size_t nCount, size_t nSize);
@@ -200,4 +216,11 @@ protected:
 	BOOL SetConsoleInfo(CONSOLE_INFO *pci);
 	void SetConsoleFontSizeTo(int inSizeX, int inSizeY);
 	BOOL RetrieveConsoleInfo();
+	BOOL InitBuffers();
+private:
+	// Эти переменные инициализируются в RetrieveConsoleInfo()
+	CONSOLE_SELECTION_INFO m_sel;
+	CONSOLE_CURSOR_INFO m_ci;
+	DWORD m_dwConsoleCP, m_dwConsoleOutputCP, m_dwConsoleMode;
+	CONSOLE_SCREEN_BUFFER_INFO m_sbi;
 };

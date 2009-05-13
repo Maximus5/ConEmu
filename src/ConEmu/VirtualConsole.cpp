@@ -52,6 +52,7 @@ CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
     mh_ForceReadEvent = CreateEvent(NULL,FALSE,FALSE,NULL);
     mh_EndUpdateEvent = CreateEvent(NULL,FALSE,FALSE,NULL);
 	mh_Sync2WindowEvent = CreateEvent(NULL,FALSE,FALSE,NULL);
+	mh_ConChanged = NULL;
     //mh_ReqSetSize = CreateEvent(NULL,FALSE,FALSE,NULL);
 	//mh_ReqSetSizeEnd = CreateEvent(NULL,FALSE,FALSE,NULL);
     //m_ReqSetSize = MakeCoord ( 0,0 );
@@ -64,6 +65,11 @@ CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
 	mh_StdIn = NULL; mh_StdOut = NULL;
     
     mr_LeftPanel = mr_RightPanel = MakeRect(-1,-1);
+
+	m_dwConsoleCP = 0; m_dwConsoleOutputCP = 0; m_dwConsoleMode = 0;
+	memset(&m_sel, 0, sizeof(m_sel));
+	memset(&m_ci, 0, sizeof(m_ci));
+	memset(&m_sbi, 0, sizeof(m_sbi));
 
 #ifdef _DEBUG
     mn_BackColorIdx = 2;
@@ -157,15 +163,15 @@ CVirtualConsole::~CVirtualConsole()
     DeleteCriticalSection(&csCON);
 }
 
-HANDLE CVirtualConsole::hConIn()
+/*HANDLE CVirtualConsole::hConIn()
 {
 	if (!this)
 		return GetStdHandle(STD_INPUT_HANDLE);
 	return mh_StdIn;
-}
+}*/
 
 // Дабы избежать многоратных Recreate во время обновления - пересоздаем хэндл только в начале Update!
-HANDLE CVirtualConsole::hConOut(BOOL abAllowRecreate/*=FALSE*/)
+/*HANDLE CVirtualConsole::hConOut(BOOL abAllowRecreate/ *=FALSE* /)
 {
 	// TODO: поддержка telnet'a (переоткрывать хэндл?)
 	if (!this)
@@ -206,8 +212,8 @@ HANDLE CVirtualConsole::hConOut(BOOL abAllowRecreate/*=FALSE*/)
     }
     
     return mh_ConOut;
-	*/
-}
+	* /
+}*/
 
 // InitDC вызывается только при критических изменениях (размеры, шрифт, и т.п.) когда нужно пересоздать DC и Bitmap
 bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize)
@@ -219,24 +225,24 @@ bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize)
         { DeleteDC(hDC); hDC = NULL; }
     if (hBitmap)
         { DeleteObject(hBitmap); hBitmap = NULL; }
-    if (ConChar)
+    /*if (ConChar)
         { Free(ConChar); ConChar = NULL; }
     if (ConAttr)
         { Free(ConAttr); ConAttr = NULL; }
     if (ConCharX)
-        { Free(ConCharX); ConCharX = NULL; }
+        { Free(ConCharX); ConCharX = NULL; }*/
     if (tmpOem)
         { Free(tmpOem); tmpOem = NULL; }
-    if (TextParts)
-        { Free(TextParts); TextParts = NULL; }
+    /*if (TextParts)
+        { Free(TextParts); TextParts = NULL; }*/
 
     //CONSOLE_SCREEN_BUFFER_INFO csbi;
     if (!GetConsoleScreenBufferInfo())
         return false;
 
     IsForceUpdate = true;
-    TextWidth = csbi.srWindow.Right - csbi.srWindow.Left + 1;
-    TextHeight = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
+    //TextWidth = csbi.srWindow.Right - csbi.srWindow.Left + 1;
+    //TextHeight = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
 
 #ifdef _DEBUG
 	_ASSERT(TextHeight >= 5);
@@ -247,15 +253,15 @@ bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize)
         return false;
     }
 
-    if ((int)TextWidth < csbi.dwSize.X)
-        TextWidth = csbi.dwSize.X;
+    /*if ((int)TextWidth < csbi.dwSize.X)
+        TextWidth = csbi.dwSize.X;*/
 
     MCHKHEAP
-    ConChar = (TCHAR*)Alloc((TextWidth * TextHeight * 2), sizeof(*ConChar));
+    /*ConChar = (TCHAR*)Alloc((TextWidth * TextHeight * 2), sizeof(*ConChar));
     ConAttr = (WORD*)Alloc((TextWidth * TextHeight * 2), sizeof(*ConAttr));
-    ConCharX = (DWORD*)Alloc((TextWidth * TextHeight), sizeof(*ConCharX));
+    ConCharX = (DWORD*)Alloc((TextWidth * TextHeight), sizeof(*ConCharX));*/
     tmpOem = (char*)Alloc((TextWidth + 5), sizeof(*tmpOem));
-    TextParts = (struct _TextParts*)Alloc((TextWidth + 2), sizeof(*TextParts));
+    //TextParts = (struct _TextParts*)Alloc((TextWidth + 2), sizeof(*TextParts));
     MCHKHEAP
     if (!ConChar || !ConAttr || !ConCharX || !tmpOem || !TextParts)
         return false;
@@ -610,14 +616,16 @@ bool CVirtualConsole::Update(bool isForce, HDC *ahDc)
 		return false;
 	}
 
+	RetrieveConsoleInfo();
+
     #ifdef MSGLOGGER
     DcDebug dbg(&hDC, ahDc); // для отладки - рисуем сразу на канвасе окна
     #endif
 
     // переоткрыть хэндл Output'а при необходимости
-    if (!hConOut(TRUE)) {
+    /*if (!hConOut(TRUE)) {
         return false;
-    }
+    }*/
 
     MCHKHEAP
     bool lRes = false;
@@ -772,7 +780,7 @@ bool CVirtualConsole::UpdatePrepare(bool isForce, HDC *ahDc)
     // for large window and ReadConsoleOutput works OK. More optimal solution for all
     // cases is not that difficult to develop but it will be increased complexity and
     // overhead often for nothing, not sure that we really should use it.
-    DWORD nbActuallyRead;
+    /*DWORD nbActuallyRead;
     if (!ReadConsoleOutputAttribute(hConOut(), ConAttr, TextLen, coord, &nbActuallyRead) ||
         !ReadConsoleOutputCharacter(hConOut(), ConChar, TextLen, coord, &nbActuallyRead))
     {
@@ -786,7 +794,7 @@ bool CVirtualConsole::UpdatePrepare(bool isForce, HDC *ahDc)
             ConCharNow += TextWidth;
             ++coord.Y;
         }
-    }
+    }*/
     
     MCHKHEAP
     
@@ -838,7 +846,7 @@ bool CVirtualConsole::UpdatePrepare(bool isForce, HDC *ahDc)
 	}
 
     // get cursor info
-    GetConsoleCursorInfo(hConOut(), &cinf);
+    GetConsoleCursorInfo(/*hConOut(),*/ &cinf);
 
     // get selection info in buffer mode
     
@@ -1669,10 +1677,10 @@ bool CVirtualConsole::SetConsoleSize(COORD size)
     {
         //HANDLE hConsoleOut = hConOut();
         bool lbRc = true;
-        HANDLE h = hConOut();
-		#ifdef _DEBUG
-		_ASSERT(h!=NULL);
-		#endif
+        //HANDLE h = hConOut();
+		//#ifdef _DEBUG
+		//_ASSERT(h!=NULL);
+		//#endif
         BOOL lbNeedChange = FALSE;
         //CONSOLE_SCREEN_BUFFER_INFO csbi;
         if (GetConsoleScreenBufferInfo()) {
@@ -1685,7 +1693,8 @@ bool CVirtualConsole::SetConsoleSize(COORD size)
 			// Если этого не сделать - размер консоли нельзя УМЕНЬШИТЬ
             MOVEWINDOW(hConWnd, rcConPos.left, rcConPos.top, 1, 1, 1); // попробуем не дергаться?
 			//specified width and height cannot be less than the width and height of the console screen buffer's window
-            SETCONSOLESCREENBUFFERSIZERET(h, size, lbWS);
+			TODO("SETCONSOLESCREENBUFFERSIZERET");
+            //SETCONSOLESCREENBUFFERSIZERET(h, size, lbWS);
 			dwErr = GetLastError();
             GetConsoleScreenBufferInfo();
             if (csbi.dwSize.X != size.X || csbi.dwSize.Y != size.Y) {
@@ -1766,7 +1775,8 @@ bool CVirtualConsole::SetConsoleSize(COORD size)
             csbi.dwSize.Y = max(csbi.dwSize.Y, size.Y);
     }
     MOVEWINDOW(hConWnd, rcConPos.left, rcConPos.top, 1, 1, 1);
-    SETCONSOLESCREENBUFFERSIZE(hConOut(), csbi.dwSize);
+	TODO("SETCONSOLESCREENBUFFERSIZE");
+    //SETCONSOLESCREENBUFFERSIZE(hConOut(), csbi.dwSize);
     //окошко раздвигаем только по ширине!
     GetWindowRect(hConWnd, &rcConPos);
     MOVEWINDOW(hConWnd, rcConPos.left, rcConPos.top, GetSystemMetrics(SM_CXSCREEN), rcConPos.bottom-rcConPos.top, 1);
@@ -1792,7 +1802,8 @@ bool CVirtualConsole::SetConsoleSize(COORD size)
         rect.Top += shift;
         rect.Bottom += shift;
     }
-    SetConsoleWindowInfo(hConOut(), TRUE, &rect);
+	TODO("SetConsoleWindowInfo");
+    //SetConsoleWindowInfo(hConOut(), TRUE, &rect);
     return true;
 }
 
@@ -1824,8 +1835,12 @@ void CVirtualConsole::SyncConsole2Window()
     SetConsoleSize(MakeCoord(newCon.right, newCon.bottom));
 }
 
+
 BOOL CVirtualConsole::AttachPID(DWORD dwPID)
 {
+	TODO("AttachPID пока работать не будет");
+	return FALSE;
+
     #ifdef MSGLOGGER
         TCHAR szMsg[100]; wsprintf(szMsg, _T("Attach to process %i"), (int)dwPID);
         OutputDebugString(szMsg);
@@ -1876,8 +1891,9 @@ BOOL CVirtualConsole::AttachPID(DWORD dwPID)
 
 void CVirtualConsole::InitHandlers(BOOL abCreated)
 {
-    hConWnd = GetConsoleWindow();
-	ghConWnd = hConWnd; // ставим сразу, чтобы было известно, к какой консоли мы сейчас подцеплены (иначе hConOut() вернет NULL)
+    //hConWnd = GetConsoleWindow();
+	//2009-05-13 теперь похоже не нужно
+	//ghConWnd = hConWnd; // ставим сразу, чтобы было известно, к какой консоли мы сейчас подцеплены (иначе hConOut() вернет NULL)
 
     SetConsoleCtrlHandler((PHANDLER_ROUTINE)CConEmuMain::HandlerRoutine, true);
     
@@ -1897,14 +1913,17 @@ void CVirtualConsole::InitHandlers(BOOL abCreated)
 	//}
     SetHandleInformation(GetStdHandle(STD_ERROR_HANDLE), HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT);
 
+    TODO("Перенести в ConEmuC");
+	/*
     DWORD mode = 0;
     BOOL lb = GetConsoleMode(hConIn(), &mode);
     if (!(mode & ENABLE_MOUSE_INPUT)) {
         mode |= ENABLE_MOUSE_INPUT;
         lb = SetConsoleMode(hConIn(), mode);
     }
+	*/
 
-    hConOut();
+    //hConOut();
 
     if (abCreated) {
         SetConsoleFontSizeTo(4, 6);
@@ -1947,7 +1966,8 @@ void CVirtualConsole::InitHandlers(BOOL abCreated)
         SetConsoleFontSizeTo(4, 6);
     }
 
-    gConEmu.ConsoleCreated(hConWnd);
+	if (gConEmu.isActive(this))
+		gConEmu.ConsoleCreated(hConWnd);
 }
 
 // asExeName может быть NULL, тогда ставим полный путь к ConEmu (F:_VCProject_FarPlugin_#FAR180_ConEmu.exe)
@@ -1961,7 +1981,7 @@ void CVirtualConsole::RegistryProps(BOOL abRollback, ConExeProps& props, LPCTSTR
     if (!abRollback) {
         memset(&props, 0, sizeof(props));
 
-        if (gSet.ourSI.lpTitle && *gSet.ourSI.lpTitle) {
+        /*if (gSet.ourSI.lpTitle && *gSet.ourSI.lpTitle) {
             int nLen = _tcslen(gSet.ourSI.lpTitle);
             if (nLen>4 && _tcsicmp(gSet.ourSI.lpTitle+nLen-4, _T(".lnk"))==0) {
                 props.FullKeyName = (TCHAR*)Alloc(10, sizeof(TCHAR));
@@ -1973,7 +1993,7 @@ void CVirtualConsole::RegistryProps(BOOL abRollback, ConExeProps& props, LPCTSTR
                 pszExeName = props.FullKeyName+_tcslen(props.FullKeyName);
                 _tcscpy(pszExeName, gSet.ourSI.lpTitle);
             }
-        } else
+        } else*/
         if (asExeName && *asExeName) {
             props.FullKeyName = (TCHAR*)Alloc(_tcslen(asExeName)+10, sizeof(TCHAR));
             _tcscpy(props.FullKeyName, _T("Console\\"));
@@ -2029,9 +2049,9 @@ void CVirtualConsole::RegistryProps(BOOL abRollback, ConExeProps& props, LPCTSTR
                 props.FaceName[0] = 0;
             
             // Установить требуемые умолчания
-			RECT rcWnd; GetClientRect(ghWnd, &rcWnd);
-			RECT rcCon = gConEmu.CalcRect(CER_CONSOLE, rcWnd, CER_MAINCLIENT);
-			dwVal = (rcCon.right) | (rcCon.bottom<<16);
+			/*RECT rcWnd; GetClientRect(ghWnd, &rcWnd);
+			RECT rcCon = gConEmu.CalcRect(CER_CONSOLE, rcWnd, CER_MAINCLIENT);*/
+			dwVal = (m_sbi.dwSize.X) | (m_sbi.dwSize.Y<<16);
             RegSetValueEx(hkey, _T("ScreenBufferSize"), 0, REG_DWORD, (LPBYTE)&dwVal, sizeof(DWORD));
             RegSetValueEx(hkey, _T("WindowSize"), 0, REG_DWORD, (LPBYTE)&dwVal, sizeof(DWORD));
             if (!ghWndDC) dwVal = 0; else {
@@ -2087,13 +2107,19 @@ DWORD CVirtualConsole::StartProcessThread(LPVOID lpParameter)
     CVirtualConsole* pCon = (CVirtualConsole*)lpParameter;
     //BOOL lbRc = pCon->StartProcess(); -- лучше так все-таки не делать. велика вероятность блокировки при изменении TOPMOST главного окна
     
+    //if (!pCon->RetrieveConsoleInfo()) {
+	//    return 1;
+    //}
+    
+    _ASSERTE(pCon->mh_ConChanged!=NULL);
     //TODO: а тут мы будем читать консоль...
-    HANDLE hEvents[3] = {pCon->mh_TermEvent, 
+    HANDLE hEvents[4] = {pCon->mh_TermEvent, 
+                         pCon->mh_ConChanged,
                          pCon->mh_ForceReadEvent,
 						 pCon->mh_Sync2WindowEvent};
 	DWORD  nEvents = countof(hEvents);
     DWORD  nWait = 0;
-    BOOL   bLoop = TRUE, bIconic = FALSE;
+    BOOL   bLoop = TRUE, bIconic = FALSE, bFirst = TRUE;
 
 	DWORD nElapse = max(10,gSet.nMainTimerElapse);
     
@@ -2118,7 +2144,7 @@ DWORD CVirtualConsole::StartProcessThread(LPVOID lpParameter)
 
 		// Размер консоли меняем в том треде, в котором это требуется. Иначе можем заблокироваться при Update (InitDC)
         // Требуется изменение размеров консоли
-        /*if (nWait == (WAIT_OBJECT_0+2)) {
+        /*if (nWait == (WAIT_OBJECT_0+3)) {
 	        pCon->SetConsoleSize(pCon->m_ReqSetSize);
 	        //SetEvent(pCon->mh_ReqSetSizeEnd);
 	        //continue; -- и сразу обновим информацию о ней
@@ -2130,8 +2156,15 @@ DWORD CVirtualConsole::StartProcessThread(LPVOID lpParameter)
 
         try {   
             ResetEvent(pCon->mh_EndUpdateEvent);
+            
+			if (bFirst || nWait == (WAIT_OBJECT_0+1)) {
+				bFirst = FALSE;
+				if (!pCon->RetrieveConsoleInfo()) {
+					_ASSERT(FALSE);
+				}
+			}
 
-			if (nWait == (WAIT_OBJECT_0+2)) {
+			if (nWait == (WAIT_OBJECT_0+3)) {
 				pCon->SyncConsole2Window();
 			}
 
@@ -2188,7 +2221,19 @@ BOOL CVirtualConsole::StartProcess()
 {
     BOOL lbRc = FALSE;
 
-    CSection SCON(&csCON, &ncsTCON);
+    //CSection SCON(&csCON, &ncsTCON);
+    
+    // Инициализировать переменные m_sbi, m_ci, m_sel
+	RECT rcWnd; GetClientRect(ghWnd, &rcWnd);
+	RECT rcCon = gConEmu.CalcRect(CER_CONSOLE, rcWnd, CER_MAINCLIENT);
+	_ASSERTE(rcCon.right!=0 && rcCon.bottom!=0);
+	m_sbi.dwSize = MakeCoord(rcCon.right,rcCon.bottom);
+	m_sbi.wAttributes = 7;
+	m_sbi.srWindow.Right = rcCon.right-1; m_sbi.srWindow.Bottom = rcCon.bottom-1;
+	m_sbi.dwMaximumWindowSize = m_sbi.dwSize;
+	m_ci.dwSize = 15; m_ci.bVisible = TRUE;
+	if (!InitBuffers())
+		return FALSE;
 
     if (ghConWnd) {
         // Сначала нужно отцепиться от текущей консоли
@@ -2198,10 +2243,11 @@ BOOL CVirtualConsole::StartProcess()
     
     ConExeProps props;
     
+	// 2009-05-13 Теперь запуск консоли идет в отдельном процессе, так что ярлык не помешает
     // Если запускались с ярлыка - это нихрена не поможет... информация похоже в .lnk сохраняется...
-    RegistryProps(FALSE, props);
+    RegistryProps(FALSE, props, CEC_INITTITLE);
 
-    if (!gConEmu.isShowConsole && !gSet.isConVisible
+    /*if (!gConEmu.isShowConsole && !gSet.isConVisible
         #ifdef MSGLOGGER
         && !IsDebuggerPresent()
         #endif
@@ -2216,13 +2262,10 @@ BOOL CVirtualConsole::StartProcess()
         #endif
         ) SetWindowPos(ghWnd, HWND_NOTOPMOST, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
 
-    SetForegroundWindow(ghWnd);
+    SetForegroundWindow(ghWnd);*/
     
-    RegistryProps(TRUE, props);
+    //RegistryProps(TRUE, props);
 
-#ifdef _DEBUG
-	Sleep(1000);
-#endif
 
 	// Уже должно быть сделано в InitHandlers
 	/*RECT rcWnd; GetClientRect(ghWnd, &rcWnd);
@@ -2232,9 +2275,9 @@ BOOL CVirtualConsole::StartProcess()
 //#pragma message("error: почему-то консоль создалась схлопнутой по ширине/высоте, хотя ее размеры были нормальные!")
 	// TODO: перед Update нужно позвать установку размера консоли!
 
-	Update(true);
+	//Update(true);
 
-	SCON.Leave();
+	//SCON.Leave();
 
     /*if (gSet.isConMan) {
         if (!gConEmu.InitConMan(gSet.GetCmd())) {
@@ -2253,6 +2296,12 @@ BOOL CVirtualConsole::StartProcess()
 
         ZeroMemory( &si, sizeof(si) );
         si.cb = sizeof(si);
+		si.dwFlags = STARTF_USESHOWWINDOW|STARTF_USECOUNTCHARS|STARTF_USEPOSITION;
+		si.lpTitle = CEC_INITTITLE;
+		si.dwXCountChars = m_sbi.dwSize.X; si.dwYCountChars = m_sbi.dwSize.Y;
+		si.wShowWindow = gSet.isConVisible ? SW_SHOWNORMAL : SW_HIDE;
+		RECT rcDC; GetWindowRect(ghWndDC, &rcDC);
+		si.dwX = rcDC.left; si.dwY = rcDC.top;
         ZeroMemory( &pi, sizeof(pi) );
 
         int nStep = 1;
@@ -2353,8 +2402,15 @@ BOOL CVirtualConsole::StartProcess()
         //CloseHandle(pi.hProcess); pi.hProcess = NULL;
 		mn_ConEmuC_PID = pi.dwProcessId;
 		mh_ConEmuC = pi.hProcess; pi.hProcess = NULL;
+		
+		// Событие "изменения" консоли
+		wsprintfW(ms_ConEmuC_Pipe, CE_NEEDUPDATE, mn_ConEmuC_PID);
+		mh_ConChanged = CreateEvent ( NULL, FALSE, FALSE, ms_ConEmuC_Pipe );
+		
+		// Имя пайпа для управления ConEmuC
 		wsprintfW(ms_ConEmuC_Pipe, CESERVERPIPENAME, L".", mn_ConEmuC_PID);
 		MCHKHEAP
+		
     }
 
     return lbRc;
@@ -2421,9 +2477,11 @@ bool CVirtualConsole::CheckBufferSize()
     // При выходе из FAR -> CMD с gConEmu.BufferHeight - смена QuickEdit режима
     DWORD mode = 0;
     BOOL lb = FALSE;
+    TODO("Перенести в ConEmuC");
     if (gConEmu.BufferHeight) {
         //TODO: похоже, что для gConEmu.BufferHeight это вызывается постоянно?
-        lb = GetConsoleMode(hConIn(), &mode);
+        //lb = GetConsoleMode(hConIn(), &mode);
+        mode = GetConsoleMode();
 
         if (csbi.dwSize.Y>(csbi.srWindow.Bottom-csbi.srWindow.Top+1)) {
             // Буфер больше высоты окна
@@ -2434,7 +2492,8 @@ bool CVirtualConsole::CheckBufferSize()
             mode |= ENABLE_EXTENDED_FLAGS;
         }
 
-        lb = SetConsoleMode(hConIn(), mode);
+		TODO("SetConsoleMode");
+        //lb = SetConsoleMode(hConIn(), mode);
     }
     
     return lbForceUpdate;
@@ -2452,7 +2511,8 @@ void CVirtualConsole::SendMouseEvent(UINT messg, WPARAM wParam, int x, int y)
     if (gConEmu.BufferHeight == 0)
         lbStdMode = TRUE;
 
-    if (lbStdMode)
+	TODO("!!!lbStdMode!!!");
+    /*if (lbStdMode)
     {
         Assert ( gSet.LogFont.lfWidth && gSet.LogFont.lfHeight );
         if (!gSet.LogFont.lfWidth | !gSet.LogFont.lfHeight)
@@ -2498,14 +2558,14 @@ void CVirtualConsole::SendMouseEvent(UINT messg, WPARAM wParam, int x, int y)
             r.Event.MouseEvent.dwEventFlags = MOUSE_WHEELED;
             r.Event.MouseEvent.dwButtonState |= (0xFFFF0000 & wParam);
         } else if (messg == WM_MOUSEHWHEEL) {
-            r.Event.MouseEvent.dwEventFlags = 8/*MOUSE_HWHEELED*/;
+            r.Event.MouseEvent.dwEventFlags = 8; //MOUSE_HWHEELED
             r.Event.MouseEvent.dwButtonState |= (0xFFFF0000 & wParam);
         }
         DWORD dwWritten = 0;
         if (!WriteConsoleInput(hConIn(), &r, 1, &dwWritten)) {
             DisplayLastError(L"SendMouseEvent failed!");
         }
-    } else {
+    } else*/ {
         /*Если пересылать так - лезут глюки:
         1) левый клик вообще не доходит до консоли
         2) правый клик вызывает "левую" консольную менюшку
@@ -2581,6 +2641,7 @@ void CVirtualConsole::StopThread()
     SafeCloseHandle(mh_ForceReadEvent);
     SafeCloseHandle(mh_EndUpdateEvent);
 	SafeCloseHandle(mh_Sync2WindowEvent);
+	SafeCloseHandle(mh_ConChanged);
     
     SafeCloseHandle(mh_Thread);
 
@@ -2712,7 +2773,7 @@ void CVirtualConsole::GetConsoleSizeInfo(CONSOLE_INFO *pci)
     CSection SCON(&csCON, &ncsTCON);
     //CONSOLE_SCREEN_BUFFER_INFO csbi;
 
-    HANDLE hConsoleOut = hConOut(); //hConOut();
+    //HANDLE hConsoleOut = hConOut(); //hConOut();
 
     GetConsoleScreenBufferInfo();
 
@@ -2864,8 +2925,8 @@ void CVirtualConsole::SetConsoleFontSizeTo(int inSizeX, int inSizeY)
         cfi.dwFontSize.Y = inSizeY;
         //TODO: А Люциду кто ставить будет???
         _tcscpy(cfi.FaceName, _T("Lucida Console"));
-        SetCurrentConsoleFontEx(hConOut()/*hConOut()*/,
-            FALSE, &cfi);
+		TODO("SetCurrentConsoleFontEx");
+        //SetCurrentConsoleFontEx(hConOut()/*hConOut()*/, FALSE, &cfi);
     }
     else // We have other NT
     {
@@ -2937,18 +2998,20 @@ BOOL CVirtualConsole::isBufferHeight()
 
 BOOL CVirtualConsole::GetConsoleScreenBufferInfo()
 {
-	mdw_LastError = 0;
-	BOOL lbRc = FALSE;
-	HANDLE h = hConOut();
-	if (!h) {
-		mdw_LastError = ERROR_INVALID_HANDLE;
-	} else {
-		memset(&csbi, 0, sizeof(csbi));
-		lbRc = ::GetConsoleScreenBufferInfo(h, &csbi);
-		if (!lbRc)
-			mdw_LastError = GetLastError();
-	}
-	return lbRc;
+	csbi = m_sbi;
+	return TRUE;
+	//mdw_LastError = 0;
+	//BOOL lbRc = FALSE;
+	//HANDLE h = hConOut();
+	//if (!h) {
+	//	mdw_LastError = ERROR_INVALID_HANDLE;
+	//} else {
+	//	memset(&csbi, 0, sizeof(csbi));
+	//	lbRc = ::GetConsoleScreenBufferInfo(h, &csbi);
+	//	if (!lbRc)
+	//		mdw_LastError = GetLastError();
+	//}
+	//return lbRc;
 }
 
 LPCTSTR CVirtualConsole::GetTitle()
@@ -2960,118 +3023,239 @@ LPCTSTR CVirtualConsole::GetTitle()
  
 BOOL CVirtualConsole::RetrieveConsoleInfo()
 { 
-   BOOL lbRc = FALSE;
-   HANDLE hPipe = NULL; 
-   CESERVER_REQ in={0}, *pOut=NULL;
-   BYTE cbReadBuf[BUFSIZE];
-   BOOL fSuccess;
-   DWORD cbRead, dwMode; 
+	BOOL lbRc = FALSE;
+	HANDLE hPipe = NULL; 
+	CESERVER_REQ in={0}, *pOut=NULL;
+	BYTE cbReadBuf[BUFSIZE];
+	BOOL fSuccess;
+	DWORD cbRead, dwMode, dwErr;
 
- 
-   // Try to open a named pipe; wait for it, if necessary. 
-   while (1) 
-   { 
-      hPipe = CreateFile( 
-         ms_ConEmuC_Pipe,// pipe name 
-         GENERIC_READ |  // read and write access 
-         GENERIC_WRITE, 
-         0,              // no sharing 
-         NULL,           // default security attributes
-         OPEN_EXISTING,  // opens existing pipe 
-         0,              // default attributes 
-         NULL);          // no template file 
- 
-      // Break if the pipe handle is valid. 
-      if (hPipe != INVALID_HANDLE_VALUE) 
-         break; 
- 
-      // Exit if an error other than ERROR_PIPE_BUSY occurs. 
-      if (GetLastError() != ERROR_PIPE_BUSY) 
-      {
-         DisplayLastError(L"Could not open pipe"); 
-         return 0;
-      }
- 
-      // All pipe instances are busy, so wait for 1 second.
-      if (! WaitNamedPipe(ms_ConEmuC_Pipe, 1000) ) 
-      {
-         DisplayLastError(L"Could not open pipe"); 
-         return 0;
-      }
-  } 
- 
-   // The pipe connected; change to message-read mode. 
-   dwMode = PIPE_READMODE_MESSAGE; 
-   fSuccess = SetNamedPipeHandleState( 
-      hPipe,    // pipe handle 
-      &dwMode,  // new pipe mode 
-      NULL,     // don't set maximum bytes 
-      NULL);    // don't set maximum time 
-   if (!fSuccess) 
-   {
-      DisplayLastError(L"SetNamedPipeHandleState failed");
-      return 0;
-   }
 
-   in.nSize = 8;
-   in.nCmd  = CECMD_GETFULLINFO;
- 
-   // Send a message to the pipe server and read the response. 
-   fSuccess = TransactNamedPipe( 
-      hPipe,                  // pipe handle 
-      &in,                    // message to server
+	// Try to open a named pipe; wait for it, if necessary. 
+	while (1) 
+	{ 
+	  hPipe = CreateFile( 
+		 ms_ConEmuC_Pipe,// pipe name 
+		 GENERIC_READ |  // read and write access 
+		 GENERIC_WRITE, 
+		 0,              // no sharing 
+		 NULL,           // default security attributes
+		 OPEN_EXISTING,  // opens existing pipe 
+		 0,              // default attributes 
+		 NULL);          // no template file 
+
+	  // Break if the pipe handle is valid. 
+	  if (hPipe != INVALID_HANDLE_VALUE) 
+		 break; 
+
+	  // Exit if an error other than ERROR_PIPE_BUSY occurs. 
+	  dwErr = GetLastError();
+	  if (dwErr != ERROR_PIPE_BUSY) 
+	  {
+		TODO("Подождать, пока появится пайп с таким именем, но только пока жив mh_ConEmuC");
+		dwErr = WaitForSingleObject(mh_ConEmuC, 100);
+		if (dwErr = WAIT_OBJECT_0)
+			return FALSE;
+		continue;
+		//DisplayLastError(L"Could not open pipe", dwErr);
+		//return 0;
+	  }
+
+	  // All pipe instances are busy, so wait for 1 second.
+	  if (!WaitNamedPipe(ms_ConEmuC_Pipe, 1000) ) 
+	  {
+		dwErr = WaitForSingleObject(mh_ConEmuC, 100);
+		if (dwErr = WAIT_OBJECT_0)
+			return FALSE;
+	    //DisplayLastError(L"WaitNamedPipe failed"); 
+		//return 0;
+	  }
+	} 
+
+	// The pipe connected; change to message-read mode. 
+	dwMode = PIPE_READMODE_MESSAGE; 
+	fSuccess = SetNamedPipeHandleState( 
+	  hPipe,    // pipe handle 
+	  &dwMode,  // new pipe mode 
+	  NULL,     // don't set maximum bytes 
+	  NULL);    // don't set maximum time 
+	if (!fSuccess) 
+	{
+	  DisplayLastError(L"SetNamedPipeHandleState failed");
+	  return 0;
+	}
+
+	in.nSize = 8;
+	in.nCmd  = CECMD_GETFULLINFO;
+
+	// Send a message to the pipe server and read the response. 
+	fSuccess = TransactNamedPipe( 
+	  hPipe,                  // pipe handle 
+	  &in,                    // message to server
 	  in.nSize,               // message length 
-      cbReadBuf,              // buffer to receive reply
-      BUFSIZE*sizeof(BYTE),   // size of read buffer
-      &cbRead,                // bytes read
-      NULL);                  // not overlapped 
+	  cbReadBuf,              // buffer to receive reply
+	  BUFSIZE*sizeof(BYTE),   // size of read buffer
+	  &cbRead,                // bytes read
+	  NULL);                  // not overlapped 
 
-   if (!fSuccess && (GetLastError() != ERROR_MORE_DATA)) 
-   {
-      DisplayLastError(L"TransactNamedPipe failed"); 
-      return 0;
-   }
+	if (!fSuccess && (GetLastError() != ERROR_MORE_DATA)) 
+	{
+	  DisplayLastError(L"TransactNamedPipe failed"); 
+	  return 0;
+	}
 
-   int nAllSize = *((DWORD*)cbReadBuf);
-   if (nAllSize==0) {
+	int nAllSize = *((DWORD*)cbReadBuf);
+	if (nAllSize==0) {
 	   DisplayLastError(L"Empty data recieved from server", 0);
 	   return 0;
-   }
-   pOut = (CESERVER_REQ*)calloc(nAllSize,1);
-   _ASSERTE(pOut!=NULL);
-   memmove(pOut, cbReadBuf, cbRead);
+	}
+	pOut = (CESERVER_REQ*)calloc(nAllSize,1);
+	_ASSERTE(pOut!=NULL);
+	memmove(pOut, cbReadBuf, cbRead);
+	_ASSERTE(pOut->nVersion==CESERVER_REQ_VER);
 
-   LPBYTE ptrData = ((LPBYTE)pOut)+cbRead;
-   nAllSize -= cbRead;
- 
-   while(nAllSize>0)
-   { 
-      //_tprintf(TEXT("%s\n"), chReadBuf);
+	LPBYTE ptrData = ((LPBYTE)pOut)+cbRead;
+	nAllSize -= cbRead;
 
-      // Break if TransactNamedPipe or ReadFile is successful
-      if(fSuccess)
-         break;
+	while(nAllSize>0)
+	{ 
+	  //_tprintf(TEXT("%s\n"), chReadBuf);
 
-      // Read from the pipe if there is more data in the message.
-      fSuccess = ReadFile( 
-         hPipe,      // pipe handle 
-         ptrData,    // buffer to receive reply 
-         nAllSize,   // size of buffer 
-         &cbRead,    // number of bytes read 
-         NULL);      // not overlapped 
+	  // Break if TransactNamedPipe or ReadFile is successful
+	  if(fSuccess)
+		 break;
 
-      // Exit if an error other than ERROR_MORE_DATA occurs.
-      if( !fSuccess && (GetLastError() != ERROR_MORE_DATA)) 
-         break;
+	  // Read from the pipe if there is more data in the message.
+	  fSuccess = ReadFile( 
+		 hPipe,      // pipe handle 
+		 ptrData,    // buffer to receive reply 
+		 nAllSize,   // size of buffer 
+		 &cbRead,    // number of bytes read 
+		 NULL);      // not overlapped 
+
+	  // Exit if an error other than ERROR_MORE_DATA occurs.
+	  if( !fSuccess && (GetLastError() != ERROR_MORE_DATA)) 
+		 break;
 	  ptrData += cbRead;
 	  nAllSize -= cbRead;
-   }
+	}
 
-   _ASSERT(nAllSize==0);
+	_ASSERTE(nAllSize==0);
 
-   CloseHandle(hPipe);
+	CloseHandle(hPipe);
 
-   // Теперь нужно раскидать данные про структурам
- 
-   return 0; 
+	// Теперь нужно открыть секцию - начинаем изменение переменных класса
+	CSection SCON(&csCON, &ncsTCON);
+	// Теперь нужно раскидать данные про структурам
+	LPBYTE lpCur = (LPBYTE)pOut->Data;
+	// 1
+	HWND hWnd = *((HWND*)lpCur);
+	_ASSERTE(hWnd!=NULL);
+	if (hConWnd != hWnd) {
+		hConWnd = hWnd;
+		InitHandlers(TRUE);
+	}
+	lpCur += sizeof(hWnd);
+	// 2
+	// во время чтения содержимого консоли может увеличиться количество процессов
+	// поэтому РЕАЛЬНОЕ количество - выставим после чтения и CriticalSection(csProc);
+	int dwProcCount = (int)*((DWORD*)lpCur); lpCur += sizeof(DWORD);
+	Processes.clear();
+	ConProcess prc = {0};
+	while (dwProcCount>0) {
+		prc.ProcessID = *((DWORD*)lpCur); lpCur += sizeof(DWORD);
+		Processes.push_back(prc);
+		dwProcCount--;
+	}
+	// 3
+	DWORD dwSelRc = *((DWORD*)lpCur); lpCur += sizeof(DWORD); //CONSOLE_SELECTION_INFO sel = {0}; // GetConsoleSelectionInfo
+	memmove(&m_sel, lpCur, sizeof(m_sel));
+	lpCur += sizeof(m_sel);
+	// 4
+	DWORD dwCiRc = *((DWORD*)lpCur); lpCur += sizeof(DWORD); //CONSOLE_CURSOR_INFO ci = {0}; // GetConsoleCursorInfo
+	memmove(&m_ci, lpCur, sizeof(m_ci));
+	lpCur += sizeof(cinf);
+	// 5, 6, 7
+	m_dwConsoleCP = *((DWORD*)lpCur); lpCur += sizeof(DWORD);       // GetConsoleCP()
+	m_dwConsoleOutputCP = *((DWORD*)lpCur); lpCur += sizeof(DWORD); // GetConsoleOutputCP()
+	m_dwConsoleMode = *((DWORD*)lpCur); lpCur += sizeof(DWORD);     // GetConsoleMode(hConIn, &dwConsoleMode);
+	// 8
+	DWORD dwSbiRc = *((DWORD*)lpCur); lpCur += sizeof(DWORD); //CONSOLE_SCREEN_BUFFER_INFO sbi = {{0,0}}; // GetConsoleScreenBufferInfo
+	memmove(&m_sbi, lpCur, sizeof(csbi));
+	lpCur += sizeof(csbi);
+	// 9
+	DWORD OneBufferSize = *((DWORD*)lpCur); lpCur += sizeof(DWORD);
+	TODO("Скопировать содержимое буферов, если OneBufferSize>0");
+	if (InitBuffers()) {
+		memmove(ConChar, lpCur, OneBufferSize); lpCur += OneBufferSize;
+		memmove(ConAttr, lpCur, OneBufferSize); lpCur += OneBufferSize;
+	}
+
+	// Освободить память
+	free(pOut);
+    return TRUE;
+}
+
+BOOL CVirtualConsole::InitBuffers()
+{
+	BOOL lbRc = FALSE;
+	int nNewWidth  = m_sbi.srWindow.Right - m_sbi.srWindow.Left + 1;
+	int nNewHeight = m_sbi.srWindow.Bottom - m_sbi.srWindow.Top + 1;
+
+#ifdef _DEBUG
+	_ASSERT(nNewHeight >= 5);
+#endif
+	if (!nNewWidth || !nNewHeight) {
+		Assert(nNewWidth && nNewHeight);
+		return FALSE;
+	}
+
+	// Если требуется увеличить или создать (первично) буфера
+	if (!ConChar || (TextWidth*TextHeight) < (DWORD)(nNewWidth*nNewHeight))
+	{
+		CSection SCON(&csCON, &ncsTCON);
+
+		if (nNewWidth < m_sbi.dwSize.X)
+			nNewWidth = m_sbi.dwSize.X;
+
+		if (ConChar)
+			{ Free(ConChar); ConChar = NULL; }
+		if (ConAttr)
+			{ Free(ConAttr); ConAttr = NULL; }
+		if (ConCharX)
+			{ Free(ConCharX); ConCharX = NULL; }
+		if (TextParts)
+			{ Free(TextParts); TextParts = NULL; }
+
+		MCHKHEAP
+		ConChar = (TCHAR*)Alloc((nNewWidth * nNewHeight * 2), sizeof(*ConChar));
+			_ASSERTE(ConChar!=NULL);
+		ConAttr = (WORD*)Alloc((nNewWidth * nNewHeight * 2), sizeof(*ConAttr));
+			_ASSERTE(ConAttr!=NULL);
+		ConCharX = (DWORD*)Alloc((nNewWidth * nNewHeight), sizeof(*ConCharX));
+			_ASSERTE(ConCharX!=NULL);
+		TextParts = (struct _TextParts*)Alloc((TextWidth + 2), sizeof(*TextParts));
+			_ASSERTE(TextParts!=NULL);
+
+		InitDC(false,true);
+
+		lbRc = ConChar!=NULL && ConAttr!=NULL && ConCharX!=NULL && TextParts!=NULL;
+	} else if (TextWidth!=nNewWidth || TextHeight!=nNewHeight) {
+		memset(ConChar, 0, (nNewWidth * nNewHeight * 2) * sizeof(*ConChar));
+		memset(ConAttr, 0, (nNewWidth * nNewHeight * 2) * sizeof(*ConAttr));
+		memset(ConCharX, 0, (nNewWidth * nNewHeight) * sizeof(*ConCharX));
+		memset(TextParts, 0, (TextWidth + 2) * sizeof(*TextParts));
+
+		InitDC(false,true);
+
+		lbRc = TRUE;
+	} else {
+		lbRc = TRUE;
+	}
+	MCHKHEAP
+
+	TextWidth = nNewWidth;
+	TextHeight = nNewHeight;
+
+	return lbRc;
 }

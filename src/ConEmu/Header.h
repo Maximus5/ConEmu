@@ -100,10 +100,6 @@
 #define DEBUGLOGFILE(m)
 #endif
 
-// with line number
-#define STRING2(x) #x
-#define STRING(x) STRING2(x)
-#define FILE_LINE __FILE__ "(" STRING(__LINE__) "): TODO: "
 
 #if !defined(__GNUC__)
 #pragma warning (disable : 4005)
