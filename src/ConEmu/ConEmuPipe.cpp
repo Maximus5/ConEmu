@@ -41,7 +41,7 @@ void CConEmuPipe::Close()
 	}
 	MCHKHEAP
 
-	OutputDebugString(_T("Pipe::Close()\n"));
+	DEBUGSTR(L"Pipe::Close()\n");
 }
 
 #define CREATEEVENT(fmt,h) \
@@ -73,7 +73,7 @@ BOOL CConEmuPipe::Init(LPCTSTR asOp, BOOL abSilent)
 
     if (!gConEmu.isFar() && !gConEmu.mn_TopProcessID) {
 	    gConEmu.DnDstep(_T("Pipe: FAR not active"));
-		OutputDebugString(_T("Pipe::FAR not active\n"));
+		DEBUGSTR(L"Pipe::FAR not active\n");
 	    return FALSE;
 	}
 	
@@ -91,7 +91,7 @@ BOOL CConEmuPipe::Init(LPCTSTR asOp, BOOL abSilent)
 	CREATEEVENT(CONEMUALIVE, hEventAlive);
 	CREATEEVENT(CONEMUREADY, hEventReady);
 	if (!hEventAlive || !hEventReady) {
-		OutputDebugString(_T("ConEmu plugins is not installed\n"));
+		DEBUGSTR(L"ConEmu plugins is not installed\n");
 		if (!abSilent) {
 			WCHAR szMsg[128];
 			swprintf(szMsg, _T("ConEmu plugin was not installed!\r\nFAR PID: %i"), nPID);
@@ -117,13 +117,13 @@ BOOL CConEmuPipe::Init(LPCTSTR asOp, BOOL abSilent)
 		!hEventCmd[CMD_POSTMACRO] || !hEventCmd[CMD_DEFFONT] || 
 		!hEventCmd[CMD_LANGCHANGE] || !hEventCmd[CMD_EXIT] )
 	{
-		OutputDebugString(_T("Create event failed\n"));
+		DEBUGSTR(L"Create event failed\n");
 		if (!abSilent)
 			MBoxA(_T("CreateEvent failed"));
 		return FALSE;
 	}
 
-	OutputDebugString(_T("Pipe:Initialized\n"));
+	DEBUGSTR(L"Pipe:Initialized\n");
 
 	return TRUE;
 }
@@ -145,8 +145,10 @@ BOOL CConEmuPipe::Execute(int nCmd)
 		return FALSE;
 	}
 
+	#ifdef _DEBUG
 	WCHAR szMsg[64]; swprintf(szMsg, _T("Pipe:Execute(%i)\n"), nCmd);
-	OutputDebugString(szMsg);
+	DEBUGSTR(szMsg);
+	#endif
 
 	ResetEvent(hEventAlive);
 	ResetEvent(hEventReady);
@@ -167,7 +169,7 @@ BOOL CConEmuPipe::Read(LPVOID pData, DWORD nSize, DWORD* nRead)
 
 	if (hMapping==NULL) {
 		// Нужно инициализировать FileMapping
-		OutputDebugString(_T("Starts reading result\n"));
+		DEBUGSTR(L"Starts reading result\n");
 		
 		lstrcpy(sLastOp, ms_LastOp);
 		

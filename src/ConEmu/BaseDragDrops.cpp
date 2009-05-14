@@ -275,7 +275,7 @@ CDataObject::~CDataObject()
 	if(m_pFormatEtc) delete[] m_pFormatEtc;
 	if(m_pStgMedium) delete[] m_pStgMedium;
 
-	OutputDebugString(_T("oof\n"));
+	DEBUGSTR(L"oof\n");
 }
 
 //

@@ -957,7 +957,7 @@ void SendTabs(int tabCount, BOOL abWritePipe/*=FALSE*/)
 #ifdef _DEBUG
 	WCHAR szDbg[100]; wsprintf(szDbg, L"-SendTabs(%i,%s), prev=%i\n", tabCount, 
 		abWritePipe ? L"Transfer" : L"Post", gnCurTabCount);
-	OutputDebugString(szDbg);
+	OUTPUTDEBUGSTRING(szDbg);
 #endif
 	if (ConEmuHwnd && IsWindow(ConEmuHwnd) && tabs) {
 		COPYDATASTRUCT cds;

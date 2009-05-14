@@ -13,7 +13,7 @@
 
 #define CES_NTVDM 0x10
 #define CEC_INITTITLE       L"ConEmu"
-#define CE_NEEDUPDATE       L"ConEmuNeedUpdate%u" // ConEmuC_PID - изменилось содержимое консольного окна
+//#define CE_NEEDUPDATE       L"ConEmuNeedUpdate%u" // ConEmuC_PID - изменилось содержимое консольного окна
 
 #define CESERVERPIPENAME    L"\\\\%s\\pipe\\ConEmuSrv%u"
 #define CESERVERINPUTNAME   L"\\\\%s\\pipe\\ConEmuSrvInput%u"

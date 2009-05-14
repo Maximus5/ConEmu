@@ -89,6 +89,7 @@ public:
 		TCHAR Name[64]; // чтобы полная инфа об ошибке влезала
 	};
 	std::vector<ConProcess> Processes;
+	CRITICAL_SECTION csPRC; DWORD ncsTPRC;
 public:
     //HANDLE  hConOut(BOOL abAllowRecreate=FALSE);
 	//HANDLE  hConIn();
@@ -146,6 +147,7 @@ public:
 	DWORD GetConsoleMode() { return m_dwConsoleMode; };
 	DWORD GetConsoleScreenBufferInfo(CONSOLE_SCREEN_BUFFER_INFO *sbi) { *sbi = m_sbi; };
 	void SyncConsole2Window();
+	void OnWinEvent(DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime);
 
 protected:
 	DWORD mn_ConEmuC_PID; HANDLE mh_ConEmuC; TCHAR ms_ConEmuC_Pipe[MAX_PATH];

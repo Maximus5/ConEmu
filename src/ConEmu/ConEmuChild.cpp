@@ -94,14 +94,16 @@ LRESULT CALLBACK CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam
     case WM_INPUTLANGCHANGE:
     case WM_INPUTLANGCHANGEREQUEST:
 	{
+		#ifdef _DEBUG
 		if (IsDebuggerPresent()) {
 			WCHAR szMsg[128];
 			wsprintf(szMsg, L"InChild %s(CP:%i, HKL:0x%08X)\n",
 				(messg == WM_INPUTLANGCHANGE) ? L"WM_INPUTLANGCHANGE" : L"WM_INPUTLANGCHANGEREQUEST",
 				wParam, lParam);
-			OutputDebugString(szMsg);
+			DEBUGSTR(szMsg);
 
 		}
+		#endif
 		result = DefWindowProc(hWnd, messg, wParam, lParam);
 	} break;
 
@@ -121,12 +123,13 @@ LRESULT CALLBACK CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam
 #endif
 
     default:
+		// Сообщение приходит из ConEmuPlugin
 		if (messg == mn_MsgTabChanged) {
 			if (gSet.isTabs) {
 				//изменились табы, их нужно перечитать
 				#ifdef MSGLOGGER
 					WCHAR szDbg[128]; swprintf(szDbg, L"Tabs:Notified(%i)\n", wParam);
-					OutputDebugStringW(szDbg);
+					DEBUGSTR(szDbg);
 				#endif
 				#pragma message (__FILE__ "(" STRING(__LINE__) "): TODO: здесь хорошо бы вместо OnTimer реально обновить mn_TopProcessID")
 				// иначе во время запуска PID фара еще может быть не известен...

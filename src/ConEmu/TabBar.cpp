@@ -69,6 +69,11 @@ void TabBarClass::Retrieve()
 	if (gSet.isTabs == 0)
 		return; // если табов нет ¬ќќЅў≈ - и читать ничего не нужно
 
+	if (!gConEmu.isFar() && !gConEmu.mn_TopProcessID) {
+		Reset();
+		return;
+	}
+
 	CConEmuPipe pipe;
 	if (pipe.Init(_T("TabBarClass::Retrieve"), TRUE))
 	{
@@ -277,7 +282,7 @@ void TabBarClass::Update(ConEmuTab* tabs, int tabsCount)
 
 #ifdef MSGLOGGER
 	WCHAR szDbg[128]; swprintf(szDbg, L"TabBarClass::Update(%i)\n", tabsCount);
-	OutputDebugStringW(szDbg);
+	DEBUGSTR(szDbg);
 #endif
 
 	int i;

@@ -8,7 +8,7 @@
 CVirtualConsole* CVirtualConsole::Create()
 {
     CVirtualConsole* pCon = new CVirtualConsole();
-    #pragma message (__FILE__ "(" STRING(__LINE__) "): TODO: CVirtualConsole::Create - создать процесс")
+    TODO("CVirtualConsole::Create - создать процесс")
     
     if (gSet.nAttachPID) {
         // Attach - only once
@@ -52,13 +52,14 @@ CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
     mh_ForceReadEvent = CreateEvent(NULL,FALSE,FALSE,NULL);
     mh_EndUpdateEvent = CreateEvent(NULL,FALSE,FALSE,NULL);
 	mh_Sync2WindowEvent = CreateEvent(NULL,FALSE,FALSE,NULL);
-	mh_ConChanged = NULL;
+	mh_ConChanged = CreateEvent(NULL,FALSE,FALSE,NULL);
     //mh_ReqSetSize = CreateEvent(NULL,FALSE,FALSE,NULL);
 	//mh_ReqSetSizeEnd = CreateEvent(NULL,FALSE,FALSE,NULL);
     //m_ReqSetSize = MakeCoord ( 0,0 );
 
     //InitializeCriticalSection(&csDC); ncsTDC = 0;
     InitializeCriticalSection(&csCON); ncsTCON = 0;
+	InitializeCriticalSection(&csPRC); ncsTPRC = 0;
         
     //pVCon = this;
     //mh_ConOut = NULL; mb_ConHandleCreated = FALSE;
@@ -161,6 +162,7 @@ CVirtualConsole::~CVirtualConsole()
     
     //DeleteCriticalSection(&csDC);
     DeleteCriticalSection(&csCON);
+	DeleteCriticalSection(&csPRC);
 }
 
 /*HANDLE CVirtualConsole::hConIn()
@@ -616,7 +618,7 @@ bool CVirtualConsole::Update(bool isForce, HDC *ahDc)
 		return false;
 	}
 
-	RetrieveConsoleInfo();
+	//RetrieveConsoleInfo();
 
     #ifdef MSGLOGGER
     DcDebug dbg(&hDC, ahDc); // для отладки - рисуем сразу на канвасе окна
@@ -1843,11 +1845,11 @@ BOOL CVirtualConsole::AttachPID(DWORD dwPID)
 
     #ifdef MSGLOGGER
         TCHAR szMsg[100]; wsprintf(szMsg, _T("Attach to process %i"), (int)dwPID);
-        OutputDebugString(szMsg);
+        DEBUGSTR(szMsg);
     #endif
     BOOL lbRc = AttachConsole(dwPID);
     if (!lbRc) {
-        OutputDebugString(_T(" - failed\n"));
+        DEBUGSTR(_T(" - failed\n"));
         BOOL lbFailed = TRUE;
         DWORD dwErr = GetLastError();
         if (/*dwErr==0x1F || dwErr==6 &&*/ dwPID == -1)
@@ -1873,14 +1875,14 @@ BOOL CVirtualConsole::AttachPID(DWORD dwPID)
             return FALSE;
         }
     }
-    OutputDebugString(_T(" - OK"));
+    DEBUGSTR(_T(" - OK"));
 
     InitHandlers(FALSE);
 
     // Попытаться дернуть плагин для установки шрифта.
     CConEmuPipe pipe;
     
-    OutputDebugString(_T("CheckProcesses\n"));
+    DEBUGSTR(_T("CheckProcesses\n"));
     gConEmu.CheckProcesses(0,TRUE);
     
     if (pipe.Init(_T("DefFont.in.attach"), TRUE))
@@ -2123,6 +2125,7 @@ DWORD CVirtualConsole::StartProcessThread(LPVOID lpParameter)
 
 	DWORD nElapse = max(10,gSet.nMainTimerElapse);
     
+	TODO("Нить не завершается при F10 в фаре - процессы пока не инициализированы...")
     while (TRUE/*bLoop*/)
     {
 	    gSet.Performance(tPerfInterval, TRUE); // именно обратный отсчет. Мы смотрим на промежуток МЕЖДУ таймерами
@@ -2330,30 +2333,30 @@ BOOL CVirtualConsole::StartProcess()
 			MCHKHEAP
 
             #ifdef MSGLOGGER
-            OutputDebugString(psCurCmd);OutputDebugString(_T("\n"));
+            DEBUGSTR(psCurCmd);DEBUGSTR(_T("\n"));
             #endif
             try {
                 lbRc = CreateProcess(NULL, psCurCmd, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
-                OutputDebugString(_T("CreateProcess finished\n"));
+                DEBUGSTR(_T("CreateProcess finished\n"));
             } catch(...) {
                 lbRc = FALSE;
             }
             if (lbRc)
             {
-                OutputDebugString(_T("CreateProcess OK\n"));
+                DEBUGSTR(_T("CreateProcess OK\n"));
                 lbRc = TRUE;
 
                 /*if (!AttachPID(pi.dwProcessId)) {
-                    OutputDebugString(_T("AttachPID failed\n"));
+                    DEBUGSTR(_T("AttachPID failed\n"));
                     return FALSE;
                 }
-                OutputDebugString(_T("AttachPID OK\n"));*/
+                DEBUGSTR(_T("AttachPID OK\n"));*/
 
                 break; // OK, запустили
             } else {
                 //Box("Cannot execute the command.");
                 DWORD dwLastError = GetLastError();
-                OutputDebugString(_T("CreateProcess failed\n"));
+                DEBUGSTR(_T("CreateProcess failed\n"));
                 int nLen = _tcslen(psCurCmd);
                 TCHAR* pszErr=(TCHAR*)Alloc(nLen+100,sizeof(TCHAR));
                 
@@ -2403,9 +2406,9 @@ BOOL CVirtualConsole::StartProcess()
 		mn_ConEmuC_PID = pi.dwProcessId;
 		mh_ConEmuC = pi.hProcess; pi.hProcess = NULL;
 		
-		// Событие "изменения" консоли
-		wsprintfW(ms_ConEmuC_Pipe, CE_NEEDUPDATE, mn_ConEmuC_PID);
-		mh_ConChanged = CreateEvent ( NULL, FALSE, FALSE, ms_ConEmuC_Pipe );
+		// Событие "изменения" консоли //2009-05-14 Теперь события обрабатываются в GUI
+		//wsprintfW(ms_ConEmuC_Pipe, CE_NEEDUPDATE, mn_ConEmuC_PID);
+		//mh_ConChanged = CreateEvent ( NULL, FALSE, FALSE, ms_ConEmuC_Pipe );
 		
 		// Имя пайпа для управления ConEmuC
 		wsprintfW(ms_ConEmuC_Pipe, CESERVERPIPENAME, L".", mn_ConEmuC_PID);
@@ -3019,10 +3022,21 @@ LPCTSTR CVirtualConsole::GetTitle()
 	return Title;
 }
 
+void CVirtualConsole::OnWinEvent(DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime)
+{
+	_ASSERTE(hwnd!=NULL && hConWnd!=NULL && hwnd==hConWnd);
+	
+	TODO("!!! Сделать обработку событий и население Processes");
+}
+
 #define BUFSIZE 512
  
 BOOL CVirtualConsole::RetrieveConsoleInfo()
-{ 
+{
+	TODO("!!! WinEvent нужно перенести в ConEmu. Наиболее частую операцию по изменению курсора можно обрабатывать без участия ConEmuC");
+
+	TODO("!!! Необходимо сделать флажок, для выбора между CECMD_GETFULLINFO/CECMD_GETSHORTINFO");
+
 	BOOL lbRc = FALSE;
 	HANDLE hPipe = NULL; 
 	CESERVER_REQ in={0}, *pOut=NULL;
@@ -3030,6 +3044,10 @@ BOOL CVirtualConsole::RetrieveConsoleInfo()
 	BOOL fSuccess;
 	DWORD cbRead, dwMode, dwErr;
 
+	#ifdef _DEBUG
+	DWORD dwStartTick = GetTickCount(), dwEndTick, dwDelta;
+	DEBUGSTR(L"CVirtualConsole::RetrieveConsoleInfo");
+	#endif
 
 	// Try to open a named pipe; wait for it, if necessary. 
 	while (1) 
@@ -3065,8 +3083,10 @@ BOOL CVirtualConsole::RetrieveConsoleInfo()
 	  if (!WaitNamedPipe(ms_ConEmuC_Pipe, 1000) ) 
 	  {
 		dwErr = WaitForSingleObject(mh_ConEmuC, 100);
-		if (dwErr = WAIT_OBJECT_0)
+		if (dwErr = WAIT_OBJECT_0) {
+			DEBUGSTR(L" - FAILED!\n");
 			return FALSE;
+		}
 	    //DisplayLastError(L"WaitNamedPipe failed"); 
 		//return 0;
 	  }
@@ -3081,6 +3101,7 @@ BOOL CVirtualConsole::RetrieveConsoleInfo()
 	  NULL);    // don't set maximum time 
 	if (!fSuccess) 
 	{
+	  DEBUGSTR(L" - FAILED!\n");
 	  DisplayLastError(L"SetNamedPipeHandleState failed");
 	  return 0;
 	}
@@ -3100,12 +3121,14 @@ BOOL CVirtualConsole::RetrieveConsoleInfo()
 
 	if (!fSuccess && (GetLastError() != ERROR_MORE_DATA)) 
 	{
+	  DEBUGSTR(L" - FAILED!\n");
 	  DisplayLastError(L"TransactNamedPipe failed"); 
 	  return 0;
 	}
 
 	int nAllSize = *((DWORD*)cbReadBuf);
 	if (nAllSize==0) {
+	   DEBUGSTR(L" - FAILED!\n");
 	   DisplayLastError(L"Empty data recieved from server", 0);
 	   return 0;
 	}
@@ -3193,6 +3216,13 @@ BOOL CVirtualConsole::RetrieveConsoleInfo()
 
 	// Освободить память
 	free(pOut);
+
+	#ifdef _DEBUG
+	dwEndTick = GetTickCount();
+	dwDelta = dwEndTick - dwStartTick;
+	WCHAR szText[64]; wsprintfW(szText, L" - SUCCEEDED (%i ms)!\n", dwDelta);
+	DEBUGSTR(szText);
+	#endif
     return TRUE;
 }
 

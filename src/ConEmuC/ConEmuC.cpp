@@ -12,53 +12,87 @@
 	#include <crtdbg.h>
 #endif
 
+#ifdef USE_WIN_EVENT
+#ifndef EVENT_CONSOLE_CARET
+#define EVENT_CONSOLE_CARET             0x4001
+#define EVENT_CONSOLE_UPDATE_REGION     0x4002
+#define EVENT_CONSOLE_UPDATE_SIMPLE     0x4003
+#define EVENT_CONSOLE_UPDATE_SCROLL     0x4004
+#define EVENT_CONSOLE_LAYOUT            0x4005
+#define EVENT_CONSOLE_START_APPLICATION 0x4006
+#define EVENT_CONSOLE_END_APPLICATION   0x4007
+#endif
+#endif
+
 #define BUFSIZE 4096
  
 DWORD WINAPI InstanceThread(LPVOID);
 DWORD WINAPI ServerThread(LPVOID lpvParam);
 DWORD WINAPI InputThread(LPVOID lpvParam);
 BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out); 
+
+#ifdef USE_WIN_EVENT
+DWORD WINAPI WinEventThread(LPVOID lpvParam);
 void CALLBACK WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime);
+#endif
 
 wchar_t szPipename[MAX_PATH], szInputname[MAX_PATH];
 HANDLE  hConIn = NULL;
+#ifdef USE_WIN_EVENT
 HWINEVENTHOOK hWinHook = NULL;
+#endif
 HWND hConWnd = NULL;
+#ifdef USE_WIN_EVENT
 HANDLE hGlblUpdateEvt = NULL;
+#endif
 HANDLE hExitEvent = NULL;
 BOOL bAlwaysConfirmExit = FALSE;
+#ifdef USE_WIN_EVENT
 BOOL bContentsChanged = TRUE; // Первое чтение параметров должно быть ПОЛНЫМ
-CRITICAL_SECTION csConBuf, csProc;
+CRITICAL_SECTION csProc;
+#endif
+CRITICAL_SECTION csConBuf;
 wchar_t* psChars = NULL;
 WORD* pnAttrs = NULL;
 DWORD nBufCharCount = NULL;
 
+#ifdef USE_WIN_EVENT
 std::vector<DWORD> nProcesses;
+#endif
 
 //#define CES_NTVDM 0x10 -- common.hpp
 DWORD dwActiveFlags = 0;
 
 int main()
 {
+	TODO("printf ошибок бессмысленен, т.к. ConEmu их все-равно не увидит...");
+	TODO("можно при ошибках показать консоль, предварительно поставив 80x25 и установив крупный шрифт");
+
 	int iRc = 100;
-	wchar_t sComSpec[MAX_PATH], sName[64];
+	wchar_t sComSpec[MAX_PATH];
+	#ifdef USE_WIN_EVENT
+	wchar_t sName[64];
+	#endif
 	wchar_t* psFilePart;
 	wchar_t* psCmdLine = GetCommandLineW();
 	size_t nCmdLine = lstrlenW(psCmdLine);
 	wchar_t* psNewCmd = NULL;
-    DWORD dwThreadId, dwPID;
-    HANDLE hThread; 
+    DWORD dwThreadId, dwPID, dwWinEventThread = 0;
+    HANDLE hThread = NULL, hWinEventThread = NULL, hWait[2]={NULL,NULL};
 	BOOL bViaCmdExe = TRUE;
 	PROCESS_INFORMATION pi; memset(&pi, 0, sizeof(pi));
 	STARTUPINFOW si; memset(&si, 0, sizeof(si)); si.cb = sizeof(si);
 	DWORD dwErr = 0;
+	BOOL lbRc = FALSE;
 
 	dwPID = GetCurrentProcessId();
 	wsprintfW(szPipename, CESERVERPIPENAME, L".", dwPID);
 	wsprintfW(szInputname, CESERVERINPUTNAME, L".", dwPID);
 	
 	InitializeCriticalSection(&csConBuf);
+	#ifdef USE_WIN_EVENT
 	InitializeCriticalSection(&csProc);
+	#endif
 	hConWnd = GetConsoleWindow();
 	_ASSERTE(hConWnd!=NULL);
 	if (!hConWnd) {
@@ -72,6 +106,7 @@ int main()
 		printf("CreateEvent() failed, ErrCode=0x%08X\n", dwErr); 
 		iRc=109; goto wrap;
 	}
+	#ifdef USE_WIN_EVENT
 	wsprintfW(sName, CE_NEEDUPDATE, dwPID);
 	hGlblUpdateEvt = CreateEvent(NULL, FALSE, FALSE, sName);
 	_ASSERTE(hGlblUpdateEvt!=NULL);
@@ -80,6 +115,7 @@ int main()
 		printf("CreateEvent(ConEmuNeedUpdate%u) failed, ErrCode=0x%08X\n", (DWORD)hConWnd, dwErr); 
 		iRc=110; goto wrap;
 	}
+	#endif
 
 #ifdef _DEBUG
 	//if (!IsDebuggerPresent()) MessageBox(0,L"Loaded",L"ComEmuC",0);
@@ -151,20 +187,41 @@ int main()
 
 	TODO("Нити обработки команд и SetWinEventHook нужно выполнять только в корневом ConEmuC, а не в ComSpec");
 
+	#ifdef USE_WIN_EVENT
 	#ifdef _DEBUG
 		//if (!IsDebuggerPresent()) MessageBox(0,L"Debug",L"ConEmuC",0);
 	#endif
-	TODO("The client thread that calls SetWinEventHook must have a message loop in order to receive events.");
-	TODO("Вынести в отдельную нить!");
-	TODO("WINEVENT_SKIPOWNPROCESS?");
-    hWinHook = SetWinEventHook(EVENT_CONSOLE_START_APPLICATION/*EVENT_CONSOLE_CARET*/,EVENT_CONSOLE_END_APPLICATION,
-        NULL, WinEventProc, 0,0, WINEVENT_OUTOFCONTEXT /*| WINEVENT_SKIPOWNPROCESS ?*/);
-	dwErr = GetLastError();
-	if (!hWinHook) {
+	// The client thread that calls SetWinEventHook must have a message loop in order to receive events.");
+	hWait[0] = CreateEvent(NULL,FALSE,FALSE,NULL);
+	_ASSERTE(hWait[0]!=NULL);
+	hWinEventThread = CreateThread( 
+		NULL,              // no security attribute 
+		0,                 // default stack size 
+		WinEventThread,      // thread proc
+		hWait[0],              // thread parameter 
+		0,                 // not suspended 
+		&dwWinEventThread);      // returns thread ID 
+	if (hWinEventThread == NULL) 
+	{
 		dwErr = GetLastError();
-		printf("SetWinEventHook failed, ErrCode=0x%08X\n", dwErr); 
+		printf("CreateThread(WinEventThread) failed, ErrCode=0x%08X\n", dwErr); 
+		CloseHandle(hWait[0]); hWait[0]=NULL; hWait[1]=NULL;
 		iRc=106; goto wrap;
 	}
+	hWait[1] = hWinEventThread;
+	dwErr = WaitForMultipleObjects(2, hWait, FALSE, 10000);
+	CloseHandle(hWait[0]); hWait[0]=NULL; hWait[1]=NULL;
+	if (!hWinHook) {
+		_ASSERT(dwErr == WAIT_TIMEOUT);
+		if (dwErr == WAIT_TIMEOUT) { // по идее этого быть не должно
+			TerminateThread(hWinEventThread,100);
+			CloseHandle(hWinEventThread); hWinEventThread = NULL;
+		}
+		// Ошибка на экран уже выведена, нить уже завершена, закрыть дескриптор
+		CloseHandle(hWinEventThread); hWinEventThread = NULL;
+		iRc=111; goto wrap;
+	}
+	#endif
 
 	// Запустить нить обработки команд	
 	hThread = CreateThread( 
@@ -187,7 +244,7 @@ int main()
 	
 	
 	
-	BOOL lbRc = CreateProcessW(NULL, psNewCmd, NULL,NULL, TRUE, NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi);
+	lbRc = CreateProcessW(NULL, psNewCmd, NULL,NULL, TRUE, NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi);
 	dwErr = GetLastError();
 	if (!lbRc)
 	{
@@ -199,29 +256,43 @@ int main()
 	// Ожидаем завершения процесса
 	WaitForSingleObject(pi.hProcess, INFINITE);
 
-	//TODO: Вообще-то это нужно делать более корректно, и завершаться только когда процессов в консоли более не останется
+	TODO("Вообще-то это нужно делать более корректно, и завершаться только когда процессов в консоли более не останется");
 
 	iRc = 0;
 wrap:
 	// Закрываем дескрипторы и выходим
+	#ifdef USE_WIN_EVENT
+	if (dwWinEventThread && hWinEventThread) {
+		PostThreadMessage(dwWinEventThread, WM_QUIT, 0, 0);
+		// Подождем немножко, пока нить сама завершится
+		if (WaitForSingleObject(hWinEventThread, 500) != WAIT_OBJECT_0) {
+			TerminateThread ( hWinEventThread, 100 ); // раз корректно не хочет...
+		}
+		CloseHandle(hWinEventThread); hWinEventThread = NULL;
+	}
+	#endif
 	if (pi.hProcess) CloseHandle(pi.hProcess); 
 	if (pi.hThread) CloseHandle(pi.hThread);
 	if (hThread) {
-		TerminateThread ( hThread, 100 ); //TODO: Сделать корректное завершение
-		CloseHandle(hThread);
+		TerminateThread ( hThread, 100 ); TODO("Сделать корректное завершение");
+		CloseHandle(hThread); hThread = NULL;
 	}
 	//
 	if (hConIn) {
 		CloseHandle(hConIn); hConIn = NULL;
 	}
+	#ifdef USE_WIN_EVENT
     if (hWinHook) {
         UnhookWinEvent(hWinHook); hWinHook = NULL;
     }
+	#endif
 	if (psNewCmd) { delete psNewCmd; psNewCmd = NULL; }
 	if (psChars) { free(psChars); psChars = NULL; }
 	if (pnAttrs) { free(pnAttrs); pnAttrs = NULL; }
 	DeleteCriticalSection(&csConBuf);
+	#ifdef USE_WIN_EVENT
 	DeleteCriticalSection(&csProc);
+	#endif
 
 	if (iRc!=0 || bAlwaysConfirmExit) {
 		printf("Press any key to close console");
@@ -444,7 +515,9 @@ DWORD ReadConsoleData(HANDLE hConOut, CONSOLE_SCREEN_BUFFER_INFO &sbi) // sbi ин
 {
 	BOOL lbRc = TRUE;
 	DWORD cbDataSize = 0; // Size in bytes of ONE buffer
+	#ifdef USE_WIN_EVENT
 	bContentsChanged = FALSE;
+	#endif
 	EnterCriticalSection(&csConBuf);
 
 	SHORT TextWidth=0, TextHeight=0;
@@ -523,10 +596,18 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 {
 	BOOL lbRc = FALSE;
 	HANDLE hConOut = NULL;
+	#ifndef USE_WIN_EVENT
+	BOOL bContentsChanged = FALSE;
+	#endif
 
 	switch (in.nCmd) {
+		case CECMD_GETSHORTINFO:
 		case CECMD_GETFULLINFO:
 		{
+			#ifndef USE_WIN_EVENT
+			bContentsChanged = (in.nCmd == CECMD_GETFULLINFO);
+			#endif
+
 			hConOut = CreateFile(L"CONOUT$", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_READ,
 			            0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
 			_ASSERT(hConOut!=INVALID_HANDLE_VALUE);
@@ -541,10 +622,14 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 			// 2
 			// во время чтения содержимого консоли может увеличиться количество процессов
 			// поэтому РЕАЛЬНОЕ количество - выставим после чтения и CriticalSection(csProc);
+			#ifdef USE_WIN_EVENT
 			EnterCriticalSection(&csProc);
 			DWORD dwProcCount = nProcesses.size()+20;
 			LeaveCriticalSection(&csProc);
 			dwAllSize += sizeof(DWORD)*(dwProcCount+1); // PID процессов + их количество
+			#else
+			dwAllSize += sizeof(DWORD);
+			#endif
 			// 3
 			DWORD dwSelRc = 0; CONSOLE_SELECTION_INFO sel = {0}; // GetConsoleSelectionInfo
 			dwAllSize += sizeof(dwSelRc)+sizeof(sel);
@@ -596,6 +681,9 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 			// 2
 			// во время чтения содержимого консоли может увеличиться количество процессов
 			// поэтому РЕАЛЬНОЕ количество - выставим после чтения и CriticalSection(csProc);
+			#ifndef USE_WIN_EVENT
+			*((DWORD*)lpCur) = 0; lpCur += sizeof(DWORD);
+			#else
 			EnterCriticalSection(&csProc);
 			DWORD dwTestCount = nProcesses.size();
 			_ASSERTE(dwTestCount<=dwProcCount);
@@ -606,6 +694,7 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 				lpCur += sizeof(DWORD);
 			}
 			LeaveCriticalSection(&csProc);
+			#endif
 
 			// 3
 			if (!GetConsoleSelectionInfo(&sel)) { dwSelRc = GetLastError(); if (!dwSelRc) dwSelRc = -1; }
@@ -657,6 +746,39 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 	return lbRc;
 }
 
+#ifdef USE_WIN_EVENT
+DWORD WINAPI WinEventThread(LPVOID lpvParam)
+{
+	DWORD dwErr = 0;
+	HANDLE hStartedEvent = (HANDLE)lpvParam;
+	
+	// "Ловим" все консольные события
+    hWinHook = SetWinEventHook(EVENT_CONSOLE_CARET,EVENT_CONSOLE_END_APPLICATION,
+        NULL, WinEventProc, 0,0, WINEVENT_OUTOFCONTEXT /*| WINEVENT_SKIPOWNPROCESS ?*/);
+	dwErr = GetLastError();
+	if (!hWinHook) {
+		dwErr = GetLastError();
+		printf("SetWinEventHook failed, ErrCode=0x%08X\n", dwErr); 
+		SetEvent(hStartedEvent);
+		return 100;
+	}
+	SetEvent(hStartedEvent); hStartedEvent = NULL; // здесь он более не требуется
+
+    MSG lpMsg;
+    while (GetMessage(&lpMsg, NULL, 0, 0))
+    {
+		TranslateMessage(&lpMsg);
+		DispatchMessage(&lpMsg);
+    }
+    
+    // Закрыть хук
+    if (hWinHook) {
+        UnhookWinEvent(hWinHook); hWinHook = NULL;
+    }
+    
+	return 0;
+}
+
 //Minimum supported client Windows 2000 Professional 
 //Minimum supported server Windows 2000 Server 
 void CALLBACK WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime)
@@ -673,6 +795,11 @@ void CALLBACK WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, 
 		//The idObject parameter contains the process identifier of the newly created process. 
 		//If the application is a 16-bit application, the idChild parameter is CONSOLE_APPLICATION_16BIT and idObject is the process identifier of the NTVDM session associated with the console.
 
+		#ifdef _DEBUG
+		WCHAR szDbg[128]; wsprintfW(szDbg, L"EVENT_CONSOLE_START_APPLICATION(PID=%i%s)\n", idObject, (idChild == CONSOLE_APPLICATION_16BIT) ? L" 16bit" : L"");
+		OutputDebugString(szDbg);
+		#endif
+
 		EnterCriticalSection(&csProc);
 		nProcesses.push_back(idObject);
 		LeaveCriticalSection(&csProc);
@@ -686,6 +813,11 @@ void CALLBACK WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, 
     case EVENT_CONSOLE_END_APPLICATION:
 		//A console process has exited. 
 		//The idObject parameter contains the process identifier of the terminated process.
+
+		#ifdef _DEBUG
+		wsprintfW(szDbg, L"EVENT_CONSOLE_END_APPLICATION(PID=%i%s)\n", idObject, (idChild == CONSOLE_APPLICATION_16BIT) ? L" 16bit" : L"");
+		OutputDebugString(szDbg);
+		#endif
 
 		{
 			std::vector<DWORD>::iterator iter;
@@ -706,23 +838,66 @@ void CALLBACK WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, 
 			LeaveCriticalSection(&csProc);
 		}
         return; // обновление экрана не требуется
+
+	case EVENT_CONSOLE_UPDATE_REGION: // 0x4002 
+		{
+		//More than one character has changed. 
+		//The idObject parameter is a COORD structure that specifies the start of the changed region. 
+		//The idChild parameter is a COORD structure that specifies the end of the changed region.
+		#ifdef _DEBUG
+		COORD crStart, crEnd; memmove(&crStart, &idObject, sizeof(idObject)); memmove(&crEnd, &idChild, sizeof(idChild));
+		WCHAR szDbg[128]; wsprintfW(szDbg, L"EVENT_CONSOLE_UPDATE_REGION({%i, %i} - {%i, %i})\n", crStart.X,crStart.Y, crEnd.X,crEnd.Y);
+		OutputDebugString(szDbg);
+		#endif
+		} break;
+	case EVENT_CONSOLE_UPDATE_SCROLL: //0x4004
+		{
+		//The console has scrolled.
+		//The idObject parameter is the horizontal distance the console has scrolled. 
+		//The idChild parameter is the vertical distance the console has scrolled.
+		#ifdef _DEBUG
+		WCHAR szDbg[128]; wsprintfW(szDbg, L"EVENT_CONSOLE_UPDATE_SCROLL(X=%i, Y=%i)\n", idObject, idChild);
+		OutputDebugString(szDbg);
+		#endif
+		} break;
+	case EVENT_CONSOLE_UPDATE_SIMPLE: //0x4003
+		{
+		//A single character has changed.
+		//The idObject parameter is a COORD structure that specifies the character that has changed.
+		//The idChild parameter specifies the character in the high word and the character attributes in the low word.
+		#ifdef _DEBUG
+		COORD crWhere; memmove(&crWhere, &idObject, sizeof(idObject));
+		WCHAR ch = (WCHAR)HIWORD(idChild); WORD wA = LOWORD(idChild);
+		WCHAR szDbg[128]; wsprintfW(szDbg, L"EVENT_CONSOLE_UPDATE_SIMPLE({%i, %i} '%c'(\\x%04X) A=%i)\n", crWhere.X,crWhere.Y, ch, ch, wA);
+		OutputDebugString(szDbg);
+		#endif
+		} break;
+	case EVENT_CONSOLE_CARET: //0x4001
+		{
+		//The console caret has moved.
+		//The idObject parameter is one or more of the following values:
+		//		CONSOLE_CARET_SELECTION or CONSOLE_CARET_VISIBLE.
+		//The idChild parameter is a COORD structure that specifies the cursor's current position.
+		#ifdef _DEBUG
+		COORD crWhere; memmove(&crWhere, &idChild, sizeof(idChild));
+		WCHAR ch = (WCHAR)HIWORD(idChild); WORD wA = LOWORD(idChild);
+		WCHAR szDbg[128]; wsprintfW(szDbg, L"EVENT_CONSOLE_CARET({%i, %i} Sel=%c, Vis=%c\n", crWhere.X,crWhere.Y, 
+			((idObject & CONSOLE_CARET_SELECTION)==CONSOLE_CARET_SELECTION) ? L'Y' : L'N',
+			((idObject & CONSOLE_CARET_VISIBLE)==CONSOLE_CARET_VISIBLE) ? L'Y' : L'N');
+		OutputDebugString(szDbg);
+		#endif
+		} break;
+	case EVENT_CONSOLE_LAYOUT: //0x4005
+		{
+		//The console layout has changed.
+		OutputDebugString(L"EVENT_CONSOLE_LAYOUT\n");
+		} break;
     }
-	/*
-	EVENT_CONSOLE_UPDATE_REGION 
-0x4002 More than one character has changed. The idObject parameter is a COORD structure that specifies the start of the changed region. The idChild parameter is a COORD structure that specifies the end of the changed region.
-	EVENT_CONSOLE_UPDATE_SCROLL 
-0x4004 The console has scrolled. The idObject parameter is the horizontal distance the console has scrolled. The idChild parameter is the vertical distance the console has scrolled.
-	EVENT_CONSOLE_UPDATE_SIMPLE 
-0x4003 A single character has changed. The idObject parameter is a COORD structure that specifies the character that has changed. The idChild parameter specifies the character in the high word and the character attributes in the low word.
-	EVENT_CONSOLE_CARET 
-0x4001 The console caret has moved. The idObject parameter is one or more of the following values: CONSOLE_CARET_SELECTION or CONSOLE_CARET_VISIBLE.
-The idChild parameter is a COORD structure that specifies the cursor's current position.
-	EVENT_CONSOLE_LAYOUT 
-0x4005 The console layout has changed.
-	*/
+
 	// Т.е. изменилось содержимое консоли - уведомить GUI часть
 	if (event != EVENT_CONSOLE_CARET) { // Если изменилось только положение курсора - перечитывать содержимое не нужно
 		bContentsChanged = TRUE;
 	}
 	SetEvent(hGlblUpdateEvt);
 }
+#endif
