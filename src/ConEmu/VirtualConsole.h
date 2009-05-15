@@ -1,6 +1,25 @@
 #pragma once
 #include "kl_parts.h"
 
+#define CES_CONMANACTIVE 0x01
+#define CES_TELNETACTIVE 0x02
+#define CES_FARACTIVE 0x04
+#define CES_CONALTERNATIVE 0x08
+#define CES_PROGRAMS (0x0F - CES_CONMANACTIVE)
+
+//#define CES_NTVDM 0x10 -- common.hpp
+#define CES_PROGRAMS2 0xFF
+
+#define CES_FILEPANEL 0x100
+#define CES_TEMPPANEL 0x200
+#define CES_PLUGINPANEL 0x400
+#define CES_EDITOR 0x1000
+#define CES_VIEWER 0x2000
+#define CES_COPYING 0x4000
+#define CES_MOVING 0x8000
+#define CES_FARFLAGS 0xFFFF00
+//... and so on
+
 // Undocumented console message
 #define WM_SETCONSOLEINFO			(WM_USER+201)
 // and others
@@ -17,6 +36,7 @@
 #define MAX_TITLE_SIZE 0x400
 
 #pragma pack(push, 1)
+
 
 //
 //	Structure to send console via WM_SETCONSOLEINFO
@@ -57,6 +77,17 @@ typedef struct _CONSOLE_INFO
 
 #pragma pack(pop)
 
+struct ConProcess {
+	DWORD ProcessID, ParentPID;
+	bool  IsFar;
+	bool  IsTelnet; // может быть включен ВМЕСТЕ с IsFar, если удалось подцепится к фару через сетевой пайп
+	bool  IsNtvdm;  // 16bit приложения
+	bool  IsCmd;    // значит фар выполняет команду
+	bool  NameChecked, RetryName;
+	bool  Alive;
+	TCHAR Name[64]; // чтобы полная инфа об ошибке влезала
+};
+
 class CVirtualConsole
 {
 public:
@@ -79,17 +110,6 @@ private:
 		RECT lastRect;
 		UINT lastSize; // предыдущая высота курсора (в процентах)
 	} Cursor;
-public:
-	struct ConProcess {
-		DWORD ProcessID, ParentPID;
-		bool  IsFar;
-		bool  IsTelnet; // может быть включен ВМЕСТЕ с IsFar, если удалось подцепится к фару через сетевой пайп
-		bool  IsNtvdm;  // 16bit приложения
-		bool  NameChecked, RetryName;
-		TCHAR Name[64]; // чтобы полная инфа об ошибке влезала
-	};
-	std::vector<ConProcess> Processes;
-	CRITICAL_SECTION csPRC; DWORD ncsTPRC;
 public:
     //HANDLE  hConOut(BOOL abAllowRecreate=FALSE);
 	//HANDLE  hConIn();
@@ -133,6 +153,7 @@ public:
 	bool SetConsoleSize(COORD size);
 	bool CheckBufferSize();
 	void SendMouseEvent(UINT messg, WPARAM wParam, int x, int y);
+	void SendConsoleEvent(INPUT_RECORD* piRec);
 	void StopSignal();
 	void StopThread();
 	void Paint();
@@ -148,9 +169,12 @@ public:
 	DWORD GetConsoleScreenBufferInfo(CONSOLE_SCREEN_BUFFER_INFO *sbi) { *sbi = m_sbi; };
 	void SyncConsole2Window();
 	void OnWinEvent(DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime);
+	int  GetProcesses(ConProcess** ppPrc);
+	DWORD GetFarPID();
+	DWORD GetActiveStatus();
 
 protected:
-	DWORD mn_ConEmuC_PID; HANDLE mh_ConEmuC; TCHAR ms_ConEmuC_Pipe[MAX_PATH];
+	DWORD mn_ConEmuC_PID; HANDLE mh_ConEmuC, mh_ConEmuCInput; TCHAR ms_ConEmuC_Pipe[MAX_PATH], ms_ConEmuCInput_Pipe[MAX_PATH];
 	TCHAR Title[MAX_TITLE_SIZE+1], TitleCmp[MAX_TITLE_SIZE+1];
 	//HANDLE  mh_ConOut; BOOL mb_ConHandleCreated;
 	HANDLE mh_StdIn, mh_StdOut;
@@ -204,7 +228,8 @@ protected:
 	void RegistryProps(BOOL abRollback, ConExeProps& props, LPCTSTR asExeName=NULL);
 	static DWORD WINAPI StartProcessThread(LPVOID lpParameter);
 	HANDLE mh_Heap, mh_Thread;
-	HANDLE mh_TermEvent, mh_ForceReadEvent, mh_EndUpdateEvent, mh_Sync2WindowEvent, mh_ConChanged;
+	HANDLE mh_TermEvent, mh_ForceReadEvent, mh_EndUpdateEvent, mh_Sync2WindowEvent, mh_ConChanged, mh_CursorChanged;
+	BOOL mb_FullRetrieveNeeded;
 	//HANDLE mh_ReqSetSize, mh_ReqSetSizeEnd; COORD m_ReqSetSize;
 	DWORD mn_ThreadID;
 	LPVOID Alloc(size_t nCount, size_t nSize);
@@ -217,7 +242,7 @@ protected:
 	void GetConsoleSizeInfo(CONSOLE_INFO *pci);
 	BOOL SetConsoleInfo(CONSOLE_INFO *pci);
 	void SetConsoleFontSizeTo(int inSizeX, int inSizeY);
-	BOOL RetrieveConsoleInfo();
+	BOOL RetrieveConsoleInfo(BOOL bShortOnly);
 	BOOL InitBuffers();
 private:
 	// Эти переменные инициализируются в RetrieveConsoleInfo()
@@ -225,4 +250,9 @@ private:
 	CONSOLE_CURSOR_INFO m_ci;
 	DWORD m_dwConsoleCP, m_dwConsoleOutputCP, m_dwConsoleMode;
 	CONSOLE_SCREEN_BUFFER_INFO m_sbi;
+	std::vector<ConProcess> Processes;
+	CRITICAL_SECTION csPRC; DWORD ncsTPRC;
+	void CVirtualConsole::AddProcess(DWORD addPID);
+	void CheckProcessName(struct ConProcess &ConPrc, LPWSTR asFullFileName);
+	DWORD mn_ActiveStatus;
 };

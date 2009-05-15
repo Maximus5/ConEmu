@@ -1,4 +1,7 @@
 #include "Header.h"
+#include <Tlhelp32.h>
+
+TODO("CES_CONMANACTIVE deprecated");
 
 #define VCURSORWIDTH 2
 #define HCURSORHEIGHT 2
@@ -47,15 +50,19 @@ CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
 	memset(Title,0,sizeof(Title)); memset(TitleCmp,0,sizeof(TitleCmp));
     SIZE_T nMinHeapSize = (1000 + (200 * 90 * 2) * 6 + MAX_PATH*2)*2 + 210*sizeof(*TextParts);
     mh_Heap = HeapCreate(HEAP_GENERATE_EXCEPTIONS, nMinHeapSize, 0);
-    mh_Thread = NULL; mn_ThreadID = 0; mn_ConEmuC_PID = 0; mh_ConEmuC = NULL; ms_ConEmuC_Pipe[0] = 0;
+    mh_Thread = NULL; mn_ThreadID = 0; mn_ConEmuC_PID = 0; mh_ConEmuC = NULL; mh_ConEmuCInput = NULL;
+    ms_ConEmuC_Pipe[0] = 0; ms_ConEmuCInput_Pipe[0] = 0;
     mh_TermEvent = CreateEvent(NULL,FALSE,FALSE,NULL);
     mh_ForceReadEvent = CreateEvent(NULL,FALSE,FALSE,NULL);
     mh_EndUpdateEvent = CreateEvent(NULL,FALSE,FALSE,NULL);
 	mh_Sync2WindowEvent = CreateEvent(NULL,FALSE,FALSE,NULL);
 	mh_ConChanged = CreateEvent(NULL,FALSE,FALSE,NULL);
+	mh_CursorChanged = NULL;
+	mb_FullRetrieveNeeded = FALSE;
     //mh_ReqSetSize = CreateEvent(NULL,FALSE,FALSE,NULL);
 	//mh_ReqSetSizeEnd = CreateEvent(NULL,FALSE,FALSE,NULL);
     //m_ReqSetSize = MakeCoord ( 0,0 );
+    mn_ActiveStatus = 0;
 
     //InitializeCriticalSection(&csDC); ncsTDC = 0;
     InitializeCriticalSection(&csCON); ncsTCON = 0;
@@ -156,6 +163,7 @@ CVirtualConsole::~CVirtualConsole()
 	SafeCloseHandle(mh_StdOut);
 
 	SafeCloseHandle(mh_ConEmuC); mn_ConEmuC_PID = 0;
+	SafeCloseHandle(mh_ConEmuCInput);
 
 	//SafeCloseHandle(mh_ReqSetSize);
 	//SafeCloseHandle(mh_ReqSetSizeEnd);
@@ -641,7 +649,7 @@ bool CVirtualConsole::Update(bool isForce, HDC *ahDc)
     }
 
     // start timer before ReadConsoleOutput* calls, they do take time
-    gSet.Performance(tPerfRead, FALSE);
+    //gSet.Performance(tPerfRead, FALSE);
 
     //if (gbNoDblBuffer) isForce = TRUE; // Debug, dblbuffer
 
@@ -653,7 +661,7 @@ bool CVirtualConsole::Update(bool isForce, HDC *ahDc)
         return false;
     }
     
-    gSet.Performance(tPerfRead, TRUE);
+    //gSet.Performance(tPerfRead, TRUE);
 
     //gSet.Performance(tPerfRender, FALSE);
 
@@ -1843,6 +1851,7 @@ BOOL CVirtualConsole::AttachPID(DWORD dwPID)
 	TODO("AttachPID пока работать не будет");
 	return FALSE;
 
+#ifdef ALLOW_ATTACHPID
     #ifdef MSGLOGGER
         TCHAR szMsg[100]; wsprintf(szMsg, _T("Attach to process %i"), (int)dwPID);
         DEBUGSTR(szMsg);
@@ -1882,13 +1891,14 @@ BOOL CVirtualConsole::AttachPID(DWORD dwPID)
     // Попытаться дернуть плагин для установки шрифта.
     CConEmuPipe pipe;
     
-    DEBUGSTR(_T("CheckProcesses\n"));
-    gConEmu.CheckProcesses(0,TRUE);
+    //DEBUGSTR(_T("CheckProcesses\n"));
+    //gConEmu.CheckProcesses(0,TRUE);
     
     if (pipe.Init(_T("DefFont.in.attach"), TRUE))
         pipe.Execute(CMD_DEFFONT);
 
     return TRUE;
+#endif
 }
 
 void CVirtualConsole::InitHandlers(BOOL abCreated)
@@ -2114,12 +2124,24 @@ DWORD CVirtualConsole::StartProcessThread(LPVOID lpParameter)
     //}
     
     _ASSERTE(pCon->mh_ConChanged!=NULL);
+	_ASSERTE(pCon->mh_CursorChanged!=NULL);
+
     //TODO: а тут мы будем читать консоль...
-    HANDLE hEvents[4] = {pCon->mh_TermEvent, 
-                         pCon->mh_ConChanged,
-                         pCon->mh_ForceReadEvent,
-						 pCon->mh_Sync2WindowEvent};
+	#define IDEVENT_TERM  0
+	#define IDEVENT_CONCHANGED 1
+	#define IDEVENT_CURSORCHANGED 2
+	#define IDEVENV_FORCEREADEVENT 3
+	#define IDEVENT_SYNC2WINDOW 4
+	#define EVENTS_COUNT (IDEVENT_SYNC2WINDOW+1)
+    HANDLE hEvents[EVENTS_COUNT];
+	hEvents[IDEVENT_TERM] = pCon->mh_TermEvent;
+	hEvents[IDEVENT_CONCHANGED] = pCon->mh_ConChanged;
+	hEvents[IDEVENT_CURSORCHANGED] = pCon->mh_CursorChanged;
+	hEvents[IDEVENV_FORCEREADEVENT] = pCon->mh_ForceReadEvent;
+	hEvents[IDEVENT_SYNC2WINDOW] = pCon->mh_Sync2WindowEvent;
 	DWORD  nEvents = countof(hEvents);
+	_ASSERT(EVENTS_COUNT==nEvents);
+
     DWORD  nWait = 0;
     BOOL   bLoop = TRUE, bIconic = FALSE, bFirst = TRUE;
 
@@ -2134,7 +2156,7 @@ DWORD CVirtualConsole::StartProcessThread(LPVOID lpParameter)
         // в минимизированном режиме - сократить расходы
         nWait = WaitForMultipleObjects(nEvents, hEvents, FALSE, bIconic ? 1000 : nElapse);
 
-		if (nWait == WAIT_OBJECT_0 /*|| !bLoop*/)
+		if (nWait == IDEVENT_TERM /*|| !bLoop*/)
             break; // требование завершения нити
           
         if (!gConEmu.isShowConsole && !gSet.isConVisible)
@@ -2147,7 +2169,7 @@ DWORD CVirtualConsole::StartProcessThread(LPVOID lpParameter)
 
 		// Размер консоли меняем в том треде, в котором это требуется. Иначе можем заблокироваться при Update (InitDC)
         // Требуется изменение размеров консоли
-        /*if (nWait == (WAIT_OBJECT_0+3)) {
+        /*if (nWait == (IDEVENT_SYNC2WINDOW)) {
 	        pCon->SetConsoleSize(pCon->m_ReqSetSize);
 	        //SetEvent(pCon->mh_ReqSetSizeEnd);
 	        //continue; -- и сразу обновим информацию о ней
@@ -2160,14 +2182,14 @@ DWORD CVirtualConsole::StartProcessThread(LPVOID lpParameter)
         try {   
             ResetEvent(pCon->mh_EndUpdateEvent);
             
-			if (bFirst || nWait == (WAIT_OBJECT_0+1)) {
+			if (bFirst || (nWait==IDEVENT_CONCHANGED) || (nWait==IDEVENT_CURSORCHANGED)) {
 				bFirst = FALSE;
-				if (!pCon->RetrieveConsoleInfo()) {
+				if (!pCon->RetrieveConsoleInfo((nWait==IDEVENT_CURSORCHANGED))) {
 					_ASSERT(FALSE);
 				}
 			}
 
-			if (nWait == (WAIT_OBJECT_0+3)) {
+			if (nWait == IDEVENT_SYNC2WINDOW) {
 				pCon->SyncConsole2Window();
 			}
 
@@ -2406,12 +2428,13 @@ BOOL CVirtualConsole::StartProcess()
 		mn_ConEmuC_PID = pi.dwProcessId;
 		mh_ConEmuC = pi.hProcess; pi.hProcess = NULL;
 		
-		// Событие "изменения" консоли //2009-05-14 Теперь события обрабатываются в GUI
-		//wsprintfW(ms_ConEmuC_Pipe, CE_NEEDUPDATE, mn_ConEmuC_PID);
-		//mh_ConChanged = CreateEvent ( NULL, FALSE, FALSE, ms_ConEmuC_Pipe );
+		// Событие "изменения" консоли //2009-05-14 Теперь события обрабатываются в GUI, но прийти из консоли может изменение размера курсора
+		wsprintfW(ms_ConEmuC_Pipe, CE_CURSORUPDATE, mn_ConEmuC_PID);
+		mh_CursorChanged = CreateEvent ( NULL, FALSE, FALSE, ms_ConEmuC_Pipe );
 		
 		// Имя пайпа для управления ConEmuC
 		wsprintfW(ms_ConEmuC_Pipe, CESERVERPIPENAME, L".", mn_ConEmuC_PID);
+		wsprintfW(ms_ConEmuCInput_Pipe, CESERVERINPUTNAME, L".", mn_ConEmuC_PID);
 		MCHKHEAP
 		
     }
@@ -2514,8 +2537,7 @@ void CVirtualConsole::SendMouseEvent(UINT messg, WPARAM wParam, int x, int y)
     if (gConEmu.BufferHeight == 0)
         lbStdMode = TRUE;
 
-	TODO("!!!lbStdMode!!!");
-    /*if (lbStdMode)
+    if (lbStdMode)
     {
         Assert ( gSet.LogFont.lfWidth && gSet.LogFont.lfHeight );
         if (!gSet.LogFont.lfWidth | !gSet.LogFont.lfHeight)
@@ -2564,11 +2586,15 @@ void CVirtualConsole::SendMouseEvent(UINT messg, WPARAM wParam, int x, int y)
             r.Event.MouseEvent.dwEventFlags = 8; //MOUSE_HWHEELED
             r.Event.MouseEvent.dwButtonState |= (0xFFFF0000 & wParam);
         }
-        DWORD dwWritten = 0;
+
+		// Посылаем событие в консоль через ConEmuC
+		SendConsoleEvent ( &r );
+
+        /*DWORD dwWritten = 0;
         if (!WriteConsoleInput(hConIn(), &r, 1, &dwWritten)) {
             DisplayLastError(L"SendMouseEvent failed!");
-        }
-    } else*/ {
+        }*/
+    } else {
         /*Если пересылать так - лезут глюки:
         1) левый клик вообще не доходит до консоли
         2) правый клик вызывает "левую" консольную менюшку
@@ -2594,6 +2620,85 @@ void CVirtualConsole::SendMouseEvent(UINT messg, WPARAM wParam, int x, int y)
 
         POSTMESSAGE(hConWnd, messg, wParam, MAKELPARAM( newX, newY ), TRUE);
     }
+}
+
+void CVirtualConsole::SendConsoleEvent(INPUT_RECORD* piRec)
+{
+	DWORD dwErr = 0, dwMode = 0;
+	BOOL fSuccess = FALSE;
+
+	if (mh_ConEmuCInput==NULL || mh_ConEmuCInput==INVALID_HANDLE_VALUE) {
+		// Try to open a named pipe; wait for it, if necessary. 
+		while (1) 
+		{ 
+		  mh_ConEmuCInput = CreateFile( 
+			 ms_ConEmuCInput_Pipe,// pipe name 
+			 GENERIC_WRITE, 
+			 0,              // no sharing 
+			 NULL,           // default security attributes
+			 OPEN_EXISTING,  // opens existing pipe 
+			 0,              // default attributes 
+			 NULL);          // no template file 
+
+		  // Break if the pipe handle is valid. 
+		  if (mh_ConEmuCInput != INVALID_HANDLE_VALUE) 
+			 break; 
+
+		  // Exit if an error other than ERROR_PIPE_BUSY occurs. 
+		  dwErr = GetLastError();
+		  if (dwErr != ERROR_PIPE_BUSY) 
+		  {
+			TODO("Подождать, пока появится пайп с таким именем, но только пока жив mh_ConEmuC");
+			dwErr = WaitForSingleObject(mh_ConEmuC, 100);
+			if (dwErr = WAIT_OBJECT_0)
+				return;
+			continue;
+			//DisplayLastError(L"Could not open pipe", dwErr);
+			//return 0;
+		  }
+
+		  // All pipe instances are busy, so wait for 1 second.
+		  if (!WaitNamedPipe(ms_ConEmuC_Pipe, 1000) ) 
+		  {
+			dwErr = WaitForSingleObject(mh_ConEmuC, 100);
+			if (dwErr = WAIT_OBJECT_0) {
+				DEBUGSTR(L" - FAILED!\n");
+				return;
+			}
+		    //DisplayLastError(L"WaitNamedPipe failed"); 
+			//return 0;
+		  }
+		} 
+
+		// The pipe connected; change to message-read mode. 
+		dwMode = PIPE_READMODE_MESSAGE; 
+		fSuccess = SetNamedPipeHandleState( 
+		  mh_ConEmuCInput,    // pipe handle 
+		  &dwMode,  // new pipe mode 
+		  NULL,     // don't set maximum bytes 
+		  NULL);    // don't set maximum time 
+		if (!fSuccess) 
+		{
+		  DEBUGSTR(L" - FAILED!\n");
+		  DisplayLastError(L"SetNamedPipeHandleState failed");
+		  return;
+		}
+	}
+	
+	// Пайп есть. Проверим, что ConEmuC жив
+	DWORD dwExitCode = 0;
+	fSuccess = GetExitCodeProcess(mh_ConEmuC, &dwExitCode);
+	if (dwExitCode!=STILL_ACTIVE) {
+		DisplayLastError(L"ConEmuC was terminated");
+		return;
+	}
+	
+	DWORD dwSize = sizeof(INPUT_RECORD), dwWritten;
+	fSuccess = WriteFile ( mh_ConEmuCInput, piRec, dwSize, &dwWritten, NULL);
+	if (!fSuccess) {
+		DisplayLastError(L"Can't send console event");
+		return;
+	}
 }
 
 LPVOID CVirtualConsole::Alloc(size_t nCount, size_t nSize)
@@ -2645,6 +2750,7 @@ void CVirtualConsole::StopThread()
     SafeCloseHandle(mh_EndUpdateEvent);
 	SafeCloseHandle(mh_Sync2WindowEvent);
 	SafeCloseHandle(mh_ConChanged);
+	SafeCloseHandle(mh_CursorChanged);
     
     SafeCloseHandle(mh_Thread);
 
@@ -3027,11 +3133,294 @@ void CVirtualConsole::OnWinEvent(DWORD event, HWND hwnd, LONG idObject, LONG idC
 	_ASSERTE(hwnd!=NULL && hConWnd!=NULL && hwnd==hConWnd);
 	
 	TODO("!!! Сделать обработку событий и население Processes");
+	//
+	//AddProcess(idobject), и удаление idObject из списка процессов
+	// Не забыть, про обработку флажка Ntvdm
+	
+	TODO("При отцеплении от консоли NTVDM - можно прибить этот процесс");
+    switch(event)
+    {
+    case EVENT_CONSOLE_START_APPLICATION:
+		//A new console process has started. 
+		//The idObject parameter contains the process identifier of the newly created process. 
+		//If the application is a 16-bit application, the idChild parameter is CONSOLE_APPLICATION_16BIT and idObject is the process identifier of the NTVDM session associated with the console.
+		{	
+			CSection SPRC(&csPRC, &ncsTPRC);
+			AddProcess(idObject);
+			// Если запущено 16битное приложение - необходимо повысить приоритет нашего процесса, иначе будут тормоза
+			if (idChild == CONSOLE_APPLICATION_16BIT) {
+				mn_ActiveStatus |= CES_NTVDM;
+				SetPriorityClass(GetCurrentProcess(), HIGH_PRIORITY_CLASS);
+			}
+		} break;
+    case EVENT_CONSOLE_END_APPLICATION:
+		//A console process has exited. 
+		//The idObject parameter contains the process identifier of the terminated process.
+		{
+			CSection SPRC(&csPRC, &ncsTPRC);
+			std::vector<ConProcess>::iterator iter=Processes.begin();
+			while (iter!=Processes.end()) {
+				if (idObject == iter->ProcessID) {
+					Processes.erase(iter);
+					break;
+				}
+				iter++;
+			}
+			if (idChild == CONSOLE_APPLICATION_16BIT) {
+                gConEmu.gbPostUpdateWindowSize = true;
+                gConEmu.mn_ActiveStatus &= ~CES_NTVDM;
+				TODO("Вообще-то хорошо бы проверить, что 16бит не осталось в других консолях");
+                SetPriorityClass(GetCurrentProcess(), NORMAL_PRIORITY_CLASS);
+			}
+		} break;
+	case EVENT_CONSOLE_UPDATE_REGION: // 0x4002 
+		{
+		//More than one character has changed. 
+		//The idObject parameter is a COORD structure that specifies the start of the changed region. 
+		//The idChild parameter is a COORD structure that specifies the end of the changed region.
+		#ifdef _DEBUG
+		COORD crStart, crEnd; memmove(&crStart, &idObject, sizeof(idObject)); memmove(&crEnd, &idChild, sizeof(idChild));
+		WCHAR szDbg[128]; wsprintfW(szDbg, L"EVENT_CONSOLE_UPDATE_REGION({%i, %i} - {%i, %i})\n", crStart.X,crStart.Y, crEnd.X,crEnd.Y);
+		OutputDebugString(szDbg);
+		#endif
+		} break;
+	case EVENT_CONSOLE_UPDATE_SCROLL: //0x4004
+		{
+		//The console has scrolled.
+		//The idObject parameter is the horizontal distance the console has scrolled. 
+		//The idChild parameter is the vertical distance the console has scrolled.
+		#ifdef _DEBUG
+		WCHAR szDbg[128]; wsprintfW(szDbg, L"EVENT_CONSOLE_UPDATE_SCROLL(X=%i, Y=%i)\n", idObject, idChild);
+		OutputDebugString(szDbg);
+		#endif
+		} break;
+	case EVENT_CONSOLE_UPDATE_SIMPLE: //0x4003
+		{
+		//A single character has changed.
+		//The idObject parameter is a COORD structure that specifies the character that has changed.
+		//The idChild parameter specifies the character in the high word and the character attributes in the low word.
+		#ifdef _DEBUG
+		COORD crWhere; memmove(&crWhere, &idObject, sizeof(idObject));
+		WCHAR ch = (WCHAR)HIWORD(idChild); WORD wA = LOWORD(idChild);
+		WCHAR szDbg[128]; wsprintfW(szDbg, L"EVENT_CONSOLE_UPDATE_SIMPLE({%i, %i} '%c'(\\x%04X) A=%i)\n", crWhere.X,crWhere.Y, ch, ch, wA);
+		OutputDebugString(szDbg);
+		#endif
+		} break;
+	case EVENT_CONSOLE_CARET: //0x4001
+		{
+		//The console caret has moved.
+		//The idObject parameter is one or more of the following values:
+		//		CONSOLE_CARET_SELECTION or CONSOLE_CARET_VISIBLE.
+		//The idChild parameter is a COORD structure that specifies the cursor's current position.
+		#ifdef _DEBUG
+		COORD crWhere; memmove(&crWhere, &idChild, sizeof(idChild));
+		WCHAR ch = (WCHAR)HIWORD(idChild); WORD wA = LOWORD(idChild);
+		WCHAR szDbg[128]; wsprintfW(szDbg, L"EVENT_CONSOLE_CARET({%i, %i} Sel=%c, Vis=%c\n", crWhere.X,crWhere.Y, 
+			((idObject & CONSOLE_CARET_SELECTION)==CONSOLE_CARET_SELECTION) ? L'Y' : L'N',
+			((idObject & CONSOLE_CARET_VISIBLE)==CONSOLE_CARET_VISIBLE) ? L'Y' : L'N');
+		OutputDebugString(szDbg);
+		#endif
+		} break;
+	case EVENT_CONSOLE_LAYOUT: //0x4005
+		{
+		//The console layout has changed.
+		OutputDebugString(L"EVENT_CONSOLE_LAYOUT\n");
+		} break;
+    }
 }
+
+int CVirtualConsole::GetProcesses(ConProcess** ppPrc)
+{
+	CSection SPRC(&csPRC, &ncsTPRC);
+	
+	int dwProcCount = Processes.size();
+
+	if (ppPrc == NULL) {
+		SPRC.Leave();
+		return dwProcCount;
+	}
+	
+	if (dwProcCount > 0) {
+		*ppPrc = (ConProcess*)calloc(dwProcCount, sizeof(ConProcess));
+		_ASSERTE((*ppPrc)!=NULL);
+		
+		for (int i=0; i<dwProcCount; i++) {
+			(*ppPrc)[i] = Processes[i];
+		}
+		
+	} else {
+		*ppPrc = NULL;
+	}
+	
+	SPRC.Leave();
+	return dwProcCount;
+}
+
+DWORD CVirtualConsole::GetActiveStatus()
+{
+	return mn_ActiveStatus;
+}
+
+DWORD CVirtualConsole::GetFarPID()
+{
+	if ((mn_ActiveStatus & CES_FARACTIVE) == 0)
+		return 0;
+
+	std::vector<ConProcess>::reverse_iterator iter = Processes.rbegin();
+	while (iter!=Processes.rend()) {
+		if (iter->IsFar) {
+			return iter->ProcessID;
+		}
+		iter++;
+	}
+	return 0;
+}
+
+void CVirtualConsole::AddProcess(DWORD addPID)
+{
+	CSection SPRC(&csPRC, &ncsTPRC);
+	
+	std::vector<ConProcess>::iterator iter;
+	BOOL bAlive = FALSE;
+	BOOL bProcessChanged = FALSE;
+	
+	// может он уже есть в списке?
+	iter=Processes.begin();
+	while (iter!=Processes.end()) {
+		if (addPID == iter->ProcessID) {
+			addPID = 0;
+			break;
+		}
+		iter++;
+	}
+
+	// Перед добавлением нового - поставить пометочку на все процессы, вдруг кто уже убился	
+    iter = Processes.begin();
+    while (iter != Processes.end())
+    {
+        iter->Alive = false;
+        iter ++;
+    }
+	
+
+	// Теперь нужно добавить новый процесс
+	ConProcess cp;
+    HANDLE h = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS,0);
+    _ASSERTE(h!=INVALID_HANDLE_VALUE);
+    if (h==INVALID_HANDLE_VALUE) {
+        DWORD dwErr = GetLastError();
+        // Просто добавить, раз не удалось снять Snapshoot
+		memset(&cp, 0, sizeof(cp));
+		cp.ProcessID = addPID; cp.RetryName = true;
+		wsprintf(cp.Name, L"Can't create snaphoot. ErrCode=0x%08X", dwErr);
+		Processes.push_back(cp);
+		
+    } else {
+        PROCESSENTRY32 p; memset(&p, 0, sizeof(p)); p.dwSize = sizeof(p);
+        if (Process32First(h, &p)) 
+        {
+            do {
+	            // Если он addPID - добавить в Processes
+	            if (addPID && addPID == p.th32ProcessID) {
+		            if (!bProcessChanged) bProcessChanged = TRUE;
+					memset(&cp, 0, sizeof(cp));
+					cp.ProcessID = addPID; cp.ParentPID = p.th32ParentProcessID;
+                    CheckProcessName(cp, p.szExeFile); //far, telnet, cmd, conemuc, и пр.
+                    cp.Alive = true;
+					Processes.push_back(cp);
+		            break;
+	            }
+	            
+                // Перебираем запомненные процессы - поставить флажок Alive
+                // сохранить имя для тех процессов, которым ранее это сделать не удалось
+                iter = Processes.begin();
+                while (iter != Processes.end())
+                {
+	                if (iter->ProcessID == p.th32ProcessID) {
+		                iter->Alive = true;
+	                    if (!iter->NameChecked)
+	                    {
+		                    // пометить, что сменился список (определилось имя процесса)
+		                    if (!bProcessChanged) bProcessChanged = TRUE;
+		                    //far, telnet, cmd, conemuc, и пр.
+	                        CheckProcessName(*iter, p.szExeFile);
+	                        // запомнить родителя
+	                        iter->ParentPID = p.th32ParentProcessID;
+	                    }
+	                }
+                    iter ++;
+                }
+                
+            // Следущий процесс
+            } while (Process32Next(h, &p));
+        }
+        
+        // Убрать процессы, которых уже нет
+        iter = Processes.begin();
+        while (iter != Processes.end())
+        {
+            if (!iter->Alive) {
+	            if (!bProcessChanged) bProcessChanged = TRUE;
+	            iter = Processes.erase(iter);
+	        } else {
+                iter ++;
+            }
+        }
+        
+        // Закрыть shapshoot
+        SafeCloseHandle(h);
+    }
+    
+    // Обновить статус запущенных программ
+    bool bIsFar=false, bIsTelnet=false, bIsNtvdm=false, bIsCmd=false;
+    iter = Processes.begin();
+    while (iter != Processes.end())
+    {
+	    if (!bIsFar && iter->IsFar) bIsFar = true;
+	    if (!bIsTelnet && iter->IsTelnet) bIsTelnet = true;
+	    if (!bIsNtvdm && iter->IsNtvdm) bIsNtvdm = true;
+	    if (!bIsCmd && iter->IsCmd) bIsCmd = true;
+        iter ++;
+    }
+    if (bIsCmd && bIsFar) // Если в консоли запущен cmd.exe - значит (скорее всего?) фар выполняет команду
+	    bIsFar = false;
+	    
+    mn_ActiveStatus &= ~CES_PROGRAMS2;
+    if (bIsFar) mn_ActiveStatus |= CES_FARACTIVE;
+    if (bIsTelnet) mn_ActiveStatus |= CES_TELNETACTIVE;
+    if (bIsNtvdm) mn_ActiveStatus |= CES_NTVDM;
+    
+    // Обновить список процессов в окне настроек и закладки
+    if (bProcessChanged) {
+        gConEmu.UpdateProcessDisplay(bProcessChanged);
+	    TabBar.Refresh(mn_ActiveStatus & CES_FARACTIVE);
+    }
+}
+
+void CVirtualConsole::CheckProcessName(struct ConProcess &ConPrc, LPWSTR asFullFileName)
+{
+    wchar_t* pszSlash = _tcsrchr(asFullFileName, _T('\\'));
+    if (pszSlash) pszSlash++; else pszSlash=asFullFileName;
+    int nLen = _tcslen(pszSlash);
+    if (nLen>=63) pszSlash[63]=0;
+    lstrcpyW(ConPrc.Name, pszSlash);
+
+    ConPrc.IsFar = lstrcmpi(ConPrc.Name, _T("far.exe"))==0;
+
+    ConPrc.IsNtvdm = lstrcmpi(ConPrc.Name, _T("ntvdm.exe"))==0;
+
+    ConPrc.IsTelnet = lstrcmpi(ConPrc.Name, _T("telnet.exe"))==0;
+    
+    TODO("Тут главное не промахнуться, и не посчитать корневой conemuc, из которого запущен сам FAR, или который запустил плагин, чтобы GUI прицепился к этой консоли");
+    ConPrc.IsCmd = lstrcmpi(ConPrc.Name, _T("cmd.exe"))==0 || lstrcmpi(ConPrc.Name, _T("conemuc.exe"))==0;
+
+    ConPrc.NameChecked = true;
+}
+
 
 #define BUFSIZE 512
  
-BOOL CVirtualConsole::RetrieveConsoleInfo()
+BOOL CVirtualConsole::RetrieveConsoleInfo(BOOL bShortOnly)
 {
 	TODO("!!! WinEvent нужно перенести в ConEmu. Наиболее частую операцию по изменению курсора можно обрабатывать без участия ConEmuC");
 
@@ -3044,10 +3433,11 @@ BOOL CVirtualConsole::RetrieveConsoleInfo()
 	BOOL fSuccess;
 	DWORD cbRead, dwMode, dwErr;
 
-	#ifdef _DEBUG
-	DWORD dwStartTick = GetTickCount(), dwEndTick, dwDelta;
-	DEBUGSTR(L"CVirtualConsole::RetrieveConsoleInfo");
-	#endif
+	gSet.Performance(tPerfRead, FALSE);
+	//#ifdef _DEBUG
+	//DWORD dwStartTick = GetTickCount(), dwEndTick, dwDelta;
+	//DEBUGSTR(L"CVirtualConsole::RetrieveConsoleInfo");
+	//#endif
 
 	// Try to open a named pipe; wait for it, if necessary. 
 	while (1) 
@@ -3107,7 +3497,7 @@ BOOL CVirtualConsole::RetrieveConsoleInfo()
 	}
 
 	in.nSize = 8;
-	in.nCmd  = CECMD_GETFULLINFO;
+	in.nCmd  = bShortOnly ? CECMD_GETSHORTINFO : CECMD_GETFULLINFO;
 
 	// Send a message to the pipe server and read the response. 
 	fSuccess = TransactNamedPipe( 
@@ -3182,14 +3572,18 @@ BOOL CVirtualConsole::RetrieveConsoleInfo()
 	// 2
 	// во время чтения содержимого консоли может увеличиться количество процессов
 	// поэтому РЕАЛЬНОЕ количество - выставим после чтения и CriticalSection(csProc);
+	//CSection SPRC(&csPRC, &ncsTPRC);
+	//TODO("Сделать корректную обработку! не чистить Processes не глядя, а удалять только отсутствующие! также получить информацию о процессе");
 	int dwProcCount = (int)*((DWORD*)lpCur); lpCur += sizeof(DWORD);
-	Processes.clear();
-	ConProcess prc = {0};
-	while (dwProcCount>0) {
-		prc.ProcessID = *((DWORD*)lpCur); lpCur += sizeof(DWORD);
-		Processes.push_back(prc);
-		dwProcCount--;
-	}
+	if (dwProcCount) lpCur += sizeof(DWORD)*dwProcCount;
+	//Processes.clear();
+	//ConProcess prc = {0};
+	//while (dwProcCount>0) {
+	//	prc.ProcessID = *((DWORD*)lpCur); lpCur += sizeof(DWORD);
+	//	Processes.push_back(prc);
+	//	dwProcCount--;
+	//}
+	//SPRC.Leave();
 	// 3
 	DWORD dwSelRc = *((DWORD*)lpCur); lpCur += sizeof(DWORD); //CONSOLE_SELECTION_INFO sel = {0}; // GetConsoleSelectionInfo
 	memmove(&m_sel, lpCur, sizeof(m_sel));
@@ -3207,22 +3601,25 @@ BOOL CVirtualConsole::RetrieveConsoleInfo()
 	memmove(&m_sbi, lpCur, sizeof(csbi));
 	lpCur += sizeof(csbi);
 	// 9
-	DWORD OneBufferSize = *((DWORD*)lpCur); lpCur += sizeof(DWORD);
-	TODO("Скопировать содержимое буферов, если OneBufferSize>0");
-	if (InitBuffers()) {
-		memmove(ConChar, lpCur, OneBufferSize); lpCur += OneBufferSize;
-		memmove(ConAttr, lpCur, OneBufferSize); lpCur += OneBufferSize;
+	if (!bShortOnly) {
+		DWORD OneBufferSize = *((DWORD*)lpCur); lpCur += sizeof(DWORD);
+		TODO("Скопировать содержимое буферов, если OneBufferSize>0");
+		if (InitBuffers()) {
+			memmove(ConChar, lpCur, OneBufferSize); lpCur += OneBufferSize;
+			memmove(ConAttr, lpCur, OneBufferSize); lpCur += OneBufferSize;
+		}
 	}
 
 	// Освободить память
 	free(pOut);
 
-	#ifdef _DEBUG
-	dwEndTick = GetTickCount();
-	dwDelta = dwEndTick - dwStartTick;
-	WCHAR szText[64]; wsprintfW(szText, L" - SUCCEEDED (%i ms)!\n", dwDelta);
-	DEBUGSTR(szText);
-	#endif
+	//#ifdef _DEBUG
+	//dwEndTick = GetTickCount();
+	//dwDelta = dwEndTick - dwStartTick;
+	//WCHAR szText[64]; wsprintfW(szText, L" - SUCCEEDED (%i ms)!\n", dwDelta);
+	//DEBUGSTR(szText);
+	//#endif
+	gSet.Performance(tPerfRead, TRUE);
     return TRUE;
 }
 

@@ -111,20 +111,9 @@ public:
 	TCHAR ms_EditorRus[16], ms_ViewerRus[16], ms_TempPanel[32], ms_TempPanelRus[32];
 protected:
 	TCHAR Title[MAX_TITLE_SIZE], TitleCmp[MAX_TITLE_SIZE];
-	struct ConProcess {
-		DWORD ProcessID, ParentPID;
-		BYTE  ConmanIDX;
-		//bool  Alive;
-		bool  IsConman;
-		bool  IsFar;
-		bool  IsTelnet; // может быть включен ВМЕСТЕ с IsFar, если удалось подцепится к фару через сетевой пайп
-		bool  IsNtvdm; // 16bit приложения
-		bool  NameChecked, ConmanChecked, RetryName;
-		TCHAR Name[64]; // чтобы полная инфа об ошибке влезала
-	};
 	//int mn_NeedRetryName;
-	std::vector<struct ConProcess> m_Processes;
-	void CheckProcessName(struct ConProcess &ConPrc, LPCTSTR asFullFileName);
+	//std::vector<struct ConProcess> m_Processes;
+	//void CheckProcessName(struct ConProcess &ConPrc, LPCTSTR asFullFileName);
 	LPTSTR GetTitleStart(DWORD* rnConmanIDX=NULL);
 	//bool GetProcessFileName(DWORD dwPID, TCHAR* rsName/*[32]*/, DWORD *pdwErr);
 	BOOL mb_InTimer;
@@ -144,7 +133,9 @@ protected:
 	UINT mn_MsgUpdateTitle;
 
 public:
-	DWORD CheckProcesses(DWORD nConmanIDX, BOOL bTitleChanged);
+	DWORD CheckProcesses();
+	DWORD GetFarPID();
+	//DWORD CheckProcesses(DWORD nConmanIDX, BOOL bTitleChanged);
 	/*typedef int (_cdecl * ConMan_MainProc_t)(LPCWSTR asCommandLine, BOOL abStandalone);
 	ConMan_MainProc_t ConMan_MainProc;
 	typedef void (_cdecl * ConMan_LookForKeyboard_t)();
