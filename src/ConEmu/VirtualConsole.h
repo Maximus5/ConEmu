@@ -1,5 +1,6 @@
 #pragma once
 #include "kl_parts.h"
+#include "../Common/common.hpp"
 
 #define CES_CONMANACTIVE 0x01
 #define CES_TELNETACTIVE 0x02
@@ -123,7 +124,7 @@ public:
 	bool isEditor, isFilePanel;
 	BYTE attrBackLast;
 
-	TCHAR *ConChar;
+	wchar_t *ConChar;
 	WORD  *ConAttr;
 	//WORD  FontWidth[0x10000]; //, Font2Width[0x10000];
 	DWORD *ConCharX;
@@ -172,9 +173,14 @@ public:
 	int  GetProcesses(ConProcess** ppPrc);
 	DWORD GetFarPID();
 	DWORD GetActiveStatus();
+	DWORD GetServerPID();
+	LRESULT OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
+	bool isConSelectMode();
+	bool isFar();
 
 protected:
-	DWORD mn_ConEmuC_PID; HANDLE mh_ConEmuC, mh_ConEmuCInput; TCHAR ms_ConEmuC_Pipe[MAX_PATH], ms_ConEmuCInput_Pipe[MAX_PATH];
+	DWORD mn_ConEmuC_PID; HANDLE mh_ConEmuC, mh_ConEmuCInput;
+	TCHAR ms_ConEmuC_Pipe[MAX_PATH], ms_ConEmuCInput_Pipe[MAX_PATH], ms_VConServer_Pipe[MAX_PATH];
 	TCHAR Title[MAX_TITLE_SIZE+1], TitleCmp[MAX_TITLE_SIZE+1];
 	//HANDLE  mh_ConOut; BOOL mb_ConHandleCreated;
 	HANDLE mh_StdIn, mh_StdOut;
@@ -227,7 +233,7 @@ protected:
 	} ConExeProps;
 	void RegistryProps(BOOL abRollback, ConExeProps& props, LPCTSTR asExeName=NULL);
 	static DWORD WINAPI StartProcessThread(LPVOID lpParameter);
-	HANDLE mh_Heap, mh_Thread;
+	HANDLE mh_Heap, mh_Thread, mh_VConServerThread;
 	HANDLE mh_TermEvent, mh_ForceReadEvent, mh_EndUpdateEvent, mh_Sync2WindowEvent, mh_ConChanged, mh_CursorChanged;
 	BOOL mb_FullRetrieveNeeded;
 	//HANDLE mh_ReqSetSize, mh_ReqSetSizeEnd; COORD m_ReqSetSize;
@@ -243,16 +249,25 @@ protected:
 	BOOL SetConsoleInfo(CONSOLE_INFO *pci);
 	void SetConsoleFontSizeTo(int inSizeX, int inSizeY);
 	BOOL RetrieveConsoleInfo(BOOL bShortOnly);
-	BOOL InitBuffers();
+	BOOL InitBuffers(DWORD OneBufferSize);
 private:
 	// Эти переменные инициализируются в RetrieveConsoleInfo()
 	CONSOLE_SELECTION_INFO m_sel;
 	CONSOLE_CURSOR_INFO m_ci;
 	DWORD m_dwConsoleCP, m_dwConsoleOutputCP, m_dwConsoleMode;
 	CONSOLE_SCREEN_BUFFER_INFO m_sbi;
-	std::vector<ConProcess> Processes;
+	std::vector<ConProcess> m_Processes;
+	int mn_ProcessCount; DWORD mn_FarPID;
 	CRITICAL_SECTION csPRC; DWORD ncsTPRC;
-	void CVirtualConsole::AddProcess(DWORD addPID);
-	void CheckProcessName(struct ConProcess &ConPrc, LPWSTR asFullFileName);
+	void ProcessAdd(DWORD addPID);
+	void ProcessDelete(DWORD addPID);
+	void ProcessUpdateFlags(BOOL abProcessChanged);
+	void ProcessCheckName(struct ConProcess &ConPrc, LPWSTR asFullFileName);
 	DWORD mn_ActiveStatus;
+	bool isShowConsole;
+	bool mb_ConsoleSelectMode;
+	int BufferHeight;
+	static DWORD WINAPI ServerThread(LPVOID lpvParam);
+	void ServerThreadCommand(HANDLE hPipe);
+	void ApplyConsoleInfo(CESERVER_REQ* pInfo);
 };

@@ -62,7 +62,7 @@ public:
 	//HANDLE hPipe;
 	//HANDLE hPipeEvent;
 	bool isWndNotFSMaximized;
-	bool isShowConsole;
+	//bool isShowConsole;
 	//bool mb_FullWindowDrag;
 	//bool isLBDown, /*isInDrag,*/ isDragProcessed, 
 	//mb_InSizing, -> state&MOUSE_SIZING
@@ -85,7 +85,7 @@ public:
 	bool isPiewUpdate;
 	bool gbPostUpdateWindowSize;
 	HWND hPictureView; bool bPicViewSlideShow; DWORD dwLastSlideShowTick; RECT mrc_WndPosOnPicView;
-	bool gb_ConsoleSelectMode;
+	//bool gb_ConsoleSelectMode;
 	bool setParent, setParent2;
 	//BOOL mb_InClose;
 	//int RBDownNewX, RBDownNewY;
@@ -96,7 +96,7 @@ public:
 	CProgressBars *ProgressBars;
 	COORD m_LastConSize; // console size after last resize (in columns and lines)
 	bool mb_IgnoreSizeChange;
-	int BufferHeight; // в отличие от gSet - может изменяться текущей консольной программой
+	//int BufferHeight; // в отличие от gSet - может изменяться текущей консольной программой
 	//RECT  dcWindowLast; // Последний размер дочернего окна
 	//uint cBlinkShift; // cursor blink counter threshold
 	TCHAR szConEmuVersion[32];
@@ -105,7 +105,7 @@ public:
 	HMODULE mh_ConMan;
 	//HMODULE mh_Infis; TCHAR ms_InfisPath[MAX_PATH*2];
 	DWORD mn_ActiveStatus;
-	DWORD mn_TopProcessID; 
+	//DWORD mn_TopProcessID; 
 	//BOOL mb_FarActive;
 	//TCHAR ms_TopProcess[MAX_PATH+1];
 	TCHAR ms_EditorRus[16], ms_ViewerRus[16], ms_TempPanel[32], ms_TempPanelRus[32];

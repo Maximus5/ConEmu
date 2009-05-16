@@ -279,7 +279,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="C:\Utils\Far\ConEmuC.exe"
+				OutputFile="C:\Utils\Far.Test\ConEmuC.exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
 				SubSystem="1"

@@ -69,7 +69,7 @@ void TabBarClass::Retrieve()
 	if (gSet.isTabs == 0)
 		return; // если табов нет ¬ќќЅў≈ - и читать ничего не нужно
 
-	if (!gConEmu.isFar() && !gConEmu.mn_TopProcessID) {
+	if (!gConEmu.isFar()) {
 		Reset();
 		return;
 	}
@@ -225,13 +225,14 @@ bool TabBarClass::IsShown()
 BOOL TabBarClass::IsAllowed()
 {
 	BOOL lbTabsAllowed = TRUE;
-	if (gConEmu.BufferHeight) {
+	TODO("пока убрал");
+	//if (gConEmu.BufferHeight) {
 		CVirtualConsole* pCon = gConEmu.ActiveCon();
 		if (!pCon) 
 			lbTabsAllowed = FALSE;
 		else
 			lbTabsAllowed = !pCon->isBufferHeight();
-	}
+	//}
 	return lbTabsAllowed;
 }
 

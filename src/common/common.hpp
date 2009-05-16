@@ -1,3 +1,4 @@
+#pragma once
 #include <windows.h>
 
 //#define CONEMUPIPE      L"\\\\.\\pipe\\ConEmuPipe%u"
@@ -8,21 +9,28 @@
 // with line number
 #define STRING2(x) #x
 #define STRING(x) STRING2(x)
-#define FILE_LINE __FILE__ "(" STRING(__LINE__) "): TODO: "
-#define TODO(s) __pragma(message (FILE_LINE s))
+#define FILE_LINE __FILE__ "(" STRING(__LINE__) "): "
+#define TODO(s) __pragma(message (FILE_LINE "TODO: " s))
+#define WARNING(s) __pragma(message (FILE_LINE "warning: " s))
+#define PRAGMA_ERROR(s) __pragma(message (FILE_LINE "error: " s))
 
 #define CES_NTVDM 0x10
 #define CEC_INITTITLE       L"ConEmu"
 #define CE_CURSORUPDATE     L"ConEmuCursorUpdate%u" // ConEmuC_PID - изменился курсор (размер или выделение). положение курсора отслеживает GUI
 
-#define CESERVERPIPENAME    L"\\\\%s\\pipe\\ConEmuSrv%u"
-#define CESERVERINPUTNAME   L"\\\\%s\\pipe\\ConEmuSrvInput%u"
+#define CESERVERPIPENAME    L"\\\\%s\\pipe\\ConEmuSrv%u"      // ConEmuC_PID
+#define CESERVERINPUTNAME   L"\\\\%s\\pipe\\ConEmuSrvInput%u" // ConEmuC_PID
+#define CEGUIPIPENAME       L"\\\\%s\\pipe\\ConEmuGui%u"      // ConEmuC_PID
 #define CECMD_GETSHORTINFO  1
 #define CECMD_GETFULLINFO   2
 #define CECMD_SETSIZE       3
 #define CECMD_WRITEINPUT    4
 
 #define CESERVER_REQ_VER    1
+
+#define PIPEBUFSIZE 4096
+
+#pragma pack(push, 1)
 
 typedef struct tag_CESERVER_REQ {
 	DWORD   nSize;
@@ -31,6 +39,13 @@ typedef struct tag_CESERVER_REQ {
 	BYTE    Data[1]; // вообще-то размер динамический
 } CESERVER_REQ;
 
+typedef struct tag_CESERVER_CHAR {
+	COORD crWhere;
+	WCHAR ch;
+	WORD wA;
+} CESERVER_CHAR;
+
+#pragma pack(pop)
 
 #define CONEMUMAPPING    L"ConEmuPluginData%u"
 #define CONEMUDRAGFROM   L"ConEmuDragFrom%u"

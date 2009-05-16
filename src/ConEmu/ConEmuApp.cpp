@@ -825,7 +825,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         gSet.LogFont.lfHeight = SizeVal;
     if (BufferHeightPrm) {
         gSet.BufferHeight = BufferHeightVal;
-        gConEmu.BufferHeight = BufferHeightVal;
+		TODO("gConEmu.BufferHeight = BufferHeightVal пока убрал");
+        //gConEmu.BufferHeight = BufferHeightVal;
     }
 	if (!WindowPrm) {
 		if (nCmdShow == SW_SHOWMAXIMIZED)

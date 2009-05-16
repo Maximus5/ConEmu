@@ -71,7 +71,8 @@ BOOL CConEmuPipe::Init(LPCTSTR asOp, BOOL abSilent)
 		return FALSE;
 	}
 
-    if (!gConEmu.isFar() && !gConEmu.mn_TopProcessID) {
+	DWORD dwCurProcId = gConEmu.ActiveCon()->GetFarPID();
+    if (!gConEmu.isFar() && !dwCurProcId) {
 	    gConEmu.DnDstep(_T("Pipe: FAR not active"));
 		DEBUGSTR(L"Pipe::FAR not active\n");
 	    return FALSE;
@@ -82,7 +83,6 @@ BOOL CConEmuPipe::Init(LPCTSTR asOp, BOOL abSilent)
 	lstrcpyn(ms_LastOp, asOp, 64);
 
 	// Сформируем ИМЯ сразу, а то вдруг процесс переключится?
-	DWORD dwCurProcId = gConEmu.mn_TopProcessID;
 	nPID = dwCurProcId;
 	wsprintf(sMapName, CONEMUMAPPING, dwCurProcId);
 	
