@@ -3523,14 +3523,17 @@ void CVirtualConsole::ServerThreadCommand(HANDLE hPipe)
 	free(pOut);
 }
 
-#define COPYBUFFER(v) { \
-	nVarSize = sizeof(v); \
+#define COPYBUFFERS(v,s) { \
+	nVarSize = s; \
 	if ((lpCur+nVarSize)>lpEnd) { \
 		_ASSERT(FALSE); \
 		return; \
 	} \
 	memmove(&(v), lpCur, nVarSize); \
 	lpCur += nVarSize; \
+}
+#define COPYBUFFER(v) { \
+	COPYBUFFERS(v, sizeof(v)); \
 }
 
 void CVirtualConsole::ApplyConsoleInfo(CESERVER_REQ* pInfo)
@@ -3590,20 +3593,31 @@ void CVirtualConsole::ApplyConsoleInfo(CESERVER_REQ* pInfo)
 	if (dwSbiRc != 0) {
 		_ASSERTE(dwSbiRc == sizeof(m_sbi));
 		COPYBUFFER(m_sbi);
+		WARNING("Здесь нужно пересоздать буфера, если сменился размер!");
 	}
 	// 9
 	DWORD dwCharChanged = 0;
 	COPYBUFFER(dwCharChanged);
 	if (dwCharChanged != 0) {
-		_ASSERTE(dwCharChanged == sizeof(CESERVER_CHAR));
+		_ASSERTE(dwCharChanged >= sizeof(CESERVER_CHAR));
 
 		if (ConChar && ConAttr) {
-			CESERVER_CHAR ch;
-			COPYBUFFER(ch);
-			_ASSERT(!isBufferHeight());
-			int nIdx = ch.crWhere.X + ch.crWhere.Y * m_sbi.dwSize.X;
-			ConChar[nIdx] = ch.ch;
-			ConAttr[nIdx] = ch.wA;
+			CESERVER_CHAR* pch = (CESERVER_CHAR*)calloc(dwCharChanged,1);
+			COPYBUFFERS(pch,2*sizeof(COORD));
+			int nLineLen = pch->crEnd.X - pch.crStart.X + 1;
+			int nLineCount = pch->crEnd.Y - pch.crStart.Y + 1;
+			_ASSERTE((nLineLen*nLineCount*4+2*sizeof(COORD))==dwCharChanged);
+			COPYBUFFERS(pch->data,dwCharChanged-2*sizeof(COORD));
+			_ASSERTE(!isBufferHeight());
+			wchar_t* pszLine = (wchar_t*)(pch->data);
+			WORD*    pnLine  = ((WORD*)pch->data)+(nLineLen*nLineCount);
+			for (int y = pch->crStart.Y; y <= pch->crEnd.Y; y++) {
+				int nIdx = ch.crStart.X + y * m_sbi.dwSize.X;
+				memmove(ConChar+nIdx, pszLine, nLineLen*2);
+					pszLine += nLineLen;
+				memmove(ConAttr+nIdx, pnLine, nLineLen*2);
+					pnLine += nLineLen;
+			}
 		} else {
 			lpCur += dwCharChanged;
 		}

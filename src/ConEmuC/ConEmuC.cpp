@@ -34,7 +34,8 @@ void CALLBACK WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, 
 void CheckCursorPos();
 void SendConsoleChanges(CESERVER_REQ* pOut);
 CESERVER_REQ* CreateConsoleInfo(CESERVER_CHAR* pCharOnly, BOOL bCharAttrBuff);
-void ReloadConsoleInfo();
+BOOL ReloadConsoleInfo(); // возвращает TRUE в случае изменений
+void ReloadFullConsoleInfo(); // В том числе перечитывает содержимое
 
 
 DWORD dwSelfPID = 0;
@@ -55,6 +56,9 @@ DWORD dwSelRc = 0; CONSOLE_SELECTION_INFO sel = {0}; // GetConsoleSelectionInfo
 DWORD dwCiRc = 0; CONSOLE_CURSOR_INFO ci = {0}; // GetConsoleCursorInfo
 DWORD dwConsoleCP=0, dwConsoleOutputCP=0, dwConsoleMode=0;
 DWORD dwSbiRc = 0; CONSOLE_SCREEN_BUFFER_INFO sbi = {{0,0}}; // GetConsoleScreenBufferInfo
+DWORD nMainTimerElapse = 10;
+BOOL  bConsoleActive = TRUE; TODO("Обрабатывать консольные события Activate/Deactivate");
+HANDLE hRefreshEvent = NULL;
 
 
 // Список процессов нам нужен, чтобы определить, когда консоль уже не нужна.
@@ -675,8 +679,11 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 
 DWORD WINAPI WinEventThread(LPVOID lpvParam)
 {
-	DWORD dwErr = 0;
+	DWORD dwErr = 0, nWait = 0;
 	HANDLE hStartedEvent = (HANDLE)lpvParam;
+	BOOL lbQuit = FALSE;
+	
+	hRefreshEvent = CreateEvent(NULL,FALSE,FALSE,NULL);
 	
 	// "Ловим" все консольные события
     hWinHook = SetWinEventHook(EVENT_CONSOLE_CARET,EVENT_CONSOLE_END_APPLICATION,
@@ -691,15 +698,35 @@ DWORD WINAPI WinEventThread(LPVOID lpvParam)
 	SetEvent(hStartedEvent); hStartedEvent = NULL; // здесь он более не требуется
 
     MSG lpMsg;
-    while (GetMessage(&lpMsg, NULL, 0, 0))
-    {
-		TranslateMessage(&lpMsg);
-		DispatchMessage(&lpMsg);
-    }
+	while (!lbQuit)
+	{
+		nWait = WAIT_TIMEOUT;
+		// Много сообщений в этой нити быть не должно, так что много времени терять не должны
+		while (PeekMessage(&lpMsg, NULL, 0, 0, PM_REMOVE))
+		{
+			if (lpMsg.message == WM_QUIT) {
+				lbQuit = TRUE; break;
+			}
+			TranslateMessage(&lpMsg);
+			DispatchMessage(&lpMsg);
+			PRAGMA_ERROR("Все таки это (WaitForSingleObject&ReloadFullConsoleInfo) нужно вынести в отдельную нить - иначе событие не возникнет до окончания WaitForSingleObject");
+			if ((nWait = WaitForSingleObject(hRefreshEvent,0)) == WAIT_OBJECT_0)
+				break;
+		}
+		if (lbQuit) break;
+		// Подождать немножко
+		if (nWait != WAIT_OBJECT_0)
+			nWait = WaitForSingleObject ( hWinEventThread, bConsoleActive ? nMainTimerElapse : 1000 );
+		// Посмотреть, есть ли изменения в консоли
+		ReloadFullConsoleInfo();
+	}
     
     // Закрыть хук
     if (hWinHook) {
         UnhookWinEvent(hWinHook); hWinHook = NULL;
+    }
+    if (hRefreshEvent) {
+	    CloseHandle(hRefreshEvent); hRefreshEvent = NULL;
     }
     
 	return 0;
@@ -786,8 +813,12 @@ void CALLBACK WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, 
 			WCHAR szDbg[128]; wsprintfW(szDbg, L"EVENT_CONSOLE_UPDATE_REGION({%i, %i} - {%i, %i})\n", crStart.X,crStart.Y, crEnd.X,crEnd.Y);
 			OutputDebugString(szDbg);
 			#endif
-			bNeedConAttrBuf = TRUE;
-		} break;
+			//bNeedConAttrBuf = TRUE;
+			//// Перечитать размер, положение курсора, и пр.
+			//ReloadConsoleInfo();
+			SetEvent(hRefreshEvent);
+		}
+		return; // Обновление по событию в нити
 
 	case EVENT_CONSOLE_UPDATE_SCROLL: //0x4004
 		{
@@ -798,8 +829,13 @@ void CALLBACK WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, 
 			WCHAR szDbg[128]; wsprintfW(szDbg, L"EVENT_CONSOLE_UPDATE_SCROLL(X=%i, Y=%i)\n", idObject, idChild);
 			OutputDebugString(szDbg);
 			#endif
-			bNeedConAttrBuf = TRUE;
-		} break;
+			//bNeedConAttrBuf = TRUE;
+			//// Перечитать размер, положение курсора, и пр.
+			//if (!ReloadConsoleInfo())
+			//	return;
+			SetEvent(hRefreshEvent);
+		}
+		return; // Обновление по событию в нити
 
 	case EVENT_CONSOLE_UPDATE_SIMPLE: //0x4003
 		{
@@ -807,12 +843,16 @@ void CALLBACK WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, 
 		//The idObject parameter is a COORD structure that specifies the character that has changed.
 		//Warning! В писании от  микрософта тут ошибка!
 		//The idChild parameter specifies the character in the low word and the character attributes in the high word.
-			memmove(&ch.crWhere, &idObject, sizeof(idObject));
-			ch.ch = (WCHAR)LOWORD(idChild); ch.wA = HIWORD(idChild);
+			memmove(&ch.crStart, &idObject, sizeof(idObject));
+			ch.crEnd = ch.crStart;
+			ch.data[0] = (WCHAR)LOWORD(idChild); ch.data[1] = HIWORD(idChild);
 			#ifdef _DEBUG
-			WCHAR szDbg[128]; wsprintfW(szDbg, L"EVENT_CONSOLE_UPDATE_SIMPLE({%i, %i} '%c'(\\x%04X) A=%i)\n", ch.crWhere.X,ch.crWhere.Y, ch.ch, ch.ch, ch.wA);
+			WCHAR szDbg[128]; wsprintfW(szDbg, L"EVENT_CONSOLE_UPDATE_SIMPLE({%i, %i} '%c'(\\x%04X) A=%i)\n", ch.crStart.X,ch.crStart.Y, ch.data[0], ch.data[0], ch.data[1]);
 			OutputDebugString(szDbg);
 			#endif
+			// Перечитать размер, положение курсора, и пр.
+			ReloadConsoleInfo();
+			TODO("Если Reload==FALSE, и ch не меняет предыдущего символа/атрибута в psChars/pnAttrs - сразу выйти");
 		} break;
 
 	case EVENT_CONSOLE_CARET: //0x4001
@@ -830,6 +870,9 @@ void CALLBACK WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, 
 				((idObject & CONSOLE_CARET_VISIBLE)==CONSOLE_CARET_VISIBLE) ? L'Y' : L'N');
 			OutputDebugString(szDbg);
 			#endif
+			// Перечитать размер, положение курсора, и пр.
+			if (!ReloadConsoleInfo())
+				return;
 		} break;
 
 	case EVENT_CONSOLE_LAYOUT: //0x4005
@@ -838,12 +881,16 @@ void CALLBACK WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, 
 			#ifdef _DEBUG
 			OutputDebugString(L"EVENT_CONSOLE_LAYOUT\n");
 			#endif
-			bNeedConAttrBuf = TRUE;
-		} break;
+			//bNeedConAttrBuf = TRUE;
+			TODO("А когда вообще это событие вызывается?");
+			//// Перечитать размер, положение курсора, и пр.
+			//if (!ReloadConsoleInfo())
+			//	return;
+			SetEvent(hRefreshEvent);
+		}
+		return; // Обновление по событию в нити
     }
 
-	// Перечитать размер, положение курсора, и пр.
-	ReloadConsoleInfo();
 
 	// Дальнейшее имеет смысл только если CVirtualConsole уже запустил серверный пайп
 	if (szGuiPipeName[0] == 0)
@@ -1047,15 +1094,45 @@ CESERVER_REQ* CreateConsoleInfo(CESERVER_CHAR* pCharOnly, BOOL bCharAttrBuff)
 	return pOut;
 }
 
-void ReloadConsoleInfo()
+BOOL ReloadConsoleInfo()
 {
-	if (!GetConsoleSelectionInfo(&sel)) { dwSelRc = GetLastError(); if (!dwSelRc) dwSelRc = -1; } else dwSelRc = 0;
+	BOOL lbChanged = FALSE;
+	CONSOLE_SELECTION_INFO lsel = {0}; // GetConsoleSelectionInfo
+	CONSOLE_CURSOR_INFO lci = {0}; // GetConsoleCursorInfo
+	DWORD ldwConsoleCP=0, ldwConsoleOutputCP=0, ldwConsoleMode=0;
+	CONSOLE_SCREEN_BUFFER_INFO lsbi = {{0,0}}; // GetConsoleScreenBufferInfo
 
-	if (!GetConsoleCursorInfo(hConOut, &ci)) { dwCiRc = GetLastError(); if (!dwCiRc) dwCiRc = -1; } else dwCiRc = 0;
+	if (!GetConsoleSelectionInfo(&lsel)) { dwSelRc = GetLastError(); if (!dwSelRc) dwSelRc = -1; } else {
+		dwSelRc = 0;
+		if (memcmp(&sel, &lsel, sizeof(sel))) {
+			sel = lsel;
+			lbChanged = TRUE;
+		}
+	}
 
-	dwConsoleCP = GetConsoleCP();
-	dwConsoleOutputCP = GetConsoleOutputCP();
-	dwConsoleMode=0; GetConsoleMode(hConIn, &dwConsoleMode);
+	if (!GetConsoleCursorInfo(hConOut, &lci)) { dwCiRc = GetLastError(); if (!dwCiRc) dwCiRc = -1; } else {
+		dwCiRc = 0;
+		if (memcmp(&ci, &lci, sizeof(ci))) {
+			ci = lci;
+			lbChanged = TRUE;
+		}
+	}
 
-	if (!GetConsoleScreenBufferInfo(hConOut, &sbi)) { dwSbiRc = GetLastError(); if (!dwSbiRc) dwSbiRc = -1; } else dwSbiRc = 0;
+	ldwConsoleCP = GetConsoleCP(); if (dwConsoleCP!=ldwConsoleCP) { dwConsoleCP = ldwConsoleCP; lbChanged = TRUE; }
+	ldwConsoleOutputCP = GetConsoleOutputCP(); if (dwConsoleOutputCP!=ldwConsoleOutputCP) { dwConsoleOutputCP = ldwConsoleOutputCP; lbChanged = TRUE; }
+	ldwConsoleMode=0; GetConsoleMode(hConIn, &ldwConsoleMode); if (dwConsoleMode!=ldwConsoleMode) { dwConsoleMode = ldwConsoleMode; lbChanged = TRUE; }
+
+	if (!GetConsoleScreenBufferInfo(hConOut, &lsbi)) { dwSbiRc = GetLastError(); if (!dwSbiRc) dwSbiRc = -1; } else {
+		dwSbiRc = 0;
+		if (memcmp(&sbi, &lsbi, sizeof(sbi))) {
+			sbi = lsbi;
+			lbChanged = TRUE;
+		}
+	}
+
+	return lbChanged;
+}
+
+void ReloadFullConsoleInfo()
+{
 }

@@ -40,9 +40,8 @@ typedef struct tag_CESERVER_REQ {
 } CESERVER_REQ;
 
 typedef struct tag_CESERVER_CHAR {
-	COORD crWhere;
-	WCHAR ch;
-	WORD wA;
+	COORD crStart, crEnd;
+	WORD  data[2]; // variable length
 } CESERVER_CHAR;
 
 #pragma pack(pop)
