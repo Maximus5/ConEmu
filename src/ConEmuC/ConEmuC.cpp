@@ -33,9 +33,10 @@ DWORD WINAPI WinEventThread(LPVOID lpvParam);
 void CALLBACK WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime);
 void CheckCursorPos();
 void SendConsoleChanges(CESERVER_REQ* pOut);
-CESERVER_REQ* CreateConsoleInfo(CESERVER_CHAR* pCharOnly, BOOL bCharAttrBuff);
+CESERVER_REQ* CreateConsoleInfo(CESERVER_CHAR* pCharOnly, int bCharAttrBuff);
 BOOL ReloadConsoleInfo(); // возвращает TRUE в случае изменений
-void ReloadFullConsoleInfo(); // В том числе перечитывает содержимое
+void ReloadFullConsoleInfo(CESERVER_CHAR* pCharOnly=NULL); // В том числе перечитывает содержимое
+DWORD WINAPI RefreshThread(LPVOID lpvParam); // Нить, перечитывающая содержимое консоли
 
 
 DWORD dwSelfPID = 0;
@@ -51,7 +52,7 @@ CRITICAL_SECTION csProc;
 CRITICAL_SECTION csConBuf;
 wchar_t* psChars = NULL;
 WORD* pnAttrs = NULL;
-DWORD nBufCharCount = NULL;
+DWORD nBufCharCount = 0;
 DWORD dwSelRc = 0; CONSOLE_SELECTION_INFO sel = {0}; // GetConsoleSelectionInfo
 DWORD dwCiRc = 0; CONSOLE_CURSOR_INFO ci = {0}; // GetConsoleCursorInfo
 DWORD dwConsoleCP=0, dwConsoleOutputCP=0, dwConsoleMode=0;
@@ -59,6 +60,7 @@ DWORD dwSbiRc = 0; CONSOLE_SCREEN_BUFFER_INFO sbi = {{0,0}}; // GetConsoleScreen
 DWORD nMainTimerElapse = 10;
 BOOL  bConsoleActive = TRUE; TODO("Обрабатывать консольные события Activate/Deactivate");
 HANDLE hRefreshEvent = NULL;
+BOOL  bNeedFullReload = TRUE;
 
 
 // Список процессов нам нужен, чтобы определить, когда консоль уже не нужна.
@@ -83,6 +85,8 @@ DWORD dwActiveFlags = 0;
 #define CERR_CREATEINPUTTHREAD 112
 #define CERR_CONOUTFAILED 113
 #define CERR_PROCESSTIMEOUT 114
+#define CERR_REFRESHEVENT 115
+#define CERR_CREATEREFRESHTHREAD 116
 
 
 int main()
@@ -96,8 +100,8 @@ int main()
 	wchar_t* psCmdLine = GetCommandLineW();
 	size_t nCmdLine = lstrlenW(psCmdLine);
 	wchar_t* psNewCmd = NULL;
-    DWORD dwThreadId = 0, dwWinEventThread = 0, dwThreadInputId = 0;
-    HANDLE hThread = NULL, hInputThread, hWinEventThread = NULL, hWait[2]={NULL,NULL};
+    DWORD dwThreadId = 0, dwWinEventThread = 0, dwThreadInputId = 0, dwRefreshThread = 0;
+    HANDLE hThread = NULL, hInputThread, hWinEventThread = NULL, hWait[2]={NULL,NULL}, hRefreshThread;
 	BOOL bViaCmdExe = TRUE;
 	PROCESS_INFORMATION pi; memset(&pi, 0, sizeof(pi));
 	STARTUPINFOW si; memset(&si, 0, sizeof(si)); si.cb = sizeof(si);
@@ -118,11 +122,17 @@ int main()
 		printf("hConWnd==NULL, ErrCode=0x%08X\n", dwErr); 
 		iRc=CERR_GETCONSOLEWINDOW; goto wrap;
 	}
-	hExitEvent = CreateEvent(NULL, TRUE, FALSE, NULL); ResetEvent(hExitEvent);
+	hExitEvent = CreateEvent(NULL, TRUE/*используется в нескольких нитях, manual*/, FALSE, NULL); ResetEvent(hExitEvent);
 	if (!hExitEvent) {
 		dwErr = GetLastError();
 		printf("CreateEvent() failed, ErrCode=0x%08X\n", dwErr); 
 		iRc=CERR_EXITEVENT; goto wrap;
+	}
+	hRefreshEvent = CreateEvent(NULL,FALSE,FALSE,NULL);
+	if (!hRefreshEvent) {
+		dwErr = GetLastError();
+		printf("CreateEvent() failed, ErrCode=0x%08X\n", dwErr); 
+		iRc=CERR_REFRESHEVENT; goto wrap;
 	}
 	//wsprintfW(sName, CE_NEEDUPDATE, dwSelfPID);
 	//hGlblUpdateEvt = CreateEvent(NULL, FALSE, FALSE, sName);
@@ -279,6 +289,21 @@ int main()
 		iRc=CERR_CREATEINPUTTHREAD; goto wrap;
 	}
 
+	// Запустить нить наблюдения за консолью
+	hRefreshThread = CreateThread( 
+		NULL,              // no security attribute 
+		0,                 // default stack size 
+		RefreshThread,     // thread proc
+		NULL,              // thread parameter 
+		0,                 // not suspended 
+		&dwRefreshThread); // returns thread ID 
+
+	if (hRefreshThread == NULL) 
+	{
+		dwErr = GetLastError();
+		printf("CreateThread(RefreshThread) failed, ErrCode=0x%08X\n", dwErr); 
+		iRc=CERR_CREATEREFRESHTHREAD; goto wrap;
+	}
 	
 	
 	
@@ -311,6 +336,9 @@ int main()
 
 	iRc = 0;
 wrap:
+	// На всякий случай - выставим событие
+	if (hExitEvent) SetEvent(hExitEvent);
+
 	// Закрываем дескрипторы и выходим
 	if (dwWinEventThread && hWinEventThread) {
 		PostThreadMessage(dwWinEventThread, WM_QUIT, 0, 0);
@@ -330,6 +358,13 @@ wrap:
 		TerminateThread ( hThread, 100 ); TODO("Сделать корректное завершение");
 		CloseHandle(hThread); hThread = NULL;
 	}
+	if (hRefreshThread) {
+		if (WaitForSingleObject(hRefreshThread, 100)!=WAIT_OBJECT_0) {
+			_ASSERT(FALSE);
+			TerminateThread(hRefreshThread, 100);
+		}
+		CloseHandle(hRefreshThread); hRefreshThread = NULL;
+	}
 	//
 	if (hConIn && hConIn!=INVALID_HANDLE_VALUE) {
 		CloseHandle(hConIn); hConIn = NULL;
@@ -337,6 +372,9 @@ wrap:
 	if (hConOut && hConOut!=INVALID_HANDLE_VALUE) {
 		CloseHandle(hConOut); hConIn = NULL;
 	}
+    if (hRefreshEvent) {
+	    CloseHandle(hRefreshEvent); hRefreshEvent = NULL;
+    }
     if (hWinHook) {
         UnhookWinEvent(hWinHook); hWinHook = NULL;
     }
@@ -563,9 +601,10 @@ DWORD WINAPI InstanceThread(LPVOID lpvParam)
 // На результат видимо придется не обращать внимания - не блокировать же выполнение
 // сообщениями об ошибках... Возможно, что информацию об ошибке стоит записать
 // в сам текстовый буфер.
-DWORD ReadConsoleData(CONSOLE_SCREEN_BUFFER_INFO &sbi) // sbi инициализируется вызывающей функцией
+DWORD ReadConsoleData(BOOL* pbDataChanged = NULL) // sbi инициализируется вызывающей функцией
 {
-	BOOL lbRc = TRUE;
+	TODO("Можно отслеживать реально изменившийся прямоугольник и передавать только его");
+	BOOL lbRc = TRUE, lbChanged = FALSE;
 	DWORD cbDataSize = 0; // Size in bytes of ONE buffer
 	bContentsChanged = FALSE;
 	EnterCriticalSection(&csConBuf);
@@ -579,11 +618,12 @@ DWORD ReadConsoleData(CONSOLE_SCREEN_BUFFER_INFO &sbi) // sbi инициализируется в
 	TextHeight = sbi.srWindow.Bottom - sbi.srWindow.Top + 1;
 	TextLen = TextWidth * TextHeight;
 	if (TextLen > nBufCharCount) {
+		lbChanged = TRUE;
 		free(psChars);
-		psChars = (wchar_t*)calloc(TextLen,sizeof(wchar_t));
+		psChars = (wchar_t*)calloc(TextLen*2,sizeof(wchar_t));
 		_ASSERTE(psChars!=NULL);
 		free(pnAttrs);
-		pnAttrs = (WORD*)calloc(TextLen,sizeof(WORD));
+		pnAttrs = (WORD*)calloc(TextLen*2,sizeof(WORD));
 		_ASSERTE(pnAttrs!=NULL);
 		if (psChars && pnAttrs) {
 			nBufCharCount = TextLen;
@@ -634,9 +674,19 @@ DWORD ReadConsoleData(CONSOLE_SCREEN_BUFFER_INFO &sbi) // sbi инициализируется в
 
 		cbDataSize = TextLen * 2; // Size in bytes of ONE buffer
 
+		if (!lbChanged) {
+			if (memcmp(psChars, psChars+TextLen, TextLen*sizeof(wchar_t)))
+				lbChanged = TRUE;
+			else if (memcmp(pnAttrs, pnAttrs+TextLen, TextLen*sizeof(WORD)))
+				lbChanged = TRUE;
+		}
+
 	} else {
 		lbRc = FALSE;
 	}
+
+	if (pbDataChanged)
+		*pbDataChanged = lbChanged;
 
 	LeaveCriticalSection(&csConBuf);
 	return cbDataSize;
@@ -645,7 +695,7 @@ DWORD ReadConsoleData(CONSOLE_SCREEN_BUFFER_INFO &sbi) // sbi инициализируется в
 BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 {
 	BOOL lbRc = FALSE;
-	BOOL bContentsChanged = FALSE;
+	int bContentsChanged = FALSE;
 
 	switch (in.nCmd) {
 		case CECMD_GETSHORTINFO:
@@ -654,7 +704,7 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 			if (szGuiPipeName[0] == 0) { // Серверный пайп в CVirtualConsole уже должен быть запущен
 				wsprintf(szGuiPipeName, CEGUIPIPENAME, L".", dwSelfPID);
 			}
-			bContentsChanged = (in.nCmd == CECMD_GETFULLINFO);
+			bContentsChanged = (in.nCmd == CECMD_GETFULLINFO) ? 1 : 0;
 
 			_ASSERT(hConOut && hConOut!=INVALID_HANDLE_VALUE);
 			if (hConOut==NULL || hConOut==INVALID_HANDLE_VALUE)
@@ -679,11 +729,9 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 
 DWORD WINAPI WinEventThread(LPVOID lpvParam)
 {
-	DWORD dwErr = 0, nWait = 0;
+	DWORD dwErr = 0;
 	HANDLE hStartedEvent = (HANDLE)lpvParam;
-	BOOL lbQuit = FALSE;
 	
-	hRefreshEvent = CreateEvent(NULL,FALSE,FALSE,NULL);
 	
 	// "Ловим" все консольные события
     hWinHook = SetWinEventHook(EVENT_CONSOLE_CARET,EVENT_CONSOLE_END_APPLICATION,
@@ -698,36 +746,41 @@ DWORD WINAPI WinEventThread(LPVOID lpvParam)
 	SetEvent(hStartedEvent); hStartedEvent = NULL; // здесь он более не требуется
 
     MSG lpMsg;
-	while (!lbQuit)
+	while (GetMessage(&lpMsg, NULL, 0, 0))
 	{
-		nWait = WAIT_TIMEOUT;
-		// Много сообщений в этой нити быть не должно, так что много времени терять не должны
-		while (PeekMessage(&lpMsg, NULL, 0, 0, PM_REMOVE))
-		{
-			if (lpMsg.message == WM_QUIT) {
-				lbQuit = TRUE; break;
-			}
-			TranslateMessage(&lpMsg);
-			DispatchMessage(&lpMsg);
-			PRAGMA_ERROR("Все таки это (WaitForSingleObject&ReloadFullConsoleInfo) нужно вынести в отдельную нить - иначе событие не возникнет до окончания WaitForSingleObject");
-			if ((nWait = WaitForSingleObject(hRefreshEvent,0)) == WAIT_OBJECT_0)
-				break;
-		}
-		if (lbQuit) break;
-		// Подождать немножко
-		if (nWait != WAIT_OBJECT_0)
-			nWait = WaitForSingleObject ( hWinEventThread, bConsoleActive ? nMainTimerElapse : 1000 );
-		// Посмотреть, есть ли изменения в консоли
-		ReloadFullConsoleInfo();
+		//if (lpMsg.message == WM_QUIT) { // GetMessage возвращает FALSE при получении этого сообщения
+		//	lbQuit = TRUE; break;
+		//}
+		TranslateMessage(&lpMsg);
+		DispatchMessage(&lpMsg);
 	}
     
     // Закрыть хук
     if (hWinHook) {
         UnhookWinEvent(hWinHook); hWinHook = NULL;
     }
-    if (hRefreshEvent) {
-	    CloseHandle(hRefreshEvent); hRefreshEvent = NULL;
-    }
+    
+	return 0;
+}
+
+DWORD WINAPI RefreshThread(LPVOID lpvParam)
+{
+	DWORD dwErr = 0, nWait = 0;
+	HANDLE hEvents[2] = {hExitEvent, hRefreshEvent};
+	BOOL lbQuit = FALSE;
+
+	while (!lbQuit)
+	{
+		nWait = WAIT_TIMEOUT;
+
+		// Подождать немножко
+		nWait = WaitForMultipleObjects ( 2, hEvents, FALSE, /*bConsoleActive ? nMainTimerElapse :*/ 60000 );
+		if (nWait == WAIT_OBJECT_0)
+			break; // затребовано завершение нити
+
+		// Посмотреть, есть ли изменения в консоли
+		ReloadFullConsoleInfo();
+	}
     
 	return 0;
 }
@@ -816,6 +869,7 @@ void CALLBACK WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, 
 			//bNeedConAttrBuf = TRUE;
 			//// Перечитать размер, положение курсора, и пр.
 			//ReloadConsoleInfo();
+			bNeedFullReload = TRUE;
 			SetEvent(hRefreshEvent);
 		}
 		return; // Обновление по событию в нити
@@ -833,6 +887,7 @@ void CALLBACK WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, 
 			//// Перечитать размер, положение курсора, и пр.
 			//if (!ReloadConsoleInfo())
 			//	return;
+			bNeedFullReload = TRUE;
 			SetEvent(hRefreshEvent);
 		}
 		return; // Обновление по событию в нити
@@ -851,9 +906,21 @@ void CALLBACK WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, 
 			OutputDebugString(szDbg);
 			#endif
 			// Перечитать размер, положение курсора, и пр.
-			ReloadConsoleInfo();
-			TODO("Если Reload==FALSE, и ch не меняет предыдущего символа/атрибута в psChars/pnAttrs - сразу выйти");
-		} break;
+			if (!ReloadConsoleInfo()) { // Если Layout не поменялся
+				TODO("Если Reload==FALSE, и ch не меняет предыдущего символа/атрибута в psChars/pnAttrs - сразу выйти");
+				
+				int nIdx = ch.crStart.X + ch.crStart.Y * sbi.dwSize.X;
+				_ASSERTE(nIdx>=0 && (DWORD)nIdx<nBufCharCount);
+				if (psChars[nIdx] == (wchar_t)ch.data[0] && pnAttrs[nIdx] == ch.data[1])
+					return; // данные не менялись
+			}
+			// Применить
+			int nIdx = ch.crStart.X + ch.crStart.Y * sbi.dwSize.X;
+			psChars[nIdx] = (wchar_t)ch.data[0];
+			psChars[nIdx+nBufCharCount] = (wchar_t)ch.data[0];
+			// И отправить
+			ReloadFullConsoleInfo(&ch);
+		} return;
 
 	case EVENT_CONSOLE_CARET: //0x4001
 		{
@@ -870,10 +937,11 @@ void CALLBACK WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, 
 				((idObject & CONSOLE_CARET_VISIBLE)==CONSOLE_CARET_VISIBLE) ? L'Y' : L'N');
 			OutputDebugString(szDbg);
 			#endif
+			SetEvent(hRefreshEvent);
 			// Перечитать размер, положение курсора, и пр.
-			if (!ReloadConsoleInfo())
-				return;
-		} break;
+			//if (ReloadConsoleInfo())
+			//	return;
+		} return;
 
 	case EVENT_CONSOLE_LAYOUT: //0x4005
 		{
@@ -886,39 +954,40 @@ void CALLBACK WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, 
 			//// Перечитать размер, положение курсора, и пр.
 			//if (!ReloadConsoleInfo())
 			//	return;
+			bNeedFullReload = TRUE;
 			SetEvent(hRefreshEvent);
 		}
 		return; // Обновление по событию в нити
     }
 
 
-	// Дальнейшее имеет смысл только если CVirtualConsole уже запустил серверный пайп
-	if (szGuiPipeName[0] == 0)
-		return;
+	//// Дальнейшее имеет смысл только если CVirtualConsole уже запустил серверный пайп
+	//if (szGuiPipeName[0] == 0)
+	//	return;
 
-	CESERVER_REQ* pOut = 
-		CreateConsoleInfo (
-			(event == EVENT_CONSOLE_UPDATE_SIMPLE) ? &ch : NULL,
-			bNeedConAttrBuf
-		);
-	_ASSERTE(pOut!=NULL);
-	if (!pOut)
-		return;
+	//CESERVER_REQ* pOut = 
+	//	CreateConsoleInfo (
+	//		(event == EVENT_CONSOLE_UPDATE_SIMPLE) ? &ch : NULL,
+	//		FALSE/*bNeedConAttrBuf*/
+	//	);
+	//_ASSERTE(pOut!=NULL);
+	//if (!pOut)
+	//	return;
 
-	//Warning! WinXPSP3. EVENT_CONSOLE_CARET проходит ТОЛЬКО если консоль в фокусе. 
-	//         А с ConEmu она НИКОГДА не в фокусе, так что курсор не обновляется.
-	// Т.е. изменилось содержимое консоли - уведомить GUI часть
-	//if (event != EVENT_CONSOLE_CARET) { // Если изменилось только положение курсора - перечитывать содержимое не нужно
-	//	bContentsChanged = TRUE;
-	//}
-	//SetEvent(hGlblUpdateEvt);
+	////Warning! WinXPSP3. EVENT_CONSOLE_CARET проходит ТОЛЬКО если консоль в фокусе. 
+	////         А с ConEmu она НИКОГДА не в фокусе, так что курсор не обновляется.
+	//// Т.е. изменилось содержимое консоли - уведомить GUI часть
+	////if (event != EVENT_CONSOLE_CARET) { // Если изменилось только положение курсора - перечитывать содержимое не нужно
+	////	bContentsChanged = TRUE;
+	////}
+	////SetEvent(hGlblUpdateEvt);
 
-	//WARNING("Все изменения пересылать в GUI через CEGUIPIPENAME");
-	//WARNING("Этот пайп обрабатывается в каждом CVirtualConsole по отдельности");
+	////WARNING("Все изменения пересылать в GUI через CEGUIPIPENAME");
+	////WARNING("Этот пайп обрабатывается в каждом CVirtualConsole по отдельности");
 
-	SendConsoleChanges ( pOut );
+	//SendConsoleChanges ( pOut );
 
-	free ( pOut );
+	//free ( pOut );
 }
 
 void SendConsoleChanges(CESERVER_REQ* pOut)
@@ -955,7 +1024,7 @@ void SendConsoleChanges(CESERVER_REQ* pOut)
 		// All pipe instances are busy, so wait for 100 ms.
 		if (!WaitNamedPipe(szGuiPipeName, 100) ) 
 			return;
-	} 
+	}
 
 	// The pipe connected; change to message-read mode. 
 	dwMode = PIPE_READMODE_MESSAGE; 
@@ -975,7 +1044,7 @@ void SendConsoleChanges(CESERVER_REQ* pOut)
 	_ASSERTE(fSuccess && dwWritten == pOut->nSize);
 }
 
-CESERVER_REQ* CreateConsoleInfo(CESERVER_CHAR* pCharOnly, BOOL bCharAttrBuff)
+CESERVER_REQ* CreateConsoleInfo(CESERVER_CHAR* pCharOnly, int bCharAttrBuff)
 {
 	CESERVER_REQ* pOut = NULL;
 	DWORD dwAllSize = sizeof(CESERVER_REQ), nSize;
@@ -1010,7 +1079,12 @@ CESERVER_REQ* CreateConsoleInfo(CESERVER_CHAR* pCharOnly, BOOL bCharAttrBuff)
 	DWORD OneBufferSize = 0;
 	dwAllSize += sizeof(DWORD);
 	if (bCharAttrBuff) {
-		OneBufferSize = ReadConsoleData(sbi); // returns size in bytes of ONE buffer
+		if (bCharAttrBuff == 2) {
+			_ASSERTE(nBufCharCount>0);
+			OneBufferSize = nBufCharCount*2;
+		} else {
+			OneBufferSize = ReadConsoleData(); // returns size in bytes of ONE buffer
+		}
 		if (OneBufferSize) {
 			dwAllSize += OneBufferSize * 2;
 		}
@@ -1133,6 +1207,28 @@ BOOL ReloadConsoleInfo()
 	return lbChanged;
 }
 
-void ReloadFullConsoleInfo()
+void ReloadFullConsoleInfo(CESERVER_CHAR* pCharOnly/*=NULL*/)
 {
+	BOOL lbInfChanged = FALSE, lbDataChanged = FALSE;
+	DWORD dwBufSize = 0;
+
+	lbInfChanged = ReloadConsoleInfo();
+
+	if (bNeedFullReload) {
+		bNeedFullReload = FALSE;
+		dwBufSize = ReadConsoleData(&lbDataChanged);
+	}
+
+	if (lbInfChanged || lbDataChanged || pCharOnly) {
+		TODO("Можно отслеживать реально изменившийся прямоугольник и передавать только его");
+		CESERVER_REQ* pOut = CreateConsoleInfo(lbDataChanged ? NULL : pCharOnly, lbDataChanged ? 2 : 0);
+		_ASSERTE(pOut!=NULL); if (!pOut) return;
+		SendConsoleChanges(pOut);
+		free(pOut);
+		// Запомнить последнее отправленное
+		if (lbDataChanged && nBufCharCount) {
+			memmove(psChars+nBufCharCount, psChars, nBufCharCount*sizeof(wchar_t));
+			memmove(pnAttrs+nBufCharCount, pnAttrs, nBufCharCount*sizeof(WORD));
+		}
+	}
 }

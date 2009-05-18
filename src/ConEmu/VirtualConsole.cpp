@@ -2246,13 +2246,13 @@ DWORD CVirtualConsole::StartProcessThread(LPVOID lpParameter)
 	    gSet.Performance(tPerfInterval, FALSE);
     }
     
-	if (pCon->mh_VConServerThread) {
+	if (pCon->mh_VConServerThread && pCon->ms_VConServer_Pipe[0]) {
 		// 
 		pCon->StopSignal(); // уже должен быть выставлен, но на всякий случай
 		HANDLE hPipe = NULL;
 		// Передернуть пайп, чтобы нить сервера завершилась
 		hPipe = CreateFile( 
-			szGuiPipeName,  // pipe name 
+			pCon->ms_VConServer_Pipe,  // pipe name 
 			GENERIC_WRITE, 
 			0,              // no sharing 
 			NULL,           // default security attributes
@@ -3261,7 +3261,6 @@ LRESULT CVirtualConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM
                     gConEmu.SetWindowMode(gConEmu.isWndNotFSMaximized ? rMaximized : rNormal);
 
                 isSkipNextAltUp = true;
-                //POSTMESSAGE(hConWnd, messg, wParam, lParam);
             }
         }
         else if (messg == WM_SYSKEYDOWN && wParam == VK_SPACE && lParam & 29 && !isPressed(VK_SHIFT))
@@ -3275,8 +3274,13 @@ LRESULT CVirtualConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM
         else if (messg == WM_KEYUP && wParam == VK_MENU && isSkipNextAltUp) isSkipNextAltUp = false;
         else if (messg == WM_SYSKEYDOWN && wParam == VK_F9 && lParam & 29 && !isPressed(VK_SHIFT))
             gConEmu.SetWindowMode((IsZoomed(ghWnd)||(gSet.isFullScreen&&gConEmu.isWndNotFSMaximized)) ? rNormal : rMaximized);
-        else
-            POSTMESSAGE(hConWnd, messg, wParam, lParam, FALSE);
+		else {
+			if (messg == WM_CHAR || messg == WM_SYSCHAR) {
+				WARNING("TODO: Пересылка символов в консоль");
+			} else {
+				POSTMESSAGE(hConWnd, messg, wParam, lParam, FALSE);
+			}
+		}
     }
 
     /*if (IsDebuggerPresent()) {
@@ -3411,7 +3415,6 @@ DWORD CVirtualConsole::ServerThread(LPVOID lpvParam)
 	for (;;) 
 	{ 
 		if (WaitForSingleObject ( pCon->mh_TermEvent, 0 ) == WAIT_OBJECT_0) {
-			CloseHandle(hPipe);
 			return 0;
 		}
 
@@ -3444,15 +3447,17 @@ DWORD CVirtualConsole::ServerThread(LPVOID lpvParam)
 		fConnected = ConnectNamedPipe(hPipe, NULL) ? TRUE : (GetLastError() == ERROR_PIPE_CONNECTED); 
 
 		if (WaitForSingleObject ( pCon->mh_TermEvent, 0 ) == WAIT_OBJECT_0) {
-			CloseHandle(hPipe);
+			CloseHandle(hPipe); hPipe = NULL;
 			return 0;
 		}
 
 		if (fConnected) 
 			pCon->ServerThreadCommand ( hPipe );
 
-		CloseHandle(hPipe);
-	} 
+		CloseHandle(hPipe); hPipe = NULL;
+	}
+
+	pCon->ms_VConServer_Pipe[0] = 0; // флаг, что нить завершилась
 	return 1; 
 }
 
@@ -3603,16 +3608,16 @@ void CVirtualConsole::ApplyConsoleInfo(CESERVER_REQ* pInfo)
 
 		if (ConChar && ConAttr) {
 			CESERVER_CHAR* pch = (CESERVER_CHAR*)calloc(dwCharChanged,1);
-			COPYBUFFERS(pch,2*sizeof(COORD));
-			int nLineLen = pch->crEnd.X - pch.crStart.X + 1;
-			int nLineCount = pch->crEnd.Y - pch.crStart.Y + 1;
+			COPYBUFFERS(*pch,2*sizeof(COORD));
+			int nLineLen = pch->crEnd.X - pch->crStart.X + 1;
+			int nLineCount = pch->crEnd.Y - pch->crStart.Y + 1;
 			_ASSERTE((nLineLen*nLineCount*4+2*sizeof(COORD))==dwCharChanged);
 			COPYBUFFERS(pch->data,dwCharChanged-2*sizeof(COORD));
 			_ASSERTE(!isBufferHeight());
 			wchar_t* pszLine = (wchar_t*)(pch->data);
 			WORD*    pnLine  = ((WORD*)pch->data)+(nLineLen*nLineCount);
 			for (int y = pch->crStart.Y; y <= pch->crEnd.Y; y++) {
-				int nIdx = ch.crStart.X + y * m_sbi.dwSize.X;
+				int nIdx = pch->crStart.X + y * m_sbi.dwSize.X;
 				memmove(ConChar+nIdx, pszLine, nLineLen*2);
 					pszLine += nLineLen;
 				memmove(ConAttr+nIdx, pnLine, nLineLen*2);
