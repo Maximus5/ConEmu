@@ -37,6 +37,7 @@ CESERVER_REQ* CreateConsoleInfo(CESERVER_CHAR* pCharOnly, int bCharAttrBuff);
 BOOL ReloadConsoleInfo(); // возвращает TRUE в случае изменений
 void ReloadFullConsoleInfo(CESERVER_CHAR* pCharOnly=NULL); // В том числе перечитывает содержимое
 DWORD WINAPI RefreshThread(LPVOID lpvParam); // Нить, перечитывающая содержимое консоли
+DWORD ReadConsoleData(RECT* prcChanged = NULL, BOOL* pbDataChanged = NULL); //((LPRECT)1) или реальный LPRECT
 
 
 DWORD dwSelfPID = 0;
@@ -601,13 +602,17 @@ DWORD WINAPI InstanceThread(LPVOID lpvParam)
 // На результат видимо придется не обращать внимания - не блокировать же выполнение
 // сообщениями об ошибках... Возможно, что информацию об ошибке стоит записать
 // в сам текстовый буфер.
-DWORD ReadConsoleData(BOOL* pbDataChanged = NULL) // sbi инициализируется вызывающей функцией
+DWORD ReadConsoleData(RECT* prcChanged = NULL, BOOL* pbDataChanged = NULL)
 {
-	TODO("Можно отслеживать реально изменившийся прямоугольник и передавать только его");
+	WARNING("Если передан prcDataChanged(!=0 && !=1) - считывать из консоли только его, с учетом прокрутки");
+	WARNING("Для оптимизации вызовов - можно считать, что левый и правый край совпадают с краями консоли");
+	WARNING("И только если в одно чтение это не удалось - читать строками у учетом реальных краев");
+	WARNING("Если передан prcChanged - в него заносится РЕАЛЬНО изменный прямоугольник, для последующей пересылки в GUI");
 	BOOL lbRc = TRUE, lbChanged = FALSE;
 	DWORD cbDataSize = 0; // Size in bytes of ONE buffer
 	bContentsChanged = FALSE;
 	EnterCriticalSection(&csConBuf);
+	RECT rcReadRect = {0};
 
 	SHORT TextWidth=0, TextHeight=0;
 	DWORD TextLen=0;
@@ -654,21 +659,15 @@ DWORD ReadConsoleData(BOOL* pbDataChanged = NULL) // sbi инициализируется вызыва
 	    // for large window and ReadConsoleOutput works OK. More optimal solution for all
 	    // cases is not that difficult to develop but it will be increased complexity and
 	    // overhead often for nothing, not sure that we really should use it.
+	    
 	    DWORD nbActuallyRead;
-	    if (!ReadConsoleOutputAttribute(hConOut, pnAttrs, TextLen, coord, &nbActuallyRead) ||
-	        !ReadConsoleOutputCharacter(hConOut, psChars, TextLen, coord, &nbActuallyRead))
+	    if (!ReadConsoleOutputCharacter(hConOut, psChars, TextLen, coord, &nbActuallyRead) || !ReadConsoleOutputAttribute(hConOut, pnAttrs, TextLen, coord, &nbActuallyRead))
 	    {
-		    OutputDebugString(L"!!! Read from console Line-By-Line\n");
-		    
-	        WORD* ConAttrNow = pnAttrs;
-	        wchar_t* ConCharNow = psChars;
-	        for(int y = 0; y < (int)TextHeight; ++y)
+	        WORD* ConAttrNow = pnAttrs; wchar_t* ConCharNow = psChars;
+	        for(int y = 0; y < (int)TextHeight; y++, coord.Y++)
 	        {
-	            ReadConsoleOutputAttribute(hConOut, ConAttrNow, TextWidth, coord, &nbActuallyRead);
-	            ReadConsoleOutputCharacter(hConOut, ConCharNow, TextWidth, coord, &nbActuallyRead);
-	            ConAttrNow += TextWidth;
-	            ConCharNow += TextWidth;
-	            ++coord.Y;
+	            ReadConsoleOutputCharacter(hConOut, ConCharNow, TextWidth, coord, &nbActuallyRead); ConCharNow += TextWidth;
+	            ReadConsoleOutputAttribute(hConOut, ConAttrNow, TextWidth, coord, &nbActuallyRead); ConAttrNow += TextWidth;
 	        }
 	    }
 

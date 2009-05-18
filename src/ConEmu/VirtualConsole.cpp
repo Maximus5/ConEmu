@@ -5,6 +5,13 @@ TODO("CES_CONMANACTIVE deprecated");
 
 WARNING("Может быть хватит ServerThread? А StartProcessThread зарезервировать только для запуска процесса, и сразу из него выйти");
 
+WARNING("В каждой VCon создать буфер BYTE[256] для хранения распознанных клавиш (Ctrl,...,Up,PgDn,Add,и пр.");
+WARNING("Нераспознанные можно помещать в буфер {VKEY,wchar_t=0}, в котором заполнять последний wchar_t по WM_CHAR/WM_SYSCHAR");
+WARNING("При WM_(SYS)CHAR помещать wchar_t в начало, в первый незанятый VKEY");
+WARNING("При нераспознном WM_KEYUP - брать(и убрать) wchar_t из этого буфера, послав в консоль UP");
+TODO("А периодически - проводить процерку isKeyDown, и чистить буфер");
+
+
 //Курсор, его положение, размер консоли, измененный текст, и пр...
 
 #define VCURSORWIDTH 2
