@@ -140,7 +140,7 @@ public:
 	static CVirtualConsole* Create();
 
 	bool InitDC(bool abNoDc, bool abNoWndResize);
-	void InitHandlers(BOOL abCreated);
+	//void InitHandlers(BOOL abCreated);
 	void DumpConsole();
 	bool Update(bool isForce = false, HDC *ahDc=NULL);
 	void SelectFont(HFONT hNew);
@@ -175,8 +175,10 @@ public:
 	DWORD GetActiveStatus();
 	DWORD GetServerPID();
 	LRESULT OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
+	LRESULT OnScroll(int nDirection);
 	bool isConSelectMode();
 	bool isFar();
+	void ShowConsole(int nMode); // -1 Toggle, 0 - Hide, 1 - Show
 
 protected:
 	DWORD mn_ConEmuC_PID; HANDLE mh_ConEmuC, mh_ConEmuCInput;
@@ -268,6 +270,12 @@ private:
 	bool mb_ConsoleSelectMode;
 	int BufferHeight;
 	static DWORD WINAPI ServerThread(LPVOID lpvParam);
-	void ServerThreadCommand(HANDLE hPipe);
+	typedef struct tag_ServerThreadCommandArg {
+		CVirtualConsole *pCon;
+		HANDLE hPipe;
+	} ServerThreadCommandArg;
+	static DWORD WINAPI ServerThreadCommand(LPVOID/* ServerThreadCommandArg* */ lpvParam);
 	void ApplyConsoleInfo(CESERVER_REQ* pInfo);
+	void SetHwnd(HWND ahConWnd);
+	WORD mn_LastVKeyPressed;
 };

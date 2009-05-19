@@ -7,6 +7,8 @@ const int TAB_FONT_HEIGTH = 16;
 wchar_t TAB_FONT_FACE[] = L"Tahoma";
 WNDPROC _defaultTabProc = NULL;
 
+PRAGMA_ERROR("Почему-то таб не отображается");
+
 TabBarClass::TabBarClass()
 {
 	_active = false;
@@ -294,7 +296,8 @@ void TabBarClass::Update(ConEmuTab* tabs, int tabsCount)
 		TCHAR dummy[MAX_PATH*2];
 		TCHAR fileName[MAX_PATH+4];
 		TCHAR szFormat[32];
-		wchar_t* tFileName=NULL; //--Maximus
+		TCHAR szEllip[MAX_PATH+1];
+		wchar_t *tFileName=NULL, *pszNo=NULL, *pszTitle=NULL; //--Maximus
 		if (tabs[i].Name[0]==0 || tabs[i].Type == 1/*WTYPE_PANELS*/) {
 			_tcscpy(tabs[i].Name, gConEmu.isFar() ? gSet.szTabPanels : gSet.pszTabConsole);
 			tFileName = tabs[i].Name;
@@ -325,14 +328,21 @@ void TabBarClass::Update(ConEmuTab* tabs, int tabsCount)
 			_tcsncat(fileName, _T("..."), 3);
 			_tcsncat(fileName, tFileName + origLength - 10, 10);*/
 			int nSplit = nMaxLen*2/3;
-			TCHAR szEllip[MAX_PATH+1];
+			
 			_tcsncpy(szEllip, tFileName, nSplit); szEllip[nSplit]=0;
 			_tcscat(szEllip, _T("…"));
 			_tcscat(szEllip, tFileName + origLength - (nMaxLen - nSplit));
-			wsprintf(fileName, szFormat, szEllip);
-		} else {
-			wsprintf(fileName, szFormat, tFileName);
+			
+			tFileName = szEllip;
 		}
+		pszNo = wcsstr(szFormat, L"%i");
+		pszTitle = wcsstr(szFormat, L"%s");
+		if (pszNo == NULL)
+			wsprintf(fileName, szFormat, tFileName);
+		else if (pszNo < pszTitle || pszTitle == NULL)
+			wsprintf(fileName, szFormat, i, tFileName);
+		else
+			wsprintf(fileName, szFormat, tFileName, i);
 
 		AddTab(fileName, i);
 	}

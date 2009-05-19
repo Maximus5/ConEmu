@@ -37,7 +37,9 @@ CESERVER_REQ* CreateConsoleInfo(CESERVER_CHAR* pCharOnly, int bCharAttrBuff);
 BOOL ReloadConsoleInfo(); // возвращает TRUE в случае изменений
 void ReloadFullConsoleInfo(CESERVER_CHAR* pCharOnly=NULL); // В том числе перечитывает содержимое
 DWORD WINAPI RefreshThread(LPVOID lpvParam); // Нить, перечитывающая содержимое консоли
-DWORD ReadConsoleData(RECT* prcChanged = NULL, BOOL* pbDataChanged = NULL); //((LPRECT)1) или реальный LPRECT
+DWORD ReadConsoleData(CESERVER_CHAR** pCheck = NULL, BOOL* pbDataChanged = NULL); //((LPRECT)1) или реальный LPRECT
+void InitServer();
+void SetConsoleFontSizeTo(HWND inConWnd, int inSizeX, int inSizeY);
 
 
 DWORD dwSelfPID = 0;
@@ -145,7 +147,7 @@ int main()
 	//}
 
 #ifdef _DEBUG
-	if (!IsDebuggerPresent()) MessageBox(0,L"Loaded",L"ComEmuC",0);
+	//if (!IsDebuggerPresent()) MessageBox(0,L"Loaded",L"ComEmuC",0);
 #endif
 	
 	if (!psCmdLine)
@@ -160,6 +162,10 @@ int main()
 	}
 	if (wcsncmp(psCmdLine, L"/CMD", 4)==0) {
 		bViaCmdExe = FALSE; psCmdLine += 4;
+
+		WARNING("InitServer звать только для корневого ConEmuC");
+		InitServer();
+
 	} else {
 		psCmdLine += 2; // нас интересует все что ПОСЛЕ /C
 	}
@@ -568,7 +574,7 @@ DWORD WINAPI InstanceThread(LPVOID lpvParam)
          &cbBytesRead, // number of bytes read 
          NULL);        // not overlapped I/O 
 
-      if (!fSuccess || cbBytesRead < 8 || in.nSize < 8)
+      if (!fSuccess || cbBytesRead < 12 || in.nSize < 12)
          break;
          
       if (!GetAnswerToRequest(in, &pOut) || pOut==NULL)
@@ -602,7 +608,7 @@ DWORD WINAPI InstanceThread(LPVOID lpvParam)
 // На результат видимо придется не обращать внимания - не блокировать же выполнение
 // сообщениями об ошибках... Возможно, что информацию об ошибке стоит записать
 // в сам текстовый буфер.
-DWORD ReadConsoleData(RECT* prcChanged = NULL, BOOL* pbDataChanged = NULL)
+DWORD ReadConsoleData(CESERVER_CHAR** pCheck /*= NULL*/, BOOL* pbDataChanged /*= NULL*/)
 {
 	WARNING("Если передан prcDataChanged(!=0 && !=1) - считывать из консоли только его, с учетом прокрутки");
 	WARNING("Для оптимизации вызовов - можно считать, что левый и правый край совпадают с краями консоли");
@@ -701,7 +707,7 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 		case CECMD_GETFULLINFO:
 		{
 			if (szGuiPipeName[0] == 0) { // Серверный пайп в CVirtualConsole уже должен быть запущен
-				wsprintf(szGuiPipeName, CEGUIPIPENAME, L".", dwSelfPID);
+				wsprintf(szGuiPipeName, CEGUIPIPENAME, L".", (HWND)hConWnd); // был dwSelfPID
 			}
 			bContentsChanged = (in.nCmd == CECMD_GETFULLINFO) ? 1 : 0;
 
@@ -1208,6 +1214,7 @@ BOOL ReloadConsoleInfo()
 
 void ReloadFullConsoleInfo(CESERVER_CHAR* pCharOnly/*=NULL*/)
 {
+	CESERVER_CHAR* pCheck = NULL;
 	BOOL lbInfChanged = FALSE, lbDataChanged = FALSE;
 	DWORD dwBufSize = 0;
 
@@ -1215,7 +1222,11 @@ void ReloadFullConsoleInfo(CESERVER_CHAR* pCharOnly/*=NULL*/)
 
 	if (bNeedFullReload) {
 		bNeedFullReload = FALSE;
-		dwBufSize = ReadConsoleData(&lbDataChanged);
+		dwBufSize = ReadConsoleData(&pCheck, &lbDataChanged);
+		if (lbDataChanged && pCheck != NULL) {
+			pCharOnly = pCheck;
+			lbDataChanged = FALSE; // Изменения передадутся через pCharOnly
+		}
 	}
 
 	if (lbInfChanged || lbDataChanged || pCharOnly) {
@@ -1230,4 +1241,60 @@ void ReloadFullConsoleInfo(CESERVER_CHAR* pCharOnly/*=NULL*/)
 			memmove(pnAttrs+nBufCharCount, pnAttrs, nBufCharCount*sizeof(WORD));
 		}
 	}
+
+	if (pCheck) free(pCheck);
+}
+
+WARNING("InitServer() нужно позвать перед прицеплянием к ConEmu.GUI. Посмотреть, что выкинуть");
+void InitServer()
+{
+    //hConWnd = GetConsoleWindow();
+	//2009-05-13 теперь похоже не нужно
+	//ghConWnd = hConWnd; // ставим сразу, чтобы было известно, к какой консоли мы сейчас подцеплены (иначе hConOut() вернет NULL)
+
+    //SetConsoleCtrlHandler((PHANDLER_ROUTINE)CConEmuMain::HandlerRoutine, true);
+    
+    // наверное это имеет смысл только при создании консоли, а не при аттаче
+    SetHandleInformation(GetStdHandle(STD_INPUT_HANDLE), HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT);
+	// DuplicateHandle смысле не имеет, при первом же FreeConsole - эти хэндлы отвалятся
+	//if (!DuplicateHandle(GetCurrentProcess(), h, GetCurrentProcess(), &mh_StdIn, 0, TRUE, DUPLICATE_SAME_ACCESS)) {
+	//	dwErr = GetLastError();
+	//mh_StdIn = CreateFile(_T("CONIN$"), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_READ,
+    //        0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+	//}
+    SetHandleInformation(GetStdHandle(STD_OUTPUT_HANDLE), HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT);
+	//if (!DuplicateHandle(GetCurrentProcess(), h, GetCurrentProcess(), &mh_StdOut, 0, TRUE, DUPLICATE_SAME_ACCESS)) {
+	//	dwErr = GetLastError();
+	//mh_StdOut = CreateFile(_T("CONOUT$"), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_READ,
+    //        0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+	//}
+    SetHandleInformation(GetStdHandle(STD_ERROR_HANDLE), HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT);
+
+    //TODO("Перенести в ConEmuC");
+	/*
+    DWORD mode = 0;
+    BOOL lb = GetConsoleMode(hConIn(), &mode);
+    if (!(mode & ENABLE_MOUSE_INPUT)) {
+        mode |= ENABLE_MOUSE_INPUT;
+        lb = SetConsoleMode(hConIn(), mode);
+    }
+	*/
+
+    //hConOut();
+
+    SetConsoleFontSizeTo(hConWnd, 4, 6);
+
+    if (IsIconic(hConWnd)) {
+        // окошко нужно развернуть!
+        WINDOWPLACEMENT wplCon;
+        memset(&wplCon, 0, sizeof(wplCon)); wplCon.length = sizeof(wplCon);
+        GetWindowPlacement(hConWnd, &wplCon);
+
+        /*int n = wplMain.rcNormalPosition.left - wplCon.rcNormalPosition.left;
+        wplCon.rcNormalPosition.left += n; wplCon.rcNormalPosition.right += n;
+        n = wplMain.rcNormalPosition.top - wplCon.rcNormalPosition.top;
+        wplCon.rcNormalPosition.top += n; wplCon.rcNormalPosition.bottom += n;*/
+        wplCon.showCmd = SW_RESTORE;
+        SetWindowPlacement(hConWnd, &wplCon);
+    }
 }

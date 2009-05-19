@@ -10,6 +10,9 @@ WARNING("Нераспознанные можно помещать в буфер {VKEY,wchar_t=0}, в котором запол
 WARNING("При WM_(SYS)CHAR помещать wchar_t в начало, в первый незанятый VKEY");
 WARNING("При нераспознном WM_KEYUP - брать(и убрать) wchar_t из этого буфера, послав в консоль UP");
 TODO("А периодически - проводить процерку isKeyDown, и чистить буфер");
+WARNING("при переключении на другую консоль (да наверное и в процессе просто нажатий - модификатор может быть изменен в самой программе) требуется проверка caps, scroll, num");
+WARNING("а перед пересылкой символа/клавиши проверять нажат ли на клавиатуре Ctrl/Shift/Alt");
+
 
 
 //Курсор, его положение, размер консоли, измененный текст, и пр...
@@ -116,6 +119,7 @@ CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
     memset(&csbi, 0, sizeof(csbi)); mdw_LastError = 0;
     m_LastMaxReadCnt = 0; m_LastMaxReadTick = 0;
     hConWnd = NULL;
+    mn_LastVKeyPressed = 0;
 
     nSpaceCount = 1000;
     Spaces = (TCHAR*)Alloc(nSpaceCount,sizeof(TCHAR));
@@ -1902,7 +1906,8 @@ BOOL CVirtualConsole::AttachPID(DWORD dwPID)
     }
     DEBUGSTR(_T(" - OK"));
 
-    InitHandlers(FALSE);
+	TODO("InitHandler в GUI наверное уже и не нужен...");
+    //InitHandlers(FALSE);
 
     // Попытаться дернуть плагин для установки шрифта.
     CConEmuPipe pipe;
@@ -1917,86 +1922,86 @@ BOOL CVirtualConsole::AttachPID(DWORD dwPID)
 #endif
 }
 
-void CVirtualConsole::InitHandlers(BOOL abCreated)
-{
-    //hConWnd = GetConsoleWindow();
-	//2009-05-13 теперь похоже не нужно
-	//ghConWnd = hConWnd; // ставим сразу, чтобы было известно, к какой консоли мы сейчас подцеплены (иначе hConOut() вернет NULL)
-
-    SetConsoleCtrlHandler((PHANDLER_ROUTINE)CConEmuMain::HandlerRoutine, true);
-    
-    // наверное это имеет смысл только при создании консоли, а не при аттаче
-    SetHandleInformation(GetStdHandle(STD_INPUT_HANDLE), HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT);
-	// DuplicateHandle смысле не имеет, при первом же FreeConsole - эти хэндлы отвалятся
-	//if (!DuplicateHandle(GetCurrentProcess(), h, GetCurrentProcess(), &mh_StdIn, 0, TRUE, DUPLICATE_SAME_ACCESS)) {
-	//	dwErr = GetLastError();
-	mh_StdIn = CreateFile(_T("CONIN$"), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_READ,
-            0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
-	//}
-    SetHandleInformation(GetStdHandle(STD_OUTPUT_HANDLE), HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT);
-	//if (!DuplicateHandle(GetCurrentProcess(), h, GetCurrentProcess(), &mh_StdOut, 0, TRUE, DUPLICATE_SAME_ACCESS)) {
-	//	dwErr = GetLastError();
-	mh_StdOut = CreateFile(_T("CONOUT$"), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_READ,
-            0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
-	//}
-    SetHandleInformation(GetStdHandle(STD_ERROR_HANDLE), HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT);
-
-    TODO("Перенести в ConEmuC");
-	/*
-    DWORD mode = 0;
-    BOOL lb = GetConsoleMode(hConIn(), &mode);
-    if (!(mode & ENABLE_MOUSE_INPUT)) {
-        mode |= ENABLE_MOUSE_INPUT;
-        lb = SetConsoleMode(hConIn(), mode);
-    }
-	*/
-
-    //hConOut();
-
-    if (abCreated) {
-        SetConsoleFontSizeTo(4, 6);
-
-        if (IsIconic(hConWnd)) {
-            // окошко нужно развернуть!
-            WINDOWPLACEMENT wplMain, wplCon;
-            memset(&wplMain, 0, sizeof(wplMain)); wplMain.length = sizeof(wplMain);
-            memset(&wplCon, 0, sizeof(wplCon)); wplCon.length = sizeof(wplCon);
-            GetWindowPlacement(ghWnd, &wplMain);
-            GetWindowPlacement(hConWnd, &wplCon);
-
-            int n = wplMain.rcNormalPosition.left - wplCon.rcNormalPosition.left;
-            wplCon.rcNormalPosition.left += n; wplCon.rcNormalPosition.right += n;
-            n = wplMain.rcNormalPosition.top - wplCon.rcNormalPosition.top;
-            wplCon.rcNormalPosition.top += n; wplCon.rcNormalPosition.bottom += n;
-            wplCon.showCmd = SW_RESTORE;
-            SetWindowPlacement(hConWnd, &wplCon);
-        }
-
-        //if (gSet.wndHeight && gSet.wndWidth)
-        {
-			//// Скорректировать под размер экрана!
-			//RECT rcCon = MakeRect(gSet.wndWidth, gSet.wndHeight);
-			//RECT rcWnd = gConEmu.CalcRect(CER_MAIN, rcCon, CER_CONSOLE);
-			//rcWnd = gConEmu.CalcRect(CER_CORRECTED, rcWnd, gSet.isFullScreen ? CER_FULLSCREEN : CER_MAXIMIZED);
-			//rcCon = gConEmu.CalcRect(CER_CONSOLE, rcWnd, CER_MAIN);
-			//
-			//COORD b = {min(((int)gSet.wndWidth),rcCon.right), min(((int)gSet.wndHeight),rcCon.bottom)};
-			//SetConsoleSize(b);
-
-			// Корректируем по размеру окна
-			RECT rcWnd; GetClientRect(ghWnd, &rcWnd);
-			RECT rcCon = gConEmu.CalcRect(CER_CONSOLE, rcWnd, CER_MAINCLIENT);
-			SetConsoleSize(MakeCoord(rcCon.right,rcCon.bottom));
-        }
-
-        SetConsoleTitle(gSet.GetCmd());
-    } else {
-        SetConsoleFontSizeTo(4, 6);
-    }
-
-	if (gConEmu.isActive(this))
-		gConEmu.ConsoleCreated(hConWnd);
-}
+//void CVirtualConsole::InitHandlers(BOOL abCreated)
+//{
+//    //hConWnd = GetConsoleWindow();
+//	//2009-05-13 теперь похоже не нужно
+//	//ghConWnd = hConWnd; // ставим сразу, чтобы было известно, к какой консоли мы сейчас подцеплены (иначе hConOut() вернет NULL)
+//
+//    //SetConsoleCtrlHandler((PHANDLER_ROUTINE)CConEmuMain::HandlerRoutine, true);
+//    
+//    // наверное это имеет смысл только при создании консоли, а не при аттаче
+//    SetHandleInformation(GetStdHandle(STD_INPUT_HANDLE), HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT);
+//	// DuplicateHandle смысле не имеет, при первом же FreeConsole - эти хэндлы отвалятся
+//	//if (!DuplicateHandle(GetCurrentProcess(), h, GetCurrentProcess(), &mh_StdIn, 0, TRUE, DUPLICATE_SAME_ACCESS)) {
+//	//	dwErr = GetLastError();
+//	mh_StdIn = CreateFile(_T("CONIN$"), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_READ,
+//            0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+//	//}
+//    SetHandleInformation(GetStdHandle(STD_OUTPUT_HANDLE), HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT);
+//	//if (!DuplicateHandle(GetCurrentProcess(), h, GetCurrentProcess(), &mh_StdOut, 0, TRUE, DUPLICATE_SAME_ACCESS)) {
+//	//	dwErr = GetLastError();
+//	mh_StdOut = CreateFile(_T("CONOUT$"), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_READ,
+//            0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+//	//}
+//    SetHandleInformation(GetStdHandle(STD_ERROR_HANDLE), HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT);
+//
+//    TODO("Перенести в ConEmuC");
+//	/*
+//    DWORD mode = 0;
+//    BOOL lb = GetConsoleMode(hConIn(), &mode);
+//    if (!(mode & ENABLE_MOUSE_INPUT)) {
+//        mode |= ENABLE_MOUSE_INPUT;
+//        lb = SetConsoleMode(hConIn(), mode);
+//    }
+//	*/
+//
+//    //hConOut();
+//
+//    if (abCreated) {
+//        SetConsoleFontSizeTo(4, 6);
+//
+//        if (IsIconic(hConWnd)) {
+//            // окошко нужно развернуть!
+//            WINDOWPLACEMENT wplMain, wplCon;
+//            memset(&wplMain, 0, sizeof(wplMain)); wplMain.length = sizeof(wplMain);
+//            memset(&wplCon, 0, sizeof(wplCon)); wplCon.length = sizeof(wplCon);
+//            GetWindowPlacement(ghWnd, &wplMain);
+//            GetWindowPlacement(hConWnd, &wplCon);
+//
+//            int n = wplMain.rcNormalPosition.left - wplCon.rcNormalPosition.left;
+//            wplCon.rcNormalPosition.left += n; wplCon.rcNormalPosition.right += n;
+//            n = wplMain.rcNormalPosition.top - wplCon.rcNormalPosition.top;
+//            wplCon.rcNormalPosition.top += n; wplCon.rcNormalPosition.bottom += n;
+//            wplCon.showCmd = SW_RESTORE;
+//            SetWindowPlacement(hConWnd, &wplCon);
+//        }
+//
+//        //if (gSet.wndHeight && gSet.wndWidth)
+//        {
+//			//// Скорректировать под размер экрана!
+//			//RECT rcCon = MakeRect(gSet.wndWidth, gSet.wndHeight);
+//			//RECT rcWnd = gConEmu.CalcRect(CER_MAIN, rcCon, CER_CONSOLE);
+//			//rcWnd = gConEmu.CalcRect(CER_CORRECTED, rcWnd, gSet.isFullScreen ? CER_FULLSCREEN : CER_MAXIMIZED);
+//			//rcCon = gConEmu.CalcRect(CER_CONSOLE, rcWnd, CER_MAIN);
+//			//
+//			//COORD b = {min(((int)gSet.wndWidth),rcCon.right), min(((int)gSet.wndHeight),rcCon.bottom)};
+//			//SetConsoleSize(b);
+//
+//			// Корректируем по размеру окна
+//			RECT rcWnd; GetClientRect(ghWnd, &rcWnd);
+//			RECT rcCon = gConEmu.CalcRect(CER_CONSOLE, rcWnd, CER_MAINCLIENT);
+//			SetConsoleSize(MakeCoord(rcCon.right,rcCon.bottom));
+//        }
+//
+//        SetConsoleTitle(gSet.GetCmd());
+//    } else {
+//        SetConsoleFontSizeTo(4, 6);
+//    }
+//
+//	if (gConEmu.isActive(this))
+//		gConEmu.ConsoleCreated(hConWnd);
+//}
 
 // asExeName может быть NULL, тогда ставим полный путь к ConEmu (F:_VCProject_FarPlugin_#FAR180_ConEmu.exe)
 // а может быть как просто именем "FAR", так и с расширением "FAR.EXE" (зависит от командной строки)
@@ -2176,7 +2181,8 @@ DWORD CVirtualConsole::StartProcessThread(LPVOID lpParameter)
 
 		if (nWait == IDEVENT_TERM /*|| !bLoop*/ || nWait == IDEVENT_CONCLOSED)
             break; // требование завершения нити
-          
+
+        // Если консоль не должна быть показана - но ее кто-то отобразил 
         if (!pCon->isShowConsole && !gSet.isConVisible)
         {
             /*if (foreWnd == hConWnd)
@@ -3176,67 +3182,18 @@ LPCTSTR CVirtualConsole::GetTitle()
 	return Title;
 }
 
+LRESULT CVirtualConsole::OnScroll(int nDirection)
+{
+	// SB_LINEDOWN / SB_LINEUP / SB_PAGEDOWN / SB_PAGEUP
+	TODO("Переделать в команду пайпа");
+	POSTMESSAGE(ghConWnd, WM_VSCROLL, SB_LINEDOWN, NULL, FALSE);
+	return 0;
+}
+
 LRESULT CVirtualConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 {
     LRESULT result = 0;
 
-
-  // buffer mode: scroll with keys  -- NightRoman
-    if (BufferHeight && messg == WM_KEYDOWN && isPressed(VK_CONTROL))
-    {
-        switch(wParam)
-        {
-        case VK_DOWN:
-            POSTMESSAGE(hConWnd, WM_VSCROLL, SB_LINEDOWN, NULL, FALSE);
-            return 0;
-        case VK_UP:
-            POSTMESSAGE(hConWnd, WM_VSCROLL, SB_LINEUP, NULL, FALSE);
-            return 0;
-        case VK_NEXT:
-            POSTMESSAGE(hConWnd, WM_VSCROLL, SB_PAGEDOWN, NULL, FALSE);
-            return 0;
-        case VK_PRIOR:
-            POSTMESSAGE(hConWnd, WM_VSCROLL, SB_PAGEUP, NULL, FALSE);
-            return 0;
-        }
-    }
-
-    //CtrlWinAltSpace
-    if (messg == WM_KEYDOWN && wParam == VK_SPACE && isPressed(VK_CONTROL) && isPressed(VK_LWIN) && isPressed(VK_MENU))
-    {
-        static DWORD dwLastSpaceTick;
-        if ((dwLastSpaceTick-GetTickCount())<1000) {
-            if (hWnd == ghWndDC) MBoxA(_T("Space bounce recieved from DC")); else
-            if (hWnd == ghWnd) MBoxA(_T("Space bounce recieved from MainWindow")); else
-            if (hWnd == gConEmu.m_Back.mh_Wnd) MBoxA(_T("Space bounce recieved from BackWindow")); else
-            MBoxA(_T("Space bounce recieved from unknown window"));
-            return 0;
-        }
-        dwLastSpaceTick = GetTickCount();
-        if (!IsWindowVisible(hConWnd))
-        {
-            isShowConsole = true;
-            //ShowWindow(hConWnd, SW_SHOWNORMAL);
-            //if (setParent) SetParent(hConWnd, 0);
-            RECT rcCon, rcWnd; GetWindowRect(hConWnd, &rcCon); GetWindowRect(ghWnd, &rcWnd);
-            SetWindowPos(hConWnd, HWND_TOPMOST, 
-                rcWnd.right-rcCon.right+rcCon.left,rcWnd.bottom-rcCon.bottom+rcCon.top,0,0, SWP_NOSIZE|SWP_SHOWWINDOW);
-            EnableWindow(hConWnd, true);
-            SetFocus(ghWnd);
-            //if (setParent) SetParent(hConWnd, 0);
-        }
-        else
-        {
-            isShowConsole = false;
-            //if (!gSet.isConVisible)
-            ShowWindow(hConWnd, SW_HIDE);
-            //if (setParent) SetParent(hConWnd, setParent2 ? ghWnd : ghWndDC);
-            //if (!gSet.isConVisible)
-            EnableWindow(hConWnd, false);
-            SetFocus(ghWnd);
-        }
-        return 0;
-    }
 
     if (mb_ConsoleSelectMode && messg == WM_KEYDOWN && ((wParam == VK_ESCAPE) || (wParam == VK_RETURN)))
         mb_ConsoleSelectMode = false; //TODO: может как-то по другому определять?
@@ -3244,14 +3201,15 @@ LRESULT CVirtualConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM
     // Основная обработка 
     {
         if (messg == WM_SYSKEYDOWN) 
-            if (wParam == VK_INSERT && lParam & 29)
+            if (wParam == VK_INSERT && lParam & (1<<29)/*Бред. это 29-й бит, а не число 29*/)
                 mb_ConsoleSelectMode = true;
 
         static bool isSkipNextAltUp = false;
-        if (messg == WM_SYSKEYDOWN && wParam == VK_RETURN && lParam & 29)
+        if (messg == WM_SYSKEYDOWN && wParam == VK_RETURN && lParam & (1<<29)/*Бред. это 29-й бит, а не число 29*/)
         {
             if (gSet.isSentAltEnter)
             {
+	            TODO("Переделать в SendConsoleInput");
                 POSTMESSAGE(hConWnd, WM_KEYDOWN, VK_MENU, 0, TRUE);
                 POSTMESSAGE(hConWnd, WM_KEYDOWN, VK_RETURN, 0, TRUE);
                 POSTMESSAGE(hConWnd, WM_KEYUP, VK_RETURN, 0, TRUE);
@@ -3270,7 +3228,7 @@ LRESULT CVirtualConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM
                 isSkipNextAltUp = true;
             }
         }
-        else if (messg == WM_SYSKEYDOWN && wParam == VK_SPACE && lParam & 29 && !isPressed(VK_SHIFT))
+        else if (messg == WM_SYSKEYDOWN && wParam == VK_SPACE && lParam & (1<<29)/*Бред. это 29-й бит, а не число 29*/ && !isPressed(VK_SHIFT))
         {
             RECT rect, cRect;
             GetWindowRect(ghWnd, &rect);
@@ -3279,13 +3237,70 @@ LRESULT CVirtualConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM
             gConEmu.ShowSysmenu(ghWnd, ghWnd, rect.right - cRect.right - wInfo.cxWindowBorders, rect.bottom - cRect.bottom - wInfo.cyWindowBorders);
         }
         else if (messg == WM_KEYUP && wParam == VK_MENU && isSkipNextAltUp) isSkipNextAltUp = false;
-        else if (messg == WM_SYSKEYDOWN && wParam == VK_F9 && lParam & 29 && !isPressed(VK_SHIFT))
+        else if (messg == WM_SYSKEYDOWN && wParam == VK_F9 && lParam & (1<<29)/*Бред. это 29-й бит, а не число 29*/ && !isPressed(VK_SHIFT))
             gConEmu.SetWindowMode((IsZoomed(ghWnd)||(gSet.isFullScreen&&gConEmu.isWndNotFSMaximized)) ? rNormal : rMaximized);
 		else {
+			INPUT_RECORD r = {KEY_EVENT};
+
+			WORD nCaps = GetKeyState(VK_CAPITAL);
+			WORD nNum = GetKeyState(VK_NUMLOCK);
+			WORD nScroll = GetKeyState(VK_SCROLL);
+			WORD nLAlt = GetKeyState(VK_LMENU);
+			WORD nRAlt = GetKeyState(VK_RMENU);
+			WORD nLCtrl = GetKeyState(VK_LCONTROL);
+			WORD nRCtrl = GetKeyState(VK_RCONTROL);
+			WORD nShift = GetKeyState(VK_SHIFT);
+
 			if (messg == WM_CHAR || messg == WM_SYSCHAR) {
-				WARNING("TODO: Пересылка символов в консоль");
+				PRAGMA_ERROR("Сюда приходят и сомволы с кодами 27, 13, 9, 8 и пр.");
+				r.Event.KeyEvent.bKeyDown = TRUE;
+				r.Event.KeyEvent.uChar.UnicodeChar = (WCHAR)wParam;
+				r.Event.KeyEvent.wRepeatCount = 1; TODO("0-15 ? Specifies the repeat count for the current message. The value is the number of times the keystroke is autorepeated as a result of the user holding down the key. If the keystroke is held long enough, multiple messages are sent. However, the repeat count is not cumulative.");
+				r.Event.KeyEvent.wVirtualKeyCode = mn_LastVKeyPressed;
 			} else {
-				POSTMESSAGE(hConWnd, messg, wParam, lParam, FALSE);
+				mn_LastVKeyPressed = wParam & 0xFFFF;
+				//POSTMESSAGE(hConWnd, messg, wParam, lParam, FALSE);
+				if ((wParam >= VK_F1 && wParam <= VK_F24) || wParam == VK_RETURN || wParam == VK_ESCAPE ||
+					wParam == VK_TAB)
+				{
+					r.Event.KeyEvent.wRepeatCount = 1; TODO("0-15 ? Specifies the repeat count for the current message. The value is the number of times the keystroke is autorepeated as a result of the user holding down the key. If the keystroke is held long enough, multiple messages are sent. However, the repeat count is not cumulative.");
+					r.Event.KeyEvent.wVirtualKeyCode = mn_LastVKeyPressed;
+				} else {
+					return 0;
+				}
+				r.Event.KeyEvent.bKeyDown = (messg == WM_KEYDOWN || messg == WM_SYSKEYDOWN);
+			}
+
+			r.Event.KeyEvent.wVirtualScanCode = ((DWORD)lParam & 0xFF0000) >> 16; // 16-23 - Specifies the scan code. The value depends on the OEM.
+			// 24 - Specifies whether the key is an extended key, such as the right-hand ALT and CTRL keys that appear on an enhanced 101- or 102-key keyboard. The value is 1 if it is an extended key; otherwise, it is 0.
+			// 29 - Specifies the context code. The value is 1 if the ALT key is held down while the key is pressed; otherwise, the value is 0.
+			// 30 - Specifies the previous key state. The value is 1 if the key is down before the message is sent, or it is 0 if the key is up.
+			// 31 - Specifies the transition state. The value is 1 if the key is being released, or it is 0 if the key is being pressed.
+			r.Event.KeyEvent.dwControlKeyState = 0;
+			if (((DWORD)lParam & (DWORD)(1 << 24)) != 0)
+				r.Event.KeyEvent.dwControlKeyState |= ENHANCED_KEY;
+			if ((nCaps & 1) == 1)
+				r.Event.KeyEvent.dwControlKeyState |= CAPSLOCK_ON;
+			if ((nNum & 1) == 1)
+				r.Event.KeyEvent.dwControlKeyState |= NUMLOCK_ON;
+			if ((nScroll & 1) == 1)
+				r.Event.KeyEvent.dwControlKeyState |= SCROLLLOCK_ON;
+			if (nLAlt & 0x8000)
+				r.Event.KeyEvent.dwControlKeyState |= LEFT_ALT_PRESSED;
+			if (nRAlt & 0x8000)
+				r.Event.KeyEvent.dwControlKeyState |= RIGHT_ALT_PRESSED;
+			if (nLCtrl & 0x8000)
+				r.Event.KeyEvent.dwControlKeyState |= LEFT_CTRL_PRESSED;
+			if (nRCtrl & 0x8000)
+				r.Event.KeyEvent.dwControlKeyState |= RIGHT_CTRL_PRESSED;
+			if (nShift & 0x8000)
+				r.Event.KeyEvent.dwControlKeyState |= SHIFT_PRESSED;
+			SendConsoleEvent(&r);
+
+			if (messg == WM_CHAR || messg == WM_SYSCHAR) {
+				// И сразу посылаем отпускание
+				r.Event.KeyEvent.bKeyDown = FALSE;
+				SendConsoleEvent(&r);
 			}
 		}
     }
@@ -3309,7 +3324,7 @@ void CVirtualConsole::OnWinEvent(DWORD event, HWND hwnd, LONG idObject, LONG idC
 	_ASSERTE(hwnd!=NULL);
 	
 	if (hConWnd == NULL && event == EVENT_CONSOLE_START_APPLICATION && idObject == mn_ConEmuC_PID)
-		hConWnd = hwnd;
+		SetHwnd ( hwnd );
 
 	_ASSERTE(hConWnd!=NULL && hwnd==hConWnd);
 	
@@ -3410,9 +3425,9 @@ DWORD CVirtualConsole::ServerThread(LPVOID lpvParam)
 	HANDLE hPipe = NULL; 
 	DWORD dwErr = 0;
 
-	_ASSERTE(pCon->mn_ConEmuC_PID!=0);
+	_ASSERTE(pCon->hConWnd!=NULL);
 
-	wsprintf(pCon->ms_VConServer_Pipe, CEGUIPIPENAME, L".", (DWORD)pCon->mn_ConEmuC_PID);
+	wsprintf(pCon->ms_VConServer_Pipe, CEGUIPIPENAME, L".", (DWORD)pCon->hConWnd); //был mn_ConEmuC_PID
 
 	// The main loop creates an instance of the named pipe and 
 	// then waits for a client to connect to it. When the client 
@@ -3427,7 +3442,7 @@ DWORD CVirtualConsole::ServerThread(LPVOID lpvParam)
 
 		hPipe = CreateNamedPipe( 
 			pCon->ms_VConServer_Pipe, // pipe name 
-			PIPE_ACCESS_INBOUND,      // read/write access 
+			PIPE_ACCESS_DUPLEX,       // read/write access 
 			PIPE_TYPE_MESSAGE |       // message type pipe 
 			PIPE_READMODE_MESSAGE |   // message-read mode 
 			PIPE_WAIT,                // blocking mode 
@@ -3458,20 +3473,33 @@ DWORD CVirtualConsole::ServerThread(LPVOID lpvParam)
 			return 0;
 		}
 
-		if (fConnected) 
-			pCon->ServerThreadCommand ( hPipe );
-
-		CloseHandle(hPipe); hPipe = NULL;
+		if (fConnected) {
+			ServerThreadCommandArg* pArg = (ServerThreadCommandArg*)calloc(sizeof(ServerThreadCommandArg),1);
+			pArg->pCon = pCon;
+			pArg->hPipe = hPipe;
+			//pCon->ServerThreadCommand ( hPipe ); // При необходимости - записывает в пайп результат сама
+			DWORD dwCommandTID = 0;
+			HANDLE hCommandThread = CreateThread(NULL, 0, ServerThreadCommand, (LPVOID)pArg, 0, &dwCommandTID);
+			_ASSERTE(hCommandThread!=NULL);
+			CloseHandle(hCommandThread);
+		} else {
+			CloseHandle(hPipe); hPipe = NULL;
+		}
 	}
 
 	pCon->ms_VConServer_Pipe[0] = 0; // флаг, что нить завершилась
 	return 1; 
 }
 
-void CVirtualConsole::ServerThreadCommand(HANDLE hPipe)
+DWORD CVirtualConsole::ServerThreadCommand(LPVOID/* ServerThreadCommandArg* */ lpvParam)
 {
+	ServerThreadCommandArg* pArg = (ServerThreadCommandArg*)lpvParam;
+	CVirtualConsole* pCon = pArg->pCon;
+	HANDLE hPipe = pArg->hPipe;
+	free(pArg); pArg = NULL;
+
 	CESERVER_REQ in={0}, *pOut=NULL;
-	DWORD cbRead = 0;
+	DWORD cbRead = 0, cbWritten = 0;
 	BOOL fSuccess = FALSE;
 
 	// Send a message to the pipe server and read the response. 
@@ -3484,13 +3512,16 @@ void CVirtualConsole::ServerThreadCommand(HANDLE hPipe)
 
 	if (!fSuccess && (GetLastError() != ERROR_MORE_DATA)) 
 	{
-		_ASSERTE("TransactNamedPipe failed"==NULL);
-		return;
+		_ASSERTE("ReadFile(pipe) failed"==NULL);
+		CloseHandle(hPipe);
+		return 0;
 	}
-	_ASSERTE(in.nSize>0);
+	_ASSERTE(in.nSize>=12 && cbRead>=12);
 	_ASSERTE(in.nVersion == CESERVER_REQ_VER);
-	if (cbRead < sizeof(in) || in.nSize < cbRead || in.nVersion != CESERVER_REQ_VER)
-		return;
+	if (cbRead < 12 || /*in.nSize < cbRead ||*/ in.nVersion != CESERVER_REQ_VER) {
+		CloseHandle(hPipe);
+		return 0;
+	}
 
 	int nAllSize = in.nSize;
 	pOut = (CESERVER_REQ*)calloc(nAllSize,1);
@@ -3526,13 +3557,38 @@ void CVirtualConsole::ServerThreadCommand(HANDLE hPipe)
 
 	TODO("Может возникнуть ASSERT, если консоль была закрыта в процессе чтения");
 	_ASSERTE(nAllSize==0);
-	if (nAllSize>0)
-		return; // удалось считать не все данные
+	if (nAllSize>0) {
+		CloseHandle(hPipe);
+		return 0; // удалось считать не все данные
+	}
 
-	ApplyConsoleInfo(pOut);
+	// Все данные из пайпа получены, обрабатываем команду и возвращаем (если нужно) результат
+	if (pOut->nCmd == CECMD_GETFULLINFO || pOut->nCmd == CECMD_GETSHORTINFO) {
+		pCon->ApplyConsoleInfo(pOut);
+		
+	} else if (pOut->nCmd == CECMD_GETGUIHWND) {
+		CESERVER_REQ *pRet = NULL;
+		int nSize = sizeof(CESERVER_REQ) - sizeof(pRet->Data/*BYTE*/) + 2*sizeof(DWORD);
+		pRet = (CESERVER_REQ*)calloc(nSize, 1);
+		pRet->nSize = nSize;
+		pRet->nCmd = pOut->nCmd;
+		pRet->nVersion = CESERVER_REQ_VER;
+		((DWORD*)pRet->Data)[0] = (DWORD)ghWnd;
+		((DWORD*)pRet->Data)[1] = (DWORD)ghWndDC;
+		// Отправляем
+		fSuccess = WriteFile( 
+			hPipe,        // handle to pipe 
+			pRet,         // buffer to write from 
+			pRet->nSize,  // number of bytes to write 
+			&cbWritten,   // number of bytes written 
+			NULL);        // not overlapped I/O 
+	}
 
 	// Освободить память
 	free(pOut);
+
+	CloseHandle(hPipe);
+	return 0;
 }
 
 #define COPYBUFFERS(v,s) { \
@@ -3561,8 +3617,7 @@ void CVirtualConsole::ApplyConsoleInfo(CESERVER_REQ* pInfo)
 	COPYBUFFER(hWnd);
 	_ASSERTE(hWnd!=NULL);
 	if (hConWnd != hWnd) {
-		hConWnd = hWnd;
-		InitHandlers(TRUE);
+		SetHwnd ( hWnd );
 	}
 	// 2
 	// во время чтения содержимого консоли может увеличиться количество процессов
@@ -3889,12 +3944,6 @@ BOOL CVirtualConsole::RetrieveConsoleInfo(BOOL bShortOnly)
 
 	TODO("!!! Необходимо сделать флажок, для выбора между CECMD_GETFULLINFO/CECMD_GETSHORTINFO");
 
-	if (mh_VConServerThread == NULL) {
-		DWORD dwServerTID = 0;
-		mh_VConServerThread = CreateThread(NULL, 0, ServerThread, (LPVOID)this, 0, &dwServerTID);
-		_ASSERTE(mh_VConServerThread!=NULL);
-	}
-
 	BOOL lbRc = FALSE;
 	HANDLE hPipe = NULL; 
 	CESERVER_REQ in={0}, *pOut=NULL;
@@ -3962,10 +4011,12 @@ BOOL CVirtualConsole::RetrieveConsoleInfo(BOOL bShortOnly)
 	{
 	  DEBUGSTR(L" - FAILED!\n");
 	  DisplayLastError(L"SetNamedPipeHandleState failed");
+	  CloseHandle(hPipe);
 	  return 0;
 	}
 
-	in.nSize = 8;
+	in.nSize = 12;
+	in.nVersion = CESERVER_REQ_VER;
 	in.nCmd  = bShortOnly ? CECMD_GETSHORTINFO : CECMD_GETFULLINFO;
 
 	// Send a message to the pipe server and read the response. 
@@ -3982,6 +4033,7 @@ BOOL CVirtualConsole::RetrieveConsoleInfo(BOOL bShortOnly)
 	{
 	  DEBUGSTR(L" - FAILED!\n");
 	  DisplayLastError(L"TransactNamedPipe failed"); 
+	  CloseHandle(hPipe);
 	  return 0;
 	}
 
@@ -3989,6 +4041,7 @@ BOOL CVirtualConsole::RetrieveConsoleInfo(BOOL bShortOnly)
 	if (nAllSize==0) {
 	   DEBUGSTR(L" - FAILED!\n");
 	   DisplayLastError(L"Empty data recieved from server", 0);
+	   CloseHandle(hPipe);
 	   return 0;
 	}
 	pOut = (CESERVER_REQ*)calloc(nAllSize,1);
@@ -4164,3 +4217,54 @@ BOOL CVirtualConsole::InitBuffers(DWORD OneBufferSize)
 
 	return lbRc;
 }
+
+void CVirtualConsole::ShowConsole(int nMode) // -1 Toggle, 0 - Hide, 1 - Show
+{
+	if (this == NULL) return;
+	if (!hConWnd) return;
+	
+	if (nMode == -1) {
+		nMode = IsWindowVisible(hConWnd) ? 0 : 1;
+	}
+	
+    if (nMode == 1)
+    {
+        isShowConsole = true;
+        //ShowWindow(hConWnd, SW_SHOWNORMAL);
+        //if (setParent) SetParent(hConWnd, 0);
+        RECT rcCon, rcWnd; GetWindowRect(hConWnd, &rcCon); GetWindowRect(ghWnd, &rcWnd);
+        SetWindowPos(hConWnd, HWND_TOPMOST, 
+            rcWnd.right-rcCon.right+rcCon.left,rcWnd.bottom-rcCon.bottom+rcCon.top,0,0, SWP_NOSIZE|SWP_SHOWWINDOW);
+        EnableWindow(hConWnd, true);
+        SetFocus(ghWnd);
+        //if (setParent) SetParent(hConWnd, 0);
+    }
+    else
+    {
+        isShowConsole = false;
+        //if (!gSet.isConVisible)
+        ShowWindow(hConWnd, SW_HIDE);
+        //if (setParent) SetParent(hConWnd, setParent2 ? ghWnd : ghWndDC);
+        //if (!gSet.isConVisible)
+        //EnableWindow(hConWnd, false); -- наверное не нужно
+        SetFocus(ghWnd);
+    }
+}
+
+void CVirtualConsole::SetHwnd(HWND ahConWnd)
+{
+	hConWnd = ahConWnd;
+	
+	if (gSet.isConVisible)
+		ShowConsole(1); // установить консольному окну флаг AlwaysOnTop
+	
+	TODO("InitHandler в GUI наверное уже и не нужен...");
+	//InitHandlers(TRUE);
+	
+	if (mh_VConServerThread == NULL) {
+		DWORD dwServerTID = 0;
+		mh_VConServerThread = CreateThread(NULL, 0, ServerThread, (LPVOID)this, 0, &dwServerTID);
+		_ASSERTE(mh_VConServerThread!=NULL);
+	}
+}
+

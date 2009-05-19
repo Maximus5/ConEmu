@@ -159,7 +159,7 @@ public:
 	static RECT CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFrom, RECT* prDC=NULL);
 	//bool CheckBufferSize();
 	bool ConmanAction(int nCmd);
-	void ConsoleCreated(HWND hConWnd);
+	//void ConsoleCreated(HWND hConWnd);
 	CVirtualConsole* CreateCon();
 	//COORD ConsoleSizeFromWindow(RECT* arect = NULL, bool frameIncluded = false, bool alreadyClient = false);
 	//RECT ConsoleOffsetRect();
@@ -170,7 +170,7 @@ public:
 	//void GetCWShift(HWND inWnd, POINT *outShift);
 	//void GetCWShift(HWND inWnd, RECT *outShift);
 	//int GetBufferHeight();
-	static BOOL WINAPI HandlerRoutine(DWORD dwCtrlType);
+	//static BOOL WINAPI HandlerRoutine(DWORD dwCtrlType);
 	BOOL Init();
 	//BOOL InitConMan(LPCWSTR asCommandLine);
 	void InvalidateAll();
