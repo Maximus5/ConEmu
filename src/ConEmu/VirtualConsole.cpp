@@ -120,6 +120,7 @@ CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
     m_LastMaxReadCnt = 0; m_LastMaxReadTick = 0;
     hConWnd = NULL;
     mn_LastVKeyPressed = 0;
+	mn_LastConReadTick = 0;
 
     nSpaceCount = 1000;
     Spaces = (TCHAR*)Alloc(nSpaceCount,sizeof(TCHAR));
@@ -797,6 +798,8 @@ bool CVirtualConsole::UpdatePrepare(bool isForce, HDC *ahDc)
     drawImage = gSet.isShowBgImage && gSet.isBackgroundImageValid;
     TextLen = TextWidth * TextHeight;
     coord.X = csbi.srWindow.Left; coord.Y = csbi.srWindow.Top;
+
+	PRAGMA_ERROR("Нужно пересоздать буфера при необходимости и скопировать данные из новых переменных В ConAttr/ConChar");
 
     MCHKHEAP
     // Get attributes (first) and text (second)
@@ -2182,6 +2185,16 @@ DWORD CVirtualConsole::StartProcessThread(LPVOID lpParameter)
 		if (nWait == IDEVENT_TERM /*|| !bLoop*/ || nWait == IDEVENT_CONCLOSED)
             break; // требование завершения нити
 
+		// Проверим, что ConEmuC жив
+		{
+			DWORD dwExitCode = 0;
+			BOOL fSuccess = GetExitCodeProcess(pCon->mh_ConEmuC, &dwExitCode);
+			if (dwExitCode!=STILL_ACTIVE) {
+				pCon->StopSignal();
+				return 0;
+			}
+		}
+
         // Если консоль не должна быть показана - но ее кто-то отобразил 
         if (!pCon->isShowConsole && !gSet.isConVisible)
         {
@@ -2665,6 +2678,14 @@ void CVirtualConsole::SendConsoleEvent(INPUT_RECORD* piRec)
 	DWORD dwErr = 0, dwMode = 0;
 	BOOL fSuccess = FALSE;
 
+	// Пайп есть. Проверим, что ConEmuC жив
+	DWORD dwExitCode = 0;
+	fSuccess = GetExitCodeProcess(mh_ConEmuC, &dwExitCode);
+	if (dwExitCode!=STILL_ACTIVE) {
+		//DisplayLastError(L"ConEmuC was terminated");
+		return;
+	}
+
 	TODO("Если пайп с таким именем не появится в течении 10 секунд (минуты?) - закрыть VirtualConsole показав ошибку");
 	if (mh_ConEmuCInput==NULL || mh_ConEmuCInput==INVALID_HANDLE_VALUE) {
 		// Try to open a named pipe; wait for it, if necessary. 
@@ -2725,10 +2746,10 @@ void CVirtualConsole::SendConsoleEvent(INPUT_RECORD* piRec)
 	}
 	
 	// Пайп есть. Проверим, что ConEmuC жив
-	DWORD dwExitCode = 0;
+	dwExitCode = 0;
 	fSuccess = GetExitCodeProcess(mh_ConEmuC, &dwExitCode);
 	if (dwExitCode!=STILL_ACTIVE) {
-		DisplayLastError(L"ConEmuC was terminated");
+		//DisplayLastError(L"ConEmuC was terminated");
 		return;
 	}
 	
@@ -2768,6 +2789,13 @@ void CVirtualConsole::Free(LPVOID ptr)
 
 void CVirtualConsole::StopSignal()
 {
+	if (mn_ProcessCount) {
+		CSection SPRC(&csPRC, &ncsTPRC);
+		m_Processes.clear();
+		SPRC.Leave();
+		mn_ProcessCount = 0;
+	}
+
     SetEvent(mh_TermEvent);
 }
 
@@ -3623,8 +3651,9 @@ void CVirtualConsole::ServerThreadCommand(HANDLE hPipe)
 
 void CVirtualConsole::ApplyConsoleInfo(CESERVER_REQ* pInfo)
 {
-	// Теперь нужно открыть секцию - начинаем изменение переменных класса
-	CSection SCON(&csCON, &ncsTCON);
+	_ASSERTE(this!=NULL);
+	if (this==NULL) return;
+
 	// Теперь нужно раскидать данные про структурам
 	LPBYTE lpCur = (LPBYTE)pInfo->Data;
 	LPBYTE lpEnd = ((LPBYTE)pInfo)+pInfo->nSize;
@@ -3636,7 +3665,10 @@ void CVirtualConsole::ApplyConsoleInfo(CESERVER_REQ* pInfo)
 	if (hConWnd != hWnd) {
 		SetHwnd ( hWnd );
 	}
-	// 2
+	// 2 - GetTickCount последнего чтения
+	DWORD nLastConReadTick = 0;
+	COPYBUFFER(nLastConReadTick);
+	// 3
 	// во время чтения содержимого консоли может увеличиться количество процессов
 	// поэтому РЕАЛЬНОЕ количество - выставим после чтения и CriticalSection(csProc);
 	//CSection SPRC(&csPRC, &ncsTPRC);
@@ -3653,25 +3685,30 @@ void CVirtualConsole::ApplyConsoleInfo(CESERVER_REQ* pInfo)
 	//	dwProcCount--;
 	//}
 	//SPRC.Leave();
-	// 3
+
+	// Теперь нужно открыть секцию - начинаем изменение переменных класса
+	PRAGMA_ERROR("Создать НОВУЮ секцию, а не csCON");
+	CSection SCON(&csCON, &ncsTCON);
+
+	// 4
 	DWORD dwSelRc = 0; //CONSOLE_SELECTION_INFO sel = {0}; // GetConsoleSelectionInfo
 	COPYBUFFER(dwSelRc);
 	if (dwSelRc != 0) {
 		_ASSERTE(dwSelRc == sizeof(m_sel));
 		COPYBUFFER(m_sel);
 	}
-	// 4
+	// 5
 	DWORD dwCiRc = 0; //CONSOLE_CURSOR_INFO ci = {0}; // GetConsoleCursorInfo
 	COPYBUFFER(dwCiRc);
 	if (dwCiRc != 0) {
 		_ASSERTE(dwCiRc == sizeof(m_ci));
 		COPYBUFFER(m_ci);
 	}
-	// 5, 6, 7
+	// 6, 7, 8
 	COPYBUFFER(m_dwConsoleCP);       // GetConsoleCP()
 	COPYBUFFER(m_dwConsoleOutputCP); // GetConsoleOutputCP()
 	COPYBUFFER(m_dwConsoleMode);     // GetConsoleMode(hConIn, &dwConsoleMode);
-	// 8
+	// 9
 	DWORD dwSbiRc = 0; //CONSOLE_SCREEN_BUFFER_INFO sbi = {{0,0}}; // GetConsoleScreenBufferInfo
 	COPYBUFFER(dwSbiRc);
 	if (dwSbiRc != 0) {
@@ -3679,7 +3716,7 @@ void CVirtualConsole::ApplyConsoleInfo(CESERVER_REQ* pInfo)
 		COPYBUFFER(m_sbi);
 		WARNING("Здесь нужно пересоздать буфера, если сменился размер!");
 	}
-	// 9
+	// 10
 	DWORD dwCharChanged = 0;
 	COPYBUFFER(dwCharChanged);
 	if (dwCharChanged != 0) {
@@ -3695,6 +3732,7 @@ void CVirtualConsole::ApplyConsoleInfo(CESERVER_REQ* pInfo)
 			_ASSERTE(!isBufferHeight());
 			wchar_t* pszLine = (wchar_t*)(pch->data);
 			WORD*    pnLine  = ((WORD*)pch->data)+(nLineLen*nLineCount);
+			PRAGMA_ERROR("Собственно данные копировать в новые переменные - текущий буфер консоли");
 			for (int y = pch->crStart.Y; y <= pch->crEnd.Y; y++) {
 				int nIdx = pch->crStart.X + y * m_sbi.dwSize.X;
 				memmove(ConChar+nIdx, pszLine, nLineLen*2);
@@ -3706,16 +3744,25 @@ void CVirtualConsole::ApplyConsoleInfo(CESERVER_REQ* pInfo)
 			lpCur += dwCharChanged;
 		}
 	}
-	// 10
+	// 11
 	DWORD OneBufferSize = 0;
 	COPYBUFFER(OneBufferSize);
 	if (OneBufferSize != 0) {
 		if (InitBuffers(OneBufferSize)) {
+			PRAGMA_ERROR("Собственно данные копировать в новые переменные - текущий буфер консоли");
 			memmove(ConChar, lpCur, OneBufferSize); lpCur += OneBufferSize;
 			memmove(ConAttr, lpCur, OneBufferSize); lpCur += OneBufferSize;
 		}
 	}
 
+	if (mn_LastConReadTick) {
+		DWORD dwDelta = nLastConReadTick - mn_LastConReadTick;
+		// может перевалить через 0
+		_ASSERTE(mn_LastConReadTick <= nLastConReadTick || dwDelta > 0x1000000);
+	}
+	mn_LastConReadTick = nLastConReadTick;
+
+	PRAGMA_ERROR("НЕ csCon");
 	SCON.Leave();
 	// Передернуть GUI
 	SetEvent(mh_ForceReadEvent);

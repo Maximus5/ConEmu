@@ -278,4 +278,5 @@ private:
 	void ApplyConsoleInfo(CESERVER_REQ* pInfo);
 	void SetHwnd(HWND ahConWnd);
 	WORD mn_LastVKeyPressed;
+	DWORD mn_LastConReadTick;
 };

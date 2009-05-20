@@ -102,11 +102,11 @@ REGEDIT4
 "TabFrame"=hex:01
 ;; For internal use (Tab control sizes)
 ;"TabMargins"=hex:04,00,00,00,19,00,00,00,04,00,00,00,04,00,00,00
-;; Tab labels formatting
+;; Tab labels formatting. '%i' is optional.
 "TabPanels"="Panels|Console"
-"TabEditor"="[%s]"
-"TabEditorModified"="[%s] *"
-"TabViewer"="{%s}"
+"TabEditor"="%i-[%s]"
+"TabEditorModified"="%i-[%s] *"
+"TabViewer"="%i-{%s}"
 "TabLenMax"=dword:00000014
 
 ;; Debug. 1 - Create 'app' window on taskbar

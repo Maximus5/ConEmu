@@ -1058,6 +1058,9 @@ CESERVER_REQ* CreateConsoleInfo(CESERVER_CHAR* pCharOnly, int bCharAttrBuff)
 	HWND hWnd = NULL;
 	dwAllSize += (nSize=sizeof(hWnd)); _ASSERTE(nSize==4);
 	// 2
+	PRAGMA_ERROR("“ут нужно бы вставить GetTickCount(), чтобы GUI случайно не 'обновил' экран старыми данными");
+	dwAllSize += (nSize=sizeof(DWORD));
+	// 3
 	// во врем€ чтени€ содержимого консоли может увеличитьс€ количество процессов
 	// поэтому –≈јЋ№Ќќ≈ количество - выставим после чтени€ и CriticalSection(csProc);
 	//EnterCriticalSection(&csProc);
@@ -1065,22 +1068,22 @@ CESERVER_REQ* CreateConsoleInfo(CESERVER_CHAR* pCharOnly, int bCharAttrBuff)
 	//LeaveCriticalSection(&csProc);
 	//dwAllSize += sizeof(DWORD)*(dwProcCount+1); // PID процессов + их количество
 	dwAllSize += (nSize=sizeof(DWORD)); // список процессов формируетс€ в GUI, так что пока - просто 0 (Reserved)
-	// 3
+	// 4
 	//DWORD dwSelRc = 0; CONSOLE_SELECTION_INFO sel = {0}; // GetConsoleSelectionInfo
 	dwAllSize += sizeof(dwSelRc)+((dwSelRc==0) ? (nSize=sizeof(sel)) : 0);
-	// 4
+	// 5
 	//DWORD dwCiRc = 0; CONSOLE_CURSOR_INFO ci = {0}; // GetConsoleCursorInfo
 	dwAllSize += sizeof(dwCiRc)+((dwCiRc==0) ? (nSize=sizeof(ci)) : 0);
-	// 5, 6, 7
+	// 6, 7, 8
 	//DWORD dwConsoleCP=0, dwConsoleOutputCP=0, dwConsoleMode=0;
 	dwAllSize += 3*sizeof(DWORD);
-	// 8
+	// 9
 	//DWORD dwSbiRc = 0; CONSOLE_SCREEN_BUFFER_INFO sbi = {{0,0}}; // GetConsoleScreenBufferInfo
 	//if (!GetConsoleScreenBufferInfo(hConOut, &sbi)) { dwSbiRc = GetLastError(); if (!dwSbiRc) dwSbiRc = -1; }
 	dwAllSize += sizeof(dwSbiRc)+((dwSbiRc==0) ? (nSize=sizeof(sbi)) : 0);
-	// 9
-	dwAllSize += sizeof(DWORD) + (pCharOnly ? (nSize=sizeof(CESERVER_CHAR)) : 0);
 	// 10
+	dwAllSize += sizeof(DWORD) + (pCharOnly ? (nSize=sizeof(CESERVER_CHAR)) : 0);
+	// 11
 	DWORD OneBufferSize = 0;
 	dwAllSize += sizeof(DWORD);
 	if (bCharAttrBuff) {
@@ -1117,6 +1120,10 @@ CESERVER_REQ* CreateConsoleInfo(CESERVER_CHAR* pCharOnly, int bCharAttrBuff)
 	lpCur += sizeof(hWnd);
 
 	// 2
+	*((DWORD*)lpCur) = GetTickCount();
+	lpCur += sizeof(DWORD);
+
+	// 3
 	// во врем€ чтени€ содержимого консоли может увеличитьс€ количество процессов
 	// поэтому –≈јЋ№Ќќ≈ количество - выставим после чтени€ и CriticalSection(csProc);
 	*((DWORD*)lpCur) = 0; lpCur += sizeof(DWORD);
@@ -1131,39 +1138,39 @@ CESERVER_REQ* CreateConsoleInfo(CESERVER_CHAR* pCharOnly, int bCharAttrBuff)
 	//}
 	//LeaveCriticalSection(&csProc);
 
-	// 3
+	// 4
 	nSize=sizeof(sel); *((DWORD*)lpCur) = (dwSelRc == 0) ? nSize : 0; lpCur += sizeof(DWORD);
 	if (dwSelRc == 0) {
 		memmove(lpCur, &sel, nSize); lpCur += nSize;
 	}
 
-	// 4
+	// 5
 	nSize=sizeof(ci); *((DWORD*)lpCur) = (dwCiRc == 0) ? nSize : 0; lpCur += sizeof(DWORD);
 	if (dwCiRc == 0) {
 		memmove(lpCur, &ci, nSize); lpCur += nSize;
 	}
 
-	// 5
-	*((DWORD*)lpCur) = dwConsoleCP; lpCur += sizeof(DWORD);
 	// 6
-	*((DWORD*)lpCur) = dwConsoleOutputCP; lpCur += sizeof(DWORD);
+	*((DWORD*)lpCur) = dwConsoleCP; lpCur += sizeof(DWORD);
 	// 7
+	*((DWORD*)lpCur) = dwConsoleOutputCP; lpCur += sizeof(DWORD);
+	// 8
 	*((DWORD*)lpCur) = dwConsoleMode; lpCur += sizeof(DWORD);
 
-	// 8
+	// 9
 	//if (!GetConsoleScreenBufferInfo(hConOut, &sbi)) { dwSbiRc = GetLastError(); if (!dwSbiRc) dwSbiRc = -1; }
 	nSize=sizeof(sbi); *((DWORD*)lpCur) = (dwSbiRc == 0) ? nSize : 0; lpCur += sizeof(DWORD);
 	if (dwSbiRc == 0) {
 		memmove(lpCur, &sbi, nSize); lpCur += nSize;
 	}
 
-	// 9
+	// 10
 	*((DWORD*)lpCur) = pCharOnly ? sizeof(CESERVER_CHAR) : 0; lpCur += sizeof(DWORD);
 	if (pCharOnly) {
 		memmove(lpCur, pCharOnly, sizeof(CESERVER_CHAR)); lpCur += (nSize=sizeof(CESERVER_CHAR));
 	}
 
-	// 10 - здесь будет 0, если текст в консоли не мен€лс€
+	// 11 - здесь будет 0, если текст в консоли не мен€лс€
 	*((DWORD*)lpCur) = OneBufferSize; lpCur += sizeof(DWORD);
 	if (OneBufferSize && OneBufferSize!=-1) {
 		memmove(lpCur, psChars, OneBufferSize); lpCur += OneBufferSize;
