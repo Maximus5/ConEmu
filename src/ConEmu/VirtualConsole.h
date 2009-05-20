@@ -274,7 +274,7 @@ private:
 		CVirtualConsole *pCon;
 		HANDLE hPipe;
 	} ServerThreadCommandArg;
-	static DWORD WINAPI ServerThreadCommand(LPVOID/* ServerThreadCommandArg* */ lpvParam);
+	void ServerThreadCommand(HANDLE hPipe);
 	void ApplyConsoleInfo(CESERVER_REQ* pInfo);
 	void SetHwnd(HWND ahConWnd);
 	WORD mn_LastVKeyPressed;

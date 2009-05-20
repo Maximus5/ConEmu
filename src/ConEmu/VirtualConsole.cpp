@@ -65,7 +65,7 @@ CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
     SIZE_T nMinHeapSize = (1000 + (200 * 90 * 2) * 6 + MAX_PATH*2)*2 + 210*sizeof(*TextParts);
     mh_Heap = HeapCreate(HEAP_GENERATE_EXCEPTIONS, nMinHeapSize, 0);
     mh_Thread = NULL; mn_ThreadID = 0; mn_ConEmuC_PID = 0; mh_ConEmuC = NULL; mh_ConEmuCInput = NULL;
-	mh_VConServerThread = NULL;
+	//mh_VConServerThread = NULL;
     ms_ConEmuC_Pipe[0] = 0; ms_ConEmuCInput_Pipe[0] = 0; ms_VConServer_Pipe[0] = 0;
     mh_TermEvent = CreateEvent(NULL,TRUE/*MANUAL - используется в нескольких нитях!*/,FALSE,NULL); ResetEvent(mh_TermEvent);
     mh_ForceReadEvent = CreateEvent(NULL,FALSE,FALSE,NULL);
@@ -2258,22 +2258,20 @@ DWORD CVirtualConsole::StartProcessThread(LPVOID lpParameter)
 
 	    gSet.Performance(tPerfInterval, FALSE);
     }
-    
-	if (pCon->mh_VConServerThread && pCon->ms_VConServer_Pipe[0]) {
-		// 
+   
+	// Завершение серверных нитей этой консоли
+	if (pCon->ms_VConServer_Pipe[0]) // значит хотя бы одна нить была запущена
+	{	
 		pCon->StopSignal(); // уже должен быть выставлен, но на всякий случай
-		HANDLE hPipe = NULL;
-		// Передернуть пайп, чтобы нить сервера завершилась
-		hPipe = CreateFile( 
-			pCon->ms_VConServer_Pipe,  // pipe name 
-			GENERIC_WRITE, 
-			0,              // no sharing 
-			NULL,           // default security attributes
-			OPEN_EXISTING,  // opens existing pipe 
-			0,              // default attributes 
-			NULL);          // no template file 
-		if (hPipe!=INVALID_HANDLE_VALUE)
+		//
+		HANDLE hPipe = INVALID_HANDLE_VALUE;
+		// Передернуть пайпы, чтобы нить сервера завершилась
+		while ((hPipe = CreateFile(pCon->ms_VConServer_Pipe,GENERIC_WRITE,0,NULL,
+			OPEN_EXISTING,0,NULL)) != INVALID_HANDLE_VALUE)
+		{
 			CloseHandle(hPipe);
+			hPipe = INVALID_HANDLE_VALUE;
+		}
 	}
     
     // Finalize
@@ -3252,7 +3250,8 @@ LRESULT CVirtualConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM
 			WORD nShift = GetKeyState(VK_SHIFT);
 
 			if (messg == WM_CHAR || messg == WM_SYSCHAR) {
-				PRAGMA_ERROR("Сюда приходят и сомволы с кодами 27, 13, 9, 8 и пр.");
+				if (((WCHAR)wParam) <= 32 || mn_LastVKeyPressed == 0)
+					return 0; // это уже обработано
 				r.Event.KeyEvent.bKeyDown = TRUE;
 				r.Event.KeyEvent.uChar.UnicodeChar = (WCHAR)wParam;
 				r.Event.KeyEvent.wRepeatCount = 1; TODO("0-15 ? Specifies the repeat count for the current message. The value is the number of times the keystroke is autorepeated as a result of the user holding down the key. If the keystroke is held long enough, multiple messages are sent. However, the repeat count is not cumulative.");
@@ -3260,11 +3259,16 @@ LRESULT CVirtualConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM
 			} else {
 				mn_LastVKeyPressed = wParam & 0xFFFF;
 				//POSTMESSAGE(hConWnd, messg, wParam, lParam, FALSE);
-				if ((wParam >= VK_F1 && wParam <= VK_F24) || wParam == VK_RETURN || wParam == VK_ESCAPE ||
-					wParam == VK_TAB)
+				if ((wParam >= VK_F1 && wParam <= /*VK_F24*/ VK_SCROLL) || wParam <= 32 ||
+					(wParam >= VK_LSHIFT && wParam <= /*VK_RMENU*/ 0xB7 /*=VK_LAUNCH_APP2*/) ||
+					(wParam >= VK_LWIN && wParam <= VK_APPS) ||
+					/*(wParam >= VK_NUMPAD0 && wParam <= VK_DIVIDE) ||*/ //TODO:
+					(wParam >= VK_PRIOR && wParam <= VK_HELP) ||
+					FALSE)
 				{
 					r.Event.KeyEvent.wRepeatCount = 1; TODO("0-15 ? Specifies the repeat count for the current message. The value is the number of times the keystroke is autorepeated as a result of the user holding down the key. If the keystroke is held long enough, multiple messages are sent. However, the repeat count is not cumulative.");
 					r.Event.KeyEvent.wVirtualKeyCode = mn_LastVKeyPressed;
+					mn_LastVKeyPressed = 0; // чтобы не обрабатывать WM_(SYS)CHAR
 				} else {
 					return 0;
 				}
@@ -3420,22 +3424,26 @@ void CVirtualConsole::OnWinEvent(DWORD event, HWND hwnd, LONG idObject, LONG idC
 DWORD CVirtualConsole::ServerThread(LPVOID lpvParam) 
 { 
 	CVirtualConsole *pCon = (CVirtualConsole*)lpvParam;
-	BOOL fConnected;
+	BOOL fConnected = FALSE;
 	//DWORD dwThreadId;
 	HANDLE hPipe = NULL; 
 	DWORD dwErr = 0;
 
 	_ASSERTE(pCon->hConWnd!=NULL);
-
-	wsprintf(pCon->ms_VConServer_Pipe, CEGUIPIPENAME, L".", (DWORD)pCon->hConWnd); //был mn_ConEmuC_PID
+	_ASSERTE(pCon->ms_VConServer_Pipe[0]!=0);
+	//wsprintf(pCon->ms_VConServer_Pipe, CEGUIPIPENAME, L".", (DWORD)pCon->hConWnd); //был mn_ConEmuC_PID
 
 	// The main loop creates an instance of the named pipe and 
 	// then waits for a client to connect to it. When the client 
 	// connects, a thread is created to handle communications 
 	// with that client, and the loop is repeated. 
 
-	for (;;) 
+	while (!fConnected)
 	{ 
+		if (hPipe != NULL && hPipe != INVALID_HANDLE_VALUE) {
+			CloseHandle ( hPipe ); hPipe = NULL;
+		}
+
 		if (WaitForSingleObject ( pCon->mh_TermEvent, 0 ) == WAIT_OBJECT_0) {
 			return 0;
 		}
@@ -3468,35 +3476,44 @@ DWORD CVirtualConsole::ServerThread(LPVOID lpvParam)
 
 		fConnected = ConnectNamedPipe(hPipe, NULL) ? TRUE : (GetLastError() == ERROR_PIPE_CONNECTED); 
 
+		// Консоль закрывается
 		if (WaitForSingleObject ( pCon->mh_TermEvent, 0 ) == WAIT_OBJECT_0) {
 			CloseHandle(hPipe); hPipe = NULL;
 			return 0;
 		}
-
-		if (fConnected) {
-			ServerThreadCommandArg* pArg = (ServerThreadCommandArg*)calloc(sizeof(ServerThreadCommandArg),1);
-			pArg->pCon = pCon;
-			pArg->hPipe = hPipe;
-			//pCon->ServerThreadCommand ( hPipe ); // При необходимости - записывает в пайп результат сама
-			DWORD dwCommandTID = 0;
-			HANDLE hCommandThread = CreateThread(NULL, 0, ServerThreadCommand, (LPVOID)pArg, 0, &dwCommandTID);
-			_ASSERTE(hCommandThread!=NULL);
-			CloseHandle(hCommandThread);
-		} else {
-			CloseHandle(hPipe); hPipe = NULL;
-		}
 	}
 
-	pCon->ms_VConServer_Pipe[0] = 0; // флаг, что нить завершилась
-	return 1; 
+	if (fConnected) {
+		{	// Запустить новый серверный пайп. Этот instance будет закрыт после обработки команды.
+			DWORD dwServerTID = 0;
+			HANDLE hThread = CreateThread(NULL, 0, ServerThread, (LPVOID)pCon, 0, &dwServerTID);
+			_ASSERTE(hThread!=NULL);
+			CloseHandle(hThread);
+		}
+
+		//ServerThreadCommandArg* pArg = (ServerThreadCommandArg*)calloc(sizeof(ServerThreadCommandArg),1);
+		//pArg->pCon = pCon;
+		//pArg->hPipe = hPipe;
+		pCon->ServerThreadCommand ( hPipe ); // При необходимости - записывает в пайп результат сама
+		//DWORD dwCommandTID = 0;
+		//HANDLE hCommandThread = CreateThread(NULL, 0, ServerThreadCommand, (LPVOID)pArg, 0, &dwCommandTID);
+		//_ASSERTE(hCommandThread!=NULL);
+		//CloseHandle(hCommandThread);
+	}
+
+	CloseHandle(hPipe); hPipe = NULL;
+
+
+	//pCon->ms_VConServer_Pipe[0] = 0; // флаг, что нить завершилась
+	return 0; 
 }
 
-DWORD CVirtualConsole::ServerThreadCommand(LPVOID/* ServerThreadCommandArg* */ lpvParam)
+void CVirtualConsole::ServerThreadCommand(HANDLE hPipe)
 {
-	ServerThreadCommandArg* pArg = (ServerThreadCommandArg*)lpvParam;
-	CVirtualConsole* pCon = pArg->pCon;
-	HANDLE hPipe = pArg->hPipe;
-	free(pArg); pArg = NULL;
+	//ServerThreadCommandArg* pArg = (ServerThreadCommandArg*)lpvParam;
+	//CVirtualConsole* pCon = pArg->pCon;
+	//HANDLE hPipe = pArg->hPipe;
+	//free(pArg); pArg = NULL;
 
 	CESERVER_REQ in={0}, *pOut=NULL;
 	DWORD cbRead = 0, cbWritten = 0;
@@ -3513,14 +3530,14 @@ DWORD CVirtualConsole::ServerThreadCommand(LPVOID/* ServerThreadCommandArg* */ l
 	if (!fSuccess && (GetLastError() != ERROR_MORE_DATA)) 
 	{
 		_ASSERTE("ReadFile(pipe) failed"==NULL);
-		CloseHandle(hPipe);
-		return 0;
+		//CloseHandle(hPipe);
+		return;
 	}
 	_ASSERTE(in.nSize>=12 && cbRead>=12);
 	_ASSERTE(in.nVersion == CESERVER_REQ_VER);
 	if (cbRead < 12 || /*in.nSize < cbRead ||*/ in.nVersion != CESERVER_REQ_VER) {
-		CloseHandle(hPipe);
-		return 0;
+		//CloseHandle(hPipe);
+		return;
 	}
 
 	int nAllSize = in.nSize;
@@ -3558,13 +3575,13 @@ DWORD CVirtualConsole::ServerThreadCommand(LPVOID/* ServerThreadCommandArg* */ l
 	TODO("Может возникнуть ASSERT, если консоль была закрыта в процессе чтения");
 	_ASSERTE(nAllSize==0);
 	if (nAllSize>0) {
-		CloseHandle(hPipe);
-		return 0; // удалось считать не все данные
+		//CloseHandle(hPipe);
+		return; // удалось считать не все данные
 	}
 
 	// Все данные из пайпа получены, обрабатываем команду и возвращаем (если нужно) результат
 	if (pOut->nCmd == CECMD_GETFULLINFO || pOut->nCmd == CECMD_GETSHORTINFO) {
-		pCon->ApplyConsoleInfo(pOut);
+		ApplyConsoleInfo(pOut);
 		
 	} else if (pOut->nCmd == CECMD_GETGUIHWND) {
 		CESERVER_REQ *pRet = NULL;
@@ -3587,8 +3604,8 @@ DWORD CVirtualConsole::ServerThreadCommand(LPVOID/* ServerThreadCommandArg* */ l
 	// Освободить память
 	free(pOut);
 
-	CloseHandle(hPipe);
-	return 0;
+	//CloseHandle(hPipe);
+	return;
 }
 
 #define COPYBUFFERS(v,s) { \
@@ -4260,11 +4277,13 @@ void CVirtualConsole::SetHwnd(HWND ahConWnd)
 	
 	TODO("InitHandler в GUI наверное уже и не нужен...");
 	//InitHandlers(TRUE);
-	
-	if (mh_VConServerThread == NULL) {
+
+	if (ms_VConServer_Pipe[0] == 0) {
+		wsprintf(ms_VConServer_Pipe, CEGUIPIPENAME, L".", (DWORD)hConWnd); //был mn_ConEmuC_PID
 		DWORD dwServerTID = 0;
-		mh_VConServerThread = CreateThread(NULL, 0, ServerThread, (LPVOID)this, 0, &dwServerTID);
-		_ASSERTE(mh_VConServerThread!=NULL);
+		HANDLE hThread = CreateThread(NULL, 0, ServerThread, (LPVOID)this, 0, &dwServerTID);
+		_ASSERTE(hThread!=NULL);
+		CloseHandle(hThread);
 	}
 }
 

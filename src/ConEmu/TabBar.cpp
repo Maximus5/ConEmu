@@ -7,7 +7,7 @@ const int TAB_FONT_HEIGTH = 16;
 wchar_t TAB_FONT_FACE[] = L"Tahoma";
 WNDPROC _defaultTabProc = NULL;
 
-PRAGMA_ERROR("Почему-то таб не отображается");
+//PRAGMA_ERROR("Почему-то таб не отображается");
 
 TabBarClass::TabBarClass()
 {
