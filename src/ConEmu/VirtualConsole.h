@@ -162,12 +162,12 @@ public:
 	BOOL isBufferHeight();
 	LPCTSTR GetTitle();
 	BOOL GetConsoleScreenBufferInfo();
-	void GetConsoleSelectionInfo(CONSOLE_SELECTION_INFO *sel) {	*sel = m_sel; };
-	void GetConsoleCursorInfo(CONSOLE_CURSOR_INFO *ci) { *ci = m_ci; };
-	DWORD GetConsoleCP() { return m_dwConsoleCP; };
-	DWORD GetConsoleOutputCP() { return m_dwConsoleOutputCP; };
-	DWORD GetConsoleMode() { return m_dwConsoleMode; };
-	DWORD GetConsoleScreenBufferInfo(CONSOLE_SCREEN_BUFFER_INFO *sbi) { *sbi = m_sbi; };
+	void GetConsoleSelectionInfo(CONSOLE_SELECTION_INFO *sel) {	*sel = con.m_sel; };
+	void GetConsoleCursorInfo(CONSOLE_CURSOR_INFO *ci) { *ci = con.m_ci; };
+	DWORD GetConsoleCP() { return con.m_dwConsoleCP; };
+	DWORD GetConsoleOutputCP() { return con.m_dwConsoleOutputCP; };
+	DWORD GetConsoleMode() { return con.m_dwConsoleMode; };
+	DWORD GetConsoleScreenBufferInfo(CONSOLE_SCREEN_BUFFER_INFO *sbi) { *sbi = con.m_sbi; };
 	void SyncConsole2Window();
 	void OnWinEvent(DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime);
 	int  GetProcesses(ConProcess** ppPrc);
@@ -254,13 +254,23 @@ protected:
 	BOOL InitBuffers(DWORD OneBufferSize);
 private:
 	// Эти переменные инициализируются в RetrieveConsoleInfo()
-	CONSOLE_SELECTION_INFO m_sel;
-	CONSOLE_CURSOR_INFO m_ci;
-	DWORD m_dwConsoleCP, m_dwConsoleOutputCP, m_dwConsoleMode;
-	CONSOLE_SCREEN_BUFFER_INFO m_sbi;
-	std::vector<ConProcess> m_Processes;
-	int mn_ProcessCount; DWORD mn_FarPID;
+	struct {
+		CRITICAL_SECTION cs; DWORD ncsT;
+		CONSOLE_SELECTION_INFO m_sel;
+		CONSOLE_CURSOR_INFO m_ci;
+		DWORD m_dwConsoleCP, m_dwConsoleOutputCP, m_dwConsoleMode;
+		CONSOLE_SCREEN_BUFFER_INFO m_sbi;
+		wchar_t *pConChar;
+		WORD  *pConAttr;
+		int nTextWidth, nTextHeight;
+	} con;
+	// 
 	CRITICAL_SECTION csPRC; DWORD ncsTPRC;
+	std::vector<ConProcess> m_Processes;
+	int mn_ProcessCount;
+	//
+	DWORD mn_FarPID;
+	//
 	void ProcessAdd(DWORD addPID);
 	void ProcessDelete(DWORD addPID);
 	void ProcessUpdateFlags(BOOL abProcessChanged);
@@ -270,13 +280,14 @@ private:
 	bool mb_ConsoleSelectMode;
 	int BufferHeight;
 	static DWORD WINAPI ServerThread(LPVOID lpvParam);
-	typedef struct tag_ServerThreadCommandArg {
-		CVirtualConsole *pCon;
-		HANDLE hPipe;
-	} ServerThreadCommandArg;
+	//typedef struct tag_ServerThreadCommandArg {
+	//	CVirtualConsole *pCon;
+	//	HANDLE hPipe;
+	//} ServerThreadCommandArg;
 	void ServerThreadCommand(HANDLE hPipe);
 	void ApplyConsoleInfo(CESERVER_REQ* pInfo);
 	void SetHwnd(HWND ahConWnd);
 	WORD mn_LastVKeyPressed;
 	DWORD mn_LastConReadTick;
+	BOOL GetConWindowSize(const CONSOLE_SCREEN_BUFFER_INFO& sbi, int& nNewWidth, int& nNewHeight);
 };

@@ -86,6 +86,7 @@ CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
     //InitializeCriticalSection(&csDC); ncsTDC = 0;
     InitializeCriticalSection(&csCON); ncsTCON = 0;
 	InitializeCriticalSection(&csPRC); ncsTPRC = 0;
+	InitializeCriticalSection(&con.cs); con.ncsT = 0;
         
     //pVCon = this;
     //mh_ConOut = NULL; mb_ConHandleCreated = FALSE;
@@ -93,10 +94,11 @@ CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
     
     mr_LeftPanel = mr_RightPanel = MakeRect(-1,-1);
 
-	m_dwConsoleCP = 0; m_dwConsoleOutputCP = 0; m_dwConsoleMode = 0;
-	memset(&m_sel, 0, sizeof(m_sel));
-	memset(&m_ci, 0, sizeof(m_ci));
-	memset(&m_sbi, 0, sizeof(m_sbi));
+	memset(&con, 0, sizeof(con));
+	//m_dwConsoleCP = 0; m_dwConsoleOutputCP = 0; m_dwConsoleMode = 0;
+	//memset(&m_sel, 0, sizeof(m_sel));
+	//memset(&m_ci, 0, sizeof(m_ci));
+	//memset(&m_sbi, 0, sizeof(m_sbi));
 
 #ifdef _DEBUG
     mn_BackColorIdx = 2;
@@ -162,6 +164,10 @@ CVirtualConsole::~CVirtualConsole()
         { Free(ConChar); ConChar = NULL; }
     if (ConAttr)
         { Free(ConAttr); ConAttr = NULL; }
+    if (con.pConChar)
+        { Free(con.pConChar); con.pConChar = NULL; }
+    if (con.pConAttr)
+        { Free(con.pConAttr); con.pConAttr = NULL; }
     if (ConCharX)
         { Free(ConCharX); ConCharX = NULL; }
     if (tmpOem)
@@ -192,6 +198,7 @@ CVirtualConsole::~CVirtualConsole()
     //DeleteCriticalSection(&csDC);
     DeleteCriticalSection(&csCON);
 	DeleteCriticalSection(&csPRC);
+	DeleteCriticalSection(&con.cs);
 }
 
 /*HANDLE CVirtualConsole::hConIn()
@@ -256,16 +263,16 @@ bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize)
         { DeleteDC(hDC); hDC = NULL; }
     if (hBitmap)
         { DeleteObject(hBitmap); hBitmap = NULL; }
-    /*if (ConChar)
+    if (ConChar)
         { Free(ConChar); ConChar = NULL; }
     if (ConAttr)
         { Free(ConAttr); ConAttr = NULL; }
     if (ConCharX)
-        { Free(ConCharX); ConCharX = NULL; }*/
+        { Free(ConCharX); ConCharX = NULL; }
     if (tmpOem)
         { Free(tmpOem); tmpOem = NULL; }
-    /*if (TextParts)
-        { Free(TextParts); TextParts = NULL; }*/
+    if (TextParts)
+        { Free(TextParts); TextParts = NULL; }
 
     //CONSOLE_SCREEN_BUFFER_INFO csbi;
     if (!GetConsoleScreenBufferInfo())
@@ -274,6 +281,8 @@ bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize)
     IsForceUpdate = true;
     //TextWidth = csbi.srWindow.Right - csbi.srWindow.Left + 1;
     //TextHeight = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
+	TextWidth = con.nTextWidth;
+	TextHeight = con.nTextHeight;
 
 #ifdef _DEBUG
 	_ASSERT(TextHeight >= 5);
@@ -284,15 +293,15 @@ bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize)
         return false;
     }
 
-    /*if ((int)TextWidth < csbi.dwSize.X)
-        TextWidth = csbi.dwSize.X;*/
+    //if ((int)TextWidth < csbi.dwSize.X)
+    //    TextWidth = csbi.dwSize.X;
 
     MCHKHEAP
-    /*ConChar = (TCHAR*)Alloc((TextWidth * TextHeight * 2), sizeof(*ConChar));
+    ConChar = (TCHAR*)Alloc((TextWidth * TextHeight * 2), sizeof(*ConChar));
     ConAttr = (WORD*)Alloc((TextWidth * TextHeight * 2), sizeof(*ConAttr));
-    ConCharX = (DWORD*)Alloc((TextWidth * TextHeight), sizeof(*ConCharX));*/
+    ConCharX = (DWORD*)Alloc((TextWidth * TextHeight), sizeof(*ConCharX));
     tmpOem = (char*)Alloc((TextWidth + 5), sizeof(*tmpOem));
-    //TextParts = (struct _TextParts*)Alloc((TextWidth + 2), sizeof(*TextParts));
+    TextParts = (struct _TextParts*)Alloc((TextWidth + 2), sizeof(*TextParts));
     MCHKHEAP
     if (!ConChar || !ConAttr || !ConCharX || !tmpOem || !TextParts)
         return false;
@@ -771,16 +780,18 @@ bool CVirtualConsole::UpdatePrepare(bool isForce, HDC *ahDc)
     isEditor = gConEmu.isEditor();
     isFilePanel = gConEmu.isFilePanel(true);
 
-    winSize.X = csbi.srWindow.Right - csbi.srWindow.Left + 1; winSize.Y = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
-    if (winSize.X < csbi.dwSize.X)
-        winSize.X = csbi.dwSize.X;
-    csbi.dwCursorPosition.X -= csbi.srWindow.Left;
+    //winSize.X = csbi.srWindow.Right - csbi.srWindow.Left + 1; winSize.Y = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
+    //if (winSize.X < csbi.dwSize.X)
+    //    winSize.X = csbi.dwSize.X;
+	winSize = MakeCoord(con.nTextWidth,con.nTextHeight);
+
+    //csbi.dwCursorPosition.X -= csbi.srWindow.Left; -- горизонтальная прокрутка игнорируется!
     csbi.dwCursorPosition.Y -= csbi.srWindow.Top;
     isCursorValid =
         csbi.dwCursorPosition.X >= 0 && csbi.dwCursorPosition.Y >= 0 &&
         csbi.dwCursorPosition.X < winSize.X && csbi.dwCursorPosition.Y < winSize.Y;
 
-    // Первая инициализация, или 
+    // Первая инициализация, или смена размера
     if (isForce || !ConChar || TextWidth != winSize.X || TextHeight != winSize.Y) {
         if (!InitDC(ahDc!=NULL, false))
             return false;
@@ -799,7 +810,11 @@ bool CVirtualConsole::UpdatePrepare(bool isForce, HDC *ahDc)
     TextLen = TextWidth * TextHeight;
     coord.X = csbi.srWindow.Left; coord.Y = csbi.srWindow.Top;
 
-	PRAGMA_ERROR("Нужно пересоздать буфера при необходимости и скопировать данные из новых переменных В ConAttr/ConChar");
+	// скопировать данные из состояния консоли В ConAttr/ConChar
+	CSection csData(&con.cs, &con.ncsT);
+	memmove(ConChar, con.pConChar, TextLen*2);
+	memmove(ConAttr, con.pConAttr, TextLen*2);
+	csData.Leave();
 
     MCHKHEAP
     // Get attributes (first) and text (second)
@@ -1669,6 +1684,8 @@ void CVirtualConsole::SetConsoleSizeInt(COORD size)
 
 bool CVirtualConsole::SetConsoleSize(COORD size)
 {
+	WARNING("Вынести код в ConEmuC и передать через пайп");
+
     //CSection SCON(&csCON, &ncsTCON);
 	CSection SCON(NULL,NULL);
 
@@ -2067,6 +2084,8 @@ void CVirtualConsole::RegistryProps(BOOL abRollback, ConExeProps& props, LPCTSTR
     
     if (0 == RegCreateKeyEx ( HKEY_CURRENT_USER, props.FullKeyName, NULL, NULL, NULL, KEY_ALL_ACCESS, NULL, &hkey, &dwDisp)) {
         if (!abRollback) {
+			GetConsoleScreenBufferInfo();
+
             props.bKeyExists = (dwDisp == REG_OPENED_EXISTING_KEY);
             // Считать значения
             DWORD dwSize, dwVal;
@@ -2087,7 +2106,7 @@ void CVirtualConsole::RegistryProps(BOOL abRollback, ConExeProps& props, LPCTSTR
             // Установить требуемые умолчания
 			/*RECT rcWnd; GetClientRect(ghWnd, &rcWnd);
 			RECT rcCon = gConEmu.CalcRect(CER_CONSOLE, rcWnd, CER_MAINCLIENT);*/
-			dwVal = (m_sbi.dwSize.X) | (m_sbi.dwSize.Y<<16);
+			dwVal = (csbi.dwSize.X) | (csbi.dwSize.Y<<16);
             RegSetValueEx(hkey, _T("ScreenBufferSize"), 0, REG_DWORD, (LPBYTE)&dwVal, sizeof(DWORD));
             RegSetValueEx(hkey, _T("WindowSize"), 0, REG_DWORD, (LPBYTE)&dwVal, sizeof(DWORD));
             if (!ghWndDC) dwVal = 0; else {
@@ -2303,11 +2322,11 @@ BOOL CVirtualConsole::StartProcess()
 	RECT rcWnd; GetClientRect(ghWnd, &rcWnd);
 	RECT rcCon = gConEmu.CalcRect(CER_CONSOLE, rcWnd, CER_MAINCLIENT);
 	_ASSERTE(rcCon.right!=0 && rcCon.bottom!=0);
-	m_sbi.dwSize = MakeCoord(rcCon.right,rcCon.bottom);
-	m_sbi.wAttributes = 7;
-	m_sbi.srWindow.Right = rcCon.right-1; m_sbi.srWindow.Bottom = rcCon.bottom-1;
-	m_sbi.dwMaximumWindowSize = m_sbi.dwSize;
-	m_ci.dwSize = 15; m_ci.bVisible = TRUE;
+	con.m_sbi.dwSize = MakeCoord(rcCon.right,rcCon.bottom);
+	con.m_sbi.wAttributes = 7;
+	con.m_sbi.srWindow.Right = rcCon.right-1; con.m_sbi.srWindow.Bottom = rcCon.bottom-1;
+	con.m_sbi.dwMaximumWindowSize = con.m_sbi.dwSize;
+	con.m_ci.dwSize = 15; con.m_ci.bVisible = TRUE;
 	if (!InitBuffers(0))
 		return FALSE;
 
@@ -2374,7 +2393,7 @@ BOOL CVirtualConsole::StartProcess()
         si.cb = sizeof(si);
 		si.dwFlags = STARTF_USESHOWWINDOW|STARTF_USECOUNTCHARS|STARTF_USEPOSITION;
 		si.lpTitle = CEC_INITTITLE;
-		si.dwXCountChars = m_sbi.dwSize.X; si.dwYCountChars = m_sbi.dwSize.Y;
+		si.dwXCountChars = con.m_sbi.dwSize.X; si.dwYCountChars = con.m_sbi.dwSize.Y;
 		si.wShowWindow = gSet.isConVisible ? SW_SHOWNORMAL : SW_HIDE;
 		RECT rcDC; GetWindowRect(ghWndDC, &rcDC);
 		si.dwX = rcDC.left; si.dwY = rcDC.top;
@@ -3187,7 +3206,7 @@ bool CVirtualConsole::isFar()
 
 BOOL CVirtualConsole::GetConsoleScreenBufferInfo()
 {
-	csbi = m_sbi;
+	csbi = con.m_sbi;
 	return TRUE;
 	//mdw_LastError = 0;
 	//BOOL lbRc = FALSE;
@@ -3415,12 +3434,15 @@ void CVirtualConsole::OnWinEvent(DWORD event, HWND hwnd, LONG idObject, LONG idC
 		//The idChild parameter specifies the character in the low word and the character attributes in the high word.
 			COORD crWhere; memmove(&crWhere, &idObject, sizeof(idObject));
 			WCHAR ch = (WCHAR)LOWORD(idChild); WORD wA = HIWORD(idChild);
-			if (ConChar && ConAttr && !isBufferHeight()) {
-				int nIdx = crWhere.X+crWhere.Y*m_sbi.dwSize.X;
-				ConChar[nIdx] = ch;
-				ConAttr[nIdx] = wA;
+			CSection cs(&con.cs, &con.ncsT);
+			if (con.pConChar && con.pConAttr && !isBufferHeight()) {
+				int nIdx = crWhere.X+crWhere.Y*con.m_sbi.dwSize.X;
+				con.pConChar[nIdx] = ch;
+				con.pConAttr[nIdx] = wA;
+				cs.Leave();
 				SetEvent(mh_ForceReadEvent);
 			} else {
+				cs.Leave();
 				SetEvent(mh_ConChanged); TODO("Вообще-то можно и без запроса в консоль - самим сразу менять, но нужно учесть, что может быть прокрутка");
 			}
 		} break;
@@ -3437,7 +3459,7 @@ void CVirtualConsole::OnWinEvent(DWORD event, HWND hwnd, LONG idObject, LONG idC
 			if (isBufferHeight()) {
 				SetEvent(mh_CursorChanged); 
 			} else {
-				m_sbi.dwCursorPosition = crWhere;
+				con.m_sbi.dwCursorPosition = crWhere;
 				SetEvent(mh_ForceReadEvent);
 			}
 		} break;
@@ -3654,6 +3676,7 @@ void CVirtualConsole::ApplyConsoleInfo(CESERVER_REQ* pInfo)
 	_ASSERTE(this!=NULL);
 	if (this==NULL) return;
 
+	BOOL bBufRecreated = FALSE;
 	// Теперь нужно раскидать данные про структурам
 	LPBYTE lpCur = (LPBYTE)pInfo->Data;
 	LPBYTE lpEnd = ((LPBYTE)pInfo)+pInfo->nSize;
@@ -3687,42 +3710,47 @@ void CVirtualConsole::ApplyConsoleInfo(CESERVER_REQ* pInfo)
 	//SPRC.Leave();
 
 	// Теперь нужно открыть секцию - начинаем изменение переменных класса
-	PRAGMA_ERROR("Создать НОВУЮ секцию, а не csCON");
-	CSection SCON(&csCON, &ncsTCON);
+	CSection sc(&con.cs, &con.ncsT);
 
 	// 4
 	DWORD dwSelRc = 0; //CONSOLE_SELECTION_INFO sel = {0}; // GetConsoleSelectionInfo
 	COPYBUFFER(dwSelRc);
 	if (dwSelRc != 0) {
-		_ASSERTE(dwSelRc == sizeof(m_sel));
-		COPYBUFFER(m_sel);
+		_ASSERTE(dwSelRc == sizeof(con.m_sel));
+		COPYBUFFER(con.m_sel);
 	}
 	// 5
 	DWORD dwCiRc = 0; //CONSOLE_CURSOR_INFO ci = {0}; // GetConsoleCursorInfo
 	COPYBUFFER(dwCiRc);
 	if (dwCiRc != 0) {
-		_ASSERTE(dwCiRc == sizeof(m_ci));
-		COPYBUFFER(m_ci);
+		_ASSERTE(dwCiRc == sizeof(con.m_ci));
+		COPYBUFFER(con.m_ci);
 	}
 	// 6, 7, 8
-	COPYBUFFER(m_dwConsoleCP);       // GetConsoleCP()
-	COPYBUFFER(m_dwConsoleOutputCP); // GetConsoleOutputCP()
-	COPYBUFFER(m_dwConsoleMode);     // GetConsoleMode(hConIn, &dwConsoleMode);
+	COPYBUFFER(con.m_dwConsoleCP);       // GetConsoleCP()
+	COPYBUFFER(con.m_dwConsoleOutputCP); // GetConsoleOutputCP()
+	COPYBUFFER(con.m_dwConsoleMode);     // GetConsoleMode(hConIn, &dwConsoleMode);
 	// 9
 	DWORD dwSbiRc = 0; //CONSOLE_SCREEN_BUFFER_INFO sbi = {{0,0}}; // GetConsoleScreenBufferInfo
 	COPYBUFFER(dwSbiRc);
 	if (dwSbiRc != 0) {
-		_ASSERTE(dwSbiRc == sizeof(m_sbi));
-		COPYBUFFER(m_sbi);
-		WARNING("Здесь нужно пересоздать буфера, если сменился размер!");
+		_ASSERTE(dwSbiRc == sizeof(con.m_sbi));
+		COPYBUFFER(con.m_sbi);
+		int nNewWidth = 0, nNewHeight = 0;
+		if (GetConWindowSize(con.m_sbi, nNewWidth, nNewHeight)) {
+			bBufRecreated = TRUE;
+			InitBuffers(nNewWidth*nNewHeight*2);
+		}
 	}
 	// 10
 	DWORD dwCharChanged = 0;
 	COPYBUFFER(dwCharChanged);
 	if (dwCharChanged != 0) {
 		_ASSERTE(dwCharChanged >= sizeof(CESERVER_CHAR));
+		_ASSERTE(!bBufRecreated && con.pConChar && con.pConAttr);
 
-		if (ConChar && ConAttr) {
+		// Если буфер был пересоздан (bBufRecreated) изменение только блока символов бессмысленно - нужны полные данные!
+		if (!bBufRecreated && con.pConChar && con.pConAttr) {
 			CESERVER_CHAR* pch = (CESERVER_CHAR*)calloc(dwCharChanged,1);
 			COPYBUFFERS(*pch,2*sizeof(COORD));
 			int nLineLen = pch->crEnd.X - pch->crStart.X + 1;
@@ -3732,12 +3760,12 @@ void CVirtualConsole::ApplyConsoleInfo(CESERVER_REQ* pInfo)
 			_ASSERTE(!isBufferHeight());
 			wchar_t* pszLine = (wchar_t*)(pch->data);
 			WORD*    pnLine  = ((WORD*)pch->data)+(nLineLen*nLineCount);
-			PRAGMA_ERROR("Собственно данные копировать в новые переменные - текущий буфер консоли");
+			// Собственно данные копировать в новые переменные - текущий буфер консоли
 			for (int y = pch->crStart.Y; y <= pch->crEnd.Y; y++) {
-				int nIdx = pch->crStart.X + y * m_sbi.dwSize.X;
-				memmove(ConChar+nIdx, pszLine, nLineLen*2);
+				int nIdx = pch->crStart.X + y * con.m_sbi.dwSize.X;
+				memmove(con.pConChar+nIdx, pszLine, nLineLen*2);
 					pszLine += nLineLen;
-				memmove(ConAttr+nIdx, pnLine, nLineLen*2);
+				memmove(con.pConAttr+nIdx, pnLine, nLineLen*2);
 					pnLine += nLineLen;
 			}
 		} else {
@@ -3749,11 +3777,12 @@ void CVirtualConsole::ApplyConsoleInfo(CESERVER_REQ* pInfo)
 	COPYBUFFER(OneBufferSize);
 	if (OneBufferSize != 0) {
 		if (InitBuffers(OneBufferSize)) {
-			PRAGMA_ERROR("Собственно данные копировать в новые переменные - текущий буфер консоли");
-			memmove(ConChar, lpCur, OneBufferSize); lpCur += OneBufferSize;
-			memmove(ConAttr, lpCur, OneBufferSize); lpCur += OneBufferSize;
+			memmove(con.pConChar, lpCur, OneBufferSize); lpCur += OneBufferSize;
+			memmove(con.pConAttr, lpCur, OneBufferSize); lpCur += OneBufferSize;
 		}
 	}
+
+	sc.Leave();
 
 	if (mn_LastConReadTick) {
 		DWORD dwDelta = nLastConReadTick - mn_LastConReadTick;
@@ -3762,8 +3791,7 @@ void CVirtualConsole::ApplyConsoleInfo(CESERVER_REQ* pInfo)
 	}
 	mn_LastConReadTick = nLastConReadTick;
 
-	PRAGMA_ERROR("НЕ csCon");
-	SCON.Leave();
+	
 	// Передернуть GUI
 	SetEvent(mh_ForceReadEvent);
 }
@@ -4212,63 +4240,61 @@ BOOL CVirtualConsole::RetrieveConsoleInfo(BOOL bShortOnly)
     return TRUE;
 }
 
-BOOL CVirtualConsole::InitBuffers(DWORD OneBufferSize)
+BOOL CVirtualConsole::GetConWindowSize(const CONSOLE_SCREEN_BUFFER_INFO& sbi, int& nNewWidth, int& nNewHeight)
 {
-	BOOL lbRc = FALSE;
-	int nNewWidth  = m_sbi.srWindow.Right - m_sbi.srWindow.Left + 1;
-	int nNewHeight = m_sbi.srWindow.Bottom - m_sbi.srWindow.Top + 1;
+	nNewWidth  = con.m_sbi.srWindow.Right - con.m_sbi.srWindow.Left + 1;
+	nNewHeight = con.m_sbi.srWindow.Bottom - con.m_sbi.srWindow.Top + 1;
 
 #ifdef _DEBUG
-	_ASSERT(nNewHeight >= 5);
+	_ASSERTE(nNewHeight >= 5);
 #endif
 	if (!nNewWidth || !nNewHeight) {
 		Assert(nNewWidth && nNewHeight);
 		return FALSE;
 	}
 
-	if (nNewWidth < m_sbi.dwSize.X)
-		nNewWidth = m_sbi.dwSize.X;
+	if (nNewWidth < con.m_sbi.dwSize.X)
+		nNewWidth = con.m_sbi.dwSize.X;
+
+	return TRUE;
+}
+
+BOOL CVirtualConsole::InitBuffers(DWORD OneBufferSize)
+{
+	BOOL lbRc = FALSE;
+	int nNewWidth = 0, nNewHeight = 0;
+
+	if (!GetConWindowSize(con.m_sbi, nNewWidth, nNewHeight))
+		return FALSE;
 
 	if (OneBufferSize) {
-		_ASSERTE((nNewWidth * nNewHeight * sizeof(*ConChar)) == OneBufferSize);
-		if ((nNewWidth * nNewHeight * sizeof(*ConChar)) != OneBufferSize)
+		_ASSERTE((nNewWidth * nNewHeight * sizeof(*con.pConChar)) == OneBufferSize);
+		if ((nNewWidth * nNewHeight * sizeof(*con.pConChar)) != OneBufferSize)
 			return FALSE;
 	}
 
 	// Если требуется увеличить или создать (первично) буфера
-	if (!ConChar || (TextWidth*TextHeight) < (DWORD)(nNewWidth*nNewHeight))
+	if (!con.pConChar || (con.nTextWidth*con.nTextHeight) < (DWORD)(nNewWidth*nNewHeight))
 	{
-		CSection SCON(&csCON, &ncsTCON);
+		CSection sc(&con.cs, &con.ncsT);
 
-		if (ConChar)
-			{ Free(ConChar); ConChar = NULL; }
-		if (ConAttr)
-			{ Free(ConAttr); ConAttr = NULL; }
-		if (ConCharX)
-			{ Free(ConCharX); ConCharX = NULL; }
-		if (TextParts)
-			{ Free(TextParts); TextParts = NULL; }
+		if (con.pConChar)
+			{ Free(con.pConChar); con.pConChar = NULL; }
+		if (con.pConAttr)
+			{ Free(con.pConAttr); con.pConAttr = NULL; }
 
 		MCHKHEAP
-		ConChar = (TCHAR*)Alloc((nNewWidth * nNewHeight * 2), sizeof(*ConChar));
-			_ASSERTE(ConChar!=NULL);
-		ConAttr = (WORD*)Alloc((nNewWidth * nNewHeight * 2), sizeof(*ConAttr));
-			_ASSERTE(ConAttr!=NULL);
-		ConCharX = (DWORD*)Alloc((nNewWidth * nNewHeight), sizeof(*ConCharX));
-			_ASSERTE(ConCharX!=NULL);
-		TextParts = (struct _TextParts*)Alloc((TextWidth + 2), sizeof(*TextParts));
-			_ASSERTE(TextParts!=NULL);
+		con.pConChar = (TCHAR*)Alloc((nNewWidth * nNewHeight * 2), sizeof(*con.pConChar));
+			_ASSERTE(con.pConChar!=NULL);
+		con.pConAttr = (WORD*)Alloc((nNewWidth * nNewHeight * 2), sizeof(*con.pConAttr));
+			_ASSERTE(con.pConAttr!=NULL);
 
-		InitDC(false,true);
+		sc.Leave();
 
-		lbRc = ConChar!=NULL && ConAttr!=NULL && ConCharX!=NULL && TextParts!=NULL;
+		lbRc = con.pConChar!=NULL && con.pConAttr!=NULL;
 	} else if (TextWidth!=nNewWidth || TextHeight!=nNewHeight) {
-		memset(ConChar, 0, (nNewWidth * nNewHeight * 2) * sizeof(*ConChar));
-		memset(ConAttr, 0, (nNewWidth * nNewHeight * 2) * sizeof(*ConAttr));
-		memset(ConCharX, 0, (nNewWidth * nNewHeight) * sizeof(*ConCharX));
-		memset(TextParts, 0, (TextWidth + 2) * sizeof(*TextParts));
-
-		InitDC(false,true);
+		memset(con.pConChar, 0, (nNewWidth * nNewHeight * 2) * sizeof(*con.pConChar));
+		memset(con.pConAttr, 0, (nNewWidth * nNewHeight * 2) * sizeof(*con.pConAttr));
 
 		lbRc = TRUE;
 	} else {
@@ -4276,8 +4302,10 @@ BOOL CVirtualConsole::InitBuffers(DWORD OneBufferSize)
 	}
 	MCHKHEAP
 
-	TextWidth = nNewWidth;
-	TextHeight = nNewHeight;
+	con.nTextWidth = nNewWidth;
+	con.nTextHeight = nNewHeight;
+
+	InitDC(false,true);
 
 	return lbRc;
 }
