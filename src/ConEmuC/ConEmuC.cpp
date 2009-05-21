@@ -7,6 +7,8 @@
 
 WARNING("Наверное все-же стоит производить периодические чтения содержимого консоли, а не только по событию");
 
+WARNING("Стоит именно здесь осуществлять проверку живости GUI окна (если оно было). Ведь может быть запущен не far, а CMD.exe");
+
 #if defined(__GNUC__)
 	//#include "assert.h"
 	#define _ASSERTE(x)
@@ -38,18 +40,25 @@ BOOL ReloadConsoleInfo(); // возвращает TRUE в случае изменений
 void ReloadFullConsoleInfo(CESERVER_CHAR* pCharOnly=NULL); // В том числе перечитывает содержимое
 DWORD WINAPI RefreshThread(LPVOID lpvParam); // Нить, перечитывающая содержимое консоли
 DWORD ReadConsoleData(CESERVER_CHAR** pCheck = NULL, BOOL* pbDataChanged = NULL); //((LPRECT)1) или реальный LPRECT
-void InitServer();
 void SetConsoleFontSizeTo(HWND inConWnd, int inSizeX, int inSizeY);
+int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd); // Разбор параметров командной строки
+int NextArg(LPCWSTR &asCmdLine, wchar_t* rsArg/*[MAX_PATH+1]*/);
+int ServerInit(); // Создать необходимые события и нити
+void ServerDone(int aiRc);
+int ComspecInit();
+void ComspecDone(int aiRc);
+void Help();
 
 
-DWORD dwSelfPID = 0;
-wchar_t szPipename[MAX_PATH], szInputname[MAX_PATH], szGuiPipeName[MAX_PATH];
+
+DWORD gnSelfPID = 0;
+wchar_t szPipename[MAX_PATH] = {0}, szInputname[MAX_PATH] = {0}, szGuiPipeName[MAX_PATH] = {0};
 HANDLE  hConIn = NULL, hConOut = NULL;
 HWINEVENTHOOK hWinHook = NULL;
 HWND hConWnd = NULL;
 //HANDLE hGlblUpdateEvt = NULL;
 HANDLE hExitEvent = NULL;
-BOOL bAlwaysConfirmExit = FALSE;
+BOOL gbAlwaysConfirmExit = FALSE;
 BOOL bContentsChanged = TRUE; // Первое чтение параметров должно быть ПОЛНЫМ
 CRITICAL_SECTION csProc;
 CRITICAL_SECTION csConBuf;
@@ -62,8 +71,14 @@ DWORD dwConsoleCP=0, dwConsoleOutputCP=0, dwConsoleMode=0;
 DWORD dwSbiRc = 0; CONSOLE_SCREEN_BUFFER_INFO sbi = {{0,0}}; // GetConsoleScreenBufferInfo
 DWORD nMainTimerElapse = 10;
 BOOL  bConsoleActive = TRUE; TODO("Обрабатывать консольные события Activate/Deactivate");
-HANDLE hRefreshEvent = NULL;
+HANDLE hRefreshEvent = NULL; // ServerMode, перечитать консоль, и если есть изменения - отослать в GUI
 BOOL  bNeedFullReload = TRUE;
+enum {
+	RM_UNDEFINED = 0,
+	RM_SERVER,
+	RM_COMSPEC
+} gnRunMode = RM_UNDEFINED;
+
 
 
 // Список процессов нам нужен, чтобы определить, когда консоль уже не нужна.
@@ -90,148 +105,431 @@ DWORD dwActiveFlags = 0;
 #define CERR_PROCESSTIMEOUT 114
 #define CERR_REFRESHEVENT 115
 #define CERR_CREATEREFRESHTHREAD 116
+#define CERR_CMDLINE 117
+#define CERR_HELPREQUESTED 118
 
 
 int main()
 {
-	TODO("printf ошибок бессмысленен, т.к. ConEmu их все-равно не увидит...");
 	TODO("можно при ошибках показать консоль, предварительно поставив 80x25 и установив крупный шрифт");
 
 	int iRc = 100;
-	wchar_t sComSpec[MAX_PATH];
-	wchar_t* psFilePart;
-	wchar_t* psCmdLine = GetCommandLineW();
-	size_t nCmdLine = lstrlenW(psCmdLine);
+	//wchar_t sComSpec[MAX_PATH];
+	//wchar_t* psFilePart;
+	//wchar_t* psCmdLine = GetCommandLineW();
+	//size_t nCmdLine = lstrlenW(psCmdLine);
 	wchar_t* psNewCmd = NULL;
     DWORD dwThreadId = 0, dwWinEventThread = 0, dwThreadInputId = 0, dwRefreshThread = 0;
     HANDLE hThread = NULL, hInputThread, hWinEventThread = NULL, hWait[2]={NULL,NULL}, hRefreshThread;
-	BOOL bViaCmdExe = TRUE;
+	//BOOL bViaCmdExe = TRUE;
 	PROCESS_INFORMATION pi; memset(&pi, 0, sizeof(pi));
 	STARTUPINFOW si; memset(&si, 0, sizeof(si)); si.cb = sizeof(si);
 	DWORD dwErr = 0, nWait = 0;
 	BOOL lbRc = FALSE;
-	szGuiPipeName[0] = 0;
+    DWORD mode = 0;
+    BOOL lb = FALSE;
 
-	dwSelfPID = GetCurrentProcessId();
-	wsprintfW(szPipename, CESERVERPIPENAME, L".", dwSelfPID);
-	wsprintfW(szInputname, CESERVERINPUTNAME, L".", dwSelfPID);
+	gnSelfPID = GetCurrentProcessId();
 	
-	InitializeCriticalSection(&csConBuf);
-	InitializeCriticalSection(&csProc);
-	hConWnd = GetConsoleWindow();
-	_ASSERTE(hConWnd!=NULL);
-	if (!hConWnd) {
-		dwErr = GetLastError();
-		printf("hConWnd==NULL, ErrCode=0x%08X\n", dwErr); 
-		iRc=CERR_GETCONSOLEWINDOW; goto wrap;
-	}
-	hExitEvent = CreateEvent(NULL, TRUE/*используется в нескольких нитях, manual*/, FALSE, NULL); ResetEvent(hExitEvent);
-	if (!hExitEvent) {
-		dwErr = GetLastError();
-		printf("CreateEvent() failed, ErrCode=0x%08X\n", dwErr); 
-		iRc=CERR_EXITEVENT; goto wrap;
-	}
-	hRefreshEvent = CreateEvent(NULL,FALSE,FALSE,NULL);
-	if (!hRefreshEvent) {
-		dwErr = GetLastError();
-		printf("CreateEvent() failed, ErrCode=0x%08X\n", dwErr); 
-		iRc=CERR_REFRESHEVENT; goto wrap;
-	}
-	//wsprintfW(sName, CE_NEEDUPDATE, dwSelfPID);
-	//hGlblUpdateEvt = CreateEvent(NULL, FALSE, FALSE, sName);
-	//_ASSERTE(hGlblUpdateEvt!=NULL);
-	//if (!hGlblUpdateEvt) {
-	//	dwErr = GetLastError();
-	//	printf("CreateEvent(ConEmuNeedUpdate%u) failed, ErrCode=0x%08X\n", (DWORD)hConWnd, dwErr); 
-	//	iRc=CERR_GLOBALUPDATE; goto wrap;
-	//}
-
 #ifdef _DEBUG
 	//if (!IsDebuggerPresent()) MessageBox(0,L"Loaded",L"ComEmuC",0);
 #endif
 	
-	if (!psCmdLine)
-	{
-		printf ("GetCommandLineW failed!\n" );
-		iRc=CERR_GETCOMMANDLINE; goto wrap;
-	}
-	if ((psCmdLine = wcsstr(psCmdLine, L"/C")) == NULL)
-	{
-		printf ("/C argument not found!\n" );
-		iRc=CERR_CARGUMENT; goto wrap;
-	}
-	if (wcsncmp(psCmdLine, L"/CMD", 4)==0) {
-		bViaCmdExe = FALSE; psCmdLine += 4;
-
-		WARNING("InitServer звать только для корневого ConEmuC");
-		InitServer();
-
-	} else {
-		psCmdLine += 2; // нас интересует все что ПОСЛЕ /C
-	}
-	while (*psCmdLine == L' ') psCmdLine++;
-	if (!bViaCmdExe) {
-		if (lstrcmpiW(psCmdLine, L"cmd")==0 || lstrcmpiW(psCmdLine, L"cmd ")==0 ||
-			lstrcmpiW(psCmdLine, L"cmd.exe")==0 || lstrcmpiW(psCmdLine, L"cmd.exe")==0) {
-			bViaCmdExe = FALSE;
-		}
-	}
-
-	if (!bViaCmdExe) {
-		nCmdLine += 10;
-	} else {
-		//TODO: Хорошо бы попробовать через переменную окружения "старый" процессор
-		//TODO: находить. Например, перед заменой можно сохранять ComSpec в ComSpecC
-		if (!SearchPathW(NULL, L"cmd.exe", NULL, MAX_PATH, sComSpec, &psFilePart))
-		{
-			printf ("Can't find cmd.exe!\n");
-			iRc=CERR_CMDEXENOTFOUND; goto wrap;
-		}
-		
-		nCmdLine += lstrlenW(sComSpec)+10;
+	if ((iRc = ParseCommandLine(GetCommandLineW(), psNewCmd)) != 0)
+		goto wrap;
+	
+	/* ***************************** */
+	/* *** "Общая" инициализация *** */
+	/* ***************************** */
+	
+	// Хэндл консольного окна
+	hConWnd = GetConsoleWindow();
+	_ASSERTE(hConWnd!=NULL);
+	if (!hConWnd) {
+		dwErr = GetLastError();
+		wprintf(L"hConWnd==NULL, ErrCode=0x%08X\n", dwErr); 
+		iRc = CERR_GETCONSOLEWINDOW; goto wrap;
 	}
 	
-	psNewCmd = new wchar_t[nCmdLine];
-	if (!psNewCmd)
-	{
-		printf ("Can't allocate %i wchars!\n", nCmdLine);
-		iRc=CERR_NOTENOUGHMEM1; goto wrap;
-	}
-	
-	if (!bViaCmdExe)
-	{
-		lstrcpyW( psNewCmd, psCmdLine );
-	} else {
-		psNewCmd[0] = L'"';
-		lstrcpyW( psNewCmd+1, sComSpec );
-		lstrcatW( psNewCmd, L"\" /C " );
-		lstrcatW( psNewCmd, psCmdLine );
+	// Событие используется для всех режимов
+	hExitEvent = CreateEvent(NULL, TRUE/*используется в нескольких нитях, manual*/, FALSE, NULL); ResetEvent(hExitEvent);
+	if (!hExitEvent) {
+		dwErr = GetLastError();
+		wprintf(L"CreateEvent() failed, ErrCode=0x%08X\n", dwErr); 
+		iRc = CERR_EXITEVENT; goto wrap;
 	}
 
-	
-
+	// Дескрипторы
 	hConIn  = CreateFile(L"CONIN$", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_READ,
 	            0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
 	if (hConIn == INVALID_HANDLE_VALUE) {
 		dwErr = GetLastError();
-		printf("CreateFile(CONIN$) failed, ErrCode=0x%08X\n", dwErr); 
-		iRc=CERR_CONINFAILED; goto wrap;
+		wprintf(L"CreateFile(CONIN$) failed, ErrCode=0x%08X\n", dwErr); 
+		iRc = CERR_CONINFAILED; goto wrap;
 	}
+	// Дескрипторы
 	hConOut = CreateFile(L"CONOUT$", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_READ,
 	            0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
 	if (hConOut == INVALID_HANDLE_VALUE) {
 		dwErr = GetLastError();
-		printf("CreateFile(CONOUT$) failed, ErrCode=0x%08X\n", dwErr); 
-		iRc=CERR_CONOUTFAILED; goto wrap;
+		wprintf(L"CreateFile(CONOUT$) failed, ErrCode=0x%08X\n", dwErr); 
+		iRc = CERR_CONOUTFAILED; goto wrap;
 	}
+	
+    SetHandleInformation(GetStdHandle(STD_INPUT_HANDLE), HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT);
+    SetHandleInformation(GetStdHandle(STD_OUTPUT_HANDLE), HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT);
+    SetHandleInformation(GetStdHandle(STD_ERROR_HANDLE), HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT);
+	
+    mode = 0;
+    lb = GetConsoleMode(hConIn, &mode);
+    if (!(mode & ENABLE_MOUSE_INPUT)) {
+        mode |= ENABLE_MOUSE_INPUT;
+        lb = SetConsoleMode(hConIn, mode);
+    }
+
+
+	/* ******************************** */
+	/* *** "Режимная" инициализация *** */
+	/* ******************************** */
+	if (gnRunMode == RM_SERVER) {
+		if ((iRc = ServerInit()) != 0)
+			goto wrap;
+	} else {
+		if ((iRc = ComspecInit()) != 0)
+			goto wrap;
+	}
+
+	
+	
+	
+	/* ********************************* */
+	/* *** Запуск дочернего процесса *** */
+	/* ********************************* */
+	
+	lbRc = CreateProcessW(NULL, psNewCmd, NULL,NULL, TRUE, NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi);
+	dwErr = GetLastError();
+	if (!lbRc)
+	{
+		wprintf (L"Can't create process, ErrCode=0x%08X! Command to be executed:\n%s\n", dwErr, psNewCmd);
+		iRc = CERR_CREATEPROCESS; goto wrap;
+	}
+	delete psNewCmd; psNewCmd = NULL;
+
+	
+	
+	/* *************************** */
+	/* *** Ожидание завершения *** */
+	/* *************************** */
+	
+	if (gnRunMode == RM_SERVER) {
+		if (pi.hProcess) CloseHandle(pi.hProcess); 
+		if (pi.hThread) CloseHandle(pi.hThread);
+	
+		// Ждем, пока в консоли не останется процессов (кроме нашего)
+		TODO("Проверить, может ли так получиться, что CreateProcess прошел, а к консоли он не прицепился? Может, если процесс GUI");
+		nWait = WaitForSingleObject(hExitEvent, 6*1000); //Запуск процесса наверное может задержать антивирус
+		if (nWait != WAIT_OBJECT_0) { // Если таймаут
+			EnterCriticalSection(&csProc);
+			iRc = nProcesses.size();
+			LeaveCriticalSection(&csProc);
+			// И процессов в консоли все еще нет
+			if (iRc == 0) {
+				wprintf (L"Process was not attached to console. Is it GUI?\nCommand to be executed:\n%s\n", psNewCmd);
+				iRc = CERR_PROCESSTIMEOUT; goto wrap;
+			}
+
+			// По крайней мере один процесс в консоли запустился. Ждем пока в консоли не останется никого кроме нас
+			WaitForSingleObject(hExitEvent, INFINITE);
+		}
+	} else {
+		// В режиме ComSpec нас интересует завершение ТОЛЬКО дочернего процесса
+		WaitForSingleObject(pi.hProcess, INFINITE);
+		// Сразу закрыть хэндлы
+		if (pi.hProcess) CloseHandle(pi.hProcess); 
+		if (pi.hThread) CloseHandle(pi.hThread);
+	}
+
+	
+	
+	
+	/* ************************* */
+	/* *** Завершение работы *** */
+	/* ************************* */
+	
+	iRc = 0;
+wrap:
+	// На всякий случай - выставим событие
+	if (hExitEvent) SetEvent(hExitEvent);
+	
+	
+	/* ***************************** */
+	/* *** "Режимное" завершение *** */
+	/* ***************************** */
+	
+	if (gnRunMode == RM_SERVER) {
+		ServerDone(iRc);
+	} else {
+		ComspecDone(iRc);
+	}
+
+	
+	/* ************************** */
+	/* *** "Общее" завершение *** */
+	/* ************************** */
+	
+	if (hConIn && hConIn!=INVALID_HANDLE_VALUE) {
+		CloseHandle(hConIn); hConIn = NULL;
+	}
+	if (hConOut && hConOut!=INVALID_HANDLE_VALUE) {
+		CloseHandle(hConOut); hConIn = NULL;
+	}
+
+	if (iRc!=0 || gbAlwaysConfirmExit) {
+		wprintf(L"Press any key to close console");
+		_getch();
+		wprintf(L"\n");
+	}
+	
+	if (psNewCmd) { delete psNewCmd; psNewCmd = NULL; }
+    return iRc;
+}
+
+void Help()
+{
+	wprintf(
+		L"ConEmuC. Copyright (c) 2009, Maximus5\n"
+		L"This is a console part of ConEmu product.\n"
+		L"Usage: ComEmuC [/CONFIRM] /C <command line, passed to %%COMSPEC%%>\n"
+		L"   or: ComEmuC [/CONFIRM] /CMD <program with arguments, far.exe for example>\n"
+		L"   or: ComEmuC /?\n"
+	);
+}
+
+// Разбор параметров командной строки
+int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
+{
+	int iRc = 0;
+	wchar_t szArg[MAX_PATH+1] = {0};
+	wchar_t szComSpec[MAX_PATH+1] = {0};
+	LPCWSTR pwszCopy = NULL;
+	wchar_t* psFilePart = NULL;
+	BOOL bViaCmdExe = TRUE;
+	size_t nCmdLine = 0;
+	
+	if (!asCmdLine || !*asCmdLine)
+	{
+		DWORD dwErr = GetLastError();
+		wprintf (L"GetCommandLineW failed! ErrCode=0x%08X\n", dwErr);
+		return CERR_GETCOMMANDLINE;
+	}
+
+	gnRunMode = RM_UNDEFINED;
+	
+	while ((iRc = NextArg(asCmdLine, szArg)) == 0)
+	{
+		if (wcscmp(szArg, L"/?")==0 || wcscmp(szArg, L"-?")==0 || wcscmp(szArg, L"/h")==0 || wcscmp(szArg, L"-h")==0) {
+			Help();
+			return CERR_HELPREQUESTED;
+		} else 
+		
+		if (wcscmp(szArg, L"/CONFIRM")==0) {
+			gbAlwaysConfirmExit = TRUE;
+		} else
+		
+		// После этих аргументов - идет то, что передается в CreateProcess!
+		if (wcscmp(szArg, L"/C")==0 || wcscmp(szArg, L"/c")==0) {
+			gnRunMode = RM_COMSPEC;
+			break; // asCmdLine уже указывает на запускаемую программу
+		} else if (wcscmp(szArg, L"/CMD")==0 || wcscmp(szArg, L"/cmd")==0) {
+			gnRunMode = RM_SERVER;
+			break; // asCmdLine уже указывает на запускаемую программу
+		}
+	}
+	
+	if (iRc != 0) {
+		wprintf (L"Parsing command line failed:\n%s\n", asCmdLine);
+		return iRc;
+	}
+	if (gnRunMode == RM_UNDEFINED) {
+		wprintf (L"Parsing command line failed (/C argument not found):\n%s\n", GetCommandLineW());
+		return CERR_CARGUMENT;
+	}
+
+	if (gnRunMode == RM_COMSPEC) {
+		pwszCopy = asCmdLine;
+		if ((iRc = NextArg(pwszCopy, szArg)) != 0) {
+			wprintf (L"Parsing command line failed:\n%s\n", asCmdLine);
+			return iRc;
+		}
+		pwszCopy = wcsrchr(szArg, L'\\'); if (!pwszCopy) pwszCopy = szArg;
+	
+		if (lstrcmpiW(pwszCopy, L"cmd")==0 || lstrcmpiW(pwszCopy, L"cmd.exe")==0) {
+			bViaCmdExe = FALSE; // уже указан командный процессор, cmd.exe в начало добавлять не нужно
+		}
+	} else {
+		bViaCmdExe = FALSE; // командным процессором выступает сам ConEmuC (серверный режим)
+	}
+	
+	nCmdLine = lstrlenW(asCmdLine);
+
+	if (!bViaCmdExe) {
+		nCmdLine += 1; // только место под 0
+	} else {
+		// Если определена ComSpecC - значит ConEmuC переопределил стандартный ComSpec
+		if (!GetEnvironmentVariable(L"ComSpecC", szComSpec, MAX_PATH) || szComSpec[0] == 0)
+			if (!GetEnvironmentVariable(L"ComSpec", szComSpec, MAX_PATH) || szComSpec[0] == 0)
+				szComSpec[0] = 0;
+		if (szComSpec[0] != 0) {
+			// Только если это (случайно) не conemuc.exe
+			pwszCopy = wcsrchr(szComSpec, L'\\'); if (!pwszCopy) pwszCopy = szComSpec;
+			if (lstrcmpiW(pwszCopy, L"ConEmuC")==0 || lstrcmpiW(pwszCopy, L"ConEmuC.exe")==0)
+				szComSpec[0] = 0;
+		}
+		
+		// ComSpec/ComSpecC не определен, используем cmd.exe
+		if (szComSpec[0] == 0) {
+			if (!SearchPathW(NULL, L"cmd.exe", NULL, MAX_PATH, szComSpec, &psFilePart))
+			{
+				wprintf (L"Can't find cmd.exe!\n");
+				return CERR_CMDEXENOTFOUND;
+			}
+		}
+
+		nCmdLine += lstrlenW(szComSpec)+10; // "/C" и кавычки
+	}
+
+	*psNewCmd = new wchar_t[nCmdLine];
+	if (!(*psNewCmd))
+	{
+		wprintf (L"Can't allocate %i wchars!\n", nCmdLine);
+		return CERR_NOTENOUGHMEM1;
+	}
+	
+	if (!bViaCmdExe)
+	{
+		lstrcpyW( *psNewCmd, asCmdLine );
+	} else {
+		if (wcschr(szComSpec, L' ')) {
+			(*psNewCmd)[0] = L'"';
+			lstrcpyW( (*psNewCmd)+1, sComSpec );
+			lstrcatW( (*psNewCmd), L"\" /C " );
+		} else {
+			lstrcpyW( (*psNewCmd), sComSpec );
+			lstrcatW( (*psNewCmd), L" /C " );
+		}
+		lstrcatW( (*psNewCmd), asCmdLine );
+	}
+	
+	return 0;
+}
+
+int NextArg(LPCWSTR &asCmdLine, wchar_t* rsArg/*[MAX_PATH+1]*/)
+{
+	LPCWSTR psCmdLine = asCmdLine;
+	wchar_t ch = *psCmdLine, *pch = NULL;
+	int nArgLen = 0;
+	
+	while (ch == L' ' || ch == L'\t' || ch == L'\r' || ch == L'\n') ch = *(++psCmdLine);
+	if (ch == 0) return CERR_CMDLINE;
+
+	// аргумент начинается с "
+	if (ch == L'"') {
+		psCmdLine++;
+		pch = wcschr(psCmdLine, L'"');
+		if (!pch) return CERR_CMDLINE;
+		while (pch[1] == L'"') {
+			pch += 2;
+			pch = wcschr(pch, L'"');
+			if (!pch) return CERR_CMDLINE;
+		}
+		// Теперь в pch ссылка на последнюю "
+	} else {
+		// До конца строки или до первого пробела
+		pch = wcschr(psCmdLine, L' ');
+		if (!pch) pch = psCmdLine + wcslen(psCmdLine); // до конца строки
+	}
+	
+	nArgLen = pch - psCmdLine;
+	if (nArgLen > MAX_PATH) return CERR_CMDLINE;
+
+	// Вернуть аргумент
+	memcpy(rsArg, psCmdLine, nArgLen*sizeof(wchar_t));
+	rsArg[nArgLen] = 0;
+	
+	// Finilize
+	ch = *psCmdLine; // может указывать на закрывающую кавычку
+	while (ch == L'"' || ch == L' ' || ch == L'\t' || ch == L'\r' || ch == L'\n') ch = *(++psCmdLine);
+	asCmdLine = psCmdLine;
+	
+	return 0;
+}
+
+int ComspecInit()
+{
+	WARNING("Увеличить высоту буфера до 600+ строк, запомнить текущий размер (высота И ширина)");
+	TODO("Определить код родительского процесса, и если это FAR - запомнить его (для подключения к пайпу плагина)");
+	return 0;
+}
+
+void ComspecDone(int aiRc)
+{
+	TODO("Уведомить плагин через пайп (если родитель - FAR) что процесс завершен. Плагин должен считать и запомнить содержимое консоли и только потом вернуть управление в ConEmuC!");
+	
+	WARNING("Вернуть размер буфера (высота И ширина)");
+}
+
+// Создать необходимые события и нити
+int ServerInit()
+{
+	int iRc = 0;
+	HANDLE hWait[2] = {NULL,NULL};
+	
+	InitializeCriticalSection(&csConBuf);
+	InitializeCriticalSection(&csProc);
+	
+	wsprintfW(szPipename, CESERVERPIPENAME, L".", gnSelfPID);
+	wsprintfW(szInputname, CESERVERINPUTNAME, L".", gnSelfPID);
+
+	// Размер шрифта и Lucida. Обязательно для сервеного режима.
+    SetConsoleFontSizeTo(hConWnd, 4, 6);
+
+    if (IsIconic(hConWnd)) { // окошко нужно развернуть!
+        WINDOWPLACEMENT wplCon = {sizeof(wplCon)};
+        GetWindowPlacement(hConWnd, &wplCon);
+        wplCon.showCmd = SW_RESTORE;
+        SetWindowPlacement(hConWnd, &wplCon);
+    }
+
+
 	// Сразу получить текущее состояние консоли
 	ReloadConsoleInfo();
 
-	TODO("Нити обработки команд и SetWinEventHook нужно выполнять только в корневом ConEmuC, а не в ComSpec");
+    //
+	hRefreshEvent = CreateEvent(NULL,FALSE,FALSE,NULL);
+	if (!hRefreshEvent) {
+		dwErr = GetLastError();
+		wprintf(L"CreateEvent() failed, ErrCode=0x%08X\n", dwErr); 
+		iRc = CERR_REFRESHEVENT; goto wrap;
+	}
 
-	#ifdef _DEBUG
-		//if (!IsDebuggerPresent()) MessageBox(0,L"Debug",L"ConEmuC",0);
-	#endif
+    
+	// Запустить нить наблюдения за консолью
+	hRefreshThread = CreateThread( 
+		NULL,              // no security attribute 
+		0,                 // default stack size 
+		RefreshThread,     // thread proc
+		NULL,              // thread parameter 
+		0,                 // not suspended 
+		&dwRefreshThread); // returns thread ID 
+
+	if (hRefreshThread == NULL) 
+	{
+		dwErr = GetLastError();
+		wprintf(L"CreateThread(RefreshThread) failed, ErrCode=0x%08X\n", dwErr); 
+		iRc = CERR_CREATEREFRESHTHREAD; goto wrap;
+	}
+    
+	
 	// The client thread that calls SetWinEventHook must have a message loop in order to receive events.");
 	hWait[0] = CreateEvent(NULL,FALSE,FALSE,NULL);
 	_ASSERTE(hWait[0]!=NULL);
@@ -245,9 +543,9 @@ int main()
 	if (hWinEventThread == NULL) 
 	{
 		dwErr = GetLastError();
-		printf("CreateThread(WinEventThread) failed, ErrCode=0x%08X\n", dwErr); 
+		wprintf(L"CreateThread(WinEventThread) failed, ErrCode=0x%08X\n", dwErr); 
 		CloseHandle(hWait[0]); hWait[0]=NULL; hWait[1]=NULL;
-		iRc=CERR_WINEVENTTHREAD; goto wrap;
+		iRc = CERR_WINEVENTTHREAD; goto wrap;
 	}
 	hWait[1] = hWinEventThread;
 	dwErr = WaitForMultipleObjects(2, hWait, FALSE, 10000);
@@ -260,9 +558,8 @@ int main()
 		}
 		// Ошибка на экран уже выведена, нить уже завершена, закрыть дескриптор
 		CloseHandle(hWinEventThread); hWinEventThread = NULL;
-		iRc=CERR_WINHOOKNOTCREATED; goto wrap;
+		iRc = CERR_WINHOOKNOTCREATED; goto wrap;
 	}
-
 
 	// Запустить нить обработки команд	
 	hThread = CreateThread( 
@@ -276,8 +573,8 @@ int main()
 	if (hThread == NULL) 
 	{
 		dwErr = GetLastError();
-		printf("CreateThread(ServerThread) failed, ErrCode=0x%08X\n", dwErr); 
-		iRc=CERR_CREATESERVERTHREAD; goto wrap;
+		wprintf(L"CreateThread(ServerThread) failed, ErrCode=0x%08X\n", dwErr); 
+		iRc = CERR_CREATESERVERTHREAD; goto wrap;
 	}
 
 	// Запустить нить обработки событий (клавиатура, мышь, и пр.)
@@ -292,60 +589,18 @@ int main()
 	if (hInputThread == NULL) 
 	{
 		dwErr = GetLastError();
-		printf("CreateThread(InputThread) failed, ErrCode=0x%08X\n", dwErr); 
-		iRc=CERR_CREATEINPUTTHREAD; goto wrap;
+		wprintf(L"CreateThread(InputThread) failed, ErrCode=0x%08X\n", dwErr); 
+		iRc = CERR_CREATEINPUTTHREAD; goto wrap;
 	}
 
-	// Запустить нить наблюдения за консолью
-	hRefreshThread = CreateThread( 
-		NULL,              // no security attribute 
-		0,                 // default stack size 
-		RefreshThread,     // thread proc
-		NULL,              // thread parameter 
-		0,                 // not suspended 
-		&dwRefreshThread); // returns thread ID 
 
-	if (hRefreshThread == NULL) 
-	{
-		dwErr = GetLastError();
-		printf("CreateThread(RefreshThread) failed, ErrCode=0x%08X\n", dwErr); 
-		iRc=CERR_CREATEREFRESHTHREAD; goto wrap;
-	}
-	
-	
-	
-	
-	lbRc = CreateProcessW(NULL, psNewCmd, NULL,NULL, TRUE, NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi);
-	dwErr = GetLastError();
-	if (!lbRc)
-	{
-		printf ("Can't create process, ErrCode=0x%08X! Command to be executed:\n%s", dwErr, psNewCmd);
-		iRc=CERR_CREATEPROCESS; goto wrap;
-	}
-	delete psNewCmd; psNewCmd = NULL;
-
-	// Ждем, пока в консоли не останется процессов (кроме нашего)
-	TODO("Проверить, может ли так получиться, что CreateProcess прошел, а к консоли он не прицепился? Может, если процесс GUI");
-	nWait = WaitForSingleObject(hExitEvent, 6*1000); //Запуск процесса наверное может задержать антивирус
-	if (nWait != WAIT_OBJECT_0) { // Если таймаут
-		EnterCriticalSection(&csProc);
-		iRc = nProcesses.size();
-		LeaveCriticalSection(&csProc);
-		// И процессов в консоли все еще нет
-		if (iRc == 0) {
-			printf ("Process was not attached to console. Is it GUI?\nCommand to be executed:\n%s", psNewCmd);
-			iRc=CERR_PROCESSTIMEOUT; goto wrap;
-		}
-
-		// По крайней мере один процесс в консоли запустился. Ждем пока в консоли не останется никого кроме нас
-		WaitForSingleObject(hExitEvent, INFINITE);
-	}
-
-	iRc = 0;
 wrap:
-	// На всякий случай - выставим событие
-	if (hExitEvent) SetEvent(hExitEvent);
+	return iRc;
+}
 
+// Завершить все нити и закрыть дескрипторы
+void ServerDone(int aiRc)
+{
 	// Закрываем дескрипторы и выходим
 	if (dwWinEventThread && hWinEventThread) {
 		PostThreadMessage(dwWinEventThread, WM_QUIT, 0, 0);
@@ -359,8 +614,7 @@ wrap:
 		TerminateThread ( hInputThread, 100 ); TODO("Сделать корректное завершение");
 		CloseHandle(hInputThread); hInputThread = NULL;
 	}
-	if (pi.hProcess) CloseHandle(pi.hProcess); 
-	if (pi.hThread) CloseHandle(pi.hThread);
+
 	if (hThread) {
 		TerminateThread ( hThread, 100 ); TODO("Сделать корректное завершение");
 		CloseHandle(hThread); hThread = NULL;
@@ -372,33 +626,19 @@ wrap:
 		}
 		CloseHandle(hRefreshThread); hRefreshThread = NULL;
 	}
-	//
-	if (hConIn && hConIn!=INVALID_HANDLE_VALUE) {
-		CloseHandle(hConIn); hConIn = NULL;
-	}
-	if (hConOut && hConOut!=INVALID_HANDLE_VALUE) {
-		CloseHandle(hConOut); hConIn = NULL;
-	}
+	
     if (hRefreshEvent) {
 	    CloseHandle(hRefreshEvent); hRefreshEvent = NULL;
     }
     if (hWinHook) {
         UnhookWinEvent(hWinHook); hWinHook = NULL;
     }
-	if (psNewCmd) { delete psNewCmd; psNewCmd = NULL; }
+	
 	if (psChars) { free(psChars); psChars = NULL; }
 	if (pnAttrs) { free(pnAttrs); pnAttrs = NULL; }
 	DeleteCriticalSection(&csConBuf);
 	DeleteCriticalSection(&csProc);
-
-	if (iRc!=0 || bAlwaysConfirmExit) {
-		printf("Press any key to close console");
-		_getch();
-		printf("\n");
-	}
-    return iRc;
 }
-
 
 
 
@@ -433,7 +673,7 @@ DWORD WINAPI ServerThread(LPVOID lpvParam)
       if (hPipe == INVALID_HANDLE_VALUE) 
       {
 	      dwErr = GetLastError();
-          printf("CreatePipe failed, ErrCode=0x%08X\n"); 
+          wprintf(L"CreatePipe failed, ErrCode=0x%08X\n"); 
           Sleep(50);
           //return 99;
           continue;
@@ -460,7 +700,7 @@ DWORD WINAPI ServerThread(LPVOID lpvParam)
          if (hThread == NULL) 
          {
 	        dwErr = GetLastError();
-            printf("CreateThread failed, ErrCode=0x%08X\n"); 
+            wprintf(L"CreateThread failed, ErrCode=0x%08X\n"); 
             Sleep(50);
             //return 0;
             continue;
@@ -506,7 +746,7 @@ DWORD WINAPI InputThread(LPVOID lpvParam)
       if (hPipe == INVALID_HANDLE_VALUE) 
       {
 	      dwErr = GetLastError();
-          printf("CreatePipe failed, ErrCode=0x%08X\n"); 
+          wprintf(L"CreatePipe failed, ErrCode=0x%08X\n"); 
           Sleep(50);
           //return 99;
           continue;
@@ -707,7 +947,7 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 		case CECMD_GETFULLINFO:
 		{
 			if (szGuiPipeName[0] == 0) { // Серверный пайп в CVirtualConsole уже должен быть запущен
-				wsprintf(szGuiPipeName, CEGUIPIPENAME, L".", (HWND)hConWnd); // был dwSelfPID
+				wsprintf(szGuiPipeName, CEGUIPIPENAME, L".", (HWND)hConWnd); // был gnSelfPID
 			}
 			bContentsChanged = (in.nCmd == CECMD_GETFULLINFO) ? 1 : 0;
 
@@ -744,7 +984,7 @@ DWORD WINAPI WinEventThread(LPVOID lpvParam)
 	dwErr = GetLastError();
 	if (!hWinHook) {
 		dwErr = GetLastError();
-		printf("SetWinEventHook failed, ErrCode=0x%08X\n", dwErr); 
+		wprintf(L"SetWinEventHook failed, ErrCode=0x%08X\n", dwErr); 
 		SetEvent(hStartedEvent);
 		return 100;
 	}
@@ -814,7 +1054,7 @@ void CALLBACK WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, 
 		OutputDebugString(szDbg);
 		#endif
 
-		if (idObject != dwSelfPID) {
+		if (idObject != gnSelfPID) {
 			EnterCriticalSection(&csProc);
 			nProcesses.push_back(idObject);
 			LeaveCriticalSection(&csProc);
@@ -836,7 +1076,7 @@ void CALLBACK WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, 
 		OutputDebugString(szDbg);
 		#endif
 
-		if (idObject != dwSelfPID) {
+		if (idObject != gnSelfPID) {
 			std::vector<DWORD>::iterator iter;
 			EnterCriticalSection(&csProc);
 			for (iter=nProcesses.begin(); iter!=nProcesses.end(); iter++) {
@@ -1252,56 +1492,3 @@ void ReloadFullConsoleInfo(CESERVER_CHAR* pCharOnly/*=NULL*/)
 	if (pCheck) free(pCheck);
 }
 
-WARNING("InitServer() нужно позвать перед прицеплянием к ConEmu.GUI. Посмотреть, что выкинуть");
-void InitServer()
-{
-    //hConWnd = GetConsoleWindow();
-	//2009-05-13 теперь похоже не нужно
-	//ghConWnd = hConWnd; // ставим сразу, чтобы было известно, к какой консоли мы сейчас подцеплены (иначе hConOut() вернет NULL)
-
-    //SetConsoleCtrlHandler((PHANDLER_ROUTINE)CConEmuMain::HandlerRoutine, true);
-    
-    // наверное это имеет смысл только при создании консоли, а не при аттаче
-    SetHandleInformation(GetStdHandle(STD_INPUT_HANDLE), HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT);
-	// DuplicateHandle смысле не имеет, при первом же FreeConsole - эти хэндлы отвалятся
-	//if (!DuplicateHandle(GetCurrentProcess(), h, GetCurrentProcess(), &mh_StdIn, 0, TRUE, DUPLICATE_SAME_ACCESS)) {
-	//	dwErr = GetLastError();
-	//mh_StdIn = CreateFile(_T("CONIN$"), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_READ,
-    //        0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
-	//}
-    SetHandleInformation(GetStdHandle(STD_OUTPUT_HANDLE), HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT);
-	//if (!DuplicateHandle(GetCurrentProcess(), h, GetCurrentProcess(), &mh_StdOut, 0, TRUE, DUPLICATE_SAME_ACCESS)) {
-	//	dwErr = GetLastError();
-	//mh_StdOut = CreateFile(_T("CONOUT$"), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_READ,
-    //        0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
-	//}
-    SetHandleInformation(GetStdHandle(STD_ERROR_HANDLE), HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT);
-
-    //TODO("Перенести в ConEmuC");
-	/*
-    DWORD mode = 0;
-    BOOL lb = GetConsoleMode(hConIn(), &mode);
-    if (!(mode & ENABLE_MOUSE_INPUT)) {
-        mode |= ENABLE_MOUSE_INPUT;
-        lb = SetConsoleMode(hConIn(), mode);
-    }
-	*/
-
-    //hConOut();
-
-    SetConsoleFontSizeTo(hConWnd, 4, 6);
-
-    if (IsIconic(hConWnd)) {
-        // окошко нужно развернуть!
-        WINDOWPLACEMENT wplCon;
-        memset(&wplCon, 0, sizeof(wplCon)); wplCon.length = sizeof(wplCon);
-        GetWindowPlacement(hConWnd, &wplCon);
-
-        /*int n = wplMain.rcNormalPosition.left - wplCon.rcNormalPosition.left;
-        wplCon.rcNormalPosition.left += n; wplCon.rcNormalPosition.right += n;
-        n = wplMain.rcNormalPosition.top - wplCon.rcNormalPosition.top;
-        wplCon.rcNormalPosition.top += n; wplCon.rcNormalPosition.bottom += n;*/
-        wplCon.showCmd = SW_RESTORE;
-        SetWindowPlacement(hConWnd, &wplCon);
-    }
-}
