@@ -9,6 +9,8 @@ WARNING("Наверное все-же стоит производить периодические чтения содержимого конс
 
 WARNING("Стоит именно здесь осуществлять проверку живости GUI окна (если оно было). Ведь может быть запущен не far, а CMD.exe");
 
+WARNING("Если GUI умер, или не подцепился по таймауту - показать консольное окно и наверное установить шрифт поболе");
+
 #if defined(__GNUC__)
 	//#include "assert.h"
 	#define _ASSERTE(x)
@@ -26,6 +28,7 @@ WARNING("Стоит именно здесь осуществлять проверку живости GUI окна (если оно был
 #define EVENT_CONSOLE_END_APPLICATION   0x4007
 #endif
 
+#define SafeCloseHandle(h) { if ((h)!=NULL) { HANDLE hh = (h); (h) = NULL; if (hh!=INVALID_HANDLE_VALUE) CloseHandle(hh); } }
 
 DWORD WINAPI InstanceThread(LPVOID);
 DWORD WINAPI ServerThread(LPVOID lpvParam);
@@ -75,6 +78,7 @@ struct {
 	//
 	wchar_t szPipename[MAX_PATH], szInputname[MAX_PATH], szGuiPipeName[MAX_PATH];
 	//
+	HANDLE hConEmuGuiAttached;
 	HWINEVENTHOOK hWinHook;
 	BOOL bContentsChanged; // Первое чтение параметров должно быть ПОЛНЫМ
 	wchar_t* psChars;
@@ -166,12 +170,13 @@ int main()
 	
 	
 	// Событие используется для всех режимов
-	ghExitEvent = CreateEvent(NULL, TRUE/*используется в нескольких нитях, manual*/, FALSE, NULL); ResetEvent(ghExitEvent);
+	ghExitEvent = CreateEvent(NULL, TRUE/*используется в нескольких нитях, manual*/, FALSE, NULL);
 	if (!ghExitEvent) {
 		dwErr = GetLastError();
 		wprintf(L"CreateEvent() failed, ErrCode=0x%08X\n", dwErr); 
 		iRc = CERR_EXITEVENT; goto wrap;
 	}
+	ResetEvent(ghExitEvent);
 
 	// Дескрипторы
 	ghConIn  = CreateFile(L"CONIN$", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_READ,
@@ -236,8 +241,15 @@ int main()
 	/* *************************** */
 	
 	if (gnRunMode == RM_SERVER) {
-		if (pi.hProcess) CloseHandle(pi.hProcess); 
-		if (pi.hThread) CloseHandle(pi.hThread);
+		if (pi.hProcess) SafeCloseHandle(pi.hProcess); 
+		if (pi.hThread) SafeCloseHandle(pi.hThread);
+
+		if (srv.hConEmuGuiAttached) {
+			if (WaitForSingleObject(srv.hConEmuGuiAttached, 1000) == WAIT_OBJECT_0) {
+				// GUI пайп готов
+				wsprintf(srv.szGuiPipeName, CEGUIPIPENAME, L".", (DWORD)ghConWnd); // был gnSelfPID
+			}
+		}
 	
 		// Ждем, пока в консоли не останется процессов (кроме нашего)
 		TODO("Проверить, может ли так получиться, что CreateProcess прошел, а к консоли он не прицепился? Может, если процесс GUI");
@@ -259,8 +271,8 @@ int main()
 		// В режиме ComSpec нас интересует завершение ТОЛЬКО дочернего процесса
 		WaitForSingleObject(pi.hProcess, INFINITE);
 		// Сразу закрыть хэндлы
-		if (pi.hProcess) CloseHandle(pi.hProcess); 
-		if (pi.hThread) CloseHandle(pi.hThread);
+		if (pi.hProcess) SafeCloseHandle(pi.hProcess); 
+		if (pi.hThread) SafeCloseHandle(pi.hThread);
 	}
 
 	
@@ -292,15 +304,15 @@ wrap:
 	/* ************************** */
 	
 	if (ghConIn && ghConIn!=INVALID_HANDLE_VALUE) {
-		CloseHandle(ghConIn); ghConIn = NULL;
+		SafeCloseHandle(ghConIn);
 	}
 	if (ghConOut && ghConOut!=INVALID_HANDLE_VALUE) {
-		CloseHandle(ghConOut); ghConIn = NULL;
+		SafeCloseHandle(ghConOut);
 	}
 
 	if (iRc!=0 || gbAlwaysConfirmExit) {
 		wprintf(L"Press any key to close console");
-		_getch();
+		int nCh = _getch();
 		wprintf(L"\n");
 	}
 	
@@ -377,9 +389,12 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 		}
 		pwszCopy = wcsrchr(szArg, L'\\'); if (!pwszCopy) pwszCopy = szArg;
 	
+		#pragma warning( push )
+		#pragma warning(disable : 6400)
 		if (lstrcmpiW(pwszCopy, L"cmd")==0 || lstrcmpiW(pwszCopy, L"cmd.exe")==0) {
 			bViaCmdExe = FALSE; // уже указан командный процессор, cmd.exe в начало добавлять не нужно
 		}
+		#pragma warning( pop )
 	} else {
 		bViaCmdExe = FALSE; // командным процессором выступает сам ConEmuC (серверный режим)
 	}
@@ -396,8 +411,11 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 		if (szComSpec[0] != 0) {
 			// Только если это (случайно) не conemuc.exe
 			pwszCopy = wcsrchr(szComSpec, L'\\'); if (!pwszCopy) pwszCopy = szComSpec;
+			#pragma warning( push )
+			#pragma warning(disable : 6400)
 			if (lstrcmpiW(pwszCopy, L"ConEmuC")==0 || lstrcmpiW(pwszCopy, L"ConEmuC.exe")==0)
 				szComSpec[0] = 0;
+			#pragma warning( pop )
 		}
 		
 		// ComSpec/ComSpecC не определен, используем cmd.exe
@@ -509,7 +527,14 @@ int ServerInit()
 	
 	InitializeCriticalSection(&srv.csConBuf);
 	InitializeCriticalSection(&srv.csProc);
+
+	// временно используем эту переменную, чтобы не плодить локальных
+	wsprintfW(srv.szPipename, CEGUIATTACHED, (DWORD)ghConWnd);
+	srv.hConEmuGuiAttached = CreateEvent(NULL, TRUE, FALSE, srv.szPipename);
+	_ASSERTE(srv.hConEmuGuiAttached!=NULL);
+	if (srv.hConEmuGuiAttached) ResetEvent(srv.hConEmuGuiAttached);
 	
+	// Инициализация имен пайпов
 	wsprintfW(srv.szPipename, CESERVERPIPENAME, L".", gnSelfPID);
 	wsprintfW(srv.szInputname, CESERVERINPUTNAME, L".", gnSelfPID);
 
@@ -567,20 +592,25 @@ int ServerInit()
 	{
 		dwErr = GetLastError();
 		wprintf(L"CreateThread(WinEventThread) failed, ErrCode=0x%08X\n", dwErr); 
-		CloseHandle(hWait[0]); hWait[0]=NULL; hWait[1]=NULL;
+		SafeCloseHandle(hWait[0]);
+		hWait[0]=NULL; hWait[1]=NULL;
 		iRc = CERR_WINEVENTTHREAD; goto wrap;
 	}
 	hWait[1] = srv.hWinEventThread;
 	dwErr = WaitForMultipleObjects(2, hWait, FALSE, 10000);
-	CloseHandle(hWait[0]); hWait[0]=NULL; hWait[1]=NULL;
+	SafeCloseHandle(hWait[0]);
+	hWait[0]=NULL; hWait[1]=NULL;
 	if (!srv.hWinHook) {
 		_ASSERT(dwErr == WAIT_TIMEOUT);
 		if (dwErr == WAIT_TIMEOUT) { // по идее этого быть не должно
+			#pragma warning( push )
+			#pragma warning( disable : 6258 )
 			TerminateThread(srv.hWinEventThread,100);
-			CloseHandle(srv.hWinEventThread); srv.hWinEventThread = NULL;
+			#pragma warning( pop )
+			SafeCloseHandle(srv.hWinEventThread);
 		}
 		// Ошибка на экран уже выведена, нить уже завершена, закрыть дескриптор
-		CloseHandle(srv.hWinEventThread); srv.hWinEventThread = NULL;
+		SafeCloseHandle(srv.hWinEventThread);
 		iRc = CERR_WINHOOKNOTCREATED; goto wrap;
 	}
 
@@ -629,29 +659,41 @@ void ServerDone(int aiRc)
 		PostThreadMessage(srv.dwWinEventThread, WM_QUIT, 0, 0);
 		// Подождем немножко, пока нить сама завершится
 		if (WaitForSingleObject(srv.hWinEventThread, 500) != WAIT_OBJECT_0) {
+			#pragma warning( push )
+			#pragma warning( disable : 6258 )
 			TerminateThread ( srv.hWinEventThread, 100 ); // раз корректно не хочет...
+			#pragma warning( pop )
 		}
-		CloseHandle(srv.hWinEventThread); srv.hWinEventThread = NULL;
+		SafeCloseHandle(srv.hWinEventThread);
 	}
 	if (srv.hInputThread) {
+		#pragma warning( push )
+		#pragma warning( disable : 6258 )
 		TerminateThread ( srv.hInputThread, 100 ); TODO("Сделать корректное завершение");
-		CloseHandle(srv.hInputThread); srv.hInputThread = NULL;
+		#pragma warning( pop )
+		SafeCloseHandle(srv.hInputThread);
 	}
 
 	if (srv.hServerThread) {
+		#pragma warning( push )
+		#pragma warning( disable : 6258 )
 		TerminateThread ( srv.hServerThread, 100 ); TODO("Сделать корректное завершение");
-		CloseHandle(srv.hServerThread); srv.hServerThread = NULL;
+		#pragma warning( pop )
+		SafeCloseHandle(srv.hServerThread);
 	}
 	if (srv.hRefreshThread) {
 		if (WaitForSingleObject(srv.hRefreshThread, 100)!=WAIT_OBJECT_0) {
 			_ASSERT(FALSE);
+			#pragma warning( push )
+			#pragma warning( disable : 6258 )
 			TerminateThread(srv.hRefreshThread, 100);
+			#pragma warning( pop )
 		}
-		CloseHandle(srv.hRefreshThread); srv.hRefreshThread = NULL;
+		SafeCloseHandle(srv.hRefreshThread);
 	}
 	
     if (srv.hRefreshEvent) {
-	    CloseHandle(srv.hRefreshEvent); srv.hRefreshEvent = NULL;
+	    SafeCloseHandle(srv.hRefreshEvent);
     }
     if (srv.hWinHook) {
         UnhookWinEvent(srv.hWinHook); srv.hWinHook = NULL;
@@ -696,7 +738,7 @@ DWORD WINAPI ServerThread(LPVOID lpvParam)
       if (hPipe == INVALID_HANDLE_VALUE) 
       {
 	      dwErr = GetLastError();
-          wprintf(L"CreatePipe failed, ErrCode=0x%08X\n"); 
+          wprintf(L"CreatePipe failed, ErrCode=0x%08X\n", dwErr); 
           Sleep(50);
           //return 99;
           continue;
@@ -723,16 +765,19 @@ DWORD WINAPI ServerThread(LPVOID lpvParam)
          if (hInstanceThread == NULL) 
          {
 	        dwErr = GetLastError();
-            wprintf(L"CreateThread(Instance) failed, ErrCode=0x%08X\n"); 
+            wprintf(L"CreateThread(Instance) failed, ErrCode=0x%08X\n", dwErr);
             Sleep(50);
             //return 0;
             continue;
          }
-         else CloseHandle(hInstanceThread); 
+		 else {
+			 SafeCloseHandle(hInstanceThread); 
+		 }
        } 
-      else 
+	  else {
         // The client could not connect, so close the pipe. 
-         CloseHandle(hPipe); 
+         SafeCloseHandle(hPipe); 
+	  }
    } 
    return 1; 
 } 
@@ -769,7 +814,7 @@ DWORD WINAPI InputThread(LPVOID lpvParam)
       if (hPipe == INVALID_HANDLE_VALUE) 
       {
 	      dwErr = GetLastError();
-          wprintf(L"CreatePipe failed, ErrCode=0x%08X\n"); 
+          wprintf(L"CreatePipe failed, ErrCode=0x%08X\n", dwErr);
           Sleep(50);
           //return 99;
           continue;
@@ -796,7 +841,7 @@ DWORD WINAPI InputThread(LPVOID lpvParam)
 	      {
 		      // предусмотреть возможность завершения нити
 		      if (iRec.EventType == 0xFFFF) {
-			      CloseHandle(hPipe);
+			      SafeCloseHandle(hPipe);
 			      break;
 		      }
 		      if (iRec.EventType) {
@@ -810,7 +855,7 @@ DWORD WINAPI InputThread(LPVOID lpvParam)
       } 
       else 
         // The client could not connect, so close the pipe. 
-         CloseHandle(hPipe);
+         SafeCloseHandle(hPipe);
    } 
    return 1; 
 } 
@@ -863,7 +908,7 @@ DWORD WINAPI InstanceThread(LPVOID lpvParam)
  
    FlushFileBuffers(hPipe); 
    DisconnectNamedPipe(hPipe); 
-   CloseHandle(hPipe); 
+   SafeCloseHandle(hPipe); 
 
    return 1;
 }
@@ -970,7 +1015,7 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 		case CECMD_GETFULLINFO:
 		{
 			if (srv.szGuiPipeName[0] == 0) { // Серверный пайп в CVirtualConsole уже должен быть запущен
-				wsprintf(srv.szGuiPipeName, CEGUIPIPENAME, L".", (HWND)ghConWnd); // был gnSelfPID
+				wsprintf(srv.szGuiPipeName, CEGUIPIPENAME, L".", (DWORD)ghConWnd); // был gnSelfPID
 			}
 			nContentsChanged = (in.nCmd == CECMD_GETFULLINFO) ? 1 : 0;
 
@@ -1064,6 +1109,9 @@ void CALLBACK WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, 
 
 	BOOL bNeedConAttrBuf = FALSE;
 	CESERVER_CHAR ch = {{0,0}};
+	#ifdef _DEBUG
+	WCHAR szDbg[128];
+	#endif
 
     switch(event)
     {
@@ -1073,7 +1121,7 @@ void CALLBACK WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, 
 		//If the application is a 16-bit application, the idChild parameter is CONSOLE_APPLICATION_16BIT and idObject is the process identifier of the NTVDM session associated with the console.
 
 		#ifdef _DEBUG
-		WCHAR szDbg[128]; wsprintfW(szDbg, L"EVENT_CONSOLE_START_APPLICATION(PID=%i%s)\n", idObject, (idChild == CONSOLE_APPLICATION_16BIT) ? L" 16bit" : L"");
+		wsprintfW(szDbg, L"EVENT_CONSOLE_START_APPLICATION(PID=%i%s)\n", idObject, (idChild == CONSOLE_APPLICATION_16BIT) ? L" 16bit" : L"");
 		OutputDebugString(szDbg);
 		#endif
 
@@ -1131,7 +1179,7 @@ void CALLBACK WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, 
 		//The idChild parameter is a COORD structure that specifies the end of the changed region.
 			#ifdef _DEBUG
 			COORD crStart, crEnd; memmove(&crStart, &idObject, sizeof(idObject)); memmove(&crEnd, &idChild, sizeof(idChild));
-			WCHAR szDbg[128]; wsprintfW(szDbg, L"EVENT_CONSOLE_UPDATE_REGION({%i, %i} - {%i, %i})\n", crStart.X,crStart.Y, crEnd.X,crEnd.Y);
+			wsprintfW(szDbg, L"EVENT_CONSOLE_UPDATE_REGION({%i, %i} - {%i, %i})\n", crStart.X,crStart.Y, crEnd.X,crEnd.Y);
 			OutputDebugString(szDbg);
 			#endif
 			//bNeedConAttrBuf = TRUE;
@@ -1148,7 +1196,7 @@ void CALLBACK WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, 
 		//The idObject parameter is the horizontal distance the console has scrolled. 
 		//The idChild parameter is the vertical distance the console has scrolled.
 			#ifdef _DEBUG
-			WCHAR szDbg[128]; wsprintfW(szDbg, L"EVENT_CONSOLE_UPDATE_SCROLL(X=%i, Y=%i)\n", idObject, idChild);
+			wsprintfW(szDbg, L"EVENT_CONSOLE_UPDATE_SCROLL(X=%i, Y=%i)\n", idObject, idChild);
 			OutputDebugString(szDbg);
 			#endif
 			//bNeedConAttrBuf = TRUE;
@@ -1170,7 +1218,7 @@ void CALLBACK WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, 
 			ch.crEnd = ch.crStart;
 			ch.data[0] = (WCHAR)LOWORD(idChild); ch.data[1] = HIWORD(idChild);
 			#ifdef _DEBUG
-			WCHAR szDbg[128]; wsprintfW(szDbg, L"EVENT_CONSOLE_UPDATE_SIMPLE({%i, %i} '%c'(\\x%04X) A=%i)\n", ch.crStart.X,ch.crStart.Y, ch.data[0], ch.data[0], ch.data[1]);
+			wsprintfW(szDbg, L"EVENT_CONSOLE_UPDATE_SIMPLE({%i, %i} '%c'(\\x%04X) A=%i)\n", ch.crStart.X,ch.crStart.Y, ch.data[0], ch.data[0], ch.data[1]);
 			OutputDebugString(szDbg);
 			#endif
 			// Перечитать размер, положение курсора, и пр.
@@ -1200,7 +1248,7 @@ void CALLBACK WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, 
 		//The idChild parameter is a COORD structure that specifies the cursor's current position.
 			#ifdef _DEBUG
 			COORD crWhere; memmove(&crWhere, &idChild, sizeof(idChild));
-			WCHAR szDbg[128]; wsprintfW(szDbg, L"EVENT_CONSOLE_CARET({%i, %i} Sel=%c, Vis=%c\n", crWhere.X,crWhere.Y, 
+			wsprintfW(szDbg, L"EVENT_CONSOLE_CARET({%i, %i} Sel=%c, Vis=%c\n", crWhere.X,crWhere.Y, 
 				((idObject & CONSOLE_CARET_SELECTION)==CONSOLE_CARET_SELECTION) ? L'Y' : L'N',
 				((idObject & CONSOLE_CARET_VISIBLE)==CONSOLE_CARET_VISIBLE) ? L'Y' : L'N');
 			OutputDebugString(szDbg);
@@ -1260,7 +1308,7 @@ void CALLBACK WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, 
 
 void SendConsoleChanges(CESERVER_REQ* pOut)
 {
-	//srv.szGuiPipeName инициализируется только после первого RetrieveConsoleInfo в GUI. Это значит, что там запущена серверная нить
+	//srv.szGuiPipeName инициализируется только после того, как GUI узнал хэндл консольного окна
 	if (srv.szGuiPipeName[0] == 0)
 		return;
 

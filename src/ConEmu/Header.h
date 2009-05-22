@@ -136,17 +136,17 @@ __forceinline void *memcpy(void *_Dst, const void *_Src, size_t _Size)
 void __forceinline DisplayLastError(LPCTSTR asLabel, DWORD dwError=0)
 {
 	DWORD dw = dwError ? dwError : GetLastError();
-	LPVOID lpMsgBuf = NULL;
+	wchar_t* lpMsgBuf = NULL;
 	MCHKHEAP
-	FormatMessage( FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, NULL, dw, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR) &lpMsgBuf, 0, NULL );
-	int nLen = _tcslen(asLabel)+64+(lpMsgBuf ? _tcslen((TCHAR*)lpMsgBuf) : 0);
-	TCHAR *out = new TCHAR[nLen];
+	FormatMessage( FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, NULL, dw, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPWSTR)&lpMsgBuf, 0, NULL );
+	int nLen = _tcslen(asLabel)+64+(lpMsgBuf ? wcslen(lpMsgBuf) : 0);
+	wchar_t *out = new wchar_t[nLen];
 	wsprintf(out, _T("%s\nLastError=0x%08X\n%s"), asLabel, dw, lpMsgBuf);
 	if (gbMessagingStarted) SetForegroundWindow(ghWnd);
 	MessageBox(gbMessagingStarted ? ghWnd : NULL, out, gConEmu.GetTitle(), MB_SYSTEMMODAL | MB_ICONERROR);
 	MCHKHEAP
 	LocalFree(lpMsgBuf);
-	delete out;
+	delete [] out;
 	MCHKHEAP
 }
 

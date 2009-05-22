@@ -7,6 +7,8 @@
 typedef HWND (APIENTRY *FGetConsoleWindow)();
 typedef DWORD (APIENTRY *FGetConsoleProcessList)(LPDWORD,DWORD);
 
+WARNING("Для 'Простых' запросов можно использовать 'CallNamedPipe', Это если нужно например получить хэндлы окон");
+
 
 //#if defined(__GNUC__)
 //extern "C" {

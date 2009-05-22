@@ -89,6 +89,8 @@ struct ConProcess {
 	TCHAR Name[64]; // чтобы полная инфа об ошибке влезала
 };
 
+#define MAX_SERVER_THREADS 3
+
 class CVirtualConsole
 {
 public:
@@ -280,6 +282,9 @@ private:
 	bool mb_ConsoleSelectMode;
 	int BufferHeight;
 	static DWORD WINAPI ServerThread(LPVOID lpvParam);
+	HANDLE mh_ServerThreads[MAX_SERVER_THREADS];
+	DWORD  mn_ServerThreadsId[MAX_SERVER_THREADS];
+	HANDLE mh_ServerSemaphore, mh_GuiAttached;
 	//typedef struct tag_ServerThreadCommandArg {
 	//	CVirtualConsole *pCon;
 	//	HANDLE hPipe;

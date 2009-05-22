@@ -271,10 +271,12 @@ typedef BOOL (WINAPI *PSetCurrentConsoleFontEx)(__in HANDLE hConsoleOutput,__in 
 
 void SetConsoleFontSizeTo(HWND inConWnd, int inSizeX, int inSizeY)
 {
+	HMODULE hKernel = GetModuleHandle(L"kernel32.dll");
+	if (!hKernel) return;
 	PGetCurrentConsoleFontEx GetCurrentConsoleFontEx = (PGetCurrentConsoleFontEx)
-		GetProcAddress(GetModuleHandle(L"kernel32.dll"), "GetCurrentConsoleFontEx");
+		GetProcAddress(hKernel, "GetCurrentConsoleFontEx");
 	PSetCurrentConsoleFontEx SetCurrentConsoleFontEx = (PSetCurrentConsoleFontEx)
-		GetProcAddress(GetModuleHandle(L"kernel32.dll"), "SetCurrentConsoleFontEx");
+		GetProcAddress(hKernel, "SetCurrentConsoleFontEx");
 
 	if (GetCurrentConsoleFontEx && SetCurrentConsoleFontEx) // We have Vista
 	{

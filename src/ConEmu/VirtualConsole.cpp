@@ -82,6 +82,11 @@ CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
 	mb_ConsoleSelectMode = false;
 	BufferHeight = 0;
 	mn_ProcessCount = 0; mn_FarPID = 0;
+	mh_ServerSemaphore = NULL;
+	memset(mh_ServerThreads, 0, sizeof(mh_ServerThreads));
+	memset(mn_ServerThreadsId, 0, sizeof(mn_ServerThreadsId));
+
+	memset(&con, 0, sizeof(con)); //WARNING! Содержит CriticalSection, поэтому сброс выполнять ПЕРЕД InitializeCriticalSection(&con.cs);
 
     //InitializeCriticalSection(&csDC); ncsTDC = 0;
     InitializeCriticalSection(&csCON); ncsTCON = 0;
@@ -94,7 +99,6 @@ CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
     
     mr_LeftPanel = mr_RightPanel = MakeRect(-1,-1);
 
-	memset(&con, 0, sizeof(con));
 	//m_dwConsoleCP = 0; m_dwConsoleOutputCP = 0; m_dwConsoleMode = 0;
 	//memset(&m_sel, 0, sizeof(m_sel));
 	//memset(&m_ci, 0, sizeof(m_ci));
@@ -120,7 +124,7 @@ CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
     isEditor = false;
     memset(&csbi, 0, sizeof(csbi)); mdw_LastError = 0;
     m_LastMaxReadCnt = 0; m_LastMaxReadTick = 0;
-    hConWnd = NULL;
+    hConWnd = NULL; mh_GuiAttached = NULL;
     mn_LastVKeyPressed = 0;
 	mn_LastConReadTick = 0;
 
@@ -191,6 +195,9 @@ CVirtualConsole::~CVirtualConsole()
 
 	SafeCloseHandle(mh_ConEmuC); mn_ConEmuC_PID = 0;
 	SafeCloseHandle(mh_ConEmuCInput);
+	
+	SafeCloseHandle(mh_ServerSemaphore);
+	SafeCloseHandle(mh_GuiAttached);
 
 	//SafeCloseHandle(mh_ReqSetSize);
 	//SafeCloseHandle(mh_ReqSetSizeEnd);
@@ -2297,12 +2304,22 @@ DWORD CVirtualConsole::StartProcessThread(LPVOID lpParameter)
 		pCon->StopSignal(); // уже должен быть выставлен, но на всякий случай
 		//
 		HANDLE hPipe = INVALID_HANDLE_VALUE;
-		// Передернуть пайпы, чтобы нить сервера завершилась
-		while ((hPipe = CreateFile(pCon->ms_VConServer_Pipe,GENERIC_WRITE,0,NULL,
-			OPEN_EXISTING,0,NULL)) != INVALID_HANDLE_VALUE)
-		{
+		// Передернуть пайпы, чтобы нити сервера завершились
+		for (int i=0; i<MAX_SERVER_THREADS; i++) {
+			hPipe = CreateFile(pCon->ms_VConServer_Pipe,GENERIC_WRITE,0,NULL,OPEN_EXISTING,0,NULL);
+			if (hPipe == INVALID_HANDLE_VALUE)
+				break;
+			// Просто закроем пайп - его нужно было передернуть
 			CloseHandle(hPipe);
 			hPipe = INVALID_HANDLE_VALUE;
+		}
+		// Немного подождем, пока ВСЕ нити завершатся
+		WaitForMultipleObjects(MAX_SERVER_THREADS, pCon->mh_ServerThreads, TRUE, 500);
+		for (int i=0; i<MAX_SERVER_THREADS; i++) {
+			if (WaitForSingleObject(pCon->mh_ServerThreads[i],0) != WAIT_OBJECT_0)
+				TerminateThread(pCon->mh_ServerThreads[i],0);
+			CloseHandle(pCon->mh_ServerThreads[i]);
+			pCon->mh_ServerThreads[i] = NULL;
 		}
 	}
     
@@ -3471,90 +3488,110 @@ void CVirtualConsole::OnWinEvent(DWORD event, HWND hwnd, LONG idObject, LONG idC
     }
 }
 
+WARNING("Попробовать создать пул серверных нитей и не завершать нить, а открыть в ней же новый instance пайпа");
+WARNING("Поскольку количество нитей будет статическим - можно хранить хэндлы всех нитей, для ожидания их завершения");
 DWORD CVirtualConsole::ServerThread(LPVOID lpvParam) 
 { 
 	CVirtualConsole *pCon = (CVirtualConsole*)lpvParam;
 	BOOL fConnected = FALSE;
-	//DWORD dwThreadId;
-	HANDLE hPipe = NULL; 
 	DWORD dwErr = 0;
+	HANDLE hPipe = NULL; 
+	HANDLE hWait[2] = {NULL,NULL};
 
 	_ASSERTE(pCon->hConWnd!=NULL);
 	_ASSERTE(pCon->ms_VConServer_Pipe[0]!=0);
+	_ASSERTE(pCon->mh_ServerSemaphore!=NULL);
 	//wsprintf(pCon->ms_VConServer_Pipe, CEGUIPIPENAME, L".", (DWORD)pCon->hConWnd); //был mn_ConEmuC_PID
 
 	// The main loop creates an instance of the named pipe and 
 	// then waits for a client to connect to it. When the client 
 	// connects, a thread is created to handle communications 
 	// with that client, and the loop is repeated. 
+	
+	hWait[0] = pCon->mh_TermEvent;
+	hWait[1] = pCon->mh_ServerSemaphore;
 
-	while (!fConnected)
-	{ 
-		if (hPipe != NULL && hPipe != INVALID_HANDLE_VALUE) {
-			CloseHandle ( hPipe ); hPipe = NULL;
+	// Пока не затребовано завершение консоли
+	{
+		while (!fConnected)
+		{ 
+			_ASSERTE(hPipe == NULL);
+
+			// Дождаться разрешения семафора, или закрытия консоли
+			dwErr = WaitForMultipleObjects ( 2, hWait, FALSE, INFINITE );
+			if (dwErr == WAIT_OBJECT_0) {
+				return 0; // Консоль закрывается
+			}
+
+			hPipe = CreateNamedPipe( 
+				pCon->ms_VConServer_Pipe, // pipe name 
+				PIPE_ACCESS_DUPLEX,       // read/write access 
+				PIPE_TYPE_MESSAGE |       // message type pipe 
+				PIPE_READMODE_MESSAGE |   // message-read mode 
+				PIPE_WAIT,                // blocking mode 
+				PIPE_UNLIMITED_INSTANCES, // max. instances  
+				PIPEBUFSIZE,              // output buffer size 
+				PIPEBUFSIZE,              // input buffer size 
+				0,                        // client time-out 
+				NULL);                    // default security attribute 
+
+			_ASSERTE(hPipe != INVALID_HANDLE_VALUE);
+
+			if (hPipe == INVALID_HANDLE_VALUE) 
+			{
+				//DisplayLastError(L"CreatePipe failed"); 
+				hPipe = NULL;
+				Sleep(50);
+				continue;
+			}
+
+			// Wait for the client to connect; if it succeeds, 
+			// the function returns a nonzero value. If the function
+			// returns zero, GetLastError returns ERROR_PIPE_CONNECTED. 
+
+			fConnected = ConnectNamedPipe(hPipe, NULL) ? TRUE : ((dwErr = GetLastError()) == ERROR_PIPE_CONNECTED); 
+
+			// Консоль закрывается!
+			if (WaitForSingleObject ( pCon->mh_TermEvent, 0 ) == WAIT_OBJECT_0) {
+				//FlushFileBuffers(hPipe); -- это не нужно, мы ничего не возвращали
+				//DisconnectNamedPipe(hPipe); 
+				SafeCloseHandle(hPipe);
+				return 0;
+			}
+
+			if (!fConnected)
+				SafeCloseHandle(hPipe);
 		}
 
-		if (WaitForSingleObject ( pCon->mh_TermEvent, 0 ) == WAIT_OBJECT_0) {
-			return 0;
+		if (fConnected) {
+			// сразу сбросим, чтобы не забыть
+			fConnected = FALSE;
+			// разрешить другой нити принять вызов
+			ReleaseSemaphore(pCon->mh_ServerSemaphore, 1, NULL);
+			
+			/*{	// Запустить новый серверный пайп. Этот instance будет закрыт после обработки команды.
+				DWORD dwServerTID = 0;
+				HANDLE hThread = CreateThread(NULL, 0, ServerThread, (LPVOID)pCon, 0, &dwServerTID);
+				_ASSERTE(hThread!=NULL);
+				SafeCloseHandle(hThread);
+			}*/
+
+			//ServerThreadCommandArg* pArg = (ServerThreadCommandArg*)calloc(sizeof(ServerThreadCommandArg),1);
+			//pArg->pCon = pCon;
+			//pArg->hPipe = hPipe;
+			pCon->ServerThreadCommand ( hPipe ); // При необходимости - записывает в пайп результат сама
+			//DWORD dwCommandTID = 0;
+			//HANDLE hCommandThread = CreateThread(NULL, 0, ServerThreadCommand, (LPVOID)pArg, 0, &dwCommandTID);
+			//_ASSERTE(hCommandThread!=NULL);
+			//SafeCloseHandle(hCommandThread);
 		}
 
-		hPipe = CreateNamedPipe( 
-			pCon->ms_VConServer_Pipe, // pipe name 
-			PIPE_ACCESS_DUPLEX,       // read/write access 
-			PIPE_TYPE_MESSAGE |       // message type pipe 
-			PIPE_READMODE_MESSAGE |   // message-read mode 
-			PIPE_WAIT,                // blocking mode 
-			PIPE_UNLIMITED_INSTANCES, // max. instances  
-			PIPEBUFSIZE,              // output buffer size 
-			PIPEBUFSIZE,              // input buffer size 
-			0,                        // client time-out 
-			NULL);                    // default security attribute 
+		FlushFileBuffers(hPipe); 
+		//DisconnectNamedPipe(hPipe); 
+		SafeCloseHandle(hPipe);
+	} // Перейти к открытию нового instance пайпа
+	while (WaitForSingleObject ( pCon->mh_TermEvent, 0 ) != WAIT_OBJECT_0);
 
-		_ASSERTE(hPipe != INVALID_HANDLE_VALUE);
-
-		if (hPipe == INVALID_HANDLE_VALUE) 
-		{
-			DisplayLastError(L"CreatePipe failed"); 
-			Sleep(50);
-			//return 99;
-			continue;
-		}
-
-		// Wait for the client to connect; if it succeeds, 
-		// the function returns a nonzero value. If the function
-		// returns zero, GetLastError returns ERROR_PIPE_CONNECTED. 
-
-		fConnected = ConnectNamedPipe(hPipe, NULL) ? TRUE : (GetLastError() == ERROR_PIPE_CONNECTED); 
-
-		// Консоль закрывается
-		if (WaitForSingleObject ( pCon->mh_TermEvent, 0 ) == WAIT_OBJECT_0) {
-			CloseHandle(hPipe); hPipe = NULL;
-			return 0;
-		}
-	}
-
-	if (fConnected) {
-		{	// Запустить новый серверный пайп. Этот instance будет закрыт после обработки команды.
-			DWORD dwServerTID = 0;
-			HANDLE hThread = CreateThread(NULL, 0, ServerThread, (LPVOID)pCon, 0, &dwServerTID);
-			_ASSERTE(hThread!=NULL);
-			CloseHandle(hThread);
-		}
-
-		//ServerThreadCommandArg* pArg = (ServerThreadCommandArg*)calloc(sizeof(ServerThreadCommandArg),1);
-		//pArg->pCon = pCon;
-		//pArg->hPipe = hPipe;
-		pCon->ServerThreadCommand ( hPipe ); // При необходимости - записывает в пайп результат сама
-		//DWORD dwCommandTID = 0;
-		//HANDLE hCommandThread = CreateThread(NULL, 0, ServerThreadCommand, (LPVOID)pArg, 0, &dwCommandTID);
-		//_ASSERTE(hCommandThread!=NULL);
-		//CloseHandle(hCommandThread);
-	}
-
-	CloseHandle(hPipe); hPipe = NULL;
-
-
-	//pCon->ms_VConServer_Pipe[0] = 0; // флаг, что нить завершилась
 	return 0; 
 }
 
@@ -3566,7 +3603,7 @@ void CVirtualConsole::ServerThreadCommand(HANDLE hPipe)
 	//free(pArg); pArg = NULL;
 
 	CESERVER_REQ in={0}, *pOut=NULL;
-	DWORD cbRead = 0, cbWritten = 0;
+	DWORD cbRead = 0, cbWritten = 0, dwErr = 0;
 	BOOL fSuccess = FALSE;
 
 	// Send a message to the pipe server and read the response. 
@@ -3577,7 +3614,7 @@ void CVirtualConsole::ServerThreadCommand(HANDLE hPipe)
 		&cbRead,          // bytes read
 		NULL);            // not overlapped 
 
-	if (!fSuccess && (GetLastError() != ERROR_MORE_DATA)) 
+	if (!fSuccess && ((dwErr = GetLastError()) != ERROR_MORE_DATA)) 
 	{
 		_ASSERTE("ReadFile(pipe) failed"==NULL);
 		//CloseHandle(hPipe);
@@ -3616,7 +3653,7 @@ void CVirtualConsole::ServerThreadCommand(HANDLE hPipe)
 			NULL);      // not overlapped 
 
 		// Exit if an error other than ERROR_MORE_DATA occurs.
-		if( !fSuccess && (GetLastError() != ERROR_MORE_DATA)) 
+		if( !fSuccess && ((dwErr = GetLastError()) != ERROR_MORE_DATA)) 
 			break;
 		ptrData += cbRead;
 		nAllSize -= cbRead;
@@ -3671,6 +3708,7 @@ void CVirtualConsole::ServerThreadCommand(HANDLE hPipe)
 	COPYBUFFERS(v, sizeof(v)); \
 }
 
+WARNING("Для ограничения доступа к содержимому возможно лучше использовать Semaphore nor CriticalSection");
 void CVirtualConsole::ApplyConsoleInfo(CESERVER_REQ* pInfo)
 {
 	_ASSERTE(this!=NULL);
@@ -3733,13 +3771,15 @@ void CVirtualConsole::ApplyConsoleInfo(CESERVER_REQ* pInfo)
 	// 9
 	DWORD dwSbiRc = 0; //CONSOLE_SCREEN_BUFFER_INFO sbi = {{0,0}}; // GetConsoleScreenBufferInfo
 	COPYBUFFER(dwSbiRc);
+	int nNewWidth = 0, nNewHeight = 0;
 	if (dwSbiRc != 0) {
 		_ASSERTE(dwSbiRc == sizeof(con.m_sbi));
 		COPYBUFFER(con.m_sbi);
-		int nNewWidth = 0, nNewHeight = 0;
 		if (GetConWindowSize(con.m_sbi, nNewWidth, nNewHeight)) {
-			bBufRecreated = TRUE;
-			InitBuffers(nNewWidth*nNewHeight*2);
+			if (nNewWidth != con.nTextWidth || nNewHeight != con.nTextHeight) {
+				bBufRecreated = TRUE;
+				InitBuffers(nNewWidth*nNewHeight*2);
+			}
 		}
 	}
 	// 10
@@ -4274,7 +4314,7 @@ BOOL CVirtualConsole::InitBuffers(DWORD OneBufferSize)
 	}
 
 	// Если требуется увеличить или создать (первично) буфера
-	if (!con.pConChar || (con.nTextWidth*con.nTextHeight) < (DWORD)(nNewWidth*nNewHeight))
+	if (!con.pConChar || (con.nTextWidth*con.nTextHeight) < (nNewWidth*nNewHeight))
 	{
 		CSection sc(&con.cs, &con.ncsT);
 
@@ -4346,6 +4386,10 @@ void CVirtualConsole::ShowConsole(int nMode) // -1 Toggle, 0 - Hide, 1 - Show
 void CVirtualConsole::SetHwnd(HWND ahConWnd)
 {
 	hConWnd = ahConWnd;
+
+#ifdef _DEBUG
+	//MessageBox(0,L"Attached",L"ComEmu",0);
+#endif
 	
 	if (gSet.isConVisible)
 		ShowConsole(1); // установить консольному окну флаг AlwaysOnTop
@@ -4354,11 +4398,22 @@ void CVirtualConsole::SetHwnd(HWND ahConWnd)
 	//InitHandlers(TRUE);
 
 	if (ms_VConServer_Pipe[0] == 0) {
+		// временно используем эту переменную, чтобы не плодить локальных
+		wsprintfW(ms_VConServer_Pipe, CEGUIATTACHED, (DWORD)hConWnd);
+		mh_GuiAttached = CreateEvent(NULL, TRUE, FALSE, ms_VConServer_Pipe);
+		_ASSERTE(mh_GuiAttached!=NULL);
+
+		// Запустить серверный пайп
 		wsprintf(ms_VConServer_Pipe, CEGUIPIPENAME, L".", (DWORD)hConWnd); //был mn_ConEmuC_PID
-		DWORD dwServerTID = 0;
-		HANDLE hThread = CreateThread(NULL, 0, ServerThread, (LPVOID)this, 0, &dwServerTID);
-		_ASSERTE(hThread!=NULL);
-		CloseHandle(hThread);
+		mh_ServerSemaphore = CreateSemaphore(NULL, 1, 1, NULL);
+		for (int i=0; i<MAX_SERVER_THREADS; i++) {
+			mn_ServerThreadsId[i] = 0;
+			mh_ServerThreads[i] = CreateThread(NULL, 0, ServerThread, (LPVOID)this, 0, &mn_ServerThreadsId[i]);
+			_ASSERTE(mh_ServerThreads[i]!=NULL);
+		}
+
+		// чтобы ConEmuC знал, что мы готовы
+		SetEvent(mh_GuiAttached);
 	}
 }
 
