@@ -3483,6 +3483,7 @@ LRESULT CVirtualConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM
 {
     LRESULT result = 0;
 
+    PRAGMA_ERROR("Не рработают хоткеи с Ctrl, например Ctrl-Q, Ctrl-W и т.д.");
 
     if (mb_ConsoleSelectMode && messg == WM_KEYDOWN && ((wParam == VK_ESCAPE) || (wParam == VK_RETURN)))
         mb_ConsoleSelectMode = false; //TODO: может как-то по другому определять?
