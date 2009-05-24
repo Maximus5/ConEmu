@@ -618,6 +618,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			else if ( !klstricmp(curCommand, _T("/visible")) ) {
 				VisValue = true; VisPrm = true;
 			}
+			else if ( !klstricmp(curCommand, _T("/detached")) ) {
+				gConEmu.mb_StartDetached = TRUE;
+			}
             else if ( !klstricmp(curCommand, _T("/ct")) || !klstricmp(curCommand, _T("/cleartype")) )
             {
                 ClearTypePrm = true;
@@ -919,14 +922,19 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 ///| Main message loop |//////////////////////////////////////////////////
 //------------------------------------------------------------------------
     
-    MSG lpMsg;
+	MSG Msg = {NULL};
     gbMessagingStarted = TRUE;
-    while (GetMessage(&lpMsg, NULL, 0, 0))
+    while (GetMessage(&Msg, NULL, 0, 0))
     {
-		if (!IsWindow(ghOpWnd) || !IsDialogMessage(ghOpWnd, &lpMsg))
+		BOOL lbDlgMsg = FALSE;
+		if (ghOpWnd) {
+			if (IsWindow(ghOpWnd))
+				lbDlgMsg = IsDialogMessage(ghOpWnd, &Msg);
+		}
+		if (!lbDlgMsg)
 		{
-			TranslateMessage(&lpMsg);
-			DispatchMessage(&lpMsg);
+			TranslateMessage(&Msg);
+			DispatchMessage(&Msg);
 		}
     }
     gbMessagingStarted = FALSE;

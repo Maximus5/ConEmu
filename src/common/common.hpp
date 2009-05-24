@@ -6,6 +6,9 @@
 //#define CONEMUEVENTOUT  L"ConEmuOutEvent%u"
 //#define CONEMUEVENTPIPE L"ConEmuPipeEvent%u"
 
+#define MIN_CON_WIDTH 28
+#define MIN_CON_HEIGHT 7
+
 // with line number
 #define STRING2(x) #x
 #define STRING(x) STRING2(x)
@@ -25,7 +28,7 @@
 #define CECMD_GETSHORTINFO  1
 #define CECMD_GETFULLINFO   2
 #define CECMD_SETSIZE       3
-#define CECMD_WRITEINPUT    4
+// 4 - пока свободно
 #define CECMD_GETGUIHWND    5
 
 #define CESERVER_REQ_VER    1
@@ -47,6 +50,8 @@ typedef struct tag_CESERVER_CHAR {
 } CESERVER_CHAR;
 
 #pragma pack(pop)
+
+#define CONEMUMSG_ATTACH L"ConEmuMain::Attach" // wParam == hConWnd, lParam == ConEmuC_PID
 
 #define CONEMUMAPPING    L"ConEmuPluginData%u"
 #define CONEMUDRAGFROM   L"ConEmuDragFrom%u"

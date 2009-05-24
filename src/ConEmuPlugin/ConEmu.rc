@@ -57,7 +57,7 @@ END
 
 VS_VERSION_INFO VERSIONINFO
  FILEVERSION CONEMUVERN
- PRODUCTVERSION 1,0,0,1
+ PRODUCTVERSION CONEMUVERN
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -82,7 +82,7 @@ BEGIN
             VALUE "OriginalFilename", "ConEmu.dll\0"
             VALUE "PrivateBuild", "\0"
             VALUE "ProductName", "ConEmu\0"
-            VALUE "ProductVersion", "1, 0, 0, 1\0"
+            VALUE "ProductVersion", CONEMUVERS
             VALUE "SpecialBuild", "\0"
         END
     END

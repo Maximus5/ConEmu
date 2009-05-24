@@ -181,17 +181,19 @@ BOOL LoadFarVersion()
 		DWORD dwSize = GetFileVersionInfoSize(FarPath, &dwRsrvd);
 		if (dwSize>0) {
 			void *pVerData = calloc(dwSize, 1);
-			VS_FIXEDFILEINFO *lvs = NULL;
-			UINT nLen = sizeof(lvs);
-			if (GetFileVersionInfo(FarPath, 0, dwSize, pVerData)) {
-				TCHAR szSlash[3]; lstrcpyW(szSlash, L"\\");
-				if (VerQueryValue ((void*)pVerData, szSlash, (void**)&lvs, &nLen)) {
-					gFarVersion.dwVer = lvs->dwFileVersionMS;
-					gFarVersion.dwBuild = lvs->dwFileVersionLS;
-					lbRc = TRUE;
+			if (pVerData) {
+				VS_FIXEDFILEINFO *lvs = NULL;
+				UINT nLen = sizeof(lvs);
+				if (GetFileVersionInfo(FarPath, 0, dwSize, pVerData)) {
+					TCHAR szSlash[3]; lstrcpyW(szSlash, L"\\");
+					if (VerQueryValue ((void*)pVerData, szSlash, (void**)&lvs, &nLen)) {
+						gFarVersion.dwVer = lvs->dwFileVersionMS;
+						gFarVersion.dwBuild = lvs->dwFileVersionLS;
+						lbRc = TRUE;
+					}
 				}
+				free(pVerData);
 			}
-			free(pVerData);
 		}
 	}
 
@@ -228,8 +230,10 @@ void ProcessCommand(DWORD nCmd, BOOL bReqMainThread)
 
 	if (bReqMainThread) {
 		gnReqCommand = nCmd;
-		if (!ghReqCommandEvent)
+		if (!ghReqCommandEvent) {
 			ghReqCommandEvent = CreateEvent(NULL,FALSE,FALSE,NULL);
+			if (!ghReqCommandEvent) return;
+		}
 		ResetEvent(ghReqCommandEvent);
 		
 		// Проверить, не изменилась ли горячая клавиша плагина, и если да - пересоздать макросы
@@ -616,8 +620,11 @@ void InitHWND(HWND ahFarHwnd)
 		DWORD dwPID, dwThread;
 		dwThread = GetWindowThreadProcessId(ConEmuHwnd, &dwPID);
 		typedef BOOL (WINAPI* AllowSetForegroundWindowT)(DWORD);
-		AllowSetForegroundWindowT AllowSetForegroundWindowF = (AllowSetForegroundWindowT)GetProcAddress(GetModuleHandle(L"user32.dll"), "AllowSetForegroundWindow");
-		if (AllowSetForegroundWindowF) AllowSetForegroundWindowF(dwPID);
+		HMODULE hUser32 = GetModuleHandle(L"user32.dll");
+		if (hUser32) {
+			AllowSetForegroundWindowT AllowSetForegroundWindowF = (AllowSetForegroundWindowT)GetProcAddress(hUser32, "AllowSetForegroundWindow");
+			if (AllowSetForegroundWindowF) AllowSetForegroundWindowF(dwPID);
+		}
 		// дернуть табы, если они нужны
 		int tabCount = 0;
 		CreateTabs(1);
@@ -658,13 +665,14 @@ BOOL CheckPlugKey()
 	WCHAR szMacroKey[2][MAX_PATH], szCheckKey[32];
 	
 	//Прочитать назначенные плагинам клавиши, и если для ConEmu.dll указана клавиша активации - запомнить ее
-	wsprintfW(szMacroKey[0], L"%s\\PluginHotkeys", gszRootKey, szCheckKey);
+	wsprintfW(szMacroKey[0], L"%s\\PluginHotkeys", gszRootKey/*, szCheckKey*/);
 	if (0==RegOpenKeyExW(HKEY_CURRENT_USER, szMacroKey[0], 0, KEY_READ, &hkey))
 	{
 		DWORD dwIndex = 0, dwSize; FILETIME ft;
 		while (0==RegEnumKeyEx(hkey, dwIndex++, szMacroKey[1], &(dwSize=MAX_PATH), NULL, NULL, NULL, &ft)) {
 			WCHAR* pszSlash = szMacroKey[1]+lstrlenW(szMacroKey[1])-1;
 			while (pszSlash>szMacroKey[1] && *pszSlash!=L'/') pszSlash--;
+			#pragma warning(disable : 6400)
 			if (lstrcmpiW(pszSlash, L"/conemu.dll")==0) {
 				WCHAR lsFullPath[MAX_PATH*2];
 				lstrcpy(lsFullPath, szMacroKey[0]);
@@ -1068,8 +1076,10 @@ void StopThread(void)
 		SetEvent(hEventCmd[CMD_EXIT]); // Завершить нить
 	//CloseTabs(); -- ConEmu само разберется
 	if (hThread) { // подождем чуть-чуть, или принудительно прибъем нить ожидания
-		if (WaitForSingleObject(hThread,1000))
+		if (WaitForSingleObject(hThread,1000)) {
+			#pragma warning (disable : 6258)
 			TerminateThread(hThread, 100);
+		}
 		CloseHandle(hThread); hThread = NULL;
 	}
 	

@@ -116,7 +116,7 @@ void ProcessDragFrom757()
 			free ( pi ); pi = NULL;
 
 			free(bIsFull);
-			delete Path; Path=NULL;
+			delete [] Path; Path=NULL;
 
 			// Конец списка
 			//WriteFile(hPipe, &nNull, sizeof(int), &cout, NULL);
@@ -168,6 +168,13 @@ void ProcessDragTo757()
 		nStructSize += (lstrlen(szPDir))*sizeof(WCHAR); // Именно WCHAR! не TCHAR
 
 	pfpi = (ForwardedPanelInfo*)calloc(nStructSize,1);
+	if (!pfpi) {
+		int ItemsCount=0;
+		//WriteFile(hPipe, &ItemsCount, sizeof(int), &cout, NULL);				
+		OutDataAlloc(sizeof(ItemsCount));
+		OutDataWrite(&ItemsCount,sizeof(ItemsCount));
+		return;
+	}
 
 
 	pfpi->ActivePathShift = sizeof(ForwardedPanelInfo);
@@ -212,6 +219,8 @@ void SetStartupInfoW757(void *aInfo)
 {
 	::InfoW757 = (PluginStartupInfo*)calloc(sizeof(PluginStartupInfo),1);
 	::FSFW757 = (FarStandardFunctions*)calloc(sizeof(FarStandardFunctions),1);
+	if (::InfoW757 == NULL || ::FSFW757 == NULL)
+		return;
 	*::InfoW757 = *((struct PluginStartupInfo*)aInfo);
 	*::FSFW757 = *((struct PluginStartupInfo*)aInfo)->FSF;
 	::InfoW757->FSF = ::FSFW757;

@@ -120,7 +120,7 @@ void ProcessDragFrom789()
 			free ( pi ); pi = NULL;
 
 			free(bIsFull);
-			delete Path; Path=NULL;
+			delete [] Path; Path=NULL;
 
 			// Конец списка
 			//WriteFile(hPipe, &nNull, sizeof(int), &cout, NULL);
@@ -172,6 +172,13 @@ void ProcessDragTo789()
 		nStructSize += (lstrlen(szPDir))*sizeof(WCHAR); // Именно WCHAR! не TCHAR
 
 	pfpi = (ForwardedPanelInfo*)calloc(nStructSize,1);
+	if (!pfpi) {
+		int ItemsCount=0;
+		//WriteFile(hPipe, &ItemsCount, sizeof(int), &cout, NULL);				
+		OutDataAlloc(sizeof(ItemsCount));
+		OutDataWrite(&ItemsCount,sizeof(ItemsCount));
+		return;
+	}
 
 
 	pfpi->ActivePathShift = sizeof(ForwardedPanelInfo);
@@ -216,6 +223,8 @@ void SetStartupInfoW789(void *aInfo)
 {
 	::InfoW789 = (PluginStartupInfo*)calloc(sizeof(PluginStartupInfo),1);
 	::FSFW789 = (FarStandardFunctions*)calloc(sizeof(FarStandardFunctions),1);
+	if (::InfoW789 == NULL || ::FSFW789 == NULL)
+		return;
 	*::InfoW789 = *((struct PluginStartupInfo*)aInfo);
 	*::FSFW789 = *((struct PluginStartupInfo*)aInfo)->FSF;
 	::InfoW789->FSF = ::FSFW789;

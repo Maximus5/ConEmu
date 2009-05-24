@@ -62,6 +62,7 @@ public:
 	//HANDLE hPipe;
 	//HANDLE hPipeEvent;
 	bool isWndNotFSMaximized;
+	BOOL mb_StartDetached;
 	//bool isShowConsole;
 	//bool mb_FullWindowDrag;
 	//bool isLBDown, /*isInDrag,*/ isDragProcessed, 
@@ -101,7 +102,7 @@ public:
 	//uint cBlinkShift; // cursor blink counter threshold
 	TCHAR szConEmuVersion[32];
 	//DWORD m_ProcList[1000], 
-	DWORD m_ProcCount, m_ActiveConmanIDX, mn_ConmanPID;
+	DWORD m_ProcCount; //, m_ActiveConmanIDX, mn_ConmanPID;
 	HMODULE mh_ConMan;
 	//HMODULE mh_Infis; TCHAR ms_InfisPath[MAX_PATH*2];
 	DWORD mn_ActiveStatus;
@@ -121,7 +122,7 @@ protected:
 	HWINEVENTHOOK mh_WinHook;
 	static VOID CALLBACK WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime);
 	CVirtualConsole *mp_VCon[MAX_CONSOLE_COUNT], *pVCon;
-	int mn_ActiveCon; // в планах - убить m_ActiveConmanIDX
+	//int mn_ActiveCon; // в планах - убить m_ActiveConmanIDX
 	bool mb_SkipSyncSize, mb_PassSysCommand;
 	// Registered messages
 	DWORD mn_MainThreadId;
@@ -131,6 +132,8 @@ protected:
 	UINT mn_MsgUpdateSizes;
 	UINT mn_MsgSetWindowMode;
 	UINT mn_MsgUpdateTitle;
+	UINT mn_MsgAttach;
+	UINT mn_MsgVConTerminated;
 
 public:
 	DWORD CheckProcesses();
@@ -145,6 +148,7 @@ public:
 	
 public:
 	LPCTSTR GetTitle();
+	LPCTSTR GetTitle(int nIdx);
 	void UpdateProcessDisplay(BOOL abForce);
 	void UpdateSizes();
 
@@ -154,13 +158,15 @@ public:
 
 public:
 	CVirtualConsole* ActiveCon();
+	int ActiveConNum(); // 0-based
 	static void AddMargins(RECT& rc, RECT& rcAddShift, BOOL abExpand=FALSE);
+	LPARAM AttachRequested(HWND ahConWnd, DWORD anConemuC_PID);
 	static RECT CalcMargins(enum ConEmuMargins mg);
 	static RECT CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFrom, RECT* prDC=NULL);
 	//bool CheckBufferSize();
 	bool ConmanAction(int nCmd);
 	//void ConsoleCreated(HWND hConWnd);
-	CVirtualConsole* CreateCon();
+	CVirtualConsole* CreateCon(BOOL abStartDetached=FALSE);
 	//COORD ConsoleSizeFromWindow(RECT* arect = NULL, bool frameIncluded = false, bool alreadyClient = false);
 	//RECT ConsoleOffsetRect();
 	void Destroy();
@@ -224,4 +230,5 @@ public:
 	LRESULT OnSizing(WPARAM wParam, LPARAM lParam);
 	LRESULT OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam);
 	LRESULT OnTimer(WPARAM wParam, LPARAM lParam);
+	LRESULT OnVConTerminated(CVirtualConsole* apVCon, BOOL abPosted = FALSE);
 };

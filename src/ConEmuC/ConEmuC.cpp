@@ -4,6 +4,13 @@
 #include <conio.h>
 #include <vector>
 #include "..\common\common.hpp"
+#include "..\common\ConEmuCheck.h"
+
+#ifdef _DEBUG
+#define MCHKHEAP { int MDEBUG_CHK=_CrtCheckMemory(); _ASSERTE(MDEBUG_CHK); }
+#else
+#define MCHKHEAP
+#endif
 
 WARNING("Наверное все-же стоит производить периодические чтения содержимого консоли, а не только по событию");
 
@@ -51,6 +58,7 @@ void ServerDone(int aiRc);
 int ComspecInit();
 void ComspecDone(int aiRc);
 void Help();
+BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect);
 
 
 /*  Global  */
@@ -59,6 +67,8 @@ HANDLE  ghConIn = NULL, ghConOut = NULL;
 HWND    ghConWnd = NULL;
 HANDLE  ghExitEvent = NULL;
 BOOL    gbAlwaysConfirmExit = FALSE;
+BOOL    gbAttachMode = FALSE;
+//int		gnBufferHeight = 0;
 
 
 enum {
@@ -91,6 +101,8 @@ struct {
 	DWORD nMainTimerElapse;
 	BOOL  bConsoleActive;
 	HANDLE hRefreshEvent; // ServerMode, перечитать консоль, и если есть изменения - отослать в GUI
+	HANDLE hChangingSize; // FALSE на время смены размера консоли
+	COORD crBufferSize; SHORT nBufferHeight;
 	BOOL  bNeedFullReload;
 } srv = {NULL};
 
@@ -124,6 +136,7 @@ DWORD dwActiveFlags = 0;
 #define CERR_CREATEREFRESHTHREAD 116
 #define CERR_CMDLINE 117
 #define CERR_HELPREQUESTED 118
+#define CERR_ATTACHFAILED 119
 
 
 int main()
@@ -361,7 +374,20 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 		if (wcscmp(szArg, L"/CONFIRM")==0) {
 			gbAlwaysConfirmExit = TRUE;
 		} else
-		
+
+		if (wcscmp(szArg, L"/ATTACH")==0) {
+			gbAttachMode = TRUE;
+			gnRunMode = RM_SERVER;
+		} else
+
+		if (wcsncmp(szArg, L"/B", 2)==0) {
+			if (wcsncmp(szArg, L"/BW=", 4)==0) {
+				srv.crBufferSize.X = _wtoi(szArg+4);
+			} else if (wcsncmp(szArg, L"/BH=", 4)==0) {
+				srv.crBufferSize.Y = _wtoi(szArg+4);
+			}
+		} else
+
 		// После этих аргументов - идет то, что передается в CreateProcess!
 		if (wcscmp(szArg, L"/C")==0 || wcscmp(szArg, L"/c")==0) {
 			gnRunMode = RM_COMSPEC;
@@ -538,8 +564,12 @@ int ServerInit()
 	wsprintfW(srv.szPipename, CESERVERPIPENAME, L".", gnSelfPID);
 	wsprintfW(srv.szInputname, CESERVERINPUTNAME, L".", gnSelfPID);
 
-	// Размер шрифта и Lucida. Обязательно для сервеного режима.
+	// Размер шрифта и Lucida. Обязательно для серверного режима.
     SetConsoleFontSizeTo(ghConWnd, 4, 6);
+	if (srv.crBufferSize.X && srv.crBufferSize.Y) {
+		SMALL_RECT rc = {0};
+		SetConsoleSize(0, srv.crBufferSize, rc); // может обломаться? если шрифт еще большой
+	}
 
     if (IsIconic(ghConWnd)) { // окошко нужно развернуть!
         WINDOWPLACEMENT wplCon = {sizeof(wplCon)};
@@ -556,9 +586,17 @@ int ServerInit()
 	srv.hRefreshEvent = CreateEvent(NULL,FALSE,FALSE,NULL);
 	if (!srv.hRefreshEvent) {
 		dwErr = GetLastError();
-		wprintf(L"CreateEvent() failed, ErrCode=0x%08X\n", dwErr); 
+		wprintf(L"CreateEvent(hRefreshEvent) failed, ErrCode=0x%08X\n", dwErr); 
 		iRc = CERR_REFRESHEVENT; goto wrap;
 	}
+
+	srv.hChangingSize = CreateEvent(NULL,TRUE,FALSE,NULL);
+	if (!srv.hChangingSize) {
+		dwErr = GetLastError();
+		wprintf(L"CreateEvent(hChangingSize) failed, ErrCode=0x%08X\n", dwErr); 
+		iRc = CERR_REFRESHEVENT; goto wrap;
+	}
+	SetEvent(srv.hChangingSize);
 
     
 	// Запустить нить наблюдения за консолью
@@ -646,6 +684,28 @@ int ServerInit()
 		iRc = CERR_CREATEINPUTTHREAD; goto wrap;
 	}
 
+	if (gbAttachMode) {
+		HWND hGui = NULL, hDcWnd = NULL;
+		UINT nMsg = RegisterWindowMessage(CONEMUMSG_ATTACH);
+		DWORD dwStart = GetTickCount(), dwDelta = 0, dwCur = 0;
+		// Если с первого раза не получится (GUI мог еще не загрузиться) пробуем еще
+		while (!hDcWnd && dwDelta <= 5000) {
+			while ((hGui = FindWindowEx(NULL, hGui, VirtualConsoleClassMain, NULL)) != NULL) {
+				hDcWnd = (HWND)SendMessage(hGui, nMsg, (WPARAM)ghConWnd, (LPARAM)gnSelfPID);
+				if (hDcWnd != NULL) {
+					break;
+				}
+			}
+			if (hDcWnd) break;
+
+			Sleep(500);
+			dwCur = GetTickCount(); dwDelta = dwCur - dwStart;
+		}
+		if (!hDcWnd) {
+			wprintf(L"Available ConEmu GUI window not found!\n");
+			iRc = CERR_ATTACHFAILED; goto wrap;
+		}
+	}
 
 wrap:
 	return iRc;
@@ -695,6 +755,9 @@ void ServerDone(int aiRc)
     if (srv.hRefreshEvent) {
 	    SafeCloseHandle(srv.hRefreshEvent);
     }
+	if (srv.hChangingSize) {
+		SafeCloseHandle(srv.hChangingSize);
+	}
     if (srv.hWinHook) {
         UnhookWinEvent(srv.hWinHook); srv.hWinHook = NULL;
     }
@@ -862,55 +925,73 @@ DWORD WINAPI InputThread(LPVOID lpvParam)
  
 DWORD WINAPI InstanceThread(LPVOID lpvParam) 
 { 
-   CESERVER_REQ in={0}, *pOut=NULL;
-   DWORD cbBytesRead, cbWritten; 
-   BOOL fSuccess; 
-   HANDLE hPipe; 
- 
-// The thread's parameter is a handle to a pipe instance. 
- 
-   hPipe = (HANDLE) lpvParam; 
- 
-   while (1) 
-   { 
-   // Read client requests from the pipe. 
-      memset(&in, 0, sizeof(in));
-      fSuccess = ReadFile( 
-         hPipe,        // handle to pipe 
-         &in,          // buffer to receive data 
-         sizeof(in),   // size of buffer 
-         &cbBytesRead, // number of bytes read 
-         NULL);        // not overlapped I/O 
+	CESERVER_REQ in={0}, *pIn=NULL, *pOut=NULL;
+	DWORD cbBytesRead, cbWritten, dwErr = 0;
+	BOOL fSuccess; 
+	HANDLE hPipe; 
 
-      if (!fSuccess || cbBytesRead < 12 || in.nSize < 12)
-         break;
-         
-      if (!GetAnswerToRequest(in, &pOut) || pOut==NULL)
-	     break;
+	// The thread's parameter is a handle to a pipe instance. 
+	hPipe = (HANDLE) lpvParam; 
  
-   // Write the reply to the pipe. 
-      fSuccess = WriteFile( 
-         hPipe,        // handle to pipe 
-         pOut,         // buffer to write from 
-         pOut->nSize,  // number of bytes to write 
-         &cbWritten,   // number of bytes written 
-         NULL);        // not overlapped I/O 
+	// Read client requests from the pipe. 
+	memset(&in, 0, sizeof(in));
+	fSuccess = ReadFile(
+		hPipe,        // handle to pipe 
+		&in,          // buffer to receive data 
+		sizeof(in),   // size of buffer 
+		&cbBytesRead, // number of bytes read 
+		NULL);        // not overlapped I/O 
 
-      // освободить память
-      free(pOut);
-         
-      if (!fSuccess || pOut->nSize != cbWritten) break; 
-  } 
- 
+	if ((!fSuccess && ((dwErr = GetLastError()) != ERROR_MORE_DATA)) ||
+			cbBytesRead < 12 || in.nSize < 12)
+	{
+		goto wrap;
+	}
+
+	if (in.nSize > cbBytesRead)
+	{
+		DWORD cbNextRead = 0;
+		pIn = (CESERVER_REQ*)calloc(in.nSize, 1);
+		if (!pIn)
+			goto wrap;
+		*pIn = in;
+		fSuccess = ReadFile(
+			hPipe,        // handle to pipe 
+			((LPBYTE)pIn)+cbBytesRead,  // buffer to receive data 
+			in.nSize - cbBytesRead,   // size of buffer 
+			&cbNextRead, // number of bytes read 
+			NULL);        // not overlapped I/O 
+		if (fSuccess)
+			cbBytesRead += cbNextRead;
+	}
+
+	if (!GetAnswerToRequest(pIn ? *pIn : in, &pOut) || pOut==NULL) {
+		goto wrap;
+	}
+
+	// Write the reply to the pipe. 
+	fSuccess = WriteFile( 
+		hPipe,        // handle to pipe 
+		pOut,         // buffer to write from 
+		pOut->nSize,  // number of bytes to write 
+		&cbWritten,   // number of bytes written 
+		NULL);        // not overlapped I/O 
+
+	// освободить память
+	free(pOut);
+
+	//if (!fSuccess || pOut->nSize != cbWritten) break; 
+
 // Flush the pipe to allow the client to read the pipe's contents 
 // before disconnecting. Then disconnect the pipe, and close the 
 // handle to this pipe instance. 
- 
-   FlushFileBuffers(hPipe); 
-   DisconnectNamedPipe(hPipe); 
-   SafeCloseHandle(hPipe); 
 
-   return 1;
+	FlushFileBuffers(hPipe); 
+	DisconnectNamedPipe(hPipe);
+wrap:
+	SafeCloseHandle(hPipe); 
+
+	return 1;
 }
 
 // На результат видимо придется не обращать внимания - не блокировать же выполнение
@@ -933,8 +1014,9 @@ DWORD ReadConsoleData(CESERVER_CHAR** pCheck /*= NULL*/, BOOL* pbDataChanged /*=
 	COORD coord;
 	
 	//TODO: а точно по srWindow ширину нужно смотреть?
-	TextWidth = max(srv.sbi.dwSize.X, (srv.sbi.srWindow.Right - srv.sbi.srWindow.Left + 1));
-	TextHeight = srv.sbi.srWindow.Bottom - srv.sbi.srWindow.Top + 1;
+	TextWidth = srv.sbi.dwSize.X; //max(srv.sbi.dwSize.X, (srv.sbi.srWindow.Right - srv.sbi.srWindow.Left + 1));
+	WARNING("Для режима BufferHeight нужно считать по другому!");
+	TextHeight = srv.sbi.dwSize.Y; //srv.sbi.srWindow.Bottom - srv.sbi.srWindow.Top + 1;
 	TextLen = TextWidth * TextHeight;
 	if (TextLen > srv.nBufCharCount) {
 		lbChanged = TRUE;
@@ -1029,10 +1111,33 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 		} break;
 		case CECMD_SETSIZE:
 		{
-			//TODO:
-		} break;
-		case CECMD_WRITEINPUT:
-		{
+			int nOutSize = sizeof(CESERVER_REQ) + sizeof(CONSOLE_SCREEN_BUFFER_INFO) - 1;
+			*out = (CESERVER_REQ*)calloc(nOutSize,1);
+			if (*out == NULL) return FALSE;
+			(*out)->nCmd = 0;
+			(*out)->nSize = nOutSize;
+			(*out)->nVersion = CESERVER_REQ_VER;
+			if (in.nSize >= (12 + sizeof(USHORT)+sizeof(COORD)+sizeof(SMALL_RECT))) {
+				USHORT nBufferHeight = 0;
+				COORD  crNewSize = {0,0};
+				SMALL_RECT rNewRect = {0};
+				memmove(&nBufferHeight, in.Data, sizeof(USHORT));
+				memmove(&crNewSize, in.Data+sizeof(USHORT), sizeof(COORD));
+				memmove(&rNewRect, in.Data+sizeof(USHORT)+sizeof(COORD), sizeof(SMALL_RECT));
+
+				(*out)->nCmd = CECMD_SETSIZE;
+
+				SetConsoleSize(nBufferHeight, crNewSize, rNewRect);
+			}
+			PCONSOLE_SCREEN_BUFFER_INFO psc = (PCONSOLE_SCREEN_BUFFER_INFO)(*out)->Data;
+			GetConsoleScreenBufferInfo(ghConOut, psc);
+			WARNING("Игнорируем горизонтальный скроллинг");
+			psc->srWindow.Left = 0; psc->srWindow.Right = psc->dwSize.X - 1;
+			WARNING("Игнорируем вертикальный скроллинг для обычного режима");
+			if (srv.nBufferHeight == 0) {
+				psc->srWindow.Top = 0; psc->srWindow.Bottom = psc->dwSize.Y - 1;
+			}
+			lbRc = TRUE;
 		} break;
 	}
 	
@@ -1398,7 +1503,8 @@ CESERVER_REQ* CreateConsoleInfo(CESERVER_CHAR* pCharOnly, int bCharAttrBuff)
 	DWORD OneBufferSize = 0;
 	dwAllSize += sizeof(DWORD);
 	if (bCharAttrBuff) {
-		if (bCharAttrBuff == 2) {
+		TODO("Доработать для передачи только изменившегося прямоугольника и BufferHeight");
+		if (bCharAttrBuff == 2 && OneBufferSize == (srv.nBufCharCount*2)) {
 			_ASSERTE(srv.nBufCharCount>0);
 			OneBufferSize = srv.nBufCharCount*2;
 		} else {
@@ -1521,6 +1627,12 @@ BOOL ReloadConsoleInfo()
 
 	if (!GetConsoleScreenBufferInfo(ghConOut, &lsbi)) { srv.dwSbiRc = GetLastError(); if (!srv.dwSbiRc) srv.dwSbiRc = -1; } else {
 		srv.dwSbiRc = 0;
+		WARNING("Игнорируем горизонтальный скроллинг");
+		lsbi.srWindow.Left = 0; lsbi.srWindow.Right = lsbi.dwSize.X - 1;
+		WARNING("Игнорируем вертикальный скроллинг для обычного режима");
+		if (srv.nBufferHeight == 0) {
+			lsbi.srWindow.Top = 0; lsbi.srWindow.Bottom = lsbi.dwSize.Y - 1;
+		}
 		if (memcmp(&srv.sbi, &lsbi, sizeof(srv.sbi))) {
 			srv.sbi = lsbi;
 			lbChanged = TRUE;
@@ -1555,11 +1667,75 @@ void ReloadFullConsoleInfo(CESERVER_CHAR* pCharOnly/*=NULL*/)
 		free(pOut);
 		// Запомнить последнее отправленное
 		if (lbDataChanged && srv.nBufCharCount) {
+			MCHKHEAP
 			memmove(srv.psChars+srv.nBufCharCount, srv.psChars, srv.nBufCharCount*sizeof(wchar_t));
 			memmove(srv.pnAttrs+srv.nBufCharCount, srv.pnAttrs, srv.nBufCharCount*sizeof(WORD));
+			MCHKHEAP
 		}
 	}
 
 	if (pCheck) free(pCheck);
 }
 
+BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect)
+{
+	_ASSERTE(ghConWnd);
+	if (!ghConWnd) return FALSE;
+
+	// Проверка минимального размера
+	if (crNewSize.X</*4*/MIN_CON_WIDTH) crNewSize.X = /*4*/MIN_CON_WIDTH;
+	if (crNewSize.Y</*3*/MIN_CON_HEIGHT) crNewSize.Y = /*3*/MIN_CON_HEIGHT;
+
+	srv.nBufferHeight = BufferHeight;
+	srv.crBufferSize = crNewSize;
+
+	RECT rcConPos = {0};
+	GetWindowRect(ghConWnd, &rcConPos);
+
+	BOOL lbRc = TRUE;
+	DWORD nWait = 0;
+	BOOL lbNeedChange = TRUE;
+	CONSOLE_SCREEN_BUFFER_INFO csbi = {{0,0}};
+	if (GetConsoleScreenBufferInfo(ghConOut, &csbi)) {
+		lbNeedChange = (csbi.dwSize.X != crNewSize.X) || (csbi.dwSize.Y != crNewSize.Y);
+	}
+
+	if (srv.hChangingSize) { // во время запуска ConEmuC
+		nWait = WaitForSingleObject(srv.hChangingSize, 300);
+		_ASSERTE(nWait == WAIT_OBJECT_0);
+		ResetEvent(srv.hChangingSize);
+	}
+
+	// case: simple mode
+	if (BufferHeight == 0)
+	{
+		if (lbNeedChange) {
+			DWORD dwErr = 0;
+			// Если этого не сделать - размер консоли нельзя УМЕНЬШИТЬ
+			MoveWindow(ghConWnd, rcConPos.left, rcConPos.top, 1, 1, 1);
+			//specified width and height cannot be less than the width and height of the console screen buffer's window
+			lbRc = SetConsoleScreenBufferSize(ghConOut, crNewSize);
+				if (!lbRc) dwErr = GetLastError();
+			//TODO: а если правый нижний край вылезет за пределы экрана?
+				//WARNING("отключил для теста");
+			MoveWindow(ghConWnd, rcConPos.left, rcConPos.top, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), 1);
+		}
+
+	} else {
+		// Начался ресайз для BufferHeight
+
+		MoveWindow(ghConWnd, rcConPos.left, rcConPos.top, 1, 1, 1);
+		lbRc = SetConsoleScreenBufferSize(ghConOut, crNewSize);
+		//окошко раздвигаем только по ширине!
+		GetWindowRect(ghConWnd, &rcConPos);
+		MoveWindow(ghConWnd, rcConPos.left, rcConPos.top, GetSystemMetrics(SM_CXSCREEN), rcConPos.bottom-rcConPos.top, 1);
+
+		SetConsoleWindowInfo(ghConOut, TRUE, &rNewRect);
+	}
+
+	if (srv.hChangingSize) { // во время запуска ConEmuC
+		SetEvent(srv.hChangingSize);
+	}
+
+	return lbRc;
+}

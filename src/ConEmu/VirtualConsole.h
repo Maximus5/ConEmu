@@ -95,8 +95,10 @@ class CVirtualConsole
 {
 public:
 	bool IsForceUpdate;
-	uint TextWidth, TextHeight; // размер в символха
+	uint TextWidth, TextHeight; // размер в символах
 	uint Width, Height; // размер в пикселях
+private:
+	uint nMaxTextWidth, nMaxTextHeight; // размер в символах
 private:
 	struct
 	{
@@ -139,8 +141,10 @@ public:
 
 	CVirtualConsole(/*HANDLE hConsoleOutput = NULL*/);
 	~CVirtualConsole();
-	static CVirtualConsole* Create();
+	static CVirtualConsole* Create(bool abDetached);
 
+	void OnActivate();
+	BOOL PreInit();
 	bool InitDC(bool abNoDc, bool abNoWndResize);
 	//void InitHandlers(BOOL abCreated);
 	void DumpConsole();
@@ -181,6 +185,8 @@ public:
 	bool isConSelectMode();
 	bool isFar();
 	void ShowConsole(int nMode); // -1 Toggle, 0 - Hide, 1 - Show
+	BOOL isDetached();
+	BOOL AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID);
 
 protected:
 	DWORD mn_ConEmuC_PID; HANDLE mh_ConEmuC, mh_ConEmuCInput;
@@ -239,12 +245,12 @@ protected:
 	static DWORD WINAPI StartProcessThread(LPVOID lpParameter);
 	HANDLE mh_Heap, mh_Thread, mh_VConServerThread;
 	HANDLE mh_TermEvent, mh_ForceReadEvent, mh_EndUpdateEvent, mh_Sync2WindowEvent, mh_ConChanged, mh_CursorChanged;
-	BOOL mb_FullRetrieveNeeded;
+	BOOL mb_FullRetrieveNeeded, mb_Detached;
 	//HANDLE mh_ReqSetSize, mh_ReqSetSizeEnd; COORD m_ReqSetSize;
 	DWORD mn_ThreadID;
 	LPVOID Alloc(size_t nCount, size_t nSize);
 	void Free(LPVOID ptr);
-	//CRITICAL_SECTION csDC;  DWORD ncsTDC;
+	CRITICAL_SECTION csDC;  DWORD ncsTDC;
 	CRITICAL_SECTION csCON; DWORD ncsTCON;
 	int mn_BackColorIdx; //==0
 	void Box(LPCTSTR szText);

@@ -134,7 +134,7 @@ void ProcessDragFromA()
 			}
 
 			free(bIsFull);
-			delete Path; Path=NULL;
+			delete [] Path; Path=NULL;
 
 			// Конец списка
 			//WriteFile(hPipe, &nNull/*ItemsCount*/, sizeof(int), &cout, NULL);
@@ -181,7 +181,13 @@ void ProcessDragToA()
 		nStructSize += (lstrlenA(PPInfo.CurDir))*sizeof(WCHAR); // Именно WCHAR! не TCHAR
 
 	pfpi = (ForwardedPanelInfo*)calloc(nStructSize,1);
-
+	if (!pfpi) {
+		int ItemsCount=0;
+		//WriteFile(hPipe, &ItemsCount, sizeof(int), &cout, NULL);				
+		OutDataAlloc(sizeof(ItemsCount));
+		OutDataWrite(&ItemsCount,sizeof(ItemsCount));
+		return;
+	}
 
 	pfpi->ActivePathShift = sizeof(ForwardedPanelInfo);
 	pfpi->pszActivePath = (WCHAR*)(((char*)pfpi)+pfpi->ActivePathShift);
@@ -246,6 +252,8 @@ void WINAPI _export SetStartupInfo(const struct PluginStartupInfo *aInfo)
     
 	::InfoA = (PluginStartupInfo*)calloc(sizeof(PluginStartupInfo),1);
 	::FSFA = (FarStandardFunctions*)calloc(sizeof(FarStandardFunctions),1);
+	if (::InfoA == NULL || ::FSFA == NULL)
+		return;
 	*::InfoA = *aInfo;
 	*::FSFA = *aInfo->FSF;
 	::InfoA->FSF = ::FSFA;

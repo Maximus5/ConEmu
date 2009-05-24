@@ -640,28 +640,21 @@ void TabBarClass::OnConman(int nConNumber, BOOL bAlternative)
 {
 	if (!mh_ConmanToolbar) return;
 
-	/*if (gConEmu.ConMan_ProcessCommand) {
-		int nGrpCount = gConEmu.ConMan_ProcessCommand(11/ *GET_STATUS* /,0,0);
-		FarTitle title; memset(&title, 0, sizeof(title));
-		BOOL bPresent[MAX_CONSOLE_COUNT]; memset(bPresent, 0, sizeof(bPresent));
-		MCHKHEAP
-		for (int i=1; i<=nGrpCount; i++) {
-			if (gConEmu.ConMan_ProcessCommand(45/ *GET_TITLEBYIDX* /,i,(int)&title)) {
-				if (title.num>=1 && title.num<=MAX_CONSOLE_COUNT)
-					bPresent[title.num-1] = TRUE;
-			}
-		}
+	BOOL bPresent[MAX_CONSOLE_COUNT]; memset(bPresent, 0, sizeof(bPresent));
+	MCHKHEAP
+	for (int i=1; i<=MAX_CONSOLE_COUNT; i++) {
+		bPresent[i-1] = gConEmu.GetTitle(i-1) != NULL;
+	}
 
-		SendMessage(mh_ConmanToolbar, WM_SETREDRAW, 0, 0);
-		for (int i=1; i<=MAX_CONSOLE_COUNT; i++) {
-			SendMessage(mh_ConmanToolbar, TB_HIDEBUTTON, i, !bPresent[i-1]);
-		}
+	SendMessage(mh_ConmanToolbar, WM_SETREDRAW, 0, 0);
+	for (int i=1; i<=MAX_CONSOLE_COUNT; i++) {
+		SendMessage(mh_ConmanToolbar, TB_HIDEBUTTON, i, !bPresent[i-1]);
+	}
 
-		UpdateToolbarPos();
-		SendMessage(mh_ConmanToolbar, WM_SETREDRAW, 1, 0);
+	UpdateToolbarPos();
+	SendMessage(mh_ConmanToolbar, WM_SETREDRAW, 1, 0);
 
-		nConNumber = gConEmu.ConMan_ProcessCommand(46/ *GET_ACTIVENUM* /,0,0);
-	}*/
+	nConNumber = gConEmu.ActiveConNum()+1;
 	
 	if (nConNumber>=1 && nConNumber<=MAX_CONSOLE_COUNT) {
 		SendMessage(mh_ConmanToolbar, TB_CHECKBUTTON, nConNumber, 1);
@@ -754,10 +747,6 @@ void TabBarClass::OnConman(int nConNumber, BOOL bAlternative)
 
 HWND TabBarClass::CreateToolbar()
 {
-#ifndef _DEBUG
-	return NULL; // ConMan временно недоступен!
-#endif
-
 	if (!mh_Rebar || !gSet.isConMan)
 		return NULL; // нет табов - нет и тулбара
 	if (mh_ConmanToolbar)

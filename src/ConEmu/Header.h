@@ -213,16 +213,19 @@ public:
 			#ifdef _DEBUG
 			DWORD dwTryLockSectionStart = GetTickCount(), dwCurrentTick;
 			#endif
-			while (!TryEnterCriticalSection(mp_cs)) {
+			if (!TryEnterCriticalSection(mp_cs)) {
 				Sleep(50);
-				OutputDebugString(_T("TryEnterCriticalSection failed!!!\n"));
-				#ifdef _DEBUG
-				dwCurrentTick = GetTickCount();
-				if ((dwCurrentTick - dwTryLockSectionStart) > 3000) {
-					_ASSERTE((dwCurrentTick - dwTryLockSectionStart) <= 3000);
-					dwTryLockSectionStart = GetTickCount();
+				while (!TryEnterCriticalSection(mp_cs)) {
+					Sleep(50);
+					OutputDebugString(_T("TryEnterCriticalSection failed!!!\n"));
+					#ifdef _DEBUG
+					dwCurrentTick = GetTickCount();
+					if ((dwCurrentTick - dwTryLockSectionStart) > 3000) {
+						_ASSERTE((dwCurrentTick - dwTryLockSectionStart) <= 3000);
+						dwTryLockSectionStart = GetTickCount();
+					}
+					#endif
 				}
-				#endif
 			}
 			//EnterCriticalSection(mp_cs);
 			*mp_TID = dwTID;

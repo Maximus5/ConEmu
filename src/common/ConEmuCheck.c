@@ -7,7 +7,7 @@
 typedef HWND (APIENTRY *FGetConsoleWindow)();
 typedef DWORD (APIENTRY *FGetConsoleProcessList)(LPDWORD,DWORD);
 
-WARNING("Для 'Простых' запросов можно использовать 'CallNamedPipe', Это если нужно например получить хэндлы окон");
+//WARNING("Для 'Простых' запросов можно использовать 'CallNamedPipe', Это если нужно например получить хэндлы окон");
 
 
 //#if defined(__GNUC__)
@@ -33,7 +33,10 @@ HWND GetConEmuHWND(BOOL abRoot)
 	
 	
 	
-	fGetConsoleWindow = (FGetConsoleWindow)GetProcAddress( GetModuleHandleA("kernel32.dll"), "GetConsoleWindow" );
+	HMODULE hKernel32 = GetModuleHandleA("kernel32.dll");
+	if (hKernel32) {
+		fGetConsoleWindow = (FGetConsoleWindow)GetProcAddress( hKernel32, "GetConsoleWindow" );
+	}
 	if (!fGetConsoleWindow) return NULL;
 		
 	FarHwnd = fGetConsoleWindow();
