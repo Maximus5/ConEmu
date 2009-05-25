@@ -143,7 +143,8 @@ public:
 	~CVirtualConsole();
 	static CVirtualConsole* Create(bool abDetached);
 
-	void OnActivate();
+	void OnActivate(int nNewNum, int nOldNum);
+	void OnFocus(BOOL abFocused);
 	BOOL PreInit();
 	bool InitDC(bool abNoDc, bool abNoWndResize);
 	//void InitHandlers(BOOL abCreated);
@@ -301,4 +302,5 @@ private:
 	WORD mn_LastVKeyPressed;
 	DWORD mn_LastConReadTick;
 	BOOL GetConWindowSize(const CONSOLE_SCREEN_BUFFER_INFO& sbi, int& nNewWidth, int& nNewHeight);
+	int mn_Focused; //-1 после запуска, 1 - в фокусе, 0 - не в фокусе
 };

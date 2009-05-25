@@ -1,7 +1,7 @@
 #include <Windows.h>
 #include <stdio.h>
 #include <Shlwapi.h>
-#include <conio.h>
+//#include <conio.h>
 #include <vector>
 #include "..\common\common.hpp"
 #include "..\common\ConEmuCheck.h"
@@ -102,9 +102,12 @@ struct {
 	BOOL  bConsoleActive;
 	HANDLE hRefreshEvent; // ServerMode, перечитать консоль, и если есть изменения - отослать в GUI
 	HANDLE hChangingSize; // FALSE на время смены размера консоли
-	COORD crBufferSize; SHORT nBufferHeight;
 	BOOL  bNeedFullReload;
 } srv = {NULL};
+
+COORD gcrBufferSize = {80,25};
+BOOL  gbParmBufferSize = FALSE;
+SHORT gnBufferHeight = 0;
 
 struct {
 	DWORD dwFarPID;
@@ -307,8 +310,10 @@ wrap:
 	
 	if (gnRunMode == RM_SERVER) {
 		ServerDone(iRc);
+		//MessageBox(0,L"Server done...",L"ComEmuC",0);
 	} else {
 		ComspecDone(iRc);
+		//MessageBox(0,L"Comspec done...",L"ComEmuC",0);
 	}
 
 	
@@ -324,8 +329,34 @@ wrap:
 	}
 
 	if (iRc!=0 || gbAlwaysConfirmExit) {
+		//MessageBox(0,L"Debug message....",L"ComEmuC",0);
+
+		// Чтобы ошибку было нормально видно
+		BOOL lbNeedVisible = FALSE;
+		if (ghConWnd) { // Если консоль была скрыта
+			if (!IsWindowVisible(ghConWnd)) {
+				lbNeedVisible = TRUE;
+				SMALL_RECT rcNil = {0}; SetConsoleSize(0, gcrBufferSize, rcNil); // поставить "стандартный" 80x25
+				SetConsoleFontSizeTo(ghConWnd, 8, 12); // установим шрифт побольше
+				ShowWindow(ghConWnd, SW_SHOWNORMAL); // и покажем окошко
+			}
+		}
+		//
 		wprintf(L"Press any key to close console");
-		int nCh = _getch();
+
+		INPUT_RECORD r = {0}; DWORD dwCount = 0;
+		while (PeekConsoleInput(GetStdHandle(STD_INPUT_HANDLE), &r, 1, &dwCount)) {
+			if (dwCount)
+				ReadConsoleInput(GetStdHandle(STD_INPUT_HANDLE), &r, 1, &dwCount);
+
+			if (lbNeedVisible && !IsWindowVisible(ghConWnd)) {
+				ShowWindow(ghConWnd, SW_SHOWNORMAL); // и покажем окошко
+			}
+
+			if (r.EventType == KEY_EVENT)
+				break;
+		}
+		//int nCh = _getch();
 		wprintf(L"\n");
 	}
 	
@@ -382,9 +413,9 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 
 		if (wcsncmp(szArg, L"/B", 2)==0) {
 			if (wcsncmp(szArg, L"/BW=", 4)==0) {
-				srv.crBufferSize.X = _wtoi(szArg+4);
+				gcrBufferSize.X = _wtoi(szArg+4); gbParmBufferSize = TRUE;
 			} else if (wcsncmp(szArg, L"/BH=", 4)==0) {
-				srv.crBufferSize.Y = _wtoi(szArg+4);
+				gcrBufferSize.Y = _wtoi(szArg+4); gbParmBufferSize = TRUE;
 			}
 		} else
 
@@ -566,9 +597,9 @@ int ServerInit()
 
 	// Размер шрифта и Lucida. Обязательно для серверного режима.
     SetConsoleFontSizeTo(ghConWnd, 4, 6);
-	if (srv.crBufferSize.X && srv.crBufferSize.Y) {
+	if (gbParmBufferSize && gcrBufferSize.X && gcrBufferSize.Y) {
 		SMALL_RECT rc = {0};
-		SetConsoleSize(0, srv.crBufferSize, rc); // может обломаться? если шрифт еще большой
+		SetConsoleSize(0, gcrBufferSize, rc); // может обломаться? если шрифт еще большой
 	}
 
     if (IsIconic(ghConWnd)) { // окошко нужно развернуть!
@@ -1134,7 +1165,7 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 			WARNING("Игнорируем горизонтальный скроллинг");
 			psc->srWindow.Left = 0; psc->srWindow.Right = psc->dwSize.X - 1;
 			WARNING("Игнорируем вертикальный скроллинг для обычного режима");
-			if (srv.nBufferHeight == 0) {
+			if (gnBufferHeight == 0) {
 				psc->srWindow.Top = 0; psc->srWindow.Bottom = psc->dwSize.Y - 1;
 			}
 			lbRc = TRUE;
@@ -1185,6 +1216,8 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 {
 	DWORD dwErr = 0, nWait = 0;
 	HANDLE hEvents[2] = {ghExitEvent, srv.hRefreshEvent};
+	CONSOLE_CURSOR_INFO lci = {0}; // GetConsoleCursorInfo
+	CONSOLE_SCREEN_BUFFER_INFO lsbi = {{0,0}}; // GetConsoleScreenBufferInfo
 	BOOL lbQuit = FALSE;
 
 	while (!lbQuit)
@@ -1192,12 +1225,29 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 		nWait = WAIT_TIMEOUT;
 
 		// Подождать немножко
-		nWait = WaitForMultipleObjects ( 2, hEvents, FALSE, /*srv.bConsoleActive ? srv.nMainTimerElapse :*/ 60000 );
+		TODO("Здесь можно увеличить время ожидания, если консоль неактивна");
+		nWait = WaitForMultipleObjects ( 2, hEvents, FALSE, /*srv.bConsoleActive ? srv.nMainTimerElapse :*/ 10 );
 		if (nWait == WAIT_OBJECT_0)
 			break; // затребовано завершение нити
 
-		// Посмотреть, есть ли изменения в консоли
-		ReloadFullConsoleInfo();
+		if (nWait == WAIT_TIMEOUT) {
+			// К сожалению, исключительно курсорные события не приходят (если консоль не в фокусе)
+			if (GetConsoleScreenBufferInfo(ghConOut, &lsbi)) {
+				if (memcmp(&srv.sbi.dwCursorPosition, &lsbi.dwCursorPosition, sizeof(lsbi.dwCursorPosition))) {
+					nWait = (WAIT_OBJECT_0+1);
+				}
+			}
+			if ((nWait == WAIT_TIMEOUT) && GetConsoleCursorInfo(ghConOut, &lci)) {
+				if (memcmp(&srv.ci, &lci, sizeof(srv.ci))) {
+					nWait = (WAIT_OBJECT_0+1);
+				}
+			}
+		}
+
+		if (nWait == (WAIT_OBJECT_0+1)) {
+			// Посмотреть, есть ли изменения в консоли
+			ReloadFullConsoleInfo();
+		}
 	}
     
 	return 0;
@@ -1630,7 +1680,7 @@ BOOL ReloadConsoleInfo()
 		WARNING("Игнорируем горизонтальный скроллинг");
 		lsbi.srWindow.Left = 0; lsbi.srWindow.Right = lsbi.dwSize.X - 1;
 		WARNING("Игнорируем вертикальный скроллинг для обычного режима");
-		if (srv.nBufferHeight == 0) {
+		if (gnBufferHeight == 0) {
 			lsbi.srWindow.Top = 0; lsbi.srWindow.Bottom = lsbi.dwSize.Y - 1;
 		}
 		if (memcmp(&srv.sbi, &lsbi, sizeof(srv.sbi))) {
@@ -1682,12 +1732,16 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect)
 	_ASSERTE(ghConWnd);
 	if (!ghConWnd) return FALSE;
 
-	// Проверка минимального размера
-	if (crNewSize.X</*4*/MIN_CON_WIDTH) crNewSize.X = /*4*/MIN_CON_WIDTH;
-	if (crNewSize.Y</*3*/MIN_CON_HEIGHT) crNewSize.Y = /*3*/MIN_CON_HEIGHT;
+	_ASSERTE(crNewSize.X>=MIN_CON_WIDTH && crNewSize.Y>=MIN_CON_HEIGHT);
 
-	srv.nBufferHeight = BufferHeight;
-	srv.crBufferSize = crNewSize;
+	// Проверка минимального размера
+	if (crNewSize.X</*4*/MIN_CON_WIDTH)
+		crNewSize.X = /*4*/MIN_CON_WIDTH;
+	if (crNewSize.Y</*3*/MIN_CON_HEIGHT)
+		crNewSize.Y = /*3*/MIN_CON_HEIGHT;
+
+	gnBufferHeight = BufferHeight;
+	gcrBufferSize = crNewSize;
 
 	RECT rcConPos = {0};
 	GetWindowRect(ghConWnd, &rcConPos);

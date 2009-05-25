@@ -7,7 +7,7 @@ const int TAB_FONT_HEIGTH = 16;
 wchar_t TAB_FONT_FACE[] = L"Tahoma";
 WNDPROC _defaultTabProc = NULL;
 
-//PRAGMA_ERROR("ѕочему-то таб не отображаетс€");
+PRAGMA_ERROR("Ќе работают всплывающие подсказки дл€ кнопок мультиконсоли");
 
 TabBarClass::TabBarClass()
 {
@@ -654,7 +654,7 @@ void TabBarClass::OnConman(int nConNumber, BOOL bAlternative)
 	UpdateToolbarPos();
 	SendMessage(mh_ConmanToolbar, WM_SETREDRAW, 1, 0);
 
-	nConNumber = gConEmu.ActiveConNum()+1;
+	//nConNumber = gConEmu.ActiveConNum()+1; -- сюда пришел уже правильный номер!
 	
 	if (nConNumber>=1 && nConNumber<=MAX_CONSOLE_COUNT) {
 		SendMessage(mh_ConmanToolbar, TB_CHECKBUTTON, nConNumber, 1);

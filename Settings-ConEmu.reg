@@ -74,6 +74,9 @@ REGEDIT4
 ;; Disable language switch via ConEmu FAR plugin
 ;"LangChangeWsPlugin"=hex:00
 
+;; Disable focus events send to console (search in panels will never be closed).
+;"SkipFocusEvents"=hex:01
+
 ;; Debug. 1 - Don't hide console window
 "ConVisible"=hex:00
 

@@ -132,7 +132,7 @@ CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
     isEditor = false;
     memset(&csbi, 0, sizeof(csbi)); mdw_LastError = 0;
     m_LastMaxReadCnt = 0; m_LastMaxReadTick = 0;
-    hConWnd = NULL; mh_GuiAttached = NULL;
+    hConWnd = NULL; mh_GuiAttached = NULL; mn_Focused = -1;
     mn_LastVKeyPressed = 0;
 	mn_LastConReadTick = 0;
 
@@ -1767,8 +1767,10 @@ bool CVirtualConsole::SetConsoleSize(COORD size)
         return false; // консоль пока не создана?
     }
 
-    if (size.X</*4*/MIN_CON_WIDTH) size.X = /*4*/MIN_CON_WIDTH;
-    if (size.Y</*3*/MIN_CON_HEIGHT) size.Y = /*3*/MIN_CON_HEIGHT;
+    if (size.X</*4*/MIN_CON_WIDTH)
+		size.X = /*4*/MIN_CON_WIDTH;
+    if (size.Y</*3*/MIN_CON_HEIGHT)
+		size.Y = /*3*/MIN_CON_HEIGHT;
 
 	bool lbRc = false;
 	BOOL fSuccess = FALSE;
@@ -3483,7 +3485,7 @@ LRESULT CVirtualConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM
 {
     LRESULT result = 0;
 
-    PRAGMA_ERROR("Не рработают хоткеи с Ctrl, например Ctrl-Q, Ctrl-W и т.д.");
+    //PRAGMA_ERROR("Не рработают хоткеи с Ctrl, например Ctrl-Q, Ctrl-W и т.д.");
 
     if (mb_ConsoleSelectMode && messg == WM_KEYDOWN && ((wParam == VK_ESCAPE) || (wParam == VK_RETURN)))
         mb_ConsoleSelectMode = false; //TODO: может как-то по другому определять?
@@ -3532,14 +3534,14 @@ LRESULT CVirtualConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM
 		else {
 			INPUT_RECORD r = {KEY_EVENT};
 
-			WORD nCaps = GetKeyState(VK_CAPITAL);
-			WORD nNum = GetKeyState(VK_NUMLOCK);
-			WORD nScroll = GetKeyState(VK_SCROLL);
-			WORD nLAlt = GetKeyState(VK_LMENU);
-			WORD nRAlt = GetKeyState(VK_RMENU);
-			WORD nLCtrl = GetKeyState(VK_LCONTROL);
-			WORD nRCtrl = GetKeyState(VK_RCONTROL);
-			WORD nShift = GetKeyState(VK_SHIFT);
+			WORD nCaps = 1 & (WORD)GetKeyState(VK_CAPITAL);
+			WORD nNum = 1 & (WORD)GetKeyState(VK_NUMLOCK);
+			WORD nScroll = 1 & (WORD)GetKeyState(VK_SCROLL);
+			WORD nLAlt = 0x8000 & (WORD)GetKeyState(VK_LMENU);
+			WORD nRAlt = 0x8000 & (WORD)GetKeyState(VK_RMENU);
+			WORD nLCtrl = 0x8000 & (WORD)GetKeyState(VK_LCONTROL);
+			WORD nRCtrl = 0x8000 & (WORD)GetKeyState(VK_RCONTROL);
+			WORD nShift = 0x8000 & (WORD)GetKeyState(VK_SHIFT);
 
 			if (messg == WM_CHAR || messg == WM_SYSCHAR) {
 				if (((WCHAR)wParam) <= 32 || mn_LastVKeyPressed == 0)
@@ -3552,14 +3554,16 @@ LRESULT CVirtualConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM
 				mn_LastVKeyPressed = wParam & 0xFFFF;
 				//POSTMESSAGE(hConWnd, messg, wParam, lParam, FALSE);
 				if ((wParam >= VK_F1 && wParam <= /*VK_F24*/ VK_SCROLL) || wParam <= 32 ||
-					(wParam >= VK_LSHIFT && wParam <= /*VK_RMENU*/ 0xB7 /*=VK_LAUNCH_APP2*/) ||
-					(wParam >= VK_LWIN && wParam <= VK_APPS) ||
+					(wParam >= VK_LSHIFT/*0xA0*/ && wParam <= /*VK_RMENU=0xA5*/ 0xB7 /*=VK_LAUNCH_APP2*/) ||
+					(wParam >= VK_LWIN/*0x5B*/ && wParam <= VK_APPS/*0x5D*/) ||
 					/*(wParam >= VK_NUMPAD0 && wParam <= VK_DIVIDE) ||*/ //TODO:
-					(wParam >= VK_PRIOR && wParam <= VK_HELP) ||
+					(wParam >= VK_PRIOR/*0x21*/ && wParam <= VK_HELP/*0x2F*/) ||
+					nLCtrl || nRCtrl ||
 					FALSE)
 				{
 					r.Event.KeyEvent.wRepeatCount = 1; TODO("0-15 ? Specifies the repeat count for the current message. The value is the number of times the keystroke is autorepeated as a result of the user holding down the key. If the keystroke is held long enough, multiple messages are sent. However, the repeat count is not cumulative.");
 					r.Event.KeyEvent.wVirtualKeyCode = mn_LastVKeyPressed;
+					if (nLCtrl || nRCtrl) r.Event.KeyEvent.uChar.UnicodeChar = 0;
 					mn_LastVKeyPressed = 0; // чтобы не обрабатывать WM_(SYS)CHAR
 				} else {
 					return 0;
@@ -4528,9 +4532,9 @@ BOOL CVirtualConsole::GetConWindowSize(const CONSOLE_SCREEN_BUFFER_INFO& sbi, in
 			nNewHeight = con.m_sbi.srWindow.Bottom - con.m_sbi.srWindow.Top + 1;
 	}
 
-#ifdef _DEBUG
-	_ASSERTE(nNewHeight >= 5);
-#endif
+
+	_ASSERTE(nNewWidth>=MIN_CON_WIDTH && nNewHeight>=MIN_CON_HEIGHT);
+
 	if (!nNewWidth || !nNewHeight) {
 		Assert(nNewWidth && nNewHeight);
 		return FALSE;
@@ -4673,9 +4677,38 @@ void CVirtualConsole::SetHwnd(HWND ahConWnd)
 	}
 }
 
-void CVirtualConsole::OnActivate()
+void CVirtualConsole::OnActivate(int nNewNum, int nOldNum)
 {
 	// Чтобы можно было найти хэндл окна по хэндлу консоли
 	SetWindowLong(ghWnd, GWL_USERDATA, (LONG)hConWnd);
 	ghConWnd = hConWnd;
+	
+	WARNING("Не работало обновление заголовка");
+	gConEmu.UpdateTitle(Title);
+
+	TabBar.OnConman(nNewNum+1, FALSE);
+
+	gConEmu.UpdateProcessDisplay(TRUE);
+}
+
+void CVirtualConsole::OnFocus(BOOL abFocused)
+{
+	if (!this) return;
+
+	if ((mn_Focused == -1) ||
+		((mn_Focused == 0) && abFocused) ||
+		((mn_Focused == 1) && !abFocused))
+	{
+#ifdef _DEBUG
+		if (abFocused)
+			DEBUGSTR(L"--Get focus\n");
+		else
+			DEBUGSTR(L"--Loose focus\n");
+#endif
+		INPUT_RECORD r = {FOCUS_EVENT};
+		r.Event.FocusEvent.bSetFocus = abFocused;
+		SendConsoleEvent(&r);
+
+		mn_Focused = abFocused ? 1 : 0;
+	}
 }
