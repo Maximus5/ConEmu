@@ -59,7 +59,7 @@ public:
     bool isTryToCenter;
     RECT rcTabMargins;
     bool isTabFrame;
-    bool isConMan;
+    bool isConMan; BYTE icConManNew, icConManNext; bool isConManNewConfirm;
 
     // Заголовки табов
     WCHAR szTabPanels[64]; LPCWSTR pszTabConsole;

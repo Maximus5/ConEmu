@@ -40,8 +40,13 @@ REGEDIT4
 ;; Needs EMenu & macro on 'Apps' button
 "RightClick opens context menu"=hex:02
 
-;; Turn on 'internal' conman feature
+;; Turn on 'internal' conman feature (multiconsole)
 "ConMan"=hex:00
+;; Some hotkeys for multiconsole
+;"ConMan.NewConsole"=hex:57 ; win + w
+;"ConMan.NewConfirm"=hex:01 ; Confirm new console creation from shortcut
+;"ConMan.Next"=hex:51       ; win + q
+
 ;; Some programs uses multiple console buffers (i.e. telnet, conman)
 ;; Set 'hex:01' to support them (activated automatically for known applications)
 "Update Console handle"=hex:00

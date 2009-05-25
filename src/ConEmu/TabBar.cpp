@@ -7,8 +7,6 @@ const int TAB_FONT_HEIGTH = 16;
 wchar_t TAB_FONT_FACE[] = L"Tahoma";
 WNDPROC _defaultTabProc = NULL;
 
-PRAGMA_ERROR("Не работают всплывающие подсказки для кнопок мультиконсоли");
-
 TabBarClass::TabBarClass()
 {
 	_active = false;
@@ -529,14 +527,16 @@ bool TabBarClass::OnNotify(LPNMHDR nmhdr)
 
 	if (nmhdr->code == TBN_GETINFOTIP)
 	{
-		/*if (!gConEmu.isConman() || !gConEmu.ConMan_ProcessCommand)
-			return false;
+		if (!gSet.isConMan)
+			return 0;
 		LPNMTBGETINFOTIP pDisp = (LPNMTBGETINFOTIP)nmhdr;
 		if (pDisp->iItem>=1 && pDisp->iItem<=MAX_CONSOLE_COUNT) {
 			if (!pDisp->pszText || !pDisp->cchTextMax) return false;
-			FarTitle title; memset(&title, 0, sizeof(title));
-			if (gConEmu.ConMan_ProcessCommand(44/ *GET_TITLEBYNUM* /,pDisp->iItem,(int)&title)) {
-				lstrcpyn(pDisp->pszText, title.title, pDisp->cchTextMax);
+			LPCWSTR pszTitle = gConEmu.ActiveCon()->GetTitle();
+			if (pszTitle) {
+				lstrcpyn(pDisp->pszText, pszTitle, pDisp->cchTextMax);
+			} else {
+				pDisp->pszText[0] = 0;
 			}
 		} else
 		if (pDisp->iItem==13) {
@@ -544,7 +544,7 @@ bool TabBarClass::OnNotify(LPNMHDR nmhdr)
 		} else
 		if (pDisp->iItem==14) {
 			lstrcpyn(pDisp->pszText, _T("Alternative console"), pDisp->cchTextMax);
-		}*/
+		}
 		return true;
 	}
 
@@ -557,6 +557,8 @@ void TabBarClass::OnCommand(WPARAM wParam, LPARAM lParam)
 		return;
 	//if (!gConEmu.isConman() || !gConEmu.mh_ConMan || gConEmu.mh_ConMan==INVALID_HANDLE_VALUE)
 	//	return;
+	if (!gSet.isConMan)
+		return;
 
 	if (wParam>=1 && wParam<=MAX_CONSOLE_COUNT) {
 		gConEmu.ConmanAction(wParam-1);

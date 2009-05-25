@@ -67,7 +67,7 @@ void CSettings::InitSettings()
     _tcscpy(Config, _T("Software\\ConEmu"));
     
     psCmd = NULL; psCurCmd = NULL;
-    isConMan = false;
+    isConMan = false; icConManNew = 'W'; icConManNext = 'Q'; isConManNewConfirm = true;
 
     nMainTimerElapse = 10;
     nAffinity = 3;

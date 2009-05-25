@@ -70,7 +70,7 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 IDD_DIALOG1 DIALOGEX 0, 0, 328, 258
 STYLE DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_TOPMOST | WS_EX_CONTROLPARENT
-FONT 8, "MS Shell Dlg", 0, 0, 0x1
+FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        "Anti-aliasing",IDC_STATIC,263,4,60,45,WS_GROUP
     CONTROL         "&None",rNoneAA,"Button",BS_AUTORADIOBUTTON | WS_GROUP,
@@ -89,7 +89,7 @@ BEGIN
     GROUPBOX        "",IDC_STATIC,4,172,319,50
     CONTROL         "Back&ground image (bmp):",cbBgImage2,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,10,172,96,8
-    EDITTEXT        tBgImage,34,184,209,11,ES_AUTOHSCROLL
+    EDITTEXT        tBgImage,34,184,209,12,ES_AUTOHSCROLL
     COMBOBOX        tFontFace,10,16,123,72,CBS_DROPDOWN | CBS_AUTOHSCROLL | 
                     CBS_SORT | WS_VSCROLL | WS_TABSTOP
     COMBOBOX        tFontSizeY,47,34,38,66,CBS_DROPDOWN | CBS_AUTOHSCROLL | 
@@ -117,21 +117,21 @@ BEGIN
                     BS_AUTO3STATE | WS_TABSTOP,10,139,125,8
     GROUPBOX        "Font",IDC_STATIC,4,4,136,122
     RTEXT           "Size:",IDC_STATIC,9,37,32,8
-    CTEXT           "x",IDC_STATIC,89,35,6,8
+    CTEXT           "x",IDC_STATIC,89,35,8,8
     RTEXT           "Charset:",IDC_STATIC,9,53,32,8
-    EDITTEXT        tWndWidth,199,60,20,11,ES_AUTOHSCROLL | ES_NUMBER
-    EDITTEXT        tWndHeight,229,60,20,11,ES_AUTOHSCROLL | ES_NUMBER
-    CTEXT           "x",IDC_STATIC,221,61,6,8
+    EDITTEXT        tWndWidth,199,60,20,12,ES_AUTOHSCROLL | ES_NUMBER
+    EDITTEXT        tWndHeight,229,60,20,12,ES_AUTOHSCROLL | ES_NUMBER
+    CTEXT           "x",IDC_STATIC,221,61,8,8
     CONTROL         "Force monospace",cbMonospace,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,10,83,70,8
-    CTEXT           "x",IDC_STATIC,101,83,6,8
+    CTEXT           "x",IDC_STATIC,101,83,8,8
     COMBOBOX        tFontSizeX3,109,81,24,66,CBS_DROPDOWN | WS_VSCROLL | 
                     WS_TABSTOP
     LTEXT           "Path:",IDC_STATIC,10,184,18,8
     LTEXT           "Darkening:",IDC_STATIC,10,203,36,8
     CONTROL         "",slDarker,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | 
                     WS_TABSTOP,52,202,177,12
-    EDITTEXT        tDarker,233,202,30,11,ES_AUTOHSCROLL | ES_NUMBER
+    EDITTEXT        tDarker,233,202,30,12,ES_AUTOHSCROLL | ES_NUMBER
     CONTROL         "AltEnter",cbSendAE,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,10,153,48,8
     CONTROL         "Enable Tabs",cbTabs,"Button",BS_AUTO3STATE | WS_TABSTOP,
@@ -145,7 +145,7 @@ BEGIN
                     CBS_SORT | WS_VSCROLL | WS_TABSTOP
     COMBOBOX        tFontSizeX2,109,107,24,66,CBS_DROPDOWN | WS_VSCROLL | 
                     WS_TABSTOP
-    CTEXT           "x",IDC_STATIC,101,109,6,8
+    CTEXT           "x",IDC_STATIC,101,109,8,8
     PUSHBUTTON      "...",bBgImage,247,184,16,12
     CONTROL         "Stretch",rBgStretch,"Button",BS_AUTORADIOBUTTON | 
                     WS_DISABLED,278,195,39,10
@@ -158,9 +158,9 @@ BEGIN
     CONTROL         "Cascade",rCascade,"Button",BS_AUTORADIOBUTTON,268,87,44,
                     10
     CONTROL         "Fixed",rFixed,"Button",BS_AUTORADIOBUTTON,268,75,33,10
-    EDITTEXT        tWndX,268,60,20,11,ES_AUTOHSCROLL | ES_NUMBER
-    EDITTEXT        tWndY,297,60,20,11,ES_AUTOHSCROLL | ES_NUMBER
-    CTEXT           "x",IDC_STATIC,290,61,6,8
+    EDITTEXT        tWndX,268,60,20,12,ES_AUTOHSCROLL | ES_NUMBER
+    EDITTEXT        tWndY,297,60,20,12,ES_AUTOHSCROLL | ES_NUMBER
+    CTEXT           "x",IDC_STATIC,290,61,8,8
     GROUPBOX        "Command Line",IDC_STATIC,4,223,319,30
     EDITTEXT        tCmdLine,9,234,258,12,ES_AUTOHSCROLL
     GROUPBOX        "Graphic enhancement",IDC_STATIC,147,101,176,25
@@ -175,8 +175,8 @@ BEGIN
                     154,154,36,10
     COMBOBOX        lbRDragKey,192,152,56,30,CBS_DROPDOWNLIST | WS_VSCROLL | 
                     WS_TABSTOP
-    CONTROL         "ConMan",cbConMan,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
-                    274,235,43,10
+    CONTROL         "MultiCon",cbConMan,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,274,235,43,10
     CONTROL         "Min 2 tray",cbMinToTray,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,67,153,47,10
     PUSHBUTTON      "Apply",cbApplyPos,214,83,36,12
@@ -350,7 +350,7 @@ CAPTION "Settings..."
 FONT 8, "MS Shell Dlg"
 BEGIN
     DEFPUSHBUTTON   "Save settings",bSaveSettings,268,283,70,14
-    CONTROL         "Always update con. handle (ConMan, Telnet)",
+    CONTROL         "Always update con. handle (Telnet, etc.)",
                     cbAutoConHandle,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,
                     285,168,8
     CONTROL         "Tab1",tabMain,"SysTabControl32",WS_TABSTOP,4,4,334,276
@@ -359,12 +359,12 @@ END
 IDD_DIALOG3 DIALOGEX 0, 0, 328, 258
 STYLE DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_TOPMOST | WS_EX_CONTROLPARENT
-FONT 8, "MS Shell Dlg", 0, 0, 0x1
+FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        "Performance counters",gbPerformance,4,4,319,30
     RTEXT           "Render:",IDC_STATIC,92,17,27,8
-    EDITTEXT        tPerfRender,121,16,43,11,ES_AUTOHSCROLL | ES_READONLY
-    EDITTEXT        tPerfBlt,190,16,43,11,ES_AUTOHSCROLL | ES_READONLY
+    EDITTEXT        tPerfRender,121,16,43,12,ES_AUTOHSCROLL | ES_READONLY
+    EDITTEXT        tPerfBlt,190,16,43,12,ES_AUTOHSCROLL | ES_READONLY
     RTEXT           "Blt:",IDC_STATIC,176,17,12,8
     GROUPBOX        "Console states",IDC_STATIC,4,39,319,43
     CHECKBOX        "ConMan",cbsConManActive,11,51,43,10,WS_DISABLED | NOT 
@@ -386,55 +386,29 @@ BEGIN
     CHECKBOX        "Viewer",cbsViewer,174,67,37,10,WS_DISABLED | NOT 
                     WS_TABSTOP
     GROUPBOX        "Processes",IDC_STATIC,4,128,319,92
-    EDITTEXT        tsConManIdx,55,51,18,11,ES_AUTOHSCROLL | ES_READONLY
-    EDITTEXT        tsTopPID,38,67,26,11,ES_AUTOHSCROLL | ES_READONLY
+    EDITTEXT        tsConManIdx,55,51,18,12,ES_AUTOHSCROLL | ES_READONLY
+    EDITTEXT        tsTopPID,38,67,26,12,ES_AUTOHSCROLL | ES_READONLY
     LISTBOX         lbProcesses,9,139,307,74,NOT LBS_NOTIFY | 
                     LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_HSCROLL | 
                     WS_TABSTOP
     RTEXT           "Read:",IDC_STATIC,9,17,23,8
-    EDITTEXT        tPerfRead,36,16,43,11,ES_AUTOHSCROLL | ES_READONLY
-    EDITTEXT        tPerfInterval,274,16,43,11,ES_AUTOHSCROLL | ES_READONLY
+    EDITTEXT        tPerfRead,36,16,43,12,ES_AUTOHSCROLL | ES_READONLY
+    EDITTEXT        tPerfInterval,274,16,43,12,ES_AUTOHSCROLL | ES_READONLY
     RTEXT           "Interval:",IDC_STATIC,240,17,31,8
     GROUPBOX        "Current command line",IDC_STATIC,4,223,319,30
     EDITTEXT        tCurCmdLine,9,234,307,12,ES_AUTOHSCROLL | ES_READONLY
     GROUPBOX        "Sizes",IDC_STATIC,4,83,318,41
     LTEXT           "Console (chars):",IDC_STATIC,9,94,55,8
-    EDITTEXT        tConSizeChr,67,93,54,11,ES_AUTOHSCROLL | ES_READONLY
+    EDITTEXT        tConSizeChr,67,93,54,12,ES_AUTOHSCROLL | ES_READONLY
     RTEXT           "(pixels):",IDC_STATIC,123,94,30,8
-    EDITTEXT        tConSizePix,156,93,54,11,ES_AUTOHSCROLL | ES_READONLY
+    EDITTEXT        tConSizePix,156,93,54,12,ES_AUTOHSCROLL | ES_READONLY
     RTEXT           "DC window:",IDC_STATIC,215,94,45,8
-    EDITTEXT        tDCSize,263,93,54,11,ES_AUTOHSCROLL | ES_READONLY
+    EDITTEXT        tDCSize,263,93,54,12,ES_AUTOHSCROLL | ES_READONLY
     LTEXT           "Left:",IDC_STATIC,9,110,15,8
-    EDITTEXT        tPanelLeft,32,109,90,11,ES_AUTOHSCROLL | ES_READONLY
+    EDITTEXT        tPanelLeft,32,109,90,12,ES_AUTOHSCROLL | ES_READONLY
     RTEXT           "Right:",IDC_STATIC,131,110,22,8
-    EDITTEXT        tPanelRight,156,109,90,11,ES_AUTOHSCROLL | ES_READONLY
+    EDITTEXT        tPanelRight,156,109,90,12,ES_AUTOHSCROLL | ES_READONLY
 END
-
-
-/////////////////////////////////////////////////////////////////////////////
-//
-// DESIGNINFO
-//
-
-#ifdef APSTUDIO_INVOKED
-GUIDELINES DESIGNINFO DISCARDABLE 
-BEGIN
-    IDD_DIALOG1, DIALOG
-    BEGIN
-        BOTTOMMARGIN, 242
-    END
-
-    IDD_DIALOG2, DIALOG
-    BEGIN
-        BOTTOMMARGIN, 242
-    END
-
-    IDD_DIALOG3, DIALOG
-    BEGIN
-        BOTTOMMARGIN, 242
-    END
-END
-#endif    // APSTUDIO_INVOKED
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -470,7 +444,7 @@ STRINGTABLE DISCARDABLE
 BEGIN
     cbDragL                 "Allow drag with left mouse button"
     cbDragR                 "Allow drag with right mouse button"
-    cbConMan                "Turn on ConMan features (multiwindow,\ntoolbar, alternative console)\nconman.dll, hook.dll, infis.dll required\nConEmu restart required"
+    cbConMan                "Turn on MultiConsole\n(several consoles in one ConEmu, alternative console)\nConEmu restart required"
     cbMinToTray             "Auto minimize to tray"
 END
 
