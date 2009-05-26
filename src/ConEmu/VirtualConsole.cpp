@@ -1,6 +1,8 @@
 #include "Header.h"
 #include <Tlhelp32.h>
 
+PRAGMA_ERROR("При попытке компиляции F:\\VCProject\\FarPlugin\\PPCReg\\compile.cmd - Enter в консоль не прошел");
+
 TODO("CES_CONMANACTIVE deprecated");
 
 WARNING("Может быть хватит ServerThread? А StartProcessThread зарезервировать только для запуска процесса, и сразу из него выйти");

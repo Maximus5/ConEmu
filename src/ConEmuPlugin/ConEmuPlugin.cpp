@@ -142,6 +142,16 @@ BOOL WINAPI DllMainCRTStartup(HANDLE hDll,DWORD dwReason,LPVOID lpReserved)
 }
 #endif
 
+BOOL WINAPI IsConsoleActive()
+{
+	if (ConEmuHwnd) {
+		if (IsWindow(ConEmuHwnd)) {
+			// 
+		}
+	}
+	return TRUE;
+}
+
 HWND WINAPI GetFarHWND2(BOOL abConEmuOnly)
 {
 	if (ConEmuHwnd) {

@@ -18,3 +18,4 @@ EXPORTS
 	GetFarVersion=GetFarVersion@4
 	GetFarHWND=GetFarHWND@0
 	GetFarHWND2=GetFarHWND2@4
+	IsConsoleActive=IsConsoleActive@0
