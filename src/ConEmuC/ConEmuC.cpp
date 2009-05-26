@@ -1290,6 +1290,14 @@ void CALLBACK WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, 
 				dwActiveFlags |= CES_NTVDM;
 				SetPriorityClass(GetCurrentProcess(), HIGH_PRIORITY_CLASS);
 			}
+			//
+			//HANDLE hIn = CreateFile(L"CONIN$", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_READ,
+			//		            0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+			//if (hIn != INVALID_HANDLE_VALUE) {
+			//	HANDLE hOld = ghConIn;
+			//	ghConIn = hIn;
+			//	SafeCloseHandle(hOld);
+			//}
 		}
         return; // обновление экрана не требуется
 
@@ -1324,6 +1332,14 @@ void CALLBACK WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, 
 				}
 			}
 			LeaveCriticalSection(&srv.csProc);
+			//
+			//HANDLE hIn = CreateFile(L"CONIN$", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_READ,
+			//		            0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+			//if (hIn != INVALID_HANDLE_VALUE) {
+			//	HANDLE hOld = ghConIn;
+			//	ghConIn = hIn;
+			//	SafeCloseHandle(hOld);
+			//}
 		}
         return; // обновление экрана не требуется
 

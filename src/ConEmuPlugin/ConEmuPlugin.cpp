@@ -129,6 +129,7 @@ extern "C"{
   int  WINAPI ProcessEditorInputW(void* Rec);
   void WINAPI SetStartupInfoW(void *aInfo);
   BOOL WINAPI IsTerminalMode();
+  BOOL WINAPI IsConsoleActive();
 #ifdef __cplusplus
 };
 #endif
@@ -146,7 +147,11 @@ BOOL WINAPI IsConsoleActive()
 {
 	if (ConEmuHwnd) {
 		if (IsWindow(ConEmuHwnd)) {
-			// 
+			HWND hParent = GetParent(ConEmuHwnd);
+			if (hParent) {
+				HWND hTest = (HWND)GetWindowLong(hParent, GWL_USERDATA);
+				return (hTest == FarHwnd);
+			}
 		}
 	}
 	return TRUE;

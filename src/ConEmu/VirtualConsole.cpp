@@ -1,7 +1,11 @@
 #include "Header.h"
 #include <Tlhelp32.h>
 
-PRAGMA_ERROR("При попытке компиляции F:\\VCProject\\FarPlugin\\PPCReg\\compile.cmd - Enter в консоль не прошел");
+// WARNING("не появляются табы во второй консоли");
+WARNING("На предыдущей строке символы под курсором прыгают влево");
+WARNING("При быстром наборе текста курсор часто 'замерзает' на одной из букв, но продолжает двигаться дальше");
+
+//PRAGMA_ERROR("При попытке компиляции F:\\VCProject\\FarPlugin\\PPCReg\\compile.cmd - Enter в консоль не прошел");
 
 TODO("CES_CONMANACTIVE deprecated");
 
@@ -3565,7 +3569,12 @@ LRESULT CVirtualConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM
 				{
 					r.Event.KeyEvent.wRepeatCount = 1; TODO("0-15 ? Specifies the repeat count for the current message. The value is the number of times the keystroke is autorepeated as a result of the user holding down the key. If the keystroke is held long enough, multiple messages are sent. However, the repeat count is not cumulative.");
 					r.Event.KeyEvent.wVirtualKeyCode = mn_LastVKeyPressed;
-					if (nLCtrl || nRCtrl) r.Event.KeyEvent.uChar.UnicodeChar = 0;
+					r.Event.KeyEvent.uChar.UnicodeChar = 0;
+					if (!nLCtrl && !nRCtrl) {
+						if (wParam == VK_ESCAPE || wParam == VK_RETURN || wParam == VK_BACK || wParam == VK_TAB || wParam == VK_SPACE
+							|| FALSE)
+							r.Event.KeyEvent.uChar.UnicodeChar = wParam;
+					}
 					mn_LastVKeyPressed = 0; // чтобы не обрабатывать WM_(SYS)CHAR
 				} else {
 					return 0;

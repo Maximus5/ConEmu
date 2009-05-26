@@ -2,6 +2,9 @@
 #include <commctrl.h>
 #include "header.h"
 
+WARNING("не по€вл€ютс€ табы во второй консоли");
+WARNING("не мен€ютс€ табы при переключении на другую консоль");
+
 TabBarClass TabBar;
 const int TAB_FONT_HEIGTH = 16;
 wchar_t TAB_FONT_FACE[] = L"Tahoma";
@@ -490,6 +493,7 @@ void TabBarClass::UpdateToolbarPos()
 
 bool TabBarClass::OnNotify(LPNMHDR nmhdr)
 {
+WARNING("ƒл€ всех кнопок 1-12 отображаетс€ заголовок “≈ ”ў≈… консоли");
 	if (!_active)
 	{
 		return false;
