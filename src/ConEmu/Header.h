@@ -77,6 +77,7 @@
 //#endif
 #define isPressed(inp) HIBYTE(GetKeyState(inp))
 #define countof(a) (sizeof((a))/(sizeof(*(a))))
+#define ZeroStruct(s) memset(&(s), sizeof(s), 0)
 
 #define PTDIFFTEST(C,D) (((abs(C.x-LOWORD(lParam)))<D) && ((abs(C.y-HIWORD(lParam)))<D))
 

@@ -94,6 +94,7 @@ struct ConProcess {
 class CVirtualConsole
 {
 public:
+    WARNING("Сделать protected!");
 	bool IsForceUpdate;
 	uint TextWidth, TextHeight; // размер в символах
 	uint Width, Height; // размер в пикселях
@@ -145,7 +146,7 @@ public:
 
 	void OnActivate(int nNewNum, int nOldNum);
 	void OnFocus(BOOL abFocused);
-	BOOL PreInit();
+	BOOL PreInit(BOOL abCreateBuffers=TRUE);
 	bool InitDC(bool abNoDc, bool abNoWndResize);
 	//void InitHandlers(BOOL abCreated);
 	void DumpConsole();
@@ -188,6 +189,7 @@ public:
 	void ShowConsole(int nMode); // -1 Toggle, 0 - Hide, 1 - Show
 	BOOL isDetached();
 	BOOL AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID);
+	RECT GetRect();
 
 protected:
 	DWORD mn_ConEmuC_PID; HANDLE mh_ConEmuC, mh_ConEmuCInput;
