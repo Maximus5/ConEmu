@@ -438,13 +438,15 @@ bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize)
 void CVirtualConsole::DumpConsole()
 {
     OPENFILENAME ofn; memset(&ofn,0,sizeof(ofn));
+	WCHAR temp[MAX_PATH+5];
     ofn.lStructSize=sizeof(ofn);
     ofn.hwndOwner = ghWnd;
     ofn.lpstrFilter = _T("ConEmu dumps (*.con)\0*.con\0\0");
     ofn.nFilterIndex = 1;
-    ofn.lpstrFile = temp;
+    ofn.lpstrFile = temp; temp[0] = 0;
     ofn.nMaxFile = MAX_PATH;
-    ofn.lpstrTitle = _T("Dump console...");
+    ofn.lpstrTitle = L"Dump console...";
+	ofn.lpstrDefExt = L"con";
     ofn.Flags = OFN_ENABLESIZING|OFN_NOCHANGEDIR
             | OFN_PATHMUSTEXIST|OFN_EXPLORER|OFN_HIDEREADONLY|OFN_OVERWRITEPROMPT;
     if (!GetSaveFileName(&ofn))
@@ -461,8 +463,14 @@ void CVirtualConsole::DumpConsole()
     WriteFile(hFile, pszTitle, _tcslen(pszTitle)*sizeof(*pszTitle), &dw, NULL);
     swprintf(temp, _T("\r\nSize: %ix%i\r\n"), TextWidth, TextHeight);
     WriteFile(hFile, temp, _tcslen(temp)*sizeof(TCHAR), &dw, NULL);
-    WriteFile(hFile, ConChar, TextWidth * TextHeight * 2, &dw, NULL);
-    WriteFile(hFile, ConAttr, TextWidth * TextHeight * 2, &dw, NULL);
+	WriteFile(hFile, ConChar, TextWidth * TextHeight * 2, &dw, NULL);
+	WriteFile(hFile, ConAttr, TextWidth * TextHeight * 2, &dw, NULL);
+	WriteFile(hFile, ConChar+(TextWidth * TextHeight), TextWidth * TextHeight * 2, &dw, NULL);
+	WriteFile(hFile, ConAttr+(TextWidth * TextHeight), TextWidth * TextHeight * 2, &dw, NULL);
+	if (con.pConChar && con.pConAttr) {
+		WriteFile(hFile, con.pConChar, con.nTextWidth * con.nTextHeight * 2, &dw, NULL);
+		WriteFile(hFile, con.pConAttr, con.nTextWidth * con.nTextHeight * 2, &dw, NULL);
+	}
     CloseHandle(hFile);
 }
 
@@ -2237,137 +2245,137 @@ BOOL CVirtualConsole::AttachPID(DWORD dwPID)
 
 // asExeName может быть NULL, тогда ставим полный путь к ConEmu (F:_VCProject_FarPlugin_#FAR180_ConEmu.exe)
 // а может быть как просто именем "FAR", так и с расширением "FAR.EXE" (зависит от командной строки)
-void CVirtualConsole::RegistryProps(BOOL abRollback, ConExeProps& props, LPCTSTR asExeName/*=NULL*/)
-{
-    HKEY hkey = NULL;
-    DWORD dwDisp = 0;
-    TCHAR *pszExeName = NULL;
-    
-    if (!abRollback) {
-        memset(&props, 0, sizeof(props));
-
-        /*if (gSet.ourSI.lpTitle && *gSet.ourSI.lpTitle) {
-            int nLen = _tcslen(gSet.ourSI.lpTitle);
-            if (nLen>4 && _tcsicmp(gSet.ourSI.lpTitle+nLen-4, _T(".lnk"))==0) {
-                props.FullKeyName = (TCHAR*)Alloc(10, sizeof(TCHAR));
-                _tcscpy(props.FullKeyName, _T("Console"));
-                pszExeName = props.FullKeyName+_tcslen(props.FullKeyName);
-            } else {
-                props.FullKeyName = (TCHAR*)Alloc(nLen+10, sizeof(TCHAR));
-                _tcscpy(props.FullKeyName, _T("Console\\"));
-                pszExeName = props.FullKeyName+_tcslen(props.FullKeyName);
-                _tcscpy(pszExeName, gSet.ourSI.lpTitle);
-            }
-        } else*/
-        if (asExeName && *asExeName) {
-            props.FullKeyName = (TCHAR*)Alloc(_tcslen(asExeName)+10, sizeof(TCHAR));
-            _tcscpy(props.FullKeyName, _T("Console\\"));
-            pszExeName = props.FullKeyName+_tcslen(props.FullKeyName);
-            _tcscpy(pszExeName, asExeName);
-        } else {
-            props.FullKeyName = (TCHAR*)Alloc(MAX_PATH+10, sizeof(TCHAR));
-            _tcscpy(props.FullKeyName, _T("Console\\"));
-            pszExeName = props.FullKeyName+_tcslen(props.FullKeyName);
-            if (!GetModuleFileName(NULL, pszExeName, MAX_PATH+1)) {
-                DisplayLastError(_T("Can't get module file name"));
-                if (props.FullKeyName) { Free(props.FullKeyName); props.FullKeyName = NULL; }
-                return;
-            }
-        }
-        
-        for (TCHAR* psz=pszExeName; pszExeName && *psz; psz++) {
-            if (*psz == _T('\\')) *psz = _T('_');
-        }
-    } else if (!props.FullKeyName) {
-        return;
-    }
-    
-    
-    if (abRollback && !props.bKeyExists) {
-        // Просто удалить подключ pszExeName
-        if (0 == RegOpenKeyEx ( HKEY_CURRENT_USER, _T("Console"), NULL, DELETE , &hkey)) {
-            RegDeleteKey(hkey, pszExeName);
-            RegCloseKey(hkey);
-        }
-        if (props.FullKeyName) { Free(props.FullKeyName); props.FullKeyName = NULL;}
-        if (props.FaceName) { Free(props.FaceName); props.FaceName = NULL;}
-        return;
-    }
-    
-    if (0 == RegCreateKeyEx ( HKEY_CURRENT_USER, props.FullKeyName, NULL, NULL, NULL, KEY_ALL_ACCESS, NULL, &hkey, &dwDisp)) {
-        if (!abRollback) {
-			GetConsoleScreenBufferInfo();
-
-            props.bKeyExists = (dwDisp == REG_OPENED_EXISTING_KEY);
-            // Считать значения
-            DWORD dwSize, dwVal;
-            if (0!=RegQueryValueEx(hkey, _T("ScreenBufferSize"), 0, NULL, (LPBYTE)&props.ScreenBufferSize, &(dwSize=sizeof(DWORD))))
-                props.ScreenBufferSize = -1;
-            if (0!=RegQueryValueEx(hkey, _T("WindowSize"), 0, NULL, (LPBYTE)&props.WindowSize, &(dwSize=sizeof(DWORD))))
-                props.WindowSize = -1;
-            if (0!=RegQueryValueEx(hkey, _T("WindowPosition"), 0, NULL, (LPBYTE)&props.WindowPosition, &(dwSize=sizeof(DWORD))))
-                props.WindowPosition = -1;
-            if (0!=RegQueryValueEx(hkey, _T("FontSize"), 0, NULL, (LPBYTE)&props.FontSize, &(dwSize=sizeof(DWORD))))
-                props.FontSize = -1;
-            if (0!=RegQueryValueEx(hkey, _T("FontFamily"), 0, NULL, (LPBYTE)&props.FontFamily, &(dwSize=sizeof(DWORD))))
-                props.FontFamily = -1;
-            props.FaceName = (TCHAR*)Alloc(MAX_PATH+1,sizeof(TCHAR));
-            if (0!=RegQueryValueEx(hkey, _T("FaceName"), 0, NULL, (LPBYTE)props.FaceName, &(dwSize=(sizeof(TCHAR)*(MAX_PATH+1)))))
-                props.FaceName[0] = 0;
-            
-            // Установить требуемые умолчания
-			/*RECT rcWnd; GetClientRect(ghWnd, &rcWnd);
-			RECT rcCon = gConEmu.CalcRect(CER_CONSOLE, rcWnd, CER_MAINCLIENT);*/
-			dwVal = (csbi.dwSize.X) | (csbi.dwSize.Y<<16);
-            RegSetValueEx(hkey, _T("ScreenBufferSize"), 0, REG_DWORD, (LPBYTE)&dwVal, sizeof(DWORD));
-            RegSetValueEx(hkey, _T("WindowSize"), 0, REG_DWORD, (LPBYTE)&dwVal, sizeof(DWORD));
-            if (!ghWndDC) dwVal = 0; else {
-                RECT rcWnd; GetWindowRect(ghWndDC, &rcWnd);
-                rcWnd.left = max(0, (rcWnd.left & 0xFFFF));
-                rcWnd.top = max(0, (rcWnd.top & 0xFFFF));
-                dwVal = (rcWnd.left) | (rcWnd.top<<16);
-            }
-            RegSetValueEx(hkey, _T("WindowPosition"), 0, REG_DWORD, (LPBYTE)&dwVal, sizeof(DWORD));
-            dwVal = 0x00060000;
-            RegSetValueEx(hkey, _T("FontSize"), 0, REG_DWORD, (LPBYTE)&dwVal, sizeof(DWORD));
-            dwVal = 0x00000036;
-            RegSetValueEx(hkey, _T("FontFamily"), 0, REG_DWORD, (LPBYTE)&dwVal, sizeof(DWORD));
-            TCHAR szLucida[64]; _tcscpy(szLucida, _T("Lucida Console"));
-            RegSetValueEx(hkey, _T("FaceName"), 0, REG_SZ, (LPBYTE)szLucida, sizeof(TCHAR)*(_tcslen(szLucida)+1));
-        } else {
-            // Вернуть значения
-            if (props.ScreenBufferSize == -1)
-                RegDeleteValue(hkey, _T("ScreenBufferSize"));
-            else
-                RegSetValueEx(hkey, _T("ScreenBufferSize"), 0, REG_DWORD, (LPBYTE)&props.ScreenBufferSize, sizeof(DWORD));
-            if (props.WindowSize == -1)
-                RegDeleteValue(hkey, _T("WindowSize"));
-            else
-                RegSetValueEx(hkey, _T("WindowSize"), 0, REG_DWORD, (LPBYTE)&props.WindowSize, sizeof(DWORD));
-            if (props.WindowPosition == -1)
-                RegDeleteValue(hkey, _T("WindowPosition"));
-            else
-                RegSetValueEx(hkey, _T("WindowPosition"), 0, REG_DWORD, (LPBYTE)&props.WindowPosition, sizeof(DWORD));
-            if (props.FontSize == -1)
-                RegDeleteValue(hkey, _T("FontSize"));
-            else
-                RegSetValueEx(hkey, _T("FontSize"), 0, REG_DWORD, (LPBYTE)&props.FontSize, sizeof(DWORD));
-            if (props.FontFamily == -1)
-                RegDeleteValue(hkey, _T("FontFamily"));
-            else
-                RegSetValueEx(hkey, _T("FontFamily"), 0, REG_DWORD, (LPBYTE)&props.FontFamily, sizeof(DWORD));
-            if (props.FaceName && *props.FaceName)
-                RegSetValueEx(hkey, _T("FaceName"), 0, REG_SZ, (LPBYTE)props.FaceName, sizeof(TCHAR)*(_tcslen(props.FaceName)+1));
-            else
-                RegDeleteValue(hkey, _T("FaceName"));
-            
-            // и освободить буфера
-            if (props.FullKeyName) { Free(props.FullKeyName); props.FullKeyName = NULL;}
-            if (props.FaceName) { Free(props.FaceName); props.FaceName = NULL;}
-        }
-        RegCloseKey(hkey);
-    }
-}
+//void CVirtualConsole::RegistryProps(BOOL abRollback, ConExeProps& props, LPCTSTR asExeName/*=NULL*/)
+//{
+//    HKEY hkey = NULL;
+//    DWORD dwDisp = 0;
+//    TCHAR *pszExeName = NULL;
+//    
+//    if (!abRollback) {
+//        memset(&props, 0, sizeof(props));
+//
+//        /*if (gSet.ourSI.lpTitle && *gSet.ourSI.lpTitle) {
+//            int nLen = _tcslen(gSet.ourSI.lpTitle);
+//            if (nLen>4 && _tcsicmp(gSet.ourSI.lpTitle+nLen-4, _T(".lnk"))==0) {
+//                props.FullKeyName = (TCHAR*)Alloc(10, sizeof(TCHAR));
+//                _tcscpy(props.FullKeyName, _T("Console"));
+//                pszExeName = props.FullKeyName+_tcslen(props.FullKeyName);
+//            } else {
+//                props.FullKeyName = (TCHAR*)Alloc(nLen+10, sizeof(TCHAR));
+//                _tcscpy(props.FullKeyName, _T("Console\\"));
+//                pszExeName = props.FullKeyName+_tcslen(props.FullKeyName);
+//                _tcscpy(pszExeName, gSet.ourSI.lpTitle);
+//            }
+//        } else*/
+//        if (asExeName && *asExeName) {
+//            props.FullKeyName = (TCHAR*)Alloc(_tcslen(asExeName)+10, sizeof(TCHAR));
+//            _tcscpy(props.FullKeyName, _T("Console\\"));
+//            pszExeName = props.FullKeyName+_tcslen(props.FullKeyName);
+//            _tcscpy(pszExeName, asExeName);
+//        } else {
+//            props.FullKeyName = (TCHAR*)Alloc(MAX_PATH+10, sizeof(TCHAR));
+//            _tcscpy(props.FullKeyName, _T("Console\\"));
+//            pszExeName = props.FullKeyName+_tcslen(props.FullKeyName);
+//            if (!GetModuleFileName(NULL, pszExeName, MAX_PATH+1)) {
+//                DisplayLastError(_T("Can't get module file name"));
+//                if (props.FullKeyName) { Free(props.FullKeyName); props.FullKeyName = NULL; }
+//                return;
+//            }
+//        }
+//        
+//        for (TCHAR* psz=pszExeName; pszExeName && *psz; psz++) {
+//            if (*psz == _T('\\')) *psz = _T('_');
+//        }
+//    } else if (!props.FullKeyName) {
+//        return;
+//    }
+//    
+//    
+//    if (abRollback && !props.bKeyExists) {
+//        // Просто удалить подключ pszExeName
+//        if (0 == RegOpenKeyEx ( HKEY_CURRENT_USER, _T("Console"), NULL, DELETE , &hkey)) {
+//            RegDeleteKey(hkey, pszExeName);
+//            RegCloseKey(hkey);
+//        }
+//        if (props.FullKeyName) { Free(props.FullKeyName); props.FullKeyName = NULL;}
+//        if (props.FaceName) { Free(props.FaceName); props.FaceName = NULL;}
+//        return;
+//    }
+//    
+//    if (0 == RegCreateKeyEx ( HKEY_CURRENT_USER, props.FullKeyName, NULL, NULL, NULL, KEY_ALL_ACCESS, NULL, &hkey, &dwDisp)) {
+//        if (!abRollback) {
+//			GetConsoleScreenBufferInfo();
+//
+//            props.bKeyExists = (dwDisp == REG_OPENED_EXISTING_KEY);
+//            // Считать значения
+//            DWORD dwSize, dwVal;
+//            if (0!=RegQueryValueEx(hkey, _T("ScreenBufferSize"), 0, NULL, (LPBYTE)&props.ScreenBufferSize, &(dwSize=sizeof(DWORD))))
+//                props.ScreenBufferSize = -1;
+//            if (0!=RegQueryValueEx(hkey, _T("WindowSize"), 0, NULL, (LPBYTE)&props.WindowSize, &(dwSize=sizeof(DWORD))))
+//                props.WindowSize = -1;
+//            if (0!=RegQueryValueEx(hkey, _T("WindowPosition"), 0, NULL, (LPBYTE)&props.WindowPosition, &(dwSize=sizeof(DWORD))))
+//                props.WindowPosition = -1;
+//            if (0!=RegQueryValueEx(hkey, _T("FontSize"), 0, NULL, (LPBYTE)&props.FontSize, &(dwSize=sizeof(DWORD))))
+//                props.FontSize = -1;
+//            if (0!=RegQueryValueEx(hkey, _T("FontFamily"), 0, NULL, (LPBYTE)&props.FontFamily, &(dwSize=sizeof(DWORD))))
+//                props.FontFamily = -1;
+//            props.FaceName = (TCHAR*)Alloc(MAX_PATH+1,sizeof(TCHAR));
+//            if (0!=RegQueryValueEx(hkey, _T("FaceName"), 0, NULL, (LPBYTE)props.FaceName, &(dwSize=(sizeof(TCHAR)*(MAX_PATH+1)))))
+//                props.FaceName[0] = 0;
+//            
+//            // Установить требуемые умолчания
+//			/*RECT rcWnd; GetClientRect(ghWnd, &rcWnd);
+//			RECT rcCon = gConEmu.CalcRect(CER_CONSOLE, rcWnd, CER_MAINCLIENT);*/
+//			dwVal = (csbi.dwSize.X) | (csbi.dwSize.Y<<16);
+//            RegSetValueEx(hkey, _T("ScreenBufferSize"), 0, REG_DWORD, (LPBYTE)&dwVal, sizeof(DWORD));
+//            RegSetValueEx(hkey, _T("WindowSize"), 0, REG_DWORD, (LPBYTE)&dwVal, sizeof(DWORD));
+//            if (!ghWndDC) dwVal = 0; else {
+//                RECT rcWnd; GetWindowRect(ghWndDC, &rcWnd);
+//                rcWnd.left = max(0, (rcWnd.left & 0xFFFF));
+//                rcWnd.top = max(0, (rcWnd.top & 0xFFFF));
+//                dwVal = (rcWnd.left) | (rcWnd.top<<16);
+//            }
+//            RegSetValueEx(hkey, _T("WindowPosition"), 0, REG_DWORD, (LPBYTE)&dwVal, sizeof(DWORD));
+//            dwVal = 0x00060000;
+//            RegSetValueEx(hkey, _T("FontSize"), 0, REG_DWORD, (LPBYTE)&dwVal, sizeof(DWORD));
+//            dwVal = 0x00000036;
+//            RegSetValueEx(hkey, _T("FontFamily"), 0, REG_DWORD, (LPBYTE)&dwVal, sizeof(DWORD));
+//            TCHAR szLucida[64]; _tcscpy(szLucida, _T("Lucida Console"));
+//            RegSetValueEx(hkey, _T("FaceName"), 0, REG_SZ, (LPBYTE)szLucida, sizeof(TCHAR)*(_tcslen(szLucida)+1));
+//        } else {
+//            // Вернуть значения
+//            if (props.ScreenBufferSize == -1)
+//                RegDeleteValue(hkey, _T("ScreenBufferSize"));
+//            else
+//                RegSetValueEx(hkey, _T("ScreenBufferSize"), 0, REG_DWORD, (LPBYTE)&props.ScreenBufferSize, sizeof(DWORD));
+//            if (props.WindowSize == -1)
+//                RegDeleteValue(hkey, _T("WindowSize"));
+//            else
+//                RegSetValueEx(hkey, _T("WindowSize"), 0, REG_DWORD, (LPBYTE)&props.WindowSize, sizeof(DWORD));
+//            if (props.WindowPosition == -1)
+//                RegDeleteValue(hkey, _T("WindowPosition"));
+//            else
+//                RegSetValueEx(hkey, _T("WindowPosition"), 0, REG_DWORD, (LPBYTE)&props.WindowPosition, sizeof(DWORD));
+//            if (props.FontSize == -1)
+//                RegDeleteValue(hkey, _T("FontSize"));
+//            else
+//                RegSetValueEx(hkey, _T("FontSize"), 0, REG_DWORD, (LPBYTE)&props.FontSize, sizeof(DWORD));
+//            if (props.FontFamily == -1)
+//                RegDeleteValue(hkey, _T("FontFamily"));
+//            else
+//                RegSetValueEx(hkey, _T("FontFamily"), 0, REG_DWORD, (LPBYTE)&props.FontFamily, sizeof(DWORD));
+//            if (props.FaceName && *props.FaceName)
+//                RegSetValueEx(hkey, _T("FaceName"), 0, REG_SZ, (LPBYTE)props.FaceName, sizeof(TCHAR)*(_tcslen(props.FaceName)+1));
+//            else
+//                RegDeleteValue(hkey, _T("FaceName"));
+//            
+//            // и освободить буфера
+//            if (props.FullKeyName) { Free(props.FullKeyName); props.FullKeyName = NULL;}
+//            if (props.FaceName) { Free(props.FaceName); props.FaceName = NULL;}
+//        }
+//        RegCloseKey(hkey);
+//    }
+//}
 
 DWORD CVirtualConsole::StartProcessThread(LPVOID lpParameter)
 {
@@ -2575,11 +2583,11 @@ BOOL CVirtualConsole::StartProcess()
     //}
     
     
-    ConExeProps props;
+    //ConExeProps props;
     
 	// 2009-05-13 Теперь запуск консоли идет в отдельном процессе, так что ярлык не помешает
     // Если запускались с ярлыка - это нихрена не поможет... информация похоже в .lnk сохраняется...
-    RegistryProps(FALSE, props, CEC_INITTITLE);
+    //RegistryProps(FALSE, props, CEC_INITTITLE);
 
     /*if (!isShowConsole && !gSet.isConVisible
         #ifdef MSGLOGGER
@@ -2652,14 +2660,16 @@ BOOL CVirtualConsole::StartProcess()
 
 			int nLen = _tcslen(lpszCmd);
 			TCHAR *pszSlash=NULL;
-			nLen += _tcslen(gConEmu.ms_ConEmuExe) + 20;
+			nLen += _tcslen(gConEmu.ms_ConEmuExe) + 128;
 			psCurCmd = (wchar_t*)malloc(nLen*sizeof(wchar_t));
 			_ASSERTE(psCurCmd);
 			wcscpy(psCurCmd, L"\"");
 			wcscat(psCurCmd, gConEmu.ms_ConEmuExe);
 			pszSlash = wcsrchr(psCurCmd, _T('\\'));
 			MCHKHEAP
-			wcscpy(pszSlash+1, L"ConEmuC.exe\" /CMD ");
+			wcscpy(pszSlash+1, L"ConEmuC.exe\" ");
+			wsprintf(psCurCmd+wcslen(psCurCmd), L"/BW=%i /BH=%i /BZ=%i", con.m_sbi.dwSize.X, con.m_sbi.dwSize.Y, BufferHeight);
+			wcscat(psCurCmd, L" /CMD ");
 			wcscat(psCurCmd, lpszCmd);
 			MCHKHEAP
 
@@ -3966,6 +3976,17 @@ void CVirtualConsole::ApplyConsoleInfo(CESERVER_REQ* pInfo)
 	_ASSERTE(this!=NULL);
 	if (this==NULL) return;
 
+	int nPacket = con.nPacketIdx++;
+	if (gSet.szDumpPackets[0]) {
+		wchar_t szPath[MAX_PATH+20]; wsprintf(szPath, gSet.szDumpPackets, mn_ConEmuC_PID, nPacket);
+		HANDLE hFile = CreateFile(szPath, GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, 
+			FILE_ATTRIBUTE_NORMAL, NULL);
+		if (hFile!=INVALID_HANDLE_VALUE) {
+			DWORD dwWritten = 0;
+			WriteFile(hFile, pInfo, pInfo->nSize, &dwWritten, 0);
+			CloseHandle(hFile);
+		}
+	}
 	BOOL bBufRecreated = FALSE;
 	// Теперь нужно раскидать данные про структурам
 	LPBYTE lpCur = (LPBYTE)pInfo->Data;

@@ -53,7 +53,6 @@ public:
     int wndX, wndY; // в пикселях
     bool wndCascade;
     u8 bgImageDarker;
-    bool isConVisible;
     DWORD nSlideShowElapse;
     DWORD nIconID;
     bool isTryToCenter;
@@ -83,6 +82,11 @@ public:
     bool isLangChangeWsPlugin;
     
     DWORD nAffinity;
+
+	// Debugging - "c:\\temp\\ConEmuVCon-%i-%i.dat"
+	wchar_t szDumpPackets[MAX_PATH];
+	// Debugging
+	bool isConVisible;
     
     // Working variables...
     HBITMAP hBgBitmap;
@@ -135,4 +139,5 @@ private:
     typedef HRESULT (STDAPICALLTYPE *EnableThemeDialogTextureT)(HWND hwnd,DWORD dwFlags);
     EnableThemeDialogTextureT EnableThemeDialogTextureF;
 	UINT mn_MsgUpdateCounter;
+	wchar_t temp[MAX_PATH];
 };

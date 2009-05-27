@@ -40,14 +40,14 @@ REGEDIT4
 ;; Needs EMenu & macro on 'Apps' button
 "RightClick opens context menu"=hex:02
 
-;; Turn on 'internal' conman feature (multiconsole)
-"ConMan"=hex:00
+;; Turn on multiconsole (sort of 'ConMan' functionality)
+"Multi"=hex:00
 ;; Some hotkeys for multiconsole
-;"ConMan.NewConsole"=hex:57 ; win + w
-;"ConMan.NewConfirm"=hex:01 ; Confirm new console creation from shortcut
-;"ConMan.Next"=hex:51       ; win + q
+;"Multi.NewConsole"=hex:57 ; win + w
+;"Multi.NewConfirm"=hex:01 ; Confirm new console creation from shortcut
+;"Multi.Next"=hex:51       ; win + q
 
-;; Some programs uses multiple console buffers (i.e. telnet, conman)
+;; Some programs uses several console buffers (i.e. telnet, conman)
 ;; Set 'hex:01' to support them (activated automatically for known applications)
 "Update Console handle"=hex:00
 
@@ -84,6 +84,8 @@ REGEDIT4
 
 ;; Debug. 1 - Don't hide console window
 "ConVisible"=hex:00
+;; Debug. If defined - dump every recieved screen from ConEmuC.
+;"DumpPackets"="c:\\temp\\ConEmuVCon-%i-%i.dat"
 
 ;; Drag'n'Drop
 ;; 0 - Drag disabled, 1 - LDrag, 2 - RDrag, 3 - LDrag&RDrag

@@ -207,7 +207,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="F:\VCProject\FarPlugin\#FAR180\ConEmuC.exe"
+				OutputFile="F:\VCProject\FarPlugin\#FAR175\ConEmuC.exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
 				SubSystem="1"

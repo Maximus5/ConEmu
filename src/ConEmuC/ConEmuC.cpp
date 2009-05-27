@@ -416,6 +416,8 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 				gcrBufferSize.X = _wtoi(szArg+4); gbParmBufferSize = TRUE;
 			} else if (wcsncmp(szArg, L"/BH=", 4)==0) {
 				gcrBufferSize.Y = _wtoi(szArg+4); gbParmBufferSize = TRUE;
+			} else if (wcsncmp(szArg, L"/BZ=", 4)==0) {
+				gnBufferHeight = _wtoi(szArg+4); gbParmBufferSize = TRUE;
 			}
 		} else
 
@@ -599,7 +601,7 @@ int ServerInit()
     SetConsoleFontSizeTo(ghConWnd, 4, 6);
 	if (gbParmBufferSize && gcrBufferSize.X && gcrBufferSize.Y) {
 		SMALL_RECT rc = {0};
-		SetConsoleSize(0, gcrBufferSize, rc); // может обломаться? если шрифт еще большой
+		SetConsoleSize(gnBufferHeight, gcrBufferSize, rc); // может обломаться? если шрифт еще большой
 	}
 
     if (IsIconic(ghConWnd)) { // окошко нужно развернуть!
@@ -1800,7 +1802,8 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect)
 		GetWindowRect(ghConWnd, &rcConPos);
 		MoveWindow(ghConWnd, rcConPos.left, rcConPos.top, GetSystemMetrics(SM_CXSCREEN), rcConPos.bottom-rcConPos.top, 1);
 
-		SetConsoleWindowInfo(ghConOut, TRUE, &rNewRect);
+		if (rNewRect.Right && rNewRect.Bottom)
+			SetConsoleWindowInfo(ghConOut, TRUE, &rNewRect);
 	}
 
 	if (srv.hChangingSize) { // во время запуска ConEmuC

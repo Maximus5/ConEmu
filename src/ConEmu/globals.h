@@ -28,7 +28,7 @@ class CSettings;
 extern CSettings gSet;
 class TrayIcon;
 extern TrayIcon Icon;
-extern TCHAR temp[MAX_PATH];
+//extern TCHAR temp[MAX_PATH];
 
 extern BOOL gbNoDblBuffer;
 

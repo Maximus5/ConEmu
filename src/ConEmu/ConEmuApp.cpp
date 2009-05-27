@@ -21,7 +21,7 @@ HWND ghWnd=NULL, ghWndDC=NULL, ghConWnd=NULL, ghWndApp=NULL;
 CConEmuMain gConEmu;
 //CVirtualConsole *pVCon=NULL;
 CSettings gSet;
-TCHAR temp[MAX_PATH];
+//TCHAR temp[MAX_PATH]; -- низзя, очень велик шанс нарваться при многопоточности
 TCHAR szIconPath[MAX_PATH];
 HICON hClassIcon = NULL, hClassIconSm = NULL;
 

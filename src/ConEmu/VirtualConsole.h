@@ -232,17 +232,17 @@ protected:
 	void ParseLine(int row, TCHAR *ConCharLine, WORD *ConAttrLine);
 	BOOL AttachPID(DWORD dwPID);
 	BOOL StartProcess();
-	typedef struct _ConExeProps {
-		BOOL  bKeyExists;
-		DWORD ScreenBufferSize; //Loword-Width, Hiword-Height
-		DWORD WindowSize;
-		DWORD WindowPosition;
-		DWORD FontSize;
-		DWORD FontFamily;
-		TCHAR *FaceName;
-		TCHAR *FullKeyName;
-	} ConExeProps;
-	void RegistryProps(BOOL abRollback, ConExeProps& props, LPCTSTR asExeName=NULL);
+	//typedef struct _ConExeProps {
+	//	BOOL  bKeyExists;
+	//	DWORD ScreenBufferSize; //Loword-Width, Hiword-Height
+	//	DWORD WindowSize;
+	//	DWORD WindowPosition;
+	//	DWORD FontSize;
+	//	DWORD FontFamily;
+	//	TCHAR *FaceName;
+	//	TCHAR *FullKeyName;
+	//} ConExeProps;
+	//void RegistryProps(BOOL abRollback, ConExeProps& props, LPCTSTR asExeName=NULL);
 	static DWORD WINAPI StartProcessThread(LPVOID lpParameter);
 	HANDLE mh_Heap, mh_Thread, mh_VConServerThread;
 	HANDLE mh_TermEvent, mh_ForceReadEvent, mh_EndUpdateEvent, mh_Sync2WindowEvent, mh_ConChanged, mh_CursorChanged;
@@ -272,6 +272,7 @@ private:
 		wchar_t *pConChar;
 		WORD  *pConAttr;
 		int nTextWidth, nTextHeight;
+		size_t nPacketIdx;
 	} con;
 	// 
 	CRITICAL_SECTION csPRC; DWORD ncsTPRC;

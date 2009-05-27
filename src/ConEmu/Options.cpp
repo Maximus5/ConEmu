@@ -68,6 +68,7 @@ void CSettings::InitSettings()
     
     psCmd = NULL; psCurCmd = NULL;
     isConMan = false; icConManNew = 'W'; icConManNext = 'Q'; isConManNewConfirm = true;
+	szDumpPackets[0] = 0;
 
     nMainTimerElapse = 10;
     nAffinity = 3;
@@ -180,11 +181,18 @@ void CSettings::LoadSettings()
         reg.Load(_T("ExtendColors"), isExtendColors);
         reg.Load(_T("ExtendColorIdx"), nExtendColor);
             if (nExtendColor<0 || nExtendColor>15) nExtendColor=14;
+
+		// Debugging
+		reg.Load(_T("ConVisible"), isConVisible);
+		reg.Load(_T("DumpPackets"), szDumpPackets);
     
         reg.Load(_T("FontName"), inFont);
         reg.Load(_T("FontName2"), inFont2);
         reg.Load(_T("CmdLine"), &psCmd);
-        reg.Load(_T("ConMan"), isConMan);
+        reg.Load(_T("Multi"), isConMan);
+			reg.Load(_T("Multi.NewConsole"), icConManNew);
+			reg.Load(_T("Multi.Next"), icConManNext);
+			reg.Load(_T("Multi.NewConfirm"), isConManNewConfirm);
         reg.Load(_T("BackGround Image"), sBgImage);
         reg.Load(_T("bgImageDarker"), bgImageDarker);
         reg.Load(_T("FontSize"), inSize);
@@ -237,7 +245,6 @@ void CSettings::LoadSettings()
         reg.Load(_T("Tabs"), isTabs);
         reg.Load(_T("TabFrame"), isTabFrame);
         reg.Load(_T("TabMargins"), rcTabMargins);
-        reg.Load(_T("ConVisible"), isConVisible);
         reg.Load(_T("SlideShowElapse"), nSlideShowElapse);
         reg.Load(_T("IconID"), nIconID);
         reg.Load(_T("TabPanels"), szTabPanels);
@@ -370,7 +377,10 @@ BOOL CSettings::SaveSettings()
             }*/
 
             reg.Save(_T("CmdLine"), psCmd);
-            reg.Save(_T("ConMan"), isConMan);
+            reg.Save(_T("Multi"), isConMan);
+				//reg.Save(_T("Multi.NewConsole"), icConManNew);
+				//reg.Save(_T("Multi.Next"), icConManNext);
+				//reg.Save(_T("Multi.NewConfirm"), isConManNewConfirm);
             reg.Save(_T("FontName"), LogFont.lfFaceName);
             reg.Save(_T("FontName2"), LogFont2.lfFaceName);
             reg.Save(_T("BackGround Image"), sBgImage);
@@ -488,7 +498,7 @@ BOOL CALLBACK CSettings::EnumFamCallBack(LPLOGFONT lplf, LPNEWTEXTMETRIC lpntm, 
 
 LRESULT CSettings::OnInitDialog()
 {
-    MCHKHEAP
+	MCHKHEAP
     {
         TCITEM tie;
         HWND _hwndTab = GetDlgItem(ghOpWnd, tabMain);
@@ -1009,7 +1019,7 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
 
     case bBgImage:
         {
-            GetDlgItemText(hMain, tBgImage, temp, MAX_PATH);
+			GetDlgItemText(hMain, tBgImage, temp, MAX_PATH);
             OPENFILENAME ofn; memset(&ofn,0,sizeof(ofn));
             ofn.lStructSize=sizeof(ofn);
             ofn.hwndOwner = ghOpWnd;
@@ -1061,7 +1071,7 @@ LRESULT CSettings::OnColorButtonClicked(WPARAM wParam, LPARAM lParam)
         if (CB >= 1000 && CB <= 1031)
         {
             COLORREF color = Colors[CB - 1000];
-            if( ShowColorDialog(ghOpWnd, &color) )
+			if( ShowColorDialog(ghOpWnd, &color) )
             {
                 Colors[CB - 1000] = color;
                 wsprintf(temp, _T("%i %i %i"), getR(color), getG(color), getB(color));
@@ -1116,7 +1126,7 @@ LRESULT CSettings::OnEditChanged(WPARAM wParam, LPARAM lParam)
     WORD TB = LOWORD(wParam);
     if (TB == tBgImage)
     {
-        GetDlgItemText(hMain, tBgImage, temp, MAX_PATH);
+		GetDlgItemText(hMain, tBgImage, temp, MAX_PATH);
         if( LoadImageFrom(temp, true) )
         {
             gConEmu.Update(true);
@@ -1187,7 +1197,7 @@ LRESULT CSettings::OnComboBox(WPARAM wParam, LPARAM lParam)
     WORD wId = LOWORD(wParam);
     if (wId == tFontFace || wId == tFontFace2)
     {
-        LOGFONT* pLogFont = (wId == tFontFace) ? &LogFont : &LogFont2;
+		LOGFONT* pLogFont = (wId == tFontFace) ? &LogFont : &LogFont2;
         int nID = (wId == tFontFace) ? tFontFace : tFontFace2;
         _tcscpy(temp, pLogFont->lfFaceName);
         if (HIWORD(wParam) == CBN_EDITCHANGE)
