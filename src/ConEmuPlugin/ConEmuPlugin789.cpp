@@ -17,6 +17,9 @@ struct FarStandardFunctions *FSFW789=NULL;
 
 void ProcessDragFrom789()
 {
+	if (!InfoW789 || !InfoW789->AdvControl)
+		return;
+
 	WindowInfo WInfo;				
     WInfo.Pos=0;
 	InfoW789->AdvControl(InfoW789->ModuleNumber, ACTL_GETSHORTWINDOWINFO, (void*)&WInfo);
@@ -138,6 +141,9 @@ void ProcessDragFrom789()
 
 void ProcessDragTo789()
 {
+	if (!InfoW789 || !InfoW789->AdvControl)
+		return;
+
 	WindowInfo WInfo;				
     WInfo.Pos=0;
 	InfoW789->AdvControl(InfoW789->ModuleNumber, ACTL_GETSHORTWINDOWINFO, (void*)&WInfo);
@@ -244,6 +250,9 @@ extern int lastModifiedStateW;
 // watch non-modified -> modified editor status change
 int ProcessEditorInputW789(LPCVOID aRec)
 {
+	if (!InfoW789)
+		return 0;
+
 	const INPUT_RECORD *Rec = (const INPUT_RECORD*)aRec;
 	// only key events with virtual codes > 0 are likely to cause status change (?)
 	if (Rec->EventType == KEY_EVENT && Rec->Event.KeyEvent.wVirtualKeyCode > 0  && Rec->Event.KeyEvent.bKeyDown)
@@ -306,6 +315,9 @@ int ProcessEditorInputW789(LPCVOID aRec)
 
 void UpdateConEmuTabsW789(int event, bool losingFocus, bool editorSave)
 {
+	if (!InfoW789 || !InfoW789->AdvControl)
+		return;
+
     BOOL lbCh = FALSE;
 	WindowInfo WInfo;
 
@@ -392,6 +404,9 @@ void SetWindow789(int nTab)
 
 void PostMacro789(wchar_t* asMacro)
 {
+	if (!InfoW789 || !InfoW789->AdvControl)
+		return;
+
 	ActlKeyMacro mcr;
 	mcr.Command = MCMD_POSTMACROSTRING;
 	mcr.Param.PlainText.SequenceText = asMacro;

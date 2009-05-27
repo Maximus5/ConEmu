@@ -20,6 +20,8 @@ extern "C" {
 #include "../common/ConEmuCheck.h"
 }
 
+WARNING("Подозреваю, что в gszRootKey не учитывается имя пользователя/конфигурации");
+
 #define MAKEFARVERSION(major,minor,build) ( ((major)<<8) | (minor) | ((build)<<16))
 
 // minimal(?) FAR version 2.0 alpha build 757

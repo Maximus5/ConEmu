@@ -160,7 +160,7 @@ BEGIN
     CONTROL         "Fixed",rFixed,"Button",BS_AUTORADIOBUTTON,268,75,33,10
     EDITTEXT        tWndX,268,60,20,12,ES_AUTOHSCROLL | ES_NUMBER
     EDITTEXT        tWndY,297,60,20,12,ES_AUTOHSCROLL | ES_NUMBER
-    CTEXT           "x",IDC_STATIC,290,61,8,8
+    CTEXT           "x",IDC_STATIC,289,61,8,8
     GROUPBOX        "Command Line",IDC_STATIC,4,223,319,30
     EDITTEXT        tCmdLine,9,234,258,12,ES_AUTOHSCROLL
     GROUPBOX        "Graphic enhancement",IDC_STATIC,147,101,176,25
@@ -347,7 +347,7 @@ IDD_DIALOGM DIALOGEX 0, 0, 341, 300
 STYLE DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 EXSTYLE WS_EX_TOPMOST
 CAPTION "Settings..."
-FONT 8, "MS Shell Dlg"
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     DEFPUSHBUTTON   "Save settings",bSaveSettings,268,283,70,14
     CONTROL         "Always update con. handle (Telnet, etc.)",
@@ -359,7 +359,7 @@ END
 IDD_DIALOG3 DIALOGEX 0, 0, 328, 258
 STYLE DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_TOPMOST | WS_EX_CONTROLPARENT
-FONT 8, "MS Shell Dlg"
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     GROUPBOX        "Performance counters",gbPerformance,4,4,319,30
     RTEXT           "Render:",IDC_STATIC,92,17,27,8
