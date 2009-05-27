@@ -20,21 +20,17 @@ int WINAPI _export GetMinFarVersion(void)
 	return MAKEFARVERSION(1,71,2470);
 }
 
-
-struct PluginStartupInfo *InfoA=NULL;
-struct FarStandardFunctions *FSFA=NULL;
-
-
 HANDLE WINAPI _export OpenPlugin(int OpenFrom,INT_PTR Item)
 {
-	if (InfoA == NULL)
-		return INVALID_HANDLE_VALUE;
-
 	if (gnReqCommand != (DWORD)-1) {
 		ProcessCommand(gnReqCommand, FALSE/*bReqMainThread*/);
 	}
 	return INVALID_HANDLE_VALUE;
 }
+
+
+struct PluginStartupInfo *InfoA=NULL;
+struct FarStandardFunctions *FSFA=NULL;
 
 
 extern 
@@ -49,9 +45,6 @@ void UpdateConEmuTabsA(int event, bool losingFocus, bool editorSave);
 
 void ProcessDragFromA()
 {
-	if (InfoA == NULL)
-		return;
-
 	WindowInfo WInfo;
     WInfo.Pos=0;
 	InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETWINDOWINFO, (void*)&WInfo);
@@ -158,9 +151,6 @@ void ProcessDragFromA()
 }
 void ProcessDragToA()
 {
-	if (InfoA == NULL)
-		return;
-
 	WindowInfo WInfo;				
     WInfo.Pos=0;
 	InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETWINDOWINFO, (void*)&WInfo);
@@ -305,7 +295,7 @@ void WINAPI _export GetPluginInfo(struct PluginInfo *pi)
 // watch non-modified -> modified editor status change
 int WINAPI _export ProcessEditorInput(const INPUT_RECORD *Rec)
 {
-	if (!ConEmuHwnd || !InfoA) // иногда событие от QuickView приходит ДО инициализации плагина
+	if (!ConEmuHwnd)
 		return 0; // Если мы не под эмулятором - ничего
 	// only key events with virtual codes > 0 are likely to cause status change (?)
 	if (Rec->EventType == KEY_EVENT && Rec->Event.KeyEvent.wVirtualKeyCode > 0  && Rec->Event.KeyEvent.bKeyDown)
@@ -324,7 +314,7 @@ int WINAPI _export ProcessEditorInput(const INPUT_RECORD *Rec)
 
 int WINAPI _export ProcessEditorEvent(int Event, void *Param)
 {
-	if (!ConEmuHwnd || !InfoA) // иногда событие от QuickView приходит ДО инициализации плагина
+	if (!ConEmuHwnd)
 		return 0; // Если мы не под эмулятором - ничего
 	switch (Event)
 	{
@@ -343,7 +333,7 @@ int WINAPI _export ProcessEditorEvent(int Event, void *Param)
 
 int WINAPI _export ProcessViewerEvent(int Event, void *Param)
 {
-	if (!ConEmuHwnd || !InfoA) // иногда событие от QuickView приходит ДО инициализации плагина
+	if (!ConEmuHwnd)
 		return 0; // Если мы не под эмулятором - ничего
 	switch (Event)
 	{
@@ -361,8 +351,6 @@ int WINAPI _export ProcessViewerEvent(int Event, void *Param)
 
 void UpdateConEmuTabsA(int event, bool losingFocus, bool editorSave)
 {
-	if (!InfoA) return;
-
     BOOL lbCh = FALSE;
 	WindowInfo WInfo;
 	WCHAR* pszName = gszDir1; pszName[0] = 0; //(WCHAR*)calloc(CONEMUTABMAX, sizeof(WCHAR));
@@ -444,8 +432,6 @@ void SetWindowA(int nTab)
 
 void PostMacroA(char* asMacro)
 {
-	if (!InfoA || !InfoA->AdvControl) return;
-
 	ActlKeyMacro mcr;
 	mcr.Command = MCMD_POSTMACROSTRING;
 	mcr.Param.PlainText.SequenceText = asMacro;
