@@ -6,6 +6,10 @@
 #include "..\common\common.hpp"
 #include "..\common\ConEmuCheck.h"
 
+WARNING("!!!! Пока можно при появлении события запоминать текущий тик");
+// и проверять его в RefreshThread. Если он не 0 - и дельта больше (100мс?)
+// то принудительно перечитать консоль и сбросить тик в 0.
+
 #ifdef _DEBUG
 #define MCHKHEAP { int MDEBUG_CHK=_CrtCheckMemory(); _ASSERTE(MDEBUG_CHK); }
 #else
@@ -605,6 +609,7 @@ void ComspecDone(int aiRc)
     WARNING("Вернуть размер буфера (высота И ширина)");
 }
 
+WARNING("Добавить LogInput(INPUT_RECORD* pRec) но имя файла сделать 'ConEmuC-input-%i.log'");
 void CreateLogSizeFile()
 {
     if (ghLogSize) return; // уже
@@ -620,7 +625,7 @@ void CreateLogSizeFile()
         wprintf(L"wcsrchr failed!\n%s\n", szFile);
         return; // ошибка
     }
-    wsprintfW(pszDot, L"-size-%i.log", gdwMainThreadId);
+    wsprintfW(pszDot, L"-size-%i.log", gnSelfPID);
     
     ghLogSize = CreateFileW ( szFile, GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
     if (ghLogSize == INVALID_HANDLE_VALUE) {
@@ -668,24 +673,22 @@ void LogSize(COORD* pcrSize, LPCSTR pszLabel)
     if (dwId == srv.dwInputThreadId)
             pszThread = "InputThread";
             
-    HDESK hDesk = GetThreadDesktop ( GetCurrentThreadId() );
-    HDESK hInp = OpenInputDesktop ( 0, FALSE, GENERIC_READ );
+    /*HDESK hDesk = GetThreadDesktop ( GetCurrentThreadId() );
+    HDESK hInp = OpenInputDesktop ( 0, FALSE, GENERIC_READ );*/
     
             
     SYSTEMTIME st; GetLocalTime(&st);
     if (pcrSize) {
-        sprintf(szInfo, "%i:%02i:%02i CurSize={%ix%i} ChangeTo={%ix%i} %s %s 0x%08X:0x%08X\r\n",
+        sprintf(szInfo, "%i:%02i:%02i CurSize={%ix%i} ChangeTo={%ix%i} %s %s\r\n",
             st.wHour, st.wMinute, st.wSecond,
-            lsbi.dwSize.X, lsbi.dwSize.Y, pcrSize->X, pcrSize->Y, pszThread, (pszLabel ? pszLabel : ""),
-            hDesk, hInp);
+            lsbi.dwSize.X, lsbi.dwSize.Y, pcrSize->X, pcrSize->Y, pszThread, (pszLabel ? pszLabel : ""));
     } else {
-        sprintf(szInfo, "%i:%02i:%02i CurSize={%ix%i} %s %s 0x%08X:0x%08X\r\n",
+        sprintf(szInfo, "%i:%02i:%02i CurSize={%ix%i} %s %s\r\n",
             st.wHour, st.wMinute, st.wSecond,
-            lsbi.dwSize.X, lsbi.dwSize.Y, pszThread, (pszLabel ? pszLabel : ""),
-            hDesk, hInp);
+            lsbi.dwSize.X, lsbi.dwSize.Y, pszThread, (pszLabel ? pszLabel : ""));
     }
     
-    if (hInp) CloseDesktop ( hInp );
+    //if (hInp) CloseDesktop ( hInp );
     
     DWORD dwLen = 0;
     WriteFile(ghLogSize, szInfo, strlen(szInfo), &dwLen, 0);

@@ -306,4 +306,11 @@ private:
 	DWORD mn_LastConReadTick;
 	BOOL GetConWindowSize(const CONSOLE_SCREEN_BUFFER_INFO& sbi, int& nNewWidth, int& nNewHeight);
 	int mn_Focused; //-1 после запуска, 1 - в фокусе, 0 - не в фокусе
+	// Логи
+	BOOL mb_UseLogs;
+	HANDLE mh_LogInput; wchar_t *mpsz_LogInputFile, *mpsz_LogPackets; UINT mn_LogPackets;
+	void CreateLogFiles();
+	void CloseLogFiles();
+	void LogInput(INPUT_RECORD* pRec);
+	void LogPacket(CESERVER_REQ* pInfo);
 };
