@@ -77,7 +77,7 @@ BOOL    gbAlwaysConfirmExit = FALSE;
 BOOL    gbAttachMode = FALSE;
 DWORD   gdwMainThreadId = 0;
 //int       gnBufferHeight = 0;
-
+wchar_t* gpszRunCmd = NULL;
 
 enum {
     RM_UNDEFINED = 0,
@@ -111,6 +111,7 @@ struct {
     HANDLE hRefreshEvent; // ServerMode, перечитать консоль, и если есть изменени€ - отослать в GUI
     HANDLE hChangingSize; // FALSE на врем€ смены размера консоли
     BOOL  bNeedFullReload;
+    DWORD nLastUpdateTick;
 } srv = {NULL};
 
 COORD gcrBufferSize = {80,25};
@@ -128,6 +129,7 @@ struct {
 // —писок процессов нам нужен, чтобы определить, когда консоль уже не нужна.
 // Ќапример, запустили FAR, он запустил Update, FAR перезапущен...
 std::vector<DWORD> nProcesses;
+BOOL gbInRecreateRoot = FALSE;
 
 //#define CES_NTVDM 0x10 -- common.hpp
 DWORD dwActiveFlags = 0;
@@ -163,7 +165,7 @@ int main()
     //wchar_t* psFilePart;
     //wchar_t* psCmdLine = GetCommandLineW();
     //size_t nCmdLine = lstrlenW(psCmdLine);
-    wchar_t* psNewCmd = NULL;
+    //wchar_t* psNewCmd = NULL;
     HANDLE hWait[2]={NULL,NULL};
     //BOOL bViaCmdExe = TRUE;
     PROCESS_INFORMATION pi; memset(&pi, 0, sizeof(pi));
@@ -189,11 +191,11 @@ int main()
     //if (!IsDebuggerPresent()) MessageBox(0,L"Loaded",L"ComEmuC",0);
 #endif
     
-    if ((iRc = ParseCommandLine(GetCommandLineW(), &psNewCmd)) != 0)
+    if ((iRc = ParseCommandLine(GetCommandLineW(), &gpszRunCmd)) != 0)
         goto wrap;
-    #ifdef _DEBUG
-    CreateLogSizeFile();
-    #endif
+    //#ifdef _DEBUG
+    //CreateLogSizeFile();
+    //#endif
     
     /* ***************************** */
     /* *** "ќбща€" инициализаци€ *** */
@@ -256,14 +258,14 @@ int main()
     /* *** «апуск дочернего процесса *** */
     /* ********************************* */
     
-    lbRc = CreateProcessW(NULL, psNewCmd, NULL,NULL, TRUE, NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi);
+    lbRc = CreateProcessW(NULL, gpszRunCmd, NULL,NULL, TRUE, NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi);
     dwErr = GetLastError();
     if (!lbRc)
     {
-        wprintf (L"Can't create process, ErrCode=0x%08X! Command to be executed:\n%s\n", dwErr, psNewCmd);
+        wprintf (L"Can't create process, ErrCode=0x%08X! Command to be executed:\n%s\n", dwErr, gpszRunCmd);
         iRc = CERR_CREATEPROCESS; goto wrap;
     }
-    delete psNewCmd; psNewCmd = NULL;
+    //delete psNewCmd; psNewCmd = NULL;
 
     
     
@@ -291,7 +293,7 @@ int main()
             LeaveCriticalSection(&srv.csProc);
             // » процессов в консоли все еще нет
             if (iRc == 0) {
-                wprintf (L"Process was not attached to console. Is it GUI?\nCommand to be executed:\n%s\n", psNewCmd);
+                wprintf (L"Process was not attached to console. Is it GUI?\nCommand to be executed:\n%s\n", gpszRunCmd);
                 iRc = CERR_PROCESSTIMEOUT; goto wrap;
             }
 
@@ -389,7 +391,7 @@ wrap:
         free(wpszLogSizeFile); wpszLogSizeFile = NULL;
     }
     
-    if (psNewCmd) { delete psNewCmd; psNewCmd = NULL; }
+    if (gpszRunCmd) { delete gpszRunCmd; gpszRunCmd = NULL; }
     return iRc;
 }
 
@@ -1298,8 +1300,80 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
             }
             lbRc = TRUE;
         } break;
+        
+        case CECMD_RECREATE:
+        {
+	        lbRc = FALSE; // возврат результата не требуетс€
+			// как-то оно не особо хорошо...
+#ifdef xxxxxx
+			EnterCriticalSection(&srv.csProc);
+	        int i, nCount = (nProcesses.size()+5); // + небольшой резерв
+	        _ASSERTE(nCount>0);
+			if (nCount <= 0) {
+				LeaveCriticalSection(&srv.csProc);
+				break;
+			}
+	        
+	        DWORD *pdwPID = (DWORD*)calloc(nCount, sizeof(DWORD));
+	        _ASSERTE(pdwPID!=NULL);
+	        
+	        // —начала сделаем копию списка, а то при приходе событий WinEvent может подратьс€ за vector
+	        std::vector<DWORD>::iterator iter = nProcesses.begin();
+	        i = 0;
+	        while (iter != nProcesses.end() && i < nCount) {
+		        DWORD dwPID = *iter;
+		        if (dwPID && dwPID != gnSelfPID) {
+			        pdwPID[i] = dwPID;
+			    }
+			    iter ++;
+	        }
+			LeaveCriticalSection(&srv.csProc); // здесь мы его больше не мен€ем
+	        
+			gbInRecreateRoot = TRUE;
+
+	        // “еперь можно кил€ть
+	        BOOL fSuccess = TRUE;
+	        DWORD dwErr = 0;
+	        for (i=nCount-1; i>=0; i--) {
+		        if (pdwPID[i] == 0) continue;
+		        HANDLE hProcess = OpenProcess ( PROCESS_TERMINATE, FALSE, pdwPID[i] );
+		        if (hProcess == NULL) {
+			        dwErr = GetLastError(); fSuccess = FALSE; break;
+		        }
+		        fSuccess = TerminateProcess(hProcess, 100);
+		        dwErr = GetLastError();
+		        CloseHandle(hProcess);
+		        if (!fSuccess) break;
+	        }
+			free(pdwPID); pdwPID = NULL; // больше не требуетс€
+
+	        if (fSuccess) {
+		        // Clear console!
+			    CONSOLE_SCREEN_BUFFER_INFO lsbi = {{0,0}};
+			    HANDLE hCon = ghConOut ? ghConOut : GetStdHandle(STD_OUTPUT_HANDLE);
+			    if (GetConsoleScreenBufferInfo(hCon, &lsbi)) {
+				    DWORD dwWritten = 0; COORD cr = {0,0};
+				    FillConsoleOutputCharacter(hCon, L' ', lsbi.dwSize.X*lsbi.dwSize.Y, cr, &dwWritten);
+				    FillConsoleOutputAttribute(hCon, 7, lsbi.dwSize.X*lsbi.dwSize.Y, cr, &dwWritten);
+		        }
+		        // Create process!
+			    PROCESS_INFORMATION pi; memset(&pi, 0, sizeof(pi));
+			    STARTUPINFOW si; memset(&si, 0, sizeof(si)); si.cb = sizeof(si);
+			    wprintf(L"\r\nRestarting root process: %s\r\n", gpszRunCmd);
+			    fSuccess = CreateProcessW(NULL, gpszRunCmd, NULL,NULL, TRUE, NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi);
+			    dwErr = GetLastError();
+			    if (!fSuccess)
+			    {
+			        wprintf (L"Can't create process, ErrCode=0x%08X!\n", dwErr);
+					gbAlwaysConfirmExit = TRUE; // чтобы консоль сразу не схлопнулась, а было видно ошибку
+					SetEvent(ghExitEvent); // завершение...
+			    }
+	        }
+#endif
+        } break;
     }
     
+	if (gbInRecreateRoot) gbInRecreateRoot = FALSE;
     return lbRc;
 }
 
@@ -1369,6 +1443,15 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
                 if (memcmp(&srv.ci, &lci, sizeof(srv.ci))) {
                     nWait = (WAIT_OBJECT_0+1);
                 }
+            }
+            if (srv.nLastUpdateTick) {
+	            DWORD dwCurTick = GetTickCount();
+	            DWORD dwDelta = dwCurTick - srv.nLastUpdateTick;
+	            TODO("ѕо какой-то причине, иногда, в GUI приход€т не все изменени€ консоли... попробуем так?");
+	            if (dwDelta > 300) {
+		            srv.nLastUpdateTick = 0;
+		            nWait = (WAIT_OBJECT_0+1);
+	            }
             }
         }
 
@@ -1451,7 +1534,7 @@ void CALLBACK WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, 
                         SetPriorityClass(GetCurrentProcess(), NORMAL_PRIORITY_CLASS);
                     }
                     // ѕроцессов в консоли не осталось?
-                    if (nProcesses.size() == 0) {
+                    if (nProcesses.size() == 0 && !gbInRecreateRoot) {
                         LeaveCriticalSection(&srv.csProc);
                         SetEvent(ghExitEvent);
                         return;
@@ -1880,6 +1963,9 @@ void ReloadFullConsoleInfo(CESERVER_CHAR* pCharOnly/*=NULL*/)
             MCHKHEAP
         }
     }
+    
+    //
+    srv.nLastUpdateTick = GetTickCount();
 
     if (pCheck) free(pCheck);
 }

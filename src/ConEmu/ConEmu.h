@@ -87,7 +87,7 @@ public:
 	bool gbPostUpdateWindowSize;
 	HWND hPictureView; bool bPicViewSlideShow; DWORD dwLastSlideShowTick; RECT mrc_WndPosOnPicView;
 	//bool gb_ConsoleSelectMode;
-	bool setParent, setParent2;
+	//bool setParent, setParent2;
 	//BOOL mb_InClose;
 	//int RBDownNewX, RBDownNewY;
 	POINT cursor, Rcursor;

@@ -46,6 +46,7 @@ REGEDIT4
 ;"Multi.NewConsole"=hex:57 ; win + w
 ;"Multi.NewConfirm"=hex:01 ; Confirm new console creation from shortcut
 ;"Multi.Next"=hex:51       ; win + q
+;"Multi.Restart"=hex:C0    ; win + ~
 
 ;; Some programs uses several console buffers (i.e. telnet, conman)
 ;; Set 'hex:01' to support them (activated automatically for known applications)

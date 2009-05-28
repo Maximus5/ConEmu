@@ -58,7 +58,7 @@ public:
     bool isTryToCenter;
     RECT rcTabMargins;
     bool isTabFrame;
-    bool isConMan; BYTE icConManNew, icConManNext; bool isConManNewConfirm;
+    bool isConMan; BYTE icConManNew, icConManNext, icConManRecreate; bool isConManNewConfirm;
 
     // Заголовки табов
     WCHAR szTabPanels[64]; LPCWSTR pszTabConsole;
@@ -84,6 +84,7 @@ public:
     DWORD nAffinity;
 
 	// Debugging - "c:\\temp\\ConEmuVCon-%i-%i.dat"
+	bool isAdvLogging;
 	wchar_t szDumpPackets[MAX_PATH];
 	// Debugging
 	bool isConVisible;

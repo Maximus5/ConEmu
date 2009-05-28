@@ -481,7 +481,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     //pVCon = NULL;
 
-    bool setParentDisabled=false;
+    //bool setParentDisabled=false;
     bool ClearTypePrm = false;
     bool FontPrm = false; TCHAR* FontVal = NULL;
     bool SizePrm = false; LONG SizeVal;
@@ -502,11 +502,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     //DisableIME();
 
     //Windows7 - SetParent для консоли валится
-    gConEmu.setParent = false; // PictureView теперь идет через Wrapper
-    if ((osver.dwMajorVersion>6) || (osver.dwMajorVersion==6 && osver.dwMinorVersion>=1))
-    {
-        setParentDisabled = true;
-    }
+    //gConEmu.setParent = false; // PictureView теперь идет через Wrapper
+    //if ((osver.dwMajorVersion>6) || (osver.dwMajorVersion==6 && osver.dwMinorVersion>=1))
+    //{
+    //    setParentDisabled = true;
+    //}
     if (osver.dwMajorVersion>=6)
     {
 	    CheckConIme();
@@ -717,18 +717,22 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             {
                 WindowModeVal = rMaximized; WindowPrm = true;
             }
-            else if ( !klstricmp(curCommand, _T("/DontSetParent")) || !klstricmp(curCommand, _T("/Windows7")) )
+            else if ( !klstricmp(curCommand, _T("/log")))
             {
-                setParentDisabled = true;
-            }
-            else if ( !klstricmp(curCommand, _T("/SetParent")) )
-            {
-                gConEmu.setParent = true;
-            }
-            else if ( !klstricmp(curCommand, _T("/SetParent2")) )
-            {
-                gConEmu.setParent = true; gConEmu.setParent2 = true;
-            }
+	            gSet.isAdvLogging = true;
+	        }
+            //else if ( !klstricmp(curCommand, _T("/DontSetParent")) || !klstricmp(curCommand, _T("/Windows7")) )
+            //{
+            //    setParentDisabled = true;
+            //}
+            //else if ( !klstricmp(curCommand, _T("/SetParent")) )
+            //{
+            //    gConEmu.setParent = true;
+            //}
+            //else if ( !klstricmp(curCommand, _T("/SetParent2")) )
+            //{
+            //    gConEmu.setParent = true; gConEmu.setParent2 = true;
+            //}
             else if (!klstricmp(curCommand, _T("/BufferHeight")) && i + 1 < params)
             {
                 curCommand += _tcslen(curCommand) + 1; i++;
@@ -776,9 +780,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			curCommand += _tcslen(curCommand) + 1; i++;
         }
     }
-    if (setParentDisabled && (gConEmu.setParent || gConEmu.setParent2)) {
-        gConEmu.setParent=false; gConEmu.setParent2=false;
-    }
+    //if (setParentDisabled && (gConEmu.setParent || gConEmu.setParent2)) {
+    //    gConEmu.setParent=false; gConEmu.setParent2=false;
+    //}
 
     if (psUnknown) {
 	    TCHAR* psMsg = (TCHAR*)calloc(_tcslen(psUnknown)+100,sizeof(TCHAR));

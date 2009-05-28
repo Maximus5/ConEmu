@@ -30,6 +30,7 @@
 #define CECMD_SETSIZE       3
 // 4 - пока свободно
 #define CECMD_GETGUIHWND    5
+#define CECMD_RECREATE      6
 
 #define CESERVER_REQ_VER    1
 

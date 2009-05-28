@@ -50,6 +50,12 @@
 #define CONMAN_NEXTCONSOLE 21
 #define CONMAN_PREVCONSOLE 22
 #define CONMAN_ALTCONSOLE 15
+//
+#define CONMAN_RECREATE 100
+//...
+#define CONMAN_RECREATELAST (CONMAN_RECREATE+MAX_CONSOLE_COUNT-1) // это все зарезервировано
+
+#define CON_RECREATE_TIMEOUT 30000
 
 #ifndef CLEARTYPE_NATURAL_QUALITY
 #define CLEARTYPE_QUALITY       5
@@ -346,10 +352,8 @@ Command line switches:\n\
 /font <fontname> - Specify the font name.\n\
 /size <fontsize> - Specify the font size.\n\
 /fontfile <fontfilename> - Loads fonts from file.\n\
-/SetParent - force change parent of con.window\n\
-/DontSetParent - disable of changing parent (aka /Windows7)\n\
 /BufferHeight <lines> - may be used with cmd.exe\n\
-/Attach [PID] - intercept console of specified process\n\
+--/Attach [PID] - intercept console of specified process\n\
 /cmd <commandline> - Command line to start. This must be the last used switch.\n\
 \n\
 Command line examples:\n\
@@ -358,7 +362,6 @@ ConEmu.exe /ct /font \"Lucida Console\" /size 16 /cmd far.exe \"c:\\1 2\\\"\n\
 (c) 2006-2008, Zoin (based on console emulator by SEt).\n\
 NightRoman: drawing process optimization, BufferHeight and other fixes\n\
 dolzenko_: windows switching via GUI tabs\n\
-DrKnS: Update plugin support\n\
 alex_itd: Drag'n'Drop, RightClick, AltEnter and GUI bars\n\
 Mors: loading font from file\n\
 Maximus5: PictureView support, bugfixes and customizations.";

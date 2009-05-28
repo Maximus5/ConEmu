@@ -164,7 +164,7 @@ public:
 	void SendMouseEvent(UINT messg, WPARAM wParam, int x, int y);
 	void SendConsoleEvent(INPUT_RECORD* piRec);
 	void StopSignal();
-	void StopThread();
+	void StopThread(BOOL abRecreating=FALSE);
 	void Paint();
 	void UpdateInfo();
 	BOOL isBufferHeight();
@@ -190,6 +190,7 @@ public:
 	BOOL isDetached();
 	BOOL AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID);
 	RECT GetRect();
+	bool RecreateProcess();
 
 protected:
 	DWORD mn_ConEmuC_PID; HANDLE mh_ConEmuC, mh_ConEmuCInput;
@@ -292,7 +293,7 @@ private:
 	bool mb_ConsoleSelectMode;
 	int BufferHeight;
 	static DWORD WINAPI ServerThread(LPVOID lpvParam);
-	HANDLE mh_ServerThreads[MAX_SERVER_THREADS];
+	HANDLE mh_ServerThreads[MAX_SERVER_THREADS], mh_ActiveServerThread;
 	DWORD  mn_ServerThreadsId[MAX_SERVER_THREADS];
 	HANDLE mh_ServerSemaphore, mh_GuiAttached;
 	//typedef struct tag_ServerThreadCommandArg {
@@ -306,6 +307,8 @@ private:
 	DWORD mn_LastConReadTick;
 	BOOL GetConWindowSize(const CONSOLE_SCREEN_BUFFER_INFO& sbi, int& nNewWidth, int& nNewHeight);
 	int mn_Focused; //-1 после запуска, 1 - в фокусе, 0 - не в фокусе
+	DWORD mn_InRecreate; // Tick, когда начали пересоздание
+	BOOL mb_ProcessRestarted;
 	// Логи
 	BOOL mb_UseLogs;
 	HANDLE mh_LogInput; wchar_t *mpsz_LogInputFile, *mpsz_LogPackets; UINT mn_LogPackets;
@@ -313,4 +316,5 @@ private:
 	void CloseLogFiles();
 	void LogInput(INPUT_RECORD* pRec);
 	void LogPacket(CESERVER_REQ* pInfo);
+	bool RecreateProcessStart();
 };

@@ -67,8 +67,10 @@ void CSettings::InitSettings()
     _tcscpy(Config, _T("Software\\ConEmu"));
     
     psCmd = NULL; psCurCmd = NULL;
-    isConMan = false; icConManNew = 'W'; icConManNext = 'Q'; isConManNewConfirm = true;
-	szDumpPackets[0] = 0;
+    isConMan = false; icConManNew = 'W'; icConManNext = 'Q'; icConManRecreate = 192/*VK_тильда*/; isConManNewConfirm = true;
+    // Logging
+    isAdvLogging = false;
+	wcscpy(szDumpPackets, L"c:\\temp\\ConEmuVCon-%i-%i.dat");
 
     nMainTimerElapse = 10;
     nAffinity = 3;
@@ -192,6 +194,7 @@ void CSettings::LoadSettings()
         reg.Load(_T("Multi"), isConMan);
 			reg.Load(_T("Multi.NewConsole"), icConManNew);
 			reg.Load(_T("Multi.Next"), icConManNext);
+			reg.Load(_T("Multi.Recreate"), icConManRecreate);
 			reg.Load(_T("Multi.NewConfirm"), isConManNewConfirm);
         reg.Load(_T("BackGround Image"), sBgImage);
         reg.Load(_T("bgImageDarker"), bgImageDarker);
