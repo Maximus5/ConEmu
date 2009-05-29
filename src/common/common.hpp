@@ -13,13 +13,8 @@
 #define STRING2(x) #x
 #define STRING(x) STRING2(x)
 #define FILE_LINE __FILE__ "(" STRING(__LINE__) "): "
-#ifdef HIDE_TODO
-#define TODO(s) 
-#define WARNING(s) 
-#else
 #define TODO(s) __pragma(message (FILE_LINE "TODO: " s))
 #define WARNING(s) __pragma(message (FILE_LINE "warning: " s))
-#endif
 #define PRAGMA_ERROR(s) __pragma(message (FILE_LINE "error: " s))
 
 #define CES_NTVDM 0x10
