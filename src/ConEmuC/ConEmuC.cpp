@@ -1069,26 +1069,9 @@ DWORD WINAPI InputThread(LPVOID lpvParam)
                   break;
               }
               if (iRec.EventType) {
-	              // проверить ENABLE_PROCESSED_INPUT в GetConsoleMode
-	              #define ALL_MODIFIERS (LEFT_ALT_PRESSED|RIGHT_ALT_PRESSED|LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED|SHIFT_PRESSED)
-	              #define CTRL_MODIFIERS (LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED)
-	              if (iRec.EventType == KEY_EVENT && 
-		              (iRec.Event.KeyEvent.dwControlKeyState & CTRL_MODIFIERS) &&
-		              ((iRec.Event.KeyEvent.dwControlKeyState & ALL_MODIFIERS) 
-			           == (iRec.Event.KeyEvent.dwControlKeyState & CTRL_MODIFIERS)) &&
-		              (iRec.Event.KeyEvent.wVirtualKeyCode == 'C' || 
-		               iRec.Event.KeyEvent.wVirtualKeyCode == VK_PAUSE))
-		          {
-			          GenerateConsoleCtrlEvent(
-				          (iRec.Event.KeyEvent.wVirtualKeyCode == 'C') ? 0 : 1,
-				          0);
-				      iRec.EventType = 0;
-		          }
               
-		          if (iRec.EventType) {
-	                  fSuccess = WriteConsoleInput(ghConIn, &iRec, 1, &cbWritten);
-	                  _ASSERTE(fSuccess && cbWritten==1);
-	              }
+                  fSuccess = WriteConsoleInput(ghConIn, &iRec, 1, &cbWritten);
+                  _ASSERTE(fSuccess && cbWritten==1);
               }
               // next
               memset(&iRec,0,sizeof(iRec));

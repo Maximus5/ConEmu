@@ -131,7 +131,7 @@ LRESULT CALLBACK CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam
 					WCHAR szDbg[128]; swprintf(szDbg, L"Tabs:Notified(%i)\n", wParam);
 					DEBUGSTR(szDbg);
 				#endif
-				#pragma message (__FILE__ "(" STRING(__LINE__) "): TODO: здесь хорошо бы вместо OnTimer реально обновить mn_TopProcessID")
+				TODO("здесь хорошо бы вместо OnTimer реально обновить mn_TopProcessID")
 				// иначе во время запуска PID фара еще может быть не известен...
 				//gConEmu.OnTimer(0,0); не получилось. индекс конмана не менялся, из-за этого индекс активного фара так и остался 0
 				TabBar.Retrieve();

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="windows-1251"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9,00"
+	Version="9.00"
 	Name="conemu"
 	ProjectGUID="{EEE25AC6-D94D-472D-8D4A-3C6C382CFD3D}"
 	RootNamespace="conemu"
@@ -41,7 +41,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;MSGLOGGER;_WIN32_WINNT=0x510"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;MSGLOGGER;_WIN32_WINNT=0x510;HIDE_TODO"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -198,7 +198,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;MSGLOGGER"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;MSGLOGGER;HIDE_TODO"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -218,7 +218,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="comctl32.lib UxTheme.lib Shlwapi.lib version.lib"
-				OutputFile="F:\VCProject\FarPlugin\#FAR175\ConEmu.exe"
+				OutputFile="F:\VCProject\FarPlugin\#FAR180\ConEmu.exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
 				GenerateMapFile="true"
@@ -366,6 +366,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\RealConsole.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\TabBar.cpp"
 				>
 			</File>
@@ -429,6 +433,10 @@
 			</File>
 			<File
 				RelativePath=".\ProgressBars.h"
+				>
+			</File>
+			<File
+				RelativePath=".\RealConsole.h"
 				>
 			</File>
 			<File
