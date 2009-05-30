@@ -6,6 +6,11 @@
 #include "..\common\common.hpp"
 #include "..\common\ConEmuCheck.h"
 
+#ifdef _DEBUG
+//  Раскомментировать, чтобы сразу после запуска процесса (conemuc.exe) показать MessageBox, чтобы прицепиться дебаггером
+//	#define SHOW_STARTED_MSGBOX
+#endif
+
 WARNING("!!!! Пока можно при появлении события запоминать текущий тик");
 // и проверять его в RefreshThread. Если он не 0 - и дельта больше (100мс?)
 // то принудительно перечитать консоль и сбросить тик в 0.
@@ -193,7 +198,7 @@ int main()
     gnSelfPID = GetCurrentProcessId();
     gdwMainThreadId = GetCurrentThreadId();
     
-#ifdef _DEBUG
+#ifdef SHOW_STARTED_MSGBOX
     if (!IsDebuggerPresent()) MessageBox(0,GetCommandLineW(),L"ComEmuC Loaded",0);
 #endif
     
@@ -645,10 +650,11 @@ int NextArg(LPCWSTR &asCmdLine, wchar_t* rsArg/*[MAX_PATH+1]*/)
 
 int ComspecInit()
 {
-    WARNING("Увеличить высоту буфера до 600+ строк, запомнить текущий размер (высота И ширина)");
     TODO("Определить код родительского процесса, и если это FAR - запомнить его (для подключения к пайпу плагина)");
 	TODO("Размер получить из GUI, если оно есть, иначе - по умолчанию");
 	TODO("GUI может скорректировать размер с учетом полосы прокрутки");
+
+	WARNING("Послать в GUI CONEMUCMDSTARTED");
 
 	if (GetConsoleScreenBufferInfo(ghConOut, &cmd.sbi)) {
 		//SMALL_RECT rc = {0}; 
@@ -660,9 +666,11 @@ int ComspecInit()
 
 void ComspecDone(int aiRc)
 {
+	WARNING("Послать в GUI CONEMUCMDSTOPPED");
+
     TODO("Уведомить плагин через пайп (если родитель - FAR) что процесс завершен. Плагин должен считать и запомнить содержимое консоли и только потом вернуть управление в ConEmuC!");
     
-    WARNING("Вернуть размер буфера (высота И ширина)");
+    // Вернуть размер буфера (высота И ширина)
 	if (cmd.sbi.dwSize.X && cmd.sbi.dwSize.Y) {
 		SMALL_RECT rc = {0};
 		SetConsoleSize(0, cmd.sbi.dwSize, rc, "ComspecDone");
@@ -2203,11 +2211,13 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
         // Начался ресайз для BufferHeight
 		COORD crHeight = {crNewSize.X, BufferHeight};
 
+		GetWindowRect(ghConWnd, &rcConPos);
         MoveWindow(ghConWnd, rcConPos.left, rcConPos.top, 1, 1, 1);
         lbRc = SetConsoleScreenBufferSize(ghConOut, crHeight); // а не crNewSize - там "оконные" размеры
         //окошко раздвигаем только по ширине!
-        GetWindowRect(ghConWnd, &rcConPos);
-        MoveWindow(ghConWnd, rcConPos.left, rcConPos.top, GetSystemMetrics(SM_CXSCREEN), rcConPos.bottom-rcConPos.top, 1);
+		RECT rcCurConPos = {0};
+		GetWindowRect(ghConWnd, &rcCurConPos); //X-Y новые, но высота - старая
+        MoveWindow(ghConWnd, rcCurConPos.left, rcCurConPos.top, GetSystemMetrics(SM_CXSCREEN), rcConPos.bottom-rcConPos.top, 1);
 
 		if (rNewRect.Right && rNewRect.Bottom) {
             SetConsoleWindowInfo(ghConOut, TRUE, &rNewRect);

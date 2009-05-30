@@ -59,7 +59,9 @@ typedef struct tag_CESERVER_CHAR {
 
 #pragma pack(pop)
 
-#define CONEMUMSG_ATTACH L"ConEmuMain::Attach" // wParam == hConWnd, lParam == ConEmuC_PID
+#define CONEMUMSG_ATTACH L"ConEmuMain::Attach"        // wParam == hConWnd, lParam == ConEmuC_PID
+#define CONEMUCMDSTARTED L"ConEmuMain::CmdStarted"    // wParam == hConWnd, lParam == ConEmuC_PID (as ComSpec)
+#define CONEMUCMDSTOPPED L"ConEmuMain::CmdTerminated" // wParam == hConWnd, lParam == ConEmuC_PID (as ComSpec)
 
 #define CONEMUMAPPING    L"ConEmuPluginData%u"
 #define CONEMUDRAGFROM   L"ConEmuDragFrom%u"

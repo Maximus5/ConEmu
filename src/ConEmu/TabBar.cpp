@@ -234,7 +234,7 @@ BOOL TabBarClass::IsAllowed()
 		if (!pCon) 
 			lbTabsAllowed = FALSE;
 		else
-			lbTabsAllowed = !pCon->isBufferHeight();
+			lbTabsAllowed = !pCon->mp_RCon->isBufferHeight();
 	//}
 	return lbTabsAllowed;
 }
@@ -536,7 +536,7 @@ WARNING("Для всех кнопок 1-12 отображается заголовок ТЕКУЩЕЙ консоли");
 		LPNMTBGETINFOTIP pDisp = (LPNMTBGETINFOTIP)nmhdr;
 		if (pDisp->iItem>=1 && pDisp->iItem<=MAX_CONSOLE_COUNT) {
 			if (!pDisp->pszText || !pDisp->cchTextMax) return false;
-			LPCWSTR pszTitle = gConEmu.ActiveCon()->GetTitle();
+			LPCWSTR pszTitle = gConEmu.ActiveCon()->mp_RCon->GetTitle();
 			if (pszTitle) {
 				lstrcpyn(pDisp->pszText, pszTitle, pDisp->cchTextMax);
 			} else {

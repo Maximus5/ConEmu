@@ -103,7 +103,7 @@ public:
 	TCHAR szConEmuVersion[32];
 	//DWORD m_ProcList[1000], 
 	DWORD m_ProcCount; //, m_ActiveConmanIDX, mn_ConmanPID;
-	HMODULE mh_ConMan;
+	//HMODULE mh_ConMan;
 	//HMODULE mh_Infis; TCHAR ms_InfisPath[MAX_PATH*2];
 	DWORD mn_ActiveStatus;
 	//DWORD mn_TopProcessID; 
@@ -115,7 +115,7 @@ protected:
 	//int mn_NeedRetryName;
 	//std::vector<struct ConProcess> m_Processes;
 	//void CheckProcessName(struct ConProcess &ConPrc, LPCTSTR asFullFileName);
-	LPTSTR GetTitleStart(DWORD* rnConmanIDX=NULL);
+	LPTSTR GetTitleStart();
 	//bool GetProcessFileName(DWORD dwPID, TCHAR* rsName/*[32]*/, DWORD *pdwErr);
 	BOOL mb_InTimer;
 	BOOL mb_ProcessCreated; DWORD mn_StartTick;
@@ -134,6 +134,8 @@ protected:
 	UINT mn_MsgUpdateTitle;
 	UINT mn_MsgAttach;
 	UINT mn_MsgVConTerminated;
+	UINT mn_MsgCmdStarted;
+	UINT mn_MsgCmdStopped;
 
 public:
 	DWORD CheckProcesses();
@@ -181,8 +183,8 @@ public:
 	//BOOL InitConMan(LPCWSTR asCommandLine);
 	void InvalidateAll();
 	bool isActive(CVirtualConsole* apCon);
-	bool isConman();
-	bool isConmanAlternative();
+	//bool isConman();
+	//bool isConmanAlternative();
 	bool isConSelectMode();
 	bool isDragging();
 	bool isEditor();
@@ -218,6 +220,7 @@ public:
 public:
 	LRESULT OnClose(HWND hWnd);
 	LRESULT OnCopyData(PCOPYDATASTRUCT cds);
+	LRESULT OnConEmuCmd(BOOL abStarted, HWND ahConWnd, DWORD anConEmuC_PID);
 	LRESULT OnCreate(HWND hWnd);
 	LRESULT OnDestroy(HWND hWnd);
 	LRESULT OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
