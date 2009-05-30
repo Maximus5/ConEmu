@@ -66,6 +66,7 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 void CreateLogSizeFile();
 void LogSize(COORD* pcrSize, LPCSTR pszLabel);
 BOOL WINAPI HandlerRoutine(DWORD dwCtrlType);
+int GetProcessCount(DWORD **rpdwPID);
 
 
 /*  Global  */
@@ -78,6 +79,7 @@ BOOL    gbAttachMode = FALSE;
 DWORD   gdwMainThreadId = 0;
 //int       gnBufferHeight = 0;
 wchar_t* gpszRunCmd = NULL;
+HANDLE  ghCtrlCEvent = NULL, ghCtrlBreakEvent = NULL;
 
 enum {
     RM_UNDEFINED = 0,
@@ -117,7 +119,13 @@ struct {
     HANDLE hChangingSize; // FALSE на время смены размера консоли
     BOOL  bNeedFullReload;
     DWORD nLastUpdateTick;
-} srv = {NULL};
+} srv = {0};
+
+struct {
+	DWORD dwProcessGroup;
+	DWORD dwFarPID;
+	CONSOLE_SCREEN_BUFFER_INFO sbi;
+} cmd = {0};
 
 COORD gcrBufferSize = {80,25};
 BOOL  gbParmBufferSize = FALSE;
@@ -126,10 +134,6 @@ SHORT gnBufferHeight = 0;
 HANDLE ghLogSize = NULL;
 wchar_t* wpszLogSizeFile = NULL;
 
-
-struct {
-    DWORD dwFarPID;
-} cmd = {0};
 
 BOOL gbInRecreateRoot = FALSE;
 
@@ -190,7 +194,7 @@ int main()
     gdwMainThreadId = GetCurrentThreadId();
     
 #ifdef _DEBUG
-    //if (!IsDebuggerPresent()) MessageBox(0,L"Loaded",L"ComEmuC",0);
+    if (!IsDebuggerPresent()) MessageBox(0,GetCommandLineW(),L"ComEmuC Loaded",0);
 #endif
     
     if ((iRc = ParseCommandLine(GetCommandLineW(), &gpszRunCmd)) != 0)
@@ -230,19 +234,21 @@ int main()
         iRc = CERR_CONOUTFAILED; goto wrap;
     }
     
-    SetHandleInformation(GetStdHandle(STD_INPUT_HANDLE), HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT);
-    SetHandleInformation(GetStdHandle(STD_OUTPUT_HANDLE), HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT);
-    SetHandleInformation(GetStdHandle(STD_ERROR_HANDLE), HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT);
+	//2009-05-30 попробуем без этого ?
+    //SetHandleInformation(GetStdHandle(STD_INPUT_HANDLE), HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT);
+    //SetHandleInformation(GetStdHandle(STD_OUTPUT_HANDLE), HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT);
+    //SetHandleInformation(GetStdHandle(STD_ERROR_HANDLE), HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT);
     
     mode = 0;
-    lb = GetConsoleMode(ghConIn, &mode);
+    /*lb = GetConsoleMode(ghConIn, &mode);
     if (!(mode & ENABLE_MOUSE_INPUT)) {
         mode |= ENABLE_MOUSE_INPUT;
         lb = SetConsoleMode(ghConIn, mode);
-    }
+    }*/
 
 	// Обязательно, иначе по CtrlC мы свалимся
-	SetConsoleCtrlHandler((PHANDLER_ROUTINE)NULL/*HandlerRoutine*/, true);
+	SetConsoleCtrlHandler((PHANDLER_ROUTINE)HandlerRoutine, true);
+	//SetConsoleMode(ghConIn, 0);
 
     /* ******************************** */
     /* *** "Режимная" инициализация *** */
@@ -262,7 +268,10 @@ int main()
     /* *** Запуск дочернего процесса *** */
     /* ********************************* */
     
-    lbRc = CreateProcessW(NULL, gpszRunCmd, NULL,NULL, TRUE, NORMAL_PRIORITY_CLASS|CREATE_NEW_PROCESS_GROUP, NULL, NULL, &si, &pi);
+	// CREATE_NEW_PROCESS_GROUP - низя, перестает работать Ctrl-C
+    lbRc = CreateProcessW(NULL, gpszRunCmd, NULL,NULL, TRUE, 
+			NORMAL_PRIORITY_CLASS/*|CREATE_NEW_PROCESS_GROUP*/, 
+			NULL, NULL, &si, &pi);
     dwErr = GetLastError();
     if (!lbRc)
     {
@@ -271,7 +280,9 @@ int main()
     }
     //delete psNewCmd; psNewCmd = NULL;
 
-    
+	// Обязательно, иначе по CtrlC мы свалимся
+	//SetConsoleCtrlHandler(HandlerRoutine, TRUE);
+
     
     /* *************************** */
     /* *** Ожидание завершения *** */
@@ -308,7 +319,35 @@ int main()
         }
     } else {
         // В режиме ComSpec нас интересует завершение ТОЛЬКО дочернего процесса
-        WaitForSingleObject(pi.hProcess, INFINITE);
+
+		wchar_t szEvtName[128];
+
+		wsprintf(szEvtName, CESIGNAL_C, pi.dwProcessId);
+		ghCtrlCEvent = CreateEvent(NULL, FALSE, FALSE, szEvtName);
+		wsprintf(szEvtName, CESIGNAL_BREAK, pi.dwProcessId);
+		ghCtrlBreakEvent = CreateEvent(NULL, FALSE, FALSE, szEvtName);
+
+		HANDLE hEvents[3];
+		hEvents[0] = pi.hProcess;
+		hEvents[1] = ghCtrlCEvent;
+		hEvents[2] = ghCtrlBreakEvent;
+        //WaitForSingleObject(pi.hProcess, INFINITE);
+		DWORD dwWait = 0;
+		BOOL lbGenRc = FALSE;
+		while ((dwWait = WaitForMultipleObjects(3, hEvents, FALSE, INFINITE)) != WAIT_OBJECT_0)
+		{
+			if (dwWait == (WAIT_OBJECT_0+1) || dwWait == (WAIT_OBJECT_0+2)) {
+				DWORD dwEvent = (dwWait == (WAIT_OBJECT_0+1)) ? CTRL_C_EVENT : CTRL_BREAK_EVENT;
+				/*DWORD dwMode = 0;
+				HANDLE hConIn  = CreateFile(L"CONIN$", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_READ,
+					0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+				GetConsoleMode(hConIn, &dwMode);
+				SetConsoleMode(hConIn, dwMode);
+				CloseHandle(hConIn);*/
+
+				lbGenRc = GenerateConsoleCtrlEvent(dwEvent, pi.dwProcessId);
+			}
+		}
         // Сразу закрыть хэндлы
         if (pi.hProcess) SafeCloseHandle(pi.hProcess); 
         if (pi.hThread) SafeCloseHandle(pi.hThread);
@@ -595,9 +634,10 @@ int NextArg(LPCWSTR &asCmdLine, wchar_t* rsArg/*[MAX_PATH+1]*/)
 
     psCmdLine = pch;
     
-    // Finilize
+    // Finalize
     ch = *psCmdLine; // может указывать на закрывающую кавычку
-    while (ch == L'"' || ch == L' ' || ch == L'\t' || ch == L'\r' || ch == L'\n') ch = *(++psCmdLine);
+	if (ch == L'"') ch = *(++psCmdLine);
+    while (ch == L' ' || ch == L'\t' || ch == L'\r' || ch == L'\n') ch = *(++psCmdLine);
     asCmdLine = psCmdLine;
     
     return 0;
@@ -607,6 +647,14 @@ int ComspecInit()
 {
     WARNING("Увеличить высоту буфера до 600+ строк, запомнить текущий размер (высота И ширина)");
     TODO("Определить код родительского процесса, и если это FAR - запомнить его (для подключения к пайпу плагина)");
+	TODO("Размер получить из GUI, если оно есть, иначе - по умолчанию");
+	TODO("GUI может скорректировать размер с учетом полосы прокрутки");
+
+	if (GetConsoleScreenBufferInfo(ghConOut, &cmd.sbi)) {
+		//SMALL_RECT rc = {0}; 
+		//COORD crNew = {cmd.sbi.dwSize.X,cmd.sbi.dwSize.Y};
+		SetConsoleSize(1000, cmd.sbi.dwSize, cmd.sbi.srWindow, "ComspecInit");
+	}
     return 0;
 }
 
@@ -615,6 +663,13 @@ void ComspecDone(int aiRc)
     TODO("Уведомить плагин через пайп (если родитель - FAR) что процесс завершен. Плагин должен считать и запомнить содержимое консоли и только потом вернуть управление в ConEmuC!");
     
     WARNING("Вернуть размер буфера (высота И ширина)");
+	if (cmd.sbi.dwSize.X && cmd.sbi.dwSize.Y) {
+		SMALL_RECT rc = {0};
+		SetConsoleSize(0, cmd.sbi.dwSize, rc, "ComspecDone");
+	}
+
+	SafeCloseHandle(ghCtrlCEvent);
+	SafeCloseHandle(ghCtrlBreakEvent);
 }
 
 WARNING("Добавить LogInput(INPUT_RECORD* pRec) но имя файла сделать 'ConEmuC-input-%i.log'");
@@ -707,6 +762,21 @@ int ServerInit()
     int iRc = 0;
     DWORD dwErr = 0;
     HANDLE hWait[2] = {NULL,NULL};
+	wchar_t szComSpec[MAX_PATH+1], szSelf[MAX_PATH+1];
+
+	TODO("Сразу проверить, может ComSpecC уже есть?");
+	if (GetEnvironmentVariable(L"ComSpec", szComSpec, MAX_PATH)) {
+		wchar_t* pszSlash = wcsrchr(szComSpec, L'\\');
+		if (pszSlash) {
+			if (wcsnicmp(pszSlash, L"\\conemuc.", 9)) {
+				// Если это НЕ мы - сохранить в ComSpecC
+				SetEnvironmentVariable(L"ComSpecC", szComSpec);
+			}
+		}
+	}
+	if (GetModuleFileName(NULL, szSelf, MAX_PATH)) {
+		SetEnvironmentVariable(L"ComSpec", szSelf);
+	}
 
     srv.bContentsChanged = TRUE;
     srv.nMainTimerElapse = 10;
@@ -1076,53 +1146,103 @@ DWORD WINAPI InputThread(LPVOID lpvParam)
 	              // проверить ENABLE_PROCESSED_INPUT в GetConsoleMode
 	              #define ALL_MODIFIERS (LEFT_ALT_PRESSED|RIGHT_ALT_PRESSED|LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED|SHIFT_PRESSED)
 	              #define CTRL_MODIFIERS (LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED)
-	              if (iRec.EventType == KEY_EVENT && 
-					  (iRec.Event.KeyEvent.wVirtualKeyCode == 'C' || 
-					  iRec.Event.KeyEvent.wVirtualKeyCode == VK_PAUSE))
+				//if (iRec.EventType == KEY_EVENT && iRec.Event.KeyEvent.wVirtualKeyCode == 'C' &&
+				//  (iRec.Event.KeyEvent.dwControlKeyState & LEFT_CTRL_PRESSED)
+				// )
+				//{
+				//  /*DWORD dwMode = 0;
+				//  HANDLE hConIn  = CreateFile(L"CONIN$", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_READ,
+				//	  0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+				//  GetConsoleMode(hConIn, &dwMode);
+				//  SetConsoleMode(hConIn, dwMode&~ENABLE_PROCESSED_INPUT);
+				//  CloseHandle(hConIn);*/
+				//
+				//  PostMessage(ghConWnd, WM_KEYDOWN, 17,0x001D0001);
+				//  PostMessage(ghConWnd, WM_KEYDOWN, 67,0x002E0001);
+				//  PostMessage(ghConWnd, WM_KEYUP, 67,0xC02E0001);
+				//  PostMessage(ghConWnd, WM_KEYUP, 17,0xC01D0001);
+				//  iRec.EventType = 0;
+				//}
+	              if (iRec.EventType == KEY_EVENT && iRec.Event.KeyEvent.bKeyDown &&
+					  (iRec.Event.KeyEvent.wVirtualKeyCode == 'C' || iRec.Event.KeyEvent.wVirtualKeyCode == VK_CANCEL)
+					 )
 				  {
-					  //The SetConsoleMode function can disable the ENABLE_PROCESSED_INPUT mode for a console's input buffer, 
-					  //so CTRL+C is reported as keyboard input rather than as a signal. 
-					  // CTRL+BREAK is always treated as a signal
-		              if (srv.dwConsoleMode == 0 &&
-						  (iRec.Event.KeyEvent.dwControlKeyState & CTRL_MODIFIERS) &&
+						BOOL lbRc = FALSE;
+						DWORD dwEvent = (iRec.Event.KeyEvent.wVirtualKeyCode == 'C') ? CTRL_C_EVENT : CTRL_BREAK_EVENT;
+					  //&& (srv.dwConsoleMode & ENABLE_PROCESSED_INPUT)
+
+						//The SetConsoleMode function can disable the ENABLE_PROCESSED_INPUT mode for a console's input buffer, 
+						//so CTRL+C is reported as keyboard input rather than as a signal. 
+						// CTRL+BREAK is always treated as a signal
+						if (
+							(iRec.Event.KeyEvent.dwControlKeyState & CTRL_MODIFIERS) &&
 							((iRec.Event.KeyEvent.dwControlKeyState & ALL_MODIFIERS) 
 							== (iRec.Event.KeyEvent.dwControlKeyState & CTRL_MODIFIERS))
-		                 )
-					  {
-						  // что-то GenerateConsoleCtrlEvent не доходит до cmd.exe....
-						  DWORD dwErr = 0; BOOL lbRc = FALSE;
-						  DWORD *pdwPID = NULL; int nCount = 0, i;
-						  EnterCriticalSection(&srv.csProc);
-						  nCount = srv.nProcesses.size();
-						  if (nCount > 0) {
-						      pdwPID = (DWORD*)calloc(nCount, sizeof(DWORD));
-							  std::vector<DWORD>::iterator iter = srv.nProcesses.begin();
-							  i = 0;
-							  while (iter != srv.nProcesses.end()) {
-								  pdwPID[i++] = *iter;
-								  iter ++;
-							  }
-						  }
-						  LeaveCriticalSection(&srv.csProc);
+							)
+						{
+							//iRec.EventType = 0;
 
-						  for (i = nCount-1; i>=0; i--) {
-							  if (pdwPID[i] == 0 || pdwPID[i] == gnSelfPID) continue;
-							  lbRc = GenerateConsoleCtrlEvent(
-								  (iRec.Event.KeyEvent.wVirtualKeyCode == 'C') ? 0 : 1,
-								  pdwPID[i] /*srv.dwProcessGroup*/);
-							  if (!lbRc) dwErr = GetLastError();
-						  }
-						  lbRc = GenerateConsoleCtrlEvent(
-							  (iRec.Event.KeyEvent.wVirtualKeyCode == 'C') ? 0 : 1,
-							  srv.dwProcessGroup);
-						  lbRc = GenerateConsoleCtrlEvent(
-							  (iRec.Event.KeyEvent.wVirtualKeyCode == 'C') ? 0 : 1,
-							  0 /*srv.dwProcessGroup*/);
-						  iRec.EventType = 0;
-						  /*PostMessage(ghConWnd, WM_KEYDOWN, VK_CONTROL, 0);
-						  PostMessage(ghConWnd, WM_KEYDOWN, iRec.Event.KeyEvent.wVirtualKeyCode, 0);
-						  PostMessage(ghConWnd, WM_KEYUP, iRec.Event.KeyEvent.wVirtualKeyCode, 0);
-						  PostMessage(ghConWnd, WM_KEYUP, VK_CONTROL, 0);*/
+						#ifdef xxxxxx // так работает, но в "ping" приходит только CTRL_BREAK_EVENT
+							BOOL lbRc = FALSE;
+							DWORD dwEvent =
+							(iRec.Event.KeyEvent.wVirtualKeyCode == 'C') ?
+								CTRL_C_EVENT : CTRL_BREAK_EVENT;
+							lbRc = GenerateConsoleCtrlEvent(dwEvent, 0);
+						#endif
+
+						#ifdef xxxxx // не работает
+							BOOL lbRc = FALSE;
+							//SendMessage(ghConWnd, WM_KEYDOWN, VK_CANCEL, 0x01460001);
+							lbRc = GenerateConsoleCtrlEvent(
+							(iRec.Event.KeyEvent.wVirtualKeyCode == 'C') ? 0 : 1,
+							0);
+						#endif
+
+
+						#ifdef xxxxx // Это пересылает событие в ConEmuC, который работает как ComSpec
+						DWORD *pdwPID = NULL;
+						int nCount = GetProcessCount(&pdwPID);
+						wchar_t szEvtName[128];
+						for (int i=nCount-1; pdwPID && i>=0; i--) {
+							wsprintf(szEvtName, (iRec.Event.KeyEvent.wVirtualKeyCode == 'C') ? CESIGNAL_C : CESIGNAL_BREAK, pdwPID[i]);
+							HANDLE hEvent = OpenEvent(EVENT_MODIFY_STATE, FALSE, szEvtName);
+							if (hEvent) {
+								lbRc = TRUE; PulseEvent(hEvent); CloseHandle(hEvent); break;
+							}
+						}
+
+						if (!lbRc)
+						#endif
+
+						// Вроде работает, Главное не запускать процесс с флагом CREATE_NEW_PROCESS_GROUP
+						// иначе у микрософтовской консоли (WinXP SP3) сносит крышу, и она реагирует
+						// на Ctrl-Break, но напрочь игнорирует Ctrl-C
+						lbRc = GenerateConsoleCtrlEvent(dwEvent, 0);
+
+						/*BOOL lbRc = FALSE;
+						DWORD dwEvent =
+						(iRec.Event.KeyEvent.wVirtualKeyCode == 'C') ?
+						CTRL_C_EVENT : CTRL_BREAK_EVENT;
+						lbRc = GenerateConsoleCtrlEvent(dwEvent, 0);*/
+
+						/*for (i = nCount-1; !lbRc && i>=0; i--) {
+						if (pdwPID[i] == 0 || pdwPID[i] == gnSelfPID) continue;
+						lbRc = GenerateConsoleCtrlEvent(
+						(iRec.Event.KeyEvent.wVirtualKeyCode == 'C') ? 0 : 1,
+						pdwPID[i]);
+						if (!lbRc) dwErr = GetLastError();
+						}
+						if (!lbRc)
+						lbRc = GenerateConsoleCtrlEvent(
+						(iRec.Event.KeyEvent.wVirtualKeyCode == 'C') ? 0 : 1,
+						srv.dwProcessGroup);
+						if (!lbRc)
+						lbRc = GenerateConsoleCtrlEvent(dwEvent, 0);*/
+						//iRec.EventType = 0;
+						/*PostMessage(ghConWnd, WM_KEYDOWN, VK_CONTROL, 0);
+						PostMessage(ghConWnd, WM_KEYDOWN, iRec.Event.KeyEvent.wVirtualKeyCode, 0);
+						PostMessage(ghConWnd, WM_KEYUP, iRec.Event.KeyEvent.wVirtualKeyCode, 0);
+						PostMessage(ghConWnd, WM_KEYUP, VK_CONTROL, 0);*/
 					  }
 		          }
               
@@ -1502,12 +1622,13 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
                     nWait = (WAIT_OBJECT_0+1);
                 }
             }
-            if (srv.nLastUpdateTick) {
+            //if (srv.nLastUpdateTick) 
+			{
 	            DWORD dwCurTick = GetTickCount();
 	            DWORD dwDelta = dwCurTick - srv.nLastUpdateTick;
 	            TODO("По какой-то причине, иногда, в GUI приходят не все изменения консоли... попробуем так?");
-	            if (dwDelta > 300) {
-		            srv.nLastUpdateTick = 0;
+	            if (dwDelta > 1000) {
+		            srv.nLastUpdateTick = GetTickCount();
 		            nWait = (WAIT_OBJECT_0+1);
 	            }
             }
@@ -2080,15 +2201,17 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 
     } else {
         // Начался ресайз для BufferHeight
+		COORD crHeight = {crNewSize.X, BufferHeight};
 
         MoveWindow(ghConWnd, rcConPos.left, rcConPos.top, 1, 1, 1);
-        lbRc = SetConsoleScreenBufferSize(ghConOut, crNewSize);
+        lbRc = SetConsoleScreenBufferSize(ghConOut, crHeight); // а не crNewSize - там "оконные" размеры
         //окошко раздвигаем только по ширине!
         GetWindowRect(ghConWnd, &rcConPos);
         MoveWindow(ghConWnd, rcConPos.left, rcConPos.top, GetSystemMetrics(SM_CXSCREEN), rcConPos.bottom-rcConPos.top, 1);
 
-        if (rNewRect.Right && rNewRect.Bottom)
+		if (rNewRect.Right && rNewRect.Bottom) {
             SetConsoleWindowInfo(ghConOut, TRUE, &rNewRect);
+		}
     }
 
     if (srv.hChangingSize) { // во время запуска ConEmuC
@@ -2107,4 +2230,28 @@ BOOL WINAPI HandlerRoutine(DWORD dwCtrlType)
     }*/
 
     return TRUE;
+}
+
+int GetProcessCount(DWORD **rpdwPID)
+{
+	DWORD dwErr = 0; BOOL lbRc = FALSE;
+	DWORD *pdwPID = NULL; int nCount = 0, i;
+	EnterCriticalSection(&srv.csProc);
+	nCount = srv.nProcesses.size();
+	if (nCount > 0 && rpdwPID) {
+		pdwPID = (DWORD*)calloc(nCount, sizeof(DWORD));
+		_ASSERTE(pdwPID!=NULL);
+		if (pdwPID) {
+			std::vector<DWORD>::iterator iter = srv.nProcesses.begin();
+			i = 0;
+			while (iter != srv.nProcesses.end()) {
+				pdwPID[i++] = *iter;
+				iter ++;
+			}
+		}
+	}
+	LeaveCriticalSection(&srv.csProc);
+	if (rpdwPID)
+		*rpdwPID = pdwPID;
+	return nCount;
 }
