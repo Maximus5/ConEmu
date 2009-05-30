@@ -86,6 +86,8 @@ enum {
 } gnRunMode = RM_UNDEFINED;
 
 struct {
+	DWORD dwProcessGroup;
+	//
     HANDLE hServerThread;   DWORD dwServerThreadId;
     HANDLE hRefreshThread;  DWORD dwRefreshThread;
     HANDLE hWinEventThread; DWORD dwWinEventThread;
@@ -93,6 +95,9 @@ struct {
     //
     CRITICAL_SECTION csProc;
     CRITICAL_SECTION csConBuf;
+	// Список процессов нам нужен, чтобы определить, когда консоль уже не нужна.
+	// Например, запустили FAR, он запустил Update, FAR перезапущен...
+	std::vector<DWORD> nProcesses;
     //
     wchar_t szPipename[MAX_PATH], szInputname[MAX_PATH], szGuiPipeName[MAX_PATH];
     //
@@ -126,9 +131,6 @@ struct {
     DWORD dwFarPID;
 } cmd = {0};
 
-// Список процессов нам нужен, чтобы определить, когда консоль уже не нужна.
-// Например, запустили FAR, он запустил Update, FAR перезапущен...
-std::vector<DWORD> nProcesses;
 BOOL gbInRecreateRoot = FALSE;
 
 //#define CES_NTVDM 0x10 -- common.hpp
@@ -239,6 +241,8 @@ int main()
         lb = SetConsoleMode(ghConIn, mode);
     }
 
+	// Обязательно, иначе по CtrlC мы свалимся
+	SetConsoleCtrlHandler((PHANDLER_ROUTINE)NULL/*HandlerRoutine*/, true);
 
     /* ******************************** */
     /* *** "Режимная" инициализация *** */
@@ -258,7 +262,7 @@ int main()
     /* *** Запуск дочернего процесса *** */
     /* ********************************* */
     
-    lbRc = CreateProcessW(NULL, gpszRunCmd, NULL,NULL, TRUE, NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi);
+    lbRc = CreateProcessW(NULL, gpszRunCmd, NULL,NULL, TRUE, NORMAL_PRIORITY_CLASS|CREATE_NEW_PROCESS_GROUP, NULL, NULL, &si, &pi);
     dwErr = GetLastError();
     if (!lbRc)
     {
@@ -274,6 +278,8 @@ int main()
     /* *************************** */
     
     if (gnRunMode == RM_SERVER) {
+		srv.dwProcessGroup = pi.dwProcessId;
+
         if (pi.hProcess) SafeCloseHandle(pi.hProcess); 
         if (pi.hThread) SafeCloseHandle(pi.hThread);
 
@@ -289,7 +295,7 @@ int main()
         nWait = WaitForSingleObject(ghExitEvent, 6*1000); //Запуск процесса наверное может задержать антивирус
         if (nWait != WAIT_OBJECT_0) { // Если таймаут
             EnterCriticalSection(&srv.csProc);
-            iRc = nProcesses.size();
+            iRc = srv.nProcesses.size();
             LeaveCriticalSection(&srv.csProc);
             // И процессов в консоли все еще нет
             if (iRc == 0) {
@@ -636,8 +642,6 @@ void CreateLogSizeFile()
         wprintf(L"CreateFile failed! ErrCode=0x%08X\n%s\n", dwErr, szFile);
         return;
     }
-    
-    SetConsoleCtrlHandler((PHANDLER_ROUTINE)HandlerRoutine, true);
     
     wpszLogSizeFile = wcsdup(szFile);
     // OK, лог создали
@@ -1069,9 +1073,63 @@ DWORD WINAPI InputThread(LPVOID lpvParam)
                   break;
               }
               if (iRec.EventType) {
+	              // проверить ENABLE_PROCESSED_INPUT в GetConsoleMode
+	              #define ALL_MODIFIERS (LEFT_ALT_PRESSED|RIGHT_ALT_PRESSED|LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED|SHIFT_PRESSED)
+	              #define CTRL_MODIFIERS (LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED)
+	              if (iRec.EventType == KEY_EVENT && 
+					  (iRec.Event.KeyEvent.wVirtualKeyCode == 'C' || 
+					  iRec.Event.KeyEvent.wVirtualKeyCode == VK_PAUSE))
+				  {
+					  //The SetConsoleMode function can disable the ENABLE_PROCESSED_INPUT mode for a console's input buffer, 
+					  //so CTRL+C is reported as keyboard input rather than as a signal. 
+					  // CTRL+BREAK is always treated as a signal
+		              if (srv.dwConsoleMode == 0 &&
+						  (iRec.Event.KeyEvent.dwControlKeyState & CTRL_MODIFIERS) &&
+							((iRec.Event.KeyEvent.dwControlKeyState & ALL_MODIFIERS) 
+							== (iRec.Event.KeyEvent.dwControlKeyState & CTRL_MODIFIERS))
+		                 )
+					  {
+						  // что-то GenerateConsoleCtrlEvent не доходит до cmd.exe....
+						  DWORD dwErr = 0; BOOL lbRc = FALSE;
+						  DWORD *pdwPID = NULL; int nCount = 0, i;
+						  EnterCriticalSection(&srv.csProc);
+						  nCount = srv.nProcesses.size();
+						  if (nCount > 0) {
+						      pdwPID = (DWORD*)calloc(nCount, sizeof(DWORD));
+							  std::vector<DWORD>::iterator iter = srv.nProcesses.begin();
+							  i = 0;
+							  while (iter != srv.nProcesses.end()) {
+								  pdwPID[i++] = *iter;
+								  iter ++;
+							  }
+						  }
+						  LeaveCriticalSection(&srv.csProc);
+
+						  for (i = nCount-1; i>=0; i--) {
+							  if (pdwPID[i] == 0 || pdwPID[i] == gnSelfPID) continue;
+							  lbRc = GenerateConsoleCtrlEvent(
+								  (iRec.Event.KeyEvent.wVirtualKeyCode == 'C') ? 0 : 1,
+								  pdwPID[i] /*srv.dwProcessGroup*/);
+							  if (!lbRc) dwErr = GetLastError();
+						  }
+						  lbRc = GenerateConsoleCtrlEvent(
+							  (iRec.Event.KeyEvent.wVirtualKeyCode == 'C') ? 0 : 1,
+							  srv.dwProcessGroup);
+						  lbRc = GenerateConsoleCtrlEvent(
+							  (iRec.Event.KeyEvent.wVirtualKeyCode == 'C') ? 0 : 1,
+							  0 /*srv.dwProcessGroup*/);
+						  iRec.EventType = 0;
+						  /*PostMessage(ghConWnd, WM_KEYDOWN, VK_CONTROL, 0);
+						  PostMessage(ghConWnd, WM_KEYDOWN, iRec.Event.KeyEvent.wVirtualKeyCode, 0);
+						  PostMessage(ghConWnd, WM_KEYUP, iRec.Event.KeyEvent.wVirtualKeyCode, 0);
+						  PostMessage(ghConWnd, WM_KEYUP, VK_CONTROL, 0);*/
+					  }
+		          }
               
-                  fSuccess = WriteConsoleInput(ghConIn, &iRec, 1, &cbWritten);
-                  _ASSERTE(fSuccess && cbWritten==1);
+		          if (iRec.EventType) {
+	                  fSuccess = WriteConsoleInput(ghConIn, &iRec, 1, &cbWritten);
+	                  _ASSERTE(fSuccess && cbWritten==1);
+	              }
               }
               // next
               memset(&iRec,0,sizeof(iRec));
@@ -1307,7 +1365,7 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 			// как-то оно не особо хорошо...
 #ifdef xxxxxx
 			EnterCriticalSection(&srv.csProc);
-	        int i, nCount = (nProcesses.size()+5); // + небольшой резерв
+	        int i, nCount = (srv.nProcesses.size()+5); // + небольшой резерв
 	        _ASSERTE(nCount>0);
 			if (nCount <= 0) {
 				LeaveCriticalSection(&srv.csProc);
@@ -1318,9 +1376,9 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 	        _ASSERTE(pdwPID!=NULL);
 	        
 	        // Сначала сделаем копию списка, а то при приходе событий WinEvent может подраться за vector
-	        std::vector<DWORD>::iterator iter = nProcesses.begin();
+	        std::vector<DWORD>::iterator iter = srv.nProcesses.begin();
 	        i = 0;
-	        while (iter != nProcesses.end() && i < nCount) {
+	        while (iter != srv.nProcesses.end() && i < nCount) {
 		        DWORD dwPID = *iter;
 		        if (dwPID && dwPID != gnSelfPID) {
 			        pdwPID[i] = dwPID;
@@ -1493,7 +1551,7 @@ void CALLBACK WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, 
 
         if (idObject != gnSelfPID) {
             EnterCriticalSection(&srv.csProc);
-            nProcesses.push_back(idObject);
+            srv.nProcesses.push_back(idObject);
             LeaveCriticalSection(&srv.csProc);
 
             if (idChild == CONSOLE_APPLICATION_16BIT) {
@@ -1524,9 +1582,9 @@ void CALLBACK WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, 
         if (idObject != gnSelfPID) {
             std::vector<DWORD>::iterator iter;
             EnterCriticalSection(&srv.csProc);
-            for (iter=nProcesses.begin(); iter!=nProcesses.end(); iter++) {
+            for (iter=srv.nProcesses.begin(); iter!=srv.nProcesses.end(); iter++) {
                 if (idObject == *iter) {
-                    nProcesses.erase(iter);
+                    srv.nProcesses.erase(iter);
                     if (idChild == CONSOLE_APPLICATION_16BIT) {
                         DWORD ntvdmPID = idObject;
                         dwActiveFlags &= ~CES_NTVDM;
@@ -1534,7 +1592,7 @@ void CALLBACK WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, 
                         SetPriorityClass(GetCurrentProcess(), NORMAL_PRIORITY_CLASS);
                     }
                     // Процессов в консоли не осталось?
-                    if (nProcesses.size() == 0 && !gbInRecreateRoot) {
+                    if (srv.nProcesses.size() == 0 && !gbInRecreateRoot) {
                         LeaveCriticalSection(&srv.csProc);
                         SetEvent(ghExitEvent);
                         return;
@@ -1757,7 +1815,7 @@ CESERVER_REQ* CreateConsoleInfo(CESERVER_CHAR* pCharOnly, int bCharAttrBuff)
     // во время чтения содержимого консоли может увеличиться количество процессов
     // поэтому РЕАЛЬНОЕ количество - выставим после чтения и CriticalSection(srv.csProc);
     //EnterCriticalSection(&srv.csProc);
-    //DWORD dwProcCount = nProcesses.size()+20;
+    //DWORD dwProcCount = srv.nProcesses.size()+20;
     //LeaveCriticalSection(&srv.csProc);
     //dwAllSize += sizeof(DWORD)*(dwProcCount+1); // PID процессов + их количество
     dwAllSize += (nSize=sizeof(DWORD)); // список процессов формируется в GUI, так что пока - просто 0 (Reserved)
@@ -1827,12 +1885,12 @@ CESERVER_REQ* CreateConsoleInfo(CESERVER_CHAR* pCharOnly, int bCharAttrBuff)
     // поэтому РЕАЛЬНОЕ количество - выставим после чтения и CriticalSection(srv.csProc);
     *((DWORD*)lpCur) = 0; lpCur += sizeof(DWORD);
     //EnterCriticalSection(&srv.csProc);
-    //DWORD dwTestCount = nProcesses.size();
+    //DWORD dwTestCount = srv.nProcesses.size();
     //_ASSERTE(dwTestCount<=dwProcCount);
     //if (dwTestCount < dwProcCount) dwProcCount = dwTestCount;
     //*((DWORD*)lpCur) = dwProcCount; lpCur += sizeof(DWORD);
     //for (DWORD n=0; n<dwProcCount; n++) {
-    //  *((DWORD*)lpCur) = nProcesses[n];
+    //  *((DWORD*)lpCur) = srv.nProcesses[n];
     //  lpCur += sizeof(DWORD);
     //}
     //LeaveCriticalSection(&srv.csProc);
@@ -2040,14 +2098,13 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
     return lbRc;
 }
 
-// Пока ставится ТОЛЬКО если включен лог файл
 BOOL WINAPI HandlerRoutine(DWORD dwCtrlType)
 {
-    SafeCloseHandle(ghLogSize);
+    /*SafeCloseHandle(ghLogSize);
     if (wpszLogSizeFile) {
         DeleteFile(wpszLogSizeFile);
         free(wpszLogSizeFile); wpszLogSizeFile = NULL;
-    }
+    }*/
 
-    return FALSE;
+    return TRUE;
 }

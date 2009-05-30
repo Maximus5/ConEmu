@@ -101,6 +101,9 @@ public:
 	uint TextWidth, TextHeight; // размер в символах
 	uint Width, Height; // размер в пикселях
 	*/
+	uint TextWidth() { return con.nTextWidth; };
+	uint TextHeight() { return con.nTextHeight; };
+	friend class CVirtualConsole;
 private:
 	/*
 	uint nMaxTextWidth, nMaxTextHeight; // размер в символах
@@ -133,7 +136,7 @@ public:
 	//SIZE	bgBmp;
 	//HFONT   /*hFont, hFont2,*/ hSelectedFont, hOldFont;
 
-	bool isEditor, isFilePanel;
+	//bool isEditor, isFilePanel;
 	//BYTE attrBackLast;
 
 	//wchar_t *ConChar;
@@ -143,20 +146,19 @@ public:
 	//TCHAR *Spaces; WORD nSpaceCount;
 	
 	// координаты панелей в символах
-	RECT mr_LeftPanel, mr_RightPanel;
+	//RECT mr_LeftPanel, mr_RightPanel;
 
 	//CONSOLE_SELECTION_INFO SelectionInfo;
 
 	CRealConsole(CVirtualConsole* apVCon);
 	~CRealConsole();
-	static CRealConsole* Create(CVirtualConsole* apVCon, bool abDetached);
-
-	void OnActivate(int nNewNum, int nOldNum);
+	
+	//void OnActivate(int nNewNum, int nOldNum);
 	void OnFocus(BOOL abFocused);
 	BOOL PreInit(BOOL abCreateBuffers=TRUE);
 	//bool InitDC(bool abNoDc, bool abNoWndResize);
 	//void InitHandlers(BOOL abCreated);
-	//void DumpConsole();
+	void DumpConsole(HANDLE ahFile);
 	//bool Update(bool isForce = false, HDC *ahDc=NULL);
 	//void SelectFont(HFONT hNew);
 	//void SelectBrush(HBRUSH hNew);
@@ -173,7 +175,7 @@ public:
 	void StopSignal();
 	void StopThread(BOOL abRecreating=FALSE);
 	//void Paint();
-	void UpdateInfo();
+	//void UpdateInfo();
 	BOOL isBufferHeight();
 	LPCTSTR GetTitle();
 	void GetConsoleScreenBufferInfo(CONSOLE_SCREEN_BUFFER_INFO* sbi) { *sbi = con.m_sbi; };
@@ -197,15 +199,17 @@ public:
 	BOOL AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID);
 	//RECT GetRect();
 	bool RecreateProcess();
+	void GetData(wchar_t* pChar, WORD* pAttr, uint nSize);
 
 protected:
-	CVirtualConsole* mp_VCon;
+	BOOL PreCreate(BOOL abDetached);
+	CVirtualConsole* mp_VCon; // соответствующая виртуальная консоль
 	DWORD mn_ConEmuC_PID; HANDLE mh_ConEmuC, mh_ConEmuCInput;
 	TCHAR ms_ConEmuC_Pipe[MAX_PATH], ms_ConEmuCInput_Pipe[MAX_PATH], ms_VConServer_Pipe[MAX_PATH];
 	TCHAR Title[MAX_TITLE_SIZE+1], TitleCmp[MAX_TITLE_SIZE+1];
 	//HANDLE  mh_ConOut; BOOL mb_ConHandleCreated;
 	//HANDLE mh_StdIn, mh_StdOut;
-	i64 m_LastMaxReadCnt; DWORD m_LastMaxReadTick;
+	//i64 m_LastMaxReadCnt; DWORD m_LastMaxReadTick;
 	//enum _PartType{
 	//	pNull,  // конец строки/последний, неотображаемый элемент
 	//	pSpace, // при разборе строки будем смотреть, если нашли pText,pSpace,pText то pSpace,pText добавить в первый pText
@@ -228,7 +232,7 @@ protected:
 	//} *TextParts;
 	//CONSOLE_SCREEN_BUFFER_INFO csbi; DWORD mdw_LastError;
 	//CONSOLE_CURSOR_INFO	cinf;
-	COORD winSize, coord;
+	//COORD winSize, coord;
 	//CONSOLE_SELECTION_INFO select1, select2;
 	//uint TextLen;
 	//bool isCursorValid, drawImage, doSelect, textChanged, attrChanged;
@@ -242,6 +246,7 @@ protected:
 	//void ParseLine(int row, TCHAR *ConCharLine, WORD *ConAttrLine);
 	BOOL AttachPID(DWORD dwPID);
 	BOOL StartProcess();
+	BOOL StartMonitorThread();
 	//typedef struct _ConExeProps {
 	//	BOOL  bKeyExists;
 	//	DWORD ScreenBufferSize; //Loword-Width, Hiword-Height
@@ -253,12 +258,12 @@ protected:
 	//	TCHAR *FullKeyName;
 	//} ConExeProps;
 	//void RegistryProps(BOOL abRollback, ConExeProps& props, LPCTSTR asExeName=NULL);
-	static DWORD WINAPI StartProcessThread(LPVOID lpParameter);
-	HANDLE /*mh_Heap,*/ mh_Thread, mh_VConServerThread;
+	static DWORD WINAPI MonitorThread(LPVOID lpParameter);
+	HANDLE mh_VConServerThread;
 	HANDLE mh_TermEvent, mh_ForceReadEvent, mh_EndUpdateEvent, mh_Sync2WindowEvent, mh_ConChanged, mh_CursorChanged;
 	BOOL mb_FullRetrieveNeeded, mb_Detached;
 	//HANDLE mh_ReqSetSize, mh_ReqSetSizeEnd; COORD m_ReqSetSize;
-	DWORD mn_ThreadID;
+	HANDLE mh_MonitorThread; DWORD mn_MonitorThreadID;
 	//LPVOID Alloc(size_t nCount, size_t nSize);
 	//void Free(LPVOID ptr);
 	//CRITICAL_SECTION csDC;  DWORD ncsTDC;
