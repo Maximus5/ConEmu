@@ -36,7 +36,7 @@ BEGIN
             VALUE "OriginalFilename", "ConEmu.exe\0"
             VALUE "PrivateBuild", "\0"
             VALUE "ProductName", "\0"
-            VALUE "ProductVersion", "0, 0, 0, 0\0"
+            VALUE "ProductVersion", "1, 0, 0, 1\0"
             VALUE "SpecialBuild", "\0"
         END
     END

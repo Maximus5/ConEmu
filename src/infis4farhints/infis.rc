@@ -1,4 +1,4 @@
-// Microsoft Visual C++ generated resource script.
+//Microsoft Developer Studio generated resource script.
 //
 #include "resource.h"
 
@@ -28,19 +28,19 @@ LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
 // TEXTINCLUDE
 //
 
-1 TEXTINCLUDE 
+1 TEXTINCLUDE DISCARDABLE 
 BEGIN
     "resource.h\0"
 END
 
-2 TEXTINCLUDE 
+2 TEXTINCLUDE DISCARDABLE 
 BEGIN
     "#include ""../ConEmu/afxres.h""\r\n"
     "#include ""../ConEmu/version.h""\r\n"
     "\0"
 END
 
-3 TEXTINCLUDE 
+3 TEXTINCLUDE DISCARDABLE 
 BEGIN
     "\r\n"
     "\0"
@@ -49,6 +49,7 @@ END
 #endif    // APSTUDIO_INVOKED
 
 
+#ifndef _MAC
 /////////////////////////////////////////////////////////////////////////////
 //
 // Version
@@ -56,7 +57,7 @@ END
 
 VS_VERSION_INFO VERSIONINFO
  FILEVERSION CONEMUVERN
- PRODUCTVERSION 1,0,0,1
+ PRODUCTVERSION CONEMUVERN
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -71,13 +72,18 @@ BEGIN
     BEGIN
         BLOCK "000004b0"
         BEGIN
-            VALUE "CompanyName", " "
-            VALUE "FileDescription", "ConEmu console extender"
+            VALUE "Comments", "\0"
+            VALUE "CompanyName", " \0"
+            VALUE "FileDescription", "FarHints fix 4 ConEmu\0"
             VALUE "FileVersion", CONEMUVERS
-            VALUE "LegalCopyright", "2009"
-            VALUE "OriginalFilename", "ConEmuC.exe"
-            VALUE "ProductName", "ConEmu"
-            VALUE "ProductVersion", "1, 0, 0, 1"
+            VALUE "InternalName", "\0"
+            VALUE "LegalCopyright", "2009\0"
+            VALUE "LegalTrademarks", "\0"
+            VALUE "OriginalFilename", "infis.dll\0"
+            VALUE "PrivateBuild", "\0"
+            VALUE "ProductName", "ConEmu\0"
+            VALUE "ProductVersion", CONEMUVERS
+            VALUE "SpecialBuild", "\0"
         END
     END
     BLOCK "VarFileInfo"
@@ -86,15 +92,8 @@ BEGIN
     END
 END
 
+#endif    // !_MAC
 
-/////////////////////////////////////////////////////////////////////////////
-//
-// Icon
-//
-
-// Icon with lowest ID value placed first to ensure application icon
-// remains consistent on all systems.
-IDI_ICON1               ICON                    "..\\ConEmu\\ConEmu.ico"
 #endif    // Russian resources
 /////////////////////////////////////////////////////////////////////////////
 

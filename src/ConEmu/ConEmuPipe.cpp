@@ -71,7 +71,7 @@ BOOL CConEmuPipe::Init(LPCTSTR asOp, BOOL abSilent)
 		return FALSE;
 	}
 
-	DWORD dwCurProcId = gConEmu.ActiveCon()->mp_RCon->GetFarPID();
+	DWORD dwCurProcId = gConEmu.ActiveCon()->RCon()->GetFarPID();
     if (!gConEmu.isFar() && !dwCurProcId) {
 	    gConEmu.DnDstep(_T("Pipe: FAR not active"));
 		DEBUGSTR(L"Pipe::FAR not active\n");

@@ -35,11 +35,11 @@
 #define CECMD_GETSHORTINFO  1
 #define CECMD_GETFULLINFO   2
 #define CECMD_SETSIZE       3
-// 4 - пока свободно
+#define CECMD_CMDSTARTSTOP  4
 #define CECMD_GETGUIHWND    5
 #define CECMD_RECREATE      6
 
-#define CESERVER_REQ_VER    1
+#define CESERVER_REQ_VER    2
 
 #define PIPEBUFSIZE 4096
 
@@ -53,15 +53,15 @@ typedef struct tag_CESERVER_REQ {
 } CESERVER_REQ;
 
 typedef struct tag_CESERVER_CHAR {
-	COORD crStart, crEnd;
+	COORD crStart, crEnd; //WARNING: Ёто јЅ—ќЋё“Ќџ≈ координаты (без учета прокрутки), а не экранные.
 	WORD  data[2]; // variable length
 } CESERVER_CHAR;
 
 #pragma pack(pop)
 
 #define CONEMUMSG_ATTACH L"ConEmuMain::Attach"        // wParam == hConWnd, lParam == ConEmuC_PID
-#define CONEMUCMDSTARTED L"ConEmuMain::CmdStarted"    // wParam == hConWnd, lParam == ConEmuC_PID (as ComSpec)
-#define CONEMUCMDSTOPPED L"ConEmuMain::CmdTerminated" // wParam == hConWnd, lParam == ConEmuC_PID (as ComSpec)
+//#define CONEMUCMDSTARTED L"ConEmuMain::CmdStarted"    // wParam == hConWnd, lParam == ConEmuC_PID (as ComSpec)
+//#define CONEMUCMDSTOPPED L"ConEmuMain::CmdTerminated" // wParam == hConWnd, lParam == ConEmuC_PID (as ComSpec)
 
 #define CONEMUMAPPING    L"ConEmuPluginData%u"
 #define CONEMUDRAGFROM   L"ConEmuDragFrom%u"

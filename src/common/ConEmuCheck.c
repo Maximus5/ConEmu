@@ -2,10 +2,16 @@
 #include <windows.h>
 #define _T(s) s
 #include "ConEmuCheck.h"
-#include "common.hpp"
+
+#ifdef _DEBUG
+	#include <crtdbg.h>
+#else
+	#define _ASSERT()
+	#define _ASSERTE(f)
+#endif
 
 typedef HWND (APIENTRY *FGetConsoleWindow)();
-typedef DWORD (APIENTRY *FGetConsoleProcessList)(LPDWORD,DWORD);
+//typedef DWORD (APIENTRY *FGetConsoleProcessList)(LPDWORD,DWORD);
 
 //WARNING("Для 'Простых' запросов можно использовать 'CallNamedPipe', Это если нужно например получить хэндлы окон");
 
@@ -18,108 +24,153 @@ typedef DWORD (APIENTRY *FGetConsoleProcessList)(LPDWORD,DWORD);
 //};
 //#endif
 
-// Returns HWND of Gui console DC window
-HWND GetConEmuHWND(BOOL abRoot)
+//Arguments:
+//   hConWnd - Хэндл КОНСОЛЬНОГО окна (по нему формируется имя пайпа для GUI)
+//   pIn     - выполняемая команда
+//Returns:
+//   CESERVER_REQ. Его необходимо освободить через free(...);
+//WARNING!!!
+//   Эта процедура не может получить с сервера более 512 байт данных!
+CESERVER_REQ* ExecuteGuiCmd(HWND hConWnd, const CESERVER_REQ* pIn)
 {
-	HWND FarHwnd=NULL, ConEmuHwnd=NULL, ConEmuRoot=NULL;
-	FGetConsoleWindow fGetConsoleWindow = NULL;
+	CESERVER_REQ* pOut = NULL;
 	wchar_t szGuiPipeName[MAX_PATH];
-	BOOL lbRc = FALSE;
 	HANDLE hPipe = NULL; 
-	CESERVER_REQ in = {0};
-	BYTE cbReadBuf[64];
+	BYTE cbReadBuf[512];
 	BOOL fSuccess = FALSE;
 	DWORD cbRead = 0, dwMode = 0, dwErr = 0;
-	
-	
-	
-	HMODULE hKernel32 = GetModuleHandleA("kernel32.dll");
-	if (hKernel32) {
-		fGetConsoleWindow = (FGetConsoleWindow)GetProcAddress( hKernel32, "GetConsoleWindow" );
-	}
-	if (!fGetConsoleWindow) return NULL;
-		
-	FarHwnd = fGetConsoleWindow();
-	if (!FarHwnd) return NULL;
-	
-	wsprintfW(szGuiPipeName, CEGUIPIPENAME, L".", (DWORD)FarHwnd);
+
+	if (!hConWnd)
+		return NULL;
+
+	wsprintfW(szGuiPipeName, CEGUIPIPENAME, L".", (DWORD)hConWnd);
 	//
 
 	// Try to open a named pipe; wait for it, if necessary. 
 	while (1) 
 	{ 
-	  hPipe = CreateFile( 
-		 szGuiPipeName,  // pipe name 
-		 GENERIC_READ |  // read and write access 
-		 GENERIC_WRITE, 
-		 0,              // no sharing 
-		 NULL,           // default security attributes
-		 OPEN_EXISTING,  // opens existing pipe 
-		 0,              // default attributes 
-		 NULL);          // no template file 
+		hPipe = CreateFile( 
+			szGuiPipeName,  // pipe name 
+			GENERIC_READ |  // read and write access 
+			GENERIC_WRITE, 
+			0,              // no sharing 
+			NULL,           // default security attributes
+			OPEN_EXISTING,  // opens existing pipe 
+			0,              // default attributes 
+			NULL);          // no template file 
 
-	  // Break if the pipe handle is valid. 
-	  if (hPipe != INVALID_HANDLE_VALUE) 
-		 break; 
+		// Break if the pipe handle is valid. 
+		if (hPipe != INVALID_HANDLE_VALUE) 
+			break; 
 
-	  // Exit if an error other than ERROR_PIPE_BUSY occurs. 
-	  dwErr = GetLastError();
-	  if (dwErr != ERROR_PIPE_BUSY) 
-	  {
-		return NULL;
-	  }
+		// Exit if an error other than ERROR_PIPE_BUSY occurs. 
+		dwErr = GetLastError();
+		if (dwErr != ERROR_PIPE_BUSY) 
+		{
+			return NULL;
+		}
 
-	  // All pipe instances are busy, so wait for 1 second.
-	  if (!WaitNamedPipe(szGuiPipeName, 1000) ) 
-	  {
-		return NULL;
-	  }
+		// All pipe instances are busy, so wait for 1 second.
+		if (!WaitNamedPipe(szGuiPipeName, 1000) ) 
+		{
+			return NULL;
+		}
 	} 
 
 	// The pipe connected; change to message-read mode. 
 	dwMode = PIPE_READMODE_MESSAGE; 
 	fSuccess = SetNamedPipeHandleState( 
-	  hPipe,    // pipe handle 
-	  &dwMode,  // new pipe mode 
-	  NULL,     // don't set maximum bytes 
-	  NULL);    // don't set maximum time 
+		hPipe,    // pipe handle 
+		&dwMode,  // new pipe mode 
+		NULL,     // don't set maximum bytes 
+		NULL);    // don't set maximum time 
 	if (!fSuccess) 
 	{
-	  return NULL;
+		return NULL;
 	}
-
-	in.nSize = 12;
-	in.nVersion = CESERVER_REQ_VER;
-	in.nCmd  = CECMD_GETGUIHWND;
 
 	// Send a message to the pipe server and read the response. 
 	fSuccess = TransactNamedPipe( 
-	  hPipe,                  // pipe handle 
-	  &in,                    // message to server
-	  in.nSize,               // message length 
-	  cbReadBuf,              // buffer to receive reply
-	  sizeof(cbReadBuf),      // size of read buffer
-	  &cbRead,                // bytes read
-	  NULL);                  // not overlapped 
+		hPipe,                  // pipe handle 
+		(LPVOID)pIn,            // message to server
+		pIn->nSize,             // message length 
+		cbReadBuf,              // buffer to receive reply
+		sizeof(cbReadBuf),      // size of read buffer
+		&cbRead,                // bytes read
+		NULL);                  // not overlapped 
 
 	dwErr = GetLastError();
 	CloseHandle(hPipe);
-	
+
 	if (!fSuccess /*&& (dwErr != ERROR_MORE_DATA)*/)
 	{
-	  return NULL;
+		return NULL;
+	}
+
+	if (cbRead < (3*sizeof(DWORD)))
+		return NULL;
+
+	if (((CESERVER_REQ*)cbReadBuf)->nSize != cbRead) {
+		OutputDebugString(L"!!! Wrong nSize recieved from GUI server !!!\n");
+		return NULL;
+	}
+
+	if (((CESERVER_REQ*)cbReadBuf)->nVersion != CESERVER_REQ_VER) {
+		OutputDebugString(L"!!! Wrong nVersion recieved from GUI server !!!\n");
+		return NULL;
 	}
 	
-	if (cbRead < (5*sizeof(DWORD)))
+	pOut = (CESERVER_REQ*)malloc(cbRead);
+	_ASSERTE(pOut);
+	if (!pOut) return NULL;
+	memmove(pOut, cbReadBuf, cbRead);
+
+	return pOut;
+}
+
+HWND myGetConsoleWindow()
+{
+	HWND hConWnd = NULL;
+	static FGetConsoleWindow fGetConsoleWindow = NULL;
+	if (!fGetConsoleWindow) {
+		HMODULE hKernel32 = GetModuleHandleA("kernel32.dll");
+		if (hKernel32) {
+			fGetConsoleWindow = (FGetConsoleWindow)GetProcAddress( hKernel32, "GetConsoleWindow" );
+		}
+	}
+	if (fGetConsoleWindow) 
+		hConWnd = fGetConsoleWindow();
+	return hConWnd;
+}
+
+// Returns HWND of Gui console DC window
+HWND GetConEmuHWND(BOOL abRoot)
+{
+	BOOL lbRc = FALSE;
+	HWND FarHwnd=NULL, ConEmuHwnd=NULL, ConEmuRoot=NULL;
+	CESERVER_REQ in = {0}, *pOut = NULL;
+
+	FarHwnd = myGetConsoleWindow();
+	if ( !FarHwnd )
 		return NULL;
 
-	if (((DWORD*)cbReadBuf)[0] != (5*sizeof(DWORD)) ||
-	    ((DWORD*)cbReadBuf)[1] != in.nCmd ||
-	    ((DWORD*)cbReadBuf)[2] != CESERVER_REQ_VER)
-		return NULL;
+	in.nSize = 3*sizeof(DWORD);
+	in.nVersion = CESERVER_REQ_VER;
+	in.nCmd  = CECMD_GETGUIHWND;
 
-	ConEmuRoot = (HWND)(((DWORD*)cbReadBuf)[3]);
-	ConEmuHwnd = (HWND)(((DWORD*)cbReadBuf)[4]);
+	pOut = ExecuteGuiCmd(FarHwnd, &in);
+	if (!pOut)
+		return NULL;
+	
+	if (pOut->nSize != (5*sizeof(DWORD)) || pOut->nCmd != in.nCmd) {
+		free(pOut);
+		return NULL;
+	}
+
+	ConEmuRoot = (HWND)(((DWORD*)pOut->Data)[0]);
+	ConEmuHwnd = (HWND)(((DWORD*)pOut->Data)[1]);
+
+	free(pOut);
 	
 	return (abRoot) ? ConEmuRoot : ConEmuHwnd;
 }

@@ -214,6 +214,8 @@ void CConEmuChild::Invalidate()
 
 
 
+WARNING("!!! На время скроллирования необходимо установить AutoScroll в TRUE, а при отпускании ползунка - вернуть старое значение!");
+TODO("И вообще, скроллинг нужно передавать через pipe");
 
 CConEmuBack::CConEmuBack()
 {
@@ -336,17 +338,19 @@ void CConEmuBack::Resize()
 	RECT rcClient; GetClientRect(ghWnd, &rcClient);
 	RECT rc = gConEmu.CalcRect(CER_BACK, rcClient, CER_MAINCLIENT);
 
-#ifdef _DEBUG
+	#ifdef _DEBUG
 	GetClientRect(mh_Wnd, &rcClient);
-#endif
+	#endif
+
 	MoveWindow(mh_Wnd, 
 		rc.left, rc.top,
 		rc.right - rc.left,
 		rc.bottom - rc.top,
 		1);
-#ifdef _DEBUG
+
+	#ifdef _DEBUG
 	GetClientRect(mh_Wnd, &rcClient);
-#endif
+	#endif
 }
 
 void CConEmuBack::Refresh()

@@ -350,6 +350,7 @@ Command line switches:\n\
 /? - This help screen.\n\
 /ct - Clear Type anti-aliasing.\n\
 /fs | /max - (Full screen) | (Maximized) mode.\n\
+/multi | /nomulti - enable or disable multiconsole features\n\
 /font <fontname> - Specify the font name.\n\
 /size <fontsize> - Specify the font size.\n\
 /fontfile <fontfilename> - Loads fonts from file.\n\

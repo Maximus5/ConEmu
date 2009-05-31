@@ -4,7 +4,11 @@
 //#include <conio.h>
 #include <vector>
 #include "..\common\common.hpp"
+extern "C" {
 #include "..\common\ConEmuCheck.h"
+}
+
+WARNING("Почему-то при запуске FAR ширина GUI окна чуть уменьшается");
 
 #ifdef _DEBUG
 //  Раскомментировать, чтобы сразу после запуска процесса (conemuc.exe) показать MessageBox, чтобы прицепиться дебаггером
@@ -21,11 +25,20 @@ WARNING("!!!! Пока можно при появлении события запоминать текущий тик");
 #define MCHKHEAP
 #endif
 
+//#ifndef _DEBUG
+#define FORCE_REDRAW_FIX
+//#endif
+
+
 WARNING("Наверное все-же стоит производить периодические чтения содержимого консоли, а не только по событию");
 
 WARNING("Стоит именно здесь осуществлять проверку живости GUI окна (если оно было). Ведь может быть запущен не far, а CMD.exe");
 
 WARNING("Если GUI умер, или не подцепился по таймауту - показать консольное окно и наверное установить шрифт поболе");
+
+WARNING("В некоторых случаях не срабатывает ни EVENT_CONSOLE_UPDATE_SIMPLE ни EVENT_CONSOLE_UPDATE_REGION");
+// Пример. Запускаем cmd.exe. печатаем какую-то муйню в командной строке и нажимаем 'Esc'
+// При Esc никаких событий ВООБЩЕ не дергается, а экран в консоли изменился!
 
 #if defined(__GNUC__)
     //#include "assert.h"
@@ -55,7 +68,7 @@ void CALLBACK WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, 
 void CheckCursorPos();
 void SendConsoleChanges(CESERVER_REQ* pOut);
 CESERVER_REQ* CreateConsoleInfo(CESERVER_CHAR* pCharOnly, int bCharAttrBuff);
-BOOL ReloadConsoleInfo(); // возвращает TRUE в случае изменений
+BOOL ReloadConsoleInfo(BOOL abSkipCursorCharCheck=FALSE); // возвращает TRUE в случае изменений
 void ReloadFullConsoleInfo(CESERVER_CHAR* pCharOnly=NULL); // В том числе перечитывает содержимое
 DWORD WINAPI RefreshThread(LPVOID lpvParam); // Нить, перечитывающая содержимое консоли
 DWORD ReadConsoleData(CESERVER_CHAR** pCheck = NULL, BOOL* pbDataChanged = NULL); //((LPRECT)1) или реальный LPRECT
@@ -72,6 +85,11 @@ void CreateLogSizeFile();
 void LogSize(COORD* pcrSize, LPCSTR pszLabel);
 BOOL WINAPI HandlerRoutine(DWORD dwCtrlType);
 int GetProcessCount(DWORD **rpdwPID);
+SHORT CorrectTopVisible(int nY);
+void CorrectVisibleRect(CONSOLE_SCREEN_BUFFER_INFO* pSbi);
+WARNING("Вместо GetConsoleScreenBufferInfo нужно использовать MyGetConsoleScreenBufferInfo!");
+BOOL MyGetConsoleScreenBufferInfo(HANDLE ahConOut, PCONSOLE_SCREEN_BUFFER_INFO apsc);
+
 
 
 /*  Global  */
@@ -113,16 +131,20 @@ struct {
     BOOL bContentsChanged; // Первое чтение параметров должно быть ПОЛНЫМ
     wchar_t* psChars;
     WORD* pnAttrs;
-    DWORD nBufCharCount;
+		DWORD nBufCharCount;
+	WORD* ptrLineCmp;
+		DWORD nLineCmpSize;
     DWORD dwSelRc; CONSOLE_SELECTION_INFO sel; // GetConsoleSelectionInfo
     DWORD dwCiRc; CONSOLE_CURSOR_INFO ci; // GetConsoleCursorInfo
     DWORD dwConsoleCP, dwConsoleOutputCP, dwConsoleMode;
-    DWORD dwSbiRc; CONSOLE_SCREEN_BUFFER_INFO sbi; // GetConsoleScreenBufferInfo
+    DWORD dwSbiRc; CONSOLE_SCREEN_BUFFER_INFO sbi; // MyGetConsoleScreenBufferInfo
+	//USHORT nUsedHeight; // Высота, используемая в GUI - вместо него используем gcrBufferSize.Y
+	SHORT nTopVisibleLine; // Прокрутка в GUI может быть заблокирована. Если -1 - без блокировки, используем текущее значение
     DWORD nMainTimerElapse;
     BOOL  bConsoleActive;
     HANDLE hRefreshEvent; // ServerMode, перечитать консоль, и если есть изменения - отослать в GUI
     HANDLE hChangingSize; // FALSE на время смены размера консоли
-    BOOL  bNeedFullReload;
+    BOOL  bNeedFullReload, bForceFullReload;
     DWORD nLastUpdateTick;
 } srv = {0};
 
@@ -654,12 +676,40 @@ int ComspecInit()
 	TODO("Размер получить из GUI, если оно есть, иначе - по умолчанию");
 	TODO("GUI может скорректировать размер с учетом полосы прокрутки");
 
-	WARNING("Послать в GUI CONEMUCMDSTARTED");
+	int nNewBufferHeight = 0;
+	COORD crNewSize = cmd.sbi.dwSize;
+	SMALL_RECT rNewWindow = cmd.sbi.srWindow;
 
-	if (GetConsoleScreenBufferInfo(ghConOut, &cmd.sbi)) {
+	CESERVER_REQ *pIn = NULL, *pOut = NULL;
+	int nSize = sizeof(CESERVER_REQ)-sizeof(pIn->Data)+3*sizeof(DWORD);
+	pIn = (CESERVER_REQ*)calloc(nSize,1);
+	if (pIn) {
+		pIn->nCmd = CECMD_CMDSTARTSTOP;
+		pIn->nSize = nSize;
+		pIn->nVersion = CESERVER_REQ_VER;
+		((DWORD*)(pIn->Data))[0] = TRUE;
+		((DWORD*)(pIn->Data))[1] = (DWORD)ghConWnd;
+		((DWORD*)(pIn->Data))[2] = gnSelfPID;
+
+		pOut = ExecuteGuiCmd(ghConWnd, pIn);
+		if (pOut) {
+			nNewBufferHeight = ((DWORD*)(pOut->Data))[0];
+			crNewSize.X = (SHORT)((DWORD*)(pOut->Data))[1];
+			crNewSize.Y = (SHORT)((DWORD*)(pOut->Data))[2];
+			if (rNewWindow.Right >= crNewSize.X) // размер был уменьшен за счет полосы прокрутки
+				rNewWindow.Right = crNewSize.X-1;
+			free(pOut);
+
+			gnBufferHeight = nNewBufferHeight;
+		}
+	}
+
+	if (MyGetConsoleScreenBufferInfo(ghConOut, &cmd.sbi)) {
+		if (gnBufferHeight > nNewBufferHeight)
+			nNewBufferHeight = gnBufferHeight;
 		//SMALL_RECT rc = {0}; 
 		//COORD crNew = {cmd.sbi.dwSize.X,cmd.sbi.dwSize.Y};
-		SetConsoleSize(1000, cmd.sbi.dwSize, cmd.sbi.srWindow, "ComspecInit");
+		SetConsoleSize(nNewBufferHeight, crNewSize, rNewWindow, "ComspecInit");
 	}
     return 0;
 }
@@ -674,6 +724,23 @@ void ComspecDone(int aiRc)
 	if (cmd.sbi.dwSize.X && cmd.sbi.dwSize.Y) {
 		SMALL_RECT rc = {0};
 		SetConsoleSize(0, cmd.sbi.dwSize, rc, "ComspecDone");
+	}
+
+	CESERVER_REQ *pIn = NULL, *pOut = NULL;
+	int nSize = sizeof(CESERVER_REQ)-sizeof(pIn->Data)+3*sizeof(DWORD);
+	pIn = (CESERVER_REQ*)calloc(nSize,1);
+	if (pIn) {
+		pIn->nCmd = CECMD_CMDSTARTSTOP;
+		pIn->nSize = nSize;
+		pIn->nVersion = CESERVER_REQ_VER;
+		((DWORD*)(pIn->Data))[0] = TRUE;
+		((DWORD*)(pIn->Data))[1] = (DWORD)ghConWnd;
+		((DWORD*)(pIn->Data))[2] = gnSelfPID;
+
+		pOut = ExecuteGuiCmd(ghConWnd, pIn);
+		if (pOut) {
+			free(pOut);
+		}
 	}
 
 	SafeCloseHandle(ghCtrlCEvent);
@@ -706,7 +773,7 @@ void CreateLogSizeFile()
         return;
     }
     
-    wpszLogSizeFile = wcsdup(szFile);
+    wpszLogSizeFile = _wcsdup(szFile);
     // OK, лог создали
     LPCSTR pszCmdLine = GetCommandLineA();
     if (pszCmdLine) {
@@ -721,6 +788,7 @@ void LogSize(COORD* pcrSize, LPCSTR pszLabel)
     if (!ghLogSize) return;
     
     CONSOLE_SCREEN_BUFFER_INFO lsbi = {{0,0}};
+	// В дебажный лог помещаем реальный значения
     GetConsoleScreenBufferInfo(ghConOut ? ghConOut : GetStdHandle(STD_OUTPUT_HANDLE), &lsbi);
     
     char szInfo[192] = {0};
@@ -776,7 +844,7 @@ int ServerInit()
 	if (GetEnvironmentVariable(L"ComSpec", szComSpec, MAX_PATH)) {
 		wchar_t* pszSlash = wcsrchr(szComSpec, L'\\');
 		if (pszSlash) {
-			if (wcsnicmp(pszSlash, L"\\conemuc.", 9)) {
+			if (_wcsnicmp(pszSlash, L"\\conemuc.", 9)) {
 				// Если это НЕ мы - сохранить в ComSpecC
 				SetEnvironmentVariable(L"ComSpecC", szComSpec);
 			}
@@ -789,7 +857,8 @@ int ServerInit()
     srv.bContentsChanged = TRUE;
     srv.nMainTimerElapse = 10;
     srv.bConsoleActive = TRUE; TODO("Обрабатывать консольные события Activate/Deactivate");
-    srv.bNeedFullReload = TRUE;
+    srv.bNeedFullReload = TRUE; srv.bForceFullReload = FALSE;
+	srv.nTopVisibleLine = -1; // блокировка прокрутки не включена
 
     
     InitializeCriticalSection(&srv.csConBuf);
@@ -1007,6 +1076,7 @@ void ServerDone(int aiRc)
     
     if (srv.psChars) { free(srv.psChars); srv.psChars = NULL; }
     if (srv.pnAttrs) { free(srv.pnAttrs); srv.pnAttrs = NULL; }
+	if (srv.ptrLineCmp) { free(srv.ptrLineCmp); srv.ptrLineCmp = NULL; }
     DeleteCriticalSection(&srv.csConBuf);
     DeleteCriticalSection(&srv.csProc);
 }
@@ -1356,14 +1426,24 @@ DWORD ReadConsoleData(CESERVER_CHAR** pCheck /*= NULL*/, BOOL* pbDataChanged /*=
     EnterCriticalSection(&srv.csConBuf);
     RECT rcReadRect = {0};
 
-    SHORT TextWidth=0, TextHeight=0;
+    USHORT TextWidth=0, TextHeight=0;
     DWORD TextLen=0;
     COORD coord;
     
     //TODO: а точно по srWindow ширину нужно смотреть?
     TextWidth = srv.sbi.dwSize.X; //max(srv.sbi.dwSize.X, (srv.sbi.srWindow.Right - srv.sbi.srWindow.Left + 1));
-    WARNING("Для режима BufferHeight нужно считать по другому!");
-    TextHeight = srv.sbi.dwSize.Y; //srv.sbi.srWindow.Bottom - srv.sbi.srWindow.Top + 1;
+	// Уже должно быть поправлено в CorrectVisibleRect
+	//if (gnBufferHeight == 0) {
+	//	// Сервер мог еще не успеть среагировать на изменение режима BufferHeight
+	//	if (srv.sbi.dwMaximumWindowSize.Y < srv.sbi.dwSize.Y)
+	//		gnBufferHeight = srv.sbi.dwSize.Y; // Это однозначно буферный режим
+	//}
+	if (gnBufferHeight == 0) {
+		TextHeight = srv.sbi.dwSize.Y; //srv.sbi.srWindow.Bottom - srv.sbi.srWindow.Top + 1;
+	} else {
+		//Для режима BufferHeight нужно считать по другому!
+		TextHeight = gcrBufferSize.Y;
+	}
     TextLen = TextWidth * TextHeight;
     if (TextLen > srv.nBufCharCount) {
         lbChanged = TRUE;
@@ -1380,8 +1460,21 @@ DWORD ReadConsoleData(CESERVER_CHAR** pCheck /*= NULL*/, BOOL* pbDataChanged /*=
             lbRc = FALSE;
         }
     }
+	if (TextWidth > srv.nLineCmpSize) {
+		free(srv.ptrLineCmp);
+		srv.ptrLineCmp = (WORD*)calloc(TextWidth*2,sizeof(WORD));
+		_ASSERTE(srv.ptrLineCmp!=NULL);
+		if (srv.ptrLineCmp) {
+			srv.nLineCmpSize = TextWidth*2;
+		} else {
+			srv.nLineCmpSize = 0;
+		}
+	}
     //TODO: может все-таки из {0,srv.sbi.srWindow.Top} начинать нужно?
-    coord.X = srv.sbi.srWindow.Left; coord.Y = srv.sbi.srWindow.Top;
+    //coord.X = srv.sbi.srWindow.Left;
+	//coord.Y = srv.sbi.srWindow.Top;
+	coord.X = 0;
+	coord.Y = srv.sbi.srWindow.Top;
 
     //TODO: перечитывать содержимое ТОЛЬКО по srv.bContentsChanged
     // ПЕРЕД чтением - сбросить srv.bContentsChanged в FALSE
@@ -1417,9 +1510,10 @@ DWORD ReadConsoleData(CESERVER_CHAR** pCheck /*= NULL*/, BOOL* pbDataChanged /*=
         cbDataSize = TextLen * 2; // Size in bytes of ONE buffer
 
         if (!lbChanged) {
-            if (memcmp(srv.psChars, srv.psChars+TextLen, TextLen*sizeof(wchar_t)))
+			// Тут сдвиг именно srv.nBufCharCount, а не TextLen, чтобы не рассчитывать его каждый раз
+            if (memcmp(srv.psChars, srv.psChars+srv.nBufCharCount, TextLen*sizeof(wchar_t)))
                 lbChanged = TRUE;
-            else if (memcmp(srv.pnAttrs, srv.pnAttrs+TextLen, TextLen*sizeof(WORD)))
+            else if (memcmp(srv.pnAttrs, srv.pnAttrs+srv.nBufCharCount, TextLen*sizeof(WORD)))
                 lbChanged = TRUE;
         }
 
@@ -1464,26 +1558,25 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
             (*out)->nCmd = 0;
             (*out)->nSize = nOutSize;
             (*out)->nVersion = CESERVER_REQ_VER;
-            if (in.nSize >= (12 + sizeof(USHORT)+sizeof(COORD)+sizeof(SMALL_RECT))) {
+            if (in.nSize >= (12 + sizeof(USHORT)+sizeof(COORD)+sizeof(SHORT)+sizeof(SMALL_RECT))) {
                 USHORT nBufferHeight = 0;
                 COORD  crNewSize = {0,0};
                 SMALL_RECT rNewRect = {0};
+				SHORT  nNewTopVisible = -1;
                 memmove(&nBufferHeight, in.Data, sizeof(USHORT));
                 memmove(&crNewSize, in.Data+sizeof(USHORT), sizeof(COORD));
-                memmove(&rNewRect, in.Data+sizeof(USHORT)+sizeof(COORD), sizeof(SMALL_RECT));
+				memmove(&nNewTopVisible, in.Data+sizeof(USHORT)+sizeof(COORD), sizeof(SHORT));
+                memmove(&rNewRect, in.Data+sizeof(USHORT)+sizeof(COORD)+sizeof(SHORT), sizeof(SMALL_RECT));
 
                 (*out)->nCmd = CECMD_SETSIZE;
 
+				srv.nTopVisibleLine = nNewTopVisible;
                 SetConsoleSize(nBufferHeight, crNewSize, rNewRect, ":CECMD_SETSIZE");
             }
             PCONSOLE_SCREEN_BUFFER_INFO psc = (PCONSOLE_SCREEN_BUFFER_INFO)(*out)->Data;
-            GetConsoleScreenBufferInfo(ghConOut, psc);
-            WARNING("Игнорируем горизонтальный скроллинг");
-            psc->srWindow.Left = 0; psc->srWindow.Right = psc->dwSize.X - 1;
-            WARNING("Игнорируем вертикальный скроллинг для обычного режима");
-            if (gnBufferHeight == 0) {
-                psc->srWindow.Top = 0; psc->srWindow.Bottom = psc->dwSize.Y - 1;
-            }
+
+            MyGetConsoleScreenBufferInfo(ghConOut, psc);
+
             lbRc = TRUE;
         } break;
         
@@ -1537,7 +1630,7 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 		        // Clear console!
 			    CONSOLE_SCREEN_BUFFER_INFO lsbi = {{0,0}};
 			    HANDLE hCon = ghConOut ? ghConOut : GetStdHandle(STD_OUTPUT_HANDLE);
-			    if (GetConsoleScreenBufferInfo(hCon, &lsbi)) {
+			    if (MyGetConsoleScreenBufferInfo(hCon, &lsbi)) {
 				    DWORD dwWritten = 0; COORD cr = {0,0};
 				    FillConsoleOutputCharacter(hCon, L' ', lsbi.dwSize.X*lsbi.dwSize.Y, cr, &dwWritten);
 				    FillConsoleOutputAttribute(hCon, 7, lsbi.dwSize.X*lsbi.dwSize.Y, cr, &dwWritten);
@@ -1605,7 +1698,7 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
     DWORD dwErr = 0, nWait = 0;
     HANDLE hEvents[2] = {ghExitEvent, srv.hRefreshEvent};
     CONSOLE_CURSOR_INFO lci = {0}; // GetConsoleCursorInfo
-    CONSOLE_SCREEN_BUFFER_INFO lsbi = {{0,0}}; // GetConsoleScreenBufferInfo
+    CONSOLE_SCREEN_BUFFER_INFO lsbi = {{0,0}}; // MyGetConsoleScreenBufferInfo
     BOOL lbQuit = FALSE;
 
     while (!lbQuit)
@@ -1620,7 +1713,7 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 
         if (nWait == WAIT_TIMEOUT) {
             // К сожалению, исключительно курсорные события не приходят (если консоль не в фокусе)
-            if (GetConsoleScreenBufferInfo(ghConOut, &lsbi)) {
+            if (MyGetConsoleScreenBufferInfo(ghConOut, &lsbi)) {
                 if (memcmp(&srv.sbi.dwCursorPosition, &lsbi.dwCursorPosition, sizeof(lsbi.dwCursorPosition))) {
                     nWait = (WAIT_OBJECT_0+1);
                 }
@@ -1630,16 +1723,19 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
                     nWait = (WAIT_OBJECT_0+1);
                 }
             }
-            //if (srv.nLastUpdateTick) 
-			{
-	            DWORD dwCurTick = GetTickCount();
-	            DWORD dwDelta = dwCurTick - srv.nLastUpdateTick;
-	            TODO("По какой-то причине, иногда, в GUI приходят не все изменения консоли... попробуем так?");
-	            if (dwDelta > 1000) {
-		            srv.nLastUpdateTick = GetTickCount();
-		            nWait = (WAIT_OBJECT_0+1);
-	            }
+            
+
+			#ifdef FORCE_REDRAW_FIX
+            DWORD dwCurTick = GetTickCount();
+            DWORD dwDelta = dwCurTick - srv.nLastUpdateTick;
+            if (dwDelta > 1000) {
+				TODO("По какой-то причине, иногда, в GUI приходят не все изменения консоли... попробуем так?");
+				srv.bNeedFullReload = TRUE;
+				srv.bForceFullReload = TRUE;
+	            srv.nLastUpdateTick = GetTickCount();
+	            nWait = (WAIT_OBJECT_0+1);
             }
+			#endif
         }
 
         if (nWait == (WAIT_OBJECT_0+1)) {
@@ -1791,18 +1887,30 @@ void CALLBACK WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, 
             OutputDebugString(szDbg);
             #endif
             // Перечитать размер, положение курсора, и пр.
-            if (!ReloadConsoleInfo()) { // Если Layout не поменялся
-                TODO("Если Reload==FALSE, и ch не меняет предыдущего символа/атрибута в srv.psChars/srv.pnAttrs - сразу выйти");
-                
-                int nIdx = ch.crStart.X + ch.crStart.Y * srv.sbi.dwSize.X;
-                _ASSERTE(nIdx>=0 && (DWORD)nIdx<srv.nBufCharCount);
+			BOOL lbLayoutChanged = ReloadConsoleInfo(TRUE);
+
+			SHORT nYCorrected = CorrectTopVisible(ch.crStart.Y);
+
+			// Если строка не попала с пересылаемый в GUI буфер - просто выйдем
+			if (nYCorrected < 0 || nYCorrected >= min(gcrBufferSize.Y,srv.sbi.dwSize.Y))
+				return;
+
+			int nIdx = ch.crStart.X + nYCorrected * srv.sbi.dwSize.X;
+			_ASSERTE(nIdx>=0 && (DWORD)nIdx<srv.nBufCharCount);
+
+            if (!lbLayoutChanged) { // Если Layout не поменялся
+                // Если Reload==FALSE, и ch не меняет предыдущего символа/атрибута в srv.psChars/srv.pnAttrs - сразу выйти");
                 if (srv.psChars[nIdx] == (wchar_t)ch.data[0] && srv.pnAttrs[nIdx] == ch.data[1])
                     return; // данные не менялись
             }
+
             // Применить
-            int nIdx = ch.crStart.X + ch.crStart.Y * srv.sbi.dwSize.X;
-            srv.psChars[nIdx] = (wchar_t)ch.data[0];
-            srv.psChars[nIdx+srv.nBufCharCount] = (wchar_t)ch.data[0];
+			srv.psChars[nIdx] = (wchar_t)ch.data[0];
+			// Чтобы не рассчитывать каждый раз сдвиг буфера - он всегда максимальный == srv.nBufCharCount
+			srv.psChars[nIdx+srv.nBufCharCount] = (wchar_t)ch.data[0];
+			srv.pnAttrs[nIdx] = (WORD)ch.data[1];
+			srv.pnAttrs[nIdx+srv.nBufCharCount] = (WORD)ch.data[1];
+
             // И отправить
             ReloadFullConsoleInfo(&ch);
         } return;
@@ -1873,6 +1981,24 @@ void CALLBACK WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, 
     //SendConsoleChanges ( pOut );
 
     //free ( pOut );
+}
+
+// Скорректировать строку nY так, чтобы ее индекс соответствовал буферу, пересылаемому в GUI
+// Пересылаемый буфер содержит видимую часть консоли (или видимую в GUI, если автопрокрутка 'заблокирована')
+SHORT CorrectTopVisible(int nY)
+{
+	int nYCorrected = nY;
+	if (srv.nTopVisibleLine != -1) {
+		// верхняя строка в GUI зафиксирована
+		nYCorrected = nY - srv.nTopVisibleLine;
+	} else if (srv.sbi.dwSize.Y <= gcrBufferSize.Y) {
+		// Если текущая высота буфера не больше используемой в GUI - строки не отнимаем
+		nYCorrected = nY;
+	} else {
+		// Нужно из Y вычесть (0-based) индекс верхней видимой строки
+		nYCorrected = nY - srv.sbi.srWindow.Top;
+	}
+	return nYCorrected;
 }
 
 void SendConsoleChanges(CESERVER_REQ* pOut)
@@ -1958,8 +2084,8 @@ CESERVER_REQ* CreateConsoleInfo(CESERVER_CHAR* pCharOnly, int bCharAttrBuff)
     //DWORD srv.dwConsoleCP=0, srv.dwConsoleOutputCP=0, srv.dwConsoleMode=0;
     dwAllSize += 3*sizeof(DWORD);
     // 9
-    //DWORD srv.dwSbiRc = 0; CONSOLE_SCREEN_BUFFER_INFO srv.sbi = {{0,0}}; // GetConsoleScreenBufferInfo
-    //if (!GetConsoleScreenBufferInfo(ghConOut, &srv.sbi)) { srv.dwSbiRc = GetLastError(); if (!srv.dwSbiRc) srv.dwSbiRc = -1; }
+    //DWORD srv.dwSbiRc = 0; CONSOLE_SCREEN_BUFFER_INFO srv.sbi = {{0,0}}; // MyGetConsoleScreenBufferInfo
+    //if (!MyGetConsoleScreenBufferInfo(ghConOut, &srv.sbi)) { srv.dwSbiRc = GetLastError(); if (!srv.dwSbiRc) srv.dwSbiRc = -1; }
     dwAllSize += sizeof(srv.dwSbiRc)+((srv.dwSbiRc==0) ? (nSize=sizeof(srv.sbi)) : 0);
     // 10
     dwAllSize += sizeof(DWORD) + (pCharOnly ? (nSize=sizeof(CESERVER_CHAR)) : 0);
@@ -1968,12 +2094,15 @@ CESERVER_REQ* CreateConsoleInfo(CESERVER_CHAR* pCharOnly, int bCharAttrBuff)
     dwAllSize += sizeof(DWORD);
     if (bCharAttrBuff) {
         TODO("Доработать для передачи только изменившегося прямоугольника и BufferHeight");
-        if (bCharAttrBuff == 2 && OneBufferSize == (srv.nBufCharCount*2)) {
-            _ASSERTE(srv.nBufCharCount>0);
-            OneBufferSize = srv.nBufCharCount*2;
-        } else {
-            OneBufferSize = ReadConsoleData(); // returns size in bytes of ONE buffer
-        }
+        //if (bCharAttrBuff == 2 && OneBufferSize == (srv.nBufCharCount*2)) {
+        //    _ASSERTE(srv.nBufCharCount>0);
+        //    OneBufferSize = srv.nBufCharCount*2;
+        //} else {
+        OneBufferSize = ReadConsoleData(); // returns size in bytes of ONE buffer
+		//}
+		if (OneBufferSize > (200*100*2)) {
+			_ASSERTE(OneBufferSize && OneBufferSize<=(200*100*2));
+		}
         #ifdef _DEBUG
         if (gnBufferHeight == 0) {
             _ASSERTE(OneBufferSize == (srv.sbi.dwSize.X*srv.sbi.dwSize.Y*2));
@@ -2044,7 +2173,7 @@ CESERVER_REQ* CreateConsoleInfo(CESERVER_CHAR* pCharOnly, int bCharAttrBuff)
     *((DWORD*)lpCur) = srv.dwConsoleMode; lpCur += sizeof(DWORD);
 
     // 9
-    //if (!GetConsoleScreenBufferInfo(ghConOut, &srv.sbi)) { srv.dwSbiRc = GetLastError(); if (!srv.dwSbiRc) srv.dwSbiRc = -1; }
+    //if (!MyGetConsoleScreenBufferInfo(ghConOut, &srv.sbi)) { srv.dwSbiRc = GetLastError(); if (!srv.dwSbiRc) srv.dwSbiRc = -1; }
     nSize=sizeof(srv.sbi); *((DWORD*)lpCur) = (srv.dwSbiRc == 0) ? nSize : 0; lpCur += sizeof(DWORD);
     if (srv.dwSbiRc == 0) {
         memmove(lpCur, &srv.sbi, nSize); lpCur += nSize;
@@ -2074,21 +2203,23 @@ CESERVER_REQ* CreateConsoleInfo(CESERVER_CHAR* pCharOnly, int bCharAttrBuff)
     return pOut;
 }
 
-BOOL ReloadConsoleInfo()
+BOOL ReloadConsoleInfo(BOOL abSkipCursorCharCheck/*=FALSE*/)
 {
     BOOL lbChanged = FALSE;
-    CONSOLE_SELECTION_INFO lsel = {0}; // GetConsoleSelectionInfo
+    //CONSOLE_SELECTION_INFO lsel = {0}; // GetConsoleSelectionInfo
     CONSOLE_CURSOR_INFO lci = {0}; // GetConsoleCursorInfo
     DWORD ldwConsoleCP=0, ldwConsoleOutputCP=0, ldwConsoleMode=0;
-    CONSOLE_SCREEN_BUFFER_INFO lsbi = {{0,0}}; // GetConsoleScreenBufferInfo
+    CONSOLE_SCREEN_BUFFER_INFO lsbi = {{0,0}}; // MyGetConsoleScreenBufferInfo
 
-    if (!GetConsoleSelectionInfo(&lsel)) { srv.dwSelRc = GetLastError(); if (!srv.dwSelRc) srv.dwSelRc = -1; } else {
-        srv.dwSelRc = 0;
-        if (memcmp(&srv.sel, &lsel, sizeof(srv.sel))) {
-            srv.sel = lsel;
-            lbChanged = TRUE;
-        }
-    }
+	TODO("Вообще-то Selection будем обрабатывать сами в GUI, так что эти вызовы наверное нафиг, для ускорения процесса");
+	srv.dwSelRc = 0; memset(&srv.sel, 0, sizeof(srv.sel));
+    //if (!GetConsoleSelectionInfo(&lsel)) { srv.dwSelRc = GetLastError(); if (!srv.dwSelRc) srv.dwSelRc = -1; } else {
+    //    srv.dwSelRc = 0;
+    //    if (memcmp(&srv.sel, &lsel, sizeof(srv.sel))) {
+    //        srv.sel = lsel;
+    //        lbChanged = TRUE;
+    //    }
+    //}
 
     if (!GetConsoleCursorInfo(ghConOut, &lci)) { srv.dwCiRc = GetLastError(); if (!srv.dwCiRc) srv.dwCiRc = -1; } else {
         srv.dwCiRc = 0;
@@ -2102,15 +2233,59 @@ BOOL ReloadConsoleInfo()
     ldwConsoleOutputCP = GetConsoleOutputCP(); if (srv.dwConsoleOutputCP!=ldwConsoleOutputCP) { srv.dwConsoleOutputCP = ldwConsoleOutputCP; lbChanged = TRUE; }
     ldwConsoleMode=0; GetConsoleMode(ghConIn, &ldwConsoleMode); if (srv.dwConsoleMode!=ldwConsoleMode) { srv.dwConsoleMode = ldwConsoleMode; lbChanged = TRUE; }
 
-    if (!GetConsoleScreenBufferInfo(ghConOut, &lsbi)) { srv.dwSbiRc = GetLastError(); if (!srv.dwSbiRc) srv.dwSbiRc = -1; } else {
+    if (!MyGetConsoleScreenBufferInfo(ghConOut, &lsbi)) { srv.dwSbiRc = GetLastError(); if (!srv.dwSbiRc) srv.dwSbiRc = -1; } else {
         srv.dwSbiRc = 0;
-        WARNING("Игнорируем горизонтальный скроллинг");
-        lsbi.srWindow.Left = 0; lsbi.srWindow.Right = lsbi.dwSize.X - 1;
-        WARNING("Игнорируем вертикальный скроллинг для обычного режима");
-        if (gnBufferHeight == 0) {
-            lsbi.srWindow.Top = 0; lsbi.srWindow.Bottom = lsbi.dwSize.Y - 1;
-        }
         if (memcmp(&srv.sbi, &lsbi, sizeof(srv.sbi))) {
+			if (srv.psChars && srv.pnAttrs && !abSkipCursorCharCheck
+				&& !(srv.bForceFullReload || srv.bNeedFullReload)
+				&& memcmp(&srv.sbi.dwCursorPosition, &lsbi.dwCursorPosition, sizeof(lsbi.dwCursorPosition))
+				)
+			{
+				// В некоторых случаях не срабатывает ни EVENT_CONSOLE_UPDATE_SIMPLE ни EVENT_CONSOLE_UPDATE_REGION
+				// Пример. Запускаем cmd.exe. печатаем какую-то муйню в командной строке и нажимаем 'Esc'
+				// При Esc никаких событий ВООБЩЕ не дергается, а экран в консоли изменился!
+
+				// Вобщем, если есть изменения в символах/атрибутах строки на которой БЫЛ курсор,
+				// или на которую курсор помещен - перечитать консоль полностью - bForceFullReload=TRUE
+				int nCount = min(lsbi.dwSize.X, (int)srv.nLineCmpSize);
+				if (nCount && srv.ptrLineCmp) {
+					DWORD nbActuallyRead = 0;
+					COORD coord = {0,0};
+					DWORD nBufferShift = 0;
+					for (int i=0; i<=1; i++) {
+						if (i==0) {
+							// Строка на которой БЫЛ курсор
+							coord.Y = srv.sbi.dwCursorPosition.Y;
+							// С учетом первой видимой строки...
+							nBufferShift = coord.Y - srv.sbi.srWindow.Top;
+						} else {
+							// Строка на которую встал курсор
+							if (coord.Y == lsbi.dwCursorPosition.Y) break; // строка не менялась, только позиция
+							coord.Y = lsbi.dwCursorPosition.Y;
+							// С учетом первой видимой строки...
+							nBufferShift = coord.Y - srv.sbi.srWindow.Top;
+						}
+						// размерность
+						if (nBufferShift < 0 || nBufferShift >= (USHORT)gcrBufferSize.Y)
+							continue; // вышел из видимой в GUI области
+						nBufferShift = nBufferShift*gcrBufferSize.X;
+
+						if (ReadConsoleOutputCharacter(ghConOut, (wchar_t*)srv.ptrLineCmp, nCount, coord, &nbActuallyRead)) {
+							if (memcmp(srv.ptrLineCmp, srv.psChars+nBufferShift, nbActuallyRead*2)) {
+								srv.bForceFullReload = TRUE; break;
+							}
+						}
+						if (ReadConsoleOutputAttribute(ghConOut, srv.ptrLineCmp, nCount, coord, &nbActuallyRead)) {
+							if (memcmp(srv.ptrLineCmp, srv.pnAttrs+nBufferShift, nbActuallyRead*2)) {
+								srv.bForceFullReload = TRUE; break;
+							}
+						}
+					}
+				}
+			}
+			if ((lsbi.srWindow.Bottom - lsbi.srWindow.Top)>lsbi.dwMaximumWindowSize.Y) {
+				_ASSERTE((lsbi.srWindow.Bottom - lsbi.srWindow.Top)<lsbi.dwMaximumWindowSize.Y);
+			}
             srv.sbi = lsbi;
             lbChanged = TRUE;
         }
@@ -2119,21 +2294,80 @@ BOOL ReloadConsoleInfo()
     return lbChanged;
 }
 
+BOOL MyGetConsoleScreenBufferInfo(HANDLE ahConOut, PCONSOLE_SCREEN_BUFFER_INFO apsc)
+{
+	BOOL lbRc = FALSE;
+
+	lbRc = GetConsoleScreenBufferInfo(ahConOut, apsc);
+	if (lbRc) {
+		if (gnBufferHeight) {
+			if (gnBufferHeight <= (apsc->dwMaximumWindowSize.Y * 1.2))
+				gnBufferHeight = max(300, (apsc->dwMaximumWindowSize.Y * 1.2));
+		}
+		// Если прокрутки быть не должно - по возможности уберем ее, иначе при запуске FAR
+		// запустится только в ВИДИМОЙ области
+		if (((apsc->srWindow.Right+1) < apsc->dwSize.X)
+			|| ((gnBufferHeight == 0) && ((apsc->srWindow.Bottom+1) < apsc->dwSize.Y))
+			)
+		{
+			RECT rcConPos; GetWindowRect(ghConWnd, &rcConPos);
+			int nNewWidth = GetSystemMetrics(SM_CXSCREEN);
+			int nNewHeight = (gnBufferHeight != 0) ? (rcConPos.bottom - rcConPos.top) : GetSystemMetrics(SM_CYSCREEN);
+
+			MoveWindow(ghConWnd, rcConPos.left, rcConPos.top, nNewWidth, nNewHeight, TRUE);
+			lbRc = GetConsoleScreenBufferInfo(ahConOut, apsc);
+		}
+		CorrectVisibleRect(apsc);
+	}
+
+	return lbRc;
+}
+
+void CorrectVisibleRect(CONSOLE_SCREEN_BUFFER_INFO* pSbi)
+{
+	// Игнорируем горизонтальный скроллинг
+	pSbi->srWindow.Left = 0; pSbi->srWindow.Right = pSbi->dwSize.X - 1;
+	if (gnBufferHeight == 0) {
+		// Сервер мог еще не успеть среагировать на изменение режима BufferHeight
+		if (pSbi->dwMaximumWindowSize.Y < pSbi->dwSize.Y)
+			gnBufferHeight = pSbi->dwSize.Y; // Это однозначно буферный режим
+	}
+	// Игнорируем вертикальный скроллинг для обычного режима
+	if (gnBufferHeight == 0) {
+		pSbi->srWindow.Top = 0; pSbi->srWindow.Bottom = pSbi->dwSize.Y - 1;
+	} else if (srv.nTopVisibleLine!=-1) {
+		// А для 'буферного' режима позиция может быть заблокирована
+		pSbi->srWindow.Top = srv.nTopVisibleLine;
+		pSbi->srWindow.Bottom = min( (pSbi->dwSize.Y-1), (srv.nTopVisibleLine+gcrBufferSize.Y-1) );
+	} else {
+		// Просто корректируем нижнюю строку по отображаемому в GUI региону
+		TODO("Вообще-то хорошо бы эту коррекцию сделать так, чтобы курсор был видим");
+		pSbi->srWindow.Bottom = min( (pSbi->dwSize.Y-1), (pSbi->srWindow.Top+gcrBufferSize.Y-1) );
+	}
+}
+
 void ReloadFullConsoleInfo(CESERVER_CHAR* pCharOnly/*=NULL*/)
 {
     CESERVER_CHAR* pCheck = NULL;
     BOOL lbInfChanged = FALSE, lbDataChanged = FALSE;
     DWORD dwBufSize = 0;
 
-    lbInfChanged = ReloadConsoleInfo();
+    lbInfChanged = ReloadConsoleInfo(pCharOnly!=NULL);
 
-    if (srv.bNeedFullReload) {
+    if (srv.bNeedFullReload || srv.bForceFullReload) {
+		BOOL bForce = srv.bForceFullReload;
         srv.bNeedFullReload = FALSE;
+		srv.bForceFullReload = FALSE;
         dwBufSize = ReadConsoleData(&pCheck, &lbDataChanged);
         if (lbDataChanged && pCheck != NULL) {
             pCharOnly = pCheck;
             lbDataChanged = FALSE; // Изменения передадутся через pCharOnly
-        }
+		} else if (!lbDataChanged && bForce) {
+			// его тоже сразу сбрасывать, но принудительно выставлять lbDataChanged
+			// это потому, что по какой-то причине ИНОГДА в буфер попазают некорректные данные... где-то баг, пока не нашел
+			lbDataChanged = TRUE;
+			OutputDebugString(L"!!! Forced full console data send\n");
+		}
     }
 
     if (lbInfChanged || lbDataChanged || pCharOnly) {
@@ -2157,6 +2391,9 @@ void ReloadFullConsoleInfo(CESERVER_CHAR* pCharOnly/*=NULL*/)
     if (pCheck) free(pCheck);
 }
 
+// BufferHeight  - высота БУФЕРА (0 - без прокрутки)
+// crNewSize     - размер ОКНА (ширина окна == ширине буфера)
+// rNewRect      - для (BufferHeight!=0) определяет new upper-left and lower-right corners of the window
 BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, LPCSTR asLabel)
 {
     _ASSERTE(ghConWnd);
@@ -2182,7 +2419,7 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
     DWORD nWait = 0;
     BOOL lbNeedChange = TRUE;
     CONSOLE_SCREEN_BUFFER_INFO csbi = {{0,0}};
-    if (GetConsoleScreenBufferInfo(ghConOut, &csbi)) {
+    if (MyGetConsoleScreenBufferInfo(ghConOut, &csbi)) {
         lbNeedChange = (csbi.dwSize.X != crNewSize.X) || (csbi.dwSize.Y != crNewSize.Y);
     }
 
@@ -2219,9 +2456,12 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 		GetWindowRect(ghConWnd, &rcCurConPos); //X-Y новые, но высота - старая
         MoveWindow(ghConWnd, rcCurConPos.left, rcCurConPos.top, GetSystemMetrics(SM_CXSCREEN), rcConPos.bottom-rcConPos.top, 1);
 
-		if (rNewRect.Right && rNewRect.Bottom) {
-            SetConsoleWindowInfo(ghConOut, TRUE, &rNewRect);
+		rNewRect.Left = 0;
+		if (!rNewRect.Right || !rNewRect.Bottom) {
+			rNewRect.Right = crHeight.X-1;
+			rNewRect.Bottom = min( (crHeight.Y-1), (rNewRect.Top+gcrBufferSize.Y-1) );
 		}
+        SetConsoleWindowInfo(ghConOut, TRUE, &rNewRect);
     }
 
     if (srv.hChangingSize) { // во время запуска ConEmuC

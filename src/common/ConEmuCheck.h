@@ -1,4 +1,7 @@
+
 #pragma once
+
+#include "common.hpp"
 
 #define VirtualConsoleClass L"VirtualConsoleClass"
 #define VirtualConsoleClassMain L"VirtualConsoleClass"
@@ -7,6 +10,7 @@
 
 // Service function
 HWND AtoH(char *Str, int Len);
+
 
 // 0 -- All OK (ConEmu found, Version OK)
 // 1 -- NO ConEmu (simple console mode)
@@ -23,3 +27,10 @@ int ConEmuCheck(HWND* ahConEmuWnd);
 ////         3 -- same as 2, but ConEmu DC window - absent (old conemu version?)
 ////         4 -- same as 0, but ConEmu DC window - absent (old conemu version?)
 HWND GetConEmuHWND(BOOL abRoot /*, int* pnConsoleIsChild/ *=NULL*/);
+
+
+CESERVER_REQ* ExecuteGuiCmd(HWND hConWnd, const CESERVER_REQ* pIn);
+
+
+HWND myGetConsoleWindow();
+

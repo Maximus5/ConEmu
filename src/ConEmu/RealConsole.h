@@ -112,7 +112,7 @@ public:
 	BOOL PreInit(BOOL abCreateBuffers=TRUE);
 	void DumpConsole(HANDLE ahFile);
 
-	bool SetConsoleSize(COORD size);
+	BOOL SetConsoleSize(COORD size);
 	void SendMouseEvent(UINT messg, WPARAM wParam, int x, int y);
 	void SendConsoleEvent(INPUT_RECORD* piRec);
 	void StopSignal();
@@ -133,16 +133,18 @@ public:
 	DWORD GetServerPID();
 	LRESULT OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnScroll(int nDirection);
-	bool isConSelectMode();
-	bool isFar();
+	BOOL isConSelectMode();
+	BOOL isFar();
 	void ShowConsole(int nMode); // -1 Toggle, 0 - Hide, 1 - Show
 	BOOL isDetached();
 	BOOL AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID);
-	bool RecreateProcess();
+	BOOL RecreateProcess();
 	void GetData(wchar_t* pChar, WORD* pAttr, uint nSize);
 	void OnActivate(int nNewNum, int nOldNum);
-	bool CheckBufferSize();
-	LRESULT OnConEmuCmd(BOOL abStarted, DWORD anConEmuC_PID);
+	BOOL CheckBufferSize();
+	//LRESULT OnConEmuCmd(BOOL abStarted, DWORD anConEmuC_PID);
+	BOOL BufferHeightTurnedOn(CONSOLE_SCREEN_BUFFER_INFO* psbi);
+	void UpdateScrollInfo();
 
 protected:
 	BOOL PreCreate(BOOL abDetached);
@@ -173,9 +175,11 @@ private:
 		CONSOLE_CURSOR_INFO m_ci;
 		DWORD m_dwConsoleCP, m_dwConsoleOutputCP, m_dwConsoleMode;
 		CONSOLE_SCREEN_BUFFER_INFO m_sbi;
+		USHORT nTopVisibleLine; // может отличаться от m_sbi.srWindow.Top, если прокрутка заблокирована
 		wchar_t *pConChar;
 		WORD  *pConAttr;
 		int nTextWidth, nTextHeight;
+		BOOL bBufferHeight;
 		size_t nPacketIdx;
 	} con;
 	// 
@@ -190,9 +194,8 @@ private:
 	void ProcessUpdateFlags(BOOL abProcessChanged);
 	void ProcessCheckName(struct ConProcess &ConPrc, LPWSTR asFullFileName);
 	DWORD mn_ActiveStatus;
-	bool isShowConsole;
-	bool mb_ConsoleSelectMode;
-	int BufferHeight;
+	BOOL isShowConsole;
+	BOOL mb_ConsoleSelectMode;
 	static DWORD WINAPI ServerThread(LPVOID lpvParam);
 	HANDLE mh_ServerThreads[MAX_SERVER_THREADS], mh_ActiveServerThread;
 	DWORD  mn_ServerThreadsId[MAX_SERVER_THREADS];
@@ -203,7 +206,7 @@ private:
 	void SetHwnd(HWND ahConWnd);
 	WORD mn_LastVKeyPressed;
 	DWORD mn_LastConReadTick;
-	BOOL GetConWindowSize(const CONSOLE_SCREEN_BUFFER_INFO& sbi, int& nNewWidth, int& nNewHeight);
+	BOOL GetConWindowSize(const CONSOLE_SCREEN_BUFFER_INFO& sbi, int& nNewWidth, int& nNewHeight, BOOL* pbBufferHeight=NULL);
 	int mn_Focused; //-1 после запуска, 1 - в фокусе, 0 - не в фокусе
 	DWORD mn_InRecreate; // Tick, когда начали пересоздание
 	BOOL mb_ProcessRestarted;
@@ -214,5 +217,5 @@ private:
 	void CloseLogFiles();
 	void LogInput(INPUT_RECORD* pRec);
 	void LogPacket(CESERVER_REQ* pInfo);
-	bool RecreateProcessStart();
+	BOOL RecreateProcessStart();
 };

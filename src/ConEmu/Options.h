@@ -8,7 +8,7 @@ public:
 
     TCHAR Config[MAX_PATH];
 
-    int BufferHeight;
+    int DefaultBufferHeight; bool ForceBufferHeight; bool AutoScroll;
     
     LOGFONT LogFont, LogFont2;
     COLORREF Colors[0x20];
@@ -16,15 +16,21 @@ public:
     char nExtendColor;
 
     /* Background image */
-    TCHAR sBgImage[MAX_PATH];
+    WCHAR sBgImage[MAX_PATH];
     bool isShowBgImage, isBackgroundImageValid;
 
     /* Command Line (Registry) */
     LPTSTR psCmd;
     /* Command Line ("/cmd" arg) */
     LPTSTR psCurCmd;
+	private:
+	/* 'Default' command line (if nor Registry, nor /cmd specified) */
+	WCHAR  szDefCmd[10];
+	public:
     /* "Active" command line */
     LPCTSTR GetCmd();
+	/* "Default" command line "far/cmd", based on /BufferHeight switch */
+	LPCTSTR GetDefaultCmd();
     /* OUR(!) startup info */
     STARTUPINFOW ourSI;
     /* If Attach to PID requested */
@@ -114,6 +120,7 @@ public:
     void UpdateSize(UINT w, UINT h);
     void UpdateTTF(BOOL bNewTTF);
     void Performance(UINT nID, BOOL bEnd);
+	void SetArgBufferHeight(int anBufferHeight);
 public:
     LRESULT OnInitDialog();
     LRESULT OnButtonClicked(WPARAM wParam, LPARAM lParam);

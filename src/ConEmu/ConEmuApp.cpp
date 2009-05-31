@@ -1,6 +1,8 @@
 #include "Header.h"
 #include <commctrl.h>
+extern "C" {
 #include "../common/ConEmuCheck.h"
+}
 
 
 #ifdef MSGLOGGER
@@ -609,10 +611,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				}
 		        return nSetupRc;
 	        }
-			else if ( !klstricmp(curCommand, _T("/conman")) ) {
+			else if ( !klstricmp(curCommand, _T("/multi")) ) {
 				ConManValue = true; ConManPrm = true;
 			}
-			else if ( !klstricmp(curCommand, _T("/noconman")) ) {
+			else if ( !klstricmp(curCommand, _T("/nomulti")) ) {
 				ConManValue = false; ConManPrm = true;
 			}
 			else if ( !klstricmp(curCommand, _T("/visible")) ) {
@@ -831,9 +833,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     if (SizePrm)
         gSet.LogFont.lfHeight = SizeVal;
     if (BufferHeightPrm) {
-        gSet.BufferHeight = BufferHeightVal;
-		TODO("gConEmu.BufferHeight = BufferHeightVal пока убрал");
-        //gConEmu.BufferHeight = BufferHeightVal;
+        gSet.SetArgBufferHeight ( BufferHeightVal );
     }
 	if (!WindowPrm) {
 		if (nCmdShow == SW_SHOWMAXIMIZED)
@@ -901,7 +901,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     // *) it is used by ConMan and some FAR plugins, set it for standard mode or if /SetParent switch is set
     // *) do not set it by default for buffer mode because it causes unwanted selection jumps
     // WARP ItSelf опытным путем выяснил, что SetParent валит ConEmu в Windows7
-    //if (!setParentDisabled && (setParent || gConEmu.BufferHeight == 0))
+    //if (!setParentDisabled && (setParent || gConEmu.Buffer Height == 0))
     
     //gConEmu.SetConParent();
 

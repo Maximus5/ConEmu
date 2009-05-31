@@ -1,9 +1,11 @@
+
 #pragma once
 
 #define HDCWND ghWndDC
 
 
 #define WM_TRAYNOTIFY WM_USER+1
+#define ID_AUTOSCROLL 0xABCA
 #define ID_DUMPCONSOLE 0xABCB
 #define ID_CONPROP 0xABCC
 #define ID_SETTINGS 0xABCD
@@ -29,7 +31,9 @@ enum ConEmuMargins {
 	CEM_FRAME = 0, // Разница между размером всего окна и клиентской области окна (рамка + заголовок)
 	// Далее все отступы считаются в клиентской части (дочерние окна)!
 	CEM_TAB,       // Отступы от краев таба (если он видим) до окна фона (с прокруткой)
-	CEM_BACK       // Отступы от краев окна фона (с прокруткой) до окна с отрисовкой (DC)
+	CEM_BACK,      // Отступы от краев окна фона (с прокруткой) до окна с отрисовкой (DC)
+	CEM_BACKFORCESCROLL,
+	CEM_BACKFORCENOSCROLL
 };
 
 enum ConEmuRect {
@@ -97,32 +101,18 @@ public:
 	CProgressBars *ProgressBars;
 	COORD m_LastConSize; // console size after last resize (in columns and lines)
 	bool mb_IgnoreSizeChange;
-	//int BufferHeight; // в отличие от gSet - может изменяться текущей консольной программой
-	//RECT  dcWindowLast; // Последний размер дочернего окна
-	//uint cBlinkShift; // cursor blink counter threshold
 	TCHAR szConEmuVersion[32];
-	//DWORD m_ProcList[1000], 
-	DWORD m_ProcCount; //, m_ActiveConmanIDX, mn_ConmanPID;
-	//HMODULE mh_ConMan;
-	//HMODULE mh_Infis; TCHAR ms_InfisPath[MAX_PATH*2];
+	DWORD m_ProcCount;
 	DWORD mn_ActiveStatus;
-	//DWORD mn_TopProcessID; 
-	//BOOL mb_FarActive;
-	//TCHAR ms_TopProcess[MAX_PATH+1];
 	TCHAR ms_EditorRus[16], ms_ViewerRus[16], ms_TempPanel[32], ms_TempPanelRus[32];
 protected:
 	TCHAR Title[MAX_TITLE_SIZE], TitleCmp[MAX_TITLE_SIZE];
-	//int mn_NeedRetryName;
-	//std::vector<struct ConProcess> m_Processes;
-	//void CheckProcessName(struct ConProcess &ConPrc, LPCTSTR asFullFileName);
 	LPTSTR GetTitleStart();
-	//bool GetProcessFileName(DWORD dwPID, TCHAR* rsName/*[32]*/, DWORD *pdwErr);
 	BOOL mb_InTimer;
 	BOOL mb_ProcessCreated; DWORD mn_StartTick;
 	HWINEVENTHOOK mh_WinHook;
 	static VOID CALLBACK WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime);
 	CVirtualConsole *mp_VCon[MAX_CONSOLE_COUNT], *pVCon;
-	//int mn_ActiveCon; // в планах - убить m_ActiveConmanIDX
 	bool mb_SkipSyncSize, mb_PassSysCommand;
 	// Registered messages
 	DWORD mn_MainThreadId;
@@ -134,19 +124,11 @@ protected:
 	UINT mn_MsgUpdateTitle;
 	UINT mn_MsgAttach;
 	UINT mn_MsgVConTerminated;
-	UINT mn_MsgCmdStarted;
-	UINT mn_MsgCmdStopped;
+	UINT mn_MsgUpdateScrollInfo;
 
 public:
 	DWORD CheckProcesses();
 	DWORD GetFarPID();
-	//DWORD CheckProcesses(DWORD nConmanIDX, BOOL bTitleChanged);
-	/*typedef int (_cdecl * ConMan_MainProc_t)(LPCWSTR asCommandLine, BOOL abStandalone);
-	ConMan_MainProc_t ConMan_MainProc;
-	typedef void (_cdecl * ConMan_LookForKeyboard_t)();
-	ConMan_LookForKeyboard_t ConMan_LookForKeyboard;
-	typedef int (_cdecl * ConMan_ProcessCommand_t)( DWORD nCmd, int Param1, int Param2 );
-	ConMan_ProcessCommand_t ConMan_ProcessCommand;*/
 	
 public:
 	LPCTSTR GetTitle();
@@ -165,26 +147,14 @@ public:
 	LPARAM AttachRequested(HWND ahConWnd, DWORD anConemuC_PID);
 	static RECT CalcMargins(enum ConEmuMargins mg);
 	static RECT CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFrom, RECT* prDC=NULL);
-	//bool CheckBufferSize();
 	bool ConmanAction(int nCmd);
-	//void ConsoleCreated(HWND hConWnd);
 	CVirtualConsole* CreateCon(BOOL abStartDetached=FALSE);
-	//COORD ConsoleSizeFromWindow(RECT* arect = NULL, bool frameIncluded = false, bool alreadyClient = false);
-	//RECT ConsoleOffsetRect();
 	void Destroy();
 	void DnDstep(LPCTSTR asMsg);
-	//RECT DCClientRect(RECT* pClient=NULL);
 	void ForceShowTabs(BOOL abShow);
-	//void GetCWShift(HWND inWnd, POINT *outShift);
-	//void GetCWShift(HWND inWnd, RECT *outShift);
-	//int GetBufferHeight();
-	//static BOOL WINAPI HandlerRoutine(DWORD dwCtrlType);
 	BOOL Init();
-	//BOOL InitConMan(LPCWSTR asCommandLine);
 	void InvalidateAll();
 	bool isActive(CVirtualConsole* apCon);
-	//bool isConman();
-	//bool isConmanAlternative();
 	bool isConSelectMode();
 	bool isDragging();
 	bool isEditor();
@@ -201,7 +171,6 @@ public:
 	bool LoadVersionInfo(wchar_t* pFullPath);
 	static RECT MapRect(RECT rFrom, BOOL bFrame2Client);
 	void PaintCon();
-	//void PaintGaps(HDC hDC=NULL);
 	void PostCopy(wchar_t* apszMacro, BOOL abRecieved=FALSE);
 	void PostMacro(LPCWSTR asMacro);
 	void PostCreate(BOOL abRecieved=FALSE);
@@ -215,12 +184,11 @@ public:
 	void SyncWindowToConsole();
 	void Update(bool isForce = false);
 	void UpdateTitle(LPCTSTR asNewTitle);
-	//RECT WindowSizeFromConsole(COORD consoleSize, bool rectInWindow = false, bool clientOnly = false);
 	LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 public:
 	LRESULT OnClose(HWND hWnd);
 	LRESULT OnCopyData(PCOPYDATASTRUCT cds);
-	LRESULT OnConEmuCmd(BOOL abStarted, HWND ahConWnd, DWORD anConEmuC_PID);
+	//LRESULT OnConEmuCmd(BOOL abStarted, HWND ahConWnd, DWORD anConEmuC_PID);
 	LRESULT OnCreate(HWND hWnd);
 	LRESULT OnDestroy(HWND hWnd);
 	LRESULT OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
@@ -234,4 +202,5 @@ public:
 	LRESULT OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam);
 	LRESULT OnTimer(WPARAM wParam, LPARAM lParam);
 	LRESULT OnVConTerminated(CVirtualConsole* apVCon, BOOL abPosted = FALSE);
+	LRESULT OnUpdateScrollInfo(BOOL abPosted = FALSE);
 };

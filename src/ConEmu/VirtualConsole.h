@@ -7,10 +7,12 @@
 
 class CVirtualConsole
 {
-public:
+private:
 	friend class CRealConsole;
 	// RealConsole
 	CRealConsole *mp_RCon;
+public:
+	CRealConsole *RCon() { if (this) return mp_RCon; return NULL; };
 public:
     WARNING("Сделать protected!");
 	bool IsForceUpdate;

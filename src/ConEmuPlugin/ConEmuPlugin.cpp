@@ -89,6 +89,7 @@ CRITICAL_SECTION csTabs, csData;
 WCHAR gcPlugKey=0;
 BOOL  gbPlugKeyChanged=FALSE;
 HKEY  ghRegMonitorKey=NULL; HANDLE ghRegMonitorEvt=NULL;
+HMODULE ghFarHintsFix = NULL;
 
 #if defined(__GNUC__)
 typedef HWND (APIENTRY *FGetConsoleWindow)();
@@ -116,6 +117,22 @@ BOOL APIENTRY DllMain( HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
 			    if (GetEnvironmentVariable(L"TERM", szVarValue, 63)) {
 				    TerminalMode = TRUE;
 			    }
+			    
+			    if (!TerminalMode) {
+					// FarHints fix for multiconsole mode...
+					if (GetModuleFileName((HMODULE)hModule, szVarValue, MAX_PATH)) {
+						WCHAR *pszSlash = wcsrchr(szVarValue, L'\\');
+						if (pszSlash) pszSlash++; else pszSlash = szVarValue;
+						lstrcpyW(pszSlash, L"infis.dll");
+						ghFarHintsFix = LoadLibrary(szVarValue);
+					}
+			    }
+			}
+			break;
+		case DLL_PROCESS_DETACH:
+			if (ghFarHintsFix) {
+				FreeLibrary(ghFarHintsFix);
+				ghFarHintsFix = NULL;
 			}
 			break;
 	}

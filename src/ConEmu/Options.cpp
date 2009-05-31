@@ -1,7 +1,9 @@
 
 #include "Header.h"
 #include <commctrl.h>
+extern "C" {
 #include "../common/ConEmuCheck.h"
+}
 
 #define COUNTER_REFRESH 5000
 
@@ -66,7 +68,7 @@ void CSettings::InitSettings()
 //------------------------------------------------------------------------
     _tcscpy(Config, _T("Software\\ConEmu"));
     
-    psCmd = NULL; psCurCmd = NULL;
+    psCmd = NULL; psCurCmd = NULL; wcscpy(szDefCmd, L"far");
     isConMan = false; icConManNew = 'W'; icConManNext = 'Q'; icConManRecreate = 192/*VK_тильда*/; isConManNewConfirm = true;
     // Logging
     isAdvLogging = false;
@@ -77,7 +79,9 @@ void CSettings::InitSettings()
     //isAdvLangChange = true;
     isSkipFocusEvents = false;
     isLangChangeWsPlugin = false;
-    BufferHeight = 0;
+    DefaultBufferHeight = 1000; 
+	ForceBufferHeight = false; /* устанавливается в true, из ком.строки /BufferHeight */
+	AutoScroll = true;
     LogFont.lfHeight = 16;
     LogFont.lfWidth = 0;
     LogFont.lfEscapement = LogFont.lfOrientation = 0;
@@ -207,6 +211,8 @@ void CSettings::LoadSettings()
         reg.Load(_T("WindowMode"), gConEmu.WindowMode);
         reg.Load(_T("ConWnd X"), wndX); /*if (wndX<-10) wndX = 0;*/
         reg.Load(_T("ConWnd Y"), wndY); /*if (wndY<-10) wndY = 0;*/
+		// ЭТО не влияет на szDefCmd. Только прямое указание флажка "/BufferHeight N" 
+		// может сменить (умолчательную) команду запуска на "cmd" или "far"
         reg.Load(_T("Cascaded"), wndCascade);
         if (wndCascade) {
 	        HWND hPrev = FindWindow(VirtualConsoleClassMain, NULL);
@@ -225,6 +231,8 @@ void CSettings::LoadSettings()
         reg.Load(_T("ConWnd Width"), wndWidth); if (!wndWidth) wndWidth = 80; else if (wndWidth>1000) wndWidth = 1000;
         reg.Load(_T("ConWnd Height"), wndHeight); if (!wndHeight) wndHeight = 25; else if (wndHeight>500) wndHeight = 500;
         reg.Load(_T("16it Height"), ntvdmHeight); if (ntvdmHeight<20) ntvdmHeight = 20; else if (ntvdmHeight>100) ntvdmHeight = 100;
+		reg.Load(_T("DefaultBufferHeight"), DefaultBufferHeight); if (DefaultBufferHeight < 300) DefaultBufferHeight = 300;
+
         reg.Load(_T("CursorType"), isCursorV);
         reg.Load(_T("CursorColor"), isCursorColor);
         reg.Load(_T("Experimental"), isFixFarBorders);
@@ -1880,13 +1888,29 @@ HFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
     return hFont;
 }
 
+// "Умолчательная" высота буфера.
+// + ConEmu стартует в буферном режиме
+// + команда по умолчанию (если не задана в реестре или ком.строке) будет "cmd", а не "far"
+void CSettings::SetArgBufferHeight(int anBufferHeight)
+{
+	_ASSERTE(anBufferHeight>=0);
+	if (anBufferHeight>=0) DefaultBufferHeight = anBufferHeight;
+	ForceBufferHeight = (DefaultBufferHeight != 0);
+	wcscpy(szDefCmd, ForceBufferHeight ? L"far" : L"cmd");
+}
+
+LPCTSTR CSettings::GetDefaultCmd()
+{
+	return szDefCmd;
+}
+
 LPCTSTR CSettings::GetCmd()
 {
     if (psCurCmd && *psCurCmd)
         return psCurCmd;
     if (psCmd && *psCmd)
         return psCmd;
-    if (psCurCmd) free(psCurCmd);
-    psCurCmd = _tcsdup(BufferHeight == 0 ? _T("far") : _T("cmd"));
+    SafeFree(psCurCmd); // в принципе, эта строка скорее всего не нужна, но на всякий случай...
+    psCurCmd = wcsdup(szDefCmd);
     return psCurCmd;
 }

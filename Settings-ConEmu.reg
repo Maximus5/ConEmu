@@ -58,9 +58,11 @@ REGEDIT4
 ;; Center console in Fullscreen and Maximized modes
 "TryToCenter"=hex:01
 
-;; Console (real) width and height in characters
+;; Console (real) width and height in characters (window size)
 "ConWnd Width"=dword:00000050
 "ConWnd Height"=dword:00000019
+;; Console buffer height (default). Set 0 to disable autoswitch to bufferheight mode. min=300 lines
+;"DefaultBufferHeight"=dword:000003E8 ; 1000 lines
 
 ;; Buffer height for 16bit applications
 ;"16bit Height"=dword:00000019
