@@ -19,9 +19,11 @@ TabBarClass::TabBarClass()
 	mb_ChangeAllowed = FALSE;
 	mb_Enabled = TRUE;
 	mh_ConmanToolbar = NULL; mh_Tabbar = NULL; mh_Rebar = NULL; mn_LastToolbarWidth = 0;
+	mb_PostUpdateCalled = FALSE;
 	//GetConsolesTitles = NULL;
 	//ActivateConsole = NULL;
 	//ConMan_KeyAction = NULL;
+	mn_MsgUpdateTabs = RegisterWindowMessage(CONEMUMSG_UPDATETABS);
 }
 
 void TabBarClass::Enable(BOOL abEnabled)
@@ -60,11 +62,12 @@ void TabBarClass::Reset()
 		return;
 	}
 
-	ConEmuTab tab; memset(&tab, 0, sizeof(tab));
+	/*ConEmuTab tab; memset(&tab, 0, sizeof(tab));
 	tab.Pos=0;
 	tab.Current=1;
-	tab.Type = 1;
-	TabBar.Update(&tab, 1);
+	tab.Type = 1;*/
+	//TabBar.Update(&tab, 1);
+	Update();
 }
 
 void TabBarClass::Retrieve()
@@ -77,48 +80,50 @@ void TabBarClass::Retrieve()
 		return;
 	}
 
-	CConEmuPipe pipe;
-	if (pipe.Init(_T("TabBarClass::Retrieve"), TRUE))
-	{
-		DWORD cbWritten=0;
-		if (pipe.Execute(CMD_REQTABS))
-		{
-			gConEmu.DnDstep(_T("Tabs: Checking for plugin (1 sec)"));
-			// Подождем немножко, проверим что плагин живой
-			cbWritten = WaitForSingleObject(pipe.hEventAlive, CONEMUALIVETIMEOUT);
-			if (cbWritten!=WAIT_OBJECT_0) {
-				TCHAR szErr[MAX_PATH];
-				wsprintf(szErr, _T("ConEmu plugin is not active!\r\nProcessID=%i"), pipe.nPID);
-				MBoxA(szErr);
-			} else {
-				gConEmu.DnDstep(_T("Tabs: Waiting for result (10 sec)"));
-				cbWritten = WaitForSingleObject(pipe.hEventReady, CONEMUREADYTIMEOUT);
-				if (cbWritten!=WAIT_OBJECT_0) {
-					TCHAR szErr[MAX_PATH];
-					wsprintf(szErr, _T("Command waiting time exceeds!\r\nConEmu plugin is locked?\r\nProcessID=%i"), pipe.nPID);
-					MBoxA(szErr);
-				} else {
-					gConEmu.DnDstep(_T("Tabs: Recieving data"));
-					DWORD cbBytesRead=0;
-					int nTabCount=0;
-					pipe.Read(&nTabCount, sizeof(nTabCount), &cbBytesRead);
+	TODO("Retrieve() может нужно выполнить в RCon?");
 
-					if (nTabCount<=0) {
-						gConEmu.DnDstep(_T("Tabs: data empty"));
-						this->Reset();
-					} else {
-						COPYDATASTRUCT cds = {0};
-						
-						cds.dwData = nTabCount;
-						cds.lpData = pipe.GetPtr(); // хвост
+	//CConEmuPipe pipe;
+	//if (pipe.Init(_T("TabBarClass::Retrieve"), TRUE))
+	//{
+	//	DWORD cbWritten=0;
+	//	if (pipe.Execute(CMD_REQTABS))
+	//	{
+	//		gConEmu.DnDstep(_T("Tabs: Checking for plugin (1 sec)"));
+	//		// Подождем немножко, проверим что плагин живой
+	//		cbWritten = WaitForSingleObject(pipe.hEventAlive, CONEMUALIVETIMEOUT);
+	//		if (cbWritten!=WAIT_OBJECT_0) {
+	//			TCHAR szErr[MAX_PATH];
+	//			wsprintf(szErr, _T("ConEmu plugin is not active!\r\nProcessID=%i"), pipe.nPID);
+	//			MBoxA(szErr);
+	//		} else {
+	//			gConEmu.DnDstep(_T("Tabs: Waiting for result (10 sec)"));
+	//			cbWritten = WaitForSingleObject(pipe.hEventReady, CONEMUREADYTIMEOUT);
+	//			if (cbWritten!=WAIT_OBJECT_0) {
+	//				TCHAR szErr[MAX_PATH];
+	//				wsprintf(szErr, _T("Command waiting time exceeds!\r\nConEmu plugin is locked?\r\nProcessID=%i"), pipe.nPID);
+	//				MBoxA(szErr);
+	//			} else {
+	//				gConEmu.DnDstep(_T("Tabs: Recieving data"));
+	//				DWORD cbBytesRead=0;
+	//				int nTabCount=0;
+	//				pipe.Read(&nTabCount, sizeof(nTabCount), &cbBytesRead);
 
-						gConEmu.OnCopyData(&cds);
-						gConEmu.DnDstep(NULL);
-					}
-				}
-			}
-		}
-	}
+	//				if (nTabCount<=0) {
+	//					gConEmu.DnDstep(_T("Tabs: data empty"));
+	//					this->Reset();
+	//				} else {
+	//					COPYDATASTRUCT cds = {0};
+	//					
+	//					cds.dwData = nTabCount;
+	//					cds.lpData = pipe.GetPtr(); // хвост
+
+	//					gConEmu.OnCopyData(&cds);
+	//					gConEmu.DnDstep(NULL);
+	//				}
+	//			}
+	//		}
+	//	}
+	//}
 }
 
 void TabBarClass::AddTab(LPCWSTR text, int i)
@@ -155,27 +160,47 @@ void TabBarClass::FarSendChangeTab(int tabIndex)
 	//PostMessage(ghConWnd, WM_KEYDOWN, FarTabShortcut(tabIndex), 0);
 	//PostMessage(ghConWnd, WM_KEYUP, FarTabShortcut(tabIndex), 0);
 
-	CConEmuPipe pipe;
+	if (tabIndex<0 || m_Tab2VCon.size() <= (UINT)tabIndex)
+		return;
+
+	CVirtualConsole *pVCon = m_Tab2VCon[tabIndex].pVCon;
+	DWORD wndIndex = m_Tab2VCon[tabIndex].nFarWindowId;
+
+	if (!gConEmu.isValid(pVCon)) {
+		if (mb_PostUpdateCalled) return;
+		mb_PostUpdateCalled = TRUE;
+		PostMessage(ghWnd, mn_MsgUpdateTabs, 0, 0);
+		return;
+	}
+
+	if (!gConEmu.isActive(pVCon)) {
+		if (!gConEmu.Activate(pVCon)) {
+			TODO("А текущий таб не слетит, если активировать не удалось?");
+			return;
+		}
+	}
+
+	CConEmuPipe pipe(pVCon->RCon()->GetFarPID(), 100);
 	if (pipe.Init(_T("TabBarClass::FarSendChangeTab")))
 	{
 		DWORD cbWritten = 0;
-		if (pipe.Execute(CMD_SETWINDOW))
+		if (pipe.Execute(CMD_SETWINDOW, &wndIndex, 4))
 		{
-			gConEmu.DnDstep(_T("Tab: Checking for plugin (1 sec)"));
-			// Подождем немножко, проверим что плагин живой
-			cbWritten = WaitForSingleObject(pipe.hEventAlive, CONEMUALIVETIMEOUT);
-			if (cbWritten!=WAIT_OBJECT_0) {
-				TCHAR szErr[MAX_PATH];
-				wsprintf(szErr, _T("ConEmu plugin is not active!\r\nProcessID=%i"), pipe.nPID);
-				MBoxA(szErr);
-			} else {
-				gConEmu.DnDstep(_T("Tab: Waiting for result (10 sec)"));
-				cbWritten = WaitForSingleObject(pipe.hEventReady, CONEMUREADYTIMEOUT);
-				if (cbWritten!=WAIT_OBJECT_0) {
-					TCHAR szErr[MAX_PATH];
-					wsprintf(szErr, _T("Command waiting time exceeds!\r\nConEmu plugin is locked?\r\nProcessID=%i"), pipe.nPID);
-					MBoxA(szErr);
-				} else {
+			//gConEmu.DnDstep(_T("Tab: Checking for plugin (1 sec)"));
+			//// Подождем немножко, проверим что плагин живой
+			//cbWritten = WaitForSingleObject(pipe.hEventAlive, CONEMUALIVETIMEOUT);
+			//if (cbWritten!=WAIT_OBJECT_0) {
+			//	TCHAR szErr[MAX_PATH];
+			//	wsprintf(szErr, _T("ConEmu plugin is not active!\r\nProcessID=%i"), pipe.nPID);
+			//	MBoxA(szErr);
+			//} else {
+			//	gConEmu.DnDstep(_T("Tab: Waiting for result (10 sec)"));
+			//	cbWritten = WaitForSingleObject(pipe.hEventReady, CONEMUREADYTIMEOUT);
+			//	if (cbWritten!=WAIT_OBJECT_0) {
+			//		TCHAR szErr[MAX_PATH];
+			//		wsprintf(szErr, _T("Command waiting time exceeds!\r\nConEmu plugin is locked?\r\nProcessID=%i"), pipe.nPID);
+			//		MBoxA(szErr);
+			//	} else {
 					gConEmu.DnDstep(_T("Tab: Recieving data"));
 					DWORD cbBytesRead=0;
 					int nWholeSize=0;
@@ -188,8 +213,8 @@ void TabBarClass::FarSendChangeTab(int tabIndex)
 
 					Retrieve();//TODO: хорошо бы как-то оптимизировать...
 				}
-			}
-		}
+			//}
+		//}
 	}
 }
 
@@ -260,7 +285,7 @@ void TabBarClass::Activate()
 		_defaultTabProc = (WNDPROC)SetWindowLongPtr(_hwndTab, GWL_WNDPROC, (LONG_PTR)TabProc);
 
 		//if (gConEmu.mh_ConMan) // mh_ConMan может быть еще не инициализирован!
-		if (gSet.isConMan)
+		if (gSet.isMulti)
 			CreateToolbar();*/
 	}
 
@@ -277,95 +302,193 @@ void TabBarClass::Deactivate()
 	_active = false;
 }
 
-void TabBarClass::Update(ConEmuTab* tabs, int tabsCount)
+//void TabBarClass::Update(ConEmuTab* tabs, int tabsCount)
+//{
+//	if (!_active)
+//	{
+//		return;
+//	}
+//
+//#ifdef MSGLOGGER
+//	WCHAR szDbg[128]; swprintf(szDbg, L"TabBarClass::Update(%i)\n", tabsCount);
+//	DEBUGSTR(szDbg);
+//#endif
+//
+//	int i;
+//	//TabCtrl_DeleteAllItems(mh_Tabbar);
+//	for (i = 0; i < tabsCount; i++)
+//	{
+//		// get file name
+//		TCHAR dummy[MAX_PATH*2];
+//		TCHAR fileName[MAX_PATH+4];
+//		TCHAR szFormat[32];
+//		TCHAR szEllip[MAX_PATH+1];
+//		wchar_t *tFileName=NULL, *pszNo=NULL, *pszTitle=NULL; //--Maximus
+//		if (tabs[i].Name[0]==0 || tabs[i].Type == 1/*WTYPE_PANELS*/) {
+//			_tcscpy(tabs[i].Name, gConEmu.isFar() ? gSet.szTabPanels : gSet.pszTabConsole);
+//			tFileName = tabs[i].Name;
+//			_tcscpy(szFormat, _T("%s"));
+//		} else {
+//			GetFullPathName(tabs[i].Name, MAX_PATH*2, dummy, &tFileName);
+//			if (!tFileName)
+//				tFileName = tabs[i].Name;
+//
+//			if (tabs[i].Type == 3/*WTYPE_EDITOR*/) {
+//				if (tabs[i].Modified)
+//					_tcscpy(szFormat, gSet.szTabEditorModified);
+//				else
+//					_tcscpy(szFormat, gSet.szTabEditor);
+//			} 
+//			else if (tabs[i].Type == 2/*WTYPE_VIEWER*/)
+//				_tcscpy(szFormat, gSet.szTabViewer);
+//		}
+//		// restrict length
+//		int origLength = _tcslen(tFileName);
+//		int nMaxLen = gSet.nTabLenMax - _tcslen(szFormat) + 2/* %s */;
+//		if (nMaxLen<15) nMaxLen=15; else
+//			if (nMaxLen>=MAX_PATH) nMaxLen=MAX_PATH-1;
+//		if (origLength > nMaxLen)
+//		{
+//			/*_tcsnset(fileName, _T('\0'), MAX_PATH);
+//			_tcsncat(fileName, tFileName, 10);
+//			_tcsncat(fileName, _T("..."), 3);
+//			_tcsncat(fileName, tFileName + origLength - 10, 10);*/
+//			int nSplit = nMaxLen*2/3;
+//			
+//			_tcsncpy(szEllip, tFileName, nSplit); szEllip[nSplit]=0;
+//			_tcscat(szEllip, _T("…"));
+//			_tcscat(szEllip, tFileName + origLength - (nMaxLen - nSplit));
+//			
+//			tFileName = szEllip;
+//		}
+//		pszNo = wcsstr(szFormat, L"%i");
+//		pszTitle = wcsstr(szFormat, L"%s");
+//		if (pszNo == NULL)
+//			wsprintf(fileName, szFormat, tFileName);
+//		else if (pszNo < pszTitle || pszTitle == NULL)
+//			wsprintf(fileName, szFormat, i, tFileName);
+//		else
+//			wsprintf(fileName, szFormat, tFileName, i);
+//
+//		AddTab(fileName, i);
+//	}
+//	
+//	// удалить лишние закладки
+//	int nCurCount = TabCtrl_GetItemCount(mh_Tabbar);
+//	for (i=tabsCount; i<nCurCount; i++)
+//		TabCtrl_DeleteItem(mh_Tabbar, i);
+//
+//	if (tabsCount) {
+//		int ncur = 0;
+//		for (i = tabsCount-1; i >= 0; i--)
+//		{
+//			if (tabs[i].Current)
+//			{
+//				ncur = i; break;
+//			}
+//		}
+//		SelectTab(ncur);
+//	}
+//	
+//	if (_tabHeight && tabsCount==1 && tabs[0].Type == 1/*WTYPE_PANELS*/ && gSet.isTabs==2) {
+//		// Автоскрытие табов (все редакторы/вьюверы закрыты)
+//		Deactivate();
+//	} else
+//	if (mh_Rebar) {
+//		RECT rcWnd; GetWindowRect(mh_Rebar, &rcWnd);
+//		m_Margins.top = rcWnd.bottom - rcWnd.top;
+//		m_Margins.left = 0;
+//		m_Margins.right = 0;
+//		m_Margins.bottom = 0;
+//	} else
+//	if (_tabHeight == NULL)
+//	{
+//		RECT rcClient, rcWnd;
+//		GetClientRect(ghWnd, &rcClient); 
+//		rcWnd = rcClient;
+//		TabCtrl_AdjustRect(mh_Tabbar, FALSE, &rcClient);
+//		_tabHeight = rcClient.top;
+//
+//		m_Margins.top = rcClient.top;
+//		/*if (gSet.isTabFrame)
+//		{
+//			m_Margins.left = rcClient.left;
+//			m_Margins.right = rcWnd.right-rcClient.right;
+//			m_Margins.bottom = rcWnd.bottom-rcClient.bottom;
+//		}*/
+//		gSet.UpdateMargins(m_Margins);
+//
+//		UpdatePosition();
+//	}
+//}
+
+
+void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
 {
 	if (!_active)
 	{
 		return;
 	}
-
-#ifdef MSGLOGGER
-	WCHAR szDbg[128]; swprintf(szDbg, L"TabBarClass::Update(%i)\n", tabsCount);
-	DEBUGSTR(szDbg);
-#endif
-
-	int i;
-	//TabCtrl_DeleteAllItems(mh_Tabbar);
-	for (i = 0; i < tabsCount; i++)
-	{
-		// get file name
-		TCHAR dummy[MAX_PATH*2];
-		TCHAR fileName[MAX_PATH+4];
-		TCHAR szFormat[32];
-		TCHAR szEllip[MAX_PATH+1];
-		wchar_t *tFileName=NULL, *pszNo=NULL, *pszTitle=NULL; //--Maximus
-		if (tabs[i].Name[0]==0 || tabs[i].Type == 1/*WTYPE_PANELS*/) {
-			_tcscpy(tabs[i].Name, gConEmu.isFar() ? gSet.szTabPanels : gSet.pszTabConsole);
-			tFileName = tabs[i].Name;
-			_tcscpy(szFormat, _T("%s"));
-		} else {
-			GetFullPathName(tabs[i].Name, MAX_PATH*2, dummy, &tFileName);
-			if (!tFileName)
-				tFileName = tabs[i].Name;
-
-			if (tabs[i].Type == 3/*WTYPE_EDITOR*/) {
-				if (tabs[i].Modified)
-					_tcscpy(szFormat, gSet.szTabEditorModified);
-				else
-					_tcscpy(szFormat, gSet.szTabEditor);
-			} 
-			else if (tabs[i].Type == 2/*WTYPE_VIEWER*/)
-				_tcscpy(szFormat, gSet.szTabViewer);
-		}
-		// restrict length
-		int origLength = _tcslen(tFileName);
-		int nMaxLen = gSet.nTabLenMax - _tcslen(szFormat) + 2/* %s */;
-		if (nMaxLen<15) nMaxLen=15; else
-			if (nMaxLen>=MAX_PATH) nMaxLen=MAX_PATH-1;
-		if (origLength > nMaxLen)
-		{
-			/*_tcsnset(fileName, _T('\0'), MAX_PATH);
-			_tcsncat(fileName, tFileName, 10);
-			_tcsncat(fileName, _T("..."), 3);
-			_tcsncat(fileName, tFileName + origLength - 10, 10);*/
-			int nSplit = nMaxLen*2/3;
-			
-			_tcsncpy(szEllip, tFileName, nSplit); szEllip[nSplit]=0;
-			_tcscat(szEllip, _T("…"));
-			_tcscat(szEllip, tFileName + origLength - (nMaxLen - nSplit));
-			
-			tFileName = szEllip;
-		}
-		pszNo = wcsstr(szFormat, L"%i");
-		pszTitle = wcsstr(szFormat, L"%s");
-		if (pszNo == NULL)
-			wsprintf(fileName, szFormat, tFileName);
-		else if (pszNo < pszTitle || pszTitle == NULL)
-			wsprintf(fileName, szFormat, i, tFileName);
-		else
-			wsprintf(fileName, szFormat, tFileName, i);
-
-		AddTab(fileName, i);
+	
+	if (!gConEmu.isMainThread()) {
+		if (mb_PostUpdateCalled) return;
+		mb_PostUpdateCalled = TRUE;
+		PostMessage(ghWnd, mn_MsgUpdateTabs, 0, 0);
+		return;
 	}
 	
+	mb_PostUpdateCalled = FALSE;
+
+	ConEmuTab tab = {0};
+	
+	int V, I, tabIdx = 0, nCurTab = -1;
+	VConTabs vct = {NULL};
+
+	// Выполняться должно только в основной нити, так что CriticalSection не нужна
+	m_Tab2VCon.clear();
+	
+	for (V = 0; V < MAX_CONSOLE_COUNT; V++) {
+		CVirtualConsole* pVCon = gConEmu.GetVCon(V);
+		if (!pVCon) continue;
+		
+		BOOL lbActive = gConEmu.isActive(pVCon);
+		
+		for (I = 0; pVCon->RCon()->GetTab(I, &tab); I++) {
+			PrepareTab(&tab);
+			
+			vct.pVCon = pVCon;
+			vct.nFarWindowId = I;
+			m_Tab2VCon.push_back(vct);
+			AddTab(tab.Name, tabIdx); // Добавит или заменит существующий
+			
+			if (lbActive && tab.Current)
+				nCurTab = tabIdx;
+			
+			tabIdx++;
+		}
+	}
+	if (tabIdx == 0) // хотя бы "Console" покажем
+	{
+		PrepareTab(&tab);
+		
+		vct.pVCon = NULL;
+		vct.nFarWindowId = 0;
+		AddTab(tab.Name, tabIdx); // Добавит или заменит существующий
+		nCurTab = tabIdx;
+		tabIdx++;
+	}
+
 	// удалить лишние закладки
 	int nCurCount = TabCtrl_GetItemCount(mh_Tabbar);
-	for (i=tabsCount; i<nCurCount; i++)
-		TabCtrl_DeleteItem(mh_Tabbar, i);
+	for (I = tabIdx; I < nCurCount; I++)
+		TabCtrl_DeleteItem(mh_Tabbar, I);
 
-	if (tabsCount) {
-		int ncur = 0;
-		for (i = tabsCount-1; i >= 0; i--)
-		{
-			if (tabs[i].Current)
-			{
-				ncur = i; break;
-			}
-		}
-		SelectTab(ncur);
+	if (nCurTab != -1) {
+		SelectTab(nCurTab);
 	}
+
 	
-	if (_tabHeight && tabsCount==1 && tabs[0].Type == 1/*WTYPE_PANELS*/ && gSet.isTabs==2) {
+	if (_tabHeight && tabIdx==1 && tab.Type == 1/*WTYPE_PANELS*/ && gSet.isTabs==2) {
 		// Автоскрытие табов (все редакторы/вьюверы закрыты)
 		Deactivate();
 	} else
@@ -396,6 +519,7 @@ void TabBarClass::Update(ConEmuTab* tabs, int tabsCount)
 		UpdatePosition();
 	}
 }
+
 
 RECT TabBarClass::GetMargins()
 {
@@ -527,11 +651,11 @@ WARNING("Для всех кнопок 1-12 отображается заголовок ТЕКУЩЕЙ консоли");
 		// start waiting for title to change
 		_titleShouldChange = true;
 		return true;
-	} 
+	}
 
 	if (nmhdr->code == TBN_GETINFOTIP)
 	{
-		if (!gSet.isConMan)
+		if (!gSet.isMulti)
 			return 0;
 		LPNMTBGETINFOTIP pDisp = (LPNMTBGETINFOTIP)nmhdr;
 		if (pDisp->iItem>=1 && pDisp->iItem<=MAX_CONSOLE_COUNT) {
@@ -561,7 +685,7 @@ void TabBarClass::OnCommand(WPARAM wParam, LPARAM lParam)
 		return;
 	//if (!gConEmu.isConman() || !gConEmu.mh_ConMan || gConEmu.mh_ConMan==INVALID_HANDLE_VALUE)
 	//	return;
-	if (!gSet.isConMan)
+	if (!gSet.isMulti)
 		return;
 
 	if (wParam>=1 && wParam<=MAX_CONSOLE_COUNT) {
@@ -753,7 +877,7 @@ void TabBarClass::OnConman(int nConNumber, BOOL bAlternative)
 
 HWND TabBarClass::CreateToolbar()
 {
-	if (!mh_Rebar || !gSet.isConMan)
+	if (!mh_Rebar || !gSet.isMulti)
 		return NULL; // нет табов - нет и тулбара
 	if (mh_ConmanToolbar)
 		return mh_ConmanToolbar; // Уже создали
@@ -976,4 +1100,63 @@ void TabBarClass::CreateRebar()
 	gSet.UpdateMargins(m_Margins);
 
 	//_hwndTab = mh_Rebar; // пока...
+}
+
+void TabBarClass::PrepareTab(ConEmuTab* pTab)
+{
+	// get file name
+	TCHAR dummy[MAX_PATH*2];
+	TCHAR fileName[MAX_PATH+4];
+	TCHAR szFormat[32];
+	TCHAR szEllip[MAX_PATH+1];
+	wchar_t *tFileName=NULL, *pszNo=NULL, *pszTitle=NULL; //--Maximus
+	if (pTab->Name[0]==0 || pTab->Type == 1/*WTYPE_PANELS*/) {
+		if (pTab->Name[0] == 0 && pTab->Current) {
+			_tcscpy(pTab->Name, gConEmu.isFar() ? gSet.szTabPanels : gSet.pszTabConsole);
+		}
+		tFileName = pTab->Name;
+		_tcscpy(szFormat, _T("%s"));
+	} else {
+		GetFullPathName(pTab->Name, MAX_PATH*2, dummy, &tFileName);
+		if (!tFileName)
+			tFileName = pTab->Name;
+
+		if (pTab->Type == 3/*WTYPE_EDITOR*/) {
+			if (pTab->Modified)
+				_tcscpy(szFormat, gSet.szTabEditorModified);
+			else
+				_tcscpy(szFormat, gSet.szTabEditor);
+		} 
+		else if (pTab->Type == 2/*WTYPE_VIEWER*/)
+			_tcscpy(szFormat, gSet.szTabViewer);
+	}
+	// restrict length
+	int origLength = _tcslen(tFileName);
+	int nMaxLen = gSet.nTabLenMax - _tcslen(szFormat) + 2/* %s */;
+	if (nMaxLen<15) nMaxLen=15; else
+		if (nMaxLen>=MAX_PATH) nMaxLen=MAX_PATH-1;
+	if (origLength > nMaxLen)
+	{
+		/*_tcsnset(fileName, _T('\0'), MAX_PATH);
+		_tcsncat(fileName, tFileName, 10);
+		_tcsncat(fileName, _T("..."), 3);
+		_tcsncat(fileName, tFileName + origLength - 10, 10);*/
+		int nSplit = nMaxLen*2/3;
+		
+		_tcsncpy(szEllip, tFileName, nSplit); szEllip[nSplit]=0;
+		_tcscat(szEllip, _T("…"));
+		_tcscat(szEllip, tFileName + origLength - (nMaxLen - nSplit));
+		
+		tFileName = szEllip;
+	}
+	pszNo = wcsstr(szFormat, L"%i");
+	pszTitle = wcsstr(szFormat, L"%s");
+	if (pszNo == NULL)
+		wsprintf(fileName, szFormat, tFileName);
+	else if (pszNo < pszTitle || pszTitle == NULL)
+		wsprintf(fileName, szFormat, pTab->Pos, tFileName);
+	else
+		wsprintf(fileName, szFormat, tFileName, pTab->Pos);
+
+	wcscpy(pTab->Name, fileName);
 }

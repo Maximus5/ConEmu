@@ -31,7 +31,7 @@ HANDLE WINAPI _export OpenPlugin(int OpenFrom,INT_PTR Item)
 		return INVALID_HANDLE_VALUE;
 
 	if (gnReqCommand != (DWORD)-1) {
-		ProcessCommand(gnReqCommand, FALSE/*bReqMainThread*/);
+		ProcessCommand(gnReqCommand, FALSE/*bReqMainThread*/, gpReqCommandData);
 	}
 	return INVALID_HANDLE_VALUE;
 }

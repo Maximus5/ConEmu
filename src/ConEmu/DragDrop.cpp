@@ -575,7 +575,7 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragEnter(IDataObject * pDataObject,DWORD g
 	
 void CDragDrop::RetrieveDragToInfo(IDataObject * pDataObject)
 {
-	CConEmuPipe pipe;
+	CConEmuPipe pipe(gConEmu.GetFarPID(), CONEMUREADYTIMEOUT);
 
 	gConEmu.DnDstep(_T("DnD: DragEnter starting"));
 
@@ -586,21 +586,21 @@ void CDragDrop::RetrieveDragToInfo(IDataObject * pDataObject)
 		//WriteFile(pipe.hPipe, &cmd, sizeof(cmd), &cbWritten, NULL); 
 		if (pipe.Execute(CMD_DRAGTO))
 		{
-			gConEmu.DnDstep(_T("DnD: Checking for plugin (1 sec)"));
-			// Подождем немножко, проверим что плагин живой
-			cbWritten = WaitForSingleObject(pipe.hEventAlive, CONEMUALIVETIMEOUT);
-			if (cbWritten!=WAIT_OBJECT_0) {
-				TCHAR szErr[MAX_PATH];
-				wsprintf(szErr, _T("ConEmu plugin is not active!\r\nProcessID=%i"), pipe.nPID);
-				MBoxA(szErr);
-			} else {
-				gConEmu.DnDstep(_T("DnD: Checking for plugin (10 sec)"));
-				cbWritten = WaitForSingleObject(pipe.hEventReady, CONEMUREADYTIMEOUT);
-				if (cbWritten!=WAIT_OBJECT_0) {
-					TCHAR szErr[MAX_PATH];
-					wsprintf(szErr, _T("Command waiting time exceeds!\r\nConEmu plugin is locked?\r\nProcessID=%i"), pipe.nPID);
-					MBoxA(szErr);
-				} else {
+			//gConEmu.DnDstep(_T("DnD: Checking for plugin (1 sec)"));
+			//// Подождем немножко, проверим что плагин живой
+			//cbWritten = WaitForSingleObject(pipe.hEventAlive, CONEMUALIVETIMEOUT);
+			//if (cbWritten!=WAIT_OBJECT_0) {
+			//	TCHAR szErr[MAX_PATH];
+			//	wsprintf(szErr, _T("ConEmu plugin is not active!\r\nProcessID=%i"), pipe.nPID);
+			//	MBoxA(szErr);
+			//} else {
+			//	gConEmu.DnDstep(_T("DnD: Checking for plugin (10 sec)"));
+			//	cbWritten = WaitForSingleObject(pipe.hEventReady, CONEMUREADYTIMEOUT);
+			//	if (cbWritten!=WAIT_OBJECT_0) {
+			//		TCHAR szErr[MAX_PATH];
+			//		wsprintf(szErr, _T("Command waiting time exceeds!\r\nConEmu plugin is locked?\r\nProcessID=%i"), pipe.nPID);
+			//		MBoxA(szErr);
+			//	} else {
 					DWORD cbBytesRead=0;
 					int cbStructSize=0;
 					if (m_pfpi) {free(m_pfpi); m_pfpi=NULL;}
@@ -624,8 +624,8 @@ void CDragDrop::RetrieveDragToInfo(IDataObject * pDataObject)
 								m_pfpi->pszPassivePath[nPathLen-1] = 0;
 						}
 					}
-				}
-			}
+				//}
+			//}
 		}
 	}
 	gConEmu.DnDstep(NULL);
@@ -701,7 +701,7 @@ void CDragDrop::Drag()
 	
 	if (m_pfpi) {free(m_pfpi); m_pfpi=NULL;}
 
-	CConEmuPipe pipe;
+	CConEmuPipe pipe(gConEmu.GetFarPID(), CONEMUREADYTIMEOUT);
 	if (pipe.Init(_T("CDragDrop::Drag")))
 	{
 		//isInDrag=true; // return в теле не допускать - нужно сбросить в конце
@@ -711,21 +711,21 @@ void CDragDrop::Drag()
 		//WriteFile(pipe.hPipe, &cmd, sizeof(cmd), &cbWritten, NULL); 
 		if (pipe.Execute(CMD_DRAGFROM))
 		{
-			gConEmu.DnDstep(_T("DnD: Checking for plugin (1 sec)"));
-			// Подождем немножко, проверим что плагин живой
-			cbWritten = WaitForSingleObject(pipe.hEventAlive, CONEMUALIVETIMEOUT);
-			if (cbWritten!=WAIT_OBJECT_0) {
-				TCHAR szErr[MAX_PATH];
-				wsprintf(szErr, _T("ConEmu plugin is not active!\r\nProcessID=%i"), pipe.nPID);
-				MBoxA(szErr);
-			} else {
-				gConEmu.DnDstep(_T("DnD: Waiting for result (10 sec)"));
-				cbWritten = WaitForSingleObject(pipe.hEventReady, CONEMUREADYTIMEOUT);
-				if (cbWritten!=WAIT_OBJECT_0) {
-					TCHAR szErr[MAX_PATH];
-					wsprintf(szErr, _T("Command waiting time exceeds!\r\nConEmu plugin is locked?\r\nProcessID=%i"), pipe.nPID);
-					MBoxA(szErr);
-				} else {
+			//gConEmu.DnDstep(_T("DnD: Checking for plugin (1 sec)"));
+			//// Подождем немножко, проверим что плагин живой
+			//cbWritten = WaitForSingleObject(pipe.hEventAlive, CONEMUALIVETIMEOUT);
+			//if (cbWritten!=WAIT_OBJECT_0) {
+			//	TCHAR szErr[MAX_PATH];
+			//	wsprintf(szErr, _T("ConEmu plugin is not active!\r\nProcessID=%i"), pipe.nPID);
+			//	MBoxA(szErr);
+			//} else {
+			//	gConEmu.DnDstep(_T("DnD: Waiting for result (10 sec)"));
+			//	cbWritten = WaitForSingleObject(pipe.hEventReady, CONEMUREADYTIMEOUT);
+			//	if (cbWritten!=WAIT_OBJECT_0) {
+			//		TCHAR szErr[MAX_PATH];
+			//		wsprintf(szErr, _T("Command waiting time exceeds!\r\nConEmu plugin is locked?\r\nProcessID=%i"), pipe.nPID);
+			//		MBoxA(szErr);
+			//	} else {
 					gConEmu.DnDstep(_T("DnD: Recieving data"));
 					DWORD cbBytesRead=0;
 					int nWholeSize=0;
@@ -927,8 +927,8 @@ void CDragDrop::Drag()
 						pDropSource->Release();		
 						//isLBDown=false; -- а ReleaseCapture кто будет делать?
 					}
-				}
-			}
+				//}
+			//}
 		}
 	}
 	//isInDrag=false;

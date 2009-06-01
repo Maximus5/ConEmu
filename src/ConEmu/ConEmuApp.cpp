@@ -842,13 +842,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		gConEmu.WindowMode = WindowModeVal;
 	}
 	if (ConManPrm)
-		gSet.isConMan = ConManValue;
+		gSet.isMulti = ConManValue;
 	if (VisValue)
 		gSet.isConVisible = VisPrm;
 	// Если запускается conman - принудительно включить флажок "Обновлять handle"
 	//cmdNew = gSet.Cmd;
 	//while (*cmdNew==L' ' || *cmdNew==L'"')
-	if (gSet.isConMan || StrStrI(gSet.GetCmd(), L"conman.exe"))
+	if (gSet.isMulti || StrStrI(gSet.GetCmd(), L"conman.exe"))
 		gSet.isUpdConHandle = TRUE;
 		
 

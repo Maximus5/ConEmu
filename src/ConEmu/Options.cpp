@@ -69,7 +69,7 @@ void CSettings::InitSettings()
     _tcscpy(Config, _T("Software\\ConEmu"));
     
     psCmd = NULL; psCurCmd = NULL; wcscpy(szDefCmd, L"far");
-    isConMan = false; icConManNew = 'W'; icConManNext = 'Q'; icConManRecreate = 192/*VK_тильда*/; isConManNewConfirm = true;
+    isMulti = false; icMultiNew = 'W'; icMultiNext = 'Q'; icMultiRecreate = 192/*VK_тильда*/; isMultiNewConfirm = true;
     // Logging
     isAdvLogging = false;
 	wcscpy(szDumpPackets, L"c:\\temp\\ConEmuVCon-%i-%i.dat");
@@ -195,11 +195,11 @@ void CSettings::LoadSettings()
         reg.Load(_T("FontName"), inFont);
         reg.Load(_T("FontName2"), inFont2);
         reg.Load(_T("CmdLine"), &psCmd);
-        reg.Load(_T("Multi"), isConMan);
-			reg.Load(_T("Multi.NewConsole"), icConManNew);
-			reg.Load(_T("Multi.Next"), icConManNext);
-			reg.Load(_T("Multi.Recreate"), icConManRecreate);
-			reg.Load(_T("Multi.NewConfirm"), isConManNewConfirm);
+        reg.Load(_T("Multi"), isMulti);
+			reg.Load(_T("Multi.NewConsole"), icMultiNew);
+			reg.Load(_T("Multi.Next"), icMultiNext);
+			reg.Load(_T("Multi.Recreate"), icMultiRecreate);
+			reg.Load(_T("Multi.NewConfirm"), isMultiNewConfirm);
         reg.Load(_T("BackGround Image"), sBgImage);
         reg.Load(_T("bgImageDarker"), bgImageDarker);
         reg.Load(_T("FontSize"), inSize);
@@ -388,10 +388,10 @@ BOOL CSettings::SaveSettings()
             }*/
 
             reg.Save(_T("CmdLine"), psCmd);
-            reg.Save(_T("Multi"), isConMan);
-				//reg.Save(_T("Multi.NewConsole"), icConManNew);
-				//reg.Save(_T("Multi.Next"), icConManNext);
-				//reg.Save(_T("Multi.NewConfirm"), isConManNewConfirm);
+            reg.Save(_T("Multi"), isMulti);
+				//reg.Save(_T("Multi.NewConsole"), icMultiNew);
+				//reg.Save(_T("Multi.Next"), icMultiNext);
+				//reg.Save(_T("Multi.NewConfirm"), isMultiNewConfirm);
             reg.Save(_T("FontName"), LogFont.lfFaceName);
             reg.Save(_T("FontName2"), LogFont2.lfFaceName);
             reg.Save(_T("BackGround Image"), sBgImage);
@@ -685,7 +685,7 @@ LRESULT CSettings::OnInitDialog()
         CheckDlgButton(hMain, cbNonProportional, BST_CHECKED);
     if (isUpdConHandle)
         CheckDlgButton(ghOpWnd, cbAutoConHandle, BST_CHECKED);
-    if (isConMan)
+    if (isMulti)
         CheckDlgButton(hMain, cbConMan, BST_CHECKED);
 
     if (LogFont.lfWeight == FW_BOLD) CheckDlgButton(hMain, cbBold, BST_CHECKED);
@@ -882,7 +882,7 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
         break;
         
     case cbConMan:
-        isConMan = !isConMan;
+        isMulti = !isMulti;
         break;
 
     case cbBold:

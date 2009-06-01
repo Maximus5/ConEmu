@@ -125,6 +125,7 @@ protected:
 	UINT mn_MsgAttach;
 	UINT mn_MsgVConTerminated;
 	UINT mn_MsgUpdateScrollInfo;
+	UINT mn_MsgUpdateTabs;
 
 public:
 	DWORD CheckProcesses();
@@ -133,6 +134,7 @@ public:
 public:
 	LPCTSTR GetTitle();
 	LPCTSTR GetTitle(int nIdx);
+	CVirtualConsole* GetVCon(int nIdx);
 	void UpdateProcessDisplay(BOOL abForce);
 	void UpdateSizes();
 
@@ -142,6 +144,7 @@ public:
 
 public:
 	CVirtualConsole* ActiveCon();
+	BOOL Activate(CVirtualConsole* apVCon);
 	int ActiveConNum(); // 0-based
 	static void AddMargins(RECT& rc, RECT& rcAddShift, BOOL abExpand=FALSE);
 	LPARAM AttachRequested(HWND ahConWnd, DWORD anConemuC_PID);
@@ -154,7 +157,7 @@ public:
 	void ForceShowTabs(BOOL abShow);
 	BOOL Init();
 	void InvalidateAll();
-	bool isActive(CVirtualConsole* apCon);
+	bool isActive(CVirtualConsole* apVCon);
 	bool isConSelectMode();
 	bool isDragging();
 	bool isEditor();
@@ -166,6 +169,7 @@ public:
 	bool isNtvdm();
 	bool isPictureView();
 	bool isSizing();
+	bool isValid(CVirtualConsole* apVCon);
 	bool isViewer();
 	void LoadIcons();
 	bool LoadVersionInfo(wchar_t* pFullPath);

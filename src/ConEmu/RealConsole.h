@@ -145,6 +145,9 @@ public:
 	//LRESULT OnConEmuCmd(BOOL abStarted, DWORD anConEmuC_PID);
 	BOOL BufferHeightTurnedOn(CONSOLE_SCREEN_BUFFER_INFO* psbi);
 	void UpdateScrollInfo();
+	void SetTabs(ConEmuTab* tabs, int tabsCount);
+	BOOL GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab);
+	int GetTabCount();
 
 protected:
 	BOOL PreCreate(BOOL abDetached);
@@ -188,6 +191,9 @@ private:
 	int mn_ProcessCount;
 	//
 	DWORD mn_FarPID;
+	//
+	ConEmuTab* mp_tabs;
+	int mn_tabsCount;
 	//
 	void ProcessAdd(DWORD addPID);
 	void ProcessDelete(DWORD addPID);

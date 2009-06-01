@@ -25,9 +25,9 @@ WARNING("!!!! Пока можно при появлении события запоминать текущий тик");
 #define MCHKHEAP
 #endif
 
-//#ifndef _DEBUG
+#ifndef _DEBUG
 #define FORCE_REDRAW_FIX
-//#endif
+#endif
 
 
 WARNING("Наверное все-же стоит производить периодические чтения содержимого консоли, а не только по событию");
@@ -2045,8 +2045,10 @@ void SendConsoleChanges(CESERVER_REQ* pOut)
         NULL,     // don't set maximum bytes 
         NULL);    // don't set maximum time 
     _ASSERT(fSuccess);
-    if (!fSuccess)
+	if (!fSuccess) {
+		CloseHandle(hPipe);
         return;
+	}
 
 
     // Собственно запись в пайп
@@ -2302,7 +2304,7 @@ BOOL MyGetConsoleScreenBufferInfo(HANDLE ahConOut, PCONSOLE_SCREEN_BUFFER_INFO a
 	if (lbRc) {
 		if (gnBufferHeight) {
 			if (gnBufferHeight <= (apsc->dwMaximumWindowSize.Y * 1.2))
-				gnBufferHeight = max(300, (apsc->dwMaximumWindowSize.Y * 1.2));
+				gnBufferHeight = max(300, (SHORT)(apsc->dwMaximumWindowSize.Y * 1.2));
 		}
 		// Если прокрутки быть не должно - по возможности уберем ее, иначе при запуске FAR
 		// запустится только в ВИДИМОЙ области

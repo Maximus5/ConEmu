@@ -86,6 +86,7 @@ CESERVER_REQ* ExecuteGuiCmd(HWND hConWnd, const CESERVER_REQ* pIn)
 		NULL);    // don't set maximum time 
 	if (!fSuccess) 
 	{
+		CloseHandle(hPipe);
 		return NULL;
 	}
 

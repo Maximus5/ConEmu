@@ -16,6 +16,13 @@
 #include "..\common\pluginW789.hpp"
 #include "PluginHeader.h"
 
+#ifdef _DEBUG
+#include <crtdbg.h>
+#else
+#define _ASSERT(f)
+#define _ASSERTE(f)
+#endif
+
 extern "C" {
 #include "../common/ConEmuCheck.h"
 }
@@ -62,7 +69,7 @@ void WINAPI _export GetPluginInfoW(struct PluginInfo *pi)
 HANDLE WINAPI _export OpenPluginW(int OpenFrom,INT_PTR Item)
 {
 	if (gnReqCommand != (DWORD)-1) {
-		ProcessCommand(gnReqCommand, FALSE/*bReqMainThread*/);
+		ProcessCommand(gnReqCommand, FALSE/*bReqMainThread*/, gpReqCommandData);
 	}
 	return INVALID_HANDLE_VALUE;
 }
@@ -79,10 +86,12 @@ WCHAR gszDir1[CONEMUTABMAX], gszDir2[CONEMUTABMAX];
 WCHAR gszRootKey[MAX_PATH];
 int maxTabCount = 0, lastWindowCount = 0, gnCurTabCount = 0;
 ConEmuTab* tabs = NULL; //(ConEmuTab*) calloc(maxTabCount, sizeof(ConEmuTab));
-LPBYTE gpData=NULL, gpCursor=NULL;
+LPBYTE gpData = NULL, gpCursor = NULL;
+CESERVER_REQ* gpCmdRet = NULL;
 DWORD  gnDataSize=0;
 HANDLE ghMapping = NULL;
 DWORD gnReqCommand = -1;
+LPVOID gpReqCommandData = NULL;
 HANDLE ghReqCommandEvent = NULL;
 UINT gnMsgTabChanged = 0;
 CRITICAL_SECTION csTabs, csData;
@@ -90,6 +99,13 @@ WCHAR gcPlugKey=0;
 BOOL  gbPlugKeyChanged=FALSE;
 HKEY  ghRegMonitorKey=NULL; HANDLE ghRegMonitorEvt=NULL;
 HMODULE ghFarHintsFix = NULL;
+WCHAR gszPluginServerPipe[MAX_PATH];
+#define MAX_SERVER_THREADS 3
+HANDLE ghServerThreads[MAX_SERVER_THREADS] = {NULL,NULL,NULL};
+HANDLE ghActiveServerThread = NULL;
+DWORD  gnServerThreadsId[MAX_SERVER_THREADS] = {0,0,0};
+HANDLE ghServerTerminateEvent = NULL;
+HANDLE ghServerSemaphore = NULL;
 
 #if defined(__GNUC__)
 typedef HWND (APIENTRY *FGetConsoleWindow)();
@@ -260,12 +276,14 @@ BOOL IsKeyChanged(BOOL abAllowReload)
 	return lbKeyChanged;
 }
 
-void ProcessCommand(DWORD nCmd, BOOL bReqMainThread)
+void ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData)
 {
-	if (gpData) free(gpData); gpData = NULL; gpCursor = NULL;
+	if (gpCmdRet) free(gpCmdRet);
+	gpCmdRet = NULL; gpData = NULL; gpCursor = NULL;
 
 	if (bReqMainThread) {
 		gnReqCommand = nCmd;
+		gpReqCommandData = pCommandData;
 		if (!ghReqCommandEvent) {
 			ghReqCommandEvent = CreateEvent(NULL,FALSE,FALSE,NULL);
 			if (!ghReqCommandEvent) return;
@@ -278,6 +296,7 @@ void ProcessCommand(DWORD nCmd, BOOL bReqMainThread)
 
 
 		// Нужен вызов плагина в остновной нити
+		WARNING("Переделать на WriteConsoleInput");
 		SendMessage(FarHwnd, WM_KEYDOWN, VK_F14, 0);
 		SendMessage(FarHwnd, WM_KEYUP, VK_F14, (LPARAM)(3<<30));
 
@@ -287,7 +306,8 @@ void ProcessCommand(DWORD nCmd, BOOL bReqMainThread)
 		DWORD dwWait = WaitForMultipleObjects ( 2, hEvents, FALSE, CONEMUFARTIMEOUT );
 		if (dwWait) ResetEvent(ghReqCommandEvent); // Сразу сбросим, вдруг не дождались?
 		//CloseHandle(hEvents[0]);
-		
+
+		gpReqCommandData = NULL;
 		gnReqCommand = -1;
 		return;
 	}
@@ -324,7 +344,12 @@ void ProcessCommand(DWORD nCmd, BOOL bReqMainThread)
 		}
 		case (CMD_SETWINDOW):
 		{
-			int nTab = GetWindowLong(ConEmuHwnd, GWL_TABINDEX);
+			int nTab = 0;
+			if (pCommandData) {
+				nTab = *((DWORD*)pCommandData);
+			} else {
+				nTab = GetWindowLong(ConEmuHwnd, GWL_TABINDEX);
+			}
 			if (gFarVersion.dwVerMajor==1)
 				SetWindowA(nTab);
 			else if (gFarVersion.dwBuild>=789)
@@ -335,18 +360,22 @@ void ProcessCommand(DWORD nCmd, BOOL bReqMainThread)
 		}
 		case (CMD_POSTMACRO):
 		{
-			HKEY hKey = NULL;
-			if (0==RegOpenKeyEx(HKEY_CURRENT_USER, L"Software\\ConEmu", 0, KEY_ALL_ACCESS, &hKey))
-			{
-				DWORD dwSize = 0;
-				if (0==RegQueryValueEx(hKey, L"PostMacroString", NULL, NULL, NULL, &dwSize)) {
-					wchar_t* pszMacro = (wchar_t*)calloc(dwSize+2,1);
-					if (0==RegQueryValueEx(hKey, L"PostMacroString", NULL, NULL, (LPBYTE)pszMacro, &dwSize)) {
-						PostMacro(pszMacro);
+			if (pCommandData) {
+				PostMacro((wchar_t*)pCommandData);
+			} else {
+				HKEY hKey = NULL;
+				if (0==RegOpenKeyEx(HKEY_CURRENT_USER, L"Software\\ConEmu", 0, KEY_ALL_ACCESS, &hKey))
+				{
+					DWORD dwSize = 0;
+					if (0==RegQueryValueEx(hKey, L"PostMacroString", NULL, NULL, NULL, &dwSize)) {
+						wchar_t* pszMacro = (wchar_t*)calloc(dwSize+2,1);
+						if (0==RegQueryValueEx(hKey, L"PostMacroString", NULL, NULL, (LPBYTE)pszMacro, &dwSize)) {
+							PostMacro(pszMacro);
+						}
+						RegDeleteValue(hKey, L"PostMacroString");
 					}
-					RegDeleteValue(hKey, L"PostMacroString");
+					RegCloseKey(hKey);
 				}
-				RegCloseKey(hKey);
 			}
 			break;
 		}
@@ -358,6 +387,7 @@ void ProcessCommand(DWORD nCmd, BOOL bReqMainThread)
 		SetEvent(ghReqCommandEvent);
 }
 
+// Эту нить нужно оставить, чтобы была возможность отобразить консоль при падении ConEmu
 DWORD WINAPI ThreadProcW(LPVOID lpParameter)
 {
 	DWORD dwProcId = GetCurrentProcessId();
@@ -535,7 +565,7 @@ DWORD WINAPI ThreadProcW(LPVOID lpParameter)
 			
 			default:
 			// Все остальные команды нужно выполнять в нити FAR'а
-			ProcessCommand(dwWait/*nCmd*/, TRUE/*bReqMainThread*/);
+			ProcessCommand(dwWait/*nCmd*/, TRUE/*bReqMainThread*/, NULL);
 		}
 
 		// Подготовиться к передаче данных
@@ -575,7 +605,8 @@ DWORD WINAPI ThreadProcW(LPVOID lpParameter)
 			}
 		}
 		if (gpData) {
-			free(gpData); gpData = NULL; gpCursor = NULL;
+			free(gpCmdRet);
+			gpCmdRet = NULL; gpData = NULL; gpCursor = NULL;
 		}
 		LeaveCriticalSection(&csData);
 
@@ -637,6 +668,20 @@ void InitHWND(HWND ahFarHwnd)
 	WCHAR szEventName[128];
 	DWORD dwCurProcId = GetCurrentProcessId();
 
+	// Запустить сервер команд
+	wsprintf(gszPluginServerPipe, CEPLUGINPIPENAME, L".", dwCurProcId);
+	ghServerTerminateEvent = CreateEvent(NULL,TRUE,FALSE,NULL);
+	_ASSERTE(ghServerTerminateEvent!=NULL);
+	if (ghServerTerminateEvent) ResetEvent(ghServerTerminateEvent);
+	ghServerSemaphore = CreateSemaphore(NULL, 1, 1, NULL);
+    for (int i=0; i<MAX_SERVER_THREADS; i++) {
+        gnServerThreadsId[i] = 0;
+        ghServerThreads[i] = CreateThread(NULL, 0, ServerThread, (LPVOID)NULL, 0, &gnServerThreadsId[i]);
+        _ASSERTE(ghServerThreads[i]!=NULL);
+    }
+
+
+	// пока оставим
 	CREATEEVENT(CONEMUDRAGFROM, hEventCmd[CMD_DRAGFROM]);
 	CREATEEVENT(CONEMUDRAGTO, hEventCmd[CMD_DRAGTO]);
 	CREATEEVENT(CONEMUREQTABS, hEventCmd[CMD_REQTABS]);
@@ -993,17 +1038,21 @@ BOOL AddTab(int &tabCount, bool losingFocus, bool editorSave,
 	return lbCh;
 }
 
-void SendTabs(int tabCount, BOOL abWritePipe/*=FALSE*/)
+void SendTabs(int tabCount, BOOL abFillDataOnly/*=FALSE*/)
 {
-	if (abWritePipe) {
-		EnterCriticalSection(&csTabs);
-	}
+	//if (abWritePipe) { //2009-06-01 Секцию вроде всегда блокировать нужно...
+	EnterCriticalSection(&csTabs);
+	BOOL bReleased = FALSE;
+	//}
 #ifdef _DEBUG
 	WCHAR szDbg[100]; wsprintf(szDbg, L"-SendTabs(%i,%s), prev=%i\n", tabCount, 
-		abWritePipe ? L"Transfer" : L"Post", gnCurTabCount);
+		abFillDataOnly ? L"FillDataOnly" : L"Post", gnCurTabCount);
 	OUTPUTDEBUGSTRING(szDbg);
 #endif
-	if (ConEmuHwnd && IsWindow(ConEmuHwnd) && tabs) {
+	if (tabs 
+		&& (abFillDataOnly || (ConEmuHwnd && IsWindow(ConEmuHwnd)))
+		)
+	{
 		COPYDATASTRUCT cds;
 		if (tabs[0].Type == WTYPE_PANELS) {
 			cds.dwData = tabCount;
@@ -1013,28 +1062,38 @@ void SendTabs(int tabCount, BOOL abWritePipe/*=FALSE*/)
 			cds.dwData = --tabCount;
 			cds.lpData = tabs+1;
 		}
-		if (abWritePipe) {
-			cds.cbData = cds.dwData * sizeof(ConEmuTab);
-			EnterCriticalSection(&csData);
-			OutDataAlloc(sizeof(cds.dwData) + cds.cbData);
-			OutDataWrite(&cds.dwData, sizeof(cds.dwData));
-			OutDataWrite(cds.lpData, cds.cbData);
-			LeaveCriticalSection(&csData);
-		} else
+		// Если abFillDataOnly - данные подготавливаются для записи в Pipe - иначе процедура отсылает данные сама
+
+		cds.cbData = cds.dwData * sizeof(ConEmuTab);
+		EnterCriticalSection(&csData);
+		OutDataAlloc(sizeof(cds.dwData) + cds.cbData);
+		OutDataWrite(&cds.dwData, sizeof(cds.dwData));
+		OutDataWrite(cds.lpData, cds.cbData);
+		LeaveCriticalSection(&csData);
+
+		LeaveCriticalSection(&csTabs); bReleased = TRUE;
+
 		//TODO: возможно, что при переключении окон командой из конэму нужно сразу переслать табы?
-		if (tabCount && gnReqCommand==(DWORD)-1) {
+		_ASSERT(gpCmdRet!=NULL);
+		if (!abFillDataOnly && tabCount && gnReqCommand==(DWORD)-1) {
 			//cds.cbData = tabCount * sizeof(ConEmuTab);
 			//SendMessage(ConEmuHwnd, WM_COPYDATA, (WPARAM)FarHwnd, (LPARAM)&cds);
 			// Это нужно делать только если инициировано ФАРОМ. Если запрос прислал ConEmu - не посылать...
 			if (gnCurTabCount != tabCount || tabCount > 1) {
 				gnCurTabCount = tabCount; // сразу запомним!, А то при ретриве табов количество еще старым будет...
-				PostMessage(ConEmuHwnd, gnMsgTabChanged, tabCount, 0);
+				//PostMessage(ConEmuHwnd, gnMsgTabChanged, tabCount, 0);
+				gpCmdRet->nCmd = CECMD_TABSCHANGED;
+				CESERVER_REQ* pOut =
+					ExecuteGuiCmd(FarHwnd, gpCmdRet);
+				if (pOut) free(pOut);
 			}
 		}
 	}
 	//free(tabs); - освобождается в ExitFARW
     gnCurTabCount = tabCount;
-	LeaveCriticalSection(&csTabs);
+	if (!bReleased) {
+		LeaveCriticalSection(&csTabs); bReleased = TRUE;
+	}
 }
 
 // watch non-modified -> modified editor status change
@@ -1110,6 +1169,43 @@ void StopThread(void)
 {
 	if (hEventCmd[CMD_EXIT])
 		SetEvent(hEventCmd[CMD_EXIT]); // Завершить нить
+
+	if (ghServerTerminateEvent) {
+		SetEvent(ghServerTerminateEvent);
+
+        HANDLE hPipe = INVALID_HANDLE_VALUE;
+		DWORD dwWait = 0;
+        // Передернуть пайпы, чтобы нити сервера завершились
+        for (int i=0; i<MAX_SERVER_THREADS; i++) {
+			OutputDebugString(L"Plugin: Touching our server pipe\n");
+			HANDLE hServer = ghActiveServerThread;
+            hPipe = CreateFile(gszPluginServerPipe,GENERIC_WRITE,0,NULL,OPEN_EXISTING,0,NULL);
+			if (hPipe == INVALID_HANDLE_VALUE) {
+				OutputDebugString(L"Plugin: All pipe instances closed?\n");
+                break;
+			}
+			OutputDebugString(L"Plugin: Waiting server pipe thread\n");
+			dwWait = WaitForSingleObject(hServer, 200); // пытаемся дождаться, пока нить завершится
+            // Просто закроем пайп - его нужно было передернуть
+            CloseHandle(hPipe);
+            hPipe = INVALID_HANDLE_VALUE;
+        }
+        // Немного подождем, пока ВСЕ нити завершатся
+		OutputDebugString(L"Plugin: Checking server pipe threads are closed\n");
+        WaitForMultipleObjects(MAX_SERVER_THREADS, ghServerThreads, TRUE, 500);
+        for (int i=0; i<MAX_SERVER_THREADS; i++) {
+			if (WaitForSingleObject(ghServerThreads[i],0) != WAIT_OBJECT_0) {
+				OutputDebugString(L"### Plugin: Terminating mh_ServerThreads\n");
+                TerminateThread(ghServerThreads[i],0);
+			}
+            CloseHandle(ghServerThreads[i]);
+            ghServerThreads[i] = NULL;
+        }
+
+		SafeCloseHandle(ghServerTerminateEvent);
+		SafeCloseHandle(ghServerSemaphore);
+	}
+
 	//CloseTabs(); -- ConEmu само разберется
 	if (hThread) { // подождем чуть-чуть, или принудительно прибъем нить ожидания
 		if (WaitForSingleObject(hThread,1000)) {
@@ -1160,10 +1256,15 @@ void CloseTabs()
 // Возвращает FALSE при ошибках выделения памяти
 BOOL OutDataAlloc(DWORD anSize)
 {
-	gpData = (LPBYTE)calloc(anSize,1);
-	if (!gpData)
+	// + размер заголовка gpCmdRet
+	gpCmdRet = (CESERVER_REQ*)calloc(12+anSize,1);
+	if (!gpCmdRet)
 		return FALSE;
 
+	gpCmdRet->nSize = anSize+12;
+	gpCmdRet->nVersion = CESERVER_REQ_VER;
+
+	gpData = gpCmdRet->Data;
 	gnDataSize = anSize;
 	gpCursor = gpData;
 
@@ -1174,14 +1275,21 @@ BOOL OutDataAlloc(DWORD anSize)
 // Возвращает FALSE при ошибках выделения памяти
 BOOL OutDataRealloc(DWORD anNewSize)
 {
-	if (!gpData)
+	if (!gpCmdRet)
 		return OutDataAlloc(anNewSize);
 
 	if (anNewSize < gnDataSize)
 		return FALSE; // нельзя выделять меньше памяти, чем уже есть
 
 	// realloc иногда не работает, так что даже и не пытаемся
-	LPBYTE lpNewData = (LPBYTE)calloc(anNewSize,1);
+	CESERVER_REQ* lpNewCmdRet = (CESERVER_REQ*)calloc(12+anNewSize,1);
+	if (!lpNewCmdRet)
+		return FALSE;
+	lpNewCmdRet->nCmd = gpCmdRet->nCmd;
+	lpNewCmdRet->nSize = anNewSize+12;
+	lpNewCmdRet->nVersion = gpCmdRet->nVersion;
+
+	LPBYTE lpNewData = lpNewCmdRet->Data;
 	if (!lpNewData)
 		return FALSE;
 
@@ -1190,7 +1298,8 @@ BOOL OutDataRealloc(DWORD anNewSize)
 	// запомнить новую позицию курсора
 	gpCursor = lpNewData + (gpCursor - gpData);
 	// И новый буфер с размером
-	free(gpData);
+	free(gpCmdRet);
+	gpCmdRet = lpNewCmdRet;
 	gpData = lpNewData;
 	gnDataSize = anNewSize;
 
@@ -1254,4 +1363,211 @@ void PostMacro(wchar_t* asMacro)
 	} else {
 		PostMacro757(asMacro);
 	}
+}
+
+DWORD WINAPI ServerThread(LPVOID lpvParam) 
+{ 
+    BOOL fConnected = FALSE;
+    DWORD dwErr = 0;
+    HANDLE hPipe = NULL; 
+    HANDLE hWait[2] = {NULL,NULL};
+	DWORD dwTID = GetCurrentThreadId();
+
+    _ASSERTE(gszPluginServerPipe[0]!=0);
+    _ASSERTE(ghServerSemaphore!=NULL);
+
+    // The main loop creates an instance of the named pipe and 
+    // then waits for a client to connect to it. When the client 
+    // connects, a thread is created to handle communications 
+    // with that client, and the loop is repeated. 
+    
+    hWait[0] = ghServerTerminateEvent;
+    hWait[1] = ghServerSemaphore;
+
+    // Пока не затребовано завершение консоли
+    do {
+        while (!fConnected)
+        { 
+            _ASSERTE(hPipe == NULL);
+
+            // Дождаться разрешения семафора, или закрытия консоли
+            dwErr = WaitForMultipleObjects ( 2, hWait, FALSE, INFINITE );
+            if (dwErr == WAIT_OBJECT_0) {
+                return 0; // Консоль закрывается
+            }
+
+			for (int i=0; i<MAX_SERVER_THREADS; i++) {
+				if (gnServerThreadsId[i] == dwTID) {
+					ghActiveServerThread = ghServerThreads[i]; break;
+				}
+			}
+
+            hPipe = CreateNamedPipe( 
+                gszPluginServerPipe,      // pipe name 
+                PIPE_ACCESS_DUPLEX,       // read/write access 
+                PIPE_TYPE_MESSAGE |       // message type pipe 
+                PIPE_READMODE_MESSAGE |   // message-read mode 
+                PIPE_WAIT,                // blocking mode 
+                PIPE_UNLIMITED_INSTANCES, // max. instances  
+                PIPEBUFSIZE,              // output buffer size 
+                PIPEBUFSIZE,              // input buffer size 
+                0,                        // client time-out 
+                NULL);                    // default security attribute 
+
+            _ASSERTE(hPipe != INVALID_HANDLE_VALUE);
+
+            if (hPipe == INVALID_HANDLE_VALUE) 
+            {
+                //DisplayLastError(L"CreatePipe failed"); 
+                hPipe = NULL;
+                Sleep(50);
+                continue;
+            }
+
+            // Wait for the client to connect; if it succeeds, 
+            // the function returns a nonzero value. If the function
+            // returns zero, GetLastError returns ERROR_PIPE_CONNECTED. 
+
+            fConnected = ConnectNamedPipe(hPipe, NULL) ? TRUE : ((dwErr = GetLastError()) == ERROR_PIPE_CONNECTED); 
+
+            // Консоль закрывается!
+            if (WaitForSingleObject ( ghServerTerminateEvent, 0 ) == WAIT_OBJECT_0) {
+                //FlushFileBuffers(hPipe); -- это не нужно, мы ничего не возвращали
+                //DisconnectNamedPipe(hPipe); 
+				ReleaseSemaphore(ghServerSemaphore, 1, NULL);
+                SafeCloseHandle(hPipe);
+                return 0;
+            }
+
+            if (!fConnected)
+                SafeCloseHandle(hPipe);
+        }
+
+        if (fConnected) {
+            // сразу сбросим, чтобы не забыть
+            fConnected = FALSE;
+            // разрешить другой нити принять вызов
+            ReleaseSemaphore(ghServerSemaphore, 1, NULL);
+            
+            ServerThreadCommand ( hPipe ); // При необходимости - записывает в пайп результат сама
+        }
+
+        FlushFileBuffers(hPipe); 
+        //DisconnectNamedPipe(hPipe); 
+        SafeCloseHandle(hPipe);
+    } // Перейти к открытию нового instance пайпа
+    while (WaitForSingleObject ( ghServerTerminateEvent, 0 ) != WAIT_OBJECT_0);
+
+    return 0; 
+}
+
+void ServerThreadCommand(HANDLE hPipe)
+{
+    CESERVER_REQ in={0}, *pIn=NULL;
+    DWORD cbRead = 0, cbWritten = 0, dwErr = 0;
+    BOOL fSuccess = FALSE;
+
+    // Send a message to the pipe server and read the response. 
+    fSuccess = ReadFile( 
+        hPipe,            // pipe handle 
+        &in,              // buffer to receive reply
+        sizeof(in),       // size of read buffer
+        &cbRead,          // bytes read
+        NULL);            // not overlapped 
+
+    if (!fSuccess && ((dwErr = GetLastError()) != ERROR_MORE_DATA)) 
+    {
+        _ASSERTE("ReadFile(pipe) failed"==NULL);
+        //CloseHandle(hPipe);
+        return;
+    }
+    _ASSERTE(in.nSize>=12 && cbRead>=12);
+    _ASSERTE(in.nVersion == CESERVER_REQ_VER);
+    if (cbRead < 12 || /*in.nSize < cbRead ||*/ in.nVersion != CESERVER_REQ_VER) {
+        //CloseHandle(hPipe);
+        return;
+    }
+
+    int nAllSize = in.nSize;
+    pIn = (CESERVER_REQ*)calloc(nAllSize,1);
+    _ASSERTE(pIn!=NULL);
+    memmove(pIn, &in, cbRead);
+    _ASSERTE(pIn->nVersion==CESERVER_REQ_VER);
+
+    LPBYTE ptrData = ((LPBYTE)pIn)+cbRead;
+    nAllSize -= cbRead;
+
+    while(nAllSize>0)
+    { 
+        //_tprintf(TEXT("%s\n"), chReadBuf);
+
+        // Break if TransactNamedPipe or ReadFile is successful
+        if(fSuccess)
+            break;
+
+        // Read from the pipe if there is more data in the message.
+        fSuccess = ReadFile( 
+            hPipe,      // pipe handle 
+            ptrData,    // buffer to receive reply 
+            nAllSize,   // size of buffer 
+            &cbRead,    // number of bytes read 
+            NULL);      // not overlapped 
+
+        // Exit if an error other than ERROR_MORE_DATA occurs.
+        if( !fSuccess && ((dwErr = GetLastError()) != ERROR_MORE_DATA)) 
+            break;
+        ptrData += cbRead;
+        nAllSize -= cbRead;
+    }
+
+    TODO("Может возникнуть ASSERT, если консоль была закрыта в процессе чтения");
+    _ASSERTE(nAllSize==0);
+    if (nAllSize>0) {
+        //CloseHandle(hPipe);
+        return; // удалось считать не все данные
+    }
+
+	UINT nDataSize = pIn->nSize - sizeof(CESERVER_REQ) + 1;
+
+    // Все данные из пайпа получены, обрабатываем команду и возвращаем (если нужно) результат
+	//fSuccess = WriteFile( hPipe, pOut, pOut->nSize, &cbWritten, NULL);
+
+	if (pIn->nCmd == CMD_LANGCHANGE) {
+		_ASSERTE(nDataSize>=4);
+		HKL hkl = (HKL)*((DWORD*)pIn->Data);
+		if (hkl) {
+			DWORD dwLastError = 0;
+			WCHAR szLoc[10]; wsprintf(szLoc, L"%08x", (DWORD)(((DWORD)hkl) & 0xFFFF));
+			HKL hkl1 = LoadKeyboardLayout(szLoc, KLF_ACTIVATE|KLF_REORDER|KLF_SUBSTITUTE_OK|KLF_SETFORPROCESS);
+			HKL hkl2 = ActivateKeyboardLayout(hkl1, KLF_SETFORPROCESS|KLF_REORDER);
+			if (!hkl2) {
+				dwLastError = GetLastError();
+			}
+			dwLastError = dwLastError;
+		}
+
+	} else if (pIn->nCmd == CMD_DEFFONT) {
+		// исключение - асинхронный, результат не требуется
+		SetConsoleFontSizeTo(FarHwnd, 4, 6);
+		MoveWindow(FarHwnd, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), 1); // чтобы убрать возможные полосы прокрутки...
+
+	} else if (pIn->nCmd == CMD_REQTABS) {
+		SendTabs(gnCurTabCount, TRUE);
+
+	} else {
+		ProcessCommand(pIn->nCmd, TRUE/*bReqMainThread*/, pIn->Data);
+
+		if (gpCmdRet) {
+			fSuccess = WriteFile( hPipe, gpCmdRet, gpCmdRet->nSize, &cbWritten, NULL);
+			free(gpCmdRet);
+			gpCmdRet = NULL; gpData = NULL; gpCursor = NULL;
+		}
+	}
+
+
+    // Освободить память
+    free(pIn);
+
+    //CloseHandle(hPipe); -- закрывает вызывающая функция
+    return;
 }

@@ -31,7 +31,7 @@ BOOL CreateTabs(int windowCount);
 BOOL AddTab(int &tabCount, bool losingFocus, bool editorSave, 
 			int Type, LPCWSTR Name, LPCWSTR FileName, int Current, int Modified);
 
-void SendTabs(int tabCount, BOOL abWritePipe=FALSE);
+void SendTabs(int tabCount, BOOL abFillDataOnly=FALSE);
 
 void InitHWND(HWND ahFarHwnd);
 
@@ -86,6 +86,10 @@ LPCWSTR GetMsg757(int aiMsg);
 LPCWSTR GetMsg789(int aiMsg);
 
 extern DWORD gnReqCommand;
-void ProcessCommand(DWORD nCmd, BOOL bReqMainThread);
+extern LPVOID gpReqCommandData;
+void ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData);
 BOOL CheckPlugKey();
 void NotifyChangeKey();
+
+DWORD WINAPI ServerThread(LPVOID lpvParam);
+void ServerThreadCommand(HANDLE hPipe);

@@ -29,6 +29,7 @@
 #define CESERVERPIPENAME    L"\\\\%s\\pipe\\ConEmuSrv%u"      // ConEmuC_PID
 #define CESERVERINPUTNAME   L"\\\\%s\\pipe\\ConEmuSrvInput%u" // ConEmuC_PID
 #define CEGUIPIPENAME       L"\\\\%s\\pipe\\ConEmuGui%u"      // GetConsoleWindow() // необходимо, чтобы плагин мог общаться с GUI
+#define CEPLUGINPIPENAME    L"\\\\%s\\pipe\\ConEmuPlugin%u"   // Far_PID
 #define CEGUIATTACHED       L"ConEmuGuiAttached.%u"
 #define CESIGNAL_C          L"ConEmuC_C_Signal.%u"
 #define CESIGNAL_BREAK      L"ConEmuC_Break_Signal.%u"
@@ -38,6 +39,7 @@
 #define CECMD_CMDSTARTSTOP  4
 #define CECMD_GETGUIHWND    5
 #define CECMD_RECREATE      6
+#define CECMD_TABSCHANGED   7
 
 #define CESERVER_REQ_VER    2
 

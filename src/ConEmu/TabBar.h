@@ -1,46 +1,38 @@
+
 #pragma once
+
+#include <vector>
+
+#define CONEMUMSG_UPDATETABS _T("ConEmuMain::UpdateTabs")
 
 class TabBarClass
 {
 private:
 	bool _active;
-	//HWND _hwndTab;
 	int _tabHeight;
-	//TCHAR _lastTitle[MAX_PATH];
 	RECT m_Margins;
 	bool _titleShouldChange;
 	int _prevTab;
 	BOOL mb_ChangeAllowed, mb_Enabled;
 	void AddTab(LPCWSTR text, int i);
 	void SelectTab(int i);
-	//char FarTabShortcut(int tabIndex);
 	void FarSendChangeTab(int tabIndex);
-	//static LRESULT CALLBACK ToolWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 	HWND mh_Tabbar, mh_ConmanToolbar, mh_Rebar;
 	LONG mn_LastToolbarWidth;
-	//typedef BOOL _cdecl GetConsolesTitles_t( void* titles, DWORD* number );
-	//typedef BOOL _cdecl ActivateConsole_t( DWORD number );
-	//GetConsolesTitles_t* GetConsolesTitles;
-	//ActivateConsole_t* ActivateConsole;
-	/*typedef struct RegShortcut
-	{
-	    TCHAR* name;
-	    char*  def;
-	    char*  value;
-	    DWORD  action;
-	} RegShortcut;
-	typedef bool (_cdecl * ConMan_KeyAction_t)( RegShortcut* shortcut );
-	ConMan_KeyAction_t ConMan_KeyAction;
-	typedef struct FarTitle
-	{
-		DWORD num;
-		TCHAR title[MAX_PATH];
-		bool  active;
-	} FarTitle;*/
 	void UpdateToolbarPos();
+	void PrepareTab(ConEmuTab* pTab);
 
 protected:
 	//static LRESULT CALLBACK TabProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+	
+	// Пока - банально. VCon, номер в FAR
+	typedef struct {
+		CVirtualConsole* pVCon;
+		int nFarWindowId;
+	} VConTabs;
+	std::vector<VConTabs> m_Tab2VCon;
+	BOOL mb_PostUpdateCalled;
+	UINT mn_MsgUpdateTabs;
 
 public:
 	TabBarClass();
@@ -52,7 +44,6 @@ public:
 	bool IsActive();
 	bool IsShown();
 	BOOL IsAllowed();
-	//int Height();
 	RECT GetMargins();
 	void Activate();
 	HWND CreateToolbar();
@@ -60,7 +51,8 @@ public:
 	void CreateRebar();
 	void Deactivate();
 	void RePaint();
-	void Update(ConEmuTab* tabs, int tabsCount);
+	//void Update(ConEmuTab* tabs, int tabsCount);
+	void Update(BOOL abPosted=FALSE);
 	void UpdatePosition();
 	void UpdateWidth();
 	void OnConman(int nConNumber, BOOL bAlternative);
@@ -68,4 +60,3 @@ public:
 	void OnCommand(WPARAM wParam, LPARAM lParam);
 	void OnMouse(int message, int x, int y);
 };
-
