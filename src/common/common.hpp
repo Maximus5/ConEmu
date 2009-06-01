@@ -65,17 +65,17 @@ typedef struct tag_CESERVER_CHAR {
 //#define CONEMUCMDSTARTED L"ConEmuMain::CmdStarted"    // wParam == hConWnd, lParam == ConEmuC_PID (as ComSpec)
 //#define CONEMUCMDSTOPPED L"ConEmuMain::CmdTerminated" // wParam == hConWnd, lParam == ConEmuC_PID (as ComSpec)
 
-#define CONEMUMAPPING    L"ConEmuPluginData%u"
-#define CONEMUDRAGFROM   L"ConEmuDragFrom%u"
-#define CONEMUDRAGTO     L"ConEmuDragTo%u"
-#define CONEMUREQTABS    L"ConEmuReqTabs%u"
-#define CONEMUSETWINDOW  L"ConEmuSetWindow%u"
-#define CONEMUPOSTMACRO  L"ConEmuPostMacro%u"
-#define CONEMUDEFFONT    L"ConEmuDefFont%u"
-#define CONEMULANGCHANGE L"ConEmuLangChange%u"
-#define CONEMUEXIT       L"ConEmuExit%u"
-#define CONEMUALIVE      L"ConEmuAlive%u"
-#define CONEMUREADY      L"ConEmuReady%u"
+//#define CONEMUMAPPING    L"ConEmuPluginData%u"
+//#define CONEMUDRAGFROM   L"ConEmuDragFrom%u"
+//#define CONEMUDRAGTO     L"ConEmuDragTo%u"
+//#define CONEMUREQTABS    L"ConEmuReqTabs%u"
+//#define CONEMUSETWINDOW  L"ConEmuSetWindow%u"
+//#define CONEMUPOSTMACRO  L"ConEmuPostMacro%u"
+//#define CONEMUDEFFONT    L"ConEmuDefFont%u"
+//#define CONEMULANGCHANGE L"ConEmuLangChange%u"
+//#define CONEMUEXIT       L"ConEmuExit%u"
+//#define CONEMUALIVE      L"ConEmuAlive%u"
+//#define CONEMUREADY      L"ConEmuReady%u"
 #define CONEMUTABCHANGED L"ConEmuTabsChanged"
 #define CMD_DRAGFROM     0
 #define CMD_DRAGTO       1
@@ -94,7 +94,7 @@ typedef struct tag_CESERVER_CHAR {
 #ifdef _DEBUG
 	#define CONEMUALIVETIMEOUT INFINITE
 	#define CONEMUREADYTIMEOUT INFINITE
-	#define CONEMUFARTIMEOUT   10000 // Сколько ожидать, пока ФАР среагирует на вызов плагина
+	#define CONEMUFARTIMEOUT   120000 // Сколько ожидать, пока ФАР среагирует на вызов плагина
 #else
 	#define CONEMUALIVETIMEOUT 1000  // Живость плагина ждем секунду
 	#define CONEMUREADYTIMEOUT 10000 // А на выполнение команды - 10s max

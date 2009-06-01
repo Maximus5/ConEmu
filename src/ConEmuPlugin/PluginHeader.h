@@ -22,7 +22,7 @@ extern HWND ConEmuHwnd;
 extern HWND FarHwnd;
 extern FarVersion gFarVersion;
 extern int lastModifiedStateW;
-extern HANDLE hEventCmd[MAXCMDCOUNT];
+//extern HANDLE hEventCmd[MAXCMDCOUNT];
 extern HANDLE hThread;
 extern WCHAR gcPlugKey;
 
@@ -86,10 +86,11 @@ LPCWSTR GetMsg757(int aiMsg);
 LPCWSTR GetMsg789(int aiMsg);
 
 extern DWORD gnReqCommand;
+extern int gnPluginOpenFrom;
 extern LPVOID gpReqCommandData;
 void ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData);
 BOOL CheckPlugKey();
 void NotifyChangeKey();
 
 DWORD WINAPI ServerThread(LPVOID lpvParam);
-void ServerThreadCommand(HANDLE hPipe);
+DWORD WINAPI ServerThreadCommand(LPVOID ahPipe);

@@ -148,6 +148,7 @@ public:
 	void SetTabs(ConEmuTab* tabs, int tabsCount);
 	BOOL GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab);
 	int GetTabCount();
+	BOOL ActivateFarWindow(int anWndIndex);
 
 protected:
 	BOOL PreCreate(BOOL abDetached);
@@ -193,7 +194,9 @@ private:
 	DWORD mn_FarPID;
 	//
 	ConEmuTab* mp_tabs;
-	int mn_tabsCount;
+	int mn_tabsCount, mn_ActiveTab;
+	WCHAR ms_PanelTitle[CONEMUTABMAX];
+	void CheckPanelTitle();
 	//
 	void ProcessAdd(DWORD addPID);
 	void ProcessDelete(DWORD addPID);

@@ -27,5 +27,5 @@ public:
    BOOL Init(LPCTSTR asOp, BOOL abSilent=FALSE);
    BOOL Execute(int nCmd, LPVOID apData=NULL, UINT anDataSize=0);
    BOOL Read(LPVOID pData, DWORD nSize, DWORD* nRead);
-   LPBYTE GetPtr();
+   LPBYTE GetPtr(DWORD* pdwLeft=NULL);
 };

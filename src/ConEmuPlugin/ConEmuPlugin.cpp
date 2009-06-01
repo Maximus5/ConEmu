@@ -15,6 +15,7 @@
 #include "..\common\common.hpp"
 #include "..\common\pluginW789.hpp"
 #include "PluginHeader.h"
+#include <vector>
 
 #ifdef _DEBUG
 #include <crtdbg.h>
@@ -66,9 +67,15 @@ void WINAPI _export GetPluginInfoW(struct PluginInfo *pi)
 	pi->Reserved = 0;	
 }
 
+
+BOOL gbInfoW_OK = FALSE;
 HANDLE WINAPI _export OpenPluginW(int OpenFrom,INT_PTR Item)
 {
+	if (!gbInfoW_OK)
+		return INVALID_HANDLE_VALUE;
+
 	if (gnReqCommand != (DWORD)-1) {
+		gnPluginOpenFrom = OpenFrom;
 		ProcessCommand(gnReqCommand, FALSE/*bReqMainThread*/, gpReqCommandData);
 	}
 	return INVALID_HANDLE_VALUE;
@@ -79,7 +86,8 @@ HANDLE WINAPI _export OpenPluginW(int OpenFrom,INT_PTR Item)
 HWND ConEmuHwnd=NULL; // Содержит хэндл окна отрисовки. Это ДОЧЕРНЕЕ окно.
 BOOL TerminalMode = FALSE;
 HWND FarHwnd=NULL;
-HANDLE hEventCmd[MAXCMDCOUNT], hEventAlive=NULL, hEventReady=NULL;
+DWORD gnMainThreadId = 0;
+//HANDLE hEventCmd[MAXCMDCOUNT], hEventAlive=NULL, hEventReady=NULL;
 HANDLE hThread=NULL;
 FarVersion gFarVersion;
 WCHAR gszDir1[CONEMUTABMAX], gszDir2[CONEMUTABMAX];
@@ -89,8 +97,9 @@ ConEmuTab* tabs = NULL; //(ConEmuTab*) calloc(maxTabCount, sizeof(ConEmuTab));
 LPBYTE gpData = NULL, gpCursor = NULL;
 CESERVER_REQ* gpCmdRet = NULL;
 DWORD  gnDataSize=0;
-HANDLE ghMapping = NULL;
+//HANDLE ghMapping = NULL;
 DWORD gnReqCommand = -1;
+int gnPluginOpenFrom = -1;
 LPVOID gpReqCommandData = NULL;
 HANDLE ghReqCommandEvent = NULL;
 UINT gnMsgTabChanged = 0;
@@ -101,11 +110,14 @@ HKEY  ghRegMonitorKey=NULL; HANDLE ghRegMonitorEvt=NULL;
 HMODULE ghFarHintsFix = NULL;
 WCHAR gszPluginServerPipe[MAX_PATH];
 #define MAX_SERVER_THREADS 3
-HANDLE ghServerThreads[MAX_SERVER_THREADS] = {NULL,NULL,NULL};
-HANDLE ghActiveServerThread = NULL;
-DWORD  gnServerThreadsId[MAX_SERVER_THREADS] = {0,0,0};
+//HANDLE ghServerThreads[MAX_SERVER_THREADS] = {NULL,NULL,NULL};
+//HANDLE ghActiveServerThread = NULL;
+HANDLE ghServerThread = NULL;
+DWORD  gnServerThreadId = 0;
+std::vector<HANDLE> ghCommandThreads;
+//DWORD  gnServerThreadsId[MAX_SERVER_THREADS] = {0,0,0};
 HANDLE ghServerTerminateEvent = NULL;
-HANDLE ghServerSemaphore = NULL;
+HANDLE ghPluginSemaphore = NULL;
 
 #if defined(__GNUC__)
 typedef HWND (APIENTRY *FGetConsoleWindow)();
@@ -125,6 +137,7 @@ BOOL APIENTRY DllMain( HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
 				GetConsoleWindow = (FGetConsoleWindow)GetProcAddress(GetModuleHandle(L"kernel32.dll"),"GetConsoleWindow");
 				#endif
 				HWND hConWnd = GetConsoleWindow();
+				gnMainThreadId = GetCurrentThreadId();
 				InitHWND(hConWnd);
 				
 			    // Check Terminal mode
@@ -281,13 +294,23 @@ void ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData)
 	if (gpCmdRet) free(gpCmdRet);
 	gpCmdRet = NULL; gpData = NULL; gpCursor = NULL;
 
-	if (bReqMainThread) {
-		gnReqCommand = nCmd;
-		gpReqCommandData = pCommandData;
-		if (!ghReqCommandEvent) {
-			ghReqCommandEvent = CreateEvent(NULL,FALSE,FALSE,NULL);
-			if (!ghReqCommandEvent) return;
+	WARNING("Тут нужно сделать проверку содержимого консоли");
+	// Если отображено меню - плагин не запустится
+	// Не перепутать меню с пустым экраном (Ctrl-O)
+
+	if (bReqMainThread && (gnMainThreadId != GetCurrentThreadId())) {
+		_ASSERTE(ghPluginSemaphore!=NULL);
+		_ASSERTE(ghServerTerminateEvent!=NULL);
+		// Засемафорить, чтобы несколько команд одновременно не пошли...
+		HANDLE hEvents[2] = {ghServerTerminateEvent, ghPluginSemaphore};
+		DWORD dwWait = WaitForMultipleObjects(2, hEvents, FALSE, INFINITE);
+		if (dwWait == WAIT_OBJECT_0) {
+			// Плагин завершается
+			return;
 		}
+
+		gnReqCommand = nCmd; gnPluginOpenFrom = -1;
+		gpReqCommandData = pCommandData;
 		ResetEvent(ghReqCommandEvent);
 		
 		// Проверить, не изменилась ли горячая клавиша плагина, и если да - пересоздать макросы
@@ -301,14 +324,18 @@ void ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData)
 		SendMessage(FarHwnd, WM_KEYUP, VK_F14, (LPARAM)(3<<30));
 
 		
-		HANDLE hEvents[2] = {ghReqCommandEvent, hEventCmd[CMD_EXIT]};
+		//HANDLE hEvents[2] = {ghReqCommandEvent, hEventCmd[CMD_EXIT]};
+		hEvents[0] = ghReqCommandEvent;
+		hEvents[1] = ghServerTerminateEvent;
+
 		//DuplicateHandle(GetCurrentProcess(), ghReqCommandEvent, GetCurrentProcess(), hEvents, 0, 0, DUPLICATE_SAME_ACCESS);
-		DWORD dwWait = WaitForMultipleObjects ( 2, hEvents, FALSE, CONEMUFARTIMEOUT );
+		dwWait = WaitForMultipleObjects ( 2, hEvents, FALSE, CONEMUFARTIMEOUT );
 		if (dwWait) ResetEvent(ghReqCommandEvent); // Сразу сбросим, вдруг не дождались?
-		//CloseHandle(hEvents[0]);
+
+		ReleaseSemaphore(ghPluginSemaphore, 1, NULL);
 
 		gpReqCommandData = NULL;
-		gnReqCommand = -1;
+		gnReqCommand = -1; gnPluginOpenFrom = -1;
 		return;
 	}
 	
@@ -345,38 +372,29 @@ void ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData)
 		case (CMD_SETWINDOW):
 		{
 			int nTab = 0;
-			if (pCommandData) {
-				nTab = *((DWORD*)pCommandData);
-			} else {
-				nTab = GetWindowLong(ConEmuHwnd, GWL_TABINDEX);
+			// Окно мы можем сменить только если:
+			if (gnPluginOpenFrom == OPEN_VIEWER || gnPluginOpenFrom == OPEN_EDITOR 
+				|| gnPluginOpenFrom == OPEN_PLUGINSMENU)
+			{
+				_ASSERTE(pCommandData!=NULL);
+				if (pCommandData!=NULL)
+					nTab = *((DWORD*)pCommandData);
+
+				if (gFarVersion.dwVerMajor==1)
+					SetWindowA(nTab);
+				else if (gFarVersion.dwBuild>=789)
+					SetWindow789(nTab);
+				else
+					SetWindow757(nTab);
 			}
-			if (gFarVersion.dwVerMajor==1)
-				SetWindowA(nTab);
-			else if (gFarVersion.dwBuild>=789)
-				SetWindow789(nTab);
-			else
-				SetWindow757(nTab);
+			SendTabs(gnCurTabCount, TRUE);
 			break;
 		}
 		case (CMD_POSTMACRO):
 		{
-			if (pCommandData) {
+			_ASSERTE(pCommandData!=NULL);
+			if (pCommandData!=NULL)
 				PostMacro((wchar_t*)pCommandData);
-			} else {
-				HKEY hKey = NULL;
-				if (0==RegOpenKeyEx(HKEY_CURRENT_USER, L"Software\\ConEmu", 0, KEY_ALL_ACCESS, &hKey))
-				{
-					DWORD dwSize = 0;
-					if (0==RegQueryValueEx(hKey, L"PostMacroString", NULL, NULL, NULL, &dwSize)) {
-						wchar_t* pszMacro = (wchar_t*)calloc(dwSize+2,1);
-						if (0==RegQueryValueEx(hKey, L"PostMacroString", NULL, NULL, (LPBYTE)pszMacro, &dwSize)) {
-							PostMacro(pszMacro);
-						}
-						RegDeleteValue(hKey, L"PostMacroString");
-					}
-					RegCloseKey(hKey);
-				}
-			}
 			break;
 		}
 	}
@@ -395,18 +413,21 @@ DWORD WINAPI ThreadProcW(LPVOID lpParameter)
 	while (true)
 	{
 		DWORD dwWait = 0;
-		DWORD dwTimeout = 1000;
+		DWORD dwTimeout = 500;
 		/*#ifdef _DEBUG
 		dwTimeout = INFINITE;
 		#endif*/
 
-		dwWait = WaitForMultipleObjects(MAXCMDCOUNT, hEventCmd, FALSE, dwTimeout);
+		//dwWait = WaitForMultipleObjects(MAXCMDCOUNT, hEventCmd, FALSE, dwTimeout);
+		dwWait = WaitForSingleObject(ghServerTerminateEvent, dwTimeout);
+		if (dwWait == WAIT_OBJECT_0)
+			break; // завершение плагина
 
 		// Теоретически, нить обработки может запуститься и без ConEmuHwnd (под телнетом)
 	    if (ConEmuHwnd && FarHwnd && (dwWait>=(WAIT_OBJECT_0+MAXCMDCOUNT))) {
+
 			// Мог быть сделан Detach! (CtrlAltTab)
 			HWND hConWnd = GetConsoleWindow();
-			
 		    if (!IsWindow(ConEmuHwnd) || hConWnd!=FarHwnd) {
 			    ConEmuHwnd = NULL;
 
@@ -414,71 +435,72 @@ DWORD WINAPI ThreadProcW(LPVOID lpParameter)
 				{
 					if (hConWnd != FarHwnd && IsWindow(hConWnd)) {
 						FarHwnd = hConWnd;
-						int nBtn = ShowMessage(1, 2);
-						if (nBtn == 0) {
-							// Create process, with flag /Attach GetCurrentProcessId()
-							// Sleep for sometimes, try InitHWND(hConWnd); several times
-							WCHAR  szExe[0x200];
-							WCHAR  szCurArgs[0x600];
-							
-							PROCESS_INFORMATION pi; memset(&pi, 0, sizeof(pi));
-							STARTUPINFO si; memset(&si, 0, sizeof(si));
-							si.cb = sizeof(si);
-							
-							//TODO: ConEmu.exe
-							int nLen = 0;
-							if ((nLen=GetModuleFileName(0, szExe, 0x190))==0) {
-								goto closethread;
-							}
-							WCHAR* pszSlash = szExe+nLen-1;
-			                while (pszSlash>szExe && *(pszSlash-1)!=L'\\') pszSlash--;
-			                lstrcpyW(pszSlash, L"ConEmu.exe");
-			                
-							DWORD dwPID = GetCurrentProcessId();
-							wsprintf(szCurArgs, L"\"%s\" /Attach %i ", szExe, dwPID);
-							
-							GetEnvironmentVariableW(L"ConEmuArgs", szCurArgs+lstrlenW(szCurArgs), 0x380);
-			                
-							
-							if (!CreateProcess(NULL, szCurArgs, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL,
-									NULL, &si, &pi))
-							{
-								// Хорошо бы ошибку показать?
-								goto closethread;
-							}
-							
-							// Ждем
-							while (TRUE)
-							{
-								dwWait = WaitForSingleObject(hEventCmd[CMD_EXIT], 200);
-								// ФАР закрывается
-								if (dwWait == WAIT_OBJECT_0) {
-									CloseHandle(pi.hProcess); CloseHandle(pi.hThread);
-									goto closethread;
-								}
-								if (!GetExitCodeProcess(pi.hProcess, &dwPID) || dwPID!=STILL_ACTIVE) {
-									CloseHandle(pi.hProcess); CloseHandle(pi.hThread);
-									goto closethread;
-								}
-								InitHWND(hConWnd);
-								if (ConEmuHwnd) {
-									// Справились, но шрифт ConEmu скорее всего поменять не смог...
-									SetConsoleFontSizeTo(FarHwnd, 4, 6);
-									MoveWindow(FarHwnd, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), 1); // чтобы убрать возможные полосы прокрутки...
-									break;
-								}
-							}
-							
-							// Закрыть хэндлы
-							CloseHandle(pi.hProcess); CloseHandle(pi.hThread);
-							// Хорошо бы сразу Табы обновить...
-							SendTabs(gnCurTabCount, TRUE);
-							continue;
-						} else {
-							// Пользователь отказался, выходим из нити обработки
-							goto closethread;
-						}
+						//int nBtn = ShowMessage(1, 2);
+						//if (nBtn == 0) {
+						//	// Create process, with flag /Attach GetCurrentProcessId()
+						//	// Sleep for sometimes, try InitHWND(hConWnd); several times
+						//	WCHAR  szExe[0x200];
+						//	WCHAR  szCurArgs[0x600];
+						//	
+						//	PROCESS_INFORMATION pi; memset(&pi, 0, sizeof(pi));
+						//	STARTUPINFO si; memset(&si, 0, sizeof(si));
+						//	si.cb = sizeof(si);
+						//	
+						//	//TODO: ConEmu.exe
+						//	int nLen = 0;
+						//	if ((nLen=GetModuleFileName(0, szExe, 0x190))==0) {
+						//		goto closethread;
+						//	}
+						//	WCHAR* pszSlash = szExe+nLen-1;
+			   //             while (pszSlash>szExe && *(pszSlash-1)!=L'\\') pszSlash--;
+			   //             lstrcpyW(pszSlash, L"ConEmu.exe");
+			   //             
+						//	DWORD dwPID = GetCurrentProcessId();
+						//	wsprintf(szCurArgs, L"\"%s\" /Attach %i ", szExe, dwPID);
+						//	
+						//	GetEnvironmentVariableW(L"ConEmuArgs", szCurArgs+lstrlenW(szCurArgs), 0x380);
+			   //             
+						//	
+						//	if (!CreateProcess(NULL, szCurArgs, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL,
+						//			NULL, &si, &pi))
+						//	{
+						//		// Хорошо бы ошибку показать?
+						//		goto closethread;
+						//	}
+						//	
+						//	// Ждем
+						//	while (TRUE)
+						//	{
+						//		dwWait = WaitForSingleObject(hEventCmd[CMD_EXIT], 200);
+						//		// ФАР закрывается
+						//		if (dwWait == WAIT_OBJECT_0) {
+						//			CloseHandle(pi.hProcess); CloseHandle(pi.hThread);
+						//			goto closethread;
+						//		}
+						//		if (!GetExitCodeProcess(pi.hProcess, &dwPID) || dwPID!=STILL_ACTIVE) {
+						//			CloseHandle(pi.hProcess); CloseHandle(pi.hThread);
+						//			goto closethread;
+						//		}
+						//		InitHWND(hConWnd);
+						//		if (ConEmuHwnd) {
+						//			// Справились, но шрифт ConEmu скорее всего поменять не смог...
+						//			SetConsoleFontSizeTo(FarHwnd, 4, 6);
+						//			MoveWindow(FarHwnd, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), 1); // чтобы убрать возможные полосы прокрутки...
+						//			break;
+						//		}
+						//	}
+						//	
+						//	// Закрыть хэндлы
+						//	CloseHandle(pi.hProcess); CloseHandle(pi.hThread);
+						//	// Хорошо бы сразу Табы обновить...
+						//	SendTabs(gnCurTabCount, TRUE);
+						//	continue;
+						//} else {
+						//	// Пользователь отказался, выходим из нити обработки
+						//	goto closethread;
+						//}
 					} else {
+						// hConWnd не валидно
 						MessageBox(0, L"ConEmu was abnormally termintated!\r\nExiting from FAR", L"ConEmu plugin", MB_OK|MB_ICONSTOP|MB_SETFOREGROUND);
 						TerminateProcess(GetCurrentProcess(), 100);
 					}
@@ -493,19 +515,19 @@ DWORD WINAPI ThreadProcW(LPVOID lpParameter)
 					EnableWindow(FarHwnd, true);
 				}
 			    
-				goto closethread;
+				//goto closethread;
 		    }
 	    }
 
-		if (dwWait == (WAIT_OBJECT_0+CMD_EXIT))
-		{
-			goto closethread;
-		}
+		//if (dwWait == (WAIT_OBJECT_0+CMD_EXIT))
+		//{
+		//	goto closethread;
+		//}
 
-		if (dwWait>=(WAIT_OBJECT_0+MAXCMDCOUNT))
-		{
-			continue;
-		}
+		//if (dwWait>=(WAIT_OBJECT_0+MAXCMDCOUNT))
+		//{
+		//	continue;
+		//}
 
 		if (!ConEmuHwnd) {
 			// ConEmu могло подцепиться
@@ -513,117 +535,117 @@ DWORD WINAPI ThreadProcW(LPVOID lpParameter)
 			ConEmuHwnd = GetConEmuHWND ( FALSE/*abRoot*/  /*, &nChk*/ );
 		}
 
-		SafeCloseHandle(ghMapping);
-		// Поставим флажок, что мы приступили к обработке
-		// Хоть табы и не загружаются из фара, а пересылаются в текущем виде, но делается это обычным образом
-		//if (dwWait != (WAIT_OBJECT_0+CMD_REQTABS)) // исключение - запрос табов. он асинхронный
-		SetEvent(hEventAlive);
+		//SafeCloseHandle(ghMapping);
+		//// Поставим флажок, что мы приступили к обработке
+		//// Хоть табы и не загружаются из фара, а пересылаются в текущем виде, но делается это обычным образом
+		////if (dwWait != (WAIT_OBJECT_0+CMD_REQTABS)) // исключение - запрос табов. он асинхронный
+		//SetEvent(hEventAlive);
 
 
-		switch (dwWait)
-		{
-			case (WAIT_OBJECT_0+CMD_REQTABS):
-			{
-				/*if (!gnCurTabCount || !tabs) {
-					CreateTabs(1);
-					int nTabs=0; --низзя! это теперь идет через CriticalSection
-					AddTab(nTabs, false, false, WTYPE_PANELS, 0,0,1,0); 
-				}*/
-				SendTabs(gnCurTabCount, TRUE);
-				// пересылка тоже обычным образом
-				//// исключение - запрос табов. он асинхронный
-				//continue;
-				break;
-			}
-			
-			case (WAIT_OBJECT_0+CMD_DEFFONT):
-			{
-				// исключение - асинхронный, результат не требуется
-				ResetEvent(hEventAlive);
-				SetConsoleFontSizeTo(FarHwnd, 4, 6);
-				MoveWindow(FarHwnd, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), 1); // чтобы убрать возможные полосы прокрутки...
-				continue;
-			}
-			
-			case (WAIT_OBJECT_0+CMD_LANGCHANGE):
-			{
-				// исключение - асинхронный, результат не требуется
-				ResetEvent(hEventAlive);
-				HKL hkl = (HKL)GetWindowLong(ConEmuHwnd, GWL_LANGCHANGE);
-				if (hkl) {
-					DWORD dwLastError = 0;
-					WCHAR szLoc[10]; wsprintf(szLoc, L"%08x", (DWORD)(((DWORD)hkl) & 0xFFFF));
-					HKL hkl1 = LoadKeyboardLayout(szLoc, KLF_ACTIVATE|KLF_REORDER|KLF_SUBSTITUTE_OK|KLF_SETFORPROCESS);
-					HKL hkl2 = ActivateKeyboardLayout(hkl1, KLF_SETFORPROCESS|KLF_REORDER);
-					if (!hkl2) {
-						dwLastError = GetLastError();
-					}
-					dwLastError = dwLastError;
-				}
-				continue;
-			}
-			
-			default:
-			// Все остальные команды нужно выполнять в нити FAR'а
-			ProcessCommand(dwWait/*nCmd*/, TRUE/*bReqMainThread*/, NULL);
-		}
+		//switch (dwWait)
+		//{
+		//	case (WAIT_OBJECT_0+CMD_REQTABS):
+		//	{
+		//		/*if (!gnCurTabCount || !tabs) {
+		//			CreateTabs(1);
+		//			int nTabs=0; --низзя! это теперь идет через CriticalSection
+		//			AddTab(nTabs, false, false, WTYPE_PANELS, 0,0,1,0); 
+		//		}*/
+		//		SendTabs(gnCurTabCount, TRUE);
+		//		// пересылка тоже обычным образом
+		//		//// исключение - запрос табов. он асинхронный
+		//		//continue;
+		//		break;
+		//	}
+		//	
+		//	case (WAIT_OBJECT_0+CMD_DEFFONT):
+		//	{
+		//		// исключение - асинхронный, результат не требуется
+		//		ResetEvent(hEventAlive);
+		//		SetConsoleFontSizeTo(FarHwnd, 4, 6);
+		//		MoveWindow(FarHwnd, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), 1); // чтобы убрать возможные полосы прокрутки...
+		//		continue;
+		//	}
+		//	
+		//	case (WAIT_OBJECT_0+CMD_LANGCHANGE):
+		//	{
+		//		// исключение - асинхронный, результат не требуется
+		//		ResetEvent(hEventAlive);
+		//		HKL hkl = (HKL)GetWindowLong(ConEmuHwnd, GWL_LANGCHANGE);
+		//		if (hkl) {
+		//			DWORD dwLastError = 0;
+		//			WCHAR szLoc[10]; wsprintf(szLoc, L"%08x", (DWORD)(((DWORD)hkl) & 0xFFFF));
+		//			HKL hkl1 = LoadKeyboardLayout(szLoc, KLF_ACTIVATE|KLF_REORDER|KLF_SUBSTITUTE_OK|KLF_SETFORPROCESS);
+		//			HKL hkl2 = ActivateKeyboardLayout(hkl1, KLF_SETFORPROCESS|KLF_REORDER);
+		//			if (!hkl2) {
+		//				dwLastError = GetLastError();
+		//			}
+		//			dwLastError = dwLastError;
+		//		}
+		//		continue;
+		//	}
+		//	
+		//	default:
+		//	// Все остальные команды нужно выполнять в нити FAR'а
+		//	ProcessCommand(dwWait/*nCmd*/, TRUE/*bReqMainThread*/, NULL);
+		//}
 
-		// Подготовиться к передаче данных
-		EnterCriticalSection(&csData);
-		wsprintf(gszDir1, CONEMUMAPPING, dwProcId);
-		gnDataSize = gpData ? (gpCursor - gpData) : 0;
-		#ifdef _DEBUG
-		int nSize = gnDataSize; // чего-то там происходит...
-		#endif
-		SetLastError(0);
-		ghMapping = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, gnDataSize+4, gszDir1);
-		#ifdef _DEBUG
-		DWORD dwCreateError = GetLastError();
-		#endif
-		if (ghMapping) {
-			LPBYTE lpMap = (LPBYTE)MapViewOfFile(ghMapping, FILE_MAP_ALL_ACCESS, 0,0,0);
-			if (!lpMap) {
-				// Ошибка
-				SafeCloseHandle(ghMapping);
-			} else {
-				// copy data
-				if (gpData && gnDataSize) {
-					*((DWORD*)lpMap) = gnDataSize+4;
-					#ifdef _DEBUG
-					LPBYTE dst=lpMap+4; LPBYTE src=gpData;
-					for (DWORD n=gnDataSize;n>0;n--)
-						*(dst++) = *(src++);
-					#else
-					memcpy(lpMap+4, gpData, gnDataSize);
-					#endif
-				} else {
-					*((DWORD*)lpMap) = 0;
-				}
+		//// Подготовиться к передаче данных
+		//EnterCriticalSection(&csData);
+		//wsprintf(gszDir1, CONEMUMAPPING, dwProcId);
+		//gnDataSize = gpData ? (gpCursor - gpData) : 0;
+		//#ifdef _DEBUG
+		//int nSize = gnDataSize; // чего-то там происходит...
+		//#endif
+		//SetLastError(0);
+		//ghMapping = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, gnDataSize+4, gszDir1);
+		//#ifdef _DEBUG
+		//DWORD dwCreateError = GetLastError();
+		//#endif
+		//if (ghMapping) {
+		//	LPBYTE lpMap = (LPBYTE)MapViewOfFile(ghMapping, FILE_MAP_ALL_ACCESS, 0,0,0);
+		//	if (!lpMap) {
+		//		// Ошибка
+		//		SafeCloseHandle(ghMapping);
+		//	} else {
+		//		// copy data
+		//		if (gpData && gnDataSize) {
+		//			*((DWORD*)lpMap) = gnDataSize+4;
+		//			#ifdef _DEBUG
+		//			LPBYTE dst=lpMap+4; LPBYTE src=gpData;
+		//			for (DWORD n=gnDataSize;n>0;n--)
+		//				*(dst++) = *(src++);
+		//			#else
+		//			memcpy(lpMap+4, gpData, gnDataSize);
+		//			#endif
+		//		} else {
+		//			*((DWORD*)lpMap) = 0;
+		//		}
 
-				//unmaps a mapped view of a file from the calling process's address space
-				UnmapViewOfFile(lpMap);
-			}
-		}
-		if (gpData) {
-			free(gpCmdRet);
-			gpCmdRet = NULL; gpData = NULL; gpCursor = NULL;
-		}
-		LeaveCriticalSection(&csData);
+		//		//unmaps a mapped view of a file from the calling process's address space
+		//		UnmapViewOfFile(lpMap);
+		//	}
+		//}
+		//if (gpData) {
+		//	free(gpCmdRet);
+		//	gpCmdRet = NULL; gpData = NULL; gpCursor = NULL;
+		//}
+		//LeaveCriticalSection(&csData);
 
 		// Поставим флажок, что плагин жив и закончил
-		SetEvent(hEventReady);
+		//SetEvent(hEventReady);
 
 		//Sleep(1);
 	}
 
 
-closethread:
+//closethread:
 	// Закрываем все хэндлы и выходим
-	for (int i=0; i<MAXCMDCOUNT; i++)
-		SafeCloseHandle(hEventCmd[i]);
-	SafeCloseHandle(hEventAlive);
-	SafeCloseHandle(hEventReady);
-	SafeCloseHandle(ghMapping);
+	//for (int i=0; i<MAXCMDCOUNT; i++)
+	//	SafeCloseHandle(hEventCmd[i]);
+	//SafeCloseHandle(hEventAlive);
+	//SafeCloseHandle(hEventReady);
+	//SafeCloseHandle(ghMapping);
 
 	return 0;
 }
@@ -636,6 +658,8 @@ void WINAPI _export SetStartupInfoW(void *aInfo)
 		SetStartupInfoW789(aInfo);
 	else
 		SetStartupInfoW757(aInfo);
+
+	gbInfoW_OK = TRUE;
 
 	CheckMacro(TRUE);
 }
@@ -657,7 +681,7 @@ void InitHWND(HWND ahFarHwnd)
 	ConEmuHwnd = NULL;
 	FarHwnd = ahFarHwnd;
 
-	memset(hEventCmd, 0, sizeof(HANDLE)*MAXCMDCOUNT);
+	//memset(hEventCmd, 0, sizeof(HANDLE)*MAXCMDCOUNT);
 	
 	//int nChk = 0;
 	ConEmuHwnd = GetConEmuHWND ( FALSE/*abRoot*/  /*, &nChk*/ );
@@ -665,35 +689,41 @@ void InitHWND(HWND ahFarHwnd)
 	gnMsgTabChanged = RegisterWindowMessage(CONEMUTABCHANGED);
 
 	// Даже если мы не в ConEmu - все равно запустить нить, т.к. в ConEmu теперь есть возможность /Attach!
-	WCHAR szEventName[128];
+	//WCHAR szEventName[128];
 	DWORD dwCurProcId = GetCurrentProcessId();
+
+	if (!ghReqCommandEvent) {
+		ghReqCommandEvent = CreateEvent(NULL,FALSE,FALSE,NULL);
+		_ASSERTE(ghReqCommandEvent!=NULL);
+	}
 
 	// Запустить сервер команд
 	wsprintf(gszPluginServerPipe, CEPLUGINPIPENAME, L".", dwCurProcId);
 	ghServerTerminateEvent = CreateEvent(NULL,TRUE,FALSE,NULL);
 	_ASSERTE(ghServerTerminateEvent!=NULL);
 	if (ghServerTerminateEvent) ResetEvent(ghServerTerminateEvent);
-	ghServerSemaphore = CreateSemaphore(NULL, 1, 1, NULL);
-    for (int i=0; i<MAX_SERVER_THREADS; i++) {
-        gnServerThreadsId[i] = 0;
-        ghServerThreads[i] = CreateThread(NULL, 0, ServerThread, (LPVOID)NULL, 0, &gnServerThreadsId[i]);
-        _ASSERTE(ghServerThreads[i]!=NULL);
-    }
+	ghPluginSemaphore = CreateSemaphore(NULL, 1, 1, NULL);
+    gnServerThreadId = 0;
+    ghServerThread = CreateThread(NULL, 0, ServerThread, (LPVOID)NULL, 0, &gnServerThreadId);
+    _ASSERTE(ghServerThread!=NULL);
 
 
-	// пока оставим
-	CREATEEVENT(CONEMUDRAGFROM, hEventCmd[CMD_DRAGFROM]);
-	CREATEEVENT(CONEMUDRAGTO, hEventCmd[CMD_DRAGTO]);
-	CREATEEVENT(CONEMUREQTABS, hEventCmd[CMD_REQTABS]);
-	CREATEEVENT(CONEMUSETWINDOW, hEventCmd[CMD_SETWINDOW]);
-	CREATEEVENT(CONEMUPOSTMACRO, hEventCmd[CMD_POSTMACRO]);
-	CREATEEVENT(CONEMUDEFFONT, hEventCmd[CMD_DEFFONT]);
-	CREATEEVENT(CONEMULANGCHANGE, hEventCmd[CMD_LANGCHANGE]);
-	CREATEEVENT(CONEMUEXIT, hEventCmd[CMD_EXIT]);
-	CREATEEVENT(CONEMUALIVE, hEventAlive);
-	CREATEEVENT(CONEMUREADY, hEventReady);
+
+	
+	//CREATEEVENT(CONEMUDRAGFROM, hEventCmd[CMD_DRAGFROM]);
+	//CREATEEVENT(CONEMUDRAGTO, hEventCmd[CMD_DRAGTO]);
+	//CREATEEVENT(CONEMUREQTABS, hEventCmd[CMD_REQTABS]);
+	//CREATEEVENT(CONEMUSETWINDOW, hEventCmd[CMD_SETWINDOW]);
+	//CREATEEVENT(CONEMUPOSTMACRO, hEventCmd[CMD_POSTMACRO]);
+	//CREATEEVENT(CONEMUDEFFONT, hEventCmd[CMD_DEFFONT]);
+	//CREATEEVENT(CONEMULANGCHANGE, hEventCmd[CMD_LANGCHANGE]);
+	//CREATEEVENT(CONEMUEXIT, hEventCmd[CMD_EXIT]);
+	//CREATEEVENT(CONEMUALIVE, hEventAlive);
+	//CREATEEVENT(CONEMUREADY, hEventReady);
 
 	hThread=CreateThread(NULL, 0, &ThreadProcW, 0, 0, 0);
+
+
 
 	// Если мы не под эмулятором - больше ничего делать не нужно
 	if (ConEmuHwnd) {
@@ -992,6 +1022,7 @@ BOOL AddTab(int &tabCount, bool losingFocus, bool editorSave,
 			int Type, LPCWSTR Name, LPCWSTR FileName, int Current, int Modified)
 {
     BOOL lbCh = FALSE;
+	OutputDebugString(L"--AddTab\n");
     
 	if (Type == WTYPE_PANELS) {
 	    lbCh = (tabs[0].Current != (losingFocus ? 1 : 0)) ||
@@ -1167,44 +1198,36 @@ int WINAPI _export ProcessViewerEventW(int Event, void *Param)
 
 void StopThread(void)
 {
-	if (hEventCmd[CMD_EXIT])
-		SetEvent(hEventCmd[CMD_EXIT]); // Завершить нить
+	//if (hEventCmd[CMD_EXIT])
+	//	SetEvent(hEventCmd[CMD_EXIT]); // Завершить нить
 
 	if (ghServerTerminateEvent) {
 		SetEvent(ghServerTerminateEvent);
-
-        HANDLE hPipe = INVALID_HANDLE_VALUE;
-		DWORD dwWait = 0;
-        // Передернуть пайпы, чтобы нити сервера завершились
-        for (int i=0; i<MAX_SERVER_THREADS; i++) {
-			OutputDebugString(L"Plugin: Touching our server pipe\n");
-			HANDLE hServer = ghActiveServerThread;
-            hPipe = CreateFile(gszPluginServerPipe,GENERIC_WRITE,0,NULL,OPEN_EXISTING,0,NULL);
-			if (hPipe == INVALID_HANDLE_VALUE) {
-				OutputDebugString(L"Plugin: All pipe instances closed?\n");
-                break;
-			}
-			OutputDebugString(L"Plugin: Waiting server pipe thread\n");
-			dwWait = WaitForSingleObject(hServer, 200); // пытаемся дождаться, пока нить завершится
-            // Просто закроем пайп - его нужно было передернуть
-            CloseHandle(hPipe);
-            hPipe = INVALID_HANDLE_VALUE;
-        }
-        // Немного подождем, пока ВСЕ нити завершатся
-		OutputDebugString(L"Plugin: Checking server pipe threads are closed\n");
-        WaitForMultipleObjects(MAX_SERVER_THREADS, ghServerThreads, TRUE, 500);
-        for (int i=0; i<MAX_SERVER_THREADS; i++) {
-			if (WaitForSingleObject(ghServerThreads[i],0) != WAIT_OBJECT_0) {
-				OutputDebugString(L"### Plugin: Terminating mh_ServerThreads\n");
-                TerminateThread(ghServerThreads[i],0);
-			}
-            CloseHandle(ghServerThreads[i]);
-            ghServerThreads[i] = NULL;
-        }
-
-		SafeCloseHandle(ghServerTerminateEvent);
-		SafeCloseHandle(ghServerSemaphore);
 	}
+
+	if (ghServerThread) {
+		HANDLE hPipe = INVALID_HANDLE_VALUE;
+		DWORD dwWait = 0;
+		// Передернуть пайп, чтобы нить сервера завершилась
+		OutputDebugString(L"Plugin: Touching our server pipe\n");
+		hPipe = CreateFile(gszPluginServerPipe,GENERIC_WRITE,0,NULL,OPEN_EXISTING,0,NULL);
+		if (hPipe == INVALID_HANDLE_VALUE) {
+			OutputDebugString(L"Plugin: All pipe instances closed?\n");
+		} else {
+			OutputDebugString(L"Plugin: Waiting server pipe thread\n");
+			dwWait = WaitForSingleObject(ghServerThread, 300); // пытаемся дождаться, пока нить завершится
+			// Просто закроем пайп - его нужно было передернуть
+			CloseHandle(hPipe);
+			hPipe = INVALID_HANDLE_VALUE;
+		}
+		dwWait = WaitForSingleObject(ghServerThread, 0);
+		if (dwWait != WAIT_OBJECT_0) {
+			#pragma warning (disable : 6258)
+			TerminateThread(ghServerThread, 100);
+		}
+		SafeCloseHandle(ghServerThread);
+	}
+	SafeCloseHandle(ghPluginSemaphore);
 
 	//CloseTabs(); -- ConEmu само разберется
 	if (hThread) { // подождем чуть-чуть, или принудительно прибъем нить ожидания
@@ -1229,6 +1252,7 @@ void StopThread(void)
 	
 	if (ghRegMonitorKey) { RegCloseKey(ghRegMonitorKey); ghRegMonitorKey = NULL; }
 	SafeCloseHandle(ghRegMonitorEvt);
+	SafeCloseHandle(ghServerTerminateEvent);
 }
 
 void   WINAPI _export ExitFARW(void)
@@ -1370,49 +1394,55 @@ DWORD WINAPI ServerThread(LPVOID lpvParam)
     BOOL fConnected = FALSE;
     DWORD dwErr = 0;
     HANDLE hPipe = NULL; 
-    HANDLE hWait[2] = {NULL,NULL};
+    //HANDLE hWait[2] = {NULL,NULL};
 	DWORD dwTID = GetCurrentThreadId();
+	std::vector<HANDLE>::iterator iter;
 
     _ASSERTE(gszPluginServerPipe[0]!=0);
-    _ASSERTE(ghServerSemaphore!=NULL);
+    //_ASSERTE(ghServerSemaphore!=NULL);
 
     // The main loop creates an instance of the named pipe and 
     // then waits for a client to connect to it. When the client 
     // connects, a thread is created to handle communications 
     // with that client, and the loop is repeated. 
     
-    hWait[0] = ghServerTerminateEvent;
-    hWait[1] = ghServerSemaphore;
+    //hWait[0] = ghServerTerminateEvent;
+    //hWait[1] = ghServerSemaphore;
 
     // Пока не затребовано завершение консоли
     do {
+		fConnected = FALSE; // Новый пайп
         while (!fConnected)
         { 
             _ASSERTE(hPipe == NULL);
 
-            // Дождаться разрешения семафора, или закрытия консоли
-            dwErr = WaitForMultipleObjects ( 2, hWait, FALSE, INFINITE );
-            if (dwErr == WAIT_OBJECT_0) {
-                return 0; // Консоль закрывается
-            }
-
-			for (int i=0; i<MAX_SERVER_THREADS; i++) {
-				if (gnServerThreadsId[i] == dwTID) {
-					ghActiveServerThread = ghServerThreads[i]; break;
+			// Проверить, может какие-то командные нити уже завершились
+			iter = ghCommandThreads.begin();
+			while (iter != ghCommandThreads.end()) {
+				HANDLE hThread = *iter; dwErr = 0;
+				if (WaitForSingleObject(hThread, 0) == WAIT_OBJECT_0) {
+					CloseHandle ( hThread );
+					iter = ghCommandThreads.erase(iter);
+				} else {
+					iter++;
 				}
 			}
 
-            hPipe = CreateNamedPipe( 
-                gszPluginServerPipe,      // pipe name 
-                PIPE_ACCESS_DUPLEX,       // read/write access 
-                PIPE_TYPE_MESSAGE |       // message type pipe 
-                PIPE_READMODE_MESSAGE |   // message-read mode 
-                PIPE_WAIT,                // blocking mode 
-                PIPE_UNLIMITED_INSTANCES, // max. instances  
-                PIPEBUFSIZE,              // output buffer size 
-                PIPEBUFSIZE,              // input buffer size 
-                0,                        // client time-out 
-                NULL);                    // default security attribute 
+            //// Дождаться разрешения семафора, или закрытия консоли
+            //dwErr = WaitForMultipleObjects ( 2, hWait, FALSE, INFINITE );
+            //if (dwErr == WAIT_OBJECT_0) {
+            //    return 0; // Консоль закрывается
+            //}
+
+			//for (int i=0; i<MAX_SERVER_THREADS; i++) {
+			//	if (gnServerThreadsId[i] == dwTID) {
+			//		ghActiveServerThread = ghServerThreads[i]; break;
+			//	}
+			//}
+
+            hPipe = CreateNamedPipe( gszPluginServerPipe, PIPE_ACCESS_DUPLEX, 
+				PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT, PIPE_UNLIMITED_INSTANCES,
+                PIPEBUFSIZE, PIPEBUFSIZE, 0, NULL);
 
             _ASSERTE(hPipe != INVALID_HANDLE_VALUE);
 
@@ -1434,9 +1464,9 @@ DWORD WINAPI ServerThread(LPVOID lpvParam)
             if (WaitForSingleObject ( ghServerTerminateEvent, 0 ) == WAIT_OBJECT_0) {
                 //FlushFileBuffers(hPipe); -- это не нужно, мы ничего не возвращали
                 //DisconnectNamedPipe(hPipe); 
-				ReleaseSemaphore(ghServerSemaphore, 1, NULL);
+				//ReleaseSemaphore(ghServerSemaphore, 1, NULL);
                 SafeCloseHandle(hPipe);
-                return 0;
+                goto wrap;
             }
 
             if (!fConnected)
@@ -1445,53 +1475,83 @@ DWORD WINAPI ServerThread(LPVOID lpvParam)
 
         if (fConnected) {
             // сразу сбросим, чтобы не забыть
-            fConnected = FALSE;
+            //fConnected = FALSE;
             // разрешить другой нити принять вызов
-            ReleaseSemaphore(ghServerSemaphore, 1, NULL);
+            //ReleaseSemaphore(ghServerSemaphore, 1, NULL);
             
-            ServerThreadCommand ( hPipe ); // При необходимости - записывает в пайп результат сама
+            //ServerThreadCommand ( hPipe ); // При необходимости - записывает в пайп результат сама
+			DWORD dwThread = 0;
+			HANDLE hThread = CreateThread(NULL, 0, ServerThreadCommand, (LPVOID)hPipe, 0, &dwThread);
+			_ASSERTE(hThread!=NULL);
+			if (hThread==NULL) {
+				// Раз не удалось запустить нить - можно попробовать так обработать...
+				ServerThreadCommand((LPVOID)hPipe);
+			} else {
+				ghCommandThreads.push_back ( hThread );
+			}
+			hPipe = NULL; // закрывает ServerThreadCommand
         }
 
-        FlushFileBuffers(hPipe); 
-        //DisconnectNamedPipe(hPipe); 
-        SafeCloseHandle(hPipe);
+		if (hPipe) {
+			if (hPipe != INVALID_HANDLE_VALUE) {
+				FlushFileBuffers(hPipe); 
+				//DisconnectNamedPipe(hPipe); 
+				CloseHandle(hPipe);
+			}
+			hPipe = NULL;
+		}
     } // Перейти к открытию нового instance пайпа
     while (WaitForSingleObject ( ghServerTerminateEvent, 0 ) != WAIT_OBJECT_0);
+
+wrap:
+	// Прибивание всех запущенных нитей
+	iter = ghCommandThreads.begin();
+	while (iter != ghCommandThreads.end()) {
+		HANDLE hThread = *iter; dwErr = 0;
+		if (WaitForSingleObject(hThread, 100) != WAIT_OBJECT_0) {
+			TerminateThread(hThread, 100);
+		}
+		CloseHandle ( hThread );
+		iter = ghCommandThreads.erase(iter);
+	}
 
     return 0; 
 }
 
-void ServerThreadCommand(HANDLE hPipe)
+DWORD WINAPI ServerThreadCommand(LPVOID ahPipe)
 {
-    CESERVER_REQ in={0}, *pIn=NULL;
+	HANDLE hPipe = (HANDLE)ahPipe;
+    CESERVER_REQ *pIn=NULL;
+	BYTE cbBuffer[64]; // Для большей части команд нам хватит
     DWORD cbRead = 0, cbWritten = 0, dwErr = 0;
     BOOL fSuccess = FALSE;
 
     // Send a message to the pipe server and read the response. 
-    fSuccess = ReadFile( 
-        hPipe,            // pipe handle 
-        &in,              // buffer to receive reply
-        sizeof(in),       // size of read buffer
-        &cbRead,          // bytes read
-        NULL);            // not overlapped 
+    fSuccess = ReadFile( hPipe, cbBuffer, sizeof(cbBuffer), &cbRead, NULL);
+	dwErr = GetLastError();
 
-    if (!fSuccess && ((dwErr = GetLastError()) != ERROR_MORE_DATA)) 
+    if (!fSuccess && (dwErr != ERROR_MORE_DATA)) 
     {
         _ASSERTE("ReadFile(pipe) failed"==NULL);
-        //CloseHandle(hPipe);
-        return;
+        CloseHandle(hPipe);
+        return 0;
     }
-    _ASSERTE(in.nSize>=12 && cbRead>=12);
-    _ASSERTE(in.nVersion == CESERVER_REQ_VER);
-    if (cbRead < 12 || /*in.nSize < cbRead ||*/ in.nVersion != CESERVER_REQ_VER) {
-        //CloseHandle(hPipe);
-        return;
+	pIn = (CESERVER_REQ*)cbBuffer; // Пока cast, если нужно больше - выделим память
+    _ASSERTE(pIn->nSize>=12 && cbRead>=12);
+    _ASSERTE(pIn->nVersion == CESERVER_REQ_VER);
+    if (cbRead < 12 || /*in.nSize < cbRead ||*/ pIn->nVersion != CESERVER_REQ_VER) {
+        CloseHandle(hPipe);
+        return 0;
     }
 
-    int nAllSize = in.nSize;
+    int nAllSize = pIn->nSize;
     pIn = (CESERVER_REQ*)calloc(nAllSize,1);
     _ASSERTE(pIn!=NULL);
-    memmove(pIn, &in, cbRead);
+	if (!pIn) {
+		CloseHandle(hPipe);
+		return 0;
+	}
+    memmove(pIn, cbBuffer, cbRead);
     _ASSERTE(pIn->nVersion==CESERVER_REQ_VER);
 
     LPBYTE ptrData = ((LPBYTE)pIn)+cbRead;
@@ -1523,8 +1583,10 @@ void ServerThreadCommand(HANDLE hPipe)
     TODO("Может возникнуть ASSERT, если консоль была закрыта в процессе чтения");
     _ASSERTE(nAllSize==0);
     if (nAllSize>0) {
-        //CloseHandle(hPipe);
-        return; // удалось считать не все данные
+		if (((LPVOID)cbBuffer) != ((LPVOID)pIn))
+			free(pIn);
+        CloseHandle(hPipe);
+        return 0; // удалось считать не все данные
     }
 
 	UINT nDataSize = pIn->nSize - sizeof(CESERVER_REQ) + 1;
@@ -1566,8 +1628,9 @@ void ServerThreadCommand(HANDLE hPipe)
 
 
     // Освободить память
-    free(pIn);
+	if (((LPVOID)cbBuffer) != ((LPVOID)pIn))
+		free(pIn);
 
-    //CloseHandle(hPipe); -- закрывает вызывающая функция
-    return;
+    CloseHandle(hPipe);
+    return 0;
 }

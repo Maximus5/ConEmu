@@ -256,6 +256,11 @@ BOOL CConEmuPipe::Execute(int nCmd, LPVOID apData, UINT anDataSize)
       NULL);                  // not overlapped 
 	dwErr = GetLastError();
 
+	if (!fSuccess && dwErr == ERROR_BROKEN_PIPE) {
+		// Плагин не вернул данных, но обработал команду
+		Close();
+		return TRUE;
+	} else
     if (!fSuccess && (dwErr != ERROR_MORE_DATA)) 
     {
 		DEBUGSTR(L" - FAILED!\n");
@@ -322,8 +327,14 @@ BOOL CConEmuPipe::Execute(int nCmd, LPVOID apData, UINT anDataSize)
 	return TRUE;
 }
 
-LPBYTE CConEmuPipe::GetPtr()
+LPBYTE CConEmuPipe::GetPtr(DWORD* pdwLeft/*=NULL*/)
 {
+	if (pdwLeft) {
+		if (!dwMaxDataSize)
+			*pdwLeft = 0;
+		else
+			*pdwLeft = dwMaxDataSize - (lpCursor-pOut->Data);
+	}
 	return lpCursor;
 }
 
