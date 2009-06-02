@@ -88,8 +88,8 @@ typedef struct tag_CESERVER_CHAR {
 #define MAXCMDCOUNT      8
 #define CMD_EXIT         MAXCMDCOUNT-1
 
-#define GWL_TABINDEX     0
-#define GWL_LANGCHANGE   4
+//#define GWL_TABINDEX     0
+//#define GWL_LANGCHANGE   4
 
 #ifdef _DEBUG
 	#define CONEMUALIVETIMEOUT INFINITE

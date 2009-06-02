@@ -152,38 +152,59 @@ void TabBarClass::SelectTab(int i)
 	return tabIndex < 10 ? '0' + tabIndex : 'A' + tabIndex - 10;
 }*/
 
-void TabBarClass::FarSendChangeTab(int tabIndex)
+BOOL TabBarClass::GetVConFromTab(int nTabIdx, CVirtualConsole** rpVCon, DWORD* rpWndIndex)
 {
-	SetWindowLong(ghWndDC, GWL_TABINDEX, tabIndex);
+	BOOL lbRc = FALSE;
+	CVirtualConsole *pVCon = NULL;
+	DWORD wndIndex = 0;
+
+	if (nTabIdx >= 0 && (UINT)nTabIdx < m_Tab2VCon.size()) {
+		pVCon = m_Tab2VCon[nTabIdx].pVCon;
+		wndIndex = m_Tab2VCon[nTabIdx].nFarWindowId;
+
+		if (!gConEmu.isValid(pVCon)) {
+			if (!mb_PostUpdateCalled)
+			{
+				mb_PostUpdateCalled = TRUE;
+				PostMessage(ghWnd, mn_MsgUpdateTabs, 0, 0);
+			}
+		} else {
+			lbRc = TRUE;
+		}
+	}
+
+	if (rpVCon) *rpVCon = lbRc ? pVCon : NULL;
+	if (rpWndIndex) *rpWndIndex = lbRc ? wndIndex : 0;
+
+	return lbRc;
+}
+
+CVirtualConsole* TabBarClass::FarSendChangeTab(int tabIndex)
+{
+	//SetWindowLong(ghWndDC, GWL_TABINDEX, tabIndex);
 	//PostMessage(ghConWnd, WM_KEYDOWN, VK_F14, 0);
 	//PostMessage(ghConWnd, WM_KEYUP, VK_F14, 0);
 	//PostMessage(ghConWnd, WM_KEYDOWN, FarTabShortcut(tabIndex), 0);
 	//PostMessage(ghConWnd, WM_KEYUP, FarTabShortcut(tabIndex), 0);
 
-	if (tabIndex<0 || m_Tab2VCon.size() <= (UINT)tabIndex)
-		return;
+	CVirtualConsole *pVCon = NULL;
+	DWORD wndIndex = 0;
 
-	CVirtualConsole *pVCon = m_Tab2VCon[tabIndex].pVCon;
-	DWORD wndIndex = m_Tab2VCon[tabIndex].nFarWindowId;
-
-	if (!gConEmu.isValid(pVCon)) {
-		if (mb_PostUpdateCalled) return;
-		mb_PostUpdateCalled = TRUE;
-		PostMessage(ghWnd, mn_MsgUpdateTabs, 0, 0);
-		return;
-	}
+	if (!GetVConFromTab(tabIndex, &pVCon, &wndIndex))
+		return NULL;
 
 	if (!gConEmu.isActive(pVCon)) {
 		if (!gConEmu.Activate(pVCon)) {
 			TODO("А текущий таб не слетит, если активировать не удалось?");
-			return;
+			return NULL;
 		}
 	}
 
 	pVCon->RCon()->ActivateFarWindow(wndIndex);
+
+	return pVCon;
 }
 
-/*
 LRESULT CALLBACK TabBarClass::TabProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	switch (uMsg)
@@ -192,12 +213,16 @@ LRESULT CALLBACK TabBarClass::TabProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARA
 	case WM_RBUTTONUP:
 		{
 			TabBar.OnMouse(uMsg, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
-			break;
+			return 0;
+		}
+	case WM_SETFOCUS:
+		{
+			SetFocus(ghWndDC);
+			return 0;
 		}
 	}
 	return CallWindowProc(_defaultTabProc, hwnd, uMsg, wParam, lParam);
 }
-*/
 
 
 bool TabBarClass::IsActive()
@@ -625,7 +650,7 @@ WARNING("Для всех кнопок 1-12 отображается заголовок ТЕКУЩЕЙ консоли");
 		LPNMTBGETINFOTIP pDisp = (LPNMTBGETINFOTIP)nmhdr;
 		if (pDisp->iItem>=1 && pDisp->iItem<=MAX_CONSOLE_COUNT) {
 			if (!pDisp->pszText || !pDisp->cchTextMax) return false;
-			LPCWSTR pszTitle = gConEmu.ActiveCon()->RCon()->GetTitle();
+			LPCWSTR pszTitle = gConEmu.GetVCon(pDisp->iItem-1)->RCon()->GetTitle();
 			if (pszTitle) {
 				lstrcpyn(pDisp->pszText, pszTitle, pDisp->cchTextMax);
 			} else {
@@ -717,10 +742,16 @@ void TabBarClass::OnMouse(int message, int x, int y)
 		int iPage = TabCtrl_HitTest(mh_Tabbar, &htInfo);
 		if (iPage != -1)
 		{
-			FarSendChangeTab(iPage);
-			Sleep(50); // TODO
-			PostMessage(ghConWnd, WM_KEYDOWN, VK_F10, 0);
-			PostMessage(ghConWnd, WM_KEYUP, VK_F10, (LPARAM)(3<<30));
+			CVirtualConsole* pVCon = NULL;
+
+			pVCon = FarSendChangeTab(iPage);
+
+			//Sleep(50); // TODO
+			/*PostMessage(ghConWnd, WM_KEYDOWN, VK_F10, 0);
+			PostMessage(ghConWnd, WM_KEYUP, VK_F10, (LPARAM)(3<<30));*/
+
+			pVCon->RCon()->OnKeyboard(ghWnd, WM_KEYDOWN, VK_F10, 0);
+			pVCon->RCon()->OnKeyboard(ghWnd, WM_KEYUP, VK_F10, (LPARAM)(3<<30));
 		}
 	}
 }
@@ -926,9 +957,9 @@ HWND TabBarClass::CreateTabbar()
 			CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_SWISS, TAB_FONT_FACE);
 		SendMessage(mh_Tabbar, WM_SETFONT, WPARAM (hFont), TRUE);
 		
-		/*#pragma warning (disable : 4312)
-		_defaultTabProc = (WNDPROC)SetWindowLongPtr(mh_Tabbar, GWL_WNDPROC, (LONG_PTR)TabProc);*/
-
+		// Надо
+		#pragma warning (disable : 4312)
+		_defaultTabProc = (WNDPROC)SetWindowLongPtr(mh_Tabbar, GWL_WNDPROC, (LONG_PTR)TabProc);
 
 		AddTab(gConEmu.isFar() ? gSet.szTabPanels : gSet.pszTabConsole, 0);
  
