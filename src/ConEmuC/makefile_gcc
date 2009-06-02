@@ -78,6 +78,7 @@ endif
 CXX = g++
 CC = gcc
 RM = rm -f
+RMDIR = rmdir
 CP = cp -f
 M4 = tools/m4 -P -DFARBIT=$(DIRBIT)
 GAWK = tools/gawk
@@ -134,3 +135,9 @@ $(EXEFULLNAME): $(OBJS) $(DEF)
 #ifndef DISABLEAUTODEPS
 #-include $(DEPS)
 #endif
+
+.PHONY: clean
+clean:
+	@echo final cleaning
+	@$(RM) $(OBJS)
+	@$(RMDIR) $(OBJDIR) ../../gcc/common ../../gcc/conemuc ../../gcc/ConEmuPlugin ../../gcc

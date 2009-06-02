@@ -45,7 +45,8 @@ RCWIDE = -D UNICODE -D _UNICODE
 CXXWIDE = -D UNICODE -D _UNICODE
 CCWIDE = -D UNICODE -D _UNICODE
 
-OBJDIR = ../../gcc/plugin
+TMPDIR = ../../gcc
+OBJDIR = $(TMPDIR)/plugin
 REOBJDIR = \.\.\/\.\.\/gcc\/plugin
 DLLDIR = ../../plugins/ConEmu
 COMMON = ../common
@@ -76,6 +77,7 @@ CXX = g++
 CC = gcc
 DLLTOOL = dlltool
 RM = rm -f
+RMDIR = rmdir
 CP = cp -f
 M4 = m4 -P
 MV = mv -f
@@ -138,3 +140,9 @@ $(DLLFULLNAME): $(OBJS) $(DEF)
 #ifndef DISABLEAUTODEPS
 #-include $(DEPS)
 #endif
+
+.PHONY: clean
+clean:
+	@echo final cleaning
+	@$(RM) $(OBJS)
+	@$(RMDIR) $(OBJDIR) $(TMPDIR)

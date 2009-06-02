@@ -84,7 +84,6 @@ CXX = g++
 CC = gcc
 DLLTOOL = dlltool
 RM = rm -f
-RMDIR = rmdir
 CP = cp -f
 M4 = m4 -P
 MV = mv -f
@@ -106,14 +105,13 @@ MAP = $(patsubst %.$(EXT),%.map,$(DLLFULLNAME))
 
 .PHONY: all
 all: iclean build
-#all: iclean build
-#	@$(MAKE) -f makefile_gcc build 
-# clean
+#	@$(MAKE) -f makefile_gcc build clean
 
 .PHONY: iclean
 iclean:
 	@echo prebuild cleaning
-	@$(RM) $(OBJDIR)/*.* $(COMDIR)/*.*
+	@$(RM) $(OBJDIR)/*.*
+	@$(RM) $(COMDIR)/*.*
 
 .PHONY: build
 build: $(DLLFULLNAME)
@@ -164,4 +162,6 @@ $(DLLFULLNAME): $(OBJS) $(DEF)
 clean:
 	@echo final cleaning
 	@$(RM) $(OBJS)
-	@$(RMDIR) $(OBJDIR) $(COMDIR) $(TMPDIR)
+	@$(RMDIR) $(OBJDIR)
+	@$(RMDIR) $(COMDIR)
+	@$(RMDIR) $(TMPDIR)

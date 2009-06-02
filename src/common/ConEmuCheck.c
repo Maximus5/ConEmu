@@ -6,8 +6,13 @@
 #ifdef _DEBUG
 	#include <crtdbg.h>
 #else
+	#ifndef _ASSERT
 	#define _ASSERT()
+	#endif
+	
+	#ifndef _ASSERTE
 	#define _ASSERTE(f)
+	#endif
 #endif
 
 typedef HWND (APIENTRY *FGetConsoleWindow)();

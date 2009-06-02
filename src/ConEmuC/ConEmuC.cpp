@@ -3,7 +3,7 @@
 //#define _WIN32_WINNT 0x0500
 //#endif
 
-#define CONEMUC_DLL_MODE
+//#define CONEMUC_DLL_MODE
 
 #include <Windows.h>
 #include <WinCon.h>
@@ -53,8 +53,12 @@ WARNING("¬ некоторых случа€х не срабатывает ни EVENT_CONSOLE_UPDATE_SIMPLE ни EV
 
 #if defined(__GNUC__)
     //#include "assert.h"
+    #ifndef _ASSERTE
     #define _ASSERTE(x)
+    #endif
+    #ifndef _ASSERT
     #define _ASSERT(x)
+    #endif
 #else
     #include <crtdbg.h>
 #endif
@@ -172,6 +176,7 @@ struct tag_Srv {
 struct tag_Cmd {
 	DWORD dwProcessGroup;
 	DWORD dwFarPID;
+	BOOL  bK;
 	CONSOLE_SCREEN_BUFFER_INFO sbi;
 } cmd = {0};
 
@@ -521,8 +526,9 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
         } else
 
         // ѕосле этих аргументов - идет то, что передаетс€ в CreateProcess!
-        if (wcscmp(szArg, L"/C")==0 || wcscmp(szArg, L"/c")==0) {
+        if (wcscmp(szArg, L"/C")==0 || wcscmp(szArg, L"/c")==0 || wcscmp(szArg, L"/K")==0 || wcscmp(szArg, L"/k")==0) {
             gnRunMode = RM_COMSPEC;
+            cmd.bK = (wcscmp(szArg, L"/K")==0 || wcscmp(szArg, L"/k")==0);
             break; // asCmdLine уже указывает на запускаемую программу
         } else if (wcscmp(szArg, L"/CMD")==0 || wcscmp(szArg, L"/cmd")==0) {
             gnRunMode = RM_SERVER;
@@ -607,10 +613,10 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
         if (wcschr(szComSpec, L' ')) {
             (*psNewCmd)[0] = L'"';
             lstrcpyW( (*psNewCmd)+1, szComSpec );
-            lstrcatW( (*psNewCmd), L"\" /C " );
+            lstrcatW( (*psNewCmd), cmd.bK ? L"\" /K " : L"\" /C " );
         } else {
             lstrcpyW( (*psNewCmd), szComSpec );
-            lstrcatW( (*psNewCmd), L" /C " );
+            lstrcatW( (*psNewCmd), cmd.bK ? L"\" /K " : L"\" /C " );
         }
         lstrcatW( (*psNewCmd), asCmdLine );
     }
