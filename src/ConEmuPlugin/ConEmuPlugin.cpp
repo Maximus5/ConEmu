@@ -17,13 +17,6 @@
 #include "PluginHeader.h"
 #include <vector>
 
-#ifdef _DEBUG
-#include <crtdbg.h>
-#else
-#define _ASSERT(f)
-#define _ASSERTE(f)
-#endif
-
 extern "C" {
 #include "../common/ConEmuCheck.h"
 }
@@ -119,10 +112,10 @@ std::vector<HANDLE> ghCommandThreads;
 HANDLE ghServerTerminateEvent = NULL;
 HANDLE ghPluginSemaphore = NULL;
 
-//#if defined(__GNUC__)
-//typedef HWND (APIENTRY *FGetConsoleWindow)();
-//FGetConsoleWindow GetConsoleWindow = NULL;
-//#endif
+#if defined(__GNUC__)
+typedef HWND (APIENTRY *FGetConsoleWindow)();
+FGetConsoleWindow GetConsoleWindow = NULL;
+#endif
 extern void SetConsoleFontSizeTo(HWND inConWnd, int inSizeX, int inSizeY);
 
 BOOL WINAPI DllMain( HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved )
@@ -133,9 +126,9 @@ BOOL WINAPI DllMain( HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserve
 				#ifdef _DEBUG
 				//if (!IsDebuggerPresent()) MessageBoxA(GetForegroundWindow(), "ConEmu.dll loaded", "ConEmu", 0);
 				#endif
-				//#if defined(__GNUC__)
-				//GetConsoleWindow = (FGetConsoleWindow)GetProcAddress(GetModuleHandle(L"kernel32.dll"),"GetConsoleWindow");
-				//#endif
+				#if defined(__GNUC__)
+				GetConsoleWindow = (FGetConsoleWindow)GetProcAddress(GetModuleHandle(L"kernel32.dll"),"GetConsoleWindow");
+				#endif
 				HWND hConWnd = GetConsoleWindow();
 				gnMainThreadId = GetCurrentThreadId();
 				InitHWND(hConWnd);

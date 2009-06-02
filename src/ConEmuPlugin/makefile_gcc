@@ -47,8 +47,8 @@ USERLIBS = -lversion
 WIDE = 1
 DIRSURF = W
 RCWIDE = -D UNICODE -D _UNICODE
-CXXWIDE = -D UNICODE -D _UNICODE -D _WIN32_WINNT=0x0500 -D WINVER=0x0500
-CCWIDE = -D UNICODE -D _UNICODE -D _WIN32_WINNT=0x0500 -D WINVER=0x0500
+CXXWIDE = -D UNICODE -D _UNICODE
+CCWIDE = -D UNICODE -D _UNICODE
 
 OBJDIR = ../../gcc/plugin
 REOBJDIR = \.\.\/\.\.\/gcc\/plugin
@@ -100,18 +100,8 @@ OBJS = $(patsubst %.cpp,$(OBJDIR)/%.o,$(filter %.cpp,$(SRCS))) $(patsubst %.c,$(
 MAP = $(patsubst %.$(EXT),%.map,$(DLLFULLNAME))
 
 
-.PHONY: all
-all: iclean
-	@$(MAKE) -f makefile_gcc build
 
-.PHONY: iclean
-iclean:
-	@echo rebuild cleaning
-	@$(RM) $(OBJDIR)/*.*
-	@$(RM) ../../gcc/common/*.*
-
-.PHONY: build
-build: $(DLLFULLNAME)
+all: $(DLLFULLNAME)
 
 
 #ifndef DISABLEAUTODEPS
@@ -153,8 +143,3 @@ $(DLLFULLNAME): $(OBJS) $(DEF)
 #ifndef DISABLEAUTODEPS
 #-include $(DEPS)
 #endif
-
-.PHONY: clean
-clean:
-	@echo final cleaning
-	@$(RM) $(OBJS)

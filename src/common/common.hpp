@@ -32,6 +32,8 @@
 	#define min(a,b)            (((a) < (b)) ? (a) : (b))
 	#endif
 
+	#define _ASSERT(f)
+	#define _ASSERTE(f)
 	
 #else
 
@@ -46,7 +48,11 @@
 	#define WARNING(s) __pragma(message (FILE_LINE "warning: " s))
 	#endif
 	#define PRAGMA_ERROR(s) __pragma(message (FILE_LINE "error: " s))
-	
+
+	#ifdef _DEBUG
+	#include <crtdbg.h>
+	#endif
+
 #endif
 
 #define CES_NTVDM 0x10
