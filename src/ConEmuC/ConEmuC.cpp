@@ -28,6 +28,8 @@ WARNING("!!!! Пока можно при появлении события запоминать текущий тик");
 
 #ifndef _DEBUG
 #define FORCE_REDRAW_FIX
+#else
+#undef FORCE_REDRAW_FIX
 #endif
 
 
@@ -90,6 +92,7 @@ SHORT CorrectTopVisible(int nY);
 void CorrectVisibleRect(CONSOLE_SCREEN_BUFFER_INFO* pSbi);
 WARNING("Вместо GetConsoleScreenBufferInfo нужно использовать MyGetConsoleScreenBufferInfo!");
 BOOL MyGetConsoleScreenBufferInfo(HANDLE ahConOut, PCONSOLE_SCREEN_BUFFER_INFO apsc);
+void ExitWaitForKey(WORD vkKey, LPCWSTR asConfirm, BOOL abNewLine);
 
 
 
@@ -188,6 +191,7 @@ DWORD dwActiveFlags = 0;
 #define CERR_CMDLINE 117
 #define CERR_HELPREQUESTED 118
 #define CERR_ATTACHFAILED 119
+#define CERR_CMDLINEEMPTY 120
 
 
 int main()
@@ -390,6 +394,11 @@ int main()
     
     iRc = 0;
 wrap:
+	// 
+	if (iRc!=0 || gbAlwaysConfirmExit) {
+		ExitWaitForKey(VK_RETURN, L"Press Enter to close console", TRUE);
+	}
+
     // На всякий случай - выставим событие
     if (ghExitEvent) SetEvent(ghExitEvent);
     
@@ -418,45 +427,45 @@ wrap:
         SafeCloseHandle(ghConOut);
     }
 
-    if (iRc!=0 || gbAlwaysConfirmExit) {
-        // Чтобы ошибку было нормально видно
-        BOOL lbNeedVisible = FALSE;
-        if (!ghConWnd) ghConWnd = GetConsoleWindow();
-        if (ghConWnd) { // Если консоль была скрыта
-            if (!IsWindowVisible(ghConWnd)) {
-                lbNeedVisible = TRUE;
-                // поставить "стандартный" 80x25, или то, что было передано к ком.строке
-                SMALL_RECT rcNil = {0}; SetConsoleSize(0, gcrBufferSize, rcNil, ":Exiting");
-                SetConsoleFontSizeTo(ghConWnd, 8, 12); // установим шрифт побольше
-                ShowWindow(ghConWnd, SW_SHOWNORMAL); // и покажем окошко
-            }
-        }
-
-        // Сначала почистить буфер
-        INPUT_RECORD r = {0}; DWORD dwCount = 0;
-        FlushConsoleInputBuffer(GetStdHandle(STD_INPUT_HANDLE));
-
-        //
-        wprintf(L"Press Enter to close console");
-
-        //if (lbNeedVisible)
-        // Если окошко опять было скрыто - значит GUI часть жива, и опять отображаться не нужно
-        //while (PeekConsoleInput(GetStdHandle(STD_INPUT_HANDLE), &r, 1, &dwCount)) {
-        //    if (dwCount)
-        //        ReadConsoleInput(GetStdHandle(STD_INPUT_HANDLE), &r, 1, &dwCount);
-        //    else
-        //        Sleep(100);
-        //    if (lbNeedVisible && !IsWindowVisible(ghConWnd)) {
-        //        ShowWindow(ghConWnd, SW_SHOWNORMAL); // и покажем окошко
-        //    }
-        while (ReadConsoleInput(GetStdHandle(STD_INPUT_HANDLE), &r, 1, &dwCount)) {
-            if (r.EventType == KEY_EVENT && r.Event.KeyEvent.wVirtualKeyCode == VK_RETURN)
-                break;
-        }
-        //MessageBox(0,L"Debug message...............1",L"ComEmuC",0);
-        //int nCh = _getch();
-        wprintf(L"\n");
-    }
+    //if (iRc!=0 || gbAlwaysConfirmExit) {
+    //    // Чтобы ошибку было нормально видно
+    //    BOOL lbNeedVisible = FALSE;
+    //    if (!ghConWnd) ghConWnd = GetConsoleWindow();
+    //    if (ghConWnd) { // Если консоль была скрыта
+    //        if (!IsWindowVisible(ghConWnd)) {
+    //            lbNeedVisible = TRUE;
+    //            // поставить "стандартный" 80x25, или то, что было передано к ком.строке
+    //            SMALL_RECT rcNil = {0}; SetConsoleSize(0, gcrBufferSize, rcNil, ":Exiting");
+    //            SetConsoleFontSizeTo(ghConWnd, 8, 12); // установим шрифт побольше
+    //            ShowWindow(ghConWnd, SW_SHOWNORMAL); // и покажем окошко
+    //        }
+    //    }
+    //
+    //    // Сначала почистить буфер
+    //    INPUT_RECORD r = {0}; DWORD dwCount = 0;
+    //    FlushConsoleInputBuffer(GetStdHandle(STD_INPUT_HANDLE));
+    //
+    //    //
+    //    wprintf(L"Press Enter to close console");
+    //
+    //    //if (lbNeedVisible)
+    //    // Если окошко опять было скрыто - значит GUI часть жива, и опять отображаться не нужно
+    //    //while (PeekConsoleInput(GetStdHandle(STD_INPUT_HANDLE), &r, 1, &dwCount)) {
+    //    //    if (dwCount)
+    //    //        ReadConsoleInput(GetStdHandle(STD_INPUT_HANDLE), &r, 1, &dwCount);
+    //    //    else
+    //    //        Sleep(100);
+    //    //    if (lbNeedVisible && !IsWindowVisible(ghConWnd)) {
+    //    //        ShowWindow(ghConWnd, SW_SHOWNORMAL); // и покажем окошко
+    //    //    }
+    //    while (ReadConsoleInput(GetStdHandle(STD_INPUT_HANDLE), &r, 1, &dwCount)) {
+    //        if (r.EventType == KEY_EVENT && r.Event.KeyEvent.wVirtualKeyCode == VK_RETURN)
+    //            break;
+    //    }
+    //    //MessageBox(0,L"Debug message...............1",L"ComEmuC",0);
+    //    //int nCh = _getch();
+    //    wprintf(L"\n");
+    //}
     
     SafeCloseHandle(ghLogSize);
     if (wpszLogSizeFile) {
@@ -545,7 +554,12 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
     }
     
     if (iRc != 0) {
-        wprintf (L"Parsing command line failed:\n%s\n", asCmdLine);
+	    if (iRc == CERR_CMDLINEEMPTY) {
+		    Help();
+		    wprintf (L"\n\nParsing command line failed (/C argument not found):\n%s\n", GetCommandLineW());
+	    } else {
+	        wprintf (L"Parsing command line failed:\n%s\n", asCmdLine);
+	    }
         return iRc;
     }
     if (gnRunMode == RM_UNDEFINED) {
@@ -634,7 +648,7 @@ int NextArg(LPCWSTR &asCmdLine, wchar_t* rsArg/*[MAX_PATH+1]*/)
     int nArgLen = 0;
     
     while (ch == L' ' || ch == L'\t' || ch == L'\r' || ch == L'\n') ch = *(++psCmdLine);
-    if (ch == 0) return CERR_CMDLINE;
+    if (ch == 0) return CERR_CMDLINEEMPTY;
 
     // аргумент начинается с "
     if (ch == L'"') {
@@ -670,6 +684,50 @@ int NextArg(LPCWSTR &asCmdLine, wchar_t* rsArg/*[MAX_PATH+1]*/)
     
     return 0;
 }
+
+void ExitWaitForKey(WORD vkKey, LPCWSTR asConfirm, BOOL abNewLine)
+{
+    // Чтобы ошибку было нормально видно
+    BOOL lbNeedVisible = FALSE;
+    if (!ghConWnd) ghConWnd = GetConsoleWindow();
+    if (ghConWnd) { // Если консоль была скрыта
+	    WARNING("Если GUI жив - отвечает на запросы SendMessageTimeout - показывать консоль не нужно. Не красиво получается");
+        if (!IsWindowVisible(ghConWnd)) {
+            lbNeedVisible = TRUE;
+            // поставить "стандартный" 80x25, или то, что было передано к ком.строке
+            SMALL_RECT rcNil = {0}; SetConsoleSize(0, gcrBufferSize, rcNil, ":Exiting");
+            SetConsoleFontSizeTo(ghConWnd, 8, 12); // установим шрифт побольше
+            ShowWindow(ghConWnd, SW_SHOWNORMAL); // и покажем окошко
+        }
+    }
+
+    // Сначала почистить буфер
+    INPUT_RECORD r = {0}; DWORD dwCount = 0;
+    FlushConsoleInputBuffer(GetStdHandle(STD_INPUT_HANDLE));
+
+    //
+    wprintf(asConfirm);
+
+    //if (lbNeedVisible)
+    // Если окошко опять было скрыто - значит GUI часть жива, и опять отображаться не нужно
+    //while (PeekConsoleInput(GetStdHandle(STD_INPUT_HANDLE), &r, 1, &dwCount)) {
+    //    if (dwCount)
+    //        ReadConsoleInput(GetStdHandle(STD_INPUT_HANDLE), &r, 1, &dwCount);
+    //    else
+    //        Sleep(100);
+    //    if (lbNeedVisible && !IsWindowVisible(ghConWnd)) {
+    //        ShowWindow(ghConWnd, SW_SHOWNORMAL); // и покажем окошко
+    //    }
+    while (ReadConsoleInput(GetStdHandle(STD_INPUT_HANDLE), &r, 1, &dwCount)) {
+        if (r.EventType == KEY_EVENT && r.Event.KeyEvent.wVirtualKeyCode == vkKey)
+            break;
+    }
+    //MessageBox(0,L"Debug message...............1",L"ComEmuC",0);
+    //int nCh = _getch();
+    if (abNewLine)
+	    wprintf(L"\n");
+}
+
 
 int ComspecInit()
 {

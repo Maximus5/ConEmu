@@ -3,6 +3,8 @@
 //HANDLE CConEmuPipe::hMapping=NULL;
 //TCHAR  CConEmuPipe::sLastOp[64] = _T("");
 
+WARNING("!!! Обязательно нужно сделать возможность отваливаться по таймауту!");
+
 CConEmuPipe::CConEmuPipe(DWORD anFarPID, DWORD anTimeout/*=-1*/)
 {
 	mn_FarPID = anFarPID;

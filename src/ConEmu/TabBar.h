@@ -8,6 +8,7 @@
 class TabBarClass
 {
 private:
+	HWND mh_Tabbar, mh_ConmanToolbar, mh_Rebar, mh_TabTip;
 	bool _active;
 	int _tabHeight;
 	RECT m_Margins;
@@ -17,14 +18,15 @@ private:
 	void AddTab(LPCWSTR text, int i);
 	void SelectTab(int i);
 	CVirtualConsole* FarSendChangeTab(int tabIndex);
-	HWND mh_Tabbar, mh_ConmanToolbar, mh_Rebar;
 	LONG mn_LastToolbarWidth;
 	void UpdateToolbarPos();
 	void PrepareTab(ConEmuTab* pTab);
 	BOOL GetVConFromTab(int nTabIdx, CVirtualConsole** rpVCon, DWORD* rpWndIndex);
+	ConEmuTab m_Tab4Tip;
 
 protected:
 	static LRESULT CALLBACK TabProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+	static WNDPROC _defaultTabProc;
 	
 	// Пока - банально. VCon, номер в FAR
 	typedef struct {

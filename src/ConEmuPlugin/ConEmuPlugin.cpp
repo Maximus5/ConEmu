@@ -289,6 +289,9 @@ BOOL IsKeyChanged(BOOL abAllowReload)
 	return lbKeyChanged;
 }
 
+WARNING("ќб€зательно сделать возможность отваливатьс€ по таймауту, если плагин не удалось активировать");
+// ѕроверку можно сделать чтением буфера ввода - если там еще есть событие отпускани€ F11 - значит
+// меню плагинов еще загружаетс€. »наче можно еще чуть-чуть подождать, и отваливатьс€ - активироватьс€ не получитс€
 void ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData)
 {
 	if (gpCmdRet) free(gpCmdRet);

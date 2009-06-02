@@ -2,13 +2,14 @@
 #include <commctrl.h>
 #include "header.h"
 
-WARNING("не по€вл€ютс€ табы во второй консоли");
+WARNING("!!! «апустили far, открыли edit, перешли в панель, открыли второй edit, ESC, ни одна вкладка не активна");
+// Ѕолее того, если есть еще одна консоль - активной станет перва€ вкладка следующей Ќ≈ј “»¬Ќќ… консоли
 WARNING("не мен€ютс€ табы при переключении на другую консоль");
 
 TabBarClass TabBar;
 const int TAB_FONT_HEIGTH = 16;
 wchar_t TAB_FONT_FACE[] = L"Tahoma";
-WNDPROC _defaultTabProc = NULL;
+WNDPROC TabBarClass::_defaultTabProc = NULL;
 
 TabBarClass::TabBarClass()
 {
@@ -24,6 +25,7 @@ TabBarClass::TabBarClass()
 	//ActivateConsole = NULL;
 	//ConMan_KeyAction = NULL;
 	mn_MsgUpdateTabs = RegisterWindowMessage(CONEMUMSG_UPDATETABS);
+	memset(&m_Tab4Tip, 0, sizeof(m_Tab4Tip));
 }
 
 void TabBarClass::Enable(BOOL abEnabled)
@@ -607,7 +609,6 @@ void TabBarClass::UpdateToolbarPos()
 
 bool TabBarClass::OnNotify(LPNMHDR nmhdr)
 {
-WARNING("ƒл€ всех кнопок 1-12 отображаетс€ заголовок “≈ ”ў≈… консоли");
 	if (!_active)
 	{
 		return false;
@@ -643,7 +644,7 @@ WARNING("ƒл€ всех кнопок 1-12 отображаетс€ заголовок “≈ ”ў≈… консоли");
 		return true;
 	}
 
-	if (nmhdr->code == TBN_GETINFOTIP)
+	if (nmhdr->code == TBN_GETINFOTIP /*&& nmhdr->hwndFrom == mh_ConmanToolbar*/)
 	{
 		if (!gSet.isMulti)
 			return 0;
@@ -663,6 +664,44 @@ WARNING("ƒл€ всех кнопок 1-12 отображаетс€ заголовок “≈ ”ў≈… консоли");
 		if (pDisp->iItem==14) {
 			lstrcpyn(pDisp->pszText, _T("Alternative console"), pDisp->cchTextMax);
 		}
+		return true;
+	}
+
+	if (nmhdr->code == TTN_GETDISPINFO && (nmhdr->hwndFrom == mh_Tabbar || nmhdr->hwndFrom == mh_TabTip))
+	{
+		LPNMTTDISPINFO pDisp = (LPNMTTDISPINFO)nmhdr;
+		CVirtualConsole *pVCon = NULL;
+		DWORD wndIndex = 0;
+		TCHITTESTINFO htInfo;
+		
+		pDisp->hinst = NULL;
+		pDisp->szText[0] = 0;
+		pDisp->lpszText = NULL;
+		
+		GetCursorPos(&htInfo.pt);
+		MapWindowPoints(NULL, mh_Tabbar, &htInfo.pt, 1);
+		
+		int iPage = TabCtrl_HitTest(mh_Tabbar, &htInfo);
+		
+		if (iPage >= 0) {
+			// ≈сли в табе нет "Е" - тип не нужен
+			TCITEM item = {TCIF_TEXT};
+			WCHAR  szBuffer[MAX_PATH] = {0};
+			item.pszText = szBuffer; item.cchTextMax = MAX_PATH;
+			
+			if (!TabCtrl_GetItem(mh_Tabbar, iPage, &item))
+				return 0;
+			if (!wcschr(szBuffer, L'Е'))
+				return 0;
+		
+			if (!GetVConFromTab(iPage, &pVCon, &wndIndex))
+				return 0;
+			if (!pVCon->RCon()->GetTab(wndIndex, &m_Tab4Tip))
+				return 0;
+		
+			pDisp->lpszText = m_Tab4Tip.Name;
+		}
+		
 		return true;
 	}
 
@@ -946,13 +985,23 @@ HWND TabBarClass::CreateTabbar()
 
 		RECT rcClient;
 		GetClientRect(ghWnd, &rcClient); 
-		DWORD nPlacement = TCS_SINGLELINE|WS_VISIBLE/*|TCS_BUTTONS*/;
+		DWORD nPlacement = TCS_SINGLELINE|WS_VISIBLE/*|TCS_BUTTONS*/|TCS_TOOLTIPS;
 		mh_Tabbar = CreateWindow(WC_TABCONTROL, NULL, nPlacement | WS_CHILD | WS_CLIPSIBLINGS | TCS_FOCUSNEVER, 0, 0, 
 			rcClient.right, 0, mh_Rebar, NULL, g_hInstance, NULL);
 		if (mh_Tabbar == NULL)
 		{ 
 			return NULL; 
 		}
+	    if (!mh_TabTip || !IsWindow(mh_TabTip)) {
+	        mh_TabTip = CreateWindowEx(WS_EX_TOPMOST, TOOLTIPS_CLASS, NULL,
+	                              WS_POPUP | TTS_ALWAYSTIP /*| TTS_BALLOON*/ | TTS_NOPREFIX,
+	                              CW_USEDEFAULT, CW_USEDEFAULT,
+	                              CW_USEDEFAULT, CW_USEDEFAULT,
+	                              mh_Tabbar, NULL, 
+	                              g_hInstance, NULL);
+	        SetWindowPos(mh_TabTip, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE);
+	        TabCtrl_SetToolTips ( mh_Tabbar, mh_TabTip );
+	    }
 		HFONT hFont = CreateFont(TAB_FONT_HEIGTH, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, ANSI_CHARSET, OUT_DEFAULT_PRECIS, 
 			CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_SWISS, TAB_FONT_FACE);
 		SendMessage(mh_Tabbar, WM_SETFONT, WPARAM (hFont), TRUE);
