@@ -10,17 +10,44 @@
 #define MIN_CON_HEIGHT 7
 
 // with line number
-#define STRING2(x) #x
-#define STRING(x) STRING2(x)
-#define FILE_LINE __FILE__ "(" STRING(__LINE__) "): "
-#ifdef HIDE_TODO
-#define TODO(s) 
-#define WARNING(s) 
+#if !defined(_MSC_VER)
+
+	#define TODO(s)
+	#define WARNING(s)
+	#define PRAGMA_ERROR(s)
+
+	#define CONSOLE_APPLICATION_16BIT 1
+	
+	typedef struct _CONSOLE_SELECTION_INFO {
+	    DWORD dwFlags;
+	    COORD dwSelectionAnchor;
+	    SMALL_RECT srSelection;
+	} CONSOLE_SELECTION_INFO, *PCONSOLE_SELECTION_INFO;
+
+	#ifndef max
+	#define max(a,b)            (((a) > (b)) ? (a) : (b))
+	#endif
+
+	#ifndef min
+	#define min(a,b)            (((a) < (b)) ? (a) : (b))
+	#endif
+
+	
 #else
-#define TODO(s) __pragma(message (FILE_LINE "TODO: " s))
-#define WARNING(s) __pragma(message (FILE_LINE "warning: " s))
+
+	#define STRING2(x) #x
+	#define STRING(x) STRING2(x)
+	#define FILE_LINE __FILE__ "(" STRING(__LINE__) "): "
+	#ifdef HIDE_TODO
+	#define TODO(s) 
+	#define WARNING(s) 
+	#else
+	#define TODO(s) __pragma(message (FILE_LINE "TODO: " s))
+	#define WARNING(s) __pragma(message (FILE_LINE "warning: " s))
+	#endif
+	#define PRAGMA_ERROR(s) __pragma(message (FILE_LINE "error: " s))
+	
 #endif
-#define PRAGMA_ERROR(s) __pragma(message (FILE_LINE "error: " s))
 
 #define CES_NTVDM 0x10
 #define CEC_INITTITLE       L"ConEmu"

@@ -1,5 +1,6 @@
 NAME = ConEmuC
 SRCS = ConEmuC.cpp \
+       ../Common/ConEmuCheck.c \
        ../ConEmuPlugin/setconsoleinfo.cpp
 
 USERLIBS = 
@@ -44,8 +45,8 @@ USERLIBS =
 WIDE = 1
 DIRSURF = W
 RCWIDE = -D UNICODE -D _UNICODE
-CXXWIDE = -D UNICODE -D _UNICODE
-CCWIDE = -D UNICODE -D _UNICODE
+CXXWIDE = -D UNICODE -D _UNICODE -D _WIN32_WINNT=0x0500 -D WINVER=0x0500
+CCWIDE = -D UNICODE -D _UNICODE -D _WIN32_WINNT=0x0500 -D WINVER=0x0500
 
 OBJDIR = ../../gcc/conemuc
 REOBJDIR = \.\.\/\.\.\/gcc\/conemuc

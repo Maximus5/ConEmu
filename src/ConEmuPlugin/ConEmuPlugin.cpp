@@ -119,13 +119,13 @@ std::vector<HANDLE> ghCommandThreads;
 HANDLE ghServerTerminateEvent = NULL;
 HANDLE ghPluginSemaphore = NULL;
 
-#if defined(__GNUC__)
-typedef HWND (APIENTRY *FGetConsoleWindow)();
-FGetConsoleWindow GetConsoleWindow = NULL;
-#endif
+//#if defined(__GNUC__)
+//typedef HWND (APIENTRY *FGetConsoleWindow)();
+//FGetConsoleWindow GetConsoleWindow = NULL;
+//#endif
 extern void SetConsoleFontSizeTo(HWND inConWnd, int inSizeX, int inSizeY);
 
-BOOL APIENTRY DllMain( HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved )
+BOOL WINAPI DllMain( HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved )
 {
 	switch (ul_reason_for_call) {
 		case DLL_PROCESS_ATTACH:
@@ -133,9 +133,9 @@ BOOL APIENTRY DllMain( HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
 				#ifdef _DEBUG
 				//if (!IsDebuggerPresent()) MessageBoxA(GetForegroundWindow(), "ConEmu.dll loaded", "ConEmu", 0);
 				#endif
-				#if defined(__GNUC__)
-				GetConsoleWindow = (FGetConsoleWindow)GetProcAddress(GetModuleHandle(L"kernel32.dll"),"GetConsoleWindow");
-				#endif
+				//#if defined(__GNUC__)
+				//GetConsoleWindow = (FGetConsoleWindow)GetProcAddress(GetModuleHandle(L"kernel32.dll"),"GetConsoleWindow");
+				//#endif
 				HWND hConWnd = GetConsoleWindow();
 				gnMainThreadId = GetCurrentThreadId();
 				InitHWND(hConWnd);
@@ -411,7 +411,7 @@ void ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData)
 // Эту нить нужно оставить, чтобы была возможность отобразить консоль при падении ConEmu
 DWORD WINAPI ThreadProcW(LPVOID lpParameter)
 {
-	DWORD dwProcId = GetCurrentProcessId();
+	//DWORD dwProcId = GetCurrentProcessId();
 
 	while (true)
 	{
@@ -786,7 +786,9 @@ BOOL CheckPlugKey()
 		while (0==RegEnumKeyEx(hkey, dwIndex++, szMacroKey[1], &(dwSize=MAX_PATH), NULL, NULL, NULL, &ft)) {
 			WCHAR* pszSlash = szMacroKey[1]+lstrlenW(szMacroKey[1])-1;
 			while (pszSlash>szMacroKey[1] && *pszSlash!=L'/') pszSlash--;
+			#if !defined(__GNUC__)
 			#pragma warning(disable : 6400)
+			#endif
 			if (lstrcmpiW(pszSlash, L"/conemu.dll")==0) {
 				WCHAR lsFullPath[MAX_PATH*2];
 				lstrcpy(lsFullPath, szMacroKey[0]);
@@ -1021,6 +1023,15 @@ BOOL CreateTabs(int windowCount)
 	return tabs!=NULL;
 }
 
+
+	#ifndef max
+	#define max(a,b)            (((a) > (b)) ? (a) : (b))
+	#endif
+
+	#ifndef min
+	#define min(a,b)            (((a) < (b)) ? (a) : (b))
+	#endif
+
 BOOL AddTab(int &tabCount, bool losingFocus, bool editorSave, 
 			int Type, LPCWSTR Name, LPCWSTR FileName, int Current, int Modified)
 {
@@ -1061,7 +1072,7 @@ BOOL AddTab(int &tabCount, bool losingFocus, bool editorSave,
 			lastModifiedStateW = -1;
 		}
 
-		int nLen=min(lstrlen(Name),(CONEMUTABMAX-1));
+		int nLen = min(lstrlen(Name),(CONEMUTABMAX-1));
 		lstrcpyn(tabs[tabCount].Name, Name, nLen+1);
 		tabs[tabCount].Name[nLen]=0;
 
@@ -1225,7 +1236,9 @@ void StopThread(void)
 		}
 		dwWait = WaitForSingleObject(ghServerThread, 0);
 		if (dwWait != WAIT_OBJECT_0) {
+			#if !defined(__GNUC__)
 			#pragma warning (disable : 6258)
+			#endif
 			TerminateThread(ghServerThread, 100);
 		}
 		SafeCloseHandle(ghServerThread);
@@ -1235,7 +1248,9 @@ void StopThread(void)
 	//CloseTabs(); -- ConEmu само разберется
 	if (hThread) { // подождем чуть-чуть, или принудительно прибъем нить ожидания
 		if (WaitForSingleObject(hThread,1000)) {
+			#if !defined(__GNUC__)
 			#pragma warning (disable : 6258)
+			#endif
 			TerminateThread(hThread, 100);
 		}
 		CloseHandle(hThread); hThread = NULL;
@@ -1398,7 +1413,7 @@ DWORD WINAPI ServerThread(LPVOID lpvParam)
     DWORD dwErr = 0;
     HANDLE hPipe = NULL; 
     //HANDLE hWait[2] = {NULL,NULL};
-	DWORD dwTID = GetCurrentThreadId();
+	//DWORD dwTID = GetCurrentThreadId();
 	std::vector<HANDLE>::iterator iter;
 
     _ASSERTE(gszPluginServerPipe[0]!=0);
@@ -1592,14 +1607,17 @@ DWORD WINAPI ServerThreadCommand(LPVOID ahPipe)
         return 0; // удалось считать не все данные
     }
 
+    #ifdef _DEBUG
 	UINT nDataSize = pIn->nSize - sizeof(CESERVER_REQ) + 1;
+	#endif
 
     // Все данные из пайпа получены, обрабатываем команду и возвращаем (если нужно) результат
 	//fSuccess = WriteFile( hPipe, pOut, pOut->nSize, &cbWritten, NULL);
 
 	if (pIn->nCmd == CMD_LANGCHANGE) {
 		_ASSERTE(nDataSize>=4);
-		HKL hkl = (HKL)*((DWORD*)pIn->Data);
+		HKL hkl = 0;
+		memmove(&hkl, pIn->Data, 4);
 		if (hkl) {
 			DWORD dwLastError = 0;
 			WCHAR szLoc[10]; wsprintf(szLoc, L"%08x", (DWORD)(((DWORD)hkl) & 0xFFFF));

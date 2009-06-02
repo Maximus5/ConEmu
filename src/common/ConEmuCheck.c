@@ -147,7 +147,7 @@ HWND myGetConsoleWindow()
 // Returns HWND of Gui console DC window
 HWND GetConEmuHWND(BOOL abRoot)
 {
-	BOOL lbRc = FALSE;
+	//BOOL lbRc = FALSE;
 	HWND FarHwnd=NULL, ConEmuHwnd=NULL, ConEmuRoot=NULL;
 	CESERVER_REQ in = {0}, *pOut = NULL;
 

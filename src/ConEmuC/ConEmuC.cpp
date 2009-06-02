@@ -1,4 +1,10 @@
+
+//#ifndef _WIN32_WINNT
+//#define _WIN32_WINNT 0x0500
+//#endif
+
 #include <Windows.h>
+#include <WinCon.h>
 #include <stdio.h>
 #include <Shlwapi.h>
 //#include <conio.h>
@@ -46,6 +52,7 @@ WARNING("В некоторых случаях не срабатывает ни EVENT_CONSOLE_UPDATE_SIMPLE ни EV
 #if defined(__GNUC__)
     //#include "assert.h"
     #define _ASSERTE(x)
+    #define _ASSERT(x)
 #else
     #include <crtdbg.h>
 #endif
@@ -67,7 +74,7 @@ DWORD WINAPI ServerThread(LPVOID lpvParam);
 DWORD WINAPI InputThread(LPVOID lpvParam);
 BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out); 
 DWORD WINAPI WinEventThread(LPVOID lpvParam);
-void CALLBACK WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime);
+void WINAPI WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime);
 void CheckCursorPos();
 void SendConsoleChanges(CESERVER_REQ* pOut);
 CESERVER_REQ* CreateConsoleInfo(CESERVER_CHAR* pCharOnly, int bCharAttrBuff);
@@ -108,13 +115,13 @@ DWORD   gdwMainThreadId = 0;
 wchar_t* gpszRunCmd = NULL;
 HANDLE  ghCtrlCEvent = NULL, ghCtrlBreakEvent = NULL;
 
-enum {
+enum tag_RunMode {
     RM_UNDEFINED = 0,
     RM_SERVER,
     RM_COMSPEC
 } gnRunMode = RM_UNDEFINED;
 
-struct {
+struct tag_Srv {
 	DWORD dwProcessGroup;
 	//
     HANDLE hServerThread;   DWORD dwServerThreadId;
@@ -152,7 +159,7 @@ struct {
     DWORD nLastUpdateTick;
 } srv = {0};
 
-struct {
+struct tag_Cmd {
 	DWORD dwProcessGroup;
 	DWORD dwFarPID;
 	CONSOLE_SCREEN_BUFFER_INFO sbi;
@@ -204,14 +211,14 @@ int main()
     //wchar_t* psCmdLine = GetCommandLineW();
     //size_t nCmdLine = lstrlenW(psCmdLine);
     //wchar_t* psNewCmd = NULL;
-    HANDLE hWait[2]={NULL,NULL};
+    //HANDLE hWait[2]={NULL,NULL};
     //BOOL bViaCmdExe = TRUE;
     PROCESS_INFORMATION pi; memset(&pi, 0, sizeof(pi));
     STARTUPINFOW si; memset(&si, 0, sizeof(si)); si.cb = sizeof(si);
     DWORD dwErr = 0, nWait = 0;
     BOOL lbRc = FALSE;
     DWORD mode = 0;
-    BOOL lb = FALSE;
+    //BOOL lb = FALSE;
 
     // Хэндл консольного окна
     ghConWnd = GetConsoleWindow();
@@ -396,7 +403,7 @@ int main()
 wrap:
 	// 
 	if (iRc!=0 || gbAlwaysConfirmExit) {
-		ExitWaitForKey(VK_RETURN, L"Press Enter to close console", TRUE);
+		ExitWaitForKey(VK_RETURN, L"\n\nPress Enter to close console", TRUE);
 	}
 
     // На всякий случай - выставим событие
@@ -1267,12 +1274,12 @@ DWORD WINAPI InputThread(LPVOID lpvParam)
           //TODO:
           DWORD cbBytesRead, cbWritten;
           INPUT_RECORD iRec; memset(&iRec,0,sizeof(iRec));
-          while (fSuccess = ReadFile( 
+          while ((fSuccess = ReadFile( 
              hPipe,        // handle to pipe 
              &iRec,        // buffer to receive data 
              sizeof(iRec), // size of buffer 
              &cbBytesRead, // number of bytes read 
-             NULL))        // not overlapped I/O 
+             NULL)) != FALSE)        // not overlapped I/O 
           {
               // предусмотреть возможность завершения нити
               if (iRec.EventType == 0xFFFF) {
@@ -1483,7 +1490,7 @@ DWORD ReadConsoleData(CESERVER_CHAR** pCheck /*= NULL*/, BOOL* pbDataChanged /*=
     DWORD cbDataSize = 0; // Size in bytes of ONE buffer
     srv.bContentsChanged = FALSE;
     EnterCriticalSection(&srv.csConBuf);
-    RECT rcReadRect = {0};
+    //RECT rcReadRect = {0};
 
     USHORT TextWidth=0, TextHeight=0;
     DWORD TextLen=0;
@@ -1724,7 +1731,7 @@ DWORD WINAPI WinEventThread(LPVOID lpvParam)
     
     // "Ловим" все консольные события
     srv.hWinHook = SetWinEventHook(EVENT_CONSOLE_CARET,EVENT_CONSOLE_END_APPLICATION,
-        NULL, WinEventProc, 0,0, WINEVENT_OUTOFCONTEXT /*| WINEVENT_SKIPOWNPROCESS ?*/);
+        NULL, (WINEVENTPROC)WinEventProc, 0,0, WINEVENT_OUTOFCONTEXT /*| WINEVENT_SKIPOWNPROCESS ?*/);
     dwErr = GetLastError();
     if (!srv.hWinHook) {
         dwErr = GetLastError();
@@ -1754,7 +1761,7 @@ DWORD WINAPI WinEventThread(LPVOID lpvParam)
 
 DWORD WINAPI RefreshThread(LPVOID lpvParam)
 {
-    DWORD dwErr = 0, nWait = 0;
+    DWORD /*dwErr = 0,*/ nWait = 0;
     HANDLE hEvents[2] = {ghExitEvent, srv.hRefreshEvent};
     CONSOLE_CURSOR_INFO lci = {0}; // GetConsoleCursorInfo
     CONSOLE_SCREEN_BUFFER_INFO lsbi = {{0,0}}; // MyGetConsoleScreenBufferInfo
@@ -1808,14 +1815,14 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 
 //Minimum supported client Windows 2000 Professional 
 //Minimum supported server Windows 2000 Server 
-void CALLBACK WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime)
+void WINAPI WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime)
 {
     if (hwnd != ghConWnd) {
         _ASSERTE(hwnd); // по идее, тут должен быть хэндл консольного окна, проверим
         return;
     }
 
-    BOOL bNeedConAttrBuf = FALSE;
+    //BOOL bNeedConAttrBuf = FALSE;
     CESERVER_CHAR ch = {{0,0}};
     #ifdef _DEBUG
     WCHAR szDbg[128];
@@ -1833,13 +1840,13 @@ void CALLBACK WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, 
         OutputDebugString(szDbg);
         #endif
 
-        if (idObject != gnSelfPID) {
+        if (((DWORD)idObject) != gnSelfPID) {
             EnterCriticalSection(&srv.csProc);
             srv.nProcesses.push_back(idObject);
             LeaveCriticalSection(&srv.csProc);
 
             if (idChild == CONSOLE_APPLICATION_16BIT) {
-                DWORD ntvdmPID = idObject;
+                //DWORD ntvdmPID = idObject;
                 dwActiveFlags |= CES_NTVDM;
                 SetPriorityClass(GetCurrentProcess(), HIGH_PRIORITY_CLASS);
             }
@@ -1863,14 +1870,14 @@ void CALLBACK WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, 
         OutputDebugString(szDbg);
         #endif
 
-        if (idObject != gnSelfPID) {
+        if (((DWORD)idObject) != gnSelfPID) {
             std::vector<DWORD>::iterator iter;
             EnterCriticalSection(&srv.csProc);
             for (iter=srv.nProcesses.begin(); iter!=srv.nProcesses.end(); iter++) {
-                if (idObject == *iter) {
+                if (((DWORD)idObject) == *iter) {
                     srv.nProcesses.erase(iter);
                     if (idChild == CONSOLE_APPLICATION_16BIT) {
-                        DWORD ntvdmPID = idObject;
+                        //DWORD ntvdmPID = idObject;
                         dwActiveFlags &= ~CES_NTVDM;
                         //TODO: возможно стоит прибить процесс NTVDM?
                         SetPriorityClass(GetCurrentProcess(), NORMAL_PRIORITY_CLASS);
@@ -2248,7 +2255,7 @@ CESERVER_REQ* CreateConsoleInfo(CESERVER_CHAR* pCharOnly, int bCharAttrBuff)
 
     // 11 - здесь будет 0, если текст в консоли не менялся
     *((DWORD*)lpCur) = OneBufferSize; lpCur += sizeof(DWORD);
-    if (OneBufferSize && OneBufferSize!=-1) {
+    if (OneBufferSize && OneBufferSize!=(DWORD)-1) {
         memmove(lpCur, srv.psChars, OneBufferSize); lpCur += OneBufferSize;
         memmove(lpCur, srv.pnAttrs, OneBufferSize); lpCur += OneBufferSize;
     }
@@ -2545,7 +2552,7 @@ BOOL WINAPI HandlerRoutine(DWORD dwCtrlType)
 
 int GetProcessCount(DWORD **rpdwPID)
 {
-	DWORD dwErr = 0; BOOL lbRc = FALSE;
+	//DWORD dwErr = 0; BOOL lbRc = FALSE;
 	DWORD *pdwPID = NULL; int nCount = 0, i;
 	EnterCriticalSection(&srv.csProc);
 	nCount = srv.nProcesses.size();
