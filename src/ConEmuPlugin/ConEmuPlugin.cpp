@@ -21,9 +21,7 @@ extern "C" {
 #include "../common/ConEmuCheck.h"
 }
 
-#if !defined(__GNUC__)
 WARNING("Подозреваю, что в gszRootKey не учитывается имя пользователя/конфигурации");
-#endif
 
 #define MAKEFARVERSION(major,minor,build) ( ((major)<<8) | (minor) | ((build)<<16))
 
@@ -112,11 +110,24 @@ std::vector<HANDLE> ghCommandThreads;
 HANDLE ghServerTerminateEvent = NULL;
 HANDLE ghPluginSemaphore = NULL;
 
-#if defined(__GNUC__)
-typedef HWND (APIENTRY *FGetConsoleWindow)();
-FGetConsoleWindow GetConsoleWindow = NULL;
-#endif
+//#if defined(__GNUC__)
+//typedef HWND (APIENTRY *FGetConsoleWindow)();
+//FGetConsoleWindow GetConsoleWindow = NULL;
+//#endif
 extern void SetConsoleFontSizeTo(HWND inConWnd, int inSizeX, int inSizeY);
+
+#if defined(__GNUC__)
+extern "C"{
+  BOOL WINAPI DllMain( HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved );
+  HWND WINAPI GetFarHWND();
+  HWND WINAPI GetFarHWND2(BOOL abConEmuOnly);
+  void WINAPI GetFarVersion ( FarVersion* pfv );
+  int  WINAPI ProcessEditorInputW(void* Rec);
+  void WINAPI SetStartupInfoW(void *aInfo);
+  BOOL WINAPI IsTerminalMode();
+  BOOL WINAPI IsConsoleActive();
+};
+#endif
 
 BOOL WINAPI DllMain( HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved )
 {
@@ -126,9 +137,9 @@ BOOL WINAPI DllMain( HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserve
 				#ifdef _DEBUG
 				//if (!IsDebuggerPresent()) MessageBoxA(GetForegroundWindow(), "ConEmu.dll loaded", "ConEmu", 0);
 				#endif
-				#if defined(__GNUC__)
-				GetConsoleWindow = (FGetConsoleWindow)GetProcAddress(GetModuleHandle(L"kernel32.dll"),"GetConsoleWindow");
-				#endif
+				//#if defined(__GNUC__)
+				//GetConsoleWindow = (FGetConsoleWindow)GetProcAddress(GetModuleHandle(L"kernel32.dll"),"GetConsoleWindow");
+				//#endif
 				HWND hConWnd = GetConsoleWindow();
 				gnMainThreadId = GetCurrentThreadId();
 				InitHWND(hConWnd);
@@ -160,31 +171,6 @@ BOOL WINAPI DllMain( HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserve
 	}
 	return TRUE;
 }
-
-#if defined(__GNUC__)
-#ifdef __cplusplus
-extern "C"{
-#endif
-  BOOL WINAPI DllMainCRTStartup(HANDLE hDll,DWORD dwReason,LPVOID lpReserved);
-  HWND WINAPI GetFarHWND();
-  HWND WINAPI GetFarHWND2(BOOL abConEmuOnly);
-  void WINAPI GetFarVersion ( FarVersion* pfv );
-  int  WINAPI ProcessEditorInputW(void* Rec);
-  void WINAPI SetStartupInfoW(void *aInfo);
-  BOOL WINAPI IsTerminalMode();
-  BOOL WINAPI IsConsoleActive();
-#ifdef __cplusplus
-};
-#endif
-
-BOOL WINAPI DllMainCRTStartup(HANDLE hDll,DWORD dwReason,LPVOID lpReserved)
-{
-  /*(void) lpReserved;
-  (void) dwReason;
-  (void) hDll;*/
-  return DllMain(hDll, dwReason,lpReserved);
-}
-#endif
 
 BOOL WINAPI IsConsoleActive()
 {
