@@ -8,6 +8,7 @@ EXPORTS
 	GetMinFarVersionW    @6
 	ExitFARW             @7
 	OpenPluginW          @8
+	OpenFilePluginW      @9
 	SetStartupInfo       @11
 	GetPluginInfo        @12
 	ProcessEditorInput   @13

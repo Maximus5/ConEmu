@@ -3,16 +3,14 @@
 #include "..\common\pluginW789.hpp"
 #include "PluginHeader.h"
 
-#ifndef FORWARD_WM_COPYDATA
-#define FORWARD_WM_COPYDATA(hwnd, hwndFrom, pcds, fn) \
-    (BOOL)(UINT)(DWORD)(fn)((hwnd), WM_COPYDATA, (WPARAM)(hwndFrom), (LPARAM)(pcds))
-#endif
+//#ifndef FORWARD_WM_COPYDATA
+//#define FORWARD_WM_COPYDATA(hwnd, hwndFrom, pcds, fn) \
+//    (BOOL)(UINT)(DWORD)(fn)((hwnd), WM_COPYDATA, (WPARAM)(hwndFrom), (LPARAM)(pcds))
+//#endif
 
 
 struct PluginStartupInfo *InfoW789=NULL;
 struct FarStandardFunctions *FSFW789=NULL;
-
-
 
 
 void ProcessDragFrom789()

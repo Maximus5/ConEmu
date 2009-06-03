@@ -394,7 +394,7 @@ DWORD WINAPI ThreadProcW(LPVOID lpParameter)
 
 	DWORD dwStartTick = GetTickCount();
 	
-	_ASSERTE(ConEmuHwnd!=NULL);
+	//_ASSERTE(ConEmuHwnd!=NULL); -- ConEmu может подцепиться позднее!
 
 	while (true)
 	{
