@@ -81,7 +81,7 @@
 //	return h && (h == ghWnd || h == ghOpWnd || h == ghConWnd);
 //}
 //#endif
-#define isPressed(inp) HIBYTE(GetKeyState(inp))
+#define isPressed(inp) ((GetKeyState(inp) & 0x8000) == 0x8000)
 #define countof(a) (sizeof((a))/(sizeof(*(a))))
 #define ZeroStruct(s) memset(&(s), sizeof(s), 0)
 

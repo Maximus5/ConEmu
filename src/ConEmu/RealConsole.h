@@ -149,6 +149,7 @@ public:
 	BOOL GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab);
 	int GetTabCount();
 	BOOL ActivateFarWindow(int anWndIndex);
+	DWORD CanActivateFarWindow(int anWndIndex);
 
 protected:
 	BOOL PreCreate(BOOL abDetached);

@@ -26,6 +26,8 @@ TabBarClass::TabBarClass()
 	//ConMan_KeyAction = NULL;
 	mn_MsgUpdateTabs = RegisterWindowMessage(CONEMUMSG_UPDATETABS);
 	memset(&m_Tab4Tip, 0, sizeof(m_Tab4Tip));
+	mb_InKeySwitching = FALSE;
+	ms_TmpTabText[0] = 0;
 }
 
 void TabBarClass::Enable(BOOL abEnabled)
@@ -128,6 +130,7 @@ void TabBarClass::Retrieve()
 	//}
 }
 
+// Добавляет закладку, или меняет (при необходимости) заголовок существующей
 void TabBarClass::AddTab(LPCWSTR text, int i)
 {
 	TCITEM tie;
@@ -136,16 +139,19 @@ void TabBarClass::AddTab(LPCWSTR text, int i)
 	tie.pszText = (LPWSTR)text ;
 
 	int nCurCount = TabCtrl_GetItemCount(mh_Tabbar);
-	if (i>=nCurCount)
+	if (i>=nCurCount) {
 		TabCtrl_InsertItem(mh_Tabbar, i, &tie);
-	else
-		TabCtrl_SetItem(mh_Tabbar, i, &tie);
+	} else {
+		if (wcscmp(GetTabText(i), text)) // "меняем" только если он реально меняется
+			TabCtrl_SetItem(mh_Tabbar, i, &tie);
+	}
 }
 
 void TabBarClass::SelectTab(int i)
 {
     mb_ChangeAllowed = TRUE;
-	TabCtrl_SetCurSel(mh_Tabbar, i);
+    if (i != TabCtrl_GetCurSel(mh_Tabbar)) // Меняем выделение, только если оно реально меняется
+		TabCtrl_SetCurSel(mh_Tabbar, i);
 	mb_ChangeAllowed = FALSE;
 }
 
@@ -191,18 +197,34 @@ CVirtualConsole* TabBarClass::FarSendChangeTab(int tabIndex)
 
 	CVirtualConsole *pVCon = NULL;
 	DWORD wndIndex = 0;
+	BOOL  bNeedActivate = FALSE, bChangeOk = FALSE;
 
-	if (!GetVConFromTab(tabIndex, &pVCon, &wndIndex))
+	if (!GetVConFromTab(tabIndex, &pVCon, &wndIndex)) {
+		if (mb_InKeySwitching) Update(); // показать реальное положение дел
 		return NULL;
+	}
+	
+	if (!gConEmu.isActive(pVCon))
+		bNeedActivate = TRUE;
+		
 
-	if (!gConEmu.isActive(pVCon)) {
+	bChangeOk = pVCon->RCon()->ActivateFarWindow(wndIndex);
+	
+	// Чтобы лишнее не мелькало - активируем консоль 
+	// ТОЛЬКО после смены таба (успешной или неудачной - неважно)
+	if (bNeedActivate) {
 		if (!gConEmu.Activate(pVCon)) {
+			if (mb_InKeySwitching) Update(); // показать реальное положение дел
+			
 			TODO("А текущий таб не слетит, если активировать не удалось?");
 			return NULL;
 		}
 	}
-
-	pVCon->RCon()->ActivateFarWindow(wndIndex);
+	
+	if (!bChangeOk) {
+		pVCon = NULL;
+		if (mb_InKeySwitching) Update(); // показать реальное положение дел
+	}
 
 	return pVCon;
 }
@@ -451,7 +473,8 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
 			vct.pVCon = pVCon;
 			vct.nFarWindowId = I;
 			m_Tab2VCon.push_back(vct);
-			AddTab(tab.Name, tabIdx); // Добавит или заменит существующий
+			// Добавляет закладку, или меняет (при необходимости) заголовок существующей
+			AddTab(tab.Name, tabIdx);
 			
 			if (lbActive && tab.Current)
 				nCurTab = tabIdx;
@@ -465,7 +488,8 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
 		
 		vct.pVCon = NULL;
 		vct.nFarWindowId = 0;
-		AddTab(tab.Name, tabIdx); // Добавит или заменит существующий
+		// Добавляет закладку, или меняет (при необходимости) заголовок существующей
+		AddTab(tab.Name, tabIdx);
 		nCurTab = tabIdx;
 		tabIdx++;
 	}
@@ -685,13 +709,7 @@ bool TabBarClass::OnNotify(LPNMHDR nmhdr)
 		
 		if (iPage >= 0) {
 			// Если в табе нет "…" - тип не нужен
-			TCITEM item = {TCIF_TEXT};
-			WCHAR  szBuffer[MAX_PATH] = {0};
-			item.pszText = szBuffer; item.cchTextMax = MAX_PATH;
-			
-			if (!TabCtrl_GetItem(mh_Tabbar, iPage, &item))
-				return 0;
-			if (!wcschr(szBuffer, L'…'))
+			if (!wcschr(GetTabText(iPage), L'…'))
 				return 0;
 		
 			if (!GetVConFromTab(iPage, &pVCon, &wndIndex))
@@ -706,6 +724,18 @@ bool TabBarClass::OnNotify(LPNMHDR nmhdr)
 	}
 
 	return false;
+}
+
+LPCWSTR TabBarClass::GetTabText(int nTabIdx)
+{
+	TCITEM item = {TCIF_TEXT};
+	item.pszText = ms_TmpTabText; item.cchTextMax = sizeof(ms_TmpTabText)/sizeof(ms_TmpTabText[0]);
+	ms_TmpTabText[0] = 0;
+	
+	if (!TabCtrl_GetItem(mh_Tabbar, nTabIdx, &item))
+		return L"";
+		
+	return ms_TmpTabText;
 }
 
 void TabBarClass::OnCommand(WPARAM wParam, LPARAM lParam)
@@ -985,13 +1015,18 @@ HWND TabBarClass::CreateTabbar()
 
 		RECT rcClient;
 		GetClientRect(ghWnd, &rcClient); 
-		DWORD nPlacement = TCS_SINGLELINE|WS_VISIBLE/*|TCS_BUTTONS*/|TCS_TOOLTIPS;
+		DWORD nPlacement = TCS_SINGLELINE|WS_VISIBLE/*|TCS_BUTTONS*//*|TCS_TOOLTIPS*/;
 		mh_Tabbar = CreateWindow(WC_TABCONTROL, NULL, nPlacement | WS_CHILD | WS_CLIPSIBLINGS | TCS_FOCUSNEVER, 0, 0, 
 			rcClient.right, 0, mh_Rebar, NULL, g_hInstance, NULL);
 		if (mh_Tabbar == NULL)
 		{ 
 			return NULL; 
 		}
+
+		// Надо
+		#pragma warning (disable : 4312)
+		_defaultTabProc = (WNDPROC)SetWindowLongPtr(mh_Tabbar, GWL_WNDPROC, (LONG_PTR)TabProc);
+
 	    if (!mh_TabTip || !IsWindow(mh_TabTip)) {
 	        mh_TabTip = CreateWindowEx(WS_EX_TOPMOST, TOOLTIPS_CLASS, NULL,
 	                              WS_POPUP | TTS_ALWAYSTIP /*| TTS_BALLOON*/ | TTS_NOPREFIX,
@@ -1006,11 +1041,10 @@ HWND TabBarClass::CreateTabbar()
 			CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_SWISS, TAB_FONT_FACE);
 		SendMessage(mh_Tabbar, WM_SETFONT, WPARAM (hFont), TRUE);
 		
-		// Надо
-		#pragma warning (disable : 4312)
-		_defaultTabProc = (WNDPROC)SetWindowLongPtr(mh_Tabbar, GWL_WNDPROC, (LONG_PTR)TabProc);
 
-		AddTab(gConEmu.isFar() ? gSet.szTabPanels : gSet.pszTabConsole, 0);
+		// Добавляет закладку, или меняет (при необходимости) заголовок существующей
+		//AddTab(gConEmu.isFar() ? gSet.szTabPanels : gSet.pszTabConsole, 0);
+		AddTab(gConEmu.GetTitle(), 0);
  
 // Create a toolbar. 
 	/*
@@ -1157,7 +1191,14 @@ void TabBarClass::PrepareTab(ConEmuTab* pTab)
 	wchar_t *tFileName=NULL, *pszNo=NULL, *pszTitle=NULL; //--Maximus
 	if (pTab->Name[0]==0 || pTab->Type == 1/*WTYPE_PANELS*/) {
 		if (pTab->Name[0] == 0) {
-			_tcscpy(pTab->Name, gConEmu.isFar() ? gSet.szTabPanels : gSet.pszTabConsole);
+			#ifdef _DEBUG
+			// Это должно случаться ТОЛЬКО при инициализации GUI
+			int nTabCount = TabCtrl_GetItemCount(mh_Tabbar);
+			if (nTabCount>0 && gConEmu.ActiveCon()!=NULL) {
+				_ASSERTE(pTab->Name[0] != 0);
+			}
+			#endif
+			_tcscpy(pTab->Name, gConEmu.GetTitle()); //isFar() ? gSet.szTabPanels : gSet.pszTabConsole);
 		}
 		tFileName = pTab->Name;
 		_tcscpy(szFormat, _T("%s"));
@@ -1204,4 +1245,101 @@ void TabBarClass::PrepareTab(ConEmuTab* pTab)
 		wsprintf(fileName, szFormat, tFileName, pTab->Pos);
 
 	wcscpy(pTab->Name, fileName);
+}
+
+// Переключение табов
+
+int TabBarClass::GetNextTab(BOOL abForward)
+{
+	int nCurSel = TabCtrl_GetCurSel(mh_Tabbar);
+	int nCurCount = TabCtrl_GetItemCount(mh_Tabbar);
+	
+	int i, nNewSel = -1;
+
+	TODO("Добавить возможность переключаться а'ля RecentScreens");
+	if (abForward) {	
+		if (!gSet.isTabRecent) {
+			for (i = nCurSel+1; nNewSel == -1 && i < nCurCount; i++)
+				if (CanActivateTab(i)) nNewSel = i;
+			
+			for (i = 0; nNewSel == -1 && i < nCurSel; i++)
+				if (CanActivateTab(i)) nNewSel = i;
+		} else {
+			TODO("...");
+		}
+	} else {
+		if (!gSet.isTabRecent) {
+			for (i = nCurSel-1; nNewSel == -1 && i >= 0; i++)
+				if (CanActivateTab(i)) nNewSel = i;
+			
+			for (i = nCurCount-1; nNewSel == -1 && i > nCurSel; i++)
+				if (CanActivateTab(i)) nNewSel = i;
+		} else {
+			TODO("...");
+		}
+	}
+
+	return nNewSel;
+}
+
+void TabBarClass::SwitchNext()
+{
+	int nNewSel = GetNextTab ( TRUE );
+	
+	if (nNewSel != -1) {
+		mb_InKeySwitching = TRUE;
+		// Пока Ctrl не отпущен - только подсвечиваем таб, а не переключаем реально
+		SelectTab ( nNewSel );
+	}
+}
+
+void TabBarClass::SwitchPrev()
+{
+	int nNewSel = GetNextTab ( FALSE );
+	
+	if (nNewSel != -1) {
+		mb_InKeySwitching = TRUE;
+		// Пока Ctrl не отпущен - только подсвечиваем таб, а не переключаем реально
+		SelectTab ( nNewSel );
+	}
+}
+
+void TabBarClass::SwitchCommit()
+{
+	if (!mb_InKeySwitching) return;
+	
+	int nCurSel = TabCtrl_GetCurSel(mh_Tabbar);
+	
+	FarSendChangeTab(nCurSel);
+	
+	mb_InKeySwitching = FALSE;
+}
+
+BOOL TabBarClass::CanActivateTab(int nTabIdx)
+{
+	CVirtualConsole *pVCon = NULL;
+	DWORD wndIndex = 0;
+
+	if (!GetVConFromTab(nTabIdx, &pVCon, &wndIndex))
+		return FALSE;
+
+	if (!pVCon->RCon()->CanActivateFarWindow(wndIndex))
+		return FALSE;
+		
+	return TRUE;
+}
+
+BOOL TabBarClass::OnKeyboard(UINT messg, WPARAM wParam, LPARAM lParam)
+{
+	if (!IsShown())
+		return FALSE;
+
+	if (messg == WM_KEYDOWN && wParam == VK_TAB) {
+		if (!isPressed(VK_SHIFT))
+			SwitchNext();
+		else
+			SwitchPrev();
+	}
+		
+	return TRUE;
 }

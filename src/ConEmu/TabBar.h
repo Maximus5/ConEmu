@@ -23,6 +23,11 @@ private:
 	void PrepareTab(ConEmuTab* pTab);
 	BOOL GetVConFromTab(int nTabIdx, CVirtualConsole** rpVCon, DWORD* rpWndIndex);
 	ConEmuTab m_Tab4Tip;
+	WCHAR  ms_TmpTabText[MAX_PATH];
+	LPCWSTR GetTabText(int nTabIdx);
+	BOOL CanActivateTab(int nTabIdx);
+	BOOL mb_InKeySwitching;
+	int GetNextTab(BOOL abForward);
 
 protected:
 	static LRESULT CALLBACK TabProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -36,6 +41,19 @@ protected:
 	std::vector<VConTabs> m_Tab2VCon;
 	BOOL mb_PostUpdateCalled;
 	UINT mn_MsgUpdateTabs;
+	
+	// Tab stack
+	typedef union _ULARGE_INTEGER { 
+		struct {
+			DWORD FarPID/*LowPart*/;
+			DWORD WndNo/*HighPart*/;
+		};
+		struct {
+			DWORD FarPID/*LowPart*/;
+			DWORD WndNo/*HighPart*/;
+		} u;
+		ULONGLONG ID;
+	} FAR_WND_ID;
 
 public:
 	TabBarClass();
@@ -62,4 +80,9 @@ public:
 	bool OnNotify(LPNMHDR nmhdr);
 	void OnCommand(WPARAM wParam, LPARAM lParam);
 	void OnMouse(int message, int x, int y);
+	// Переключение табов
+	void SwitchNext();
+	void SwitchPrev();
+	void SwitchCommit();
+	BOOL OnKeyboard(UINT messg, WPARAM wParam, LPARAM lParam);
 };

@@ -54,7 +54,7 @@ public:
     bool isDefCopy;
     bool isDnDsteps;
     bool isGUIpb;
-    char isTabs;
+    char isTabs; bool isTabSelf, isTabRecent;
     DWORD wndWidth, wndHeight, ntvdmHeight; // в символах
     int wndX, wndY; // в пикселях
     bool wndCascade;

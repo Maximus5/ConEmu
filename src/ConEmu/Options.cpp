@@ -142,7 +142,7 @@ void CSettings::InitSettings()
     
     isCursorV = true;
     
-    isTabs = 1;
+    isTabs = 1; isTabSelf = true; isTabRecent = false;
     
     isVisualizer = false;
     nVizNormal = 1; nVizFore = 15; nVizTab = 15; nVizEOL = 8; nVizEOF = 12;

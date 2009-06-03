@@ -392,6 +392,10 @@ DWORD WINAPI ThreadProcW(LPVOID lpParameter)
 {
 	//DWORD dwProcId = GetCurrentProcessId();
 
+	DWORD dwStartTick = GetTickCount();
+	
+	_ASSERTE(ConEmuHwnd!=NULL);
+
 	while (true)
 	{
 		DWORD dwWait = 0;
@@ -404,6 +408,9 @@ DWORD WINAPI ThreadProcW(LPVOID lpParameter)
 		dwWait = WaitForSingleObject(ghServerTerminateEvent, dwTimeout);
 		if (dwWait == WAIT_OBJECT_0)
 			break; // завершение плагина
+
+		if (ConEmuHwnd == NULL && FarHwnd != NULL) {
+		}
 
 		// “еоретически, нить обработки может запуститьс€ и без ConEmuHwnd (под телнетом)
 	    if (ConEmuHwnd && FarHwnd && (dwWait>=(WAIT_OBJECT_0+MAXCMDCOUNT))) {
@@ -1158,7 +1165,8 @@ int WINAPI _export ProcessEditorEventW(int Event, void *Param)
 		return 0;
 	}
 	// !!! »менно UpdateConEmuTabsW, без версии !!!
-	UpdateConEmuTabsW(Event, Event == EE_KILLFOCUS, Event == EE_SAVE);
+	//2009-06-03 EE_KILLFOCUS при закрытии редактора не приходит. “олько EE_CLOSE
+	UpdateConEmuTabsW(Event, (Event == EE_KILLFOCUS || Event == EE_CLOSE), Event == EE_SAVE);
 	return 0;
 }
 
@@ -1185,7 +1193,8 @@ int WINAPI _export ProcessViewerEventW(int Event, void *Param)
 		return 0;
 	}
 	// !!! »менно UpdateConEmuTabsW, без версии !!!
-	UpdateConEmuTabsW(Event, Event == VE_KILLFOCUS, false);
+	//2009-06-03 VE_KILLFOCUS при закрытии редактора не приходит. “олько VE_CLOSE
+	UpdateConEmuTabsW(Event, (Event == VE_KILLFOCUS || Event == VE_CLOSE), false);
 	return 0;
 }
 

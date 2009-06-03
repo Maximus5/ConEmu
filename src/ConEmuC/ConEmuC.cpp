@@ -616,7 +616,7 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
             lstrcatW( (*psNewCmd), cmd.bK ? L"\" /K " : L"\" /C " );
         } else {
             lstrcpyW( (*psNewCmd), szComSpec );
-            lstrcatW( (*psNewCmd), cmd.bK ? L"\" /K " : L"\" /C " );
+            lstrcatW( (*psNewCmd), cmd.bK ? L" /K " : L" /C " );
         }
         lstrcatW( (*psNewCmd), asCmdLine );
     }

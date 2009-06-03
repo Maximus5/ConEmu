@@ -1,6 +1,8 @@
 #pragma once
 #include <windows.h>
 
+#include "usetodo.hpp"
+
 //#define CONEMUPIPE      L"\\\\.\\pipe\\ConEmuPipe%u"
 //#define CONEMUEVENTIN   L"ConEmuInEvent%u"
 //#define CONEMUEVENTOUT  L"ConEmuOutEvent%u"
@@ -12,46 +14,46 @@
 // with line number
 #if !defined(_MSC_VER)
 
-	#define TODO(s)
-	#define WARNING(s)
-	#define PRAGMA_ERROR(s)
+    #define TODO(s)
+    #define WARNING(s)
+    #define PRAGMA_ERROR(s)
 
-	#define CONSOLE_APPLICATION_16BIT 1
-	
-	typedef struct _CONSOLE_SELECTION_INFO {
-	    DWORD dwFlags;
-	    COORD dwSelectionAnchor;
-	    SMALL_RECT srSelection;
-	} CONSOLE_SELECTION_INFO, *PCONSOLE_SELECTION_INFO;
+    #define CONSOLE_APPLICATION_16BIT 1
+    
+    typedef struct _CONSOLE_SELECTION_INFO {
+        DWORD dwFlags;
+        COORD dwSelectionAnchor;
+        SMALL_RECT srSelection;
+    } CONSOLE_SELECTION_INFO, *PCONSOLE_SELECTION_INFO;
 
-	#ifndef max
-	#define max(a,b)            (((a) > (b)) ? (a) : (b))
-	#endif
+    #ifndef max
+    #define max(a,b)            (((a) > (b)) ? (a) : (b))
+    #endif
 
-	#ifndef min
-	#define min(a,b)            (((a) < (b)) ? (a) : (b))
-	#endif
+    #ifndef min
+    #define min(a,b)            (((a) < (b)) ? (a) : (b))
+    #endif
 
-	#define _ASSERT(f)
-	#define _ASSERTE(f)
-	
+    #define _ASSERT(f)
+    #define _ASSERTE(f)
+    
 #else
 
-	#define STRING2(x) #x
-	#define STRING(x) STRING2(x)
-	#define FILE_LINE __FILE__ "(" STRING(__LINE__) "): "
-	#ifdef HIDE_TODO
-	#define TODO(s) 
-	#define WARNING(s) 
-	#else
-	#define TODO(s) __pragma(message (FILE_LINE "TODO: " s))
-	#define WARNING(s) __pragma(message (FILE_LINE "warning: " s))
-	#endif
-	#define PRAGMA_ERROR(s) __pragma(message (FILE_LINE "error: " s))
+    #define STRING2(x) #x
+    #define STRING(x) STRING2(x)
+    #define FILE_LINE __FILE__ "(" STRING(__LINE__) "): "
+    #ifdef HIDE_TODO
+    #define TODO(s) 
+    #define WARNING(s) 
+    #else
+    #define TODO(s) __pragma(message (FILE_LINE "TODO: " s))
+    #define WARNING(s) __pragma(message (FILE_LINE "warning: " s))
+    #endif
+    #define PRAGMA_ERROR(s) __pragma(message (FILE_LINE "error: " s))
 
-	#ifdef _DEBUG
-	#include <crtdbg.h>
-	#endif
+    #ifdef _DEBUG
+    #include <crtdbg.h>
+    #endif
 
 #endif
 
@@ -81,15 +83,15 @@
 #pragma pack(push, 1)
 
 typedef struct tag_CESERVER_REQ {
-	DWORD   nSize;
-	DWORD   nCmd;
-	DWORD   nVersion;
-	BYTE    Data[1]; // вообще-то размер динамический
+    DWORD   nSize;
+    DWORD   nCmd;
+    DWORD   nVersion;
+    BYTE    Data[1]; // вообще-то размер динамический
 } CESERVER_REQ;
 
 typedef struct tag_CESERVER_CHAR {
-	COORD crStart, crEnd; //WARNING: Это АБСОЛЮТНЫЕ координаты (без учета прокрутки), а не экранные.
-	WORD  data[2]; // variable length
+    COORD crStart, crEnd; //WARNING: Это АБСОЛЮТНЫЕ координаты (без учета прокрутки), а не экранные.
+    WORD  data[2]; // variable length
 } CESERVER_CHAR;
 
 #pragma pack(pop)
@@ -125,58 +127,58 @@ typedef struct tag_CESERVER_CHAR {
 //#define GWL_LANGCHANGE   4
 
 #ifdef _DEBUG
-	#define CONEMUALIVETIMEOUT INFINITE
-	#define CONEMUREADYTIMEOUT INFINITE
-	#define CONEMUFARTIMEOUT   120000 // Сколько ожидать, пока ФАР среагирует на вызов плагина
+    #define CONEMUALIVETIMEOUT INFINITE
+    #define CONEMUREADYTIMEOUT INFINITE
+    #define CONEMUFARTIMEOUT   120000 // Сколько ожидать, пока ФАР среагирует на вызов плагина
 #else
-	#define CONEMUALIVETIMEOUT 1000  // Живость плагина ждем секунду
-	#define CONEMUREADYTIMEOUT 10000 // А на выполнение команды - 10s max
-	#define CONEMUFARTIMEOUT   10000 // Сколько ожидать, пока ФАР среагирует на вызов плагина
+    #define CONEMUALIVETIMEOUT 1000  // Живость плагина ждем секунду
+    #define CONEMUREADYTIMEOUT 10000 // А на выполнение команды - 10s max
+    #define CONEMUFARTIMEOUT   10000 // Сколько ожидать, пока ФАР среагирует на вызов плагина
 #endif
 
 #define CONEMUTABMAX 0x400
 struct ConEmuTab
 {
-	int  Pos;
-	int  Current;
-	int  Type;
-	int  Modified;
-	wchar_t Name[CONEMUTABMAX];
-//	int  Modified;
-//	int isEditor;
+    int  Pos;
+    int  Current;
+    int  Type;
+    int  Modified;
+    wchar_t Name[CONEMUTABMAX];
+//  int  Modified;
+//  int isEditor;
 };
 
 struct ForwardedPanelInfo
 {
-	RECT ActiveRect;
-	RECT PassiveRect;
-	int ActivePathShift; // сдвиг в этой структуре в байтах
-	int PassivePathShift; // сдвиг в этой структуре в байтах
-	WCHAR* pszActivePath/*[MAX_PATH+1]*/;
-	WCHAR* pszPassivePath/*[MAX_PATH+1]*/;
+    RECT ActiveRect;
+    RECT PassiveRect;
+    int ActivePathShift; // сдвиг в этой структуре в байтах
+    int PassivePathShift; // сдвиг в этой структуре в байтах
+    WCHAR* pszActivePath/*[MAX_PATH+1]*/;
+    WCHAR* pszPassivePath/*[MAX_PATH+1]*/;
 };
 
 struct FarVersion {
-	union {
-		DWORD dwVer;
-		struct {
-			WORD dwVerMinor;
-			WORD dwVerMajor;
-		};
-	};
-	DWORD dwBuild;
+    union {
+        DWORD dwVer;
+        struct {
+            WORD dwVerMinor;
+            WORD dwVerMajor;
+        };
+    };
+    DWORD dwBuild;
 };
 
 struct ForwardedFileInfo
 {
-	WCHAR Path[MAX_PATH+1];
+    WCHAR Path[MAX_PATH+1];
 };
 
 /*enum PipeCmd
 {
-	SetTabs=0,
-	DragFrom,
-	DragTo
+    SetTabs=0,
+    DragFrom,
+    DragTo
 };*/
 
 // ConEmu.dll экспортирует следующие функции
