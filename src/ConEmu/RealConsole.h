@@ -220,7 +220,7 @@ private:
 	void ApplyConsoleInfo(CESERVER_REQ* pInfo);
 	void SetHwnd(HWND ahConWnd);
 	WORD mn_LastVKeyPressed;
-	DWORD mn_LastConReadTick;
+	DWORD mn_LastConFullReadTick, mn_LastConRgnReadTick;
 	BOOL GetConWindowSize(const CONSOLE_SCREEN_BUFFER_INFO& sbi, int& nNewWidth, int& nNewHeight, BOOL* pbBufferHeight=NULL);
 	int mn_Focused; //-1 после запуска, 1 - в фокусе, 0 - не в фокусе
 	DWORD mn_InRecreate; // Tick, когда начали пересоздание
