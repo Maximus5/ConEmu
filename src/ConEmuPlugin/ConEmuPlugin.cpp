@@ -1030,7 +1030,7 @@ BOOL AddTab(int &tabCount, bool losingFocus, bool editorSave,
 {
     BOOL lbCh = FALSE;
 	OutputDebugString(L"--AddTab\n");
-    
+
 	if (Type == WTYPE_PANELS) {
 	    lbCh = (tabs[0].Current != (losingFocus ? 1 : 0)) ||
 	           (tabs[0].Type != WTYPE_PANELS);
@@ -1042,6 +1042,12 @@ BOOL AddTab(int &tabCount, bool losingFocus, bool editorSave,
 	} else
 	if (Type == WTYPE_EDITOR || Type == WTYPE_VIEWER)
 	{
+		// ѕервое окно - должно быть панели. ≈сли нет - значит фар открыт в режиме редактора
+		if (tabCount == 1) {
+			// 04.06.2009 Maks - Ќе, чего-то не то... при открытии редактора из панелей - он замен€ет панели
+			//tabs[0].Type = Type;
+		}
+
 		// when receiving saving event receiver is still reported as modified
 		if (editorSave && lstrcmpi(FileName, Name) == 0)
 			Modified = 0;
@@ -1097,7 +1103,7 @@ void SendTabs(int tabCount, BOOL abFillDataOnly/*=FALSE*/)
 			cds.lpData = tabs;
 		} else {
 			// ѕанелей нет - фар был открыт в режиме редактора!
-			cds.dwData = --tabCount;
+			cds.dwData = --tabCount; //2009-06-04 наверное больше одного редактора в таком случае быть не должно
 			cds.lpData = tabs+1;
 		}
 		// ≈сли abFillDataOnly - данные подготавливаютс€ дл€ записи в Pipe - иначе процедура отсылает данные сама

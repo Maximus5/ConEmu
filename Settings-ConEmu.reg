@@ -111,8 +111,14 @@ REGEDIT4
 
 ;; Tabs: 0 - don't show, 1 - always, 2 - auto
 "Tabs"=hex:02
+;; Handle 'Ctrl-Tab' & 'Ctrl-Shift-Tab' internally
+"TabSelf"=hex:01
+;; Keyboard switching: 0 - immediate, 1 - on Ctrl depress
+"TabLazy"=hex:01
+;; TabRecent
+;"TabRecent"=hex:01 - Does not work still
 ;; Tabs view style. 0 - Labels only, 1 - Labels & Frame
-"TabFrame"=hex:01
+;"TabFrame"=hex:00 - Does not work still
 ;; For internal use (Tab control sizes)
 ;"TabMargins"=hex:04,00,00,00,19,00,00,00,04,00,00,00,04,00,00,00
 ;; Tab labels formatting. '%i' is optional.

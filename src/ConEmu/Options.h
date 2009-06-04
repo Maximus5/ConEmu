@@ -46,7 +46,7 @@ public:
     char isRClickSendKey;
     bool isSentAltEnter;
     bool isMinToTray;
-    bool isForceMonospace, isTTF;
+    bool isForceMonospace, isProportional;
     bool isUpdConHandle;
     BYTE isDragEnabled;
     BYTE isDropEnabled;
@@ -54,7 +54,7 @@ public:
     bool isDefCopy;
     bool isDnDsteps;
     bool isGUIpb;
-    char isTabs; bool isTabSelf, isTabRecent;
+    char isTabs; bool isTabSelf, isTabRecent, isTabLazy;
     DWORD wndWidth, wndHeight, ntvdmHeight; // в символах
     int wndX, wndY; // в пикселях
     bool wndCascade;

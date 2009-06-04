@@ -204,7 +204,8 @@ void ShowConDump(wchar_t* pszText)
 
 HANDLE WINAPI OpenFilePluginW(const wchar_t *Name,const unsigned char *Data,int DataSize,int OpMode)
 {
-	if (OpMode) return INVALID_HANDLE_VALUE; // только из панелей в обычном режиме
+	//Name==NULL, когда Shift-F1
+	if (OpMode || Name == NULL) return INVALID_HANDLE_VALUE; // только из панелей в обычном режиме
 	const wchar_t* pszDot = wcsrchr(Name, L'.');
 	if (!pszDot || lstrcmpi(pszDot, L".con")) return INVALID_HANDLE_VALUE;
 	if (DataSize < 12) return INVALID_HANDLE_VALUE;

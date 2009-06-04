@@ -14,7 +14,6 @@ public:
 	CRealConsole *RCon() { if (this) return mp_RCon; return NULL; };
 public:
     WARNING("Сделать protected!");
-	bool IsForceUpdate;
 	uint TextWidth, TextHeight; // размер в символах
 	uint Width, Height; // размер в пикселях
 private:
@@ -35,6 +34,9 @@ private:
 		RECT lastRect;
 		UINT lastSize; // предыдущая высота курсора (в процентах)
 	} Cursor;
+	//
+	bool    mb_IsForceUpdate; // Это устанавливается в InitDC, чтобы случайно isForce не потерялся
+	bool    mb_RequiredForceUpdate; // Сменился шрифт, например...
 public:
 	HDC     hDC;
 	HBITMAP hBitmap;
@@ -77,6 +79,7 @@ public:
 	DWORD GetConsoleMode() { return mp_RCon->GetConsoleMode(); };
 	void GetConsoleScreenBufferInfo(CONSOLE_SCREEN_BUFFER_INFO *sbi) { mp_RCon->GetConsoleScreenBufferInfo(sbi); };
 	RECT GetRect();
+	void OnFontChanged();
 
 protected:
 	enum _PartType{

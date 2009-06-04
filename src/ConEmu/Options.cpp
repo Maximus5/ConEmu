@@ -79,7 +79,7 @@ void CSettings::InitSettings()
     //isAdvLangChange = true;
     isSkipFocusEvents = false;
     isLangChangeWsPlugin = false;
-    DefaultBufferHeight = 1000; 
+    DefaultBufferHeight = 1000;
 	ForceBufferHeight = false; /* устанавливается в true, из ком.строки /BufferHeight */
 	AutoScroll = true;
     LogFont.lfHeight = 16;
@@ -96,7 +96,7 @@ void CSettings::InitSettings()
     _tcscpy(LogFont2.lfFaceName, _T("Lucida Console"));
     isTryToCenter = false;
     isTabFrame = true;
-    isForceMonospace = false; isTTF = false;
+    isForceMonospace = false; isProportional = false;
     isMinToTray = false;
     
     Registry RegConColors, RegConDef;
@@ -142,7 +142,7 @@ void CSettings::InitSettings()
     
     isCursorV = true;
     
-    isTabs = 1; isTabSelf = true; isTabRecent = false;
+    isTabs = 1; isTabSelf = true; isTabRecent = false; isTabLazy = true;
     
     isVisualizer = false;
     nVizNormal = 1; nVizFore = 15; nVizTab = 15; nVizEOL = 8; nVizEOF = 12;
@@ -230,6 +230,7 @@ void CSettings::LoadSettings()
         }
         reg.Load(_T("ConWnd Width"), wndWidth); if (!wndWidth) wndWidth = 80; else if (wndWidth>1000) wndWidth = 1000;
         reg.Load(_T("ConWnd Height"), wndHeight); if (!wndHeight) wndHeight = 25; else if (wndHeight>500) wndHeight = 500;
+        //TODO: Эти два параметра не сохраняются
         reg.Load(_T("16it Height"), ntvdmHeight); if (ntvdmHeight<20) ntvdmHeight = 20; else if (ntvdmHeight>100) ntvdmHeight = 100;
 		reg.Load(_T("DefaultBufferHeight"), DefaultBufferHeight); if (DefaultBufferHeight < 300) DefaultBufferHeight = 300;
 
@@ -243,7 +244,7 @@ void CSettings::LoadSettings()
         reg.Load(_T("FontBold"), isBold);
         reg.Load(_T("FontItalic"), isItalic);
         reg.Load(_T("ForceMonospace"), isForceMonospace);
-        reg.Load(_T("Proportional"), isTTF);
+        reg.Load(_T("Proportional"), isProportional);
         reg.Load(_T("Update Console handle"), isUpdConHandle);
         reg.Load(_T("Dnd"), isDragEnabled); 
         isDropEnabled = (BYTE)(isDragEnabled ? 1 : 0); // ранее "DndDrop" не было, поэтому ставим default
@@ -254,6 +255,9 @@ void CSettings::LoadSettings()
         reg.Load(_T("DndSteps"), isDnDsteps);
         reg.Load(_T("GUIpb"), isGUIpb);
         reg.Load(_T("Tabs"), isTabs);
+	        reg.Load(_T("TabSelf"), isTabSelf);
+	        reg.Load(_T("TabLazy"), isTabLazy);
+	        reg.Load(_T("TabRecent"), isTabRecent);
         reg.Load(_T("TabFrame"), isTabFrame);
         reg.Load(_T("TabMargins"), rcTabMargins);
         reg.Load(_T("SlideShowElapse"), nSlideShowElapse);
@@ -416,11 +420,14 @@ BOOL CSettings::SaveSettings()
             reg.Save(_T("DefCopy"), isDefCopy);
             reg.Save(_T("GUIpb"), isGUIpb);
             reg.Save(_T("Tabs"), isTabs);
+		        reg.Save(_T("TabSelf"), isTabSelf);
+		        reg.Save(_T("TabLazy"), isTabLazy);
+		        reg.Save(_T("TabRecent"), isTabRecent);
             reg.Save(_T("BackGround Image show"), isShowBgImage);
             reg.Save(_T("FontBold"), LogFont.lfWeight == FW_BOLD);
             reg.Save(_T("FontItalic"), LogFont.lfItalic);
             reg.Save(_T("ForceMonospace"), isForceMonospace);
-            reg.Save(_T("Proportional"), isTTF);
+            reg.Save(_T("Proportional"), isProportional);
             reg.Save(_T("Update Console handle"), isUpdConHandle);
 
             reg.Save(_T("ConWnd Width"), wndWidth);
@@ -681,7 +688,7 @@ LRESULT CSettings::OnInitDialog()
         CheckDlgButton(hMain, rCursorH, BST_CHECKED);
     if (isForceMonospace)
         CheckDlgButton(hMain, cbMonospace, BST_CHECKED);
-    if (!isTTF)
+    if (!isProportional)
         CheckDlgButton(hMain, cbNonProportional, BST_CHECKED);
     if (isUpdConHandle)
         CheckDlgButton(ghOpWnd, cbAutoConHandle, BST_CHECKED);
@@ -1000,7 +1007,7 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
         break;
 
     case cbNonProportional:
-        isTTF = !isTTF;
+        isProportional = !isProportional;
         mb_IgnoreEditChanged = TRUE;
         gConEmu.Update(true);
         mb_IgnoreEditChanged = FALSE;
@@ -1754,9 +1761,9 @@ void CSettings::UpdateTTF(BOOL bNewTTF)
 {
     if (mb_IgnoreTtfChange) return;
 
-    isTTF = bNewTTF;
+    isProportional = bNewTTF;
     /* */ CheckDlgButton(hMain, cbNonProportional, 
-        gSet.isTTF ? BST_UNCHECKED : BST_CHECKED);
+        gSet.isProportional ? BST_UNCHECKED : BST_CHECKED);
 }
 
 void CSettings::Performance(UINT nID, BOOL bEnd)
