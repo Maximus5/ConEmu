@@ -10,6 +10,7 @@
 
 #define MIN_CON_WIDTH 28
 #define MIN_CON_HEIGHT 7
+#define GUI_ATTACH_TIMEOUT 5000
 
 // with line number
 #if !defined(_MSC_VER)

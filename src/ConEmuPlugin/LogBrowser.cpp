@@ -60,7 +60,7 @@ void ShowConPacket(CESERVER_REQ* pReq)
 	psz += wcslen(psz);
 
 	if (pReq->nCmd == CECMD_GETSHORTINFO || pReq->nCmd == CECMD_GETFULLINFO) {
-		wcscpy(psz, L"\n"); psz ++;
+		lstrcpyW(psz, L"\n"); psz ++;
 		LPBYTE ptr = pReq->Data;
 		// 1
 		wsprintf(psz, L"ConHwnd:    0x%08X\n", *(DWORD*)ptr); ptr += 4; psz += wcslen(psz);
@@ -69,12 +69,12 @@ void ShowConPacket(CESERVER_REQ* pReq)
 		// 3
 		dw = *(DWORD*)ptr;
 		wsprintf(psz, L"Processes:  %i", dw); ptr += 4; psz += wcslen(psz);
-		if (dw) { wcscpy(psz, L" {"); psz += wcslen(psz); }
+		if (dw) { lstrcpyW(psz, L" {"); psz += wcslen(psz); }
 		for (UINT n=0; n<dw; n++) {
-			if (n) { wcscpy(psz, L","); psz++; }
+			if (n) { lstrcpyW(psz, L","); psz++; }
 			wsprintf(psz, L"%i", *(DWORD*)ptr); ptr += 4; psz += wcslen(psz);
 		}
-		wcscpy(psz, dw ? L"}\n" : L"\n"); psz += wcslen(psz);
+		lstrcpyW(psz, dw ? L"}\n" : L"\n"); psz += wcslen(psz);
 		// 4
 		CONSOLE_SELECTION_INFO sel = {0};
 		dw = *(DWORD*)ptr; ptr += 4;
@@ -96,19 +96,19 @@ void ShowConPacket(CESERVER_REQ* pReq)
 		dw = *(DWORD*)ptr; ptr += 4;
 		if (dw>0) {
 			memmove(&sbi, ptr, min(dw,sizeof(sbi))); ptr += dw;
-			wcscpy(psz, L"\nConsole window layout\n"); psz += wcslen(psz);
+			lstrcpyW(psz, L"\nConsole window layout\n"); psz += wcslen(psz);
 			wsprintf(psz, L"  BufferSize: {%i x %i}%\n", sbi.dwSize.X, sbi.dwSize.Y); psz += wcslen(psz);
 			wsprintf(psz, L"  CursorPos:  {%i x %i}%\n", sbi.dwCursorPosition.X, sbi.dwCursorPosition.Y); psz += wcslen(psz);
 			wsprintf(psz, L"  MaxWndSize: {%i x %i}%\n", sbi.dwMaximumWindowSize.X, sbi.dwMaximumWindowSize.Y); psz += wcslen(psz);
 			wsprintf(psz, L"  WindowSize: {L=%i, T=%i, R=%i, B=%i}\n", sbi.srWindow.Left, sbi.srWindow.Top, sbi.srWindow.Right, sbi.srWindow.Bottom); psz += wcslen(psz);
-			wcscpy(psz, L"\n"); psz += wcslen(psz);
+			lstrcpyW(psz, L"\n"); psz += wcslen(psz);
 		}
 		// 10
 		dw = *(DWORD*)ptr; ptr += 4;
 		if (dw>0) {
 			if (dw >= sizeof(CESERVER_CHAR)) {
 				pceChar = (CESERVER_CHAR*)ptr;
-				wcscpy(psz, L"\nConsole region changes\n"); psz += wcslen(psz);
+				lstrcpyW(psz, L"\nConsole region changes\n"); psz += wcslen(psz);
 				wsprintf(psz, L"  Region:   {L=%i, T=%i, R=%i, B=%i}\n", pceChar->crStart.X, pceChar->crStart.Y, pceChar->crEnd.X, pceChar->crEnd.Y);
 				wsprintf(psz, L"  NewChar:  '%c'\n", pceChar->data[0]);
 			} else {
@@ -125,17 +125,17 @@ void ShowConPacket(CESERVER_REQ* pReq)
 			wsprintf(psz, L"Full console dump. Size: %i %s %i*%i*2\n", 
 				dwConDataBufSize, (dw==dwConDataBufSize) ? L"==" : L"<>", sbi.dwSize.X, sbi.dwSize.Y); 
 			psz += wcslen(psz);
-			wcscpy(psz, L"Press 'PgDn' to display it\n"); psz += wcslen(psz);
+			lstrcpyW(psz, L"Press 'PgDn' to display it\n"); psz += wcslen(psz);
 			pszConData = (wchar_t*)ptr; ptr += dwConDataBufSize;
 			pnConData = (WORD*)ptr;
 		}
 	} else {
-		int nMax = min(((int)(csbi.dwSize.X/4)),(pReq->nSize-12));
-		wcscpy(psz, L"\n\nPacket data:\n"); psz += wcslen(psz);
+		int nMax = min(((UINT)(csbi.dwSize.X/4)),(pReq->nSize-12));
+		lstrcpyW(psz, L"\n\nPacket data:\n"); psz += wcslen(psz);
 		for (int i=0; i<nMax; i++) {
 			wsprintf(psz, L"%02X ", (BYTE)pReq->Data[i]); psz += 3;
 		}
-		wcscpy(psz, L"\n");
+		lstrcpyW(psz, L"\n");
 	}
 
 	do {

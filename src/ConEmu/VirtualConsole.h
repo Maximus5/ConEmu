@@ -8,7 +8,6 @@
 class CVirtualConsole
 {
 private:
-	friend class CRealConsole;
 	// RealConsole
 	CRealConsole *mp_RCon;
 public:

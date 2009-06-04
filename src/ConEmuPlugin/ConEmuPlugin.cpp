@@ -393,7 +393,7 @@ DWORD WINAPI ThreadProcW(LPVOID lpParameter)
 	//DWORD dwProcId = GetCurrentProcessId();
 
 	DWORD dwStartTick = GetTickCount();
-	
+	BOOL lbStartedNoConEmu = (ConEmuHwnd == NULL);
 	//_ASSERTE(ConEmuHwnd!=NULL); -- ConEmu может подцепиться позднее!
 
 	while (true)
@@ -409,7 +409,14 @@ DWORD WINAPI ThreadProcW(LPVOID lpParameter)
 		if (dwWait == WAIT_OBJECT_0)
 			break; // завершение плагина
 
-		if (ConEmuHwnd == NULL && FarHwnd != NULL) {
+		if (lbStartedNoConEmu && ConEmuHwnd == NULL && FarHwnd != NULL) {
+			DWORD dwCurTick = GetTickCount();
+			DWORD dwDelta = dwCurTick - dwStartTick;
+			if (dwDelta > GUI_ATTACH_TIMEOUT) {
+				lbStartedNoConEmu = FALSE;
+				ShowWindowAsync(FarHwnd, SW_SHOWNORMAL);
+				EnableWindow(FarHwnd, true);
+			}
 		}
 
 		// Теоретически, нить обработки может запуститься и без ConEmuHwnd (под телнетом)

@@ -99,8 +99,7 @@ public:
 
 	uint TextWidth() { return con.nTextWidth; };
 	uint TextHeight() { return con.nTextHeight; };
-	friend class CVirtualConsole;
-
+	
 public:
 	HWND    hConWnd;
 
@@ -151,8 +150,14 @@ public:
 	BOOL ActivateFarWindow(int anWndIndex);
 	DWORD CanActivateFarWindow(int anWndIndex);
 
-protected:
+public:
+	// Вызываются из CVirtualConsole
 	BOOL PreCreate(BOOL abDetached);
+	BOOL IsConsoleThread();
+	void SetForceRead();
+	DWORD WaitEndUpdate(DWORD dwTimeout=1000);
+
+protected:
 	CVirtualConsole* mp_VCon; // соответствующая виртуальная консоль
 	DWORD mn_ConEmuC_PID; HANDLE mh_ConEmuC, mh_ConEmuCInput;
 	TCHAR ms_ConEmuC_Pipe[MAX_PATH], ms_ConEmuCInput_Pipe[MAX_PATH], ms_VConServer_Pipe[MAX_PATH];
