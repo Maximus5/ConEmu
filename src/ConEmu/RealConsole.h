@@ -233,4 +233,11 @@ private:
 	void LogInput(INPUT_RECORD* pRec);
 	void LogPacket(CESERVER_REQ* pInfo);
 	BOOL RecreateProcessStart();
+	// Прием и обработка пакетов
+	CRITICAL_SECTION csPKT; DWORD ncsTPKT;
+	DWORD mn_LastProcessedPkt; HANDLE mh_PacketArrived;
+	std::vector<CESERVER_REQ*> m_Packets;
+	void PushPacket(CESERVER_REQ* pPkt);
+	CESERVER_REQ* PopPacket();
 };
+

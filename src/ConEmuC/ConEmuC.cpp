@@ -41,7 +41,7 @@ WARNING("!!!! Пока можно при появлении события запоминать текущий тик");
 #ifndef _DEBUG
 #define FORCE_REDRAW_FIX
 #else
-#undef FORCE_REDRAW_FIX
+#define FORCE_REDRAW_FIX
 #endif
 
 
@@ -174,7 +174,8 @@ struct tag_Srv {
     HANDLE hRefreshEvent; // ServerMode, перечитать консоль, и если есть изменения - отослать в GUI
     HANDLE hChangingSize; // FALSE на время смены размера консоли
     BOOL  bNeedFullReload, bForceFullReload;
-    DWORD nLastUpdateTick;
+    DWORD nLastUpdateTick; // Для FORCE_REDRAW_FIX
+	DWORD nLastPacketID; // ИД пакета для отправки в GUI
 } srv = {0};
 
 struct tag_Cmd {
@@ -2124,6 +2125,9 @@ void SendConsoleChanges(CESERVER_REQ* pOut)
 
 CESERVER_REQ* CreateConsoleInfo(CESERVER_CHAR* pCharOnly, int bCharAttrBuff)
 {
+	// ИД пакета формируем сразу, чтобы не перемешались
+	DWORD nPacketId = ++srv.nLastPacketID;
+
     CESERVER_REQ* pOut = NULL;
     DWORD dwAllSize = sizeof(CESERVER_REQ), nSize;
 
@@ -2131,7 +2135,7 @@ CESERVER_REQ* CreateConsoleInfo(CESERVER_CHAR* pCharOnly, int bCharAttrBuff)
     HWND hWnd = NULL;
     dwAllSize += (nSize=sizeof(hWnd)); _ASSERTE(nSize==4);
     // 2
-    // Тут нужно вставить GetTickCount(), чтобы GUI случайно не 'обновил' экран старыми данными
+    // Тут нужно вставить ИД пакета, чтобы GUI случайно не 'обновил' экран старыми данными
     dwAllSize += (nSize=sizeof(DWORD));
     // 3
     // во время чтения содержимого консоли может увеличиться количество процессов
@@ -2202,7 +2206,7 @@ CESERVER_REQ* CreateConsoleInfo(CESERVER_CHAR* pCharOnly, int bCharAttrBuff)
     lpCur += sizeof(hWnd);
 
     // 2
-    *((DWORD*)lpCur) = GetTickCount();
+    *((DWORD*)lpCur) = nPacketId;
     lpCur += sizeof(DWORD);
 
     // 3

@@ -83,6 +83,8 @@
 
 #pragma pack(push, 1)
 
+WARNING("–азделить пакет на заголовок CESERVER_REQ_HDR и пакет_с_данными CESERVER_REQ_DATA");
+// ¬ CESERVER_REQ_DATA уже можно набросать Union'ов по типам команд...
 typedef struct tag_CESERVER_REQ {
     DWORD   nSize;
     DWORD   nCmd;
