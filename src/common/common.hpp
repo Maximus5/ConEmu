@@ -93,8 +93,9 @@ typedef struct tag_CESERVER_REQ {
 } CESERVER_REQ;
 
 typedef struct tag_CESERVER_CHAR {
-    COORD crStart, crEnd; //WARNING: Это АБСОЛЮТНЫЕ координаты (без учета прокрутки), а не экранные.
-    WORD  data[2]; // variable length
+	int   nSize;    // размер структуры динамический. Если 0 - значит прямоугольник is NULL
+    COORD cr1, cr2; // WARNING: Это АБСОЛЮТНЫЕ координаты (без учета прокрутки), а не экранные.
+    WORD  data[2];  // variable length
 } CESERVER_CHAR;
 
 #pragma pack(pop)
