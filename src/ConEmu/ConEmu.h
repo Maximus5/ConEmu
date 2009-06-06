@@ -27,11 +27,13 @@
 class CConEmuChild;
 class CConEmuBack;
 
+WARNING("Проверить, чтобы DC нормально центрировалось после удаления CEM_BACK");
 enum ConEmuMargins {
 	CEM_FRAME = 0, // Разница между размером всего окна и клиентской области окна (рамка + заголовок)
 	// Далее все отступы считаются в клиентской части (дочерние окна)!
 	CEM_TAB,       // Отступы от краев таба (если он видим) до окна фона (с прокруткой)
-	CEM_BACK,      // Отступы от краев окна фона (с прокруткой) до окна с отрисовкой (DC)
+	//2009-06-07 Это был только SM_CXVSCROLL, который сейчас всплывает и не занимает место!
+	//CEM_BACK,      // Отступы от краев окна фона (с прокруткой) до окна с отрисовкой (DC)
 	CEM_BACKFORCESCROLL,
 	CEM_BACKFORCENOSCROLL
 };
@@ -41,7 +43,7 @@ enum ConEmuRect {
 	// Далее все координаты считаются относительно клиенсткой области {0,0}
 	CER_MAINCLIENT, // клиентская область главного окна
 	CER_TAB,        // положение контрола с закладками (всего)
-	CER_BACK,       // положение окна с прокруткой
+	CER_BACK,       // положение окна с фоном
 	CER_DC,         // положение окна отрисовки
 	CER_CONSOLE,    // !!! _ размер в символах _ !!!
 	CER_FULLSCREEN, // полный размер в pix текущего монитора (содержащего ghWnd)
@@ -126,6 +128,7 @@ protected:
 	UINT mn_MsgVConTerminated;
 	UINT mn_MsgUpdateScrollInfo;
 	UINT mn_MsgUpdateTabs;
+	UINT mn_MsgOldCmdVer; BOOL mb_InShowOldCmdVersion;
 
 public:
 	DWORD CheckProcesses();
@@ -182,6 +185,7 @@ public:
 	void ReSize();
 	void SetConsoleWindowSize(const COORD& size, bool updateInfo);
 	bool SetWindowMode(uint inMode);
+	void ShowOldCmdVersion(DWORD nCmd, DWORD nVersion);
 	void ShowSysmenu(HWND Wnd, HWND Owner, int x, int y);
 	void SyncConsoleToWindow();
 	void SyncNtvdm();

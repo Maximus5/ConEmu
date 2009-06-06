@@ -121,6 +121,7 @@ public:
     void UpdateTTF(BOOL bNewTTF);
     void Performance(UINT nID, BOOL bEnd);
 	void SetArgBufferHeight(int anBufferHeight);
+	void InitFont();
 public:
     LRESULT OnInitDialog();
     LRESULT OnButtonClicked(WPARAM wParam, LPARAM lParam);

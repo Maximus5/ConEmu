@@ -219,7 +219,8 @@ TODO("И вообще, скроллинг нужно передавать через pipe");
 
 CConEmuBack::CConEmuBack()
 {
-	mh_Wnd = NULL;
+	mh_WndBack = NULL;
+	mh_WndScroll = NULL;
 	mh_BackBrush = NULL;
 	mn_LastColor = -1;
 #ifdef _DEBUG
@@ -245,7 +246,8 @@ HWND CConEmuBack::Create()
 			NULL, szClassNameBack};
 	if (!RegisterClass(&wc)) {
 		dwLastError = GetLastError();
-		mh_Wnd = (HWND)-1; // чтобы родитель не ругался
+		mh_WndBack = (HWND)-1; // чтобы родитель не ругался
+		mh_WndScroll = (HWND)-1;
 		MBoxA(_T("Can't register background window class!"));
 		return NULL;
 	}
@@ -254,19 +256,37 @@ HWND CConEmuBack::Create()
 	RECT rcClient; GetClientRect(ghWnd, &rcClient);
 	RECT rc = gConEmu.CalcRect(CER_BACK, rcClient, CER_MAINCLIENT);
 
-	mh_Wnd = CreateWindow(szClassNameBack, 0, style, 
+	mh_WndBack = CreateWindow(szClassNameBack, NULL, style, 
 		rc.left, rc.top,
 		rcClient.right - rc.right - rc.left,
 		rcClient.bottom - rc.bottom - rc.top,
 		ghWnd, NULL, (HINSTANCE)g_hInstance, NULL);
-	if (!mh_Wnd) {
+	if (!mh_WndBack) {
 		dwLastError = GetLastError();
-		mh_Wnd = (HWND)-1; // чтобы родитель не ругался
+		mh_WndBack = (HWND)-1; // чтобы родитель не ругался
 		MBoxA(_T("Can't create background window!"));
 		return NULL; //
 	}
 
-	return mh_Wnd;
+	// Прокрутка
+	style = SBS_RIGHTALIGN/*|WS_VISIBLE*/|SBS_VERT|WS_CHILD|WS_CLIPSIBLINGS;
+	mh_WndScroll = CreateWindowEx(0/*|WS_EX_LAYERED*/ /*WS_EX_TRANSPARENT*/, L"SCROLLBAR", NULL, style,
+		rc.left, rc.top,
+		rcClient.right - rc.right - rc.left,
+		rcClient.bottom - rc.bottom - rc.top,
+		ghWnd, NULL, (HINSTANCE)g_hInstance, NULL);
+	if (!mh_WndScroll) {
+		dwLastError = GetLastError();
+		mh_WndScroll = (HWND)-1; // чтобы родитель не ругался
+		MBoxA(_T("Can't create scrollbar window!"));
+		return NULL; //
+	}
+	TODO("alpha-blended. похоже для WS_CHILD это не прокатит...");
+	//BOOL lbRcLayered = SetLayeredWindowAttributes ( mh_WndScroll, 0, 100, LWA_ALPHA );
+	//if (!lbRcLayered)
+	//	dwLastError = GetLastError();
+
+	return mh_WndBack;
 }
 
 LRESULT CALLBACK CConEmuBack::BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
@@ -278,7 +298,7 @@ LRESULT CALLBACK CConEmuBack::BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, 
 
 	switch (messg) {
 		case WM_CREATE:
-			gConEmu.m_Back.mh_Wnd = hWnd;
+			gConEmu.m_Back.mh_WndBack = hWnd;
 			break;
 		case WM_DESTROY:
 			DeleteObject(gConEmu.m_Back.mh_BackBrush);
@@ -331,25 +351,33 @@ LRESULT CALLBACK CConEmuBack::BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, 
 
 void CConEmuBack::Resize()
 {
-	if (!mh_Wnd || !IsWindow(mh_Wnd)) 
+	if (!mh_WndBack || !IsWindow(mh_WndBack)) 
 		return;
 
 	//RECT rc = gConEmu.ConsoleOffsetRect();
 	RECT rcClient; GetClientRect(ghWnd, &rcClient);
+	RECT rcScroll; GetWindowRect(mh_WndScroll, &rcScroll);
+
 	RECT rc = gConEmu.CalcRect(CER_BACK, rcClient, CER_MAINCLIENT);
 
 	#ifdef _DEBUG
-	GetClientRect(mh_Wnd, &rcClient);
+	GetClientRect(mh_WndBack, &rcClient);
 	#endif
 
-	MoveWindow(mh_Wnd, 
+	MoveWindow(mh_WndBack, 
 		rc.left, rc.top,
 		rc.right - rc.left,
 		rc.bottom - rc.top,
 		1);
+	MoveWindow(mh_WndScroll, 
+		rc.right - (rcScroll.right-rcScroll.left),
+		rc.top,
+		rcScroll.right-rcScroll.left,
+		rc.bottom - rc.top,
+		1);
 
 	#ifdef _DEBUG
-	GetClientRect(mh_Wnd, &rcClient);
+	GetClientRect(mh_WndBack, &rcClient);
 	#endif
 }
 
@@ -361,7 +389,7 @@ void CConEmuBack::Refresh()
 	mn_LastColor = gSet.Colors[mn_ColorIdx];
 	HBRUSH hNewBrush = CreateSolidBrush(mn_LastColor);
 
-	SetClassLong(mh_Wnd, GCL_HBRBACKGROUND, (LONG)hNewBrush);
+	SetClassLong(mh_WndBack, GCL_HBRBACKGROUND, (LONG)hNewBrush);
 	DeleteObject(mh_BackBrush);
 	mh_BackBrush = hNewBrush;
 
@@ -370,8 +398,20 @@ void CConEmuBack::Refresh()
 	Invalidate();
 }
 
+void CConEmuBack::RePaint()
+{
+	if (mh_WndBack && mh_WndBack!=(HWND)-1)
+	{
+		Refresh();
+		UpdateWindow(mh_WndBack);
+		//if (mh_WndScroll) UpdateWindow(mh_WndScroll);
+	}
+}
+
 void CConEmuBack::Invalidate()
 {
-	if (this && mh_Wnd)
-		InvalidateRect(mh_Wnd, NULL, FALSE);
+	if (this && mh_WndBack) {
+		InvalidateRect(mh_WndBack, NULL, FALSE);
+		InvalidateRect(mh_WndScroll, NULL, FALSE);
+	}
 }

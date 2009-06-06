@@ -361,7 +361,8 @@ Command line switches:\n\
 Command line examples:\n\
 ConEmu.exe /ct /font \"Lucida Console\" /size 16 /cmd far.exe \"c:\\1 2\\\"\n\
 \n\
-(c) 2006-2008, Zoin (based on console emulator by SEt).\n\
+© 2006-2008, Zoin (based on console emulator by SEt)\n\
+© 2009, Maximus5\n\
 NightRoman: drawing process optimization, BufferHeight and other fixes\n\
 dolzenko_: windows switching via GUI tabs\n\
 alex_itd: Drag'n'Drop, RightClick, AltEnter and GUI bars\n\

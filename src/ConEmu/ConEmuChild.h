@@ -23,7 +23,8 @@ public:
 	CConEmuBack();
 	~CConEmuBack();
 
-	HWND mh_Wnd;
+	HWND mh_WndBack;
+	HWND mh_WndScroll;
 	HBRUSH mh_BackBrush;
 	COLORREF mn_LastColor;
 
@@ -31,6 +32,7 @@ public:
 	void Resize();
 	void Refresh();
 	void Invalidate();
+	void RePaint();
 
 	static LRESULT CALLBACK BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 protected:

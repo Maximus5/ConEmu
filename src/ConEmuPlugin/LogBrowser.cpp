@@ -60,6 +60,8 @@ void ShowConPacket(CESERVER_REQ* pReq)
 		case CECMD_GETGUIHWND: pszEnd = L"CECMD_GETGUIHWND"; break;
 		case CECMD_RECREATE: pszEnd = L"CECMD_RECREATE"; break;
 		case CECMD_TABSCHANGED: pszEnd = L"CECMD_TABSCHANGED"; break;
+		case CECMD_CMDSTARTED: pszEnd = L"CECMD_CMDSTARTED"; break;
+		case CECMD_CMDFINISHED: pszEnd = L"CECMD_CMDFINISHED"; break;
 		default: pszEnd = L"???";
 	}
 	wsprintf(psz, L"Packet size: %i;  Command: %i (%s);  Version: %i\n",
@@ -116,7 +118,7 @@ void ShowConPacket(CESERVER_REQ* pReq)
 			if (dw >= sizeof(CESERVER_CHAR)) {
 				pceChar = (CESERVER_CHAR*)ptr;
 				lstrcpyW(psz, L"\nConsole region changes\n"); psz += wcslen(psz);
-				wsprintf(psz, L"  Region:   {L=%i, T=%i, R=%i, B=%i}\n", pceChar->crStart.X, pceChar->crStart.Y, pceChar->crEnd.X, pceChar->crEnd.Y);
+				wsprintf(psz, L"  Region:   {L=%i, T=%i, R=%i, B=%i}\n", pceChar->hdr.cr1.X, pceChar->hdr.cr1.Y, pceChar->hdr.cr2.X, pceChar->hdr.cr2.Y);
 				wsprintf(psz, L"  NewChar:  '%c'\n", pceChar->data[0]);
 			} else {
 				pceChar = NULL;

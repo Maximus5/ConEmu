@@ -21,6 +21,9 @@ extern "C" {
 #include "../common/ConEmuCheck.h"
 }
 
+#define Free free
+#define Alloc calloc
+
 WARNING("Подозреваю, что в gszRootKey не учитывается имя пользователя/конфигурации");
 
 #define MAKEFARVERSION(major,minor,build) ( ((major)<<8) | (minor) | ((build)<<16))
@@ -84,7 +87,7 @@ FarVersion gFarVersion;
 WCHAR gszDir1[CONEMUTABMAX], gszDir2[CONEMUTABMAX];
 WCHAR gszRootKey[MAX_PATH];
 int maxTabCount = 0, lastWindowCount = 0, gnCurTabCount = 0;
-ConEmuTab* tabs = NULL; //(ConEmuTab*) calloc(maxTabCount, sizeof(ConEmuTab));
+ConEmuTab* tabs = NULL; //(ConEmuTab*) Alloc(maxTabCount, sizeof(ConEmuTab));
 LPBYTE gpData = NULL, gpCursor = NULL;
 CESERVER_REQ* gpCmdRet = NULL;
 DWORD  gnDataSize=0;
@@ -224,7 +227,7 @@ BOOL LoadFarVersion()
 		DWORD dwRsrvd = 0;
 		DWORD dwSize = GetFileVersionInfoSize(FarPath, &dwRsrvd);
 		if (dwSize>0) {
-			void *pVerData = calloc(dwSize, 1);
+			void *pVerData = Alloc(dwSize, 1);
 			if (pVerData) {
 				VS_FIXEDFILEINFO *lvs = NULL;
 				UINT nLen = sizeof(lvs);
@@ -236,7 +239,7 @@ BOOL LoadFarVersion()
 						lbRc = TRUE;
 					}
 				}
-				free(pVerData);
+				Free(pVerData);
 			}
 		}
 	}
@@ -273,7 +276,7 @@ WARNING("Обязательно сделать возможность отваливаться по таймауту, если плагин н
 // меню плагинов еще загружается. Иначе можно еще чуть-чуть подождать, и отваливаться - активироваться не получится
 void ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData)
 {
-	if (gpCmdRet) free(gpCmdRet);
+	if (gpCmdRet) Free(gpCmdRet);
 	gpCmdRet = NULL; gpData = NULL; gpCursor = NULL;
 
 	WARNING("Тут нужно сделать проверку содержимого консоли");
@@ -623,7 +626,7 @@ DWORD WINAPI ThreadProcW(LPVOID lpParameter)
 		//	}
 		//}
 		//if (gpData) {
-		//	free(gpCmdRet);
+		//	Free(gpCmdRet);
 		//	gpCmdRet = NULL; gpData = NULL; gpCursor = NULL;
 		//}
 		//LeaveCriticalSection(&csData);
@@ -1003,10 +1006,10 @@ BOOL CreateTabs(int windowCount)
 	{
 		maxTabCount = windowCount + 10; // с запасом
 		if (tabs) {
-			free(tabs); tabs = NULL;
+			Free(tabs); tabs = NULL;
 		}
 		
-		tabs = (ConEmuTab*) calloc(maxTabCount, sizeof(ConEmuTab));
+		tabs = (ConEmuTab*) Alloc(maxTabCount, sizeof(ConEmuTab));
 	}
 	
 	lastWindowCount = windowCount;
@@ -1129,11 +1132,11 @@ void SendTabs(int tabCount, BOOL abFillDataOnly/*=FALSE*/)
 				gpCmdRet->nCmd = CECMD_TABSCHANGED;
 				CESERVER_REQ* pOut =
 					ExecuteGuiCmd(FarHwnd, gpCmdRet);
-				if (pOut) free(pOut);
+				if (pOut) Free(pOut);
 			}
 		}
 	}
-	//free(tabs); - освобождается в ExitFARW
+	//Free(tabs); - освобождается в ExitFARW
     gnCurTabCount = tabCount;
 	if (!bReleased) {
 		LeaveCriticalSection(&csTabs); bReleased = TRUE;
@@ -1258,7 +1261,7 @@ void StopThread(void)
 	}
 	
     if (tabs) {
-	    free(tabs);
+	    Free(tabs);
 	    tabs = NULL;
     }
     
@@ -1300,7 +1303,7 @@ void CloseTabs()
 BOOL OutDataAlloc(DWORD anSize)
 {
 	// + размер заголовка gpCmdRet
-	gpCmdRet = (CESERVER_REQ*)calloc(12+anSize,1);
+	gpCmdRet = (CESERVER_REQ*)Alloc(12+anSize,1);
 	if (!gpCmdRet)
 		return FALSE;
 
@@ -1325,7 +1328,7 @@ BOOL OutDataRealloc(DWORD anNewSize)
 		return FALSE; // нельзя выделять меньше памяти, чем уже есть
 
 	// realloc иногда не работает, так что даже и не пытаемся
-	CESERVER_REQ* lpNewCmdRet = (CESERVER_REQ*)calloc(12+anNewSize,1);
+	CESERVER_REQ* lpNewCmdRet = (CESERVER_REQ*)Alloc(12+anNewSize,1);
 	if (!lpNewCmdRet)
 		return FALSE;
 	lpNewCmdRet->nCmd = gpCmdRet->nCmd;
@@ -1341,7 +1344,7 @@ BOOL OutDataRealloc(DWORD anNewSize)
 	// запомнить новую позицию курсора
 	gpCursor = lpNewData + (gpCursor - gpData);
 	// И новый буфер с размером
-	free(gpCmdRet);
+	Free(gpCmdRet);
 	gpCmdRet = lpNewCmdRet;
 	gpData = lpNewData;
 	gnDataSize = anNewSize;
@@ -1395,11 +1398,11 @@ void PostMacro(wchar_t* asMacro)
 		
 	if (gFarVersion.dwVerMajor==1) {
 		int nLen = lstrlenW(asMacro);
-		char* pszMacro = (char*)calloc(nLen+1,1);
+		char* pszMacro = (char*)Alloc(nLen+1,1);
 		if (pszMacro) {
 			WideCharToMultiByte(CP_OEMCP,0,asMacro,nLen+1,pszMacro,nLen+1,0,0);
 			PostMacroA(pszMacro);
-			free(pszMacro);
+			Free(pszMacro);
 		}
 	} else if (gFarVersion.dwBuild>=789) {
 		PostMacro789(asMacro);
@@ -1564,7 +1567,7 @@ DWORD WINAPI ServerThreadCommand(LPVOID ahPipe)
     }
 
     int nAllSize = pIn->nSize;
-    pIn = (CESERVER_REQ*)calloc(nAllSize,1);
+    pIn = (CESERVER_REQ*)Alloc(nAllSize,1);
     _ASSERTE(pIn!=NULL);
 	if (!pIn) {
 		CloseHandle(hPipe);
@@ -1603,7 +1606,7 @@ DWORD WINAPI ServerThreadCommand(LPVOID ahPipe)
     _ASSERTE(nAllSize==0);
     if (nAllSize>0) {
 		if (((LPVOID)cbBuffer) != ((LPVOID)pIn))
-			free(pIn);
+			Free(pIn);
         CloseHandle(hPipe);
         return 0; // удалось считать не все данные
     }
@@ -1643,7 +1646,7 @@ DWORD WINAPI ServerThreadCommand(LPVOID ahPipe)
 
 		if (gpCmdRet) {
 			fSuccess = WriteFile( hPipe, gpCmdRet, gpCmdRet->nSize, &cbWritten, NULL);
-			free(gpCmdRet);
+			Free(gpCmdRet);
 			gpCmdRet = NULL; gpData = NULL; gpCursor = NULL;
 		}
 	}
@@ -1651,7 +1654,7 @@ DWORD WINAPI ServerThreadCommand(LPVOID ahPipe)
 
     // Освободить память
 	if (((LPVOID)cbBuffer) != ((LPVOID)pIn))
-		free(pIn);
+		Free(pIn);
 
     CloseHandle(hPipe);
     return 0;

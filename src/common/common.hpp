@@ -76,8 +76,10 @@
 #define CECMD_GETGUIHWND    5
 #define CECMD_RECREATE      6
 #define CECMD_TABSCHANGED   7
+#define CECMD_CMDSTARTED    8 // == CECMD_SETSIZE + восстановить содержимое консоли (запустился comspec)
+#define CECMD_CMDFINISHED   9 // == CECMD_SETSIZE + сохранить содержимое консоли (завершился comspec)
 
-#define CESERVER_REQ_VER    2
+#define CESERVER_REQ_VER    3
 
 #define PIPEBUFSIZE 4096
 
@@ -85,18 +87,42 @@
 
 WARNING("Разделить пакет на заголовок CESERVER_REQ_HDR и пакет_с_данными CESERVER_REQ_DATA");
 // В CESERVER_REQ_DATA уже можно набросать Union'ов по типам команд...
+
+typedef struct tag_CESERVER_REQ_HDR {
+	DWORD   nSize;
+	DWORD   nCmd;
+	DWORD   nVersion;
+} CESERVER_REQ_HDR;
+
 typedef struct tag_CESERVER_REQ {
+	/* CESERVER_REQ_HDR start */
     DWORD   nSize;
     DWORD   nCmd;
     DWORD   nVersion;
-    BYTE    Data[1]; // вообще-то размер динамический
+	/* CESERVER_REQ_HDR end */
+    BYTE    Data[1]; // variable(!) length
 } CESERVER_REQ;
 
-typedef struct tag_CESERVER_CHAR {
+typedef struct tag_CESERVER_CHAR_HDR {
 	int   nSize;    // размер структуры динамический. Если 0 - значит прямоугольник is NULL
-    COORD cr1, cr2; // WARNING: Это АБСОЛЮТНЫЕ координаты (без учета прокрутки), а не экранные.
-    WORD  data[2];  // variable length
+	COORD cr1, cr2; // WARNING: Это АБСОЛЮТНЫЕ координаты (без учета прокрутки), а не экранные.
+} CESERVER_CHAR_HDR;
+
+typedef struct tag_CESERVER_CHAR {
+	CESERVER_CHAR_HDR hdr; // фиксированная часть
+    WORD  data[2];  // variable(!) length
 } CESERVER_CHAR;
+
+typedef struct tag_CESERVER_CONSAVE_HDR {
+	CESERVER_REQ_HDR hdr; // Заполняется только перед отсылкой в плагин
+	CONSOLE_SCREEN_BUFFER_INFO sbi;
+	DWORD cbMaxOneBufferSize;
+} CESERVER_CONSAVE_HDR;
+
+typedef struct tag_CESERVER_CONSAVE {
+	CESERVER_CONSAVE_HDR hdr;
+	wchar_t Data[1];
+} CESERVER_CONSAVE;
 
 #pragma pack(pop)
 

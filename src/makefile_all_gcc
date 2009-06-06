@@ -1,5 +1,4 @@
-ALLDIRS = infis4farhints \
-          ConEmuPlugin \
+ALLDIRS = ConEmuPlugin \
           ConEmuC
 # ConEmuD
 # ConEmu

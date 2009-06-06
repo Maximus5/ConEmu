@@ -328,7 +328,17 @@ void CSettings::LoadSettings()
     /*if (isShowBgImage && pVCon)
         LoadImageFrom(pBgImage);*/
 
+	//2009-06-07 Размер шрифта может быть задан в командной строке, так что создаем шрифт не здесь
+	//InitFont();
+
+	MCHKHEAP
+}
+
+void CSettings::InitFont()
+{
+
     mh_Font = CreateFontIndirectMy(&LogFont);
+	//2009-06-07 Реальный размер созданного шрифта мог измениться
 
     MCHKHEAP
 }
@@ -1858,11 +1868,11 @@ HFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 {
     memset(FontWidth, 0, sizeof(*FontWidth)*0x10000);
 
-    DeleteObject(mh_Font2); mh_Font2 = NULL;
-
-    int width = FontSizeX2 ? FontSizeX2 : inFont->lfWidth;
-    mh_Font2 = CreateFont(abs(inFont->lfHeight), abs(width), 0, 0, FW_NORMAL,
-        0, 0, 0, DEFAULT_CHARSET, OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS, ANTIALIASED_QUALITY, 0, LogFont2.lfFaceName);
+	// Перенес ПОСЛЕ создания основного шрифта, т.к. размер реального шрифта может быть другим
+	//if (mh_Font2) { DeleteObject(mh_Font2); mh_Font2 = NULL; }
+	//   int width = FontSizeX2 ? FontSizeX2 : inFont->lfWidth;
+	//   mh_Font2 = CreateFont(abs(inFont->lfHeight), abs(width), 0, 0, FW_NORMAL,
+	//       0, 0, 0, DEFAULT_CHARSET, OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS, ANTIALIASED_QUALITY, 0, LogFont2.lfFaceName);
 
     HFONT hFont = CreateFontIndirect(inFont);
 
@@ -1881,8 +1891,8 @@ HFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
                 LogFont.lfWidth = FontSizeX3 ? FontSizeX3 : tm.tmMaxCharWidth;
             else
                 LogFont.lfWidth = tm.tmAveCharWidth;
-            LogFont.lfHeight = tm.tmHeight;
-
+            LogFont.lfHeight = tm.tmHeight; TODO("Здесь нужно обновить реальный размер шрифта в диалоге настройки!");
+			
             if (ghOpWnd) // устанавливать только при листании шрифта в настройке
                 UpdateTTF ( (tm.tmMaxCharWidth - tm.tmAveCharWidth)>2 );
 
@@ -1890,6 +1900,12 @@ HFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
             DeleteDC(hDC);
         }
         ReleaseDC(0, hScreenDC);
+
+		if (mh_Font2) { DeleteObject(mh_Font2); mh_Font2 = NULL; }
+
+		int width = FontSizeX2 ? FontSizeX2 : inFont->lfWidth;
+		mh_Font2 = CreateFont(abs(inFont->lfHeight), abs(width), 0, 0, FW_NORMAL,
+			0, 0, 0, DEFAULT_CHARSET, OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS, ANTIALIASED_QUALITY, 0, LogFont2.lfFaceName);
     }
 
     return hFont;

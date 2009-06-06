@@ -111,7 +111,7 @@ public:
 	BOOL PreInit(BOOL abCreateBuffers=TRUE);
 	void DumpConsole(HANDLE ahFile);
 
-	BOOL SetConsoleSize(COORD size);
+	BOOL SetConsoleSize(COORD size, DWORD anCmdID=CECMD_SETSIZE);
 	void SendMouseEvent(UINT messg, WPARAM wParam, int x, int y);
 	void SendConsoleEvent(INPUT_RECORD* piRec);
 	void StopSignal();

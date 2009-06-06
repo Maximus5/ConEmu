@@ -6,6 +6,8 @@ WARNING("!!! Запустили far, открыли edit, перешли в панель, открыли второй edit,
 // Более того, если есть еще одна консоль - активной станет первая вкладка следующей НЕАКТИВНОЙ консоли
 WARNING("не меняются табы при переключении на другую консоль");
 
+TODO("Для WinXP можно поиграться стилем WS_EX_COMPOSITED");
+
 TabBarClass TabBar;
 const int TAB_FONT_HEIGTH = 16;
 wchar_t TAB_FONT_FACE[] = L"Tahoma";

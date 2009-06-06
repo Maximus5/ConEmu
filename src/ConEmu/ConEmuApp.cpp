@@ -627,6 +627,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             {
                 ClearTypePrm = true;
             }
+
+			// טלÿ רנטפעא
             else if ( !klstricmp(curCommand, _T("/font")) && i + 1 < params)
             {
                 curCommand += _tcslen(curCommand) + 1; i++;
@@ -636,6 +638,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
                     FontVal = curCommand;
                 }
             }
+
+			// ֲûסמעא רנטפעא
             else if ( !klstricmp(curCommand, _T("/size")) && i + 1 < params)
             {
                 curCommand += _tcslen(curCommand) + 1; i++;
@@ -850,6 +854,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	//while (*cmdNew==L' ' || *cmdNew==L'"')
 	if (gSet.isMulti || StrStrI(gSet.GetCmd(), L"conman.exe"))
 		gSet.isUpdConHandle = TRUE;
+
+	gSet.InitFont();
 		
 
     
