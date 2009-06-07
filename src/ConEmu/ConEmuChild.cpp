@@ -84,6 +84,9 @@ LRESULT CALLBACK CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam
     case WM_LBUTTONDBLCLK:
     case WM_MBUTTONDBLCLK:
     case WM_RBUTTONDBLCLK:
+	case WM_XBUTTONDOWN:
+	case WM_XBUTTONUP:
+	case WM_XBUTTONDBLCLK:
     case WM_VSCROLL:
         // Вся обработка в родителе
         result = gConEmu.WndProc(hWnd, messg, wParam, lParam);
@@ -223,6 +226,9 @@ CConEmuBack::CConEmuBack()
 	mh_WndScroll = NULL;
 	mh_BackBrush = NULL;
 	mn_LastColor = -1;
+	mn_ScrollWidth = 0;
+	mb_ScrollVisible = FALSE;
+	mpfn_ScrollProc = NULL;
 #ifdef _DEBUG
 	mn_ColorIdx = 1;
 #else
@@ -281,10 +287,14 @@ HWND CConEmuBack::Create()
 		MBoxA(_T("Can't create scrollbar window!"));
 		return NULL; //
 	}
+	GetWindowRect(mh_WndScroll, &rcClient);
+	mn_ScrollWidth = rcClient.right - rcClient.left;
 	TODO("alpha-blended. похоже для WS_CHILD это не прокатит...");
 	//BOOL lbRcLayered = SetLayeredWindowAttributes ( mh_WndScroll, 0, 100, LWA_ALPHA );
 	//if (!lbRcLayered)
 	//	dwLastError = GetLastError();
+	#pragma warning (disable : 4312)
+	mpfn_ScrollProc = (WNDPROC)SetWindowLongPtr(mh_WndScroll, GWL_WNDPROC, (LONG_PTR)ScrollWndProc);
 
 	return mh_WndBack;
 }
@@ -345,6 +355,30 @@ LRESULT CALLBACK CConEmuBack::BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, 
 	}
 
     result = DefWindowProc(hWnd, messg, wParam, lParam);
+
+	return result;
+}
+
+LRESULT CALLBACK CConEmuBack::ScrollWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
+{
+	LRESULT result = 0;
+
+	if (messg == WM_SYSCHAR)
+		return TRUE;
+
+	switch (messg) {
+		case WM_CREATE:
+			gConEmu.m_Back.mh_WndScroll = hWnd;
+			break;
+		case WM_VSCROLL:
+			POSTMESSAGE(ghConWnd, messg, wParam, lParam, FALSE);
+			break;
+	}
+
+	if (gConEmu.m_Back.mpfn_ScrollProc)
+		result = CallWindowProc(gConEmu.m_Back.mpfn_ScrollProc, hWnd, messg, wParam, lParam);
+	else
+		result = DefWindowProc(hWnd, messg, wParam, lParam);
 
 	return result;
 }
@@ -414,4 +448,31 @@ void CConEmuBack::Invalidate()
 		InvalidateRect(mh_WndBack, NULL, FALSE);
 		InvalidateRect(mh_WndScroll, NULL, FALSE);
 	}
+}
+
+BOOL CConEmuBack::TrackMouse()
+{
+	BOOL lbRc = FALSE; // По умолчанию - мышь не перехватывать
+	BOOL lbBufferMode = gConEmu.ActiveCon()->RCon()->isBufferHeight();
+	if (/*!mb_ScrollVisible &&*/ lbBufferMode) {
+		// Если мышь в над скроллбаром - показать его
+		POINT ptCur; RECT rcScroll;
+		GetCursorPos(&ptCur);
+		GetWindowRect(mh_WndScroll, &rcScroll);
+		if (PtInRect(&rcScroll, ptCur)) {
+			if (!mb_ScrollVisible) {
+				mb_ScrollVisible = TRUE;
+				//ShowWindow(mh_WndScroll, SW_SHOWNOACTIVATE);
+				SetWindowPos(mh_WndScroll, HWND_TOP, 0,0,0,0, SWP_NOSIZE|SWP_NOMOVE|SWP_SHOWWINDOW);
+			}
+			lbRc = TRUE;
+		} else if (mb_ScrollVisible) {
+			mb_ScrollVisible = FALSE;
+			ShowWindow(mh_WndScroll, SW_HIDE);
+		}
+	} else if (mb_ScrollVisible && !lbBufferMode) {
+		mb_ScrollVisible = FALSE;
+		ShowWindow(mh_WndScroll, SW_HIDE);
+	}
+	return lbRc;
 }

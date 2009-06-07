@@ -52,7 +52,7 @@ void ShowConPacket(CESERVER_REQ* pReq)
 	SetWindowText(FarHwnd, L"ConEmu packet dump");
 
 	psz = pszText;
-	switch (pReq->nCmd) {
+	switch (pReq->hdr.nCmd) {
 		case CECMD_GETSHORTINFO: pszEnd = L"CECMD_GETSHORTINFO"; break;
 		case CECMD_GETFULLINFO: pszEnd = L"CECMD_GETFULLINFO"; break;
 		case CECMD_SETSIZE: pszEnd = L"CECMD_SETSIZE"; break;
@@ -65,10 +65,10 @@ void ShowConPacket(CESERVER_REQ* pReq)
 		default: pszEnd = L"???";
 	}
 	wsprintf(psz, L"Packet size: %i;  Command: %i (%s);  Version: %i\n",
-		pReq->nSize, pReq->nCmd, pszEnd, pReq->nVersion);
+		pReq->hdr.nSize, pReq->hdr.nCmd, pszEnd, pReq->hdr.nVersion);
 	psz += wcslen(psz);
 
-	if (pReq->nCmd == CECMD_GETSHORTINFO || pReq->nCmd == CECMD_GETFULLINFO) {
+	if (pReq->hdr.nCmd == CECMD_GETSHORTINFO || pReq->hdr.nCmd == CECMD_GETFULLINFO) {
 		lstrcpyW(psz, L"\n"); psz ++;
 		LPBYTE ptr = pReq->Data;
 		// 1
@@ -139,7 +139,7 @@ void ShowConPacket(CESERVER_REQ* pReq)
 			pnConData = (WORD*)ptr;
 		}
 	} else {
-		int nMax = min(((UINT)(csbi.dwSize.X/4)),(pReq->nSize-12));
+		int nMax = min(((UINT)(csbi.dwSize.X/4)),(pReq->hdr.nSize-sizeof(CESERVER_REQ_HDR)));
 		lstrcpyW(psz, L"\n\nPacket data:\n"); psz += wcslen(psz);
 		for (int i=0; i<nMax; i++) {
 			wsprintf(psz, L"%02X ", (BYTE)pReq->Data[i]); psz += 3;
@@ -217,7 +217,7 @@ HANDLE WINAPI OpenFilePluginW(const wchar_t *Name,const unsigned char *Data,int 
 	if (OpMode || Name == NULL) return INVALID_HANDLE_VALUE; // только из панелей в обычном режиме
 	const wchar_t* pszDot = wcsrchr(Name, L'.');
 	if (!pszDot || lstrcmpi(pszDot, L".con")) return INVALID_HANDLE_VALUE;
-	if (DataSize < 12) return INVALID_HANDLE_VALUE;
+	if (DataSize < sizeof(CESERVER_REQ_HDR)) return INVALID_HANDLE_VALUE;
 
 	HANDLE hFile = CreateFile(Name, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, 0);
 	if (hFile == INVALID_HANDLE_VALUE) {
@@ -250,9 +250,9 @@ HANDLE WINAPI OpenFilePluginW(const wchar_t *Name,const unsigned char *Data,int 
 	HANDLE h = InfoW789->SaveScreen(0,0,-1,-1);
 
 	CESERVER_REQ* pReq = (CESERVER_REQ*)pszData;
-	if (pReq->nSize == dwSizeLow)
+	if (pReq->hdr.nSize == dwSizeLow)
 	{
-		if (pReq->nVersion != CESERVER_REQ_VER && pReq->nVersion < 20) {
+		if (pReq->hdr.nVersion != CESERVER_REQ_VER && pReq->hdr.nVersion < 20) {
 			InfoW789->Message(InfoW789->ModuleNumber, FMSG_ALLINONE|FMSG_MB_OK|FMSG_WARNING,
 				NULL, (const wchar_t* const*)L"ConEmu plugin\nUnknown version of packet", 0,0);
 		} else {

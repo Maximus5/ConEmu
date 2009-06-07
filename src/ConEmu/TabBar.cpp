@@ -688,7 +688,7 @@ bool TabBarClass::OnNotify(LPNMHDR nmhdr)
             lstrcpyn(pDisp->pszText, _T("Create new console"), pDisp->cchTextMax);
         } else
         if (pDisp->iItem==14) {
-            lstrcpyn(pDisp->pszText, _T("Alternative console"), pDisp->cchTextMax);
+            lstrcpyn(pDisp->pszText, _T("BufferHeight mode"), pDisp->cchTextMax);
         }
         return true;
     }
@@ -754,7 +754,8 @@ void TabBarClass::OnCommand(WPARAM wParam, LPARAM lParam)
     } else if (wParam==13) {
         gConEmu.ConmanAction(CONMAN_NEWCONSOLE);
     } else if (wParam==14) {
-        gConEmu.ConmanAction(CONMAN_ALTCONSOLE);
+        //gConEmu.ConmanAction(CONMAN_ALTCONSOLE); // Только информационно!
+		SendMessage(mh_ConmanToolbar, TB_CHECKBUTTON, 14, gConEmu.ActiveCon()->RCon()->isBufferHeight());
     }
 
     //if (!TabBar.GetConsolesTitles)
@@ -833,7 +834,7 @@ void TabBarClass::Invalidate()
         InvalidateRect(mh_Rebar, NULL, TRUE);
 }
 
-void TabBarClass::OnConman(int nConNumber, BOOL bAlternative)
+void TabBarClass::OnConsoleActivated(int nConNumber/*, BOOL bAlternative*/)
 {
     if (!mh_ConmanToolbar) return;
 
@@ -859,7 +860,13 @@ void TabBarClass::OnConman(int nConNumber, BOOL bAlternative)
         for (int i=1; i<=MAX_CONSOLE_COUNT; i++)
             SendMessage(mh_ConmanToolbar, TB_CHECKBUTTON, i, 0);
     }
-    SendMessage(mh_ConmanToolbar, TB_CHECKBUTTON, 14, bAlternative);
+}
+
+void TabBarClass::OnBufferHeight(BOOL abBufferHeight)
+{
+	if (!mh_ConmanToolbar) return;
+
+    SendMessage(mh_ConmanToolbar, TB_CHECKBUTTON, 14, abBufferHeight);
 }
 
 /*LRESULT TabBarClass::ToolWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
@@ -971,7 +978,7 @@ HWND TabBarClass::CreateToolbar()
         {0, 0, TBSTATE_ENABLED, TBSTYLE_SEP},
         {12, 13, TBSTATE_ENABLED, BTNS_BUTTON},
         {0, 0, TBSTATE_ENABLED, TBSTYLE_SEP},
-        {13, 14, 0, TBSTYLE_CHECK}
+        {13, 14, TBSTATE_ENABLED, TBSTYLE_CHECK}
         };
 
     mh_ConmanToolbar = CreateWindowEx(0, TOOLBARCLASSNAME, NULL, 

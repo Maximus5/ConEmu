@@ -60,7 +60,7 @@
 
 #define CES_NTVDM 0x10
 #define CEC_INITTITLE       L"ConEmu"
-#define CE_CURSORUPDATE     L"ConEmuCursorUpdate%u" // ConEmuC_PID - изменился курсор (размер или выделение). положение курсора отслеживает GUI
+//#define CE_CURSORUPDATE     L"ConEmuCursorUpdate%u" // ConEmuC_PID - изменился курсор (размер или выделение). положение курсора отслеживает GUI
 
 #define CESERVERPIPENAME    L"\\\\%s\\pipe\\ConEmuSrv%u"      // ConEmuC_PID
 #define CESERVERINPUTNAME   L"\\\\%s\\pipe\\ConEmuSrvInput%u" // ConEmuC_PID
@@ -72,36 +72,29 @@
 #define CECMD_GETSHORTINFO  1
 #define CECMD_GETFULLINFO   2
 #define CECMD_SETSIZE       3
-#define CECMD_CMDSTARTSTOP  4
+#define CECMD_CMDSTARTSTOP  4 // 0 - ServerStart, 1 - ServerStop, 2 - ComspecStart, 3 - ComspecStop
 #define CECMD_GETGUIHWND    5
 #define CECMD_RECREATE      6
 #define CECMD_TABSCHANGED   7
 #define CECMD_CMDSTARTED    8 // == CECMD_SETSIZE + восстановить содержимое консоли (запустился comspec)
 #define CECMD_CMDFINISHED   9 // == CECMD_SETSIZE + сохранить содержимое консоли (завершился comspec)
+#define CECMD_GETOUTPUTFILE 10 // Записать вывод последней консольной программы во временный файл и вернуть его имя
+#define CECMD_GETOUTPUT     11
 
-#define CESERVER_REQ_VER    3
+#define CESERVER_REQ_VER    4
 
 #define PIPEBUFSIZE 4096
 
 #pragma pack(push, 1)
 
-WARNING("Разделить пакет на заголовок CESERVER_REQ_HDR и пакет_с_данными CESERVER_REQ_DATA");
-// В CESERVER_REQ_DATA уже можно набросать Union'ов по типам команд...
 
 typedef struct tag_CESERVER_REQ_HDR {
 	DWORD   nSize;
 	DWORD   nCmd;
 	DWORD   nVersion;
+	DWORD   nSrcThreadId;
 } CESERVER_REQ_HDR;
 
-typedef struct tag_CESERVER_REQ {
-	/* CESERVER_REQ_HDR start */
-    DWORD   nSize;
-    DWORD   nCmd;
-    DWORD   nVersion;
-	/* CESERVER_REQ_HDR end */
-    BYTE    Data[1]; // variable(!) length
-} CESERVER_REQ;
 
 typedef struct tag_CESERVER_CHAR_HDR {
 	int   nSize;    // размер структуры динамический. Если 0 - значит прямоугольник is NULL
@@ -110,7 +103,7 @@ typedef struct tag_CESERVER_CHAR_HDR {
 
 typedef struct tag_CESERVER_CHAR {
 	CESERVER_CHAR_HDR hdr; // фиксированная часть
-    WORD  data[2];  // variable(!) length
+	WORD  data[2];  // variable(!) length
 } CESERVER_CHAR;
 
 typedef struct tag_CESERVER_CONSAVE_HDR {
@@ -123,6 +116,64 @@ typedef struct tag_CESERVER_CONSAVE {
 	CESERVER_CONSAVE_HDR hdr;
 	wchar_t Data[1];
 } CESERVER_CONSAVE;
+
+
+
+typedef struct tag_CESERVER_REQ_RGNINFO {
+	DWORD dwRgnInfoSize;
+	CESERVER_CHAR RgnInfo;
+} CESERVER_REQ_RGNINFO;
+
+typedef struct tag_CESERVER_REQ_FULLCONDATA {
+	DWORD dwRgnInfoSize_MustBe0; // must be 0
+	DWORD dwOneBufferSize; // may be 0
+	wchar_t Data[300]; // Variable length!!!
+} CESERVER_REQ_FULLCONDATA;
+
+typedef struct tag_CESERVER_REQ_CONINFO {
+	/* 1*/HWND hConWnd;
+	/* 2*/DWORD nPacketId;
+	/* 3*/DWORD nProcessCount; // Will be 0 in current version
+	// Next Fields are valid ONLY if (nProcessCount == 0)
+	/* 4*/DWORD dwSelSize; // To kill
+	      CONSOLE_SELECTION_INFO si;
+    /* 5*/DWORD dwCiSize;
+	      CONSOLE_CURSOR_INFO ci;
+    /* 6*/DWORD dwConsoleCP;
+	/* 7*/DWORD dwConsoleOutputCP;
+	/* 8*/DWORD dwConsoleMode;
+	/* 9*/DWORD dwSbiSize;
+	      CONSOLE_SCREEN_BUFFER_INFO sbi;
+    union {
+	/*10*/DWORD dwRgnInfoSize;
+	      CESERVER_REQ_RGNINFO RgnInfo;
+    /*11*/CESERVER_REQ_FULLCONDATA FullData;
+	};
+} CESERVER_REQ_CONINFO;
+
+typedef struct tag_CESERVER_REQ_SETSIZE {
+	USHORT nBufferHeight; // 0 или высота буфера (режим с прокруткой)
+	COORD  size;
+	SHORT  nSendTopLine;  // -1 или 0based номер строки зафиксированной в GUI (только для режима с прокруткой)
+	SMALL_RECT rcWindow;  // координаты видимой области для режима с прокруткой
+} CESERVER_REQ_SETSIZE;
+
+typedef struct tag_CESERVER_REQ_OUTPUTFILE {
+	BOOL  bUnicode;
+	WCHAR szFilePathName[MAX_PATH+1];
+} CESERVER_REQ_OUTPUTFILE;
+
+typedef struct tag_CESERVER_REQ {
+    CESERVER_REQ_HDR hdr;
+	union {
+		BYTE    Data[1]; // variable(!) length
+		CESERVER_REQ_CONINFO ConInfo; // Informational only! Some fields ARE VARIABLE LENGTH
+		CESERVER_REQ_SETSIZE SetSize;
+		CONSOLE_SCREEN_BUFFER_INFO SetSizeRet;
+		CESERVER_REQ_OUTPUTFILE OutputFile;
+	};
+} CESERVER_REQ;
+
 
 #pragma pack(pop)
 
@@ -214,3 +265,86 @@ struct ForwardedFileInfo
 // ConEmu.dll экспортирует следующие функции
 //HWND WINAPI GetFarHWND();
 //void WINAPI _export GetFarVersion ( FarVersion* pfv );
+
+//------------------------------------------------------------------------
+///| Section |////////////////////////////////////////////////////////////
+//------------------------------------------------------------------------
+#ifdef __cplusplus
+class CSection
+{
+protected:
+	CRITICAL_SECTION* mp_cs;
+	DWORD* mp_TID;
+public:
+	void Leave()
+	{
+		if (mp_cs) {
+			*mp_TID = 0;
+			mp_TID = NULL;
+			//OutputDebugString(_T("LeaveCriticalSection\n"));
+			LeaveCriticalSection(mp_cs);
+			#ifdef _DEBUG
+			#ifndef CSECTION_NON_RAISE
+			_ASSERTE(mp_cs->LockCount==-1);
+			#endif
+			#endif
+			mp_cs = NULL;
+		}
+	}
+	void Enter(CRITICAL_SECTION* pcs, DWORD* pTID)
+	{
+		Leave(); // если было
+
+		mp_TID = pTID;
+		DWORD dwTID = GetCurrentThreadId();
+		if (dwTID == *pTID)
+			return; // в этой нити уже заблокировано
+
+		mp_cs = pcs;
+		if (mp_cs) {
+			//OutputDebugString(_T("TryEnterCriticalSection\n"));
+			#ifdef _DEBUG
+			DWORD dwTryLockSectionStart = GetTickCount(), dwCurrentTick;
+			#endif
+			if (!TryEnterCriticalSection(mp_cs)) {
+				Sleep(50);
+				while (!TryEnterCriticalSection(mp_cs)) {
+					Sleep(50);
+					OutputDebugString(L"TryEnterCriticalSection failed!!!\n");
+					#ifdef _DEBUG
+					dwCurrentTick = GetTickCount();
+					if ((dwCurrentTick - dwTryLockSectionStart) > 3000) {
+						#ifndef CSECTION_NON_RAISE
+						_ASSERTE((dwCurrentTick - dwTryLockSectionStart) <= 3000);
+						#endif
+						dwTryLockSectionStart = GetTickCount();
+					}
+					#endif
+				}
+			}
+			//EnterCriticalSection(mp_cs);
+			*mp_TID = dwTID;
+		}
+	}
+	bool isLocked()
+	{
+		if (mp_cs)
+			return true;
+		// мог быть заблокирован из другой нити в этой же функции
+		if (mp_TID) {
+			DWORD dwTID = GetCurrentThreadId();
+			if (*mp_TID == dwTID)
+				return true;
+		}
+		return false;
+	}
+	CSection (CRITICAL_SECTION* pcs, DWORD* pTID) : mp_cs(NULL), mp_TID(NULL)
+	{
+		if (pcs) Enter(pcs, pTID);
+	}
+	~CSection()
+	{
+		Leave();
+	}
+};
+#endif

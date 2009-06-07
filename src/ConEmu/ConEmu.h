@@ -194,6 +194,7 @@ public:
 	void UpdateTitle(LPCTSTR asNewTitle);
 	LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 public:
+	void OnBufferHeight(BOOL abBufferHeight);
 	LRESULT OnClose(HWND hWnd);
 	LRESULT OnCopyData(PCOPYDATASTRUCT cds);
 	//LRESULT OnConEmuCmd(BOOL abStarted, HWND ahConWnd, DWORD anConEmuC_PID);

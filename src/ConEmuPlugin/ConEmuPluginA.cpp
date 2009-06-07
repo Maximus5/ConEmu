@@ -33,6 +33,8 @@ HANDLE WINAPI _export OpenPlugin(int OpenFrom,INT_PTR Item)
 	if (gnReqCommand != (DWORD)-1) {
 		gnPluginOpenFrom = OpenFrom;
 		ProcessCommand(gnReqCommand, FALSE/*bReqMainThread*/, gpReqCommandData);
+	} else {
+		ShowPluginMenu();
 	}
 	return INVALID_HANDLE_VALUE;
 }
@@ -452,4 +454,40 @@ void PostMacroA(char* asMacro)
 	mcr.Param.PlainText.SequenceText = asMacro;
 	mcr.Param.PlainText.Flags = KSFLAGS_DISABLEOUTPUT;
 	InfoA->AdvControl(InfoA->ModuleNumber, ACTL_KEYMACRO, (void*)&mcr);
+}
+
+int ShowPluginMenuA()
+{
+	if (!InfoA)
+		return -1;
+
+	FarMenuItem items[] = {
+		{"", 1, 0, 0}
+	};
+	lstrcpyA(items[0].Text, InfoA->GetMsg(InfoA->ModuleNumber,3));
+	int nCount = sizeof(items)/sizeof(items[0]);
+
+	int nRc = InfoA->Menu(InfoA->ModuleNumber, -1,-1, 0, 
+		FMENU_AUTOHIGHLIGHT|FMENU_CHANGECONSOLETITLE|FMENU_WRAPMODE,
+		InfoA->GetMsg(InfoA->ModuleNumber,2),
+		NULL, NULL, NULL, NULL, items, nCount);
+
+	return nRc;
+}
+
+BOOL EditOutputA(LPCWSTR asFileName)
+{
+	if (!InfoA)
+		return FALSE;
+
+	char szAnsi[MAX_PATH+1];
+	if (!WideCharToMultiByte(CP_ACP, 0, asFileName, -1, szAnsi, MAX_PATH+1, 0,0))
+		return FALSE;
+
+	int iRc =
+	InfoA->Editor(szAnsi, InfoA->GetMsg(InfoA->ModuleNumber,3), 0,0,-1,-1, 
+		EF_NONMODAL|EF_IMMEDIATERETURN|EF_DELETEONLYFILEONCLOSE|EF_ENABLE_F6|EF_DISABLEHISTORY,
+		0, 1);
+
+	return (iRc != EEC_OPEN_ERROR);
 }

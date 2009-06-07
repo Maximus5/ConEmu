@@ -225,7 +225,7 @@ BOOL CConEmuPipe::Execute(int nCmd, LPVOID apData, UINT anDataSize)
 	DEBUGSTR(szMsg);
 	#endif
 
-	int nAllSize = sizeof(CESERVER_REQ)+anDataSize-1;
+	int nAllSize = sizeof(CESERVER_REQ_HDR)+anDataSize;
 	CESERVER_REQ* pIn = (CESERVER_REQ*)calloc(nAllSize,1);
 	_ASSERTE(pIn!=NULL);
 	if (!pIn) {
@@ -236,9 +236,10 @@ BOOL CConEmuPipe::Execute(int nCmd, LPVOID apData, UINT anDataSize)
 		return FALSE;
 	}
 
-	pIn->nCmd = nCmd;
-	pIn->nSize = nAllSize;
-	pIn->nVersion = CESERVER_REQ_VER;
+	pIn->hdr.nCmd = nCmd;
+	pIn->hdr.nSrcThreadId = GetCurrentThreadId();
+	pIn->hdr.nSize = nAllSize;
+	pIn->hdr.nVersion = CESERVER_REQ_VER;
 	if (apData && anDataSize) {
 		memmove(pIn->Data, apData, anDataSize);
 	}
@@ -251,7 +252,7 @@ BOOL CConEmuPipe::Execute(int nCmd, LPVOID apData, UINT anDataSize)
     fSuccess = TransactNamedPipe( 
       mh_Pipe,                // pipe handle 
       pIn,                    // message to server
-      pIn->nSize,             // message length 
+      pIn->hdr.nSize,             // message length 
       cbReadBuf,              // buffer to receive reply
       sizeof(cbReadBuf),      // size of read buffer
       &cbRead,                // bytes read
@@ -273,6 +274,15 @@ BOOL CConEmuPipe::Execute(int nCmd, LPVOID apData, UINT anDataSize)
         return FALSE;
     }
 
+	// Информационно!
+	pOut = (CESERVER_REQ*)cbReadBuf;
+	if (pOut->hdr.nVersion != CESERVER_REQ_VER) {
+		gConEmu.ShowOldCmdVersion(pOut->hdr.nCmd, pOut->hdr.nVersion);
+		pOut = NULL;
+		Close();
+		return FALSE;
+	}
+	pOut = NULL;
 
 
     nAllSize = *((DWORD*)cbReadBuf);
@@ -285,7 +295,7 @@ BOOL CConEmuPipe::Execute(int nCmd, LPVOID apData, UINT anDataSize)
     pOut = (CESERVER_REQ*)calloc(nAllSize,1);
     _ASSERTE(pOut!=NULL);
     memmove(pOut, cbReadBuf, cbRead);
-    _ASSERTE(pOut->nVersion==CESERVER_REQ_VER);
+    _ASSERTE(pOut->hdr.nVersion==CESERVER_REQ_VER);
 
     LPBYTE ptrData = ((LPBYTE)pOut)+cbRead;
     nAllSize -= cbRead;
@@ -320,7 +330,7 @@ BOOL CConEmuPipe::Execute(int nCmd, LPVOID apData, UINT anDataSize)
 	SafeFree(pIn);
 
 	lpCursor = pOut->Data;
-	dwMaxDataSize = pOut->nSize - sizeof(CESERVER_REQ) + 1;
+	dwMaxDataSize = pOut->hdr.nSize - sizeof(CESERVER_REQ_HDR);
 
 	//ResetEvent(hEventAlive);
 	//ResetEvent(hEventReady);

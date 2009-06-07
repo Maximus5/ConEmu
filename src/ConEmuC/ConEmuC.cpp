@@ -5,11 +5,13 @@
 
 //#define CONEMUC_DLL_MODE
 
+#define CSECTION_NON_RAISE
+
 #include <Windows.h>
 #include <WinCon.h>
 #include <stdio.h>
 #include <Shlwapi.h>
-//#include <conio.h>
+#include <Tlhelp32.h>
 #include <vector>
 #include "..\common\common.hpp"
 extern "C" {
@@ -25,7 +27,7 @@ WARNING("При запуске как ComSpec получаем ошибку: {crNewSize.X>=MIN_CON_WIDTH &&
 
 #ifdef _DEBUG
 //  Раскомментировать, чтобы сразу после запуска процесса (conemuc.exe) показать MessageBox, чтобы прицепиться дебаггером
-  #define SHOW_STARTED_MSGBOX
+//  #define SHOW_STARTED_MSGBOX
 #endif
 
 WARNING("!!!! Пока можно при появлении события запоминать текущий тик");
@@ -41,8 +43,10 @@ CRITICAL_SECTION gcsHeap;
 #endif
 
 #ifndef _DEBUG
+// Релизный режим
 #define FORCE_REDRAW_FIX
 #else
+// Отладочный режим
 //#define FORCE_REDRAW_FIX
 #endif
 
@@ -118,6 +122,7 @@ void CmdOutputStore();
 void CmdOutputRestore();
 LPVOID Alloc(size_t nCount, size_t nSize);
 void Free(LPVOID ptr);
+void CheckConEmuHwnd();
 
 #else
 
@@ -135,6 +140,7 @@ void ExitWaitForKey(WORD vkKey, LPCWSTR asConfirm, BOOL abNewLine);
 DWORD   gnSelfPID = 0;
 HANDLE  ghConIn = NULL, ghConOut = NULL;
 HWND    ghConWnd = NULL;
+HWND    ghConEmuWnd = NULL; // Root! window
 HANDLE  ghExitEvent = NULL;
 BOOL    gbAlwaysConfirmExit = FALSE;
 BOOL    gbAttachMode = FALSE;
@@ -143,12 +149,16 @@ DWORD   gdwMainThreadId = 0;
 wchar_t* gpszRunCmd = NULL;
 HANDLE  ghCtrlCEvent = NULL, ghCtrlBreakEvent = NULL;
 HANDLE ghHeap = NULL; //HeapCreate(HEAP_GENERATE_EXCEPTIONS, nMinHeapSize, 0);
+#ifdef _DEBUG
+size_t gnHeapUsed = 0, gnHeapMax = 0;
+#endif
 
 enum tag_RunMode {
     RM_UNDEFINED = 0,
     RM_SERVER,
     RM_COMSPEC
 } gnRunMode = RM_UNDEFINED;
+
 
 struct tag_Srv {
     DWORD dwProcessGroup;
@@ -185,17 +195,23 @@ struct tag_Srv {
     DWORD nMainTimerElapse;
     BOOL  bConsoleActive;
     HANDLE hRefreshEvent; // ServerMode, перечитать консоль, и если есть изменения - отослать в GUI
-    HANDLE hChangingSize; // FALSE на время смены размера консоли
+    //HANDLE hChangingSize; // FALSE на время смены размера консоли
+	CRITICAL_SECTION csChangeSize; DWORD ncsTChangeSize;
     BOOL  bNeedFullReload;  // Нужен полный скан консоли
     BOOL  bForceFullSend; // Необходимо отослать ПОЛНОЕ содержимое консоли, а не только измененное
+	BOOL  bRequestPostFullReload; // Во время чтения произошел ресайз - нужно запустить повторный цикл!
     //DWORD nLastUpdateTick; // Для FORCE_REDRAW_FIX
 	DWORD nLastPacketID; // ИД пакета для отправки в GUI
 	// Если меняется только один символ... (но перечитаем всю линию)
 	//BOOL bCharChangedSet; 
 	CESERVER_CHAR CharChanged; CRITICAL_SECTION csChar;
 	// Сохранненый Output последнего cmd...
-	CESERVER_CONSAVE* pStoredOutput;
 } srv = {0};
+
+
+#pragma pack(push, 1)
+CESERVER_CONSAVE* gpStoredOutput = NULL;
+#pragma pack(pop)
 
 struct tag_Cmd {
     DWORD dwProcessGroup;
@@ -264,7 +280,7 @@ int main()
     DWORD mode = 0;
     //BOOL lb = FALSE;
 
-	ghHeap = HeapCreate(HEAP_GENERATE_EXCEPTIONS, 1000000, 0);
+	ghHeap = HeapCreate(HEAP_GENERATE_EXCEPTIONS, 200000, 0);
 
     // Хэндл консольного окна
     ghConWnd = GetConsoleWindow();
@@ -757,6 +773,10 @@ int ComspecInit()
     TODO("GUI может скорректировать размер с учетом полосы прокрутки");
 
 	// Размер должен менять сам GUI, через серверный ConEmuC!
+	#ifdef SHOW_STARTED_MSGBOX
+	MessageBox(GetConsoleWindow(), L"ConEmuC (comspec mode) is about to START", L"ConEmuC.ComSpec", 0);
+	#endif
+
 
     int nNewBufferHeight = 0;
 	COORD crNewSize = {0,0};
@@ -770,21 +790,24 @@ int ComspecInit()
 	_ASSERTE(crNewSize.X>=MIN_CON_WIDTH && crNewSize.Y>=MIN_CON_HEIGHT);
     
     CESERVER_REQ *pIn = NULL, *pOut = NULL;
-    int nSize = sizeof(CESERVER_REQ)-sizeof(pIn->Data)+3*sizeof(DWORD);
+    int nSize = sizeof(CESERVER_REQ_HDR)+3*sizeof(DWORD);
     pIn = (CESERVER_REQ*)Alloc(nSize,1);
     if (pIn) {
-        pIn->nCmd = CECMD_CMDSTARTSTOP;
-        pIn->nSize = nSize;
-        pIn->nVersion = CESERVER_REQ_VER;
-        ((DWORD*)(pIn->Data))[0] = 1; // Cmd режим начат
+        pIn->hdr.nCmd = CECMD_CMDSTARTSTOP;
+		pIn->hdr.nSrcThreadId = GetCurrentThreadId();
+        pIn->hdr.nSize = nSize;
+        pIn->hdr.nVersion = CESERVER_REQ_VER;
+        ((DWORD*)(pIn->Data))[0] = 2; // Cmd режим начат
         ((DWORD*)(pIn->Data))[1] = (DWORD)ghConWnd;
         ((DWORD*)(pIn->Data))[2] = gnSelfPID;
 
         pOut = ExecuteGuiCmd(ghConWnd, pIn);
         if (pOut) {
-			BOOL  bAlreadyBufferHeight = *(DWORD*)(pIn->Data);
-			HWND  hGuiWnd = (HWND)*(DWORD*)(pIn->Data+4);
-			DWORD nGuiPID = *(DWORD*)(pIn->Data+8);
+			BOOL  bAlreadyBufferHeight = *(DWORD*)(pOut->Data);
+			#ifdef _DEBUG
+			HWND  hGuiWnd = (HWND)*(DWORD*)(pOut->Data+4);
+			#endif
+			DWORD nGuiPID = *(DWORD*)(pOut->Data+8);
 
 			AllowSetForegroundWindow(nGuiPID);
 
@@ -826,7 +849,17 @@ void ComspecDone(int aiRc)
 
     //TODO("Уведомить плагин через пайп (если родитель - FAR) что процесс завершен. Плагин должен считать и запомнить содержимое консоли и только потом вернуть управление в ConEmuC!");
 
+	BOOL lbRc1 = FALSE, lbRc2 = FALSE;
+	CONSOLE_SCREEN_BUFFER_INFO sbi1 = {{0,0}}, sbi2 = {{0,0}};
+	// Тут нужна реальная, а не скорректированная информация!
+	if (!cmd.bNonGuiMode) // Если GUI не сможет через сервер вернуть высоту буфера - это нужно сделать нам!
+		lbRc1 = GetConsoleScreenBufferInfo(ghConOut, &sbi1);
+
+
 	//PRAGMA_ERROR("Размер должен возвращать сам GUI, через серверный ConEmuC!");
+	#ifdef SHOW_STARTED_MSGBOX
+	MessageBox(GetConsoleWindow(), L"ConEmuC (comspec mode) is about to TERMINATE", L"ConEmuC.ComSpec", 0);
+	#endif
     
     if (!cmd.bNonGuiMode)
     {
@@ -837,13 +870,14 @@ void ComspecDone(int aiRc)
         //}
 
         CESERVER_REQ *pIn = NULL, *pOut = NULL;
-        int nSize = sizeof(CESERVER_REQ)-sizeof(pIn->Data)+3*sizeof(DWORD);
+        int nSize = sizeof(CESERVER_REQ_HDR)+3*sizeof(DWORD);
         pIn = (CESERVER_REQ*)Alloc(nSize,1);
         if (pIn) {
-            pIn->nCmd = CECMD_CMDSTARTSTOP;
-            pIn->nSize = nSize;
-            pIn->nVersion = CESERVER_REQ_VER;
-            ((DWORD*)(pIn->Data))[0] = 0; // Cmd режим завершен
+            pIn->hdr.nCmd = CECMD_CMDSTARTSTOP;
+			pIn->hdr.nSrcThreadId = GetCurrentThreadId();
+            pIn->hdr.nSize = nSize;
+            pIn->hdr.nVersion = CESERVER_REQ_VER;
+            ((DWORD*)(pIn->Data))[0] = 3; // Cmd режим завершен
             ((DWORD*)(pIn->Data))[1] = (DWORD)ghConWnd;
             ((DWORD*)(pIn->Data))[2] = gnSelfPID;
 
@@ -852,6 +886,17 @@ void ComspecDone(int aiRc)
                 Free(pOut);
             }
         }
+
+		lbRc2 = GetConsoleScreenBufferInfo(ghConOut, &sbi2);
+		if (lbRc1 && lbRc2 && sbi2.dwSize.Y == sbi1.dwSize.Y) {
+			// GUI не смог вернуть высоту буфера... 
+			// Это плохо, т.к. фар высоту буфера не меняет и будет сильно глючить на N сотнях строк...
+			if (sbi2.dwSize.Y != cmd.sbi.dwSize.Y) {
+			    SMALL_RECT rc = {0};
+				sbi2.dwSize.Y = cmd.sbi.dwSize.Y;
+			    SetConsoleSize(0, sbi2.dwSize, rc, "ComspecDone.Force");
+			}
+		}
     }
 
     SafeCloseHandle(ghCtrlCEvent);
@@ -951,6 +996,10 @@ int ServerInit()
     HANDLE hWait[2] = {NULL,NULL};
     wchar_t szComSpec[MAX_PATH+1], szSelf[MAX_PATH+1];
 
+	CheckConEmuHwnd();
+
+	InitializeCriticalSection(&srv.csChangeSize);
+
     TODO("Сразу проверить, может ComSpecC уже есть?");
     if (GetEnvironmentVariable(L"ComSpec", szComSpec, MAX_PATH)) {
         wchar_t* pszSlash = wcsrchr(szComSpec, L'\\');
@@ -1014,13 +1063,13 @@ int ServerInit()
         iRc = CERR_REFRESHEVENT; goto wrap;
     }
 
-    srv.hChangingSize = CreateEvent(NULL,TRUE,FALSE,NULL);
-    if (!srv.hChangingSize) {
-        dwErr = GetLastError();
-        wprintf(L"CreateEvent(hChangingSize) failed, ErrCode=0x%08X\n", dwErr); 
-        iRc = CERR_REFRESHEVENT; goto wrap;
-    }
-    SetEvent(srv.hChangingSize);
+    //srv.hChangingSize = CreateEvent(NULL,TRUE,FALSE,NULL);
+    //if (!srv.hChangingSize) {
+    //    dwErr = GetLastError();
+    //    wprintf(L"CreateEvent(hChangingSize) failed, ErrCode=0x%08X\n", dwErr); 
+    //    iRc = CERR_REFRESHEVENT; goto wrap;
+    //}
+    //SetEvent(srv.hChangingSize);
 
     
     // Запустить нить наблюдения за консолью
@@ -1117,6 +1166,7 @@ int ServerInit()
             while ((hGui = FindWindowEx(NULL, hGui, VirtualConsoleClassMain, NULL)) != NULL) {
                 hDcWnd = (HWND)SendMessage(hGui, nMsg, (WPARAM)ghConWnd, (LPARAM)gnSelfPID);
                 if (hDcWnd != NULL) {
+					ghConEmuWnd = hGui;
                     break;
                 }
             }
@@ -1130,6 +1180,8 @@ int ServerInit()
             iRc = CERR_ATTACHFAILED; goto wrap;
         }
     }
+
+	CheckConEmuHwnd();
 
 wrap:
     return iRc;
@@ -1179,20 +1231,102 @@ void ServerDone(int aiRc)
     if (srv.hRefreshEvent) {
         SafeCloseHandle(srv.hRefreshEvent);
     }
-    if (srv.hChangingSize) {
-        SafeCloseHandle(srv.hChangingSize);
-    }
+    //if (srv.hChangingSize) {
+    //    SafeCloseHandle(srv.hChangingSize);
+    //}
     if (srv.hWinHook) {
         UnhookWinEvent(srv.hWinHook); srv.hWinHook = NULL;
     }
     
-	if (srv.pStoredOutput) { Free(srv.pStoredOutput); srv.pStoredOutput = NULL; }
+	if (gpStoredOutput) { Free(gpStoredOutput); gpStoredOutput = NULL; }
     if (srv.psChars) { Free(srv.psChars); srv.psChars = NULL; }
     if (srv.pnAttrs) { Free(srv.pnAttrs); srv.pnAttrs = NULL; }
     if (srv.ptrLineCmp) { Free(srv.ptrLineCmp); srv.ptrLineCmp = NULL; }
     DeleteCriticalSection(&srv.csConBuf);
     DeleteCriticalSection(&srv.csProc);
     DeleteCriticalSection(&srv.csChar);
+	DeleteCriticalSection(&srv.csChangeSize);
+}
+
+void CheckConEmuHwnd()
+{
+	//HWND hWndFore = GetForegroundWindow();
+	//HWND hWndFocus = GetFocus();
+	DWORD dwGuiThreadId = 0, dwGuiProcessId = 0;
+
+	if (ghConEmuWnd == NULL) {
+		CESERVER_REQ *pIn = NULL, *pOut = NULL;
+		int nSize = sizeof(CESERVER_REQ_HDR)+3*sizeof(DWORD);
+		pIn = (CESERVER_REQ*)Alloc(nSize,1);
+		if (pIn) {
+			pIn->hdr.nCmd = CECMD_CMDSTARTSTOP;
+			pIn->hdr.nSrcThreadId = GetCurrentThreadId();
+			pIn->hdr.nSize = nSize;
+			pIn->hdr.nVersion = CESERVER_REQ_VER;
+			((DWORD*)(pIn->Data))[0] = 0; // Server режим начат
+			((DWORD*)(pIn->Data))[1] = (DWORD)ghConWnd;
+			((DWORD*)(pIn->Data))[2] = gnSelfPID;
+
+			pOut = ExecuteGuiCmd(ghConWnd, pIn);
+			if (pOut) {
+				#ifdef _DEBUG
+				BOOL  bAlreadyBufferHeight = *(DWORD*)(pOut->Data);
+				#endif
+				HWND  hGuiWnd = (HWND)*(DWORD*)(pOut->Data+4);
+				#ifdef _DEBUG
+				DWORD nGuiPID = *(DWORD*)(pOut->Data+8);
+				#endif
+
+				ghConEmuWnd = hGuiWnd;
+
+				Free(pOut);
+			}
+			Free(pIn);
+		}
+	}
+	// GUI может еще "висеть" в ожидании или в отладчике, так что пробуем и через Snapshoot
+	if (ghConEmuWnd == NULL) {
+		DWORD dwGuiPID = 0;
+		HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS,0);
+		if (hSnap != INVALID_HANDLE_VALUE) {
+			PROCESSENTRY32 prc = {sizeof(PROCESSENTRY32)};
+			if (Process32First(hSnap, &prc)) {
+				do {
+					if (prc.th32ProcessID == gnSelfPID) {
+						dwGuiPID = prc.th32ParentProcessID;
+						break;
+					}
+				} while (Process32Next(hSnap, &prc));
+			}
+			CloseHandle(hSnap);
+		}
+		if (dwGuiPID) {
+			HWND hGui = NULL;
+			while ((hGui = FindWindowEx(NULL, hGui, VirtualConsoleClassMain, NULL)) != NULL) {
+				dwGuiThreadId = GetWindowThreadProcessId(hGui, &dwGuiProcessId);
+				if (dwGuiProcessId == dwGuiPID) {
+					ghConEmuWnd = hGui;
+					break;
+				}
+			}
+		}
+	}
+	if (ghConEmuWnd == NULL) { // Если уж ничего не помогло...
+		ghConEmuWnd = GetConEmuHWND(TRUE/*abRoot*/);
+	}
+	if (ghConEmuWnd) {
+		dwGuiThreadId = GetWindowThreadProcessId(ghConEmuWnd, &dwGuiProcessId);
+
+		AllowSetForegroundWindow(dwGuiProcessId);
+
+		//if (hWndFore == ghConWnd || hWndFocus == ghConWnd)
+		//if (hWndFore != ghConEmuWnd)
+
+		SetForegroundWindow(ghConWnd);
+
+	} else {
+		_ASSERTE(ghConEmuWnd!=NULL);
+	}
 }
 
 
@@ -1485,22 +1619,22 @@ DWORD WINAPI InstanceThread(LPVOID lpvParam)
         NULL);        // not overlapped I/O 
 
     if ((!fSuccess && ((dwErr = GetLastError()) != ERROR_MORE_DATA)) ||
-            cbBytesRead < (sizeof(CESERVER_REQ)-1) || in.nSize < (sizeof(CESERVER_REQ)-1))
+            cbBytesRead < sizeof(CESERVER_REQ_HDR) || in.hdr.nSize < sizeof(CESERVER_REQ_HDR))
     {
         goto wrap;
     }
 
-    if (in.nSize > cbBytesRead)
+    if (in.hdr.nSize > cbBytesRead)
     {
         DWORD cbNextRead = 0;
-        pIn = (CESERVER_REQ*)Alloc(in.nSize, 1);
+        pIn = (CESERVER_REQ*)Alloc(in.hdr.nSize, 1);
         if (!pIn)
             goto wrap;
         *pIn = in;
         fSuccess = ReadFile(
             hPipe,        // handle to pipe 
             ((LPBYTE)pIn)+cbBytesRead,  // buffer to receive data 
-            in.nSize - cbBytesRead,   // size of buffer 
+            in.hdr.nSize - cbBytesRead,   // size of buffer 
             &cbNextRead, // number of bytes read 
             NULL);        // not overlapped I/O 
         if (fSuccess)
@@ -1516,15 +1650,16 @@ DWORD WINAPI InstanceThread(LPVOID lpvParam)
     fSuccess = WriteFile( 
         hPipe,        // handle to pipe 
         pOut,         // buffer to write from 
-        pOut->nSize,  // number of bytes to write 
+        pOut->hdr.nSize,  // number of bytes to write 
         &cbWritten,   // number of bytes written 
         NULL);        // not overlapped I/O 
 
     // освободить память
-    Free(pOut);
+	if ((LPVOID)pOut != (LPVOID)gpStoredOutput) // Если это НЕ сохраненный вывод
+		Free(pOut);
 
 	MCHKHEAP
-    //if (!fSuccess || pOut->nSize != cbWritten) break; 
+    //if (!fSuccess || pOut->hdr.nSize != cbWritten) break; 
 
 // Flush the pipe to allow the client to read the pipe's contents 
 // before disconnecting. Then disconnect the pipe, and close the 
@@ -1552,6 +1687,10 @@ BOOL ReadConsoleData(CESERVER_CHAR* pCheck /*= NULL*/)
     //srv.bContentsChanged = FALSE;
     EnterCriticalSection(&srv.csConBuf);
     //RECT rcReadRect = {0};
+
+	BOOL lbFirstLoop = TRUE;
+
+Loop1:
 
     USHORT TextWidth=0, TextHeight=0;
     DWORD TextLen=0;
@@ -1651,9 +1790,25 @@ BOOL ReadConsoleData(CESERVER_CHAR* pCheck /*= NULL*/)
 			int nTop = coord.Y;
 			int nLines = pCheck->hdr.cr2.Y - pCheck->hdr.cr1.Y + 1;
 
-			_ASSERTE(pCheck->hdr.cr1.Y>=nTop);
-			_ASSERTE(pCheck->hdr.cr2.Y<=(nTop+srv.nVisibleHeight));
+			// Если мы попали во время ресайза...
+			if (pCheck->hdr.cr1.Y < nTop)
+				pCheck->hdr.cr1.Y = nTop;
+			if (pCheck->hdr.cr2.Y >= (nTop+srv.nVisibleHeight)) {
+				srv.bRequestPostFullReload = TRUE;
 
+				if (lbFirstLoop) {
+					lbFirstLoop = FALSE;
+					srv.bForceFullSend = TRUE;
+					if (pCheck)
+						memset(pCheck, 0, sizeof(CESERVER_CHAR_HDR));
+					goto Loop1;
+				}
+				pCheck->hdr.cr2.Y = (nTop+srv.nVisibleHeight-1);
+			}
+			//_ASSERTE(pCheck->hdr.cr1.Y>=nTop);
+			//_ASSERTE(pCheck->hdr.cr2.Y<=(nTop+srv.nVisibleHeight));
+
+			coord.X = 0; coord.Y = pCheck->hdr.cr1.Y;
 			int nShift = TextWidth * (pCheck->hdr.cr1.Y - nTop);
 			wchar_t* ConCharNow = srv.psChars + nShift;
 			wchar_t* ConCharEnd = srv.psChars + srv.nOneBufferSize;
@@ -1663,6 +1818,38 @@ BOOL ReadConsoleData(CESERVER_CHAR* pCheck /*= NULL*/)
 
 			MCHKHEAP
 
+			// Если мы попали во время ресайза...
+			if (((DWORD)(nShift+nRectLen)) > TextLen) {
+				srv.bRequestPostFullReload = TRUE;
+
+				if (lbFirstLoop) {
+					lbFirstLoop = FALSE;
+					srv.bForceFullSend = TRUE;
+					if (pCheck)
+						memset(pCheck, 0, sizeof(CESERVER_CHAR_HDR));
+					goto Loop1;
+				}
+
+				// Попытаемся ограничить чтение требуемым размером
+				TextWidth = srv.sbi.dwSize.X;
+				TextHeight = (gnBufferHeight == 0) ? srv.sbi.dwSize.Y : gcrBufferSize.Y;
+				srv.nVisibleHeight = TextHeight;
+				TextLen = TextWidth * TextHeight;
+				if (TextLen > srv.nBufCharCount) {
+					TextLen = srv.nBufCharCount;
+					TextHeight = (USHORT)(TextLen / TextWidth);
+				}
+				pCheck->hdr.cr1.X = min(pCheck->hdr.cr1.X,(TextWidth-1));
+				pCheck->hdr.cr2.X = min(pCheck->hdr.cr2.X,(TextWidth-1));
+				pCheck->hdr.cr1.Y = min(pCheck->hdr.cr1.Y,(TextHeight-1));
+				pCheck->hdr.cr2.Y = min(pCheck->hdr.cr2.Y,(TextHeight-1));
+
+				nShift = TextWidth * (pCheck->hdr.cr1.Y - nTop);
+				ConCharNow = srv.psChars + nShift;
+				ConCharEnd = srv.psChars + srv.nOneBufferSize;
+				ConAttrNow = srv.pnAttrs + nShift;
+				nRectLen = TextWidth * nLines;
+			}
 			_ASSERTE(((DWORD)(nShift+nRectLen))<=TextLen);
 
 			if (!ReadConsoleOutputAttribute(ghConOut, ConAttrNow, nRectLen, coord, &nbActuallyRead)
@@ -1759,6 +1946,8 @@ BOOL ReadConsoleData(CESERVER_CHAR* pCheck /*= NULL*/)
 				//	}
 				//}
 			}
+			// Добавить номер строки, с которой начали считать
+			cr1.Y += pCheck->hdr.cr1.Y; cr2.Y += pCheck->hdr.cr1.Y;
 			MCHKHEAP
 			// Теперь у нас АБСОЛЮТНЫЕ координаты изменений но в ВИДИМОЙ области
 			if (cr2.X != -1) {
@@ -1806,6 +1995,9 @@ BOOL ReadConsoleData(CESERVER_CHAR* pCheck /*= NULL*/)
 			}
 		}
 
+		if (TextWidth != srv.sbi.dwSize.X)
+			srv.bRequestPostFullReload = TRUE;
+
         //cbDataSize = TextLen * 2; // Size in bytes of ONE buffer
 
 
@@ -1828,7 +2020,7 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 
 	MCHKHEAP
 
-    switch (in.nCmd) {
+    switch (in.hdr.nCmd) {
         case CECMD_GETSHORTINFO:
         case CECMD_GETFULLINFO:
         {
@@ -1840,13 +2032,13 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
             if (ghConOut==NULL || ghConOut==INVALID_HANDLE_VALUE)
                 return FALSE;
 
-			if (in.nCmd == CECMD_GETFULLINFO)
+			if (in.hdr.nCmd == CECMD_GETFULLINFO)
 				ReadConsoleData(NULL);
 
 			MCHKHEAP
 
             // На запрос из GUI (GetAnswerToRequest)
-            *out = CreateConsoleInfo(NULL, (in.nCmd == CECMD_GETFULLINFO));
+            *out = CreateConsoleInfo(NULL, (in.hdr.nCmd == CECMD_GETFULLINFO));
 
 			MCHKHEAP
 
@@ -1857,14 +2049,15 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 		case CECMD_CMDFINISHED:
         {
 			MCHKHEAP
-            int nOutSize = sizeof(CESERVER_REQ) + sizeof(CONSOLE_SCREEN_BUFFER_INFO) - 1;
+            int nOutSize = sizeof(CESERVER_REQ_HDR) + sizeof(CONSOLE_SCREEN_BUFFER_INFO);
             *out = (CESERVER_REQ*)Alloc(nOutSize,1);
             if (*out == NULL) return FALSE;
-            (*out)->nCmd = 0;
-            (*out)->nSize = nOutSize;
-            (*out)->nVersion = CESERVER_REQ_VER;
+            (*out)->hdr.nCmd = 0;
+			(*out)->hdr.nSrcThreadId = GetCurrentThreadId();
+            (*out)->hdr.nSize = nOutSize;
+            (*out)->hdr.nVersion = CESERVER_REQ_VER;
 			MCHKHEAP
-            if (in.nSize >= ((sizeof(CESERVER_REQ)-1) + sizeof(USHORT)+sizeof(COORD)+sizeof(SHORT)+sizeof(SMALL_RECT))) {
+            if (in.hdr.nSize >= (sizeof(CESERVER_REQ_HDR) + sizeof(USHORT)+sizeof(COORD)+sizeof(SHORT)+sizeof(SMALL_RECT))) {
                 USHORT nBufferHeight = 0;
                 COORD  crNewSize = {0,0};
                 SMALL_RECT rNewRect = {0};
@@ -1876,9 +2069,17 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 
 				MCHKHEAP
 
-                (*out)->nCmd = in.nCmd;
+                (*out)->hdr.nCmd = in.hdr.nCmd;
+				(*out)->hdr.nSrcThreadId = GetCurrentThreadId();
 
-				if (in.nCmd == CECMD_CMDFINISHED) {
+				#ifdef _DEBUG
+				if (in.hdr.nCmd == CECMD_CMDFINISHED || in.hdr.nCmd == CECMD_CMDSTARTED) {
+					OutputDebugString((in.hdr.nCmd == CECMD_CMDFINISHED) ? 
+						L"\n!!! CECMD_CMDFINISHED !!!\n\n" : L"\n!!! CECMD_CMDSTARTED !!!\n\n");
+				}
+				#endif
+
+				if (in.hdr.nCmd == CECMD_CMDFINISHED) {
 					// Сохранить данные ВСЕЙ консоли
 					CmdOutputStore();
 				}
@@ -1890,7 +2091,7 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 
 				MCHKHEAP
 
-				if (in.nCmd == CECMD_CMDSTARTED) {
+				if (in.hdr.nCmd == CECMD_CMDSTARTED) {
 					// Восстановить текст скрытой (прокрученной вверх) части консоли
 					CmdOutputRestore();
 				}
@@ -1904,6 +2105,23 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 
             lbRc = TRUE;
         } break;
+
+		case CECMD_GETOUTPUT:
+		{
+			if (gpStoredOutput) {
+				gpStoredOutput->hdr.hdr.nCmd = CECMD_GETOUTPUT;
+				gpStoredOutput->hdr.hdr.nSize = 
+					sizeof(CESERVER_CONSAVE_HDR)
+					+ min((int)gpStoredOutput->hdr.cbMaxOneBufferSize, 
+					      (gpStoredOutput->hdr.sbi.dwSize.X*gpStoredOutput->hdr.sbi.dwSize.Y*2));
+				gpStoredOutput->hdr.hdr.nVersion = CESERVER_REQ_VER;
+				gpStoredOutput->hdr.hdr.nSrcThreadId = GetCurrentThreadId();
+
+				*out = (CESERVER_REQ*)gpStoredOutput;
+
+				lbRc = TRUE;
+			}
+		} break;
         
         case CECMD_RECREATE:
         {
@@ -2033,6 +2251,7 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
     DWORD nLastUpdateTick = GetTickCount();
     BOOL  lbEventualChange = FALSE;
     DWORD dwTimeout = 10; // задержка чтения информации об окне (размеров, курсора,...)
+	BOOL  lbFirstForeground = TRUE;
     
     BOOL lbQuit = FALSE;
 
@@ -2046,6 +2265,13 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
         nWait = WaitForMultipleObjects ( 2, hEvents, FALSE, /*srv.bConsoleActive ? srv.nMainTimerElapse :*/ dwTimeout );
         if (nWait == WAIT_OBJECT_0)
             break; // затребовано завершение нити
+
+		if (ghConEmuWnd && GetForegroundWindow() == ghConWnd) {
+			if (lbFirstForeground || !IsWindowVisible(ghConWnd)) {
+				SetForegroundWindow(ghConEmuWnd);
+				lbFirstForeground = FALSE;
+			}
+		}
             
         // Проверим, реальный это таймаут - или изменение по событию от консоли
         lbEventualChange = (nWait == (WAIT_OBJECT_0+1));
@@ -2082,11 +2308,18 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
         if (nWait == (WAIT_OBJECT_0+1)) {
 			MCHKHEAP
             // Посмотреть, есть ли изменения в консоли
-            if (ReloadFullConsoleInfo()) // и если они есть - сбросить интервал таймаута в минимальный
+			// и если они есть - сбросить интервал таймаута в минимальный
+			// Но если после выполнения будет выставлен srv.bRequestPostFullReload - 
+			// значит во время чтения произошел ресайз и нужно СРАЗУ запустить второй цикл чтения
+            if (ReloadFullConsoleInfo() && !srv.bRequestPostFullReload)
 	            nDelayRefresh = MIN_FORCEREFRESH_INTERVAL;
             // Запомнить, когда в последний раз проверили содержимое консоли
             nLastUpdateTick = GetTickCount();
 			MCHKHEAP
+			if (srv.bRequestPostFullReload) {
+				srv.bRequestPostFullReload = FALSE;
+				SetEvent(srv.hRefreshEvent);
+			}
         }
         
         WARNING("Win2k скорее всего события вообще не ходят, так что timeout нужно ставить вообще минимальный (10)");
@@ -2295,15 +2528,15 @@ void WINAPI WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LO
         //The idObject parameter is one or more of the following values:
         //      CONSOLE_CARET_SELECTION or CONSOLE_CARET_VISIBLE.
         //The idChild parameter is a COORD structure that specifies the cursor's current position.
-            #ifdef _DEBUG
             COORD crWhere; memmove(&crWhere, &idChild, sizeof(idChild));
+            #ifdef _DEBUG
             wsprintfW(szDbg, L"EVENT_CONSOLE_CARET({%i, %i} Sel=%c, Vis=%c\n", crWhere.X,crWhere.Y, 
                 ((idObject & CONSOLE_CARET_SELECTION)==CONSOLE_CARET_SELECTION) ? L'Y' : L'N',
                 ((idObject & CONSOLE_CARET_VISIBLE)==CONSOLE_CARET_VISIBLE) ? L'Y' : L'N');
             OutputDebugString(szDbg);
             #endif
 			if (srv.sbi.dwCursorPosition.X != crWhere.X || srv.sbi.dwCursorPosition.Y != crWhere.Y
-				|| srv.ci.bVisible != ((idObject & CONSOLE_CARET_VISIBLE)==CONSOLE_CARET_VISIBLE))
+				|| srv.ci.bVisible != ((idObject & 2/*CONSOLE_CARET_VISIBLE*/)==2/*CONSOLE_CARET_VISIBLE*/))
 			{
 				SetEvent(srv.hRefreshEvent);
 			}
@@ -2429,8 +2662,17 @@ void SendConsoleChanges(CESERVER_REQ* pOut)
 
     // Собственно запись в пайп
     DWORD dwWritten = 0;
-    fSuccess = WriteFile ( hPipe, pOut, pOut->nSize, &dwWritten, NULL);
-    _ASSERTE(fSuccess && dwWritten == pOut->nSize);
+    fSuccess = WriteFile ( hPipe, pOut, pOut->hdr.nSize, &dwWritten, NULL);
+	if (!fSuccess || dwWritten != pOut->hdr.nSize) {
+		// GUI мог быть закрыт!
+		if (ghConEmuWnd && IsWindow(ghConEmuWnd)) {
+			// Окно разрушиться не успело, и все равно вывалился assert
+			_ASSERTE(fSuccess && dwWritten == pOut->hdr.nSize);
+		} else {
+			ghConEmuWnd = NULL;
+			TODO("Какие-то действия... показать консольное окно, или еще что-то");
+		}
+	}
 }
 
 CESERVER_REQ* CreateConsoleInfo(CESERVER_CHAR* pRgnOnly, BOOL bCharAttrBuff)
@@ -2439,7 +2681,8 @@ CESERVER_REQ* CreateConsoleInfo(CESERVER_CHAR* pRgnOnly, BOOL bCharAttrBuff)
 	DWORD nPacketId = ++srv.nLastPacketID;
 
     CESERVER_REQ* pOut = NULL;
-    DWORD dwAllSize = sizeof(CESERVER_REQ), nSize;
+    DWORD dwAllSize = sizeof(CESERVER_REQ_HDR);
+	DWORD nSize; // temp, для определения размера добавляемой переменной
 
     // 1
     HWND hWnd = NULL;
@@ -2489,7 +2732,12 @@ CESERVER_REQ* CreateConsoleInfo(CESERVER_CHAR* pRgnOnly, BOOL bCharAttrBuff)
         }
         #ifdef _DEBUG
         if (gnBufferHeight == 0) {
-            _ASSERTE(OneBufferSize == (srv.sbi.dwSize.X*srv.sbi.dwSize.Y*2));
+			if (OneBufferSize != (srv.sbi.dwSize.X*srv.sbi.dwSize.Y*2)) {
+				// Это может случиться во время ресайза
+				srv.bRequestPostFullReload = TRUE;
+				OneBufferSize = OneBufferSize;
+			}
+            //_ASSERTE(OneBufferSize == (srv.sbi.dwSize.X*srv.sbi.dwSize.Y*2));
         }
         #endif
         if (OneBufferSize) {
@@ -2497,17 +2745,18 @@ CESERVER_REQ* CreateConsoleInfo(CESERVER_CHAR* pRgnOnly, BOOL bCharAttrBuff)
         }
     }
 
-    // Выделение буфера
-    pOut = (CESERVER_REQ*)Alloc(dwAllSize+sizeof(CESERVER_REQ), 1); // размер считали в байтах
+    // Выделение буфера // Размер заголовка уже учтен!
+    pOut = (CESERVER_REQ*)Alloc(dwAllSize/*+sizeof(CESERVER_REQ)*/, 1); // размер считали в байтах
     _ASSERT(pOut!=NULL);
     if (pOut == NULL) {
         return FALSE;
     }
 
     // инициализация
-    pOut->nSize = dwAllSize;
-    pOut->nCmd = bCharAttrBuff ? CECMD_GETFULLINFO : CECMD_GETSHORTINFO;
-    pOut->nVersion = CESERVER_REQ_VER;
+    pOut->hdr.nSize = dwAllSize;
+    pOut->hdr.nCmd = bCharAttrBuff ? CECMD_GETFULLINFO : CECMD_GETSHORTINFO;
+	pOut->hdr.nSrcThreadId = GetCurrentThreadId();
+    pOut->hdr.nVersion = CESERVER_REQ_VER;
 
     // поехали
     LPBYTE lpCur = (LPBYTE)(pOut->Data);
@@ -2683,18 +2932,25 @@ BOOL ReloadConsoleInfo(CESERVER_CHAR* pChangedRgn/*=NULL*/)
 						if (ReadConsoleOutputAttribute(ghConOut, srv.ptrLineCmp, nCount, coord, &nbActuallyRead)) {
 							if (memcmp(srv.ptrLineCmp, srv.pnAttrs+nBufferShift, nbActuallyRead*2)) {
 								//srv.bForceFullSend = TRUE; break;
-								if (pChangedRgn)
+								if (pChangedRgn) {
 									EnlargeRegion(pChangedRgn->hdr, coord);
+									coord.X = gcrBufferSize.X -1;
+									EnlargeRegion(pChangedRgn->hdr, coord);
+								}
 							}
 						}
 
 						MCHKHEAP
 
+						coord.X = 0;
                         if (ReadConsoleOutputCharacter(ghConOut, (wchar_t*)srv.ptrLineCmp, nCount, coord, &nbActuallyRead)) {
                             if (memcmp(srv.ptrLineCmp, srv.psChars+nBufferShift, nbActuallyRead*2)) {
                                 //srv.bForceFullSend = TRUE; break;
-                                if (pChangedRgn)
+								if (pChangedRgn) {
 	                                EnlargeRegion(pChangedRgn->hdr, coord);
+									coord.X = gcrBufferSize.X -1;
+									EnlargeRegion(pChangedRgn->hdr, coord);
+								}
                             }
                         }
                     }
@@ -2719,6 +2975,10 @@ BOOL MyGetConsoleScreenBufferInfo(HANDLE ahConOut, PCONSOLE_SCREEN_BUFFER_INFO a
 {
     BOOL lbRc = FALSE;
 
+	CSection cs(NULL,NULL);
+	if (gnRunMode == RM_SERVER)
+		cs.Enter(&srv.csChangeSize, &srv.ncsTChangeSize);
+
     lbRc = GetConsoleScreenBufferInfo(ahConOut, apsc);
     if (lbRc) {
         if (gnBufferHeight) {
@@ -2741,11 +3001,21 @@ BOOL MyGetConsoleScreenBufferInfo(HANDLE ahConOut, PCONSOLE_SCREEN_BUFFER_INFO a
         CorrectVisibleRect(apsc);
     }
 
+	cs.Leave();
+
+	#ifdef _DEBUG
+	if ((apsc->srWindow.Bottom - apsc->srWindow.Top)>apsc->dwMaximumWindowSize.Y) {
+		_ASSERTE((apsc->srWindow.Bottom - apsc->srWindow.Top)<apsc->dwMaximumWindowSize.Y);
+	}
+	#endif
+
     return lbRc;
 }
 
 void CorrectVisibleRect(CONSOLE_SCREEN_BUFFER_INFO* pSbi)
 {
+	_ASSERTE(gcrBufferSize.Y<200);
+
     // Игнорируем горизонтальный скроллинг
     pSbi->srWindow.Left = 0; pSbi->srWindow.Right = pSbi->dwSize.X - 1;
     if (gnBufferHeight == 0) {
@@ -2765,13 +3035,21 @@ void CorrectVisibleRect(CONSOLE_SCREEN_BUFFER_INFO* pSbi)
         TODO("Вообще-то хорошо бы эту коррекцию сделать так, чтобы курсор был видим");
         pSbi->srWindow.Bottom = min( (pSbi->dwSize.Y-1), (pSbi->srWindow.Top+gcrBufferSize.Y-1) );
     }
+
+	#ifdef _DEBUG
+	if ((pSbi->srWindow.Bottom - pSbi->srWindow.Top)>pSbi->dwMaximumWindowSize.Y) {
+		_ASSERTE((pSbi->srWindow.Bottom - pSbi->srWindow.Top)<pSbi->dwMaximumWindowSize.Y);
+	}
+	#endif
 }
 
 BOOL ReloadFullConsoleInfo(/*CESERVER_CHAR* pCharOnly/ *=NULL*/)
 {
+	#ifdef _DEBUG
 	DWORD dwCurThId = GetCurrentThreadId();
 	// Должен вызываться ТОЛЬКО в главной нити (RefreshThread)
 	_ASSERTE(dwCurThId == srv.dwRefreshThread);
+	#endif
 
 	BOOL lbChangesWasSent = FALSE;
     CESERVER_CHAR* pCheck = NULL;
@@ -2902,12 +3180,12 @@ BOOL ReloadFullConsoleInfo(/*CESERVER_CHAR* pCharOnly/ *=NULL*/)
 				MCHKHEAP
 				// ширина консоли
 				int nConLineLen = srv.sbi.dwSize.X;
-				int nConLineSize = nConLineLen * 2; // wchar_t / WORD
+				//int nConLineSize = nConLineLen * 2; // wchar_t / WORD
 				// Побежали по строкам (тут координата уже не играет - работаем с указателями)
 				for (int y = nRelativeY1; y <= nRelativeY2; y++) {
 					#ifdef _DEBUG
-						_ASSERTE(!IsBadWritePtr(pszSend, nConLineSize));
-						_ASSERTE(!IsBadWritePtr(pnSend, nConLineSize));
+						_ASSERTE(!IsBadWritePtr(pszSend, nLineSize));
+						_ASSERTE(!IsBadWritePtr(pnSend, nLineSize));
 					#endif
 					memmove(pszSend, pszCon, nLineSize);
 						pszSend += nLineLen; pszCon += nConLineLen;
@@ -2985,6 +3263,10 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 {
     _ASSERTE(ghConWnd);
     if (!ghConWnd) return FALSE;
+
+	CSection cs(NULL,NULL);
+	if (gnRunMode == RM_SERVER)
+		cs.Enter(&srv.csChangeSize, &srv.ncsTChangeSize);
     
     if (ghLogSize) LogSize(&crNewSize, asLabel);
 
@@ -2998,23 +3280,24 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 
     gnBufferHeight = BufferHeight;
     gcrBufferSize = crNewSize;
+	_ASSERTE(gcrBufferSize.Y<200);
 
     RECT rcConPos = {0};
     GetWindowRect(ghConWnd, &rcConPos);
 
     BOOL lbRc = TRUE;
-    DWORD nWait = 0;
+    //DWORD nWait = 0;
     BOOL lbNeedChange = TRUE;
     CONSOLE_SCREEN_BUFFER_INFO csbi = {{0,0}};
     if (MyGetConsoleScreenBufferInfo(ghConOut, &csbi)) {
         lbNeedChange = (csbi.dwSize.X != crNewSize.X) || (csbi.dwSize.Y != crNewSize.Y);
     }
 
-    if (srv.hChangingSize) { // во время запуска ConEmuC
-        nWait = WaitForSingleObject(srv.hChangingSize, 300);
-        _ASSERTE(nWait == WAIT_OBJECT_0);
-        ResetEvent(srv.hChangingSize);
-    }
+    //if (srv.hChangingSize) {
+    //    nWait = WaitForSingleObject(srv.hChangingSize, 300);
+    //    _ASSERTE(nWait == WAIT_OBJECT_0);
+    //    ResetEvent(srv.hChangingSize);
+    //}
 
     // case: simple mode
     if (BufferHeight == 0)
@@ -3044,16 +3327,20 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
         MoveWindow(ghConWnd, rcCurConPos.left, rcCurConPos.top, GetSystemMetrics(SM_CXSCREEN), rcConPos.bottom-rcConPos.top, 1);
 
         rNewRect.Left = 0;
-        if (!rNewRect.Right || !rNewRect.Bottom) {
+        //if (!rNewRect.Right || !rNewRect.Bottom)
+		{
             rNewRect.Right = crHeight.X-1;
             rNewRect.Bottom = min( (crHeight.Y-1), (rNewRect.Top+gcrBufferSize.Y-1) );
+			_ASSERTE(rNewRect.Bottom<200);
         }
         SetConsoleWindowInfo(ghConOut, TRUE, &rNewRect);
     }
 
-    if (srv.hChangingSize) { // во время запуска ConEmuC
-        SetEvent(srv.hChangingSize);
-    }
+    //if (srv.hChangingSize) { // во время запуска ConEmuC
+    //    SetEvent(srv.hChangingSize);
+    //}
+
+	cs.Leave();
 
     return lbRc;
 }
@@ -3119,30 +3406,31 @@ void EnlargeRegion(CESERVER_CHAR_HDR& rgn, const COORD crNew)
     }
 }
 
-// Сохранить данные ВСЕЙ консоли в srv.pStoredOutput
+// Сохранить данные ВСЕЙ консоли в gpStoredOutput
 void CmdOutputStore()
 {
 	CONSOLE_SCREEN_BUFFER_INFO lsbi = {{0,0}};
 	// !!! Нас интересует реальное положение дел в консоли, 
 	//     а не скорректированное функцией MyGetConsoleScreenBufferInfo
 	if (!GetConsoleScreenBufferInfo(ghConOut, &lsbi)) {
-		if (srv.pStoredOutput) { Free(srv.pStoredOutput); srv.pStoredOutput = NULL; }
+		if (gpStoredOutput) { Free(gpStoredOutput); gpStoredOutput = NULL; }
 		return; // Не смогли получить информацию о консоли...
 	}
 	int nOneBufferSize = lsbi.dwSize.X * lsbi.dwSize.Y * 2; // Читаем всю консоль целиком!
 	// Если требуется увеличение размера выделенной памяти
-	if (srv.pStoredOutput && srv.pStoredOutput->hdr.cbMaxOneBufferSize < (DWORD)nOneBufferSize) {
-		Free(srv.pStoredOutput); srv.pStoredOutput = NULL;
+	if (gpStoredOutput && gpStoredOutput->hdr.cbMaxOneBufferSize < (DWORD)nOneBufferSize) {
+		Free(gpStoredOutput); gpStoredOutput = NULL;
 	}
-	if (srv.pStoredOutput == NULL) {
+	if (gpStoredOutput == NULL) {
 		// Выделяем память: заголовок + буфер текста (на атрибуты забьем)
-		srv.pStoredOutput = (CESERVER_CONSAVE*)Alloc(sizeof(CESERVER_CONSAVE_HDR)+nOneBufferSize,1);
-		_ASSERTE(srv.pStoredOutput!=NULL);
-		if (srv.pStoredOutput == NULL)
+		gpStoredOutput = (CESERVER_CONSAVE*)Alloc(sizeof(CESERVER_CONSAVE_HDR)+nOneBufferSize,1);
+		_ASSERTE(gpStoredOutput!=NULL);
+		if (gpStoredOutput == NULL)
 			return; // Не смогли выделить память
+		gpStoredOutput->hdr.cbMaxOneBufferSize = nOneBufferSize;
 	}
 	// Запомнить sbi
-	memmove(&srv.pStoredOutput->hdr.sbi, &lsbi, sizeof(lsbi));
+	memmove(&gpStoredOutput->hdr.sbi, &lsbi, sizeof(lsbi));
 	// Теперь читаем данные
 	COORD coord = {0,0};
 	DWORD nbActuallyRead = 0;
@@ -3159,10 +3447,11 @@ void CmdOutputStore()
 	// cases is not that difficult to develop but it will be increased complexity and
 	// overhead often for nothing, not sure that we really should use it.
 
-	if (!ReadConsoleOutputCharacter(ghConOut, srv.pStoredOutput->Data, nReadLen, coord, &nbActuallyRead)
+	if (!ReadConsoleOutputCharacter(ghConOut, gpStoredOutput->Data, nReadLen, coord, &nbActuallyRead)
 		|| (nbActuallyRead != nReadLen))
 	{
-		wchar_t* ConCharNow = srv.pStoredOutput->Data;
+		wchar_t* ConCharNow = gpStoredOutput->Data;
+		nReadLen = lsbi.dwSize.X;
 		for(int y = 0; y < (int)lsbi.dwSize.Y; y++, coord.Y++)
 		{
 			ReadConsoleOutputCharacter(ghConOut, ConCharNow, nReadLen, coord, &nbActuallyRead);
@@ -3173,7 +3462,7 @@ void CmdOutputStore()
 
 void CmdOutputRestore()
 {
-	if (srv.pStoredOutput) {
+	if (gpStoredOutput) {
 		TODO("Восстановить текст скрытой (прокрученной вверх) части консоли");
 		// Учесть, что ширина консоли могла измениться со времени выполнения предыдущей команды.
 		// Сейчас у нас в верхней части консоли может оставаться кусочек предыдущего вывода (восстановил FAR).
@@ -3187,27 +3476,41 @@ void CmdOutputRestore()
 
 LPVOID Alloc(size_t nCount, size_t nSize)
 {
-#ifdef _DEBUG
+	#ifdef _DEBUG
 	//HeapValidate(ghHeap, 0, NULL);
-#endif
+	#endif
+
 	size_t nWhole = nCount * nSize;
 	LPVOID ptr = HeapAlloc ( ghHeap, HEAP_GENERATE_EXCEPTIONS|HEAP_ZERO_MEMORY, nWhole );
-#ifdef _DEBUG
+
+	#ifdef _DEBUG
 	HeapValidate(ghHeap, 0, NULL);
-#endif
+
+	if (ptr) {
+		gnHeapUsed += nWhole;
+		if (gnHeapMax < gnHeapUsed)
+			gnHeapMax = gnHeapUsed;
+	}
+	#endif
+
 	return ptr;
 }
 
 void Free(LPVOID ptr)
 {
 	if (ptr && ghHeap) {
-#ifdef _DEBUG
+		#ifdef _DEBUG
 		//HeapValidate(ghHeap, 0, NULL);
-#endif
+		size_t nMemSize = HeapSize(ghHeap, 0, ptr);
+		#endif
+
 		HeapFree ( ghHeap, 0, ptr );
-#ifdef _DEBUG
+
+		#ifdef _DEBUG
 		HeapValidate(ghHeap, 0, NULL);
-#endif
+		if (gnHeapUsed > nMemSize)
+			gnHeapUsed -= nMemSize;
+		#endif
 	}
 }
 

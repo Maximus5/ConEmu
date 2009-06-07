@@ -71,6 +71,8 @@ HANDLE WINAPI _export OpenPluginW(int OpenFrom,INT_PTR Item)
 	if (gnReqCommand != (DWORD)-1) {
 		gnPluginOpenFrom = OpenFrom;
 		ProcessCommand(gnReqCommand, FALSE/*bReqMainThread*/, gpReqCommandData);
+	} else {
+		ShowPluginMenu();
 	}
 	return INVALID_HANDLE_VALUE;
 }
@@ -1129,7 +1131,8 @@ void SendTabs(int tabCount, BOOL abFillDataOnly/*=FALSE*/)
 			if (gnCurTabCount != tabCount || tabCount > 1) {
 				gnCurTabCount = tabCount; // сразу запомним!, ј то при ретриве табов количество еще старым будет...
 				//PostMessage(ConEmuHwnd, gnMsgTabChanged, tabCount, 0);
-				gpCmdRet->nCmd = CECMD_TABSCHANGED;
+				gpCmdRet->hdr.nCmd = CECMD_TABSCHANGED;
+				gpCmdRet->hdr.nSrcThreadId = GetCurrentThreadId();
 				CESERVER_REQ* pOut =
 					ExecuteGuiCmd(FarHwnd, gpCmdRet);
 				if (pOut) Free(pOut);
@@ -1303,12 +1306,13 @@ void CloseTabs()
 BOOL OutDataAlloc(DWORD anSize)
 {
 	// + размер заголовка gpCmdRet
-	gpCmdRet = (CESERVER_REQ*)Alloc(12+anSize,1);
+	gpCmdRet = (CESERVER_REQ*)Alloc(sizeof(CESERVER_REQ_HDR)+anSize,1);
 	if (!gpCmdRet)
 		return FALSE;
 
-	gpCmdRet->nSize = anSize+12;
-	gpCmdRet->nVersion = CESERVER_REQ_VER;
+	gpCmdRet->hdr.nSize = anSize+sizeof(CESERVER_REQ_HDR);
+	gpCmdRet->hdr.nVersion = CESERVER_REQ_VER;
+	gpCmdRet->hdr.nSrcThreadId = GetCurrentThreadId();
 
 	gpData = gpCmdRet->Data;
 	gnDataSize = anSize;
@@ -1328,12 +1332,13 @@ BOOL OutDataRealloc(DWORD anNewSize)
 		return FALSE; // нельз€ выдел€ть меньше пам€ти, чем уже есть
 
 	// realloc иногда не работает, так что даже и не пытаемс€
-	CESERVER_REQ* lpNewCmdRet = (CESERVER_REQ*)Alloc(12+anNewSize,1);
+	CESERVER_REQ* lpNewCmdRet = (CESERVER_REQ*)Alloc(sizeof(CESERVER_REQ_HDR)+anNewSize,1);
 	if (!lpNewCmdRet)
 		return FALSE;
-	lpNewCmdRet->nCmd = gpCmdRet->nCmd;
-	lpNewCmdRet->nSize = anNewSize+12;
-	lpNewCmdRet->nVersion = gpCmdRet->nVersion;
+	lpNewCmdRet->hdr.nCmd = gpCmdRet->hdr.nCmd;
+	lpNewCmdRet->hdr.nSize = anNewSize+sizeof(CESERVER_REQ_HDR);
+	lpNewCmdRet->hdr.nVersion = gpCmdRet->hdr.nVersion;
+	lpNewCmdRet->hdr.nSrcThreadId = GetCurrentThreadId();
 
 	LPBYTE lpNewData = lpNewCmdRet->Data;
 	if (!lpNewData)
@@ -1559,14 +1564,14 @@ DWORD WINAPI ServerThreadCommand(LPVOID ahPipe)
         return 0;
     }
 	pIn = (CESERVER_REQ*)cbBuffer; // ѕока cast, если нужно больше - выделим пам€ть
-    _ASSERTE(pIn->nSize>=12 && cbRead>=12);
-    _ASSERTE(pIn->nVersion == CESERVER_REQ_VER);
-    if (cbRead < 12 || /*in.nSize < cbRead ||*/ pIn->nVersion != CESERVER_REQ_VER) {
+    _ASSERTE(pIn->hdr.nSize>=sizeof(CESERVER_REQ_HDR) && cbRead>=sizeof(CESERVER_REQ_HDR));
+    _ASSERTE(pIn->hdr.nVersion == CESERVER_REQ_VER);
+    if (cbRead < sizeof(CESERVER_REQ_HDR) || /*in.nSize < cbRead ||*/ pIn->hdr.nVersion != CESERVER_REQ_VER) {
         CloseHandle(hPipe);
         return 0;
     }
 
-    int nAllSize = pIn->nSize;
+    int nAllSize = pIn->hdr.nSize;
     pIn = (CESERVER_REQ*)Alloc(nAllSize,1);
     _ASSERTE(pIn!=NULL);
 	if (!pIn) {
@@ -1574,7 +1579,7 @@ DWORD WINAPI ServerThreadCommand(LPVOID ahPipe)
 		return 0;
 	}
     memmove(pIn, cbBuffer, cbRead);
-    _ASSERTE(pIn->nVersion==CESERVER_REQ_VER);
+    _ASSERTE(pIn->hdr.nVersion==CESERVER_REQ_VER);
 
     LPBYTE ptrData = ((LPBYTE)pIn)+cbRead;
     nAllSize -= cbRead;
@@ -1612,13 +1617,13 @@ DWORD WINAPI ServerThreadCommand(LPVOID ahPipe)
     }
 
     #ifdef _DEBUG
-	UINT nDataSize = pIn->nSize - sizeof(CESERVER_REQ) + 1;
+	UINT nDataSize = pIn->hdr.nSize - sizeof(CESERVER_REQ) + 1;
 	#endif
 
     // ¬се данные из пайпа получены, обрабатываем команду и возвращаем (если нужно) результат
 	//fSuccess = WriteFile( hPipe, pOut, pOut->nSize, &cbWritten, NULL);
 
-	if (pIn->nCmd == CMD_LANGCHANGE) {
+	if (pIn->hdr.nCmd == CMD_LANGCHANGE) {
 		_ASSERTE(nDataSize>=4);
 		HKL hkl = 0;
 		memmove(&hkl, pIn->Data, 4);
@@ -1633,19 +1638,19 @@ DWORD WINAPI ServerThreadCommand(LPVOID ahPipe)
 			dwLastError = dwLastError;
 		}
 
-	} else if (pIn->nCmd == CMD_DEFFONT) {
+	} else if (pIn->hdr.nCmd == CMD_DEFFONT) {
 		// исключение - асинхронный, результат не требуетс€
 		SetConsoleFontSizeTo(FarHwnd, 4, 6);
 		MoveWindow(FarHwnd, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), 1); // чтобы убрать возможные полосы прокрутки...
 
-	} else if (pIn->nCmd == CMD_REQTABS) {
+	} else if (pIn->hdr.nCmd == CMD_REQTABS) {
 		SendTabs(gnCurTabCount, TRUE);
 
 	} else {
-		ProcessCommand(pIn->nCmd, TRUE/*bReqMainThread*/, pIn->Data);
+		ProcessCommand(pIn->hdr.nCmd, TRUE/*bReqMainThread*/, pIn->Data);
 
 		if (gpCmdRet) {
-			fSuccess = WriteFile( hPipe, gpCmdRet, gpCmdRet->nSize, &cbWritten, NULL);
+			fSuccess = WriteFile( hPipe, gpCmdRet, gpCmdRet->hdr.nSize, &cbWritten, NULL);
 			Free(gpCmdRet);
 			gpCmdRet = NULL; gpData = NULL; gpCursor = NULL;
 		}
@@ -1658,4 +1663,51 @@ DWORD WINAPI ServerThreadCommand(LPVOID ahPipe)
 
     CloseHandle(hPipe);
     return 0;
+}
+
+void ShowPluginMenu()
+{
+	int nItem = -1;
+	if (!FarHwnd)
+		return;
+
+	if (gFarVersion.dwVerMajor==1)
+		nItem = ShowPluginMenuA();
+	else if (gFarVersion.dwBuild>=789)
+		nItem = ShowPluginMenu789();
+	else
+		nItem = ShowPluginMenu757();
+
+	if (nItem < 0)
+		return;
+
+	switch (nItem) {
+		case 0: { // ќткрыть в редакторе вывод последней консольной программы
+			CESERVER_REQ* pIn = (CESERVER_REQ*)calloc(sizeof(CESERVER_REQ_HDR)+4,1);
+			if (!pIn) return;
+			CESERVER_REQ* pOut = NULL;
+			pIn->hdr.nSize = sizeof(CESERVER_REQ_HDR)+4;
+			pIn->hdr.nCmd = CECMD_GETOUTPUTFILE;
+			pIn->hdr.nSrcThreadId = GetCurrentThreadId();
+			pIn->hdr.nVersion = CESERVER_REQ_VER;
+			pIn->OutputFile.bUnicode = (gFarVersion.dwVerMajor>=2);
+			pOut = ExecuteGuiCmd(FarHwnd, pIn);
+			if (pOut) {
+				if (pOut->OutputFile.szFilePathName[0]) {
+					BOOL lbRc = FALSE;
+					if (gFarVersion.dwVerMajor==1)
+						lbRc = EditOutputA(pOut->OutputFile.szFilePathName);
+					else if (gFarVersion.dwBuild>=789)
+						lbRc = EditOutput789(pOut->OutputFile.szFilePathName);
+					else
+						lbRc = EditOutput757(pOut->OutputFile.szFilePathName);
+					if (!lbRc) {
+						DeleteFile(pOut->OutputFile.szFilePathName);
+					}
+				}
+				free(pOut);
+			}
+			free(pIn);
+		} break;
+	}
 }

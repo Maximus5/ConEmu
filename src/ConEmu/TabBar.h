@@ -76,7 +76,8 @@ public:
 	void Update(BOOL abPosted=FALSE);
 	void UpdatePosition();
 	void UpdateWidth();
-	void OnConman(int nConNumber, BOOL bAlternative);
+	void OnConsoleActivated(int nConNumber/*, BOOL bAlternative*/);
+	void OnBufferHeight(BOOL abBufferHeight);
 	bool OnNotify(LPNMHDR nmhdr);
 	void OnCommand(WPARAM wParam, LPARAM lParam);
 	void OnMouse(int message, int x, int y);

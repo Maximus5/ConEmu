@@ -94,3 +94,12 @@ void NotifyChangeKey();
 
 DWORD WINAPI ServerThread(LPVOID lpvParam);
 DWORD WINAPI ServerThreadCommand(LPVOID ahPipe);
+
+void ShowPluginMenu();
+int ShowPluginMenuA();
+int ShowPluginMenu757();
+int ShowPluginMenu789();
+
+BOOL EditOutputA(LPCWSTR asFileName);
+BOOL EditOutput757(LPCWSTR asFileName);
+BOOL EditOutput789(LPCWSTR asFileName);

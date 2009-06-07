@@ -398,3 +398,34 @@ void PostMacro757(wchar_t* asMacro)
 	mcr.Param.PlainText.Flags = KSFLAGS_DISABLEOUTPUT;
 	InfoW757->AdvControl(InfoW757->ModuleNumber, ACTL_KEYMACRO, (void*)&mcr);
 }
+
+int ShowPluginMenu757()
+{
+	if (!InfoW757)
+		return -1;
+
+	FarMenuItem items[] = {
+		{(wchar_t*)InfoW757->GetMsg(InfoW757->ModuleNumber,3), 1, 0, 0}
+	};
+	int nCount = sizeof(items)/sizeof(items[0]);
+
+	int nRc = InfoW757->Menu(InfoW757->ModuleNumber, -1,-1, 0, 
+		FMENU_AUTOHIGHLIGHT|FMENU_CHANGECONSOLETITLE|FMENU_WRAPMODE,
+		InfoW757->GetMsg(InfoW757->ModuleNumber,2),
+		NULL, NULL, NULL, NULL, items, nCount);
+
+	return nRc;
+}
+
+BOOL EditOutput757(LPCWSTR asFileName)
+{
+	if (!InfoW757)
+		return FALSE;
+
+	int iRc =
+		InfoW757->Editor(asFileName, InfoW757->GetMsg(InfoW757->ModuleNumber,3), 0,0,-1,-1, 
+		EF_NONMODAL|EF_IMMEDIATERETURN|EF_DELETEONLYFILEONCLOSE|EF_ENABLE_F6|EF_DISABLEHISTORY,
+		0, 1, 1200);
+
+	return (iRc != EEC_OPEN_ERROR);
+}

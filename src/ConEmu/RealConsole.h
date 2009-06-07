@@ -169,7 +169,7 @@ protected:
 
 	static DWORD WINAPI MonitorThread(LPVOID lpParameter);
 	HANDLE mh_VConServerThread;
-	HANDLE mh_TermEvent, mh_ForceReadEvent, mh_EndUpdateEvent, mh_Sync2WindowEvent, mh_ConChanged, mh_CursorChanged;
+	HANDLE mh_TermEvent, mh_ForceReadEvent, mh_EndUpdateEvent, mh_Sync2WindowEvent, mh_ConChanged/*, mh_CursorChanged*/;
 	BOOL mb_FullRetrieveNeeded, mb_Detached;
 	HANDLE mh_MonitorThread; DWORD mn_MonitorThreadID;
 
@@ -215,6 +215,7 @@ private:
 	HANDLE mh_ServerThreads[MAX_SERVER_THREADS], mh_ActiveServerThread;
 	DWORD  mn_ServerThreadsId[MAX_SERVER_THREADS];
 	HANDLE mh_ServerSemaphore, mh_GuiAttached;
+	void SetBufferHeightMode(BOOL abBufferHeight);
 
 	void ServerThreadCommand(HANDLE hPipe);
 	void ApplyConsoleInfo(CESERVER_REQ* pInfo);
@@ -239,5 +240,7 @@ private:
 	std::vector<CESERVER_REQ*> m_Packets;
 	void PushPacket(CESERVER_REQ* pPkt);
 	CESERVER_REQ* PopPacket();
+	//
+	BOOL PrepareOutputFile(BOOL abUnicodeText, wchar_t* pszFilePathName);
 };
 

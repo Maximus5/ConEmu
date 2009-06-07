@@ -41,7 +41,7 @@ CESERVER_REQ* ExecuteGuiCmd(HWND hConWnd, const CESERVER_REQ* pIn)
 	CESERVER_REQ* pOut = NULL;
 	wchar_t szGuiPipeName[MAX_PATH];
 	HANDLE hPipe = NULL; 
-	BYTE cbReadBuf[512];
+	BYTE cbReadBuf[600]; // чтобы CESERVER_REQ_OUTPUTFILE поместился
 	BOOL fSuccess = FALSE;
 	DWORD cbRead = 0, dwMode = 0, dwErr = 0;
 
@@ -95,11 +95,13 @@ CESERVER_REQ* ExecuteGuiCmd(HWND hConWnd, const CESERVER_REQ* pIn)
 		return NULL;
 	}
 
+	_ASSERTE(pIn->hdr.nSrcThreadId==GetCurrentThreadId());
+
 	// Send a message to the pipe server and read the response. 
 	fSuccess = TransactNamedPipe( 
 		hPipe,                  // pipe handle 
 		(LPVOID)pIn,            // message to server
-		pIn->nSize,             // message length 
+		pIn->hdr.nSize,             // message length 
 		cbReadBuf,              // buffer to receive reply
 		sizeof(cbReadBuf),      // size of read buffer
 		&cbRead,                // bytes read
@@ -113,16 +115,16 @@ CESERVER_REQ* ExecuteGuiCmd(HWND hConWnd, const CESERVER_REQ* pIn)
 		return NULL;
 	}
 
-	if (cbRead < (3*sizeof(DWORD)))
+	if (cbRead < sizeof(CESERVER_REQ_HDR))
 		return NULL;
 
-	if (((CESERVER_REQ*)cbReadBuf)->nSize != cbRead) {
-		OutputDebugString(L"!!! Wrong nSize recieved from GUI server !!!\n");
+	if (((CESERVER_REQ*)cbReadBuf)->hdr.nSize != cbRead) {
+		OutputDebugString(L"!!! Wrong nSize received from GUI server !!!\n");
 		return NULL;
 	}
 
-	if (((CESERVER_REQ*)cbReadBuf)->nVersion != CESERVER_REQ_VER) {
-		OutputDebugString(L"!!! Wrong nVersion recieved from GUI server !!!\n");
+	if (((CESERVER_REQ*)cbReadBuf)->hdr.nVersion != CESERVER_REQ_VER) {
+		OutputDebugString(L"!!! Wrong nVersion received from GUI server !!!\n");
 		return NULL;
 	}
 	
@@ -160,15 +162,16 @@ HWND GetConEmuHWND(BOOL abRoot)
 	if ( !FarHwnd )
 		return NULL;
 
-	in.nSize = 3*sizeof(DWORD);
-	in.nVersion = CESERVER_REQ_VER;
-	in.nCmd  = CECMD_GETGUIHWND;
+	in.hdr.nSize = sizeof(CESERVER_REQ_HDR);
+	in.hdr.nVersion = CESERVER_REQ_VER;
+	in.hdr.nCmd  = CECMD_GETGUIHWND;
+	in.hdr.nSrcThreadId = GetCurrentThreadId();
 
 	pOut = ExecuteGuiCmd(FarHwnd, &in);
 	if (!pOut)
 		return NULL;
 	
-	if (pOut->nSize != (5*sizeof(DWORD)) || pOut->nCmd != in.nCmd) {
+	if (pOut->hdr.nSize != (sizeof(CESERVER_REQ_HDR)+2*sizeof(DWORD)) || pOut->hdr.nCmd != in.hdr.nCmd) {
 		free(pOut);
 		return NULL;
 	}
