@@ -1682,7 +1682,8 @@ void ShowPluginMenu()
 		return;
 
 	switch (nItem) {
-		case 0: { // Открыть в редакторе вывод последней консольной программы
+		case 0: case 1:
+		{ // Открыть в редакторе вывод последней консольной программы
 			CESERVER_REQ* pIn = (CESERVER_REQ*)calloc(sizeof(CESERVER_REQ_HDR)+4,1);
 			if (!pIn) return;
 			CESERVER_REQ* pOut = NULL;
@@ -1696,11 +1697,11 @@ void ShowPluginMenu()
 				if (pOut->OutputFile.szFilePathName[0]) {
 					BOOL lbRc = FALSE;
 					if (gFarVersion.dwVerMajor==1)
-						lbRc = EditOutputA(pOut->OutputFile.szFilePathName);
+						lbRc = EditOutputA(pOut->OutputFile.szFilePathName, (nItem==1));
 					else if (gFarVersion.dwBuild>=789)
-						lbRc = EditOutput789(pOut->OutputFile.szFilePathName);
+						lbRc = EditOutput789(pOut->OutputFile.szFilePathName, (nItem==1));
 					else
-						lbRc = EditOutput757(pOut->OutputFile.szFilePathName);
+						lbRc = EditOutput757(pOut->OutputFile.szFilePathName, (nItem==1));
 					if (!lbRc) {
 						DeleteFile(pOut->OutputFile.szFilePathName);
 					}

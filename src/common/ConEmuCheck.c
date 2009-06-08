@@ -136,6 +136,12 @@ CESERVER_REQ* ExecuteGuiCmd(HWND hConWnd, const CESERVER_REQ* pIn)
 	return pOut;
 }
 
+void ExecuteFreeResult(CESERVER_REQ* pOut)
+{
+	if (!pOut) return;
+	free(pOut);
+}
+
 HWND myGetConsoleWindow()
 {
 	HWND hConWnd = NULL;

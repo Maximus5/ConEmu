@@ -30,6 +30,7 @@ HWND GetConEmuHWND(BOOL abRoot /*, int* pnConsoleIsChild/ *=NULL*/);
 
 
 CESERVER_REQ* ExecuteGuiCmd(HWND hConWnd, const CESERVER_REQ* pIn);
+void ExecuteFreeResult(CESERVER_REQ* pOut);
 
 
 HWND myGetConsoleWindow();

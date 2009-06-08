@@ -116,6 +116,7 @@ protected:
 	static VOID CALLBACK WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime);
 	CVirtualConsole *mp_VCon[MAX_CONSOLE_COUNT], *pVCon;
 	bool mb_SkipSyncSize, mb_PassSysCommand;
+	//DWORD mn_CurrentKeybLayout;
 	// Registered messages
 	DWORD mn_MainThreadId;
 	UINT mn_MsgPostCreate;
@@ -158,6 +159,7 @@ public:
 	void Destroy();
 	void DnDstep(LPCTSTR asMsg);
 	void ForceShowTabs(BOOL abShow);
+	DWORD GetActiveKeyboardLayout();
 	BOOL Init();
 	void InvalidateAll();
 	bool isActive(CVirtualConsole* apVCon);
@@ -190,6 +192,7 @@ public:
 	void SyncConsoleToWindow();
 	void SyncNtvdm();
 	void SyncWindowToConsole();
+	void SwitchKeyboardLayout(DWORD dwNewKeybLayout);
 	void Update(bool isForce = false);
 	void UpdateTitle(LPCTSTR asNewTitle);
 	LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);

@@ -100,6 +100,6 @@ int ShowPluginMenuA();
 int ShowPluginMenu757();
 int ShowPluginMenu789();
 
-BOOL EditOutputA(LPCWSTR asFileName);
-BOOL EditOutput757(LPCWSTR asFileName);
-BOOL EditOutput789(LPCWSTR asFileName);
+BOOL EditOutputA(LPCWSTR asFileName, BOOL abView);
+BOOL EditOutput757(LPCWSTR asFileName, BOOL abView);
+BOOL EditOutput789(LPCWSTR asFileName, BOOL abView);

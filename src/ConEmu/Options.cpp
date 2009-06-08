@@ -78,7 +78,8 @@ void CSettings::InitSettings()
     nAffinity = 3;
     //isAdvLangChange = true;
     isSkipFocusEvents = false;
-    isLangChangeWsPlugin = false;
+    //isLangChangeWsPlugin = false;
+	isMonitorConsoleLang = 3;
     DefaultBufferHeight = 1000;
 	ForceBufferHeight = false; /* устанавливается в true, из ком.строки /BufferHeight */
 	AutoScroll = true;
@@ -294,7 +295,8 @@ void CSettings::LoadSettings()
         reg.Load(_T("AffinityMask"), nAffinity);
         //reg.Load(_T("AdvLangChange"), isAdvLangChange);
         reg.Load(_T("SkipFocusEvents"), isSkipFocusEvents);
-        reg.Load(_T("LangChangeWsPlugin"), isLangChangeWsPlugin);
+        //reg.Load(_T("LangChangeWsPlugin"), isLangChangeWsPlugin);
+		reg.Load(_T("MonitorConsoleLang"), isMonitorConsoleLang);
         
         reg.CloseKey();
     }

@@ -79,8 +79,9 @@ REGEDIT4
 ;; GUI progress bars on Copy/Move
 "GUIpb"=hex:00
 
-;; Disable language switch via ConEmu FAR plugin
-;"LangChangeWsPlugin"=hex:00
+;; Monitor input language change in console (i.e. XLat switching support)
+;; 00 - disabled, 01 - monitor console, 02 - one lang for all consoles, 03 == 01 & 02
+"MonitorConsoleLang"=hex:03
 
 ;; Disable focus events send to console (search in panels will never be closed).
 ;"SkipFocusEvents"=hex:01

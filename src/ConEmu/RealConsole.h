@@ -149,6 +149,7 @@ public:
 	int GetTabCount();
 	BOOL ActivateFarWindow(int anWndIndex);
 	DWORD CanActivateFarWindow(int anWndIndex);
+	void SwitchKeyboardLayout(DWORD dwNewKeybLayout);
 
 public:
 	// Вызываются из CVirtualConsole
@@ -191,6 +192,7 @@ private:
 		int nTextWidth, nTextHeight;
 		BOOL bBufferHeight;
 		size_t nPacketIdx;
+		DWORD dwKeybLayout;
 	} con;
 	// 
 	CRITICAL_SECTION csPRC; DWORD ncsTPRC;
@@ -242,5 +244,6 @@ private:
 	CESERVER_REQ* PopPacket();
 	//
 	BOOL PrepareOutputFile(BOOL abUnicodeText, wchar_t* pszFilePathName);
+	HANDLE PrepareOutputFileCreate(wchar_t* pszFilePathName);
 };
 

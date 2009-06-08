@@ -110,11 +110,6 @@
 #define DEBUGLOGFILE(m)
 #endif
 
-#ifdef _DEBUG
-	#define DEBUGSTR(s) OutputDebugString(s)
-#else
-	#define DEBUGSTR(s)
-#endif
 
 #if !defined(__GNUC__)
 #pragma warning (disable : 4005)

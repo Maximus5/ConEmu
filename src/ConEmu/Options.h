@@ -85,7 +85,8 @@ public:
     UINT nMainTimerElapse; // периодичность, с которой из консоли считывается текст
     //bool isAdvLangChange; // в Висте без ConIme в самой консоли не меняется язык, пока не послать WM_SETFOCUS. Но при этом исчезает диалог быстрого поиска
     bool isSkipFocusEvents;
-    bool isLangChangeWsPlugin;
+    //bool isLangChangeWsPlugin;
+	char isMonitorConsoleLang;
     
     DWORD nAffinity;
 

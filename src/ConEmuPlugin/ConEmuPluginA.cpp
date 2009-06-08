@@ -462,9 +462,11 @@ int ShowPluginMenuA()
 		return -1;
 
 	FarMenuItem items[] = {
+		{"", 1, 0, 0},
 		{"", 1, 0, 0}
 	};
 	lstrcpyA(items[0].Text, InfoA->GetMsg(InfoA->ModuleNumber,3));
+	lstrcpyA(items[1].Text, InfoA->GetMsg(InfoA->ModuleNumber,4));
 	int nCount = sizeof(items)/sizeof(items[0]);
 
 	int nRc = InfoA->Menu(InfoA->ModuleNumber, -1,-1, 0, 
@@ -475,7 +477,7 @@ int ShowPluginMenuA()
 	return nRc;
 }
 
-BOOL EditOutputA(LPCWSTR asFileName)
+BOOL EditOutputA(LPCWSTR asFileName, BOOL abView)
 {
 	if (!InfoA)
 		return FALSE;
@@ -484,10 +486,19 @@ BOOL EditOutputA(LPCWSTR asFileName)
 	if (!WideCharToMultiByte(CP_ACP, 0, asFileName, -1, szAnsi, MAX_PATH+1, 0,0))
 		return FALSE;
 
-	int iRc =
-	InfoA->Editor(szAnsi, InfoA->GetMsg(InfoA->ModuleNumber,3), 0,0,-1,-1, 
-		EF_NONMODAL|EF_IMMEDIATERETURN|EF_DELETEONLYFILEONCLOSE|EF_ENABLE_F6|EF_DISABLEHISTORY,
-		0, 1);
+	BOOL lbRc = FALSE;
+	if (!abView) {
+		int iRc =
+		InfoA->Editor(szAnsi, InfoA->GetMsg(InfoA->ModuleNumber,5), 0,0,-1,-1, 
+			EF_NONMODAL|EF_IMMEDIATERETURN|EF_DELETEONLYFILEONCLOSE|EF_ENABLE_F6|EF_DISABLEHISTORY,
+			0, 1);
+		lbRc = (iRc != EEC_OPEN_ERROR);
+	} else {
+		int iRc =
+			InfoA->Viewer(szAnsi, InfoA->GetMsg(InfoA->ModuleNumber,5), 0,0,-1,-1, 
+			VF_NONMODAL|VF_IMMEDIATERETURN|VF_DELETEONLYFILEONCLOSE|VF_ENABLE_F6|VF_DISABLEHISTORY);
+		lbRc = TRUE;
+	}
 
-	return (iRc != EEC_OPEN_ERROR);
+	return lbRc;
 }

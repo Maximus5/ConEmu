@@ -418,7 +418,8 @@ int ShowPluginMenu789()
 		return -1;
 
 	FarMenuItem items[] = {
-		{(wchar_t*)InfoW789->GetMsg(InfoW789->ModuleNumber,3), 1, 0, 0}
+		{(wchar_t*)InfoW789->GetMsg(InfoW789->ModuleNumber,3), 1, 0, 0},
+		{(wchar_t*)InfoW789->GetMsg(InfoW789->ModuleNumber,4), 1, 0, 0}
 	};
 	int nCount = sizeof(items)/sizeof(items[0]);
 
@@ -430,15 +431,25 @@ int ShowPluginMenu789()
 	return nRc;
 }
 
-BOOL EditOutput789(LPCWSTR asFileName)
+BOOL EditOutput789(LPCWSTR asFileName, BOOL abView)
 {
 	if (!InfoW789)
 		return FALSE;
 
-	int iRc =
-		InfoW789->Editor(asFileName, InfoW789->GetMsg(InfoW789->ModuleNumber,3), 0,0,-1,-1, 
-		EF_NONMODAL|EF_IMMEDIATERETURN|EF_DELETEONLYFILEONCLOSE|EF_ENABLE_F6|EF_DISABLEHISTORY,
-		0, 1, 1200);
+	BOOL lbRc = FALSE;
+	if (!abView) {
+		int iRc =
+			InfoW789->Editor(asFileName, InfoW789->GetMsg(InfoW789->ModuleNumber,5), 0,0,-1,-1, 
+			EF_NONMODAL|EF_IMMEDIATERETURN|EF_DELETEONLYFILEONCLOSE|EF_ENABLE_F6|EF_DISABLEHISTORY,
+			0, 1, 1200);
+		lbRc = (iRc != EEC_OPEN_ERROR);
+	} else {
+		int iRc =
+			InfoW789->Viewer(asFileName, InfoW789->GetMsg(InfoW789->ModuleNumber,5), 0,0,-1,-1, 
+			VF_NONMODAL|VF_IMMEDIATERETURN|VF_DELETEONLYFILEONCLOSE|VF_ENABLE_F6|VF_DISABLEHISTORY,
+			1200);
+		lbRc = TRUE;
+	}
 
-	return (iRc != EEC_OPEN_ERROR);
+	return lbRc;
 }

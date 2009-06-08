@@ -58,6 +58,13 @@
 
 #endif
 
+#ifdef _DEBUG
+#define DEBUGSTR(s) OutputDebugString(s)
+#else
+#define DEBUGSTR(s)
+#endif
+
+
 #define CES_NTVDM 0x10
 #define CEC_INITTITLE       L"ConEmu"
 //#define CE_CURSORUPDATE     L"ConEmuCursorUpdate%u" // ConEmuC_PID - изменился курсор (размер или выделение). положение курсора отслеживает GUI
@@ -80,6 +87,7 @@
 #define CECMD_CMDFINISHED   9 // == CECMD_SETSIZE + сохранить содержимое консоли (завершился comspec)
 #define CECMD_GETOUTPUTFILE 10 // Записать вывод последней консольной программы во временный файл и вернуть его имя
 #define CECMD_GETOUTPUT     11
+#define CECMD_LANGCHANGE    12
 
 #define CESERVER_REQ_VER    4
 
