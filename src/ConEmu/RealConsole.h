@@ -150,6 +150,7 @@ public:
 	BOOL ActivateFarWindow(int anWndIndex);
 	DWORD CanActivateFarWindow(int anWndIndex);
 	void SwitchKeyboardLayout(DWORD dwNewKeybLayout);
+	void CloseConsole();
 
 public:
 	// Вызываются из CVirtualConsole

@@ -67,7 +67,7 @@ public:
     bool isMulti; BYTE icMultiNew, icMultiNext, icMultiRecreate; bool isMultiNewConfirm;
 
     // Заголовки табов
-    WCHAR szTabPanels[64]; LPCWSTR pszTabConsole;
+    WCHAR szTabConsole[32];
     WCHAR szTabEditor[32];
     WCHAR szTabEditorModified[32];
     WCHAR szTabViewer[32];

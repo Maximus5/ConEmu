@@ -123,7 +123,7 @@ REGEDIT4
 ;; For internal use (Tab control sizes)
 ;"TabMargins"=hex:04,00,00,00,19,00,00,00,04,00,00,00,04,00,00,00
 ;; Tab labels formatting. '%i' is optional.
-"TabPanels"="Panels|Console"
+"TabConsole"="%s"
 "TabEditor"="%i-[%s]"
 "TabEditorModified"="%i-[%s] *"
 "TabViewer"="%i-{%s}"

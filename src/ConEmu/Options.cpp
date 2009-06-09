@@ -134,8 +134,8 @@ void CSettings::InitSettings()
     nSlideShowElapse = 2500;
     nIconID = IDI_ICON1;
     isRClickSendKey = 2;
-    _tcscpy(szTabPanels, _T("Panels"));
-    pszTabConsole = _tcscpy(szTabPanels+_tcslen(szTabPanels)+1, _T("Console"));
+    _tcscpy(szTabConsole, _T("%s"));
+    //pszTabConsole = _tcscpy(szTabPanels+_tcslen(szTabPanels)+1, _T("Console"));
     _tcscpy(szTabEditor, _T("[%s]"));
     _tcscpy(szTabEditorModified, _T("[%s] *"));
     /* */ _tcscpy(szTabViewer, _T("{%s}"));
@@ -263,14 +263,14 @@ void CSettings::LoadSettings()
         reg.Load(_T("TabMargins"), rcTabMargins);
         reg.Load(_T("SlideShowElapse"), nSlideShowElapse);
         reg.Load(_T("IconID"), nIconID);
-        reg.Load(_T("TabPanels"), szTabPanels);
-            WCHAR* pszVert = wcschr(szTabPanels, L'|');
-            if (!pszVert) {
-                if (wcslen(szTabPanels)>54) szTabPanels[54] = 0;
-                pszVert = szTabPanels + wcslen(szTabPanels);
-                wcscpy(pszVert+1, L"Console");
-            }
-            *pszVert = 0; pszTabConsole = pszVert+1;
+        reg.Load(_T("TabConsole"), szTabConsole);
+            //WCHAR* pszVert = wcschr(szTabPanels, L'|');
+            //if (!pszVert) {
+            //    if (wcslen(szTabPanels)>54) szTabPanels[54] = 0;
+            //    pszVert = szTabPanels + wcslen(szTabPanels);
+            //    wcscpy(pszVert+1, L"Console");
+            //}
+            //*pszVert = 0; pszTabConsole = pszVert+1;
         reg.Load(_T("TabEditor"), szTabEditor);
         reg.Load(_T("TabEditorModified"), szTabEditorModified);
         reg.Load(_T("TabViewer"), szTabViewer);

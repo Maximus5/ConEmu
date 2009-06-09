@@ -688,7 +688,10 @@ bool TabBarClass::OnNotify(LPNMHDR nmhdr)
             lstrcpyn(pDisp->pszText, _T("Create new console"), pDisp->cchTextMax);
         } else
         if (pDisp->iItem==14) {
-            lstrcpyn(pDisp->pszText, _T("BufferHeight mode"), pDisp->cchTextMax);
+	        BOOL lbPressed = (SendMessage(mh_ConmanToolbar, TB_GETSTATE, pDisp->iItem, 0) & TBSTATE_CHECKED) == TBSTATE_CHECKED;
+            lstrcpyn(pDisp->pszText, 
+	            lbPressed ? L"BufferHeight mode is ON" : L"BufferHeight mode is off",
+	            pDisp->cchTextMax);
         }
         return true;
     }
@@ -1198,7 +1201,14 @@ void TabBarClass::PrepareTab(ConEmuTab* pTab)
     TCHAR szFormat[32];
     TCHAR szEllip[MAX_PATH+1];
     wchar_t *tFileName=NULL, *pszNo=NULL, *pszTitle=NULL; //--Maximus
+    int nSplit = 0;
+    int nMaxLen = 0; //gSet.nTabLenMax - _tcslen(szFormat) + 2/* %s */;
+    int origLength = 0; //_tcslen(tFileName);
     if (pTab->Name[0]==0 || pTab->Type == 1/*WTYPE_PANELS*/) {
+	    //_tcscpy(szFormat, _T("%s"));
+	    _tcscpy(szFormat, gSet.szTabConsole);
+	    nMaxLen = gSet.nTabLenMax - _tcslen(szFormat) + 2/* %s */;
+	    
         if (pTab->Name[0] == 0) {
             #ifdef _DEBUG
             // Это должно случаться ТОЛЬКО при инициализации GUI
@@ -1211,7 +1221,14 @@ void TabBarClass::PrepareTab(ConEmuTab* pTab)
             _tcscpy(pTab->Name, gConEmu.GetTitle()); //isFar() ? gSet.szTabPanels : gSet.pszTabConsole);
         }
         tFileName = pTab->Name;
-        _tcscpy(szFormat, _T("%s"));
+        origLength = _tcslen(tFileName);
+        if (origLength>6) {
+	        // Чтобы в заголовке было что-то вроде "{C:\Program Fil...- Far"
+	        //                              вместо "{C:\Program F...} - Far"
+	        if (lstrcmp(tFileName + origLength - 6, L" - Far") == 0)
+		        nSplit = nMaxLen - 6;
+	    }
+	        
     } else {
         GetFullPathName(pTab->Name, MAX_PATH*2, dummy, &tFileName);
         if (!tFileName)
@@ -1227,8 +1244,10 @@ void TabBarClass::PrepareTab(ConEmuTab* pTab)
             _tcscpy(szFormat, gSet.szTabViewer);
     }
     // restrict length
-    int origLength = _tcslen(tFileName);
-    int nMaxLen = gSet.nTabLenMax - _tcslen(szFormat) + 2/* %s */;
+    if (!nMaxLen)
+	    nMaxLen = gSet.nTabLenMax - _tcslen(szFormat) + 2/* %s */;
+	if (!origLength)
+	    origLength = _tcslen(tFileName);
     if (nMaxLen<15) nMaxLen=15; else
         if (nMaxLen>=MAX_PATH) nMaxLen=MAX_PATH-1;
     if (origLength > nMaxLen)
@@ -1237,7 +1256,8 @@ void TabBarClass::PrepareTab(ConEmuTab* pTab)
         _tcsncat(fileName, tFileName, 10);
         _tcsncat(fileName, _T("..."), 3);
         _tcsncat(fileName, tFileName + origLength - 10, 10);*/
-        int nSplit = nMaxLen*2/3;
+        if (!nSplit)
+	        nSplit = nMaxLen*2/3;
         
         _tcsncpy(szEllip, tFileName, nSplit); szEllip[nSplit]=0;
         _tcscat(szEllip, _T("…"));

@@ -38,8 +38,11 @@ WARNING("!!!! Пока можно при появлении события запоминать текущий тик");
 CRITICAL_SECTION gcsHeap;
 //#define MCHKHEAP { EnterCriticalSection(&gcsHeap); int MDEBUG_CHK=_CrtCheckMemory(); _ASSERTE(MDEBUG_CHK); LeaveCriticalSection(&gcsHeap); }
 #define MCHKHEAP HeapValidate(ghHeap, 0, NULL);
+//#define HEAP_LOGGING
+#define DEBUGLOG(s) OutputDebugString(s)
 #else
 #define MCHKHEAP
+#define DEBUGLOG(s)
 #endif
 
 #ifndef _DEBUG
@@ -125,6 +128,7 @@ void Free(LPVOID ptr);
 void CheckConEmuHwnd();
 typedef BOOL (__stdcall *PGETCONSOLEKEYBOARDLAYOUTNAME)(wchar_t*);
 PGETCONSOLEKEYBOARDLAYOUTNAME pfnGetConsoleKeyboardLayoutName = NULL; //(PGETCONSOLEKEYBOARDLAYOUTNAME)GetProcAddress (hKernel, "GetConsoleKeyboardLayoutNameW");
+void CheckKeyboardLayout();
 
 #else
 
@@ -389,9 +393,9 @@ int main()
 
 
     
-    /* *************************** */
-    /* *** Ожидание завершения *** */
-    /* *************************** */
+    /* ************************ */
+    /* *** Ожидание запуска *** */
+    /* ************************ */
     
     if (gnRunMode == RM_SERVER) {
         srv.dwProcessGroup = pi.dwProcessId;
@@ -418,9 +422,6 @@ int main()
                 wprintf (L"Process was not attached to console. Is it GUI?\nCommand to be executed:\n%s\n", gpszRunCmd);
                 iRc = CERR_PROCESSTIMEOUT; goto wrap;
             }
-
-            // По крайней мере один процесс в консоли запустился. Ждем пока в консоли не останется никого кроме нас
-            WaitForSingleObject(ghExitEvent, INFINITE);
         }
     } else {
         // В режиме ComSpec нас интересует завершение ТОЛЬКО дочернего процесса
@@ -431,7 +432,16 @@ int main()
         ghCtrlCEvent = CreateEvent(NULL, FALSE, FALSE, szEvtName);
         wsprintf(szEvtName, CESIGNAL_BREAK, pi.dwProcessId);
         ghCtrlBreakEvent = CreateEvent(NULL, FALSE, FALSE, szEvtName);
+    }
 
+    /* *************************** */
+    /* *** Ожидание завершения *** */
+    /* *************************** */
+wait:    
+    if (gnRunMode == RM_SERVER) {
+        // По крайней мере один процесс в консоли запустился. Ждем пока в консоли не останется никого кроме нас
+        WaitForSingleObject(ghExitEvent, INFINITE);
+	} else {
         HANDLE hEvents[3];
         hEvents[0] = pi.hProcess;
         hEvents[1] = ghCtrlCEvent;
@@ -456,8 +466,7 @@ int main()
         // Сразу закрыть хэндлы
         if (pi.hProcess) SafeCloseHandle(pi.hProcess); 
         if (pi.hThread) SafeCloseHandle(pi.hThread);
-    }
-
+	}
     
     
     
@@ -469,7 +478,16 @@ int main()
 wrap:
     // 
     if (iRc!=0 || gbAlwaysConfirmExit) {
-        ExitWaitForKey(VK_RETURN, L"\n\nPress Enter to close console", TRUE);
+        ExitWaitForKey(VK_RETURN, L"\n\nPress Enter to close console, or wait...", TRUE);
+        if (iRc == CERR_PROCESSTIMEOUT) {
+            EnterCriticalSection(&srv.csProc);
+            int nCount = srv.nProcesses.size();
+            LeaveCriticalSection(&srv.csProc);
+	        if (nCount > 0) {
+		        // Процесс таки запустился!
+		        goto wait;
+	        }
+        }
     }
 
     // На всякий случай - выставим событие
@@ -759,6 +777,17 @@ void ExitWaitForKey(WORD vkKey, LPCWSTR asConfirm, BOOL abNewLine)
     //        ShowWindow(ghConWnd, SW_SHOWNORMAL); // и покажем окошко
     //    }
     while (ReadConsoleInput(GetStdHandle(STD_INPUT_HANDLE), &r, 1, &dwCount)) {
+		if (gnRunMode == RM_SERVER) {
+			EnterCriticalSection(&srv.csProc);
+			int nCount = srv.nProcesses.size();
+			LeaveCriticalSection(&srv.csProc);
+			if (nCount > 0) {
+				// ! Процесс таки запустился, закрываться не будем. Вернуть событие в буфер!
+				WriteConsoleInput(GetStdHandle(STD_INPUT_HANDLE), &r, 1, &dwCount);
+				break;
+			}
+		}
+    
         if (r.EventType == KEY_EVENT && r.Event.KeyEvent.bKeyDown && r.Event.KeyEvent.wVirtualKeyCode == vkKey)
             break;
     }
@@ -2264,6 +2293,7 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
     BOOL  lbEventualChange = FALSE;
     DWORD dwTimeout = 10; // задержка чтения информации об окне (размеров, курсора,...)
 	BOOL  lbFirstForeground = TRUE;
+	BOOL  lbLocalForced = FALSE;
     
     BOOL lbQuit = FALSE;
 
@@ -2273,13 +2303,14 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 		MCHKHEAP
 
         // Подождать немножко
-        TODO("Здесь можно увеличить время ожидания, если консоль неактивна");
+        // !!! Здесь таймаут должен быть минимальным, ну разве что консоль неактивна
         nWait = WaitForMultipleObjects ( 2, hEvents, FALSE, /*srv.bConsoleActive ? srv.nMainTimerElapse :*/ dwTimeout );
         if (nWait == WAIT_OBJECT_0)
             break; // затребовано завершение нити
 
 		if (ghConEmuWnd && GetForegroundWindow() == ghConWnd) {
 			if (lbFirstForeground || !IsWindowVisible(ghConWnd)) {
+				DEBUGSTR(L"...SetForegroundWindow(ghConEmuWnd);\n");
 				SetForegroundWindow(ghConEmuWnd);
 				lbFirstForeground = FALSE;
 			}
@@ -2288,42 +2319,37 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
         // Проверим, реальный это таймаут - или изменение по событию от консоли
         lbEventualChange = (nWait == (WAIT_OBJECT_0+1));
 
-        TODO("Проверить, чего оно возвращает. В идеале было бы следить за раскладкой в консоли и после XLat менять ее и в GUI"); 
-        if (pfnGetConsoleKeyboardLayoutName) {
-	        wchar_t szCurKeybLayout[KL_NAMELENGTH+1];
-	        if (pfnGetConsoleKeyboardLayoutName(szCurKeybLayout)) {
-		        if (lstrcmpW(szCurKeybLayout, srv.szKeybLayout)) {
-			        // Сменился
-			        lstrcpyW(srv.szKeybLayout, szCurKeybLayout);
-					// Отошлем в GUI
-					wchar_t *pszEnd = szCurKeybLayout+8;
-					DWORD dwLayout = wcstol(szCurKeybLayout, &pszEnd, 16);
-					CESERVER_REQ* pIn = (CESERVER_REQ*)Alloc(sizeof(CESERVER_REQ_HDR)+4,1);
-					if (pIn) {
-						pIn->hdr.nSize = sizeof(CESERVER_REQ_HDR)+4;
-						pIn->hdr.nCmd = CECMD_LANGCHANGE;
-						pIn->hdr.nSrcThreadId = GetCurrentThreadId();
-						pIn->hdr.nVersion = CESERVER_REQ_VER;
-						memmove(pIn->Data, &dwLayout, 4);
+		// Если можем - проверим текущую раскладку в консоли
+	    if (pfnGetConsoleKeyboardLayoutName)
+			CheckKeyboardLayout();
 
-						CESERVER_REQ* pOut = NULL;
-						pOut = ExecuteGuiCmd(ghConWnd, pIn);
-						if (pOut) ExecuteFreeResult(pOut);
-						Free(pIn);
-					}
-		        }
-	        }
-	    }
+		
+		// В прошлый раз было запрошено полное повторное сканирование консоли
+		if (srv.bRequestPostFullReload) {
+			DEBUGSTR(L"...bRequestPostFullReload detected, full reload forces\n");
+			srv.bNeedFullReload = TRUE;
+			srv.bRequestPostFullReload = FALSE; // Сброс. FullReload уже выставили
+			nWait = (WAIT_OBJECT_0+1); // Принудительно
+			memset(&srv.CharChanged.hdr, 0, sizeof(srv.CharChanged.hdr));
+			lbEventualChange = TRUE; // чтобы следующий интервал чтения не увеличился
+		}
 
+
+		// Проверка позиции курсора и размера буфера - это вызовет частичное или полное сканирование консоли
+		lbLocalForced = FALSE;
         if (nWait == WAIT_TIMEOUT) {
             // К сожалению, исключительно курсорные события не приходят (если консоль не в фокусе)
             if (MyGetConsoleScreenBufferInfo(ghConOut, &lsbi)) {
                 if (memcmp(&srv.sbi.dwCursorPosition, &lsbi.dwCursorPosition, sizeof(lsbi.dwCursorPosition))) {
+					DEBUGSTR(L"...dwCursorPosition changed\n");
+					lbLocalForced = TRUE;
                     nWait = (WAIT_OBJECT_0+1);
                 }
             }
             if ((nWait == WAIT_TIMEOUT) && GetConsoleCursorInfo(ghConOut, &lci)) {
                 if (memcmp(&srv.ci, &lci, sizeof(srv.ci))) {
+					DEBUGSTR(L"...CursorInfo changed\n");
+					lbLocalForced = TRUE;
                     nWait = (WAIT_OBJECT_0+1);
                 }
             }
@@ -2335,6 +2361,7 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 	            DWORD nCurTick = GetTickCount();
 	            nDelta = nCurTick - nLastUpdateTick;
 	            if (nDelta > nDelayRefresh) {
+					DEBUGSTR(L"...FORCE_REDRAW_FIX triggered\n");
 	                srv.bNeedFullReload = TRUE;
 	                //srv.bForceFullSend = TRUE;
 	                nLastUpdateTick = nCurTick; // после рефреша возьмем новый tick
@@ -2345,20 +2372,42 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
         }
 
         if (nWait == (WAIT_OBJECT_0+1)) {
+			#ifdef _DEBUG
+			wchar_t szDbg[128], szRgn[64];
+			if (srv.CharChanged.hdr.nSize) {
+				wsprintf(szRgn, L"{L:%i, T:%i, R:%i, B:%i}", 
+					srv.CharChanged.hdr.cr1.X, srv.CharChanged.hdr.cr1.Y,
+					srv.CharChanged.hdr.cr2.X, srv.CharChanged.hdr.cr2.Y);
+			} else {
+				lstrcpyW(szRgn, L"No");
+			}
+			wsprintf(szDbg, L"...Reloading(Eventual:%i, FullReload:%i, FullSend:%i, Rgn:%s)\n",
+				lbEventualChange, srv.bNeedFullReload, srv.bForceFullSend, szRgn);
+			DEBUGLOG(szDbg);
+			#endif
 			MCHKHEAP
             // Посмотреть, есть ли изменения в консоли
 			// и если они есть - сбросить интервал таймаута в минимальный
 			// Но если после выполнения будет выставлен srv.bRequestPostFullReload - 
 			// значит во время чтения произошел ресайз и нужно СРАЗУ запустить второй цикл чтения
-            if (ReloadFullConsoleInfo() && !srv.bRequestPostFullReload)
-	            nDelayRefresh = MIN_FORCEREFRESH_INTERVAL;
+			if (ReloadFullConsoleInfo()) {
+				DEBUGLOG(L"+++Changes was sent\n");
+				if (lbLocalForced)
+					srv.bRequestPostFullReload = TRUE; // По любому чиху в консоли - перечитаем данные еще раз через минимум задержки
+				nDelayRefresh = MIN_FORCEREFRESH_INTERVAL;
+			} else {
+				DEBUGLOG(L"---No changes in console\n");
+			}
             // Запомнить, когда в последний раз проверили содержимое консоли
             nLastUpdateTick = GetTickCount();
 			MCHKHEAP
 			if (srv.bRequestPostFullReload) {
-				srv.bRequestPostFullReload = FALSE;
-				SetEvent(srv.hRefreshEvent);
+				DEBUGLOG(L"...bRequestPostFullReload was set\n");
+				lbEventualChange = TRUE; // были изменения в консоли
+				//srv.bRequestPostFullReload = FALSE;
+				ResetEvent(srv.hRefreshEvent); // Чтобы консоль успела просраться
 			}
+			DEBUGLOG(L"\n");
         }
         
         WARNING("Win2k скорее всего события вообще не ходят, так что timeout нужно ставить вообще минимальный (10)");
@@ -2366,8 +2415,12 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
         if (lbEventualChange) {
 	        nDelayRefresh = MIN_FORCEREFRESH_INTERVAL;
         } else {
-	        if (nDelayRefresh < MAX_FORCEREFRESH_INTERVAL)
-		        nDelayRefresh = (DWORD)(nDelayRefresh * 1.5);
+			if (nDelayRefresh < MAX_FORCEREFRESH_INTERVAL) {
+				#ifdef FORCE_REDRAW_FIX
+				DEBUGLOG(L"...increasing delay refresh\n");
+				#endif
+		        nDelayRefresh = (DWORD)(nDelayRefresh * 1.3);
+			}
         }
 		MCHKHEAP
     }
@@ -2722,6 +2775,9 @@ CESERVER_REQ* CreateConsoleInfo(CESERVER_CHAR* pRgnOnly, BOOL bCharAttrBuff)
     CESERVER_REQ* pOut = NULL;
     DWORD dwAllSize = sizeof(CESERVER_REQ_HDR);
 	DWORD nSize; // temp, для определения размера добавляемой переменной
+	#ifdef _DEBUG
+	BOOL  lbDataSent = FALSE;
+	#endif
 
     // 1
     HWND hWnd = NULL;
@@ -2854,15 +2910,34 @@ CESERVER_REQ* CreateConsoleInfo(CESERVER_CHAR* pRgnOnly, BOOL bCharAttrBuff)
     // 10
     *((DWORD*)lpCur) = pRgnOnly ? pRgnOnly->hdr.nSize : 0; lpCur += sizeof(DWORD);
     if (pRgnOnly && pRgnOnly->hdr.nSize != 0) {
+		#ifdef _DEBUG
+		wchar_t szDbg[128];
+		wsprintf(szDbg, L"+++Sending region {L:%i, T:%i, R:%i, B:%i}, DataSize: %i bytes\n", 
+					pRgnOnly->hdr.cr1.X, pRgnOnly->hdr.cr1.Y,
+					pRgnOnly->hdr.cr2.X, pRgnOnly->hdr.cr2.Y,
+					pRgnOnly->hdr.nSize);
+		DEBUGLOG(szDbg);
+		lbDataSent = TRUE;
+		#endif
         memmove(lpCur, pRgnOnly, pRgnOnly->hdr.nSize); lpCur += (nSize=pRgnOnly->hdr.nSize);
     }
 
     // 11 - здесь будет 0, если текст в консоли не менялся
     *((DWORD*)lpCur) = OneBufferSize; lpCur += sizeof(DWORD);
     if (OneBufferSize && OneBufferSize!=(DWORD)-1) { // OneBufferSize==0, если pRgnOnly!=0
+		#ifdef _DEBUG
+		DEBUGLOG(L"---Sending full console data\n");
+		lbDataSent = TRUE;
+		#endif
         memmove(lpCur, srv.psChars, OneBufferSize); lpCur += OneBufferSize;
         memmove(lpCur, srv.pnAttrs, OneBufferSize); lpCur += OneBufferSize;
     }
+
+	#ifdef _DEBUG
+	if (!lbDataSent) {
+		DEBUGLOG(L"---Sending only console information\n");
+	}
+	#endif
     
     if (ghLogSize) {
         static COORD scr_Last = {-1,-1};
@@ -3296,6 +3371,12 @@ BOOL ReloadFullConsoleInfo(/*CESERVER_CHAR* pCharOnly/ *=NULL*/)
 		// Она только выделяет память для отсылки и копирует в нее то что уже есть
         CESERVER_REQ* pOut = CreateConsoleInfo(pChangedBuffer, bForceFullSend);
 
+		if (pChangedBuffer) {
+			if (pChangedBuffer->hdr.nSize>(sizeof(CESERVER_CHAR_HDR)+4)) {
+				srv.bRequestPostFullReload = TRUE; // Если изменилось больше одной буквы - перечитаем данные еще раз через минимум задержки
+			}
+		}
+
 		MCHKHEAP
 
 		TODO("память для pChangedBuffer можно бы не освобождать, а использовать повторно...");
@@ -3491,6 +3572,36 @@ void EnlargeRegion(CESERVER_CHAR_HDR& rgn, const COORD crNew)
     }
 }
 
+void CheckKeyboardLayout()
+{
+    if (pfnGetConsoleKeyboardLayoutName) {
+        wchar_t szCurKeybLayout[KL_NAMELENGTH+1];
+		// Возвращает строку в виде "00000419"
+        if (pfnGetConsoleKeyboardLayoutName(szCurKeybLayout)) {
+	        if (lstrcmpW(szCurKeybLayout, srv.szKeybLayout)) {
+		        // Сменился
+		        lstrcpyW(srv.szKeybLayout, szCurKeybLayout);
+				// Отошлем в GUI
+				wchar_t *pszEnd = szCurKeybLayout+8;
+				DWORD dwLayout = wcstol(szCurKeybLayout, &pszEnd, 16);
+				CESERVER_REQ* pIn = (CESERVER_REQ*)Alloc(sizeof(CESERVER_REQ_HDR)+4,1);
+				if (pIn) {
+					pIn->hdr.nSize = sizeof(CESERVER_REQ_HDR)+4;
+					pIn->hdr.nCmd = CECMD_LANGCHANGE;
+					pIn->hdr.nSrcThreadId = GetCurrentThreadId();
+					pIn->hdr.nVersion = CESERVER_REQ_VER;
+					memmove(pIn->Data, &dwLayout, 4);
+
+					CESERVER_REQ* pOut = NULL;
+					pOut = ExecuteGuiCmd(ghConWnd, pIn);
+					if (pOut) ExecuteFreeResult(pOut);
+					Free(pIn);
+				}
+	        }
+        }
+    }
+}
+
 // Сохранить данные ВСЕЙ консоли в gpStoredOutput
 void CmdOutputStore()
 {
@@ -3571,11 +3682,13 @@ LPVOID Alloc(size_t nCount, size_t nSize)
 	size_t nWhole = nCount * nSize;
 	LPVOID ptr = HeapAlloc ( ghHeap, HEAP_GENERATE_EXCEPTIONS|HEAP_ZERO_MEMORY, nWhole );
 
-	#ifdef _DEBUG
+	#ifdef HEAP_LOGGING
 	wchar_t szDbg[64];
 	wsprintfW(szDbg, L"%i: ALLOCATED   0x%08X..0x%08X   (%i bytes)\n", GetCurrentThreadId(), (DWORD)ptr, ((DWORD)ptr)+nWhole, nWhole);
 	DEBUGSTR(szDbg);
+	#endif
 
+	#ifdef _DEBUG
 	HeapValidate(ghHeap, 0, NULL);
 	if (ptr) {
 		gnHeapUsed += nWhole;
@@ -3593,6 +3706,8 @@ void Free(LPVOID ptr)
 		#ifdef _DEBUG
 		//HeapValidate(ghHeap, 0, NULL);
 		size_t nMemSize = HeapSize(ghHeap, 0, ptr);
+		#endif
+		#ifdef HEAP_LOGGING
 		wchar_t szDbg[64];
 		wsprintfW(szDbg, L"%i: FREE BLOCK  0x%08X..0x%08X   (%i bytes)\n", GetCurrentThreadId(), (DWORD)ptr, ((DWORD)ptr)+nMemSize, nMemSize);
 		DEBUGSTR(szDbg);
