@@ -27,7 +27,7 @@ WARNING("При запуске как ComSpec получаем ошибку: {crNewSize.X>=MIN_CON_WIDTH &&
 
 #ifdef _DEBUG
 //  Раскомментировать, чтобы сразу после запуска процесса (conemuc.exe) показать MessageBox, чтобы прицепиться дебаггером
-//  #define SHOW_STARTED_MSGBOX
+  #define SHOW_STARTED_MSGBOX
 #endif
 
 WARNING("!!!! Пока можно при появлении события запоминать текущий тик");
@@ -228,6 +228,7 @@ struct tag_Cmd {
     BOOL  bK;
     BOOL  bNonGuiMode; // Если запущен НЕ в консоли, привязанной к GUI. Может быть из-за того, что работает как COMSPEC
     CONSOLE_SCREEN_BUFFER_INFO sbi;
+    BOOL  bNewConsole;
 } cmd = {0};
 
 COORD gcrBufferSize = {80,25};
@@ -264,6 +265,7 @@ DWORD dwActiveFlags = 0;
 #define CERR_HELPREQUESTED 118
 #define CERR_ATTACHFAILED 119
 #define CERR_CMDLINEEMPTY 120
+#define CERR_RUNNEWCONSOLE 121
 
 
 int main()
@@ -477,7 +479,7 @@ wait:
     iRc = 0;
 wrap:
     // 
-    if (iRc!=0 || gbAlwaysConfirmExit) {
+    if ((iRc!=0 && iRc!=CERR_RUNNEWCONSOLE) || gbAlwaysConfirmExit) {
         ExitWaitForKey(VK_RETURN, L"\n\nPress Enter to close console, or wait...", TRUE);
         if (iRc == CERR_PROCESSTIMEOUT) {
             EnterCriticalSection(&srv.csProc);
@@ -560,6 +562,7 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
     wchar_t* psFilePart = NULL;
     BOOL bViaCmdExe = TRUE;
     size_t nCmdLine = 0;
+    LPCWSTR pwszStartCmdLine = asCmdLine;
     
     if (!asCmdLine || !*asCmdLine)
     {
@@ -569,6 +572,7 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
     }
 
     gnRunMode = RM_UNDEFINED;
+    
     
     while ((iRc = NextArg(asCmdLine, szArg)) == 0)
     {
@@ -626,6 +630,54 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
     }
 
     if (gnRunMode == RM_COMSPEC) {
+    
+		// Может просили открыть новую консоль?
+		int nArgLen = lstrlenA(" -new_console");
+		pwszCopy = (wchar_t*)wcsstr(asCmdLine, L" -new_console");
+		// Если после -new_console идет пробел, или это вообще конец строки
+		if (pwszCopy && 
+			(pwszCopy[nArgLen]==L' ' || pwszCopy[nArgLen]==0
+			 || (pwszCopy[nArgLen]==L'"' || pwszCopy[nArgLen+1]==0)))
+		{
+			// тогда обрабатываем
+			cmd.bNewConsole = TRUE;
+			//
+			int nNewLen = wcslen(pwszStartCmdLine) + 100;
+			wchar_t* pszNewCmd = new wchar_t[nNewLen];
+			if (!pszNewCmd) {
+		        wprintf (L"Can't allocate %i wchars!\n", nNewLen);
+		        return CERR_NOTENOUGHMEM1;
+			}
+			// Сначала скопировать все, что было ДО /c
+			const wchar_t* pszC = asCmdLine;
+			while (*pszC != L'/') pszC --;
+			nNewLen = pszC - pwszStartCmdLine;
+			_ASSERTE(nNewLen>0);
+			wcsncpy(pszNewCmd, pwszStartCmdLine, nNewLen);
+			pszNewCmd[nNewLen] = 0;
+			// Поправим режимы открытия
+			if (!gbAttachMode)
+				wcscat(pszNewCmd, L" /ATTACH ");
+			if (!gbAlwaysConfirmExit)
+				wcscat(pszNewCmd, L" /CONFIRM ");
+			// Сформировать новую команду
+			// "cmd" потому что пока не хочется обрезать кавычки и думать, реально ли он нужен
+			// cmd /c ""c:\program files\arc\7z.exe" -?"   // да еще и внутри могут быть двойными...
+			// cmd /c "dir c:\"
+			// и пр.
+			wcscat(pszNewCmd, L" /CMD cmd /C ");
+			nNewLen = pwszCopy - asCmdLine;
+			psFilePart = pszNewCmd + lstrlenW(pszNewCmd);
+			wcsncpy(psFilePart, asCmdLine, nNewLen); psFilePart += nNewLen;
+			pwszCopy += nArgLen;
+			if (*pwszCopy) wcscpy(psFilePart, pwszCopy);
+			//MessageBox(NULL, pszNewCmd, L"CmdLine", 0);
+			//return 200;
+			// Можно запускаться
+			*psNewCmd = pszNewCmd;
+			return 0;
+		}
+    
         pwszCopy = asCmdLine;
         if ((iRc = NextArg(pwszCopy, szArg)) != 0) {
             wprintf (L"Parsing command line failed:\n%s\n", asCmdLine);
@@ -721,8 +773,11 @@ int NextArg(LPCWSTR &asCmdLine, wchar_t* rsArg/*[MAX_PATH+1]*/)
         // Теперь в pch ссылка на последнюю "
     } else {
         // До конца строки или до первого пробела
-        pch = wcschr(psCmdLine, L' ');
-        if (!pch) pch = psCmdLine + wcslen(psCmdLine); // до конца строки
+        //pch = wcschr(psCmdLine, L' ');
+        // 09.06.2009 Maks - обломался на: cmd /c" echo Y "
+        pch = psCmdLine;
+        while (*pch && *pch!=L' ' && *pch!=L'"') pch++;
+        //if (!pch) pch = psCmdLine + wcslen(psCmdLine); // до конца строки
     }
     
     nArgLen = pch - psCmdLine;
@@ -816,9 +871,38 @@ int ComspecInit()
 	COORD crNewSize = {0,0};
     SMALL_RECT rNewWindow = cmd.sbi.srWindow;
 	BOOL lbSbiRc = FALSE;
+	
 
 	// Это наверное и не нужно, просто для информации...
 	lbSbiRc = MyGetConsoleScreenBufferInfo(ghConOut, &cmd.sbi);
+	
+	
+	if (cmd.bNewConsole) {
+	    PROCESS_INFORMATION pi; memset(&pi, 0, sizeof(pi));
+	    STARTUPINFOW si; memset(&si, 0, sizeof(si)); si.cb = sizeof(si);
+        si.dwFlags = STARTF_USESHOWWINDOW|STARTF_USECOUNTCHARS;
+        si.dwXCountChars = cmd.sbi.dwSize.X;
+		si.dwYCountChars = cmd.sbi.dwSize.Y;
+        si.wShowWindow = SW_HIDE;
+	
+	    // CREATE_NEW_PROCESS_GROUP - низя, перестает работать Ctrl-C
+	    BOOL lbRc = CreateProcessW(NULL, gpszRunCmd, NULL,NULL, TRUE, 
+	            NORMAL_PRIORITY_CLASS|CREATE_NEW_CONSOLE, 
+	            NULL, NULL, &si, &pi);
+	    DWORD dwErr = GetLastError();
+	    if (!lbRc)
+	    {
+	        wprintf (L"Can't create process, ErrCode=0x%08X! Command to be executed:\n%s\n", dwErr, gpszRunCmd);
+	        return CERR_CREATEPROCESS;
+	    }
+	    //delete psNewCmd; psNewCmd = NULL;
+		AllowSetForegroundWindow(pi.dwProcessId);
+		wprintf(L"New console created. PID=%i. Exiting...\n", pi.dwProcessId);
+		SafeCloseHandle(pi.hProcess); SafeCloseHandle(pi.hThread);
+		gbAlwaysConfirmExit = FALSE;
+		return CERR_RUNNEWCONSOLE;
+	}
+	
 
 	crNewSize = cmd.sbi.dwSize;
 	_ASSERTE(crNewSize.X>=MIN_CON_WIDTH && crNewSize.Y>=MIN_CON_HEIGHT);
@@ -1033,7 +1117,9 @@ int ServerInit()
     
     if (hKernel) pfnGetConsoleKeyboardLayoutName = (PGETCONSOLEKEYBOARDLAYOUTNAME)GetProcAddress (hKernel, "GetConsoleKeyboardLayoutNameW");
 
-	CheckConEmuHwnd();
+	if (!gbAttachMode) {
+		CheckConEmuHwnd();
+	}
 
 	InitializeCriticalSection(&srv.csChangeSize);
 
@@ -3372,7 +3458,7 @@ BOOL ReloadFullConsoleInfo(/*CESERVER_CHAR* pCharOnly/ *=NULL*/)
         CESERVER_REQ* pOut = CreateConsoleInfo(pChangedBuffer, bForceFullSend);
 
 		if (pChangedBuffer) {
-			if (pChangedBuffer->hdr.nSize>(sizeof(CESERVER_CHAR_HDR)+4)) {
+			if (pChangedBuffer->hdr.nSize>((int)sizeof(CESERVER_CHAR_HDR)+4)) {
 				srv.bRequestPostFullReload = TRUE; // Если изменилось больше одной буквы - перечитаем данные еще раз через минимум задержки
 			}
 		}
