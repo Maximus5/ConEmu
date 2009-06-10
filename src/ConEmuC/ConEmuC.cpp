@@ -151,6 +151,7 @@ HANDLE  ghConIn = NULL, ghConOut = NULL;
 HWND    ghConWnd = NULL;
 HWND    ghConEmuWnd = NULL; // Root! window
 HANDLE  ghExitEvent = NULL;
+HANDLE  ghFinilizeEvent = NULL;
 BOOL    gbAlwaysConfirmExit = FALSE;
 BOOL    gbAttachMode = FALSE;
 DWORD   gdwMainThreadId = 0;
@@ -340,6 +341,13 @@ int main()
         iRc = CERR_EXITEVENT; goto wrap;
     }
     ResetEvent(ghExitEvent);
+    ghFinilizeEvent = CreateEvent(NULL, TRUE/*используется в нескольких нитях, manual*/, FALSE, NULL);
+    if (!ghFinilizeEvent) {
+        dwErr = GetLastError();
+        wprintf(L"CreateEvent() failed, ErrCode=0x%08X\n", dwErr); 
+        iRc = CERR_EXITEVENT; goto wrap;
+    }
+    ResetEvent(ghFinilizeEvent);
 
     // Дескрипторы
     ghConIn  = CreateFile(L"CONIN$", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_READ,
@@ -426,7 +434,7 @@ int main()
     
         // Ждем, пока в консоли не останется процессов (кроме нашего)
         TODO("Проверить, может ли так получиться, что CreateProcess прошел, а к консоли он не прицепился? Может, если процесс GUI");
-        nWait = WaitForSingleObject(ghExitEvent, 6*1000); //Запуск процесса наверное может задержать антивирус
+        nWait = WaitForSingleObject(ghFinilizeEvent, 6*1000); //Запуск процесса наверное может задержать антивирус
         if (nWait != WAIT_OBJECT_0) { // Если таймаут
             EnterCriticalSection(&srv.csProc);
             iRc = srv.nProcesses.size();
@@ -454,7 +462,7 @@ int main()
 wait:    
     if (gnRunMode == RM_SERVER) {
         // По крайней мере один процесс в консоли запустился. Ждем пока в консоли не останется никого кроме нас
-        WaitForSingleObject(ghExitEvent, INFINITE);
+        WaitForSingleObject(ghFinilizeEvent, INFINITE);
 	} else {
         HANDLE hEvents[3];
         hEvents[0] = pi.hProcess;
@@ -2273,76 +2281,6 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 			}
 		} break;
         
-        case CECMD_RECREATE:
-        {
-            lbRc = FALSE; // возврат результата не требуется
-            // как-то оно не особо хорошо...
-#ifdef xxxxxx
-            EnterCriticalSection(&srv.csProc);
-            int i, nCount = (srv.nProcesses.size()+5); // + небольшой резерв
-            _ASSERTE(nCount>0);
-            if (nCount <= 0) {
-                LeaveCriticalSection(&srv.csProc);
-                break;
-            }
-            
-            DWORD *pdwPID = (DWORD*)Alloc(nCount, sizeof(DWORD));
-            _ASSERTE(pdwPID!=NULL);
-            
-            // Сначала сделаем копию списка, а то при приходе событий WinEvent может подраться за vector
-            std::vector<DWORD>::iterator iter = srv.nProcesses.begin();
-            i = 0;
-            while (iter != srv.nProcesses.end() && i < nCount) {
-                DWORD dwPID = *iter;
-                if (dwPID && dwPID != gnSelfPID) {
-                    pdwPID[i] = dwPID;
-                }
-                iter ++;
-            }
-            LeaveCriticalSection(&srv.csProc); // здесь мы его больше не меняем
-            
-            gbInRecreateRoot = TRUE;
-
-            // Теперь можно килять
-            BOOL fSuccess = TRUE;
-            DWORD dwErr = 0;
-            for (i=nCount-1; i>=0; i--) {
-                if (pdwPID[i] == 0) continue;
-                HANDLE hProcess = OpenProcess ( PROCESS_TERMINATE, FALSE, pdwPID[i] );
-                if (hProcess == NULL) {
-                    dwErr = GetLastError(); fSuccess = FALSE; break;
-                }
-                fSuccess = TerminateProcess(hProcess, 100);
-                dwErr = GetLastError();
-                CloseHandle(hProcess);
-                if (!fSuccess) break;
-            }
-            Free(pdwPID); pdwPID = NULL; // больше не требуется
-
-            if (fSuccess) {
-                // Clear console!
-                CONSOLE_SCREEN_BUFFER_INFO lsbi = {{0,0}};
-                HANDLE hCon = ghConOut ? ghConOut : GetStdHandle(STD_OUTPUT_HANDLE);
-                if (MyGetConsoleScreenBufferInfo(hCon, &lsbi)) {
-                    DWORD dwWritten = 0; COORD cr = {0,0};
-                    FillConsoleOutputCharacter(hCon, L' ', lsbi.dwSize.X*lsbi.dwSize.Y, cr, &dwWritten);
-                    FillConsoleOutputAttribute(hCon, 7, lsbi.dwSize.X*lsbi.dwSize.Y, cr, &dwWritten);
-                }
-                // Create process!
-                PROCESS_INFORMATION pi; memset(&pi, 0, sizeof(pi));
-                STARTUPINFOW si; memset(&si, 0, sizeof(si)); si.cb = sizeof(si);
-                wprintf(L"\r\nRestarting root process: %s\r\n", gpszRunCmd);
-                fSuccess = CreateProcessW(NULL, gpszRunCmd, NULL,NULL, TRUE, NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi);
-                dwErr = GetLastError();
-                if (!fSuccess)
-                {
-                    wprintf (L"Can't create process, ErrCode=0x%08X!\n", dwErr);
-                    gbAlwaysConfirmExit = TRUE; // чтобы консоль сразу не схлопнулась, а было видно ошибку
-                    SetEvent(ghExitEvent); // завершение...
-                }
-            }
-#endif
-        } break;
     }
     
     if (gbInRecreateRoot) gbInRecreateRoot = FALSE;
@@ -2609,7 +2547,7 @@ void WINAPI WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LO
                     // Процессов в консоли не осталось?
                     if (srv.nProcesses.size() == 0 && !gbInRecreateRoot) {
                         LeaveCriticalSection(&srv.csProc);
-                        SetEvent(ghExitEvent);
+                        SetEvent(ghFinilizeEvent);
                         return;
                     }
                     break;

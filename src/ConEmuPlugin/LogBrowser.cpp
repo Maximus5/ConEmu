@@ -58,7 +58,7 @@ void ShowConPacket(CESERVER_REQ* pReq)
 		case CECMD_SETSIZE: pszEnd = L"CECMD_SETSIZE"; break;
 		case CECMD_CMDSTARTSTOP: pszEnd = L"CECMD_CMDSTARTSTOP"; break;
 		case CECMD_GETGUIHWND: pszEnd = L"CECMD_GETGUIHWND"; break;
-		case CECMD_RECREATE: pszEnd = L"CECMD_RECREATE"; break;
+//		case CECMD_RECREATE: pszEnd = L"CECMD_RECREATE"; break;
 		case CECMD_TABSCHANGED: pszEnd = L"CECMD_TABSCHANGED"; break;
 		case CECMD_CMDSTARTED: pszEnd = L"CECMD_CMDSTARTED"; break;
 		case CECMD_CMDFINISHED: pszEnd = L"CECMD_CMDFINISHED"; break;

@@ -81,7 +81,7 @@
 #define CECMD_SETSIZE       3
 #define CECMD_CMDSTARTSTOP  4 // 0 - ServerStart, 1 - ServerStop, 2 - ComspecStart, 3 - ComspecStop
 #define CECMD_GETGUIHWND    5
-#define CECMD_RECREATE      6
+//#define CECMD_RECREATE      6
 #define CECMD_TABSCHANGED   7
 #define CECMD_CMDSTARTED    8 // == CECMD_SETSIZE + восстановить содержимое консоли (запустился comspec)
 #define CECMD_CMDFINISHED   9 // == CECMD_SETSIZE + сохранить содержимое консоли (завершился comspec)
