@@ -89,7 +89,7 @@
 #define CECMD_GETOUTPUT     11
 #define CECMD_LANGCHANGE    12
 
-#define CESERVER_REQ_VER    4
+#define CESERVER_REQ_VER    5
 
 #define PIPEBUFSIZE 4096
 
@@ -171,13 +171,18 @@ typedef struct tag_CESERVER_REQ_OUTPUTFILE {
 	WCHAR szFilePathName[MAX_PATH+1];
 } CESERVER_REQ_OUTPUTFILE;
 
+typedef struct tag_CESERVER_REQ_RETSIZE {
+	DWORD nNextPacketId;
+	CONSOLE_SCREEN_BUFFER_INFO SetSizeRet;
+} CESERVER_REQ_RETSIZE;
+
 typedef struct tag_CESERVER_REQ {
     CESERVER_REQ_HDR hdr;
 	union {
 		BYTE    Data[1]; // variable(!) length
 		CESERVER_REQ_CONINFO ConInfo; // Informational only! Some fields ARE VARIABLE LENGTH
 		CESERVER_REQ_SETSIZE SetSize;
-		CONSOLE_SCREEN_BUFFER_INFO SetSizeRet;
+		CESERVER_REQ_RETSIZE SetSizeRet;
 		CESERVER_REQ_OUTPUTFILE OutputFile;
 	};
 } CESERVER_REQ;

@@ -64,7 +64,7 @@ public:
 	POINT ptFullScreenSize; // size for GetMinMaxInfo in Fullscreen mode
 	//DWORD gnLastProcessCount;
 	//uint cBlinkNext;
-	DWORD WindowMode;
+	DWORD WindowMode, change2WindowMode;
 	//HANDLE hPipe;
 	//HANDLE hPipeEvent;
 	bool isWndNotFSMaximized;
@@ -176,6 +176,7 @@ public:
 	bool isSizing();
 	bool isValid(CVirtualConsole* apVCon);
 	bool isViewer();
+	bool isWindowNormal();
 	void LoadIcons();
 	bool LoadVersionInfo(wchar_t* pFullPath);
 	static RECT MapRect(RECT rFrom, BOOL bFrame2Client);

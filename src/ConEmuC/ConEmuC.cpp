@@ -27,7 +27,7 @@ WARNING("При запуске как ComSpec получаем ошибку: {crNewSize.X>=MIN_CON_WIDTH &&
 
 #ifdef _DEBUG
 //  Раскомментировать, чтобы сразу после запуска процесса (conemuc.exe) показать MessageBox, чтобы прицепиться дебаггером
-  #define SHOW_STARTED_MSGBOX
+  //#define SHOW_STARTED_MSGBOX
 #endif
 
 WARNING("!!!! Пока можно при появлении события запоминать текущий тик");
@@ -51,7 +51,10 @@ CRITICAL_SECTION gcsHeap;
 #else
 // Отладочный режим
 //#define FORCE_REDRAW_FIX
+#define PRINTCMDLINE
 #endif
+//#define RELATIVE_TRANSMIT_DISABLE
+
 
 #define MIN_FORCEREFRESH_INTERVAL 100
 #define MAX_FORCEREFRESH_INTERVAL 1000
@@ -211,6 +214,11 @@ struct tag_Srv {
 	// Если меняется только один символ... (но перечитаем всю линию)
 	//BOOL bCharChangedSet; 
 	CESERVER_CHAR CharChanged; CRITICAL_SECTION csChar;
+	
+	// Буфер для отсылки в консоль
+	DWORD nChangedBufferSize;
+	CESERVER_CHAR *pChangedBuffer;
+
 	// Сохранненый Output последнего cmd...
 	//
 	// Keyboard layout name
@@ -308,6 +316,10 @@ int main()
 #ifdef SHOW_STARTED_MSGBOX
     if (!IsDebuggerPresent()) MessageBox(GetConsoleWindow(),GetCommandLineW(),L"ComEmuC Loaded",0);
 #endif
+
+	#ifdef PRINTCMDLINE
+	wprintf(L"ConEmuC: %s\n", GetCommandLineW());
+	#endif
     
     if ((iRc = ParseCommandLine(GetCommandLineW(), &gpszRunCmd)) != 0)
         goto wrap;
@@ -1885,7 +1897,7 @@ Loop1:
     // его использование - закрыть через CriticalSection
     
 	// Читаем консоль только если требуется
-    if (srv.psChars && srv.pnAttrs && (srv.bNeedFullReload || pCheck != NULL))
+    if (srv.psChars && srv.pnAttrs && (srv.bForceFullSend || srv.bNeedFullReload || pCheck != NULL))
 	{
         //dwAllSize += TextWidth*TextHeight*4;
         
@@ -1904,7 +1916,8 @@ Loop1:
 		DWORD nbActuallyRead;
 
 		TODO("Если передан непустой прямоугольник pCheck - скорее всего можно считывать только его");
-		if (pCheck && pCheck->hdr.nSize) {
+		if (!srv.bForceFullSend && pCheck && pCheck->hdr.nSize)
+		{
 			// Читаем только прямоугольник, определенный в pCheck->hdr.
 			WARNING("Координаты в pCheck->hdr должны быть абсолютными, а не видимыми");
 			// Читаем только видимую (в GUI) часть! ( {0,coord.Y} - {srv.sbi.dwSize.X-1,coord.Y+TextHeight-1} )
@@ -2085,6 +2098,7 @@ Loop1:
 					// Консоль изменилась полностью - не маяться с передачей прямоугольника
 					srv.bForceFullSend = TRUE;
 					memset(&pCheck->hdr, 0, sizeof(pCheck->hdr));
+					goto Loop1;
 				} else {
 					pCheck->hdr.cr1 = cr1;
 					pCheck->hdr.cr2 = cr2;
@@ -2110,8 +2124,11 @@ Loop1:
 						ConCharNow += TextWidth;
 				}
 			}
+			if (srv.bForceFullSend)
+				lbChanged = TRUE;
 
-			if (!lbChanged) {
+			if (!lbChanged)
+			{
 				MCHKHEAP
 				// Тут сдвиг именно srv.nBufCharCount, а не TextLen, чтобы не рассчитывать его каждый раз
 				if (memcmp(srv.psChars, srv.psChars+srv.nBufCharCount, TextLen*sizeof(wchar_t)))
@@ -2176,7 +2193,7 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 		case CECMD_CMDFINISHED:
         {
 			MCHKHEAP
-            int nOutSize = sizeof(CESERVER_REQ_HDR) + sizeof(CONSOLE_SCREEN_BUFFER_INFO);
+            int nOutSize = sizeof(CESERVER_REQ_HDR) + sizeof(CONSOLE_SCREEN_BUFFER_INFO) + sizeof(DWORD);
             *out = (CESERVER_REQ*)Alloc(nOutSize,1);
             if (*out == NULL) return FALSE;
             (*out)->hdr.nCmd = 0;
@@ -2224,9 +2241,15 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 				}
             }
 			MCHKHEAP
-            PCONSOLE_SCREEN_BUFFER_INFO psc = (PCONSOLE_SCREEN_BUFFER_INFO)(*out)->Data;
-
-            MyGetConsoleScreenBufferInfo(ghConOut, psc);
+			
+			PCONSOLE_SCREEN_BUFFER_INFO psc = &((*out)->SetSizeRet.SetSizeRet);
+			MyGetConsoleScreenBufferInfo(ghConOut, psc);
+			
+			DWORD nPacketId = ++srv.nLastPacketID;
+			(*out)->SetSizeRet.nNextPacketId = nPacketId;
+			
+			srv.bForceFullSend = TRUE;
+			SetEvent(srv.hRefreshEvent);
 
 			MCHKHEAP
 
@@ -3320,7 +3343,7 @@ BOOL ReloadFullConsoleInfo(/*CESERVER_CHAR* pCharOnly/ *=NULL*/)
 	// srv.bForceFullSend - выставляет ReloadConsoleInfo
     if (srv.bNeedFullReload || srv.bForceFullSend || pCheck) {
         
-		if (pCheck == NULL) { // Все равно попытаемся определить измененную область
+		if (pCheck == NULL && !srv.bForceFullSend) { // Все равно попытаемся определить измененную область
 			memset(&lCharChanged, 0, sizeof(lCharChanged));
 			lCharChanged.hdr.cr1.Y = (srv.nTopVisibleLine == -1) ? srv.sbi.srWindow.Top : srv.nTopVisibleLine;
 			lCharChanged.hdr.cr2.X = srv.sbi.dwSize.X - 1;
@@ -3338,7 +3361,7 @@ BOOL ReloadFullConsoleInfo(/*CESERVER_CHAR* pCharOnly/ *=NULL*/)
 		MCHKHEAP
 		_ASSERTE(pCheck==NULL || pCheck==&lCharChanged);
 		MCHKHEAP
-		lbDataChanged = ReadConsoleData(&lCharChanged);
+		lbDataChanged = ReadConsoleData(srv.bForceFullSend ? NULL : &lCharChanged);
 		MCHKHEAP
 		#ifdef _DEBUG
 			if (lCharChanged.hdr.nSize) {
@@ -3377,6 +3400,9 @@ BOOL ReloadFullConsoleInfo(/*CESERVER_CHAR* pCharOnly/ *=NULL*/)
         // Это из RefreshThread
         //CESERVER_REQ* pOut = CreateConsoleInfo(lbDataChanged ? NULL : pCharOnly, lbDataChanged ? 2 : 0); -- 2009.06.05 было так
         CESERVER_CHAR *pChangedBuffer = NULL;
+        #ifdef RELATIVE_TRANSMIT_DISABLE
+        bForceFullSend = TRUE;
+        #endif
 		// Если изменений в видимой области тут нет - (pCheck->hdr.nSize == 0)
         if (!bForceFullSend && pCheck && pCheck->hdr.nSize) {
 	        // Нужно сформировать pChangedBuffer по прямоугольнику из pCheck, если не bForceFullSend !!!
@@ -3389,7 +3415,12 @@ BOOL ReloadFullConsoleInfo(/*CESERVER_CHAR* pCharOnly/ *=NULL*/)
 				+ (pCheck->hdr.cr2.Y - pCheck->hdr.cr1.Y + 1)
 				* (pCheck->hdr.cr2.X - pCheck->hdr.cr1.X + 1)
 				* (sizeof(WORD)+sizeof(wchar_t));
-			pChangedBuffer = (CESERVER_CHAR*)Alloc(nSize, 1);
+			if (nSize > srv.nChangedBufferSize) {
+				Free(srv.pChangedBuffer);
+				srv.pChangedBuffer = (CESERVER_CHAR*)Alloc(nSize, 1);
+				srv.nChangedBufferSize = (srv.pChangedBuffer != NULL) ? nSize : 0;
+			}
+			pChangedBuffer = srv.pChangedBuffer;
 			if (pChangedBuffer) {
 				pChangedBuffer->hdr.nSize = nSize;
 				// Здесь у нас АБСОЛЮТНЫЕ а не видимые координаты, но попадающие только в ВИДИМУЮ область
@@ -3450,6 +3481,13 @@ BOOL ReloadFullConsoleInfo(/*CESERVER_CHAR* pCharOnly/ *=NULL*/)
 		}
 
 		MCHKHEAP
+		
+		#ifdef RELATIVE_TRANSMIT_DISABLE
+		bForceFullSend = TRUE;
+		// память для pChangedBuffer не освобождать, а использовать повторно
+		if (pChangedBuffer) 
+			pChangedBuffer = NULL;
+		#endif
         
 		// Одновременно обе переменные выставлены быть не должны
 		_ASSERTE((pChangedBuffer!=NULL)!=bForceFullSend || !bForceFullSend);
@@ -3465,8 +3503,8 @@ BOOL ReloadFullConsoleInfo(/*CESERVER_CHAR* pCharOnly/ *=NULL*/)
 
 		MCHKHEAP
 
-		TODO("память для pChangedBuffer можно бы не освобождать, а использовать повторно...");
-		if (pChangedBuffer) { Free(pChangedBuffer); pChangedBuffer = NULL; }
+		// память для pChangedBuffer не освобождать, а использовать повторно
+		//if (pChangedBuffer) { Free(pChangedBuffer); pChangedBuffer = NULL; }
 
 		MCHKHEAP
 

@@ -97,8 +97,8 @@ class CRealConsole
 {
 public:
 
-	uint TextWidth() { return con.nTextWidth; };
-	uint TextHeight() { return con.nTextHeight; };
+	uint TextWidth();
+	uint TextHeight();
 	
 public:
 	HWND    hConWnd;
@@ -138,7 +138,7 @@ public:
 	BOOL isDetached();
 	BOOL AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID);
 	BOOL RecreateProcess();
-	void GetData(wchar_t* pChar, WORD* pAttr, uint nSize);
+	void GetData(wchar_t* pChar, WORD* pAttr, uint nWidth, uint nHeight);
 	void OnActivate(int nNewNum, int nOldNum);
 	BOOL CheckBufferSize();
 	//LRESULT OnConEmuCmd(BOOL abStarted, DWORD anConEmuC_PID);
@@ -191,6 +191,7 @@ private:
 		wchar_t *pConChar;
 		WORD  *pConAttr;
 		int nTextWidth, nTextHeight;
+		int nChange2TextWidth, nChange2TextHeight;
 		BOOL bBufferHeight;
 		size_t nPacketIdx;
 		DWORD dwKeybLayout;
@@ -218,7 +219,8 @@ private:
 	HANDLE mh_ServerThreads[MAX_SERVER_THREADS], mh_ActiveServerThread;
 	DWORD  mn_ServerThreadsId[MAX_SERVER_THREADS];
 	HANDLE mh_ServerSemaphore, mh_GuiAttached;
-	void SetBufferHeightMode(BOOL abBufferHeight);
+	void SetBufferHeightMode(BOOL abBufferHeight, BOOL abLock=FALSE);
+	BOOL mb_BuferModeChangeLocked;
 
 	void ServerThreadCommand(HANDLE hPipe);
 	void ApplyConsoleInfo(CESERVER_REQ* pInfo);

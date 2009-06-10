@@ -243,7 +243,7 @@ LRESULT CALLBACK TabBarClass::TabProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARA
         }
     case WM_SETFOCUS:
         {
-            SetFocus(ghWndDC);
+            SetFocus(ghWnd);
             return 0;
         }
     }

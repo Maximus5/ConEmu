@@ -46,9 +46,14 @@ LRESULT CALLBACK CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam
     switch (messg)
     {
     case WM_COPYDATA:
+	    WARNING("WM_COPYDATA убить");
 		// если уж пришло сюда - передадим куда надо
 		result = gConEmu.WndProc ( ghWnd, messg, wParam, lParam );
 		break;
+
+	case WM_SETFOCUS:
+		SetFocus(ghWnd); // Фокус должен быть в главном окне!
+		return 0;
 
     case WM_ERASEBKGND:
 		result = 0;
@@ -73,7 +78,7 @@ LRESULT CALLBACK CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam
     case WM_ACTIVATE:
     case WM_ACTIVATEAPP:
     case WM_KILLFOCUS:
-    case WM_SETFOCUS:
+    //case WM_SETFOCUS:
     case WM_MOUSEMOVE:
     case WM_RBUTTONDOWN:
     case WM_RBUTTONUP:
@@ -313,13 +318,9 @@ LRESULT CALLBACK CConEmuBack::BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, 
 		case WM_DESTROY:
 			DeleteObject(gConEmu.m_Back.mh_BackBrush);
 			break;
-		//case WM_SETFOCUS:
-		//
-		//	if (messg == WM_SETFOCUS) {
-		//		if (ghWndDC && IsWindow(ghWndDC))
-		//			SetFocus(ghWndDC);
-		//	}
-		//	return 0;
+		case WM_SETFOCUS:
+			SetFocus(ghWnd); // Фокус должен быть в главном окне!
+			return 0;
 	    case WM_VSCROLL:
 	        POSTMESSAGE(ghConWnd, messg, wParam, lParam, FALSE);
 	        break;
@@ -373,6 +374,9 @@ LRESULT CALLBACK CConEmuBack::ScrollWndProc(HWND hWnd, UINT messg, WPARAM wParam
 		case WM_VSCROLL:
 			POSTMESSAGE(ghConWnd, messg, wParam, lParam, FALSE);
 			break;
+		case WM_SETFOCUS:
+			SetFocus(ghWnd); // Фокус должен быть в главном окне!
+			return 0;
 	}
 
 	if (gConEmu.m_Back.mpfn_ScrollProc)

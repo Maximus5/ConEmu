@@ -153,7 +153,9 @@ void ShowConPacket(CESERVER_REQ* pReq)
 			lbNeedRedraw = TRUE;
 		} else if (r->EventType == KEY_EVENT && r->Event.KeyEvent.bKeyDown) {
 			if (r->Event.KeyEvent.wVirtualScanCode == VK_NEXT) {
-				lbNeedRedraw = gdwPage!=1; gdwPage = 1;
+				//lbNeedRedraw = gdwPage!=1; gdwPage = 1;
+				lbNeedRedraw = TRUE;
+				gdwPage = (gdwPage == 1) ? 0 : 1;
 			} else if (r->Event.KeyEvent.wVirtualScanCode == VK_PRIOR) {
 				lbNeedRedraw = gdwPage!=0; gdwPage = 0;
 			}
