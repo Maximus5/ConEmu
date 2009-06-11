@@ -3159,24 +3159,42 @@ BOOL MyGetConsoleScreenBufferInfo(HANDLE ahConOut, PCONSOLE_SCREEN_BUFFER_INFO a
 		cs.Enter(&srv.csChangeSize, &srv.ncsTChangeSize);
 
     lbRc = GetConsoleScreenBufferInfo(ahConOut, apsc);
-    if (lbRc) {
-        if (gnBufferHeight) {
-            if (gnBufferHeight <= (apsc->dwMaximumWindowSize.Y * 1.2))
-                gnBufferHeight = max(300, (SHORT)(apsc->dwMaximumWindowSize.Y * 1.2));
-        }
+    if (lbRc && gnRunMode == RM_SERVER) // ComSpec окно менять НЕ ДОЛЖЕН!
+	{
+				// Перенесено в SetConsoleSize
+				//     if (gnBufferHeight) {
+				//// Если мы знаем о режиме BufferHeight - можно подкорректировать размер (зачем это было сделано?)
+				//         if (gnBufferHeight <= (apsc->dwMaximumWindowSize.Y * 1.2))
+				//             gnBufferHeight = max(300, (SHORT)(apsc->dwMaximumWindowSize.Y * 1.2));
+				//     }
+
         // Если прокрутки быть не должно - по возможности уберем ее, иначе при запуске FAR
         // запустится только в ВИДИМОЙ области
-        if (((apsc->srWindow.Right+1) < apsc->dwSize.X)
-            || ((gnBufferHeight == 0) && ((apsc->srWindow.Bottom+1) < apsc->dwSize.Y))
-            )
-        {
-            RECT rcConPos; GetWindowRect(ghConWnd, &rcConPos);
-            int nNewWidth = GetSystemMetrics(SM_CXSCREEN);
-            int nNewHeight = (gnBufferHeight != 0) ? (rcConPos.bottom - rcConPos.top) : GetSystemMetrics(SM_CYSCREEN);
+		BOOL lbNeedCorrect = FALSE;
+		if (apsc->srWindow.Left > 0) {
+			lbNeedCorrect = TRUE; apsc->srWindow.Left = 0;
+		}
+		if ((apsc->srWindow.Right+1) < apsc->dwSize.X) {
+			lbNeedCorrect = TRUE; apsc->srWindow.Right = (apsc->dwSize.X - 1);
+		}
+		BOOL lbBufferHeight = FALSE;
+		if (apsc->dwSize.Y >= (apsc->dwMaximumWindowSize.Y * 1.2))
+			lbBufferHeight = TRUE;
 
-            MoveWindow(ghConWnd, rcConPos.left, rcConPos.top, nNewWidth, nNewHeight, TRUE);
-            lbRc = GetConsoleScreenBufferInfo(ahConOut, apsc);
+		if (!lbBufferHeight) {
+			_ASSERTE((apsc->srWindow.Bottom-apsc->srWindow.Top)<200);
+
+			if (apsc->srWindow.Top > 0) {
+				lbNeedCorrect = TRUE; apsc->srWindow.Top = 0;
+			}
+			if ((apsc->srWindow.Bottom+1) < apsc->dwSize.Y) {
+				lbNeedCorrect = TRUE; apsc->srWindow.Bottom = (apsc->dwSize.Y - 1);
+			}
         }
+		if (lbNeedCorrect) {
+			lbRc = SetConsoleWindowInfo(ghConOut, TRUE, &apsc->srWindow);
+			lbRc = GetConsoleScreenBufferInfo(ahConOut, apsc);
+		}
         CorrectVisibleRect(apsc);
     }
 
@@ -3500,20 +3518,30 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
     if (crNewSize.Y</*3*/MIN_CON_HEIGHT)
         crNewSize.Y = /*3*/MIN_CON_HEIGHT;
 
+    BOOL lbNeedChange = TRUE;
+    CONSOLE_SCREEN_BUFFER_INFO csbi = {{0,0}};
+    if (MyGetConsoleScreenBufferInfo(ghConOut, &csbi)) {
+        lbNeedChange = (csbi.dwSize.X != crNewSize.X) || (csbi.dwSize.Y != crNewSize.Y);
+    }
+
+	// Делаем это ПОСЛЕ MyGetConsoleScreenBufferInfo, т.к. некоторые коррекции размера окна 
+	// она делает ориентируясь на gnBufferHeight
     gnBufferHeight = BufferHeight;
     gcrBufferSize = crNewSize;
 	_ASSERTE(gcrBufferSize.Y<200);
+
+    if (gnBufferHeight) {
+		// В режиме BufferHeight - высота ДОЛЖНА быть больше допустимого размера окна консоли
+		// иначе мы запутаемся при проверках "буферный ли это режим"...
+        if (gnBufferHeight <= (csbi.dwMaximumWindowSize.Y * 1.2))
+            gnBufferHeight = max(300, (SHORT)(csbi.dwMaximumWindowSize.Y * 1.2));
+    }
 
     RECT rcConPos = {0};
     GetWindowRect(ghConWnd, &rcConPos);
 
     BOOL lbRc = TRUE;
     //DWORD nWait = 0;
-    BOOL lbNeedChange = TRUE;
-    CONSOLE_SCREEN_BUFFER_INFO csbi = {{0,0}};
-    if (MyGetConsoleScreenBufferInfo(ghConOut, &csbi)) {
-        lbNeedChange = (csbi.dwSize.X != crNewSize.X) || (csbi.dwSize.Y != crNewSize.Y);
-    }
 
     //if (srv.hChangingSize) {
     //    nWait = WaitForSingleObject(srv.hChangingSize, 300);
@@ -3530,10 +3558,14 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
             MoveWindow(ghConWnd, rcConPos.left, rcConPos.top, 1, 1, 1);
             //specified width and height cannot be less than the width and height of the console screen buffer's window
             lbRc = SetConsoleScreenBufferSize(ghConOut, crNewSize);
-                if (!lbRc) dwErr = GetLastError();
+            if (!lbRc) dwErr = GetLastError();
             //TODO: а если правый нижний край вылезет за пределы экрана?
-                //WARNING("отключил для теста");
-            MoveWindow(ghConWnd, rcConPos.left, rcConPos.top, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), 1);
+            //WARNING("отключил для теста");
+            //MoveWindow(ghConWnd, rcConPos.left, rcConPos.top, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), 1);
+			rNewRect.Left = 0; rNewRect.Top = 0;
+			rNewRect.Right = crNewSize.X - 1;
+			rNewRect.Bottom = crNewSize.Y - 1;
+			SetConsoleWindowInfo(ghConOut, TRUE, &rNewRect);
         }
 
     } else {
@@ -3544,17 +3576,14 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
         MoveWindow(ghConWnd, rcConPos.left, rcConPos.top, 1, 1, 1);
         lbRc = SetConsoleScreenBufferSize(ghConOut, crHeight); // а не crNewSize - там "оконные" размеры
         //окошко раздвигаем только по ширине!
-        RECT rcCurConPos = {0};
-        GetWindowRect(ghConWnd, &rcCurConPos); //X-Y новые, но высота - старая
-        MoveWindow(ghConWnd, rcCurConPos.left, rcCurConPos.top, GetSystemMetrics(SM_CXSCREEN), rcConPos.bottom-rcConPos.top, 1);
+        //RECT rcCurConPos = {0};
+        //GetWindowRect(ghConWnd, &rcCurConPos); //X-Y новые, но высота - старая
+        //MoveWindow(ghConWnd, rcCurConPos.left, rcCurConPos.top, GetSystemMetrics(SM_CXSCREEN), rcConPos.bottom-rcConPos.top, 1);
 
         rNewRect.Left = 0;
-        //if (!rNewRect.Right || !rNewRect.Bottom)
-		{
-            rNewRect.Right = crHeight.X-1;
-            rNewRect.Bottom = min( (crHeight.Y-1), (rNewRect.Top+gcrBufferSize.Y-1) );
-			_ASSERTE(rNewRect.Bottom<200);
-        }
+        rNewRect.Right = crHeight.X-1;
+        rNewRect.Bottom = min( (crHeight.Y-1), (rNewRect.Top+gcrBufferSize.Y-1) );
+		_ASSERTE(rNewRect.Bottom<200);
         SetConsoleWindowInfo(ghConOut, TRUE, &rNewRect);
     }
 

@@ -375,7 +375,9 @@ BOOL CreateMainWindow()
 	    return FALSE;
     }
     
-	WNDCLASSEX wc = {sizeof(WNDCLASSEX), CS_DBLCLKS|CS_OWNDC|CS_SAVEBITS, MainWndProc, 0, 16, 
+	// 2009-06-11 Возможно, что CS_SAVEBITS приводит к глюкам отрисовки
+	// банально непрорисовываются некоторые части экрана (драйвер видюхи глючит?)
+	WNDCLASSEX wc = {sizeof(WNDCLASSEX), CS_DBLCLKS|CS_OWNDC/*|CS_SAVEBITS*/, MainWndProc, 0, 16, 
 		    g_hInstance, hClassIcon, LoadCursor(NULL, IDC_ARROW), 
 		    NULL /*(HBRUSH)COLOR_BACKGROUND*/, 
 		    NULL, szClassNameParent, hClassIconSm};// | CS_DROPSHADOW

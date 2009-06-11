@@ -138,7 +138,7 @@ public:
 	BOOL isDetached();
 	BOOL AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID);
 	BOOL RecreateProcess();
-	void GetData(wchar_t* pChar, WORD* pAttr, uint nWidth, uint nHeight);
+	void GetData(wchar_t* pChar, WORD* pAttr, int nWidth, int nHeight);
 	void OnActivate(int nNewNum, int nOldNum);
 	BOOL CheckBufferSize();
 	//LRESULT OnConEmuCmd(BOOL abStarted, DWORD anConEmuC_PID);
@@ -151,6 +151,7 @@ public:
 	DWORD CanActivateFarWindow(int anWndIndex);
 	void SwitchKeyboardLayout(DWORD dwNewKeybLayout);
 	void CloseConsole();
+	void Paste();
 
 public:
 	// Вызываются из CVirtualConsole

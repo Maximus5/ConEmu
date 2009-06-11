@@ -162,7 +162,17 @@ LRESULT CConEmuChild::OnPaint(WPARAM wParam, LPARAM lParam)
     if (gConEmu.isPictureView())
     {
 		// если PictureView распахнуто не на все окно - отрисовать видимую часть консоли!
-		RECT rcPic, rcClient;
+		RECT rcPic, rcClient, rcCommon;
+
+		GetWindowRect(gConEmu.hPictureView, &rcPic);
+		GetClientRect(ghWnd, &rcClient); // Нам нужен ПОЛНЫЙ размер но ПОД тулбаром.
+		MapWindowPoints(ghWnd, NULL, (LPPOINT)&rcClient, 2);
+		BOOL lbIntersect = IntersectRect(&rcCommon, &rcClient, &rcPic);
+		
+		// Убрать из отрисовки прямоугольник PictureView
+		MapWindowPoints(NULL, ghWndDC, (LPPOINT)&rcPic, 2);
+		ValidateRect(ghWndDC, &rcPic);
+
 		GetClientRect(gConEmu.hPictureView, &rcPic);
 		GetClientRect(ghWndDC, &rcClient);
 		
@@ -190,20 +200,23 @@ LRESULT CConEmuChild::OnSize(WPARAM wParam, LPARAM lParam)
     BOOL lbIsPicView = FALSE;
 
 	RECT rcNewClient; GetClientRect(ghWndDC,&rcNewClient);
+
+    // Вроде это и не нужно. Ни для Ansi ни для Unicode версии плагина
+    // Все равно в ConEmu запрещен ресайз во время видимости окошка PictureView 
     
-    if (gConEmu.isPictureView())
-    {
-        if (gConEmu.hPictureView) {
-            lbIsPicView = TRUE;
-            gConEmu.isPiewUpdate = true;
-            RECT rcClient; GetClientRect(ghWndDC, &rcClient);
-            //TODO: а ведь PictureView может и в QuickView активироваться...
-            MoveWindow(gConEmu.hPictureView, 0,0,rcClient.right,rcClient.bottom, 1);
-            //INVALIDATE(); //InvalidateRect(hWnd, NULL, FALSE);
-			Invalidate();
-            //SetFocus(hPictureView); -- все равно на другой процесс фокус передать нельзя...
-        }
-    }
+    //if (gConEmu.isPictureView())
+    //{
+    //    if (gConEmu.hPictureView) {
+    //        lbIsPicView = TRUE;
+    //        gConEmu.isPiewUpdate = true;
+    //        RECT rcClient; GetClientRect(ghWndDC, &rcClient);
+    //        //TODO: а ведь PictureView может и в QuickView активироваться...
+    //        MoveWindow(gConEmu.hPictureView, 0,0,rcClient.right,rcClient.bottom, 1);
+    //        //INVALIDATE(); //InvalidateRect(hWnd, NULL, FALSE);
+	//		Invalidate();
+    //        //SetFocus(hPictureView); -- все равно на другой процесс фокус передать нельзя...
+    //    }
+    //}
 
 	return result;
 }
