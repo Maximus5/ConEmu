@@ -494,7 +494,9 @@ BOOL EditOutputA(LPCWSTR asFileName, BOOL abView)
 			0, 1);
 		lbRc = (iRc != EEC_OPEN_ERROR);
 	} else {
+		#ifdef _DEBUG
 		int iRc =
+		#endif
 			InfoA->Viewer(szAnsi, InfoA->GetMsg(InfoA->ModuleNumber,5), 0,0,-1,-1, 
 			VF_NONMODAL|VF_IMMEDIATERETURN|VF_DELETEONLYFILEONCLOSE|VF_ENABLE_F6|VF_DISABLEHISTORY);
 		lbRc = TRUE;

@@ -173,6 +173,7 @@ protected:
 	BOOL AttachPID(DWORD dwPID);
 	BOOL StartProcess();
 	BOOL StartMonitorThread();
+	BOOL mb_NeedStartProcess;
 
 	static DWORD WINAPI MonitorThread(LPVOID lpParameter);
 	HANDLE mh_VConServerThread;

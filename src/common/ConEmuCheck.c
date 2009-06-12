@@ -162,7 +162,7 @@ HWND GetConEmuHWND(BOOL abRoot)
 {
 	//BOOL lbRc = FALSE;
 	HWND FarHwnd=NULL, ConEmuHwnd=NULL, ConEmuRoot=NULL;
-	CESERVER_REQ in = {0}, *pOut = NULL;
+	CESERVER_REQ in = {{0}}, *pOut = NULL;
 
 	FarHwnd = myGetConsoleWindow();
 	if ( !FarHwnd )

@@ -3,10 +3,6 @@
 #include "..\common\pluginW757.hpp"
 #include "PluginHeader.h"
 
-//#ifndef FORWARD_WM_COPYDATA
-//#define FORWARD_WM_COPYDATA(hwnd, hwndFrom, pcds, fn) \
-//    (BOOL)(UINT)(DWORD)(fn)((hwnd), WM_COPYDATA, (WPARAM)(hwndFrom), (LPARAM)(pcds))
-//#endif
 
 
 struct PluginStartupInfo *InfoW757=NULL;
@@ -431,7 +427,9 @@ BOOL EditOutput757(LPCWSTR asFileName, BOOL abView)
 			0, 1, 1200);
 		lbRc = (iRc != EEC_OPEN_ERROR);
 	} else {
+		#ifdef _DEBUG
 		int iRc =
+		#endif
 			InfoW757->Viewer(asFileName, InfoW757->GetMsg(InfoW757->ModuleNumber,5), 0,0,-1,-1, 
 			VF_NONMODAL|VF_IMMEDIATERETURN|VF_DELETEONLYFILEONCLOSE|VF_ENABLE_F6|VF_DISABLEHISTORY,
 			1200);

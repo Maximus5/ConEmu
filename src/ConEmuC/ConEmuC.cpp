@@ -1299,7 +1299,7 @@ int ServerInit()
         wprintf(L"CreateThread(InputThread) failed, ErrCode=0x%08X\n", dwErr); 
         iRc = CERR_CREATEINPUTTHREAD; goto wrap;
     }
-	SetThreadPriority(srv.hInputThread, THREAD_PRIORITY_ABOVE_NORMAL);
+	//SetThreadPriority(srv.hInputThread, THREAD_PRIORITY_ABOVE_NORMAL);
 
     if (gbAttachMode) {
         HWND hGui = NULL, hDcWnd = NULL;
