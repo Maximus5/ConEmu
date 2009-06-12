@@ -59,7 +59,7 @@
 #endif
 
 #ifdef _DEBUG
-#define DEBUGSTR(s) OutputDebugString(s)
+#define DEBUGSTR(s) { SYSTEMTIME st; GetLocalTime(&st); wchar_t szDEBUGSTRTime[32]; wsprintf(szDEBUGSTRTime, L"%i:%02i:%02i.%03i ", st.wHour, st.wMinute, st.wSecond, st.wMilliseconds); OutputDebugString(szDEBUGSTRTime); OutputDebugString(s); }
 #else
 #define DEBUGSTR(s)
 #endif

@@ -1,4 +1,5 @@
 #include <windows.h>
+#include <wchar.h>
 #include "..\common\common.hpp"
 #include "..\common\pluginW789.hpp"
 #include "PluginHeader.h"
@@ -15,17 +16,19 @@ extern struct PluginStartupInfo *InfoW789;
 extern struct FarStandardFunctions *FSFW789;
 
 CONSOLE_SCREEN_BUFFER_INFO csbi;
-DWORD gdwPage = 0;
+int gnPage = 0;
+bool gbShowAttrsOnly = false;
 
 BOOL CheckConInput(INPUT_RECORD* pr)
 {
 	DWORD dwCount = 0;
+	memset(pr, 0, sizeof(INPUT_RECORD));
 	BOOL lbRc = ReadConsoleInput(GetStdHandle(STD_INPUT_HANDLE), pr, 1, &dwCount);
 	if (!lbRc)
 		return FALSE;
 
 	if (pr->EventType == KEY_EVENT) {
-		if (pr->Event.KeyEvent.wVirtualScanCode == VK_ESCAPE)
+		if (pr->Event.KeyEvent.wVirtualKeyCode == VK_ESCAPE)
 			return FALSE;
 	}
 
@@ -35,7 +38,8 @@ BOOL CheckConInput(INPUT_RECORD* pr)
 
 void ShowConPacket(CESERVER_REQ* pReq)
 {
-	INPUT_RECORD r[2] = {WINDOW_BUFFER_SIZE_EVENT};
+	// Где-то там с выравниванием проблема
+	INPUT_RECORD *r = (INPUT_RECORD*)calloc(sizeof(INPUT_RECORD),2);
 	HANDLE hO = GetStdHandle(STD_OUTPUT_HANDLE);
 	COORD cr;
 	DWORD dw, dwLen;
@@ -118,8 +122,16 @@ void ShowConPacket(CESERVER_REQ* pReq)
 			if (dw >= sizeof(CESERVER_CHAR)) {
 				pceChar = (CESERVER_CHAR*)ptr;
 				lstrcpyW(psz, L"\nConsole region changes\n"); psz += wcslen(psz);
-				wsprintf(psz, L"  Region:   {L=%i, T=%i, R=%i, B=%i}\n", pceChar->hdr.cr1.X, pceChar->hdr.cr1.Y, pceChar->hdr.cr2.X, pceChar->hdr.cr2.Y);
-				wsprintf(psz, L"  NewChar:  '%c'\n", pceChar->data[0]);
+				sbi.dwSize.X = (pceChar->hdr.cr2.X-pceChar->hdr.cr1.X+1);
+				sbi.dwSize.Y = (pceChar->hdr.cr2.Y-pceChar->hdr.cr1.Y+1);
+				dwConDataBufSize = sbi.dwSize.X*sbi.dwSize.Y;
+				wsprintf(psz, L"  Region:    {L=%i, T=%i, R=%i, B=%i}  {%i x %i}\n",
+					pceChar->hdr.cr1.X, pceChar->hdr.cr1.Y, pceChar->hdr.cr2.X, pceChar->hdr.cr2.Y,
+					sbi.dwSize.X, sbi.dwSize.Y); psz += wcslen(psz);
+				wsprintf(psz, L"  FirstChar: '%c'\n", pceChar->data[0]); psz += wcslen(psz);
+				lstrcpyW(psz, L"Press 'PgDn' to display it\n"); psz += wcslen(psz);
+				pszConData = (wchar_t*)pceChar->data;
+				pnConData = (WORD*)(pszConData+dwConDataBufSize);
 			} else {
 				pceChar = NULL;
 				wsprintf(psz, L"\nInvalid length of CESERVER_CHAR (%i)\n", dw); psz += wcslen(psz);
@@ -147,24 +159,28 @@ void ShowConPacket(CESERVER_REQ* pReq)
 		lstrcpyW(psz, L"\n");
 	}
 
+	r->EventType = WINDOW_BUFFER_SIZE_EVENT;
+
 	do {
 		if (r->EventType == WINDOW_BUFFER_SIZE_EVENT) {
 			r->EventType = 0; cr.X = 0; cr.Y = 0;
 			lbNeedRedraw = TRUE;
 		} else if (r->EventType == KEY_EVENT && r->Event.KeyEvent.bKeyDown) {
-			if (r->Event.KeyEvent.wVirtualScanCode == VK_NEXT) {
-				//lbNeedRedraw = gdwPage!=1; gdwPage = 1;
+			if (r->Event.KeyEvent.wVirtualKeyCode == VK_NEXT) {
 				lbNeedRedraw = TRUE;
-				gdwPage = (gdwPage == 1) ? 0 : 1;
-			} else if (r->Event.KeyEvent.wVirtualScanCode == VK_PRIOR) {
-				lbNeedRedraw = gdwPage!=0; gdwPage = 0;
+				gnPage++;
+				FlushConsoleInputBuffer(GetStdHandle(STD_INPUT_HANDLE));
+			} else if (r->Event.KeyEvent.wVirtualKeyCode == VK_PRIOR) {
+				lbNeedRedraw = TRUE;
+				gnPage--;
 			}
 		}
+		if (gnPage<0) gnPage = 1; else if (gnPage>1) gnPage = 0;
 
 		if (lbNeedRedraw) {
 			lbNeedRedraw = FALSE;
 			cr.X = 0; cr.Y = 0;
-			if (gdwPage == 0) {
+			if (gnPage == 0) {
 				FillConsoleOutputAttribute(hO, 7, csbi.dwSize.X*csbi.dwSize.Y, cr, &dw);
 				FillConsoleOutputCharacter(hO, L' ', csbi.dwSize.X*csbi.dwSize.Y, cr, &dw);
 				cr.X = 0; cr.Y = 0; psz = pszText;
@@ -177,7 +193,7 @@ void ShowConPacket(CESERVER_REQ* pReq)
 					cr.Y ++; psz = pszEnd + 1;
 				}
 				SetConsoleCursorPosition(hO, cr);
-			} else if (gdwPage == 1) {
+			} else if (gnPage == 1) {
 				FillConsoleOutputAttribute(hO, 0x10, csbi.dwSize.X*csbi.dwSize.Y, cr, &dw);
 				FillConsoleOutputCharacter(hO, L' ', csbi.dwSize.X*csbi.dwSize.Y, cr, &dw);
 
@@ -207,9 +223,110 @@ void ShowConPacket(CESERVER_REQ* pReq)
 
 void ShowConDump(wchar_t* pszText)
 {
-	INPUT_RECORD r = {0};
+	INPUT_RECORD r[2];
+	BOOL lbNeedRedraw = TRUE;
+	HANDLE hO = GetStdHandle(STD_OUTPUT_HANDLE);
+	//CONSOLE_SCREEN_BUFFER_INFO sbi = {{0,0}};
+	COORD cr, crSize;
+	WCHAR* pszBuffers[3];
+	WORD*  pnBuffers[3];
+	WCHAR* pszDumpTitle, *pszRN, *pszSize, *pszTitle = NULL;
 
-	
+	SetWindowText(FarHwnd, L"ConEmu screen dump");
+
+	pszDumpTitle = pszText;
+	pszRN = wcschr(pszDumpTitle, L'\r');
+	if (!pszRN) return;
+	*pszRN = 0;
+	pszSize = pszRN + 2;
+	if (wcsncmp(pszSize, L"Size: ", 6)) return;
+
+	pszRN = wcschr(pszSize, L'\r');
+	if (!pszRN) return;
+	pszBuffers[0] = pszRN + 2;
+
+	pszSize += 6;
+	if ((pszRN = wcschr(pszSize, L'x'))==NULL) return;
+	*pszRN = 0;
+	crSize.X = (SHORT)wcstol(pszSize, &pszRN, 10);
+	pszSize = pszRN + 1;
+	if ((pszRN = wcschr(pszSize, L'\r'))==NULL) return;
+	*pszRN = 0;
+	crSize.Y = (SHORT)wcstol(pszSize, &pszRN, 10);
+
+	pszTitle = (WCHAR*)calloc(wcslen(pszDumpTitle)+200,2);
+
+	DWORD dwConDataBufSize = crSize.X * crSize.Y;
+	pnBuffers[0] = ((WORD*)(pszBuffers[0])) + dwConDataBufSize;
+	pszBuffers[1] = ((WCHAR*)(pnBuffers[0])) + dwConDataBufSize;
+	pnBuffers[1] = ((WORD*)(pszBuffers[1])) + dwConDataBufSize;
+	pszBuffers[2] = ((WCHAR*)(pnBuffers[1])) + dwConDataBufSize;
+	pnBuffers[2] = ((WORD*)(pszBuffers[2])) + dwConDataBufSize;
+
+	r->EventType = WINDOW_BUFFER_SIZE_EVENT;
+
+	do {
+		if (r->EventType == WINDOW_BUFFER_SIZE_EVENT) {
+			r->EventType = 0;
+			lbNeedRedraw = TRUE;
+		} else if (r->EventType == KEY_EVENT && r->Event.KeyEvent.bKeyDown) {
+			if (r->Event.KeyEvent.wVirtualKeyCode == VK_NEXT) {
+				lbNeedRedraw = TRUE;
+				gnPage++;
+				FlushConsoleInputBuffer(GetStdHandle(STD_INPUT_HANDLE));
+			} else if (r->Event.KeyEvent.wVirtualKeyCode == VK_PRIOR) {
+				lbNeedRedraw = TRUE;
+				gnPage--;
+			} else if (r->Event.KeyEvent.uChar.UnicodeChar == L'*') {
+				lbNeedRedraw = TRUE;
+				gbShowAttrsOnly = !gbShowAttrsOnly;
+			}
+		}
+		if (gnPage<0) gnPage = 3; else if (gnPage>3) gnPage = 0;
+
+		if (lbNeedRedraw) {
+			lbNeedRedraw = FALSE;
+			cr.X = 0; cr.Y = 0;
+			DWORD dw = 0;
+			if (gnPage == 0) {
+				FillConsoleOutputAttribute(hO, 7, csbi.dwSize.X*csbi.dwSize.Y, cr, &dw);
+				FillConsoleOutputCharacter(hO, L' ', csbi.dwSize.X*csbi.dwSize.Y, cr, &dw);
+				cr.X = 0; cr.Y = 0; SetConsoleCursorPosition(hO, cr);
+				wprintf(L"Console screen dump viewer\nTitle: %s\nSize: {%i x %i}\n",
+					pszDumpTitle, crSize.X, crSize.Y);
+				
+			} else if (gnPage >= 1 && gnPage <= 3) {
+				FillConsoleOutputAttribute(hO, gbShowAttrsOnly ? 0xF : 0x10, csbi.dwSize.X*csbi.dwSize.Y, cr, &dw);
+				FillConsoleOutputCharacter(hO, L' ', csbi.dwSize.X*csbi.dwSize.Y, cr, &dw);
+
+				int nMaxX = min(crSize.X, csbi.dwSize.X);
+				int nMaxY = min(crSize.Y, csbi.dwSize.Y);
+				wchar_t* pszConData = pszBuffers[gnPage-1];
+				WORD* pnConData = pnBuffers[gnPage-1];
+				if (pszConData && dwConDataBufSize) {
+					wchar_t* pszSrc = pszConData;
+					wchar_t* pszEnd = pszConData + dwConDataBufSize;
+					WORD* pnSrc = pnConData;
+					cr.X = 0; cr.Y = 0;
+					while (cr.Y < nMaxY && pszSrc < pszEnd) {
+						if (!gbShowAttrsOnly) {
+							WriteConsoleOutputCharacter(hO, pszSrc, nMaxX, cr, &dw);
+							WriteConsoleOutputAttribute(hO, pnSrc, nMaxX, cr, &dw);
+						} else {
+							WriteConsoleOutputCharacter(hO, (wchar_t*)pnSrc, nMaxX, cr, &dw);
+						}
+
+						pszSrc += crSize.X; pnSrc += crSize.X; cr.Y++;
+					}
+				}
+				cr.Y = nMaxY-1;
+				SetConsoleCursorPosition(hO, cr);
+			}
+		}
+
+	} while (CheckConInput(r));
+
+	free(pszTitle);
 }
 
 

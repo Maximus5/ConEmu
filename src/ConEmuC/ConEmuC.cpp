@@ -48,12 +48,12 @@ CRITICAL_SECTION gcsHeap;
 #ifndef _DEBUG
 // Релизный режим
 #define FORCE_REDRAW_FIX
+#define RELATIVE_TRANSMIT_DISABLE
 #else
 // Отладочный режим
 //#define FORCE_REDRAW_FIX
 #define PRINTCMDLINE
 #endif
-//#define RELATIVE_TRANSMIT_DISABLE
 
 
 #define MIN_FORCEREFRESH_INTERVAL 100
@@ -1299,6 +1299,7 @@ int ServerInit()
         wprintf(L"CreateThread(InputThread) failed, ErrCode=0x%08X\n", dwErr); 
         iRc = CERR_CREATEINPUTTHREAD; goto wrap;
     }
+	SetThreadPriority(srv.hInputThread, THREAD_PRIORITY_ABOVE_NORMAL);
 
     if (gbAttachMode) {
         HWND hGui = NULL, hDcWnd = NULL;
@@ -2354,6 +2355,11 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
         nWait = WaitForMultipleObjects ( 2, hEvents, FALSE, /*srv.bConsoleActive ? srv.nMainTimerElapse :*/ dwTimeout );
         if (nWait == WAIT_OBJECT_0)
             break; // затребовано завершение нити
+		#ifdef _DEBUG
+		if (nWait == (WAIT_OBJECT_0+1)) {
+			DEBUGSTR(L"*** hRefreshEvent was set, checking console...\n");
+		}
+		#endif
 
 		if (ghConEmuWnd && GetForegroundWindow() == ghConWnd) {
 			if (lbFirstForeground || !IsWindowVisible(ghConWnd)) {
@@ -3371,7 +3377,7 @@ BOOL ReloadFullConsoleInfo(/*CESERVER_CHAR* pCharOnly/ *=NULL*/)
 				+ (pCheck->hdr.cr2.Y - pCheck->hdr.cr1.Y + 1)
 				* (pCheck->hdr.cr2.X - pCheck->hdr.cr1.X + 1)
 				* (sizeof(WORD)+sizeof(wchar_t));
-			if (nSize > srv.nChangedBufferSize) {
+			if (nSize > (int)srv.nChangedBufferSize) {
 				Free(srv.pChangedBuffer);
 				srv.pChangedBuffer = (CESERVER_CHAR*)Alloc(nSize, 1);
 				srv.nChangedBufferSize = (srv.pChangedBuffer != NULL) ? nSize : 0;

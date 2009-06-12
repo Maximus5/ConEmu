@@ -39,7 +39,7 @@ void CProgressBars::OnTimer()
 		CVirtualConsole* pCon = gConEmu.ActiveCon();
 		uint TextWidth  = pCon->TextWidth;
 		uint TextHeight = pCon->TextHeight;
-		LPCTSTR ConChar = pCon->ConChar;
+		LPCTSTR ConChar = pCon->mpsz_ConChar;
 
 		int delta=0;
 		if (ConChar[((TextHeight-2)/2)*TextWidth + (TextWidth-45)/2 + 45] == _T('%'))

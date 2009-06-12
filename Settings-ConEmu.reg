@@ -106,6 +106,9 @@ REGEDIT4
 ;; 1- Отображать в заголовке окна процесс общения с плагином FAR; 0 - не отображать
 "DndSteps"=hex:01
 
+;; Fix dashed selection with right mouse drag
+"RSelectionFix"=hex:01
+
 ;; Прокручивать заголовок в кнопке на панели задач (пока не работает)
 ;"ScrollTitle"=hex:01
 ;"ScrollTitleLen"=hex:16,00,00,00

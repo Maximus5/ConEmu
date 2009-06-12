@@ -95,6 +95,9 @@ class CVirtualConsole;
 
 class CRealConsole
 {
+#ifdef _DEBUG
+	friend class CVirtualConsole;
+#endif
 public:
 
 	uint TextWidth();
@@ -140,6 +143,7 @@ public:
 	BOOL RecreateProcess();
 	void GetData(wchar_t* pChar, WORD* pAttr, int nWidth, int nHeight);
 	void OnActivate(int nNewNum, int nOldNum);
+	void OnDeactivate(int nNewNum);
 	BOOL CheckBufferSize();
 	//LRESULT OnConEmuCmd(BOOL abStarted, DWORD anConEmuC_PID);
 	BOOL BufferHeightTurnedOn(CONSOLE_SCREEN_BUFFER_INFO* psbi);
@@ -196,6 +200,8 @@ private:
 		BOOL bBufferHeight;
 		size_t nPacketIdx;
 		DWORD dwKeybLayout;
+		BOOL bRBtnDrag; // в консоль посылается драг правой кнопкой (выделение в FAR)
+		COORD crRBtnDrag;
 	} con;
 	// 
 	CRITICAL_SECTION csPRC; DWORD ncsTPRC;

@@ -37,17 +37,17 @@ private:
 	//
 	bool    mb_IsForceUpdate; // Это устанавливается в InitDC, чтобы случайно isForce не потерялся
 	bool    mb_RequiredForceUpdate; // Сменился шрифт, например...
-public:
+private:
 	HDC     hDC;
 	HBITMAP hBitmap;
 	HBRUSH  hBrush0, hOldBrush, hSelectedBrush;
 	HFONT   hSelectedFont, hOldFont;
-
+public:
 	bool isEditor, isFilePanel;
 	BYTE attrBackLast;
 
-	wchar_t *ConChar;
-	WORD  *ConAttr;
+	wchar_t *mpsz_ConChar, *mpsz_ConCharSave;
+	WORD  *mpn_ConAttr, *mpn_ConAttrSave;
 	DWORD *ConCharX;
 	TCHAR *Spaces; WORD nSpaceCount;
 	
@@ -70,7 +70,7 @@ public:
 	void BlitPictureTo(int inX, int inY, int inWidth, int inHeight);
 	bool CheckSelection(const CONSOLE_SELECTION_INFO& select, SHORT row, SHORT col);
 	bool GetCharAttr(TCHAR ch, WORD atr, TCHAR& rch, BYTE& foreColorNum, BYTE& backColorNum);
-	void Paint();
+	void Paint(HDC hPaintDC);
 	void UpdateInfo();
 	void GetConsoleSelectionInfo(CONSOLE_SELECTION_INFO *sel) {	mp_RCon->GetConsoleSelectionInfo(sel); };
 	void GetConsoleCursorInfo(CONSOLE_CURSOR_INFO *ci) { mp_RCon->GetConsoleCursorInfo(ci); };

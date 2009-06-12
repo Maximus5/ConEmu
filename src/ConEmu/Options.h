@@ -48,6 +48,7 @@ public:
     bool isMinToTray;
     bool isForceMonospace, isProportional;
     bool isUpdConHandle;
+	bool isRSelFix;
     BYTE isDragEnabled;
     BYTE isDropEnabled;
     DWORD nLDragKey, nRDragKey;

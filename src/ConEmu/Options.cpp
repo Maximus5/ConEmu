@@ -69,7 +69,7 @@ void CSettings::InitSettings()
     _tcscpy(Config, _T("Software\\ConEmu"));
     
     psCmd = NULL; psCurCmd = NULL; wcscpy(szDefCmd, L"far");
-    isMulti = false; icMultiNew = 'W'; icMultiNext = 'Q'; icMultiRecreate = 192/*VK_тильда*/; isMultiNewConfirm = true;
+    isMulti = true; icMultiNew = 'W'; icMultiNext = 'Q'; icMultiRecreate = 192/*VK_тильда*/; isMultiNewConfirm = true;
     // Logging
     isAdvLogging = false;
 	wcscpy(szDumpPackets, L"c:\\temp\\ConEmuVCon-%i-%i.dat");
@@ -154,6 +154,7 @@ void CSettings::InitSettings()
     isScrollTitle = true;
     ScrollTitleLen = 22;
     
+	isRSelFix = true;
     isDragEnabled = DRAG_L_ALLOWED; isDropEnabled = (BYTE)1;
     nLDragKey = 0; nRDragKey = VK_LCONTROL; isDnDsteps = true; isDefCopy = true;
     MCHKHEAP
@@ -247,6 +248,7 @@ void CSettings::LoadSettings()
         reg.Load(_T("ForceMonospace"), isForceMonospace);
         reg.Load(_T("Proportional"), isProportional);
         reg.Load(_T("Update Console handle"), isUpdConHandle);
+		reg.Load(_T("RSelectionFix"), isRSelFix);
         reg.Load(_T("Dnd"), isDragEnabled); 
         isDropEnabled = (BYTE)(isDragEnabled ? 1 : 0); // ранее "DndDrop" не было, поэтому ставим default
         reg.Load(_T("DndLKey"), nLDragKey);
