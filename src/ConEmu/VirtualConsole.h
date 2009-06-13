@@ -113,7 +113,7 @@ protected:
 	char *tmpOem;
 	void UpdateCursor(bool& lRes);
 	void UpdateCursorDraw(HDC hPaintDC, COORD pos, UINT dwSize);
-	bool UpdatePrepare(bool isForce, HDC *ahDc);
+	bool UpdatePrepare(bool isForce, HDC *ahDc, CSection *pSDC);
 	void UpdateText(bool isForce, bool updateText, bool updateCursor);
 	WORD CharWidth(TCHAR ch);
 	bool CheckChangedTextAttr();
