@@ -114,7 +114,7 @@ BOOL ReloadConsoleInfo(CESERVER_CHAR* pChangedRgn=NULL); // возвращает TRUE в сл
 BOOL ReloadFullConsoleInfo(/*CESERVER_CHAR* pCharOnly=NULL*/); // В том числе перечитывает содержимое
 DWORD WINAPI RefreshThread(LPVOID lpvParam); // Нить, перечитывающая содержимое консоли
 BOOL ReadConsoleData(CESERVER_CHAR* pCheck = NULL); //((LPRECT)1) или реальный LPRECT
-void SetConsoleFontSizeTo(HWND inConWnd, int inSizeX, int inSizeY);
+void SetConsoleFontSizeTo(HWND inConWnd, int inSizeY, int inSizeX, wchar_t *asFontName);
 int ServerInit(); // Создать необходимые события и нити
 void ServerDone(int aiRc);
 int ComspecInit();
@@ -229,6 +229,10 @@ struct tag_Srv {
 	//
 	// Keyboard layout name
 	wchar_t szKeybLayout[KL_NAMELENGTH+1];
+
+	// Optional console font (may be specified in registry)
+	wchar_t szConsoleFont[LF_FACESIZE];
+	SHORT nConFontWidth, nConFontHeight;
 } srv = {0};
 
 
@@ -624,6 +628,16 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
                 gnBufferHeight = _wtoi(szArg+4); gbParmBufferSize = TRUE;
             }
         } else
+
+		if (wcsncmp(szArg, L"/F", 2)==0) {
+			if (wcsncmp(szArg, L"/FN=", 4)==0) {
+				lstrcpynW(srv.szConsoleFont, szArg+4, 32);
+			} else if (wcsncmp(szArg, L"/FW=", 4)==0) {
+				srv.nConFontWidth = _wtoi(szArg+4);
+			} else if (wcsncmp(szArg, L"/FH=", 4)==0) {
+				srv.nConFontHeight = _wtoi(szArg+4);
+			}
+		} else
         
         if (wcscmp(szArg, L"/LOG")==0) {
             CreateLogSizeFile();
@@ -834,7 +848,7 @@ void ExitWaitForKey(WORD vkKey, LPCWSTR asConfirm, BOOL abNewLine)
             lbNeedVisible = TRUE;
             // поставить "стандартный" 80x25, или то, что было передано к ком.строке
             SMALL_RECT rcNil = {0}; SetConsoleSize(0, gcrBufferSize, rcNil, ":Exiting");
-            SetConsoleFontSizeTo(ghConWnd, 8, 12); // установим шрифт побольше
+            //SetConsoleFontSizeTo(ghConWnd, 8, 12); // установим шрифт побольше
             ShowWindow(ghConWnd, SW_SHOWNORMAL); // и покажем окошко
         }
     }
@@ -1184,8 +1198,20 @@ int ServerInit()
     wsprintfW(srv.szInputname, CESERVERINPUTNAME, L".", gnSelfPID);
 
     // Размер шрифта и Lucida. Обязательно для серверного режима.
+	if (srv.szConsoleFont[0] == 0) lstrcpyW(srv.szConsoleFont, L"Lucida Console");
+	if (srv.nConFontHeight<6) srv.nConFontHeight = 6;
+	if (srv.nConFontWidth==0 && srv.nConFontHeight==0) {
+		srv.nConFontWidth = 4; srv.nConFontHeight = 6;
+	} else if (srv.nConFontWidth==0) {
+		srv.nConFontWidth = srv.nConFontHeight * 2 / 3;
+	} else if (srv.nConFontHeight==0) {
+		srv.nConFontHeight = srv.nConFontWidth * 3 / 2;
+	}
+	if (srv.nConFontHeight<6 || srv.nConFontWidth <4) {
+		srv.nConFontWidth = 4; srv.nConFontHeight = 6;
+	}
     if (ghLogSize) LogSize(NULL, ":SetConsoleFontSizeTo.before");
-    SetConsoleFontSizeTo(ghConWnd, 4, 6);
+    SetConsoleFontSizeTo(ghConWnd, srv.nConFontHeight, srv.nConFontWidth, srv.szConsoleFont);
     if (ghLogSize) LogSize(NULL, ":SetConsoleFontSizeTo.after");
     if (gbParmBufferSize && gcrBufferSize.X && gcrBufferSize.Y) {
         SMALL_RECT rc = {0};

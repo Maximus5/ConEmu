@@ -460,7 +460,7 @@ BOOL CheckConIme()
 	return TRUE;
 }
 
-extern void SetConsoleFontSizeTo(HWND inConWnd, int inSizeX, int inSizeY);
+//extern void SetConsoleFontSizeTo(HWND inConWnd, int inSizeX, int inSizeY);
 
 // Disables the IME for all threads in a current process.
 //void DisableIME()

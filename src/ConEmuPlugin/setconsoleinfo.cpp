@@ -269,7 +269,7 @@ typedef BOOL (WINAPI *PGetCurrentConsoleFontEx)(__in HANDLE hConsoleOutput,__in 
 typedef BOOL (WINAPI *PSetCurrentConsoleFontEx)(__in HANDLE hConsoleOutput,__in BOOL bMaximumWindow,__out PCONSOLE_FONT_INFOEX lpConsoleCurrentFontEx);
 
 
-void SetConsoleFontSizeTo(HWND inConWnd, int inSizeX, int inSizeY)
+void SetConsoleFontSizeTo(HWND inConWnd, int inSizeY, int inSizeX, wchar_t *asFontName)
 {
 	HMODULE hKernel = GetModuleHandle(L"kernel32.dll");
 	if (!hKernel)
@@ -286,7 +286,7 @@ void SetConsoleFontSizeTo(HWND inConWnd, int inSizeX, int inSizeY)
 		cfi.dwFontSize.X = inSizeX;
 		cfi.dwFontSize.Y = inSizeY;
 		//TODO: А Люциду кто ставить будет???
-		lstrcpyW(cfi.FaceName, L"Lucida Console");
+		lstrcpynW(cfi.FaceName, asFontName ? asFontName : L"Lucida Console", LF_FACESIZE);
 		SetCurrentConsoleFontEx(GetStdHandle(STD_OUTPUT_HANDLE), FALSE, &cfi);
 	}
 	else // We have other NT
@@ -310,7 +310,7 @@ void SetConsoleFontSizeTo(HWND inConWnd, int inSizeX, int inSizeY)
 		ci.FontSize.Y				= inSizeY;
 		ci.FontFamily				= 0;//0x30;//FF_MODERN|FIXED_PITCH;//0x30;
 		ci.FontWeight				= 0;//0x400;
-		lstrcpyW(ci.FaceName, L"Lucida Console");
+		lstrcpynW(ci.FaceName, asFontName ? asFontName : L"Lucida Console", 32);
 
 		ci.CursorSize				= 25;
 		ci.FullScreen				= FALSE;

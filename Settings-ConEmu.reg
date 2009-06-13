@@ -159,6 +159,12 @@ REGEDIT4
 ;; Значение для SetProcessAffinityMask
 ;"AffinityMask"=dword:00000003
 
+;; Real Console font. Use very carefully.
+;; !!! It MUST be UNICODE. 
+;; !!! It MUST be smaller than main font.
+;"ConsoleFontName"="Lucida Console"
+;"ConsoleFontWidth"=dword:4
+;"ConsoleFontHeight"=dword:6
 
 ;; You may uncomment this to 'Auto run' ConEmu with any batch file or Cmd.exe call
 ;[HKEY_CURRENT_USER\Software\Microsoft\Command Processor]

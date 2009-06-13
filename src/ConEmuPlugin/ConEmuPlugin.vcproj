@@ -547,10 +547,6 @@
 				RelativePath=".\LogBrowser.cpp"
 				>
 			</File>
-			<File
-				RelativePath=".\setconsoleinfo.cpp"
-				>
-			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"

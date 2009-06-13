@@ -219,7 +219,7 @@ typedef struct tag_CESERVER_REQ {
 #define CMD_REQTABS      2
 #define CMD_SETWINDOW    3
 #define CMD_POSTMACRO    4
-#define CMD_DEFFONT      5
+//#define CMD_DEFFONT      5
 #define CMD_LANGCHANGE   6
 // +2
 #define MAXCMDCOUNT      8

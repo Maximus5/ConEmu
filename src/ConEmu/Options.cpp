@@ -99,6 +99,11 @@ void CSettings::InitSettings()
     isTabFrame = true;
     isForceMonospace = false; isProportional = false;
     isMinToTray = false;
+
+	ConsoleFont.lfHeight = 6;
+	ConsoleFont.lfWidth = 4;
+	_tcscpy(ConsoleFont.lfFaceName, _T("Lucida Console"));
+
     
     Registry RegConColors, RegConDef;
     if (RegConColors.OpenKey(_T("Console"), KEY_READ))
@@ -193,7 +198,6 @@ void CSettings::LoadSettings()
 		// Debugging
 		reg.Load(_T("ConVisible"), isConVisible);
 		//reg.Load(_T("DumpPackets"), szDumpPackets);
-    
         reg.Load(_T("FontName"), inFont);
         reg.Load(_T("FontName2"), inFont2);
         reg.Load(_T("CmdLine"), &psCmd);
@@ -210,6 +214,11 @@ void CSettings::LoadSettings()
         reg.Load(_T("FontSizeX2"), FontSizeX2);
         reg.Load(_T("FontCharSet"), FontCharSet);
         reg.Load(_T("Anti-aliasing"), Quality);
+
+		reg.Load(L"ConsoleFontName", ConsoleFont.lfFaceName);
+		reg.Load(L"ConsoleFontWidth", ConsoleFont.lfWidth);
+		reg.Load(L"ConsoleFontHeight", ConsoleFont.lfHeight);
+
         reg.Load(_T("WindowMode"), gConEmu.WindowMode);
         reg.Load(_T("ConWnd X"), wndX); /*if (wndX<-10) wndX = 0;*/
         reg.Load(_T("ConWnd Y"), wndY); /*if (wndY<-10) wndY = 0;*/

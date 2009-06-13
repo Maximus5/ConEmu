@@ -249,6 +249,7 @@ CConEmuBack::CConEmuBack()
 	mn_ScrollWidth = 0;
 	mb_ScrollVisible = FALSE;
 	mpfn_ScrollProc = NULL;
+	memset(&mrc_LastClient, 0, sizeof(mrc_LastClient));
 #ifdef _DEBUG
 	mn_ColorIdx = 1;
 #else
@@ -411,6 +412,11 @@ void CConEmuBack::Resize()
 
 	//RECT rc = gConEmu.ConsoleOffsetRect();
 	RECT rcClient; GetClientRect(ghWnd, &rcClient);
+
+	if (memcmp(&rcClient, &mrc_LastClient, sizeof(RECT))==0)
+		return; // ничего не менялось
+	memmove(&mrc_LastClient, &rcClient, sizeof(RECT)); // сразу запомним
+
 	RECT rcScroll; GetWindowRect(mh_WndScroll, &rcScroll);
 
 	RECT rc = gConEmu.CalcRect(CER_BACK, rcClient, CER_MAINCLIENT);

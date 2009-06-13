@@ -11,6 +11,7 @@ public:
     int DefaultBufferHeight; bool ForceBufferHeight; bool AutoScroll;
     
     LOGFONT LogFont, LogFont2;
+	LOGFONT ConsoleFont;
     COLORREF Colors[0x20];
     bool isExtendColors;
     char nExtendColor;

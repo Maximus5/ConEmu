@@ -40,6 +40,7 @@ public:
 	static LRESULT CALLBACK BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 	static LRESULT CALLBACK ScrollWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 protected:
+	RECT mrc_LastClient;
 	int mn_ColorIdx;
 	WNDPROC mpfn_ScrollProc;
 };

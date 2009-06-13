@@ -123,7 +123,7 @@ HANDLE ghPluginSemaphore = NULL;
 //typedef HWND (APIENTRY *FGetConsoleWindow)();
 //FGetConsoleWindow GetConsoleWindow = NULL;
 //#endif
-extern void SetConsoleFontSizeTo(HWND inConWnd, int inSizeX, int inSizeY);
+//extern void SetConsoleFontSizeTo(HWND inConWnd, int inSizeX, int inSizeY);
 
 #if defined(__GNUC__)
 extern "C"{
@@ -1653,10 +1653,10 @@ DWORD WINAPI ServerThreadCommand(LPVOID ahPipe)
 			dwLastError = dwLastError;
 		}
 
-	} else if (pIn->hdr.nCmd == CMD_DEFFONT) {
-		// исключение - асинхронный, результат не требуется
-		SetConsoleFontSizeTo(FarHwnd, 4, 6);
-		MoveWindow(FarHwnd, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), 1); // чтобы убрать возможные полосы прокрутки...
+	//} else if (pIn->hdr.nCmd == CMD_DEFFONT) {
+	//	// исключение - асинхронный, результат не требуется
+	//	SetConsoleFontSizeTo(FarHwnd, 4, 6);
+	//	MoveWindow(FarHwnd, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), 1); // чтобы убрать возможные полосы прокрутки...
 
 	} else if (pIn->hdr.nCmd == CMD_REQTABS) {
 		SendTabs(gnCurTabCount, TRUE, TRUE);
