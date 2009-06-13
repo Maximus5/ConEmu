@@ -31,7 +31,7 @@ BOOL CreateTabs(int windowCount);
 BOOL AddTab(int &tabCount, bool losingFocus, bool editorSave, 
 			int Type, LPCWSTR Name, LPCWSTR FileName, int Current, int Modified);
 
-void SendTabs(int tabCount, BOOL abFillDataOnly=FALSE);
+void SendTabs(int tabCount, BOOL abFillDataOnly=FALSE, BOOL abForceSend=FALSE);
 
 void InitHWND(HWND ahFarHwnd);
 
@@ -44,8 +44,8 @@ int ProcessViewerEventW757(int Event, void *Param);
 void StopThread(void);
 void ExitFARW789(void);
 void ExitFARW757(void);
-void UpdateConEmuTabsW789(int event, bool losingFocus, bool editorSave);
-void UpdateConEmuTabsW757(int event, bool losingFocus, bool editorSave);
+void UpdateConEmuTabsW789(int event, bool losingFocus, bool editorSave, void* Param=NULL);
+void UpdateConEmuTabsW757(int event, bool losingFocus, bool editorSave, void* Param=NULL);
 void SetStartupInfoW789(void *aInfo);
 void SetStartupInfoW757(void *aInfo);
 void ProcessDragFrom789();
@@ -61,7 +61,7 @@ void SetWindow757(int nTab);
 void CloseTabs();
 
 HWND AtoH(WCHAR *Str, int Len);
-void UpdateConEmuTabsW(int event, bool losingFocus, bool editorSave);
+void UpdateConEmuTabsW(int event, bool losingFocus, bool editorSave, void* Param=NULL);
 
 BOOL LoadFarVersion();
 

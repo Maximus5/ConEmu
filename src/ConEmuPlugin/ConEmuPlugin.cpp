@@ -28,6 +28,10 @@ WARNING("Подозреваю, что в gszRootKey не учитывается имя пользователя/конфигурац
 
 #define MAKEFARVERSION(major,minor,build) ( ((major)<<8) | (minor) | ((build)<<16))
 
+#ifdef _DEBUG
+wchar_t gszDbgModLabel[6] = {0};
+#endif
+
 // minimal(?) FAR version 2.0 alpha build 757
 int WINAPI _export GetMinFarVersionW(void)
 {
@@ -140,7 +144,7 @@ BOOL WINAPI DllMain( HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserve
 		case DLL_PROCESS_ATTACH:
 			{
 				#ifdef _DEBUG
-				//if (!IsDebuggerPresent()) MessageBoxA(GetForegroundWindow(), "ConEmu.dll loaded", "ConEmu", 0);
+				//if (!IsDebuggerPresent()) MessageBoxA(GetForegroundWindow(), "ConEmu.dll loaded", "ConEmu plugin", 0);
 				#endif
 				//#if defined(__GNUC__)
 				//GetConsoleWindow = (FGetConsoleWindow)GetProcAddress(GetModuleHandle(L"kernel32.dll"),"GetConsoleWindow");
@@ -374,7 +378,7 @@ void ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData)
 				else
 					SetWindow757(nTab);
 			}
-			SendTabs(gnCurTabCount, TRUE);
+			SendTabs(gnCurTabCount, TRUE, TRUE);
 			break;
 		}
 		case (CMD_POSTMACRO):
@@ -992,12 +996,12 @@ void CheckMacro(BOOL abAllowAPI)
 	}
 }
 
-void UpdateConEmuTabsW(int event, bool losingFocus, bool editorSave)
+void UpdateConEmuTabsW(int event, bool losingFocus, bool editorSave, void* Param/*=NULL*/)
 {
 	if (gFarVersion.dwBuild>=789)
-		UpdateConEmuTabsW789(event, losingFocus, editorSave);
+		UpdateConEmuTabsW789(event, losingFocus, editorSave, Param);
 	else
-		UpdateConEmuTabsW757(event, losingFocus, editorSave);
+		UpdateConEmuTabsW757(event, losingFocus, editorSave, Param);
 }
 
 BOOL CreateTabs(int windowCount)
@@ -1044,6 +1048,7 @@ BOOL AddTab(int &tabCount, bool losingFocus, bool editorSave,
 		tabs[0].Name[0] = 0;
 		tabs[0].Pos = 0;
 		tabs[0].Type = WTYPE_PANELS;
+		if (!tabCount) tabCount++;
 	} else
 	if (Type == WTYPE_EDITOR || Type == WTYPE_VIEWER)
 	{
@@ -1087,7 +1092,7 @@ BOOL AddTab(int &tabCount, bool losingFocus, bool editorSave,
 	return lbCh;
 }
 
-void SendTabs(int tabCount, BOOL abFillDataOnly/*=FALSE*/)
+void SendTabs(int tabCount, BOOL abFillDataOnly/*=FALSE*/, BOOL abForceSend/*=FALSE*/)
 {
 	//if (abWritePipe) { //2009-06-01 Секцию вроде всегда блокировать нужно...
 	EnterCriticalSection(&csTabs);
@@ -1103,14 +1108,14 @@ void SendTabs(int tabCount, BOOL abFillDataOnly/*=FALSE*/)
 		)
 	{
 		COPYDATASTRUCT cds;
-		if (tabs[0].Type == WTYPE_PANELS) {
+		//if (tabs[0].Type == WTYPE_PANELS) {
 			cds.dwData = tabCount;
 			cds.lpData = tabs;
-		} else {
-			// Панелей нет - фар был открыт в режиме редактора!
-			cds.dwData = --tabCount; //2009-06-04 наверное больше одного редактора в таком случае быть не должно
-			cds.lpData = tabs+1;
-		}
+		//} else {
+		//	// Панелей нет - фар был открыт в режиме редактора!
+		//	cds.dwData = --tabCount; //2009-06-04 наверное больше одного редактора в таком случае быть не должно
+		//	cds.lpData = tabs+1;
+		//}
 		// Если abFillDataOnly - данные подготавливаются для записи в Pipe - иначе процедура отсылает данные сама
 
 		cds.cbData = cds.dwData * sizeof(ConEmuTab);
@@ -1128,7 +1133,9 @@ void SendTabs(int tabCount, BOOL abFillDataOnly/*=FALSE*/)
 			//cds.cbData = tabCount * sizeof(ConEmuTab);
 			//SendMessage(ConEmuHwnd, WM_COPYDATA, (WPARAM)FarHwnd, (LPARAM)&cds);
 			// Это нужно делать только если инициировано ФАРОМ. Если запрос прислал ConEmu - не посылать...
-			if (gnCurTabCount != tabCount || tabCount > 1) {
+			//if (gnCurTabCount != tabCount /*|| tabCount > 1*/)
+			if (ConEmuHwnd && (abForceSend || gnCurTabCount != tabCount))
+			{
 				gnCurTabCount = tabCount; // сразу запомним!, А то при ретриве табов количество еще старым будет...
 				//PostMessage(ConEmuHwnd, gnMsgTabChanged, tabCount, 0);
 				gpCmdRet->hdr.nCmd = CECMD_TABSCHANGED;
@@ -1152,8 +1159,8 @@ int lastModifiedStateW = -1;
 
 int WINAPI _export ProcessEditorInputW(void* Rec)
 {
-	if (!ConEmuHwnd)
-		return 0; // Если мы не под эмулятором - ничего
+	// Даже если мы не под эмулятором - просто запомним текущее состояние
+	//if (!ConEmuHwnd) return 0; // Если мы не под эмулятором - ничего
 	if (gFarVersion.dwBuild>=789)
 		return ProcessEditorInputW789((LPCVOID)Rec);
 	else
@@ -1162,15 +1169,24 @@ int WINAPI _export ProcessEditorInputW(void* Rec)
 
 int WINAPI _export ProcessEditorEventW(int Event, void *Param)
 {
-	if (!ConEmuHwnd)
-		return 0; // Если мы не под эмулятором - ничего
+	// Даже если мы не под эмулятором - просто запомним текущее состояние
+	//if (!ConEmuHwnd) return 0; // Если мы не под эмулятором - ничего
 	/*if (gFarVersion.dwBuild>=789)
 		return ProcessEditorEventW789(Event,Param);
 	else
 		return ProcessEditorEventW757(Event,Param);*/
+	static bool sbEditorReading = false;
 	// Вроде коды событий не различаются, да и от ANSI не отличаются...
 	switch (Event)
 	{
+	case EE_READ: // в этот момент количество окон еще не изменилось
+		sbEditorReading = true;
+		return 0;
+	case EE_REDRAW:
+		if (!sbEditorReading)
+			return 0;
+		sbEditorReading = false;
+		OUTPUTDEBUGSTRING(L"EE_REDRAW(first)"); break;
 	case EE_CLOSE:
 		OUTPUTDEBUGSTRING(L"EE_CLOSE"); break;
 	case EE_GOTFOCUS:
@@ -1179,20 +1195,19 @@ int WINAPI _export ProcessEditorEventW(int Event, void *Param)
 		OUTPUTDEBUGSTRING(L"EE_KILLFOCUS"); break;
 	case EE_SAVE:
 		OUTPUTDEBUGSTRING(L"EE_SAVE"); break;
-	//case EE_READ: -- в этот момент количество окон еще не изменилось
 	default:
 		return 0;
 	}
 	// !!! Именно UpdateConEmuTabsW, без версии !!!
 	//2009-06-03 EE_KILLFOCUS при закрытии редактора не приходит. Только EE_CLOSE
-	UpdateConEmuTabsW(Event, (Event == EE_KILLFOCUS || Event == EE_CLOSE), Event == EE_SAVE);
+	UpdateConEmuTabsW(Event+100, (Event == EE_KILLFOCUS || Event == EE_CLOSE), Event == EE_SAVE);
 	return 0;
 }
 
 int WINAPI _export ProcessViewerEventW(int Event, void *Param)
 {
-	if (!ConEmuHwnd)
-		return 0; // Если мы не под эмулятором - ничего
+	// Даже если мы не под эмулятором - просто запомним текущее состояние
+	//if (!ConEmuHwnd) return 0; // Если мы не под эмулятором - ничего
 	/*if (gFarVersion.dwBuild>=789)
 		return ProcessViewerEventW789(Event,Param);
 	else
@@ -1213,7 +1228,7 @@ int WINAPI _export ProcessViewerEventW(int Event, void *Param)
 	}
 	// !!! Именно UpdateConEmuTabsW, без версии !!!
 	//2009-06-03 VE_KILLFOCUS при закрытии редактора не приходит. Только VE_CLOSE
-	UpdateConEmuTabsW(Event, (Event == VE_KILLFOCUS || Event == VE_CLOSE), false);
+	UpdateConEmuTabsW(Event+200, (Event == VE_KILLFOCUS || Event == VE_CLOSE), false, Param);
 	return 0;
 }
 
@@ -1644,7 +1659,7 @@ DWORD WINAPI ServerThreadCommand(LPVOID ahPipe)
 		MoveWindow(FarHwnd, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), 1); // чтобы убрать возможные полосы прокрутки...
 
 	} else if (pIn->hdr.nCmd == CMD_REQTABS) {
-		SendTabs(gnCurTabCount, TRUE);
+		SendTabs(gnCurTabCount, TRUE, TRUE);
 
 	} else {
 		ProcessCommand(pIn->hdr.nCmd, TRUE/*bReqMainThread*/, pIn->Data);

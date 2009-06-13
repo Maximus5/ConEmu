@@ -223,8 +223,10 @@ LRESULT CConEmuChild::OnSize(WPARAM wParam, LPARAM lParam)
 
 void CConEmuChild::Invalidate()
 {
-	if (ghWndDC)
+	if (ghWndDC) {
+		DEBUGSTR(L" +++ Invalidate on DC window called\n");
 		InvalidateRect(ghWndDC, NULL, FALSE);
+	}
 }
 
 
@@ -341,8 +343,10 @@ LRESULT CALLBACK CConEmuBack::BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, 
 			{
 				PAINTSTRUCT ps; memset(&ps, 0, sizeof(ps));
 				HDC hDc = BeginPaint(hWnd, &ps);
+				#ifndef SKIP_ALL_FILLRECT
 				if (!IsRectEmpty(&ps.rcPaint))
 					FillRect(hDc, &ps.rcPaint, gConEmu.m_Back.mh_BackBrush);
+				#endif
 				EndPaint(hWnd, &ps);
 			}
 			return 0;

@@ -59,7 +59,15 @@
 #endif
 
 #ifdef _DEBUG
-#define DEBUGSTR(s) { SYSTEMTIME st; GetLocalTime(&st); wchar_t szDEBUGSTRTime[32]; wsprintf(szDEBUGSTRTime, L"%i:%02i:%02i.%03i ", st.wHour, st.wMinute, st.wSecond, st.wMilliseconds); OutputDebugString(szDEBUGSTRTime); OutputDebugString(s); }
+extern wchar_t gszDbgModLabel[6];
+#define CHEKCDBGMODLABEL if (gszDbgModLabel[0]==0) { \
+	wchar_t szFile[MAX_PATH]; GetModuleFileName(NULL, szFile, MAX_PATH); \
+	wchar_t* pszName = wcsrchr(szFile, L'\\'); \
+	if (_wcsicmp(pszName, L"\\conemu.exe")==0) wcscpy(gszDbgModLabel, L"(gui)"); \
+	else if (_wcsicmp(pszName, L"\\conemuc.exe")==0) wcscpy(gszDbgModLabel, L"(srv)"); \
+	else wcscpy(gszDbgModLabel, L"(dll)"); \
+}
+#define DEBUGSTR(s) { CHEKCDBGMODLABEL; SYSTEMTIME st; GetLocalTime(&st); wchar_t szDEBUGSTRTime[40]; wsprintf(szDEBUGSTRTime, L"%i:%02i:%02i.%03i%s ", st.wHour, st.wMinute, st.wSecond, st.wMilliseconds, gszDbgModLabel); OutputDebugString(szDEBUGSTRTime); OutputDebugString(s); }
 #else
 #define DEBUGSTR(s)
 #endif

@@ -1,5 +1,7 @@
 #pragma once
 
+#define SKIP_ALL_FILLRECT
+
 class CConEmuChild
 {
 public:

@@ -177,7 +177,7 @@ protected:
 
 	static DWORD WINAPI MonitorThread(LPVOID lpParameter);
 	HANDLE mh_VConServerThread;
-	HANDLE mh_TermEvent, mh_ForceReadEvent, mh_EndUpdateEvent, mh_Sync2WindowEvent, mh_ConChanged/*, mh_CursorChanged*/;
+	HANDLE mh_TermEvent, mh_MonitorThreadEvent, mh_EndUpdateEvent, mh_Sync2WindowEvent;
 	BOOL mb_FullRetrieveNeeded, mb_Detached;
 	HANDLE mh_MonitorThread; DWORD mn_MonitorThreadID;
 
@@ -199,7 +199,7 @@ private:
 		int nTextWidth, nTextHeight;
 		int nChange2TextWidth, nChange2TextHeight;
 		BOOL bBufferHeight;
-		size_t nPacketIdx;
+		DWORD nPacketIdx;
 		DWORD dwKeybLayout;
 		BOOL bRBtnDrag; // в консоль посылается драг правой кнопкой (выделение в FAR)
 		COORD crRBtnDrag;

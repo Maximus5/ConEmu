@@ -16,6 +16,10 @@ BOOL gbNoDblBuffer = false;
 #endif
 BOOL gbMessagingStarted = FALSE;
 
+#ifdef _DEBUG
+wchar_t gszDbgModLabel[6] = {0};
+#endif
+
 
 //externs
 HINSTANCE g_hInstance=NULL;
@@ -472,6 +476,26 @@ extern void SetConsoleFontSizeTo(HWND inConWnd, int inSizeX, int inSizeY);
 //	}
 //	return;
 //}
+
+void MessageLoop()
+{
+	MSG Msg = {NULL};
+	gbMessagingStarted = TRUE;
+	while (GetMessage(&Msg, NULL, 0, 0))
+	{
+		BOOL lbDlgMsg = FALSE;
+		if (ghOpWnd) {
+			if (IsWindow(ghOpWnd))
+				lbDlgMsg = IsDialogMessage(ghOpWnd, &Msg);
+		}
+		if (!lbDlgMsg)
+		{
+			TranslateMessage(&Msg);
+			DispatchMessage(&Msg);
+		}
+	}
+	gbMessagingStarted = FALSE;
+}
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
@@ -933,23 +957,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 //------------------------------------------------------------------------
 ///| Main message loop |//////////////////////////////////////////////////
 //------------------------------------------------------------------------
-    
-	MSG Msg = {NULL};
-    gbMessagingStarted = TRUE;
-    while (GetMessage(&Msg, NULL, 0, 0))
-    {
-		BOOL lbDlgMsg = FALSE;
-		if (ghOpWnd) {
-			if (IsWindow(ghOpWnd))
-				lbDlgMsg = IsDialogMessage(ghOpWnd, &Msg);
-		}
-		if (!lbDlgMsg)
-		{
-			TranslateMessage(&Msg);
-			DispatchMessage(&Msg);
-		}
-    }
-    gbMessagingStarted = FALSE;
+
+	SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_ABOVE_NORMAL);
+
+	MessageLoop();
     
 //------------------------------------------------------------------------
 ///| Deinitialization |///////////////////////////////////////////////////

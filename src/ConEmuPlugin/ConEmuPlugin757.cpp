@@ -300,7 +300,7 @@ int ProcessEditorInputW757(LPCVOID aRec)
 }*/
 
 
-void UpdateConEmuTabsW757(int event, bool losingFocus, bool editorSave)
+void UpdateConEmuTabsW757(int event, bool losingFocus, bool editorSave, void* Param/*=NULL*/)
 {
 	if (!InfoW757 || !InfoW757->AdvControl)
 		return;
@@ -320,7 +320,7 @@ void UpdateConEmuTabsW757(int event, bool losingFocus, bool editorSave)
 		InfoW757->EditorControl(ECTL_GETINFO, &ei);
 	}
 
-	int tabCount = 1;
+	int tabCount = 0;
 	for (int i = 0; i < windowCount; i++)
 	{
 		WInfo.Pos = i;
@@ -335,7 +335,7 @@ void UpdateConEmuTabsW757(int event, bool losingFocus, bool editorSave)
 	if (editorSave) 
 		InfoW757->EditorControl(ECTL_FREEINFO, &ei);
 
-	SendTabs(tabCount);
+	SendTabs(tabCount, FALSE, lbCh);
 }
 
 void ExitFARW757(void)

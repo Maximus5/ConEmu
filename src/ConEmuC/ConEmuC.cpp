@@ -30,6 +30,11 @@ WARNING("При запуске как ComSpec получаем ошибку: {crNewSize.X>=MIN_CON_WIDTH &&
   //#define SHOW_STARTED_MSGBOX
 #endif
 
+#ifdef _DEBUG
+wchar_t gszDbgModLabel[6] = {0};
+#endif
+
+
 WARNING("!!!! Пока можно при появлении события запоминать текущий тик");
 // и проверять его в RefreshThread. Если он не 0 - и дельта больше (100мс?)
 // то принудительно перечитать консоль и сбросить тик в 0.
@@ -1622,23 +1627,7 @@ DWORD WINAPI InputThread(LPVOID lpvParam)
                   // проверить ENABLE_PROCESSED_INPUT в GetConsoleMode
                   #define ALL_MODIFIERS (LEFT_ALT_PRESSED|RIGHT_ALT_PRESSED|LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED|SHIFT_PRESSED)
                   #define CTRL_MODIFIERS (LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED)
-                //if (iRec.EventType == KEY_EVENT && iRec.Event.KeyEvent.wVirtualKeyCode == 'C' &&
-                //  (iRec.Event.KeyEvent.dwControlKeyState & LEFT_CTRL_PRESSED)
-                // )
-                //{
-                //  /*DWORD dwMode = 0;
-                //  HANDLE hConIn  = CreateFile(L"CONIN$", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_READ,
-                //    0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
-                //  GetConsoleMode(hConIn, &dwMode);
-                //  SetConsoleMode(hConIn, dwMode&~ENABLE_PROCESSED_INPUT);
-                //  CloseHandle(hConIn);*/
-                //
-                //  PostMessage(ghConWnd, WM_KEYDOWN, 17,0x001D0001);
-                //  PostMessage(ghConWnd, WM_KEYDOWN, 67,0x002E0001);
-                //  PostMessage(ghConWnd, WM_KEYUP, 67,0xC02E0001);
-                //  PostMessage(ghConWnd, WM_KEYUP, 17,0xC01D0001);
-                //  iRec.EventType = 0;
-                //}
+
                   if (iRec.EventType == KEY_EVENT && iRec.Event.KeyEvent.bKeyDown &&
                       (iRec.Event.KeyEvent.wVirtualKeyCode == 'C' || iRec.Event.KeyEvent.wVirtualKeyCode == VK_CANCEL)
                      )
@@ -1647,82 +1636,34 @@ DWORD WINAPI InputThread(LPVOID lpvParam)
                         DWORD dwEvent = (iRec.Event.KeyEvent.wVirtualKeyCode == 'C') ? CTRL_C_EVENT : CTRL_BREAK_EVENT;
                       //&& (srv.dwConsoleMode & ENABLE_PROCESSED_INPUT)
 
-                        //The SetConsoleMode function can disable the ENABLE_PROCESSED_INPUT mode for a console's input buffer, 
-                        //so CTRL+C is reported as keyboard input rather than as a signal. 
-                        // CTRL+BREAK is always treated as a signal
-                        if (
-                            (iRec.Event.KeyEvent.dwControlKeyState & CTRL_MODIFIERS) &&
-                            ((iRec.Event.KeyEvent.dwControlKeyState & ALL_MODIFIERS) 
-                            == (iRec.Event.KeyEvent.dwControlKeyState & CTRL_MODIFIERS))
-                            )
-                        {
-                            //iRec.EventType = 0;
+					//The SetConsoleMode function can disable the ENABLE_PROCESSED_INPUT mode for a console's input buffer, 
+					//so CTRL+C is reported as keyboard input rather than as a signal. 
+					// CTRL+BREAK is always treated as a signal
+					if (
+						(iRec.Event.KeyEvent.dwControlKeyState & CTRL_MODIFIERS) &&
+						((iRec.Event.KeyEvent.dwControlKeyState & ALL_MODIFIERS) 
+						== (iRec.Event.KeyEvent.dwControlKeyState & CTRL_MODIFIERS))
+						)
+					{
 
-                        #ifdef xxxxxx // так работает, но в "ping" приходит только CTRL_BREAK_EVENT
-                            BOOL lbRc = FALSE;
-                            DWORD dwEvent =
-                            (iRec.Event.KeyEvent.wVirtualKeyCode == 'C') ?
-                                CTRL_C_EVENT : CTRL_BREAK_EVENT;
-                            lbRc = GenerateConsoleCtrlEvent(dwEvent, 0);
-                        #endif
-
-                        #ifdef xxxxx // не работает
-                            BOOL lbRc = FALSE;
-                            //SendMessage(ghConWnd, WM_KEYDOWN, VK_CANCEL, 0x01460001);
-                            lbRc = GenerateConsoleCtrlEvent(
-                            (iRec.Event.KeyEvent.wVirtualKeyCode == 'C') ? 0 : 1,
-                            0);
-                        #endif
-
-
-                        #ifdef xxxxx // Это пересылает событие в ConEmuC, который работает как ComSpec
-                        DWORD *pdwPID = NULL;
-                        int nCount = GetProcessCount(&pdwPID);
-                        wchar_t szEvtName[128];
-                        for (int i=nCount-1; pdwPID && i>=0; i--) {
-                            wsprintf(szEvtName, (iRec.Event.KeyEvent.wVirtualKeyCode == 'C') ? CESIGNAL_C : CESIGNAL_BREAK, pdwPID[i]);
-                            HANDLE hEvent = OpenEvent(EVENT_MODIFY_STATE, FALSE, szEvtName);
-                            if (hEvent) {
-                                lbRc = TRUE; PulseEvent(hEvent); CloseHandle(hEvent); break;
-                            }
-                        }
-
-                        if (!lbRc)
-                        #endif
 
                         // Вроде работает, Главное не запускать процесс с флагом CREATE_NEW_PROCESS_GROUP
                         // иначе у микрософтовской консоли (WinXP SP3) сносит крышу, и она реагирует
                         // на Ctrl-Break, но напрочь игнорирует Ctrl-C
                         lbRc = GenerateConsoleCtrlEvent(dwEvent, 0);
 
-                        /*BOOL lbRc = FALSE;
-                        DWORD dwEvent =
-                        (iRec.Event.KeyEvent.wVirtualKeyCode == 'C') ?
-                        CTRL_C_EVENT : CTRL_BREAK_EVENT;
-                        lbRc = GenerateConsoleCtrlEvent(dwEvent, 0);*/
-
-                        /*for (i = nCount-1; !lbRc && i>=0; i--) {
-                        if (pdwPID[i] == 0 || pdwPID[i] == gnSelfPID) continue;
-                        lbRc = GenerateConsoleCtrlEvent(
-                        (iRec.Event.KeyEvent.wVirtualKeyCode == 'C') ? 0 : 1,
-                        pdwPID[i]);
-                        if (!lbRc) dwErr = GetLastError();
-                        }
-                        if (!lbRc)
-                        lbRc = GenerateConsoleCtrlEvent(
-                        (iRec.Event.KeyEvent.wVirtualKeyCode == 'C') ? 0 : 1,
-                        srv.dwProcessGroup);
-                        if (!lbRc)
-                        lbRc = GenerateConsoleCtrlEvent(dwEvent, 0);*/
-                        //iRec.EventType = 0;
-                        /*PostMessage(ghConWnd, WM_KEYDOWN, VK_CONTROL, 0);
-                        PostMessage(ghConWnd, WM_KEYDOWN, iRec.Event.KeyEvent.wVirtualKeyCode, 0);
-                        PostMessage(ghConWnd, WM_KEYUP, iRec.Event.KeyEvent.wVirtualKeyCode, 0);
-                        PostMessage(ghConWnd, WM_KEYUP, VK_CONTROL, 0);*/
-                      }
+                    }
                   }
               
                   if (iRec.EventType) {
+					#ifdef _DEBUG
+					  if (iRec.EventType == KEY_EVENT && iRec.Event.KeyEvent.bKeyDown &&
+						  iRec.Event.KeyEvent.wVirtualKeyCode == VK_F11)
+					  {
+						  DEBUGSTR(L"  ---  F11 recieved\n");
+					  }
+					#endif
+
                       fSuccess = WriteConsoleInput(ghConIn, &iRec, 1, &cbWritten);
                       _ASSERTE(fSuccess && cbWritten==1);
                   }
@@ -1831,6 +1772,9 @@ BOOL ReadConsoleData(CESERVER_CHAR* pCheck /*= NULL*/)
     //srv.bContentsChanged = FALSE;
     EnterCriticalSection(&srv.csConBuf);
     //RECT rcReadRect = {0};
+	// Если во время чтения консоли приходит ресайз - консоль глючит
+	// может отдать совершенно левые данные (например не с той строки, с которой просили)
+	CSection cs(&srv.csChangeSize, &srv.ncsTChangeSize);
 
 	BOOL lbFirstLoop = TRUE;
 
@@ -2002,6 +1946,7 @@ Loop1:
 				|| !ReadConsoleOutputCharacter(ghConOut, ConCharNow, nRectLen, coord, &nbActuallyRead) 
 				)
 			{
+				DEBUGSTR(L" !!! Can't read full console screen. Read line by line\n");
 				for (y = 0; y < nLines; y++, coord.Y ++)
 				{
 					_ASSERTE(ConCharNow<ConCharEnd);
@@ -2011,6 +1956,10 @@ Loop1:
 					ReadConsoleOutputCharacter(ghConOut, ConCharNow, TextWidth, coord, &nbActuallyRead);
 						ConCharNow += TextWidth;
 				}
+			}
+			TODO("Во время ресайза консоль может подглючивать - отдает не то что нужно...");
+			if (gnBufferHeight && *srv.psChars!=9553) {
+				//_ASSERTE(*srv.psChars!=9553);
 			}
 
 			MCHKHEAP
@@ -2123,6 +2072,7 @@ Loop1:
 				|| !ReadConsoleOutputCharacter(ghConOut, srv.psChars, TextLen, coord, &nbActuallyRead)
 				)
 			{
+				DEBUGSTR(L" !!! Can't read full console screen. Read line by line\n");
 				WORD* ConAttrNow = srv.pnAttrs; wchar_t* ConCharNow = srv.psChars;
 				for(int y = 0; y < (int)TextHeight; y++, coord.Y++)
 				{
@@ -2133,6 +2083,8 @@ Loop1:
 						ConCharNow += TextWidth;
 				}
 			}
+			TODO("Во время ресайза консоль может подглючивать - отдает не то что нужно...");
+			//_ASSERTE(*srv.psChars!=9553);
 			if (srv.bForceFullSend)
 				lbChanged = TRUE;
 
@@ -2980,6 +2932,8 @@ CESERVER_REQ* CreateConsoleInfo(CESERVER_CHAR* pRgnOnly, BOOL bCharAttrBuff)
     if (OneBufferSize && OneBufferSize!=(DWORD)-1) { // OneBufferSize==0, если pRgnOnly!=0
 		#ifdef _DEBUG
 		DEBUGLOG(L"---Sending full console data\n");
+		TODO("Во время ресайза консоль может подглючивать - отдает не то что нужно...");
+		//_ASSERTE(*srv.psChars!=9553);
 		lbDataSent = TRUE;
 		#endif
         memmove(lpCur, srv.psChars, OneBufferSize); lpCur += OneBufferSize;
@@ -3164,7 +3118,34 @@ BOOL MyGetConsoleScreenBufferInfo(HANDLE ahConOut, PCONSOLE_SCREEN_BUFFER_INFO a
 	if (gnRunMode == RM_SERVER)
 		cs.Enter(&srv.csChangeSize, &srv.ncsTChangeSize);
 
+	if (gnRunMode == RM_SERVER) // ComSpec окно менять НЕ ДОЛЖЕН!
+	{
+		// Если юзер случайно нажал максимизацию, когда консольное окно видимо - ничего хорошего не будет
+		if (IsZoomed(ghConWnd)) {
+			SendMessage(ghConWnd, WM_SYSCOMMAND, SC_RESTORE, 0);
+			Sleep(200);
+			//lbRc = GetConsoleScreenBufferInfo(ahConOut, apsc);
+			//SetConsoleSize(gnBufferHeight, gcrBufferSize, srv.sbi.srWindow);
+			// Если этого не сделать - размер консоли нельзя УМЕНЬШИТЬ
+			RECT rcConPos;
+			GetWindowRect(ghConWnd, &rcConPos);
+			MoveWindow(ghConWnd, rcConPos.left, rcConPos.top, 1, 1, 1);
+			if (gnBufferHeight == 0)
+			{
+				//specified width and height cannot be less than the width and height of the console screen buffer's window
+				lbRc = SetConsoleScreenBufferSize(ghConOut, gcrBufferSize);
+			} else {
+				// Начался ресайз для BufferHeight
+				COORD crHeight = {gcrBufferSize.X, gnBufferHeight};
+				MoveWindow(ghConWnd, rcConPos.left, rcConPos.top, 1, 1, 1);
+				lbRc = SetConsoleScreenBufferSize(ghConOut, crHeight); // а не crNewSize - там "оконные" размеры
+			}
+			SetConsoleWindowInfo(ghConOut, TRUE, &srv.sbi.srWindow);
+		}
+	}
+
     lbRc = GetConsoleScreenBufferInfo(ahConOut, apsc);
+	_ASSERTE((apsc->srWindow.Bottom-apsc->srWindow.Top)<150);
     if (lbRc && gnRunMode == RM_SERVER) // ComSpec окно менять НЕ ДОЛЖЕН!
 	{
 				// Перенесено в SetConsoleSize

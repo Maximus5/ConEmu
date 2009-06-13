@@ -93,7 +93,7 @@ public:
 
 	// Debugging - "c:\\temp\\ConEmuVCon-%i-%i.dat"
 	bool isAdvLogging;
-	wchar_t szDumpPackets[MAX_PATH];
+	//wchar_t szDumpPackets[MAX_PATH];
 	// Debugging
 	bool isConVisible;
     

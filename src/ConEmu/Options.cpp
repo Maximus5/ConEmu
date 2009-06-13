@@ -72,7 +72,7 @@ void CSettings::InitSettings()
     isMulti = true; icMultiNew = 'W'; icMultiNext = 'Q'; icMultiRecreate = 192/*VK_тильда*/; isMultiNewConfirm = true;
     // Logging
     isAdvLogging = false;
-	wcscpy(szDumpPackets, L"c:\\temp\\ConEmuVCon-%i-%i.dat");
+	//wcscpy(szDumpPackets, L"c:\\temp\\ConEmuVCon-%i-%i.dat");
 
     nMainTimerElapse = 10;
     nAffinity = 3;
@@ -192,7 +192,7 @@ void CSettings::LoadSettings()
 
 		// Debugging
 		reg.Load(_T("ConVisible"), isConVisible);
-		reg.Load(_T("DumpPackets"), szDumpPackets);
+		//reg.Load(_T("DumpPackets"), szDumpPackets);
     
         reg.Load(_T("FontName"), inFont);
         reg.Load(_T("FontName2"), inFont2);

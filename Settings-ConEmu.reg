@@ -88,8 +88,6 @@ REGEDIT4
 
 ;; Debug. 1 - Don't hide console window
 "ConVisible"=hex:00
-;; Debug. If defined - dump every recieved screen from ConEmuC.
-;"DumpPackets"="c:\\temp\\ConEmuVCon-%i-%i.dat"
 
 ;; Drag'n'Drop
 ;; 0 - Drag disabled, 1 - LDrag, 2 - RDrag, 3 - LDrag&RDrag

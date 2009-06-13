@@ -48,7 +48,7 @@ VOID CALLBACK ConEmuCheckTimerProc(
   DWORD dwTime       // current system time
 );
 
-void UpdateConEmuTabsA(int event, bool losingFocus, bool editorSave);
+void UpdateConEmuTabsA(int event, bool losingFocus, bool editorSave, void *Param=NULL);
 
 void ProcessDragFromA()
 {
@@ -308,8 +308,8 @@ void WINAPI _export GetPluginInfo(struct PluginInfo *pi)
 // watch non-modified -> modified editor status change
 int WINAPI _export ProcessEditorInput(const INPUT_RECORD *Rec)
 {
-	if (!ConEmuHwnd || !InfoA) // иногда событие от QuickView приходит ДО инициализации плагина
-		return 0; // Если мы не под эмулятором - ничего
+	if (/*!ConEmuHwnd ||*/ !InfoA) // иногда событие от QuickView приходит ДО инициализации плагина
+		return 0; // Даже если мы не под эмулятором - просто запомним текущее состояние
 	// only key events with virtual codes > 0 are likely to cause status change (?)
 	if (Rec->EventType == KEY_EVENT && Rec->Event.KeyEvent.wVirtualKeyCode > 0  && Rec->Event.KeyEvent.bKeyDown)
 	{
@@ -327,8 +327,8 @@ int WINAPI _export ProcessEditorInput(const INPUT_RECORD *Rec)
 
 int WINAPI _export ProcessEditorEvent(int Event, void *Param)
 {
-	if (!ConEmuHwnd || !InfoA) // иногда событие от QuickView приходит ДО инициализации плагина
-		return 0; // Если мы не под эмулятором - ничего
+	if (/*!ConEmuHwnd ||*/ !InfoA) // иногда событие от QuickView приходит ДО инициализации плагина
+		return 0; // Даже если мы не под эмулятором - просто запомним текущее состояние
 	switch (Event)
 	{
 	case EE_CLOSE:
@@ -337,7 +337,7 @@ int WINAPI _export ProcessEditorEvent(int Event, void *Param)
 	case EE_SAVE:
 	//case EE_READ:
 		{
-			UpdateConEmuTabsA(Event, Event == EE_KILLFOCUS, Event == EE_SAVE);
+			UpdateConEmuTabsA(Event+100, Event == EE_KILLFOCUS, Event == EE_SAVE);
 			break;
 		}
 	}
@@ -346,8 +346,8 @@ int WINAPI _export ProcessEditorEvent(int Event, void *Param)
 
 int WINAPI _export ProcessViewerEvent(int Event, void *Param)
 {
-	if (!ConEmuHwnd || !InfoA) // иногда событие от QuickView приходит ДО инициализации плагина
-		return 0; // Если мы не под эмулятором - ничего
+	if (/*!ConEmuHwnd ||*/ !InfoA) // иногда событие от QuickView приходит ДО инициализации плагина
+		return 0; // Даже если мы не под эмулятором - просто запомним текущее состояние
 	switch (Event)
 	{
 	case VE_CLOSE:
@@ -355,14 +355,14 @@ int WINAPI _export ProcessViewerEvent(int Event, void *Param)
 	case VE_KILLFOCUS:
 	case VE_GOTFOCUS:
 		{
-			UpdateConEmuTabsA(Event, Event == VE_KILLFOCUS, false);
+			UpdateConEmuTabsA(Event+200, Event == VE_KILLFOCUS, false, Param);
 		}
 	}
 
 	return 0;
 }
 
-void UpdateConEmuTabsA(int event, bool losingFocus, bool editorSave)
+void UpdateConEmuTabsA(int event, bool losingFocus, bool editorSave, void *Param/*=NULL*/)
 {
 	if (!InfoA) return;
 
@@ -387,7 +387,17 @@ void UpdateConEmuTabsA(int event, bool losingFocus, bool editorSave)
 			MultiByteToWideChar(CP_OEMCP, 0, ei.FileName, lstrlenA(ei.FileName)+1, pszFileName, CONEMUTABMAX);
 	}
 
-	int tabCount = 1;
+	ViewerInfo vi = {sizeof(ViewerInfo)};
+	if (event == 206) {
+		if (Param)
+			vi.ViewerID = *(int*)Param;
+		InfoA->ViewerControl(VCTL_GETINFO, &vi);
+		pszFileName = gszDir2; pszFileName[0] = 0;
+		if (vi.FileName)
+			MultiByteToWideChar(CP_OEMCP, 0, vi.FileName, lstrlenA(vi.FileName)+1, pszFileName, CONEMUTABMAX);
+	}
+
+	int tabCount = 0;
 	for (int i = 0; i < windowCount; i++)
 	{
 		WInfo.Pos = i;
@@ -401,7 +411,14 @@ void UpdateConEmuTabsA(int event, bool losingFocus, bool editorSave)
 		}
 	}
 
-	SendTabs(tabCount);
+	// Viewer в FAR 2 build 9xx не попадает в список окон при событии VE_GOTFOCUS
+	if (!losingFocus && !editorSave && tabCount == 0 && event == 206) {
+		lbCh |= AddTab(tabCount, losingFocus, editorSave, 
+			WTYPE_VIEWER, pszFileName, NULL, 
+			1, 0);
+	}
+
+	SendTabs(tabCount, FALSE, lbCh);
 }
 
 void   WINAPI _export ExitFAR(void)

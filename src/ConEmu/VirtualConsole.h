@@ -62,6 +62,7 @@ public:
 
 	bool InitDC(bool abNoDc, bool abNoWndResize);
 	void DumpConsole();
+	void DumpConsole(LPCWSTR asFile);
 	bool Update(bool isForce = false, HDC *ahDc=NULL);
 	void SelectFont(HFONT hNew);
 	void SelectBrush(HBRUSH hNew);
@@ -82,6 +83,7 @@ public:
 	void OnFontChanged();
 
 protected:
+	wchar_t* mpsz_LogScreen; DWORD mn_LogScreenIdx;
 	enum _PartType{
 		pNull,  // конец строки/последний, неотображаемый элемент
 		pSpace, // при разборе строки будем смотреть, если нашли pText,pSpace,pText то pSpace,pText добавить в первый pText
