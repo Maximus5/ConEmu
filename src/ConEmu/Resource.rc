@@ -105,7 +105,7 @@ BEGIN
     CONTROL         "&Monospace",cbNonProportional,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,79,67,54,8
     CONTROL         "&Fix Far borders",cbFixFarBorders,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,10,96,64,8
+                    BS_AUTO3STATE | WS_TABSTOP,10,96,64,8
     GROUPBOX        "Window size",IDC_STATIC,147,50,110,50
     CONTROL         "Normal",rNormal,"Button",BS_AUTORADIOBUTTON | WS_GROUP,
                     151,61,38,8

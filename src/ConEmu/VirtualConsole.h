@@ -68,6 +68,7 @@ public:
 	void SelectBrush(HBRUSH hNew);
 	bool isCharBorder(WCHAR inChar);
 	bool isCharBorderVertical(WCHAR inChar);
+	bool isCharProgress(WCHAR inChar);
 	void BlitPictureTo(int inX, int inY, int inWidth, int inHeight);
 	bool CheckSelection(const CONSOLE_SELECTION_INFO& select, SHORT row, SHORT col);
 	bool GetCharAttr(TCHAR ch, WORD atr, TCHAR& rch, BYTE& foreColorNum, BYTE& backColorNum);
@@ -127,4 +128,26 @@ protected:
 	int mn_BackColorIdx; //==0
 	void Box(LPCTSTR szText);
 	BOOL RetrieveConsoleInfo(BOOL bShortOnly);
+	typedef struct tag_PARTBRUSHES {
+		wchar_t ch; // 0x2591 0x2592 0x2593 0x2588 - по увеличению плотности
+		SHORT   nBackIdx;
+		SHORT   nForeIdx;
+		HBRUSH  hBrush;
+	} PARTBRUSHES;
+	std::vector<PARTBRUSHES> m_PartBrushes;
+	HBRUSH PartBrush(wchar_t ch, SHORT nBackIdx, SHORT nForeIdx);
 };
+
+#include <pshpack1.h>
+typedef struct tagMYRGB {
+	union {
+		COLORREF color;
+		struct {
+			BYTE    rgbBlue;
+			BYTE    rgbGreen;
+			BYTE    rgbRed;
+			BYTE    rgbReserved;
+		};
+	};
+} MYRGB;
+#include <poppack.h>

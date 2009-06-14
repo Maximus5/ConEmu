@@ -47,6 +47,7 @@ CSettings::CSettings()
     }
 
 	mn_MsgUpdateCounter = RegisterWindowMessage(_T("ConEmuSettings::Counter"));
+	mn_MsgRecreateFont = RegisterWindowMessage(_T("CSettings::RecreateFont"));
 }
 
 CSettings::~CSettings()
@@ -67,6 +68,8 @@ void CSettings::InitSettings()
 ///| Moved from CVirtualConsole |/////////////////////////////////////////
 //------------------------------------------------------------------------
     _tcscpy(Config, _T("Software\\ConEmu"));
+
+	FontFile[0] = 0;
     
     psCmd = NULL; psCurCmd = NULL; wcscpy(szDefCmd, L"far");
     isMulti = true; icMultiNew = 'W'; icMultiNext = 'Q'; icMultiRecreate = 192/*VK_тильда*/; isMultiNewConfirm = true;
@@ -130,7 +133,7 @@ void CSettings::InitSettings()
 ///| Default settings |///////////////////////////////////////////////////
 //------------------------------------------------------------------------
     _tcscpy(sBgImage, _T("c:\\back.bmp"));
-    isFixFarBorders = true;
+    isFixFarBorders = TRUE;
     bgImageDarker = 0;
     wndHeight = ntvdmHeight = 25; // NightRoman
     wndWidth = 80;  // NightRoman
@@ -684,7 +687,7 @@ LRESULT CSettings::OnInitDialog()
         CheckDlgButton(hMain, rCTAA, BST_CHECKED);
         break;
     }
-    if (isFixFarBorders)   CheckDlgButton(hMain, cbFixFarBorders, BST_CHECKED);
+    if (isFixFarBorders) CheckDlgButton(hMain, cbFixFarBorders, (isFixFarBorders==1) ? BST_CHECKED : BST_INDETERMINATE);
     if (isCursorColor) CheckDlgButton(hMain, cbCursorColor, BST_CHECKED);
     if (isRClickSendKey) CheckDlgButton(hMain, cbRClick, (isRClickSendKey==1) ? BST_CHECKED : BST_INDETERMINATE);
     if (isSentAltEnter) CheckDlgButton(hMain, cbSendAE, BST_CHECKED);
@@ -862,11 +865,14 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
     case rNoneAA:
     case rStandardAA:
     case rCTAA:
+		PostMessage(hMain, gSet.mn_MsgRecreateFont, wParam, 0);
+		/*
         LogFont.lfQuality = wParam == rNoneAA ? NONANTIALIASED_QUALITY : wParam == rStandardAA ? ANTIALIASED_QUALITY : CLEARTYPE_NATURAL_QUALITY;
         DeleteObject(mh_Font);
         mh_Font = CreateFontIndirectMy(&LogFont);
         if (FontSizeX) LogFont.lfWidth = FontSizeX;
         gConEmu.Update(true);
+		*/
         break;
 
     case bSaveSettings:
@@ -910,7 +916,15 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
 	    break;
 
     case cbFixFarBorders:
-        isFixFarBorders = !isFixFarBorders;
+        //isFixFarBorders = !isFixFarBorders;
+		switch(IsChecked(hMain, cbFixFarBorders)) {
+		case BST_UNCHECKED:
+			isFixFarBorders = 0; break;
+		case BST_CHECKED:
+			isFixFarBorders = 1; break;
+		case BST_INDETERMINATE:
+			isFixFarBorders = 2; break;
+		}
 
         gConEmu.Update(true);
         break;
@@ -928,6 +942,8 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
     case cbBold:
     case cbItalic:
         {
+			PostMessage(hMain, gSet.mn_MsgRecreateFont, wParam, 0);
+			/*
             if (wParam == cbBold)
                 LogFont.lfWeight = SendDlgItemMessage(hMain, cbBold, BM_GETCHECK, 0, 0) == BST_CHECKED ? FW_BOLD : FW_NORMAL;
             else if (wParam == cbItalic)
@@ -948,6 +964,7 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
                 gConEmu.ReSize();
                 //InvalidateRect(ghWnd, 0, 0);
             }
+			*/
         }
         break;
 
@@ -1023,18 +1040,18 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
         isDefCopy = !isDefCopy;
         break;
     
-    case cbGUIpb:
+    case cbGUIpb: // GUI Progress Bars
         isGUIpb = !isGUIpb;
         break;
     
     case cbTabs:
-        switch(IsDlgButtonChecked(hMain, cbTabs)) {
+        switch(IsChecked(hMain, cbTabs)) {
             case BST_UNCHECKED:
-                isTabs=0; break;
+                isTabs = 0; break;
             case BST_CHECKED:
-                isTabs=1; break;
+                isTabs = 1; break;
             case BST_INDETERMINATE:
-                isTabs=2; break;
+                isTabs = 2; break;
         }
         //isTabs = !isTabs;
         break;
@@ -1248,6 +1265,8 @@ LRESULT CSettings::OnComboBox(WPARAM wParam, LPARAM lParam)
     WORD wId = LOWORD(wParam);
     if (wId == tFontFace || wId == tFontFace2)
     {
+		PostMessage(hMain, gSet.mn_MsgRecreateFont, wParam, 0);
+		/*
 		LOGFONT* pLogFont = (wId == tFontFace) ? &LogFont : &LogFont2;
         int nID = (wId == tFontFace) ? tFontFace : tFontFace2;
         _tcscpy(temp, pLogFont->lfFaceName);
@@ -1300,10 +1319,13 @@ LRESULT CSettings::OnComboBox(WPARAM wParam, LPARAM lParam)
             }
         }
         mb_IgnoreTtfChange = TRUE;
+		*/
     }
     else if (wId == tFontSizeY || wId == tFontSizeX || 
         wId == tFontSizeX2 || wId == tFontSizeX3 || wId == tFontCharset)
     {
+		PostMessage ( hMain, mn_MsgRecreateFont, wId, 0 );
+		/*
         int newSize = 0;
         if (wId == tFontSizeY || wId == tFontSizeX || 
             wId == tFontSizeX2 || wId == tFontSizeX3)
@@ -1350,6 +1372,7 @@ LRESULT CSettings::OnComboBox(WPARAM wParam, LPARAM lParam)
                 //InvalidateRect(ghWnd, 0, 0);
             }
         }
+		*/
     } else 
     if (wId == lbLDragKey || wId == lbRDragKey) {
         int num = SendDlgItemMessage(hMain, wId, CB_GETCURSEL, 0, 0);
@@ -1676,6 +1699,9 @@ BOOL CALLBACK CSettings::mainOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARA
         }
         break;
     default:
+		if (messg == gSet.mn_MsgRecreateFont) {
+			gSet.RecreateFont(wParam);
+		}
         return 0;
     }
     return 0;
@@ -1887,20 +1913,40 @@ void CSettings::RegisterTipsFor(HWND hChildDlg)
     SendMessage(hwndTip, TTM_SETMAXTIPWIDTH, 0, (LPARAM)300);
 }
 
-void CSettings::RecreateFont()
+void CSettings::RecreateFont(WORD wFromID)
 {
+	if (wFromID == tFontFace)
+		mb_IgnoreTtfChange = FALSE;
+
 	LOGFONT LF = {0};
-	LF.lfHeight = 16;
-	LF.lfWidth = 0;
-	LF.lfEscapement = LF.lfOrientation = 0;
-	LF.lfWeight = FW_NORMAL;
-	LF.lfItalic = LF.lfUnderline = LF.lfStrikeOut = FALSE;
-	LF.lfCharSet = DEFAULT_CHARSET;
 	LF.lfOutPrecision = OUT_TT_PRECIS;
 	LF.lfClipPrecision = CLIP_DEFAULT_PRECIS;
-	LF.lfQuality = ANTIALIASED_QUALITY;
 	LF.lfPitchAndFamily = FIXED_PITCH | FF_MODERN;
-	_tcscpy(LF.lfFaceName, _T("Lucida Console"));
+
+	GetDlgItemText(hMain, tFontFace, LF.lfFaceName, countof(LF.lfFaceName));
+
+	LF.lfHeight = GetNumber(hMain, tFontSizeY);
+	LF.lfWidth = FontSizeX = GetNumber(hMain, tFontSizeX);
+	LF.lfWeight = IsChecked(hMain, cbBold) ? FW_BOLD : FW_NORMAL;
+	LF.lfItalic = IsChecked(hMain, cbItalic);
+
+	LF.lfCharSet = LogFont.lfCharSet;
+	int newCharSet = SendDlgItemMessage(hMain, tFontCharset, CB_GETCURSEL, 0, 0);
+	if (newCharSet != CB_ERR && newCharSet >= 0 && newCharSet < 19)
+		LogFont.lfCharSet = chSetsNums[newCharSet];
+
+	if (IsChecked(hMain, rNoneAA))
+		LF.lfQuality = NONANTIALIASED_QUALITY;
+	else if (IsChecked(hMain, rStandardAA))
+		LF.lfQuality = ANTIALIASED_QUALITY;
+	else if (IsChecked(hMain, rCTAA))
+		LF.lfQuality = CLEARTYPE_NATURAL_QUALITY;
+
+	GetDlgItemText(hMain, tFontFace2, LogFont2.lfFaceName, countof(LogFont2.lfFaceName));
+	FontSizeX2 = GetNumber(hMain, tFontSizeX2);
+	FontSizeX3 = GetNumber(hMain, tFontSizeX3);
+	
+
 
 	HFONT hf = CreateFontIndirectMy(&LF);
 	if (hf) {
@@ -1908,7 +1954,22 @@ void CSettings::RecreateFont()
 		LogFont = LF;
 		mh_Font = hf;
 		DeleteObject(hOldF);
+
+		gConEmu.Update(true);
+		if (!isFullScreen && !IsZoomed(ghWnd))
+			gConEmu.SyncWindowToConsole();
+		else
+			gConEmu.SyncConsoleToWindow();
+		gConEmu.ReSize();
 	}
+
+	if (wFromID == tFontFace) {
+		wchar_t szSize[10];
+		wsprintf(szSize, _T("%i"), LF.lfHeight);
+		SetDlgItemText(hMain, tFontSizeY, szSize);
+	}
+
+	mb_IgnoreTtfChange = TRUE;
 }
 
 HFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
@@ -1945,11 +2006,32 @@ HFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 		if (mh_Font2) { DeleteObject(mh_Font2); mh_Font2 = NULL; }
 
 		int width = FontSizeX2 ? FontSizeX2 : inFont->lfWidth;
+		// Иначе рамки прерывистыми получаются... поставил NONANTIALIASED_QUALITY
 		mh_Font2 = CreateFont(abs(inFont->lfHeight), abs(width), 0, 0, FW_NORMAL,
-			0, 0, 0, DEFAULT_CHARSET, OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS, ANTIALIASED_QUALITY, 0, LogFont2.lfFaceName);
+			0, 0, 0, DEFAULT_CHARSET, OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS, 
+			NONANTIALIASED_QUALITY/*ANTIALIASED_QUALITY*/, 0, LogFont2.lfFaceName);
     }
 
     return hFont;
+}
+
+// FALSE - выключена
+// TRUE (BST_CHECKED) - включена
+// BST_INDETERMINATE (2) - 3-d state
+int CSettings::IsChecked(HWND hParent, WORD nCtrlId)
+{
+	// Аналог IsDlgButtonChecked
+	int nChecked = SendDlgItemMessage(hParent, nCtrlId, BM_GETCHECK, 0, 0);
+	return nChecked;
+}
+
+int CSettings::GetNumber(HWND hParent, WORD nCtrlId)
+{
+	int nValue = 0;
+	wchar_t szNumber[32] = {0};
+	if (GetDlgItemText(hParent, nCtrlId, szNumber, countof(szNumber)))
+		nValue = klatoi(szNumber);
+	return nValue;
 }
 
 // "Умолчательная" высота буфера.

@@ -16,6 +16,7 @@ public:
 private:
     LOGFONT LogFont, LogFont2;
 public:
+	wchar_t FontFile[MAX_PATH];
 	LOGFONT ConsoleFont;
     COLORREF Colors[0x20];
     bool isExtendColors;
@@ -46,7 +47,7 @@ public:
     DWORD FontSizeX2;
     DWORD FontSizeX3;
     bool isFullScreen;
-    bool isFixFarBorders;
+    char isFixFarBorders;
     bool isCursorV;
     bool isCursorColor;
     char isRClickSendKey;
@@ -149,7 +150,7 @@ private:
     HWND hwndTip;
     void RegisterTipsFor(HWND hChildDlg);
     HFONT CreateFontIndirectMy(LOGFONT *inFont);
-	void RecreateFont();
+	void RecreateFont(WORD wFromID);
     // Theming
     HMODULE mh_Uxtheme;
     typedef HRESULT (STDAPICALLTYPE *SetWindowThemeT)(HWND hwnd,LPCWSTR pszSubAppName,LPCWSTR pszSubIdList);
@@ -158,4 +159,7 @@ private:
     EnableThemeDialogTextureT EnableThemeDialogTextureF;
 	UINT mn_MsgUpdateCounter;
 	wchar_t temp[MAX_PATH];
+	UINT mn_MsgRecreateFont;
+	int IsChecked(HWND hParent, WORD nCtrlId);
+	int GetNumber(HWND hParent, WORD nCtrlId);
 };

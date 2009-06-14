@@ -25,7 +25,10 @@ REGEDIT4
 ;; and the one
 "ForceMonospace"=hex:00
 
-;; Fix far borders
+;; Fix far borders. 
+;; hex:00 - borders are drawn using main font.
+;; hex:01 - using FontName2.
+;; hex:02 - same as hex:01 & progress symbols are filled.
 "Experimental"=hex:01
 ;"FontName2"="Lucida Console"
 ;"FontSizeX2"=dword:00000000

@@ -902,6 +902,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     }
     
 
+	if (FontFilePrm) {
+		if (!AddFontResourceEx(FontFile, FR_PRIVATE, NULL)) //ADD fontname; by Mors
+		{
+			MessageBox(NULL, FontFile, L"Can't register font", MB_OK|MB_ICONSTOP);
+			return 100;
+		}
+		lstrcpynW(gSet.FontFile, FontFile, countof(gSet.FontFile));
+	}
+
 
 //------------------------------------------------------------------------
 ///| Create taskbar window |//////////////////////////////////////////////
@@ -916,8 +925,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 //------------------------------------------------------------------------
 ///| Creating window |////////////////////////////////////////////////////
 //------------------------------------------------------------------------
-
-    if (FontFilePrm) AddFontResourceEx(FontFile, FR_PRIVATE, NULL); //ADD fontname; by Mors
 
     if (!CreateMainWindow()) {
 	    free(cmdLine);
