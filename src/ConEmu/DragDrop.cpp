@@ -314,8 +314,10 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop (IDataObject * pDataObject,DWORD grfKe
 
 	// Определить, на какую панель бросаем
 	ScreenToClient(m_hWnd, (LPPOINT)&pt);
-	pt.x/=gSet.LogFont.lfWidth;
-	pt.y/=gSet.LogFont.lfHeight;
+	COORD cr = gConEmu.ActiveCon()->ClientToConsole(pt.x, pt.y);
+	pt.x = cr.X; pt.y = cr.Y;
+	//pt.x/=gSet.Log Font.lfWidth;
+	//pt.y/=gSet.Log Font.lfHeight;
 	BOOL lbActive = PtInRect(&(m_pfpi->ActiveRect), *(LPPOINT)&pt);
 
 	
@@ -476,8 +478,10 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragOver(DWORD grfKeyState,POINTL pt,DWORD 
 	//gConEmu.DnDstep(_T("DnD: DragOver starting"));
 
 	ScreenToClient(m_hWnd, (LPPOINT)&pt);
-	pt.x/=gSet.LogFont.lfWidth;
-	pt.y/=gSet.LogFont.lfHeight;
+	COORD cr = gConEmu.ActiveCon()->ClientToConsole(pt.x, pt.y);
+	pt.x = cr.X; pt.y = cr.Y;
+	//pt.x/=gSet.Log Font.lfWidth;
+	//pt.y/=gSet.Log Font.lfHeight;
 
 	BOOL lbActive = FALSE, lbPassive = FALSE;
 	if (((lbActive = PtInRect(&(m_pfpi->ActiveRect), *(LPPOINT)&pt)) && m_pfpi->pszActivePath[0] && !mb_selfdrag) ||

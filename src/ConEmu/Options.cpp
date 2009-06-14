@@ -14,7 +14,7 @@ HWND ghOpWnd=NULL;
 namespace Settings {
     const WCHAR* szKeys[] = {L"<None>", L"Left Ctrl", L"Right Ctrl", L"Left Alt", L"Right Alt", L"Left Shift", L"Right Shift"};
     const DWORD  nKeys[] =  {0,         VK_LCONTROL,  VK_RCONTROL,   VK_LMENU,    VK_RMENU,     VK_LSHIFT,     VK_RSHIFT};
-    const BYTE   FSizes[] = {0, 8, 10, 12, 14, 16, 18, 20, 24, 26, 28, 30, 32, 34, 36, 40, 46, 50, 52, 72};
+    const BYTE   FSizes[] = {0, 8, 10, 12, 14, 16, 18, 19, 20, 24, 26, 28, 30, 32, 34, 36, 40, 46, 50, 52, 72};
 };
 
 CSettings::CSettings()
@@ -28,7 +28,7 @@ CSettings::CSettings()
     memset(mn_CounterMax, 0, sizeof(*mn_CounterMax)*(tPerfInterval-gbPerformance));
     memset(mn_CounterTick, 0, sizeof(*mn_CounterTick)*(tPerfInterval-gbPerformance));
     hBgBitmap = NULL; bgBmp = MakeCoord(0,0); hBgDc = NULL; mh_Font = NULL; mh_Font2 = NULL;
-    memset(FontWidth, 0, sizeof(FontWidth));
+    memset(CharWidth, 0, sizeof(CharWidth));
     nAttachPID = 0; hAttachConWnd = NULL;
     memset(&ourSI, 0, sizeof(ourSI));
     ourSI.cb = sizeof(ourSI);
@@ -216,7 +216,7 @@ void CSettings::LoadSettings()
         reg.Load(_T("Anti-aliasing"), Quality);
 
 		reg.Load(L"ConsoleFontName", ConsoleFont.lfFaceName);
-		reg.Load(L"ConsoleFontWidth", ConsoleFont.lfWidth);
+		reg.Load(L"ConsoleCharWidth", ConsoleFont.lfWidth);
 		reg.Load(L"ConsoleFontHeight", ConsoleFont.lfHeight);
 
         reg.Load(_T("WindowMode"), gConEmu.WindowMode);
@@ -347,8 +347,18 @@ void CSettings::LoadSettings()
 	MCHKHEAP
 }
 
-void CSettings::InitFont()
+void CSettings::InitFont(LPCWSTR asFontName/*=NULL*/, int anFontHeight/*=-1*/, int anQuality/*=-1*/)
 {
+	if (asFontName && *asFontName) {
+		lstrcpynW(LogFont.lfFaceName, asFontName, 32);
+	}
+	if (anFontHeight!=-1) {
+		LogFont.lfHeight = anFontHeight;
+		LogFont.lfWidth = 0;
+	}
+	if (anQuality!=-1) {
+		LogFont.lfQuality = ANTIALIASED_QUALITY;
+	}
 
     mh_Font = CreateFontIndirectMy(&LogFont);
 	//2009-06-07 Реальный размер созданного шрифта мог измениться
@@ -1877,15 +1887,33 @@ void CSettings::RegisterTipsFor(HWND hChildDlg)
     SendMessage(hwndTip, TTM_SETMAXTIPWIDTH, 0, (LPARAM)300);
 }
 
+void CSettings::RecreateFont()
+{
+	LOGFONT LF = {0};
+	LF.lfHeight = 16;
+	LF.lfWidth = 0;
+	LF.lfEscapement = LF.lfOrientation = 0;
+	LF.lfWeight = FW_NORMAL;
+	LF.lfItalic = LF.lfUnderline = LF.lfStrikeOut = FALSE;
+	LF.lfCharSet = DEFAULT_CHARSET;
+	LF.lfOutPrecision = OUT_TT_PRECIS;
+	LF.lfClipPrecision = CLIP_DEFAULT_PRECIS;
+	LF.lfQuality = ANTIALIASED_QUALITY;
+	LF.lfPitchAndFamily = FIXED_PITCH | FF_MODERN;
+	_tcscpy(LF.lfFaceName, _T("Lucida Console"));
+
+	HFONT hf = CreateFontIndirectMy(&LF);
+	if (hf) {
+		HFONT hOldF = mh_Font;
+		LogFont = LF;
+		mh_Font = hf;
+		DeleteObject(hOldF);
+	}
+}
+
 HFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 {
-    memset(FontWidth, 0, sizeof(*FontWidth)*0x10000);
-
-	// Перенес ПОСЛЕ создания основного шрифта, т.к. размер реального шрифта может быть другим
-	//if (mh_Font2) { DeleteObject(mh_Font2); mh_Font2 = NULL; }
-	//   int width = FontSizeX2 ? FontSizeX2 : inFont->lfWidth;
-	//   mh_Font2 = CreateFont(abs(inFont->lfHeight), abs(width), 0, 0, FW_NORMAL,
-	//       0, 0, 0, DEFAULT_CHARSET, OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS, ANTIALIASED_QUALITY, 0, LogFont2.lfFaceName);
+    memset(CharWidth, 0, sizeof(*CharWidth)*0x10000);
 
     HFONT hFont = CreateFontIndirect(inFont);
 
@@ -1901,10 +1929,10 @@ HFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
             GetTextMetrics(hDC, &tm);
             if (isForceMonospace)
                 //Maximus - у Arial'а например MaxWidth слишком большой
-                LogFont.lfWidth = FontSizeX3 ? FontSizeX3 : tm.tmMaxCharWidth;
+                inFont->lfWidth = FontSizeX3 ? FontSizeX3 : tm.tmMaxCharWidth;
             else
-                LogFont.lfWidth = tm.tmAveCharWidth;
-            LogFont.lfHeight = tm.tmHeight; TODO("Здесь нужно обновить реальный размер шрифта в диалоге настройки!");
+                inFont->lfWidth = tm.tmAveCharWidth;
+            inFont->lfHeight = tm.tmHeight; TODO("Здесь нужно обновить реальный размер шрифта в диалоге настройки!");
 			
             if (ghOpWnd) // устанавливать только при листании шрифта в настройке
                 UpdateTTF ( (tm.tmMaxCharWidth - tm.tmAveCharWidth)>2 );
@@ -1946,7 +1974,24 @@ LPCTSTR CSettings::GetCmd()
         return psCurCmd;
     if (psCmd && *psCmd)
         return psCmd;
-    SafeFree(psCurCmd); // в принципе, эта строка скорее всего не нужна, но на всякий случай...
+    SafeFree(psCurCmd); // впринципе, эта строка скорее всего не нужна, но на всякий случай...
     psCurCmd = wcsdup(szDefCmd);
     return psCurCmd;
+}
+
+LONG CSettings::FontWidth()
+{
+	_ASSERTE(LogFont.lfWidth);
+	return LogFont.lfWidth;
+}
+
+LONG CSettings::FontHeight()
+{
+	_ASSERTE(LogFont.lfHeight);
+	return LogFont.lfHeight;
+}
+
+BYTE CSettings::FontCharSet()
+{
+	return LogFont.lfCharSet;
 }

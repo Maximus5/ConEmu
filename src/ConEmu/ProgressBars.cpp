@@ -60,9 +60,9 @@ void CProgressBars::OnTimer()
 
 			SendMessage(Progressbar1, PBM_SETPOS, perc, 0);
 			SetWindowPos(Progressbar1, 0, 
-				((TextWidth-45)/2)*gSet.LogFont.lfWidth+rcShift.left, 
-				(TextHeight-4+delta*2)/2*gSet.LogFont.lfHeight+rcShift.top/*TabBar.Height()*/, 
-				gSet.LogFont.lfWidth*41, gSet.LogFont.lfHeight, 0);
+				((TextWidth-45)/2)*gSet.FontWidth()+rcShift.left, 
+				(TextHeight-4+delta*2)/2*gSet.FontHeight()+rcShift.top/*TabBar.Height()*/, 
+				gSet.FontWidth()*41, gSet.FontHeight(), 0);
 			ShowWindow(Progressbar1, SW_SHOW);
 
 			if (ConChar[((TextHeight)/2)*TextWidth + (TextWidth-45)/2 + 45] == _T('%'))
@@ -77,9 +77,9 @@ void CProgressBars::OnTimer()
 
 				SendMessage(Progressbar2, PBM_SETPOS, perc, 0);
 				SetWindowPos(Progressbar2, 0, 
-					((TextWidth-45)/2)*gSet.LogFont.lfWidth+rcShift.left, 
-					(TextHeight)/2*gSet.LogFont.lfHeight+rcShift.top/*TabBar.Height()*/, 
-					gSet.LogFont.lfWidth*41, gSet.LogFont.lfHeight, 0);
+					((TextWidth-45)/2)*gSet.FontWidth()+rcShift.left, 
+					(TextHeight)/2*gSet.FontHeight()+rcShift.top/*TabBar.Height()*/, 
+					gSet.FontWidth()*41, gSet.FontHeight(), 0);
 				ShowWindow(Progressbar2, SW_SHOW);
 			}
 			else

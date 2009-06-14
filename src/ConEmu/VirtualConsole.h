@@ -81,6 +81,7 @@ public:
 	void GetConsoleScreenBufferInfo(CONSOLE_SCREEN_BUFFER_INFO *sbi) { mp_RCon->GetConsoleScreenBufferInfo(sbi); };
 	RECT GetRect();
 	void OnFontChanged();
+	COORD ClientToConsole(LONG x, LONG y);
 
 protected:
 	wchar_t* mpsz_LogScreen; DWORD mn_LogScreenIdx;

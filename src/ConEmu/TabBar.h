@@ -28,6 +28,9 @@ private:
 	BOOL CanActivateTab(int nTabIdx);
 	BOOL mb_InKeySwitching;
 	int GetNextTab(BOOL abForward);
+	int GetCurSel();
+	int GetItemCount();
+	void DeleteItem(int I);
 
 protected:
 	static LRESULT CALLBACK TabProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -41,6 +44,7 @@ protected:
 	std::vector<VConTabs> m_Tab2VCon;
 	BOOL mb_PostUpdateCalled;
 	UINT mn_MsgUpdateTabs;
+	UINT mn_CurSelTab;
 	
 	// Tab stack
 	typedef union _ULARGE_INTEGER { 
@@ -82,6 +86,7 @@ public:
 	void OnCommand(WPARAM wParam, LPARAM lParam);
 	void OnMouse(int message, int x, int y);
 	// Переключение табов
+	void Switch(BOOL abForward);
 	void SwitchNext();
 	void SwitchPrev();
 	void SwitchCommit();

@@ -446,12 +446,22 @@ BEGIN
     cbDragR                 "Allow drag with right mouse button"
     cbConMan                "Turn on MultiConsole\n(several consoles in one ConEmu, alternative console)\nConEmu restart required"
     cbMinToTray             "Auto minimize to tray"
+    tFontFace               "Face name for main font"
+    tFontSizeY              "Main font height"
+    tFontCharset            "Main font charset"
+    tFontFace2              "Font face used to draw FAR borders"
 END
 
 STRINGTABLE DISCARDABLE 
 BEGIN
+    cbBold                  "Main font weight"
+    tFontSizeX              "Main font width\n0 - mean defailt width\nfor specified height"
+    cbItalic                "Main font italic"
     tWndWidth               "Width of console window\nThis is in characters"
     tWndHeight              "Height of console window\nThis is in characters"
+    cbMonospace             "Draw characters one by one. It's much(!) slower,\nbut allows to use proportional fonts (Arial, etc.)\nas monospaced."
+    cbNonProportional       "Check it for non proportional\n(monospaced) fonts"
+    tFontSizeX2             "WIDTH for additional font.\nIt must be wider than main font,\notherwise, You get 'dashed' borders."
     cbSendAE                "When is on, You can't enter fullscreen mode from keyboard,\nbut You can use 'AltEnter' for macros in FAR"
     cbDnDCopy               "Forced 'Copy' action as default,\nYou can use Ctrl, Shift or Alt\nduring drag to change action"
 END
@@ -463,8 +473,14 @@ END
 
 STRINGTABLE DISCARDABLE 
 BEGIN
+    tFontSizeX3             "Cell width for 'Force monospace' mode"
     tWndX                   "Upper left corner of ConEmu in Normal mode\nThis is in pixels"
     tWndY                   "Upper left corner of ConEmu in Normal mode\nThis is in pixels"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    cbFixFarBorders         "You can specify additional font for drawing FAR borders.\nI.e. Main font is 'Fixedsys', additional is 'Lucida Console'."
 END
 
 #endif    // English (U.S.) resources

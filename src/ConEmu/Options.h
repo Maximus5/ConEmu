@@ -10,7 +10,12 @@ public:
 
     int DefaultBufferHeight; bool ForceBufferHeight; bool AutoScroll;
     
+	LONG FontWidth();
+	LONG FontHeight();
+	BYTE FontCharSet();
+private:
     LOGFONT LogFont, LogFont2;
+public:
 	LOGFONT ConsoleFont;
     COLORREF Colors[0x20];
     bool isExtendColors;
@@ -103,7 +108,7 @@ public:
     COORD   bgBmp;
     HDC     hBgDc;
     HFONT   mh_Font, mh_Font2;
-    WORD    FontWidth[0x10000]; //, Font2Width[0x10000];
+    WORD    CharWidth[0x10000]; //, Font2Width[0x10000];
 
     HWND hMain, hColors, hInfo;
 
@@ -124,7 +129,7 @@ public:
     void UpdateTTF(BOOL bNewTTF);
     void Performance(UINT nID, BOOL bEnd);
 	void SetArgBufferHeight(int anBufferHeight);
-	void InitFont();
+	void InitFont(LPCWSTR asFontName=NULL, int anFontHeight=-1, int anQuality=-1);
 public:
     LRESULT OnInitDialog();
     LRESULT OnButtonClicked(WPARAM wParam, LPARAM lParam);
@@ -144,6 +149,7 @@ private:
     HWND hwndTip;
     void RegisterTipsFor(HWND hChildDlg);
     HFONT CreateFontIndirectMy(LOGFONT *inFont);
+	void RecreateFont();
     // Theming
     HMODULE mh_Uxtheme;
     typedef HRESULT (STDAPICALLTYPE *SetWindowThemeT)(HWND hwnd,LPCWSTR pszSubAppName,LPCWSTR pszSubIdList);

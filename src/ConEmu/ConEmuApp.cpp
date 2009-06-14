@@ -397,16 +397,16 @@ BOOL CreateMainWindow()
     
     if (gSet.wndWidth && gSet.wndHeight)
     {
-	    //if (gSet.LogFont.lfWidth==0)
+	    //if (gSet.FontWidth()==0)
 		//    pVCon->InitDC(FALSE); // инициализировать ширину шрифта по умолчанию
 
-		MBoxAssert(gSet.LogFont.lfWidth && gSet.LogFont.lfHeight);
+		MBoxAssert(gSet.FontWidth() && gSet.FontHeight());
 
 	    COORD conSize; conSize.X=gSet.wndWidth; conSize.Y=gSet.wndHeight;
 	    int nShiftX = GetSystemMetrics(SM_CXSIZEFRAME)*2;
 	    int nShiftY = GetSystemMetrics(SM_CYSIZEFRAME)*2 + GetSystemMetrics(SM_CYCAPTION);
-		nWidth  = conSize.X * gSet.LogFont.lfWidth + nShiftX + gSet.rcTabMargins.left+gSet.rcTabMargins.right;
-	    nHeight = conSize.Y * gSet.LogFont.lfHeight + nShiftY + gSet.rcTabMargins.top+gSet.rcTabMargins.bottom;
+		nWidth  = conSize.X * gSet.FontWidth() + nShiftX + gSet.rcTabMargins.left+gSet.rcTabMargins.right;
+	    nHeight = conSize.Y * gSet.FontHeight() + nShiftY + gSet.rcTabMargins.top+gSet.rcTabMargins.bottom;
     }
     
 	//if (gConEmu.WindowMode == rMaximized) style |= WS_MAXIMIZE;
@@ -856,12 +856,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		MCHKHEAP
 	}
 	//#pragma message("Win2k: CLEARTYPE_NATURAL_QUALITY")
-    if (ClearTypePrm)
-        gSet.LogFont.lfQuality = CLEARTYPE_NATURAL_QUALITY;
-    if (FontPrm)
-        _tcscpy(gSet.LogFont.lfFaceName, FontVal);
-    if (SizePrm)
-        gSet.LogFont.lfHeight = SizeVal;
+    //if (ClearTypePrm)
+    //    gSet.LogFont.lfQuality = CLEARTYPE_NATURAL_QUALITY;
+    //if (FontPrm)
+    //    _tcscpy(gSet.LogFont.lfFaceName, FontVal);
+    //if (SizePrm)
+    //    gSet.LogFont.lfHeight = SizeVal;
     if (BufferHeightPrm) {
         gSet.SetArgBufferHeight ( BufferHeightVal );
     }
@@ -875,13 +875,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		gSet.isMulti = ConManValue;
 	if (VisValue)
 		gSet.isConVisible = VisPrm;
-	// Если запускается conman - принудительно включить флажок "Обновлять handle"
-	//cmdNew = gSet.Cmd;
-	//while (*cmdNew==L' ' || *cmdNew==L'"')
+	// Если запускается conman (нафига?) - принудительно включить флажок "Обновлять handle"
 	if (gSet.isMulti || StrStrI(gSet.GetCmd(), L"conman.exe"))
 		gSet.isUpdConHandle = TRUE;
 
-	gSet.InitFont();
+	gSet.InitFont(
+		FontPrm ? FontVal : NULL,
+		SizePrm ? SizeVal : -1,
+		ClearTypePrm ? CLEARTYPE_NATURAL_QUALITY : -1
+		);
 		
 
     
