@@ -737,6 +737,16 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
                 if (!FontFilePrm)
                 {
                     FontFilePrm = true;
+					int nLen = _tcslen(curCommand);
+					if (nLen >= MAX_PATH)
+					{
+						TCHAR* psz=(TCHAR*)calloc(nLen+100,sizeof(TCHAR));
+						wsprintf(psz, _T("Too long /FontFile name (%i chars).\r\n"), nLen);
+						_tcscat(psz, curCommand);
+						MBoxA(psz);
+						free(psz); free(cmdLine);
+						return 100;
+					}
                     FontFile = curCommand;
                 }
             }
@@ -794,7 +804,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	                    _tcscat(psz, curCommand);
                         MBoxA(psz);
                         free(psz); free(cmdLine);
-                        return -1;
+                        return 100;
                     }
                     ConfigVal = curCommand;
                 }
@@ -879,12 +889,27 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	if (gSet.isMulti || StrStrI(gSet.GetCmd(), L"conman.exe"))
 		gSet.isUpdConHandle = TRUE;
 
+
+	if (FontFilePrm) {
+		if (!AddFontResourceEx(FontFile, FR_PRIVATE, NULL)) //ADD fontname; by Mors
+		{
+			TCHAR* psz=(TCHAR*)calloc(wcslen(FontFile)+100,sizeof(TCHAR));
+			lstrcpyW(psz, L"Can't register font:\n");
+			lstrcatW(psz, FontFile);
+			MessageBox(NULL, psz, L"ConEmu", MB_OK|MB_ICONSTOP);
+			free(psz);
+			return 100;
+		}
+		lstrcpynW(gSet.FontFile, FontFile, countof(gSet.FontFile));
+	}
+
+
 	gSet.InitFont(
 		FontPrm ? FontVal : NULL,
 		SizePrm ? SizeVal : -1,
 		ClearTypePrm ? CLEARTYPE_NATURAL_QUALITY : -1
 		);
-		
+
 
     
 //------------------------------------------------------------------------
@@ -900,16 +925,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	    }
 	    gSet.nAttachPID = AttachVal;
     }
-    
-
-	if (FontFilePrm) {
-		if (!AddFontResourceEx(FontFile, FR_PRIVATE, NULL)) //ADD fontname; by Mors
-		{
-			MessageBox(NULL, FontFile, L"Can't register font", MB_OK|MB_ICONSTOP);
-			return 100;
-		}
-		lstrcpynW(gSet.FontFile, FontFile, countof(gSet.FontFile));
-	}
 
 
 //------------------------------------------------------------------------

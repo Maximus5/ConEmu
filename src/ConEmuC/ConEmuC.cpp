@@ -232,6 +232,7 @@ struct tag_Srv {
 
 	// Optional console font (may be specified in registry)
 	wchar_t szConsoleFont[LF_FACESIZE];
+	wchar_t szConsoleFontFile[MAX_PATH];
 	SHORT nConFontWidth, nConFontHeight;
 } srv = {0};
 
@@ -636,6 +637,8 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 				srv.nConFontWidth = _wtoi(szArg+4);
 			} else if (wcsncmp(szArg, L"/FH=", 4)==0) {
 				srv.nConFontHeight = _wtoi(szArg+4);
+			} else if (wcsncmp(szArg, L"/FF=", 4)==0) {
+				lstrcpynW(srv.szConsoleFontFile, szArg+4, MAX_PATH);
 			}
 		} else
         
@@ -1210,6 +1213,8 @@ int ServerInit()
 	if (srv.nConFontHeight<6 || srv.nConFontWidth <4) {
 		srv.nConFontWidth = 4; srv.nConFontHeight = 6;
 	}
+	if (srv.szConsoleFontFile[0])
+		AddFontResourceEx(srv.szConsoleFontFile, FR_PRIVATE, NULL);
     if (ghLogSize) LogSize(NULL, ":SetConsoleFontSizeTo.before");
     SetConsoleFontSizeTo(ghConWnd, srv.nConFontHeight, srv.nConFontWidth, srv.szConsoleFont);
     if (ghLogSize) LogSize(NULL, ":SetConsoleFontSizeTo.after");
@@ -1421,6 +1426,9 @@ void ServerDone(int aiRc)
     DeleteCriticalSection(&srv.csProc);
     DeleteCriticalSection(&srv.csChar);
 	DeleteCriticalSection(&srv.csChangeSize);
+
+	if (srv.szConsoleFontFile[0])
+		RemoveFontResourceEx(srv.szConsoleFontFile, FR_PRIVATE, NULL);
 }
 
 void CheckConEmuHwnd()
