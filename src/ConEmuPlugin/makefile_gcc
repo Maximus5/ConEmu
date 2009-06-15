@@ -94,7 +94,7 @@ AR = ar
 RANLIB = ranlib
 CXXFLAGS = -mno-cygwin -I $(COMMON) -I $(COMINC) -Wall -Os -funsigned-char -fomit-frame-pointer -fstrict-aliasing -fno-rtti -fno-exceptions $(CXXWIDE) $(USERCPP) $(WINVER)
 CCFLAGS = -mno-cygwin -I $(COMMON) -I $(COMINC) -Wall -Os -funsigned-char -fomit-frame-pointer -fstrict-aliasing -fno-exceptions $(CCWIDE) $(USERCPP) $(WINVER)
-LNKFLAGS = -mno-cygwin -mdll -s -lgcc $(USERLIBSFIRST) $(COMMONLIB) -luser32 -lkernel32 -ladvapi32 -lshell32 $(USERLIBS)
+LNKFLAGS = -mdll -s -lgcc $(USERLIBSFIRST) $(COMMONLIB) -luser32 -lkernel32 -ladvapi32 -lshell32 $(USERLIBS)
 RCFLAGS = -I $(COMINC) $(RCWIDE) $(USERRC)
 
 OBJS = $(patsubst %.cpp,$(OBJDIR)/%.o,$(filter %.cpp,$(SRCS))) $(patsubst %.c,$(OBJDIR)/%.o,$(filter %.c,$(SRCS))) $(RES)

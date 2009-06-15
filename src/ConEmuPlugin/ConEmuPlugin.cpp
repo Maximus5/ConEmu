@@ -32,10 +32,10 @@ WARNING("ѕодозреваю, что в gszRootKey не учитываетс€ им€ пользовател€/конфигурац
 wchar_t gszDbgModLabel[6] = {0};
 #endif
 
-// minimal(?) FAR version 2.0 alpha build 757
+// minimal(?) FAR version 2.0 alpha build 789
 int WINAPI _export GetMinFarVersionW(void)
 {
-	return MAKEFARVERSION(2,0,757);
+	return MAKEFARVERSION(2,0,789);
 }
 
 /* COMMON - пока структуры не различаютс€ */

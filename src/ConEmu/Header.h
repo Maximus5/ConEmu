@@ -7,7 +7,9 @@
 #include <windows.h>
 #include <Shlwapi.h>
 #include <vector>
+#if !defined(__GNUC__)
 #include <crtdbg.h>
+#endif
 
 #ifdef KL_MEM
 #include "c:\\lang\\kl.h"
@@ -32,6 +34,7 @@
 #include "tabbar.h"
 #include "TrayIcon.h"
 #include "ConEmuPipe.h"
+#include "UnicodeChars.h"
 
 
 #define DRAG_L_ALLOWED 0x01
@@ -65,11 +68,14 @@
 #ifndef EVENT_CONSOLE_START_APPLICATION
 #define EVENT_CONSOLE_START_APPLICATION 0x4006
 #define EVENT_CONSOLE_END_APPLICATION   0x4007
-#if defined(_WIN64)
-#define CONSOLE_APPLICATION_16BIT       0x0000
-#else
-#define CONSOLE_APPLICATION_16BIT       0x0001
 #endif
+
+#if !defined(CONSOLE_APPLICATION_16BIT)
+//#if defined(_WIN64)
+#define CONSOLE_APPLICATION_16BIT       0x0000
+//#else
+//#define CONSOLE_APPLICATION_16BIT       0x0001
+//#endif
 #endif
 
 
@@ -84,6 +90,8 @@
 #define isPressed(inp) ((GetKeyState(inp) & 0x8000) == 0x8000)
 #define countof(a) (sizeof((a))/(sizeof(*(a))))
 #define ZeroStruct(s) memset(&(s), sizeof(s), 0)
+#define isDriveLetter(c) ((c>=L'A' && c<=L'Z') || (c>=L'a' && c<=L'z'))
+#define isDigit(c) (c>=L'0' && c<=L'9')
 
 #define PTDIFFTEST(C,D) (((abs(C.x-LOWORD(lParam)))<D) && ((abs(C.y-HIWORD(lParam)))<D))
 
@@ -111,10 +119,12 @@
 #endif
 
 
-#if !defined(__GNUC__)
-#pragma warning (disable : 4005)
-#define _WIN32_WINNT 0x0502
-#endif
+//#if !defined(__GNUC__)
+//#pragma warning (disable : 4005)
+//#if !defined(_WIN32_WINNT)
+//#define _WIN32_WINNT 0x0502
+//#endif
+//#endif
 
 
 
@@ -178,7 +188,7 @@ BOOL __forceinline CoordInRect(COORD& c, RECT& r)
 	return (c.X >= r.left && c.X <= r.right) && (c.Y >= r.top && c.Y <= r.bottom);
 }
 
-#pragma warning(disable: 4311) // 'type cast' : pointer truncation from 'HBRUSH' to 'BOOL'
+//#pragma warning(disable: 4311) // 'type cast' : pointer truncation from 'HBRUSH' to 'BOOL'
 
 
 
@@ -259,30 +269,29 @@ public:
 ///| Global variables |///////////////////////////////////////////////////
 //------------------------------------------------------------------------
 
-
-const wchar_t pHelp[] = L"\
-Console emulation program.\n\
-By default this program launches \"Far.exe\" from the same directory it is in.\n\
-\n\
-Command line switches:\n\
-/? - This help screen.\n\
-/ct - Clear Type anti-aliasing.\n\
-/fs | /max - (Full screen) | (Maximized) mode.\n\
-/multi | /nomulti - enable or disable multiconsole features\n\
-/font <fontname> - Specify the font name.\n\
-/size <fontsize> - Specify the font size.\n\
-/fontfile <fontfilename> - Loads fonts from file.\n\
-/BufferHeight <lines> - may be used with cmd.exe\n\
---/Attach [PID] - intercept console of specified process\n\
-/cmd <commandline> - Command line to start. This must be the last used switch.\n\
-\n\
-Command line examples:\n\
-ConEmu.exe /ct /font \"Lucida Console\" /size 16 /cmd far.exe \"c:\\1 2\\\"\n\
-\n\
-© 2006-2008, Zoin (based on console emulator by SEt)\n\
-© 2009, Maximus5\n\
-NightRoman: drawing process optimization, BufferHeight and other fixes\n\
-dolzenko_: windows switching via GUI tabs\n\
-alex_itd: Drag'n'Drop, RightClick, AltEnter and GUI bars\n\
-Mors: loading font from file\n\
-Maximus5: PictureView support, bugfixes and customizations.";
+#define pHelp \
+L"Console emulation program.\n" \
+L"By default this program launches \"Far.exe\" from the same directory it is in.\n" \
+L"\n" \
+L"Command line switches:\n" \
+L"/? - This help screen.\n" \
+L"/ct - Clear Type anti-aliasing.\n" \
+L"/fs | /max - (Full screen) | (Maximized) mode.\n" \
+L"/multi | /nomulti - enable or disable multiconsole features\n" \
+L"/font <fontname> - Specify the font name.\n" \
+L"/size <fontsize> - Specify the font size.\n" \
+L"/fontfile <fontfilename> - Loads fonts from file.\n" \
+L"/BufferHeight <lines> - may be used with cmd.exe\n" \
+L"--/Attach [PID] - intercept console of specified process\n" \
+L"/cmd <commandline> - Command line to start. This must be the last used switch.\n" \
+L"\n" \
+L"Command line examples:\n" \
+L"ConEmu.exe /ct /font \"Lucida Console\" /size 16 /cmd far.exe \"c:\\1 2\\\"\n" \
+L"\n" \
+L"\x00A9 2006-2008, Zoin (based on console emulator by SEt)\n" \
+L"\x00A9 2009, Maximus5\n" \
+L"NightRoman: drawing process optimization, BufferHeight and other fixes\n" \
+L"dolzenko_: windows switching via GUI tabs\n" \
+L"alex_itd: Drag'n'Drop, RightClick, AltEnter and GUI bars\n" \
+L"Mors: loading font from file\n" \
+L"Maximus5: PictureView support, bugfixes and customizations."

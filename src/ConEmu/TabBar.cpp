@@ -13,6 +13,15 @@ const int TAB_FONT_HEIGTH = 16;
 wchar_t TAB_FONT_FACE[] = L"Tahoma";
 WNDPROC TabBarClass::_defaultTabProc = NULL;
 
+#ifndef TBN_GETINFOTIP
+#define TBN_GETINFOTIP TBN_GETINFOTIPW
+#endif
+#ifndef RB_SETWINDOWTHEME
+#define CCM_SETWINDOWTHEME      (CCM_FIRST + 0xb)
+#define RB_SETWINDOWTHEME       CCM_SETWINDOWTHEME
+#endif
+
+
 TabBarClass::TabBarClass()
 {
     _active = false;
@@ -604,7 +613,7 @@ bool TabBarClass::OnNotify(LPNMHDR nmhdr)
         
         if (iPage >= 0) {
             // ≈сли в табе нет "Е" - тип не нужен
-            if (!wcschr(GetTabText(iPage), L'Е'))
+            if (!wcschr(GetTabText(iPage), L'\x2062' /*"Е"*/))
                 return 0;
         
             if (!GetVConFromTab(iPage, &pVCon, &wndIndex))
@@ -759,86 +768,6 @@ void TabBarClass::OnBufferHeight(BOOL abBufferHeight)
 
     SendMessage(mh_ConmanToolbar, TB_CHECKBUTTON, 14, abBufferHeight);
 }
-
-/*LRESULT TabBarClass::ToolWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
-{
-    switch (messg) {
-        case WM_NOTIFY:
-            {
-                LPNMHDR pHdr = (LPNMHDR)lParam;
-                switch (pHdr->code) {
-                    case TBN_GETINFOTIP:
-                    {
-                        /*if (!gConEmu.isConman() || !gConEmu.ConMan_ProcessCommand)
-                            break;
-                        LPNMTBGETINFOTIP pDisp = (LPNMTBGETINFOTIP)lParam;
-                        if (pDisp->iItem>=1 && pDisp->iItem<=MAX_CONSOLE_COUNT) {
-                            if (!pDisp->pszText || !pDisp->cchTextMax) break;
-                            FarTitle title; memset(&title, 0, sizeof(title));
-                            if (gConEmu.ConMan_ProcessCommand(44/ *GET_TITLEBYNUM* /,pDisp->iItem,(int)&title)) {
-                                lstrcpyn(pDisp->pszText, title.title, pDisp->cchTextMax);
-                            }
-                        } else
-                        if (pDisp->iItem==13) {
-                            lstrcpyn(pDisp->pszText, _T("Create new console"), pDisp->cchTextMax);
-                        } else
-                        if (pDisp->iItem==14) {
-                            lstrcpyn(pDisp->pszText, _T("Alternative console"), pDisp->cchTextMax);
-                        }* /
-                    }
-                    break;
-                }
-            }
-            break;
-        case WM_COMMAND:
-            {
-                if (!gConEmu.isConman() || !gConEmu.mh_ConMan || gConEmu.mh_ConMan==INVALID_HANDLE_VALUE)
-                    break;
-
-                //if (!TabBar.GetConsolesTitles)
-                //  TabBar.GetConsolesTitles =
-                //      (GetConsolesTitles_t*)GetProcAddress( gConEmu.mh_Infis, "GetConsolesTitles" );
-                //if (!TabBar.ActivateConsole)
-                //  TabBar.ActivateConsole =
-                //      (ActivateConsole_t*)GetProcAddress( gConEmu.mh_Infis, "ActivateConsole" );
-                if (!TabBar.ConMan_KeyAction)
-                    TabBar.ConMan_KeyAction = (ConMan_KeyAction_t)GetProcAddress( gConEmu.mh_ConMan, "_KeyAction_" );
-                if (!TabBar.ConMan_KeyAction)
-                    break;
-
-                RegShortcut cmd; memset(&cmd, 0, sizeof(cmd));
-                if (wParam>=1 && wParam<=MAX_CONSOLE_COUNT)
-                {
-                    // активировать консоль є
-                    cmd.action = wParam - 1;
-                    //gConEmu.mb_IgnoreSizeChange = true;
-                    //CVirtualConsole* pCon = gConEmu.ActiveCon();
-                    //if (pCon) {
-                    //  COORD sz = {pCon->TextWidth, pCon->TextHeight};
-                        TabBar.ConMan_KeyAction ( &cmd );
-                        //// ”становить размер консоли!
-                        //gConEmu.SetConsoleWindowSize(sz, false);
-                        //gConEmu.mb_IgnoreSizeChange = false;
-                    //}
-                } else
-                if (wParam==13)
-                {
-                    // —оздать новую консоль
-                    cmd.action = 20;
-                    TabBar.ConMan_KeyAction ( &cmd );
-                } else
-                if (wParam==14)
-                {
-                    // переключение между альтернативной консолью
-                    cmd.action = 15;
-                    TabBar.ConMan_KeyAction ( &cmd );
-                }
-            }
-            break;
-    }
-    return DefWindowProc(hWnd, messg, wParam, lParam);
-}
-*/
 
 HWND TabBarClass::CreateToolbar()
 {
@@ -1148,7 +1077,7 @@ void TabBarClass::PrepareTab(ConEmuTab* pTab)
 	        nSplit = nMaxLen*2/3;
         
         _tcsncpy(szEllip, tFileName, nSplit); szEllip[nSplit]=0;
-        _tcscat(szEllip, _T("Е"));
+        _tcscat(szEllip, L"\x2062" /*"Е"*/);
         _tcscat(szEllip, tFileName + origLength - (nMaxLen - nSplit));
         
         tFileName = szEllip;

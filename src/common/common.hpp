@@ -19,7 +19,7 @@
     #define WARNING(s)
     #define PRAGMA_ERROR(s)
 
-    #define CONSOLE_APPLICATION_16BIT 1
+    //#define CONSOLE_APPLICATION_16BIT 1
     
     typedef struct _CONSOLE_SELECTION_INFO {
         DWORD dwFlags;
@@ -286,6 +286,15 @@ struct ForwardedFileInfo
 // ConEmu.dll экспортирует следующие функции
 //HWND WINAPI GetFarHWND();
 //void WINAPI _export GetFarVersion ( FarVersion* pfv );
+
+//#if defined(__GNUC__)
+////typedef DWORD   HWINEVENTHOOK;
+//#define WINEVENT_OUTOFCONTEXT   0x0000  // Events are ASYNC
+//// User32.dll
+//typedef HWINEVENTHOOK (WINAPI* FSetWinEventHook)(DWORD eventMin, DWORD eventMax, HMODULE hmodWinEventProc, WINEVENTPROC pfnWinEventProc, DWORD idProcess, DWORD idThread, DWORD dwFlags);
+//typedef BOOL (WINAPI* FUnhookWinEvent)(HWINEVENTHOOK hWinEventHook);
+//#endif
+
 
 //------------------------------------------------------------------------
 ///| Section |////////////////////////////////////////////////////////////

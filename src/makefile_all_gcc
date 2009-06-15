@@ -1,7 +1,7 @@
-ALLDIRS = ConEmuPlugin \
-          ConEmuC
+ALLDIRS = ConEmu \
+          ConEmuC \
+          ConEmuPlugin
 # ConEmuD
-# ConEmu
 
 
 all: $(ALLDIRS) clean
@@ -16,5 +16,5 @@ $(ALLDIRS): $(FICTIVE)
 .PHONY: clean
 clean:
 	@echo final cleaning
-	@rm -f ../gcc/common/*.* ../gcc/conemuc/*.* ../gcc/ConEmuPlugin/*.* ../gcc/Plugin/*.* ../gcc/*.*
-	@rmdir ../gcc/common ../gcc/conemuc ../gcc/ConEmuPlugin ../gcc/Plugin ../gcc
+	@rm -f ../gcc/common/*.* ../gcc/conemu/*.* ../gcc/conemuc/*.*  ../gcc/ConEmuPlugin/*.* ../gcc/Plugin/*.* ../gcc/*.*
+	@rmdir ../gcc/common ../gcc/conemu ../gcc/conemuc ../gcc/ConEmuPlugin ../gcc/Plugin ../gcc

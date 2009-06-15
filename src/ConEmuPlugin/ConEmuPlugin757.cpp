@@ -4,15 +4,18 @@
 #include "PluginHeader.h"
 
 
+//#define FAR757
 
+#ifdef FAR757
 struct PluginStartupInfo *InfoW757=NULL;
 struct FarStandardFunctions *FSFW757=NULL;
-
+#endif
 
 
 
 void ProcessDragFrom757()
 {
+#ifdef FAR757
 	if (!InfoW757 || !InfoW757->AdvControl)
 		return;
 
@@ -129,10 +132,12 @@ void ProcessDragFrom757()
 		OutDataWrite(&ItemsCount, sizeof(int)); // смена формата
 	}
 	//free(szCurDir);
+#endif
 }
 
 void ProcessDragTo757()
 {
+#ifdef FAR757
 	if (!InfoW757 || !InfoW757->AdvControl)
 		return;
 
@@ -215,10 +220,12 @@ void ProcessDragTo757()
 	OutDataWrite(pfpi, nStructSize);
 
 	free(pfpi); pfpi=NULL;
+#endif
 }
 
 void SetStartupInfoW757(void *aInfo)
 {
+#ifdef FAR757
 	::InfoW757 = (PluginStartupInfo*)calloc(sizeof(PluginStartupInfo),1);
 	::FSFW757 = (FarStandardFunctions*)calloc(sizeof(FarStandardFunctions),1);
 	if (::InfoW757 == NULL || ::FSFW757 == NULL)
@@ -234,13 +241,16 @@ void SetStartupInfoW757(void *aInfo)
 	*pszSlash = 0;
 
 	/*if (!FarHwnd)
+
 		InitHWND((HWND)InfoW757->AdvControl(InfoW757->ModuleNumber, ACTL_GETFARHWND, 0));*/
+#endif
 }
 
 extern int lastModifiedStateW;
 // watch non-modified -> modified editor status change
 int ProcessEditorInputW757(LPCVOID aRec)
 {
+#ifdef FAR757
 	if (!InfoW757)
 		return 0;
 
@@ -259,6 +269,7 @@ int ProcessEditorInputW757(LPCVOID aRec)
 			lastModifiedStateW = currentModifiedState;
 		}
 	}
+#endif
 	return 0;
 }
 
@@ -302,6 +313,7 @@ int ProcessEditorInputW757(LPCVOID aRec)
 
 void UpdateConEmuTabsW757(int event, bool losingFocus, bool editorSave, void* Param/*=NULL*/)
 {
+#ifdef FAR757
 	if (!InfoW757 || !InfoW757->AdvControl)
 		return;
 
@@ -336,10 +348,12 @@ void UpdateConEmuTabsW757(int event, bool losingFocus, bool editorSave, void* Pa
 		InfoW757->EditorControl(ECTL_FREEINFO, &ei);
 
 	SendTabs(tabCount, FALSE, lbCh);
+#endif
 }
 
 void ExitFARW757(void)
 {
+#ifdef FAR757
 	if (InfoW757) {
 		free(InfoW757);
 		InfoW757=NULL;
@@ -348,44 +362,56 @@ void ExitFARW757(void)
 		free(FSFW757);
 		FSFW757=NULL;
 	}
+#endif
 }
 
 int ShowMessage757(int aiMsg, int aiButtons)
 {
+#ifdef FAR757
 	if (!InfoW757 || !InfoW757->Message || !InfoW757->GetMsg)
 		return -1;
 	return InfoW757->Message(InfoW757->ModuleNumber, FMSG_ALLINONE, NULL, 
 		(const wchar_t * const *)InfoW757->GetMsg(InfoW757->ModuleNumber,aiMsg), 0, aiButtons);
+#endif
+	return 0;
 }
 
 LPCWSTR GetMsg757(int aiMsg)
 {
+#ifdef FAR757
 	if (!InfoW757 || !InfoW757->GetMsg)
 		return L"";
 	return InfoW757->GetMsg(InfoW757->ModuleNumber,aiMsg);
+#endif
+	return NULL;
 }
 
 void ReloadMacro757()
 {
+#ifdef FAR757
 	if (!InfoW757 || !InfoW757->AdvControl)
 		return;
 
 	ActlKeyMacro command;
 	command.Command=MCMD_LOADALL;
 	InfoW757->AdvControl(InfoW757->ModuleNumber,ACTL_KEYMACRO,&command);
+#endif
 }
 
 void SetWindow757(int nTab)
 {
+#ifdef FAR757
 	if (!InfoW757 || !InfoW757->AdvControl)
 		return;
 
 	if (InfoW757->AdvControl(InfoW757->ModuleNumber, ACTL_SETCURRENTWINDOW, (void*)nTab))
 		InfoW757->AdvControl(InfoW757->ModuleNumber, ACTL_COMMIT, 0);
+#endif
 }
 
 void PostMacro757(wchar_t* asMacro)
 {
+#ifdef FAR757
 	if (!InfoW757 || !InfoW757->AdvControl) return;
 
 	ActlKeyMacro mcr;
@@ -393,10 +419,12 @@ void PostMacro757(wchar_t* asMacro)
 	mcr.Param.PlainText.SequenceText = asMacro;
 	mcr.Param.PlainText.Flags = KSFLAGS_DISABLEOUTPUT;
 	InfoW757->AdvControl(InfoW757->ModuleNumber, ACTL_KEYMACRO, (void*)&mcr);
+#endif
 }
 
 int ShowPluginMenu757()
 {
+#ifdef FAR757
 	if (!InfoW757)
 		return -1;
 
@@ -412,10 +440,13 @@ int ShowPluginMenu757()
 		NULL, NULL, NULL, NULL, items, nCount);
 
 	return nRc;
+#endif
+	return 0;
 }
 
 BOOL EditOutput757(LPCWSTR asFileName, BOOL abView)
 {
+#ifdef FAR757
 	if (!InfoW757)
 		return FALSE;
 
@@ -437,4 +468,6 @@ BOOL EditOutput757(LPCWSTR asFileName, BOOL abView)
 	}
 
 	return lbRc;
+#endif
+	return FALSE;
 }

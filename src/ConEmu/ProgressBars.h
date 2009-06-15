@@ -14,4 +14,6 @@ protected:
 	typedef HRESULT (STDAPICALLTYPE *SetWindowThemeT)(HWND hwnd,LPCWSTR pszSubAppName,LPCWSTR pszSubIdList);
 	SetWindowThemeT SetWindowThemeF;
 	HMODULE mh_Uxtheme;
+	wchar_t ms_CopyingLocal[64];
+	wchar_t ms_MovingLocal[64];
 };

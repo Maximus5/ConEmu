@@ -43,7 +43,6 @@ template <class T>__forceinline const T& klMax(const T &a, const T &b) {return a
 #define sizeofarray(array) (sizeof(array)/sizeof(*array))
 #define klInit()
 
-#if !defined(__GNUC__)
 
 struct klFile
 	// define KL_File_no_init to skip generation of constructors and destructors
@@ -75,6 +74,7 @@ struct klFile
 	bool Write(const void *buffer, u32 lSize) {return WriteFile(hHandle, buffer, lSize, &iCount, NULL) != 0;}
 };
 
+
 __forceinline void klSplitCommandLine(wchar_t *str, uint *n)
 {
 	*n = 0;
@@ -101,7 +101,6 @@ __forceinline void klSplitCommandLine(wchar_t *str, uint *n)
 	return;
 }
 
-#endif
 
 
 __forceinline u32 __cdecl klMulDivU32(u32 a, u32 b, u32 c)

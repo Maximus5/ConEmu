@@ -129,7 +129,7 @@ int GetCodecClsid(const WCHAR* format, CLSID* pClsid)
 	return -1;  // Failure
 
 } // GetCodecClsid
-#endif
+
 
 BOOL gbMStreamCoInitialized=FALSE;
 class MStream : public IStream
@@ -151,8 +151,9 @@ public:
 		mn_RefCount = 1;
 		mn_DataSize = 4096*1024; mn_DataPos = 0; mn_DataLen = 0;
 		mp_Data = (char*)calloc(mn_DataSize,1);
-		if (mp_Data==NULL)
-			throw "Can't allocate memory";
+		if (mp_Data==NULL) {
+			mn_DataSize = 0;
+		}
 		mb_SelfAlloc = TRUE;
 		if (!gbMStreamCoInitialized) {
 			HRESULT hr = CoInitialize(NULL);
@@ -368,6 +369,7 @@ public:
 		return STG_E_INVALIDFUNCTION;
 	};
 };
+#endif
 
 
 

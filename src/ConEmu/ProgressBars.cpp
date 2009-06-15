@@ -12,6 +12,9 @@ CProgressBars::CProgressBars(HWND hWnd, HINSTANCE hInstance)
 
 	SendMessage(Progressbar1, PBM_SETRANGE, 0, (LPARAM) MAKELPARAM (0, 100));
 	SendMessage(Progressbar2, PBM_SETRANGE, 0, (LPARAM) MAKELPARAM (0, 100));		
+	
+	MultiByteToWideChar(CP_ACP,0,"Копирование",-1,ms_CopyingLocal,countof(ms_CopyingLocal));
+	MultiByteToWideChar(CP_ACP,0,"Перенос",-1,ms_MovingLocal,countof(ms_MovingLocal));
 
 	mh_Uxtheme = LoadLibrary(_T("UxTheme.dll"));
 	if (mh_Uxtheme) {
@@ -56,7 +59,11 @@ void CProgressBars::OnTimer()
 			tmp[2]=ConChar[((TextHeight-4)/2+delta)*TextWidth + (TextWidth-45)/2 + 44];
 			tmp[3]=0;
 			int perc;
+			#if !defined(__GNUC__)
 			swscanf_s(tmp, _T("%i"), &perc);
+			#else
+			swscanf(tmp, _T("%i"), &perc);
+			#endif
 
 			SendMessage(Progressbar1, PBM_SETPOS, perc, 0);
 			SetWindowPos(Progressbar1, 0, 
@@ -73,7 +80,11 @@ void CProgressBars::OnTimer()
 				tmp[2]=ConChar[((TextHeight)/2)*TextWidth + (TextWidth-45)/2 + 44];
 				tmp[3]=0;
 				int perc;
+				#if !defined(__GNUC__)
 				swscanf_s(tmp, _T("%i"), &perc);
+				#else
+				swscanf(tmp, _T("%i"), &perc);
+				#endif
 
 				SendMessage(Progressbar2, PBM_SETPOS, perc, 0);
 				SetWindowPos(Progressbar2, 0, 
@@ -99,10 +110,10 @@ bool CProgressBars::isCoping()
 {
 	//TODO: Локализация
 	LPCTSTR pszTitle = gConEmu.GetTitle();
-	if (wcsstr(pszTitle, _T("Копирование"))
-		|| wcsstr(pszTitle, _T("Copying"))
-		|| wcsstr(pszTitle, _T("Перенос"))
-		|| wcsstr(pszTitle, _T("Moving"))
+	if (wcsstr(pszTitle, ms_CopyingLocal)
+		|| wcsstr(pszTitle, L"Copying")
+		|| wcsstr(pszTitle, ms_MovingLocal)
+		|| wcsstr(pszTitle, L"Moving")
 		)
 		return true;
 	return false;
