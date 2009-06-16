@@ -232,6 +232,7 @@ bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize)
         lbNeedCreateBuffers = TRUE;
 
     if (!mp_RCon->TextWidth() || !mp_RCon->TextHeight()) {
+	    PRAGMA_ERROR("Если тут ошибка - будет просто DC Initialization failed, что не понятно...");
         Assert(mp_RCon->TextWidth() && mp_RCon->TextHeight());
         return false;
     }
@@ -298,8 +299,10 @@ bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize)
         HEAPVAL
     }
     //MCHKHEAP
-    if (!mpsz_ConChar || !mpsz_ConCharSave || !mpn_ConAttr || !mpn_ConAttrSave || !ConCharX || !tmpOem || !TextParts)
+    if (!mpsz_ConChar || !mpsz_ConCharSave || !mpn_ConAttr || !mpn_ConAttrSave || !ConCharX || !tmpOem || !TextParts) {
+	    PRAGMA_ERROR("Если тут ошибка - будет просто DC Initialization failed, что не понятно...");
         return false;
+    }
 
     if (!lbNeedCreateBuffers) {
         HEAPVAL
