@@ -779,10 +779,27 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
         return CERR_NOTENOUGHMEM1;
     }
     
-    if (!bViaCmdExe)
+	lstrcpyW( *psNewCmd, asCmdLine );
+    
+    // Сменим заголовок консоли
+    if (*asCmdLine == L'"') {
+	    if (asCmdLine[1]) {
+		    wchar_t *pszTitle = *psNewCmd;
+		    wchar_t *pszEndQ = pszTitle + lstrlenW(pszTitle) - 1;
+		    if (pszEndQ > (pszTitle+1) && *pszEndQ == L'"') {
+			    *pszEndQ = 0; pszTitle ++;
+		    } else {
+			    pszEndQ = NULL;
+		    }
+		    SetWindowText(ghConWnd, pszTitle);
+		    if (pszEndQ) *pszEndQ = L'"';
+		}
+    } else if (*asCmdLine) {
+	    SetWindowText(ghConWnd, asCmdLine);
+    }
+    
+    if (bViaCmdExe)
     {
-        lstrcpyW( *psNewCmd, asCmdLine );
-    } else {
         if (wcschr(szComSpec, L' ')) {
             (*psNewCmd)[0] = L'"';
             lstrcpyW( (*psNewCmd)+1, szComSpec );
@@ -1160,6 +1177,8 @@ int ServerInit()
     HANDLE hWait[2] = {NULL,NULL};
     wchar_t szComSpec[MAX_PATH+1], szSelf[MAX_PATH+1];
     HMODULE hKernel = GetModuleHandleW (L"kernel32.dll");
+    
+    
     
     if (hKernel) pfnGetConsoleKeyboardLayoutName = (PGETCONSOLEKEYBOARDLAYOUTNAME)GetProcAddress (hKernel, "GetConsoleKeyboardLayoutNameW");
 

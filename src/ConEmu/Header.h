@@ -282,7 +282,7 @@ L"/font <fontname> - Specify the font name.\n" \
 L"/size <fontsize> - Specify the font size.\n" \
 L"/fontfile <fontfilename> - Loads fonts from file.\n" \
 L"/BufferHeight <lines> - may be used with cmd.exe\n" \
-L"--/Attach [PID] - intercept console of specified process\n" \
+/* L"/Attach [PID] - intercept console of specified process\n" */ \
 L"/cmd <commandline> - Command line to start. This must be the last used switch.\n" \
 L"\n" \
 L"Command line examples:\n" \
@@ -293,5 +293,4 @@ L"\x00A9 2009, Maximus5\n" \
 L"NightRoman: drawing process optimization, BufferHeight and other fixes\n" \
 L"dolzenko_: windows switching via GUI tabs\n" \
 L"alex_itd: Drag'n'Drop, RightClick, AltEnter and GUI bars\n" \
-L"Mors: loading font from file\n" \
-L"Maximus5: PictureView support, bugfixes and customizations."
+L"Mors: loading font from file."

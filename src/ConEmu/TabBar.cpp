@@ -405,7 +405,12 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
     for (I = tabIdx; I < nCurCount; I++)
         DeleteItem(I);
 
-    if (nCurTab != -1) {
+    if (mb_InKeySwitching) {
+	    if (mn_CurSelTab >= nCurCount) // ≈сли выбранный таб вылез за границы
+		    mb_InKeySwitching = FALSE;
+    }
+        
+    if (!mb_InKeySwitching && nCurTab != -1) {
         SelectTab(nCurTab);
     }
 
@@ -613,7 +618,7 @@ bool TabBarClass::OnNotify(LPNMHDR nmhdr)
         
         if (iPage >= 0) {
             // ≈сли в табе нет "Е" - тип не нужен
-            if (!wcschr(GetTabText(iPage), L'\x2062' /*"Е"*/))
+            if (!wcschr(GetTabText(iPage), L'\x2026' /*"Е"*/))
                 return 0;
         
             if (!GetVConFromTab(iPage, &pVCon, &wndIndex))
@@ -932,6 +937,7 @@ void TabBarClass::CreateRebar()
 
     if (NULL == (mh_Rebar = CreateWindowEx(WS_EX_TOOLWINDOW, REBARCLASSNAME, NULL,
                 WS_VISIBLE |WS_CHILD|WS_VISIBLE|WS_CLIPSIBLINGS|WS_CLIPCHILDREN|
+                /*CCS_NORESIZE|*/CCS_NOPARENTALIGN|
                 RBS_FIXEDORDER|RBS_AUTOSIZE|/*RBS_VARHEIGHT|*/CCS_NODIVIDER,
                 0,0,rcWnd.right,16, ghWnd, NULL, g_hInstance, NULL)))
         return;
@@ -1077,7 +1083,7 @@ void TabBarClass::PrepareTab(ConEmuTab* pTab)
 	        nSplit = nMaxLen*2/3;
         
         _tcsncpy(szEllip, tFileName, nSplit); szEllip[nSplit]=0;
-        _tcscat(szEllip, L"\x2062" /*"Е"*/);
+        _tcscat(szEllip, L"\x2026" /*"Е"*/);
         _tcscat(szEllip, tFileName + origLength - (nMaxLen - nSplit));
         
         tFileName = szEllip;
@@ -1166,6 +1172,14 @@ void TabBarClass::SwitchCommit()
     FarSendChangeTab(nCurSel);
     
     mb_InKeySwitching = FALSE;
+}
+
+void TabBarClass::SwitchRollback()
+{
+	if (mb_InKeySwitching) {
+		mb_InKeySwitching = FALSE;
+		Update();
+	}
 }
 
 BOOL TabBarClass::CanActivateTab(int nTabIdx)

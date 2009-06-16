@@ -1541,9 +1541,12 @@ HBRUSH CVirtualConsole::PartBrush(wchar_t ch, SHORT nBackIdx, SHORT nForeIdx)
 	//#define	PART_75(f,b) ((((int)f) + ((int)b)*3) / 4)
 	//#define	PART_50(f,b) ((((int)f) + ((int)b)) / 2)
 	//#define	PART_25(f,b) (((3*(int)f) + ((int)b)) / 4)
-	#define	PART_75(f,b) (b + 0.80*(f-b))
-	#define	PART_50(f,b) (b + 0.75*(f-b))
-	#define	PART_25(f,b) (b + 0.50*(f-b))
+	//#define	PART_75(f,b) (b + 0.80*(f-b))
+	//#define	PART_50(f,b) (b + 0.75*(f-b))
+	//#define	PART_25(f,b) (b + 0.50*(f-b))
+	#define	PART_75(f,b) (b + ((gSet.isPartBrush75*(f-b))>>8))
+	#define	PART_50(f,b) (b + ((gSet.isPartBrush50*(f-b))>>8))
+	#define	PART_25(f,b) (b + ((gSet.isPartBrush25*(f-b))>>8))
 
 	if (ch == ucBox75 /* 75% */) {
 		clrMy.rgbRed = PART_75(clrFore.rgbRed,clrBack.rgbRed);
@@ -1560,6 +1563,8 @@ HBRUSH CVirtualConsole::PartBrush(wchar_t ch, SHORT nBackIdx, SHORT nForeIdx)
 		clrMy.rgbGreen = PART_25(clrFore.rgbGreen,clrBack.rgbGreen);
 		clrMy.rgbBlue = PART_25(clrFore.rgbBlue,clrBack.rgbBlue);
 		clrMy.rgbReserved = 0;
+	} else if (ch == L' ' || ch == 0x00A0 /* Non breaking space */) {
+		clrMy.color = clrBack.color;
 	}
 
 	PARTBRUSHES pb;

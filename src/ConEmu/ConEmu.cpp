@@ -2874,6 +2874,18 @@ LRESULT CConEmuMain::OnDestroy(HWND hWnd)
 
 LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 {
+	BOOL lbSetFocus = FALSE;
+	if (messg == WM_SETFOCUS)
+		lbSetFocus = TRUE;
+	else if (messg == WM_ACTIVATE)
+		lbSetFocus = (LOWORD(wParam)==WA_ACTIVE) || (LOWORD(wParam)==WA_CLICKACTIVE);
+	else if (messg == WM_ACTIVATEAPP)
+		lbSetFocus = (wParam!=0);
+
+	if (!lbSetFocus) {
+		TabBar.SwitchRollback();
+	}
+
     if (gSet.isSkipFocusEvents)
         return 0;
         
@@ -2896,16 +2908,6 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 #endif
 
 	if (pVCon /*&& (messg == WM_SETFOCUS || messg == WM_KILLFOCUS)*/) {
-		BOOL lbSetFocus = FALSE;
-		if (messg == WM_SETFOCUS)
-			lbSetFocus = TRUE;
-		else if (messg == WM_KILLFOCUS)
-			lbSetFocus = FALSE;
-		else if (messg == WM_ACTIVATE)
-			lbSetFocus = (LOWORD(wParam)==WA_ACTIVE) || (LOWORD(wParam)==WA_CLICKACTIVE);
-		else if (messg == WM_ACTIVATEAPP)
-			lbSetFocus = (wParam!=0);
-
 		pVCon->RCon()->OnFocus(lbSetFocus);
 	}
     return 0;

@@ -32,6 +32,10 @@ REGEDIT4
 "Experimental"=hex:01
 ;"FontName2"="Lucida Console"
 ;"FontSizeX2"=dword:00000000
+;; For "Experimental" == 2 You may specify the weights of parts (5..250)
+;"PartBrush75"=hex:C8
+;"PartBrush50"=hex:96
+;"PartBrush25"=hex:5A
 
 ;; 1 - Vertical cursor
 "CursorType"=hex:01

@@ -133,7 +133,7 @@ void CSettings::InitSettings()
 ///| Default settings |///////////////////////////////////////////////////
 //------------------------------------------------------------------------
     _tcscpy(sBgImage, _T("c:\\back.bmp"));
-    isFixFarBorders = TRUE;
+    isFixFarBorders = TRUE; isPartBrush75 = 0xC8; isPartBrush50 = 0x96; isPartBrush25 = 0x5A;
     bgImageDarker = 0;
     wndHeight = ntvdmHeight = 25; // NightRoman
     wndWidth = 80;  // NightRoman
@@ -251,6 +251,13 @@ void CSettings::LoadSettings()
         reg.Load(_T("CursorType"), isCursorV);
         reg.Load(_T("CursorColor"), isCursorColor);
         reg.Load(_T("Experimental"), isFixFarBorders);
+        
+        reg.Load(_T("PartBrush75"), isPartBrush75); if (isPartBrush75<5) isPartBrush75=5; else if (isPartBrush75>250) isPartBrush75=250;
+        reg.Load(_T("PartBrush50"), isPartBrush50); if (isPartBrush50<5) isPartBrush50=5; else if (isPartBrush50>250) isPartBrush50=250;
+        reg.Load(_T("PartBrush25"), isPartBrush25); if (isPartBrush25<5) isPartBrush25=5; else if (isPartBrush25>250) isPartBrush25=250;
+        if (isPartBrush50>=isPartBrush75) isPartBrush50=isPartBrush75-10;
+        if (isPartBrush25>=isPartBrush50) isPartBrush25=isPartBrush50-10;
+        
         reg.Load(_T("RightClick opens context menu"), isRClickSendKey);
         reg.Load(_T("AltEnter"), isSentAltEnter);
         reg.Load(_T("Min2Tray"), isMinToTray);

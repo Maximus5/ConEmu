@@ -4,7 +4,7 @@ REGEDIT4
 ; Checkbox 'AltEnter' in ConEmu settings must be On.
 ; Plugin 'Far commands' must be installed.
 
-[HKEY_CURRENT_USER\Software\Far2\KeyMacros\Shell\AltEnter]
+[HKEY_CURRENT_USER\Software\Far\KeyMacros\Shell\AltEnter]
 "Sequence"="CtrlHome e d i t : < Enter"
 "DisableOutput"=dword:00000001
 "Description"="Execute CmdLine and redirect output to Editor"

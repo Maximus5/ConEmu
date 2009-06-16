@@ -48,6 +48,7 @@ public:
     DWORD FontSizeX3;
     bool isFullScreen;
     char isFixFarBorders;
+    BYTE isPartBrush75, isPartBrush50, isPartBrush25;
     bool isCursorV;
     bool isCursorColor;
     char isRClickSendKey;

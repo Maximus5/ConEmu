@@ -44,7 +44,7 @@ protected:
 	std::vector<VConTabs> m_Tab2VCon;
 	BOOL mb_PostUpdateCalled;
 	UINT mn_MsgUpdateTabs;
-	UINT mn_CurSelTab;
+	int mn_CurSelTab;
 	
 	// Tab stack
 	typedef union _ULARGE_INTEGER { 
@@ -90,5 +90,6 @@ public:
 	void SwitchNext();
 	void SwitchPrev();
 	void SwitchCommit();
+	void SwitchRollback();
 	BOOL OnKeyboard(UINT messg, WPARAM wParam, LPARAM lParam);
 };

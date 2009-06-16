@@ -1768,11 +1768,11 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
         //CloseHandle(hPipe);
         return;
     }
-    _ASSERTE(in.hdr.nSize>=sizeof(CESERVER_REQ_HDR) && cbRead>=sizeof(CESERVER_REQ_HDR));
 	if (in.hdr.nVersion != CESERVER_REQ_VER) {
-		gConEmu.ShowOldCmdVersion(pIn->hdr.nCmd, pIn->hdr.nVersion);
+		gConEmu.ShowOldCmdVersion(in.hdr.nCmd, in.hdr.nVersion);
 		return;
 	}
+    _ASSERTE(in.hdr.nSize>=sizeof(CESERVER_REQ_HDR) && cbRead>=sizeof(CESERVER_REQ_HDR));
     if (cbRead < sizeof(CESERVER_REQ_HDR) || /*in.hdr.nSize < cbRead ||*/ in.hdr.nVersion != CESERVER_REQ_VER) {
         //CloseHandle(hPipe);
         return;
