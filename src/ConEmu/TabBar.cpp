@@ -443,7 +443,6 @@ void TabBarClass::UpdatePosition()
         return;
     }
 
-
     RECT client; //, self;
     GetClientRect(ghWnd, &client);
     //GetWindowRect(mh_Tabbar, &self);
@@ -452,7 +451,7 @@ void TabBarClass::UpdatePosition()
         if (mh_Rebar) {
             if (!IsWindowVisible(mh_Rebar))
                 ShowWindow(mh_Rebar, SW_SHOW);
-            MoveWindow(mh_Rebar, 0, 0, client.right, _tabHeight, 1);
+            //MoveWindow(mh_Rebar, 0, 0, client.right, _tabHeight, 1);
         } else {
             if (!IsWindowVisible(mh_Tabbar))
                 ShowWindow(mh_Tabbar, SW_SHOW);
@@ -460,8 +459,13 @@ void TabBarClass::UpdatePosition()
                 MoveWindow(mh_Tabbar, 0, 0, client.right, client.bottom, 1);
             else
                 MoveWindow(mh_Tabbar, 0, 0, client.right, _tabHeight, 1);
+
         }
+		gConEmu.SyncConsoleToWindow();
+		gConEmu.ReSize();
     } else {
+		gConEmu.SyncConsoleToWindow();
+		gConEmu.ReSize();
         if (mh_Rebar) {
             if (IsWindowVisible(mh_Rebar))
                 ShowWindow(mh_Rebar, SW_HIDE);
@@ -470,8 +474,6 @@ void TabBarClass::UpdatePosition()
                 ShowWindow(mh_Tabbar, SW_HIDE);
         }
     }
-
-	gConEmu.ReSize();
 }
 
 void TabBarClass::UpdateWidth()
@@ -869,53 +871,12 @@ HWND TabBarClass::CreateTabbar()
         // ƒобавл€ет закладку, или мен€ет (при необходимости) заголовок существующей
         //AddTab(gConEmu.isFar() ? gSet.szTabPanels : gSet.pszTabConsole, 0);
         AddTab(gConEmu.GetTitle(), 0);
- 
-// Create a toolbar. 
-    /*
-    TBBUTTON buttons[3] = {
-        {0, 1001, TBSTATE_ENABLED|TBSTATE_CHECKED|TBSTATE_MARKED, TBSTYLE_CHECKGROUP},
-        {0, 1002, TBSTATE_ENABLED, TBSTYLE_CHECKGROUP},
-        {0, 0, TBSTATE_ENABLED, BTNS_SEP}
-        };
 
-    mh_Tabbar = CreateWindowEx(0, TOOLBARCLASSNAME, NULL, 
-        WS_CHILD|WS_VISIBLE|CCS_NOPARENTALIGN|CCS_NORESIZE|CCS_NODIVIDER|TBSTYLE_TOOLTIPS|TBSTYLE_LIST, 0, 0, 0, 0, mh_Rebar, 
-        NULL, NULL, NULL); 
- 
-    HFONT hFont = CreateFont(TAB_FONT_HEIGTH, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, ANSI_CHARSET, OUT_DEFAULT_PRECIS, 
-        CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_SWISS, TAB_FONT_FACE);
-    SendMessage(mh_Tabbar, WM_SETFONT, WPARAM (hFont), TRUE);
-
-   SendMessage(mh_Tabbar, TB_BUTTONSTRUCTSIZE, (WPARAM) sizeof(TBBUTTON), 0); 
-   SendMessage(mh_Tabbar, TB_SETEXTENDEDSTYLE, 0, TBSTYLE_EX_HIDECLIPPEDBUTTONS);
-
-   SendMessage(mh_Tabbar, TB_SETBITMAPSIZE, 0, MAKELONG(16,16)); 
-   SendMessage(mh_Tabbar, TB_SETBUTTONSIZE, 0, MAKELONG(200,16));
-   //SendMessage(mh_Tabbar, TB_SETPADDING, 0, MAKELONG(4,4));
-   //SendMessage(mh_Tabbar, TB_SETINDENT, 4, 0);
-   SendMessage(mh_Tabbar, TB_SETBUTTONWIDTH, 0, MAKELONG(100,200));
-   DWORD nStyle = DT_NOPREFIX|DT_CENTER|DT_VCENTER|DT_PATH_ELLIPSIS;
-   SendMessage(mh_Tabbar, TB_SETDRAWTEXTFLAGS, DT_CENTER, DT_CENTER);
-   TBMETRICS tbm = {sizeof(TBMETRICS)};
-   tbm.dwMask = TBMF_PAD|TBMF_BUTTONSPACING;
-   tbm.cxPad = 4; tbm.cyPad = 4;
-   tbm.cxButtonSpacing = 6; tbm.cyButtonSpacing = 4;
-   SendMessage(mh_Tabbar, TB_SETMETRICS, 0, (LPARAM)&tbm);
+		GetClientRect(ghWnd, &rcClient); 
+		TabCtrl_AdjustRect(mh_Tabbar, FALSE, &rcClient);
+		_tabHeight = rcClient.top;
 
 
-
-   
-
-   buttons[0].iString = (INT_PTR)L"Console";
-   buttons[0].fsStyle = BTNS_CHECKGROUP|BTNS_AUTOSIZE|BTNS_NOPREFIX|BTNS_SHOWTEXT;
-   buttons[0].iBitmap = I_IMAGENONE;
-   buttons[1].iString = (INT_PTR)L"Panels";
-   buttons[1].fsStyle = BTNS_CHECKGROUP|BTNS_AUTOSIZE|BTNS_NOPREFIX|BTNS_SHOWTEXT;
-   buttons[1].iBitmap = I_IMAGENONE;
-
-   SendMessage(mh_Tabbar, TB_ADDBUTTONS, 2, (LPARAM)&buttons);
-
-   SendMessage(mh_Tabbar, TB_AUTOSIZE, 0, 0); */
 
    return mh_Tabbar;
 }
@@ -1000,7 +961,7 @@ void TabBarClass::CreateRebar()
 
 
     //GetWindowRect(mh_Rebar, &rc);
-	_tabHeight = rc.bottom - rc.top;
+	//_tabHeight = rc.bottom - rc.top;
     m_Margins = MakeRect(0,_tabHeight,0,0);
     gSet.UpdateMargins(m_Margins);
 

@@ -325,6 +325,8 @@ void CRealConsole::SyncConsole2Window()
     if (!this)
         return;
 
+	//2009-06-17 Попробуем так. Вроде быстрее и наверное ничего блокироваться не должно
+	/*
     if (GetCurrentThreadId() != mn_MonitorThreadID) {
         RECT rcClient; GetClientRect(ghWnd, &rcClient);
         _ASSERTE(rcClient.right>250 && rcClient.bottom>200);
@@ -338,6 +340,7 @@ void CRealConsole::SyncConsole2Window()
         SetEvent(mh_Sync2WindowEvent);
         return;
     }
+	*/
 
     DEBUGLOGFILE("SyncConsoleToWindow\n");
 
