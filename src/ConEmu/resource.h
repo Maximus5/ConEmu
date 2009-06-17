@@ -139,7 +139,7 @@
 #define rMaximized                      1312
 #define rFullScreen                     1313
 #define gbPerformance                   1400
-#define tPerfRead                       1401
+#define tPerfFPS                        1401
 #define tPerfRender                     1402
 #define tPerfBlt                        1403
 #define tPerfInterval                   1404

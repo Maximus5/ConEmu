@@ -123,7 +123,7 @@ protected:
 	HANDLE mh_Heap;
 	LPVOID Alloc(size_t nCount, size_t nSize);
 	void Free(LPVOID ptr);
-	CRITICAL_SECTION csDC;  DWORD ncsTDC;
+	CRITICAL_SECTION csDC;  DWORD ncsTDC; BOOL mb_PaintRequested; BOOL mb_PaintLocked;
 	CRITICAL_SECTION csCON; DWORD ncsTCON;
 	int mn_BackColorIdx; //==0
 	void Box(LPCTSTR szText);

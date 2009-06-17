@@ -1,7 +1,7 @@
 NAME = ConEmu
 SRCS = ConEmuPlugin.cpp \
        ConEmuPlugin789.cpp \
-       ConEmuPlugin757.cpp \
+       ConEmuPlugin995.cpp \
        ConEmuPluginA.cpp \
        setconsoleinfo.cpp \
        ../common/ConEmuCheck.c

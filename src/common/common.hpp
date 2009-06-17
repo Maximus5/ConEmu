@@ -321,28 +321,36 @@ public:
 			mp_cs = NULL;
 		}
 	}
-	void Enter(CRITICAL_SECTION* pcs, DWORD* pTID)
+	bool Enter(CRITICAL_SECTION* pcs, DWORD* pTID, DWORD nTimeout=(DWORD)-1)
 	{
 		Leave(); // если было
 
 		mp_TID = pTID;
 		DWORD dwTID = GetCurrentThreadId();
 		if (dwTID == *pTID)
-			return; // в этой нити уже заблокировано
+			return true; // в этой нити уже заблокировано
 
 		mp_cs = pcs;
 		if (mp_cs) {
 			//OutputDebugString(_T("TryEnterCriticalSection\n"));
-			#ifdef _DEBUG
+			
+			// НАДА. Т.к. может быть задан nTimeout (для DC)
 			DWORD dwTryLockSectionStart = GetTickCount(), dwCurrentTick;
-			#endif
+			
 			if (!TryEnterCriticalSection(mp_cs)) {
 				Sleep(50);
 				while (!TryEnterCriticalSection(mp_cs)) {
 					Sleep(50);
-					OutputDebugString(L"TryEnterCriticalSection failed!!!\n");
-					#ifdef _DEBUG
+					DEBUGSTR(L"TryEnterCriticalSection failed!!!\n");
+					
 					dwCurrentTick = GetTickCount();
+					if ((nTimeout != (DWORD)-1) && ((dwCurrentTick - dwTryLockSectionStart) > nTimeout)) {
+						mp_TID = NULL; mp_cs = NULL;
+						DEBUGSTR(L"TryEnterCriticalSection Timeout!!!\n");
+						return false;
+					}
+					
+					#ifdef _DEBUG
 					if ((dwCurrentTick - dwTryLockSectionStart) > 3000) {
 						#ifndef CSECTION_NON_RAISE
 						_ASSERTE((dwCurrentTick - dwTryLockSectionStart) <= 3000);
@@ -355,6 +363,7 @@ public:
 			//EnterCriticalSection(mp_cs);
 			*mp_TID = dwTID;
 		}
+		return false;
 	}
 	bool isLocked()
 	{

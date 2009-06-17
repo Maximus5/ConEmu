@@ -25,7 +25,8 @@ WNDPROC TabBarClass::_defaultTabProc = NULL;
 TabBarClass::TabBarClass()
 {
     _active = false;
-    _tabHeight = NULL; memset(&m_Margins, 0, sizeof(m_Margins));
+    _tabHeight = 0;
+	memset(&m_Margins, 0, sizeof(m_Margins));
     _titleShouldChange = false;
     _prevTab = -1;
     mb_ChangeAllowed = FALSE;
@@ -303,11 +304,6 @@ bool TabBarClass::IsShown()
     return _active && IsWindowVisible(mh_Tabbar);
 }
 
-/*int TabBarClass::Height()
-{
-    return _tabHeight;
-}*/
-
 BOOL TabBarClass::IsAllowed()
 {
     BOOL lbTabsAllowed = TRUE;
@@ -329,16 +325,17 @@ void TabBarClass::Activate()
     }
 
     _active = true;
+
+	UpdatePosition();
 }
 
 void TabBarClass::Deactivate()
 {
-    if (!_active /*|| !_tabHeight*/)
+    if (!_active)
         return;
 
-    _tabHeight = 0; memset(&m_Margins, 0, sizeof(m_Margins));
+	_active = false;
     UpdatePosition();
-    _active = false;
 }
 
 void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
@@ -360,14 +357,32 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
     ConEmuTab tab = {0};
     
     int V, I, tabIdx = 0, nCurTab = -1;
+	CVirtualConsole* pVCon = NULL;
     VConTabs vct = {NULL};
 
     // Выполняться должно только в основной нити, так что CriticalSection не нужна
     m_Tab2VCon.clear();
+
+	if (!TabBar.IsActive() && gSet.isTabs) {
+		int nTabs = 0;
+		for (V = 0; V < MAX_CONSOLE_COUNT && nTabs < 2; V++) {
+			if (!(pVCon = gConEmu.GetVCon(V))) continue;
+			nTabs += pVCon->RCon()->GetTabCount();
+		}
+		if (nTabs > 1)
+			Activate();
+	} else if (TabBar.IsActive() && gSet.isTabs==2) {
+		int nTabs = 0;
+		for (V = 0; V < MAX_CONSOLE_COUNT && nTabs < 2; V++) {
+			if (!(pVCon = gConEmu.GetVCon(V))) continue;
+			nTabs += pVCon->RCon()->GetTabCount();
+		}
+		if (nTabs <= 1)
+			Deactivate();
+	}
     
     for (V = 0; V < MAX_CONSOLE_COUNT; V++) {
-        CVirtualConsole* pVCon = gConEmu.GetVCon(V);
-        if (!pVCon) continue;
+        if (!(pVCon = gConEmu.GetVCon(V))) continue;
         
         BOOL lbActive = gConEmu.isActive(pVCon);
         
@@ -413,32 +428,6 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
     if (!mb_InKeySwitching && nCurTab != -1) {
         SelectTab(nCurTab);
     }
-
-    
-    if (_tabHeight && tabIdx==1 && tab.Type == 1/*WTYPE_PANELS*/ && gSet.isTabs==2) {
-        // Автоскрытие табов (все редакторы/вьюверы закрыты)
-        Deactivate();
-    } else
-    if (mh_Rebar) {
-        RECT rcWnd; GetWindowRect(mh_Rebar, &rcWnd);
-        m_Margins.top = rcWnd.bottom - rcWnd.top;
-        m_Margins.left = 0;
-        m_Margins.right = 0;
-        m_Margins.bottom = 0;
-    } else
-    if (_tabHeight == NULL && mh_Tabbar)
-    {
-        RECT rcClient, rcWnd;
-        GetClientRect(ghWnd, &rcClient); 
-        rcWnd = rcClient;
-        TabCtrl_AdjustRect(mh_Tabbar, FALSE, &rcClient);
-        _tabHeight = rcClient.top;
-
-        m_Margins.top = rcClient.top;
-        gSet.UpdateMargins(m_Margins);
-
-        UpdatePosition();
-    }
 }
 
 
@@ -449,18 +438,17 @@ RECT TabBarClass::GetMargins()
 
 void TabBarClass::UpdatePosition()
 {
-    if (!_active)
+    if (!mh_Rebar)
     {
         return;
     }
 
-    gConEmu.ReSize();
 
     RECT client; //, self;
     GetClientRect(ghWnd, &client);
     //GetWindowRect(mh_Tabbar, &self);
     
-    if (_tabHeight>0) {
+    if (_active) {
         if (mh_Rebar) {
             if (!IsWindowVisible(mh_Rebar))
                 ShowWindow(mh_Rebar, SW_SHOW);
@@ -482,6 +470,8 @@ void TabBarClass::UpdatePosition()
                 ShowWindow(mh_Tabbar, SW_HIDE);
         }
     }
+
+	gConEmu.ReSize();
 }
 
 void TabBarClass::UpdateWidth()
@@ -1010,7 +1000,8 @@ void TabBarClass::CreateRebar()
 
 
     //GetWindowRect(mh_Rebar, &rc);
-    m_Margins = MakeRect(0,rc.bottom-rc.top,0,0);
+	_tabHeight = rc.bottom - rc.top;
+    m_Margins = MakeRect(0,_tabHeight,0,0);
     gSet.UpdateMargins(m_Margins);
 
     //_hwndTab = mh_Rebar; // пока...

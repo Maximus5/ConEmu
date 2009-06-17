@@ -4,11 +4,11 @@
 /*
   plugin.hpp
 
-  Plugin API for FAR Manager 2.0 build 757
+  Plugin API for FAR Manager 2.0 build 995
 */
 
 #if defined(_MSC_VER)
-#pragma message ("Using plugin.hpp for FAR Manager 2.0 build 757")
+#pragma message ("Using plugin.hpp for FAR Manager 2.0 build 995")
 #endif
 
 /*
@@ -45,7 +45,7 @@ other possible license with no implications from the above license on them.
 
 #define FARMANAGERVERSION_MAJOR 2
 #define FARMANAGERVERSION_MINOR 0
-#define FARMANAGERVERSION_BUILD 757
+#define FARMANAGERVERSION_BUILD 995
 
 #ifndef RC_INVOKED
 
@@ -314,7 +314,6 @@ enum FarMessagesProc{
   DM_SETCOMBOBOXEVENT,
   DM_GETCOMBOBOXEVENT,
 
-  DM_FREEDLGITEM,
   DM_GETCONSTTEXTPTR,
   DM_GETDLGITEMSHORT,
   DM_SETDLGITEMSHORT,
@@ -372,6 +371,8 @@ enum LISTITEMFLAGS {
   LIF_CHECKED            = 0x00020000UL,
   LIF_SEPARATOR          = 0x00040000UL,
   LIF_DISABLE            = 0x00080000UL,
+  LIF_GRAYED             = 0x00100000UL,
+  LIF_HIDDEN             = 0x00200000UL,
   LIF_DELETEUSERDATA     = 0x80000000UL,
 };
 
@@ -613,6 +614,8 @@ enum MENUITEMFLAGS {
   MIF_CHECKED    = 0x00020000UL,
   MIF_SEPARATOR  = 0x00040000UL,
   MIF_DISABLE    = 0x00080000UL,
+  MIF_GRAYED     = 0x00100000UL,
+  MIF_HIDDEN     = 0x00200000UL,
   MIF_USETEXTPTR = 0x80000000UL,
 };
 
@@ -761,7 +764,6 @@ enum FILE_CONTROL_COMMANDS{
 	FCTL_GETPANELITEM,
 	FCTL_GETSELECTEDPANELITEM,
 	FCTL_GETCURRENTPANELITEM,
-	FCTL_FREEPANELITEM,
 	FCTL_GETCURRENTDIRECTORY,
 	FCTL_GETCOLUMNTYPES,
 	FCTL_GETCOLUMNWIDTHS,
@@ -907,7 +909,6 @@ enum ADVANCED_CONTROL_COMMANDS{
   ACTL_GETDIALOGSETTINGS    = 22,
   ACTL_GETSHORTWINDOWINFO   = 23,
   ACTL_REDRAWALL            = 27,
-  ACTL_FREEWINDOWINFO       = 28,
 };
 
 
@@ -1063,8 +1064,10 @@ struct WindowInfo
   int  Type;
   int  Modified;
   int  Current;
-  const wchar_t *TypeName;
-  const wchar_t *Name;
+  wchar_t *TypeName;
+  int TypeNameSize;
+  wchar_t *Name;
+  int NameSize;
 };
 
 typedef INT_PTR (WINAPI *FARAPIADVCONTROL)(
@@ -1086,7 +1089,7 @@ enum VIEWER_CONTROL_COMMANDS {
 
 enum VIEWER_OPTIONS {
   VOPT_SAVEFILEPOSITION=1,
-  VOPT_AUTODETECTTABLE=2,
+  VOPT_AUTODETECTCODEPAGE=2,
 };
 
 enum VIEWER_SETMODE_TYPES {
@@ -1213,13 +1216,14 @@ enum EDITOR_CONTROL_COMMANDS {
   ECTL_GETBOOKMARKS,
   ECTL_TURNOFFMARKINGBLOCK,
   ECTL_DELETEBLOCK,
-  ECTL_FREEINFO, //!!!!!
   ECTL_ADDSTACKBOOKMARK,
   ECTL_PREVSTACKBOOKMARK,
   ECTL_NEXTSTACKBOOKMARK,
   ECTL_CLEARSTACKBOOKMARKS,
   ECTL_DELETESTACKBOOKMARK,
   ECTL_GETSTACKBOOKMARKS,
+  ECTL_UNDOREDO,
+  ECTL_GETFILENAME,
 };
 
 enum EDITOR_SETPARAMETER_TYPES {
@@ -1228,7 +1232,7 @@ enum EDITOR_SETPARAMETER_TYPES {
   ESPT_AUTOINDENT,
   ESPT_CURSORBEYONDEOL,
   ESPT_CHARCODEBASE,
-  ESPT_CHARTABLE,
+  ESPT_CODEPAGE,
   ESPT_SAVEFILEPOSITION,
   ESPT_LOCKMODE,
   ESPT_SETWORDDIV,
@@ -1247,6 +1251,21 @@ struct EditorSetParameter
   } Param;
   DWORD Flags;
   DWORD Reserved2;
+};
+
+
+enum EDITOR_UNDOREDO_COMMANDS {
+  EUR_BEGIN,
+  EUR_END,
+  EUR_UNDO,
+  EUR_REDO
+};
+
+
+struct EditorUndoRedo
+{
+  int Command;
+  DWORD_PTR Reserved[3];
 };
 
 struct EditorGetString
@@ -1281,7 +1300,7 @@ enum EDITOR_OPTIONS {
   EOPT_DELREMOVESBLOCKS  = 0x00000004,
   EOPT_AUTOINDENT        = 0x00000008,
   EOPT_SAVEFILEPOSITION  = 0x00000010,
-  EOPT_AUTODETECTTABLE   = 0x00000020,
+  EOPT_AUTODETECTCODEPAGE   = 0x00000020,
   EOPT_CURSORBEYONDEOL   = 0x00000040,
   EOPT_EXPANDONLYNEWTABS = 0x00000080,
 };
@@ -1303,7 +1322,6 @@ enum EDITOR_CURRENTSTATE {
 struct EditorInfo
 {
   int EditorID;
-  const wchar_t *FileName;
   int WindowSizeX;
   int WindowSizeY;
   int TotalLines;
@@ -1428,7 +1446,7 @@ typedef int     (WINAPIV *FARSTDSSCANF)(const wchar_t *Buffer, const wchar_t *Fo
 typedef void    (WINAPI *FARSTDQSORT)(void *base, size_t nelem, size_t width, int (__cdecl *fcmp)(const void *, const void *));
 typedef void    (WINAPI *FARSTDQSORTEX)(void *base, size_t nelem, size_t width, int (__cdecl *fcmp)(const void *, const void *,void *userparam),void *userparam);
 typedef void   *(WINAPI *FARSTDBSEARCH)(const void *key, const void *base, size_t nelem, size_t width, int (__cdecl *fcmp)(const void *, const void *));
-typedef int     (WINAPI *FARSTDGETFILEOWNER)(const wchar_t *Computer,const wchar_t *Name,wchar_t *Owner);
+typedef int     (WINAPI *FARSTDGETFILEOWNER)(const wchar_t *Computer,const wchar_t *Name,wchar_t *Owner,int Size);
 typedef int     (WINAPI *FARSTDGETNUMBEROFLINKS)(const wchar_t *Name);
 typedef int     (WINAPI *FARSTDATOI)(const wchar_t *s);
 typedef __int64 (WINAPI *FARSTDATOI64)(const wchar_t *s);
@@ -1719,8 +1737,6 @@ enum OPERATION_MODES {
   OPM_QUICKVIEW  =0x0040,
 };
 
-#define MAXSIZE_SHORTCUTDATA  8192
-
 struct OpenPluginInfo
 {
   int                   StructSize;
@@ -1753,6 +1769,7 @@ enum OPENPLUGIN_OPENFROM{
   OPEN_VIEWER       = 6,
   OPEN_FILEPANEL    = 7,
   OPEN_DIALOG       = 8,
+  OPEN_FROMMACRO    = 0x10000,
 };
 
 enum FAR_PKF_FLAGS {

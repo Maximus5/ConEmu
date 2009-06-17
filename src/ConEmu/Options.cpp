@@ -26,6 +26,7 @@ CSettings::CSettings()
     QueryPerformanceFrequency((LARGE_INTEGER *)&mn_Freq);
     memset(mn_Counter, 0, sizeof(*mn_Counter)*(tPerfInterval-gbPerformance));
     memset(mn_CounterMax, 0, sizeof(*mn_CounterMax)*(tPerfInterval-gbPerformance));
+    memset(mn_FPS, 0, sizeof(mn_FPS)); mn_FPS_CUR_FRAME = 0;
     memset(mn_CounterTick, 0, sizeof(*mn_CounterTick)*(tPerfInterval-gbPerformance));
     hBgBitmap = NULL; bgBmp = MakeCoord(0,0); hBgDc = NULL; mh_Font = NULL; mh_Font2 = NULL;
     memset(CharWidth, 0, sizeof(CharWidth));
@@ -1767,9 +1768,22 @@ BOOL CALLBACK CSettings::infoOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARA
 		if (messg == gSet.mn_MsgUpdateCounter) {
             wchar_t sTemp[64];
 			if (gSet.mn_Freq!=0) {
-				double v = (gSet.mn_CounterMax[wParam]/(double)gSet.mn_Freq)*1000;
+				double v = 0;
+				if (wParam != 0) {
+					v = (gSet.mn_CounterMax[wParam]/(double)gSet.mn_Freq)*1000;
+				} else {
+				    i64 tmin = 0, tmax = 0;
+				    tmin = gSet.mn_FPS[0];
+				    for (int i = 0; i < countof(gSet.mn_FPS); i++) {
+					    if (gSet.mn_FPS[i] < tmin) tmin = gSet.mn_FPS[i];
+					    if (gSet.mn_FPS[i] > tmax) tmax = gSet.mn_FPS[i];
+				    }
+				    if (tmax > tmin) {
+					    v = ((double)20) / (tmax - tmin) * gSet.mn_Freq;
+				    }
+				}
 				swprintf(sTemp, _T("%.1f"), v);
-				SetDlgItemText(gSet.hInfo, wParam+tPerfRead, sTemp);
+				SetDlgItemText(gSet.hInfo, wParam+tPerfFPS, sTemp);
 			}
 			return TRUE;
 		}
@@ -1834,7 +1848,7 @@ void CSettings::UpdateTTF(BOOL bNewTTF)
 
 void CSettings::Performance(UINT nID, BOOL bEnd)
 {
-    if (nID == gbPerformance)
+    if (nID == gbPerformance) //groupbox ctrl id
     {
 		if (!gConEmu.isMainThread())
 			return;
@@ -1845,35 +1859,51 @@ void CSettings::Performance(UINT nID, BOOL bEnd)
             swprintf(sTemp, _T("Performance counters (%I64i)"), ((i64)(mn_Freq/1000)));
             SetDlgItemText(hInfo, nID, sTemp);
             
-            for (nID=tPerfRead; mn_Freq && nID<=tPerfInterval; nID++) {
-                //swprintf(sTemp, _T("%I64i"), mn_CounterMax[nID-tPerfRead]);
-				SendMessage(gSet.hInfo, mn_MsgUpdateCounter, nID-tPerfRead, 0);
+            for (nID=tPerfFPS; mn_Freq && nID<=tPerfInterval; nID++) {
+				SendMessage(gSet.hInfo, mn_MsgUpdateCounter, nID-tPerfFPS, 0);
             }
         }
         return;
     }
-    if (nID<tPerfRead || nID>tPerfInterval)
+    if (nID<tPerfFPS || nID>tPerfInterval)
         return;
+        
+    if (nID == tPerfFPS) {
+	    i64 tick2 = 0; //, tmin = 0, tmax = 0;
+	    QueryPerformanceCounter((LARGE_INTEGER *)&tick2);
+	    mn_FPS[mn_FPS_CUR_FRAME] = tick2;
+	    mn_FPS_CUR_FRAME++; if (mn_FPS_CUR_FRAME > countof(mn_FPS)) mn_FPS_CUR_FRAME = 0;
+	    //tmin = mn_FPS[0];
+	    //for (int i = 0; i < countof(mn_FPS); i++) {
+		//    if (mn_FPS[i] < tmin) tmin = mn_FPS[i];
+		//    if (mn_FPS[i] > tmax) tmax = mn_FPS[i];
+	    //}
+	    //if (tmax > tmin)
+        if (ghOpWnd) {
+			PostMessage(gSet.hInfo, mn_MsgUpdateCounter, nID-tPerfFPS, 0);
+        }
+	    return;
+	}        
 
     if (!bEnd) {
-        QueryPerformanceCounter((LARGE_INTEGER *)&(mn_Counter[nID-tPerfRead]));
+        QueryPerformanceCounter((LARGE_INTEGER *)&(mn_Counter[nID-tPerfFPS]));
         return;
-    } else if (!mn_Counter[nID-tPerfRead] || !mn_Freq) {
+    } else if (!mn_Counter[nID-tPerfFPS] || !mn_Freq) {
         return;
     }
     
     i64 tick2;
     QueryPerformanceCounter((LARGE_INTEGER *)&tick2);
-    i64 t = (tick2-mn_Counter[nID-tPerfRead]);
+    i64 t = (tick2-mn_Counter[nID-tPerfFPS]);
     
-    if (mn_CounterMax[nID-tPerfRead]<t || 
-        (GetTickCount()-mn_CounterTick[nID-tPerfRead])>COUNTER_REFRESH)
+    if (mn_CounterMax[nID-tPerfFPS]<t || 
+        (GetTickCount()-mn_CounterTick[nID-tPerfFPS])>COUNTER_REFRESH)
     {
-        mn_CounterMax[nID-tPerfRead] = t;
-        mn_CounterTick[nID-tPerfRead] = GetTickCount();
+        mn_CounterMax[nID-tPerfFPS] = t;
+        mn_CounterTick[nID-tPerfFPS] = GetTickCount();
         
         if (ghOpWnd) {
-			PostMessage(gSet.hInfo, mn_MsgUpdateCounter, nID-tPerfRead, 0);
+			PostMessage(gSet.hInfo, mn_MsgUpdateCounter, nID-tPerfFPS, 0);
         }
     }
 }

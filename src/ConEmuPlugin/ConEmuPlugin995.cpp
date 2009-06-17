@@ -1,31 +1,25 @@
 #include <windows.h>
 #include "..\common\common.hpp"
-#include "..\common\pluginW757.hpp"
+#include "..\common\pluginW995.hpp"
 #include "PluginHeader.h"
 
 
-//#define FAR757
-
-#ifdef FAR757
-struct PluginStartupInfo *InfoW757=NULL;
-struct FarStandardFunctions *FSFW757=NULL;
-#endif
+struct PluginStartupInfo *InfoW995=NULL;
+struct FarStandardFunctions *FSFW995=NULL;
 
 
-
-void ProcessDragFrom757()
+void ProcessDragFrom995()
 {
-#ifdef FAR757
-	if (!InfoW757 || !InfoW757->AdvControl)
+	if (!InfoW995 || !InfoW995->AdvControl)
 		return;
 
 	WindowInfo WInfo;				
     WInfo.Pos=0;
-	InfoW757->AdvControl(InfoW757->ModuleNumber, ACTL_GETSHORTWINDOWINFO, (void*)&WInfo);
+	InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETSHORTWINDOWINFO, (void*)&WInfo);
 	if (!WInfo.Current)
 	{
 		int ItemsCount=0;
-		//WriteFile(hPipe, &ItemsCount, sizeof(int), &cout, NULL);
+		//WriteFile(hPipe, &ItemsCount, sizeof(int), &cout, NULL);				
 		OutDataAlloc(sizeof(ItemsCount));
 		OutDataWrite(&ItemsCount,sizeof(ItemsCount));
 		return;
@@ -33,10 +27,10 @@ void ProcessDragFrom757()
 
 	PanelInfo PInfo;
 	WCHAR *szCurDir=gszDir1; szCurDir[0]=0; //(WCHAR*)calloc(0x400,sizeof(WCHAR));
-	InfoW757->Control(PANEL_ACTIVE, FCTL_GETPANELINFO, NULL, (LONG_PTR)&PInfo);
+	InfoW995->Control(PANEL_ACTIVE, FCTL_GETPANELINFO, NULL, (LONG_PTR)&PInfo);
 	if ((PInfo.PanelType == PTYPE_FILEPANEL || PInfo.PanelType == PTYPE_TREEPANEL) && PInfo.Visible)
 	{
-		InfoW757->Control(PANEL_ACTIVE, FCTL_GETCURRENTDIRECTORY, 0x400, (LONG_PTR)szCurDir);
+		InfoW995->Control(PANEL_ACTIVE, FCTL_GETCURRENTDIRECTORY, 0x400, (LONG_PTR)szCurDir);
 		int nDirLen=0, nDirNoSlash=0;
 		if (szCurDir[0])
 		{
@@ -56,7 +50,7 @@ void ProcessDragFrom757()
 		
 		if (PInfo.SelectedItemsNumber>0)
 		{
-			PluginPanelItem *pi = (PluginPanelItem*)calloc(PInfo.SelectedItemsNumber, sizeof(PluginPanelItem));
+			PluginPanelItem **pi = (PluginPanelItem**)calloc(PInfo.SelectedItemsNumber, sizeof(PluginPanelItem*));
 			bool *bIsFull = (bool*)calloc(PInfo.SelectedItemsNumber, sizeof(bool));
 			int ItemsCount=PInfo.SelectedItemsNumber, i;
 
@@ -65,14 +59,18 @@ void ProcessDragFrom757()
 			// сначала посчитать максимальную длину буфера
 			for (i=0;i<ItemsCount;i++)
 			{
-				if (!InfoW757->Control(PANEL_ACTIVE, FCTL_GETSELECTEDPANELITEM, i, (LONG_PTR)&(pi[i])))
+				size_t sz = InfoW995->Control(PANEL_ACTIVE, FCTL_GETSELECTEDPANELITEM, i, NULL);
+				if (!sz)
+					continue;
+				pi[i] = (PluginPanelItem*)calloc(sz, 1); // размер возвращается в байтах
+				if (!InfoW995->Control(PANEL_ACTIVE, FCTL_GETSELECTEDPANELITEM, i, (LONG_PTR)(pi[i])))
 					continue;
 
 				int nLen=nDirLen+nDirNoSlash;
-				if ((pi[i].FindData.lpwszFileName[0] == L'\\' && pi[i].FindData.lpwszFileName[1] == L'\\') ||
-				    (ISALPHA(pi[i].FindData.lpwszFileName[0]) && pi[i].FindData.lpwszFileName[1] == L':' && pi[i].FindData.lpwszFileName[2] == L'\\'))
+				if ((pi[i]->FindData.lpwszFileName[0] == L'\\' && pi[i]->FindData.lpwszFileName[1] == L'\\') ||
+				    (ISALPHA(pi[i]->FindData.lpwszFileName[0]) && pi[i]->FindData.lpwszFileName[1] == L':' && pi[i]->FindData.lpwszFileName[2] == L'\\'))
 				    { nLen = 0; bIsFull[i] = TRUE; } // это уже полный путь!
-				nLen += lstrlenW(pi[i].FindData.lpwszFileName);
+				nLen += lstrlenW(pi[i]->FindData.lpwszFileName);
 				if (nLen>nMaxLen)
 					nMaxLen = nLen;
 				nWholeLen += (nLen+1);
@@ -90,7 +88,7 @@ void ProcessDragFrom757()
 				//wsprintf(Path, L"%s\\%s", szCurDir, PInfo.SelectedItems[i]->FindData.lpwszFileName);
 				Path[0]=0;
 
-				if (!pi[i].FindData.lpwszFileName) continue; //этот элемент получить не удалось
+				if (!pi[i] || !pi[i]->FindData.lpwszFileName) continue; //этот элемент получить не удалось
 
 				int nLen=0;
 				if (nDirLen>0 && !bIsFull[i]) {
@@ -101,8 +99,8 @@ void ProcessDragFrom757()
 					}
 					nLen = nDirLen+nDirNoSlash;
 				}
-				lstrcpy(Path+nLen, pi[i].FindData.lpwszFileName);
-				nLen += lstrlen(pi[i].FindData.lpwszFileName);
+				lstrcpy(Path+nLen, pi[i]->FindData.lpwszFileName);
+				nLen += lstrlen(pi[i]->FindData.lpwszFileName);
 
 				nLen++;
 				//WriteFile(hPipe, &nLen, sizeof(int), &cout, NULL);
@@ -113,7 +111,7 @@ void ProcessDragFrom757()
 
 			for (i=0;i<ItemsCount;i++)
 			{
-				InfoW757->Control(PANEL_ACTIVE, FCTL_FREEPANELITEM, 0, (LONG_PTR)&(pi[i]));
+				if (pi[i]) free(pi[i]);
 			}
 			free ( pi ); pi = NULL;
 
@@ -132,28 +130,26 @@ void ProcessDragFrom757()
 		OutDataWrite(&ItemsCount, sizeof(int)); // смена формата
 	}
 	//free(szCurDir);
-#endif
 }
 
-void ProcessDragTo757()
+void ProcessDragTo995()
 {
-#ifdef FAR757
-	if (!InfoW757 || !InfoW757->AdvControl)
+	if (!InfoW995 || !InfoW995->AdvControl)
 		return;
 
 	WindowInfo WInfo;				
     WInfo.Pos=0;
-	InfoW757->AdvControl(InfoW757->ModuleNumber, ACTL_GETSHORTWINDOWINFO, (void*)&WInfo);
+	InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETSHORTWINDOWINFO, (void*)&WInfo);
 	if (!WInfo.Current)
 	{
-		//InfoW757->AdvControl(InfoW757->ModuleNumber, ACTL_FREEWINDOWINFO, (void*)&WInfo);
+		//InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_FREEWINDOWINFO, (void*)&WInfo);
 		int ItemsCount=0;
 		//WriteFile(hPipe, &ItemsCount, sizeof(int), &cout, NULL);				
 		OutDataAlloc(sizeof(ItemsCount));
 		OutDataWrite(&ItemsCount,sizeof(ItemsCount));
 		return;
 	}
-	//InfoW757->AdvControl(InfoW757->ModuleNumber, ACTL_FREEWINDOWINFO, (void*)&WInfo);
+	//InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_FREEWINDOWINFO, (void*)&WInfo);
 	
 	PanelInfo PAInfo, PPInfo;
 	ForwardedPanelInfo *pfpi=NULL;
@@ -163,14 +159,14 @@ void ProcessDragTo757()
 	WCHAR *szPDir=gszDir1; szPDir[0]=0; //(WCHAR*)calloc(0x400,sizeof(WCHAR));
 	WCHAR *szADir=gszDir2; szADir[0]=0; //(WCHAR*)calloc(0x400,sizeof(WCHAR));
 	
-	//if (!(lbAOK=InfoW757->Control(PANEL_ACTIVE, FCTL_GETPANELSHORTINFO, &PAInfo)))
-	lbAOK=InfoW757->Control(PANEL_ACTIVE, FCTL_GETPANELINFO, 0, (LONG_PTR)&PAInfo) &&
-		  InfoW757->Control(PANEL_ACTIVE, FCTL_GETCURRENTDIRECTORY, 0x400, (LONG_PTR)szADir);
+	//if (!(lbAOK=InfoW995->Control(PANEL_ACTIVE, FCTL_GETPANELSHORTINFO, &PAInfo)))
+	lbAOK=InfoW995->Control(PANEL_ACTIVE, FCTL_GETPANELINFO, 0, (LONG_PTR)&PAInfo) &&
+		  InfoW995->Control(PANEL_ACTIVE, FCTL_GETCURRENTDIRECTORY, 0x400, (LONG_PTR)szADir);
 	if (lbAOK && szADir)
 		nStructSize += (lstrlen(szADir))*sizeof(WCHAR);
 
-	lbPOK=InfoW757->Control(PANEL_PASSIVE, FCTL_GETPANELINFO, 0, (LONG_PTR)&PPInfo) &&
-		  InfoW757->Control(PANEL_PASSIVE, FCTL_GETCURRENTDIRECTORY, 0x400, (LONG_PTR)szPDir);
+	lbPOK=InfoW995->Control(PANEL_PASSIVE, FCTL_GETPANELINFO, 0, (LONG_PTR)&PPInfo) &&
+		  InfoW995->Control(PANEL_PASSIVE, FCTL_GETCURRENTDIRECTORY, 0x400, (LONG_PTR)szPDir);
 	if (lbPOK && szPDir)
 		nStructSize += (lstrlen(szPDir))*sizeof(WCHAR); // Именно WCHAR! не TCHAR
 
@@ -220,38 +216,34 @@ void ProcessDragTo757()
 	OutDataWrite(pfpi, nStructSize);
 
 	free(pfpi); pfpi=NULL;
-#endif
 }
 
-void SetStartupInfoW757(void *aInfo)
+void SetStartupInfoW995(void *aInfo)
 {
-#ifdef FAR757
-	::InfoW757 = (PluginStartupInfo*)calloc(sizeof(PluginStartupInfo),1);
-	::FSFW757 = (FarStandardFunctions*)calloc(sizeof(FarStandardFunctions),1);
-	if (::InfoW757 == NULL || ::FSFW757 == NULL)
+	::InfoW995 = (PluginStartupInfo*)calloc(sizeof(PluginStartupInfo),1);
+	::FSFW995 = (FarStandardFunctions*)calloc(sizeof(FarStandardFunctions),1);
+	if (::InfoW995 == NULL || ::FSFW995 == NULL)
 		return;
-	*::InfoW757 = *((struct PluginStartupInfo*)aInfo);
-	*::FSFW757 = *((struct PluginStartupInfo*)aInfo)->FSF;
-	::InfoW757->FSF = ::FSFW757;
-	
-	lstrcpynW(gszRootKey, InfoW757->RootKey, MAX_PATH);
+	*::InfoW995 = *((struct PluginStartupInfo*)aInfo);
+	*::FSFW995 = *((struct PluginStartupInfo*)aInfo)->FSF;
+	::InfoW995->FSF = ::FSFW995;
+
+	lstrcpynW(gszRootKey, InfoW995->RootKey, MAX_PATH);
 	WCHAR* pszSlash = gszRootKey+lstrlenW(gszRootKey)-1;
 	if (*pszSlash == L'\\') *(pszSlash--) = 0;
 	while (pszSlash>gszRootKey && *pszSlash!=L'\\') pszSlash--;
 	*pszSlash = 0;
 
+	
 	/*if (!FarHwnd)
-
-		InitHWND((HWND)InfoW757->AdvControl(InfoW757->ModuleNumber, ACTL_GETFARHWND, 0));*/
-#endif
+		InitHWND((HWND)InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETFARHWND, 0));*/
 }
 
 extern int lastModifiedStateW;
 // watch non-modified -> modified editor status change
-int ProcessEditorInputW757(LPCVOID aRec)
+int ProcessEditorInputW995(LPCVOID aRec)
 {
-#ifdef FAR757
-	if (!InfoW757)
+	if (!InfoW995)
 		return 0;
 
 	const INPUT_RECORD *Rec = (const INPUT_RECORD*)aRec;
@@ -259,9 +251,8 @@ int ProcessEditorInputW757(LPCVOID aRec)
 	if (Rec->EventType == KEY_EVENT && Rec->Event.KeyEvent.wVirtualKeyCode > 0  && Rec->Event.KeyEvent.bKeyDown)
 	{
 		EditorInfo ei;
-		InfoW757->EditorControl(ECTL_GETINFO, &ei);
+		InfoW995->EditorControl(ECTL_GETINFO, &ei);
 		int currentModifiedState = ei.CurState == ECSTATE_MODIFIED ? 1 : 0;
-		InfoW757->EditorControl(ECTL_FREEINFO, &ei);
 		if (lastModifiedStateW != currentModifiedState)
 		{
 			// !!! Именно UpdateConEmuTabsW, без версии !!!
@@ -269,11 +260,10 @@ int ProcessEditorInputW757(LPCVOID aRec)
 			lastModifiedStateW = currentModifiedState;
 		}
 	}
-#endif
 	return 0;
 }
 
-/*int ProcessEditorEventW757(int Event, void *Param)
+/*int ProcessEditorEventW995(int Event, void *Param)
 {
 	switch (Event)
 	{
@@ -294,166 +284,174 @@ int ProcessEditorInputW757(LPCVOID aRec)
 	return 0;
 }*/
 
-/*int ProcessViewerEventW757(int Event, void *Param)
+/*int ProcessViewerEventW995(int Event, void *Param)
 {
 	switch (Event)
 	{
 	case VE_CLOSE:
+		OUTPUTDEBUGSTRING(L"VE_CLOSE"); break;
 	//case VE_READ:
+	//	OUTPUTDEBUGSTRING(L"VE_CLOSE"); break;
 	case VE_KILLFOCUS:
+		OUTPUTDEBUGSTRING(L"VE_KILLFOCUS"); break;
 	case VE_GOTFOCUS:
-		{
-			// !!! Именно UpdateConEmuTabsW, без версии !!!
-			UpdateConEmuTabsW(Event, Event == VE_KILLFOCUS, false);
-		}
+		OUTPUTDEBUGSTRING(L"VE_GOTFOCUS"); break;
+	default:
+		return 0;
 	}
+	// !!! Именно UpdateConEmuTabsW, без версии !!!
+	UpdateConEmuTabsW(Event, Event == VE_KILLFOCUS, false);
 	return 0;
 }*/
 
 
-void UpdateConEmuTabsW757(int event, bool losingFocus, bool editorSave, void* Param/*=NULL*/)
+void UpdateConEmuTabsW995(int event, bool losingFocus, bool editorSave, void* Param/*=NULL*/)
 {
-#ifdef FAR757
-	if (!InfoW757 || !InfoW757->AdvControl)
+	if (!InfoW995 || !InfoW995->AdvControl)
 		return;
 
     BOOL lbCh = FALSE;
-	WindowInfo WInfo;
+	WindowInfo WInfo = {0};
+	wchar_t szWNameBuffer[CONEMUTABMAX];
+	WInfo.Name = szWNameBuffer;
+	WInfo.NameSize = CONEMUTABMAX;
 
-	int windowCount = (int)InfoW757->AdvControl(InfoW757->ModuleNumber, ACTL_GETWINDOWCOUNT, NULL);
+	int windowCount = (int)InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETWINDOWCOUNT, NULL);
 	lbCh = (lastWindowCount != windowCount);
 	
 	if (!CreateTabs ( windowCount ))
 		return;
 
-	EditorInfo ei;
-	if (editorSave)
-	{
-		InfoW757->EditorControl(ECTL_GETINFO, &ei);
+	//EditorInfo ei = {0};
+	//if (editorSave)
+	//{
+	//	InfoW995->EditorControl(ECTL_GETINFO, &ei);
+	//}
+
+	ViewerInfo vi = {sizeof(ViewerInfo)};
+	if (event == 206) {
+		if (Param)
+			vi.ViewerID = *(int*)Param;
+		InfoW995->ViewerControl(VCTL_GETINFO, &vi);
 	}
 
 	int tabCount = 0;
 	for (int i = 0; i < windowCount; i++)
 	{
 		WInfo.Pos = i;
-		InfoW757->AdvControl(InfoW757->ModuleNumber, ACTL_GETWINDOWINFO, (void*)&WInfo);
+		InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETWINDOWINFO, (void*)&WInfo);
+		WARNING("Проверить! Как ведет себя ACTL_GETWINDOWINFO при сохранении файла под другим именем");
 		if (WInfo.Type == WTYPE_EDITOR || WInfo.Type == WTYPE_VIEWER || WInfo.Type == WTYPE_PANELS)
 			lbCh |= AddTab(tabCount, losingFocus, editorSave, 
-				WInfo.Type, WInfo.Name, editorSave ? ei.FileName : NULL, 
+				WInfo.Type, WInfo.Name, /*editorSave ? ei.FileName :*/ NULL, 
 				WInfo.Current, WInfo.Modified);
-		InfoW757->AdvControl(InfoW757->ModuleNumber, ACTL_FREEWINDOWINFO, (void*)&WInfo);
+		//InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_FREEWINDOWINFO, (void*)&WInfo);
 	}
 	
-	if (editorSave) 
-		InfoW757->EditorControl(ECTL_FREEINFO, &ei);
+	//if (editorSave) 
+	//	InfoW995->EditorControl(ECTL_FREEINFO, &ei);
+
+	// Viewer в FAR 2 build 9xx не попадает в список окон при событии VE_GOTFOCUS
+	if (!losingFocus && !editorSave && tabCount == 0 && event == 206) {
+		lbCh |= AddTab(tabCount, losingFocus, editorSave, 
+			WTYPE_VIEWER, vi.FileName, NULL, 
+			1, 0);
+	}
+
+#ifdef _DEBUG
+	//WCHAR szDbg[128]; wsprintfW(szDbg, L"Event: %i, count %i\n", event, tabCount);
+	//OutputDebugStringW(szDbg);
+#endif
 
 	SendTabs(tabCount, FALSE, lbCh);
-#endif
 }
 
-void ExitFARW757(void)
+void ExitFARW995(void)
 {
-#ifdef FAR757
-	if (InfoW757) {
-		free(InfoW757);
-		InfoW757=NULL;
+	if (InfoW995) {
+		free(InfoW995);
+		InfoW995=NULL;
 	}
-	if (FSFW757) {
-		free(FSFW757);
-		FSFW757=NULL;
+	if (FSFW995) {
+		free(FSFW995);
+		FSFW995=NULL;
 	}
-#endif
 }
 
-int ShowMessage757(int aiMsg, int aiButtons)
+int ShowMessage995(int aiMsg, int aiButtons)
 {
-#ifdef FAR757
-	if (!InfoW757 || !InfoW757->Message || !InfoW757->GetMsg)
+	if (!InfoW995 || !InfoW995->Message || !InfoW995->GetMsg)
 		return -1;
-	return InfoW757->Message(InfoW757->ModuleNumber, FMSG_ALLINONE, NULL, 
-		(const wchar_t * const *)InfoW757->GetMsg(InfoW757->ModuleNumber,aiMsg), 0, aiButtons);
-#endif
-	return 0;
+	return InfoW995->Message(InfoW995->ModuleNumber, FMSG_ALLINONE, NULL, 
+		(const wchar_t * const *)InfoW995->GetMsg(InfoW995->ModuleNumber,aiMsg), 0, aiButtons);
 }
 
-LPCWSTR GetMsg757(int aiMsg)
+LPCWSTR GetMsg995(int aiMsg)
 {
-#ifdef FAR757
-	if (!InfoW757 || !InfoW757->GetMsg)
+	if (!InfoW995 || !InfoW995->GetMsg)
 		return L"";
-	return InfoW757->GetMsg(InfoW757->ModuleNumber,aiMsg);
-#endif
-	return NULL;
+	return InfoW995->GetMsg(InfoW995->ModuleNumber,aiMsg);
 }
 
-void ReloadMacro757()
+void ReloadMacro995()
 {
-#ifdef FAR757
-	if (!InfoW757 || !InfoW757->AdvControl)
+	if (!InfoW995 || !InfoW995->AdvControl)
 		return;
 
 	ActlKeyMacro command;
 	command.Command=MCMD_LOADALL;
-	InfoW757->AdvControl(InfoW757->ModuleNumber,ACTL_KEYMACRO,&command);
-#endif
+	InfoW995->AdvControl(InfoW995->ModuleNumber,ACTL_KEYMACRO,&command);
 }
 
-void SetWindow757(int nTab)
+void SetWindow995(int nTab)
 {
-#ifdef FAR757
-	if (!InfoW757 || !InfoW757->AdvControl)
+	if (!InfoW995 || !InfoW995->AdvControl)
 		return;
 
-	if (InfoW757->AdvControl(InfoW757->ModuleNumber, ACTL_SETCURRENTWINDOW, (void*)nTab))
-		InfoW757->AdvControl(InfoW757->ModuleNumber, ACTL_COMMIT, 0);
-#endif
+	if (InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_SETCURRENTWINDOW, (void*)nTab))
+		InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_COMMIT, 0);
 }
 
-void PostMacro757(wchar_t* asMacro)
+void PostMacro995(wchar_t* asMacro)
 {
-#ifdef FAR757
-	if (!InfoW757 || !InfoW757->AdvControl) return;
+	if (!InfoW995 || !InfoW995->AdvControl)
+		return;
 
 	ActlKeyMacro mcr;
 	mcr.Command = MCMD_POSTMACROSTRING;
 	mcr.Param.PlainText.SequenceText = asMacro;
 	mcr.Param.PlainText.Flags = KSFLAGS_DISABLEOUTPUT;
-	InfoW757->AdvControl(InfoW757->ModuleNumber, ACTL_KEYMACRO, (void*)&mcr);
-#endif
+	InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_KEYMACRO, (void*)&mcr);
 }
 
-int ShowPluginMenu757()
+int ShowPluginMenu995()
 {
-#ifdef FAR757
-	if (!InfoW757)
+	if (!InfoW995)
 		return -1;
 
 	FarMenuItem items[] = {
-		{(wchar_t*)InfoW757->GetMsg(InfoW757->ModuleNumber,3), 1, 0, 0},
-		{(wchar_t*)InfoW757->GetMsg(InfoW757->ModuleNumber,4), 1, 0, 0}
+		{(wchar_t*)InfoW995->GetMsg(InfoW995->ModuleNumber,3), 1, 0, 0},
+		{(wchar_t*)InfoW995->GetMsg(InfoW995->ModuleNumber,4), 1, 0, 0}
 	};
 	int nCount = sizeof(items)/sizeof(items[0]);
 
-	int nRc = InfoW757->Menu(InfoW757->ModuleNumber, -1,-1, 0, 
+	int nRc = InfoW995->Menu(InfoW995->ModuleNumber, -1,-1, 0, 
 		FMENU_AUTOHIGHLIGHT|FMENU_CHANGECONSOLETITLE|FMENU_WRAPMODE,
-		InfoW757->GetMsg(InfoW757->ModuleNumber,2),
+		InfoW995->GetMsg(InfoW995->ModuleNumber,2),
 		NULL, NULL, NULL, NULL, items, nCount);
 
 	return nRc;
-#endif
-	return 0;
 }
 
-BOOL EditOutput757(LPCWSTR asFileName, BOOL abView)
+BOOL EditOutput995(LPCWSTR asFileName, BOOL abView)
 {
-#ifdef FAR757
-	if (!InfoW757)
+	if (!InfoW995)
 		return FALSE;
 
 	BOOL lbRc = FALSE;
 	if (!abView) {
 		int iRc =
-			InfoW757->Editor(asFileName, InfoW757->GetMsg(InfoW757->ModuleNumber,5), 0,0,-1,-1, 
+			InfoW995->Editor(asFileName, InfoW995->GetMsg(InfoW995->ModuleNumber,5), 0,0,-1,-1, 
 			EF_NONMODAL|EF_IMMEDIATERETURN|EF_DELETEONLYFILEONCLOSE|EF_ENABLE_F6|EF_DISABLEHISTORY,
 			0, 1, 1200);
 		lbRc = (iRc != EEC_OPEN_ERROR);
@@ -461,13 +459,11 @@ BOOL EditOutput757(LPCWSTR asFileName, BOOL abView)
 		#ifdef _DEBUG
 		int iRc =
 		#endif
-			InfoW757->Viewer(asFileName, InfoW757->GetMsg(InfoW757->ModuleNumber,5), 0,0,-1,-1, 
+			InfoW995->Viewer(asFileName, InfoW995->GetMsg(InfoW995->ModuleNumber,5), 0,0,-1,-1, 
 			VF_NONMODAL|VF_IMMEDIATERETURN|VF_DELETEONLYFILEONCLOSE|VF_ENABLE_F6|VF_DISABLEHISTORY,
 			1200);
 		lbRc = TRUE;
 	}
 
 	return lbRc;
-#endif
-	return FALSE;
 }

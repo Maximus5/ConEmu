@@ -1,6 +1,6 @@
 #pragma once
 
-#define SKIP_ALL_FILLRECT
+//#define SKIP_ALL_FILLRECT
 
 class CConEmuChild
 {
@@ -41,6 +41,7 @@ public:
 	static LRESULT CALLBACK ScrollWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 protected:
 	RECT mrc_LastClient;
+	bool mb_LastTabVisible;
 	int mn_ColorIdx;
 	WNDPROC mpfn_ScrollProc;
 };

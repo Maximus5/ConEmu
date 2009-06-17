@@ -201,8 +201,6 @@ public:
 public:
 	void OnBufferHeight(BOOL abBufferHeight);
 	LRESULT OnClose(HWND hWnd);
-	LRESULT OnCopyData(PCOPYDATASTRUCT cds);
-	//LRESULT OnConEmuCmd(BOOL abStarted, HWND ahConWnd, DWORD anConEmuC_PID);
 	LRESULT OnCreate(HWND hWnd);
 	LRESULT OnDestroy(HWND hWnd);
 	LRESULT OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);

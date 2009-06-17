@@ -2663,83 +2663,6 @@ LRESULT CConEmuMain::OnClose(HWND hWnd)
 //	return 0;
 //}
 
-WARNING("WM_COPYDATA убить");
-LRESULT CConEmuMain::OnCopyData(PCOPYDATASTRUCT cds)
-{
-    LRESULT result = 0;
-
-    #ifdef MSGLOGGER
-        WCHAR szDbg[128]; swprintf(szDbg, L"Tabs:Retrieved(%i)\n", cds->dwData);
-        DEBUGSTR(szDbg);
-    #endif
-    
-    if (cds->dwData == 0) {
-        BOOL lbInClose = FALSE;
-        DWORD /*ProcList[2],*/ ProcCount=0;
-        //ProcCount = GetConsoleProcessList(ProcList,2);
-        TODO("хорошо бы разнести загрузку списка процессов и обработку загруженных по ConMan")
-        ProcCount = CheckProcesses(); //m_ActiveConmanIDX, FALSE);
-        if (ProcCount<=2)
-            lbInClose = TRUE;
-
-        // хотя в последнем плагине и не приходит...
-        if (!lbInClose) { // Чтобы табы не прыгали при щелчке по крестику
-            // Приходит из плагина по ExitFAR
-            ForceShowTabs(FALSE); // Скрыть табы
-
-            //CONSOLE_SCREEN_BUFFER_INFO inf; memset(&inf, 0, sizeof(inf));
-            //GetConsoleScreenBufferInfo(pVCon->hConOut(), &inf);
-            //if ((Buffer Height > 0) /*&& (inf.dwSize.Y==(inf.srWindow.Bottom-inf.srWindow.Top+1))*/)
-			if (pVCon->RCon()->isBufferHeight())
-            {
-				TODO("SetConsoleMode");
-                /*DWORD mode = 0;
-                BOOL lb = GetConsoleMode(pVCon->hConIn(), &mode);
-                mode |= ENABLE_QUICK_EDIT_MODE|ENABLE_INSERT_MODE|ENABLE_EXTENDED_FLAGS;
-                lb = SetConsoleMode(pVCon->hConIn(), mode);*/
-            }
-        }
-    } else {
-        BOOL lbNeedInval=FALSE;
-        ConEmuTab* tabs = (ConEmuTab*)cds->lpData;
-        // Если не активен ИЛИ появлились edit/view ИЛИ табы просили отображать всегда
-        // Это сообщение посылает плагин ConEmu при изменениях и входе в FAR
-        if (!TabBar.IsActive() && gSet.isTabs && (cds->dwData>1 || tabs[0].Type!=1/*WTYPE_PANELS*/ || gSet.isTabs==1))
-        {
-            //if ((Buffer Height > 0) /*&& (inf.dwSize.Y==(inf.srWindow.Bottom-inf.srWindow.Top+1))*/)
-			if (pVCon->RCon()->isBufferHeight())
-            {
-                //CONSOLE_SCREEN_BUFFER_INFO inf; memset(&inf, 0, sizeof(inf));
-                //GetConsoleScreenBufferInfo(pVCon->hConOut(), &inf);
-				TODO("SetConsoleMode");
-                /*DWORD mode = 0;
-                BOOL lb = GetConsoleMode(pVCon->hConIn(), &mode);
-                mode &= ~(ENABLE_QUICK_EDIT_MODE|ENABLE_INSERT_MODE);
-                mode |= ENABLE_EXTENDED_FLAGS;
-                lb = SetConsoleMode(pVCon->hConIn(), mode);*/
-            }
-
-            TabBar.Activate();
-            lbNeedInval = TRUE;
-        }
-        //TabBar.Update(tabs, cds->dwData);
-		pVCon->RCon()->SetTabs(tabs, cds->dwData);
-        if (lbNeedInval)
-        {
-            SyncConsoleToWindow();
-            //RECT rc = ConsoleOffsetRect();
-            //rc.bottom = rc.top; rc.top = 0;
-            InvalidateRect(ghWnd, NULL/*&rc*/, FALSE);
-            if (!gSet.isFullScreen && !IsZoomed(ghWnd)) {
-                //SyncWindowToConsole(); -- это делать нельзя, т.к. FAR еще не отработал изменение консоли!
-                gbPostUpdateWindowSize = true;
-            }
-        }
-    }
-
-    return result;
-}
-
 LRESULT CConEmuMain::OnCreate(HWND hWnd)
 {
     ghWnd = hWnd; // ставим сразу, чтобы функции могли пользоваться
@@ -3944,13 +3867,6 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
     {
         TabBar.OnCommand(wParam, lParam);
         result = 0;
-        break;
-    }
-
-    case WM_COPYDATA:
-    {   WARNING("WM_COPYDATA убить");
-        PCOPYDATASTRUCT cds = PCOPYDATASTRUCT(lParam);
-        result = OnCopyData(cds);
         break;
     }
     

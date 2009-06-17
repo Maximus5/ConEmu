@@ -391,8 +391,8 @@ BEGIN
     LISTBOX         lbProcesses,9,139,307,74,NOT LBS_NOTIFY | 
                     LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_HSCROLL | 
                     WS_TABSTOP
-    RTEXT           "Read:",IDC_STATIC,9,17,23,8
-    EDITTEXT        tPerfRead,36,16,43,12,ES_AUTOHSCROLL | ES_READONLY
+    RTEXT           "FPS:",IDC_STATIC,9,17,23,8
+    EDITTEXT        tPerfFPS,36,16,43,12,ES_AUTOHSCROLL | ES_READONLY
     EDITTEXT        tPerfInterval,274,16,43,12,ES_AUTOHSCROLL | ES_READONLY
     RTEXT           "Interval:",IDC_STATIC,240,17,31,8
     GROUPBOX        "Current command line",IDC_STATIC,4,223,319,30

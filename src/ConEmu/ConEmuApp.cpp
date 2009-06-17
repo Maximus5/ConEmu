@@ -59,7 +59,6 @@ void DebugLogMessage(HWND h, UINT m, WPARAM w, LPARAM l, BOOL posted, BOOL extra
     switch (m)
     {
     MSG1(WM_NOTIFY);
-    MSG1(WM_COPYDATA);
     MSG1(WM_PAINT);
     MSG1(WM_TIMER);
     MSG2(WM_SIZING);

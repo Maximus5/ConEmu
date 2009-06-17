@@ -13,7 +13,7 @@
 //#include <string.h>
 //#include <tchar.h>
 #include "..\common\common.hpp"
-#include "..\common\pluginW789.hpp"
+#include "..\common\pluginW995.hpp"
 #include "PluginHeader.h"
 #include <vector>
 
@@ -32,10 +32,12 @@ WARNING("Подозреваю, что в gszRootKey не учитывается имя пользователя/конфигурац
 wchar_t gszDbgModLabel[6] = {0};
 #endif
 
-// minimal(?) FAR version 2.0 alpha build 789
+
+
+// minimal(?) FAR version 2.0 alpha build FAR_X_VER
 int WINAPI _export GetMinFarVersionW(void)
 {
-	return MAKEFARVERSION(2,0,789);
+	return MAKEFARVERSION(2,0,FAR_X_VER);
 }
 
 /* COMMON - пока структуры не различаются */
@@ -143,6 +145,7 @@ BOOL WINAPI DllMain( HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserve
 	switch (ul_reason_for_call) {
 		case DLL_PROCESS_ATTACH:
 			{
+				_ASSERTE(FAR_X_VER<FAR_Y_VER);
 				#ifdef _DEBUG
 				//if (!IsDebuggerPresent()) MessageBoxA(GetForegroundWindow(), "ConEmu.dll loaded", "ConEmu plugin", 0);
 				#endif
@@ -253,7 +256,7 @@ BOOL LoadFarVersion()
 	if (!lbRc) {
 		gFarVersion.dwVerMajor = 2;
 		gFarVersion.dwVerMinor = 0;
-		gFarVersion.dwBuild = 789;
+		gFarVersion.dwBuild = FAR_X_VER;
 	}
 
 	return lbRc;
@@ -344,20 +347,20 @@ void ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData)
 		{
 			if (gFarVersion.dwVerMajor==1)
 				ProcessDragFromA();
-			else if (gFarVersion.dwBuild>=789)
-				ProcessDragFrom789();
+			else if (gFarVersion.dwBuild>=FAR_Y_VER)
+				FUNC_Y(ProcessDragFrom)();
 			else
-				ProcessDragFrom757();
+				FUNC_X(ProcessDragFrom)();
 			break;
 		}
 		case (CMD_DRAGTO):
 		{
 			if (gFarVersion.dwVerMajor==1)
 				ProcessDragToA();
-			else if (gFarVersion.dwBuild>=789)
-				ProcessDragTo789();
+			else if (gFarVersion.dwBuild>=FAR_Y_VER)
+				FUNC_Y(ProcessDragTo)();
 			else
-				ProcessDragTo757();
+				FUNC_X(ProcessDragTo)();
 			break;
 		}
 		case (CMD_SETWINDOW):
@@ -373,10 +376,10 @@ void ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData)
 
 				if (gFarVersion.dwVerMajor==1)
 					SetWindowA(nTab);
-				else if (gFarVersion.dwBuild>=789)
-					SetWindow789(nTab);
+				else if (gFarVersion.dwBuild>=FAR_Y_VER)
+					FUNC_Y(SetWindow)(nTab);
 				else
-					SetWindow757(nTab);
+					FUNC_X(SetWindow)(nTab);
 			}
 			SendTabs(gnCurTabCount, TRUE, TRUE);
 			break;
@@ -659,10 +662,10 @@ void WINAPI _export SetStartupInfoW(void *aInfo)
 {
 	if (!gFarVersion.dwVerMajor) LoadFarVersion();
 
-	if (gFarVersion.dwBuild>=789)
-		SetStartupInfoW789(aInfo);
+	if (gFarVersion.dwBuild>=FAR_Y_VER)
+		FUNC_Y(SetStartupInfoW)(aInfo);
 	else
-		SetStartupInfoW757(aInfo);
+		FUNC_X(SetStartupInfoW)(aInfo);
 
 	gbInfoW_OK = TRUE;
 
@@ -984,10 +987,10 @@ void CheckMacro(BOOL abAllowAPI)
 	if (lbMacroAdded && abAllowAPI) {
 		if (gFarVersion.dwVerMajor==1)
 			ReloadMacroA();
-		else if (gFarVersion.dwBuild>=789)
-			ReloadMacro789();
+		else if (gFarVersion.dwBuild>=FAR_Y_VER)
+			FUNC_Y(ReloadMacro)();
 		else
-			ReloadMacro757();
+			FUNC_X(ReloadMacro)();
 	}
 
 	// First call
@@ -998,10 +1001,10 @@ void CheckMacro(BOOL abAllowAPI)
 
 void UpdateConEmuTabsW(int event, bool losingFocus, bool editorSave, void* Param/*=NULL*/)
 {
-	if (gFarVersion.dwBuild>=789)
-		UpdateConEmuTabsW789(event, losingFocus, editorSave, Param);
+	if (gFarVersion.dwBuild>=FAR_Y_VER)
+		FUNC_Y(UpdateConEmuTabsW)(event, losingFocus, editorSave, Param);
 	else
-		UpdateConEmuTabsW757(event, losingFocus, editorSave, Param);
+		FUNC_X(UpdateConEmuTabsW)(event, losingFocus, editorSave, Param);
 }
 
 BOOL CreateTabs(int windowCount)
@@ -1044,7 +1047,7 @@ BOOL AddTab(int &tabCount, bool losingFocus, bool editorSave,
 	    lbCh = (tabs[0].Current != (losingFocus ? 1 : 0)) ||
 	           (tabs[0].Type != WTYPE_PANELS);
 		tabs[0].Current = losingFocus ? 1 : 0;
-		//lstrcpyn(tabs[0].Name, GetMsgW789(0), CONEMUTABMAX-1);
+		//lstrcpyn(tabs[0].Name, FUNC_Y(GetMsgW)(0), CONEMUTABMAX-1);
 		tabs[0].Name[0] = 0;
 		tabs[0].Pos = 0;
 		tabs[0].Type = WTYPE_PANELS;
@@ -1130,8 +1133,6 @@ void SendTabs(int tabCount, BOOL abFillDataOnly/*=FALSE*/, BOOL abForceSend/*=FA
 		//TODO: возможно, что при переключении окон командой из конэму нужно сразу переслать табы?
 		_ASSERT(gpCmdRet!=NULL);
 		if (!abFillDataOnly && tabCount && gnReqCommand==(DWORD)-1) {
-			//cds.cbData = tabCount * sizeof(ConEmuTab);
-			//SendMessage(ConEmuHwnd, WM_COPYDATA, (WPARAM)FarHwnd, (LPARAM)&cds);
 			// Это нужно делать только если инициировано ФАРОМ. Если запрос прислал ConEmu - не посылать...
 			//if (gnCurTabCount != tabCount /*|| tabCount > 1*/)
 			if (ConEmuHwnd && (abForceSend || gnCurTabCount != tabCount))
@@ -1161,20 +1162,20 @@ int WINAPI _export ProcessEditorInputW(void* Rec)
 {
 	// Даже если мы не под эмулятором - просто запомним текущее состояние
 	//if (!ConEmuHwnd) return 0; // Если мы не под эмулятором - ничего
-	if (gFarVersion.dwBuild>=789)
-		return ProcessEditorInputW789((LPCVOID)Rec);
+	if (gFarVersion.dwBuild>=FAR_Y_VER)
+		return FUNC_Y(ProcessEditorInputW)((LPCVOID)Rec);
 	else
-		return ProcessEditorInputW757((LPCVOID)Rec);
+		return FUNC_X(ProcessEditorInputW)((LPCVOID)Rec);
 }
 
 int WINAPI _export ProcessEditorEventW(int Event, void *Param)
 {
 	// Даже если мы не под эмулятором - просто запомним текущее состояние
 	//if (!ConEmuHwnd) return 0; // Если мы не под эмулятором - ничего
-	/*if (gFarVersion.dwBuild>=789)
-		return ProcessEditorEventW789(Event,Param);
+	/*if (gFarVersion.dwBuild>=FAR_Y_VER)
+		return FUNC_Y(ProcessEditorEventW)(Event,Param);
 	else
-		return ProcessEditorEventW757(Event,Param);*/
+		return FUNC_X(ProcessEditorEventW)(Event,Param);*/
 	static bool sbEditorReading = false;
 	// Вроде коды событий не различаются, да и от ANSI не отличаются...
 	switch (Event)
@@ -1208,10 +1209,10 @@ int WINAPI _export ProcessViewerEventW(int Event, void *Param)
 {
 	// Даже если мы не под эмулятором - просто запомним текущее состояние
 	//if (!ConEmuHwnd) return 0; // Если мы не под эмулятором - ничего
-	/*if (gFarVersion.dwBuild>=789)
-		return ProcessViewerEventW789(Event,Param);
+	/*if (gFarVersion.dwBuild>=FAR_Y_VER)
+		return FUNC_Y(ProcessViewerEventW)(Event,Param);
 	else
-		return ProcessViewerEventW757(Event,Param);*/
+		return FUNC_X(ProcessViewerEventW)(Event,Param);*/
 	// Вроде коды событий не различаются, да и от ANSI не отличаются...
 	switch (Event)
 	{
@@ -1299,20 +1300,21 @@ void   WINAPI _export ExitFARW(void)
 {
 	StopThread();
 
-	if (gFarVersion.dwBuild>=789)
-		ExitFARW789();
+	if (gFarVersion.dwBuild>=FAR_Y_VER)
+		FUNC_Y(ExitFARW)();
 	else
-		ExitFARW757();
+		FUNC_X(ExitFARW)();
 }
 
 void CloseTabs()
 {
-	if (ConEmuHwnd && IsWindow(ConEmuHwnd)) {
-		COPYDATASTRUCT cds;
-		cds.dwData = 0;
-		cds.lpData = &cds.dwData;
-		cds.cbData = sizeof(cds.dwData);
-		SendMessage(ConEmuHwnd, WM_COPYDATA, (WPARAM)FarHwnd, (LPARAM)&cds);
+	if (ConEmuHwnd && IsWindow(ConEmuHwnd) && FarHwnd) {
+		CESERVER_REQ in = {{sizeof(CESERVER_REQ_HDR)}};
+		in.hdr.nCmd = CECMD_TABSCHANGED;
+		in.hdr.nSrcThreadId = GetCurrentThreadId();
+		in.hdr.nVersion = CESERVER_REQ_VER;
+		CESERVER_REQ* pOut = ExecuteGuiCmd(FarHwnd, &in);
+		if (pOut) Free(pOut);
 	}
 }
 
@@ -1395,20 +1397,20 @@ int ShowMessage(int aiMsg, int aiButtons)
 {
 	if (gFarVersion.dwVerMajor==1)
 		return ShowMessageA(aiMsg, aiButtons);
-	else if (gFarVersion.dwBuild>=789)
-		return ShowMessage789(aiMsg, aiButtons);
+	else if (gFarVersion.dwBuild>=FAR_Y_VER)
+		return FUNC_Y(ShowMessage)(aiMsg, aiButtons);
 	else
-		return ShowMessage757(aiMsg, aiButtons);
+		return FUNC_X(ShowMessage)(aiMsg, aiButtons);
 }
 
 LPCWSTR GetMsgW(int aiMsg)
 {
 	if (gFarVersion.dwVerMajor==1)
 		return L"";
-	else if (gFarVersion.dwBuild>=789)
-		return GetMsg789(aiMsg);
+	else if (gFarVersion.dwBuild>=FAR_Y_VER)
+		return FUNC_Y(GetMsg)(aiMsg);
 	else
-		return GetMsg757(aiMsg);
+		return FUNC_X(GetMsg)(aiMsg);
 }
 
 void PostMacro(wchar_t* asMacro)
@@ -1424,10 +1426,10 @@ void PostMacro(wchar_t* asMacro)
 			PostMacroA(pszMacro);
 			Free(pszMacro);
 		}
-	} else if (gFarVersion.dwBuild>=789) {
-		PostMacro789(asMacro);
+	} else if (gFarVersion.dwBuild>=FAR_Y_VER) {
+		FUNC_Y(PostMacro)(asMacro);
 	} else {
-		PostMacro757(asMacro);
+		FUNC_X(PostMacro)(asMacro);
 	}
 }
 
@@ -1688,10 +1690,10 @@ void ShowPluginMenu()
 
 	if (gFarVersion.dwVerMajor==1)
 		nItem = ShowPluginMenuA();
-	else if (gFarVersion.dwBuild>=789)
-		nItem = ShowPluginMenu789();
+	else if (gFarVersion.dwBuild>=FAR_Y_VER)
+		nItem = FUNC_Y(ShowPluginMenu)();
 	else
-		nItem = ShowPluginMenu757();
+		nItem = FUNC_X(ShowPluginMenu)();
 
 	if (nItem < 0)
 		return;
@@ -1713,10 +1715,10 @@ void ShowPluginMenu()
 					BOOL lbRc = FALSE;
 					if (gFarVersion.dwVerMajor==1)
 						lbRc = EditOutputA(pOut->OutputFile.szFilePathName, (nItem==1));
-					else if (gFarVersion.dwBuild>=789)
-						lbRc = EditOutput789(pOut->OutputFile.szFilePathName, (nItem==1));
+					else if (gFarVersion.dwBuild>=FAR_Y_VER)
+						lbRc = FUNC_Y(EditOutput)(pOut->OutputFile.szFilePathName, (nItem==1));
 					else
-						lbRc = EditOutput757(pOut->OutputFile.szFilePathName, (nItem==1));
+						lbRc = FUNC_X(EditOutput)(pOut->OutputFile.szFilePathName, (nItem==1));
 					if (!lbRc) {
 						DeleteFile(pOut->OutputFile.szFilePathName);
 					}

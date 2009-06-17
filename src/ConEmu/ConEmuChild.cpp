@@ -45,12 +45,6 @@ LRESULT CALLBACK CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam
 
     switch (messg)
     {
-    case WM_COPYDATA:
-	    WARNING("WM_COPYDATA убить");
-		// если уж пришло сюда - передадим куда надо
-		result = gConEmu.WndProc ( ghWnd, messg, wParam, lParam );
-		break;
-
 	case WM_SETFOCUS:
 		SetFocus(ghWnd); // Фокус должен быть в главном окне!
 		return 0;
@@ -250,6 +244,7 @@ CConEmuBack::CConEmuBack()
 	mb_ScrollVisible = FALSE;
 	mpfn_ScrollProc = NULL;
 	memset(&mrc_LastClient, 0, sizeof(mrc_LastClient));
+	mb_LastTabVisible = false;
 #ifdef _DEBUG
 	mn_ColorIdx = 1;
 #else
@@ -413,9 +408,13 @@ void CConEmuBack::Resize()
 	//RECT rc = gConEmu.ConsoleOffsetRect();
 	RECT rcClient; GetClientRect(ghWnd, &rcClient);
 
-	if (memcmp(&rcClient, &mrc_LastClient, sizeof(RECT))==0)
-		return; // ничего не менялось
+	bool bTabsShown = TabBar.IsShown();
+	if (mb_LastTabVisible == bTabsShown) {
+		if (memcmp(&rcClient, &mrc_LastClient, sizeof(RECT))==0)
+			return; // ничего не менялось
+	}
 	memmove(&mrc_LastClient, &rcClient, sizeof(RECT)); // сразу запомним
+	mb_LastTabVisible = bTabsShown;
 
 	RECT rcScroll; GetWindowRect(mh_WndScroll, &rcScroll);
 

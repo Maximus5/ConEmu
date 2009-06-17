@@ -14,6 +14,12 @@
 
 #define ISALPHA(c) ((((c) >= (BYTE)'c') && ((c) <= (BYTE)'z')) || (((c) >= (BYTE)'C') && ((c) <= (BYTE)'Z')))
 
+#define FAR_X_VER 789
+#define FAR_Y_VER 995
+#define FUNC_X(fn) fn##789
+#define FUNC_Y(fn) fn##995
+
+
 extern int lastModifiedStateW;
 extern WCHAR gszDir1[CONEMUTABMAX], gszDir2[CONEMUTABMAX], gszRootKey[MAX_PATH];
 extern int maxTabCount, lastWindowCount;
@@ -35,28 +41,28 @@ void SendTabs(int tabCount, BOOL abFillDataOnly=FALSE, BOOL abForceSend=FALSE);
 
 void InitHWND(HWND ahFarHwnd);
 
-int ProcessEditorInputW789(LPCVOID Rec);
-int ProcessEditorInputW757(LPCVOID Rec);
-int ProcessEditorEventW789(int Event, void *Param);
-int ProcessEditorEventW757(int Event, void *Param);
-int ProcessViewerEventW789(int Event, void *Param);
-int ProcessViewerEventW757(int Event, void *Param);
+int FUNC_X(ProcessEditorInputW)(LPCVOID Rec);
+int FUNC_Y(ProcessEditorInputW)(LPCVOID Rec);
+int FUNC_X(ProcessEditorEventW)(int Event, void *Param);
+int FUNC_Y(ProcessEditorEventW)(int Event, void *Param);
+int FUNC_X(ProcessViewerEventW)(int Event, void *Param);
+int FUNC_Y(ProcessViewerEventW)(int Event, void *Param);
 void StopThread(void);
-void ExitFARW789(void);
-void ExitFARW757(void);
-void UpdateConEmuTabsW789(int event, bool losingFocus, bool editorSave, void* Param=NULL);
-void UpdateConEmuTabsW757(int event, bool losingFocus, bool editorSave, void* Param=NULL);
-void SetStartupInfoW789(void *aInfo);
-void SetStartupInfoW757(void *aInfo);
-void ProcessDragFrom789();
-void ProcessDragFrom757();
+void FUNC_X(ExitFARW)(void);
+void FUNC_Y(ExitFARW)(void);
+void FUNC_X(UpdateConEmuTabsW)(int event, bool losingFocus, bool editorSave, void* Param=NULL);
+void FUNC_Y(UpdateConEmuTabsW)(int event, bool losingFocus, bool editorSave, void* Param=NULL);
+void FUNC_X(SetStartupInfoW)(void *aInfo);
+void FUNC_Y(SetStartupInfoW)(void *aInfo);
+void FUNC_X(ProcessDragFrom)();
+void FUNC_Y(ProcessDragFrom)();
 void ProcessDragFromA();
-void ProcessDragTo789();
-void ProcessDragTo757();
+void FUNC_X(ProcessDragTo)();
+void FUNC_Y(ProcessDragTo)();
 void ProcessDragToA();
 void SetWindowA(int nTab);
-void SetWindow789(int nTab);
-void SetWindow757(int nTab);
+void FUNC_X(SetWindow)(int nTab);
+void FUNC_Y(SetWindow)(int nTab);
 
 void CloseTabs();
 
@@ -72,18 +78,18 @@ void CheckMacro(BOOL abAllowAPI);
 BOOL IsKeyChanged(BOOL abAllowReload);
 int ShowMessage(int aiMsg, int aiButtons);
 int ShowMessageA(int aiMsg, int aiButtons);
-int ShowMessage789(int aiMsg, int aiButtons);
-int ShowMessage757(int aiMsg, int aiButtons);
+int FUNC_X(ShowMessage)(int aiMsg, int aiButtons);
+int FUNC_Y(ShowMessage)(int aiMsg, int aiButtons);
 void ReloadMacroA();
-void ReloadMacro789();
-void ReloadMacro757();
+void FUNC_X(ReloadMacro)();
+void FUNC_Y(ReloadMacro)();
 void PostMacro(wchar_t* asMacro);
 void PostMacroA(char* asMacro);
-void PostMacro789(wchar_t* asMacro);
-void PostMacro757(wchar_t* asMacro);
+void FUNC_X(PostMacro)(wchar_t* asMacro);
+void FUNC_Y(PostMacro)(wchar_t* asMacro);
 LPCWSTR GetMsgW(int aiMsg);
-LPCWSTR GetMsg757(int aiMsg);
-LPCWSTR GetMsg789(int aiMsg);
+LPCWSTR FUNC_Y(GetMsg)(int aiMsg);
+LPCWSTR FUNC_X(GetMsg)(int aiMsg);
 
 extern DWORD gnReqCommand;
 extern int gnPluginOpenFrom;
@@ -97,9 +103,9 @@ DWORD WINAPI ServerThreadCommand(LPVOID ahPipe);
 
 void ShowPluginMenu();
 int ShowPluginMenuA();
-int ShowPluginMenu757();
-int ShowPluginMenu789();
+int FUNC_Y(ShowPluginMenu)();
+int FUNC_X(ShowPluginMenu)();
 
 BOOL EditOutputA(LPCWSTR asFileName, BOOL abView);
-BOOL EditOutput757(LPCWSTR asFileName, BOOL abView);
-BOOL EditOutput789(LPCWSTR asFileName, BOOL abView);
+BOOL FUNC_Y(EditOutput)(LPCWSTR asFileName, BOOL abView);
+BOOL FUNC_X(EditOutput)(LPCWSTR asFileName, BOOL abView);
