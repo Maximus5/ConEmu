@@ -177,7 +177,8 @@ BOOL CRealConsole::SetConsoleSize(COORD size, DWORD anCmdID/*=CECMD_SETSIZE*/)
     _ASSERTE(hConWnd && ms_ConEmuC_Pipe[0]);
 
     if (!hConWnd || ms_ConEmuC_Pipe[0] == 0) {
-        Box(_T("Console was not created (CRealConsole::SetConsoleSize)"));
+	    // 19.06.2009 Maks - Она действительно может быть еще не создана
+        //Box(_T("Console was not created (CRealConsole::SetConsoleSize)"));
         return false; // консоль пока не создана?
     }
     
