@@ -202,7 +202,7 @@ BOOL CConEmuPipe::Init(LPCTSTR asOp, BOOL abSilent)
 }
 
 // Не интересуется результатом команды!
-BOOL CConEmuPipe::Execute(int nCmd, LPVOID apData, UINT anDataSize)
+BOOL CConEmuPipe::Execute(int nCmd, LPCVOID apData, UINT anDataSize)
 {
 	WARNING("Если указан mdw_Timeout - создать нить и выполнять команду в ней. Ожидать нить не более и прибить ее, если пришел Timeout");
 

@@ -590,21 +590,6 @@ void CDragDrop::RetrieveDragToInfo(IDataObject * pDataObject)
 		//WriteFile(pipe.hPipe, &cmd, sizeof(cmd), &cbWritten, NULL); 
 		if (pipe.Execute(CMD_DRAGTO))
 		{
-			//gConEmu.DnDstep(_T("DnD: Checking for plugin (1 sec)"));
-			//// Подождем немножко, проверим что плагин живой
-			//cbWritten = WaitForSingleObject(pipe.hEventAlive, CONEMUALIVETIMEOUT);
-			//if (cbWritten!=WAIT_OBJECT_0) {
-			//	TCHAR szErr[MAX_PATH];
-			//	wsprintf(szErr, _T("ConEmu plugin is not active!\r\nProcessID=%i"), pipe.nPID);
-			//	MBoxA(szErr);
-			//} else {
-			//	gConEmu.DnDstep(_T("DnD: Checking for plugin (10 sec)"));
-			//	cbWritten = WaitForSingleObject(pipe.hEventReady, CONEMUREADYTIMEOUT);
-			//	if (cbWritten!=WAIT_OBJECT_0) {
-			//		TCHAR szErr[MAX_PATH];
-			//		wsprintf(szErr, _T("Command waiting time exceeds!\r\nConEmu plugin is locked?\r\nProcessID=%i"), pipe.nPID);
-			//		MBoxA(szErr);
-			//	} else {
 					DWORD cbBytesRead=0;
 					int cbStructSize=0;
 					if (m_pfpi) {free(m_pfpi); m_pfpi=NULL;}
@@ -708,28 +693,9 @@ void CDragDrop::Drag()
 	CConEmuPipe pipe(gConEmu.GetFarPID(), CONEMUREADYTIMEOUT);
 	if (pipe.Init(_T("CDragDrop::Drag")))
 	{
-		//isInDrag=true; // return в теле не допускать - нужно сбросить в конце
-
-		//PipeCmd cmd=DragFrom;
 		DWORD cbWritten=0;
-		//WriteFile(pipe.hPipe, &cmd, sizeof(cmd), &cbWritten, NULL); 
 		if (pipe.Execute(CMD_DRAGFROM))
 		{
-			//gConEmu.DnDstep(_T("DnD: Checking for plugin (1 sec)"));
-			//// Подождем немножко, проверим что плагин живой
-			//cbWritten = WaitForSingleObject(pipe.hEventAlive, CONEMUALIVETIMEOUT);
-			//if (cbWritten!=WAIT_OBJECT_0) {
-			//	TCHAR szErr[MAX_PATH];
-			//	wsprintf(szErr, _T("ConEmu plugin is not active!\r\nProcessID=%i"), pipe.nPID);
-			//	MBoxA(szErr);
-			//} else {
-			//	gConEmu.DnDstep(_T("DnD: Waiting for result (10 sec)"));
-			//	cbWritten = WaitForSingleObject(pipe.hEventReady, CONEMUREADYTIMEOUT);
-			//	if (cbWritten!=WAIT_OBJECT_0) {
-			//		TCHAR szErr[MAX_PATH];
-			//		wsprintf(szErr, _T("Command waiting time exceeds!\r\nConEmu plugin is locked?\r\nProcessID=%i"), pipe.nPID);
-			//		MBoxA(szErr);
-			//	} else {
 					gConEmu.DnDstep(_T("DnD: Recieving data"));
 					DWORD cbBytesRead=0;
 					int nWholeSize=0;
@@ -766,11 +732,32 @@ void CDragDrop::Drag()
 							curr+=wcslen(curr)+1;
 							nFilesCount ++;
 						}
+
+						int cbStructSize=0;
+						if (m_pfpi) {free(m_pfpi); m_pfpi=NULL;}
+						if (pipe.Read(&cbStructSize, sizeof(int), &cbBytesRead))
+						{
+							if (cbStructSize>sizeof(ForwardedPanelInfo)) {
+								m_pfpi = (ForwardedPanelInfo*)calloc(cbStructSize, 1);
+
+								pipe.Read(m_pfpi, cbStructSize, &cbBytesRead);
+
+								m_pfpi->pszActivePath = (WCHAR*)(((char*)m_pfpi)+m_pfpi->ActivePathShift);
+								//Slash на конце нам не нужен
+								int nPathLen = lstrlenW( m_pfpi->pszActivePath );
+								if (nPathLen>0 && m_pfpi->pszActivePath[nPathLen-1]==_T('\\'))
+									m_pfpi->pszActivePath[nPathLen-1] = 0;
+								
+								m_pfpi->pszPassivePath = (WCHAR*)(((char*)m_pfpi)+m_pfpi->PassivePathShift);
+								//Slash на конце нам не нужен
+								nPathLen = lstrlenW( m_pfpi->pszPassivePath );
+								if (nPathLen>0 && m_pfpi->pszPassivePath[nPathLen-1]==_T('\\'))
+									m_pfpi->pszPassivePath[nPathLen-1] = 0;
+							}
+						}
 						// Сразу закроем
 						pipe.Close();
 						
-					//		int size = MakeDropWord(szDraggedPath);// Длинна null,null строки
-					//		if (size <= 1) return;
 						int size=(curr-szDraggedPath)*sizeof(wchar_t)+2;
 						
 						MCHKHEAP
@@ -916,7 +903,8 @@ void CDragDrop::Drag()
 						//CFSTR_PREFERREDDROPEFFECT, FD_LINKUI 
 						
 						// Сразу получим информацию о путях панелей...
-						RetrieveDragToInfo(mp_DataObject);
+						if (!m_pfpi) // если это уже не сделали
+							RetrieveDragToInfo(mp_DataObject);
 						
 						//gConEmu.DnDstep(_T("DnD: Finally, DoDragDrop"));
 						gConEmu.DnDstep(NULL);

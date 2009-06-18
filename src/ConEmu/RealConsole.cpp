@@ -2,7 +2,7 @@
 // WARNING!!! Содержит юникодные символы !!!
 
 #include "Header.h"
-#include <Tlhelp32.h>
+        #include <Tlhelp32.h>
 
 WARNING("При быстром наборе текста курсор часто 'замерзает' на одной из букв, но продолжает двигаться дальше");
 
@@ -66,6 +66,7 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
     //mh_CursorChanged = NULL;
     mb_Detached = FALSE;
     mb_FullRetrieveNeeded = FALSE;
+    memset(&m_LastMouse, 0, sizeof(m_LastMouse));
 
     mn_ActiveStatus = 0;
     isShowConsole = false;
@@ -90,7 +91,7 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
     mn_LastConFullReadTick = 0; mn_LastConRgnReadTick = 0;
     mh_LogInput = NULL; mpsz_LogInputFile = NULL; mpsz_LogPackets = NULL; mn_LogPackets = 0;
 
-    mb_UseLogs = gSet.isAdvLogging;
+    m_UseLogs = gSet.isAdvLogging;
 
     SetTabs(NULL,1); // Для начала - показывать вкладку Console, а там ФАР разберется
     
@@ -325,8 +326,8 @@ void CRealConsole::SyncConsole2Window()
     if (!this)
         return;
 
-	//2009-06-17 Попробуем так. Вроде быстрее и наверное ничего блокироваться не должно
-	/*
+    //2009-06-17 Попробуем так. Вроде быстрее и наверное ничего блокироваться не должно
+    /*
     if (GetCurrentThreadId() != mn_MonitorThreadID) {
         RECT rcClient; GetClientRect(ghWnd, &rcClient);
         _ASSERTE(rcClient.right>250 && rcClient.bottom>200);
@@ -340,7 +341,7 @@ void CRealConsole::SyncConsole2Window()
         SetEvent(mh_Sync2WindowEvent);
         return;
     }
-	*/
+    */
 
     DEBUGLOGFILE("SyncConsoleToWindow\n");
 
@@ -1118,6 +1119,21 @@ void CRealConsole::SendMouseEvent(UINT messg, WPARAM wParam, int x, int y)
 
 void CRealConsole::SendConsoleEvent(INPUT_RECORD* piRec)
 {
+    if (piRec->EventType == MOUSE_EVENT) {
+    	if (piRec->Event.MouseEvent.dwEventFlags == MOUSE_MOVED) {
+    		if (m_LastMouse.dwButtonState     == piRec->Event.MouseEvent.dwButtonState 
+    		 && m_LastMouse.dwControlKeyState == piRec->Event.MouseEvent.dwControlKeyState
+    		 && m_LastMouse.dwMousePosition.X == piRec->Event.MouseEvent.dwMousePosition.X
+    		 && m_LastMouse.dwMousePosition.Y == piRec->Event.MouseEvent.dwMousePosition.Y)
+    		 return; // Это событие лишнее. Движения мышки реально не было, кнопки не менялись
+    	}
+        // Запомним
+        m_LastMouse.dwMousePosition   = piRec->Event.MouseEvent.dwMousePosition;
+        m_LastMouse.dwEventFlags      = piRec->Event.MouseEvent.dwEventFlags;
+        m_LastMouse.dwButtonState     = piRec->Event.MouseEvent.dwButtonState;
+        m_LastMouse.dwControlKeyState = piRec->Event.MouseEvent.dwControlKeyState;
+    }
+
     WARNING("Некоторые события можно игнорировать, если ConEmuC не смог их принять сразу (например Focus)");
     WARNING("Отсыл сообщений перенаправлять в нить RealConsole, а не делать в главной нити. Иначе GUI может заблокироваться!");
 
@@ -2921,7 +2937,7 @@ void CRealConsole::OnFocus(BOOL abFocused)
 
 void CRealConsole::CreateLogFiles()
 {
-    if (!mb_UseLogs || mh_LogInput) return; // уже
+    if (!m_UseLogs || mh_LogInput) return; // уже
 
     DWORD dwErr = 0;
     wchar_t szFile[MAX_PATH+64], *pszDot;
@@ -2937,7 +2953,6 @@ void CRealConsole::CreateLogFiles()
     *pszDot = 0;
 
     mpsz_LogPackets = (wchar_t*)calloc(pszDot - szFile + 64, 2);
-    wcscpy(mpsz_LogPackets, szFile);
     wsprintf(mpsz_LogPackets+wcslen(mpsz_LogPackets), L"\\ConEmu-recv-%i-%%i.con", mn_ConEmuC_PID); // ConEmu-recv-<ConEmuC_PID>-<index>.con
 
     wsprintfW(pszDot, L"\\ConEmu-input-%i.log", mn_ConEmuC_PID);
@@ -2968,8 +2983,24 @@ void CRealConsole::LogInput(INPUT_RECORD* pRec)
     switch (pRec->EventType) {
     /*case FOCUS_EVENT: sprintf(pszAdd, "FOCUS_EVENT(%i)\r\n", pRec->Event.FocusEvent.bSetFocus);
         break;*/
-    /*case MOUSE_EVENT: sprintf(pszAdd, "MOUSE_EVENT\r\n");
-        break;*/
+    case MOUSE_EVENT: sprintf(pszAdd, "MOUSE_EVENT\r\n");
+        {
+            wsprintfA(pszAdd, "Mouse: {%ix%i} Btns:{", pRec->Event.MouseEvent.dwMousePosition.X, pRec->Event.MouseEvent.dwMousePosition.Y);
+            pszAdd += strlen(pszAdd);
+            if (pRec->Event.MouseEvent.dwButtonState & 1) strcat(pszAdd, "L");
+            if (pRec->Event.MouseEvent.dwButtonState & 2) strcat(pszAdd, "R");
+            if (pRec->Event.MouseEvent.dwButtonState & 4) strcat(pszAdd, "M1");
+            if (pRec->Event.MouseEvent.dwButtonState & 8) strcat(pszAdd, "M2");
+            if (pRec->Event.MouseEvent.dwButtonState & 0x10) strcat(pszAdd, "M3");
+            strcat(pszAdd, "} "); pszAdd += strlen(pszAdd);
+            wsprintfA(pszAdd, "KeyState: 0x%08X ", pRec->Event.MouseEvent.dwControlKeyState);
+            if (pRec->Event.MouseEvent.dwEventFlags & 0x01) strcat(pszAdd, "|MOUSE_MOVED");
+            if (pRec->Event.MouseEvent.dwEventFlags & 0x02) strcat(pszAdd, "|DOUBLE_CLICK");
+            if (pRec->Event.MouseEvent.dwEventFlags & 0x04) strcat(pszAdd, "|MOUSE_WHEELED");
+            if (pRec->Event.MouseEvent.dwEventFlags & 0x08) strcat(pszAdd, "|MOUSE_HWHEELED");
+            strcat(pszAdd, "\r\n");
+            
+        } break;
     case KEY_EVENT:
         {
             char chAcp; WideCharToMultiByte(CP_ACP, 0, &pRec->Event.KeyEvent.uChar.UnicodeChar, 1, &chAcp, 1, 0,0);
@@ -3027,7 +3058,7 @@ void CRealConsole::CloseLogFiles()
 
 void CRealConsole::LogPacket(CESERVER_REQ* pInfo)
 {
-    if (!mpsz_LogPackets) return;
+    if (!mpsz_LogPackets || m_UseLogs!=2) return;
 
     wchar_t szPath[MAX_PATH];
     wsprintf(szPath, mpsz_LogPackets, ++mn_LogPackets);

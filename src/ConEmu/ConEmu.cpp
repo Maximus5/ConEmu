@@ -1926,7 +1926,7 @@ void CConEmuMain::PostMacro(LPCWSTR asMacro)
             {
                 DWORD cbWritten=0;
 				DnDstep(_T("Macro: Waiting for result (10 sec)"));
-                if (pipe.Execute(CMD_POSTMACRO))
+                if (pipe.Execute(CMD_POSTMACRO, asMacro, (wcslen(asMacro)+1)*2))
                 {
                     //DnDstep(_T("Macro: Checking for plugin (1 sec)"));
                     //// Подождем немножко, проверим что плагин живой

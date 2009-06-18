@@ -760,7 +760,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             }
             else if ( !klstricmp(curCommand, _T("/log")))
             {
-	            gSet.isAdvLogging = true;
+	            gSet.isAdvLogging = 1;
+	        }
+            else if ( !klstricmp(curCommand, _T("/log0")))
+            {
+	            gSet.isAdvLogging = 2;
 	        }
             //else if ( !klstricmp(curCommand, _T("/DontSetParent")) || !klstricmp(curCommand, _T("/Windows7")) )
             //{

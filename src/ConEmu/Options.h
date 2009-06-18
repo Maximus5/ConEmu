@@ -1,3 +1,4 @@
+
 #pragma once
 
 class CSettings
@@ -64,6 +65,7 @@ public:
     bool isDnDsteps;
     bool isGUIpb;
     char isTabs; bool isTabSelf, isTabRecent, isTabLazy;
+	wchar_t *sTabCloseMacro;
     DWORD wndWidth, wndHeight, ntvdmHeight; // в символах
     int wndX, wndY; // в пикселях
     bool wndCascade;
@@ -100,7 +102,7 @@ public:
     DWORD nAffinity;
 
 	// Debugging - "c:\\temp\\ConEmuVCon-%i-%i.dat"
-	bool isAdvLogging;
+	BYTE isAdvLogging;
 	//wchar_t szDumpPackets[MAX_PATH];
 	// Debugging
 	bool isConVisible;

@@ -57,6 +57,7 @@ CSettings::~CSettings()
     if (mh_Font2) { DeleteObject(mh_Font2); mh_Font2 = NULL; }
     if (psCmd) {free(psCmd); psCmd = NULL;}
     if (psCurCmd) {free(psCurCmd); psCurCmd = NULL;}
+	if (sTabCloseMacro) {free(sTabCloseMacro); sTabCloseMacro = NULL;}
     if (mh_Uxtheme!=NULL) { FreeLibrary(mh_Uxtheme); mh_Uxtheme = NULL; }
 }
 
@@ -75,7 +76,7 @@ void CSettings::InitSettings()
     psCmd = NULL; psCurCmd = NULL; wcscpy(szDefCmd, L"far");
     isMulti = true; icMultiNew = 'W'; icMultiNext = 'Q'; icMultiRecreate = 192/*VK_тильда*/; isMultiNewConfirm = true;
     // Logging
-    isAdvLogging = false;
+    isAdvLogging = 0;
 	//wcscpy(szDumpPackets, L"c:\\temp\\ConEmuVCon-%i-%i.dat");
 
     nMainTimerElapse = 10;
@@ -153,6 +154,7 @@ void CSettings::InitSettings()
     isCursorV = true;
     
     isTabs = 1; isTabSelf = true; isTabRecent = false; isTabLazy = true;
+	sTabCloseMacro = NULL;
     
     isVisualizer = false;
     nVizNormal = 1; nVizFore = 15; nVizTab = 15; nVizEOL = 8; nVizEOF = 12;
@@ -281,6 +283,7 @@ void CSettings::LoadSettings()
 	        reg.Load(_T("TabSelf"), isTabSelf);
 	        reg.Load(_T("TabLazy"), isTabLazy);
 	        reg.Load(_T("TabRecent"), isTabRecent);
+			reg.Load(_T("TabCloseMacro"), sTabCloseMacro);
         reg.Load(_T("TabFrame"), isTabFrame);
         reg.Load(_T("TabMargins"), rcTabMargins);
         reg.Load(_T("SlideShowElapse"), nSlideShowElapse);

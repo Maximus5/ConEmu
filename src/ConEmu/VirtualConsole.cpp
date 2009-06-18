@@ -51,24 +51,24 @@ CVirtualConsole* CVirtualConsole::Create(bool abDetached)
 {
     CVirtualConsole* pCon = new CVirtualConsole();
     
-	if (!pCon->mp_RCon->PreCreate(abDetached)) {
-		delete pCon;
-		return NULL;
-	}
+    if (!pCon->mp_RCon->PreCreate(abDetached)) {
+        delete pCon;
+        return NULL;
+    }
 
     return pCon;
 }
 
 CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
 {
-	mp_RCon = new CRealConsole(this);
+    mp_RCon = new CRealConsole(this);
 
     SIZE_T nMinHeapSize = (1000 + (200 * 90 * 2) * 6 + MAX_PATH*2)*2 + 210*sizeof(*TextParts);
     mh_Heap = HeapCreate(HEAP_GENERATE_EXCEPTIONS, nMinHeapSize, 0);
    
-	cinf.dwSize = 15; cinf.bVisible = TRUE;
-	ZeroStruct(winSize); ZeroStruct(coord); ZeroStruct(select1); ZeroStruct(select2);
-	TextLen = 0;
+    cinf.dwSize = 15; cinf.bVisible = TRUE;
+    ZeroStruct(winSize); ZeroStruct(coord); ZeroStruct(select1); ZeroStruct(select2);
+    TextLen = 0;
   
     InitializeCriticalSection(&csDC); ncsTDC = 0; mb_PaintRequested = FALSE; mb_PaintLocked = FALSE;
     InitializeCriticalSection(&csCON); ncsTCON = 0;
@@ -88,10 +88,10 @@ CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
     hDC = NULL; hBitmap = NULL;
     hSelectedFont = NULL; hOldFont = NULL;
     mpsz_ConChar = NULL; mpsz_ConCharSave = NULL;
-	mpn_ConAttr = NULL; mpn_ConAttrSave = NULL;
-	ConCharX = NULL; 
-	tmpOem = NULL; 
-	TextParts = NULL;
+    mpn_ConAttr = NULL; mpn_ConAttrSave = NULL;
+    ConCharX = NULL; 
+    tmpOem = NULL; 
+    TextParts = NULL;
     memset(&SelectionInfo, 0, sizeof(SelectionInfo));
     mb_IsForceUpdate = false;
     hBrush0 = NULL; hSelectedBrush = NULL; hOldBrush = NULL;
@@ -114,27 +114,27 @@ CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
     if (gSet.isShowBgImage)
         gSet.LoadImageFrom(gSet.sBgImage);
 
-	if (!gSet.isAdvLogging) {
-		mpsz_LogScreen = NULL;
-	} else {
-		mn_LogScreenIdx = 0;
-		DWORD dwErr = 0;
-		wchar_t szFile[MAX_PATH+64], *pszDot;
-		if (!GetModuleFileName(NULL, szFile, MAX_PATH)) {
-			dwErr = GetLastError();
-			DisplayLastError(L"GetModuleFileName failed! ErrCode=0x%08X\n", dwErr);
-			return; // не удалось
-		}
-		if ((pszDot = wcsrchr(szFile, L'\\')) == NULL) {
-			DisplayLastError(L"wcsrchr failed!");
-			return; // ошибка
-		}
-		*pszDot = 0;
+    if (gSet.isAdvLogging != 2) {
+        mpsz_LogScreen = NULL;
+    } else {
+        mn_LogScreenIdx = 0;
+        DWORD dwErr = 0;
+        wchar_t szFile[MAX_PATH+64], *pszDot;
+        if (!GetModuleFileName(NULL, szFile, MAX_PATH)) {
+            dwErr = GetLastError();
+            DisplayLastError(L"GetModuleFileName failed! ErrCode=0x%08X\n", dwErr);
+            return; // не удалось
+        }
+        if ((pszDot = wcsrchr(szFile, L'\\')) == NULL) {
+            DisplayLastError(L"wcsrchr failed!");
+            return; // ошибка
+        }
+        *pszDot = 0;
 
-		mpsz_LogScreen = (wchar_t*)calloc(pszDot - szFile + 64, 2);
-		wcscpy(mpsz_LogScreen, szFile);
-		wcscpy(mpsz_LogScreen+wcslen(mpsz_LogScreen), L"\\ConEmu-VCon-%i-%i.con"/*, RCon()->GetServerPID()*/);
-	}
+        mpsz_LogScreen = (wchar_t*)calloc(pszDot - szFile + 64, 2);
+        wcscpy(mpsz_LogScreen, szFile);
+        wcscpy(mpsz_LogScreen+wcslen(mpsz_LogScreen), L"\\ConEmu-VCon-%i-%i.con"/*, RCon()->GetServerPID()*/);
+    }
 
     // InitDC звать бессмысленно - консоль еще не создана
 }
@@ -142,21 +142,21 @@ CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
 CVirtualConsole::~CVirtualConsole()
 {
     if (mp_RCon)
-		mp_RCon->StopThread();
+        mp_RCon->StopThread();
     
     MCHKHEAP
     if (hDC)
         { DeleteDC(hDC); hDC = NULL; }
     if (hBitmap)
         { DeleteObject(hBitmap); hBitmap = NULL; }
-	if (mpsz_ConChar)
-		{ Free(mpsz_ConChar); mpsz_ConChar = NULL; }
-	if (mpsz_ConCharSave)
-		{ Free(mpsz_ConCharSave); mpsz_ConCharSave = NULL; }
+    if (mpsz_ConChar)
+        { Free(mpsz_ConChar); mpsz_ConChar = NULL; }
+    if (mpsz_ConCharSave)
+        { Free(mpsz_ConCharSave); mpsz_ConCharSave = NULL; }
     if (mpn_ConAttr)
         { Free(mpn_ConAttr); mpn_ConAttr = NULL; }
-	if (mpn_ConAttrSave)
-		{ Free(mpn_ConAttrSave); mpn_ConAttrSave = NULL; }
+    if (mpn_ConAttrSave)
+        { Free(mpn_ConAttrSave); mpn_ConAttrSave = NULL; }
     if (ConCharX)
         { Free(ConCharX); ConCharX = NULL; }
     if (tmpOem)
@@ -172,37 +172,37 @@ CVirtualConsole::~CVirtualConsole()
         mh_Heap = NULL;
     }
 
-	if (mpsz_LogScreen) {
-		wchar_t szMask[MAX_PATH*2]; wcscpy(szMask, mpsz_LogScreen);
-		wchar_t *psz = wcsrchr(szMask, L'%');
-		if (psz) {
-			wcscpy(psz, L"*.*");
-			psz = wcsrchr(szMask, L'\\'); 
-			if (psz) {
-				psz++;
-				WIN32_FIND_DATA fnd;
-				HANDLE hFind = FindFirstFile(szMask, &fnd);
-				if (hFind != INVALID_HANDLE_VALUE) {
-					do {
-						if ((fnd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)==0) {
-							wcscpy(psz, fnd.cFileName);
-							DeleteFile(szMask);
-						}
-					} while (FindNextFile(hFind, &fnd));
-					FindClose(hFind);
-				}
-			}
-		}
-		free(mpsz_LogScreen); mpsz_LogScreen = NULL;
-	}
+    if (mpsz_LogScreen) {
+        wchar_t szMask[MAX_PATH*2]; wcscpy(szMask, mpsz_LogScreen);
+        wchar_t *psz = wcsrchr(szMask, L'%');
+        if (psz) {
+            wcscpy(psz, L"*.*");
+            psz = wcsrchr(szMask, L'\\'); 
+            if (psz) {
+                psz++;
+                WIN32_FIND_DATA fnd;
+                HANDLE hFind = FindFirstFile(szMask, &fnd);
+                if (hFind != INVALID_HANDLE_VALUE) {
+                    do {
+                        if ((fnd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)==0) {
+                            wcscpy(psz, fnd.cFileName);
+                            DeleteFile(szMask);
+                        }
+                    } while (FindNextFile(hFind, &fnd));
+                    FindClose(hFind);
+                }
+            }
+        }
+        free(mpsz_LogScreen); mpsz_LogScreen = NULL;
+    }
     
     DeleteCriticalSection(&csDC);
     DeleteCriticalSection(&csCON);
 
-	if (mp_RCon) {
-		delete mp_RCon;
-		mp_RCon = NULL;
-	}
+    if (mp_RCon) {
+        delete mp_RCon;
+        mp_RCon = NULL;
+    }
 }
 
 #ifdef _DEBUG
@@ -219,9 +219,9 @@ bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize)
     BOOL lbNeedCreateBuffers = FALSE;
 
 #ifdef _DEBUG
-	if (!mp_RCon->IsConsoleThread()) {
-		_ASSERTE(mp_RCon->IsConsoleThread());
-	}
+    if (!mp_RCon->IsConsoleThread()) {
+        _ASSERTE(mp_RCon->IsConsoleThread());
+    }
 #endif
 
     // Буфер пересоздаем только если требуется его увеличение
@@ -232,7 +232,7 @@ bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize)
         lbNeedCreateBuffers = TRUE;
 
     if (!mp_RCon->TextWidth() || !mp_RCon->TextHeight()) {
-	    WARNING("Если тут ошибка - будет просто DC Initialization failed, что не понятно...");
+        WARNING("Если тут ошибка - будет просто DC Initialization failed, что не понятно...");
         Assert(mp_RCon->TextWidth() && mp_RCon->TextHeight());
         return false;
     }
@@ -242,14 +242,14 @@ bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize)
         SCON.Enter(&csCON, &ncsTCON);
 
         HEAPVAL
-		if (mpsz_ConChar)
-			{ Free(mpsz_ConChar); mpsz_ConChar = NULL; }
-		if (mpsz_ConCharSave)
-			{ Free(mpsz_ConCharSave); mpsz_ConCharSave = NULL; }
-		if (mpn_ConAttr)
-			{ Free(mpn_ConAttr); mpn_ConAttr = NULL; }
-		if (mpn_ConAttrSave)
-			{ Free(mpn_ConAttrSave); mpn_ConAttrSave = NULL; }
+        if (mpsz_ConChar)
+            { Free(mpsz_ConChar); mpsz_ConChar = NULL; }
+        if (mpsz_ConCharSave)
+            { Free(mpsz_ConCharSave); mpsz_ConCharSave = NULL; }
+        if (mpn_ConAttr)
+            { Free(mpn_ConAttr); mpn_ConAttr = NULL; }
+        if (mpn_ConAttrSave)
+            { Free(mpn_ConAttrSave); mpn_ConAttrSave = NULL; }
         if (ConCharX)
             { Free(ConCharX); ConCharX = NULL; }
         if (tmpOem)
@@ -272,8 +272,8 @@ bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize)
     TextHeight = mp_RCon->TextHeight();
 
 #ifdef _DEBUG
-	if (TextHeight == 24)
-		TextHeight = 24;
+    if (TextHeight == 24)
+        TextHeight = 24;
     _ASSERT(TextHeight >= 5);
 #endif
 
@@ -290,9 +290,9 @@ bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize)
 
         HEAPVAL
         mpsz_ConChar = (TCHAR*)Alloc((nMaxTextWidth * nMaxTextHeight), sizeof(*mpsz_ConChar));
-		mpsz_ConCharSave = (TCHAR*)Alloc((nMaxTextWidth * nMaxTextHeight), sizeof(*mpsz_ConCharSave));
+        mpsz_ConCharSave = (TCHAR*)Alloc((nMaxTextWidth * nMaxTextHeight), sizeof(*mpsz_ConCharSave));
         mpn_ConAttr = (WORD*)Alloc((nMaxTextWidth * nMaxTextHeight), sizeof(*mpn_ConAttr));
-		mpn_ConAttrSave = (WORD*)Alloc((nMaxTextWidth * nMaxTextHeight), sizeof(*mpn_ConAttrSave));
+        mpn_ConAttrSave = (WORD*)Alloc((nMaxTextWidth * nMaxTextHeight), sizeof(*mpn_ConAttrSave));
         ConCharX = (DWORD*)Alloc((nMaxTextWidth * nMaxTextHeight), sizeof(*ConCharX));
         tmpOem = (char*)Alloc((nMaxTextWidth + 5), sizeof(*tmpOem));
         TextParts = (struct _TextParts*)Alloc((nMaxTextWidth + 2), sizeof(*TextParts));
@@ -300,17 +300,17 @@ bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize)
     }
     //MCHKHEAP
     if (!mpsz_ConChar || !mpsz_ConCharSave || !mpn_ConAttr || !mpn_ConAttrSave || !ConCharX || !tmpOem || !TextParts) {
-	    WARNING("Если тут ошибка - будет просто DC Initialization failed, что не понятно...");
+        WARNING("Если тут ошибка - будет просто DC Initialization failed, что не понятно...");
         return false;
     }
 
     if (!lbNeedCreateBuffers) {
         HEAPVAL
         ZeroMemory(mpsz_ConChar, (TextWidth * TextHeight)*sizeof(*mpsz_ConChar));
-		ZeroMemory(mpsz_ConCharSave, (TextWidth * TextHeight)*sizeof(*mpsz_ConChar));
+        ZeroMemory(mpsz_ConCharSave, (TextWidth * TextHeight)*sizeof(*mpsz_ConChar));
         HEAPVAL
         ZeroMemory(mpn_ConAttr, (TextWidth * TextHeight)*sizeof(*mpn_ConAttr));
-		ZeroMemory(mpn_ConAttrSave, (TextWidth * TextHeight)*sizeof(*mpn_ConAttr));
+        ZeroMemory(mpn_ConAttrSave, (TextWidth * TextHeight)*sizeof(*mpn_ConAttr));
         HEAPVAL
         ZeroMemory(ConCharX, (TextWidth * TextHeight)*sizeof(*ConCharX));
         HEAPVAL
@@ -362,7 +362,7 @@ bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize)
             // Посчитать новый размер в пикселях
             Width = TextWidth * gSet.FontWidth();
             Height = TextHeight * gSet.FontHeight();
-			_ASSERTE(Height <= 1200);
+            _ASSERTE(Height <= 1200);
 
             if (ghOpWnd)
                 gConEmu.UpdateSizes();
@@ -386,8 +386,8 @@ bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize)
 
 void CVirtualConsole::DumpConsole()
 {
-	if (!this) return;
-	
+    if (!this) return;
+    
     OPENFILENAME ofn; memset(&ofn,0,sizeof(ofn));
     WCHAR temp[MAX_PATH+5];
     ofn.lStructSize=sizeof(ofn);
@@ -403,13 +403,13 @@ void CVirtualConsole::DumpConsole()
     if (!GetSaveFileName(&ofn))
         return;
 
-	DumpConsole(temp);
+    DumpConsole(temp);
 }
 
 void CVirtualConsole::DumpConsole(LPCWSTR asFile)
 {
-	// Она сделает снимок нашего буфера (hDC) в png файл
-	DumpImage(hDC, Width, Height, asFile);
+    // Она сделает снимок нашего буфера (hDC) в png файл
+    DumpImage(hDC, Width, Height, asFile);
         
     HANDLE hFile = CreateFile(asFile, GENERIC_WRITE, FILE_SHARE_READ,
         NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
@@ -420,16 +420,16 @@ void CVirtualConsole::DumpConsole(LPCWSTR asFile)
     DWORD dw;
     LPCTSTR pszTitle = gConEmu.GetTitle();
     WriteFile(hFile, pszTitle, _tcslen(pszTitle)*sizeof(*pszTitle), &dw, NULL);
-	wchar_t temp[100];
+    wchar_t temp[100];
     swprintf(temp, _T("\r\nSize: %ix%i\r\n"), TextWidth, TextHeight);
     WriteFile(hFile, temp, _tcslen(temp)*sizeof(TCHAR), &dw, NULL);
     WriteFile(hFile, mpsz_ConChar, TextWidth * TextHeight * 2, &dw, NULL);
     WriteFile(hFile, mpn_ConAttr, TextWidth * TextHeight * 2, &dw, NULL);
     WriteFile(hFile, mpsz_ConCharSave, TextWidth * TextHeight * 2, &dw, NULL);
     WriteFile(hFile, mpn_ConAttrSave, TextWidth * TextHeight * 2, &dw, NULL);
-	if (mp_RCon) {
-		mp_RCon->DumpConsole(hFile);
-	}
+    if (mp_RCon) {
+        mp_RCon->DumpConsole(hFile);
+    }
     CloseHandle(hFile);
 }
 
@@ -476,8 +476,8 @@ bool CVirtualConsole::isCharBorderVertical(WCHAR inChar)
 
 bool CVirtualConsole::isCharProgress(WCHAR inChar)
 {
-	bool isProgress = (inChar == ucBox25 || inChar == ucBox50 || inChar == ucBox75 || inChar == ucBox100);
-	return isProgress;
+    bool isProgress = (inChar == ucBox25 || inChar == ucBox50 || inChar == ucBox75 || inChar == ucBox100);
+    return isProgress;
 }
 
 void CVirtualConsole::BlitPictureTo(int inX, int inY, int inWidth, int inHeight)
@@ -492,17 +492,17 @@ void CVirtualConsole::BlitPictureTo(int inX, int inY, int inWidth, int inHeight)
         }
 
         RECT rect = {max(inX,gSet.bgBmp.X), inY, inX+inWidth, inY+inHeight};
-		#ifndef SKIP_ALL_FILLRECT
+        #ifndef SKIP_ALL_FILLRECT
         if (!IsRectEmpty(&rect))
             FillRect(hDC, &rect, hBrush0);
-		#endif
+        #endif
 
         if (gSet.bgBmp.X>inX) {
             rect.left = inX; rect.top = max(inY,gSet.bgBmp.Y); rect.right = gSet.bgBmp.X;
-			#ifndef SKIP_ALL_FILLRECT
+            #ifndef SKIP_ALL_FILLRECT
             if (!IsRectEmpty(&rect))
                 FillRect(hDC, &rect, hBrush0);
-			#endif
+            #endif
         }
 
         //DeleteObject(hBrush);
@@ -611,7 +611,7 @@ bool CVirtualConsole::GetCharAttr(TCHAR ch, WORD atr, TCHAR& rch, BYTE& foreColo
 // Возвращает ширину символа, учитывает FixBorders
 WORD CVirtualConsole::CharWidth(TCHAR ch)
 {
-	if (gSet.isForceMonospace || !gSet.isProportional)
+    if (gSet.isForceMonospace || !gSet.isProportional)
         return gSet.FontWidth();
 
     WORD nWidth = gSet.FontWidth();
@@ -664,25 +664,25 @@ bool CVirtualConsole::CheckChangedTextAttr()
     attrChanged = 0!=memcmp(mpn_ConAttr, mpn_ConAttrSave, TextLen * sizeof(*mpn_ConAttr));
 
 #ifdef MSGLOGGER
-	COORD ch;
-	if (textChanged) {
-		for (UINT i=0; i<TextLen; i++) {
-			if (mpsz_ConChar[i] != mpsz_ConCharSave[i]) {
-				ch.Y = i % TextWidth;
-				ch.X = i - TextWidth * ch.Y;
-				break;
-			}
-		}
-	}
-	if (attrChanged) {
-		for (UINT i=0; i<TextLen; i++) {
-			if (mpn_ConAttr[i] != mpn_ConAttrSave[i]) {
-				ch.Y = i % TextWidth;
-				ch.X = i - TextWidth * ch.Y;
-				break;
-			}
-		}
-	}
+    COORD ch;
+    if (textChanged) {
+        for (UINT i=0; i<TextLen; i++) {
+            if (mpsz_ConChar[i] != mpsz_ConCharSave[i]) {
+                ch.Y = i % TextWidth;
+                ch.X = i - TextWidth * ch.Y;
+                break;
+            }
+        }
+    }
+    if (attrChanged) {
+        for (UINT i=0; i<TextLen; i++) {
+            if (mpn_ConAttr[i] != mpn_ConAttrSave[i]) {
+                ch.Y = i % TextWidth;
+                ch.X = i - TextWidth * ch.Y;
+                break;
+            }
+        }
+    }
 #endif
 
     return textChanged || attrChanged;
@@ -693,16 +693,16 @@ bool CVirtualConsole::Update(bool isForce, HDC *ahDc)
     if (!this || !mp_RCon || !mp_RCon->hConWnd)
         return false;
 
-	if (!mp_RCon->IsConsoleThread()) {
-		if (!ahDc) {
-			mp_RCon->SetForceRead();
-			mp_RCon->WaitEndUpdate(1000);
-			//gConEmu.InvalidateAll(); -- зачем на All??? Update и так Invalidate зовет
-			return false;
-		}
+    if (!mp_RCon->IsConsoleThread()) {
+        if (!ahDc) {
+            mp_RCon->SetForceRead();
+            mp_RCon->WaitEndUpdate(1000);
+            //gConEmu.InvalidateAll(); -- зачем на All??? Update и так Invalidate зовет
+            return false;
+        }
     }
 
-	// Рисуем актуальную информацию из CRealConsole. ЗДЕСЬ запросы в консоль не делаются.
+    // Рисуем актуальную информацию из CRealConsole. ЗДЕСЬ запросы в консоль не делаются.
     //RetrieveConsoleInfo();
 
     #ifdef MSGLOGGER
@@ -714,10 +714,10 @@ bool CVirtualConsole::Update(bool isForce, HDC *ahDc)
     bool lRes = false;
     
     CSection SCON(&csCON, &ncsTCON);
-	CSection SDC(NULL,NULL); //&csDC, &ncsTDC);
-	//if (mb_PaintRequested) -- не должно быть. Эта функция работает ТОЛЬКО в консольной нити
-	if (mb_PaintLocked) // Значит идет асинхронный Paint (BitBlt) - это может быть во время ресайза, или над окошком что-то протащили
-		SDC.Enter(&csDC, &ncsTDC, 200); // но по таймауту, чтобы не повисли ненароком
+    CSection SDC(NULL,NULL); //&csDC, &ncsTDC);
+    //if (mb_PaintRequested) -- не должно быть. Эта функция работает ТОЛЬКО в консольной нити
+    if (mb_PaintLocked) // Значит идет асинхронный Paint (BitBlt) - это может быть во время ресайза, или над окошком что-то протащили
+        SDC.Enter(&csDC, &ncsTDC, 200); // но по таймауту, чтобы не повисли ненароком
 
 
     GetConsoleScreenBufferInfo(&csbi);
@@ -772,7 +772,7 @@ bool CVirtualConsole::Update(bool isForce, HDC *ahDc)
     {
         lRes = true;
 
-		DEBUGSTR(L" +++ updateText detected in VCon\n");
+        DEBUGSTR(L" +++ updateText detected in VCon\n");
 
         //------------------------------------------------------------------------
         ///| Drawing modified text |//////////////////////////////////////////////
@@ -799,20 +799,20 @@ bool CVirtualConsole::Update(bool isForce, HDC *ahDc)
     //SDC.Leave();
     SCON.Leave();
 
-	if (lRes && gConEmu.isActive(this)) {
-		if (mpsz_LogScreen && mp_RCon && mp_RCon->GetServerPID()) {
-			mn_LogScreenIdx++;
-			wchar_t szLogPath[MAX_PATH]; wsprintfW(szLogPath, mpsz_LogScreen, mp_RCon->GetServerPID(), mn_LogScreenIdx);
-			DumpConsole(szLogPath);
-		}
+    if (lRes && gConEmu.isActive(this)) {
+        if (mpsz_LogScreen && mp_RCon && mp_RCon->GetServerPID()) {
+            mn_LogScreenIdx++;
+            wchar_t szLogPath[MAX_PATH]; wsprintfW(szLogPath, mpsz_LogScreen, mp_RCon->GetServerPID(), mn_LogScreenIdx);
+            DumpConsole(szLogPath);
+        }
 
-		// должен вызываться в консольной нити (IsConsoleThread)
-		mb_PaintRequested = TRUE;
-		gConEmu.m_Child.Invalidate();
-		//09.06.13 а если так? быстрее изменения на экране не появятся?
-		UpdateWindow(ghWndDC); // оно посылает сообщение в окно, и ждет окончания отрисовки
-		mb_PaintRequested = FALSE;
-	}
+        // должен вызываться в консольной нити (IsConsoleThread)
+        mb_PaintRequested = TRUE;
+        gConEmu.m_Child.Invalidate();
+        //09.06.13 а если так? быстрее изменения на экране не появятся?
+        UpdateWindow(ghWndDC); // оно посылает сообщение в окно, и ждет окончания отрисовки
+        mb_PaintRequested = FALSE;
+    }
 
     gSet.Performance(tPerfRender, TRUE);
 
@@ -823,10 +823,10 @@ bool CVirtualConsole::Update(bool isForce, HDC *ahDc)
     if (hBrush0) { // создается в BlitPictureTo
         DeleteObject(hBrush0); hBrush0 = NULL;
     }
-	for (UINT br=0; br<m_PartBrushes.size(); br++) {
-		DeleteObject(m_PartBrushes[br].hBrush);
-	}
-	m_PartBrushes.clear();
+    for (UINT br=0; br<m_PartBrushes.size(); br++) {
+        DeleteObject(m_PartBrushes[br].hBrush);
+    }
+    m_PartBrushes.clear();
     SelectFont(NULL);
     MCHKHEAP
     return lRes;
@@ -852,14 +852,14 @@ bool CVirtualConsole::UpdatePrepare(bool isForce, HDC *ahDc, CSection *pSDC)
         csbi.dwCursorPosition.X < winSize.X && csbi.dwCursorPosition.Y < winSize.Y;
 
     if (mb_RequiredForceUpdate || mb_IsForceUpdate) {
-	    isForce = true;
-	    mb_RequiredForceUpdate = false;
+        isForce = true;
+        mb_RequiredForceUpdate = false;
     }
 
     // Первая инициализация, или смена размера
     if (isForce || !mpsz_ConChar || TextWidth != winSize.X || TextHeight != winSize.Y) {
-		if (pSDC && !pSDC->isLocked()) // Если секция еще не заблокирована (отпускает - вызывающая функция)
-			pSDC->Enter(&csDC, &ncsTDC, 200); // но по таймауту, чтобы не повисли ненароком
+        if (pSDC && !pSDC->isLocked()) // Если секция еще не заблокирована (отпускает - вызывающая функция)
+            pSDC->Enter(&csDC, &ncsTDC, 200); // но по таймауту, чтобы не повисли ненароком
         if (!InitDC(ahDc!=NULL && !isForce/*abNoDc*/, false/*abNoWndResize*/))
             return false;
     }
@@ -880,7 +880,7 @@ bool CVirtualConsole::UpdatePrepare(bool isForce, HDC *ahDc, CSection *pSDC)
     coord.X = csbi.srWindow.Left; coord.Y = csbi.srWindow.Top;
 
     // скопировать данные из состояния консоли В mpn_ConAttr/mpsz_ConChar
-	mp_RCon->GetData(mpsz_ConChar, mpn_ConAttr, TextWidth, TextHeight); //TextLen*2);
+    mp_RCon->GetData(mpsz_ConChar, mpn_ConAttr, TextWidth, TextHeight); //TextLen*2);
 
     HEAPVAL
  
@@ -1080,32 +1080,32 @@ void CVirtualConsole::ParseLine(int row, TCHAR *ConCharLine, WORD *ConAttrLine)
 
 void CVirtualConsole::UpdateText(bool isForce, bool updateText, bool updateCursor)
 {
-	if (!updateText) {
-		_ASSERTE(updateText);
+    if (!updateText) {
+        _ASSERTE(updateText);
         return;
-	}
+    }
 
 #ifdef _DEBUG
-	if (!mp_RCon->IsConsoleThread()) {
-		_ASSERTE(mp_RCon->IsConsoleThread());
-	}
-	// Данные уже должны быть заполнены, и там не должно быть лажы
-	BOOL lbDataValid = TRUE; uint n = 0;
-	while (n<TextLen) {
-		if (mpsz_ConChar[n] == 0) {
-			lbDataValid = FALSE; //break;
-			mpsz_ConChar[n] = L'¤';
-			mpn_ConAttr[n] = 12;
-		} else if (mpsz_ConChar[n] != L' ') {
-			// 0 - может быть только для пробела. Иначе символ будет скрытым, чего по идее, быть не должно
-			if (mpn_ConAttr[n] == 0) {
-				lbDataValid = FALSE; //break;
-				mpn_ConAttr[n] = 12;
-			}
-		}
-		n++;
-	}
-	//_ASSERTE(lbDataValid);
+    if (!mp_RCon->IsConsoleThread()) {
+        _ASSERTE(mp_RCon->IsConsoleThread());
+    }
+    // Данные уже должны быть заполнены, и там не должно быть лажы
+    BOOL lbDataValid = TRUE; uint n = 0;
+    while (n<TextLen) {
+        if (mpsz_ConChar[n] == 0) {
+            lbDataValid = FALSE; //break;
+            mpsz_ConChar[n] = L'¤';
+            mpn_ConAttr[n] = 12;
+        } else if (mpsz_ConChar[n] != L' ') {
+            // 0 - может быть только для пробела. Иначе символ будет скрытым, чего по идее, быть не должно
+            if (mpn_ConAttr[n] == 0) {
+                lbDataValid = FALSE; //break;
+                mpn_ConAttr[n] = 12;
+            }
+        }
+        n++;
+    }
+    //_ASSERTE(lbDataValid);
 #endif
 
 
@@ -1205,17 +1205,17 @@ void CVirtualConsole::UpdateText(bool isForce, bool updateText, bool updateCurso
             WCHAR c = ConCharLine[j];
             BYTE attrFore, attrBack;
             bool isUnicode = isCharBorder(c/*ConCharLine[j]*/);
-			bool isProgress = false, isSpace = false;
+            bool isProgress = false, isSpace = false;
             bool lbS1 = false, lbS2 = false;
             int nS11 = 0, nS12 = 0, nS21 = 0, nS22 = 0;
 
             if (GetCharAttr(c, attr, c, attrFore, attrBack))
                 isUnicode = true;
 
-			if (isUnicode)
-				isProgress = isCharProgress(c); // ucBox25 / ucBox50 / ucBox75 / ucBox100
-			else
-				isSpace = (c == 0x20 || c == 0xA0 || c == 0);
+            if (isUnicode)
+                isProgress = isCharProgress(c); // ucBox25 / ucBox50 / ucBox75 / ucBox100
+            else
+                isSpace = (c == 0x20 || c == 0xA0 || c == 0);
 
             MCHKHEAP
             // корректировка лидирующих пробелов и рамок
@@ -1360,7 +1360,7 @@ void CVirtualConsole::UpdateText(bool isForce, bool updateText, bool updateCurso
                 }
 
                 if (gbNoDblBuffer) GdiFlush();
-				WARNING("Отрисовка прогрессбаров и прокруток");
+                WARNING("Отрисовка прогрессбаров и прокруток");
                 ExtTextOut(hDC, rect.left, rect.top, nFlags, &rect, &c, 1, 0);
                 if (gbNoDblBuffer) GdiFlush();
                 MCHKHEAP
@@ -1433,21 +1433,21 @@ void CVirtualConsole::UpdateText(bool isForce, bool updateText, bool updateCurso
                     else
                     {
                         TCHAR ch;
-						if (gSet.isFixFarBorders == 2 && isProgress) {
-							ch = c; // Графическая отрисовка прокрутки и прогресса
-							while(j2 < end && ConAttrLine[j2] == attr && ch == ConCharLine[j2+1])
-							{
-								ConCharXLine[j2] = (j2 ? ConCharXLine[j2-1] : 0)+CharWidth(ch);
-								j2++;
-							}
-						} else {
-							while(j2 < end && ConAttrLine[j2] == attr && 
-								isCharBorder(ch = ConCharLine[j2]) && ch == ConCharLine[j2+1])
-							{
-								ConCharXLine[j2] = (j2 ? ConCharXLine[j2-1] : 0)+CharWidth(ch);
-								j2++;
-							}
-						}
+                        if (gSet.isFixFarBorders == 2 && isProgress) {
+                            ch = c; // Графическая отрисовка прокрутки и прогресса
+                            while(j2 < end && ConAttrLine[j2] == attr && ch == ConCharLine[j2+1])
+                            {
+                                ConCharXLine[j2] = (j2 ? ConCharXLine[j2-1] : 0)+CharWidth(ch);
+                                j2++;
+                            }
+                        } else {
+                            while(j2 < end && ConAttrLine[j2] == attr && 
+                                isCharBorder(ch = ConCharLine[j2]) && ch == ConCharLine[j2+1])
+                            {
+                                ConCharXLine[j2] = (j2 ? ConCharXLine[j2-1] : 0)+CharWidth(ch);
+                                j2++;
+                            }
+                        }
                     }
                 }
                 if (gSet.isFixFarBorders)
@@ -1477,9 +1477,9 @@ void CVirtualConsole::UpdateText(bool isForce, bool updateText, bool updateCurso
 
                 MCHKHEAP
                 if (gbNoDblBuffer) GdiFlush();
-				if (gSet.isFixFarBorders == 2 && isProgress) {
-					FillRect(hDC, &rect, PartBrush(c, attrBack, attrFore));
-				} else
+                if (gSet.isFixFarBorders == 2 && isProgress) {
+                    FillRect(hDC, &rect, PartBrush(c, attrBack, attrFore));
+                } else
                 if (gSet.isProportional && c == ' ') {
                     int nCnt = ((rect.right - rect.left) / CharWidth(L' '))+1;
                     ExtTextOut(hDC, rect.left, rect.top, nFlags, &rect,
@@ -1537,60 +1537,60 @@ done:
 
 HBRUSH CVirtualConsole::PartBrush(wchar_t ch, SHORT nBackIdx, SHORT nForeIdx)
 {
-	std::vector<PARTBRUSHES>::iterator iter = m_PartBrushes.begin();
-	while (iter != m_PartBrushes.end()) {
-		if (iter->ch == ch && iter->nBackIdx == nBackIdx && iter->nForeIdx == nForeIdx)
-			return iter->hBrush;
-		iter ++;
-	}
+    std::vector<PARTBRUSHES>::iterator iter = m_PartBrushes.begin();
+    while (iter != m_PartBrushes.end()) {
+        if (iter->ch == ch && iter->nBackIdx == nBackIdx && iter->nForeIdx == nForeIdx)
+            return iter->hBrush;
+        iter ++;
+    }
 
-	MYRGB clrBack, clrFore, clrMy;
-	clrBack.color = gSet.Colors[nBackIdx];
-	clrFore.color = gSet.Colors[nForeIdx];
+    MYRGB clrBack, clrFore, clrMy;
+    clrBack.color = gSet.Colors[nBackIdx];
+    clrFore.color = gSet.Colors[nForeIdx];
 
-	clrMy.color = clrFore.color; // 100 %
+    clrMy.color = clrFore.color; // 100 %
 
-	//#define	PART_75(f,b) ((((int)f) + ((int)b)*3) / 4)
-	//#define	PART_50(f,b) ((((int)f) + ((int)b)) / 2)
-	//#define	PART_25(f,b) (((3*(int)f) + ((int)b)) / 4)
-	//#define	PART_75(f,b) (b + 0.80*(f-b))
-	//#define	PART_50(f,b) (b + 0.75*(f-b))
-	//#define	PART_25(f,b) (b + 0.50*(f-b))
-	#define	PART_75(f,b) (b + ((gSet.isPartBrush75*(f-b))>>8))
-	#define	PART_50(f,b) (b + ((gSet.isPartBrush50*(f-b))>>8))
-	#define	PART_25(f,b) (b + ((gSet.isPartBrush25*(f-b))>>8))
+    //#define   PART_75(f,b) ((((int)f) + ((int)b)*3) / 4)
+    //#define   PART_50(f,b) ((((int)f) + ((int)b)) / 2)
+    //#define   PART_25(f,b) (((3*(int)f) + ((int)b)) / 4)
+    //#define   PART_75(f,b) (b + 0.80*(f-b))
+    //#define   PART_50(f,b) (b + 0.75*(f-b))
+    //#define   PART_25(f,b) (b + 0.50*(f-b))
+    #define PART_75(f,b) (b + ((gSet.isPartBrush75*(f-b))>>8))
+    #define PART_50(f,b) (b + ((gSet.isPartBrush50*(f-b))>>8))
+    #define PART_25(f,b) (b + ((gSet.isPartBrush25*(f-b))>>8))
 
-	if (ch == ucBox75 /* 75% */) {
-		clrMy.rgbRed = PART_75(clrFore.rgbRed,clrBack.rgbRed);
-		clrMy.rgbGreen = PART_75(clrFore.rgbGreen,clrBack.rgbGreen);
-		clrMy.rgbBlue = PART_75(clrFore.rgbBlue,clrBack.rgbBlue);
-		clrMy.rgbReserved = 0;
-	} else if (ch == ucBox50 /* 50% */) {
-		clrMy.rgbRed = PART_50(clrFore.rgbRed,clrBack.rgbRed);
-		clrMy.rgbGreen = PART_50(clrFore.rgbGreen,clrBack.rgbGreen);
-		clrMy.rgbBlue = PART_50(clrFore.rgbBlue,clrBack.rgbBlue);
-		clrMy.rgbReserved = 0;
-	} else if (ch == ucBox25 /* 25% */) {
-		clrMy.rgbRed = PART_25(clrFore.rgbRed,clrBack.rgbRed);
-		clrMy.rgbGreen = PART_25(clrFore.rgbGreen,clrBack.rgbGreen);
-		clrMy.rgbBlue = PART_25(clrFore.rgbBlue,clrBack.rgbBlue);
-		clrMy.rgbReserved = 0;
-	} else if (ch == L' ' || ch == 0x00A0 /* Non breaking space */) {
-		clrMy.color = clrBack.color;
-	}
+    if (ch == ucBox75 /* 75% */) {
+        clrMy.rgbRed = PART_75(clrFore.rgbRed,clrBack.rgbRed);
+        clrMy.rgbGreen = PART_75(clrFore.rgbGreen,clrBack.rgbGreen);
+        clrMy.rgbBlue = PART_75(clrFore.rgbBlue,clrBack.rgbBlue);
+        clrMy.rgbReserved = 0;
+    } else if (ch == ucBox50 /* 50% */) {
+        clrMy.rgbRed = PART_50(clrFore.rgbRed,clrBack.rgbRed);
+        clrMy.rgbGreen = PART_50(clrFore.rgbGreen,clrBack.rgbGreen);
+        clrMy.rgbBlue = PART_50(clrFore.rgbBlue,clrBack.rgbBlue);
+        clrMy.rgbReserved = 0;
+    } else if (ch == ucBox25 /* 25% */) {
+        clrMy.rgbRed = PART_25(clrFore.rgbRed,clrBack.rgbRed);
+        clrMy.rgbGreen = PART_25(clrFore.rgbGreen,clrBack.rgbGreen);
+        clrMy.rgbBlue = PART_25(clrFore.rgbBlue,clrBack.rgbBlue);
+        clrMy.rgbReserved = 0;
+    } else if (ch == L' ' || ch == 0x00A0 /* Non breaking space */) {
+        clrMy.color = clrBack.color;
+    }
 
-	PARTBRUSHES pb;
-	pb.ch = ch; pb.nBackIdx = nBackIdx; pb.nForeIdx = nForeIdx;
-	pb.hBrush = CreateSolidBrush(clrMy.color);
+    PARTBRUSHES pb;
+    pb.ch = ch; pb.nBackIdx = nBackIdx; pb.nForeIdx = nForeIdx;
+    pb.hBrush = CreateSolidBrush(clrMy.color);
 
-	m_PartBrushes.push_back(pb);
-	return pb.hBrush;
+    m_PartBrushes.push_back(pb);
+    return pb.hBrush;
 }
 
 void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, COORD pos, UINT dwSize)
 {
-	Cursor.x = csbi.dwCursorPosition.X;
-	Cursor.y = csbi.dwCursorPosition.Y;
+    Cursor.x = csbi.dwCursorPosition.X;
+    Cursor.y = csbi.dwCursorPosition.Y;
 
     int CurChar = pos.Y * TextWidth + pos.X;
     if (CurChar < 0 || CurChar>=(int)(TextWidth * TextHeight))
@@ -1599,7 +1599,7 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, COORD pos, UINT dwSize)
         return; // защита
     COORD pix;
 
-	pix.X = pos.X * gSet.FontWidth();
+    pix.X = pos.X * gSet.FontWidth();
     pix.Y = pos.Y * gSet.FontHeight();
     if (pos.X && ConCharX[CurChar-1])
         pix.X = ConCharX[CurChar-1];
@@ -1671,7 +1671,7 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, COORD pos, UINT dwSize)
         rect.bottom = (pos.Y+1) * gSet.FontHeight();
     }
     
-	HFONT hOldFont = NULL;
+    HFONT hOldFont = NULL;
 
     if (gSet.FontCharSet() == OEM_CHARSET && !isCharBorder(Cursor.ch[0]))
     {
@@ -1681,7 +1681,7 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, COORD pos, UINT dwSize)
         WideCharToMultiByte(CP_OEMCP, 0, Cursor.ch, 1, tmp, 1, 0, 0);
         ExtTextOutA(hPaintDC, pix.X, pix.Y,
             ETO_CLIPPED | ETO_OPAQUE, &rect, tmp, 1, 0);
-			//((drawImage && (Cursor.foreColorNum < 2) && !vis) ? 0 : ETO_OPAQUE),&rect, tmp, 1, 0);
+            //((drawImage && (Cursor.foreColorNum < 2) && !vis) ? 0 : ETO_OPAQUE),&rect, tmp, 1, 0);
     }
     else
     {
@@ -1692,7 +1692,7 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, COORD pos, UINT dwSize)
 
         ExtTextOut(hPaintDC, pix.X, pix.Y,
             ETO_CLIPPED | ETO_OPAQUE, &rect, Cursor.ch, 1, 0);
-			//((drawImage && (Cursor.foreColorNum < 2) && !vis) ? 0 : ETO_OPAQUE), &rect, Cursor.ch, 1, 0);
+            //((drawImage && (Cursor.foreColorNum < 2) && !vis) ? 0 : ETO_OPAQUE), &rect, Cursor.ch, 1, 0);
     }
 }
 
@@ -1704,47 +1704,47 @@ void CVirtualConsole::UpdateCursor(bool& lRes)
     Cursor.isVisiblePrevFromInfo = cinf.bVisible;
 
     BOOL lbUpdateTick = FALSE;
-	bool bConActive = gConEmu.isActive(this) 
-		#ifndef _DEBUG
-		&& gConEmu.isMeForeground()
-		#endif
-		;
+    bool bConActive = gConEmu.isActive(this) 
+        #ifndef _DEBUG
+        && gConEmu.isMeForeground()
+        #endif
+        ;
 
-	// Если курсор (в консоли) видим, и находится в видимой области (при прокрутке)
-	if (cinf.bVisible && isCursorValid)
-	{
-		#ifdef CURSOR_ALWAYS_VISIBLE
-			Cursor.isVisible = true;
-		#else
-			// Смена позиции курсора - его нужно обновить, если окно активно
-			if ((Cursor.x != csbi.dwCursorPosition.X) || (Cursor.y != csbi.dwCursorPosition.Y)) 
-			{
-				Cursor.isVisible = bConActive;
-				if (Cursor.isVisible) lRes = true; //force, pos changed
-				lbUpdateTick = TRUE;
-			} else
-			// Настало время мигания
-			if ((GetTickCount() - Cursor.nLastBlink) > Cursor.nBlinkTime)
-			{
-				Cursor.isVisible = bConActive && !Cursor.isVisible;
-				lbUpdateTick = TRUE;
-			}
-		#endif
-	} else {
-		// Иначе - его нужно спрятать (курсор скрыт в консоли, или ушел за границы экрана)
-		Cursor.isVisible = false;
-	}
+    // Если курсор (в консоли) видим, и находится в видимой области (при прокрутке)
+    if (cinf.bVisible && isCursorValid)
+    {
+        #ifdef CURSOR_ALWAYS_VISIBLE
+            Cursor.isVisible = true;
+        #else
+            // Смена позиции курсора - его нужно обновить, если окно активно
+            if ((Cursor.x != csbi.dwCursorPosition.X) || (Cursor.y != csbi.dwCursorPosition.Y)) 
+            {
+                Cursor.isVisible = bConActive;
+                if (Cursor.isVisible) lRes = true; //force, pos changed
+                lbUpdateTick = TRUE;
+            } else
+            // Настало время мигания
+            if ((GetTickCount() - Cursor.nLastBlink) > Cursor.nBlinkTime)
+            {
+                Cursor.isVisible = bConActive && !Cursor.isVisible;
+                lbUpdateTick = TRUE;
+            }
+        #endif
+    } else {
+        // Иначе - его нужно спрятать (курсор скрыт в консоли, или ушел за границы экрана)
+        Cursor.isVisible = false;
+    }
 
-	// Смена видимости палки в ConEmu
-	if (Cursor.isVisible != Cursor.isVisiblePrev) {
-		lRes = true;
-		lbUpdateTick = TRUE;
-	}
+    // Смена видимости палки в ConEmu
+    if (Cursor.isVisible != Cursor.isVisiblePrev) {
+        lRes = true;
+        lbUpdateTick = TRUE;
+    }
 
-	// Сохраним новое положение
+    // Сохраним новое положение
     //Cursor.x = csbi.dwCursorPosition.X;
     //Cursor.y = csbi.dwCursorPosition.Y;
-	Cursor.isVisiblePrev = Cursor.isVisible;
+    Cursor.isVisiblePrev = Cursor.isVisible;
 
     if (lbUpdateTick)
         Cursor.nLastBlink = GetTickCount();
@@ -1785,13 +1785,13 @@ void CVirtualConsole::Paint()
         return;
 
 #ifdef _DEBUG
-	if (this) {
-		if (!mp_RCon || mp_RCon->m_Packets.empty()) {
-			DEBUGSTR(L"*** Painting ***\n");
-		} else {
-			DEBUGSTR(L"*** Painting (!!! Non processed packets are queued !!!) ***\n");
-		}
-	}
+    if (this) {
+        if (!mp_RCon || mp_RCon->m_Packets.empty()) {
+            DEBUGSTR(L"*** Painting ***\n");
+        } else {
+            DEBUGSTR(L"*** Painting (!!! Non processed packets are queued !!!) ***\n");
+        }
+    }
 #endif
     
     if (!this) {
@@ -1805,9 +1805,9 @@ void CVirtualConsole::Paint()
         RECT rcClient; GetClientRect(ghWndDC, &rcClient);
         PAINTSTRUCT ps;
         HDC hDc = BeginPaint(ghWndDC, &ps);
-		#ifndef SKIP_ALL_FILLRECT
+        #ifndef SKIP_ALL_FILLRECT
         FillRect(hDc, &rcClient, hBr);
-		#endif
+        #endif
         DeleteObject(hBr);
         EndPaint(ghWndDC, &ps);
         return;
@@ -1836,22 +1836,22 @@ void CVirtualConsole::Paint()
 
         hPaintDc = BeginPaint(ghWndDC, &ps);
 
-		// Если окно больше готового DC - залить края (справа/снизу) фоновым цветом
+        // Если окно больше готового DC - залить края (справа/снизу) фоновым цветом
         HBRUSH hBr = NULL;
         if (((ULONG)client.right) > Width) {
             if (!hBr) hBr = CreateSolidBrush(gSet.Colors[mn_BackColorIdx]);
             RECT rcFill = MakeRect(Width, 0, client.right, client.bottom);
-			#ifndef SKIP_ALL_FILLRECT
+            #ifndef SKIP_ALL_FILLRECT
             FillRect(hPaintDc, &rcFill, hBr);
-			#endif
+            #endif
             client.right = Width;
         }
         if (((ULONG)client.bottom) > Height) {
             if (!hBr) hBr = CreateSolidBrush(gSet.Colors[mn_BackColorIdx]);
             RECT rcFill = MakeRect(0, Height, client.right, client.bottom);
-			#ifndef SKIP_ALL_FILLRECT
+            #ifndef SKIP_ALL_FILLRECT
             FillRect(hPaintDc, &rcFill, hBr);
-			#endif
+            #endif
             client.bottom = Height;
         }
         if (hBr) { DeleteObject(hBr); hBr = NULL; }
@@ -1859,11 +1859,11 @@ void CVirtualConsole::Paint()
 
     BOOL lbPaintLocked = FALSE;
     if (!mb_PaintRequested) { // Если Paint вызыван НЕ из Update (а например ресайз, или над нашим окошком что-то протащили).
-	    if (S.Enter(&csDC, &ncsTDC, 200)) // но по таймауту, чтобы не повисли ненароком
-		    mb_PaintLocked = lbPaintLocked = TRUE;
-	}
+        if (S.Enter(&csDC, &ncsTDC, 200)) // но по таймауту, чтобы не повисли ненароком
+            mb_PaintLocked = lbPaintLocked = TRUE;
+    }
 
-		// Собственно, копирование готового bitmap
+        // Собственно, копирование готового bitmap
         if (!gbNoDblBuffer) {
             // Обычный режим
             BitBlt(hPaintDc, 0, 0, client.right, client.bottom, hDC, 0, 0, SRCCOPY);
@@ -1878,31 +1878,31 @@ void CVirtualConsole::Paint()
     S.Leave();
     
     if (lbPaintLocked)
-	    mb_PaintLocked = FALSE;
+        mb_PaintLocked = FALSE;
 
-		// Палку курсора теперь рисуем только в окне
-		//UpdateCursor(hPaintDc);
+        // Палку курсора теперь рисуем только в окне
+        //UpdateCursor(hPaintDc);
 
         if (gbNoDblBuffer) GdiSetBatchLimit(0); // вернуть стандартный режим
 
         
 
-		if (Cursor.isVisible && cinf.bVisible && isCursorValid)
-		{
-			HFONT hOldFont = (HFONT)SelectObject(hPaintDc, gSet.mh_Font);
+        if (Cursor.isVisible && cinf.bVisible && isCursorValid)
+        {
+            HFONT hOldFont = (HFONT)SelectObject(hPaintDc, gSet.mh_Font);
 
-			int CurChar = csbi.dwCursorPosition.Y * TextWidth + csbi.dwCursorPosition.X;
-			Cursor.ch[1] = 0;
-			GetCharAttr(mpsz_ConChar[CurChar], mpn_ConAttr[CurChar], Cursor.ch[0], Cursor.bgColorNum, Cursor.foreColorNum);
-			Cursor.foreColor = gSet.Colors[Cursor.foreColorNum];
-			Cursor.bgColor = gSet.Colors[Cursor.bgColorNum];
+            int CurChar = csbi.dwCursorPosition.Y * TextWidth + csbi.dwCursorPosition.X;
+            Cursor.ch[1] = 0;
+            GetCharAttr(mpsz_ConChar[CurChar], mpn_ConAttr[CurChar], Cursor.ch[0], Cursor.bgColorNum, Cursor.foreColorNum);
+            Cursor.foreColor = gSet.Colors[Cursor.foreColorNum];
+            Cursor.bgColor = gSet.Colors[Cursor.bgColorNum];
 
-			UpdateCursorDraw(hPaintDc, csbi.dwCursorPosition, cinf.dwSize);
+            UpdateCursorDraw(hPaintDc, csbi.dwCursorPosition, cinf.dwSize);
 
-			Cursor.isVisiblePrev = Cursor.isVisible;
+            Cursor.isVisiblePrev = Cursor.isVisible;
 
-			SelectObject(hPaintDc, hOldFont);
-		}
+            SelectObject(hPaintDc, hOldFont);
+        }
 
 
     
@@ -1947,37 +1947,37 @@ void CVirtualConsole::Box(LPCTSTR szText)
 
 RECT CVirtualConsole::GetRect()
 {
-	RECT rc;
-	if (Width == 0 || Height == 0) { // если консоль еще не загрузилась - прикидываем по размеру GUI окна
-		//rc = MakeRect(winSize.X, winSize.Y);
-	    RECT rcWnd; GetClientRect(ghWnd, &rcWnd);
-		RECT rcCon = gConEmu.CalcRect(CER_CONSOLE, rcWnd, CER_MAINCLIENT);
-		RECT rcDC = gConEmu.CalcRect(CER_DC, rcCon, CER_CONSOLE);
-		rc = MakeRect(rcDC.right, rcDC.bottom);
-	} else {
-		rc = MakeRect(Width, Height);
-	}
-	return rc;
+    RECT rc;
+    if (Width == 0 || Height == 0) { // если консоль еще не загрузилась - прикидываем по размеру GUI окна
+        //rc = MakeRect(winSize.X, winSize.Y);
+        RECT rcWnd; GetClientRect(ghWnd, &rcWnd);
+        RECT rcCon = gConEmu.CalcRect(CER_CONSOLE, rcWnd, CER_MAINCLIENT);
+        RECT rcDC = gConEmu.CalcRect(CER_DC, rcCon, CER_CONSOLE);
+        rc = MakeRect(rcDC.right, rcDC.bottom);
+    } else {
+        rc = MakeRect(Width, Height);
+    }
+    return rc;
 }
 
 void CVirtualConsole::OnFontChanged()
 {
-	if (!this) return;
-	mb_RequiredForceUpdate = true;
+    if (!this) return;
+    mb_RequiredForceUpdate = true;
 }
 
 // Функция живет здесь, а не в gSet, т.к. здесь мы может более точно опеределить знакоместо
 COORD CVirtualConsole::ClientToConsole(LONG x, LONG y)
 {
-	TODO("X координаты нам известны, так что можно бы более корректно позицию определять...");
-	_ASSERTE(gSet.FontWidth()!=0 && gSet.FontHeight()!=0);
-	COORD cr = {0,0};
-	//if (this) -- пока переменные класса не используются - NULL не страшен
-	{
-		if (gSet.FontWidth())
-			cr.X = x/gSet.FontWidth();
-		if (gSet.FontHeight())
-			cr.Y = y/gSet.FontHeight();
-	}
-	return cr;
+    TODO("X координаты нам известны, так что можно бы более корректно позицию определять...");
+    _ASSERTE(gSet.FontWidth()!=0 && gSet.FontHeight()!=0);
+    COORD cr = {0,0};
+    //if (this) -- пока переменные класса не используются - NULL не страшен
+    {
+        if (gSet.FontWidth())
+            cr.X = x/gSet.FontWidth();
+        if (gSet.FontHeight())
+            cr.Y = y/gSet.FontHeight();
+    }
+    return cr;
 }

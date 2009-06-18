@@ -24,6 +24,7 @@ extern int lastModifiedStateW;
 extern WCHAR gszDir1[CONEMUTABMAX], gszDir2[CONEMUTABMAX], gszRootKey[MAX_PATH];
 extern int maxTabCount, lastWindowCount;
 extern ConEmuTab* tabs; //(ConEmuTab*) calloc(maxTabCount, sizeof(ConEmuTab));
+extern CESERVER_REQ* gpCmdRet;
 extern HWND ConEmuHwnd;
 extern HWND FarHwnd;
 extern FarVersion gFarVersion;
@@ -93,6 +94,7 @@ LPCWSTR FUNC_X(GetMsg)(int aiMsg);
 
 extern DWORD gnReqCommand;
 extern int gnPluginOpenFrom;
+extern BOOL gbCmdCallObsolete;
 extern LPVOID gpReqCommandData;
 void ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData);
 BOOL CheckPlugKey();

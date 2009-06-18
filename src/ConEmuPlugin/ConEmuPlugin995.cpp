@@ -145,7 +145,8 @@ void ProcessDragTo995()
 		//InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_FREEWINDOWINFO, (void*)&WInfo);
 		int ItemsCount=0;
 		//WriteFile(hPipe, &ItemsCount, sizeof(int), &cout, NULL);				
-		OutDataAlloc(sizeof(ItemsCount));
+		if (gpCmdRet==NULL)
+			OutDataAlloc(sizeof(ItemsCount));
 		OutDataWrite(&ItemsCount,sizeof(ItemsCount));
 		return;
 	}
@@ -174,7 +175,8 @@ void ProcessDragTo995()
 	if (!pfpi) {
 		int ItemsCount=0;
 		//WriteFile(hPipe, &ItemsCount, sizeof(int), &cout, NULL);				
-		OutDataAlloc(sizeof(ItemsCount));
+		if (gpCmdRet==NULL)
+			OutDataAlloc(sizeof(ItemsCount));
 		OutDataWrite(&ItemsCount,sizeof(ItemsCount));
 		return;
 	}
@@ -211,7 +213,8 @@ void ProcessDragTo995()
 	// Собственно, пересылка информации
 	//WriteFile(hPipe, &nStructSize, sizeof(nStructSize), &cout, NULL);
 	//WriteFile(hPipe, pfpi, nStructSize, &cout, NULL);
-	OutDataAlloc(nStructSize+4);
+	if (gpCmdRet==NULL)
+			OutDataAlloc(nStructSize+4);
 	OutDataWrite(&nStructSize, sizeof(nStructSize));
 	OutDataWrite(pfpi, nStructSize);
 
@@ -340,7 +343,7 @@ void UpdateConEmuTabsW995(int event, bool losingFocus, bool editorSave, void* Pa
 	{
 		WInfo.Pos = i;
 		InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETWINDOWINFO, (void*)&WInfo);
-		WARNING("Проверить! Как ведет себя ACTL_GETWINDOWINFO при сохранении файла под другим именем");
+		WARNING("Для получения имени нужно пользовать ECTL_GETFILENAME");
 		if (WInfo.Type == WTYPE_EDITOR || WInfo.Type == WTYPE_VIEWER || WInfo.Type == WTYPE_PANELS)
 			lbCh |= AddTab(tabCount, losingFocus, editorSave, 
 				WInfo.Type, WInfo.Name, /*editorSave ? ei.FileName :*/ NULL, 

@@ -34,7 +34,10 @@ HANDLE WINAPI _export OpenPlugin(int OpenFrom,INT_PTR Item)
 		gnPluginOpenFrom = OpenFrom;
 		ProcessCommand(gnReqCommand, FALSE/*bReqMainThread*/, gpReqCommandData);
 	} else {
-		ShowPluginMenu();
+		if (!gbCmdCallObsolete)
+			ShowPluginMenu();
+		else
+			gbCmdCallObsolete = FALSE;
 	}
 	return INVALID_HANDLE_VALUE;
 }
@@ -171,7 +174,8 @@ void ProcessDragToA()
 	{
 		int ItemsCount=0;
 		//WriteFile(hPipe, &ItemsCount, sizeof(int), &cout, NULL);				
-		OutDataAlloc(sizeof(ItemsCount));
+		if (gpCmdRet==NULL)
+			OutDataAlloc(sizeof(ItemsCount));
 		OutDataWrite(&ItemsCount,sizeof(ItemsCount));
 		return;
 	}
@@ -197,7 +201,8 @@ void ProcessDragToA()
 	if (!pfpi) {
 		int ItemsCount=0;
 		//WriteFile(hPipe, &ItemsCount, sizeof(int), &cout, NULL);				
-		OutDataAlloc(sizeof(ItemsCount));
+		if (gpCmdRet==NULL)
+			OutDataAlloc(sizeof(ItemsCount));
 		OutDataWrite(&ItemsCount,sizeof(ItemsCount));
 		return;
 	}
@@ -241,7 +246,8 @@ void ProcessDragToA()
 	// Собственно, пересылка информации
 	//WriteFile(hPipe, &nStructSize, sizeof(nStructSize), &cout, NULL);
 	//WriteFile(hPipe, pfpi, nStructSize, &cout, NULL);
-	OutDataAlloc(nStructSize+4);
+	if (gpCmdRet==NULL)
+		OutDataAlloc(nStructSize+4);
 	OutDataWrite(&nStructSize, sizeof(nStructSize));
 	OutDataWrite(pfpi, nStructSize);
 

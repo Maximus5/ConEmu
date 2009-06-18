@@ -718,8 +718,9 @@ void TabBarClass::OnMouse(int message, int x, int y)
             pVCon = FarSendChangeTab(iPage);
 
 			if (pVCon) {
-				pVCon->RCon()->OnKeyboard(ghWnd, WM_KEYDOWN, VK_F10, 0);
-				pVCon->RCon()->OnKeyboard(ghWnd, WM_KEYUP, VK_F10, (LPARAM)(3<<30));
+				//pVCon->RCon()->OnKeyboard(ghWnd, WM_KEYDOWN, VK_F10, 0);
+				//pVCon->RCon()->OnKeyboard(ghWnd, WM_KEYUP, VK_F10, (LPARAM)(3<<30));
+				gConEmu.PostMacro(gSet.sTabCloseMacro ? gSet.sTabCloseMacro : L"F10");
 			}
         }
     }

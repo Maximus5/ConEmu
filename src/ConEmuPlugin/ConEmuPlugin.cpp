@@ -78,7 +78,10 @@ HANDLE WINAPI _export OpenPluginW(int OpenFrom,INT_PTR Item)
 		gnPluginOpenFrom = OpenFrom;
 		ProcessCommand(gnReqCommand, FALSE/*bReqMainThread*/, gpReqCommandData);
 	} else {
-		ShowPluginMenu();
+		if (!gbCmdCallObsolete)
+			ShowPluginMenu();
+		else
+			gbCmdCallObsolete = FALSE;
 	}
 	return INVALID_HANDLE_VALUE;
 }
@@ -102,6 +105,7 @@ DWORD  gnDataSize=0;
 //HANDLE ghMapping = NULL;
 DWORD gnReqCommand = -1;
 int gnPluginOpenFrom = -1;
+BOOL gbCmdCallObsolete = FALSE;
 LPVOID gpReqCommandData = NULL;
 HANDLE ghReqCommandEvent = NULL;
 UINT gnMsgTabChanged = 0;
@@ -310,10 +314,16 @@ void ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData)
 		// Проверить, не изменилась ли горячая клавиша плагина, и если да - пересоздать макросы
 		IsKeyChanged(TRUE);
 
+		INPUT_RECORD evt[10];
+		DWORD dwStartWait, dwCur, dwTimeout, dwInputs = 0, dwInputsFirst = 0;
+		BOOL  lbInputs = FALSE;
+		HANDLE hInput = GetStdHandle(STD_INPUT_HANDLE);
 
+		BOOL lbInput = PeekConsoleInput(hInput, evt, 10, &dwInputsFirst);
 
 		// Нужен вызов плагина в остновной нити
 		WARNING("Переделать на WriteConsoleInput");
+		gbCmdCallObsolete = FALSE;
 		SendMessage(FarHwnd, WM_KEYDOWN, VK_F14, 0);
 		SendMessage(FarHwnd, WM_KEYUP, VK_F14, (LPARAM)(3<<30));
 
@@ -322,8 +332,24 @@ void ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData)
 		hEvents[0] = ghReqCommandEvent;
 		hEvents[1] = ghServerTerminateEvent;
 
+		dwTimeout = CONEMUFARTIMEOUT;
+		dwStartWait = GetTickCount();
 		//DuplicateHandle(GetCurrentProcess(), ghReqCommandEvent, GetCurrentProcess(), hEvents, 0, 0, DUPLICATE_SAME_ACCESS);
-		dwWait = WaitForMultipleObjects ( 2, hEvents, FALSE, CONEMUFARTIMEOUT );
+		do {
+			dwWait = WaitForMultipleObjects ( 2, hEvents, FALSE, 200 );
+			if (dwWait == WAIT_TIMEOUT) {
+				lbInput = PeekConsoleInput(hInput, evt, 10, &dwInputs);
+				if (lbInput && dwInputs == 0) {
+					//Раз из буфера ввода убралось "Отпускание F14" - значит ловить уже нечего, выходим
+					gbCmdCallObsolete = TRUE; // иначе может всплыть меню, когда не надо 
+					break;
+				}
+
+				dwCur = GetTickCount();
+				if ((dwCur - dwStartWait) > dwTimeout)
+					break;
+			}
+		} while (dwWait == WAIT_TIMEOUT);
 		if (dwWait) ResetEvent(ghReqCommandEvent); // Сразу сбросим, вдруг не дождались?
 
 		ReleaseSemaphore(ghPluginSemaphore, 1, NULL);
@@ -345,12 +371,16 @@ void ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData)
 	{
 		case (CMD_DRAGFROM):
 		{
-			if (gFarVersion.dwVerMajor==1)
+			if (gFarVersion.dwVerMajor==1) {
 				ProcessDragFromA();
-			else if (gFarVersion.dwBuild>=FAR_Y_VER)
+				ProcessDragToA();
+			} else if (gFarVersion.dwBuild>=FAR_Y_VER) {
 				FUNC_Y(ProcessDragFrom)();
-			else
+				FUNC_Y(ProcessDragTo)();
+			} else {
 				FUNC_X(ProcessDragFrom)();
+				FUNC_X(ProcessDragTo)();
+			}
 			break;
 		}
 		case (CMD_DRAGTO):
@@ -1123,6 +1153,7 @@ void SendTabs(int tabCount, BOOL abFillDataOnly/*=FALSE*/, BOOL abForceSend/*=FA
 
 		cds.cbData = cds.dwData * sizeof(ConEmuTab);
 		EnterCriticalSection(&csData);
+		if (gpCmdRet) { Free(gpCmdRet); gpCmdRet = NULL; gpData = NULL; gpCursor = NULL; }
 		OutDataAlloc(sizeof(cds.dwData) + cds.cbData);
 		OutDataWrite(&cds.dwData, sizeof(cds.dwData));
 		OutDataWrite(cds.lpData, cds.cbData);
@@ -1322,6 +1353,7 @@ void CloseTabs()
 // Возвращает FALSE при ошибках выделения памяти
 BOOL OutDataAlloc(DWORD anSize)
 {
+	_ASSERTE(gpCmdRet==NULL);
 	// + размер заголовка gpCmdRet
 	gpCmdRet = (CESERVER_REQ*)Alloc(sizeof(CESERVER_REQ_HDR)+anSize,1);
 	if (!gpCmdRet)

@@ -145,7 +145,8 @@ void ProcessDragTo789()
 		//InfoW789->AdvControl(InfoW789->ModuleNumber, ACTL_FREEWINDOWINFO, (void*)&WInfo);
 		int ItemsCount=0;
 		//WriteFile(hPipe, &ItemsCount, sizeof(int), &cout, NULL);				
-		OutDataAlloc(sizeof(ItemsCount));
+		if (gpCmdRet==NULL)
+			OutDataAlloc(sizeof(ItemsCount));
 		OutDataWrite(&ItemsCount,sizeof(ItemsCount));
 		return;
 	}
@@ -174,7 +175,8 @@ void ProcessDragTo789()
 	if (!pfpi) {
 		int ItemsCount=0;
 		//WriteFile(hPipe, &ItemsCount, sizeof(int), &cout, NULL);				
-		OutDataAlloc(sizeof(ItemsCount));
+		if (gpCmdRet==NULL)
+			OutDataAlloc(sizeof(ItemsCount));
 		OutDataWrite(&ItemsCount,sizeof(ItemsCount));
 		return;
 	}
@@ -211,7 +213,8 @@ void ProcessDragTo789()
 	// Собственно, пересылка информации
 	//WriteFile(hPipe, &nStructSize, sizeof(nStructSize), &cout, NULL);
 	//WriteFile(hPipe, pfpi, nStructSize, &cout, NULL);
-	OutDataAlloc(nStructSize+4);
+	if (gpCmdRet==NULL)
+			OutDataAlloc(nStructSize+4);
 	OutDataWrite(&nStructSize, sizeof(nStructSize));
 	OutDataWrite(pfpi, nStructSize);
 

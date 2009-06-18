@@ -240,7 +240,7 @@ private:
     DWORD mn_InRecreate; // Tick, когда начали пересоздание
     BOOL mb_ProcessRestarted;
     // Логи
-    BOOL mb_UseLogs;
+    BYTE m_UseLogs;
     HANDLE mh_LogInput; wchar_t *mpsz_LogInputFile, *mpsz_LogPackets; UINT mn_LogPackets;
     void CreateLogFiles();
     void CloseLogFiles();
@@ -256,5 +256,7 @@ private:
     //
     BOOL PrepareOutputFile(BOOL abUnicodeText, wchar_t* pszFilePathName);
     HANDLE PrepareOutputFileCreate(wchar_t* pszFilePathName);
+    // фикс для dblclick в редакторе
+    MOUSE_EVENT_RECORD m_LastMouse;
 };
 

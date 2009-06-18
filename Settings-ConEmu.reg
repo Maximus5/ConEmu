@@ -120,6 +120,8 @@ REGEDIT4
 
 ;; Tabs: 0 - don't show, 1 - always, 2 - auto
 "Tabs"=hex:02
+;; Key macros for close active tab (editor/viewer/panel)
+;"TabCloseMacro"="F10"
 ;; Handle 'Ctrl-Tab' & 'Ctrl-Shift-Tab' internally
 "TabSelf"=hex:01
 ;; Keyboard switching: 0 - immediate, 1 - on Ctrl depress
