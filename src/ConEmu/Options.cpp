@@ -58,6 +58,7 @@ CSettings::~CSettings()
     if (psCmd) {free(psCmd); psCmd = NULL;}
     if (psCurCmd) {free(psCurCmd); psCurCmd = NULL;}
 	if (sTabCloseMacro) {free(sTabCloseMacro); sTabCloseMacro = NULL;}
+	if (sRClickMacro) {free(sRClickMacro); sRClickMacro = NULL;}
     if (mh_Uxtheme!=NULL) { FreeLibrary(mh_Uxtheme); mh_Uxtheme = NULL; }
 }
 
@@ -144,6 +145,7 @@ void CSettings::InitSettings()
     nSlideShowElapse = 2500;
     nIconID = IDI_ICON1;
     isRClickSendKey = 2;
+    sRClickMacro = NULL;
     _tcscpy(szTabConsole, _T("%s"));
     //pszTabConsole = _tcscpy(szTabPanels+_tcslen(szTabPanels)+1, _T("Console"));
     _tcscpy(szTabEditor, _T("[%s]"));
@@ -262,6 +264,7 @@ void CSettings::LoadSettings()
         if (isPartBrush25>=isPartBrush50) isPartBrush25=isPartBrush50-10;
         
         reg.Load(_T("RightClick opens context menu"), isRClickSendKey);
+        	reg.Load(L"RightClickMacro", &sRClickMacro);
         reg.Load(_T("AltEnter"), isSentAltEnter);
         reg.Load(_T("Min2Tray"), isMinToTray);
         reg.Load(_T("BackGround Image show"), isShowBgImage);

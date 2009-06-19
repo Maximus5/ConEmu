@@ -511,6 +511,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\common\ConEmuCheck.c"
+				>
+			</File>
+			<File
 				RelativePath=".\ConEmuChild.cpp"
 				>
 			</File>
@@ -570,6 +574,10 @@
 			</File>
 			<File
 				RelativePath=".\ConEmuApp.h"
+				>
+			</File>
+			<File
+				RelativePath="..\common\ConEmuCheck.h"
 				>
 			</File>
 			<File

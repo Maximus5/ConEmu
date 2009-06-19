@@ -156,10 +156,11 @@ public:
     void SwitchKeyboardLayout(DWORD dwNewKeybLayout);
     void CloseConsole();
     void Paste();
+    void LogString(LPCSTR asText);
 
 public:
     // Вызываются из CVirtualConsole
-    BOOL PreCreate(BOOL abDetached);
+    BOOL PreCreate(BOOL abDetached, LPCWSTR asNewCmd = NULL);
     BOOL IsConsoleThread();
     void SetForceRead();
     DWORD WaitEndUpdate(DWORD dwTimeout=1000);
@@ -179,6 +180,7 @@ protected:
     HANDLE mh_VConServerThread;
     HANDLE mh_TermEvent, mh_MonitorThreadEvent, mh_EndUpdateEvent, mh_Sync2WindowEvent;
     BOOL mb_FullRetrieveNeeded, mb_Detached;
+    wchar_t* ms_SpecialCmd;
     HANDLE mh_MonitorThread; DWORD mn_MonitorThreadID;
 
     void Box(LPCTSTR szText);

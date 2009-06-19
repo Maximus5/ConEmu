@@ -53,6 +53,7 @@ public:
     bool isCursorV;
     bool isCursorColor;
     char isRClickSendKey;
+    wchar_t *sRClickMacro;
     bool isSentAltEnter;
     bool isMinToTray;
     bool isForceMonospace, isProportional;

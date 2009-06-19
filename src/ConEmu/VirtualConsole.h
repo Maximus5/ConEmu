@@ -58,7 +58,7 @@ public:
 
 	CVirtualConsole(/*HANDLE hConsoleOutput = NULL*/);
 	~CVirtualConsole();
-	static CVirtualConsole* Create(bool abDetached);
+	static CVirtualConsole* Create(bool abDetached, LPCWSTR asNewCmd = NULL);
 
 	bool InitDC(bool abNoDc, bool abNoWndResize);
 	void DumpConsole();

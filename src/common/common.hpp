@@ -96,6 +96,8 @@ extern wchar_t gszDbgModLabel[6];
 #define CECMD_GETOUTPUTFILE 10 // Записать вывод последней консольной программы во временный файл и вернуть его имя
 #define CECMD_GETOUTPUT     11
 #define CECMD_LANGCHANGE    12
+#define CECMD_NEWCMD        13 // Запустить в этом экземпляре новую консоль с переданной командой
+#define CECMD_TABSCMD       14 // 0: спрятать/показать табы, 1: перейти на следующую, 2: перейти на предыдущую, 3: commit switch
 
 #define CESERVER_REQ_VER    5
 
@@ -184,6 +186,11 @@ typedef struct tag_CESERVER_REQ_RETSIZE {
 	CONSOLE_SCREEN_BUFFER_INFO SetSizeRet;
 } CESERVER_REQ_RETSIZE;
 
+typedef struct tag_CESERVER_REQ_NEWCMD {
+	wchar_t szCurDir[MAX_PATH];
+	wchar_t szCommand[MAX_PATH]; // На самом деле - variable_size !!!
+} CESERVER_REQ_NEWCMD;
+
 typedef struct tag_CESERVER_REQ {
     CESERVER_REQ_HDR hdr;
 	union {
@@ -192,6 +199,7 @@ typedef struct tag_CESERVER_REQ {
 		CESERVER_REQ_SETSIZE SetSize;
 		CESERVER_REQ_RETSIZE SetSizeRet;
 		CESERVER_REQ_OUTPUTFILE OutputFile;
+		CESERVER_REQ_NEWCMD NewCmd;
 	};
 } CESERVER_REQ;
 

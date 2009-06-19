@@ -65,6 +65,7 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
     mh_PacketArrived = CreateEvent(NULL,FALSE,FALSE,NULL);
     //mh_CursorChanged = NULL;
     mb_Detached = FALSE;
+    ms_SpecialCmd = NULL;
     mb_FullRetrieveNeeded = FALSE;
     memset(&m_LastMouse, 0, sizeof(m_LastMouse));
 
@@ -109,6 +110,8 @@ CRealConsole::~CRealConsole()
     if (con.pConAttr)
         { Free(con.pConAttr); con.pConAttr = NULL; }
 
+    if (ms_SpecialCmd)
+    	{ Free(ms_SpecialCmd); ms_SpecialCmd = NULL; }
 
 
     SafeCloseHandle(mh_ConEmuC); mn_ConEmuC_PID = 0;
@@ -129,9 +132,19 @@ CRealConsole::~CRealConsole()
     CloseLogFiles();
 }
 
-BOOL CRealConsole::PreCreate(BOOL abDetached)
+BOOL CRealConsole::PreCreate(BOOL abDetached, LPCWSTR asNewCmd /*= NULL*/)
 {
     mb_NeedStartProcess = FALSE;
+    
+    if (asNewCmd && !ms_SpecialCmd) {
+    	_ASSERTE(abDetached == FALSE);
+    	int nLen = lstrlenW(asNewCmd);
+    	ms_SpecialCmd = (wchar_t*)Alloc(nLen+1,2);
+    	if (!ms_SpecialCmd)
+    		return FALSE;
+    	lstrcpyW(ms_SpecialCmd, asNewCmd);
+    }
+    
     if (abDetached) {
         // Пока ничего не делаем - просто создается серверная нить
         if (!PreInit()) { //TODO: вообще-то PreInit() уже наверное вызван...
@@ -709,7 +722,11 @@ BOOL CRealConsole::PreInit(BOOL abCreateBuffers/*=TRUE*/)
     //  if (gConEmu.ActiveCon()->RCon()->isBufferHeight())
     //      rcWnd.right += GetSystemMetrics(SM_CXVSCROLL);
     //}
-    RECT rcCon = gConEmu.CalcRect(CER_CONSOLE, rcWnd, CER_MAINCLIENT);
+    RECT rcCon;
+	if (IsIconic(ghWnd))
+		rcCon = MakeRect(gSet.wndWidth, gSet.wndHeight);
+	else
+		rcCon = gConEmu.CalcRect(CER_CONSOLE, rcWnd, CER_MAINCLIENT);
     _ASSERTE(rcCon.right!=0 && rcCon.bottom!=0);
     if (con.bBufferHeight) {
         con.m_sbi.dwSize = MakeCoord(rcCon.right,gSet.DefaultBufferHeight);
@@ -748,69 +765,13 @@ BOOL CRealConsole::StartProcess()
 {
     BOOL lbRc = FALSE;
 
-    //CSection SCON(&csCON, &ncsTCON);
 
     if (!mb_ProcessRestarted) {
         if (!PreInit())
             return FALSE;
     }
+
     
-    //if (ghConWnd) {
-    //    // Сначала нужно отцепиться от текущей консоли
-    //    FreeConsole(); ghConWnd = NULL;
-    //}
-    
-    
-    //ConExeProps props;
-    
-    // 2009-05-13 Теперь запуск консоли идет в отдельном процессе, так что ярлык не помешает
-    // Если запускались с ярлыка - это нихрена не поможет... информация похоже в .lnk сохраняется...
-    //RegistryProps(FALSE, props, CEC_INITTITLE);
-
-    /*if (!isShowConsole && !gSet.isConVisible
-        #ifdef MSGLOGGER
-        && !IsDebuggerPresent()
-        #endif
-        ) SetWindowPos(ghWnd, HWND_TOPMOST, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
-    AllocConsole();
-
-    InitHandlers(TRUE);
-
-    if (!isShowConsole && !gSet.isConVisible
-        #ifdef MSGLOGGER
-        && !IsDebuggerPresent()
-        #endif
-        ) SetWindowPos(ghWnd, HWND_NOTOPMOST, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
-
-    SetForegroundWindow(ghWnd);*/
-    
-    //RegistryProps(TRUE, props);
-
-
-    // Уже должно быть сделано в InitHandlers
-    /*RECT rcWnd; GetClientRect(ghWnd, &rcWnd);
-    RECT rcCon = gConEmu.CalcRect(CER_CONSOLE, rcWnd, CER_MAINCLIENT);
-    SetConsoleSize(MakeCoord(rcCon.right,rcCon.bottom));*/
-
-//#pragma message("error: почему-то консоль создалась схлопнутой по ширине/высоте, хотя ее размеры были нормальные!")
-    // TODO: перед Update нужно позвать установку размера консоли!
-
-    //Update(true);
-
-    //SCON.Leave();
-
-    /*if (gSet.isConMan) {
-        if (!gConEmu.InitConMan(gSet.GetCmd())) {
-            // Иначе жестоко получается. ConEmu вообще будет сложно запустить...
-            gSet.isConMan = false;
-        } else {
-            //SetForegroundWindow(ghWnd);
-            return TRUE;
-        }
-    }*/ 
-    
-    //if (!gSet.isConMan)
-    {
         STARTUPINFO si;
         PROCESS_INFORMATION pi;
 
@@ -825,7 +786,7 @@ BOOL CRealConsole::StartProcess()
         //si.dwX = rcDC.left; si.dwY = rcDC.top;
         ZeroMemory( &pi, sizeof(pi) );
 
-        int nStep = 1;
+        int nStep = (ms_SpecialCmd!=NULL) ? 2 : 1;
         wchar_t* psCurCmd = NULL;
         while (nStep <= 2)
         {
@@ -835,7 +796,11 @@ BOOL CRealConsole::StartProcess()
                 nStep ++;
             }*/
 
-            LPTSTR lpszCmd = (LPTSTR)gSet.GetCmd();
+            LPCWSTR lpszCmd = NULL;
+            if (ms_SpecialCmd)
+            	lpszCmd = ms_SpecialCmd;
+            else
+            	lpszCmd = gSet.GetCmd();
 
             int nLen = _tcslen(lpszCmd);
             TCHAR *pszSlash=NULL;
@@ -917,26 +882,33 @@ BOOL CRealConsole::StartProcess()
                 _tcscpy(psz, _T("Cannot execute the command.\r\n"));
                 _tcscat(psz, psCurCmd); _tcscat(psz, _T("\r\n"));
                 _tcscat(psz, pszErr);
-                if (psz[_tcslen(psz)-1]!=_T('\n')) _tcscat(psz, _T("\r\n"));
-                if (!gSet.psCurCmd && StrStrI(gSet.GetCmd(), gSet.GetDefaultCmd())==NULL) {
-                    _tcscat(psz, _T("\r\n\r\n"));
-                    _tcscat(psz, _T("Do You want to simply start "));
-                    _tcscat(psz, gSet.GetDefaultCmd());
-                    _tcscat(psz, _T("?"));
-                    nButtons |= MB_YESNO;
+                if (ms_SpecialCmd == NULL)
+                {
+	                if (psz[_tcslen(psz)-1]!=_T('\n')) _tcscat(psz, _T("\r\n"));
+    	            if (!gSet.psCurCmd && StrStrI(gSet.GetCmd(), gSet.GetDefaultCmd())==NULL) {
+        	            _tcscat(psz, _T("\r\n\r\n"));
+            	        _tcscat(psz, _T("Do You want to simply start "));
+                	    _tcscat(psz, gSet.GetDefaultCmd());
+                    	_tcscat(psz, _T("?"));
+	                    nButtons |= MB_YESNO;
+    	            }
                 }
                 MCHKHEAP
                 //Box(psz);
                 int nBrc = MessageBox(NULL, psz, _T("ConEmu"), nButtons);
                 Free(psz); Free(pszErr);
                 if (nBrc!=IDYES) {
-                    gConEmu.Destroy();
+                	// ??? Может ведь быть НЕСКОЛЬКО консолей. Нельзя так разрушать основное окно!
+                    //gConEmu.Destroy();
                     return FALSE;
                 }
                 // Выполнить стандартную команду...
-                gSet.psCurCmd = _tcsdup(gSet.GetDefaultCmd());
-                nStep ++;
-                MCHKHEAP
+                if (ms_SpecialCmd == NULL)
+                {
+	                gSet.psCurCmd = _tcsdup(gSet.GetDefaultCmd());
+	            }
+    	        nStep ++;
+        	    MCHKHEAP
                 if (psCurCmd) free(psCurCmd); psCurCmd = NULL;
             }
         }
@@ -962,7 +934,6 @@ BOOL CRealConsole::StartProcess()
         wsprintfW(ms_ConEmuCInput_Pipe, CESERVERINPUTNAME, L".", mn_ConEmuC_PID);
         MCHKHEAP
         
-    }
 
     return lbRc;
 }
@@ -2969,6 +2940,17 @@ void CRealConsole::CreateLogFiles()
 
     mpsz_LogInputFile = wcsdup(szFile);
     // OK, лог создали
+}
+
+void CRealConsole::LogString(LPCSTR asText)
+{
+	if (!this) return;
+	if (!asText) return;
+    DWORD dwLen = strlen(asText);
+    if (dwLen)
+    	WriteFile(mh_LogInput, asText, dwLen, &dwLen, 0);
+    WriteFile(mh_LogInput, "\r\n", 2, &dwLen, 0);
+    FlushFileBuffers(mh_LogInput);
 }
 
 void CRealConsole::LogInput(INPUT_RECORD* pRec)

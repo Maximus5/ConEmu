@@ -42,10 +42,13 @@ REGEDIT4
 "CursorColor"=hex:00
 
 ;; 0 - don't handle - always send RClick to console
-;; 1 - always send 'Apps' to console
-;; 2 - ShortClick - send RClick, LongClick - send 'Apps'
+;; 1 - always show context menu (look at "RightClickMacro" value)
+;; 2 - ShortClick - send RClick, LongClick - show menu
 ;; Needs EMenu & macro on 'Apps' button
 "RightClick opens context menu"=hex:02
+;; You may specify special macro, used to display menu.
+;; By default (value is absent) ConEmu simply send 'Apps' key to console
+;"RightClickMacro"="F11 e Enter"
 
 ;; Turn on multiconsole (sort of 'ConMan' functionality)
 "Multi"=hex:00

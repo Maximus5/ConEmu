@@ -47,11 +47,11 @@ WARNING("! А нафига КУРСОР (мигающий) отрисовывать в VirtualConsole? Не лучше ли
 #define CONSOLE_SELECTION_NOT_EMPTY     0x0002   // non-null select rectangle
 #endif
 
-CVirtualConsole* CVirtualConsole::Create(bool abDetached)
+CVirtualConsole* CVirtualConsole::Create(bool abDetached, LPCWSTR asNewCmd /* = NULL */)
 {
     CVirtualConsole* pCon = new CVirtualConsole();
     
-    if (!pCon->mp_RCon->PreCreate(abDetached)) {
+    if (!pCon->mp_RCon->PreCreate(abDetached, asNewCmd)) {
         delete pCon;
         return NULL;
     }

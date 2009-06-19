@@ -1116,6 +1116,11 @@ void TabBarClass::Switch(BOOL abForward)
     }
 }
 
+BOOL TabBarClass::IsInSwitch()
+{
+	return mb_InKeySwitching;
+}
+
 void TabBarClass::SwitchCommit()
 {
     if (!mb_InKeySwitching) return;
@@ -1133,6 +1138,16 @@ void TabBarClass::SwitchRollback()
 		mb_InKeySwitching = FALSE;
 		Update();
 	}
+}
+
+// Убьет из стека отсутствующих
+void TabBarClass::CheckStack()
+{
+}
+
+// Убьет из стека отсутствующих и поместит tab на верх стека
+void TabBarClass::AddStack(VConTabs tab)
+{
 }
 
 BOOL TabBarClass::CanActivateTab(int nTabIdx)

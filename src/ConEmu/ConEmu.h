@@ -131,6 +131,11 @@ protected:
 	UINT mn_MsgUpdateScrollInfo;
 	UINT mn_MsgUpdateTabs;
 	UINT mn_MsgOldCmdVer; BOOL mb_InShowOldCmdVersion;
+	
+	//
+	static DWORD CALLBACK ServerThread(LPVOID lpvParam);
+	void ServerThreadCommand(HANDLE hPipe);
+	DWORD mn_ServerThreadId; HANDLE mh_ServerThread, mh_ServerThreadTerminate;
 
 public:
 	DWORD CheckProcesses();
@@ -156,7 +161,7 @@ public:
 	static RECT CalcMargins(enum ConEmuMargins mg);
 	static RECT CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFrom, RECT* prDC=NULL);
 	bool ConmanAction(int nCmd);
-	CVirtualConsole* CreateCon(BOOL abStartDetached=FALSE);
+	CVirtualConsole* CreateCon(BOOL abStartDetached=FALSE, LPCWSTR asNewCmd=NULL);
 	void Destroy();
 	void DnDstep(LPCTSTR asMsg);
 	void ForceShowTabs(BOOL abShow);
@@ -185,6 +190,7 @@ public:
 	void PostCopy(wchar_t* apszMacro, BOOL abRecieved=FALSE);
 	void PostMacro(LPCWSTR asMacro);
 	void PostCreate(BOOL abRecieved=FALSE);
+	bool PtDiffTest(POINT C, int aX, int aY, UINT D); //(((abs(C.x-LOWORD(lParam)))<D) && ((abs(C.y-HIWORD(lParam)))<D))
 	void RePaint();
 	void ReSize();
 	void SetConsoleWindowSize(const COORD& size, bool updateInfo);

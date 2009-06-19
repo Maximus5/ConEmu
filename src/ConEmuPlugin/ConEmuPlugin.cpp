@@ -1174,7 +1174,7 @@ void SendTabs(int tabCount, BOOL abFillDataOnly/*=FALSE*/, BOOL abForceSend/*=FA
 				gpCmdRet->hdr.nSrcThreadId = GetCurrentThreadId();
 				CESERVER_REQ* pOut =
 					ExecuteGuiCmd(FarHwnd, gpCmdRet);
-				if (pOut) Free(pOut);
+				if (pOut) ExecuteFreeResult(pOut);
 			}
 		}
 	}
@@ -1345,7 +1345,7 @@ void CloseTabs()
 		in.hdr.nSrcThreadId = GetCurrentThreadId();
 		in.hdr.nVersion = CESERVER_REQ_VER;
 		CESERVER_REQ* pOut = ExecuteGuiCmd(FarHwnd, &in);
-		if (pOut) Free(pOut);
+		if (pOut) ExecuteFreeResult(pOut);
 	}
 }
 
@@ -1755,7 +1755,7 @@ void ShowPluginMenu()
 						DeleteFile(pOut->OutputFile.szFilePathName);
 					}
 				}
-				free(pOut);
+				ExecuteFreeResult(pOut);
 			}
 			free(pIn);
 		} break;

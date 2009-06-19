@@ -37,9 +37,16 @@ protected:
 	static WNDPROC _defaultTabProc;
 	
 	// Пока - банально. VCon, номер в FAR
-	typedef struct {
-		CVirtualConsole* pVCon;
-		int nFarWindowId;
+	typedef union tag_FAR_WND_ID { 
+		struct {
+			CVirtualConsole* pVCon;
+			int nFarWindowId/*HighPart*/;
+		};
+		struct {
+			CVirtualConsole* pVCon;
+			int nFarWindowId/*HighPart*/;
+		} u;
+		ULONGLONG ID;
 	} VConTabs;
 	std::vector<VConTabs> m_Tab2VCon;
 	BOOL mb_PostUpdateCalled;
@@ -47,17 +54,9 @@ protected:
 	int mn_CurSelTab;
 	
 	// Tab stack
-	typedef union _ULARGE_INTEGER { 
-		struct {
-			DWORD FarPID/*LowPart*/;
-			DWORD WndNo/*HighPart*/;
-		};
-		struct {
-			DWORD FarPID/*LowPart*/;
-			DWORD WndNo/*HighPart*/;
-		} u;
-		ULONGLONG ID;
-	} FAR_WND_ID;
+	std::vector<VConTabs> m_TabStack;
+	void CheckStack(); // Убьет из стека отсутствующих
+	void AddStack(VConTabs tab); // Убьет из стека отсутствующих и поместит tab на верх стека
 
 public:
 	TabBarClass();
@@ -89,6 +88,7 @@ public:
 	void Switch(BOOL abForward);
 	void SwitchNext();
 	void SwitchPrev();
+	BOOL IsInSwitch();
 	void SwitchCommit();
 	void SwitchRollback();
 	BOOL OnKeyboard(UINT messg, WPARAM wParam, LPARAM lParam);

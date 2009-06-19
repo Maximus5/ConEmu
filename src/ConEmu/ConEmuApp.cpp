@@ -1,3 +1,4 @@
+
 #include "Header.h"
 #include <commctrl.h>
 extern "C" {
@@ -519,6 +520,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	bool AttachPrm = false; LONG AttachVal=0;
 	bool ConManPrm = false, ConManValue = false;
 	bool VisPrm = false, VisValue = false;
+	bool SingleInstance = false;
 
     //gConEmu.cBlinkShift = GetCaretBlinkTime()/15;
 
@@ -766,6 +768,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             {
 	            gSet.isAdvLogging = 2;
 	        }
+	        else if ( !klstricmp(curCommand, _T("/single")) )
+	        {
+	        	SingleInstance = true;
+	        }
             //else if ( !klstricmp(curCommand, _T("/DontSetParent")) || !klstricmp(curCommand, _T("/Windows7")) )
             //{
             //    setParentDisabled = true;
@@ -837,7 +843,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	    free(psMsg);
 	    return 100;
     }
-        
+
         
 //------------------------------------------------------------------------
 ///| load settings and apply parameters |/////////////////////////////////
@@ -913,7 +919,45 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		ClearTypePrm ? CLEARTYPE_NATURAL_QUALITY : -1
 		);
 
+		
+///////////////////////////////////
 
+	if (SingleInstance) {
+		BOOL lbAccepted = FALSE;
+		LPCWSTR lpszCmd = gSet.GetCmd();
+		if (lpszCmd && *lpszCmd) {
+			HWND ConEmuHwnd = FindWindowExW(NULL, NULL, VirtualConsoleClassMain, NULL);
+			if (ConEmuHwnd) {
+				CESERVER_REQ *pIn = NULL, *pOut = NULL;
+				int nCmdLen = lstrlenW(lpszCmd);
+				int nSize = sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_NEWCMD);
+				if (nCmdLen >= MAX_PATH) {
+					nSize += (nCmdLen - MAX_PATH + 2) * 2;
+				}
+				pIn = (CESERVER_REQ*)calloc(nSize,1);
+				if (pIn) {
+					pIn->hdr.nSize = nSize;
+					pIn->hdr.nCmd = CECMD_NEWCMD;
+					pIn->hdr.nVersion = CESERVER_REQ_VER;
+					pIn->hdr.nSrcThreadId = GetCurrentThreadId();
+					lstrcpyW(pIn->NewCmd.szCommand, lpszCmd);
+
+					DWORD dwPID = 0;
+					if (GetWindowThreadProcessId(ConEmuHwnd, &dwPID))
+						AllowSetForegroundWindow(dwPID);
+					
+					pOut = ExecuteGuiCmd(ConEmuHwnd, pIn);
+					if (pOut && pOut->Data[0])
+						lbAccepted = TRUE;
+				}
+				if (pIn) {free(pIn); pIn = NULL;}
+				if (pOut) ExecuteFreeResult(pOut);
+			}
+		}
+		if (lbAccepted)
+			return 0;
+	}
+ 
     
 //------------------------------------------------------------------------
 ///| Allocating console |/////////////////////////////////////////////////
