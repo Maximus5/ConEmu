@@ -157,13 +157,14 @@ public:
     void CloseConsole();
     void Paste();
     void LogString(LPCSTR asText);
+	bool isActive();
 
 public:
     // Вызываются из CVirtualConsole
     BOOL PreCreate(BOOL abDetached, LPCWSTR asNewCmd = NULL);
     BOOL IsConsoleThread();
     void SetForceRead();
-    DWORD WaitEndUpdate(DWORD dwTimeout=1000);
+    //DWORD WaitEndUpdate(DWORD dwTimeout=1000);
 
 protected:
     CVirtualConsole* mp_VCon; // соответствующая виртуальная консоль
@@ -178,7 +179,7 @@ protected:
 
     static DWORD WINAPI MonitorThread(LPVOID lpParameter);
     HANDLE mh_VConServerThread;
-    HANDLE mh_TermEvent, mh_MonitorThreadEvent, mh_EndUpdateEvent, mh_Sync2WindowEvent;
+    HANDLE mh_TermEvent, mh_MonitorThreadEvent, mh_Sync2WindowEvent;
     BOOL mb_FullRetrieveNeeded, mb_Detached;
     wchar_t* ms_SpecialCmd;
     HANDLE mh_MonitorThread; DWORD mn_MonitorThreadID;
@@ -255,6 +256,7 @@ private:
     std::vector<CESERVER_REQ*> m_Packets;
     void PushPacket(CESERVER_REQ* pPkt);
     CESERVER_REQ* PopPacket();
+	BOOL mb_DataChanged;
     //
     BOOL PrepareOutputFile(BOOL abUnicodeText, wchar_t* pszFilePathName);
     HANDLE PrepareOutputFileCreate(wchar_t* pszFilePathName);

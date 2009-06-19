@@ -69,6 +69,7 @@ CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
     cinf.dwSize = 15; cinf.bVisible = TRUE;
     ZeroStruct(winSize); ZeroStruct(coord); ZeroStruct(select1); ZeroStruct(select2);
     TextLen = 0;
+	mb_RequiredForceUpdate = true;
   
     InitializeCriticalSection(&csDC); ncsTDC = 0; mb_PaintRequested = FALSE; mb_PaintLocked = FALSE;
     InitializeCriticalSection(&csCON); ncsTCON = 0;
@@ -219,8 +220,8 @@ bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize)
     BOOL lbNeedCreateBuffers = FALSE;
 
 #ifdef _DEBUG
-    if (!mp_RCon->IsConsoleThread()) {
-        _ASSERTE(mp_RCon->IsConsoleThread());
+    if (mp_RCon->IsConsoleThread()) {
+        //_ASSERTE(!mp_RCon->IsConsoleThread());
     }
 #endif
 
@@ -693,6 +694,24 @@ bool CVirtualConsole::Update(bool isForce, HDC *ahDc)
     if (!this || !mp_RCon || !mp_RCon->hConWnd)
         return false;
 
+	if (!gConEmu.isMainThread()) {
+		if (isForce)
+			mb_RequiredForceUpdate = true;
+
+		//if (mb_RequiredForceUpdate || updateText || updateCursor)
+		{
+			if (gConEmu.isActive(this)) {
+				gConEmu.m_Child.Invalidate();
+			}
+
+			return true;
+		}
+
+		return false;
+	}
+
+
+	/* -- 2009-06-20 переделал. графика теперь крутится ТОЛЬКО в MainThread
     if (!mp_RCon->IsConsoleThread()) {
         if (!ahDc) {
             mp_RCon->SetForceRead();
@@ -701,6 +720,7 @@ bool CVirtualConsole::Update(bool isForce, HDC *ahDc)
             return false;
         }
     }
+	*/
 
     // Рисуем актуальную информацию из CRealConsole. ЗДЕСЬ запросы в консоль не делаются.
     //RetrieveConsoleInfo();
@@ -765,6 +785,7 @@ bool CVirtualConsole::Update(bool isForce, HDC *ahDc)
         else
             updateCursor = Cursor.isVisiblePrevFromInfo && !cinf.bVisible;
     }
+
     
     gSet.Performance(tPerfRender, FALSE);
 
@@ -810,7 +831,7 @@ bool CVirtualConsole::Update(bool isForce, HDC *ahDc)
         mb_PaintRequested = TRUE;
         gConEmu.m_Child.Invalidate();
         //09.06.13 а если так? быстрее изменения на экране не появятся?
-        UpdateWindow(ghWndDC); // оно посылает сообщение в окно, и ждет окончания отрисовки
+        //UpdateWindow(ghWndDC); // оно посылает сообщение в окно, и ждет окончания отрисовки
         mb_PaintRequested = FALSE;
     }
 
@@ -1086,8 +1107,8 @@ void CVirtualConsole::UpdateText(bool isForce, bool updateText, bool updateCurso
     }
 
 #ifdef _DEBUG
-    if (!mp_RCon->IsConsoleThread()) {
-        _ASSERTE(mp_RCon->IsConsoleThread());
+    if (mp_RCon->IsConsoleThread()) {
+        //_ASSERTE(!mp_RCon->IsConsoleThread());
     }
     // Данные уже должны быть заполнены, и там не должно быть лажы
     BOOL lbDataValid = TRUE; uint n = 0;
@@ -1814,6 +1835,8 @@ void CVirtualConsole::Paint()
     }
     
     gSet.Performance(tPerfFPS, TRUE); // считается по своему
+
+	Update(mb_RequiredForceUpdate);
 
     BOOL lbExcept = FALSE;
     RECT client;

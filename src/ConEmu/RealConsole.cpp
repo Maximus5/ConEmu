@@ -58,7 +58,7 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
     ms_ConEmuC_Pipe[0] = 0; ms_ConEmuCInput_Pipe[0] = 0; ms_VConServer_Pipe[0] = 0;
     mh_TermEvent = CreateEvent(NULL,TRUE/*MANUAL - используется в нескольких нитях!*/,FALSE,NULL); ResetEvent(mh_TermEvent);
     mh_MonitorThreadEvent = CreateEvent(NULL,FALSE,FALSE,NULL);
-    mh_EndUpdateEvent = CreateEvent(NULL,FALSE,FALSE,NULL);
+    //mh_EndUpdateEvent = CreateEvent(NULL,FALSE,FALSE,NULL);
     WARNING("mh_Sync2WindowEvent убрать");
     mh_Sync2WindowEvent = CreateEvent(NULL,FALSE,FALSE,NULL);
     //mh_ConChanged = CreateEvent(NULL,FALSE,FALSE,NULL);
@@ -68,6 +68,7 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
     ms_SpecialCmd = NULL;
     mb_FullRetrieveNeeded = FALSE;
     memset(&m_LastMouse, 0, sizeof(m_LastMouse));
+	mb_DataChanged = FALSE;
 
     mn_ActiveStatus = 0;
     isShowConsole = false;
@@ -322,7 +323,7 @@ BOOL CRealConsole::SetConsoleSize(COORD size, DWORD anCmdID/*=CECMD_SETSIZE*/)
         }
     }
 
-    if (lbRc && gConEmu.isActive(mp_VCon)) {
+    if (lbRc && isActive()) {
         // update size info
         //if (!gSet.isFullScreen && !IsZoomed(ghWnd) && !IsIconic(ghWnd))
         if (gConEmu.isWindowNormal())
@@ -529,7 +530,7 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
         }
 
         
-        bActive = gConEmu.isActive(pRCon->mp_VCon);
+        bActive = pRCon->isActive();
         bIconic = IsIconic(ghWnd);
 
         // в минимизированном/неактивном режиме - сократить расходы
@@ -570,7 +571,7 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
         DWORD dwT1 = GetTickCount();
 
         try {   
-            ResetEvent(pRCon->mh_EndUpdateEvent);
+            //ResetEvent(pRCon->mh_EndUpdateEvent);
             
             
             if (!bDetached && bFirst) {
@@ -627,16 +628,19 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 
             // По con.m_sbi проверяет, включена ли прокрутка
             bool lbForceUpdate = pRCon->CheckBufferSize();
-            if (lbForceUpdate && gConEmu.isActive(pRCon->mp_VCon)) // размер текущего консольного окна был изменен
+            if (lbForceUpdate && pRCon->isActive()) // размер текущего консольного окна был изменен
                 gConEmu.OnSize(-1); // послать в главную нить запрос на обновление размера
             if (!lbForceUpdate && (nWait == (WAIT_OBJECT_0+1)))
                 lbForceUpdate = true;
 
             // 04.06.2009 Maks - видимо, EndUpdateEvent не всегда вызывался!
             // 04.06.2009 Maks - если консоль активна - Invalidate вызовет сам VCon при необходимости
-            pRCon->mp_VCon->Update(lbForceUpdate);
+			if (lbForceUpdate || pRCon->mb_DataChanged) {
+				pRCon->mb_DataChanged = FALSE;
+				pRCon->mp_VCon->Update(lbForceUpdate);
+			}
 
-            SetEvent(pRCon->mh_EndUpdateEvent);
+            //SetEvent(pRCon->mh_EndUpdateEvent);
         } catch(...) {
             bLoop = FALSE;
         }
@@ -1252,7 +1256,7 @@ void CRealConsole::StopThread(BOOL abRecreating)
     if (!abRecreating) {
         SafeCloseHandle(mh_TermEvent);
         SafeCloseHandle(mh_MonitorThreadEvent);
-        SafeCloseHandle(mh_EndUpdateEvent);
+        //SafeCloseHandle(mh_EndUpdateEvent);
         SafeCloseHandle(mh_Sync2WindowEvent);
         //SafeCloseHandle(mh_ConChanged);
         SafeCloseHandle(mh_PacketArrived);
@@ -1943,7 +1947,7 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
         if ((gSet.isMonitorConsoleLang & 1) == 1) {
             if (con.dwKeybLayout != dwNewKeybLayout) {
                 con.dwKeybLayout = dwNewKeybLayout;
-                if (gConEmu.isActive(mp_VCon))
+                if (isActive())
                     gConEmu.SwitchKeyboardLayout(dwNewKeybLayout);
             }
         }
@@ -2150,6 +2154,8 @@ void CRealConsole::ApplyConsoleInfo(CESERVER_REQ* pInfo)
     
     con.nChange2TextWidth = -1;
     con.nChange2TextHeight = -1;
+
+	mb_DataChanged = TRUE;
 
 #ifdef _DEBUG
     // Данные уже должны быть заполнены, и там не должно быть лажы
@@ -2877,7 +2883,7 @@ void CRealConsole::SetHwnd(HWND ahConWnd)
     if ((gSet.isMonitorConsoleLang & 2) == 2) // Один Layout на все консоли
         SwitchKeyboardLayout(gConEmu.GetActiveKeyboardLayout());
 
-    if (gConEmu.isActive(mp_VCon)) {
+    if (isActive()) {
         ghConWnd = hConWnd;
         // Чтобы можно было найти хэндл окна по хэндлу консоли
         SetWindowLong(ghWnd, GWL_USERDATA, (LONG)hConWnd);
@@ -3255,7 +3261,7 @@ void CRealConsole::OnActivate(int nNewNum, int nOldNum)
     if (!this)
         return;
 
-    _ASSERTE(gConEmu.isActive(mp_VCon));
+    _ASSERTE(isActive());
 
     // Чтобы можно было найти хэндл окна по хэндлу консоли
     SetWindowLong(ghWnd, GWL_USERDATA, (LONG)hConWnd);
@@ -3316,7 +3322,7 @@ BOOL CRealConsole::BufferHeightTurnedOn(CONSOLE_SCREEN_BUFFER_INFO* psbi)
 
 void CRealConsole::UpdateScrollInfo()
 {
-    if (!gConEmu.isActive(mp_VCon))
+    if (!isActive())
         return;
 
     if (!gConEmu.isMainThread()) {
@@ -3697,11 +3703,13 @@ void CRealConsole::SetForceRead()
     SetEvent(mh_MonitorThreadEvent);
 }
 
+/*
 DWORD CRealConsole::WaitEndUpdate(DWORD dwTimeout)
 {
     DWORD dwWait = WaitForSingleObject(mh_EndUpdateEvent, dwTimeout);
     return dwWait;
 }
+*/
 
 // Банально добавляет пакет в вектор. Сейчас порядок не важен
 void CRealConsole::PushPacket(CESERVER_REQ* pPkt)
@@ -3793,7 +3801,7 @@ void CRealConsole::SetBufferHeightMode(BOOL abBufferHeight, BOOL abLock/*=FALSE*
     }
 
     con.bBufferHeight = abBufferHeight;
-    if (gConEmu.isActive(mp_VCon))
+    if (isActive())
         gConEmu.OnBufferHeight(abBufferHeight);
 }
 
@@ -4158,4 +4166,11 @@ uint CRealConsole::TextHeight()
         _ASSERTE(nRet<=200);
     }
     return nRet;
+}
+
+bool CRealConsole::isActive()
+{
+	if (!this) return false;
+	if (!mp_VCon) return false;
+	return gConEmu.isActive(mp_VCon);
 }
