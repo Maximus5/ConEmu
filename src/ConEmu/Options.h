@@ -25,7 +25,9 @@ public:
 
     /* Background image */
     WCHAR sBgImage[MAX_PATH];
-    bool isShowBgImage, isBackgroundImageValid;
+    char isShowBgImage;
+	bool isBackgroundImageValid;
+	u8 bgImageDarker;
 
     /* Command Line (Registry) */
     LPTSTR psCmd;
@@ -51,6 +53,7 @@ public:
     char isFixFarBorders;
     BYTE isPartBrush75, isPartBrush50, isPartBrush25;
     bool isCursorV;
+	bool isCursorBlink;
     bool isCursorColor;
     char isRClickSendKey;
     wchar_t *sRClickMacro;
@@ -70,7 +73,6 @@ public:
     DWORD wndWidth, wndHeight, ntvdmHeight; // в символах
     int wndX, wndY; // в пикселях
     bool wndCascade;
-    u8 bgImageDarker;
     DWORD nSlideShowElapse;
     DWORD nIconID;
     bool isTryToCenter;
@@ -135,8 +137,11 @@ public:
     void Performance(UINT nID, BOOL bEnd);
 	void SetArgBufferHeight(int anBufferHeight);
 	void InitFont(LPCWSTR asFontName=NULL, int anFontHeight=-1, int anQuality=-1);
-public:
+protected:
     LRESULT OnInitDialog();
+	LRESULT OnInitDialog_Main();
+	LRESULT OnInitDialog_Color();
+	LRESULT OnInitDialog_Info();
     LRESULT OnButtonClicked(WPARAM wParam, LPARAM lParam);
     LRESULT OnColorButtonClicked(WPARAM wParam, LPARAM lParam);
     LRESULT OnEditChanged(WPARAM wParam, LPARAM lParam);
@@ -167,4 +172,9 @@ private:
 	UINT mn_MsgRecreateFont;
 	int IsChecked(HWND hParent, WORD nCtrlId);
 	int GetNumber(HWND hParent, WORD nCtrlId);
+	BOOL mb_TabHotKeyRegistered;
+	void RegisterTabs();
+	void UnregisterTabs();
+	static DWORD CALLBACK EnumFontsThread(LPVOID apArg);
+	HANDLE mh_EnumThread;
 };

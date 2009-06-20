@@ -22,6 +22,7 @@ CSettings::CSettings()
     InitSettings();
     mb_IgnoreEditChanged = FALSE;
     mb_IgnoreTtfChange = TRUE;
+	mb_TabHotKeyRegistered = FALSE;
     hMain = NULL; hColors = NULL; hInfo = NULL; hwndTip = NULL;
     QueryPerformanceFrequency((LARGE_INTEGER *)&mn_Freq);
     memset(mn_Counter, 0, sizeof(*mn_Counter)*(tPerfInterval-gbPerformance));
@@ -135,9 +136,12 @@ void CSettings::InitSettings()
 //------------------------------------------------------------------------
 ///| Default settings |///////////////////////////////////////////////////
 //------------------------------------------------------------------------
+	isShowBgImage = 0;
     _tcscpy(sBgImage, _T("c:\\back.bmp"));
+	bgImageDarker = 0x46;
+
     isFixFarBorders = TRUE; isPartBrush75 = 0xC8; isPartBrush50 = 0x96; isPartBrush25 = 0x5A;
-    bgImageDarker = 0;
+    
     wndHeight = ntvdmHeight = 25; // NightRoman
     wndWidth = 80;  // NightRoman
     wndX = 0; wndY = 0; wndCascade = true;
@@ -154,6 +158,8 @@ void CSettings::InitSettings()
     nTabLenMax = 20;
     
     isCursorV = true;
+	isCursorBlink = true;
+	isCursorColor = false;
     
     isTabs = 1; isTabSelf = true; isTabRecent = false; isTabLazy = true;
 	sTabCloseMacro = NULL;
@@ -214,8 +220,7 @@ void CSettings::LoadSettings()
 			reg.Load(_T("Multi.Next"), icMultiNext);
 			reg.Load(_T("Multi.Recreate"), icMultiRecreate);
 			reg.Load(_T("Multi.NewConfirm"), isMultiNewConfirm);
-        reg.Load(_T("BackGround Image"), sBgImage);
-        reg.Load(_T("bgImageDarker"), bgImageDarker);
+
         reg.Load(_T("FontSize"), inSize);
         reg.Load(_T("FontSizeX"), FontSizeX);
         reg.Load(_T("FontSizeX3"), FontSizeX3);
@@ -253,8 +258,10 @@ void CSettings::LoadSettings()
         reg.Load(_T("16it Height"), ntvdmHeight); if (ntvdmHeight<20) ntvdmHeight = 20; else if (ntvdmHeight>100) ntvdmHeight = 100;
 		reg.Load(_T("DefaultBufferHeight"), DefaultBufferHeight); if (DefaultBufferHeight < 300) DefaultBufferHeight = 300;
 
-        reg.Load(_T("CursorType"), isCursorV);
-        reg.Load(_T("CursorColor"), isCursorColor);
+        reg.Load(L"CursorType", isCursorV);
+        reg.Load(L"CursorColor", isCursorColor);
+		reg.Load(L"CursorBlink", isCursorBlink);
+
         reg.Load(_T("Experimental"), isFixFarBorders);
         
         reg.Load(_T("PartBrush75"), isPartBrush75); if (isPartBrush75<5) isPartBrush75=5; else if (isPartBrush75>250) isPartBrush75=250;
@@ -267,7 +274,12 @@ void CSettings::LoadSettings()
         	reg.Load(L"RightClickMacro", &sRClickMacro);
         reg.Load(_T("AltEnter"), isSentAltEnter);
         reg.Load(_T("Min2Tray"), isMinToTray);
+
         reg.Load(_T("BackGround Image show"), isShowBgImage);
+			if (isShowBgImage!=0 && isShowBgImage!=1 && isShowBgImage!=2) isShowBgImage = 0;
+		reg.Load(_T("BackGround Image"), sBgImage);
+		reg.Load(_T("bgImageDarker"), bgImageDarker);
+
         reg.Load(_T("FontBold"), isBold);
         reg.Load(_T("FontItalic"), isItalic);
         reg.Load(_T("ForceMonospace"), isForceMonospace);
@@ -448,8 +460,11 @@ BOOL CSettings::SaveSettings()
 				//reg.Save(_T("Multi.NewConfirm"), isMultiNewConfirm);
             reg.Save(_T("FontName"), LogFont.lfFaceName);
             reg.Save(_T("FontName2"), LogFont2.lfFaceName);
+
             reg.Save(_T("BackGround Image"), sBgImage);
             reg.Save(_T("bgImageDarker"), bgImageDarker);
+			reg.Save(_T("BackGround Image show"), isShowBgImage);
+
             reg.Save(_T("FontSize"), LogFont.lfHeight);
             reg.Save(_T("FontSizeX"), FontSizeX);
             reg.Save(_T("FontSizeX2"), FontSizeX2);
@@ -457,8 +472,11 @@ BOOL CSettings::SaveSettings()
             reg.Save(_T("FontCharSet"), LogFont.lfCharSet);
             reg.Save(_T("Anti-aliasing"), LogFont.lfQuality);
             reg.Save(_T("WindowMode"), isFullScreen ? rFullScreen : IsZoomed(ghWnd) ? rMaximized : rNormal);
-            reg.Save(_T("CursorType"), isCursorV);
+            
+			reg.Save(_T("CursorType"), isCursorV);
             reg.Save(_T("CursorColor"), isCursorColor);
+			reg.Save(L"CursorBlink", isCursorBlink);
+
             reg.Save(_T("Experimental"), isFixFarBorders);
             reg.Save(_T("RightClick opens context menu"), isRClickSendKey);
             reg.Save(_T("AltEnter"), isSentAltEnter);
@@ -468,12 +486,14 @@ BOOL CSettings::SaveSettings()
             reg.Save(_T("DndRKey"), nRDragKey);
             reg.Save(_T("DndDrop"), isDropEnabled);
             reg.Save(_T("DefCopy"), isDefCopy);
+
             reg.Save(_T("GUIpb"), isGUIpb);
+
             reg.Save(_T("Tabs"), isTabs);
 		        reg.Save(_T("TabSelf"), isTabSelf);
 		        reg.Save(_T("TabLazy"), isTabLazy);
 		        reg.Save(_T("TabRecent"), isTabRecent);
-            reg.Save(_T("BackGround Image show"), isShowBgImage);
+            
             reg.Save(_T("FontBold"), LogFont.lfWeight == FW_BOLD);
             reg.Save(_T("FontItalic"), LogFont.lfItalic);
             reg.Save(_T("ForceMonospace"), isForceMonospace);
@@ -564,8 +584,40 @@ BOOL CALLBACK CSettings::EnumFamCallBack(LPLOGFONT lplf, LPNEWTEXTMETRIC lpntm, 
     UNREFERENCED_PARAMETER( lpntm );
 }
 
+DWORD CSettings::EnumFontsThread(LPVOID apArg)
+{
+	HDC hdc = GetDC(NULL);
+	int aFontCount[] = { 0, 0, 0 };
+	EnumFontFamilies(hdc, (LPCTSTR) NULL, (FONTENUMPROC) EnumFamCallBack, (LPARAM) aFontCount);
+	DeleteDC(hdc);
+
+	wchar_t szName[MAX_PATH];
+	GetDlgItemText(gSet.hMain, tFontFace, szName, MAX_PATH);
+	SendDlgItemMessage(gSet.hMain, tFontFace, CB_SELECTSTRING, -1, (LPARAM)szName);
+	GetDlgItemText(gSet.hMain, tFontFace2, szName, MAX_PATH);
+	SendDlgItemMessage(gSet.hMain, tFontFace2, CB_SELECTSTRING, -1, (LPARAM)szName);
+
+	SafeCloseHandle(gSet.mh_EnumThread)
+
+	return 0;
+}
+
 LRESULT CSettings::OnInitDialog()
 {
+	_ASSERTE(!hMain && !hColors && !hInfo);
+	hMain = NULL; hColors = NULL; hInfo = NULL;
+
+	RegisterTabs();
+
+	TCHAR szTitle[MAX_PATH]; szTitle[0]=0;
+	int nConfLen = _tcslen(Config);
+	int nStdLen = strlen("Software\\ConEmu");
+	if (nConfLen>(nStdLen+1))
+		wsprintf(szTitle, _T("Settings (%s)..."), (Config+nStdLen+1));
+	else
+		_tcscpy(szTitle, _T("Settings..."));
+	SetWindowText ( ghOpWnd, szTitle );
+
 	MCHKHEAP
     {
         TCITEM tie;
@@ -590,277 +642,290 @@ LRESULT CSettings::OnInitDialog()
         hMain = CreateDialog((HINSTANCE)GetModuleHandle(NULL), 
             MAKEINTRESOURCE(IDD_DIALOG1), ghOpWnd, mainOpProc);
         MoveWindow(hMain, rcClient.left, rcClient.top, rcClient.right-rcClient.left, rcClient.bottom-rcClient.top, 0);
+		/*
         hColors = CreateDialog((HINSTANCE)GetModuleHandle(NULL), 
             MAKEINTRESOURCE(IDD_DIALOG2), ghOpWnd, colorOpProc);
         MoveWindow(hColors, rcClient.left, rcClient.top, rcClient.right-rcClient.left, rcClient.bottom-rcClient.top, 0);
         hInfo = CreateDialog((HINSTANCE)GetModuleHandle(NULL), 
             MAKEINTRESOURCE(IDD_DIALOG3), ghOpWnd, infoOpProc);
         MoveWindow(hInfo, rcClient.left, rcClient.top, rcClient.right-rcClient.left, rcClient.bottom-rcClient.top, 0);
+		*/
+
+		//OnInitDialog_Main();
 
         ShowWindow(hMain, SW_SHOW);
     }
     
     MCHKHEAP
 
-    {
-        HDC hdc = GetDC(ghOpWnd);
-        int aFontCount[] = { 0, 0, 0 };
-        EnumFontFamilies(hdc, (LPCTSTR) NULL, (FONTENUMPROC) EnumFamCallBack, (LPARAM) aFontCount);
-        DeleteDC(hdc);
-        
-        TCHAR szTitle[MAX_PATH]; szTitle[0]=0;
-        int nConfLen = _tcslen(Config);
-        int nStdLen = strlen("Software\\ConEmu");
-        if (nConfLen>(nStdLen+1))
-            wsprintf(szTitle, _T("Settings (%s)..."), (Config+nStdLen+1));
-        else
-            _tcscpy(szTitle, _T("Settings..."));
-        SetWindowText ( ghOpWnd, szTitle );
-    }
+	{
+		RECT rect;
+		GetWindowRect(ghOpWnd, &rect);
 
-    SendDlgItemMessage(hMain, tFontFace, CB_SELECTSTRING, -1, (LPARAM)LogFont.lfFaceName);
-    SendDlgItemMessage(hMain, tFontFace2, CB_SELECTSTRING, -1, (LPARAM)LogFont2.lfFaceName);
+		BOOL lbCentered = FALSE;
+		HMONITOR hMon = MonitorFromWindow(ghOpWnd, MONITOR_DEFAULTTONEAREST);
+		if (hMon) {
+			MONITORINFO mi; mi.cbSize = sizeof(mi);
+			if (GetMonitorInfo(hMon, &mi)) {
+				lbCentered = TRUE;
+				MoveWindow(ghOpWnd, 
+					(mi.rcWork.left+mi.rcWork.right-rect.right+rect.left)/2,
+					(mi.rcWork.top+mi.rcWork.bottom-rect.bottom+rect.top)/2,
+					rect.right - rect.left, rect.bottom - rect.top, false);
+			}
+		}
 
-    {
-        for (uint i=0; i < sizeofarray(Settings::FSizes); i++)
-        {
-            wsprintf(temp, _T("%i"), Settings::FSizes[i]);
-            if (i > 0)
-                SendDlgItemMessage(hMain, tFontSizeY, CB_ADDSTRING, 0, (LPARAM) temp);
-            SendDlgItemMessage(hMain, tFontSizeX, CB_ADDSTRING, 0, (LPARAM) temp);
-            SendDlgItemMessage(hMain, tFontSizeX2, CB_ADDSTRING, 0, (LPARAM) temp);
-            SendDlgItemMessage(hMain, tFontSizeX3, CB_ADDSTRING, 0, (LPARAM) temp);
-        }
-
-        wsprintf(temp, _T("%i"), LogFont.lfHeight);
-        upToFontHeight = LogFont.lfHeight;
-        if( SendDlgItemMessage(hMain, tFontSizeY, CB_SELECTSTRING, -1, (LPARAM)temp) == CB_ERR )
-            SetDlgItemText(hMain, tFontSizeY, temp);
-
-        wsprintf(temp, _T("%i"), FontSizeX);
-        if( SendDlgItemMessage(hMain, tFontSizeX, CB_SELECTSTRING, -1, (LPARAM)temp) == CB_ERR )
-            SetDlgItemText(hMain, tFontSizeX, temp);
-
-        wsprintf(temp, _T("%i"), FontSizeX2);
-        if( SendDlgItemMessage(hMain, tFontSizeX2, CB_SELECTSTRING, -1, (LPARAM)temp) == CB_ERR )
-            SetDlgItemText(hMain, tFontSizeX2, temp);
-
-        wsprintf(temp, _T("%i"), FontSizeX3);
-        if( SendDlgItemMessage(hMain, tFontSizeX3, CB_SELECTSTRING, -1, (LPARAM)temp) == CB_ERR )
-            SetDlgItemText(hMain, tFontSizeX3, temp);
-    }
-
-    {
-        const char *ChSets[] = {"ANSI", "Arabic", "Baltic", "Chinese Big 5", "Default", "East Europe",
-            "GB 2312", "Greek", "Hebrew", "Hangul", "Johab", "Mac", "OEM", "Russian", "Shiftjis",
-            "Symbol", "Thai", "Turkish", "Vietnamese"};
-
-        u8 num = 4;
-        for (uint i=0; i < 19; i++)
-        {
-            SendDlgItemMessageA(hMain, tFontCharset, CB_ADDSTRING, 0, (LPARAM) ChSets[i]);
-            if (chSetsNums[i] == LogFont.lfCharSet) num = i;
-        }
-        SendDlgItemMessage(hMain, tFontCharset, CB_SETCURSEL, num, 0);
-    }
-
-    MCHKHEAP
-
-    SetDlgItemText(hMain, tCmdLine, psCmd ? psCmd : _T(""));
-    SetDlgItemText(hInfo, tCurCmdLine, GetCommandLine());
-    SetDlgItemText(hMain, tBgImage, sBgImage);
-    CheckDlgButton(hMain, rBgSimple, BST_CHECKED);
-
-    TCHAR tmp[10];
-    wsprintf(tmp, _T("%i"), bgImageDarker);
-    SendDlgItemMessage(hMain, tDarker, EM_SETLIMITTEXT, 3, 0);
-    SetDlgItemText(hMain, tDarker, tmp);
-
-    SendDlgItemMessage(hMain, slDarker, TBM_SETRANGE, (WPARAM) true, (LPARAM) MAKELONG(0, 255));
-    SendDlgItemMessage(hMain, slDarker, TBM_SETPOS  , (WPARAM) true, (LPARAM) bgImageDarker);
-
-    if (isShowBgImage)
-        CheckDlgButton(hMain, cbBgImage, BST_CHECKED);
-    else
-    {
-        EnableWindow(GetDlgItem(hMain, tBgImage), false);
-        EnableWindow(GetDlgItem(hMain, tDarker), false);
-        EnableWindow(GetDlgItem(hMain, slDarker), false);
-        EnableWindow(GetDlgItem(hMain, bBgImage), false);
-    }
-
-    switch(LogFont.lfQuality)
-    {
-    case NONANTIALIASED_QUALITY:
-        CheckDlgButton(hMain, rNoneAA, BST_CHECKED);
-        break;
-    case ANTIALIASED_QUALITY:
-        CheckDlgButton(hMain, rStandardAA, BST_CHECKED);
-        break;
-    case CLEARTYPE_NATURAL_QUALITY:
-        CheckDlgButton(hMain, rCTAA, BST_CHECKED);
-        break;
-    }
-    if (isFixFarBorders) CheckDlgButton(hMain, cbFixFarBorders, (isFixFarBorders==1) ? BST_CHECKED : BST_INDETERMINATE);
-    if (isCursorColor) CheckDlgButton(hMain, cbCursorColor, BST_CHECKED);
-    if (isRClickSendKey) CheckDlgButton(hMain, cbRClick, (isRClickSendKey==1) ? BST_CHECKED : BST_INDETERMINATE);
-    if (isSentAltEnter) CheckDlgButton(hMain, cbSendAE, BST_CHECKED);
-    if (isMinToTray) CheckDlgButton(hMain, cbMinToTray, BST_CHECKED);
-
-    if (isDragEnabled) {
-        //CheckDlgButton(hMain, cbDragEnabled, BST_CHECKED);
-        if (isDragEnabled & DRAG_L_ALLOWED) CheckDlgButton(hMain, cbDragL, BST_CHECKED);
-        if (isDragEnabled & DRAG_R_ALLOWED) CheckDlgButton(hMain, cbDragR, BST_CHECKED);
-    }
-    if (isDropEnabled) CheckDlgButton(hMain, cbDropEnabled, (isDropEnabled==1) ? BST_CHECKED : BST_INDETERMINATE);
-    if (isDefCopy) CheckDlgButton(hMain, cbDnDCopy, BST_CHECKED);
-    {
-        uint nKeyCount = sizeofarray(Settings::szKeys);
-        u8 numL = 0, numR = 0;
-        for (uint i=0; i<nKeyCount; i++) {
-            SendDlgItemMessage(hMain, lbLDragKey, CB_ADDSTRING, 0, (LPARAM) Settings::szKeys[i]);
-            SendDlgItemMessage(hMain, lbRDragKey, CB_ADDSTRING, 0, (LPARAM) Settings::szKeys[i]);
-            if (Settings::nKeys[i] == nLDragKey) numL = i;
-            if (Settings::nKeys[i] == nRDragKey) numR = i;
-        }
-        if (!numL) nLDragKey = 0; // если код клавиши неизвестен?
-        if (!numR) nRDragKey = 0; // если код клавиши неизвестен?
-        SendDlgItemMessage(hMain, lbLDragKey, CB_SETCURSEL, numL, 0);
-        SendDlgItemMessage(hMain, lbRDragKey, CB_SETCURSEL, numR, 0);
-    }
-    
-
-    if (isGUIpb) CheckDlgButton(hMain, cbGUIpb, BST_CHECKED);
-    if (isTabs) CheckDlgButton(hMain, cbTabs, (isTabs==1) ? BST_CHECKED : BST_INDETERMINATE);
-    if (isCursorV)
-        CheckDlgButton(hMain, rCursorV, BST_CHECKED);
-    else
-        CheckDlgButton(hMain, rCursorH, BST_CHECKED);
-    if (isForceMonospace)
-        CheckDlgButton(hMain, cbMonospace, BST_CHECKED);
-    if (!isProportional)
-        CheckDlgButton(hMain, cbNonProportional, BST_CHECKED);
-    if (isUpdConHandle)
-        CheckDlgButton(ghOpWnd, cbAutoConHandle, BST_CHECKED);
-    if (isMulti)
-        CheckDlgButton(hMain, cbConMan, BST_CHECKED);
-
-    if (LogFont.lfWeight == FW_BOLD) CheckDlgButton(hMain, cbBold, BST_CHECKED);
-    if (LogFont.lfItalic)            CheckDlgButton(hMain, cbItalic, BST_CHECKED);
-
-    if (isFullScreen)
-        CheckRadioButton(hMain, rNormal, rFullScreen, rFullScreen);
-    else if (IsZoomed(ghWnd))
-        CheckRadioButton(hMain, rNormal, rFullScreen, rMaximized);
-    else
-        CheckRadioButton(hMain, rNormal, rFullScreen, rNormal);
-
-    //wsprintf(temp, _T("%i"), wndWidth);   SetDlgItemText(hMain, tWndWidth, temp);
-    SendDlgItemMessage(hMain, tWndWidth, EM_SETLIMITTEXT, 3, 0);
-    //wsprintf(temp, _T("%i"), wndHeight);  SetDlgItemText(hMain, tWndHeight, temp);
-    SendDlgItemMessage(hMain, tWndHeight, EM_SETLIMITTEXT, 3, 0);
-    UpdateSize(wndWidth, wndHeight);
-    
-    EnableWindow(GetDlgItem(hMain, cbApplyPos), FALSE);
-
-    SendDlgItemMessage(hMain, tWndX, EM_SETLIMITTEXT, 6, 0);
-    SendDlgItemMessage(hMain, tWndY, EM_SETLIMITTEXT, 6, 0);
-    
-    MCHKHEAP
-
-    if (!isFullScreen && !IsZoomed(ghWnd))
-    {
-        EnableWindow(GetDlgItem(hMain, tWndWidth), true);
-        EnableWindow(GetDlgItem(hMain, tWndHeight), true);
-        EnableWindow(GetDlgItem(hMain, tWndX), true);
-        EnableWindow(GetDlgItem(hMain, tWndY), true);
-        if (!IsIconic(ghWnd)) {
-            RECT rc; GetWindowRect(ghWnd, &rc);
-            wndX = rc.left; wndY = rc.top;
-        }
-    }
-    else
-    {
-        EnableWindow(GetDlgItem(hMain, tWndWidth), false);
-        EnableWindow(GetDlgItem(hMain, tWndHeight), false);
-        EnableWindow(GetDlgItem(hMain, tWndX), false);
-        EnableWindow(GetDlgItem(hMain, tWndY), false);
-    }
-    UpdatePos(wndX, wndY);
-    CheckDlgButton(hMain, wndCascade ? rCascade : rFixed, BST_CHECKED);
-
-    #define getR(inColorref) (byte)inColorref
-    #define getG(inColorref) (byte)(inColorref >> 8)
-    #define getB(inColorref) (byte)(inColorref >> 16)
-
-    for (uint i = 0; i < 32; i++)
-    {
-        SendDlgItemMessage(hColors, 1100 + i, EM_SETLIMITTEXT, 11, 0);
-        wsprintf(temp, _T("%i %i %i"), getR(Colors[i]), getG(Colors[i]), getB(Colors[i]));
-        SetDlgItemText(hColors, 1100 + i, temp);
-    }
-
-    for (uint i=0; i < 16; i++)
-    {
-        wsprintf(temp, (i<10) ? _T("# %i") : _T("#%i"), i);
-        SendDlgItemMessage(hColors, lbExtendIdx, CB_ADDSTRING, 0, (LPARAM) temp);
-        SendDlgItemMessage(hColors, lbVisFore, CB_ADDSTRING, 0, (LPARAM) temp);
-        SendDlgItemMessage(hColors, lbVisNormal, CB_ADDSTRING, 0, (LPARAM) temp);
-        SendDlgItemMessage(hColors, lbVisTab, CB_ADDSTRING, 0, (LPARAM) temp);
-        SendDlgItemMessage(hColors, lbVisEOL, CB_ADDSTRING, 0, (LPARAM) temp);
-        SendDlgItemMessage(hColors, lbVisEOF, CB_ADDSTRING, 0, (LPARAM) temp);
-    }
-    SendDlgItemMessage(hColors, lbExtendIdx, CB_SETCURSEL, nExtendColor, 0);
-    CheckDlgButton(hColors, cbExtendColors, isExtendColors ? BST_CHECKED : BST_UNCHECKED);
-    OnColorButtonClicked(cbExtendColors, 0);
-    
-    // Visualizer
-    CheckDlgButton(hColors, cbVisualizer, isVisualizer ? BST_CHECKED : BST_UNCHECKED);
-    SendDlgItemMessage(hColors, lbVisFore, CB_SETCURSEL, nVizFore, 0);
-    SendDlgItemMessage(hColors, lbVisNormal, CB_SETCURSEL, nVizNormal, 0);
-    SendDlgItemMessage(hColors, lbVisTab, CB_SETCURSEL, nVizTab, 0);
-    SendDlgItemMessage(hColors, lbVisEOL, CB_SETCURSEL, nVizEOL, 0);
-    SendDlgItemMessage(hColors, lbVisEOF, CB_SETCURSEL, nVizEOF, 0);
-    OnColorButtonClicked(cbVisualizer, 0);
-    
-    // Performance
-    Performance(gbPerformance, TRUE);
-    
-
-    gConEmu.UpdateProcessDisplay(TRUE);
-	gConEmu.UpdateSizes();
-
-
-    MCHKHEAP
-
-    {
-        RECT rect;
-        GetWindowRect(ghOpWnd, &rect);
-
-        BOOL lbCentered = FALSE;
-        HMONITOR hMon = MonitorFromWindow(ghOpWnd, MONITOR_DEFAULTTONEAREST);
-        if (hMon) {
-            MONITORINFO mi; mi.cbSize = sizeof(mi);
-            if (GetMonitorInfo(hMon, &mi)) {
-                lbCentered = TRUE;
-                MoveWindow(ghOpWnd, 
-                    (mi.rcWork.left+mi.rcWork.right-rect.right+rect.left)/2,
-                    (mi.rcWork.top+mi.rcWork.bottom-rect.bottom+rect.top)/2,
-                    rect.right - rect.left, rect.bottom - rect.top, false);
-            }
-        }
-
-        if (!lbCentered)
-            MoveWindow(ghOpWnd, GetSystemMetrics(SM_CXSCREEN)/2 - (rect.right - rect.left)/2, GetSystemMetrics(SM_CYSCREEN)/2 - (rect.bottom - rect.top)/2, rect.right - rect.left, rect.bottom - rect.top, false);
-    }
-    
-    RegisterTipsFor(hMain);
-    RegisterTipsFor(hColors);
-    RegisterTipsFor(hInfo);
-
-    MCHKHEAP
+		if (!lbCentered)
+			MoveWindow(ghOpWnd, GetSystemMetrics(SM_CXSCREEN)/2 - (rect.right - rect.left)/2, GetSystemMetrics(SM_CYSCREEN)/2 - (rect.bottom - rect.top)/2, rect.right - rect.left, rect.bottom - rect.top, false);
+	}
 
     return 0;
+}
+
+LRESULT CSettings::OnInitDialog_Main()
+{
+	if (gSet.EnableThemeDialogTextureF)
+		gSet.EnableThemeDialogTextureF(hMain, 6/*ETDT_ENABLETAB*/);
+
+	SetDlgItemText(hMain, tFontFace, LogFont.lfFaceName);
+	SetDlgItemText(hMain, tFontFace2, LogFont2.lfFaceName);
+	DWORD dwThId;
+	mh_EnumThread = CreateThread(0,0,EnumFontsThread,0,0,&dwThId); // хэндл закроет сама нить
+
+	{
+		for (uint i=0; i < sizeofarray(Settings::FSizes); i++)
+		{
+			wsprintf(temp, _T("%i"), Settings::FSizes[i]);
+			if (i > 0)
+				SendDlgItemMessage(hMain, tFontSizeY, CB_ADDSTRING, 0, (LPARAM) temp);
+			SendDlgItemMessage(hMain, tFontSizeX, CB_ADDSTRING, 0, (LPARAM) temp);
+			SendDlgItemMessage(hMain, tFontSizeX2, CB_ADDSTRING, 0, (LPARAM) temp);
+			SendDlgItemMessage(hMain, tFontSizeX3, CB_ADDSTRING, 0, (LPARAM) temp);
+		}
+
+		wsprintf(temp, _T("%i"), LogFont.lfHeight);
+		upToFontHeight = LogFont.lfHeight;
+		if( SendDlgItemMessage(hMain, tFontSizeY, CB_SELECTSTRING, -1, (LPARAM)temp) == CB_ERR )
+			SetDlgItemText(hMain, tFontSizeY, temp);
+
+		wsprintf(temp, _T("%i"), FontSizeX);
+		if( SendDlgItemMessage(hMain, tFontSizeX, CB_SELECTSTRING, -1, (LPARAM)temp) == CB_ERR )
+			SetDlgItemText(hMain, tFontSizeX, temp);
+
+		wsprintf(temp, _T("%i"), FontSizeX2);
+		if( SendDlgItemMessage(hMain, tFontSizeX2, CB_SELECTSTRING, -1, (LPARAM)temp) == CB_ERR )
+			SetDlgItemText(hMain, tFontSizeX2, temp);
+
+		wsprintf(temp, _T("%i"), FontSizeX3);
+		if( SendDlgItemMessage(hMain, tFontSizeX3, CB_SELECTSTRING, -1, (LPARAM)temp) == CB_ERR )
+			SetDlgItemText(hMain, tFontSizeX3, temp);
+	}
+
+	{
+		const char *ChSets[] = {"ANSI", "Arabic", "Baltic", "Chinese Big 5", "Default", "East Europe",
+			"GB 2312", "Greek", "Hebrew", "Hangul", "Johab", "Mac", "OEM", "Russian", "Shiftjis",
+			"Symbol", "Thai", "Turkish", "Vietnamese"};
+
+		u8 num = 4;
+		for (uint i=0; i < 19; i++)
+		{
+			SendDlgItemMessageA(hMain, tFontCharset, CB_ADDSTRING, 0, (LPARAM) ChSets[i]);
+			if (chSetsNums[i] == LogFont.lfCharSet) num = i;
+		}
+		SendDlgItemMessage(hMain, tFontCharset, CB_SETCURSEL, num, 0);
+	}
+
+	MCHKHEAP
+
+	SetDlgItemText(hMain, tCmdLine, psCmd ? psCmd : _T(""));
+
+	SetDlgItemText(hMain, tBgImage, sBgImage);
+	CheckDlgButton(hMain, rBgSimple, BST_CHECKED);
+
+	TCHAR tmp[10];
+	wsprintf(tmp, _T("%i"), bgImageDarker);
+	SendDlgItemMessage(hMain, tDarker, EM_SETLIMITTEXT, 3, 0);
+	SetDlgItemText(hMain, tDarker, tmp);
+
+	SendDlgItemMessage(hMain, slDarker, TBM_SETRANGE, (WPARAM) true, (LPARAM) MAKELONG(0, 255));
+	SendDlgItemMessage(hMain, slDarker, TBM_SETPOS  , (WPARAM) true, (LPARAM) bgImageDarker);
+
+	if (isShowBgImage)
+		CheckDlgButton(hMain, cbBgImage, (isShowBgImage == 1) ? BST_CHECKED : BST_INDETERMINATE);
+	else
+	{
+		EnableWindow(GetDlgItem(hMain, tBgImage), false);
+		EnableWindow(GetDlgItem(hMain, tDarker), false);
+		EnableWindow(GetDlgItem(hMain, slDarker), false);
+		EnableWindow(GetDlgItem(hMain, bBgImage), false);
+	}
+
+	switch(LogFont.lfQuality)
+	{
+	case NONANTIALIASED_QUALITY:
+		CheckDlgButton(hMain, rNoneAA, BST_CHECKED);
+		break;
+	case ANTIALIASED_QUALITY:
+		CheckDlgButton(hMain, rStandardAA, BST_CHECKED);
+		break;
+	case CLEARTYPE_NATURAL_QUALITY:
+		CheckDlgButton(hMain, rCTAA, BST_CHECKED);
+		break;
+	}
+	if (isFixFarBorders) CheckDlgButton(hMain, cbFixFarBorders, (isFixFarBorders==1) ? BST_CHECKED : BST_INDETERMINATE);
+	if (isCursorColor) CheckDlgButton(hMain, cbCursorColor, BST_CHECKED);
+	if (isCursorBlink) CheckDlgButton(hMain, cbCursorBlink, BST_CHECKED);
+	if (isRClickSendKey) CheckDlgButton(hMain, cbRClick, (isRClickSendKey==1) ? BST_CHECKED : BST_INDETERMINATE);
+	if (isSentAltEnter) CheckDlgButton(hMain, cbSendAE, BST_CHECKED);
+	if (isMinToTray) CheckDlgButton(hMain, cbMinToTray, BST_CHECKED);
+
+	if (isDragEnabled) {
+		//CheckDlgButton(hMain, cbDragEnabled, BST_CHECKED);
+		if (isDragEnabled & DRAG_L_ALLOWED) CheckDlgButton(hMain, cbDragL, BST_CHECKED);
+		if (isDragEnabled & DRAG_R_ALLOWED) CheckDlgButton(hMain, cbDragR, BST_CHECKED);
+	}
+	if (isDropEnabled) CheckDlgButton(hMain, cbDropEnabled, (isDropEnabled==1) ? BST_CHECKED : BST_INDETERMINATE);
+	if (isDefCopy) CheckDlgButton(hMain, cbDnDCopy, BST_CHECKED);
+	{
+		uint nKeyCount = sizeofarray(Settings::szKeys);
+		u8 numL = 0, numR = 0;
+		for (uint i=0; i<nKeyCount; i++) {
+			SendDlgItemMessage(hMain, lbLDragKey, CB_ADDSTRING, 0, (LPARAM) Settings::szKeys[i]);
+			SendDlgItemMessage(hMain, lbRDragKey, CB_ADDSTRING, 0, (LPARAM) Settings::szKeys[i]);
+			if (Settings::nKeys[i] == nLDragKey) numL = i;
+			if (Settings::nKeys[i] == nRDragKey) numR = i;
+		}
+		if (!numL) nLDragKey = 0; // если код клавиши неизвестен?
+		if (!numR) nRDragKey = 0; // если код клавиши неизвестен?
+		SendDlgItemMessage(hMain, lbLDragKey, CB_SETCURSEL, numL, 0);
+		SendDlgItemMessage(hMain, lbRDragKey, CB_SETCURSEL, numR, 0);
+	}
+
+
+	if (isGUIpb) CheckDlgButton(hMain, cbGUIpb, BST_CHECKED);
+	if (isTabs) CheckDlgButton(hMain, cbTabs, (isTabs==1) ? BST_CHECKED : BST_INDETERMINATE);
+	if (isCursorV)
+		CheckDlgButton(hMain, rCursorV, BST_CHECKED);
+	else
+		CheckDlgButton(hMain, rCursorH, BST_CHECKED);
+	if (isForceMonospace)
+		CheckDlgButton(hMain, cbMonospace, BST_CHECKED);
+	if (!isProportional)
+		CheckDlgButton(hMain, cbNonProportional, BST_CHECKED);
+	if (isUpdConHandle)
+		CheckDlgButton(ghOpWnd, cbAutoConHandle, BST_CHECKED);
+	if (isMulti)
+		CheckDlgButton(hMain, cbConMan, BST_CHECKED);
+
+	if (LogFont.lfWeight == FW_BOLD) CheckDlgButton(hMain, cbBold, BST_CHECKED);
+	if (LogFont.lfItalic)            CheckDlgButton(hMain, cbItalic, BST_CHECKED);
+
+	if (isFullScreen)
+		CheckRadioButton(hMain, rNormal, rFullScreen, rFullScreen);
+	else if (IsZoomed(ghWnd))
+		CheckRadioButton(hMain, rNormal, rFullScreen, rMaximized);
+	else
+		CheckRadioButton(hMain, rNormal, rFullScreen, rNormal);
+
+	//wsprintf(temp, _T("%i"), wndWidth);   SetDlgItemText(hMain, tWndWidth, temp);
+	SendDlgItemMessage(hMain, tWndWidth, EM_SETLIMITTEXT, 3, 0);
+	//wsprintf(temp, _T("%i"), wndHeight);  SetDlgItemText(hMain, tWndHeight, temp);
+	SendDlgItemMessage(hMain, tWndHeight, EM_SETLIMITTEXT, 3, 0);
+	UpdateSize(wndWidth, wndHeight);
+
+	EnableWindow(GetDlgItem(hMain, cbApplyPos), FALSE);
+
+	SendDlgItemMessage(hMain, tWndX, EM_SETLIMITTEXT, 6, 0);
+	SendDlgItemMessage(hMain, tWndY, EM_SETLIMITTEXT, 6, 0);
+
+	MCHKHEAP
+
+	if (!isFullScreen && !IsZoomed(ghWnd))
+	{
+		EnableWindow(GetDlgItem(hMain, tWndWidth), true);
+		EnableWindow(GetDlgItem(hMain, tWndHeight), true);
+		EnableWindow(GetDlgItem(hMain, tWndX), true);
+		EnableWindow(GetDlgItem(hMain, tWndY), true);
+		if (!IsIconic(ghWnd)) {
+			RECT rc; GetWindowRect(ghWnd, &rc);
+			wndX = rc.left; wndY = rc.top;
+		}
+	}
+	else
+	{
+		EnableWindow(GetDlgItem(hMain, tWndWidth), false);
+		EnableWindow(GetDlgItem(hMain, tWndHeight), false);
+		EnableWindow(GetDlgItem(hMain, tWndX), false);
+		EnableWindow(GetDlgItem(hMain, tWndY), false);
+	}
+	UpdatePos(wndX, wndY);
+	CheckDlgButton(hMain, wndCascade ? rCascade : rFixed, BST_CHECKED);
+
+	RegisterTipsFor(hMain);
+
+	return 0;
+}
+
+LRESULT CSettings::OnInitDialog_Color()
+{
+	if (gSet.EnableThemeDialogTextureF)
+		gSet.EnableThemeDialogTextureF(hColors, 6/*ETDT_ENABLETAB*/);
+
+	#define getR(inColorref) (byte)inColorref
+	#define getG(inColorref) (byte)(inColorref >> 8)
+	#define getB(inColorref) (byte)(inColorref >> 16)
+
+	for (uint i = 0; i < 32; i++)
+	{
+		SendDlgItemMessage(hColors, 1100 + i, EM_SETLIMITTEXT, 11, 0);
+		wsprintf(temp, _T("%i %i %i"), getR(Colors[i]), getG(Colors[i]), getB(Colors[i]));
+		SetDlgItemText(hColors, 1100 + i, temp);
+	}
+
+	for (uint i=0; i < 16; i++)
+	{
+		wsprintf(temp, (i<10) ? _T("# %i") : _T("#%i"), i);
+		SendDlgItemMessage(hColors, lbExtendIdx, CB_ADDSTRING, 0, (LPARAM) temp);
+		SendDlgItemMessage(hColors, lbVisFore, CB_ADDSTRING, 0, (LPARAM) temp);
+		SendDlgItemMessage(hColors, lbVisNormal, CB_ADDSTRING, 0, (LPARAM) temp);
+		SendDlgItemMessage(hColors, lbVisTab, CB_ADDSTRING, 0, (LPARAM) temp);
+		SendDlgItemMessage(hColors, lbVisEOL, CB_ADDSTRING, 0, (LPARAM) temp);
+		SendDlgItemMessage(hColors, lbVisEOF, CB_ADDSTRING, 0, (LPARAM) temp);
+	}
+	SendDlgItemMessage(hColors, lbExtendIdx, CB_SETCURSEL, nExtendColor, 0);
+	CheckDlgButton(hColors, cbExtendColors, isExtendColors ? BST_CHECKED : BST_UNCHECKED);
+	OnColorButtonClicked(cbExtendColors, 0);
+
+	// Visualizer
+	CheckDlgButton(hColors, cbVisualizer, isVisualizer ? BST_CHECKED : BST_UNCHECKED);
+	SendDlgItemMessage(hColors, lbVisFore, CB_SETCURSEL, nVizFore, 0);
+	SendDlgItemMessage(hColors, lbVisNormal, CB_SETCURSEL, nVizNormal, 0);
+	SendDlgItemMessage(hColors, lbVisTab, CB_SETCURSEL, nVizTab, 0);
+	SendDlgItemMessage(hColors, lbVisEOL, CB_SETCURSEL, nVizEOL, 0);
+	SendDlgItemMessage(hColors, lbVisEOF, CB_SETCURSEL, nVizEOF, 0);
+	OnColorButtonClicked(cbVisualizer, 0);
+
+	RegisterTipsFor(hColors);
+
+	return 0;
+}
+
+LRESULT CSettings::OnInitDialog_Info()
+{
+	if (gSet.EnableThemeDialogTextureF)
+		gSet.EnableThemeDialogTextureF(hInfo, 6/*ETDT_ENABLETAB*/);
+
+	SetDlgItemText(hInfo, tCurCmdLine, GetCommandLine());
+
+	// Performance
+	Performance(gbPerformance, TRUE);
+
+	gConEmu.UpdateProcessDisplay(TRUE);
+	gConEmu.UpdateSizes();
+
+	RegisterTipsFor(hInfo);
+
+	return 0;
 }
 
 LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
@@ -902,7 +967,7 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
         break;
         
     case cbApplyPos:
-	    if (SendDlgItemMessage(hMain, rNormal, BM_GETCHECK, 0, 0) == BST_CHECKED) {
+	    if (IsChecked(hMain, rNormal) == BST_CHECKED) {
 	        DWORD newX, newY;
 	        GetDlgItemText(hMain, tWndWidth, temp, MAX_PATH);  newX = klatoi(temp);
 	        GetDlgItemText(hMain, tWndHeight, temp, MAX_PATH); newY = klatoi(temp);
@@ -911,11 +976,11 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
 			    gConEmu.SetWindowMode(rNormal);
 			// ”становить размер
 	        gConEmu.SetConsoleWindowSize(MakeCoord(newX, newY), true);
-	    } else if (SendDlgItemMessage(hMain, rMaximized, BM_GETCHECK, 0, 0) == BST_CHECKED) {
+	    } else if (IsChecked(hMain, rMaximized) == BST_CHECKED) {
 		    SetFocus(GetDlgItem(hMain, rMaximized));
 		    if (!IsZoomed(ghWnd))
 			    gConEmu.SetWindowMode(rMaximized);
-	    } else if (SendDlgItemMessage(hMain, rFullScreen, BM_GETCHECK, 0, 0) == BST_CHECKED) {
+	    } else if (IsChecked(hMain, rFullScreen) == BST_CHECKED) {
 		    SetFocus(GetDlgItem(hMain, rFullScreen));
 		    if (!isFullScreen)
 			    gConEmu.SetWindowMode(rFullScreen);
@@ -944,10 +1009,13 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
         break;
 
     case cbCursorColor:
-        isCursorColor = !isCursorColor;
-
+        isCursorColor = IsChecked(hMain,cbCursorColor);
         gConEmu.Update(true);
         break;
+
+	case cbCursorBlink:
+		isCursorBlink = IsChecked(hMain,cbCursorBlink);
+		break;
         
     case cbConMan:
         isMulti = !isMulti;
@@ -957,51 +1025,36 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
     case cbItalic:
         {
 			PostMessage(hMain, gSet.mn_MsgRecreateFont, wParam, 0);
-			/*
-            if (wParam == cbBold)
-                LogFont.lfWeight = SendDlgItemMessage(hMain, cbBold, BM_GETCHECK, 0, 0) == BST_CHECKED ? FW_BOLD : FW_NORMAL;
-            else if (wParam == cbItalic)
-                LogFont.lfItalic = SendDlgItemMessage(hMain, cbItalic, BM_GETCHECK, 0, 0) == BST_CHECKED ? true : false;
-
-            LogFont.lfWidth = FontSizeX;
-            HFONT hFont = CreateFontIndirectMy(&LogFont);
-            if (hFont)
-            {
-                DeleteObject(mh_Font);
-                mh_Font = hFont;
-
-                gConEmu.Update(true);
-                if (!isFullScreen && !IsZoomed(ghWnd))
-                    gConEmu.SyncWindowToConsole();
-                else
-                    gConEmu.SyncConsoleToWindow();
-                gConEmu.ReSize();
-                //InvalidateRect(ghWnd, 0, 0);
-            }
-			*/
         }
         break;
 
     case cbBgImage:
-        isShowBgImage = SendDlgItemMessage(hMain, cbBgImage, BM_GETCHECK, 0, 0) == BST_CHECKED ? true : false;
+        isShowBgImage = IsChecked(hMain, cbBgImage);
         EnableWindow(GetDlgItem(hMain, tBgImage), isShowBgImage);
         EnableWindow(GetDlgItem(hMain, tDarker), isShowBgImage);
         EnableWindow(GetDlgItem(hMain, slDarker), isShowBgImage);
         EnableWindow(GetDlgItem(hMain, bBgImage), isShowBgImage);
 
+		if (isShowBgImage && bgImageDarker == 0) {
+			if (MessageBox(ghOpWnd, 
+				    L"Background image will NOT be visible\n"
+					L"while 'Darkening' is 0. Increase it?",
+					L"ConEmu", MB_YESNO|MB_ICONEXCLAMATION)!=IDNO)
+			{
+				bgImageDarker = 0x46;
+				SendDlgItemMessage(hMain, slDarker, TBM_SETPOS  , (WPARAM) true, (LPARAM) bgImageDarker);
+				TCHAR tmp[10];
+				wsprintf(tmp, _T("%i"), gSet.bgImageDarker);
+				SetDlgItemText(hMain, tDarker, tmp);
+				gSet.LoadImageFrom(gSet.sBgImage);
+			}
+		}
+
         gConEmu.Update(true);
         break;
 
     case cbRClick:
-        //isRClickSendKey = !isRClickSendKey;
-        switch(IsDlgButtonChecked(hMain, cbRClick)) {
-            case BST_UNCHECKED:
-                isRClickSendKey=0; break;
-            case BST_CHECKED:
-                isRClickSendKey=1; break;
-            case BST_INDETERMINATE:
-                isRClickSendKey=2; break;
-        }
+		isRClickSendKey = IsChecked(hMain, cbRClick); //0-1-2
         break;
 
     case cbSendAE:
@@ -1012,46 +1065,17 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
         isMinToTray = !isMinToTray;
         break;
 
-    /*case cbDragEnabled:
-        if (IsDlgButtonChecked(hMain, cbDragEnabled) == BST_UNCHECKED) {
-            if (IsDlgButtonChecked(hMain, cbDragL)==BST_CHECKED) 
-                CheckDlgButton(hMain, cbDragL, BST_UNCHECKED);
-            if (IsDlgButtonChecked(hMain, cbDragR)==BST_CHECKED) 
-                CheckDlgButton(hMain, cbDragR, BST_UNCHECKED);
-        } else {
-            if (IsDlgButtonChecked(hMain, cbDragL)!=BST_CHECKED) 
-                CheckDlgButton(hMain, cbDragL, BST_CHECKED);
-        }*/
     case cbDragL:
     case cbDragR:
-        //isDragEnabled = !isDragEnabled;
         isDragEnabled = 
-            ((IsDlgButtonChecked(hMain, cbDragL)==BST_CHECKED) ? DRAG_L_ALLOWED : 0) |
-            ((IsDlgButtonChecked(hMain, cbDragR)==BST_CHECKED) ? DRAG_R_ALLOWED : 0);
-        //if ( (isDragEnabled == 0) != (IsDlgButtonChecked(hMain, cbDragEnabled) == BST_UNCHECKED) )
-        //    CheckDlgButton(hMain, cbDragEnabled, (isDragEnabled == 0) ? BST_UNCHECKED : BST_CHECKED);
+            (IsChecked(hMain, cbDragL) ? DRAG_L_ALLOWED : 0) |
+            (IsChecked(hMain, cbDragR) ? DRAG_R_ALLOWED : 0);
         break;
     case cbDropEnabled:
-        //isDropEnabled = !isDropEnabled;
-        switch(IsDlgButtonChecked(hMain, cbDropEnabled)) {
-            case BST_UNCHECKED:
-                isDropEnabled=0; break;
-            case BST_CHECKED:
-                isDropEnabled=1; break;
-            case BST_INDETERMINATE:
-                isDropEnabled=2; break;
-        }
+        isDropEnabled = IsChecked(hMain, cbDropEnabled);
         break;
     case cbDnDCopy:
-        //switch(IsDlgButtonChecked(hMain, cbDnDCopy)) {
-        //    case BST_UNCHECKED:
-        //        isDefCopy=0; break;
-        //    case BST_CHECKED:
-        //        isDefCopy=1; break;
-        //    case BST_INDETERMINATE:
-        //        isDefCopy=2; break;
-        //}
-        isDefCopy = !isDefCopy;
+        isDefCopy = IsChecked(hMain, cbDnDCopy) == BST_CHECKED;
         break;
     
     case cbGUIpb: // GUI Progress Bars
@@ -1130,7 +1154,7 @@ LRESULT CSettings::OnColorButtonClicked(WPARAM wParam, LPARAM lParam)
     switch(wParam)
     {
     case cbExtendColors:
-        isExtendColors = SendDlgItemMessage(hColors, cbExtendColors, BM_GETCHECK, 0, 0) == BST_CHECKED ? true : false;
+        isExtendColors = IsChecked(hColors, cbExtendColors) == BST_CHECKED ? true : false;
         for (int i=16; i<32; i++)
             EnableWindow(GetDlgItem(hColors, 1100+i), isExtendColors);
         EnableWindow(GetDlgItem(hColors, lbExtendIdx), isExtendColors);
@@ -1139,7 +1163,7 @@ LRESULT CSettings::OnColorButtonClicked(WPARAM wParam, LPARAM lParam)
         }
         break;
     case cbVisualizer:
-        isVisualizer = SendDlgItemMessage(hColors, cbVisualizer, BM_GETCHECK, 0, 0) == BST_CHECKED ? true : false;
+        isVisualizer = IsChecked(hColors, cbVisualizer) == BST_CHECKED ? true : false;
         EnableWindow(GetDlgItem(hColors, lbVisNormal), isVisualizer);
         EnableWindow(GetDlgItem(hColors, lbVisFore), isVisualizer);
         EnableWindow(GetDlgItem(hColors, lbVisTab), isVisualizer);
@@ -1209,30 +1233,16 @@ LRESULT CSettings::OnEditChanged(WPARAM wParam, LPARAM lParam)
     if (TB == tBgImage)
     {
 		GetDlgItemText(hMain, tBgImage, temp, MAX_PATH);
-        if( LoadImageFrom(temp, true) )
-        {
-            gConEmu.Update(true);
+		if (wcscmp(temp, sBgImage)) {
+			if( LoadImageFrom(temp, true) )
+			{
+				gConEmu.Update(true);
+			}
         }
     }
-    else if ( (TB == tWndWidth || TB == tWndHeight) && IsDlgButtonChecked(hMain, rNormal) == BST_CHECKED )
+    else if ( (TB == tWndWidth || TB == tWndHeight) && IsChecked(hMain, rNormal) == BST_CHECKED )
     {
 	    EnableWindow(GetDlgItem(hMain, cbApplyPos), TRUE);
-        /*
-        DWORD newX, newY;
-        GetDlgItemText(hMain, tWndWidth, temp, MAX_PATH);
-        newX = klatoi(temp);
-        GetDlgItemText(hMain, tWndHeight, temp, MAX_PATH);
-        newY = klatoi(temp);
-
-        if (newX > 24 && newY > 7)
-        {
-            wndWidth = newX;
-            wndHeight = newY;
-
-            COORD b = {};
-            gConEmu.SetConsoleWindowSize(MakeCoord(wndWidth, wndHeight), false);
-        }
-        */
     }
     else if (TB == tDarker)
     {
@@ -1421,11 +1431,35 @@ LRESULT CSettings::OnTab(LPNMHDR phdr)
                     ShowWindow(hInfo, SW_HIDE);
                     SetFocus(hMain);
                 } else if (nSel==1) {
+					if (!hColors) {
+						SetCursor(LoadCursor(NULL,IDC_WAIT));
+
+						HWND _hwndTab = GetDlgItem(ghOpWnd, tabMain);
+						RECT rcClient; GetWindowRect(_hwndTab, &rcClient);
+						MapWindowPoints(NULL, ghOpWnd, (LPPOINT)&rcClient, 2);
+						TabCtrl_AdjustRect(_hwndTab, FALSE, &rcClient);
+
+						hColors = CreateDialog((HINSTANCE)GetModuleHandle(NULL), 
+							MAKEINTRESOURCE(IDD_DIALOG2), ghOpWnd, colorOpProc);
+						MoveWindow(hColors, rcClient.left, rcClient.top, rcClient.right-rcClient.left, rcClient.bottom-rcClient.top, 0);
+					}
                     ShowWindow(hColors, SW_SHOW);
                     ShowWindow(hMain, SW_HIDE);
                     ShowWindow(hInfo, SW_HIDE);
                     SetFocus(hColors);
                 } else {
+					if (!hInfo) {
+						SetCursor(LoadCursor(NULL,IDC_WAIT));
+
+						HWND _hwndTab = GetDlgItem(ghOpWnd, tabMain);
+						RECT rcClient; GetWindowRect(_hwndTab, &rcClient);
+						MapWindowPoints(NULL, ghOpWnd, (LPPOINT)&rcClient, 2);
+						TabCtrl_AdjustRect(_hwndTab, FALSE, &rcClient);
+
+						hInfo = CreateDialog((HINSTANCE)GetModuleHandle(NULL), 
+							MAKEINTRESOURCE(IDD_DIALOG3), ghOpWnd, infoOpProc);
+						MoveWindow(hInfo, rcClient.left, rcClient.top, rcClient.right-rcClient.left, rcClient.bottom-rcClient.top, 0);
+					}
                     ShowWindow(hInfo, SW_SHOW);
                     ShowWindow(hMain, SW_HIDE);
                     ShowWindow(hColors, SW_HIDE);
@@ -1558,14 +1592,19 @@ bool CSettings::LoadImageFrom(TCHAR *inPath, bool abShowErrors)
 
 void CSettings::Dialog()
 {
+	SetCursor(LoadCursor(NULL,IDC_WAIT));
+
+	// —начала обновить DC, чтобы некрасивостей не было
+	UpdateWindow(ghWndDC);
+
 	//2009-05-03. DialogBox создает ћќƒјЋ№Ќџ… ƒиалог
     //DialogBox((HINSTANCE)GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_DIALOGM), 0, wndOpProc);
-	SetCursor(LoadCursor(NULL,IDC_WAIT));
+	
     HWND hOpt = CreateDialog(g_hInstance, MAKEINTRESOURCE(IDD_DIALOGM), NULL, wndOpProc);
 	if (!hOpt) {
 		DisplayLastError(L"Can't create settings dialog!");
 	} else {
-		ShowWindow(hOpt, SW_SHOWNORMAL);
+		ShowWindow ( hOpt, SW_SHOWNORMAL );
 		SetFocus ( hOpt );
 	}
 }
@@ -1645,14 +1684,39 @@ BOOL CALLBACK CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM
                 gSet.OnTab(phdr);
         } break;
     case WM_CLOSE:
-        if (gSet.hwndTip) {DestroyWindow(gSet.hwndTip); gSet.hwndTip = NULL;}
+        //if (gSet.hwndTip) {DestroyWindow(gSet.hwndTip); gSet.hwndTip = NULL;}
 		DestroyWindow(hWnd2);
 		break;
     case WM_DESTROY:
+		gSet.UnregisterTabs();
         if (gSet.hwndTip) {DestroyWindow(gSet.hwndTip); gSet.hwndTip = NULL;}
         //EndDialog(hWnd2, TRUE);
-        ghOpWnd = NULL;
+        ghOpWnd = NULL; gSet.hMain = NULL; gSet.hColors = NULL; gSet.hInfo = NULL;
         break;
+	case WM_HOTKEY:
+		if (wParam == 0x101) {
+			// ѕереключитьс€ на следующий таб
+			int nCur = SendDlgItemMessage(ghOpWnd, tabMain, TCM_GETCURSEL,0,0);
+			int nAll = SendDlgItemMessage(ghOpWnd, tabMain, TCM_GETITEMCOUNT,0,0);
+			nCur ++; if (nCur>=nAll) nCur = 0;
+			SendDlgItemMessage(ghOpWnd, tabMain, TCM_SETCURSEL,nCur,0);				 
+			NMHDR hdr = {GetDlgItem(ghOpWnd, tabMain),tabMain,TCN_SELCHANGE};
+			gSet.OnTab(&hdr);
+		} else if (wParam == 0x102) {
+			// ѕереключитьс€ на предыдущий таб
+			int nCur = SendDlgItemMessage(ghOpWnd, tabMain, TCM_GETCURSEL,0,0);
+			int nAll = SendDlgItemMessage(ghOpWnd, tabMain, TCM_GETITEMCOUNT,0,0);
+			nCur --; if (nCur<0) nCur = nAll - 1;
+			SendDlgItemMessage(ghOpWnd, tabMain, TCM_SETCURSEL,nCur,0);				 
+			NMHDR hdr = {GetDlgItem(ghOpWnd, tabMain),tabMain,TCN_SELCHANGE};
+			gSet.OnTab(&hdr);
+		}
+	case WM_ACTIVATE:
+		if (LOWORD(wParam) != 0)
+			gSet.RegisterTabs();
+		else
+			gSet.UnregisterTabs();
+		break;
     default:
         return 0;
     }
@@ -1664,8 +1728,9 @@ BOOL CALLBACK CSettings::mainOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARA
     switch (messg)
     {
     case WM_INITDIALOG:
-        if (gSet.EnableThemeDialogTextureF)
-            gSet.EnableThemeDialogTextureF(hWnd2, 6/*ETDT_ENABLETAB*/);
+		_ASSERTE(gSet.hMain==NULL || gSet.hMain==hWnd2);
+		gSet.hMain = hWnd2;
+        gSet.OnInitDialog_Main();
         break;
 
     case WM_CTLCOLORSTATIC:
@@ -1726,8 +1791,9 @@ BOOL CALLBACK CSettings::colorOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPAR
     switch (messg)
     {
     case WM_INITDIALOG:
-        if (gSet.EnableThemeDialogTextureF)
-            gSet.EnableThemeDialogTextureF(hWnd2, 6/*ETDT_ENABLETAB*/);
+		_ASSERTE(gSet.hColors==NULL || gSet.hColors==hWnd2);
+		gSet.hColors = hWnd2;
+		gSet.OnInitDialog_Color();
         break;
 
     case WM_CTLCOLORSTATIC:
@@ -1766,8 +1832,9 @@ BOOL CALLBACK CSettings::infoOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARA
     switch (messg)
     {
     case WM_INITDIALOG:
-        if (gSet.EnableThemeDialogTextureF)
-            gSet.EnableThemeDialogTextureF(hWnd2, 6/*ETDT_ENABLETAB*/);
+		_ASSERTE(gSet.hInfo==NULL || gSet.hInfo==hWnd2);
+		gSet.hInfo = hWnd2;
+		gSet.OnInitDialog_Info();
         break;
 
     default:
@@ -1928,7 +1995,7 @@ void CSettings::RegisterTipsFor(HWND hChildDlg)
     }
     if (!hwndTip) return; // не смогли создать
 
-    HWND hChild = NULL;
+    HWND hChild = NULL, hEdit = NULL;
     
     BOOL lbRc = FALSE;
     TCHAR szText[0x200];
@@ -1950,6 +2017,12 @@ void CSettings::RegisterTipsFor(HWND hChildDlg)
             //toolInfo.hinst = g_hInstance;
             //toolInfo.lpszText = (LPTSTR)wID;
             lbRc = SendMessage(hwndTip, TTM_ADDTOOL, 0, (LPARAM)&toolInfo);
+
+			hEdit = FindWindowEx(hChild, NULL, L"Edit", NULL);
+			if (hEdit) {
+				toolInfo.uId = (UINT_PTR)hEdit;
+				lbRc = SendMessage(hwndTip, TTM_ADDTOOL, 0, (LPARAM)&toolInfo);
+			}
         }
     }
 
@@ -2065,6 +2138,9 @@ int CSettings::IsChecked(HWND hParent, WORD nCtrlId)
 {
 	// јналог IsDlgButtonChecked
 	int nChecked = SendDlgItemMessage(hParent, nCtrlId, BM_GETCHECK, 0, 0);
+	_ASSERTE(nChecked==0 || nChecked==1 || nChecked==2);
+	if (nChecked!=0 && nChecked!=1 && nChecked!=2)
+		nChecked = 0;
 	return nChecked;
 }
 
@@ -2119,4 +2195,22 @@ LONG CSettings::FontHeight()
 BYTE CSettings::FontCharSet()
 {
 	return LogFont.lfCharSet;
+}
+
+void CSettings::RegisterTabs()
+{
+	if (!mb_TabHotKeyRegistered) {
+		if (RegisterHotKey(ghOpWnd, 0x101, MOD_CONTROL, VK_TAB))
+			mb_TabHotKeyRegistered = TRUE;
+		RegisterHotKey(ghOpWnd, 0x102, MOD_CONTROL|MOD_SHIFT, VK_TAB);
+	}
+}
+
+void CSettings::UnregisterTabs()
+{
+	if (mb_TabHotKeyRegistered) {
+		UnregisterHotKey(ghOpWnd, 0x101);
+		UnregisterHotKey(ghOpWnd, 0x102);
+	}
+	mb_TabHotKeyRegistered = FALSE;
 }

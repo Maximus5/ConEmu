@@ -63,11 +63,11 @@ extern wchar_t gszDbgModLabel[6];
 #define CHEKCDBGMODLABEL if (gszDbgModLabel[0]==0) { \
 	wchar_t szFile[MAX_PATH]; GetModuleFileName(NULL, szFile, MAX_PATH); \
 	wchar_t* pszName = wcsrchr(szFile, L'\\'); \
-	if (_wcsicmp(pszName, L"\\conemu.exe")==0) wcscpy(gszDbgModLabel, L"(gui)"); \
-	else if (_wcsicmp(pszName, L"\\conemuc.exe")==0) wcscpy(gszDbgModLabel, L"(srv)"); \
-	else wcscpy(gszDbgModLabel, L"(dll)"); \
+	if (_wcsicmp(pszName, L"\\conemu.exe")==0) lstrcpyW(gszDbgModLabel, L"(gui)"); \
+	else if (_wcsicmp(pszName, L"\\conemuc.exe")==0) lstrcpyW(gszDbgModLabel, L"(srv)"); \
+	else lstrcpyW(gszDbgModLabel, L"(dll)"); \
 }
-#define DEBUGSTR(s) // { CHEKCDBGMODLABEL; SYSTEMTIME st; GetLocalTime(&st); wchar_t szDEBUGSTRTime[40]; wsprintf(szDEBUGSTRTime, L"%i:%02i:%02i.%03i%s ", st.wHour, st.wMinute, st.wSecond, st.wMilliseconds, gszDbgModLabel); OutputDebugString(szDEBUGSTRTime); OutputDebugString(s); }
+#define DEBUGSTR(s) { CHEKCDBGMODLABEL; SYSTEMTIME st; GetLocalTime(&st); wchar_t szDEBUGSTRTime[40]; wsprintf(szDEBUGSTRTime, L"%i:%02i:%02i.%03i%s ", st.wHour, st.wMinute, st.wSecond, st.wMilliseconds, gszDbgModLabel); OutputDebugString(szDEBUGSTRTime); OutputDebugString(s); }
 #else
 #define DEBUGSTR(s)
 #endif
@@ -98,6 +98,7 @@ extern wchar_t gszDbgModLabel[6];
 #define CECMD_LANGCHANGE    12
 #define CECMD_NEWCMD        13 // Запустить в этом экземпляре новую консоль с переданной командой
 #define CECMD_TABSCMD       14 // 0: спрятать/показать табы, 1: перейти на следующую, 2: перейти на предыдущую, 3: commit switch
+#define CECMD_RESOURCES     15 // Посылается плагином при инициализации (установка ресурсов)
 
 #define CESERVER_REQ_VER    5
 
@@ -251,7 +252,7 @@ struct ConEmuTab
 {
     int  Pos;
     int  Current;
-    int  Type;
+    int  Type; // Panels=1, Viewer=2, Editor=3
     int  Modified;
     wchar_t Name[CONEMUTABMAX];
 //  int  Modified;

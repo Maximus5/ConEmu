@@ -3,6 +3,7 @@
 CConEmuChild::CConEmuChild()
 {
 	mn_MsgTabChanged = RegisterWindowMessage(CONEMUTABCHANGED);
+	mb_Invalidated = FALSE;
 }
 
 CConEmuChild::~CConEmuChild()
@@ -180,6 +181,8 @@ LRESULT CConEmuChild::OnPaint(WPARAM wParam, LPARAM lParam)
 		gConEmu.PaintCon();
 	}
 
+	Validate();
+
 	gSet.Performance(tPerfBlt, TRUE);
 
 	// ≈сли открыто окно настроек - обновить системную информацию о размерах
@@ -217,12 +220,20 @@ LRESULT CConEmuChild::OnSize(WPARAM wParam, LPARAM lParam)
 
 void CConEmuChild::Invalidate()
 {
+	if (mb_Invalidated)
+		return;
 	if (ghWndDC) {
 		DEBUGSTR(L" +++ Invalidate on DC window called\n");
+		mb_Invalidated = TRUE;
 		InvalidateRect(ghWndDC, NULL, FALSE);
 	}
 }
 
+void CConEmuChild::Validate()
+{
+	mb_Invalidated = FALSE;
+	//if (ghWndDC) ValidateRect(ghWnd, NULL);
+}
 
 
 

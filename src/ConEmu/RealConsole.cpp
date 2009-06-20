@@ -70,7 +70,7 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
     memset(&m_LastMouse, 0, sizeof(m_LastMouse));
 	mb_DataChanged = FALSE;
 
-    mn_ActiveStatus = 0;
+    mn_ProgramStatus = 0; mn_FarStatus = 0;
     isShowConsole = false;
     mb_ConsoleSelectMode = false;
     mn_ProcessCount = 0; mn_FarPID = 0; mn_InRecreate = 0; mb_ProcessRestarted = FALSE;
@@ -94,6 +94,16 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
     mh_LogInput = NULL; mpsz_LogInputFile = NULL; mpsz_LogPackets = NULL; mn_LogPackets = 0;
 
     m_UseLogs = gSet.isAdvLogging;
+
+	mb_PluginDetected = FALSE; mn_FarPID_PluginDetected = 0;
+
+	lstrcpy(ms_Editor, L"edit ");
+	MultiByteToWideChar(CP_ACP, 0, "редактирование ", -1, ms_EditorRus, 32);
+	lstrcpy(ms_Viewer, L"view ");
+	MultiByteToWideChar(CP_ACP, 0, "просмотр ", -1, ms_ViewerRus, 32);
+	lstrcpy(ms_TempPanel, L"{Temporary panel");
+	MultiByteToWideChar(CP_ACP, 0, "{Временная панель", -1, ms_TempPanelRus, 32);
+
 
     SetTabs(NULL,1); // Для начала - показывать вкладку Console, а там ФАР разберется
     
@@ -607,28 +617,17 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
                 && GetWindowText(pRCon->hConWnd, pRCon->TitleCmp, countof(pRCon->TitleCmp)-2)
                 && wcscmp(pRCon->Title, pRCon->TitleCmp))
             {
-                // Окошко фара полюбило мигать, но его все равно не видно...
-                FLASHWINFO flsh = {sizeof(FLASHWINFO)}; flsh.hwnd = pRCon->hConWnd; flsh.dwFlags = FLASHW_STOP;
-                FlashWindowEx(&flsh);
-                //
-                wcscpy(pRCon->Title, pRCon->TitleCmp);
-                // иначе может среагировать на изменение заголовка ДО того,
-                // как мы узнаем, что активировался редактор...
-                TODO("Должно срабатывать и при запуске консольной программы!");
-                if (pRCon->Title[0] == L'{' || pRCon->Title[0] == L'(')
-                    pRCon->CheckPanelTitle();
-
-                if (bActive)
-                    gConEmu.UpdateTitle(pRCon->TitleCmp);
-                TabBar.Update(); // сменить заголовок закладки?
+				pRCon->OnTitleChanged();
             } else if (bActive) {
                 if (wcscmp(pRCon->Title, gConEmu.GetTitle()))
                     gConEmu.UpdateTitle(pRCon->TitleCmp);
             }
 
+			bool lbIsActive = pRCon->isActive();
+
             // По con.m_sbi проверяет, включена ли прокрутка
             bool lbForceUpdate = pRCon->CheckBufferSize();
-            if (lbForceUpdate && pRCon->isActive()) // размер текущего консольного окна был изменен
+            if (lbForceUpdate && lbIsActive) // размер текущего консольного окна был изменен
                 gConEmu.OnSize(-1); // послать в главную нить запрос на обновление размера
             if (!lbForceUpdate && (nWait == (WAIT_OBJECT_0+1)))
                 lbForceUpdate = true;
@@ -638,6 +637,13 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 			if (lbForceUpdate || pRCon->mb_DataChanged) {
 				pRCon->mb_DataChanged = FALSE;
 				pRCon->mp_VCon->Update(lbForceUpdate);
+			} else if (gSet.isCursorBlink && lbIsActive) {
+				// Возможно, настало время мигнуть курсором?
+				bool lbNeedBlink = false;
+				pRCon->mp_VCon->UpdateCursor(lbNeedBlink);
+				// UpdateCursor Invalidate не зовет
+				if (lbNeedBlink)
+					gConEmu.m_Child.Invalidate();
 			}
 
             //SetEvent(pRCon->mh_EndUpdateEvent);
@@ -1548,7 +1554,7 @@ void CRealConsole::OnWinEvent(DWORD event, HWND hwnd, LONG idObject, LONG idChil
             ProcessAdd(idObject);
             // Если запущено 16битное приложение - необходимо повысить приоритет нашего процесса, иначе будут тормоза
             if (idChild == CONSOLE_APPLICATION_16BIT) {
-                mn_ActiveStatus |= CES_NTVDM;
+                mn_ProgramStatus |= CES_NTVDM;
                 SetPriorityClass(GetCurrentProcess(), HIGH_PRIORITY_CLASS);
             }
         } break;
@@ -1560,7 +1566,7 @@ void CRealConsole::OnWinEvent(DWORD event, HWND hwnd, LONG idObject, LONG idChil
             //
             if (idChild == CONSOLE_APPLICATION_16BIT) {
                 gConEmu.gbPostUpdateWindowSize = true;
-                gConEmu.mn_ActiveStatus &= ~CES_NTVDM;
+                mn_ProgramStatus &= ~CES_NTVDM;
                 TODO("Вообще-то хорошо бы проверить, что 16бит не осталось в других консолях");
                 SetPriorityClass(GetCurrentProcess(), NORMAL_PRIORITY_CLASS);
             }
@@ -1906,10 +1912,15 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
             
     } else if (pIn->hdr.nCmd == CECMD_TABSCHANGED) {
         DEBUGSTR(L"GUI recieved CECMD_TABSCHANGED\n");
-        _ASSERTE(nDataSize>=4);
-        int nTabCount = (nDataSize-4) / sizeof(ConEmuTab);
-        _ASSERTE((nTabCount*sizeof(ConEmuTab))==(nDataSize-4));
-        SetTabs((ConEmuTab*)(pIn->Data+4), nTabCount);
+		if (nDataSize == 0) {
+			// ФАР закрывается
+			SetTabs(NULL, 0);
+		} else {
+			_ASSERTE(nDataSize>=4);
+			int nTabCount = (nDataSize-4) / sizeof(ConEmuTab);
+			_ASSERTE((nTabCount*sizeof(ConEmuTab))==(nDataSize-4));
+			SetTabs((ConEmuTab*)(pIn->Data+4), nTabCount);
+		}
 
     } else if (pIn->hdr.nCmd == CECMD_GETOUTPUTFILE) {
         DEBUGSTR(L"GUI recieved CECMD_GETOUTPUTFILE\n");
@@ -1952,7 +1963,41 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
             }
         }
 
-    }
+	} else if (pIn->hdr.nCmd == CECMD_TABSCMD) {
+		// 0: спрятать/показать табы, 1: перейти на следующую, 2: перейти на предыдущую, 3: commit switch
+		DEBUGSTR(L"GUI recieved CECMD_TABSCMD\n");
+		_ASSERTE(nDataSize>=1);
+		DWORD nTabCmd = pIn->Data[0];
+		gConEmu.TabCommand(nTabCmd);
+
+	} else if (pIn->hdr.nCmd == CECMD_RESOURCES) {
+		DEBUGSTR(L"GUI recieved CECMD_TABSCMD\n");
+		_ASSERTE(nDataSize>=6);
+		mb_PluginDetected = TRUE; // Запомним, что в фаре есть плагин (хотя фар может быть закрыт)
+		mn_FarPID_PluginDetected = *((DWORD*)pIn->Data);
+		ProcessAdd(mn_FarPID_PluginDetected); // На всякий случай, вдруг он еще не в нашем списке?
+		wchar_t* pszRes = (wchar_t*)(pIn->Data+4), *pszNext;
+		if (*pszRes) {
+			pszNext = pszRes + lstrlen(pszRes)+1;
+			if (lstrlen(pszRes)>=30) pszRes[30] = 0;
+			lstrcpy(ms_EditorRus, pszRes); lstrcat(ms_EditorRus, L" ");
+			pszRes = pszNext;
+
+			if (*pszRes) {
+				pszNext = pszRes + lstrlen(pszRes)+1;
+				if (lstrlen(pszRes)>=30) pszRes[30] = 0;
+				lstrcpy(ms_ViewerRus, pszRes); lstrcat(ms_ViewerRus, L" ");
+				pszRes = pszNext;
+
+				if (*pszRes) {
+					pszNext = pszRes + lstrlen(pszRes)+1;
+					if (lstrlen(pszRes)>=31) pszRes[31] = 0;
+					lstrcpy(ms_TempPanelRus, pszRes);
+					pszRes = pszNext;
+				}
+			}
+		}
+	}
 
     // Освободить память
     if (pIn && (LPVOID)pIn != (LPVOID)&in) {
@@ -2158,6 +2203,11 @@ void CRealConsole::ApplyConsoleInfo(CESERVER_REQ* pInfo)
 	mb_DataChanged = TRUE;
 
 #ifdef _DEBUG
+	wchar_t szCursorInfo[60];
+	wsprintfW(szCursorInfo, L"Cursor (X=%i, Y=%i, Vis:%i, H:%i)\n", 
+		con.m_sbi.dwCursorPosition.X, con.m_sbi.dwCursorPosition.Y,
+		con.m_ci.bVisible, con.m_ci.dwSize);
+	DEBUGSTR(szCursorInfo);
     // Данные уже должны быть заполнены, и там не должно быть лажы
     if (con.pConChar) {
         BOOL lbDataValid = TRUE; uint n = 0;
@@ -2237,11 +2287,20 @@ int CRealConsole::GetProcesses(ConProcess** ppPrc)
     return dwProcCount;
 }
 
-DWORD CRealConsole::GetActiveStatus()
+DWORD CRealConsole::GetProgramStatus()
 {
     if (!this)
         return 0;
-    return mn_ActiveStatus;
+    return mn_ProgramStatus;
+}
+
+DWORD CRealConsole::GetFarStatus()
+{
+	if (!this)
+		return 0;
+	if ((mn_ProgramStatus & CES_FARACTIVE) == 0)
+		return 0;
+	return mn_FarStatus;
 }
 
 DWORD CRealConsole::GetServerPID()
@@ -2256,7 +2315,7 @@ DWORD CRealConsole::GetFarPID()
     if (!this)
         return 0;
 
-    if ((mn_ActiveStatus & CES_FARACTIVE) == 0)
+    if ((mn_ProgramStatus & CES_FARACTIVE) == 0)
         return 0;
 
     return mn_FarPID;
@@ -2289,10 +2348,10 @@ void CRealConsole::ProcessUpdateFlags(BOOL abProcessChanged)
         bIsFar = false; dwPID = 0;
     }
         
-    mn_ActiveStatus &= ~CES_PROGRAMS2;
-    if (bIsFar) mn_ActiveStatus |= CES_FARACTIVE;
-    if (bIsTelnet) mn_ActiveStatus |= CES_TELNETACTIVE;
-    if (bIsNtvdm) mn_ActiveStatus |= CES_NTVDM;
+    mn_ProgramStatus = 0;
+    if (bIsFar) mn_ProgramStatus |= CES_FARACTIVE;
+    if (bIsTelnet) mn_ProgramStatus |= CES_TELNETACTIVE;
+    if (bIsNtvdm) mn_ProgramStatus |= CES_NTVDM;
 
     mn_ProcessCount = m_Processes.size();
     if (mn_FarPID != dwPID)
@@ -2310,7 +2369,7 @@ void CRealConsole::ProcessUpdateFlags(BOOL abProcessChanged)
     // Обновить список процессов в окне настроек и закладки
     if (abProcessChanged) {
         gConEmu.UpdateProcessDisplay(abProcessChanged);
-        TabBar.Refresh(mn_ActiveStatus & CES_FARACTIVE);
+        TabBar.Refresh(mn_ProgramStatus & CES_FARACTIVE);
     }
 }
 
@@ -3438,7 +3497,7 @@ BOOL CRealConsole::CheckBufferSize()
 //  } else {
 //      ProcessDelete(anConEmuC_PID);
 //
-//      if ((mn_ActiveStatus & CES_CMDACTIVE) == 0)
+//      if ((mn_ProgramStatus & CES_CMDACTIVE) == 0)
 //          BufferHeight = 0;
 //  }
 //
@@ -3494,6 +3553,7 @@ void CRealConsole::SetTabs(ConEmuTab* tabs, int tabsCount)
 
     if (mp_tabs && mn_tabsCount) {
         CheckPanelTitle();
+		CheckFarStates();
     }
     
     // Передернуть TabBar...
@@ -4173,4 +4233,110 @@ bool CRealConsole::isActive()
 	if (!this) return false;
 	if (!mp_VCon) return false;
 	return gConEmu.isActive(mp_VCon);
+}
+
+void CRealConsole::CheckFarStates()
+{
+	// далее идут взаимоисключающие флаги режимов текущей программы
+	mn_FarStatus = 0;
+
+	//if (mb_PluginDetected && mn_FarPID == mn_FarPID_PluginDetected
+	if (GetFarPID() != 0) {
+		if (mp_tabs && mn_ActiveTab >= 0 && mn_ActiveTab < mn_tabsCount) {
+			if (mp_tabs[mn_ActiveTab].Type != 1) {
+				if (mp_tabs[mn_ActiveTab].Type == 2)
+					mn_FarStatus |= CES_VIEWER;
+				else if (mp_tabs[mn_ActiveTab].Type == 3)
+					mn_FarStatus |= CES_EDITOR;
+			}
+		}
+
+		if (mn_FarStatus == 0) {
+			if (wcsncmp(Title, ms_Editor, lstrlen(ms_Editor))==0 || wcsncmp(Title, ms_EditorRus, lstrlen(ms_EditorRus))==0)
+				mn_FarStatus |= CES_EDITOR;
+			else if (wcsncmp(Title, ms_Viewer, lstrlen(ms_Viewer))==0 || wcsncmp(Title, ms_ViewerRus, lstrlen(ms_ViewerRus))==0)
+				mn_FarStatus |= CES_VIEWER;
+			else if (isFilePanel(true))
+				mn_FarStatus |= CES_FILEPANEL;
+		}
+	}
+}
+
+void CRealConsole::OnTitleChanged()
+{
+	if (!this) return;
+
+	// Окошко фара полюбило мигать, но его все равно не видно...
+	FLASHWINFO flsh = {sizeof(FLASHWINFO)}; flsh.hwnd = hConWnd; flsh.dwFlags = FLASHW_STOP;
+	FlashWindowEx(&flsh);
+	//
+	wcscpy(Title, TitleCmp);
+
+	CheckFarStates();
+
+	// иначе может среагировать на изменение заголовка ДО того,
+	// как мы узнаем, что активировался редактор...
+	TODO("Должно срабатывать и при запуске консольной программы!");
+	if (Title[0] == L'{' || Title[0] == L'(')
+		CheckPanelTitle();
+
+	if (gConEmu.isActive(mp_VCon))
+		gConEmu.UpdateTitle(TitleCmp);
+	TabBar.Update(); // сменить заголовок закладки?
+}
+
+bool CRealConsole::isFilePanel(bool abPluginAllowed/*=false*/)
+{
+	if (!this) return false;
+
+	if (Title[0] == 0) return false;
+
+	if (abPluginAllowed) {
+		if (isEditor() || isViewer())
+			return false;
+	}
+
+	// нужно для DragDrop
+	if (_tcsncmp(Title, ms_TempPanel, _tcslen(ms_TempPanel)) == 0 || _tcsncmp(Title, ms_TempPanelRus, _tcslen(ms_TempPanelRus)) == 0)
+		return true;
+
+	if ((abPluginAllowed && Title[0]==_T('{')) ||
+		(_tcsncmp(Title, _T("{\\\\"), 3)==0) ||
+		(Title[0] == _T('{') && isDriveLetter(Title[1]) && Title[2] == _T(':') && Title[3] == _T('\\')))
+	{
+		TCHAR *Br = _tcsrchr(Title, _T('}'));
+		if (Br && _tcscmp(Br, _T("} - Far"))==0)
+			return true;
+	}
+	//TCHAR *BrF = _tcschr(Title, '{'), *BrS = _tcschr(Title, '}'), *Slash = _tcschr(Title, '\\');
+	//if (BrF && BrS && Slash && BrF == Title && (Slash == Title+1 || Slash == Title+3))
+	//    return true;
+	return false;
+}
+
+bool CRealConsole::isEditor()
+{
+	if (!this) return false;
+	return GetFarStatus() & CES_EDITOR;
+}
+
+bool CRealConsole::isViewer()
+{
+	if (!this) return false;
+	return GetFarStatus() & CES_VIEWER;
+}
+
+bool CRealConsole::isNtvdm()
+{
+	if (!this) return false;
+	if (mn_ProgramStatus & CES_NTVDM) {
+		if (mn_ProgramStatus & CES_FARFLAGS) {
+			//mn_ActiveStatus &= ~CES_NTVDM;
+		} else if (isFilePanel()) {
+			//mn_ActiveStatus &= ~CES_NTVDM;
+		} else {
+			return true;
+		}
+	}
+	return false;
 }

@@ -47,6 +47,12 @@ WARNING("! А нафига КУРСОР (мигающий) отрисовывать в VirtualConsole? Не лучше ли
 #define CONSOLE_SELECTION_NOT_EMPTY     0x0002   // non-null select rectangle
 #endif
 
+#ifdef _DEBUG
+#define DUMPDC(f) if (mb_DebugDumpDC) DumpImage(hDC, Width, Height, f);
+#else
+#define DUMPDC(f)
+#endif
+
 CVirtualConsole* CVirtualConsole::Create(bool abDetached, LPCWSTR asNewCmd /* = NULL */)
 {
     CVirtualConsole* pCon = new CVirtualConsole();
@@ -75,6 +81,8 @@ CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
     InitializeCriticalSection(&csCON); ncsTCON = 0;
 
     mr_LeftPanel = mr_RightPanel = MakeRect(-1,-1);
+
+	mb_InPaintCall = FALSE;
 
 
 #ifdef _DEBUG
@@ -111,6 +119,10 @@ CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
     if (gSet.wndHeight)
         TextHeight = gSet.wndHeight;
     
+
+	#ifdef _DEBUG
+	mb_DebugDumpDC = FALSE;
+	#endif
 
     if (gSet.isShowBgImage)
         gSet.LoadImageFrom(gSet.sBgImage);
@@ -483,6 +495,10 @@ bool CVirtualConsole::isCharProgress(WCHAR inChar)
 
 void CVirtualConsole::BlitPictureTo(int inX, int inY, int inWidth, int inHeight)
 {
+	#ifdef _DEBUG
+	BOOL lbDump = FALSE;
+	if (lbDump) DumpImage(gSet.hBgDc, gSet.bgBmp.X, gSet.bgBmp.Y, L"F:\\bgtemp.png");
+	#endif
     if (gSet.bgBmp.X>inX && gSet.bgBmp.Y>inY)
         BitBlt(hDC, inX, inY, inWidth, inHeight, gSet.hBgDc, inX, inY, SRCCOPY);
     if (gSet.bgBmp.X<(inX+inWidth) || gSet.bgBmp.Y<(inY+inHeight))
@@ -827,12 +843,14 @@ bool CVirtualConsole::Update(bool isForce, HDC *ahDc)
             DumpConsole(szLogPath);
         }
 
-        // должен вызываться в консольной нити (IsConsoleThread)
-        mb_PaintRequested = TRUE;
-        gConEmu.m_Child.Invalidate();
-        //09.06.13 а если так? быстрее изменения на экране не появятся?
-        //UpdateWindow(ghWndDC); // оно посылает сообщение в окно, и ждет окончания отрисовки
-        mb_PaintRequested = FALSE;
+		if (!mb_InPaintCall) {
+			// должен вызываться в консольной нити (IsConsoleThread)
+			mb_PaintRequested = TRUE;
+			gConEmu.m_Child.Invalidate();
+			//09.06.13 а если так? быстрее изменения на экране не появятся?
+			UpdateWindow(ghWndDC); // оно посылает сообщение в окно, и ждет окончания отрисовки
+			mb_PaintRequested = FALSE;
+		}
     }
 
     gSet.Performance(tPerfRender, TRUE);
@@ -859,6 +877,7 @@ bool CVirtualConsole::UpdatePrepare(bool isForce, HDC *ahDc, CSection *pSDC)
     
     attrBackLast = 0;
     isEditor = gConEmu.isEditor();
+	isViewer = gConEmu.isViewer();
     isFilePanel = gConEmu.isFilePanel(true);
 
     //winSize.X = csbi.srWindow.Right - csbi.srWindow.Left + 1; winSize.Y = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
@@ -896,7 +915,8 @@ bool CVirtualConsole::UpdatePrepare(bool isForce, HDC *ahDc, CSection *pSDC)
         isForce = true;
 
 
-    drawImage = gSet.isShowBgImage && gSet.isBackgroundImageValid;
+    drawImage = (gSet.isShowBgImage == 1 || (gSet.isShowBgImage == 2 && !(isEditor || isViewer)) )
+		&& gSet.isBackgroundImageValid;
     TextLen = TextWidth * TextHeight;
     coord.X = csbi.srWindow.Left; coord.Y = csbi.srWindow.Top;
 
@@ -1524,6 +1544,8 @@ void CVirtualConsole::UpdateText(bool isForce, bool updateText, bool updateCurso
                 if (gbNoDblBuffer) GdiFlush();
                 MCHKHEAP
             }
+
+			DUMPDC(L"F:\\vcon.png");
         
             // stop if all is done
             if (!updateText)
@@ -1610,6 +1632,23 @@ HBRUSH CVirtualConsole::PartBrush(wchar_t ch, SHORT nBackIdx, SHORT nForeIdx)
 
 void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, COORD pos, UINT dwSize)
 {
+#ifdef _DEBUG
+	wchar_t szCursorInfo[60];
+	wsprintfW(szCursorInfo, L"CursorDraw (X=%i, Y=%i, H:%i)\n", 
+		csbi.dwCursorPosition.X, csbi.dwCursorPosition.Y, dwSize);
+	DEBUGSTR(szCursorInfo);
+	static DWORD nLastTick = 0;
+	DWORD nTick = GetTickCount();
+	DWORD nDelta = nTick - nLastTick;
+	if (Cursor.x == csbi.dwCursorPosition.X && Cursor.y == csbi.dwCursorPosition.Y) {
+		if (nDelta < 10) {
+			//_ASSERTE(nDelta > 100);
+			nDelta = nDelta;
+		}
+	}
+	nLastTick = nTick;
+#endif
+
     Cursor.x = csbi.dwCursorPosition.X;
     Cursor.y = csbi.dwCursorPosition.Y;
 
@@ -1734,9 +1773,9 @@ void CVirtualConsole::UpdateCursor(bool& lRes)
     // Если курсор (в консоли) видим, и находится в видимой области (при прокрутке)
     if (cinf.bVisible && isCursorValid)
     {
-        #ifdef CURSOR_ALWAYS_VISIBLE
-            Cursor.isVisible = true;
-        #else
+		if (!gSet.isCursorBlink) {
+            Cursor.isVisible = true; // Видим всегда (даже в неактивной консоли), не мигает
+		} else {
             // Смена позиции курсора - его нужно обновить, если окно активно
             if ((Cursor.x != csbi.dwCursorPosition.X) || (Cursor.y != csbi.dwCursorPosition.Y)) 
             {
@@ -1750,7 +1789,7 @@ void CVirtualConsole::UpdateCursor(bool& lRes)
                 Cursor.isVisible = bConActive && !Cursor.isVisible;
                 lbUpdateTick = TRUE;
             }
-        #endif
+		}
     } else {
         // Иначе - его нужно спрятать (курсор скрыт в консоли, или ушел за границы экрана)
         Cursor.isVisible = false;
@@ -1836,7 +1875,9 @@ void CVirtualConsole::Paint()
     
     gSet.Performance(tPerfFPS, TRUE); // считается по своему
 
+	mb_InPaintCall = TRUE;
 	Update(mb_RequiredForceUpdate);
+	mb_InPaintCall = FALSE;
 
     BOOL lbExcept = FALSE;
     RECT client;

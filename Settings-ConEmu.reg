@@ -4,7 +4,7 @@ REGEDIT4
 ;; 'default' command line. May be empty
 "CmdLine"="Far.exe"
 
-;; 
+;; hex:01 - enabled, hex:02 - enabled only in panels
 "BackGround Image show"=hex:00
 "BackGround Image"="c:\\back.bmp"
 "bgImageDarker"=hex:46
@@ -40,6 +40,8 @@ REGEDIT4
 ;; 1 - Vertical cursor
 "CursorType"=hex:01
 "CursorColor"=hex:00
+;; 0 - To disable cursor blinking
+"CursorBlink"=hex:01
 
 ;; 0 - don't handle - always send RClick to console
 ;; 1 - always show context menu (look at "RightClickMacro" value)

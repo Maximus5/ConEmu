@@ -131,7 +131,8 @@ public:
     void OnWinEvent(DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime);
     int  GetProcesses(ConProcess** ppPrc);
     DWORD GetFarPID();
-    DWORD GetActiveStatus();
+    DWORD GetProgramStatus();
+	DWORD GetFarStatus();
     DWORD GetServerPID();
     LRESULT OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
     LRESULT OnScroll(int nDirection);
@@ -158,6 +159,10 @@ public:
     void Paste();
     void LogString(LPCSTR asText);
 	bool isActive();
+	bool isFilePanel(bool abPluginAllowed=false);
+	bool isEditor();
+	bool isViewer();
+	bool isNtvdm();
 
 public:
     // Вызываются из CVirtualConsole
@@ -223,7 +228,7 @@ private:
     void ProcessDelete(DWORD addPID);
     void ProcessUpdateFlags(BOOL abProcessChanged);
     void ProcessCheckName(struct ConProcess &ConPrc, LPWSTR asFullFileName);
-    DWORD mn_ActiveStatus;
+    DWORD mn_ProgramStatus, mn_FarStatus;
     BOOL isShowConsole;
     BOOL mb_ConsoleSelectMode;
     static DWORD WINAPI ServerThread(LPVOID lpvParam);
@@ -262,5 +267,11 @@ private:
     HANDLE PrepareOutputFileCreate(wchar_t* pszFilePathName);
     // фикс для dblclick в редакторе
     MOUSE_EVENT_RECORD m_LastMouse;
+	//
+	wchar_t ms_Editor[32], ms_EditorRus[32], ms_Viewer[32], ms_ViewerRus[32];
+	wchar_t ms_TempPanel[32], ms_TempPanelRus[32];
+	//
+	BOOL mb_PluginDetected; DWORD mn_FarPID_PluginDetected;
+	void CheckFarStates();
+	void OnTitleChanged();
 };
-

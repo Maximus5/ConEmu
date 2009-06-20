@@ -33,7 +33,7 @@ CConEmuMain::CConEmuMain()
     //memset(m_ProcList, 0, 1000*sizeof(DWORD)); 
     m_ProcCount=0; //mn_ConmanPID = 0; //mh_Infis = NULL; ms_InfisPath[0] = 0;
     //mn_TopProcessID = 0; //ms_TopProcess[0] = 0; mb_FarActive = FALSE;
-    mn_ActiveStatus = 0; //m_ActiveConmanIDX = 0; //mn_NeedRetryName = 0;
+    //mn_ActiveStatus = 0; //m_ActiveConmanIDX = 0; //mn_NeedRetryName = 0;
     mb_ProcessCreated = FALSE; mn_StartTick = 0;
     //mh_ConMan = NULL;
     //ConMan_MainProc = NULL; ConMan_LookForKeyboard = NULL; ConMan_ProcessCommand = NULL; 
@@ -45,9 +45,6 @@ CConEmuMain::CConEmuMain()
     mouse.lastMMW=-1;
     mouse.lastMML=-1;
 
-    //mh_Psapi = NULL;
-    //GetModuleFileNameEx= NULL;
-
     if (!GetModuleFileName(NULL, ms_ConEmuExe, MAX_PATH)) {
         DisplayLastError(L"GetModuleFileName failed");
         TerminateProcess(GetCurrentProcess(), 100);
@@ -55,27 +52,7 @@ CConEmuMain::CConEmuMain()
 
     mh_WinHook = NULL;
 
-#ifdef _UNICODE
-    MultiByteToWideChar(CP_ACP, 0, "редактирование ", -1, ms_EditorRus, 16);
-    MultiByteToWideChar(CP_ACP, 0, "просмотр ", -1, ms_ViewerRus, 16);
-#else
-    strcpy(ms_EditorRus, "редактирование ");
-    strcpy(ms_ViewerRus, "просмотр ");
-#endif
-    _tcscpy(ms_TempPanel, _T("{Temporary panel"));
-    MultiByteToWideChar(CP_ACP, 0, "{Временная панель", -1, ms_TempPanelRus, 32);
 
-
-    /*Registry reg;
-    if (reg.OpenKey(_T("Control Panel\\Desktop"), KEY_READ))
-    {
-        WCHAR szValue[MAX_PATH];
-        if (reg.Load(_T("DragFullWindows"), szValue))
-            mb_FullWindowDrag = szValue[0]==L'1';
-        reg.CloseKey();
-    }*/
-
-    //mn_ActiveCon = -1; 
     pVCon = NULL;
     memset(mp_VCon, 0, sizeof(mp_VCon));
     
@@ -90,6 +67,7 @@ CConEmuMain::CConEmuMain()
     mn_MsgUpdateScrollInfo = RegisterWindowMessage(_T("ConEmuMain::UpdateScrollInfo"));
     mn_MsgUpdateTabs = RegisterWindowMessage(CONEMUMSG_UPDATETABS);
     mn_MsgOldCmdVer = RegisterWindowMessage(_T("ConEmuMain::OldCmdVersion")); mb_InShowOldCmdVersion = FALSE;
+	mn_MsgTabCommand = RegisterWindowMessage(_T("ConEmuMain::TabCommand"));
 }
 
 BOOL CConEmuMain::Init()
@@ -1337,7 +1315,7 @@ LPARAM CConEmuMain::AttachRequested(HWND ahConWnd, DWORD anConemuC_PID)
 DWORD CConEmuMain::CheckProcesses()
 {
     DWORD dwAllCount = 0;
-    mn_ActiveStatus &= ~CES_PROGRAMS;
+    //mn_ActiveStatus &= ~CES_PROGRAMS;
     for (int j=0; j<MAX_CONSOLE_COUNT; j++) {
         if (mp_VCon[j] == NULL) continue;
 
@@ -1346,9 +1324,9 @@ DWORD CConEmuMain::CheckProcesses()
             dwAllCount += nCount;
     }
 
-    if (pVCon) {
-        mn_ActiveStatus |= (pVCon->RCon()->GetActiveStatus() & CES_PROGRAMS);
-    }
+    //if (pVCon) {
+    //    mn_ActiveStatus |= pVCon->RCon()->GetProgramStatus();
+    //}
 
     m_ProcCount = dwAllCount;
     return dwAllCount;
@@ -1991,15 +1969,17 @@ void CConEmuMain::UpdateProcessDisplay(BOOL abForce)
         return;
 
     wchar_t szNo[32];
+	DWORD nProgramStatus = pVCon->RCon()->GetProgramStatus();
+	DWORD nFarStatus = pVCon->RCon()->GetFarStatus();
     CheckDlgButton(gSet.hInfo, cbsConManActive, (gSet.isMulti) ? BST_CHECKED : BST_UNCHECKED);
     SetDlgItemText(gSet.hInfo, tsConManIdx, _itow(gConEmu.ActiveConNum()+1, szNo, 10));
-    CheckDlgButton(gSet.hInfo, cbsTelnetActive, (mn_ActiveStatus&CES_TELNETACTIVE) ? BST_CHECKED : BST_UNCHECKED);
+    CheckDlgButton(gSet.hInfo, cbsTelnetActive, (nProgramStatus&CES_TELNETACTIVE) ? BST_CHECKED : BST_UNCHECKED);
     CheckDlgButton(gSet.hInfo, cbsNtvdmActive, isNtvdm() ? BST_CHECKED : BST_UNCHECKED);
-    CheckDlgButton(gSet.hInfo, cbsFarActive, (mn_ActiveStatus&CES_FARACTIVE) ? BST_CHECKED : BST_UNCHECKED);
-    CheckDlgButton(gSet.hInfo, cbsFilePanel, (mn_ActiveStatus&CES_FILEPANEL) ? BST_CHECKED : BST_UNCHECKED);
-    //CheckDlgButton(gSet.hInfo, cbsPlugin, (mn_ActiveStatus&CES_CONMANACTIVE) ? BST_CHECKED : BST_UNCHECKED);
-    CheckDlgButton(gSet.hInfo, cbsEditor, (mn_ActiveStatus&CES_EDITOR) ? BST_CHECKED : BST_UNCHECKED);
-    CheckDlgButton(gSet.hInfo, cbsViewer, (mn_ActiveStatus&CES_VIEWER) ? BST_CHECKED : BST_UNCHECKED);
+    CheckDlgButton(gSet.hInfo, cbsFarActive, (nProgramStatus&CES_FARACTIVE) ? BST_CHECKED : BST_UNCHECKED);
+    CheckDlgButton(gSet.hInfo, cbsFilePanel, (nFarStatus&CES_FILEPANEL) ? BST_CHECKED : BST_UNCHECKED);
+    //CheckDlgButton(gSet.hInfo, cbsPlugin, (nFarStatus&CES_CONMANACTIVE) ? BST_CHECKED : BST_UNCHECKED);
+    CheckDlgButton(gSet.hInfo, cbsEditor, (nFarStatus&CES_EDITOR) ? BST_CHECKED : BST_UNCHECKED);
+    CheckDlgButton(gSet.hInfo, cbsViewer, (nFarStatus&CES_VIEWER) ? BST_CHECKED : BST_UNCHECKED);
     SetDlgItemText(gSet.hInfo, tsTopPID, _itow(pVCon->RCon()->GetFarPID(), szNo, 10));
 
     if (!abForce)
@@ -2093,15 +2073,15 @@ void CConEmuMain::UpdateTitle(LPCTSTR asNewTitle)
     LPTSTR pszTitle = GetTitleStart();
     //BOOL lbCurAlt = (mn_ActiveStatus & (CES_CONMANACTIVE|CES_CONALTERNATIVE))==(CES_CONMANACTIVE|CES_CONALTERNATIVE);
     
-    WARNING("Этот код нужно перенести в RealConsole");
-    mn_ActiveStatus &= CES_PROGRAMS2; // оставляем только флаги текущей программы
-    // далее идут взаимоисключающие флаги режимов текущей программы
-    if (_tcsncmp(pszTitle, _T("edit "), 5)==0 || _tcsncmp(pszTitle, ms_EditorRus, _tcslen(ms_EditorRus))==0)
-        mn_ActiveStatus |= CES_EDITOR;
-    else if (_tcsncmp(pszTitle, _T("view "), 5)==0 || _tcsncmp(pszTitle, ms_ViewerRus, _tcslen(ms_ViewerRus))==0)
-        mn_ActiveStatus |= CES_VIEWER;
-    else if (isFilePanel(true))
-        mn_ActiveStatus |= CES_FILEPANEL;
+    //WARNING("Этот код нужно перенести в RealConsole");
+    //mn_ActiveStatus &= CES_PROGRAMS2; // оставляем только флаги текущей программы
+    //// далее идут взаимоисключающие флаги режимов текущей программы
+    //if (_tcsncmp(pszTitle, _T("edit "), 5)==0 || _tcsncmp(pszTitle, ms_EditorRus, _tcslen(ms_EditorRus))==0)
+    //    mn_ActiveStatus |= CES_EDITOR;
+    //else if (_tcsncmp(pszTitle, _T("view "), 5)==0 || _tcsncmp(pszTitle, ms_ViewerRus, _tcslen(ms_ViewerRus))==0)
+    //    mn_ActiveStatus |= CES_VIEWER;
+    //else if (isFilePanel(true))
+    //    mn_ActiveStatus |= CES_FILEPANEL;
 
 
     // Под конец - проверить список процессов консоли
@@ -2388,38 +2368,14 @@ bool CConEmuMain::isDragging()
 
 bool CConEmuMain::isFilePanel(bool abPluginAllowed/*=false*/)
 {
-    TCHAR* pszTitle=GetTitleStart();
-    if (!pszTitle) return false;
-    
-    /*if (isConmanAlternative())
-        return false;*/
-
-    if (abPluginAllowed) {
-        if (isEditor() || isViewer())
-            return false;
-    }
-    
-    // нужно для DragDrop
-    if (_tcsncmp(pszTitle, ms_TempPanel, _tcslen(ms_TempPanel)) == 0 || _tcsncmp(pszTitle, ms_TempPanelRus, _tcslen(ms_TempPanelRus)) == 0)
-        return true;
-
-    if ((abPluginAllowed && pszTitle[0]==_T('{')) ||
-        (_tcsncmp(pszTitle, _T("{\\\\"), 3)==0) ||
-        (pszTitle[0] == _T('{') && isDriveLetter(pszTitle[1]) && pszTitle[2] == _T(':') && pszTitle[3] == _T('\\')))
-    {
-        TCHAR *Br = _tcsrchr(pszTitle, _T('}'));
-        if (Br && _tcscmp(Br, _T("} - Far"))==0)
-            return true;
-    }
-    //TCHAR *BrF = _tcschr(Title, '{'), *BrS = _tcschr(Title, '}'), *Slash = _tcschr(Title, '\\');
-    //if (BrF && BrS && Slash && BrF == Title && (Slash == Title+1 || Slash == Title+3))
-    //    return true;
-    return false;
+	if (!pVCon) return false;
+	return pVCon->RCon()->isFilePanel(abPluginAllowed);
 }
 
 bool CConEmuMain::isEditor()
 {
-    return mn_ActiveStatus & CES_EDITOR;
+	if (!pVCon) return false;
+    return pVCon->RCon()->isEditor();
 }
 
 bool CConEmuMain::isFar()
@@ -2464,16 +2420,8 @@ bool CConEmuMain::isMeForeground()
 
 bool CConEmuMain::isNtvdm()
 {
-    if (mn_ActiveStatus & CES_NTVDM) {
-        if (mn_ActiveStatus & CES_FARFLAGS) {
-            //mn_ActiveStatus &= ~CES_NTVDM;
-        } else if (isFilePanel()) {
-            //mn_ActiveStatus &= ~CES_NTVDM;
-        } else {
-            return true;
-        }
-    }
-    return false;
+	if (!pVCon) return false;
+	return pVCon->RCon()->isNtvdm();
 }
 
 bool CConEmuMain::isValid(CVirtualConsole* apVCon)
@@ -2491,7 +2439,8 @@ bool CConEmuMain::isValid(CVirtualConsole* apVCon)
 
 bool CConEmuMain::isViewer()
 {
-    return mn_ActiveStatus & CES_VIEWER;
+	if (!pVCon) return false;
+    return pVCon->RCon()->isViewer();
 }
 
 bool CConEmuMain::isWindowNormal()
@@ -2587,6 +2536,36 @@ void CConEmuMain::SwitchKeyboardLayout(DWORD dwNewKeybLayout)
     }
 }
 
+void CConEmuMain::TabCommand(UINT nTabCmd)
+{
+	if (!isMainThread()) {
+		PostMessage(ghWnd, mn_MsgTabCommand, nTabCmd, 0);
+		return;
+	}
+
+	switch (nTabCmd) {
+		case 0:
+			{
+				if (TabBar.IsShown())
+					gSet.isTabs = 0;
+				else
+					gSet.isTabs = 1;
+				gConEmu.ForceShowTabs ( gSet.isTabs == 1 );
+			} break;
+		case 1:
+			{
+				TabBar.SwitchNext();
+			} break;
+		case 2:
+			{
+				TabBar.SwitchPrev();
+			} break;
+		case 3:
+			{
+				TabBar.SwitchCommit();
+			} break;
+	};
+}
 
 
 
@@ -2669,6 +2648,7 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd)
     InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_HELP, _T("&About"));
     InsertMenu(hwndMain, 0, MF_BYPOSITION, MF_SEPARATOR, 0);
     hDebug = CreatePopupMenu();
+	AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_CON_TOGGLE_VISIBLE, _T("&Real console"));
     AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_CONPROP, _T("&Properties..."));
     AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_DUMPCONSOLE, _T("&Dump..."));
     InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_POPUP | MF_ENABLED, (UINT_PTR)hDebug, _T("&Debug"));
@@ -3548,6 +3528,10 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
             pVCon->DumpConsole();
         return 0;
         //break;
+	case ID_CON_TOGGLE_VISIBLE:
+		if (pVCon)
+			pVCon->RCon()->ShowConsole(-1); // Toggle visibility
+		return 0;
     case ID_HELP:
         {
             WCHAR szTitle[255];
@@ -4053,29 +4037,7 @@ void CConEmuMain::ServerThreadCommand(HANDLE hPipe)
         DEBUGSTR(L"GUI recieved CECMD_TABSCMD\n");
         _ASSERTE(nDataSize>=1);
         DWORD nTabCmd = pIn->Data[0];
-        switch (nTabCmd) {
-        case 0:
-            {
-                if (TabBar.IsShown())
-                    gSet.isTabs = 0;
-                else
-                    gSet.isTabs = 1;
-                ForceShowTabs ( gSet.isTabs == 1 );
-            } break;
-        case 1:
-            {
-                TabBar.SwitchNext();
-            } break;
-        case 2:
-            {
-                TabBar.SwitchPrev();
-            } break;
-        case 3:
-            {
-                TabBar.SwitchCommit();
-            } break;
-        };
-
+		TabCommand(nTabCmd);
     }
 
     // Освободить память
@@ -4289,15 +4251,18 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
             return gConEmu.AttachRequested ( (HWND)wParam, (DWORD)lParam );
         } else if (messg == gConEmu.mn_MsgVConTerminated) {
             return gConEmu.OnVConTerminated ( (CVirtualConsole*)lParam, TRUE );
-        } else if (messg == mn_MsgUpdateScrollInfo) {
+        } else if (messg == gConEmu.mn_MsgUpdateScrollInfo) {
             return OnUpdateScrollInfo(TRUE);
-        } else if (messg == mn_MsgUpdateTabs) {
+        } else if (messg == gConEmu.mn_MsgUpdateTabs) {
             TabBar.Update(TRUE);
             return 0;
-        } else if (messg == mn_MsgOldCmdVer) {
+        } else if (messg == gConEmu.mn_MsgOldCmdVer) {
             gConEmu.ShowOldCmdVersion(wParam, lParam);
             return 0;
-        }
+		} else if (messg == gConEmu.mn_MsgTabCommand) {
+			TabCommand(wParam);
+			return 0;
+		}
         //else if (messg == gConEmu.mn_MsgCmdStarted || messg == gConEmu.mn_MsgCmdStopped) {
         //  return gConEmu.OnConEmuCmd( (messg == gConEmu.mn_MsgCmdStarted), (HWND)wParam, (DWORD)lParam);
         //}

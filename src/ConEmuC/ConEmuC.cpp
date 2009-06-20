@@ -141,6 +141,7 @@ void CheckConEmuHwnd();
 typedef BOOL (__stdcall *PGETCONSOLEKEYBOARDLAYOUTNAME)(wchar_t*);
 PGETCONSOLEKEYBOARDLAYOUTNAME pfnGetConsoleKeyboardLayoutName = NULL; //(PGETCONSOLEKEYBOARDLAYOUTNAME)GetProcAddress (hKernel, "GetConsoleKeyboardLayoutNameW");
 void CheckKeyboardLayout();
+int CALLBACK FontEnumProc(ENUMLOGFONTEX *lpelfe, NEWTEXTMETRICEX *lpntme, DWORD FontType, LPARAM lParam);
 
 #else
 
@@ -245,7 +246,7 @@ struct tag_Srv {
 
 #define USER_IDLE_TIMEOUT ((DWORD)1000)
 #define CHECK_IDLE_TIMEOUT 100 /* 1000 / 20 */
-#define USER_ACTIVITY (gnBufferHeight == 0) || ((GetTickCount() - srv.dwLastUserTick) <= USER_IDLE_TIMEOUT)
+#define USER_ACTIVITY ((gnBufferHeight == 0) || ((GetTickCount() - srv.dwLastUserTick) <= USER_IDLE_TIMEOUT))
 
 
 #pragma pack(push, 1)
@@ -556,7 +557,7 @@ wrap:
     /* ************************** */
     
     if (gpszPrevConTitle && ghConWnd) {
-        SetWindowText(ghConWnd, gpszPrevConTitle);
+        SetConsoleTitleW(gpszPrevConTitle);
         Free(gpszPrevConTitle);
     }
     
@@ -804,25 +805,29 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
             } else {
                 pszEndQ = NULL;
             }
-            int nLen = GetWindowTextLength(ghConWnd);
+            int nLen = 4096; //GetWindowTextLength(ghConWnd); -- KIS2009 гундит "Посылка оконного сообщения"...
             if (nLen > 0) {
                 gpszPrevConTitle = (wchar_t*)Alloc(nLen+1,2);
                 if (gpszPrevConTitle) {
-                    GetWindowText(ghConWnd, gpszPrevConTitle, nLen+1);
+					if (!GetConsoleTitleW(gpszPrevConTitle, nLen+1)) {
+						Free(gpszPrevConTitle); gpszPrevConTitle = NULL;
+					}
                 }
             }
-            SetWindowText(ghConWnd, pszTitle);
+            SetConsoleTitleW(pszTitle);
             if (pszEndQ) *pszEndQ = L'"';
         }
     } else if (*asCmdLine) {
-        int nLen = GetWindowTextLength(ghConWnd);
+        int nLen = 4096; //GetWindowTextLength(ghConWnd); -- KIS2009 гундит "Посылка оконного сообщения"...
         if (nLen > 0) {
             gpszPrevConTitle = (wchar_t*)Alloc(nLen+1,2);
             if (gpszPrevConTitle) {
-                GetWindowText(ghConWnd, gpszPrevConTitle, nLen+1);
-            }
+				if (!GetConsoleTitleW(gpszPrevConTitle, nLen+1)) {
+					Free(gpszPrevConTitle); gpszPrevConTitle = NULL;
+				}
+			}
         }
-        SetWindowText(ghConWnd, asCmdLine);
+        SetConsoleTitleW(asCmdLine);
     }
     
     if (bViaCmdExe)
@@ -1251,7 +1256,19 @@ int ServerInit()
     wsprintfW(srv.szInputname, CESERVERINPUTNAME, L".", gnSelfPID);
 
     // Размер шрифта и Lucida. Обязательно для серверного режима.
-    if (srv.szConsoleFont[0] == 0) lstrcpyW(srv.szConsoleFont, L"Lucida Console");
+	if (srv.szConsoleFont[0]) {
+		// Требуется проверить наличие такого шрифта!
+		LOGFONT fnt = {0};
+		lstrcpynW(fnt.lfFaceName, srv.szConsoleFont, LF_FACESIZE);
+		srv.szConsoleFont[0] = 0; // сразу сбросим. Если шрифт есть - имя будет скопировано в FontEnumProc
+		HDC hdc = GetDC(NULL);
+		EnumFontFamiliesEx(hdc, &fnt, (FONTENUMPROCW) FontEnumProc, (LPARAM)&fnt, 0);
+		DeleteDC(hdc);
+	}
+	if (srv.szConsoleFont[0] == 0) {
+		lstrcpyW(srv.szConsoleFont, L"Lucida Console");
+		srv.nConFontWidth = 4; srv.nConFontHeight = 6;
+	}
     if (srv.nConFontHeight<6) srv.nConFontHeight = 6;
     if (srv.nConFontWidth==0 && srv.nConFontHeight==0) {
         srv.nConFontWidth = 4; srv.nConFontHeight = 6;
@@ -1479,6 +1496,16 @@ void ServerDone(int aiRc)
 
     //if (srv.szConsoleFontFile[0])
     //  RemoveFontResourceEx(srv.szConsoleFontFile, FR_PRIVATE, NULL);
+}
+
+int CALLBACK FontEnumProc(ENUMLOGFONTEX *lpelfe, NEWTEXTMETRICEX *lpntme, DWORD FontType, LPARAM lParam)
+{
+	if ((FontType & TRUETYPE_FONTTYPE) == TRUETYPE_FONTTYPE) {
+		// OK, подходит
+		lstrcpyW(srv.szConsoleFont, lpelfe->elfLogFont.lfFaceName);
+		return 0;
+	}
+	return TRUE; // ищем следующий фонт
 }
 
 void CheckConEmuHwnd()
@@ -2423,11 +2450,15 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
             CheckKeyboardLayout();
             
         // Если это таймаут и не буферный режим и нет пользовательской активности
-        if (!lbEventualChange && !(USER_ACTIVITY)) {
+        if ((gnBufferHeight != 0) && !lbEventualChange && !(USER_ACTIVITY)) {
             DWORD nCurTick = GetTickCount();
             nDelta = nCurTick - nIdleTick;
-            if (nDelta < CHECK_IDLE_TIMEOUT)
-	            continue; // еще подождем
+			if (nDelta < CHECK_IDLE_TIMEOUT) {
+	            // еще подождем
+				DWORD nSleep = CHECK_IDLE_TIMEOUT - nDelta;
+				if (nSleep > 100) nSleep = 100;
+				Sleep(nSleep);
+			}
 	    }
 	    nIdleTick = GetTickCount();
 

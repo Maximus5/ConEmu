@@ -85,10 +85,10 @@ BEGIN
     CONTROL         "&Horizontal (like in console)",rCursorH,"Button",
                     BS_AUTORADIOBUTTON,153,25,96,8
     CONTROL         "Co&lor",cbCursorColor,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,153,36,96,8
+                    WS_TABSTOP,153,36,43,8
     GROUPBOX        "",IDC_STATIC,4,172,319,50
-    CONTROL         "Back&ground image (bmp):",cbBgImage2,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,10,172,96,8
+    CONTROL         "Back&ground image (bmp):",cbBgImage,"Button",
+                    BS_AUTO3STATE | WS_TABSTOP,10,172,96,8
     EDITTEXT        tBgImage,34,184,209,12,ES_AUTOHSCROLL
     COMBOBOX        tFontFace,10,16,123,72,CBS_DROPDOWN | CBS_AUTOHSCROLL | 
                     CBS_SORT | WS_VSCROLL | WS_TABSTOP
@@ -180,6 +180,8 @@ BEGIN
     CONTROL         "Min 2 tray",cbMinToTray,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,67,153,47,10
     PUSHBUTTON      "Apply",cbApplyPos,214,83,36,12
+    CONTROL         "Blinking",cbCursorBlink,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,200,36,50,8
 END
 
 IDD_DIALOG2 DIALOGEX 0, 0, 328, 246

@@ -124,6 +124,7 @@ std::vector<HANDLE> ghCommandThreads;
 //DWORD  gnServerThreadsId[MAX_SERVER_THREADS] = {0,0,0};
 HANDLE ghServerTerminateEvent = NULL;
 HANDLE ghPluginSemaphore = NULL;
+wchar_t gsFarLang[64];
 
 //#if defined(__GNUC__)
 //typedef HWND (APIENTRY *FGetConsoleWindow)();
@@ -571,6 +572,8 @@ DWORD WINAPI ThreadProcW(LPVOID lpParameter)
 			// ConEmu могло подцепитьс€
 			//int nChk = 0;
 			ConEmuHwnd = GetConEmuHWND ( FALSE/*abRoot*/  /*, &nChk*/ );
+			if (ConEmuHwnd)
+				InitResources();
 		}
 
 		//SafeCloseHandle(ghMapping);
@@ -700,6 +703,8 @@ void WINAPI _export SetStartupInfoW(void *aInfo)
 	gbInfoW_OK = TRUE;
 
 	CheckMacro(TRUE);
+
+	CheckResources();
 }
 
 #define CREATEEVENT(fmt,h) \
@@ -709,6 +714,7 @@ void WINAPI _export SetStartupInfoW(void *aInfo)
 	
 void InitHWND(HWND ahFarHwnd)
 {
+	gsFarLang[0] = 0;
 	InitializeCriticalSection(&csTabs);
 	InitializeCriticalSection(&csData);
 	LoadFarVersion(); // пригодитс€ уже здесь!
@@ -1031,6 +1037,11 @@ void CheckMacro(BOOL abAllowAPI)
 
 void UpdateConEmuTabsW(int event, bool losingFocus, bool editorSave, void* Param/*=NULL*/)
 {
+	if (!gbInfoW_OK)
+		return;
+
+	CheckResources();
+
 	if (gFarVersion.dwBuild>=FAR_Y_VER)
 		FUNC_Y(UpdateConEmuTabsW)(event, losingFocus, editorSave, Param);
 	else
@@ -1266,6 +1277,8 @@ int WINAPI _export ProcessViewerEventW(int Event, void *Param)
 
 void StopThread(void)
 {
+	CloseTabs();
+
 	//if (hEventCmd[CMD_EXIT])
 	//	SetEvent(hEventCmd[CMD_EXIT]); // «авершить нить
 
@@ -1299,7 +1312,6 @@ void StopThread(void)
 	}
 	SafeCloseHandle(ghPluginSemaphore);
 
-	//CloseTabs(); -- ConEmu само разберетс€
 	if (hThread) { // подождем чуть-чуть, или принудительно прибъем нить ожидани€
 		if (WaitForSingleObject(hThread,1000)) {
 			#if !defined(__GNUC__)
@@ -1335,6 +1347,47 @@ void   WINAPI _export ExitFARW(void)
 		FUNC_Y(ExitFARW)();
 	else
 		FUNC_X(ExitFARW)();
+}
+
+void CheckResources()
+{
+	wchar_t szLang[64];
+	GetEnvironmentVariable(L"FARLANG", szLang, 63);
+	if (lstrcmpW(szLang, gsFarLang))
+		InitResources();
+}
+
+// ѕередать в ConEmu строки с ресурсами
+void InitResources()
+{
+	if (!ConEmuHwnd || !FarHwnd) return;
+	// ¬ ConEmu нужно передать следущие ресурсы
+	//
+	int nSize = sizeof(CESERVER_REQ) + sizeof(DWORD) 
+		+ 3*(MAX_PATH+1)*2; // + 3 строковых ресурса
+	CESERVER_REQ *pIn = (CESERVER_REQ*)Alloc(nSize,1);;
+	if (pIn) {
+		pIn->hdr.nCmd = CECMD_RESOURCES;
+		pIn->hdr.nSrcThreadId = GetCurrentThreadId();
+		pIn->hdr.nVersion = CESERVER_REQ_VER;
+		*((DWORD*)pIn->Data) = GetCurrentProcessId();
+		wchar_t* pszRes = (wchar_t*)(pIn->Data+4);
+		if (gFarVersion.dwVerMajor==1) {
+			GetMsgA(10, pszRes); pszRes += lstrlenW(pszRes)+1;
+			GetMsgA(11, pszRes); pszRes += lstrlenW(pszRes)+1;
+			GetMsgA(12, pszRes); pszRes += lstrlenW(pszRes)+1;
+		} else {
+			lstrcpyW(pszRes, GetMsgW(10)); pszRes += lstrlenW(pszRes)+1;
+			lstrcpyW(pszRes, GetMsgW(11)); pszRes += lstrlenW(pszRes)+1;
+			lstrcpyW(pszRes, GetMsgW(12)); pszRes += lstrlenW(pszRes)+1;
+		}
+		pIn->hdr.nSize = ((LPBYTE)pszRes) - ((LPBYTE)pIn);
+		CESERVER_REQ* pOut = ExecuteGuiCmd(FarHwnd, pIn);
+		if (pOut) ExecuteFreeResult(pOut);
+		Free(pIn);
+
+		GetEnvironmentVariable(L"FARLANG", gsFarLang, 63);
+	}
 }
 
 void CloseTabs()
@@ -1758,6 +1811,18 @@ void ShowPluginMenu()
 				ExecuteFreeResult(pOut);
 			}
 			free(pIn);
+		} break;
+		case 3: // ѕоказать/спр€тать табы
+		case 4: case 5: case 6:
+		{
+			CESERVER_REQ in, *pOut = NULL;
+			in.hdr.nSize = sizeof(CESERVER_REQ_HDR)+1;
+			in.hdr.nCmd = CECMD_TABSCMD;
+			in.hdr.nSrcThreadId = GetCurrentThreadId();
+			in.hdr.nVersion = CESERVER_REQ_VER;
+			in.Data[0] = nItem - 3;
+			pOut = ExecuteGuiCmd(FarHwnd, &in);
+			if (pOut) ExecuteFreeResult(pOut);
 		} break;
 	}
 }

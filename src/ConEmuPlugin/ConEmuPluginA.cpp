@@ -284,6 +284,8 @@ void WINAPI _export SetStartupInfo(const struct PluginStartupInfo *aInfo)
 	*pszSlash = 0;
 
 	CheckMacro(TRUE);
+
+	CheckResources();
 }
 
 extern WCHAR gcPlugKey; // Для ANSI far он инициализируется как (char)
@@ -371,6 +373,8 @@ int WINAPI _export ProcessViewerEvent(int Event, void *Param)
 void UpdateConEmuTabsA(int event, bool losingFocus, bool editorSave, void *Param/*=NULL*/)
 {
 	if (!InfoA) return;
+
+	CheckResources();
 
     BOOL lbCh = FALSE;
 	WindowInfo WInfo;
@@ -486,10 +490,19 @@ int ShowPluginMenuA()
 
 	FarMenuItem items[] = {
 		{"", 1, 0, 0},
-		{"", 1, 0, 0}
+		{"", 0, 0, 0},
+		{"", 0, 0, 1},
+		{"", 0, 0, 0},
+		{"", 0, 0, 0},
+		{"", 0, 0, 0},
+		{"", 0, 0, 0}
 	};
 	lstrcpyA(items[0].Text, InfoA->GetMsg(InfoA->ModuleNumber,3));
 	lstrcpyA(items[1].Text, InfoA->GetMsg(InfoA->ModuleNumber,4));
+	lstrcpyA(items[3].Text, InfoA->GetMsg(InfoA->ModuleNumber,6));
+	lstrcpyA(items[4].Text, InfoA->GetMsg(InfoA->ModuleNumber,7));
+	lstrcpyA(items[5].Text, InfoA->GetMsg(InfoA->ModuleNumber,8));
+	lstrcpyA(items[6].Text, InfoA->GetMsg(InfoA->ModuleNumber,9));
 	int nCount = sizeof(items)/sizeof(items[0]);
 
 	int nRc = InfoA->Menu(InfoA->ModuleNumber, -1,-1, 0, 
@@ -526,4 +539,19 @@ BOOL EditOutputA(LPCWSTR asFileName, BOOL abView)
 	}
 
 	return lbRc;
+}
+
+void GetMsgA(int aiMsg, wchar_t* rsMsg/*MAX_PATH*/)
+{
+	if (!rsMsg || !InfoA)
+		return;
+	LPCSTR pszMsg = InfoA->GetMsg(InfoA->ModuleNumber,aiMsg);
+	if (pszMsg && *pszMsg) {
+		int nLen = strlen(pszMsg);
+		if (nLen>=MAX_PATH) nLen = MAX_PATH - 1;
+		nLen = MultiByteToWideChar(CP_OEMCP, 0, pszMsg, nLen, rsMsg, MAX_PATH-1);
+		if (nLen>=0) rsMsg[nLen] = 0;
+	} else {
+		rsMsg[0] = 0;
+	}
 }

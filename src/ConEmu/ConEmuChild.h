@@ -14,9 +14,11 @@ public:
 	LRESULT OnSize(WPARAM wParam, LPARAM lParam);
 	HWND Create();
 	void Invalidate();
+	void Validate();
 
 protected:
 	UINT mn_MsgTabChanged;
+	BOOL mb_Invalidated;
 };
 
 class CConEmuBack

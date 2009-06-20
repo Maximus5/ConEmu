@@ -434,7 +434,12 @@ int ShowPluginMenu995()
 
 	FarMenuItem items[] = {
 		{(wchar_t*)InfoW995->GetMsg(InfoW995->ModuleNumber,3), 1, 0, 0},
-		{(wchar_t*)InfoW995->GetMsg(InfoW995->ModuleNumber,4), 1, 0, 0}
+		{(wchar_t*)InfoW995->GetMsg(InfoW995->ModuleNumber,4), 0, 0, 0},
+		{L"", 0, 0, 1},
+		{(wchar_t*)InfoW995->GetMsg(InfoW995->ModuleNumber,6), 0, 0, 0},
+		{(wchar_t*)InfoW995->GetMsg(InfoW995->ModuleNumber,7), 0, 0, 0},
+		{(wchar_t*)InfoW995->GetMsg(InfoW995->ModuleNumber,8), 0, 0, 0},
+		{(wchar_t*)InfoW995->GetMsg(InfoW995->ModuleNumber,9), 0, 0, 0}
 	};
 	int nCount = sizeof(items)/sizeof(items[0]);
 

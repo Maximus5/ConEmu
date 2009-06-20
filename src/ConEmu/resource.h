@@ -51,7 +51,6 @@
 #define tBgImage                        1037
 #define tDarker                         1038
 #define cbBgImage                       1039
-#define cbBgImage2                      1039
 #define cbBold                          1041
 #define tFontSizeX                      1042
 #define cbItalic                        1043
@@ -166,6 +165,7 @@
 #define tPanelRight                     1516
 #define cbsAltActive                    1517
 #define cbApplyPos                      1520
+#define cbCursorBlink                   1522
 
 // Next default values for new objects
 // 
@@ -173,7 +173,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        112
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1522
+#define _APS_NEXT_CONTROL_VALUE         1523
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

@@ -5,6 +5,7 @@
 
 
 #define WM_TRAYNOTIFY WM_USER+1
+#define ID_CON_TOGGLE_VISIBLE 0xABC8
 #define ID_CON_PASTE 0xABC9
 #define ID_AUTOSCROLL 0xABCA
 #define ID_DUMPCONSOLE 0xABCB
@@ -106,8 +107,8 @@ public:
 	bool mb_IgnoreSizeChange;
 	TCHAR szConEmuVersion[32];
 	DWORD m_ProcCount;
-	DWORD mn_ActiveStatus;
-	TCHAR ms_EditorRus[16], ms_ViewerRus[16], ms_TempPanel[32], ms_TempPanelRus[32];
+	//DWORD mn_ActiveStatus;
+	//TCHAR ms_EditorRus[16], ms_ViewerRus[16], ms_TempPanel[32], ms_TempPanelRus[32];
 protected:
 	TCHAR Title[MAX_TITLE_SIZE], TitleCmp[MAX_TITLE_SIZE], MultiTitle[MAX_TITLE_SIZE+20];
 	LPTSTR GetTitleStart();
@@ -131,6 +132,7 @@ protected:
 	UINT mn_MsgUpdateScrollInfo;
 	UINT mn_MsgUpdateTabs;
 	UINT mn_MsgOldCmdVer; BOOL mb_InShowOldCmdVersion;
+	UINT mn_MsgTabCommand;
 	
 	//
 	static DWORD CALLBACK ServerThread(LPVOID lpvParam);
@@ -201,6 +203,7 @@ public:
 	void SyncNtvdm();
 	void SyncWindowToConsole();
 	void SwitchKeyboardLayout(DWORD dwNewKeybLayout);
+	void TabCommand(UINT nTabCmd);
 	void Update(bool isForce = false);
 	void UpdateTitle(LPCTSTR asNewTitle);
 	LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);

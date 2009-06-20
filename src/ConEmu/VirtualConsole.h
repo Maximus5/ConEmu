@@ -42,8 +42,11 @@ private:
 	HBITMAP hBitmap;
 	HBRUSH  hBrush0, hOldBrush, hSelectedBrush;
 	HFONT   hSelectedFont, hOldFont;
+	#ifdef _DEBUG
+	BOOL    mb_DebugDumpDC;
+	#endif
 public:
-	bool isEditor, isFilePanel;
+	bool isEditor, isViewer, isFilePanel;
 	BYTE attrBackLast;
 
 	wchar_t *mpsz_ConChar, *mpsz_ConCharSave;
@@ -64,6 +67,7 @@ public:
 	void DumpConsole();
 	void DumpConsole(LPCWSTR asFile);
 	bool Update(bool isForce = false, HDC *ahDc=NULL);
+	void UpdateCursor(bool& lRes);
 	void SelectFont(HFONT hNew);
 	void SelectBrush(HBRUSH hNew);
 	bool isCharBorder(WCHAR inChar);
@@ -113,7 +117,6 @@ protected:
 	uint TextLen;
 	bool isCursorValid, drawImage, doSelect, textChanged, attrChanged;
 	char *tmpOem;
-	void UpdateCursor(bool& lRes);
 	void UpdateCursorDraw(HDC hPaintDC, COORD pos, UINT dwSize);
 	bool UpdatePrepare(bool isForce, HDC *ahDc, CSection *pSDC);
 	void UpdateText(bool isForce, bool updateText, bool updateCursor);
@@ -136,6 +139,7 @@ protected:
 	} PARTBRUSHES;
 	std::vector<PARTBRUSHES> m_PartBrushes;
 	HBRUSH PartBrush(wchar_t ch, SHORT nBackIdx, SHORT nForeIdx);
+	BOOL mb_InPaintCall;
 };
 
 #include <pshpack1.h>

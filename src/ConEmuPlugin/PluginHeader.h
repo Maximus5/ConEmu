@@ -65,6 +65,8 @@ void SetWindowA(int nTab);
 void FUNC_X(SetWindow)(int nTab);
 void FUNC_Y(SetWindow)(int nTab);
 
+void CheckResources();
+void InitResources();
 void CloseTabs();
 
 HWND AtoH(WCHAR *Str, int Len);
@@ -89,6 +91,7 @@ void PostMacroA(char* asMacro);
 void FUNC_X(PostMacro)(wchar_t* asMacro);
 void FUNC_Y(PostMacro)(wchar_t* asMacro);
 LPCWSTR GetMsgW(int aiMsg);
+void GetMsgA(int aiMsg, wchar_t* rsMsg/*MAX_PATH*/);
 LPCWSTR FUNC_Y(GetMsg)(int aiMsg);
 LPCWSTR FUNC_X(GetMsg)(int aiMsg);
 
