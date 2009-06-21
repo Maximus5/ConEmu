@@ -1,6 +1,8 @@
 #pragma once
 
 //#define SKIP_ALL_FILLRECT
+class CVirtualConsole;
+class CRealConsole;
 
 class CConEmuChild
 {
@@ -19,6 +21,10 @@ public:
 protected:
 	UINT mn_MsgTabChanged;
 	BOOL mb_Invalidated;
+#ifdef _DEBUG
+	friend class CVirtualConsole;
+	friend class CRealConsole;
+#endif
 };
 
 class CConEmuBack

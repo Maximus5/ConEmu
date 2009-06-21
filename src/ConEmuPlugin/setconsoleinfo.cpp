@@ -13,7 +13,7 @@
 
 #include <windows.h>
 #include <stdarg.h>
-#include "../ConEmu/kl_parts.h"
+//#include "../ConEmu/kl_parts.h"
 
 // only in Win2k+  (use FindWindow for NT4)
 //HWND WINAPI GetConsoleWindow();

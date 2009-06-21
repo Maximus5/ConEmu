@@ -195,8 +195,8 @@ protected:
     BOOL InitBuffers(DWORD OneBufferSize);
 private:
     // Эти переменные инициализируются в RetrieveConsoleInfo()
+	MSection csCON; //DWORD ncsT;
     struct {
-        CRITICAL_SECTION cs; DWORD ncsT;
         CONSOLE_SELECTION_INFO m_sel;
         CONSOLE_CURSOR_INFO m_ci;
         DWORD m_dwConsoleCP, m_dwConsoleOutputCP, m_dwConsoleMode;
@@ -213,7 +213,7 @@ private:
         COORD crRBtnDrag;
     } con;
     // 
-    CRITICAL_SECTION csPRC; DWORD ncsTPRC;
+    MSection csPRC; //DWORD ncsTPRC;
     std::vector<ConProcess> m_Processes;
     int mn_ProcessCount;
     //
@@ -242,7 +242,6 @@ private:
     void ApplyConsoleInfo(CESERVER_REQ* pInfo);
     void SetHwnd(HWND ahConWnd);
     WORD mn_LastVKeyPressed;
-    DWORD mn_LastConFullReadTick, mn_LastConRgnReadTick;
     BOOL GetConWindowSize(const CONSOLE_SCREEN_BUFFER_INFO& sbi, int& nNewWidth, int& nNewHeight, BOOL* pbBufferHeight=NULL);
     int mn_Focused; //-1 после запуска, 1 - в фокусе, 0 - не в фокусе
     DWORD mn_InRecreate; // Tick, когда начали пересоздание
@@ -256,7 +255,7 @@ private:
     void LogPacket(CESERVER_REQ* pInfo);
     BOOL RecreateProcessStart();
     // Прием и обработка пакетов
-    CRITICAL_SECTION csPKT; DWORD ncsTPKT;
+    MSection csPKT; //DWORD ncsTPKT;
     DWORD mn_LastProcessedPkt; HANDLE mh_PacketArrived;
     std::vector<CESERVER_REQ*> m_Packets;
     void PushPacket(CESERVER_REQ* pPkt);

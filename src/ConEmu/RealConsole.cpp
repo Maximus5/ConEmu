@@ -78,19 +78,18 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
     memset(mh_ServerThreads, 0, sizeof(mh_ServerThreads)); mh_ActiveServerThread = NULL;
     memset(mn_ServerThreadsId, 0, sizeof(mn_ServerThreadsId));
 
-    memset(&con, 0, sizeof(con)); //WARNING! Содержит CriticalSection, поэтому сброс выполнять ПЕРЕД InitializeCriticalSection(&con.cs);
+    memset(&con, 0, sizeof(con)); //WARNING! Содержит CriticalSection, поэтому сброс выполнять ПЕРЕД InitializeCriticalSection(&csCON);
     mb_BuferModeChangeLocked = FALSE;
 
 
-    InitializeCriticalSection(&csPRC); ncsTPRC = 0;
-    InitializeCriticalSection(&con.cs); con.ncsT = 0;
-    InitializeCriticalSection(&csPKT); ncsTPKT = 0;
+    //InitializeCriticalSection(&csPRC); ncsTPRC = 0;
+    //InitializeCriticalSection(&csCON); con.ncsT = 0;
+    //InitializeCriticalSection(&csPKT); ncsTPKT = 0;
 
     mn_LastProcessedPkt = 0;
 
     hConWnd = NULL; mh_GuiAttached = NULL; mn_Focused = -1;
     mn_LastVKeyPressed = 0;
-    mn_LastConFullReadTick = 0; mn_LastConRgnReadTick = 0;
     mh_LogInput = NULL; mpsz_LogInputFile = NULL; mpsz_LogPackets = NULL; mn_LogPackets = 0;
 
     m_UseLogs = gSet.isAdvLogging;
@@ -131,9 +130,9 @@ CRealConsole::~CRealConsole()
     SafeCloseHandle(mh_ServerSemaphore);
     SafeCloseHandle(mh_GuiAttached);
 
-    DeleteCriticalSection(&csPRC);
-    DeleteCriticalSection(&con.cs);
-    DeleteCriticalSection(&csPKT);
+    //DeleteCriticalSection(&csPRC);
+    //DeleteCriticalSection(&csCON);
+    //DeleteCriticalSection(&csPKT);
     
     
     if (mp_tabs) Free(mp_tabs);
@@ -198,7 +197,7 @@ void CRealConsole::DumpConsole(HANDLE ahFile)
 BOOL CRealConsole::SetConsoleSize(COORD size, DWORD anCmdID/*=CECMD_SETSIZE*/)
 {
     if (!this) return FALSE;
-    _ASSERTE(hConWnd && ms_ConEmuC_Pipe[0]);
+    //_ASSERTE(hConWnd && ms_ConEmuC_Pipe[0]);
 
     if (!hConWnd || ms_ConEmuC_Pipe[0] == 0) {
 	    // 19.06.2009 Maks - Она действительно может быть еще не создана
@@ -600,6 +599,7 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
             }
 
             if (nWait==IDEVENT_PACKETARRIVED || !pRCon->m_Packets.empty()) {
+				MSectionLock cs; cs.Lock(&pRCon->csPKT, TRUE);
                 CESERVER_REQ* pPkt = NULL;
                 while ((pPkt = pRCon->PopPacket()) != NULL) {
                     pRCon->ApplyConsoleInfo(pPkt);
@@ -629,21 +629,24 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
             bool lbForceUpdate = pRCon->CheckBufferSize();
             if (lbForceUpdate && lbIsActive) // размер текущего консольного окна был изменен
                 gConEmu.OnSize(-1); // послать в главную нить запрос на обновление размера
-            if (!lbForceUpdate && (nWait == (WAIT_OBJECT_0+1)))
-                lbForceUpdate = true;
+            //if (!lbForceUpdate && (nWait == (WAIT_OBJECT_0+1)))
+            //    lbForceUpdate = true;
 
             // 04.06.2009 Maks - видимо, EndUpdateEvent не всегда вызывался!
             // 04.06.2009 Maks - если консоль активна - Invalidate вызовет сам VCon при необходимости
-			if (lbForceUpdate || pRCon->mb_DataChanged) {
+			if ((nWait == (WAIT_OBJECT_0+1)) || lbForceUpdate || pRCon->mb_DataChanged) {
 				pRCon->mb_DataChanged = FALSE;
+				gConEmu.m_Child.Validate(); // сбросить флажок
 				pRCon->mp_VCon->Update(lbForceUpdate);
 			} else if (gSet.isCursorBlink && lbIsActive) {
 				// Возможно, настало время мигнуть курсором?
 				bool lbNeedBlink = false;
 				pRCon->mp_VCon->UpdateCursor(lbNeedBlink);
 				// UpdateCursor Invalidate не зовет
-				if (lbNeedBlink)
+				if (lbNeedBlink) {
+					gConEmu.m_Child.Validate(); // сбросить флажок
 					gConEmu.m_Child.Invalidate();
+				}
 			}
 
             //SetEvent(pRCon->mh_EndUpdateEvent);
@@ -1224,9 +1227,9 @@ void CRealConsole::StopSignal()
         return;
 
     if (mn_ProcessCount) {
-        CSection SPRC(&csPRC, &ncsTPRC);
+        MSectionLock SPRC; SPRC.Lock(&csPRC, TRUE);
         m_Processes.clear();
-        SPRC.Leave();
+        SPRC.Unlock();
         mn_ProcessCount = 0;
     }
 
@@ -1305,16 +1308,6 @@ BOOL CRealConsole::isBufferHeight()
         return FALSE;
 
     return con.bBufferHeight;
-
-    ////TODO: вроде не нужно
-    ////CSection SCON(&csCON, &ncsTCON);
-
-    //BOOL lbScrollMode = FALSE;
-    ////CONSOLE_SCREEN_BUFFER_INFO inf; memset(&inf, 0, sizeof(inf));
-    //if (con.m_sbi.dwSize.Y>(con.m_sbi.srWindow.Bottom-con.m_sbi.srWindow.Top+1))
-    //    lbScrollMode = TRUE;
-
-    //return lbScrollMode;
 }
 
 BOOL CRealConsole::isConSelectMode()
@@ -1571,67 +1564,6 @@ void CRealConsole::OnWinEvent(DWORD event, HWND hwnd, LONG idObject, LONG idChil
                 SetPriorityClass(GetCurrentProcess(), NORMAL_PRIORITY_CLASS);
             }
         } break;
-    //case EVENT_CONSOLE_UPDATE_REGION: // 0x4002 
-    //    {
-    //    //More than one character has changed. 
-    //    //The idObject parameter is a COORD structure that specifies the start of the changed region. 
-    //    //The idChild parameter is a COORD structure that specifies the end of the changed region.
-    //        SetEvent(mh_ConChanged);
-    //    } break;
-    //case EVENT_CONSOLE_UPDATE_SCROLL: //0x4004
-    //    {
-    //    //The console has scrolled.
-    //    //The idObject parameter is the horizontal distance the console has scrolled. 
-    //    //The idChild parameter is the vertical distance the console has scrolled.
-    //        SetEvent(mh_ConChanged);
-    //    } break;
-    //case EVENT_CONSOLE_UPDATE_SIMPLE: //0x4003
-    //    {
-    //    //A single character has changed.
-    //    //The idObject parameter is a COORD structure that specifies the character that has changed.
-    //    //Warning! В писании от  микрософта тут ошибка!
-    //    //The idChild parameter specifies the character in the low word and the character attributes in the high word.
-    //        COORD crWhere; memmove(&crWhere, &idObject, sizeof(idObject));
-    //        WCHAR ch = (WCHAR)LOWORD(idChild); WORD wA = HIWORD(idChild);
-    //        CSection cs(&con.cs, &con.ncsT);
-    //        HANDLE hEvent = NULL;
-    //        try {
-    //            if (con.pConChar && con.pConAttr && !isBufferHeight()) {
-    //                int nIdx = crWhere.X+crWhere.Y*con.m_sbi.dwSize.X;
-    //                con.pConChar[nIdx] = ch;
-    //                con.pConAttr[nIdx] = wA;
-    //                hEvent = mh_ForceReadEvent;
-    //            } else {
-    //                hEvent = mh_ConChanged; TODO("Вообще-то можно и без запроса в консоль - самим сразу менять, но нужно учесть, что может быть прокрутка");
-    //            }
-    //        } catch(...) {
-    //            _ASSERT(FALSE);
-    //        }
-    //        cs.Leave();
-    //        if (hEvent) SetEvent(hEvent);
-    //    } break;
-    //case EVENT_CONSOLE_CARET: //0x4001
-    //    {
-    //    //Warning! WinXPSP3. Это событие проходит ТОЛЬКО если консоль в фокусе. 
-    //    //         А с ConEmu она НИКОГДА не в фокусе, так что курсор не обновляется.
-    //    //The console caret has moved.
-    //    //The idObject parameter is one or more of the following values:
-    //    //      CONSOLE_CARET_SELECTION or CONSOLE_CARET_VISIBLE.
-    //    //The idChild parameter is a COORD structure that specifies the cursor's current position.
-    //        COORD crWhere; memmove(&crWhere, &idChild, sizeof(idChild));
-    //        TODO("А тут тоже можно самим курсор позиционировать, не забыть про прокрутку");
-    //        if (isBufferHeight()) {
-    //            SetEvent(mh_CursorChanged); 
-    //        } else {
-    //            con.m_sbi.dwCursorPosition = crWhere;
-    //            SetEvent(mh_ForceReadEvent);
-    //        }
-    //    } break;
-    //case EVENT_CONSOLE_LAYOUT: //0x4005
-    //    {
-    //    //The console layout has changed.
-    //        SetEvent(mh_ConChanged);
-    //    } break;
     }
 }
 
@@ -2008,18 +1940,18 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
     return;
 }
 
-#define COPYBUFFERS(v,s) { \
-    nVarSize = s; \
-    if ((lpCur+nVarSize)>lpEnd) { \
-        _ASSERT(FALSE); \
-        return; \
-    } \
-    memmove(&(v), lpCur, nVarSize); \
-    lpCur += nVarSize; \
-}
-#define COPYBUFFER(v) { \
-    COPYBUFFERS(v, sizeof(v)); \
-}
+//#define COPYBUFFERS(v,s) { \
+//    nVarSize = s; \
+//    if ((lpCur+nVarSize)>lpEnd) { \
+//        _ASSERT(FALSE); \
+//        return; \
+//    } \
+//    memmove(&(v), lpCur, nVarSize); \
+//    lpCur += nVarSize; \
+//}
+//#define COPYBUFFER(v) { \
+//    COPYBUFFERS(v, sizeof(v)); \
+//}
 
 WARNING("Для ограничения доступа к содержимому возможно лучше использовать Semaphore nor CriticalSection");
 void CRealConsole::ApplyConsoleInfo(CESERVER_REQ* pInfo)
@@ -2029,14 +1961,14 @@ void CRealConsole::ApplyConsoleInfo(CESERVER_REQ* pInfo)
 
     _ASSERTE(pInfo->hdr.nVersion==CESERVER_REQ_VER && pInfo->hdr.nCmd<100);
     #ifdef _DEBUG
-    if (!con.bBufferHeight && pInfo->ConInfo.sbi.srWindow.Top != 0) {
-        _ASSERTE(pInfo->ConInfo.sbi.srWindow.Top == 0);
+    if (!con.bBufferHeight && pInfo->ConInfo.inf.sbi.srWindow.Top != 0) {
+        _ASSERTE(pInfo->ConInfo.inf.sbi.srWindow.Top == 0);
     }
     #endif
 
     // На всякий случай сразу запомним ИД пакета, обработанного последним
-    _ASSERTE(mn_LastProcessedPkt == ((DWORD*)pInfo->Data)[1]);
-    mn_LastProcessedPkt = ((DWORD*)pInfo->Data)[1];
+    _ASSERTE(mn_LastProcessedPkt == pInfo->ConInfo.inf.nPacketId);
+    mn_LastProcessedPkt = pInfo->ConInfo.inf.nPacketId;
 
     #ifdef _DEBUG
     wchar_t szDbg[100];
@@ -2046,75 +1978,48 @@ void CRealConsole::ApplyConsoleInfo(CESERVER_REQ* pInfo)
 
     LogPacket(pInfo);
 
+	_ASSERTE(pInfo->hdr.nSize>=(sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_CONINFO_HDR)+2*sizeof(DWORD)));
+	if (pInfo->hdr.nSize < (sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_CONINFO_HDR)+2*sizeof(DWORD)))
+		return; // Broken packet!
+
     BOOL bBufRecreated = FALSE;
-    // Теперь нужно раскидать данные про структурам
-    LPBYTE lpCur = (LPBYTE)pInfo->Data;
-    LPBYTE lpEnd = ((LPBYTE)pInfo)+pInfo->hdr.nSize;
-    DWORD  nVarSize;
     // 1
-    HWND hWnd = NULL;
-    COPYBUFFER(hWnd);
+    HWND hWnd = pInfo->ConInfo.inf.hConWnd;
     _ASSERTE(hWnd!=NULL);
     if (hConWnd != hWnd) {
         SetHwnd ( hWnd );
     }
-    // 2 - GetTickCount последнего чтения
-    DWORD nLastConReadTick = 0;
-    COPYBUFFER(nLastConReadTick);
     // 3
-    // во время чтения содержимого консоли может увеличиться количество процессов
-    // поэтому РЕАЛЬНОЕ количество - выставим после чтения и CriticalSection(csProc);
-    //CSection SPRC(&csPRC, &ncsTPRC);
-    //TODO("Сделать корректную обработку! не чистить m_Processes не глядя, а удалять только отсутствующие! также получить информацию о процессе");
-    DWORD dwProcCount = 0;
-    COPYBUFFER(dwProcCount);
-    _ASSERTE(dwProcCount==0); // Список процессов формируется в GUI. Reserved...
-    if (dwProcCount) lpCur += sizeof(DWORD)*dwProcCount;
-    //m_Processes.clear();
-    //ConProcess prc = {0};
-    //while (dwProcCount>0) {
-    //  prc.ProcessID = *((DWORD*)lpCur); lpCur += sizeof(DWORD);
-    //  m_Processes.push_back(prc);
-    //  dwProcCount--;
-    //}
-    //SPRC.Leave();
+    WARNING("Здесь у нас реальные процессы консоли, надо бы обновиться");
+	//pInfo->ConInfo.inf.nProcesses
 
     // Теперь нужно открыть секцию - начинаем изменение переменных класса
-    CSection sc(NULL,NULL);
+    MSectionLock sc;
 
     // 4
-    DWORD dwSelRc = 0; //CONSOLE_SELECTION_INFO sel = {0}; // GetConsoleSelectionInfo
-    COPYBUFFER(dwSelRc);
-    if (dwSelRc != 0) {
-        _ASSERTE(dwSelRc == sizeof(con.m_sel));
-        COPYBUFFER(con.m_sel);
+    DWORD dwCiSize = pInfo->ConInfo.inf.dwCiSize;
+    if (dwCiSize != 0) {
+        _ASSERTE(dwCiSize == sizeof(con.m_ci));
+        memmove(&con.m_ci, &pInfo->ConInfo.inf.ci, dwCiSize);
     }
-    // 5
-    DWORD dwCiRc = 0; //CONSOLE_CURSOR_INFO ci = {0}; // GetConsoleCursorInfo
-    COPYBUFFER(dwCiRc);
-    if (dwCiRc != 0) {
-        _ASSERTE(dwCiRc == sizeof(con.m_ci));
-        COPYBUFFER(con.m_ci);
-    }
-    // 6, 7, 8
-    COPYBUFFER(con.m_dwConsoleCP);       // GetConsoleCP()
-    COPYBUFFER(con.m_dwConsoleOutputCP); // GetConsoleOutputCP()
-    COPYBUFFER(con.m_dwConsoleMode);     // GetConsoleMode(hConIn, &dwConsoleMode);
-    // 9
-    DWORD dwSbiRc = 0; //CONSOLE_SCREEN_BUFFER_INFO sbi = {{0,0}}; // GetConsoleScreenBufferInfo
-    COPYBUFFER(dwSbiRc);
+    // 5, 6, 7
+    con.m_dwConsoleCP = pInfo->ConInfo.inf.dwConsoleCP;
+    con.m_dwConsoleOutputCP = pInfo->ConInfo.inf.dwConsoleOutputCP;
+    con.m_dwConsoleMode = pInfo->ConInfo.inf.dwConsoleMode;
+    // 8
+    DWORD dwSbiSize = pInfo->ConInfo.inf.dwSbiSize;
     int nNewWidth = 0, nNewHeight = 0;
-    if (dwSbiRc != 0) {
+    if (dwSbiSize != 0) {
         MCHKHEAP
-        _ASSERTE(dwSbiRc == sizeof(con.m_sbi));
-        COPYBUFFER(con.m_sbi);
+        _ASSERTE(dwSbiSize == sizeof(con.m_sbi));
+        memmove(&con.m_sbi, &pInfo->ConInfo.inf.sbi, dwSbiSize);
         if (GetConWindowSize(con.m_sbi, nNewWidth, nNewHeight)) {
             if (con.bBufferHeight != (nNewHeight < con.m_sbi.dwSize.Y))
                 SetBufferHeightMode(nNewHeight < con.m_sbi.dwSize.Y);
             //  TODO("Включить прокрутку? или оно само?");
             if (nNewWidth != con.nTextWidth || nNewHeight != con.nTextHeight) {
                 bBufRecreated = TRUE;
-                sc.Enter(&con.cs, &con.ncsT);
+                sc.Lock(&csCON, TRUE);
                 WARNING("может не заблокировалось?");
                 InitBuffers(nNewWidth*nNewHeight*2);
             }
@@ -2123,23 +2028,23 @@ void CRealConsole::ApplyConsoleInfo(CESERVER_REQ* pInfo)
             con.nTopVisibleLine = con.m_sbi.srWindow.Top;
         MCHKHEAP
     }
-    // 10
-    DWORD dwCharChanged = 0;
+    // 9
+    DWORD dwCharChanged = pInfo->ConInfo.RgnInfo.dwRgnInfoSize;
     BOOL  lbDataRecv = FALSE;
-    COPYBUFFER(dwCharChanged);
     if (dwCharChanged != 0) {
         _ASSERTE(dwCharChanged >= sizeof(CESERVER_CHAR));
         _ASSERTE(!bBufRecreated && con.pConChar && con.pConAttr);
 
         // Если буфер был пересоздан (bBufRecreated) изменение только блока символов бессмысленно - нужны полные данные!
         if (!bBufRecreated && con.pConChar && con.pConAttr) {
+			MSectionLock sc2; sc2.Lock(&csCON);
+
             DEBUGSTR(L"                   *** Relative dump received!\n");
             MCHKHEAP
-            CESERVER_CHAR* pch = (CESERVER_CHAR*)lpCur;
+            CESERVER_CHAR* pch = &pInfo->ConInfo.RgnInfo.RgnInfo;
             //calloc(dwCharChanged,1);
             //COPYBUFFERS(*pch,dwCharChanged);
             _ASSERTE(pch->hdr.nSize==dwCharChanged);
-            lpCur += dwCharChanged;
             int nLineLen = pch->hdr.cr2.X - pch->hdr.cr1.X + 1;
             _ASSERTE(nLineLen>0);
             int nLineCount = pch->hdr.cr2.Y - pch->hdr.cr1.Y + 1;
@@ -2165,34 +2070,25 @@ void CRealConsole::ApplyConsoleInfo(CESERVER_REQ* pInfo)
                 MCHKHEAP
             }
         } else {
-            lpCur += dwCharChanged;
             DEBUGSTR(L"                   *** Expected full dump, but Relative received!\n");
         }
-    }
-    // 11
-    DWORD OneBufferSize = 0;
-    COPYBUFFER(OneBufferSize);
-    if (OneBufferSize != 0) {
-        BOOL lbObsolete = FALSE;
-        int nDelta = (int)(DWORD)(nLastConReadTick - mn_LastConFullReadTick);
-        if (nDelta<0) lbObsolete = TRUE;
-        
-        if (!lbObsolete)
-        {
-            sc.Enter(&con.cs, &con.ncsT); //TODO: Она наверное уже и не нужна
-            DEBUGSTR(L"                   *** FULL dump received!\n");
-            MCHKHEAP
-            if (InitBuffers(OneBufferSize)) {
-                MCHKHEAP
-                memmove(con.pConChar, lpCur, OneBufferSize); lpCur += OneBufferSize;
-                memmove(con.pConAttr, lpCur, OneBufferSize); lpCur += OneBufferSize;
-                MCHKHEAP
-            }
-        } else {
-            DEBUGSTR(L"                   *** Obsolete(!) FULL dump received!\n");
-            _ASSERTE(!lbObsolete);
-        }
-    }
+	} else {
+		// 10
+		DWORD OneBufferSize = pInfo->ConInfo.FullData.dwOneBufferSize;
+		if (OneBufferSize != 0) {
+			MSectionLock sc2; sc2.Lock(&csCON);
+
+			DEBUGSTR(L"                   *** FULL dump received!\n");
+			MCHKHEAP
+			if (InitBuffers(OneBufferSize)) {
+				MCHKHEAP
+				LPBYTE lpCur = (LPBYTE)pInfo->ConInfo.FullData.Data;
+				memmove(con.pConChar, lpCur, OneBufferSize); lpCur += OneBufferSize;
+				memmove(con.pConAttr, lpCur, OneBufferSize); lpCur += OneBufferSize;
+				MCHKHEAP
+			}
+		}
+	}
 
     TODO("Во время ресайза консоль может подглючивать - отдает не то что нужно...");
     //_ASSERTE(*con.pConChar!=ucBoxDblVert);
@@ -2228,18 +2124,7 @@ void CRealConsole::ApplyConsoleInfo(CESERVER_REQ* pInfo)
     //_ASSERTE(lbDataValid);
 #endif
 
-    sc.Leave();
-
-    //if (mn_LastConReadTick) {
-    //    DWORD dwDelta = nLastConReadTick - mn_LastConReadTick;
-    //    // может перевалить через 0
-    //    _ASSERTE(mn_LastConReadTick <= nLastConReadTick || dwDelta > 0x1000000);
-    //}
-    //mn_LastConReadTick = nLastConReadTick;
-
-    
-    // Передернуть MonitorThread
-    SetEvent(mh_MonitorThreadEvent);
+    sc.Unlock();
 }
 
 int CRealConsole::GetProcesses(ConProcess** ppPrc)
@@ -2267,7 +2152,7 @@ int CRealConsole::GetProcesses(ConProcess** ppPrc)
         return mn_ProcessCount;
     }
 
-    CSection SPRC(&csPRC, &ncsTPRC);
+    MSectionLock SPRC; SPRC.Lock(&csPRC);
     
     int dwProcCount = m_Processes.size();
 
@@ -2283,7 +2168,7 @@ int CRealConsole::GetProcesses(ConProcess** ppPrc)
         *ppPrc = NULL;
     }
     
-    SPRC.Leave();
+    SPRC.Unlock();
     return dwProcCount;
 }
 
@@ -2375,7 +2260,7 @@ void CRealConsole::ProcessUpdateFlags(BOOL abProcessChanged)
 
 void CRealConsole::ProcessAdd(DWORD addPID)
 {
-    CSection SPRC(&csPRC, &ncsTPRC);
+    MSectionLock SPRC; SPRC.Lock(&csPRC);
 
     BOOL lbRecreateOk = FALSE;
     if (mn_InRecreate && mn_ProcessCount == 0) {
@@ -2404,11 +2289,15 @@ void CRealConsole::ProcessAdd(DWORD addPID)
     _ASSERTE(h!=INVALID_HANDLE_VALUE);
     if (h==INVALID_HANDLE_VALUE) {
         DWORD dwErr = GetLastError();
-        // Просто добавить, раз не удалось снять Snapshoot
-        memset(&cp, 0, sizeof(cp));
-        cp.ProcessID = addPID; cp.RetryName = true;
-        wsprintf(cp.Name, L"Can't create snaphoot. ErrCode=0x%08X", dwErr);
-        m_Processes.push_back(cp);
+		if (addPID) {
+			// Просто добавить, раз не удалось снять Snapshoot
+			memset(&cp, 0, sizeof(cp));
+			cp.ProcessID = addPID; cp.RetryName = true;
+			wsprintf(cp.Name, L"Can't create snaphoot. ErrCode=0x%08X", dwErr);
+
+			SPRC.RelockExclusive();
+			m_Processes.push_back(cp);
+		}
         
     } else {
         //Snapshoot создан, поехали
@@ -2428,6 +2317,8 @@ void CRealConsole::ProcessAdd(DWORD addPID)
                     cp.ProcessID = addPID; cp.ParentPID = p.th32ParentProcessID;
                     ProcessCheckName(cp, p.szExeFile); //far, telnet, cmd, conemuc, и пр.
                     cp.Alive = true;
+
+					SPRC.RelockExclusive();
                     m_Processes.push_back(cp);
                     break;
                 }
@@ -2462,6 +2353,7 @@ void CRealConsole::ProcessAdd(DWORD addPID)
         {
             if (!iter->Alive) {
                 if (!bProcessChanged) bProcessChanged = TRUE;
+				SPRC.RelockExclusive();
                 iter = m_Processes.erase(iter);
             } else {
                 iter ++;
@@ -2482,7 +2374,7 @@ void CRealConsole::ProcessAdd(DWORD addPID)
 
 void CRealConsole::ProcessDelete(DWORD addPID)
 {
-    CSection SPRC(&csPRC, &ncsTPRC);
+    MSectionLock SPRC; SPRC.Lock(&csPRC, TRUE);
 
     BOOL bProcessChanged = FALSE;
     std::vector<ConProcess>::iterator iter=m_Processes.begin();
@@ -2497,6 +2389,8 @@ void CRealConsole::ProcessDelete(DWORD addPID)
 
     // Обновить статус запущенных программ, получить PID FAR'а, посчитать количество процессов в консоли
     ProcessUpdateFlags(bProcessChanged);
+
+	SPRC.Unlock();
     
     if (mn_InRecreate && mn_ProcessCount == 0 && !mb_ProcessRestarted) {
         RecreateProcessStart();
@@ -2539,11 +2433,6 @@ BOOL CRealConsole::RetrieveConsoleInfo(BOOL bShortOnly)
     BOOL fSuccess;
     DWORD cbRead, dwMode, dwErr;
 
-    //gSet.Performance(tPerfRead, FALSE);
-    //#ifdef _DEBUG
-    //DWORD dwStartTick = GetTickCount(), dwEndTick, dwDelta;
-    //DEBUGSTR(L"CRealConsole::RetrieveConsoleInfo");
-    //#endif
 
     // Try to open a named pipe; wait for it, if necessary. 
     while (1) 
@@ -2680,62 +2569,12 @@ BOOL CRealConsole::RetrieveConsoleInfo(BOOL bShortOnly)
 
     CloseHandle(hPipe);
 
-  mn_LastProcessedPkt = ((DWORD*)pOut->Data)[1];
-  // Warning. В некоторых случаях это может быть просто указатель на буфер, а не выделенная память!
+	mn_LastProcessedPkt = ((DWORD*)pOut->Data)[1];
+	// Warning. В некоторых случаях это может быть просто указатель на буфер, а не выделенная память!
     ApplyConsoleInfo ( pOut );
+	// Передернуть MonitorThread
+	SetEvent(mh_MonitorThreadEvent);
 
-    //// Теперь нужно открыть секцию - начинаем изменение переменных класса
-    //CSection SCON(&csCON, &ncsTCON);
-    //// Теперь нужно раскидать данные про структурам
-    //LPBYTE lpCur = (LPBYTE)pOut->Data;
-    //// 1
-    //HWND hWnd = *((HWND*)lpCur);
-    //_ASSERTE(hWnd!=NULL);
-    //if (hConWnd != hWnd) {
-    //  hConWnd = hWnd;
-    //  InitHandlers(TRUE);
-    //}
-    //lpCur += sizeof(hWnd);
-    //// 2
-    //// во время чтения содержимого консоли может увеличиться количество процессов
-    //// поэтому РЕАЛЬНОЕ количество - выставим после чтения и CriticalSection(csProc);
-    ////CSection SPRC(&csPRC, &ncsTPRC);
-    ////TODO("Сделать корректную обработку! не чистить m_Processes не глядя, а удалять только отсутствующие! также получить информацию о процессе");
-    //int dwProcCount = (int)*((DWORD*)lpCur); lpCur += sizeof(DWORD);
-    //if (dwProcCount) lpCur += sizeof(DWORD)*dwProcCount;
-    ////m_Processes.clear();
-    ////ConProcess prc = {0};
-    ////while (dwProcCount>0) {
-    ////    prc.ProcessID = *((DWORD*)lpCur); lpCur += sizeof(DWORD);
-    ////    m_Processes.push_back(prc);
-    ////    dwProcCount--;
-    ////}
-    ////SPRC.Leave();
-    //// 3
-    //DWORD dwSelRc = *((DWORD*)lpCur); lpCur += sizeof(DWORD); //CONSOLE_SELECTION_INFO sel = {0}; // GetConsoleSelectionInfo
-    //memmove(&m_sel, lpCur, sizeof(m_sel));
-    //lpCur += sizeof(m_sel);
-    //// 4
-    //DWORD dwCiRc = *((DWORD*)lpCur); lpCur += sizeof(DWORD); //CONSOLE_CURSOR_INFO ci = {0}; // GetConsoleCursorInfo
-    //memmove(&m_ci, lpCur, sizeof(m_ci));
-    //lpCur += sizeof(cinf);
-    //// 5, 6, 7
-    //m_dwConsoleCP = *((DWORD*)lpCur); lpCur += sizeof(DWORD);       // GetConsoleCP()
-    //m_dwConsoleOutputCP = *((DWORD*)lpCur); lpCur += sizeof(DWORD); // GetConsoleOutputCP()
-    //m_dwConsoleMode = *((DWORD*)lpCur); lpCur += sizeof(DWORD);     // GetConsoleMode(hConIn, &dwConsoleMode);
-    //// 8
-    //DWORD dwSbiRc = *((DWORD*)lpCur); lpCur += sizeof(DWORD); //CONSOLE_SCREEN_BUFFER_INFO sbi = {{0,0}}; // GetConsoleScreenBufferInfo
-    //memmove(&m_sbi, lpCur, sizeof(csbi));
-    //lpCur += sizeof(csbi);
-    //// 9
-    //if (!bShortOnly) {
-    //  DWORD OneBufferSize = *((DWORD*)lpCur); lpCur += sizeof(DWORD);
-    //  TODO("Скопировать содержимое буферов, если OneBufferSize>0");
-    //  if (InitBuffers()) {
-    //      memmove(ConChar, lpCur, OneBufferSize); lpCur += OneBufferSize;
-    //      memmove(ConAttr, lpCur, OneBufferSize); lpCur += OneBufferSize;
-    //  }
-    //}
 
     // Освободить память
   // Warning. В некоторых случаях это может быть просто указатель на буфер, а не выделенная память!
@@ -2744,13 +2583,7 @@ BOOL CRealConsole::RetrieveConsoleInfo(BOOL bShortOnly)
   }
   pOut = NULL;
 
-    //#ifdef _DEBUG
-    //dwEndTick = GetTickCount();
-    //dwDelta = dwEndTick - dwStartTick;
-    //WCHAR szText[64]; wsprintfW(szText, L" - SUCCEEDED (%i ms)!\n", dwDelta);
-    //DEBUGSTR(szText);
-    //#endif
-    //gSet.Performance(tPerfRead, TRUE);
+
     return TRUE;
 }
 
@@ -2829,7 +2662,7 @@ BOOL CRealConsole::InitBuffers(DWORD OneBufferSize)
     // Если требуется увеличить или создать (первично) буфера
     if (!con.pConChar || (con.nTextWidth*con.nTextHeight) < (nNewWidth*nNewHeight))
     {
-        CSection sc(&con.cs, &con.ncsT);
+        MSectionLock sc; sc.Lock(&csCON, TRUE);
 
         //try {
         if (con.pConChar)
@@ -2846,7 +2679,7 @@ BOOL CRealConsole::InitBuffers(DWORD OneBufferSize)
         //    con.pConAttr = NULL;
         //}
 
-        sc.Leave();
+        sc.Unlock();
 
         _ASSERTE(con.pConChar!=NULL);
         _ASSERTE(con.pConAttr!=NULL);
@@ -2856,8 +2689,10 @@ BOOL CRealConsole::InitBuffers(DWORD OneBufferSize)
         lbRc = con.pConChar!=NULL && con.pConAttr!=NULL;
     } else if (con.nTextWidth!=nNewWidth || con.nTextHeight!=nNewHeight) {
         MCHKHEAP
+		MSectionLock sc; sc.Lock(&csCON);
         memset(con.pConChar, 0, (nNewWidth * nNewHeight * 2) * sizeof(*con.pConChar));
         memset(con.pConAttr, 0, (nNewWidth * nNewHeight * 2) * sizeof(*con.pConAttr));
+		sc.Unlock();
         MCHKHEAP
 
         lbRc = TRUE;
@@ -2990,7 +2825,8 @@ void CRealConsole::CreateLogFiles()
     *pszDot = 0;
 
     mpsz_LogPackets = (wchar_t*)calloc(pszDot - szFile + 64, 2);
-    wsprintf(mpsz_LogPackets+wcslen(mpsz_LogPackets), L"\\ConEmu-recv-%i-%%i.con", mn_ConEmuC_PID); // ConEmu-recv-<ConEmuC_PID>-<index>.con
+	lstrcpyW(mpsz_LogPackets, szFile);
+    wsprintf(mpsz_LogPackets+(pszDot-szFile), L"\\ConEmu-recv-%i-%%i.con", mn_ConEmuC_PID); // ConEmu-recv-<ConEmuC_PID>-<index>.con
 
     wsprintfW(pszDot, L"\\ConEmu-input-%i.log", mn_ConEmuC_PID);
     
@@ -3260,7 +3096,7 @@ void CRealConsole::GetData(wchar_t* pChar, WORD* pAttr, int nWidth, int nHeight)
     if (nWidth == 0 || nHeight == 0)
         return;
     
-    CSection csData(&con.cs, &con.ncsT);
+    MSectionLock csData; csData.Lock(&csCON);
     HEAPVAL
 
     wchar_t wSetChar = L' ';
@@ -3312,7 +3148,7 @@ void CRealConsole::GetData(wchar_t* pChar, WORD* pAttr, int nWidth, int nHeight)
         }
     }
     HEAPVAL
-    csData.Leave();
+    csData.Unlock();
 }
 
 void CRealConsole::OnActivate(int nNewNum, int nOldNum)
@@ -3666,7 +3502,7 @@ DWORD CRealConsole::CanActivateFarWindow(int anWndIndex)
     {   // Меню может быть только в панелях
         if (mp_tabs[mn_ActiveTab].Type == 1/*WTYPE_PANELS*/)
         {
-            CSection cs(&con.cs, &con.ncsT);
+            MSectionLock cs; cs.Lock(&csCON);
             if (con.pConChar) {
                 if (con.pConChar[0] == L'R') {
                     // Запись макроса. Запретим наверное переключаться?
@@ -3693,7 +3529,7 @@ DWORD CRealConsole::CanActivateFarWindow(int anWndIndex)
                     }
                 }
             }
-            cs.Leave();
+            cs.Unlock();
         }
     }
     
@@ -3785,9 +3621,9 @@ void CRealConsole::PushPacket(CESERVER_REQ* pPkt)
     }
 #endif
 
-    CSection cs(&csPKT, &ncsTPKT);
+    MSectionLock cs; cs.Lock(&csPKT);
     m_Packets.push_back(pPkt);
-    cs.Leave();
+    cs.Unlock();
     MCHKHEAP
     SetEvent(mh_PacketArrived);
 }
@@ -3803,7 +3639,7 @@ CESERVER_REQ* CRealConsole::PopPacket()
 
     CESERVER_REQ* pRet = NULL, *pCmp = NULL;
 
-    CSection cs(&csPKT, &ncsTPKT);
+    MSectionLock cs; cs.Lock(&csPKT, TRUE);
 
     std::vector<CESERVER_REQ*>::iterator iter;
     DWORD dwMinID = 0;
@@ -3846,7 +3682,7 @@ CESERVER_REQ* CRealConsole::PopPacket()
         }
     }
 
-    cs.Leave();
+    cs.Unlock();
     MCHKHEAP
     return pRet;
 }

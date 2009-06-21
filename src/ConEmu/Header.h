@@ -88,8 +88,6 @@
 //}
 //#endif
 #define isPressed(inp) ((GetKeyState(inp) & 0x8000) == 0x8000)
-#define countof(a) (sizeof((a))/(sizeof(*(a))))
-#define ZeroStruct(s) memset(&(s), sizeof(s), 0)
 #define isDriveLetter(c) ((c>=L'A' && c<=L'Z') || (c>=L'a' && c<=L'z'))
 #define isDigit(c) (c>=L'0' && c<=L'9')
 

@@ -220,8 +220,10 @@ LRESULT CConEmuChild::OnSize(WPARAM wParam, LPARAM lParam)
 
 void CConEmuChild::Invalidate()
 {
-	if (mb_Invalidated)
+	if (mb_Invalidated) {
+		DEBUGSTR(L" ### Warning! Invalidate on DC window will be ignored\n");
 		return;
+	}
 	if (ghWndDC) {
 		DEBUGSTR(L" +++ Invalidate on DC window called\n");
 		mb_Invalidated = TRUE;
@@ -232,6 +234,7 @@ void CConEmuChild::Invalidate()
 void CConEmuChild::Validate()
 {
 	mb_Invalidated = FALSE;
+	DEBUGSTR(L" +++ Validate on DC window called\n");
 	//if (ghWndDC) ValidateRect(ghWnd, NULL);
 }
 

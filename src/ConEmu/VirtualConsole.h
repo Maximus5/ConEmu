@@ -118,7 +118,7 @@ protected:
 	bool isCursorValid, drawImage, doSelect, textChanged, attrChanged;
 	char *tmpOem;
 	void UpdateCursorDraw(HDC hPaintDC, COORD pos, UINT dwSize);
-	bool UpdatePrepare(bool isForce, HDC *ahDc, CSection *pSDC);
+	bool UpdatePrepare(bool isForce, HDC *ahDc, MSectionLock *pSDC);
 	void UpdateText(bool isForce, bool updateText, bool updateCursor);
 	WORD CharWidth(TCHAR ch);
 	bool CheckChangedTextAttr();
@@ -126,8 +126,8 @@ protected:
 	HANDLE mh_Heap;
 	LPVOID Alloc(size_t nCount, size_t nSize);
 	void Free(LPVOID ptr);
-	CRITICAL_SECTION csDC;  DWORD ncsTDC; BOOL mb_PaintRequested; BOOL mb_PaintLocked;
-	CRITICAL_SECTION csCON; DWORD ncsTCON;
+	MSection csDC;  /*DWORD ncsTDC;*/ BOOL mb_PaintRequested; BOOL mb_PaintLocked;
+	MSection csCON; /*DWORD ncsTCON;*/
 	int mn_BackColorIdx; //==0
 	void Box(LPCTSTR szText);
 	BOOL RetrieveConsoleInfo(BOOL bShortOnly);

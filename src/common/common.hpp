@@ -1,5 +1,10 @@
 #pragma once
 #include <windows.h>
+#if !defined(__GNUC__)
+#include <crtdbg.h>
+#else
+#define _ASSERTE(f)
+#endif
 
 #include "usetodo.hpp"
 
@@ -58,6 +63,9 @@
 
 #endif
 
+#define countof(a) (sizeof((a))/(sizeof(*(a))))
+#define ZeroStruct(s) memset(&(s), 0, sizeof(s))
+
 #ifdef _DEBUG
 extern wchar_t gszDbgModLabel[6];
 #define CHEKCDBGMODLABEL if (gszDbgModLabel[0]==0) { \
@@ -67,7 +75,7 @@ extern wchar_t gszDbgModLabel[6];
 	else if (_wcsicmp(pszName, L"\\conemuc.exe")==0) lstrcpyW(gszDbgModLabel, L"(srv)"); \
 	else lstrcpyW(gszDbgModLabel, L"(dll)"); \
 }
-#define DEBUGSTR(s) { CHEKCDBGMODLABEL; SYSTEMTIME st; GetLocalTime(&st); wchar_t szDEBUGSTRTime[40]; wsprintf(szDEBUGSTRTime, L"%i:%02i:%02i.%03i%s ", st.wHour, st.wMinute, st.wSecond, st.wMilliseconds, gszDbgModLabel); OutputDebugString(szDEBUGSTRTime); OutputDebugString(s); }
+#define DEBUGSTR(s) //{ CHEKCDBGMODLABEL; SYSTEMTIME st; GetLocalTime(&st); wchar_t szDEBUGSTRTime[40]; wsprintf(szDEBUGSTRTime, L"%i:%02i:%02i.%03i%s ", st.wHour, st.wMinute, st.wSecond, st.wMilliseconds, gszDbgModLabel); OutputDebugString(szDEBUGSTRTime); OutputDebugString(s); }
 #else
 #define DEBUGSTR(s)
 #endif
@@ -100,7 +108,7 @@ extern wchar_t gszDbgModLabel[6];
 #define CECMD_TABSCMD       14 // 0: спрятать/показать табы, 1: перейти на следующую, 2: перейти на предыдущую, 3: commit switch
 #define CECMD_RESOURCES     15 // Посылается плагином при инициализации (установка ресурсов)
 
-#define CESERVER_REQ_VER    5
+#define CESERVER_REQ_VER    6
 
 #define PIPEBUFSIZE 4096
 
@@ -149,24 +157,25 @@ typedef struct tag_CESERVER_REQ_FULLCONDATA {
 	wchar_t Data[300]; // Variable length!!!
 } CESERVER_REQ_FULLCONDATA;
 
-typedef struct tag_CESERVER_REQ_CONINFO {
+typedef struct tag_CESERVER_REQ_CONINFO_HDR {
 	/* 1*/HWND hConWnd;
 	/* 2*/DWORD nPacketId;
-	/* 3*/DWORD nProcessCount; // Will be 0 in current version
-	// Next Fields are valid ONLY if (nProcessCount == 0)
-	/* 4*/DWORD dwSelSize; // To kill
-	      CONSOLE_SELECTION_INFO si;
-    /* 5*/DWORD dwCiSize;
+	/* 3*/DWORD nProcesses[20];
+    /* 4*/DWORD dwCiSize;
 	      CONSOLE_CURSOR_INFO ci;
-    /* 6*/DWORD dwConsoleCP;
-	/* 7*/DWORD dwConsoleOutputCP;
-	/* 8*/DWORD dwConsoleMode;
-	/* 9*/DWORD dwSbiSize;
+    /* 5*/DWORD dwConsoleCP;
+	/* 6*/DWORD dwConsoleOutputCP;
+	/* 7*/DWORD dwConsoleMode;
+	/* 8*/DWORD dwSbiSize;
 	      CONSOLE_SCREEN_BUFFER_INFO sbi;
+} CESERVER_REQ_CONINFO_HDR;
+
+typedef struct tag_CESERVER_REQ_CONINFO {
+	CESERVER_REQ_CONINFO_HDR inf;
     union {
-	/*10*/DWORD dwRgnInfoSize;
+	/* 9*/DWORD dwRgnInfoSize;
 	      CESERVER_REQ_RGNINFO RgnInfo;
-    /*11*/CESERVER_REQ_FULLCONDATA FullData;
+    /*10*/CESERVER_REQ_FULLCONDATA FullData;
 	};
 } CESERVER_REQ_CONINFO;
 
@@ -309,6 +318,256 @@ struct ForwardedFileInfo
 ///| Section |////////////////////////////////////////////////////////////
 //------------------------------------------------------------------------
 #ifdef __cplusplus
+class MSectionLock;
+
+class MSection
+{
+protected:
+	CRITICAL_SECTION m_cs;
+	DWORD mn_TID; // устанавливается только после EnterCriticalSection
+	int mn_Locked;
+	BOOL mb_Exclusive;
+	HANDLE mh_ReleaseEvent;
+	friend class MSectionLock;
+	DWORD mn_LockedTID[10];
+	int   mn_LockedCount[10];
+public:
+	MSection() {
+		mn_TID = 0; mn_Locked = 0; mb_Exclusive = FALSE;
+		ZeroStruct(mn_LockedTID); ZeroStruct(mn_LockedCount);
+		InitializeCriticalSection(&m_cs);
+		mh_ReleaseEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+		_ASSERTE(mh_ReleaseEvent!=NULL);
+		if (mh_ReleaseEvent) ResetEvent(mh_ReleaseEvent);
+	};
+	~MSection() {
+		DeleteCriticalSection(&m_cs);
+		if (mh_ReleaseEvent) {
+			CloseHandle(mh_ReleaseEvent); mh_ReleaseEvent = NULL;
+		}
+	};
+protected:
+	void AddRef(DWORD dwTID) {
+		mn_Locked ++; // увеличиваем счетчик nonexclusive locks
+		_ASSERTE(mn_Locked>0);
+		ResetEvent(mh_ReleaseEvent); // На всякий случай сбросим Event
+		int j = -1;
+		for (int i=1; i<10; i++) {
+			if (mn_LockedTID[i] == dwTID) {
+				mn_LockedCount[i] ++; 
+				j = -2; 
+				break;
+			} else if (j == -1 && mn_LockedTID[i] == 0) {
+				mn_LockedTID[i] = dwTID;
+				mn_LockedCount[i] ++; 
+				j = i;
+				break;
+			}
+		}
+		_ASSERTE(j != -1);
+	};
+	void ReleaseRef(DWORD dwTID) {
+		_ASSERTE(mn_Locked>0);
+		if (mn_Locked > 0) mn_Locked --;
+		if (mn_Locked == 0)
+			SetEvent(mh_ReleaseEvent); // Больше nonexclusive locks не осталось
+		for (int i=1; i<10; i++) {
+			if (mn_LockedTID[i] == dwTID) {
+				mn_LockedCount[i] --; break;
+			}
+		}
+	};
+	void WaitUnlocked(DWORD dwTID, DWORD anTimeout) {
+		DWORD dwStartTick = GetTickCount();
+		int nSelfCount = 0;
+		for (int i=1; i<10; i++) {
+			if (mn_LockedTID[i] == dwTID) {
+				nSelfCount = mn_LockedCount[i];
+				break;
+			}
+		}
+		while (mn_Locked > nSelfCount) {
+			#ifdef _DEBUG
+			DEBUGSTR(L"!!! Waiting for exclusive access\n");
+
+			DWORD nWait = 
+			#endif
+
+			WaitForSingleObject(mh_ReleaseEvent, 10);
+
+			DWORD dwCurTick = GetTickCount();
+			DWORD dwDelta = dwCurTick - dwStartTick;
+
+			if (anTimeout != (DWORD)-1) {
+				if (dwDelta > anTimeout) {
+					#ifndef CSECTION_NON_RAISE
+					_ASSERTE(dwDelta<=anTimeout);
+					#endif
+					break;
+				}
+			}
+			#ifdef _DEBUG
+			else if (dwDelta > 3000) {
+				#ifndef CSECTION_NON_RAISE
+				_ASSERTE(dwDelta <= 3000);
+				#endif
+				break;
+			}
+			#endif
+		}
+	};
+	bool MyEnterCriticalSection(DWORD anTimeout) {
+		//EnterCriticalSection(&m_cs); 
+		// дождаться пока секцию отпустят
+
+		// НАДА. Т.к. может быть задан nTimeout (для DC)
+		DWORD dwTryLockSectionStart = GetTickCount(), dwCurrentTick;
+
+		if (!TryEnterCriticalSection(&m_cs)) {
+			Sleep(10);
+			while (!TryEnterCriticalSection(&m_cs)) {
+				Sleep(10);
+				DEBUGSTR(L"TryEnterCriticalSection failed!!!\n");
+
+				dwCurrentTick = GetTickCount();
+				if (anTimeout != (DWORD)-1) {
+					if (((dwCurrentTick - dwTryLockSectionStart) > anTimeout)) {
+						#ifndef CSECTION_NON_RAISE
+						_ASSERTE((dwCurrentTick - dwTryLockSectionStart) <= anTimeout);
+						#endif
+						return false;
+					}
+				}
+				#ifdef _DEBUG
+				else if ((dwCurrentTick - dwTryLockSectionStart) > 3000) {
+					#ifndef CSECTION_NON_RAISE
+					_ASSERTE((dwCurrentTick - dwTryLockSectionStart) <= 3000);
+					#endif
+					dwTryLockSectionStart = GetTickCount();
+				}
+				#endif
+			}
+		}
+
+		return true;
+	}
+	BOOL Lock(BOOL abExclusive, DWORD anTimeout=-1, BOOL abRelockExclusive=FALSE) {
+		DWORD dwTID = GetCurrentThreadId();
+		
+		// Может эта нить уже полностью заблокирована?
+		if (mb_Exclusive && dwTID == mn_TID) {
+			return FALSE; // Уже, но Unlock делать не нужно!
+		}
+		
+		if (!abExclusive) {
+			// Быстрая блокировка, не запрещающая чтение другим нитям.
+			// Запрещено только изменение (пересоздание буфера например)
+			AddRef(dwTID);
+			
+			// Если другая нить уже захватила exclusive
+			if (mb_Exclusive) {
+				ReleaseRef(dwTID); // Иначе можем попасть на взаимную блокировку
+
+				DEBUGSTR(L"!!! Failed non exclusive lock, trying to use CriticalSection\n");
+				MyEnterCriticalSection(anTimeout); // дождаться пока секцию отпустят
+				_ASSERTE(!mb_Exclusive); // После LeaveCriticalSection mb_Exclusive УЖЕ должен быть сброшен
+
+				AddRef(dwTID); // Возвращаем блокировку
+
+				// Но поскольку нам нужен только nonexclusive lock
+				LeaveCriticalSection(&m_cs);
+			}
+		} else {
+			// Требуется Exclusive Lock
+
+			#ifdef _DEBUG
+			if (mb_Exclusive) {
+				// Этого надо стараться избегать
+				DEBUGSTR(L"!!! Exclusive lock found in other thread\n");
+			}
+			#endif
+			
+			// Если есть ExclusiveLock (в другой нити) - дождется сама EnterCriticalSection
+			#ifdef _DEBUG
+			BOOL lbPrev = mb_Exclusive;
+			#endif
+			mb_Exclusive = TRUE; // Сразу, чтобы в nonexclusive не нарваться
+			MyEnterCriticalSection(anTimeout);
+			_ASSERTE(!(lbPrev && mb_Exclusive)); // После LeaveCriticalSection mb_Exclusive УЖЕ должен быть сброшен
+			mb_Exclusive = TRUE; // Флаг могла сбросить другая нить, выполнившая Leave
+			mn_TID = dwTID; // И запомним, в какой нити это произошло
+			_ASSERTE(mn_LockedTID[0] == 0 && mn_LockedCount[0] == 0);
+			mn_LockedTID[0] = dwTID;
+			mn_LockedCount[0] ++;
+
+			if (abRelockExclusive) {
+				ReleaseRef(dwTID); // Если до этого был nonexclusive lock
+			}
+
+			// B если есть nonexclusive locks - дождаться их завершения
+			if (mn_Locked) {
+				//WARNING: Тут есть шанс наколоться, если сначала был NonExclusive, а потом в этой же нити - Exclusive
+				// В таких случаях нужно вызывать с параметром abRelockExclusive
+				WaitUnlocked(dwTID, anTimeout);
+			}
+		}
+		
+		return TRUE;
+	};
+	void Unlock(BOOL abExclusive) {
+		DWORD dwTID = GetCurrentThreadId();
+		if (abExclusive) {
+			_ASSERTE(dwTID == dwTID && mb_Exclusive);
+			_ASSERTE(mn_LockedTID[0] == dwTID);
+			mb_Exclusive = FALSE; mn_TID = 0;
+			mn_LockedTID[0] = 0; mn_LockedCount[0] --;
+			LeaveCriticalSection(&m_cs);
+		} else {
+			ReleaseRef(dwTID);
+		}
+	};
+};
+
+class MSectionLock
+{
+protected:
+	MSection* mp_S;
+	BOOL mb_Locked, mb_Exclusive;
+public:
+	BOOL Lock(MSection* apS, BOOL abExclusive=FALSE, DWORD anTimeout=-1) {
+		if (mb_Locked && apS == mp_S && abExclusive == mb_Exclusive)
+			return FALSE; // уже заблокирован
+		_ASSERTE(!mb_Locked);
+		mb_Exclusive = abExclusive;
+		mp_S = apS;
+		mb_Locked = mp_S->Lock(mb_Exclusive, anTimeout);
+		return mb_Locked;
+	};
+	BOOL RelockExclusive(DWORD anTimeout=-1) {
+		if (mb_Locked && mb_Exclusive) return FALSE; // уже
+		mb_Exclusive = TRUE;
+		mb_Locked = mp_S->Lock(mb_Exclusive, anTimeout, mb_Locked);
+		return mb_Locked;
+	};
+	void Unlock() {
+		if (mp_S && mb_Locked) {
+			mp_S->Unlock(mb_Exclusive);
+			mb_Locked = FALSE;
+		}
+	};
+	BOOL isLocked() {
+		return (mp_S!=NULL) && mb_Locked;
+	};
+public:
+	MSectionLock() {
+		mp_S = NULL; mb_Locked = FALSE; mb_Exclusive = FALSE;
+	};
+	~MSectionLock() {
+		if (mb_Locked) Unlock();
+	};
+};
+
+
 class CSection
 {
 protected:

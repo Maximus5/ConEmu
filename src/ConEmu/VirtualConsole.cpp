@@ -77,8 +77,9 @@ CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
     TextLen = 0;
 	mb_RequiredForceUpdate = true;
   
-    InitializeCriticalSection(&csDC); ncsTDC = 0; mb_PaintRequested = FALSE; mb_PaintLocked = FALSE;
-    InitializeCriticalSection(&csCON); ncsTCON = 0;
+    //InitializeCriticalSection(&csDC); ncsTDC = 0; 
+	mb_PaintRequested = FALSE; mb_PaintLocked = FALSE;
+    //InitializeCriticalSection(&csCON); ncsTCON = 0;
 
     mr_LeftPanel = mr_RightPanel = MakeRect(-1,-1);
 
@@ -209,8 +210,8 @@ CVirtualConsole::~CVirtualConsole()
         free(mpsz_LogScreen); mpsz_LogScreen = NULL;
     }
     
-    DeleteCriticalSection(&csDC);
-    DeleteCriticalSection(&csCON);
+    //DeleteCriticalSection(&csDC);
+    //DeleteCriticalSection(&csCON);
 
     if (mp_RCon) {
         delete mp_RCon;
@@ -228,7 +229,7 @@ CVirtualConsole::~CVirtualConsole()
 // InitDC вызывается только при критических изменениях (размеры, шрифт, и т.п.) когда нужно пересоздать DC и Bitmap
 bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize)
 {
-    CSection SCON(NULL, NULL); //&csCON, &ncsTCON);
+    MSectionLock SCON; SCON.Lock(&csCON);
     BOOL lbNeedCreateBuffers = FALSE;
 
 #ifdef _DEBUG
@@ -252,7 +253,7 @@ bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize)
 
 
     if (lbNeedCreateBuffers) {
-        SCON.Enter(&csCON, &ncsTCON);
+        SCON.RelockExclusive();
 
         HEAPVAL
         if (mpsz_ConChar)
@@ -333,7 +334,7 @@ bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize)
         HEAPVAL
     }
 
-    SCON.Leave();
+    SCON.Unlock();
 
     HEAPVAL
 
@@ -344,9 +345,10 @@ bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize)
     // Это может быть, если отключена буферизация (debug) и вывод идет сразу на экран
     if (!abNoDc)
     {
-        CSection SDC(NULL,NULL);
+		DEBUGSTR(L"*** Recreate DC\n");
+        MSectionLock SDC;
         // Если в этой нити уже заблокирован - секция не дергается
-        SDC.Enter(&csDC, &ncsTDC, 200); // но по таймауту, чтобы не повисли ненароком
+        SDC.Lock(&csDC, TRUE, 200); // но по таймауту, чтобы не повисли ненароком
 
         if (hDC)
         { DeleteDC(hDC); hDC = NULL; }
@@ -356,19 +358,6 @@ bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize)
         const HDC hScreenDC = GetDC(0);
         if (hDC = CreateCompatibleDC(hScreenDC))
         {
-            /*SelectFont(gSet.mh_Font);
-            TEXTMETRIC tm;
-            GetTextMetrics(hDC, &tm);
-            if (gSet.isForceMonospace)
-                //Maximus - у Arial'а например MaxWidth слишком большой
-                gSet.FontWidth() = gSet.FontSizeX3 ? gSet.FontSizeX3 : tm.tmMaxCharWidth;
-            else
-                gSet.FontWidth() = tm.tmAveCharWidth;
-            gSet.FontHeight() = tm.tmHeight;
-
-            if (ghOpWnd) // устанавливать только при листании шрифта в настройке
-                gSet.UpdateTTF ( (tm.tmMaxCharWidth - tm.tmAveCharWidth)>2 );*/
-
             Assert ( gSet.FontWidth() && gSet.FontHeight() );
 
             BOOL lbWasInitialized = TextWidth && TextHeight;
@@ -718,6 +707,10 @@ bool CVirtualConsole::Update(bool isForce, HDC *ahDc)
 		{
 			if (gConEmu.isActive(this)) {
 				gConEmu.m_Child.Invalidate();
+				//UpdateWindow(ghWndDC); // оно посылает сообщение в окно, и ждет окончания отрисовки
+				//#ifdef _DEBUG
+				//_ASSERTE(!gConEmu.m_Child.mb_Invalidated);
+				//#endif
 			}
 
 			return true;
@@ -749,11 +742,11 @@ bool CVirtualConsole::Update(bool isForce, HDC *ahDc)
     MCHKHEAP
     bool lRes = false;
     
-    CSection SCON(&csCON, &ncsTCON);
-    CSection SDC(NULL,NULL); //&csDC, &ncsTDC);
+    MSectionLock SCON; SCON.Lock(&csCON);
+    MSectionLock SDC; //&csDC, &ncsTDC);
     //if (mb_PaintRequested) -- не должно быть. Эта функция работает ТОЛЬКО в консольной нити
     if (mb_PaintLocked) // Значит идет асинхронный Paint (BitBlt) - это может быть во время ресайза, или над окошком что-то протащили
-        SDC.Enter(&csDC, &ncsTDC, 200); // но по таймауту, чтобы не повисли ненароком
+        SDC.Lock(&csDC, TRUE, 200); // но по таймауту, чтобы не повисли ненароком
 
 
     GetConsoleScreenBufferInfo(&csbi);
@@ -834,7 +827,7 @@ bool CVirtualConsole::Update(bool isForce, HDC *ahDc)
     MCHKHEAP
     
     //SDC.Leave();
-    SCON.Leave();
+    SCON.Unlock();
 
     if (lRes && gConEmu.isActive(this)) {
         if (mpsz_LogScreen && mp_RCon && mp_RCon->GetServerPID()) {
@@ -844,11 +837,15 @@ bool CVirtualConsole::Update(bool isForce, HDC *ahDc)
         }
 
 		if (!mb_InPaintCall) {
-			// должен вызываться в консольной нити (IsConsoleThread)
+			// должен вызываться в основной нити
+			_ASSERTE(gConEmu.isMainThread());
 			mb_PaintRequested = TRUE;
 			gConEmu.m_Child.Invalidate();
 			//09.06.13 а если так? быстрее изменения на экране не появятся?
 			UpdateWindow(ghWndDC); // оно посылает сообщение в окно, и ждет окончания отрисовки
+			#ifdef _DEBUG
+			_ASSERTE(!gConEmu.m_Child.mb_Invalidated);
+			#endif
 			mb_PaintRequested = FALSE;
 		}
     }
@@ -871,9 +868,9 @@ bool CVirtualConsole::Update(bool isForce, HDC *ahDc)
     return lRes;
 }
 
-bool CVirtualConsole::UpdatePrepare(bool isForce, HDC *ahDc, CSection *pSDC)
+bool CVirtualConsole::UpdatePrepare(bool isForce, HDC *ahDc, MSectionLock *pSDC)
 {
-    CSection S(&csCON, &ncsTCON);
+    MSectionLock SCON; SCON.Lock(&csCON);
     
     attrBackLast = 0;
     isEditor = gConEmu.isEditor();
@@ -899,7 +896,7 @@ bool CVirtualConsole::UpdatePrepare(bool isForce, HDC *ahDc, CSection *pSDC)
     // Первая инициализация, или смена размера
     if (isForce || !mpsz_ConChar || TextWidth != winSize.X || TextHeight != winSize.Y) {
         if (pSDC && !pSDC->isLocked()) // Если секция еще не заблокирована (отпускает - вызывающая функция)
-            pSDC->Enter(&csDC, &ncsTDC, 200); // но по таймауту, чтобы не повисли ненароком
+            pSDC->Lock(&csDC, TRUE, 200); // но по таймауту, чтобы не повисли ненароком
         if (!InitDC(ahDc!=NULL && !isForce/*abNoDc*/, false/*abNoWndResize*/))
             return false;
     }
@@ -1884,9 +1881,6 @@ void CVirtualConsole::Paint()
     PAINTSTRUCT ps;
     HDC hPaintDc = NULL;
 
-    
-    //CSection S(&csCON, &ncsTCON);
-    //if (!S.isLocked()) return; // не удалось получить доступ к CS
 
     GetClientRect(ghWndDC, &client);
 
@@ -1896,7 +1890,7 @@ void CVirtualConsole::Paint()
             gConEmu.OnSize(-1); // Только ресайз дочерних окон
     }
     
-    CSection S(NULL, NULL); //&csDC, &ncsTDC);
+    MSectionLock S; //&csDC, &ncsTDC);
 
         hPaintDc = BeginPaint(ghWndDC, &ps);
 
@@ -1923,7 +1917,7 @@ void CVirtualConsole::Paint()
 
     BOOL lbPaintLocked = FALSE;
     if (!mb_PaintRequested) { // Если Paint вызыван НЕ из Update (а например ресайз, или над нашим окошком что-то протащили).
-        if (S.Enter(&csDC, &ncsTDC, 200)) // но по таймауту, чтобы не повисли ненароком
+        if (S.Lock(&csDC, 200)) // но по таймауту, чтобы не повисли ненароком
             mb_PaintLocked = lbPaintLocked = TRUE;
     }
 
@@ -1939,7 +1933,7 @@ void CVirtualConsole::Paint()
             Update(true, &hPaintDc);
         }
 
-    S.Leave();
+    S.Unlock();
     
     if (lbPaintLocked)
         mb_PaintLocked = FALSE;
