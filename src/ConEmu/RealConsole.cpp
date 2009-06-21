@@ -2865,9 +2865,9 @@ void CRealConsole::LogInput(INPUT_RECORD* pRec)
     char *pszAdd = szInfo+strlen(szInfo);
 
     switch (pRec->EventType) {
-    /*case FOCUS_EVENT: sprintf(pszAdd, "FOCUS_EVENT(%i)\r\n", pRec->Event.FocusEvent.bSetFocus);
+    /*case FOCUS_EVENT: wsprintfA(pszAdd, "FOCUS_EVENT(%i)\r\n", pRec->Event.FocusEvent.bSetFocus);
         break;*/
-    case MOUSE_EVENT: sprintf(pszAdd, "MOUSE_EVENT\r\n");
+    case MOUSE_EVENT: wsprintfA(pszAdd, "MOUSE_EVENT\r\n");
         {
             wsprintfA(pszAdd, "Mouse: {%ix%i} Btns:{", pRec->Event.MouseEvent.dwMousePosition.X, pRec->Event.MouseEvent.dwMousePosition.Y);
             pszAdd += strlen(pszAdd);

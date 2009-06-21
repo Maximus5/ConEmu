@@ -3459,12 +3459,12 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
                         return 0;
                     } else {
                         char szLog[100];
-                        sprintf(szLog, "RightClicked, but condition failed (RCSK:%i, Delay:%i)", (int)gSet.isRClickSendKey, (int)dwDelta);
+                        wsprintfA(szLog, "RightClicked, but condition failed (RCSK:%i, Delay:%i)", (int)gSet.isRClickSendKey, (int)dwDelta);
                         pVCon->RCon()->LogString(szLog);
                     }
                 } else {
                     char szLog[100];
-                    sprintf(szLog, "RightClicked, but mouse was moved {%i-%i}->{%i-%i}", Rcursor.x, Rcursor.y, LOWORD(lParam), HIWORD(lParam));
+                    wsprintfA(szLog, "RightClicked, but mouse was moved {%i-%i}->{%i-%i}", Rcursor.x, Rcursor.y, LOWORD(lParam), HIWORD(lParam));
                     pVCon->RCon()->LogString(szLog);
                 }
                 // Иначе нужно сначала послать WM_RBUTTONDOWN
@@ -3472,7 +3472,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
                 pVCon->RCon()->SendMouseEvent(WM_RBUTTONDOWN, wParam, winX, winY);
             } else {
                 char szLog[100];
-                sprintf(szLog, "RightClicked, but condition failed (RCSK:%i, State:%u)", (int)gSet.isRClickSendKey, (DWORD)mouse.state);
+                wsprintfA(szLog, "RightClicked, but condition failed (RCSK:%i, State:%u)", (int)gSet.isRClickSendKey, (DWORD)mouse.state);
                 pVCon->RCon()->LogString(szLog);
             }
             //isRBDown=false; // чтобы не осталось случайно

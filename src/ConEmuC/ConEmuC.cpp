@@ -29,6 +29,7 @@ WARNING("При запуске как ComSpec получаем ошибку: {crNewSize.X>=MIN_CON_WIDTH &&
 //  Раскомментировать, чтобы сразу после запуска процесса (conemuc.exe) показать MessageBox, чтобы прицепиться дебаггером
 //  #define SHOW_STARTED_MSGBOX
 #endif
+#define SHOW_STARTED_MSGBOX
 
 #ifdef _DEBUG
 wchar_t gszDbgModLabel[6] = {0};

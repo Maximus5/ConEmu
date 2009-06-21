@@ -11,7 +11,8 @@ SRCS =  BaseDragDrops.cpp  \
 		ScreenDump.cpp     \
 		TabBar.cpp         \
 		TrayIcon.cpp       \
-		VirtualConsole.cpp 
+		VirtualConsole.cpp \
+        ../common/ConEmuCheck.c
 
 USERLIBS = -lversion
 
@@ -99,7 +100,7 @@ CCFLAGS = -mno-cygwin -I $(COMMON) -I $(COMINC) -Wall -Os -funsigned-char -fomit
 LNKFLAGS = -mwindows $(USERLIBSFIRST) $(COMMONLIB) -luser32 -lkernel32 -ladvapi32 -lshell32 -lgdi32 -lcomdlg32 -lole32 -luuid -lcomctl32 $(USERLIBS)
 RCFLAGS = -I $(COMINC) $(RCWIDE) $(USERRC)
 
-OBJS = $(patsubst %.cpp,$(OBJDIR)/%.o,$(filter %.cpp,$(SRCS))) $(RES)
+OBJS = $(patsubst %.cpp,$(OBJDIR)/%.o,$(filter %.cpp,$(SRCS))) $(patsubst %.c,$(OBJDIR)/%.o,$(filter %.c,$(SRCS))) $(RES)
 ifndef DISABLEAUTODEPS
 DEPS = $(patsubst %.cpp,$(OBJDIR)/%.d,$(filter %.cpp,$(SRCS)))
 endif
@@ -121,6 +122,11 @@ $(OBJDIR)/%.o: %.cpp
 	@echo compiling $<
 	@$(MKDIR) -p $(@D)
 	@$(CXX) $(CXXFLAGS) -c -o $@ $<
+
+$(OBJDIR)/%.o: %.c
+	@echo compiling $<
+	@$(MKDIR) -p $(@D)
+	@$(CC) $(CCFLAGS) -c -o $@ $<
 
 $(RES): $(RC_NAME)
 	@echo compiling $<
