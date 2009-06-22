@@ -75,7 +75,7 @@ extern wchar_t gszDbgModLabel[6];
 	else if (_wcsicmp(pszName, L"\\conemuc.exe")==0) lstrcpyW(gszDbgModLabel, L"(srv)"); \
 	else lstrcpyW(gszDbgModLabel, L"(dll)"); \
 }
-#define DEBUGSTR(s) //{ CHEKCDBGMODLABEL; SYSTEMTIME st; GetLocalTime(&st); wchar_t szDEBUGSTRTime[40]; wsprintf(szDEBUGSTRTime, L"%i:%02i:%02i.%03i%s ", st.wHour, st.wMinute, st.wSecond, st.wMilliseconds, gszDbgModLabel); OutputDebugString(szDEBUGSTRTime); OutputDebugString(s); }
+#define DEBUGSTR(s) { CHEKCDBGMODLABEL; SYSTEMTIME st; GetLocalTime(&st); wchar_t szDEBUGSTRTime[40]; wsprintf(szDEBUGSTRTime, L"%i:%02i:%02i.%03i%s ", st.wHour, st.wMinute, st.wSecond, st.wMilliseconds, gszDbgModLabel); OutputDebugString(szDEBUGSTRTime); OutputDebugString(s); }
 #else
 #define DEBUGSTR(s)
 #endif
@@ -451,7 +451,7 @@ protected:
 
 		return true;
 	}
-	BOOL Lock(BOOL abExclusive, DWORD anTimeout=-1, BOOL abRelockExclusive=FALSE) {
+	BOOL Lock(BOOL abExclusive, DWORD anTimeout=-1/*, BOOL abRelockExclusive=FALSE*/) {
 		DWORD dwTID = GetCurrentThreadId();
 		
 		// Может эта нить уже полностью заблокирована?
@@ -469,13 +469,14 @@ protected:
 				ReleaseRef(dwTID); // Иначе можем попасть на взаимную блокировку
 
 				DEBUGSTR(L"!!! Failed non exclusive lock, trying to use CriticalSection\n");
-				MyEnterCriticalSection(anTimeout); // дождаться пока секцию отпустят
+				bool lbEntered = MyEnterCriticalSection(anTimeout); // дождаться пока секцию отпустят
 				_ASSERTE(!mb_Exclusive); // После LeaveCriticalSection mb_Exclusive УЖЕ должен быть сброшен
 
 				AddRef(dwTID); // Возвращаем блокировку
 
 				// Но поскольку нам нужен только nonexclusive lock
-				LeaveCriticalSection(&m_cs);
+				if (lbEntered)
+					LeaveCriticalSection(&m_cs);
 			}
 		} else {
 			// Требуется Exclusive Lock
@@ -492,6 +493,7 @@ protected:
 			BOOL lbPrev = mb_Exclusive;
 			#endif
 			mb_Exclusive = TRUE; // Сразу, чтобы в nonexclusive не нарваться
+			TODO("Может быть по таймауту отвалилось?\n");
 			MyEnterCriticalSection(anTimeout);
 			_ASSERTE(!(lbPrev && mb_Exclusive)); // После LeaveCriticalSection mb_Exclusive УЖЕ должен быть сброшен
 			mb_Exclusive = TRUE; // Флаг могла сбросить другая нить, выполнившая Leave
@@ -500,9 +502,9 @@ protected:
 			mn_LockedTID[0] = dwTID;
 			mn_LockedCount[0] ++;
 
-			if (abRelockExclusive) {
+			/*if (abRelockExclusive) {
 				ReleaseRef(dwTID); // Если до этого был nonexclusive lock
-			}
+			}*/
 
 			// B если есть nonexclusive locks - дождаться их завершения
 			if (mn_Locked) {
@@ -545,8 +547,10 @@ public:
 	};
 	BOOL RelockExclusive(DWORD anTimeout=-1) {
 		if (mb_Locked && mb_Exclusive) return FALSE; // уже
+		// Чистый ReLock делать нельзя. Виснут другие нити, которые тоже запросили ReLock
+		Unlock();
 		mb_Exclusive = TRUE;
-		mb_Locked = mp_S->Lock(mb_Exclusive, anTimeout, mb_Locked);
+		mb_Locked = mp_S->Lock(mb_Exclusive, anTimeout);
 		return mb_Locked;
 	};
 	void Unlock() {

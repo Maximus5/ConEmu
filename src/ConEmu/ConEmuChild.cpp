@@ -220,9 +220,11 @@ LRESULT CConEmuChild::OnSize(WPARAM wParam, LPARAM lParam)
 
 void CConEmuChild::Invalidate()
 {
+	//2009-06-22 Опять поперла непрорисовка. Причем если по экрану окошко повозить - изображение нормальное
+	// Так что пока лучше два раза нарисуем...
 	if (mb_Invalidated) {
-		DEBUGSTR(L" ### Warning! Invalidate on DC window will be ignored\n");
-		return;
+		DEBUGSTR(L" ### Warning! Invalidate on DC window will be duplicated\n");
+	//	return;
 	}
 	if (ghWndDC) {
 		DEBUGSTR(L" +++ Invalidate on DC window called\n");

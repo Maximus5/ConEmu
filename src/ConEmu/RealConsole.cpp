@@ -43,6 +43,12 @@ WARNING("Часто после разблокирования компьютера размер консоли изменяется (OK), 
 #define HEAPVAL 
 #endif
 
+#ifdef _DEBUG
+	#define FORCE_INVALIDATE_TIMEOUT 3000
+#else
+	#define FORCE_INVALIDATE_TIMEOUT 300
+#endif
+
 CRealConsole::CRealConsole(CVirtualConsole* apVCon)
 {
     mp_VCon = apVCon;
@@ -81,6 +87,7 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
     memset(&con, 0, sizeof(con)); //WARNING! Содержит CriticalSection, поэтому сброс выполнять ПЕРЕД InitializeCriticalSection(&csCON);
     mb_BuferModeChangeLocked = FALSE;
 
+    mn_LastInvalidateTick = 0;
 
     //InitializeCriticalSection(&csPRC); ncsTPRC = 0;
     //InitializeCriticalSection(&csCON); con.ncsT = 0;
@@ -636,17 +643,27 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
             // 04.06.2009 Maks - если консоль активна - Invalidate вызовет сам VCon при необходимости
 			if ((nWait == (WAIT_OBJECT_0+1)) || lbForceUpdate || pRCon->mb_DataChanged) {
 				pRCon->mb_DataChanged = FALSE;
-				gConEmu.m_Child.Validate(); // сбросить флажок
-				pRCon->mp_VCon->Update(lbForceUpdate);
-			} else if (gSet.isCursorBlink && lbIsActive) {
-				// Возможно, настало время мигнуть курсором?
-				bool lbNeedBlink = false;
-				pRCon->mp_VCon->UpdateCursor(lbNeedBlink);
-				// UpdateCursor Invalidate не зовет
-				if (lbNeedBlink) {
-					gConEmu.m_Child.Validate(); // сбросить флажок
-					gConEmu.m_Child.Invalidate();
-				}
+				if (lbIsActive) {
+    				gConEmu.m_Child.Validate(); // сбросить флажок
+    				pRCon->mp_VCon->Update(lbForceUpdate);
+    				pRCon->mn_LastInvalidateTick = GetTickCount();
+    			}
+			} else if (lbIsActive) {
+				if (gSet.isCursorBlink) {
+    				// Возможно, настало время мигнуть курсором?
+    				bool lbNeedBlink = false;
+    				pRCon->mp_VCon->UpdateCursor(lbNeedBlink);
+    				// UpdateCursor Invalidate не зовет
+    				if (lbNeedBlink) {
+    					gConEmu.m_Child.Validate(); // сбросить флажок
+    					gConEmu.m_Child.Invalidate();
+    					pRCon->mn_LastInvalidateTick = GetTickCount();
+    				}
+    			} else if (((GetTickCount() - pRCon->mn_LastInvalidateTick) > FORCE_INVALIDATE_TIMEOUT)) {
+    				gConEmu.m_Child.Validate(); // сбросить флажок
+    				gConEmu.m_Child.Invalidate();
+    				pRCon->mn_LastInvalidateTick = GetTickCount();
+    			}
 			}
 
             //SetEvent(pRCon->mh_EndUpdateEvent);
@@ -1544,6 +1561,7 @@ void CRealConsole::OnWinEvent(DWORD event, HWND hwnd, LONG idObject, LONG idChil
         {   
             if (mn_InRecreate>=1)
                 mn_InRecreate = 0; // корневой процесс успешно пересоздался
+			WARNING("Тут можно повиснуть, если нарваться на блокировку: процесс может быть добавлен и через сервер");
             ProcessAdd(idObject);
             // Если запущено 16битное приложение - необходимо повысить приоритет нашего процесса, иначе будут тормоза
             if (idChild == CONSOLE_APPLICATION_16BIT) {
@@ -1555,6 +1573,7 @@ void CRealConsole::OnWinEvent(DWORD event, HWND hwnd, LONG idObject, LONG idChil
         //A console process has exited. 
         //The idObject parameter contains the process identifier of the terminated process.
         {
+			WARNING("Тут можно повиснуть, если нарваться на блокировку: процесс может быть удален и через сервер");
             ProcessDelete(idObject);
             //
             if (idChild == CONSOLE_APPLICATION_16BIT) {
@@ -1961,7 +1980,7 @@ void CRealConsole::ApplyConsoleInfo(CESERVER_REQ* pInfo)
 
     _ASSERTE(pInfo->hdr.nVersion==CESERVER_REQ_VER && pInfo->hdr.nCmd<100);
     #ifdef _DEBUG
-    if (!con.bBufferHeight && pInfo->ConInfo.inf.sbi.srWindow.Top != 0) {
+    if (!con.bBufferHeight && !mb_BuferModeChangeLocked && pInfo->ConInfo.inf.sbi.srWindow.Top != 0) {
         _ASSERTE(pInfo->ConInfo.inf.sbi.srWindow.Top == 0);
     }
     #endif
@@ -2295,8 +2314,9 @@ void CRealConsole::ProcessAdd(DWORD addPID)
 			cp.ProcessID = addPID; cp.RetryName = true;
 			wsprintf(cp.Name, L"Can't create snaphoot. ErrCode=0x%08X", dwErr);
 
-			SPRC.RelockExclusive();
+			SPRC.RelockExclusive(300);
 			m_Processes.push_back(cp);
+			SPRC.Unlock();
 		}
         
     } else {
@@ -2318,7 +2338,7 @@ void CRealConsole::ProcessAdd(DWORD addPID)
                     ProcessCheckName(cp, p.szExeFile); //far, telnet, cmd, conemuc, и пр.
                     cp.Alive = true;
 
-					SPRC.RelockExclusive();
+					SPRC.RelockExclusive(300);
                     m_Processes.push_back(cp);
                     break;
                 }
@@ -2353,7 +2373,7 @@ void CRealConsole::ProcessAdd(DWORD addPID)
         {
             if (!iter->Alive) {
                 if (!bProcessChanged) bProcessChanged = TRUE;
-				SPRC.RelockExclusive();
+				SPRC.RelockExclusive(300);
                 iter = m_Processes.erase(iter);
             } else {
                 iter ++;

@@ -273,4 +273,5 @@ private:
 	BOOL mb_PluginDetected; DWORD mn_FarPID_PluginDetected;
 	void CheckFarStates();
 	void OnTitleChanged();
+	DWORD mn_LastInvalidateTick;
 };

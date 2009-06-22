@@ -52,6 +52,7 @@ protected:
 	BOOL mb_PostUpdateCalled;
 	UINT mn_MsgUpdateTabs;
 	int mn_CurSelTab;
+	int GetIndexByTab(VConTabs tab);
 	
 	// Tab stack
 	std::vector<VConTabs> m_TabStack;

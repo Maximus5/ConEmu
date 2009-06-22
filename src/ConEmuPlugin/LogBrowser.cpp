@@ -1,7 +1,7 @@
 #include <windows.h>
 #include <wchar.h>
 #include "..\common\common.hpp"
-#include "..\common\pluginW789.hpp"
+#include "..\common\pluginW995.hpp"
 #include "PluginHeader.h"
 
 // Можно бы добавить обработку Up/Down для перехода между пакетами
@@ -12,8 +12,8 @@
 //  = нормальный (отображается цветной текст, как был в консоли)
 //  = атрибутивный (отображаются ТОЛЬКО атрибуты, но как текст, а не как цвет)
 
-extern struct PluginStartupInfo *InfoW789;
-extern struct FarStandardFunctions *FSFW789;
+extern struct PluginStartupInfo *InfoW995;
+extern struct FarStandardFunctions *FSFW995;
 
 CONSOLE_SCREEN_BUFFER_INFO csbi;
 int gnPage = 0;
@@ -327,7 +327,7 @@ void ShowConDump(wchar_t* pszText)
 HANDLE WINAPI OpenFilePluginW(const wchar_t *Name,const unsigned char *Data,int DataSize,int OpMode)
 {
 	//Name==NULL, когда Shift-F1
-	if (!InfoW789) return INVALID_HANDLE_VALUE;
+	if (!InfoW995) return INVALID_HANDLE_VALUE;
 	if (OpMode || Name == NULL) return INVALID_HANDLE_VALUE; // только из панелей в обычном режиме
 	const wchar_t* pszDot = wcsrchr(Name, L'.');
 	if (!pszDot || lstrcmpi(pszDot, L".con")) return INVALID_HANDLE_VALUE;
@@ -335,7 +335,7 @@ HANDLE WINAPI OpenFilePluginW(const wchar_t *Name,const unsigned char *Data,int 
 
 	HANDLE hFile = CreateFile(Name, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, 0);
 	if (hFile == INVALID_HANDLE_VALUE) {
-		InfoW789->Message(InfoW789->ModuleNumber, FMSG_ALLINONE|FMSG_MB_OK|FMSG_WARNING,
+		InfoW995->Message(InfoW995->ModuleNumber, FMSG_ALLINONE|FMSG_MB_OK|FMSG_WARNING,
 			NULL, (const wchar_t* const*)L"ConEmu plugin\nCan't open file!", 0,0);
 		return INVALID_HANDLE_VALUE;
 	}
@@ -343,7 +343,7 @@ HANDLE WINAPI OpenFilePluginW(const wchar_t *Name,const unsigned char *Data,int 
 	DWORD dwSizeLow, dwSizeHigh = 0;
 	dwSizeLow = GetFileSize(hFile, &dwSizeHigh);
 	if (dwSizeHigh) {
-		InfoW789->Message(InfoW789->ModuleNumber, FMSG_ALLINONE|FMSG_MB_OK|FMSG_WARNING,
+		InfoW995->Message(InfoW995->ModuleNumber, FMSG_ALLINONE|FMSG_MB_OK|FMSG_WARNING,
 			NULL, (const wchar_t* const*)L"ConEmu plugin\nFile too large!", 0,0);
 		CloseHandle(hFile);
 		return INVALID_HANDLE_VALUE;
@@ -352,7 +352,7 @@ HANDLE WINAPI OpenFilePluginW(const wchar_t *Name,const unsigned char *Data,int 
 	wchar_t* pszData = (wchar_t*)calloc(dwSizeLow+2,1);
 	if (!pszData) return INVALID_HANDLE_VALUE;
 	if (!ReadFile(hFile, pszData, dwSizeLow, &dwSizeHigh, 0) || dwSizeHigh != dwSizeLow) {
-		InfoW789->Message(InfoW789->ModuleNumber, FMSG_ALLINONE|FMSG_MB_OK|FMSG_WARNING,
+		InfoW995->Message(InfoW995->ModuleNumber, FMSG_ALLINONE|FMSG_MB_OK|FMSG_WARNING,
 			NULL, (const wchar_t* const*)L"ConEmu plugin\nCan't read file!", 0,0);
 		return INVALID_HANDLE_VALUE;
 	}
@@ -361,13 +361,13 @@ HANDLE WINAPI OpenFilePluginW(const wchar_t *Name,const unsigned char *Data,int 
 	memset(&csbi, 0, sizeof(csbi));
 	GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
 
-	HANDLE h = InfoW789->SaveScreen(0,0,-1,-1);
+	HANDLE h = InfoW995->SaveScreen(0,0,-1,-1);
 
 	CESERVER_REQ* pReq = (CESERVER_REQ*)pszData;
 	if (pReq->hdr.nSize == dwSizeLow)
 	{
 		if (pReq->hdr.nVersion != CESERVER_REQ_VER && pReq->hdr.nVersion < 20) {
-			InfoW789->Message(InfoW789->ModuleNumber, FMSG_ALLINONE|FMSG_MB_OK|FMSG_WARNING,
+			InfoW995->Message(InfoW995->ModuleNumber, FMSG_ALLINONE|FMSG_MB_OK|FMSG_WARNING,
 				NULL, (const wchar_t* const*)L"ConEmu plugin\nUnknown version of packet", 0,0);
 		} else {
 			ShowConPacket(pReq);
@@ -376,12 +376,12 @@ HANDLE WINAPI OpenFilePluginW(const wchar_t *Name,const unsigned char *Data,int 
 		ShowConDump(pszData);
 	}
 
-	InfoW789->RestoreScreen(NULL);
-	InfoW789->RestoreScreen(h);
-	InfoW789->Text(0,0,0,0);
+	InfoW995->RestoreScreen(NULL);
+	InfoW995->RestoreScreen(h);
+	InfoW995->Text(0,0,0,0);
 
-	//InfoW789->Control(PANEL_ACTIVE, FCTL_REDRAWPANEL, 0, 0); 
-	//InfoW789->Control(PANEL_PASSIVE, FCTL_REDRAWPANEL, 0, 0); 
+	//InfoW995->Control(PANEL_ACTIVE, FCTL_REDRAWPANEL, 0, 0); 
+	//InfoW995->Control(PANEL_PASSIVE, FCTL_REDRAWPANEL, 0, 0); 
 	//INPUT_RECORD r = {WINDOW_BUFFER_SIZE_EVENT};
 	//r.Event.WindowBufferSizeEvent.dwSize = csbi.dwSize;
 	//WriteConsoleInput(GetStdHandle(STD_INPUT_HANDLE), &r, 1, &dwSizeLow);

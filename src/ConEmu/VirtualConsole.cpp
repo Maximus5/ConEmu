@@ -253,7 +253,9 @@ bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize)
 
 
     if (lbNeedCreateBuffers) {
+		DEBUGSTR(L"Relocking SCON exclusively\n");
         SCON.RelockExclusive();
+		DEBUGSTR(L"Relocking SCON exclusively (done)\n");
 
         HEAPVAL
         if (mpsz_ConChar)

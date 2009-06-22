@@ -161,7 +161,7 @@ void CSettings::InitSettings()
 	isCursorBlink = true;
 	isCursorColor = false;
     
-    isTabs = 1; isTabSelf = true; isTabRecent = false; isTabLazy = true;
+    isTabs = 1; isTabSelf = true; isTabRecent = true; isTabLazy = true;
 	sTabCloseMacro = NULL;
     
     isVisualizer = false;

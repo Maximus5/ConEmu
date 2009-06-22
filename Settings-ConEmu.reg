@@ -131,8 +131,8 @@ REGEDIT4
 "TabSelf"=hex:01
 ;; Keyboard switching: 0 - immediate, 1 - on Ctrl depress
 "TabLazy"=hex:01
-;; TabRecent
-;"TabRecent"=hex:01 - Does not work still
+;; Switch first between recent tabs
+"TabRecent"=hex:01
 ;; Tabs view style. 0 - Labels only, 1 - Labels & Frame
 ;"TabFrame"=hex:00 - Does not work still
 ;; For internal use (Tab control sizes)

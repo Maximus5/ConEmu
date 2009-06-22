@@ -415,7 +415,13 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
         tabIdx++;
     }
 
-    // удалить лишние закладки
+	// Update последних выбранных
+	if (nCurTab >= 0 && (UINT)nCurTab < m_Tab2VCon.size())
+		AddStack(m_Tab2VCon[nCurTab]);
+	else
+		CheckStack(); // иначе просто проверим стек
+
+    // удалить лишние закладки (визуально)
     int nCurCount = GetItemCount();
     for (I = tabIdx; I < nCurCount; I++)
         DeleteItem(I);
@@ -1057,34 +1063,93 @@ void TabBarClass::PrepareTab(ConEmuTab* pTab)
 
 // Переключение табов
 
+int TabBarClass::GetIndexByTab(VConTabs tab)
+{
+	int nIdx = -1;
+	std::vector<VConTabs>::iterator iter = m_Tab2VCon.begin();
+	while (iter != m_Tab2VCon.end()) {
+		nIdx ++;
+		if (iter->ID == tab.ID)
+			return nIdx;
+		iter ++;
+	}
+	return -1;
+}
+
 int TabBarClass::GetNextTab(BOOL abForward)
 {
     int nCurSel = GetCurSel();
     int nCurCount = GetItemCount();
+    VConTabs cur; cur.ID = 0;
+    
+    _ASSERTE(nCurCount == m_Tab2VCon.size());
+    if (nCurCount < 1)
+    	return 0; // хотя такого и не должно быть
+    
+    if (gSet.isTabRecent && nCurSel >= 0 && (UINT)nCurSel < m_Tab2VCon.size())
+        cur = m_Tab2VCon[nCurSel];
+    
     
     int i, nNewSel = -1;
 
     TODO("Добавить возможность переключаться а'ля RecentScreens");
-    if (abForward) {    
-        if (!gSet.isTabRecent) {
-            for (i = nCurSel+1; nNewSel == -1 && i < nCurCount; i++)
-                if (CanActivateTab(i)) nNewSel = i;
-            
-            for (i = 0; nNewSel == -1 && i < nCurSel; i++)
-                if (CanActivateTab(i)) nNewSel = i;
-        } else {
-            TODO("...");
-        }
+    if (abForward) {
+    	if (gSet.isTabRecent) {
+        	std::vector<VConTabs>::iterator iter = m_TabStack.begin();
+        	while (iter != m_TabStack.end()) {
+        		// Найти в стеке выделенный таб
+        		if (iter->ID == cur.ID) {
+        			// Определить следующий таб, который мы можем активировать
+        			do {
+	        			iter ++; // Если дошли до конца (сейчас выделен последний таб) вернуть первый
+    	    			if (iter == m_TabStack.end()) iter = m_TabStack.begin();
+    	    			// Определить индекс в m_Tab2VCon
+    	    			i = GetIndexByTab ( *iter );
+    	    			if (CanActivateTab(i)) {
+    	    				return i;
+        				}
+        			} while (iter->ID != cur.ID);
+        			break;
+        		}
+				iter ++;
+        	}
+    	} // Если не смогли в стиле Recent - идем простым путем
+    	
+    
+        for (i = nCurSel+1; nNewSel == -1 && i < nCurCount; i++)
+            if (CanActivateTab(i)) nNewSel = i;
+        
+        for (i = 0; nNewSel == -1 && i < nCurSel; i++)
+            if (CanActivateTab(i)) nNewSel = i;
+
     } else {
-        if (!gSet.isTabRecent) {
-            for (i = nCurSel-1; nNewSel == -1 && i >= 0; i++)
-                if (CanActivateTab(i)) nNewSel = i;
-            
-            for (i = nCurCount-1; nNewSel == -1 && i > nCurSel; i++)
-                if (CanActivateTab(i)) nNewSel = i;
-        } else {
-            TODO("...");
-        }
+    
+    	if (gSet.isTabRecent) {
+        	std::vector<VConTabs>::reverse_iterator iter = m_TabStack.rbegin();
+        	while (iter != m_TabStack.rend()) {
+        		// Найти в стеке выделенный таб
+        		if (iter->ID == cur.ID) {
+        			// Определить следующий таб, который мы можем активировать
+        			do {
+	        			iter ++; // Если дошли до конца (сейчас выделен последний таб) вернуть первый
+    	    			if (iter == m_TabStack.rend()) iter = m_TabStack.rbegin();
+    	    			// Определить индекс в m_Tab2VCon
+    	    			i = GetIndexByTab ( *iter );
+    	    			if (CanActivateTab(i)) {
+    	    				return i;
+        				}
+        			} while (iter->ID != cur.ID);
+        			break;
+        		}
+        	}
+    	} // Если не смогли в стиле Recent - идем простым путем
+    
+        for (i = nCurSel-1; nNewSel == -1 && i >= 0; i++)
+            if (CanActivateTab(i)) nNewSel = i;
+        
+        for (i = nCurCount-1; nNewSel == -1 && i > nCurSel; i++)
+            if (CanActivateTab(i)) nNewSel = i;
+
     }
 
     return nNewSel;
@@ -1140,14 +1205,65 @@ void TabBarClass::SwitchRollback()
 	}
 }
 
-// Убьет из стека отсутствующих
+// Убьет из стека старые, и добавит новые
 void TabBarClass::CheckStack()
 {
+	_ASSERTE(gConEmu.isMainThread());
+
+	std::vector<VConTabs>::iterator i, j;
+	BOOL lbExist = FALSE;
+
+	j = m_TabStack.begin();
+	while (j != m_TabStack.end()) {
+		lbExist = FALSE;
+		for (i = m_Tab2VCon.begin(); i != m_Tab2VCon.end(); i++) {
+			if (i->ID == j->ID) {
+				lbExist = TRUE; break;
+			}
+		}
+		if (lbExist)
+			j++;
+		else
+			j = m_TabStack.erase(j);
+	}
+
+	for (i = m_Tab2VCon.begin(); i != m_Tab2VCon.end(); i++) {
+		lbExist = FALSE;
+		for (j = m_TabStack.begin(); j != m_TabStack.end(); j++) {
+			if (i->ID == j->ID) {
+				lbExist = TRUE; break;
+			}
+		}
+		if (!lbExist)
+			m_TabStack.push_back(*i);
+	}
 }
 
 // Убьет из стека отсутствующих и поместит tab на верх стека
 void TabBarClass::AddStack(VConTabs tab)
 {
+	_ASSERTE(gConEmu.isMainThread());
+	
+	BOOL lbExist = FALSE;
+	if (!m_TabStack.empty()) {
+		VConTabs tmp;
+		std::vector<VConTabs>::iterator iter = m_TabStack.begin();
+		while (iter != m_TabStack.end()) {
+			if (iter->ID == tab.ID) {
+				if (iter == m_TabStack.begin()) {
+					lbExist = TRUE;
+				} else {
+					m_TabStack.erase(iter);
+				}
+				break;
+			}
+			iter ++;
+		}
+	}
+	if (!lbExist) // поместить наверх стека
+		m_TabStack.insert(m_TabStack.begin(), tab);
+
+	CheckStack();
 }
 
 BOOL TabBarClass::CanActivateTab(int nTabIdx)
