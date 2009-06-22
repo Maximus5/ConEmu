@@ -1003,7 +1003,27 @@ int ComspecInit()
         return CERR_RUNNEWCONSOLE;
     }
     
-
+    
+    // Если определена ComSpecC - значит ConEmuC переопределил стандартный ComSpec
+    // Вернем его
+    wchar_t szComSpec[MAX_PATH+1];
+    if (GetEnvironmentVariable(L"ComSpecC", szComSpec, MAX_PATH) && szComSpec[0] != 0)
+    {
+        // Только если это (случайно) не conemuc.exe
+        wchar_t* pwszCopy = wcsrchr(szComSpec, L'\\'); 
+        if (!pwszCopy) pwszCopy = szComSpec;
+        #pragma warning( push )
+        #pragma warning(disable : 6400)
+        if (lstrcmpiW(pwszCopy, L"ConEmuC")==0 || lstrcmpiW(pwszCopy, L"ConEmuC.exe")==0)
+            szComSpec[0] = 0;
+        #pragma warning( pop )
+        if (szComSpec[0]) {
+	        SetEnvironmentVariable(L"ComSpec", szComSpec);
+	        SetEnvironmentVariable(L"ComSpecC", NULL);
+        }
+    }
+    
+    
     crNewSize = cmd.sbi.dwSize;
     _ASSERTE(crNewSize.X>=MIN_CON_WIDTH && crNewSize.Y>=MIN_CON_HEIGHT);
     
@@ -1207,7 +1227,8 @@ int ServerInit()
     int iRc = 0;
     DWORD dwErr = 0;
     HANDLE hWait[2] = {NULL,NULL};
-    wchar_t szComSpec[MAX_PATH+1], szSelf[MAX_PATH+1];
+    wchar_t szComSpec[MAX_PATH+1], szSelf[MAX_PATH+3];
+    wchar_t* pszSelf = szSelf+1;
     HMODULE hKernel = GetModuleHandleW (L"kernel32.dll");
     
     
@@ -1233,7 +1254,11 @@ int ServerInit()
             }
         }
     }
-    if (GetModuleFileName(NULL, szSelf, MAX_PATH)) {
+    if (GetModuleFileName(NULL, pszSelf, MAX_PATH)) {
+	    if (wcschr(pszSelf, L' ')) {
+		    *(--pszSelf) = L'"';
+		    lstrcatW(pszSelf, L"\"");
+	    }
         SetEnvironmentVariable(L"ComSpec", szSelf);
     }
 
