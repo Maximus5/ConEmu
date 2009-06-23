@@ -28,9 +28,11 @@ WARNING("При запуске как ComSpec получаем ошибку: {crNewSize.X>=MIN_CON_WIDTH &&
 #ifdef _DEBUG
 //  Раскомментировать, чтобы сразу после запуска процесса (conemuc.exe) показать MessageBox, чтобы прицепиться дебаггером
 //  #define SHOW_STARTED_MSGBOX
-#endif
 // Раскомментировать для вывода в консоль информации режима Comspec
-#define PRINT_COMSPEC(f,a) wprintf(f,a)
+	#define PRINT_COMSPEC(f,a) wprintf(f,a)
+#else
+	#define PRINT_COMSPEC(f,a)
+#endif
 
 #ifdef _DEBUG
 wchar_t gszDbgModLabel[6] = {0};
@@ -46,7 +48,7 @@ CRITICAL_SECTION gcsHeap;
 //#define MCHKHEAP { EnterCriticalSection(&gcsHeap); int MDEBUG_CHK=_CrtCheckMemory(); _ASSERTE(MDEBUG_CHK); LeaveCriticalSection(&gcsHeap); }
 #define MCHKHEAP HeapValidate(ghHeap, 0, NULL);
 //#define HEAP_LOGGING
-#define DEBUGLOG(s) OutputDebugString(s)
+#define DEBUGLOG(s) //OutputDebugString(s)
 #else
 #define MCHKHEAP
 #define DEBUGLOG(s)
@@ -145,6 +147,7 @@ void CheckKeyboardLayout();
 int CALLBACK FontEnumProc(ENUMLOGFONTEX *lpelfe, NEWTEXTMETRICEX *lpntme, DWORD FontType, LPARAM lParam);
 typedef DWORD (WINAPI* FGetConsoleProcessList)(LPDWORD lpdwProcessList, DWORD dwProcessCount);
 FGetConsoleProcessList pfnGetConsoleProcessList = NULL;
+BOOL HookWinEvents(BOOL abEnabled);
 
 
 #else
@@ -191,6 +194,9 @@ struct tag_Srv {
     HANDLE hRefreshThread;  DWORD dwRefreshThread;
     HANDLE hWinEventThread; DWORD dwWinEventThread;
     HANDLE hInputThread;    DWORD dwInputThreadId;
+    //
+    UINT nMsgHookEnableDisable;
+    UINT nMaxFPS;
     //
     CRITICAL_SECTION csProc;
     CRITICAL_SECTION csConBuf;
@@ -248,7 +254,7 @@ struct tag_Srv {
 } srv = {0};
 
 #define USER_IDLE_TIMEOUT ((DWORD)1000)
-#define CHECK_IDLE_TIMEOUT 100 /* 1000 / 20 */
+#define CHECK_IDLE_TIMEOUT 250 /* 1000 / 4 */
 #define USER_ACTIVITY ((gnBufferHeight == 0) || ((GetTickCount() - srv.dwLastUserTick) <= USER_IDLE_TIMEOUT))
 
 
@@ -1226,12 +1232,11 @@ int ServerInit()
 {
     int iRc = 0;
     DWORD dwErr = 0;
-    HANDLE hWait[2] = {NULL,NULL};
     wchar_t szComSpec[MAX_PATH+1], szSelf[MAX_PATH+3];
     wchar_t* pszSelf = szSelf+1;
     HMODULE hKernel = GetModuleHandleW (L"kernel32.dll");
     
-    
+    srv.nMaxFPS = 10;
     
     if (hKernel) {
         pfnGetConsoleKeyboardLayoutName = (FGetConsoleKeyboardLayoutName)GetProcAddress (hKernel, "GetConsoleKeyboardLayoutNameW");
@@ -1259,7 +1264,7 @@ int ServerInit()
 		    *(--pszSelf) = L'"';
 		    lstrcatW(pszSelf, L"\"");
 	    }
-        SetEnvironmentVariable(L"ComSpec", szSelf);
+        SetEnvironmentVariable(L"ComSpec", pszSelf);
     }
 
     //srv.bContentsChanged = TRUE;
@@ -1337,13 +1342,6 @@ int ServerInit()
         iRc = CERR_REFRESHEVENT; goto wrap;
     }
 
-    //srv.hChangingSize = CreateEvent(NULL,TRUE,FALSE,NULL);
-    //if (!srv.hChangingSize) {
-    //    dwErr = GetLastError();
-    //    wprintf(L"CreateEvent(hChangingSize) failed, ErrCode=0x%08X\n", dwErr); 
-    //    iRc = CERR_REFRESHEVENT; goto wrap;
-    //}
-    //SetEvent(srv.hChangingSize);
 
     
     // Запустить нить наблюдения за консолью
@@ -1363,51 +1361,18 @@ int ServerInit()
     }
     
     
+    srv.nMsgHookEnableDisable = RegisterWindowMessage(L"ConEmuC::HookEnableDisable");
     // The client thread that calls SetWinEventHook must have a message loop in order to receive events.");
-    hWait[0] = CreateEvent(NULL,FALSE,FALSE,NULL);
-    _ASSERTE(hWait[0]!=NULL);
-    srv.hWinEventThread = CreateThread( 
-        NULL,              // no security attribute 
-        0,                 // default stack size 
-        WinEventThread,      // thread proc
-        hWait[0],              // thread parameter 
-        0,                 // not suspended 
-        &srv.dwWinEventThread);      // returns thread ID 
+    srv.hWinEventThread = CreateThread( NULL, 0, WinEventThread, NULL, 0, &srv.dwWinEventThread);
     if (srv.hWinEventThread == NULL) 
     {
         dwErr = GetLastError();
         wprintf(L"CreateThread(WinEventThread) failed, ErrCode=0x%08X\n", dwErr); 
-        SafeCloseHandle(hWait[0]);
-        hWait[0]=NULL; hWait[1]=NULL;
         iRc = CERR_WINEVENTTHREAD; goto wrap;
-    }
-    hWait[1] = srv.hWinEventThread;
-    dwErr = WaitForMultipleObjects(2, hWait, FALSE, 10000);
-    SafeCloseHandle(hWait[0]);
-    hWait[0]=NULL; hWait[1]=NULL;
-    if (!srv.hWinHook) {
-        _ASSERT(dwErr == WAIT_TIMEOUT);
-        if (dwErr == WAIT_TIMEOUT) { // по идее этого быть не должно
-            #pragma warning( push )
-            #pragma warning( disable : 6258 )
-            TerminateThread(srv.hWinEventThread,100);
-            #pragma warning( pop )
-            SafeCloseHandle(srv.hWinEventThread);
-        }
-        // Ошибка на экран уже выведена, нить уже завершена, закрыть дескриптор
-        SafeCloseHandle(srv.hWinEventThread);
-        iRc = CERR_WINHOOKNOTCREATED; goto wrap;
     }
 
     // Запустить нить обработки команд  
-    srv.hServerThread = CreateThread( 
-        NULL,              // no security attribute 
-        0,                 // default stack size 
-        ServerThread,      // thread proc
-        NULL,              // thread parameter 
-        0,                 // not suspended 
-        &srv.dwServerThreadId);      // returns thread ID 
-
+    srv.hServerThread = CreateThread( NULL, 0, ServerThread, NULL, 0, &srv.dwServerThreadId);
     if (srv.hServerThread == NULL) 
     {
         dwErr = GetLastError();
@@ -1509,9 +1474,8 @@ void ServerDone(int aiRc)
     //if (srv.hChangingSize) {
     //    SafeCloseHandle(srv.hChangingSize);
     //}
-    if (srv.hWinHook) {
-        UnhookWinEvent(srv.hWinHook); srv.hWinHook = NULL;
-    }
+    // Отключить хук
+    HookWinEvents ( FALSE );
     
     if (gpStoredOutput) { Free(gpStoredOutput); gpStoredOutput = NULL; }
     if (srv.psChars) { Free(srv.psChars); srv.psChars = NULL; }
@@ -1801,6 +1765,12 @@ DWORD WINAPI InputThread(LPVOID lpvParam)
                           DEBUGSTR(L"  ---  F11 recieved\n");
                       }
                     #endif
+					#ifdef _DEBUG
+					if (iRec.EventType == MOUSE_EVENT) {
+						wchar_t szDbg[60]; wsprintf(szDbg, L"ConEmuC.MouseEvent(X=%i,Y=%i,Btns=0x%04x,Moved=%i)\n", iRec.Event.MouseEvent.dwMousePosition.X, iRec.Event.MouseEvent.dwMousePosition.Y, iRec.Event.MouseEvent.dwButtonState, (iRec.Event.MouseEvent.dwEventFlags & MOUSE_MOVED));
+						OutputDebugString(szDbg);
+					}
+					#endif
                     
                       // Запомнить, когда была последняя активность пользователя
                       if (iRec.EventType == KEY_EVENT
@@ -2328,9 +2298,15 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
                 if (in.hdr.nCmd == CECMD_CMDFINISHED) {
                 	PRINT_COMSPEC(L"CECMD_CMDFINISHED, Set height to: %i\n", crNewSize.Y);
                     DEBUGSTR(L"\n!!! CECMD_CMDFINISHED !!!\n\n");
+                    // Вернуть нотификатор
+                    if (srv.dwWinEventThread != 0)
+                    	PostThreadMessage(srv.dwWinEventThread, srv.nMsgHookEnableDisable, TRUE, 0);
                 } else if (in.hdr.nCmd == CECMD_CMDSTARTED) {
                 	PRINT_COMSPEC(L"CECMD_CMDSTARTED, Set height to: %i\n", nBufferHeight);
                     DEBUGSTR(L"\n!!! CECMD_CMDSTARTED !!!\n\n");
+                    // Отключить нотификатор
+                    if (srv.dwWinEventThread != 0)
+                    	PostThreadMessage(srv.dwWinEventThread, srv.nMsgHookEnableDisable, FALSE, 0);
                 }
                 //#endif
 
@@ -2392,28 +2368,57 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
     return lbRc;
 }
 
+BOOL HookWinEvents(BOOL abEnabled)
+{
+	if (abEnabled) {
+		if (srv.hWinHook != NULL) {
+			PRINT_COMSPEC(L"!!! HookWinEvents was already set !!!\n", 0);
+			return TRUE;
+		}
+		
+        // "Ловим" все консольные события
+        srv.hWinHook = SetWinEventHook(EVENT_CONSOLE_CARET,EVENT_CONSOLE_END_APPLICATION,
+            NULL, (WINEVENTPROC)WinEventProc, 0,0, WINEVENT_OUTOFCONTEXT /*| WINEVENT_SKIPOWNPROCESS ?*/);
+
+        if (!srv.hWinHook) {
+        	DWORD dwErr = GetLastError();
+        	PRINT_COMSPEC(L"!!! HookWinEvents FAILED, ErrCode=0x%08X\n", dwErr);
+        	return FALSE;
+        }
+        
+        PRINT_COMSPEC(L"WinEventsHook was enabled\n", 0);
+        
+	} else {
+	    if (srv.hWinHook) {
+	        UnhookWinEvent(srv.hWinHook); srv.hWinHook = NULL;
+	        
+	        PRINT_COMSPEC(L"WinEventsHook was disabled\n", 0);
+	    }
+	    return TRUE;
+	}
+	
+	return FALSE;
+}
 
 DWORD WINAPI WinEventThread(LPVOID lpvParam)
 {
     DWORD dwErr = 0;
-    HANDLE hStartedEvent = (HANDLE)lpvParam;
+    //HANDLE hStartedEvent = (HANDLE)lpvParam;
     
     
     // "Ловим" все консольные события
-    srv.hWinHook = SetWinEventHook(EVENT_CONSOLE_CARET,EVENT_CONSOLE_END_APPLICATION,
-        NULL, (WINEVENTPROC)WinEventProc, 0,0, WINEVENT_OUTOFCONTEXT /*| WINEVENT_SKIPOWNPROCESS ?*/);
-    dwErr = GetLastError();
-    if (!srv.hWinHook) {
-        dwErr = GetLastError();
-        wprintf(L"SetWinEventHook failed, ErrCode=0x%08X\n", dwErr); 
-        SetEvent(hStartedEvent);
-        return 100;
-    }
-    SetEvent(hStartedEvent); hStartedEvent = NULL; // здесь он более не требуется
+    HookWinEvents ( TRUE );
+    
+    //
+    //SetEvent(hStartedEvent); hStartedEvent = NULL; // здесь он более не требуется
 
     MSG lpMsg;
     while (GetMessage(&lpMsg, NULL, 0, 0))
     {
+    	if (lpMsg.message == srv.nMsgHookEnableDisable) {
+    		HookWinEvents ( lpMsg.wParam != 0 );
+    		continue;
+    	}
         MCHKHEAP
         //if (lpMsg.message == WM_QUIT) { // GetMessage возвращает FALSE при получении этого сообщения
         //  lbQuit = TRUE; break;
@@ -2424,9 +2429,7 @@ DWORD WINAPI WinEventThread(LPVOID lpvParam)
     }
     
     // Закрыть хук
-    if (srv.hWinHook) {
-        UnhookWinEvent(srv.hWinHook); srv.hWinHook = NULL;
-    }
+    HookWinEvents ( FALSE );
 
     MCHKHEAP
     
@@ -2454,7 +2457,7 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
     {
         nWait = WAIT_TIMEOUT;
         MCHKHEAP
-
+        
         // Подождать немножко
         // !!! Здесь таймаут должен быть минимальным, ну разве что консоль неактивна
         nWait = WaitForMultipleObjects ( 2, hEvents, FALSE, /*srv.bConsoleActive ? srv.nMainTimerElapse :*/ dwTimeout );
@@ -2465,6 +2468,17 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
             DEBUGSTR(L"*** hRefreshEvent was set, checking console...\n");
         }
         #endif
+        
+        if (gnBufferHeight != 0) {
+        	if (srv.nMaxFPS>0) {
+        		dwTimeout = 1000 / srv.nMaxFPS;
+        		if (dwTimeout < 50) dwTimeout = 50;
+        	} else {
+        		dwTimeout = 100;
+        	}
+        } else {
+        	dwTimeout = 10;
+       	}
 
         if (ghConEmuWnd && GetForegroundWindow() == ghConWnd) {
             if (lbFirstForeground || !IsWindowVisible(ghConWnd)) {
@@ -2481,16 +2495,18 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
         if (pfnGetConsoleKeyboardLayoutName)
             CheckKeyboardLayout();
             
-        // Если это таймаут и не буферный режим и нет пользовательской активности
-        if ((gnBufferHeight != 0) && !lbEventualChange && !(USER_ACTIVITY)) {
-            DWORD nCurTick = GetTickCount();
-            nDelta = nCurTick - nIdleTick;
-            if (nDelta < CHECK_IDLE_TIMEOUT) {
-                // еще подождем
-                DWORD nSleep = CHECK_IDLE_TIMEOUT - nDelta;
-                if (nSleep > 100) nSleep = 100;
-                Sleep(nSleep);
-            }
+        // Если это таймаут и не буферный режим //и нет пользовательской активности
+        if ((gnBufferHeight != 0) && !lbEventualChange /*&& !(USER_ACTIVITY)*/) {
+        	srv.bRequestPostFullReload = TRUE; // считать данные полностью
+            //DWORD nCurTick = GetTickCount();
+            //nDelta = nCurTick - nIdleTick;
+            //if (nDelta < CHECK_IDLE_TIMEOUT) {
+            //    // еще подождем
+            //    DWORD nSleep = CHECK_IDLE_TIMEOUT - nDelta;
+            //    if (nSleep > CHECK_IDLE_TIMEOUT) nSleep = CHECK_IDLE_TIMEOUT;
+            //    Sleep(nSleep);
+            //    srv.bRequestPostFullReload = TRUE; // считать данные полностью
+            //}
         }
         nIdleTick = GetTickCount();
 

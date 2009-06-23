@@ -1845,8 +1845,8 @@ void CVirtualConsole::Paint()
 
 #ifdef _DEBUG
     if (this) {
-        if (!mp_RCon || mp_RCon->m_Packets.empty()) {
-            DEBUGSTR(L"*** Painting ***\n");
+        if (!mp_RCon || !mp_RCon->isPackets()) {
+        	DEBUGSTR(L"*** Painting ***\n");
         } else {
             DEBUGSTR(L"*** Painting (!!! Non processed packets are queued !!!) ***\n");
         }

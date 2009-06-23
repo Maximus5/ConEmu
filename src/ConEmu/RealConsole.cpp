@@ -54,6 +54,7 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
     mp_VCon = apVCon;
     memset(Title,0,sizeof(Title)); memset(TitleCmp,0,sizeof(TitleCmp));
     mp_tabs = NULL; mn_tabsCount = 0; ms_PanelTitle[0] = 0; mn_ActiveTab = 0;
+    memset(&m_PacketQueue, 0, sizeof(m_PacketQueue));
 
     wcscpy(Title, L"ConEmu");
     wcscpy(ms_PanelTitle, Title);
@@ -406,7 +407,7 @@ BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID)
     //}
 
     SetHwnd(ahConWnd);
-    ProcessAdd(anConemuC_PID);
+    ProcessUpdate(&anConemuC_PID, 1);
 
     mh_ConEmuC = hProcess;
     mn_ConEmuC_PID = anConemuC_PID;
@@ -605,8 +606,8 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
                 }
             }
 
-            if (nWait==IDEVENT_PACKETARRIVED || !pRCon->m_Packets.empty()) {
-				MSectionLock cs; cs.Lock(&pRCon->csPKT, TRUE);
+            if (nWait==IDEVENT_PACKETARRIVED || pRCon->isPackets()) {
+				//MSectionLock cs; cs.Lock(&pRCon->csPKT, TRUE);
                 CESERVER_REQ* pPkt = NULL;
                 while ((pPkt = pRCon->PopPacket()) != NULL) {
                     pRCon->ApplyConsoleInfo(pPkt);
@@ -1065,13 +1066,17 @@ void CRealConsole::SendMouseEvent(UINT messg, WPARAM wParam, int x, int y)
                 if (nYDelta < -1 || nYDelta > 1) {
                     // Если после предыдущего драга прошло более 1 строки
                     SHORT nYstep = (nYDelta < -1) ? -1 : 1;
-                    SHORT nYend = crMouse.Y - nYstep;
-                    SHORT y = con.crRBtnDrag.Y + nYstep;
+                    SHORT nYend = crMouse.Y; // - nYstep;
+					crMouse.Y = con.crRBtnDrag.Y + nYstep;
                     // досылаем пропущенные строки
-                    while (y != nYend) {
-                        r.Event.MouseEvent.dwMousePosition = MakeCoord(crMouse.X,y);
+                    while (crMouse.Y != nYend) {
+						#ifdef _DEBUG
+						wchar_t szDbg[60]; wsprintf(szDbg, L"+++ Add right button drag: {%ix%i}\n", crMouse.X, crMouse.Y);
+						OutputDebugString(szDbg);
+						#endif
+                        r.Event.MouseEvent.dwMousePosition = crMouse;
                         SendConsoleEvent ( &r );
-                        y += nYstep;
+                        crMouse.Y += nYstep;
                     }
                 }
             }
@@ -1134,6 +1139,11 @@ void CRealConsole::SendConsoleEvent(INPUT_RECORD* piRec)
         m_LastMouse.dwEventFlags      = piRec->Event.MouseEvent.dwEventFlags;
         m_LastMouse.dwButtonState     = piRec->Event.MouseEvent.dwButtonState;
         m_LastMouse.dwControlKeyState = piRec->Event.MouseEvent.dwControlKeyState;
+
+		#ifdef _DEBUG
+		wchar_t szDbg[60]; wsprintf(szDbg, L"ConEmu.Mouse event at: {%ix%i}\n", m_LastMouse.dwMousePosition.X, m_LastMouse.dwMousePosition.Y);
+		OutputDebugString(szDbg);
+		#endif
     }
 
     WARNING("Некоторые события можно игнорировать, если ConEmuC не смог их принять сразу (например Focus)");
@@ -1561,8 +1571,10 @@ void CRealConsole::OnWinEvent(DWORD event, HWND hwnd, LONG idObject, LONG idChil
         {   
             if (mn_InRecreate>=1)
                 mn_InRecreate = 0; // корневой процесс успешно пересоздался
-			WARNING("Тут можно повиснуть, если нарваться на блокировку: процесс может быть добавлен и через сервер");
-            ProcessAdd(idObject);
+                
+			//WARNING("Тут можно повиснуть, если нарваться на блокировку: процесс может быть добавлен и через сервер");
+            //Process Add(idObject);
+            
             // Если запущено 16битное приложение - необходимо повысить приоритет нашего процесса, иначе будут тормоза
             if (idChild == CONSOLE_APPLICATION_16BIT) {
                 mn_ProgramStatus |= CES_NTVDM;
@@ -1573,8 +1585,9 @@ void CRealConsole::OnWinEvent(DWORD event, HWND hwnd, LONG idObject, LONG idChil
         //A console process has exited. 
         //The idObject parameter contains the process identifier of the terminated process.
         {
-			WARNING("Тут можно повиснуть, если нарваться на блокировку: процесс может быть удален и через сервер");
-            ProcessDelete(idObject);
+			//WARNING("Тут можно повиснуть, если нарваться на блокировку: процесс может быть удален и через сервер");
+            //Process Delete(idObject);
+            
             //
             if (idChild == CONSOLE_APPLICATION_16BIT) {
                 gConEmu.gbPostUpdateWindowSize = true;
@@ -1782,6 +1795,7 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
         DEBUGSTR((pIn->hdr.nCmd == CECMD_GETFULLINFO) ? L"GUI recieved CECMD_GETFULLINFO\n" : L"GUI recieved CECMD_GETSHORTINFO\n");
         //ApplyConsoleInfo(pIn);
         if (((LPVOID)&in)==((LPVOID)pIn)) {
+        	// Это фиксированная память - переменная (in)
             _ASSERTE(in.hdr.nSize>0);
             // Для его обработки нужно создать копию памяти, которую освободит PopPacket
             pIn = (CESERVER_REQ*)calloc(in.hdr.nSize,1);
@@ -1817,10 +1831,12 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
                 }
             }
 
-            ProcessAdd(nPID);
+            // 23.06.2009 Maks - уберем пока. Должно работать в ApplyConsoleInfo
+            //Process Add(nPID);
 
         } else {
-            ProcessDelete(nPID);
+        	// 23.06.2009 Maks - уберем пока. Должно работать в ApplyConsoleInfo
+            //Process Delete(nPID);
 
             if (nStarted == 3) {
                 // Восстановить размер через серверный ConEmuC
@@ -1926,7 +1942,8 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 		_ASSERTE(nDataSize>=6);
 		mb_PluginDetected = TRUE; // Запомним, что в фаре есть плагин (хотя фар может быть закрыт)
 		mn_FarPID_PluginDetected = *((DWORD*)pIn->Data);
-		ProcessAdd(mn_FarPID_PluginDetected); // На всякий случай, вдруг он еще не в нашем списке?
+		// 23.06.2009 Maks - уберем пока. Должно работать в ApplyConsoleInfo
+		//Process Add(mn_FarPID_PluginDetected); // На всякий случай, вдруг он еще не в нашем списке?
 		wchar_t* pszRes = (wchar_t*)(pIn->Data+4), *pszNext;
 		if (*pszRes) {
 			pszNext = pszRes + lstrlen(pszRes)+1;
@@ -2009,8 +2026,8 @@ void CRealConsole::ApplyConsoleInfo(CESERVER_REQ* pInfo)
         SetHwnd ( hWnd );
     }
     // 3
-    WARNING("Здесь у нас реальные процессы консоли, надо бы обновиться");
-	//pInfo->ConInfo.inf.nProcesses
+    // Здесь у нас реальные процессы консоли, надо обновиться
+	ProcessUpdate(pInfo->ConInfo.inf.nProcesses, countof(pInfo->ConInfo.inf.nProcesses));
 
     // Теперь нужно открыть секцию - начинаем изменение переменных класса
     MSectionLock sc;
@@ -2230,8 +2247,12 @@ void CRealConsole::ProcessUpdateFlags(BOOL abProcessChanged)
 {
     //Warning: Должен вызываться ТОЛЬКО из ProcessAdd/ProcessDelete, т.к. сам секцию не блокирует
 
-    bool bIsFar=false, bIsTelnet=false, bIsNtvdm=false, bIsCmd=false;
+    bool bIsFar=false, bIsTelnet=false, bIsCmd=false;
     DWORD dwPID = 0;
+    
+    // Наличие 16bit определяем ТОЛЬКО по WinEvent. Иначе не получится отсечь его завершение,
+    // т.к. процесс ntvdm.exe не выгружается, а остается в памяти.
+    const bool bIsNtvdm = (mn_ProgramStatus & CES_NTVDM) == CES_NTVDM;
 
     std::vector<ConProcess>::reverse_iterator iter = m_Processes.rbegin();
     while (iter!=m_Processes.rend()) {
@@ -2239,7 +2260,7 @@ void CRealConsole::ProcessUpdateFlags(BOOL abProcessChanged)
         if (iter->ProcessID != mn_ConEmuC_PID) {
             if (!bIsFar && iter->IsFar) bIsFar = true;
             if (!bIsTelnet && iter->IsTelnet) bIsTelnet = true;
-            if (!bIsNtvdm && iter->IsNtvdm) bIsNtvdm = true;
+            //if (!bIsNtvdm && iter->IsNtvdm) bIsNtvdm = true;
             if (!bIsCmd && iter->IsCmd) bIsCmd = true;
             // 
             if (!dwPID && iter->IsFar)  dwPID = iter->ProcessID;
@@ -2277,111 +2298,136 @@ void CRealConsole::ProcessUpdateFlags(BOOL abProcessChanged)
     }
 }
 
-void CRealConsole::ProcessAdd(DWORD addPID)
+void CRealConsole::ProcessUpdate(DWORD *apPID, UINT anCount)
 {
     MSectionLock SPRC; SPRC.Lock(&csPRC);
 
     BOOL lbRecreateOk = FALSE;
     if (mn_InRecreate && mn_ProcessCount == 0) {
+    	// Раз сюда что-то пришло, значит мы получили пакет, значит консоль запустилась
         lbRecreateOk = TRUE;
     }
     
+    UINT i = 0;
     std::vector<ConProcess>::iterator iter;
     BOOL bAlive = FALSE;
-    BOOL bProcessChanged = FALSE;
+    BOOL bProcessChanged = FALSE, bProcessNew = FALSE, bProcessDel = FALSE;
     
-    // может он уже есть в списке?
+    // поставить пометочку на все процессы, вдруг кто уже убился 
+    iter = m_Processes.begin();
+    while (iter != m_Processes.end()) { iter->inConsole = false; iter ++; }
+    
+    // Проверяем, какие процессы уже есть в нашем списке
     iter=m_Processes.begin();
     while (iter!=m_Processes.end()) {
-        if (addPID == iter->ProcessID) {
-            addPID = 0;
-            break;
+    	for (i = 0; i < anCount; i++) {
+	        if (apPID[i] && apPID[i] == iter->ProcessID) {
+	        	iter->inConsole = true;
+    	        apPID[i] = 0; // Его добавлять уже не нужно, мы о нем знаем
+    	        break;
+        	}    
         }
         iter++;
     }
+    
+    // Проверяем, есть ли изменения
+	for (i = 0; i < anCount; i++) {
+        if (apPID[i]) {
+        	bProcessNew = TRUE; break;
+        }
+    }
+    iter = m_Processes.begin();
+    while (iter != m_Processes.end()) {
+    	if (iter->inConsole == false) {
+    		bProcessDel = TRUE; break;
+    	}
+    	iter ++;
+   	}
+
 
     
 
     // Теперь нужно добавить новый процесс
-    ConProcess cp;
-    HANDLE h = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS,0);
-    _ASSERTE(h!=INVALID_HANDLE_VALUE);
-    if (h==INVALID_HANDLE_VALUE) {
-        DWORD dwErr = GetLastError();
-		if (addPID) {
-			// Просто добавить, раз не удалось снять Snapshoot
-			memset(&cp, 0, sizeof(cp));
-			cp.ProcessID = addPID; cp.RetryName = true;
-			wsprintf(cp.Name, L"Can't create snaphoot. ErrCode=0x%08X", dwErr);
+    if (bProcessNew || bProcessDel)
+    {
+        ConProcess cp;
+        HANDLE h = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS,0);
+        _ASSERTE(h!=INVALID_HANDLE_VALUE);
+        if (h==INVALID_HANDLE_VALUE) {
+            DWORD dwErr = GetLastError();
+            wchar_t szError[255];
+            wsprintf(szError, L"Can't create process snapshoot, ErrCode=0x%08X", dwErr);
+            gConEmu.DnDstep(szError);
+            
+        } else {
+            //Snapshoot создан, поехали
 
-			SPRC.RelockExclusive(300);
-			m_Processes.push_back(cp);
-			SPRC.Unlock();
-		}
-        
-    } else {
-        //Snapshoot создан, поехали
+            // Перед добавлением нового - поставить пометочку на все процессы, вдруг кто уже убился 
+            iter = m_Processes.begin();
+            while (iter != m_Processes.end()) { iter->Alive = false; iter ++; }
 
-        // Перед добавлением нового - поставить пометочку на все процессы, вдруг кто уже убился 
-        iter = m_Processes.begin();
-        while (iter != m_Processes.end()) { iter->Alive = false; iter ++; }
+            PROCESSENTRY32 p; memset(&p, 0, sizeof(p)); p.dwSize = sizeof(p);
+            if (Process32First(h, &p)) 
+            {
+                do {
+                    // Если он addPID - добавить в m_Processes
+                    if (bProcessNew) {
+                    	for (i = 0; i < anCount; i++) {
+                            if (apPID[i] && apPID[i] == p.th32ProcessID) {
+                                if (!bProcessChanged) bProcessChanged = TRUE;
+                                memset(&cp, 0, sizeof(cp));
+                                cp.ProcessID = apPID[i]; cp.ParentPID = p.th32ParentProcessID;
+                                ProcessCheckName(cp, p.szExeFile); //far, telnet, cmd, conemuc, и пр.
+                                cp.Alive = true;
+                                cp.inConsole = true;
 
-        PROCESSENTRY32 p; memset(&p, 0, sizeof(p)); p.dwSize = sizeof(p);
-        if (Process32First(h, &p)) 
-        {
-            do {
-                // Если он addPID - добавить в m_Processes
-                if (addPID && addPID == p.th32ProcessID) {
-                    if (!bProcessChanged) bProcessChanged = TRUE;
-                    memset(&cp, 0, sizeof(cp));
-                    cp.ProcessID = addPID; cp.ParentPID = p.th32ParentProcessID;
-                    ProcessCheckName(cp, p.szExeFile); //far, telnet, cmd, conemuc, и пр.
-                    cp.Alive = true;
-
-					SPRC.RelockExclusive(300);
-                    m_Processes.push_back(cp);
-                    break;
-                }
-                
-                // Перебираем запомненные процессы - поставить флажок Alive
-                // сохранить имя для тех процессов, которым ранее это сделать не удалось
-                iter = m_Processes.begin();
-                while (iter != m_Processes.end())
-                {
-                    if (iter->ProcessID == p.th32ProcessID) {
-                        iter->Alive = true;
-                        if (!iter->NameChecked)
-                        {
-                            // пометить, что сменился список (определилось имя процесса)
-                            if (!bProcessChanged) bProcessChanged = TRUE;
-                            //far, telnet, cmd, conemuc, и пр.
-                            ProcessCheckName(*iter, p.szExeFile);
-                            // запомнить родителя
-                            iter->ParentPID = p.th32ParentProcessID;
+            					SPRC.RelockExclusive(300); // Заблокировать, если это еще не сделано
+                                m_Processes.push_back(cp);
+                            }
                         }
                     }
-                    iter ++;
-                }
-                
-            // Следущий процесс
-            } while (Process32Next(h, &p));
-        }
-        
-        // Убрать процессы, которых уже нет
-        iter = m_Processes.begin();
-        while (iter != m_Processes.end())
-        {
-            if (!iter->Alive) {
-                if (!bProcessChanged) bProcessChanged = TRUE;
-				SPRC.RelockExclusive(300);
-                iter = m_Processes.erase(iter);
-            } else {
-                iter ++;
+                    
+                    // Перебираем запомненные процессы - поставить флажок Alive
+                    // сохранить имя для тех процессов, которым ранее это сделать не удалось
+                    iter = m_Processes.begin();
+                    while (iter != m_Processes.end())
+                    {
+                        if (iter->ProcessID == p.th32ProcessID) {
+                            iter->Alive = true;
+                            if (!iter->NameChecked)
+                            {
+                                // пометить, что сменился список (определилось имя процесса)
+                                if (!bProcessChanged) bProcessChanged = TRUE;
+                                //far, telnet, cmd, conemuc, и пр.
+                                ProcessCheckName(*iter, p.szExeFile);
+                                // запомнить родителя
+                                iter->ParentPID = p.th32ParentProcessID;
+                            }
+                        }
+                        iter ++;
+                    }
+                    
+                // Следущий процесс
+                } while (Process32Next(h, &p));
             }
+            
+            // Закрыть shapshoot
+            SafeCloseHandle(h);
         }
-        
-        // Закрыть shapshoot
-        SafeCloseHandle(h);
+    }
+    
+    // Убрать процессы, которых уже нет
+    iter = m_Processes.begin();
+    while (iter != m_Processes.end())
+    {
+        if (!iter->Alive || !iter->inConsole) {
+            if (!bProcessChanged) bProcessChanged = TRUE;
+
+    		SPRC.RelockExclusive(300); // Если уже нами заблокирован - просто вернет FALSE	
+            iter = m_Processes.erase(iter);
+        } else {
+            iter ++;
+        }
     }
     
     // Обновить статус запущенных программ, получить PID FAR'а, посчитать количество процессов в консоли
@@ -2392,30 +2438,145 @@ void CRealConsole::ProcessAdd(DWORD addPID)
         mn_InRecreate = 0;
 }
 
-void CRealConsole::ProcessDelete(DWORD addPID)
-{
-    MSectionLock SPRC; SPRC.Lock(&csPRC, TRUE);
+//void CRealConsole::ProcessAdd(DWORD addPID)
+//{
+//    MSectionLock SPRC; SPRC.Lock(&csPRC);
+//
+//    BOOL lbRecreateOk = FALSE;
+//    if (mn_InRecreate && mn_ProcessCount == 0) {
+//        lbRecreateOk = TRUE;
+//    }
+//    
+//    std::vector<ConProcess>::iterator iter;
+//    BOOL bAlive = FALSE;
+//    BOOL bProcessChanged = FALSE;
+//    
+//    // может он уже есть в списке?
+//    iter=m_Processes.begin();
+//    while (iter!=m_Processes.end()) {
+//        if (addPID == iter->ProcessID) {
+//            addPID = 0;
+//            break;
+//        }
+//        iter++;
+//    }
+//
+//    
+//
+//    // Теперь нужно добавить новый процесс
+//    ConProcess cp;
+//    HANDLE h = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS,0);
+//    _ASSERTE(h!=INVALID_HANDLE_VALUE);
+//    if (h==INVALID_HANDLE_VALUE) {
+//        DWORD dwErr = GetLastError();
+//		if (addPID) {
+//			// Просто добавить, раз не удалось снять Snapshoot
+//			memset(&cp, 0, sizeof(cp));
+//			cp.ProcessID = addPID; cp.RetryName = true;
+//			wsprintf(cp.Name, L"Can't create snaphoot. ErrCode=0x%08X", dwErr);
+//
+//			SPRC.RelockExclusive(300);
+//			m_Processes.push_back(cp);
+//			SPRC.Unlock();
+//		}
+//        
+//    } else {
+//        //Snapshoot создан, поехали
+//
+//        // Перед добавлением нового - поставить пометочку на все процессы, вдруг кто уже убился 
+//        iter = m_Processes.begin();
+//        while (iter != m_Processes.end()) { iter->Alive = false; iter ++; }
+//
+//        PROCESSENTRY32 p; memset(&p, 0, sizeof(p)); p.dwSize = sizeof(p);
+//        if (Process32First(h, &p)) 
+//        {
+//            do {
+//                // Если он addPID - добавить в m_Processes
+//                if (addPID && addPID == p.th32ProcessID) {
+//                    if (!bProcessChanged) bProcessChanged = TRUE;
+//                    memset(&cp, 0, sizeof(cp));
+//                    cp.ProcessID = addPID; cp.ParentPID = p.th32ParentProcessID;
+//                    ProcessCheckName(cp, p.szExeFile); //far, telnet, cmd, conemuc, и пр.
+//                    cp.Alive = true;
+//
+//					SPRC.RelockExclusive(300);
+//                    m_Processes.push_back(cp);
+//                    break;
+//                }
+//                
+//                // Перебираем запомненные процессы - поставить флажок Alive
+//                // сохранить имя для тех процессов, которым ранее это сделать не удалось
+//                iter = m_Processes.begin();
+//                while (iter != m_Processes.end())
+//                {
+//                    if (iter->ProcessID == p.th32ProcessID) {
+//                        iter->Alive = true;
+//                        if (!iter->NameChecked)
+//                        {
+//                            // пометить, что сменился список (определилось имя процесса)
+//                            if (!bProcessChanged) bProcessChanged = TRUE;
+//                            //far, telnet, cmd, conemuc, и пр.
+//                            ProcessCheckName(*iter, p.szExeFile);
+//                            // запомнить родителя
+//                            iter->ParentPID = p.th32ParentProcessID;
+//                        }
+//                    }
+//                    iter ++;
+//                }
+//                
+//            // Следущий процесс
+//            } while (Process32Next(h, &p));
+//        }
+//        
+//        // Убрать процессы, которых уже нет
+//        iter = m_Processes.begin();
+//        while (iter != m_Processes.end())
+//        {
+//            if (!iter->Alive) {
+//                if (!bProcessChanged) bProcessChanged = TRUE;
+//				SPRC.RelockExclusive(300);
+//                iter = m_Processes.erase(iter);
+//            } else {
+//                iter ++;
+//            }
+//        }
+//        
+//        // Закрыть shapshoot
+//        SafeCloseHandle(h);
+//    }
+//    
+//    // Обновить статус запущенных программ, получить PID FAR'а, посчитать количество процессов в консоли
+//    ProcessUpdateFlags(bProcessChanged);
+//
+//    // 
+//    if (lbRecreateOk)
+//        mn_InRecreate = 0;
+//}
 
-    BOOL bProcessChanged = FALSE;
-    std::vector<ConProcess>::iterator iter=m_Processes.begin();
-    while (iter!=m_Processes.end()) {
-        if (addPID == iter->ProcessID) {
-            m_Processes.erase(iter);
-            bProcessChanged = TRUE;
-            break;
-        }
-        iter++;
-    }
-
-    // Обновить статус запущенных программ, получить PID FAR'а, посчитать количество процессов в консоли
-    ProcessUpdateFlags(bProcessChanged);
-
-	SPRC.Unlock();
-    
-    if (mn_InRecreate && mn_ProcessCount == 0 && !mb_ProcessRestarted) {
-        RecreateProcessStart();
-    }
-}
+//void CRealConsole::ProcessDelete(DWORD addPID)
+//{
+//    MSectionLock SPRC; SPRC.Lock(&csPRC, TRUE);
+//
+//    BOOL bProcessChanged = FALSE;
+//    std::vector<ConProcess>::iterator iter=m_Processes.begin();
+//    while (iter!=m_Processes.end()) {
+//        if (addPID == iter->ProcessID) {
+//            m_Processes.erase(iter);
+//            bProcessChanged = TRUE;
+//            break;
+//        }
+//        iter++;
+//    }
+//
+//    // Обновить статус запущенных программ, получить PID FAR'а, посчитать количество процессов в консоли
+//    ProcessUpdateFlags(bProcessChanged);
+//
+//	SPRC.Unlock();
+//    
+//    if (mn_InRecreate && mn_ProcessCount == 0 && !mb_ProcessRestarted) {
+//        RecreateProcessStart();
+//    }
+//}
 
 void CRealConsole::ProcessCheckName(struct ConProcess &ConPrc, LPWSTR asFullFileName)
 {
@@ -3347,11 +3508,11 @@ BOOL CRealConsole::CheckBufferSize()
 //  WORD newBufferWidth  = TextWidth();
 //
 //  if (abStarted) {
-//      ProcessAdd(anConEmuC_PID);
+//      Process Add(anConEmuC_PID);
 //
 //      BufferHeight = TextHeight(); TODO("нужно вернуть реальный требуемый размер...");
 //  } else {
-//      ProcessDelete(anConEmuC_PID);
+//      Process Delete(anConEmuC_PID);
 //
 //      if ((mn_ProgramStatus & CES_CMDACTIVE) == 0)
 //          BufferHeight = 0;
@@ -3627,24 +3788,61 @@ DWORD CRealConsole::WaitEndUpdate(DWORD dwTimeout)
 }
 */
 
+bool CRealConsole::isPackets()
+{
+    CESERVER_REQ** iter = m_PacketQueue;
+    CESERVER_REQ** end = iter + countof(m_PacketQueue);
+    
+    while (iter != end) {
+        if ( *iter != NULL )
+        	return true;
+		iter ++; // ячейка пуста
+    }
+
+	return false;
+}
+
 // Банально добавляет пакет в вектор. Сейчас порядок не важен
 void CRealConsole::PushPacket(CESERVER_REQ* pPkt)
 {
-#ifdef _DEBUG
-    DWORD dwChSize = 0;
-    CESERVER_CHAR_HDR ch = {0};
-    memmove(&dwChSize, pPkt->Data+86, dwChSize);
-    if (dwChSize) {
-        memmove(&ch, pPkt->Data+90, sizeof(ch));
-        _ASSERTE(ch.nSize == dwChSize);
-        _ASSERTE(ch.cr1.X<=ch.cr2.X && ch.cr1.Y<=ch.cr2.Y);
-    }
-#endif
+//#ifdef _DEBUG
+//    DWORD dwChSize = 0;
+//    CESERVER_CHAR_HDR ch = {0};
+//    memmove(&dwChSize, pPkt->Data+86, dwChSize);
+//    if (dwChSize) {
+//        memmove(&ch, pPkt->Data+90, sizeof(ch));
+//        _ASSERTE(ch.nSize == dwChSize);
+//        _ASSERTE(ch.cr1.X<=ch.cr2.X && ch.cr1.Y<=ch.cr2.Y);
+//    }
+//#endif
 
-    MSectionLock cs; cs.Lock(&csPKT);
-    m_Packets.push_back(pPkt);
-    cs.Unlock();
-    MCHKHEAP
+	int i;
+	DWORD dwTID = GetCurrentThreadId();
+	
+	CESERVER_REQ **pQueue = NULL;
+	for (i=0; !pQueue && i < MAX_SERVER_THREADS; i++) {
+		if (mn_ServerThreadsId[i] == dwTID)
+			pQueue = m_PacketQueue + (i*MAX_THREAD_PACKETS);
+	}
+	// Если это не серверная нить - добавляем в зарезервированную область
+	if (!pQueue) pQueue = m_PacketQueue + (MAX_SERVER_THREADS*MAX_THREAD_PACKETS);
+	
+	for (i=0; i < MAX_THREAD_PACKETS; i++, pQueue++)
+	{
+		if (*pQueue == NULL) {
+			*pQueue = pPkt;
+			pQueue = NULL;
+			break;
+		}
+	}
+	
+	// Если не NULL - значит очередь переполнена!
+	_ASSERTE(pQueue == NULL);
+
+    //MSectionLock cs; cs.Lock(&csPKT);
+    //m_Packets.push_back(pPkt);
+    //cs.Unlock();
+    //MCHKHEAP
     SetEvent(mh_PacketArrived);
 }
 
@@ -3652,25 +3850,34 @@ void CRealConsole::PushPacket(CESERVER_REQ* pPkt)
 // Вызывающая функция должна освободить результат (free)
 CESERVER_REQ* CRealConsole::PopPacket()
 {
-    if (m_Packets.empty())
+    if (!isPackets())
         return NULL;
 
     MCHKHEAP
 
     CESERVER_REQ* pRet = NULL, *pCmp = NULL;
 
-    MSectionLock cs; cs.Lock(&csPKT, TRUE);
+    //MSectionLock cs; cs.Lock(&csPKT, TRUE);
 
-    std::vector<CESERVER_REQ*>::iterator iter;
+    //std::vector<CESERVER_REQ*>::iterator iter;
+    CESERVER_REQ** iter = m_PacketQueue;
+    CESERVER_REQ** end = iter + countof(m_PacketQueue);
+    
     DWORD dwMinID = 0;
     
-    iter = m_Packets.begin();
-    while (iter != m_Packets.end()) {
+    while (iter != end) {
         pCmp = *iter;
+        if (pCmp == NULL) {
+        	iter ++; // ячейка пуста
+        	continue;
+        }
+
         if ( ((DWORD*)pCmp->Data)[1] <= mn_LastProcessedPkt ) {
             // Убить все пакеты, с МЕНЬШИМ ИД (хотя их и так уже быть не должно)
             TODO("Проверить, что произойдет с пакетами регионов/символов...");
-            iter = m_Packets.erase(iter);
+            DEBUGSTR(L"!!! *** Obsolete packet found *** !!!\n");
+            *iter = NULL;
+            iter ++;
             free(pCmp);
             MCHKHEAP
             continue;
@@ -3687,22 +3894,25 @@ CESERVER_REQ* CRealConsole::PopPacket()
     if (pRet) {
         mn_LastProcessedPkt = dwMinID;
 
-        // хз, можно ли запомнить итератор в del (и не поменяется ли действие в разных версия компилятора)
-        iter = m_Packets.begin();
-        while (iter != m_Packets.end()) {
+        iter = m_PacketQueue;
+        while (iter != end) {
             pCmp = *iter;
+            if (pCmp == NULL) {
+            	iter ++;
+            	continue;
+            }
+            
             if ( ((DWORD*)pCmp->Data)[1] <= mn_LastProcessedPkt ) {
                 if (pRet!=pCmp)
                     free(pCmp);
                 MCHKHEAP
-                iter = m_Packets.erase(iter);
-            } else {
-                iter ++;
+                *iter = NULL;
             }
+            iter ++;
         }
     }
 
-    cs.Unlock();
+    //cs.Unlock();
     MCHKHEAP
     return pRet;
 }
@@ -4186,13 +4396,16 @@ bool CRealConsole::isNtvdm()
 {
 	if (!this) return false;
 	if (mn_ProgramStatus & CES_NTVDM) {
-		if (mn_ProgramStatus & CES_FARFLAGS) {
-			//mn_ActiveStatus &= ~CES_NTVDM;
-		} else if (isFilePanel()) {
-			//mn_ActiveStatus &= ~CES_NTVDM;
-		} else {
-			return true;
-		}
+        // Наличие 16bit определяем ТОЛЬКО по WinEvent. Иначе не получится отсечь его завершение,
+        // т.к. процесс ntvdm.exe не выгружается, а остается в памяти.
+		return true;
+		//if (mn_ProgramStatus & CES_FARFLAGS) {
+		//	//mn_ActiveStatus &= ~CES_NTVDM;
+		//} else if (isFilePanel()) {
+		//	//mn_ActiveStatus &= ~CES_NTVDM;
+		//} else {
+		//	return true;
+		//}
 	}
 	return false;
 }

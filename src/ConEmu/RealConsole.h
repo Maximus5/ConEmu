@@ -85,11 +85,12 @@ struct ConProcess {
     bool  IsNtvdm;  // 16bit приложения
     bool  IsCmd;    // значит фар выполняет команду
     bool  NameChecked, RetryName;
-    bool  Alive;
+    bool  Alive, inConsole;
     TCHAR Name[64]; // чтобы полная инфа об ошибке влезала
 };
 
 #define MAX_SERVER_THREADS 3
+#define MAX_THREAD_PACKETS 100
 
 class CVirtualConsole;
 
@@ -163,6 +164,7 @@ public:
 	bool isEditor();
 	bool isViewer();
 	bool isNtvdm();
+	bool isPackets();
 
 public:
     // Вызываются из CVirtualConsole
@@ -224,8 +226,9 @@ private:
     WCHAR ms_PanelTitle[CONEMUTABMAX];
     void CheckPanelTitle();
     //
-    void ProcessAdd(DWORD addPID);
-    void ProcessDelete(DWORD addPID);
+    //void ProcessAdd(DWORD addPID);
+    //void ProcessDelete(DWORD addPID);
+    void ProcessUpdate(DWORD *apPID, UINT anCount);
     void ProcessUpdateFlags(BOOL abProcessChanged);
     void ProcessCheckName(struct ConProcess &ConPrc, LPWSTR asFullFileName);
     DWORD mn_ProgramStatus, mn_FarStatus;
@@ -255,9 +258,10 @@ private:
     void LogPacket(CESERVER_REQ* pInfo);
     BOOL RecreateProcessStart();
     // Прием и обработка пакетов
-    MSection csPKT; //DWORD ncsTPKT;
+    //MSection csPKT; //DWORD ncsTPKT;
     DWORD mn_LastProcessedPkt; HANDLE mh_PacketArrived;
-    std::vector<CESERVER_REQ*> m_Packets;
+    //std::vector<CESERVER_REQ*> m_Packets;
+    CESERVER_REQ* m_PacketQueue[(MAX_SERVER_THREADS+1)*MAX_THREAD_PACKETS];
     void PushPacket(CESERVER_REQ* pPkt);
     CESERVER_REQ* PopPacket();
 	BOOL mb_DataChanged;

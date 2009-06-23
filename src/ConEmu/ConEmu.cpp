@@ -2951,7 +2951,10 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
     // Tabs
     if (/*gSet.isTabs &&*/ gSet.isTabSelf && /*TabBar.IsShown() &&*/
         (
-         ((messg == WM_KEYDOWN || messg == WM_KEYUP) && wParam == VK_TAB)
+         ((messg == WM_KEYDOWN || messg == WM_KEYUP) 
+           && (wParam == VK_TAB 
+               || (TabBar.IsInSwitch() 
+                   && (wParam == VK_UP || wParam == VK_DOWN || wParam == VK_LEFT || wParam == VK_RIGHT))))
          || (messg == WM_CHAR && wParam == VK_TAB)
         ))
     {

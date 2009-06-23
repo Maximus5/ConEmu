@@ -1141,6 +1141,7 @@ int TabBarClass::GetNextTab(BOOL abForward)
         			} while (iter->ID != cur.ID);
         			break;
         		}
+				iter++;
         	}
     	} // Если не смогли в стиле Recent - идем простым путем
     
@@ -1246,7 +1247,7 @@ void TabBarClass::AddStack(VConTabs tab)
 	
 	BOOL lbExist = FALSE;
 	if (!m_TabStack.empty()) {
-		VConTabs tmp;
+		//VConTabs tmp;
 		std::vector<VConTabs>::iterator iter = m_TabStack.begin();
 		while (iter != m_TabStack.end()) {
 			if (iter->ID == tab.ID) {
@@ -1284,11 +1285,20 @@ BOOL TabBarClass::OnKeyboard(UINT messg, WPARAM wParam, LPARAM lParam)
 {
     //if (!IsShown()) return FALSE; -- всегда. Табы теперь есть в памяти
 
-    if (messg == WM_KEYDOWN && wParam == VK_TAB) {
+    if (messg == WM_KEYDOWN && wParam == VK_TAB)
+    {
         if (!isPressed(VK_SHIFT))
             SwitchNext();
         else
             SwitchPrev();
+    } else if (mb_InKeySwitching && messg == WM_KEYDOWN
+        && (wParam == VK_UP || wParam == VK_DOWN || wParam == VK_LEFT || wParam == VK_RIGHT))
+    {
+    	bool bRecent = gSet.isTabRecent;
+		gSet.isTabRecent = false;
+    	BOOL bForward = (wParam == VK_RIGHT || wParam == VK_DOWN);
+    	Switch(bForward);
+    	gSet.isTabRecent = bRecent;
     }
         
     return TRUE;
