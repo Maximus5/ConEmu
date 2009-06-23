@@ -646,6 +646,7 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 				pRCon->mb_DataChanged = FALSE;
 				if (lbIsActive) {
     				gConEmu.m_Child.Validate(); // сбросить флажок
+					pRCon->LogString("mp_VCon->Update from CRealConsole::MonitorThread");
     				pRCon->mp_VCon->Update(lbForceUpdate);
     				pRCon->mn_LastInvalidateTick = GetTickCount();
     			}
@@ -656,6 +657,7 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
     				pRCon->mp_VCon->UpdateCursor(lbNeedBlink);
     				// UpdateCursor Invalidate не зовет
     				if (lbNeedBlink) {
+						pRCon->LogString("Invalidating from CRealConsole::MonitorThread.1");
     					gConEmu.m_Child.Validate(); // сбросить флажок
     					gConEmu.m_Child.Invalidate();
 						UpdateWindow(ghWndDC);
@@ -663,6 +665,7 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
     				}
     			} else if (((GetTickCount() - pRCon->mn_LastInvalidateTick) > FORCE_INVALIDATE_TIMEOUT)) {
 					DEBUGSTR("+++ Force invalidate by timeout\n");
+					pRCon->LogString("Invalidating from CRealConsole::MonitorThread.2");
     				gConEmu.m_Child.Validate(); // сбросить флажок
     				gConEmu.m_Child.Invalidate();
 					UpdateWindow(ghWndDC); //2009-06-24. Подозрение, что если не это - у Zeroes1 не отрисовываются изменения
@@ -882,6 +885,8 @@ BOOL CRealConsole::StartProcess()
 
             if (lbRc)
             {
+				ProcessUpdate(&pi.dwProcessId, 1);
+
                 AllowSetForegroundWindow(pi.dwProcessId);
                 SetForegroundWindow(ghWnd);
 

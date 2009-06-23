@@ -152,6 +152,8 @@ LRESULT CConEmuChild::OnPaint(WPARAM wParam, LPARAM lParam)
     //if (gbInPaint)
 	//    break;
 
+	gConEmu.ActiveCon()->RCon()->LogString("CConEmuChild::OnPaint");
+
 	gSet.Performance(tPerfBlt, FALSE);
 
     if (gConEmu.isPictureView())

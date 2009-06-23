@@ -708,6 +708,7 @@ bool CVirtualConsole::Update(bool isForce, HDC *ahDc)
 		//if (mb_RequiredForceUpdate || updateText || updateCursor)
 		{
 			if (gConEmu.isActive(this)) {
+				mp_RCon->LogString("Invalidating from CVirtualConsole::Update.1");
 				gConEmu.m_Child.Invalidate();
 				//UpdateWindow(ghWndDC); // оно посылает сообщение в окно, и ждет окончания отрисовки
 				//#ifdef _DEBUG
@@ -843,6 +844,7 @@ bool CVirtualConsole::Update(bool isForce, HDC *ahDc)
 			_ASSERTE(gConEmu.isMainThread());
 			mb_PaintRequested = TRUE;
 			gConEmu.m_Child.Invalidate();
+			mp_RCon->LogString("Invalidating from CVirtualConsole::Update.2");
 			//09.06.13 а если так? быстрее изменения на экране не появятся?
 			UpdateWindow(ghWndDC); // оно посылает сообщение в окно, и ждет окончания отрисовки
 			#ifdef _DEBUG
@@ -1926,6 +1928,8 @@ void CVirtualConsole::Paint()
         // Собственно, копирование готового bitmap
         if (!gbNoDblBuffer) {
             // Обычный режим
+			mp_RCon->LogString("Blitting to Display");
+
             BitBlt(hPaintDc, 0, 0, client.right, client.bottom, hDC, 0, 0, SRCCOPY);
         } else {
             GdiSetBatchLimit(1); // отключить буферизацию вывода для текущей нити
