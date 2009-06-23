@@ -658,11 +658,14 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
     				if (lbNeedBlink) {
     					gConEmu.m_Child.Validate(); // сбросить флажок
     					gConEmu.m_Child.Invalidate();
+						UpdateWindow(ghWndDC);
     					pRCon->mn_LastInvalidateTick = GetTickCount();
     				}
     			} else if (((GetTickCount() - pRCon->mn_LastInvalidateTick) > FORCE_INVALIDATE_TIMEOUT)) {
+					DEBUGSTR("+++ Force invalidate by timeout\n");
     				gConEmu.m_Child.Validate(); // сбросить флажок
     				gConEmu.m_Child.Invalidate();
+					UpdateWindow(ghWndDC); //2009-06-24. Подозрение, что если не это - у Zeroes1 не отрисовываются изменения
     				pRCon->mn_LastInvalidateTick = GetTickCount();
     			}
 			}

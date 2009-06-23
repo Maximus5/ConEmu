@@ -3776,8 +3776,10 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
                             SyncConsoleToWindow();
                         OnSize(0, client.right, client.bottom);
                     }
-                    _ASSERTE(pVCon!=NULL);
-                    m_LastConSize = MakeCoord(pVCon->TextWidth,pVCon->TextHeight);
+                    //_ASSERTE(pVCon!=NULL);
+					if (pVCon) {
+						m_LastConSize = MakeCoord(pVCon->TextWidth,pVCon->TextHeight);
+					}
                 }
                 else if (pVCon && (m_LastConSize.X != pVCon->TextWidth || m_LastConSize.Y != pVCon->TextHeight))
                 {

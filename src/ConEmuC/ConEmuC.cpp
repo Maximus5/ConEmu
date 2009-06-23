@@ -38,6 +38,8 @@ WARNING("При запуске как ComSpec получаем ошибку: {crNewSize.X>=MIN_CON_WIDTH &&
 wchar_t gszDbgModLabel[6] = {0};
 #endif
 
+#define START_MAX_PROCESSES 1000
+#define CHECK_PROCESSES_TIMEOUT 500
 
 WARNING("!!!! Пока можно при появлении события запоминать текущий тик");
 // и проверять его в RefreshThread. Если он не 0 - и дельта больше (100мс?)
@@ -130,7 +132,7 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 void CreateLogSizeFile();
 void LogSize(COORD* pcrSize, LPCSTR pszLabel);
 BOOL WINAPI HandlerRoutine(DWORD dwCtrlType);
-int GetProcessCount(DWORD **rpdwPID);
+int GetProcessCount(DWORD *rpdwPID, UINT nMaxCount);
 SHORT CorrectTopVisible(int nY);
 void CorrectVisibleRect(CONSOLE_SCREEN_BUFFER_INFO* pSbi);
 WARNING("Вместо GetConsoleScreenBufferInfo нужно использовать MyGetConsoleScreenBufferInfo!");
@@ -148,6 +150,7 @@ int CALLBACK FontEnumProc(ENUMLOGFONTEX *lpelfe, NEWTEXTMETRICEX *lpntme, DWORD 
 typedef DWORD (WINAPI* FGetConsoleProcessList)(LPDWORD lpdwProcessList, DWORD dwProcessCount);
 FGetConsoleProcessList pfnGetConsoleProcessList = NULL;
 BOOL HookWinEvents(BOOL abEnabled);
+void CheckProcessCount(BOOL abForce=FALSE);
 
 
 #else
@@ -198,11 +201,13 @@ struct tag_Srv {
     UINT nMsgHookEnableDisable;
     UINT nMaxFPS;
     //
-    CRITICAL_SECTION csProc;
+    MSection *csProc;
     CRITICAL_SECTION csConBuf;
     // Список процессов нам нужен, чтобы определить, когда консоль уже не нужна.
     // Например, запустили FAR, он запустил Update, FAR перезапущен...
-    std::vector<DWORD> nProcesses;
+    //std::vector<DWORD> nProcesses;
+	UINT nProcessCount, nMaxProcesses;
+	DWORD* pnProcesses;
     //
     wchar_t szPipename[MAX_PATH], szInputname[MAX_PATH], szGuiPipeName[MAX_PATH];
     //
@@ -452,6 +457,8 @@ int main()
         srv.hRootProcess  = pi.hProcess; // Required for Win2k
         srv.dwRootProcess = pi.dwProcessId;
 
+		CheckProcessCount(TRUE);
+
         //if (pi.hProcess) SafeCloseHandle(pi.hProcess); 
         if (pi.hThread) SafeCloseHandle(pi.hThread);
 
@@ -466,9 +473,7 @@ int main()
         TODO("Проверить, может ли так получиться, что CreateProcess прошел, а к консоли он не прицепился? Может, если процесс GUI");
         nWait = WaitForSingleObject(ghFinilizeEvent, 6*1000); //Запуск процесса наверное может задержать антивирус
         if (nWait != WAIT_OBJECT_0) { // Если таймаут
-            EnterCriticalSection(&srv.csProc);
-            iRc = srv.nProcesses.size();
-            LeaveCriticalSection(&srv.csProc);
+            iRc = srv.nProcessCount;
             // И процессов в консоли все еще нет
             if (iRc == 0) {
                 wprintf (L"Process was not attached to console. Is it GUI?\nCommand to be executed:\n%s\n", gpszRunCmd);
@@ -532,9 +537,7 @@ wrap:
     if ((iRc!=0 && iRc!=CERR_RUNNEWCONSOLE) || gbAlwaysConfirmExit) {
         ExitWaitForKey(VK_RETURN, L"\n\nPress Enter to close console, or wait...", TRUE);
         if (iRc == CERR_PROCESSTIMEOUT) {
-            EnterCriticalSection(&srv.csProc);
-            int nCount = srv.nProcesses.size();
-            LeaveCriticalSection(&srv.csProc);
+            int nCount = srv.nProcessCount;
             if (nCount > 0) {
                 // Процесс таки запустился!
                 goto wait;
@@ -935,9 +938,7 @@ void ExitWaitForKey(WORD vkKey, LPCWSTR asConfirm, BOOL abNewLine)
     //    }
     while (ReadConsoleInput(GetStdHandle(STD_INPUT_HANDLE), &r, 1, &dwCount)) {
         if (gnRunMode == RM_SERVER) {
-            EnterCriticalSection(&srv.csProc);
-            int nCount = srv.nProcesses.size();
-            LeaveCriticalSection(&srv.csProc);
+            int nCount = srv.nProcessCount;
             if (nCount > 0) {
                 // ! Процесс таки запустился, закрываться не будем. Вернуть событие в буфер!
                 WriteConsoleInput(GetStdHandle(STD_INPUT_HANDLE), &r, 1, &dwCount);
@@ -1243,6 +1244,16 @@ int ServerInit()
         pfnGetConsoleProcessList = (FGetConsoleProcessList)GetProcAddress (hKernel, "GetConsoleProcessList");
     }
 
+	srv.csProc = new MSection();
+
+	srv.nMaxProcesses = START_MAX_PROCESSES; srv.nProcessCount = 0;
+	srv.pnProcesses = (DWORD*)Alloc(srv.nMaxProcesses, sizeof(DWORD));
+	if (srv.pnProcesses == NULL) {
+		wprintf (L"Can't allocate %i DWORDS!\n", srv.nMaxProcesses);
+		iRc = CERR_NOTENOUGHMEM1; goto wrap;
+	}
+
+
     if (!gbAttachMode) {
         CheckConEmuHwnd();
     }
@@ -1275,7 +1286,6 @@ int ServerInit()
 
     
     InitializeCriticalSection(&srv.csConBuf);
-    InitializeCriticalSection(&srv.csProc);
     InitializeCriticalSection(&srv.csChar);
 
     // временно используем эту переменную, чтобы не плодить локальных
@@ -1482,11 +1492,82 @@ void ServerDone(int aiRc)
     if (srv.pnAttrs) { Free(srv.pnAttrs); srv.pnAttrs = NULL; }
     if (srv.ptrLineCmp) { Free(srv.ptrLineCmp); srv.ptrLineCmp = NULL; }
     DeleteCriticalSection(&srv.csConBuf);
-    DeleteCriticalSection(&srv.csProc);
     DeleteCriticalSection(&srv.csChar);
     DeleteCriticalSection(&srv.csChangeSize);
 
     SafeCloseHandle(srv.hRootProcess); 
+
+	if (srv.csProc) {
+		delete srv.csProc;
+		srv.csProc = NULL;
+	}
+}
+
+void CheckProcessCount(BOOL abForce/*=FALSE*/)
+{
+	static DWORD dwLastCheckTick = GetTickCount();
+
+	if (!abForce) {
+		DWORD dwCurTick = GetTickCount();
+		if ((dwCurTick - dwLastCheckTick) < (DWORD)CHECK_PROCESSES_TIMEOUT)
+			return;
+	}
+
+	MSectionLock CS; CS.Lock(srv.csProc);
+
+	if (srv.nProcessCount == 0) {
+		srv.pnProcesses[0] = gnSelfPID;
+		srv.nProcessCount = 1;
+	}
+
+	if (!pfnGetConsoleProcessList) {
+
+		if (srv.hRootProcess) {
+			if (WaitForSingleObject(srv.hRootProcess, 0) == WAIT_OBJECT_0) {
+				srv.pnProcesses[1] = 0;
+				srv.nProcessCount = 1;
+			} else {
+				srv.pnProcesses[1] = srv.dwRootProcess;
+				srv.nProcessCount = 2;
+			}
+		}
+
+	} else {
+		DWORD nCurCount = 0;
+
+		nCurCount = pfnGetConsoleProcessList(srv.pnProcesses, srv.nProcessCount);
+
+		if (nCurCount > srv.nProcessCount) {
+			DWORD nSize = nCurCount + 20;
+			DWORD* pnPID = (DWORD*)Alloc(nSize, sizeof(DWORD));
+			if (pnPID) {
+				
+				CS.RelockExclusive(200);
+
+				nCurCount = pfnGetConsoleProcessList(pnPID, nSize);
+				if (nCurCount > 0 && nCurCount <= nSize) {
+					Free(srv.pnProcesses);
+					srv.pnProcesses = pnPID; pnPID = NULL;
+					srv.nProcessCount = nCurCount;
+					srv.nMaxProcesses = nSize;
+				}
+
+				if (pnPID)
+					Free(pnPID);
+			}
+		} else {
+			srv.nProcessCount = nCurCount;
+		}
+	}
+
+	dwLastCheckTick = GetTickCount();
+
+	// Процессов в консоли не осталось?
+	if (srv.nProcessCount == 1 && srv.pnProcesses[0] == gnSelfPID) {
+		CS.Unlock();
+		SetEvent(ghFinilizeEvent);
+		return;
+	}
 }
 
 int CALLBACK FontEnumProc(ENUMLOGFONTEX *lpelfe, NEWTEXTMETRICEX *lpntme, DWORD FontType, LPARAM lParam)
@@ -2643,9 +2724,12 @@ void WINAPI WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LO
         #endif
 
         if (((DWORD)idObject) != gnSelfPID) {
+			CheckProcessCount(TRUE);
+				/*
             EnterCriticalSection(&srv.csProc);
             srv.nProcesses.push_back(idObject);
             LeaveCriticalSection(&srv.csProc);
+				*/
 
             if (idChild == CONSOLE_APPLICATION_16BIT) {
                 //DWORD ntvdmPID = idObject;
@@ -2673,6 +2757,16 @@ void WINAPI WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LO
         #endif
 
         if (((DWORD)idObject) != gnSelfPID) {
+			CheckProcessCount(TRUE);
+
+			if (idChild == CONSOLE_APPLICATION_16BIT) {
+				//DWORD ntvdmPID = idObject;
+				dwActiveFlags &= ~CES_NTVDM;
+				//TODO: возможно стоит прибить процесс NTVDM?
+				SetPriorityClass(GetCurrentProcess(), NORMAL_PRIORITY_CLASS);
+			}
+
+				/*
             std::vector<DWORD>::iterator iter;
             EnterCriticalSection(&srv.csProc);
             for (iter=srv.nProcesses.begin(); iter!=srv.nProcesses.end(); iter++) {
@@ -2694,6 +2788,7 @@ void WINAPI WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LO
                 }
             }
             LeaveCriticalSection(&srv.csProc);
+				*/
             //
             //HANDLE hIn = CreateFile(L"CONIN$", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_READ,
             //                  0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
@@ -3030,39 +3125,8 @@ CESERVER_REQ* CreateConsoleInfo(CESERVER_CHAR* pRgnOnly, BOOL bCharAttrBuff)
 
     // 3
     // Если есть возможность (WinXP+) - получим реальный список процессов из консоли
-    if (pfnGetConsoleProcessList) {
-        DWORD nCount = countof(pOut->ConInfo.inf.nProcesses);
-        nSize = pfnGetConsoleProcessList(pOut->ConInfo.inf.nProcesses, nCount);
-        if (nSize > nCount) {
-            memset(pOut->ConInfo.inf.nProcesses, 0, sizeof(pOut->ConInfo.inf.nProcesses));
-            pOut->ConInfo.inf.nProcesses[0] = gnSelfPID;
-
-            nCount = nSize + 20;
-            DWORD* pnPID = (DWORD*)Alloc(nCount, sizeof(DWORD));
-            if (pnPID) {
-                nSize = pfnGetConsoleProcessList(pnPID, nCount);
-                if (nSize > 0 && nSize <= nCount) {
-                    nCount = countof(pOut->ConInfo.inf.nProcesses);
-                    _ASSERTE(nCount<nSize);
-                    for (int i1=(nSize-1), i2=(nCount-1); i2>0 && i1>0; i1--, i2--)
-                        pOut->ConInfo.inf.nProcesses[i2] = pnPID[i1];
-                }
-                Free(pnPID);
-            }
-        } else {
-            for (UINT i=nSize; i<nCount; i++) // Вдруг GetConsoleProcessList замусорила неиспользуемые ID
-                pOut->ConInfo.inf.nProcesses[i] = 0;
-        }
-    } else { // Иначе
-        pOut->ConInfo.inf.nProcesses[0] = gnSelfPID;
-        if (srv.hRootProcess) {
-            if (WaitForSingleObject(srv.hRootProcess, 0)) {
-                pOut->ConInfo.inf.nProcesses[1] = srv.dwRootProcess;
-            } else {
-                TODO("Для Win2k закрыть хэндл srv.hRootProcess, уведомить о завершении");
-            }
-        }
-    }
+	CheckProcessCount();
+	GetProcessCount(pOut->ConInfo.inf.nProcesses, countof(pOut->ConInfo.inf.nProcesses));
 
     // 4
     nSize = sizeof(srv.ci);
@@ -3764,8 +3828,38 @@ BOOL WINAPI HandlerRoutine(DWORD dwCtrlType)
     return TRUE;
 }
 
-int GetProcessCount(DWORD **rpdwPID)
+int GetProcessCount(DWORD *rpdwPID, UINT nMaxCount)
 {
+	if (!rpdwPID || !nMaxCount)
+		return srv.nProcessCount;
+
+	MSectionLock CS;
+	if (!CS.Lock(srv.csProc, 200)) {
+		// Если не удалось заблокировать переменную - просто вернем себя
+		*rpdwPID = gnSelfPID;
+		return 1;
+	}
+
+	UINT nSize = srv.nProcessCount;
+	if (nSize > nMaxCount) {
+		memset(rpdwPID, 0, sizeof(DWORD)*nMaxCount);
+		rpdwPID[0] = gnSelfPID;
+
+		for (int i1=(nSize-1), i2=(nMaxCount-1); i2>0 && i1>0; i1--, i2--)
+			rpdwPID[i2] = srv.pnProcesses[i1];
+
+		nSize = nMaxCount;
+
+	} else {
+		memmove(rpdwPID, srv.pnProcesses, sizeof(DWORD)*nSize);
+
+		for (UINT i=nSize; i<nMaxCount; i++)
+			rpdwPID[i] = 0;
+	}
+
+	return nSize;
+
+	/*
     //DWORD dwErr = 0; BOOL lbRc = FALSE;
     DWORD *pdwPID = NULL; int nCount = 0, i;
     EnterCriticalSection(&srv.csProc);
@@ -3786,6 +3880,7 @@ int GetProcessCount(DWORD **rpdwPID)
     if (rpdwPID)
         *rpdwPID = pdwPID;
     return nCount;
+	*/
 }
 
 // Если crNew выходит за пределы rgn - увеличить его
