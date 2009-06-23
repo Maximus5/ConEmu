@@ -150,7 +150,7 @@ int CALLBACK FontEnumProc(ENUMLOGFONTEX *lpelfe, NEWTEXTMETRICEX *lpntme, DWORD 
 typedef DWORD (WINAPI* FGetConsoleProcessList)(LPDWORD lpdwProcessList, DWORD dwProcessCount);
 FGetConsoleProcessList pfnGetConsoleProcessList = NULL;
 BOOL HookWinEvents(BOOL abEnabled);
-void CheckProcessCount(BOOL abForce=FALSE);
+BOOL CheckProcessCount(BOOL abForce=FALSE);
 
 
 #else
@@ -207,7 +207,7 @@ struct tag_Srv {
     // Например, запустили FAR, он запустил Update, FAR перезапущен...
     //std::vector<DWORD> nProcesses;
 	UINT nProcessCount, nMaxProcesses;
-	DWORD* pnProcesses;
+	DWORD* pnProcesses, *pnProcessesCopy;
     //
     wchar_t szPipename[MAX_PATH], szInputname[MAX_PATH], szGuiPipeName[MAX_PATH];
     //
@@ -1248,7 +1248,8 @@ int ServerInit()
 
 	srv.nMaxProcesses = START_MAX_PROCESSES; srv.nProcessCount = 0;
 	srv.pnProcesses = (DWORD*)Alloc(srv.nMaxProcesses, sizeof(DWORD));
-	if (srv.pnProcesses == NULL) {
+	srv.pnProcessesCopy = (DWORD*)Alloc(srv.nMaxProcesses, sizeof(DWORD));
+	if (srv.pnProcesses == NULL || srv.pnProcessesCopy == NULL) {
 		wprintf (L"Can't allocate %i DWORDS!\n", srv.nMaxProcesses);
 		iRc = CERR_NOTENOUGHMEM1; goto wrap;
 	}
@@ -1501,18 +1502,26 @@ void ServerDone(int aiRc)
 		delete srv.csProc;
 		srv.csProc = NULL;
 	}
+
+	if (srv.pnProcesses) {
+		Free(srv.pnProcesses); srv.pnProcesses = NULL;
+	}
+	if (srv.pnProcessesCopy) {
+		Free(srv.pnProcessesCopy); srv.pnProcessesCopy = NULL;
+	}
 }
 
-void CheckProcessCount(BOOL abForce/*=FALSE*/)
+BOOL CheckProcessCount(BOOL abForce/*=FALSE*/)
 {
 	static DWORD dwLastCheckTick = GetTickCount();
 
 	if (!abForce) {
 		DWORD dwCurTick = GetTickCount();
 		if ((dwCurTick - dwLastCheckTick) < (DWORD)CHECK_PROCESSES_TIMEOUT)
-			return;
+			return FALSE;
 	}
 
+	BOOL lbChanged = FALSE;
 	MSectionLock CS; CS.Lock(srv.csProc);
 
 	if (srv.nProcessCount == 0) {
@@ -1525,9 +1534,11 @@ void CheckProcessCount(BOOL abForce/*=FALSE*/)
 		if (srv.hRootProcess) {
 			if (WaitForSingleObject(srv.hRootProcess, 0) == WAIT_OBJECT_0) {
 				srv.pnProcesses[1] = 0;
+				lbChanged = srv.nProcessCount != 1;
 				srv.nProcessCount = 1;
 			} else {
 				srv.pnProcesses[1] = srv.dwRootProcess;
+				lbChanged = srv.nProcessCount != 2;
 				srv.nProcessCount = 2;
 			}
 		}
@@ -1536,6 +1547,7 @@ void CheckProcessCount(BOOL abForce/*=FALSE*/)
 		DWORD nCurCount = 0;
 
 		nCurCount = pfnGetConsoleProcessList(srv.pnProcesses, srv.nProcessCount);
+		lbChanged = srv.nProcessCount != nCurCount;
 
 		if (nCurCount > srv.nProcessCount) {
 			DWORD nSize = nCurCount + 20;
@@ -1558,6 +1570,11 @@ void CheckProcessCount(BOOL abForce/*=FALSE*/)
 		} else {
 			srv.nProcessCount = nCurCount;
 		}
+
+		if (!lbChanged) {
+			lbChanged = memcmp(srv.pnProcessesCopy, srv.pnProcesses, sizeof(DWORD)*START_MAX_PROCESSES) != 0;
+			memmove(srv.pnProcessesCopy, srv.pnProcesses, sizeof(DWORD)*START_MAX_PROCESSES);
+		}
 	}
 
 	dwLastCheckTick = GetTickCount();
@@ -1566,8 +1583,9 @@ void CheckProcessCount(BOOL abForce/*=FALSE*/)
 	if (srv.nProcessCount == 1 && srv.pnProcesses[0] == gnSelfPID) {
 		CS.Unlock();
 		SetEvent(ghFinilizeEvent);
-		return;
 	}
+
+	return lbChanged;
 }
 
 int CALLBACK FontEnumProc(ENUMLOGFONTEX *lpelfe, NEWTEXTMETRICEX *lpntme, DWORD FontType, LPARAM lParam)
@@ -2575,7 +2593,7 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
         // Если можем - проверим текущую раскладку в консоли
         if (pfnGetConsoleKeyboardLayoutName)
             CheckKeyboardLayout();
-            
+
         // Если это таймаут и не буферный режим //и нет пользовательской активности
         if ((gnBufferHeight != 0) && !lbEventualChange /*&& !(USER_ACTIVITY)*/) {
         	srv.bRequestPostFullReload = TRUE; // считать данные полностью
@@ -2605,6 +2623,7 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 
         // Проверка позиции курсора и размера буфера - это вызовет частичное или полное сканирование консоли
         lbLocalForced = FALSE;
+		// Если все еще считаем, что изменений нет
         if (nWait == WAIT_TIMEOUT) {
             // К сожалению, исключительно курсорные события не приходят (если консоль не в фокусе)
             if (MyGetConsoleScreenBufferInfo(ghConOut, &lsbi)) {
@@ -2628,7 +2647,7 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
             if (nWait == WAIT_TIMEOUT) { // Если изменений не выставлено - проверим таймаут обновления
                 DWORD nCurTick = GetTickCount();
                 nDelta = nCurTick - nLastUpdateTick;
-                if (nDelta > nDelayRefresh) {
+                if (nDelta > MIN_FORCEREFRESH_INTERVAL/*nDelayRefresh*/) {
                     DEBUGSTR(L"...FORCE_REDRAW_FIX triggered\n");
                     srv.bNeedFullReload = TRUE;
                     //srv.bForceFullSend = TRUE;
@@ -2638,6 +2657,13 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
             }
             #endif
         }
+
+		if (CheckProcessCount()) {
+			TODO("Пока так, а потом можно будет отдельной командой только процессы передать");
+			srv.bNeedFullReload = TRUE;
+			srv.bForceFullSend = TRUE;
+			nWait = (WAIT_OBJECT_0+1);
+		}
 
         if (nWait == (WAIT_OBJECT_0+1)) {
             #ifdef _DEBUG
