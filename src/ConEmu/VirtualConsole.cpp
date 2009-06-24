@@ -1633,50 +1633,26 @@ HBRUSH CVirtualConsole::PartBrush(wchar_t ch, SHORT nBackIdx, SHORT nForeIdx)
 
 void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, COORD pos, UINT dwSize)
 {
-#ifdef _DEBUG
-	wchar_t szCursorInfo[60];
-	wsprintfW(szCursorInfo, L"CursorDraw (X=%i, Y=%i, H:%i)\n", 
-		csbi.dwCursorPosition.X, csbi.dwCursorPosition.Y, dwSize);
-	DEBUGSTR(szCursorInfo);
-	static DWORD nLastTick = 0;
-	DWORD nTick = GetTickCount();
-	DWORD nDelta = nTick - nLastTick;
-	if (Cursor.x == csbi.dwCursorPosition.X && Cursor.y == csbi.dwCursorPosition.Y) {
-		if (nDelta < 10) {
-			//_ASSERTE(nDelta > 100);
-			nDelta = nDelta;
-		}
-	}
-	nLastTick = nTick;
-#endif
-
     Cursor.x = csbi.dwCursorPosition.X;
     Cursor.y = csbi.dwCursorPosition.Y;
 
     int CurChar = pos.Y * TextWidth + pos.X;
-    if (CurChar < 0 || CurChar>=(int)(TextWidth * TextHeight))
+    if (CurChar < 0 || CurChar>=(int)(TextWidth * TextHeight)) {
+    	gConEmu.m_Child.SetCaret ( -1 ); // ≈сли был создан системный курсор - он разрушитс€
         return; // может быть или глюк - или размер консоли был резко уменьшен и предыдуща€ позици€ курсора пропала с экрана
-    if (!ConCharX)
+    }
+    if (!ConCharX) {
+    	gConEmu.m_Child.SetCaret ( -1 ); // ≈сли был создан системный курсор - он разрушитс€
         return; // защита
+    }
     COORD pix;
-
+    
     pix.X = pos.X * gSet.FontWidth();
     pix.Y = pos.Y * gSet.FontHeight();
     if (pos.X && ConCharX[CurChar-1])
         pix.X = ConCharX[CurChar-1];
 
-
-    if (gSet.isCursorColor)
-    {
-        SetTextColor(hPaintDC, Cursor.foreColor);
-        SetBkColor(hPaintDC, Cursor.bgColor);
-    }
-    else
-    {
-        SetTextColor(hPaintDC, Cursor.foreColor);
-        SetBkColor(hPaintDC, Cursor.foreColorNum < 5 ? gSet.Colors[15] : gSet.Colors[0]);
-    }
-
+        
     RECT rect;
     
     if (!gSet.isCursorV)
@@ -1730,6 +1706,26 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, COORD pos, UINT dwSize)
         //      + klMax(1, MulDiv(gSet.FontWidth(), cinf.dwSize, 100) 
         //      + (cinf.dwSize > 10 ? 1 : 0));
         rect.bottom = (pos.Y+1) * gSet.FontHeight();
+    }
+    
+    
+	//if (!gSet.isCursorBlink) {
+	//	gConEmu.m_Child.SetCaret ( 1, rect.left, rect.top, rect.right-rect.left, rect.bottom-rect.top );
+	//	return;
+	//} else {
+	//	gConEmu.m_Child.SetCaret ( -1 ); // ≈сли был создан системный курсор - он разрушитс€
+	//}
+
+
+    if (gSet.isCursorColor)
+    {
+        SetTextColor(hPaintDC, Cursor.foreColor);
+        SetBkColor(hPaintDC, Cursor.bgColor);
+    }
+    else
+    {
+        SetTextColor(hPaintDC, Cursor.foreColor);
+        SetBkColor(hPaintDC, Cursor.foreColorNum < 5 ? gSet.Colors[15] : gSet.Colors[0]);
     }
     
     HFONT hOldFont = NULL;

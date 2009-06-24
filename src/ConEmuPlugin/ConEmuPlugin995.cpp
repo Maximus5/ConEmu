@@ -1,6 +1,6 @@
 #include <windows.h>
 #include "..\common\common.hpp"
-#include "..\common\pluginW995.hpp"
+#include "..\common\pluginW1007.hpp" // Отличается от 995 наличием SynchoApi
 #include "PluginHeader.h"
 
 

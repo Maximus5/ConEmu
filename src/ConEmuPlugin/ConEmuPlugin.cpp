@@ -13,7 +13,7 @@
 //#include <string.h>
 //#include <tchar.h>
 #include "..\common\common.hpp"
-#include "..\common\pluginW995.hpp"
+#include "..\common\pluginW1007.hpp"
 #include "PluginHeader.h"
 #include <vector>
 
@@ -30,6 +30,20 @@ WARNING("Подозреваю, что в gszRootKey не учитывается имя пользователя/конфигурац
 
 #ifdef _DEBUG
 wchar_t gszDbgModLabel[6] = {0};
+#endif
+
+#if defined(__GNUC__)
+extern "C"{
+  BOOL WINAPI DllMain( HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved );
+  HWND WINAPI GetFarHWND();
+  HWND WINAPI GetFarHWND2(BOOL abConEmuOnly);
+  void WINAPI GetFarVersion ( FarVersion* pfv );
+  int  WINAPI ProcessEditorInputW(void* Rec);
+  void WINAPI SetStartupInfoW(void *aInfo);
+  int  WINAPI ProcessSynchroEventW(int Event,void *Param);
+  BOOL WINAPI IsTerminalMode();
+  BOOL WINAPI IsConsoleActive();
+};
 #endif
 
 
@@ -85,6 +99,22 @@ HANDLE WINAPI _export OpenPluginW(int OpenFrom,INT_PTR Item)
 	}
 	return INVALID_HANDLE_VALUE;
 }
+
+int WINAPI _export ProcessSynchroEventW(int Event,void *Param)
+{
+	if (Event == SE_COMMONSYNCHRO) {
+    	if (!gbInfoW_OK)
+    		return 0;
+
+    	if (gnReqCommand != (DWORD)-1) {
+    		TODO("Определить текущую область... (panel/editor/viewer/menu/...");
+    		gnPluginOpenFrom = 0;
+    		ProcessCommand(gnReqCommand, FALSE/*bReqMainThread*/, gpReqCommandData);
+    	}
+	}
+	return 0;
+}
+
 /* COMMON - end */
 
 
@@ -132,18 +162,6 @@ wchar_t gsFarLang[64];
 //#endif
 //extern void SetConsoleFontSizeTo(HWND inConWnd, int inSizeX, int inSizeY);
 
-#if defined(__GNUC__)
-extern "C"{
-  BOOL WINAPI DllMain( HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved );
-  HWND WINAPI GetFarHWND();
-  HWND WINAPI GetFarHWND2(BOOL abConEmuOnly);
-  void WINAPI GetFarVersion ( FarVersion* pfv );
-  int  WINAPI ProcessEditorInputW(void* Rec);
-  void WINAPI SetStartupInfoW(void *aInfo);
-  BOOL WINAPI IsTerminalMode();
-  BOOL WINAPI IsConsoleActive();
-};
-#endif
 
 BOOL WINAPI DllMain( HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved )
 {
@@ -317,7 +335,7 @@ void ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData)
 
 		INPUT_RECORD evt[10];
 		DWORD dwStartWait, dwCur, dwTimeout, dwInputs = 0, dwInputsFirst = 0;
-		BOOL  lbInputs = FALSE;
+		//BOOL  lbInputs = FALSE;
 		HANDLE hInput = GetStdHandle(STD_INPUT_HANDLE);
 
 		BOOL lbInput = PeekConsoleInput(hInput, evt, 10, &dwInputsFirst);

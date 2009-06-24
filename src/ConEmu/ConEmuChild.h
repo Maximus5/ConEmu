@@ -17,6 +17,8 @@ public:
 	HWND Create();
 	void Invalidate();
 	void Validate();
+	
+	void SetCaret ( int Visible, UINT X=0, UINT Y=0, UINT nWidth=0, UINT nHeight=0 );
 
 protected:
 	UINT mn_MsgTabChanged;
@@ -25,6 +27,12 @@ protected:
 	friend class CVirtualConsole;
 	friend class CRealConsole;
 #endif
+    struct tag_Caret {
+    	UINT  X, Y;
+    	UINT  nWidth, nHeight;
+    	BOOL  bVisible;
+    	BOOL  bCreated;
+    } Caret;
 };
 
 class CConEmuBack

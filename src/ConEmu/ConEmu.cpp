@@ -2272,7 +2272,8 @@ LRESULT CConEmuMain::OnPaint(WPARAM wParam, LPARAM lParam)
 
 void CConEmuMain::PaintCon()
 {
-    ProgressBars->OnTimer();
+    if (ProgressBars)
+		ProgressBars->OnTimer();
     pVCon->Paint();
 }
 

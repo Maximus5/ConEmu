@@ -441,7 +441,7 @@ BOOL CheckConIme()
 				dwValue = 1;
 	        reg.CloseKey();
 	        if (dwValue!=0) {
-		        if (IDCANCEL==MessageBox(0,_T("Unwanted value of 'LoadConIme' registry parameter!\r\nPress 'Cancel' to stop this message.\r\nTake a look at 'FAQ-ConEmu.txt'"), _T("ConEmu"),MB_OKCANCEL|MB_ICONEXCLAMATION))
+		        if (IDCANCEL==MessageBox(0,_T("Unwanted value of 'LoadConIme' registry parameter!\r\nPress 'Cancel' to stop this message.\r\nTake a look at 'FAQ-ConEmu.txt'.\r\nYou may simply import file 'Disable_ConIme.reg'\r\nlocated in 'ConEmu.Addons' folder."), _T("ConEmu"),MB_OKCANCEL|MB_ICONEXCLAMATION))
 			        lbStopWarning = TRUE;
 		    }
 	    } else {

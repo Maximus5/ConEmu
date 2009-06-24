@@ -11,6 +11,7 @@ private:
 	HWND mh_Tabbar, mh_ConmanToolbar, mh_Rebar, mh_TabTip;
 	bool _active;
 	int _tabHeight;
+	int mn_ThemeHeightDiff;
 	RECT m_Margins;
 	bool _titleShouldChange;
 	int _prevTab;
@@ -35,6 +36,8 @@ private:
 protected:
 	static LRESULT CALLBACK TabProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 	static WNDPROC _defaultTabProc;
+	static LRESULT CALLBACK BarProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+	static WNDPROC _defaultBarProc;
 	
 	// Пока - банально. VCon, номер в FAR
 	typedef union tag_FAR_WND_ID { 

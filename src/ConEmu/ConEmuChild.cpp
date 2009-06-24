@@ -4,6 +4,7 @@ CConEmuChild::CConEmuChild()
 {
 	mn_MsgTabChanged = RegisterWindowMessage(CONEMUTABCHANGED);
 	mb_Invalidated = FALSE;
+	memset(&Caret, 0, sizeof(Caret));
 }
 
 CConEmuChild::~CConEmuChild()
@@ -151,6 +152,8 @@ LRESULT CConEmuChild::OnPaint(WPARAM wParam, LPARAM lParam)
 	BOOL lbSkipDraw = FALSE;
     //if (gbInPaint)
 	//    break;
+	
+	mb_Invalidated = FALSE;
 
 	gConEmu.ActiveCon()->RCon()->LogString("CConEmuChild::OnPaint");
 
@@ -224,14 +227,19 @@ void CConEmuChild::Invalidate()
 {
 	//2009-06-22 Опять поперла непрорисовка. Причем если по экрану окошко повозить - изображение нормальное
 	// Так что пока лучше два раза нарисуем...
-	if (mb_Invalidated) {
-		DEBUGSTR(L" ### Warning! Invalidate on DC window will be duplicated\n");
-	//	return;
-	}
+	//if (mb_Invalidated) {
+	//	DEBUGSTR(L" ### Warning! Invalidate on DC window will be duplicated\n");
+	////	return;
+	//}
 	if (ghWndDC) {
 		DEBUGSTR(L" +++ Invalidate on DC window called\n");
-		mb_Invalidated = TRUE;
-		InvalidateRect(ghWndDC, NULL, FALSE);
+		//mb_Invalidated = TRUE;
+		RECT rcClient; GetClientRect(ghWndDC, &rcClient);
+		InvalidateRect(ghWndDC, &rcClient, FALSE);
+		if (!mb_Invalidated) {
+			mb_Invalidated = TRUE;
+			PostMessage(ghWndDC, WM_PAINT, 0,0);
+		}
 	}
 }
 
@@ -240,6 +248,44 @@ void CConEmuChild::Validate()
 	mb_Invalidated = FALSE;
 	DEBUGSTR(L" +++ Validate on DC window called\n");
 	//if (ghWndDC) ValidateRect(ghWnd, NULL);
+}
+
+void CConEmuChild::SetCaret ( int Visible, UINT X, UINT Y, UINT nWidth, UINT nHeight )
+{
+	if (Visible == -1) {
+		if (Caret.bCreated) {
+			DestroyCaret();
+			Caret.bCreated = FALSE;
+			Caret.bVisible = FALSE;
+		}
+		return;
+	}
+	
+	if (Caret.bCreated && (nWidth != Caret.nWidth || nHeight != Caret.nHeight)) {
+		DestroyCaret();
+		Caret.bCreated = FALSE;
+		Caret.bVisible = FALSE;
+	}
+	if (!Caret.bCreated) {
+		//If second parameter is (HBITMAP)1 - the caret dotted
+		Caret.bCreated = CreateCaret ( ghWndDC, (HBITMAP)0, nWidth, nHeight );
+		Caret.nWidth = nWidth; Caret.nHeight = nHeight;
+	}
+	
+	if (Visible == 0 && Caret.bVisible) {
+		ShowCaret ( ghWndDC );
+		Caret.bVisible = FALSE;
+	}
+
+	if (Caret.X != X || Caret.Y != Y) {	
+		SetCaretPos ( X, Y );
+		Caret.X = X; Caret.Y = Y;
+	}
+	
+	if (Visible == 1 && !Caret.bVisible) {
+		ShowCaret ( ghWndDC );
+		Caret.bVisible = TRUE;
+	}
 }
 
 

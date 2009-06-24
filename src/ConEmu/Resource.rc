@@ -419,7 +419,6 @@ END
 //
 
 IDB_CONMAN1             BITMAP  DISCARDABLE     "toolbar1.bmp"
-IDB_REBAR               BITMAP  DISCARDABLE     "Rebar.bmp"
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -482,7 +481,8 @@ END
 
 STRINGTABLE DISCARDABLE 
 BEGIN
-    cbFixFarBorders         "You can specify additional font for drawing FAR borders.\nI.e. Main font is 'Fixedsys', additional is 'Lucida Console'."
+    cbFixFarBorders         "You can specify additional font for drawing FAR borders.\nI.e. Main font is 'Fixedsys', additional is 'Lucida Console'.\n3s - enhance scrollbars and progresbars."
+    cbGUIpb                 "Enhancement of standart (only) copy/move progressbars.\nYou may choose 3state of 'Fix Far Borders' instead of..."
 END
 
 #endif    // English (U.S.) resources

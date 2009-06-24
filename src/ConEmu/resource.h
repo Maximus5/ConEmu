@@ -14,7 +14,6 @@
 #define IDC_COPY                        108
 #define IDC_LINK                        109
 #define IDC_MOVE                        110
-#define IDB_REBAR                       111
 #define c0                              1000
 #define c1                              1001
 #define c2                              1002

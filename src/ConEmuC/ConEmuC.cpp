@@ -497,7 +497,12 @@ int main()
 wait:    
     if (gnRunMode == RM_SERVER) {
         // По крайней мере один процесс в консоли запустился. Ждем пока в консоли не останется никого кроме нас
-        WaitForSingleObject(ghFinilizeEvent, INFINITE);
+        nWait = WaitForSingleObject(ghFinilizeEvent, INFINITE);
+		#ifdef _DEBUG
+		if (nWait == WAIT_OBJECT_0) {
+			DEBUGSTR(L"*** FinilizeEvent was set!\n");
+		}
+		#endif
     } else {
         HANDLE hEvents[3];
         hEvents[0] = pi.hProcess;
@@ -1515,6 +1520,11 @@ BOOL CheckProcessCount(BOOL abForce/*=FALSE*/)
 {
 	static DWORD dwLastCheckTick = GetTickCount();
 
+	UINT nPrevCount = srv.nProcessCount;
+	if (srv.nProcessCount <= 0) {
+		abForce = TRUE;
+	}
+
 	if (!abForce) {
 		DWORD dwCurTick = GetTickCount();
 		if ((dwCurTick - dwLastCheckTick) < (DWORD)CHECK_PROCESSES_TIMEOUT)
@@ -1572,15 +1582,20 @@ BOOL CheckProcessCount(BOOL abForce/*=FALSE*/)
 		}
 
 		if (!lbChanged) {
-			lbChanged = memcmp(srv.pnProcessesCopy, srv.pnProcesses, sizeof(DWORD)*START_MAX_PROCESSES) != 0;
-			memmove(srv.pnProcessesCopy, srv.pnProcesses, sizeof(DWORD)*START_MAX_PROCESSES);
+			UINT nSize = sizeof(DWORD)*START_MAX_PROCESSES;
+			#ifdef _DEBUG
+			_ASSERTE(!IsBadWritePtr(srv.pnProcessesCopy,nSize));
+			_ASSERTE(!IsBadWritePtr(srv.pnProcesses,nSize));
+			#endif
+			lbChanged = memcmp(srv.pnProcessesCopy, srv.pnProcesses, nSize) != 0;
+			memmove(srv.pnProcessesCopy, srv.pnProcesses, nSize);
 		}
 	}
 
 	dwLastCheckTick = GetTickCount();
 
 	// Процессов в консоли не осталось?
-	if (srv.nProcessCount == 1 && srv.pnProcesses[0] == gnSelfPID) {
+	if (nPrevCount > 1 && srv.nProcessCount == 1 && srv.pnProcesses[0] == gnSelfPID) {
 		CS.Unlock();
 		SetEvent(ghFinilizeEvent);
 	}
@@ -3153,6 +3168,7 @@ CESERVER_REQ* CreateConsoleInfo(CESERVER_CHAR* pRgnOnly, BOOL bCharAttrBuff)
     // Если есть возможность (WinXP+) - получим реальный список процессов из консоли
 	CheckProcessCount();
 	GetProcessCount(pOut->ConInfo.inf.nProcesses, countof(pOut->ConInfo.inf.nProcesses));
+	_ASSERTE(pOut->ConInfo.inf.nProcesses[0]);
 
     // 4
     nSize = sizeof(srv.ci);
@@ -3856,8 +3872,10 @@ BOOL WINAPI HandlerRoutine(DWORD dwCtrlType)
 
 int GetProcessCount(DWORD *rpdwPID, UINT nMaxCount)
 {
-	if (!rpdwPID || !nMaxCount)
+	if (!rpdwPID || !nMaxCount) {
+		_ASSERTE(rpdwPID && nMaxCount);
 		return srv.nProcessCount;
+	}
 
 	MSectionLock CS;
 	if (!CS.Lock(srv.csProc, 200)) {
@@ -3871,7 +3889,7 @@ int GetProcessCount(DWORD *rpdwPID, UINT nMaxCount)
 		memset(rpdwPID, 0, sizeof(DWORD)*nMaxCount);
 		rpdwPID[0] = gnSelfPID;
 
-		for (int i1=(nSize-1), i2=(nMaxCount-1); i2>0 && i1>0; i1--, i2--)
+		for (int i1=0, i2=(nMaxCount-1); i1<nSize && i2>0; i1++, i2--)
 			rpdwPID[i2] = srv.pnProcesses[i1];
 
 		nSize = nMaxCount;
@@ -3882,6 +3900,8 @@ int GetProcessCount(DWORD *rpdwPID, UINT nMaxCount)
 		for (UINT i=nSize; i<nMaxCount; i++)
 			rpdwPID[i] = 0;
 	}
+
+	_ASSERTE(rpdwPID[0]);
 
 	return nSize;
 

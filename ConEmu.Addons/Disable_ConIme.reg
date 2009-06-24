@@ -1,0 +1,4 @@
+REGEDIT4
+
+[HKEY_CURRENT_USER\Console]
+"LoadConIme"=dword:00000000

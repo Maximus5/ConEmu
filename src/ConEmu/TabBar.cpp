@@ -12,6 +12,8 @@ TabBarClass TabBar;
 const int TAB_FONT_HEIGTH = 16;
 wchar_t TAB_FONT_FACE[] = L"Tahoma";
 WNDPROC TabBarClass::_defaultTabProc = NULL;
+WNDPROC TabBarClass::_defaultBarProc = NULL;
+typedef BOOL (WINAPI* FAppThemed)();
 
 #ifndef TBN_GETINFOTIP
 #define TBN_GETINFOTIP TBN_GETINFOTIPW
@@ -41,6 +43,7 @@ TabBarClass::TabBarClass()
     mb_InKeySwitching = FALSE;
     ms_TmpTabText[0] = 0;
 	mn_CurSelTab = 0;
+	mn_ThemeHeightDiff = 0;
 }
 
 void TabBarClass::Enable(BOOL abEnabled)
@@ -293,6 +296,20 @@ LRESULT CALLBACK TabBarClass::TabProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARA
     return CallWindowProc(_defaultTabProc, hwnd, uMsg, wParam, lParam);
 }
 
+LRESULT CALLBACK TabBarClass::BarProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+    switch (uMsg)
+    {
+    case WM_WINDOWPOSCHANGING:
+        {
+        	LPWINDOWPOS pos = (LPWINDOWPOS)lParam;
+            pos->y = (TabBar.mn_ThemeHeightDiff == 0) ? 1 : 0;
+            return 0;
+        }
+    }
+    return CallWindowProc(_defaultBarProc, hwnd, uMsg, wParam, lParam);
+}
+
 
 bool TabBarClass::IsActive()
 {
@@ -509,7 +526,7 @@ void TabBarClass::UpdateToolbarPos()
         SIZE sz; 
         SendMessage(mh_ConmanToolbar, TB_GETMAXSIZE, 0, (LPARAM)&sz);
         if (mh_Rebar) {
-            if (sz.cx > mn_LastToolbarWidth)
+            if (sz.cx != mn_LastToolbarWidth)
             {
                 REBARBANDINFO rbBand={80}; // не используем size, т.к. приходит "новый" размер из висты и в XP обламываемся
                 rbBand.fMask  = RBBIM_SIZE | RBBIM_CHILDSIZE;
@@ -518,8 +535,7 @@ void TabBarClass::UpdateToolbarPos()
                 rbBand.cyMinChild = sz.cy;
 
                 // Add the band that has the toolbar.
-                if (SendMessage(mh_Rebar, RB_SETBANDINFO, 1, (LPARAM)&rbBand)) {
-                }
+                SendMessage(mh_Rebar, RB_SETBANDINFO, 1, (LPARAM)&rbBand);
             }
         } else {
             RECT rcClient;
@@ -808,6 +824,9 @@ HWND TabBarClass::CreateToolbar()
     mh_ConmanToolbar = CreateWindowEx(0, TOOLBARCLASSNAME, NULL, 
         WS_CHILD|WS_VISIBLE|TBSTYLE_FLAT|CCS_NOPARENTALIGN|CCS_NORESIZE|CCS_NODIVIDER|TBSTYLE_TOOLTIPS|TBSTYLE_TRANSPARENT, 0, 0, 0, 0, mh_Rebar, 
         NULL, NULL, NULL); 
+        
+   _defaultBarProc = (WNDPROC)SetWindowLongPtr(mh_ConmanToolbar, GWL_WNDPROC, (LONG_PTR)BarProc);
+
  
    SendMessage(mh_ConmanToolbar, TB_BUTTONSTRUCTSIZE, (WPARAM) sizeof(TBBUTTON), 0); 
    SendMessage(mh_ConmanToolbar, TB_SETBITMAPSIZE, 0, MAKELONG(16,16)); 
@@ -841,6 +860,21 @@ HWND TabBarClass::CreateTabbar()
         return NULL; // нет табов - нет и тулбара
     if (mh_Tabbar)
         return mh_Tabbar; // Уже создали
+
+	// Важно проверку делать после создания главного окна, иначе IsAppThemed будет возвращать FALSE
+    BOOL bAppThemed = FALSE, bThemeActive = FALSE;
+    FAppThemed pfnThemed = NULL;
+    HMODULE hUxTheme = LoadLibrary ( L"UxTheme.dll" );
+    if (hUxTheme) {
+    	pfnThemed = (FAppThemed)GetProcAddress( hUxTheme, "IsAppThemed" );
+    	if (pfnThemed) bAppThemed = pfnThemed();
+    	pfnThemed = (FAppThemed)GetProcAddress( hUxTheme, "IsThemeActive" );
+    	if (pfnThemed) bThemeActive = pfnThemed();
+    	FreeLibrary ( hUxTheme ); hUxTheme = NULL;
+    }
+    if (!bAppThemed || !bThemeActive)
+    	mn_ThemeHeightDiff = 2;
+
     
     /*mh_TabbarP = CreateWindow(_T("VirtualConsoleClassBar"), _T(""), 
             WS_VISIBLE|WS_CHILD, 0,0,340,22, ghWnd, 0, 0, 0);
@@ -881,7 +915,7 @@ HWND TabBarClass::CreateTabbar()
 
 		GetClientRect(ghWnd, &rcClient); 
 		TabCtrl_AdjustRect(mh_Tabbar, FALSE, &rcClient);
-		_tabHeight = rcClient.top;
+		_tabHeight = rcClient.top - mn_ThemeHeightDiff;
 
 
 
@@ -911,7 +945,7 @@ void TabBarClass::CreateRebar()
     }
 
     rbBand.fMask  = RBBIM_SIZE | RBBIM_CHILD | RBBIM_CHILDSIZE | RBBIM_ID | RBBIM_STYLE | RBBIM_COLORS;
-    rbBand.fStyle = RBBS_CHILDEDGE | RBBS_FIXEDSIZE;
+    rbBand.fStyle = RBBS_CHILDEDGE | RBBS_FIXEDSIZE | RBBS_VARIABLEHEIGHT;
     rbBand.clrBack = GetSysColor(COLOR_BTNFACE);
     rbBand.clrFore = GetSysColor(COLOR_BTNTEXT);
 
@@ -930,7 +964,7 @@ void TabBarClass::CreateRebar()
         RECT rcClient;
         GetClientRect(ghWnd, &rcClient); 
         TabCtrl_AdjustRect(mh_Tabbar, FALSE, &rcClient);
-        sz.cy = rcClient.top - 3;
+        sz.cy = rcClient.top - 3 - mn_ThemeHeightDiff;
     }
 
 
@@ -941,7 +975,7 @@ void TabBarClass::CreateRebar()
         rbBand.hwndChild  = mh_Tabbar;
         rbBand.cxMinChild = 100;
         rbBand.cx = rbBand.cxIdeal = rcWnd.right - sz.cx - 80;
-        rbBand.cyMinChild = sz.cy;
+		rbBand.cyChild = rbBand.cyMinChild = rbBand.cyMaxChild = _tabHeight; // sz.cy;
 
         if (!SendMessage(mh_Rebar, RB_INSERTBAND, (WPARAM)-1, (LPARAM)&rbBand)) {
             DisplayLastError(_T("Can't initialize rebar (tabbar)"));
@@ -955,12 +989,19 @@ void TabBarClass::CreateRebar()
         rbBand.wID        = 2;
         rbBand.hwndChild  = mh_ConmanToolbar;
         rbBand.cx = rbBand.cxMinChild = rbBand.cxIdeal = mn_LastToolbarWidth = sz.cx;
-        rbBand.cyMinChild = sz.cy;
+        rbBand.cyChild = rbBand.cyMinChild = rbBand.cyMaxChild = sz.cy + mn_ThemeHeightDiff;
 
         // Add the band that has the toolbar.
         if (!SendMessage(mh_Rebar, RB_INSERTBAND, (WPARAM)-1, (LPARAM)&rbBand)) {
             DisplayLastError(_T("Can't initialize rebar (toolbar)"));
         }
+        
+        //if (mn_ThemeHeightDiff) {
+        //	POINT pt = {0,0};
+        //	MapWindowPoints(mh_ConmanToolbar, mh_Rebar, &pt, 1);
+        //	pt.y = 0;
+        //	SetWindowPos(mh_ConmanToolbar, NULL, pt.x, pt.y, 0, 0, SWP_NOSIZE|SWP_NOZORDER);
+       	//}
     }
 
     RECT rc;
