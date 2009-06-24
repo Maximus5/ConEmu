@@ -1252,8 +1252,9 @@ int ServerInit()
 	srv.csProc = new MSection();
 
 	srv.nMaxProcesses = START_MAX_PROCESSES; srv.nProcessCount = 0;
-	srv.pnProcesses = (DWORD*)Alloc(srv.nMaxProcesses, sizeof(DWORD));
-	srv.pnProcessesCopy = (DWORD*)Alloc(srv.nMaxProcesses, sizeof(DWORD));
+	srv.pnProcesses = (DWORD*)Alloc(START_MAX_PROCESSES, sizeof(DWORD));
+	srv.pnProcessesCopy = (DWORD*)Alloc(START_MAX_PROCESSES, sizeof(DWORD));
+	MCHKHEAP
 	if (srv.pnProcesses == NULL || srv.pnProcessesCopy == NULL) {
 		wprintf (L"Can't allocate %i DWORDS!\n", srv.nMaxProcesses);
 		iRc = CERR_NOTENOUGHMEM1; goto wrap;
@@ -1559,8 +1560,8 @@ BOOL CheckProcessCount(BOOL abForce/*=FALSE*/)
 		nCurCount = pfnGetConsoleProcessList(srv.pnProcesses, srv.nProcessCount);
 		lbChanged = srv.nProcessCount != nCurCount;
 
-		if (nCurCount > srv.nProcessCount) {
-			DWORD nSize = nCurCount + 20;
+		if (nCurCount > srv.nMaxProcesses) {
+			DWORD nSize = nCurCount + 100;
 			DWORD* pnPID = (DWORD*)Alloc(nSize, sizeof(DWORD));
 			if (pnPID) {
 				
@@ -1582,13 +1583,15 @@ BOOL CheckProcessCount(BOOL abForce/*=FALSE*/)
 		}
 
 		if (!lbChanged) {
-			UINT nSize = sizeof(DWORD)*START_MAX_PROCESSES;
+			UINT nSize = sizeof(DWORD)*min(srv.nMaxProcesses,START_MAX_PROCESSES);
 			#ifdef _DEBUG
 			_ASSERTE(!IsBadWritePtr(srv.pnProcessesCopy,nSize));
 			_ASSERTE(!IsBadWritePtr(srv.pnProcesses,nSize));
 			#endif
 			lbChanged = memcmp(srv.pnProcessesCopy, srv.pnProcesses, nSize) != 0;
+			MCHKHEAP
 			memmove(srv.pnProcessesCopy, srv.pnProcesses, nSize);
+			MCHKHEAP
 		}
 	}
 
@@ -3889,7 +3892,7 @@ int GetProcessCount(DWORD *rpdwPID, UINT nMaxCount)
 		memset(rpdwPID, 0, sizeof(DWORD)*nMaxCount);
 		rpdwPID[0] = gnSelfPID;
 
-		for (int i1=0, i2=(nMaxCount-1); i1<nSize && i2>0; i1++, i2--)
+		for (int i1=0, i2=(nMaxCount-1); i1<(int)nSize && i2>0; i1++, i2--)
 			rpdwPID[i2] = srv.pnProcesses[i1];
 
 		nSize = nMaxCount;

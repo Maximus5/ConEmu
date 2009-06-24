@@ -3453,6 +3453,10 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
                         // ј теперь можно и Apps нажать
                         mouse.bSkipRDblClk=true; // чтобы пока FAR думает в консоль не проскочило мышиное сообщение
                         //POSTMESSAGE(ghConWnd, WM_KEYDOWN, VK_APPS, 0, TRUE);
+
+						DWORD dwFarPID = pVCon->RCon()->GetFarPID();
+						if (dwFarPID) AllowSetForegroundWindow(dwFarPID);
+
                         if (gSet.sRClickMacro && *gSet.sRClickMacro) {
                             // ≈сли юзер задал свой макрос - выполн€ем его
 							PostMacro(gSet.sRClickMacro);

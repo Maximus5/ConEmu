@@ -647,7 +647,8 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 				if (lbIsActive) {
     				gConEmu.m_Child.Validate(); // сбросить флажок
 					pRCon->LogString("mp_VCon->Update from CRealConsole::MonitorThread");
-    				pRCon->mp_VCon->Update(lbForceUpdate);
+    				if (pRCon->mp_VCon->Update(lbForceUpdate))
+						gConEmu.m_Child.Redraw();
     				pRCon->mn_LastInvalidateTick = GetTickCount();
     			}
 			} else if (lbIsActive) {
@@ -658,17 +659,19 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
     				// UpdateCursor Invalidate не зовет
     				if (lbNeedBlink) {
 						pRCon->LogString("Invalidating from CRealConsole::MonitorThread.1");
-    					gConEmu.m_Child.Validate(); // сбросить флажок
+						gConEmu.m_Child.Redraw();
+    					/*gConEmu.m_Child.Validate(); // сбросить флажок
     					gConEmu.m_Child.Invalidate();
-						UpdateWindow(ghWndDC);
+						UpdateWindow(ghWndDC);*/
     					pRCon->mn_LastInvalidateTick = GetTickCount();
     				}
     			} else if (((GetTickCount() - pRCon->mn_LastInvalidateTick) > FORCE_INVALIDATE_TIMEOUT)) {
 					DEBUGSTR("+++ Force invalidate by timeout\n");
 					pRCon->LogString("Invalidating from CRealConsole::MonitorThread.2");
-    				gConEmu.m_Child.Validate(); // сбросить флажок
+					gConEmu.m_Child.Redraw();
+    				/*gConEmu.m_Child.Validate(); // сбросить флажок
     				gConEmu.m_Child.Invalidate();
-					UpdateWindow(ghWndDC); //2009-06-24. Подозрение, что если не это - у Zeroes1 не отрисовываются изменения
+					UpdateWindow(ghWndDC);*/ //2009-06-24. Подозрение, что если не это - у Zeroes1 не отрисовываются изменения
     				pRCon->mn_LastInvalidateTick = GetTickCount();
     			}
 			}
@@ -1482,6 +1485,12 @@ LRESULT CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lP
                     nLCtrl || nRCtrl ||
                     FALSE)
                 {
+					if (wParam == VK_APPS) {
+						WARNING("Не очень красиво это. На каждый чих функцию звать тоже нехорошо, но так хоть меню будет нормально всплывать");
+						DWORD dwFarPID = GetFarPID();
+						if (dwFarPID) AllowSetForegroundWindow(dwFarPID);
+					}
+
                     r.Event.KeyEvent.wRepeatCount = 1; TODO("0-15 ? Specifies the repeat count for the current message. The value is the number of times the keystroke is autorepeated as a result of the user holding down the key. If the keystroke is held long enough, multiple messages are sent. However, the repeat count is not cumulative.");
                     r.Event.KeyEvent.wVirtualKeyCode = mn_LastVKeyPressed;
                     r.Event.KeyEvent.uChar.UnicodeChar = 0;

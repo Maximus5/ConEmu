@@ -3,7 +3,8 @@
 CConEmuChild::CConEmuChild()
 {
 	mn_MsgTabChanged = RegisterWindowMessage(CONEMUTABCHANGED);
-	mb_Invalidated = FALSE;
+	mn_MsgPostFullPaint = RegisterWindowMessage(L"CConEmuChild::PostFullPaint");
+	mb_PostFullPaint = FALSE;
 	memset(&Caret, 0, sizeof(Caret));
 }
 
@@ -56,7 +57,7 @@ LRESULT CALLBACK CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam
 		break;
 		
     case WM_PAINT:
-		result = gConEmu.m_Child.OnPaint(wParam, lParam);
+		result = gConEmu.m_Child.OnPaint();
 		break;
 
     case WM_SIZE:
@@ -128,7 +129,7 @@ LRESULT CALLBACK CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam
 
     default:
 		// Сообщение приходит из ConEmuPlugin
-		if (messg == mn_MsgTabChanged) {
+		if (messg == gConEmu.m_Child.mn_MsgTabChanged) {
 			if (gSet.isTabs) {
 				//изменились табы, их нужно перечитать
 				#ifdef MSGLOGGER
@@ -140,20 +141,23 @@ LRESULT CALLBACK CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam
 				//gConEmu.OnTimer(0,0); не получилось. индекс конмана не менялся, из-за этого индекс активного фара так и остался 0
 				TabBar.Retrieve();
 			}
+		} else if (messg == gConEmu.m_Child.mn_MsgPostFullPaint) {
+		
+		} else if (messg) {
+			result = DefWindowProc(hWnd, messg, wParam, lParam);
 		}
-        if (messg) result = DefWindowProc(hWnd, messg, wParam, lParam);
     }
     return result;
 }
 
-LRESULT CConEmuChild::OnPaint(WPARAM wParam, LPARAM lParam)
+LRESULT CConEmuChild::OnPaint()
 {
 	LRESULT result = 0;
 	BOOL lbSkipDraw = FALSE;
     //if (gbInPaint)
 	//    break;
 	
-	mb_Invalidated = FALSE;
+	mb_PostFullPaint = FALSE;
 
 	gConEmu.ActiveCon()->RCon()->LogString("CConEmuChild::OnPaint");
 
@@ -178,7 +182,7 @@ LRESULT CConEmuChild::OnPaint(WPARAM wParam, LPARAM lParam)
 		
 		if (rcPic.right>=rcClient.right) {
 			lbSkipDraw = TRUE;
-	        result = DefWindowProc(ghWndDC, WM_PAINT, wParam, lParam);
+	        result = DefWindowProc(ghWndDC, WM_PAINT, 0, 0);
         }
 	}
 	if (!lbSkipDraw)
@@ -223,6 +227,13 @@ LRESULT CConEmuChild::OnSize(WPARAM wParam, LPARAM lParam)
 	return result;
 }
 
+void CConEmuChild::Redraw()
+{
+	DEBUGSTR(L" +++ RedrawWindow on DC window called\n");
+	BOOL lbRc = RedrawWindow(ghWndDC, NULL, NULL,
+		RDW_INTERNALPAINT|RDW_NOERASE|RDW_UPDATENOW);
+}
+
 void CConEmuChild::Invalidate()
 {
 	//2009-06-22 Опять поперла непрорисовка. Причем если по экрану окошко повозить - изображение нормальное
@@ -236,17 +247,17 @@ void CConEmuChild::Invalidate()
 		//mb_Invalidated = TRUE;
 		RECT rcClient; GetClientRect(ghWndDC, &rcClient);
 		InvalidateRect(ghWndDC, &rcClient, FALSE);
-		if (!mb_Invalidated) {
+		/*if (!mb_Invalidated) {
 			mb_Invalidated = TRUE;
 			PostMessage(ghWndDC, WM_PAINT, 0,0);
-		}
+		}*/
 	}
 }
 
 void CConEmuChild::Validate()
 {
-	mb_Invalidated = FALSE;
-	DEBUGSTR(L" +++ Validate on DC window called\n");
+	//mb_Invalidated = FALSE;
+	//DEBUGSTR(L" +++ Validate on DC window called\n");
 	//if (ghWndDC) ValidateRect(ghWnd, NULL);
 }
 

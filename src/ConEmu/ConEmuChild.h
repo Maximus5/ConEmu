@@ -12,17 +12,19 @@ public:
 
 	LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 public:
-	LRESULT OnPaint(WPARAM wParam, LPARAM lParam);
+	LRESULT OnPaint();
 	LRESULT OnSize(WPARAM wParam, LPARAM lParam);
 	HWND Create();
 	void Invalidate();
 	void Validate();
+	void Redraw();
 	
 	void SetCaret ( int Visible, UINT X=0, UINT Y=0, UINT nWidth=0, UINT nHeight=0 );
 
 protected:
 	UINT mn_MsgTabChanged;
-	BOOL mb_Invalidated;
+	UINT mn_MsgPostFullPaint;
+	BOOL mb_PostFullPaint;
 #ifdef _DEBUG
 	friend class CVirtualConsole;
 	friend class CRealConsole;

@@ -846,9 +846,9 @@ bool CVirtualConsole::Update(bool isForce, HDC *ahDc)
 			gConEmu.m_Child.Invalidate();
 			mp_RCon->LogString("Invalidating from CVirtualConsole::Update.2");
 			//09.06.13 а если так? быстрее изменения на экране не появятся?
-			UpdateWindow(ghWndDC); // оно посылает сообщение в окно, и ждет окончания отрисовки
+			//UpdateWindow(ghWndDC); // оно посылает сообщение в окно, и ждет окончания отрисовки
 			#ifdef _DEBUG
-			_ASSERTE(!gConEmu.m_Child.mb_Invalidated);
+			//_ASSERTE(!gConEmu.m_Child.mb_Invalidated);
 			#endif
 			mb_PaintRequested = FALSE;
 		}
@@ -1892,27 +1892,33 @@ void CVirtualConsole::Paint()
     
     MSectionLock S; //&csDC, &ncsTDC);
 
-        hPaintDc = BeginPaint(ghWndDC, &ps);
+	RECT rcUpdateRect = {0};
+	BOOL lbInval = GetUpdateRect(ghWndDC, &rcUpdateRect, FALSE);
 
-        // Если окно больше готового DC - залить края (справа/снизу) фоновым цветом
-        HBRUSH hBr = NULL;
-        if (((ULONG)client.right) > Width) {
-            if (!hBr) hBr = CreateSolidBrush(gSet.Colors[mn_BackColorIdx]);
-            RECT rcFill = MakeRect(Width, 0, client.right, client.bottom);
-            #ifndef SKIP_ALL_FILLRECT
-            FillRect(hPaintDc, &rcFill, hBr);
-            #endif
-            client.right = Width;
-        }
-        if (((ULONG)client.bottom) > Height) {
-            if (!hBr) hBr = CreateSolidBrush(gSet.Colors[mn_BackColorIdx]);
-            RECT rcFill = MakeRect(0, Height, client.right, client.bottom);
-            #ifndef SKIP_ALL_FILLRECT
-            FillRect(hPaintDc, &rcFill, hBr);
-            #endif
-            client.bottom = Height;
-        }
-        if (hBr) { DeleteObject(hBr); hBr = NULL; }
+	if (lbInval)
+        hPaintDc = BeginPaint(ghWndDC, &ps);
+	else
+		hPaintDc = GetDC(ghWndDC);
+
+    // Если окно больше готового DC - залить края (справа/снизу) фоновым цветом
+    HBRUSH hBr = NULL;
+    if (((ULONG)client.right) > Width) {
+        if (!hBr) hBr = CreateSolidBrush(gSet.Colors[mn_BackColorIdx]);
+        RECT rcFill = MakeRect(Width, 0, client.right, client.bottom);
+        #ifndef SKIP_ALL_FILLRECT
+        FillRect(hPaintDc, &rcFill, hBr);
+        #endif
+        client.right = Width;
+    }
+    if (((ULONG)client.bottom) > Height) {
+        if (!hBr) hBr = CreateSolidBrush(gSet.Colors[mn_BackColorIdx]);
+        RECT rcFill = MakeRect(0, Height, client.right, client.bottom);
+        #ifndef SKIP_ALL_FILLRECT
+        FillRect(hPaintDc, &rcFill, hBr);
+        #endif
+        client.bottom = Height;
+    }
+    if (hBr) { DeleteObject(hBr); hBr = NULL; }
 
 
     BOOL lbPaintLocked = FALSE;
@@ -1921,19 +1927,19 @@ void CVirtualConsole::Paint()
             mb_PaintLocked = lbPaintLocked = TRUE;
     }
 
-        // Собственно, копирование готового bitmap
-        if (!gbNoDblBuffer) {
-            // Обычный режим
-			mp_RCon->LogString("Blitting to Display");
+    // Собственно, копирование готового bitmap
+    if (!gbNoDblBuffer) {
+        // Обычный режим
+		mp_RCon->LogString("Blitting to Display");
 
-            BitBlt(hPaintDc, 0, 0, client.right, client.bottom, hDC, 0, 0, SRCCOPY);
-        } else {
-            GdiSetBatchLimit(1); // отключить буферизацию вывода для текущей нити
+        BitBlt(hPaintDc, 0, 0, client.right, client.bottom, hDC, 0, 0, SRCCOPY);
+    } else {
+        GdiSetBatchLimit(1); // отключить буферизацию вывода для текущей нити
 
-            GdiFlush();
-            // Рисуем сразу на канвасе, без буферизации
-            Update(true, &hPaintDc);
-        }
+        GdiFlush();
+        // Рисуем сразу на канвасе, без буферизации
+        Update(true, &hPaintDc);
+    }
 
     S.Unlock();
     
@@ -1970,7 +1976,10 @@ void CVirtualConsole::Paint()
         Box(_T("Exception triggered in CVirtualConsole::Paint"));
 
     if (hPaintDc && ghWndDC) {
-        EndPaint(ghWndDC, &ps);
+		if (lbInval)
+			EndPaint(ghWndDC, &ps);
+		else
+			ReleaseDC(ghWndDC, hPaintDc);
     }
     
     //gSet.Performance(tPerfFPS, FALSE); // Обратный
