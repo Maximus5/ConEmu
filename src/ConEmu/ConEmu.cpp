@@ -40,6 +40,7 @@ CConEmuMain::CConEmuMain()
     mb_IgnoreSizeChange = false;
     //mn_CurrentKeybLayout = (DWORD)GetKeyboardLayout(0);
     mn_ServerThreadId = 0; mh_ServerThread = NULL; mh_ServerThreadTerminate = NULL;
+    mpsz_RecreateCmd = NULL;
 
     memset(&mouse, 0, sizeof(mouse));
     mouse.lastMMW=-1;
@@ -1906,6 +1907,199 @@ bool CConEmuMain::PtDiffTest(POINT C, int aX, int aY, UINT D)
     return true;
 }
 
+void CConEmuMain::Recreate(BOOL abRecreate, BOOL abConfirm)
+{
+	SafeFree(mpsz_RecreateCmd);
+	
+	if (!abRecreate) {
+		// Создать новую консоль
+		//LPCWSTR pszCmd = gSet.GetCmd();
+        if (abConfirm) {
+            //wchar_t* pszMsg = (wchar_t*)calloc(128+wcslen(pszCmd),2);
+            //if (pszMsg) {
+            //    wcscpy(pszMsg, L"Create new console:\n"); wcscat(pszMsg, pszCmd);
+            //    TODO("Сюда можно еще добавить кнопку для закрытия этой консоли");
+            //    int nRc = MessageBox(ghWnd, pszMsg, L"ConEmu", MB_YESNO|MB_ICONQUESTION);
+            //    free(pszMsg);
+            //    if (nRc != IDYES)
+            //        return 0;
+            //}
+            BOOL b = gbDontEnable;
+            gbDontEnable = TRUE;
+            int nRc = DialogBoxParam(g_hInstance, MAKEINTRESOURCE(IDD_RESTART), ghWnd, RecreateDlgProc, (LPARAM)abRecreate);
+            gbDontEnable = b;
+            if (nRc != IDC_START)
+            	return;
+        }
+        //Собственно, запуск
+        CreateCon(FALSE, mpsz_RecreateCmd);
+        
+	} else {
+        // Restart or close console
+        int nActive = ActiveConNum();
+        if (nActive >=0) {
+            //LPCWSTR pszCmd = gSet.GetCmd();
+            //wchar_t* pszMsg = (wchar_t*)calloc(128+wcslen(pszCmd),2);
+            //if (pszMsg) {
+            //    wsprintf(pszMsg, 
+            //        L"About to recreate console:\n\n%s\n\n"
+            //        L"Press <No> to close current console\n"
+            //        L"Warning, unsaved work may be lost!"
+            //        , pszCmd);
+            //    int nRc = MessageBox(ghWnd, pszMsg, L"ConEmu", MB_YESNOCANCEL|MB_ICONEXCLAMATION|MB_DEFBUTTON3);
+            //    free(pszMsg);
+            //    if (nRc == IDNO) {
+            //        pVCon->RCon()->CloseConsole();
+            //        return 0;
+            //    }
+            //    if (nRc != IDYES)
+            //        return 0;
+            //}
+            BOOL b = gbDontEnable;
+            gbDontEnable = TRUE;
+            int nRc = DialogBoxParam(g_hInstance, MAKEINTRESOURCE(IDD_RESTART), ghWnd, RecreateDlgProc, (LPARAM)abRecreate);
+            gbDontEnable = b;
+            if (nRc == IDC_TERMINATE) {
+                pVCon->RCon()->CloseConsole();
+                return;
+            }
+            if (nRc != IDC_START)
+            	return;
+            // Собственно, Recreate
+            pVCon->RCon()->RecreateProcess(mpsz_RecreateCmd);
+        }
+	}
+	
+	SafeFree(mpsz_RecreateCmd);
+}
+
+BOOL CConEmuMain::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
+{
+    switch (messg)
+    {
+    case WM_INITDIALOG:
+    	{
+    		BOOL lbRc = FALSE;
+            //#ifdef _DEBUG
+            //SetWindowPos(ghOpWnd, HWND_NOTOPMOST, 0,0,0,0, SWP_NOSIZE|SWP_NOMOVE);
+            //#endif
+            
+            LPCWSTR pszCmd = gConEmu.ActiveCon()->RCon()->GetCmd();
+            int nId = SendDlgItemMessage(hDlg, IDC_RESTART_CMD, CB_FINDSTRINGEXACT, -1, (LPARAM)pszCmd);
+            if (nId < 0) SendDlgItemMessage(hDlg, IDC_RESTART_CMD, CB_INSERTSTRING, 0, (LPARAM)pszCmd);
+            LPCWSTR pszSystem = gSet.GetCmd();
+            if (pszSystem != pszCmd) {
+                int nId = SendDlgItemMessage(hDlg, IDC_RESTART_CMD, CB_FINDSTRINGEXACT, -1, (LPARAM)pszSystem);
+                if (nId < 0) SendDlgItemMessage(hDlg, IDC_RESTART_CMD, CB_INSERTSTRING, 0, (LPARAM)pszSystem);
+            }
+            SetDlgItemText(hDlg, IDC_RESTART_CMD, pszCmd);
+
+            SetClassLong(hDlg, GCL_HICON, (LONG)hClassIcon);
+            if (lParam != 0 /*Recreate*/) {
+            	SetDlgItemText(hDlg, IDC_RESTART_MSG, L"About to recreate console");
+            	SendDlgItemMessage(hDlg, IDC_RESTART_ICON, STM_SETICON, (WPARAM)LoadIcon(NULL,IDI_EXCLAMATION), 0);
+            	
+            	lbRc = TRUE;
+            } else {
+            	SetDlgItemText(hDlg, IDC_RESTART_MSG, L"Сreate new console");
+            	SendDlgItemMessage(hDlg, IDC_RESTART_ICON, STM_SETICON, (WPARAM)LoadIcon(NULL,IDI_QUESTION), 0);
+            	POINT pt = {0,0};
+            	MapWindowPoints(GetDlgItem(hDlg, IDC_TERMINATE), hDlg, &pt, 1);
+            	DestroyWindow(GetDlgItem(hDlg, IDC_TERMINATE));
+            	SetWindowPos(GetDlgItem(hDlg, IDC_START), NULL, pt.x, pt.y, 0,0, SWP_NOSIZE|SWP_NOZORDER);
+            	SetDlgItemText(hDlg, IDC_START, L"&Start");
+            	DestroyWindow(GetDlgItem(hDlg, IDC_WARNING));
+            	
+            	SetFocus(GetDlgItem(hDlg, IDC_RESTART_CMD));
+            }
+            
+    		RECT rect;
+    		GetWindowRect(hDlg, &rect);
+    		RECT rcParent;
+    		GetWindowRect(ghWnd, &rcParent);
+			MoveWindow(hDlg,
+				(rcParent.left+rcParent.right-rect.right+rect.left)/2,
+				(rcParent.top+rcParent.bottom-rect.bottom+rect.top)/2,
+				rect.right - rect.left, rect.bottom - rect.top, false);
+				
+			return lbRc;
+        }
+        
+    case WM_CTLCOLORSTATIC:
+        if (GetDlgItem(hDlg, IDC_WARNING) == (HWND)lParam)
+        {
+        	SetTextColor((HDC)wParam, 255);
+            HBRUSH hBrush = GetSysColorBrush(COLOR_3DFACE);
+            SetBkMode((HDC)wParam, TRANSPARENT);
+            return (BOOL)hBrush;
+        }
+        break;
+
+    case WM_GETICON:
+        if (wParam==ICON_BIG) {
+            /*SetWindowLong(hWnd2, DWL_MSGRESULT, (LRESULT)hClassIcon);
+            return 1;*/
+        } else {
+            SetWindowLong(hDlg, DWL_MSGRESULT, (LRESULT)hClassIconSm);
+            return 1;
+        }
+        return 0;
+
+    case WM_COMMAND:
+        if (HIWORD(wParam) == BN_CLICKED)
+        {
+            switch (LOWORD(wParam)) {
+            	case IDC_CHOOSE:
+        		{
+        			wchar_t *pszFilePath = NULL;
+            		int nLen = MAX_PATH*2;
+            		pszFilePath = (wchar_t*)calloc(nLen+1,2);
+            		if (!pszFilePath) return 1;
+            		
+                    OPENFILENAME ofn; memset(&ofn,0,sizeof(ofn));
+                    ofn.lStructSize=sizeof(ofn);
+                    ofn.hwndOwner = hDlg;
+                    ofn.lpstrFilter = _T("Executables (*.exe)\0*.exe\0\0");
+                    ofn.nFilterIndex = 1;
+                    ofn.lpstrFile = pszFilePath;
+                    ofn.nMaxFile = nLen;
+                    ofn.lpstrTitle = _T("Choose program to run");
+                    ofn.Flags = OFN_ENABLESIZING|OFN_NOCHANGEDIR
+                            | OFN_PATHMUSTEXIST|OFN_EXPLORER|OFN_HIDEREADONLY|OFN_FILEMUSTEXIST;
+                    if (GetOpenFileName(&ofn))
+                        SetDlgItemText(hDlg, IDC_RESTART_CMD, pszFilePath);
+
+                    SafeFree(pszFilePath); 
+                    return 1;
+        		}
+            		
+            	case IDC_START:
+            	{
+            		HWND hEdit = GetDlgItem(hDlg, IDC_RESTART_CMD);
+            		int nLen = GetWindowTextLength(hEdit);
+            		if (nLen > 0) {
+            			gConEmu.mpsz_RecreateCmd = (wchar_t*)calloc(nLen+1,2);
+            			if (gConEmu.mpsz_RecreateCmd)
+            				GetWindowText(hEdit, gConEmu.mpsz_RecreateCmd, nLen+1);
+            		}
+            		EndDialog(hDlg, IDC_START);
+            		return 1;
+            	}
+            	case IDC_TERMINATE:
+            		EndDialog(hDlg, IDC_TERMINATE);
+            		return 1;
+            	case IDCANCEL:
+            		EndDialog(hDlg, IDCANCEL);
+            		return 1;
+            }
+        }
+        break;
+    default:
+        return 0;
+    }
+    return 0;
+}
+
 void CConEmuMain::ShowOldCmdVersion(DWORD nCmd, DWORD nVersion)
 {
     if (!isMainThread()) {
@@ -2935,10 +3129,10 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
         
         static DWORD dwLastSpaceTick;
         if ((dwLastSpaceTick-GetTickCount())<1000) {
-            if (hWnd == ghWndDC) MBoxA(_T("Space bounce recieved from DC")); else
-            if (hWnd == ghWnd) MBoxA(_T("Space bounce recieved from MainWindow")); else
-            if (hWnd == gConEmu.m_Back.mh_WndBack) MBoxA(_T("Space bounce recieved from BackWindow")); else
-                if (hWnd == gConEmu.m_Back.mh_WndScroll) MBoxA(_T("Space bounce recieved from ScrollBar")); else
+            if (hWnd == ghWndDC) MBoxA(_T("Space bounce recieved from DC")) else
+            if (hWnd == ghWnd) MBoxA(_T("Space bounce recieved from MainWindow")) else
+            if (hWnd == gConEmu.m_Back.mh_WndBack) MBoxA(_T("Space bounce recieved from BackWindow")) else
+            if (hWnd == gConEmu.m_Back.mh_WndScroll) MBoxA(_T("Space bounce recieved from ScrollBar")) else
             MBoxA(_T("Space bounce recieved from unknown window"));
             return 0;
         }
@@ -2988,52 +3182,27 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
                 sb_SkipConmanChar = true;
                 sn_SkipConmanVk[0] = lbLWin ? VK_LWIN : VK_RWIN;
                 sn_SkipConmanVk[1] = lParam & 0xFF0000;
+                
                 // Теперь собственно обработка
                 if (wParam>='1' && wParam<='9')
                     ConmanAction(wParam - '1');
+                    
                 else if (wParam=='0')
                     ConmanAction(10);
+                    
                 else if (wParam==VK_F11 && wParam==VK_F12)
                     ConmanAction(wParam - VK_F11 + 11);
+                    
                 else if (wParam == gSet.icMultiNext)
                     ConmanAction(isPressed(VK_SHIFT) ? CONMAN_PREVCONSOLE : CONMAN_NEXTCONSOLE);
+                    
                 else if (wParam == gSet.icMultiNew) {
-                    if (gSet.isMultiNewConfirm) {
-                        LPCWSTR pszCmd = gSet.GetCmd();
-                        wchar_t* pszMsg = (wchar_t*)calloc(128+wcslen(pszCmd),2);
-                        if (pszMsg) {
-                            wcscpy(pszMsg, L"Create new console:\n"); wcscat(pszMsg, pszCmd);
-                            TODO("Сюда можно еще добавить кнопку для закрытия этой консоли");
-                            int nRc = MessageBox(ghWnd, pszMsg, L"ConEmu", MB_YESNO|MB_ICONQUESTION);
-                            free(pszMsg);
-                            if (nRc != IDYES)
-                                return 0;
-                        }
-                    }
-                    ConmanAction(CONMAN_NEWCONSOLE);
+                	// Создать новую консоль
+                	Recreate ( FALSE, gSet.isMultiNewConfirm );
+                	
                 } else if (wParam == gSet.icMultiRecreate) {
-                    // Restart or close console
-                    int nActive = ActiveConNum();
-                    if (nActive >=0) {
-                        LPCWSTR pszCmd = gSet.GetCmd();
-                        wchar_t* pszMsg = (wchar_t*)calloc(128+wcslen(pszCmd),2);
-                        if (pszMsg) {
-                            wsprintf(pszMsg, 
-                                L"About to recreate console:\n\n%s\n\n"
-                                L"Press <No> to close current console\n"
-                                L"Warning, unsaved work may be lost!"
-                                , pszCmd);
-                            int nRc = MessageBox(ghWnd, pszMsg, L"ConEmu", MB_YESNOCANCEL|MB_ICONEXCLAMATION|MB_DEFBUTTON3);
-                            free(pszMsg);
-                            if (nRc == IDNO) {
-                                pVCon->RCon()->CloseConsole();
-                                return 0;
-                            }
-                            if (nRc != IDYES)
-                                return 0;
-                        }
-                        ConmanAction(CONMAN_RECREATE+nActive);
-                    }
+                	Recreate ( TRUE, TRUE );
+                	
                 }
                 return 0;
             }
@@ -3681,10 +3850,11 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
     {
     case 0:
         //Maximus5. Hack - если какая-то зараза задизеблила окно
-        DWORD dwStyle = GetWindowLong(ghWnd, GWL_STYLE);
-        if (dwStyle & WS_DISABLED)
-            EnableWindow(ghWnd, TRUE);
-
+        if (!gbDontEnable) {
+            DWORD dwStyle = GetWindowLong(ghWnd, GWL_STYLE);
+            if (dwStyle & WS_DISABLED)
+                EnableWindow(ghWnd, TRUE);
+		}
 
         CheckProcesses(); //m_ActiveConmanIDX, FALSE/*bTitleChanged*/);
 

@@ -142,7 +142,7 @@ public:
     void ShowConsole(int nMode); // -1 Toggle, 0 - Hide, 1 - Show
     BOOL isDetached();
     BOOL AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID);
-    BOOL RecreateProcess();
+    BOOL RecreateProcess(LPCWSTR asNewCommand=NULL);
     void GetData(wchar_t* pChar, WORD* pAttr, int nWidth, int nHeight);
     void OnActivate(int nNewNum, int nOldNum);
     void OnDeactivate(int nNewNum);
@@ -165,6 +165,7 @@ public:
 	bool isViewer();
 	bool isNtvdm();
 	bool isPackets();
+	LPCWSTR GetCmd();
 
 public:
     // Вызываются из CVirtualConsole

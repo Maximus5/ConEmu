@@ -49,6 +49,63 @@ END
 
 #endif    // APSTUDIO_INVOKED
 
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_RESTART DIALOG DISCARDABLE  0, 0, 310, 70
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "ConEmu"
+FONT 8, "MS Sans Serif"
+BEGIN
+    DEFPUSHBUTTON   "&Restart",IDC_START,147,51,50,14
+    PUSHBUTTON      "&Terminate",IDC_TERMINATE,201,51,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,254,51,50,14
+    PUSHBUTTON      "...",IDC_CHOOSE,284,19,14,13
+    COMBOBOX        IDC_RESTART_CMD,10,19,269,50,CBS_DROPDOWN | 
+                    CBS_AUTOHSCROLL | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        "About to restart console",IDC_RESTART_MSG,4,5,300,35
+    ICON            "ConEmu.ico",IDC_RESTART_ICON,6,45,20,20
+    CTEXT           "Warning, unsaved work may be lost!",IDC_WARNING,57,35,
+                    157,8
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO DISCARDABLE 
+BEGIN
+    IDD_RESTART, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 303
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 63
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog Info
+//
+
+IDD_RESTART DLGINIT
+BEGIN
+    IDC_RESTART_CMD, 0x403, 4, 0
+0x6166, 0x0072, 
+    IDC_RESTART_CMD, 0x403, 4, 0
+0x6d63, 0x0064, 
+    0
+END
+
 #endif    // Russian resources
 /////////////////////////////////////////////////////////////////////////////
 
@@ -70,7 +127,7 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 IDD_DIALOG1 DIALOGEX 0, 0, 328, 258
 STYLE DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_TOPMOST | WS_EX_CONTROLPARENT
-FONT 8, "MS Shell Dlg"
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     GROUPBOX        "Anti-aliasing",IDC_STATIC,263,4,60,45,WS_GROUP
     CONTROL         "&None",rNoneAA,"Button",BS_AUTORADIOBUTTON | WS_GROUP,
@@ -465,6 +522,7 @@ BEGIN
     tFontSizeX2             "WIDTH for additional font.\nIt must be wider than main font,\notherwise, You get 'dashed' borders."
     cbSendAE                "When is on, You can't enter fullscreen mode from keyboard,\nbut You can use 'AltEnter' for macros in FAR"
     cbDnDCopy               "Forced 'Copy' action as default,\nYou can use Ctrl, Shift or Alt\nduring drag to change action"
+    cbGUIpb                 "Enhancement of standart (only) copy/move progressbars.\nYou may choose 3state of 'Fix Far Borders' instead of..."
 END
 
 STRINGTABLE DISCARDABLE 
@@ -482,7 +540,6 @@ END
 STRINGTABLE DISCARDABLE 
 BEGIN
     cbFixFarBorders         "You can specify additional font for drawing FAR borders.\nI.e. Main font is 'Fixedsys', additional is 'Lucida Console'.\n3s - enhance scrollbars and progresbars."
-    cbGUIpb                 "Enhancement of standart (only) copy/move progressbars.\nYou may choose 3state of 'Fix Far Borders' instead of..."
 END
 
 #endif    // English (U.S.) resources

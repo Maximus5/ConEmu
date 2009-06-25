@@ -118,6 +118,7 @@ protected:
 	static VOID CALLBACK WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime);
 	CVirtualConsole *mp_VCon[MAX_CONSOLE_COUNT], *pVCon;
 	bool mb_SkipSyncSize, mb_PassSysCommand;
+	wchar_t *mpsz_RecreateCmd;
 	//DWORD mn_CurrentKeybLayout;
 	// Registered messages
 	DWORD mn_MainThreadId;
@@ -193,6 +194,8 @@ public:
 	void PostMacro(LPCWSTR asMacro);
 	void PostCreate(BOOL abRecieved=FALSE);
 	bool PtDiffTest(POINT C, int aX, int aY, UINT D); //(((abs(C.x-LOWORD(lParam)))<D) && ((abs(C.y-HIWORD(lParam)))<D))
+	void Recreate(BOOL abRecreate, BOOL abConfirm);
+	static BOOL CALLBACK RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam);
 	void RePaint();
 	void ReSize();
 	void SetConsoleWindowSize(const COORD& size, bool updateInfo);

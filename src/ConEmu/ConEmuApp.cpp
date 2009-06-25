@@ -31,6 +31,7 @@ CSettings gSet;
 //TCHAR temp[MAX_PATH]; -- низзя, очень велик шанс нарваться при многопоточности
 TCHAR szIconPath[MAX_PATH];
 HICON hClassIcon = NULL, hClassIconSm = NULL;
+BOOL gbDontEnable = FALSE;
 
 
 const TCHAR *const szClassName = VirtualConsoleClass;

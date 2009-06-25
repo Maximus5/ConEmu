@@ -14,6 +14,7 @@
 #define IDC_COPY                        108
 #define IDC_LINK                        109
 #define IDC_MOVE                        110
+#define IDD_RESTART                     112
 #define c0                              1000
 #define c1                              1001
 #define c2                              1002
@@ -165,14 +166,21 @@
 #define cbsAltActive                    1517
 #define cbApplyPos                      1520
 #define cbCursorBlink                   1522
+#define IDC_RESTART_ICON                1523
+#define IDC_START                       1524
+#define IDC_TERMINATE                   1525
+#define IDC_RESTART_CMD                 1527
+#define IDC_CHOOSE                      1528
+#define IDC_RESTART_MSG                 1529
+#define IDC_WARNING                     1530
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        112
+#define _APS_NEXT_RESOURCE_VALUE        114
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1523
+#define _APS_NEXT_CONTROL_VALUE         1531
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

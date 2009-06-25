@@ -436,7 +436,7 @@ DWORD CDragDrop::ShellOpThreadProc(LPVOID lpParameter)
 	}
 	if (hr != S_OK) {
 		if (hr == 7 || hr == ERROR_CANCELLED)
-			MBoxA(_T("Shell operation was cancelled"));
+			MBoxA(_T("Shell operation was cancelled"))
 		else
 			DisplayLastError(_T("Shell operation failed"), hr);
 	}

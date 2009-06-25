@@ -153,7 +153,7 @@ CRealConsole::~CRealConsole()
 BOOL CRealConsole::PreCreate(BOOL abDetached, LPCWSTR asNewCmd /*= NULL*/)
 {
     mb_NeedStartProcess = FALSE;
-    
+
     if (asNewCmd && !ms_SpecialCmd) {
     	_ASSERTE(abDetached == FALSE);
     	int nLen = lstrlenW(asNewCmd);
@@ -162,7 +162,7 @@ BOOL CRealConsole::PreCreate(BOOL abDetached, LPCWSTR asNewCmd /*= NULL*/)
     		return FALSE;
     	lstrcpyW(ms_SpecialCmd, asNewCmd);
     }
-    
+
     if (abDetached) {
         // Пока ничего не делаем - просто создается серверная нить
         if (!PreInit()) { //TODO: вообще-то PreInit() уже наверное вызван...
@@ -1139,11 +1139,19 @@ void CRealConsole::SendConsoleEvent(INPUT_RECORD* piRec)
 {
     if (piRec->EventType == MOUSE_EVENT) {
     	if (piRec->Event.MouseEvent.dwEventFlags == MOUSE_MOVED) {
-    		if (m_LastMouse.dwButtonState     == piRec->Event.MouseEvent.dwButtonState 
+    		if (m_LastMouse.dwEventFlags != 0
+			 && m_LastMouse.dwButtonState     == piRec->Event.MouseEvent.dwButtonState 
     		 && m_LastMouse.dwControlKeyState == piRec->Event.MouseEvent.dwControlKeyState
     		 && m_LastMouse.dwMousePosition.X == piRec->Event.MouseEvent.dwMousePosition.X
     		 && m_LastMouse.dwMousePosition.Y == piRec->Event.MouseEvent.dwMousePosition.Y)
-    		 return; // Это событие лишнее. Движения мышки реально не было, кнопки не менялись
+			{
+				#ifdef _DEBUG
+				wchar_t szDbg[60];
+				wsprintf(szDbg, L"!!! Skipping ConEmu.Mouse event at: {%ix%i}\n", m_LastMouse.dwMousePosition.X, m_LastMouse.dwMousePosition.Y);
+				OutputDebugString(szDbg);
+				#endif
+    			return; // Это событие лишнее. Движения мышки реально не было, кнопки не менялись
+			}
     	}
         // Запомним
         m_LastMouse.dwMousePosition   = piRec->Event.MouseEvent.dwMousePosition;
@@ -1152,7 +1160,8 @@ void CRealConsole::SendConsoleEvent(INPUT_RECORD* piRec)
         m_LastMouse.dwControlKeyState = piRec->Event.MouseEvent.dwControlKeyState;
 
 		#ifdef _DEBUG
-		wchar_t szDbg[60]; wsprintf(szDbg, L"ConEmu.Mouse event at: {%ix%i}\n", m_LastMouse.dwMousePosition.X, m_LastMouse.dwMousePosition.Y);
+		wchar_t szDbg[60];
+		wsprintf(szDbg, L"ConEmu.Mouse event at: {%ix%i}\n", m_LastMouse.dwMousePosition.X, m_LastMouse.dwMousePosition.Y);
 		OutputDebugString(szDbg);
 		#endif
     }
@@ -3156,7 +3165,7 @@ void CRealConsole::LogPacket(CESERVER_REQ* pInfo)
 
 
 // Послать в консоль запрос на закрытие
-BOOL CRealConsole::RecreateProcess()
+BOOL CRealConsole::RecreateProcess(LPCWSTR asNewCommand/*=NULL*/)
 {
     if (!this)
         return false;
@@ -3171,6 +3180,18 @@ BOOL CRealConsole::RecreateProcess()
         Box(_T("Console already in recreate..."));
         return false;
     }
+    
+    if (asNewCommand && *asNewCommand) {
+    	if (ms_SpecialCmd) Free(ms_SpecialCmd);
+    	int nLen = lstrlenW(asNewCommand);
+    	ms_SpecialCmd = (wchar_t*)Alloc(nLen+1,2);
+    	if (!ms_SpecialCmd) {
+    		Box(_T("Can't allocate memory..."));
+    		return FALSE;
+    	}
+    	lstrcpyW(ms_SpecialCmd, asNewCommand);
+    }
+
 
     DWORD nWait = 0;
 
@@ -4425,4 +4446,12 @@ bool CRealConsole::isNtvdm()
 		//}
 	}
 	return false;
+}
+
+LPCWSTR CRealConsole::GetCmd()
+{
+	if (ms_SpecialCmd)
+		return ms_SpecialCmd;
+	else
+		return gSet.GetCmd();
 }
