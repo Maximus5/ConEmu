@@ -23,7 +23,7 @@ HWND CConEmuChild::Create()
 	//	MBoxA(_T("Can't register DC window class!"));
 	//	return NULL;
 	//}
-	DWORD style = WS_VISIBLE | WS_CHILD | WS_CLIPSIBLINGS /*| WS_CLIPCHILDREN | (gSet.Buffer Height ? WS_VSCROLL : 0)*/;
+	DWORD style = WS_VISIBLE | WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
 	//RECT rc = gConEmu.DCClientRect();
 	RECT rcMain; GetClientRect(ghWnd, &rcMain);
 	RECT rc = gConEmu.CalcRect(CER_DC, rcMain, CER_MAINCLIENT);

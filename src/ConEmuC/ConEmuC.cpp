@@ -29,7 +29,7 @@ WARNING("При запуске как ComSpec получаем ошибку: {crNewSize.X>=MIN_CON_WIDTH &&
 //  Раскомментировать, чтобы сразу после запуска процесса (conemuc.exe) показать MessageBox, чтобы прицепиться дебаггером
 //  #define SHOW_STARTED_MSGBOX
 // Раскомментировать для вывода в консоль информации режима Comspec
-	#define PRINT_COMSPEC(f,a) wprintf(f,a)
+    #define PRINT_COMSPEC(f,a) wprintf(f,a)
 #else
 	#define PRINT_COMSPEC(f,a)
 #endif
@@ -40,6 +40,8 @@ wchar_t gszDbgModLabel[6] = {0};
 
 #define START_MAX_PROCESSES 1000
 #define CHECK_PROCESSES_TIMEOUT 500
+#define CHECK_ANTIVIRUS_TIMEOUT 6*1000
+#define CHECK_ROOTSTART_TIMEOUT 10*1000
 
 WARNING("!!!! Пока можно при появлении события запоминать текущий тик");
 // и проверять его в RefreshThread. Если он не 0 - и дельта больше (100мс?)
@@ -174,7 +176,7 @@ HWND    ghConWnd = NULL;
 HWND    ghConEmuWnd = NULL; // Root! window
 HANDLE  ghExitEvent = NULL;
 HANDLE  ghFinilizeEvent = NULL;
-BOOL    gbAlwaysConfirmExit = FALSE;
+BOOL    gbAlwaysConfirmExit = FALSE, gbInShutdown = FALSE;
 BOOL    gbAttachMode = FALSE;
 DWORD   gdwMainThreadId = 0;
 //int       gnBufferHeight = 0;
@@ -209,7 +211,7 @@ struct tag_Srv {
     // Например, запустили FAR, он запустил Update, FAR перезапущен...
     //std::vector<DWORD> nProcesses;
 	UINT nProcessCount, nMaxProcesses;
-	DWORD* pnProcesses, *pnProcessesCopy;
+	DWORD* pnProcesses, *pnProcessesCopy, nProcessStartTick;
     //
     wchar_t szPipename[MAX_PATH], szInputname[MAX_PATH], szGuiPipeName[MAX_PATH];
     //
@@ -430,6 +432,7 @@ int main()
     /* ********************************* */
     
     // CREATE_NEW_PROCESS_GROUP - низя, перестает работать Ctrl-C
+	srv.nProcessStartTick = GetTickCount();
     lbRc = CreateProcessW(NULL, gpszRunCmd, NULL,NULL, TRUE, 
             NORMAL_PRIORITY_CLASS/*|CREATE_NEW_PROCESS_GROUP*/, 
             NULL, NULL, &si, &pi);
@@ -466,7 +469,7 @@ int main()
     
         // Ждем, пока в консоли не останется процессов (кроме нашего)
         TODO("Проверить, может ли так получиться, что CreateProcess прошел, а к консоли он не прицепился? Может, если процесс GUI");
-        nWait = WaitForSingleObject(ghFinilizeEvent, 6*1000); //Запуск процесса наверное может задержать антивирус
+        nWait = WaitForSingleObject(ghFinilizeEvent, CHECK_ANTIVIRUS_TIMEOUT); //Запуск процесса наверное может задержать антивирус
         if (nWait != WAIT_OBJECT_0) { // Если таймаут
             iRc = srv.nProcessCount;
             // И процессов в консоли все еще нет
@@ -534,11 +537,14 @@ wait:
     iRc = 0;
 wrap:
     // 
-    if ((iRc!=0 && iRc!=CERR_RUNNEWCONSOLE) || gbAlwaysConfirmExit) {
+    if (!gbInShutdown
+		&& ((iRc!=0 && iRc!=CERR_RUNNEWCONSOLE) || gbAlwaysConfirmExit)
+		)
+	{
         ExitWaitForKey(VK_RETURN, L"\n\nPress Enter to close console, or wait...", TRUE);
         if (iRc == CERR_PROCESSTIMEOUT) {
             int nCount = srv.nProcessCount;
-            if (nCount > 0) {
+            if (nCount > 1) {
                 // Процесс таки запустился!
                 goto wait;
             }
@@ -612,10 +618,15 @@ void Help()
 
 BOOL IsNeedCmd(LPCWSTR asCmdLine)
 {
-	if (wcschr(asCmdLine, L"&") || 
-		wcschr(asCmdLine, L">") || 
-		wcschr(asCmdLine, L"<") || 
-		wcschr(asCmdLine, L"|"))
+	_ASSERTE(asCmdLine && *asCmdLine);
+
+	if (!asCmdLine || *asCmdLine == 0)
+		return TRUE;
+
+	if (wcschr(asCmdLine, L'&') || 
+		wcschr(asCmdLine, L'>') || 
+		wcschr(asCmdLine, L'<') || 
+		wcschr(asCmdLine, L'|'))
 	{
 		// Если есть одна из команд перенаправления, или слияния - нужен CMD.EXE
 		return TRUE;
@@ -627,9 +638,13 @@ BOOL IsNeedCmd(LPCWSTR asCmdLine)
 
 	// cmd /c ""c:\program files\arc\7z.exe" -?"   // да еще и внутри могут быть двойными...
 	// cmd /c "dir c:\"
-	if (pwszCopy[0] == L'"' && pwszCopy[1] == L'"' && pwszCopy[2]) {
-		if (pwszCopy[lstrlenW(pwszCopy)-1] == L'"')
+	int nLastChar = lstrlenW(pwszCopy) - 1;
+	if (pwszCopy[0] == L'"' && pwszCopy[nLastChar] == L'"') {
+		if (pwszCopy[1] == L'"' && pwszCopy[2]) {
 			pwszCopy ++; // Отбросить первую кавычку в командах типа: ""c:\program files\arc\7z.exe" -?"
+		} else if (wcschr(pwszCopy+1, L'"') == (pwszCopy+nLastChar)) {
+			pwszCopy ++; // Отбросить первую кавычку в командах типа: "c:\arc\7z.exe -?"
+		}
 	}
 
 	// Получим первую команду (исполняемый файл?)
@@ -650,7 +665,7 @@ BOOL IsNeedCmd(LPCWSTR asCmdLine)
 	if (pwszDot) { // Если указан .exe или .com файл
 		if (lstrcmpiW(pwszDot, L".exe")==0 || lstrcmpiW(pwszDot, L".com")==0) {
 			if (FileExists(szArg))
-				return TRUE;
+				return FALSE; // Запускается конкретная консольная программа. cmd.exe не требуется
 		}
 	}
 
@@ -663,7 +678,7 @@ BOOL IsNeedCmd(LPCWSTR asCmdLine)
 BOOL FileExists(LPCWSTR asFile)
 {
 	WIN32_FIND_DATA fnd; memset(&fnd, 0, sizeof(fnd));
-	HANDLE h = FindFirstFile(szArg, &fnd);
+	HANDLE h = FindFirstFile(asFile, &fnd);
 	if (h != INVALID_HANDLE_VALUE) {
 		FindClose(h);
 		return (fnd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0;
@@ -787,9 +802,9 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
             wcsncpy(pszNewCmd, pwszStartCmdLine, nNewLen);
             pszNewCmd[nNewLen] = 0;
             // Поправим режимы открытия
-            if (!gbAttachMode)
+            if (!gbAttachMode) // Если ключа еще нет в ком.строке - добавим
                 wcscat(pszNewCmd, L" /ATTACH ");
-            if (!gbAlwaysConfirmExit)
+            if (!gbAlwaysConfirmExit) // Если ключа еще нет в ком.строке - добавим
                 wcscat(pszNewCmd, L" /CONFIRM ");
             // Сформировать новую команду
             // "cmd" потому что пока не хочется обрезать кавычки и думать, реально ли он нужен
@@ -812,6 +827,8 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
             //return 200;
             // Можно запускаться
             *psNewCmd = pszNewCmd;
+            // 26.06.2009 Maks - чтобы сразу выйти - вся обработка будет в новой консоли.
+            gbAlwaysConfirmExit = FALSE;
             return 0;
         }
 
@@ -880,7 +897,9 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
         if (asCmdLine[1]) {
             wchar_t *pszTitle = *psNewCmd;
             wchar_t *pszEndQ = pszTitle + lstrlenW(pszTitle) - 1;
-            if (pszEndQ > (pszTitle+1) && *pszEndQ == L'"') {
+            if (pszEndQ > (pszTitle+1) && *pszEndQ == L'"'
+				&& wcschr(pszTitle+1, L'"') == pszEndQ)
+			{
                 *pszEndQ = 0; pszTitle ++;
             } else {
                 pszEndQ = NULL;
@@ -920,7 +939,23 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
             lstrcpyW( (*psNewCmd), szComSpec );
             lstrcatW( (*psNewCmd), cmd.bK ? L" /K " : L" /C " );
         }
+		BOOL lbNeedQuatete = TRUE;
+		// Команды в cmd.exe лучше передавать так:
+		// ""c:\program files\arc\7z.exe" -?"
+		int nLastChar = lstrlenW(asCmdLine) - 1;
+		if (asCmdLine[0] == L'"' && asCmdLine[nLastChar] == L'"') {
+			if (asCmdLine[1] == L'"' && asCmdLine[2])
+				lbNeedQuatete = FALSE; // уже
+			else if (wcschr(asCmdLine+1, L'"') == (asCmdLine+nLastChar))
+				lbNeedQuatete = FALSE; // не требуется. внутри кавычек нет
+		} 
+		if (lbNeedQuatete) { // надо
+			lstrcatW( (*psNewCmd), L"\"" );
+		}
+		// Собственно, командная строка
         lstrcatW( (*psNewCmd), asCmdLine );
+		if (lbNeedQuatete)
+			lstrcatW( (*psNewCmd), L"\"" );
     }
     
     return 0;
@@ -1009,7 +1044,7 @@ void ExitWaitForKey(WORD vkKey, LPCWSTR asConfirm, BOOL abNewLine)
     while (ReadConsoleInput(GetStdHandle(STD_INPUT_HANDLE), &r, 1, &dwCount)) {
         if (gnRunMode == RM_SERVER) {
             int nCount = srv.nProcessCount;
-            if (nCount > 0) {
+            if (nCount > 1) {
                 // ! Процесс таки запустился, закрываться не будем. Вернуть событие в буфер!
                 WriteConsoleInput(GetStdHandle(STD_INPUT_HANDLE), &r, 1, &dwCount);
                 break;
@@ -1663,8 +1698,21 @@ BOOL CheckProcessCount(BOOL abForce/*=FALSE*/)
 	dwLastCheckTick = GetTickCount();
 
 	// Процессов в консоли не осталось?
+	WARNING("Если в консоли ДО этого были процессы - все условия вида 'srv.nProcessCount == 1' обломаются");
+	// Пример - запускаемся из фара. Количество процессов ИЗНАЧАЛЬНО - 5
+	// cmd вываливается сразу (path not found)
+	// количество процессов ОСТАЕТСЯ 5 и ни одно из ниже условий не проходит
+	if (nPrevCount == 1 && srv.nProcessCount == 1 &&
+		((dwLastCheckTick - srv.nProcessStartTick) > CHECK_ROOTSTART_TIMEOUT) &&
+		WaitForSingleObject(ghFinilizeEvent,0) == WAIT_TIMEOUT)
+	{
+		nPrevCount = 2; // чтобы сработало следующее условие
+		if (!gbAlwaysConfirmExit) gbAlwaysConfirmExit = TRUE; // чтобы консоль не схлопнулась
+	}
 	if (nPrevCount > 1 && srv.nProcessCount == 1 && srv.pnProcesses[0] == gnSelfPID) {
 		CS.Unlock();
+		if (!gbAlwaysConfirmExit && (dwLastCheckTick - srv.nProcessStartTick) <= CHECK_ROOTSTART_TIMEOUT)
+			gbAlwaysConfirmExit = TRUE; // чтобы консоль не схлопнулась
 		SetEvent(ghFinilizeEvent);
 	}
 
@@ -1758,7 +1806,8 @@ void CheckConEmuHwnd()
         SetForegroundWindow(ghConWnd);
 
     } else {
-        _ASSERTE(ghConEmuWnd!=NULL);
+		// да и фиг сним. нас могли просто так, без gui запустить
+        //_ASSERTE(ghConEmuWnd!=NULL);
     }
 }
 
@@ -3929,6 +3978,9 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 
 BOOL WINAPI HandlerRoutine(DWORD dwCtrlType)
 {
+	if (dwCtrlType >= CTRL_CLOSE_EVENT && dwCtrlType <= CTRL_SHUTDOWN_EVENT) {
+		gbInShutdown = TRUE;
+	}
     /*SafeCloseHandle(ghLogSize);
     if (wpszLogSizeFile) {
         DeleteFile(wpszLogSizeFile);

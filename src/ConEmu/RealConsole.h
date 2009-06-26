@@ -166,6 +166,7 @@ public:
 	bool isNtvdm();
 	bool isPackets();
 	LPCWSTR GetCmd();
+	short GetProgress();
 
 public:
     // Вызываются из CVirtualConsole
@@ -179,6 +180,7 @@ protected:
     DWORD mn_ConEmuC_PID; HANDLE mh_ConEmuC, mh_ConEmuCInput;
     TCHAR ms_ConEmuC_Pipe[MAX_PATH], ms_ConEmuCInput_Pipe[MAX_PATH], ms_VConServer_Pipe[MAX_PATH];
     TCHAR Title[MAX_TITLE_SIZE+1], TitleCmp[MAX_TITLE_SIZE+1];
+    short mn_Progress;
 
     BOOL AttachPID(DWORD dwPID);
     BOOL StartProcess();

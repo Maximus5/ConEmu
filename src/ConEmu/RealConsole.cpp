@@ -58,6 +58,7 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
 
     wcscpy(Title, L"ConEmu");
     wcscpy(ms_PanelTitle, Title);
+    mn_Progress = -1; // Процентов нет
 
     mh_MonitorThread = NULL; mn_MonitorThreadID = 0; mn_ConEmuC_PID = 0; mh_ConEmuC = NULL; mh_ConEmuCInput = NULL;
     mb_NeedStartProcess = FALSE;
@@ -4377,6 +4378,33 @@ void CRealConsole::OnTitleChanged()
 	wcscpy(Title, TitleCmp);
 
 	CheckFarStates();
+	
+	// Обработка прогресса операций
+	short nLastProgress = mn_Progress;
+	if (Title[0] == L'{' || Title[0] == L'(' || Title[0] == L'[') {
+		if (isDigit(Title[1])) {
+			if (isDigit(Title[2]) && isDigit(Title[3]) && Title[4] == L'%') {
+				// По идее больше 100% быть не должно :)
+				mn_Progress = 100*(Title[1] - L'0') + 10*(Title[2] - L'0') + (Title[3] - L'0');
+			} else if (isDigit(Title[2]) && Title[3] == L'%') {
+				// 10 .. 99 %
+				mn_Progress = 10*(Title[1] - L'0') + (Title[2] - L'0');
+			} else if (Title[2] == L'%') {
+				// 0 .. 9 %
+				mn_Progress = (Title[1] - L'0');
+			} else {
+				// Процентов нет
+				mn_Progress = -1;
+			}
+			_ASSERTE(mn_Progress<=100);
+			if (mn_Progress > 100)
+				mn_Progress = 100;
+		} else {
+			mn_Progress = -1;
+		}
+	} else {
+		mn_Progress = -1;
+	}
 
 	// иначе может среагировать на изменение заголовка ДО того,
 	// как мы узнаем, что активировался редактор...
@@ -4384,8 +4412,13 @@ void CRealConsole::OnTitleChanged()
 	if (Title[0] == L'{' || Title[0] == L'(')
 		CheckPanelTitle();
 
-	if (gConEmu.isActive(mp_VCon))
+	if (gConEmu.isActive(mp_VCon)) {
+		// Для активной консоли - обновляем заголовок. Прогресс обновится там же
 		gConEmu.UpdateTitle(TitleCmp);
+	} else if (nLastProgress != mn_Progress) {
+		// Для НЕ активной консоли - уведомить главное окно, что у нас сменились проценты
+		gConEmu.UpdateProgress(TRUE/*abUpdateTitle*/);
+	}
 	TabBar.Update(); // сменить заголовок закладки?
 }
 
@@ -4454,4 +4487,10 @@ LPCWSTR CRealConsole::GetCmd()
 		return ms_SpecialCmd;
 	else
 		return gSet.GetCmd();
+}
+
+short CRealConsole::GetProgress()
+{
+	if (!this) return -1;
+	return mn_Progress;
 }

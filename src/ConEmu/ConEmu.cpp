@@ -27,7 +27,7 @@ CConEmuMain::CConEmuMain()
     DragDrop=NULL;
     ProgressBars=NULL;
     //cBlinkShift=0;
-    Title[0] = 0; TitleCmp[0] = 0; MultiTitle[0] = 0;
+    Title[0] = 0; TitleCmp[0] = 0; MultiTitle[0] = 0; mn_Progress = -1;
     mb_InTimer = FALSE;
     //mb_InClose = FALSE;
     //memset(m_ProcList, 0, 1000*sizeof(DWORD)); 
@@ -2236,30 +2236,10 @@ void CConEmuMain::UpdateTitle(LPCTSTR asNewTitle)
         PostMessage(ghWnd, mn_MsgUpdateTitle, 0, 0);
         return;
     }
-
+    
     wcscpy(Title, asNewTitle);
 
-    LPCWSTR psTitle = Title;
-
-    if (gSet.isMulti && !TabBar.IsShown()) {
-        int nCur = 1, nCount = 0;
-        for (int n=0; n<MAX_CONSOLE_COUNT; n++) {
-            if (mp_VCon[n]) {
-                nCount ++;
-                if (pVCon == mp_VCon[n])
-                    nCur = n+1;
-            }
-        }
-        if (nCount > 1) {
-            wsprintf(MultiTitle, L"[%i/%i] ", nCur, nCount);
-            wcscat(MultiTitle, Title);
-            psTitle = MultiTitle;
-        }
-    }
-
-    SetWindowText(ghWnd, psTitle);
-    if (ghWndApp)
-        SetWindowText(ghWndApp, psTitle);
+    UpdateProgress(TRUE);
 
     BOOL  lbTitleChanged = TRUE;
 
@@ -2280,6 +2260,65 @@ void CConEmuMain::UpdateTitle(LPCTSTR asNewTitle)
 
     // Под конец - проверить список процессов консоли
     CheckProcesses();
+}
+
+// Если в текущей консоли есть проценты - отображаются они
+// Иначе - отображается максимальное значение процентов из всех консолей
+void CConEmuMain::UpdateProgress(BOOL abUpdateTitle)
+{
+    LPCWSTR psTitle = NULL;
+    MultiTitle[0] = 0;
+    
+    short nProgress = -1, n;
+    BOOL bActiveHasProgress = FALSE;
+    if ((nProgress = pVCon->RCon()->GetProgress()) >= 0) {
+    	mn_Progress = nProgress;
+    	bActiveHasProgress = TRUE;
+    } else {
+    	for (UINT i = 0; i < MAX_CONSOLE_COUNT && nProgress < 100; i++) {
+        	if (mp_VCon[i]) {
+        		n = mp_VCon[i]->RCon()->GetProgress();
+        		if (n > nProgress) nProgress = n;
+        	}
+        }
+        mn_Progress = min(nProgress,100);
+    }
+
+    static short nLastProgress = -1;
+    if (nLastProgress != mn_Progress) {
+    	nLastProgress = mn_Progress;
+    	TODO("Прогресс на иконке или в стиле Win7");
+    }
+    if (mn_Progress >= 0 && !bActiveHasProgress) {
+    	psTitle = MultiTitle;
+    	wsprintf(MultiTitle+lstrlen(MultiTitle), L"{*%i%%} ", mn_Progress);
+    }
+
+    if (gSet.isMulti && !TabBar.IsShown()) {
+        int nCur = 1, nCount = 0;
+        for (int n=0; n<MAX_CONSOLE_COUNT; n++) {
+            if (mp_VCon[n]) {
+                nCount ++;
+                if (pVCon == mp_VCon[n])
+                    nCur = n+1;
+            }
+        }
+        if (nCount > 1) {
+        	psTitle = MultiTitle;
+            wsprintf(MultiTitle+lstrlen(MultiTitle), L"[%i/%i] ", nCur, nCount);
+        }
+    }
+    
+    if (psTitle)
+    	wcscat(MultiTitle, Title);
+    else
+    	psTitle = Title;
+
+    SetWindowText(ghWnd, psTitle);
+
+	// Задел на будущее
+    if (ghWndApp)
+        SetWindowText(ghWndApp, psTitle);
 }
 
 VOID CConEmuMain::WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime)

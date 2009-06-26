@@ -110,7 +110,8 @@ public:
 	//DWORD mn_ActiveStatus;
 	//TCHAR ms_EditorRus[16], ms_ViewerRus[16], ms_TempPanel[32], ms_TempPanelRus[32];
 protected:
-	TCHAR Title[MAX_TITLE_SIZE], TitleCmp[MAX_TITLE_SIZE], MultiTitle[MAX_TITLE_SIZE+20];
+	TCHAR Title[MAX_TITLE_SIZE], TitleCmp[MAX_TITLE_SIZE], MultiTitle[MAX_TITLE_SIZE+30];
+	short mn_Progress;
 	LPTSTR GetTitleStart();
 	BOOL mb_InTimer;
 	BOOL mb_ProcessCreated; DWORD mn_StartTick;
@@ -209,6 +210,7 @@ public:
 	void TabCommand(UINT nTabCmd);
 	void Update(bool isForce = false);
 	void UpdateTitle(LPCTSTR asNewTitle);
+	void UpdateProgress(BOOL abUpdateTitle);
 	LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 public:
 	void OnBufferHeight(BOOL abBufferHeight);
