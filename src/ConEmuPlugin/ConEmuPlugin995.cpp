@@ -3,6 +3,9 @@
 #include "..\common\pluginW1007.hpp" // Отличается от 995 наличием SynchoApi
 #include "PluginHeader.h"
 
+#ifdef _DEBUG
+#define SHOW_DEBUG_EVENTS
+#endif
 
 struct PluginStartupInfo *InfoW995=NULL;
 struct FarStandardFunctions *FSFW995=NULL;
@@ -251,16 +254,32 @@ int ProcessEditorInputW995(LPCVOID aRec)
 
 	const INPUT_RECORD *Rec = (const INPUT_RECORD*)aRec;
 	// only key events with virtual codes > 0 are likely to cause status change (?)
-	if (Rec->EventType == KEY_EVENT && Rec->Event.KeyEvent.wVirtualKeyCode > 0  && Rec->Event.KeyEvent.bKeyDown)
+	if ((Rec->EventType & 0xFF) == KEY_EVENT 
+		&& (Rec->Event.KeyEvent.wVirtualKeyCode || Rec->Event.KeyEvent.wVirtualScanCode || Rec->Event.KeyEvent.uChar.UnicodeChar)
+		&& Rec->Event.KeyEvent.bKeyDown)
 	{
+#ifdef SHOW_DEBUG_EVENTS
+		char szDbg[255]; wsprintfA(szDbg, "ProcessEditorInput(E=%i, VK=%i, SC=%i, CH=%i, Down=%i)\n", 
+			Rec->EventType, Rec->Event.KeyEvent.wVirtualKeyCode, 
+			Rec->Event.KeyEvent.wVirtualScanCode, Rec->Event.KeyEvent.uChar.AsciiChar,
+			Rec->Event.KeyEvent.bKeyDown);
+		OutputDebugStringA(szDbg);
+#endif
+
 		EditorInfo ei;
 		InfoW995->EditorControl(ECTL_GETINFO, &ei);
+#ifdef SHOW_DEBUG_EVENTS
+		wsprintfA(szDbg, "Editor:State=%i\n", ei.CurState);
+		OutputDebugStringA(szDbg);
+#endif
 		int currentModifiedState = ei.CurState == ECSTATE_MODIFIED ? 1 : 0;
 		if (lastModifiedStateW != currentModifiedState)
 		{
 			// !!! Именно UpdateConEmuTabsW, без версии !!!
 			UpdateConEmuTabsW(0, false, false);
 			lastModifiedStateW = currentModifiedState;
+		} else {
+			gbHandleOneRedraw = true;
 		}
 	}
 	return 0;

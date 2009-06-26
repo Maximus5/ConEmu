@@ -3,6 +3,7 @@
 #include "..\common\pluginA.hpp"
 #include "PluginHeader.h"
 
+//#define SHOW_DEBUG_EVENTS
 
 // minimal(?) FAR version 1.71 alpha 4 build 2470
 int WINAPI _export GetMinFarVersion(void)
@@ -319,15 +320,34 @@ int WINAPI _export ProcessEditorInput(const INPUT_RECORD *Rec)
 	if (/*!ConEmuHwnd ||*/ !InfoA) // иногда событие от QuickView приходит ДО инициализации плагина
 		return 0; // Даже если мы не под эмулятором - просто запомним текущее состояние
 	// only key events with virtual codes > 0 are likely to cause status change (?)
-	if (Rec->EventType == KEY_EVENT && Rec->Event.KeyEvent.wVirtualKeyCode > 0  && Rec->Event.KeyEvent.bKeyDown)
+
+
+
+	if ((Rec->EventType & 0xFF) == KEY_EVENT 
+		&& (Rec->Event.KeyEvent.wVirtualKeyCode || Rec->Event.KeyEvent.wVirtualScanCode || Rec->Event.KeyEvent.uChar.AsciiChar)
+		&& Rec->Event.KeyEvent.bKeyDown)
 	{
+#ifdef SHOW_DEBUG_EVENTS
+		char szDbg[255]; wsprintfA(szDbg, "ProcessEditorInput(E=%i, VK=%i, SC=%i, CH=%i, Down=%i)\n", 
+			Rec->EventType, Rec->Event.KeyEvent.wVirtualKeyCode, 
+			Rec->Event.KeyEvent.wVirtualScanCode, Rec->Event.KeyEvent.uChar.AsciiChar,
+			Rec->Event.KeyEvent.bKeyDown);
+		OutputDebugStringA(szDbg);
+#endif
+
 		EditorInfo ei;
 		InfoA->EditorControl(ECTL_GETINFO, &ei);
+#ifdef SHOW_DEBUG_EVENTS
+		wsprintfA(szDbg, "Editor:State=%i\n", ei.CurState);
+		OutputDebugStringA(szDbg);
+#endif
 		int currentModifiedState = ei.CurState == ECSTATE_MODIFIED ? 1 : 0;
 		if (lastModifiedStateW != currentModifiedState)
 		{
 			UpdateConEmuTabsA(0, false, false);
 			lastModifiedStateW = currentModifiedState;
+		} else {
+			gbHandleOneRedraw = true;
 		}
 	}
 	return 0;
@@ -339,6 +359,12 @@ int WINAPI _export ProcessEditorEvent(int Event, void *Param)
 		return 0; // Даже если мы не под эмулятором - просто запомним текущее состояние
 	switch (Event)
 	{
+	case EE_REDRAW:
+		if (!gbHandleOneRedraw)
+			return 0;
+		gbHandleOneRedraw = false;
+		OUTPUTDEBUGSTRING(L"EE_REDRAW(first)\n");
+		break;
 	case EE_CLOSE:
 	case EE_GOTFOCUS:
 	case EE_KILLFOCUS:
@@ -414,6 +440,10 @@ void UpdateConEmuTabsA(int event, bool losingFocus, bool editorSave, void *Param
 		InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETWINDOWINFO, (void*)&WInfo);
 		if (WInfo.Type == WTYPE_EDITOR || WInfo.Type == WTYPE_VIEWER || WInfo.Type == WTYPE_PANELS)
 		{
+#ifdef SHOW_DEBUG_EVENTS
+			char szDbg[255]; wsprintfA(szDbg, "Window %i (Type=%i, Modified=%i)\n", i, WInfo.Type, WInfo.Modified);
+			OutputDebugStringA(szDbg);
+#endif
 			MultiByteToWideChar(CP_OEMCP, 0, WInfo.Name, lstrlenA(WInfo.Name)+1, pszName, CONEMUTABMAX);
 			lbCh |= AddTab(tabCount, losingFocus, editorSave, 
 				WInfo.Type, pszName, editorSave ? pszFileName : NULL, 

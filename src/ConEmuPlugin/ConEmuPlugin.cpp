@@ -1100,7 +1100,7 @@ BOOL AddTab(int &tabCount, bool losingFocus, bool editorSave,
 			int Type, LPCWSTR Name, LPCWSTR FileName, int Current, int Modified)
 {
     BOOL lbCh = FALSE;
-	OutputDebugString(L"--AddTab\n");
+	DEBUGSTR(L"--AddTab\n");
 
 	if (Type == WTYPE_PANELS) {
 	    lbCh = (tabs[0].Current != (losingFocus ? 1 : 0)) ||
@@ -1217,6 +1217,7 @@ void SendTabs(int tabCount, BOOL abFillDataOnly/*=FALSE*/, BOOL abForceSend/*=FA
 // watch non-modified -> modified editor status change
 
 int lastModifiedStateW = -1;
+bool gbHandleOneRedraw = false;
 
 int WINAPI _export ProcessEditorInputW(void* Rec)
 {
@@ -1236,26 +1237,27 @@ int WINAPI _export ProcessEditorEventW(int Event, void *Param)
 		return FUNC_Y(ProcessEditorEventW)(Event,Param);
 	else
 		return FUNC_X(ProcessEditorEventW)(Event,Param);*/
-	static bool sbEditorReading = false;
+	//static bool sbEditorReading = false;
 	// Вроде коды событий не различаются, да и от ANSI не отличаются...
 	switch (Event)
 	{
 	case EE_READ: // в этот момент количество окон еще не изменилось
-		sbEditorReading = true;
+		gbHandleOneRedraw = true;
 		return 0;
 	case EE_REDRAW:
-		if (!sbEditorReading)
+		if (!gbHandleOneRedraw)
 			return 0;
-		sbEditorReading = false;
-		OUTPUTDEBUGSTRING(L"EE_REDRAW(first)"); break;
+		gbHandleOneRedraw = false;
+		OUTPUTDEBUGSTRING(L"EE_REDRAW(first)\n");
+		break;
 	case EE_CLOSE:
-		OUTPUTDEBUGSTRING(L"EE_CLOSE"); break;
+		OUTPUTDEBUGSTRING(L"EE_CLOSE\n"); break;
 	case EE_GOTFOCUS:
-		OUTPUTDEBUGSTRING(L"EE_GOTFOCUS"); break;
+		OUTPUTDEBUGSTRING(L"EE_GOTFOCUS\n"); break;
 	case EE_KILLFOCUS:
-		OUTPUTDEBUGSTRING(L"EE_KILLFOCUS"); break;
+		OUTPUTDEBUGSTRING(L"EE_KILLFOCUS\n"); break;
 	case EE_SAVE:
-		OUTPUTDEBUGSTRING(L"EE_SAVE"); break;
+		OUTPUTDEBUGSTRING(L"EE_SAVE\n"); break;
 	default:
 		return 0;
 	}

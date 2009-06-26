@@ -151,6 +151,8 @@ typedef DWORD (WINAPI* FGetConsoleProcessList)(LPDWORD lpdwProcessList, DWORD dw
 FGetConsoleProcessList pfnGetConsoleProcessList = NULL;
 BOOL HookWinEvents(BOOL abEnabled);
 BOOL CheckProcessCount(BOOL abForce=FALSE);
+BOOL IsNeedCmd(LPCWSTR asCmdLine);
+BOOL FileExists(LPCWSTR asFile);
 
 
 #else
@@ -322,13 +324,6 @@ int main()
 #endif
 
     int iRc = 100;
-    //wchar_t sComSpec[MAX_PATH];
-    //wchar_t* psFilePart;
-    //wchar_t* psCmdLine = GetCommandLineW();
-    //size_t nCmdLine = lstrlenW(psCmdLine);
-    //wchar_t* psNewCmd = NULL;
-    //HANDLE hWait[2]={NULL,NULL};
-    //BOOL bViaCmdExe = TRUE;
     PROCESS_INFORMATION pi; memset(&pi, 0, sizeof(pi));
     STARTUPINFOW si; memset(&si, 0, sizeof(si)); si.cb = sizeof(si);
     DWORD dwErr = 0, nWait = 0;
@@ -615,6 +610,67 @@ void Help()
     );
 }
 
+BOOL IsNeedCmd(LPCWSTR asCmdLine)
+{
+	if (wcschr(asCmdLine, L"&") || 
+		wcschr(asCmdLine, L">") || 
+		wcschr(asCmdLine, L"<") || 
+		wcschr(asCmdLine, L"|"))
+	{
+		// ≈сли есть одна из команд перенаправлени€, или сли€ни€ - нужен CMD.EXE
+		return TRUE;
+	}
+
+	wchar_t szArg[MAX_PATH+10] = {0};
+	int iRc = 0;
+	LPCWSTR pwszCopy = asCmdLine;
+
+	// cmd /c ""c:\program files\arc\7z.exe" -?"   // да еще и внутри могут быть двойными...
+	// cmd /c "dir c:\"
+	if (pwszCopy[0] == L'"' && pwszCopy[1] == L'"' && pwszCopy[2]) {
+		if (pwszCopy[lstrlenW(pwszCopy)-1] == L'"')
+			pwszCopy ++; // ќтбросить первую кавычку в командах типа: ""c:\program files\arc\7z.exe" -?"
+	}
+
+	// ѕолучим первую команду (исполн€емый файл?)
+	if ((iRc = NextArg(pwszCopy, szArg)) != 0) {
+	    //Parsing command line failed
+	    return TRUE;
+	}
+	pwszCopy = wcsrchr(szArg, L'\\'); if (!pwszCopy) pwszCopy = szArg;
+
+	#pragma warning( push )
+	#pragma warning(disable : 6400)
+
+	if (lstrcmpiW(pwszCopy, L"cmd")==0 || lstrcmpiW(pwszCopy, L"cmd.exe")==0) {
+	    return FALSE; // уже указан командный процессор, cmd.exe в начало добавл€ть не нужно
+	}
+
+	LPCWSTR pwszDot = wcsrchr(pwszCopy, L'.');
+	if (pwszDot) { // ≈сли указан .exe или .com файл
+		if (lstrcmpiW(pwszDot, L".exe")==0 || lstrcmpiW(pwszDot, L".com")==0) {
+			if (FileExists(szArg))
+				return TRUE;
+		}
+	}
+
+	TODO("ƒоделать поиски с: SearchPath, GetFullPathName, добавив расширени€ .exe & .com");
+
+	#pragma warning( pop )
+	return TRUE;
+}
+
+BOOL FileExists(LPCWSTR asFile)
+{
+	WIN32_FIND_DATA fnd; memset(&fnd, 0, sizeof(fnd));
+	HANDLE h = FindFirstFile(szArg, &fnd);
+	if (h != INVALID_HANDLE_VALUE) {
+		FindClose(h);
+		return (fnd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0;
+	}
+	return FALSE;
+}
+
 // –азбор параметров командной строки
 int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 {
@@ -740,11 +796,17 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
             // cmd /c ""c:\program files\arc\7z.exe" -?"   // да еще и внутри могут быть двойными...
             // cmd /c "dir c:\"
             // и пр.
-            wcscat(pszNewCmd, L" /CMD cmd /C ");
+			TODO("ѕопытатьс€ определить необходимость cmd");
+			if (IsNeedCmd(asCmdLine))
+				wcscat(pszNewCmd, L" /CMD cmd /C ");
+			else
+				wcscat(pszNewCmd, L" /CMD ");
+			// убрать из запускаемой команды "-new_console"
             nNewLen = pwszCopy - asCmdLine;
             psFilePart = pszNewCmd + lstrlenW(pszNewCmd);
             wcsncpy(psFilePart, asCmdLine, nNewLen); psFilePart += nNewLen;
             pwszCopy += nArgLen;
+			// добавить в команду запуска собственно программу с аргументами
             if (*pwszCopy) wcscpy(psFilePart, pwszCopy);
             //MessageBox(NULL, pszNewCmd, L"CmdLine", 0);
             //return 200;
@@ -752,23 +814,25 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
             *psNewCmd = pszNewCmd;
             return 0;
         }
+
+        //pwszCopy = asCmdLine;
+        //if ((iRc = NextArg(pwszCopy, szArg)) != 0) {
+        //    wprintf (L"Parsing command line failed:\n%s\n", asCmdLine);
+        //    return iRc;
+        //}
+        //pwszCopy = wcsrchr(szArg, L'\\'); if (!pwszCopy) pwszCopy = szArg;
     
-        pwszCopy = asCmdLine;
-        if ((iRc = NextArg(pwszCopy, szArg)) != 0) {
-            wprintf (L"Parsing command line failed:\n%s\n", asCmdLine);
-            return iRc;
-        }
-        pwszCopy = wcsrchr(szArg, L'\\'); if (!pwszCopy) pwszCopy = szArg;
-    
-        #pragma warning( push )
-        #pragma warning(disable : 6400)
-        if (lstrcmpiW(pwszCopy, L"cmd")==0 || lstrcmpiW(pwszCopy, L"cmd.exe")==0) {
-            bViaCmdExe = FALSE; // уже указан командный процессор, cmd.exe в начало добавл€ть не нужно
-        }
-        #pragma warning( pop )
-    } else {
-        bViaCmdExe = FALSE; // командным процессором выступает сам ConEmuC (серверный режим)
+        //#pragma warning( push )
+        //#pragma warning(disable : 6400)
+        //if (lstrcmpiW(pwszCopy, L"cmd")==0 || lstrcmpiW(pwszCopy, L"cmd.exe")==0) {
+        //    bViaCmdExe = FALSE; // уже указан командный процессор, cmd.exe в начало добавл€ть не нужно
+        //}
+        //#pragma warning( pop )
+    //} else {
+    //    bViaCmdExe = FALSE; // командным процессором выступает сам ConEmuC (серверный режим)
     }
+
+	bViaCmdExe = IsNeedCmd(asCmdLine);
     
     nCmdLine = lstrlenW(asCmdLine);
 
@@ -808,6 +872,7 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
         return CERR_NOTENOUGHMEM1;
     }
     
+	// это нужно дл€ смены заголовка консоли. при необходимости COMSPEC впишем ниже, после смены
     lstrcpyW( *psNewCmd, asCmdLine );
     
     // —меним заголовок консоли

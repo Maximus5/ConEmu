@@ -251,7 +251,9 @@ int ProcessEditorInputW789(LPCVOID aRec)
 
 	const INPUT_RECORD *Rec = (const INPUT_RECORD*)aRec;
 	// only key events with virtual codes > 0 are likely to cause status change (?)
-	if (Rec->EventType == KEY_EVENT && Rec->Event.KeyEvent.wVirtualKeyCode > 0  && Rec->Event.KeyEvent.bKeyDown)
+	if ((Rec->EventType & 0xFF) == KEY_EVENT 
+		&& (Rec->Event.KeyEvent.wVirtualKeyCode || Rec->Event.KeyEvent.wVirtualScanCode || Rec->Event.KeyEvent.uChar.UnicodeChar)
+		&& Rec->Event.KeyEvent.bKeyDown)
 	{
 		EditorInfo ei;
 		InfoW789->EditorControl(ECTL_GETINFO, &ei);

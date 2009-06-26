@@ -1148,7 +1148,7 @@ void CRealConsole::SendConsoleEvent(INPUT_RECORD* piRec)
 				#ifdef _DEBUG
 				wchar_t szDbg[60];
 				wsprintf(szDbg, L"!!! Skipping ConEmu.Mouse event at: {%ix%i}\n", m_LastMouse.dwMousePosition.X, m_LastMouse.dwMousePosition.Y);
-				OutputDebugString(szDbg);
+				DEBUGSTR(szDbg);
 				#endif
     			return; // Это событие лишнее. Движения мышки реально не было, кнопки не менялись
 			}
@@ -1162,7 +1162,7 @@ void CRealConsole::SendConsoleEvent(INPUT_RECORD* piRec)
 		#ifdef _DEBUG
 		wchar_t szDbg[60];
 		wsprintf(szDbg, L"ConEmu.Mouse event at: {%ix%i}\n", m_LastMouse.dwMousePosition.X, m_LastMouse.dwMousePosition.Y);
-		OutputDebugString(szDbg);
+		DEBUGSTR(szDbg);
 		#endif
     }
 
