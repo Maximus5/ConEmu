@@ -359,6 +359,9 @@ int WINAPI _export ProcessEditorEvent(int Event, void *Param)
 		return 0; // Даже если мы не под эмулятором - просто запомним текущее состояние
 	switch (Event)
 	{
+	case EE_READ: // в этот момент количество окон еще не изменилось
+		gbHandleOneRedraw = true;
+		return 0;
 	case EE_REDRAW:
 		if (!gbHandleOneRedraw)
 			return 0;
@@ -369,12 +372,11 @@ int WINAPI _export ProcessEditorEvent(int Event, void *Param)
 	case EE_GOTFOCUS:
 	case EE_KILLFOCUS:
 	case EE_SAVE:
-	//case EE_READ:
-		{
-			UpdateConEmuTabsA(Event+100, Event == EE_KILLFOCUS, Event == EE_SAVE);
-			break;
-		}
+		break;
+	default:
+		return 0;
 	}
+	UpdateConEmuTabsA(Event+100, Event == EE_KILLFOCUS, Event == EE_SAVE);
 	return 0;
 }
 

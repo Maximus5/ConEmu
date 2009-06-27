@@ -4537,7 +4537,7 @@ void CRealConsole::EnableComSpec(DWORD anFarPID, BOOL abSwitch)
 	wchar_t* pszSlash = wcsrchr(pszValue, L'\\');
 	_ASSERTE(pszSlash!=NULL);
 	lstrcpy(pszSlash, L"\\ConEmuC.exe");
-	if (lbNeedQuot) lstrcat(pszSlash, L" ");
+	if (lbNeedQuot) lstrcat(pszSlash, L"\"");
 
 	lbNeedQuot = (szCMD[0] != L'"') && (wcschr(szCMD, L' ') != NULL);
 	pszName = pszValue + lstrlenW(pszValue) + 1;
