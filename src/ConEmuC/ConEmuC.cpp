@@ -27,9 +27,9 @@ WARNING("При запуске как ComSpec получаем ошибку: {crNewSize.X>=MIN_CON_WIDTH &&
 
 #ifdef _DEBUG
 //  Раскомментировать, чтобы сразу после запуска процесса (conemuc.exe) показать MessageBox, чтобы прицепиться дебаггером
-  #define SHOW_STARTED_MSGBOX
+//  #define SHOW_STARTED_MSGBOX
 // Раскомментировать для вывода в консоль информации режима Comspec
-    #define PRINT_COMSPEC(f,a) wprintf(f,a)
+    #define PRINT_COMSPEC(f,a) //wprintf(f,a)
 #else
 	#define PRINT_COMSPEC(f,a)
 #endif
@@ -153,7 +153,7 @@ typedef DWORD (WINAPI* FGetConsoleProcessList)(LPDWORD lpdwProcessList, DWORD dw
 FGetConsoleProcessList pfnGetConsoleProcessList = NULL;
 BOOL HookWinEvents(BOOL abEnabled);
 BOOL CheckProcessCount(BOOL abForce=FALSE);
-BOOL IsNeedCmd(LPCWSTR asCmdLine);
+BOOL IsNeedCmd(LPCWSTR asCmdLine, BOOL *rbNeedCutStartEndQuot);
 BOOL FileExists(LPCWSTR asFile);
 
 
@@ -630,7 +630,24 @@ void Help()
     );
 }
 
-BOOL IsNeedCmd(LPCWSTR asCmdLine)
+#pragma warning( push )
+#pragma warning(disable : 6400)
+BOOL IsExecutable(LPCWSTR aszFilePathName)
+{
+	#pragma warning( push )
+	#pragma warning(disable : 6400)
+	LPCWSTR pwszDot = wcsrchr(aszFilePathName, L'.');
+	if (pwszDot) { // Если указан .exe или .com файл
+		if (lstrcmpiW(pwszDot, L".exe")==0 || lstrcmpiW(pwszDot, L".com")==0) {
+			if (FileExists(aszFilePathName))
+				return TRUE;
+		}
+	}
+	return FALSE;
+}
+#pragma warning( pop )
+
+BOOL IsNeedCmd(LPCWSTR asCmdLine, BOOL *rbNeedCutStartEndQuot)
 {
 	_ASSERTE(asCmdLine && *asCmdLine);
 
@@ -648,6 +665,7 @@ BOOL IsNeedCmd(LPCWSTR asCmdLine)
 
 	wchar_t szArg[MAX_PATH+10] = {0};
 	int iRc = 0;
+	BOOL lbFirstWasGot = FALSE;
 	LPCWSTR pwszCopy = asCmdLine;
 
 	// cmd /c ""c:\program files\arc\7z.exe" -?"   // да еще и внутри могут быть двойными...
@@ -656,15 +674,33 @@ BOOL IsNeedCmd(LPCWSTR asCmdLine)
 	if (pwszCopy[0] == L'"' && pwszCopy[nLastChar] == L'"') {
 		if (pwszCopy[1] == L'"' && pwszCopy[2]) {
 			pwszCopy ++; // Отбросить первую кавычку в командах типа: ""c:\program files\arc\7z.exe" -?"
+			if (rbNeedCutStartEndQuot) *rbNeedCutStartEndQuot = TRUE;
 		} else if (wcschr(pwszCopy+1, L'"') == (pwszCopy+nLastChar)) {
 			pwszCopy ++; // Отбросить первую кавычку в командах типа: "c:\arc\7z.exe -?"
+			if (rbNeedCutStartEndQuot) *rbNeedCutStartEndQuot = TRUE;
+		} else {
+			// отбросить первую кавычку в: "C:\GCC\msys\bin\make.EXE -f "makefile" COMMON="../../../plugins/common""
+			LPCWSTR pwszTemp = pwszCopy + 1;
+			// Получим первую команду (исполняемый файл?)
+			if ((iRc = NextArg(pwszTemp, szArg)) != 0) {
+				//Parsing command line failed
+				return TRUE;
+			}
+			LPCWSTR pwszQ = pwszCopy + 1 + wcslen(szArg);
+			if (*pwszQ != L'"' && IsExecutable(szArg)) {
+				pwszCopy ++; // отбрасываем
+				lbFirstWasGot = TRUE;
+				if (rbNeedCutStartEndQuot) *rbNeedCutStartEndQuot = TRUE;
+			}
 		}
 	}
 
 	// Получим первую команду (исполняемый файл?)
-	if ((iRc = NextArg(pwszCopy, szArg)) != 0) {
-	    //Parsing command line failed
-	    return TRUE;
+	if (!lbFirstWasGot) {
+		if ((iRc = NextArg(pwszCopy, szArg)) != 0) {
+			//Parsing command line failed
+			return TRUE;
+		}
 	}
 	pwszCopy = wcsrchr(szArg, L'\\'); if (!pwszCopy) pwszCopy = szArg; else pwszCopy ++;
 
@@ -682,15 +718,11 @@ BOOL IsNeedCmd(LPCWSTR asCmdLine)
 		return FALSE; // уже указан командный процессор, cmd.exe в начало добавлять не нужно
 	}
 
-	LPCWSTR pwszDot = wcsrchr(pwszCopy, L'.');
-	if (pwszDot) { // Если указан .exe или .com файл
-		if (lstrcmpiW(pwszDot, L".exe")==0 || lstrcmpiW(pwszDot, L".com")==0) {
-			if (FileExists(szArg))
-				return FALSE; // Запускается конкретная консольная программа. cmd.exe не требуется
-		}
-	}
+	if (IsExecutable(szArg))
+		return FALSE; // Запускается конкретная консольная программа. cmd.exe не требуется
 
-	TODO("Доделать поиски с: SearchPath, GetFullPathName, добавив расширения .exe & .com");
+	//Можно еще Доделать поиски с: SearchPath, GetFullPathName, добавив расширения .exe & .com
+	//хотя фар сам формирует полные пути к командам, так что можно не заморачиваться
 
 	#pragma warning( pop )
 	return TRUE;
@@ -718,6 +750,7 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
     BOOL bViaCmdExe = TRUE;
     size_t nCmdLine = 0;
     LPCWSTR pwszStartCmdLine = asCmdLine;
+	BOOL lbNeedCutStartEndQuot = FALSE;
     
     if (!asCmdLine || !*asCmdLine)
     {
@@ -811,7 +844,7 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
             //
             int nNewLen = wcslen(pwszStartCmdLine) + 100;
             //
-            BOOL lbIsNeedCmd = IsNeedCmd(asCmdLine);
+            BOOL lbIsNeedCmd = IsNeedCmd(asCmdLine, &lbNeedCutStartEndQuot);
             
             // Font, size, etc.
             
@@ -900,7 +933,8 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
     //    bViaCmdExe = FALSE; // командным процессором выступает сам ConEmuC (серверный режим)
     }
 
-	bViaCmdExe = IsNeedCmd(asCmdLine);
+
+	bViaCmdExe = IsNeedCmd(asCmdLine, &lbNeedCutStartEndQuot);
     
     nCmdLine = lstrlenW(asCmdLine);
 
@@ -943,7 +977,6 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 	// это нужно для смены заголовка консоли. при необходимости COMSPEC впишем ниже, после смены
     lstrcpyW( *psNewCmd, asCmdLine );
 
-	BOOL lbNeedCutStartEndQuot = FALSE;
     
     // Сменим заголовок консоли
     if (*asCmdLine == L'"') {
@@ -997,10 +1030,13 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 		// ""c:\program files\arc\7z.exe" -?"
 		int nLastChar = lstrlenW(asCmdLine) - 1;
 		if (asCmdLine[0] == L'"' && asCmdLine[nLastChar] == L'"') {
-			if (asCmdLine[1] == L'"' && asCmdLine[2])
-				lbNeedQuatete = FALSE; // уже
-			else if (wcschr(asCmdLine+1, L'"') == (asCmdLine+nLastChar))
-				lbNeedQuatete = FALSE; // не требуется. внутри кавычек нет
+			// Наверное можно положиться на фар, и не кавычить самостоятельно
+			if (gnRunMode == RM_COMSPEC)
+				lbNeedQuatete = FALSE;
+			//if (asCmdLine[1] == L'"' && asCmdLine[2])
+			//	lbNeedQuatete = FALSE; // уже
+			//else if (wcschr(asCmdLine+1, L'"') == (asCmdLine+nLastChar))
+			//	lbNeedQuatete = FALSE; // не требуется. внутри кавычек нет
 		} 
 		if (lbNeedQuatete) { // надо
 			lstrcatW( (*psNewCmd), L"\"" );
@@ -1016,6 +1052,10 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 		_ASSERTE(pszEndQ && *pszEndQ == L'"');
 		if (pszEndQ && *pszEndQ == L'"') *pszEndQ = 0;
 	}
+
+#ifdef _DEBUG
+	OutputDebugString(*psNewCmd); OutputDebugString(L"\n");
+#endif
     
     return 0;
 }
