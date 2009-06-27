@@ -326,7 +326,7 @@ void CSettings::LoadSettings()
 	        reg.Load(_T("TabSelf"), isTabSelf);
 	        reg.Load(_T("TabLazy"), isTabLazy);
 	        reg.Load(_T("TabRecent"), isTabRecent);
-			reg.Load(_T("TabCloseMacro"), sTabCloseMacro);
+			if (!reg.Load(_T("TabCloseMacro"), &sTabCloseMacro) && sTabCloseMacro && !*sTabCloseMacro) { free(sTabCloseMacro); sTabCloseMacro = NULL; }
         reg.Load(_T("TabFrame"), isTabFrame);
         reg.Load(_T("TabMargins"), rcTabMargins);
         reg.Load(_T("SlideShowElapse"), nSlideShowElapse);

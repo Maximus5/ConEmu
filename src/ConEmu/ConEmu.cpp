@@ -1889,6 +1889,7 @@ void CConEmuMain::PostMacro(LPCWSTR asMacro)
         DWORD cbWritten=0;
         DnDstep(_T("Macro: Waiting for result (10 sec)"));
         pipe.Execute(CMD_POSTMACRO, asMacro, (wcslen(asMacro)+1)*2);
+		DnDstep(NULL);
     }
 }
 
