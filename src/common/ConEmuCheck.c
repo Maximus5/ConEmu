@@ -29,6 +29,21 @@ typedef HWND (APIENTRY *FGetConsoleWindow)();
 //};
 //#endif
 
+CESERVER_REQ* ExecuteNewCmd(DWORD nCmd, DWORD nSize)
+{
+    CESERVER_REQ* pIn = NULL;
+    if (nSize) {
+        pIn = (CESERVER_REQ*)calloc(nSize, 1);
+        if (pIn) {
+	        pIn->hdr.nCmd = nCmd;
+	        pIn->hdr.nSrcThreadId = GetCurrentThreadId();
+	        pIn->hdr.nSize = nSize;
+	        pIn->hdr.nVersion = CESERVER_REQ_VER;
+        }
+    }
+    return pIn;
+}
+
 //Arguments:
 //   hConWnd - Хэндл КОНСОЛЬНОГО окна (по нему формируется имя пайпа для GUI)
 //   pIn     - выполняемая команда

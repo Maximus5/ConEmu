@@ -141,6 +141,8 @@ void CSettings::InitSettings()
 	bgImageDarker = 0x46;
 
     isFixFarBorders = TRUE; isPartBrush75 = 0xC8; isPartBrush50 = 0x96; isPartBrush25 = 0x5A;
+	memset(icFixFarBorderRanges, 0, sizeof(icFixFarBorderRanges));
+	icFixFarBorderRanges[0].bUsed = true; icFixFarBorderRanges[0].cBegin = 0x2013; icFixFarBorderRanges[0].cEnd = 0x25C4;
     
     wndHeight = ntvdmHeight = 25; // NightRoman
     wndWidth = 80;  // NightRoman
@@ -262,7 +264,33 @@ void CSettings::LoadSettings()
         reg.Load(L"CursorColor", isCursorColor);
 		reg.Load(L"CursorBlink", isCursorBlink);
 
-        reg.Load(_T("Experimental"), isFixFarBorders);
+		if (!reg.Load(L"FixFarBorders", isFixFarBorders))
+			reg.Load(L"Experimental", isFixFarBorders);
+		{
+			wchar_t szCharRanges[120]; // max 10 ranges x 10 chars + a little ;)
+			if (reg.Load(L"FixFarBordersRanges", szCharRanges)) {
+				int n = 0, nMax = countof(icFixFarBorderRanges);
+				wchar_t *pszRange = szCharRanges, *pszNext = NULL;
+				wchar_t cBegin, cEnd;
+				while (*pszRange && n < nMax) {
+					cBegin = (wchar_t)wcstol(pszRange, &pszNext, 16);
+					if (!cBegin || cBegin == 0xFFFF || *pszNext != L'-') break;
+					pszRange = pszNext + 1;
+					cEnd = (wchar_t)wcstol(pszRange, &pszNext, 16);
+					if (!cEnd || cEnd == 0xFFFF) break;
+
+					icFixFarBorderRanges[n].bUsed = true;
+					icFixFarBorderRanges[n].cBegin = cBegin;
+					icFixFarBorderRanges[n].cEnd = cEnd;
+
+					n ++;
+					if (*pszNext != L';') break;
+					pszRange = pszNext + 1;
+				}
+				for ( ; n < nMax; n++)
+					icFixFarBorderRanges[n].bUsed = false;
+			}
+		}
         
         reg.Load(_T("PartBrush75"), isPartBrush75); if (isPartBrush75<5) isPartBrush75=5; else if (isPartBrush75>250) isPartBrush75=250;
         reg.Load(_T("PartBrush50"), isPartBrush50); if (isPartBrush50<5) isPartBrush50=5; else if (isPartBrush50>250) isPartBrush50=250;
@@ -477,7 +505,7 @@ BOOL CSettings::SaveSettings()
             reg.Save(_T("CursorColor"), isCursorColor);
 			reg.Save(L"CursorBlink", isCursorBlink);
 
-            reg.Save(_T("Experimental"), isFixFarBorders);
+            reg.Save(_T("FixFarBorders"), isFixFarBorders);
             reg.Save(_T("RightClick opens context menu"), isRClickSendKey);
             reg.Save(_T("AltEnter"), isSentAltEnter);
             reg.Save(_T("Min2Tray"), isMinToTray);

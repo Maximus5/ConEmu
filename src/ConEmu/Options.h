@@ -51,6 +51,10 @@ public:
     DWORD FontSizeX3;
     bool isFullScreen;
     char isFixFarBorders;
+	struct tag_CharRanges {
+		bool bUsed;
+		wchar_t cBegin, cEnd;
+	} icFixFarBorderRanges[10];
     BYTE isPartBrush75, isPartBrush50, isPartBrush25;
     bool isCursorV;
 	bool isCursorBlink;

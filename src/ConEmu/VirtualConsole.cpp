@@ -134,11 +134,7 @@ CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
         mn_LogScreenIdx = 0;
         DWORD dwErr = 0;
         wchar_t szFile[MAX_PATH+64], *pszDot;
-        if (!GetModuleFileName(NULL, szFile, MAX_PATH)) {
-            dwErr = GetLastError();
-            DisplayLastError(L"GetModuleFileName failed! ErrCode=0x%08X\n", dwErr);
-            return; // не удалось
-        }
+		lstrcpyW(szFile, gConEmu.ms_ConEmuExe);
         if ((pszDot = wcsrchr(szFile, L'\\')) == NULL) {
             DisplayLastError(L"wcsrchr failed!");
             return; // ошибка
@@ -441,10 +437,17 @@ void CVirtualConsole::DumpConsole(LPCWSTR asFile)
 //#define isCharBorder(inChar) (inChar>=0x2013 && inChar<=0x266B)
 bool CVirtualConsole::isCharBorder(WCHAR inChar)
 {
-    if (inChar>=0x2013 && inChar<=0x266B)
-        return true;
-    else
-        return false;
+	for (int i=0; i<10 && gSet.icFixFarBorderRanges[i].bUsed; i++)
+		if (inChar>=gSet.icFixFarBorderRanges[i].cBegin && inChar<=gSet.icFixFarBorderRanges[i].cEnd)
+			return true;
+
+	return false;
+
+    //if (inChar>=0x2013 && inChar<=0x266B)
+    //    return true;
+    //else
+    //    return false;
+
     //if (gSet.isFixFarBorders)
     //{
     //  //if (! (inChar > 0x2500 && inChar < 0x251F))

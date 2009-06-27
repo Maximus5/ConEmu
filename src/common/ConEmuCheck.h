@@ -29,6 +29,7 @@ int ConEmuCheck(HWND* ahConEmuWnd);
 HWND GetConEmuHWND(BOOL abRoot /*, int* pnConsoleIsChild/ *=NULL*/);
 
 
+CESERVER_REQ* ExecuteNewCmd(DWORD nCmd, DWORD nSize);
 CESERVER_REQ* ExecuteGuiCmd(HWND hConWnd, const CESERVER_REQ* pIn);
 void ExecuteFreeResult(CESERVER_REQ* pOut);
 

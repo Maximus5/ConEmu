@@ -475,8 +475,10 @@ DWORD WINAPI ThreadProcW(LPVOID lpParameter)
 			DWORD dwDelta = dwCurTick - dwStartTick;
 			if (dwDelta > GUI_ATTACH_TIMEOUT) {
 				lbStartedNoConEmu = FALSE;
-				ShowWindowAsync(FarHwnd, SW_SHOWNORMAL);
-				EnableWindow(FarHwnd, true);
+				if (!TerminalMode && !IsWindowVisible(FarHwnd)) {
+					ShowWindowAsync(FarHwnd, SW_SHOWNORMAL);
+					EnableWindow(FarHwnd, true);
+				}
 			}
 		}
 
@@ -487,6 +489,11 @@ DWORD WINAPI ThreadProcW(LPVOID lpParameter)
 			HWND hConWnd = GetConsoleWindow();
 		    if (!IsWindow(ConEmuHwnd) || hConWnd!=FarHwnd) {
 			    ConEmuHwnd = NULL;
+
+				if (!TerminalMode && !IsWindowVisible(FarHwnd)) {
+					ShowWindowAsync(FarHwnd, SW_SHOWNORMAL);
+					EnableWindow(FarHwnd, true);
+				}
 
 				if (hConWnd!=FarHwnd || !IsWindow(FarHwnd))
 				{
@@ -1767,6 +1774,20 @@ DWORD WINAPI ServerThreadCommand(LPVOID ahPipe)
 
 	} else if (pIn->hdr.nCmd == CMD_REQTABS) {
 		SendTabs(gnCurTabCount, TRUE, TRUE);
+
+	} else if (pIn->hdr.nCmd == CMD_SETENVVAR) {
+		// ”становить переменные окружени€
+		_ASSERTE(nDataSize>=4);
+		wchar_t *pszName  = (wchar_t*)pIn->Data;
+		wchar_t *pszValue = pszName + lstrlenW(pszName) + 1;
+		while (*pszName && *pszValue) {
+			// ≈сли в pszValue пуста€ строка - удаление переменной
+			SetEnvironmentVariableW(pszName, (*pszValue != 0) ? pszValue : NULL);
+			//
+			pszName = pszValue + lstrlenW(pszValue) + 1;
+			if (*pszName == 0) break;
+			pszValue = pszName + lstrlenW(pszName) + 1;
+		}
 
 	} else {
 		ProcessCommand(pIn->hdr.nCmd, TRUE/*bReqMainThread*/, pIn->Data);

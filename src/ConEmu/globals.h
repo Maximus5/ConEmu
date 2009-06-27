@@ -21,7 +21,7 @@ extern const int TAB_FONT_HEIGTH;
 extern wchar_t TAB_FONT_FACE[];
 
 
-extern TCHAR szIconPath[MAX_PATH];
+//extern TCHAR szIconPath[MAX_PATH];
 extern HICON hClassIcon, hClassIconSm;
 
 class CSettings;

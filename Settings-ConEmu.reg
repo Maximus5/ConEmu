@@ -29,9 +29,12 @@ REGEDIT4
 ;; hex:00 - borders are drawn using main font.
 ;; hex:01 - using FontName2.
 ;; hex:02 - same as hex:01 & progress symbols are filled.
-"Experimental"=hex:01
+"FixFarBorders"=hex:01
 ;"FontName2"="Lucida Console"
 ;"FontSizeX2"=dword:00000000
+;; You may redefine default character ranges for 'Fix far borders' feature.
+;; Charset - Unicode, one char - 4 hex digits, max - 10 ranges.
+;"FixFarBordersRanges"="2013-2015;2190-21AF;2500-25C4"
 ;; For "Experimental" == 2 You may specify the weights of parts (5..250)
 ;"PartBrush75"=hex:C8
 ;"PartBrush50"=hex:96

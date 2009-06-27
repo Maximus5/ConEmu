@@ -1455,7 +1455,7 @@ LRESULT CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lP
             }
         }
         else if (messg == WM_SYSKEYDOWN && wParam == VK_SPACE && lParam & (1<<29)/*Бред. это 29-й бит, а не число 29*/ && !isPressed(VK_SHIFT))
-        {
+        {	// Нада, или системное меню будет недоступно
             RECT rect, cRect;
             GetWindowRect(ghWnd, &rect);
             GetClientRect(ghWnd, &cRect);
@@ -1493,6 +1493,7 @@ LRESULT CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lP
                     /*(wParam >= VK_NUMPAD0 && wParam <= VK_DIVIDE) ||*/ //TODO:
                     (wParam >= VK_PRIOR/*0x21*/ && wParam <= VK_HELP/*0x2F*/) ||
                     nLCtrl || nRCtrl ||
+					((nLAlt || nRAlt) && !(nLCtrl || nRCtrl || nShift) && (wParam >= VK_NUMPAD0/*0x60*/ && wParam <= VK_NUMPAD9/*0x69*/)) || // Ввод Alt-цифры при включенном NumLock
                     FALSE)
                 {
 					if (wParam == VK_APPS) {
@@ -1973,6 +1974,8 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 		//Process Add(mn_FarPID_PluginDetected); // На всякий случай, вдруг он еще не в нашем списке?
 		wchar_t* pszRes = (wchar_t*)(pIn->Data+4), *pszNext;
 		if (*pszRes) {
+			EnableComSpec(mn_FarPID_PluginDetected, TRUE);
+
 			pszNext = pszRes + lstrlen(pszRes)+1;
 			if (lstrlen(pszRes)>=30) pszRes[30] = 0;
 			lstrcpy(ms_EditorRus, pszRes); lstrcat(ms_EditorRus, L" ");
@@ -3021,11 +3024,8 @@ void CRealConsole::CreateLogFiles()
 
     DWORD dwErr = 0;
     wchar_t szFile[MAX_PATH+64], *pszDot;
-    if (!GetModuleFileName(NULL, szFile, MAX_PATH)) {
-        dwErr = GetLastError();
-        DisplayLastError(L"GetModuleFileName failed! ErrCode=0x%08X\n", dwErr);
-        return; // не удалось
-    }
+	_ASSERTE(gConEmu.ms_ConEmuExe[0]);
+	lstrcpyW(szFile, gConEmu.ms_ConEmuExe);
     if ((pszDot = wcsrchr(szFile, L'\\')) == NULL) {
         DisplayLastError(L"wcsrchr failed!");
         return; // ошибка
@@ -4493,4 +4493,66 @@ short CRealConsole::GetProgress()
 {
 	if (!this) return -1;
 	return mn_Progress;
+}
+
+void CRealConsole::EnableComSpec(DWORD anFarPID, BOOL abSwitch)
+{
+	if (!this) return;
+	if (!anFarPID) return;
+
+	int nLen = /*ComSpec\0*/ 8 + /*ComSpecC\0*/ 9 + 20 +  2*lstrlenW(gConEmu.ms_ConEmuExe);
+	wchar_t szCMD[MAX_PATH+1];
+	wchar_t szData[MAX_PATH*4];
+
+	// Если определена ComSpecC - значит переопределен стандартный ComSpec
+	if (!GetEnvironmentVariable(L"ComSpecC", szCMD, MAX_PATH) || szCMD[0] == 0)
+		if (!GetEnvironmentVariable(L"ComSpec", szCMD, MAX_PATH) || szCMD[0] == 0)
+			szCMD[0] = 0;
+	if (szCMD[0] != 0) {
+		// Только если это (случайно) не conemuc.exe
+		wchar_t* pwszCopy = wcsrchr(szCMD, L'\\'); if (!pwszCopy) pwszCopy = szCMD;
+		#pragma warning( push )
+		#pragma warning(disable : 6400)
+		if (lstrcmpiW(pwszCopy, L"ConEmuC")==0 || lstrcmpiW(pwszCopy, L"ConEmuC.exe")==0)
+			szCMD[0] = 0;
+		#pragma warning( pop )
+	}
+
+	// ComSpec/ComSpecC не определен, используем cmd.exe
+	if (szCMD[0] == 0) {
+		wchar_t* psFilePart = NULL;
+		if (!SearchPathW(NULL, L"cmd.exe", NULL, MAX_PATH, szCMD, &psFilePart))
+		{
+			DisplayLastError(L"Can't find cmd.exe!\n", 0);
+			return;
+		}
+	}
+
+	BOOL lbNeedQuot = (wcschr(gConEmu.ms_ConEmuExe, L' ') != NULL);
+	wchar_t* pszName = szData;
+	lstrcpy(pszName, L"ComSpec");
+	wchar_t* pszValue = pszName + lstrlenW(pszName) + 1;
+	if (lbNeedQuot) *(pszValue++) = L'"';
+	lstrcpy(pszValue, gConEmu.ms_ConEmuExe);
+	wchar_t* pszSlash = wcsrchr(pszValue, L'\\');
+	_ASSERTE(pszSlash!=NULL);
+	lstrcpy(pszSlash, L"\\ConEmuC.exe");
+	if (lbNeedQuot) lstrcat(pszSlash, L" ");
+
+	lbNeedQuot = (szCMD[0] != L'"') && (wcschr(szCMD, L' ') != NULL);
+	pszName = pszValue + lstrlenW(pszValue) + 1;
+	lstrcpy(pszName, L"ComSpecC");
+	pszValue = pszName + lstrlenW(pszName) + 1;
+	if (lbNeedQuot) *(pszValue++) = L'"';
+	lstrcpy(pszValue, szCMD);
+	if (lbNeedQuot) lstrcat(pszSlash, L" ");
+
+	pszName = pszValue + lstrlenW(pszValue) + 1;
+	*(pszName++) = 0;
+	*(pszName++) = 0;
+
+	// Выполнить в плагине
+	CConEmuPipe pipe(anFarPID, 300);
+	if (pipe.Init(L"SetEnvVars", TRUE))
+		pipe.Execute(CMD_SETENVVAR, szData, 2*(pszName - szData));
 }

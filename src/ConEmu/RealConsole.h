@@ -167,6 +167,7 @@ public:
 	bool isPackets();
 	LPCWSTR GetCmd();
 	short GetProgress();
+	void EnableComSpec(DWORD anFarPID, BOOL abSwitch);
 
 public:
     // Вызываются из CVirtualConsole

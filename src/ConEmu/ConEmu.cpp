@@ -46,10 +46,13 @@ CConEmuMain::CConEmuMain()
     mouse.lastMMW=-1;
     mouse.lastMML=-1;
 
-    if (!GetModuleFileName(NULL, ms_ConEmuExe, MAX_PATH)) {
+	ms_ConEmuExe[0] = 0;
+    if (!GetModuleFileName(NULL, ms_ConEmuExe, MAX_PATH) || !wcschr(ms_ConEmuExe, L'\\')) {
         DisplayLastError(L"GetModuleFileName failed");
         TerminateProcess(GetCurrentProcess(), 100);
+		return;
     }
+	LoadVersionInfo(ms_ConEmuExe);
 
     mh_WinHook = NULL;
 
@@ -1785,22 +1788,18 @@ void CConEmuMain::LoadIcons()
 {
     if (hClassIcon)
         return; // Уже загружены
+
+	TCHAR szIconPath[MAX_PATH] = {0};
+	lstrcpyW(szIconPath, ms_ConEmuExe);
         
-    if (GetModuleFileName(0, szIconPath, MAX_PATH))
-    {
-        this->LoadVersionInfo(szIconPath);
-        
-        TCHAR *lpszExt = _tcsrchr(szIconPath, _T('.'));
-        if (!lpszExt)
-            szIconPath[0] = 0;
-        else {
-            _tcscpy(lpszExt, _T(".ico"));
-            DWORD dwAttr = GetFileAttributes(szIconPath);
-            if (dwAttr==-1 || (dwAttr & FILE_ATTRIBUTE_DIRECTORY))
-                szIconPath[0]=0;
-        }
-    } else {
-        szIconPath[0]=0;
+    TCHAR *lpszExt = _tcsrchr(szIconPath, _T('.'));
+    if (!lpszExt)
+        szIconPath[0] = 0;
+    else {
+        _tcscpy(lpszExt, _T(".ico"));
+        DWORD dwAttr = GetFileAttributes(szIconPath);
+        if (dwAttr==-1 || (dwAttr & FILE_ATTRIBUTE_DIRECTORY))
+            szIconPath[0]=0;
     }
     
     if (szIconPath[0]) {
@@ -2193,8 +2192,8 @@ void CConEmuMain::UpdateProcessDisplay(BOOL abForce)
             else
                 temp[0] = 0;
 
-            swprintf(temp+_tcslen(temp), _T("[%i] %s - PID:%i"),
-                j+1, pPrc[i].Name, pPrc[i].ProcessID);
+            swprintf(temp+_tcslen(temp), _T("[%i.%i] %s - PID:%i"),
+                j+1, i, pPrc[i].Name, pPrc[i].ProcessID);
             SendDlgItemMessage(gSet.hInfo, lbProcesses, LB_ADDSTRING, 0, (LPARAM)temp);
         }
         if (pPrc) { free(pPrc); pPrc = NULL; }

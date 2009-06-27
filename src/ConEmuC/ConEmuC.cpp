@@ -42,6 +42,10 @@ wchar_t gszDbgModLabel[6] = {0};
 #define CHECK_PROCESSES_TIMEOUT 500
 #define CHECK_ANTIVIRUS_TIMEOUT 6*1000
 #define CHECK_ROOTSTART_TIMEOUT 10*1000
+#define CHECK_ROOTOK_TIMEOUT 10*1000
+#define MIN_FORCEREFRESH_INTERVAL 100
+#define MAX_FORCEREFRESH_INTERVAL 1000
+#define MAX_INPUT_QUEUE_EMPTY_WAIT 100
 
 WARNING("!!!! Пока можно при появлении события запоминать текущий тик");
 // и проверять его в RefreshThread. Если он не 0 - и дельта больше (100мс?)
@@ -66,10 +70,6 @@ CRITICAL_SECTION gcsHeap;
 // Отладочный режим
 //#define FORCE_REDRAW_FIX
 #endif
-
-
-#define MIN_FORCEREFRESH_INTERVAL 100
-#define MAX_FORCEREFRESH_INTERVAL 1000
 
 #if !defined(CONSOLE_APPLICATION_16BIT)
 #define CONSOLE_APPLICATION_16BIT       0x0000
@@ -176,7 +176,8 @@ HWND    ghConWnd = NULL;
 HWND    ghConEmuWnd = NULL; // Root! window
 HANDLE  ghExitEvent = NULL;
 HANDLE  ghFinilizeEvent = NULL;
-BOOL    gbAlwaysConfirmExit = FALSE, gbInShutdown = FALSE;
+BOOL    gbAlwaysConfirmExit = FALSE, gbInShutdown = FALSE, gbAutoDisableConfirmExit = FALSE;
+int     gbRootWasFoundInCon = 0;
 BOOL    gbAttachMode = FALSE;
 DWORD   gdwMainThreadId = 0;
 //int       gnBufferHeight = 0;
@@ -195,7 +196,7 @@ enum tag_RunMode {
 
 
 struct tag_Srv {
-    HANDLE hRootProcess;    DWORD dwRootProcess;
+    HANDLE hRootProcess;    DWORD dwRootProcess;  DWORD dwRootStartTime;
     //
     HANDLE hServerThread;   DWORD dwServerThreadId;
     HANDLE hRefreshThread;  DWORD dwRefreshThread;
@@ -348,7 +349,10 @@ int main()
     gdwMainThreadId = GetCurrentThreadId();
     
 #ifdef SHOW_STARTED_MSGBOX
-    if (!IsDebuggerPresent()) MessageBox(GetConsoleWindow(),GetCommandLineW(),L"ComEmuC Loaded",0);
+	if (!IsDebuggerPresent()) {
+		wchar_t szTitle[100]; wsprintf(szTitle, L"ConEmuC Loaded (PID=%i)", gnSelfPID);
+		MessageBox(NULL,GetCommandLineW(),szTitle,0);
+	}
 #endif
 
     PRINT_COMSPEC(L"ConEmuC started: %s\n", GetCommandLineW());
@@ -454,8 +458,15 @@ int main()
     if (gnRunMode == RM_SERVER) {
         srv.hRootProcess  = pi.hProcess; // Required for Win2k
         srv.dwRootProcess = pi.dwProcessId;
+		srv.dwRootStartTime = GetTickCount();
 
+		// Скорее всего процесс в консольном списке уже будет
 		CheckProcessCount(TRUE);
+		#ifdef _DEBUG
+		if (srv.nProcessCount) {
+			_ASSERTE(srv.pnProcesses[srv.nProcessCount-1]!=0);
+		}
+		#endif
 
         //if (pi.hProcess) SafeCloseHandle(pi.hProcess); 
         if (pi.hThread) SafeCloseHandle(pi.hThread);
@@ -541,7 +552,10 @@ wrap:
 		&& ((iRc!=0 && iRc!=CERR_RUNNEWCONSOLE) || gbAlwaysConfirmExit)
 		)
 	{
-        ExitWaitForKey(VK_RETURN, L"\n\nPress Enter to close console, or wait...", TRUE);
+        ExitWaitForKey(VK_RETURN, 
+			(gbRootWasFoundInCon != 1) ?
+			L"\n\nPress Enter to close console, or wait..." : L"\n\nPress Enter to close console..."
+			, TRUE);
         if (iRc == CERR_PROCESSTIMEOUT) {
             int nCount = srv.nProcessCount;
             if (nCount > 1) {
@@ -561,10 +575,10 @@ wrap:
     
     if (gnRunMode == RM_SERVER) {
         ServerDone(iRc);
-        //MessageBox(0,L"Server done...",L"ComEmuC",0);
+        //MessageBox(0,L"Server done...",L"ConEmuC",0);
     } else {
         ComspecDone(iRc);
-        //MessageBox(0,L"Comspec done...",L"ComEmuC",0);
+        //MessageBox(0,L"Comspec done...",L"ConEmuC",0);
     }
 
     
@@ -605,9 +619,9 @@ void Help()
     wprintf(
         L"ConEmuC. Copyright (c) 2009, Maximus5\n"
         L"This is a console part of ConEmu product.\n"
-        L"Usage: ComEmuC [switches] /C <command line, passed to %%COMSPEC%%>\n"
-        L"   or: ComEmuC [switches] /CMD <program with arguments, far.exe for example>\n"
-        L"   or: ComEmuC /?\n"
+        L"Usage: ConEmuC [switches] /C <command line, passed to %%COMSPEC%%>\n"
+        L"   or: ConEmuC [switches] /CMD <program with arguments, far.exe for example>\n"
+        L"   or: ConEmuC /?\n"
         L"Switches:\n"
         L"        /CONFIRM  - confirm closing console on program termination\n"
         L"        /ATTACH   - auto attach to ConEmu GUI\n"
@@ -652,13 +666,20 @@ BOOL IsNeedCmd(LPCWSTR asCmdLine)
 	    //Parsing command line failed
 	    return TRUE;
 	}
-	pwszCopy = wcsrchr(szArg, L'\\'); if (!pwszCopy) pwszCopy = szArg;
+	pwszCopy = wcsrchr(szArg, L'\\'); if (!pwszCopy) pwszCopy = szArg; else pwszCopy ++;
 
 	#pragma warning( push )
 	#pragma warning(disable : 6400)
 
-	if (lstrcmpiW(pwszCopy, L"cmd")==0 || lstrcmpiW(pwszCopy, L"cmd.exe")==0) {
+	if (lstrcmpiW(pwszCopy, L"cmd")==0 || lstrcmpiW(pwszCopy, L"cmd.exe")==0)
+	{
 	    return FALSE; // уже указан командный процессор, cmd.exe в начало добавлять не нужно
+	}
+
+	if (lstrcmpiW(pwszCopy, L"far")==0 || lstrcmpiW(pwszCopy, L"far.exe")==0)
+	{
+		gbAutoDisableConfirmExit = TRUE;
+		return FALSE; // уже указан командный процессор, cmd.exe в начало добавлять не нужно
 	}
 
 	LPCWSTR pwszDot = wcsrchr(pwszCopy, L'.');
@@ -789,6 +810,32 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
             cmd.bNewConsole = TRUE;
             //
             int nNewLen = wcslen(pwszStartCmdLine) + 100;
+            //
+            BOOL lbIsNeedCmd = IsNeedCmd(asCmdLine);
+            
+            // Font, size, etc.
+            
+    	    CESERVER_REQ *pIn = NULL, *pOut = NULL;
+    	    wchar_t* pszAddNewConArgs = NULL;
+    	    if ((pIn = ExecuteNewCmd(CECMD_GETNEWCONPARM, sizeof(CESERVER_REQ_HDR)+2*sizeof(DWORD))) != NULL) {
+    	        ((DWORD*)(pIn->Data))[0] = gnSelfPID;
+    	        ((DWORD*)(pIn->Data))[1] = lbIsNeedCmd;
+    	        
+                PRINT_COMSPEC(L"Retrieve new console add args (begin)\n",0);
+                pOut = ExecuteGuiCmd(ghConWnd, pIn);
+                PRINT_COMSPEC(L"Retrieve new console add args (begin)\n",0);
+                
+                if (pOut) {
+                    pszAddNewConArgs = (wchar_t*)pOut->Data;
+                    if (*pszAddNewConArgs == 0) {
+                        ExecuteFreeResult(pOut); pOut = NULL; pszAddNewConArgs = NULL;
+                    } else {
+                        nNewLen += wcslen(pszAddNewConArgs) + 1;
+                    }
+                }
+                ExecuteFreeResult(pIn); pIn = NULL;
+    	    }
+            //
             wchar_t* pszNewCmd = new wchar_t[nNewLen];
             if (!pszNewCmd) {
                 wprintf (L"Can't allocate %i wchars!\n", nNewLen);
@@ -806,13 +853,17 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
                 wcscat(pszNewCmd, L" /ATTACH ");
             if (!gbAlwaysConfirmExit) // Если ключа еще нет в ком.строке - добавим
                 wcscat(pszNewCmd, L" /CONFIRM ");
+            if (pszAddNewConArgs) {
+                wcscat(pszNewCmd, L" ");
+                wcscat(pszNewCmd, pszAddNewConArgs);
+            }
             // Сформировать новую команду
             // "cmd" потому что пока не хочется обрезать кавычки и думать, реально ли он нужен
             // cmd /c ""c:\program files\arc\7z.exe" -?"   // да еще и внутри могут быть двойными...
             // cmd /c "dir c:\"
             // и пр.
-			TODO("Попытаться определить необходимость cmd");
-			if (IsNeedCmd(asCmdLine))
+			// Попытаться определить необходимость cmd
+			if (lbIsNeedCmd)
 				wcscat(pszNewCmd, L" /CMD cmd /C ");
 			else
 				wcscat(pszNewCmd, L" /CMD ");
@@ -1015,12 +1066,20 @@ void ExitWaitForKey(WORD vkKey, LPCWSTR asConfirm, BOOL abNewLine)
     if (!ghConWnd) ghConWnd = GetConsoleWindow();
     if (ghConWnd) { // Если консоль была скрыта
         WARNING("Если GUI жив - отвечает на запросы SendMessageTimeout - показывать консоль не нужно. Не красиво получается");
-        if (!IsWindowVisible(ghConWnd)) {
-            lbNeedVisible = TRUE;
-            // поставить "стандартный" 80x25, или то, что было передано к ком.строке
-            SMALL_RECT rcNil = {0}; SetConsoleSize(0, gcrBufferSize, rcNil, ":Exiting");
-            //SetConsoleFontSizeTo(ghConWnd, 8, 12); // установим шрифт побольше
-            ShowWindow(ghConWnd, SW_SHOWNORMAL); // и покажем окошко
+		if (!IsWindowVisible(ghConWnd)) {
+			BOOL lbGuiAlive = FALSE;
+			if (ghConEmuWnd && IsWindow(ghConEmuWnd)) {
+				DWORD dwLRc = 0;
+				if (SendMessageTimeout(ghConEmuWnd, WM_NULL, 0, 0, SMTO_ABORTIFHUNG, 1000, &dwLRc))
+					lbGuiAlive = TRUE;
+			}
+			if (!lbGuiAlive && !IsWindowVisible(ghConWnd)) {
+				lbNeedVisible = TRUE;
+				// не надо наверное... // поставить "стандартный" 80x25, или то, что было передано к ком.строке
+				//SMALL_RECT rcNil = {0}; SetConsoleSize(0, gcrBufferSize, rcNil, ":Exiting");
+				//SetConsoleFontSizeTo(ghConWnd, 8, 12); // установим шрифт побольше
+				ShowWindow(ghConWnd, SW_SHOWNORMAL); // и покажем окошко
+			}
         }
     }
 
@@ -1054,7 +1113,7 @@ void ExitWaitForKey(WORD vkKey, LPCWSTR asConfirm, BOOL abNewLine)
         if (r.EventType == KEY_EVENT && r.Event.KeyEvent.bKeyDown && r.Event.KeyEvent.wVirtualKeyCode == vkKey)
             break;
     }
-    //MessageBox(0,L"Debug message...............1",L"ComEmuC",0);
+    //MessageBox(0,L"Debug message...............1",L"ConEmuC",0);
     //int nCh = _getch();
     if (abNewLine)
         wprintf(L"\n");
@@ -1080,6 +1139,7 @@ int ComspecInit()
     SMALL_RECT rNewWindow = cmd.sbi.srWindow;
     BOOL lbSbiRc = FALSE;
     
+	gbRootWasFoundInCon = 2; // не добавлять к "Press Enter to close console" - "or wait"
 
     // Это наверное и не нужно, просто для информации...
     lbSbiRc = MyGetConsoleScreenBufferInfo(ghConOut, &cmd.sbi);
@@ -1359,6 +1419,10 @@ int ServerInit()
 		wprintf (L"Can't allocate %i DWORDS!\n", srv.nMaxProcesses);
 		iRc = CERR_NOTENOUGHMEM1; goto wrap;
 	}
+	CheckProcessCount(TRUE); // Сначала добавит себя
+	// в принципе, серверный режим может быть вызван из фара, чтобы подцепиться к GUI 
+	// но больше двух процессов в консоли не ожидается!
+	_ASSERTE(srv.nProcessCount<=2); 
 
 
     if (!gbAttachMode) {
@@ -1657,7 +1721,7 @@ BOOL CheckProcessCount(BOOL abForce/*=FALSE*/)
 	} else {
 		DWORD nCurCount = 0;
 
-		nCurCount = pfnGetConsoleProcessList(srv.pnProcesses, srv.nProcessCount);
+		nCurCount = pfnGetConsoleProcessList(srv.pnProcesses, srv.nMaxProcesses);
 		lbChanged = srv.nProcessCount != nCurCount;
 
 		if (nCurCount > srv.nMaxProcesses) {
@@ -1696,6 +1760,31 @@ BOOL CheckProcessCount(BOOL abForce/*=FALSE*/)
 	}
 
 	dwLastCheckTick = GetTickCount();
+
+	// Если корень - фар, и он проработал достаточно (10 сек), значит он живой и gbAlwaysConfirmExit можно сбросить
+	if (gbAlwaysConfirmExit && gbAutoDisableConfirmExit && nPrevCount > 1 && srv.hRootProcess) {
+		if ((dwLastCheckTick - srv.nProcessStartTick) > CHECK_ROOTOK_TIMEOUT) {
+			if (WaitForSingleObject(srv.hRootProcess, 0) == WAIT_OBJECT_0) {
+				// Корневой процесс завершен, возможно, была какая-то проблема?
+				gbAutoDisableConfirmExit = FALSE; gbAlwaysConfirmExit = TRUE;
+			} else {
+				// Корневой процесс все еще работает, считаем что все ок и подтверждения закрытия консоли не потребуется
+				gbAutoDisableConfirmExit = FALSE; gbAlwaysConfirmExit = FALSE;
+			}
+		}
+	}
+	if (gbRootWasFoundInCon == 0 && srv.nProcessCount > 1 && srv.hRootProcess && srv.dwRootProcess) {
+		if (WaitForSingleObject(srv.hRootProcess, 0) == WAIT_OBJECT_0) {
+			gbRootWasFoundInCon = 2; // в консоль процесс не попал, и уже завершился
+		} else {
+			for (UINT n = 0; n < srv.nProcessCount; n++) {
+				if (srv.dwRootProcess == srv.pnProcesses[n]) {
+					// Процесс попал в консоль
+					gbRootWasFoundInCon = 1; break;
+				}
+			}			
+		}
+	}
 
 	// Процессов в консоли не осталось?
 	WARNING("Если в консоли ДО этого были процессы - все условия вида 'srv.nProcessCount == 1' обломаются");
@@ -1894,6 +1983,8 @@ DWORD WINAPI ServerThread(LPVOID lpvParam)
 DWORD WINAPI InputThread(LPVOID lpvParam) 
 { 
    BOOL fConnected, fSuccess; 
+   INPUT_RECORD irDummy[10];
+   DWORD nCurInputCount = 0;
    //DWORD srv.dwServerThreadId;
    HANDLE hPipe = NULL; 
    DWORD dwErr = 0;
@@ -2012,6 +2103,17 @@ DWORD WINAPI InputThread(LPVOID lpvParam)
                           srv.dwLastUserTick = GetTickCount();
                       }
 
+                      // 27.06.2009 Maks - If input queue is not empty - wait for a while, to awoid conflicts with FAR reading queue
+                      if (PeekConsoleInput(ghConIn, irDummy, 1, &(nCurInputCount = 0)) && nCurInputCount > 0) {
+                          DWORD dwStartTick = GetTickCount();
+                          WARNING("Do NOT wait, but place event in Cyclic queue");
+                          do {
+                              Sleep(5);
+                              if (!PeekConsoleInput(ghConIn, irDummy, 1, &(nCurInputCount = 0)))
+                                  nCurInputCount = 0;
+                          } while ((nCurInputCount > 0) && ((GetTickCount() - dwStartTick) < MAX_INPUT_QUEUE_EMPTY_WAIT));
+                      }
+                      
                       fSuccess = WriteConsoleInput(ghConIn, &iRec, 1, &cbWritten);
                       _ASSERTE(fSuccess && cbWritten==1);
                   }

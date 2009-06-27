@@ -107,8 +107,9 @@ extern wchar_t gszDbgModLabel[6];
 #define CECMD_NEWCMD        13 // Запустить в этом экземпляре новую консоль с переданной командой
 #define CECMD_TABSCMD       14 // 0: спрятать/показать табы, 1: перейти на следующую, 2: перейти на предыдущую, 3: commit switch
 #define CECMD_RESOURCES     15 // Посылается плагином при инициализации (установка ресурсов)
+#define CECMD_GETNEWCONPARM 16 // Доп.аргументы для создания новой консоли (шрифт, размер,...)
 
-#define CESERVER_REQ_VER    6
+#define CESERVER_REQ_VER    7
 
 #define PIPEBUFSIZE 4096
 
@@ -239,8 +240,9 @@ typedef struct tag_CESERVER_REQ {
 #define CMD_POSTMACRO    4
 //#define CMD_DEFFONT      5
 #define CMD_LANGCHANGE   6
+#define CMD_SETENVVAR    7 // Установить переменные окружения (FAR plugin)
 // +2
-#define MAXCMDCOUNT      8
+#define MAXCMDCOUNT      9
 #define CMD_EXIT         MAXCMDCOUNT-1
 
 //#define GWL_TABINDEX     0
