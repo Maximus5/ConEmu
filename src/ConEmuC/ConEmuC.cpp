@@ -27,7 +27,7 @@ WARNING("При запуске как ComSpec получаем ошибку: {crNewSize.X>=MIN_CON_WIDTH &&
 
 #ifdef _DEBUG
 //  Раскомментировать, чтобы сразу после запуска процесса (conemuc.exe) показать MessageBox, чтобы прицепиться дебаггером
-//  #define SHOW_STARTED_MSGBOX
+  #define SHOW_STARTED_MSGBOX
 // Раскомментировать для вывода в консоль информации режима Comspec
     #define PRINT_COMSPEC(f,a) wprintf(f,a)
 #else
@@ -942,6 +942,8 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
     
 	// это нужно для смены заголовка консоли. при необходимости COMSPEC впишем ниже, после смены
     lstrcpyW( *psNewCmd, asCmdLine );
+
+	BOOL lbNeedCutStartEndQuot = FALSE;
     
     // Сменим заголовок консоли
     if (*asCmdLine == L'"') {
@@ -951,7 +953,7 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
             if (pszEndQ > (pszTitle+1) && *pszEndQ == L'"'
 				&& wcschr(pszTitle+1, L'"') == pszEndQ)
 			{
-                *pszEndQ = 0; pszTitle ++;
+                *pszEndQ = 0; pszTitle ++; lbNeedCutStartEndQuot = TRUE;
             } else {
                 pszEndQ = NULL;
             }
@@ -1007,7 +1009,13 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
         lstrcatW( (*psNewCmd), asCmdLine );
 		if (lbNeedQuatete)
 			lstrcatW( (*psNewCmd), L"\"" );
-    }
+	} else if (lbNeedCutStartEndQuot) {
+		// ""c:\arc\7z.exe -?"" - не запустится!
+		lstrcpyW( *psNewCmd, asCmdLine+1 );
+		wchar_t *pszEndQ = *psNewCmd + lstrlenW(*psNewCmd) - 1;
+		_ASSERTE(pszEndQ && *pszEndQ == L'"');
+		if (pszEndQ && *pszEndQ == L'"') *pszEndQ = 0;
+	}
     
     return 0;
 }

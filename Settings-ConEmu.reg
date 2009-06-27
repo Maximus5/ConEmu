@@ -173,6 +173,11 @@ REGEDIT4
 ;; Time interval between console read in ms (10..1000)
 ;"MainTimerElapse"=dword:0000000A
 
+;; PictureView support
+;; Interval between slides for PictureView plugin (default is 2.5s).
+;; Slideshow mode may be activated by 'Pause/Break' key.
+;"SlideShowElapse"=dword:00001000
+
 ;; Значение для SetProcessAffinityMask
 ;"AffinityMask"=dword:00000003
 
@@ -183,6 +188,7 @@ REGEDIT4
 ;"ConsoleFontWidth"=dword:4
 ;"ConsoleFontHeight"=dword:6
 
+;; Autorun does not works in the current version of ConEmu.
 ;; You may uncomment this to 'Auto run' ConEmu with any batch file or Cmd.exe call
 ;[HKEY_CURRENT_USER\Software\Microsoft\Command Processor]
 ;"AutoRun"="C:\\Program Files\\FAR\\cmd_autorun.cmd\""
