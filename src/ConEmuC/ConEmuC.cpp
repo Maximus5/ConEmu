@@ -3401,7 +3401,7 @@ CESERVER_REQ* CreateConsoleInfo(CESERVER_CHAR* pRgnOnly, BOOL bCharAttrBuff)
         //OneBufferSize = ReadConsoleData(); // returns size in bytes of ONE buffer
         //}
         if (OneBufferSize > (200*100*2)) {
-            _ASSERTE(OneBufferSize && OneBufferSize<=(200*100*2));
+            //_ASSERTE(OneBufferSize && OneBufferSize<=(200*100*2));
         }
         #ifdef _DEBUG
         if (gnBufferHeight == 0) {
@@ -4053,6 +4053,12 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
     if (MyGetConsoleScreenBufferInfo(ghConOut, &csbi)) {
         lbNeedChange = (csbi.dwSize.X != crNewSize.X) || (csbi.dwSize.Y != crNewSize.Y);
     }
+
+	COORD crMax = GetLargestConsoleWindowSize(ghConOut);
+	if (crMax.X && crNewSize.X > crMax.X)
+		crNewSize.X = crMax.X;
+	if (crMax.Y && crNewSize.Y > crMax.Y)
+		crNewSize.Y = crMax.Y;
 
     // ƒелаем это ѕќ—Ћ≈ MyGetConsoleScreenBufferInfo, т.к. некоторые коррекции размера окна 
     // она делает ориентиру€сь на gnBufferHeight

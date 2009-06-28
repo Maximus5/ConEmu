@@ -381,7 +381,7 @@ void CRealConsole::SyncConsole2Window()
     DEBUGLOGFILE("SyncConsoleToWindow\n");
 
     RECT rcClient; GetClientRect(ghWnd, &rcClient);
-    _ASSERTE(rcClient.right>140 && rcClient.bottom>100);
+    //_ASSERTE(rcClient.right>140 && rcClient.bottom>100);
 
     // Посчитать нужный размер консоли
     RECT newCon = gConEmu.CalcRect(CER_CONSOLE, rcClient, CER_MAINCLIENT);
