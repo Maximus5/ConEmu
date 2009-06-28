@@ -9,13 +9,17 @@ REGEDIT4
 "BackGround Image"="c:\\back.bmp"
 "bgImageDarker"=hex:46
 
-;; Main console font
+;; Main display font
 "FontName"="Lucida Console"
 "FontSize"=dword:00000014
 "FontSizeX"=dword:00000000
 "FontCharSet"=hex:cc
 "FontBold"=hex:00
 "FontItalic"=hex:00
+;; Not recommended for manual change.
+;; hex:00 - cast main font as MONOSPACE font (i.e. Courier, Lucida Console, ...)
+;; hex:01 - ... as proportional font (i.e. Arial, Tahoma, ...)
+;"Proportional"=hex:00
 
 ;; 
 "Anti-aliasing"=hex:04
@@ -69,6 +73,9 @@ REGEDIT4
 
 ;; Window mode. 51f - Normal, 520 - Maximized, 521 - Fullscreen
 "WindowMode"=dword:0000051f
+
+;; Auto minimize to the Tray
+;"Min2Tray"=hex:01
 
 ;; Center console in Fullscreen and Maximized modes
 "TryToCenter"=hex:01

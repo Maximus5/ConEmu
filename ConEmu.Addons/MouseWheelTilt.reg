@@ -5,11 +5,13 @@ REGEDIT4
 ;;
 
 ; Tilt mouse wheel Left
+[-HKEY_CURRENT_USER\Software\Far2\KeyMacros\Shell\MsM2Click]
 [HKEY_CURRENT_USER\Software\Far2\KeyMacros\Shell\MsM2Click]
 "Sequence"="CtrlPgUp"
 "DisableOutput"=dword:00000001
 
 ; Tilt mouse wheel Right
+[-HKEY_CURRENT_USER\Software\Far2\KeyMacros\Shell\MsM3Click]
 [HKEY_CURRENT_USER\Software\Far2\KeyMacros\Shell\MsM3Click]
 "Sequence"="CtrlPgDn"
 "DisableOutput"=dword:00000001
@@ -19,11 +21,13 @@ REGEDIT4
 ;;
 
 ; Tilt mouse wheel Left
+[-HKEY_CURRENT_USER\Software\Far\KeyMacros\Shell\MsM2Click]
 [HKEY_CURRENT_USER\Software\Far\KeyMacros\Shell\MsM2Click]
 "Sequence"="CtrlPgUp"
 "DisableOutput"=dword:00000001
 
 ; Tilt mouse wheel Right
+[-HKEY_CURRENT_USER\Software\Far\KeyMacros\Shell\MsM3Click]
 [HKEY_CURRENT_USER\Software\Far\KeyMacros\Shell\MsM3Click]
 "Sequence"="CtrlPgDn"
 "DisableOutput"=dword:00000001
