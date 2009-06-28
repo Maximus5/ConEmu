@@ -600,8 +600,10 @@ BOOL CALLBACK CSettings::EnumFamCallBack(LPLOGFONT lplf, LPNEWTEXTMETRIC lpntm, 
     else
         aiFontCount[1]++;
 
-    SendDlgItemMessage(gSet.hMain, tFontFace, CB_ADDSTRING, 0, (LPARAM) lplf->lfFaceName);
-    SendDlgItemMessage(gSet.hMain, tFontFace2, CB_ADDSTRING, 0, (LPARAM) lplf->lfFaceName);
+	if (SendDlgItemMessage(gSet.hMain, tFontFace, CB_FINDSTRINGEXACT, -1, (LPARAM) lplf->lfFaceName)==-1) {
+		SendDlgItemMessage(gSet.hMain, tFontFace, CB_ADDSTRING, 0, (LPARAM) lplf->lfFaceName);
+		SendDlgItemMessage(gSet.hMain, tFontFace2, CB_ADDSTRING, 0, (LPARAM) lplf->lfFaceName);
+	}
 
     MCHKHEAP
     if (aiFontCount[0] || aiFontCount[1] || aiFontCount[2])
@@ -1345,8 +1347,10 @@ LRESULT CSettings::OnComboBox(WPARAM wParam, LPARAM lParam)
 		wId == tFontSizeY || wId == tFontSizeX || 
         wId == tFontSizeX2 || wId == tFontSizeX3)
     {
-		//PostMessage ( hMain, mn_MsgRecreateFont, wId, 0 );
-		mn_LastChangingFontCtrlId = wId;
+		if (HIWORD(wParam) == CBN_SELCHANGE)
+			PostMessage ( hMain, mn_MsgRecreateFont, wId, 0 );
+		else
+			mn_LastChangingFontCtrlId = wId;
     } else 
     if (wId == lbLDragKey || wId == lbRDragKey) {
         int num = SendDlgItemMessage(hMain, wId, CB_GETCURSEL, 0, 0);

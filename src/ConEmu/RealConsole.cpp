@@ -4401,13 +4401,20 @@ void CRealConsole::OnTitleChanged()
 	short nLastProgress = mn_Progress;
 	if (Title[0] == L'{' || Title[0] == L'(' || Title[0] == L'[') {
 		if (isDigit(Title[1])) {
-			if (isDigit(Title[2]) && isDigit(Title[3]) && Title[4] == L'%') {
+			if (isDigit(Title[2]) && isDigit(Title[3]) 
+				&& (Title[4] == L'%' || (Title[4] == L'.' && isDigit(Title[5]) && Title[6] == L'%'))
+				)
+			{
 				// По идее больше 100% быть не должно :)
 				mn_Progress = 100*(Title[1] - L'0') + 10*(Title[2] - L'0') + (Title[3] - L'0');
-			} else if (isDigit(Title[2]) && Title[3] == L'%') {
+			} else if (isDigit(Title[2]) 
+				&& (Title[3] == L'%' || (Title[3] == L'.' && isDigit(Title[4]) && Title[5] == L'%') )
+				)
+			{
 				// 10 .. 99 %
 				mn_Progress = 10*(Title[1] - L'0') + (Title[2] - L'0');
-			} else if (Title[2] == L'%') {
+			} else if (Title[2] == L'%' || (Title[2] == L'.' && isDigit(Title[3]) && Title[4] == L'%'))
+			{
 				// 0 .. 9 %
 				mn_Progress = (Title[1] - L'0');
 			} else {
