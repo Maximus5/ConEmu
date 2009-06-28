@@ -172,13 +172,16 @@ private:
     typedef HRESULT (STDAPICALLTYPE *EnableThemeDialogTextureT)(HWND hwnd,DWORD dwFlags);
     EnableThemeDialogTextureT EnableThemeDialogTextureF;
 	UINT mn_MsgUpdateCounter;
-	wchar_t temp[MAX_PATH];
+	//wchar_t temp[MAX_PATH];
 	UINT mn_MsgRecreateFont;
 	int IsChecked(HWND hParent, WORD nCtrlId);
 	int GetNumber(HWND hParent, WORD nCtrlId);
+	int SelectString(HWND hParent, WORD nCtrlId, LPCWSTR asText);
+	int SelectStringExact(HWND hParent, WORD nCtrlId, LPCWSTR asText);
 	BOOL mb_TabHotKeyRegistered;
 	void RegisterTabs();
 	void UnregisterTabs();
 	static DWORD CALLBACK EnumFontsThread(LPVOID apArg);
 	HANDLE mh_EnumThread;
+	WORD mn_LastChangingFontCtrlId;
 };

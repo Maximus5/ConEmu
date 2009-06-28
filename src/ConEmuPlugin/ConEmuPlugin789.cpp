@@ -325,10 +325,11 @@ void UpdateConEmuTabsW789(int event, bool losingFocus, bool editorSave, void* Pa
 	if (!CreateTabs ( windowCount ))
 		return;
 
-	EditorInfo ei = {0};
+	EditorInfo ei = {0}; BOOL bEditorRetrieved = FALSE;
 	if (editorSave)
 	{
 		InfoW789->EditorControl(ECTL_GETINFO, &ei);
+		bEditorRetrieved = TRUE;
 	}
 
 	ViewerInfo vi = {sizeof(ViewerInfo)};
@@ -339,26 +340,44 @@ void UpdateConEmuTabsW789(int event, bool losingFocus, bool editorSave, void* Pa
 	}
 
 	int tabCount = 0;
+	BOOL lbActiveFound = FALSE;
 	for (int i = 0; i < windowCount; i++)
 	{
 		WInfo.Pos = i;
 		InfoW789->AdvControl(InfoW789->ModuleNumber, ACTL_GETWINDOWINFO, (void*)&WInfo);
-		if (WInfo.Type == WTYPE_EDITOR || WInfo.Type == WTYPE_VIEWER || WInfo.Type == WTYPE_PANELS)
+		if (WInfo.Type == WTYPE_EDITOR || WInfo.Type == WTYPE_VIEWER || WInfo.Type == WTYPE_PANELS) {
+			if (WInfo.Current) lbActiveFound = TRUE;
 			lbCh |= AddTab(tabCount, losingFocus, editorSave, 
 				WInfo.Type, WInfo.Name, editorSave ? ei.FileName : NULL, 
 				WInfo.Current, WInfo.Modified);
+		}
 		InfoW789->AdvControl(InfoW789->ModuleNumber, ACTL_FREEWINDOWINFO, (void*)&WInfo);
 	}
 	
-	if (editorSave) 
-		InfoW789->EditorControl(ECTL_FREEINFO, &ei);
-
 	// Viewer в FAR 2 build 9xx не попадает в список окон при событии VE_GOTFOCUS
 	if (!losingFocus && !editorSave && tabCount == 0 && event == 206) {
 		lbCh |= AddTab(tabCount, losingFocus, editorSave, 
 			WTYPE_VIEWER, vi.FileName, NULL, 
 			1, 0);
 	}
+
+	// Скорее всего это модальный редактор (или вьювер?)
+	if (!lbActiveFound && !losingFocus) {
+		if (!bEditorRetrieved) { // Если информацию о редакторе еще не получили
+			InfoW789->EditorControl(ECTL_GETINFO, &ei);
+			bEditorRetrieved = TRUE;
+		}
+		if (ei.CurState) {
+			tabCount = 0;
+			lbCh |= AddTab(tabCount, losingFocus, editorSave, 
+				WTYPE_EDITOR, ei.FileName, NULL, 
+				1, ei.CurState == ECSTATE_MODIFIED);
+		}
+	}
+
+	if (bEditorRetrieved) 
+		InfoW789->EditorControl(ECTL_FREEINFO, &ei);
+
 
 #ifdef _DEBUG
 	//WCHAR szDbg[128]; wsprintfW(szDbg, L"Event: %i, count %i\n", event, tabCount);

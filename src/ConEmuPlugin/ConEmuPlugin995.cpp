@@ -358,27 +358,50 @@ void UpdateConEmuTabsW995(int event, bool losingFocus, bool editorSave, void* Pa
 	}
 
 	int tabCount = 0;
+	BOOL lbActiveFound = FALSE;
 	for (int i = 0; i < windowCount; i++)
 	{
 		WInfo.Pos = i;
 		InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETWINDOWINFO, (void*)&WInfo);
 		WARNING("Для получения имени нужно пользовать ECTL_GETFILENAME");
-		if (WInfo.Type == WTYPE_EDITOR || WInfo.Type == WTYPE_VIEWER || WInfo.Type == WTYPE_PANELS)
+		if (WInfo.Type == WTYPE_EDITOR || WInfo.Type == WTYPE_VIEWER || WInfo.Type == WTYPE_PANELS) {
+			if (WInfo.Current) lbActiveFound = TRUE;
 			lbCh |= AddTab(tabCount, losingFocus, editorSave, 
 				WInfo.Type, WInfo.Name, /*editorSave ? ei.FileName :*/ NULL, 
 				WInfo.Current, WInfo.Modified);
+		}
 		//InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_FREEWINDOWINFO, (void*)&WInfo);
 	}
-	
-	//if (editorSave) 
-	//	InfoW995->EditorControl(ECTL_FREEINFO, &ei);
 
 	// Viewer в FAR 2 build 9xx не попадает в список окон при событии VE_GOTFOCUS
 	if (!losingFocus && !editorSave && tabCount == 0 && event == 206) {
+		lbActiveFound = TRUE;
 		lbCh |= AddTab(tabCount, losingFocus, editorSave, 
 			WTYPE_VIEWER, vi.FileName, NULL, 
 			1, 0);
 	}
+
+
+	// Скорее всего это модальный редактор (или вьювер?)
+	if (!lbActiveFound && !losingFocus) {
+		EditorInfo ei = {0};
+		if (InfoW995->EditorControl(ECTL_GETINFO, &ei)) {
+			int nLen = InfoW995->EditorControl(ECTL_GETFILENAME, NULL);
+			if (nLen > 0) {
+				wchar_t* pszEditorFileName = (wchar_t*)calloc(nLen+1,2);
+				if (pszEditorFileName) {
+					if (InfoW995->EditorControl(ECTL_GETFILENAME, pszEditorFileName)) {
+						tabCount = 0;
+						lbCh |= AddTab(tabCount, losingFocus, editorSave, 
+							WTYPE_EDITOR, pszEditorFileName, NULL, 
+							1, ei.CurState == ECSTATE_MODIFIED);
+					}
+					free(pszEditorFileName);
+				}
+			}
+		}
+	}
+	
 
 #ifdef _DEBUG
 	//WCHAR szDbg[128]; wsprintfW(szDbg, L"Event: %i, count %i\n", event, tabCount);

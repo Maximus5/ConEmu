@@ -242,6 +242,8 @@ RECT CConEmuMain::CalcMargins(enum ConEmuMargins mg)
         //        rc = MakeRect(0,0); // раз прокрутки нет - значит дополнительные отступы не нужны
         //    }
         //}   break;
+    default:
+        _ASSERTE(mg==CEM_FRAME || mg==CEM_TAB);
     }
     
     return rc;
@@ -450,6 +452,8 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tF
                 case CER_MAXIMIZED:
                     rc = mi.rcWork;
                     break;
+                default:
+                    _ASSERTE(tFrom==CER_FULLSCREEN || tFrom==CER_MAXIMIZED);
                 }
             } else {
                 switch (tFrom)
@@ -460,6 +464,8 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tF
                 case CER_MAXIMIZED:
                     rc = MakeRect(GetSystemMetrics(SM_CXMAXIMIZED),GetSystemMetrics(SM_CYMAXIMIZED));
                     break;
+                default:
+                    _ASSERTE(tFrom==CER_FULLSCREEN || tFrom==CER_MAXIMIZED);
                 }
             }
 
@@ -1050,6 +1056,14 @@ void CConEmuMain::ReSize()
 LRESULT CConEmuMain::OnSize(WPARAM wParam, WORD newClientWidth, WORD newClientHeight)
 {
     LRESULT result = 0;
+    
+    #if defined(__GNUC__)
+    char szDbg[255];
+    wsprintfA(szDbg, "CConEmuMain::OnSize(wParam=%i, Width=%i, Height=%i, "
+        "IsIconic=%i, IgnoreSizeChange=%i)\n",
+        wParam, newClientWidth, newClientHeight, IsIconic(ghWnd), mb_IgnoreSizeChange);
+    pVCon->RCon()->LogString(szDbg);
+    #endif
 
     if (wParam == SIZE_MINIMIZED || IsIconic(ghWnd)) {
         return 0;
@@ -1079,10 +1093,12 @@ LRESULT CConEmuMain::OnSize(WPARAM wParam, WORD newClientWidth, WORD newClientHe
     // Там же ресайзится ScrollBar
     m_Back.Resize();
     
+    #ifdef _DEBUG
+    BOOL lbIsPicView = 
+    #endif
+    isPictureView();
 
-    BOOL lbIsPicView = isPictureView();
-
-    if (wParam != -1 && change2WindowMode == -1)
+    if (wParam != (DWORD)-1 && change2WindowMode == (DWORD)-1)
         SyncConsoleToWindow();
     
     RECT mainClient = MakeRect(newClientWidth,newClientHeight);
@@ -1119,6 +1135,14 @@ LRESULT CConEmuMain::OnSize(WPARAM wParam, WORD newClientWidth, WORD newClientHe
 LRESULT CConEmuMain::OnSizing(WPARAM wParam, LPARAM lParam)
 {
     LRESULT result = true;
+    
+    #if defined(__GNUC__)
+    char szDbg[255];
+    wsprintfA(szDbg, "CConEmuMain::OnSizing(wParam=%i, L.Lo=%i, L.Hi=%i)\n",
+        wParam, LOWORD(lParam), HIWORD(lParam));
+    pVCon->RCon()->LogString(szDbg);
+    #endif
+
 
     if (isPictureView()) {
         RECT *pRect = (RECT*)lParam; // с рамкой
@@ -1678,17 +1702,22 @@ bool CConEmuMain::ConmanAction(int nCmd)
         if (pCon == pVCon)
             return true; // уже
         bool lbSizeOK = true;
-        // ПЕРЕД переключением на новую консоль - обновить ее размеры
-        if (pVCon) {
-            if (pCon->TextWidth != pVCon->TextWidth || pCon->TextHeight != pVCon->TextHeight) {
-                lbSizeOK = pCon->RCon()->SetConsoleSize(MakeCoord(pVCon->TextWidth,pVCon->TextHeight));
-            }
-        }
+		int nOldConNum = ActiveConNum();
 
-        int nOldConNum = ActiveConNum();
-
+		// Спрятать PictureView, или еще чего...
         if (pVCon) pVCon->RCon()->OnDeactivate(nCmd);
         
+		// ПЕРЕД переключением на новую консоль - обновить ее размеры
+		if (pVCon) {
+			int nOldConWidth = pVCon->RCon()->TextWidth();
+			int nOldConHeight = pVCon->RCon()->TextHeight();
+			int nNewConWidth = pCon->RCon()->TextWidth();
+			int nNewConHeight = pCon->RCon()->TextHeight();
+			if (nOldConWidth != nNewConWidth || nOldConHeight != nNewConHeight) {
+				lbSizeOK = pCon->RCon()->SetConsoleSize(MakeCoord(nOldConWidth,nOldConHeight));
+			}
+		}
+
         pVCon = pCon;
 
         pCon->RCon()->OnActivate(nCmd, nOldConNum);
@@ -1699,7 +1728,7 @@ bool CConEmuMain::ConmanAction(int nCmd)
     } else if (nCmd == CONMAN_NEWCONSOLE) {
         CVirtualConsole* pCon = CreateCon(FALSE);
         bool lbRc = pCon!=NULL;
-        int nActive = ActiveConNum();
+        //int nActive = ActiveConNum();
         /*if (lbRc)
             TabBar.OnConman(nActive+1, FALSE);*/
         return lbRc;
@@ -1798,7 +1827,7 @@ void CConEmuMain::LoadIcons()
     else {
         _tcscpy(lpszExt, _T(".ico"));
         DWORD dwAttr = GetFileAttributes(szIconPath);
-        if (dwAttr==-1 || (dwAttr & FILE_ATTRIBUTE_DIRECTORY))
+        if (dwAttr==(DWORD)-1 || (dwAttr & FILE_ATTRIBUTE_DIRECTORY))
             szIconPath[0]=0;
     }
     
@@ -1826,7 +1855,7 @@ bool CConEmuMain::LoadVersionInfo(wchar_t* pFullPath)
 {
     LPBYTE pBuffer=NULL;
     wchar_t* pVersion=NULL;
-    wchar_t* pDesc=NULL;
+    //wchar_t* pDesc=NULL;
     
     const wchar_t WSFI[] = L"StringFileInfo";
 
@@ -1886,7 +1915,7 @@ void CConEmuMain::PostMacro(LPCWSTR asMacro)
     CConEmuPipe pipe(GetFarPID(), CONEMUREADYTIMEOUT);
     if (pipe.Init(_T("CConEmuMain::PostMacro"), TRUE))
     {
-        DWORD cbWritten=0;
+        //DWORD cbWritten=0;
         DnDstep(_T("Macro: Waiting for result (10 sec)"));
         pipe.Execute(CMD_POSTMACRO, asMacro, (wcslen(asMacro)+1)*2);
 		DnDstep(NULL);
@@ -1996,12 +2025,14 @@ BOOL CConEmuMain::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
 
             SetClassLong(hDlg, GCL_HICON, (LONG)hClassIcon);
             if (lParam != 0 /*Recreate*/) {
-            	SetDlgItemText(hDlg, IDC_RESTART_MSG, L"About to recreate console");
+				//GCC hack. иначе не собирается
+            	SetDlgItemTextA(hDlg, IDC_RESTART_MSG, "About to recreate console");
             	SendDlgItemMessage(hDlg, IDC_RESTART_ICON, STM_SETICON, (WPARAM)LoadIcon(NULL,IDI_EXCLAMATION), 0);
             	
             	lbRc = TRUE;
             } else {
-            	SetDlgItemText(hDlg, IDC_RESTART_MSG, L"Сreate new console");
+				//GCC hack. иначе не собирается
+            	SetDlgItemTextA(hDlg, IDC_RESTART_MSG, "Сreate new console");
             	SendDlgItemMessage(hDlg, IDC_RESTART_ICON, STM_SETICON, (WPARAM)LoadIcon(NULL,IDI_QUESTION), 0);
             	POINT pt = {0,0};
             	MapWindowPoints(GetDlgItem(hDlg, IDC_TERMINATE), hDlg, &pt, 1);
@@ -2241,10 +2272,10 @@ void CConEmuMain::UpdateTitle(LPCTSTR asNewTitle)
 
     UpdateProgress(TRUE);
 
-    BOOL  lbTitleChanged = TRUE;
+    //BOOL  lbTitleChanged = TRUE;
 
     //BOOL lbPrevAlt = (mn_ActiveStatus & (CES_CONMANACTIVE|CES_CONALTERNATIVE))==(CES_CONMANACTIVE|CES_CONALTERNATIVE);
-    LPTSTR pszTitle = GetTitleStart();
+    //LPTSTR pszTitle = GetTitleStart();
     //BOOL lbCurAlt = (mn_ActiveStatus & (CES_CONMANACTIVE|CES_CONALTERNATIVE))==(CES_CONMANACTIVE|CES_CONALTERNATIVE);
     
     //WARNING("Этот код нужно перенести в RealConsole");
@@ -2426,7 +2457,7 @@ VOID CConEmuMain::WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hw
         for (int i=0; i<MAX_CONSOLE_COUNT; i++) {
             if (!gConEmu.mp_VCon[i]) continue;
             if (gConEmu.mp_VCon[i]->RCon()->hConWnd == hwnd ||
-                gConEmu.mp_VCon[i]->RCon()->GetServerPID() == idObject)
+                gConEmu.mp_VCon[i]->RCon()->GetServerPID() == (DWORD)idObject)
             {
                 gConEmu.mp_VCon[i]->RCon()->OnWinEvent(event, hwnd, idObject, idChild, dwEventThread, dwmsEventTime);
                 lbProcessed = TRUE;
@@ -2493,7 +2524,10 @@ LRESULT CConEmuMain::OnPaint(WPARAM wParam, LPARAM lParam)
     LRESULT result = 0;
 
     PAINTSTRUCT ps;
-    HDC hDc = BeginPaint(ghWnd, &ps);
+    #ifdef _DEBUG
+    HDC hDc = 
+    #endif
+    BeginPaint(ghWnd, &ps);
 
     //PaintGaps(hDc);
 
@@ -2699,22 +2733,27 @@ bool CConEmuMain::isPictureView()
     }
 
     bool lbPrevPicView = (hPictureView != NULL);
+
+	if (pVCon && pVCon->RCon())
+		hPictureView = pVCon->RCon()->isPictureView();
+	else
+		hPictureView = NULL;
     
-    if (!hPictureView) {
-        hPictureView = FindWindowEx(ghWnd, NULL, L"FarPictureViewControlClass", NULL);
-        if (!hPictureView)
-            hPictureView = FindWindowEx(ghWndDC, NULL, L"FarPictureViewControlClass", NULL);
-        if (!hPictureView) { // FullScreen?
-            hPictureView = FindWindowEx(NULL, NULL, L"FarPictureViewControlClass", NULL);
-        }
-        if (hPictureView) {
-            // Проверить на принадлежность фару
-            DWORD dwPID, dwTID;
-            dwTID = GetWindowThreadProcessId ( hPictureView, &dwPID );
-            if (dwPID != pVCon->RCon()->GetFarPID())
-                hPictureView = NULL;
-        }
-    }
+    //if (!hPictureView) {
+    //    hPictureView = FindWindowEx(ghWnd, NULL, L"FarPictureViewControlClass", NULL);
+    //    if (!hPictureView)
+    //        hPictureView = FindWindowEx(ghWndDC, NULL, L"FarPictureViewControlClass", NULL);
+    //    if (!hPictureView) { // FullScreen?
+    //        hPictureView = FindWindowEx(NULL, NULL, L"FarPictureViewControlClass", NULL);
+    //    }
+    //    if (hPictureView) {
+    //        // Проверить на принадлежность фару
+    //        DWORD dwPID, dwTID;
+    //        dwTID = GetWindowThreadProcessId ( hPictureView, &dwPID );
+    //        if (dwPID != pVCon->RCon()->GetFarPID())
+    //            hPictureView = NULL;
+    //    }
+    //}
 
     lbRc = hPictureView!=NULL;
 
@@ -2964,7 +3003,7 @@ LRESULT CConEmuMain::OnDestroy(HWND hWnd)
         wsprintf(szServerPipe, CEGUIPIPENAME, L".", (DWORD)ghWnd);
         
         HANDLE hPipe = CreateFile(szServerPipe,GENERIC_WRITE,0,NULL,OPEN_EXISTING,0,NULL);
-        if (hPipe = INVALID_HANDLE_VALUE) {
+        if (hPipe == INVALID_HANDLE_VALUE) {
             DEBUGSTR(L"All pipe instances closed?\n");
         } else {
             DEBUGSTR(L"Waiting server pipe thread\n");
@@ -3973,8 +4012,10 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
                 // чтобы не насиловать консоль лишний раз - реальное измененение ее размеров только
                 // при отпускании мышкой рамки окна
                 BOOL lbSizeChanged = FALSE;
-                if (pVCon)
-                    lbSizeChanged = (c.right != pVCon->RCon()->TextWidth() || c.bottom != pVCon->RCon()->TextHeight());
+                if (pVCon) {
+                    lbSizeChanged = (c.right != (int)pVCon->RCon()->TextWidth() 
+                            || c.bottom != (int)pVCon->RCon()->TextHeight());
+                }
                 if (!isSizing() &&
                     (lbSizingToDo /*после реального ресайза мышкой*/ ||
                      gbPostUpdateWindowSize /*после появления/скрытия табов*/ || 
@@ -3995,7 +4036,9 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 						m_LastConSize = MakeCoord(pVCon->TextWidth,pVCon->TextHeight);
 					}
                 }
-                else if (pVCon && (m_LastConSize.X != pVCon->TextWidth || m_LastConSize.Y != pVCon->TextHeight))
+                else if (pVCon 
+	                && (m_LastConSize.X != (int)pVCon->TextWidth 
+	                    || m_LastConSize.Y != (int)pVCon->TextHeight))
                 {
                     // По идее, сюда мы попадаем только для 16-бит приложений
                     if (isNtvdm())
@@ -4079,7 +4122,9 @@ DWORD CConEmuMain::ServerThread(LPVOID lpvParam)
     BOOL fConnected = FALSE;
     DWORD dwErr = 0;
     HANDLE hPipe = NULL; 
+    #ifdef _DEBUG
     DWORD dwTID = GetCurrentThreadId();
+    #endif
     wchar_t szServerPipe[MAX_PATH];
 
     _ASSERTE(ghWnd!=NULL);
@@ -4153,7 +4198,7 @@ DWORD CConEmuMain::ServerThread(LPVOID lpvParam)
 // Эта функция пайп не закрывает!
 void CConEmuMain::ServerThreadCommand(HANDLE hPipe)
 {
-    CESERVER_REQ in={0}, *pIn=NULL;
+    CESERVER_REQ in={{0}}, *pIn=NULL;
     DWORD cbRead = 0, cbWritten = 0, dwErr = 0;
     BOOL fSuccess = FALSE;
 
@@ -4224,9 +4269,9 @@ void CConEmuMain::ServerThreadCommand(HANDLE hPipe)
         }
     }
 
-    
+    #ifdef _DEBUG
     UINT nDataSize = pIn->hdr.nSize - sizeof(CESERVER_REQ_HDR);
-
+    #endif
     // Все данные из пайпа получены, обрабатываем команду и возвращаем (если нужно) результат
     if (pIn->hdr.nCmd == CECMD_NEWCMD) {
         DEBUGSTR(L"GUI recieved CECMD_NEWCMD\n");

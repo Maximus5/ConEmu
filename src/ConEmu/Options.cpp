@@ -39,6 +39,7 @@ CSettings::CSettings()
     } catch(...) {
         memset(&ourSI, 0, sizeof(ourSI));
     }
+	mn_LastChangingFontCtrlId = 0;
 
     SetWindowThemeF = NULL;
     mh_Uxtheme = LoadLibrary(_T("UxTheme.dll"));
@@ -621,9 +622,9 @@ DWORD CSettings::EnumFontsThread(LPVOID apArg)
 
 	wchar_t szName[MAX_PATH];
 	GetDlgItemText(gSet.hMain, tFontFace, szName, MAX_PATH);
-	SendDlgItemMessage(gSet.hMain, tFontFace, CB_SELECTSTRING, -1, (LPARAM)szName);
+	gSet.SelectString(gSet.hMain, tFontFace, szName);
 	GetDlgItemText(gSet.hMain, tFontFace2, szName, MAX_PATH);
-	SendDlgItemMessage(gSet.hMain, tFontFace2, CB_SELECTSTRING, -1, (LPARAM)szName);
+	gSet.SelectString(gSet.hMain, tFontFace2, szName);
 
 	SafeCloseHandle(gSet.mh_EnumThread)
 
@@ -636,6 +637,8 @@ LRESULT CSettings::OnInitDialog()
 	hMain = NULL; hColors = NULL; hInfo = NULL;
 
 	RegisterTabs();
+
+	mn_LastChangingFontCtrlId = 0;
 
 	TCHAR szTitle[MAX_PATH]; szTitle[0]=0;
 	int nConfLen = _tcslen(Config);
@@ -721,6 +724,8 @@ LRESULT CSettings::OnInitDialog_Main()
 	mh_EnumThread = CreateThread(0,0,EnumFontsThread,0,0,&dwThId); // хэндл закроет сама нить
 
 	{
+		wchar_t temp[MAX_PATH];
+
 		for (uint i=0; i < sizeofarray(Settings::FSizes); i++)
 		{
 			wsprintf(temp, _T("%i"), Settings::FSizes[i]);
@@ -733,20 +738,16 @@ LRESULT CSettings::OnInitDialog_Main()
 
 		wsprintf(temp, _T("%i"), LogFont.lfHeight);
 		upToFontHeight = LogFont.lfHeight;
-		if( SendDlgItemMessage(hMain, tFontSizeY, CB_SELECTSTRING, -1, (LPARAM)temp) == CB_ERR )
-			SetDlgItemText(hMain, tFontSizeY, temp);
+		SelectStringExact(hMain, tFontSizeY, temp);
 
 		wsprintf(temp, _T("%i"), FontSizeX);
-		if( SendDlgItemMessage(hMain, tFontSizeX, CB_SELECTSTRING, -1, (LPARAM)temp) == CB_ERR )
-			SetDlgItemText(hMain, tFontSizeX, temp);
+		SelectStringExact(hMain, tFontSizeX, temp);
 
 		wsprintf(temp, _T("%i"), FontSizeX2);
-		if( SendDlgItemMessage(hMain, tFontSizeX2, CB_SELECTSTRING, -1, (LPARAM)temp) == CB_ERR )
-			SetDlgItemText(hMain, tFontSizeX2, temp);
+		SelectStringExact(hMain, tFontSizeX2, temp);
 
 		wsprintf(temp, _T("%i"), FontSizeX3);
-		if( SendDlgItemMessage(hMain, tFontSizeX3, CB_SELECTSTRING, -1, (LPARAM)temp) == CB_ERR )
-			SetDlgItemText(hMain, tFontSizeX3, temp);
+		SelectStringExact(hMain, tFontSizeX3, temp);
 	}
 
 	{
@@ -874,6 +875,8 @@ LRESULT CSettings::OnInitDialog_Main()
 		EnableWindow(GetDlgItem(hMain, tWndHeight), true);
 		EnableWindow(GetDlgItem(hMain, tWndX), true);
 		EnableWindow(GetDlgItem(hMain, tWndY), true);
+		EnableWindow(GetDlgItem(hMain, rFixed), true);
+		EnableWindow(GetDlgItem(hMain, rCascade), true);
 		if (!IsIconic(ghWnd)) {
 			RECT rc; GetWindowRect(ghWnd, &rc);
 			wndX = rc.left; wndY = rc.top;
@@ -885,9 +888,13 @@ LRESULT CSettings::OnInitDialog_Main()
 		EnableWindow(GetDlgItem(hMain, tWndHeight), false);
 		EnableWindow(GetDlgItem(hMain, tWndX), false);
 		EnableWindow(GetDlgItem(hMain, tWndY), false);
+		EnableWindow(GetDlgItem(hMain, rFixed), false);
+		EnableWindow(GetDlgItem(hMain, rCascade), false);
 	}
 	UpdatePos(wndX, wndY);
 	CheckDlgButton(hMain, wndCascade ? rCascade : rFixed, BST_CHECKED);
+
+	mn_LastChangingFontCtrlId = 0;
 
 	RegisterTipsFor(hMain);
 
@@ -902,6 +909,8 @@ LRESULT CSettings::OnInitDialog_Color()
 	#define getR(inColorref) (byte)inColorref
 	#define getG(inColorref) (byte)(inColorref >> 8)
 	#define getB(inColorref) (byte)(inColorref >> 16)
+
+	wchar_t temp[MAX_PATH];
 
 	for (uint i = 0; i < 32; i++)
 	{
@@ -959,7 +968,7 @@ LRESULT CSettings::OnInitDialog_Info()
 LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
 {
     WORD CB = LOWORD(wParam);
-    switch(wParam)
+    switch(CB)
     {
     case IDOK:
     case IDCANCEL:
@@ -983,6 +992,8 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
         break;
 
     case bSaveSettings:
+		if (IsWindowEnabled(GetDlgItem(hMain, cbApplyPos))) // были изменения в полях размера/положения
+			OnButtonClicked(cbApplyPos, 0);
         if (SaveSettings())
             SendMessage(ghOpWnd,WM_COMMAND,IDOK,0);
         break;
@@ -992,11 +1003,18 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
     case rMaximized:
         //gConEmu.SetWindowMode(wParam);
         EnableWindow(GetDlgItem(hMain, cbApplyPos), TRUE);
+		EnableWindow(GetDlgItem(hMain, tWndWidth), CB == rNormal);
+		EnableWindow(GetDlgItem(hMain, tWndHeight), CB == rNormal);
+		EnableWindow(GetDlgItem(hMain, tWndX), CB == rNormal);
+		EnableWindow(GetDlgItem(hMain, tWndY), CB == rNormal);
+		EnableWindow(GetDlgItem(hMain, rFixed), CB == rNormal);
+		EnableWindow(GetDlgItem(hMain, rCascade), CB == rNormal);
         break;
         
     case cbApplyPos:
 	    if (IsChecked(hMain, rNormal) == BST_CHECKED) {
 	        DWORD newX, newY;
+			wchar_t temp[MAX_PATH];
 	        GetDlgItemText(hMain, tWndWidth, temp, MAX_PATH);  newX = klatoi(temp);
 	        GetDlgItemText(hMain, tWndHeight, temp, MAX_PATH); newY = klatoi(temp);
 		    SetFocus(GetDlgItem(hMain, rNormal));
@@ -1153,6 +1171,7 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
 
     case bBgImage:
         {
+			wchar_t temp[MAX_PATH];
 			GetDlgItemText(hMain, tBgImage, temp, MAX_PATH);
             OPENFILENAME ofn; memset(&ofn,0,sizeof(ofn));
             ofn.lStructSize=sizeof(ofn);
@@ -1205,6 +1224,7 @@ LRESULT CSettings::OnColorButtonClicked(WPARAM wParam, LPARAM lParam)
         if (CB >= 1000 && CB <= 1031)
         {
             COLORREF color = Colors[CB - 1000];
+			wchar_t temp[MAX_PATH];
 			if( ShowColorDialog(ghOpWnd, &color) )
             {
                 Colors[CB - 1000] = color;
@@ -1228,6 +1248,7 @@ LRESULT CSettings::OnColorEditChanged(WPARAM wParam, LPARAM lParam)
     if (TB >= 1100 && TB <= 1131)
     {
         int r, g, b;
+		wchar_t temp[MAX_PATH];
         GetDlgItemText(hColors, TB, temp, MAX_PATH);
         TCHAR *sp1 = _tcschr(temp, ' '), *sp2;
         if (sp1 && *(sp1+1) && *(sp1+1) != ' ')
@@ -1260,6 +1281,7 @@ LRESULT CSettings::OnEditChanged(WPARAM wParam, LPARAM lParam)
     WORD TB = LOWORD(wParam);
     if (TB == tBgImage)
     {
+		wchar_t temp[MAX_PATH];
 		GetDlgItemText(hMain, tBgImage, temp, MAX_PATH);
 		if (wcscmp(temp, sBgImage)) {
 			if( LoadImageFrom(temp, true) )
@@ -1315,116 +1337,16 @@ LRESULT CSettings::OnColorComboBox(WPARAM wParam, LPARAM lParam)
 LRESULT CSettings::OnComboBox(WPARAM wParam, LPARAM lParam)
 {
     WORD wId = LOWORD(wParam);
-    if (wId == tFontFace || wId == tFontFace2)
+    if (wId == tFontCharset)
     {
 		PostMessage(hMain, gSet.mn_MsgRecreateFont, wParam, 0);
-		/*
-		LOGFONT* pLogFont = (wId == tFontFace) ? &LogFont : &LogFont2;
-        int nID = (wId == tFontFace) ? tFontFace : tFontFace2;
-        _tcscpy(temp, pLogFont->lfFaceName);
-        if (HIWORD(wParam) == CBN_EDITCHANGE)
-            GetDlgItemText(hMain, nID, pLogFont->lfFaceName, LF_FACESIZE);
-        else
-            SendDlgItemMessage(hMain, nID, CB_GETLBTEXT, SendDlgItemMessage(hMain, nID, CB_GETCURSEL, 0, 0), (LPARAM)pLogFont->lfFaceName);
-
-        if (HIWORD(wParam) == CBN_EDITCHANGE)
-        {
-            LRESULT a = SendDlgItemMessage(hMain, nID, CB_FINDSTRINGEXACT, -1, (LPARAM)pLogFont->lfFaceName);
-            if(a == CB_ERR)
-            {
-                _tcscpy(pLogFont->lfFaceName, temp);
-                return -1;
-            }
-        }
-
-        if (wId == tFontFace)
-            mb_IgnoreTtfChange = FALSE;
-
-        BYTE qWas = pLogFont->lfQuality;
-        pLogFont->lfHeight = upToFontHeight;
-        pLogFont->lfWidth = FontSizeX;
-        HFONT hFont = CreateFontIndirectMy(&LogFont);
-        if (hFont)
-        {
-            if (wId == tFontFace) {
-                DeleteObject(mh_Font);
-                mh_Font = hFont;
-            } else {
-                DeleteObject(hFont); hFont = NULL;
-            }
-            // else { -- hFont2 удаляется и создается автоматически в функции CreateFontIndirectMy
-            //    DeleteObject(hFont2);
-            //    hFont2 = hFont;
-            //}
-
-            gConEmu.Update(true);
-            if (!isFullScreen && !IsZoomed(ghWnd))
-                gConEmu.SyncWindowToConsole();
-            else
-                gConEmu.SyncConsoleToWindow();
-            gConEmu.ReSize();
-            //InvalidateRect(ghWnd, 0, 0);
-
-            if (wId == tFontFace) {
-                wsprintf(temp, _T("%i"), pLogFont->lfHeight);
-                SetDlgItemText(hMain, tFontSizeY, temp);
-            }
-        }
-        mb_IgnoreTtfChange = TRUE;
-		*/
     }
-    else if (wId == tFontSizeY || wId == tFontSizeX || 
-        wId == tFontSizeX2 || wId == tFontSizeX3 || wId == tFontCharset)
+    else if (wId == tFontFace || wId == tFontFace2 || 
+		wId == tFontSizeY || wId == tFontSizeX || 
+        wId == tFontSizeX2 || wId == tFontSizeX3)
     {
-		PostMessage ( hMain, mn_MsgRecreateFont, wId, 0 );
-		/*
-        int newSize = 0;
-        if (wId == tFontSizeY || wId == tFontSizeX || 
-            wId == tFontSizeX2 || wId == tFontSizeX3)
-        {
-            if (HIWORD(wParam) == CBN_EDITCHANGE)
-                GetDlgItemText(hMain, wId, temp, MAX_PATH);
-            else
-                SendDlgItemMessage(hMain, wId, CB_GETLBTEXT, SendDlgItemMessage(hMain, wId, CB_GETCURSEL, 0, 0), (LPARAM)temp);
-
-            newSize = klatoi(temp);
-        }
-
-        if (newSize > 4 && newSize < 200 || (newSize == 0 && *temp == '0') || wId == tFontCharset)
-        {
-            if (wId == tFontSizeY)
-                LogFont.lfHeight = upToFontHeight = newSize;
-            else if (wId == tFontSizeX)
-                FontSizeX = newSize;
-            else if (wId == tFontSizeX2)
-                FontSizeX2 = newSize;
-            else if (wId == tFontSizeX3)
-                FontSizeX3 = newSize;
-            else if (wId == tFontCharset)
-            {
-                int newCharSet = SendDlgItemMessage(hMain, tFontCharset, CB_GETCURSEL, 0, 0);
-                if (newCharSet != CB_ERR && newCharSet >= 0 && newCharSet < 19)
-                    LogFont.lfCharSet = chSetsNums[newCharSet];
-                LogFont.lfHeight = upToFontHeight;
-            }
-            LogFont.lfWidth = FontSizeX;
-
-            HFONT hFont = CreateFontIndirectMy(&LogFont);
-            if (hFont)
-            {
-                DeleteObject(mh_Font);
-                mh_Font = hFont;
-
-                gConEmu.Update(true);
-                if (!isFullScreen && !IsZoomed(ghWnd))
-                    gConEmu.SyncWindowToConsole();
-                else
-                    gConEmu.SyncConsoleToWindow();
-                gConEmu.ReSize();
-                //InvalidateRect(ghWnd, 0, 0);
-            }
-        }
-		*/
+		//PostMessage ( hMain, mn_MsgRecreateFont, wId, 0 );
+		mn_LastChangingFontCtrlId = wId;
     } else 
     if (wId == lbLDragKey || wId == lbRDragKey) {
         int num = SendDlgItemMessage(hMain, wId, CB_GETCURSEL, 0, 0);
@@ -1803,7 +1725,10 @@ BOOL CALLBACK CSettings::mainOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARA
         else if (HIWORD(wParam) == CBN_EDITCHANGE || HIWORD(wParam) == CBN_SELCHANGE)
         {
             gSet.OnComboBox(wParam, lParam);
-        }
+		} else if (HIWORD(wParam) == CBN_KILLFOCUS && gSet.mn_LastChangingFontCtrlId && LOWORD(wParam) == gSet.mn_LastChangingFontCtrlId) {
+			PostMessage ( gSet.hMain, gSet.mn_MsgRecreateFont, gSet.mn_LastChangingFontCtrlId, 0 );
+			gSet.mn_LastChangingFontCtrlId = 0;
+		}
         break;
     default:
 		if (messg == gSet.mn_MsgRecreateFont) {
@@ -2179,6 +2104,42 @@ int CSettings::GetNumber(HWND hParent, WORD nCtrlId)
 	if (GetDlgItemText(hParent, nCtrlId, szNumber, countof(szNumber)))
 		nValue = klatoi(szNumber);
 	return nValue;
+}
+
+int CSettings::SelectString(HWND hParent, WORD nCtrlId, LPCWSTR asText)
+{
+	// Осуществляет поиск по _началу_ (!) строки
+	int nIdx = SendDlgItemMessage(hParent, nCtrlId, CB_SELECTSTRING, -1, (LPARAM)asText);
+	return nIdx;
+}
+
+int CSettings::SelectStringExact(HWND hParent, WORD nCtrlId, LPCWSTR asText)
+{
+	int nIdx = SendDlgItemMessage(hParent, nCtrlId, CB_FINDSTRINGEXACT, -1, (LPARAM)asText);
+	if (nIdx < 0) {
+		int nCount = SendDlgItemMessage(hParent, nCtrlId, CB_GETCOUNT, 0, 0);
+		int nNewVal = _wtol(asText);
+		wchar_t temp[MAX_PATH];
+		for (int i = 0; i < nCount; i++) {
+			if (!SendDlgItemMessage(hParent, nCtrlId, CB_GETLBTEXT, i, (LPARAM)temp)) break;
+			int nCurVal = _wtol(temp);
+			if (nCurVal == nNewVal) {
+				nIdx = i;
+				break;
+			} else
+			if (nCurVal > nNewVal) {
+				nIdx = SendDlgItemMessage(hParent, nCtrlId, CB_INSERTSTRING, i, (LPARAM) asText);
+				break;
+			}
+		}
+		if (nIdx < 0)
+			nIdx = SendDlgItemMessage(hParent, nCtrlId, CB_INSERTSTRING, 0, (LPARAM) asText);
+	}
+	if (nIdx >= 0)
+		SendDlgItemMessage(hParent, nCtrlId, CB_SETCURSEL, nIdx, 0);
+	else
+		SetDlgItemText(hParent, nCtrlId, asText);
+	return nIdx;
 }
 
 // "Умолчательная" высота буфера.

@@ -34,11 +34,8 @@ TabBarClass::TabBarClass()
     _prevTab = -1;
     mb_ChangeAllowed = FALSE;
     mb_Enabled = TRUE;
-    mh_ConmanToolbar = NULL; mh_Tabbar = NULL; mh_Rebar = NULL; mn_LastToolbarWidth = 0;
+    mh_Toolbar = NULL; mh_Tabbar = NULL; mh_Rebar = NULL; mn_LastToolbarWidth = 0;
     mb_PostUpdateCalled = FALSE;
-    //GetConsolesTitles = NULL;
-    //ActivateConsole = NULL;
-    //ConMan_KeyAction = NULL;
     mn_MsgUpdateTabs = RegisterWindowMessage(CONEMUMSG_UPDATETABS);
     memset(&m_Tab4Tip, 0, sizeof(m_Tab4Tip));
     mb_InKeySwitching = FALSE;
@@ -510,7 +507,30 @@ void TabBarClass::UpdateWidth()
     GetClientRect(ghWnd, &client);
     GetWindowRect(mh_Tabbar, &self);
     if (mh_Rebar) {
+		SIZE sz = {0,0};
+		int nBarIndex = -1;
+		BOOL lbNeedShow = FALSE, lbWideEnough = FALSE;
+		if (mh_Toolbar) {
+			nBarIndex = SendMessage(mh_Rebar, RB_IDTOINDEX, 2, 0);
+			SendMessage(mh_Toolbar, TB_GETMAXSIZE, 0, (LPARAM)&sz);
+			lbWideEnough = (sz.cx + 150) <= client.right;
+			if (!lbWideEnough) {
+				if (IsWindowVisible(mh_Toolbar))
+					SendMessage(mh_Rebar, RB_SHOWBAND, nBarIndex, 0);
+			} else {
+				if (!IsWindowVisible(mh_Toolbar))
+					lbNeedShow = TRUE;
+			}
+		}
         MoveWindow(mh_Rebar, 0, 0, client.right, _tabHeight, 1);
+		if (lbWideEnough && nBarIndex != 1) {
+			SendMessage(mh_Rebar, RB_MOVEBAND, nBarIndex, 1);
+			nBarIndex = SendMessage(mh_Rebar, RB_IDTOINDEX, 2, 0);
+			_ASSERTE(nBarIndex == 1);
+		}
+		if (lbNeedShow) {
+			SendMessage(mh_Rebar, RB_SHOWBAND, nBarIndex, 1);
+		}
     } else
     if (gSet.isTabFrame) {
         MoveWindow(mh_Tabbar, 0, 0, client.right, client.bottom, 1);
@@ -523,9 +543,9 @@ void TabBarClass::UpdateWidth()
 
 void TabBarClass::UpdateToolbarPos()
 {
-    if (mh_ConmanToolbar) {
+    if (mh_Toolbar) {
         SIZE sz; 
-        SendMessage(mh_ConmanToolbar, TB_GETMAXSIZE, 0, (LPARAM)&sz);
+        SendMessage(mh_Toolbar, TB_GETMAXSIZE, 0, (LPARAM)&sz);
         if (mh_Rebar) {
             if (sz.cx != mn_LastToolbarWidth)
             {
@@ -542,11 +562,6 @@ void TabBarClass::UpdateToolbarPos()
             RECT rcClient;
             GetWindowRect(mh_Tabbar, &rcClient);
             MapWindowPoints(NULL, ghWnd, (LPPOINT)&rcClient, 2);
-            //int nbWidth = SendMessage(mh_ConmanToolbar, TB_GETBUTTONSIZE, 0, 0) & 0xFFFF;
-            //int nHidden = 10;
-            /*SetWindowPos(mh_ConmanToolbarParent, HWND_TOP, 
-               rcClient.right - sz.cx - 2, 0,
-               sz.cx, sz.cy, 0);*/
         }
     }
 }
@@ -588,7 +603,7 @@ bool TabBarClass::OnNotify(LPNMHDR nmhdr)
         return true;
     }
 
-    if (nmhdr->code == TBN_GETINFOTIP /*&& nmhdr->hwndFrom == mh_ConmanToolbar*/)
+    if (nmhdr->code == TBN_GETINFOTIP /*&& nmhdr->hwndFrom == mh_Toolbar*/)
     {
         if (!gSet.isMulti)
             return 0;
@@ -606,7 +621,7 @@ bool TabBarClass::OnNotify(LPNMHDR nmhdr)
             lstrcpyn(pDisp->pszText, _T("Create new console"), pDisp->cchTextMax);
         } else
         if (pDisp->iItem==14) {
-	        BOOL lbPressed = (SendMessage(mh_ConmanToolbar, TB_GETSTATE, pDisp->iItem, 0) & TBSTATE_CHECKED) == TBSTATE_CHECKED;
+	        BOOL lbPressed = (SendMessage(mh_Toolbar, TB_GETSTATE, pDisp->iItem, 0) & TBSTATE_CHECKED) == TBSTATE_CHECKED;
             lstrcpyn(pDisp->pszText, 
 	            lbPressed ? L"BufferHeight mode is ON" : L"BufferHeight mode is off",
 	            pDisp->cchTextMax);
@@ -664,11 +679,10 @@ LPCWSTR TabBarClass::GetTabText(int nTabIdx)
 
 void TabBarClass::OnCommand(WPARAM wParam, LPARAM lParam)
 {
-    if (mh_ConmanToolbar != (HWND)lParam)
+    if (mh_Toolbar != (HWND)lParam)
         return;
-    //if (!gConEmu.isConman() || !gConEmu.mh_ConMan || gConEmu.mh_ConMan==INVALID_HANDLE_VALUE)
-    //  return;
-    if (!gSet.isMulti)
+
+	if (!gSet.isMulti)
         return;
 
     if (wParam>=1 && wParam<=MAX_CONSOLE_COUNT) {
@@ -676,48 +690,8 @@ void TabBarClass::OnCommand(WPARAM wParam, LPARAM lParam)
     } else if (wParam==13) {
         gConEmu.ConmanAction(CONMAN_NEWCONSOLE);
     } else if (wParam==14) {
-        //gConEmu.ConmanAction(CONMAN_ALTCONSOLE); // Только информационно!
-		SendMessage(mh_ConmanToolbar, TB_CHECKBUTTON, 14, gConEmu.ActiveCon()->RCon()->isBufferHeight());
+		SendMessage(mh_Toolbar, TB_CHECKBUTTON, 14, gConEmu.ActiveCon()->RCon()->isBufferHeight());
     }
-
-    //if (!TabBar.GetConsolesTitles)
-    //  TabBar.GetConsolesTitles =
-    //      (GetConsolesTitles_t*)GetProcAddress( gConEmu.mh_Infis, "GetConsolesTitles" );
-    //if (!TabBar.ActivateConsole)
-    //  TabBar.ActivateConsole =
-    //      (ActivateConsole_t*)GetProcAddress( gConEmu.mh_Infis, "ActivateConsole" );
-    /*if (!TabBar.ConMan_KeyAction)
-        TabBar.ConMan_KeyAction = (ConMan_KeyAction_t)GetProcAddress( gConEmu.mh_ConMan, "_KeyAction_" );
-    if (!TabBar.ConMan_KeyAction)
-        return;
-
-    RegShortcut cmd; memset(&cmd, 0, sizeof(cmd));
-    if (wParam>=1 && wParam<=MAX_CONSOLE_COUNT)
-    {
-        // активировать консоль №
-        cmd.action = wParam - 1;
-        //gConEmu.mb_IgnoreSizeChange = true;
-        //CVirtualConsole* pCon = gConEmu.ActiveCon();
-        //if (pCon) {
-        //  COORD sz = {pCon->TextWidth, pCon->TextHeight};
-            TabBar.ConMan_KeyAction ( &cmd );
-            //// Установить размер консоли!
-            //gConEmu.SetConsoleWindowSize(sz, false);
-            //gConEmu.mb_IgnoreSizeChange = false;
-        //}
-    } else
-    if (wParam==13)
-    {
-        // Создать новую консоль
-        cmd.action = 20;
-        TabBar.ConMan_KeyAction ( &cmd );
-    } else
-    if (wParam==14)
-    {
-        // переключение между альтернативной консолью
-        cmd.action = 15;
-        TabBar.ConMan_KeyAction ( &cmd );
-    }*/
 }
 
 void TabBarClass::OnMouse(int message, int x, int y)
@@ -727,7 +701,6 @@ void TabBarClass::OnMouse(int message, int x, int y)
         return;
     }
 
-    //SetFocus(ghWnd);
     if (message == WM_MBUTTONUP || message == WM_RBUTTONUP)
     {
         TCHITTESTINFO htInfo;
@@ -741,8 +714,6 @@ void TabBarClass::OnMouse(int message, int x, int y)
             pVCon = FarSendChangeTab(iPage);
 
 			if (pVCon) {
-				//pVCon->RCon()->OnKeyboard(ghWnd, WM_KEYDOWN, VK_F10, 0);
-				//pVCon->RCon()->OnKeyboard(ghWnd, WM_KEYUP, VK_F10, (LPARAM)(3<<30));
 				gConEmu.PostMacro(gSet.sTabCloseMacro ? gSet.sTabCloseMacro : L"F10");
 			}
         }
@@ -755,9 +726,10 @@ void TabBarClass::Invalidate()
         InvalidateRect(mh_Rebar, NULL, TRUE);
 }
 
+// nConNumber - 1based
 void TabBarClass::OnConsoleActivated(int nConNumber/*, BOOL bAlternative*/)
 {
-    if (!mh_ConmanToolbar) return;
+    if (!mh_Toolbar) return;
 
     BOOL bPresent[MAX_CONSOLE_COUNT]; memset(bPresent, 0, sizeof(bPresent));
     MCHKHEAP
@@ -765,94 +737,81 @@ void TabBarClass::OnConsoleActivated(int nConNumber/*, BOOL bAlternative*/)
         bPresent[i-1] = gConEmu.GetTitle(i-1) != NULL;
     }
 
-    SendMessage(mh_ConmanToolbar, WM_SETREDRAW, 0, 0);
+    SendMessage(mh_Toolbar, WM_SETREDRAW, 0, 0);
     for (int i=1; i<=MAX_CONSOLE_COUNT; i++) {
-        SendMessage(mh_ConmanToolbar, TB_HIDEBUTTON, i, !bPresent[i-1]);
+        SendMessage(mh_Toolbar, TB_HIDEBUTTON, i, !bPresent[i-1]);
     }
 
     UpdateToolbarPos();
-    SendMessage(mh_ConmanToolbar, WM_SETREDRAW, 1, 0);
+    SendMessage(mh_Toolbar, WM_SETREDRAW, 1, 0);
 
     //nConNumber = gConEmu.ActiveConNum()+1; -- сюда пришел уже правильный номер!
     
     if (nConNumber>=1 && nConNumber<=MAX_CONSOLE_COUNT) {
-        SendMessage(mh_ConmanToolbar, TB_CHECKBUTTON, nConNumber, 1);
+        SendMessage(mh_Toolbar, TB_CHECKBUTTON, nConNumber, 1);
     } else {
         for (int i=1; i<=MAX_CONSOLE_COUNT; i++)
-            SendMessage(mh_ConmanToolbar, TB_CHECKBUTTON, i, 0);
+            SendMessage(mh_Toolbar, TB_CHECKBUTTON, i, 0);
     }
 }
 
 void TabBarClass::OnBufferHeight(BOOL abBufferHeight)
 {
-	if (!mh_ConmanToolbar) return;
+	if (!mh_Toolbar) return;
 
-    SendMessage(mh_ConmanToolbar, TB_CHECKBUTTON, 14, abBufferHeight);
+    SendMessage(mh_Toolbar, TB_CHECKBUTTON, 14, abBufferHeight);
 }
 
 HWND TabBarClass::CreateToolbar()
 {
     if (!mh_Rebar || !gSet.isMulti)
         return NULL; // нет табов - нет и тулбара
-    if (mh_ConmanToolbar)
-        return mh_ConmanToolbar; // Уже создали
+    if (mh_Toolbar)
+        return mh_Toolbar; // Уже создали
 
-    /*mh_ConmanToolbarP = CreateWindow(_T("VirtualConsoleClassBar"), _T(""), 
-            WS_VISIBLE|WS_CHILD, 0,0,340,22, ghWnd, 0, 0, 0);
-    if (!mh_ConmanToolbarP) return NULL;*/
 
-    
-// Create a toolbar. 
-    TBBUTTON buttons[16] = {
-        {0, 1, TBSTATE_ENABLED, TBSTYLE_CHECKGROUP},
-        {1, 2, TBSTATE_ENABLED|TBSTATE_HIDDEN, TBSTYLE_CHECKGROUP},
-        {2, 3, TBSTATE_ENABLED|TBSTATE_HIDDEN, TBSTYLE_CHECKGROUP/*|TBSTYLE_TRANSPARENT*/},
-        {3, 4, TBSTATE_ENABLED|TBSTATE_HIDDEN, TBSTYLE_CHECKGROUP/*|TBSTYLE_TRANSPARENT*/},
-        {4, 5, TBSTATE_ENABLED|TBSTATE_HIDDEN, TBSTYLE_CHECKGROUP/*|TBSTYLE_TRANSPARENT*/},
-        {5, 6, TBSTATE_ENABLED|TBSTATE_HIDDEN, TBSTYLE_CHECKGROUP/*|TBSTYLE_TRANSPARENT*/},
-        {6, 7, TBSTATE_ENABLED|TBSTATE_HIDDEN, TBSTYLE_CHECKGROUP/*|TBSTYLE_TRANSPARENT*/},
-        {7, 8, TBSTATE_ENABLED|TBSTATE_HIDDEN, TBSTYLE_CHECKGROUP/*|TBSTYLE_TRANSPARENT*/},
-        {8, 9, TBSTATE_ENABLED|TBSTATE_HIDDEN, TBSTYLE_CHECKGROUP/*|TBSTYLE_TRANSPARENT*/},
-        {9, 10, TBSTATE_ENABLED|TBSTATE_HIDDEN, TBSTYLE_CHECKGROUP/*|TBSTYLE_TRANSPARENT*/},
-        {10, 11, TBSTATE_ENABLED|TBSTATE_HIDDEN, TBSTYLE_CHECKGROUP/*|TBSTYLE_TRANSPARENT*/},
-        {11, 12, TBSTATE_ENABLED|TBSTATE_HIDDEN, TBSTYLE_CHECKGROUP/*|TBSTYLE_TRANSPARENT*/},
-        {0, 0, TBSTATE_ENABLED, TBSTYLE_SEP},
-        {12, 13, TBSTATE_ENABLED, BTNS_BUTTON},
-        {0, 0, TBSTATE_ENABLED, TBSTYLE_SEP},
-        {13, 14, TBSTATE_ENABLED, TBSTYLE_CHECK}
-        };
-
-    mh_ConmanToolbar = CreateWindowEx(0, TOOLBARCLASSNAME, NULL, 
+    mh_Toolbar = CreateWindowEx(0, TOOLBARCLASSNAME, NULL, 
         WS_CHILD|WS_VISIBLE|TBSTYLE_FLAT|CCS_NOPARENTALIGN|CCS_NORESIZE|CCS_NODIVIDER|TBSTYLE_TOOLTIPS|TBSTYLE_TRANSPARENT, 0, 0, 0, 0, mh_Rebar, 
         NULL, NULL, NULL); 
         
-   _defaultBarProc = (WNDPROC)SetWindowLongPtr(mh_ConmanToolbar, GWL_WNDPROC, (LONG_PTR)BarProc);
+   _defaultBarProc = (WNDPROC)SetWindowLongPtr(mh_Toolbar, GWL_WNDPROC, (LONG_PTR)BarProc);
 
  
-   SendMessage(mh_ConmanToolbar, TB_BUTTONSTRUCTSIZE, (WPARAM) sizeof(TBBUTTON), 0); 
-   SendMessage(mh_ConmanToolbar, TB_SETBITMAPSIZE, 0, MAKELONG(16,16)); 
+   SendMessage(mh_Toolbar, TB_BUTTONSTRUCTSIZE, (WPARAM) sizeof(TBBUTTON), 0); 
+   SendMessage(mh_Toolbar, TB_SETBITMAPSIZE, 0, MAKELONG(16,16)); 
    TBADDBITMAP bmp = {g_hInstance,IDB_CONMAN1};
-   int nFirst = SendMessage(mh_ConmanToolbar, TB_ADDBITMAP, 14, (LPARAM)&bmp);
+   int nFirst = SendMessage(mh_Toolbar, TB_ADDBITMAP, 14, (LPARAM)&bmp);
+
    //buttons
-   SendMessage(mh_ConmanToolbar, TB_ADDBUTTONS, 16, (LPARAM)&buttons);
+   TBBUTTON btn = {0, 1, TBSTATE_ENABLED, TBSTYLE_CHECKGROUP}, sep = {0, 0, TBSTATE_ENABLED, TBSTYLE_SEP};
+   int nActiveCon = gConEmu.ActiveConNum()+1;
+   // Console numbers
+   for (int i = 1; i <= 12; i++) {
+	   btn.iBitmap = nFirst + i-1;
+	   btn.idCommand = i;
+	   btn.fsState = TBSTATE_ENABLED
+		   | ((gConEmu.GetTitle(i-1) == NULL) ? TBSTATE_HIDDEN : 0)
+		   | ((i == nActiveCon) ? TBSTATE_CHECKED : 0);
+	   SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&btn);
+   }
+   SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&sep);
 
-   SendMessage(mh_ConmanToolbar, TB_AUTOSIZE, 0, 0); 
+   // New console
+   btn.fsStyle = BTNS_BUTTON; btn.iBitmap = nFirst + 12; btn.idCommand = 13; btn.fsState = TBSTATE_ENABLED;
+   SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&btn);
+   SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&sep);
+
+   // Buffer height mode
+   btn.iBitmap = nFirst + 13; btn.idCommand = 14; btn.fsState = TBSTATE_ENABLED;
+   SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&btn);
+
+
+   SendMessage(mh_Toolbar, TB_AUTOSIZE, 0, 0);
    SIZE sz; 
-   SendMessage(mh_ConmanToolbar, TB_GETMAXSIZE, 0, (LPARAM)&sz);
-   /*RECT rcClient;
-   GetWindowRect(mh_Tabbar, &rcClient);
-   MapWindowPoints(NULL, ghWnd, (LPPOINT)&rcClient, 2);
-   //int nbWidth = SendMessage(mh_ConmanToolbar, TB_GETBUTTONSIZE, 0, 0) & 0xFFFF;
-   //int nHidden = 10;
-   SetWindowPos(mh_ConmanToolbarParent, HWND_TOP, 
-       rcClient.right - sz.cx - 2, 0,
-       sz.cx, sz.cy, 0);*/
+   SendMessage(mh_Toolbar, TB_GETMAXSIZE, 0, (LPARAM)&sz);
 
-   /*if (gConEmu.ConMan_ProcessCommand)
-       OnConman(0, FALSE);*/
 
-   //ShowWindow(hwndTB, SW_SHOW); 
-   return mh_ConmanToolbar;
+   return mh_Toolbar;
 }
 
 HWND TabBarClass::CreateTabbar()
@@ -959,8 +918,8 @@ void TabBarClass::CreateRebar()
     CreateToolbar();
 
     SIZE sz = {0,0};
-    if (mh_ConmanToolbar) {
-        SendMessage(mh_ConmanToolbar, TB_GETMAXSIZE, 0, (LPARAM)&sz);
+    if (mh_Toolbar) {
+        SendMessage(mh_Toolbar, TB_GETMAXSIZE, 0, (LPARAM)&sz);
     } else {
         RECT rcClient;
         GetClientRect(ghWnd, &rcClient); 
@@ -984,11 +943,11 @@ void TabBarClass::CreateRebar()
     }
 
 
-    if (mh_ConmanToolbar)
+    if (mh_Toolbar)
     {
         // Set values unique to the band with the toolbar.
         rbBand.wID        = 2;
-        rbBand.hwndChild  = mh_ConmanToolbar;
+        rbBand.hwndChild  = mh_Toolbar;
         rbBand.cx = rbBand.cxMinChild = rbBand.cxIdeal = mn_LastToolbarWidth = sz.cx;
         rbBand.cyChild = rbBand.cyMinChild = rbBand.cyMaxChild = sz.cy + mn_ThemeHeightDiff;
 
@@ -999,9 +958,9 @@ void TabBarClass::CreateRebar()
         
         //if (mn_ThemeHeightDiff) {
         //	POINT pt = {0,0};
-        //	MapWindowPoints(mh_ConmanToolbar, mh_Rebar, &pt, 1);
+        //	MapWindowPoints(mh_Toolbar, mh_Rebar, &pt, 1);
         //	pt.y = 0;
-        //	SetWindowPos(mh_ConmanToolbar, NULL, pt.x, pt.y, 0, 0, SWP_NOSIZE|SWP_NOZORDER);
+        //	SetWindowPos(mh_Toolbar, NULL, pt.x, pt.y, 0, 0, SWP_NOSIZE|SWP_NOZORDER);
        	//}
     }
 

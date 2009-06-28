@@ -414,11 +414,12 @@ void UpdateConEmuTabsA(int event, bool losingFocus, bool editorSave, void *Param
 	if (!CreateTabs ( windowCount ))
 		return;
 
-	EditorInfo ei;
+	EditorInfo ei = {0}; BOOL bEditorRetrieved = FALSE;
 	WCHAR* pszFileName = NULL;
 	if (editorSave)
 	{
 		InfoA->EditorControl(ECTL_GETINFO, &ei);
+		bEditorRetrieved = TRUE;
 		//pszFileName = (WCHAR*)calloc(CONEMUTABMAX, sizeof(WCHAR));
 		pszFileName = gszDir2; pszFileName[0] = 0;
 		if (ei.FileName)
@@ -436,6 +437,7 @@ void UpdateConEmuTabsA(int event, bool losingFocus, bool editorSave, void *Param
 	}
 
 	int tabCount = 0;
+	BOOL lbActiveFound = FALSE;
 	for (int i = 0; i < windowCount; i++)
 	{
 		WInfo.Pos = i;
@@ -446,6 +448,7 @@ void UpdateConEmuTabsA(int event, bool losingFocus, bool editorSave, void *Param
 			char szDbg[255]; wsprintfA(szDbg, "Window %i (Type=%i, Modified=%i)\n", i, WInfo.Type, WInfo.Modified);
 			OutputDebugStringA(szDbg);
 #endif
+			if (WInfo.Current) lbActiveFound = TRUE;
 			MultiByteToWideChar(CP_OEMCP, 0, WInfo.Name, lstrlenA(WInfo.Name)+1, pszName, CONEMUTABMAX);
 			lbCh |= AddTab(tabCount, losingFocus, editorSave, 
 				WInfo.Type, pszName, editorSave ? pszFileName : NULL, 
@@ -455,10 +458,30 @@ void UpdateConEmuTabsA(int event, bool losingFocus, bool editorSave, void *Param
 
 	// Viewer в FAR 2 build 9xx не попадает в список окон при событии VE_GOTFOCUS
 	if (!losingFocus && !editorSave && tabCount == 0 && event == 206) {
+		lbActiveFound = TRUE;
 		lbCh |= AddTab(tabCount, losingFocus, editorSave, 
 			WTYPE_VIEWER, pszFileName, NULL, 
 			1, 0);
 	}
+
+	// Скорее всего это модальный редактор (или вьювер?)
+	/*
+	if (!lbActiveFound && !losingFocus) {
+		if (!bEditorRetrieved) { // Если информацию о редакторе еще не получили
+			InfoA->EditorControl(ECTL_GETINFO, &ei);
+			bEditorRetrieved = TRUE;
+			pszFileName = gszDir2; pszFileName[0] = 0;
+			if (ei.FileName)
+				MultiByteToWideChar(CP_OEMCP, 0, ei.FileName, lstrlenA(ei.FileName)+1, pszFileName, CONEMUTABMAX);
+		}
+		if (ei.CurState) {
+			tabCount = 0;
+			lbCh |= AddTab(tabCount, losingFocus, editorSave, 
+				WTYPE_EDITOR, pszFileName, NULL, 
+				1, ei.CurState == ECSTATE_MODIFIED);
+		}
+	}
+	*/
 
 	SendTabs(tabCount, FALSE, lbCh);
 }

@@ -8,7 +8,7 @@
 class TabBarClass
 {
 private:
-	HWND mh_Tabbar, mh_ConmanToolbar, mh_Rebar, mh_TabTip;
+	HWND mh_Tabbar, mh_Toolbar, mh_Rebar, mh_TabTip;
 	bool _active;
 	int _tabHeight;
 	int mn_ThemeHeightDiff;

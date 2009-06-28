@@ -49,7 +49,8 @@ struct klFile
 {
 	HANDLE hHandle;
 	u32 iCount;
-	i64 lSize;
+	//i64 lSize;
+	ULARGE_INTEGER lSize;
 	TCHAR Name[MAX_PATH];
 
 	void Close() {if (hHandle != INVALID_HANDLE_VALUE) {CloseHandle(hHandle); hHandle = INVALID_HANDLE_VALUE;}}
@@ -62,9 +63,9 @@ struct klFile
 		{
 			if (pName != Name)
 				klstrncpy(Name, pName, MAX_PATH);
-			*((u32*)&lSize) = GetFileSize(hHandle, ((u32*)&lSize) + 1);
-			if (((u32)lSize) == INVALID_FILE_SIZE && GetLastError() != NO_ERROR)
-				lSize = 0;
+			lSize.LowPart = ::GetFileSize(hHandle, &lSize.HighPart);
+			if (lSize.LowPart == INVALID_FILE_SIZE && GetLastError() != NO_ERROR)
+				lSize.QuadPart = 0;
 			return true;
 		}
 		else

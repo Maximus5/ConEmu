@@ -60,6 +60,8 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
     wcscpy(ms_PanelTitle, Title);
     mn_Progress = -1; // Процентов нет
 
+	hPictureView = NULL; mb_PicViewWasHidden = FALSE;
+
     mh_MonitorThread = NULL; mn_MonitorThreadID = 0; mn_ConEmuC_PID = 0; mh_ConEmuC = NULL; mh_ConEmuCInput = NULL;
     mb_NeedStartProcess = FALSE;
 
@@ -214,7 +216,7 @@ BOOL CRealConsole::SetConsoleSize(COORD size, DWORD anCmdID/*=CECMD_SETSIZE*/)
         return false; // консоль пока не создана?
     }
     
-    _ASSERTE(size.X>MIN_CON_WIDTH && size.Y>MIN_CON_HEIGHT);
+    _ASSERTE(size.X>=MIN_CON_WIDTH && size.Y>=MIN_CON_HEIGHT);
     
     if (size.X</*4*/MIN_CON_WIDTH)
         size.X = /*4*/MIN_CON_WIDTH;
@@ -379,10 +381,11 @@ void CRealConsole::SyncConsole2Window()
     DEBUGLOGFILE("SyncConsoleToWindow\n");
 
     RECT rcClient; GetClientRect(ghWnd, &rcClient);
-    _ASSERTE(rcClient.right>250 && rcClient.bottom>200);
+    _ASSERTE(rcClient.right>140 && rcClient.bottom>100);
 
     // Посчитать нужный размер консоли
     RECT newCon = gConEmu.CalcRect(CER_CONSOLE, rcClient, CER_MAINCLIENT);
+	_ASSERTE(newCon.right>20 && newCon.bottom>6);
 
     SetConsoleSize(MakeCoord(newCon.right, newCon.bottom));
 }
@@ -3400,12 +3403,24 @@ void CRealConsole::OnActivate(int nNewNum, int nOldNum)
     gConEmu.OnBufferHeight(con.bBufferHeight);
 
     gConEmu.UpdateProcessDisplay(TRUE);
+
+	HWND hPic = isPictureView();
+	if (hPic && mb_PicViewWasHidden) {
+		if (!IsWindowVisible(hPic))
+			ShowWindow(hPic, SW_SHOWNA);
+	}
+	mb_PicViewWasHidden = FALSE;
 }
 
 void CRealConsole::OnDeactivate(int nNewNum)
 {
-    if (!this)
-        return;
+    if (!this) return;
+
+	HWND hPic = isPictureView();
+	if (hPic && IsWindowVisible(hPic)) {
+		mb_PicViewWasHidden = TRUE;
+		ShowWindow(hPic, SW_HIDE);
+	}
 
     //if (mh_MonitorThread) SetThreadPriority(mh_MonitorThread, THREAD_PRIORITY_NORMAL);
 }
@@ -3700,6 +3715,9 @@ DWORD CRealConsole::CanActivateFarWindow(int anWndIndex)
     // Добавил такую проверочку. По идее, у нас всегда должен быть актуальный номер текущего окна.
     if (mn_ActiveTab == anWndIndex)
         return (DWORD)-1; // Нужное окно уже выделено, лучше не дергаться...
+
+	if (isPictureView())
+		return 0; // При наличии PictureView переключиться на другой таб этой консоли не получится
 
     if (!GetWindowText(hConWnd, TitleCmp, countof(TitleCmp)-2))
         TitleCmp[0] = 0;
@@ -4555,4 +4573,47 @@ void CRealConsole::EnableComSpec(DWORD anFarPID, BOOL abSwitch)
 	CConEmuPipe pipe(anFarPID, 300);
 	if (pipe.Init(L"SetEnvVars", TRUE))
 		pipe.Execute(CMD_SETENVVAR, szData, 2*(pszName - szData));
+}
+
+// Заголовок окна для PictureView вообще может пользователем настраиваться, так что
+// рассчитывать на него при определения "Просмотра" - нельзя
+HWND CRealConsole::isPictureView()
+{
+	if (!this) return NULL;
+
+	if (hPictureView && (!IsWindow(hPictureView) || !isFar())) {
+		hPictureView = NULL; mb_PicViewWasHidden = FALSE;
+		gConEmu.InvalidateAll();
+	}
+
+	if (!hPictureView) {
+		hPictureView = FindWindowEx(ghWnd, NULL, L"FarPictureViewControlClass", NULL);
+		if (!hPictureView)
+			hPictureView = FindWindowEx(ghWndDC, NULL, L"FarPictureViewControlClass", NULL);
+		if (!hPictureView) { // FullScreen?
+			hPictureView = FindWindowEx(NULL, NULL, L"FarPictureViewControlClass", NULL);
+		}
+		if (hPictureView) {
+			// Проверить на принадлежность фару
+			DWORD dwPID, dwTID;
+			dwTID = GetWindowThreadProcessId ( hPictureView, &dwPID );
+			if (dwPID != mn_FarPID) {
+				hPictureView = NULL; mb_PicViewWasHidden = FALSE;
+			}
+		}
+	}
+
+	
+	if (hPictureView) {
+		if (mb_PicViewWasHidden) {
+			// Окошко было скрыто при переключении на другую консоль, но картинка еще активна
+		} else if (!IsWindowVisible(hPictureView)) {
+			// Если вызывали Help (F1) - окошко PictureView прячется (самим плагином), считаем что картинки нет
+			hPictureView = NULL; mb_PicViewWasHidden = FALSE;
+		}
+	}
+
+	if (mb_PicViewWasHidden && !hPictureView) mb_PicViewWasHidden = FALSE;
+
+	return hPictureView;
 }

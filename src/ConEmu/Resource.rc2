@@ -4,6 +4,11 @@ IDI_ICON1               ICON    DISCARDABLE     "ConEmu.ico"
 IDI_ICON2               ICON    DISCARDABLE     "Far.ico"
 IDI_ICON3               ICON    DISCARDABLE     "Far2.ico"
 
+// Manifest 4 GCC
+#if defined(__GNUC__)
+1 24 DISCARDABLE "conemu.gcc.manifest"
+#endif
+
 /////////////////////////////////////////////////////////////////////////////
 //
 // Version

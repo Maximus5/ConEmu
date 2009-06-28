@@ -121,6 +121,7 @@ public:
     void StopSignal();
     void StopThread(BOOL abRecreating=FALSE);
     BOOL isBufferHeight();
+	HWND isPictureView();
     LPCTSTR GetTitle();
     void GetConsoleScreenBufferInfo(CONSOLE_SCREEN_BUFFER_INFO* sbi) { *sbi = con.m_sbi; };
     void GetConsoleSelectionInfo(CONSOLE_SELECTION_INFO *sel) { *sel = con.m_sel; };
@@ -189,7 +190,6 @@ protected:
     BOOL mb_NeedStartProcess;
 
     static DWORD WINAPI MonitorThread(LPVOID lpParameter);
-    HANDLE mh_VConServerThread;
     HANDLE mh_TermEvent, mh_MonitorThreadEvent, mh_Sync2WindowEvent;
     BOOL mb_FullRetrieveNeeded, mb_Detached;
     wchar_t* ms_SpecialCmd;
@@ -282,4 +282,6 @@ private:
 	void CheckFarStates();
 	void OnTitleChanged();
 	DWORD mn_LastInvalidateTick;
+	//
+	HWND hPictureView; BOOL mb_PicViewWasHidden;
 };

@@ -27,9 +27,11 @@ WARNING("При запуске как ComSpec получаем ошибку: {crNewSize.X>=MIN_CON_WIDTH &&
 
 #ifdef _DEBUG
 //  Раскомментировать, чтобы сразу после запуска процесса (conemuc.exe) показать MessageBox, чтобы прицепиться дебаггером
-//  #define SHOW_STARTED_MSGBOX
+  //#define SHOW_STARTED_MSGBOX
 // Раскомментировать для вывода в консоль информации режима Comspec
     #define PRINT_COMSPEC(f,a) //wprintf(f,a)
+#elif defined(__GNUC__)
+    #define PRINT_COMSPEC(f,a) wprintf(f,a)
 #else
 	#define PRINT_COMSPEC(f,a)
 #endif
@@ -548,6 +550,7 @@ wait:
     iRc = 0;
 wrap:
     // 
+    PRINT_COMSPEC(L"Finalizing. gbInShutdown=%i\n", gbInShutdown);
     if (!gbInShutdown
 		&& ((iRc!=0 && iRc!=CERR_RUNNEWCONSOLE) || gbAlwaysConfirmExit)
 		)
@@ -851,8 +854,8 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
     	    CESERVER_REQ *pIn = NULL, *pOut = NULL;
     	    wchar_t* pszAddNewConArgs = NULL;
     	    if ((pIn = ExecuteNewCmd(CECMD_GETNEWCONPARM, sizeof(CESERVER_REQ_HDR)+2*sizeof(DWORD))) != NULL) {
-    	        ((DWORD*)(pIn->Data))[0] = gnSelfPID;
-    	        ((DWORD*)(pIn->Data))[1] = lbIsNeedCmd;
+    	        pIn->dwData[0] = gnSelfPID;
+    	        pIn->dwData[1] = lbIsNeedCmd;
     	        
                 PRINT_COMSPEC(L"Retrieve new console add args (begin)\n",0);
                 pOut = ExecuteGuiCmd(ghConWnd, pIn);
@@ -1135,6 +1138,9 @@ void ExitWaitForKey(WORD vkKey, LPCWSTR asConfirm, BOOL abNewLine)
     INPUT_RECORD r = {0}; DWORD dwCount = 0;
     FlushConsoleInputBuffer(GetStdHandle(STD_INPUT_HANDLE));
 
+    PRINT_COMSPEC(L"Finalizing. gbInShutdown=%i\n", gbInShutdown);
+    if (gbInShutdown)
+        return; // Event закрытия мог припоздниться
     //
     wprintf(asConfirm);
 
@@ -1158,7 +1164,9 @@ void ExitWaitForKey(WORD vkKey, LPCWSTR asConfirm, BOOL abNewLine)
             }
         }
     
-        if (r.EventType == KEY_EVENT && r.Event.KeyEvent.bKeyDown && r.Event.KeyEvent.wVirtualKeyCode == vkKey)
+        if (gbInShutdown ||
+                (r.EventType == KEY_EVENT && r.Event.KeyEvent.bKeyDown 
+                 && r.Event.KeyEvent.wVirtualKeyCode == vkKey))
             break;
     }
     //MessageBox(0,L"Debug message...............1",L"ConEmuC",0);
@@ -1255,19 +1263,19 @@ int ComspecInit()
         pIn->hdr.nSrcThreadId = GetCurrentThreadId();
         pIn->hdr.nSize = nSize;
         pIn->hdr.nVersion = CESERVER_REQ_VER;
-        ((DWORD*)(pIn->Data))[0] = 2; // Cmd режим начат
-        ((DWORD*)(pIn->Data))[1] = (DWORD)ghConWnd;
-        ((DWORD*)(pIn->Data))[2] = gnSelfPID;
+        pIn->dwData[0] = 2; // Cmd режим начат
+        pIn->dwData[1] = (DWORD)ghConWnd;
+        pIn->dwData[2] = gnSelfPID;
 
         PRINT_COMSPEC(L"Starting comspec mode (ExecuteGuiCmd started)\n",0);
         pOut = ExecuteGuiCmd(ghConWnd, pIn);
         PRINT_COMSPEC(L"Starting comspec mode (ExecuteGuiCmd finished)\n",0);
         if (pOut) {
-            BOOL  bAlreadyBufferHeight = *(DWORD*)(pOut->Data);
+            BOOL  bAlreadyBufferHeight = pOut->dwData[0];
             #ifdef _DEBUG
-            HWND  hGuiWnd = (HWND)*(DWORD*)(pOut->Data+4);
+            HWND  hGuiWnd = (HWND)pOut->dwData[1];
             #endif
-            DWORD nGuiPID = *(DWORD*)(pOut->Data+8);
+            DWORD nGuiPID = pOut->dwData[2];
 
             AllowSetForegroundWindow(nGuiPID);
 
@@ -1327,9 +1335,9 @@ void ComspecDone(int aiRc)
             pIn->hdr.nSrcThreadId = GetCurrentThreadId();
             pIn->hdr.nSize = nSize;
             pIn->hdr.nVersion = CESERVER_REQ_VER;
-            ((DWORD*)(pIn->Data))[0] = 3; // Cmd режим завершен
-            ((DWORD*)(pIn->Data))[1] = (DWORD)ghConWnd;
-            ((DWORD*)(pIn->Data))[2] = gnSelfPID;
+            pIn->dwData[0] = 3; // Cmd режим завершен
+            pIn->dwData[1] = (DWORD)ghConWnd;
+            pIn->dwData[2] = gnSelfPID;
 
             PRINT_COMSPEC(L"Finalizing comspec mode (ExecuteGuiCmd started)\n",0);
             pOut = ExecuteGuiCmd(ghConWnd, pIn);
@@ -1881,9 +1889,9 @@ void CheckConEmuHwnd()
             pIn->hdr.nSrcThreadId = GetCurrentThreadId();
             pIn->hdr.nSize = nSize;
             pIn->hdr.nVersion = CESERVER_REQ_VER;
-            ((DWORD*)(pIn->Data))[0] = 0; // Server режим начат
-            ((DWORD*)(pIn->Data))[1] = (DWORD)ghConWnd;
-            ((DWORD*)(pIn->Data))[2] = gnSelfPID;
+            pIn->dwData[0] = 0; // Server режим начат
+            pIn->dwData[1] = (DWORD)ghConWnd;
+            pIn->dwData[2] = gnSelfPID;
 
             pOut = ExecuteGuiCmd(ghConWnd, pIn);
             if (pOut) {
@@ -2783,7 +2791,7 @@ BOOL HookWinEvents(BOOL abEnabled)
 
 DWORD WINAPI WinEventThread(LPVOID lpvParam)
 {
-    DWORD dwErr = 0;
+    //DWORD dwErr = 0;
     //HANDLE hStartedEvent = (HANDLE)lpvParam;
     
     
@@ -4128,7 +4136,9 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 
 BOOL WINAPI HandlerRoutine(DWORD dwCtrlType)
 {
+    PRINT_COMSPEC(L"HandlerRoutine triggered. Event type=%i\n", dwCtrlType);
 	if (dwCtrlType >= CTRL_CLOSE_EVENT && dwCtrlType <= CTRL_SHUTDOWN_EVENT) {
+    	PRINT_COMSPEC(L"Console about to be closed\n", 0);
 		gbInShutdown = TRUE;
 	}
     /*SafeCloseHandle(ghLogSize);

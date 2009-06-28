@@ -206,6 +206,8 @@ typedef struct tag_CESERVER_REQ {
     CESERVER_REQ_HDR hdr;
 	union {
 		BYTE    Data[1]; // variable(!) length
+		WORD    wData[1];
+		DWORD   dwData[1];
 		CESERVER_REQ_CONINFO ConInfo; // Informational only! Some fields ARE VARIABLE LENGTH
 		CESERVER_REQ_SETSIZE SetSize;
 		CESERVER_REQ_RETSIZE SetSizeRet;
