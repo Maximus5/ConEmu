@@ -23,7 +23,7 @@ CSettings::CSettings()
     mb_IgnoreEditChanged = FALSE;
     mb_IgnoreTtfChange = TRUE;
 	mb_TabHotKeyRegistered = FALSE;
-    hMain = NULL; hColors = NULL; hInfo = NULL; hwndTip = NULL;
+    hMain = NULL; hExt = NULL; hColors = NULL; hInfo = NULL; hwndTip = NULL;
     QueryPerformanceFrequency((LARGE_INTEGER *)&mn_Freq);
     memset(mn_Counter, 0, sizeof(*mn_Counter)*(tPerfInterval-gbPerformance));
     memset(mn_CounterMax, 0, sizeof(*mn_CounterMax)*(tPerfInterval-gbPerformance));
@@ -636,7 +636,7 @@ DWORD CSettings::EnumFontsThread(LPVOID apArg)
 LRESULT CSettings::OnInitDialog()
 {
 	_ASSERTE(!hMain && !hColors && !hInfo);
-	hMain = NULL; hColors = NULL; hInfo = NULL;
+	hMain = NULL; hExt = NULL; hColors = NULL; hInfo = NULL;
 
 	RegisterTabs();
 
@@ -659,10 +659,12 @@ LRESULT CSettings::OnInitDialog()
         tie.iImage = -1; 
         tie.pszText = _T("Main");
         TabCtrl_InsertItem(_hwndTab, 0, &tie);
-        tie.pszText = _T("Colors");
+        tie.pszText = _T("Features");
         TabCtrl_InsertItem(_hwndTab, 1, &tie);
-        tie.pszText = _T("Info");
+        tie.pszText = _T("Colors");
         TabCtrl_InsertItem(_hwndTab, 2, &tie);
+        tie.pszText = _T("Info");
+        TabCtrl_InsertItem(_hwndTab, 3, &tie);
         
         HFONT hFont = CreateFont(TAB_FONT_HEIGTH, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, ANSI_CHARSET, OUT_DEFAULT_PRECIS, 
             CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_SWISS, TAB_FONT_FACE);
@@ -803,51 +805,25 @@ LRESULT CSettings::OnInitDialog_Main()
 		CheckDlgButton(hMain, rCTAA, BST_CHECKED);
 		break;
 	}
-	if (isFixFarBorders) CheckDlgButton(hMain, cbFixFarBorders, (isFixFarBorders==1) ? BST_CHECKED : BST_INDETERMINATE);
 	if (isCursorColor) CheckDlgButton(hMain, cbCursorColor, BST_CHECKED);
 	if (isCursorBlink) CheckDlgButton(hMain, cbCursorBlink, BST_CHECKED);
-	if (isRClickSendKey) CheckDlgButton(hMain, cbRClick, (isRClickSendKey==1) ? BST_CHECKED : BST_INDETERMINATE);
-	if (isSentAltEnter) CheckDlgButton(hMain, cbSendAE, BST_CHECKED);
-	if (isMinToTray) CheckDlgButton(hMain, cbMinToTray, BST_CHECKED);
-
-	if (isDragEnabled) {
-		//CheckDlgButton(hMain, cbDragEnabled, BST_CHECKED);
-		if (isDragEnabled & DRAG_L_ALLOWED) CheckDlgButton(hMain, cbDragL, BST_CHECKED);
-		if (isDragEnabled & DRAG_R_ALLOWED) CheckDlgButton(hMain, cbDragR, BST_CHECKED);
-	}
-	if (isDropEnabled) CheckDlgButton(hMain, cbDropEnabled, (isDropEnabled==1) ? BST_CHECKED : BST_INDETERMINATE);
-	if (isDefCopy) CheckDlgButton(hMain, cbDnDCopy, BST_CHECKED);
-	{
-		uint nKeyCount = sizeofarray(Settings::szKeys);
-		u8 numL = 0, numR = 0;
-		for (uint i=0; i<nKeyCount; i++) {
-			SendDlgItemMessage(hMain, lbLDragKey, CB_ADDSTRING, 0, (LPARAM) Settings::szKeys[i]);
-			SendDlgItemMessage(hMain, lbRDragKey, CB_ADDSTRING, 0, (LPARAM) Settings::szKeys[i]);
-			if (Settings::nKeys[i] == nLDragKey) numL = i;
-			if (Settings::nKeys[i] == nRDragKey) numR = i;
-		}
-		if (!numL) nLDragKey = 0; // если код клавиши неизвестен?
-		if (!numR) nRDragKey = 0; // если код клавиши неизвестен?
-		SendDlgItemMessage(hMain, lbLDragKey, CB_SETCURSEL, numL, 0);
-		SendDlgItemMessage(hMain, lbRDragKey, CB_SETCURSEL, numR, 0);
-	}
 
 
 	if (isGUIpb) CheckDlgButton(hMain, cbGUIpb, BST_CHECKED);
-	if (isTabs) CheckDlgButton(hMain, cbTabs, (isTabs==1) ? BST_CHECKED : BST_INDETERMINATE);
+	
 	if (isCursorV)
 		CheckDlgButton(hMain, rCursorV, BST_CHECKED);
 	else
 		CheckDlgButton(hMain, rCursorH, BST_CHECKED);
+		
 	if (isForceMonospace)
 		CheckDlgButton(hMain, cbMonospace, BST_CHECKED);
 	if (!isProportional)
 		CheckDlgButton(hMain, cbNonProportional, BST_CHECKED);
+		
 	if (isUpdConHandle)
 		CheckDlgButton(ghOpWnd, cbAutoConHandle, BST_CHECKED);
-	if (isMulti)
-		CheckDlgButton(hMain, cbConMan, BST_CHECKED);
-
+		
 	if (LogFont.lfWeight == FW_BOLD) CheckDlgButton(hMain, cbBold, BST_CHECKED);
 	if (LogFont.lfItalic)            CheckDlgButton(hMain, cbItalic, BST_CHECKED);
 
@@ -899,6 +875,48 @@ LRESULT CSettings::OnInitDialog_Main()
 	mn_LastChangingFontCtrlId = 0;
 
 	RegisterTipsFor(hMain);
+
+	return 0;
+}
+
+LRESULT CSettings::OnInitDialog_Ext()
+{
+	if (gSet.EnableThemeDialogTextureF)
+		gSet.EnableThemeDialogTextureF(hExt, 6/*ETDT_ENABLETAB*/);
+
+	if (isRClickSendKey) CheckDlgButton(hExt, cbRClick, (isRClickSendKey==1) ? BST_CHECKED : BST_INDETERMINATE);
+	if (isSentAltEnter) CheckDlgButton(hExt, cbSendAE, BST_CHECKED);
+	if (isMinToTray) CheckDlgButton(hExt, cbMinToTray, BST_CHECKED);
+
+	if (isDragEnabled) {
+		//CheckDlgButton(hExt, cbDragEnabled, BST_CHECKED);
+		if (isDragEnabled & DRAG_L_ALLOWED) CheckDlgButton(hExt, cbDragL, BST_CHECKED);
+		if (isDragEnabled & DRAG_R_ALLOWED) CheckDlgButton(hExt, cbDragR, BST_CHECKED);
+	}
+	if (isDropEnabled) CheckDlgButton(hExt, cbDropEnabled, (isDropEnabled==1) ? BST_CHECKED : BST_INDETERMINATE);
+	if (isDefCopy) CheckDlgButton(hExt, cbDnDCopy, BST_CHECKED);
+	{
+		uint nKeyCount = sizeofarray(Settings::szKeys);
+		u8 numL = 0, numR = 0;
+		for (uint i=0; i<nKeyCount; i++) {
+			SendDlgItemMessage(hExt, lbLDragKey, CB_ADDSTRING, 0, (LPARAM) Settings::szKeys[i]);
+			SendDlgItemMessage(hExt, lbRDragKey, CB_ADDSTRING, 0, (LPARAM) Settings::szKeys[i]);
+			if (Settings::nKeys[i] == nLDragKey) numL = i;
+			if (Settings::nKeys[i] == nRDragKey) numR = i;
+		}
+		if (!numL) nLDragKey = 0; // если код клавиши неизвестен?
+		if (!numR) nRDragKey = 0; // если код клавиши неизвестен?
+		SendDlgItemMessage(hExt, lbLDragKey, CB_SETCURSEL, numL, 0);
+		SendDlgItemMessage(hExt, lbRDragKey, CB_SETCURSEL, numR, 0);
+	}
+
+
+	if (isTabs) CheckDlgButton(hExt, cbTabs, (isTabs==1) ? BST_CHECKED : BST_INDETERMINATE);
+
+	if (isMulti)
+		CheckDlgButton(hExt, cbConMan, BST_CHECKED);
+
+	RegisterTipsFor(hExt);
 
 	return 0;
 }
@@ -1066,7 +1084,7 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
 		break;
         
     case cbConMan:
-        isMulti = !isMulti;
+        isMulti = IsChecked(hExt, cbConMan);
         break;
 
     case cbBold:
@@ -1102,36 +1120,36 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
         break;
 
     case cbRClick:
-		isRClickSendKey = IsChecked(hMain, cbRClick); //0-1-2
+		isRClickSendKey = IsChecked(hExt, cbRClick); //0-1-2
         break;
 
     case cbSendAE:
-        isSentAltEnter = !isSentAltEnter;
+        isSentAltEnter = IsChecked(hExt, cbSendAE);
         break;
 
     case cbMinToTray:
-        isMinToTray = !isMinToTray;
+        isMinToTray = IsChecked(hExt, cbMinToTray);
         break;
 
     case cbDragL:
     case cbDragR:
         isDragEnabled = 
-            (IsChecked(hMain, cbDragL) ? DRAG_L_ALLOWED : 0) |
-            (IsChecked(hMain, cbDragR) ? DRAG_R_ALLOWED : 0);
+            (IsChecked(hExt, cbDragL) ? DRAG_L_ALLOWED : 0) |
+            (IsChecked(hExt, cbDragR) ? DRAG_R_ALLOWED : 0);
         break;
     case cbDropEnabled:
-        isDropEnabled = IsChecked(hMain, cbDropEnabled);
+        isDropEnabled = IsChecked(hExt, cbDropEnabled);
         break;
     case cbDnDCopy:
-        isDefCopy = IsChecked(hMain, cbDnDCopy) == BST_CHECKED;
+        isDefCopy = IsChecked(hExt, cbDnDCopy) == BST_CHECKED;
         break;
     
     case cbGUIpb: // GUI Progress Bars
-        isGUIpb = !isGUIpb;
+        isGUIpb = IsChecked(hMain, cbGUIpb);
         break;
     
     case cbTabs:
-        switch(IsChecked(hMain, cbTabs)) {
+        switch(IsChecked(hExt, cbTabs)) {
             case BST_UNCHECKED:
                 isTabs = 0; break;
             case BST_CHECKED:
@@ -1353,7 +1371,7 @@ LRESULT CSettings::OnComboBox(WPARAM wParam, LPARAM lParam)
 			mn_LastChangingFontCtrlId = wId;
     } else 
     if (wId == lbLDragKey || wId == lbRDragKey) {
-        int num = SendDlgItemMessage(hMain, wId, CB_GETCURSEL, 0, 0);
+        int num = SendDlgItemMessage(hExt, wId, CB_GETCURSEL, 0, 0);
         int nKeyCount = sizeofarray(Settings::szKeys);
         if (num>=0 && num<nKeyCount) {
             if (wId == lbLDragKey)
@@ -1366,7 +1384,7 @@ LRESULT CSettings::OnComboBox(WPARAM wParam, LPARAM lParam)
             else
                 nRDragKey = 0;
             if (num) // Invalid index?
-                SendDlgItemMessage(hMain, wId, CB_SETCURSEL, num=0, 0);
+                SendDlgItemMessage(hExt, wId, CB_SETCURSEL, num=0, 0);
         }
     }
     return 0;
@@ -1379,45 +1397,46 @@ LRESULT CSettings::OnTab(LPNMHDR phdr)
             {
                 int nSel = TabCtrl_GetCurSel(phdr->hwndFrom);
 
+                HWND* phCurrent = NULL;
+                UINT  nDlgRc = 0;
+                DLGPROC dlgProc = NULL;
+                
                 if (nSel==0) {
-                    ShowWindow(hMain, SW_SHOW);
-                    ShowWindow(hColors, SW_HIDE);
-                    ShowWindow(hInfo, SW_HIDE);
-                    SetFocus(hMain);
+                	phCurrent = &hMain;
                 } else if (nSel==1) {
-					if (!hColors) {
-						SetCursor(LoadCursor(NULL,IDC_WAIT));
-
-						HWND _hwndTab = GetDlgItem(ghOpWnd, tabMain);
-						RECT rcClient; GetWindowRect(_hwndTab, &rcClient);
-						MapWindowPoints(NULL, ghOpWnd, (LPPOINT)&rcClient, 2);
-						TabCtrl_AdjustRect(_hwndTab, FALSE, &rcClient);
-
-						hColors = CreateDialog((HINSTANCE)GetModuleHandle(NULL), 
-							MAKEINTRESOURCE(IDD_DIALOG2), ghOpWnd, colorOpProc);
-						MoveWindow(hColors, rcClient.left, rcClient.top, rcClient.right-rcClient.left, rcClient.bottom-rcClient.top, 0);
-					}
-                    ShowWindow(hColors, SW_SHOW);
-                    ShowWindow(hMain, SW_HIDE);
-                    ShowWindow(hInfo, SW_HIDE);
-                    SetFocus(hColors);
+                	phCurrent = &hExt;
+                	nDlgRc = IDD_DIALOG4;
+                	dlgProc = extOpProc;
+                } else if (nSel==2) {
+                	phCurrent = &hColors;
+                	nDlgRc = IDD_DIALOG2;
+                	dlgProc = colorOpProc;
                 } else {
-					if (!hInfo) {
-						SetCursor(LoadCursor(NULL,IDC_WAIT));
+                	phCurrent = &hInfo;
+                	nDlgRc = IDD_DIALOG3;
+                	dlgProc = infoOpProc;
+                }
+                
+				if (*phCurrent == NULL && nDlgRc && dlgProc) {
+					SetCursor(LoadCursor(NULL,IDC_WAIT));
 
-						HWND _hwndTab = GetDlgItem(ghOpWnd, tabMain);
-						RECT rcClient; GetWindowRect(_hwndTab, &rcClient);
-						MapWindowPoints(NULL, ghOpWnd, (LPPOINT)&rcClient, 2);
-						TabCtrl_AdjustRect(_hwndTab, FALSE, &rcClient);
+					HWND _hwndTab = GetDlgItem(ghOpWnd, tabMain);
+					RECT rcClient; GetWindowRect(_hwndTab, &rcClient);
+					MapWindowPoints(NULL, ghOpWnd, (LPPOINT)&rcClient, 2);
+					TabCtrl_AdjustRect(_hwndTab, FALSE, &rcClient);
 
-						hInfo = CreateDialog((HINSTANCE)GetModuleHandle(NULL), 
-							MAKEINTRESOURCE(IDD_DIALOG3), ghOpWnd, infoOpProc);
-						MoveWindow(hInfo, rcClient.left, rcClient.top, rcClient.right-rcClient.left, rcClient.bottom-rcClient.top, 0);
-					}
-                    ShowWindow(hInfo, SW_SHOW);
-                    ShowWindow(hMain, SW_HIDE);
-                    ShowWindow(hColors, SW_HIDE);
-                    SetFocus(hInfo);
+					*phCurrent = CreateDialog((HINSTANCE)GetModuleHandle(NULL), 
+						MAKEINTRESOURCE(nDlgRc), ghOpWnd, dlgProc);
+					MoveWindow(*phCurrent, rcClient.left, rcClient.top, rcClient.right-rcClient.left, rcClient.bottom-rcClient.top, 0);
+				}
+                
+                if (*phCurrent != NULL) {
+                    ShowWindow(*phCurrent, SW_SHOW);
+                    if (*phCurrent != hMain)   ShowWindow(hMain, SW_HIDE);
+                    if (*phCurrent != hExt)    ShowWindow(hExt,  SW_HIDE);
+                    if (*phCurrent != hColors) ShowWindow(hColors, SW_HIDE);
+                    if (*phCurrent != hInfo)   ShowWindow(hInfo, SW_HIDE);
+                    SetFocus(*phCurrent);
                 }
             }
             break;
@@ -1597,10 +1616,10 @@ BOOL CALLBACK CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM
                 return (BOOL)KillBrush;
             }
             break;
-    case WM_KEYDOWN:
-        if (wParam == VK_ESCAPE)
-            SendMessage(hWnd2, WM_CLOSE, 0, 0);
-        break;
+    //case WM_KEYDOWN:
+    //    if (wParam == VK_ESCAPE)
+    //        SendMessage(hWnd2, WM_CLOSE, 0, 0);
+    //    break;
 
     case WM_HSCROLL:
         {
@@ -1645,7 +1664,7 @@ BOOL CALLBACK CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM
 		gSet.UnregisterTabs();
         if (gSet.hwndTip) {DestroyWindow(gSet.hwndTip); gSet.hwndTip = NULL;}
         //EndDialog(hWnd2, TRUE);
-        ghOpWnd = NULL; gSet.hMain = NULL; gSet.hColors = NULL; gSet.hInfo = NULL;
+        ghOpWnd = NULL; gSet.hMain = NULL; gSet.hExt = NULL; gSet.hColors = NULL; gSet.hInfo = NULL;
         break;
 	case WM_HOTKEY:
 		if (wParam == 0x101) {
@@ -1697,10 +1716,10 @@ BOOL CALLBACK CSettings::mainOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARA
                 return (BOOL)KillBrush;
             }
             break;
-    case WM_KEYDOWN:
-        if (wParam == VK_ESCAPE)
-            SendMessage(hWnd2, WM_CLOSE, 0, 0);
-        break;
+    //case WM_KEYDOWN:
+    //    if (wParam == VK_ESCAPE)
+    //        SendMessage(hWnd2, WM_CLOSE, 0, 0);
+    //    break;
 
     case WM_HSCROLL:
         {
@@ -1738,6 +1757,51 @@ BOOL CALLBACK CSettings::mainOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARA
 		if (messg == gSet.mn_MsgRecreateFont) {
 			gSet.RecreateFont(wParam);
 		}
+        return 0;
+    }
+    return 0;
+}
+
+BOOL CALLBACK CSettings::extOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
+{
+    switch (messg)
+    {
+    case WM_INITDIALOG:
+		_ASSERTE(gSet.hExt==NULL || gSet.hExt==hWnd2);
+		gSet.hExt = hWnd2;
+        gSet.OnInitDialog_Ext();
+        break;
+
+    case WM_CTLCOLORSTATIC:
+        for (uint i = 1000; i < 1016; i++)
+            if (GetDlgItem(hWnd2, i) == (HWND)lParam)
+            {
+                static HBRUSH KillBrush;
+                DeleteObject(KillBrush);
+                KillBrush = CreateSolidBrush(gSet.Colors[i-1000]);
+                return (BOOL)KillBrush;
+            }
+            break;
+    //case WM_KEYDOWN:
+    //    if (wParam == VK_ESCAPE)
+    //        SendMessage(hWnd2, WM_CLOSE, 0, 0);
+    //    break;
+
+    case WM_COMMAND:
+        if (HIWORD(wParam) == BN_CLICKED)
+        {
+            gSet.OnButtonClicked(wParam, lParam);
+        }
+        else if (HIWORD(wParam) == EN_CHANGE)
+        {
+            gSet.OnEditChanged(wParam, lParam);
+        }
+        else if (HIWORD(wParam) == CBN_EDITCHANGE || HIWORD(wParam) == CBN_SELCHANGE)
+        {
+            gSet.OnComboBox(wParam, lParam);
+		}
+        break;
+    default:
         return 0;
     }
     return 0;
@@ -2093,6 +2157,10 @@ HFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 // BST_INDETERMINATE (2) - 3-d state
 int CSettings::IsChecked(HWND hParent, WORD nCtrlId)
 {
+	#ifdef _DEBUG
+	HWND hChild = GetDlgItem(hParent, nCtrlId);
+	_ASSERTE(hChild!=NULL);
+	#endif
 	// Аналог IsDlgButtonChecked
 	int nChecked = SendDlgItemMessage(hParent, nCtrlId, BM_GETCHECK, 0, 0);
 	_ASSERTE(nChecked==0 || nChecked==1 || nChecked==2);
@@ -2103,6 +2171,10 @@ int CSettings::IsChecked(HWND hParent, WORD nCtrlId)
 
 int CSettings::GetNumber(HWND hParent, WORD nCtrlId)
 {
+	#ifdef _DEBUG
+	HWND hChild = GetDlgItem(hParent, nCtrlId);
+	_ASSERTE(hChild!=NULL);
+	#endif
 	int nValue = 0;
 	wchar_t szNumber[32] = {0};
 	if (GetDlgItemText(hParent, nCtrlId, szNumber, countof(szNumber)))
@@ -2112,6 +2184,10 @@ int CSettings::GetNumber(HWND hParent, WORD nCtrlId)
 
 int CSettings::SelectString(HWND hParent, WORD nCtrlId, LPCWSTR asText)
 {
+	#ifdef _DEBUG
+	HWND hChild = GetDlgItem(hParent, nCtrlId);
+	_ASSERTE(hChild!=NULL);
+	#endif
 	// Осуществляет поиск по _началу_ (!) строки
 	int nIdx = SendDlgItemMessage(hParent, nCtrlId, CB_SELECTSTRING, -1, (LPARAM)asText);
 	return nIdx;
@@ -2119,6 +2195,10 @@ int CSettings::SelectString(HWND hParent, WORD nCtrlId, LPCWSTR asText)
 
 int CSettings::SelectStringExact(HWND hParent, WORD nCtrlId, LPCWSTR asText)
 {
+	#ifdef _DEBUG
+	HWND hChild = GetDlgItem(hParent, nCtrlId);
+	_ASSERTE(hChild!=NULL);
+	#endif
 	int nIdx = SendDlgItemMessage(hParent, nCtrlId, CB_FINDSTRINGEXACT, -1, (LPARAM)asText);
 	if (nIdx < 0) {
 		int nCount = SendDlgItemMessage(hParent, nCtrlId, CB_GETCOUNT, 0, 0);

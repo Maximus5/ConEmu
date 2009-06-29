@@ -27,7 +27,7 @@ WARNING("При запуске как ComSpec получаем ошибку: {crNewSize.X>=MIN_CON_WIDTH &&
 
 #ifdef _DEBUG
 //  Раскомментировать, чтобы сразу после запуска процесса (conemuc.exe) показать MessageBox, чтобы прицепиться дебаггером
-  //#define SHOW_STARTED_MSGBOX
+//    #define SHOW_STARTED_MSGBOX
 // Раскомментировать для вывода в консоль информации режима Comspec
     #define PRINT_COMSPEC(f,a) //wprintf(f,a)
 #elif defined(__GNUC__)
@@ -438,7 +438,9 @@ int main()
     /* ********************************* */
     
     // CREATE_NEW_PROCESS_GROUP - низя, перестает работать Ctrl-C
-	srv.nProcessStartTick = GetTickCount();
+	// Перед CreateProcessW нужно ставить 0, иначе из-за антивирусов может наступить
+	// timeout ожидания окончания процесса еще ДО выхода из CreateProcessW
+	srv.nProcessStartTick = 0;
     lbRc = CreateProcessW(NULL, gpszRunCmd, NULL,NULL, TRUE, 
             NORMAL_PRIORITY_CLASS/*|CREATE_NEW_PROCESS_GROUP*/, 
             NULL, NULL, &si, &pi);
@@ -448,6 +450,7 @@ int main()
         wprintf (L"Can't create process, ErrCode=0x%08X! Command to be executed:\n%s\n", dwErr, gpszRunCmd);
         iRc = CERR_CREATEPROCESS; goto wrap;
     }
+	srv.nProcessStartTick = GetTickCount();
     //delete psNewCmd; psNewCmd = NULL;
     AllowSetForegroundWindow(pi.dwProcessId);
 
@@ -486,7 +489,7 @@ int main()
         if (nWait != WAIT_OBJECT_0) { // Если таймаут
             iRc = srv.nProcessCount;
             // И процессов в консоли все еще нет
-            if (iRc == 0) {
+            if (iRc == 1) {
                 wprintf (L"Process was not attached to console. Is it GUI?\nCommand to be executed:\n%s\n", gpszRunCmd);
                 iRc = CERR_PROCESSTIMEOUT; goto wrap;
             }
@@ -1847,7 +1850,7 @@ BOOL CheckProcessCount(BOOL abForce/*=FALSE*/)
 	// Пример - запускаемся из фара. Количество процессов ИЗНАЧАЛЬНО - 5
 	// cmd вываливается сразу (path not found)
 	// количество процессов ОСТАЕТСЯ 5 и ни одно из ниже условий не проходит
-	if (nPrevCount == 1 && srv.nProcessCount == 1 &&
+	if (nPrevCount == 1 && srv.nProcessCount == 1 && srv.nProcessStartTick &&
 		((dwLastCheckTick - srv.nProcessStartTick) > CHECK_ROOTSTART_TIMEOUT) &&
 		WaitForSingleObject(ghFinilizeEvent,0) == WAIT_TIMEOUT)
 	{

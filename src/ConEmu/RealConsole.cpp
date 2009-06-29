@@ -558,8 +558,12 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
         nWait = WaitForMultipleObjects(nEvents, hEvents, FALSE, (bIconic || !bActive) ? max(1000,nElapse) : nElapse);
         _ASSERTE(nWait!=(DWORD)-1);
 
-        if (nWait == IDEVENT_TERM /*|| !bLoop*/ || nWait == IDEVENT_CONCLOSED)
+		if (nWait == IDEVENT_TERM /*|| !bLoop*/ || nWait == IDEVENT_CONCLOSED) {
+			if (nWait == IDEVENT_CONCLOSED) {
+				DEBUGSTR(L"### ConEmuC.exe was terminated\n");
+			}
             break; // требование завершени€ нити
+		}
 
         // ѕроверим, что ConEmuC жив
         if (pRCon->mh_ConEmuC) {

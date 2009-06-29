@@ -11,6 +11,7 @@
 #define IDD_DIALOG2                     103
 #define IDD_DIALOGM                     104
 #define IDD_DIALOG3                     105
+#define IDD_DIALOG4                     106
 #define IDC_COPY                        108
 #define IDC_LINK                        109
 #define IDC_MOVE                        110
@@ -173,6 +174,15 @@
 #define IDC_CHOOSE                      1528
 #define IDC_RESTART_MSG                 1529
 #define IDC_WARNING                     1530
+#define cbTabSelf                       1531
+#define cbTabLazy                       1532
+#define cbTabRecent                     1533
+#define cbLongOutput                    1534
+#define tLongOutputHeight               1535
+#define cbRSelectionFix                 1536
+#define cbMonitorConsoleLang            1537
+#define cbSkipFocusEvents               1538
+#define IDC_HOTKEY1                     1539
 
 // Next default values for new objects
 // 
@@ -180,7 +190,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        114
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1531
+#define _APS_NEXT_CONTROL_VALUE         1540
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

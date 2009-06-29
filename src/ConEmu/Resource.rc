@@ -67,10 +67,10 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 // Dialog
 //
 
-IDD_DIALOG1 DIALOGEX 0, 0, 328, 258
+IDD_DIALOG1 DIALOGEX 0, 0, 328, 216
 STYLE DS_FIXEDSYS | DS_CONTROL | WS_CHILD
-EXSTYLE WS_EX_TOPMOST | WS_EX_CONTROLPARENT
-FONT 8, "MS Shell Dlg"
+EXSTYLE WS_EX_CONTROLPARENT
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     GROUPBOX        "Anti-aliasing",IDC_STATIC,263,4,60,45,WS_GROUP
     CONTROL         "&None",rNoneAA,"Button",BS_AUTORADIOBUTTON | WS_GROUP,
@@ -86,10 +86,10 @@ BEGIN
                     BS_AUTORADIOBUTTON,153,25,96,8
     CONTROL         "Co&lor",cbCursorColor,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,153,36,43,8
-    GROUPBOX        "",IDC_STATIC,4,172,319,50
+    GROUPBOX        "",IDC_STATIC,4,130,319,50
     CONTROL         "Back&ground image (bmp):",cbBgImage,"Button",
-                    BS_AUTO3STATE | WS_TABSTOP,10,172,96,8
-    EDITTEXT        tBgImage,34,184,209,12,ES_AUTOHSCROLL
+                    BS_AUTO3STATE | WS_TABSTOP,10,130,96,8
+    EDITTEXT        tBgImage,34,142,209,12,ES_AUTOHSCROLL
     COMBOBOX        tFontFace,10,16,123,72,CBS_DROPDOWN | CBS_AUTOHSCROLL | 
                     CBS_SORT | WS_VSCROLL | WS_TABSTOP
     COMBOBOX        tFontSizeY,47,34,38,66,CBS_DROPDOWN | CBS_AUTOHSCROLL | 
@@ -113,8 +113,6 @@ BEGIN
                     74,48,8
     CONTROL         "Full screen",rFullScreen,"Button",BS_AUTORADIOBUTTON,
                     151,87,49,8
-    CONTROL         "&RightClick for context menu",cbRClick,"Button",
-                    BS_AUTO3STATE | WS_TABSTOP,10,139,125,8
     GROUPBOX        "Font",IDC_STATIC,4,4,136,122
     RTEXT           "Size:",IDC_STATIC,9,37,32,8
     CTEXT           "x",IDC_STATIC,89,35,8,8
@@ -127,33 +125,26 @@ BEGIN
     CTEXT           "x",IDC_STATIC,101,83,8,8
     COMBOBOX        tFontSizeX3,109,81,24,66,CBS_DROPDOWN | WS_VSCROLL | 
                     WS_TABSTOP
-    LTEXT           "Path:",IDC_STATIC,10,184,18,8
-    LTEXT           "Darkening:",IDC_STATIC,10,203,36,8
+    LTEXT           "Path:",IDC_STATIC,10,142,18,8
+    LTEXT           "Darkening:",IDC_STATIC,10,161,36,8
     CONTROL         "",slDarker,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | 
-                    WS_TABSTOP,52,202,177,12
-    EDITTEXT        tDarker,233,202,30,12,ES_AUTOHSCROLL | ES_NUMBER
-    CONTROL         "AltEnter",cbSendAE,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,10,153,48,8
-    CONTROL         "Enable Tabs",cbTabs,"Button",BS_AUTO3STATE | WS_TABSTOP,
-                    154,112,72,8
-    GROUPBOX        "Keyboard and mouse",IDC_STATIC,4,129,136,39
-    CONTROL         "GUI progress bars",cbGUIpb,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,229,112,86,8
-    CONTROL         "Copy by default",cbDnDCopy,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,252,154,66,8
+                    WS_TABSTOP,52,160,177,12
+    EDITTEXT        tDarker,233,160,30,12,ES_AUTOHSCROLL | ES_NUMBER
+    CONTROL         "GUI progress bars (standard copy/move only)",cbGUIpb,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,153,112,164,8
     COMBOBOX        tFontFace2,9,107,88,72,CBS_DROPDOWN | CBS_AUTOHSCROLL | 
                     CBS_SORT | WS_VSCROLL | WS_TABSTOP
     COMBOBOX        tFontSizeX2,109,107,24,66,CBS_DROPDOWN | WS_VSCROLL | 
                     WS_TABSTOP
     CTEXT           "x",IDC_STATIC,101,109,8,8
-    PUSHBUTTON      "...",bBgImage,247,184,16,12
+    PUSHBUTTON      "...",bBgImage,247,142,16,12
     CONTROL         "Stretch",rBgStretch,"Button",BS_AUTORADIOBUTTON | 
-                    WS_DISABLED,278,195,39,10
+                    WS_DISABLED,278,153,39,10
     CONTROL         "Tile",rBgTile,"Button",BS_AUTORADIOBUTTON | WS_DISABLED,
-                    278,207,39,10
-    CONTROL         "UpLeft",rBgSimple,"Button",BS_AUTORADIOBUTTON,278,182,
+                    278,165,39,10
+    CONTROL         "UpLeft",rBgSimple,"Button",BS_AUTORADIOBUTTON,278,140,
                     39,10
-    GROUPBOX        "Placement",IDC_STATIC,270,172,53,50
+    GROUPBOX        "Placement",IDC_STATIC,270,130,53,50
     GROUPBOX        "Position",IDC_STATIC,263,50,60,50,WS_DISABLED
     CONTROL         "Cascade",rCascade,"Button",BS_AUTORADIOBUTTON,268,87,44,
                     10
@@ -161,24 +152,9 @@ BEGIN
     EDITTEXT        tWndX,268,60,20,12,ES_AUTOHSCROLL | ES_NUMBER
     EDITTEXT        tWndY,297,60,20,12,ES_AUTOHSCROLL | ES_NUMBER
     CTEXT           "x",IDC_STATIC,289,61,8,8
-    GROUPBOX        "Command Line",IDC_STATIC,4,223,319,30
-    EDITTEXT        tCmdLine,9,234,258,12,ES_AUTOHSCROLL
+    GROUPBOX        "Command Line",IDC_STATIC,4,181,319,30
+    EDITTEXT        tCmdLine,9,192,307,12,ES_AUTOHSCROLL
     GROUPBOX        "Graphic enhancement",IDC_STATIC,147,101,176,25
-    GROUPBOX        "Drag and drop (Shell style)",IDC_STATIC,147,129,176,39
-    COMBOBOX        lbLDragKey,192,138,56,30,CBS_DROPDOWNLIST | WS_VSCROLL | 
-                    WS_TABSTOP
-    CONTROL         "Allow 'Drop'",cbDropEnabled,"Button",BS_AUTO3STATE | 
-                    WS_TABSTOP,252,139,53,10
-    CONTROL         "LDrag",cbDragL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
-                    154,139,36,10
-    CONTROL         "RDrag",cbDragR,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
-                    154,154,36,10
-    COMBOBOX        lbRDragKey,192,152,56,30,CBS_DROPDOWNLIST | WS_VSCROLL | 
-                    WS_TABSTOP
-    CONTROL         "MultiCon",cbConMan,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,274,235,43,10
-    CONTROL         "Min 2 tray",cbMinToTray,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,67,153,47,10
     PUSHBUTTON      "Apply",cbApplyPos,214,83,36,12
     CONTROL         "Blinking",cbCursorBlink,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,200,36,50,8
@@ -186,7 +162,7 @@ END
 
 IDD_DIALOG2 DIALOGEX 0, 0, 328, 246
 STYLE DS_FIXEDSYS | DS_CONTROL | WS_CHILD
-EXSTYLE WS_EX_TOPMOST | WS_EX_CONTROLPARENT
+EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     GROUPBOX        "Colors (""red green blue"")",IDC_STATIC,4,4,319,67
@@ -360,7 +336,7 @@ END
 
 IDD_DIALOG3 DIALOGEX 0, 0, 328, 258
 STYLE DS_FIXEDSYS | DS_CONTROL | WS_CHILD
-EXSTYLE WS_EX_TOPMOST | WS_EX_CONTROLPARENT
+EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     GROUPBOX        "Performance counters",gbPerformance,4,4,319,30
@@ -410,6 +386,59 @@ BEGIN
     EDITTEXT        tPanelLeft,32,109,90,12,ES_AUTOHSCROLL | ES_READONLY
     RTEXT           "Right:",IDC_STATIC,131,110,22,8
     EDITTEXT        tPanelRight,156,109,90,12,ES_AUTOHSCROLL | ES_READONLY
+END
+
+IDD_DIALOG4 DIALOGEX 0, 0, 328, 167
+STYLE DS_FIXEDSYS | DS_CONTROL | WS_CHILD
+EXSTYLE WS_EX_CONTROLPARENT
+FONT 8, "MS Shell Dlg"
+BEGIN
+    CONTROL         "&RightClick for context menu",cbRClick,"Button",
+                    BS_AUTO3STATE | WS_TABSTOP,10,44,125,8
+    CONTROL         "AltEnter",cbSendAE,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,90,59,42,8
+    CONTROL         "Enable Tabs",cbTabs,"Button",BS_AUTO3STATE | WS_TABSTOP,
+                    10,15,64,8
+    GROUPBOX        "Mouse",IDC_STATIC,4,34,136,39
+    CONTROL         "Copy by default",cbDnDCopy,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,252,59,66,8
+    GROUPBOX        "Multi console",IDC_STATIC,4,76,319,30
+    GROUPBOX        "Tabs (panels, editors, viewers)",IDC_STATIC,4,2,319,30
+    GROUPBOX        "Drag and drop (Shell style)",IDC_STATIC,147,34,176,39
+    COMBOBOX        lbLDragKey,192,43,56,30,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    CONTROL         "Allow 'Drop'",cbDropEnabled,"Button",BS_AUTO3STATE | 
+                    WS_TABSTOP,252,44,53,10
+    CONTROL         "LDrag",cbDragL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
+                    154,44,36,10
+    CONTROL         "RDrag",cbDragR,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
+                    154,59,36,10
+    COMBOBOX        lbRDragKey,192,57,56,30,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    CONTROL         "MultiCon",cbConMan,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,10,89,43,8
+    CONTROL         "Minimize to tray",cbMinToTray,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,231,123,85,8
+    CONTROL         "Internal CtrlTab",cbTabSelf,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,76,15,72,8
+    CONTROL         "Lazy tab switch",cbTabLazy,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,154,15,71,8
+    CONTROL         "Recent mode",cbTabRecent,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,233,15,75,8
+    CONTROL         "Long output",cbLongOutput,"Button",BS_AUTOCHECKBOX | 
+                    WS_DISABLED | WS_TABSTOP,61,89,56,8
+    EDITTEXT        tLongOutputHeight,122,87,40,12,ES_AUTOHSCROLL | 
+                    WS_DISABLED
+    CONTROL         "Right selection fix",cbRSelectionFix,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,10,59,76,8
+    CONTROL         "MonitorConsoleLang",cbMonitorConsoleLang,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,10,122,94,8
+    CONTROL         "SkipFocusEvents",cbSkipFocusEvents,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,113,123,93,8
+    CONTROL         "HotKey1",IDC_HOTKEY1,"msctls_hotkey32",WS_BORDER | 
+                    WS_TABSTOP,237,85,80,14
+    GROUPBOX        "Real console tweaks",IDC_STATIC,4,109,212,30
+    GROUPBOX        "Window tweaks",IDC_STATIC,223,109,100,30
 END
 
 IDD_RESTART DIALOG DISCARDABLE  0, 0, 310, 70

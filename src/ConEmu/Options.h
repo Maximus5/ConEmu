@@ -121,11 +121,12 @@ public:
     HFONT   mh_Font, mh_Font2;
     WORD    CharWidth[0x10000]; //, Font2Width[0x10000];
 
-    HWND hMain, hColors, hInfo;
+    HWND hMain, hExt, hColors, hInfo;
 
     bool LoadImageFrom(TCHAR *inPath, bool abShowErrors=false);
     static BOOL CALLBACK wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
     static BOOL CALLBACK mainOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
+    static BOOL CALLBACK extOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
     static BOOL CALLBACK colorOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
     static BOOL CALLBACK infoOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
     void LoadSettings();
@@ -144,6 +145,7 @@ public:
 protected:
     LRESULT OnInitDialog();
 	LRESULT OnInitDialog_Main();
+	LRESULT OnInitDialog_Ext();
 	LRESULT OnInitDialog_Color();
 	LRESULT OnInitDialog_Info();
     LRESULT OnButtonClicked(WPARAM wParam, LPARAM lParam);
