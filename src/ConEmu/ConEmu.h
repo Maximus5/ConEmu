@@ -1,7 +1,11 @@
 
 #pragma once
 
+#if !defined(__GNUC__)
 #include <shobjidl.h>
+#else
+#include "ShObjIdl_Part.h"
+#endif
 
 #define HDCWND ghWndDC
 
@@ -123,6 +127,7 @@ protected:
 	bool mb_SkipSyncSize, mb_PassSysCommand;
 	wchar_t *mpsz_RecreateCmd;
 	ITaskbarList3 *mp_TaskBar;
+	typedef BOOL (WINAPI* FRegisterShellHookWindow)(HWND);
 	//DWORD mn_CurrentKeybLayout;
 	// Registered messages
 	DWORD mn_MainThreadId;

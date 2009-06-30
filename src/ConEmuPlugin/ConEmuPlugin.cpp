@@ -1397,8 +1397,8 @@ void InitResources()
 		pIn->hdr.nCmd = CECMD_RESOURCES;
 		pIn->hdr.nSrcThreadId = GetCurrentThreadId();
 		pIn->hdr.nVersion = CESERVER_REQ_VER;
-		*((DWORD*)pIn->Data) = GetCurrentProcessId();
-		wchar_t* pszRes = (wchar_t*)(pIn->Data+4);
+		pIn->dwData[0] = GetCurrentProcessId();
+		wchar_t* pszRes = (wchar_t*)&(pIn->dwData[1]);
 		if (gFarVersion.dwVerMajor==1) {
 			GetMsgA(10, pszRes); pszRes += lstrlenW(pszRes)+1;
 			GetMsgA(11, pszRes); pszRes += lstrlenW(pszRes)+1;

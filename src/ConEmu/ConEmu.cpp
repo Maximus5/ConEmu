@@ -9,6 +9,11 @@
 
 WARNING("ghConWnd == NULL")
 
+#ifdef __GNUC__
+const CLSID CLSID_TaskbarList = {0x56FDF344, 0xFD6D, 0x11d0, {0x95, 0x8A, 0x00, 0x60, 0x97, 0xC9, 0xA0, 0x90}};
+const IID IID_ITaskbarList3 = {0xea1afb91, 0x9e28, 0x4b86, {0x90, 0xe9, 0x9e, 0x9f, 0x8a, 0x5e, 0xef, 0xaf}};
+#endif
+
 CConEmuMain::CConEmuMain()
 {
     mn_MainThreadId = GetCurrentThreadId();
@@ -2906,7 +2911,13 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd)
     ghWnd = hWnd; // ставим сразу, чтобы функции могли пользоваться
     Icon.LoadIcon(hWnd, gSet.nIconID/*IDI_ICON1*/);
     
-    RegisterShellHookWindow ( hWnd );
+    
+    // Позволяет реагировать на запросы FlashWindow из фара и запуск приложений
+    HMODULE hUser32 = GetModuleHandle(L"user32.dll");
+    FRegisterShellHookWindow fnRegisterShellHookWindow = NULL;
+    if (hUser32) fnRegisterShellHookWindow = (FRegisterShellHookWindow)GetProcAddress(hUser32, "RegisterShellHookWindow");
+    if (fnRegisterShellHookWindow) fnRegisterShellHookWindow ( hWnd );
+    
     
     // Чтобы можно было найти хэндл окна по хэндлу консоли
     SetWindowLong(hWnd, GWL_USERDATA, (LONG)ghConWnd); // 31.03.2009 Maximus - только нихрена оно еще не создано!

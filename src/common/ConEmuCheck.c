@@ -133,12 +133,14 @@ CESERVER_REQ* ExecuteGuiCmd(HWND hConWnd, const CESERVER_REQ* pIn)
 	if (cbRead < sizeof(CESERVER_REQ_HDR))
 		return NULL;
 
-	if (((CESERVER_REQ*)cbReadBuf)->hdr.nSize != cbRead) {
+	pOut = (CESERVER_REQ*)cbReadBuf; // temporary
+	
+	if (pOut->hdr.nSize != cbRead) {
 		OutputDebugString(L"!!! Wrong nSize received from GUI server !!!\n");
 		return NULL;
 	}
 
-	if (((CESERVER_REQ*)cbReadBuf)->hdr.nVersion != CESERVER_REQ_VER) {
+	if (pOut->hdr.nVersion != CESERVER_REQ_VER) {
 		OutputDebugString(L"!!! Wrong nVersion received from GUI server !!!\n");
 		return NULL;
 	}
@@ -197,8 +199,8 @@ HWND GetConEmuHWND(BOOL abRoot)
 		return NULL;
 	}
 
-	ConEmuRoot = (HWND)(((DWORD*)pOut->Data)[0]);
-	ConEmuHwnd = (HWND)(((DWORD*)pOut->Data)[1]);
+	ConEmuRoot = (HWND)pOut->dwData[0];
+	ConEmuHwnd = (HWND)pOut->dwData[1];
 
 	free(pOut);
 	
