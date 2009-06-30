@@ -141,7 +141,7 @@ void CSettings::InitSettings()
     _tcscpy(sBgImage, _T("c:\\back.bmp"));
 	bgImageDarker = 0x46;
 
-    isFixFarBorders = TRUE; isPartBrush75 = 0xC8; isPartBrush50 = 0x96; isPartBrush25 = 0x5A;
+    isFixFarBorders = 2; isPartBrush75 = 0xC8; isPartBrush50 = 0x96; isPartBrush25 = 0x5A;
 	memset(icFixFarBorderRanges, 0, sizeof(icFixFarBorderRanges));
 	icFixFarBorderRanges[0].bUsed = true; icFixFarBorderRanges[0].cBegin = 0x2013; icFixFarBorderRanges[0].cEnd = 0x25C4;
     
@@ -510,6 +510,7 @@ BOOL CSettings::SaveSettings()
             reg.Save(_T("RightClick opens context menu"), isRClickSendKey);
             reg.Save(_T("AltEnter"), isSentAltEnter);
             reg.Save(_T("Min2Tray"), isMinToTray);
+            reg.Save(_T("RSelectionFix"), isRSelFix);
             reg.Save(_T("Dnd"), isDragEnabled);
             reg.Save(_T("DndLKey"), nLDragKey);
             reg.Save(_T("DndRKey"), nRDragKey);
@@ -548,6 +549,8 @@ BOOL CSettings::SaveSettings()
             reg.Save(_T("VizEolCh"), cVizEOL);
             reg.Save(_T("VizEofCh"), cVizEOF);
             
+            reg.Save(_T("SkipFocusEvents"), isSkipFocusEvents);
+    		reg.Save(_T("MonitorConsoleLang"), isMonitorConsoleLang);
             
             reg.CloseKey();
             
@@ -721,6 +724,9 @@ LRESULT CSettings::OnInitDialog_Main()
 {
 	if (gSet.EnableThemeDialogTextureF)
 		gSet.EnableThemeDialogTextureF(hMain, 6/*ETDT_ENABLETAB*/);
+		
+	if (isUpdConHandle)
+		CheckDlgButton(ghOpWnd, cbAutoConHandle, BST_CHECKED);
 
 	SetDlgItemText(hMain, tFontFace, LogFont.lfFaceName);
 	SetDlgItemText(hMain, tFontFace2, LogFont2.lfFaceName);
@@ -821,11 +827,11 @@ LRESULT CSettings::OnInitDialog_Main()
 	if (!isProportional)
 		CheckDlgButton(hMain, cbNonProportional, BST_CHECKED);
 		
-	if (isUpdConHandle)
-		CheckDlgButton(ghOpWnd, cbAutoConHandle, BST_CHECKED);
-		
 	if (LogFont.lfWeight == FW_BOLD) CheckDlgButton(hMain, cbBold, BST_CHECKED);
 	if (LogFont.lfItalic)            CheckDlgButton(hMain, cbItalic, BST_CHECKED);
+	
+	if (isFixFarBorders)
+		CheckDlgButton(hMain, cbFixFarBorders, (isFixFarBorders == 1) ? BST_CHECKED : BST_INDETERMINATE);
 
 	if (isFullScreen)
 		CheckRadioButton(hMain, rNormal, rFullScreen, rFullScreen);
@@ -911,10 +917,36 @@ LRESULT CSettings::OnInitDialog_Ext()
 	}
 
 
-	if (isTabs) CheckDlgButton(hExt, cbTabs, (isTabs==1) ? BST_CHECKED : BST_INDETERMINATE);
+	if (isTabs)
+		CheckDlgButton(hExt, cbTabs, (isTabs==1) ? BST_CHECKED : BST_INDETERMINATE);
+	if (isTabSelf)
+		CheckDlgButton(hExt, cbTabSelf, BST_CHECKED);
+	if (isTabRecent)
+		CheckDlgButton(hExt, cbTabRecent, BST_CHECKED);
+	if (isTabLazy)
+		CheckDlgButton(hExt, cbTabLazy, BST_CHECKED);
+	
+	if (isRSelFix)
+		CheckDlgButton(hExt, cbRSelectionFix, BST_CHECKED);
+
+	if (isMonitorConsoleLang)
+		CheckDlgButton(hExt, cbMonitorConsoleLang, BST_CHECKED);
+	
+	if (isSkipFocusEvents)
+		CheckDlgButton(hExt, cbSkipFocusEvents, BST_CHECKED);
 
 	if (isMulti)
 		CheckDlgButton(hExt, cbConMan, BST_CHECKED);
+	#ifndef _DEBUG
+	ShowWindow(GetDlgItem(hExt, cbLongOutput), SW_HIDE);
+	ShowWindow(GetDlgItem(hExt, tLongOutputHeight), SW_HIDE);
+	ShowWindow(GetDlgItem(hExt, IDC_HOTKEY1), SW_HIDE);
+	#endif
+
+	// Test	
+	SendDlgItemMessage(hExt, IDC_HOTKEY1, HKM_SETRULES, 
+		HKCOMB_A|HKCOMB_C|HKCOMB_CA|HKCOMB_S|HKCOMB_SA|HKCOMB_SC|HKCOMB_SCA, 0);
+	SendDlgItemMessage(hExt, IDC_HOTKEY1, HKM_SETHOTKEY, icMultiNew, 0);
 
 	RegisterTipsFor(hExt);
 
@@ -1159,6 +1191,27 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
         }
         //isTabs = !isTabs;
         break;
+    case cbTabSelf:
+    	isTabSelf = IsChecked(hExt, cbTabSelf);
+    	break;
+	case cbTabRecent:
+		isTabRecent = IsChecked(hExt, cbTabRecent);
+		break;
+	case cbTabLazy:
+		isTabLazy = IsChecked(hExt, cbTabLazy);
+		break;
+
+	case cbRSelectionFix:
+		isRSelFix = IsChecked(hExt, cbRSelectionFix);
+		break;
+
+	case cbMonitorConsoleLang:
+		isMonitorConsoleLang = IsChecked(hExt, cbMonitorConsoleLang);
+		break;
+	
+	case cbSkipFocusEvents:
+		isSkipFocusEvents = IsChecked(hExt, cbSkipFocusEvents);
+		break;
 
     case cbNonProportional:
         isProportional = !isProportional;
@@ -2013,6 +2066,7 @@ void CSettings::RegisterTipsFor(HWND hChildDlg)
                               ghOpWnd, NULL, 
                               g_hInstance, NULL);
         SetWindowPos(hwndTip, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE);
+        SendMessage(hwndTip, TTM_SETDELAYTIME, TTDT_AUTOPOP, 30000);
     }
     if (!hwndTip) return; // не смогли создать
 

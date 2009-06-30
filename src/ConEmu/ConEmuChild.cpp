@@ -1,4 +1,6 @@
+
 #include "Header.h"
+
 
 CConEmuChild::CConEmuChild()
 {
@@ -36,6 +38,7 @@ HWND CConEmuChild::Create()
 	//SetClassLong(ghWndDC, GCL_HBRBACKGROUND, (LONG)gConEmu.m_Back.mh_BackBrush);
 	SetWindowPos(ghWndDC, HWND_TOP, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
 	//gConEmu.dcWindowLast = rc; //TODO!!!
+	
 	return ghWndDC;
 }
 
@@ -325,6 +328,7 @@ CConEmuBack::CConEmuBack()
 #else
 	mn_ColorIdx = 0;
 #endif
+	//mh_UxTheme = NULL; mh_ThemeData = NULL; mfn_OpenThemeData = NULL; mfn_CloseThemeData = NULL;
 }
 
 CConEmuBack::~CConEmuBack()
@@ -366,11 +370,17 @@ HWND CConEmuBack::Create()
 	}
 
 	// Прокрутка
-	style = SBS_RIGHTALIGN/*|WS_VISIBLE*/|SBS_VERT|WS_CHILD|WS_CLIPSIBLINGS;
-	mh_WndScroll = CreateWindowEx(0/*|WS_EX_LAYERED*/ /*WS_EX_TRANSPARENT*/, L"SCROLLBAR", NULL, style,
-		rc.left, rc.top,
-		rcClient.right - rc.right - rc.left,
-		rcClient.bottom - rc.bottom - rc.top,
+	//style = SBS_RIGHTALIGN/*|WS_VISIBLE*/|SBS_VERT|WS_CHILD|WS_CLIPSIBLINGS;
+	//mh_WndScroll = CreateWindowEx(0/*|WS_EX_LAYERED*/ /*WS_EX_TRANSPARENT*/, L"SCROLLBAR", NULL, style,
+	//	rc.left, rc.top,
+	//	rcClient.right - rc.right - rc.left,
+	//	rcClient.bottom - rc.bottom - rc.top,
+	//	ghWnd, NULL, (HINSTANCE)g_hInstance, NULL);
+	style = WS_VSCROLL|WS_CHILD|WS_CLIPSIBLINGS;
+	mn_ScrollWidth = GetSystemMetrics(SM_CXVSCROLL);
+	mh_WndScroll = CreateWindowEx(0/*|WS_EX_LAYERED*/ /*WS_EX_TRANSPARENT*/, szClassNameBack, NULL, style,
+		rc.left - mn_ScrollWidth, rc.top,
+		mn_ScrollWidth, rc.bottom - rc.top,
 		ghWnd, NULL, (HINSTANCE)g_hInstance, NULL);
 	if (!mh_WndScroll) {
 		dwLastError = GetLastError();
@@ -378,14 +388,36 @@ HWND CConEmuBack::Create()
 		MBoxA(_T("Can't create scrollbar window!"));
 		return NULL; //
 	}
-	GetWindowRect(mh_WndScroll, &rcClient);
-	mn_ScrollWidth = rcClient.right - rcClient.left;
+	//GetWindowRect(mh_WndScroll, &rcClient);
+	//mn_ScrollWidth = rcClient.right - rcClient.left;
 	TODO("alpha-blended. похоже для WS_CHILD это не прокатит...");
 	//BOOL lbRcLayered = SetLayeredWindowAttributes ( mh_WndScroll, 0, 100, LWA_ALPHA );
 	//if (!lbRcLayered)
 	//	dwLastError = GetLastError();
 	#pragma warning (disable : 4312)
 	mpfn_ScrollProc = (WNDPROC)SetWindowLongPtr(mh_WndScroll, GWL_WNDPROC, (LONG_PTR)ScrollWndProc);
+
+	
+	//// Важно проверку делать после создания главного окна, иначе IsAppThemed будет возвращать FALSE
+    //BOOL bAppThemed = FALSE, bThemeActive = FALSE;
+    //FAppThemed pfnThemed = NULL;
+    //mh_UxTheme = LoadLibrary ( L"UxTheme.dll" );
+    //if (mh_UxTheme) {
+    //	pfnThemed = (FAppThemed)GetProcAddress( mh_UxTheme, "IsAppThemed" );
+    //	if (pfnThemed) bAppThemed = pfnThemed();
+    //	pfnThemed = (FAppThemed)GetProcAddress( mh_UxTheme, "IsThemeActive" );
+    //	if (pfnThemed) bThemeActive = pfnThemed();
+    //}
+    //if (!bAppThemed || !bThemeActive) {
+    //	FreeLibrary(mh_UxTheme); mh_UxTheme = NULL;
+	//} else {
+    //	mfn_OpenThemeData = (FOpenThemeData)GetProcAddress( mh_UxTheme, "OpenThemeData" );
+    //	mfn_OpenThemeDataEx = (FOpenThemeData)GetProcAddress( mh_UxTheme, "OpenThemeDataEx" );
+    //	mfn_CloseThemeData = (FCloseThemeData)GetProcAddress( mh_UxTheme, "CloseThemeData" );
+    //	
+    //	if (mfn_OpenThemeDataEx)
+    //		mh_ThemeData = mfn_OpenThemeDataEx ( mh_WndScroll, L"Scrollbar", OTD_NONCLIENT );
+	//}
 
 	return mh_WndBack;
 }
@@ -402,6 +434,14 @@ LRESULT CALLBACK CConEmuBack::BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, 
 			gConEmu.m_Back.mh_WndBack = hWnd;
 			break;
 		case WM_DESTROY:
+			//if (gConEmu.m_Back.mh_ThemeData && gConEmu.m_Back.mfn_CloseThemeData) {
+			//	gConEmu.m_Back.mfn_CloseThemeData ( gConEmu.m_Back.mh_ThemeData );
+			//	gConEmu.m_Back.mh_ThemeData = NULL;
+			//}
+			//if (gConEmu.m_Back.mh_UxTheme) {
+			//	FreeLibrary(gConEmu.m_Back.mh_UxTheme);
+			//	gConEmu.m_Back.mh_UxTheme = NULL;
+			//}
 			DeleteObject(gConEmu.m_Back.mh_BackBrush);
 			break;
 		case WM_SETFOCUS:
@@ -563,7 +603,7 @@ BOOL CConEmuBack::TrackMouse()
 		if (PtInRect(&rcScroll, ptCur)) {
 			if (!mb_ScrollVisible) {
 				mb_ScrollVisible = TRUE;
-				//ShowWindow(mh_WndScroll, SW_SHOWNOACTIVATE);
+				ShowWindow(mh_WndScroll, SW_SHOWNOACTIVATE);
 				SetWindowPos(mh_WndScroll, HWND_TOP, 0,0,0,0, SWP_NOSIZE|SWP_NOMOVE|SWP_SHOWWINDOW);
 			}
 			lbRc = TRUE;

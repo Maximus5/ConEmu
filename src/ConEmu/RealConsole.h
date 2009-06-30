@@ -104,9 +104,10 @@ public:
     uint TextWidth();
     uint TextHeight();
     
-public:
+private:
     HWND    hConWnd;
-
+public:
+	HWND    ConWnd();
 
     CRealConsole(CVirtualConsole* apVCon);
     ~CRealConsole();

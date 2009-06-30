@@ -399,6 +399,12 @@ BEGIN
                     WS_TABSTOP,90,59,42,8
     CONTROL         "Enable Tabs",cbTabs,"Button",BS_AUTO3STATE | WS_TABSTOP,
                     10,15,64,8
+    CONTROL         "Internal CtrlTab",cbTabSelf,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,76,15,72,8
+    CONTROL         "Lazy tab switch",cbTabLazy,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,154,15,71,8
+    CONTROL         "Recent mode",cbTabRecent,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,233,15,75,8
     GROUPBOX        "Mouse",IDC_STATIC,4,34,136,39
     CONTROL         "Copy by default",cbDnDCopy,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,252,59,66,8
@@ -417,23 +423,17 @@ BEGIN
                     WS_TABSTOP
     CONTROL         "MultiCon",cbConMan,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,10,89,43,8
-    CONTROL         "Minimize to tray",cbMinToTray,"Button",BS_AUTOCHECKBOX | 
+    CONTROL         "Auto minimize to tray",cbMinToTray,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,231,123,85,8
-    CONTROL         "Internal CtrlTab",cbTabSelf,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,76,15,72,8
-    CONTROL         "Lazy tab switch",cbTabLazy,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,154,15,71,8
-    CONTROL         "Recent mode",cbTabRecent,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,233,15,75,8
     CONTROL         "Long output",cbLongOutput,"Button",BS_AUTOCHECKBOX | 
                     WS_DISABLED | WS_TABSTOP,61,89,56,8
     EDITTEXT        tLongOutputHeight,122,87,40,12,ES_AUTOHSCROLL | 
                     WS_DISABLED
     CONTROL         "Right selection fix",cbRSelectionFix,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,10,59,76,8
-    CONTROL         "MonitorConsoleLang",cbMonitorConsoleLang,"Button",
+    CONTROL         "Monitor console lang",cbMonitorConsoleLang,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,10,122,94,8
-    CONTROL         "SkipFocusEvents",cbSkipFocusEvents,"Button",
+    CONTROL         "Skip focus events",cbSkipFocusEvents,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,113,123,93,8
     CONTROL         "HotKey1",IDC_HOTKEY1,"msctls_hotkey32",WS_BORDER | 
                     WS_TABSTOP,237,85,80,14
@@ -492,7 +492,7 @@ BEGIN
     cbDragL                 "Allow drag with left mouse button"
     cbDragR                 "Allow drag with right mouse button"
     cbConMan                "Turn on MultiConsole\n(several consoles in one ConEmu, alternative console)\nConEmu restart required"
-    cbMinToTray             "Auto minimize to tray"
+    cbMinToTray             "Auto minimize to tray\nRight click on 'Close window button'\nin ConEmu title for minimize to tray,\nwhen this checkbox is OFF."
     tFontFace               "Face name for main font"
     tFontSizeY              "Main font height"
     tFontCharset            "Main font charset"
@@ -517,6 +517,17 @@ END
 STRINGTABLE DISCARDABLE 
 BEGIN
     cbRClick                "Off - all RClicks passed to console\nOn - Apps passed to console instead of RClick\n3s - Short RClick passed, Long RClick -> Apps\nWarning! This may conflict with RDrag"
+    cbRSelectionFix         "Fix dashed selection with fast right mouse drag"
+    cbMonitorConsoleLang    "Monitor input language change in real\nconsole (i.e. XLat switching support)"
+    cbSkipFocusEvents       "Don't send focus events to console to disable\nautoclosing of fast search dialog in panels"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    cbTabs                  "Show tabs (all opened panels, editors and viewers)\non the top of ConEmu window"
+    cbTabSelf               "Handle CtrlTab and CtrlShiftTab internally\n(by ConEmu). This keystrokes will not be sent\nto console window, bu You can easily\nswitch between consoles (panels)."
+    cbTabLazy               "When checked - real window switching\nwill be performed on Ctrl depress"
+    cbTabRecent             "Switch first between recent tabs.\nYou may still switch between tabs in\nstandard manner using Left/Right\n(after CtrlTab), while Ctrl is still presses."
 END
 
 STRINGTABLE DISCARDABLE 

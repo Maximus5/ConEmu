@@ -701,7 +701,7 @@ bool CVirtualConsole::CheckChangedTextAttr()
 
 bool CVirtualConsole::Update(bool isForce, HDC *ahDc)
 {
-    if (!this || !mp_RCon || !mp_RCon->hConWnd)
+    if (!this || !mp_RCon || !mp_RCon->ConWnd())
         return false;
 
 	if (!gConEmu.isMainThread()) {

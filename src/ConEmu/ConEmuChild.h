@@ -62,4 +62,15 @@ protected:
 	bool mb_LastTabVisible;
 	int mn_ColorIdx;
 	WNDPROC mpfn_ScrollProc;
+//protected:
+//	// Theming
+//    typedef HANDLE (WINAPI* FOpenThemeData)(HWND,LPCWSTR);
+//    FOpenThemeData mfn_OpenThemeData;
+//    typedef HANDLE (WINAPI* FOpenThemeDataEx)(HWND,LPCWSTR,DWORD);
+//    FOpenThemeData mfn_OpenThemeDataEx;
+//    typedef HRESULT (WINAPI* FCloseThemeData)(HANDLE);
+//    FCloseThemeData mfn_CloseThemeData;
+//    typedef BOOL (WINAPI* FAppThemed)();
+//    HMODULE mh_UxTheme;
+//    HANDLE  mh_ThemeData;
 };

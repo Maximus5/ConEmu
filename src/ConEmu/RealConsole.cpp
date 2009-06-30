@@ -4393,9 +4393,10 @@ void CRealConsole::OnTitleChanged()
 {
 	if (!this) return;
 
-	// Окошко фара полюбило мигать, но его все равно не видно...
-	FLASHWINFO flsh = {sizeof(FLASHWINFO)}; flsh.hwnd = hConWnd; flsh.dwFlags = FLASHW_STOP;
-	FlashWindowEx(&flsh);
+	// Перенесено в ShellHook
+	//// Окошко фара полюбило мигать, но его все равно не видно...
+	//FLASHWINFO flsh = {sizeof(FLASHWINFO)}; flsh.hwnd = hConWnd; flsh.dwFlags = FLASHW_STOP;
+	//FlashWindowEx(&flsh);
 	//
 	wcscpy(Title, TitleCmp);
 
@@ -4627,4 +4628,10 @@ HWND CRealConsole::isPictureView()
 	if (mb_PicViewWasHidden && !hPictureView) mb_PicViewWasHidden = FALSE;
 
 	return hPictureView;
+}
+
+HWND CRealConsole::ConWnd()
+{
+	if (!this) return NULL;
+	return hConWnd;
 }

@@ -55,7 +55,7 @@ CConEmuMain::CConEmuMain()
 	LoadVersionInfo(ms_ConEmuExe);
 
     mh_WinHook = NULL;
-
+	mp_TaskBar = NULL;
 
     pVCon = NULL;
     memset(mp_VCon, 0, sizeof(mp_VCon));
@@ -72,6 +72,7 @@ CConEmuMain::CConEmuMain()
     mn_MsgUpdateTabs = RegisterWindowMessage(CONEMUMSG_UPDATETABS);
     mn_MsgOldCmdVer = RegisterWindowMessage(_T("ConEmuMain::OldCmdVersion")); mb_InShowOldCmdVersion = FALSE;
 	mn_MsgTabCommand = RegisterWindowMessage(_T("ConEmuMain::TabCommand"));
+	mn_MsgSheelHook = RegisterWindowMessage(_T("SHELLHOOK"));
 }
 
 BOOL CConEmuMain::Init()
@@ -2317,8 +2318,18 @@ void CConEmuMain::UpdateProgress(BOOL abUpdateTitle)
 
     static short nLastProgress = -1;
     if (nLastProgress != mn_Progress) {
+    	HRESULT hr = S_OK;
+    	if (mp_TaskBar) {
+    		if (mn_Progress >= 0) {
+    			hr = mp_TaskBar->SetProgressValue(ghWnd, mn_Progress, 100);
+    			if (nLastProgress == -1)
+    				hr = mp_TaskBar->SetProgressState(ghWnd, TBPF_NORMAL);
+    		} else {
+    			hr = mp_TaskBar->SetProgressState(ghWnd, TBPF_NOPROGRESS);
+    		}
+    	}
+    	// Запомнить последнее
     	nLastProgress = mn_Progress;
-    	TODO("Прогресс на иконке или в стиле Win7");
     }
     if (mn_Progress >= 0 && !bActiveHasProgress) {
     	psTitle = MultiTitle;
@@ -2442,7 +2453,7 @@ VOID CConEmuMain::WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hw
     BOOL lbProcessed = FALSE;
     for (int i=0; i<MAX_CONSOLE_COUNT; i++) {
         if (!gConEmu.mp_VCon[i]) continue;
-        if (!gConEmu.mp_VCon[i]->RCon()->hConWnd || gConEmu.mp_VCon[i]->RCon()->hConWnd != hwnd) continue;
+        if (!gConEmu.mp_VCon[i]->RCon()->ConWnd() || gConEmu.mp_VCon[i]->RCon()->ConWnd() != hwnd) continue;
 
         gConEmu.mp_VCon[i]->RCon()->OnWinEvent(event, hwnd, idObject, idChild, dwEventThread, dwmsEventTime);
         lbProcessed = TRUE;
@@ -2456,7 +2467,7 @@ VOID CConEmuMain::WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hw
         // Warning. В принципе, за время выполнения этой процедуры mp_VCon[i]->hConWnd мог уже проинициализироваться
         for (int i=0; i<MAX_CONSOLE_COUNT; i++) {
             if (!gConEmu.mp_VCon[i]) continue;
-            if (gConEmu.mp_VCon[i]->RCon()->hConWnd == hwnd ||
+            if (gConEmu.mp_VCon[i]->RCon()->ConWnd() == hwnd ||
                 gConEmu.mp_VCon[i]->RCon()->GetServerPID() == (DWORD)idObject)
             {
                 gConEmu.mp_VCon[i]->RCon()->OnWinEvent(event, hwnd, idObject, idChild, dwEventThread, dwmsEventTime);
@@ -2675,7 +2686,7 @@ bool CConEmuMain::isMeForeground()
         if (h && !isMe) {
             for (int i=0; i<MAX_CONSOLE_COUNT; i++) {
                 if (mp_VCon[i]) {
-                    if (h == mp_VCon[i]->RCon()->hConWnd) {
+                    if (h == mp_VCon[i]->RCon()->ConWnd()) {
                         isMe = true; break;
                     }
                 }
@@ -2895,6 +2906,8 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd)
     ghWnd = hWnd; // ставим сразу, чтобы функции могли пользоваться
     Icon.LoadIcon(hWnd, gSet.nIconID/*IDI_ICON1*/);
     
+    RegisterShellHookWindow ( hWnd );
+    
     // Чтобы можно было найти хэндл окна по хэндлу консоли
     SetWindowLong(hWnd, GWL_USERDATA, (LONG)ghConWnd); // 31.03.2009 Maximus - только нихрена оно еще не создано!
 
@@ -2941,7 +2954,7 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd)
     mh_ServerThreadTerminate = CreateEvent(NULL, TRUE, FALSE, NULL);
         if (mh_ServerThreadTerminate) ResetEvent(mh_ServerThreadTerminate);
     mh_ServerThread = CreateThread(NULL, 0, ServerThread, (LPVOID)this, 0, &mn_ServerThreadId);
-
+    
     return 0;
 }
 
@@ -2971,8 +2984,21 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
         }
         if (gConEmu.mb_StartDetached) gConEmu.mb_StartDetached = FALSE; // действует только на первую консоль
 
-        OleInitialize (NULL); // как бы попробовать включать Ole только во время драга. кажется что из-за него глючит переключалка языка
+        HRESULT hr = S_OK;
+        hr = OleInitialize (NULL); // как бы попробовать включать Ole только во время драга. кажется что из-за него глючит переключалка языка
         //CoInitializeEx(NULL, COINIT_MULTITHREADED);
+
+         
+		if (!mp_TaskBar) {
+			hr = CoCreateInstance(CLSID_TaskbarList,NULL,CLSCTX_INPROC_SERVER,IID_ITaskbarList3,(void**)&mp_TaskBar);
+			if (hr == S_OK && mp_TaskBar) {
+				hr = mp_TaskBar->HrInit();
+			}
+			if (hr != S_OK && mp_TaskBar) {
+				if (mp_TaskBar) mp_TaskBar->Release();
+				mp_TaskBar = NULL;
+			}
+		}
 
         if (!DragDrop)
             DragDrop = new CDragDrop(HDCWND);
@@ -3049,6 +3075,11 @@ LRESULT CConEmuMain::OnDestroy(HWND hWnd)
     }
 
     Icon.Delete();
+    
+    if (mp_TaskBar) {
+    	mp_TaskBar->Release();
+    	mp_TaskBar = NULL;
+    }
 
     KillTimer(ghWnd, 0);
 
@@ -3752,6 +3783,66 @@ fin:
     return 0;
 }
 
+LRESULT CConEmuMain::OnShellHook(WPARAM wParam, LPARAM lParam)
+{
+	/*
+wParam lParam 
+HSHELL_GETMINRECT A pointer to a SHELLHOOKINFO structure.  
+HSHELL_WINDOWACTIVATEED The HWND handle of the activated window.  
+HSHELL_RUDEAPPACTIVATEED The HWND handle of the activated window.  
+HSHELL_WINDOWREPLACING The HWND handle of the window replacing the top-level window.  
+HSHELL_WINDOWREPLACED The HWND handle of the window being replaced.  
+HSHELL_WINDOWCREATED The HWND handle of the window being created.  
+HSHELL_WINDOWDESTROYED The HWND handle of the top-level window being destroyed.  
+HSHELL_ACTIVATESHELLWINDOW Not used.  
+HSHELL_TASKMAN Can be ignored.  
+HSHELL_REDRAW The HWND handle of the window that needs to be redrawn.  
+HSHELL_FLASH The HWND handle of the window that needs to be flashed.  
+HSHELL_ENDTASK The HWND handle of the window that should be forced to exit.  
+HSHELL_APPCOMMAND The APPCOMMAND which has been unhandled by the application or other hooks. See WM_APPCOMMAND and use the GET_APPCOMMAND_LPARAM macro to retrieve this parameter.  
+	*/
+	switch (wParam) {
+	case HSHELL_FLASH:
+		{
+			HWND hCon = (HWND)lParam;
+			if (!hCon) return 0;
+			for (int i = 0; i<MAX_CONSOLE_COUNT; i++) {
+				if (!mp_VCon[i]) continue;
+				if (mp_VCon[i]->RCon()->ConWnd() == hCon) {
+					FLASHWINFO fl = {sizeof(FLASHWINFO), ghWnd, FLASHW_ALL|FLASHW_TIMERNOFG, 0};
+					if (!isMeForeground())
+        				FlashWindowEx(&fl); // Помигать в GUI
+        			fl.dwFlags = FLASHW_STOP; fl.hwnd = hCon;
+        			FlashWindowEx(&fl);
+        			break;
+        		}
+    		}
+		}
+		break;
+	case HSHELL_WINDOWCREATED:
+		{
+			if (isMeForeground()) {
+				HWND hWnd = (HWND)lParam;
+				if (!hWnd) return 0;
+				DWORD dwPID = 0;
+				GetWindowThreadProcessId(hWnd, &dwPID);
+				if (dwPID && dwPID != GetCurrentProcessId()) {
+					AllowSetForegroundWindow(dwPID);
+				
+					//#ifdef _DEBUG
+					//wchar_t szTitle[255], szClass[255], szMsg[1024];
+					//GetWindowText(hWnd, szTitle, 254); GetClassName(hWnd, szClass, 254);
+					//wsprintf(szMsg, L"Window was created:\nTitle: %s\nClass: %s\nPID: %i", szTitle, szClass, dwPID);
+					//MBox(szMsg);
+					//#endif
+				}
+			}
+		}
+		break;
+	}
+	return 0;
+}
+
 LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 {
     LRESULT result = 0;
@@ -3795,7 +3886,9 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
             #else
             wsprintf(szTitle, L"About ConEmu (%s)", szConEmuVersion);
             #endif
-            MessageBoxW(ghOpWnd, pHelp, szTitle, MB_ICONQUESTION);
+            BOOL b = gbDontEnable; gbDontEnable = TRUE;
+            MessageBoxW(ghWnd, pHelp, szTitle, MB_ICONQUESTION);
+            gbDontEnable = b;
         }
         return 0;
         //break;
@@ -3858,7 +3951,7 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
                         continue;
                     }
                     nConCount ++;
-                    if (mp_VCon[i]->RCon()->hConWnd) {
+                    if (mp_VCon[i]->RCon()->ConWnd()) {
                         mp_VCon[i]->RCon()->CloseConsole();
                     }
                 }
@@ -4388,7 +4481,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
     case WM_GETMINMAXINFO:
         {
             LPMINMAXINFO pInfo = (LPMINMAXINFO)lParam;
-            result = OnGetMinMaxInfo(pInfo);
+            result = gConEmu.OnGetMinMaxInfo(pInfo);
             break;
         }
 
@@ -4398,31 +4491,31 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
     case WM_SYSKEYUP:
     case WM_CHAR:
     case WM_SYSCHAR:
-        result = OnKeyboard(hWnd, messg, wParam, lParam);
+        result = gConEmu.OnKeyboard(hWnd, messg, wParam, lParam);
         if (messg == WM_SYSCHAR)
             return TRUE;
         break;
 
     case WM_ACTIVATE:
         #ifdef MSGLOGGER
-        result = OnFocus(hWnd, messg, wParam, lParam);
+        result = gConEmu.OnFocus(hWnd, messg, wParam, lParam);
         result = DefWindowProc(hWnd, messg, wParam, lParam);
         break;
         #endif
     case WM_ACTIVATEAPP:
         #ifdef MSGLOGGER
-        result = OnFocus(hWnd, messg, wParam, lParam);
+        result = gConEmu.OnFocus(hWnd, messg, wParam, lParam);
         result = DefWindowProc(hWnd, messg, wParam, lParam);
         break;
         #endif
     case WM_KILLFOCUS:
         #ifdef MSGLOGGER
-        result = OnFocus(hWnd, messg, wParam, lParam);
+        result = gConEmu.OnFocus(hWnd, messg, wParam, lParam);
         result = DefWindowProc(hWnd, messg, wParam, lParam);
         break;
         #endif
     case WM_SETFOCUS:
-        result = OnFocus(hWnd, messg, wParam, lParam);
+        result = gConEmu.OnFocus(hWnd, messg, wParam, lParam);
         result = DefWindowProc(hWnd, messg, wParam, lParam);
         break;
 
@@ -4440,19 +4533,19 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
     case WM_XBUTTONDOWN:
     case WM_XBUTTONUP:
     case WM_XBUTTONDBLCLK:
-        result = OnMouse(hWnd, messg, wParam, lParam);
+        result = gConEmu.OnMouse(hWnd, messg, wParam, lParam);
         break;
 
     case WM_CLOSE:
-        result = OnClose(hWnd);
+        result = gConEmu.OnClose(hWnd);
         break;
 
     case WM_CREATE:
-        result = OnCreate(hWnd);
+        result = gConEmu.OnCreate(hWnd);
         break;
 
     case WM_SYSCOMMAND:
-        result = OnSysCommand(hWnd, wParam, lParam);
+        result = gConEmu.OnSysCommand(hWnd, wParam, lParam);
         break;
 
     case WM_NCLBUTTONDOWN:
@@ -4476,7 +4569,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 
 
     case WM_DESTROY:
-        result = OnDestroy(hWnd);
+        result = gConEmu.OnDestroy(hWnd);
         break;
     
     case WM_IME_NOTIFY:
@@ -4524,7 +4617,10 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
             gConEmu.ShowOldCmdVersion(wParam, lParam);
             return 0;
 		} else if (messg == gConEmu.mn_MsgTabCommand) {
-			TabCommand(wParam);
+			gConEmu.TabCommand(wParam);
+			return 0;
+		} else if (messg == gConEmu.mn_MsgSheelHook) {
+			gConEmu.OnShellHook(wParam, lParam);
 			return 0;
 		}
         //else if (messg == gConEmu.mn_MsgCmdStarted || messg == gConEmu.mn_MsgCmdStopped) {

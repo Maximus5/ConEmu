@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include <shobjidl.h>
+
 #define HDCWND ghWndDC
 
 
@@ -120,6 +122,7 @@ protected:
 	CVirtualConsole *mp_VCon[MAX_CONSOLE_COUNT], *pVCon;
 	bool mb_SkipSyncSize, mb_PassSysCommand;
 	wchar_t *mpsz_RecreateCmd;
+	ITaskbarList3 *mp_TaskBar;
 	//DWORD mn_CurrentKeybLayout;
 	// Registered messages
 	DWORD mn_MainThreadId;
@@ -135,6 +138,7 @@ protected:
 	UINT mn_MsgUpdateTabs;
 	UINT mn_MsgOldCmdVer; BOOL mb_InShowOldCmdVersion;
 	UINT mn_MsgTabCommand;
+	UINT mn_MsgSheelHook;
 	
 	//
 	static DWORD CALLBACK ServerThread(LPVOID lpvParam);
@@ -225,6 +229,7 @@ public:
 	LRESULT OnPaint(WPARAM wParam, LPARAM lParam);
 	LRESULT OnSize(WPARAM wParam=0, WORD newClientWidth=(WORD)-1, WORD newClientHeight=(WORD)-1);
 	LRESULT OnSizing(WPARAM wParam, LPARAM lParam);
+	LRESULT OnShellHook(WPARAM wParam, LPARAM lParam);
 	LRESULT OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam);
 	LRESULT OnTimer(WPARAM wParam, LPARAM lParam);
 	LRESULT OnVConTerminated(CVirtualConsole* apVCon, BOOL abPosted = FALSE);
