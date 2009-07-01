@@ -132,7 +132,7 @@ CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
         mpsz_LogScreen = NULL;
     } else {
         mn_LogScreenIdx = 0;
-        DWORD dwErr = 0;
+        //DWORD dwErr = 0;
         wchar_t szFile[MAX_PATH+64], *pszDot;
 		lstrcpyW(szFile, gConEmu.ms_ConEmuExe);
         if ((pszDot = wcsrchr(szFile, L'\\')) == NULL) {
@@ -354,11 +354,13 @@ bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize)
         { DeleteObject(hBitmap); hBitmap = NULL; }
 
         const HDC hScreenDC = GetDC(0);
-        if (hDC = CreateCompatibleDC(hScreenDC))
+        if ((hDC = CreateCompatibleDC(hScreenDC)) != NULL)
         {
             Assert ( gSet.FontWidth() && gSet.FontHeight() );
 
+            #ifdef _DEBUG
             BOOL lbWasInitialized = TextWidth && TextHeight;
+            #endif
             // Посчитать новый размер в пикселях
             Width = TextWidth * gSet.FontWidth();
             Height = TextHeight * gSet.FontHeight();
@@ -656,7 +658,10 @@ WORD CVirtualConsole::CharWidth(TCHAR ch)
             SIZE sz;
             ABC abc;
             //This function succeeds only with TrueType fonts
-            BOOL lb1 = GetCharABCWidths(hDC, ch, ch, &abc);
+            #ifdef _DEBUG
+            BOOL lb1 =
+            #endif
+            GetCharABCWidths(hDC, ch, ch, &abc);
 
             if (GetTextExtentPoint32(hDC, &ch, 1, &sz) && sz.cx)
                 gSet.CharWidth[ch] = sz.cx;
@@ -901,7 +906,7 @@ bool CVirtualConsole::UpdatePrepare(bool isForce, HDC *ahDc, MSectionLock *pSDC)
     }
 
     // Первая инициализация, или смена размера
-    if (isForce || !mpsz_ConChar || TextWidth != winSize.X || TextHeight != winSize.Y) {
+    if (isForce || !mpsz_ConChar || TextWidth != (uint)winSize.X || TextHeight != (uint)winSize.Y) {
         if (pSDC && !pSDC->isLocked()) // Если секция еще не заблокирована (отпускает - вызывающая функция)
             pSDC->Lock(&csDC, TRUE, 200); // но по таймауту, чтобы не повисли ненароком
         if (!InitDC(ahDc!=NULL && !isForce/*abNoDc*/, false/*abNoWndResize*/))
@@ -1033,7 +1038,7 @@ enum CVirtualConsole::_PartType CVirtualConsole::GetCharType(TCHAR ch)
 // row - 0-based
 void CVirtualConsole::ParseLine(int row, TCHAR *ConCharLine, WORD *ConAttrLine)
 {
-    UINT idx = 0;
+    //UINT idx = 0;
     struct _TextParts *pStart=TextParts, *pEnd=TextParts;
     enum _PartType cType1, cType2;
     UINT i1=0, i2=0;

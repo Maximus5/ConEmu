@@ -37,6 +37,7 @@ const TCHAR *const szClassName = VirtualConsoleClass;
 const TCHAR *const szClassNameParent = VirtualConsoleClassMain;
 const TCHAR *const szClassNameApp = VirtualConsoleClassApp;
 const TCHAR *const szClassNameBack = VirtualConsoleClassBack;
+const TCHAR *const szClassNameScroll = VirtualConsoleClassScroll;
 
 
 OSVERSIONINFO osver;
@@ -512,8 +513,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     //bool setParentDisabled=false;
     bool ClearTypePrm = false;
     bool FontPrm = false; TCHAR* FontVal = NULL;
-    bool SizePrm = false; LONG SizeVal;
-    bool BufferHeightPrm = false; int BufferHeightVal;
+    bool SizePrm = false; LONG SizeVal = 0;
+    bool BufferHeightPrm = false; int BufferHeightVal = 0;
     bool ConfigPrm = false; TCHAR* ConfigVal = NULL;
 	bool FontFilePrm = false; TCHAR* FontFile = NULL; //ADD fontname; by Mors
 	bool WindowPrm = false; int WindowModeVal = 0;
@@ -600,7 +601,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				        return 101;
 				    curCommand += _tcslen(curCommand) + 1; i++;
 				    DWORD dwAttr = GetFileAttributes(curCommand);
-				    if (dwAttr == -1 || (dwAttr & FILE_ATTRIBUTE_DIRECTORY))
+				    if (dwAttr == (DWORD)-1 || (dwAttr & FILE_ATTRIBUTE_DIRECTORY))
 					    return 102;
 			    }
 
@@ -714,7 +715,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				                if (_tcscmp(sClass, _T("ConsoleWindowClass"))==0) {
 					                // перебрать все ConEmu, может кто-то уже подцеплен?
 					                HWND hEmu = NULL;
-					                while (hEmu = FindWindowEx(NULL, hEmu, VirtualConsoleClassMain, NULL))
+					                while ((hEmu = FindWindowEx(NULL, hEmu, VirtualConsoleClassMain, NULL)) != NULL)
 					                {
 						                if (hCon == (HWND)GetWindowLong(hEmu, GWL_USERDATA)) {
 							                // к этой консоли уже подцеплен ConEmu

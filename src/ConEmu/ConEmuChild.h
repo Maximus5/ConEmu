@@ -61,7 +61,7 @@ protected:
 	RECT mrc_LastClient;
 	bool mb_LastTabVisible;
 	int mn_ColorIdx;
-	WNDPROC mpfn_ScrollProc;
+	//WNDPROC mpfn_ScrollProc;
 //protected:
 //	// Theming
 //    typedef HANDLE (WINAPI* FOpenThemeData)(HWND,LPCWSTR);

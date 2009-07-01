@@ -14,6 +14,10 @@ const CLSID CLSID_TaskbarList = {0x56FDF344, 0xFD6D, 0x11d0, {0x95, 0x8A, 0x00, 
 const IID IID_ITaskbarList3 = {0xea1afb91, 0x9e28, 0x4b86, {0x90, 0xe9, 0x9e, 0x9f, 0x8a, 0x5e, 0xef, 0xaf}};
 #endif
 
+#if defined(__GNUC__)
+#define EXT_GNUC_LOG
+#endif
+
 CConEmuMain::CConEmuMain()
 {
     mn_MainThreadId = GetCurrentThreadId();
@@ -51,16 +55,17 @@ CConEmuMain::CConEmuMain()
     mouse.lastMMW=-1;
     mouse.lastMML=-1;
 
-	ms_ConEmuExe[0] = 0;
+    ms_ConEmuExe[0] = 0;
     if (!GetModuleFileName(NULL, ms_ConEmuExe, MAX_PATH) || !wcschr(ms_ConEmuExe, L'\\')) {
         DisplayLastError(L"GetModuleFileName failed");
         TerminateProcess(GetCurrentProcess(), 100);
-		return;
+        return;
     }
-	LoadVersionInfo(ms_ConEmuExe);
+    LoadVersionInfo(ms_ConEmuExe);
 
     mh_WinHook = NULL;
-	mp_TaskBar = NULL;
+	//mh_PopupHook = NULL;
+    mp_TaskBar = NULL;
 
     pVCon = NULL;
     memset(mp_VCon, 0, sizeof(mp_VCon));
@@ -76,8 +81,8 @@ CConEmuMain::CConEmuMain()
     mn_MsgUpdateScrollInfo = RegisterWindowMessage(_T("ConEmuMain::UpdateScrollInfo"));
     mn_MsgUpdateTabs = RegisterWindowMessage(CONEMUMSG_UPDATETABS);
     mn_MsgOldCmdVer = RegisterWindowMessage(_T("ConEmuMain::OldCmdVersion")); mb_InShowOldCmdVersion = FALSE;
-	mn_MsgTabCommand = RegisterWindowMessage(_T("ConEmuMain::TabCommand"));
-	mn_MsgSheelHook = RegisterWindowMessage(_T("SHELLHOOK"));
+    mn_MsgTabCommand = RegisterWindowMessage(_T("ConEmuMain::TabCommand"));
+    mn_MsgSheelHook = RegisterWindowMessage(_T("SHELLHOOK"));
 }
 
 BOOL CConEmuMain::Init()
@@ -90,6 +95,9 @@ BOOL CConEmuMain::Init()
     //#endif
     mh_WinHook = SetWinEventHook(EVENT_CONSOLE_START_APPLICATION/*EVENT_CONSOLE_CARET*/,EVENT_CONSOLE_END_APPLICATION,
         NULL, (WINEVENTPROC)CConEmuMain::WinEventProc, 0,0, WINEVENT_OUTOFCONTEXT);
+	
+    //mh_PopupHook = SetWinEventHook(EVENT_SYSTEM_MENUPOPUPSTART,EVENT_SYSTEM_MENUPOPUPSTART,
+    //    NULL, (WINEVENTPROC)CConEmuMain::WinEventProc, 0,0, WINEVENT_OUTOFCONTEXT);
 
     /*mh_Psapi = LoadLibrary(_T("psapi.dll"));
     if (mh_Psapi) {
@@ -137,13 +145,13 @@ CConEmuMain::~CConEmuMain()
     mh_ConMan = NULL;*/
 
     if (mh_WinHook) {
-        //#if defined(__GNUC__)
-        //HMODULE hUser32 = GetModuleHandle(L"user32.dll");
-        //FUnhookWinEvent UnhookWinEvent = (FSetWinEventHook)GetProcAddress(hUser32, "UnhookWinEvent");
-        //#endif
         UnhookWinEvent(mh_WinHook);
         mh_WinHook = NULL;
     }
+	//if (mh_PopupHook) {
+	//	UnhookWinEvent(mh_PopupHook);
+	//	mh_PopupHook = NULL;
+	//}
 
     if (DragDrop) {
         delete DragDrop;
@@ -315,8 +323,7 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tF
                         //AddMargins(rc, rcShift, TRUE/*abExpand*/);
                     } break;
                     default:
-                        MBoxAssert(FALSE); // Недопустимо
-                        return rc;
+                        break;
                 }
             }
             return rc;
@@ -341,8 +348,7 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tF
         case CER_MAXIMIZED:
             break;
         default:
-            MBoxAssert(FALSE); // Недопустимо
-            return rc;
+            break;
     };
 
     RECT rcAddShift = MakeRect(0,0);
@@ -516,8 +522,7 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tF
             return rc;
         } break;
         default:
-            MBoxAssert(FALSE); // Недопустимо
-            return rc;
+            break;
     }
     
     AddMargins(rc, rcAddShift);
@@ -674,7 +679,7 @@ void CConEmuMain::SetConsoleWindowSize(const COORD& size, bool updateInfo)
     // Это не совсем корректно... ntvdm.exe не выгружается после выхода из 16бит приложения
     if (isNtvdm()) {
         //if (size.X == 80 && size.Y>25 && lastSize1.X != size.X && size.Y == lastSize1.Y) {
-            TODO("Ntvdm почему-то не всегда устанавливает ВЫСОТУ консоли в 25/28 символов...")
+            TODO("Ntvdm почему-то не всегда устанавливает ВЫСОТУ консоли в 25/28/50 символов...")
         //}
         return; // запрет изменения размеров консоли для 16бит приложений 
     }
@@ -1063,7 +1068,7 @@ LRESULT CConEmuMain::OnSize(WPARAM wParam, WORD newClientWidth, WORD newClientHe
 {
     LRESULT result = 0;
     
-    #if defined(__GNUC__)
+    #if defined(EXT_GNUC_LOG)
     char szDbg[255];
     wsprintfA(szDbg, "CConEmuMain::OnSize(wParam=%i, Width=%i, Height=%i, "
         "IsIconic=%i, IgnoreSizeChange=%i)\n",
@@ -1090,6 +1095,15 @@ LRESULT CConEmuMain::OnSize(WPARAM wParam, WORD newClientWidth, WORD newClientHe
         RECT rcClient; GetClientRect(ghWnd, &rcClient);
         newClientWidth = rcClient.right;
         newClientHeight = rcClient.bottom;
+        #if defined(EXT_GNUC_LOG)
+        char szDbg[255];
+        wsprintfA(szDbg, "  --  RealSize(Width=%i, Height=%i)", newClientWidth, newClientHeight);
+        pVCon->RCon()->LogString(szDbg);
+        #endif
+    } else {
+        #if defined(EXT_GNUC_LOG)
+        pVCon->RCon()->LogString("  -- normal mode\n");
+        #endif
     }
 
     if (TabBar.IsActive())
@@ -1104,19 +1118,38 @@ LRESULT CConEmuMain::OnSize(WPARAM wParam, WORD newClientWidth, WORD newClientHe
     #endif
     isPictureView();
 
-    if (wParam != (DWORD)-1 && change2WindowMode == (DWORD)-1)
+    if (wParam != (DWORD)-1 && change2WindowMode == (DWORD)-1) {
+        #if defined(EXT_GNUC_LOG)
+        pVCon->RCon()->LogString("  --  Executing SyncConsoleToWindow");
+        #endif
         SyncConsoleToWindow();
+    }
     
     RECT mainClient = MakeRect(newClientWidth,newClientHeight);
+    #if defined(EXT_GNUC_LOG)
+    wsprintfA(szDbg, "  --  mainClient=(%i,%i,%i,%i)", mainClient.left, mainClient.top, mainClient.right, mainClient.bottom);
+    pVCon->RCon()->LogString(szDbg);
+    #endif
     //RECT dcSize; GetClientRect(ghWndDC, &dcSize);
     RECT dcSize = CalcRect(CER_DC, mainClient, CER_MAINCLIENT);
+    #if defined(EXT_GNUC_LOG)
+    if (dcSize.top > 40) {
+        pVCon->RCon()->LogString("  **  Error");
+    }
+    wsprintfA(szDbg, "  --  dcSize=(%i,%i,%i,%i)", dcSize.left, dcSize.top, dcSize.right, dcSize.bottom);
+    pVCon->RCon()->LogString(szDbg);
+    #endif
     //DCClientRect(&client);
     RECT client = CalcRect(CER_DC, mainClient, CER_MAINCLIENT, &dcSize);
+    #if defined(EXT_GNUC_LOG)
+    wsprintfA(szDbg, "  --  client=(%i,%i,%i,%i)", client.left, client.top, client.right, client.bottom);
+    pVCon->RCon()->LogString(szDbg);
+    #endif
 
     RECT rcNewCon; memset(&rcNewCon,0,sizeof(rcNewCon));
     if (pVCon && pVCon->Width && pVCon->Height) {
-        if ((gSet.isTryToCenter || isNtvdm()) && 
-            (IsZoomed(ghWnd) || gSet.isFullScreen)) 
+        if ((gSet.isTryToCenter && (IsZoomed(ghWnd) || gSet.isFullScreen))
+			|| isNtvdm())
         {
             rcNewCon.left = (client.right+client.left-(int)pVCon->Width)/2;
             rcNewCon.top = (client.bottom+client.top-(int)pVCon->Height)/2;
@@ -1126,13 +1159,29 @@ LRESULT CConEmuMain::OnSize(WPARAM wParam, WORD newClientWidth, WORD newClientHe
         if (rcNewCon.top<client.top) rcNewCon.top=client.top;
 
         rcNewCon.right = rcNewCon.left + pVCon->Width;
-            if (rcNewCon.right>client.right) rcNewCon.right=client.right;
         rcNewCon.bottom = rcNewCon.top + pVCon->Height;
-            if (rcNewCon.bottom>client.bottom) rcNewCon.bottom=client.bottom;
+        
+        if (rcNewCon.right>client.right) rcNewCon.right=client.right;
+        if (rcNewCon.bottom>client.bottom) rcNewCon.bottom=client.bottom;
+        
+        #if defined(EXT_GNUC_LOG)
+        wsprintfA(szDbg, "  --  rcNewCon=(%i,%i,%i,%i) pVCon=(%ix%i) client=(%i,%i,%i,%i)", 
+            rcNewCon.left, rcNewCon.top, rcNewCon.right, rcNewCon.bottom, pVCon->Width, pVCon->Height,
+            client.left, client.top, client.right, client.bottom);
+        pVCon->RCon()->LogString(szDbg);
+        #endif
     } else {
         rcNewCon = client;
+        #if defined(EXT_GNUC_LOG)
+        wsprintfA(szDbg, "  --  rcNewCon=client(%i,%i,%i,%i)", rcNewCon.left, rcNewCon.top, rcNewCon.right, rcNewCon.bottom);
+        pVCon->RCon()->LogString(szDbg);
+        #endif
     }
     // Двигаем/ресайзим окошко DC
+    #if defined(EXT_GNUC_LOG)
+    wsprintfA(szDbg, "  --  Moving DC window(X=%i, Y=%i, Width=%i, Height=%i)", rcNewCon.left, rcNewCon.top, rcNewCon.right - rcNewCon.left, rcNewCon.bottom - rcNewCon.top);
+    pVCon->RCon()->LogString(szDbg);
+    #endif
     MoveWindow(ghWndDC, rcNewCon.left, rcNewCon.top, rcNewCon.right - rcNewCon.left, rcNewCon.bottom - rcNewCon.top, 1);
 
     return result;
@@ -1142,7 +1191,7 @@ LRESULT CConEmuMain::OnSizing(WPARAM wParam, LPARAM lParam)
 {
     LRESULT result = true;
     
-    #if defined(__GNUC__)
+    #if defined(EXT_GNUC_LOG)
     char szDbg[255];
     wsprintfA(szDbg, "CConEmuMain::OnSizing(wParam=%i, L.Lo=%i, L.Hi=%i)\n",
         wParam, LOWORD(lParam), HIWORD(lParam));
@@ -1708,21 +1757,21 @@ bool CConEmuMain::ConmanAction(int nCmd)
         if (pCon == pVCon)
             return true; // уже
         bool lbSizeOK = true;
-		int nOldConNum = ActiveConNum();
+        int nOldConNum = ActiveConNum();
 
-		// Спрятать PictureView, или еще чего...
+        // Спрятать PictureView, или еще чего...
         if (pVCon) pVCon->RCon()->OnDeactivate(nCmd);
         
-		// ПЕРЕД переключением на новую консоль - обновить ее размеры
-		if (pVCon) {
-			int nOldConWidth = pVCon->RCon()->TextWidth();
-			int nOldConHeight = pVCon->RCon()->TextHeight();
-			int nNewConWidth = pCon->RCon()->TextWidth();
-			int nNewConHeight = pCon->RCon()->TextHeight();
-			if (nOldConWidth != nNewConWidth || nOldConHeight != nNewConHeight) {
-				lbSizeOK = pCon->RCon()->SetConsoleSize(MakeCoord(nOldConWidth,nOldConHeight));
-			}
-		}
+        // ПЕРЕД переключением на новую консоль - обновить ее размеры
+        if (pVCon) {
+            int nOldConWidth = pVCon->RCon()->TextWidth();
+            int nOldConHeight = pVCon->RCon()->TextHeight();
+            int nNewConWidth = pCon->RCon()->TextWidth();
+            int nNewConHeight = pCon->RCon()->TextHeight();
+            if (nOldConWidth != nNewConWidth || nOldConHeight != nNewConHeight) {
+                lbSizeOK = pCon->RCon()->SetConsoleSize(MakeCoord(nOldConWidth,nOldConHeight));
+            }
+        }
 
         pVCon = pCon;
 
@@ -1824,8 +1873,8 @@ void CConEmuMain::LoadIcons()
     if (hClassIcon)
         return; // Уже загружены
 
-	TCHAR szIconPath[MAX_PATH] = {0};
-	lstrcpyW(szIconPath, ms_ConEmuExe);
+    TCHAR szIconPath[MAX_PATH] = {0};
+    lstrcpyW(szIconPath, ms_ConEmuExe);
         
     TCHAR *lpszExt = _tcsrchr(szIconPath, _T('.'));
     if (!lpszExt)
@@ -1924,7 +1973,7 @@ void CConEmuMain::PostMacro(LPCWSTR asMacro)
         //DWORD cbWritten=0;
         DnDstep(_T("Macro: Waiting for result (10 sec)"));
         pipe.Execute(CMD_POSTMACRO, asMacro, (wcslen(asMacro)+1)*2);
-		DnDstep(NULL);
+        DnDstep(NULL);
     }
 }
 
@@ -1944,11 +1993,11 @@ bool CConEmuMain::PtDiffTest(POINT C, int aX, int aY, UINT D)
 
 void CConEmuMain::Recreate(BOOL abRecreate, BOOL abConfirm)
 {
-	SafeFree(mpsz_RecreateCmd);
-	
-	if (!abRecreate) {
-		// Создать новую консоль
-		//LPCWSTR pszCmd = gSet.GetCmd();
+    SafeFree(mpsz_RecreateCmd);
+    
+    if (!abRecreate) {
+        // Создать новую консоль
+        //LPCWSTR pszCmd = gSet.GetCmd();
         if (abConfirm) {
             //wchar_t* pszMsg = (wchar_t*)calloc(128+wcslen(pszCmd),2);
             //if (pszMsg) {
@@ -1964,12 +2013,12 @@ void CConEmuMain::Recreate(BOOL abRecreate, BOOL abConfirm)
             int nRc = DialogBoxParam(g_hInstance, MAKEINTRESOURCE(IDD_RESTART), ghWnd, RecreateDlgProc, (LPARAM)abRecreate);
             gbDontEnable = b;
             if (nRc != IDC_START)
-            	return;
+                return;
         }
         //Собственно, запуск
         CreateCon(FALSE, mpsz_RecreateCmd);
         
-	} else {
+    } else {
         // Restart or close console
         int nActive = ActiveConNum();
         if (nActive >=0) {
@@ -1999,13 +2048,13 @@ void CConEmuMain::Recreate(BOOL abRecreate, BOOL abConfirm)
                 return;
             }
             if (nRc != IDC_START)
-            	return;
+                return;
             // Собственно, Recreate
             pVCon->RCon()->RecreateProcess(mpsz_RecreateCmd);
         }
-	}
-	
-	SafeFree(mpsz_RecreateCmd);
+    }
+    
+    SafeFree(mpsz_RecreateCmd);
 }
 
 BOOL CConEmuMain::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
@@ -2013,8 +2062,8 @@ BOOL CConEmuMain::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
     switch (messg)
     {
     case WM_INITDIALOG:
-    	{
-    		BOOL lbRc = FALSE;
+        {
+            BOOL lbRc = FALSE;
             //#ifdef _DEBUG
             //SetWindowPos(ghOpWnd, HWND_NOTOPMOST, 0,0,0,0, SWP_NOSIZE|SWP_NOMOVE);
             //#endif
@@ -2031,41 +2080,41 @@ BOOL CConEmuMain::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
 
             SetClassLong(hDlg, GCL_HICON, (LONG)hClassIcon);
             if (lParam != 0 /*Recreate*/) {
-				//GCC hack. иначе не собирается
-            	SetDlgItemTextA(hDlg, IDC_RESTART_MSG, "About to recreate console");
-            	SendDlgItemMessage(hDlg, IDC_RESTART_ICON, STM_SETICON, (WPARAM)LoadIcon(NULL,IDI_EXCLAMATION), 0);
-            	
-            	lbRc = TRUE;
+                //GCC hack. иначе не собирается
+                SetDlgItemTextA(hDlg, IDC_RESTART_MSG, "About to recreate console");
+                SendDlgItemMessage(hDlg, IDC_RESTART_ICON, STM_SETICON, (WPARAM)LoadIcon(NULL,IDI_EXCLAMATION), 0);
+                
+                lbRc = TRUE;
             } else {
-				//GCC hack. иначе не собирается
-            	SetDlgItemTextA(hDlg, IDC_RESTART_MSG, "Сreate new console");
-            	SendDlgItemMessage(hDlg, IDC_RESTART_ICON, STM_SETICON, (WPARAM)LoadIcon(NULL,IDI_QUESTION), 0);
-            	POINT pt = {0,0};
-            	MapWindowPoints(GetDlgItem(hDlg, IDC_TERMINATE), hDlg, &pt, 1);
-            	DestroyWindow(GetDlgItem(hDlg, IDC_TERMINATE));
-            	SetWindowPos(GetDlgItem(hDlg, IDC_START), NULL, pt.x, pt.y, 0,0, SWP_NOSIZE|SWP_NOZORDER);
-            	SetDlgItemText(hDlg, IDC_START, L"&Start");
-            	DestroyWindow(GetDlgItem(hDlg, IDC_WARNING));
-            	
-            	SetFocus(GetDlgItem(hDlg, IDC_RESTART_CMD));
+                //GCC hack. иначе не собирается
+                SetDlgItemTextA(hDlg, IDC_RESTART_MSG, "Сreate new console");
+                SendDlgItemMessage(hDlg, IDC_RESTART_ICON, STM_SETICON, (WPARAM)LoadIcon(NULL,IDI_QUESTION), 0);
+                POINT pt = {0,0};
+                MapWindowPoints(GetDlgItem(hDlg, IDC_TERMINATE), hDlg, &pt, 1);
+                DestroyWindow(GetDlgItem(hDlg, IDC_TERMINATE));
+                SetWindowPos(GetDlgItem(hDlg, IDC_START), NULL, pt.x, pt.y, 0,0, SWP_NOSIZE|SWP_NOZORDER);
+                SetDlgItemText(hDlg, IDC_START, L"&Start");
+                DestroyWindow(GetDlgItem(hDlg, IDC_WARNING));
+                
+                SetFocus(GetDlgItem(hDlg, IDC_RESTART_CMD));
             }
             
-    		RECT rect;
-    		GetWindowRect(hDlg, &rect);
-    		RECT rcParent;
-    		GetWindowRect(ghWnd, &rcParent);
-			MoveWindow(hDlg,
-				(rcParent.left+rcParent.right-rect.right+rect.left)/2,
-				(rcParent.top+rcParent.bottom-rect.bottom+rect.top)/2,
-				rect.right - rect.left, rect.bottom - rect.top, false);
-				
-			return lbRc;
+            RECT rect;
+            GetWindowRect(hDlg, &rect);
+            RECT rcParent;
+            GetWindowRect(ghWnd, &rcParent);
+            MoveWindow(hDlg,
+                (rcParent.left+rcParent.right-rect.right+rect.left)/2,
+                (rcParent.top+rcParent.bottom-rect.bottom+rect.top)/2,
+                rect.right - rect.left, rect.bottom - rect.top, false);
+                
+            return lbRc;
         }
         
     case WM_CTLCOLORSTATIC:
         if (GetDlgItem(hDlg, IDC_WARNING) == (HWND)lParam)
         {
-        	SetTextColor((HDC)wParam, 255);
+            SetTextColor((HDC)wParam, 255);
             HBRUSH hBrush = GetSysColorBrush(COLOR_3DFACE);
             SetBkMode((HDC)wParam, TRANSPARENT);
             return (BOOL)hBrush;
@@ -2086,13 +2135,13 @@ BOOL CConEmuMain::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
         if (HIWORD(wParam) == BN_CLICKED)
         {
             switch (LOWORD(wParam)) {
-            	case IDC_CHOOSE:
-        		{
-        			wchar_t *pszFilePath = NULL;
-            		int nLen = MAX_PATH*2;
-            		pszFilePath = (wchar_t*)calloc(nLen+1,2);
-            		if (!pszFilePath) return 1;
-            		
+                case IDC_CHOOSE:
+                {
+                    wchar_t *pszFilePath = NULL;
+                    int nLen = MAX_PATH*2;
+                    pszFilePath = (wchar_t*)calloc(nLen+1,2);
+                    if (!pszFilePath) return 1;
+                    
                     OPENFILENAME ofn; memset(&ofn,0,sizeof(ofn));
                     ofn.lStructSize=sizeof(ofn);
                     ofn.hwndOwner = hDlg;
@@ -2108,26 +2157,26 @@ BOOL CConEmuMain::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
 
                     SafeFree(pszFilePath); 
                     return 1;
-        		}
-            		
-            	case IDC_START:
-            	{
-            		HWND hEdit = GetDlgItem(hDlg, IDC_RESTART_CMD);
-            		int nLen = GetWindowTextLength(hEdit);
-            		if (nLen > 0) {
-            			gConEmu.mpsz_RecreateCmd = (wchar_t*)calloc(nLen+1,2);
-            			if (gConEmu.mpsz_RecreateCmd)
-            				GetWindowText(hEdit, gConEmu.mpsz_RecreateCmd, nLen+1);
-            		}
-            		EndDialog(hDlg, IDC_START);
-            		return 1;
-            	}
-            	case IDC_TERMINATE:
-            		EndDialog(hDlg, IDC_TERMINATE);
-            		return 1;
-            	case IDCANCEL:
-            		EndDialog(hDlg, IDCANCEL);
-            		return 1;
+                }
+                    
+                case IDC_START:
+                {
+                    HWND hEdit = GetDlgItem(hDlg, IDC_RESTART_CMD);
+                    int nLen = GetWindowTextLength(hEdit);
+                    if (nLen > 0) {
+                        gConEmu.mpsz_RecreateCmd = (wchar_t*)calloc(nLen+1,2);
+                        if (gConEmu.mpsz_RecreateCmd)
+                            GetWindowText(hEdit, gConEmu.mpsz_RecreateCmd, nLen+1);
+                    }
+                    EndDialog(hDlg, IDC_START);
+                    return 1;
+                }
+                case IDC_TERMINATE:
+                    EndDialog(hDlg, IDC_TERMINATE);
+                    return 1;
+                case IDCANCEL:
+                    EndDialog(hDlg, IDCANCEL);
+                    return 1;
             }
         }
         break;
@@ -2200,8 +2249,8 @@ void CConEmuMain::UpdateProcessDisplay(BOOL abForce)
         return;
 
     wchar_t szNo[32];
-	DWORD nProgramStatus = pVCon->RCon()->GetProgramStatus();
-	DWORD nFarStatus = pVCon->RCon()->GetFarStatus();
+    DWORD nProgramStatus = pVCon->RCon()->GetProgramStatus();
+    DWORD nFarStatus = pVCon->RCon()->GetFarStatus();
     CheckDlgButton(gSet.hInfo, cbsConManActive, (gSet.isMulti) ? BST_CHECKED : BST_UNCHECKED);
     SetDlgItemText(gSet.hInfo, tsConManIdx, _itow(gConEmu.ActiveConNum()+1, szNo, 10));
     CheckDlgButton(gSet.hInfo, cbsTelnetActive, (nProgramStatus&CES_TELNETACTIVE) ? BST_CHECKED : BST_UNCHECKED);
@@ -2309,36 +2358,36 @@ void CConEmuMain::UpdateProgress(BOOL abUpdateTitle)
     short nProgress = -1, n;
     BOOL bActiveHasProgress = FALSE;
     if ((nProgress = pVCon->RCon()->GetProgress()) >= 0) {
-    	mn_Progress = nProgress;
-    	bActiveHasProgress = TRUE;
+        mn_Progress = nProgress;
+        bActiveHasProgress = TRUE;
     } else {
-    	for (UINT i = 0; i < MAX_CONSOLE_COUNT && nProgress < 100; i++) {
-        	if (mp_VCon[i]) {
-        		n = mp_VCon[i]->RCon()->GetProgress();
-        		if (n > nProgress) nProgress = n;
-        	}
+        for (UINT i = 0; i < MAX_CONSOLE_COUNT && nProgress < 100; i++) {
+            if (mp_VCon[i]) {
+                n = mp_VCon[i]->RCon()->GetProgress();
+                if (n > nProgress) nProgress = n;
+            }
         }
         mn_Progress = min(nProgress,100);
     }
 
     static short nLastProgress = -1;
     if (nLastProgress != mn_Progress) {
-    	HRESULT hr = S_OK;
-    	if (mp_TaskBar) {
-    		if (mn_Progress >= 0) {
-    			hr = mp_TaskBar->SetProgressValue(ghWnd, mn_Progress, 100);
-    			if (nLastProgress == -1)
-    				hr = mp_TaskBar->SetProgressState(ghWnd, TBPF_NORMAL);
-    		} else {
-    			hr = mp_TaskBar->SetProgressState(ghWnd, TBPF_NOPROGRESS);
-    		}
-    	}
-    	// Запомнить последнее
-    	nLastProgress = mn_Progress;
+        HRESULT hr = S_OK;
+        if (mp_TaskBar) {
+            if (mn_Progress >= 0) {
+                hr = mp_TaskBar->SetProgressValue(ghWnd, mn_Progress, 100);
+                if (nLastProgress == -1)
+                    hr = mp_TaskBar->SetProgressState(ghWnd, TBPF_NORMAL);
+            } else {
+                hr = mp_TaskBar->SetProgressState(ghWnd, TBPF_NOPROGRESS);
+            }
+        }
+        // Запомнить последнее
+        nLastProgress = mn_Progress;
     }
     if (mn_Progress >= 0 && !bActiveHasProgress) {
-    	psTitle = MultiTitle;
-    	wsprintf(MultiTitle+lstrlen(MultiTitle), L"{*%i%%} ", mn_Progress);
+        psTitle = MultiTitle;
+        wsprintf(MultiTitle+lstrlen(MultiTitle), L"{*%i%%} ", mn_Progress);
     }
 
     if (gSet.isMulti && !TabBar.IsShown()) {
@@ -2351,19 +2400,19 @@ void CConEmuMain::UpdateProgress(BOOL abUpdateTitle)
             }
         }
         if (nCount > 1) {
-        	psTitle = MultiTitle;
+            psTitle = MultiTitle;
             wsprintf(MultiTitle+lstrlen(MultiTitle), L"[%i/%i] ", nCur, nCount);
         }
     }
     
     if (psTitle)
-    	wcscat(MultiTitle, Title);
+        wcscat(MultiTitle, Title);
     else
-    	psTitle = Title;
+        psTitle = Title;
 
     SetWindowText(ghWnd, psTitle);
 
-	// Задел на будущее
+    // Задел на будущее
     if (ghWndApp)
         SetWindowText(ghWndApp, psTitle);
 }
@@ -2372,6 +2421,31 @@ VOID CConEmuMain::WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hw
 {
     _ASSERTE(hwnd!=NULL);
     // Процесс может запуститься и ДО того, как закончится инициализация хэндла окна!
+
+	// Не помогает
+	//if (event == EVENT_SYSTEM_MENUPOPUPSTART) {
+	//	if (gConEmu.isMeForeground())
+	//	{
+	//		//SetForegroundWindow(hwnd);
+	//		DWORD dwPID = 0;
+	//		GetWindowThreadProcessId(hwnd, &dwPID);
+	//		AllowSetForegroundWindow(dwPID);
+	//		HWND hParent = GetAncestor(hwnd, GA_PARENT); // Это Desktop
+	//		if (hParent) {
+	//			GetWindowThreadProcessId(hParent, &dwPID);
+	//			AllowSetForegroundWindow(dwPID);
+	//		}
+	//	}
+	//	//hwnd это похоже окошко самого меню, ClassName=#32768 (диалог)
+	//	//#ifdef _DEBUG
+	//	//wchar_t szClass[128] = {0}, szTitle[128] = {0};
+	//	//HWND hParent = GetAncestor(hwnd, GA_PARENT); // Это Desktop
+	//	//GetClassName(hParent, szClass, 128); GetWindowText(hParent, szTitle, 128);
+	//	//WCHAR szDbg[512]; wsprintfW(szDbg, L"EVENT_SYSTEM_MENUPOPUPSTART(HWND=0x%08X, object=0x%08X, child=0x%08X)\nClass: %s, Title: %s\n\n", hwnd, idObject, idChild, szClass, szTitle);
+	//	//OutputDebugString(szDbg);
+	//	//#endif
+	//	return;
+	//}
 
 #ifdef _DEBUG
     switch(event)
@@ -2556,7 +2630,7 @@ LRESULT CConEmuMain::OnPaint(WPARAM wParam, LPARAM lParam)
 void CConEmuMain::PaintCon()
 {
     if (ProgressBars)
-		ProgressBars->OnTimer();
+        ProgressBars->OnTimer();
     pVCon->Paint();
 }
 
@@ -2652,13 +2726,13 @@ bool CConEmuMain::isDragging()
 
 bool CConEmuMain::isFilePanel(bool abPluginAllowed/*=false*/)
 {
-	if (!pVCon) return false;
-	return pVCon->RCon()->isFilePanel(abPluginAllowed);
+    if (!pVCon) return false;
+    return pVCon->RCon()->isFilePanel(abPluginAllowed);
 }
 
 bool CConEmuMain::isEditor()
 {
-	if (!pVCon) return false;
+    if (!pVCon) return false;
     return pVCon->RCon()->isEditor();
 }
 
@@ -2704,8 +2778,8 @@ bool CConEmuMain::isMeForeground()
 
 bool CConEmuMain::isNtvdm()
 {
-	if (!pVCon) return false;
-	return pVCon->RCon()->isNtvdm();
+    if (!pVCon) return false;
+    return pVCon->RCon()->isNtvdm();
 }
 
 bool CConEmuMain::isValid(CVirtualConsole* apVCon)
@@ -2723,7 +2797,7 @@ bool CConEmuMain::isValid(CVirtualConsole* apVCon)
 
 bool CConEmuMain::isViewer()
 {
-	if (!pVCon) return false;
+    if (!pVCon) return false;
     return pVCon->RCon()->isViewer();
 }
 
@@ -2750,10 +2824,10 @@ bool CConEmuMain::isPictureView()
 
     bool lbPrevPicView = (hPictureView != NULL);
 
-	if (pVCon && pVCon->RCon())
-		hPictureView = pVCon->RCon()->isPictureView();
-	else
-		hPictureView = NULL;
+    if (pVCon && pVCon->RCon())
+        hPictureView = pVCon->RCon()->isPictureView();
+    else
+        hPictureView = NULL;
     
     //if (!hPictureView) {
     //    hPictureView = FindWindowEx(ghWnd, NULL, L"FarPictureViewControlClass", NULL);
@@ -2827,33 +2901,33 @@ void CConEmuMain::SwitchKeyboardLayout(DWORD dwNewKeybLayout)
 
 void CConEmuMain::TabCommand(UINT nTabCmd)
 {
-	if (!isMainThread()) {
-		PostMessage(ghWnd, mn_MsgTabCommand, nTabCmd, 0);
-		return;
-	}
+    if (!isMainThread()) {
+        PostMessage(ghWnd, mn_MsgTabCommand, nTabCmd, 0);
+        return;
+    }
 
-	switch (nTabCmd) {
-		case 0:
-			{
-				if (TabBar.IsShown())
-					gSet.isTabs = 0;
-				else
-					gSet.isTabs = 1;
-				gConEmu.ForceShowTabs ( gSet.isTabs == 1 );
-			} break;
-		case 1:
-			{
-				TabBar.SwitchNext();
-			} break;
-		case 2:
-			{
-				TabBar.SwitchPrev();
-			} break;
-		case 3:
-			{
-				TabBar.SwitchCommit();
-			} break;
-	};
+    switch (nTabCmd) {
+        case 0:
+            {
+                if (TabBar.IsShown())
+                    gSet.isTabs = 0;
+                else
+                    gSet.isTabs = 1;
+                gConEmu.ForceShowTabs ( gSet.isTabs == 1 );
+            } break;
+        case 1:
+            {
+                TabBar.SwitchNext();
+            } break;
+        case 2:
+            {
+                TabBar.SwitchPrev();
+            } break;
+        case 3:
+            {
+                TabBar.SwitchCommit();
+            } break;
+    };
 }
 
 
@@ -2945,7 +3019,7 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd)
     InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_HELP, _T("&About"));
     InsertMenu(hwndMain, 0, MF_BYPOSITION, MF_SEPARATOR, 0);
     hDebug = CreatePopupMenu();
-	AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_CON_TOGGLE_VISIBLE, _T("&Real console"));
+    AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_CON_TOGGLE_VISIBLE, _T("&Real console"));
     AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_CONPROP, _T("&Properties..."));
     AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_DUMPCONSOLE, _T("&Dump..."));
     InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_POPUP | MF_ENABLED, (UINT_PTR)hDebug, _T("&Debug"));
@@ -3000,16 +3074,16 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
         //CoInitializeEx(NULL, COINIT_MULTITHREADED);
 
          
-		if (!mp_TaskBar) {
-			hr = CoCreateInstance(CLSID_TaskbarList,NULL,CLSCTX_INPROC_SERVER,IID_ITaskbarList3,(void**)&mp_TaskBar);
-			if (hr == S_OK && mp_TaskBar) {
-				hr = mp_TaskBar->HrInit();
-			}
-			if (hr != S_OK && mp_TaskBar) {
-				if (mp_TaskBar) mp_TaskBar->Release();
-				mp_TaskBar = NULL;
-			}
-		}
+        if (!mp_TaskBar) {
+            hr = CoCreateInstance(CLSID_TaskbarList,NULL,CLSCTX_INPROC_SERVER,IID_ITaskbarList3,(void**)&mp_TaskBar);
+            if (hr == S_OK && mp_TaskBar) {
+                hr = mp_TaskBar->HrInit();
+            }
+            if (hr != S_OK && mp_TaskBar) {
+                if (mp_TaskBar) mp_TaskBar->Release();
+                mp_TaskBar = NULL;
+            }
+        }
 
         if (!DragDrop)
             DragDrop = new CDragDrop(HDCWND);
@@ -3075,6 +3149,10 @@ LRESULT CConEmuMain::OnDestroy(HWND hWnd)
         UnhookWinEvent(mh_WinHook);
         mh_WinHook = NULL;
     }
+	//if (mh_PopupHook) {
+	//	UnhookWinEvent(mh_PopupHook);
+	//	mh_PopupHook = NULL;
+	//}
 
     if (DragDrop) {
         delete DragDrop;
@@ -3088,8 +3166,8 @@ LRESULT CConEmuMain::OnDestroy(HWND hWnd)
     Icon.Delete();
     
     if (mp_TaskBar) {
-    	mp_TaskBar->Release();
-    	mp_TaskBar = NULL;
+        mp_TaskBar->Release();
+        mp_TaskBar = NULL;
     }
 
     KillTimer(ghWnd, 0);
@@ -3317,12 +3395,12 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
                     ConmanAction(isPressed(VK_SHIFT) ? CONMAN_PREVCONSOLE : CONMAN_NEXTCONSOLE);
                     
                 else if (wParam == gSet.icMultiNew) {
-                	// Создать новую консоль
-                	Recreate ( FALSE, gSet.isMultiNewConfirm );
-                	
+                    // Создать новую консоль
+                    Recreate ( FALSE, gSet.isMultiNewConfirm );
+                    
                 } else if (wParam == gSet.icMultiRecreate) {
-                	Recreate ( TRUE, TRUE );
-                	
+                    Recreate ( TRUE, TRUE );
+                    
                 }
                 return 0;
             }
@@ -3743,12 +3821,12 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
                         mouse.bSkipRDblClk=true; // чтобы пока FAR думает в консоль не проскочило мышиное сообщение
                         //POSTMESSAGE(ghConWnd, WM_KEYDOWN, VK_APPS, 0, TRUE);
 
-						DWORD dwFarPID = pVCon->RCon()->GetFarPID();
-						if (dwFarPID) AllowSetForegroundWindow(dwFarPID);
+                        DWORD dwFarPID = pVCon->RCon()->GetFarPID();
+                        if (dwFarPID) AllowSetForegroundWindow(dwFarPID);
 
                         if (gSet.sRClickMacro && *gSet.sRClickMacro) {
                             // Если юзер задал свой макрос - выполняем его
-							PostMacro(gSet.sRClickMacro);
+                            PostMacro(gSet.sRClickMacro);
                         } else {
                             pVCon->RCon()->OnKeyboard(ghConWnd, WM_KEYDOWN, VK_APPS, (VK_APPS << 16) | (1 << 24));
                             pVCon->RCon()->OnKeyboard(ghConWnd, WM_KEYUP, VK_APPS, (VK_APPS << 16) | (1 << 24));
@@ -3796,7 +3874,7 @@ fin:
 
 LRESULT CConEmuMain::OnShellHook(WPARAM wParam, LPARAM lParam)
 {
-	/*
+    /*
 wParam lParam 
 HSHELL_GETMINRECT A pointer to a SHELLHOOKINFO structure.  
 HSHELL_WINDOWACTIVATEED The HWND handle of the activated window.  
@@ -3811,47 +3889,83 @@ HSHELL_REDRAW The HWND handle of the window that needs to be redrawn.
 HSHELL_FLASH The HWND handle of the window that needs to be flashed.  
 HSHELL_ENDTASK The HWND handle of the window that should be forced to exit.  
 HSHELL_APPCOMMAND The APPCOMMAND which has been unhandled by the application or other hooks. See WM_APPCOMMAND and use the GET_APPCOMMAND_LPARAM macro to retrieve this parameter.  
-	*/
-	switch (wParam) {
-	case HSHELL_FLASH:
-		{
-			HWND hCon = (HWND)lParam;
-			if (!hCon) return 0;
-			for (int i = 0; i<MAX_CONSOLE_COUNT; i++) {
-				if (!mp_VCon[i]) continue;
-				if (mp_VCon[i]->RCon()->ConWnd() == hCon) {
-					FLASHWINFO fl = {sizeof(FLASHWINFO), ghWnd, FLASHW_ALL|FLASHW_TIMERNOFG, 0};
-					if (!isMeForeground())
-        				FlashWindowEx(&fl); // Помигать в GUI
-        			fl.dwFlags = FLASHW_STOP; fl.hwnd = hCon;
-        			FlashWindowEx(&fl);
-        			break;
-        		}
-    		}
-		}
-		break;
-	case HSHELL_WINDOWCREATED:
-		{
-			if (isMeForeground()) {
-				HWND hWnd = (HWND)lParam;
-				if (!hWnd) return 0;
-				DWORD dwPID = 0;
-				GetWindowThreadProcessId(hWnd, &dwPID);
-				if (dwPID && dwPID != GetCurrentProcessId()) {
-					AllowSetForegroundWindow(dwPID);
-				
-					//#ifdef _DEBUG
-					//wchar_t szTitle[255], szClass[255], szMsg[1024];
-					//GetWindowText(hWnd, szTitle, 254); GetClassName(hWnd, szClass, 254);
-					//wsprintf(szMsg, L"Window was created:\nTitle: %s\nClass: %s\nPID: %i", szTitle, szClass, dwPID);
-					//MBox(szMsg);
-					//#endif
-				}
-			}
-		}
-		break;
-	}
-	return 0;
+    */
+    switch (wParam) {
+    case HSHELL_FLASH:
+        {
+            HWND hCon = (HWND)lParam;
+            if (!hCon) return 0;
+            for (int i = 0; i<MAX_CONSOLE_COUNT; i++) {
+                if (!mp_VCon[i]) continue;
+                if (mp_VCon[i]->RCon()->ConWnd() == hCon) {
+                    FLASHWINFO fl = {sizeof(FLASHWINFO), ghWnd, FLASHW_ALL|FLASHW_TIMERNOFG, 0};
+                    if (isMeForeground()) {
+                    	if (mp_VCon[i] != pVCon) { // Только для неактивной консоли
+                    		fl.uCount = 4; fl.dwFlags = FLASHW_ALL;
+                    		FlashWindowEx(&fl);
+                    	}
+                    } else {
+                    	FlashWindowEx(&fl); // Помигать в GUI
+                    }
+                    
+                    fl.dwFlags = FLASHW_STOP; fl.hwnd = hCon;
+                    FlashWindowEx(&fl);
+                    break;
+                }
+            }
+        }
+        break;
+    case HSHELL_WINDOWCREATED:
+        {
+            if (isMeForeground()) {
+                HWND hWnd = (HWND)lParam;
+                if (!hWnd) return 0;
+                DWORD dwPID = 0, dwParentPID = 0, dwFarPID = 0;
+                GetWindowThreadProcessId(hWnd, &dwPID);
+                if (dwPID && dwPID != GetCurrentProcessId()) {
+                    AllowSetForegroundWindow(dwPID);
+                    
+                    if (IsWindowVisible(hWnd)) // ? оно успело ?
+                    {
+                    	// Получить PID родительского процесса этого окошка
+                    	HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS,0);
+                        if (hSnap != INVALID_HANDLE_VALUE) {
+                            PROCESSENTRY32 prc = {sizeof(PROCESSENTRY32)};
+                            if (Process32First(hSnap, &prc)) {
+                                do {
+                                    if (prc.th32ProcessID == dwPID) {
+                                        dwParentPID = prc.th32ParentProcessID;
+                                        break;
+                                    }
+                                } while (Process32Next(hSnap, &prc));
+                            }
+                            CloseHandle(hSnap);
+                        }
+                    	
+                    	for (int i = 0; i<MAX_CONSOLE_COUNT; i++) {
+                    		if (mp_VCon[i] == NULL || mp_VCon[i]->RCon() == NULL) continue;
+                    		dwFarPID = mp_VCon[i]->RCon()->GetFarPID();
+                    		if (!dwFarPID) continue;
+                    		
+                    		if (dwPID == dwFarPID || dwParentPID == dwFarPID) { // MSDN Topics
+                    			SetForegroundWindow(hWnd);
+                    			break;
+                    		}
+                    	}
+                    }
+                
+                    //#ifdef _DEBUG
+                    //wchar_t szTitle[255], szClass[255], szMsg[1024];
+                    //GetWindowText(hWnd, szTitle, 254); GetClassName(hWnd, szClass, 254);
+                    //wsprintf(szMsg, L"Window was created:\nTitle: %s\nClass: %s\nPID: %i", szTitle, szClass, dwPID);
+                    //MBox(szMsg);
+                    //#endif
+                }
+            }
+        }
+        break;
+    }
+    return 0;
 }
 
 LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
@@ -3885,10 +3999,10 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
             pVCon->DumpConsole();
         return 0;
         //break;
-	case ID_CON_TOGGLE_VISIBLE:
-		if (pVCon)
-			pVCon->RCon()->ShowConsole(-1); // Toggle visibility
-		return 0;
+    case ID_CON_TOGGLE_VISIBLE:
+        if (pVCon)
+            pVCon->RCon()->ShowConsole(-1); // Toggle visibility
+        return 0;
     case ID_HELP:
         {
             WCHAR szTitle[255];
@@ -4036,7 +4150,7 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
             DWORD dwStyle = GetWindowLong(ghWnd, GWL_STYLE);
             if (dwStyle & WS_DISABLED)
                 EnableWindow(ghWnd, TRUE);
-		}
+        }
 
         CheckProcesses(); //m_ActiveConmanIDX, FALSE/*bTitleChanged*/);
 
@@ -4136,13 +4250,13 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
                         OnSize(0, client.right, client.bottom);
                     }
                     //_ASSERTE(pVCon!=NULL);
-					if (pVCon) {
-						m_LastConSize = MakeCoord(pVCon->TextWidth,pVCon->TextHeight);
-					}
+                    if (pVCon) {
+                        m_LastConSize = MakeCoord(pVCon->TextWidth,pVCon->TextHeight);
+                    }
                 }
                 else if (pVCon 
-	                && (m_LastConSize.X != (int)pVCon->TextWidth 
-	                    || m_LastConSize.Y != (int)pVCon->TextHeight))
+                    && (m_LastConSize.X != (int)pVCon->TextWidth 
+                        || m_LastConSize.Y != (int)pVCon->TextHeight))
                 {
                     // По идее, сюда мы попадаем только для 16-бит приложений
                     if (isNtvdm())
@@ -4405,7 +4519,7 @@ void CConEmuMain::ServerThreadCommand(HANDLE hPipe)
         DEBUGSTR(L"GUI recieved CECMD_TABSCMD\n");
         _ASSERTE(nDataSize>=1);
         DWORD nTabCmd = pIn->Data[0];
-		TabCommand(nTabCmd);
+        TabCommand(nTabCmd);
     }
 
     // Освободить память
@@ -4627,13 +4741,13 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
         } else if (messg == gConEmu.mn_MsgOldCmdVer) {
             gConEmu.ShowOldCmdVersion(wParam, lParam);
             return 0;
-		} else if (messg == gConEmu.mn_MsgTabCommand) {
-			gConEmu.TabCommand(wParam);
-			return 0;
-		} else if (messg == gConEmu.mn_MsgSheelHook) {
-			gConEmu.OnShellHook(wParam, lParam);
-			return 0;
-		}
+        } else if (messg == gConEmu.mn_MsgTabCommand) {
+            gConEmu.TabCommand(wParam);
+            return 0;
+        } else if (messg == gConEmu.mn_MsgSheelHook) {
+            gConEmu.OnShellHook(wParam, lParam);
+            return 0;
+        }
         //else if (messg == gConEmu.mn_MsgCmdStarted || messg == gConEmu.mn_MsgCmdStopped) {
         //  return gConEmu.OnConEmuCmd( (messg == gConEmu.mn_MsgCmdStarted), (HWND)wParam, (DWORD)lParam);
         //}

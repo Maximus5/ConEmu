@@ -59,9 +59,9 @@ void CConEmuPipe::Close()
 	DEBUGSTR(L"Pipe::Close()\n");
 }
 
-//#define CREATEEVENT(fmt,h) \
-//		wsprintf(szEventName, fmt, dwCurProcId ); \
-//		h = OpenEvent(EVENT_ALL_ACCESS, FALSE, szEventName); \
+//#define CREATEEVENT(fmt,h) 
+//		wsprintf(szEventName, fmt, dwCurProcId ); 
+//		h = OpenEvent(EVENT_ALL_ACCESS, FALSE, szEventName); 
 //		if (h==INVALID_HANDLE_VALUE) h=NULL;
 
 //#pragma message("warning: добавить аргумент abSilent, вдруг плагин еще не загружен?")

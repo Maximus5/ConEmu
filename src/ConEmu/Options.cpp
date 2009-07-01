@@ -112,7 +112,6 @@ void CSettings::InitSettings()
 	ConsoleFont.lfWidth = 4;
 	_tcscpy(ConsoleFont.lfFaceName, _T("Lucida Console"));
 
-    
     Registry RegConColors, RegConDef;
     if (RegConColors.OpenKey(_T("Console"), KEY_READ))
     {
@@ -145,8 +144,9 @@ void CSettings::InitSettings()
 	memset(icFixFarBorderRanges, 0, sizeof(icFixFarBorderRanges));
 	icFixFarBorderRanges[0].bUsed = true; icFixFarBorderRanges[0].cBegin = 0x2013; icFixFarBorderRanges[0].cEnd = 0x25C4;
     
-    wndHeight = ntvdmHeight = 25; // NightRoman
-    wndWidth = 80;  // NightRoman
+    wndHeight = 25;
+	ntvdmHeight = 28;
+    wndWidth = 80;
     wndX = 0; wndY = 0; wndCascade = true;
     isConVisible = false;
     nSlideShowElapse = 2500;
@@ -258,7 +258,7 @@ void CSettings::LoadSettings()
         reg.Load(_T("ConWnd Width"), wndWidth); if (!wndWidth) wndWidth = 80; else if (wndWidth>1000) wndWidth = 1000;
         reg.Load(_T("ConWnd Height"), wndHeight); if (!wndHeight) wndHeight = 25; else if (wndHeight>500) wndHeight = 500;
         //TODO: Эти два параметра не сохраняются
-        reg.Load(_T("16it Height"), ntvdmHeight); if (ntvdmHeight<20) ntvdmHeight = 20; else if (ntvdmHeight>100) ntvdmHeight = 100;
+        reg.Load(_T("16it Height"), ntvdmHeight); if (ntvdmHeight!=25 && ntvdmHeight!=28 && ntvdmHeight!=50) ntvdmHeight = 28;
 		reg.Load(_T("DefaultBufferHeight"), DefaultBufferHeight); if (DefaultBufferHeight < 300) DefaultBufferHeight = 300;
 
         reg.Load(L"CursorType", isCursorV);
@@ -657,16 +657,17 @@ LRESULT CSettings::OnInitDialog()
 	MCHKHEAP
     {
         TCITEM tie;
+        wchar_t szTitle[32];
         HWND _hwndTab = GetDlgItem(ghOpWnd, tabMain);
         tie.mask = TCIF_TEXT;
         tie.iImage = -1; 
-        tie.pszText = _T("Main");
+        tie.pszText = wcscpy(szTitle, L"Main");
         TabCtrl_InsertItem(_hwndTab, 0, &tie);
-        tie.pszText = _T("Features");
+        tie.pszText = wcscpy(szTitle, L"Features");
         TabCtrl_InsertItem(_hwndTab, 1, &tie);
-        tie.pszText = _T("Colors");
+        tie.pszText = wcscpy(szTitle, L"Colors");
         TabCtrl_InsertItem(_hwndTab, 2, &tie);
-        tie.pszText = _T("Info");
+        tie.pszText = wcscpy(szTitle, L"Info");
         TabCtrl_InsertItem(_hwndTab, 3, &tie);
         
         HFONT hFont = CreateFont(TAB_FONT_HEIGTH, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, ANSI_CHARSET, OUT_DEFAULT_PRECIS, 
@@ -1524,7 +1525,7 @@ bool CSettings::LoadImageFrom(TCHAR *inPath, bool abShowErrors)
         char File[101];
         file.Read(File, 100);
         char *pBuf = File;
-        if (*(u16*)pBuf == 'MB' && *(u32*)(pBuf + 0x0A) >= 0x36 && *(u32*)(pBuf + 0x0A) <= 0x436 && *(u32*)(pBuf + 0x0E) == 0x28 && !pBuf[0x1D] && !*(u32*)(pBuf + 0x1E))
+        if (pBuf[0] == 'B' && pBuf[1] == 'M' && *(u32*)(pBuf + 0x0A) >= 0x36 && *(u32*)(pBuf + 0x0A) <= 0x436 && *(u32*)(pBuf + 0x0E) == 0x28 && !pBuf[0x1D] && !*(u32*)(pBuf + 0x1E))
             //if (*(u16*)pBuf == 'MB' && *(u32*)(pBuf + 0x0A) >= 0x36)
         {
             const HDC hScreenDC = GetDC(0);
@@ -1532,7 +1533,7 @@ bool CSettings::LoadImageFrom(TCHAR *inPath, bool abShowErrors)
             HBITMAP hNewBgBitmap;
             if (hNewBgDc)
             {
-                if(hNewBgBitmap = (HBITMAP)LoadImage(NULL, exPath, IMAGE_BITMAP,0,0,LR_LOADFROMFILE))
+                if((hNewBgBitmap = (HBITMAP)LoadImage(NULL, exPath, IMAGE_BITMAP,0,0,LR_LOADFROMFILE)) != NULL)
                 {
                     if (hBgBitmap) { DeleteObject(hBgBitmap); hBgBitmap=NULL; }
                     if (hBgDc) { DeleteDC(hBgDc); hBgDc=NULL; }
@@ -1921,7 +1922,7 @@ BOOL CALLBACK CSettings::infoOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARA
 				} else {
 				    i64 tmin = 0, tmax = 0;
 				    tmin = gSet.mn_FPS[0];
-				    for (int i = 0; i < countof(gSet.mn_FPS); i++) {
+				    for (UINT i = 0; i < countof(gSet.mn_FPS); i++) {
 					    if (gSet.mn_FPS[i] < tmin) tmin = gSet.mn_FPS[i];
 					    if (gSet.mn_FPS[i] > tmax) tmax = gSet.mn_FPS[i];
 				    }
@@ -2014,12 +2015,13 @@ void CSettings::Performance(UINT nID, BOOL bEnd)
     }
     if (nID<tPerfFPS || nID>tPerfInterval)
         return;
-        
+
     if (nID == tPerfFPS) {
 	    i64 tick2 = 0; //, tmin = 0, tmax = 0;
 	    QueryPerformanceCounter((LARGE_INTEGER *)&tick2);
 	    mn_FPS[mn_FPS_CUR_FRAME] = tick2;
-	    mn_FPS_CUR_FRAME++; if (mn_FPS_CUR_FRAME > countof(mn_FPS)) mn_FPS_CUR_FRAME = 0;
+	    mn_FPS_CUR_FRAME++;
+		if (mn_FPS_CUR_FRAME >= (int)countof(mn_FPS)) mn_FPS_CUR_FRAME = 0;
 	    //tmin = mn_FPS[0];
 	    //for (int i = 0; i < countof(mn_FPS); i++) {
 		//    if (mn_FPS[i] < tmin) tmin = mn_FPS[i];

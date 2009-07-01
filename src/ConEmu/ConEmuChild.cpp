@@ -1,6 +1,10 @@
 
 #include "Header.h"
 
+#if defined(__GNUC__)
+#define EXT_GNUC_LOG
+#endif
+
 
 CConEmuChild::CConEmuChild()
 {
@@ -174,7 +178,10 @@ LRESULT CConEmuChild::OnPaint()
 		GetWindowRect(gConEmu.hPictureView, &rcPic);
 		GetClientRect(ghWnd, &rcClient); // Нам нужен ПОЛНЫЙ размер но ПОД тулбаром.
 		MapWindowPoints(ghWnd, NULL, (LPPOINT)&rcClient, 2);
-		BOOL lbIntersect = IntersectRect(&rcCommon, &rcClient, &rcPic);
+		#ifdef _DEBUG
+		BOOL lbIntersect =
+		#endif
+		IntersectRect(&rcCommon, &rcClient, &rcPic);
 		
 		// Убрать из отрисовки прямоугольник PictureView
 		MapWindowPoints(NULL, ghWndDC, (LPPOINT)&rcPic, 2);
@@ -206,9 +213,11 @@ LRESULT CConEmuChild::OnPaint()
 LRESULT CConEmuChild::OnSize(WPARAM wParam, LPARAM lParam)
 {
 	LRESULT result = 0;
+	#ifdef _DEBUG
     BOOL lbIsPicView = FALSE;
 
 	RECT rcNewClient; GetClientRect(ghWndDC,&rcNewClient);
+	#endif
 
     // Вроде это и не нужно. Ни для Ansi ни для Unicode версии плагина
     // Все равно в ConEmu запрещен ресайз во время видимости окошка PictureView 
@@ -233,7 +242,10 @@ LRESULT CConEmuChild::OnSize(WPARAM wParam, LPARAM lParam)
 void CConEmuChild::Redraw()
 {
 	DEBUGSTR(L" +++ RedrawWindow on DC window called\n");
-	BOOL lbRc = RedrawWindow(ghWndDC, NULL, NULL,
+	#ifdef _DEBUG
+	BOOL lbRc =
+	#endif
+	RedrawWindow(ghWndDC, NULL, NULL,
 		RDW_INTERNALPAINT|RDW_NOERASE|RDW_UPDATENOW);
 }
 
@@ -320,7 +332,6 @@ CConEmuBack::CConEmuBack()
 	mn_LastColor = -1;
 	mn_ScrollWidth = 0;
 	mb_ScrollVisible = FALSE;
-	mpfn_ScrollProc = NULL;
 	memset(&mrc_LastClient, 0, sizeof(mrc_LastClient));
 	mb_LastTabVisible = false;
 #ifdef _DEBUG
@@ -352,6 +363,17 @@ HWND CConEmuBack::Create()
 		MBoxA(_T("Can't register background window class!"));
 		return NULL;
 	}
+	// Scroller
+	wc.lpfnWndProc = CConEmuBack::ScrollWndProc;
+	wc.lpszClassName = szClassNameScroll;
+	if (!RegisterClass(&wc)) {
+		dwLastError = GetLastError();
+		mh_WndBack = (HWND)-1; // чтобы родитель не ругался
+		mh_WndScroll = (HWND)-1;
+		MBoxA(_T("Can't register scroller window class!"));
+		return NULL;
+	}
+
 	DWORD style = WS_VISIBLE | WS_CHILD | WS_CLIPSIBLINGS ;
 	//RECT rc = gConEmu.ConsoleOffsetRect();
 	RECT rcClient; GetClientRect(ghWnd, &rcClient);
@@ -378,7 +400,7 @@ HWND CConEmuBack::Create()
 	//	ghWnd, NULL, (HINSTANCE)g_hInstance, NULL);
 	style = WS_VSCROLL|WS_CHILD|WS_CLIPSIBLINGS;
 	mn_ScrollWidth = GetSystemMetrics(SM_CXVSCROLL);
-	mh_WndScroll = CreateWindowEx(0/*|WS_EX_LAYERED*/ /*WS_EX_TRANSPARENT*/, szClassNameBack, NULL, style,
+	mh_WndScroll = CreateWindowEx(0/*|WS_EX_LAYERED*/ /*WS_EX_TRANSPARENT*/, szClassNameScroll, NULL, style,
 		rc.left - mn_ScrollWidth, rc.top,
 		mn_ScrollWidth, rc.bottom - rc.top,
 		ghWnd, NULL, (HINSTANCE)g_hInstance, NULL);
@@ -394,8 +416,6 @@ HWND CConEmuBack::Create()
 	//BOOL lbRcLayered = SetLayeredWindowAttributes ( mh_WndScroll, 0, 100, LWA_ALPHA );
 	//if (!lbRcLayered)
 	//	dwLastError = GetLastError();
-	#pragma warning (disable : 4312)
-	mpfn_ScrollProc = (WNDPROC)SetWindowLongPtr(mh_WndScroll, GWL_WNDPROC, (LONG_PTR)ScrollWndProc);
 
 	
 	//// Важно проверку делать после создания главного окна, иначе IsAppThemed будет возвращать FALSE
@@ -507,26 +527,39 @@ LRESULT CALLBACK CConEmuBack::ScrollWndProc(HWND hWnd, UINT messg, WPARAM wParam
 			return 0;
 	}
 
-	if (gConEmu.m_Back.mpfn_ScrollProc)
-		result = CallWindowProc(gConEmu.m_Back.mpfn_ScrollProc, hWnd, messg, wParam, lParam);
-	else
-		result = DefWindowProc(hWnd, messg, wParam, lParam);
+	result = DefWindowProc(hWnd, messg, wParam, lParam);
 
 	return result;
 }
 
 void CConEmuBack::Resize()
 {
-	if (!mh_WndBack || !IsWindow(mh_WndBack)) 
+	#if defined(EXT_GNUC_LOG)
+	CVirtualConsole* pVCon = gConEmu.ActiveCon();
+	#endif
+	
+	if (!mh_WndBack || !IsWindow(mh_WndBack)) {
+    	#if defined(EXT_GNUC_LOG)
+        pVCon->RCon()->LogString("  --  CConEmuBack::Resize() - exiting, mh_WndBack failed");
+        #endif
 		return;
+	}
 
 	//RECT rc = gConEmu.ConsoleOffsetRect();
 	RECT rcClient; GetClientRect(ghWnd, &rcClient);
 
 	bool bTabsShown = TabBar.IsShown();
 	if (mb_LastTabVisible == bTabsShown) {
-		if (memcmp(&rcClient, &mrc_LastClient, sizeof(RECT))==0)
+		if (memcmp(&rcClient, &mrc_LastClient, sizeof(RECT))==0) {
+        	#if defined(EXT_GNUC_LOG)
+        	char szDbg[255];
+        	wsprintfA(szDbg, "  --  CConEmuBack::Resize() - exiting, (%i,%i,%i,%i)==(%i,%i,%i,%i)",
+        		rcClient.left, rcClient.top, rcClient.right, rcClient.bottom,
+        		mrc_LastClient.left, mrc_LastClient.top, mrc_LastClient.right, mrc_LastClient.bottom);
+            pVCon->RCon()->LogString(szDbg);
+            #endif
 			return; // ничего не менялось
+		}
 	}
 	memmove(&mrc_LastClient, &rcClient, sizeof(RECT)); // сразу запомним
 	mb_LastTabVisible = bTabsShown;
@@ -539,6 +572,11 @@ void CConEmuBack::Resize()
 	GetClientRect(mh_WndBack, &rcClient);
 	#endif
 
+	#if defined(EXT_GNUC_LOG)
+	char szDbg[255]; wsprintfA(szDbg, "  --  CConEmuBack::Resize() - X=%i, Y=%i, W=%i, H=%i", rc.left, rc.top, 	rc.right - rc.left,	rc.bottom - rc.top );
+    pVCon->RCon()->LogString(szDbg);
+    #endif
+    
 	MoveWindow(mh_WndBack, 
 		rc.left, rc.top,
 		rc.right - rc.left,

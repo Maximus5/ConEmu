@@ -4,6 +4,7 @@ extern const TCHAR *const szClassName;
 extern const TCHAR *const szClassNameParent;
 extern const TCHAR *const szClassNameApp;
 extern const TCHAR *const szClassNameBack;
+extern const TCHAR *const szClassNameScroll;
 
 //class CVirtualConsole;
 //extern CVirtualConsole *pVCon;

@@ -50,6 +50,15 @@ USERLIBS = -lversion
 #WIDE - set for a unicode build
 #
 
+ifndef DEBUG
+DEBUGFLAGS=
+DEBUGLINKFLAGS=-s
+else
+DEBUGFLAGS=-g
+DEBUGLINKFLAGS=
+endif                   
+
+
 WIDE = 1
 DIRSURF = W
 RCWIDE = -D UNICODE -D _UNICODE
@@ -95,9 +104,9 @@ MKDIR = mkdir -p
 WINDRES = windres
 AR = ar
 RANLIB = ranlib
-CXXFLAGS = -mwindows -fexceptions -I $(COMMON) -I $(COMINC) -Wall -Os -funsigned-char -fomit-frame-pointer -fstrict-aliasing -fno-rtti $(CXXWIDE) $(USERCPP) 
-CCFLAGS = -mwindows -I $(COMMON) -I $(COMINC) -Wall -Os -funsigned-char -fomit-frame-pointer -fstrict-aliasing $(CCWIDE) $(USERCPP)
-LNKFLAGS = -mwindows $(USERLIBSFIRST) $(COMMONLIB) -luser32 -lkernel32 -ladvapi32 -lshell32 -lgdi32 -lcomdlg32 -lole32 -luuid -lcomctl32 $(USERLIBS)
+CXXFLAGS = $(DEBUGFLAGS) -mwindows -fexceptions -I $(COMMON) -I $(COMINC) -Wall -Os -funsigned-char -fomit-frame-pointer -fstrict-aliasing -fno-rtti $(CXXWIDE) $(USERCPP) 
+CCFLAGS = $(DEBUGFLAGS) -mwindows -I $(COMMON) -I $(COMINC) -Wall -Os -funsigned-char -fomit-frame-pointer -fstrict-aliasing $(CCWIDE) $(USERCPP)
+LNKFLAGS = $(DEBUGLINKFLAGS) -mwindows $(USERLIBSFIRST) $(COMMONLIB) -luser32 -lkernel32 -ladvapi32 -lshell32 -lgdi32 -lcomdlg32 -lole32 -luuid -lcomctl32 $(USERLIBS)
 RCFLAGS = -I $(COMINC) $(RCWIDE) $(USERRC)
 
 OBJS = $(patsubst %.cpp,$(OBJDIR)/%.o,$(filter %.cpp,$(SRCS))) $(patsubst %.c,$(OBJDIR)/%.o,$(filter %.c,$(SRCS))) $(RES)

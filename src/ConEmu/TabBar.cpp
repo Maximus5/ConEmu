@@ -373,7 +373,7 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
     
     int V, I, tabIdx = 0, nCurTab = -1;
 	CVirtualConsole* pVCon = NULL;
-    VConTabs vct = {NULL};
+    VConTabs vct = {{NULL}};
 
     // Выполняться должно только в основной нити, так что CriticalSection не нужна
     m_Tab2VCon.clear();
@@ -850,8 +850,10 @@ HWND TabBarClass::CreateTabbar()
             return NULL; 
         }
 
-        // Надо
+        #if !defined(__GNUC__)
         #pragma warning (disable : 4312)
+        #endif
+        // Надо
         _defaultTabProc = (WNDPROC)SetWindowLongPtr(mh_Tabbar, GWL_WNDPROC, (LONG_PTR)TabProc);
 
         if (!mh_TabTip || !IsWindow(mh_TabTip)) {

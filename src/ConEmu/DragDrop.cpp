@@ -586,7 +586,7 @@ void CDragDrop::RetrieveDragToInfo(IDataObject * pDataObject)
 	if (pipe.Init(_T("CDragDrop::DragEnter")))
 	{
 		//PipeCmd cmd=DragTo;
-		DWORD cbWritten=0;
+		//DWORD cbWritten=0;
 		//WriteFile(pipe.hPipe, &cmd, sizeof(cmd), &cbWritten, NULL); 
 		if (pipe.Execute(CMD_DRAGTO))
 		{
@@ -595,7 +595,7 @@ void CDragDrop::RetrieveDragToInfo(IDataObject * pDataObject)
 					if (m_pfpi) {free(m_pfpi); m_pfpi=NULL;}
 					if (pipe.Read(&cbStructSize, sizeof(int), &cbBytesRead))
 					{
-						if (cbStructSize>sizeof(ForwardedPanelInfo)) {
+						if ((DWORD)cbStructSize>sizeof(ForwardedPanelInfo)) {
 							m_pfpi = (ForwardedPanelInfo*)calloc(cbStructSize, 1);
 
 							pipe.Read(m_pfpi, cbStructSize, &cbBytesRead);
@@ -693,7 +693,7 @@ void CDragDrop::Drag()
 	CConEmuPipe pipe(gConEmu.GetFarPID(), CONEMUREADYTIMEOUT);
 	if (pipe.Init(_T("CDragDrop::Drag")))
 	{
-		DWORD cbWritten=0;
+		//DWORD cbWritten=0;
 		if (pipe.Execute(CMD_DRAGFROM))
 		{
 					gConEmu.DnDstep(_T("DnD: Recieving data"));
@@ -737,7 +737,7 @@ void CDragDrop::Drag()
 						if (m_pfpi) {free(m_pfpi); m_pfpi=NULL;}
 						if (pipe.Read(&cbStructSize, sizeof(int), &cbBytesRead))
 						{
-							if (cbStructSize>sizeof(ForwardedPanelInfo)) {
+							if ((DWORD)cbStructSize>sizeof(ForwardedPanelInfo)) {
 								m_pfpi = (ForwardedPanelInfo*)calloc(cbStructSize, 1);
 
 								pipe.Read(m_pfpi, cbStructSize, &cbBytesRead);

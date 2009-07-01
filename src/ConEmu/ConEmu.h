@@ -121,7 +121,7 @@ protected:
 	LPTSTR GetTitleStart();
 	BOOL mb_InTimer;
 	BOOL mb_ProcessCreated; DWORD mn_StartTick;
-	HWINEVENTHOOK mh_WinHook;
+	HWINEVENTHOOK mh_WinHook; //, mh_PopupHook;
 	static VOID CALLBACK WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime);
 	CVirtualConsole *mp_VCon[MAX_CONSOLE_COUNT], *pVCon;
 	bool mb_SkipSyncSize, mb_PassSysCommand;

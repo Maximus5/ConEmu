@@ -7,6 +7,7 @@
 #define VirtualConsoleClassMain L"VirtualConsoleClass"
 #define VirtualConsoleClassApp L"VirtualConsoleClassApp"
 #define VirtualConsoleClassBack L"VirtualConsoleClassBack"
+#define VirtualConsoleClassScroll L"VirtualConsoleClassScroll"
 
 // Service function
 HWND AtoH(char *Str, int Len);

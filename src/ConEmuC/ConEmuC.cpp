@@ -31,7 +31,7 @@ WARNING("При запуске как ComSpec получаем ошибку: {crNewSize.X>=MIN_CON_WIDTH &&
 // Раскомментировать для вывода в консоль информации режима Comspec
     #define PRINT_COMSPEC(f,a) //wprintf(f,a)
 #elif defined(__GNUC__)
-    #define PRINT_COMSPEC(f,a) wprintf(f,a)
+    #define PRINT_COMSPEC(f,a) //wprintf(f,a)
 #else
 	#define PRINT_COMSPEC(f,a)
 #endif
@@ -74,7 +74,7 @@ CRITICAL_SECTION gcsHeap;
 #endif
 
 #if !defined(CONSOLE_APPLICATION_16BIT)
-#define CONSOLE_APPLICATION_16BIT       0x0000
+#define CONSOLE_APPLICATION_16BIT       0x0001
 #endif
 
 
@@ -153,7 +153,7 @@ void CheckKeyboardLayout();
 int CALLBACK FontEnumProc(ENUMLOGFONTEX *lpelfe, NEWTEXTMETRICEX *lpntme, DWORD FontType, LPARAM lParam);
 typedef DWORD (WINAPI* FGetConsoleProcessList)(LPDWORD lpdwProcessList, DWORD dwProcessCount);
 FGetConsoleProcessList pfnGetConsoleProcessList = NULL;
-BOOL HookWinEvents(BOOL abEnabled);
+BOOL HookWinEvents(int abEnabled);
 BOOL CheckProcessCount(BOOL abForce=FALSE);
 BOOL IsNeedCmd(LPCWSTR asCmdLine, BOOL *rbNeedCutStartEndQuot);
 BOOL FileExists(LPCWSTR asFile);
@@ -215,11 +215,12 @@ struct tag_Srv {
     //std::vector<DWORD> nProcesses;
 	UINT nProcessCount, nMaxProcesses;
 	DWORD* pnProcesses, *pnProcessesCopy, nProcessStartTick;
+	BOOL bNtvdmActive;
     //
     wchar_t szPipename[MAX_PATH], szInputname[MAX_PATH], szGuiPipeName[MAX_PATH];
     //
     HANDLE hConEmuGuiAttached;
-    HWINEVENTHOOK hWinHook;
+    HWINEVENTHOOK hWinHook, hWinHookStartEnd;
     //BOOL bContentsChanged; // Первое чтение параметров должно быть ПОЛНЫМ
     wchar_t* psChars;
     WORD* pnAttrs;
@@ -294,7 +295,7 @@ wchar_t* wpszLogSizeFile = NULL;
 BOOL gbInRecreateRoot = FALSE;
 
 //#define CES_NTVDM 0x10 -- common.hpp
-DWORD dwActiveFlags = 0;
+//DWORD dwActiveFlags = 0;
 
 #define CERR_GETCOMMANDLINE 100
 #define CERR_CARGUMENT 101
@@ -1715,7 +1716,7 @@ void ServerDone(int aiRc)
     //    SafeCloseHandle(srv.hChangingSize);
     //}
     // Отключить хук
-    HookWinEvents ( FALSE );
+    HookWinEvents ( -1 );
     
     if (gpStoredOutput) { Free(gpStoredOutput); gpStoredOutput = NULL; }
     if (srv.psChars) { Free(srv.psChars); srv.psChars = NULL; }
@@ -2302,7 +2303,7 @@ Loop1:
     //  if (srv.sbi.dwMaximumWindowSize.Y < srv.sbi.dwSize.Y)
     //      gnBufferHeight = srv.sbi.dwSize.Y; // Это однозначно буферный режим
     //}
-    if (gnBufferHeight == 0) {
+    if (gnBufferHeight == 0 || srv.bNtvdmActive) {
         TextHeight = srv.sbi.dwSize.Y; //srv.sbi.srWindow.Bottom - srv.sbi.srWindow.Top + 1;
     } else {
         //Для режима BufferHeight нужно считать по другому!
@@ -2760,30 +2761,46 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
     return lbRc;
 }
 
-BOOL HookWinEvents(BOOL abEnabled)
+BOOL HookWinEvents(int abEnabled)
 {
-	if (abEnabled) {
+	if (abEnabled == 1) {
 		if (srv.hWinHook != NULL) {
 			PRINT_COMSPEC(L"!!! HookWinEvents was already set !!!\n", 0);
 			return TRUE;
 		}
 		
-        // "Ловим" все консольные события
-        srv.hWinHook = SetWinEventHook(EVENT_CONSOLE_CARET,EVENT_CONSOLE_END_APPLICATION,
-            NULL, (WINEVENTPROC)WinEventProc, 0,0, WINEVENT_OUTOFCONTEXT /*| WINEVENT_SKIPOWNPROCESS ?*/);
+		if (!srv.hWinHook) {
+			// "Ловим" все консольные события (кроме Start/End)
+			srv.hWinHook = SetWinEventHook(EVENT_CONSOLE_CARET,EVENT_CONSOLE_LAYOUT,
+				NULL, (WINEVENTPROC)WinEventProc, 0,0, WINEVENT_OUTOFCONTEXT /*| WINEVENT_SKIPOWNPROCESS ?*/);
 
-        if (!srv.hWinHook) {
-        	DWORD dwErr = GetLastError();
-        	PRINT_COMSPEC(L"!!! HookWinEvents FAILED, ErrCode=0x%08X\n", dwErr);
-        	return FALSE;
+			if (!srv.hWinHook) {
+        		PRINT_COMSPEC(L"!!! HookWinEvents FAILED, ErrCode=0x%08X\n", GetLastError());
+        		return FALSE;
+			}
         }
-        
+
+		if (!srv.hWinHookStartEnd) {
+			// "Ловим" (Start/End)
+			srv.hWinHookStartEnd = SetWinEventHook(EVENT_CONSOLE_START_APPLICATION,EVENT_CONSOLE_END_APPLICATION,
+				NULL, (WINEVENTPROC)WinEventProc, 0,0, WINEVENT_OUTOFCONTEXT /*| WINEVENT_SKIPOWNPROCESS ?*/);
+
+			if (!srv.hWinHookStartEnd) {
+        		PRINT_COMSPEC(L"!!! HookWinEvents(StartEnd) FAILED, ErrCode=0x%08X\n", GetLastError());
+        		return FALSE;
+			}
+        }
+
         PRINT_COMSPEC(L"WinEventsHook was enabled\n", 0);
         
-	} else {
+	}
+	if (abEnabled != 1) {
+		if (abEnabled == -1 && srv.hWinHookStartEnd) {
+	        UnhookWinEvent(srv.hWinHookStartEnd); srv.hWinHookStartEnd = NULL;
+	        PRINT_COMSPEC(L"WinEventsHook(StartEnd) was disabled\n", 0);
+		}
 	    if (srv.hWinHook) {
 	        UnhookWinEvent(srv.hWinHook); srv.hWinHook = NULL;
-	        
 	        PRINT_COMSPEC(L"WinEventsHook was disabled\n", 0);
 	    }
 	    return TRUE;
@@ -2799,7 +2816,7 @@ DWORD WINAPI WinEventThread(LPVOID lpvParam)
     
     
     // "Ловим" все консольные события
-    HookWinEvents ( TRUE );
+    HookWinEvents ( 1 );
     
     //
     //SetEvent(hStartedEvent); hStartedEvent = NULL; // здесь он более не требуется
@@ -2808,7 +2825,7 @@ DWORD WINAPI WinEventThread(LPVOID lpvParam)
     while (GetMessage(&lpMsg, NULL, 0, 0))
     {
     	if (lpMsg.message == srv.nMsgHookEnableDisable) {
-    		HookWinEvents ( lpMsg.wParam != 0 );
+			HookWinEvents ( (lpMsg.wParam != 0) ? 1 : 0 );
     		continue;
     	}
         MCHKHEAP
@@ -2821,7 +2838,7 @@ DWORD WINAPI WinEventThread(LPVOID lpvParam)
     }
     
     // Закрыть хук
-    HookWinEvents ( FALSE );
+    HookWinEvents ( -1 );
 
     MCHKHEAP
     
@@ -3038,6 +3055,7 @@ void WINAPI WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LO
         //If the application is a 16-bit application, the idChild parameter is CONSOLE_APPLICATION_16BIT and idObject is the process identifier of the NTVDM session associated with the console.
 
         #ifdef _DEBUG
+        _ASSERTE(CONSOLE_APPLICATION_16BIT==1);
         wsprintfW(szDbg, L"EVENT_CONSOLE_START_APPLICATION(PID=%i%s)\n", idObject, (idChild == CONSOLE_APPLICATION_16BIT) ? L" 16bit" : L"");
         DEBUGSTR(szDbg);
         #endif
@@ -3050,10 +3068,16 @@ void WINAPI WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LO
             LeaveCriticalSection(&srv.csProc);
 				*/
 
+			_ASSERTE(CONSOLE_APPLICATION_16BIT==1);
             if (idChild == CONSOLE_APPLICATION_16BIT) {
                 //DWORD ntvdmPID = idObject;
-                dwActiveFlags |= CES_NTVDM;
+                //dwActiveFlags |= CES_NTVDM;
+				srv.bNtvdmActive = TRUE;
                 SetPriorityClass(GetCurrentProcess(), HIGH_PRIORITY_CLASS);
+
+				// Тут менять высоту уже нельзя... смена размера не доходит до 16бит приложения...
+				// Возможные значения высоты - 25/28/50 строк. При старте - обычно 28
+				// Ширина - только 80 символов
             }
             //
             //HANDLE hIn = CreateFile(L"CONIN$", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_READ,
@@ -3078,9 +3102,11 @@ void WINAPI WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LO
         if (((DWORD)idObject) != gnSelfPID) {
 			CheckProcessCount(TRUE);
 
+			_ASSERTE(CONSOLE_APPLICATION_16BIT==1);
 			if (idChild == CONSOLE_APPLICATION_16BIT) {
 				//DWORD ntvdmPID = idObject;
-				dwActiveFlags &= ~CES_NTVDM;
+				//dwActiveFlags &= ~CES_NTVDM;
+				srv.bNtvdmActive = FALSE;
 				//TODO: возможно стоит прибить процесс NTVDM?
 				SetPriorityClass(GetCurrentProcess(), NORMAL_PRIORITY_CLASS);
 			}

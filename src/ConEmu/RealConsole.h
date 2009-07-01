@@ -224,7 +224,7 @@ private:
     std::vector<ConProcess> m_Processes;
     int mn_ProcessCount;
     //
-    DWORD mn_FarPID;
+    DWORD mn_FarPID, mn_LastSetForegroundPID;
     //
     ConEmuTab* mp_tabs;
     int mn_tabsCount, mn_ActiveTab;

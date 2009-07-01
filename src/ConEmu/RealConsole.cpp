@@ -44,9 +44,9 @@ WARNING("Часто после разблокирования компьютера размер консоли изменяется (OK), 
 #endif
 
 #ifdef _DEBUG
-	#define FORCE_INVALIDATE_TIMEOUT 3000
+    #define FORCE_INVALIDATE_TIMEOUT 3000
 #else
-	#define FORCE_INVALIDATE_TIMEOUT 300
+    #define FORCE_INVALIDATE_TIMEOUT 300
 #endif
 
 CRealConsole::CRealConsole(CVirtualConsole* apVCon)
@@ -60,7 +60,7 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
     wcscpy(ms_PanelTitle, Title);
     mn_Progress = -1; // Процентов нет
 
-	hPictureView = NULL; mb_PicViewWasHidden = FALSE;
+    hPictureView = NULL; mb_PicViewWasHidden = FALSE;
 
     mh_MonitorThread = NULL; mn_MonitorThreadID = 0; mn_ConEmuC_PID = 0; mh_ConEmuC = NULL; mh_ConEmuCInput = NULL;
     mb_NeedStartProcess = FALSE;
@@ -78,12 +78,13 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
     ms_SpecialCmd = NULL;
     mb_FullRetrieveNeeded = FALSE;
     memset(&m_LastMouse, 0, sizeof(m_LastMouse));
-	mb_DataChanged = FALSE;
+    mb_DataChanged = FALSE;
 
     mn_ProgramStatus = 0; mn_FarStatus = 0;
     isShowConsole = false;
     mb_ConsoleSelectMode = false;
     mn_ProcessCount = 0; mn_FarPID = 0; mn_InRecreate = 0; mb_ProcessRestarted = FALSE;
+    mn_LastSetForegroundPID = 0;
     mh_ServerSemaphore = NULL;
     memset(mh_ServerThreads, 0, sizeof(mh_ServerThreads)); mh_ActiveServerThread = NULL;
     memset(mn_ServerThreadsId, 0, sizeof(mn_ServerThreadsId));
@@ -105,14 +106,14 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
 
     m_UseLogs = gSet.isAdvLogging;
 
-	mb_PluginDetected = FALSE; mn_FarPID_PluginDetected = 0;
+    mb_PluginDetected = FALSE; mn_FarPID_PluginDetected = 0;
 
-	lstrcpy(ms_Editor, L"edit ");
-	MultiByteToWideChar(CP_ACP, 0, "редактирование ", -1, ms_EditorRus, 32);
-	lstrcpy(ms_Viewer, L"view ");
-	MultiByteToWideChar(CP_ACP, 0, "просмотр ", -1, ms_ViewerRus, 32);
-	lstrcpy(ms_TempPanel, L"{Temporary panel");
-	MultiByteToWideChar(CP_ACP, 0, "{Временная панель", -1, ms_TempPanelRus, 32);
+    lstrcpy(ms_Editor, L"edit ");
+    MultiByteToWideChar(CP_ACP, 0, "редактирование ", -1, ms_EditorRus, 32);
+    lstrcpy(ms_Viewer, L"view ");
+    MultiByteToWideChar(CP_ACP, 0, "просмотр ", -1, ms_ViewerRus, 32);
+    lstrcpy(ms_TempPanel, L"{Temporary panel");
+    MultiByteToWideChar(CP_ACP, 0, "{Временная панель", -1, ms_TempPanelRus, 32);
 
 
     SetTabs(NULL,1); // Для начала - показывать вкладку Console, а там ФАР разберется
@@ -132,7 +133,7 @@ CRealConsole::~CRealConsole()
         { Free(con.pConAttr); con.pConAttr = NULL; }
 
     if (ms_SpecialCmd)
-    	{ Free(ms_SpecialCmd); ms_SpecialCmd = NULL; }
+        { Free(ms_SpecialCmd); ms_SpecialCmd = NULL; }
 
 
     SafeCloseHandle(mh_ConEmuC); mn_ConEmuC_PID = 0;
@@ -158,12 +159,12 @@ BOOL CRealConsole::PreCreate(BOOL abDetached, LPCWSTR asNewCmd /*= NULL*/)
     mb_NeedStartProcess = FALSE;
 
     if (asNewCmd && !ms_SpecialCmd) {
-    	_ASSERTE(abDetached == FALSE);
-    	int nLen = lstrlenW(asNewCmd);
-    	ms_SpecialCmd = (wchar_t*)Alloc(nLen+1,2);
-    	if (!ms_SpecialCmd)
-    		return FALSE;
-    	lstrcpyW(ms_SpecialCmd, asNewCmd);
+        _ASSERTE(abDetached == FALSE);
+        int nLen = lstrlenW(asNewCmd);
+        ms_SpecialCmd = (wchar_t*)Alloc(nLen+1,2);
+        if (!ms_SpecialCmd)
+            return FALSE;
+        lstrcpyW(ms_SpecialCmd, asNewCmd);
     }
 
     if (abDetached) {
@@ -211,7 +212,7 @@ BOOL CRealConsole::SetConsoleSize(COORD size, DWORD anCmdID/*=CECMD_SETSIZE*/)
     //_ASSERTE(hConWnd && ms_ConEmuC_Pipe[0]);
 
     if (!hConWnd || ms_ConEmuC_Pipe[0] == 0) {
-	    // 19.06.2009 Maks - Она действительно может быть еще не создана
+        // 19.06.2009 Maks - Она действительно может быть еще не создана
         //Box(_T("Console was not created (CRealConsole::SetConsoleSize)"));
         return false; // консоль пока не создана?
     }
@@ -385,7 +386,7 @@ void CRealConsole::SyncConsole2Window()
 
     // Посчитать нужный размер консоли
     RECT newCon = gConEmu.CalcRect(CER_CONSOLE, rcClient, CER_MAINCLIENT);
-	_ASSERTE(newCon.right>20 && newCon.bottom>6);
+    _ASSERTE(newCon.right>20 && newCon.bottom>6);
 
     SetConsoleSize(MakeCoord(newCon.right, newCon.bottom));
 }
@@ -558,17 +559,20 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
         nWait = WaitForMultipleObjects(nEvents, hEvents, FALSE, (bIconic || !bActive) ? max(1000,nElapse) : nElapse);
         _ASSERTE(nWait!=(DWORD)-1);
 
-		if (nWait == IDEVENT_TERM /*|| !bLoop*/ || nWait == IDEVENT_CONCLOSED) {
-			if (nWait == IDEVENT_CONCLOSED) {
-				DEBUGSTR(L"### ConEmuC.exe was terminated\n");
-			}
+        if (nWait == IDEVENT_TERM /*|| !bLoop*/ || nWait == IDEVENT_CONCLOSED) {
+            if (nWait == IDEVENT_CONCLOSED) {
+                DEBUGSTR(L"### ConEmuC.exe was terminated\n");
+            }
             break; // требование завершения нити
-		}
+        }
 
         // Проверим, что ConEmuC жив
         if (pRCon->mh_ConEmuC) {
             DWORD dwExitCode = 0;
-            BOOL fSuccess = GetExitCodeProcess(pRCon->mh_ConEmuC, &dwExitCode);
+            #ifdef _DEBUG
+            BOOL fSuccess = 
+            #endif
+            GetExitCodeProcess(pRCon->mh_ConEmuC, &dwExitCode);
             if (dwExitCode!=STILL_ACTIVE) {
                 pRCon->StopSignal();
                 return 0;
@@ -615,7 +619,7 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
             }
 
             if (nWait==IDEVENT_PACKETARRIVED || pRCon->isPackets()) {
-				//MSectionLock cs; cs.Lock(&pRCon->csPKT, TRUE);
+                //MSectionLock cs; cs.Lock(&pRCon->csPKT, TRUE);
                 CESERVER_REQ* pPkt = NULL;
                 while ((pPkt = pRCon->PopPacket()) != NULL) {
                     pRCon->ApplyConsoleInfo(pPkt);
@@ -633,13 +637,13 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
                 && GetWindowText(pRCon->hConWnd, pRCon->TitleCmp, countof(pRCon->TitleCmp)-2)
                 && wcscmp(pRCon->Title, pRCon->TitleCmp))
             {
-				pRCon->OnTitleChanged();
+                pRCon->OnTitleChanged();
             } else if (bActive) {
                 if (wcscmp(pRCon->Title, gConEmu.GetTitle()))
                     gConEmu.UpdateTitle(pRCon->TitleCmp);
             }
 
-			bool lbIsActive = pRCon->isActive();
+            bool lbIsActive = pRCon->isActive();
 
             // По con.m_sbi проверяет, включена ли прокрутка
             bool lbForceUpdate = pRCon->CheckBufferSize();
@@ -650,39 +654,39 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 
             // 04.06.2009 Maks - видимо, EndUpdateEvent не всегда вызывался!
             // 04.06.2009 Maks - если консоль активна - Invalidate вызовет сам VCon при необходимости
-			if ((nWait == (WAIT_OBJECT_0+1)) || lbForceUpdate || pRCon->mb_DataChanged) {
-				pRCon->mb_DataChanged = FALSE;
-				if (lbIsActive) {
-    				gConEmu.m_Child.Validate(); // сбросить флажок
-					pRCon->LogString("mp_VCon->Update from CRealConsole::MonitorThread");
-    				if (pRCon->mp_VCon->Update(lbForceUpdate))
-						gConEmu.m_Child.Redraw();
-    				pRCon->mn_LastInvalidateTick = GetTickCount();
-    			}
-			} else if (lbIsActive) {
-				if (gSet.isCursorBlink) {
-    				// Возможно, настало время мигнуть курсором?
-    				bool lbNeedBlink = false;
-    				pRCon->mp_VCon->UpdateCursor(lbNeedBlink);
-    				// UpdateCursor Invalidate не зовет
-    				if (lbNeedBlink) {
-						pRCon->LogString("Invalidating from CRealConsole::MonitorThread.1");
-						gConEmu.m_Child.Redraw();
-    					/*gConEmu.m_Child.Validate(); // сбросить флажок
-    					gConEmu.m_Child.Invalidate();
-						UpdateWindow(ghWndDC);*/
-    					pRCon->mn_LastInvalidateTick = GetTickCount();
-    				}
-    			} else if (((GetTickCount() - pRCon->mn_LastInvalidateTick) > FORCE_INVALIDATE_TIMEOUT)) {
-					DEBUGSTR("+++ Force invalidate by timeout\n");
-					pRCon->LogString("Invalidating from CRealConsole::MonitorThread.2");
-					gConEmu.m_Child.Redraw();
-    				/*gConEmu.m_Child.Validate(); // сбросить флажок
-    				gConEmu.m_Child.Invalidate();
-					UpdateWindow(ghWndDC);*/ //2009-06-24. Подозрение, что если не это - у Zeroes1 не отрисовываются изменения
-    				pRCon->mn_LastInvalidateTick = GetTickCount();
-    			}
-			}
+            if ((nWait == (WAIT_OBJECT_0+1)) || lbForceUpdate || pRCon->mb_DataChanged) {
+                pRCon->mb_DataChanged = FALSE;
+                if (lbIsActive) {
+                    gConEmu.m_Child.Validate(); // сбросить флажок
+                    pRCon->LogString("mp_VCon->Update from CRealConsole::MonitorThread");
+                    if (pRCon->mp_VCon->Update(lbForceUpdate))
+                        gConEmu.m_Child.Redraw();
+                    pRCon->mn_LastInvalidateTick = GetTickCount();
+                }
+            } else if (lbIsActive) {
+                if (gSet.isCursorBlink) {
+                    // Возможно, настало время мигнуть курсором?
+                    bool lbNeedBlink = false;
+                    pRCon->mp_VCon->UpdateCursor(lbNeedBlink);
+                    // UpdateCursor Invalidate не зовет
+                    if (lbNeedBlink) {
+                        pRCon->LogString("Invalidating from CRealConsole::MonitorThread.1");
+                        gConEmu.m_Child.Redraw();
+                        /*gConEmu.m_Child.Validate(); // сбросить флажок
+                        gConEmu.m_Child.Invalidate();
+                        UpdateWindow(ghWndDC);*/
+                        pRCon->mn_LastInvalidateTick = GetTickCount();
+                    }
+                } else if (((GetTickCount() - pRCon->mn_LastInvalidateTick) > FORCE_INVALIDATE_TIMEOUT)) {
+                    DEBUGSTR("+++ Force invalidate by timeout\n");
+                    pRCon->LogString("Invalidating from CRealConsole::MonitorThread.2");
+                    gConEmu.m_Child.Redraw();
+                    /*gConEmu.m_Child.Validate(); // сбросить флажок
+                    gConEmu.m_Child.Invalidate();
+                    UpdateWindow(ghWndDC);*/ //2009-06-24. Подозрение, что если не это - у Zeroes1 не отрисовываются изменения
+                    pRCon->mn_LastInvalidateTick = GetTickCount();
+                }
+            }
 
             //SetEvent(pRCon->mh_EndUpdateEvent);
         } catch(...) {
@@ -771,10 +775,10 @@ BOOL CRealConsole::PreInit(BOOL abCreateBuffers/*=TRUE*/)
     //      rcWnd.right += GetSystemMetrics(SM_CXVSCROLL);
     //}
     RECT rcCon;
-	if (IsIconic(ghWnd))
-		rcCon = MakeRect(gSet.wndWidth, gSet.wndHeight);
-	else
-		rcCon = gConEmu.CalcRect(CER_CONSOLE, rcWnd, CER_MAINCLIENT);
+    if (IsIconic(ghWnd))
+        rcCon = MakeRect(gSet.wndWidth, gSet.wndHeight);
+    else
+        rcCon = gConEmu.CalcRect(CER_CONSOLE, rcWnd, CER_MAINCLIENT);
     _ASSERTE(rcCon.right!=0 && rcCon.bottom!=0);
     if (con.bBufferHeight) {
         con.m_sbi.dwSize = MakeCoord(rcCon.right,gSet.DefaultBufferHeight);
@@ -822,11 +826,12 @@ BOOL CRealConsole::StartProcess()
     
         STARTUPINFO si;
         PROCESS_INFORMATION pi;
+        wchar_t szInitConTitle[255];
 
         ZeroMemory( &si, sizeof(si) );
         si.cb = sizeof(si);
         si.dwFlags = STARTF_USESHOWWINDOW|STARTF_USECOUNTCHARS/*|STARTF_USEPOSITION*/;
-        si.lpTitle = CEC_INITTITLE;
+        si.lpTitle = wcscpy(szInitConTitle, CEC_INITTITLE);
         si.dwXCountChars = con.m_sbi.dwSize.X;
         si.dwYCountChars = con.m_sbi.dwSize.Y;
         si.wShowWindow = gSet.isConVisible ? SW_SHOWNORMAL : SW_HIDE;
@@ -846,9 +851,9 @@ BOOL CRealConsole::StartProcess()
 
             LPCWSTR lpszCmd = NULL;
             if (ms_SpecialCmd)
-            	lpszCmd = ms_SpecialCmd;
+                lpszCmd = ms_SpecialCmd;
             else
-            	lpszCmd = gSet.GetCmd();
+                lpszCmd = gSet.GetCmd();
 
             int nLen = _tcslen(lpszCmd);
             TCHAR *pszSlash=NULL;
@@ -896,7 +901,7 @@ BOOL CRealConsole::StartProcess()
 
             if (lbRc)
             {
-				ProcessUpdate(&pi.dwProcessId, 1);
+                ProcessUpdate(&pi.dwProcessId, 1);
 
                 AllowSetForegroundWindow(pi.dwProcessId);
                 SetForegroundWindow(ghWnd);
@@ -934,31 +939,31 @@ BOOL CRealConsole::StartProcess()
                 _tcscat(psz, pszErr);
                 if (ms_SpecialCmd == NULL)
                 {
-	                if (psz[_tcslen(psz)-1]!=_T('\n')) _tcscat(psz, _T("\r\n"));
-    	            if (!gSet.psCurCmd && StrStrI(gSet.GetCmd(), gSet.GetDefaultCmd())==NULL) {
-        	            _tcscat(psz, _T("\r\n\r\n"));
-            	        _tcscat(psz, _T("Do You want to simply start "));
-                	    _tcscat(psz, gSet.GetDefaultCmd());
-                    	_tcscat(psz, _T("?"));
-	                    nButtons |= MB_YESNO;
-    	            }
+                    if (psz[_tcslen(psz)-1]!=_T('\n')) _tcscat(psz, _T("\r\n"));
+                    if (!gSet.psCurCmd && StrStrI(gSet.GetCmd(), gSet.GetDefaultCmd())==NULL) {
+                        _tcscat(psz, _T("\r\n\r\n"));
+                        _tcscat(psz, _T("Do You want to simply start "));
+                        _tcscat(psz, gSet.GetDefaultCmd());
+                        _tcscat(psz, _T("?"));
+                        nButtons |= MB_YESNO;
+                    }
                 }
                 MCHKHEAP
                 //Box(psz);
                 int nBrc = MessageBox(NULL, psz, _T("ConEmu"), nButtons);
                 Free(psz); Free(pszErr);
                 if (nBrc!=IDYES) {
-                	// ??? Может ведь быть НЕСКОЛЬКО консолей. Нельзя так разрушать основное окно!
+                    // ??? Может ведь быть НЕСКОЛЬКО консолей. Нельзя так разрушать основное окно!
                     //gConEmu.Destroy();
                     return FALSE;
                 }
                 // Выполнить стандартную команду...
                 if (ms_SpecialCmd == NULL)
                 {
-	                gSet.psCurCmd = _tcsdup(gSet.GetDefaultCmd());
-	            }
-    	        nStep ++;
-        	    MCHKHEAP
+                    gSet.psCurCmd = _tcsdup(gSet.GetDefaultCmd());
+                }
+                nStep ++;
+                MCHKHEAP
                 if (psCurCmd) free(psCurCmd); psCurCmd = NULL;
             }
         }
@@ -1080,19 +1085,21 @@ void CRealConsole::SendMouseEvent(UINT messg, WPARAM wParam, int x, int y)
             if (con.bRBtnDrag && !lbRBtnDrag) {
                 con.bRBtnDrag = FALSE;
             } else if (con.bRBtnDrag) {
+            	#ifdef _DEBUG
                 SHORT nXDelta = crMouse.X - con.crRBtnDrag.X;
+                #endif
                 SHORT nYDelta = crMouse.Y - con.crRBtnDrag.Y;
                 if (nYDelta < -1 || nYDelta > 1) {
                     // Если после предыдущего драга прошло более 1 строки
                     SHORT nYstep = (nYDelta < -1) ? -1 : 1;
                     SHORT nYend = crMouse.Y; // - nYstep;
-					crMouse.Y = con.crRBtnDrag.Y + nYstep;
+                    crMouse.Y = con.crRBtnDrag.Y + nYstep;
                     // досылаем пропущенные строки
                     while (crMouse.Y != nYend) {
-						#ifdef _DEBUG
-						wchar_t szDbg[60]; wsprintf(szDbg, L"+++ Add right button drag: {%ix%i}\n", crMouse.X, crMouse.Y);
-						OutputDebugString(szDbg);
-						#endif
+                        #ifdef _DEBUG
+                        wchar_t szDbg[60]; wsprintf(szDbg, L"+++ Add right button drag: {%ix%i}\n", crMouse.X, crMouse.Y);
+                        OutputDebugString(szDbg);
+                        #endif
                         r.Event.MouseEvent.dwMousePosition = crMouse;
                         SendConsoleEvent ( &r );
                         crMouse.Y += nYstep;
@@ -1106,6 +1113,13 @@ void CRealConsole::SendMouseEvent(UINT messg, WPARAM wParam, int x, int y)
         }
         
         r.Event.MouseEvent.dwMousePosition = crMouse;
+
+        if (mn_FarPID && mn_FarPID != mn_LastSetForegroundPID) {
+            //DWORD dwFarPID = GetFarPID();
+            //if (dwFarPID)
+            AllowSetForegroundWindow(mn_FarPID);
+            mn_LastSetForegroundPID = mn_FarPID;
+        }
 
         // Посылаем событие в консоль через ConEmuC
         SendConsoleEvent ( &r );
@@ -1146,32 +1160,32 @@ void CRealConsole::SendMouseEvent(UINT messg, WPARAM wParam, int x, int y)
 void CRealConsole::SendConsoleEvent(INPUT_RECORD* piRec)
 {
     if (piRec->EventType == MOUSE_EVENT) {
-    	if (piRec->Event.MouseEvent.dwEventFlags == MOUSE_MOVED) {
-    		if (m_LastMouse.dwEventFlags != 0
-			 && m_LastMouse.dwButtonState     == piRec->Event.MouseEvent.dwButtonState 
-    		 && m_LastMouse.dwControlKeyState == piRec->Event.MouseEvent.dwControlKeyState
-    		 && m_LastMouse.dwMousePosition.X == piRec->Event.MouseEvent.dwMousePosition.X
-    		 && m_LastMouse.dwMousePosition.Y == piRec->Event.MouseEvent.dwMousePosition.Y)
-			{
-				#ifdef _DEBUG
-				wchar_t szDbg[60];
-				wsprintf(szDbg, L"!!! Skipping ConEmu.Mouse event at: {%ix%i}\n", m_LastMouse.dwMousePosition.X, m_LastMouse.dwMousePosition.Y);
-				DEBUGSTR(szDbg);
-				#endif
-    			return; // Это событие лишнее. Движения мышки реально не было, кнопки не менялись
-			}
-    	}
+        if (piRec->Event.MouseEvent.dwEventFlags == MOUSE_MOVED) {
+            if (m_LastMouse.dwEventFlags != 0
+             && m_LastMouse.dwButtonState     == piRec->Event.MouseEvent.dwButtonState 
+             && m_LastMouse.dwControlKeyState == piRec->Event.MouseEvent.dwControlKeyState
+             && m_LastMouse.dwMousePosition.X == piRec->Event.MouseEvent.dwMousePosition.X
+             && m_LastMouse.dwMousePosition.Y == piRec->Event.MouseEvent.dwMousePosition.Y)
+            {
+                #ifdef _DEBUG
+                wchar_t szDbg[60];
+                wsprintf(szDbg, L"!!! Skipping ConEmu.Mouse event at: {%ix%i}\n", m_LastMouse.dwMousePosition.X, m_LastMouse.dwMousePosition.Y);
+                DEBUGSTR(szDbg);
+                #endif
+                return; // Это событие лишнее. Движения мышки реально не было, кнопки не менялись
+            }
+        }
         // Запомним
         m_LastMouse.dwMousePosition   = piRec->Event.MouseEvent.dwMousePosition;
         m_LastMouse.dwEventFlags      = piRec->Event.MouseEvent.dwEventFlags;
         m_LastMouse.dwButtonState     = piRec->Event.MouseEvent.dwButtonState;
         m_LastMouse.dwControlKeyState = piRec->Event.MouseEvent.dwControlKeyState;
 
-		#ifdef _DEBUG
-		wchar_t szDbg[60];
-		wsprintf(szDbg, L"ConEmu.Mouse event at: {%ix%i}\n", m_LastMouse.dwMousePosition.X, m_LastMouse.dwMousePosition.Y);
-		DEBUGSTR(szDbg);
-		#endif
+        #ifdef _DEBUG
+        wchar_t szDbg[60];
+        wsprintf(szDbg, L"ConEmu.Mouse event at: {%ix%i}\n", m_LastMouse.dwMousePosition.X, m_LastMouse.dwMousePosition.Y);
+        DEBUGSTR(szDbg);
+        #endif
     }
 
     WARNING("Некоторые события можно игнорировать, если ConEmuC не смог их принять сразу (например Focus)");
@@ -1215,7 +1229,7 @@ void CRealConsole::SendConsoleEvent(INPUT_RECORD* piRec)
           {
             TODO("Подождать, пока появится пайп с таким именем, но только пока жив mh_ConEmuC");
             dwErr = WaitForSingleObject(mh_ConEmuC, 100);
-            if (dwErr = WAIT_OBJECT_0) {
+            if (dwErr == WAIT_OBJECT_0) {
                 return;
             }
             continue;
@@ -1227,7 +1241,7 @@ void CRealConsole::SendConsoleEvent(INPUT_RECORD* piRec)
           if (!WaitNamedPipe(ms_ConEmuCInput_Pipe, 100) ) 
           {
             dwErr = WaitForSingleObject(mh_ConEmuC, 100);
-            if (dwErr = WAIT_OBJECT_0) {
+            if (dwErr == WAIT_OBJECT_0) {
                 DEBUGSTR(L" - FAILED!\n");
                 return;
             }
@@ -1404,7 +1418,7 @@ LRESULT CRealConsole::OnScroll(int nDirection)
 
 LRESULT CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 {
-    LRESULT result = 0;
+    //LRESULT result = 0;
 
 #ifdef _DEBUG
     if (wParam != VK_LCONTROL && wParam != VK_RCONTROL && wParam != VK_CONTROL &&
@@ -1462,7 +1476,7 @@ LRESULT CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lP
             }
         }
         else if (messg == WM_SYSKEYDOWN && wParam == VK_SPACE && lParam & (1<<29)/*Бред. это 29-й бит, а не число 29*/ && !isPressed(VK_SHIFT))
-        {	// Нада, или системное меню будет недоступно
+        {   // Нада, или системное меню будет недоступно
             RECT rect, cRect;
             GetWindowRect(ghWnd, &rect);
             GetClientRect(ghWnd, &cRect);
@@ -1500,15 +1514,9 @@ LRESULT CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lP
                     /*(wParam >= VK_NUMPAD0 && wParam <= VK_DIVIDE) ||*/ //TODO:
                     (wParam >= VK_PRIOR/*0x21*/ && wParam <= VK_HELP/*0x2F*/) ||
                     nLCtrl || nRCtrl ||
-					((nLAlt || nRAlt) && !(nLCtrl || nRCtrl || nShift) && (wParam >= VK_NUMPAD0/*0x60*/ && wParam <= VK_NUMPAD9/*0x69*/)) || // Ввод Alt-цифры при включенном NumLock
+                    ((nLAlt || nRAlt) && !(nLCtrl || nRCtrl || nShift) && (wParam >= VK_NUMPAD0/*0x60*/ && wParam <= VK_NUMPAD9/*0x69*/)) || // Ввод Alt-цифры при включенном NumLock
                     FALSE)
                 {
-					if (wParam == VK_APPS) {
-						WARNING("Не очень красиво это. На каждый чих функцию звать тоже нехорошо, но так хоть меню будет нормально всплывать");
-						DWORD dwFarPID = GetFarPID();
-						if (dwFarPID) AllowSetForegroundWindow(dwFarPID);
-					}
-
                     r.Event.KeyEvent.wRepeatCount = 1; TODO("0-15 ? Specifies the repeat count for the current message. The value is the number of times the keystroke is autorepeated as a result of the user holding down the key. If the keystroke is held long enough, multiple messages are sent. However, the repeat count is not cumulative.");
                     r.Event.KeyEvent.wVirtualKeyCode = mn_LastVKeyPressed;
                     r.Event.KeyEvent.uChar.UnicodeChar = 0;
@@ -1558,6 +1566,14 @@ LRESULT CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lP
             }
             #endif
 
+            
+            if (mn_FarPID && mn_FarPID != mn_LastSetForegroundPID) {
+                //DWORD dwFarPID = GetFarPID();
+                //if (dwFarPID)
+                AllowSetForegroundWindow(mn_FarPID);
+                mn_LastSetForegroundPID = mn_FarPID;
+            }
+            
             SendConsoleEvent(&r);
 
             if (messg == WM_CHAR || messg == WM_SYSCHAR) {
@@ -1586,7 +1602,7 @@ void CRealConsole::OnWinEvent(DWORD event, HWND hwnd, LONG idObject, LONG idChil
 {
     _ASSERTE(hwnd!=NULL);
     
-    if (hConWnd == NULL && event == EVENT_CONSOLE_START_APPLICATION && idObject == mn_ConEmuC_PID)
+    if (hConWnd == NULL && event == EVENT_CONSOLE_START_APPLICATION && idObject == (LONG)mn_ConEmuC_PID)
         SetHwnd ( hwnd );
 
     _ASSERTE(hConWnd!=NULL && hwnd==hConWnd);
@@ -1607,10 +1623,11 @@ void CRealConsole::OnWinEvent(DWORD event, HWND hwnd, LONG idObject, LONG idChil
             if (mn_InRecreate>=1)
                 mn_InRecreate = 0; // корневой процесс успешно пересоздался
                 
-			//WARNING("Тут можно повиснуть, если нарваться на блокировку: процесс может быть добавлен и через сервер");
+            //WARNING("Тут можно повиснуть, если нарваться на блокировку: процесс может быть добавлен и через сервер");
             //Process Add(idObject);
             
             // Если запущено 16битное приложение - необходимо повысить приоритет нашего процесса, иначе будут тормоза
+            _ASSERTE(CONSOLE_APPLICATION_16BIT==1);
             if (idChild == CONSOLE_APPLICATION_16BIT) {
                 mn_ProgramStatus |= CES_NTVDM;
                 SetPriorityClass(GetCurrentProcess(), HIGH_PRIORITY_CLASS);
@@ -1620,7 +1637,7 @@ void CRealConsole::OnWinEvent(DWORD event, HWND hwnd, LONG idObject, LONG idChil
         //A console process has exited. 
         //The idObject parameter contains the process identifier of the terminated process.
         {
-			//WARNING("Тут можно повиснуть, если нарваться на блокировку: процесс может быть удален и через сервер");
+            //WARNING("Тут можно повиснуть, если нарваться на блокировку: процесс может быть удален и через сервер");
             //Process Delete(idObject);
             
             //
@@ -1751,7 +1768,7 @@ DWORD CRealConsole::ServerThread(LPVOID lpvParam)
 // Эта функция пайп не закрывает!
 void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 {
-    CESERVER_REQ in={0}, *pIn=NULL;
+    CESERVER_REQ in={{0}}, *pIn=NULL;
     DWORD cbRead = 0, cbWritten = 0, dwErr = 0;
     BOOL fSuccess = FALSE;
 
@@ -1830,7 +1847,7 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
         DEBUGSTR((pIn->hdr.nCmd == CECMD_GETFULLINFO) ? L"GUI recieved CECMD_GETFULLINFO\n" : L"GUI recieved CECMD_GETSHORTINFO\n");
         //ApplyConsoleInfo(pIn);
         if (((LPVOID)&in)==((LPVOID)pIn)) {
-        	// Это фиксированная память - переменная (in)
+            // Это фиксированная память - переменная (in)
             _ASSERTE(in.hdr.nSize>0);
             // Для его обработки нужно создать копию памяти, которую освободит PopPacket
             pIn = (CESERVER_REQ*)calloc(in.hdr.nSize,1);
@@ -1841,9 +1858,11 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 
     } else if (pIn->hdr.nCmd == CECMD_CMDSTARTSTOP) {
         //
-        DWORD nStarted = *(DWORD*)(pIn->Data);
-        HWND  hWnd     = (HWND)*(DWORD*)(pIn->Data+4);
-        DWORD nPID     = *(DWORD*)(pIn->Data+8);
+        DWORD nStarted = pIn->dwData[0];
+        #ifdef _DEBUG
+        HWND  hWnd     = (HWND)pIn->dwData[1];
+        #endif
+        DWORD nPID     = pIn->dwData[2];
         DEBUGSTR(L"GUI recieved CECMD_CMDSTARTSTOP\n");
         
         if (nStarted == 0 || nStarted == 2) {
@@ -1870,7 +1889,7 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
             //Process Add(nPID);
 
         } else {
-        	// 23.06.2009 Maks - уберем пока. Должно работать в ApplyConsoleInfo
+            // 23.06.2009 Maks - уберем пока. Должно работать в ApplyConsoleInfo
             //Process Delete(nPID);
 
             if (nStarted == 3) {
@@ -1914,15 +1933,15 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
             
     } else if (pIn->hdr.nCmd == CECMD_TABSCHANGED) {
         DEBUGSTR(L"GUI recieved CECMD_TABSCHANGED\n");
-		if (nDataSize == 0) {
-			// ФАР закрывается
-			SetTabs(NULL, 0);
-		} else {
-			_ASSERTE(nDataSize>=4);
-			int nTabCount = (nDataSize-4) / sizeof(ConEmuTab);
-			_ASSERTE((nTabCount*sizeof(ConEmuTab))==(nDataSize-4));
-			SetTabs((ConEmuTab*)(pIn->Data+4), nTabCount);
-		}
+        if (nDataSize == 0) {
+            // ФАР закрывается
+            SetTabs(NULL, 0);
+        } else {
+            _ASSERTE(nDataSize>=4);
+            int nTabCount = (nDataSize-4) / sizeof(ConEmuTab);
+            _ASSERTE((nTabCount*sizeof(ConEmuTab))==(nDataSize-4));
+            SetTabs((ConEmuTab*)(pIn->Data+4), nTabCount);
+        }
 
     } else if (pIn->hdr.nCmd == CECMD_GETOUTPUTFILE) {
         DEBUGSTR(L"GUI recieved CECMD_GETOUTPUTFILE\n");
@@ -1965,44 +1984,44 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
             }
         }
 
-	} else if (pIn->hdr.nCmd == CECMD_TABSCMD) {
-		// 0: спрятать/показать табы, 1: перейти на следующую, 2: перейти на предыдущую, 3: commit switch
-		DEBUGSTR(L"GUI recieved CECMD_TABSCMD\n");
-		_ASSERTE(nDataSize>=1);
-		DWORD nTabCmd = pIn->Data[0];
-		gConEmu.TabCommand(nTabCmd);
+    } else if (pIn->hdr.nCmd == CECMD_TABSCMD) {
+        // 0: спрятать/показать табы, 1: перейти на следующую, 2: перейти на предыдущую, 3: commit switch
+        DEBUGSTR(L"GUI recieved CECMD_TABSCMD\n");
+        _ASSERTE(nDataSize>=1);
+        DWORD nTabCmd = pIn->Data[0];
+        gConEmu.TabCommand(nTabCmd);
 
-	} else if (pIn->hdr.nCmd == CECMD_RESOURCES) {
-		DEBUGSTR(L"GUI recieved CECMD_TABSCMD\n");
-		_ASSERTE(nDataSize>=6);
-		mb_PluginDetected = TRUE; // Запомним, что в фаре есть плагин (хотя фар может быть закрыт)
-		mn_FarPID_PluginDetected = *((DWORD*)pIn->Data);
-		// 23.06.2009 Maks - уберем пока. Должно работать в ApplyConsoleInfo
-		//Process Add(mn_FarPID_PluginDetected); // На всякий случай, вдруг он еще не в нашем списке?
-		wchar_t* pszRes = (wchar_t*)(pIn->Data+4), *pszNext;
-		if (*pszRes) {
-			EnableComSpec(mn_FarPID_PluginDetected, TRUE);
+    } else if (pIn->hdr.nCmd == CECMD_RESOURCES) {
+        DEBUGSTR(L"GUI recieved CECMD_TABSCMD\n");
+        _ASSERTE(nDataSize>=6);
+        mb_PluginDetected = TRUE; // Запомним, что в фаре есть плагин (хотя фар может быть закрыт)
+        mn_FarPID_PluginDetected = *((DWORD*)pIn->Data);
+        // 23.06.2009 Maks - уберем пока. Должно работать в ApplyConsoleInfo
+        //Process Add(mn_FarPID_PluginDetected); // На всякий случай, вдруг он еще не в нашем списке?
+        wchar_t* pszRes = (wchar_t*)(pIn->Data+4), *pszNext;
+        if (*pszRes) {
+            EnableComSpec(mn_FarPID_PluginDetected, TRUE);
 
-			pszNext = pszRes + lstrlen(pszRes)+1;
-			if (lstrlen(pszRes)>=30) pszRes[30] = 0;
-			lstrcpy(ms_EditorRus, pszRes); lstrcat(ms_EditorRus, L" ");
-			pszRes = pszNext;
+            pszNext = pszRes + lstrlen(pszRes)+1;
+            if (lstrlen(pszRes)>=30) pszRes[30] = 0;
+            lstrcpy(ms_EditorRus, pszRes); lstrcat(ms_EditorRus, L" ");
+            pszRes = pszNext;
 
-			if (*pszRes) {
-				pszNext = pszRes + lstrlen(pszRes)+1;
-				if (lstrlen(pszRes)>=30) pszRes[30] = 0;
-				lstrcpy(ms_ViewerRus, pszRes); lstrcat(ms_ViewerRus, L" ");
-				pszRes = pszNext;
+            if (*pszRes) {
+                pszNext = pszRes + lstrlen(pszRes)+1;
+                if (lstrlen(pszRes)>=30) pszRes[30] = 0;
+                lstrcpy(ms_ViewerRus, pszRes); lstrcat(ms_ViewerRus, L" ");
+                pszRes = pszNext;
 
-				if (*pszRes) {
-					pszNext = pszRes + lstrlen(pszRes)+1;
-					if (lstrlen(pszRes)>=31) pszRes[31] = 0;
-					lstrcpy(ms_TempPanelRus, pszRes);
-					pszRes = pszNext;
-				}
-			}
-		}
-	}
+                if (*pszRes) {
+                    pszNext = pszRes + lstrlen(pszRes)+1;
+                    if (lstrlen(pszRes)>=31) pszRes[31] = 0;
+                    lstrcpy(ms_TempPanelRus, pszRes);
+                    pszRes = pszNext;
+                }
+            }
+        }
+    }
 
     // Освободить память
     if (pIn && (LPVOID)pIn != (LPVOID)&in) {
@@ -2013,17 +2032,17 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
     return;
 }
 
-//#define COPYBUFFERS(v,s) { \
-//    nVarSize = s; \
-//    if ((lpCur+nVarSize)>lpEnd) { \
-//        _ASSERT(FALSE); \
-//        return; \
-//    } \
-//    memmove(&(v), lpCur, nVarSize); \
-//    lpCur += nVarSize; \
+//#define COPYBUFFERS(v,s) { 
+//    nVarSize = s; 
+//    if ((lpCur+nVarSize)>lpEnd) { 
+//        _ASSERT(FALSE); 
+//        return; 
+//    } 
+//    memmove(&(v), lpCur, nVarSize); 
+//    lpCur += nVarSize; 
 //}
-//#define COPYBUFFER(v) { \
-//    COPYBUFFERS(v, sizeof(v)); \
+//#define COPYBUFFER(v) { 
+//    COPYBUFFERS(v, sizeof(v)); 
 //}
 
 WARNING("Для ограничения доступа к содержимому возможно лучше использовать Semaphore nor CriticalSection");
@@ -2051,9 +2070,9 @@ void CRealConsole::ApplyConsoleInfo(CESERVER_REQ* pInfo)
 
     LogPacket(pInfo);
 
-	_ASSERTE(pInfo->hdr.nSize>=(sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_CONINFO_HDR)+2*sizeof(DWORD)));
-	if (pInfo->hdr.nSize < (sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_CONINFO_HDR)+2*sizeof(DWORD)))
-		return; // Broken packet!
+    _ASSERTE(pInfo->hdr.nSize>=(sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_CONINFO_HDR)+2*sizeof(DWORD)));
+    if (pInfo->hdr.nSize < (sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_CONINFO_HDR)+2*sizeof(DWORD)))
+        return; // Broken packet!
 
     BOOL bBufRecreated = FALSE;
     // 1
@@ -2064,7 +2083,7 @@ void CRealConsole::ApplyConsoleInfo(CESERVER_REQ* pInfo)
     }
     // 3
     // Здесь у нас реальные процессы консоли, надо обновиться
-	ProcessUpdate(pInfo->ConInfo.inf.nProcesses, countof(pInfo->ConInfo.inf.nProcesses));
+    ProcessUpdate(pInfo->ConInfo.inf.nProcesses, countof(pInfo->ConInfo.inf.nProcesses));
 
     // Теперь нужно открыть секцию - начинаем изменение переменных класса
     MSectionLock sc;
@@ -2103,14 +2122,14 @@ void CRealConsole::ApplyConsoleInfo(CESERVER_REQ* pInfo)
     }
     // 9
     DWORD dwCharChanged = pInfo->ConInfo.RgnInfo.dwRgnInfoSize;
-    BOOL  lbDataRecv = FALSE;
+    //BOOL  lbDataRecv = FALSE;
     if (dwCharChanged != 0) {
         _ASSERTE(dwCharChanged >= sizeof(CESERVER_CHAR));
         _ASSERTE(!bBufRecreated && con.pConChar && con.pConAttr);
 
         // Если буфер был пересоздан (bBufRecreated) изменение только блока символов бессмысленно - нужны полные данные!
         if (!bBufRecreated && con.pConChar && con.pConAttr) {
-			MSectionLock sc2; sc2.Lock(&csCON);
+            MSectionLock sc2; sc2.Lock(&csCON);
 
             DEBUGSTR(L"                   *** Relative dump received!\n");
             MCHKHEAP
@@ -2145,23 +2164,23 @@ void CRealConsole::ApplyConsoleInfo(CESERVER_REQ* pInfo)
         } else {
             DEBUGSTR(L"                   *** Expected full dump, but Relative received!\n");
         }
-	} else {
-		// 10
-		DWORD OneBufferSize = pInfo->ConInfo.FullData.dwOneBufferSize;
-		if (OneBufferSize != 0) {
-			MSectionLock sc2; sc2.Lock(&csCON);
+    } else {
+        // 10
+        DWORD OneBufferSize = pInfo->ConInfo.FullData.dwOneBufferSize;
+        if (OneBufferSize != 0) {
+            MSectionLock sc2; sc2.Lock(&csCON);
 
-			DEBUGSTR(L"                   *** FULL dump received!\n");
-			MCHKHEAP
-			if (InitBuffers(OneBufferSize)) {
-				MCHKHEAP
-				LPBYTE lpCur = (LPBYTE)pInfo->ConInfo.FullData.Data;
-				memmove(con.pConChar, lpCur, OneBufferSize); lpCur += OneBufferSize;
-				memmove(con.pConAttr, lpCur, OneBufferSize); lpCur += OneBufferSize;
-				MCHKHEAP
-			}
-		}
-	}
+            DEBUGSTR(L"                   *** FULL dump received!\n");
+            MCHKHEAP
+            if (InitBuffers(OneBufferSize)) {
+                MCHKHEAP
+                LPBYTE lpCur = (LPBYTE)pInfo->ConInfo.FullData.Data;
+                memmove(con.pConChar, lpCur, OneBufferSize); lpCur += OneBufferSize;
+                memmove(con.pConAttr, lpCur, OneBufferSize); lpCur += OneBufferSize;
+                MCHKHEAP
+            }
+        }
+    }
 
     TODO("Во время ресайза консоль может подглючивать - отдает не то что нужно...");
     //_ASSERTE(*con.pConChar!=ucBoxDblVert);
@@ -2169,14 +2188,14 @@ void CRealConsole::ApplyConsoleInfo(CESERVER_REQ* pInfo)
     con.nChange2TextWidth = -1;
     con.nChange2TextHeight = -1;
 
-	mb_DataChanged = TRUE;
+    mb_DataChanged = TRUE;
 
 #ifdef _DEBUG
-	wchar_t szCursorInfo[60];
-	wsprintfW(szCursorInfo, L"Cursor (X=%i, Y=%i, Vis:%i, H:%i)\n", 
-		con.m_sbi.dwCursorPosition.X, con.m_sbi.dwCursorPosition.Y,
-		con.m_ci.bVisible, con.m_ci.dwSize);
-	DEBUGSTR(szCursorInfo);
+    wchar_t szCursorInfo[60];
+    wsprintfW(szCursorInfo, L"Cursor (X=%i, Y=%i, Vis:%i, H:%i)\n", 
+        con.m_sbi.dwCursorPosition.X, con.m_sbi.dwCursorPosition.Y,
+        con.m_ci.bVisible, con.m_ci.dwSize);
+    DEBUGSTR(szCursorInfo);
     // Данные уже должны быть заполнены, и там не должно быть лажы
     if (con.pConChar) {
         BOOL lbDataValid = TRUE; uint n = 0;
@@ -2254,11 +2273,11 @@ DWORD CRealConsole::GetProgramStatus()
 
 DWORD CRealConsole::GetFarStatus()
 {
-	if (!this)
-		return 0;
-	if ((mn_ProgramStatus & CES_FARACTIVE) == 0)
-		return 0;
-	return mn_FarStatus;
+    if (!this)
+        return 0;
+    if ((mn_ProgramStatus & CES_FARACTIVE) == 0)
+        return 0;
+    return mn_FarStatus;
 }
 
 DWORD CRealConsole::GetServerPID()
@@ -2289,7 +2308,7 @@ void CRealConsole::ProcessUpdateFlags(BOOL abProcessChanged)
     
     // Наличие 16bit определяем ТОЛЬКО по WinEvent. Иначе не получится отсечь его завершение,
     // т.к. процесс ntvdm.exe не выгружается, а остается в памяти.
-    const bool bIsNtvdm = (mn_ProgramStatus & CES_NTVDM) == CES_NTVDM;
+    bool bIsNtvdm = (mn_ProgramStatus & CES_NTVDM) == CES_NTVDM;
 
     std::vector<ConProcess>::reverse_iterator iter = m_Processes.rbegin();
     while (iter!=m_Processes.rend()) {
@@ -2313,7 +2332,8 @@ void CRealConsole::ProcessUpdateFlags(BOOL abProcessChanged)
     mn_ProgramStatus = 0;
     if (bIsFar) mn_ProgramStatus |= CES_FARACTIVE;
     if (bIsTelnet) mn_ProgramStatus |= CES_TELNETACTIVE;
-    if (bIsNtvdm) mn_ProgramStatus |= CES_NTVDM;
+    if (bIsNtvdm)
+        mn_ProgramStatus |= CES_NTVDM;
 
     mn_ProcessCount = m_Processes.size();
     if (mn_FarPID != dwPID)
@@ -2341,13 +2361,13 @@ void CRealConsole::ProcessUpdate(DWORD *apPID, UINT anCount)
 
     BOOL lbRecreateOk = FALSE;
     if (mn_InRecreate && mn_ProcessCount == 0) {
-    	// Раз сюда что-то пришло, значит мы получили пакет, значит консоль запустилась
+        // Раз сюда что-то пришло, значит мы получили пакет, значит консоль запустилась
         lbRecreateOk = TRUE;
     }
     
     UINT i = 0;
     std::vector<ConProcess>::iterator iter;
-    BOOL bAlive = FALSE;
+    //BOOL bAlive = FALSE;
     BOOL bProcessChanged = FALSE, bProcessNew = FALSE, bProcessDel = FALSE;
     
     // поставить пометочку на все процессы, вдруг кто уже убился 
@@ -2357,29 +2377,29 @@ void CRealConsole::ProcessUpdate(DWORD *apPID, UINT anCount)
     // Проверяем, какие процессы уже есть в нашем списке
     iter=m_Processes.begin();
     while (iter!=m_Processes.end()) {
-    	for (i = 0; i < anCount; i++) {
-	        if (apPID[i] && apPID[i] == iter->ProcessID) {
-	        	iter->inConsole = true;
-    	        apPID[i] = 0; // Его добавлять уже не нужно, мы о нем знаем
-    	        break;
-        	}    
+        for (i = 0; i < anCount; i++) {
+            if (apPID[i] && apPID[i] == iter->ProcessID) {
+                iter->inConsole = true;
+                apPID[i] = 0; // Его добавлять уже не нужно, мы о нем знаем
+                break;
+            }    
         }
         iter++;
     }
     
     // Проверяем, есть ли изменения
-	for (i = 0; i < anCount; i++) {
+    for (i = 0; i < anCount; i++) {
         if (apPID[i]) {
-        	bProcessNew = TRUE; break;
+            bProcessNew = TRUE; break;
         }
     }
     iter = m_Processes.begin();
     while (iter != m_Processes.end()) {
-    	if (iter->inConsole == false) {
-    		bProcessDel = TRUE; break;
-    	}
-    	iter ++;
-   	}
+        if (iter->inConsole == false) {
+            bProcessDel = TRUE; break;
+        }
+        iter ++;
+    }
 
 
     
@@ -2409,7 +2429,7 @@ void CRealConsole::ProcessUpdate(DWORD *apPID, UINT anCount)
                 do {
                     // Если он addPID - добавить в m_Processes
                     if (bProcessNew) {
-                    	for (i = 0; i < anCount; i++) {
+                        for (i = 0; i < anCount; i++) {
                             if (apPID[i] && apPID[i] == p.th32ProcessID) {
                                 if (!bProcessChanged) bProcessChanged = TRUE;
                                 memset(&cp, 0, sizeof(cp));
@@ -2418,7 +2438,7 @@ void CRealConsole::ProcessUpdate(DWORD *apPID, UINT anCount)
                                 cp.Alive = true;
                                 cp.inConsole = true;
 
-            					SPRC.RelockExclusive(300); // Заблокировать, если это еще не сделано
+                                SPRC.RelockExclusive(300); // Заблокировать, если это еще не сделано
                                 m_Processes.push_back(cp);
                             }
                         }
@@ -2460,7 +2480,7 @@ void CRealConsole::ProcessUpdate(DWORD *apPID, UINT anCount)
         if (!iter->Alive || !iter->inConsole) {
             if (!bProcessChanged) bProcessChanged = TRUE;
 
-    		SPRC.RelockExclusive(300); // Если уже нами заблокирован - просто вернет FALSE	
+            SPRC.RelockExclusive(300); // Если уже нами заблокирован - просто вернет FALSE  
             iter = m_Processes.erase(iter);
         } else {
             iter ++;
@@ -2506,16 +2526,16 @@ void CRealConsole::ProcessUpdate(DWORD *apPID, UINT anCount)
 //    _ASSERTE(h!=INVALID_HANDLE_VALUE);
 //    if (h==INVALID_HANDLE_VALUE) {
 //        DWORD dwErr = GetLastError();
-//		if (addPID) {
-//			// Просто добавить, раз не удалось снять Snapshoot
-//			memset(&cp, 0, sizeof(cp));
-//			cp.ProcessID = addPID; cp.RetryName = true;
-//			wsprintf(cp.Name, L"Can't create snaphoot. ErrCode=0x%08X", dwErr);
+//      if (addPID) {
+//          // Просто добавить, раз не удалось снять Snapshoot
+//          memset(&cp, 0, sizeof(cp));
+//          cp.ProcessID = addPID; cp.RetryName = true;
+//          wsprintf(cp.Name, L"Can't create snaphoot. ErrCode=0x%08X", dwErr);
 //
-//			SPRC.RelockExclusive(300);
-//			m_Processes.push_back(cp);
-//			SPRC.Unlock();
-//		}
+//          SPRC.RelockExclusive(300);
+//          m_Processes.push_back(cp);
+//          SPRC.Unlock();
+//      }
 //        
 //    } else {
 //        //Snapshoot создан, поехали
@@ -2536,7 +2556,7 @@ void CRealConsole::ProcessUpdate(DWORD *apPID, UINT anCount)
 //                    ProcessCheckName(cp, p.szExeFile); //far, telnet, cmd, conemuc, и пр.
 //                    cp.Alive = true;
 //
-//					SPRC.RelockExclusive(300);
+//                  SPRC.RelockExclusive(300);
 //                    m_Processes.push_back(cp);
 //                    break;
 //                }
@@ -2571,7 +2591,7 @@ void CRealConsole::ProcessUpdate(DWORD *apPID, UINT anCount)
 //        {
 //            if (!iter->Alive) {
 //                if (!bProcessChanged) bProcessChanged = TRUE;
-//				SPRC.RelockExclusive(300);
+//              SPRC.RelockExclusive(300);
 //                iter = m_Processes.erase(iter);
 //            } else {
 //                iter ++;
@@ -2608,7 +2628,7 @@ void CRealConsole::ProcessUpdate(DWORD *apPID, UINT anCount)
 //    // Обновить статус запущенных программ, получить PID FAR'а, посчитать количество процессов в консоли
 //    ProcessUpdateFlags(bProcessChanged);
 //
-//	SPRC.Unlock();
+//  SPRC.Unlock();
 //    
 //    if (mn_InRecreate && mn_ProcessCount == 0 && !mb_ProcessRestarted) {
 //        RecreateProcessStart();
@@ -2643,10 +2663,10 @@ BOOL CRealConsole::RetrieveConsoleInfo(BOOL bShortOnly)
 
     TODO("!!! Необходимо сделать флажок, для выбора между CECMD_GETFULLINFO/CECMD_GETSHORTINFO");
 
-    BOOL lbRc = FALSE;
+    //BOOL lbRc = FALSE;
     HANDLE hPipe = NULL; 
     CESERVER_REQ_HDR in = {0};
-  CESERVER_REQ *pOut = NULL;
+	CESERVER_REQ *pOut = NULL;
     BYTE cbReadBuf[512];
     BOOL fSuccess;
     DWORD cbRead, dwMode, dwErr;
@@ -2675,7 +2695,7 @@ BOOL CRealConsole::RetrieveConsoleInfo(BOOL bShortOnly)
       {
         TODO("Подождать, пока появится пайп с таким именем, но только пока жив mh_ConEmuC");
         dwErr = WaitForSingleObject(mh_ConEmuC, 100);
-        if (dwErr = WAIT_OBJECT_0)
+        if (dwErr == WAIT_OBJECT_0)
             return FALSE;
         continue;
         //DisplayLastError(L"Could not open pipe", dwErr);
@@ -2686,7 +2706,7 @@ BOOL CRealConsole::RetrieveConsoleInfo(BOOL bShortOnly)
       if (!WaitNamedPipe(ms_ConEmuC_Pipe, 1000) ) 
       {
         dwErr = WaitForSingleObject(mh_ConEmuC, 100);
-        if (dwErr = WAIT_OBJECT_0) {
+        if (dwErr == WAIT_OBJECT_0) {
             DEBUGSTR(L" - FAILED!\n");
             return FALSE;
         }
@@ -2733,23 +2753,24 @@ BOOL CRealConsole::RetrieveConsoleInfo(BOOL bShortOnly)
       return 0;
     }
 
-  // Пока не выделяя память, просто указатель на буфер
-  pOut = (CESERVER_REQ*)cbReadBuf;
-  if (pOut->hdr.nVersion != CESERVER_REQ_VER) {
+    // Пока не выделяя память, просто указатель на буфер
+    pOut = (CESERVER_REQ*)cbReadBuf;
+    if (pOut->hdr.nVersion != CESERVER_REQ_VER) {
       gConEmu.ShowOldCmdVersion(pOut->hdr.nCmd, pOut->hdr.nVersion);
       CloseHandle(hPipe);
       return 0;
-  }
+    }
 
     int nAllSize = *((DWORD*)cbReadBuf);
-    if (nAllSize==0) {
+    if (nAllSize == 0) {
        DEBUGSTR(L" - FAILED!\n");
        DisplayLastError(L"Empty data recieved from server", 0);
        CloseHandle(hPipe);
        return 0;
     }
-  if (nAllSize > sizeof(cbReadBuf))
-  {
+    
+  	if (nAllSize > (int)sizeof(cbReadBuf))
+  	{
       pOut = (CESERVER_REQ*)calloc(nAllSize,1);
       _ASSERTE(pOut!=NULL);
       memmove(pOut, cbReadBuf, cbRead);
@@ -2787,11 +2808,11 @@ BOOL CRealConsole::RetrieveConsoleInfo(BOOL bShortOnly)
 
     CloseHandle(hPipe);
 
-	mn_LastProcessedPkt = ((DWORD*)pOut->Data)[1];
-	// Warning. В некоторых случаях это может быть просто указатель на буфер, а не выделенная память!
+    mn_LastProcessedPkt = ((DWORD*)pOut->Data)[1];
+    // Warning. В некоторых случаях это может быть просто указатель на буфер, а не выделенная память!
     ApplyConsoleInfo ( pOut );
-	// Передернуть MonitorThread
-	SetEvent(mh_MonitorThreadEvent);
+    // Передернуть MonitorThread
+    SetEvent(mh_MonitorThreadEvent);
 
 
     // Освободить память
@@ -2858,7 +2879,9 @@ BOOL CRealConsole::InitBuffers(DWORD OneBufferSize)
 {
     // Эта функция должна вызываться только в MonitorThread.
     // Тогда блокировка буфера не потребуется
+    #ifdef _DEBUG
     DWORD dwCurThId = GetCurrentThreadId();
+    #endif
     _ASSERTE(mn_MonitorThreadID==0 || dwCurThId==mn_MonitorThreadID);
 
     BOOL lbRc = FALSE;
@@ -2907,10 +2930,10 @@ BOOL CRealConsole::InitBuffers(DWORD OneBufferSize)
         lbRc = con.pConChar!=NULL && con.pConAttr!=NULL;
     } else if (con.nTextWidth!=nNewWidth || con.nTextHeight!=nNewHeight) {
         MCHKHEAP
-		MSectionLock sc; sc.Lock(&csCON);
+        MSectionLock sc; sc.Lock(&csCON);
         memset(con.pConChar, 0, (nNewWidth * nNewHeight * 2) * sizeof(*con.pConChar));
         memset(con.pConAttr, 0, (nNewWidth * nNewHeight * 2) * sizeof(*con.pConAttr));
-		sc.Unlock();
+        sc.Unlock();
         MCHKHEAP
 
         lbRc = TRUE;
@@ -3031,8 +3054,8 @@ void CRealConsole::CreateLogFiles()
 
     DWORD dwErr = 0;
     wchar_t szFile[MAX_PATH+64], *pszDot;
-	_ASSERTE(gConEmu.ms_ConEmuExe[0]);
-	lstrcpyW(szFile, gConEmu.ms_ConEmuExe);
+    _ASSERTE(gConEmu.ms_ConEmuExe[0]);
+    lstrcpyW(szFile, gConEmu.ms_ConEmuExe);
     if ((pszDot = wcsrchr(szFile, L'\\')) == NULL) {
         DisplayLastError(L"wcsrchr failed!");
         return; // ошибка
@@ -3040,7 +3063,7 @@ void CRealConsole::CreateLogFiles()
     *pszDot = 0;
 
     mpsz_LogPackets = (wchar_t*)calloc(pszDot - szFile + 64, 2);
-	lstrcpyW(mpsz_LogPackets, szFile);
+    lstrcpyW(mpsz_LogPackets, szFile);
     wsprintf(mpsz_LogPackets+(pszDot-szFile), L"\\ConEmu-recv-%i-%%i.con", mn_ConEmuC_PID); // ConEmu-recv-<ConEmuC_PID>-<index>.con
 
     wsprintfW(pszDot, L"\\ConEmu-input-%i.log", mn_ConEmuC_PID);
@@ -3060,11 +3083,11 @@ void CRealConsole::CreateLogFiles()
 
 void CRealConsole::LogString(LPCSTR asText)
 {
-	if (!this) return;
-	if (!asText) return;
+    if (!this) return;
+    if (!asText) return;
     DWORD dwLen = strlen(asText);
     if (dwLen)
-    	WriteFile(mh_LogInput, asText, dwLen, &dwLen, 0);
+        WriteFile(mh_LogInput, asText, dwLen, &dwLen, 0);
     WriteFile(mh_LogInput, "\r\n", 2, &dwLen, 0);
     FlushFileBuffers(mh_LogInput);
 }
@@ -3190,18 +3213,18 @@ BOOL CRealConsole::RecreateProcess(LPCWSTR asNewCommand/*=NULL*/)
     }
     
     if (asNewCommand && *asNewCommand) {
-    	if (ms_SpecialCmd) Free(ms_SpecialCmd);
-    	int nLen = lstrlenW(asNewCommand);
-    	ms_SpecialCmd = (wchar_t*)Alloc(nLen+1,2);
-    	if (!ms_SpecialCmd) {
-    		Box(_T("Can't allocate memory..."));
-    		return FALSE;
-    	}
-    	lstrcpyW(ms_SpecialCmd, asNewCommand);
+        if (ms_SpecialCmd) Free(ms_SpecialCmd);
+        int nLen = lstrlenW(asNewCommand);
+        ms_SpecialCmd = (wchar_t*)Alloc(nLen+1,2);
+        if (!ms_SpecialCmd) {
+            Box(_T("Can't allocate memory..."));
+            return FALSE;
+        }
+        lstrcpyW(ms_SpecialCmd, asNewCommand);
     }
 
 
-    DWORD nWait = 0;
+    //DWORD nWait = 0;
 
     mb_ProcessRestarted = FALSE;
     mn_InRecreate = GetTickCount();
@@ -3408,23 +3431,23 @@ void CRealConsole::OnActivate(int nNewNum, int nOldNum)
 
     gConEmu.UpdateProcessDisplay(TRUE);
 
-	HWND hPic = isPictureView();
-	if (hPic && mb_PicViewWasHidden) {
-		if (!IsWindowVisible(hPic))
-			ShowWindow(hPic, SW_SHOWNA);
-	}
-	mb_PicViewWasHidden = FALSE;
+    HWND hPic = isPictureView();
+    if (hPic && mb_PicViewWasHidden) {
+        if (!IsWindowVisible(hPic))
+            ShowWindow(hPic, SW_SHOWNA);
+    }
+    mb_PicViewWasHidden = FALSE;
 }
 
 void CRealConsole::OnDeactivate(int nNewNum)
 {
     if (!this) return;
 
-	HWND hPic = isPictureView();
-	if (hPic && IsWindowVisible(hPic)) {
-		mb_PicViewWasHidden = TRUE;
-		ShowWindow(hPic, SW_HIDE);
-	}
+    HWND hPic = isPictureView();
+    if (hPic && IsWindowVisible(hPic)) {
+        mb_PicViewWasHidden = TRUE;
+        ShowWindow(hPic, SW_HIDE);
+    }
 
     //if (mh_MonitorThread) SetThreadPriority(mh_MonitorThread, THREAD_PRIORITY_NORMAL);
 }
@@ -3628,7 +3651,7 @@ void CRealConsole::SetTabs(ConEmuTab* tabs, int tabsCount)
 
     if (mp_tabs && mn_tabsCount) {
         CheckPanelTitle();
-		CheckFarStates();
+        CheckFarStates();
     }
     
     // Передернуть TabBar...
@@ -3720,8 +3743,8 @@ DWORD CRealConsole::CanActivateFarWindow(int anWndIndex)
     if (mn_ActiveTab == anWndIndex)
         return (DWORD)-1; // Нужное окно уже выделено, лучше не дергаться...
 
-	if (isPictureView())
-		return 0; // При наличии PictureView переключиться на другой таб этой консоли не получится
+    if (isPictureView())
+        return 0; // При наличии PictureView переключиться на другой таб этой консоли не получится
 
     if (!GetWindowText(hConWnd, TitleCmp, countof(TitleCmp)-2))
         TitleCmp[0] = 0;
@@ -3806,7 +3829,7 @@ BOOL CRealConsole::ActivateFarWindow(int anWndIndex)
     CConEmuPipe pipe(dwPID, 100);
     if (pipe.Init(_T("CRealConsole::ActivateFarWindow")))
     {
-        DWORD cbWritten = 0;
+        //DWORD cbWritten = 0;
         if (pipe.Execute(CMD_SETWINDOW, &anWndIndex, 4))
         {
             DWORD cbBytesRead=0;
@@ -3856,11 +3879,11 @@ bool CRealConsole::isPackets()
     
     while (iter != end) {
         if ( *iter != NULL )
-        	return true;
-		iter ++; // ячейка пуста
+            return true;
+        iter ++; // ячейка пуста
     }
 
-	return false;
+    return false;
 }
 
 // Банально добавляет пакет в вектор. Сейчас порядок не важен
@@ -3877,28 +3900,28 @@ void CRealConsole::PushPacket(CESERVER_REQ* pPkt)
 //    }
 //#endif
 
-	int i;
-	DWORD dwTID = GetCurrentThreadId();
-	
-	CESERVER_REQ **pQueue = NULL;
-	for (i=0; !pQueue && i < MAX_SERVER_THREADS; i++) {
-		if (mn_ServerThreadsId[i] == dwTID)
-			pQueue = m_PacketQueue + (i*MAX_THREAD_PACKETS);
-	}
-	// Если это не серверная нить - добавляем в зарезервированную область
-	if (!pQueue) pQueue = m_PacketQueue + (MAX_SERVER_THREADS*MAX_THREAD_PACKETS);
-	
-	for (i=0; i < MAX_THREAD_PACKETS; i++, pQueue++)
-	{
-		if (*pQueue == NULL) {
-			*pQueue = pPkt;
-			pQueue = NULL;
-			break;
-		}
-	}
-	
-	// Если не NULL - значит очередь переполнена!
-	_ASSERTE(pQueue == NULL);
+    int i;
+    DWORD dwTID = GetCurrentThreadId();
+    
+    CESERVER_REQ **pQueue = NULL;
+    for (i=0; !pQueue && i < MAX_SERVER_THREADS; i++) {
+        if (mn_ServerThreadsId[i] == dwTID)
+            pQueue = m_PacketQueue + (i*MAX_THREAD_PACKETS);
+    }
+    // Если это не серверная нить - добавляем в зарезервированную область
+    if (!pQueue) pQueue = m_PacketQueue + (MAX_SERVER_THREADS*MAX_THREAD_PACKETS);
+    
+    for (i=0; i < MAX_THREAD_PACKETS; i++, pQueue++)
+    {
+        if (*pQueue == NULL) {
+            *pQueue = pPkt;
+            pQueue = NULL;
+            break;
+        }
+    }
+    
+    // Если не NULL - значит очередь переполнена!
+    _ASSERTE(pQueue == NULL);
 
     //MSectionLock cs; cs.Lock(&csPKT);
     //m_Packets.push_back(pPkt);
@@ -3929,8 +3952,8 @@ CESERVER_REQ* CRealConsole::PopPacket()
     while (iter != end) {
         pCmp = *iter;
         if (pCmp == NULL) {
-        	iter ++; // ячейка пуста
-        	continue;
+            iter ++; // ячейка пуста
+            continue;
         }
 
         if ( ((DWORD*)pCmp->Data)[1] <= mn_LastProcessedPkt ) {
@@ -3959,8 +3982,8 @@ CESERVER_REQ* CRealConsole::PopPacket()
         while (iter != end) {
             pCmp = *iter;
             if (pCmp == NULL) {
-            	iter ++;
-            	continue;
+                iter ++;
+                continue;
             }
             
             if ( ((DWORD*)pCmp->Data)[1] <= mn_LastProcessedPkt ) {
@@ -4357,281 +4380,285 @@ uint CRealConsole::TextHeight()
 
 bool CRealConsole::isActive()
 {
-	if (!this) return false;
-	if (!mp_VCon) return false;
-	return gConEmu.isActive(mp_VCon);
+    if (!this) return false;
+    if (!mp_VCon) return false;
+    return gConEmu.isActive(mp_VCon);
 }
 
 void CRealConsole::CheckFarStates()
 {
-	// далее идут взаимоисключающие флаги режимов текущей программы
-	mn_FarStatus = 0;
+    // далее идут взаимоисключающие флаги режимов текущей программы
+    mn_FarStatus = 0;
 
-	//if (mb_PluginDetected && mn_FarPID == mn_FarPID_PluginDetected
-	if (GetFarPID() != 0) {
-		if (mp_tabs && mn_ActiveTab >= 0 && mn_ActiveTab < mn_tabsCount) {
-			if (mp_tabs[mn_ActiveTab].Type != 1) {
-				if (mp_tabs[mn_ActiveTab].Type == 2)
-					mn_FarStatus |= CES_VIEWER;
-				else if (mp_tabs[mn_ActiveTab].Type == 3)
-					mn_FarStatus |= CES_EDITOR;
-			}
-		}
+    //if (mb_PluginDetected && mn_FarPID == mn_FarPID_PluginDetected
+    if (GetFarPID() != 0) {
+        if (mp_tabs && mn_ActiveTab >= 0 && mn_ActiveTab < mn_tabsCount) {
+            if (mp_tabs[mn_ActiveTab].Type != 1) {
+                if (mp_tabs[mn_ActiveTab].Type == 2)
+                    mn_FarStatus |= CES_VIEWER;
+                else if (mp_tabs[mn_ActiveTab].Type == 3)
+                    mn_FarStatus |= CES_EDITOR;
+            }
+        }
 
-		if (mn_FarStatus == 0) {
-			if (wcsncmp(Title, ms_Editor, lstrlen(ms_Editor))==0 || wcsncmp(Title, ms_EditorRus, lstrlen(ms_EditorRus))==0)
-				mn_FarStatus |= CES_EDITOR;
-			else if (wcsncmp(Title, ms_Viewer, lstrlen(ms_Viewer))==0 || wcsncmp(Title, ms_ViewerRus, lstrlen(ms_ViewerRus))==0)
-				mn_FarStatus |= CES_VIEWER;
-			else if (isFilePanel(true))
-				mn_FarStatus |= CES_FILEPANEL;
-		}
-	}
+        if (mn_FarStatus == 0) {
+            if (wcsncmp(Title, ms_Editor, lstrlen(ms_Editor))==0 || wcsncmp(Title, ms_EditorRus, lstrlen(ms_EditorRus))==0)
+                mn_FarStatus |= CES_EDITOR;
+            else if (wcsncmp(Title, ms_Viewer, lstrlen(ms_Viewer))==0 || wcsncmp(Title, ms_ViewerRus, lstrlen(ms_ViewerRus))==0)
+                mn_FarStatus |= CES_VIEWER;
+            else if (isFilePanel(true))
+                mn_FarStatus |= CES_FILEPANEL;
+        }
+    }
 }
 
 void CRealConsole::OnTitleChanged()
 {
-	if (!this) return;
+    if (!this) return;
 
-	// Перенесено в ShellHook
-	//// Окошко фара полюбило мигать, но его все равно не видно...
-	//FLASHWINFO flsh = {sizeof(FLASHWINFO)}; flsh.hwnd = hConWnd; flsh.dwFlags = FLASHW_STOP;
-	//FlashWindowEx(&flsh);
-	//
-	wcscpy(Title, TitleCmp);
+    // Перенесено в ShellHook
+    //// Окошко фара полюбило мигать, но его все равно не видно...
+    //FLASHWINFO flsh = {sizeof(FLASHWINFO)}; flsh.hwnd = hConWnd; flsh.dwFlags = FLASHW_STOP;
+    //FlashWindowEx(&flsh);
+    //
+    wcscpy(Title, TitleCmp);
 
-	CheckFarStates();
-	
-	// Обработка прогресса операций
-	short nLastProgress = mn_Progress;
-	if (Title[0] == L'{' || Title[0] == L'(' || Title[0] == L'[') {
-		if (isDigit(Title[1])) {
-			if (isDigit(Title[2]) && isDigit(Title[3]) 
-				&& (Title[4] == L'%' || (Title[4] == L'.' && isDigit(Title[5]) && Title[6] == L'%'))
-				)
-			{
-				// По идее больше 100% быть не должно :)
-				mn_Progress = 100*(Title[1] - L'0') + 10*(Title[2] - L'0') + (Title[3] - L'0');
-			} else if (isDigit(Title[2]) 
-				&& (Title[3] == L'%' || (Title[3] == L'.' && isDigit(Title[4]) && Title[5] == L'%') )
-				)
-			{
-				// 10 .. 99 %
-				mn_Progress = 10*(Title[1] - L'0') + (Title[2] - L'0');
-			} else if (Title[2] == L'%' || (Title[2] == L'.' && isDigit(Title[3]) && Title[4] == L'%'))
-			{
-				// 0 .. 9 %
-				mn_Progress = (Title[1] - L'0');
-			} else {
-				// Процентов нет
-				mn_Progress = -1;
-			}
-			_ASSERTE(mn_Progress<=100);
-			if (mn_Progress > 100)
-				mn_Progress = 100;
-		} else {
-			mn_Progress = -1;
-		}
-	} else {
-		mn_Progress = -1;
-	}
+    CheckFarStates();
+    
+    // Обработка прогресса операций
+    short nLastProgress = mn_Progress;
+    if (Title[0] == L'{' || Title[0] == L'(' || Title[0] == L'[') {
+        if (isDigit(Title[1])) {
+            if (isDigit(Title[2]) && isDigit(Title[3]) 
+                && (Title[4] == L'%' || (Title[4] == L'.' && isDigit(Title[5]) && Title[6] == L'%'))
+                )
+            {
+                // По идее больше 100% быть не должно :)
+                mn_Progress = 100*(Title[1] - L'0') + 10*(Title[2] - L'0') + (Title[3] - L'0');
+            } else if (isDigit(Title[2]) 
+                && (Title[3] == L'%' || (Title[3] == L'.' && isDigit(Title[4]) && Title[5] == L'%') )
+                )
+            {
+                // 10 .. 99 %
+                mn_Progress = 10*(Title[1] - L'0') + (Title[2] - L'0');
+            } else if (Title[2] == L'%' || (Title[2] == L'.' && isDigit(Title[3]) && Title[4] == L'%'))
+            {
+                // 0 .. 9 %
+                mn_Progress = (Title[1] - L'0');
+            } else {
+                // Процентов нет
+                mn_Progress = -1;
+            }
+            _ASSERTE(mn_Progress<=100);
+            if (mn_Progress > 100)
+                mn_Progress = 100;
+        } else {
+            mn_Progress = -1;
+        }
+    } else {
+        mn_Progress = -1;
+    }
 
-	// иначе может среагировать на изменение заголовка ДО того,
-	// как мы узнаем, что активировался редактор...
-	TODO("Должно срабатывать и при запуске консольной программы!");
-	if (Title[0] == L'{' || Title[0] == L'(')
-		CheckPanelTitle();
+    // иначе может среагировать на изменение заголовка ДО того,
+    // как мы узнаем, что активировался редактор...
+    TODO("Должно срабатывать и при запуске консольной программы!");
+    if (Title[0] == L'{' || Title[0] == L'(')
+        CheckPanelTitle();
 
-	if (gConEmu.isActive(mp_VCon)) {
-		// Для активной консоли - обновляем заголовок. Прогресс обновится там же
-		gConEmu.UpdateTitle(TitleCmp);
-	} else if (nLastProgress != mn_Progress) {
-		// Для НЕ активной консоли - уведомить главное окно, что у нас сменились проценты
-		gConEmu.UpdateProgress(TRUE/*abUpdateTitle*/);
-	}
-	TabBar.Update(); // сменить заголовок закладки?
+    if (gConEmu.isActive(mp_VCon)) {
+        // Для активной консоли - обновляем заголовок. Прогресс обновится там же
+        gConEmu.UpdateTitle(TitleCmp);
+    } else if (nLastProgress != mn_Progress) {
+        // Для НЕ активной консоли - уведомить главное окно, что у нас сменились проценты
+        gConEmu.UpdateProgress(TRUE/*abUpdateTitle*/);
+    }
+    TabBar.Update(); // сменить заголовок закладки?
 }
 
 bool CRealConsole::isFilePanel(bool abPluginAllowed/*=false*/)
 {
-	if (!this) return false;
+    if (!this) return false;
 
-	if (Title[0] == 0) return false;
+    if (Title[0] == 0) return false;
 
-	if (abPluginAllowed) {
-		if (isEditor() || isViewer())
-			return false;
-	}
+    if (abPluginAllowed) {
+        if (isEditor() || isViewer())
+            return false;
+    }
 
-	// нужно для DragDrop
-	if (_tcsncmp(Title, ms_TempPanel, _tcslen(ms_TempPanel)) == 0 || _tcsncmp(Title, ms_TempPanelRus, _tcslen(ms_TempPanelRus)) == 0)
-		return true;
+    // нужно для DragDrop
+    if (_tcsncmp(Title, ms_TempPanel, _tcslen(ms_TempPanel)) == 0 || _tcsncmp(Title, ms_TempPanelRus, _tcslen(ms_TempPanelRus)) == 0)
+        return true;
 
-	if ((abPluginAllowed && Title[0]==_T('{')) ||
-		(_tcsncmp(Title, _T("{\\\\"), 3)==0) ||
-		(Title[0] == _T('{') && isDriveLetter(Title[1]) && Title[2] == _T(':') && Title[3] == _T('\\')))
-	{
-		TCHAR *Br = _tcsrchr(Title, _T('}'));
-		if (Br && _tcscmp(Br, _T("} - Far"))==0)
-			return true;
-	}
-	//TCHAR *BrF = _tcschr(Title, '{'), *BrS = _tcschr(Title, '}'), *Slash = _tcschr(Title, '\\');
-	//if (BrF && BrS && Slash && BrF == Title && (Slash == Title+1 || Slash == Title+3))
-	//    return true;
-	return false;
+    if ((abPluginAllowed && Title[0]==_T('{')) ||
+        (_tcsncmp(Title, _T("{\\\\"), 3)==0) ||
+        (Title[0] == _T('{') && isDriveLetter(Title[1]) && Title[2] == _T(':') && Title[3] == _T('\\')))
+    {
+        TCHAR *Br = _tcsrchr(Title, _T('}'));
+        if (Br && _tcscmp(Br, _T("} - Far"))==0)
+            return true;
+    }
+    //TCHAR *BrF = _tcschr(Title, '{'), *BrS = _tcschr(Title, '}'), *Slash = _tcschr(Title, '\\');
+    //if (BrF && BrS && Slash && BrF == Title && (Slash == Title+1 || Slash == Title+3))
+    //    return true;
+    return false;
 }
 
 bool CRealConsole::isEditor()
 {
-	if (!this) return false;
-	return GetFarStatus() & CES_EDITOR;
+    if (!this) return false;
+    return GetFarStatus() & CES_EDITOR;
 }
 
 bool CRealConsole::isViewer()
 {
-	if (!this) return false;
-	return GetFarStatus() & CES_VIEWER;
+    if (!this) return false;
+    return GetFarStatus() & CES_VIEWER;
 }
 
 bool CRealConsole::isNtvdm()
 {
-	if (!this) return false;
-	if (mn_ProgramStatus & CES_NTVDM) {
+    if (!this) return false;
+    if (mn_ProgramStatus & CES_NTVDM) {
         // Наличие 16bit определяем ТОЛЬКО по WinEvent. Иначе не получится отсечь его завершение,
         // т.к. процесс ntvdm.exe не выгружается, а остается в памяти.
-		return true;
-		//if (mn_ProgramStatus & CES_FARFLAGS) {
-		//	//mn_ActiveStatus &= ~CES_NTVDM;
-		//} else if (isFilePanel()) {
-		//	//mn_ActiveStatus &= ~CES_NTVDM;
-		//} else {
-		//	return true;
-		//}
-	}
-	return false;
+        return true;
+        //if (mn_ProgramStatus & CES_FARFLAGS) {
+        //  //mn_ActiveStatus &= ~CES_NTVDM;
+        //} else if (isFilePanel()) {
+        //  //mn_ActiveStatus &= ~CES_NTVDM;
+        //} else {
+        //  return true;
+        //}
+    }
+    return false;
 }
 
 LPCWSTR CRealConsole::GetCmd()
 {
-	if (ms_SpecialCmd)
-		return ms_SpecialCmd;
-	else
-		return gSet.GetCmd();
+    if (ms_SpecialCmd)
+        return ms_SpecialCmd;
+    else
+        return gSet.GetCmd();
 }
 
 short CRealConsole::GetProgress()
 {
-	if (!this) return -1;
-	return mn_Progress;
+    if (!this) return -1;
+    return mn_Progress;
 }
 
 void CRealConsole::EnableComSpec(DWORD anFarPID, BOOL abSwitch)
 {
-	if (!this) return;
-	if (!anFarPID) return;
+    if (!this) return;
+    if (!anFarPID) return;
 
-	int nLen = /*ComSpec\0*/ 8 + /*ComSpecC\0*/ 9 + 20 +  2*lstrlenW(gConEmu.ms_ConEmuExe);
-	wchar_t szCMD[MAX_PATH+1];
-	wchar_t szData[MAX_PATH*4];
+    //int nLen = /*ComSpec\0*/ 8 + /*ComSpecC\0*/ 9 + 20 +  2*lstrlenW(gConEmu.ms_ConEmuExe);
+    wchar_t szCMD[MAX_PATH+1];
+    wchar_t szData[MAX_PATH*4];
 
-	// Если определена ComSpecC - значит переопределен стандартный ComSpec
-	if (!GetEnvironmentVariable(L"ComSpecC", szCMD, MAX_PATH) || szCMD[0] == 0)
-		if (!GetEnvironmentVariable(L"ComSpec", szCMD, MAX_PATH) || szCMD[0] == 0)
-			szCMD[0] = 0;
-	if (szCMD[0] != 0) {
-		// Только если это (случайно) не conemuc.exe
-		wchar_t* pwszCopy = wcsrchr(szCMD, L'\\'); if (!pwszCopy) pwszCopy = szCMD;
-		#pragma warning( push )
-		#pragma warning(disable : 6400)
-		if (lstrcmpiW(pwszCopy, L"ConEmuC")==0 || lstrcmpiW(pwszCopy, L"ConEmuC.exe")==0)
-			szCMD[0] = 0;
-		#pragma warning( pop )
-	}
+    // Если определена ComSpecC - значит переопределен стандартный ComSpec
+    if (!GetEnvironmentVariable(L"ComSpecC", szCMD, MAX_PATH) || szCMD[0] == 0)
+        if (!GetEnvironmentVariable(L"ComSpec", szCMD, MAX_PATH) || szCMD[0] == 0)
+            szCMD[0] = 0;
+    if (szCMD[0] != 0) {
+        // Только если это (случайно) не conemuc.exe
+        wchar_t* pwszCopy = wcsrchr(szCMD, L'\\'); if (!pwszCopy) pwszCopy = szCMD;
+        #if !defined(__GNUC__)
+        #pragma warning( push )
+        #pragma warning(disable : 6400)
+        #endif
+        if (lstrcmpiW(pwszCopy, L"ConEmuC")==0 || lstrcmpiW(pwszCopy, L"ConEmuC.exe")==0)
+            szCMD[0] = 0;
+        #if !defined(__GNUC__)
+        #pragma warning( pop )
+        #endif
+    }
 
-	// ComSpec/ComSpecC не определен, используем cmd.exe
-	if (szCMD[0] == 0) {
-		wchar_t* psFilePart = NULL;
-		if (!SearchPathW(NULL, L"cmd.exe", NULL, MAX_PATH, szCMD, &psFilePart))
-		{
-			DisplayLastError(L"Can't find cmd.exe!\n", 0);
-			return;
-		}
-	}
+    // ComSpec/ComSpecC не определен, используем cmd.exe
+    if (szCMD[0] == 0) {
+        wchar_t* psFilePart = NULL;
+        if (!SearchPathW(NULL, L"cmd.exe", NULL, MAX_PATH, szCMD, &psFilePart))
+        {
+            DisplayLastError(L"Can't find cmd.exe!\n", 0);
+            return;
+        }
+    }
 
-	BOOL lbNeedQuot = (wcschr(gConEmu.ms_ConEmuExe, L' ') != NULL);
-	wchar_t* pszName = szData;
-	lstrcpy(pszName, L"ComSpec");
-	wchar_t* pszValue = pszName + lstrlenW(pszName) + 1;
-	if (lbNeedQuot) *(pszValue++) = L'"';
-	lstrcpy(pszValue, gConEmu.ms_ConEmuExe);
-	wchar_t* pszSlash = wcsrchr(pszValue, L'\\');
-	_ASSERTE(pszSlash!=NULL);
-	lstrcpy(pszSlash, L"\\ConEmuC.exe");
-	if (lbNeedQuot) lstrcat(pszSlash, L"\"");
+    BOOL lbNeedQuot = (wcschr(gConEmu.ms_ConEmuExe, L' ') != NULL);
+    wchar_t* pszName = szData;
+    lstrcpy(pszName, L"ComSpec");
+    wchar_t* pszValue = pszName + lstrlenW(pszName) + 1;
+    if (lbNeedQuot) *(pszValue++) = L'"';
+    lstrcpy(pszValue, gConEmu.ms_ConEmuExe);
+    wchar_t* pszSlash = wcsrchr(pszValue, L'\\');
+    _ASSERTE(pszSlash!=NULL);
+    lstrcpy(pszSlash, L"\\ConEmuC.exe");
+    if (lbNeedQuot) lstrcat(pszSlash, L"\"");
 
-	lbNeedQuot = (szCMD[0] != L'"') && (wcschr(szCMD, L' ') != NULL);
-	pszName = pszValue + lstrlenW(pszValue) + 1;
-	lstrcpy(pszName, L"ComSpecC");
-	pszValue = pszName + lstrlenW(pszName) + 1;
-	if (lbNeedQuot) *(pszValue++) = L'"';
-	lstrcpy(pszValue, szCMD);
-	if (lbNeedQuot) lstrcat(pszSlash, L" ");
+    lbNeedQuot = (szCMD[0] != L'"') && (wcschr(szCMD, L' ') != NULL);
+    pszName = pszValue + lstrlenW(pszValue) + 1;
+    lstrcpy(pszName, L"ComSpecC");
+    pszValue = pszName + lstrlenW(pszName) + 1;
+    if (lbNeedQuot) *(pszValue++) = L'"';
+    lstrcpy(pszValue, szCMD);
+    if (lbNeedQuot) lstrcat(pszSlash, L" ");
 
-	pszName = pszValue + lstrlenW(pszValue) + 1;
-	*(pszName++) = 0;
-	*(pszName++) = 0;
+    pszName = pszValue + lstrlenW(pszValue) + 1;
+    *(pszName++) = 0;
+    *(pszName++) = 0;
 
-	// Выполнить в плагине
-	CConEmuPipe pipe(anFarPID, 300);
-	if (pipe.Init(L"SetEnvVars", TRUE))
-		pipe.Execute(CMD_SETENVVAR, szData, 2*(pszName - szData));
+    // Выполнить в плагине
+    CConEmuPipe pipe(anFarPID, 300);
+    if (pipe.Init(L"SetEnvVars", TRUE))
+        pipe.Execute(CMD_SETENVVAR, szData, 2*(pszName - szData));
 }
 
 // Заголовок окна для PictureView вообще может пользователем настраиваться, так что
 // рассчитывать на него при определения "Просмотра" - нельзя
 HWND CRealConsole::isPictureView()
 {
-	if (!this) return NULL;
+    if (!this) return NULL;
 
-	if (hPictureView && (!IsWindow(hPictureView) || !isFar())) {
-		hPictureView = NULL; mb_PicViewWasHidden = FALSE;
-		gConEmu.InvalidateAll();
-	}
+    if (hPictureView && (!IsWindow(hPictureView) || !isFar())) {
+        hPictureView = NULL; mb_PicViewWasHidden = FALSE;
+        gConEmu.InvalidateAll();
+    }
 
-	if (!hPictureView) {
-		hPictureView = FindWindowEx(ghWnd, NULL, L"FarPictureViewControlClass", NULL);
-		if (!hPictureView)
-			hPictureView = FindWindowEx(ghWndDC, NULL, L"FarPictureViewControlClass", NULL);
-		if (!hPictureView) { // FullScreen?
-			hPictureView = FindWindowEx(NULL, NULL, L"FarPictureViewControlClass", NULL);
-		}
-		if (hPictureView) {
-			// Проверить на принадлежность фару
-			DWORD dwPID, dwTID;
-			dwTID = GetWindowThreadProcessId ( hPictureView, &dwPID );
-			if (dwPID != mn_FarPID) {
-				hPictureView = NULL; mb_PicViewWasHidden = FALSE;
-			}
-		}
-	}
+    if (!hPictureView) {
+        hPictureView = FindWindowEx(ghWnd, NULL, L"FarPictureViewControlClass", NULL);
+        if (!hPictureView)
+            hPictureView = FindWindowEx(ghWndDC, NULL, L"FarPictureViewControlClass", NULL);
+        if (!hPictureView) { // FullScreen?
+            hPictureView = FindWindowEx(NULL, NULL, L"FarPictureViewControlClass", NULL);
+        }
+        if (hPictureView) {
+            // Проверить на принадлежность фару
+            DWORD dwPID, dwTID;
+            dwTID = GetWindowThreadProcessId ( hPictureView, &dwPID );
+            if (dwPID != mn_FarPID) {
+                hPictureView = NULL; mb_PicViewWasHidden = FALSE;
+            }
+        }
+    }
 
-	
-	if (hPictureView) {
-		if (mb_PicViewWasHidden) {
-			// Окошко было скрыто при переключении на другую консоль, но картинка еще активна
-		} else if (!IsWindowVisible(hPictureView)) {
-			// Если вызывали Help (F1) - окошко PictureView прячется (самим плагином), считаем что картинки нет
-			hPictureView = NULL; mb_PicViewWasHidden = FALSE;
-		}
-	}
+    
+    if (hPictureView) {
+        if (mb_PicViewWasHidden) {
+            // Окошко было скрыто при переключении на другую консоль, но картинка еще активна
+        } else if (!IsWindowVisible(hPictureView)) {
+            // Если вызывали Help (F1) - окошко PictureView прячется (самим плагином), считаем что картинки нет
+            hPictureView = NULL; mb_PicViewWasHidden = FALSE;
+        }
+    }
 
-	if (mb_PicViewWasHidden && !hPictureView) mb_PicViewWasHidden = FALSE;
+    if (mb_PicViewWasHidden && !hPictureView) mb_PicViewWasHidden = FALSE;
 
-	return hPictureView;
+    return hPictureView;
 }
 
 HWND CRealConsole::ConWnd()
 {
-	if (!this) return NULL;
-	return hConWnd;
+    if (!this) return NULL;
+    return hConWnd;
 }

@@ -41,14 +41,14 @@ BOOL LoadScreen(HDC hScreen, int anWidth, int anHeight, LPBYTE* pScreen, DWORD *
 	bih->biClrImportant = 0;
 	bih->biClrImportant = 0;
 	char * pData = (char*)calloc(iMemSize,1);
-	char * pDataEnd = pData + iMemSize;
+	//char * pDataEnd = pData + iMemSize;
 
 	if (pData==NULL || bi==NULL) {
 		if (bi) free(bi);
 		if (pData) free(pData);
 		return FALSE;
 	}
-	char *pDataCur = pData;
+	//char *pDataCur = pData;
 
 	HDC hMem = CreateCompatibleDC(hScreen);
 	char* ppvBits=NULL;
@@ -63,7 +63,7 @@ BOOL LoadScreen(HDC hScreen, int anWidth, int anHeight, LPBYTE* pScreen, DWORD *
 
 
 	BITMAPFILEHEADER bfh;
-	bfh.bfType = 'MB';
+	bfh.bfType = 0x4D42; // 'MB';
 	bfh.bfSize = sizeof(BITMAPFILEHEADER)+iHdrSize+iMemSize;
 	bfh.bfReserved1=0;
 	bfh.bfReserved2=0;

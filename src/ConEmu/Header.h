@@ -71,11 +71,7 @@
 #endif
 
 #if !defined(CONSOLE_APPLICATION_16BIT)
-//#if defined(_WIN64)
-#define CONSOLE_APPLICATION_16BIT       0x0000
-//#else
-//#define CONSOLE_APPLICATION_16BIT       0x0001
-//#endif
+#define CONSOLE_APPLICATION_16BIT       0x0001
 #endif
 
 
