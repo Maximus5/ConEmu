@@ -35,6 +35,7 @@
 #ifndef COM_NO_WINDOWS_H
 #include "windows.h"
 #include "ole2.h"
+#include "commctrl.h"
 #endif /*COM_NO_WINDOWS_H*/
 
 #ifndef __shobjidl_h__

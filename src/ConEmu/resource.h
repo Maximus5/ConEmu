@@ -84,11 +84,9 @@
 #define cbAutoConHandle                 1074
 #define rCascade                        1075
 #define rFixed                          1076
-#define cbsConManActive                 1078
 #define cbsTelnetActive                 1079
 #define cbsFarActive                    1080
 #define cbsFilePanel                    1081
-#define cbsPlugin                       1082
 #define cbsEditor                       1083
 #define cbsViewer                       1084
 #define lbProcesses                     1085
@@ -151,7 +149,6 @@
 #define cbConMan                        1506
 #define cbMinToTray                     1507
 #define tCurCmdLine                     1508
-#define tsConManIdx                     1509
 #define tsTopPID                        1510
 #define tFontFace                       1511
 #define tFontSizeY                      1512
@@ -164,7 +161,6 @@
 #define tPanelLeft                      1515
 #define tCmdLine                        1516
 #define tPanelRight                     1516
-#define cbsAltActive                    1517
 #define cbApplyPos                      1520
 #define cbCursorBlink                   1522
 #define IDC_RESTART_ICON                1523
@@ -183,6 +179,8 @@
 #define cbMonitorConsoleLang            1537
 #define cbSkipFocusEvents               1538
 #define IDC_HOTKEY1                     1539
+#define cbsProgress                     1540
+#define cbsProgressError                1541
 
 // Next default values for new objects
 // 
@@ -190,7 +188,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        114
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1540
+#define _APS_NEXT_CONTROL_VALUE         1542
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

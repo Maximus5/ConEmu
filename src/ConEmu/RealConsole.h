@@ -11,14 +11,17 @@
 //#define CES_NTVDM 0x10 -- common.hpp
 #define CES_PROGRAMS2 0xFF
 
-#define CES_FILEPANEL 0x100
-#define CES_TEMPPANEL 0x200
-#define CES_PLUGINPANEL 0x400
-#define CES_EDITOR 0x1000
-#define CES_VIEWER 0x2000
-#define CES_COPYING 0x4000
-#define CES_MOVING 0x8000
-#define CES_FARFLAGS 0xFFFF00
+#define CES_FILEPANEL      0x0001
+#define CES_TEMPPANEL      0x0002
+#define CES_PLUGINPANEL    0x0004
+#define CES_EDITOR         0x0010
+#define CES_VIEWER         0x0020
+#define CES_COPYING        0x0040
+#define CES_MOVING         0x0080
+#define CES_FARFLAGS       0xFFFF
+#define CES_MAYBEPANEL   0x010000
+#define CES_WASPROGRESS  0x020000
+#define CES_OPER_ERROR   0x040000
 //... and so on
 
 // Undocumented console message
@@ -168,7 +171,7 @@ public:
 	bool isNtvdm();
 	bool isPackets();
 	LPCWSTR GetCmd();
-	short GetProgress();
+	short GetProgress(BOOL* rpbError);
 	void EnableComSpec(DWORD anFarPID, BOOL abSwitch);
 
 public:
@@ -183,7 +186,7 @@ protected:
     DWORD mn_ConEmuC_PID; HANDLE mh_ConEmuC, mh_ConEmuCInput;
     TCHAR ms_ConEmuC_Pipe[MAX_PATH], ms_ConEmuCInput_Pipe[MAX_PATH], ms_VConServer_Pipe[MAX_PATH];
     TCHAR Title[MAX_TITLE_SIZE+1], TitleCmp[MAX_TITLE_SIZE+1];
-    short mn_Progress;
+    short mn_Progress, mn_PreWarningProgress;
 
     BOOL AttachPID(DWORD dwPID);
     BOOL StartProcess();

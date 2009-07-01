@@ -1,14 +1,12 @@
 
 #pragma once
 
-#if !defined(__GNUC__)
-#include <shobjidl.h>
-#else
-#include "ShObjIdl_Part.h"
-#endif
-
 #define HDCWND ghWndDC
 
+#ifndef __ITaskbarList3_FWD_DEFINED__
+#define __ITaskbarList3_FWD_DEFINED__
+typedef interface ITaskbarList3 ITaskbarList3;
+#endif 	/* __ITaskbarList3_FWD_DEFINED__ */
 
 #define WM_TRAYNOTIFY WM_USER+1
 #define ID_CON_TOGGLE_VISIBLE 0xABC8

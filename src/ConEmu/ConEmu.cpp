@@ -1,6 +1,7 @@
 
 #include "Header.h"
 #include <Tlhelp32.h>
+#include "ShObjIdl_Part.h"
 
 #define PROCESS_WAIT_START_TIME 1000
 
@@ -11,8 +12,8 @@ WARNING("ghConWnd == NULL")
 
 #ifdef __GNUC__
 const CLSID CLSID_TaskbarList = {0x56FDF344, 0xFD6D, 0x11d0, {0x95, 0x8A, 0x00, 0x60, 0x97, 0xC9, 0xA0, 0x90}};
-const IID IID_ITaskbarList3 = {0xea1afb91, 0x9e28, 0x4b86, {0x90, 0xe9, 0x9e, 0x9f, 0x8a, 0x5e, 0xef, 0xaf}};
 #endif
+const IID IID_ITaskbarList3 = {0xea1afb91, 0x9e28, 0x4b86, {0x90, 0xe9, 0x9e, 0x9f, 0x8a, 0x5e, 0xef, 0xaf}};
 
 #if defined(__GNUC__)
 #define EXT_GNUC_LOG
@@ -2251,16 +2252,15 @@ void CConEmuMain::UpdateProcessDisplay(BOOL abForce)
     wchar_t szNo[32];
     DWORD nProgramStatus = pVCon->RCon()->GetProgramStatus();
     DWORD nFarStatus = pVCon->RCon()->GetFarStatus();
-    CheckDlgButton(gSet.hInfo, cbsConManActive, (gSet.isMulti) ? BST_CHECKED : BST_UNCHECKED);
-    SetDlgItemText(gSet.hInfo, tsConManIdx, _itow(gConEmu.ActiveConNum()+1, szNo, 10));
     CheckDlgButton(gSet.hInfo, cbsTelnetActive, (nProgramStatus&CES_TELNETACTIVE) ? BST_CHECKED : BST_UNCHECKED);
-    CheckDlgButton(gSet.hInfo, cbsNtvdmActive, isNtvdm() ? BST_CHECKED : BST_UNCHECKED);
+    CheckDlgButton(gSet.hInfo, cbsNtvdmActive, (nProgramStatus&CES_NTVDM) ? BST_CHECKED : BST_UNCHECKED);
     CheckDlgButton(gSet.hInfo, cbsFarActive, (nProgramStatus&CES_FARACTIVE) ? BST_CHECKED : BST_UNCHECKED);
     CheckDlgButton(gSet.hInfo, cbsFilePanel, (nFarStatus&CES_FILEPANEL) ? BST_CHECKED : BST_UNCHECKED);
-    //CheckDlgButton(gSet.hInfo, cbsPlugin, (nFarStatus&CES_CONMANACTIVE) ? BST_CHECKED : BST_UNCHECKED);
     CheckDlgButton(gSet.hInfo, cbsEditor, (nFarStatus&CES_EDITOR) ? BST_CHECKED : BST_UNCHECKED);
     CheckDlgButton(gSet.hInfo, cbsViewer, (nFarStatus&CES_VIEWER) ? BST_CHECKED : BST_UNCHECKED);
     SetDlgItemText(gSet.hInfo, tsTopPID, _itow(pVCon->RCon()->GetFarPID(), szNo, 10));
+	CheckDlgButton(gSet.hInfo, cbsProgress, (nFarStatus&CES_WASPROGRESS) ? BST_CHECKED : BST_UNCHECKED);
+	CheckDlgButton(gSet.hInfo, cbsProgressError, (nFarStatus&CES_OPER_ERROR) ? BST_CHECKED : BST_UNCHECKED);
 
     if (!abForce)
         return;
@@ -2357,33 +2357,38 @@ void CConEmuMain::UpdateProgress(BOOL abUpdateTitle)
     
     short nProgress = -1, n;
     BOOL bActiveHasProgress = FALSE;
-    if ((nProgress = pVCon->RCon()->GetProgress()) >= 0) {
+	BOOL bWasError = FALSE;
+    if ((nProgress = pVCon->RCon()->GetProgress(&bWasError)) >= 0) {
         mn_Progress = nProgress;
         bActiveHasProgress = TRUE;
-    } else {
-        for (UINT i = 0; i < MAX_CONSOLE_COUNT && nProgress < 100; i++) {
-            if (mp_VCon[i]) {
-                n = mp_VCon[i]->RCon()->GetProgress();
-                if (n > nProgress) nProgress = n;
-            }
+    }
+	// нас интересует возможное наличие ошибки во всех остальных консол€х
+    for (UINT i = 0; i < MAX_CONSOLE_COUNT; i++) {
+        if (mp_VCon[i]) {
+            n = mp_VCon[i]->RCon()->GetProgress(&bWasError);
+            if (!bActiveHasProgress && n > nProgress) nProgress = n;
         }
+    }
+	if (!bActiveHasProgress) {
         mn_Progress = min(nProgress,100);
     }
 
     static short nLastProgress = -1;
-    if (nLastProgress != mn_Progress) {
+	static BOOL  bLastProgressError = FALSE;
+    if (nLastProgress != mn_Progress  || bLastProgressError != bWasError) {
         HRESULT hr = S_OK;
         if (mp_TaskBar) {
             if (mn_Progress >= 0) {
                 hr = mp_TaskBar->SetProgressValue(ghWnd, mn_Progress, 100);
-                if (nLastProgress == -1)
-                    hr = mp_TaskBar->SetProgressState(ghWnd, TBPF_NORMAL);
+                if (nLastProgress == -1 || bLastProgressError != bWasError)
+					hr = mp_TaskBar->SetProgressState(ghWnd, bWasError ? TBPF_ERROR : TBPF_NORMAL);
             } else {
                 hr = mp_TaskBar->SetProgressState(ghWnd, TBPF_NOPROGRESS);
             }
         }
         // «апомнить последнее
         nLastProgress = mn_Progress;
+		bLastProgressError = bWasError;
     }
     if (mn_Progress >= 0 && !bActiveHasProgress) {
         psTitle = MultiTitle;

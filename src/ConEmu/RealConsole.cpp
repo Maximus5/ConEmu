@@ -2,7 +2,7 @@
 // WARNING!!! Содержит юникодные символы !!!
 
 #include "Header.h"
-        #include <Tlhelp32.h>
+#include <Tlhelp32.h>
 
 WARNING("При быстром наборе текста курсор часто 'замерзает' на одной из букв, но продолжает двигаться дальше");
 
@@ -58,7 +58,7 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
 
     wcscpy(Title, L"ConEmu");
     wcscpy(ms_PanelTitle, Title);
-    mn_Progress = -1; // Процентов нет
+    mn_Progress = -1; mn_PreWarningProgress = -1; // Процентов нет
 
     hPictureView = NULL; mb_PicViewWasHidden = FALSE;
 
@@ -4387,29 +4387,56 @@ bool CRealConsole::isActive()
 
 void CRealConsole::CheckFarStates()
 {
-    // далее идут взаимоисключающие флаги режимов текущей программы
-    mn_FarStatus = 0;
+	DWORD nLastState = mn_FarStatus;
 
-    //if (mb_PluginDetected && mn_FarPID == mn_FarPID_PluginDetected
-    if (GetFarPID() != 0) {
-        if (mp_tabs && mn_ActiveTab >= 0 && mn_ActiveTab < mn_tabsCount) {
-            if (mp_tabs[mn_ActiveTab].Type != 1) {
-                if (mp_tabs[mn_ActiveTab].Type == 2)
-                    mn_FarStatus |= CES_VIEWER;
-                else if (mp_tabs[mn_ActiveTab].Type == 3)
-                    mn_FarStatus |= CES_EDITOR;
-            }
-        }
+	if (GetFarPID() == 0) {
+		mn_FarStatus = 0;
+	} else {
+		mn_FarStatus &= ~CES_FARFLAGS;
 
-        if (mn_FarStatus == 0) {
-            if (wcsncmp(Title, ms_Editor, lstrlen(ms_Editor))==0 || wcsncmp(Title, ms_EditorRus, lstrlen(ms_EditorRus))==0)
-                mn_FarStatus |= CES_EDITOR;
-            else if (wcsncmp(Title, ms_Viewer, lstrlen(ms_Viewer))==0 || wcsncmp(Title, ms_ViewerRus, lstrlen(ms_ViewerRus))==0)
-                mn_FarStatus |= CES_VIEWER;
-            else if (isFilePanel(true))
-                mn_FarStatus |= CES_FILEPANEL;
-        }
-    }
+		if (mp_tabs && mn_ActiveTab >= 0 && mn_ActiveTab < mn_tabsCount) {
+			if (mp_tabs[mn_ActiveTab].Type != 1) {
+				if (mp_tabs[mn_ActiveTab].Type == 2)
+					mn_FarStatus |= CES_VIEWER;
+				else if (mp_tabs[mn_ActiveTab].Type == 3)
+					mn_FarStatus |= CES_EDITOR;
+			}
+		}
+
+		if ((mn_FarStatus & CES_FARFLAGS) == 0) {
+			if (wcsncmp(Title, ms_Editor, lstrlen(ms_Editor))==0 || wcsncmp(Title, ms_EditorRus, lstrlen(ms_EditorRus))==0)
+				mn_FarStatus |= CES_EDITOR;
+			else if (wcsncmp(Title, ms_Viewer, lstrlen(ms_Viewer))==0 || wcsncmp(Title, ms_ViewerRus, lstrlen(ms_ViewerRus))==0)
+				mn_FarStatus |= CES_VIEWER;
+			else if (isFilePanel(true))
+				mn_FarStatus |= CES_FILEPANEL;
+		}
+
+		// Смысл в том, чтобы не сбросить флажок CES_MAYBEPANEL если в панелях открыт диалог
+		// Флажок сбрасывается только в редактроре/вьювере
+		if ((mn_FarStatus & (CES_EDITOR | CES_VIEWER)) != 0)
+			mn_FarStatus &= ~(CES_MAYBEPANEL|CES_WASPROGRESS|CES_OPER_ERROR); // При переключении в редактор/вьювер - сбросить CES_MAYBEPANEL
+
+		if ((mn_FarStatus & CES_FILEPANEL) == CES_FILEPANEL) {
+			mn_FarStatus |= CES_MAYBEPANEL; // Попали в панель - поставим флажок
+			mn_FarStatus &= ~(CES_WASPROGRESS|CES_OPER_ERROR); // Значит СЕЙЧАС процесс копирования не идет
+		}
+
+		if (mn_Progress >= 0 && mn_Progress <= 100) {
+			mn_PreWarningProgress = mn_Progress;
+			if ((mn_FarStatus & CES_MAYBEPANEL) == CES_MAYBEPANEL)
+				mn_FarStatus |= CES_WASPROGRESS; // Пометить статус, что прогресс был
+			mn_FarStatus &= ~CES_OPER_ERROR;
+		} else if ((mn_FarStatus & (CES_WASPROGRESS|CES_MAYBEPANEL)) == (CES_WASPROGRESS|CES_MAYBEPANEL)) {
+			mn_FarStatus |= CES_OPER_ERROR;
+		}
+	}
+
+	if ((mn_FarStatus & CES_WASPROGRESS) == 0 && mn_Progress == -1)
+		mn_PreWarningProgress = -1;
+
+	if (mn_FarStatus != nLastState)
+		gConEmu.UpdateProcessDisplay(FALSE);
 }
 
 void CRealConsole::OnTitleChanged()
@@ -4423,8 +4450,6 @@ void CRealConsole::OnTitleChanged()
     //
     wcscpy(Title, TitleCmp);
 
-    CheckFarStates();
-    
     // Обработка прогресса операций
     short nLastProgress = mn_Progress;
     if (Title[0] == L'{' || Title[0] == L'(' || Title[0] == L'[') {
@@ -4458,6 +4483,8 @@ void CRealConsole::OnTitleChanged()
     } else {
         mn_Progress = -1;
     }
+
+	CheckFarStates();
 
     // иначе может среагировать на изменение заголовка ДО того,
     // как мы узнаем, что активировался редактор...
@@ -4542,10 +4569,16 @@ LPCWSTR CRealConsole::GetCmd()
         return gSet.GetCmd();
 }
 
-short CRealConsole::GetProgress()
+short CRealConsole::GetProgress(BOOL *rpbError)
 {
     if (!this) return -1;
-    return mn_Progress;
+	if (mn_Progress >= 0)
+		return mn_Progress;
+	if (mn_PreWarningProgress >= 0) {
+		*rpbError = TRUE;
+		return mn_PreWarningProgress;
+	}
+	return -1;
 }
 
 void CRealConsole::EnableComSpec(DWORD anFarPID, BOOL abSwitch)

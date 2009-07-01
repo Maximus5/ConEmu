@@ -160,10 +160,10 @@ BEGIN
                     WS_TABSTOP,200,36,50,8
 END
 
-IDD_DIALOG2 DIALOGEX 0, 0, 328, 246
+IDD_DIALOG2 DIALOGEX 0, 0, 328, 197
 STYLE DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
-FONT 8, "MS Shell Dlg", 0, 0, 0x1
+FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        "Colors (""red green blue"")",IDC_STATIC,4,4,319,67
     RTEXT           "0.",IDC_STATIC,12,18,8,8
@@ -321,77 +321,74 @@ BEGIN
                     WS_VSCROLL | WS_TABSTOP
 END
 
-IDD_DIALOGM DIALOGEX 0, 0, 341, 300
+IDD_DIALOGM DIALOGEX 0, 0, 341, 259
 STYLE DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 EXSTYLE WS_EX_TOPMOST
 CAPTION "Settings..."
-FONT 8, "MS Shell Dlg", 0, 0, 0x1
+FONT 8, "MS Shell Dlg"
 BEGIN
-    DEFPUSHBUTTON   "Save settings",bSaveSettings,268,283,70,14
+    DEFPUSHBUTTON   "Save settings",bSaveSettings,268,242,70,14
     CONTROL         "Always update con. handle (Telnet, etc.)",
                     cbAutoConHandle,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,
-                    285,168,8
-    CONTROL         "Tab1",tabMain,"SysTabControl32",WS_TABSTOP,4,4,334,276
+                    244,168,8
+    CONTROL         "Tab1",tabMain,"SysTabControl32",WS_TABSTOP,4,4,334,234
 END
 
-IDD_DIALOG3 DIALOGEX 0, 0, 328, 258
+IDD_DIALOG3 DIALOGEX 0, 0, 328, 199
 STYLE DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
-FONT 8, "MS Shell Dlg", 0, 0, 0x1
+FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        "Performance counters",gbPerformance,4,4,319,30
     RTEXT           "Render:",IDC_STATIC,92,17,27,8
     EDITTEXT        tPerfRender,121,16,43,12,ES_AUTOHSCROLL | ES_READONLY
     EDITTEXT        tPerfBlt,190,16,43,12,ES_AUTOHSCROLL | ES_READONLY
     RTEXT           "Blt:",IDC_STATIC,176,17,12,8
-    GROUPBOX        "Console states",IDC_STATIC,4,39,319,43
-    CHECKBOX        "ConMan",cbsConManActive,11,51,43,10,WS_DISABLED | NOT 
+    GROUPBOX        "Console states",IDC_STATIC,4,39,319,27
+    CHECKBOX        "Telnet",cbsTelnetActive,11,50,35,10,WS_DISABLED | NOT 
                     WS_TABSTOP
-    CHECKBOX        "Alt",cbsAltActive,119,51,35,10,WS_DISABLED | NOT 
+    CHECKBOX        "16bit",cbsNtvdmActive,285,50,32,10,WS_DISABLED | NOT 
                     WS_TABSTOP
-    CHECKBOX        "Telnet",cbsTelnetActive,79,51,35,10,WS_DISABLED | NOT 
+    CHECKBOX        "Far",cbsFarActive,48,50,25,10,WS_DISABLED | NOT 
                     WS_TABSTOP
-    CHECKBOX        "Ntvdm",cbsNtvdmActive,119,51,35,10,WS_DISABLED | NOT 
+    CHECKBOX        "Panel",cbsFilePanel,112,50,32,10,WS_DISABLED | NOT 
                     WS_TABSTOP
-    CHECKBOX        "Far",cbsFarActive,11,67,25,10,WS_DISABLED | NOT 
+    CHECKBOX        "Editor",cbsEditor,150,50,34,10,WS_DISABLED | NOT 
                     WS_TABSTOP
-    CHECKBOX        "Panel",cbsFilePanel,68,67,32,10,WS_DISABLED | NOT 
+    CHECKBOX        "Viewer",cbsViewer,184,50,37,10,WS_DISABLED | NOT 
                     WS_TABSTOP
-    CHECKBOX        "Plugin",cbsPlugin,103,67,35,10,WS_DISABLED | NOT 
-                    WS_TABSTOP
-    CHECKBOX        "Editor",cbsEditor,139,67,34,10,WS_DISABLED | NOT 
-                    WS_TABSTOP
-    CHECKBOX        "Viewer",cbsViewer,174,67,37,10,WS_DISABLED | NOT 
-                    WS_TABSTOP
-    GROUPBOX        "Processes",IDC_STATIC,4,128,319,92
-    EDITTEXT        tsConManIdx,55,51,18,12,ES_AUTOHSCROLL | ES_READONLY
-    EDITTEXT        tsTopPID,38,67,26,12,ES_AUTOHSCROLL | ES_READONLY
-    LISTBOX         lbProcesses,9,139,307,74,NOT LBS_NOTIFY | 
+    GROUPBOX        "Processes",IDC_STATIC,4,68,185,92
+    EDITTEXT        tsTopPID,75,49,32,12,ES_AUTOHSCROLL | ES_READONLY
+    LISTBOX         lbProcesses,9,79,173,74,NOT LBS_NOTIFY | 
                     LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_HSCROLL | 
                     WS_TABSTOP
     RTEXT           "FPS:",IDC_STATIC,9,17,23,8
     EDITTEXT        tPerfFPS,36,16,43,12,ES_AUTOHSCROLL | ES_READONLY
     EDITTEXT        tPerfInterval,274,16,43,12,ES_AUTOHSCROLL | ES_READONLY
     RTEXT           "Interval:",IDC_STATIC,240,17,31,8
-    GROUPBOX        "Current command line",IDC_STATIC,4,223,319,30
-    EDITTEXT        tCurCmdLine,9,234,307,12,ES_AUTOHSCROLL | ES_READONLY
-    GROUPBOX        "Sizes",IDC_STATIC,4,83,318,41
-    LTEXT           "Console (chars):",IDC_STATIC,9,94,55,8
-    EDITTEXT        tConSizeChr,67,93,54,12,ES_AUTOHSCROLL | ES_READONLY
-    RTEXT           "(pixels):",IDC_STATIC,123,94,30,8
-    EDITTEXT        tConSizePix,156,93,54,12,ES_AUTOHSCROLL | ES_READONLY
-    RTEXT           "DC window:",IDC_STATIC,215,94,45,8
-    EDITTEXT        tDCSize,263,93,54,12,ES_AUTOHSCROLL | ES_READONLY
-    LTEXT           "Left:",IDC_STATIC,9,110,15,8
-    EDITTEXT        tPanelLeft,32,109,90,12,ES_AUTOHSCROLL | ES_READONLY
-    RTEXT           "Right:",IDC_STATIC,131,110,22,8
-    EDITTEXT        tPanelRight,156,109,90,12,ES_AUTOHSCROLL | ES_READONLY
+    GROUPBOX        "Current command line",IDC_STATIC,4,163,319,30
+    EDITTEXT        tCurCmdLine,9,174,307,12,ES_AUTOHSCROLL | ES_READONLY
+    GROUPBOX        "Sizes",IDC_STATIC,195,68,128,92
+    RTEXT           "Console (chars):",IDC_STATIC,200,79,59,8
+    EDITTEXT        tConSizeChr,264,77,54,12,ES_AUTOHSCROLL | ES_READONLY
+    RTEXT           "(pixels):",IDC_STATIC,229,94,30,8
+    EDITTEXT        tConSizePix,264,92,54,12,ES_AUTOHSCROLL | ES_READONLY
+    RTEXT           "DC window:",IDC_STATIC,214,110,45,8
+    EDITTEXT        tDCSize,264,108,54,12,ES_AUTOHSCROLL | ES_READONLY
+    RTEXT           "Left:",IDC_STATIC,198,128,26,8
+    EDITTEXT        tPanelLeft,228,126,90,12,ES_AUTOHSCROLL | ES_READONLY
+    RTEXT           "Right:",IDC_STATIC,197,145,27,8
+    EDITTEXT        tPanelRight,228,143,90,12,ES_AUTOHSCROLL | ES_READONLY
+    CONTROL         "%%",cbsProgress,"Button",BS_AUTOCHECKBOX | WS_DISABLED | 
+                    WS_TABSTOP,223,50,27,10
+    CONTROL         "Error",cbsProgressError,"Button",BS_AUTOCHECKBOX | 
+                    WS_DISABLED | WS_TABSTOP,251,50,31,10
 END
 
 IDD_DIALOG4 DIALOGEX 0, 0, 328, 167
 STYLE DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
-FONT 8, "MS Shell Dlg"
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     CONTROL         "&RightClick for context menu",cbRClick,"Button",
                     BS_AUTO3STATE | WS_TABSTOP,10,44,125,8
@@ -423,8 +420,8 @@ BEGIN
                     WS_TABSTOP
     CONTROL         "MultiCon",cbConMan,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,10,89,43,8
-    CONTROL         "Auto minimize to tray",cbMinToTray,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,231,123,85,8
+    CONTROL         "Auto minimize to tray",cbMinToTray,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,231,123,85,8
     CONTROL         "Long output",cbLongOutput,"Button",BS_AUTOCHECKBOX | 
                     WS_DISABLED | WS_TABSTOP,61,89,56,8
     EDITTEXT        tLongOutputHeight,122,87,40,12,ES_AUTOHSCROLL | 
@@ -511,12 +508,17 @@ BEGIN
     tFontSizeX2             "WIDTH for additional font.\nIt must be wider than main font,\notherwise, You get 'dashed' borders."
     cbSendAE                "When is on, You can't enter fullscreen mode from keyboard,\nbut You can use 'AltEnter' for macros in FAR"
     cbDnDCopy               "Forced 'Copy' action as default,\nYou can use Ctrl, Shift or Alt\nduring drag to change action"
+    cbTabs                  "Show tabs (all opened panels, editors and viewers)\non the top of ConEmu window"
     cbGUIpb                 "Enhancement of standart (only) copy/move progressbars.\nYou may choose 3state of 'Fix Far Borders' instead of..."
 END
 
 STRINGTABLE DISCARDABLE 
 BEGIN
     cbRClick                "Off - all RClicks passed to console\nOn - Apps passed to console instead of RClick\n3s - Short RClick passed, Long RClick -> Apps\nWarning! This may conflict with RDrag"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
     cbRSelectionFix         "Fix dashed selection with fast right mouse drag"
     cbMonitorConsoleLang    "Monitor input language change in real\nconsole (i.e. XLat switching support)"
     cbSkipFocusEvents       "Don't send focus events to console to disable\nautoclosing of fast search dialog in panels"
@@ -524,7 +526,6 @@ END
 
 STRINGTABLE DISCARDABLE 
 BEGIN
-    cbTabs                  "Show tabs (all opened panels, editors and viewers)\non the top of ConEmu window"
     cbTabSelf               "Handle CtrlTab and CtrlShiftTab internally\n(by ConEmu). This keystrokes will not be sent\nto console window, bu You can easily\nswitch between consoles (panels)."
     cbTabLazy               "When checked - real window switching\nwill be performed on Ctrl depress"
     cbTabRecent             "Switch first between recent tabs.\nYou may still switch between tabs in\nstandard manner using Left/Right\n(after CtrlTab), while Ctrl is still presses."
