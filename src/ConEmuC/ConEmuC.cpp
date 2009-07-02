@@ -448,7 +448,18 @@ int main()
     dwErr = GetLastError();
     if (!lbRc)
     {
-        wprintf (L"Can't create process, ErrCode=0x%08X! Command to be executed:\n%s\n", dwErr, gpszRunCmd);
+		wchar_t* lpMsgBuf = NULL;
+		if (dwErr == 5) {
+			lpMsgBuf = (wchar_t*)LocalAlloc(LPTR, 255);
+			wcscpy(lpMsgBuf, L"Access is denied.\nThis may be cause of antiviral or file permissions denial.");
+		} else {
+			FormatMessage( FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, NULL, dwErr, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPWSTR)&lpMsgBuf, 0, NULL );
+		}
+		
+        wprintf (L"Can't create process, ErrCode=0x%08X, Description:\n%s\nCommand to be executed:\n%s\n", 
+        	dwErr, (lpMsgBuf == NULL) ? L"<Unknown error>" : lpMsgBuf, gpszRunCmd);
+        
+        if (lpMsgBuf) LocalFree(lpMsgBuf);
         iRc = CERR_CREATEPROCESS; goto wrap;
     }
 	srv.nProcessStartTick = GetTickCount();
