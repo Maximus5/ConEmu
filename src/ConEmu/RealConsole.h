@@ -126,6 +126,7 @@ public:
     void StopThread(BOOL abRecreating=FALSE);
     BOOL isBufferHeight();
 	HWND isPictureView();
+	BOOL isWindowVisible();
     LPCTSTR GetTitle();
     void GetConsoleScreenBufferInfo(CONSOLE_SCREEN_BUFFER_INFO* sbi) { *sbi = con.m_sbi; };
     void GetConsoleSelectionInfo(CONSOLE_SELECTION_INFO *sel) { *sel = con.m_sel; };

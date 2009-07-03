@@ -94,6 +94,9 @@ public:
 		// Чтобы не слать в консоль бесконечные WM_MOUSEMOVE
 		WPARAM lastMMW;
 		LPARAM lastMML;
+		
+		// Пропустить клик мышкой (окно было неактивно)
+		UINT nSkipEvents[2]; UINT nReplaseDblClk;
 	} mouse;
 	bool isPiewUpdate;
 	bool gbPostUpdateWindowSize;

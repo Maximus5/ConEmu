@@ -81,6 +81,7 @@ LRESULT CALLBACK CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam
     case WM_MOUSEWHEEL:
     case WM_ACTIVATE:
     case WM_ACTIVATEAPP:
+    //case WM_MOUSEACTIVATE:
     case WM_KILLFOCUS:
     //case WM_SETFOCUS:
     case WM_MOUSEMOVE:

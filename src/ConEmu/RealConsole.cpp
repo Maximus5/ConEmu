@@ -678,7 +678,7 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
                         pRCon->mn_LastInvalidateTick = GetTickCount();
                     }
                 } else if (((GetTickCount() - pRCon->mn_LastInvalidateTick) > FORCE_INVALIDATE_TIMEOUT)) {
-                    DEBUGSTR("+++ Force invalidate by timeout\n");
+                    DEBUGSTR(L"+++ Force invalidate by timeout\n");
                     pRCon->LogString("Invalidating from CRealConsole::MonitorThread.2");
                     gConEmu.m_Child.Redraw();
                     /*gConEmu.m_Child.Validate(); // סבנמסטעü פכאזמך
@@ -1398,6 +1398,13 @@ BOOL CRealConsole::isFar()
 {
     if (!this) return false;
     return GetFarPID()!=0;
+}
+
+BOOL CRealConsole::isWindowVisible()
+{
+	if (!this) return FALSE;
+	if (!hConWnd) return FALSE;
+	return IsWindowVisible(hConWnd);
 }
 
 LPCTSTR CRealConsole::GetTitle()

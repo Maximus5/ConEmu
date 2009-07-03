@@ -7,8 +7,6 @@
 #define PTDIFFTEST(C,D) PtDiffTest(C, LOWORD(lParam), HIWORD(lParam), D)
 //(((abs(C.x-LOWORD(lParam)))<D) && ((abs(C.y-HIWORD(lParam)))<D))
 
-WARNING("ghConWnd == NULL")
-
 
 // COM TaskBarList interface support
 #ifdef __GNUC__
@@ -3583,14 +3581,65 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
         DEBUGLOGFILE("Mouse outside of upper-left");
         return 0;
     }
+    
+    if (GetForegroundWindow() != ghWnd) {
+    	DEBUGLOGFILE("ConEmu is not foreground window, mouse event skipped");
+    	return 0;
+    }
+
+    if ((gConEmu.mouse.nSkipEvents[0] && gConEmu.mouse.nSkipEvents[0] == messg)
+        || (gConEmu.mouse.nSkipEvents[1] 
+	        && (gConEmu.mouse.nSkipEvents[1] == messg || messg == WM_MOUSEMOVE)))
+    {
+		if (gConEmu.mouse.nSkipEvents[0] == messg) {
+			gConEmu.mouse.nSkipEvents[0] = 0;
+			DEBUGSTR(L"Skipping Mouse down\n");
+		} else
+		if (gConEmu.mouse.nSkipEvents[1] == messg) {
+			gConEmu.mouse.nSkipEvents[1] = 0;
+			DEBUGSTR(L"Skipping Mouse up\n");
+		} 
+		#ifdef _DEBUG
+		else if (messg == WM_MOUSEMOVE) {
+			DEBUGSTR(L"Skipping Mouse move\n");
+		}
+		#endif
+    	DEBUGLOGFILE("ConEmu was not foreground window, mouse activation event skipped");
+    	return 0;
+    }
+    
+    if (mouse.nReplaseDblClk) {
+    	if (messg == WM_LBUTTONDOWN && mouse.nReplaseDblClk == WM_LBUTTONDBLCLK) {
+    		mouse.nReplaseDblClk = 0;
+    	} else
+    	if (messg == WM_RBUTTONDOWN && mouse.nReplaseDblClk == WM_RBUTTONDBLCLK) {
+    		mouse.nReplaseDblClk = 0;
+    	} else
+    	if (messg == WM_MBUTTONDOWN && mouse.nReplaseDblClk == WM_MBUTTONDBLCLK) {
+    		mouse.nReplaseDblClk = 0;
+    	} else
+     	if (mouse.nReplaseDblClk == messg) {
+        	switch (mouse.nReplaseDblClk) {
+        	case WM_LBUTTONDBLCLK:
+        		messg = WM_LBUTTONDOWN;
+        		break;
+        	case WM_RBUTTONDBLCLK:
+        		messg = WM_RBUTTONDOWN;
+        		break;
+        	case WM_MBUTTONDBLCLK:
+        		messg = WM_MBUTTONDOWN;
+        		break;
+        	}
+        	mouse.nReplaseDblClk = 0;
+    	}
+    }
 
     ///*&& isPressed(VK_LBUTTON)*/) && // Если этого не делать - при выделении мышкой консоль может самопроизвольно прокрутиться
-    if (pVCon->RCon()->isBufferHeight() 
+    CRealConsole* pRCon = pVCon->RCon();
+    // Только при скрытой консоли. Иначе мы ConEmu видеть вообще не будем
+    if (pRCon && (/*pRCon->isBufferHeight() ||*/ !pRCon->isWindowVisible())
         && (messg == WM_LBUTTONDOWN || messg == WM_RBUTTONDOWN || messg == WM_LBUTTONDBLCLK || messg == WM_RBUTTONDBLCLK
             || (messg == WM_MOUSEMOVE && isPressed(VK_LBUTTON)))
-        #ifdef _DEBUG
-        && !IsWindowVisible(ghConWnd) /* иначе в режиме отладки замумукаться можно */
-        #endif
         )
     {
        // buffer mode: cheat the console window: adjust its position exactly to the cursor
@@ -4658,6 +4707,32 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
         result = DefWindowProc(hWnd, messg, wParam, lParam);
         break;
 
+    case WM_MOUSEACTIVATE:
+    	//return MA_ACTIVATEANDEAT; -- ест все подряд, а LBUTTONUP пропускает :(
+		gConEmu.mouse.nSkipEvents[0] = 0;
+		gConEmu.mouse.nSkipEvents[1] = 0;
+		if (LOWORD(lParam) == HTCLIENT && GetForegroundWindow() != ghWnd) {
+			POINT ptMouse = {0}; GetCursorPos(&ptMouse);
+			RECT  rcDC = {0}; GetWindowRect(ghWndDC, &rcDC);
+			if (PtInRect(&rcDC, ptMouse)) {
+            	if (HIWORD(lParam) == WM_LBUTTONDOWN) {
+            		gConEmu.mouse.nSkipEvents[0] = WM_LBUTTONDOWN;
+            		gConEmu.mouse.nSkipEvents[1] = WM_LBUTTONUP;
+            		gConEmu.mouse.nReplaseDblClk = WM_LBUTTONDBLCLK;
+            	} else if (HIWORD(lParam) == WM_RBUTTONDOWN) {
+            		gConEmu.mouse.nSkipEvents[0] = WM_RBUTTONDOWN;
+            		gConEmu.mouse.nSkipEvents[1] = WM_RBUTTONUP;
+            		gConEmu.mouse.nReplaseDblClk = WM_RBUTTONDBLCLK;
+            	} else if (HIWORD(lParam) == WM_MBUTTONDOWN) {
+            		gConEmu.mouse.nSkipEvents[0] = WM_MBUTTONDOWN;
+            		gConEmu.mouse.nSkipEvents[1] = WM_MBUTTONUP;
+            		gConEmu.mouse.nReplaseDblClk = WM_MBUTTONDBLCLK;
+            	}
+            }
+        }
+    	result = DefWindowProc(hWnd, messg, wParam, lParam);
+    	break;
+    	
     case WM_MOUSEMOVE:
     case WM_MOUSEWHEEL:
     case WM_RBUTTONDOWN:
@@ -4770,55 +4845,3 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
     }
     return result;
 }
-
-
-
-
-/*
-
-ConEmu.cpp: In static member function 'static RECT CConEmuMain::CalcMargins(ConEmuMargins)':
-ConEmu.cpp:224: warning: enumeration value 'CEM_BACKFORCESCROLL' not handled in switch
-ConEmu.cpp:224: warning: enumeration value 'CEM_BACKFORCENOSCROLL' not handled in switch
-ConEmu.cpp: In static member function 'static RECT CConEmuMain::CalcRect(ConEmuRect, RECT, ConEmuRect, RECT*)':
-ConEmu.cpp:474: warning: enumeration value 'CER_MAIN' not handled in switch
-ConEmu.cpp:474: warning: enumeration value 'CER_MAINCLIENT' not handled in switch
-ConEmu.cpp:474: warning: enumeration value 'CER_TAB' not handled in switch
-ConEmu.cpp:474: warning: enumeration value 'CER_BACK' not handled in switch
-ConEmu.cpp:474: warning: enumeration value 'CER_DC' not handled in switch
-ConEmu.cpp:474: warning: enumeration value 'CER_CONSOLE' not handled in switch
-ConEmu.cpp:474: warning: enumeration value 'CER_CORRECTED' not handled in switch
-ConEmu.cpp:484: warning: enumeration value 'CER_MAIN' not handled in switch
-ConEmu.cpp:484: warning: enumeration value 'CER_MAINCLIENT' not handled in switch
-ConEmu.cpp:484: warning: enumeration value 'CER_TAB' not handled in switch
-ConEmu.cpp:484: warning: enumeration value 'CER_BACK' not handled in switch
-ConEmu.cpp:484: warning: enumeration value 'CER_DC' not handled in switch
-ConEmu.cpp:484: warning: enumeration value 'CER_CONSOLE' not handled in switch
-ConEmu.cpp:484: warning: enumeration value 'CER_CORRECTED' not handled in switch
-ConEmu.cpp: In member function 'LRESULT CConEmuMain::OnSize(WPARAM, WORD, WORD)':
-ConEmu.cpp:1114: warning: comparison between signed and unsigned integer expressions
-ConEmu.cpp:1114: warning: comparison between signed and unsigned integer expressions
-ConEmu.cpp:1112: warning: unused variable 'lbIsPicView'
-ConEmu.cpp: In member function 'bool CConEmuMain::ConmanAction(int)':
-ConEmu.cpp:1731: warning: unused variable 'nActive'
-ConEmu.cpp: In member function 'void CConEmuMain::LoadIcons()':
-ConEmu.cpp:1831: warning: comparison between signed and unsigned integer expressions
-ConEmu.cpp: In member function 'bool CConEmuMain::LoadVersionInfo(wchar_t*)':
-ConEmu.cpp:1862: warning: unused variable 'pDesc'
-ConEmu.cpp: In member function 'void CConEmuMain::PostMacro(const WCHAR*)':
-ConEmu.cpp:1927: warning: unused variable 'cbWritten'
-ConEmu.cpp: In member function 'void CConEmuMain::UpdateTitle(const TCHAR*)':
-ConEmu.cpp:2115: warning: unused variable 'lbTitleChanged'
-ConEmu.cpp: In static member function 'static void CConEmuMain::WinEventProc(HWINEVENTHOOK__*, DWORD, HWND__*, LONG, LONG, DWORD, DWORD)':
-ConEmu.cpp:2241: warning: comparison between signed and unsigned integer expressions
-ConEmu.cpp: In member function 'LRESULT CConEmuMain::OnPaint(WPARAM, LPARAM)':
-ConEmu.cpp:2308: warning: unused variable 'hDc'
-ConEmu.cpp: In member function 'LRESULT CConEmuMain::OnSysCommand(HWND__*, WPARAM, LPARAM)':
-ConEmu.cpp: In member function 'LRESULT CConEmuMain::OnTimer(WPARAM, LPARAM)':
-ConEmu.cpp:3821: warning: comparison between signed and unsigned integer expressions
-ConEmu.cpp:3821: warning: comparison between signed and unsigned integer expressions
-ConEmu.cpp:3840: warning: comparison between signed and unsigned integer expressions
-ConEmu.cpp:3840: warning: comparison between signed and unsigned integer expressions
-mingw32-make: *** [../../gcc/conemu/ConEmu.o] Error 1
-
-*/
-
