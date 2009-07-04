@@ -48,6 +48,7 @@ wchar_t gszDbgModLabel[6] = {0};
 #define MIN_FORCEREFRESH_INTERVAL 100
 #define MAX_FORCEREFRESH_INTERVAL 1000
 #define MAX_INPUT_QUEUE_EMPTY_WAIT 100
+#define MAX_SYNCSETSIZE_WAIT 500
 
 WARNING("!!!! Пока можно при появлении события запоминать текущий тик");
 // и проверять его в RefreshThread. Если он не 0 - и дельта больше (100мс?)
@@ -177,7 +178,7 @@ HANDLE  ghConIn = NULL, ghConOut = NULL;
 HWND    ghConWnd = NULL;
 HWND    ghConEmuWnd = NULL; // Root! window
 HANDLE  ghExitEvent = NULL;
-HANDLE  ghFinilizeEvent = NULL;
+HANDLE  ghFinalizeEvent = NULL;
 BOOL    gbAlwaysConfirmExit = FALSE, gbInShutdown = FALSE, gbAutoDisableConfirmExit = FALSE;
 int     gbRootWasFoundInCon = 0;
 BOOL    gbAttachMode = FALSE;
@@ -215,7 +216,7 @@ struct tag_Srv {
     //std::vector<DWORD> nProcesses;
 	UINT nProcessCount, nMaxProcesses;
 	DWORD* pnProcesses, *pnProcessesCopy, nProcessStartTick;
-	BOOL bNtvdmActive;
+	BOOL bNtvdmActive; DWORD nNtvdmPID;
     //
     wchar_t szPipename[MAX_PATH], szInputname[MAX_PATH], szGuiPipeName[MAX_PATH];
     //
@@ -239,6 +240,7 @@ struct tag_Srv {
     HANDLE hRefreshEvent; // ServerMode, перечитать консоль, и если есть изменения - отослать в GUI
     //HANDLE hChangingSize; // FALSE на время смены размера консоли
     CRITICAL_SECTION csChangeSize; DWORD ncsTChangeSize;
+	HANDLE hAllowInputEvent; BOOL bInSyncResize;
     BOOL  bNeedFullReload;  // Нужен полный скан консоли
     BOOL  bForceFullSend; // Необходимо отослать ПОЛНОЕ содержимое консоли, а не только измененное
     BOOL  bRequestPostFullReload; // Во время чтения произошел ресайз - нужно запустить повторный цикл!
@@ -379,13 +381,13 @@ int main()
         iRc = CERR_EXITEVENT; goto wrap;
     }
     ResetEvent(ghExitEvent);
-    ghFinilizeEvent = CreateEvent(NULL, TRUE/*используется в нескольких нитях, manual*/, FALSE, NULL);
-    if (!ghFinilizeEvent) {
+    ghFinalizeEvent = CreateEvent(NULL, TRUE/*используется в нескольких нитях, manual*/, FALSE, NULL);
+    if (!ghFinalizeEvent) {
         dwErr = GetLastError();
         wprintf(L"CreateEvent() failed, ErrCode=0x%08X\n", dwErr); 
         iRc = CERR_EXITEVENT; goto wrap;
     }
-    ResetEvent(ghFinilizeEvent);
+    ResetEvent(ghFinalizeEvent);
 
     // Дескрипторы
     ghConIn  = CreateFile(L"CONIN$", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_READ,
@@ -497,7 +499,7 @@ int main()
     
         // Ждем, пока в консоли не останется процессов (кроме нашего)
         TODO("Проверить, может ли так получиться, что CreateProcess прошел, а к консоли он не прицепился? Может, если процесс GUI");
-        nWait = WaitForSingleObject(ghFinilizeEvent, CHECK_ANTIVIRUS_TIMEOUT); //Запуск процесса наверное может задержать антивирус
+        nWait = WaitForSingleObject(ghFinalizeEvent, CHECK_ANTIVIRUS_TIMEOUT); //Запуск процесса наверное может задержать антивирус
         if (nWait != WAIT_OBJECT_0) { // Если таймаут
             iRc = srv.nProcessCount;
             // И процессов в консоли все еще нет
@@ -523,7 +525,7 @@ int main()
 wait:    
     if (gnRunMode == RM_SERVER) {
         // По крайней мере один процесс в консоли запустился. Ждем пока в консоли не останется никого кроме нас
-        nWait = WaitForSingleObject(ghFinilizeEvent, INFINITE);
+        nWait = WaitForSingleObject(ghFinalizeEvent, INFINITE);
 		#ifdef _DEBUG
 		if (nWait == WAIT_OBJECT_0) {
 			DEBUGSTR(L"*** FinilizeEvent was set!\n");
@@ -564,7 +566,8 @@ wait:
     
     iRc = 0;
 wrap:
-    // 
+    // К сожалению, HandlerRoutine может быть еще не вызван, поэтому
+	// в самой процедуре ExitWaitForKey вставлена проверка флага gbInShutdown
     PRINT_COMSPEC(L"Finalizing. gbInShutdown=%i\n", gbInShutdown);
     if (!gbInShutdown
 		&& ((iRc!=0 && iRc!=CERR_RUNNEWCONSOLE) || gbAlwaysConfirmExit)
@@ -1502,6 +1505,9 @@ int ServerInit()
 
     InitializeCriticalSection(&srv.csChangeSize);
 
+	srv.hAllowInputEvent = CreateEvent(NULL, TRUE, TRUE, NULL);
+	if (!srv.hAllowInputEvent) SetEvent(srv.hAllowInputEvent);
+
     TODO("Сразу проверить, может ComSpecC уже есть?");
     if (GetEnvironmentVariable(L"ComSpec", szComSpec, MAX_PATH)) {
         wchar_t* pszSlash = wcsrchr(szComSpec, L'\\');
@@ -1737,6 +1743,8 @@ void ServerDone(int aiRc)
     DeleteCriticalSection(&srv.csChar);
     DeleteCriticalSection(&srv.csChangeSize);
 
+	SafeCloseHandle(srv.hAllowInputEvent);
+
     SafeCloseHandle(srv.hRootProcess); 
 
 	if (srv.csProc) {
@@ -1858,13 +1866,23 @@ BOOL CheckProcessCount(BOOL abForce/*=FALSE*/)
 	}
 
 	// Процессов в консоли не осталось?
+	if (srv.nProcessCount == 2 && !srv.bNtvdmActive && srv.nNtvdmPID) {
+		// Возможно было запущено 16битное приложение, а ntvdm.exe не выгружается при его закрытии
+		// gnSelfPID не обязательно будет в srv.pnProcesses[0]
+		if ((srv.pnProcesses[0] == gnSelfPID && srv.pnProcesses[1] == srv.nNtvdmPID)
+			|| (srv.pnProcesses[1] == gnSelfPID && srv.pnProcesses[0] == srv.nNtvdmPID))
+		{
+			// Послать в нашу консоль команду закрытия
+			PostMessage(ghConWnd, WM_CLOSE, 0, 0);
+		}
+	}
 	WARNING("Если в консоли ДО этого были процессы - все условия вида 'srv.nProcessCount == 1' обломаются");
 	// Пример - запускаемся из фара. Количество процессов ИЗНАЧАЛЬНО - 5
 	// cmd вываливается сразу (path not found)
 	// количество процессов ОСТАЕТСЯ 5 и ни одно из ниже условий не проходит
 	if (nPrevCount == 1 && srv.nProcessCount == 1 && srv.nProcessStartTick &&
 		((dwLastCheckTick - srv.nProcessStartTick) > CHECK_ROOTSTART_TIMEOUT) &&
-		WaitForSingleObject(ghFinilizeEvent,0) == WAIT_TIMEOUT)
+		WaitForSingleObject(ghFinalizeEvent,0) == WAIT_TIMEOUT)
 	{
 		nPrevCount = 2; // чтобы сработало следующее условие
 		if (!gbAlwaysConfirmExit) gbAlwaysConfirmExit = TRUE; // чтобы консоль не схлопнулась
@@ -1873,7 +1891,7 @@ BOOL CheckProcessCount(BOOL abForce/*=FALSE*/)
 		CS.Unlock();
 		if (!gbAlwaysConfirmExit && (dwLastCheckTick - srv.nProcessStartTick) <= CHECK_ROOTSTART_TIMEOUT)
 			gbAlwaysConfirmExit = TRUE; // чтобы консоль не схлопнулась
-		SetEvent(ghFinilizeEvent);
+		SetEvent(ghFinalizeEvent);
 	}
 
 	return lbChanged;
@@ -2173,6 +2191,11 @@ DWORD WINAPI InputThread(LPVOID lpvParam)
                       {
                           srv.dwLastUserTick = GetTickCount();
                       }
+
+
+					  // Если сейчас идет ресайз - нежелаетльно помещение в буфер событий
+					  if (srv.bInSyncResize)
+						WaitForSingleObject(srv.hAllowInputEvent, MAX_SYNCSETSIZE_WAIT);
 
                       // 27.06.2009 Maks - If input queue is not empty - wait for a while, to awoid conflicts with FAR reading queue
                       if (PeekConsoleInput(ghConIn, irDummy, 1, &(nCurInputCount = 0)) && nCurInputCount > 0) {
@@ -2671,6 +2694,7 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
             lbRc = TRUE;
         } break;
         case CECMD_SETSIZE:
+		case CECMD_SETSIZESYNC:
         case CECMD_CMDSTARTED:
         case CECMD_CMDFINISHED:
         {
@@ -2723,8 +2747,32 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 
                 MCHKHEAP
 
+				if (in.hdr.nCmd == CECMD_SETSIZESYNC) {
+					ResetEvent(srv.hAllowInputEvent);
+					srv.bInSyncResize = TRUE;
+				}
+
                 srv.nTopVisibleLine = nNewTopVisible;
                 SetConsoleSize(nBufferHeight, crNewSize, rNewRect, ":CECMD_SETSIZE");
+
+				if (in.hdr.nCmd == CECMD_SETSIZESYNC) {
+					INPUT_RECORD r = {WINDOW_BUFFER_SIZE_EVENT};
+					r.Event.WindowBufferSizeEvent.dwSize = crNewSize;
+					DWORD dwWritten = 0;
+					if (WriteConsoleInput(ghConIn, &r, 1, &dwWritten)) {
+						if (PeekConsoleInput(ghConIn, &r, 1, &(dwWritten = 0)) && dwWritten > 0) {
+							DWORD dwStartTick = GetTickCount();
+							do {
+								Sleep(5);
+								if (!PeekConsoleInput(ghConIn, &r, 1, &(dwWritten = 0)))
+									dwWritten = 0;
+							} while ((dwWritten > 0) && ((GetTickCount() - dwStartTick) < MAX_SYNCSETSIZE_WAIT));
+						}
+					}
+
+					SetEvent(srv.hAllowInputEvent);
+					srv.bInSyncResize = FALSE;
+				}
 
                 MCHKHEAP
 
@@ -2986,7 +3034,8 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 			nWait = (WAIT_OBJECT_0+1);
 		}
 
-        if (nWait == (WAIT_OBJECT_0+1)) {
+        if (nWait == (WAIT_OBJECT_0+1) && !srv.bInSyncResize)
+		{
             #ifdef _DEBUG
             wchar_t szDbg[128], szRgn[64];
             if (srv.CharChanged.hdr.nSize) {
@@ -3081,9 +3130,8 @@ void WINAPI WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LO
 
 			_ASSERTE(CONSOLE_APPLICATION_16BIT==1);
             if (idChild == CONSOLE_APPLICATION_16BIT) {
-                //DWORD ntvdmPID = idObject;
-                //dwActiveFlags |= CES_NTVDM;
 				srv.bNtvdmActive = TRUE;
+				srv.nNtvdmPID = idObject;
                 SetPriorityClass(GetCurrentProcess(), HIGH_PRIORITY_CLASS);
 
 				// Тут менять высоту уже нельзя... смена размера не доходит до 16бит приложения...
@@ -3137,7 +3185,7 @@ void WINAPI WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LO
                     // Процессов в консоли не осталось?
                     if (srv.nProcesses.size() == 0 && !gbInRecreateRoot) {
                         LeaveCriticalSection(&srv.csProc);
-                        SetEvent(ghFinilizeEvent);
+                        SetEvent(ghFinalizeEvent);
                         return;
                     }
                     break;

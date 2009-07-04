@@ -21,10 +21,13 @@ public:
 	
 	void SetCaret ( int Visible, UINT X=0, UINT Y=0, UINT nWidth=0, UINT nHeight=0 );
 
+	void SetRedraw(BOOL abRedrawEnabled);
+
 protected:
 	UINT mn_MsgTabChanged;
 	UINT mn_MsgPostFullPaint;
 	BOOL mb_PostFullPaint;
+	BOOL mb_DisableRedraw;
 #ifdef _DEBUG
 	friend class CVirtualConsole;
 	friend class CRealConsole;

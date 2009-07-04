@@ -129,6 +129,7 @@ protected:
 	wchar_t *mpsz_RecreateCmd;
 	ITaskbarList3 *mp_TaskBar;
 	typedef BOOL (WINAPI* FRegisterShellHookWindow)(HWND);
+	RECT mrc_Ideal;
 	//DWORD mn_CurrentKeybLayout;
 	// Registered messages
 	DWORD mn_MainThreadId;
@@ -176,6 +177,7 @@ public:
 	static RECT CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFrom, RECT* prDC=NULL);
 	bool ConmanAction(int nCmd);
 	CVirtualConsole* CreateCon(BOOL abStartDetached=FALSE, LPCWSTR asNewCmd=NULL);
+	BOOL CreateMainWindow();
 	void Destroy();
 	void DnDstep(LPCTSTR asMsg);
 	void ForceShowTabs(BOOL abShow);
@@ -208,7 +210,7 @@ public:
 	void Recreate(BOOL abRecreate, BOOL abConfirm);
 	static BOOL CALLBACK RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam);
 	void RePaint();
-	void ReSize();
+	void ReSize(BOOL abCorrect2Ideal = FALSE);
 	void SetConsoleWindowSize(const COORD& size, bool updateInfo);
 	bool SetWindowMode(uint inMode);
 	void ShowOldCmdVersion(DWORD nCmd, DWORD nVersion);
@@ -221,11 +223,12 @@ public:
 	void Update(bool isForce = false);
 	void UpdateTitle(LPCTSTR asNewTitle);
 	void UpdateProgress(BOOL abUpdateTitle);
-	LRESULT CALLBACK WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
+	static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
+	LRESULT WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 public:
 	void OnBufferHeight(BOOL abBufferHeight);
 	LRESULT OnClose(HWND hWnd);
-	LRESULT OnCreate(HWND hWnd);
+	LRESULT OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate);
 	LRESULT OnDestroy(HWND hWnd);
 	LRESULT OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnGetMinMaxInfo(LPMINMAXINFO pInfo);

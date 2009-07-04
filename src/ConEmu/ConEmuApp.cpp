@@ -40,7 +40,7 @@ const TCHAR *const szClassNameBack = VirtualConsoleClassBack;
 const TCHAR *const szClassNameScroll = VirtualConsoleClassScroll;
 
 
-OSVERSIONINFO osver;
+OSVERSIONINFO gOSVer;
 
 
 #ifdef MSGLOGGER
@@ -286,27 +286,6 @@ int __stdcall _MDEBUG_TRAP(LPCSTR asFile, int anLine)
 int MDEBUG_CHK = TRUE;
 #endif
 
-LRESULT CALLBACK MainWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
-{
-    LRESULT result = 0;
-    
-	if (messg == WM_CREATE) {
-		if (ghWnd == NULL)
-			ghWnd = hWnd; // ставим сразу, чтобы функции могли пользоваться
-		else if (ghWndDC == NULL)
-			ghWndDC = hWnd; // ставим сразу, чтобы функции могли пользоваться
-	}
-	
-	if (hWnd == ghWnd)
-		result = gConEmu.WndProc(hWnd, messg, wParam, lParam);
-    else if (hWnd == ghWndDC)
-	    result = gConEmu.m_Child.ChildWndProc(hWnd, messg, wParam, lParam);
-	else if (messg)
-		result = DefWindowProc(hWnd, messg, wParam, lParam);
-
-    return result;
-}
-
 LRESULT CALLBACK AppWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 {
     LRESULT result = 0;
@@ -370,59 +349,6 @@ BOOL CreateAppWindow()
 	return TRUE;
 }
 
-BOOL CreateMainWindow()
-{
-	if (!gConEmu.Init())
-		return FALSE; // Ошибка уже показана
-
-    if (_tcscmp(VirtualConsoleClass,VirtualConsoleClassMain)) {
-	    MBoxA(_T("Error: class names must be equal!"));
-	    return FALSE;
-    }
-    
-	// 2009-06-11 Возможно, что CS_SAVEBITS приводит к глюкам отрисовки
-	// банально непрорисовываются некоторые части экрана (драйвер видюхи глючит?)
-	WNDCLASSEX wc = {sizeof(WNDCLASSEX), CS_DBLCLKS|CS_OWNDC/*|CS_SAVEBITS*/, MainWndProc, 0, 16, 
-		    g_hInstance, hClassIcon, LoadCursor(NULL, IDC_ARROW), 
-		    NULL /*(HBRUSH)COLOR_BACKGROUND*/, 
-		    NULL, szClassNameParent, hClassIconSm};// | CS_DROPSHADOW
-    if (!RegisterClassEx(&wc))
-        return -1;
-    //ghWnd = CreateWindow(szClassName, 0, WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN, gSet.wndX, gSet.wndY, cRect.right - cRect.left - 4, cRect.bottom - cRect.top - 4, NULL, NULL, (HINSTANCE)g_hInstance, NULL);
-    DWORD style = WS_CLIPCHILDREN | WS_CLIPSIBLINGS;
-    if (ghWndApp)
-	    style |= WS_POPUPWINDOW | WS_CAPTION | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX;
-	else
-		style |= WS_OVERLAPPEDWINDOW;
-    int nWidth=CW_USEDEFAULT, nHeight=CW_USEDEFAULT;
-    
-    if (gSet.wndWidth && gSet.wndHeight)
-    {
-	    //if (gSet.FontWidth()==0)
-		//    pVCon->InitDC(FALSE); // инициализировать ширину шрифта по умолчанию
-
-		MBoxAssert(gSet.FontWidth() && gSet.FontHeight());
-
-	    COORD conSize; conSize.X=gSet.wndWidth; conSize.Y=gSet.wndHeight;
-	    int nShiftX = GetSystemMetrics(SM_CXSIZEFRAME)*2;
-	    int nShiftY = GetSystemMetrics(SM_CYSIZEFRAME)*2 + GetSystemMetrics(SM_CYCAPTION);
-		nWidth  = conSize.X * gSet.FontWidth() + nShiftX + gSet.rcTabMargins.left+gSet.rcTabMargins.right;
-	    nHeight = conSize.Y * gSet.FontHeight() + nShiftY + gSet.rcTabMargins.top+gSet.rcTabMargins.bottom;
-    }
-    
-	//if (gConEmu.WindowMode == rMaximized) style |= WS_MAXIMIZE;
-	//style |= WS_VISIBLE;
-    // cRect.right - cRect.left - 4, cRect.bottom - cRect.top - 4; -- все равно это было не правильно
-	ghWnd = CreateWindow(szClassNameParent, gSet.GetCmd(), style, 
-		gSet.wndX, gSet.wndY, nWidth, nHeight, ghWndApp, NULL, (HINSTANCE)g_hInstance, NULL);
-	if (!ghWnd) {
-		if (!ghWndDC) MBoxA(_T("Can't create main window!"));
-        return FALSE;
-	}
-	//if (gConEmu.WindowMode == rFullScreen || gConEmu.WindowMode == rMaximized)
-	//	gConEmu.SetWindowMode(gConEmu.WindowMode);
-	return TRUE;
-}
 
 BOOL CheckConIme()
 {
@@ -525,19 +451,19 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     //gConEmu.cBlinkShift = GetCaretBlinkTime()/15;
 
-    memset(&osver, 0, sizeof(osver));
-    osver.dwOSVersionInfoSize = sizeof(osver);
-    GetVersionEx(&osver);
+    memset(&gOSVer, 0, sizeof(gOSVer));
+    gOSVer.dwOSVersionInfoSize = sizeof(gOSVer);
+    GetVersionEx(&gOSVer);
     
     //DisableIME();
 
     //Windows7 - SetParent для консоли валится
     //gConEmu.setParent = false; // PictureView теперь идет через Wrapper
-    //if ((osver.dwMajorVersion>6) || (osver.dwMajorVersion==6 && osver.dwMinorVersion>=1))
+    //if ((gOSVer.dwMajorVersion>6) || (gOSVer.dwMajorVersion==6 && gOSVer.dwMinorVersion>=1))
     //{
     //    setParentDisabled = true;
     //}
-    if (osver.dwMajorVersion>=6)
+    if (gOSVer.dwMajorVersion>=6)
     {
 	    CheckConIme();
     }
@@ -989,7 +915,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 ///| Creating window |////////////////////////////////////////////////////
 //------------------------------------------------------------------------
 
-    if (!CreateMainWindow()) {
+    if (!gConEmu.CreateMainWindow()) {
 	    free(cmdLine);
 	    //delete pVCon;
 	    return 100;

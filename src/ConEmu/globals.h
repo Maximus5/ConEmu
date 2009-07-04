@@ -17,6 +17,7 @@ extern HWND ghWnd, ghConWnd, ghWndDC, ghOpWnd, ghWndApp;
 extern BOOL gbMessagingStarted, gbDontEnable;
 class TabBarClass;
 extern TabBarClass TabBar;
+extern OSVERSIONINFO gOSVer;
 
 extern const int TAB_FONT_HEIGTH;
 extern wchar_t TAB_FONT_FACE[];

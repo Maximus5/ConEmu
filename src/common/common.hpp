@@ -108,8 +108,9 @@ extern wchar_t gszDbgModLabel[6];
 #define CECMD_TABSCMD       14 // 0: спрятать/показать табы, 1: перейти на следующую, 2: перейти на предыдущую, 3: commit switch
 #define CECMD_RESOURCES     15 // Посылается плагином при инициализации (установка ресурсов)
 #define CECMD_GETNEWCONPARM 16 // Доп.аргументы для создания новой консоли (шрифт, размер,...)
+#define CECMD_SETSIZESYNC   17 // Синхронно, ждет (но недолго), пока FAR обработает изменение размера (то есть отрисуется)
 
-#define CESERVER_REQ_VER    7
+#define CESERVER_REQ_VER    8
 
 #define PIPEBUFSIZE 4096
 

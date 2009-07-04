@@ -1,6 +1,9 @@
 
 #include "Header.h"
 #include <Tlhelp32.h>
+extern "C" {
+#include "../common/ConEmuCheck.h"
+}
 
 #define PROCESS_WAIT_START_TIME 1000
 
@@ -15,7 +18,8 @@
 	const IID IID_ITaskbarList3 = {0xea1afb91, 0x9e28, 0x4b86, {0x90, 0xe9, 0x9e, 0x9f, 0x8a, 0x5e, 0xef, 0xaf}};
 #else
 	#include <ShObjIdl.h>
-	#ifndef __ITaskbarList3_FWD_DEFINED__
+	#ifndef __ITaskbarList3_INTERFACE_DEFINED__
+		#undef __shobjidl_h__
 		#include "ShObjIdl_Part.h"
 		const IID IID_ITaskbarList3 = {0xea1afb91, 0x9e28, 0x4b86, {0x90, 0xe9, 0x9e, 0x9f, 0x8a, 0x5e, 0xef, 0xaf}};
 	#endif
@@ -58,6 +62,7 @@ CConEmuMain::CConEmuMain()
     //mn_CurrentKeybLayout = (DWORD)GetKeyboardLayout(0);
     mn_ServerThreadId = 0; mh_ServerThread = NULL; mh_ServerThreadTerminate = NULL;
     mpsz_RecreateCmd = NULL;
+	ZeroStruct(mrc_Ideal);
 
     memset(&mouse, 0, sizeof(mouse));
     mouse.lastMMW=-1;
@@ -123,6 +128,62 @@ BOOL CConEmuMain::Init()
     return TRUE;
 }
 
+BOOL CConEmuMain::CreateMainWindow()
+{
+	if (!Init())
+		return FALSE; // Ошибка уже показана
+
+	if (_tcscmp(VirtualConsoleClass,VirtualConsoleClassMain)) {
+		MBoxA(_T("Error: class names must be equal!"));
+		return FALSE;
+	}
+
+	// 2009-06-11 Возможно, что CS_SAVEBITS приводит к глюкам отрисовки
+	// банально непрорисовываются некоторые части экрана (драйвер видюхи глючит?)
+	WNDCLASSEX wc = {sizeof(WNDCLASSEX), CS_DBLCLKS|CS_OWNDC/*|CS_SAVEBITS*/, CConEmuMain::MainWndProc, 0, 16, 
+		g_hInstance, hClassIcon, LoadCursor(NULL, IDC_ARROW), 
+		NULL /*(HBRUSH)COLOR_BACKGROUND*/, 
+		NULL, szClassNameParent, hClassIconSm};// | CS_DROPSHADOW
+	if (!RegisterClassEx(&wc))
+		return -1;
+
+	DWORD style = WS_CLIPCHILDREN | WS_CLIPSIBLINGS;
+	if (ghWndApp)
+		style |= WS_POPUPWINDOW | WS_CAPTION | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX;
+	else
+		style |= WS_OVERLAPPEDWINDOW;
+	int nWidth=CW_USEDEFAULT, nHeight=CW_USEDEFAULT;
+
+	// Расчет размеров окна в Normal режиме
+	if (gSet.wndWidth && gSet.wndHeight)
+	{
+		MBoxAssert(gSet.FontWidth() && gSet.FontHeight());
+
+		COORD conSize; conSize.X=gSet.wndWidth; conSize.Y=gSet.wndHeight;
+		int nShiftX = GetSystemMetrics(SM_CXSIZEFRAME)*2;
+		int nShiftY = GetSystemMetrics(SM_CYSIZEFRAME)*2 + GetSystemMetrics(SM_CYCAPTION);
+		// Если табы показываются всегда - сразу добавим их размер, чтобы размер консоли был заказанным
+		nWidth  = conSize.X * gSet.FontWidth() + nShiftX 
+			+ ((gSet.isTabs == 1) ? (gSet.rcTabMargins.left+gSet.rcTabMargins.right) : 0);
+		nHeight = conSize.Y * gSet.FontHeight() + nShiftY 
+			+ ((gSet.isTabs == 1) ? (gSet.rcTabMargins.top+gSet.rcTabMargins.bottom) : 0);
+
+		mrc_Ideal = MakeRect(gSet.wndX, gSet.wndY, gSet.wndX+nWidth, gSet.wndY+nHeight);
+	}
+
+	//if (gConEmu.WindowMode == rMaximized) style |= WS_MAXIMIZE;
+	//style |= WS_VISIBLE;
+	// cRect.right - cRect.left - 4, cRect.bottom - cRect.top - 4; -- все равно это было не правильно
+	ghWnd = CreateWindow(szClassNameParent, gSet.GetCmd(), style, 
+		gSet.wndX, gSet.wndY, nWidth, nHeight, ghWndApp, NULL, (HINSTANCE)g_hInstance, NULL);
+	if (!ghWnd) {
+		if (!ghWndDC) MBoxA(_T("Can't create main window!"));
+		return FALSE;
+	}
+	//if (gConEmu.WindowMode == rFullScreen || gConEmu.WindowMode == rMaximized)
+	//	gConEmu.SetWindowMode(gConEmu.WindowMode);
+	return TRUE;
+}
 
 void CConEmuMain::Destroy()
 {
@@ -1041,35 +1102,69 @@ void CConEmuMain::ForceShowTabs(BOOL abShow)
         //TabBar.Update(&tab, 1);
         //pVCon->RCon()->SetTabs(&tab, 1);
         TabBar.Update();
-        gbPostUpdateWindowSize = true;
+        //gbPostUpdateWindowSize = true; // 2009-07-04 Resize выполняет сам TabBar
     } else if (!abShow) {
         TabBar.Deactivate();
-        gbPostUpdateWindowSize = true;
+        //gbPostUpdateWindowSize = true; // 2009-07-04 Resize выполняет сам TabBar
     }
 
-    if (gbPostUpdateWindowSize) { // значит мы что-то поменяли
-        ReSize();
-        /*RECT rcNewCon; GetClientRect(ghWnd, &rcNewCon);
-        DCClientRect(&rcNewCon);
-        MoveWindow(ghWndDC, rcNewCon.left, rcNewCon.top, rcNewCon.right - rcNewCon.left, rcNewCon.bottom - rcNewCon.top, 0);
-        dcWindowLast = rcNewCon;
-        
-        if (gSet.LogFont.lfWidth)
-        {
-            SyncConsoleToWindow();
-        }*/
-    }
+	// 2009-07-04 Resize выполняет сам TabBar
+    //if (gbPostUpdateWindowSize) { // значит мы что-то поменяли
+    //    ReSize();
+    //    /*RECT rcNewCon; GetClientRect(ghWnd, &rcNewCon);
+    //    DCClientRect(&rcNewCon);
+    //    MoveWindow(ghWndDC, rcNewCon.left, rcNewCon.top, rcNewCon.right - rcNewCon.left, rcNewCon.bottom - rcNewCon.top, 0);
+    //    dcWindowLast = rcNewCon;
+    //    
+    //    if (gSet.LogFont.lfWidth)
+    //    {
+    //        SyncConsoleToWindow();
+    //    }*/
+    //}
 }
 
-void CConEmuMain::ReSize()
+void CConEmuMain::ReSize(BOOL abCorrect2Ideal /*= FALSE*/)
 {
     if (IsIconic(ghWnd))
         return;
 
-    RECT client; GetClientRect(ghWnd, &client);
+	RECT client; GetClientRect(ghWnd, &client);
+
+	if (abCorrect2Ideal) {
+		
+
+		if (!IsZoomed(ghWnd) && !gSet.isFullScreen) {
+			// Выполняем всегда, даже если размер уже соответсвует...
+			RECT rcWnd; GetWindowRect(ghWnd, &rcWnd);
+			RECT rcConsole = CalcRect(CER_CONSOLE, mrc_Ideal, CER_MAIN);
+			RECT rcCompWnd = CalcRect(CER_MAIN, rcConsole, CER_CONSOLE);
+			// При показе/скрытии табов высота консоли может "прыгать"
+			// Ее нужно скорректировать. Поскольку идет реальный ресайз
+			// главного окна - OnSize вызовается автоматически
+			_ASSERTE(isMainThread());
+
+			m_Child.SetRedraw(FALSE);
+			pVCon->RCon()->SetConsoleSize(MakeCoord(rcConsole.right, rcConsole.bottom), CECMD_SETSIZESYNC);
+			m_Child.SetRedraw(TRUE);
+
+			MoveWindow(ghWnd, rcWnd.left, rcWnd.top, 
+				(rcCompWnd.right - rcCompWnd.left), (rcCompWnd.bottom - rcCompWnd.top), 1);
+		} else {
+			RECT rcConsole = CalcRect(CER_CONSOLE, client, CER_MAINCLIENT);
+
+			m_Child.SetRedraw(FALSE);
+			pVCon->RCon()->SetConsoleSize(MakeCoord(rcConsole.right, rcConsole.bottom), CECMD_SETSIZESYNC);
+			m_Child.SetRedraw(TRUE);
+			m_Child.Redraw();
+		}
+	}
 
     OnSize(IsZoomed(ghWnd) ? SIZE_MAXIMIZED : SIZE_RESTORED,
         client.right, client.bottom);
+
+	if (abCorrect2Ideal) {
+		
+	}
 }
 
 LRESULT CConEmuMain::OnSize(WPARAM wParam, WORD newClientWidth, WORD newClientHeight)
@@ -1113,6 +1208,11 @@ LRESULT CConEmuMain::OnSize(WPARAM wParam, WORD newClientWidth, WORD newClientHe
         pVCon->RCon()->LogString("  -- normal mode\n");
         #endif
     }
+
+	// Запомнить "идеальный" размер окна, выбранный пользователем
+	if (isSizing() && !gSet.isFullScreen && !IsZoomed(ghWnd) && !IsIconic(ghWnd)) {
+		GetWindowRect(ghWnd, &mrc_Ideal);
+	}
 
     if (TabBar.IsActive())
         TabBar.UpdateWidth();
@@ -2992,9 +3092,16 @@ LRESULT CConEmuMain::OnClose(HWND hWnd)
 //  return 0;
 //}
 
-LRESULT CConEmuMain::OnCreate(HWND hWnd)
+LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
 {
     ghWnd = hWnd; // ставим сразу, чтобы функции могли пользоваться
+
+	if (!mrc_Ideal.right) {
+		// lpCreate->cx/cy может содержать CW_USEDEFAULT
+		GetWindowRect(ghWnd, &mrc_Ideal);
+	}
+
+
     Icon.LoadIcon(hWnd, gSet.nIconID/*IDI_ICON1*/);
     
     
@@ -4316,6 +4423,10 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
                     if (pVCon) {
                         m_LastConSize = MakeCoord(pVCon->TextWidth,pVCon->TextHeight);
                     }
+					// Запомнить "идеальный" размер окна, выбранный пользователем
+					if (lbSizingToDo && !gSet.isFullScreen && !IsZoomed(ghWnd) && !IsIconic(ghWnd)) {
+						GetWindowRect(ghWnd, &mrc_Ideal);
+					}
                 }
                 else if (pVCon 
                     && (m_LastConSize.X != (int)pVCon->TextWidth 
@@ -4593,6 +4704,26 @@ void CConEmuMain::ServerThreadCommand(HANDLE hPipe)
     return;
 }
 
+LRESULT CConEmuMain::MainWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
+{
+	LRESULT result = 0;
+
+	if (messg == WM_CREATE) {
+		if (ghWnd == NULL)
+			ghWnd = hWnd; // ставим сразу, чтобы функции могли пользоваться
+		else if (ghWndDC == NULL)
+			ghWndDC = hWnd; // ставим сразу, чтобы функции могли пользоваться
+	}
+
+	if (hWnd == ghWnd)
+		result = gConEmu.WndProc(hWnd, messg, wParam, lParam);
+	else if (hWnd == ghWndDC)
+		result = gConEmu.m_Child.ChildWndProc(hWnd, messg, wParam, lParam);
+	else if (messg)
+		result = DefWindowProc(hWnd, messg, wParam, lParam);
+
+	return result;
+}
 
 LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 {
@@ -4612,6 +4743,10 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 
     switch (messg)
     {
+	case WM_CREATE:
+		result = gConEmu.OnCreate(hWnd, (LPCREATESTRUCT)lParam);
+		break;
+
     case WM_NOTIFY:
     {
         result = TabBar.OnNotify((LPNMHDR)lParam);
@@ -4754,16 +4889,12 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
         result = gConEmu.OnClose(hWnd);
         break;
 
-    case WM_CREATE:
-        result = gConEmu.OnCreate(hWnd);
-        break;
-
     case WM_SYSCOMMAND:
         result = gConEmu.OnSysCommand(hWnd, wParam, lParam);
         break;
 
     case WM_NCLBUTTONDOWN:
-        //gConEmu.mb_InSizing = (messg==WM_NCLBUTTONDOWN);
+        // При ресайзе WM_NCRBUTTONUP к сожалению не приходит
         gConEmu.mouse.state |= MOUSE_SIZING_BEGIN;
         result = DefWindowProc(hWnd, messg, wParam, lParam);
         break;

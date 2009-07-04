@@ -195,14 +195,14 @@ protected:
     BOOL mb_NeedStartProcess;
 
     static DWORD WINAPI MonitorThread(LPVOID lpParameter);
-    HANDLE mh_TermEvent, mh_MonitorThreadEvent, mh_Sync2WindowEvent;
+    HANDLE mh_TermEvent, mh_MonitorThreadEvent; //, mh_Sync2WindowEvent;
     BOOL mb_FullRetrieveNeeded, mb_Detached;
     wchar_t* ms_SpecialCmd;
     HANDLE mh_MonitorThread; DWORD mn_MonitorThreadID;
 
     void Box(LPCTSTR szText);
 
-    BOOL RetrieveConsoleInfo(BOOL bShortOnly);
+    BOOL RetrieveConsoleInfo(BOOL bShortOnly, UINT anWaitSize = 0);
     BOOL InitBuffers(DWORD OneBufferSize);
 private:
     // Эти переменные инициализируются в RetrieveConsoleInfo()
@@ -241,6 +241,7 @@ private:
     void ProcessUpdateFlags(BOOL abProcessChanged);
     void ProcessCheckName(struct ConProcess &ConPrc, LPWSTR asFullFileName);
     DWORD mn_ProgramStatus, mn_FarStatus;
+	BOOL mb_IgnoreCmdStop; // При запуске 16bit приложения не возвращать размер консоли! Это сделает OnWinEvent
     BOOL isShowConsole;
     BOOL mb_ConsoleSelectMode;
     static DWORD WINAPI ServerThread(LPVOID lpvParam);

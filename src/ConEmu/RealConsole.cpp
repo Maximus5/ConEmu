@@ -63,14 +63,14 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
     hPictureView = NULL; mb_PicViewWasHidden = FALSE;
 
     mh_MonitorThread = NULL; mn_MonitorThreadID = 0; mn_ConEmuC_PID = 0; mh_ConEmuC = NULL; mh_ConEmuCInput = NULL;
-    mb_NeedStartProcess = FALSE;
+    mb_NeedStartProcess = FALSE; mb_IgnoreCmdStop = FALSE;
 
     ms_ConEmuC_Pipe[0] = 0; ms_ConEmuCInput_Pipe[0] = 0; ms_VConServer_Pipe[0] = 0;
     mh_TermEvent = CreateEvent(NULL,TRUE/*MANUAL - используется в нескольких нитях!*/,FALSE,NULL); ResetEvent(mh_TermEvent);
     mh_MonitorThreadEvent = CreateEvent(NULL,FALSE,FALSE,NULL);
     //mh_EndUpdateEvent = CreateEvent(NULL,FALSE,FALSE,NULL);
-    WARNING("mh_Sync2WindowEvent убрать");
-    mh_Sync2WindowEvent = CreateEvent(NULL,FALSE,FALSE,NULL);
+    //WARNING("mh_Sync2WindowEvent убрать");
+    //mh_Sync2WindowEvent = CreateEvent(NULL,FALSE,FALSE,NULL);
     //mh_ConChanged = CreateEvent(NULL,FALSE,FALSE,NULL);
     mh_PacketArrived = CreateEvent(NULL,FALSE,FALSE,NULL);
     //mh_CursorChanged = NULL;
@@ -240,7 +240,7 @@ BOOL CRealConsole::SetConsoleSize(COORD size, DWORD anCmdID/*=CECMD_SETSIZE*/)
     SMALL_RECT rect = {0};
 
     pIn->hdr.nVersion = CESERVER_REQ_VER;
-    _ASSERTE(anCmdID==CECMD_SETSIZE || anCmdID==CECMD_CMDSTARTED || anCmdID==CECMD_CMDFINISHED);
+    _ASSERTE(anCmdID==CECMD_SETSIZE || anCmdID==CECMD_SETSIZESYNC || anCmdID==CECMD_CMDSTARTED || anCmdID==CECMD_CMDFINISHED);
     pIn->hdr.nCmd = anCmdID;
     pIn->hdr.nSrcThreadId = GetCurrentThreadId();
 
@@ -352,6 +352,38 @@ BOOL CRealConsole::SetConsoleSize(COORD size, DWORD anCmdID/*=CECMD_SETSIZE*/)
             gSet.UpdateSize(size.X, size.Y);
         }
     }
+
+	if (anCmdID == CECMD_SETSIZESYNC) {
+		// ConEmuC должен сам послать изменения
+		if (!RetrieveConsoleInfo(FALSE, size.Y)) {
+			Sleep(100);
+			// Ждем, пока mn_MonitorThreadID получит изменения
+			DWORD dwStartTick = GetTickCount();
+			DWORD nTimeout = 500;
+			#ifdef _DEBUG
+			nTimeout = 500;
+			#endif
+			while (!RetrieveConsoleInfo(FALSE, size.Y)) {
+				Sleep(100);
+				if ((GetTickCount() - dwStartTick) > nTimeout)
+					break;
+			}
+		}
+
+		//if (GetCurrentThreadId() != mn_MonitorThreadID) {
+		//	// Ждем, пока mn_MonitorThreadID получит изменения
+		//	DWORD dwStartTick = GetTickCount();
+		//	DWORD nTimeout = 300;
+		//	#ifdef _DEBUG
+		//	nTimeout = 300;
+		//	#endif
+		//	while (size.X != con.nTextWidth || size.Y != con.nTextHeight) {
+		//		Sleep(10);
+		//		if ((GetTickCount() - dwStartTick) > nTimeout)
+		//			break;
+		//	}
+		//}
+	}
 
     return lbRc;
 }
@@ -518,20 +550,20 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
     //TODO: а тут мы будем читать консоль...
     #define IDEVENT_TERM  0
     #define IDEVENV_MONITORTHREADEVENT 1
-    #define IDEVENT_SYNC2WINDOW 2
+    //#define IDEVENT_SYNC2WINDOW 2
     //#define IDEVENT_CURSORCHANGED 4
-    #define IDEVENT_PACKETARRIVED 3
-    #define IDEVENT_CONCLOSED 4
+    #define IDEVENT_PACKETARRIVED 2
+    #define IDEVENT_CONCLOSED 3
     #define EVENTS_COUNT (IDEVENT_CONCLOSED+1)
     HANDLE hEvents[EVENTS_COUNT];
     hEvents[IDEVENT_TERM] = pRCon->mh_TermEvent;
     //hEvents[IDEVENT_CONCHANGED] = pRCon->mh_ConChanged;
     hEvents[IDEVENV_MONITORTHREADEVENT] = pRCon->mh_MonitorThreadEvent; // Использовать, чтобы вызвать Update & Invalidate
-    hEvents[IDEVENT_SYNC2WINDOW] = pRCon->mh_Sync2WindowEvent;
+    //hEvents[IDEVENT_SYNC2WINDOW] = pRCon->mh_Sync2WindowEvent;
     //hEvents[IDEVENT_CURSORCHANGED] = pRCon->mh_CursorChanged;
     hEvents[IDEVENT_PACKETARRIVED] = pRCon->mh_PacketArrived;
     hEvents[IDEVENT_CONCLOSED] = pRCon->mh_ConEmuC;
-    DWORD  nEvents = bDetached ? (IDEVENT_SYNC2WINDOW+1) : countof(hEvents);
+    DWORD  nEvents = /*bDetached ? (IDEVENT_SYNC2WINDOW+1) :*/ countof(hEvents);
     _ASSERT(EVENTS_COUNT==countof(hEvents)); // проверить размерность
 
     DWORD  nWait = 0;
@@ -619,7 +651,7 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
             }
 
             if (nWait==IDEVENT_PACKETARRIVED || pRCon->isPackets()) {
-                //MSectionLock cs; cs.Lock(&pRCon->csPKT, TRUE);
+                //MSectionLock cs; cs.Lock(&pRCon->csPKT,уе TRUE);
                 CESERVER_REQ* pPkt = NULL;
                 while ((pPkt = pRCon->PopPacket()) != NULL) {
                     pRCon->ApplyConsoleInfo(pPkt);
@@ -627,11 +659,11 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
                 }
             }
 
-            if ((nWait == IDEVENT_SYNC2WINDOW || !WaitForSingleObject(hEvents[IDEVENT_SYNC2WINDOW],0))
-                && pRCon->hConWnd)
-            {
-                pRCon->SyncConsole2Window();
-            }
+            //if ((nWait == IDEVENT_SYNC2WINDOW || !WaitForSingleObject(hEvents[IDEVENT_SYNC2WINDOW],0))
+            //    && pRCon->hConWnd)
+            //{
+            //    pRCon->SyncConsole2Window();
+            //}
 
             if (pRCon->hConWnd 
                 && GetWindowText(pRCon->hConWnd, pRCon->TitleCmp, countof(pRCon->TitleCmp)-2)
@@ -1335,7 +1367,7 @@ void CRealConsole::StopThread(BOOL abRecreating)
         SafeCloseHandle(mh_TermEvent);
         SafeCloseHandle(mh_MonitorThreadEvent);
         //SafeCloseHandle(mh_EndUpdateEvent);
-        SafeCloseHandle(mh_Sync2WindowEvent);
+        //SafeCloseHandle(mh_Sync2WindowEvent);
         //SafeCloseHandle(mh_ConChanged);
         SafeCloseHandle(mh_PacketArrived);
     }
@@ -1637,6 +1669,8 @@ void CRealConsole::OnWinEvent(DWORD event, HWND hwnd, LONG idObject, LONG idChil
             _ASSERTE(CONSOLE_APPLICATION_16BIT==1);
             if (idChild == CONSOLE_APPLICATION_16BIT) {
                 mn_ProgramStatus |= CES_NTVDM;
+				if (gOSVer.dwMajorVersion>5 || (gOSVer.dwMajorVersion==5 && gOSVer.dwMinorVersion>=1))
+					mb_IgnoreCmdStop = TRUE;
                 SetPriorityClass(GetCurrentProcess(), HIGH_PRIORITY_CLASS);
             }
         } break;
@@ -1649,8 +1683,9 @@ void CRealConsole::OnWinEvent(DWORD event, HWND hwnd, LONG idObject, LONG idChil
             
             //
             if (idChild == CONSOLE_APPLICATION_16BIT) {
-                gConEmu.gbPostUpdateWindowSize = true;
+                //gConEmu.gbPostUpdateWindowSize = true;
                 mn_ProgramStatus &= ~CES_NTVDM;
+				SyncConsole2Window(); // После выхода из 16bit режима хорошо бы отресайзить консоль по размеру GUI
                 TODO("Вообще-то хорошо бы проверить, что 16бит не осталось в других консолях");
                 SetPriorityClass(GetCurrentProcess(), NORMAL_PRIORITY_CLASS);
             }
@@ -1882,6 +1917,10 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 
             // ComSpec started
             if (nStarted == 2) {
+				// Устанавливается в TRUE если будет запущено 16битное приложение
+				// но пока его нужно сбросить
+				mb_IgnoreCmdStop = FALSE;
+
                 if (gSet.DefaultBufferHeight && !isBufferHeight()) {
                     WARNING("Тут наверное нужно бы заблокировать прием команды смена размера из сервера ConEmuC");
                     con.m_sbi.dwSize.Y = gSet.DefaultBufferHeight;
@@ -1899,14 +1938,24 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
             // 23.06.2009 Maks - уберем пока. Должно работать в ApplyConsoleInfo
             //Process Delete(nPID);
 
+			// ComSpec stopped
             if (nStarted == 3) {
-                // Восстановить размер через серверный ConEmuC
-                mb_BuferModeChangeLocked = TRUE;
-                COORD crNewSize = {TextWidth(),TextHeight()};
-                con.m_sbi.dwSize.Y = crNewSize.Y;
-                SetBufferHeightMode(FALSE, TRUE); // Сразу выключаем, иначе команда неправильно сформируется
-                SetConsoleSize(crNewSize, CECMD_CMDFINISHED);
-                mb_BuferModeChangeLocked = FALSE;
+				if (mb_IgnoreCmdStop) {
+					// Ветка активируется только в WinXP и выше
+					// Было запущено 16битное приложение, сейчас запомненный размер консоли скорее всего 80x25
+					// что не соответствует желаемому размеру при выходе из 16бит. Консоль нужно подресайзить
+					// поз размер окна. Это сделает OnWinEvent.
+					SetBufferHeightMode(FALSE, TRUE);
+					mb_IgnoreCmdStop = FALSE; // наверное сразу сбросим, две подряд прийти не могут
+				} else {
+					// Восстановить размер через серверный ConEmuC
+					mb_BuferModeChangeLocked = TRUE;
+					COORD crNewSize = {TextWidth(),TextHeight()};
+					con.m_sbi.dwSize.Y = crNewSize.Y;
+					SetBufferHeightMode(FALSE, TRUE); // Сразу выключаем, иначе команда неправильно сформируется
+					SetConsoleSize(crNewSize, CECMD_CMDFINISHED);
+					mb_BuferModeChangeLocked = FALSE;
+				}
             }
         }
         
@@ -2058,15 +2107,21 @@ void CRealConsole::ApplyConsoleInfo(CESERVER_REQ* pInfo)
     _ASSERTE(this!=NULL);
     if (this==NULL) return;
 
-    _ASSERTE(pInfo->hdr.nVersion==CESERVER_REQ_VER && pInfo->hdr.nCmd<100);
     #ifdef _DEBUG
+	int nNeedVer = CESERVER_REQ_VER;
+	int nThisVer = pInfo->hdr.nVersion;
+	BOOL lbVerOk = nThisVer==nNeedVer;
+	_ASSERTE(lbVerOk);
+	_ASSERTE(pInfo->hdr.nCmd<100);
     if (!con.bBufferHeight && !mb_BuferModeChangeLocked && pInfo->ConInfo.inf.sbi.srWindow.Top != 0) {
         _ASSERTE(pInfo->ConInfo.inf.sbi.srWindow.Top == 0);
     }
     #endif
 
+	if (mn_LastProcessedPkt > pInfo->ConInfo.inf.nPacketId)
+		return;
     // На всякий случай сразу запомним ИД пакета, обработанного последним
-    _ASSERTE(mn_LastProcessedPkt == pInfo->ConInfo.inf.nPacketId);
+    //_ASSERTE(mn_LastProcessedPkt == pInfo->ConInfo.inf.nPacketId);
     mn_LastProcessedPkt = pInfo->ConInfo.inf.nPacketId;
 
     #ifdef _DEBUG
@@ -2663,8 +2718,7 @@ void CRealConsole::ProcessCheckName(struct ConProcess &ConPrc, LPWSTR asFullFile
 }
 
 
-WARNING("Эту функцию вообще убить. Она похоже вызывается один раз для инициализации conemuc");
-BOOL CRealConsole::RetrieveConsoleInfo(BOOL bShortOnly)
+BOOL CRealConsole::RetrieveConsoleInfo(BOOL bShortOnly, UINT anWaitSize /*= 0*/)
 {
     TODO("!!! WinEvent нужно перенести в ConEmu. Наиболее частую операцию по изменению курсора можно обрабатывать без участия ConEmuC");
 
@@ -2815,12 +2869,28 @@ BOOL CRealConsole::RetrieveConsoleInfo(BOOL bShortOnly)
 
     CloseHandle(hPipe);
 
+	BOOL lbRc = FALSE;
+
     mn_LastProcessedPkt = ((DWORD*)pOut->Data)[1];
     // Warning. В некоторых случаях это может быть просто указатель на буфер, а не выделенная память!
-    ApplyConsoleInfo ( pOut );
-    // Передернуть MonitorThread
-    SetEvent(mh_MonitorThreadEvent);
-
+	if (pOut) {
+		if (GetCurrentThreadId() == mn_MonitorThreadID) {
+			ApplyConsoleInfo ( pOut );
+			lbRc = TRUE;
+		} else {
+			// Передернуть MonitorThread -- не нужно. Это сделает PushPacket
+			//SetEvent(mh_MonitorThreadEvent);
+			_ASSERTE((LPVOID)pOut != (LPVOID)cbReadBuf);
+			if ((LPVOID)pOut != (LPVOID)cbReadBuf) {
+				BOOL lbSizeOk = (anWaitSize == 0) || (pOut->ConInfo.inf.sbi.dwSize.Y == anWaitSize);
+				if (lbSizeOk) {
+					PushPacket(pOut);
+					pOut = NULL;
+					lbRc = TRUE;
+				}
+			}
+		}
+	}
 
     // Освободить память
   // Warning. В некоторых случаях это может быть просто указатель на буфер, а не выделенная память!
@@ -2830,7 +2900,7 @@ BOOL CRealConsole::RetrieveConsoleInfo(BOOL bShortOnly)
   pOut = NULL;
 
 
-    return TRUE;
+    return lbRc;
 }
 
 BOOL CRealConsole::GetConWindowSize(const CONSOLE_SCREEN_BUFFER_INFO& sbi, int& nNewWidth, int& nNewHeight, BOOL* pbBufferHeight/*=NULL*/)

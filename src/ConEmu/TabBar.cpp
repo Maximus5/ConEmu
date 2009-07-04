@@ -460,13 +460,13 @@ RECT TabBarClass::GetMargins()
 void TabBarClass::UpdatePosition()
 {
     if (!mh_Rebar)
-    {
         return;
-    }
 
-    RECT client; //, self;
-    GetClientRect(ghWnd, &client);
-    //GetWindowRect(mh_Tabbar, &self);
+	if (IsIconic(ghWnd))
+		return; // иначе расчет размеров будет некорректным!
+
+    RECT client;
+    GetClientRect(ghWnd, &client); // нас интересует ширина окна
     
     if (_active) {
         if (mh_Rebar) {
@@ -482,11 +482,12 @@ void TabBarClass::UpdatePosition()
                 MoveWindow(mh_Tabbar, 0, 0, client.right, _tabHeight, 1);
 
         }
-		gConEmu.SyncConsoleToWindow();
-		gConEmu.ReSize();
+		//gConEmu.SyncConsoleToWindow(); -- 2009.07.04 Sync должен быть выполнен в самом ReSize
+		gConEmu.ReSize(TRUE);
     } else {
-		gConEmu.SyncConsoleToWindow();
-		gConEmu.ReSize();
+		//gConEmu.SyncConsoleToWindow(); -- 2009.07.04 Sync должен быть выполнен в самом ReSize
+		gConEmu.ReSize(TRUE);
+		// _active уже сбросили, поэтому реально спрятать можно и позже
         if (mh_Rebar) {
             if (IsWindowVisible(mh_Rebar))
                 ShowWindow(mh_Rebar, SW_HIDE);

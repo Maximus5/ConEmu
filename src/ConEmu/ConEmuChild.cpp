@@ -20,15 +20,7 @@ CConEmuChild::~CConEmuChild()
 
 HWND CConEmuChild::Create()
 {
-	//WNDCLASS wc = {CS_OWNDC|CS_DBLCLKS/*|CS_SAVEBITS*/, CConEmuChild::ChildWndProc, 0, 0, 
-	//		g_hInstance, NULL, LoadCursor(NULL, IDC_ARROW), 
-	//		NULL /*(HBRUSH)COLOR_BACKGROUND*/, 
-	//		NULL, szClassName};// | CS_DROPSHADOW
-	//if (!RegisterClass(&wc)) {
-	//	ghWndDC = (HWND)-1; // чтобы родитель не ругался
-	//	MBoxA(_T("Can't register DC window class!"));
-	//	return NULL;
-	//}
+	// Имя класса - то же самое, что и у главного окна
 	DWORD style = WS_VISIBLE | WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
 	//RECT rc = gConEmu.DCClientRect();
 	RECT rcMain; GetClientRect(ghWnd, &rcMain);
@@ -150,7 +142,7 @@ LRESULT CALLBACK CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam
 				TabBar.Retrieve();
 			}
 		} else if (messg == gConEmu.m_Child.mn_MsgPostFullPaint) {
-		
+			gConEmu.m_Child.Redraw();		
 		} else if (messg) {
 			result = DefWindowProc(hWnd, messg, wParam, lParam);
 		}
@@ -242,12 +234,27 @@ LRESULT CConEmuChild::OnSize(WPARAM wParam, LPARAM lParam)
 
 void CConEmuChild::Redraw()
 {
-	DEBUGSTR(L" +++ RedrawWindow on DC window called\n");
+	if (!gConEmu.isMainThread()) {
+		PostMessage(ghWndDC, mn_MsgPostFullPaint, 0, 0);
+		return;
+	}
+
+	if (mb_DisableRedraw) {
+		DEBUGSTR(L" +++ RedrawWindow on DC window will be ignored!\n");
+		return;
+	} else {
+		DEBUGSTR(L" +++ RedrawWindow on DC window called\n");
+	}
 	#ifdef _DEBUG
 	BOOL lbRc =
 	#endif
 	RedrawWindow(ghWndDC, NULL, NULL,
 		RDW_INTERNALPAINT|RDW_NOERASE|RDW_UPDATENOW);
+}
+
+void CConEmuChild::SetRedraw(BOOL abRedrawEnabled)
+{
+	mb_DisableRedraw = !abRedrawEnabled;
 }
 
 void CConEmuChild::Invalidate()
