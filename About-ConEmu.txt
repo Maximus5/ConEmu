@@ -5,8 +5,8 @@ SYNOPSIS
 	Represents console as customizable GUI window with various features
 
 SYNTAX
-	ConEmu [/CT] [/FS] [/Font ..] [/Size ..] [/FontFile ..] [/Config ..] [/BufferHeight ..]
-	       [/SetParent | /DontSetParent] [/ConMan] [/Attach [PID]] [/Cmd ..]
+	ConEmu [/CT] [/FS | /MAX] [/Font ..] [/Size ..] [/FontFile ..] [/Config ..]
+	       [/BufferHeight ..] [/Multi | /NoMulti] [/Cmd ..]
 
 PARAMETERS
 	/?
@@ -17,6 +17,9 @@ PARAMETERS
 
 	/FS
 	Full screen mode.
+
+	/MAX
+	Maximized window mode.
 
 	/Font <fontname>
 	Specifies the font name.
@@ -35,17 +38,9 @@ PARAMETERS
 	CtrlPgDn for vertical scrolling. This mode should not be used for programs
 	like FAR where buffer and window height are equal.
 
-	/SetParent | /SetParent2 | /DontSetParent
-	One of them may be used to change or not parent for invisible console
-	window. Default is "/DontSetParent". You may use /SetParent with ConMan.
-	"/SetParent2" is same as "/SetParent", but it use root window, nor DC.
-
-	/ConMan
-	It's recommended to use this switch, instead of standalone "ConMan.exe".
-
-	/Attach [PID]
-	ConEmu can intercept (attach to) console of specified process. If "PID"
-	is not specified - current (foreground) console is used for attach.
+	/Multi
+	Turn on MultiConsole feature (several consoles in one ConEmu window,
+	'long console output' feature).
 
 	/Cmd <commandline>
 	Command line to start. This is the last switch, the rest is treated as a
