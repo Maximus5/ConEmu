@@ -1,8 +1,13 @@
 
 // WARNING!!! Содержит юникодные символы !!!
 
+#define SHOWDEBUGSTR
+
 #include "Header.h"
 #include <Tlhelp32.h>
+
+#define DEBUGSTRDRAW(s) //DEBUGSTR(s)
+#define DEBUGSTRINPUT(s) //DEBUGSTR(s)
 
 WARNING("При быстром наборе текста курсор часто 'замерзает' на одной из букв, но продолжает двигаться дальше");
 
@@ -214,6 +219,7 @@ BOOL CRealConsole::SetConsoleSize(COORD size, DWORD anCmdID/*=CECMD_SETSIZE*/)
     if (!hConWnd || ms_ConEmuC_Pipe[0] == 0) {
         // 19.06.2009 Maks - Она действительно может быть еще не создана
         //Box(_T("Console was not created (CRealConsole::SetConsoleSize)"));
+		DEBUGSTR(L"SetConsoleSize skipped (!hConWnd)\n");
         return false; // консоль пока не создана?
     }
     
@@ -308,10 +314,11 @@ BOOL CRealConsole::SetConsoleSize(COORD size, DWORD anCmdID/*=CECMD_SETSIZE*/)
     pIn->SetSize.nSendTopLine = (gSet.AutoScroll || !con.bBufferHeight) ? -1 : con.nTopVisibleLine;
     pIn->SetSize.rcWindow = rect;
 
-
+	DEBUGSTR(L"SetConsoleSize.CallNamedPipe\n");
     fSuccess = CallNamedPipe(ms_ConEmuC_Pipe, pIn, pIn->hdr.nSize, pOut, pOut->hdr.nSize, &dwRead, 500);
 
     if (fSuccess && dwRead>=(DWORD)nOutSize) {
+		DEBUGSTR(L"SetConsoleSize.fSuccess == TRUE\n");
         if (pOut->hdr.nCmd == pIn->hdr.nCmd) {
             con.nPacketIdx = pOut->SetSizeRet.nNextPacketId;
             CONSOLE_SCREEN_BUFFER_INFO sbi = {{0,0}};
@@ -335,6 +342,7 @@ BOOL CRealConsole::SetConsoleSize(COORD size, DWORD anCmdID/*=CECMD_SETSIZE*/)
             //    lbRc = true;
             //}
             if (lbRc) { // Попробуем сразу менять nTextWidth/nTextHeight. Иначе синхронизация размеров консоли глючит...
+				DEBUGSTR(L"SetConsoleSize.lbRc == TRUE\n");
                 con.nChange2TextWidth = sbi.dwSize.X;
                 con.nChange2TextHeight = con.bBufferHeight ? (sbi.srWindow.Bottom-sbi.srWindow.Top+1) : sbi.dwSize.Y;
                 if (con.nChange2TextHeight > 200) {
@@ -353,23 +361,36 @@ BOOL CRealConsole::SetConsoleSize(COORD size, DWORD anCmdID/*=CECMD_SETSIZE*/)
         }
     }
 
+	DEBUGSTR(L"SetConsoleSize.finalizing\n");
 	if (anCmdID == CECMD_SETSIZESYNC) {
 		// ConEmuC должен сам послать изменения
-		if (!RetrieveConsoleInfo(FALSE, size.Y)) {
-			Sleep(100);
-			// Ждем, пока mn_MonitorThreadID получит изменения
-			DWORD dwStartTick = GetTickCount();
-			DWORD nTimeout = 500;
-			#ifdef _DEBUG
-			nTimeout = 500;
-			#endif
-			while (!RetrieveConsoleInfo(FALSE, size.Y)) {
-				Sleep(100);
-				if ((GetTickCount() - dwStartTick) > nTimeout)
-					break;
+		if (con.nTextWidth == size.X && con.nTextHeight == size.Y) {
+			DEBUGSTR(L"SetConsoleSize.RetrieveConsoleInfo is not needed, size already match\n");
+		} else {
+			DEBUGSTR(L"SetConsoleSize.RetrieveConsoleInfo\n");
+			if (!RetrieveConsoleInfo(size.Y)) {
+				DEBUGSTR(L"SetConsoleSize.RetrieveConsoleInfo - height failed, waiting\n");
+				Sleep(300);
+				// Ждем, пока mn_MonitorThreadID получит изменения
+				DWORD dwStartTick = GetTickCount();
+				DWORD nTimeout = 2000, nSteps = 0;
+				#ifdef _DEBUG
+				nTimeout = 2000;
+				#endif
+				while (!RetrieveConsoleInfo(size.Y)) {
+					DEBUGSTR(L"SetConsoleSize.RetrieveConsoleInfo - height failed, waiting\n");
+					nSteps ++;
+					Sleep(300);
+					if ((GetTickCount() - dwStartTick) > nTimeout)
+						break;
+				}
+				#ifdef _DEBUG
+				nTimeout = 2000;
+				#endif
+			} else {
+				DEBUGSTR(L"SetConsoleSize.RetrieveConsoleInfo - height ok, exiting\n");
 			}
 		}
-
 		//if (GetCurrentThreadId() != mn_MonitorThreadID) {
 		//	// Ждем, пока mn_MonitorThreadID получит изменения
 		//	DWORD dwStartTick = GetTickCount();
@@ -637,9 +658,9 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
             
             if (!bDetached && bFirst) {
                 bFirst = FALSE;
-                WARNING("А это надо? По идее ConEmuC должен пересылать все что требуется...");
                 DWORD dwAlive = 0;
-                if (!pRCon->RetrieveConsoleInfo(FALSE/*(nWait==IDEVENT_CURSORCHANGED)*/)) {
+				// Получить начальную информацию о консоли
+                if (!pRCon->RetrieveConsoleInfo(0)) {
                   // Ошибка может быть, если ConEmuC был закрыт в процессе
                   if (pRCon->mh_ConEmuC) {
                       dwAlive = WaitForSingleObject(pRCon->mh_ConEmuC,0);
@@ -710,7 +731,7 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
                         pRCon->mn_LastInvalidateTick = GetTickCount();
                     }
                 } else if (((GetTickCount() - pRCon->mn_LastInvalidateTick) > FORCE_INVALIDATE_TIMEOUT)) {
-                    DEBUGSTR(L"+++ Force invalidate by timeout\n");
+                    DEBUGSTRDRAW(L"+++ Force invalidate by timeout\n");
                     pRCon->LogString("Invalidating from CRealConsole::MonitorThread.2");
                     gConEmu.m_Child.Redraw();
                     /*gConEmu.m_Child.Validate(); // сбросить флажок
@@ -1130,7 +1151,7 @@ void CRealConsole::SendMouseEvent(UINT messg, WPARAM wParam, int x, int y)
                     while (crMouse.Y != nYend) {
                         #ifdef _DEBUG
                         wchar_t szDbg[60]; wsprintf(szDbg, L"+++ Add right button drag: {%ix%i}\n", crMouse.X, crMouse.Y);
-                        OutputDebugString(szDbg);
+                        DEBUGSTRINPUT(szDbg);
                         #endif
                         r.Event.MouseEvent.dwMousePosition = crMouse;
                         SendConsoleEvent ( &r );
@@ -1202,7 +1223,7 @@ void CRealConsole::SendConsoleEvent(INPUT_RECORD* piRec)
                 #ifdef _DEBUG
                 wchar_t szDbg[60];
                 wsprintf(szDbg, L"!!! Skipping ConEmu.Mouse event at: {%ix%i}\n", m_LastMouse.dwMousePosition.X, m_LastMouse.dwMousePosition.Y);
-                DEBUGSTR(szDbg);
+                DEBUGSTRINPUT(szDbg);
                 #endif
                 return; // Это событие лишнее. Движения мышки реально не было, кнопки не менялись
             }
@@ -1216,7 +1237,7 @@ void CRealConsole::SendConsoleEvent(INPUT_RECORD* piRec)
         #ifdef _DEBUG
         wchar_t szDbg[60];
         wsprintf(szDbg, L"ConEmu.Mouse event at: {%ix%i}\n", m_LastMouse.dwMousePosition.X, m_LastMouse.dwMousePosition.Y);
-        DEBUGSTR(szDbg);
+        DEBUGSTRINPUT(szDbg);
         #endif
     }
 
@@ -1274,7 +1295,7 @@ void CRealConsole::SendConsoleEvent(INPUT_RECORD* piRec)
           {
             dwErr = WaitForSingleObject(mh_ConEmuC, 100);
             if (dwErr == WAIT_OBJECT_0) {
-                DEBUGSTR(L" - FAILED!\n");
+                DEBUGSTRINPUT(L" - FAILED!\n");
                 return;
             }
             //DisplayLastError(L"WaitNamedPipe failed"); 
@@ -1283,7 +1304,7 @@ void CRealConsole::SendConsoleEvent(INPUT_RECORD* piRec)
         }
         if (mh_ConEmuCInput == NULL || mh_ConEmuCInput == INVALID_HANDLE_VALUE) {
             // Не дождались появления пайпа. Возможно, ConEmuC еще не запустился
-            DEBUGSTR(L" - mh_ConEmuCInput not found!\n");
+            DEBUGSTRINPUT(L" - mh_ConEmuCInput not found!\n");
             return;
         }
 
@@ -1296,7 +1317,7 @@ void CRealConsole::SendConsoleEvent(INPUT_RECORD* piRec)
           NULL);    // don't set maximum time 
         if (!fSuccess) 
         {
-          DEBUGSTR(L" - FAILED!\n");
+          DEBUGSTRINPUT(L" - FAILED!\n");
           DWORD dwErr = GetLastError();
           SafeCloseHandle(mh_ConEmuCInput);
           if (!IsDebuggerPresent())
@@ -1476,7 +1497,7 @@ LRESULT CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lP
                 wsprintf(szDbg, L"WM_KEYUP(%i,0x%08X)\n", wParam, lParam);
             else
                 wsprintf(szDbg, L"WM_CHAR(%i,0x%08X)\n", wParam, lParam);
-            DEBUGSTR(szDbg);
+            DEBUGSTRINPUT(szDbg);
         }
     }
 #endif
@@ -1601,7 +1622,7 @@ LRESULT CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lP
             if (r.EventType == KEY_EVENT && r.Event.KeyEvent.bKeyDown &&
                 r.Event.KeyEvent.wVirtualKeyCode == VK_F11)
             {
-                DEBUGSTR(L"  ---  F11 sending\n");
+                DEBUGSTRINPUT(L"  ---  F11 sending\n");
             }
             #endif
 
@@ -1625,13 +1646,13 @@ LRESULT CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lP
 
     /*if (IsDebuggerPresent()) {
         if (hWnd ==ghWnd)
-            DEBUGSTR(L"   focused ghWnd\n"); else
+            DEBUGSTRINPUT(L"   focused ghWnd\n"); else
         if (hWnd ==hConWnd)
-            DEBUGSTR(L"   focused hConWnd\n"); else
+            DEBUGSTRINPUT(L"   focused hConWnd\n"); else
         if (hWnd ==ghWndDC)
-            DEBUGSTR(L"   focused ghWndDC\n"); 
+            DEBUGSTRINPUT(L"   focused ghWndDC\n"); 
         else
-            DEBUGSTR(L"   focused UNKNOWN\n"); 
+            DEBUGSTRINPUT(L"   focused UNKNOWN\n"); 
     }*/
 
     return 0;
@@ -1886,7 +1907,12 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 
     // Все данные из пайпа получены, обрабатываем команду и возвращаем (если нужно) результат
     if (pIn->hdr.nCmd == CECMD_GETFULLINFO || pIn->hdr.nCmd == CECMD_GETSHORTINFO) {
-        DEBUGSTR((pIn->hdr.nCmd == CECMD_GETFULLINFO) ? L"GUI recieved CECMD_GETFULLINFO\n" : L"GUI recieved CECMD_GETSHORTINFO\n");
+		#ifdef _DEBUG
+		wchar_t szDbg[255]; wsprintf(szDbg, L"GUI recieved %s, PktID=%i\n", 
+			(pIn->hdr.nCmd == CECMD_GETFULLINFO) ? L"CECMD_GETFULLINFO" : L"CECMD_GETSHORTINFO",
+			pIn->ConInfo.inf.nPacketId);
+        DEBUGSTR(szDbg);
+		#endif
         //ApplyConsoleInfo(pIn);
         if (((LPVOID)&in)==((LPVOID)pIn)) {
             // Это фиксированная память - переменная (in)
@@ -2118,10 +2144,12 @@ void CRealConsole::ApplyConsoleInfo(CESERVER_REQ* pInfo)
     }
     #endif
 
+	// Информация этого пакета устарела
 	if (mn_LastProcessedPkt > pInfo->ConInfo.inf.nPacketId)
 		return;
     // На всякий случай сразу запомним ИД пакета, обработанного последним
-    //_ASSERTE(mn_LastProcessedPkt == pInfo->ConInfo.inf.nPacketId);
+	// Она уже может быть (mn_LastProcessedPkt == pInfo->ConInfo.inf.nPacketId)
+	// если пакет пришел из RetrieveConsoleInfo
     mn_LastProcessedPkt = pInfo->ConInfo.inf.nPacketId;
 
     #ifdef _DEBUG
@@ -2186,8 +2214,12 @@ void CRealConsole::ApplyConsoleInfo(CESERVER_REQ* pInfo)
     DWORD dwCharChanged = pInfo->ConInfo.RgnInfo.dwRgnInfoSize;
     //BOOL  lbDataRecv = FALSE;
     if (dwCharChanged != 0) {
+		#ifdef _DEBUG
         _ASSERTE(dwCharChanged >= sizeof(CESERVER_CHAR));
-        _ASSERTE(!bBufRecreated && con.pConChar && con.pConAttr);
+		if (!(!bBufRecreated && con.pConChar && con.pConAttr)) {
+			_ASSERTE(!bBufRecreated && con.pConChar && con.pConAttr);
+		}
+		#endif
 
         // Если буфер был пересоздан (bBufRecreated) изменение только блока символов бессмысленно - нужны полные данные!
         if (!bBufRecreated && con.pConChar && con.pConAttr) {
@@ -2718,7 +2750,7 @@ void CRealConsole::ProcessCheckName(struct ConProcess &ConPrc, LPWSTR asFullFile
 }
 
 
-BOOL CRealConsole::RetrieveConsoleInfo(BOOL bShortOnly, UINT anWaitSize /*= 0*/)
+BOOL CRealConsole::RetrieveConsoleInfo(UINT anWaitSize)
 {
     TODO("!!! WinEvent нужно перенести в ConEmu. Наиболее частую операцию по изменению курсора можно обрабатывать без участия ConEmuC");
 
@@ -2793,7 +2825,7 @@ BOOL CRealConsole::RetrieveConsoleInfo(BOOL bShortOnly, UINT anWaitSize /*= 0*/)
 
     in.nSize = sizeof(CESERVER_REQ_HDR);
     in.nVersion = CESERVER_REQ_VER;
-    in.nCmd  = bShortOnly ? CECMD_GETSHORTINFO : CECMD_GETFULLINFO;
+    in.nCmd  = CECMD_GETFULLINFO;
   in.nSrcThreadId = GetCurrentThreadId();
 
     // Send a message to the pipe server and read the response. 
@@ -2871,10 +2903,18 @@ BOOL CRealConsole::RetrieveConsoleInfo(BOOL bShortOnly, UINT anWaitSize /*= 0*/)
 
 	BOOL lbRc = FALSE;
 
-    mn_LastProcessedPkt = ((DWORD*)pOut->Data)[1];
     // Warning. В некоторых случаях это может быть просто указатель на буфер, а не выделенная память!
 	if (pOut) {
+		// Необходимо запомнить, какой пакет был обработан последним - он содержит актуальную информацию
+		mn_LastProcessedPkt = pOut->ConInfo.inf.nPacketId;
+
+		#ifdef _DEBUG
+		wchar_t szDbg[128]; wsprintf(szDbg, L"RetrieveConsoleInfo received PktID=%i, ConHeight=%i\n",
+			pOut->ConInfo.inf.nPacketId, pOut->ConInfo.inf.sbi.dwSize.Y);
+		DEBUGSTR(szDbg);
+		#endif
 		if (GetCurrentThreadId() == mn_MonitorThreadID) {
+			DEBUGSTR(L"RetrieveConsoleInfo is applying packet\n");
 			ApplyConsoleInfo ( pOut );
 			lbRc = TRUE;
 		} else {
@@ -2887,7 +2927,11 @@ BOOL CRealConsole::RetrieveConsoleInfo(BOOL bShortOnly, UINT anWaitSize /*= 0*/)
 					PushPacket(pOut);
 					pOut = NULL;
 					lbRc = TRUE;
+				} else {
+					DEBUGSTR(L"RetrieveConsoleInfo failed, incorrect console height\n");
 				}
+			} else {
+				DEBUGSTR(L"RetrieveConsoleInfo failed, (LPVOID)pOut == (LPVOID)cbReadBuf\n");
 			}
 		}
 	}
@@ -3112,9 +3156,9 @@ void CRealConsole::OnFocus(BOOL abFocused)
     {
 #ifdef _DEBUG
         if (abFocused) {
-            DEBUGSTR(L"--Get focus\n")
+            DEBUGSTRINPUT(L"--Get focus\n")
         } else {
-            DEBUGSTR(L"--Loose focus\n")
+            DEBUGSTRINPUT(L"--Loose focus\n")
         }
 #endif
         INPUT_RECORD r = {FOCUS_EVENT};
@@ -3977,6 +4021,12 @@ void CRealConsole::PushPacket(CESERVER_REQ* pPkt)
 //    }
 //#endif
 
+	#ifdef _DEBUG
+	wchar_t szDbg[128]; wsprintf(szDbg, L"Pushing packet PktID=%i, ConHeight=%i\n",
+		pPkt->ConInfo.inf.nPacketId, pPkt->ConInfo.inf.sbi.dwSize.Y);
+	DEBUGSTR(szDbg);
+	#endif
+
     int i;
     DWORD dwTID = GetCurrentThreadId();
     
@@ -4011,8 +4061,10 @@ void CRealConsole::PushPacket(CESERVER_REQ* pPkt)
 // Вызывающая функция должна освободить результат (free)
 CESERVER_REQ* CRealConsole::PopPacket()
 {
-    if (!isPackets())
+	if (!isPackets()) {
+		DEBUGSTR(L"Popping packet failed, queue is empty\n");
         return NULL;
+	}
 
     MCHKHEAP
 
@@ -4025,6 +4077,10 @@ CESERVER_REQ* CRealConsole::PopPacket()
     CESERVER_REQ** end = iter + countof(m_PacketQueue);
     
     DWORD dwMinID = 0;
+
+	// Во время выполнения этой функции mn_LastProcessedPkt может измениться, 
+	// поэтому во избежание потери информации запомним копию на начало функции
+	DWORD nLastProcessedPkt = mn_LastProcessedPkt;
     
     while (iter != end) {
         pCmp = *iter;
@@ -4033,10 +4089,14 @@ CESERVER_REQ* CRealConsole::PopPacket()
             continue;
         }
 
-        if ( ((DWORD*)pCmp->Data)[1] <= mn_LastProcessedPkt ) {
+        if ( pCmp->ConInfo.inf.nPacketId < nLastProcessedPkt ) {
             // Убить все пакеты, с МЕНЬШИМ ИД (хотя их и так уже быть не должно)
             TODO("Проверить, что произойдет с пакетами регионов/символов...");
-            DEBUGSTR(L"!!! *** Obsolete packet found *** !!!\n");
+			#ifdef _DEBUG
+			wchar_t szDbg[128]; wsprintf(szDbg, L"!!! *** Obsolete packet found (%i < %i) *** !!!\n", 
+				pCmp->ConInfo.inf.nPacketId, nLastProcessedPkt);
+            DEBUGSTR(szDbg);
+			#endif
             *iter = NULL;
             iter ++;
             free(pCmp);
@@ -4044,16 +4104,16 @@ CESERVER_REQ* CRealConsole::PopPacket()
             continue;
         } 
         
-        if ( dwMinID == 0 || ((DWORD*)pCmp->Data)[1] <= dwMinID ) {
+        if ( dwMinID == 0 || pCmp->ConInfo.inf.nPacketId <= dwMinID ) {
             // Ищем минимальный из допустимых
-            dwMinID = ((DWORD*)pCmp->Data)[1];
+            dwMinID = pCmp->ConInfo.inf.nPacketId;
             pRet = pCmp;
         }
         iter ++;
     }
 
     if (pRet) {
-        mn_LastProcessedPkt = dwMinID;
+        nLastProcessedPkt = dwMinID;
 
         iter = m_PacketQueue;
         while (iter != end) {
@@ -4063,7 +4123,7 @@ CESERVER_REQ* CRealConsole::PopPacket()
                 continue;
             }
             
-            if ( ((DWORD*)pCmp->Data)[1] <= mn_LastProcessedPkt ) {
+            if ( pCmp->ConInfo.inf.nPacketId <= nLastProcessedPkt ) {
                 if (pRet!=pCmp)
                     free(pCmp);
                 MCHKHEAP
@@ -4071,7 +4131,20 @@ CESERVER_REQ* CRealConsole::PopPacket()
             }
             iter ++;
         }
+
+		if (mn_LastProcessedPkt < nLastProcessedPkt)
+			mn_LastProcessedPkt = nLastProcessedPkt;
     }
+
+	#ifdef _DEBUG
+	wchar_t szDbg[128]; 
+	if (pRet)
+		wsprintf(szDbg, L"Popping packet PktID=%i, ConHeight=%i\n",
+			pRet->ConInfo.inf.nPacketId, pRet->ConInfo.inf.sbi.dwSize.Y);
+	else
+		wcscpy(szDbg, L"Popping packet failed, queue is empty\n");
+	DEBUGSTR(szDbg);
+	#endif
 
     //cs.Unlock();
     MCHKHEAP
@@ -4699,20 +4772,23 @@ void CRealConsole::EnableComSpec(DWORD anFarPID, BOOL abSwitch)
     wchar_t* pszName = szData;
     lstrcpy(pszName, L"ComSpec");
     wchar_t* pszValue = pszName + lstrlenW(pszName) + 1;
-    if (lbNeedQuot) *(pszValue++) = L'"';
-    lstrcpy(pszValue, gConEmu.ms_ConEmuExe);
-    wchar_t* pszSlash = wcsrchr(pszValue, L'\\');
-    _ASSERTE(pszSlash!=NULL);
-    lstrcpy(pszSlash, L"\\ConEmuC.exe");
-    if (lbNeedQuot) lstrcat(pszSlash, L"\"");
 
-    lbNeedQuot = (szCMD[0] != L'"') && (wcschr(szCMD, L' ') != NULL);
-    pszName = pszValue + lstrlenW(pszValue) + 1;
-    lstrcpy(pszName, L"ComSpecC");
-    pszValue = pszName + lstrlenW(pszName) + 1;
+	if (abSwitch) {
+		if (lbNeedQuot) *(pszValue++) = L'"';
+		lstrcpy(pszValue, gConEmu.ms_ConEmuExe);
+		wchar_t* pszSlash = wcsrchr(pszValue, L'\\');
+		_ASSERTE(pszSlash!=NULL);
+		lstrcpy(pszSlash, L"\\ConEmuC.exe");
+		if (lbNeedQuot) lstrcat(pszSlash, L"\"");
+
+		lbNeedQuot = (szCMD[0] != L'"') && (wcschr(szCMD, L' ') != NULL);
+		pszName = pszValue + lstrlenW(pszValue) + 1;
+		lstrcpy(pszName, L"ComSpecC");
+		pszValue = pszName + lstrlenW(pszName) + 1;
+	}
     if (lbNeedQuot) *(pszValue++) = L'"';
     lstrcpy(pszValue, szCMD);
-    if (lbNeedQuot) lstrcat(pszSlash, L" ");
+    if (lbNeedQuot) lstrcat(pszValue, L"\"");
 
     pszName = pszValue + lstrlenW(pszValue) + 1;
     *(pszName++) = 0;

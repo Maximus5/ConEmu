@@ -405,10 +405,10 @@ void CVirtualConsole::DumpConsole()
     if (!GetSaveFileName(&ofn))
         return;
 
-    DumpConsole(temp);
+    Dump(temp);
 }
 
-void CVirtualConsole::DumpConsole(LPCWSTR asFile)
+BOOL CVirtualConsole::Dump(LPCWSTR asFile)
 {
     // Она сделает снимок нашего буфера (hDC) в png файл
     DumpImage(hDC, Width, Height, asFile);
@@ -417,7 +417,7 @@ void CVirtualConsole::DumpConsole(LPCWSTR asFile)
         NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
     if (hFile == INVALID_HANDLE_VALUE) {
         DisplayLastError(_T("Can't create file!"));
-        return;
+        return FALSE;
     }
     DWORD dw;
     LPCTSTR pszTitle = gConEmu.GetTitle();
@@ -433,6 +433,7 @@ void CVirtualConsole::DumpConsole(LPCWSTR asFile)
         mp_RCon->DumpConsole(hFile);
     }
     CloseHandle(hFile);
+	return TRUE;
 }
 
 // Это символы рамок и др. спец. символы
@@ -844,7 +845,7 @@ bool CVirtualConsole::Update(bool isForce, HDC *ahDc)
         if (mpsz_LogScreen && mp_RCon && mp_RCon->GetServerPID()) {
             mn_LogScreenIdx++;
             wchar_t szLogPath[MAX_PATH]; wsprintfW(szLogPath, mpsz_LogScreen, mp_RCon->GetServerPID(), mn_LogScreenIdx);
-            DumpConsole(szLogPath);
+            Dump(szLogPath);
         }
 
 		if (!mb_InPaintCall) {

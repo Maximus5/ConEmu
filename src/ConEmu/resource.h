@@ -179,8 +179,16 @@
 #define cbMonitorConsoleLang            1537
 #define cbSkipFocusEvents               1538
 #define IDC_HOTKEY1                     1539
+#define hkNewConsole                    1539
 #define cbsProgress                     1540
+#define hkSwitchConsole                 1540
 #define cbsProgressError                1541
+#define hkCloseConsole                  1541
+#define cbSkipActivation                1542
+#define cbSkipMove                      1543
+#define gbStandardColors                1544
+#define cbVisible                       1545
+#define cbNewConfirm                    1546
 
 // Next default values for new objects
 // 
@@ -188,7 +196,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        114
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1542
+#define _APS_NEXT_CONTROL_VALUE         1547
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

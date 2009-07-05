@@ -689,7 +689,7 @@ void TabBarClass::OnCommand(WPARAM wParam, LPARAM lParam)
     if (wParam>=1 && wParam<=MAX_CONSOLE_COUNT) {
         gConEmu.ConmanAction(wParam-1);
     } else if (wParam==13) {
-        gConEmu.ConmanAction(CONMAN_NEWCONSOLE);
+        gConEmu.Recreate ( FALSE, gSet.isMultiNewConfirm ); //ConmanAction(CONMAN_NEWCONSOLE);
     } else if (wParam==14) {
 		SendMessage(mh_Toolbar, TB_CHECKBUTTON, 14, gConEmu.ActiveCon()->RCon()->isBufferHeight());
     }
@@ -981,6 +981,7 @@ void TabBarClass::CreateRebar()
 
 void TabBarClass::PrepareTab(ConEmuTab* pTab)
 {
+	_ASSERTE(this == &TabBar);
     // get file name
     TCHAR dummy[MAX_PATH*2];
     TCHAR fileName[MAX_PATH+4];

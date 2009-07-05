@@ -202,7 +202,7 @@ protected:
 
     void Box(LPCTSTR szText);
 
-    BOOL RetrieveConsoleInfo(BOOL bShortOnly, UINT anWaitSize = 0);
+    BOOL RetrieveConsoleInfo(/*BOOL bShortOnly,*/ UINT anWaitSize);
     BOOL InitBuffers(DWORD OneBufferSize);
 private:
     // Эти переменные инициализируются в RetrieveConsoleInfo()

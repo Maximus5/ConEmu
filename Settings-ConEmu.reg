@@ -83,7 +83,9 @@ REGEDIT4
 ;; Console (real) width and height in characters (window size)
 "ConWnd Width"=dword:00000050
 "ConWnd Height"=dword:00000019
-;; Console buffer height (default). Set 0 to disable autoswitch to bufferheight mode. min=300 lines
+;; Autoswitch to buffer height mode, while FAR executes console programs.
+"AutoBufferHeight"=hex:01
+;; Console buffer height (default). min=300 lines
 ;"DefaultBufferHeight"=dword:000003E8 ; 1000 lines
 
 ;; Buffer height for 16bit applications
@@ -128,6 +130,11 @@ REGEDIT4
 
 ;; Fix dashed selection with right mouse drag
 "RSelectionFix"=hex:01
+
+;; Skip mouse button (left/right/middle) click, while activating ConEmu
+"MouseSkipActivation"=hex:01
+;; Skip mouse move events, while ConEmu is not foreground window
+"MouseSkipMoving"=hex:01
 
 ;; Прокручивать заголовок в кнопке на панели задач (пока не работает)
 ;"ScrollTitle"=hex:01

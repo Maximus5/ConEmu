@@ -96,7 +96,7 @@ public:
 		LPARAM lastMML;
 		
 		// Пропустить клик мышкой (окно было неактивно)
-		UINT nSkipEvents[2]; UINT nReplaseDblClk;
+		UINT nSkipEvents[2]; UINT nReplaceDblClk;
 	} mouse;
 	bool isPiewUpdate;
 	bool gbPostUpdateWindowSize;
@@ -180,6 +180,7 @@ public:
 	BOOL CreateMainWindow();
 	void Destroy();
 	void DnDstep(LPCTSTR asMsg);
+	void EnableComSpec(BOOL abSwitch);
 	void ForceShowTabs(BOOL abShow);
 	DWORD GetActiveKeyboardLayout();
 	BOOL Init();

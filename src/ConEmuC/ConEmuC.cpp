@@ -29,7 +29,7 @@ WARNING("При запуске как ComSpec получаем ошибку: {crNewSize.X>=MIN_CON_WIDTH &&
 //  Раскомментировать, чтобы сразу после запуска процесса (conemuc.exe) показать MessageBox, чтобы прицепиться дебаггером
 //    #define SHOW_STARTED_MSGBOX
 // Раскомментировать для вывода в консоль информации режима Comspec
-    #define PRINT_COMSPEC(f,a) //wprintf(f,a)
+    #define PRINT_COMSPEC(f,a) wprintf(f,a)
 #elif defined(__GNUC__)
     #define PRINT_COMSPEC(f,a) //wprintf(f,a)
 #else
@@ -48,7 +48,7 @@ wchar_t gszDbgModLabel[6] = {0};
 #define MIN_FORCEREFRESH_INTERVAL 100
 #define MAX_FORCEREFRESH_INTERVAL 1000
 #define MAX_INPUT_QUEUE_EMPTY_WAIT 100
-#define MAX_SYNCSETSIZE_WAIT 500
+#define MAX_SYNCSETSIZE_WAIT 1000
 
 WARNING("!!!! Пока можно при появлении события запоминать текущий тик");
 // и проверять его в RefreshThread. Если он не 0 - и дельта больше (100мс?)

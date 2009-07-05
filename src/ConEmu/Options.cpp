@@ -88,7 +88,7 @@ void CSettings::InitSettings()
     isSkipFocusEvents = false;
     //isLangChangeWsPlugin = false;
 	isMonitorConsoleLang = 3;
-    DefaultBufferHeight = 1000;
+    DefaultBufferHeight = 1000; AutoBufferHeight = true;
 	ForceBufferHeight = false; /* устанавливается в true, из ком.строки /BufferHeight */
 	AutoScroll = true;
     LogFont.lfHeight = 16;
@@ -176,7 +176,7 @@ void CSettings::InitSettings()
     isScrollTitle = true;
     ScrollTitleLen = 22;
     
-	isRSelFix = true;
+	isRSelFix = true; isMouseSkipActivation = true; isMouseSkipMoving = true;
     isDragEnabled = DRAG_L_ALLOWED; isDropEnabled = (BYTE)1;
     nLDragKey = 0; nRDragKey = VK_LCONTROL; isDnDsteps = true; isDefCopy = true;
     MCHKHEAP
@@ -260,6 +260,7 @@ void CSettings::LoadSettings()
         //TODO: Эти два параметра не сохраняются
         reg.Load(_T("16it Height"), ntvdmHeight); if (ntvdmHeight!=25 && ntvdmHeight!=28 && ntvdmHeight!=50) ntvdmHeight = 28;
 		reg.Load(_T("DefaultBufferHeight"), DefaultBufferHeight); if (DefaultBufferHeight < 300) DefaultBufferHeight = 300;
+		reg.Load(_T("AutoBufferHeight"), AutoBufferHeight);
 
         reg.Load(L"CursorType", isCursorV);
         reg.Load(L"CursorColor", isCursorColor);
@@ -315,6 +316,8 @@ void CSettings::LoadSettings()
         reg.Load(_T("Proportional"), isProportional);
         reg.Load(_T("Update Console handle"), isUpdConHandle);
 		reg.Load(_T("RSelectionFix"), isRSelFix);
+		reg.Load(_T("MouseSkipActivation"), isMouseSkipActivation);
+		reg.Load(_T("MouseSkipMoving"), isMouseSkipMoving);
         reg.Load(_T("Dnd"), isDragEnabled); 
         isDropEnabled = (BYTE)(isDragEnabled ? 1 : 0); // ранее "DndDrop" не было, поэтому ставим default
         reg.Load(_T("DndLKey"), nLDragKey);
@@ -482,11 +485,13 @@ BOOL CSettings::SaveSettings()
                 wndY = rcPos.top;
             }*/
 
+			reg.Save(_T("ConVisible"), isConVisible);
             reg.Save(_T("CmdLine"), psCmd);
             reg.Save(_T("Multi"), isMulti);
-				//reg.Save(_T("Multi.NewConsole"), icMultiNew);
-				//reg.Save(_T("Multi.Next"), icMultiNext);
-				//reg.Save(_T("Multi.NewConfirm"), isMultiNewConfirm);
+				reg.Save(_T("Multi.NewConsole"), icMultiNew);
+				reg.Save(_T("Multi.Next"), icMultiNext);
+				reg.Save(_T("Multi.Recreate"), icMultiRecreate);
+				reg.Save(_T("Multi.NewConfirm"), isMultiNewConfirm);
             reg.Save(_T("FontName"), LogFont.lfFaceName);
             reg.Save(_T("FontName2"), LogFont2.lfFaceName);
 
@@ -502,6 +507,9 @@ BOOL CSettings::SaveSettings()
             reg.Save(_T("Anti-aliasing"), LogFont.lfQuality);
             reg.Save(_T("WindowMode"), isFullScreen ? rFullScreen : IsZoomed(ghWnd) ? rMaximized : rNormal);
             
+			reg.Save(_T("DefaultBufferHeight"), DefaultBufferHeight);
+			reg.Save(_T("AutoBufferHeight"), AutoBufferHeight);
+
 			reg.Save(_T("CursorType"), isCursorV);
             reg.Save(_T("CursorColor"), isCursorColor);
 			reg.Save(L"CursorBlink", isCursorBlink);
@@ -511,6 +519,8 @@ BOOL CSettings::SaveSettings()
             reg.Save(_T("AltEnter"), isSentAltEnter);
             reg.Save(_T("Min2Tray"), isMinToTray);
             reg.Save(_T("RSelectionFix"), isRSelFix);
+			reg.Save(_T("MouseSkipActivation"), isMouseSkipActivation);
+			reg.Save(_T("MouseSkipMoving"), isMouseSkipMoving);
             reg.Save(_T("Dnd"), isDragEnabled);
             reg.Save(_T("DndLKey"), nLDragKey);
             reg.Save(_T("DndRKey"), nRDragKey);
@@ -930,6 +940,11 @@ LRESULT CSettings::OnInitDialog_Ext()
 	if (isRSelFix)
 		CheckDlgButton(hExt, cbRSelectionFix, BST_CHECKED);
 
+	if (isMouseSkipActivation)
+		CheckDlgButton(hExt, cbSkipActivation, BST_CHECKED);
+	if (isMouseSkipMoving)
+		CheckDlgButton(hExt, cbSkipMove, BST_CHECKED);
+
 	if (isMonitorConsoleLang)
 		CheckDlgButton(hExt, cbMonitorConsoleLang, BST_CHECKED);
 	
@@ -938,16 +953,23 @@ LRESULT CSettings::OnInitDialog_Ext()
 
 	if (isMulti)
 		CheckDlgButton(hExt, cbConMan, BST_CHECKED);
-	#ifndef _DEBUG
-	ShowWindow(GetDlgItem(hExt, cbLongOutput), SW_HIDE);
-	ShowWindow(GetDlgItem(hExt, tLongOutputHeight), SW_HIDE);
-	ShowWindow(GetDlgItem(hExt, IDC_HOTKEY1), SW_HIDE);
-	#endif
+	if (isMultiNewConfirm)
+		CheckDlgButton(hExt, cbNewConfirm, BST_CHECKED);
+	if (AutoBufferHeight)
+		CheckDlgButton(hExt, cbLongOutput, BST_CHECKED);
+	wchar_t sz[16];
+	SendDlgItemMessage(hExt, tLongOutputHeight, EM_SETLIMITTEXT, 5, 0);
+	SetDlgItemText(hExt, tLongOutputHeight, _ltow(gSet.DefaultBufferHeight, sz, 10));
+	EnableWindow(GetDlgItem(hExt, tLongOutputHeight), AutoBufferHeight);
+	SendDlgItemMessage(hExt, hkNewConsole, HKM_SETRULES, HKCOMB_A|HKCOMB_C|HKCOMB_CA|HKCOMB_S|HKCOMB_SA|HKCOMB_SC|HKCOMB_SCA, 0);
+	SendDlgItemMessage(hExt, hkNewConsole, HKM_SETHOTKEY, icMultiNew, 0);
+	SendDlgItemMessage(hExt, hkSwitchConsole, HKM_SETRULES, HKCOMB_A|HKCOMB_C|HKCOMB_CA|HKCOMB_S|HKCOMB_SA|HKCOMB_SC|HKCOMB_SCA, 0);
+	SendDlgItemMessage(hExt, hkSwitchConsole, HKM_SETHOTKEY, icMultiNext, 0);
+	SendDlgItemMessage(hExt, hkCloseConsole, HKM_SETRULES, HKCOMB_A|HKCOMB_C|HKCOMB_CA|HKCOMB_S|HKCOMB_SA|HKCOMB_SC|HKCOMB_SCA, 0);
+	SendDlgItemMessage(hExt, hkCloseConsole, HKM_SETHOTKEY, icMultiRecreate, 0);
 
-	// Test	
-	SendDlgItemMessage(hExt, IDC_HOTKEY1, HKM_SETRULES, 
-		HKCOMB_A|HKCOMB_C|HKCOMB_CA|HKCOMB_S|HKCOMB_SA|HKCOMB_SC|HKCOMB_SCA, 0);
-	SendDlgItemMessage(hExt, IDC_HOTKEY1, HKM_SETHOTKEY, icMultiNew, 0);
+	if (isConVisible)
+		CheckDlgButton(hExt, cbVisible, BST_CHECKED);
 
 	RegisterTipsFor(hExt);
 
@@ -1120,6 +1142,16 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
         isMulti = IsChecked(hExt, cbConMan);
         break;
 
+	case cbNewConfirm:
+		isMultiNewConfirm = IsChecked(hExt, cbNewConfirm);
+		break;
+
+	case cbLongOutput:
+		AutoBufferHeight = IsChecked(hExt, cbLongOutput);
+		gConEmu.EnableComSpec(AutoBufferHeight);
+		EnableWindow(GetDlgItem(hExt, tLongOutputHeight), AutoBufferHeight);
+		break;
+
     case cbBold:
     case cbItalic:
         {
@@ -1206,6 +1238,13 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
 		isRSelFix = IsChecked(hExt, cbRSelectionFix);
 		break;
 
+	case cbSkipActivation:
+		isMouseSkipActivation = IsChecked(hExt, cbSkipActivation);
+		break;
+	case cbSkipMove:
+		isMouseSkipMoving = IsChecked(hExt, cbSkipMove);
+		break;
+
 	case cbMonitorConsoleLang:
 		isMonitorConsoleLang = IsChecked(hExt, cbMonitorConsoleLang);
 		break;
@@ -1261,6 +1300,11 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
                 SetDlgItemText(hMain, tBgImage, temp);
         }
         break;
+
+	case cbVisible:
+		isConVisible = IsChecked(hExt, cbVisible);
+		gConEmu.ActiveCon()->RCon()->ShowConsole(isConVisible);
+		break;
 
     default:
         break;
@@ -1382,6 +1426,29 @@ LRESULT CSettings::OnEditChanged(WPARAM wParam, LPARAM lParam)
             gConEmu.Update(true);
         }
     }
+	else if (TB == tLongOutputHeight) {
+		BOOL lbOk = FALSE;
+		wchar_t szTemp[16];
+		UINT nNewVal = GetDlgItemInt(hExt, tLongOutputHeight, &lbOk, FALSE);
+		if (lbOk)
+		{
+			if (nNewVal >= 300 && nNewVal <= 9999)
+				DefaultBufferHeight = nNewVal;
+			else if (nNewVal > 9999)
+				SetDlgItemText(hExt, TB, _ltow(DefaultBufferHeight, szTemp, 10));
+		} else {
+			SetDlgItemText(hExt, TB, _ltow(DefaultBufferHeight, szTemp, 10));
+		}
+	}
+	else if (TB == hkNewConsole || TB == hkSwitchConsole || TB == hkCloseConsole) {
+		UINT nHotKey = 0xFF & SendDlgItemMessage(hExt, TB, HKM_GETHOTKEY, 0, 0);
+		if (TB == hkNewConsole)
+			icMultiNew = nHotKey;
+		else if (TB == hkSwitchConsole)
+			icMultiNext = nHotKey;
+		else if (TB == hkCloseConsole)
+			icMultiRecreate = nHotKey;
+	}
 
     return 0;
 }

@@ -9,7 +9,7 @@ public:
 
     TCHAR Config[MAX_PATH];
 
-    int DefaultBufferHeight; bool ForceBufferHeight; bool AutoScroll;
+    int DefaultBufferHeight; bool ForceBufferHeight; bool AutoScroll; bool AutoBufferHeight;
     
 	LONG FontWidth();
 	LONG FontHeight();
@@ -51,6 +51,7 @@ public:
     DWORD FontSizeX3;
     bool isFullScreen;
     char isFixFarBorders;
+	bool isMouseSkipActivation, isMouseSkipMoving;
 	struct tag_CharRanges {
 		bool bUsed;
 		wchar_t cBegin, cEnd;

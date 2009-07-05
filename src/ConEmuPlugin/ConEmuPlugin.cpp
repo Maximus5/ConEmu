@@ -126,7 +126,7 @@ DWORD gnMainThreadId = 0;
 HANDLE hThread=NULL;
 FarVersion gFarVersion;
 WCHAR gszDir1[CONEMUTABMAX], gszDir2[CONEMUTABMAX];
-WCHAR gszRootKey[MAX_PATH];
+WCHAR gszRootKey[MAX_PATH*2];
 int maxTabCount = 0, lastWindowCount = 0, gnCurTabCount = 0;
 ConEmuTab* tabs = NULL; //(ConEmuTab*) Alloc(maxTabCount, sizeof(ConEmuTab));
 LPBYTE gpData = NULL, gpCursor = NULL;
@@ -746,6 +746,12 @@ void InitHWND(HWND ahFarHwnd)
 
 	// начальная инициализация. в SetStartupInfo поправим
 	wsprintfW(gszRootKey, L"Software\\%s", (gFarVersion.dwVerMajor==2) ? L"FAR2" : L"FAR");
+	// Нужно учесть, что FAR мог запуститься с ключом /u (выбор конфигурации)
+	wchar_t* pszUserSlash = gszRootKey+wcslen(gszRootKey);
+	wcscpy(pszUserSlash, L"\\Users\\");
+	wchar_t* pszUserAdd = pszUserSlash+wcslen(pszUserSlash);
+	if (GetEnvironmentVariable(L"FARUSER", pszUserAdd, MAX_PATH) == 0)
+		*pszUserSlash = 0;
 
 	ConEmuHwnd = NULL;
 	FarHwnd = ahFarHwnd;

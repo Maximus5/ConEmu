@@ -65,7 +65,7 @@ public:
 
 	bool InitDC(bool abNoDc, bool abNoWndResize);
 	void DumpConsole();
-	void DumpConsole(LPCWSTR asFile);
+	BOOL Dump(LPCWSTR asFile);
 	bool Update(bool isForce = false, HDC *ahDc=NULL);
 	void UpdateCursor(bool& lRes);
 	void SelectFont(HFONT hNew);
@@ -130,7 +130,7 @@ protected:
 	MSection csCON; /*DWORD ncsTCON;*/
 	int mn_BackColorIdx; //==0
 	void Box(LPCTSTR szText);
-	BOOL RetrieveConsoleInfo(BOOL bShortOnly);
+	//BOOL RetrieveConsoleInfo(BOOL bShortOnly);
 	typedef struct tag_PARTBRUSHES {
 		wchar_t ch; // 0x2591 0x2592 0x2593 0x2588 - по увеличению плотности
 		SHORT   nBackIdx;

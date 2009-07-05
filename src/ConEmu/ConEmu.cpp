@@ -1146,6 +1146,13 @@ void CConEmuMain::ReSize(BOOL abCorrect2Ideal /*= FALSE*/)
 			m_Child.SetRedraw(FALSE);
 			pVCon->RCon()->SetConsoleSize(MakeCoord(rcConsole.right, rcConsole.bottom), CECMD_SETSIZESYNC);
 			m_Child.SetRedraw(TRUE);
+			m_Child.Redraw();
+
+			//#ifdef _DEBUG
+			//DnDstep(L"...Sleeping");
+			//Sleep(300);
+			//DnDstep(NULL);
+			//#endif
 
 			MoveWindow(ghWnd, rcWnd.left, rcWnd.top, 
 				(rcCompWnd.right - rcCompWnd.left), (rcCompWnd.bottom - rcCompWnd.top), 1);
@@ -1950,6 +1957,17 @@ CVirtualConsole* CConEmuMain::CreateCon(BOOL abStartDetached/*=FALSE*/, LPCWSTR 
         }
     }
     return pCon;
+}
+
+void CConEmuMain::EnableComSpec(BOOL abSwitch)
+{
+	for (int i = 0; i<MAX_CONSOLE_COUNT; i++) {
+		if (mp_VCon[i] == NULL) continue;
+		CRealConsole* pRCon = mp_VCon[i]->RCon();
+		DWORD dwFarPID = pRCon->GetFarPID();
+		if (!dwFarPID) continue;
+		pRCon->EnableComSpec(dwFarPID, abSwitch);
+	}
 }
 
 void CConEmuMain::DnDstep(LPCTSTR asMsg)
@@ -3689,7 +3707,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
         return 0;
     }
     
-    if (GetForegroundWindow() != ghWnd) {
+    if (gSet.isMouseSkipMoving && GetForegroundWindow() != ghWnd) {
     	DEBUGLOGFILE("ConEmu is not foreground window, mouse event skipped");
     	return 0;
     }
@@ -3715,30 +3733,34 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
     	return 0;
     }
     
-    if (mouse.nReplaseDblClk) {
-    	if (messg == WM_LBUTTONDOWN && mouse.nReplaseDblClk == WM_LBUTTONDBLCLK) {
-    		mouse.nReplaseDblClk = 0;
-    	} else
-    	if (messg == WM_RBUTTONDOWN && mouse.nReplaseDblClk == WM_RBUTTONDBLCLK) {
-    		mouse.nReplaseDblClk = 0;
-    	} else
-    	if (messg == WM_MBUTTONDOWN && mouse.nReplaseDblClk == WM_MBUTTONDBLCLK) {
-    		mouse.nReplaseDblClk = 0;
-    	} else
-     	if (mouse.nReplaseDblClk == messg) {
-        	switch (mouse.nReplaseDblClk) {
-        	case WM_LBUTTONDBLCLK:
-        		messg = WM_LBUTTONDOWN;
-        		break;
-        	case WM_RBUTTONDBLCLK:
-        		messg = WM_RBUTTONDOWN;
-        		break;
-        	case WM_MBUTTONDBLCLK:
-        		messg = WM_MBUTTONDOWN;
-        		break;
-        	}
-        	mouse.nReplaseDblClk = 0;
-    	}
+    if (mouse.nReplaceDblClk) {
+		if (!gSet.isMouseSkipActivation) {
+			mouse.nReplaceDblClk = 0;
+		} else {
+    		if (messg == WM_LBUTTONDOWN && mouse.nReplaceDblClk == WM_LBUTTONDBLCLK) {
+    			mouse.nReplaceDblClk = 0;
+    		} else
+    		if (messg == WM_RBUTTONDOWN && mouse.nReplaceDblClk == WM_RBUTTONDBLCLK) {
+    			mouse.nReplaceDblClk = 0;
+    		} else
+    		if (messg == WM_MBUTTONDOWN && mouse.nReplaceDblClk == WM_MBUTTONDBLCLK) {
+    			mouse.nReplaceDblClk = 0;
+    		} else
+     		if (mouse.nReplaceDblClk == messg) {
+        		switch (mouse.nReplaceDblClk) {
+        		case WM_LBUTTONDBLCLK:
+        			messg = WM_LBUTTONDOWN;
+        			break;
+        		case WM_RBUTTONDBLCLK:
+        			messg = WM_RBUTTONDOWN;
+        			break;
+        		case WM_MBUTTONDBLCLK:
+        			messg = WM_MBUTTONDOWN;
+        			break;
+        		}
+        		mouse.nReplaceDblClk = 0;
+    		}
+		}
     }
 
     ///*&& isPressed(VK_LBUTTON)*/) && // Если этого не делать - при выделении мышкой консоль может самопроизвольно прокрутиться
@@ -4846,22 +4868,22 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
     	//return MA_ACTIVATEANDEAT; -- ест все подряд, а LBUTTONUP пропускает :(
 		gConEmu.mouse.nSkipEvents[0] = 0;
 		gConEmu.mouse.nSkipEvents[1] = 0;
-		if (LOWORD(lParam) == HTCLIENT && GetForegroundWindow() != ghWnd) {
+		if (gSet.isMouseSkipActivation && LOWORD(lParam) == HTCLIENT && GetForegroundWindow() != ghWnd) {
 			POINT ptMouse = {0}; GetCursorPos(&ptMouse);
 			RECT  rcDC = {0}; GetWindowRect(ghWndDC, &rcDC);
 			if (PtInRect(&rcDC, ptMouse)) {
             	if (HIWORD(lParam) == WM_LBUTTONDOWN) {
             		gConEmu.mouse.nSkipEvents[0] = WM_LBUTTONDOWN;
             		gConEmu.mouse.nSkipEvents[1] = WM_LBUTTONUP;
-            		gConEmu.mouse.nReplaseDblClk = WM_LBUTTONDBLCLK;
+            		gConEmu.mouse.nReplaceDblClk = WM_LBUTTONDBLCLK;
             	} else if (HIWORD(lParam) == WM_RBUTTONDOWN) {
             		gConEmu.mouse.nSkipEvents[0] = WM_RBUTTONDOWN;
             		gConEmu.mouse.nSkipEvents[1] = WM_RBUTTONUP;
-            		gConEmu.mouse.nReplaseDblClk = WM_RBUTTONDBLCLK;
+            		gConEmu.mouse.nReplaceDblClk = WM_RBUTTONDBLCLK;
             	} else if (HIWORD(lParam) == WM_MBUTTONDOWN) {
             		gConEmu.mouse.nSkipEvents[0] = WM_MBUTTONDOWN;
             		gConEmu.mouse.nSkipEvents[1] = WM_MBUTTONUP;
-            		gConEmu.mouse.nReplaseDblClk = WM_MBUTTONDBLCLK;
+            		gConEmu.mouse.nReplaceDblClk = WM_MBUTTONDBLCLK;
             	}
             }
         }

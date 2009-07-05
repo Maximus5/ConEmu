@@ -163,9 +163,10 @@ END
 IDD_DIALOG2 DIALOGEX 0, 0, 328, 197
 STYLE DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
-FONT 8, "MS Shell Dlg"
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Colors (""red green blue"")",IDC_STATIC,4,4,319,67
+    GROUPBOX        "Standard colors (""red green blue"")",gbStandardColors,
+                    4,4,319,67
     RTEXT           "0.",IDC_STATIC,12,18,8,8
     LTEXT           "",c0,24,15,12,12,SS_NOTIFY | SS_SUNKEN
     RTEXT           "1.",IDC_STATIC,12,31,8,8
@@ -325,7 +326,7 @@ IDD_DIALOGM DIALOGEX 0, 0, 341, 259
 STYLE DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 EXSTYLE WS_EX_TOPMOST
 CAPTION "Settings..."
-FONT 8, "MS Shell Dlg"
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     DEFPUSHBUTTON   "Save settings",bSaveSettings,268,242,70,14
     CONTROL         "Always update con. handle (Telnet, etc.)",
@@ -337,7 +338,7 @@ END
 IDD_DIALOG3 DIALOGEX 0, 0, 328, 199
 STYLE DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
-FONT 8, "MS Shell Dlg"
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     GROUPBOX        "Performance counters",gbPerformance,4,4,319,30
     RTEXT           "Render:",IDC_STATIC,92,17,27,8
@@ -385,15 +386,12 @@ BEGIN
                     WS_DISABLED | WS_TABSTOP,251,50,31,10
 END
 
-IDD_DIALOG4 DIALOGEX 0, 0, 328, 167
+IDD_DIALOG4 DIALOGEX 0, 0, 328, 184
 STYLE DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
-FONT 8, "MS Shell Dlg", 0, 0, 0x1
+FONT 8, "MS Shell Dlg"
 BEGIN
-    CONTROL         "&RightClick for context menu",cbRClick,"Button",
-                    BS_AUTO3STATE | WS_TABSTOP,10,44,125,8
-    CONTROL         "AltEnter",cbSendAE,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,90,59,42,8
+    GROUPBOX        "Tabs (panels, editors, viewers)",IDC_STATIC,4,2,319,28
     CONTROL         "Enable Tabs",cbTabs,"Button",BS_AUTO3STATE | WS_TABSTOP,
                     10,15,64,8
     CONTROL         "Internal CtrlTab",cbTabSelf,"Button",BS_AUTOCHECKBOX | 
@@ -402,40 +400,58 @@ BEGIN
                     WS_TABSTOP,154,15,71,8
     CONTROL         "Recent mode",cbTabRecent,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,233,15,75,8
-    GROUPBOX        "Mouse",IDC_STATIC,4,34,136,39
-    CONTROL         "Copy by default",cbDnDCopy,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,252,59,66,8
-    GROUPBOX        "Multi console",IDC_STATIC,4,76,319,30
-    GROUPBOX        "Tabs (panels, editors, viewers)",IDC_STATIC,4,2,319,30
+    GROUPBOX        "Window tweaks",IDC_STATIC,4,34,137,39
+    CONTROL         "Auto minimize to tray",cbMinToTray,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,10,52,109,8
     GROUPBOX        "Drag and drop (Shell style)",IDC_STATIC,147,34,176,39
+    CONTROL         "LDrag",cbDragL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
+                    154,44,36,10
     COMBOBOX        lbLDragKey,192,43,56,30,CBS_DROPDOWNLIST | WS_VSCROLL | 
                     WS_TABSTOP
     CONTROL         "Allow 'Drop'",cbDropEnabled,"Button",BS_AUTO3STATE | 
                     WS_TABSTOP,252,44,53,10
-    CONTROL         "LDrag",cbDragL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
-                    154,44,36,10
     CONTROL         "RDrag",cbDragR,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
                     154,59,36,10
     COMBOBOX        lbRDragKey,192,57,56,30,CBS_DROPDOWNLIST | WS_VSCROLL | 
                     WS_TABSTOP
+    CONTROL         "Copy by default",cbDnDCopy,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,252,59,66,8
+    GROUPBOX        "Multi console",IDC_STATIC,4,76,319,40
     CONTROL         "MultiCon",cbConMan,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,10,89,43,8
-    CONTROL         "Auto minimize to tray",cbMinToTray,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,231,123,85,8
-    CONTROL         "Long output",cbLongOutput,"Button",BS_AUTOCHECKBOX | 
-                    WS_DISABLED | WS_TABSTOP,61,89,56,8
-    EDITTEXT        tLongOutputHeight,122,87,40,12,ES_AUTOHSCROLL | 
-                    WS_DISABLED
+                    WS_TABSTOP,10,88,43,8
+    CONTROL         "Long console output",cbLongOutput,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,10,102,84,8
+    EDITTEXT        tLongOutputHeight,98,100,40,12,ES_AUTOHSCROLL
+    GROUPBOX        "Win+hotkeys",IDC_STATIC,144,84,174,26
+    RTEXT           "New:",IDC_STATIC,148,95,21,8
+    CONTROL         "HotKey1",hkNewConsole,"msctls_hotkey32",WS_BORDER | 
+                    WS_TABSTOP,171,93,23,13
+    RTEXT           "Switch:",IDC_STATIC,197,95,26,8
+    CONTROL         "HotKey1",hkSwitchConsole,"msctls_hotkey32",WS_BORDER | 
+                    WS_TABSTOP,225,93,23,13
+    RTEXT           "Recreate:",IDC_STATIC,253,95,34,8
+    CONTROL         "HotKey1",hkCloseConsole,"msctls_hotkey32",WS_BORDER | 
+                    WS_TABSTOP,289,93,23,13
+    GROUPBOX        "Mouse",IDC_STATIC,4,120,319,28
+    CONTROL         "&RightClick 4 context menu",cbRClick,"Button",
+                    BS_AUTO3STATE | WS_TABSTOP,9,133,102,8
     CONTROL         "Right selection fix",cbRSelectionFix,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,10,59,76,8
+                    BS_AUTOCHECKBOX | WS_TABSTOP,114,133,76,8
+    CONTROL         "Skip activation",cbSkipActivation,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,193,133,63,8
+    CONTROL         "Skip moving",cbSkipMove,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,262,133,55,8
+    GROUPBOX        "Real console tweaks",IDC_STATIC,4,151,319,28
     CONTROL         "Monitor console lang",cbMonitorConsoleLang,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,10,122,94,8
+                    BS_AUTOCHECKBOX | WS_TABSTOP,10,164,85,8
     CONTROL         "Skip focus events",cbSkipFocusEvents,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,113,123,93,8
-    CONTROL         "HotKey1",IDC_HOTKEY1,"msctls_hotkey32",WS_BORDER | 
-                    WS_TABSTOP,237,85,80,14
-    GROUPBOX        "Real console tweaks",IDC_STATIC,4,109,212,30
-    GROUPBOX        "Window tweaks",IDC_STATIC,223,109,100,30
+                    BS_AUTOCHECKBOX | WS_TABSTOP,97,164,78,8
+    CONTROL         "Send Alt+Enter to console",cbSendAE,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,176,164,100,8
+    CONTROL         "Visible",cbVisible,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,280,164,38,8
+    CONTROL         "Create confirmation",cbNewConfirm,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,63,88,77,8
 END
 
 IDD_RESTART DIALOG DISCARDABLE  0, 0, 310, 70
@@ -494,6 +510,7 @@ BEGIN
     tFontSizeY              "Main font height"
     tFontCharset            "Main font charset"
     tFontFace2              "Font face used to draw FAR borders"
+    cbExtendColors          "You can use up to 32 foreground colors\n(instead of console standard 16) at the\nexpense of one of background colors"
 END
 
 STRINGTABLE DISCARDABLE 
@@ -506,7 +523,7 @@ BEGIN
     cbMonospace             "Draw characters one by one. It's much(!) slower,\nbut allows to use proportional fonts (Arial, etc.)\nas monospaced."
     cbNonProportional       "Check it for non proportional\n(monospaced) fonts"
     tFontSizeX2             "WIDTH for additional font.\nIt must be wider than main font,\notherwise, You get 'dashed' borders."
-    cbSendAE                "When is on, You can't enter fullscreen mode from keyboard,\nbut You can use 'AltEnter' for macros in FAR"
+    cbSendAE                "When is on, You can't enter fullscreen mode\nfrom keyboard, but You can use 'Alt+Enter'\nfor macros in FAR"
     cbDnDCopy               "Forced 'Copy' action as default,\nYou can use Ctrl, Shift or Alt\nduring drag to change action"
     cbTabs                  "Show tabs (all opened panels, editors and viewers)\non the top of ConEmu window"
     cbGUIpb                 "Enhancement of standart (only) copy/move progressbars.\nYou may choose 3state of 'Fix Far Borders' instead of..."
@@ -522,6 +539,12 @@ BEGIN
     cbRSelectionFix         "Fix dashed selection with fast right mouse drag"
     cbMonitorConsoleLang    "Monitor input language change in real\nconsole (i.e. XLat switching support)"
     cbSkipFocusEvents       "Don't send focus events to console to disable\nautoclosing of fast search dialog in panels"
+    hkNewConsole            "Hotkey for creating new console"
+    hkSwitchConsole         "Hotkey for switching between consoles"
+    hkCloseConsole          "Hotkey for recreating (or closing)\nactive console"
+    cbSkipActivation        "Skip mouse button (left/right/middle)\nclick, while activating window"
+    cbSkipMove              "Skip mouse move events, while\nConEmu is not foreground window"
+    cbVisible               "Show real console on startup"
 END
 
 STRINGTABLE DISCARDABLE 
@@ -529,6 +552,8 @@ BEGIN
     cbTabSelf               "Handle CtrlTab and CtrlShiftTab internally\n(by ConEmu). This keystrokes will not be sent\nto console window, bu You can easily\nswitch between consoles (panels)."
     cbTabLazy               "When checked - real window switching\nwill be performed on Ctrl depress"
     cbTabRecent             "Switch first between recent tabs.\nYou may still switch between tabs in\nstandard manner using Left/Right\n(after CtrlTab), while Ctrl is still presses."
+    cbLongOutput            "Autoexpand bufferheight to specified\nnumber of lines, while FAR executes\nconsole commands. Full console output\n(up to specified count of lines) will be\navailable via FAR macro (CtrlO.reg)"
+    tLongOutputHeight       "Size of bufferheight, while FAR\nexecutes console commands"
 END
 
 STRINGTABLE DISCARDABLE 

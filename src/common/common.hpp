@@ -71,11 +71,15 @@ extern wchar_t gszDbgModLabel[6];
 #define CHEKCDBGMODLABEL if (gszDbgModLabel[0]==0) { \
 	wchar_t szFile[MAX_PATH]; GetModuleFileName(NULL, szFile, MAX_PATH); \
 	wchar_t* pszName = wcsrchr(szFile, L'\\'); \
-	if (_wcsicmp(pszName, L"\\conemu.exe")==0) lstrcpyW(gszDbgModLabel, L"(gui)"); \
-	else if (_wcsicmp(pszName, L"\\conemuc.exe")==0) lstrcpyW(gszDbgModLabel, L"(srv)"); \
-	else lstrcpyW(gszDbgModLabel, L"(dll)"); \
+	if (_wcsicmp(pszName, L"\\conemu.exe")==0) lstrcpyW(gszDbgModLabel, L"gui"); \
+	else if (_wcsicmp(pszName, L"\\conemuc.exe")==0) lstrcpyW(gszDbgModLabel, L"srv"); \
+	else lstrcpyW(gszDbgModLabel, L"dll"); \
 }
-#define DEBUGSTR(s) //{ CHEKCDBGMODLABEL; SYSTEMTIME st; GetLocalTime(&st); wchar_t szDEBUGSTRTime[40]; wsprintf(szDEBUGSTRTime, L"%i:%02i:%02i.%03i%s ", st.wHour, st.wMinute, st.wSecond, st.wMilliseconds, gszDbgModLabel); OutputDebugString(szDEBUGSTRTime); OutputDebugString(s); }
+#ifdef SHOWDEBUGSTR
+#define DEBUGSTR(s) { CHEKCDBGMODLABEL; SYSTEMTIME st; GetLocalTime(&st); wchar_t szDEBUGSTRTime[40]; wsprintf(szDEBUGSTRTime, L"%i:%02i:%02i.%03i(%s.%i) ", st.wHour, st.wMinute, st.wSecond, st.wMilliseconds, gszDbgModLabel, GetCurrentThreadId()); OutputDebugString(szDEBUGSTRTime); OutputDebugString(s); }
+#else
+#define DEBUGSTR(s)
+#endif
 #else
 #define DEBUGSTR(s)
 #endif
