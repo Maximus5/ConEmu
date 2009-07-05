@@ -2922,7 +2922,7 @@ BOOL CRealConsole::RetrieveConsoleInfo(UINT anWaitSize)
 			//SetEvent(mh_MonitorThreadEvent);
 			_ASSERTE((LPVOID)pOut != (LPVOID)cbReadBuf);
 			if ((LPVOID)pOut != (LPVOID)cbReadBuf) {
-				BOOL lbSizeOk = (anWaitSize == 0) || (pOut->ConInfo.inf.sbi.dwSize.Y == anWaitSize);
+				BOOL lbSizeOk = (anWaitSize == 0) || (pOut->ConInfo.inf.sbi.dwSize.Y == (int)anWaitSize);
 				if (lbSizeOk) {
 					PushPacket(pOut);
 					pOut = NULL;

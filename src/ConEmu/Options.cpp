@@ -2071,7 +2071,7 @@ void CSettings::Performance(UINT nID, BOOL bEnd)
         if (ghOpWnd) {
             // Performance
             wchar_t sTemp[128];
-            swprintf(sTemp, _T("Performance counters (%I64i)"), ((i64)(mn_Freq/1000)));
+            swprintf(sTemp, _T("Performance counters (%.3f GHz)"), ((double)(mn_Freq/1000)/1000000));
             SetDlgItemText(hInfo, nID, sTemp);
             
             for (nID=tPerfFPS; mn_Freq && nID<=tPerfInterval; nID++) {

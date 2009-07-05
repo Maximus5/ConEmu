@@ -2322,6 +2322,10 @@ void CConEmuMain::ShowOldCmdVersion(DWORD nCmd, DWORD nVersion)
         return;
     }
 
+	static bool lbErrorShowed = false;
+	if (lbErrorShowed) return;
+	lbErrorShowed = true;
+
     wchar_t szMsg[255];
     wsprintf(szMsg, L"ConEmu received old version packet!\nCommandID: %i, Version: %i\nPlease check ConEmuC.exe and ConEmu.dll", nCmd, nVersion);
     MBox(szMsg);
@@ -3509,9 +3513,9 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
     static DWORD sn_SkipConmanVk[2] = {0,0};
     bool lbLWin = false, lbRWin = false;
     if (gSet.isMulti && wParam && ((lbLWin = isPressed(VK_LWIN)) || (lbRWin = isPressed(VK_RWIN)) || sb_SkipConmanChar)) {
-        if (messg == WM_KEYDOWN && (lbLWin || lbRWin)) {
-            if (wParam==gSet.icMultiNext || wParam==gSet.icMultiNew || (wParam>='0' && wParam<='9') || 
-                wParam==VK_F11 || wParam==VK_F12 || wParam==gSet.icMultiRecreate)
+        if (messg == WM_KEYDOWN && (lbLWin || lbRWin) && (wParam != VK_LWIN && wParam != VK_RWIN)) {
+            if (wParam==gSet.icMultiNext || wParam==gSet.icMultiNew || (wParam>='0' && wParam<='9')
+                || wParam==gSet.icMultiRecreate)
             {
                 // Запомнить, что не нужно пускать в консоль
                 sb_SkipConmanChar = true;
@@ -3523,10 +3527,7 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
                     ConmanAction(wParam - '1');
                     
                 else if (wParam=='0')
-                    ConmanAction(10);
-                    
-                else if (wParam==VK_F11 && wParam==VK_F12)
-                    ConmanAction(wParam - VK_F11 + 11);
+                    ConmanAction(9);
                     
                 else if (wParam == gSet.icMultiNext)
                     ConmanAction(isPressed(VK_SHIFT) ? CONMAN_PREVCONSOLE : CONMAN_NEXTCONSOLE);
@@ -3540,12 +3541,15 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
                     
                 }
                 return 0;
-            }
+			}
         } else if (messg == WM_CHAR) {
             if (sn_SkipConmanVk[1] == (lParam & 0xFF0000))
                 return 0; // не пропускать букву в консоль
         } else if (messg == WM_KEYUP) {
-            if (wParam == VK_LWIN || wParam == VK_RWIN) {
+			if (wParam==VK_F11 || wParam==VK_F12) {
+				ConmanAction(wParam - VK_F11 + 10);
+				return 0;
+			} else if (wParam == VK_LWIN || wParam == VK_RWIN) {
                 if (sn_SkipConmanVk[0] == wParam) {
                     sn_SkipConmanVk[0] = 0;
                     sb_SkipConmanChar = (sn_SkipConmanVk[0] != 0) || (sn_SkipConmanVk[1] != 0);

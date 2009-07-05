@@ -389,7 +389,7 @@ END
 IDD_DIALOG4 DIALOGEX 0, 0, 328, 184
 STYLE DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
-FONT 8, "MS Shell Dlg"
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     GROUPBOX        "Tabs (panels, editors, viewers)",IDC_STATIC,4,2,319,28
     CONTROL         "Enable Tabs",cbTabs,"Button",BS_AUTO3STATE | WS_TABSTOP,
@@ -545,6 +545,7 @@ BEGIN
     cbSkipActivation        "Skip mouse button (left/right/middle)\nclick, while activating window"
     cbSkipMove              "Skip mouse move events, while\nConEmu is not foreground window"
     cbVisible               "Show real console on startup"
+    cbNewConfirm            "Confirm new console creation.\nYou may change cmd line for it."
 END
 
 STRINGTABLE DISCARDABLE 
