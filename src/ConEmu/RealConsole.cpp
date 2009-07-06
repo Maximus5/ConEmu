@@ -1689,6 +1689,7 @@ void CRealConsole::OnWinEvent(DWORD event, HWND hwnd, LONG idObject, LONG idChil
             // Если запущено 16битное приложение - необходимо повысить приоритет нашего процесса, иначе будут тормоза
             _ASSERTE(CONSOLE_APPLICATION_16BIT==1);
             if (idChild == CONSOLE_APPLICATION_16BIT) {
+				DEBUGSTR(L"16 bit application STARTED\n");
                 mn_ProgramStatus |= CES_NTVDM;
 				if (gOSVer.dwMajorVersion>5 || (gOSVer.dwMajorVersion==5 && gOSVer.dwMinorVersion>=1))
 					mb_IgnoreCmdStop = TRUE;
@@ -1705,6 +1706,7 @@ void CRealConsole::OnWinEvent(DWORD event, HWND hwnd, LONG idObject, LONG idChil
             //
             if (idChild == CONSOLE_APPLICATION_16BIT) {
                 //gConEmu.gbPostUpdateWindowSize = true;
+				DEBUGSTR(L"16 bit application TERMINATED\n");
                 mn_ProgramStatus &= ~CES_NTVDM;
 				SyncConsole2Window(); // После выхода из 16bit режима хорошо бы отресайзить консоль по размеру GUI
                 TODO("Вообще-то хорошо бы проверить, что 16бит не осталось в других консолях");
@@ -1932,29 +1934,43 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
         #endif
         DWORD nPID     = pIn->dwData[2];
         DEBUGSTR(L"GUI recieved CECMD_CMDSTARTSTOP\n");
+		DWORD nSubSystem = pIn->dwData[3];
         
         if (nStarted == 0 || nStarted == 2) {
             // Сразу заполним результат
-            ((DWORD*)(pIn->Data))[0] = isBufferHeight(); // чтобы comspec знал, что буфер нужно будет отключить
-            ((DWORD*)(pIn->Data))[1] = (DWORD)ghWnd;
-            ((DWORD*)(pIn->Data))[2] = GetCurrentProcessId();
+            pIn->dwData[0] = isBufferHeight(); // чтобы comspec знал, что буфер нужно будет отключить
+            pIn->dwData[1] = (DWORD)ghWnd;
+            pIn->dwData[2] = GetCurrentProcessId();
 
             AllowSetForegroundWindow(nPID);
 
             // ComSpec started
             if (nStarted == 2) {
 				// Устанавливается в TRUE если будет запущено 16битное приложение
-				// но пока его нужно сбросить
-				mb_IgnoreCmdStop = FALSE;
+				if (nSubSystem == 255) {
+					DEBUGSTR(L"16 bit application STARTED, aquired from CECMD_CMDSTARTSTOP\n");
+					mn_ProgramStatus |= CES_NTVDM;
+					mb_IgnoreCmdStop = TRUE;
+					COORD cr16bit = {80,con.m_sbi.dwSize.Y};
+					if (gSet.ntvdmHeight && cr16bit.Y >= gSet.ntvdmHeight) cr16bit.Y = gSet.ntvdmHeight;
+					else if (cr16bit.Y>=50) cr16bit.Y = 50;
+					else if (cr16bit.Y>=43) cr16bit.Y = 43;
+					else if (cr16bit.Y>=28) cr16bit.Y = 28;
+					else if (cr16bit.Y>=25) cr16bit.Y = 25;
+					SetConsoleSize(cr16bit, CECMD_CMDSTARTED);
+				} else {
+					// но пока его нужно сбросить
+					mb_IgnoreCmdStop = FALSE;
 
-                if (gSet.DefaultBufferHeight && !isBufferHeight()) {
-                    WARNING("Тут наверное нужно бы заблокировать прием команды смена размера из сервера ConEmuC");
-                    con.m_sbi.dwSize.Y = gSet.DefaultBufferHeight;
-                    mb_BuferModeChangeLocked = TRUE;
-                    SetBufferHeightMode(TRUE, TRUE); // Сразу включаем, иначе команда неправильно сформируется
-                    SetConsoleSize(con.m_sbi.dwSize, CECMD_CMDSTARTED);
-                    mb_BuferModeChangeLocked = FALSE;
-                }
+					if (gSet.DefaultBufferHeight && !isBufferHeight()) {
+						WARNING("Тут наверное нужно бы заблокировать прием команды смена размера из сервера ConEmuC");
+						con.m_sbi.dwSize.Y = gSet.DefaultBufferHeight;
+						mb_BuferModeChangeLocked = TRUE;
+						SetBufferHeightMode(TRUE, TRUE); // Сразу включаем, иначе команда неправильно сформируется
+						SetConsoleSize(con.m_sbi.dwSize, CECMD_CMDSTARTED);
+						mb_BuferModeChangeLocked = FALSE;
+					}
+				}
             }
 
             // 23.06.2009 Maks - уберем пока. Должно работать в ApplyConsoleInfo
@@ -1966,22 +1982,27 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 
 			// ComSpec stopped
             if (nStarted == 3) {
-				if (mb_IgnoreCmdStop) {
+				if (mb_IgnoreCmdStop || (mn_ProgramStatus & CES_NTVDM) == CES_NTVDM) {
 					// Ветка активируется только в WinXP и выше
 					// Было запущено 16битное приложение, сейчас запомненный размер консоли скорее всего 80x25
 					// что не соответствует желаемому размеру при выходе из 16бит. Консоль нужно подресайзить
 					// поз размер окна. Это сделает OnWinEvent.
-					SetBufferHeightMode(FALSE, TRUE);
+					//SetBufferHeightMode(FALSE, TRUE);
+					//PRAGMA_ERROR("Если не вызвать CECMD_CMDFINISHED не включатся WinEvents");
 					mb_IgnoreCmdStop = FALSE; // наверное сразу сбросим, две подряд прийти не могут
-				} else {
-					// Восстановить размер через серверный ConEmuC
-					mb_BuferModeChangeLocked = TRUE;
-					COORD crNewSize = {TextWidth(),TextHeight()};
-					con.m_sbi.dwSize.Y = crNewSize.Y;
-					SetBufferHeightMode(FALSE, TRUE); // Сразу выключаем, иначе команда неправильно сформируется
-					SetConsoleSize(crNewSize, CECMD_CMDFINISHED);
-					mb_BuferModeChangeLocked = FALSE;
-				}
+					
+    				DEBUGSTR(L"16 bit application TERMINATED (aquired from CECMD_CMDFINISHED)\n");
+                    mn_ProgramStatus &= ~CES_NTVDM;
+    				SyncConsole2Window(); // После выхода из 16bit режима хорошо бы отресайзить консоль по размеру GUI
+				} //else {
+				// Восстановить размер через серверный ConEmuC
+				mb_BuferModeChangeLocked = TRUE;
+				COORD crNewSize = {TextWidth(),TextHeight()};
+				con.m_sbi.dwSize.Y = crNewSize.Y;
+				SetBufferHeightMode(FALSE, TRUE); // Сразу выключаем, иначе команда неправильно сформируется
+				SetConsoleSize(crNewSize, CECMD_CMDFINISHED);
+				mb_BuferModeChangeLocked = FALSE;
+				//}
             }
         }
         
@@ -2200,7 +2221,7 @@ void CRealConsole::ApplyConsoleInfo(CESERVER_REQ* pInfo)
                 SetBufferHeightMode(nNewHeight < con.m_sbi.dwSize.Y);
             //  TODO("Включить прокрутку? или оно само?");
             if (nNewWidth != con.nTextWidth || nNewHeight != con.nTextHeight) {
-                bBufRecreated = TRUE;
+                bBufRecreated = TRUE; // Смена размера, буфер пересоздается
                 sc.Lock(&csCON, TRUE);
                 WARNING("может не заблокировалось?");
                 InitBuffers(nNewWidth*nNewHeight*2);
@@ -2216,12 +2237,13 @@ void CRealConsole::ApplyConsoleInfo(CESERVER_REQ* pInfo)
     if (dwCharChanged != 0) {
 		#ifdef _DEBUG
         _ASSERTE(dwCharChanged >= sizeof(CESERVER_CHAR));
-		if (!(!bBufRecreated && con.pConChar && con.pConAttr)) {
-			_ASSERTE(!bBufRecreated && con.pConChar && con.pConAttr);
-		}
 		#endif
 
         // Если буфер был пересоздан (bBufRecreated) изменение только блока символов бессмысленно - нужны полные данные!
+		if (bBufRecreated && con.pConChar && con.pConAttr) {
+			DEBUGSTR(L"### Buffer was recreated, via consize changing. Relative packet will be ignored ###\n");
+			RetrieveConsoleInfo(0);
+		} else
         if (!bBufRecreated && con.pConChar && con.pConAttr) {
             MSectionLock sc2; sc2.Lock(&csCON);
 
@@ -3436,6 +3458,14 @@ BOOL CRealConsole::RecreateProcessStart()
     bool lbRc = false;
     if (mn_InRecreate && mn_ProcessCount == 0 && !mb_ProcessRestarted) {
         mb_ProcessRestarted = TRUE;
+        if ((mn_ProgramStatus & CES_NTVDM) == CES_NTVDM) {
+        	mn_ProgramStatus = 0; mb_IgnoreCmdStop = FALSE;
+        	// При пересоздании сбрасывается 16битный режим, нужно отресайзится
+        	if (!PreInit())
+        		return FALSE;
+        } else {
+        	mn_ProgramStatus = 0; mb_IgnoreCmdStop = FALSE;
+        }
         
         StopThread(TRUE/*abRecreate*/);
         

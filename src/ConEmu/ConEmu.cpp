@@ -466,10 +466,14 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tF
             //TODO: покрутки нет, Однако остается незанятое поле (внизу и справа)
 
             if (gConEmu.isNtvdm()) {
-                //TODO: а перезагрузить не нужно?
-                //NTVDM почему-то отказывается менять ВЫСОТУ экранного буфера...
-                RECT rc1 = MakeRect(gConEmu.pVCon->TextWidth*gSet.FontWidth(),
-                    gSet.ntvdmHeight/*pVCon->TextHeight*/*gSet.FontHeight());
+                // NTVDM устанавливает ВЫСОТУ экранного буфера... в 25/28/43/50 строк
+                // путем округления текущей высоты (то есть если до запуска 16bit
+                // было 27 строк, то скорее всего будет установлена высота в 28 строк)
+                RECT rc1 = MakeRect(gConEmu.pVCon->TextWidth*gSet.FontWidth(), gConEmu.pVCon->TextHeight*gSet.FontHeight());
+                	//gSet.ntvdmHeight/*pVCon->TextHeight*/*gSet.FontHeight());
+                if (rc1.bottom > (rc.bottom - rc.top))
+                	rc1.bottom = (rc.bottom - rc.top); // Если размер вылез за текущий - обрежем снизу :(
+                    
                 int nS = rc.right - rc.left - rc1.right;
                 if (nS>=0) {
                     rcShift.left = nS / 2;

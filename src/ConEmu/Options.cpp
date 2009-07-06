@@ -145,7 +145,7 @@ void CSettings::InitSettings()
 	icFixFarBorderRanges[0].bUsed = true; icFixFarBorderRanges[0].cBegin = 0x2013; icFixFarBorderRanges[0].cEnd = 0x25C4;
     
     wndHeight = 25;
-	ntvdmHeight = 28;
+	ntvdmHeight = 0; // Подбирать автоматически
     wndWidth = 80;
     wndX = 0; wndY = 0; wndCascade = true;
     isConVisible = false;
@@ -258,8 +258,10 @@ void CSettings::LoadSettings()
         reg.Load(_T("ConWnd Width"), wndWidth); if (!wndWidth) wndWidth = 80; else if (wndWidth>1000) wndWidth = 1000;
         reg.Load(_T("ConWnd Height"), wndHeight); if (!wndHeight) wndHeight = 25; else if (wndHeight>500) wndHeight = 500;
         //TODO: Эти два параметра не сохраняются
-        reg.Load(_T("16it Height"), ntvdmHeight); if (ntvdmHeight!=25 && ntvdmHeight!=28 && ntvdmHeight!=50) ntvdmHeight = 28;
-		reg.Load(_T("DefaultBufferHeight"), DefaultBufferHeight); if (DefaultBufferHeight < 300) DefaultBufferHeight = 300;
+        reg.Load(_T("16bit Height"), ntvdmHeight);
+			if (ntvdmHeight!=0 && ntvdmHeight!=25 && ntvdmHeight!=28 && ntvdmHeight!=43 && ntvdmHeight!=50) ntvdmHeight = 25;
+		reg.Load(_T("DefaultBufferHeight"), DefaultBufferHeight);
+			if (DefaultBufferHeight < 300) DefaultBufferHeight = 300;
 		reg.Load(_T("AutoBufferHeight"), AutoBufferHeight);
 
         reg.Load(L"CursorType", isCursorV);

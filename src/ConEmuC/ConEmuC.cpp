@@ -27,7 +27,7 @@ WARNING("При запуске как ComSpec получаем ошибку: {crNewSize.X>=MIN_CON_WIDTH &&
 
 #ifdef _DEBUG
 //  Раскомментировать, чтобы сразу после запуска процесса (conemuc.exe) показать MessageBox, чтобы прицепиться дебаггером
-//    #define SHOW_STARTED_MSGBOX
+//  #define SHOW_STARTED_MSGBOX
 // Раскомментировать для вывода в консоль информации режима Comspec
     #define PRINT_COMSPEC(f,a) wprintf(f,a)
 #elif defined(__GNUC__)
@@ -49,6 +49,8 @@ wchar_t gszDbgModLabel[6] = {0};
 #define MAX_FORCEREFRESH_INTERVAL 1000
 #define MAX_INPUT_QUEUE_EMPTY_WAIT 100
 #define MAX_SYNCSETSIZE_WAIT 1000
+
+#define IMAGE_SUBSYSTEM_DOS_EXECUTABLE  255
 
 WARNING("!!!! Пока можно при появлении события запоминать текущий тик");
 // и проверять его в RefreshThread. Если он не 0 - и дельта больше (100мс?)
@@ -158,6 +160,7 @@ BOOL HookWinEvents(int abEnabled);
 BOOL CheckProcessCount(BOOL abForce=FALSE);
 BOOL IsNeedCmd(LPCWSTR asCmdLine, BOOL *rbNeedCutStartEndQuot);
 BOOL FileExists(LPCWSTR asFile);
+extern bool GetImageSubsystem(const wchar_t *FileName,DWORD& ImageSubsystem);
 
 
 #else
@@ -1274,7 +1277,7 @@ int ComspecInit()
     _ASSERTE(crNewSize.X>=MIN_CON_WIDTH && crNewSize.Y>=MIN_CON_HEIGHT);
     
     CESERVER_REQ *pIn = NULL, *pOut = NULL;
-    int nSize = sizeof(CESERVER_REQ_HDR)+3*sizeof(DWORD);
+    int nSize = sizeof(CESERVER_REQ_HDR)+4*sizeof(DWORD);
     pIn = (CESERVER_REQ*)Alloc(nSize,1);
     if (pIn) {
         pIn->hdr.nCmd = CECMD_CMDSTARTSTOP;
@@ -1284,6 +1287,18 @@ int ComspecInit()
         pIn->dwData[0] = 2; // Cmd режим начат
         pIn->dwData[1] = (DWORD)ghConWnd;
         pIn->dwData[2] = gnSelfPID;
+
+		// Перед запуском 16бит приложений нужно подресайзить консоль...
+		DWORD ImageSubsystem = 0;
+        LPCWSTR pszTemp = gpszRunCmd;
+        wchar_t lsRoot[MAX_PATH+1] = {0};
+        if (0 == NextArg(pszTemp, lsRoot)) {
+        	PRINT_COMSPEC(L"Starting: <%s>", lsRoot);
+        	if (!GetImageSubsystem(lsRoot, ImageSubsystem))
+				ImageSubsystem = 0;
+       		PRINT_COMSPEC(L", Subsystem: <%i>\n", ImageSubsystem);
+        }
+		pIn->dwData[3] = ImageSubsystem;
 
         PRINT_COMSPEC(L"Starting comspec mode (ExecuteGuiCmd started)\n",0);
         pOut = ExecuteGuiCmd(ghConWnd, pIn);
@@ -2345,10 +2360,14 @@ Loop1:
     }
     srv.nVisibleHeight = TextHeight;
 
+#ifdef _DEBUG
     // Вдруг случайно gnBufferHeight не установлен?
     _ASSERTE(TextHeight<=150);
     // Высота окна в консоли должна быть равна высоте в GUI, иначе мы будем терять строку с курсором при прокрутке
-    _ASSERTE(TextHeight==(srv.sbi.srWindow.Bottom-srv.sbi.srWindow.Top+1));
+	if (!srv.bNtvdmActive) {
+		_ASSERTE(TextHeight==(srv.sbi.srWindow.Bottom-srv.sbi.srWindow.Top+1));
+	}
+#endif
     
     TextLen = TextWidth * TextHeight;
     // Если для чтения всех требуемых строк требуется больший объем данных, нежели уже выделен
@@ -4230,7 +4249,7 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 
 BOOL WINAPI HandlerRoutine(DWORD dwCtrlType)
 {
-    PRINT_COMSPEC(L"HandlerRoutine triggered. Event type=%i\n", dwCtrlType);
+    //PRINT_COMSPEC(L"HandlerRoutine triggered. Event type=%i\n", dwCtrlType);
 	if (dwCtrlType >= CTRL_CLOSE_EVENT && dwCtrlType <= CTRL_SHUTDOWN_EVENT) {
     	PRINT_COMSPEC(L"Console about to be closed\n", 0);
 		gbInShutdown = TRUE;
