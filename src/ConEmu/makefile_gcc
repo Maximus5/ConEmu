@@ -119,13 +119,13 @@ MAP = $(patsubst %.$(EXT),%.map,$(EXEFULLNAME))
 
 all: $(EXEFULLNAME)
 
-ifndef DISABLEAUTODEPS
-$(OBJDIR)/%.d: %.cpp
-	@echo making depends for $<
-	@$(MKDIR) -p $(@D)
-	@$(SHELL) -ec '$(CXX) -c -MM $(CXXFLAGS) $< \
-                | sed '\''s/\($*\)\.o[ :]*/$(REOBJDIR)\1.o $(REOBJDIR)\1.d: /g'\'' > $@; [ -s $@ ] || $(RM) $@'
-endif
+#ifndef DISABLEAUTODEPS
+#$(OBJDIR)/%.d: %.cpp
+#	@echo making depends for $<
+#	@$(MKDIR) -p $(@D)
+#	@$(SHELL) -ec '$(CXX) -c -MM $(CXXFLAGS) $< \
+#                | sed '\''s/\($*\)\.o[ :]*/$(REOBJDIR)\1.o $(REOBJDIR)\1.d: /g'\'' > $@; [ -s $@ ] || $(RM) $@'
+#endif
 
 $(OBJDIR)/%.o: %.cpp
 	@echo compiling $<

@@ -775,7 +775,7 @@ HWND TabBarClass::CreateToolbar()
         WS_CHILD|WS_VISIBLE|TBSTYLE_FLAT|CCS_NOPARENTALIGN|CCS_NORESIZE|CCS_NODIVIDER|TBSTYLE_TOOLTIPS|TBSTYLE_TRANSPARENT, 0, 0, 0, 0, mh_Rebar, 
         NULL, NULL, NULL); 
         
-   _defaultBarProc = (WNDPROC)SetWindowLongPtr(mh_Toolbar, GWL_WNDPROC, (LONG_PTR)BarProc);
+   _defaultBarProc = (WNDPROC)SetWindowLongPtr(mh_Toolbar, GWLP_WNDPROC, (LONG_PTR)BarProc);
 
  
    SendMessage(mh_Toolbar, TB_BUTTONSTRUCTSIZE, (WPARAM) sizeof(TBBUTTON), 0); 
@@ -855,7 +855,7 @@ HWND TabBarClass::CreateTabbar()
         #pragma warning (disable : 4312)
         #endif
         // Надо
-        _defaultTabProc = (WNDPROC)SetWindowLongPtr(mh_Tabbar, GWL_WNDPROC, (LONG_PTR)TabProc);
+        _defaultTabProc = (WNDPROC)SetWindowLongPtr(mh_Tabbar, GWLP_WNDPROC, (LONG_PTR)TabProc);
 
         if (!mh_TabTip || !IsWindow(mh_TabTip)) {
             mh_TabTip = CreateWindowEx(WS_EX_TOPMOST, TOOLTIPS_CLASS, NULL,

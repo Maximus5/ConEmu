@@ -213,7 +213,7 @@ BOOL WINAPI IsConsoleActive()
 		if (IsWindow(ConEmuHwnd)) {
 			HWND hParent = GetParent(ConEmuHwnd);
 			if (hParent) {
-				HWND hTest = (HWND)GetWindowLong(hParent, GWL_USERDATA);
+				HWND hTest = (HWND)GetWindowLongPtr(hParent, GWLP_USERDATA);
 				return (hTest == FarHwnd);
 			}
 		}

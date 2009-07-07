@@ -2187,7 +2187,7 @@ void CConEmuMain::Recreate(BOOL abRecreate, BOOL abConfirm)
     SafeFree(mpsz_RecreateCmd);
 }
 
-BOOL CConEmuMain::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
+INT_PTR CConEmuMain::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
 {
     switch (messg)
     {
@@ -2208,7 +2208,7 @@ BOOL CConEmuMain::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
             }
             SetDlgItemText(hDlg, IDC_RESTART_CMD, pszCmd);
 
-            SetClassLong(hDlg, GCL_HICON, (LONG)hClassIcon);
+            SetClassLongPtr(hDlg, GCLP_HICON, (LONG)hClassIcon);
             if (lParam != 0 /*Recreate*/) {
                 //GCC hack. иначе не собирается
                 SetDlgItemTextA(hDlg, IDC_RESTART_MSG, "About to recreate console");
@@ -2256,7 +2256,7 @@ BOOL CConEmuMain::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
             /*SetWindowLong(hWnd2, DWL_MSGRESULT, (LRESULT)hClassIcon);
             return 1;*/
         } else {
-            SetWindowLong(hDlg, DWL_MSGRESULT, (LRESULT)hClassIconSm);
+            SetWindowLongPtr(hDlg, DWLP_MSGRESULT, (LRESULT)hClassIconSm);
             return 1;
         }
         return 0;
@@ -3139,7 +3139,7 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
     
     
     // Чтобы можно было найти хэндл окна по хэндлу консоли
-    SetWindowLong(hWnd, GWL_USERDATA, (LONG)ghConWnd); // 31.03.2009 Maximus - только нихрена оно еще не создано!
+    SetWindowLongPtr(hWnd, GWLP_USERDATA, (LONG_PTR)ghConWnd); // 31.03.2009 Maximus - только нихрена оно еще не создано!
 
     m_Back.Create();
 

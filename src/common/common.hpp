@@ -207,6 +207,21 @@ typedef struct tag_CESERVER_REQ_NEWCMD {
 	wchar_t szCommand[MAX_PATH]; // На самом деле - variable_size !!!
 } CESERVER_REQ_NEWCMD;
 
+typedef struct tag_CESERVER_REQ_STARTSTOP {
+	DWORD nStarted; // 0 - ServerStart, 1 - ServerStop, 2 - ComspecStart, 3 - ComspecStop
+	HWND  hWnd; // при передаче В GUI - консоль, при возврате в консоль - GUI
+	DWORD dwPID;
+	DWORD nSubSystem; // 255 для DOS программ
+	// А это приходит из консоли, вдруго консольная программа успела поменять размер буфера
+	CONSOLE_SCREEN_BUFFER_INFO sbi;
+} CESERVER_REQ_STARTSTOP;
+
+typedef struct tag_CESERVER_REQ_STARTSTOPRET {
+	BOOL  bWasBufferHeight;
+	HWND  hWnd; // при передаче В GUI - консоль, при возврате в консоль - GUI
+	DWORD dwPID;
+} CESERVER_REQ_STARTSTOPRET;
+
 typedef struct tag_CESERVER_REQ {
     CESERVER_REQ_HDR hdr;
 	union {
@@ -218,11 +233,14 @@ typedef struct tag_CESERVER_REQ {
 		CESERVER_REQ_RETSIZE SetSizeRet;
 		CESERVER_REQ_OUTPUTFILE OutputFile;
 		CESERVER_REQ_NEWCMD NewCmd;
+		CESERVER_REQ_STARTSTOP StartStop;
+		CESERVER_REQ_STARTSTOPRET StartStopRet;
 	};
 } CESERVER_REQ;
 
 
 #pragma pack(pop)
+
 
 #define CONEMUMSG_ATTACH L"ConEmuMain::Attach"        // wParam == hConWnd, lParam == ConEmuC_PID
 //#define CONEMUCMDSTARTED L"ConEmuMain::CmdStarted"    // wParam == hConWnd, lParam == ConEmuC_PID (as ComSpec)
@@ -302,6 +320,7 @@ struct ForwardedFileInfo
 {
     WCHAR Path[MAX_PATH+1];
 };
+
 
 /*enum PipeCmd
 {

@@ -1,7 +1,12 @@
 
+#define SHOWDEBUGSTR
+
 #include "Header.h"
 #include <Tlhelp32.h>
 #include "ScreenDump.h"
+
+#define DEBUGSTRDRAW(s) //DEBUGSTR(s)
+#define DEBUGSTRCOORD(s) //DEBUGSTR(s)
 
 // WARNING("не появляются табы во второй консоли");
 WARNING("На предыдущей строке символы под курсором прыгают влево");
@@ -249,9 +254,9 @@ bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize)
 
 
     if (lbNeedCreateBuffers) {
-		DEBUGSTR(L"Relocking SCON exclusively\n");
+		DEBUGSTRDRAW(L"Relocking SCON exclusively\n");
         SCON.RelockExclusive();
-		DEBUGSTR(L"Relocking SCON exclusively (done)\n");
+		DEBUGSTRDRAW(L"Relocking SCON exclusively (done)\n");
 
         HEAPVAL
         if (mpsz_ConChar)
@@ -343,7 +348,7 @@ bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize)
     // Это может быть, если отключена буферизация (debug) и вывод идет сразу на экран
     if (!abNoDc)
     {
-		DEBUGSTR(L"*** Recreate DC\n");
+		DEBUGSTRDRAW(L"*** Recreate DC\n");
         MSectionLock SDC;
         // Если в этой нити уже заблокирован - секция не дергается
         SDC.Lock(&csDC, TRUE, 200); // но по таймауту, чтобы не повисли ненароком
@@ -814,7 +819,7 @@ bool CVirtualConsole::Update(bool isForce, HDC *ahDc)
     {
         lRes = true;
 
-        DEBUGSTR(L" +++ updateText detected in VCon\n");
+        DEBUGSTRDRAW(L" +++ updateText detected in VCon\n");
 
         //------------------------------------------------------------------------
         ///| Drawing modified text |//////////////////////////////////////////////
@@ -1853,9 +1858,9 @@ void CVirtualConsole::Paint()
 #ifdef _DEBUG
     if (this) {
         if (!mp_RCon || !mp_RCon->isPackets()) {
-        	DEBUGSTR(L"*** Painting ***\n");
+        	DEBUGSTRDRAW(L"*** Painting ***\n");
         } else {
-            DEBUGSTR(L"*** Painting (!!! Non processed packets are queued !!!) ***\n");
+            DEBUGSTRDRAW(L"*** Painting (!!! Non processed packets are queued !!!) ***\n");
         }
     }
 #endif
@@ -2050,12 +2055,30 @@ COORD CVirtualConsole::ClientToConsole(LONG x, LONG y)
     TODO("X координаты нам известны, так что можно бы более корректно позицию определять...");
     _ASSERTE(gSet.FontWidth()!=0 && gSet.FontHeight()!=0);
     COORD cr = {0,0};
-    //if (this) -- пока переменные класса не используются - NULL не страшен
-    {
-        if (gSet.FontWidth())
-            cr.X = x/gSet.FontWidth();
-        if (gSet.FontHeight())
-            cr.Y = y/gSet.FontHeight();
+    // Сначала приблизительный пересчет по размерам шрифта
+    if (gSet.FontHeight())
+        cr.Y = y/gSet.FontHeight();
+    if (gSet.FontWidth())
+        cr.X = x/gSet.FontWidth();
+    // А теперь, если возможно, уточним X координату
+    if (this) {
+    	if (ConCharX && cr.Y < (int)TextHeight) {
+    		DWORD* ConCharXLine = ConCharX + cr.Y * TextWidth;
+			for (uint i = 0; i < TextWidth; i++, ConCharXLine++) {
+				if (((int)*ConCharXLine) >= x) {
+					if (cr.X != i) {
+						#ifdef _DEBUG
+						wchar_t szDbg[120]; wsprintf(szDbg, L"Coord corrected from {%i-%i} to {%i-%i}",
+							cr.X, cr.Y, i, cr.Y);
+						DEBUGSTRCOORD(szDbg);
+						#endif
+
+						cr.X = i;
+					}
+					break;
+				}
+			}
+    	}
     }
     return cr;
 }

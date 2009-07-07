@@ -377,7 +377,7 @@ int ConEmuCheck(HWND* ahConEmuWnd)
 //	if (!ConEmuHwnd && FarHwnd) {
 //		while((ConEmuHwnd = FindWindowExA(NULL, ConEmuHwnd, VirtualConsoleClassMain, NULL))!=NULL)
 //		{
-//			HWND hCheck = (HWND)GetWindowLong(ConEmuHwnd, GWL_USERDATA);
+//			HWND hCheck = (HWND)GetWindowLongPtr(ConEmuHwnd, GWLP_USERDATA);
 //			if (hCheck == FarHwnd) {
 //				// Нашли нужный ConEmu
 //				// Проверить "правильность" хэндла

@@ -643,7 +643,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					                HWND hEmu = NULL;
 					                while ((hEmu = FindWindowEx(NULL, hEmu, VirtualConsoleClassMain, NULL)) != NULL)
 					                {
-						                if (hCon == (HWND)GetWindowLong(hEmu, GWL_USERDATA)) {
+						                if (hCon == (HWND)GetWindowLongPtr(hEmu, GWLP_USERDATA)) {
 							                // к этой консоли уже подцеплен ConEmu
 							                return 1;
 						                }

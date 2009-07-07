@@ -188,6 +188,7 @@ BOOL    gbAttachMode = FALSE;
 DWORD   gdwMainThreadId = 0;
 //int       gnBufferHeight = 0;
 wchar_t* gpszRunCmd = NULL;
+DWORD   gnImageSubsystem = 0;
 HANDLE  ghCtrlCEvent = NULL, ghCtrlBreakEvent = NULL;
 HANDLE ghHeap = NULL; //HeapCreate(HEAP_GENERATE_EXCEPTIONS, nMinHeapSize, 0);
 #ifdef _DEBUG
@@ -1141,7 +1142,7 @@ void ExitWaitForKey(WORD vkKey, LPCWSTR asConfirm, BOOL abNewLine)
 		if (!IsWindowVisible(ghConWnd)) {
 			BOOL lbGuiAlive = FALSE;
 			if (ghConEmuWnd && IsWindow(ghConEmuWnd)) {
-				DWORD dwLRc = 0;
+				DWORD_PTR dwLRc = 0;
 				if (SendMessageTimeout(ghConEmuWnd, WM_NULL, 0, 0, SMTO_ABORTIFHUNG, 1000, &dwLRc))
 					lbGuiAlive = TRUE;
 			}
@@ -1277,38 +1278,40 @@ int ComspecInit()
     _ASSERTE(crNewSize.X>=MIN_CON_WIDTH && crNewSize.Y>=MIN_CON_HEIGHT);
     
     CESERVER_REQ *pIn = NULL, *pOut = NULL;
-    int nSize = sizeof(CESERVER_REQ_HDR)+4*sizeof(DWORD);
+    int nSize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_STARTSTOP);
     pIn = (CESERVER_REQ*)Alloc(nSize,1);
     if (pIn) {
         pIn->hdr.nCmd = CECMD_CMDSTARTSTOP;
         pIn->hdr.nSrcThreadId = GetCurrentThreadId();
         pIn->hdr.nSize = nSize;
         pIn->hdr.nVersion = CESERVER_REQ_VER;
-        pIn->dwData[0] = 2; // Cmd режим начат
-        pIn->dwData[1] = (DWORD)ghConWnd;
-        pIn->dwData[2] = gnSelfPID;
+		pIn->StartStop.nStarted = 2; // Cmd режим начат
+		pIn->StartStop.hWnd = ghConWnd;
+		pIn->StartStop.dwPID = gnSelfPID;
 
 		// ѕеред запуском 16бит приложений нужно подресайзить консоль...
-		DWORD ImageSubsystem = 0;
+		gnImageSubsystem = 0;
         LPCWSTR pszTemp = gpszRunCmd;
         wchar_t lsRoot[MAX_PATH+1] = {0};
         if (0 == NextArg(pszTemp, lsRoot)) {
         	PRINT_COMSPEC(L"Starting: <%s>", lsRoot);
-        	if (!GetImageSubsystem(lsRoot, ImageSubsystem))
-				ImageSubsystem = 0;
-       		PRINT_COMSPEC(L", Subsystem: <%i>\n", ImageSubsystem);
+        	if (!GetImageSubsystem(lsRoot, gnImageSubsystem))
+				gnImageSubsystem = 0;
+       		PRINT_COMSPEC(L", Subsystem: <%i>\n", gnImageSubsystem);
         }
-		pIn->dwData[3] = ImageSubsystem;
+		pIn->StartStop.nSubSystem = gnImageSubsystem;
+		// Ќ≈ MyGet..., а то можем заблокироватьс€...
+		GetConsoleScreenBufferInfo(ghConOut, &pIn->StartStop.sbi);
 
         PRINT_COMSPEC(L"Starting comspec mode (ExecuteGuiCmd started)\n",0);
         pOut = ExecuteGuiCmd(ghConWnd, pIn);
         PRINT_COMSPEC(L"Starting comspec mode (ExecuteGuiCmd finished)\n",0);
         if (pOut) {
-            BOOL  bAlreadyBufferHeight = pOut->dwData[0];
+			BOOL  bAlreadyBufferHeight = pOut->StartStopRet.bWasBufferHeight;
             #ifdef _DEBUG
-            HWND  hGuiWnd = (HWND)pOut->dwData[1];
+			HWND  hGuiWnd = pOut->StartStopRet.hWnd;
             #endif
-            DWORD nGuiPID = pOut->dwData[2];
+			DWORD nGuiPID = pOut->StartStopRet.dwPID;
 
             AllowSetForegroundWindow(nGuiPID);
 
@@ -1361,21 +1364,28 @@ void ComspecDone(int aiRc)
         //}
 
         CESERVER_REQ *pIn = NULL, *pOut = NULL;
-        int nSize = sizeof(CESERVER_REQ_HDR)+3*sizeof(DWORD);
+        int nSize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_STARTSTOP);
         pIn = (CESERVER_REQ*)Alloc(nSize,1);
         if (pIn) {
             pIn->hdr.nCmd = CECMD_CMDSTARTSTOP;
             pIn->hdr.nSrcThreadId = GetCurrentThreadId();
             pIn->hdr.nSize = nSize;
             pIn->hdr.nVersion = CESERVER_REQ_VER;
-            pIn->dwData[0] = 3; // Cmd режим завершен
-            pIn->dwData[1] = (DWORD)ghConWnd;
-            pIn->dwData[2] = gnSelfPID;
+			pIn->StartStop.nStarted = 3; // Cmd режим завершен
+			pIn->StartStop.hWnd = ghConWnd;
+			pIn->StartStop.dwPID = gnSelfPID;
+			pIn->StartStop.nSubSystem = gnImageSubsystem;
+			// Ќ≈ MyGet..., а то можем заблокироватьс€...
+			GetConsoleScreenBufferInfo(ghConOut, &pIn->StartStop.sbi);
 
             PRINT_COMSPEC(L"Finalizing comspec mode (ExecuteGuiCmd started)\n",0);
             pOut = ExecuteGuiCmd(ghConWnd, pIn);
             PRINT_COMSPEC(L"Finalizing comspec mode (ExecuteGuiCmd finished)\n",0);
             if (pOut) {
+				if (!pOut->StartStopRet.bWasBufferHeight) {
+					//cmd.sbi.dwSize = pIn->StartStop.sbi.dwSize;
+					lbRc1 = FALSE; //  онсольное приложение самосто€тельно сбросило буферный режим. Ќе дергатьс€...
+				}
                 ExecuteFreeResult(pOut);
             }
         }
@@ -1930,25 +1940,27 @@ void CheckConEmuHwnd()
 
     if (ghConEmuWnd == NULL) {
         CESERVER_REQ *pIn = NULL, *pOut = NULL;
-        int nSize = sizeof(CESERVER_REQ_HDR)+3*sizeof(DWORD);
+        int nSize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_STARTSTOP);
         pIn = (CESERVER_REQ*)Alloc(nSize,1);
         if (pIn) {
             pIn->hdr.nCmd = CECMD_CMDSTARTSTOP;
             pIn->hdr.nSrcThreadId = GetCurrentThreadId();
             pIn->hdr.nSize = nSize;
             pIn->hdr.nVersion = CESERVER_REQ_VER;
-            pIn->dwData[0] = 0; // Server режим начат
-            pIn->dwData[1] = (DWORD)ghConWnd;
-            pIn->dwData[2] = gnSelfPID;
+			pIn->StartStop.nStarted = 0; // Server режим начат
+			pIn->StartStop.hWnd = ghConWnd;
+			pIn->StartStop.dwPID = gnSelfPID;
+			// Ќ≈ MyGet..., а то можем заблокироватьс€...
+			GetConsoleScreenBufferInfo(ghConOut, &pIn->StartStop.sbi);
 
             pOut = ExecuteGuiCmd(ghConWnd, pIn);
             if (pOut) {
                 #ifdef _DEBUG
-                BOOL  bAlreadyBufferHeight = *(DWORD*)(pOut->Data);
+				BOOL  bAlreadyBufferHeight = pOut->StartStopRet.bWasBufferHeight;
                 #endif
-                HWND  hGuiWnd = (HWND)*(DWORD*)(pOut->Data+4);
+				HWND  hGuiWnd = pOut->StartStopRet.hWnd;
                 #ifdef _DEBUG
-                DWORD nGuiPID = *(DWORD*)(pOut->Data+8);
+				DWORD nGuiPID = pOut->StartStopRet.dwPID;
                 #endif
 
                 ghConEmuWnd = hGuiWnd;
@@ -2356,7 +2368,7 @@ Loop1:
         TextHeight = srv.sbi.dwSize.Y; //srv.sbi.srWindow.Bottom - srv.sbi.srWindow.Top + 1;
     } else {
         //ƒл€ режима BufferHeight нужно считать по другому!
-        TextHeight = gcrBufferSize.Y;
+        TextHeight = min(gcrBufferSize.Y, srv.sbi.dwSize.Y);
     }
     srv.nVisibleHeight = TextHeight;
 
@@ -3622,7 +3634,6 @@ CESERVER_REQ* CreateConsoleInfo(CESERVER_CHAR* pRgnOnly, BOOL bCharAttrBuff)
 // pChangedRgn может прийти, если мы знаем, что какие-то символы точно мен€лись
 // в этом случае pChangedRgn может быть увеличен
 BOOL ReloadConsoleInfo(CESERVER_CHAR* pChangedRgn/*=NULL*/)
-//BOOL ReloadConsoleInfo(BOOL abSkipCursorCharCheck/*=FALSE*/)
 {
     BOOL lbChanged = FALSE;
     //CONSOLE_SELECTION_INFO lsel = {0}; // GetConsoleSelectionInfo
@@ -3647,6 +3658,15 @@ BOOL ReloadConsoleInfo(CESERVER_CHAR* pChangedRgn/*=NULL*/)
     MCHKHEAP
 
     if (!MyGetConsoleScreenBufferInfo(ghConOut, &lsbi)) { srv.dwSbiRc = GetLastError(); if (!srv.dwSbiRc) srv.dwSbiRc = -1; } else {
+		//  онсольное приложение могло изменить размер буфера
+		if (!srv.bNtvdmActive
+			&& (gcrBufferSize.Y != lsbi.dwSize.Y || gnBufferHeight != 0)
+			&& (lsbi.srWindow.Top == 0 && lsbi.dwSize.Y == (lsbi.srWindow.Bottom - lsbi.srWindow.Top + 1)))
+		{
+			// Ёто значит, что прокрутки нет, и консольное приложение изменило размер буфера
+			gnBufferHeight = 0; gcrBufferSize = lsbi.dwSize;
+		}
+
         srv.dwSbiRc = 0;
         if (memcmp(&srv.sbi, &lsbi, sizeof(srv.sbi))) {
             // »зменени€ в координатах / размерах есть (скопируем данные ниже. еще строки с курсором проверить нужно)

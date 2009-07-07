@@ -4,7 +4,7 @@ ALLDIRS = ConEmu \
 # ConEmuD
 
 
-all: $(ALLDIRS) clean
+all: preclean $(ALLDIRS) clean
 
 FICTIVE=_fictive_
 $(FICTIVE):
@@ -12,6 +12,11 @@ $(FICTIVE):
 $(ALLDIRS): $(FICTIVE)
 	@echo ===========$@
 	@$(MAKE) -C $@ -f makefile_gcc
+
+.PHONY: preclean
+preclean:
+	@echo prebuild cleaning
+	@rm -f ../ConEmu.exe ../ConEmuC.exe ../plugins/ConEmu/ConEmu.dll ../gcc/common/*.* ../gcc/conemu/*.* ../gcc/conemuc/*.*  ../gcc/ConEmuPlugin/*.* ../gcc/Plugin/*.* ../gcc/*.*
 
 .PHONY: clean
 clean:

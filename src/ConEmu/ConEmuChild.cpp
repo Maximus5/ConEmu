@@ -610,7 +610,7 @@ void CConEmuBack::Refresh()
 	mn_LastColor = gSet.Colors[mn_ColorIdx];
 	HBRUSH hNewBrush = CreateSolidBrush(mn_LastColor);
 
-	SetClassLong(mh_WndBack, GCL_HBRBACKGROUND, (LONG)hNewBrush);
+	SetClassLongPtr(mh_WndBack, GCLP_HBRBACKGROUND, (LONG)hNewBrush);
 	DeleteObject(mh_BackBrush);
 	mh_BackBrush = hNewBrush;
 

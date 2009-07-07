@@ -209,7 +209,7 @@ public:
 	void PostCreate(BOOL abRecieved=FALSE);
 	bool PtDiffTest(POINT C, int aX, int aY, UINT D); //(((abs(C.x-LOWORD(lParam)))<D) && ((abs(C.y-HIWORD(lParam)))<D))
 	void Recreate(BOOL abRecreate, BOOL abConfirm);
-	static BOOL CALLBACK RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam);
+	static INT_PTR CALLBACK RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam);
 	void RePaint();
 	void ReSize(BOOL abCorrect2Ideal = FALSE);
 	void SetConsoleWindowSize(const COORD& size, bool updateInfo);

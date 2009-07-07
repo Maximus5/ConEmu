@@ -600,7 +600,7 @@ bool CSettings::ShowColorDialog(HWND HWndOwner, COLORREF *inColor)
     return false;
 }
 
-BOOL CALLBACK CSettings::EnumFamCallBack(LPLOGFONT lplf, LPNEWTEXTMETRIC lpntm, DWORD FontType, LPVOID aFontCount)
+int CSettings::EnumFamCallBack(LPLOGFONT lplf, LPNEWTEXTMETRIC lpntm, DWORD FontType, LPVOID aFontCount)
 {
     MCHKHEAP
     int far * aiFontCount = (int far *) aFontCount;
@@ -1705,7 +1705,7 @@ void CSettings::Dialog()
 	}
 }
 
-BOOL CALLBACK CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
+INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
 {
     switch (messg)
     {
@@ -1715,7 +1715,7 @@ BOOL CALLBACK CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM
         //if (IsDebuggerPresent())
         SetWindowPos(ghOpWnd, HWND_NOTOPMOST, 0,0,0,0, SWP_NOSIZE|SWP_NOMOVE);
         #endif
-        SetClassLong(hWnd2, GCL_HICON, (LONG)hClassIcon);
+        SetClassLongPtr(hWnd2, GCLP_HICON, (LONG)hClassIcon);
         gSet.OnInitDialog();
         break;
 
@@ -1724,7 +1724,7 @@ BOOL CALLBACK CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM
             /*SetWindowLong(hWnd2, DWL_MSGRESULT, (LRESULT)hClassIcon);
             return 1;*/
         } else {
-            SetWindowLong(hWnd2, DWL_MSGRESULT, (LRESULT)hClassIconSm);
+            SetWindowLongPtr(hWnd2, DWLP_MSGRESULT, (LRESULT)hClassIconSm);
             return 1;
         }
         return 0;
@@ -1819,7 +1819,7 @@ BOOL CALLBACK CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM
     return 0;
 }
 
-BOOL CALLBACK CSettings::mainOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
+INT_PTR CSettings::mainOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
 {
     switch (messg)
     {
@@ -1885,7 +1885,7 @@ BOOL CALLBACK CSettings::mainOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARA
     return 0;
 }
 
-BOOL CALLBACK CSettings::extOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
+INT_PTR CSettings::extOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
 {
     switch (messg)
     {
@@ -1930,7 +1930,7 @@ BOOL CALLBACK CSettings::extOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM
     return 0;
 }
 
-BOOL CALLBACK CSettings::colorOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
+INT_PTR CSettings::colorOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
 {
     switch (messg)
     {
@@ -1971,7 +1971,7 @@ BOOL CALLBACK CSettings::colorOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPAR
     return 0;
 }
 
-BOOL CALLBACK CSettings::infoOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
+INT_PTR CSettings::infoOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
 {
     switch (messg)
     {

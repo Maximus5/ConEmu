@@ -106,7 +106,7 @@ __forceinline void klSplitCommandLine(wchar_t *str, uint *n)
 
 __forceinline u32 __cdecl klMulDivU32(u32 a, u32 b, u32 c)
 {
-#if !defined(__GNUC__)
+#if !defined(__GNUC__) && !defined(_WIN64)
 	__asm{
 		mov	eax, a
 			mul	b
