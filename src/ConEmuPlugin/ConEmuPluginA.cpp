@@ -543,27 +543,31 @@ int ShowPluginMenuA()
 	if (!InfoA)
 		return -1;
 
-	FarMenuItem items[] = {
-		{"", 1, 0, 0},
-		{"", 0, 0, 0},
-		{"", 0, 0, 1},
-		{"", 0, 0, 0},
-		{"", 0, 0, 0},
-		{"", 0, 0, 0},
-		{"", 0, 0, 0}
+	FarMenuItemEx items[] = {
+		{MIF_SELECTED},
+		{0},
+		{MIF_SEPARATOR},
+		{0},
+		{0},
+		{0},
+		{0},
+		{MIF_SEPARATOR},
+		{ConEmuHwnd ? MIF_DISABLE : 0}
 	};
-	lstrcpyA(items[0].Text, InfoA->GetMsg(InfoA->ModuleNumber,3));
-	lstrcpyA(items[1].Text, InfoA->GetMsg(InfoA->ModuleNumber,4));
-	lstrcpyA(items[3].Text, InfoA->GetMsg(InfoA->ModuleNumber,6));
-	lstrcpyA(items[4].Text, InfoA->GetMsg(InfoA->ModuleNumber,7));
-	lstrcpyA(items[5].Text, InfoA->GetMsg(InfoA->ModuleNumber,8));
-	lstrcpyA(items[6].Text, InfoA->GetMsg(InfoA->ModuleNumber,9));
+	items[0].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,3);
+	items[1].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,4);
+	items[3].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,6);
+	items[4].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,7);
+	items[5].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,8);
+	items[6].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,9);
+	items[8].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,13);
+
 	int nCount = sizeof(items)/sizeof(items[0]);
 
 	int nRc = InfoA->Menu(InfoA->ModuleNumber, -1,-1, 0, 
-		FMENU_AUTOHIGHLIGHT|FMENU_CHANGECONSOLETITLE|FMENU_WRAPMODE,
+		FMENU_USEEXT|FMENU_AUTOHIGHLIGHT|FMENU_CHANGECONSOLETITLE|FMENU_WRAPMODE,
 		InfoA->GetMsg(InfoA->ModuleNumber,2),
-		NULL, NULL, NULL, NULL, items, nCount);
+		NULL, NULL, NULL, NULL, (FarMenuItem*)items, nCount);
 
 	return nRc;
 }

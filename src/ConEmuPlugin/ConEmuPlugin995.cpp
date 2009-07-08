@@ -474,21 +474,23 @@ int ShowPluginMenu995()
 	if (!InfoW995)
 		return -1;
 
-	FarMenuItem items[] = {
-		{(wchar_t*)InfoW995->GetMsg(InfoW995->ModuleNumber,3), 1, 0, 0},
-		{(wchar_t*)InfoW995->GetMsg(InfoW995->ModuleNumber,4), 0, 0, 0},
-		{L"", 0, 0, 1},
-		{(wchar_t*)InfoW995->GetMsg(InfoW995->ModuleNumber,6), 0, 0, 0},
-		{(wchar_t*)InfoW995->GetMsg(InfoW995->ModuleNumber,7), 0, 0, 0},
-		{(wchar_t*)InfoW995->GetMsg(InfoW995->ModuleNumber,8), 0, 0, 0},
-		{(wchar_t*)InfoW995->GetMsg(InfoW995->ModuleNumber,9), 0, 0, 0}
+	FarMenuItemEx items[] = {
+		{MIF_SELECTED,  InfoW995->GetMsg(InfoW995->ModuleNumber,3)},
+		{0,             InfoW995->GetMsg(InfoW995->ModuleNumber,4)},
+		{MIF_SEPARATOR},
+		{0,             InfoW995->GetMsg(InfoW995->ModuleNumber,6)},
+		{0,             InfoW995->GetMsg(InfoW995->ModuleNumber,7)},
+		{0,             InfoW995->GetMsg(InfoW995->ModuleNumber,8)},
+		{0,             InfoW995->GetMsg(InfoW995->ModuleNumber,9)},
+		{MIF_SEPARATOR},
+		{ConEmuHwnd ? MIF_DISABLE : 0, InfoW995->GetMsg(InfoW995->ModuleNumber,13)}
 	};
 	int nCount = sizeof(items)/sizeof(items[0]);
 
 	int nRc = InfoW995->Menu(InfoW995->ModuleNumber, -1,-1, 0, 
-		FMENU_AUTOHIGHLIGHT|FMENU_CHANGECONSOLETITLE|FMENU_WRAPMODE,
+		FMENU_USEEXT|FMENU_AUTOHIGHLIGHT|FMENU_CHANGECONSOLETITLE|FMENU_WRAPMODE,
 		InfoW995->GetMsg(InfoW995->ModuleNumber,2),
-		NULL, NULL, NULL, NULL, items, nCount);
+		NULL, NULL, NULL, NULL, (FarMenuItem*)items, nCount);
 
 	return nRc;
 }

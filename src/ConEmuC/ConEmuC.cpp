@@ -27,7 +27,7 @@ WARNING("При запуске как ComSpec получаем ошибку: {crNewSize.X>=MIN_CON_WIDTH &&
 
 #ifdef _DEBUG
 //  Раскомментировать, чтобы сразу после запуска процесса (conemuc.exe) показать MessageBox, чтобы прицепиться дебаггером
-//  #define SHOW_STARTED_MSGBOX
+  //#define SHOW_STARTED_MSGBOX
 // Раскомментировать для вывода в консоль информации режима Comspec
     #define PRINT_COMSPEC(f,a) wprintf(f,a)
 #elif defined(__GNUC__)
@@ -161,6 +161,7 @@ BOOL CheckProcessCount(BOOL abForce=FALSE);
 BOOL IsNeedCmd(LPCWSTR asCmdLine, BOOL *rbNeedCutStartEndQuot);
 BOOL FileExists(LPCWSTR asFile);
 extern bool GetImageSubsystem(const wchar_t *FileName,DWORD& ImageSubsystem);
+void RequestBufferHeight();
 
 
 #else
@@ -200,6 +201,8 @@ enum tag_RunMode {
     RM_SERVER,
     RM_COMSPEC
 } gnRunMode = RM_UNDEFINED;
+
+BOOL gbNoCreateProcess = FALSE;
 
 
 struct tag_Srv {
@@ -344,6 +347,14 @@ int main()
     //BOOL lb = FALSE;
 
     ghHeap = HeapCreate(HEAP_GENERATE_EXCEPTIONS, 200000, 0);
+    
+    HMODULE hKernel = GetModuleHandleW (L"kernel32.dll");
+    
+    if (hKernel) {
+        pfnGetConsoleKeyboardLayoutName = (FGetConsoleKeyboardLayoutName)GetProcAddress (hKernel, "GetConsoleKeyboardLayoutNameW");
+        pfnGetConsoleProcessList = (FGetConsoleProcessList)GetProcAddress (hKernel, "GetConsoleProcessList");
+    }
+    
 
     // Хэндл консольного окна
     ghConWnd = GetConsoleWindow();
@@ -448,10 +459,16 @@ int main()
 	// Перед CreateProcessW нужно ставить 0, иначе из-за антивирусов может наступить
 	// timeout ожидания окончания процесса еще ДО выхода из CreateProcessW
 	srv.nProcessStartTick = 0;
-    lbRc = CreateProcessW(NULL, gpszRunCmd, NULL,NULL, TRUE, 
-            NORMAL_PRIORITY_CLASS/*|CREATE_NEW_PROCESS_GROUP*/, 
-            NULL, NULL, &si, &pi);
-    dwErr = GetLastError();
+	if (gbNoCreateProcess) {
+		lbRc = TRUE; // Процесс уже запущен, просто цепляемся к ConEmu (GUI)
+		pi.hProcess = srv.hRootProcess;
+		pi.dwProcessId = srv.dwRootProcess;
+	} else {
+        lbRc = CreateProcessW(NULL, gpszRunCmd, NULL,NULL, TRUE, 
+                NORMAL_PRIORITY_CLASS/*|CREATE_NEW_PROCESS_GROUP*/, 
+                NULL, NULL, &si, &pi);
+        dwErr = GetLastError();
+    }
     if (!lbRc)
     {
 		wchar_t* lpMsgBuf = NULL;
@@ -650,6 +667,7 @@ void Help()
         L"Switches:\n"
         L"        /CONFIRM  - confirm closing console on program termination\n"
         L"        /ATTACH   - auto attach to ConEmu GUI\n"
+        L"        /NOCMD    - attach current console to GUI\n"
         L"        /B{W|H|Z} - define buffer width, height, window height\n"
         L"        /LOG      - create (debug) log file\n"
     );
@@ -828,18 +846,54 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
         if (wcscmp(szArg, L"/LOG")==0) {
             CreateLogSizeFile();
         } else
+        
+        if (wcscmp(szArg, L"/NOCMD")==0) {
+        	gnRunMode = RM_SERVER;
+        	gbNoCreateProcess = TRUE;
+        } else
+
+        if (wcsncmp(szArg, L"/PID=", 5)==0) {
+        	gnRunMode = RM_SERVER;
+        	gbNoCreateProcess = TRUE;
+			srv.dwRootProcess = _wtol(szArg+5);
+			if (srv.dwRootProcess == 0) {
+				wprintf (L"Attach to GUI was requested, but invalid PID specified:\n%s\n", GetCommandLineW());
+				return CERR_CARGUMENT;
+			}
+        } else
 
         // После этих аргументов - идет то, что передается в CreateProcess!
         if (wcscmp(szArg, L"/C")==0 || wcscmp(szArg, L"/c")==0 || wcscmp(szArg, L"/K")==0 || wcscmp(szArg, L"/k")==0) {
-            gnRunMode = RM_COMSPEC;
+            gnRunMode = RM_COMSPEC; gbNoCreateProcess = FALSE;
             cmd.bK = (wcscmp(szArg, L"/K")==0 || wcscmp(szArg, L"/k")==0);
             break; // asCmdLine уже указывает на запускаемую программу
         } else if (wcscmp(szArg, L"/CMD")==0 || wcscmp(szArg, L"/cmd")==0) {
-            gnRunMode = RM_SERVER;
+            gnRunMode = RM_SERVER; gbNoCreateProcess = FALSE;
             break; // asCmdLine уже указывает на запускаемую программу
         }
     }
     
+    if (gnRunMode == RM_SERVER && gbNoCreateProcess && gbAttachMode) {
+		if (pfnGetConsoleProcessList==NULL) {
+            wprintf (L"Attach to GUI was requested, but required WinXP or higher:\n%s\n", GetCommandLineW());
+            return CERR_CARGUMENT;
+		}
+		DWORD nProcesses[10];
+    	DWORD nProcCount = pfnGetConsoleProcessList ( nProcesses, 10 );
+    	if (nProcCount < 2) {
+            wprintf (L"Attach to GUI was requested, but there is no console processes:\n%s\n", GetCommandLineW());
+            return CERR_CARGUMENT;
+    	}
+    
+        wchar_t* pszNewCmd = new wchar_t[1];
+        if (!pszNewCmd) {
+            wprintf (L"Can't allocate 1 wchar!\n");
+            return CERR_NOTENOUGHMEM1;
+        }
+        pszNewCmd[0] = 0;
+        return 0;
+    }
+
     if (iRc != 0) {
         if (iRc == CERR_CMDLINEEMPTY) {
             Help();
@@ -867,7 +921,7 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
             // тогда обрабатываем
             cmd.bNewConsole = TRUE;
             //
-            int nNewLen = wcslen(pwszStartCmdLine) + 100;
+            int nNewLen = wcslen(pwszStartCmdLine) + 130;
             //
             BOOL lbIsNeedCmd = IsNeedCmd(asCmdLine, &lbNeedCutStartEndQuot);
             
@@ -915,6 +969,9 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
                 wcscat(pszNewCmd, L" ");
                 wcscat(pszNewCmd, pszAddNewConArgs);
             }
+            // Размеры должны быть такими-же
+            //wsprintf(pszNewCmd+wcslen(pszNewCmd), L" /BW=%i /BH=%i /BZ=%i ", gcrBufferSize.X, gcrBufferSize.Y, gnBufferHeight);
+            //wcscat(pszNewCmd, L" </BW=9999 /BH=9999 /BZ=9999> ");
             // Сформировать новую команду
             // "cmd" потому что пока не хочется обрезать кавычки и думать, реально ли он нужен
             // cmd /c ""c:\program files\arc\7z.exe" -?"   // да еще и внутри могут быть двойными...
@@ -1273,9 +1330,15 @@ int ComspecInit()
         }
     }
     
+    RequestBufferHeight();
     
-    crNewSize = cmd.sbi.dwSize;
-    _ASSERTE(crNewSize.X>=MIN_CON_WIDTH && crNewSize.Y>=MIN_CON_HEIGHT);
+    return 0;
+}
+
+void RequestBufferHeight()
+{    
+    //crNewSize = cmd.sbi.dwSize;
+    //_ASSERTE(crNewSize.X>=MIN_CON_WIDTH && crNewSize.Y>=MIN_CON_HEIGHT);
     
     CESERVER_REQ *pIn = NULL, *pOut = NULL;
     int nSize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_STARTSTOP);
@@ -1285,7 +1348,7 @@ int ComspecInit()
         pIn->hdr.nSrcThreadId = GetCurrentThreadId();
         pIn->hdr.nSize = nSize;
         pIn->hdr.nVersion = CESERVER_REQ_VER;
-		pIn->StartStop.nStarted = 2; // Cmd режим начат
+		pIn->StartStop.nStarted = (gnRunMode == RM_COMSPEC) ? 2 : 0; // Cmd/Srv режим начат
 		pIn->StartStop.hWnd = ghConWnd;
 		pIn->StartStop.dwPID = gnSelfPID;
 
@@ -1314,7 +1377,15 @@ int ComspecInit()
 			DWORD nGuiPID = pOut->StartStopRet.dwPID;
 
             AllowSetForegroundWindow(nGuiPID);
+            
+            gnBufferHeight = pOut->StartStopRet.nBufferHeight;
+            gcrBufferSize.X = pOut->StartStopRet.nWidth;
+            gcrBufferSize.Y = pOut->StartStopRet.nHeight;
 
+            if (gnRunMode == RM_SERVER) {
+            	SMALL_RECT rcNil = {0};
+            	SetConsoleSize(gnBufferHeight, gcrBufferSize, rcNil, "::RequestBufferHeight");
+            } else
             // Может так получиться, что один COMSPEC запущен из другого.
             if (bAlreadyBufferHeight)
                 cmd.bNonGuiMode = TRUE; // Не посылать ExecuteGuiCmd при выходе - прокрутка должна остаться
@@ -1327,14 +1398,12 @@ int ComspecInit()
             //    rNewWindow.Right = crNewSize.X-1;
             ExecuteFreeResult(pOut); pOut = NULL;
 
-            gnBufferHeight = nNewBufferHeight;
+            //gnBufferHeight = nNewBufferHeight;
         } else {
             cmd.bNonGuiMode = TRUE; // Не посылать ExecuteGuiCmd при выходе. Это не наша консоль
         }
         Free(pIn); pIn = NULL;
     }
-
-    return 0;
 }
 
 void ComspecDone(int aiRc)
@@ -1499,15 +1568,15 @@ int ServerInit()
     DWORD dwErr = 0;
     wchar_t szComSpec[MAX_PATH+1], szSelf[MAX_PATH+3];
     wchar_t* pszSelf = szSelf+1;
-    HMODULE hKernel = GetModuleHandleW (L"kernel32.dll");
+    //HMODULE hKernel = GetModuleHandleW (L"kernel32.dll");
     
     srv.nMaxFPS = 10;
     
-    if (hKernel) {
-        pfnGetConsoleKeyboardLayoutName = (FGetConsoleKeyboardLayoutName)GetProcAddress (hKernel, "GetConsoleKeyboardLayoutNameW");
-        pfnGetConsoleProcessList = (FGetConsoleProcessList)GetProcAddress (hKernel, "GetConsoleProcessList");
-    }
-
+    //if (hKernel) {
+    //    pfnGetConsoleKeyboardLayoutName = (FGetConsoleKeyboardLayoutName)GetProcAddress (hKernel, "GetConsoleKeyboardLayoutNameW");
+    //    pfnGetConsoleProcessList = (FGetConsoleProcessList)GetProcAddress (hKernel, "GetConsoleProcessList");
+    //}
+    
 	srv.csProc = new MSection();
 
 	srv.nMaxProcesses = START_MAX_PROCESSES; srv.nProcessCount = 0;
@@ -1529,6 +1598,117 @@ int ServerInit()
     }
 
     InitializeCriticalSection(&srv.csChangeSize);
+    InitializeCriticalSection(&srv.csConBuf);
+    InitializeCriticalSection(&srv.csChar);
+
+
+
+    if (gbNoCreateProcess && gbAttachMode) {
+		if (srv.dwRootProcess == 0) {
+    		// Нужно попытаться определить PID корневого процесса.
+    		// Родительским может быть cmd (comspec, запущенный из FAR)
+    		DWORD dwParentPID = 0;
+	    	
+    		if (srv.nProcessCount >= 2) {
+				HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS,0);
+				if (hSnap != INVALID_HANDLE_VALUE) {
+					PROCESSENTRY32 prc = {sizeof(PROCESSENTRY32)};
+					if (Process32First(hSnap, &prc)) {
+						do {
+                    		for (UINT i = 0; i < srv.nProcessCount; i++) {
+                    			if (prc.th32ProcessID != gnSelfPID
+                    				&& prc.th32ProcessID == srv.pnProcesses[i])
+                				{
+                		    		// Если это FAR - выходим с ним сразу
+                		    		if (lstrcmpiW(prc.szExeFile, L"far.exe")==0) {
+                		    			dwParentPID = prc.th32ProcessID;
+                		    			break;
+                		    		}
+                		    		if (!dwParentPID)
+                		    			dwParentPID = prc.th32ProcessID;
+                    			}
+                    		}
+						} while (Process32Next(hSnap, &prc));
+					}
+					CloseHandle(hSnap);
+				}
+			}
+	        
+    		if (!dwParentPID) {
+				wprintf (L"Attach to GUI was requested, but there is no console processes:\n%s\n", GetCommandLineW());
+				return CERR_CARGUMENT;
+    		}
+	    	
+    		// Нужно открыть HANDLE корневого процесса
+    		srv.hRootProcess = OpenProcess(PROCESS_QUERY_INFORMATION|SYNCHRONIZE, FALSE, dwParentPID);
+    		if (!srv.hRootProcess) {
+    			dwErr = GetLastError();
+    			wchar_t* lpMsgBuf = NULL;
+	    		
+   				FormatMessage( FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, NULL, dwErr, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPWSTR)&lpMsgBuf, 0, NULL );
+	    		
+				wprintf (L"Can't open process (%i) handle, ErrCode=0x%08X, Description:\n%s\n", 
+            		dwParentPID, dwErr, (lpMsgBuf == NULL) ? L"<Unknown error>" : lpMsgBuf);
+	            
+				if (lpMsgBuf) LocalFree(lpMsgBuf);
+				return CERR_CREATEPROCESS;
+    		}
+    		srv.dwRootProcess = dwParentPID;
+
+			// Запустить вторую копию ConEmuC НЕМОДАЛЬНО!
+			wchar_t szSelf[MAX_PATH+100];
+			wchar_t* pszSelf = szSelf+1;
+			if (!GetModuleFileName(NULL, pszSelf, MAX_PATH)) {
+				dwErr = GetLastError();
+				wprintf (L"GetModuleFileName failed, ErrCode=0x%08X\n", dwErr);
+				return CERR_CREATEPROCESS;
+			}
+			if (wcschr(pszSelf, L' ')) {
+				*(--pszSelf) = L'"';
+				lstrcatW(pszSelf, L"\"");
+			}
+
+			wsprintf(pszSelf+wcslen(pszSelf), L" /ATTACH /PID=%i", dwParentPID);
+
+			PROCESS_INFORMATION pi; memset(&pi, 0, sizeof(pi));
+			STARTUPINFOW si; memset(&si, 0, sizeof(si)); si.cb = sizeof(si);
+	        
+			PRINT_COMSPEC(L"Starting modeless:\n%s\n", pszSelf);
+	    
+			// CREATE_NEW_PROCESS_GROUP - низя, перестает работать Ctrl-C
+			BOOL lbRc = CreateProcessW(NULL, pszSelf, NULL,NULL, TRUE, 
+					NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi);
+			dwErr = GetLastError();
+			if (!lbRc)
+			{
+				wprintf (L"Can't create process, ErrCode=0x%08X! Command to be executed:\n%s\n", dwErr, pszSelf);
+				return CERR_CREATEPROCESS;
+			}
+			//delete psNewCmd; psNewCmd = NULL;
+			AllowSetForegroundWindow(pi.dwProcessId);
+			PRINT_COMSPEC(L"Modeless server was started. PID=%i. Exiting...\n", pi.dwProcessId);
+			SafeCloseHandle(pi.hProcess); SafeCloseHandle(pi.hThread);
+			gbAlwaysConfirmExit = FALSE;
+			return CERR_RUNNEWCONSOLE;
+
+		} else {
+    		// Нужно открыть HANDLE корневого процесса
+    		srv.hRootProcess = OpenProcess(PROCESS_QUERY_INFORMATION|SYNCHRONIZE, FALSE, srv.dwRootProcess);
+    		if (!srv.hRootProcess) {
+    			dwErr = GetLastError();
+    			wchar_t* lpMsgBuf = NULL;
+	    		
+   				FormatMessage( FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, NULL, dwErr, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPWSTR)&lpMsgBuf, 0, NULL );
+	    		
+				wprintf (L"Can't open process (%i) handle, ErrCode=0x%08X, Description:\n%s\n", 
+            		srv.dwRootProcess, dwErr, (lpMsgBuf == NULL) ? L"<Unknown error>" : lpMsgBuf);
+	            
+				if (lpMsgBuf) LocalFree(lpMsgBuf);
+				return CERR_CREATEPROCESS;
+    		}
+		}
+    }
+
 
 	srv.hAllowInputEvent = CreateEvent(NULL, TRUE, TRUE, NULL);
 	if (!srv.hAllowInputEvent) SetEvent(srv.hAllowInputEvent);
@@ -1558,8 +1738,6 @@ int ServerInit()
     srv.nTopVisibleLine = -1; // блокировка прокрутки не включена
 
     
-    InitializeCriticalSection(&srv.csConBuf);
-    InitializeCriticalSection(&srv.csChar);
 
     // временно используем эту переменную, чтобы не плодить локальных
     wsprintfW(srv.szPipename, CEGUIATTACHED, (DWORD)ghConWnd);
@@ -1690,6 +1868,14 @@ int ServerInit()
                 hDcWnd = (HWND)SendMessage(hGui, nMsg, (WPARAM)ghConWnd, (LPARAM)gnSelfPID);
                 if (hDcWnd != NULL) {
                     ghConEmuWnd = hGui;
+                    
+                    // Установить переменную среды с дескриптором окна
+                    SetConEmuEnvVar(ghConEmuWnd);
+                    
+                    // Если это НЕ новая консоль (-new_console) и не /ATTACH уже существующей консоли
+                    if (!gbNoCreateProcess)
+                    	RequestBufferHeight();
+                    
                     break;
                 }
             }
@@ -1705,6 +1891,7 @@ int ServerInit()
     }
 
     CheckConEmuHwnd();
+
 
 wrap:
     return iRc;
@@ -1964,6 +2151,9 @@ void CheckConEmuHwnd()
                 #endif
 
                 ghConEmuWnd = hGuiWnd;
+                
+                // Установить переменную среды с дескриптором окна
+                SetConEmuEnvVar(ghConEmuWnd);
 
                 ExecuteFreeResult(pOut);
             }
@@ -1992,6 +2182,10 @@ void CheckConEmuHwnd()
                 dwGuiThreadId = GetWindowThreadProcessId(hGui, &dwGuiProcessId);
                 if (dwGuiProcessId == dwGuiPID) {
                     ghConEmuWnd = hGui;
+                    
+                    // Установить переменную среды с дескриптором окна
+                    SetConEmuEnvVar(ghConEmuWnd);
+                    
                     break;
                 }
             }
@@ -1999,6 +2193,9 @@ void CheckConEmuHwnd()
     }
     if (ghConEmuWnd == NULL) { // Если уж ничего не помогло...
         ghConEmuWnd = GetConEmuHWND(TRUE/*abRoot*/);
+        
+        // Установить переменную среды с дескриптором окна
+        SetConEmuEnvVar(ghConEmuWnd);
     }
     if (ghConEmuWnd) {
         dwGuiThreadId = GetWindowThreadProcessId(ghConEmuWnd, &dwGuiProcessId);
@@ -3484,6 +3681,7 @@ void SendConsoleChanges(CESERVER_REQ* pOut)
             //_ASSERTE(fSuccess && dwWritten == pOut->hdr.nSize);
         } else {
             ghConEmuWnd = NULL;
+            SetConEmuEnvVar(NULL);
             TODO("Какие-то действия... показать консольное окно, или еще что-то");
         }
     }

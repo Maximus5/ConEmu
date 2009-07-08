@@ -116,3 +116,5 @@ int FUNC_X(ShowPluginMenu)();
 BOOL EditOutputA(LPCWSTR asFileName, BOOL abView);
 BOOL FUNC_Y(EditOutput)(LPCWSTR asFileName, BOOL abView);
 BOOL FUNC_X(EditOutput)(LPCWSTR asFileName, BOOL abView);
+
+BOOL Attach2Gui();

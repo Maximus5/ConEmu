@@ -62,7 +62,8 @@ class CConEmuMain
 public:
 	//HMODULE mh_Psapi;
 	//FGetModuleFileNameEx GetModuleFileNameEx;
-	wchar_t ms_ConEmuExe[MAX_PATH];
+	wchar_t ms_ConEmuExe[MAX_PATH+1];
+	wchar_t ms_ConEmuCurDir[MAX_PATH+1];
 public:
 	CConEmuChild m_Child;
 	CConEmuBack  m_Back;

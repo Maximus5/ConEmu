@@ -69,12 +69,22 @@ CConEmuMain::CConEmuMain()
     mouse.lastMML=-1;
 
     ms_ConEmuExe[0] = 0;
-    if (!GetModuleFileName(NULL, ms_ConEmuExe, MAX_PATH) || !wcschr(ms_ConEmuExe, L'\\')) {
+    wchar_t *pszSlash = NULL;
+    if (!GetModuleFileName(NULL, ms_ConEmuExe, MAX_PATH) || !(pszSlash = wcsrchr(ms_ConEmuExe, L'\\'))) {
         DisplayLastError(L"GetModuleFileName failed");
         TerminateProcess(GetCurrentProcess(), 100);
         return;
     }
     LoadVersionInfo(ms_ConEmuExe);
+    // Добавить в окружение переменную с папкой к ConEmu.exe
+    *pszSlash = 0;
+    SetEnvironmentVariable(L"ConEmuDir", ms_ConEmuExe);
+    *pszSlash = L'\\';
+    
+    // Запомнить текущую папку (на момент запуска)
+    DWORD nDirLen = GetCurrentDirectory(MAX_PATH, ms_ConEmuCurDir);
+    if (!nDirLen || nDirLen>MAX_PATH)
+    	ms_ConEmuCurDir[0] = 0;
 
     mh_WinHook = NULL;
 	//mh_PopupHook = NULL;
@@ -3153,9 +3163,7 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
     ProgressBars = new CProgressBars(ghWnd, g_hInstance);
 
     // Установить переменную среды с дескриптором окна
-    WCHAR szVar[32];
-    wsprintf(szVar, L"0x%08x", HDCWND);
-    SetEnvironmentVariable(L"ConEmuHWND", szVar);
+    SetConEmuEnvVar(ghWndDC);
 
 
     HMENU hwndMain = GetSystemMenu(ghWnd, FALSE), hDebug = NULL;

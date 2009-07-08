@@ -208,6 +208,20 @@ HWND GetConEmuHWND(BOOL abRoot)
 }
 
 
+// hConEmuWnd - HWND с отрисовкой!
+void SetConEmuEnvVar(HWND hConEmuWnd)
+{
+	if (hConEmuWnd) {
+        // Установить переменную среды с дескриптором окна
+        WCHAR szVar[32];
+        wsprintf(szVar, L"0x%08X", hConEmuWnd);
+        SetEnvironmentVariable(L"ConEmuHWND", szVar);
+    } else {
+    	SetEnvironmentVariable(L"ConEmuHWND", NULL);
+    }
+}
+
+
 // 0 -- All OK (ConEmu found, Version OK)
 // 1 -- NO ConEmu (simple console mode)
 // (obsolete) 2 -- ConEmu found, but old version

@@ -1936,6 +1936,9 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
         DWORD nPID     = pIn->StartStop.dwPID;
         DEBUGSTRCMD(L"GUI recieved CECMD_CMDSTARTSTOP\n");
 		DWORD nSubSystem = pIn->StartStop.nSubSystem;
+
+		_ASSERTE(sizeof(CESERVER_REQ_STARTSTOPRET) <= sizeof(CESERVER_REQ_STARTSTOP));
+		pIn->hdr.nSize = sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_STARTSTOPRET);
         
         if (nStarted == 0 || nStarted == 2) {
             // Сразу заполним результат
@@ -1944,6 +1947,15 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 			pIn->StartStopRet.dwPID = GetCurrentProcessId();
 
             AllowSetForegroundWindow(nPID);
+            
+            COORD cr16bit = {80,con.m_sbi.dwSize.Y};
+			if (nSubSystem == 255) {
+				if (gSet.ntvdmHeight && cr16bit.Y >= (int)gSet.ntvdmHeight) cr16bit.Y = gSet.ntvdmHeight;
+				else if (cr16bit.Y>=50) cr16bit.Y = 50;
+				else if (cr16bit.Y>=43) cr16bit.Y = 43;
+				else if (cr16bit.Y>=28) cr16bit.Y = 28;
+				else if (cr16bit.Y>=25) cr16bit.Y = 25;
+			}
 
             // ComSpec started
             if (nStarted == 2) {
@@ -1952,16 +1964,19 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 					DEBUGSTRCMD(L"16 bit application STARTED, aquired from CECMD_CMDSTARTSTOP\n");
 					mn_ProgramStatus |= CES_NTVDM;
 					mb_IgnoreCmdStop = TRUE;
-					COORD cr16bit = {80,con.m_sbi.dwSize.Y};
-					if (gSet.ntvdmHeight && cr16bit.Y >= (int)gSet.ntvdmHeight) cr16bit.Y = gSet.ntvdmHeight;
-					else if (cr16bit.Y>=50) cr16bit.Y = 50;
-					else if (cr16bit.Y>=43) cr16bit.Y = 43;
-					else if (cr16bit.Y>=28) cr16bit.Y = 28;
-					else if (cr16bit.Y>=25) cr16bit.Y = 25;
+					
 					SetConsoleSize(cr16bit, CECMD_CMDSTARTED);
+					
+					pIn->StartStopRet.nBufferHeight = 0;
+					pIn->StartStopRet.nWidth = cr16bit.X;
+					pIn->StartStopRet.nHeight = cr16bit.Y;
 				} else {
 					// но пока его нужно сбросить
 					mb_IgnoreCmdStop = FALSE;
+
+					pIn->StartStopRet.nBufferHeight = gSet.DefaultBufferHeight;
+					pIn->StartStopRet.nWidth = con.m_sbi.dwSize.X;
+					pIn->StartStopRet.nHeight = con.m_sbi.dwSize.Y;
 
 					if (gSet.DefaultBufferHeight && !isBufferHeight()) {
 						WARNING("Тут наверное нужно бы заблокировать прием команды смена размера из сервера ConEmuC");
@@ -1972,6 +1987,24 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 						mb_BuferModeChangeLocked = FALSE;
 					}
 				}
+            } else if (nStarted == 0) {
+            	// Server
+            	if (nSubSystem == 255) {
+					pIn->StartStopRet.nBufferHeight = 0;
+					pIn->StartStopRet.nWidth = cr16bit.X;
+					pIn->StartStopRet.nHeight = cr16bit.Y;
+            	} else {
+            		if (gSet.DefaultBufferHeight)
+						pIn->StartStopRet.nBufferHeight = gSet.DefaultBufferHeight;
+					else
+						pIn->StartStopRet.nBufferHeight = 0;
+					pIn->StartStopRet.nWidth = con.m_sbi.dwSize.X;
+					pIn->StartStopRet.nHeight = con.m_sbi.dwSize.Y;
+            	}
+
+				con.bBufferHeight = (pIn->StartStopRet.nBufferHeight != 0);
+				con.nChange2TextWidth = pIn->StartStopRet.nWidth;
+				con.nChange2TextHeight = pIn->StartStopRet.nHeight;
             }
 
             // 23.06.2009 Maks - уберем пока. Должно работать в ApplyConsoleInfo

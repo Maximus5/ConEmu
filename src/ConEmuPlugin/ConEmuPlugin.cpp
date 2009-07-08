@@ -227,6 +227,8 @@ HWND WINAPI GetFarHWND2(BOOL abConEmuOnly)
 		if (IsWindow(ConEmuHwnd))
 			return ConEmuHwnd;
 		ConEmuHwnd = NULL;
+		//
+		SetConEmuEnvVar(NULL);
 	}
 	if (abConEmuOnly)
 		return NULL;
@@ -489,6 +491,8 @@ DWORD WINAPI ThreadProcW(LPVOID lpParameter)
 			HWND hConWnd = GetConsoleWindow();
 		    if (!IsWindow(ConEmuHwnd) || hConWnd!=FarHwnd) {
 			    ConEmuHwnd = NULL;
+			    //
+			    SetConEmuEnvVar(NULL);
 
 				if (!TerminalMode && !IsWindowVisible(FarHwnd)) {
 					ShowWindowAsync(FarHwnd, SW_SHOWNORMAL);
@@ -597,8 +601,11 @@ DWORD WINAPI ThreadProcW(LPVOID lpParameter)
 			// ConEmu могло подцепиться
 			//int nChk = 0;
 			ConEmuHwnd = GetConEmuHWND ( FALSE/*abRoot*/  /*, &nChk*/ );
-			if (ConEmuHwnd)
+			if (ConEmuHwnd) {
+                SetConEmuEnvVar(ConEmuHwnd);
+			
 				InitResources();
+			}
 		}
 
 		//SafeCloseHandle(ghMapping);
@@ -761,6 +768,8 @@ void InitHWND(HWND ahFarHwnd)
 	//int nChk = 0;
 	ConEmuHwnd = GetConEmuHWND ( FALSE/*abRoot*/  /*, &nChk*/ );
 
+    SetConEmuEnvVar(ConEmuHwnd);
+	
 	gnMsgTabChanged = RegisterWindowMessage(CONEMUTABCHANGED);
 
 	// Даже если мы не в ConEmu - все равно запустить нить, т.к. в ConEmu теперь есть возможность /Attach!
@@ -1871,5 +1880,46 @@ void ShowPluginMenu()
 			pOut = ExecuteGuiCmd(FarHwnd, &in);
 			if (pOut) ExecuteFreeResult(pOut);
 		} break;
+		case 8: // Attach to GUI (если FAR был CtrlAltTab)
+		{
+			if (TerminalMode) break; // низзя
+			if (ConEmuHwnd && IsWindow(ConEmuHwnd)) break; // Мы и так подключены?
+			Attach2Gui();
+		} break;
 	}
+}
+
+BOOL Attach2Gui()
+{
+	// Create process, with flag /Attach GetCurrentProcessId()
+	// Sleep for sometimes, try InitHWND(hConWnd); several times
+	WCHAR  szExe[0x200] = {0};
+	BOOL lbRc = FALSE;
+	
+	DWORD nLen = 0;
+	PROCESS_INFORMATION pi; memset(&pi, 0, sizeof(pi));
+	STARTUPINFO si; memset(&si, 0, sizeof(si));
+	si.cb = sizeof(si);
+	DWORD dwSelfPID = GetCurrentProcessId();
+	
+	szExe[0] = L'"';
+	if ((nLen = GetEnvironmentVariableW(L"ConEmuDir", szExe+1, MAX_PATH)) > 0) {
+		if (szExe[nLen] != L'\\') wcscat(szExe, L"\\");
+	} else if ((nLen=GetModuleFileName(0, szExe+1, MAX_PATH)) > 0) {
+		wchar_t* pszSlash = wcsrchr ( szExe, L'\\' );
+		if (pszSlash) pszSlash[1] = 0;
+	}
+	
+	wsprintf(szExe+wcslen(szExe), L"ConEmuC.exe\" /ATTACH /PID=%i", dwSelfPID);
+	
+	
+	if (!CreateProcess(NULL, szExe, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL,
+			NULL, &si, &pi))
+	{
+		// Хорошо бы ошибку показать?
+	} else {
+		lbRc = TRUE;
+	}
+	
+	return lbRc;
 }

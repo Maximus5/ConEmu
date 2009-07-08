@@ -29,6 +29,8 @@ int ConEmuCheck(HWND* ahConEmuWnd);
 ////         4 -- same as 0, but ConEmu DC window - absent (old conemu version?)
 HWND GetConEmuHWND(BOOL abRoot /*, int* pnConsoleIsChild/ *=NULL*/);
 
+// hConEmuWnd - HWND с отрисовкой!
+void SetConEmuEnvVar(HWND hConEmuWnd);
 
 CESERVER_REQ* ExecuteNewCmd(DWORD nCmd, DWORD nSize);
 CESERVER_REQ* ExecuteGuiCmd(HWND hConWnd, const CESERVER_REQ* pIn);
