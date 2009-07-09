@@ -24,6 +24,8 @@ typedef BOOL (WINAPI* FAppThemed)();
 #define RB_SETWINDOWTHEME       CCM_SETWINDOWTHEME
 #endif
 
+#define TID_CREATE_CON   13
+#define TID_BUFFERHEIGHT 14
 
 TabBarClass::TabBarClass()
 {
@@ -618,10 +620,10 @@ bool TabBarClass::OnNotify(LPNMHDR nmhdr)
                 pDisp->pszText[0] = 0;
             }
         } else
-        if (pDisp->iItem==13) {
+        if (pDisp->iItem == TID_CREATE_CON) {
             lstrcpyn(pDisp->pszText, _T("Create new console"), pDisp->cchTextMax);
         } else
-        if (pDisp->iItem==14) {
+        if (pDisp->iItem == TID_BUFFERHEIGHT) {
 	        BOOL lbPressed = (SendMessage(mh_Toolbar, TB_GETSTATE, pDisp->iItem, 0) & TBSTATE_CHECKED) == TBSTATE_CHECKED;
             lstrcpyn(pDisp->pszText, 
 	            lbPressed ? L"BufferHeight mode is ON" : L"BufferHeight mode is off",
@@ -687,11 +689,11 @@ void TabBarClass::OnCommand(WPARAM wParam, LPARAM lParam)
         return;
 
     if (wParam>=1 && wParam<=MAX_CONSOLE_COUNT) {
-        gConEmu.ConmanAction(wParam-1);
-    } else if (wParam==13) {
-        gConEmu.Recreate ( FALSE, gSet.isMultiNewConfirm ); //ConmanAction(CONMAN_NEWCONSOLE);
-    } else if (wParam==14) {
-		SendMessage(mh_Toolbar, TB_CHECKBUTTON, 14, gConEmu.ActiveCon()->RCon()->isBufferHeight());
+        gConEmu.ConActivate(wParam-1);
+    } else if (wParam == TID_CREATE_CON) {
+        gConEmu.Recreate ( FALSE, gSet.isMultiNewConfirm );
+    } else if (wParam == TID_BUFFERHEIGHT) {
+		SendMessage(mh_Toolbar, TB_CHECKBUTTON, TID_BUFFERHEIGHT, gConEmu.ActiveCon()->RCon()->isBufferHeight());
     }
 }
 
@@ -760,7 +762,7 @@ void TabBarClass::OnBufferHeight(BOOL abBufferHeight)
 {
 	if (!mh_Toolbar) return;
 
-    SendMessage(mh_Toolbar, TB_CHECKBUTTON, 14, abBufferHeight);
+    SendMessage(mh_Toolbar, TB_CHECKBUTTON, TID_BUFFERHEIGHT, abBufferHeight);
 }
 
 HWND TabBarClass::CreateToolbar()
@@ -781,7 +783,7 @@ HWND TabBarClass::CreateToolbar()
    SendMessage(mh_Toolbar, TB_BUTTONSTRUCTSIZE, (WPARAM) sizeof(TBBUTTON), 0); 
    SendMessage(mh_Toolbar, TB_SETBITMAPSIZE, 0, MAKELONG(16,16)); 
    TBADDBITMAP bmp = {g_hInstance,IDB_CONMAN1};
-   int nFirst = SendMessage(mh_Toolbar, TB_ADDBITMAP, 14, (LPARAM)&bmp);
+   int nFirst = SendMessage(mh_Toolbar, TB_ADDBITMAP, TID_BUFFERHEIGHT, (LPARAM)&bmp);
 
    //buttons
    TBBUTTON btn = {0, 1, TBSTATE_ENABLED, TBSTYLE_CHECKGROUP}, sep = {0, 0, TBSTATE_ENABLED, TBSTYLE_SEP};
@@ -797,13 +799,16 @@ HWND TabBarClass::CreateToolbar()
    }
    SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&sep);
 
+   // Номер следующей иконки
+   btn.iBitmap = nFirst + 12;
+
    // New console
-   btn.fsStyle = BTNS_BUTTON; btn.iBitmap = nFirst + 12; btn.idCommand = 13; btn.fsState = TBSTATE_ENABLED;
+   btn.fsStyle = BTNS_BUTTON; btn.idCommand = TID_CREATE_CON; btn.fsState = TBSTATE_ENABLED;
    SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&btn);
    SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&sep);
 
    // Buffer height mode
-   btn.iBitmap = nFirst + 13; btn.idCommand = 14; btn.fsState = TBSTATE_ENABLED;
+   btn.iBitmap++; btn.idCommand = TID_BUFFERHEIGHT; btn.fsState = TBSTATE_ENABLED;
    SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&btn);
 
 

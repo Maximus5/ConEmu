@@ -2094,7 +2094,7 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
         DEBUGSTRCMD(L"GUI recieved CECMD_TABSCHANGED\n");
         if (nDataSize == 0) {
             // ФАР закрывается
-            SetTabs(NULL, 0);
+            SetTabs(NULL, 1);
         } else {
             _ASSERTE(nDataSize>=4);
             int nTabCount = (nDataSize-4) / sizeof(ConEmuTab);
@@ -2904,7 +2904,7 @@ BOOL CRealConsole::RetrieveConsoleInfo(UINT anWaitSize)
     in.nSize = sizeof(CESERVER_REQ_HDR);
     in.nVersion = CESERVER_REQ_VER;
     in.nCmd  = CECMD_GETFULLINFO;
-  in.nSrcThreadId = GetCurrentThreadId();
+    in.nSrcThreadId = GetCurrentThreadId();
 
     // Send a message to the pipe server and read the response. 
     fSuccess = TransactNamedPipe( 
@@ -3872,8 +3872,17 @@ BOOL CRealConsole::GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab)
     if (!this)
         return FALSE;
         
-    if (!mp_tabs || tabIdx<0 || tabIdx>=mn_tabsCount)
+	if (!mp_tabs || tabIdx<0 || tabIdx>=mn_tabsCount) {
+		// На всякий случай, даже если табы не инициализированы, а просят первый -
+		// вернем просто заголовок консоли
+		if (tabIdx == 0) {
+			pTab->Pos = 0; pTab->Current = 1; pTab->Type = 1; pTab->Modified = 0;
+            int nMaxLen = max(countof(Title) , countof(pTab->Name));
+            lstrcpyn(pTab->Name, Title, nMaxLen);
+			return TRUE;
+		}
         return FALSE;
+	}
     
     memmove(pTab, mp_tabs+tabIdx, sizeof(ConEmuTab));
     if (mn_tabsCount == 1 && pTab->Type == 1) {
@@ -3911,7 +3920,7 @@ int CRealConsole::GetTabCount()
     if (!this)
         return 0;
         
-    return mn_tabsCount;
+    return min(mn_tabsCount,1);
 }
 
 void CRealConsole::CheckPanelTitle()
@@ -4679,11 +4688,6 @@ void CRealConsole::OnTitleChanged()
 {
     if (!this) return;
 
-    // Перенесено в ShellHook
-    //// Окошко фара полюбило мигать, но его все равно не видно...
-    //FLASHWINFO flsh = {sizeof(FLASHWINFO)}; flsh.hwnd = hConWnd; flsh.dwFlags = FLASHW_STOP;
-    //FlashWindowEx(&flsh);
-    //
     wcscpy(Title, TitleCmp);
 
     // Обработка прогресса операций

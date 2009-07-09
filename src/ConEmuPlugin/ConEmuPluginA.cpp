@@ -544,15 +544,15 @@ int ShowPluginMenuA()
 		return -1;
 
 	FarMenuItemEx items[] = {
-		{MIF_SELECTED},
-		{0},
+		{ConEmuHwnd ? MIF_SELECTED : MIF_DISABLE},
+		{ConEmuHwnd ? 0 : MIF_DISABLE},
 		{MIF_SEPARATOR},
-		{0},
-		{0},
-		{0},
-		{0},
+		{ConEmuHwnd ? 0 : MIF_DISABLE},
+		{ConEmuHwnd ? 0 : MIF_DISABLE},
+		{ConEmuHwnd ? 0 : MIF_DISABLE},
+		{ConEmuHwnd ? 0 : MIF_DISABLE},
 		{MIF_SEPARATOR},
-		{ConEmuHwnd ? MIF_DISABLE : 0}
+		{ConEmuHwnd ? MIF_DISABLE : MIF_SELECTED}
 	};
 	items[0].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,3);
 	items[1].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,4);

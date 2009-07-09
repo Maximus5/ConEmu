@@ -1441,7 +1441,7 @@ BOOL CConEmuMain::Activate(CVirtualConsole* apVCon)
     BOOL lbRc = FALSE;
     for (int i=0; pVCon && i<MAX_CONSOLE_COUNT; i++) {
         if (mp_VCon[i] == apVCon) {
-            ConmanAction(i);
+            ConActivate(i);
             lbRc = (pVCon == apVCon);
             break;
         }
@@ -1877,10 +1877,45 @@ DWORD CConEmuMain::CheckProcesses()
 //    return m_ProcCount;
 //}
 
-bool CConEmuMain::ConmanAction(int nCmd)
+bool CConEmuMain::ConActivateNext(BOOL abNext)
 {
-    if (nCmd>=CONMAN_FIRSTCONSOLE && nCmd<=CONMAN_LASTCONSOLE) {
-        CVirtualConsole* pCon = mp_VCon[nCmd];
+    //if (nCmd == CONMAN_NEXTCONSOLE || nCmd == CONMAN_PREVCONSOLE)
+
+    int nActive = ActiveConNum(), i, j, n1, n2, n3;
+    for (j=0; j<=1; j++) {
+        if (abNext) {
+            if (j == 0) {
+                n1 = nActive+1; n2 = MAX_CONSOLE_COUNT; n3 = 1;
+            } else {
+                n1 = 0; n2 = nActive; n3 = 1;
+            }
+            if (n1>=n2) continue;
+        } else {
+            if (j == 0) {
+                n1 = nActive-1; n2 = -1; n3 = -1;
+            } else {
+                n1 = MAX_CONSOLE_COUNT-1; n2 = nActive; n3 = -1;
+            }
+            if (n1<=n2) continue;
+        }
+
+        for (i=n1; i!=n2 && i>=0 && i<MAX_CONSOLE_COUNT; i+=n3) {
+            if (mp_VCon[i]) {
+                return ConActivate(i);
+            }
+        }
+    }
+    return false;
+}
+
+// nCon - zero-based index of console
+bool CConEmuMain::ConActivate(int nCon)
+{
+    FLASHWINFO fl = {sizeof(FLASHWINFO)}; fl.dwFlags = FLASHW_STOP; fl.hwnd = ghWnd;
+    FlashWindowEx(&fl); // При многократных созданиях мигать начинает...
+
+    if (nCon>=0 && nCon<MAX_CONSOLE_COUNT) {
+        CVirtualConsole* pCon = mp_VCon[nCon];
         if (pCon == NULL)
             return false; // консоль с этим номером не была создана!
         if (pCon == pVCon)
@@ -1889,7 +1924,7 @@ bool CConEmuMain::ConmanAction(int nCmd)
         int nOldConNum = ActiveConNum();
 
         // Спрятать PictureView, или еще чего...
-        if (pVCon) pVCon->RCon()->OnDeactivate(nCmd);
+        if (pVCon) pVCon->RCon()->OnDeactivate(nCon);
         
         // ПЕРЕД переключением на новую консоль - обновить ее размеры
         if (pVCon) {
@@ -1904,49 +1939,11 @@ bool CConEmuMain::ConmanAction(int nCmd)
 
         pVCon = pCon;
 
-        pCon->RCon()->OnActivate(nCmd, nOldConNum);
+        pCon->RCon()->OnActivate(nCon, nOldConNum);
         
         if (!lbSizeOK)
             SyncWindowToConsole();
         m_Child.Invalidate();
-    } else if (nCmd == CONMAN_NEWCONSOLE) {
-        CVirtualConsole* pCon = CreateCon(FALSE);
-        bool lbRc = pCon!=NULL;
-        //int nActive = ActiveConNum();
-        /*if (lbRc)
-            TabBar.OnConman(nActive+1, FALSE);*/
-        return lbRc;
-    } else if (nCmd == CONMAN_NEXTCONSOLE || nCmd == CONMAN_PREVCONSOLE) {
-        int nActive = ActiveConNum(), i, j, n1, n2, n3;
-        for (j=0; j<=1; j++) {
-            if (nCmd == CONMAN_NEXTCONSOLE) {
-                if (j == 0) {
-                    n1 = nActive+1; n2 = MAX_CONSOLE_COUNT; n3 = 1;
-                } else {
-                    n1 = 0; n2 = nActive; n3 = 1;
-                }
-                if (n1>=n2) continue;
-            } else {
-                if (j == 0) {
-                    n1 = nActive-1; n2 = -1; n3 = -1;
-                } else {
-                    n1 = MAX_CONSOLE_COUNT-1; n2 = nActive; n3 = -1;
-                }
-                if (n1<=n2) continue;
-            }
-
-            for (i=n1; i!=n2 && i>=0 && i<MAX_CONSOLE_COUNT; i+=n3) {
-                if (mp_VCon[i]) {
-                    return ConmanAction(i);
-                }
-            }
-        }
-        return false;
-    } else if (nCmd == CONMAN_ALTCONSOLE) {
-        return false;
-    } else if (nCmd >= CONMAN_RECREATE && nCmd <= CONMAN_RECREATELAST) {
-        //CECMD_RECREATE
-        mp_VCon[nCmd-CONMAN_RECREATE]->RCon()->RecreateProcess();
     }
     return false;
 }
@@ -2135,8 +2132,29 @@ void CConEmuMain::Recreate(BOOL abRecreate, BOOL abConfirm)
 {
     SafeFree(mpsz_RecreateCmd);
     
+    FLASHWINFO fl = {sizeof(FLASHWINFO)}; fl.dwFlags = FLASHW_STOP; fl.hwnd = ghWnd;
+    FlashWindowEx(&fl); // При многократных созданиях мигать начинает...
+    
     if (!abRecreate) {
         // Создать новую консоль
+        BOOL lbSlotFound = FALSE;
+        for (int i=0; i<MAX_CONSOLE_COUNT; i++) {
+            if (!mp_VCon[i]) { lbSlotFound = TRUE; break; }
+        }
+        if (!lbSlotFound) {
+        	static bool bBoxShowed = false;
+        	if (!bBoxShowed) {
+	        	bBoxShowed = true;
+	        	
+                FlashWindowEx(&fl); // При многократных созданиях мигать начинает...
+	        	
+    	    	MBoxA(L"Maximum number of consoles was reached.");
+        		bBoxShowed = false;
+        	}
+        	FlashWindowEx(&fl); // При многократных созданиях мигать начинает...
+        	return;
+        }
+        
         //LPCWSTR pszCmd = gSet.GetCmd();
         if (abConfirm) {
             //wchar_t* pszMsg = (wchar_t*)calloc(128+wcslen(pszCmd),2);
@@ -3527,6 +3545,7 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
     if (gSet.isMulti && wParam && ((lbLWin = isPressed(VK_LWIN)) || (lbRWin = isPressed(VK_RWIN)) || sb_SkipConmanChar)) {
         if (messg == WM_KEYDOWN && (lbLWin || lbRWin) && (wParam != VK_LWIN && wParam != VK_RWIN)) {
             if (wParam==gSet.icMultiNext || wParam==gSet.icMultiNew || (wParam>='0' && wParam<='9')
+				|| ((lbLWin || lbRWin) && (wParam==VK_F11 || wParam==VK_F12)) // KeyDown для этого не проходит, но на всякий случай
                 || wParam==gSet.icMultiRecreate)
             {
                 // Запомнить, что не нужно пускать в консоль
@@ -3536,13 +3555,13 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
                 
                 // Теперь собственно обработка
                 if (wParam>='1' && wParam<='9')
-                    ConmanAction(wParam - '1');
+                    ConActivate(wParam - '1');
                     
                 else if (wParam=='0')
-                    ConmanAction(9);
+                    ConActivate(9);
                     
                 else if (wParam == gSet.icMultiNext)
-                    ConmanAction(isPressed(VK_SHIFT) ? CONMAN_PREVCONSOLE : CONMAN_NEXTCONSOLE);
+                    ConActivateNext(isPressed(VK_SHIFT) ? FALSE : TRUE);
                     
                 else if (wParam == gSet.icMultiNew) {
                     // Создать новую консоль
@@ -3550,7 +3569,7 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
                     
                 } else if (wParam == gSet.icMultiRecreate) {
                     Recreate ( TRUE, TRUE );
-                    
+
                 }
                 return 0;
 			}
@@ -3558,8 +3577,8 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
             if (sn_SkipConmanVk[1] == (lParam & 0xFF0000))
                 return 0; // не пропускать букву в консоль
         } else if (messg == WM_KEYUP) {
-			if (wParam==VK_F11 || wParam==VK_F12) {
-				ConmanAction(wParam - VK_F11 + 10);
+			if ((lbLWin || lbRWin) && (wParam==VK_F11 || wParam==VK_F12)) {
+				ConActivate(wParam - VK_F11 + 10);
 				return 0;
 			} else if (wParam == VK_LWIN || wParam == VK_RWIN) {
                 if (sn_SkipConmanVk[0] == wParam) {
@@ -4106,13 +4125,16 @@ HSHELL_APPCOMMAND The APPCOMMAND which has been unhandled by the application or 
             for (int i = 0; i<MAX_CONSOLE_COUNT; i++) {
                 if (!mp_VCon[i]) continue;
                 if (mp_VCon[i]->RCon()->ConWnd() == hCon) {
-                    FLASHWINFO fl = {sizeof(FLASHWINFO), ghWnd, FLASHW_ALL|FLASHW_TIMERNOFG, 0};
+                    FLASHWINFO fl = {sizeof(FLASHWINFO)};
                     if (isMeForeground()) {
                     	if (mp_VCon[i] != pVCon) { // Только для неактивной консоли
-                    		fl.uCount = 4; fl.dwFlags = FLASHW_ALL;
+                            fl.dwFlags = FLASHW_STOP; fl.hwnd = ghWnd;
+                            FlashWindowEx(&fl); // Чтобы мигание не накапливалось
+                    		fl.uCount = 4; fl.dwFlags = FLASHW_ALL; fl.hwnd = ghWnd;
                     		FlashWindowEx(&fl);
                     	}
                     } else {
+                    	fl.dwFlags = FLASHW_ALL|FLASHW_TIMERNOFG; fl.hwnd = ghWnd;
                     	FlashWindowEx(&fl); // Помигать в GUI
                     }
                     
@@ -4520,22 +4542,23 @@ LRESULT CConEmuMain::OnVConTerminated(CVirtualConsole* apVCon, BOOL abPosted /*=
             if (pVCon == apVCon) {
                 for (int j=(i-1); j>=0; j--) {
                     if (mp_VCon[j]) {
-                        ConmanAction(j);
+                        ConActivate(j);
                         break;
                     }
                 }
                 if (pVCon == apVCon) {
                     for (int j=(i+1); j<MAX_CONSOLE_COUNT; j++) {
                         if (mp_VCon[j]) {
-                            ConmanAction(j);
+                            ConActivate(j);
                             break;
                         }
                     }
                 }
-                for (int j=(i+1); j<MAX_CONSOLE_COUNT; j++) {
-                    mp_VCon[j-1] = mp_VCon[j];
-                }
             }
+            for (int j=(i+1); j<MAX_CONSOLE_COUNT; j++) {
+                mp_VCon[j-1] = mp_VCon[j];
+            }
+			mp_VCon[MAX_CONSOLE_COUNT-1] = NULL;
             if (pVCon == apVCon)
                 pVCon = NULL;
             delete apVCon;

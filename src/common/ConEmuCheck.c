@@ -44,27 +44,53 @@ CESERVER_REQ* ExecuteNewCmd(DWORD nCmd, DWORD nSize)
     return pIn;
 }
 
+// Forward
+CESERVER_REQ* ExecuteCmd(const wchar_t* szGuiPipeName, const CESERVER_REQ* pIn, DWORD nWaitPipe);
+
+// Выполнить в GUI (в CRealConsole)
+CESERVER_REQ* ExecuteGuiCmd(HWND hConWnd, const CESERVER_REQ* pIn)
+{
+	wchar_t szGuiPipeName[MAX_PATH];
+	
+	if (!hConWnd)
+		return NULL;
+
+	wsprintfW(szGuiPipeName, CEGUIPIPENAME, L".", (DWORD)hConWnd);
+	
+	return ExecuteCmd(szGuiPipeName, pIn, 1000);
+}
+
+// Выполнить в ConEmuC
+CESERVER_REQ* ExecuteSrvCmd(DWORD dwSrvPID, const CESERVER_REQ* pIn)
+{
+	wchar_t szGuiPipeName[MAX_PATH];
+	
+	if (!dwSrvPID)
+		return NULL;
+
+	wsprintfW(szGuiPipeName, CESERVERPIPENAME, L".", (DWORD)dwSrvPID);
+	
+	return ExecuteCmd(szGuiPipeName, pIn, 1000);
+}
+
 //Arguments:
 //   hConWnd - Хэндл КОНСОЛЬНОГО окна (по нему формируется имя пайпа для GUI)
 //   pIn     - выполняемая команда
 //Returns:
 //   CESERVER_REQ. Его необходимо освободить через free(...);
 //WARNING!!!
-//   Эта процедура не может получить с сервера более 512 байт данных!
-CESERVER_REQ* ExecuteGuiCmd(HWND hConWnd, const CESERVER_REQ* pIn)
+//   Эта процедура не может получить с сервера более 600 байт данных!
+CESERVER_REQ* ExecuteCmd(const wchar_t* szGuiPipeName, const CESERVER_REQ* pIn, DWORD nWaitPipe)
 {
 	CESERVER_REQ* pOut = NULL;
-	wchar_t szGuiPipeName[MAX_PATH];
+	
 	HANDLE hPipe = NULL; 
 	BYTE cbReadBuf[600]; // чтобы CESERVER_REQ_OUTPUTFILE поместился
 	BOOL fSuccess = FALSE;
 	DWORD cbRead = 0, dwMode = 0, dwErr = 0;
 
-	if (!hConWnd)
+	if (!pIn || !szGuiPipeName)
 		return NULL;
-
-	wsprintfW(szGuiPipeName, CEGUIPIPENAME, L".", (DWORD)hConWnd);
-	//
 
 	// Try to open a named pipe; wait for it, if necessary. 
 	while (1) 
@@ -91,7 +117,7 @@ CESERVER_REQ* ExecuteGuiCmd(HWND hConWnd, const CESERVER_REQ* pIn)
 		}
 
 		// All pipe instances are busy, so wait for 1 second.
-		if (!WaitNamedPipe(szGuiPipeName, 1000) ) 
+		if (!WaitNamedPipe(szGuiPipeName, nWaitPipe) ) 
 		{
 			return NULL;
 		}

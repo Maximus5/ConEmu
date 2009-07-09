@@ -2066,7 +2066,7 @@ COORD CVirtualConsole::ClientToConsole(LONG x, LONG y)
     		DWORD* ConCharXLine = ConCharX + cr.Y * TextWidth;
 			for (uint i = 0; i < TextWidth; i++, ConCharXLine++) {
 				if (((int)*ConCharXLine) >= x) {
-					if (cr.X != i) {
+					if (cr.X != (int)i) {
 						#ifdef _DEBUG
 						wchar_t szDbg[120]; wsprintf(szDbg, L"Coord corrected from {%i-%i} to {%i-%i}",
 							cr.X, cr.Y, i, cr.Y);

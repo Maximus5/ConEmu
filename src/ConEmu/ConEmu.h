@@ -176,7 +176,9 @@ public:
 	LPARAM AttachRequested(HWND ahConWnd, DWORD anConemuC_PID);
 	static RECT CalcMargins(enum ConEmuMargins mg);
 	static RECT CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFrom, RECT* prDC=NULL);
-	bool ConmanAction(int nCmd);
+	bool ConActivate(int nCon);
+	bool ConActivateNext(BOOL abNext);
+	//bool ConmanAction(int nCmd);
 	CVirtualConsole* CreateCon(BOOL abStartDetached=FALSE, LPCWSTR asNewCmd=NULL);
 	BOOL CreateMainWindow();
 	void Destroy();

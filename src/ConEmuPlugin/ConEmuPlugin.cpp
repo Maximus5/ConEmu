@@ -15,6 +15,7 @@
 #include "..\common\common.hpp"
 #include "..\common\pluginW1007.hpp"
 #include "PluginHeader.h"
+#include <Tlhelp32.h>
 #include <vector>
 
 extern "C" {
@@ -1891,6 +1892,58 @@ void ShowPluginMenu()
 
 BOOL Attach2Gui()
 {
+	DWORD nProcessCount = 0, dwServerPID = 0, nProcesses[100] = {0};
+	
+	typedef DWORD (WINAPI* FGetConsoleProcessList)(LPDWORD lpdwProcessList, DWORD dwProcessCount);
+	FGetConsoleProcessList pfnGetConsoleProcessList = NULL;
+    HMODULE hKernel = GetModuleHandleW (L"kernel32.dll");
+    
+    if (hKernel) {
+        pfnGetConsoleProcessList = (FGetConsoleProcessList)GetProcAddress (hKernel, "GetConsoleProcessList");
+    }
+
+    if (pfnGetConsoleProcessList) {
+    	nProcessCount = pfnGetConsoleProcessList(nProcesses, countof(nProcesses));
+    	if (nProcessCount && nProcessCount > countof(nProcesses)) {
+    		_ASSERTE(nProcessCount <= countof(nProcesses));
+    		nProcessCount = 0;
+    	}
+    }
+	
+	if (nProcessCount >= 2) {
+		HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS,0);
+		if (hSnap != INVALID_HANDLE_VALUE) {
+			PROCESSENTRY32 prc = {sizeof(PROCESSENTRY32)};
+			DWORD nSelfPID = GetCurrentProcessId();
+			if (Process32First(hSnap, &prc)) {
+				do {
+            		for (UINT i = 0; i < nProcessCount; i++) {
+            			if (prc.th32ProcessID != nSelfPID
+            				&& prc.th32ProcessID == nProcesses[i])
+        				{
+        					if (lstrcmpiW(prc.szExeFile, L"conemuc.exe")==0) {
+        						CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_ATTACH2GUI, sizeof(CESERVER_REQ_HDR));
+        						CESERVER_REQ* pOut = ExecuteSrvCmd(prc.th32ProcessID, pIn);
+        						if (pOut) dwServerPID = prc.th32ProcessID;
+        						ExecuteFreeResult(pIn); ExecuteFreeResult(pOut);
+        						// ≈сли команда успешно выполнена - выходим
+        						if (dwServerPID)
+        							break;
+        					}
+            			}
+            		}
+				} while (!dwServerPID && Process32Next(hSnap, &prc));
+			}
+			CloseHandle(hSnap);
+		}
+	}
+	
+	if (dwServerPID) {
+		// "Server was already started. PID=%i. Exiting...\n", dwServerPID
+		return TRUE;
+	}
+
+	
 	// Create process, with flag /Attach GetCurrentProcessId()
 	// Sleep for sometimes, try InitHWND(hConWnd); several times
 	WCHAR  szExe[0x200] = {0};

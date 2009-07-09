@@ -27,7 +27,7 @@ WARNING("При запуске как ComSpec получаем ошибку: {crNewSize.X>=MIN_CON_WIDTH &&
 
 #ifdef _DEBUG
 //  Раскомментировать, чтобы сразу после запуска процесса (conemuc.exe) показать MessageBox, чтобы прицепиться дебаггером
-  //#define SHOW_STARTED_MSGBOX
+//  #define SHOW_STARTED_MSGBOX
 // Раскомментировать для вывода в консоль информации режима Comspec
     #define PRINT_COMSPEC(f,a) wprintf(f,a)
 #elif defined(__GNUC__)
@@ -228,7 +228,7 @@ struct tag_Srv {
     wchar_t szPipename[MAX_PATH], szInputname[MAX_PATH], szGuiPipeName[MAX_PATH];
     //
     HANDLE hConEmuGuiAttached;
-    HWINEVENTHOOK hWinHook, hWinHookStartEnd;
+    HWINEVENTHOOK hWinHook, hWinHookStartEnd; BOOL bWinHookAllow; int nWinHookMode;
     //BOOL bContentsChanged; // Первое чтение параметров должно быть ПОЛНЫМ
     wchar_t* psChars;
     WORD* pnAttrs;
@@ -1269,8 +1269,8 @@ int ComspecInit()
     #endif
 
 
-    int nNewBufferHeight = 0;
-    COORD crNewSize = {0,0};
+    //int nNewBufferHeight = 0;
+    //COORD crNewSize = {0,0};
     SMALL_RECT rNewWindow = cmd.sbi.srWindow;
     BOOL lbSbiRc = FALSE;
     
@@ -1561,6 +1561,33 @@ void LogSize(COORD* pcrSize, LPCSTR pszLabel)
     FlushFileBuffers(ghLogSize);
 }
 
+HWND Attach2Gui(DWORD nTimeout)
+{
+    HWND hGui = NULL, hDcWnd = NULL;
+    UINT nMsg = RegisterWindowMessage(CONEMUMSG_ATTACH);
+    DWORD dwStart = GetTickCount(), dwDelta = 0, dwCur = 0;
+    // Если с первого раза не получится (GUI мог еще не загрузиться) пробуем еще
+    while (!hDcWnd && dwDelta <= nTimeout) {
+        while ((hGui = FindWindowEx(NULL, hGui, VirtualConsoleClassMain, NULL)) != NULL) {
+            hDcWnd = (HWND)SendMessage(hGui, nMsg, (WPARAM)ghConWnd, (LPARAM)gnSelfPID);
+            if (hDcWnd != NULL) {
+                ghConEmuWnd = hGui;
+                
+                // Установить переменную среды с дескриптором окна
+                SetConEmuEnvVar(ghConEmuWnd);
+                
+                break;
+            }
+        }
+        if (hDcWnd) break;
+
+        Sleep(500);
+        dwCur = GetTickCount(); dwDelta = dwCur - dwStart;
+    }
+    
+    return hDcWnd;
+}
+
 // Создать необходимые события и нити
 int ServerInit()
 {
@@ -1607,7 +1634,8 @@ int ServerInit()
 		if (srv.dwRootProcess == 0) {
     		// Нужно попытаться определить PID корневого процесса.
     		// Родительским может быть cmd (comspec, запущенный из FAR)
-    		DWORD dwParentPID = 0;
+    		DWORD dwParentPID = 0, dwFarPID = 0;
+    		DWORD dwServerPID = 0; // Вдруг в этой консоли уже есть сервер?
 	    	
     		if (srv.nProcessCount >= 2) {
 				HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS,0);
@@ -1619,19 +1647,38 @@ int ServerInit()
                     			if (prc.th32ProcessID != gnSelfPID
                     				&& prc.th32ProcessID == srv.pnProcesses[i])
                 				{
-                		    		// Если это FAR - выходим с ним сразу
-                		    		if (lstrcmpiW(prc.szExeFile, L"far.exe")==0) {
-                		    			dwParentPID = prc.th32ProcessID;
-                		    			break;
+                					if (lstrcmpiW(prc.szExeFile, L"conemuc.exe")==0) {
+                						CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_ATTACH2GUI, 0);
+                						CESERVER_REQ* pOut = ExecuteSrvCmd(prc.th32ProcessID, pIn);
+                						if (pOut) dwServerPID = prc.th32ProcessID;
+                						ExecuteFreeResult(pIn); ExecuteFreeResult(pOut);
+                						// Если команда успешно выполнена - выходим
+                						if (dwServerPID)
+                							break;
+                					}
+                		    		if (!dwFarPID && lstrcmpiW(prc.szExeFile, L"far.exe")==0) {
+                		    			dwFarPID = prc.th32ProcessID;
                 		    		}
                 		    		if (!dwParentPID)
                 		    			dwParentPID = prc.th32ProcessID;
                     			}
                     		}
+                    		// Если уже выполнили команду в сервере - выходим, перебор больше не нужен
+    						if (dwServerPID)
+    							break;
 						} while (Process32Next(hSnap, &prc));
 					}
 					CloseHandle(hSnap);
+					
+					if (dwFarPID) dwParentPID = dwFarPID;
 				}
+			}
+			
+			if (dwServerPID) {
+    			AllowSetForegroundWindow(dwServerPID);
+    			PRINT_COMSPEC(L"Server was already started. PID=%i. Exiting...\n", dwServerPID);
+    			gbAlwaysConfirmExit = FALSE;
+    			return CERR_RUNNEWCONSOLE;
 			}
 	        
     		if (!dwParentPID) {
@@ -1859,31 +1906,12 @@ int ServerInit()
     //SetThreadPriority(srv.hInputThread, THREAD_PRIORITY_ABOVE_NORMAL);
 
     if (gbAttachMode) {
-        HWND hGui = NULL, hDcWnd = NULL;
-        UINT nMsg = RegisterWindowMessage(CONEMUMSG_ATTACH);
-        DWORD dwStart = GetTickCount(), dwDelta = 0, dwCur = 0;
-        // Если с первого раза не получится (GUI мог еще не загрузиться) пробуем еще
-        while (!hDcWnd && dwDelta <= 5000) {
-            while ((hGui = FindWindowEx(NULL, hGui, VirtualConsoleClassMain, NULL)) != NULL) {
-                hDcWnd = (HWND)SendMessage(hGui, nMsg, (WPARAM)ghConWnd, (LPARAM)gnSelfPID);
-                if (hDcWnd != NULL) {
-                    ghConEmuWnd = hGui;
-                    
-                    // Установить переменную среды с дескриптором окна
-                    SetConEmuEnvVar(ghConEmuWnd);
-                    
-                    // Если это НЕ новая консоль (-new_console) и не /ATTACH уже существующей консоли
-                    if (!gbNoCreateProcess)
-                    	RequestBufferHeight();
-                    
-                    break;
-                }
-            }
-            if (hDcWnd) break;
+        HWND hDcWnd = Attach2Gui(5000);
+        
+        // Если это НЕ новая консоль (-new_console) и не /ATTACH уже существующей консоли
+        if (!gbNoCreateProcess)
+        	RequestBufferHeight();
 
-            Sleep(500);
-            dwCur = GetTickCount(); dwDelta = dwCur - dwStart;
-        }
         if (!hDcWnd) {
             wprintf(L"Available ConEmu GUI window not found!\n");
             iRc = CERR_ATTACHFAILED; goto wrap;
@@ -1911,6 +1939,7 @@ void ServerDone(int aiRc)
             #pragma warning( pop )
         }
         SafeCloseHandle(srv.hWinEventThread);
+        srv.dwWinEventThread = 0;
     }
     if (srv.hInputThread) {
         #pragma warning( push )
@@ -1944,7 +1973,8 @@ void ServerDone(int aiRc)
     //if (srv.hChangingSize) {
     //    SafeCloseHandle(srv.hChangingSize);
     //}
-    // Отключить хук
+    // Отключить все хуки
+    srv.bWinHookAllow = FALSE; srv.nWinHookMode = 0;
     HookWinEvents ( -1 );
     
     if (gpStoredOutput) { Free(gpStoredOutput); gpStoredOutput = NULL; }
@@ -2047,6 +2077,47 @@ BOOL CheckProcessCount(BOOL abForce/*=FALSE*/)
 			MCHKHEAP
 			memmove(srv.pnProcessesCopy, srv.pnProcesses, nSize);
 			MCHKHEAP
+		}
+		
+		if (lbChanged
+		    && ( (srv.hWinHook == NULL && srv.bWinHookAllow) || (srv.hWinHook != NULL) )
+		   )
+		{
+			BOOL lbFarExists = FALSE;
+			if (srv.nProcessCount > 1)
+			{
+				HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS,0);
+				if (hSnap != INVALID_HANDLE_VALUE) {
+					PROCESSENTRY32 prc = {sizeof(PROCESSENTRY32)};
+					if (Process32First(hSnap, &prc))
+					{
+						do
+						{
+                    		for (UINT i = 0; i < srv.nProcessCount; i++) {
+                    			if (prc.th32ProcessID != gnSelfPID
+                    				&& prc.th32ProcessID == srv.pnProcesses[i])
+                				{
+                		    		if (lstrcmpiW(prc.szExeFile, L"far.exe")==0) {
+                		    			lbFarExists = TRUE; break;
+                		    		}
+                    			}
+                    		}
+						} while (!lbFarExists && Process32Next(hSnap, &prc));
+					}
+					CloseHandle(hSnap);
+				}
+			}
+			
+			if (srv.nProcessCount >= 2)
+			{
+				if (lbFarExists) srv.nWinHookMode = 2; else srv.nWinHookMode = 1;
+				
+    			if (lbFarExists && srv.hWinHook == NULL && srv.bWinHookAllow) {
+    				HookWinEvents(2);
+    			} else if (!lbFarExists && srv.hWinHook) {
+    				HookWinEvents(0);
+    			}
+			}
 		}
 	}
 
@@ -3042,6 +3113,22 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
             }
         } break;
         
+        case CECMD_ATTACH2GUI:
+        {
+			HWND hDc = Attach2Gui(1000);
+			if (hDc != NULL) {
+				int nOutSize = sizeof(CESERVER_REQ_HDR) + sizeof(DWORD);
+				*out = (CESERVER_REQ*)Alloc(nOutSize,1);
+				if (*out != NULL) {
+					(*out)->hdr.nCmd = 0;
+					(*out)->hdr.nSrcThreadId = GetCurrentThreadId();
+					(*out)->hdr.nSize = nOutSize;
+					(*out)->hdr.nVersion = CESERVER_REQ_VER;
+					(*out)->dwData[0] = (DWORD)hDc;
+					lbRc = TRUE;
+				}
+			}
+        } break;
     }
     
     if (gbInRecreateRoot) gbInRecreateRoot = FALSE;
@@ -3050,13 +3137,20 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 
 BOOL HookWinEvents(int abEnabled)
 {
-	if (abEnabled == 1) {
+	if (srv.dwWinEventThread != 0 && GetCurrentThreadId() != srv.dwWinEventThread) {
+		// Функция должна выполняться в потоке с GetMessage
+       	PostThreadMessage(srv.dwWinEventThread, srv.nMsgHookEnableDisable, TRUE, 0);
+       	
+        return TRUE;
+	}
+	
+	if (abEnabled == 1 || abEnabled == 2) {
 		if (srv.hWinHook != NULL) {
 			PRINT_COMSPEC(L"!!! HookWinEvents was already set !!!\n", 0);
 			return TRUE;
 		}
 		
-		if (!srv.hWinHook) {
+		if ((abEnabled == 2) && !srv.hWinHook) {
 			// "Ловим" все консольные события (кроме Start/End)
 			srv.hWinHook = SetWinEventHook(EVENT_CONSOLE_CARET,EVENT_CONSOLE_LAYOUT,
 				NULL, (WINEVENTPROC)WinEventProc, 0,0, WINEVENT_OUTOFCONTEXT /*| WINEVENT_SKIPOWNPROCESS ?*/);
@@ -3065,6 +3159,12 @@ BOOL HookWinEvents(int abEnabled)
         		PRINT_COMSPEC(L"!!! HookWinEvents FAILED, ErrCode=0x%08X\n", GetLastError());
         		return FALSE;
 			}
+			
+			PRINT_COMSPEC(L"WinEventsHook was enabled\n", 0);
+			#ifdef SHOW_STARTED_MSGBOX
+			wchar_t szTitle[60]; wsprintf(szTitle, L"ConEmuC(PID=%i)", GetCurrentProcessId());
+			MessageBox(NULL,L"WinEventsHook was enabled",szTitle,0);
+			#endif
         }
 
 		if (!srv.hWinHookStartEnd) {
@@ -3076,19 +3176,26 @@ BOOL HookWinEvents(int abEnabled)
         		PRINT_COMSPEC(L"!!! HookWinEvents(StartEnd) FAILED, ErrCode=0x%08X\n", GetLastError());
         		return FALSE;
 			}
+			
+			PRINT_COMSPEC(L"WinEventsHook(StartEnd) was enabled\n", 0);
         }
-
-        PRINT_COMSPEC(L"WinEventsHook was enabled\n", 0);
         
-	}
+	} else
 	if (abEnabled != 1) {
 		if (abEnabled == -1 && srv.hWinHookStartEnd) {
 	        UnhookWinEvent(srv.hWinHookStartEnd); srv.hWinHookStartEnd = NULL;
 	        PRINT_COMSPEC(L"WinEventsHook(StartEnd) was disabled\n", 0);
 		}
 	    if (srv.hWinHook) {
+			#ifdef _DEBUG
+			BOOL lbUnhookRc = 
+			#endif
 	        UnhookWinEvent(srv.hWinHook); srv.hWinHook = NULL;
 	        PRINT_COMSPEC(L"WinEventsHook was disabled\n", 0);
+			#ifdef SHOW_STARTED_MSGBOX
+			wchar_t szTitle[60]; wsprintf(szTitle, L"ConEmuC(PID=%i)", GetCurrentProcessId());
+			MessageBox(NULL,L"WinEventsHook was disabled",szTitle,0);
+			#endif
 	    }
 	    return TRUE;
 	}
@@ -3101,8 +3208,13 @@ DWORD WINAPI WinEventThread(LPVOID lpvParam)
     //DWORD dwErr = 0;
     //HANDLE hStartedEvent = (HANDLE)lpvParam;
     
+    // На всякий случай
+    srv.dwWinEventThread = GetCurrentThreadId();
     
-    // "Ловим" все консольные события
+    
+    // По умолчанию - ловим только StartStop.
+    // При появлении в консоли FAR'а - включим все события
+    srv.bWinHookAllow = TRUE; srv.nWinHookMode = 1;
     HookWinEvents ( 1 );
     
     //
@@ -3112,7 +3224,8 @@ DWORD WINAPI WinEventThread(LPVOID lpvParam)
     while (GetMessage(&lpMsg, NULL, 0, 0))
     {
     	if (lpMsg.message == srv.nMsgHookEnableDisable) {
-			HookWinEvents ( (lpMsg.wParam != 0) ? 1 : 0 );
+    		srv.bWinHookAllow = (lpMsg.wParam != 0);
+			HookWinEvents ( srv.bWinHookAllow ? srv.nWinHookMode : 0 );
     		continue;
     	}
         MCHKHEAP
@@ -3165,7 +3278,7 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
         }
         #endif
         
-        if (gnBufferHeight != 0) {
+        if (gnBufferHeight != 0 || srv.nWinHookMode != 2) {
         	if (srv.nMaxFPS>0) {
         		dwTimeout = 1000 / srv.nMaxFPS;
         		if (dwTimeout < 50) dwTimeout = 50;
@@ -3325,7 +3438,7 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 void WINAPI WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime)
 {
     if (hwnd != ghConWnd) {
-        _ASSERTE(hwnd); // по идее, тут должен быть хэндл консольного окна, проверим
+        // если это не наше окно - выходим
         return;
     }
 

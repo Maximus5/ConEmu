@@ -451,15 +451,15 @@ int ShowPluginMenu789()
 		return -1;
 
 	FarMenuItemEx items[] = {
-		{MIF_SELECTED,  InfoW789->GetMsg(InfoW789->ModuleNumber,3)},
-		{0,             InfoW789->GetMsg(InfoW789->ModuleNumber,4)},
+		{ConEmuHwnd ? MIF_SELECTED : MIF_DISABLE,  InfoW789->GetMsg(InfoW789->ModuleNumber,3)},
+		{ConEmuHwnd ? 0 : MIF_DISABLE,             InfoW789->GetMsg(InfoW789->ModuleNumber,4)},
 		{MIF_SEPARATOR},
-		{0,             InfoW789->GetMsg(InfoW789->ModuleNumber,6)},
-		{0,             InfoW789->GetMsg(InfoW789->ModuleNumber,7)},
-		{0,             InfoW789->GetMsg(InfoW789->ModuleNumber,8)},
-		{0,             InfoW789->GetMsg(InfoW789->ModuleNumber,9)},
+		{ConEmuHwnd ? 0 : MIF_DISABLE,             InfoW789->GetMsg(InfoW789->ModuleNumber,6)},
+		{ConEmuHwnd ? 0 : MIF_DISABLE,             InfoW789->GetMsg(InfoW789->ModuleNumber,7)},
+		{ConEmuHwnd ? 0 : MIF_DISABLE,             InfoW789->GetMsg(InfoW789->ModuleNumber,8)},
+		{ConEmuHwnd ? 0 : MIF_DISABLE,             InfoW789->GetMsg(InfoW789->ModuleNumber,9)},
 		{MIF_SEPARATOR},
-		{ConEmuHwnd ? MIF_DISABLE : 0, InfoW789->GetMsg(InfoW789->ModuleNumber,13)}
+		{ConEmuHwnd ? MIF_DISABLE : MIF_SELECTED,  InfoW789->GetMsg(InfoW789->ModuleNumber,13)}
 	};
 	int nCount = sizeof(items)/sizeof(items[0]);
 
