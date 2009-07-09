@@ -3920,7 +3920,7 @@ int CRealConsole::GetTabCount()
     if (!this)
         return 0;
         
-    return min(mn_tabsCount,1);
+    return max(mn_tabsCount,1);
 }
 
 void CRealConsole::CheckPanelTitle()

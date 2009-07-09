@@ -469,11 +469,19 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tF
         case CER_DC:
         case CER_CONSOLE:
         {
+			// Учесть высоту закладок (табов)
             rcShift = CalcMargins(CEM_TAB);
             AddMargins(rc, rcShift);
-            //rcShift = CalcMargins(CEM_BACK);
-            //AddMargins(rc, rcShift);
-            //TODO: покрутки нет, Однако остается незанятое поле (внизу и справа)
+
+			// Для корректного деления на размер знакоместа...
+            if (gSet.FontWidth()==0 || gSet.FontHeight()==0)
+                gConEmu.pVCon->InitDC(false, true); // инициализировать ширину шрифта по умолчанию
+			//rc.right ++;
+			//int nShift = (gSet.FontWidth() - 1) / 2; if (nShift < 1) nShift = 1;
+			//rc.right += nShift;
+			// Если есть вкладки
+			//if (rcShift.top || rcShift.bottom || )
+			//nShift = (gSet.FontWidth() - 1) / 2; if (nShift < 1) nShift = 1;
 
             if (gConEmu.isNtvdm()) {
                 // NTVDM устанавливает ВЫСОТУ экранного буфера... в 25/28/43/50 строк
@@ -507,13 +515,15 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tF
             // Если нужен размер консоли в символах сразу делим и выходим
             if (tWhat == CER_CONSOLE) {
                 //MBoxAssert((gSet.Log Font.lfWidth!=0) && (gSet.Log Font.lfHeight!=0));
-                if (gSet.FontWidth()==0 || gSet.FontHeight()==0)
-                    gConEmu.pVCon->InitDC(false, true); // инициализировать ширину шрифта по умолчанию
                 
-                COORD cr = gConEmu.pVCon->ClientToConsole( (rc.right - rc.left), (rc.bottom - rc.top) );
+				//2009-07-09 - ClientToConsole использовать нельзя, т.к. после его
+				//  приближений высота может получиться больше Ideal, а ширина - меньше
+                //COORD cr = gConEmu.pVCon->ClientToConsole( (rc.right - rc.left), (rc.bottom - rc.top) );
                 //rc.right = (rc.right - rc.left) / gSet.Log Font.lfWidth;
                 //rc.bottom = (rc.bottom - rc.top) / gSet.Log Font.lfHeight;
-                rc.right = cr.X; rc.bottom = cr.Y;
+                //rc.right = cr.X; rc.bottom = cr.Y;
+				rc.right = (rc.right - rc.left + 1) / gSet.FontWidth();
+				rc.bottom = (rc.bottom - rc.top) / gSet.FontHeight();
                 rc.left = 0; rc.top = 0;
 
 #ifdef _DEBUG
@@ -923,7 +933,10 @@ bool CConEmuMain::SetWindowMode(uint inMode)
         {
             DEBUGLOGFILE("SetWindowMode(rNormal)\n");
 
-            if (pVCon && !pVCon->RCon()->SetConsoleSize(MakeCoord(gSet.wndWidth,gSet.wndHeight))) {
+			// Расчитать размер по оптимальному WindowRect
+			RECT rcCon = CalcRect(CER_CONSOLE, mrc_Ideal, CER_MAIN);
+			if (!rcCon.right || !rcCon.bottom) { rcCon.right = gSet.wndWidth; rcCon.bottom = gSet.wndHeight; }
+            if (pVCon && !pVCon->RCon()->SetConsoleSize(MakeCoord(rcCon.right, rcCon.bottom))) {
                 mb_PassSysCommand = false;
                 goto wrap;
             }

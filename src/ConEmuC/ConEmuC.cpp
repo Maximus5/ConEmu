@@ -663,11 +663,12 @@ void Help()
         L"This is a console part of ConEmu product.\n"
         L"Usage: ConEmuC [switches] /C <command line, passed to %%COMSPEC%%>\n"
         L"   or: ConEmuC [switches] /CMD <program with arguments, far.exe for example>\n"
+        L"   or: ConEmuC /ATTACH /NOCMD\n"
         L"   or: ConEmuC /?\n"
         L"Switches:\n"
         L"        /CONFIRM  - confirm closing console on program termination\n"
         L"        /ATTACH   - auto attach to ConEmu GUI\n"
-        L"        /NOCMD    - attach current console to GUI\n"
+        L"        /NOCMD    - attach current (existing) console to GUI\n"
         L"        /B{W|H|Z} - define buffer width, height, window height\n"
         L"        /LOG      - create (debug) log file\n"
     );

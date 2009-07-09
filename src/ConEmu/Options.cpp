@@ -1051,7 +1051,8 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
     case IDCANCEL:
     case IDCLOSE:
         if (isTabs==1) gConEmu.ForceShowTabs(TRUE); else
-        if (isTabs==0) gConEmu.ForceShowTabs(FALSE); // там еще есть '==2', но его здесь не обрабатываем
+        if (isTabs==0) gConEmu.ForceShowTabs(FALSE); else
+			TabBar.Update();
         SendMessage(ghOpWnd, WM_CLOSE, 0, 0);
         break;
 
