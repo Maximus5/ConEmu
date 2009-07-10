@@ -156,6 +156,7 @@ std::vector<HANDLE> ghCommandThreads;
 HANDLE ghServerTerminateEvent = NULL;
 HANDLE ghPluginSemaphore = NULL;
 wchar_t gsFarLang[64];
+BOOL FindServerCmd(DWORD nServerCmd, DWORD &dwServerPID);
 
 //#if defined(__GNUC__)
 //typedef HWND (APIENTRY *FGetConsoleWindow)();
@@ -756,7 +757,7 @@ void InitHWND(HWND ahFarHwnd)
 	wsprintfW(gszRootKey, L"Software\\%s", (gFarVersion.dwVerMajor==2) ? L"FAR2" : L"FAR");
 	// Нужно учесть, что FAR мог запуститься с ключом /u (выбор конфигурации)
 	wchar_t* pszUserSlash = gszRootKey+wcslen(gszRootKey);
-	wcscpy(pszUserSlash, L"\\Users\\");
+	lstrcpyW(pszUserSlash, L"\\Users\\");
 	wchar_t* pszUserAdd = pszUserSlash+wcslen(pszUserSlash);
 	if (GetEnvironmentVariable(L"FARUSER", pszUserAdd, MAX_PATH) == 0)
 		*pszUserSlash = 0;
@@ -1398,6 +1399,9 @@ void CheckResources()
 	GetEnvironmentVariable(L"FARLANG", szLang, 63);
 	if (lstrcmpW(szLang, gsFarLang))
 		InitResources();
+		
+	DWORD dwServerPID = 0;
+	FindServerCmd(CECMD_FARLOADED, dwServerPID);
 }
 
 // Передать в ConEmu строки с ресурсами
@@ -1890,9 +1894,12 @@ void ShowPluginMenu()
 	}
 }
 
-BOOL Attach2Gui()
+BOOL FindServerCmd(DWORD nServerCmd, DWORD &dwServerPID)
 {
-	DWORD nProcessCount = 0, dwServerPID = 0, nProcesses[100] = {0};
+	BOOL lbRc = FALSE;
+	DWORD nProcessCount = 0, nProcesses[100] = {0};
+	
+	dwServerPID = 0;
 	
 	typedef DWORD (WINAPI* FGetConsoleProcessList)(LPDWORD lpdwProcessList, DWORD dwProcessCount);
 	FGetConsoleProcessList pfnGetConsoleProcessList = NULL;
@@ -1922,13 +1929,16 @@ BOOL Attach2Gui()
             				&& prc.th32ProcessID == nProcesses[i])
         				{
         					if (lstrcmpiW(prc.szExeFile, L"conemuc.exe")==0) {
-        						CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_ATTACH2GUI, sizeof(CESERVER_REQ_HDR));
+        						CESERVER_REQ* pIn = ExecuteNewCmd(nServerCmd, sizeof(CESERVER_REQ_HDR)+sizeof(DWORD));
+        						pIn->dwData[0] = GetCurrentProcessId();
         						CESERVER_REQ* pOut = ExecuteSrvCmd(prc.th32ProcessID, pIn);
         						if (pOut) dwServerPID = prc.th32ProcessID;
         						ExecuteFreeResult(pIn); ExecuteFreeResult(pOut);
         						// Если команда успешно выполнена - выходим
-        						if (dwServerPID)
+        						if (dwServerPID) {
+        							lbRc = TRUE;
         							break;
+    							}
         					}
             			}
             		}
@@ -1938,11 +1948,17 @@ BOOL Attach2Gui()
 		}
 	}
 	
-	if (dwServerPID) {
+	return lbRc;
+}
+	
+BOOL Attach2Gui()
+{
+	DWORD dwServerPID = 0;
+	
+	if (FindServerCmd(CECMD_ATTACH2GUI, dwServerPID) && dwServerPID != 0) {
 		// "Server was already started. PID=%i. Exiting...\n", dwServerPID
 		return TRUE;
 	}
-
 	
 	// Create process, with flag /Attach GetCurrentProcessId()
 	// Sleep for sometimes, try InitHWND(hConWnd); several times
@@ -1957,7 +1973,7 @@ BOOL Attach2Gui()
 	
 	szExe[0] = L'"';
 	if ((nLen = GetEnvironmentVariableW(L"ConEmuDir", szExe+1, MAX_PATH)) > 0) {
-		if (szExe[nLen] != L'\\') wcscat(szExe, L"\\");
+		if (szExe[nLen] != L'\\') { szExe[nLen+1] = L'\\'; szExe[nLen+2] = 0; }
 	} else if ((nLen=GetModuleFileName(0, szExe+1, MAX_PATH)) > 0) {
 		wchar_t* pszSlash = wcsrchr ( szExe, L'\\' );
 		if (pszSlash) pszSlash[1] = 0;

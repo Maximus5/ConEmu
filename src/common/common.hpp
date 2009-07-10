@@ -114,6 +114,7 @@ extern wchar_t gszDbgModLabel[6];
 #define CECMD_GETNEWCONPARM 16 // Доп.аргументы для создания новой консоли (шрифт, размер,...)
 #define CECMD_SETSIZESYNC   17 // Синхронно, ждет (но недолго), пока FAR обработает изменение размера (то есть отрисуется)
 #define CECMD_ATTACH2GUI    18 // Выполнить подключение видимой (отключенной) консоли к GUI. Без аргументов
+#define CECMD_FARLOADED     19 // Посылвается плагином в сервер
 
 #define CESERVER_REQ_VER    10
 

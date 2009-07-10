@@ -885,7 +885,18 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
             wprintf (L"Attach to GUI was requested, but there is no console processes:\n%s\n", GetCommandLineW());
             return CERR_CARGUMENT;
     	}
-    
+    	// ≈сли cmd.exe запущен из cmd.exe (в консоли уже больше двух процессов) - ничего не делать
+    	if (nProcCount > 2) {
+    		// » ругатьс€ только под отладчиком
+    		wchar_t szProc[128] ={0}, szTmp[10]; //wsprintfW(szProc, L"%i, %i, %i", nProcesses[0], nProcesses[1], nProcesses[2]);
+    		for (DWORD n=0; n<nProcCount; n++) {
+    			if (n) lstrcatW(szProc, L", ");
+    			lstrcatW(szProc, _ltow(nProcesses[0], szTmp, 10));
+    		}
+    		PRINT_COMSPEC(L"Attach to GUI was requested, but there is more then 2 console processes: %s\n", szProc);
+    		return CERR_CARGUMENT;
+    	}
+
         wchar_t* pszNewCmd = new wchar_t[1];
         if (!pszNewCmd) {
             wprintf (L"Can't allocate 1 wchar!\n");
@@ -1379,9 +1390,9 @@ void RequestBufferHeight()
 
             AllowSetForegroundWindow(nGuiPID);
             
-            gnBufferHeight = pOut->StartStopRet.nBufferHeight;
-            gcrBufferSize.X = pOut->StartStopRet.nWidth;
-            gcrBufferSize.Y = pOut->StartStopRet.nHeight;
+            gnBufferHeight  = (SHORT)pOut->StartStopRet.nBufferHeight;
+            gcrBufferSize.X = (SHORT)pOut->StartStopRet.nWidth;
+            gcrBufferSize.Y = (SHORT)pOut->StartStopRet.nHeight;
 
             if (gnRunMode == RM_SERVER) {
             	SMALL_RECT rcNil = {0};
@@ -1566,10 +1577,96 @@ HWND Attach2Gui(DWORD nTimeout)
 {
     HWND hGui = NULL, hDcWnd = NULL;
     UINT nMsg = RegisterWindowMessage(CONEMUMSG_ATTACH);
+    BOOL bNeedStartGui = FALSE;
+    DWORD dwErr = 0;
+    
+    hGui = FindWindowEx(NULL, hGui, VirtualConsoleClassMain, NULL);
+    if (!hGui)
+    {
+    	DWORD dwGuiPID = 0;
+		HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS,0);
+		if (hSnap != INVALID_HANDLE_VALUE) {
+			PROCESSENTRY32 prc = {sizeof(PROCESSENTRY32)};
+			if (Process32First(hSnap, &prc)) {
+				do {
+            		for (UINT i = 0; i < srv.nProcessCount; i++) {
+    					if (lstrcmpiW(prc.szExeFile, L"conemu.exe")==0) {
+    						dwGuiPID = prc.th32ProcessID;
+    						break;
+    					}
+            		}
+					if (dwGuiPID) break;
+				} while (Process32Next(hSnap, &prc));
+			}
+			CloseHandle(hSnap);
+			
+			if (!dwGuiPID) bNeedStartGui = TRUE;
+		}
+	}
+    
+    
+    if (bNeedStartGui) {
+		wchar_t szSelf[MAX_PATH+100];
+		wchar_t* pszSelf = szSelf+1, *pszSlash = NULL;
+		if (!GetModuleFileName(NULL, pszSelf, MAX_PATH)) {
+			dwErr = GetLastError();
+			wprintf (L"GetModuleFileName failed, ErrCode=0x%08X\n", dwErr);
+			return NULL;
+		}
+		pszSlash = wcsrchr(pszSelf, L'\\');
+		if (!pszSlash) {
+			wprintf (L"Invalid GetModuleFileName, backslash not found!\n%s\n", pszSelf);
+			return NULL;
+		}
+		pszSlash++;
+		if (wcschr(pszSelf, L' ')) {
+			*(--pszSelf) = L'"';
+			lstrcpyW(pszSlash, L"ConEmu.exe\"");
+		} else {
+			lstrcpyW(pszSlash, L"ConEmu.exe");
+		}
+		
+		lstrcatW(pszSelf, L" /detached");
+		
+		PROCESS_INFORMATION pi; memset(&pi, 0, sizeof(pi));
+		STARTUPINFOW si; memset(&si, 0, sizeof(si)); si.cb = sizeof(si);
+        
+		PRINT_COMSPEC(L"Starting GUI:\n%s\n", pszSelf);
+    
+		// CREATE_NEW_PROCESS_GROUP - низ€, перестает работать Ctrl-C
+		BOOL lbRc = CreateProcessW(NULL, pszSelf, NULL,NULL, TRUE, 
+				NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi);
+		dwErr = GetLastError();
+		if (!lbRc)
+		{
+			wprintf (L"Can't create process, ErrCode=0x%08X! Command to be executed:\n%s\n", dwErr, pszSelf);
+			return NULL;
+		}
+		//delete psNewCmd; psNewCmd = NULL;
+		AllowSetForegroundWindow(pi.dwProcessId);
+		PRINT_COMSPEC(L"Detached GUI was started. PID=%i, Attaching...\n", pi.dwProcessId);
+		WaitForInputIdle(pi.hProcess, nTimeout);
+		SafeCloseHandle(pi.hProcess); SafeCloseHandle(pi.hThread);
+		
+		if (nTimeout > 1000) nTimeout = 1000;
+    }
+    
+    
     DWORD dwStart = GetTickCount(), dwDelta = 0, dwCur = 0;
+    BOOL lbNeedSetFont = TRUE;
+    // Ќужно сбросить. ћогли уже искать...
+    hGui = NULL;
     // ≈сли с первого раза не получитс€ (GUI мог еще не загрузитьс€) пробуем еще
     while (!hDcWnd && dwDelta <= nTimeout) {
         while ((hGui = FindWindowEx(NULL, hGui, VirtualConsoleClassMain, NULL)) != NULL) {
+        	if (lbNeedSetFont) {
+        		lbNeedSetFont = FALSE;
+        		
+                if (ghLogSize) LogSize(NULL, ":SetConsoleFontSizeTo.before");
+                SetConsoleFontSizeTo(ghConWnd, srv.nConFontHeight, srv.nConFontWidth, srv.szConsoleFont);
+                if (ghLogSize) LogSize(NULL, ":SetConsoleFontSizeTo.after");
+        	}
+        
             hDcWnd = (HWND)SendMessage(hGui, nMsg, (WPARAM)ghConWnd, (LPARAM)gnSelfPID);
             if (hDcWnd != NULL) {
                 ghConEmuWnd = hGui;
@@ -1582,6 +1679,9 @@ HWND Attach2Gui(DWORD nTimeout)
         }
         if (hDcWnd) break;
 
+        dwCur = GetTickCount(); dwDelta = dwCur - dwStart;
+        if (dwDelta > nTimeout) break;
+        
         Sleep(500);
         dwCur = GetTickCount(); dwDelta = dwCur - dwStart;
     }
@@ -1632,6 +1732,12 @@ int ServerInit()
 
 
     if (gbNoCreateProcess && gbAttachMode) {
+    	if (!IsWindowVisible(ghConWnd)) {
+			PRINT_COMSPEC(L"Console windows is not visible. Attach is unavailable. Exiting...\n", 0);
+			gbAlwaysConfirmExit = FALSE;
+			return CERR_RUNNEWCONSOLE;
+    	}
+    	
 		if (srv.dwRootProcess == 0) {
     		// Ќужно попытатьс€ определить PID корневого процесса.
     		// –одительским может быть cmd (comspec, запущенный из FAR)
@@ -1715,7 +1821,7 @@ int ServerInit()
 				*(--pszSelf) = L'"';
 				lstrcatW(pszSelf, L"\"");
 			}
-
+			
 			wsprintf(pszSelf+wcslen(pszSelf), L" /ATTACH /PID=%i", dwParentPID);
 
 			PROCESS_INFORMATION pi; memset(&pi, 0, sizeof(pi));
@@ -3129,6 +3235,14 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 					lbRc = TRUE;
 				}
 			}
+        } break;
+        
+        case CECMD_FARLOADED:
+        {
+        	if (gbAlwaysConfirmExit && gbAutoDisableConfirmExit && srv.dwRootProcess == in.dwData[0]) {
+				// FAR нормально запустилс€, считаем что все ок и подтверждени€ закрыти€ консоли не потребуетс€
+				gbAutoDisableConfirmExit = FALSE; gbAlwaysConfirmExit = FALSE;
+        	}
         } break;
     }
     

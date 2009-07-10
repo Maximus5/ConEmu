@@ -62,7 +62,7 @@ bool GetImageSubsystem(const wchar_t *FileName,DWORD& ImageSubsystem)
 			if(DOSHeader.e_magic!=IMAGE_DOS_SIGNATURE)
 			{
 				const wchar_t *pszExt = wcsrchr(FileName, L'.');
-				if (wcsicmp(pszExt, L".com") == 0) {
+				if (lstrcmpiW(pszExt, L".com") == 0) {
 					ImageSubsystem = IMAGE_SUBSYSTEM_DOS_EXECUTABLE;
 					Result=true;
 				}
