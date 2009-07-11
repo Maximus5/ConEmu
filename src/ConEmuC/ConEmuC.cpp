@@ -1,9 +1,14 @@
 
-//#ifndef _WIN32_WINNT
-//#define _WIN32_WINNT 0x0500
-//#endif
-
-//#define CONEMUC_DLL_MODE
+#ifdef _DEBUG
+//  Раскомментировать, чтобы сразу после запуска процесса (conemuc.exe) показать MessageBox, чтобы прицепиться дебаггером
+//  #define SHOW_STARTED_MSGBOX
+// Раскомментировать для вывода в консоль информации режима Comspec
+    #define PRINT_COMSPEC(f,a) wprintf(f,a)
+#elif defined(__GNUC__)
+    #define PRINT_COMSPEC(f,a) //wprintf(f,a)
+#else
+	#define PRINT_COMSPEC(f,a)
+#endif
 
 #define CSECTION_NON_RAISE
 
@@ -24,17 +29,6 @@ WARNING("Обязательно получить код и имя родительского процесса");
 WARNING("При запуске как ComSpec получаем ошибку: {crNewSize.X>=MIN_CON_WIDTH && crNewSize.Y>=MIN_CON_HEIGHT}");
 //E:\Source\FARUnicode\trunk\unicode_far\Debug.32.vc\ConEmuC.exe /c tools\gawk.exe -f .\scripts\gendate.awk
 
-
-#ifdef _DEBUG
-//  Раскомментировать, чтобы сразу после запуска процесса (conemuc.exe) показать MessageBox, чтобы прицепиться дебаггером
-//  #define SHOW_STARTED_MSGBOX
-// Раскомментировать для вывода в консоль информации режима Comspec
-    #define PRINT_COMSPEC(f,a) wprintf(f,a)
-#elif defined(__GNUC__)
-    #define PRINT_COMSPEC(f,a) //wprintf(f,a)
-#else
-	#define PRINT_COMSPEC(f,a)
-#endif
 
 #ifdef _DEBUG
 wchar_t gszDbgModLabel[6] = {0};
@@ -3239,7 +3233,7 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
         
         case CECMD_FARLOADED:
         {
-        	if (gbAlwaysConfirmExit && gbAutoDisableConfirmExit && srv.dwRootProcess == in.dwData[0]) {
+        	if (gbAutoDisableConfirmExit && srv.dwRootProcess == in.dwData[0]) {
 				// FAR нормально запустился, считаем что все ок и подтверждения закрытия консоли не потребуется
 				gbAutoDisableConfirmExit = FALSE; gbAlwaysConfirmExit = FALSE;
         	}

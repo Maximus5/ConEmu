@@ -357,6 +357,12 @@ void TabBarClass::Deactivate()
 
 void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
 {
+	#ifdef _DEBUG
+	if (this != &TabBar) {
+		_ASSERTE(this == &TabBar);
+	}
+	#endif
+
     /*if (!_active)
     {
         return;
@@ -380,6 +386,12 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
     // Выполняться должно только в основной нити, так что CriticalSection не нужна
     m_Tab2VCon.clear();
 
+	#ifdef _DEBUG
+	if (this != &TabBar) {
+		_ASSERTE(this == &TabBar);
+	}
+	#endif
+
 	if (!TabBar.IsActive() && gSet.isTabs) {
 		int nTabs = 0;
 		for (V = 0; V < MAX_CONSOLE_COUNT && nTabs < 2; V++) {
@@ -397,13 +409,37 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
 		if (nTabs <= 1)
 			Deactivate();
 	}
-    
+
+	#ifdef _DEBUG
+	if (this != &TabBar) {
+		_ASSERTE(this == &TabBar);
+	}
+	#endif
+
     for (V = 0; V < MAX_CONSOLE_COUNT; V++) {
         if (!(pVCon = gConEmu.GetVCon(V))) continue;
+		CRealConsole *pRCon = pVCon->RCon();
         
         BOOL lbActive = gConEmu.isActive(pVCon);
         
-        for (I = 0; pVCon->RCon()->GetTab(I, &tab); I++) {
+        for (I = 0; TRUE; I++) {
+			#ifdef _DEBUG
+			if (this != &TabBar) {
+				_ASSERTE(this == &TabBar);
+			}
+			MCHKHEAP;
+			#endif
+
+			if (!pRCon->GetTab(I, &tab))
+				break;
+
+			#ifdef _DEBUG
+			if (this != &TabBar) {
+				_ASSERTE(this == &TabBar);
+			}
+			MCHKHEAP;
+			#endif
+
             PrepareTab(&tab);
             
             vct.pVCon = pVCon;
@@ -416,6 +452,12 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
                 nCurTab = tabIdx;
             
             tabIdx++;
+
+			#ifdef _DEBUG
+			if (this != &TabBar) {
+				_ASSERTE(this == &TabBar);
+			}
+			#endif
         }
     }
     if (tabIdx == 0) // хотя бы "Console" покажем
@@ -986,7 +1028,12 @@ void TabBarClass::CreateRebar()
 
 void TabBarClass::PrepareTab(ConEmuTab* pTab)
 {
-	_ASSERTE(this == &TabBar);
+	#ifdef _DEBUG
+	if (this != &TabBar) {
+		_ASSERTE(this == &TabBar);
+	}
+	#endif
+
     // get file name
     TCHAR dummy[MAX_PATH*2];
     TCHAR fileName[MAX_PATH+4];

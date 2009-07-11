@@ -1,11 +1,8 @@
-/* ****************************************** 
-   Changes history 
-   Maximus5: убрал все static
-   2009-01-31 Maximus5
-	*) Переделать все вызовы InfoW.Control() – они радикально поменялись в последних юникодных версиях.
-	*) ACTL_GETWINDOWINFO заменить на более эффективную ACTL_GETSHORTWINDOWINFO, тогда и не надо FREE вызывать. Это там, где строковые данные об окне не используются. А где используются, после ACTL_GETWINDOWINFO надо освобождать.
-	*) После ECTL_GETINFO надо вызывать ECTL_FREEINFO.
-****************************************** */
+
+#ifdef _DEBUG
+//  Раскомментировать, чтобы сразу после загрузки плагина показать MessageBox, чтобы прицепиться дебаггером
+//  #define SHOW_STARTED_MSGBOX
+#endif
 
 //#include <stdio.h>
 #include <windows.h>
@@ -171,8 +168,8 @@ BOOL WINAPI DllMain( HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserve
 		case DLL_PROCESS_ATTACH:
 			{
 				_ASSERTE(FAR_X_VER<FAR_Y_VER);
-				#ifdef _DEBUG
-				//if (!IsDebuggerPresent()) MessageBoxA(GetForegroundWindow(), "ConEmu.dll loaded", "ConEmu plugin", 0);
+				#ifdef SHOW_STARTED_MSGBOX
+				if (!IsDebuggerPresent()) MessageBoxA(GetForegroundWindow(), "ConEmu.dll loaded", "ConEmu plugin", 0);
 				#endif
 				//#if defined(__GNUC__)
 				//GetConsoleWindow = (FGetConsoleWindow)GetProcAddress(GetModuleHandle(L"kernel32.dll"),"GetConsoleWindow");

@@ -3903,11 +3903,11 @@ BOOL CRealConsole::GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab)
     wchar_t* pszAmp = pTab->Name;
     int nCurLen = lstrlenW(pTab->Name), nMaxLen = countof(pTab->Name)-1;
     while ((pszAmp = wcschr(pszAmp, L'&')) != NULL) {
-        if (nCurLen == nMaxLen) {
+        if (nCurLen >= (nMaxLen - 2)) {
             *pszAmp = L'_';
             pszAmp ++;
         } else {
-            wmemmove(pszAmp+1, pszAmp, nCurLen-(pTab->Name-pszAmp)-1);
+            wmemmove(pszAmp+1, pszAmp, nCurLen-(pszAmp-pTab->Name)-1);
             nCurLen ++;
             pszAmp += 2;
         }
