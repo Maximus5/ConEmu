@@ -326,12 +326,12 @@ IDD_DIALOGM DIALOGEX 0, 0, 341, 259
 STYLE DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 EXSTYLE WS_EX_TOPMOST
 CAPTION "Settings..."
-FONT 8, "MS Shell Dlg", 0, 0, 0x1
+FONT 8, "MS Shell Dlg"
 BEGIN
     DEFPUSHBUTTON   "Save settings",bSaveSettings,268,242,70,14
     CONTROL         "Always update con. handle (Telnet, etc.)",
-                    cbAutoConHandle,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,
-                    244,168,8
+                    cbAutoConHandle,"Button",BS_AUTOCHECKBOX | NOT 
+                    WS_VISIBLE | WS_TABSTOP,8,244,168,8
     CONTROL         "Tab1",tabMain,"SysTabControl32",WS_TABSTOP,4,4,334,234
 END
 
@@ -550,6 +550,7 @@ END
 
 STRINGTABLE DISCARDABLE 
 BEGIN
+    cbCursorBlink           "When 'Blinking' is ON - cursor blinks\nwith standard cursor blink rate."
     cbTabSelf               "Handle CtrlTab and CtrlShiftTab internally\n(by ConEmu). This keystrokes will not be sent\nto console window, bu You can easily\nswitch between consoles (panels)."
     cbTabLazy               "When checked - real window switching\nwill be performed on Ctrl depress"
     cbTabRecent             "Switch first between recent tabs.\nYou may still switch between tabs in\nstandard manner using Left/Right\n(after CtrlTab), while Ctrl is still presses."
@@ -567,6 +568,7 @@ END
 STRINGTABLE DISCARDABLE 
 BEGIN
     cbFixFarBorders         "You can specify additional font for drawing FAR borders.\nI.e. Main font is 'Fixedsys', additional is 'Lucida Console'.\n3s - enhance scrollbars and progresbars."
+    cbCursorColor           "ON - cursor emulates console behaviour (sort of colors inversion)\nOFF - cursor is white (color#15) on dark backgrounds,\nand black (color#0) on light backgrounds"
 END
 
 #endif    // English (U.S.) resources

@@ -1730,41 +1730,69 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, COORD pos, UINT dwSize)
 	//	gConEmu.m_Child.SetCaret ( -1 ); // Если был создан системный курсор - он разрушится
 	//}
 
+	// Теперь в rect нужно отобразить курсор (XOR'ом попробуем?)
+	if (gSet.isCursorColor)
+	{
+		HBRUSH hBr = CreateSolidBrush(0xC0C0C0);
+		HBRUSH hOld = (HBRUSH)SelectObject ( hPaintDC, hBr );
 
-    if (gSet.isCursorColor)
-    {
-        SetTextColor(hPaintDC, Cursor.foreColor);
-        SetBkColor(hPaintDC, Cursor.bgColor);
+		BitBlt(hPaintDC, rect.left, rect.top, rect.right-rect.left, rect.bottom-rect.top, hDC, 0,0,
+			PATINVERT);
+
+		SelectObject ( hPaintDC, hOld );
+		DeleteObject ( hBr );
+
+		return;
     }
-    else
-    {
-        SetTextColor(hPaintDC, Cursor.foreColor);
-        SetBkColor(hPaintDC, Cursor.foreColorNum < 5 ? gSet.Colors[15] : gSet.Colors[0]);
-    }
+
+
+	//lbDark = Cursor.foreColorNum < 5; // Было раньше
+	BOOL lbIsProgr = isCharProgress(Cursor.ch[0]);
     
-    HFONT hOldFont = NULL;
+	BOOL lbDark = FALSE;
+	DWORD clr = (Cursor.ch[0] != ucBox100 && Cursor.ch[0] != ucBox75) ? Cursor.bgColor : Cursor.foreColor;
+	BYTE R = (clr & 0xFF);
+	BYTE G = (clr & 0xFF00) >> 8;
+	BYTE B = (clr & 0xFF0000) >> 16;
+	lbDark = (R <= 0x80) && (G <= 0x80) && (B <= 0x80);
+	clr = lbDark ? gSet.Colors[15] : gSet.Colors[0];
 
-    if (gSet.FontCharSet() == OEM_CHARSET && !isCharBorder(Cursor.ch[0]))
-    {
-        hOldFont = (HFONT)SelectObject(hPaintDC, gSet.mh_Font);
+	if (gSet.isFixFarBorders == 2 && lbIsProgr) {
+		HBRUSH hBr = CreateSolidBrush(clr);
+		FillRect(hPaintDC, &rect, hBr);
+		DeleteObject ( hBr );
+	}
+	else
+	{
+		SetTextColor(hPaintDC, Cursor.bgColor);
+		SetBkColor(hPaintDC, clr);
 
-        char tmp[2];
-        WideCharToMultiByte(CP_OEMCP, 0, Cursor.ch, 1, tmp, 1, 0, 0);
-        ExtTextOutA(hPaintDC, pix.X, pix.Y,
-            ETO_CLIPPED | ETO_OPAQUE, &rect, tmp, 1, 0);
-            //((drawImage && (Cursor.foreColorNum < 2) && !vis) ? 0 : ETO_OPAQUE),&rect, tmp, 1, 0);
-    }
-    else
-    {
-        if (gSet.isFixFarBorders && isCharBorder(Cursor.ch[0]))
-            hOldFont = (HFONT)SelectObject(hPaintDC, gSet.mh_Font2);
-        else
-            hOldFont = (HFONT)SelectObject(hPaintDC, gSet.mh_Font);
+		HFONT hOldFont = NULL;
 
-        ExtTextOut(hPaintDC, pix.X, pix.Y,
-            ETO_CLIPPED | ETO_OPAQUE, &rect, Cursor.ch, 1, 0);
-            //((drawImage && (Cursor.foreColorNum < 2) && !vis) ? 0 : ETO_OPAQUE), &rect, Cursor.ch, 1, 0);
-    }
+		if (gSet.FontCharSet() == OEM_CHARSET && !isCharBorder(Cursor.ch[0]))
+		{
+			hOldFont = (HFONT)SelectObject(hPaintDC, gSet.mh_Font);
+
+			char tmp[2];
+			WideCharToMultiByte(CP_OEMCP, 0, Cursor.ch, 1, tmp, 1, 0, 0);
+			ExtTextOutA(hPaintDC, pix.X, pix.Y,
+				ETO_CLIPPED | ETO_OPAQUE, &rect, tmp, 1, 0);
+				//((drawImage && (Cursor.foreColorNum < 2) && !vis) ? 0 : ETO_OPAQUE),&rect, tmp, 1, 0);
+		}
+		else
+		{
+			if (gSet.isFixFarBorders && isCharBorder(Cursor.ch[0]))
+				hOldFont = (HFONT)SelectObject(hPaintDC, gSet.mh_Font2);
+			else
+				hOldFont = (HFONT)SelectObject(hPaintDC, gSet.mh_Font);
+
+			ExtTextOut(hPaintDC, pix.X, pix.Y,
+				ETO_CLIPPED | ETO_OPAQUE, &rect, Cursor.ch, 1, 0);
+				//((drawImage && (Cursor.foreColorNum < 2) && !vis) ? 0 : ETO_OPAQUE), &rect, Cursor.ch, 1, 0);
+		}
+
+		SelectObject(hPaintDC, hOldFont);
+	}
 }
 
 void CVirtualConsole::UpdateCursor(bool& lRes)
@@ -1973,7 +2001,7 @@ void CVirtualConsole::Paint()
 
             int CurChar = csbi.dwCursorPosition.Y * TextWidth + csbi.dwCursorPosition.X;
             Cursor.ch[1] = 0;
-            GetCharAttr(mpsz_ConChar[CurChar], mpn_ConAttr[CurChar], Cursor.ch[0], Cursor.bgColorNum, Cursor.foreColorNum);
+            GetCharAttr(mpsz_ConChar[CurChar], mpn_ConAttr[CurChar], Cursor.ch[0], Cursor.foreColorNum, Cursor.bgColorNum);
             Cursor.foreColor = gSet.Colors[Cursor.foreColorNum];
             Cursor.bgColor = gSet.Colors[Cursor.bgColorNum];
 

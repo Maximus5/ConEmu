@@ -1001,6 +1001,7 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
             *psNewCmd = pszNewCmd;
             // 26.06.2009 Maks - чтобы сразу выйти - вся обработка будет в новой консоли.
             gbAlwaysConfirmExit = FALSE;
+			srv.nProcessStartTick = GetTickCount() - 2*CHECK_ROOTSTART_TIMEOUT;
             return 0;
         }
 
@@ -1313,6 +1314,7 @@ int ComspecInit()
         PRINT_COMSPEC(L"New console created. PID=%i. Exiting...\n", pi.dwProcessId);
         SafeCloseHandle(pi.hProcess); SafeCloseHandle(pi.hThread);
         gbAlwaysConfirmExit = FALSE;
+		srv.nProcessStartTick = GetTickCount() - 2*CHECK_ROOTSTART_TIMEOUT;
         return CERR_RUNNEWCONSOLE;
     }
     
@@ -1729,6 +1731,7 @@ int ServerInit()
     	if (!IsWindowVisible(ghConWnd)) {
 			PRINT_COMSPEC(L"Console windows is not visible. Attach is unavailable. Exiting...\n", 0);
 			gbAlwaysConfirmExit = FALSE;
+			srv.nProcessStartTick = GetTickCount() - 2*CHECK_ROOTSTART_TIMEOUT;
 			return CERR_RUNNEWCONSOLE;
     	}
     	
@@ -1779,6 +1782,7 @@ int ServerInit()
     			AllowSetForegroundWindow(dwServerPID);
     			PRINT_COMSPEC(L"Server was already started. PID=%i. Exiting...\n", dwServerPID);
     			gbAlwaysConfirmExit = FALSE;
+				srv.nProcessStartTick = GetTickCount() - 2*CHECK_ROOTSTART_TIMEOUT;
     			return CERR_RUNNEWCONSOLE;
 			}
 	        
@@ -1837,6 +1841,7 @@ int ServerInit()
 			PRINT_COMSPEC(L"Modeless server was started. PID=%i. Exiting...\n", pi.dwProcessId);
 			SafeCloseHandle(pi.hProcess); SafeCloseHandle(pi.hThread);
 			gbAlwaysConfirmExit = FALSE;
+			srv.nProcessStartTick = GetTickCount() - 2*CHECK_ROOTSTART_TIMEOUT;
 			return CERR_RUNNEWCONSOLE;
 
 		} else {
@@ -2233,6 +2238,7 @@ BOOL CheckProcessCount(BOOL abForce/*=FALSE*/)
 			} else {
 				// Корневой процесс все еще работает, считаем что все ок и подтверждения закрытия консоли не потребуется
 				gbAutoDisableConfirmExit = FALSE; gbAlwaysConfirmExit = FALSE;
+				srv.nProcessStartTick = GetTickCount() - 2*CHECK_ROOTSTART_TIMEOUT;
 			}
 		}
 	}
@@ -3236,6 +3242,7 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
         	if (gbAutoDisableConfirmExit && srv.dwRootProcess == in.dwData[0]) {
 				// FAR нормально запустился, считаем что все ок и подтверждения закрытия консоли не потребуется
 				gbAutoDisableConfirmExit = FALSE; gbAlwaysConfirmExit = FALSE;
+				srv.nProcessStartTick = GetTickCount() - 2*CHECK_ROOTSTART_TIMEOUT;
         	}
         } break;
     }
