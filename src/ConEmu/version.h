@@ -1,2 +1,2 @@
-#define CONEMUVERS "2009.7.11a\0"
+#define CONEMUVERS "2009.7.11b\0"
 #define CONEMUVERN 2009,7,11,0

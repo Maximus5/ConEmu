@@ -10,6 +10,11 @@
 #include "../ConEmu/afxres.h"
 #include "../ConEmu/version.h"
 
+// Manifest 4 GCC
+#if defined(__GNUC__)
+1 24 DISCARDABLE "../conemu/conemu.gcc.manifest"
+#endif
+
 /////////////////////////////////////////////////////////////////////////////
 #undef APSTUDIO_READONLY_SYMBOLS
 
@@ -37,6 +42,11 @@ END
 BEGIN
     "#include ""../ConEmu/afxres.h""\r\n"
     "#include ""../ConEmu/version.h""\r\n"
+    "\r\n"
+    "// Manifest 4 GCC\r\n"
+    "#if defined(__GNUC__)\r\n"
+    "1 24 DISCARDABLE ""conemu.gcc.manifest""\r\n"
+    "#endif\r\n"
     "\0"
 END
 
