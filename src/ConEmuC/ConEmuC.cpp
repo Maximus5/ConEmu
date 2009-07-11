@@ -462,6 +462,44 @@ int main()
                 NORMAL_PRIORITY_CLASS/*|CREATE_NEW_PROCESS_GROUP*/, 
                 NULL, NULL, &si, &pi);
         dwErr = GetLastError();
+		if (!lbRc && dwErr == 0x000002E4) {
+			PRINT_COMSPEC(L"Vista: The requested operation requires elevation (ErrCode=0x%08X).\n", dwErr)
+			// Vista: The requested operation requires elevation.
+			LPCWSTR pszCmd = gpszRunCmd;
+			wchar_t szVerb[10], szExec[MAX_PATH+1];
+			if (NextArg(pszCmd, szExec) == 0) {
+				SHELLEXECUTEINFO sei = {sizeof(SHELLEXECUTEINFO)};
+				sei.hwnd = ghConEmuWnd;
+				sei.fMask = SEE_MASK_NO_CONSOLE; //SEE_MASK_NOCLOSEPROCESS; -- смысла ждать завершения нет - процесс запускается в новой консоли
+				sei.lpVerb = wcscpy(szVerb, L"open");
+				sei.lpFile = szExec;
+				sei.lpParameters = pszCmd;
+				sei.nShow = SW_SHOWNORMAL;
+				if ((lbRc = ShellExecuteEx(&sei)) == FALSE) {
+					dwErr = GetLastError();
+				} else {
+					// OK
+					//pi.hProcess = sei.hProcess;
+					//typedef DWORD (WINAPI* FGetProcessId)(HANDLE);
+					//FGetProcessId fGetProcessId = NULL;
+					//HMODULE hKernel = GetModuleHandle(L"kernel32.dll");
+					//if (hKernel)
+					//	fGetProcessId = (FGetProcessId)GetProcAddress(hKernel, "GetProcessId");
+					//if (fGetProcessId) {
+					//	pi.dwProcessId = fGetProcessId(sei.hProcess);
+					//} else {
+					//	// Это конечно неправильно, но произойти ошибка 0x000002E4 может только в Vista,
+					//	// а там есть функция GetProcessId, так что эта ветка активироваться не должна
+					//	_ASSERTE(fGetProcessId!=NULL);
+					//	pi.dwProcessId = GetCurrentProcessId();
+					//}
+					pi.hProcess = NULL; pi.dwProcessId = 0;
+					pi.hThread = NULL; pi.dwThreadId = 0;
+					gbAlwaysConfirmExit = FALSE;
+					iRc = 0; goto wrap;
+				}
+			}
+		}
     }
     if (!lbRc)
     {
