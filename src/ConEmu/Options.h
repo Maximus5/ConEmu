@@ -13,6 +13,7 @@ public:
     
 	LONG FontWidth();
 	LONG FontHeight();
+	LONG BorderFontWidth();
 	BYTE FontCharSet();
 private:
     LOGFONT LogFont, LogFont2;

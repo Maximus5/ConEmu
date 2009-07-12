@@ -7,6 +7,10 @@
 #define ucBox75  0x2593
 #define ucBox100 0x2588
 
+/* Spaces */
+#define ucSpace 0x20
+#define ucNoBreakSpace 0xA0
+
 /* Frames */
 #define ucBoxDblVert      0x2551
 #define ucBoxDblDownRight 0x2554

@@ -1265,7 +1265,7 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
 
     case cbMonospace:
         isForceMonospace = !isForceMonospace;
-
+		RecreateFont(tFontSizeX3);
         gConEmu.Update(true);
         break;
 
@@ -2268,9 +2268,11 @@ HFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 
 		if (mh_Font2) { DeleteObject(mh_Font2); mh_Font2 = NULL; }
 
-		int width = FontSizeX2 ? FontSizeX2 : inFont->lfWidth;
+		//int width = FontSizeX2 ? FontSizeX2 : inFont->lfWidth;
+		LogFont2.lfWidth = FontSizeX2 ? FontSizeX2 : inFont->lfWidth;
+		LogFont2.lfHeight = abs(inFont->lfHeight);
 		// Иначе рамки прерывистыми получаются... поставил NONANTIALIASED_QUALITY
-		mh_Font2 = CreateFont(abs(inFont->lfHeight), abs(width), 0, 0, FW_NORMAL,
+		mh_Font2 = CreateFont(LogFont2.lfHeight, LogFont2.lfWidth, 0, 0, FW_NORMAL,
 			0, 0, 0, DEFAULT_CHARSET, OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS, 
 			NONANTIALIASED_QUALITY/*ANTIALIASED_QUALITY*/, 0, LogFont2.lfFaceName);
     }
@@ -2389,6 +2391,12 @@ LONG CSettings::FontHeight()
 {
 	_ASSERTE(LogFont.lfHeight);
 	return LogFont.lfHeight;
+}
+
+LONG CSettings::BorderFontWidth()
+{
+	_ASSERTE(LogFont2.lfWidth);
+	return LogFont2.lfWidth;
 }
 
 BYTE CSettings::FontCharSet()

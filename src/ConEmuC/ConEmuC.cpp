@@ -463,7 +463,7 @@ int main()
                 NULL, NULL, &si, &pi);
         dwErr = GetLastError();
 		if (!lbRc && dwErr == 0x000002E4) {
-			PRINT_COMSPEC(L"Vista: The requested operation requires elevation (ErrCode=0x%08X).\n", dwErr)
+			PRINT_COMSPEC(L"Vista: The requested operation requires elevation (ErrCode=0x%08X).\n", dwErr);
 			// Vista: The requested operation requires elevation.
 			LPCWSTR pszCmd = gpszRunCmd;
 			wchar_t szVerb[10], szExec[MAX_PATH+1];

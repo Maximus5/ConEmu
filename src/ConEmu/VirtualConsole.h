@@ -140,6 +140,8 @@ protected:
 	std::vector<PARTBRUSHES> m_PartBrushes;
 	HBRUSH PartBrush(wchar_t ch, SHORT nBackIdx, SHORT nForeIdx);
 	BOOL mb_InPaintCall;
+	//
+	void DistributeSpaces(wchar_t* ConCharLine, WORD* ConAttrLine, DWORD* ConCharXLine, int &j, int &j2, int &end);
 };
 
 #include <pshpack1.h>
