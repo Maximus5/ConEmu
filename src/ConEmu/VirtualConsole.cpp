@@ -1208,11 +1208,12 @@ void CVirtualConsole::UpdateText(bool isForce, bool updateText, bool updateCurso
 			// [%] ClearType, proportional fonts
 			if (end >= 0  // Если есть хоть какие-то изменения
 				&& end < (int)(TextWidth - 1) // до конца строки
-				&& (ConCharLine[end+1] == ucSpace || ConCharLine[end+1] == ucNoBreakSpace) // будем отрисовывать все проблеы
+				&& (ConCharLine[end+1] == ucSpace || ConCharLine[end+1] == ucNoBreakSpace || isCharProgress(ConCharLine[end+1])) // будем отрисовывать все проблеы
 				)
 			{
 				int n = TextWidth - 1;
-				while ((end < n) && (ConCharLine[end+1] == ucSpace || ConCharLine[end+1] == ucNoBreakSpace))
+				while ((end < n) 
+				&& (ConCharLine[end+1] == ucSpace || ConCharLine[end+1] == ucNoBreakSpace || isCharProgress(ConCharLine[end+1])))
 					end++;
 			}
             if (end < j)
@@ -1235,10 +1236,11 @@ void CVirtualConsole::UpdateText(bool isForce, bool updateText, bool updateCurso
             }
 			// [%] ClearType, proportional fonts
 			if (j > 0 // если с начала строки
-				&& (ConCharLine[j-1] == ucSpace || ConCharLine[j-1] == ucNoBreakSpace) // есть пробелы
+				&& (ConCharLine[j-1] == ucSpace || ConCharLine[j-1] == ucNoBreakSpace || isCharProgress(ConCharLine[j-1])) // есть пробелы
 				)
 			{
-				while ((j > 0) && (ConCharLine[j-1] == ucSpace || ConCharLine[j-1] == ucNoBreakSpace))
+				while ((j > 0)
+			    && (ConCharLine[j-1] == ucSpace || ConCharLine[j-1] == ucNoBreakSpace || isCharProgress(ConCharLine[j-1])))
 					j--;
 			}
             if (j >= end) // по идее это условие никогда не должно выполняться
@@ -1738,7 +1740,7 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, COORD pos, UINT dwSize)
 	BYTE R = (clr & 0xFF);
 	BYTE G = (clr & 0xFF00) >> 8;
 	BYTE B = (clr & 0xFF0000) >> 16;
-	lbDark = (R <= 0x80) && (G <= 0x80) && (B <= 0x80);
+	lbDark = (R <= 0xC0) && (G <= 0xC0) && (B <= 0xC0);
 	clr = lbDark ? gSet.Colors[15] : gSet.Colors[0];
 
 	if (gSet.isFixFarBorders == 2 && lbIsProgr) {
