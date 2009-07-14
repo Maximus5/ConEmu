@@ -2074,7 +2074,9 @@ void CSettings::Performance(UINT nID, BOOL bEnd)
         if (ghOpWnd) {
             // Performance
             wchar_t sTemp[128];
-            swprintf(sTemp, _T("Performance counters (%.3f GHz)"), ((double)(mn_Freq/1000)/1000000));
+            //Нихрена это не мегагерцы. Например на "AMD Athlon 64 X2 1999 MHz" здесь отображается "0.004 GHz"
+            //swprintf(sTemp, _T("Performance counters (%.3f GHz)"), ((double)(mn_Freq/1000)/1000000));
+            swprintf(sTemp, _T("Performance counters (%I64i)"), ((i64)(mn_Freq/1000)));
             SetDlgItemText(hInfo, nID, sTemp);
             
             for (nID=tPerfFPS; mn_Freq && nID<=tPerfInterval; nID++) {

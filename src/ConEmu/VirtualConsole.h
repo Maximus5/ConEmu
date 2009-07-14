@@ -53,9 +53,6 @@ public:
 	WORD  *mpn_ConAttr, *mpn_ConAttrSave;
 	DWORD *ConCharX;
 	TCHAR *Spaces; WORD nSpaceCount;
-	
-	// координаты панелей в символах
-	RECT mr_LeftPanel, mr_RightPanel;
 
 	CONSOLE_SELECTION_INFO SelectionInfo;
 

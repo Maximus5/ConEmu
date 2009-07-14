@@ -65,6 +65,8 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
     mp_tabs = NULL; mn_tabsCount = 0; ms_PanelTitle[0] = 0; mn_ActiveTab = 0;
     memset(&m_PacketQueue, 0, sizeof(m_PacketQueue));
 
+    mr_LeftPanel = mr_RightPanel = MakeRect(-1,-1);
+
     wcscpy(Title, L"ConEmu");
     wcscpy(ms_PanelTitle, Title);
     mn_Progress = -1; mn_PreWarningProgress = -1; // ѕроцентов нет
@@ -2333,6 +2335,7 @@ void CRealConsole::ApplyConsoleInfo(CESERVER_REQ* pInfo)
                     pnLine += nLineLen;
                 MCHKHEAP
             }
+			FindPanels();
         } else {
             DEBUGSTRPKT(L"                   *** Expected full dump, but Relative received!\n");
         }
@@ -2350,6 +2353,8 @@ void CRealConsole::ApplyConsoleInfo(CESERVER_REQ* pInfo)
                 memmove(con.pConChar, lpCur, OneBufferSize); lpCur += OneBufferSize;
                 memmove(con.pConAttr, lpCur, OneBufferSize); lpCur += OneBufferSize;
                 MCHKHEAP
+
+				FindPanels();
             }
         }
     }
@@ -3143,6 +3148,8 @@ BOOL CRealConsole::InitBuffers(DWORD OneBufferSize)
 
     con.nTextWidth = nNewWidth;
     con.nTextHeight = nNewHeight;
+
+	FindPanels(TRUE);
 
     //InitDC(false,true);
 
@@ -4937,4 +4944,79 @@ HWND CRealConsole::ConWnd()
 {
     if (!this) return NULL;
     return hConWnd;
+}
+
+TODO("≈сли панели реально есть (это можно узнать из плагина) то нужно гашение правой/левой панели");
+void CRealConsole::FindPanels(BOOL abResetOnly/* = FALSE */)
+{
+    mr_LeftPanel = mr_RightPanel = MakeRect(-1,-1);
+    if (isFar() && con.nTextHeight >= MIN_CON_HEIGHT && con.nTextWidth >= MIN_CON_WIDTH)
+    {
+        uint nY = 0;
+        if (con.pConChar[0] == L' ')
+            nY ++; // скорее всего, перва€ строка - меню
+        else if (con.pConChar[0] == L'R' && con.pConChar[1] == L' ')
+            nY ++; // скорее всего, перва€ строка - меню, при включенной записи макроса
+            
+        uint nIdx = nY*con.nTextWidth;
+        
+        if (( (con.pConChar[nIdx] == L'[' && (con.pConChar[nIdx+1]>=L'0' && con.pConChar[nIdx+1]<=L'9')) // открыто несколько редакторов/вьюверов
+              || (con.pConChar[nIdx] == 0x2554 && con.pConChar[nIdx+1] == 0x2550) // доп.окон нет, только рамка
+            ) && con.pConChar[nIdx+con.nTextWidth] == 0x2551)
+        {
+            LPCWSTR pszCenter = con.pConChar + nIdx;
+            LPCWSTR pszLine = con.pConChar + nIdx;
+            uint nCenter = 0;
+            while ( (pszCenter = wcsstr(pszCenter+1, L"\x2557\x2554")) != NULL ) {
+                nCenter = pszCenter - pszLine;
+                if (con.pConChar[nIdx+con.nTextWidth+nCenter] == 0x2551 && con.pConChar[nIdx+con.nTextWidth+nCenter+1] == 0x2551) {
+                    break; // нашли
+                }
+            }
+            
+            uint nBottom = con.nTextHeight - 1;
+            while (nBottom > 4) {
+                if (con.pConChar[con.nTextWidth*nBottom] == 0x255A && con.pConChar[con.nTextWidth*(nBottom-1)] == 0x2551)
+                    break;
+                nBottom --;
+            }
+            
+            if (pszCenter && nBottom > 4) {
+                mr_LeftPanel.left = 1;
+                mr_LeftPanel.top = nY + 2;
+                mr_LeftPanel.right = nCenter - 1;
+                mr_LeftPanel.bottom = nBottom - 3;
+                
+                mr_RightPanel.left = nCenter + 3;
+                mr_RightPanel.top = nY + 2;
+                mr_RightPanel.right = con.nTextWidth - 2;
+                mr_RightPanel.bottom = mr_LeftPanel.bottom;
+            }
+        }
+    }
+}
+
+int CRealConsole::CoordInPanel(COORD cr)
+{
+	if (!this)
+		return 0;
+
+	if (CoordInRect(cr, mr_LeftPanel))
+		return 1;
+	if (CoordInRect(cr, mr_RightPanel))
+		return 2;
+	return 0;
+}
+
+void CRealConsole::GetPanelRect(BOOL abRight, RECT* prc)
+{
+	if (!this) {
+		*prc = MakeRect(-1,-1);
+		return;
+	}
+
+	if (abRight)
+		*prc = mr_RightPanel;
+	else
+		*prc = mr_LeftPanel;
 }

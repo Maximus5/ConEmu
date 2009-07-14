@@ -86,8 +86,6 @@ CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
 	mb_PaintRequested = FALSE; mb_PaintLocked = FALSE;
     //InitializeCriticalSection(&csCON); ncsTCON = 0;
 
-    mr_LeftPanel = mr_RightPanel = MakeRect(-1,-1);
-
 	mb_InPaintCall = FALSE;
 
 
@@ -927,52 +925,7 @@ bool CVirtualConsole::UpdatePrepare(bool isForce, HDC *ahDc, MSectionLock *pSDC)
     HEAPVAL
  
     
-    // Определить координаты панелей
-    mr_LeftPanel = mr_RightPanel = MakeRect(-1,-1);
-    if (gConEmu.isFar() && TextHeight >= MIN_CON_HEIGHT && TextWidth >= MIN_CON_WIDTH)
-    {
-        uint nY = 0;
-        if (mpsz_ConChar[0] == L' ')
-            nY ++; // скорее всего, первая строка - меню
-        else if (mpsz_ConChar[0] == L'R' && mpsz_ConChar[1] == L' ')
-            nY ++; // скорее всего, первая строка - меню, при включенной записи макроса
-            
-        uint nIdx = nY*TextWidth;
-        
-        if (( (mpsz_ConChar[nIdx] == L'[' && (mpsz_ConChar[nIdx+1]>=L'0' && mpsz_ConChar[nIdx+1]<=L'9')) // открыто несколько редакторов/вьюверов
-              || (mpsz_ConChar[nIdx] == 0x2554 && mpsz_ConChar[nIdx+1] == 0x2550) // доп.окон нет, только рамка
-            ) && mpsz_ConChar[nIdx+TextWidth] == 0x2551)
-        {
-            LPCWSTR pszCenter = mpsz_ConChar + nIdx;
-            LPCWSTR pszLine = mpsz_ConChar + nIdx;
-            uint nCenter = 0;
-            while ( (pszCenter = wcsstr(pszCenter+1, L"\x2557\x2554")) != NULL ) {
-                nCenter = pszCenter - pszLine;
-                if (mpsz_ConChar[nIdx+TextWidth+nCenter] == 0x2551 && mpsz_ConChar[nIdx+TextWidth+nCenter+1] == 0x2551) {
-                    break; // нашли
-                }
-            }
-            
-            uint nBottom = TextHeight - 1;
-            while (nBottom > 4) {
-                if (mpsz_ConChar[TextWidth*nBottom] == 0x255A && mpsz_ConChar[TextWidth*(nBottom-1)] == 0x2551)
-                    break;
-                nBottom --;
-            }
-            
-            if (pszCenter && nBottom > 4) {
-                mr_LeftPanel.left = 1;
-                mr_LeftPanel.top = nY + 2;
-                mr_LeftPanel.right = nCenter - 1;
-                mr_LeftPanel.bottom = nBottom - 3;
-                
-                mr_RightPanel.left = nCenter + 3;
-                mr_RightPanel.top = nY + 2;
-                mr_RightPanel.right = TextWidth - 2;
-                mr_RightPanel.bottom = mr_LeftPanel.bottom;
-            }
-        }
-    }
+    // Определить координаты панелей (Переехало в CRealConsole)
 
     // get cursor info
     GetConsoleCursorInfo(/*hConOut(),*/ &cinf);
@@ -2023,15 +1976,26 @@ void CVirtualConsole::UpdateInfo()
     }
 
     TCHAR szSize[128];
-    wsprintf(szSize, _T("%ix%i"), mp_RCon->TextWidth(), mp_RCon->TextHeight());
-    SetDlgItemText(gSet.hInfo, tConSizeChr, szSize);
-    wsprintf(szSize, _T("%ix%i"), Width, Height);
-    SetDlgItemText(gSet.hInfo, tConSizePix, szSize);
-
-    wsprintf(szSize, _T("(%i, %i)-(%i, %i), %ix%i"), mr_LeftPanel.left+1, mr_LeftPanel.top+1, mr_LeftPanel.right+1, mr_LeftPanel.bottom+1, mr_LeftPanel.right-mr_LeftPanel.left+1, mr_LeftPanel.bottom-mr_LeftPanel.top+1);
-    SetDlgItemText(gSet.hInfo, tPanelLeft, szSize);
-    wsprintf(szSize, _T("(%i, %i)-(%i, %i), %ix%i"), mr_RightPanel.left+1, mr_RightPanel.top+1, mr_RightPanel.right+1, mr_RightPanel.bottom+1, mr_RightPanel.right-mr_RightPanel.left+1, mr_RightPanel.bottom-mr_RightPanel.top+1);
-    SetDlgItemText(gSet.hInfo, tPanelRight, szSize);
+	if (!mp_RCon) {
+		SetDlgItemText(gSet.hInfo, tConSizeChr, L"(None)");
+		SetDlgItemText(gSet.hInfo, tConSizePix, L"(None)");
+		
+		SetDlgItemText(gSet.hInfo, tPanelLeft, L"(None)");
+		SetDlgItemText(gSet.hInfo, tPanelRight, L"(None)");
+	} else {
+		wsprintf(szSize, _T("%ix%i"), mp_RCon->TextWidth(), mp_RCon->TextHeight());
+		SetDlgItemText(gSet.hInfo, tConSizeChr, szSize);
+		wsprintf(szSize, _T("%ix%i"), Width, Height);
+		SetDlgItemText(gSet.hInfo, tConSizePix, szSize);
+		
+		RECT rcPanel;
+		RCon()->GetPanelRect(FALSE, &rcPanel);
+		wsprintf(szSize, _T("(%i, %i)-(%i, %i), %ix%i"), rcPanel.left+1, rcPanel.top+1, rcPanel.right+1, rcPanel.bottom+1, rcPanel.right-rcPanel.left+1, rcPanel.bottom-rcPanel.top+1);
+		SetDlgItemText(gSet.hInfo, tPanelLeft, szSize);
+		RCon()->GetPanelRect(TRUE, &rcPanel);
+		wsprintf(szSize, _T("(%i, %i)-(%i, %i), %ix%i"), rcPanel.left+1, rcPanel.top+1, rcPanel.right+1, rcPanel.bottom+1, rcPanel.right-rcPanel.left+1, rcPanel.bottom-rcPanel.top+1);
+		SetDlgItemText(gSet.hInfo, tPanelRight, szSize);
+	}
 }
 
 void CVirtualConsole::Box(LPCTSTR szText)

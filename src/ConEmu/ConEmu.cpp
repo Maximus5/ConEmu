@@ -3963,7 +3963,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
             mouse.LClkCon = MakeCoord(conX,conY);
             mouse.LClkDC = MakeCoord(winX,winY);
             if (!isConSelectMode() && isFilePanel() && pVCon &&
-                (CoordInRect(mouse.LClkCon,pVCon->mr_LeftPanel) || CoordInRect(mouse.LClkCon,pVCon->mr_RightPanel)))
+				pVCon->RCon()->CoordInPanel(mouse.LClkCon))
             {
                 //SetCapture(ghWndDC); --2009-03-14
                 cursor.x = LOWORD(lParam);
@@ -4011,7 +4011,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 
             //if (isFilePanel()) // Maximus5
             if (!isConSelectMode() && isFilePanel() && pVCon &&
-                (CoordInRect(mouse.RClkCon,pVCon->mr_LeftPanel) || CoordInRect(mouse.RClkCon,pVCon->mr_RightPanel)))
+				pVCon->RCon()->CoordInPanel(mouse.RClkCon))
             {
                 if (gSet.isDragEnabled & DRAG_R_ALLOWED) {
                     if (!gSet.nRDragKey || isPressed(gSet.nRDragKey)) {

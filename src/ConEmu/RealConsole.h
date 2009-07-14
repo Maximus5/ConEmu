@@ -109,6 +109,7 @@ public:
     
 private:
     HWND    hConWnd;
+
 public:
 	HWND    ConWnd();
 
@@ -174,6 +175,8 @@ public:
 	LPCWSTR GetCmd();
 	short GetProgress(BOOL* rpbError);
 	void EnableComSpec(DWORD anFarPID, BOOL abSwitch);
+	int CoordInPanel(COORD cr);
+	void GetPanelRect(BOOL abRight, RECT* prc);
 
 public:
     // Вызываются из CVirtualConsole
@@ -290,4 +293,7 @@ private:
 	DWORD mn_LastInvalidateTick;
 	//
 	HWND hPictureView; BOOL mb_PicViewWasHidden;
+	// координаты панелей в символах
+	RECT mr_LeftPanel, mr_RightPanel;
+	void FindPanels(BOOL abResetOnly=FALSE);
 };
