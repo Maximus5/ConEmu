@@ -165,7 +165,6 @@ PHANDLER_ROUTINE HandlerRoutine = NULL;
 #endif
 
 int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd); // Разбор параметров командной строки
-int NextArg(LPCWSTR &asCmdLine, wchar_t* rsArg/*[MAX_PATH+1]*/);
 void Help();
 void ExitWaitForKey(WORD vkKey, LPCWSTR asConfirm, BOOL abNewLine);
 
@@ -317,10 +316,8 @@ BOOL gbInRecreateRoot = FALSE;
 #define CERR_PROCESSTIMEOUT 114
 #define CERR_REFRESHEVENT 115
 #define CERR_CREATEREFRESHTHREAD 116
-#define CERR_CMDLINE 117
 #define CERR_HELPREQUESTED 118
 #define CERR_ATTACHFAILED 119
-#define CERR_CMDLINEEMPTY 120
 #define CERR_RUNNEWCONSOLE 121
 
 
@@ -467,7 +464,7 @@ int main()
 			// Vista: The requested operation requires elevation.
 			LPCWSTR pszCmd = gpszRunCmd;
 			wchar_t szVerb[10], szExec[MAX_PATH+1];
-			if (NextArg(pszCmd, szExec) == 0) {
+			if (NextArg(&pszCmd, szExec) == 0) {
 				SHELLEXECUTEINFO sei = {sizeof(SHELLEXECUTEINFO)};
 				sei.hwnd = ghConEmuWnd;
 				sei.fMask = SEE_MASK_NO_CONSOLE; //SEE_MASK_NOCLOSEPROCESS; -- смысла ждать завершения нет - процесс запускается в новой консоли
@@ -758,7 +755,7 @@ BOOL IsNeedCmd(LPCWSTR asCmdLine, BOOL *rbNeedCutStartEndQuot)
 			// отбросить первую кавычку в: "C:\GCC\msys\bin\make.EXE -f "makefile" COMMON="../../../plugins/common""
 			LPCWSTR pwszTemp = pwszCopy + 1;
 			// Получим первую команду (исполняемый файл?)
-			if ((iRc = NextArg(pwszTemp, szArg)) != 0) {
+			if ((iRc = NextArg(&pwszTemp, szArg)) != 0) {
 				//Parsing command line failed
 				return TRUE;
 			}
@@ -773,7 +770,7 @@ BOOL IsNeedCmd(LPCWSTR asCmdLine, BOOL *rbNeedCutStartEndQuot)
 
 	// Получим первую команду (исполняемый файл?)
 	if (!lbFirstWasGot) {
-		if ((iRc = NextArg(pwszCopy, szArg)) != 0) {
+		if ((iRc = NextArg(&pwszCopy, szArg)) != 0) {
 			//Parsing command line failed
 			return TRUE;
 		}
@@ -838,7 +835,7 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
     gnRunMode = RM_UNDEFINED;
     
     
-    while ((iRc = NextArg(asCmdLine, szArg)) == 0)
+    while ((iRc = NextArg(&asCmdLine, szArg)) == 0)
     {
         if (wcscmp(szArg, L"/?")==0 || wcscmp(szArg, L"-?")==0 || wcscmp(szArg, L"/h")==0 || wcscmp(szArg, L"-h")==0) {
             Help();
@@ -1044,7 +1041,7 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
         }
 
         //pwszCopy = asCmdLine;
-        //if ((iRc = NextArg(pwszCopy, szArg)) != 0) {
+        //if ((iRc = NextArg(&pwszCopy, szArg)) != 0) {
         //    wprintf (L"Parsing command line failed:\n%s\n", asCmdLine);
         //    return iRc;
         //}
@@ -1187,52 +1184,52 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
     return 0;
 }
 
-int NextArg(LPCWSTR &asCmdLine, wchar_t* rsArg/*[MAX_PATH+1]*/)
-{
-    LPCWSTR psCmdLine = asCmdLine, pch = NULL;
-    wchar_t ch = *psCmdLine;
-    int nArgLen = 0;
-    
-    while (ch == L' ' || ch == L'\t' || ch == L'\r' || ch == L'\n') ch = *(++psCmdLine);
-    if (ch == 0) return CERR_CMDLINEEMPTY;
-
-    // аргумент начинается с "
-    if (ch == L'"') {
-        psCmdLine++;
-        pch = wcschr(psCmdLine, L'"');
-        if (!pch) return CERR_CMDLINE;
-        while (pch[1] == L'"') {
-            pch += 2;
-            pch = wcschr(pch, L'"');
-            if (!pch) return CERR_CMDLINE;
-        }
-        // Теперь в pch ссылка на последнюю "
-    } else {
-        // До конца строки или до первого пробела
-        //pch = wcschr(psCmdLine, L' ');
-        // 09.06.2009 Maks - обломался на: cmd /c" echo Y "
-        pch = psCmdLine;
-        while (*pch && *pch!=L' ' && *pch!=L'"') pch++;
-        //if (!pch) pch = psCmdLine + wcslen(psCmdLine); // до конца строки
-    }
-    
-    nArgLen = pch - psCmdLine;
-    if (nArgLen > MAX_PATH) return CERR_CMDLINE;
-
-    // Вернуть аргумент
-    memcpy(rsArg, psCmdLine, nArgLen*sizeof(wchar_t));
-    rsArg[nArgLen] = 0;
-
-    psCmdLine = pch;
-    
-    // Finalize
-    ch = *psCmdLine; // может указывать на закрывающую кавычку
-    if (ch == L'"') ch = *(++psCmdLine);
-    while (ch == L' ' || ch == L'\t' || ch == L'\r' || ch == L'\n') ch = *(++psCmdLine);
-    asCmdLine = psCmdLine;
-    
-    return 0;
-}
+//int NextArg(LPCWSTR &asCmdLine, wchar_t* rsArg/*[MAX_PATH+1]*/)
+//{
+//    LPCWSTR psCmdLine = asCmdLine, pch = NULL;
+//    wchar_t ch = *psCmdLine;
+//    int nArgLen = 0;
+//    
+//    while (ch == L' ' || ch == L'\t' || ch == L'\r' || ch == L'\n') ch = *(++psCmdLine);
+//    if (ch == 0) return CERR_CMDLINEEMPTY;
+//
+//    // аргумент начинается с "
+//    if (ch == L'"') {
+//        psCmdLine++;
+//        pch = wcschr(psCmdLine, L'"');
+//        if (!pch) return CERR_CMDLINE;
+//        while (pch[1] == L'"') {
+//            pch += 2;
+//            pch = wcschr(pch, L'"');
+//            if (!pch) return CERR_CMDLINE;
+//        }
+//        // Теперь в pch ссылка на последнюю "
+//    } else {
+//        // До конца строки или до первого пробела
+//        //pch = wcschr(psCmdLine, L' ');
+//        // 09.06.2009 Maks - обломался на: cmd /c" echo Y "
+//        pch = psCmdLine;
+//        while (*pch && *pch!=L' ' && *pch!=L'"') pch++;
+//        //if (!pch) pch = psCmdLine + wcslen(psCmdLine); // до конца строки
+//    }
+//    
+//    nArgLen = pch - psCmdLine;
+//    if (nArgLen > MAX_PATH) return CERR_CMDLINE;
+//
+//    // Вернуть аргумент
+//    memcpy(rsArg, psCmdLine, nArgLen*sizeof(wchar_t));
+//    rsArg[nArgLen] = 0;
+//
+//    psCmdLine = pch;
+//    
+//    // Finalize
+//    ch = *psCmdLine; // может указывать на закрывающую кавычку
+//    if (ch == L'"') ch = *(++psCmdLine);
+//    while (ch == L' ' || ch == L'\t' || ch == L'\r' || ch == L'\n') ch = *(++psCmdLine);
+//    asCmdLine = psCmdLine;
+//    
+//    return 0;
+//}
 
 void ExitWaitForKey(WORD vkKey, LPCWSTR asConfirm, BOOL abNewLine)
 {
@@ -1402,7 +1399,7 @@ void RequestBufferHeight()
 		gnImageSubsystem = 0;
         LPCWSTR pszTemp = gpszRunCmd;
         wchar_t lsRoot[MAX_PATH+1] = {0};
-        if (0 == NextArg(pszTemp, lsRoot)) {
+        if (0 == NextArg(&pszTemp, lsRoot)) {
         	PRINT_COMSPEC(L"Starting: <%s>", lsRoot);
         	if (!GetImageSubsystem(lsRoot, gnImageSubsystem))
 				gnImageSubsystem = 0;

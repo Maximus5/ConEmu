@@ -127,7 +127,7 @@ protected:
 	static VOID CALLBACK WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime);
 	CVirtualConsole *mp_VCon[MAX_CONSOLE_COUNT], *pVCon;
 	bool mb_SkipSyncSize, mb_PassSysCommand;
-	wchar_t *mpsz_RecreateCmd;
+	//wchar_t *mpsz_RecreateCmd;
 	ITaskbarList3 *mp_TaskBar;
 	typedef BOOL (WINAPI* FRegisterShellHookWindow)(HWND);
 	RECT mrc_Ideal;
@@ -147,6 +147,7 @@ protected:
 	UINT mn_MsgOldCmdVer; BOOL mb_InShowOldCmdVersion;
 	UINT mn_MsgTabCommand;
 	UINT mn_MsgSheelHook;
+	UINT mn_ShellExecuteEx;
 	
 	//
 	static DWORD CALLBACK ServerThread(LPVOID lpvParam);
@@ -179,13 +180,14 @@ public:
 	bool ConActivate(int nCon);
 	bool ConActivateNext(BOOL abNext);
 	//bool ConmanAction(int nCmd);
-	CVirtualConsole* CreateCon(BOOL abStartDetached=FALSE, LPCWSTR asNewCmd=NULL);
+	CVirtualConsole* CreateCon(RConStartArgs *args);
 	BOOL CreateMainWindow();
 	void Destroy();
 	void DnDstep(LPCTSTR asMsg);
 	void EnableComSpec(BOOL abSwitch);
 	void ForceShowTabs(BOOL abShow);
 	DWORD GetActiveKeyboardLayout();
+	LRESULT GuiShellExecuteEx(SHELLEXECUTEINFO* lpShellExecute);
 	BOOL Init();
 	void InvalidateAll();
 	bool isActive(CVirtualConsole* apVCon);

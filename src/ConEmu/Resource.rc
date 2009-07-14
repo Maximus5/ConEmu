@@ -326,7 +326,7 @@ IDD_DIALOGM DIALOGEX 0, 0, 341, 259
 STYLE DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 EXSTYLE WS_EX_TOPMOST
 CAPTION "Settings..."
-FONT 8, "MS Shell Dlg"
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     DEFPUSHBUTTON   "Save settings",bSaveSettings,268,242,70,14
     CONTROL         "Always update con. handle (Telnet, etc.)",
@@ -459,7 +459,7 @@ STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "ConEmu"
 FONT 8, "MS Sans Serif"
 BEGIN
-    DEFPUSHBUTTON   "&Restart",IDC_START,147,51,50,14
+    DEFPUSHBUTTON   "Re&start",IDC_START,147,51,50,14
     PUSHBUTTON      "&Terminate",IDC_TERMINATE,201,51,50,14
     PUSHBUTTON      "Cancel",IDCANCEL,254,51,50,14
     PUSHBUTTON      "...",IDC_CHOOSE,284,19,14,13
@@ -469,6 +469,8 @@ BEGIN
     ICON            "ConEmu.ico",IDC_RESTART_ICON,6,45,20,20
     CTEXT           "Warning, unsaved work may be lost!",IDC_WARNING,57,35,
                     157,8
+    CONTROL         "&Run as administrator",cbRunAs,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,31,54,108,8
 END
 
 

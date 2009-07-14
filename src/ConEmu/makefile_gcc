@@ -12,6 +12,7 @@ SRCS =  BaseDragDrops.cpp  \
 		TabBar.cpp         \
 		TrayIcon.cpp       \
 		VirtualConsole.cpp \
+		../common/CommonFunc.cpp \
         ../common/ConEmuCheck.c
 
 USERLIBS = -lversion

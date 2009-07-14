@@ -189,6 +189,7 @@
 #define gbStandardColors                1544
 #define cbVisible                       1545
 #define cbNewConfirm                    1546
+#define cbRunAs                         1547
 
 // Next default values for new objects
 // 
@@ -196,7 +197,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        114
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1547
+#define _APS_NEXT_CONTROL_VALUE         1548
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

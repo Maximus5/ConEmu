@@ -85,8 +85,8 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
     //mh_ConChanged = CreateEvent(NULL,FALSE,FALSE,NULL);
     mh_PacketArrived = CreateEvent(NULL,FALSE,FALSE,NULL);
     //mh_CursorChanged = NULL;
-    mb_Detached = FALSE;
-    ms_SpecialCmd = NULL;
+    //mb_Detached = FALSE;
+    m_Args.pszSpecialCmd = NULL;
     mb_FullRetrieveNeeded = FALSE;
     memset(&m_LastMouse, 0, sizeof(m_LastMouse));
     mb_DataChanged = FALSE;
@@ -100,8 +100,10 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
     memset(mh_ServerThreads, 0, sizeof(mh_ServerThreads)); mh_ActiveServerThread = NULL;
     memset(mn_ServerThreadsId, 0, sizeof(mn_ServerThreadsId));
 
-    memset(&con, 0, sizeof(con)); //WARNING! Содержит CriticalSection, поэтому сброс выполнять ПЕРЕД InitializeCriticalSection(&csCON);
+    ZeroStruct(con); //WARNING! Содержит CriticalSection, поэтому сброс выполнять ПЕРЕД InitializeCriticalSection(&csCON);
     mb_BuferModeChangeLocked = FALSE;
+
+	ZeroStruct(m_Args);
 
     mn_LastInvalidateTick = 0;
 
@@ -143,8 +145,8 @@ CRealConsole::~CRealConsole()
     if (con.pConAttr)
         { Free(con.pConAttr); con.pConAttr = NULL; }
 
-    if (ms_SpecialCmd)
-        { Free(ms_SpecialCmd); ms_SpecialCmd = NULL; }
+    if (m_Args.pszSpecialCmd)
+        { Free(m_Args.pszSpecialCmd); m_Args.pszSpecialCmd = NULL; }
 
 
     SafeCloseHandle(mh_ConEmuC); mn_ConEmuC_PID = 0;
@@ -165,25 +167,28 @@ CRealConsole::~CRealConsole()
     CloseLogFiles();
 }
 
-BOOL CRealConsole::PreCreate(BOOL abDetached, LPCWSTR asNewCmd /*= NULL*/)
+BOOL CRealConsole::PreCreate(RConStartArgs *args)
+	//(BOOL abDetached, LPCWSTR asNewCmd /*= NULL*/, , BOOL abAsAdmin /*= FALSE*/)
 {
     mb_NeedStartProcess = FALSE;
 
-    if (asNewCmd && !ms_SpecialCmd) {
-        _ASSERTE(abDetached == FALSE);
-        int nLen = lstrlenW(asNewCmd);
-        ms_SpecialCmd = (wchar_t*)Alloc(nLen+1,2);
-        if (!ms_SpecialCmd)
+    if (args->pszSpecialCmd && !m_Args.pszSpecialCmd) {
+        _ASSERTE(args->bDetached == FALSE);
+        int nLen = lstrlenW(args->pszSpecialCmd);
+        m_Args.pszSpecialCmd = (wchar_t*)Alloc(nLen+1,2);
+        if (!m_Args.pszSpecialCmd)
             return FALSE;
-        lstrcpyW(ms_SpecialCmd, asNewCmd);
+        lstrcpyW(m_Args.pszSpecialCmd, args->pszSpecialCmd);
     }
 
-    if (abDetached) {
+	m_Args.bRunAsAdministrator = args->bRunAsAdministrator;
+
+    if (args->bDetached) {
         // Пока ничего не делаем - просто создается серверная нить
         if (!PreInit()) { //TODO: вообще-то PreInit() уже наверное вызван...
             return FALSE;
         }
-        mb_Detached = TRUE;
+        m_Args.bDetached = TRUE;
     } else
     if (gSet.nAttachPID) {
         // Attach - only once
@@ -193,11 +198,6 @@ BOOL CRealConsole::PreCreate(BOOL abDetached, LPCWSTR asNewCmd /*= NULL*/)
         }
     } else {
         mb_NeedStartProcess = TRUE;
-        //if (!StartProcess()) {
-        //    return FALSE;
-        //}
-        // Вроде бы с запуском через нить клики мышкой в консоль начинают ходить сразу, но
-        // часто окно конэму вообще не активируется
     }
 
     if (!StartMonitorThread()) {
@@ -554,11 +554,6 @@ BOOL CRealConsole::AttachPID(DWORD dwPID)
 DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 {
     CRealConsole* pRCon = (CRealConsole*)lpParameter;
-    //BOOL lbRc = pRCon->StartProcess(); -- лучше так все-таки не делать. велика вероятность блокировки при изменении TOPMOST главного окна
-    
-    //if (!pRCon->RetrieveConsoleInfo()) {
-    //    return 1;
-    //}
 
     if (pRCon->mb_NeedStartProcess) {
         _ASSERTE(pRCon->mh_ConEmuC==NULL);
@@ -573,7 +568,7 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
     // Пока нить запускалась - произошел "аттач" так что все нормально...
     //_ASSERTE(pRCon->mb_Detached || pRCon->mh_ConEmuC!=NULL);
 
-    BOOL bDetached = pRCon->mb_Detached;
+    BOOL bDetached = pRCon->m_Args.bDetached;
     //TODO: а тут мы будем читать консоль...
     #define IDEVENT_TERM  0
     #define IDEVENV_MONITORTHREADEVENT 1
@@ -899,7 +894,7 @@ BOOL CRealConsole::StartProcess()
         //si.dwX = rcDC.left; si.dwY = rcDC.top;
         ZeroMemory( &pi, sizeof(pi) );
 
-        int nStep = (ms_SpecialCmd!=NULL) ? 2 : 1;
+        int nStep = (m_Args.pszSpecialCmd!=NULL) ? 2 : 1;
         wchar_t* psCurCmd = NULL;
         while (nStep <= 2)
         {
@@ -910,8 +905,8 @@ BOOL CRealConsole::StartProcess()
             }*/
 
             LPCWSTR lpszCmd = NULL;
-            if (ms_SpecialCmd)
-                lpszCmd = ms_SpecialCmd;
+            if (m_Args.pszSpecialCmd)
+                lpszCmd = m_Args.pszSpecialCmd;
             else
                 lpszCmd = gSet.GetCmd();
 
@@ -925,6 +920,12 @@ BOOL CRealConsole::StartProcess()
             pszSlash = wcsrchr(psCurCmd, _T('\\'));
             MCHKHEAP
             wcscpy(pszSlash+1, L"ConEmuC.exe\" ");
+
+			if (m_Args.bRunAsAdministrator) {
+				m_Args.bDetached = TRUE;
+				wcscat(pszSlash, L" /ATTACH ");
+			}
+
             int nWndWidth = con.m_sbi.dwSize.X;
             int nWndHeight = con.m_sbi.dwSize.Y;
             GetConWindowSize(con.m_sbi, nWndWidth, nWndHeight);
@@ -932,38 +933,81 @@ BOOL CRealConsole::StartProcess()
                 nWndWidth, nWndHeight,
                 (con.bBufferHeight ? gSet.DefaultBufferHeight : 0),
                 gSet.ConsoleFont.lfFaceName, gSet.ConsoleFont.lfWidth, gSet.ConsoleFont.lfHeight);
-            if (gSet.FontFile[0]) {
+            /*if (gSet.FontFile[0]) { --  РЕГИСТРАЦИЯ ШРИФТА НА КОНСОЛЬ НЕ РАБОТАЕТ!
                 wcscat(psCurCmd, L" \"/FF=");
                 wcscat(psCurCmd, gSet.FontFile);
                 wcscat(psCurCmd, L"\"");
-            }
+            }*/
             if (gSet.isAdvLogging) wcscat(psCurCmd, L" /LOG");
             wcscat(psCurCmd, L" /CMD ");
             wcscat(psCurCmd, lpszCmd);
             MCHKHEAP
 
+			DWORD dwLastError = 0;
+
             #ifdef MSGLOGGER
             DEBUGSTRPROC(psCurCmd);DEBUGSTRPROC(_T("\n"));
             #endif
-            LockSetForegroundWindow ( LSFW_LOCK );
-            try {
-                lbRc = CreateProcess(NULL, psCurCmd, NULL, NULL, FALSE, 
-                    NORMAL_PRIORITY_CLASS|
-                    CREATE_DEFAULT_ERROR_MODE|CREATE_NEW_CONSOLE
-                    //|CREATE_NEW_PROCESS_GROUP - низя! перестает срабатывать Ctrl-C
-                    , NULL, NULL, &si, &pi);
-                DEBUGSTRPROC(_T("CreateProcess finished\n"));
-            } catch(...) {
-                lbRc = FALSE;
-            }
+            
+            //try {
+				if (!m_Args.bRunAsAdministrator) {
+					LockSetForegroundWindow ( LSFW_LOCK );
 
-            LockSetForegroundWindow ( LSFW_UNLOCK );
+					lbRc = CreateProcess(NULL, psCurCmd, NULL, NULL, FALSE, 
+						NORMAL_PRIORITY_CLASS|
+						CREATE_DEFAULT_ERROR_MODE|CREATE_NEW_CONSOLE
+						//|CREATE_NEW_PROCESS_GROUP - низя! перестает срабатывать Ctrl-C
+						, NULL, NULL, &si, &pi);
+					if (!lbRc)
+						dwLastError = GetLastError();
+					DEBUGSTRPROC(_T("CreateProcess finished\n"));
+
+					LockSetForegroundWindow ( LSFW_UNLOCK );
+
+				} else {
+					LPCWSTR pszCmd = psCurCmd;
+					wchar_t szExec[MAX_PATH+1];
+					if (NextArg(&pszCmd, szExec) != 0) {
+						lbRc = FALSE;
+						dwLastError = -1;
+					} else {
+						// Почему-то валится.
+                        // Попробовать GlobalAlloc на строки (может ему чего не нравится...) сделать копии
+                        // Если не прокатит: CreateProcessAsUser with an unrestricted administrator token
+                        // http://weblogs.asp.net/kennykerr/archive/2006/09/29/Windows-Vista-for-Developers-_1320_-Part-4-_1320_-User-Account-Control.aspx
+
+						SHELLEXECUTEINFO sei = {sizeof(SHELLEXECUTEINFO)};
+						sei.hwnd = NULL; //ghWnd;
+						sei.fMask = 0;//SEE_MASK_NO_CONSOLE; //SEE_MASK_NOCLOSEPROCESS; -- смысла ждать завершения нет - процесс запускается в новой консоли
+						wchar_t szVerb[10];
+						sei.lpVerb = wcscpy(szVerb, L"runas");
+						sei.lpFile = szExec;
+						sei.lpParameters = pszCmd;
+						sei.nShow = SW_SHOWNORMAL;
+						lbRc = gConEmu.GuiShellExecuteEx(&sei);
+						//lbRc = 32 < (int)::ShellExecute(0, // owner window
+						//	L"runas",
+						//	L"C:\\Windows\\Notepad.exe",
+						//	0, // params
+						//	0, // directory
+						//	SW_SHOWNORMAL);
+						// ошибку покажем дальше
+						dwLastError = GetLastError();
+					}
+				}
+            //} catch(...) {
+            //    lbRc = FALSE;
+            //}
+
+            
 
             if (lbRc)
             {
-                ProcessUpdate(&pi.dwProcessId, 1);
+				if (!m_Args.bRunAsAdministrator) {
+					ProcessUpdate(&pi.dwProcessId, 1);
 
-                AllowSetForegroundWindow(pi.dwProcessId);
+					AllowSetForegroundWindow(pi.dwProcessId);
+				}
                 SetForegroundWindow(ghWnd);
 
                 DEBUGSTRPROC(_T("CreateProcess OK\n"));
@@ -978,7 +1022,7 @@ BOOL CRealConsole::StartProcess()
                 break; // OK, запустили
             } else {
                 //Box("Cannot execute the command.");
-                DWORD dwLastError = GetLastError();
+                //DWORD dwLastError = GetLastError();
                 DEBUGSTRPROC(_T("CreateProcess failed\n"));
                 int nLen = _tcslen(psCurCmd);
                 TCHAR* pszErr=(TCHAR*)Alloc(nLen+100,sizeof(TCHAR));
@@ -997,7 +1041,7 @@ BOOL CRealConsole::StartProcess()
                 _tcscpy(psz, _T("Cannot execute the command.\r\n"));
                 _tcscat(psz, psCurCmd); _tcscat(psz, _T("\r\n"));
                 _tcscat(psz, pszErr);
-                if (ms_SpecialCmd == NULL)
+                if (m_Args.pszSpecialCmd == NULL)
                 {
                     if (psz[_tcslen(psz)-1]!=_T('\n')) _tcscat(psz, _T("\r\n"));
                     if (!gSet.psCurCmd && StrStrI(gSet.GetCmd(), gSet.GetDefaultCmd())==NULL) {
@@ -1015,10 +1059,11 @@ BOOL CRealConsole::StartProcess()
                 if (nBrc!=IDYES) {
                     // ??? Может ведь быть НЕСКОЛЬКО консолей. Нельзя так разрушать основное окно!
                     //gConEmu.Destroy();
+					CloseConsole();
                     return FALSE;
                 }
                 // Выполнить стандартную команду...
-                if (ms_SpecialCmd == NULL)
+                if (m_Args.pszSpecialCmd == NULL)
                 {
                     gSet.psCurCmd = _tcsdup(gSet.GetDefaultCmd());
                 }
@@ -1033,22 +1078,23 @@ BOOL CRealConsole::StartProcess()
         MCHKHEAP
 
         //TODO: а делать ли это?
-        CloseHandle(pi.hThread); pi.hThread = NULL;
+        SafeCloseHandle(pi.hThread); pi.hThread = NULL;
         //CloseHandle(pi.hProcess); pi.hProcess = NULL;
         mn_ConEmuC_PID = pi.dwProcessId;
         mh_ConEmuC = pi.hProcess; pi.hProcess = NULL;
 
-        CreateLogFiles();
+		if (!m_Args.bRunAsAdministrator) {
+			CreateLogFiles();
         
-        //// Событие "изменения" консоль //2009-05-14 Теперь события обрабатываются в GUI, но прийти из консоли может изменение размера курсора
-        //wsprintfW(ms_ConEmuC_Pipe, CE_CURSORUPDATE, mn_ConEmuC_PID);
-        //mh_CursorChanged = CreateEvent ( NULL, FALSE, FALSE, ms_ConEmuC_Pipe );
-        
-        // Имя пайпа для управления ConEmuC
-        wsprintfW(ms_ConEmuC_Pipe, CESERVERPIPENAME, L".", mn_ConEmuC_PID);
-        wsprintfW(ms_ConEmuCInput_Pipe, CESERVERINPUTNAME, L".", mn_ConEmuC_PID);
-        MCHKHEAP
-        
+			//// Событие "изменения" консоль //2009-05-14 Теперь события обрабатываются в GUI, но прийти из консоли может изменение размера курсора
+			//wsprintfW(ms_ConEmuC_Pipe, CE_CURSORUPDATE, mn_ConEmuC_PID);
+			//mh_CursorChanged = CreateEvent ( NULL, FALSE, FALSE, ms_ConEmuC_Pipe );
+	        
+			// Имя пайпа для управления ConEmuC
+			wsprintfW(ms_ConEmuC_Pipe, CESERVERPIPENAME, L".", mn_ConEmuC_PID);
+			wsprintfW(ms_ConEmuCInput_Pipe, CESERVERINPUTNAME, L".", mn_ConEmuC_PID);
+			MCHKHEAP
+		}
 
     return lbRc;
 }
@@ -1444,7 +1490,7 @@ BOOL CRealConsole::isConSelectMode()
 BOOL CRealConsole::isDetached()
 {
     if (this == NULL) return FALSE;
-    if (!mb_Detached) return FALSE;
+    if (!m_Args.bDetached) return FALSE;
     // Флажок ВООБЩЕ не сбрасываем - ориентируемся на хэндлы
     //_ASSERTE(!mb_Detached || (mb_Detached && (hConWnd==NULL)));
     return (mh_ConEmuC == NULL);
@@ -3402,7 +3448,7 @@ void CRealConsole::LogPacket(CESERVER_REQ* pInfo)
 
 
 // Послать в консоль запрос на закрытие
-BOOL CRealConsole::RecreateProcess(LPCWSTR asNewCommand/*=NULL*/)
+BOOL CRealConsole::RecreateProcess(RConStartArgs *args)
 {
     if (!this)
         return false;
@@ -3418,17 +3464,18 @@ BOOL CRealConsole::RecreateProcess(LPCWSTR asNewCommand/*=NULL*/)
         return false;
     }
     
-    if (asNewCommand && *asNewCommand) {
-        if (ms_SpecialCmd) Free(ms_SpecialCmd);
-        int nLen = lstrlenW(asNewCommand);
-        ms_SpecialCmd = (wchar_t*)Alloc(nLen+1,2);
-        if (!ms_SpecialCmd) {
+    if (args->pszSpecialCmd && *args->pszSpecialCmd) {
+        if (m_Args.pszSpecialCmd) Free(m_Args.pszSpecialCmd);
+        int nLen = lstrlenW(args->pszSpecialCmd);
+        m_Args.pszSpecialCmd = (wchar_t*)Alloc(nLen+1,2);
+        if (!m_Args.pszSpecialCmd) {
             Box(_T("Can't allocate memory..."));
             return FALSE;
         }
-        lstrcpyW(ms_SpecialCmd, asNewCommand);
+        lstrcpyW(m_Args.pszSpecialCmd, args->pszSpecialCmd);
     }
 
+	m_Args.bRunAsAdministrator = args->bRunAsAdministrator;
 
     //DWORD nWait = 0;
 
@@ -4602,8 +4649,13 @@ void CRealConsole::CloseConsole()
 {
     if (!this) return;
     _ASSERTE(!mb_ProcessRestarted);
-    if (hConWnd)
+	if (hConWnd) {
         PostMessage(hConWnd, WM_CLOSE, 0, 0);
+	} else {
+		m_Args.bDetached = FALSE;
+		if (mp_VCon)
+			gConEmu.OnVConTerminated(mp_VCon);
+	}
 }
 
 uint CRealConsole::TextWidth()
@@ -4810,8 +4862,8 @@ bool CRealConsole::isNtvdm()
 
 LPCWSTR CRealConsole::GetCmd()
 {
-    if (ms_SpecialCmd)
-        return ms_SpecialCmd;
+    if (m_Args.pszSpecialCmd)
+        return m_Args.pszSpecialCmd;
     else
         return gSet.GetCmd();
 }
@@ -5019,4 +5071,15 @@ void CRealConsole::GetPanelRect(BOOL abRight, RECT* prc)
 		*prc = mr_RightPanel;
 	else
 		*prc = mr_LeftPanel;
+}
+
+// В дальнейшем надо бы возвращать значение для активного приложения
+// По крайней мене в фаре мы можем проверить токены.
+// В свойствах приложения проводником может быть установлен флажок "Run as administrator"
+// Может быть соответствующий манифест...
+// Хотя скорее всего это невозможно. В одной консоли не могут крутиться программы под разными аккаунтами
+bool CRealConsole::isAdministrator()
+{
+	if (!this) return false;
+	return m_Args.bRunAsAdministrator;
 }

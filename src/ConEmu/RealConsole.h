@@ -149,7 +149,7 @@ public:
     void ShowConsole(int nMode); // -1 Toggle, 0 - Hide, 1 - Show
     BOOL isDetached();
     BOOL AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID);
-    BOOL RecreateProcess(LPCWSTR asNewCommand=NULL);
+    BOOL RecreateProcess(RConStartArgs *args);
     void GetData(wchar_t* pChar, WORD* pAttr, int nWidth, int nHeight);
     void OnActivate(int nNewNum, int nOldNum);
     void OnDeactivate(int nNewNum);
@@ -177,10 +177,12 @@ public:
 	void EnableComSpec(DWORD anFarPID, BOOL abSwitch);
 	int CoordInPanel(COORD cr);
 	void GetPanelRect(BOOL abRight, RECT* prc);
+	bool isAdministrator();
 
 public:
     // Вызываются из CVirtualConsole
-    BOOL PreCreate(BOOL abDetached, LPCWSTR asNewCmd = NULL);
+    BOOL PreCreate(RConStartArgs *args);
+		//(BOOL abDetached, LPCWSTR asNewCmd = NULL, BOOL abAsAdmin = FALSE);
     BOOL IsConsoleThread();
     void SetForceRead();
     //DWORD WaitEndUpdate(DWORD dwTimeout=1000);
@@ -199,8 +201,10 @@ protected:
 
     static DWORD WINAPI MonitorThread(LPVOID lpParameter);
     HANDLE mh_TermEvent, mh_MonitorThreadEvent; //, mh_Sync2WindowEvent;
-    BOOL mb_FullRetrieveNeeded, mb_Detached;
-    wchar_t* ms_SpecialCmd;
+    BOOL mb_FullRetrieveNeeded; //, mb_Detached;
+	RConStartArgs m_Args;
+    //wchar_t* ms_SpecialCmd;
+	//BOOL mb_RunAsAdministrator;
     HANDLE mh_MonitorThread; DWORD mn_MonitorThreadID;
 
     void Box(LPCTSTR szText);

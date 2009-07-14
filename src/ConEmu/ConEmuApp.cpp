@@ -387,6 +387,23 @@ BOOL CheckConIme()
 	return TRUE;
 }
 
+void DisplayLastError(LPCTSTR asLabel, DWORD dwError /* =0 */)
+{
+	DWORD dw = dwError ? dwError : GetLastError();
+	wchar_t* lpMsgBuf = NULL;
+	MCHKHEAP
+		FormatMessage( FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, NULL, dw, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPWSTR)&lpMsgBuf, 0, NULL );
+	int nLen = _tcslen(asLabel)+64+(lpMsgBuf ? wcslen(lpMsgBuf) : 0);
+	wchar_t *out = new wchar_t[nLen];
+	wsprintf(out, _T("%s\nLastError=0x%08X\n%s"), asLabel, dw, lpMsgBuf);
+	if (gbMessagingStarted) SetForegroundWindow(ghWnd);
+	MessageBox(gbMessagingStarted ? ghWnd : NULL, out, gConEmu.GetTitle(), MB_SYSTEMMODAL | MB_ICONERROR);
+	MCHKHEAP
+		LocalFree(lpMsgBuf);
+	delete [] out;
+	MCHKHEAP
+}
+
 //extern void SetConsoleFontSizeTo(HWND inConWnd, int inSizeX, int inSizeY);
 
 // Disables the IME for all threads in a current process.

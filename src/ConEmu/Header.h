@@ -23,18 +23,6 @@
 
 #include "globals.h"
 #include "resource.h"
-#include "VirtualConsole.h"
-#include "options.h"
-#include "DragDrop.h"
-#include "progressbars.h"
-#include "TrayIcon.h"
-#include "ConEmuChild.h"
-#include "ConEmu.h"
-#include "ConEmuApp.h"
-#include "tabbar.h"
-#include "TrayIcon.h"
-#include "ConEmuPipe.h"
-#include "UnicodeChars.h"
 
 
 #define DRAG_L_ALLOWED 0x01
@@ -121,6 +109,19 @@
 //#endif
 
 
+typedef struct tag_RConStartArgs {
+	BOOL     bDetached;
+	wchar_t* pszSpecialCmd;
+	BOOL     bRunAsAdministrator;
+	BOOL     bRecreate; // !!! Информационно !!!
+
+	tag_RConStartArgs() {
+		bDetached = FALSE; pszSpecialCmd = NULL; bRunAsAdministrator = FALSE; bRecreate = FALSE;
+	};
+	~tag_RConStartArgs() {
+		SafeFree(pszSpecialCmd); // именно SafeFree
+	};
+} RConStartArgs;
 
 
 //------------------------------------------------------------------------
@@ -142,22 +143,7 @@
 //}
 //#endif
 
-void __forceinline DisplayLastError(LPCTSTR asLabel, DWORD dwError=0)
-{
-	DWORD dw = dwError ? dwError : GetLastError();
-	wchar_t* lpMsgBuf = NULL;
-	MCHKHEAP
-	FormatMessage( FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, NULL, dw, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPWSTR)&lpMsgBuf, 0, NULL );
-	int nLen = _tcslen(asLabel)+64+(lpMsgBuf ? wcslen(lpMsgBuf) : 0);
-	wchar_t *out = new wchar_t[nLen];
-	wsprintf(out, _T("%s\nLastError=0x%08X\n%s"), asLabel, dw, lpMsgBuf);
-	if (gbMessagingStarted) SetForegroundWindow(ghWnd);
-	MessageBox(gbMessagingStarted ? ghWnd : NULL, out, gConEmu.GetTitle(), MB_SYSTEMMODAL | MB_ICONERROR);
-	MCHKHEAP
-	LocalFree(lpMsgBuf);
-	delete [] out;
-	MCHKHEAP
-}
+void DisplayLastError(LPCTSTR asLabel, DWORD dwError = 0);
 
 COORD __forceinline MakeCoord(int W,int H)
 {
@@ -288,3 +274,17 @@ L"NightRoman: drawing process optimization, BufferHeight and other fixes\n" \
 L"dolzenko_: windows switching via GUI tabs\n" \
 L"alex_itd: Drag'n'Drop, RightClick, AltEnter and GUI bars\n" \
 L"Mors: loading font from file."
+
+
+#include "VirtualConsole.h"
+#include "options.h"
+#include "DragDrop.h"
+#include "progressbars.h"
+#include "TrayIcon.h"
+#include "ConEmuChild.h"
+#include "ConEmu.h"
+#include "ConEmuApp.h"
+#include "tabbar.h"
+#include "TrayIcon.h"
+#include "ConEmuPipe.h"
+#include "UnicodeChars.h"

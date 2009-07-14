@@ -58,11 +58,11 @@ WARNING("! А нафига КУРСОР (мигающий) отрисовывать в VirtualConsole? Не лучше ли
 #define DUMPDC(f)
 #endif
 
-CVirtualConsole* CVirtualConsole::Create(bool abDetached, LPCWSTR asNewCmd /* = NULL */)
+CVirtualConsole* CVirtualConsole::CreateVCon(RConStartArgs *args)
 {
     CVirtualConsole* pCon = new CVirtualConsole();
     
-    if (!pCon->mp_RCon->PreCreate(abDetached, asNewCmd)) {
+    if (!pCon->mp_RCon->PreCreate(args)) {
         delete pCon;
         return NULL;
     }

@@ -1,4 +1,7 @@
-#pragma once
+
+#ifndef _COMMON_HEADER_HPP_
+#define _COMMON_HEADER_HPP_
+
 #include <windows.h>
 #if !defined(__GNUC__)
 #include <crtdbg.h>
@@ -325,6 +328,7 @@ struct ForwardedFileInfo
 };
 
 
+
 /*enum PipeCmd
 {
     SetTabs=0,
@@ -345,10 +349,17 @@ struct ForwardedFileInfo
 //#endif
 
 
+#ifdef __cplusplus
+
+
+#define CERR_CMDLINEEMPTY 200
+#define CERR_CMDLINE      201
+
+int NextArg(const wchar_t** asCmdLine, wchar_t* rsArg/*[MAX_PATH+1]*/);
+
 //------------------------------------------------------------------------
 ///| Section |////////////////////////////////////////////////////////////
 //------------------------------------------------------------------------
-#ifdef __cplusplus
 class MSectionLock;
 
 class MSection
@@ -689,4 +700,9 @@ public:
 		Leave();
 	}
 };
-#endif
+#endif // __cplusplus
+
+
+
+// This must be the end line
+#endif // _COMMON_HEADER_HPP_

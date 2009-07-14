@@ -985,6 +985,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\common\Common.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\ConEmu.cpp"
 				>
 			</File>

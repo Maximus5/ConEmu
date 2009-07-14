@@ -61,7 +61,7 @@ CConEmuMain::CConEmuMain()
     mb_IgnoreSizeChange = false;
     //mn_CurrentKeybLayout = (DWORD)GetKeyboardLayout(0);
     mn_ServerThreadId = 0; mh_ServerThread = NULL; mh_ServerThreadTerminate = NULL;
-    mpsz_RecreateCmd = NULL;
+    //mpsz_RecreateCmd = NULL;
 	ZeroStruct(mrc_Ideal);
 
     memset(&mouse, 0, sizeof(mouse));
@@ -93,19 +93,21 @@ CConEmuMain::CConEmuMain()
     pVCon = NULL;
     memset(mp_VCon, 0, sizeof(mp_VCon));
     
-    mn_MsgPostCreate = RegisterWindowMessage(_T("ConEmuMain::PostCreate"));
-    mn_MsgPostCopy = RegisterWindowMessage(_T("ConEmuMain::PostCopy"));
-    mn_MsgMyDestroy = RegisterWindowMessage(_T("ConEmuMain::Destroy"));
-    mn_MsgUpdateSizes = RegisterWindowMessage(_T("ConEmuMain::UpdateSizes"));
-    mn_MsgSetWindowMode = RegisterWindowMessage(_T("ConEmuMain::SetWindowMode"));
-    mn_MsgUpdateTitle = RegisterWindowMessage(_T("ConEmuMain::UpdateTitle"));
+	UINT nAppMsg = WM_APP+10;
+    mn_MsgPostCreate = ++nAppMsg;
+    mn_MsgPostCopy = ++nAppMsg;
+    mn_MsgMyDestroy = ++nAppMsg;
+    mn_MsgUpdateSizes = ++nAppMsg;
+    mn_MsgSetWindowMode = ++nAppMsg;
+    mn_MsgUpdateTitle = ++nAppMsg;
     mn_MsgAttach = RegisterWindowMessage(CONEMUMSG_ATTACH);
-    mn_MsgVConTerminated = RegisterWindowMessage(_T("ConEmuMain::VConTerminated"));
-    mn_MsgUpdateScrollInfo = RegisterWindowMessage(_T("ConEmuMain::UpdateScrollInfo"));
+    mn_MsgVConTerminated = ++nAppMsg;
+    mn_MsgUpdateScrollInfo = ++nAppMsg;
     mn_MsgUpdateTabs = RegisterWindowMessage(CONEMUMSG_UPDATETABS);
-    mn_MsgOldCmdVer = RegisterWindowMessage(_T("ConEmuMain::OldCmdVersion")); mb_InShowOldCmdVersion = FALSE;
-    mn_MsgTabCommand = RegisterWindowMessage(_T("ConEmuMain::TabCommand"));
-    mn_MsgSheelHook = RegisterWindowMessage(_T("SHELLHOOK"));
+    mn_MsgOldCmdVer = ++nAppMsg; mb_InShowOldCmdVersion = FALSE;
+    mn_MsgTabCommand = ++nAppMsg;
+    mn_MsgSheelHook = RegisterWindowMessage(L"SHELLHOOK");
+	mn_ShellExecuteEx = ++nAppMsg;
 }
 
 BOOL CConEmuMain::Init()
@@ -215,7 +217,9 @@ CConEmuMain::~CConEmuMain()
 {
     for (int i=0; i<MAX_CONSOLE_COUNT; i++) {
         if (mp_VCon[i]) {
-            delete mp_VCon[i]; mp_VCon[i] = NULL;
+			CVirtualConsole* p = mp_VCon[i];
+			mp_VCon[i] = NULL;
+            delete p;
         }
     }
 
@@ -1495,7 +1499,8 @@ LPARAM CConEmuMain::AttachRequested(HWND ahConWnd, DWORD anConemuC_PID)
     }
     // Если не нашли - определим, можно ли добавить новую консоль?
     if (!pCon) {
-        if ((pCon = CreateCon(TRUE/*detached*/)) == NULL)
+		RConStartArgs args;
+        if ((pCon = CreateCon(&args)) == NULL)
             return 0;
     }
 
@@ -1961,12 +1966,12 @@ bool CConEmuMain::ConActivate(int nCon)
     return false;
 }
 
-CVirtualConsole* CConEmuMain::CreateCon(BOOL abStartDetached/*=FALSE*/, LPCWSTR asNewCmd /*= NULL*/)
+CVirtualConsole* CConEmuMain::CreateCon(RConStartArgs *args)
 {
     CVirtualConsole* pCon = NULL;
     for (int i=0; i<MAX_CONSOLE_COUNT; i++) {
         if (!mp_VCon[i]) {
-            pCon = CVirtualConsole::Create(abStartDetached, asNewCmd);
+            pCon = CVirtualConsole::CreateVCon(args);
             if (pCon) {
                 if (pVCon) pVCon->RCon()->OnDeactivate(i);
                 mp_VCon[i] = pCon;
@@ -2010,6 +2015,26 @@ LPTSTR CConEmuMain::GetTitleStart()
 {
     //mn_ActiveStatus &= ~CES_CONALTERNATIVE; // сброс флага альтернативной консоли
     return Title;
+}
+
+LRESULT CConEmuMain::GuiShellExecuteEx(SHELLEXECUTEINFO* lpShellExecute)
+{
+	LRESULT lRc = 0;
+
+	if (!isMainThread()) {
+		lRc = SendMessage(ghWnd, mn_ShellExecuteEx, 0, (LPARAM)lpShellExecute);
+	} else {
+		if (IsDebuggerPresent()) {
+			BOOL b = gbDontEnable; gbDontEnable = TRUE;
+			int nBtn = MessageBox(ghWnd, L"Debugger active!\nShellExecuteEx(runas) my fails\nContinue?", L"ConEmu", MB_ICONASTERISK|MB_YESNO|MB_DEFBUTTON2);
+			gbDontEnable = b;
+			if (nBtn != IDYES)
+				return (FALSE);
+		}
+		lRc = ::ShellExecuteEx(lpShellExecute);
+	}
+
+	return lRc;
 }
 
 //BOOL CConEmuMain::HandlerRoutine(DWORD dwCtrlType)
@@ -2143,10 +2168,11 @@ bool CConEmuMain::PtDiffTest(POINT C, int aX, int aY, UINT D)
 
 void CConEmuMain::Recreate(BOOL abRecreate, BOOL abConfirm)
 {
-    SafeFree(mpsz_RecreateCmd);
-    
     FLASHWINFO fl = {sizeof(FLASHWINFO)}; fl.dwFlags = FLASHW_STOP; fl.hwnd = ghWnd;
     FlashWindowEx(&fl); // При многократных созданиях мигать начинает...
+
+	RConStartArgs args;
+	args.bRecreate = abRecreate;
     
     if (!abRecreate) {
         // Создать новую консоль
@@ -2167,52 +2193,28 @@ void CConEmuMain::Recreate(BOOL abRecreate, BOOL abConfirm)
         	FlashWindowEx(&fl); // При многократных созданиях мигать начинает...
         	return;
         }
-        
-        //LPCWSTR pszCmd = gSet.GetCmd();
+
         if (abConfirm) {
-            //wchar_t* pszMsg = (wchar_t*)calloc(128+wcslen(pszCmd),2);
-            //if (pszMsg) {
-            //    wcscpy(pszMsg, L"Create new console:\n"); wcscat(pszMsg, pszCmd);
-            //    TODO("Сюда можно еще добавить кнопку для закрытия этой консоли");
-            //    int nRc = MessageBox(ghWnd, pszMsg, L"ConEmu", MB_YESNO|MB_ICONQUESTION);
-            //    free(pszMsg);
-            //    if (nRc != IDYES)
-            //        return 0;
-            //}
             BOOL b = gbDontEnable;
             gbDontEnable = TRUE;
-            int nRc = DialogBoxParam(g_hInstance, MAKEINTRESOURCE(IDD_RESTART), ghWnd, RecreateDlgProc, (LPARAM)abRecreate);
+            int nRc = DialogBoxParam(g_hInstance, MAKEINTRESOURCE(IDD_RESTART), ghWnd, RecreateDlgProc, (LPARAM)&args);
             gbDontEnable = b;
             if (nRc != IDC_START)
                 return;
+			m_Child.Redraw();
         }
         //Собственно, запуск
-        CreateCon(FALSE, mpsz_RecreateCmd);
+        CreateCon(&args);
         
     } else {
         // Restart or close console
         int nActive = ActiveConNum();
         if (nActive >=0) {
-            //LPCWSTR pszCmd = gSet.GetCmd();
-            //wchar_t* pszMsg = (wchar_t*)calloc(128+wcslen(pszCmd),2);
-            //if (pszMsg) {
-            //    wsprintf(pszMsg, 
-            //        L"About to recreate console:\n\n%s\n\n"
-            //        L"Press <No> to close current console\n"
-            //        L"Warning, unsaved work may be lost!"
-            //        , pszCmd);
-            //    int nRc = MessageBox(ghWnd, pszMsg, L"ConEmu", MB_YESNOCANCEL|MB_ICONEXCLAMATION|MB_DEFBUTTON3);
-            //    free(pszMsg);
-            //    if (nRc == IDNO) {
-            //        pVCon->RCon()->CloseConsole();
-            //        return 0;
-            //    }
-            //    if (nRc != IDYES)
-            //        return 0;
-            //}
+			args.bRunAsAdministrator = pVCon->RCon()->isAdministrator();
+
             BOOL b = gbDontEnable;
             gbDontEnable = TRUE;
-            int nRc = DialogBoxParam(g_hInstance, MAKEINTRESOURCE(IDD_RESTART), ghWnd, RecreateDlgProc, (LPARAM)abRecreate);
+            int nRc = DialogBoxParam(g_hInstance, MAKEINTRESOURCE(IDD_RESTART), ghWnd, RecreateDlgProc, (LPARAM)&args);
             gbDontEnable = b;
             if (nRc == IDC_TERMINATE) {
                 pVCon->RCon()->CloseConsole();
@@ -2220,12 +2222,13 @@ void CConEmuMain::Recreate(BOOL abRecreate, BOOL abConfirm)
             }
             if (nRc != IDC_START)
                 return;
+			m_Child.Redraw();
             // Собственно, Recreate
-            pVCon->RCon()->RecreateProcess(mpsz_RecreateCmd);
+            pVCon->RCon()->RecreateProcess(&args);
         }
     }
     
-    SafeFree(mpsz_RecreateCmd);
+    SafeFree(args.pszSpecialCmd);
 }
 
 INT_PTR CConEmuMain::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
@@ -2249,8 +2252,20 @@ INT_PTR CConEmuMain::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARA
             }
             SetDlgItemText(hDlg, IDC_RESTART_CMD, pszCmd);
 
+			RConStartArgs* pArgs = (RConStartArgs*)lParam;
+			_ASSERTE(pArgs);
+			SetWindowLongPtr(hDlg, DWLP_USER, (LONG_PTR)lParam);
+
+			// Finally, if all you need is to determine whether or not you are currently elevated you can 
+			// simply call the IsUserAnAdmin function. If you need more precision you can also use GetTokenInformation 
+			// but in most cases that is overkill.
+			TODO("Если GUI запущено под администратором - флажок включить и задизэблить!");
+
+			if (pArgs && pArgs->bRunAsAdministrator)
+				CheckDlgButton(hDlg, cbRunAs, BST_CHECKED);
+
             SetClassLongPtr(hDlg, GCLP_HICON, (LONG)hClassIcon);
-            if (lParam != 0 /*Recreate*/) {
+            if (pArgs->bRecreate) {
                 //GCC hack. иначе не собирается
                 SetDlgItemTextA(hDlg, IDC_RESTART_MSG, "About to recreate console");
                 SendDlgItemMessage(hDlg, IDC_RESTART_ICON, STM_SETICON, (WPARAM)LoadIcon(NULL,IDI_EXCLAMATION), 0);
@@ -2332,13 +2347,16 @@ INT_PTR CConEmuMain::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARA
                     
                 case IDC_START:
                 {
+					RConStartArgs* pArgs = (RConStartArgs*)GetWindowLongPtr(hDlg, DWLP_USER);
+					_ASSERTE(pArgs);
                     HWND hEdit = GetDlgItem(hDlg, IDC_RESTART_CMD);
                     int nLen = GetWindowTextLength(hEdit);
                     if (nLen > 0) {
-                        gConEmu.mpsz_RecreateCmd = (wchar_t*)calloc(nLen+1,2);
-                        if (gConEmu.mpsz_RecreateCmd)
-                            GetWindowText(hEdit, gConEmu.mpsz_RecreateCmd, nLen+1);
+                        pArgs->pszSpecialCmd = (wchar_t*)calloc(nLen+1,2);
+                        if (pArgs->pszSpecialCmd)
+                            GetWindowText(hEdit, pArgs->pszSpecialCmd, nLen+1);
                     }
+					pArgs->bRunAsAdministrator = SendDlgItemMessage(hDlg, cbRunAs, BM_GETCHECK, 0, 0);
                     EndDialog(hDlg, IDC_START);
                     return 1;
                 }
@@ -3245,7 +3263,8 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
         PostMessage(ghWnd, mn_MsgPostCreate, 0, 0);
     } else {
         if (pVCon == NULL || !gConEmu.mb_StartDetached) { // Консоль уже может быть создана, если пришел Attach из ConEmuC
-            if (!CreateCon(gConEmu.mb_StartDetached)) {
+			RConStartArgs args; args.bDetached = gConEmu.mb_StartDetached;
+            if (!CreateCon(&args)) {
                 DisplayLastError(L"Can't create new virtual console!");
                 Destroy();
                 return;
@@ -4748,8 +4767,9 @@ void CConEmuMain::ServerThreadCommand(HANDLE hPipe)
         if (IsIconic(ghWnd))
             SendMessage(ghWnd, WM_SYSCOMMAND, SC_RESTORE, 0);
         SetForegroundWindow(ghWnd);
-        
-        CVirtualConsole* pCon = CreateCon(FALSE, pIn->NewCmd.szCommand);
+
+		RConStartArgs args; args.pszSpecialCmd = pIn->NewCmd.szCommand;
+        CVirtualConsole* pCon = CreateCon(&args);
         if (pCon) {
             pIn->Data[0] = TRUE;
         }
@@ -5041,7 +5061,9 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
         } else if (messg == gConEmu.mn_MsgSheelHook) {
             gConEmu.OnShellHook(wParam, lParam);
             return 0;
-        }
+		} else if (messg == gConEmu.mn_ShellExecuteEx) {
+			return gConEmu.GuiShellExecuteEx((SHELLEXECUTEINFO*)lParam);
+		}
         //else if (messg == gConEmu.mn_MsgCmdStarted || messg == gConEmu.mn_MsgCmdStopped) {
         //  return gConEmu.OnConEmuCmd( (messg == gConEmu.mn_MsgCmdStarted), (HWND)wParam, (DWORD)lParam);
         //}
