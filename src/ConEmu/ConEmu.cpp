@@ -1499,7 +1499,7 @@ LPARAM CConEmuMain::AttachRequested(HWND ahConWnd, DWORD anConemuC_PID)
     }
     // Если не нашли - определим, можно ли добавить новую консоль?
     if (!pCon) {
-		RConStartArgs args;
+		RConStartArgs args; args.bDetached = TRUE;
         if ((pCon = CreateCon(&args)) == NULL)
             return 0;
     }
@@ -3900,7 +3900,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
                     mouse.state &= ~(DRAG_L_ALLOWED | DRAG_L_STARTED | DRAG_R_ALLOWED | DRAG_R_STARTED);
                     mouse.bIgnoreMouseMove = false;
                     //POSTMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( newX, newY ), TRUE);     //посылаем консоли отпускание
-                    pVCon->RCon()->SendMouseEvent(WM_LBUTTONUP, wParam, winX, winX);
+                    pVCon->RCon()->OnMouse(WM_LBUTTONUP, wParam, winX, winX);
                     //ReleaseCapture(); --2009-03-14
                     return 0;
                 }
@@ -3913,14 +3913,15 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 
                 if (lbLeftDrag) { // сразу "отпустить" клавишу
                     //POSTMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( mouse.LClkCon.X, mouse.LClkCon.Y ), TRUE);     //посылаем консоли отпускание
-                    pVCon->RCon()->SendMouseEvent(WM_LBUTTONUP, wParam, mouse.LClkDC.X, mouse.LClkDC.Y);
+                    pVCon->RCon()->OnMouse(WM_LBUTTONUP, wParam, mouse.LClkDC.X, mouse.LClkDC.Y);
                 } else {
                     //POSTMESSAGE(ghConWnd, WM_LBUTTONDOWN, wParam, MAKELPARAM( mouse.RClkCon.X, mouse.RClkCon.Y ), TRUE);     //посылаем консоли отпускание
-                    pVCon->RCon()->SendMouseEvent(WM_LBUTTONDOWN, wParam, mouse.RClkDC.X, mouse.RClkDC.Y);
+                    pVCon->RCon()->OnMouse(WM_LBUTTONDOWN, wParam, mouse.RClkDC.X, mouse.RClkDC.Y);
                     //POSTMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( mouse.RClkCon.X, mouse.RClkCon.Y ), TRUE);     //посылаем консоли отпускание
-                    pVCon->RCon()->SendMouseEvent(WM_LBUTTONUP, wParam, mouse.RClkDC.X, mouse.RClkDC.Y);
+                    pVCon->RCon()->OnMouse(WM_LBUTTONUP, wParam, mouse.RClkDC.X, mouse.RClkDC.Y);
                 }
 
+                pVCon->RCon()->FlushInputQueue();
                 
                 // Иначе иногда срабатывает FAR'овский D'n'D
                 //SENDMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( newX, newY ));     //посылаем консоли отпускание
@@ -3954,7 +3955,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
                 //isRBDown=false;
                 mouse.state &= ~(DRAG_R_ALLOWED | DRAG_R_STARTED | MOUSE_R_LOCKED);
                 //POSTMESSAGE(ghConWnd, WM_RBUTTONDOWN, 0, MAKELPARAM( mouse.RClkCon.X, mouse.RClkCon.Y ), TRUE);
-                pVCon->RCon()->SendMouseEvent(WM_RBUTTONDOWN, 0, mouse.RClkDC.X, mouse.RClkDC.Y);
+                pVCon->RCon()->OnMouse(WM_RBUTTONDOWN, 0, mouse.RClkDC.X, mouse.RClkDC.Y);
             }
             return 0;
         }
@@ -3995,7 +3996,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
                 }
                 //if (gSet.is DnD) mouse.bIgnoreMouseMove = true;
                 //POSTMESSAGE(ghConWnd, messg, wParam, MAKELPARAM( newX, newY ), FALSE); // было SEND
-                pVCon->RCon()->SendMouseEvent(messg, wParam, winX, winY);
+                pVCon->RCon()->OnMouse(messg, wParam, winX, winY);
                 return 0;
             }
         }
@@ -4014,7 +4015,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
                 //newY = MulDiv(cursor.y, conRect.bottom, klMax<uint>(1, pVCon->Height));
                 //#endif
                 //POSTMESSAGE(ghConWnd, messg, wParam, MAKELPARAM( newX, newY ), FALSE);
-                pVCon->RCon()->SendMouseEvent(messg, wParam, cursor.x, cursor.y);
+                pVCon->RCon()->OnMouse(messg, wParam, cursor.x, cursor.y);
                 return 0;
             }
         }
@@ -4069,9 +4070,11 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
                     {
                         // Сначала выделить файл под курсором
                         //POSTMESSAGE(ghConWnd, WM_LBUTTONDOWN, MK_LBUTTON, MAKELPARAM( mouse.RClkCon.X, mouse.RClkCon.Y ), TRUE);
-                        pVCon->RCon()->SendMouseEvent(WM_LBUTTONDOWN, MK_LBUTTON, mouse.RClkDC.X, mouse.RClkDC.Y);
+                        pVCon->RCon()->OnMouse(WM_LBUTTONDOWN, MK_LBUTTON, mouse.RClkDC.X, mouse.RClkDC.Y);
                         //POSTMESSAGE(ghConWnd, WM_LBUTTONUP, 0, MAKELPARAM( mouse.RClkCon.X, mouse.RClkCon.Y ), TRUE);
-                        pVCon->RCon()->SendMouseEvent(WM_LBUTTONUP, 0, mouse.RClkDC.X, mouse.RClkDC.Y);
+                        pVCon->RCon()->OnMouse(WM_LBUTTONUP, 0, mouse.RClkDC.X, mouse.RClkDC.Y);
+                        
+                        pVCon->RCon()->FlushInputQueue();
                     
                         //pVCon->Update(true);
                         //INVALIDATE(); //InvalidateRect(HDCWND, NULL, FALSE);
@@ -4103,7 +4106,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
                 }
                 // Иначе нужно сначала послать WM_RBUTTONDOWN
                 //POSTMESSAGE(ghConWnd, WM_RBUTTONDOWN, wParam, MAKELPARAM( newX, newY ), TRUE);
-                pVCon->RCon()->SendMouseEvent(WM_RBUTTONDOWN, wParam, winX, winY);
+                pVCon->RCon()->OnMouse(WM_RBUTTONDOWN, wParam, winX, winY);
             } else {
                 char szLog[100];
                 wsprintfA(szLog, "RightClicked, but condition failed (RCSK:%i, State:%u)", (int)gSet.isRClickSendKey, (DWORD)mouse.state);
@@ -4127,7 +4130,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 fin:
     // заменим даблклик вторым обычным
     //POSTMESSAGE(ghConWnd, messg == WM_RBUTTONDBLCLK ? WM_RBUTTONDOWN : messg, wParam, MAKELPARAM( newX, newY ), FALSE);
-    pVCon->RCon()->SendMouseEvent(messg == WM_RBUTTONDBLCLK ? WM_RBUTTONDOWN : messg, wParam, winX, winY);
+    pVCon->RCon()->OnMouse(messg == WM_RBUTTONDBLCLK ? WM_RBUTTONDOWN : messg, wParam, winX, winY);
     return 0;
 }
 
@@ -4770,6 +4773,7 @@ void CConEmuMain::ServerThreadCommand(HANDLE hPipe)
 
 		RConStartArgs args; args.pszSpecialCmd = pIn->NewCmd.szCommand;
         CVirtualConsole* pCon = CreateCon(&args);
+		args.pszSpecialCmd = NULL;
         if (pCon) {
             pIn->Data[0] = TRUE;
         }

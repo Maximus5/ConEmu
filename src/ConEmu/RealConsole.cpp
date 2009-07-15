@@ -7,7 +7,7 @@
 #include <Tlhelp32.h>
 
 #define DEBUGSTRDRAW(s) //DEBUGSTR(s)
-#define DEBUGSTRINPUT(s) //DEBUGSTR(s)
+#define DEBUGSTRINPUT(s) DEBUGSTR(s)
 #define DEBUGSTRSIZE(s) //DEBUGSTR(s)
 #define DEBUGSTRPROC(s) //DEBUGSTR(s)
 #define DEBUGSTRCMD(s) //DEBUGSTR(s)
@@ -58,12 +58,26 @@ WARNING("Часто после разблокирования компьютера размер консоли изменяется (OK), 
     #define FORCE_INVALIDATE_TIMEOUT 300
 #endif
 
+
+#define MOUSE_EVENT_MOVE      (WM_APP+10)
+#define MOUSE_EVENT_CLICK     (WM_APP+11)
+#define MOUSE_EVENT_DBLCLICK  (WM_APP+12)
+#define MOUSE_EVENT_WHEELED   (WM_APP+13)
+#define MOUSE_EVENT_HWHEELED  (WM_APP+14)
+#define MOUSE_EVENT_FIRST MOUSE_EVENT_MOVE
+#define MOUSE_EVENT_LAST MOUSE_EVENT_HWHEELED
+
+#define INPUT_THREAD_ALIVE_MSG (WM_APP+100)
+
+
 CRealConsole::CRealConsole(CVirtualConsole* apVCon)
 {
     mp_VCon = apVCon;
     memset(Title,0,sizeof(Title)); memset(TitleCmp,0,sizeof(TitleCmp));
     mp_tabs = NULL; mn_tabsCount = 0; ms_PanelTitle[0] = 0; mn_ActiveTab = 0;
     memset(&m_PacketQueue, 0, sizeof(m_PacketQueue));
+    
+    mn_FlushIn = mn_FlushOut = 0;
 
     mr_LeftPanel = mr_RightPanel = MakeRect(-1,-1);
 
@@ -73,7 +87,11 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
 
     hPictureView = NULL; mb_PicViewWasHidden = FALSE;
 
-    mh_MonitorThread = NULL; mn_MonitorThreadID = 0; mn_ConEmuC_PID = 0; mh_ConEmuC = NULL; mh_ConEmuCInput = NULL;
+    mh_MonitorThread = NULL; mn_MonitorThreadID = 0; 
+    mh_InputThread = NULL; mn_InputThreadID = 0;
+    
+    mn_ConEmuC_PID = 0; mh_ConEmuC = NULL; mh_ConEmuCInput = NULL;
+    
     mb_NeedStartProcess = FALSE; mb_IgnoreCmdStop = FALSE;
 
     ms_ConEmuC_Pipe[0] = 0; ms_ConEmuCInput_Pipe[0] = 0; ms_VConServer_Pipe[0] = 0;
@@ -550,6 +568,207 @@ BOOL CRealConsole::AttachPID(DWORD dwPID)
 #endif
 }
 
+BOOL CRealConsole::FlushInputQueue(DWORD nTimeout /*= 500*/)
+{
+	if (!this) return FALSE;
+	
+	if (nTimeout > 1000) nTimeout = 1000;
+	DWORD dwStartTick = GetTickCount();
+	
+	mn_FlushOut = mn_FlushIn;
+	mn_FlushIn++;
+	
+	TODO("Преверка зависания нити и ее перезапуск");
+	PostThreadMessage(mn_InputThreadID, INPUT_THREAD_ALIVE_MSG, mn_FlushIn, 0);
+	
+	while (mn_FlushOut != mn_FlushIn) {
+		WaitForSingleObject(mh_InputThread, 100);
+		
+		DWORD dwCurTick = GetTickCount();
+		DWORD dwDelta = dwCurTick - dwStartTick;
+		if (dwDelta > nTimeout) break;
+	}
+	
+	return (mn_FlushOut == mn_FlushIn);
+}
+
+void CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec)
+{
+	if (!this) return;
+	_ASSERTE(mn_InputThreadID!=0);
+	
+    if (piRec->EventType == MOUSE_EVENT) {
+        if (piRec->Event.MouseEvent.dwEventFlags == MOUSE_MOVED) {
+            if (m_LastMouse.dwEventFlags != 0
+             && m_LastMouse.dwButtonState     == piRec->Event.MouseEvent.dwButtonState 
+             && m_LastMouse.dwControlKeyState == piRec->Event.MouseEvent.dwControlKeyState
+             && m_LastMouse.dwMousePosition.X == piRec->Event.MouseEvent.dwMousePosition.X
+             && m_LastMouse.dwMousePosition.Y == piRec->Event.MouseEvent.dwMousePosition.Y)
+            {
+                //#ifdef _DEBUG
+                //wchar_t szDbg[60];
+                //wsprintf(szDbg, L"!!! Skipping ConEmu.Mouse event at: {%ix%i}\n", m_LastMouse.dwMousePosition.X, m_LastMouse.dwMousePosition.Y);
+                //DEBUGSTRINPUT(szDbg);
+                //#endif
+                return; // Это событие лишнее. Движения мышки реально не было, кнопки не менялись
+            }
+        }
+        // Запомним
+        m_LastMouse.dwMousePosition   = piRec->Event.MouseEvent.dwMousePosition;
+        m_LastMouse.dwEventFlags      = piRec->Event.MouseEvent.dwEventFlags;
+        m_LastMouse.dwButtonState     = piRec->Event.MouseEvent.dwButtonState;
+        m_LastMouse.dwControlKeyState = piRec->Event.MouseEvent.dwControlKeyState;
+
+        //#ifdef _DEBUG
+        //wchar_t szDbg[60];
+        //wsprintf(szDbg, L"ConEmu.Mouse event at: {%ix%i}\n", m_LastMouse.dwMousePosition.X, m_LastMouse.dwMousePosition.Y);
+        //DEBUGSTRINPUT(szDbg);
+        //#endif
+    }
+    
+
+    UINT nMsg = 0; WPARAM wParam = 0; LPARAM lParam = 0;
+    if (piRec->EventType == KEY_EVENT) {
+    	nMsg = piRec->Event.KeyEvent.bKeyDown ? WM_KEYDOWN : WM_KEYUP;
+    	
+		lParam |= (WORD)piRec->Event.KeyEvent.uChar.UnicodeChar;
+		lParam |= ((BYTE)piRec->Event.KeyEvent.wVirtualKeyCode) << 16;
+		lParam |= ((BYTE)piRec->Event.KeyEvent.wVirtualScanCode) << 24;
+		
+        wParam |= (WORD)piRec->Event.KeyEvent.dwControlKeyState;
+        wParam |= ((DWORD)piRec->Event.KeyEvent.wRepeatCount & 0xFF) << 16;
+    
+    } else if (piRec->EventType == MOUSE_EVENT) {
+		switch (piRec->Event.MouseEvent.dwEventFlags) {
+			case MOUSE_MOVED:
+				nMsg = MOUSE_EVENT_MOVE;
+				break;
+			case 0:
+				nMsg = MOUSE_EVENT_CLICK;
+				break;
+			case DOUBLE_CLICK:
+				nMsg = MOUSE_EVENT_DBLCLICK;
+				break;
+			case MOUSE_WHEELED:
+				DEBUGSTRINPUT(L"MOUSE_WHEELED.Posted\n");
+				nMsg = MOUSE_EVENT_WHEELED;
+				break;
+			case /*MOUSE_HWHEELED*/ 0x0008:
+				nMsg = MOUSE_EVENT_HWHEELED;
+				break;
+			default:
+				_ASSERT(FALSE);
+		}
+		
+    	lParam = ((WORD)piRec->Event.MouseEvent.dwMousePosition.X)
+    	       | (((DWORD)(WORD)piRec->Event.MouseEvent.dwMousePosition.Y) << 16);
+		
+		// max 0x0010/*FROM_LEFT_4ND_BUTTON_PRESSED*/
+		wParam |= ((DWORD)piRec->Event.MouseEvent.dwButtonState) & 0xFF;
+		
+		// max - ENHANCED_KEY == 0x0100
+		wParam |= (((DWORD)piRec->Event.MouseEvent.dwControlKeyState) & 0xFFFF) << 8;
+		
+		if (nMsg == MOUSE_EVENT_WHEELED || nMsg == MOUSE_EVENT_HWHEELED) {
+    		// HIWORD() - short (direction[1/-1])*count*120
+    		short nWheel = (short)((((DWORD)piRec->Event.MouseEvent.dwButtonState) & 0xFFFF0000) >> 16);
+    		char  nCount = nWheel / 120;
+    		wParam |= ((DWORD)nCount) << 24;
+		}
+		
+    
+    } else if (piRec->EventType == FOCUS_EVENT) {
+    	nMsg = piRec->Event.FocusEvent.bSetFocus ? WM_SETFOCUS : WM_KILLFOCUS;
+    	
+    } else {
+    	_ASSERT(FALSE);
+    }
+    _ASSERTE(nMsg!=0);
+    
+    TODO("Проверка зависания нити и ее перезапуск при необходимости");
+    PostThreadMessage(mn_InputThreadID, nMsg, wParam, lParam);
+}
+
+DWORD CRealConsole::InputThread(LPVOID lpParameter)
+{
+    CRealConsole* pRCon = (CRealConsole*)lpParameter;
+    
+    MSG msg;
+    while (GetMessage(&msg,0,0,0)) {
+    	if (msg.message == WM_QUIT) break;
+    	if (WaitForSingleObject(pRCon->mh_TermEvent, 0) == WAIT_OBJECT_0) break;
+
+    	if (msg.message == INPUT_THREAD_ALIVE_MSG) {
+    		pRCon->mn_FlushOut = msg.wParam;
+    		continue;
+    	
+    	} else if (msg.message == WM_KEYDOWN || msg.message == WM_KEYUP) {
+    		INPUT_RECORD r = {KEY_EVENT};
+    		
+    		// lParam
+            r.Event.KeyEvent.bKeyDown = (msg.message == WM_KEYDOWN);
+            r.Event.KeyEvent.uChar.UnicodeChar = (WCHAR)(msg.lParam & 0xFFFF);
+            r.Event.KeyEvent.wVirtualKeyCode   = (((DWORD)msg.lParam) & 0xFF0000) >> 16;
+            r.Event.KeyEvent.wVirtualScanCode  = (((DWORD)msg.lParam) & 0xFF000000) >> 24;
+            
+            // wParam. Пока что тут может быть max(ENHANCED_KEY==0x0100)
+            r.Event.KeyEvent.dwControlKeyState = ((DWORD)msg.wParam & 0xFFFF);
+            
+            r.Event.KeyEvent.wRepeatCount = ((DWORD)msg.wParam & 0xFF0000) >> 16;
+            
+            pRCon->SendConsoleEvent(&r);
+            
+    	} else if (msg.message >= MOUSE_EVENT_FIRST && msg.message <= MOUSE_EVENT_LAST) {
+    		INPUT_RECORD r = {MOUSE_EVENT};
+    		
+    		switch (msg.message) {
+    			case MOUSE_EVENT_MOVE:
+    				r.Event.MouseEvent.dwEventFlags = MOUSE_MOVED;
+    				break;
+    			case MOUSE_EVENT_CLICK:
+    				r.Event.MouseEvent.dwEventFlags = 0;
+    				break;
+    			case MOUSE_EVENT_DBLCLICK:
+    				r.Event.MouseEvent.dwEventFlags = DOUBLE_CLICK;
+    				break;
+    			case MOUSE_EVENT_WHEELED:
+    				r.Event.MouseEvent.dwEventFlags = MOUSE_WHEELED;
+					DEBUGSTRINPUT(L"MOUSE_WHEELED.Sending\n");
+    				break;
+    			case MOUSE_EVENT_HWHEELED:
+    				r.Event.MouseEvent.dwEventFlags = /*MOUSE_HWHEELED*/ 0x0008;
+    				break;
+    		}
+    		
+    		r.Event.MouseEvent.dwMousePosition.X = LOWORD(msg.lParam);
+    		r.Event.MouseEvent.dwMousePosition.Y = HIWORD(msg.lParam);
+    		
+    		// max 0x0010/*FROM_LEFT_4ND_BUTTON_PRESSED*/
+    		r.Event.MouseEvent.dwButtonState = ((DWORD)msg.wParam) & 0xFF;
+    		
+    		// max - ENHANCED_KEY == 0x0100
+    		r.Event.MouseEvent.dwControlKeyState = (((DWORD)msg.wParam) & 0xFFFF00) >> 8;
+    		
+    		if (msg.message == MOUSE_EVENT_WHEELED || msg.message == MOUSE_EVENT_HWHEELED) {
+	    		// HIWORD() - short (direction[1/-1])*count*120
+	    		short nDir = (/*signed*/ char)((((DWORD)msg.wParam) & 0xFF000000) >> 24);
+	    		r.Event.MouseEvent.dwButtonState |= ((WORD)(nDir*120)) << 16;
+			}
+			
+			pRCon->SendConsoleEvent(&r);
+			
+    	} else if (msg.message == WM_SETFOCUS || msg.message == WM_KILLFOCUS) {
+	        INPUT_RECORD r = {FOCUS_EVENT};
+	        
+	        r.Event.FocusEvent.bSetFocus = (msg.message == WM_SETFOCUS);
+	        
+	        pRCon->SendConsoleEvent(&r);
+	        
+    	}
+    }
+    
+    return 0;
+}
 
 DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 {
@@ -854,11 +1073,14 @@ BOOL CRealConsole::StartMonitorThread()
     BOOL lbRc = FALSE;
 
     _ASSERT(mh_MonitorThread==NULL);
+    _ASSERT(mh_InputThread==NULL);
     //_ASSERTE(mb_Detached || mh_ConEmuC!=NULL); -- процесс теперь запускаем в MonitorThread
 
     mh_MonitorThread = CreateThread(NULL, 0, MonitorThread, (LPVOID)this, 0, &mn_MonitorThreadID);
+    
+    mh_InputThread = CreateThread(NULL, 0, InputThread, (LPVOID)this, 0, &mn_InputThreadID);
 
-    if (mh_MonitorThread == NULL) {
+    if (mh_MonitorThread == NULL || mh_InputThread == NULL) {
         DisplayLastError(_T("Can't create console thread!"));
     } else {
         //lbRc = SetThreadPriority(mh_MonitorThread, THREAD_PRIORITY_ABOVE_NORMAL);
@@ -1101,7 +1323,7 @@ BOOL CRealConsole::StartProcess()
 
 
 
-void CRealConsole::SendMouseEvent(UINT messg, WPARAM wParam, int x, int y)
+void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y)
 {
     #ifndef WM_MOUSEHWHEEL
     #define WM_MOUSEHWHEEL                  0x020E
@@ -1203,7 +1425,7 @@ void CRealConsole::SendMouseEvent(UINT messg, WPARAM wParam, int x, int y)
                         DEBUGSTRINPUT(szDbg);
                         #endif
                         r.Event.MouseEvent.dwMousePosition = crMouse;
-                        SendConsoleEvent ( &r );
+                        PostConsoleEvent ( &r );
                         crMouse.Y += nYstep;
                     }
                 }
@@ -1224,7 +1446,7 @@ void CRealConsole::SendMouseEvent(UINT messg, WPARAM wParam, int x, int y)
         }
 
         // Посылаем событие в консоль через ConEmuC
-        SendConsoleEvent ( &r );
+        PostConsoleEvent ( &r );
 
         /*DWORD dwWritten = 0;
         if (!WriteConsoleInput(hConIn(), &r, 1, &dwWritten)) {
@@ -1422,28 +1644,44 @@ void CRealConsole::StopThread(BOOL abRecreating)
 
     DEBUGSTRPROC(L"Entering StopThread\n");
 
+    // Сначала выставить флаги закрытия
     if (mh_MonitorThread) {
         // выставление флагов и завершение нити
         StopSignal(); //SetEvent(mh_TermEvent);
+    }
+    
+    if (mh_InputThread) {
+    	PostThreadMessage(mn_InputThreadID, WM_QUIT, 0, 0);
+    }
+    
+    
+    // А теперь можно ждать завершения
+    if (mh_MonitorThread) {
         if (WaitForSingleObject(mh_MonitorThread, 300) != WAIT_OBJECT_0) {
             DEBUGSTRPROC(L"### Main Thread wating timeout, terminating...\n");
             TerminateThread(mh_MonitorThread, 1);
         } else {
             DEBUGSTRPROC(L"Main Thread closed normally\n");
         }
+        SafeCloseHandle(mh_MonitorThread);
+    }
+    
+    if (mh_InputThread) {
+        if (WaitForSingleObject(mh_InputThread, 300) != WAIT_OBJECT_0) {
+            DEBUGSTRPROC(L"### Input Thread wating timeout, terminating...\n");
+            TerminateThread(mh_InputThread, 1);
+        } else {
+            DEBUGSTRPROC(L"Input Thread closed normally\n");
+        }
+        SafeCloseHandle(mh_InputThread);
     }
     
     if (!abRecreating) {
         SafeCloseHandle(mh_TermEvent);
         SafeCloseHandle(mh_MonitorThreadEvent);
-        //SafeCloseHandle(mh_EndUpdateEvent);
-        //SafeCloseHandle(mh_Sync2WindowEvent);
-        //SafeCloseHandle(mh_ConChanged);
         SafeCloseHandle(mh_PacketArrived);
     }
-    //SafeCloseHandle(mh_CursorChanged);
     
-    SafeCloseHandle(mh_MonitorThread);
     
     if (abRecreating) {
         hConWnd = NULL;
@@ -1525,7 +1763,7 @@ LRESULT CRealConsole::OnScroll(int nDirection)
     return 0;
 }
 
-LRESULT CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
+void CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 {
     //LRESULT result = 0;
 
@@ -1574,7 +1812,7 @@ LRESULT CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lP
             else
             {
                 if (isPressed(VK_SHIFT))
-                    return 0;
+                    return;
 
                 if (!gSet.isFullScreen)
                     gConEmu.SetWindowMode(rFullScreen);
@@ -1609,7 +1847,7 @@ LRESULT CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lP
 
             if (messg == WM_CHAR || messg == WM_SYSCHAR) {
                 if (((WCHAR)wParam) <= 32 || mn_LastVKeyPressed == 0)
-                    return 0; // это уже обработано
+                    return; // это уже обработано
                 r.Event.KeyEvent.bKeyDown = TRUE;
                 r.Event.KeyEvent.uChar.UnicodeChar = (WCHAR)wParam;
                 r.Event.KeyEvent.wRepeatCount = 1; TODO("0-15 ? Specifies the repeat count for the current message. The value is the number of times the keystroke is autorepeated as a result of the user holding down the key. If the keystroke is held long enough, multiple messages are sent. However, the repeat count is not cumulative.");
@@ -1636,7 +1874,7 @@ LRESULT CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lP
                     }
                     mn_LastVKeyPressed = 0; // чтобы не обрабатывать WM_(SYS)CHAR
                 } else {
-                    return 0;
+                    return;
                 }
                 r.Event.KeyEvent.bKeyDown = (messg == WM_KEYDOWN || messg == WM_SYSKEYDOWN);
             }
@@ -1683,12 +1921,12 @@ LRESULT CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lP
                 mn_LastSetForegroundPID = mn_FarPID;
             }
             
-            SendConsoleEvent(&r);
+            PostConsoleEvent(&r);
 
             if (messg == WM_CHAR || messg == WM_SYSCHAR) {
                 // И сразу посылаем отпускание
                 r.Event.KeyEvent.bKeyDown = FALSE;
-                SendConsoleEvent(&r);
+                PostConsoleEvent(&r);
             }
         }
     }
@@ -1704,7 +1942,7 @@ LRESULT CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lP
             DEBUGSTRINPUT(L"   focused UNKNOWN\n"); 
     }*/
 
-    return 0;
+    return;
 }
 
 void CRealConsole::OnWinEvent(DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime)
@@ -3294,7 +3532,7 @@ void CRealConsole::OnFocus(BOOL abFocused)
 #endif
         INPUT_RECORD r = {FOCUS_EVENT};
         r.Event.FocusEvent.bSetFocus = abFocused;
-        SendConsoleEvent(&r);
+        PostConsoleEvent(&r);
 
         mn_Focused = abFocused ? 1 : 0;
     }
@@ -4633,11 +4871,11 @@ void CRealConsole::Paste()
             // 31 - Specifies the transition state. The value is 1 if the key is being released, or it is 0 if the key is being pressed.
             //r.Event.KeyEvent.dwControlKeyState = 0;
             
-            SendConsoleEvent(&r);
+            PostConsoleEvent(&r);
 
             // И сразу посылаем отпускание
             r.Event.KeyEvent.bKeyDown = FALSE;
-            SendConsoleEvent(&r);
+            PostConsoleEvent(&r);
         }
     }
     GlobalUnlock(hglb);

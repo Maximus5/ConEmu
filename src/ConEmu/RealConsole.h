@@ -116,13 +116,20 @@ public:
     CRealConsole(CVirtualConsole* apVCon);
     ~CRealConsole();
     
-    void OnFocus(BOOL abFocused);
     BOOL PreInit(BOOL abCreateBuffers=TRUE);
     void DumpConsole(HANDLE ahFile);
 
     BOOL SetConsoleSize(COORD size, DWORD anCmdID=CECMD_SETSIZE);
-    void SendMouseEvent(UINT messg, WPARAM wParam, int x, int y);
+private:
     void SendConsoleEvent(INPUT_RECORD* piRec);
+    DWORD mn_FlushIn, mn_FlushOut;
+public:
+    void PostConsoleEvent(INPUT_RECORD* piRec);
+    BOOL FlushInputQueue(DWORD nTimeout = 500);
+    void OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
+    void OnMouse(UINT messg, WPARAM wParam, int x, int y);
+    void OnFocus(BOOL abFocused);
+    
     void StopSignal();
     void StopThread(BOOL abRecreating=FALSE);
     BOOL isBufferHeight();
@@ -142,7 +149,6 @@ public:
     DWORD GetProgramStatus();
 	DWORD GetFarStatus();
     DWORD GetServerPID();
-    LRESULT OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
     LRESULT OnScroll(int nDirection);
     BOOL isConSelectMode();
     BOOL isFar();
@@ -199,13 +205,19 @@ protected:
     BOOL StartMonitorThread();
     BOOL mb_NeedStartProcess;
 
+    // Нить наблюдения за консолью
     static DWORD WINAPI MonitorThread(LPVOID lpParameter);
+    HANDLE mh_MonitorThread; DWORD mn_MonitorThreadID;
+    // Для пересылки событий ввода в консоль
+    static DWORD WINAPI InputThread(LPVOID lpParameter);
+    HANDLE mh_InputThread; DWORD mn_InputThreadID;
+    
     HANDLE mh_TermEvent, mh_MonitorThreadEvent; //, mh_Sync2WindowEvent;
     BOOL mb_FullRetrieveNeeded; //, mb_Detached;
 	RConStartArgs m_Args;
     //wchar_t* ms_SpecialCmd;
 	//BOOL mb_RunAsAdministrator;
-    HANDLE mh_MonitorThread; DWORD mn_MonitorThreadID;
+    
 
     void Box(LPCTSTR szText);
 
