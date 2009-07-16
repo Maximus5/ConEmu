@@ -10,6 +10,15 @@ extern "C" {
 const u8 chSetsNums[19] = {0, 178, 186, 136, 1, 238, 134, 161, 177, 129, 130, 77, 255, 204, 128, 2, 222, 162, 163};
 int upToFontHeight=0;
 HWND ghOpWnd=NULL;
+const DWORD dwDefColors[0x10] = {
+	0x00000000, 0x00800000, 0x00008000, 0x00808000, 0x00000080, 0x00800080, 0x00008080, 0x00c0c0c0, 
+	0x00808080, 0x00ff0000, 0x0000ff00, 0x00ffff00, 0x000000ff, 0x00ff00ff, 0x0000ffff, 0x00ffffff};
+
+
+
+
+
+
 
 namespace Settings {
     const WCHAR* szKeys[] = {L"<None>", L"Left Ctrl", L"Right Ctrl", L"Left Alt", L"Right Alt", L"Left Shift", L"Right Shift"};
@@ -74,7 +83,7 @@ void CSettings::InitSettings()
 //------------------------------------------------------------------------
     _tcscpy(Config, _T("Software\\ConEmu"));
 
-	FontFile[0] = 0;
+	FontFile[0] = 0; isSearchForFont = true;
     
     psCmd = NULL; psCurCmd = NULL; wcscpy(szDefCmd, L"far");
     isMulti = true; icMultiNew = 'W'; icMultiNext = 'Q'; icMultiRecreate = 192/*VK_тильда*/; isMultiNewConfirm = true;
@@ -118,12 +127,20 @@ void CSettings::InitSettings()
         RegConDef.OpenKey(HKEY_USERS, _T(".DEFAULT\\Console"), KEY_READ);
 
         TCHAR ColorName[] = _T("ColorTable00");
+		bool  lbBlackFound = false;
         for (uint i = 0x10; i--;)
         {
             ColorName[10] = i/10 + '0';
             ColorName[11] = i%10 + '0';
             if (!RegConColors.Load(ColorName, Colors[i]))
-                RegConDef.Load(ColorName, Colors[i]);
+                if (!RegConDef.Load(ColorName, Colors[i]))
+                	Colors[i] = dwDefColors[i];
+			if (Colors[i] == 0) {
+				if (!lbBlackFound)
+					lbBlackFound = true;
+				else if (lbBlackFound)
+					Colors[i] = dwDefColors[i];
+			}
             Colors[i+0x10] = Colors[i]; // Умолчания
         }
 
@@ -215,7 +232,12 @@ void CSettings::LoadSettings()
 		// Debugging
 		reg.Load(_T("ConVisible"), isConVisible);
 		//reg.Load(_T("DumpPackets"), szDumpPackets);
-        reg.Load(_T("FontName"), inFont);
+		if (reg.Load(_T("FontName"), inFont)) {
+			isSearchForFont = false;
+		} else {
+			isSearchForFont = true;
+			reg.Load(_T("SearchForFont"), isSearchForFont);
+		}
         reg.Load(_T("FontName2"), inFont2);
         reg.Load(_T("CmdLine"), &psCmd);
         reg.Load(_T("Multi"), isMulti);

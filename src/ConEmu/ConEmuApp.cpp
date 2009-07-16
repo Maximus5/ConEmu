@@ -408,6 +408,73 @@ void DisplayLastError(LPCTSTR asLabel, DWORD dwError /* =0 */)
 	MCHKHEAP
 }
 
+BOOL FindFontInFolder(wchar_t* szTempFontFam)
+{
+	BOOL lbRc = FALSE;
+
+	typedef BOOL (WINAPI* FGetFontResourceInfo)(LPCTSTR lpszFilename,LPDWORD cbBuffer,LPVOID lpBuffer,DWORD dwQueryType);
+	FGetFontResourceInfo GetFontResourceInfo = NULL;
+	HMODULE hGdi = LoadLibrary(L"gdi32.dll");
+	if (!hGdi) return FALSE;
+	GetFontResourceInfo = (FGetFontResourceInfo)GetProcAddress(hGdi, "GetFontResourceInfoW");
+	if (!GetFontResourceInfo) return FALSE;
+
+	WIN32_FIND_DATA fnd;
+	wchar_t szFind[MAX_PATH]; wcscpy(szFind, gConEmu.ms_ConEmuExe);
+	wchar_t *pszSlash = wcsrchr(szFind, L'\\');
+
+	if (pszSlash) {
+		wcscpy(pszSlash, L"\\*.ttf");
+		HANDLE hFind = FindFirstFile(szFind, &fnd);
+		if (hFind != INVALID_HANDLE_VALUE) {
+			do {
+				if ((fnd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0) {
+					lbRc = TRUE; break;
+				}
+			} while (FindNextFile(hFind, &fnd));
+			FindClose(hFind);
+		}
+
+		if (lbRc) {
+			lbRc = FALSE;
+			pszSlash[1] = 0;
+			if ((wcslen(fnd.cFileName)+wcslen(szFind)) >= MAX_PATH) {
+				TCHAR* psz=(TCHAR*)calloc(wcslen(fnd.cFileName)+100,sizeof(TCHAR));
+				lstrcpyW(psz, L"Too long full pathname for font:\n");
+				lstrcatW(psz, fnd.cFileName);
+				MessageBox(NULL, psz, L"ConEmu", MB_OK|MB_ICONSTOP);
+				free(psz);
+			} else {
+				wcscat(szFind, fnd.cFileName);
+				// Теперь нужно определить имя шрифта
+				DWORD dwSize = MAX_PATH;
+				//if (!AddFontResourceEx(szFind, FR_PRIVATE, NULL)) //ADD fontname; by Mors
+				//{
+				//	TCHAR* psz=(TCHAR*)calloc(wcslen(szFind)+100,sizeof(TCHAR));
+				//	lstrcpyW(psz, L"Can't register font:\n");
+				//	lstrcatW(psz, szFind);
+				//	MessageBox(NULL, psz, L"ConEmu", MB_OK|MB_ICONSTOP);
+				//	free(psz);
+				//} else
+				if (!GetFontResourceInfo(szFind, &dwSize, szTempFontFam, 1)) {
+					DWORD dwErr = GetLastError();
+					TCHAR* psz=(TCHAR*)calloc(wcslen(szFind)+100,sizeof(TCHAR));
+					lstrcpyW(psz, L"Can't query font family for file:\n");
+					lstrcatW(psz, szFind);
+					wsprintf(psz+wcslen(psz), L"\nErrCode=0x%08X", dwErr);
+					MessageBox(NULL, psz, L"ConEmu", MB_OK|MB_ICONSTOP);
+					free(psz);
+				} else {
+					lstrcpynW(gSet.FontFile, szFind, countof(gSet.FontFile));
+					lbRc = TRUE;
+				}
+			}
+		}
+	}
+
+	return lbRc;
+}
+
 //extern void SetConsoleFontSizeTo(HWND inConWnd, int inSizeX, int inSizeY);
 
 // Disables the IME for all threads in a current process.
@@ -459,7 +526,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     //bool setParentDisabled=false;
     bool ClearTypePrm = false;
-    bool FontPrm = false; TCHAR* FontVal = NULL;
+    bool FontPrm = false; TCHAR* FontVal = NULL; wchar_t szTempFontFam[MAX_PATH];
     bool SizePrm = false; LONG SizeVal = 0;
     bool BufferHeightPrm = false; int BufferHeightVal = 0;
     bool ConfigPrm = false; TCHAR* ConfigVal = NULL;
@@ -858,6 +925,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			return 100;
 		}
 		lstrcpynW(gSet.FontFile, FontFile, countof(gSet.FontFile));
+	} else if (gSet.isSearchForFont && gConEmu.ms_ConEmuExe[0]) {
+		if (FindFontInFolder(szTempFontFam)) {
+			// Шрифт уже зарегистрирован
+			FontFilePrm = true;
+			FontPrm = true;
+			FontVal = szTempFontFam;
+			FontFile = gSet.FontFile;
+		}
 	}
 
 

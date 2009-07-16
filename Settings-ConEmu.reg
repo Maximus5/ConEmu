@@ -21,6 +21,10 @@ REGEDIT4
 ;; hex:01 - ... as proportional font (i.e. Arial, Tahoma, ...)
 ;"Proportional"=hex:00
 
+;; For new configurations ("FontName" is absent) this is hex:01, that means:
+;; 'Search, register for process, and use first *.ttf file in conemu folder'.
+"SearchForFont"=hex:00
+
 ;; 
 "Anti-aliasing"=hex:04
 
@@ -175,7 +179,7 @@ REGEDIT4
 "VizEolCh"=hex:93,21
 "VizEofCh"=hex:40,26
 
-;; Цвета консоли (16..31 используется при ExtendColors=01)
+;; Console colors (16..31 used with ExtendColors=01)
 ;"ColorTable00"=hex:ff,ff,ff,00
 ;...
 ;"ColorTable31"=hex:ff,ff,ff,00
@@ -192,7 +196,7 @@ REGEDIT4
 ;; Slideshow mode may be activated by 'Pause/Break' key.
 ;"SlideShowElapse"=dword:00001000
 
-;; Значение для SetProcessAffinityMask
+;; Value for SetProcessAffinityMask
 ;"AffinityMask"=dword:00000003
 
 ;; Real Console font. Use very carefully.

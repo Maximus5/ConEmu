@@ -18,6 +18,7 @@ public:
 private:
     LOGFONT LogFont, LogFont2;
 public:
+	bool isSearchForFont;
 	wchar_t FontFile[MAX_PATH];
 	LOGFONT ConsoleFont;
     COLORREF Colors[0x20];

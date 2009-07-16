@@ -25,11 +25,6 @@ BOOL CDragDrop::Init()
 		DWORD dwAttrs = GetFileAttributes(szDesktopPath);
 		if (dwAttrs == (DWORD)-1) {
 			// Папка отсутсвует
-			wchar_t szError[MAX_PATH*2];
-			wcscpy(szError, L"Desktop folder not found:\n");
-			wcscat(szError, szDesktopPath);
-			wcscat(szError, L"\nSome Drag-n-Drop features will be disabled!");
-			DisplayLastError(szError);
 			
 		} else if ((dwAttrs & FILE_ATTRIBUTE_DIRECTORY) == FILE_ATTRIBUTE_DIRECTORY) {
 			hr = SHGetFolderLocation ( ghWnd, CSIDL_DESKTOP, NULL, 0, &mp_DesktopID );
@@ -38,6 +33,13 @@ BOOL CDragDrop::Init()
 			}
 
 		}
+	}
+	if (mp_DesktopID == NULL) {
+		wchar_t szError[MAX_PATH*2];
+		wcscpy(szError, L"Desktop folder not found:\n");
+		wcscat(szError, szDesktopPath);
+		wcscat(szError, L"\nSome Drag-n-Drop features will be disabled!");
+		DisplayLastError(szError);
 	}
 
 	hr = RegisterDragDrop(m_hWnd, this);
