@@ -3,26 +3,63 @@
 
 CDragDrop::CDragDrop(HWND hWnd)
 {
-	HRESULT hr = S_OK;
-	m_hWnd=hWnd;
+	m_hWnd = hWnd;
+	mb_DragDropRegistered = FALSE;
 	m_lRefCount = 1;
 	m_pfpi = NULL;
 	mp_DataObject = NULL;
 	mb_selfdrag = NULL;
-	InitializeCriticalSection(&m_CrThreads);
-
 	mp_DesktopID = NULL;
-	hr = SHGetFolderLocation ( ghWnd, CSIDL_DESKTOP, NULL, 0, &mp_DesktopID );
-	if (hr != S_OK)
-		DisplayLastError(_T("Can't get desktop folder"), hr);
+	
+	InitializeCriticalSection(&m_CrThreads);
+}
 
-	hr = RegisterDragDrop(hWnd, this);
-	if (hr != S_OK)
-		DisplayLastError(_T("Can't register Drop target"), hr);
+BOOL CDragDrop::Init()
+{
+	BOOL lbRc = FALSE;
+	HRESULT hr = S_OK;
+	
+	wchar_t szDesktopPath[MAX_PATH+1];
+	hr = SHGetFolderPath ( ghWnd, CSIDL_DESKTOP, NULL, SHGFP_TYPE_CURRENT, szDesktopPath );
+	if (hr == S_OK) {
+		DWORD dwAttrs = GetFileAttributes(szDesktopPath);
+		if (dwAttrs == (DWORD)-1) {
+			// Папка отсутсвует
+			wchar_t szError[MAX_PATH*2];
+			wcscpy(szError, L"Desktop folder not found:\n");
+			wcscat(szError, szDesktopPath);
+			wcscat(szError, L"\nSome Drag-n-Drop features will be disabled!");
+			DisplayLastError(szError);
+			
+		} else if ((dwAttrs & FILE_ATTRIBUTE_DIRECTORY) == FILE_ATTRIBUTE_DIRECTORY) {
+			hr = SHGetFolderLocation ( ghWnd, CSIDL_DESKTOP, NULL, 0, &mp_DesktopID );
+			if (hr != S_OK) {
+				DisplayLastError(L"Can't get desktop folder", hr);
+			}
+
+		}
+	}
+
+	hr = RegisterDragDrop(m_hWnd, this);
+	if (hr != S_OK) {
+		DisplayLastError(L"Can't register Drop target", hr);
+		goto wrap;
+	} else {
+		mb_DragDropRegistered = TRUE;
+	}
+
+	lbRc = TRUE;
+wrap:
+	return lbRc;
 }
 
 CDragDrop::~CDragDrop()
 {
+	if (mb_DragDropRegistered && m_hWnd) {
+		mb_DragDropRegistered = FALSE;
+		RevokeDragDrop(m_hWnd);
+	}
+
 	TryEnterCriticalSection(&m_CrThreads);
 	if (!m_OpThread.empty()) {
 		LeaveCriticalSection(&m_CrThreads);
@@ -269,6 +306,64 @@ HRESULT CDragDrop::DropFromStream(IDataObject * pDataObject, BOOL abActive)
 	return S_OK;
 }
 
+HRESULT CDragDrop::DropNames(HDROP hDrop, int iQuantity, BOOL abActive)
+{
+	wchar_t szMacro[MAX_DROP_PATH*2+30];
+	wchar_t* pszText = NULL;
+	// -- HRESULT hr = S_OK;
+	DWORD dwStartTick = GetTickCount();
+	#define OPER_TIMEOUT 5000
+
+	for ( int i = 0 ; i < iQuantity; i++ )
+	{
+		wcscpy(szMacro, L"$Text      ");
+		pszText = szMacro + wcslen(szMacro);
+
+		int nLen = DragQueryFile(hDrop,i,pszText,MAX_DROP_PATH);
+		if (nLen <= 0 || nLen >= MAX_DROP_PATH) continue;
+
+		wchar_t* psz = pszText;
+		// обработка кавычек и слэшей
+		//while ((psz = wcschr(psz, L'"')) != NULL) {
+		//	*psz = L'\'';
+		//}
+		nLen = wcslen(psz);
+		while (nLen>0 && *psz) {
+			if (*psz == L'"' || *psz == L'\\') {
+				wmemmove(psz+1, psz, nLen+1);
+				if (*psz == L'"') *psz = L'\\';
+				psz++;
+			}
+			psz++; nLen--;
+		}
+
+		if ((psz = wcschr(pszText, L' ')) != NULL) {
+			// Имя нужно окавычить
+			pszText[-3] = L'\"'; pszText[-2] = L'\\'; pszText[-1] = L'\"';
+			wcscat(pszText, L"\\\" \"");
+		} else {
+			// А тут кавычки только для макроса $Text
+			pszText[-1] = L'\"';
+			wcscat(pszText, L" \"");
+		}
+
+		gConEmu.PostMacro(szMacro);
+
+		if (((i + 1) < iQuantity)
+			&& (GetTickCount() - dwStartTick) >= OPER_TIMEOUT)
+		{
+			BOOL b = gbDontEnable; gbDontEnable = TRUE;
+			int nBtn = MessageBox(ghWnd, L"Drop operation is too long. Continue?", L"ConEmu", MB_YESNO|MB_ICONEXCLAMATION);
+			gbDontEnable = b;
+
+			if (nBtn != IDYES) break;
+			dwStartTick = GetTickCount();
+		}
+	}
+	
+	return S_OK;
+}
+
 HRESULT CDragDrop::DropLinks(HDROP hDrop, int iQuantity, BOOL abActive)
 {
 	TCHAR curr[MAX_DROP_PATH];
@@ -278,12 +373,13 @@ HRESULT CDragDrop::DropLinks(HDROP hDrop, int iQuantity, BOOL abActive)
 
 	for ( int i = 0 ; i < iQuantity; i++ )
 	{
-		DragQueryFile(hDrop,i,curr,MAX_DROP_PATH);
+		int nLen = DragQueryFile(hDrop,i,curr,MAX_DROP_PATH);
+		if (nLen <= 0 || nLen >= MAX_DROP_PATH) continue;
 
 		LPCTSTR pszTitle = _tcsrchr(curr, _T('\\'));
 		if (pszTitle) pszTitle++; else pszTitle = curr;
 
-		int nLen = nToLen+2+_tcslen(pszTitle)+4;
+		nLen = nToLen+2+_tcslen(pszTitle)+4;
 		TCHAR *szLnkPath = new TCHAR[nLen];
 		_tcscpy(szLnkPath, pszTo);
 		if (szLnkPath[_tcslen(szLnkPath)-1] != _T('\\'))
@@ -313,16 +409,24 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop (IDataObject * pDataObject,DWORD grfKe
 	}
 
 	// Определить, на какую панель бросаем
-	ScreenToClient(m_hWnd, (LPPOINT)&pt);
+	ScreenToClient(ghWndDC, (LPPOINT)&pt);
 	COORD cr = gConEmu.ActiveCon()->ClientToConsole(pt.x, pt.y);
 	pt.x = cr.X; pt.y = cr.Y;
 	//pt.x/=gSet.Log Font.lfWidth;
 	//pt.y/=gSet.Log Font.lfHeight;
 	BOOL lbActive = PtInRect(&(m_pfpi->ActiveRect), *(LPPOINT)&pt);
 
+	// Бросок в командную строку (или в редактор, потом...)
+	BOOL lbDropFileNamesOnly = FALSE;
+	if ((m_pfpi->ActiveRect.bottom && pt.y > m_pfpi->ActiveRect.bottom) ||
+		(m_pfpi->PassiveRect.bottom && pt.y > m_pfpi->PassiveRect.bottom))
+	{
+		lbDropFileNamesOnly = TRUE;
+	}
 	
 	// Если тащат просто между панелями - сразу в FAR
-	if (!lbActive && mb_selfdrag && (*pdwEffect == DROPEFFECT_COPY || *pdwEffect == DROPEFFECT_MOVE))
+	if (!lbDropFileNamesOnly && !lbActive && mb_selfdrag 
+		&& (*pdwEffect == DROPEFFECT_COPY || *pdwEffect == DROPEFFECT_MOVE))
 	{
 		wchar_t *mcr = (wchar_t*)calloc(32, sizeof(wchar_t));
 		lstrcpyW(mcr, (*pdwEffect == DROPEFFECT_MOVE) ? L"F6" : L"F5");
@@ -341,7 +445,7 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop (IDataObject * pDataObject,DWORD grfKe
 	HDROP hDrop = NULL;
 
 	if (hr != S_OK || !stgMedium.hGlobal) {
-		if (mb_selfdrag) {
+		if (mb_selfdrag || lbDropFileNamesOnly) {
 			MBoxA(_T("Drag object does not contains known formats!"));
 			return S_OK;
 		}
@@ -360,6 +464,11 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop (IDataObject * pDataObject,DWORD grfKe
 	}
 
 	gConEmu.DnDstep(_T("DnD: Drop starting"));
+
+	if (lbDropFileNamesOnly) {
+		hr = DropNames(hDrop, iQuantity, lbActive);
+		return hr;
+	}
 	
 	// Если создавать линки - делаем сразу и выходим
 	if (*pdwEffect == DROPEFFECT_LINK) {
@@ -368,26 +477,28 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop (IDataObject * pDataObject,DWORD grfKe
 	}
 
 	{
-		SHFILEOPSTRUCT *fop  = new SHFILEOPSTRUCT;
-		memset(fop, 0, sizeof(SHFILEOPSTRUCT));
-		fop->hwnd = ghWnd;
+		//SHFILEOPSTRUCT *fop  = new SHFILEOPSTRUCT;
+		ShlOpInfo *sfop = new ShlOpInfo;
+		memset(sfop, 0, sizeof(ShlOpInfo));
+		sfop->fop.hwnd = ghWnd;
+		sfop->pDnD = this;
 
 		if (lbActive) 
 		{
-			fop->pTo=new WCHAR[lstrlenW(m_pfpi->pszActivePath)+3];
-			wsprintf((LPWSTR)fop->pTo, _T("%s\\\0\0"), m_pfpi->pszActivePath);
+			sfop->fop.pTo=new WCHAR[lstrlenW(m_pfpi->pszActivePath)+3];
+			wsprintf((LPWSTR)sfop->fop.pTo, _T("%s\\\0\0"), m_pfpi->pszActivePath);
 		}
 		else
 		{
-			fop->pTo=new WCHAR[lstrlenW(m_pfpi->pszPassivePath)+3];
-			wsprintf((LPWSTR)fop->pTo, _T("%s\\\0\0"), m_pfpi->pszPassivePath);
+			sfop->fop.pTo=new WCHAR[lstrlenW(m_pfpi->pszPassivePath)+3];
+			wsprintf((LPWSTR)sfop->fop.pTo, _T("%s\\\0\0"), m_pfpi->pszPassivePath);
 		}
 
 		int nCount = MAX_DROP_PATH*iQuantity+iQuantity+1;
-		fop->pFrom=new WCHAR[nCount];
-		ZeroMemory((void*)fop->pFrom,sizeof(WCHAR)*nCount);
+		sfop->fop.pFrom=new WCHAR[nCount];
+		ZeroMemory((void*)sfop->fop.pFrom,sizeof(WCHAR)*nCount);
 
-		WCHAR *curr=(WCHAR *)fop->pFrom;
+		WCHAR *curr=(WCHAR *)sfop->fop.pFrom;
 
 		for ( int i = 0 ; i < iQuantity; i++ )
 		{
@@ -397,15 +508,15 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop (IDataObject * pDataObject,DWORD grfKe
 		
 		
 		if (*pdwEffect == DROPEFFECT_MOVE)
-			fop->wFunc=FO_MOVE;
+			sfop->fop.wFunc=FO_MOVE;
 		else
-			fop->wFunc=FO_COPY;
+			sfop->fop.wFunc=FO_COPY;
 
-		//fop->fFlags=FOF_SIMPLEPROGRESS; -- пусть полностью показывает
+		//sfop->fop.fFlags=FOF_SIMPLEPROGRESS; -- пусть полностью показывает
 		gConEmu.DnDstep(_T("DnD: Shell operation starting"));
 
 		ThInfo th;
-		th.hThread = CreateThread(NULL, 0, CDragDrop::ShellOpThreadProc, fop, 0, &th.dwThreadId);
+		th.hThread = CreateThread(NULL, 0, CDragDrop::ShellOpThreadProc, sfop, 0, &th.dwThreadId);
 		if (th.hThread == NULL) {
 			DisplayLastError(_T("Can't create shell operation thread!"));
 		} else {
@@ -422,15 +533,15 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop (IDataObject * pDataObject,DWORD grfKe
 DWORD CDragDrop::ShellOpThreadProc(LPVOID lpParameter)
 {
 	DWORD dwThreadId = GetCurrentThreadId();
-	SHFILEOPSTRUCT *fop = (SHFILEOPSTRUCT *)lpParameter;
+	ShlOpInfo *sfop = (ShlOpInfo *)lpParameter;
 	HRESULT hr = S_OK;
-	CDragDrop* pDragDrop = gConEmu.DragDrop;
+	CDragDrop* pDragDrop = sfop->pDnD;
 
 	// Собственно операция копирования/перемещения...
 	try {
-		fop->fFlags = 0; //FOF_SIMPLEPROGRESS; -- пусть полную инфу показывает
+		sfop->fop.fFlags = 0; //FOF_SIMPLEPROGRESS; -- пусть полную инфу показывает
 
-		hr = SHFileOperation(fop);
+		hr = SHFileOperation(&(sfop->fop));
 	} catch(...) {
 		hr = E_UNEXPECTED;
 	}
@@ -441,9 +552,9 @@ DWORD CDragDrop::ShellOpThreadProc(LPVOID lpParameter)
 			DisplayLastError(_T("Shell operation failed"), hr);
 	}
 	
-	if (fop->pTo) delete fop->pTo;
-	if (fop->pFrom) delete fop->pFrom;
-	delete fop;
+	if (sfop->fop.pTo) delete sfop->fop.pTo;
+	if (sfop->fop.pFrom) delete sfop->fop.pFrom;
+	delete sfop;
 	
 	TryEnterCriticalSection(&pDragDrop->m_CrThreads);
 	std::vector<ThInfo>::iterator iter = pDragDrop->m_OpThread.begin();
@@ -477,7 +588,16 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragOver(DWORD grfKeyState,POINTL pt,DWORD 
 
 	//gConEmu.DnDstep(_T("DnD: DragOver starting"));
 
-	ScreenToClient(m_hWnd, (LPPOINT)&pt);
+	POINT ptCur; ptCur.x = pt.x; ptCur.y = pt.y;
+	#ifdef _DEBUG
+	GetCursorPos(&ptCur);
+	#endif
+	RECT rcDC; GetWindowRect(ghWndDC, &rcDC);
+	if (!PtInRect(&rcDC, ptCur)) {
+		*pdwEffect = DROPEFFECT_NONE;
+		return S_OK;
+	}
+	ScreenToClient(ghWndDC, (LPPOINT)&pt);
 	COORD cr = gConEmu.ActiveCon()->ClientToConsole(pt.x, pt.y);
 	pt.x = cr.X; pt.y = cr.Y;
 	//pt.x/=gSet.Log Font.lfWidth;
@@ -502,11 +622,16 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragOver(DWORD grfKeyState,POINTL pt,DWORD 
 		if (*pdwEffect == DROPEFFECT_LINK && lbPassive && m_pfpi->pszPassivePath[0] == 0)
 			*pdwEffect = DROPEFFECT_NONE;
 	}
+	else if ((m_pfpi->ActiveRect.bottom && pt.y > m_pfpi->ActiveRect.bottom) ||
+		     (m_pfpi->PassiveRect.bottom && pt.y > m_pfpi->PassiveRect.bottom))
+	{
+		*pdwEffect = DROPEFFECT_COPY;
+	}
 	else
 		*pdwEffect = DROPEFFECT_NONE;
 
 	//gConEmu.DnDstep(_T("DnD: DragOver ok"));
-	return 0;
+	return S_OK;
 }
 
 #ifdef MSGLOGGER
@@ -585,36 +710,31 @@ void CDragDrop::RetrieveDragToInfo(IDataObject * pDataObject)
 
 	if (pipe.Init(_T("CDragDrop::DragEnter")))
 	{
-		//PipeCmd cmd=DragTo;
-		//DWORD cbWritten=0;
-		//WriteFile(pipe.hPipe, &cmd, sizeof(cmd), &cbWritten, NULL); 
 		if (pipe.Execute(CMD_DRAGTO))
 		{
-					DWORD cbBytesRead=0;
-					int cbStructSize=0;
-					if (m_pfpi) {free(m_pfpi); m_pfpi=NULL;}
-					if (pipe.Read(&cbStructSize, sizeof(int), &cbBytesRead))
-					{
-						if ((DWORD)cbStructSize>sizeof(ForwardedPanelInfo)) {
-							m_pfpi = (ForwardedPanelInfo*)calloc(cbStructSize, 1);
+			DWORD cbBytesRead=0;
+			int cbStructSize=0;
+			if (m_pfpi) {free(m_pfpi); m_pfpi=NULL;}
+			if (pipe.Read(&cbStructSize, sizeof(int), &cbBytesRead))
+			{
+				if ((DWORD)cbStructSize>sizeof(ForwardedPanelInfo)) {
+					m_pfpi = (ForwardedPanelInfo*)calloc(cbStructSize, 1);
 
-							pipe.Read(m_pfpi, cbStructSize, &cbBytesRead);
+					pipe.Read(m_pfpi, cbStructSize, &cbBytesRead);
 
-							m_pfpi->pszActivePath = (WCHAR*)(((char*)m_pfpi)+m_pfpi->ActivePathShift);
-							//Slash на конце нам не нужен
-							int nPathLen = lstrlenW( m_pfpi->pszActivePath );
-							if (nPathLen>0 && m_pfpi->pszActivePath[nPathLen-1]==_T('\\'))
-								m_pfpi->pszActivePath[nPathLen-1] = 0;
-							
-							m_pfpi->pszPassivePath = (WCHAR*)(((char*)m_pfpi)+m_pfpi->PassivePathShift);
-							//Slash на конце нам не нужен
-							nPathLen = lstrlenW( m_pfpi->pszPassivePath );
-							if (nPathLen>0 && m_pfpi->pszPassivePath[nPathLen-1]==_T('\\'))
-								m_pfpi->pszPassivePath[nPathLen-1] = 0;
-						}
-					}
-				//}
-			//}
+					m_pfpi->pszActivePath = (WCHAR*)(((char*)m_pfpi)+m_pfpi->ActivePathShift);
+					//Slash на конце нам не нужен
+					int nPathLen = lstrlenW( m_pfpi->pszActivePath );
+					if (nPathLen>0 && m_pfpi->pszActivePath[nPathLen-1]==_T('\\'))
+						m_pfpi->pszActivePath[nPathLen-1] = 0;
+					
+					m_pfpi->pszPassivePath = (WCHAR*)(((char*)m_pfpi)+m_pfpi->PassivePathShift);
+					//Slash на конце нам не нужен
+					nPathLen = lstrlenW( m_pfpi->pszPassivePath );
+					if (nPathLen>0 && m_pfpi->pszPassivePath[nPathLen-1]==_T('\\'))
+						m_pfpi->pszPassivePath[nPathLen-1] = 0;
+				}
+			}
 		}
 	}
 	gConEmu.DnDstep(NULL);
@@ -880,7 +1000,7 @@ void CDragDrop::Drag()
 							{ TYMED_HGLOBAL, { (HBITMAP)drop_data }, 0 }, //чтобы не морочиться с последующими присвоениями
 							{ TYMED_HGLOBAL, { (HBITMAP)drop_preferredeffect }, 0 },
 							{ TYMED_HGLOBAL, { (HBITMAP)drag_loop }, 0 },
-							// Эти должны идти последними
+							// Эти должны идти последними, нужны только для создания ярлыков с нажатым Alt
 							{ TYMED_HGLOBAL, { (HBITMAP)file_PIDLs }, 0},
 							{ TYMED_HGLOBAL, { (HBITMAP)file_nameW }, 0 }
 						};

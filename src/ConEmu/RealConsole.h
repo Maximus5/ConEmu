@@ -184,6 +184,7 @@ public:
 	int CoordInPanel(COORD cr);
 	void GetPanelRect(BOOL abRight, RECT* prc);
 	bool isAdministrator();
+	BOOL isMouseButtonDown();
 
 public:
     // Вызываются из CVirtualConsole
@@ -312,4 +313,6 @@ private:
 	// координаты панелей в символах
 	RECT mr_LeftPanel, mr_RightPanel;
 	void FindPanels(BOOL abResetOnly=FALSE);
+	// 
+	BOOL mb_MouseButtonDown;
 };

@@ -117,7 +117,7 @@ extern wchar_t gszDbgModLabel[6];
 #define CECMD_GETNEWCONPARM 16 // Доп.аргументы для создания новой консоли (шрифт, размер,...)
 #define CECMD_SETSIZESYNC   17 // Синхронно, ждет (но недолго), пока FAR обработает изменение размера (то есть отрисуется)
 #define CECMD_ATTACH2GUI    18 // Выполнить подключение видимой (отключенной) консоли к GUI. Без аргументов
-#define CECMD_FARLOADED     19 // Посылвается плагином в сервер
+#define CECMD_FARLOADED     19 // Посылается плагином в сервер
 
 #define CESERVER_REQ_VER    10
 
@@ -355,7 +355,17 @@ struct ForwardedFileInfo
 #define CERR_CMDLINEEMPTY 200
 #define CERR_CMDLINE      201
 
+#define MOUSE_EVENT_MOVE      (WM_APP+10)
+#define MOUSE_EVENT_CLICK     (WM_APP+11)
+#define MOUSE_EVENT_DBLCLICK  (WM_APP+12)
+#define MOUSE_EVENT_WHEELED   (WM_APP+13)
+#define MOUSE_EVENT_HWHEELED  (WM_APP+14)
+#define MOUSE_EVENT_FIRST MOUSE_EVENT_MOVE
+#define MOUSE_EVENT_LAST MOUSE_EVENT_HWHEELED
+
 int NextArg(const wchar_t** asCmdLine, wchar_t* rsArg/*[MAX_PATH+1]*/);
+BOOL PackInputRecord(const INPUT_RECORD* piRec, MSG* pMsg);
+BOOL UnpackInputRecord(const MSG* piMsg, INPUT_RECORD* pRec);
 
 //------------------------------------------------------------------------
 ///| Section |////////////////////////////////////////////////////////////
@@ -535,7 +545,7 @@ protected:
 			BOOL lbPrev = mb_Exclusive;
 			#endif
 			mb_Exclusive = TRUE; // Сразу, чтобы в nonexclusive не нарваться
-			TODO("Может быть по таймауту отвалилось?\n");
+			TODO("Need to check, if MyEnterCriticalSection failed on timeout!\n");
 			MyEnterCriticalSection(anTimeout);
 			_ASSERTE(!(lbPrev && mb_Exclusive)); // После LeaveCriticalSection mb_Exclusive УЖЕ должен быть сброшен
 			mb_Exclusive = TRUE; // Флаг могла сбросить другая нить, выполнившая Leave

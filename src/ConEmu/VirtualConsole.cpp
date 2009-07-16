@@ -640,7 +640,7 @@ WORD CVirtualConsole::CharWidth(TCHAR ch)
 		return gSet.FontWidth();
 
     WORD nWidth = gSet.FontWidth();
-    bool isBorder = false; //, isVBorder = false;
+    //bool isBorder = false; //, isVBorder = false;
 
     if (!gSet.CharWidth[ch]) {
         SelectFont(gSet.mh_Font);
@@ -1293,7 +1293,9 @@ void CVirtualConsole::UpdateText(bool isForce, bool updateText, bool updateCurso
                     if (gbNoDblBuffer) GdiFlush();
                     if (! (drawImage && (attrBack) < 2)) {
                         SetBkColor(hDC, gSet.Colors[attrBack]);
+                        #ifdef _DEBUG
                         int nCnt = ((rect.right - rect.left) / CharWidth(L' '))+1;
+                        #endif
 
                         //UINT nFlags = ETO_CLIPPED; // || ETO_OPAQUE;
                         //ExtTextOut(hDC, rect.left, rect.top, nFlags, &rect, Spaces, min(nSpaceCount, nCnt), 0);

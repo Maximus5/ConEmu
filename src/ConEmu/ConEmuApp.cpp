@@ -5,6 +5,8 @@ extern "C" {
 #include "../common/ConEmuCheck.h"
 }
 
+#define DEBUGSTRMOVE(s) //DEBUGSTR(s)
+
 
 #ifdef MSGLOGGER
 BOOL bBlockDebugLog=false, bSendToDebugger=true, bSendToFile=false;
@@ -196,17 +198,19 @@ void DebugLogPos(HWND hw, int x, int y, int w, int h, LPCSTR asFunc)
     if (bBlockDebugLog || (!bSendToFile && !IsDebuggerPresent()))
         return;
 
-    static char szPos[255];
+    
 
     if (bSendToDebugger) {
+		wchar_t szPos[255];
         static SYSTEMTIME st;
         GetLocalTime(&st);
-        wsprintfA(szPos, "%02i:%02i.%03i %s(%s, %i,%i,%i,%i)\n",
+        wsprintfW(szPos, L"%02i:%02i.%03i %s(%s, %i,%i,%i,%i)\n",
             st.wMinute, st.wSecond, st.wMilliseconds, asFunc,
-            (hw==ghConWnd) ? "Con" : "Emu", x,y,w,h);
+            (hw==ghConWnd) ? L"Con" : L"Emu", x,y,w,h);
 
-        OutputDebugStringA(szPos);
+        DEBUGSTRMOVE(szPos);
     } else if (bSendToFile) {
+		char szPos[255];
         wsprintfA(szPos, "%s(%s, %i,%i,%i,%i)\n",
 			asFunc,
             (hw==ghConWnd) ? "Con" : "Emu", x,y,w,h);

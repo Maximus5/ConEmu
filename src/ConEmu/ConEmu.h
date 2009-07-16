@@ -109,8 +109,6 @@ public:
 	POINT cursor, Rcursor;
 	//WPARAM lastMMW;
 	//LPARAM lastMML;
-	CDragDrop *DragDrop;
-	CProgressBars *ProgressBars;
 	COORD m_LastConSize; // console size after last resize (in columns and lines)
 	bool mb_IgnoreSizeChange;
 	TCHAR szConEmuVersion[32];
@@ -118,6 +116,8 @@ public:
 	//DWORD mn_ActiveStatus;
 	//TCHAR ms_EditorRus[16], ms_ViewerRus[16], ms_TempPanel[32], ms_TempPanelRus[32];
 protected:
+	CDragDrop *mp_DragDrop;
+	CProgressBars *ProgressBars;
 	TCHAR Title[MAX_TITLE_SIZE], TitleCmp[MAX_TITLE_SIZE], MultiTitle[MAX_TITLE_SIZE+30];
 	short mn_Progress;
 	LPTSTR GetTitleStart();
@@ -131,6 +131,7 @@ protected:
 	ITaskbarList3 *mp_TaskBar;
 	typedef BOOL (WINAPI* FRegisterShellHookWindow)(HWND);
 	RECT mrc_Ideal;
+	BOOL mb_MouseCaptured;
 	//DWORD mn_CurrentKeybLayout;
 	// Registered messages
 	DWORD mn_MainThreadId;
@@ -179,7 +180,7 @@ public:
 	static RECT CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFrom, RECT* prDC=NULL);
 	bool ConActivate(int nCon);
 	bool ConActivateNext(BOOL abNext);
-	//bool ConmanAction(int nCmd);
+	void CheckGuiBarsCreated();
 	CVirtualConsole* CreateCon(RConStartArgs *args);
 	BOOL CreateMainWindow();
 	void Destroy();

@@ -9,6 +9,7 @@ class CDragDrop :public CBaseDropTarget
 {
 public:
 	CDragDrop(HWND hwnd);
+	BOOL Init();
 	~CDragDrop();
 	virtual HRESULT __stdcall Drop (IDataObject * pDataObject,DWORD grfKeyState,POINTL pt,DWORD * pdwEffect);
 	virtual HRESULT __stdcall DragOver(DWORD grfKeyState,POINTL pt,DWORD * pdwEffect);
@@ -20,6 +21,7 @@ public:
 	ForwardedPanelInfo *m_pfpi;
 	HRESULT CreateLink(LPCTSTR lpszPathObj, LPCTSTR lpszPathLink, LPCTSTR lpszDesc);
 protected:
+	BOOL mb_DragDropRegistered;
 	void RetrieveDragToInfo(IDataObject * pDataObject);
 	LPITEMIDLIST mp_DesktopID;
 	DWORD mn_AllFiles, mn_CurFile; __int64 mn_CurWritten;
@@ -30,11 +32,16 @@ protected:
 	#endif
 	HRESULT DropFromStream(IDataObject * pDataObject, BOOL abActive);
 	HRESULT DropLinks(HDROP hDrop, int iQuantity, BOOL abActive);
+	HRESULT DropNames(HDROP hDrop, int iQuantity, BOOL abActive);
 	typedef struct _ThInfo {
 		HANDLE hThread;
 		DWORD  dwThreadId;
 	} ThInfo;
 	std::vector<ThInfo> m_OpThread;
 	CRITICAL_SECTION m_CrThreads;
+	typedef struct _ShlOpInfo {
+		CDragDrop* pDnD;
+		SHFILEOPSTRUCT fop;
+	} ShlOpInfo;
 	static DWORD WINAPI ShellOpThreadProc(LPVOID lpParameter);
 };

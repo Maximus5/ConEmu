@@ -1214,6 +1214,8 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
     
     case cbGUIpb: // GUI Progress Bars
         isGUIpb = IsChecked(hMain, cbGUIpb);
+        if (isGUIpb)
+        	gConEmu.CheckGuiBarsCreated();
         break;
     
     case cbTabs:

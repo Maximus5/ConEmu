@@ -7,7 +7,7 @@
 #include <Tlhelp32.h>
 
 #define DEBUGSTRDRAW(s) //DEBUGSTR(s)
-#define DEBUGSTRINPUT(s) DEBUGSTR(s)
+#define DEBUGSTRINPUT(s) //DEBUGSTR(s)
 #define DEBUGSTRSIZE(s) //DEBUGSTR(s)
 #define DEBUGSTRPROC(s) //DEBUGSTR(s)
 #define DEBUGSTRCMD(s) //DEBUGSTR(s)
@@ -59,14 +59,6 @@ WARNING("Часто после разблокирования компьютера размер консоли изменяется (OK), 
 #endif
 
 
-#define MOUSE_EVENT_MOVE      (WM_APP+10)
-#define MOUSE_EVENT_CLICK     (WM_APP+11)
-#define MOUSE_EVENT_DBLCLICK  (WM_APP+12)
-#define MOUSE_EVENT_WHEELED   (WM_APP+13)
-#define MOUSE_EVENT_HWHEELED  (WM_APP+14)
-#define MOUSE_EVENT_FIRST MOUSE_EVENT_MOVE
-#define MOUSE_EVENT_LAST MOUSE_EVENT_HWHEELED
-
 #define INPUT_THREAD_ALIVE_MSG (WM_APP+100)
 
 
@@ -80,6 +72,8 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
     mn_FlushIn = mn_FlushOut = 0;
 
     mr_LeftPanel = mr_RightPanel = MakeRect(-1,-1);
+
+	mb_MouseButtonDown = FALSE;
 
     wcscpy(Title, L"ConEmu");
     wcscpy(ms_PanelTitle, Title);
@@ -627,66 +621,13 @@ void CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec)
     }
     
 
-    UINT nMsg = 0; WPARAM wParam = 0; LPARAM lParam = 0;
-    if (piRec->EventType == KEY_EVENT) {
-    	nMsg = piRec->Event.KeyEvent.bKeyDown ? WM_KEYDOWN : WM_KEYUP;
-    	
-		lParam |= (WORD)piRec->Event.KeyEvent.uChar.UnicodeChar;
-		lParam |= ((BYTE)piRec->Event.KeyEvent.wVirtualKeyCode) << 16;
-		lParam |= ((BYTE)piRec->Event.KeyEvent.wVirtualScanCode) << 24;
-		
-        wParam |= (WORD)piRec->Event.KeyEvent.dwControlKeyState;
-        wParam |= ((DWORD)piRec->Event.KeyEvent.wRepeatCount & 0xFF) << 16;
+    MSG msg = {NULL};
     
-    } else if (piRec->EventType == MOUSE_EVENT) {
-		switch (piRec->Event.MouseEvent.dwEventFlags) {
-			case MOUSE_MOVED:
-				nMsg = MOUSE_EVENT_MOVE;
-				break;
-			case 0:
-				nMsg = MOUSE_EVENT_CLICK;
-				break;
-			case DOUBLE_CLICK:
-				nMsg = MOUSE_EVENT_DBLCLICK;
-				break;
-			case MOUSE_WHEELED:
-				DEBUGSTRINPUT(L"MOUSE_WHEELED.Posted\n");
-				nMsg = MOUSE_EVENT_WHEELED;
-				break;
-			case /*MOUSE_HWHEELED*/ 0x0008:
-				nMsg = MOUSE_EVENT_HWHEELED;
-				break;
-			default:
-				_ASSERT(FALSE);
-		}
-		
-    	lParam = ((WORD)piRec->Event.MouseEvent.dwMousePosition.X)
-    	       | (((DWORD)(WORD)piRec->Event.MouseEvent.dwMousePosition.Y) << 16);
-		
-		// max 0x0010/*FROM_LEFT_4ND_BUTTON_PRESSED*/
-		wParam |= ((DWORD)piRec->Event.MouseEvent.dwButtonState) & 0xFF;
-		
-		// max - ENHANCED_KEY == 0x0100
-		wParam |= (((DWORD)piRec->Event.MouseEvent.dwControlKeyState) & 0xFFFF) << 8;
-		
-		if (nMsg == MOUSE_EVENT_WHEELED || nMsg == MOUSE_EVENT_HWHEELED) {
-    		// HIWORD() - short (direction[1/-1])*count*120
-    		short nWheel = (short)((((DWORD)piRec->Event.MouseEvent.dwButtonState) & 0xFFFF0000) >> 16);
-    		char  nCount = nWheel / 120;
-    		wParam |= ((DWORD)nCount) << 24;
-		}
-		
-    
-    } else if (piRec->EventType == FOCUS_EVENT) {
-    	nMsg = piRec->Event.FocusEvent.bSetFocus ? WM_SETFOCUS : WM_KILLFOCUS;
-    	
-    } else {
-    	_ASSERT(FALSE);
+    if (PackInputRecord ( piRec, &msg )) {
+    	_ASSERTE(msg.message!=0);
+	    TODO("Проверка зависания нити и ее перезапуск при необходимости");
+	    PostThreadMessage(mn_InputThreadID, msg.message, msg.wParam, msg.lParam);
     }
-    _ASSERTE(nMsg!=0);
-    
-    TODO("Проверка зависания нити и ее перезапуск при необходимости");
-    PostThreadMessage(mn_InputThreadID, nMsg, wParam, lParam);
 }
 
 DWORD CRealConsole::InputThread(LPVOID lpParameter)
@@ -702,68 +643,14 @@ DWORD CRealConsole::InputThread(LPVOID lpParameter)
     		pRCon->mn_FlushOut = msg.wParam;
     		continue;
     	
-    	} else if (msg.message == WM_KEYDOWN || msg.message == WM_KEYUP) {
-    		INPUT_RECORD r = {KEY_EVENT};
+    	} else {
+    	
+    		INPUT_RECORD r = {0};
     		
-    		// lParam
-            r.Event.KeyEvent.bKeyDown = (msg.message == WM_KEYDOWN);
-            r.Event.KeyEvent.uChar.UnicodeChar = (WCHAR)(msg.lParam & 0xFFFF);
-            r.Event.KeyEvent.wVirtualKeyCode   = (((DWORD)msg.lParam) & 0xFF0000) >> 16;
-            r.Event.KeyEvent.wVirtualScanCode  = (((DWORD)msg.lParam) & 0xFF000000) >> 24;
-            
-            // wParam. Пока что тут может быть max(ENHANCED_KEY==0x0100)
-            r.Event.KeyEvent.dwControlKeyState = ((DWORD)msg.wParam & 0xFFFF);
-            
-            r.Event.KeyEvent.wRepeatCount = ((DWORD)msg.wParam & 0xFF0000) >> 16;
-            
-            pRCon->SendConsoleEvent(&r);
-            
-    	} else if (msg.message >= MOUSE_EVENT_FIRST && msg.message <= MOUSE_EVENT_LAST) {
-    		INPUT_RECORD r = {MOUSE_EVENT};
-    		
-    		switch (msg.message) {
-    			case MOUSE_EVENT_MOVE:
-    				r.Event.MouseEvent.dwEventFlags = MOUSE_MOVED;
-    				break;
-    			case MOUSE_EVENT_CLICK:
-    				r.Event.MouseEvent.dwEventFlags = 0;
-    				break;
-    			case MOUSE_EVENT_DBLCLICK:
-    				r.Event.MouseEvent.dwEventFlags = DOUBLE_CLICK;
-    				break;
-    			case MOUSE_EVENT_WHEELED:
-    				r.Event.MouseEvent.dwEventFlags = MOUSE_WHEELED;
-					DEBUGSTRINPUT(L"MOUSE_WHEELED.Sending\n");
-    				break;
-    			case MOUSE_EVENT_HWHEELED:
-    				r.Event.MouseEvent.dwEventFlags = /*MOUSE_HWHEELED*/ 0x0008;
-    				break;
+    		if (UnpackInputRecord(&msg, &r)) {
+    			pRCon->SendConsoleEvent(&r);
     		}
-    		
-    		r.Event.MouseEvent.dwMousePosition.X = LOWORD(msg.lParam);
-    		r.Event.MouseEvent.dwMousePosition.Y = HIWORD(msg.lParam);
-    		
-    		// max 0x0010/*FROM_LEFT_4ND_BUTTON_PRESSED*/
-    		r.Event.MouseEvent.dwButtonState = ((DWORD)msg.wParam) & 0xFF;
-    		
-    		// max - ENHANCED_KEY == 0x0100
-    		r.Event.MouseEvent.dwControlKeyState = (((DWORD)msg.wParam) & 0xFFFF00) >> 8;
-    		
-    		if (msg.message == MOUSE_EVENT_WHEELED || msg.message == MOUSE_EVENT_HWHEELED) {
-	    		// HIWORD() - short (direction[1/-1])*count*120
-	    		short nDir = (/*signed*/ char)((((DWORD)msg.wParam) & 0xFF000000) >> 24);
-	    		r.Event.MouseEvent.dwButtonState |= ((WORD)(nDir*120)) << 16;
-			}
-			
-			pRCon->SendConsoleEvent(&r);
-			
-    	} else if (msg.message == WM_SETFOCUS || msg.message == WM_KILLFOCUS) {
-	        INPUT_RECORD r = {FOCUS_EVENT};
-	        
-	        r.Event.FocusEvent.bSetFocus = (msg.message == WM_SETFOCUS);
-	        
-	        pRCon->SendConsoleEvent(&r);
-	        
+    	
     	}
     }
     
@@ -1369,6 +1256,9 @@ void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y)
                 r.Event.MouseEvent.dwButtonState |= 0x0010/*FROM_LEFT_4ND_BUTTON_PRESSED*/;
         }
 
+		mb_MouseButtonDown = (r.Event.MouseEvent.dwButtonState 
+			& (FROM_LEFT_1ST_BUTTON_PRESSED|FROM_LEFT_2ND_BUTTON_PRESSED|RIGHTMOST_BUTTON_PRESSED)) != 0;
+
         // Key modifiers
         if (GetKeyState(VK_CAPITAL) & 1)
             r.Event.MouseEvent.dwControlKeyState |= CAPSLOCK_ON;
@@ -1484,32 +1374,35 @@ void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y)
 void CRealConsole::SendConsoleEvent(INPUT_RECORD* piRec)
 {
     if (piRec->EventType == MOUSE_EVENT) {
-        if (piRec->Event.MouseEvent.dwEventFlags == MOUSE_MOVED) {
-            if (m_LastMouse.dwEventFlags != 0
-             && m_LastMouse.dwButtonState     == piRec->Event.MouseEvent.dwButtonState 
-             && m_LastMouse.dwControlKeyState == piRec->Event.MouseEvent.dwControlKeyState
-             && m_LastMouse.dwMousePosition.X == piRec->Event.MouseEvent.dwMousePosition.X
-             && m_LastMouse.dwMousePosition.Y == piRec->Event.MouseEvent.dwMousePosition.Y)
-            {
-                #ifdef _DEBUG
-                wchar_t szDbg[60];
-                wsprintf(szDbg, L"!!! Skipping ConEmu.Mouse event at: {%ix%i}\n", m_LastMouse.dwMousePosition.X, m_LastMouse.dwMousePosition.Y);
-                DEBUGSTRINPUT(szDbg);
-                #endif
-                return; // Это событие лишнее. Движения мышки реально не было, кнопки не менялись
-            }
-        }
-        // Запомним
-        m_LastMouse.dwMousePosition   = piRec->Event.MouseEvent.dwMousePosition;
-        m_LastMouse.dwEventFlags      = piRec->Event.MouseEvent.dwEventFlags;
-        m_LastMouse.dwButtonState     = piRec->Event.MouseEvent.dwButtonState;
-        m_LastMouse.dwControlKeyState = piRec->Event.MouseEvent.dwControlKeyState;
+    //    if (piRec->Event.MouseEvent.dwEventFlags == MOUSE_MOVED) {
+    //        if (m_LastMouse.dwEventFlags != 0
+    //         && m_LastMouse.dwButtonState     == piRec->Event.MouseEvent.dwButtonState 
+    //         && m_LastMouse.dwControlKeyState == piRec->Event.MouseEvent.dwControlKeyState
+    //         && m_LastMouse.dwMousePosition.X == piRec->Event.MouseEvent.dwMousePosition.X
+    //         && m_LastMouse.dwMousePosition.Y == piRec->Event.MouseEvent.dwMousePosition.Y)
+    //        {
+    //            #ifdef _DEBUG
+    //            wchar_t szDbg[60];
+    //            wsprintf(szDbg, L"!!! Skipping ConEmu.Mouse event at: {%ix%i}\n", m_LastMouse.dwMousePosition.X, m_LastMouse.dwMousePosition.Y);
+    //            DEBUGSTRINPUT(szDbg);
+    //            #endif
+    //            return; // Это событие лишнее. Движения мышки реально не было, кнопки не менялись
+    //        }
+    //    }
+    //    // Запомним
+    //    m_LastMouse.dwMousePosition   = piRec->Event.MouseEvent.dwMousePosition;
+    //    m_LastMouse.dwEventFlags      = piRec->Event.MouseEvent.dwEventFlags;
+    //    m_LastMouse.dwButtonState     = piRec->Event.MouseEvent.dwButtonState;
+    //    m_LastMouse.dwControlKeyState = piRec->Event.MouseEvent.dwControlKeyState;
 
-        #ifdef _DEBUG
-        wchar_t szDbg[60];
-        wsprintf(szDbg, L"ConEmu.Mouse event at: {%ix%i}\n", m_LastMouse.dwMousePosition.X, m_LastMouse.dwMousePosition.Y);
-        DEBUGSTRINPUT(szDbg);
-        #endif
+		#ifdef _DEBUG
+		wchar_t szDbg[128];
+		wsprintf(szDbg, L"ConEmu.Mouse event at: {%i-%i} BtnState:0x%08X, CtrlState:0x%08X, Flags:0x%08X\n", 
+			piRec->Event.MouseEvent.dwMousePosition.X, piRec->Event.MouseEvent.dwMousePosition.Y,
+			piRec->Event.MouseEvent.dwButtonState, piRec->Event.MouseEvent.dwControlKeyState,
+			piRec->Event.MouseEvent.dwEventFlags);
+		DEBUGSTRINPUT(szDbg);
+		#endif
     }
 
     WARNING("Некоторые события можно игнорировать, если ConEmuC не смог их принять сразу (например Focus)");
@@ -5320,4 +5213,10 @@ bool CRealConsole::isAdministrator()
 {
 	if (!this) return false;
 	return m_Args.bRunAsAdministrator;
+}
+
+BOOL CRealConsole::isMouseButtonDown()
+{
+	if (!this) return FALSE;
+	return mb_MouseButtonDown;
 }

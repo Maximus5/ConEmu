@@ -73,7 +73,7 @@ public:
     DWORD nLDragKey, nRDragKey;
     bool isDefCopy;
     bool isDnDsteps;
-    bool isGUIpb;
+    bool isGUIpb; // GUI Progress bars
     char isTabs; bool isTabSelf, isTabRecent, isTabLazy;
 	wchar_t *sTabCloseMacro;
     DWORD wndWidth, wndHeight, ntvdmHeight; // в символах
