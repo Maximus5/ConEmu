@@ -1469,6 +1469,7 @@ void CVirtualConsole::UpdateText(bool isForce, bool updateText, bool updateCurso
                     SetBkColor(hDC, gSet.Colors[attrBack]);
 				else if (drawImage) {
                     BlitPictureTo(rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top);
+					lbImgDrawn = TRUE;
 				}
 
                 UINT nFlags = ETO_CLIPPED | ((drawImage && (attrBack) < 2) ? 0 : ETO_OPAQUE);
@@ -1476,7 +1477,7 @@ void CVirtualConsole::UpdateText(bool isForce, bool updateText, bool updateCurso
                 MCHKHEAP
                 if (gbNoDblBuffer) GdiFlush();
                 if (gSet.isFixFarBorders == 2 && isProgress) {
-                    FillRect(hDC, &rect, PartBrush(c, attrBack, attrFore));
+					FillRect(hDC, &rect, PartBrush(c, attrBack, attrFore));
                 } else
                 if (/*gSet.isProportional &&*/ isSpace/*c == ' '*/) {
                     //int nCnt = ((rect.right - rect.left) / CharWidth(L' '))+1;

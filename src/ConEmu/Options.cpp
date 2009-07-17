@@ -1230,12 +1230,14 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
         break;
 
     case cbBgImage:
+		{
         isShowBgImage = IsChecked(hMain, cbBgImage);
         EnableWindow(GetDlgItem(hMain, tBgImage), isShowBgImage);
         EnableWindow(GetDlgItem(hMain, tDarker), isShowBgImage);
         EnableWindow(GetDlgItem(hMain, slDarker), isShowBgImage);
         EnableWindow(GetDlgItem(hMain, bBgImage), isShowBgImage);
 
+		BOOL lbNeedLoad = (hBgBitmap == NULL);
 		if (isShowBgImage && bgImageDarker == 0) {
 			if (MessageBox(ghOpWnd, 
 				    L"Background image will NOT be visible\n"
@@ -1247,11 +1249,15 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
 				TCHAR tmp[10];
 				wsprintf(tmp, _T("%i"), gSet.bgImageDarker);
 				SetDlgItemText(hMain, tDarker, tmp);
-				gSet.LoadImageFrom(gSet.sBgImage);
+				lbNeedLoad = TRUE;
 			}
+		}
+		if (lbNeedLoad) {
+			gSet.LoadImageFrom(gSet.sBgImage);
 		}
 
         gConEmu.Update(true);
+		}
         break;
 
     case cbRClick:

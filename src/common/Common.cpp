@@ -100,7 +100,7 @@ BOOL PackInputRecord(const INPUT_RECORD* piRec, MSG* pMsg)
     		// HIWORD() - short (direction[1/-1])*count*120
     		short nWheel = (short)((((DWORD)piRec->Event.MouseEvent.dwButtonState) & 0xFFFF0000) >> 16);
     		char  nCount = nWheel / 120;
-    		wParam |= ((DWORD)nCount) << 24;
+    		wParam |= ((DWORD)(BYTE)nCount) << 24;
 		}
 		
     
@@ -172,8 +172,9 @@ BOOL UnpackInputRecord(const MSG* piMsg, INPUT_RECORD* pRec)
 		
 		if (piMsg->message == MOUSE_EVENT_WHEELED || piMsg->message == MOUSE_EVENT_HWHEELED) {
     		// HIWORD() - short (direction[1/-1])*count*120
-    		short nDir = (/*signed*/ char)((((DWORD)piMsg->wParam) & 0xFF000000) >> 24);
-    		pRec->Event.MouseEvent.dwButtonState |= ((WORD)(nDir*120)) << 16;
+    		signed char nDir = (signed char)((((DWORD)piMsg->wParam) & 0xFF000000) >> 24);
+    		WORD wDir = nDir*120;
+    		pRec->Event.MouseEvent.dwButtonState |= wDir << 16;
 		}
 		
 	} else if (piMsg->message == WM_SETFOCUS || piMsg->message == WM_KILLFOCUS) {
