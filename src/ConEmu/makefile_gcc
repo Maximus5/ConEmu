@@ -15,7 +15,7 @@ SRCS =  BaseDragDrops.cpp  \
 		../common/Common.cpp \
         ../common/ConEmuCheck.c
 
-USERLIBS = -lversion
+USERLIBS = -lversion -lshlwapi
 
 #The following variables can be set by the user:
 #

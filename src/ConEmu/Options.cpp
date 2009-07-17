@@ -29,6 +29,7 @@ namespace Settings {
 CSettings::CSettings()
 {
     InitSettings();
+    mb_StopRegisterFonts = FALSE;
     mb_IgnoreEditChanged = FALSE;
     mb_IgnoreTtfChange = TRUE;
 	mb_TabHotKeyRegistered = FALSE;
@@ -83,7 +84,8 @@ void CSettings::InitSettings()
 //------------------------------------------------------------------------
     _tcscpy(Config, _T("Software\\ConEmu"));
 
-	FontFile[0] = 0; isSearchForFont = true;
+	//FontFile[0] = 0;
+	isAutoRegisterFonts = true;
     
     psCmd = NULL; psCurCmd = NULL; wcscpy(szDefCmd, L"far");
     isMulti = true; icMultiNew = 'W'; icMultiNext = 'Q'; icMultiRecreate = 192/*VK_тильда*/; isMultiNewConfirm = true;
@@ -112,6 +114,7 @@ void CSettings::InitSettings()
     LogFont.lfPitchAndFamily = FIXED_PITCH | FF_MODERN;
     _tcscpy(LogFont.lfFaceName, _T("Lucida Console"));
     _tcscpy(LogFont2.lfFaceName, _T("Lucida Console"));
+    mb_Name1Ok = FALSE; mb_Name2Ok = FALSE;
     isTryToCenter = false;
     isTabFrame = true;
     isForceMonospace = false; isProportional = false;
@@ -232,13 +235,16 @@ void CSettings::LoadSettings()
 		// Debugging
 		reg.Load(_T("ConVisible"), isConVisible);
 		//reg.Load(_T("DumpPackets"), szDumpPackets);
-		if (reg.Load(_T("FontName"), inFont)) {
-			isSearchForFont = false;
-		} else {
-			isSearchForFont = true;
-			reg.Load(_T("SearchForFont"), isSearchForFont);
-		}
-        reg.Load(_T("FontName2"), inFont2);
+		
+		if (reg.Load(L"FontName", inFont))
+			mb_Name1Ok = TRUE;
+        if (reg.Load(L"FontName2", inFont2))
+        	mb_Name2Ok = TRUE;
+        if (!mb_Name1Ok || !mb_Name2Ok)
+        	isAutoRegisterFonts = true;
+        else
+			reg.Load(L"AutoRegisterFonts", isAutoRegisterFonts);
+        
         reg.Load(_T("CmdLine"), &psCmd);
         reg.Load(_T("Multi"), isMulti);
 			reg.Load(_T("Multi.NewConsole"), icMultiNew);
@@ -436,6 +442,7 @@ void CSettings::InitFont(LPCWSTR asFontName/*=NULL*/, int anFontHeight/*=-1*/, i
 {
 	if (asFontName && *asFontName) {
 		lstrcpynW(LogFont.lfFaceName, asFontName, 32);
+		mb_Name1Ok = TRUE;
 	}
 	if (anFontHeight!=-1) {
 		LogFont.lfHeight = anFontHeight;
@@ -443,6 +450,44 @@ void CSettings::InitFont(LPCWSTR asFontName/*=NULL*/, int anFontHeight/*=-1*/, i
 	}
 	if (anQuality!=-1) {
 		LogFont.lfQuality = ANTIALIASED_QUALITY;
+	}
+	
+	std::vector<RegFont>::iterator iter;
+	
+	if (!mb_Name1Ok) {
+		for (int i = 0; !mb_Name1Ok && (i < 3); i++)
+		{
+			for (iter = m_RegFonts.begin(); iter != m_RegFonts.end(); iter++)
+			{
+				switch (i) {
+				case 0:
+					if (!iter->bDefault || !iter->bUnicode) continue;
+					break;
+				case 1:
+					if (!iter->bDefault) continue;
+					break;
+				case 2:
+					if (!iter->bUnicode) continue;
+					break;
+				default:
+					break;
+				}
+				
+				lstrcpynW(LogFont.lfFaceName, iter->szFontName, 32);
+				mb_Name1Ok = TRUE;
+				break;
+			}
+		}
+	}
+	if (!mb_Name2Ok) {
+		for (iter = m_RegFonts.begin(); iter != m_RegFonts.end(); iter++)
+		{
+			if (iter->bHasBorders) {
+				lstrcpynW(LogFont2.lfFaceName, iter->szFontName, 32);
+				mb_Name2Ok = TRUE;
+				break;
+			}
+		}
 	}
 
     mh_Font = CreateFontIndirectMy(&LogFont);
@@ -2446,4 +2491,296 @@ void CSettings::UnregisterTabs()
 		UnregisterHotKey(ghOpWnd, 0x102);
 	}
 	mb_TabHotKeyRegistered = FALSE;
+}
+
+// Если asFontFile НЕ NULL - значит его пользователь указал через /fontfile
+BOOL CSettings::RegisterFont(LPCWSTR asFontFile, BOOL abDefault)
+{
+	// Обработка параметра /fontfile
+	_ASSERTE(asFontFile && *asFontFile);
+	
+	if (mb_StopRegisterFonts) return FALSE;
+	
+	for (std::vector<RegFont>::iterator iter = m_RegFonts.begin(); iter != m_RegFonts.end(); iter++)
+	{
+		if (StrCmpI(iter->szFontFile, asFontFile) == 0) {
+			// Уже добавлено
+			if (abDefault && iter->bDefault == FALSE) iter->bDefault = TRUE;
+			
+			return TRUE;
+		}
+	}
+
+	RegFont rf = {abDefault};
+	
+	if (!GetFontNameFromFile(asFontFile, rf.szFontName)) {
+		//DWORD dwErr = GetLastError();
+		TCHAR* psz=(TCHAR*)calloc(wcslen(asFontFile)+100,sizeof(TCHAR));
+		lstrcpyW(psz, L"Can't retrieve font family from file:\n");
+		lstrcatW(psz, asFontFile);
+		lstrcatW(psz, L"\nContinue?");
+		int nBtn = MessageBox(NULL, psz, L"ConEmu", MB_OKCANCEL|MB_ICONSTOP);
+		free(psz);
+		if (nBtn == IDCANCEL) {
+			mb_StopRegisterFonts = TRUE;
+			return FALSE;
+		}
+		return TRUE; // продолжить со следующим файлом
+	}
+
+	if (!AddFontResourceEx(asFontFile, FR_PRIVATE, NULL)) //ADD fontname; by Mors
+	{
+		TCHAR* psz=(TCHAR*)calloc(wcslen(asFontFile)+100,sizeof(TCHAR));
+		lstrcpyW(psz, L"Can't register font:\n");
+		lstrcatW(psz, asFontFile);
+		lstrcatW(psz, L"\nContinue?");
+		int nBtn = MessageBox(NULL, psz, L"ConEmu", MB_OKCANCEL|MB_ICONSTOP);
+		free(psz);
+		if (nBtn == IDCANCEL) {
+			mb_StopRegisterFonts = TRUE;
+			return FALSE;
+		}
+		return TRUE; // продолжить со следующим файлом
+	}
+	
+	lstrcpy(rf.szFontFile, asFontFile);
+	// Теперь его нужно добавить в вектор независимо от успешности определения рамок
+	// будет нужен RemoveFontResourceEx(asFontFile, FR_PRIVATE, NULL);
+	
+	// Определить наличие рамок и "юникодности" шрифта
+	HDC hdc = CreateCompatibleDC(0);
+	if (hdc) {
+		HFONT hf = CreateFont ( 18, 0, 0, 0, FW_NORMAL, 0, 0, 0, DEFAULT_CHARSET,
+							    OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS, 
+								NONANTIALIASED_QUALITY/*ANTIALIASED_QUALITY*/, 0,
+								rf.szFontName);
+		if (hf) {
+			HFONT hOldF = (HFONT)SelectObject(hdc, hf);
+			
+			LPGLYPHSET pSets = NULL;
+			DWORD nSize = GetFontUnicodeRanges ( hdc, NULL );
+			if (nSize) {
+				pSets = (LPGLYPHSET)calloc(nSize,1);
+				if (pSets) {
+					pSets->cbThis = nSize;
+					if (GetFontUnicodeRanges ( hdc, pSets )) {
+						rf.bUnicode = (pSets->flAccel != 1/*GS_8BIT_INDICES*/);
+						// Поиск рамок
+						if (rf.bUnicode) {
+							for (DWORD r = 0; r < pSets->cRanges; r++) {
+								if (pSets->ranges[r].wcLow < ucBoxDblDownRight 
+								    && (pSets->ranges[r].wcLow + pSets->ranges[r].cGlyphs - 1) > ucBoxDblDownRight)
+								{
+									rf.bHasBorders = TRUE; break;
+								}
+							}
+						} else {
+							_ASSERTE(rf.bUnicode);
+						}
+					}
+					free(pSets);
+				}
+			}
+			
+			SelectObject(hdc, hOldF);
+			DeleteObject(hf);
+		}
+		DeleteDC(hdc);
+	}
+	
+	
+	// Запомнить шрифт
+	m_RegFonts.push_back(rf);
+	return TRUE;
+}
+
+void CSettings::RegisterFonts()	
+{
+	if (!isAutoRegisterFonts)
+		return; // Если поиск шрифтов не требуется
+
+	// Регистрация шрифтов в папке ConEmu
+	WIN32_FIND_DATA fnd;
+	wchar_t szFind[MAX_PATH]; wcscpy(szFind, gConEmu.ms_ConEmuExe);
+	wchar_t *pszSlash = wcsrchr(szFind, L'\\');
+
+	if (!pszSlash) {
+		MessageBox(NULL, L"ms_ConEmuExe does not contains '\\'", L"ConEmu", MB_OK|MB_ICONSTOP);
+	} else {
+		wcscpy(pszSlash, L"\\*.ttf");
+		HANDLE hFind = FindFirstFile(szFind, &fnd);
+		if (hFind != INVALID_HANDLE_VALUE) {
+			do {
+				if ((fnd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0) {
+					pszSlash[1] = 0;
+					if ((wcslen(fnd.cFileName)+wcslen(szFind)) >= MAX_PATH) {
+						TCHAR* psz=(TCHAR*)calloc(wcslen(fnd.cFileName)+100,sizeof(TCHAR));
+						lstrcpyW(psz, L"Too long full pathname for font:\n");
+						lstrcatW(psz, fnd.cFileName);
+						int nBtn = MessageBox(NULL, psz, L"ConEmu", MB_OKCANCEL|MB_ICONSTOP);
+						free(psz);
+						if (nBtn == IDCANCEL) break;
+					} else {
+						wcscat(szFind, fnd.cFileName);
+						
+						if (!RegisterFont(szFind, FALSE))
+							break;
+					}
+				}
+			} while (FindNextFile(hFind, &fnd));
+			FindClose(hFind);
+		}
+	}
+	
+	// Теперь можно смотреть, зарегистрились ли какие-то шрифты... И выбрать из них подходящие
+	// Это делается в InitFont
+}
+
+void CSettings::UnregisterFonts()
+{
+	for (std::vector<RegFont>::iterator iter = m_RegFonts.begin(); 
+	     iter != m_RegFonts.end(); iter = m_RegFonts.erase(iter))
+	{
+		RemoveFontResourceEx(iter->szFontFile, FR_PRIVATE, NULL);
+	}
+}
+
+BOOL CSettings::GetFontNameFromFile(LPCTSTR lpszFilePath, LPTSTR rsFontName/* [32] */)
+{
+	typedef struct _tagTT_OFFSET_TABLE{
+		USHORT	uMajorVersion;
+		USHORT	uMinorVersion;
+		USHORT	uNumOfTables;
+		USHORT	uSearchRange;
+		USHORT	uEntrySelector;
+		USHORT	uRangeShift;
+	}TT_OFFSET_TABLE;
+
+	typedef struct _tagTT_TABLE_DIRECTORY{
+		char	szTag[4];			//table name
+		ULONG	uCheckSum;			//Check sum
+		ULONG	uOffset;			//Offset from beginning of file
+		ULONG	uLength;			//length of the table in bytes
+	}TT_TABLE_DIRECTORY;
+
+	typedef struct _tagTT_NAME_TABLE_HEADER{
+		USHORT	uFSelector;			//format selector. Always 0
+		USHORT	uNRCount;			//Name Records count
+		USHORT	uStorageOffset;		//Offset for strings storage, from start of the table
+	}TT_NAME_TABLE_HEADER;
+
+	typedef struct _tagTT_NAME_RECORD{
+		USHORT	uPlatformID;
+		USHORT	uEncodingID;
+		USHORT	uLanguageID;
+		USHORT	uNameID;
+		USHORT	uStringLength;
+		USHORT	uStringOffset;	//from start of storage area
+	}TT_NAME_RECORD;
+
+	#define SWAPWORD(x)		MAKEWORD(HIBYTE(x), LOBYTE(x))
+	#define SWAPLONG(x)		MAKELONG(SWAPWORD(HIWORD(x)), SWAPWORD(LOWORD(x)))
+
+	BOOL lbRc = FALSE;
+	HANDLE f = NULL;
+	wchar_t szRetVal[MAX_PATH];
+	DWORD dwRead;
+
+	//if(f.Open(lpszFilePath, CFile::modeRead|CFile::shareDenyWrite)){
+	if ((f = CreateFile(lpszFilePath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL))!=INVALID_HANDLE_VALUE)
+	{
+		TT_OFFSET_TABLE ttOffsetTable;
+		//f.Read(&ttOffsetTable, sizeof(TT_OFFSET_TABLE));
+		if (ReadFile(f, &ttOffsetTable, sizeof(TT_OFFSET_TABLE), &(dwRead=0), NULL) && dwRead)
+		{
+			ttOffsetTable.uNumOfTables = SWAPWORD(ttOffsetTable.uNumOfTables);
+			ttOffsetTable.uMajorVersion = SWAPWORD(ttOffsetTable.uMajorVersion);
+			ttOffsetTable.uMinorVersion = SWAPWORD(ttOffsetTable.uMinorVersion);
+
+			//check is this is a true type font and the version is 1.0
+			if(ttOffsetTable.uMajorVersion != 1 || ttOffsetTable.uMinorVersion != 0)
+				return FALSE;
+			
+			TT_TABLE_DIRECTORY tblDir;
+			BOOL bFound = FALSE;
+			
+			for(int i=0; i< ttOffsetTable.uNumOfTables; i++){
+				//f.Read(&tblDir, sizeof(TT_TABLE_DIRECTORY));
+				if (ReadFile(f, &tblDir, sizeof(TT_TABLE_DIRECTORY), &(dwRead=0), NULL) && dwRead)
+				{
+					//strncpy(szRetVal, tblDir.szTag, 4); szRetVal[4] = 0;
+					//if(lstrcmpi(szRetVal, L"name") == 0)
+					//if (memcmp(tblDir.szTag, "name", 4) == 0)
+					if (strnicmp(tblDir.szTag, "name", 4) == 0)
+					{
+						bFound = TRUE;
+						tblDir.uLength = SWAPLONG(tblDir.uLength);
+						tblDir.uOffset = SWAPLONG(tblDir.uOffset);
+						break;
+					}
+				}
+			}
+			
+			if(bFound){
+				if (SetFilePointer(f, tblDir.uOffset, NULL, FILE_BEGIN)!=INVALID_SET_FILE_POINTER)
+				{
+					TT_NAME_TABLE_HEADER ttNTHeader;
+					//f.Read(&ttNTHeader, sizeof(TT_NAME_TABLE_HEADER));
+					if (ReadFile(f, &ttNTHeader, sizeof(TT_NAME_TABLE_HEADER), &(dwRead=0), NULL) && dwRead)
+					{
+						ttNTHeader.uNRCount = SWAPWORD(ttNTHeader.uNRCount);
+						ttNTHeader.uStorageOffset = SWAPWORD(ttNTHeader.uStorageOffset);
+						TT_NAME_RECORD ttRecord;
+						bFound = FALSE;
+						
+						for(int i=0; i<ttNTHeader.uNRCount; i++){
+							//f.Read(&ttRecord, sizeof(TT_NAME_RECORD));
+							if (ReadFile(f, &ttRecord, sizeof(TT_NAME_RECORD), &(dwRead=0), NULL) && dwRead)
+							{
+								ttRecord.uNameID = SWAPWORD(ttRecord.uNameID);
+								if(ttRecord.uNameID == 1){
+									ttRecord.uStringLength = SWAPWORD(ttRecord.uStringLength);
+									ttRecord.uStringOffset = SWAPWORD(ttRecord.uStringOffset);
+									//int nPos = f.GetPosition();
+									DWORD nPos = SetFilePointer(f, 0, 0, FILE_CURRENT);
+									//f.Seek(tblDir.uOffset + ttRecord.uStringOffset + ttNTHeader.uStorageOffset, CFile::begin);
+									if (SetFilePointer(f, tblDir.uOffset + ttRecord.uStringOffset + ttNTHeader.uStorageOffset, 0, FILE_BEGIN)!=INVALID_SET_FILE_POINTER)
+									{
+										if ((ttRecord.uStringLength + 1) < 33)
+										{
+											//f.Read(csTemp.GetBuffer(ttRecord.uStringLength + 1), ttRecord.uStringLength);
+											//csTemp.ReleaseBuffer();
+											char szName[MAX_PATH]; szName[ttRecord.uStringLength + 1] = 0;
+											if (ReadFile(f, szName, ttRecord.uStringLength + 1, &(dwRead=0), NULL) && dwRead)
+											{
+												//if(csTemp.GetLength() > 0){
+												if (szName[0]) {
+													szName[ttRecord.uStringLength + 1] = 0;
+													for (int j = ttRecord.uStringLength; j >= 0 && szName[j] == ' '; j--)
+														szName[j] = 0;
+													if (szName[0]) {
+														MultiByteToWideChar(CP_ACP, 0, szName, -1, szRetVal, 32);
+														szRetVal[31] = 0;
+														lbRc = TRUE;
+													}
+													break;
+												}
+											}
+										}
+									}
+									//f.Seek(nPos, CFile::begin);
+									SetFilePointer(f, nPos, 0, FILE_BEGIN);
+								}
+							}
+						}
+					}
+				}			
+			}
+		}
+		CloseHandle(f);
+	}
+	
+	if (lbRc)
+		wcscpy(rsFontName, szRetVal);
+	return lbRc;
 }

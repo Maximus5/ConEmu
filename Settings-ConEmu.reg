@@ -9,6 +9,10 @@ REGEDIT4
 "BackGround Image"="c:\\back.bmp"
 "bgImageDarker"=hex:46
 
+;; hex:01 - Search, register for process, and use first *.ttf file in conemu folder
+;; hex:00 - ConEmu will use only preregistered, system fonts
+"AutoRegisterFonts"=hex:01
+
 ;; Main display font
 "FontName"="Lucida Console"
 "FontSize"=dword:00000014
@@ -20,10 +24,6 @@ REGEDIT4
 ;; hex:00 - cast main font as MONOSPACE font (i.e. Courier, Lucida Console, ...)
 ;; hex:01 - ... as proportional font (i.e. Arial, Tahoma, ...)
 ;"Proportional"=hex:00
-
-;; For new configurations ("FontName" is absent) this is hex:01, that means:
-;; 'Search, register for process, and use first *.ttf file in conemu folder'.
-"SearchForFont"=hex:00
 
 ;; 
 "Anti-aliasing"=hex:04

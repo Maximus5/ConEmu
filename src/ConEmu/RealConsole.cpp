@@ -2671,7 +2671,7 @@ void CRealConsole::ProcessUpdateFlags(BOOL abProcessChanged)
             if (!bIsFar && iter->IsFar) bIsFar = true;
             if (!bIsTelnet && iter->IsTelnet) bIsTelnet = true;
             //if (!bIsNtvdm && iter->IsNtvdm) bIsNtvdm = true;
-            if (!bIsCmd && iter->IsCmd) bIsCmd = true;
+            if (!bIsFar && !bIsCmd && iter->IsCmd) bIsCmd = true;
             // 
             if (!dwPID && iter->IsFar)  dwPID = iter->ProcessID;
         }

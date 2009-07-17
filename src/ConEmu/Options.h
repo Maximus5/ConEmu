@@ -17,9 +17,10 @@ public:
 	BYTE FontCharSet();
 private:
     LOGFONT LogFont, LogFont2;
+    BOOL mb_Name1Ok, mb_Name2Ok;
 public:
-	bool isSearchForFont;
-	wchar_t FontFile[MAX_PATH];
+	bool isAutoRegisterFonts;
+	//wchar_t FontFile[MAX_PATH];
 	LOGFONT ConsoleFont;
     COLORREF Colors[0x20];
     bool isExtendColors;
@@ -145,6 +146,10 @@ public:
     void Performance(UINT nID, BOOL bEnd);
 	void SetArgBufferHeight(int anBufferHeight);
 	void InitFont(LPCWSTR asFontName=NULL, int anFontHeight=-1, int anQuality=-1);
+	BOOL RegisterFont(LPCWSTR asFontFile, BOOL abDefault);
+	void RegisterFonts();
+	void UnregisterFonts();
+	BOOL GetFontNameFromFile(LPCTSTR lpszFilePath, LPTSTR rsFontName);
 protected:
     LRESULT OnInitDialog();
 	LRESULT OnInitDialog_Main();
@@ -189,4 +194,14 @@ private:
 	static DWORD CALLBACK EnumFontsThread(LPVOID apArg);
 	HANDLE mh_EnumThread;
 	WORD mn_LastChangingFontCtrlId;
+	// Временно регистрируемые шрифты
+	typedef struct tag_RegFont {
+		BOOL    bDefault;             // Этот шрифт пользователь указал через /fontfile
+		wchar_t szFontFile[MAX_PATH]; // полный путь
+		wchar_t szFontName[32];       // Font Family
+		BOOL    bUnicode;             // Юникодный?
+		BOOL    bHasBorders;          // Имеет ли данный шрифт символы рамок
+	} RegFont;
+	std::vector<RegFont> m_RegFonts;
+	BOOL mb_StopRegisterFonts;
 };
