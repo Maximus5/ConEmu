@@ -3474,6 +3474,25 @@ LRESULT CConEmuMain::OnGetMinMaxInfo(LPMINMAXINFO pInfo)
 
 LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 {
+	wchar_t szTranslatedChars[11];
+	int nTranslatedChars = 0;
+	if (!GetKeyboardState(m_KeybStates)) {
+		#ifdef _DEBUG
+		DWORD dwErr = GetLastError();
+		_ASSERTE(FALSE);
+		#endif
+		static bool sbErrShown = false;
+		if (!sbErrShown) {
+			sbErrShown = true;
+			DisplayLastError(L"GetKeyboardState failed!");
+		}
+	} else {
+		HKL hkl = (HKL)GetActiveKeyboardLayout();
+		UINT nVK = wParam & 0xFFFF;
+		UINT nSC = ((DWORD)lParam & 0xFF0000) >> 16;
+		nTranslatedChars = ToUnicodeEx(nVK, nSC, m_KeybStates, szTranslatedChars, 10, 0, hkl);
+		if (nTranslatedChars>0) szTranslatedChars[max(10,nTranslatedChars)] = 0; else szTranslatedChars[0] = 0;
+	}
     //LRESULT result = 0;
 
   //  #ifdef _DEBUG
@@ -3572,10 +3591,10 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
            && (wParam == VK_TAB 
                || (TabBar.IsInSwitch() 
                    && (wParam == VK_UP || wParam == VK_DOWN || wParam == VK_LEFT || wParam == VK_RIGHT))))
-         || (messg == WM_CHAR && wParam == VK_TAB)
+         //|| (messg == WM_CHAR && wParam == VK_TAB)
         ))
     {
-        if (isPressed(VK_CONTROL) && !isPressed(VK_MENU) && !isPressed(VK_LWIN) && !isPressed(VK_LWIN))
+        if (isPressed(VK_CONTROL) /*&& !isPressed(VK_MENU)*/ && !isPressed(VK_LWIN) && !isPressed(VK_LWIN))
         {
             if (TabBar.OnKeyboard(messg, wParam, lParam))
                 return 0;
@@ -3626,9 +3645,9 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
                 }
                 return 0;
 			}
-        } else if (messg == WM_CHAR) {
-            if (sn_SkipConmanVk[1] == (lParam & 0xFF0000))
-                return 0; // не пропускать букву в консоль
+        //} else if (messg == WM_CHAR) {
+        //    if (sn_SkipConmanVk[1] == (lParam & 0xFF0000))
+        //        return 0; // не пропускать букву в консоль
         } else if (messg == WM_KEYUP) {
 			if ((lbLWin || lbRWin) && (wParam==VK_F11 || wParam==VK_F12)) {
 				ConActivate(wParam - VK_F11 + 10);
@@ -3648,7 +3667,7 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
     }
 
     if (pVCon) {
-        pVCon->RCon()->OnKeyboard(hWnd, messg, wParam, lParam);
+        pVCon->RCon()->OnKeyboard(hWnd, messg, wParam, lParam, szTranslatedChars);
     }
 
     return 0;
@@ -4138,8 +4157,19 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
                             // ≈сли юзер задал свой макрос - выполн€ем его
                             PostMacro(gSet.sRClickMacro);
                         } else {
-                            pVCon->RCon()->OnKeyboard(ghConWnd, WM_KEYDOWN, VK_APPS, (VK_APPS << 16) | (1 << 24));
-                            pVCon->RCon()->OnKeyboard(ghConWnd, WM_KEYUP, VK_APPS, (VK_APPS << 16) | (1 << 24));
+							INPUT_RECORD r = {KEY_EVENT};
+                            //pVCon->RCon()->On Keyboard(ghConWnd, WM_KEYDOWN, VK_APPS, (VK_APPS << 16) | (1 << 24));
+                            //pVCon->RCon()->On Keyboard(ghConWnd, WM_KEYUP, VK_APPS, (VK_APPS << 16) | (1 << 24));
+							r.Event.KeyEvent.bKeyDown = TRUE;
+							r.Event.KeyEvent.wVirtualKeyCode = VK_APPS;
+							r.Event.KeyEvent.wVirtualScanCode = /*28 на моей клавиатуре*/MapVirtualKey(VK_APPS, 0/*MAPVK_VK_TO_VSC*/);
+							r.Event.KeyEvent.dwControlKeyState = 0x120;
+							pVCon->RCon()->PostConsoleEvent(&r);
+
+							//On Keyboard(hConWnd, WM_KEYUP, VK_RETURN, 0);
+							r.Event.KeyEvent.bKeyDown = FALSE;
+							r.Event.KeyEvent.dwControlKeyState = 0x120;
+							pVCon->RCon()->PostConsoleEvent(&r);
                         }
                         return 0;
                     } else {
@@ -4882,8 +4912,8 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
     //OutputDebugStringW(szDbg);
     #endif
 
-    //if (messg == WM_SYSCHAR)
-    //    return TRUE;
+    if (messg == WM_SYSCHAR) // ¬ернул. ƒл€ пересылки в консоль не используетс€, но чтобы не пищало - необходимо
+        return TRUE;
     //if (messg == WM_CHAR)
     //  return TRUE;
 
@@ -4958,11 +4988,11 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
     case WM_KEYUP:
     case WM_SYSKEYDOWN:
     case WM_SYSKEYUP:
-    case WM_CHAR:
-    case WM_SYSCHAR:
+    //case WM_CHAR: -- убрал. “еперь пользуем ToUnicodeEx.
+    //case WM_SYSCHAR:
         result = gConEmu.OnKeyboard(hWnd, messg, wParam, lParam);
-        if (messg == WM_SYSCHAR)
-            return TRUE;
+        //if (messg == WM_SYSCHAR)
+        //    return TRUE;
         break;
 
     case WM_ACTIVATE:

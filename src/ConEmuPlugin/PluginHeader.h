@@ -34,6 +34,18 @@ extern int lastModifiedStateW;
 //extern HANDLE hEventCmd[MAXCMDCOUNT];
 extern HANDLE hThread;
 extern WCHAR gcPlugKey;
+extern HANDLE ghConIn;
+
+typedef struct tag_SynchroArg {
+	enum {
+		eCommand,
+		eInput
+	} SynchroType;
+	HANDLE hEvent;
+	LPARAM Result;
+	LPARAM Param1, Param2;
+	BOOL Processed;
+} SynchroArg;
 
 BOOL CreateTabs(int windowCount);
 
@@ -99,6 +111,7 @@ LPCWSTR FUNC_X(GetMsg)(int aiMsg);
 
 extern DWORD gnReqCommand;
 extern int gnPluginOpenFrom;
+extern HANDLE ghInputSynchroExecuted;
 extern BOOL gbCmdCallObsolete;
 extern LPVOID gpReqCommandData;
 void ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData);
@@ -118,3 +131,6 @@ BOOL FUNC_Y(EditOutput)(LPCWSTR asFileName, BOOL abView);
 BOOL FUNC_X(EditOutput)(LPCWSTR asFileName, BOOL abView);
 
 BOOL Attach2Gui();
+
+BOOL FUNC_X(CallSynchro)(SynchroArg *Param);
+BOOL FUNC_Y(CallSynchro)(SynchroArg *Param);

@@ -104,11 +104,34 @@ int WINAPI _export ProcessSynchroEventW(int Event,void *Param)
     	if (!gbInfoW_OK)
     		return 0;
 
-    	if (gnReqCommand != (DWORD)-1) {
-    		TODO("Определить текущую область... (panel/editor/viewer/menu/...");
-    		gnPluginOpenFrom = 0;
-    		ProcessCommand(gnReqCommand, FALSE/*bReqMainThread*/, gpReqCommandData);
-    	}
+		SynchroArg *pArg = (SynchroArg*)Param;
+		_ASSERTE(pArg!=NULL);
+		if (pArg->Processed) {
+			// Два раза подряд вызвалось с одинаковыми арументами?
+			_ASSERTE(pArg->Processed==FALSE);
+			return 0;
+		}
+
+		if (pArg->SynchroType == SynchroArg::eCommand) {
+    		if (gnReqCommand != (DWORD)-1) {
+    			TODO("Определить текущую область... (panel/editor/viewer/menu/...");
+    			gnPluginOpenFrom = 0;
+    			ProcessCommand(gnReqCommand, FALSE/*bReqMainThread*/, gpReqCommandData);
+    		}
+		} else if (pArg->SynchroType == SynchroArg::eInput) {
+			INPUT_RECORD *pRec = (INPUT_RECORD*)(pArg->Param1);
+			UINT nCount = pArg->Param2;
+
+			if (nCount>0) {
+				DWORD cbWritten = 0;
+				BOOL fSuccess = WriteConsoleInput(ghConIn, pRec, nCount, &cbWritten);
+			}
+		}
+
+		if (pArg->hEvent)
+			SetEvent(pArg->hEvent);
+		pArg->Processed = TRUE;
+		//pArg->Executed = TRUE;
 	}
 	return 0;
 }
@@ -116,12 +139,14 @@ int WINAPI _export ProcessSynchroEventW(int Event,void *Param)
 /* COMMON - end */
 
 
-HWND ConEmuHwnd=NULL; // Содержит хэндл окна отрисовки. Это ДОЧЕРНЕЕ окно.
+HWND ConEmuHwnd = NULL; // Содержит хэндл окна отрисовки. Это ДОЧЕРНЕЕ окно.
 BOOL TerminalMode = FALSE;
-HWND FarHwnd=NULL;
+HWND FarHwnd = NULL;
+HANDLE ghConIn = NULL;
 DWORD gnMainThreadId = 0;
 //HANDLE hEventCmd[MAXCMDCOUNT], hEventAlive=NULL, hEventReady=NULL;
-HANDLE hThread=NULL;
+HANDLE ghMonitorThread = NULL; DWORD gnMonitorThreadId = 0;
+HANDLE ghInputThread = NULL; DWORD gnInputThreadId = 0;
 FarVersion gFarVersion;
 WCHAR gszDir1[CONEMUTABMAX], gszDir2[CONEMUTABMAX];
 WCHAR gszRootKey[MAX_PATH*2];
@@ -133,6 +158,7 @@ DWORD  gnDataSize=0;
 //HANDLE ghMapping = NULL;
 DWORD gnReqCommand = -1;
 int gnPluginOpenFrom = -1;
+HANDLE ghInputSynchroExecuted = NULL;
 BOOL gbCmdCallObsolete = FALSE;
 LPVOID gpReqCommandData = NULL;
 HANDLE ghReqCommandEvent = NULL;
@@ -169,7 +195,7 @@ BOOL WINAPI DllMain( HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserve
 			{
 				_ASSERTE(FAR_X_VER<FAR_Y_VER);
 				#ifdef SHOW_STARTED_MSGBOX
-				if (!IsDebuggerPresent()) MessageBoxA(GetForegroundWindow(), "ConEmu.dll loaded", "ConEmu plugin", 0);
+				if (!IsDebuggerPresent()) MessageBoxA(NULL, "ConEmu.dll loaded", "ConEmu plugin", 0);
 				#endif
 				//#if defined(__GNUC__)
 				//GetConsoleWindow = (FGetConsoleWindow)GetProcAddress(GetModuleHandle(L"kernel32.dll"),"GetConsoleWindow");
@@ -450,7 +476,7 @@ void ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData)
 }
 
 // Эту нить нужно оставить, чтобы была возможность отобразить консоль при падении ConEmu
-DWORD WINAPI ThreadProcW(LPVOID lpParameter)
+DWORD WINAPI MonitorThreadProcW(LPVOID lpParameter)
 {
 	//DWORD dwProcId = GetCurrentProcessId();
 
@@ -722,6 +748,135 @@ DWORD WINAPI ThreadProcW(LPVOID lpParameter)
 	return 0;
 }
 
+BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount)
+{
+	BOOL fSuccess = FALSE;
+
+	if (!ghConIn) {
+		ghConIn  = CreateFile(L"CONIN$", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_READ,
+			0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+		if (ghConIn == INVALID_HANDLE_VALUE) {
+			#ifdef _DEBUG
+			DWORD dwErr = GetLastError();
+			_ASSERTE(ghConIn!=INVALID_HANDLE_VALUE);
+			#endif
+			ghConIn = NULL;
+			return FALSE;
+		}
+	}
+	if (!ghInputSynchroExecuted)
+		ghInputSynchroExecuted = CreateEvent(NULL, FALSE, FALSE, NULL);
+
+	if (gFarVersion.dwVerMajor>1 && (gFarVersion.dwVerMinor>0 || gFarVersion.dwBuild>=1006))
+	{
+		static SynchroArg arg = {SynchroArg::eInput};
+		arg.hEvent = ghInputSynchroExecuted;
+		arg.Param1 = (LPARAM)pr;
+		arg.Param2 = nCount;
+
+		if (gFarVersion.dwBuild>=FAR_Y_VER)
+			fSuccess = FUNC_Y(CallSynchro)(&arg);
+		else
+			fSuccess = FUNC_X(CallSynchro)(&arg);
+	} 
+	
+	if (!fSuccess)
+	{
+		DWORD nCurInputCount = 0, cbWritten = 0;
+		INPUT_RECORD irDummy[2] = {{0},{0}};
+
+		// 27.06.2009 Maks - If input queue is not empty - wait for a while, to avoid conflicts with FAR reading queue
+		if (PeekConsoleInput(ghConIn, irDummy, 1, &(nCurInputCount = 0)) && nCurInputCount > 0) {
+			DWORD dwStartTick = GetTickCount();
+			WARNING("Do NOT wait, but place event in Cyclic queue");
+			do {
+				Sleep(5);
+				if (!PeekConsoleInput(ghConIn, irDummy, 1, &(nCurInputCount = 0)))
+					nCurInputCount = 0;
+			} while ((nCurInputCount > 0) && ((GetTickCount() - dwStartTick) < MAX_INPUT_QUEUE_EMPTY_WAIT));
+		}
+
+		fSuccess = WriteConsoleInput(ghConIn, pr, nCount, &cbWritten);
+		_ASSERTE(fSuccess && cbWritten==nCount);
+	}
+
+	return fSuccess;
+} 
+
+DWORD WINAPI InputThreadProcW(LPVOID lpParameter)
+{
+	MSG msg;
+	static INPUT_RECORD recs[10] = {{0}}; // переменная должна быть глобальной? SynchoApi...
+
+	while (GetMessage(&msg,0,0,0)) {
+		if (msg.message == WM_QUIT) return 0;
+		if (ghServerTerminateEvent) {
+			if (WaitForSingleObject(ghServerTerminateEvent, 0) == WAIT_OBJECT_0) return 0;
+		}
+
+		if (msg.message == INPUT_THREAD_ALIVE_MSG) {
+			//pRCon->mn_FlushOut = msg.wParam;
+			TODO("INPUT_THREAD_ALIVE_MSG");
+			continue;
+
+		} else {
+
+			INPUT_RECORD *pRec = recs;
+			int nCount = 0, nMaxCount = countof(recs);
+			memset(recs, 0, sizeof(recs));
+
+			do {
+				if (UnpackInputRecord(&msg, pRec)) {
+					TODO("Сделать обработку пачки сообщений, вдруг они накопились в очереди?");
+
+					if (pRec->EventType == KEY_EVENT && pRec->Event.KeyEvent.bKeyDown &&
+						(pRec->Event.KeyEvent.wVirtualKeyCode == 'C' || pRec->Event.KeyEvent.wVirtualKeyCode == VK_CANCEL)
+						)
+					{
+						#define ALL_MODIFIERS (LEFT_ALT_PRESSED|RIGHT_ALT_PRESSED|LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED|SHIFT_PRESSED)
+						#define CTRL_MODIFIERS (LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED)
+
+						BOOL lbRc = FALSE;
+						DWORD dwEvent = (pRec->Event.KeyEvent.wVirtualKeyCode == 'C') ? CTRL_C_EVENT : CTRL_BREAK_EVENT;
+						//&& (srv.dwConsoleMode & ENABLE_PROCESSED_INPUT)
+
+						//The SetConsoleMode function can disable the ENABLE_PROCESSED_INPUT mode for a console's input buffer, 
+						//so CTRL+C is reported as keyboard input rather than as a signal. 
+						// CTRL+BREAK is always treated as a signal
+						if ( // Удерживается ТОЛЬКО Ctrl
+							(pRec->Event.KeyEvent.dwControlKeyState & CTRL_MODIFIERS) &&
+							((pRec->Event.KeyEvent.dwControlKeyState & ALL_MODIFIERS) 
+							== (pRec->Event.KeyEvent.dwControlKeyState & CTRL_MODIFIERS))
+							)
+						{
+							// Вроде работает, Главное не запускать процесс с флагом CREATE_NEW_PROCESS_GROUP
+							// иначе у микрософтовской консоли (WinXP SP3) сносит крышу, и она реагирует
+							// на Ctrl-Break, но напрочь игнорирует Ctrl-C
+							lbRc = GenerateConsoleCtrlEvent(dwEvent, 0);
+
+							continue; // Это событие в буфер не помещается
+						}
+					}
+					nCount++; pRec++;
+				}
+				// Если в буфере есть еще сообщения, а recs еще не полностью заполнен
+				if (nCount < nMaxCount)
+				{
+					if (!PeekMessage(&msg, 0,0,0, PM_REMOVE))
+						break;
+					if (msg.message == WM_QUIT) return 0;
+					if (ghServerTerminateEvent) {
+						if (WaitForSingleObject(ghServerTerminateEvent, 0) == WAIT_OBJECT_0) return 0;
+					}
+				}
+			} while (nCount < nMaxCount);
+			SendConsoleEvent(recs, nCount);
+		}
+	}
+
+	return 0;
+}
+
 void WINAPI _export SetStartupInfoW(void *aInfo)
 {
 	if (!gFarVersion.dwVerMajor) LoadFarVersion();
@@ -791,8 +946,9 @@ void InitHWND(HWND ahFarHwnd)
     _ASSERTE(ghServerThread!=NULL);
 
 
-	hThread=CreateThread(NULL, 0, &ThreadProcW, 0, 0, 0);
+	ghMonitorThread = CreateThread(NULL, 0, MonitorThreadProcW, 0, 0, &gnMonitorThreadId);
 
+	ghInputThread = CreateThread(NULL, 0, InputThreadProcW, 0, 0, &gnInputThreadId);
 
 
 	// Если мы не под эмулятором - больше ничего делать не нужно
@@ -1313,6 +1469,9 @@ void StopThread(void)
 	if (ghServerTerminateEvent) {
 		SetEvent(ghServerTerminateEvent);
 	}
+	if (gnInputThreadId) {
+		PostThreadMessage(gnInputThreadId, WM_QUIT, 0, 0);
+	}
 
 	if (ghServerThread) {
 		HANDLE hPipe = INVALID_HANDLE_VALUE;
@@ -1340,16 +1499,26 @@ void StopThread(void)
 	}
 	SafeCloseHandle(ghPluginSemaphore);
 
-	if (hThread) { // подождем чуть-чуть, или принудительно прибъем нить ожидания
-		if (WaitForSingleObject(hThread,1000)) {
+	if (ghMonitorThread) { // подождем чуть-чуть, или принудительно прибъем нить ожидания
+		if (WaitForSingleObject(ghMonitorThread,1000)) {
 			#if !defined(__GNUC__)
 			#pragma warning (disable : 6258)
 			#endif
-			TerminateThread(hThread, 100);
+			TerminateThread(ghMonitorThread, 100);
 		}
-		CloseHandle(hThread); hThread = NULL;
+		SafeCloseHandle(ghMonitorThread);
 	}
-	
+
+	if (ghInputThread) { // подождем чуть-чуть, или принудительно прибъем нить ожидания
+		if (WaitForSingleObject(ghInputThread,1000)) {
+			#if !defined(__GNUC__)
+			#pragma warning (disable : 6258)
+			#endif
+			TerminateThread(ghInputThread, 100);
+		}
+		SafeCloseHandle(ghInputThread);
+	}
+
     if (tabs) {
 	    Free(tabs);
 	    tabs = NULL;
@@ -1365,6 +1534,8 @@ void StopThread(void)
 	if (ghRegMonitorKey) { RegCloseKey(ghRegMonitorKey); ghRegMonitorKey = NULL; }
 	SafeCloseHandle(ghRegMonitorEvt);
 	SafeCloseHandle(ghServerTerminateEvent);
+	SafeCloseHandle(ghConIn);
+	SafeCloseHandle(ghInputSynchroExecuted);
 }
 
 void   WINAPI _export ExitFARW(void)
@@ -1394,7 +1565,7 @@ void InitResources()
 	if (!ConEmuHwnd || !FarHwnd) return;
 	// В ConEmu нужно передать следущие ресурсы
 	//
-	int nSize = sizeof(CESERVER_REQ) + sizeof(DWORD) 
+	int nSize = sizeof(CESERVER_REQ) + 2*sizeof(DWORD) 
 		+ 3*(MAX_PATH+1)*2; // + 3 строковых ресурса
 	CESERVER_REQ *pIn = (CESERVER_REQ*)Alloc(nSize,1);;
 	if (pIn) {
@@ -1402,7 +1573,8 @@ void InitResources()
 		pIn->hdr.nSrcThreadId = GetCurrentThreadId();
 		pIn->hdr.nVersion = CESERVER_REQ_VER;
 		pIn->dwData[0] = GetCurrentProcessId();
-		wchar_t* pszRes = (wchar_t*)&(pIn->dwData[1]);
+		pIn->dwData[1] = gnInputThreadId;
+		wchar_t* pszRes = (wchar_t*)&(pIn->dwData[2]);
 		if (gFarVersion.dwVerMajor==1) {
 			GetMsgA(10, pszRes); pszRes += lstrlenW(pszRes)+1;
 			GetMsgA(11, pszRes); pszRes += lstrlenW(pszRes)+1;

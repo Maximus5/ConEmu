@@ -495,3 +495,8 @@ BOOL EditOutput789(LPCWSTR asFileName, BOOL abView)
 
 	return lbRc;
 }
+
+BOOL CallSynchro789(SynchroArg *Param)
+{
+	return FALSE;
+}

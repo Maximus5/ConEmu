@@ -1133,8 +1133,9 @@ int TabBarClass::GetIndexByTab(VConTabs tab)
 	return -1;
 }
 
-int TabBarClass::GetNextTab(BOOL abForward)
+int TabBarClass::GetNextTab(BOOL abForward, BOOL abAltStyle/*=FALSE*/)
 {
+    BOOL lbRecentMode = (abAltStyle == FALSE) ? gSet.isTabRecent : !gSet.isTabRecent;
     int nCurSel = GetCurSel();
     int nCurCount = GetItemCount();
     VConTabs cur; cur.ID = 0;
@@ -1143,7 +1144,7 @@ int TabBarClass::GetNextTab(BOOL abForward)
     if (nCurCount < 1)
     	return 0; // хотя такого и не должно быть
     
-    if (gSet.isTabRecent && nCurSel >= 0 && (UINT)nCurSel < m_Tab2VCon.size())
+    if (lbRecentMode && nCurSel >= 0 && (UINT)nCurSel < m_Tab2VCon.size())
         cur = m_Tab2VCon[nCurSel];
     
     
@@ -1151,7 +1152,7 @@ int TabBarClass::GetNextTab(BOOL abForward)
 
     TODO("Добавить возможность переключаться а'ля RecentScreens");
     if (abForward) {
-    	if (gSet.isTabRecent) {
+    	if (lbRecentMode) {
         	std::vector<VConTabs>::iterator iter = m_TabStack.begin();
         	while (iter != m_TabStack.end()) {
         		// Найти в стеке выделенный таб
@@ -1181,7 +1182,7 @@ int TabBarClass::GetNextTab(BOOL abForward)
 
     } else {
     
-    	if (gSet.isTabRecent) {
+    	if (lbRecentMode) {
         	std::vector<VConTabs>::reverse_iterator iter = m_TabStack.rbegin();
         	while (iter != m_TabStack.rend()) {
         		// Найти в стеке выделенный таб
@@ -1213,19 +1214,19 @@ int TabBarClass::GetNextTab(BOOL abForward)
     return nNewSel;
 }
 
-void TabBarClass::SwitchNext()
+void TabBarClass::SwitchNext(BOOL abAltStyle/*=FALSE*/)
 {
-	Switch(TRUE);
+	Switch(TRUE, abAltStyle);
 }
 
-void TabBarClass::SwitchPrev()
+void TabBarClass::SwitchPrev(BOOL abAltStyle/*=FALSE*/)
 {
-	Switch(FALSE);
+	Switch(FALSE, abAltStyle);
 }
 
-void TabBarClass::Switch(BOOL abForward)
+void TabBarClass::Switch(BOOL abForward, BOOL abAltStyle/*=FALSE*/)
 {
-    int nNewSel = GetNextTab ( abForward );
+    int nNewSel = GetNextTab ( abForward, abAltStyle );
     
     if (nNewSel != -1) {
         if (gSet.isTabLazy && mh_Tabbar) {
@@ -1341,14 +1342,15 @@ BOOL TabBarClass::CanActivateTab(int nTabIdx)
 BOOL TabBarClass::OnKeyboard(UINT messg, WPARAM wParam, LPARAM lParam)
 {
     //if (!IsShown()) return FALSE; -- всегда. Табы теперь есть в памяти
+    BOOL lbAltPressed = isPressed(VK_MENU);
 
     if (messg == WM_KEYDOWN && wParam == VK_TAB)
     {
         if (!isPressed(VK_SHIFT))
-            SwitchNext();
+            SwitchNext(lbAltPressed);
         else
-            SwitchPrev();
-    } else if (mb_InKeySwitching && messg == WM_KEYDOWN
+            SwitchPrev(lbAltPressed);
+    } else if (mb_InKeySwitching && messg == WM_KEYDOWN && !lbAltPressed
         && (wParam == VK_UP || wParam == VK_DOWN || wParam == VK_LEFT || wParam == VK_RIGHT))
     {
     	bool bRecent = gSet.isTabRecent;

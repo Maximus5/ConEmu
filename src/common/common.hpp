@@ -119,7 +119,7 @@ extern wchar_t gszDbgModLabel[6];
 #define CECMD_ATTACH2GUI    18 // Выполнить подключение видимой (отключенной) консоли к GUI. Без аргументов
 #define CECMD_FARLOADED     19 // Посылается плагином в сервер
 
-#define CESERVER_REQ_VER    10
+#define CESERVER_REQ_VER    11
 
 #define PIPEBUFSIZE 4096
 
@@ -171,6 +171,7 @@ typedef struct tag_CESERVER_REQ_FULLCONDATA {
 typedef struct tag_CESERVER_REQ_CONINFO_HDR {
 	/* 1*/HWND hConWnd;
 	/* 2*/DWORD nPacketId;
+	      DWORD nInputTID;
 	/* 3*/DWORD nProcesses[20];
     /* 4*/DWORD dwCiSize;
 	      CONSOLE_CURSOR_INFO ci;
@@ -215,7 +216,7 @@ typedef struct tag_CESERVER_REQ_NEWCMD {
 typedef struct tag_CESERVER_REQ_STARTSTOP {
 	DWORD nStarted; // 0 - ServerStart, 1 - ServerStop, 2 - ComspecStart, 3 - ComspecStop
 	HWND  hWnd; // при передаче В GUI - консоль, при возврате в консоль - GUI
-	DWORD dwPID;
+	DWORD dwPID, dwInputTID;
 	DWORD nSubSystem; // 255 для DOS программ
 	// А это приходит из консоли, вдруго консольная программа успела поменять размер буфера
 	CONSOLE_SCREEN_BUFFER_INFO sbi;
@@ -362,6 +363,11 @@ struct ForwardedFileInfo
 #define MOUSE_EVENT_HWHEELED  (WM_APP+14)
 #define MOUSE_EVENT_FIRST MOUSE_EVENT_MOVE
 #define MOUSE_EVENT_LAST MOUSE_EVENT_HWHEELED
+
+#define INPUT_THREAD_ALIVE_MSG (WM_APP+100)
+
+#define MAX_INPUT_QUEUE_EMPTY_WAIT 100
+
 
 int NextArg(const wchar_t** asCmdLine, wchar_t* rsArg/*[MAX_PATH+1]*/);
 BOOL PackInputRecord(const INPUT_RECORD* piRec, MSG* pMsg);

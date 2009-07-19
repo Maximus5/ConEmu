@@ -132,6 +132,7 @@ protected:
 	typedef BOOL (WINAPI* FRegisterShellHookWindow)(HWND);
 	RECT mrc_Ideal;
 	BOOL mb_MouseCaptured;
+	BYTE m_KeybStates[256];
 	//DWORD mn_CurrentKeybLayout;
 	// Registered messages
 	DWORD mn_MainThreadId;

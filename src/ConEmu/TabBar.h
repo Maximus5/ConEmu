@@ -28,7 +28,7 @@ private:
 	LPCWSTR GetTabText(int nTabIdx);
 	BOOL CanActivateTab(int nTabIdx);
 	BOOL mb_InKeySwitching;
-	int GetNextTab(BOOL abForward);
+	int GetNextTab(BOOL abForward, BOOL abAltStyle=FALSE);
 	int GetCurSel();
 	int GetItemCount();
 	void DeleteItem(int I);
@@ -89,9 +89,9 @@ public:
 	void OnCommand(WPARAM wParam, LPARAM lParam);
 	void OnMouse(int message, int x, int y);
 	// Переключение табов
-	void Switch(BOOL abForward);
-	void SwitchNext();
-	void SwitchPrev();
+	void Switch(BOOL abForward, BOOL abAltStyle=FALSE);
+	void SwitchNext(BOOL abAltStyle=FALSE);
+	void SwitchPrev(BOOL abAltStyle=FALSE);
 	BOOL IsInSwitch();
 	void SwitchCommit();
 	void SwitchRollback();

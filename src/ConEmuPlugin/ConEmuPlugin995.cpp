@@ -519,3 +519,33 @@ BOOL EditOutput995(LPCWSTR asFileName, BOOL abView)
 
 	return lbRc;
 }
+
+BOOL CallSynchro995(SynchroArg *Param)
+{
+	if (!InfoW995 || !Param)
+		return FALSE;
+
+	if (gFarVersion.dwVerMajor>1 && (gFarVersion.dwVerMinor>0 || gFarVersion.dwBuild>=1006)) {
+		// Функция всегда возвращает 0
+		if (Param->hEvent)
+			ResetEvent(Param->hEvent);
+
+		Param->Processed = FALSE;
+
+		InfoW995->AdvControl ( InfoW995->ModuleNumber, ACTL_SYNCHRO, Param);
+
+		DWORD nWait = 100;
+		if (Param->hEvent) {
+			nWait = WaitForSingleObject(Param->hEvent, 10000);
+			if (nWait != WAIT_OBJECT_0) {
+				_ASSERTE(nWait==WAIT_OBJECT_0);
+			}
+		} else {
+			_ASSERTE(Param->hEvent);
+		}
+
+		return (nWait == 0);
+	}
+
+	return FALSE;
+}

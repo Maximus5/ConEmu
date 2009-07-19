@@ -82,7 +82,7 @@ typedef struct _CONSOLE_INFO
 #pragma pack(pop)
 
 struct ConProcess {
-    DWORD ProcessID, ParentPID;
+    DWORD ProcessID, ParentPID, InputTID;
     bool  IsFar;
     bool  IsTelnet; // может быть включен ВМЕСТЕ с IsFar, если удалось подцепится к фару через сетевой пайп
     bool  IsNtvdm;  // 16bit приложения
@@ -121,12 +121,12 @@ public:
 
     BOOL SetConsoleSize(COORD size, DWORD anCmdID=CECMD_SETSIZE);
 private:
-    void SendConsoleEvent(INPUT_RECORD* piRec);
+    //void SendConsoleEvent(INPUT_RECORD* piRec);
     DWORD mn_FlushIn, mn_FlushOut;
 public:
     void PostConsoleEvent(INPUT_RECORD* piRec);
     BOOL FlushInputQueue(DWORD nTimeout = 500);
-    void OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
+    void OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, wchar_t *pszChars);
     void OnMouse(UINT messg, WPARAM wParam, int x, int y);
     void OnFocus(BOOL abFocused);
     
@@ -196,7 +196,7 @@ public:
 
 protected:
     CVirtualConsole* mp_VCon; // соответствующая виртуальная консоль
-    DWORD mn_ConEmuC_PID; HANDLE mh_ConEmuC, mh_ConEmuCInput;
+    DWORD mn_ConEmuC_PID, mn_ConEmuC_Input_TID; HANDLE mh_ConEmuC, mh_ConEmuCInput;
     TCHAR ms_ConEmuC_Pipe[MAX_PATH], ms_ConEmuCInput_Pipe[MAX_PATH], ms_VConServer_Pipe[MAX_PATH];
     TCHAR Title[MAX_TITLE_SIZE+1], TitleCmp[MAX_TITLE_SIZE+1];
     short mn_Progress, mn_PreWarningProgress;
@@ -210,8 +210,8 @@ protected:
     static DWORD WINAPI MonitorThread(LPVOID lpParameter);
     HANDLE mh_MonitorThread; DWORD mn_MonitorThreadID;
     // Для пересылки событий ввода в консоль
-    static DWORD WINAPI InputThread(LPVOID lpParameter);
-    HANDLE mh_InputThread; DWORD mn_InputThreadID;
+    //static DWORD WINAPI InputThread(LPVOID lpParameter);
+    //HANDLE mh_InputThread; DWORD mn_InputThreadID;
     
     HANDLE mh_TermEvent, mh_MonitorThreadEvent; //, mh_Sync2WindowEvent;
     BOOL mb_FullRetrieveNeeded; //, mb_Detached;
@@ -248,7 +248,7 @@ private:
     std::vector<ConProcess> m_Processes;
     int mn_ProcessCount;
     //
-    DWORD mn_FarPID, mn_LastSetForegroundPID;
+    DWORD mn_FarPID, mn_FarInputTID, mn_LastSetForegroundPID;
     //
     ConEmuTab* mp_tabs;
     int mn_tabsCount, mn_ActiveTab;
@@ -304,7 +304,7 @@ private:
 	wchar_t ms_Editor[32], ms_EditorRus[32], ms_Viewer[32], ms_ViewerRus[32];
 	wchar_t ms_TempPanel[32], ms_TempPanelRus[32];
 	//
-	BOOL mb_PluginDetected; DWORD mn_FarPID_PluginDetected;
+	BOOL mb_PluginDetected; DWORD mn_FarPID_PluginDetected, mn_Far_PluginInputThreadId;
 	void CheckFarStates();
 	void OnTitleChanged();
 	DWORD mn_LastInvalidateTick;
