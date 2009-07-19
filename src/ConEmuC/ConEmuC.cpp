@@ -5,6 +5,8 @@
 // Раскомментировать для вывода в консоль информации режима Comspec
     #define PRINT_COMSPEC(f,a) //wprintf(f,a)
 #elif defined(__GNUC__)
+//  Раскомментировать, чтобы сразу после запуска процесса (conemuc.exe) показать MessageBox, чтобы прицепиться дебаггером
+//  #define SHOW_STARTED_MSGBOX
     #define PRINT_COMSPEC(f,a) //wprintf(f,a)
 #else
 	#define PRINT_COMSPEC(f,a)
