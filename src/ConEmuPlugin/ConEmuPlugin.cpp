@@ -26,6 +26,8 @@ WARNING("Подозреваю, что в gszRootKey не учитывается имя пользователя/конфигурац
 
 #define MAKEFARVERSION(major,minor,build) ( ((major)<<8) | (minor) | ((build)<<16))
 
+#define ConEmu_SysID 0x43454D55 // 'CEMU'
+
 #ifdef _DEBUG
 wchar_t gszDbgModLabel[6] = {0};
 #endif
@@ -43,6 +45,50 @@ extern "C"{
   BOOL WINAPI IsConsoleActive();
 };
 #endif
+
+
+HWND ConEmuHwnd = NULL; // Содержит хэндл окна отрисовки. Это ДОЧЕРНЕЕ окно.
+BOOL TerminalMode = FALSE;
+HWND FarHwnd = NULL;
+HANDLE ghConIn = NULL;
+DWORD gnMainThreadId = 0;
+//HANDLE hEventCmd[MAXCMDCOUNT], hEventAlive=NULL, hEventReady=NULL;
+HANDLE ghMonitorThread = NULL; DWORD gnMonitorThreadId = 0;
+HANDLE ghInputThread = NULL; DWORD gnInputThreadId = 0;
+FarVersion gFarVersion;
+WCHAR gszDir1[CONEMUTABMAX], gszDir2[CONEMUTABMAX];
+WCHAR gszRootKey[MAX_PATH*2];
+int maxTabCount = 0, lastWindowCount = 0, gnCurTabCount = 0;
+ConEmuTab* tabs = NULL; //(ConEmuTab*) Alloc(maxTabCount, sizeof(ConEmuTab));
+LPBYTE gpData = NULL, gpCursor = NULL;
+CESERVER_REQ* gpCmdRet = NULL;
+DWORD  gnDataSize=0;
+//HANDLE ghMapping = NULL;
+DWORD gnReqCommand = -1;
+int gnPluginOpenFrom = -1;
+HANDLE ghInputSynchroExecuted = NULL;
+BOOL gbCmdCallObsolete = FALSE;
+LPVOID gpReqCommandData = NULL;
+HANDLE ghReqCommandEvent = NULL;
+UINT gnMsgTabChanged = 0;
+CRITICAL_SECTION csTabs, csData;
+WCHAR gcPlugKey=0;
+BOOL  gbPlugKeyChanged=FALSE;
+HKEY  ghRegMonitorKey=NULL; HANDLE ghRegMonitorEvt=NULL;
+HMODULE ghFarHintsFix = NULL;
+WCHAR gszPluginServerPipe[MAX_PATH];
+#define MAX_SERVER_THREADS 3
+//HANDLE ghServerThreads[MAX_SERVER_THREADS] = {NULL,NULL,NULL};
+//HANDLE ghActiveServerThread = NULL;
+HANDLE ghServerThread = NULL;
+DWORD  gnServerThreadId = 0;
+std::vector<HANDLE> ghCommandThreads;
+//DWORD  gnServerThreadsId[MAX_SERVER_THREADS] = {0,0,0};
+HANDLE ghServerTerminateEvent = NULL;
+HANDLE ghPluginSemaphore = NULL;
+wchar_t gsFarLang[64];
+BOOL FindServerCmd(DWORD nServerCmd, DWORD &dwServerPID);
+SECURITY_ATTRIBUTES* gpNullSecurity = NULL;
 
 
 
@@ -76,7 +122,7 @@ void WINAPI _export GetPluginInfoW(struct PluginInfo *pi)
 	pi->PluginConfigStrings = NULL;
 	pi->PluginConfigStringsNumber = 0;
 	pi->CommandPrefix = NULL;
-	pi->Reserved = 0;	
+	pi->Reserved = ConEmu_SysID; // 'CEMU'
 }
 
 
@@ -125,6 +171,9 @@ int WINAPI _export ProcessSynchroEventW(int Event,void *Param)
 			if (nCount>0) {
 				DWORD cbWritten = 0;
 				BOOL fSuccess = WriteConsoleInput(ghConIn, pRec, nCount, &cbWritten);
+				if (!fSuccess || cbWritten != nCount) {
+					_ASSERTE(fSuccess && cbWritten==nCount);
+				}
 			}
 		}
 
@@ -138,48 +187,6 @@ int WINAPI _export ProcessSynchroEventW(int Event,void *Param)
 
 /* COMMON - end */
 
-
-HWND ConEmuHwnd = NULL; // Содержит хэндл окна отрисовки. Это ДОЧЕРНЕЕ окно.
-BOOL TerminalMode = FALSE;
-HWND FarHwnd = NULL;
-HANDLE ghConIn = NULL;
-DWORD gnMainThreadId = 0;
-//HANDLE hEventCmd[MAXCMDCOUNT], hEventAlive=NULL, hEventReady=NULL;
-HANDLE ghMonitorThread = NULL; DWORD gnMonitorThreadId = 0;
-HANDLE ghInputThread = NULL; DWORD gnInputThreadId = 0;
-FarVersion gFarVersion;
-WCHAR gszDir1[CONEMUTABMAX], gszDir2[CONEMUTABMAX];
-WCHAR gszRootKey[MAX_PATH*2];
-int maxTabCount = 0, lastWindowCount = 0, gnCurTabCount = 0;
-ConEmuTab* tabs = NULL; //(ConEmuTab*) Alloc(maxTabCount, sizeof(ConEmuTab));
-LPBYTE gpData = NULL, gpCursor = NULL;
-CESERVER_REQ* gpCmdRet = NULL;
-DWORD  gnDataSize=0;
-//HANDLE ghMapping = NULL;
-DWORD gnReqCommand = -1;
-int gnPluginOpenFrom = -1;
-HANDLE ghInputSynchroExecuted = NULL;
-BOOL gbCmdCallObsolete = FALSE;
-LPVOID gpReqCommandData = NULL;
-HANDLE ghReqCommandEvent = NULL;
-UINT gnMsgTabChanged = 0;
-CRITICAL_SECTION csTabs, csData;
-WCHAR gcPlugKey=0;
-BOOL  gbPlugKeyChanged=FALSE;
-HKEY  ghRegMonitorKey=NULL; HANDLE ghRegMonitorEvt=NULL;
-HMODULE ghFarHintsFix = NULL;
-WCHAR gszPluginServerPipe[MAX_PATH];
-#define MAX_SERVER_THREADS 3
-//HANDLE ghServerThreads[MAX_SERVER_THREADS] = {NULL,NULL,NULL};
-//HANDLE ghActiveServerThread = NULL;
-HANDLE ghServerThread = NULL;
-DWORD  gnServerThreadId = 0;
-std::vector<HANDLE> ghCommandThreads;
-//DWORD  gnServerThreadsId[MAX_SERVER_THREADS] = {0,0,0};
-HANDLE ghServerTerminateEvent = NULL;
-HANDLE ghPluginSemaphore = NULL;
-wchar_t gsFarLang[64];
-BOOL FindServerCmd(DWORD nServerCmd, DWORD &dwServerPID);
 
 //#if defined(__GNUC__)
 //typedef HWND (APIENTRY *FGetConsoleWindow)();
@@ -200,6 +207,9 @@ BOOL WINAPI DllMain( HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserve
 				//#if defined(__GNUC__)
 				//GetConsoleWindow = (FGetConsoleWindow)GetProcAddress(GetModuleHandle(L"kernel32.dll"),"GetConsoleWindow");
 				//#endif
+				
+				gpNullSecurity = NullSecurity();
+				
 				HWND hConWnd = GetConsoleWindow();
 				gnMainThreadId = GetCurrentThreadId();
 				InitHWND(hConWnd);
@@ -893,10 +903,10 @@ void WINAPI _export SetStartupInfoW(void *aInfo)
 	CheckResources();
 }
 
-#define CREATEEVENT(fmt,h) \
-		wsprintf(szEventName, fmt, dwCurProcId ); \
-		h = CreateEvent(NULL, FALSE, FALSE, szEventName); \
-		if (h==INVALID_HANDLE_VALUE) h=NULL;
+//#define CREATEEVENT(fmt,h) 
+//		wsprintf(szEventName, fmt, dwCurProcId ); 
+//		h = CreateEvent(NULL, FALSE, FALSE, szEventName); 
+//		if (h==INVALID_HANDLE_VALUE) h=NULL;
 	
 void InitHWND(HWND ahFarHwnd)
 {
@@ -1124,8 +1134,13 @@ void CheckMacro(BOOL abAllowAPI)
 		//lstrcpyW((wchar_t*)szCheckKey, L"F11  ");
 		//szCheckKey[4] = (wchar_t)(gcPlugKey ? gcPlugKey : 0xCC);
 	} else {*/
-	lstrcpyW((wchar_t*)szCheckKey, L"F11  "); //TODO: для ANSI может другой код по умолчанию?
-	szCheckKey[4] = (wchar_t)(gcPlugKey ? gcPlugKey : ((gFarVersion.dwVerMajor==1) ? 0x42C/*0xDC - аналог для OEM*/ : 0x2584));
+	if (gFarVersion.dwVerMajor==1) {
+		lstrcpyW(szCheckKey, L"F11  "); //TODO: для ANSI может другой код по умолчанию?
+		szCheckKey[4] = (wchar_t)(gcPlugKey ? gcPlugKey : ((gFarVersion.dwVerMajor==1) ? 0x42C/*0xDC - аналог для OEM*/ : 0x2584));
+	} else {
+		// Пока можно так. (пока GUID не появились)
+		wsprintfW(szCheckKey, L"callplugin(0x%08X,0)", ConEmu_SysID);
+	}
 	//}
 
 	//if (!lbMacroDontCheck)
@@ -1550,6 +1565,10 @@ void   WINAPI _export ExitFARW(void)
 
 void CheckResources()
 {
+	wchar_t szTitle[1024] = {0};
+	GetConsoleTitleW(szTitle, 1024);
+	SetConsoleTitleW(L"ConEmu: CheckResources started");
+	
 	wchar_t szLang[64];
 	GetEnvironmentVariable(L"FARLANG", szLang, 63);
 	if (lstrcmpW(szLang, gsFarLang))
@@ -1557,6 +1576,8 @@ void CheckResources()
 		
 	DWORD dwServerPID = 0;
 	FindServerCmd(CECMD_FARLOADED, dwServerPID);
+	
+	SetConsoleTitleW(szTitle);
 }
 
 // Передать в ConEmu строки с ресурсами
@@ -1774,13 +1795,13 @@ DWORD WINAPI ServerThread(LPVOID lpvParam)
 
             hPipe = CreateNamedPipe( gszPluginServerPipe, PIPE_ACCESS_DUPLEX, 
 				PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT, PIPE_UNLIMITED_INSTANCES,
-                PIPEBUFSIZE, PIPEBUFSIZE, 0, NULL);
+                PIPEBUFSIZE, PIPEBUFSIZE, 0, gpNullSecurity);
 
             _ASSERTE(hPipe != INVALID_HANDLE_VALUE);
 
             if (hPipe == INVALID_HANDLE_VALUE) 
             {
-                //DisplayLastError(L"CreatePipe failed"); 
+                //DisplayLastError(L"CreateNamedPipe failed"); 
                 hPipe = NULL;
                 Sleep(50);
                 continue;

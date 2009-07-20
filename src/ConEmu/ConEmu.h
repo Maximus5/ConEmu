@@ -133,6 +133,11 @@ protected:
 	RECT mrc_Ideal;
 	BOOL mb_MouseCaptured;
 	BYTE m_KeybStates[256];
+	//
+	BOOL mb_HotKeyRegistered;
+	void RegisterHotKeys();
+	void UnRegisterHotKeys();
+	void CtrlWinAltSpace();
 	//DWORD mn_CurrentKeybLayout;
 	// Registered messages
 	DWORD mn_MainThreadId;
@@ -189,7 +194,7 @@ public:
 	void EnableComSpec(BOOL abSwitch);
 	void ForceShowTabs(BOOL abShow);
 	DWORD GetActiveKeyboardLayout();
-	LRESULT GuiShellExecuteEx(SHELLEXECUTEINFO* lpShellExecute);
+	LRESULT GuiShellExecuteEx(SHELLEXECUTEINFO* lpShellExecute, BOOL abAllowAsync);
 	BOOL Init();
 	void InvalidateAll();
 	bool isActive(CVirtualConsole* apVCon);
@@ -217,6 +222,7 @@ public:
 	bool PtDiffTest(POINT C, int aX, int aY, UINT D); //(((abs(C.x-LOWORD(lParam)))<D) && ((abs(C.y-HIWORD(lParam)))<D))
 	void Recreate(BOOL abRecreate, BOOL abConfirm);
 	static INT_PTR CALLBACK RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam);
+	static int CALLBACK BrowseCallbackProc(HWND hwnd, UINT uMsg, LPARAM lParam, LPARAM lpData);
 	void RePaint();
 	void ReSize(BOOL abCorrect2Ideal = FALSE);
 	void SetConsoleWindowSize(const COORD& size, bool updateInfo);

@@ -125,6 +125,7 @@ private:
     DWORD mn_FlushIn, mn_FlushOut;
 public:
     void PostConsoleEvent(INPUT_RECORD* piRec);
+	void PostConsoleEventPipe(MSG *pMsg);
     BOOL FlushInputQueue(DWORD nTimeout = 500);
     void OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, wchar_t *pszChars);
     void OnMouse(UINT messg, WPARAM wParam, int x, int y);
@@ -197,6 +198,7 @@ public:
 protected:
     CVirtualConsole* mp_VCon; // соответствующая виртуальная консоль
     DWORD mn_ConEmuC_PID, mn_ConEmuC_Input_TID; HANDLE mh_ConEmuC, mh_ConEmuCInput;
+	BOOL mb_UseOnlyPipeInput;
     TCHAR ms_ConEmuC_Pipe[MAX_PATH], ms_ConEmuCInput_Pipe[MAX_PATH], ms_VConServer_Pipe[MAX_PATH];
     TCHAR Title[MAX_TITLE_SIZE+1], TitleCmp[MAX_TITLE_SIZE+1];
     short mn_Progress, mn_PreWarningProgress;
@@ -315,4 +317,6 @@ private:
 	void FindPanels(BOOL abResetOnly=FALSE);
 	// 
 	BOOL mb_MouseButtonDown;
+	//
+	SHELLEXECUTEINFO *mp_sei;
 };

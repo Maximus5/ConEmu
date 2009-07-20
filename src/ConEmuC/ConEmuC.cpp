@@ -115,6 +115,7 @@ WARNING("В некоторых случаях не срабатывает ни EVENT_CONSOLE_UPDATE_SIMPLE ни EV
 DWORD WINAPI InstanceThread(LPVOID);
 DWORD WINAPI ServerThread(LPVOID lpvParam);
 DWORD WINAPI InputThread(LPVOID lpvParam);
+DWORD WINAPI InputPipeThread(LPVOID lpvParam);
 BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out); 
 DWORD WINAPI WinEventThread(LPVOID lpvParam);
 void WINAPI WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime);
@@ -158,6 +159,7 @@ BOOL FileExists(LPCWSTR asFile);
 extern bool GetImageSubsystem(const wchar_t *FileName,DWORD& ImageSubsystem);
 void SendStarted();
 BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount);
+SECURITY_ATTRIBUTES* gpNullSecurity = NULL;
 
 
 #else
@@ -185,7 +187,7 @@ DWORD   gdwMainThreadId = 0;
 //int       gnBufferHeight = 0;
 wchar_t* gpszRunCmd = NULL;
 DWORD   gnImageSubsystem = 0;
-HANDLE  ghCtrlCEvent = NULL, ghCtrlBreakEvent = NULL;
+//HANDLE  ghCtrlCEvent = NULL, ghCtrlBreakEvent = NULL;
 HANDLE ghHeap = NULL; //HeapCreate(HEAP_GENERATE_EXCEPTIONS, nMinHeapSize, 0);
 #ifdef _DEBUG
 size_t gnHeapUsed = 0, gnHeapMax = 0;
@@ -207,6 +209,7 @@ struct tag_Srv {
     HANDLE hRefreshThread;  DWORD dwRefreshThread;
     HANDLE hWinEventThread; DWORD dwWinEventThread;
     HANDLE hInputThread;    DWORD dwInputThreadId;
+    HANDLE hInputPipeThread;DWORD dwInputPipeThreadId; // Needed in Vista & administrator
     //
     UINT nMsgHookEnableDisable;
     UINT nMaxFPS;
@@ -340,6 +343,8 @@ int main()
     //BOOL lb = FALSE;
 
     ghHeap = HeapCreate(HEAP_GENERATE_EXCEPTIONS, 200000, 0);
+    
+    gpNullSecurity = NullSecurity();
     
     HMODULE hKernel = GetModuleHandleW (L"kernel32.dll");
     
@@ -563,12 +568,12 @@ int main()
     } else {
         // В режиме ComSpec нас интересует завершение ТОЛЬКО дочернего процесса
 
-        wchar_t szEvtName[128];
-
-        wsprintf(szEvtName, CESIGNAL_C, pi.dwProcessId);
-        ghCtrlCEvent = CreateEvent(NULL, FALSE, FALSE, szEvtName);
-        wsprintf(szEvtName, CESIGNAL_BREAK, pi.dwProcessId);
-        ghCtrlBreakEvent = CreateEvent(NULL, FALSE, FALSE, szEvtName);
+        //wchar_t szEvtName[128];
+        //
+        //wsprintf(szEvtName, CESIGNAL_C, pi.dwProcessId);
+        //ghCtrlCEvent = CreateEvent(NULL, FALSE, FALSE, szEvtName);
+        //wsprintf(szEvtName, CESIGNAL_BREAK, pi.dwProcessId);
+        //ghCtrlBreakEvent = CreateEvent(NULL, FALSE, FALSE, szEvtName);
     }
 
     /* *************************** */
@@ -584,27 +589,28 @@ wait:
 		}
 		#endif
     } else {
-        HANDLE hEvents[3];
-        hEvents[0] = pi.hProcess;
-        hEvents[1] = ghCtrlCEvent;
-        hEvents[2] = ghCtrlBreakEvent;
+        //HANDLE hEvents[3];
+        //hEvents[0] = pi.hProcess;
+        //hEvents[1] = ghCtrlCEvent;
+        //hEvents[2] = ghCtrlBreakEvent;
         //WaitForSingleObject(pi.hProcess, INFINITE);
         DWORD dwWait = 0;
-        BOOL lbGenRc = FALSE;
-        while ((dwWait = WaitForMultipleObjects(3, hEvents, FALSE, INFINITE)) != WAIT_OBJECT_0)
-        {
-            if (dwWait == (WAIT_OBJECT_0+1) || dwWait == (WAIT_OBJECT_0+2)) {
-                DWORD dwEvent = (dwWait == (WAIT_OBJECT_0+1)) ? CTRL_C_EVENT : CTRL_BREAK_EVENT;
-                /*DWORD dwMode = 0;
-                HANDLE hConIn  = CreateFile(L"CONIN$", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_READ,
-                    0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
-                GetConsoleMode(hConIn, &dwMode);
-                SetConsoleMode(hConIn, dwMode);
-                CloseHandle(hConIn);*/
-
-                lbGenRc = GenerateConsoleCtrlEvent(dwEvent, pi.dwProcessId);
-            }
-        }
+        //BOOL lbGenRc = FALSE;
+        dwWait = WaitForSingleObject(pi.hProcess, INFINITE);
+        //while ((dwWait = WaitForMultipleObjects(3, hEvents, FALSE, INFINITE)) != WAIT_OBJECT_0)
+        //{
+        //    if (dwWait == (WAIT_OBJECT_0+1) || dwWait == (WAIT_OBJECT_0+2)) {
+        //        DWORD dwEvent = (dwWait == (WAIT_OBJECT_0+1)) ? CTRL_C_EVENT : CTRL_BREAK_EVENT;
+        //        /*DWORD dwMode = 0;
+        //        HANDLE hConIn  = CreateFile(L"CONIN$", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_READ,
+        //            0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+        //        GetConsoleMode(hConIn, &dwMode);
+        //        SetConsoleMode(hConIn, dwMode);
+        //        CloseHandle(hConIn);*/
+        //
+        //        lbGenRc = GenerateConsoleCtrlEvent(dwEvent, pi.dwProcessId);
+        //    }
+        //}
         // Сразу закрыть хэндлы
         if (pi.hProcess) SafeCloseHandle(pi.hProcess); 
         if (pi.hThread) SafeCloseHandle(pi.hThread);
@@ -1518,8 +1524,8 @@ void ComspecDone(int aiRc)
         }
     }
 
-    SafeCloseHandle(ghCtrlCEvent);
-    SafeCloseHandle(ghCtrlBreakEvent);
+    //SafeCloseHandle(ghCtrlCEvent);
+    //SafeCloseHandle(ghCtrlBreakEvent);
 }
 
 WARNING("Добавить LogInput(INPUT_RECORD* pRec) но имя файла сделать 'ConEmuC-input-%i.log'");
@@ -1584,6 +1590,9 @@ void LogSize(COORD* pcrSize, LPCSTR pszLabel)
             else
     if (dwId == srv.dwInputThreadId)
             pszThread = "InputThread";
+            else
+    if (dwId == srv.dwInputPipeThreadId)
+    		pszThread = "InputPipeThread";
             
     /*HDESK hDesk = GetThreadDesktop ( GetCurrentThreadId() );
     HDESK hInp = OpenInputDesktop ( 0, FALSE, GENERIC_READ );*/
@@ -1741,6 +1750,10 @@ int ServerInit()
     
 	srv.csProc = new MSection();
 
+    // Инициализация имен пайпов
+    wsprintfW(srv.szPipename, CESERVERPIPENAME, L".", gnSelfPID);
+    wsprintfW(srv.szInputname, CESERVERINPUTNAME, L".", gnSelfPID);
+
 	srv.nMaxProcesses = START_MAX_PROCESSES; srv.nProcessCount = 0;
 	srv.pnProcesses = (DWORD*)Alloc(START_MAX_PROCESSES, sizeof(DWORD));
 	srv.pnProcessesCopy = (DWORD*)Alloc(START_MAX_PROCESSES, sizeof(DWORD));
@@ -1771,6 +1784,21 @@ int ServerInit()
 		iRc = CERR_CREATEINPUTTHREAD; goto wrap;
 	}
 	//SetThreadPriority(srv.hInputThread, THREAD_PRIORITY_ABOVE_NORMAL);
+	// Запустить нить обработки событий (клавиатура, мышь, и пр.)
+	srv.hInputPipeThread = CreateThread( 
+		NULL,              // no security attribute 
+		0,                 // default stack size 
+		InputPipeThread,   // thread proc
+		NULL,              // thread parameter 
+		0,                 // not suspended 
+		&srv.dwInputPipeThreadId);      // returns thread ID 
+
+	if (srv.hInputPipeThread == NULL) 
+	{
+		dwErr = GetLastError();
+		wprintf(L"CreateThread(InputPipeThread) failed, ErrCode=0x%08X\n", dwErr); 
+		iRc = CERR_CREATEINPUTTHREAD; goto wrap;
+	}
 
 
     if (!gbAttachMode) {
@@ -1948,15 +1976,13 @@ int ServerInit()
 
     
 
-    // временно используем эту переменную, чтобы не плодить локальных
-    wsprintfW(srv.szPipename, CEGUIATTACHED, (DWORD)ghConWnd);
-    srv.hConEmuGuiAttached = CreateEvent(NULL, TRUE, FALSE, srv.szPipename);
+    wchar_t szTempName[MAX_PATH];
+    wsprintfW(szTempName, CEGUIATTACHED, (DWORD)ghConWnd);
+    srv.hConEmuGuiAttached = OpenEvent(EVENT_ALL_ACCESS, FALSE, szTempName);
+    if (srv.hConEmuGuiAttached == NULL)
+    	srv.hConEmuGuiAttached = CreateEvent(gpNullSecurity, TRUE, FALSE, szTempName);
     _ASSERTE(srv.hConEmuGuiAttached!=NULL);
     if (srv.hConEmuGuiAttached) ResetEvent(srv.hConEmuGuiAttached);
-    
-    // Инициализация имен пайпов
-    wsprintfW(srv.szPipename, CESERVERPIPENAME, L".", gnSelfPID);
-    wsprintfW(srv.szInputname, CESERVERINPUTNAME, L".", gnSelfPID);
 
     // Размер шрифта и Lucida. Обязательно для серверного режима.
     if (srv.szConsoleFont[0]) {
@@ -2089,6 +2115,14 @@ void ServerDone(int aiRc)
 	if (hPipe == INVALID_HANDLE_VALUE) {
 		DEBUGSTR(L"All pipe instances closed?\n");
 	}
+	// Передернуть нить ввода
+	HANDLE hInputPipe = CreateFile(srv.szInputname,GENERIC_WRITE,0,NULL,OPEN_EXISTING,0,NULL);
+	if (hInputPipe == INVALID_HANDLE_VALUE) {
+		DEBUGSTR(L"Input pipe was not created?\n");
+	} else {
+		MSG msg = {NULL}; msg.message = 0xFFFF; DWORD dwOut = 0;
+		WriteFile(hInputPipe, &msg, sizeof(msg), &dwOut, 0);
+	}
 
 
     // Закрываем дескрипторы и выходим
@@ -2114,6 +2148,18 @@ void ServerDone(int aiRc)
 		SafeCloseHandle(srv.hInputThread);
 		srv.dwInputThreadId = 0;
     }
+    if (srv.hInputPipeThread) {
+		// Подождем немножко, пока нить сама завершится
+		if (WaitForSingleObject(srv.hInputPipeThread, 500) != WAIT_OBJECT_0) {
+			#pragma warning( push )
+			#pragma warning( disable : 6258 )
+			TerminateThread ( srv.hInputPipeThread, 100 ); // раз корректно не хочет...
+			#pragma warning( pop )
+		}
+		SafeCloseHandle(srv.hInputPipeThread);
+		srv.dwInputPipeThreadId = 0;
+    }
+    SafeCloseHandle(hInputPipe);
 
     if (srv.hServerThread) {
 		// Подождем немножко, пока нить сама завершится
@@ -2123,9 +2169,9 @@ void ServerDone(int aiRc)
 			TerminateThread ( srv.hServerThread, 100 ); // раз корректно не хочет...
 			#pragma warning( pop )
 		}
-		SafeCloseHandle(hPipe);
         SafeCloseHandle(srv.hServerThread);
     }
+    SafeCloseHandle(hPipe);
     if (srv.hRefreshThread) {
         if (WaitForSingleObject(srv.hRefreshThread, 100)!=WAIT_OBJECT_0) {
             _ASSERT(FALSE);
@@ -2483,14 +2529,14 @@ DWORD WINAPI ServerThread(LPVOID lpvParam)
           PIPEBUFSIZE,              // output buffer size 
           PIPEBUFSIZE,              // input buffer size 
           0,                        // client time-out 
-          NULL);                    // default security attribute 
+          gpNullSecurity);          // default security attribute 
 
       _ASSERTE(hPipe != INVALID_HANDLE_VALUE);
       
       if (hPipe == INVALID_HANDLE_VALUE) 
       {
           dwErr = GetLastError();
-          wprintf(L"CreatePipe failed, ErrCode=0x%08X\n", dwErr); 
+          wprintf(L"CreateNamedPipe failed, ErrCode=0x%08X\n", dwErr); 
           Sleep(50);
           //return 99;
           continue;
@@ -2538,8 +2584,74 @@ DWORD WINAPI ServerThread(LPVOID lpvParam)
    return 1; 
 } 
 
+void ProcessInputMessage(MSG &msg)
+{
+	INPUT_RECORD r = {0};
+
+	if (!UnpackInputRecord(&msg, &r)) {
+		_ASSERT(FALSE);
+		
+	} else {
+		TODO("Сделать обработку пачки сообщений, вдруг они накопились в очереди?");
+
+		if (r.EventType == KEY_EVENT && r.Event.KeyEvent.bKeyDown &&
+			(r.Event.KeyEvent.wVirtualKeyCode == 'C' || r.Event.KeyEvent.wVirtualKeyCode == VK_CANCEL)
+			)
+		{
+			#define ALL_MODIFIERS (LEFT_ALT_PRESSED|RIGHT_ALT_PRESSED|LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED|SHIFT_PRESSED)
+			#define CTRL_MODIFIERS (LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED)
+
+			BOOL lbRc = FALSE;
+			DWORD dwEvent = (r.Event.KeyEvent.wVirtualKeyCode == 'C') ? CTRL_C_EVENT : CTRL_BREAK_EVENT;
+			//&& (srv.dwConsoleMode & ENABLE_PROCESSED_INPUT)
+
+			//The SetConsoleMode function can disable the ENABLE_PROCESSED_INPUT mode for a console's input buffer, 
+			//so CTRL+C is reported as keyboard input rather than as a signal. 
+			// CTRL+BREAK is always treated as a signal
+			if ( // Удерживается ТОЛЬКО Ctrl
+				(r.Event.KeyEvent.dwControlKeyState & CTRL_MODIFIERS) &&
+				((r.Event.KeyEvent.dwControlKeyState & ALL_MODIFIERS) 
+				== (r.Event.KeyEvent.dwControlKeyState & CTRL_MODIFIERS))
+				)
+			{
+				// Вроде работает, Главное не запускать процесс с флагом CREATE_NEW_PROCESS_GROUP
+				// иначе у микрософтовской консоли (WinXP SP3) сносит крышу, и она реагирует
+				// на Ctrl-Break, но напрочь игнорирует Ctrl-C
+				lbRc = GenerateConsoleCtrlEvent(dwEvent, 0);
+
+				return; // Это событие в буфер не помещается
+			}
+		}
+
+		#ifdef _DEBUG
+		if (r.EventType == KEY_EVENT && r.Event.KeyEvent.bKeyDown &&
+			r.Event.KeyEvent.wVirtualKeyCode == VK_F11)
+		{
+			DEBUGSTR(L"  ---  F11 recieved\n");
+		}
+		#endif
+		#ifdef _DEBUG
+		if (r.EventType == MOUSE_EVENT) {
+			wchar_t szDbg[60]; wsprintf(szDbg, L"ConEmuC.MouseEvent(X=%i,Y=%i,Btns=0x%04x,Moved=%i)\n", r.Event.MouseEvent.dwMousePosition.X, r.Event.MouseEvent.dwMousePosition.Y, r.Event.MouseEvent.dwButtonState, (r.Event.MouseEvent.dwEventFlags & MOUSE_MOVED));
+			OutputDebugString(szDbg);
+		}
+		#endif
+
+		// Запомнить, когда была последняя активность пользователя
+		if (r.EventType == KEY_EVENT
+			|| (r.EventType == MOUSE_EVENT 
+			&& (r.Event.MouseEvent.dwButtonState || r.Event.MouseEvent.dwEventFlags 
+			|| r.Event.MouseEvent.dwEventFlags == DOUBLE_CLICK)))
+		{
+			srv.dwLastUserTick = GetTickCount();
+		}
+
+		SendConsoleEvent(&r, 1);
+	}
+}
+
 DWORD WINAPI InputThread(LPVOID lpvParam) 
-{ 
+{
 	MSG msg;
 	while (GetMessage(&msg,0,0,0)) {
 		if (msg.message == WM_QUIT) break;
@@ -2554,71 +2666,106 @@ DWORD WINAPI InputThread(LPVOID lpvParam)
 
 		} else {
 
-			INPUT_RECORD r = {0};
-
-			if (UnpackInputRecord(&msg, &r)) {
-				TODO("Сделать обработку пачки сообщений, вдруг они накопились в очереди?");
-
-				if (r.EventType == KEY_EVENT && r.Event.KeyEvent.bKeyDown &&
-					(r.Event.KeyEvent.wVirtualKeyCode == 'C' || r.Event.KeyEvent.wVirtualKeyCode == VK_CANCEL)
-					)
-				{
-					#define ALL_MODIFIERS (LEFT_ALT_PRESSED|RIGHT_ALT_PRESSED|LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED|SHIFT_PRESSED)
-					#define CTRL_MODIFIERS (LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED)
-
-					BOOL lbRc = FALSE;
-					DWORD dwEvent = (r.Event.KeyEvent.wVirtualKeyCode == 'C') ? CTRL_C_EVENT : CTRL_BREAK_EVENT;
-					//&& (srv.dwConsoleMode & ENABLE_PROCESSED_INPUT)
-
-					//The SetConsoleMode function can disable the ENABLE_PROCESSED_INPUT mode for a console's input buffer, 
-					//so CTRL+C is reported as keyboard input rather than as a signal. 
-					// CTRL+BREAK is always treated as a signal
-					if ( // Удерживается ТОЛЬКО Ctrl
-						(r.Event.KeyEvent.dwControlKeyState & CTRL_MODIFIERS) &&
-						((r.Event.KeyEvent.dwControlKeyState & ALL_MODIFIERS) 
-						== (r.Event.KeyEvent.dwControlKeyState & CTRL_MODIFIERS))
-						)
-					{
-						// Вроде работает, Главное не запускать процесс с флагом CREATE_NEW_PROCESS_GROUP
-						// иначе у микрософтовской консоли (WinXP SP3) сносит крышу, и она реагирует
-						// на Ctrl-Break, но напрочь игнорирует Ctrl-C
-						lbRc = GenerateConsoleCtrlEvent(dwEvent, 0);
-
-						continue; // Это событие в буфер не помещается
-					}
-				}
-
-				#ifdef _DEBUG
-				if (r.EventType == KEY_EVENT && r.Event.KeyEvent.bKeyDown &&
-					r.Event.KeyEvent.wVirtualKeyCode == VK_F11)
-				{
-					DEBUGSTR(L"  ---  F11 recieved\n");
-				}
-				#endif
-				#ifdef _DEBUG
-				if (r.EventType == MOUSE_EVENT) {
-					wchar_t szDbg[60]; wsprintf(szDbg, L"ConEmuC.MouseEvent(X=%i,Y=%i,Btns=0x%04x,Moved=%i)\n", r.Event.MouseEvent.dwMousePosition.X, r.Event.MouseEvent.dwMousePosition.Y, r.Event.MouseEvent.dwButtonState, (r.Event.MouseEvent.dwEventFlags & MOUSE_MOVED));
-					OutputDebugString(szDbg);
-				}
-				#endif
-
-				// Запомнить, когда была последняя активность пользователя
-				if (r.EventType == KEY_EVENT
-					|| (r.EventType == MOUSE_EVENT 
-					&& (r.Event.MouseEvent.dwButtonState || r.Event.MouseEvent.dwEventFlags 
-					|| r.Event.MouseEvent.dwEventFlags == DOUBLE_CLICK)))
-				{
-					srv.dwLastUserTick = GetTickCount();
-				}
-
-				SendConsoleEvent(&r, 1);
-			}
+			TODO("Сделать обработку пачки сообщений, вдруг они накопились в очереди?");
+			ProcessInputMessage(msg);
 
 		}
 	}
 
 	return 0;
 }
+
+DWORD WINAPI InputPipeThread(LPVOID lpvParam) 
+{ 
+   BOOL fConnected, fSuccess; 
+   //DWORD nCurInputCount = 0;
+   //DWORD srv.dwServerThreadId;
+   HANDLE hPipe = NULL; 
+   DWORD dwErr = 0;
+   
+ 
+// The main loop creates an instance of the named pipe and 
+// then waits for a client to connect to it. When the client 
+// connects, a thread is created to handle communications 
+// with that client, and the loop is repeated. 
+ 
+   for (;;) 
+   { 
+      MCHKHEAP
+      hPipe = CreateNamedPipe( 
+          srv.szInputname,          // pipe name 
+          PIPE_ACCESS_INBOUND,      // goes from client to server only
+          PIPE_TYPE_MESSAGE |       // message type pipe 
+          PIPE_READMODE_MESSAGE |   // message-read mode 
+          PIPE_WAIT,                // blocking mode 
+          PIPE_UNLIMITED_INSTANCES, // max. instances  
+          PIPEBUFSIZE,              // output buffer size 
+          PIPEBUFSIZE,              // input buffer size 
+          0,                        // client time-out
+          gpNullSecurity);          // default security attribute 
+
+      if (hPipe == INVALID_HANDLE_VALUE) 
+      {
+          dwErr = GetLastError();
+		  _ASSERTE(hPipe != INVALID_HANDLE_VALUE);
+          wprintf(L"CreatePipe failed, ErrCode=0x%08X\n", dwErr);
+          Sleep(50);
+          //return 99;
+          continue;
+      }
+ 
+      // Wait for the client to connect; if it succeeds, 
+      // the function returns a nonzero value. If the function
+      // returns zero, GetLastError returns ERROR_PIPE_CONNECTED. 
+ 
+      fConnected = ConnectNamedPipe(hPipe, NULL) ? 
+         TRUE : (GetLastError() == ERROR_PIPE_CONNECTED); 
+ 
+      MCHKHEAP
+      if (fConnected) 
+      { 
+          //TODO:
+          DWORD cbBytesRead; //, cbWritten;
+          MSG imsg; memset(&imsg,0,sizeof(imsg));
+          while ((fSuccess = ReadFile( 
+             hPipe,        // handle to pipe 
+             &imsg,        // buffer to receive data 
+             sizeof(imsg), // size of buffer 
+             &cbBytesRead, // number of bytes read 
+             NULL)) != FALSE)        // not overlapped I/O 
+          {
+              // предусмотреть возможность завершения нити
+              if (imsg.message == 0xFFFF) {
+                  SafeCloseHandle(hPipe);
+                  break;
+              }
+              MCHKHEAP
+              if (imsg.message) {
+                  // Если есть возможность - сразу пошлем его в dwInputThreadId
+                  if (srv.dwInputThreadId) {
+                     if (!PostThreadMessage(srv.dwInputThreadId, imsg.message, imsg.wParam, imsg.lParam)) {
+				    	DWORD dwErr = GetLastError();
+				    	wchar_t szErr[100];
+				    	wsprintfW(szErr, L"ConEmuC: PostThreadMessage(%i) failed, code=0x%08X", srv.dwInputThreadId, dwErr);
+				    	SetConsoleTitle(szErr);
+                     }
+                  } else {
+                     ProcessInputMessage(imsg);
+                  }
+                  MCHKHEAP
+              }
+              // next
+              memset(&imsg,0,sizeof(imsg));
+              MCHKHEAP
+          }
+      } 
+      else 
+        // The client could not connect, so close the pipe. 
+         SafeCloseHandle(hPipe);
+   } 
+   MCHKHEAP
+   return 1; 
+} 
 
 BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount)
 {
@@ -2693,21 +2840,34 @@ DWORD WINAPI InstanceThread(LPVOID lpvParam)
     }
 
     if (!GetAnswerToRequest(pIn ? *pIn : in, &pOut) || pOut==NULL) {
-        goto wrap;
+    	// Если результата нет - все равно что-нибудь запишем, иначе TransactNamedPipe может виснуть?
+    	CESERVER_REQ_HDR Out={0};
+        Out.nCmd = in.hdr.nCmd;
+        Out.nSrcThreadId = GetCurrentThreadId();
+        Out.nSize = sizeof(Out);
+        Out.nVersion = CESERVER_REQ_VER;
+    	
+	    fSuccess = WriteFile( 
+	        hPipe,        // handle to pipe 
+	        &Out,         // buffer to write from 
+	        Out.nSize,    // number of bytes to write 
+	        &cbWritten,   // number of bytes written 
+	        NULL);        // not overlapped I/O 
+        
+    } else {
+	    MCHKHEAP
+	    // Write the reply to the pipe. 
+	    fSuccess = WriteFile( 
+	        hPipe,        // handle to pipe 
+	        pOut,         // buffer to write from 
+	        pOut->hdr.nSize,  // number of bytes to write 
+	        &cbWritten,   // number of bytes written 
+	        NULL);        // not overlapped I/O 
+
+	    // освободить память
+	    if ((LPVOID)pOut != (LPVOID)gpStoredOutput) // Если это НЕ сохраненный вывод
+	        Free(pOut);
     }
-
-    MCHKHEAP
-    // Write the reply to the pipe. 
-    fSuccess = WriteFile( 
-        hPipe,        // handle to pipe 
-        pOut,         // buffer to write from 
-        pOut->hdr.nSize,  // number of bytes to write 
-        &cbWritten,   // number of bytes written 
-        NULL);        // not overlapped I/O 
-
-    // освободить память
-    if ((LPVOID)pOut != (LPVOID)gpStoredOutput) // Если это НЕ сохраненный вывод
-        Free(pOut);
 
     MCHKHEAP
     //if (!fSuccess || pOut->hdr.nSize != cbWritten) break; 
@@ -2716,9 +2876,9 @@ DWORD WINAPI InstanceThread(LPVOID lpvParam)
 // before disconnecting. Then disconnect the pipe, and close the 
 // handle to this pipe instance. 
 
+wrap: // Flush и Disconnect делать всегда
     FlushFileBuffers(hPipe); 
     DisconnectNamedPipe(hPipe);
-wrap:
     SafeCloseHandle(hPipe); 
 
     return 1;

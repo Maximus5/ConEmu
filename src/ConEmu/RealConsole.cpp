@@ -83,8 +83,10 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
     mh_MonitorThread = NULL; mn_MonitorThreadID = 0; 
     //mh_InputThread = NULL; mn_InputThreadID = 0;
     
+    mp_sei = NULL;
+    
     mn_ConEmuC_PID = 0; mn_ConEmuC_Input_TID = 0;
-	mh_ConEmuC = NULL; mh_ConEmuCInput = NULL;
+	mh_ConEmuC = NULL; mh_ConEmuCInput = NULL; mb_UseOnlyPipeInput = FALSE;
     
     mb_NeedStartProcess = FALSE; mb_IgnoreCmdStop = FALSE;
 
@@ -127,7 +129,9 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
 
     mn_LastProcessedPkt = 0;
 
-    hConWnd = NULL; mh_GuiAttached = NULL; mn_Focused = -1;
+    hConWnd = NULL; 
+    mh_GuiAttached = NULL; 
+    mn_Focused = -1;
     mn_LastVKeyPressed = 0;
     mh_LogInput = NULL; mpsz_LogInputFile = NULL; mpsz_LogPackets = NULL; mn_LogPackets = 0;
 
@@ -179,6 +183,11 @@ CRealConsole::~CRealConsole()
 
     // 
     CloseLogFiles();
+    
+    if (mp_sei) {
+    	SafeCloseHandle(mp_sei->hProcess);
+    	GlobalFree(mp_sei); mp_sei = NULL;
+    }
 }
 
 BOOL CRealConsole::PreCreate(RConStartArgs *args)
@@ -469,7 +478,14 @@ BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID)
     DWORD dwErr = 0;
     HANDLE hProcess = NULL;
 
-    hProcess = OpenProcess(PROCESS_QUERY_INFORMATION|SYNCHRONIZE, FALSE, anConemuC_PID);
+    // Процесс запущен через ShellExecuteEx под другим пользователем (Administrator)
+    if (mp_sei && mp_sei->hProcess) {
+    	hProcess = mp_sei->hProcess;
+    	mp_sei->hProcess = NULL; // более не требуется. хэндл закроется в другом месте
+    }
+    // Иначе - отркрываем как обычно
+    if (!hProcess)
+    	hProcess = OpenProcess(PROCESS_QUERY_INFORMATION|SYNCHRONIZE, FALSE, anConemuC_PID);
     if (!hProcess) {
         DisplayLastError(L"Can't open ConEmuC process! Attach is impossible!", dwErr = GetLastError());
         return FALSE;
@@ -611,8 +627,11 @@ void CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec)
 #ifdef ALLOWUSEFARSYNCHRO
 	}
 #endif
-
-	_ASSERTE(dwTID!=0);
+	if (dwTID == 0) {
+		//_ASSERTE(dwTID!=0);
+		gConEmu.DnDstep(L"ConEmu: Input thread id is NULL");
+		return;
+	}
 	
     if (piRec->EventType == MOUSE_EVENT) {
         if (piRec->Event.MouseEvent.dwEventFlags == MOUSE_MOVED) {
@@ -648,7 +667,24 @@ void CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec)
     
     if (PackInputRecord ( piRec, &msg )) {
     	_ASSERTE(msg.message!=0);
-	    PostThreadMessage(dwTID, msg.message, msg.wParam, msg.lParam);
+		if (mb_UseOnlyPipeInput) {
+			PostConsoleEventPipe(&msg);
+		} else
+    	// ERROR_INVALID_THREAD_ID == 1444 (0x5A4)
+    	// On Vista PostThreadMessage failed with code 5, if target process created 'As administrator'
+	    if (!PostThreadMessage(dwTID, msg.message, msg.wParam, msg.lParam)) {
+	    	DWORD dwErr = GetLastError();
+			if (dwErr == 5) {
+				mb_UseOnlyPipeInput = TRUE;
+				PostConsoleEventPipe(&msg);
+			} else {
+	    		wchar_t szErr[100];
+	    		wsprintfW(szErr, L"ConEmu: PostThreadMessage(%i) failed, code=0x%08X", dwTID, dwErr);
+	    		gConEmu.DnDstep(szErr);
+			}
+	    }
+    } else {
+    	gConEmu.DnDstep(L"ConEmu: PackInputRecord failed!");
     }
 }
 
@@ -1010,6 +1046,14 @@ BOOL CRealConsole::StartProcess()
     }
 
     
+	mb_UseOnlyPipeInput = FALSE;
+    
+                        if (mp_sei) {
+                        	SafeCloseHandle(mp_sei->hProcess);
+                        	GlobalFree(mp_sei); mp_sei = NULL;
+                        }
+
+    
         STARTUPINFO si;
         PROCESS_INFORMATION pi;
         wchar_t szInitConTitle[255];
@@ -1106,16 +1150,44 @@ BOOL CRealConsole::StartProcess()
                         // Попробовать GlobalAlloc на строки (может ему чего не нравится...) сделать копии
                         // Если не прокатит: CreateProcessAsUser with an unrestricted administrator token
                         // http://weblogs.asp.net/kennykerr/archive/2006/09/29/Windows-Vista-for-Developers-_1320_-Part-4-_1320_-User-Account-Control.aspx
+                        
+                        if (mp_sei) {
+                        	SafeCloseHandle(mp_sei->hProcess);
+                        	GlobalFree(mp_sei); mp_sei = NULL;
+                        }
 
-						SHELLEXECUTEINFO sei = {sizeof(SHELLEXECUTEINFO)};
-						sei.hwnd = NULL; //ghWnd;
-						sei.fMask = 0;//SEE_MASK_NO_CONSOLE; //SEE_MASK_NOCLOSEPROCESS; -- смысла ждать завершения нет - процесс запускается в новой консоли
-						wchar_t szVerb[10];
-						sei.lpVerb = wcscpy(szVerb, L"runas");
-						sei.lpFile = szExec;
-						sei.lpParameters = pszCmd;
-						sei.nShow = SW_SHOWNORMAL;
-						lbRc = gConEmu.GuiShellExecuteEx(&sei);
+                        wchar_t szCurrentDirectory[MAX_PATH+1];
+                        if (!GetCurrentDirectory(MAX_PATH+1, szCurrentDirectory))
+                        	szCurrentDirectory[0] = 0;
+                        
+                        int nWholeSize = sizeof(SHELLEXECUTEINFO)
+                        	+ sizeof(wchar_t) *
+                        	  ( 10 /* Verb */
+                        	  + wcslen(szExec)+2
+                        	  + ((pszCmd == NULL) ? 0 : (wcslen(pszCmd)+2))
+                        	  + wcslen(szCurrentDirectory) + 2
+                        	  );
+						mp_sei = (SHELLEXECUTEINFO*)GlobalAlloc(GPTR, nWholeSize);
+						mp_sei->hwnd = ghWnd;
+						mp_sei->cbSize = sizeof(SHELLEXECUTEINFO);
+						mp_sei->hwnd = NULL; //ghWnd;
+						mp_sei->fMask = SEE_MASK_NO_CONSOLE|SEE_MASK_NOCLOSEPROCESS;
+						mp_sei->lpVerb = (wchar_t*)(mp_sei+1);
+							wcscpy((wchar_t*)mp_sei->lpVerb, L"runas");
+						mp_sei->lpFile = mp_sei->lpVerb + wcslen(mp_sei->lpVerb) + 2;
+							wcscpy((wchar_t*)mp_sei->lpFile, szExec);
+						mp_sei->lpParameters = mp_sei->lpFile + wcslen(mp_sei->lpFile) + 2;
+							if (pszCmd) {
+								*(wchar_t*)mp_sei->lpParameters = L' ';
+								wcscpy((wchar_t*)(mp_sei->lpParameters+1), pszCmd);
+							}
+						mp_sei->lpDirectory = mp_sei->lpParameters + wcslen(mp_sei->lpParameters) + 2;
+							if (szCurrentDirectory[0])
+								wcscpy((wchar_t*)mp_sei->lpDirectory, szCurrentDirectory);
+							else
+								mp_sei->lpDirectory = NULL;
+						mp_sei->nShow = gSet.isConVisible ? SW_SHOWNORMAL : SW_HIDE;
+						lbRc = gConEmu.GuiShellExecuteEx(mp_sei, TRUE);
 						//lbRc = 32 < (int)::ShellExecute(0, // owner window
 						//	L"runas",
 						//	L"C:\\Windows\\Notepad.exe",
@@ -1393,140 +1465,105 @@ void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y)
     //   }
 }
 
-//void CRealConsole::SendConsoleEvent(INPUT_RECORD* piRec)
-//{
-//    if (piRec->EventType == MOUSE_EVENT) {
-//    //    if (piRec->Event.MouseEvent.dwEventFlags == MOUSE_MOVED) {
-//    //        if (m_LastMouse.dwEventFlags != 0
-//    //         && m_LastMouse.dwButtonState     == piRec->Event.MouseEvent.dwButtonState 
-//    //         && m_LastMouse.dwControlKeyState == piRec->Event.MouseEvent.dwControlKeyState
-//    //         && m_LastMouse.dwMousePosition.X == piRec->Event.MouseEvent.dwMousePosition.X
-//    //         && m_LastMouse.dwMousePosition.Y == piRec->Event.MouseEvent.dwMousePosition.Y)
-//    //        {
-//    //            #ifdef _DEBUG
-//    //            wchar_t szDbg[60];
-//    //            wsprintf(szDbg, L"!!! Skipping ConEmu.Mouse event at: {%ix%i}\n", m_LastMouse.dwMousePosition.X, m_LastMouse.dwMousePosition.Y);
-//    //            DEBUGSTRINPUT(szDbg);
-//    //            #endif
-//    //            return; // Это событие лишнее. Движения мышки реально не было, кнопки не менялись
-//    //        }
-//    //    }
-//    //    // Запомним
-//    //    m_LastMouse.dwMousePosition   = piRec->Event.MouseEvent.dwMousePosition;
-//    //    m_LastMouse.dwEventFlags      = piRec->Event.MouseEvent.dwEventFlags;
-//    //    m_LastMouse.dwButtonState     = piRec->Event.MouseEvent.dwButtonState;
-//    //    m_LastMouse.dwControlKeyState = piRec->Event.MouseEvent.dwControlKeyState;
-//
-//		#ifdef _DEBUG
-//		wchar_t szDbg[128];
-//		wsprintf(szDbg, L"ConEmu.Mouse event at: {%i-%i} BtnState:0x%08X, CtrlState:0x%08X, Flags:0x%08X\n", 
-//			piRec->Event.MouseEvent.dwMousePosition.X, piRec->Event.MouseEvent.dwMousePosition.Y,
-//			piRec->Event.MouseEvent.dwButtonState, piRec->Event.MouseEvent.dwControlKeyState,
-//			piRec->Event.MouseEvent.dwEventFlags);
-//		DEBUGSTRINPUT(szDbg);
-//		#endif
-//    }
-//
-//    WARNING("Некоторые события можно игнорировать, если ConEmuC не смог их принять сразу (например Focus)");
-//    WARNING("Отсыл сообщений перенаправлять в нить RealConsole, а не делать в главной нити. Иначе GUI может заблокироваться!");
-//
-//    DWORD dwErr = 0, dwMode = 0;
-//    BOOL fSuccess = FALSE;
-//
-//    // Пайп есть. Проверим, что ConEmuC жив
-//    DWORD dwExitCode = 0;
-//    fSuccess = GetExitCodeProcess(mh_ConEmuC, &dwExitCode);
-//    if (dwExitCode!=STILL_ACTIVE) {
-//        //DisplayLastError(L"ConEmuC was terminated");
-//        return;
-//    }
-//
-//    LogInput(piRec);
-//
-//    TODO("Если пайп с таким именем не появится в течении 10 секунд (минуты?) - закрыть VirtualConsole показав ошибку");
-//    if (mh_ConEmuCInput==NULL || mh_ConEmuCInput==INVALID_HANDLE_VALUE) {
-//        // Try to open a named pipe; wait for it, if necessary. 
-//        int nSteps = 10;
-//        while ((nSteps--) > 0) 
-//        { 
-//          mh_ConEmuCInput = CreateFile( 
-//             ms_ConEmuCInput_Pipe,// pipe name 
-//             GENERIC_WRITE, 
-//             0,              // no sharing 
-//             NULL,           // default security attributes
-//             OPEN_EXISTING,  // opens existing pipe 
-//             0,              // default attributes 
-//             NULL);          // no template file 
-//
-//          // Break if the pipe handle is valid. 
-//          if (mh_ConEmuCInput != INVALID_HANDLE_VALUE) 
-//             break; 
-//
-//          // Exit if an error other than ERROR_PIPE_BUSY occurs. 
-//          dwErr = GetLastError();
-//          if (dwErr != ERROR_PIPE_BUSY) 
-//          {
-//            TODO("Подождать, пока появится пайп с таким именем, но только пока жив mh_ConEmuC");
-//            dwErr = WaitForSingleObject(mh_ConEmuC, 100);
-//            if (dwErr == WAIT_OBJECT_0) {
-//                return;
-//            }
-//            continue;
-//            //DisplayLastError(L"Could not open pipe", dwErr);
-//            //return 0;
-//          }
-//
-//          // All pipe instances are busy, so wait for 0.1 second.
-//          if (!WaitNamedPipe(ms_ConEmuCInput_Pipe, 100) ) 
-//          {
-//            dwErr = WaitForSingleObject(mh_ConEmuC, 100);
-//            if (dwErr == WAIT_OBJECT_0) {
-//                DEBUGSTRINPUT(L" - FAILED!\n");
-//                return;
-//            }
-//            //DisplayLastError(L"WaitNamedPipe failed"); 
-//            //return 0;
-//          }
-//        }
-//        if (mh_ConEmuCInput == NULL || mh_ConEmuCInput == INVALID_HANDLE_VALUE) {
-//            // Не дождались появления пайпа. Возможно, ConEmuC еще не запустился
-//            DEBUGSTRINPUT(L" - mh_ConEmuCInput not found!\n");
-//            return;
-//        }
-//
-//        // The pipe connected; change to message-read mode. 
-//        dwMode = PIPE_READMODE_MESSAGE; 
-//        fSuccess = SetNamedPipeHandleState( 
-//          mh_ConEmuCInput,    // pipe handle 
-//          &dwMode,  // new pipe mode 
-//          NULL,     // don't set maximum bytes 
-//          NULL);    // don't set maximum time 
-//        if (!fSuccess) 
-//        {
-//          DEBUGSTRINPUT(L" - FAILED!\n");
-//          DWORD dwErr = GetLastError();
-//          SafeCloseHandle(mh_ConEmuCInput);
-//          if (!IsDebuggerPresent())
-//            DisplayLastError(L"SetNamedPipeHandleState failed", dwErr);
-//          return;
-//        }
-//    }
-//    
-//    // Пайп есть. Проверим, что ConEmuC жив
-//    dwExitCode = 0;
-//    fSuccess = GetExitCodeProcess(mh_ConEmuC, &dwExitCode);
-//    if (dwExitCode!=STILL_ACTIVE) {
-//        //DisplayLastError(L"ConEmuC was terminated");
-//        return;
-//    }
-//    
-//    DWORD dwSize = sizeof(INPUT_RECORD), dwWritten;
-//    fSuccess = WriteFile ( mh_ConEmuCInput, piRec, dwSize, &dwWritten, NULL);
-//    if (!fSuccess) {
-//        DisplayLastError(L"Can't send console event");
-//        return;
-//    }
-//}
+void CRealConsole::PostConsoleEventPipe(MSG *pMsg)
+{
+    DWORD dwErr = 0, dwMode = 0;
+    BOOL fSuccess = FALSE;
+
+    // Пайп есть. Проверим, что ConEmuC жив
+    DWORD dwExitCode = 0;
+    fSuccess = GetExitCodeProcess(mh_ConEmuC, &dwExitCode);
+    if (dwExitCode!=STILL_ACTIVE) {
+        //DisplayLastError(L"ConEmuC was terminated");
+        return;
+    }
+
+    //LogInput(piRec);
+
+    TODO("Если пайп с таким именем не появится в течении 10 секунд (минуты?) - закрыть VirtualConsole показав ошибку");
+    if (mh_ConEmuCInput==NULL || mh_ConEmuCInput==INVALID_HANDLE_VALUE) {
+        // Try to open a named pipe; wait for it, if necessary. 
+        int nSteps = 10;
+        while ((nSteps--) > 0) 
+        { 
+          mh_ConEmuCInput = CreateFile( 
+             ms_ConEmuCInput_Pipe,// pipe name 
+             GENERIC_WRITE, 
+             0,              // no sharing 
+             NULL,           // default security attributes
+             OPEN_EXISTING,  // opens existing pipe 
+             0,              // default attributes 
+             NULL);          // no template file 
+
+          // Break if the pipe handle is valid. 
+          if (mh_ConEmuCInput != INVALID_HANDLE_VALUE) 
+             break; 
+
+          // Exit if an error other than ERROR_PIPE_BUSY occurs. 
+          dwErr = GetLastError();
+          if (dwErr != ERROR_PIPE_BUSY) 
+          {
+            TODO("Подождать, пока появится пайп с таким именем, но только пока жив mh_ConEmuC");
+            dwErr = WaitForSingleObject(mh_ConEmuC, 100);
+            if (dwErr == WAIT_OBJECT_0) {
+                return;
+            }
+            continue;
+            //DisplayLastError(L"Could not open pipe", dwErr);
+            //return 0;
+          }
+
+          // All pipe instances are busy, so wait for 0.1 second.
+          if (!WaitNamedPipe(ms_ConEmuCInput_Pipe, 100) ) 
+          {
+            dwErr = WaitForSingleObject(mh_ConEmuC, 100);
+            if (dwErr == WAIT_OBJECT_0) {
+                DEBUGSTRINPUT(L" - FAILED!\n");
+                return;
+            }
+            //DisplayLastError(L"WaitNamedPipe failed"); 
+            //return 0;
+          }
+        }
+        if (mh_ConEmuCInput == NULL || mh_ConEmuCInput == INVALID_HANDLE_VALUE) {
+            // Не дождались появления пайпа. Возможно, ConEmuC еще не запустился
+            DEBUGSTRINPUT(L" - mh_ConEmuCInput not found!\n");
+            return;
+        }
+
+        // The pipe connected; change to message-read mode. 
+        dwMode = PIPE_READMODE_MESSAGE; 
+        fSuccess = SetNamedPipeHandleState( 
+          mh_ConEmuCInput,    // pipe handle 
+          &dwMode,  // new pipe mode 
+          NULL,     // don't set maximum bytes 
+          NULL);    // don't set maximum time 
+        if (!fSuccess) 
+        {
+          DEBUGSTRINPUT(L" - FAILED!\n");
+          DWORD dwErr = GetLastError();
+          SafeCloseHandle(mh_ConEmuCInput);
+          if (!IsDebuggerPresent())
+            DisplayLastError(L"SetNamedPipeHandleState failed", dwErr);
+          return;
+        }
+    }
+    
+    // Пайп есть. Проверим, что ConEmuC жив
+    dwExitCode = 0;
+    fSuccess = GetExitCodeProcess(mh_ConEmuC, &dwExitCode);
+    if (dwExitCode!=STILL_ACTIVE) {
+        //DisplayLastError(L"ConEmuC was terminated");
+        return;
+    }
+    
+    DWORD dwSize = sizeof(MSG), dwWritten;
+    fSuccess = WriteFile ( mh_ConEmuCInput, pMsg, dwSize, &dwWritten, NULL);
+    if (!fSuccess) {
+        DisplayLastError(L"Can't send console event (pipe)");
+        return;
+    }
+}
 
 
 void CRealConsole::StopSignal()
@@ -1992,13 +2029,13 @@ DWORD CRealConsole::ServerThread(LPVOID lpvParam)
                 PIPEBUFSIZE,              // output buffer size 
                 PIPEBUFSIZE,              // input buffer size 
                 0,                        // client time-out 
-                NULL);                    // default security attribute 
+                gpNullSecurity);          // default security attribute 
 
             _ASSERTE(hPipe != INVALID_HANDLE_VALUE);
 
             if (hPipe == INVALID_HANDLE_VALUE) 
             {
-                //DisplayLastError(L"CreatePipe failed"); 
+                //DisplayLastError(L"CreateNamedPipe failed"); 
                 hPipe = NULL;
                 Sleep(50);
                 continue;
@@ -3447,8 +3484,13 @@ void CRealConsole::SetHwnd(HWND ahConWnd)
     if (ms_VConServer_Pipe[0] == 0) {
         // временно используем эту переменную, чтобы не плодить локальных
         wsprintfW(ms_VConServer_Pipe, CEGUIATTACHED, (DWORD)hConWnd);
-        mh_GuiAttached = CreateEvent(NULL, TRUE, FALSE, ms_VConServer_Pipe);
-        _ASSERTE(mh_GuiAttached!=NULL);
+        // Скорее всего событие в сервере еще не создано
+        mh_GuiAttached = OpenEvent(EVENT_MODIFY_STATE, FALSE, ms_VConServer_Pipe);
+        // Вроде, когда используется run as administrator - event открыть не получается?
+        if (!mh_GuiAttached) {
+        	mh_GuiAttached = CreateEvent(gpNullSecurity, TRUE, FALSE, ms_VConServer_Pipe);
+        	_ASSERTE(mh_GuiAttached!=NULL);
+        }
 
         // Запустить серверный пайп
         wsprintf(ms_VConServer_Pipe, CEGUIPIPENAME, L".", (DWORD)hConWnd); //был mn_ConEmuC_PID
@@ -3460,7 +3502,10 @@ void CRealConsole::SetHwnd(HWND ahConWnd)
         }
 
         // чтобы ConEmuC знал, что мы готовы
-        SetEvent(mh_GuiAttached);
+        if (mh_GuiAttached) {
+        	SetEvent(mh_GuiAttached);
+        	SafeCloseHandle(mh_GuiAttached);
+   		}
     }
 
     if (gSet.isConVisible)

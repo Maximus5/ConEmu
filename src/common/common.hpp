@@ -372,6 +372,7 @@ struct ForwardedFileInfo
 int NextArg(const wchar_t** asCmdLine, wchar_t* rsArg/*[MAX_PATH+1]*/);
 BOOL PackInputRecord(const INPUT_RECORD* piRec, MSG* pMsg);
 BOOL UnpackInputRecord(const MSG* piMsg, INPUT_RECORD* pRec);
+SECURITY_ATTRIBUTES* NullSecurity();
 
 //------------------------------------------------------------------------
 ///| Section |////////////////////////////////////////////////////////////

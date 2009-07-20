@@ -171,14 +171,15 @@
 #define IDC_RESTART_MSG                 1529
 #define IDC_WARNING                     1530
 #define cbTabSelf                       1531
+#define IDC_CHOOSE_DIR                  1531
 #define cbTabLazy                       1532
+#define IDC_STARTUP_DIR                 1532
 #define cbTabRecent                     1533
 #define cbLongOutput                    1534
 #define tLongOutputHeight               1535
 #define cbRSelectionFix                 1536
 #define cbMonitorConsoleLang            1537
 #define cbSkipFocusEvents               1538
-#define IDC_HOTKEY1                     1539
 #define hkNewConsole                    1539
 #define cbsProgress                     1540
 #define hkSwitchConsole                 1540

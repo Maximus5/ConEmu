@@ -1,6 +1,7 @@
 
 #include "Header.h"
 #include <Tlhelp32.h>
+#include <Shlobj.h>
 extern "C" {
 #include "../common/ConEmuCheck.h"
 }
@@ -64,6 +65,7 @@ CConEmuMain::CConEmuMain()
     //mpsz_RecreateCmd = NULL;
 	ZeroStruct(mrc_Ideal);
 	mb_MouseCaptured = FALSE;
+	mb_HotKeyRegistered = FALSE;
 
     memset(&mouse, 0, sizeof(mouse));
     mouse.lastMMW=-1;
@@ -2025,12 +2027,15 @@ LPTSTR CConEmuMain::GetTitleStart()
     return Title;
 }
 
-LRESULT CConEmuMain::GuiShellExecuteEx(SHELLEXECUTEINFO* lpShellExecute)
+LRESULT CConEmuMain::GuiShellExecuteEx(SHELLEXECUTEINFO* lpShellExecute, BOOL abAllowAsync)
 {
 	LRESULT lRc = 0;
 
 	if (!isMainThread()) {
-		lRc = SendMessage(ghWnd, mn_ShellExecuteEx, 0, (LPARAM)lpShellExecute);
+		if (abAllowAsync)
+			lRc = PostMessage(ghWnd, mn_ShellExecuteEx, abAllowAsync, (LPARAM)lpShellExecute);
+		else
+			lRc = SendMessage(ghWnd, mn_ShellExecuteEx, abAllowAsync, (LPARAM)lpShellExecute);
 	} else {
 		if (IsDebuggerPresent()) {
 			BOOL b = gbDontEnable; gbDontEnable = TRUE;
@@ -2040,6 +2045,10 @@ LRESULT CConEmuMain::GuiShellExecuteEx(SHELLEXECUTEINFO* lpShellExecute)
 				return (FALSE);
 		}
 		lRc = ::ShellExecuteEx(lpShellExecute);
+		
+		if (abAllowAsync && lRc == 0) {
+			pVCon->RCon()->CloseConsole();
+		}
 	}
 
 	return lRc;
@@ -2174,6 +2183,44 @@ bool CConEmuMain::PtDiffTest(POINT C, int aX, int aY, UINT D)
     return true;
 }
 
+void CConEmuMain::RegisterHotKeys()
+{
+	if (!mb_HotKeyRegistered) {
+		if (RegisterHotKey(ghWnd, 0x201, MOD_CONTROL|MOD_WIN|MOD_ALT, VK_SPACE))
+			mb_HotKeyRegistered = TRUE;
+	}
+}
+
+void CConEmuMain::UnRegisterHotKeys()
+{
+	if (mb_HotKeyRegistered) {
+		UnregisterHotKey(ghWnd, 0x201);
+	}
+	mb_HotKeyRegistered = FALSE;
+}
+
+void CConEmuMain::CtrlWinAltSpace()
+{
+    if (!pVCon) {
+    	//MBox(L"CtrlWinAltSpace: pVCon==NULL");
+    	return;
+	}
+    
+    static DWORD dwLastSpaceTick = 0;
+    if ((dwLastSpaceTick-GetTickCount())<1000) {
+        //if (hWnd == ghWndDC) MBoxA(_T("Space bounce recieved from DC")) else
+        //if (hWnd == ghWnd) MBoxA(_T("Space bounce recieved from MainWindow")) else
+        //if (hWnd == gConEmu.m_Back.mh_WndBack) MBoxA(_T("Space bounce recieved from BackWindow")) else
+        //if (hWnd == gConEmu.m_Back.mh_WndScroll) MBoxA(_T("Space bounce recieved from ScrollBar")) else
+        MBoxA(_T("Space bounce recieved from unknown window"));
+        return;
+    }
+    dwLastSpaceTick = GetTickCount();
+
+    //MBox(L"CtrlWinAltSpace: Toggle");
+    pVCon->RCon()->ShowConsole(-1); // Toggle visibility
+}
+
 void CConEmuMain::Recreate(BOOL abRecreate, BOOL abConfirm)
 {
     FLASHWINFO fl = {sizeof(FLASHWINFO)}; fl.dwFlags = FLASHW_STOP; fl.hwnd = ghWnd;
@@ -2239,6 +2286,14 @@ void CConEmuMain::Recreate(BOOL abRecreate, BOOL abConfirm)
     SafeFree(args.pszSpecialCmd);
 }
 
+int CConEmuMain::BrowseCallbackProc(HWND hwnd, UINT uMsg, LPARAM lParam, LPARAM lpData)
+{
+    if (uMsg==BFFM_INITIALIZED) {
+        SendMessage(hwnd, BFFM_SETSELECTION, TRUE, lpData);
+    }
+	return 0;
+}
+
 INT_PTR CConEmuMain::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
 {
     switch (messg)
@@ -2259,6 +2314,13 @@ INT_PTR CConEmuMain::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARA
                 if (nId < 0) SendDlgItemMessage(hDlg, IDC_RESTART_CMD, CB_INSERTSTRING, 0, (LPARAM)pszSystem);
             }
             SetDlgItemText(hDlg, IDC_RESTART_CMD, pszCmd);
+            
+            SetDlgItemText(hDlg, IDC_STARTUP_DIR, gConEmu.ms_ConEmuCurDir);
+            EnableWindow(GetDlgItem(hDlg, IDC_STARTUP_DIR), FALSE);
+            #ifndef _DEBUG
+            EnableWindow(GetDlgItem(hDlg, IDC_CHOOSE_DIR), FALSE);
+            #endif
+            
 
 			RConStartArgs* pArgs = (RConStartArgs*)lParam;
 			_ASSERTE(pArgs);
@@ -2269,8 +2331,10 @@ INT_PTR CConEmuMain::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARA
 			// but in most cases that is overkill.
 			TODO("Если GUI запущено под администратором - флажок включить и задизэблить!");
 
-			if (pArgs && pArgs->bRunAsAdministrator)
+			if (pArgs && pArgs->bRunAsAdministrator) {
 				CheckDlgButton(hDlg, cbRunAs, BST_CHECKED);
+				RecreateDlgProc(hDlg, WM_COMMAND, cbRunAs, 0);
+			}
 
             SetClassLongPtr(hDlg, GCLP_HICON, (LONG)hClassIcon);
             if (pArgs->bRecreate) {
@@ -2289,6 +2353,11 @@ INT_PTR CConEmuMain::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARA
                 SetWindowPos(GetDlgItem(hDlg, IDC_START), NULL, pt.x, pt.y, 0,0, SWP_NOSIZE|SWP_NOZORDER);
                 SetDlgItemText(hDlg, IDC_START, L"&Start");
                 DestroyWindow(GetDlgItem(hDlg, IDC_WARNING));
+                RECT rcBox; GetWindowRect(GetDlgItem(hDlg, cbRunAs), &rcBox);
+                pt.x = pt.x - (rcBox.right - rcBox.left) - 5;
+                MapWindowPoints(NULL, hDlg, (LPPOINT)&rcBox, 1);
+                pt.y = rcBox.top;
+                SetWindowPos(GetDlgItem(hDlg, cbRunAs), NULL, pt.x, pt.y, 0,0, SWP_NOSIZE|SWP_NOZORDER);
                 
                 SetFocus(GetDlgItem(hDlg, IDC_RESTART_CMD));
             }
@@ -2351,6 +2420,37 @@ INT_PTR CConEmuMain::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARA
 
                     SafeFree(pszFilePath); 
                     return 1;
+                }
+                
+                case IDC_CHOOSE_DIR:
+                {
+                	BROWSEINFO bi = {ghWnd};
+                	wchar_t szFolder[MAX_PATH+1] = {0};
+                	GetDlgItemText(hDlg, IDC_STARTUP_DIR, szFolder, countof(szFolder));
+                	bi.pszDisplayName = szFolder;
+                	wchar_t szTitle[100];
+                	bi.lpszTitle = wcscpy(szTitle, L"Choose startup directory");
+                	bi.ulFlags = BIF_EDITBOX | BIF_RETURNONLYFSDIRS | BIF_VALIDATE;
+                	// bi.lpfn = int CALLBACK BrowseCallbackProc(HWND hwnd, UINT uMsg, LPARAM lParam, LPARAM lpData);
+                	bi.lParam = (LPARAM)szFolder;
+                	
+                	LPITEMIDLIST pRc = SHBrowseForFolder(&bi);
+                	if (pRc) {
+                		CoTaskMemFree(pRc);
+                		
+                		SetDlgItemText(hDlg, IDC_STARTUP_DIR, szFolder);
+                	}
+                	return 1;
+                }
+                
+                case cbRunAs:
+                {
+                	// BCM_SETSHIELD = 5644
+                	if (gOSVer.dwMajorVersion >= 6) {
+                		BOOL bRunAs = SendDlgItemMessage(hDlg, cbRunAs, BM_GETCHECK, 0, 0);
+                		SendDlgItemMessage(hDlg, IDC_START, 5644/*BCM_SETSHIELD*/, 0, bRunAs);
+                	}
+                	return 1;
                 }
                     
                 case IDC_START:
@@ -3312,6 +3412,8 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
         //SetConsoleCtrlHandler((PHANDLER_ROUTINE)CConEmuMain::HandlerRoutine, true);
 
         SetForegroundWindow(ghWnd);
+        
+        RegisterHotKeys();
 
         //SetParent(ghWnd, GetParent(GetShellWindow()));
 
@@ -3393,6 +3495,8 @@ LRESULT CConEmuMain::OnDestroy(HWND hWnd)
         mp_TaskBar->Release();
         mp_TaskBar = NULL;
     }
+    
+    UnRegisterHotKeys();
 
     KillTimer(ghWnd, 0);
 
@@ -3413,6 +3517,8 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 
     if (!lbSetFocus) {
         TabBar.SwitchRollback();
+        
+        UnRegisterHotKeys();
     }
 
     if (gSet.isSkipFocusEvents)
@@ -3506,6 +3612,9 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
         //OutputDebugString(szDbg);
   //  }
   //  #endif
+  
+    if (messg == WM_KEYDOWN && !mb_HotKeyRegistered)
+    	RegisterHotKeys();
 
     if (messg == WM_KEYDOWN || messg == WM_KEYUP)
     {
@@ -3564,22 +3673,11 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
     }
     
     //CtrlWinAltSpace
+    WARNING("В висте, блин, не приходим сообщение на первое нажатие Space. Только на второе???");
+    //TODO: Переделать на HotKey
     if (messg == WM_KEYDOWN && wParam == VK_SPACE && isPressed(VK_CONTROL) && isPressed(VK_LWIN) && isPressed(VK_MENU))
     {
-        if (!pVCon) return 0;
-        
-        static DWORD dwLastSpaceTick;
-        if ((dwLastSpaceTick-GetTickCount())<1000) {
-            if (hWnd == ghWndDC) MBoxA(_T("Space bounce recieved from DC")) else
-            if (hWnd == ghWnd) MBoxA(_T("Space bounce recieved from MainWindow")) else
-            if (hWnd == gConEmu.m_Back.mh_WndBack) MBoxA(_T("Space bounce recieved from BackWindow")) else
-            if (hWnd == gConEmu.m_Back.mh_WndScroll) MBoxA(_T("Space bounce recieved from ScrollBar")) else
-            MBoxA(_T("Space bounce recieved from unknown window"));
-            return 0;
-        }
-        dwLastSpaceTick = GetTickCount();
-        
-        pVCon->RCon()->ShowConsole(-1); // Toggle visibility
+    	CtrlWinAltSpace();
         
         return 0;
     }
@@ -4718,13 +4816,13 @@ DWORD CConEmuMain::ServerThread(LPVOID lpvParam)
                 PIPEBUFSIZE,              // output buffer size 
                 PIPEBUFSIZE,              // input buffer size 
                 0,                        // client time-out 
-                NULL);                    // default security attribute 
+                gpNullSecurity);          // default security attribute 
 
             _ASSERTE(hPipe != INVALID_HANDLE_VALUE);
 
             if (hPipe == INVALID_HANDLE_VALUE) 
             {
-                //DisplayLastError(L"CreatePipe failed"); 
+                //DisplayLastError(L"CreateNamedPipe failed"); 
                 hPipe = NULL;
                 Sleep(50);
                 continue;
@@ -5088,6 +5186,11 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
         result = Icon.OnTryIcon(hWnd, messg, wParam, lParam);
         break; 
 
+	case WM_HOTKEY:
+		if (wParam == 0x201) {
+			CtrlWinAltSpace();
+		}
+		return 0;
 
     case WM_DESTROY:
         result = gConEmu.OnDestroy(hWnd);
@@ -5144,7 +5247,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
             gConEmu.OnShellHook(wParam, lParam);
             return 0;
 		} else if (messg == gConEmu.mn_ShellExecuteEx) {
-			return gConEmu.GuiShellExecuteEx((SHELLEXECUTEINFO*)lParam);
+			return gConEmu.GuiShellExecuteEx((SHELLEXECUTEINFO*)lParam, wParam);
 		}
         //else if (messg == gConEmu.mn_MsgCmdStarted || messg == gConEmu.mn_MsgCmdStopped) {
         //  return gConEmu.OnConEmuCmd( (messg == gConEmu.mn_MsgCmdStarted), (HWND)wParam, (DWORD)lParam);

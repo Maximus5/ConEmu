@@ -33,6 +33,7 @@ CSettings gSet;
 //TCHAR temp[MAX_PATH]; -- низзя, очень велик шанс нарваться при многопоточности
 HICON hClassIcon = NULL, hClassIconSm = NULL;
 BOOL gbDontEnable = FALSE;
+SECURITY_ATTRIBUTES* gpNullSecurity = NULL;
 
 
 const TCHAR *const szClassName = VirtualConsoleClass;
@@ -655,6 +656,7 @@ void MessageLoop()
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
     g_hInstance = hInstance;
+    gpNullSecurity = NullSecurity();
 
 	if (_tcsstr(GetCommandLine(), L"/debugi")) {
 		if (!IsDebuggerPresent()) _ASSERT(FALSE);

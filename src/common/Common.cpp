@@ -188,3 +188,62 @@ BOOL UnpackInputRecord(const MSG* piMsg, INPUT_RECORD* pRec)
 	
 	return TRUE;
 }
+
+class MNullDesc {
+protected:
+	PSECURITY_DESCRIPTOR mp_NullDesc;
+	SECURITY_ATTRIBUTES  m_NullSecurity;
+public:
+	DWORD mn_LastError;
+public:
+	MNullDesc() {
+		memset(&m_NullSecurity, 0, sizeof(m_NullSecurity));
+		mp_NullDesc = NULL;
+		mn_LastError = 0;
+	};
+	~MNullDesc() {
+		memset(&m_NullSecurity, 0, sizeof(m_NullSecurity));
+		LocalFree(mp_NullDesc); mp_NullDesc = NULL;
+	};
+public:
+	SECURITY_ATTRIBUTES* NullSecurity() {
+		mn_LastError = 0;
+		
+		if (mp_NullDesc) {
+			_ASSERTE(m_NullSecurity.lpSecurityDescriptor==mp_NullDesc);
+			return (&m_NullSecurity);
+		}
+		mp_NullDesc = (PSECURITY_DESCRIPTOR) LocalAlloc(LPTR,
+		      SECURITY_DESCRIPTOR_MIN_LENGTH); 
+
+		if (mp_NullDesc == NULL) {
+			mn_LastError = GetLastError();
+			return NULL;
+		}
+
+		if (!InitializeSecurityDescriptor(mp_NullDesc, SECURITY_DESCRIPTOR_REVISION)) {
+			mn_LastError = GetLastError();
+			LocalFree(mp_NullDesc); mp_NullDesc = NULL;
+			return NULL;
+		}
+
+		// Add a null DACL to the security descriptor. 
+		if (!SetSecurityDescriptorDacl(mp_NullDesc, TRUE, (PACL) NULL, FALSE)) {
+			mn_LastError = GetLastError();
+			LocalFree(mp_NullDesc); mp_NullDesc = NULL;
+			return NULL;
+		}
+
+		m_NullSecurity.nLength = sizeof(m_NullSecurity);
+		m_NullSecurity.lpSecurityDescriptor = mp_NullDesc;
+		m_NullSecurity.bInheritHandle = TRUE; 
+		
+		return (&m_NullSecurity);
+	};
+};
+MNullDesc gNullDesc;
+
+SECURITY_ATTRIBUTES* NullSecurity()
+{
+	return gNullDesc.NullSecurity();
+}

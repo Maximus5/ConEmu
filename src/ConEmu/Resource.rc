@@ -454,23 +454,28 @@ BEGIN
                     BS_AUTOCHECKBOX | WS_TABSTOP,63,88,77,8
 END
 
-IDD_RESTART DIALOG DISCARDABLE  0, 0, 310, 70
+IDD_RESTART DIALOG DISCARDABLE  0, 0, 310, 98
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "ConEmu"
 FONT 8, "MS Sans Serif"
 BEGIN
-    DEFPUSHBUTTON   "Re&start",IDC_START,147,51,50,14
-    PUSHBUTTON      "&Terminate",IDC_TERMINATE,201,51,50,14
-    PUSHBUTTON      "Cancel",IDCANCEL,254,51,50,14
+    DEFPUSHBUTTON   "Re&start",IDC_START,147,79,50,14
+    PUSHBUTTON      "&Terminate",IDC_TERMINATE,201,79,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,254,79,50,14
+    LTEXT           "Startup &directory for new process:",IDC_STATIC,10,36,
+                    106,8
+    COMBOBOX        IDC_STARTUP_DIR,10,46,269,50,CBS_DROPDOWN | 
+                    CBS_AUTOHSCROLL | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "...",IDC_CHOOSE_DIR,284,46,14,13
+    CONTROL         "&Run as administrator",cbRunAs,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,61,81,82,8
+    ICON            "ConEmu.ico",IDC_RESTART_ICON,6,73,20,20
+    GROUPBOX        "About to restart console",IDC_RESTART_MSG,4,5,300,63
     PUSHBUTTON      "...",IDC_CHOOSE,284,19,14,13
     COMBOBOX        IDC_RESTART_CMD,10,19,269,50,CBS_DROPDOWN | 
                     CBS_AUTOHSCROLL | CBS_SORT | WS_VSCROLL | WS_TABSTOP
-    GROUPBOX        "About to restart console",IDC_RESTART_MSG,4,5,300,35
-    ICON            "ConEmu.ico",IDC_RESTART_ICON,6,45,20,20
-    CTEXT           "Warning, unsaved work may be lost!",IDC_WARNING,57,35,
+    CTEXT           "Warning, unsaved work may be lost!",IDC_WARNING,57,63,
                     157,8
-    CONTROL         "&Run as administrator",cbRunAs,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,31,54,108,8
 END
 
 
@@ -489,6 +494,22 @@ IDB_CONMAN1             BITMAP  DISCARDABLE     "toolbar1.bmp"
 IDC_COPY                CURSOR  DISCARDABLE     "CursorDragCopy.cur"
 IDC_LINK                CURSOR  DISCARDABLE     "CursorDragLink.cur"
 IDC_MOVE                CURSOR  DISCARDABLE     "CursorDragMove.cur"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO DISCARDABLE 
+BEGIN
+    IDD_RESTART, DIALOG
+    BEGIN
+        BOTTOMMARGIN, 70
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
