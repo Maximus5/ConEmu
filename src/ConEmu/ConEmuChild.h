@@ -10,7 +10,7 @@ public:
 	CConEmuChild();
 	~CConEmuChild();
 
-	LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
+	LRESULT ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 public:
 	LRESULT OnPaint();
 	LRESULT OnSize(WPARAM wParam, LPARAM lParam);

@@ -1087,7 +1087,7 @@ BOOL CRealConsole::StartProcess()
 
             int nLen = _tcslen(lpszCmd);
             TCHAR *pszSlash=NULL;
-            nLen += _tcslen(gConEmu.ms_ConEmuExe) + 256 + MAX_PATH;
+            nLen += _tcslen(gConEmu.ms_ConEmuCExe) + 256 + MAX_PATH;
             psCurCmd = (wchar_t*)malloc(nLen*sizeof(wchar_t));
             _ASSERTE(psCurCmd);
             wcscpy(psCurCmd, L"\"");

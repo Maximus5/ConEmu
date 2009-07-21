@@ -10,6 +10,8 @@ CDragDrop::CDragDrop(HWND hWnd)
 	mp_DataObject = NULL;
 	mb_selfdrag = NULL;
 	mp_DesktopID = NULL;
+	mh_Overlapped = NULL; mh_BitsDC = NULL; mh_BitsBMP = NULL;
+	memset(&m_BitsInfo, 0, sizeof(m_BitsInfo));
 	
 	InitializeCriticalSection(&m_CrThreads);
 }
@@ -57,6 +59,11 @@ wrap:
 
 CDragDrop::~CDragDrop()
 {
+	if (mh_Overlapped) {
+		DestroyWindow(mh_Overlapped);
+		mh_Overlapped = NULL;
+	}
+
 	if (mb_DragDropRegistered && m_hWnd) {
 		mb_DragDropRegistered = FALSE;
 		RevokeDragDrop(m_hWnd);
@@ -235,6 +242,7 @@ HRESULT CDragDrop::DropFromStream(IDataObject * pDataObject, BOOL abActive)
 
 	// CF_HDROP в структуре отсутсвует!
 	fmtetc.cfFormat = RegisterClipboardFormat(CFSTR_FILEDESCRIPTORW);
+	TODO("ј освобождать полученное надо?");
 	if (S_OK == pDataObject->GetData(&fmtetc, &stgMedium)) {
 		lbWide = TRUE;
 		HGLOBAL hDesc = stgMedium.hGlobal;
@@ -247,6 +255,7 @@ HRESULT CDragDrop::DropFromStream(IDataObject * pDataObject, BOOL abActive)
 			fmtetc.lindex = mn_CurFile;
 
 			fmtetc.tymed = TYMED_ISTREAM; // —начала пробуем IStream
+			TODO("ј освобождать полученное надо?");
 			if (S_OK == pDataObject->GetData(&fmtetc, &stgMedium) || !stgMedium.pstm) {
 				IStream* pFile = stgMedium.pstm;
 
@@ -270,6 +279,7 @@ HRESULT CDragDrop::DropFromStream(IDataObject * pDataObject, BOOL abActive)
 	}
 	// Outlook 2k передает ANSI!
 	fmtetc.cfFormat = RegisterClipboardFormat(CFSTR_FILEDESCRIPTORA);
+	TODO("ј освобождать полученное надо?");
 	if (S_OK == pDataObject->GetData(&fmtetc, &stgMedium)) {
 		lbWide = FALSE;
 		HGLOBAL hDesc = stgMedium.hGlobal;
@@ -282,6 +292,7 @@ HRESULT CDragDrop::DropFromStream(IDataObject * pDataObject, BOOL abActive)
 			fmtetc.lindex = mn_CurFile;
 
 			fmtetc.tymed = TYMED_ISTREAM; // —начала пробуем IStream
+			TODO("ј освобождать полученное надо?");
 			if (S_OK == pDataObject->GetData(&fmtetc, &stgMedium) || !stgMedium.pstm) {
 				IStream* pFile = stgMedium.pstm;
 
@@ -443,6 +454,7 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop (IDataObject * pDataObject,DWORD grfKe
 
 	STGMEDIUM stgMedium = { 0 };
 	FORMATETC fmtetc = { CF_HDROP, 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
+	TODO("ј освобождать полученное надо?");
 	HRESULT hr = pDataObject->GetData(&fmtetc, &stgMedium);
 	HDROP hDrop = NULL;
 
@@ -647,6 +659,7 @@ void CDragDrop::EnumDragFormats(IDataObject * pDataObject)
 	FORMATETC fmt[20];
 	STGMEDIUM stg[20];
 	LPCWSTR psz[20];
+	SIZE_T memsize[20];
 	TCHAR szName[20][MAX_PATH];
 	ULONG nCnt = sizeof(fmt)/sizeof(*fmt);
 	UINT i;
@@ -672,9 +685,16 @@ void CDragDrop::EnumDragFormats(IDataObject * pDataObject)
 				wsprintf(szName[i], L"ClipFormatID=%i", fmt[i].cfFormat);
 				
 			stg[i].tymed = TYMED_HGLOBAL;
+			TODO("ј освобождать полученное надо?");
 			hr = pDataObject->GetData(fmt+i, stg+i);
-			if (hr == S_OK && stg[i].hGlobal)
+			if (hr == S_OK && stg[i].hGlobal) {
 				psz[i] = (LPCWSTR)GlobalLock(stg[i].hGlobal);
+				memsize[i] = GlobalSize(stg[i].hGlobal);
+			}
+
+			if (wcscmp(szName[i], L"DragImageBits") == 0) {
+				stg[i].tymed = TYMED_HGLOBAL;
+			}
 		}
 		
 		for (i=0; i<nCnt; i++) {
@@ -698,6 +718,9 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragEnter(IDataObject * pDataObject,DWORD g
 	{
 		if (!mb_selfdrag) // при "своем" драге - информаци€ уже получена
 			RetrieveDragToInfo(pDataObject);
+
+		LoadDragImageBits();
+
 	} else {
 		gConEmu.DnDstep(_T("DnD: Drop disabled"));
 	}
@@ -1047,4 +1070,52 @@ void CDragDrop::Drag()
 	}
 	//isInDrag=false;
 	//isDragProcessed=false; -- иначе при бросании в пассивную панель больших файлов дроп может вызватьс€ еще раз???
+}
+
+void CDragDrop::LoadDragImageBits()
+{
+	if (mb_selfdrag || mh_Overlapped)
+		return; // уже
+
+	STGMEDIUM stgMedium = { 0 };
+	FORMATETC fmtetc = { 0, 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
+	HRESULT hr = S_OK;
+
+	// CF_HDROP в структуре отсутсвует!
+	fmtetc.cfFormat = RegisterClipboardFormat(L"DragImageBits");
+	TODO("ј освобождать полученное надо?");
+	if (S_OK != pDataObject->GetData(&fmtetc, &stgMedium) || stgMedium.hGlobal == NULL) {
+		return; // ‘ормат отсутствует
+	}
+
+	SIZE_T nInfoSize = GlobalSize(stgMedium.hGlobal);
+	if (!nInfoSize) return; // пусто
+	DragImageBits* pInfo = (DragImageBits*)GlobalLock(stgMedium.hGlobal);
+	if (!pInfo) return; // Ќе удалось получить данные
+
+	#define DRAGBITSCLASS L"ConEmuDragBits"
+	static BOOL bClassRegistered = FALSE;
+	if (!bClassRegistered) {
+		#ifdef _DEBUG
+		DWORD dwLastError = 0;
+		#endif
+		HBRUSH hBackBrush = (HBRUSH)GetStockObject(WHITE_BRUSH);
+		WNDCLASS wc = {CS_OWNDC/*|CS_SAVEBITS*/, DragBitsWndProc, 0, 0, 
+				g_hInstance, NULL, NULL/*LoadCursor(NULL, IDC_ARROW)*/,
+				hBackBrush,  NULL, DRAGBITSCLASS};
+		if (!RegisterClass(&wc)) {
+			#ifdef _DEBUG
+			dwLastError = GetLastError();
+			#endif
+
+			GlobalUnlock(stgMedium.hGlobal);
+
+			// –угатьс€ не будем, чтобы драг не испортить
+			return;
+		}
+	}
+
+	// CreateDIBitmap или SetDIBits
+
+	GlobalUnlock(stgMedium.hGlobal);
 }

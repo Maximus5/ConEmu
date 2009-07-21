@@ -534,7 +534,7 @@ void PostMacroA(char* asMacro)
 	ActlKeyMacro mcr;
 	mcr.Command = MCMD_POSTMACROSTRING;
 	mcr.Param.PlainText.SequenceText = asMacro;
-	mcr.Param.PlainText.Flags = KSFLAGS_DISABLEOUTPUT;
+	mcr.Param.PlainText.Flags = 0; //KSFLAGS_DISABLEOUTPUT; -- убрал. иначе FAR может виснуть в некоторых местах
 	InfoA->AdvControl(InfoA->ModuleNumber, ACTL_KEYMACRO, (void*)&mcr);
 }
 

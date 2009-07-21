@@ -44,4 +44,17 @@ protected:
 		SHFILEOPSTRUCT fop;
 	} ShlOpInfo;
 	static DWORD WINAPI ShellOpThreadProc(LPVOID lpParameter);
+	typedef struct tag_DragImageBits {
+		DWORD nWidth, nHeight;
+		DWORD nXCursor, nYCursor; // Позиция курсора захвата, относительно драгнутой картинки
+		DWORD nRes1; // тут какой-то мусор - заняты все байты DWORD'а
+		DWORD nRes2; // всегда 0xffffffff
+		RGBQUAD pix[0];
+	} DragImageBits;
+	DragImageBits m_BitsInfo;
+	HWND mh_Overlapped;
+	HDC mh_BitsDC;
+	HBITMAP mh_BitsBMP;
+	void LoadDragImageBits();
+	static LRESULT CALLBACK DragBitsWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 };

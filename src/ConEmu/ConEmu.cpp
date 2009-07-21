@@ -85,7 +85,7 @@ CConEmuMain::CConEmuMain()
     *pszSlash = L'\\';
 
 	ms_ConEmuCExe[0] = 0;
-	if (ms_ConEmuExe[0] == L'\\' || wcschr(ms_ConEmuExe, L' ') == NULL) // Сетевые пути не менять
+	if (ms_ConEmuExe[0] == L'\\' /*|| wcschr(ms_ConEmuExe, L' ') == NULL*/) // Сетевые пути не менять
 		wcscpy(ms_ConEmuCExe, ms_ConEmuExe);
 	else {
 		wchar_t* pszShort = GetShortFileNameEx(ms_ConEmuExe);
@@ -2055,7 +2055,7 @@ LRESULT CConEmuMain::GuiShellExecuteEx(SHELLEXECUTEINFO* lpShellExecute, BOOL ab
 	} else {
 		if (IsDebuggerPresent()) {
 			BOOL b = gbDontEnable; gbDontEnable = TRUE;
-			int nBtn = MessageBox(ghWnd, L"Debugger active!\nShellExecuteEx(runas) my fails\nContinue?", L"ConEmu", MB_ICONASTERISK|MB_YESNO|MB_DEFBUTTON2);
+			int nBtn = MessageBox(ghWnd, L"Debugger active!\nShellExecuteEx(runas) my fails, when VC IDE\ncatches Microsoft C++ exceptions.\nContinue?", L"ConEmu", MB_ICONASTERISK|MB_YESNO|MB_DEFBUTTON2);
 			gbDontEnable = b;
 			if (nBtn != IDYES)
 				return (FALSE);
@@ -3715,13 +3715,13 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
         }
     }
     // !!! Запрос на переключение мог быть инициирован из плагина
-    if (messg == WM_KEYUP /*&& TabBar.IsShown()*/
-        && (wParam == VK_CONTROL || wParam == VK_LCONTROL || wParam == VK_RCONTROL)
-        && (gSet.isTabSelf || (gSet.isTabLazy && TabBar.IsInSwitch()))
-       )
-    {
-        TabBar.SwitchCommit(); // Если переключения не было - ничего не делает
-        // В фар отпускание кнопки таки пропустим
+    if (messg == WM_KEYUP && (wParam == VK_CONTROL || wParam == VK_LCONTROL || wParam == VK_RCONTROL))
+	{/*&& TabBar.IsShown()*/
+		if (gSet.isTabSelf || (gSet.isTabLazy && TabBar.IsInSwitch()))
+		{
+			TabBar.SwitchCommit(); // Если переключения не было - ничего не делает
+			// В фар отпускание кнопки таки пропустим
+		}
     }
 
     // Conman

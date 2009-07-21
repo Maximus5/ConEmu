@@ -23,7 +23,7 @@ wchar_t* GetShortFileNameEx(LPCWSTR asLong)
 {
 	TODO("хорошо бы и сетевые диски обрабатывать");
 
-	wchar_t* pszShort = wcsdup(asLong);
+	wchar_t* pszShort = _wcsdup(asLong);
 	wchar_t* pszCur = wcschr(pszShort+3, L'\\');
 	wchar_t* pszSlash;
 	wchar_t  szName[MAX_PATH+1];
@@ -35,9 +35,9 @@ wchar_t* GetShortFileNameEx(LPCWSTR asLong)
 			if (GetShortFileName(pszShort, szName)) {
 				if ((pszSlash = wcsrchr(pszShort, L'\\'))==0)
 					goto wrap;
-				wcscpy(pszSlash+1, szName);
+				lstrcpyW(pszSlash+1, szName);
 				pszSlash += 1+wcslen(szName);
-				wcscpy(pszSlash+1, pszCur+1);
+				lstrcpyW(pszSlash+1, pszCur+1);
 				pszCur = pszSlash;
 			}
 		}

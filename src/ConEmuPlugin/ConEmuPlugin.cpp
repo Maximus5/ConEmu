@@ -133,7 +133,7 @@ HANDLE WINAPI _export OpenPluginW(int OpenFrom,INT_PTR Item)
 		return INVALID_HANDLE_VALUE;
 
 	if (gnReqCommand != (DWORD)-1) {
-		gnPluginOpenFrom = OpenFrom;
+		gnPluginOpenFrom = (OpenFrom && 0xFFFF);
 		ProcessCommand(gnReqCommand, FALSE/*bReqMainThread*/, gpReqCommandData);
 	} else {
 		if (!gbCmdCallObsolete)
