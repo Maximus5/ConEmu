@@ -27,7 +27,9 @@ PARAMETERS
 	/Size <fontsize>
 	Specifies the font size.
 
-	/FontFile <fontfilename> - Loads fonts from file.
+	/FontFile <fontfilename> - Loads fonts from file. You may specify more
+	than one font file. First of them (except /Font specified) become main
+	font.
 
 	/Config <configname>
 	Tells to use an existing or create a new configuration with the specified

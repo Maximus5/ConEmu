@@ -49,12 +49,12 @@ protected:
 		DWORD nXCursor, nYCursor; // Позиция курсора захвата, относительно драгнутой картинки
 		DWORD nRes1; // тут какой-то мусор - заняты все байты DWORD'а
 		DWORD nRes2; // всегда 0xffffffff
-		RGBQUAD pix[0];
+		RGBQUAD pix[1];
 	} DragImageBits;
 	DragImageBits m_BitsInfo;
 	HWND mh_Overlapped;
 	HDC mh_BitsDC;
 	HBITMAP mh_BitsBMP;
-	void LoadDragImageBits();
+	void LoadDragImageBits(IDataObject * pDataObject);
 	static LRESULT CALLBACK DragBitsWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 };

@@ -170,7 +170,7 @@ PHANDLER_ROUTINE HandlerRoutine = NULL;
 
 int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd); // Разбор параметров командной строки
 void Help();
-void ExitWaitForKey(WORD vkKey, LPCWSTR asConfirm, BOOL abNewLine);
+void ExitWaitForKey(WORD vkKey, LPCWSTR asConfirm, BOOL abNewLine, BOOL abDontShowConsole);
 
 
 /*  Global  */
@@ -627,14 +627,33 @@ wrap:
     // К сожалению, HandlerRoutine может быть еще не вызван, поэтому
 	// в самой процедуре ExitWaitForKey вставлена проверка флага gbInShutdown
     PRINT_COMSPEC(L"Finalizing. gbInShutdown=%i\n", gbInShutdown);
+	#ifdef SHOW_STARTED_MSGBOX
+	MessageBox(GetConsoleWindow(), L"Finalizing", L"ConEmuC.ComSpec", 0);
+	#endif
     if (!gbInShutdown
 		&& ((iRc!=0 && iRc!=CERR_RUNNEWCONSOLE) || gbAlwaysConfirmExit)
 		)
 	{
-        ExitWaitForKey(VK_RETURN, 
-			(gbRootWasFoundInCon != 1) ?
-			L"\n\nPress Enter to close console, or wait..." : L"\n\nPress Enter to close console..."
-			, TRUE);
+		BOOL lbProcessesLeft = FALSE, lbDontShowConsole = FALSE;
+		if (pfnGetConsoleProcessList) {
+			DWORD nProcesses[10];
+			DWORD nProcCount = pfnGetConsoleProcessList ( nProcesses, 10 );
+			if (nProcCount > 1)
+				lbProcessesLeft = TRUE;
+		}
+
+		LPCWSTR pszMsg = NULL;
+		if (lbProcessesLeft) {
+			pszMsg = L"\n\nPress Enter to exit...";
+			lbDontShowConsole = gnRunMode != RM_SERVER;
+		} else {
+			if (gbRootWasFoundInCon == 1)
+				pszMsg = L"\n\nPress Enter to close console...";
+		}
+		if (!pszMsg) // Иначе - сообщение по умолчанию
+			pszMsg = L"\n\nPress Enter to close console, or wait...";
+
+        ExitWaitForKey(VK_RETURN, pszMsg, TRUE, lbDontShowConsole);
         if (iRc == CERR_PROCESSTIMEOUT) {
             int nCount = srv.nProcessCount;
             if (nCount > 1) {
@@ -1239,29 +1258,32 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 //    return 0;
 //}
 
-void ExitWaitForKey(WORD vkKey, LPCWSTR asConfirm, BOOL abNewLine)
+void ExitWaitForKey(WORD vkKey, LPCWSTR asConfirm, BOOL abNewLine, BOOL abDontShowConsole)
 {
     // Чтобы ошибку было нормально видно
-    BOOL lbNeedVisible = FALSE;
-    if (!ghConWnd) ghConWnd = GetConsoleWindow();
-    if (ghConWnd) { // Если консоль была скрыта
-        WARNING("Если GUI жив - отвечает на запросы SendMessageTimeout - показывать консоль не нужно. Не красиво получается");
-		if (!IsWindowVisible(ghConWnd)) {
-			BOOL lbGuiAlive = FALSE;
-			if (ghConEmuWnd && IsWindow(ghConEmuWnd)) {
-				DWORD_PTR dwLRc = 0;
-				if (SendMessageTimeout(ghConEmuWnd, WM_NULL, 0, 0, SMTO_ABORTIFHUNG, 1000, &dwLRc))
-					lbGuiAlive = TRUE;
+	if (!abDontShowConsole)
+	{
+		BOOL lbNeedVisible = FALSE;
+		if (!ghConWnd) ghConWnd = GetConsoleWindow();
+		if (ghConWnd) { // Если консоль была скрыта
+			WARNING("Если GUI жив - отвечает на запросы SendMessageTimeout - показывать консоль не нужно. Не красиво получается");
+			if (!IsWindowVisible(ghConWnd)) {
+				BOOL lbGuiAlive = FALSE;
+				if (ghConEmuWnd && IsWindow(ghConEmuWnd)) {
+					DWORD_PTR dwLRc = 0;
+					if (SendMessageTimeout(ghConEmuWnd, WM_NULL, 0, 0, SMTO_ABORTIFHUNG, 1000, &dwLRc))
+						lbGuiAlive = TRUE;
+				}
+				if (!lbGuiAlive && !IsWindowVisible(ghConWnd)) {
+					lbNeedVisible = TRUE;
+					// не надо наверное... // поставить "стандартный" 80x25, или то, что было передано к ком.строке
+					//SMALL_RECT rcNil = {0}; SetConsoleSize(0, gcrBufferSize, rcNil, ":Exiting");
+					//SetConsoleFontSizeTo(ghConWnd, 8, 12); // установим шрифт побольше
+					ShowWindow(ghConWnd, SW_SHOWNORMAL); // и покажем окошко
+				}
 			}
-			if (!lbGuiAlive && !IsWindowVisible(ghConWnd)) {
-				lbNeedVisible = TRUE;
-				// не надо наверное... // поставить "стандартный" 80x25, или то, что было передано к ком.строке
-				//SMALL_RECT rcNil = {0}; SetConsoleSize(0, gcrBufferSize, rcNil, ":Exiting");
-				//SetConsoleFontSizeTo(ghConWnd, 8, 12); // установим шрифт побольше
-				ShowWindow(ghConWnd, SW_SHOWNORMAL); // и покажем окошко
-			}
-        }
-    }
+		}
+	}
 
     // Сначала почистить буфер
     INPUT_RECORD r = {0}; DWORD dwCount = 0;
@@ -1497,7 +1519,9 @@ void ComspecDone(int aiRc)
 			pIn->StartStop.dwPID = gnSelfPID;
 			pIn->StartStop.nSubSystem = gnImageSubsystem;
 			// НЕ MyGet..., а то можем заблокироваться...
-			GetConsoleScreenBufferInfo(ghConOut, &pIn->StartStop.sbi);
+			// ghConOut может быть NULL, если ошибка произошла во время разбора аргументов
+			GetConsoleScreenBufferInfo(ghConOut ? ghConOut : GetStdHandle(STD_OUTPUT_HANDLE),
+				&pIn->StartStop.sbi);
 
             PRINT_COMSPEC(L"Finalizing comspec mode (ExecuteGuiCmd started)\n",0);
             pOut = ExecuteGuiCmd(ghConWnd, pIn);

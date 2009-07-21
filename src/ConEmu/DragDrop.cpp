@@ -719,7 +719,7 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragEnter(IDataObject * pDataObject,DWORD g
 		if (!mb_selfdrag) // при "своем" драге - информация уже получена
 			RetrieveDragToInfo(pDataObject);
 
-		LoadDragImageBits();
+		LoadDragImageBits(pDataObject);
 
 	} else {
 		gConEmu.DnDstep(_T("DnD: Drop disabled"));
@@ -1072,14 +1072,14 @@ void CDragDrop::Drag()
 	//isDragProcessed=false; -- иначе при бросании в пассивную панель больших файлов дроп может вызваться еще раз???
 }
 
-void CDragDrop::LoadDragImageBits()
+void CDragDrop::LoadDragImageBits(IDataObject * pDataObject)
 {
 	if (mb_selfdrag || mh_Overlapped)
 		return; // уже
 
 	STGMEDIUM stgMedium = { 0 };
 	FORMATETC fmtetc = { 0, 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
-	HRESULT hr = S_OK;
+	//HRESULT hr = S_OK;
 
 	// CF_HDROP в структуре отсутсвует!
 	fmtetc.cfFormat = RegisterClipboardFormat(L"DragImageBits");
@@ -1118,4 +1118,9 @@ void CDragDrop::LoadDragImageBits()
 	// CreateDIBitmap или SetDIBits
 
 	GlobalUnlock(stgMedium.hGlobal);
+}
+
+LRESULT CDragDrop::DragBitsWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
+{
+	return 0;
 }

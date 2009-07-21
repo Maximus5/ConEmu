@@ -1839,7 +1839,12 @@ void CVirtualConsole::Paint()
     }
 #endif
     
-    if (!this) {
+	BOOL lbSimpleBlack = FALSE;
+	if (!this) 
+		lbSimpleBlack = TRUE;
+	//else if (!mpsz_ConChar || !mpn_ConAttr)
+	//	lbSimpleBlack = TRUE;
+    if (lbSimpleBlack) {
         // Залить цветом 0
         #ifdef _DEBUG
             int nBackColorIdx = 2;
@@ -1943,19 +1948,30 @@ void CVirtualConsole::Paint()
 
         if (Cursor.isVisible && cinf.bVisible && isCursorValid)
         {
-            HFONT hOldFont = (HFONT)SelectObject(hPaintDc, gSet.mh_Font);
+			if (mpsz_ConChar && mpsz_ConChar)
+			{
+				HFONT hOldFont = (HFONT)SelectObject(hPaintDc, gSet.mh_Font);
 
-            int CurChar = csbi.dwCursorPosition.Y * TextWidth + csbi.dwCursorPosition.X;
-            Cursor.ch[1] = 0;
-            GetCharAttr(mpsz_ConChar[CurChar], mpn_ConAttr[CurChar], Cursor.ch[0], Cursor.foreColorNum, Cursor.bgColorNum);
-            Cursor.foreColor = gSet.Colors[Cursor.foreColorNum];
-            Cursor.bgColor = gSet.Colors[Cursor.bgColorNum];
+				MSectionLock SCON; SCON.Lock(&csCON);
 
-            UpdateCursorDraw(hPaintDc, csbi.dwCursorPosition, cinf.dwSize);
+				if (mpsz_ConChar && mpn_ConAttr)
+				{
+					int CurChar = csbi.dwCursorPosition.Y * TextWidth + csbi.dwCursorPosition.X;
+					Cursor.ch[1] = 0;
+					//CVirtualConsole* p = this;
+					GetCharAttr(mpsz_ConChar[CurChar], mpn_ConAttr[CurChar], Cursor.ch[0], Cursor.foreColorNum, Cursor.bgColorNum);
+					Cursor.foreColor = gSet.Colors[Cursor.foreColorNum];
+					Cursor.bgColor = gSet.Colors[Cursor.bgColorNum];
+				}
 
-            Cursor.isVisiblePrev = Cursor.isVisible;
+				UpdateCursorDraw(hPaintDc, csbi.dwCursorPosition, cinf.dwSize);
 
-            SelectObject(hPaintDc, hOldFont);
+				Cursor.isVisiblePrev = Cursor.isVisible;
+
+				SelectObject(hPaintDc, hOldFont);
+
+				SCON.Unlock();
+			}
         }
 
 

@@ -38,7 +38,7 @@ HWND CConEmuChild::Create()
 	return ghWndDC;
 }
 
-LRESULT CALLBACK CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
+LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 {
     LRESULT result = 0;
 

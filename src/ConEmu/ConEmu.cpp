@@ -2244,6 +2244,9 @@ void CConEmuMain::Recreate(BOOL abRecreate, BOOL abConfirm)
 
 	RConStartArgs args;
 	args.bRecreate = abRecreate;
+
+	if (!abConfirm && isPressed(VK_SHIFT))
+		abConfirm = TRUE;
     
     if (!abRecreate) {
         // Создать новую консоль

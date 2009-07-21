@@ -1170,7 +1170,7 @@ BOOL CRealConsole::StartProcess()
 						mp_sei = (SHELLEXECUTEINFO*)GlobalAlloc(GPTR, nWholeSize);
 						mp_sei->hwnd = ghWnd;
 						mp_sei->cbSize = sizeof(SHELLEXECUTEINFO);
-						mp_sei->hwnd = NULL; //ghWnd;
+						mp_sei->hwnd = /*NULL; */ ghWnd; // почему я тут NULL ставил?
 						mp_sei->fMask = SEE_MASK_NO_CONSOLE|SEE_MASK_NOCLOSEPROCESS;
 						mp_sei->lpVerb = (wchar_t*)(mp_sei+1);
 							wcscpy((wchar_t*)mp_sei->lpVerb, L"runas");
@@ -1186,7 +1186,8 @@ BOOL CRealConsole::StartProcess()
 								wcscpy((wchar_t*)mp_sei->lpDirectory, szCurrentDirectory);
 							else
 								mp_sei->lpDirectory = NULL;
-						mp_sei->nShow = gSet.isConVisible ? SW_SHOWNORMAL : SW_HIDE;
+						//mp_sei->nShow = gSet.isConVisible ? SW_SHOWNORMAL : SW_HIDE;
+						mp_sei->nShow = SW_SHOWMINIMIZED;
 						lbRc = gConEmu.GuiShellExecuteEx(mp_sei, TRUE);
 						//lbRc = 32 < (int)::ShellExecute(0, // owner window
 						//	L"runas",
