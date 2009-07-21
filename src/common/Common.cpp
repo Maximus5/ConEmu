@@ -2,6 +2,59 @@
 #include <windows.h>
 #include "common.hpp"
 
+BOOL GetShortFileName(LPCWSTR asFullPath, wchar_t* rsShortName/*name only, MAX_PATH required*/)
+{
+	WIN32_FIND_DATAW fnd; memset(&fnd, 0, sizeof(fnd));
+	HANDLE hFind = FindFirstFile(asFullPath, &fnd);
+	if (hFind == INVALID_HANDLE_VALUE)
+		return FALSE;
+	FindClose(hFind);
+	if (fnd.cAlternateFileName[0]) {
+		if (wcslen(fnd.cAlternateFileName) < wcslen(fnd.cFileName)) {
+			lstrcpyW(rsShortName, fnd.cAlternateFileName);
+			return TRUE;
+		}
+	}
+
+	return FALSE;
+}
+
+wchar_t* GetShortFileNameEx(LPCWSTR asLong)
+{
+	TODO("хорошо бы и сетевые диски обрабатывать");
+
+	wchar_t* pszShort = wcsdup(asLong);
+	wchar_t* pszCur = wcschr(pszShort+3, L'\\');
+	wchar_t* pszSlash;
+	wchar_t  szName[MAX_PATH+1];
+	int nLen = 0;
+
+	while (pszCur) {
+		*pszCur = 0;
+		{
+			if (GetShortFileName(pszShort, szName)) {
+				if ((pszSlash = wcsrchr(pszShort, L'\\'))==0)
+					goto wrap;
+				wcscpy(pszSlash+1, szName);
+				pszSlash += 1+wcslen(szName);
+				wcscpy(pszSlash+1, pszCur+1);
+				pszCur = pszSlash;
+			}
+		}
+		*pszCur = L'\\';
+		pszCur = wcschr(pszCur+1, L'\\');
+	}
+	nLen = wcslen(pszShort);
+	if (nLen>0 && pszShort[nLen-1]==L'\\')
+		pszShort[--nLen] = 0;
+	if (nLen <= MAX_PATH)
+		return pszShort;
+
+wrap:
+	free(pszShort);
+	return NULL;
+}
+
 int NextArg(const wchar_t** asCmdLine, wchar_t* rsArg/*[MAX_PATH+1]*/)
 {
     LPCWSTR psCmdLine = *asCmdLine, pch = NULL;

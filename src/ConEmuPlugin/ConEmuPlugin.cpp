@@ -864,7 +864,7 @@ DWORD WINAPI InputThreadProcW(LPVOID lpParameter)
 							// на Ctrl-Break, но напрочь игнорирует Ctrl-C
 							lbRc = GenerateConsoleCtrlEvent(dwEvent, 0);
 
-							continue; // Это событие в буфер не помещается
+							// Это событие (Ctrl+C) в буфер помещается(!) иначе до фара не дойдет собственно клавиша C с нажатым Ctrl
 						}
 					}
 					nCount++; pRec++;

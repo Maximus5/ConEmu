@@ -1221,7 +1221,7 @@ void CVirtualConsole::UpdateText(bool isForce, bool updateText, bool updateCurso
                 isUnicode = true;
 
             if (isUnicode)
-                isProgress = isCharProgress(c); // ucBox25 / ucBox50 / ucBox75 / ucBox100
+                isProgress = gSet.isFixFarBorders == 2 && isCharProgress(c); // ucBox25 / ucBox50 / ucBox75 / ucBox100
             else
                 isSpace = (c == ucSpace || c == ucNoBreakSpace || c == 0);
 
@@ -1341,12 +1341,11 @@ void CVirtualConsole::UpdateText(bool isForce, bool updateText, bool updateCurso
                 int nShift = 0;
 
                 MCHKHEAP
-                if (c != 0x20 && !isUnicode) {
+                if (!isSpace && !isProgress && !isUnicode) {
                     ABC abc;
                     //This function succeeds only with TrueType fonts
                     if (GetCharABCWidths(hDC, c, c, &abc))
                     {
-                        
                         if (abc.abcA<0) {
                             // иначе символ наверное налезет на предыдущий?
                             nShift = -abc.abcA;
@@ -1361,7 +1360,9 @@ void CVirtualConsole::UpdateText(bool isForce, bool updateText, bool updateCurso
                 if (! (drawImage && (attrBack) < 2)) {
                     SetBkColor(hDC, gSet.Colors[attrBack]);
                     //TODO: надо раскомментарить и куда-то приткнуть...
-                    if (nShift>0) ExtTextOut(hDC, rect.left, rect.top, nFlags, &rect, L" ", 1, 0);
+					TODO("А это зачем делается? Ниже идет еще один ExtTextOut");
+                    if (nShift>0 && !isSpace && !isProgress)
+						ExtTextOut(hDC, rect.left, rect.top, nFlags, &rect, L" ", 1, 0);
                 } else if (drawImage) {
                     BlitPictureTo(rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top);
                 }
@@ -1374,8 +1375,11 @@ void CVirtualConsole::UpdateText(bool isForce, bool updateText, bool updateCurso
                 }
 
                 if (gbNoDblBuffer) GdiFlush();
-                WARNING("Отрисовка прогрессбаров и прокруток");
-                ExtTextOut(hDC, rect.left, rect.top, nFlags, &rect, &c, 1, 0);
+				if (isSpace || isProgress) {
+					FillRect(hDC, &rect, PartBrush(c, attrBack, attrFore));
+				} else {
+					ExtTextOut(hDC, rect.left, rect.top, nFlags, &rect, &c, 1, 0);
+				}
                 if (gbNoDblBuffer) GdiFlush();
                 MCHKHEAP
 
@@ -1426,7 +1430,7 @@ void CVirtualConsole::UpdateText(bool isForce, bool updateText, bool updateCurso
                     else
                     {
                         TCHAR ch;
-                        if (gSet.isFixFarBorders == 2 && isProgress) {
+                        if (isProgress) {
                             ch = c; // Графическая отрисовка прокрутки и прогресса
                             while(j2 < end && ConAttrLine[j2] == attr && ch == ConCharLine[j2+1])
                             {
@@ -1476,7 +1480,7 @@ void CVirtualConsole::UpdateText(bool isForce, bool updateText, bool updateCurso
 
                 MCHKHEAP
                 if (gbNoDblBuffer) GdiFlush();
-                if (gSet.isFixFarBorders == 2 && isProgress) {
+                if (isProgress) {
 					FillRect(hDC, &rect, PartBrush(c, attrBack, attrFore));
                 } else
                 if (/*gSet.isProportional &&*/ isSpace/*c == ' '*/) {

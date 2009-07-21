@@ -1,7 +1,9 @@
 Maximus5 - 2009.07.xx
 
+[%] В версии 2009.07.19 отвалилась передача CtrlC в FAR.
+[%] При 'Force monospace' не работало 3-d state 'Fix Far borders'.
 [*] Макросы для FAR2 переведены на callplugin.
-[+] Заработал флажок 'Run as administrator'.
+[+] Заработал флажок 'Run as administrator'. Теперь в Vista и выше  можно быстро (пере)запустить консоль с максимальными правами (UAC), а в WinXP - под другим пользователем.
 
 Maximus5 - 2009.07.19
 

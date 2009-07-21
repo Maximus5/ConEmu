@@ -83,6 +83,22 @@ CConEmuMain::CConEmuMain()
     *pszSlash = 0;
     SetEnvironmentVariable(L"ConEmuDir", ms_ConEmuExe);
     *pszSlash = L'\\';
+
+	ms_ConEmuCExe[0] = 0;
+	if (ms_ConEmuExe[0] == L'\\' || wcschr(ms_ConEmuExe, L' ') == NULL) // Сетевые пути не менять
+		wcscpy(ms_ConEmuCExe, ms_ConEmuExe);
+	else {
+		wchar_t* pszShort = GetShortFileNameEx(ms_ConEmuExe);
+		if (pszShort) {
+			wcscpy(ms_ConEmuCExe, pszShort);
+			free(pszShort);
+		} else {
+			wcscpy(ms_ConEmuCExe, ms_ConEmuExe);
+		}
+	}
+	pszSlash = wcsrchr(ms_ConEmuCExe, L'\\');
+	if (pszSlash) pszSlash++; else pszSlash = ms_ConEmuCExe;
+	wcscpy(pszSlash, L"ConEmuC.exe");
     
     // Запомнить текущую папку (на момент запуска)
     DWORD nDirLen = GetCurrentDirectory(MAX_PATH, ms_ConEmuCurDir);

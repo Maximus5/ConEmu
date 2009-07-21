@@ -5161,18 +5161,15 @@ void CRealConsole::EnableComSpec(DWORD anFarPID, BOOL abSwitch)
         }
     }
 
-    BOOL lbNeedQuot = (wcschr(gConEmu.ms_ConEmuExe, L' ') != NULL);
+    BOOL lbNeedQuot = (wcschr(gConEmu.ms_ConEmuCExe, L' ') != NULL);
     wchar_t* pszName = szData;
     lstrcpy(pszName, L"ComSpec");
     wchar_t* pszValue = pszName + lstrlenW(pszName) + 1;
 
 	if (abSwitch) {
 		if (lbNeedQuot) *(pszValue++) = L'"';
-		lstrcpy(pszValue, gConEmu.ms_ConEmuExe);
-		wchar_t* pszSlash = wcsrchr(pszValue, L'\\');
-		_ASSERTE(pszSlash!=NULL);
-		lstrcpy(pszSlash, L"\\ConEmuC.exe");
-		if (lbNeedQuot) lstrcat(pszSlash, L"\"");
+		lstrcpy(pszValue, gConEmu.ms_ConEmuCExe);
+		if (lbNeedQuot) lstrcat(pszValue, L"\"");
 
 		lbNeedQuot = (szCMD[0] != L'"') && (wcschr(szCMD, L' ') != NULL);
 		pszName = pszValue + lstrlenW(pszValue) + 1;

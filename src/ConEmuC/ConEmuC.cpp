@@ -1961,11 +1961,19 @@ int ServerInit()
         }
     }
     if (GetModuleFileName(NULL, pszSelf, MAX_PATH)) {
-	    if (wcschr(pszSelf, L' ')) {
+		wchar_t *pszShort = NULL;
+		if (pszSelf[0] != L'\\')
+			pszShort = GetShortFileNameEx(pszSelf);
+	    if (!pszShort && wcschr(pszSelf, L' ')) {
 		    *(--pszSelf) = L'"';
 		    lstrcatW(pszSelf, L"\"");
 	    }
-        SetEnvironmentVariable(L"ComSpec", pszSelf);
+		if (pszShort) {
+			SetEnvironmentVariable(L"ComSpec", pszShort);
+			free(pszShort);
+		} else {
+			SetEnvironmentVariable(L"ComSpec", pszSelf);
+		}
     }
 
     //srv.bContentsChanged = TRUE;
@@ -2619,7 +2627,7 @@ void ProcessInputMessage(MSG &msg)
 				// на Ctrl-Break, но напрочь игнорирует Ctrl-C
 				lbRc = GenerateConsoleCtrlEvent(dwEvent, 0);
 
-				return; // Это событие в буфер не помещается
+				// Это событие (Ctrl+C) в буфер помещается(!) иначе до фара не дойдет собственно клавиша C с нажатым Ctrl
 			}
 		}
 
