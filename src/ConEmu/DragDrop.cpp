@@ -1,5 +1,6 @@
 #include <shlobj.h>
 #include "Header.h"
+#include "ScreenDump.h"
 
 CDragDrop::CDragDrop(HWND hWnd)
 {
@@ -11,7 +12,8 @@ CDragDrop::CDragDrop(HWND hWnd)
 	mb_selfdrag = NULL;
 	mp_DesktopID = NULL;
 	mh_Overlapped = NULL; mh_BitsDC = NULL; mh_BitsBMP = NULL;
-	memset(&m_BitsInfo, 0, sizeof(m_BitsInfo));
+	mp_Bits = NULL;
+	mn_AllFiles = 0; mn_CurWritten = 0; mn_CurFile = 0;
 	
 	InitializeCriticalSection(&m_CrThreads);
 }
@@ -59,10 +61,8 @@ wrap:
 
 CDragDrop::~CDragDrop()
 {
-	if (mh_Overlapped) {
-		DestroyWindow(mh_Overlapped);
-		mh_Overlapped = NULL;
-	}
+	DestroyDragImageBits();
+	if (mp_Bits) { free(mp_Bits); mp_Bits = NULL; }
 
 	if (mb_DragDropRegistered && m_hWnd) {
 		mb_DragDropRegistered = FALSE;
@@ -416,6 +416,8 @@ HRESULT CDragDrop::DropLinks(HDROP hDrop, int iQuantity, BOOL abActive)
 
 HRESULT STDMETHODCALLTYPE CDragDrop::Drop (IDataObject * pDataObject,DWORD grfKeyState,POINTL pt,DWORD * pdwEffect)
 {
+	DestroyDragImageBits();
+
 	*pdwEffect = DROPEFFECT_NONE;
 	if (S_OK != DragOver(grfKeyState, pt, pdwEffect) ||  *pdwEffect == DROPEFFECT_NONE) {
 		return S_OK;
@@ -607,7 +609,11 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragOver(DWORD grfKeyState,POINTL pt,DWORD 
 	GetCursorPos(&ptCur);
 	#endif
 	RECT rcDC; GetWindowRect(ghWndDC, &rcDC);
-	if (!PtInRect(&rcDC, ptCur)) {
+	HWND hWndFrom = WindowFromPoint(ptCur);
+	if ((hWndFrom != ghWnd && hWndFrom != mh_Overlapped)
+		|| !PtInRect(&rcDC, ptCur))
+	{
+		DestroyDragImageBits();
 		*pdwEffect = DROPEFFECT_NONE;
 		return S_OK;
 	}
@@ -642,7 +648,22 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragOver(DWORD grfKeyState,POINTL pt,DWORD 
 		*pdwEffect = DROPEFFECT_COPY;
 	}
 	else
+	{
 		*pdwEffect = DROPEFFECT_NONE;
+	}
+
+	if (*pdwEffect == DROPEFFECT_NONE) {
+		//DestroyDragImageBits();
+	} else {
+		if (mh_Overlapped && mp_Bits) {
+			POINT pt = {0};
+			GetCursorPos(&pt);
+			pt.x -= mp_Bits->nXCursor; pt.y -= mp_Bits->nYCursor;
+			MoveWindow(mh_Overlapped, pt.x, pt.y, mp_Bits->nWidth, mp_Bits->nHeight, 1);
+		} else if (mp_Bits) {
+			CreateDragImageWindow();
+		}
+	}
 
 	//gConEmu.DnDstep(_T("DnD: DragOver ok"));
 	return S_OK;
@@ -767,6 +788,7 @@ void CDragDrop::RetrieveDragToInfo(IDataObject * pDataObject)
 
 HRESULT STDMETHODCALLTYPE CDragDrop::DragLeave(void)
 {
+	DestroyDragImageBits();
 	return 0;
 }
 
@@ -1077,11 +1099,11 @@ void CDragDrop::LoadDragImageBits(IDataObject * pDataObject)
 	if (mb_selfdrag || mh_Overlapped)
 		return; // уже
 
+	if (mp_Bits) { free(mp_Bits); mp_Bits = NULL; }
+
 	STGMEDIUM stgMedium = { 0 };
 	FORMATETC fmtetc = { 0, 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
-	//HRESULT hr = S_OK;
 
-	// CF_HDROP в структуре отсутсвует!
 	fmtetc.cfFormat = RegisterClipboardFormat(L"DragImageBits");
 	TODO("А освобождать полученное надо?");
 	if (S_OK != pDataObject->GetData(&fmtetc, &stgMedium) || stgMedium.hGlobal == NULL) {
@@ -1093,6 +1115,29 @@ void CDragDrop::LoadDragImageBits(IDataObject * pDataObject)
 	DragImageBits* pInfo = (DragImageBits*)GlobalLock(stgMedium.hGlobal);
 	if (!pInfo) return; // Не удалось получить данные
 
+	DestroyDragImageBits();
+
+	int nCount = pInfo->nWidth * pInfo->nHeight;
+	mp_Bits = (DragImageBits*)calloc(sizeof(DragImageBits)+(nCount-1)*4,1);
+	if (mp_Bits) {
+		*mp_Bits = *pInfo;
+		memmove(mp_Bits->pix, pInfo->pix, nCount*4);
+		MCHKHEAP
+
+		// Собственно, создание (обновление?) окна с картинкой
+		CreateDragImageWindow();
+	}
+
+	// Освободим данные
+	GlobalUnlock(stgMedium.hGlobal);
+}
+
+BOOL CDragDrop::CreateDragImageWindow()
+{
+#ifndef _DEBUG
+	return FALSE;
+#endif
+
 	#define DRAGBITSCLASS L"ConEmuDragBits"
 	static BOOL bClassRegistered = FALSE;
 	if (!bClassRegistered) {
@@ -1100,27 +1145,220 @@ void CDragDrop::LoadDragImageBits(IDataObject * pDataObject)
 		DWORD dwLastError = 0;
 		#endif
 		HBRUSH hBackBrush = (HBRUSH)GetStockObject(WHITE_BRUSH);
-		WNDCLASS wc = {CS_OWNDC/*|CS_SAVEBITS*/, DragBitsWndProc, 0, 0, 
+		WNDCLASS wc = {0/*CS_OWNDC*/ /*CS_SAVEBITS*/, DragBitsWndProc, 0, 0, 
 				g_hInstance, NULL, NULL/*LoadCursor(NULL, IDC_ARROW)*/,
 				hBackBrush,  NULL, DRAGBITSCLASS};
 		if (!RegisterClass(&wc)) {
 			#ifdef _DEBUG
 			dwLastError = GetLastError();
 			#endif
-
-			GlobalUnlock(stgMedium.hGlobal);
-
 			// Ругаться не будем, чтобы драг не испортить
-			return;
+			return FALSE;
 		}
+		bClassRegistered = TRUE; // регистрировать класс один раз
 	}
+	
+	//mh_BitsDC = CreateCompatibleDC(NULL);
+	//if (!mh_BitsDC) {
+	//	return FALSE;
+	//}
+	//
+	////BITMAPINFOHEADER bmi = {sizeof(BITMAPINFOHEADER)};
+	////bmi.biWidth = pBits->nWidth; bmi.biHeight = pBits->nHeight;
+	////bmi.biPlanes = 1; bmi.biBitCount = 32; TODO("Оптимизировать для разрешения экрана?");
+	////bmi.biCompression = BI_RGB;
+	////bmi.biXPelsPerMeter = 96;
+	////bmi.biYPelsPerMeter = 96;
+	////LPBYTE ptr = (LPBYTE)calloc(bmi.biWidth*bmi.biHeight,3);
+	//LPBYTE pSrc = (LPBYTE)pBits->pix; //LPBYTE pDst = ptr; 
 
-	// CreateDIBitmap или SetDIBits
+	//BITMAPINFO bi; ZeroStruct(bi);
+	//bi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+	//bi.bmiHeader.biWidth = pBits->nWidth;
+	//bi.bmiHeader.biHeight = pBits->nHeight;
+	//bi.bmiHeader.biPlanes = 1;
+	//bi.bmiHeader.biBitCount = 24;
+	//bi.bmiHeader.biCompression = BI_RGB;
+	//bi.bmiHeader.biXPelsPerMeter = 96;
+	//bi.bmiHeader.biYPelsPerMeter = 96;
 
-	GlobalUnlock(stgMedium.hGlobal);
+	//LPBYTE pDst = NULL; mp_ImgData = NULL;
+	//mh_BitsBMP = CreateDIBSection(mh_BitsDC, &bi, DIB_RGB_COLORS, (void**)&pDst, NULL, 0);
+	//if (!mh_BitsBMP) {
+	//	DeleteDC(mh_BitsDC); mh_BitsDC = NULL;
+	//	return FALSE;
+	//}
+	//mp_ImgData = pDst;
+
+	int nCount = mp_Bits->nWidth * mp_Bits->nHeight;
+	//if (pDst) {
+	//	for (int i = 0; i < nCount; i++, pSrc+=4, pDst+=3)
+	//	{
+	//		pDst[0] = pSrc[0]; pDst[1] = pSrc[1]; pDst[2] = pSrc[2];
+	//	}
+	//}
+	
+	//if (mp_Bits) free(mp_Bits);
+	//mp_Bits = (DragImageBits*)calloc(sizeof(DragImageBits)+(nCount-1)*4,1);
+	//*mp_Bits = *pBits;
+	//memmove(mp_Bits->pix, pBits->pix, nCount*4);
+
+	//#ifdef _DEBUG
+	//HBITMAP hOldBM = (HBITMAP)
+	//#endif
+	//SelectObject(mh_BitsDC, mh_BitsBMP);
+
+	//BITMAPINFO bi; ZeroStruct(bi); bi.bmiHeader = bmi;
+	//bi.bmiHeader.biBitCount = 24;
+	//mh_BitsBMP = CreateDIBitmap(mh_BitsDC, &bmi, CBM_INIT, ptr, &bi, DIB_RGB_COLORS);
+	//free(ptr); ptr = NULL;
+	
+	#ifdef _DEBUG
+	//DumpImage(mh_BitsDC, pBits->nWidth, pBits->nHeight, L"F:\\DragImageBits.png");
+	//{
+	//	int iBitPerPixel = 32;
+	//	int iHdrSize = sizeof(BITMAPINFOHEADER);
+	//	int iScrWidth = pBits->nWidth;
+	//	int iScrHeight= pBits->nHeight;
+	//	int iWidth = iScrWidth;
+	//	int iHeight= iScrHeight;
+	//	int iMemSize = iWidth*iHeight*iBitPerPixel/8;
+	//	BITMAPFILEHEADER bfh;
+	//	bfh.bfType = 0x4D42; // 'MB';
+	//	bfh.bfSize = sizeof(BITMAPFILEHEADER)+iHdrSize+iMemSize;
+	//	bfh.bfReserved1=0;
+	//	bfh.bfReserved2=0;
+	//	bfh.bfOffBits=sizeof(BITMAPFILEHEADER)+iHdrSize;
+	//
+	//	DWORD dwSize = sizeof(bfh)+iHdrSize+iMemSize;
+	//	LPBYTE pScreen = (LPBYTE)LocalAlloc( LPTR, dwSize );
+	//	BOOL lbRc = FALSE;
+	//	if (pScreen) {
+	//		LPBYTE pPtr = pScreen;
+	//
+	//		memcpy(pPtr,&bfh,sizeof(bfh));
+	//		pPtr += sizeof(bfh);
+	//
+	//		memcpy(pPtr,&bi,iHdrSize);
+	//		pPtr += iHdrSize;
+	//
+	//		memcpy(pPtr,pBits->pix,iMemSize);
+	//		pPtr += iMemSize;
+	//
+	//		HANDLE hFile = CreateFile(L"F:\\DragImageBits.bmp", GENERIC_WRITE, FILE_SHARE_READ, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
+	//		if (hFile != INVALID_HANDLE_VALUE) {
+	//			DWORD dwWritten = 0;
+	//			lbRc = WriteFile(hFile, pScreen, dwSize, &dwWritten, 0);
+	//			CloseHandle(hFile);
+	//		}
+	//		LocalFree(pScreen);
+	//	}
+	//}
+	#endif
+
+	//m_ImgInfo = *pBits;
+	
+	POINT pt = {0};
+	//MapWindowPoints(ghWnd, NULL, &pt, 1);
+	GetCursorPos(&pt);
+	pt.x -= mp_Bits->nXCursor; pt.y -= mp_Bits->nYCursor;
+
+	mh_Overlapped = CreateWindowEx(
+		/*WS_EX_LAYERED|WS_EX_TRANSPARENT|*/WS_EX_PALETTEWINDOW|WS_EX_TOOLWINDOW|WS_EX_TOPMOST
+		/*0x000800A8/*WS_EX_LAYERED|WS_EX_TRANSPARENT|WS_EX_PALETTEWINDOW|WS_EX_TOOLWINDOW|WS_EX_TOPMOST*/,
+		DRAGBITSCLASS, L"Drag", 
+		WS_POPUP
+		/*0x94880000/*WS_POPUP*/,
+		pt.x, pt.y, mp_Bits->nWidth, mp_Bits->nHeight, ghWnd, NULL, g_hInstance, (LPVOID)this);
+	if (!mh_Overlapped) {
+		if (mh_BitsDC)  { DeleteDC(mh_BitsDC); mh_BitsDC = NULL; }
+		if (mh_BitsBMP) { DeleteObject(mh_BitsBMP); mh_BitsBMP = NULL; }
+		return NULL;
+	}
+	ShowWindow(mh_Overlapped, SW_SHOW);
+	UpdateWindow(mh_Overlapped);
+	
+	return TRUE;
 }
 
 LRESULT CDragDrop::DragBitsWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 {
-	return 0;
+	if (messg == WM_CREATE) {
+		SetWindowLongPtr(hWnd, GWLP_USERDATA, 
+			(LONG_PTR)((LPCREATESTRUCT)lParam)->lpCreateParams);
+		
+	} else
+	if (messg == WM_PAINT) {
+		CDragDrop *pDrag = (CDragDrop*)GetWindowLongPtr(hWnd, GWLP_USERDATA);
+		
+		PAINTSTRUCT ps = {0};
+		HDC hPaintDC = BeginPaint(hWnd, &ps);
+		//HDC hPaintDC = GetDC(hWnd);
+		//RECT rc = {0}; GetClientRect(hWnd, &rc);
+		//DWORD dwErr = 0;
+		//BOOL lbRc = BitBlt(hPaintDC, 0,0,pDrag->m_ImgInfo.nWidth,pDrag->m_ImgInfo.nHeight, pDrag->mh_BitsDC, 0,0, SRCCOPY);
+		//if (!lbRc) {
+		//	dwErr = GetLastError();
+		//}
+
+		MoveToEx(hPaintDC, 0, 0, NULL);
+		LineTo(hPaintDC, pDrag->mp_Bits->nWidth, pDrag->mp_Bits->nHeight);
+		MoveToEx(hPaintDC, pDrag->mp_Bits->nWidth, 0, NULL);
+		LineTo(hPaintDC, 0, pDrag->mp_Bits->nHeight);
+		
+		/*LPBYTE pSrc = (LPBYTE)pDrag->mp_Bits->pix; //LPBYTE pDst = ptr; 
+
+		BITMAPINFO bi; ZeroStruct(bi);
+		bi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+		bi.bmiHeader.biWidth = pDrag->mp_Bits->nWidth;
+		bi.bmiHeader.biHeight = pDrag->mp_Bits->nHeight;
+		bi.bmiHeader.biPlanes = 1;
+		bi.bmiHeader.biBitCount = 24;
+		bi.bmiHeader.biCompression = BI_RGB;
+		bi.bmiHeader.biXPelsPerMeter = 96;
+		bi.bmiHeader.biYPelsPerMeter = 96;
+
+		LPBYTE pDst = NULL;
+		HBITMAP hBMP = CreateDIBSection(hPaintDC, &bi, DIB_RGB_COLORS, (void**)&pDst, NULL, 0);
+		if (hBMP) {
+			HBITMAP hOld = (HBITMAP)SelectObject(hPaintDC, hBMP);
+			int nCount = pDrag->mp_Bits->nWidth * pDrag->mp_Bits->nHeight;
+			if (pDst) {
+				for (int i = 0; i < nCount; i++, pSrc+=4, pDst+=3)
+				{
+					pDst[0] = pSrc[0]; pDst[1] = pSrc[1]; pDst[2] = pSrc[2];
+				}
+			}
+			GdiFlush();
+			SelectObject(hPaintDC, hOld);
+			DeleteObject(hBMP);
+		}*/
+		
+		EndPaint(hWnd, &ps);
+		//ReleaseDC(hWnd, hPaintDC);
+		
+		return 0;
+	}
+	
+	return DefWindowProc(hWnd, messg, wParam, lParam);
+}
+
+void CDragDrop::DestroyDragImageBits()
+{
+	if (mh_Overlapped) {
+		DestroyWindow(mh_Overlapped);
+		mh_Overlapped = NULL;
+	}
+	if (mh_BitsDC)  {
+		DeleteDC(mh_BitsDC);
+		mh_BitsDC = NULL;
+	}
+	if (mh_BitsBMP) {
+		DeleteObject(mh_BitsBMP);
+		mh_BitsBMP = NULL;
+	}
+	/*if (mp_Bits) {
+		free(mp_Bits);
+		mp_Bits = NULL;
+	}*/
 }

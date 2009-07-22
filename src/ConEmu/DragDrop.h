@@ -51,10 +51,15 @@ protected:
 		DWORD nRes2; // всегда 0xffffffff
 		RGBQUAD pix[1];
 	} DragImageBits;
-	DragImageBits m_BitsInfo;
+	//DragImageBits m_BitsInfo;
 	HWND mh_Overlapped;
 	HDC mh_BitsDC;
 	HBITMAP mh_BitsBMP;
 	void LoadDragImageBits(IDataObject * pDataObject);
 	static LRESULT CALLBACK DragBitsWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
+	BOOL CreateDragImageWindow();
+	void DestroyDragImageBits();
+	//DragImageBits m_ImgInfo;
+	//LPBYTE mp_ImgData;
+	DragImageBits *mp_Bits;
 };
