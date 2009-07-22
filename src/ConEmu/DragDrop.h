@@ -55,10 +55,13 @@ protected:
 	HWND mh_Overlapped;
 	HDC mh_BitsDC;
 	HBITMAP mh_BitsBMP;
-	void LoadDragImageBits(IDataObject * pDataObject);
+	//int m_iBPP;
 	static LRESULT CALLBACK DragBitsWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 	BOOL CreateDragImageWindow();
+	void DestroyDragImageWindow();
+	BOOL LoadDragImageBits(IDataObject * pDataObject);
 	void DestroyDragImageBits();
+	void MoveDragWindow();
 	//DragImageBits m_ImgInfo;
 	//LPBYTE mp_ImgData;
 	DragImageBits *mp_Bits;
