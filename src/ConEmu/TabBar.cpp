@@ -108,7 +108,7 @@ void TabBarClass::Retrieve()
     //  DWORD cbWritten=0;
     //  if (pipe.Execute(CMD_REQTABS))
     //  {
-    //      gConEmu.DnDstep(_T("Tabs: Checking for plugin (1 sec)"));
+    //      gConEmu.DebugStep(_T("Tabs: Checking for plugin (1 sec)"));
     //      // Подождем немножко, проверим что плагин живой
     //      cbWritten = WaitForSingleObject(pipe.hEventAlive, CONEMUALIVETIMEOUT);
     //      if (cbWritten!=WAIT_OBJECT_0) {
@@ -116,20 +116,20 @@ void TabBarClass::Retrieve()
     //          wsprintf(szErr, _T("ConEmu plugin is not active!\r\nProcessID=%i"), pipe.nPID);
     //          MBoxA(szErr);
     //      } else {
-    //          gConEmu.DnDstep(_T("Tabs: Waiting for result (10 sec)"));
+    //          gConEmu.DebugStep(_T("Tabs: Waiting for result (10 sec)"));
     //          cbWritten = WaitForSingleObject(pipe.hEventReady, CONEMUREADYTIMEOUT);
     //          if (cbWritten!=WAIT_OBJECT_0) {
     //              TCHAR szErr[MAX_PATH];
     //              wsprintf(szErr, _T("Command waiting time exceeds!\r\nConEmu plugin is locked?\r\nProcessID=%i"), pipe.nPID);
     //              MBoxA(szErr);
     //          } else {
-    //              gConEmu.DnDstep(_T("Tabs: Recieving data"));
+    //              gConEmu.DebugStep(_T("Tabs: Recieving data"));
     //              DWORD cbBytesRead=0;
     //              int nTabCount=0;
     //              pipe.Read(&nTabCount, sizeof(nTabCount), &cbBytesRead);
 
     //              if (nTabCount<=0) {
-    //                  gConEmu.DnDstep(_T("Tabs: data empty"));
+    //                  gConEmu.DebugStep(_T("Tabs: data empty"));
     //                  this->Reset();
     //              } else {
     //                  COPYDATASTRUCT cds = {0};
@@ -138,7 +138,7 @@ void TabBarClass::Retrieve()
     //                  cds.lpData = pipe.GetPtr(); // хвост
 
     //                  gConEmu.OnCopyData(&cds);
-    //                  gConEmu.DnDstep(NULL);
+    //                  gConEmu.DebugStep(NULL);
     //              }
     //          }
     //      }

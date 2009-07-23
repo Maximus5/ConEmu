@@ -74,7 +74,8 @@ public:
     BYTE isDropEnabled;
     DWORD nLDragKey, nRDragKey;
     bool isDefCopy;
-    bool isDnDsteps;
+    //bool 
+    bool isDebugSteps;
     bool isGUIpb; // GUI Progress bars
     char isTabs; bool isTabSelf, isTabRecent, isTabLazy;
 	wchar_t *sTabCloseMacro;

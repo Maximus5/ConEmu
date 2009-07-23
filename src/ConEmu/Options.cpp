@@ -198,7 +198,7 @@ void CSettings::InitSettings()
     
 	isRSelFix = true; isMouseSkipActivation = true; isMouseSkipMoving = true;
     isDragEnabled = DRAG_L_ALLOWED; isDropEnabled = (BYTE)1;
-    nLDragKey = 0; nRDragKey = VK_LCONTROL; isDnDsteps = true; isDefCopy = true;
+    nLDragKey = 0; nRDragKey = VK_LCONTROL; isDebugSteps = true; isDefCopy = true;
     MCHKHEAP
 }
 
@@ -236,14 +236,14 @@ void CSettings::LoadSettings()
 		reg.Load(_T("ConVisible"), isConVisible);
 		//reg.Load(_T("DumpPackets"), szDumpPackets);
 		
+		reg.Load(L"AutoRegisterFonts", isAutoRegisterFonts);
+		
 		if (reg.Load(L"FontName", inFont))
 			mb_Name1Ok = TRUE;
         if (reg.Load(L"FontName2", inFont2))
         	mb_Name2Ok = TRUE;
         if (!mb_Name1Ok || !mb_Name2Ok)
         	isAutoRegisterFonts = true;
-        else
-			reg.Load(L"AutoRegisterFonts", isAutoRegisterFonts);
         
         reg.Load(_T("CmdLine"), &psCmd);
         reg.Load(_T("Multi"), isMulti);
@@ -354,7 +354,7 @@ void CSettings::LoadSettings()
         reg.Load(_T("DndRKey"), nRDragKey);
         reg.Load(_T("DndDrop"), isDropEnabled);
         reg.Load(_T("DefCopy"), isDefCopy);
-        reg.Load(_T("DndSteps"), isDnDsteps);
+        reg.Load(_T("DebugSteps"), isDebugSteps);
         reg.Load(_T("GUIpb"), isGUIpb);
         reg.Load(_T("Tabs"), isTabs);
 	        reg.Load(_T("TabSelf"), isTabSelf);
@@ -563,6 +563,9 @@ BOOL CSettings::SaveSettings()
 				reg.Save(_T("Multi.NewConfirm"), isMultiNewConfirm);
             reg.Save(_T("FontName"), LogFont.lfFaceName);
             reg.Save(_T("FontName2"), LogFont2.lfFaceName);
+            bool lbTest = isAutoRegisterFonts; // Если в реестре настройка есть, или изменилось значение
+            if (reg.Load(L"AutoRegisterFonts", lbTest) || isAutoRegisterFonts != lbTest)
+            	reg.Save(L"AutoRegisterFonts", isAutoRegisterFonts);
 
             reg.Save(_T("BackGround Image"), sBgImage);
             reg.Save(_T("bgImageDarker"), bgImageDarker);
@@ -595,6 +598,7 @@ BOOL CSettings::SaveSettings()
             reg.Save(_T("DndRKey"), nRDragKey);
             reg.Save(_T("DndDrop"), isDropEnabled);
             reg.Save(_T("DefCopy"), isDefCopy);
+            reg.Save(_T("DebugSteps"), isDebugSteps);
 
             reg.Save(_T("GUIpb"), isGUIpb);
 
@@ -973,6 +977,8 @@ LRESULT CSettings::OnInitDialog_Ext()
 	if (isRClickSendKey) CheckDlgButton(hExt, cbRClick, (isRClickSendKey==1) ? BST_CHECKED : BST_INDETERMINATE);
 	if (isSentAltEnter) CheckDlgButton(hExt, cbSendAE, BST_CHECKED);
 	if (isMinToTray) CheckDlgButton(hExt, cbMinToTray, BST_CHECKED);
+	if (isAutoRegisterFonts) CheckDlgButton(hExt, cbAutoRegFonts, BST_CHECKED);
+	if (isDebugSteps) CheckDlgButton(hExt, cbDebugSteps, BST_CHECKED);
 
 	if (isDragEnabled) {
 		//CheckDlgButton(hExt, cbDragEnabled, BST_CHECKED);
@@ -995,6 +1001,7 @@ LRESULT CSettings::OnInitDialog_Ext()
 		SendDlgItemMessage(hExt, lbLDragKey, CB_SETCURSEL, numL, 0);
 		SendDlgItemMessage(hExt, lbRDragKey, CB_SETCURSEL, numR, 0);
 	}
+	
 
 
 	if (isTabs)
@@ -1271,6 +1278,14 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
     case cbMinToTray:
         isMinToTray = IsChecked(hExt, cbMinToTray);
         break;
+        
+    case cbAutoRegFonts:
+    	isAutoRegisterFonts = IsChecked(hExt, cbAutoRegFonts);
+    	break;
+    	
+    case cbDebugSteps:
+    	isDebugSteps = IsChecked(hExt, cbDebugSteps);
+    	break;
 
     case cbDragL:
     case cbDragR:

@@ -629,7 +629,7 @@ void CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec)
 #endif
 	if (dwTID == 0) {
 		//_ASSERTE(dwTID!=0);
-		gConEmu.DnDstep(L"ConEmu: Input thread id is NULL");
+		gConEmu.DebugStep(L"ConEmu: Input thread id is NULL");
 		return;
 	}
 	
@@ -680,11 +680,11 @@ void CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec)
 			} else {
 	    		wchar_t szErr[100];
 	    		wsprintfW(szErr, L"ConEmu: PostThreadMessage(%i) failed, code=0x%08X", dwTID, dwErr);
-	    		gConEmu.DnDstep(szErr);
+	    		gConEmu.DebugStep(szErr);
 			}
 	    }
     } else {
-    	gConEmu.DnDstep(L"ConEmu: PackInputRecord failed!");
+    	gConEmu.DebugStep(L"ConEmu: PackInputRecord failed!");
     }
 }
 
@@ -2869,7 +2869,7 @@ void CRealConsole::ProcessUpdate(DWORD *apPID, UINT anCount)
             DWORD dwErr = GetLastError();
             wchar_t szError[255];
             wsprintf(szError, L"Can't create process snapshoot, ErrCode=0x%08X", dwErr);
-            gConEmu.DnDstep(szError);
+            gConEmu.DebugStep(szError);
             
         } else {
             //Snapshoot создан, поехали

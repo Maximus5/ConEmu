@@ -761,7 +761,7 @@ bool CVirtualConsole::Update(bool isForce, HDC *ahDc)
     ///| Read console output and cursor info... |/////////////////////////////
     //------------------------------------------------------------------------
     if (!UpdatePrepare(isForce, ahDc, &SDC)) {
-        gConEmu.DnDstep(_T("DC initialization failed!"));
+        gConEmu.DebugStep(_T("DC initialization failed!"));
         return false;
     }
     

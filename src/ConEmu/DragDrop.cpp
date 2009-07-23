@@ -274,7 +274,7 @@ HRESULT CDragDrop::DropFromStream(IDataObject * pDataObject, BOOL abActive)
 			MBoxA(_T("Drag object does not contains known medium!"));
 		}
 		GlobalUnlock(hDesc);
-		gConEmu.DnDstep(NULL);
+		gConEmu.DebugStep(NULL);
 		return S_OK;
 	}
 	// Outlook 2k передает ANSI!
@@ -311,7 +311,7 @@ HRESULT CDragDrop::DropFromStream(IDataObject * pDataObject, BOOL abActive)
 			MBoxA(_T("Drag object does not contains known medium!"));
 		}
 		GlobalUnlock(hDesc);
-		gConEmu.DnDstep(NULL);
+		gConEmu.DebugStep(NULL);
 		return S_OK;
 	}
 
@@ -480,7 +480,7 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop (IDataObject * pDataObject,DWORD grfKe
 		return S_OK; // ничего нет, выходим
 	}
 
-	gConEmu.DnDstep(_T("DnD: Drop starting"));
+	gConEmu.DebugStep(_T("DnD: Drop starting"));
 
 	if (lbDropFileNamesOnly) {
 		hr = DropNames(hDrop, iQuantity, lbActive);
@@ -530,7 +530,7 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop (IDataObject * pDataObject,DWORD grfKe
 			sfop->fop.wFunc=FO_COPY;
 
 		//sfop->fop.fFlags=FOF_SIMPLEPROGRESS; -- пусть полностью показывает
-		gConEmu.DnDstep(_T("DnD: Shell operation starting"));
+		gConEmu.DebugStep(_T("DnD: Shell operation starting"));
 
 		ThInfo th;
 		th.hThread = CreateThread(NULL, 0, CDragDrop::ShellOpThreadProc, sfop, 0, &th.dwThreadId);
@@ -542,7 +542,7 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop (IDataObject * pDataObject,DWORD grfKe
 			LeaveCriticalSection(&m_CrThreads);
 		}
 		
-		gConEmu.DnDstep(NULL);
+		gConEmu.DebugStep(NULL);
 	}
 	return S_OK; //1;
 }
@@ -594,7 +594,7 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragOver(DWORD grfKeyState,POINTL pt,DWORD 
 	HRESULT hr = S_OK;
 	if (!gSet.isDropEnabled && !gConEmu.isDragging()) {
 		*pdwEffect = DROPEFFECT_NONE;
-		gConEmu.DnDstep(_T("DnD: Drop disabled"));
+		gConEmu.DebugStep(_T("DnD: Drop disabled"));
 		hr = S_FALSE;
 	} else
 	if (m_pfpi==NULL) {
@@ -602,7 +602,7 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragOver(DWORD grfKeyState,POINTL pt,DWORD 
 	} else {
 		TODO("Если drop идет ПОД панели - впечатать путь в командную строку");
 
-		//gConEmu.DnDstep(_T("DnD: DragOver starting"));
+		//gConEmu.DebugStep(_T("DnD: DragOver starting"));
 
 		POINT ptCur; ptCur.x = pt.x; ptCur.y = pt.y;
 		#ifdef _DEBUG
@@ -660,7 +660,7 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragOver(DWORD grfKeyState,POINTL pt,DWORD 
 		CreateDragImageWindow();
 	}
 
-	//gConEmu.DnDstep(_T("DnD: DragOver ok"));
+	//gConEmu.DebugStep(_T("DnD: DragOver ok"));
 	return hr;
 }
 
@@ -739,7 +739,7 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragEnter(IDataObject * pDataObject,DWORD g
 			CreateDragImageWindow();
 
 	} else {
-		gConEmu.DnDstep(_T("DnD: Drop disabled"));
+		gConEmu.DebugStep(_T("DnD: Drop disabled"));
 	}
 	return 0;
 }
@@ -748,7 +748,7 @@ void CDragDrop::RetrieveDragToInfo(IDataObject * pDataObject)
 {
 	CConEmuPipe pipe(gConEmu.GetFarPID(), CONEMUREADYTIMEOUT);
 
-	gConEmu.DnDstep(_T("DnD: DragEnter starting"));
+	gConEmu.DebugStep(_T("DnD: DragEnter starting"));
 
 	if (pipe.Init(_T("CDragDrop::DragEnter")))
 	{
@@ -779,7 +779,7 @@ void CDragDrop::RetrieveDragToInfo(IDataObject * pDataObject)
 			}
 		}
 	}
-	gConEmu.DnDstep(NULL);
+	gConEmu.DebugStep(NULL);
 }
 
 HRESULT STDMETHODCALLTYPE CDragDrop::DragLeave(void)
@@ -843,7 +843,7 @@ HRESULT CDragDrop::CreateLink(LPCTSTR lpszPathObj, LPCTSTR lpszPathLink, LPCTSTR
 void CDragDrop::Drag()
 {
 	if (!gSet.isDragEnabled /*|| isInDrag */|| gConEmu.isDragging()) {
-		gConEmu.DnDstep(_T("DnD: Drag disabled"));
+		gConEmu.DebugStep(_T("DnD: Drag disabled"));
 		return;
 	}
 
@@ -860,7 +860,7 @@ void CDragDrop::Drag()
 		//DWORD cbWritten=0;
 		if (pipe.Execute(CMD_DRAGFROM))
 		{
-					gConEmu.DnDstep(_T("DnD: Recieving data"));
+					gConEmu.DebugStep(_T("DnD: Recieving data"));
 					DWORD cbBytesRead=0;
 					int nWholeSize=0;
 					pipe.Read(&nWholeSize, sizeof(nWholeSize), &cbBytesRead); 
@@ -874,11 +874,11 @@ void CDragDrop::Drag()
 					MCHKHEAP
 
 					if (nWholeSize<=0) {
-						gConEmu.DnDstep(_T("DnD: Data is empty"));
+						gConEmu.DebugStep(_T("DnD: Data is empty"));
 					}
 					else
 					{
-						gConEmu.DnDstep(_T("DnD: Recieving data..."));
+						gConEmu.DebugStep(_T("DnD: Recieving data..."));
 						wchar_t *szDraggedPath=NULL; //ASCIIZZ
 						szDraggedPath=new wchar_t[nWholeSize/*(MAX_PATH+1)*FilesCount*/+1];	
 						ZeroMemory(szDraggedPath, /*((MAX_PATH+1)*FilesCount+1)*/(nWholeSize+1)*sizeof(wchar_t));
@@ -999,7 +999,7 @@ void CDragDrop::Drag()
 								hr = -1;
 							}
 							if (hr == -1) {
-								gConEmu.DnDstep(_T("DnD: Exception in shell"));
+								gConEmu.DebugStep(_T("DnD: Exception in shell"));
 								return;
 							}
 						}
@@ -1070,8 +1070,8 @@ void CDragDrop::Drag()
 						if (!m_pfpi) // если это уже не сделали
 							RetrieveDragToInfo(mp_DataObject);
 						
-						//gConEmu.DnDstep(_T("DnD: Finally, DoDragDrop"));
-						gConEmu.DnDstep(NULL);
+						//gConEmu.DebugStep(_T("DnD: Finally, DoDragDrop"));
+						gConEmu.DebugStep(NULL);
 
 						MCHKHEAP
 						

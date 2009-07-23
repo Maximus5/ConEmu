@@ -1199,9 +1199,9 @@ void CConEmuMain::ReSize(BOOL abCorrect2Ideal /*= FALSE*/)
 			m_Child.Redraw();
 
 			//#ifdef _DEBUG
-			//DnDstep(L"...Sleeping");
+			//DebugStep(L"...Sleeping");
 			//Sleep(300);
-			//DnDstep(NULL);
+			//DebugStep(NULL);
 			//#endif
 
 			MoveWindow(ghWnd, rcWnd.left, rcWnd.top, 
@@ -2025,9 +2025,9 @@ void CConEmuMain::EnableComSpec(BOOL abSwitch)
 	}
 }
 
-void CConEmuMain::DnDstep(LPCTSTR asMsg)
+void CConEmuMain::DebugStep(LPCTSTR asMsg)
 {
-    if ((gSet.isDnDsteps && ghWnd) || !asMsg)
+    if ((gSet.isDebugSteps && ghWnd) || !asMsg)
         SetWindowText(ghWnd, asMsg ? asMsg : Title);
 }
 
@@ -2179,9 +2179,9 @@ void CConEmuMain::PostMacro(LPCWSTR asMacro)
     if (pipe.Init(_T("CConEmuMain::PostMacro"), TRUE))
     {
         //DWORD cbWritten=0;
-        DnDstep(_T("Macro: Waiting for result (10 sec)"));
+        DebugStep(_T("Macro: Waiting for result (10 sec)"));
         pipe.Execute(CMD_POSTMACRO, asMacro, (wcslen(asMacro)+1)*2);
-        DnDstep(NULL);
+        DebugStep(NULL);
     }
 }
 
@@ -3825,7 +3825,7 @@ LRESULT CConEmuMain::OnLangChange(UINT messg, WPARAM wParam, LPARAM lParam)
         //{
         //  if (pipe.Execute(CMD_LANGCHANGE, &lParam, sizeof(LPARAM)))
         //  {
-        //      //gConEmu.DnDstep(_T("ConEmu: Switching language (1 sec)"));
+        //      //gConEmu.DebugStep(_T("ConEmu: Switching language (1 sec)"));
         //      // Подождем немножко, проверим что плагин живой
         //      /*DWORD dwWait = WaitForSingleObject(pipe.hEventAlive, CONEMUALIVETIMEOUT);
         //      if (dwWait == WAIT_OBJECT_0)*/
@@ -4059,7 +4059,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
         if ((gSet.isDragEnabled & (mouse.state & (DRAG_L_ALLOWED|DRAG_R_ALLOWED)))!=0)
         {
 			if (mp_DragDrop==NULL) {
-				DnDstep(_T("DnD: Drag-n-Drop is null"));
+				DebugStep(_T("DnD: Drag-n-Drop is null"));
 			} else {
 				mouse.bIgnoreMouseMove = true;
 
@@ -4077,7 +4077,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 					// Если сначала фокус был на файловой панели, но после LClick он попал на НЕ файловую - отменить ShellDrag
 					bool bFilePanel = isFilePanel();
 					if (!bFilePanel) {
-						DnDstep(_T("DnD: not file panel"));
+						DebugStep(_T("DnD: not file panel"));
 						//isLBDown = false; 
 						mouse.state &= ~(DRAG_L_ALLOWED | DRAG_L_STARTED | DRAG_R_ALLOWED | DRAG_R_STARTED);
 						mouse.bIgnoreMouseMove = false;
@@ -4108,12 +4108,12 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 					// Иначе иногда срабатывает FAR'овский D'n'D
 					//SENDMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( newX, newY ));     //посылаем консоли отпускание
 					if (mp_DragDrop) {
-						DnDstep(_T("DnD: Drag-n-Drop starting"));
+						DebugStep(_T("DnD: Drag-n-Drop starting"));
 						mp_DragDrop->Drag(); //сдвинулись при зажатой левой
-						DnDstep(Title); // вернуть заголовок
+						DebugStep(Title); // вернуть заголовок
 					} else {
 						_ASSERTE(mp_DragDrop); // должно быть обработано выше
-						DnDstep(_T("DnD: Drag-n-Drop is null"));
+						DebugStep(_T("DnD: Drag-n-Drop is null"));
 					}
 					mouse.bIgnoreMouseMove = false;
 	                

@@ -191,7 +191,7 @@ public:
 	CVirtualConsole* CreateCon(RConStartArgs *args);
 	BOOL CreateMainWindow();
 	void Destroy();
-	void DnDstep(LPCTSTR asMsg);
+	void DebugStep(LPCTSTR asMsg);
 	void EnableComSpec(BOOL abSwitch);
 	void ForceShowTabs(BOOL abShow);
 	DWORD GetActiveKeyboardLayout();
