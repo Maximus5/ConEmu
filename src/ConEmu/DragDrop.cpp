@@ -667,9 +667,9 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragOver(DWORD grfKeyState,POINTL pt,DWORD 
 #ifdef MSGLOGGER
 void CDragDrop::EnumDragFormats(IDataObject * pDataObject)
 {
-	if (!mb_selfdrag)
-		return;
-		
+	BOOL lbDoEnum = FALSE;
+	if (!lbDoEnum) return;
+
 	HRESULT hr = S_OK;
 	IEnumFORMATETC *pEnum = NULL;
 	FORMATETC fmt[20];
@@ -1091,6 +1091,11 @@ void CDragDrop::Drag()
 	//isDragProcessed=false; -- иначе при бросании в пассивную панель больших файлов дроп может вызваться еще раз???
 }
 
+BOOL CDragDrop::CreateDragImageBits(IDataObject * pDataObject)
+{
+	return FALSE;
+}
+
 BOOL CDragDrop::LoadDragImageBits(IDataObject * pDataObject)
 {
 	if (mb_selfdrag || mh_Overlapped)
@@ -1104,6 +1109,9 @@ BOOL CDragDrop::LoadDragImageBits(IDataObject * pDataObject)
 
 	fmtetc.cfFormat = RegisterClipboardFormat(L"DragImageBits");
 	TODO("А освобождать полученное надо?");
+	if (S_OK != pDataObject->QueryGetData(&fmtetc)) {
+		return FALSE; // Формат отсутствует
+	}
 	if (S_OK != pDataObject->GetData(&fmtetc, &stgMedium) || stgMedium.hGlobal == NULL) {
 		return FALSE; // Формат отсутствует
 	}

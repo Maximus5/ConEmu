@@ -2646,6 +2646,17 @@ void ProcessInputMessage(MSG &msg)
 				== (r.Event.KeyEvent.dwControlKeyState & CTRL_MODIFIERS))
 				)
 			{
+				#ifdef _DEBUG
+					SafeCloseHandle(ghConIn);
+					SafeCloseHandle(ghConOut);
+					Sleep(100);
+					// Дескрипторы
+					ghConIn  = CreateFile(L"CONIN$", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_READ,
+						0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+					// Дескрипторы
+					ghConOut = CreateFile(L"CONOUT$", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_READ,
+						0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+				#endif
 				// Вроде работает, Главное не запускать процесс с флагом CREATE_NEW_PROCESS_GROUP
 				// иначе у микрософтовской консоли (WinXP SP3) сносит крышу, и она реагирует
 				// на Ctrl-Break, но напрочь игнорирует Ctrl-C
@@ -2691,6 +2702,9 @@ DWORD WINAPI InputThread(LPVOID lpvParam)
 			if (WaitForSingleObject(ghExitEvent, 0) == WAIT_OBJECT_0) break;
 		}
 
+		if (msg.message == WM_NULL) {
+			continue;
+		} else
 		if (msg.message == INPUT_THREAD_ALIVE_MSG) {
 			//pRCon->mn_FlushOut = msg.wParam;
 			TODO("INPUT_THREAD_ALIVE_MSG");

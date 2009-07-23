@@ -86,7 +86,7 @@ std::vector<HANDLE> ghCommandThreads;
 //DWORD  gnServerThreadsId[MAX_SERVER_THREADS] = {0,0,0};
 HANDLE ghServerTerminateEvent = NULL;
 HANDLE ghPluginSemaphore = NULL;
-wchar_t gsFarLang[64];
+wchar_t gsFarLang[64] = {0};
 BOOL FindServerCmd(DWORD nServerCmd, DWORD &dwServerPID);
 SECURITY_ATTRIBUTES* gpNullSecurity = NULL;
 
@@ -1565,19 +1565,28 @@ void   WINAPI _export ExitFARW(void)
 
 void CheckResources()
 {
-	wchar_t szTitle[1024] = {0};
-	GetConsoleTitleW(szTitle, 1024);
-	SetConsoleTitleW(L"ConEmu: CheckResources started");
-	
+	if (gsFarLang[0]) {
+		static DWORD dwLastTickCount = GetTickCount();
+		DWORD dwCurTick = GetTickCount();
+		if ((dwCurTick - dwLastTickCount) < 5000)
+			return;
+		dwLastTickCount = dwCurTick;
+	}
+
 	wchar_t szLang[64];
 	GetEnvironmentVariable(L"FARLANG", szLang, 63);
-	if (lstrcmpW(szLang, gsFarLang))
+	if (lstrcmpW(szLang, gsFarLang)) {
+		wchar_t szTitle[1024] = {0};
+		GetConsoleTitleW(szTitle, 1024);
+		SetConsoleTitleW(L"ConEmu: CheckResources started");
+
 		InitResources();
 		
-	DWORD dwServerPID = 0;
-	FindServerCmd(CECMD_FARLOADED, dwServerPID);
-	
-	SetConsoleTitleW(szTitle);
+		DWORD dwServerPID = 0;
+		FindServerCmd(CECMD_FARLOADED, dwServerPID);
+
+		SetConsoleTitleW(szTitle);
+	}
 }
 
 // Передать в ConEmu строки с ресурсами

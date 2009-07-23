@@ -694,7 +694,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="comctl32.lib Shlwapi.lib version.lib gdiplus.lib"
-				OutputFile="F:\VCProject\FarPlugin\#FAR175\ConEmu.exe"
+				OutputFile="\\MAX2K3\c$\Program Files\FAR\ConEmu.exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
 				GenerateMapFile="true"

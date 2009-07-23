@@ -60,6 +60,7 @@ protected:
 	BOOL CreateDragImageWindow();
 	void DestroyDragImageWindow();
 	BOOL LoadDragImageBits(IDataObject * pDataObject);
+	BOOL CreateDragImageBits(IDataObject * pDataObject);
 	void DestroyDragImageBits();
 	void MoveDragWindow();
 	//DragImageBits m_ImgInfo;
