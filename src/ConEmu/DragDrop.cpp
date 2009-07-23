@@ -1157,7 +1157,7 @@ BOOL CDragDrop::LoadDragImageBits(IDataObject * pDataObject)
 				GdiFlush();
 
 				int nBits = GetDeviceCaps(mh_BitsDC, BITSPIXEL);
-				_ASSERTE(nBits == 32);
+				//_ASSERTE(nBits == 32);
 
 				lbRc = TRUE;
 			}
