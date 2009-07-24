@@ -1745,10 +1745,37 @@ void CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 #endif
 
     if (mb_ConsoleSelectMode && messg == WM_KEYDOWN && ((wParam == VK_ESCAPE) || (wParam == VK_RETURN)))
+    {
         mb_ConsoleSelectMode = false; //TODO: может как-то по другому определять?
+    }
+    
 
     // Основная обработка 
     {
+    
+		if (wParam == VK_MENU && (messg == WM_KEYUP || messg == WM_SYSKEYUP)) {
+			// При быстром нажатии Alt-Tab (переключение в другое окно)
+			// в консоль проваливается {press Alt/release Alt}
+			// В результате, может выполниться макрос, повешенный на Alt.
+			if (!gConEmu.isMeForeground()) {
+				if (/*isPressed(VK_MENU) &&*/ !isPressed(VK_CONTROL) && !isPressed(VK_SHIFT)) {
+					INPUT_RECORD r = {KEY_EVENT};
+				
+					r.Event.KeyEvent.bKeyDown = TRUE;
+	                r.Event.KeyEvent.wVirtualKeyCode = VK_TAB;
+					r.Event.KeyEvent.wVirtualScanCode = MapVirtualKey(VK_TAB, 0/*MAPVK_VK_TO_VSC*/);
+					r.Event.KeyEvent.dwControlKeyState = 0x22;
+					r.Event.KeyEvent.uChar.UnicodeChar = 9;
+					PostConsoleEvent(&r);
+	                
+	                //On Keyboard(hConWnd, WM_KEYUP, VK_TAB, 0);
+					r.Event.KeyEvent.bKeyDown = FALSE;
+					r.Event.KeyEvent.dwControlKeyState = 0x20;
+					PostConsoleEvent(&r);
+				}
+			}
+		}
+    
         if (messg == WM_SYSKEYDOWN) 
             if (wParam == VK_INSERT && lParam & (1<<29)/*Бред. это 29-й бит, а не число 29*/)
                 mb_ConsoleSelectMode = true;
@@ -1982,12 +2009,14 @@ void CRealConsole::OnWinEvent(DWORD event, HWND hwnd, LONG idObject, LONG idChil
 DWORD CRealConsole::ServerThread(LPVOID lpvParam) 
 { 
     CRealConsole *pRCon = (CRealConsole*)lpvParam;
+	CVirtualConsole *pVCon = pRCon->mp_VCon;
     BOOL fConnected = FALSE;
     DWORD dwErr = 0;
     HANDLE hPipe = NULL; 
     HANDLE hWait[2] = {NULL,NULL};
     DWORD dwTID = GetCurrentThreadId();
 
+	_ASSERTE(pVCon!=NULL);
     _ASSERTE(pRCon->hConWnd!=NULL);
     _ASSERTE(pRCon->ms_VConServer_Pipe[0]!=0);
     _ASSERTE(pRCon->mh_ServerSemaphore!=NULL);
@@ -2065,23 +2094,14 @@ DWORD CRealConsole::ServerThread(LPVOID lpvParam)
             // сразу сбросим, чтобы не забыть
             fConnected = FALSE;
             // разрешить другой нити принять вызов
-            ReleaseSemaphore(pRCon->mh_ServerSemaphore, 1, NULL);
+            ReleaseSemaphore(hWait[1], 1, NULL);
             
-            /*{ // Запустить новый серверный пайп. Этот instance будет закрыт после обработки команды.
-                DWORD dwServerTID = 0;
-                HANDLE hThread = CreateThread(NULL, 0, ServerThread, (LPVOID)pRCon, 0, &dwServerTID);
-                _ASSERTE(hThread!=NULL);
-                SafeCloseHandle(hThread);
-            }*/
-
-            //ServerThreadCommandArg* pArg = (ServerThreadCommandArg*)calloc(sizeof(ServerThreadCommandArg),1);
-            //pArg->pRCon = pRCon;
-            //pArg->hPipe = hPipe;
-            pRCon->ServerThreadCommand ( hPipe ); // При необходимости - записывает в пайп результат сама
-            //DWORD dwCommandTID = 0;
-            //HANDLE hCommandThread = CreateThread(NULL, 0, ServerThreadCommand, (LPVOID)pArg, 0, &dwCommandTID);
-            //_ASSERTE(hCommandThread!=NULL);
-            //SafeCloseHandle(hCommandThread);
+			if (gConEmu.isValid(pVCon)) {
+				_ASSERTE(pVCon==pRCon->mp_VCon);
+	            pRCon->ServerThreadCommand ( hPipe ); // При необходимости - записывает в пайп результат сама
+			} else {
+				_ASSERT(FALSE);
+			}
         }
 
         FlushFileBuffers(hPipe); 
@@ -2262,7 +2282,7 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 					pIn->StartStopRet.nWidth = cr16bit.X;
 					pIn->StartStopRet.nHeight = cr16bit.Y;
             	} else {
-            		if (gSet.DefaultBufferHeight)
+            		if (gSet.DefaultBufferHeight && nSubSystem != 0x100)
 						pIn->StartStopRet.nBufferHeight = gSet.DefaultBufferHeight;
 					else
 						pIn->StartStopRet.nBufferHeight = 0;

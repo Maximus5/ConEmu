@@ -20,6 +20,7 @@ public:
 	bool mb_selfdrag;
 	ForwardedPanelInfo *m_pfpi;
 	HRESULT CreateLink(LPCTSTR lpszPathObj, LPCTSTR lpszPathLink, LPCTSTR lpszDesc);
+	BOOL InDragDrop();
 protected:
 	BOOL mb_DragDropRegistered;
 	void RetrieveDragToInfo(IDataObject * pDataObject);

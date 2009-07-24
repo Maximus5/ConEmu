@@ -3539,7 +3539,7 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
         
         UnRegisterHotKeys();
     }
-
+    
     if (gSet.isSkipFocusEvents)
         return 0;
         
@@ -3782,6 +3782,18 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
             }
         }
     }
+
+	if (wParam == VK_ESCAPE) {
+		if (mp_DragDrop->InDragDrop())
+			return 0;
+		static bool bEscPressed = false;
+		if (messg != WM_KEYUP)
+			bEscPressed = true;
+		else if (!bEscPressed)
+			return 0;
+		else
+			bEscPressed = false;
+	}
 
     if (pVCon) {
         pVCon->RCon()->OnKeyboard(hWnd, messg, wParam, lParam, szTranslatedChars);

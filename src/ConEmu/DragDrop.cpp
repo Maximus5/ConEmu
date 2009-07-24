@@ -321,16 +321,21 @@ HRESULT CDragDrop::DropFromStream(IDataObject * pDataObject, BOOL abActive)
 
 HRESULT CDragDrop::DropNames(HDROP hDrop, int iQuantity, BOOL abActive)
 {
-	wchar_t szMacro[MAX_DROP_PATH*2+30];
+	wchar_t szMacro[MAX_DROP_PATH*2+50];
+	wchar_t szData[MAX_DROP_PATH*2+10];
 	wchar_t* pszText = NULL;
 	// -- HRESULT hr = S_OK;
 	DWORD dwStartTick = GetTickCount();
 	#define OPER_TIMEOUT 5000
+	BOOL lbAddGoto = isPressed(VK_MENU);
+	BOOL lbAddEdit = isPressed(VK_CONTROL);
+	BOOL lbAddView = isPressed(VK_SHIFT);
 
 	for ( int i = 0 ; i < iQuantity; i++ )
 	{
-		wcscpy(szMacro, L"$Text      ");
-		pszText = szMacro + wcslen(szMacro);
+		wcscpy(szMacro, L"$Text ");
+		wcscpy(szData,  L"         ");
+		pszText = szData + wcslen(szData);
 
 		int nLen = DragQueryFile(hDrop,i,pszText,MAX_DROP_PATH);
 		if (nLen <= 0 || nLen >= MAX_DROP_PATH) continue;
@@ -352,13 +357,22 @@ HRESULT CDragDrop::DropNames(HDROP hDrop, int iQuantity, BOOL abActive)
 
 		if ((psz = wcschr(pszText, L' ')) != NULL) {
 			// Имя нужно окавычить
-			pszText[-3] = L'\"'; pszText[-2] = L'\\'; pszText[-1] = L'\"';
-			wcscat(pszText, L"\\\" \"");
-		} else {
-			// А тут кавычки только для макроса $Text
-			pszText[-1] = L'\"';
-			wcscat(pszText, L" \"");
+			*(--pszText) = L'\"';
+			*(--pszText) = L'\\';
+			wcscat(pszText, L"\\\"");
 		}
+		wcscat(szMacro, L"\"");
+		if (lbAddGoto || lbAddEdit || lbAddView) {
+			if (lbAddGoto)
+				wcscat(szMacro, L"goto:");
+			if (lbAddEdit)
+				wcscat(szMacro, L"edit:");
+			if (lbAddView)
+				wcscat(szMacro, L"view:");
+			lbAddGoto = FALSE; lbAddEdit = FALSE; lbAddView = FALSE;
+		}
+		wcscat(szMacro, pszText);
+		wcscat(szMacro, L" \"");
 
 		gConEmu.PostMacro(szMacro);
 
@@ -1215,9 +1229,10 @@ BOOL CDragDrop::CreateDragImageWindow()
 
 	int nCount = mp_Bits->nWidth * mp_Bits->nHeight;
 	
+	// |WS_BORDER|WS_SYSMENU - создает проводник. попробуем?
 	mh_Overlapped = CreateWindowEx(
 		WS_EX_LAYERED|WS_EX_TRANSPARENT|WS_EX_PALETTEWINDOW|WS_EX_TOOLWINDOW|WS_EX_TOPMOST,
-		DRAGBITSCLASS, L"Drag", WS_POPUP|WS_VISIBLE|WS_CLIPSIBLINGS,
+		DRAGBITSCLASS, L"Drag", WS_POPUP|WS_VISIBLE|WS_CLIPSIBLINGS|WS_BORDER|WS_SYSMENU,
 		0, 0, mp_Bits->nWidth, mp_Bits->nHeight, ghWnd, NULL, g_hInstance, (LPVOID)this);
 	if (!mh_Overlapped) {
 		DestroyDragImageBits();
@@ -1250,6 +1265,8 @@ void CDragDrop::MoveDragWindow()
 	BOOL bRet = UpdateLayeredWindow(mh_Overlapped, NULL, &p, &sz, mh_BitsDC, &p2, 0, 
 		&bf, /*m_iBPP == 32 ?*/ ULW_ALPHA /*: ULW_OPAQUE*/);
 	_ASSERTE(bRet);
+	
+	//SetForegroundWindow(ghWnd); // после создания окна фокус уходит из GUI
 }
 
 void CDragDrop::DestroyDragImageWindow()
@@ -1266,7 +1283,17 @@ LRESULT CDragDrop::DragBitsWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 		SetWindowLongPtr(hWnd, GWLP_USERDATA, 
 			(LONG_PTR)((LPCREATESTRUCT)lParam)->lpCreateParams);
 		
+	} else if (messg == WM_SETFOCUS) {
+		SetForegroundWindow(ghWnd); // после создания окна фокус уходит из GUI
+		return 0;
 	}
 	
 	return DefWindowProc(hWnd, messg, wParam, lParam);
+}
+
+BOOL CDragDrop::InDragDrop()
+{
+	if (mp_DataObject || mh_Overlapped)
+		return TRUE;
+	return FALSE;
 }

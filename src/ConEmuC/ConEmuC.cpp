@@ -1430,6 +1430,10 @@ void SendStarted()
 		gnImageSubsystem = 0;
         LPCWSTR pszTemp = gpszRunCmd;
         wchar_t lsRoot[MAX_PATH+1] = {0};
+		if (!gpszRunCmd) {
+			// Аттач из фар-плагина
+			gnImageSubsystem = 0x100;
+		} else
         if (0 == NextArg(&pszTemp, lsRoot)) {
         	PRINT_COMSPEC(L"Starting: <%s>", lsRoot);
         	if (!GetImageSubsystem(lsRoot, gnImageSubsystem))

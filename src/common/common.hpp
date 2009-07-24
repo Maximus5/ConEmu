@@ -217,7 +217,7 @@ typedef struct tag_CESERVER_REQ_STARTSTOP {
 	DWORD nStarted; // 0 - ServerStart, 1 - ServerStop, 2 - ComspecStart, 3 - ComspecStop
 	HWND  hWnd; // при передаче В GUI - консоль, при возврате в консоль - GUI
 	DWORD dwPID, dwInputTID;
-	DWORD nSubSystem; // 255 для DOS программ
+	DWORD nSubSystem; // 255 для DOS программ, 0x100 - аттач из FAR плагина
 	// А это приходит из консоли, вдруго консольная программа успела поменять размер буфера
 	CONSOLE_SCREEN_BUFFER_INFO sbi;
 } CESERVER_REQ_STARTSTOP;
