@@ -46,7 +46,7 @@ protected:
 	} ShlOpInfo;
 	static DWORD WINAPI ShellOpThreadProc(LPVOID lpParameter);
 	typedef struct tag_DragImageBits {
-		DWORD nWidth, nHeight;
+		DWORD nWidth, nHeight; // XP max 301x301
 		DWORD nXCursor, nYCursor; // Позиция курсора захвата, относительно драгнутой картинки
 		DWORD nRes1; // тут какой-то мусор - заняты все байты DWORD'а
 		DWORD nRes2; // всегда 0xffffffff
@@ -62,6 +62,8 @@ protected:
 	void DestroyDragImageWindow();
 	BOOL LoadDragImageBits(IDataObject * pDataObject);
 	BOOL CreateDragImageBits(IDataObject * pDataObject);
+	DragImageBits* CreateDragImageBits(wchar_t* pszFiles);
+	BOOL DrawImageBits ( HDC hDrawDC, wchar_t* pszFile, int *nMaxX, int *nMaxY );
 	void DestroyDragImageBits();
 	void MoveDragWindow();
 	//DragImageBits m_ImgInfo;

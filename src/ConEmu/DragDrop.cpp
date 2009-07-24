@@ -1025,6 +1025,11 @@ void CDragDrop::Drag()
 						DROPFILES drop_struct = { sizeof(drop_struct), { 0, 0 }, 0, 1 };
 					    
 						HGLOBAL drop_data = GlobalAlloc(GPTR, size+sizeof(drop_struct));
+						_ASSERTE(drop_data);
+						if (!drop_data) {
+							gConEmu.DebugStep(_T("DnD: Memory allocation failed!"));
+							return;
+						}
 						memcpy(drop_data, &drop_struct, sizeof(drop_struct));
 
 						memcpy(((byte*)drop_data) + sizeof(drop_struct), szDraggedPath, size);
@@ -1044,20 +1049,24 @@ void CDragDrop::Drag()
 						HGLOBAL drag_loop = GlobalAlloc(GPTR, sizeof(DWORD));
 						*((DWORD*)drag_loop) = 1;
 
+						DragImageBits *pDragBits = CreateDragImageBits ( (wchar_t*)(((byte*)drop_data) + sizeof(drop_struct)) );
+
 						DWORD           dwEffect;
 						DWORD           dwResult;
 						FORMATETC       fmtetc[] = {
 							{ CF_HDROP, 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL },
 							{ RegisterClipboardFormat(CFSTR_PREFERREDDROPEFFECT), 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL },
-							{ RegisterClipboardFormat(_T("InShellDragLoop")), 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL },
+							{ RegisterClipboardFormat(L"InShellDragLoop"), 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL },
+							{ RegisterClipboardFormat(L"DragImageBits"), 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL },
 							// Эти должны идти последними
 							{ RegisterClipboardFormat(CFSTR_SHELLIDLIST), 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL},
-							{ RegisterClipboardFormat(_T("FileNameW")), 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL }
+							{ RegisterClipboardFormat(L"FileNameW"), 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL }
 						};
 						STGMEDIUM       stgmed[] = {
 							{ TYMED_HGLOBAL, { (HBITMAP)drop_data }, 0 }, //чтобы не морочиться с последующими присвоениями
 							{ TYMED_HGLOBAL, { (HBITMAP)drop_preferredeffect }, 0 },
 							{ TYMED_HGLOBAL, { (HBITMAP)drag_loop }, 0 },
+							{ TYMED_HGLOBAL, { (HBITMAP)pDragBits }, 0 },
 							// Эти должны идти последними, нужны только для создания ярлыков с нажатым Alt
 							{ TYMED_HGLOBAL, { (HBITMAP)file_PIDLs }, 0},
 							{ TYMED_HGLOBAL, { (HBITMAP)file_nameW }, 0 }
@@ -1069,6 +1078,11 @@ void CDragDrop::Drag()
 						MCHKHEAP
 
 						int nCount = sizeof(fmtetc)/sizeof(*fmtetc);
+						if (!pDragBits) {
+							nCount --;
+							stgmed[nCount-2] = stgmed[nCount-1]; fmtetc[nCount-2] = fmtetc[nCount-1];
+							stgmed[nCount-1] = stgmed[nCount];   fmtetc[nCount-1] = fmtetc[nCount];
+						}
 						if (!file_PIDLs) nCount -= 2;
 						CreateDataObject(fmtetc, stgmed, nCount, &mp_DataObject) ;//   |   Посмотреть ниже... 
 						
@@ -1108,6 +1122,154 @@ void CDragDrop::Drag()
 BOOL CDragDrop::CreateDragImageBits(IDataObject * pDataObject)
 {
 	return FALSE;
+}
+
+CDragDrop::DragImageBits* CDragDrop::CreateDragImageBits(wchar_t* pszFiles)
+{
+	DragImageBits* pBits = NULL;
+
+	HDC hScreenDC = ::GetDC(0);
+	HDC hDrawDC = CreateCompatibleDC(hScreenDC);
+	HBITMAP hBitmap = CreateCompatibleBitmap(hScreenDC, 300, 300);
+	HBITMAP hOldBitmap = (HBITMAP)SelectObject(hDrawDC, hBitmap);
+
+	if (hDrawDC && hBitmap) {
+		SelectObject ( hDrawDC, (HFONT)GetStockObject(SYSTEM_FONT) );
+		SetTextColor(hDrawDC, 0);
+		SetBkColor(hDrawDC, RGB(192,192,192));
+		SetBkMode(hDrawDC, OPAQUE);
+
+		int nMaxX = 0, nMaxY = 0;
+		while (*pszFiles) {
+			if (!DrawImageBits ( hDrawDC, pszFiles, &nMaxX, &nMaxY ))
+				break; // вышли за пределы 300x300 (по высоте)
+
+			pszFiles += lstrlen(pszFiles)+1;
+		}
+		GdiFlush();
+		#ifdef _DEBUG
+		DumpImage(hDrawDC, nMaxX, nMaxY, L"F:\\Dump.bmp");
+		#endif
+
+		if (nMaxX && nMaxY) {
+			HDC hBitsDC = CreateCompatibleDC(hScreenDC);
+			if (hBitsDC && hDrawDC) {
+				SetLayout(hBitsDC, LAYOUT_BITMAPORIENTATIONPRESERVED);
+
+				BITMAPINFO *bih = (BITMAPINFO*)calloc(sizeof(BITMAPINFOHEADER)+sizeof(DWORD)*3,1);
+				if (bih) {
+					bih->bmiHeader.biWidth = nMaxX;
+					bih->bmiHeader.biHeight = nMaxY;
+					bih->bmiHeader.biPlanes = 1;
+					bih->bmiHeader.biBitCount = 24;
+					bih->bmiHeader.biCompression = BI_RGB;
+					bih->bmiColors[0].rgbRed = 0xFF;
+					bih->bmiColors[1].rgbGreen = 0xFF;
+					bih->bmiColors[2].rgbBlue = 0xFF;
+					/*((DWORD*)bih->bmiColors)[0] = 0x000000FF;
+					((DWORD*)bih->bmiColors)[1] = 0x0000FF00;
+					((DWORD*)bih->bmiColors)[2] = 0x00FF0000;*/
+
+					DragImageBits* pDst = (DragImageBits*)GlobalAlloc(GPTR, sizeof(DragImageBits) + (nMaxX*nMaxY - 1)*4);
+					LPBYTE pSrc = (LPBYTE)(pDst->pix);
+					DWORD dwRc = GetDIBits(hDrawDC, hBitmap, 0, nMaxY, NULL/*&pSrc*/, bih, DIB_RGB_COLORS);
+					dwRc = GetLastError();
+
+
+					
+					HBITMAP hBitsBMP = CreateDIBSection(hScreenDC, bih, DIB_RGB_COLORS, (void**)&pSrc, NULL, 0);
+					dwRc = GetLastError();
+					if (hBitsBMP && pSrc) {
+						HBITMAP hOld = (HBITMAP)SelectObject(hBitsDC, hBitsBMP);
+						BitBlt(hBitsDC, 0,0,nMaxX,nMaxY, hDrawDC,0,0, SRCCOPY);
+
+						MCHKHEAP
+
+						mp_Bits = (DragImageBits*)GlobalAlloc(GPTR, sizeof(DragImageBits));
+						if (pDst && mp_Bits) {
+							DWORD *pdwDst = (DWORD*)(pDst->pix);
+							LPBYTE pdwSrc = (LPBYTE)pSrc;
+							DWORD dw = 0;
+							for (int y = 0; y < nMaxY; y++) {
+								LPBYTE pdwLine = pdwSrc;
+								for (int x = 0; x < nMaxX; x++) {
+									dw = 0xFF000000;
+									dw |= (*(pdwSrc++));
+									dw |= (*(pdwSrc++)) << 8;
+									dw |= (*(pdwSrc++)) << 16;
+									*(pdwDst++) = dw;
+								}
+								pdwSrc += nMaxX;
+							}
+							pBits = pDst; pDst = NULL;
+						} else {
+							if (pDst) GlobalFree(pDst); pDst = NULL;
+							if (mp_Bits) GlobalFree(mp_Bits); mp_Bits = NULL;
+						}
+						MCHKHEAP
+
+						SelectObject(hBitsDC, hOld);
+						DeleteObject(hBitsBMP);
+					}
+					free(bih); bih = NULL;
+				}
+			}
+			if (hBitsDC) {
+				DeleteDC(hBitsDC); hBitsDC = NULL;
+			}
+		}
+
+		SelectObject(hDrawDC, hOldBitmap);
+	}
+	if (hDrawDC) {
+		DeleteDC(hDrawDC); hDrawDC = NULL;
+	}
+	if (hBitmap) {
+		DeleteObject(hBitmap); hBitmap = NULL;
+	}
+	if (hScreenDC) {
+		::ReleaseDC(0, hScreenDC);
+		hScreenDC = NULL;
+	}
+
+	return pBits;
+}
+
+BOOL CDragDrop::DrawImageBits ( HDC hDrawDC, wchar_t* pszFile, int *nMaxX, int *nMaxY )
+{
+	if ( (*nMaxY + 17) >= 300 )
+		return FALSE;
+	SHFILEINFO sfi = {0};
+	DWORD nDrawRC = 0;
+	UINT cbSize = sizeof(sfi);
+	DWORD_PTR shRc = SHGetFileInfo ( pszFile, 0, &sfi, cbSize, 
+		SHGFI_ATTRIBUTES|SHGFI_DISPLAYNAME|SHGFI_ICON/*|SHGFI_SELECTED*/|SHGFI_SMALLICON|SHGFI_TYPENAME);
+
+	
+
+	if (shRc) {
+		nDrawRC = DrawIconEx(hDrawDC, 0, *nMaxY, sfi.hIcon, 16, 16, 0, NULL, DI_NORMAL);
+		pszFile = sfi.szDisplayName;
+	} else {
+		// Нарисовать стандартную иконку?
+	}
+
+	RECT rcText = {18, *nMaxY, 300, (*nMaxY + 16)};
+	SIZE sz = {0};
+	GetTextExtentPoint32(hDrawDC, pszFile, lstrlen(pszFile), &sz);
+	rcText.right = min((19+sz.cx), 300);
+	nDrawRC = DrawTextEx(hDrawDC, pszFile, lstrlen(pszFile), &rcText, 
+		DT_LEFT|DT_TOP|DT_NOPREFIX|DT_PATH_ELLIPSIS|DT_SINGLELINE, NULL);
+
+	if (*nMaxX < rcText.right)
+		*nMaxX = min(rcText.right,300);
+	if (*nMaxY < rcText.bottom)
+		*nMaxY = min(rcText.bottom,300);
+
+	if (sfi.hIcon) {
+		DestroyIcon(sfi.hIcon); sfi.hIcon = NULL;
+	}
+	return TRUE;
 }
 
 BOOL CDragDrop::LoadDragImageBits(IDataObject * pDataObject)
@@ -1264,7 +1426,7 @@ void CDragDrop::MoveDragWindow()
 
 	BOOL bRet = UpdateLayeredWindow(mh_Overlapped, NULL, &p, &sz, mh_BitsDC, &p2, 0, 
 		&bf, /*m_iBPP == 32 ?*/ ULW_ALPHA /*: ULW_OPAQUE*/);
-	_ASSERTE(bRet);
+	//_ASSERTE(bRet);
 	
 	//SetForegroundWindow(ghWnd); // после создания окна фокус уходит из GUI
 }

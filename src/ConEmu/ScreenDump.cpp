@@ -1,6 +1,6 @@
 
 #ifdef _DEBUG
-#define PNGDUMP
+//#define PNGDUMP
 #endif
 
 #include <windows.h>
