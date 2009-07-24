@@ -1135,9 +1135,11 @@ CDragDrop::DragImageBits* CDragDrop::CreateDragImageBits(wchar_t* pszFiles)
 
 	if (hDrawDC && hBitmap) {
 		SelectObject ( hDrawDC, (HFONT)GetStockObject(SYSTEM_FONT) );
-		SetTextColor(hDrawDC, 0);
+		SetTextColor(hDrawDC, RGB(0,0,128));
 		SetBkColor(hDrawDC, RGB(192,192,192));
 		SetBkMode(hDrawDC, OPAQUE);
+		HFONT hOldF = NULL, hf = CreateFont(14, 0, 0, 0, 400, 0, 0, 0, CP_ACP, 0, 0, 0, 0, L"Tahoma");
+		if (hf) hOldF = (HFONT)SelectObject ( hDrawDC, hf );
 
 		int nMaxX = 0, nMaxY = 0;
 		while (*pszFiles) {
@@ -1146,72 +1148,61 @@ CDragDrop::DragImageBits* CDragDrop::CreateDragImageBits(wchar_t* pszFiles)
 
 			pszFiles += lstrlen(pszFiles)+1;
 		}
+		SelectObject ( hDrawDC, hOldF );
 		GdiFlush();
 		#ifdef _DEBUG
 		DumpImage(hDrawDC, nMaxX, nMaxY, L"F:\\Dump.bmp");
 		#endif
 
-		if (nMaxX && nMaxY) {
+		if (nMaxX>2 && nMaxY>2) {
 			HDC hBitsDC = CreateCompatibleDC(hScreenDC);
 			if (hBitsDC && hDrawDC) {
 				SetLayout(hBitsDC, LAYOUT_BITMAPORIENTATIONPRESERVED);
 
-				BITMAPINFO *bih = (BITMAPINFO*)calloc(sizeof(BITMAPINFOHEADER)+sizeof(DWORD)*3,1);
-				if (bih) {
-					bih->bmiHeader.biWidth = nMaxX;
-					bih->bmiHeader.biHeight = nMaxY;
-					bih->bmiHeader.biPlanes = 1;
-					bih->bmiHeader.biBitCount = 24;
-					bih->bmiHeader.biCompression = BI_RGB;
-					bih->bmiColors[0].rgbRed = 0xFF;
-					bih->bmiColors[1].rgbGreen = 0xFF;
-					bih->bmiColors[2].rgbBlue = 0xFF;
-					/*((DWORD*)bih->bmiColors)[0] = 0x000000FF;
-					((DWORD*)bih->bmiColors)[1] = 0x0000FF00;
-					((DWORD*)bih->bmiColors)[2] = 0x00FF0000;*/
+				BITMAPINFOHEADER bih = {sizeof(BITMAPINFOHEADER)};
+				bih.biWidth = nMaxX-1;
+				bih.biHeight = nMaxY;
+				bih.biPlanes = 1;
+				bih.biBitCount = 24;
+				bih.biCompression = BI_RGB;
+				LPBYTE pSrc = NULL;
+				HBITMAP hBitsBitmap = CreateDIBSection(hScreenDC, (BITMAPINFO*)&bih, DIB_RGB_COLORS, (void**)&pSrc, NULL, 0);
+				if (hBitsBitmap) {
+					HBITMAP hOldBitsBitmap = (HBITMAP)SelectObject(hBitsDC, hBitsBitmap);
+
+					BitBlt(hBitsDC, 0,0,nMaxX-1,nMaxY, hDrawDC,0,0, SRCCOPY);
+					GdiFlush();
 
 					DragImageBits* pDst = (DragImageBits*)GlobalAlloc(GPTR, sizeof(DragImageBits) + (nMaxX*nMaxY - 1)*4);
-					LPBYTE pSrc = (LPBYTE)(pDst->pix);
-					DWORD dwRc = GetDIBits(hDrawDC, hBitmap, 0, nMaxY, NULL/*&pSrc*/, bih, DIB_RGB_COLORS);
-					dwRc = GetLastError();
 
+					if (pDst) {
+						pDst->nWidth = nMaxX;
+						pDst->nHeight = nMaxY;
+						pDst->nXCursor = nMaxX / 2;
+						pDst->nYCursor = nMaxY / 2;
+						pDst->nRes1 = GetTickCount(); // что-то непонятное. Random?
+						pDst->nRes2 = 0xFFFFFFFF;
 
-					
-					HBITMAP hBitsBMP = CreateDIBSection(hScreenDC, bih, DIB_RGB_COLORS, (void**)&pSrc, NULL, 0);
-					dwRc = GetLastError();
-					if (hBitsBMP && pSrc) {
-						HBITMAP hOld = (HBITMAP)SelectObject(hBitsDC, hBitsBMP);
-						BitBlt(hBitsDC, 0,0,nMaxX,nMaxY, hDrawDC,0,0, SRCCOPY);
-
-						MCHKHEAP
-
-						mp_Bits = (DragImageBits*)GlobalAlloc(GPTR, sizeof(DragImageBits));
-						if (pDst && mp_Bits) {
-							DWORD *pdwDst = (DWORD*)(pDst->pix);
-							LPBYTE pdwSrc = (LPBYTE)pSrc;
-							DWORD dw = 0;
-							for (int y = 0; y < nMaxY; y++) {
-								LPBYTE pdwLine = pdwSrc;
-								for (int x = 0; x < nMaxX; x++) {
-									dw = 0xFF000000;
-									dw |= (*(pdwSrc++));
-									dw |= (*(pdwSrc++)) << 8;
-									dw |= (*(pdwSrc++)) << 16;
-									*(pdwDst++) = dw;
-								}
-								pdwSrc += nMaxX;
+						RGBQUAD *pRGB = pDst->pix;
+						for (int y = 0; y < nMaxY; y++) {
+							for (int x = 0; x < nMaxX; x++) {
+								pRGB->rgbRed = *(pSrc++);
+								pRGB->rgbGreen = *(pSrc++);
+								pRGB->rgbBlue = *(pSrc++);
+								if ( *((DWORD*)pRGB) != 0 )
+									pRGB->rgbReserved = 0x60;
+								pRGB++;
 							}
-							pBits = pDst; pDst = NULL;
-						} else {
-							if (pDst) GlobalFree(pDst); pDst = NULL;
-							if (mp_Bits) GlobalFree(mp_Bits); mp_Bits = NULL;
 						}
-						MCHKHEAP
 
-						SelectObject(hBitsDC, hOld);
-						DeleteObject(hBitsBMP);
+						pBits = pDst; pDst = NULL; //OK
+
+					} else {
+						if (pDst) GlobalFree(pDst); pDst = NULL;
 					}
-					free(bih); bih = NULL;
+
+					SelectObject(hBitsDC, hOldBitsBitmap);
+					DeleteObject(hBitsBitmap); hBitsBitmap = NULL;
 				}
 			}
 			if (hBitsDC) {
@@ -1254,7 +1245,7 @@ BOOL CDragDrop::DrawImageBits ( HDC hDrawDC, wchar_t* pszFile, int *nMaxX, int *
 		// Нарисовать стандартную иконку?
 	}
 
-	RECT rcText = {18, *nMaxY, 300, (*nMaxY + 16)};
+	RECT rcText = {18, *nMaxY+1, 300, (*nMaxY + 16)};
 	SIZE sz = {0};
 	GetTextExtentPoint32(hDrawDC, pszFile, lstrlen(pszFile), &sz);
 	rcText.right = min((19+sz.cx), 300);
@@ -1274,7 +1265,7 @@ BOOL CDragDrop::DrawImageBits ( HDC hDrawDC, wchar_t* pszFile, int *nMaxX, int *
 
 BOOL CDragDrop::LoadDragImageBits(IDataObject * pDataObject)
 {
-	if (mb_selfdrag || mh_Overlapped)
+	if (/*mb_selfdrag ||*/ mh_Overlapped)
 		return FALSE; // уже
 
 	DestroyDragImageBits();
@@ -1296,6 +1287,8 @@ BOOL CDragDrop::LoadDragImageBits(IDataObject * pDataObject)
 	if (!nInfoSize) return FALSE; // пусто
 	DragImageBits* pInfo = (DragImageBits*)GlobalLock(stgMedium.hGlobal);
 	if (!pInfo) return FALSE; // Не удалось получить данные
+	_ASSERTE(pInfo->nWidth>0 && pInfo->nWidth<=400);
+	_ASSERTE(pInfo->nHeight>0 && pInfo->nHeight<=400);
 	if (nInfoSize != (sizeof(DragImageBits)+(pInfo->nWidth * pInfo->nHeight - 1)*4)) {
 		_ASSERT(FALSE); // Неизвестный формат?
 		return FALSE;
