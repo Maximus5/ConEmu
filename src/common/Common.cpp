@@ -178,6 +178,9 @@ BOOL UnpackInputRecord(const MSG* piMsg, INPUT_RECORD* pRec)
 {
 	_ASSERTE(piMsg!=NULL && pRec!=NULL);
 	memset(pRec, 0, sizeof(INPUT_RECORD));
+
+	if (piMsg->message == 0)
+		return FALSE;
 	
 	if (piMsg->message == WM_KEYDOWN || piMsg->message == WM_KEYUP) {
 		pRec->EventType = KEY_EVENT;

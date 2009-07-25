@@ -1201,16 +1201,18 @@ DragImageBits* CDragDrop::CreateDragImageBits(wchar_t* pszFiles)
 
 						
 						MyRgbQuad *pRGB = (MyRgbQuad*)pDst->pix;
+						u32 nCurBlend = 0xAA, nAllBlend = 0xAA;
 						for (int y = 0; y < nMaxY; y++) {
 							for (int x = 0; x < nMaxX; x++) {
-								pRGB->rgbBlue =
-									*(pSrc++);
-								pRGB->rgbGreen =
-									*(pSrc++);
-								pRGB->rgbRed =
-									*(pSrc++);
-								if ( pRGB->dwValue )
-									pRGB->rgbAlpha = 0xAA;
+								pRGB->rgbBlue = *(pSrc++);
+								pRGB->rgbGreen = *(pSrc++);
+								pRGB->rgbRed = *(pSrc++);
+								if ( pRGB->dwValue ) {
+									pRGB->rgbBlue = klMulDivU32(pRGB->rgbBlue, nCurBlend, 0xFF);
+									pRGB->rgbGreen = klMulDivU32(pRGB->rgbGreen, nCurBlend, 0xFF);
+									pRGB->rgbRed = klMulDivU32(pRGB->rgbRed, nCurBlend, 0xFF);
+									pRGB->rgbAlpha = nAllBlend;
+								}
 								pRGB++;
 							}
 						}
@@ -1248,16 +1250,6 @@ DragImageBits* CDragDrop::CreateDragImageBits(wchar_t* pszFiles)
 
 BOOL CDragDrop::DrawImageBits ( HDC hDrawDC, wchar_t* pszFile, int *nMaxX, int *nMaxY )
 {
-//#ifdef _DEBUG
-//	*nMaxX = 100; *nMaxY = 18;
-//	RECT rc = MakeRect(*nMaxX,*nMaxY);
-//	HBRUSH hbr = CreateSolidBrush(RGB(0,0,255));
-//	FillRect(hDrawDC, &rc, hbr);
-//	DeleteObject(hbr);
-//	return FALSE;
-//#endif
-
-
 	if ( (*nMaxY + 17) >= 300 )
 		return FALSE;
 	SHFILEINFO sfi = {0};

@@ -398,11 +398,15 @@ int WINAPI _export ProcessViewerEvent(int Event, void *Param)
 	return 0;
 }
 
+extern MSection csTabs;
+
 void UpdateConEmuTabsA(int event, bool losingFocus, bool editorSave, void *Param/*=NULL*/)
 {
 	if (!InfoA) return;
 
 	CheckResources();
+
+	MSectionLock SC; SC.Lock(&csTabs);
 
     BOOL lbCh = FALSE;
 	WindowInfo WInfo;
@@ -483,7 +487,7 @@ void UpdateConEmuTabsA(int event, bool losingFocus, bool editorSave, void *Param
 	}
 	*/
 
-	SendTabs(tabCount, FALSE, lbCh);
+	SendTabs(tabCount, lbCh && (gnReqCommand==(DWORD)-1));
 }
 
 void   WINAPI _export ExitFAR(void)

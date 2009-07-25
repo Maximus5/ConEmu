@@ -2385,9 +2385,8 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
             SetTabs(NULL, 1);
         } else {
             _ASSERTE(nDataSize>=4);
-            int nTabCount = (nDataSize-4) / sizeof(ConEmuTab);
-            _ASSERTE((nTabCount*sizeof(ConEmuTab))==(nDataSize-4));
-            SetTabs((ConEmuTab*)(pIn->Data+4), nTabCount);
+            _ASSERTE((pIn->Tabs.nTabCount*sizeof(ConEmuTab))==(nDataSize-4));
+            SetTabs(pIn->Tabs.tabs, pIn->Tabs.nTabCount);
         }
 
     } else if (pIn->hdr.nCmd == CECMD_GETOUTPUTFILE) {

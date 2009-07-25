@@ -2705,10 +2705,8 @@ DWORD WINAPI InputThread(LPVOID lpvParam)
 		if (ghExitEvent) {
 			if (WaitForSingleObject(ghExitEvent, 0) == WAIT_OBJECT_0) break;
 		}
+		if (msg.message == 0) continue;
 
-		if (msg.message == WM_NULL) {
-			continue;
-		} else
 		if (msg.message == INPUT_THREAD_ALIVE_MSG) {
 			//pRCon->mn_FlushOut = msg.wParam;
 			TODO("INPUT_THREAD_ALIVE_MSG");

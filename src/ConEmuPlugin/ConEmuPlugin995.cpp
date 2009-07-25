@@ -408,7 +408,7 @@ void UpdateConEmuTabsW995(int event, bool losingFocus, bool editorSave, void* Pa
 	//OutputDebugStringW(szDbg);
 #endif
 
-	SendTabs(tabCount, FALSE, lbCh);
+	SendTabs(tabCount, lbCh && (gnReqCommand==(DWORD)-1));
 }
 
 void ExitFARW995(void)

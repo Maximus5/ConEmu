@@ -59,7 +59,7 @@ FarVersion gFarVersion;
 WCHAR gszDir1[CONEMUTABMAX], gszDir2[CONEMUTABMAX];
 WCHAR gszRootKey[MAX_PATH*2];
 int maxTabCount = 0, lastWindowCount = 0, gnCurTabCount = 0;
-ConEmuTab* tabs = NULL; //(ConEmuTab*) Alloc(maxTabCount, sizeof(ConEmuTab));
+CESERVER_REQ* gpTabs = NULL; //(ConEmuTab*) Alloc(maxTabCount, sizeof(ConEmuTab));
 LPBYTE gpData = NULL, gpCursor = NULL;
 CESERVER_REQ* gpCmdRet = NULL;
 DWORD  gnDataSize=0;
@@ -71,7 +71,8 @@ BOOL gbCmdCallObsolete = FALSE;
 LPVOID gpReqCommandData = NULL;
 HANDLE ghReqCommandEvent = NULL;
 UINT gnMsgTabChanged = 0;
-CRITICAL_SECTION csTabs, csData;
+CRITICAL_SECTION csData;
+MSection csTabs;
 WCHAR gcPlugKey=0;
 BOOL  gbPlugKeyChanged=FALSE;
 HKEY  ghRegMonitorKey=NULL; HANDLE ghRegMonitorEvt=NULL;
@@ -343,8 +344,9 @@ BOOL IsKeyChanged(BOOL abAllowReload)
 WARNING("Обязательно сделать возможность отваливаться по таймауту, если плагин не удалось активировать");
 // Проверку можно сделать чтением буфера ввода - если там еще есть событие отпускания F11 - значит
 // меню плагинов еще загружается. Иначе можно еще чуть-чуть подождать, и отваливаться - активироваться не получится
-void ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData)
+CESERVER_REQ* ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData)
 {
+	CESERVER_REQ* pCmdRet = NULL;
 	if (gpCmdRet) Free(gpCmdRet);
 	gpCmdRet = NULL; gpData = NULL; gpCursor = NULL;
 
@@ -360,7 +362,7 @@ void ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData)
 		DWORD dwWait = WaitForMultipleObjects(2, hEvents, FALSE, INFINITE);
 		if (dwWait == WAIT_OBJECT_0) {
 			// Плагин завершается
-			return;
+			return NULL;
 		}
 
 		gnReqCommand = nCmd; gnPluginOpenFrom = -1;
@@ -412,7 +414,7 @@ void ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData)
 
 		gpReqCommandData = NULL;
 		gnReqCommand = -1; gnPluginOpenFrom = -1;
-		return;
+		return NULL;
 	}
 	
 	/*if (gbPlugKeyChanged) {
@@ -460,14 +462,17 @@ void ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData)
 				if (pCommandData!=NULL)
 					nTab = *((DWORD*)pCommandData);
 
-				if (gFarVersion.dwVerMajor==1)
+				if (gFarVersion.dwVerMajor==1) {
 					SetWindowA(nTab);
-				else if (gFarVersion.dwBuild>=FAR_Y_VER)
-					FUNC_Y(SetWindow)(nTab);
-				else
-					FUNC_X(SetWindow)(nTab);
+				} else {
+					if (gFarVersion.dwBuild>=FAR_Y_VER)
+						FUNC_Y(SetWindow)(nTab);
+					else
+						FUNC_X(SetWindow)(nTab);
+				}
 			}
-			SendTabs(gnCurTabCount, TRUE, TRUE);
+			//SendTabs(gnCurTabCount, FALSE); // Обновить размер передаваемых данных
+			pCmdRet = gpTabs;
 			break;
 		}
 		case (CMD_POSTMACRO):
@@ -483,6 +488,11 @@ void ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData)
 
 	if (ghReqCommandEvent)
 		SetEvent(ghReqCommandEvent);
+
+	if (!pCmdRet)
+		pCmdRet = gpCmdRet;
+
+	return pCmdRet;
 }
 
 // Эту нить нужно оставить, чтобы была возможность отобразить консоль при падении ConEmu
@@ -596,7 +606,7 @@ DWORD WINAPI MonitorThreadProcW(LPVOID lpParameter)
 						//	// Закрыть хэндлы
 						//	CloseHandle(pi.hProcess); CloseHandle(pi.hThread);
 						//	// Хорошо бы сразу Табы обновить...
-						//	SendTabs(gnCurTabCount, TRUE);
+						//	Send Tabs(gnCurTabCount, TRUE);
 						//	continue;
 						//} else {
 						//	// Пользователь отказался, выходим из нити обработки
@@ -654,12 +664,12 @@ DWORD WINAPI MonitorThreadProcW(LPVOID lpParameter)
 		//{
 		//	case (WAIT_OBJECT_0+CMD_REQTABS):
 		//	{
-		//		/*if (!gnCurTabCount || !tabs) {
+		//		/*if (!gnCurTabCount || !gpTabs) {
 		//			CreateTabs(1);
 		//			int nTabs=0; --низзя! это теперь идет через CriticalSection
 		//			AddTab(nTabs, false, false, WTYPE_PANELS, 0,0,1,0); 
 		//		}*/
-		//		SendTabs(gnCurTabCount, TRUE);
+		//		Send Tabs(gnCurTabCount, TRUE);
 		//		// пересылка тоже обычным образом
 		//		//// исключение - запрос табов. он асинхронный
 		//		//continue;
@@ -760,6 +770,7 @@ DWORD WINAPI MonitorThreadProcW(LPVOID lpParameter)
 
 BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount)
 {
+	_ASSERTE(nCount>0);
 	BOOL fSuccess = FALSE;
 
 	if (!ghConIn) {
@@ -823,6 +834,7 @@ DWORD WINAPI InputThreadProcW(LPVOID lpParameter)
 		if (ghServerTerminateEvent) {
 			if (WaitForSingleObject(ghServerTerminateEvent, 0) == WAIT_OBJECT_0) return 0;
 		}
+		if (msg.message == 0) continue;
 
 		if (msg.message == INPUT_THREAD_ALIVE_MSG) {
 			//pRCon->mn_FlushOut = msg.wParam;
@@ -874,13 +886,15 @@ DWORD WINAPI InputThreadProcW(LPVOID lpParameter)
 				{
 					if (!PeekMessage(&msg, 0,0,0, PM_REMOVE))
 						break;
+					if (msg.message == 0) continue;
 					if (msg.message == WM_QUIT) return 0;
 					if (ghServerTerminateEvent) {
 						if (WaitForSingleObject(ghServerTerminateEvent, 0) == WAIT_OBJECT_0) return 0;
 					}
 				}
 			} while (nCount < nMaxCount);
-			SendConsoleEvent(recs, nCount);
+			if (nCount > 0)
+				SendConsoleEvent(recs, nCount);
 		}
 	}
 
@@ -911,7 +925,7 @@ void WINAPI _export SetStartupInfoW(void *aInfo)
 void InitHWND(HWND ahFarHwnd)
 {
 	gsFarLang[0] = 0;
-	InitializeCriticalSection(&csTabs);
+	//InitializeCriticalSection(&csTabs);
 	InitializeCriticalSection(&csData);
 	LoadFarVersion(); // пригодится уже здесь!
 
@@ -974,9 +988,11 @@ void InitHWND(HWND ahFarHwnd)
 		}
 		// дернуть табы, если они нужны
 		int tabCount = 0;
+		MSectionLock SC; SC.Lock(&csTabs);
 		CreateTabs(1);
 		AddTab(tabCount, true, false, WTYPE_PANELS, NULL, NULL, 0, 0);
-		SendTabs(tabCount=1);
+		SendTabs(tabCount=1, TRUE);
+		SC.Unlock();
 	}
 }
 
@@ -1239,31 +1255,42 @@ void UpdateConEmuTabsW(int event, bool losingFocus, bool editorSave, void* Param
 
 	CheckResources();
 
+	MSectionLock SC; SC.Lock(&csTabs);
+
 	if (gFarVersion.dwBuild>=FAR_Y_VER)
 		FUNC_Y(UpdateConEmuTabsW)(event, losingFocus, editorSave, Param);
 	else
 		FUNC_X(UpdateConEmuTabsW)(event, losingFocus, editorSave, Param);
+
+	SC.Unlock();
 }
 
 BOOL CreateTabs(int windowCount)
 {
-	EnterCriticalSection(&csTabs);
+	if (gpTabs && maxTabCount > (windowCount + 1)) {
+		// пересоздавать не нужно, секцию не трогаем. только запомним последнее кол-во окон
+		lastWindowCount = windowCount;
+		return TRUE; 
+	}
 
-	if ((tabs==NULL) || (maxTabCount <= (windowCount + 1)))
+	//EnterCriticalSection(&csTabs);
+
+	if ((gpTabs==NULL) || (maxTabCount <= (windowCount + 1)))
 	{
-		maxTabCount = windowCount + 10; // с запасом
-		if (tabs) {
-			Free(tabs); tabs = NULL;
+		MSectionLock SC; SC.Lock(&csTabs, TRUE);
+
+		maxTabCount = windowCount + 20; // с запасом
+		if (gpTabs) {
+			Free(gpTabs); gpTabs = NULL;
 		}
 		
-		tabs = (ConEmuTab*) Alloc(maxTabCount, sizeof(ConEmuTab));
+		gpTabs = (CESERVER_REQ*) Alloc(sizeof(CESERVER_REQ_HDR) + maxTabCount*sizeof(ConEmuTab), 1);
 	}
 	
 	lastWindowCount = windowCount;
 	
-	if (!tabs)
-		LeaveCriticalSection(&csTabs);
-	return tabs!=NULL;
+	//if (!gpTabs) LeaveCriticalSection(&csTabs);
+	return gpTabs!=NULL;
 }
 
 
@@ -1282,13 +1309,13 @@ BOOL AddTab(int &tabCount, bool losingFocus, bool editorSave,
 	DEBUGSTR(L"--AddTab\n");
 
 	if (Type == WTYPE_PANELS) {
-	    lbCh = (tabs[0].Current != (losingFocus ? 1 : 0)) ||
-	           (tabs[0].Type != WTYPE_PANELS);
-		tabs[0].Current = losingFocus ? 1 : 0;
-		//lstrcpyn(tabs[0].Name, FUNC_Y(GetMsgW)(0), CONEMUTABMAX-1);
-		tabs[0].Name[0] = 0;
-		tabs[0].Pos = 0;
-		tabs[0].Type = WTYPE_PANELS;
+	    lbCh = (gpTabs->Tabs.tabs[0].Current != (losingFocus ? 1 : 0)) ||
+	           (gpTabs->Tabs.tabs[0].Type != WTYPE_PANELS);
+		gpTabs->Tabs.tabs[0].Current = losingFocus ? 1 : 0;
+		//lstrcpyn(gpTabs->Tabs.tabs[0].Name, FUNC_Y(GetMsgW)(0), CONEMUTABMAX-1);
+		gpTabs->Tabs.tabs[0].Name[0] = 0;
+		gpTabs->Tabs.tabs[0].Pos = 0;
+		gpTabs->Tabs.tabs[0].Type = WTYPE_PANELS;
 		if (!tabCount) tabCount++;
 	} else
 	if (Type == WTYPE_EDITOR || Type == WTYPE_VIEWER)
@@ -1296,24 +1323,24 @@ BOOL AddTab(int &tabCount, bool losingFocus, bool editorSave,
 		// Первое окно - должно быть панели. Если нет - значит фар открыт в режиме редактора
 		if (tabCount == 1) {
 			// 04.06.2009 Maks - Не, чего-то не то... при открытии редактора из панелей - он заменяет панели
-			//tabs[0].Type = Type;
+			//gpTabs->Tabs.tabs[0].Type = Type;
 		}
 
 		// when receiving saving event receiver is still reported as modified
 		if (editorSave && lstrcmpi(FileName, Name) == 0)
 			Modified = 0;
 	
-	    lbCh = (tabs[tabCount].Current != (losingFocus ? 0 : Current)) ||
-	           (tabs[tabCount].Type != Type) ||
-	           (tabs[tabCount].Modified != Modified) ||
-	           (lstrcmp(tabs[tabCount].Name, Name) != 0);
+	    lbCh = (gpTabs->Tabs.tabs[tabCount].Current != (losingFocus ? 0 : Current)) ||
+	           (gpTabs->Tabs.tabs[tabCount].Type != Type) ||
+	           (gpTabs->Tabs.tabs[tabCount].Modified != Modified) ||
+	           (lstrcmp(gpTabs->Tabs.tabs[tabCount].Name, Name) != 0);
 	
 		// when receiving losing focus event receiver is still reported as current
-		tabs[tabCount].Type = Type;
-		tabs[tabCount].Current = losingFocus ? 0 : Current;
-		tabs[tabCount].Modified = Modified;
+		gpTabs->Tabs.tabs[tabCount].Type = Type;
+		gpTabs->Tabs.tabs[tabCount].Current = losingFocus ? 0 : Current;
+		gpTabs->Tabs.tabs[tabCount].Modified = Modified;
 
-		if (tabs[tabCount].Current != 0)
+		if (gpTabs->Tabs.tabs[tabCount].Current != 0)
 		{
 			lastModifiedStateW = Modified != 0 ? 1 : 0;
 		}
@@ -1323,74 +1350,44 @@ BOOL AddTab(int &tabCount, bool losingFocus, bool editorSave,
 		}
 
 		int nLen = min(lstrlen(Name),(CONEMUTABMAX-1));
-		lstrcpyn(tabs[tabCount].Name, Name, nLen+1);
-		tabs[tabCount].Name[nLen]=0;
+		lstrcpyn(gpTabs->Tabs.tabs[tabCount].Name, Name, nLen+1);
+		gpTabs->Tabs.tabs[tabCount].Name[nLen]=0;
 
-		tabs[tabCount].Pos = tabCount;
+		gpTabs->Tabs.tabs[tabCount].Pos = tabCount;
 		tabCount++;
 	}
 	
 	return lbCh;
 }
 
-void SendTabs(int tabCount, BOOL abFillDataOnly/*=FALSE*/, BOOL abForceSend/*=FALSE*/)
+void SendTabs(int tabCount, BOOL abForceSend/*=FALSE*/)
 {
-	//if (abWritePipe) { //2009-06-01 Секцию вроде всегда блокировать нужно...
-	EnterCriticalSection(&csTabs);
-	BOOL bReleased = FALSE;
-	//}
-#ifdef _DEBUG
-	WCHAR szDbg[100]; wsprintf(szDbg, L"-SendTabs(%i,%s), prev=%i\n", tabCount, 
-		abFillDataOnly ? L"FillDataOnly" : L"Post", gnCurTabCount);
-	OUTPUTDEBUGSTRING(szDbg);
-#endif
-	if (tabs 
-		&& (abFillDataOnly || (ConEmuHwnd && IsWindow(ConEmuHwnd)))
-		)
+	//EnterCriticalSection(&csTabs);
+	MSectionLock SC; SC.Lock(&csTabs);
+
+	if (!gpTabs) {
+		_ASSERTE(gpTabs!=NULL);
+		return;
+	}
+
+	gnCurTabCount = tabCount; // сразу запомним!, А то при ретриве табов количество еще старым будет...
+	gpTabs->Tabs.nTabCount = tabCount;
+	gpTabs->hdr.nSize = sizeof(CESERVER_REQ_HDR) + sizeof(ConEmuTab) * tabCount + sizeof(DWORD);
+
+	// Обновляем структуру сразу, чтобы она была готова к отправке в любой момент
+	gpTabs->hdr.nCmd = CECMD_TABSCHANGED;
+	gpTabs->hdr.nVersion = CESERVER_REQ_VER;
+	gpTabs->hdr.nSrcThreadId = GetCurrentThreadId();
+
+	// Это нужно делать только если инициировано ФАРОМ. Если запрос прислал ConEmu - не посылать...
+	if (tabCount && ConEmuHwnd && IsWindow(ConEmuHwnd) && abForceSend)
 	{
-		COPYDATASTRUCT cds;
-		//if (tabs[0].Type == WTYPE_PANELS) {
-			cds.dwData = tabCount;
-			cds.lpData = tabs;
-		//} else {
-		//	// Панелей нет - фар был открыт в режиме редактора!
-		//	cds.dwData = --tabCount; //2009-06-04 наверное больше одного редактора в таком случае быть не должно
-		//	cds.lpData = tabs+1;
-		//}
-		// Если abFillDataOnly - данные подготавливаются для записи в Pipe - иначе процедура отсылает данные сама
-
-		cds.cbData = cds.dwData * sizeof(ConEmuTab);
-		EnterCriticalSection(&csData);
-		if (gpCmdRet) { Free(gpCmdRet); gpCmdRet = NULL; gpData = NULL; gpCursor = NULL; }
-		OutDataAlloc(sizeof(cds.dwData) + cds.cbData);
-		OutDataWrite(&cds.dwData, sizeof(cds.dwData));
-		OutDataWrite(cds.lpData, cds.cbData);
-		LeaveCriticalSection(&csData);
-
-		LeaveCriticalSection(&csTabs); bReleased = TRUE;
-
-		//TODO: возможно, что при переключении окон командой из конэму нужно сразу переслать табы?
-		_ASSERT(gpCmdRet!=NULL);
-		if (!abFillDataOnly && tabCount && gnReqCommand==(DWORD)-1) {
-			// Это нужно делать только если инициировано ФАРОМ. Если запрос прислал ConEmu - не посылать...
-			//if (gnCurTabCount != tabCount /*|| tabCount > 1*/)
-			if (ConEmuHwnd && (abForceSend || gnCurTabCount != tabCount))
-			{
-				gnCurTabCount = tabCount; // сразу запомним!, А то при ретриве табов количество еще старым будет...
-				//PostMessage(ConEmuHwnd, gnMsgTabChanged, tabCount, 0);
-				gpCmdRet->hdr.nCmd = CECMD_TABSCHANGED;
-				gpCmdRet->hdr.nSrcThreadId = GetCurrentThreadId();
-				CESERVER_REQ* pOut =
-					ExecuteGuiCmd(FarHwnd, gpCmdRet);
-				if (pOut) ExecuteFreeResult(pOut);
-			}
-		}
+		CESERVER_REQ* pOut =
+			ExecuteGuiCmd(FarHwnd, gpTabs);
+		if (pOut) ExecuteFreeResult(pOut);
 	}
-	//Free(tabs); - освобождается в ExitFARW
-    gnCurTabCount = tabCount;
-	if (!bReleased) {
-		LeaveCriticalSection(&csTabs); bReleased = TRUE;
-	}
+    
+	SC.Unlock();
 }
 
 // watch non-modified -> modified editor status change
@@ -1534,16 +1531,16 @@ void StopThread(void)
 		SafeCloseHandle(ghInputThread);
 	}
 
-    if (tabs) {
-	    Free(tabs);
-	    tabs = NULL;
+    if (gpTabs) {
+	    Free(gpTabs);
+	    gpTabs = NULL;
     }
     
     if (ghReqCommandEvent) {
 	    CloseHandle(ghReqCommandEvent); ghReqCommandEvent = NULL;
     }
 
-	DeleteCriticalSection(&csTabs); memset(&csTabs,0,sizeof(csTabs));
+	//DeleteCriticalSection(&csTabs); memset(&csTabs,0,sizeof(csTabs));
 	DeleteCriticalSection(&csData); memset(&csData,0,sizeof(csData));
 	
 	if (ghRegMonitorKey) { RegCloseKey(ghRegMonitorKey); ghRegMonitorKey = NULL; }
@@ -1888,6 +1885,8 @@ DWORD WINAPI ServerThreadCommand(LPVOID ahPipe)
     DWORD cbRead = 0, cbWritten = 0, dwErr = 0;
     BOOL fSuccess = FALSE;
 
+	MSectionThread SCT(&csTabs);
+
     // Send a message to the pipe server and read the response. 
     fSuccess = ReadFile( hPipe, cbBuffer, sizeof(cbBuffer), &cbRead, NULL);
 	dwErr = GetLastError();
@@ -1978,8 +1977,18 @@ DWORD WINAPI ServerThreadCommand(LPVOID ahPipe)
 	//	SetConsoleFontSizeTo(FarHwnd, 4, 6);
 	//	MoveWindow(FarHwnd, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), 1); // чтобы убрать возможные полосы прокрутки...
 
-	} else if (pIn->hdr.nCmd == CMD_REQTABS) {
-		SendTabs(gnCurTabCount, TRUE, TRUE);
+	} else if (pIn->hdr.nCmd == CMD_REQTABS || pIn->hdr.nCmd == CMD_SETWINDOW) {
+		MSectionLock SC; SC.Lock(&csTabs, FALSE, 1000);
+
+		if (pIn->hdr.nCmd == CMD_SETWINDOW) {
+			ProcessCommand(pIn->hdr.nCmd, TRUE/*bReqMainThread*/, pIn->Data);
+		}
+
+		if (gpTabs) {
+			fSuccess = WriteFile( hPipe, gpTabs, gpTabs->hdr.nSize, &cbWritten, NULL);
+		}
+
+		SC.Unlock();
 
 	} else if (pIn->hdr.nCmd == CMD_SETENVVAR) {
 		// Установить переменные окружения
@@ -1996,10 +2005,12 @@ DWORD WINAPI ServerThreadCommand(LPVOID ahPipe)
 		}
 
 	} else {
-		ProcessCommand(pIn->hdr.nCmd, TRUE/*bReqMainThread*/, pIn->Data);
+		CESERVER_REQ* pCmdRet = ProcessCommand(pIn->hdr.nCmd, TRUE/*bReqMainThread*/, pIn->Data);
 
-		if (gpCmdRet) {
-			fSuccess = WriteFile( hPipe, gpCmdRet, gpCmdRet->hdr.nSize, &cbWritten, NULL);
+		if (pCmdRet) {
+			fSuccess = WriteFile( hPipe, pCmdRet, pCmdRet->hdr.nSize, &cbWritten, NULL);
+		}
+		if (gpCmdRet && gpCmdRet == pCmdRet) {
 			Free(gpCmdRet);
 			gpCmdRet = NULL; gpData = NULL; gpCursor = NULL;
 		}

@@ -25,7 +25,7 @@ extern int lastModifiedStateW;
 extern bool gbHandleOneRedraw;
 extern WCHAR gszDir1[CONEMUTABMAX], gszDir2[CONEMUTABMAX], gszRootKey[MAX_PATH*2];
 extern int maxTabCount, lastWindowCount;
-extern ConEmuTab* tabs; //(ConEmuTab*) calloc(maxTabCount, sizeof(ConEmuTab));
+extern CESERVER_REQ* tabs; //(ConEmuTab*) calloc(maxTabCount, sizeof(ConEmuTab));
 extern CESERVER_REQ* gpCmdRet;
 extern HWND ConEmuHwnd;
 extern HWND FarHwnd;
@@ -52,7 +52,7 @@ BOOL CreateTabs(int windowCount);
 BOOL AddTab(int &tabCount, bool losingFocus, bool editorSave, 
 			int Type, LPCWSTR Name, LPCWSTR FileName, int Current, int Modified);
 
-void SendTabs(int tabCount, BOOL abFillDataOnly=FALSE, BOOL abForceSend=FALSE);
+void SendTabs(int tabCount, BOOL abForceSend=FALSE);
 
 void InitHWND(HWND ahFarHwnd);
 
@@ -114,7 +114,7 @@ extern int gnPluginOpenFrom;
 extern HANDLE ghInputSynchroExecuted;
 extern BOOL gbCmdCallObsolete;
 extern LPVOID gpReqCommandData;
-void ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData);
+CESERVER_REQ* ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData);
 BOOL CheckPlugKey();
 void NotifyChangeKey();
 

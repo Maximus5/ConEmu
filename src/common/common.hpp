@@ -123,7 +123,51 @@ extern wchar_t gszDbgModLabel[6];
 
 #define PIPEBUFSIZE 4096
 
-#pragma pack(push, 1)
+
+
+//#pragma pack(push, 1)
+#include <pshpack1.h>
+
+
+#define CONEMUTABMAX 0x400
+typedef struct tag_ConEmuTab {
+	int  Pos;
+	int  Current;
+	int  Type; // Panels=1, Viewer=2, Editor=3
+	int  Modified;
+	wchar_t Name[CONEMUTABMAX];
+	//  int  Modified;
+	//  int isEditor;
+} ConEmuTab;
+
+typedef struct tag_CESERVER_REQ_CONEMUTAB {
+	DWORD nTabCount;
+	ConEmuTab tabs[1];
+} CESERVER_REQ_CONEMUTAB;
+
+typedef struct tag_ForwardedPanelInfo {
+	RECT ActiveRect;
+	RECT PassiveRect;
+	int ActivePathShift; // сдвиг в этой структуре в байтах
+	int PassivePathShift; // сдвиг в этой структуре в байтах
+	WCHAR* pszActivePath/*[MAX_PATH+1]*/;
+	WCHAR* pszPassivePath/*[MAX_PATH+1]*/;
+} ForwardedPanelInfo;
+
+typedef struct tag_FarVersion {
+	union {
+		DWORD dwVer;
+		struct {
+			WORD dwVerMinor;
+			WORD dwVerMajor;
+		};
+	};
+	DWORD dwBuild;
+} FarVersion;
+
+typedef struct tag_ForwardedFileInfo {
+	WCHAR Path[MAX_PATH+1];
+} ForwardedFileInfo;
 
 
 typedef struct tag_CESERVER_REQ_HDR {
@@ -242,11 +286,13 @@ typedef struct tag_CESERVER_REQ {
 		CESERVER_REQ_NEWCMD NewCmd;
 		CESERVER_REQ_STARTSTOP StartStop;
 		CESERVER_REQ_STARTSTOPRET StartStopRet;
+		CESERVER_REQ_CONEMUTAB Tabs;
 	};
 } CESERVER_REQ;
 
 
-#pragma pack(pop)
+//#pragma pack(pop)
+#include <poppack.h>
 
 
 #define CONEMUMSG_ATTACH L"ConEmuMain::Attach"        // wParam == hConWnd, lParam == ConEmuC_PID
@@ -289,44 +335,6 @@ typedef struct tag_CESERVER_REQ {
     #define CONEMUREADYTIMEOUT 10000 // А на выполнение команды - 10s max
     #define CONEMUFARTIMEOUT   10000 // Сколько ожидать, пока ФАР среагирует на вызов плагина
 #endif
-
-#define CONEMUTABMAX 0x400
-struct ConEmuTab
-{
-    int  Pos;
-    int  Current;
-    int  Type; // Panels=1, Viewer=2, Editor=3
-    int  Modified;
-    wchar_t Name[CONEMUTABMAX];
-//  int  Modified;
-//  int isEditor;
-};
-
-struct ForwardedPanelInfo
-{
-    RECT ActiveRect;
-    RECT PassiveRect;
-    int ActivePathShift; // сдвиг в этой структуре в байтах
-    int PassivePathShift; // сдвиг в этой структуре в байтах
-    WCHAR* pszActivePath/*[MAX_PATH+1]*/;
-    WCHAR* pszPassivePath/*[MAX_PATH+1]*/;
-};
-
-struct FarVersion {
-    union {
-        DWORD dwVer;
-        struct {
-            WORD dwVerMinor;
-            WORD dwVerMajor;
-        };
-    };
-    DWORD dwBuild;
-};
-
-struct ForwardedFileInfo
-{
-    WCHAR Path[MAX_PATH+1];
-};
 
 
 
@@ -404,6 +412,18 @@ public:
 		DeleteCriticalSection(&m_cs);
 		if (mh_ReleaseEvent) {
 			CloseHandle(mh_ReleaseEvent); mh_ReleaseEvent = NULL;
+		}
+	};
+public:
+	void ThreadTerminated(DWORD dwTID) {
+		for (int i=1; i<10; i++) {
+			if (mn_LockedTID[i] == dwTID) {
+				mn_LockedTID[i] = 0;
+				if (mn_LockedCount[i] != 0) {
+					_ASSERTE(mn_LockedCount[i] == 0);
+				}
+				break;
+			}
 		}
 	};
 protected:
@@ -587,6 +607,21 @@ protected:
 		} else {
 			ReleaseRef(dwTID);
 		}
+	};
+};
+
+class MSectionThread
+{
+protected:
+	MSection* mp_S;
+	DWORD mn_TID;
+public:
+	MSectionThread(MSection* apS) {
+		mp_S = apS; mn_TID = GetCurrentThreadId();
+	};
+	~MSectionThread() {
+		if (mp_S && mn_TID)
+			mp_S->ThreadTerminated(mn_TID);
 	};
 };
 
