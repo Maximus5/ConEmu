@@ -52,15 +52,15 @@ CSettings::CSettings()
 	mn_LastChangingFontCtrlId = 0;
 
     SetWindowThemeF = NULL;
-    mh_Uxtheme = LoadLibrary(_T("UxTheme.dll"));
+    mh_Uxtheme = LoadLibrary(L"UxTheme.dll");
     if (mh_Uxtheme) {
         SetWindowThemeF = (SetWindowThemeT)GetProcAddress(mh_Uxtheme, "SetWindowTheme");
         EnableThemeDialogTextureF = (EnableThemeDialogTextureT)GetProcAddress(mh_Uxtheme, "EnableThemeDialogTexture");
-        //if (SetWindowThemeF) { SetWindowThemeF(Progressbar1, _T(" "), _T(" ")); }
+        //if (SetWindowThemeF) { SetWindowThemeF(Progressbar1, L" ", L" "); }
     }
 
-	mn_MsgUpdateCounter = RegisterWindowMessage(_T("ConEmuSettings::Counter"));
-	mn_MsgRecreateFont = RegisterWindowMessage(_T("CSettings::RecreateFont"));
+	mn_MsgUpdateCounter = RegisterWindowMessage(L"ConEmuSettings::Counter");
+	mn_MsgRecreateFont = RegisterWindowMessage(L"CSettings::RecreateFont");
 }
 
 CSettings::~CSettings()
@@ -82,7 +82,7 @@ void CSettings::InitSettings()
 //------------------------------------------------------------------------
 ///| Moved from CVirtualConsole |/////////////////////////////////////////
 //------------------------------------------------------------------------
-    _tcscpy(Config, _T("Software\\ConEmu"));
+    _tcscpy(Config, L"Software\\ConEmu");
 
 	//FontFile[0] = 0;
 	isAutoRegisterFonts = true;
@@ -112,8 +112,8 @@ void CSettings::InitSettings()
     LogFont.lfClipPrecision = CLIP_DEFAULT_PRECIS;
     LogFont.lfQuality = ANTIALIASED_QUALITY;
     LogFont.lfPitchAndFamily = FIXED_PITCH | FF_MODERN;
-    _tcscpy(LogFont.lfFaceName, _T("Lucida Console"));
-    _tcscpy(LogFont2.lfFaceName, _T("Lucida Console"));
+    _tcscpy(LogFont.lfFaceName, L"Lucida Console");
+    _tcscpy(LogFont2.lfFaceName, L"Lucida Console");
     mb_Name1Ok = FALSE; mb_Name2Ok = FALSE;
     isTryToCenter = false;
     isTabFrame = true;
@@ -122,14 +122,14 @@ void CSettings::InitSettings()
 
 	ConsoleFont.lfHeight = 6;
 	ConsoleFont.lfWidth = 4;
-	_tcscpy(ConsoleFont.lfFaceName, _T("Lucida Console"));
+	_tcscpy(ConsoleFont.lfFaceName, L"Lucida Console");
 
     Registry RegConColors, RegConDef;
-    if (RegConColors.OpenKey(_T("Console"), KEY_READ))
+    if (RegConColors.OpenKey(L"Console", KEY_READ))
     {
-        RegConDef.OpenKey(HKEY_USERS, _T(".DEFAULT\\Console"), KEY_READ);
+        RegConDef.OpenKey(HKEY_USERS, L".DEFAULT\\Console", KEY_READ);
 
-        TCHAR ColorName[] = _T("ColorTable00");
+        TCHAR ColorName[] = L"ColorTable00";
 		bool  lbBlackFound = false;
         for (uint i = 0x10; i--;)
         {
@@ -157,7 +157,7 @@ void CSettings::InitSettings()
 ///| Default settings |///////////////////////////////////////////////////
 //------------------------------------------------------------------------
 	isShowBgImage = 0;
-    _tcscpy(sBgImage, _T("c:\\back.bmp"));
+    _tcscpy(sBgImage, L"c:\\back.bmp");
 	bgImageDarker = 0x46;
 
     isFixFarBorders = 2; isPartBrush75 = 0xC8; isPartBrush50 = 0x96; isPartBrush25 = 0x5A;
@@ -173,11 +173,11 @@ void CSettings::InitSettings()
     nIconID = IDI_ICON1;
     isRClickSendKey = 2;
     sRClickMacro = NULL;
-    _tcscpy(szTabConsole, _T("%s"));
-    //pszTabConsole = _tcscpy(szTabPanels+_tcslen(szTabPanels)+1, _T("Console"));
-    _tcscpy(szTabEditor, _T("[%s]"));
-    _tcscpy(szTabEditorModified, _T("[%s] *"));
-    /* */ _tcscpy(szTabViewer, _T("{%s}"));
+    _tcscpy(szTabConsole, L"%s");
+    //pszTabConsole = _tcscpy(szTabPanels+_tcslen(szTabPanels)+1, L"Console");
+    _tcscpy(szTabEditor, L"[%s]");
+    _tcscpy(szTabEditorModified, L"[%s] *");
+    /* */ _tcscpy(szTabViewer, L"{%s}");
     nTabLenMax = 20;
     
     isCursorV = true;
@@ -197,8 +197,12 @@ void CSettings::InitSettings()
     ScrollTitleLen = 22;
     
 	isRSelFix = true; isMouseSkipActivation = true; isMouseSkipMoving = true;
-    isDragEnabled = DRAG_L_ALLOWED; isDropEnabled = (BYTE)1;
-    nLDragKey = 0; nRDragKey = VK_LCONTROL; isDebugSteps = true; isDefCopy = true;
+
+    isDragEnabled = DRAG_L_ALLOWED; isDropEnabled = (BYTE)1; isDefCopy = true;
+    nLDragKey = 0; nRDragKey = VK_LCONTROL; 
+	isDragOverlay = 1; isDragShowIcons = true;
+	
+	isDebugSteps = true; 
     MCHKHEAP
 }
 
@@ -220,7 +224,7 @@ void CSettings::LoadSettings()
     Registry reg;
     if (reg.OpenKey(Config, KEY_READ)) // NightRoman
     {
-        TCHAR ColorName[] = _T("ColorTable00");
+        TCHAR ColorName[] = L"ColorTable00";
         for (uint i = 0x20; i--;)
         {
             ColorName[10] = i/10 + '0';
@@ -228,13 +232,13 @@ void CSettings::LoadSettings()
             reg.Load(ColorName, Colors[i]);
         }
         memmove(acrCustClr, Colors, sizeof(COLORREF)*16);
-        reg.Load(_T("ExtendColors"), isExtendColors);
-        reg.Load(_T("ExtendColorIdx"), nExtendColor);
+        reg.Load(L"ExtendColors", isExtendColors);
+        reg.Load(L"ExtendColorIdx", nExtendColor);
             if (nExtendColor<0 || nExtendColor>15) nExtendColor=14;
 
 		// Debugging
-		reg.Load(_T("ConVisible"), isConVisible);
-		//reg.Load(_T("DumpPackets"), szDumpPackets);
+		reg.Load(L"ConVisible", isConVisible);
+		//reg.Load(L"DumpPackets", szDumpPackets);
 		
 		reg.Load(L"AutoRegisterFonts", isAutoRegisterFonts);
 		
@@ -245,30 +249,30 @@ void CSettings::LoadSettings()
         if (!mb_Name1Ok || !mb_Name2Ok)
         	isAutoRegisterFonts = true;
         
-        reg.Load(_T("CmdLine"), &psCmd);
-        reg.Load(_T("Multi"), isMulti);
-			reg.Load(_T("Multi.NewConsole"), icMultiNew);
-			reg.Load(_T("Multi.Next"), icMultiNext);
-			reg.Load(_T("Multi.Recreate"), icMultiRecreate);
-			reg.Load(_T("Multi.NewConfirm"), isMultiNewConfirm);
+        reg.Load(L"CmdLine", &psCmd);
+        reg.Load(L"Multi", isMulti);
+			reg.Load(L"Multi.NewConsole", icMultiNew);
+			reg.Load(L"Multi.Next", icMultiNext);
+			reg.Load(L"Multi.Recreate", icMultiRecreate);
+			reg.Load(L"Multi.NewConfirm", isMultiNewConfirm);
 
-        reg.Load(_T("FontSize"), inSize);
-        reg.Load(_T("FontSizeX"), FontSizeX);
-        reg.Load(_T("FontSizeX3"), FontSizeX3);
-        reg.Load(_T("FontSizeX2"), FontSizeX2);
-        reg.Load(_T("FontCharSet"), FontCharSet);
-        reg.Load(_T("Anti-aliasing"), Quality);
+        reg.Load(L"FontSize", inSize);
+        reg.Load(L"FontSizeX", FontSizeX);
+        reg.Load(L"FontSizeX3", FontSizeX3);
+        reg.Load(L"FontSizeX2", FontSizeX2);
+        reg.Load(L"FontCharSet", FontCharSet);
+        reg.Load(L"Anti-aliasing", Quality);
 
 		reg.Load(L"ConsoleFontName", ConsoleFont.lfFaceName);
 		reg.Load(L"ConsoleCharWidth", ConsoleFont.lfWidth);
 		reg.Load(L"ConsoleFontHeight", ConsoleFont.lfHeight);
 
-        reg.Load(_T("WindowMode"), gConEmu.WindowMode);
-        reg.Load(_T("ConWnd X"), wndX); /*if (wndX<-10) wndX = 0;*/
-        reg.Load(_T("ConWnd Y"), wndY); /*if (wndY<-10) wndY = 0;*/
+        reg.Load(L"WindowMode", gConEmu.WindowMode);
+        reg.Load(L"ConWnd X", wndX); /*if (wndX<-10) wndX = 0;*/
+        reg.Load(L"ConWnd Y", wndY); /*if (wndY<-10) wndY = 0;*/
 		// ЭТО не влияет на szDefCmd. Только прямое указание флажка "/BufferHeight N" 
 		// может сменить (умолчательную) команду запуска на "cmd" или "far"
-        reg.Load(_T("Cascaded"), wndCascade);
+        reg.Load(L"Cascaded", wndCascade);
         if (wndCascade) {
 	        HWND hPrev = FindWindow(VirtualConsoleClassMain, NULL);
 	        while (hPrev) {
@@ -283,14 +287,14 @@ void CSettings::LoadSettings()
 				break;
 	        }
         }
-        reg.Load(_T("ConWnd Width"), wndWidth); if (!wndWidth) wndWidth = 80; else if (wndWidth>1000) wndWidth = 1000;
-        reg.Load(_T("ConWnd Height"), wndHeight); if (!wndHeight) wndHeight = 25; else if (wndHeight>500) wndHeight = 500;
+        reg.Load(L"ConWnd Width", wndWidth); if (!wndWidth) wndWidth = 80; else if (wndWidth>1000) wndWidth = 1000;
+        reg.Load(L"ConWnd Height", wndHeight); if (!wndHeight) wndHeight = 25; else if (wndHeight>500) wndHeight = 500;
         //TODO: Эти два параметра не сохраняются
-        reg.Load(_T("16bit Height"), ntvdmHeight);
+        reg.Load(L"16bit Height", ntvdmHeight);
 			if (ntvdmHeight!=0 && ntvdmHeight!=25 && ntvdmHeight!=28 && ntvdmHeight!=43 && ntvdmHeight!=50) ntvdmHeight = 25;
-		reg.Load(_T("DefaultBufferHeight"), DefaultBufferHeight);
+		reg.Load(L"DefaultBufferHeight", DefaultBufferHeight);
 			if (DefaultBufferHeight < 300) DefaultBufferHeight = 300;
-		reg.Load(_T("AutoBufferHeight"), AutoBufferHeight);
+		reg.Load(L"AutoBufferHeight", AutoBufferHeight);
 
         reg.Load(L"CursorType", isCursorV);
         reg.Load(L"CursorColor", isCursorColor);
@@ -324,48 +328,50 @@ void CSettings::LoadSettings()
 			}
 		}
         
-        reg.Load(_T("PartBrush75"), isPartBrush75); if (isPartBrush75<5) isPartBrush75=5; else if (isPartBrush75>250) isPartBrush75=250;
-        reg.Load(_T("PartBrush50"), isPartBrush50); if (isPartBrush50<5) isPartBrush50=5; else if (isPartBrush50>250) isPartBrush50=250;
-        reg.Load(_T("PartBrush25"), isPartBrush25); if (isPartBrush25<5) isPartBrush25=5; else if (isPartBrush25>250) isPartBrush25=250;
+        reg.Load(L"PartBrush75", isPartBrush75); if (isPartBrush75<5) isPartBrush75=5; else if (isPartBrush75>250) isPartBrush75=250;
+        reg.Load(L"PartBrush50", isPartBrush50); if (isPartBrush50<5) isPartBrush50=5; else if (isPartBrush50>250) isPartBrush50=250;
+        reg.Load(L"PartBrush25", isPartBrush25); if (isPartBrush25<5) isPartBrush25=5; else if (isPartBrush25>250) isPartBrush25=250;
         if (isPartBrush50>=isPartBrush75) isPartBrush50=isPartBrush75-10;
         if (isPartBrush25>=isPartBrush50) isPartBrush25=isPartBrush50-10;
         
-        reg.Load(_T("RightClick opens context menu"), isRClickSendKey);
+        reg.Load(L"RightClick opens context menu", isRClickSendKey);
         	reg.Load(L"RightClickMacro", &sRClickMacro);
-        reg.Load(_T("AltEnter"), isSentAltEnter);
-        reg.Load(_T("Min2Tray"), isMinToTray);
+        reg.Load(L"AltEnter", isSentAltEnter);
+        reg.Load(L"Min2Tray", isMinToTray);
 
-        reg.Load(_T("BackGround Image show"), isShowBgImage);
+        reg.Load(L"BackGround Image show", isShowBgImage);
 			if (isShowBgImage!=0 && isShowBgImage!=1 && isShowBgImage!=2) isShowBgImage = 0;
-		reg.Load(_T("BackGround Image"), sBgImage);
-		reg.Load(_T("bgImageDarker"), bgImageDarker);
+		reg.Load(L"BackGround Image", sBgImage);
+		reg.Load(L"bgImageDarker", bgImageDarker);
 
-        reg.Load(_T("FontBold"), isBold);
-        reg.Load(_T("FontItalic"), isItalic);
-        reg.Load(_T("ForceMonospace"), isForceMonospace);
-        reg.Load(_T("Proportional"), isProportional);
-        reg.Load(_T("Update Console handle"), isUpdConHandle);
-		reg.Load(_T("RSelectionFix"), isRSelFix);
-		reg.Load(_T("MouseSkipActivation"), isMouseSkipActivation);
-		reg.Load(_T("MouseSkipMoving"), isMouseSkipMoving);
-        reg.Load(_T("Dnd"), isDragEnabled); 
+        reg.Load(L"FontBold", isBold);
+        reg.Load(L"FontItalic", isItalic);
+        reg.Load(L"ForceMonospace", isForceMonospace);
+        reg.Load(L"Proportional", isProportional);
+        reg.Load(L"Update Console handle", isUpdConHandle);
+		reg.Load(L"RSelectionFix", isRSelFix);
+		reg.Load(L"MouseSkipActivation", isMouseSkipActivation);
+		reg.Load(L"MouseSkipMoving", isMouseSkipMoving);
+        reg.Load(L"Dnd", isDragEnabled); 
         isDropEnabled = (BYTE)(isDragEnabled ? 1 : 0); // ранее "DndDrop" не было, поэтому ставим default
-        reg.Load(_T("DndLKey"), nLDragKey);
-        reg.Load(_T("DndRKey"), nRDragKey);
-        reg.Load(_T("DndDrop"), isDropEnabled);
-        reg.Load(_T("DefCopy"), isDefCopy);
-        reg.Load(_T("DebugSteps"), isDebugSteps);
-        reg.Load(_T("GUIpb"), isGUIpb);
-        reg.Load(_T("Tabs"), isTabs);
-	        reg.Load(_T("TabSelf"), isTabSelf);
-	        reg.Load(_T("TabLazy"), isTabLazy);
-	        reg.Load(_T("TabRecent"), isTabRecent);
-			if (!reg.Load(_T("TabCloseMacro"), &sTabCloseMacro) && sTabCloseMacro && !*sTabCloseMacro) { free(sTabCloseMacro); sTabCloseMacro = NULL; }
-        reg.Load(_T("TabFrame"), isTabFrame);
-        reg.Load(_T("TabMargins"), rcTabMargins);
-        reg.Load(_T("SlideShowElapse"), nSlideShowElapse);
-        reg.Load(_T("IconID"), nIconID);
-        reg.Load(_T("TabConsole"), szTabConsole);
+        reg.Load(L"DndLKey", nLDragKey);
+        reg.Load(L"DndRKey", nRDragKey);
+        reg.Load(L"DndDrop", isDropEnabled);
+        reg.Load(L"DefCopy", isDefCopy);
+		reg.Load(L"DragOverlay", isDragOverlay);
+		reg.Load(L"DragShowIcons", isDragShowIcons);
+        reg.Load(L"DebugSteps", isDebugSteps);
+        reg.Load(L"GUIpb", isGUIpb);
+        reg.Load(L"Tabs", isTabs);
+	        reg.Load(L"TabSelf", isTabSelf);
+	        reg.Load(L"TabLazy", isTabLazy);
+	        reg.Load(L"TabRecent", isTabRecent);
+			if (!reg.Load(L"TabCloseMacro", &sTabCloseMacro) && sTabCloseMacro && !*sTabCloseMacro) { free(sTabCloseMacro); sTabCloseMacro = NULL; }
+        reg.Load(L"TabFrame", isTabFrame);
+        reg.Load(L"TabMargins", rcTabMargins);
+        reg.Load(L"SlideShowElapse", nSlideShowElapse);
+        reg.Load(L"IconID", nIconID);
+        reg.Load(L"TabConsole", szTabConsole);
             //WCHAR* pszVert = wcschr(szTabPanels, L'|');
             //if (!pszVert) {
             //    if (wcslen(szTabPanels)>54) szTabPanels[54] = 0;
@@ -373,32 +379,32 @@ void CSettings::LoadSettings()
             //    wcscpy(pszVert+1, L"Console");
             //}
             //*pszVert = 0; pszTabConsole = pszVert+1;
-        reg.Load(_T("TabEditor"), szTabEditor);
-        reg.Load(_T("TabEditorModified"), szTabEditorModified);
-        reg.Load(_T("TabViewer"), szTabViewer);
-        reg.Load(_T("TabLenMax"), nTabLenMax);
-        reg.Load(_T("ScrollTitle"), isScrollTitle);
-        reg.Load(_T("ScrollTitleLen"), ScrollTitleLen);
-        reg.Load(_T("TryToCenter"), isTryToCenter);
-        //reg.Load(_T("CreateAppWindow"), isCreateAppWindow);
-        //reg.Load(_T("AllowDetach"), isAllowDetach);
+        reg.Load(L"TabEditor", szTabEditor);
+        reg.Load(L"TabEditorModified", szTabEditorModified);
+        reg.Load(L"TabViewer", szTabViewer);
+        reg.Load(L"TabLenMax", nTabLenMax);
+        reg.Load(L"ScrollTitle", isScrollTitle);
+        reg.Load(L"ScrollTitleLen", ScrollTitleLen);
+        reg.Load(L"TryToCenter", isTryToCenter);
+        //reg.Load(L"CreateAppWindow", isCreateAppWindow);
+        //reg.Load(L"AllowDetach", isAllowDetach);
         
-        reg.Load(_T("Visualizer"), isVisualizer);
-        reg.Load(_T("VizNormal"), nVizNormal);
-        reg.Load(_T("VizFore"), nVizFore);
-        reg.Load(_T("VizTab"), nVizTab);
-        reg.Load(_T("VizEol"), nVizEOL);
-        reg.Load(_T("VizEof"), nVizEOF);
-        reg.Load(_T("VizTabCh"), cVizTab);
-        reg.Load(_T("VizEolCh"), cVizEOL);
-        reg.Load(_T("VizEofCh"), cVizEOF);
+        reg.Load(L"Visualizer", isVisualizer);
+        reg.Load(L"VizNormal", nVizNormal);
+        reg.Load(L"VizFore", nVizFore);
+        reg.Load(L"VizTab", nVizTab);
+        reg.Load(L"VizEol", nVizEOL);
+        reg.Load(L"VizEof", nVizEOF);
+        reg.Load(L"VizTabCh", cVizTab);
+        reg.Load(L"VizEolCh", cVizEOL);
+        reg.Load(L"VizEofCh", cVizEOF);
         
-        reg.Load(_T("MainTimerElapse"), nMainTimerElapse); if (nMainTimerElapse>1000) nMainTimerElapse = 1000;
-        reg.Load(_T("AffinityMask"), nAffinity);
-        //reg.Load(_T("AdvLangChange"), isAdvLangChange);
-        reg.Load(_T("SkipFocusEvents"), isSkipFocusEvents);
-        //reg.Load(_T("LangChangeWsPlugin"), isLangChangeWsPlugin);
-		reg.Load(_T("MonitorConsoleLang"), isMonitorConsoleLang);
+        reg.Load(L"MainTimerElapse", nMainTimerElapse); if (nMainTimerElapse>1000) nMainTimerElapse = 1000;
+        reg.Load(L"AffinityMask", nAffinity);
+        //reg.Load(L"AdvLangChange", isAdvLangChange);
+        reg.Load(L"SkipFocusEvents", isSkipFocusEvents);
+        //reg.Load(L"LangChangeWsPlugin", isLangChangeWsPlugin);
+		reg.Load(L"MonitorConsoleLang", isMonitorConsoleLang);
         
         reg.CloseKey();
     }
@@ -506,7 +512,7 @@ void CSettings::UpdateMargins(RECT arcMargins)
     Registry reg;
     if (reg.OpenKey(Config, KEY_WRITE))
     {
-        reg.Save(_T("TabMargins"), rcTabMargins);
+        reg.Save(L"TabMargins", rcTabMargins);
         reg.CloseKey();
     }
 }
@@ -514,9 +520,9 @@ void CSettings::UpdateMargins(RECT arcMargins)
 BOOL CSettings::SaveSettings()
 {
     Registry reg;
-    //if (reg.OpenKey(_T("Console"), KEY_WRITE))
+    //if (reg.OpenKey(L"Console", KEY_WRITE))
     //{
-    //    TCHAR ColorName[] = _T("ColorTable00");
+    //    TCHAR ColorName[] = L"ColorTable00";
     //    for (uint i = 0x10; i--;)
     //    {
     //        ColorName[10] = i/10 + '0';
@@ -527,15 +533,15 @@ BOOL CSettings::SaveSettings()
 
       if (reg.OpenKey(Config, KEY_WRITE)) // NightRoman
         {
-            TCHAR ColorName[] = _T("ColorTable00");
+            TCHAR ColorName[] = L"ColorTable00";
             for (uint i = 0x20; i--;)
             {
                 ColorName[10] = i/10 + '0';
                 ColorName[11] = i%10 + '0';
                 reg.Save(ColorName, (DWORD)Colors[i]);
             }
-            reg.Save(_T("ExtendColors"), isExtendColors);
-            reg.Save(_T("ExtendColorIdx"), nExtendColor);
+            reg.Save(L"ExtendColors", isExtendColors);
+            reg.Save(L"ExtendColorIdx", nExtendColor);
 
             int nLen = SendDlgItemMessage(hMain, tCmdLine, WM_GETTEXTLENGTH, 0, 0);
             if (nLen<=0) {
@@ -554,86 +560,88 @@ BOOL CSettings::SaveSettings()
                 wndY = rcPos.top;
             }*/
 
-			reg.Save(_T("ConVisible"), isConVisible);
-            reg.Save(_T("CmdLine"), psCmd);
-            reg.Save(_T("Multi"), isMulti);
-				reg.Save(_T("Multi.NewConsole"), icMultiNew);
-				reg.Save(_T("Multi.Next"), icMultiNext);
-				reg.Save(_T("Multi.Recreate"), icMultiRecreate);
-				reg.Save(_T("Multi.NewConfirm"), isMultiNewConfirm);
-            reg.Save(_T("FontName"), LogFont.lfFaceName);
-            reg.Save(_T("FontName2"), LogFont2.lfFaceName);
+			reg.Save(L"ConVisible", isConVisible);
+            reg.Save(L"CmdLine", psCmd);
+            reg.Save(L"Multi", isMulti);
+				reg.Save(L"Multi.NewConsole", icMultiNew);
+				reg.Save(L"Multi.Next", icMultiNext);
+				reg.Save(L"Multi.Recreate", icMultiRecreate);
+				reg.Save(L"Multi.NewConfirm", isMultiNewConfirm);
+            reg.Save(L"FontName", LogFont.lfFaceName);
+            reg.Save(L"FontName2", LogFont2.lfFaceName);
             bool lbTest = isAutoRegisterFonts; // Если в реестре настройка есть, или изменилось значение
             if (reg.Load(L"AutoRegisterFonts", lbTest) || isAutoRegisterFonts != lbTest)
             	reg.Save(L"AutoRegisterFonts", isAutoRegisterFonts);
 
-            reg.Save(_T("BackGround Image"), sBgImage);
-            reg.Save(_T("bgImageDarker"), bgImageDarker);
-			reg.Save(_T("BackGround Image show"), isShowBgImage);
+            reg.Save(L"BackGround Image", sBgImage);
+            reg.Save(L"bgImageDarker", bgImageDarker);
+			reg.Save(L"BackGround Image show", isShowBgImage);
 
-            reg.Save(_T("FontSize"), LogFont.lfHeight);
-            reg.Save(_T("FontSizeX"), FontSizeX);
-            reg.Save(_T("FontSizeX2"), FontSizeX2);
-            reg.Save(_T("FontSizeX3"), FontSizeX3);
-            reg.Save(_T("FontCharSet"), LogFont.lfCharSet);
-            reg.Save(_T("Anti-aliasing"), LogFont.lfQuality);
-            reg.Save(_T("WindowMode"), isFullScreen ? rFullScreen : IsZoomed(ghWnd) ? rMaximized : rNormal);
+            reg.Save(L"FontSize", LogFont.lfHeight);
+            reg.Save(L"FontSizeX", FontSizeX);
+            reg.Save(L"FontSizeX2", FontSizeX2);
+            reg.Save(L"FontSizeX3", FontSizeX3);
+            reg.Save(L"FontCharSet", LogFont.lfCharSet);
+            reg.Save(L"Anti-aliasing", LogFont.lfQuality);
+            reg.Save(L"WindowMode", isFullScreen ? rFullScreen : IsZoomed(ghWnd) ? rMaximized : rNormal);
             
-			reg.Save(_T("DefaultBufferHeight"), DefaultBufferHeight);
-			reg.Save(_T("AutoBufferHeight"), AutoBufferHeight);
+			reg.Save(L"DefaultBufferHeight", DefaultBufferHeight);
+			reg.Save(L"AutoBufferHeight", AutoBufferHeight);
 
-			reg.Save(_T("CursorType"), isCursorV);
-            reg.Save(_T("CursorColor"), isCursorColor);
+			reg.Save(L"CursorType", isCursorV);
+            reg.Save(L"CursorColor", isCursorColor);
 			reg.Save(L"CursorBlink", isCursorBlink);
 
-            reg.Save(_T("FixFarBorders"), isFixFarBorders);
-            reg.Save(_T("RightClick opens context menu"), isRClickSendKey);
-            reg.Save(_T("AltEnter"), isSentAltEnter);
-            reg.Save(_T("Min2Tray"), isMinToTray);
-            reg.Save(_T("RSelectionFix"), isRSelFix);
-			reg.Save(_T("MouseSkipActivation"), isMouseSkipActivation);
-			reg.Save(_T("MouseSkipMoving"), isMouseSkipMoving);
-            reg.Save(_T("Dnd"), isDragEnabled);
-            reg.Save(_T("DndLKey"), nLDragKey);
-            reg.Save(_T("DndRKey"), nRDragKey);
-            reg.Save(_T("DndDrop"), isDropEnabled);
-            reg.Save(_T("DefCopy"), isDefCopy);
-            reg.Save(_T("DebugSteps"), isDebugSteps);
+            reg.Save(L"FixFarBorders", isFixFarBorders);
+            reg.Save(L"RightClick opens context menu", isRClickSendKey);
+            reg.Save(L"AltEnter", isSentAltEnter);
+            reg.Save(L"Min2Tray", isMinToTray);
+            reg.Save(L"RSelectionFix", isRSelFix);
+			reg.Save(L"MouseSkipActivation", isMouseSkipActivation);
+			reg.Save(L"MouseSkipMoving", isMouseSkipMoving);
+            reg.Save(L"Dnd", isDragEnabled);
+            reg.Save(L"DndLKey", nLDragKey);
+            reg.Save(L"DndRKey", nRDragKey);
+            reg.Save(L"DndDrop", isDropEnabled);
+            reg.Save(L"DefCopy", isDefCopy);
+			reg.Save(L"DragOverlay", isDragOverlay);
+			reg.Save(L"DragShowIcons", isDragShowIcons);
+            reg.Save(L"DebugSteps", isDebugSteps);
 
-            reg.Save(_T("GUIpb"), isGUIpb);
+            reg.Save(L"GUIpb", isGUIpb);
 
-            reg.Save(_T("Tabs"), isTabs);
-		        reg.Save(_T("TabSelf"), isTabSelf);
-		        reg.Save(_T("TabLazy"), isTabLazy);
-		        reg.Save(_T("TabRecent"), isTabRecent);
+            reg.Save(L"Tabs", isTabs);
+		        reg.Save(L"TabSelf", isTabSelf);
+		        reg.Save(L"TabLazy", isTabLazy);
+		        reg.Save(L"TabRecent", isTabRecent);
             
-            reg.Save(_T("FontBold"), LogFont.lfWeight == FW_BOLD);
-            reg.Save(_T("FontItalic"), LogFont.lfItalic);
-            reg.Save(_T("ForceMonospace"), isForceMonospace);
-            reg.Save(_T("Proportional"), isProportional);
-            reg.Save(_T("Update Console handle"), isUpdConHandle);
+            reg.Save(L"FontBold", LogFont.lfWeight == FW_BOLD);
+            reg.Save(L"FontItalic", LogFont.lfItalic);
+            reg.Save(L"ForceMonospace", isForceMonospace);
+            reg.Save(L"Proportional", isProportional);
+            reg.Save(L"Update Console handle", isUpdConHandle);
 
-            reg.Save(_T("ConWnd Width"), wndWidth);
-            reg.Save(_T("ConWnd Height"), wndHeight);
-            reg.Save(_T("ConWnd X"), wndX);
-            reg.Save(_T("ConWnd Y"), wndY);
-            reg.Save(_T("Cascaded"), wndCascade);
+            reg.Save(L"ConWnd Width", wndWidth);
+            reg.Save(L"ConWnd Height", wndHeight);
+            reg.Save(L"ConWnd X", wndX);
+            reg.Save(L"ConWnd Y", wndY);
+            reg.Save(L"Cascaded", wndCascade);
 
-            reg.Save(_T("ScrollTitle"), isScrollTitle);
-            reg.Save(_T("ScrollTitleLen"), ScrollTitleLen);
+            reg.Save(L"ScrollTitle", isScrollTitle);
+            reg.Save(L"ScrollTitleLen", ScrollTitleLen);
             
-            reg.Save(_T("Visualizer"), isVisualizer);
-            reg.Save(_T("VizNormal"), nVizNormal);
-            reg.Save(_T("VizFore"), nVizFore);
-            reg.Save(_T("VizTab"), nVizTab);
-            reg.Save(_T("VizEol"), nVizEOL);
-            reg.Save(_T("VizEof"), nVizEOF);
-            reg.Save(_T("VizTabCh"), cVizTab);
-            reg.Save(_T("VizEolCh"), cVizEOL);
-            reg.Save(_T("VizEofCh"), cVizEOF);
+            reg.Save(L"Visualizer", isVisualizer);
+            reg.Save(L"VizNormal", nVizNormal);
+            reg.Save(L"VizFore", nVizFore);
+            reg.Save(L"VizTab", nVizTab);
+            reg.Save(L"VizEol", nVizEOL);
+            reg.Save(L"VizEof", nVizEOF);
+            reg.Save(L"VizTabCh", cVizTab);
+            reg.Save(L"VizEolCh", cVizEOL);
+            reg.Save(L"VizEofCh", cVizEOF);
             
-            reg.Save(_T("SkipFocusEvents"), isSkipFocusEvents);
-    		reg.Save(_T("MonitorConsoleLang"), isMonitorConsoleLang);
+            reg.Save(L"SkipFocusEvents", isSkipFocusEvents);
+    		reg.Save(L"MonitorConsoleLang", isMonitorConsoleLang);
             
             reg.CloseKey();
             
@@ -732,9 +740,9 @@ LRESULT CSettings::OnInitDialog()
 	int nConfLen = _tcslen(Config);
 	int nStdLen = strlen("Software\\ConEmu");
 	if (nConfLen>(nStdLen+1))
-		wsprintf(szTitle, _T("Settings (%s)..."), (Config+nStdLen+1));
+		wsprintf(szTitle, L"Settings (%s)...", (Config+nStdLen+1));
 	else
-		_tcscpy(szTitle, _T("Settings..."));
+		_tcscpy(szTitle, L"Settings...");
 	SetWindowText ( ghOpWnd, szTitle );
 
 	MCHKHEAP
@@ -822,7 +830,7 @@ LRESULT CSettings::OnInitDialog_Main()
 
 		for (uint i=0; i < sizeofarray(Settings::FSizes); i++)
 		{
-			wsprintf(temp, _T("%i"), Settings::FSizes[i]);
+			wsprintf(temp, L"%i", Settings::FSizes[i]);
 			if (i > 0)
 				SendDlgItemMessage(hMain, tFontSizeY, CB_ADDSTRING, 0, (LPARAM) temp);
 			SendDlgItemMessage(hMain, tFontSizeX, CB_ADDSTRING, 0, (LPARAM) temp);
@@ -830,17 +838,17 @@ LRESULT CSettings::OnInitDialog_Main()
 			SendDlgItemMessage(hMain, tFontSizeX3, CB_ADDSTRING, 0, (LPARAM) temp);
 		}
 
-		wsprintf(temp, _T("%i"), LogFont.lfHeight);
+		wsprintf(temp, L"%i", LogFont.lfHeight);
 		upToFontHeight = LogFont.lfHeight;
 		SelectStringExact(hMain, tFontSizeY, temp);
 
-		wsprintf(temp, _T("%i"), FontSizeX);
+		wsprintf(temp, L"%i", FontSizeX);
 		SelectStringExact(hMain, tFontSizeX, temp);
 
-		wsprintf(temp, _T("%i"), FontSizeX2);
+		wsprintf(temp, L"%i", FontSizeX2);
 		SelectStringExact(hMain, tFontSizeX2, temp);
 
-		wsprintf(temp, _T("%i"), FontSizeX3);
+		wsprintf(temp, L"%i", FontSizeX3);
 		SelectStringExact(hMain, tFontSizeX3, temp);
 	}
 
@@ -860,13 +868,13 @@ LRESULT CSettings::OnInitDialog_Main()
 
 	MCHKHEAP
 
-	SetDlgItemText(hMain, tCmdLine, psCmd ? psCmd : _T(""));
+	SetDlgItemText(hMain, tCmdLine, psCmd ? psCmd : L"");
 
 	SetDlgItemText(hMain, tBgImage, sBgImage);
 	CheckDlgButton(hMain, rBgSimple, BST_CHECKED);
 
 	TCHAR tmp[10];
-	wsprintf(tmp, _T("%i"), bgImageDarker);
+	wsprintf(tmp, L"%i", bgImageDarker);
 	SendDlgItemMessage(hMain, tDarker, EM_SETLIMITTEXT, 3, 0);
 	SetDlgItemText(hMain, tDarker, tmp);
 
@@ -924,9 +932,9 @@ LRESULT CSettings::OnInitDialog_Main()
 	else
 		CheckRadioButton(hMain, rNormal, rFullScreen, rNormal);
 
-	//wsprintf(temp, _T("%i"), wndWidth);   SetDlgItemText(hMain, tWndWidth, temp);
+	//wsprintf(temp, L"%i", wndWidth);   SetDlgItemText(hMain, tWndWidth, temp);
 	SendDlgItemMessage(hMain, tWndWidth, EM_SETLIMITTEXT, 3, 0);
-	//wsprintf(temp, _T("%i"), wndHeight);  SetDlgItemText(hMain, tWndHeight, temp);
+	//wsprintf(temp, L"%i", wndHeight);  SetDlgItemText(hMain, tWndHeight, temp);
 	SendDlgItemMessage(hMain, tWndHeight, EM_SETLIMITTEXT, 3, 0);
 	UpdateSize(wndWidth, wndHeight);
 
@@ -987,6 +995,7 @@ LRESULT CSettings::OnInitDialog_Ext()
 	}
 	if (isDropEnabled) CheckDlgButton(hExt, cbDropEnabled, (isDropEnabled==1) ? BST_CHECKED : BST_INDETERMINATE);
 	if (isDefCopy) CheckDlgButton(hExt, cbDnDCopy, BST_CHECKED);
+	// просто группировка
 	{
 		uint nKeyCount = sizeofarray(Settings::szKeys);
 		u8 numL = 0, numR = 0;
@@ -1001,7 +1010,9 @@ LRESULT CSettings::OnInitDialog_Ext()
 		SendDlgItemMessage(hExt, lbLDragKey, CB_SETCURSEL, numL, 0);
 		SendDlgItemMessage(hExt, lbRDragKey, CB_SETCURSEL, numR, 0);
 	}
-	
+	// Overlay
+	if (isDragOverlay) CheckDlgButton(hExt, cbDragImage, (isDragOverlay==1) ? BST_CHECKED : BST_INDETERMINATE);
+	if (isDragShowIcons) CheckDlgButton(hExt, cbDragIcons, BST_CHECKED);
 
 
 	if (isTabs)
@@ -1066,13 +1077,13 @@ LRESULT CSettings::OnInitDialog_Color()
 	for (uint i = 0; i < 32; i++)
 	{
 		SendDlgItemMessage(hColors, 1100 + i, EM_SETLIMITTEXT, 11, 0);
-		wsprintf(temp, _T("%i %i %i"), getR(Colors[i]), getG(Colors[i]), getB(Colors[i]));
+		wsprintf(temp, L"%i %i %i", getR(Colors[i]), getG(Colors[i]), getB(Colors[i]));
 		SetDlgItemText(hColors, 1100 + i, temp);
 	}
 
 	for (uint i=0; i < 16; i++)
 	{
-		wsprintf(temp, (i<10) ? _T("# %i") : _T("#%i"), i);
+		wsprintf(temp, (i<10) ? L"# %i" : L"#%i", i);
 		SendDlgItemMessage(hColors, lbExtendIdx, CB_ADDSTRING, 0, (LPARAM) temp);
 		SendDlgItemMessage(hColors, lbVisFore, CB_ADDSTRING, 0, (LPARAM) temp);
 		SendDlgItemMessage(hColors, lbVisNormal, CB_ADDSTRING, 0, (LPARAM) temp);
@@ -1254,7 +1265,7 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
 				bgImageDarker = 0x46;
 				SendDlgItemMessage(hMain, slDarker, TBM_SETPOS  , (WPARAM) true, (LPARAM) bgImageDarker);
 				TCHAR tmp[10];
-				wsprintf(tmp, _T("%i"), gSet.bgImageDarker);
+				wsprintf(tmp, L"%i", gSet.bgImageDarker);
 				SetDlgItemText(hMain, tDarker, tmp);
 				lbNeedLoad = TRUE;
 			}
@@ -1299,6 +1310,13 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
     case cbDnDCopy:
         isDefCopy = IsChecked(hExt, cbDnDCopy) == BST_CHECKED;
         break;
+
+	case cbDragImage:
+		isDragOverlay = IsChecked(hExt, cbDragImage);
+		break;
+	case cbDragIcons:
+		isDragShowIcons = IsChecked(hExt, cbDragIcons) == BST_CHECKED;
+		break;
     
     case cbGUIpb: // GUI Progress Bars
         isGUIpb = IsChecked(hMain, cbGUIpb);
@@ -1382,11 +1400,11 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
             OPENFILENAME ofn; memset(&ofn,0,sizeof(ofn));
             ofn.lStructSize=sizeof(ofn);
             ofn.hwndOwner = ghOpWnd;
-            ofn.lpstrFilter = _T("Bitmap images (*.bmp)\0*.bmp\0\0");
+            ofn.lpstrFilter = L"Bitmap images (*.bmp)\0*.bmp\0\0";
             ofn.nFilterIndex = 1;
             ofn.lpstrFile = temp;
             ofn.nMaxFile = MAX_PATH;
-            ofn.lpstrTitle = _T("Choose background image");
+            ofn.lpstrTitle = L"Choose background image";
             ofn.Flags = OFN_ENABLESIZING|OFN_NOCHANGEDIR
                     | OFN_PATHMUSTEXIST|OFN_EXPLORER|OFN_HIDEREADONLY|OFN_FILEMUSTEXIST;
             if (GetOpenFileName(&ofn))
@@ -1439,7 +1457,7 @@ LRESULT CSettings::OnColorButtonClicked(WPARAM wParam, LPARAM lParam)
 			if( ShowColorDialog(ghOpWnd, &color) )
             {
                 Colors[CB - 1000] = color;
-                wsprintf(temp, _T("%i %i %i"), getR(color), getG(color), getB(color));
+                wsprintf(temp, L"%i %i %i", getR(color), getG(color), getB(color));
                 SetDlgItemText(hColors, CB + 100, temp);
                 InvalidateRect(GetDlgItem(hColors, CB), 0, 1);
 
@@ -1662,7 +1680,7 @@ bool CSettings::LoadImageFrom(TCHAR *inPath, bool abShowErrors)
 {
     if (!inPath || _tcslen(inPath)>=MAX_PATH) {
         if (abShowErrors)
-            MBoxA(_T("Invalid 'inPath' in CSettings::LoadImageFrom"));
+            MBoxA(L"Invalid 'inPath' in CSettings::LoadImageFrom");
         return false;
     }
 
@@ -1671,7 +1689,7 @@ bool CSettings::LoadImageFrom(TCHAR *inPath, bool abShowErrors)
         if (abShowErrors) {
             TCHAR szError[MAX_PATH*2];
             DWORD dwErr = GetLastError();
-            swprintf(szError, _T("Can't expand environment strings:\r\n%s\r\nError code=0x%08X\r\nImage loading failed"),
+            swprintf(szError, L"Can't expand environment strings:\r\n%s\r\nError code=0x%08X\r\nImage loading failed",
                 inPath, dwErr);
             MBoxA(szError);
         }
@@ -1736,8 +1754,8 @@ bool CSettings::LoadImageFrom(TCHAR *inPath, bool abShowErrors)
 
                         MCHKHEAP
                         if (!GetDIBits(hBgDc, hBgBitmap, 0, bgBmp.Y, bArray, &bInfo, DIB_RGB_COLORS))
-                            //MBoxA(_T("!")); //Maximus5 - Да, это очень информативно
-                            MBoxA(_T("!GetDIBits"));
+                            //MBoxA(L"!"); //Maximus5 - Да, это очень информативно
+                            MBoxA(L"!GetDIBits");
 
 
                         MCHKHEAP
@@ -1755,7 +1773,7 @@ bool CSettings::LoadImageFrom(TCHAR *inPath, bool abShowErrors)
 
                         MCHKHEAP
                         if (!SetDIBits(hBgDc, hBgBitmap, 0, bgBmp.Y, bArray, &bInfo, DIB_RGB_COLORS))
-                            MBoxA(_T("!SetDIBits"));
+                            MBoxA(L"!SetDIBits");
 
                         MCHKHEAP
                         delete[] bArray;
@@ -1769,7 +1787,7 @@ bool CSettings::LoadImageFrom(TCHAR *inPath, bool abShowErrors)
             ReleaseDC(0, hScreenDC);
         } else {
             if (abShowErrors)
-                MBoxA(_T("Only BMP files supported as background!"));
+                MBoxA(L"Only BMP files supported as background!");
         }
         file.Close();
     }
@@ -1842,7 +1860,7 @@ INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPara
             {
                 gSet.bgImageDarker = newV;
                 TCHAR tmp[10];
-                wsprintf(tmp, _T("%i"), gSet.bgImageDarker);
+                wsprintf(tmp, L"%i", gSet.bgImageDarker);
                 SetDlgItemText(hWnd2, tDarker, tmp);
                 gSet.LoadImageFrom(gSet.sBgImage);
                 gConEmu.Update(true);
@@ -1942,7 +1960,7 @@ INT_PTR CSettings::mainOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
             {
                 gSet.bgImageDarker = newV;
                 TCHAR tmp[10];
-                wsprintf(tmp, _T("%i"), gSet.bgImageDarker);
+                wsprintf(tmp, L"%i", gSet.bgImageDarker);
                 SetDlgItemText(hWnd2, tDarker, tmp);
                 gSet.LoadImageFrom(gSet.sBgImage);
                 gConEmu.Update(true);
@@ -2090,7 +2108,7 @@ INT_PTR CSettings::infoOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 					    v = ((double)20) / (tmax - tmin) * gSet.mn_Freq;
 				    }
 				}
-				swprintf(sTemp, _T("%.1f"), v);
+				swprintf(sTemp, L"%.1f", v);
 				SetDlgItemText(gSet.hInfo, wParam+tPerfFPS, sTemp);
 			}
 			return TRUE;
@@ -2111,10 +2129,10 @@ void CSettings::UpdatePos(int x, int y)
     {
         mb_IgnoreEditChanged = TRUE;
 
-        wsprintf(temp, _T("%i"), gSet.wndX);
+        wsprintf(temp, L"%i", gSet.wndX);
         SetDlgItemText(hMain, tWndX, temp);
 
-        wsprintf(temp, _T("%i"), gSet.wndY);
+        wsprintf(temp, L"%i", gSet.wndY);
         SetDlgItemText(hMain, tWndY, temp);
 
         mb_IgnoreEditChanged = FALSE;
@@ -2135,10 +2153,10 @@ void CSettings::UpdateSize(UINT w, UINT h)
     if (ghOpWnd) {
         mb_IgnoreEditChanged = TRUE;
 
-        wsprintf(temp, _T("%i"), gSet.wndWidth);
+        wsprintf(temp, L"%i", gSet.wndWidth);
         SetDlgItemText(hMain, tWndWidth, temp);
 
-        wsprintf(temp, _T("%i"), gSet.wndHeight);
+        wsprintf(temp, L"%i", gSet.wndHeight);
         SetDlgItemText(hMain, tWndHeight, temp);
 
         mb_IgnoreEditChanged = FALSE;
@@ -2165,8 +2183,8 @@ void CSettings::Performance(UINT nID, BOOL bEnd)
             // Performance
             wchar_t sTemp[128];
             //Нихрена это не мегагерцы. Например на "AMD Athlon 64 X2 1999 MHz" здесь отображается "0.004 GHz"
-            //swprintf(sTemp, _T("Performance counters (%.3f GHz)"), ((double)(mn_Freq/1000)/1000000));
-            swprintf(sTemp, _T("Performance counters (%I64i)"), ((i64)(mn_Freq/1000)));
+            //swprintf(sTemp, L"Performance counters (%.3f GHz)", ((double)(mn_Freq/1000)/1000000));
+            swprintf(sTemp, L"Performance counters (%I64i)", ((i64)(mn_Freq/1000)));
             SetDlgItemText(hInfo, nID, sTemp);
             
             for (nID=tPerfFPS; mn_Freq && nID<=tPerfInterval; nID++) {
@@ -2320,7 +2338,7 @@ void CSettings::RecreateFont(WORD wFromID)
 
 	if (wFromID == tFontFace) {
 		wchar_t szSize[10];
-		wsprintf(szSize, _T("%i"), LF.lfHeight);
+		wsprintf(szSize, L"%i", LF.lfHeight);
 		SetDlgItemText(hMain, tFontSizeY, szSize);
 	}
 

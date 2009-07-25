@@ -2,6 +2,11 @@
 #include "Header.h"
 #include "ScreenDump.h"
 
+#define MAX_OVERLAY_WIDTH    300
+#define MAX_OVERLAY_HEIGHT   300
+#define OVERLAY_TEXT_SHIFT   (gSet.isDragShowIcons ? 18 : 0)
+#define OVERLAY_COLUMN_SHIFT 5
+
 CDragDrop::CDragDrop(HWND hWnd)
 {
 	m_hWnd = hWnd;
@@ -14,6 +19,7 @@ CDragDrop::CDragDrop(HWND hWnd)
 	mh_Overlapped = NULL; mh_BitsDC = NULL; mh_BitsBMP = NULL;
 	mp_Bits = NULL;
 	mn_AllFiles = 0; mn_CurWritten = 0; mn_CurFile = 0;
+	mb_DragWithinNow = FALSE;
 	
 	InitializeCriticalSection(&m_CrThreads);
 }
@@ -430,6 +436,7 @@ HRESULT CDragDrop::DropLinks(HDROP hDrop, int iQuantity, BOOL abActive)
 
 HRESULT STDMETHODCALLTYPE CDragDrop::Drop (IDataObject * pDataObject,DWORD grfKeyState,POINTL pt,DWORD * pdwEffect)
 {
+	mb_DragWithinNow = FALSE;
 	DestroyDragImageBits();
 	DestroyDragImageWindow();
 
@@ -623,7 +630,7 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragOver(DWORD grfKeyState,POINTL pt,DWORD 
 		GetCursorPos(&ptCur);
 		#endif
 		RECT rcDC; GetWindowRect(ghWndDC, &rcDC);
-		HWND hWndFrom = WindowFromPoint(ptCur);
+		//HWND hWndFrom = WindowFromPoint(ptCur);
 		if (/*(hWndFrom != ghWnd && hWndFrom != mh_Overlapped)
 			||*/ !PtInRect(&rcDC, ptCur))
 		{
@@ -666,12 +673,14 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragOver(DWORD grfKeyState,POINTL pt,DWORD 
 		}
 	}
 
-	if (*pdwEffect == DROPEFFECT_NONE) {
-		DestroyDragImageWindow();
-	} else if (mh_Overlapped && mp_Bits) {
-		MoveDragWindow();
-	} else if (mp_Bits) {
-		CreateDragImageWindow();
+	if (!mb_selfdrag) {
+		if (*pdwEffect == DROPEFFECT_NONE) {
+			DestroyDragImageWindow();
+		} else if (mh_Overlapped && mp_Bits) {
+			MoveDragWindow();
+		} else if (mp_Bits) {
+			CreateDragImageWindow();
+		}
 	}
 
 	//gConEmu.DebugStep(_T("DnD: DragOver ok"));
@@ -739,6 +748,7 @@ void CDragDrop::EnumDragFormats(IDataObject * pDataObject)
 HRESULT STDMETHODCALLTYPE CDragDrop::DragEnter(IDataObject * pDataObject,DWORD grfKeyState,POINTL pt,DWORD * pdwEffect)
 {
 	mb_selfdrag = (pDataObject == mp_DataObject);
+	mb_DragWithinNow = TRUE;
 
 	#ifdef MSGLOGGER
 	EnumDragFormats(pDataObject);
@@ -798,7 +808,9 @@ void CDragDrop::RetrieveDragToInfo(IDataObject * pDataObject)
 
 HRESULT STDMETHODCALLTYPE CDragDrop::DragLeave(void)
 {
-	DestroyDragImageBits();
+	mb_DragWithinNow = FALSE;
+	if (!mb_selfdrag)
+		DestroyDragImageBits();
 	DestroyDragImageWindow();
 	return 0;
 }
@@ -1073,7 +1085,7 @@ void CDragDrop::Drag()
 						};
 						//stgmed.hGlobal = drop_data ;
 						//--stgmed.lpszFileName=szDraggedPath;
-						CreateDropSource(&pDropSource);
+						CreateDropSource(&pDropSource, this);
 						
 						MCHKHEAP
 
@@ -1140,42 +1152,106 @@ typedef struct tag_MyRgbQuad {
 
 DragImageBits* CDragDrop::CreateDragImageBits(wchar_t* pszFiles)
 {
+	if (!pszFiles) {
+		_ASSERTE(pszFiles!=NULL);
+		return NULL;
+	}
+
+	DestroyDragImageBits();
+	DestroyDragImageWindow();
+
 	DragImageBits* pBits = NULL;
 
 	HDC hScreenDC = ::GetDC(0);
 	HDC hDrawDC = CreateCompatibleDC(hScreenDC);
-	HBITMAP hBitmap = CreateCompatibleBitmap(hScreenDC, 300, 300);
-	HBITMAP hOldBitmap = (HBITMAP)SelectObject(hDrawDC, hBitmap);
+	HBITMAP hBitmap = CreateCompatibleBitmap(hScreenDC, MAX_OVERLAY_WIDTH, MAX_OVERLAY_HEIGHT);
 
 	if (hDrawDC && hBitmap) {
-		SelectObject ( hDrawDC, (HFONT)GetStockObject(SYSTEM_FONT) );
-		SetTextColor(hDrawDC, RGB(0,0,128));
-		SetBkColor(hDrawDC, RGB(192,192,192));
-		SetBkMode(hDrawDC, OPAQUE);
 		HFONT hOldF = NULL, hf = CreateFont(14, 0, 0, 0, 400, 0, 0, 0, CP_ACP, 0, 0, 0, 0, L"Tahoma");
 		if (hf) hOldF = (HFONT)SelectObject ( hDrawDC, hf );
 
-		int nMaxX = 0, nMaxY = 0;
-		while (*pszFiles) {
-			if (!DrawImageBits ( hDrawDC, pszFiles, &nMaxX, &nMaxY ))
-				break; // вышли за пределы 300x300 (по высоте)
-
-			pszFiles += lstrlen(pszFiles)+1;
+		int nMaxX = 0, nMaxY = 0, nX = 0;
+		// GetTextExtentPoint32 почему-то портит DC, поэтому ширину получим сначала
+		wchar_t *psz = pszFiles; int nFilesCol = 0;
+		while (*psz) {
+			SIZE sz = {0};
+			LPCWSTR pszText = wcsrchr(psz, L'\\');
+			if (!pszText) pszText = psz; else psz++;
+			GetTextExtentPoint32(hDrawDC, pszText, lstrlen(pszText), &sz);
+			if (sz.cx > nMaxX)
+				nMaxX = sz.cx;
+			psz += lstrlen(psz)+1; // длина полного пути и длина имени файла разные ;)
+			nFilesCol ++;
 		}
+		nMaxX = min((OVERLAY_TEXT_SHIFT + nMaxX),MAX_OVERLAY_WIDTH);
+
+		// ≈сли тащат много файлов/папок - можно попробовать разместить их в несколько колонок
+		int nColCount = 1;
+		if (nFilesCol > 3) {
+			if (nFilesCol > 21 && (nMaxX * 3 + 32) <= MAX_OVERLAY_WIDTH) {
+				nFilesCol = (nFilesCol+3) / (nColCount = 4);
+			} else if (nFilesCol > 12 && (nMaxX * 2 + 32) <= MAX_OVERLAY_WIDTH) {
+				nFilesCol = (nFilesCol+2) / (nColCount = 3);
+			} else if ((nMaxX + 32) <= MAX_OVERLAY_WIDTH) {
+				nFilesCol = (nFilesCol+1) / (nColCount = 2);
+			}
+		}
+
+
+		HBITMAP hOldBitmap = (HBITMAP)SelectObject(hDrawDC, hBitmap);
+		SetTextColor(hDrawDC, RGB(0,0,128)); // “емно синий текст
+		//SetTextColor(hDrawDC, RGB(255,255,255)); // Ѕелый текст
+		SetBkColor(hDrawDC, RGB(192,192,192)); // на сером фоне
+		SetBkMode(hDrawDC, OPAQUE);
+
+		// DC может быть испорчен (почему?), поэтому лучше почистим его
+		RECT rcFill = MakeRect(MAX_OVERLAY_WIDTH,MAX_OVERLAY_HEIGHT);
+		#ifdef _DEBUG
+		FillRect(hDrawDC, &rcFill, (HBRUSH)GetStockObject(BLACK_BRUSH/*WHITE_BRUSH*/));
+		#else
+		FillRect(hDrawDC, &rcFill, (HBRUSH)GetStockObject(BLACK_BRUSH));
+		#endif
+		//DumpImage(hDrawDC, MAX_OVERLAY_WIDTH, nMaxY, L"F:\\Dump.bmp");
+		
+		psz = pszFiles;
+		int nFileIdx = 0, nColMaxY = 0, nAllFiles = 0;
+		nMaxX = 0;
+		int nFirstColWidth = 0;
+		while (*psz) {
+			if (!DrawImageBits ( hDrawDC, psz, &nMaxX, nX, &nColMaxY ))
+				break; // вышли за пределы MAX_OVERLAY_WIDTH x MAX_OVERLAY_HEIGHT (по высоте)
+			psz += lstrlen(psz)+1;
+			if (!*psz) break;
+			nFileIdx ++; nAllFiles ++;
+			if (nFileIdx >= nFilesCol) {
+				if (!nFirstColWidth)
+					nFirstColWidth = nMaxX + OVERLAY_TEXT_SHIFT;
+				if ((nX + nMaxX + 32) >= MAX_OVERLAY_WIDTH)
+					break;
+				nX += nMaxX + OVERLAY_TEXT_SHIFT + OVERLAY_COLUMN_SHIFT;
+				if (nColMaxY > nMaxY) nMaxY = nColMaxY;
+				nColMaxY = nMaxX = nFileIdx = 0;
+			}
+		}
+		if (nColMaxY > nMaxY) nMaxY = nColMaxY;
+		if (!nFirstColWidth) nFirstColWidth = nMaxX + OVERLAY_TEXT_SHIFT;
+
+		int nLineX = ((nX+nMaxX+OVERLAY_TEXT_SHIFT+3)>>2)<<2;
+		if (nLineX > MAX_OVERLAY_WIDTH) nLineX = MAX_OVERLAY_WIDTH;
+
 		SelectObject ( hDrawDC, hOldF );
 		GdiFlush();
+
 		#ifdef _DEBUG
-		DumpImage(hDrawDC, nMaxX, nMaxY, L"F:\\Dump.bmp");
+		DumpImage(hDrawDC, MAX_OVERLAY_WIDTH, nMaxY, L"F:\\Dump.bmp");
 		#endif
 
-		if (nMaxX>2 && nMaxY>2) {
+		if (nLineX>2 && nMaxY>2) {
 			HDC hBitsDC = CreateCompatibleDC(hScreenDC);
 			if (hBitsDC && hDrawDC) {
 				SetLayout(hBitsDC, LAYOUT_BITMAPORIENTATIONPRESERVED);
 
 				BITMAPINFOHEADER bih = {sizeof(BITMAPINFOHEADER)};
-				int nLineX = ((nMaxX+3)>>2)<<2;
-					if (nLineX > 300) nLineX = 300;
 				bih.biWidth = nLineX;
 				bih.biHeight = nMaxY;
 				bih.biPlanes = 1;
@@ -1186,7 +1262,7 @@ DragImageBits* CDragDrop::CreateDragImageBits(wchar_t* pszFiles)
 				if (hBitsBitmap) {
 					HBITMAP hOldBitsBitmap = (HBITMAP)SelectObject(hBitsDC, hBitsBitmap);
 
-					BitBlt(hBitsDC, 0,0,nMaxX,nMaxY, hDrawDC,0,0, SRCCOPY);
+					BitBlt(hBitsDC, 0,0,nLineX,nMaxY, hDrawDC,0,0, SRCCOPY);
 					GdiFlush();
 
 					DragImageBits* pDst = (DragImageBits*)GlobalAlloc(GPTR, sizeof(DragImageBits) + (nLineX*nMaxY - 1)*4);
@@ -1194,8 +1270,11 @@ DragImageBits* CDragDrop::CreateDragImageBits(wchar_t* pszFiles)
 					if (pDst) {
 						pDst->nWidth = nLineX;
 						pDst->nHeight = nMaxY;
-						pDst->nXCursor = nMaxX / 2;
-						pDst->nYCursor = nMaxY / 2;
+						if (nColCount == 1)
+							pDst->nXCursor = nMaxX / 2;
+						else
+							pDst->nXCursor = nFirstColWidth;
+						pDst->nYCursor = 17; // под первой строкой
 						pDst->nRes1 = GetTickCount(); // что-то непон€тное. Random?
 						pDst->nRes2 = 0xFFFFFFFF;
 
@@ -1203,7 +1282,7 @@ DragImageBits* CDragDrop::CreateDragImageBits(wchar_t* pszFiles)
 						MyRgbQuad *pRGB = (MyRgbQuad*)pDst->pix;
 						u32 nCurBlend = 0xAA, nAllBlend = 0xAA;
 						for (int y = 0; y < nMaxY; y++) {
-							for (int x = 0; x < nMaxX; x++) {
+							for (int x = 0; x < nLineX; x++) {
 								pRGB->rgbBlue = *(pSrc++);
 								pRGB->rgbGreen = *(pSrc++);
 								pRGB->rgbRed = *(pSrc++);
@@ -1217,14 +1296,25 @@ DragImageBits* CDragDrop::CreateDragImageBits(wchar_t* pszFiles)
 							}
 						}
 
-						pBits = pDst; pDst = NULL; //OK
+						mp_Bits = (DragImageBits*)calloc(sizeof(DragImageBits)/*+(nCount-1)*4*/,1);
+						if (mp_Bits) {
+							*mp_Bits = *pDst;
+							pBits = pDst; pDst = NULL; //OK
+							mh_BitsDC = hBitsDC; hBitsDC = NULL;
+							mh_BitsBMP = hBitsBitmap; hBitsBitmap = NULL;
+						} else {
+							if (pDst) GlobalFree(pDst); pDst = NULL; // ќшибка
+						}
 
 					} else {
 						if (pDst) GlobalFree(pDst); pDst = NULL;
 					}
 
-					SelectObject(hBitsDC, hOldBitsBitmap);
-					DeleteObject(hBitsBitmap); hBitsBitmap = NULL;
+					if (hBitsDC)
+						SelectObject(hBitsDC, hOldBitsBitmap);
+					if (hBitsBitmap) {
+						DeleteObject(hBitsBitmap); hBitsBitmap = NULL;
+					}
 				}
 			}
 			if (hBitsDC) {
@@ -1248,36 +1338,44 @@ DragImageBits* CDragDrop::CreateDragImageBits(wchar_t* pszFiles)
 	return pBits;
 }
 
-BOOL CDragDrop::DrawImageBits ( HDC hDrawDC, wchar_t* pszFile, int *nMaxX, int *nMaxY )
+BOOL CDragDrop::DrawImageBits ( HDC hDrawDC, wchar_t* pszFile, int *nMaxX, int nX, int *nMaxY )
 {
-	if ( (*nMaxY + 17) >= 300 )
+	if ( (*nMaxY + 17) >= MAX_OVERLAY_HEIGHT )
 		return FALSE;
 	SHFILEINFO sfi = {0};
 	DWORD nDrawRC = 0;
-	UINT cbSize = sizeof(sfi);
-	DWORD_PTR shRc = SHGetFileInfo ( pszFile, 0, &sfi, cbSize, 
-		SHGFI_ATTRIBUTES|SHGFI_DISPLAYNAME|SHGFI_ICON/*|SHGFI_SELECTED*/|SHGFI_SMALLICON|SHGFI_TYPENAME);
 
-	
+	wchar_t* pszText = wcsrchr(pszFile, L'\\');
+	if (!pszText) pszText = pszFile; else pszText++;
+	SIZE sz = {0};
+	GetTextExtentPoint32(hDrawDC, pszText, lstrlen(pszText), &sz);
+	if (sz.cx > *nMaxX)
+		*nMaxX = sz.cx;
 
-	if (shRc) {
-		nDrawRC = DrawIconEx(hDrawDC, 0, *nMaxY, sfi.hIcon, 16, 16, 0, NULL, DI_NORMAL);
-		pszFile = sfi.szDisplayName;
-	} else {
-		// Ќарисовать стандартную иконку?
+	// »конка, если просили
+	if (gSet.isDragShowIcons)
+	{
+		UINT cbSize = sizeof(sfi);
+		DWORD_PTR shRc = SHGetFileInfo ( pszFile, 0, &sfi, cbSize, 
+			SHGFI_ATTRIBUTES|SHGFI_ICON/*|SHGFI_SELECTED*/|SHGFI_SMALLICON|SHGFI_TYPENAME);
+
+		if (shRc) {
+			nDrawRC = DrawIconEx(hDrawDC, nX, *nMaxY, sfi.hIcon, 16, 16, 0, NULL, DI_NORMAL);
+		} else {
+			// Ќарисовать стандартную иконку?
+		}
 	}
 
-	RECT rcText = {18, *nMaxY+1, 300, (*nMaxY + 16)};
-	SIZE sz = {0};
-	GetTextExtentPoint32(hDrawDC, pszFile, lstrlen(pszFile), &sz);
-	rcText.right = min((19+sz.cx), 300);
-	nDrawRC = DrawTextEx(hDrawDC, pszFile, lstrlen(pszFile), &rcText, 
-		DT_LEFT|DT_TOP|DT_NOPREFIX|DT_PATH_ELLIPSIS|DT_SINGLELINE, NULL);
+	// ј теперь - им€ файла/папки
+	RECT rcText = {nX+OVERLAY_TEXT_SHIFT, *nMaxY+1, 0, (*nMaxY + 16)};
+	rcText.right = min(MAX_OVERLAY_WIDTH, (rcText.left + *nMaxX));
 
-	if (*nMaxX < rcText.right)
-		*nMaxX = min(rcText.right,300);
-	if (*nMaxY < rcText.bottom)
-		*nMaxY = min(rcText.bottom,300);
+	wchar_t szText[MAX_PATH+1]; lstrcpyn(szText, pszText, MAX_PATH); szText[MAX_PATH] = 0;
+	nDrawRC = DrawTextEx(hDrawDC, szText, lstrlen(szText), &rcText, 
+		DT_LEFT|DT_TOP|DT_NOPREFIX|DT_END_ELLIPSIS|DT_SINGLELINE|DT_MODIFYSTRING, NULL);
+
+	if (*nMaxY < (rcText.bottom+1))
+		*nMaxY = min(rcText.bottom+1,300);
 
 	if (sfi.hIcon) {
 		DestroyIcon(sfi.hIcon); sfi.hIcon = NULL;
@@ -1293,8 +1391,26 @@ BOOL CDragDrop::LoadDragImageBits(IDataObject * pDataObject)
 	DestroyDragImageBits();
 	DestroyDragImageWindow();
 
+	if (!gSet.isDragOverlay)
+		return FALSE;
+
 	STGMEDIUM stgMedium = { 0 };
 	FORMATETC fmtetc = { 0, 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
+
+	// Ёто пока что-то не работает
+	//if (gSet.isDragOverlay == 1) {
+	//	wchar_t* pszFiles = NULL;
+	//	fmtetc.cfFormat = RegisterClipboardFormat(L"FileNameW");
+	//	TODO("ј освобождать полученное надо?");
+	//	if (S_OK == pDataObject->QueryGetData(&fmtetc)) {
+	//		if (S_OK == pDataObject->GetData(&fmtetc, &stgMedium) || stgMedium.hGlobal == NULL) {
+	//			pszFiles = (wchar_t*)GlobalLock(stgMedium.hGlobal);
+	//			if (pszFiles) {
+	//				return (CreateDragImageBits(pszFiles) != NULL);
+	//			}
+	//		}
+	//	}
+	//}
 
 	fmtetc.cfFormat = RegisterClipboardFormat(L"DragImageBits");
 	TODO("ј освобождать полученное надо?");
@@ -1347,8 +1463,10 @@ BOOL CDragDrop::LoadDragImageBits(IDataObject * pDataObject)
 				memmove(pDst, pInfo->pix, cbSize);
 				GdiFlush();
 
+				#ifdef _DEBUG
 				int nBits = GetDeviceCaps(mh_BitsDC, BITSPIXEL);
 				//_ASSERTE(nBits == 32);
+				#endif
 
 				lbRc = TRUE;
 			}
@@ -1404,7 +1522,7 @@ BOOL CDragDrop::CreateDragImageWindow()
 	}
 	
 
-	int nCount = mp_Bits->nWidth * mp_Bits->nHeight;
+	//int nCount = mp_Bits->nWidth * mp_Bits->nHeight;
 	
 	// |WS_BORDER|WS_SYSMENU - создает проводник. попробуем?
 	mh_Overlapped = CreateWindowEx(
@@ -1439,7 +1557,10 @@ void CDragDrop::MoveDragWindow()
 	POINT p2 = {0, 0};
 	SIZE  sz = {mp_Bits->nWidth,mp_Bits->nHeight};
 
-	BOOL bRet = UpdateLayeredWindow(mh_Overlapped, NULL, &p, &sz, mh_BitsDC, &p2, 0, 
+	#ifdef _DEBUG
+	BOOL bRet = 
+	#endif
+	UpdateLayeredWindow(mh_Overlapped, NULL, &p, &sz, mh_BitsDC, &p2, 0, 
 		&bf, ULW_ALPHA /*ULW_OPAQUE*/);
 	//_ASSERTE(bRet);
 	
@@ -1461,7 +1582,9 @@ LRESULT CDragDrop::DragBitsWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 			(LONG_PTR)((LPCREATESTRUCT)lParam)->lpCreateParams);
 		
 	} else if (messg == WM_SETFOCUS) {
-		SetForegroundWindow(ghWnd); // после создани€ окна фокус уходит из GUI
+		CDragDrop *pDrag = (CDragDrop*)GetWindowLongPtr(hWnd, GWLP_USERDATA);
+		if (pDrag && pDrag->mb_DragWithinNow)
+			SetForegroundWindow(ghWnd); // после создани€ окна фокус уходит из GUI
 		return 0;
 	}
 	
@@ -1473,4 +1596,20 @@ BOOL CDragDrop::InDragDrop()
 	if (mp_DataObject || mh_Overlapped)
 		return TRUE;
 	return FALSE;
+}
+
+void CDragDrop::DragFeedBack(DWORD dwEffect)
+{
+	// Drop или отмена драга, когда источник - ConEmu
+	if (dwEffect == (DWORD)-1) {
+		mb_DragWithinNow = FALSE;
+		DestroyDragImageWindow();
+	} else if (dwEffect == DROPEFFECT_NONE) {
+		DestroyDragImageWindow();
+	} else {
+		if (!mh_Overlapped && mp_Bits)
+			CreateDragImageWindow();
+		if (mh_Overlapped)
+			MoveDragWindow();
+	}
 }

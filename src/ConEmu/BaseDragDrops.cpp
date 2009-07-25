@@ -107,10 +107,11 @@ ULONG __stdcall CBaseDropTarget::Release(void)
 //
 //	Constructor
 //
-CDropSource::CDropSource() 
+CDropSource::CDropSource(CBaseDropTarget* pCallback)
 {
 	m_lRefCount = 1;
 	mh_CurCopy = NULL; mh_CurMove = NULL; mh_CurLink = NULL;
+	mp_Callback = pCallback;
 }
 
 //
@@ -175,19 +176,28 @@ HRESULT __stdcall CDropSource::QueryInterface(REFIID iid, void **ppvObject)
 HRESULT __stdcall CDropSource::QueryContinueDrag(BOOL fEscapePressed, DWORD grfKeyState)
 {
 	// if the <Escape> key has been pressed since the last call, cancel the drop
-	if(fEscapePressed == TRUE)
+	if(fEscapePressed == TRUE) {
+		if (mp_Callback)
+			mp_Callback->DragFeedBack((DWORD)-1);
 		return DRAGDROP_S_CANCEL;	
+	}
 		
 	DWORD nDragKey = ((gConEmu.mouse.state & DRAG_L_STARTED) == DRAG_L_STARTED) ? MK_LBUTTON : MK_RBUTTON;
 	DWORD nOtherKey = ((nDragKey & MK_LBUTTON) == MK_LBUTTON) ? (MK_RBUTTON|MK_MBUTTON) : (MK_LBUTTON|MK_MBUTTON);
 
 	// if the <LeftMouse> button has been released, then do the drop!
-	if((grfKeyState & nDragKey) == 0)
+	if((grfKeyState & nDragKey) == 0) {
+		if (mp_Callback)
+			mp_Callback->DragFeedBack((DWORD)-1);
 		return DRAGDROP_S_DROP;
-		
+	}
+
 	// Если юзер нажимает другую мышиную кнопку
-	if((grfKeyState & nOtherKey) == nOtherKey)
+	if((grfKeyState & nOtherKey) == nOtherKey) {
+		if (mp_Callback)
+			mp_Callback->DragFeedBack((DWORD)-1);
 		return DRAGDROP_S_CANCEL;
+	}
 
 	// continue with the drag-drop
 	return S_OK;
@@ -202,40 +212,45 @@ HRESULT __stdcall CDropSource::QueryContinueDrag(BOOL fEscapePressed, DWORD grfK
 HRESULT __stdcall CDropSource::GiveFeedback(DWORD dwEffect)
 {
 	HRESULT hr = DRAGDROP_S_USEDEFAULTCURSORS;
-	if (dwEffect & DROPEFFECT_COPY) {
-		if (!mh_CurCopy) mh_CurCopy = LoadCursor(g_hInstance, MAKEINTRESOURCE(IDC_COPY));
-		if (mh_CurCopy) {
-			SetCursor(mh_CurCopy);
-			hr = S_OK;
-		}
+	HCURSOR hCur = NULL;
 
-	} else if (dwEffect & DROPEFFECT_MOVE) {
-		if (!mh_CurMove) mh_CurMove = LoadCursor(g_hInstance, MAKEINTRESOURCE(IDC_MOVE));
-		if (mh_CurMove) {
-			SetCursor(mh_CurMove);
-			hr = S_OK;
-		}
+	if (dwEffect != DROPEFFECT_NONE)
+	{
+		if (dwEffect & DROPEFFECT_COPY) {
+			if (!mh_CurCopy) mh_CurCopy = LoadCursor(g_hInstance, MAKEINTRESOURCE(IDC_COPY));
+			hCur = mh_CurCopy;
 
-	} else if (dwEffect & DROPEFFECT_LINK) {
-		if (!mh_CurLink) mh_CurLink = LoadCursor(g_hInstance, MAKEINTRESOURCE(IDC_LINK));
-		if (mh_CurLink) {
-			SetCursor(mh_CurLink);
-			hr = S_OK;
-		}
+		} else if (dwEffect & DROPEFFECT_MOVE) {
+			if (!mh_CurMove) mh_CurMove = LoadCursor(g_hInstance, MAKEINTRESOURCE(IDC_MOVE));
+			hCur = mh_CurMove;
 
+		} else if (dwEffect & DROPEFFECT_LINK) {
+			if (!mh_CurLink) mh_CurLink = LoadCursor(g_hInstance, MAKEINTRESOURCE(IDC_LINK));
+			hCur = mh_CurLink;
+
+		}
 	}
+
+	if (hCur) {
+		SetCursor(hCur);
+		hr = S_OK;
+	}
+
+	if (mp_Callback)
+		mp_Callback->DragFeedBack(dwEffect);
+
 	return hr;
 }
 
 //
 //	Helper routine to create an IDropSource object
 //	
-HRESULT CreateDropSource(IDropSource **ppDropSource)
+HRESULT CreateDropSource(IDropSource **ppDropSource, CBaseDropTarget* pCallback)
 {
 	if(ppDropSource == 0)
 		return E_INVALIDARG;
 
-	*ppDropSource = new CDropSource();
+	*ppDropSource = new CDropSource(pCallback);
 
 	return (*ppDropSource) ? S_OK : E_OUTOFMEMORY;
 

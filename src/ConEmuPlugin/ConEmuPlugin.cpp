@@ -414,7 +414,7 @@ CESERVER_REQ* ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandDat
 
 		gpReqCommandData = NULL;
 		gnReqCommand = -1; gnPluginOpenFrom = -1;
-		return NULL;
+		return gpCmdRet; // Результат выполнения команды
 	}
 	
 	/*if (gbPlugKeyChanged) {

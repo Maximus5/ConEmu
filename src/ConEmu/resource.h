@@ -195,6 +195,7 @@
 #define cbDragAllPlugins                1549
 #define cbAutoRegFonts                  1550
 #define cbDebugSteps                    1551
+#define cbDragIcons                     1553
 
 // Next default values for new objects
 // 
@@ -202,7 +203,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        114
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1552
+#define _APS_NEXT_CONTROL_VALUE         1554
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

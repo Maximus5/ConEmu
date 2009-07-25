@@ -70,10 +70,13 @@ public:
     bool isForceMonospace, isProportional;
     bool isUpdConHandle;
 	bool isRSelFix;
+	//Drag
     BYTE isDragEnabled;
     BYTE isDropEnabled;
     DWORD nLDragKey, nRDragKey;
     bool isDefCopy;
+	BYTE isDragOverlay;
+	bool isDragShowIcons;
     //bool 
     bool isDebugSteps;
     bool isGUIpb; // GUI Progress bars

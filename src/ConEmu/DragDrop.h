@@ -31,6 +31,7 @@ public:
 	ForwardedPanelInfo *m_pfpi;
 	HRESULT CreateLink(LPCTSTR lpszPathObj, LPCTSTR lpszPathLink, LPCTSTR lpszDesc);
 	BOOL InDragDrop();
+	virtual void DragFeedBack(DWORD dwEffect);
 protected:
 	BOOL mb_DragDropRegistered;
 	void RetrieveDragToInfo(IDataObject * pDataObject);
@@ -66,10 +67,11 @@ protected:
 	BOOL LoadDragImageBits(IDataObject * pDataObject);
 	BOOL CreateDragImageBits(IDataObject * pDataObject);
 	DragImageBits* CreateDragImageBits(wchar_t* pszFiles);
-	BOOL DrawImageBits ( HDC hDrawDC, wchar_t* pszFile, int *nMaxX, int *nMaxY );
+	BOOL DrawImageBits ( HDC hDrawDC, wchar_t* pszFile, int *nMaxX, int nX, int *nMaxY );
 	void DestroyDragImageBits();
 	void MoveDragWindow();
 	//DragImageBits m_ImgInfo;
 	//LPBYTE mp_ImgData;
 	DragImageBits *mp_Bits;
+	BOOL mb_DragWithinNow;
 };
