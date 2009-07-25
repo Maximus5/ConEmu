@@ -1124,7 +1124,21 @@ BOOL CDragDrop::CreateDragImageBits(IDataObject * pDataObject)
 	return FALSE;
 }
 
-CDragDrop::DragImageBits* CDragDrop::CreateDragImageBits(wchar_t* pszFiles)
+#include <pshpack1.h>
+typedef struct tag_MyRgbQuad {
+	union {
+		DWORD dwValue;
+		struct {
+			BYTE    rgbBlue;
+			BYTE    rgbGreen;
+			BYTE    rgbRed;
+			BYTE    rgbAlpha;
+		};
+	};
+} MyRgbQuad;
+#include <poppack.h>
+
+DragImageBits* CDragDrop::CreateDragImageBits(wchar_t* pszFiles)
 {
 	DragImageBits* pBits = NULL;
 
@@ -1160,7 +1174,9 @@ CDragDrop::DragImageBits* CDragDrop::CreateDragImageBits(wchar_t* pszFiles)
 				SetLayout(hBitsDC, LAYOUT_BITMAPORIENTATIONPRESERVED);
 
 				BITMAPINFOHEADER bih = {sizeof(BITMAPINFOHEADER)};
-				bih.biWidth = nMaxX-1;
+				int nLineX = ((nMaxX+3)>>2)<<2;
+					if (nLineX > 300) nLineX = 300;
+				bih.biWidth = nLineX;
 				bih.biHeight = nMaxY;
 				bih.biPlanes = 1;
 				bih.biBitCount = 24;
@@ -1170,27 +1186,31 @@ CDragDrop::DragImageBits* CDragDrop::CreateDragImageBits(wchar_t* pszFiles)
 				if (hBitsBitmap) {
 					HBITMAP hOldBitsBitmap = (HBITMAP)SelectObject(hBitsDC, hBitsBitmap);
 
-					BitBlt(hBitsDC, 0,0,nMaxX-1,nMaxY, hDrawDC,0,0, SRCCOPY);
+					BitBlt(hBitsDC, 0,0,nMaxX,nMaxY, hDrawDC,0,0, SRCCOPY);
 					GdiFlush();
 
-					DragImageBits* pDst = (DragImageBits*)GlobalAlloc(GPTR, sizeof(DragImageBits) + (nMaxX*nMaxY - 1)*4);
+					DragImageBits* pDst = (DragImageBits*)GlobalAlloc(GPTR, sizeof(DragImageBits) + (nLineX*nMaxY - 1)*4);
 
 					if (pDst) {
-						pDst->nWidth = nMaxX;
+						pDst->nWidth = nLineX;
 						pDst->nHeight = nMaxY;
 						pDst->nXCursor = nMaxX / 2;
 						pDst->nYCursor = nMaxY / 2;
 						pDst->nRes1 = GetTickCount(); // что-то непонятное. Random?
 						pDst->nRes2 = 0xFFFFFFFF;
 
-						RGBQUAD *pRGB = pDst->pix;
+						
+						MyRgbQuad *pRGB = (MyRgbQuad*)pDst->pix;
 						for (int y = 0; y < nMaxY; y++) {
 							for (int x = 0; x < nMaxX; x++) {
-								pRGB->rgbRed = *(pSrc++);
-								pRGB->rgbGreen = *(pSrc++);
-								pRGB->rgbBlue = *(pSrc++);
-								if ( *((DWORD*)pRGB) != 0 )
-									pRGB->rgbReserved = 0x60;
+								pRGB->rgbBlue =
+									*(pSrc++);
+								pRGB->rgbGreen =
+									*(pSrc++);
+								pRGB->rgbRed =
+									*(pSrc++);
+								if ( pRGB->dwValue )
+									pRGB->rgbAlpha = 0xAA;
 								pRGB++;
 							}
 						}
@@ -1228,6 +1248,16 @@ CDragDrop::DragImageBits* CDragDrop::CreateDragImageBits(wchar_t* pszFiles)
 
 BOOL CDragDrop::DrawImageBits ( HDC hDrawDC, wchar_t* pszFile, int *nMaxX, int *nMaxY )
 {
+//#ifdef _DEBUG
+//	*nMaxX = 100; *nMaxY = 18;
+//	RECT rc = MakeRect(*nMaxX,*nMaxY);
+//	HBRUSH hbr = CreateSolidBrush(RGB(0,0,255));
+//	FillRect(hDrawDC, &rc, hbr);
+//	DeleteObject(hbr);
+//	return FALSE;
+//#endif
+
+
 	if ( (*nMaxY + 17) >= 300 )
 		return FALSE;
 	SHFILEINFO sfi = {0};
@@ -1418,7 +1448,7 @@ void CDragDrop::MoveDragWindow()
 	SIZE  sz = {mp_Bits->nWidth,mp_Bits->nHeight};
 
 	BOOL bRet = UpdateLayeredWindow(mh_Overlapped, NULL, &p, &sz, mh_BitsDC, &p2, 0, 
-		&bf, /*m_iBPP == 32 ?*/ ULW_ALPHA /*: ULW_OPAQUE*/);
+		&bf, ULW_ALPHA /*ULW_OPAQUE*/);
 	//_ASSERTE(bRet);
 	
 	//SetForegroundWindow(ghWnd); // после создания окна фокус уходит из GUI

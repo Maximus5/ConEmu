@@ -5,6 +5,16 @@
 
 #define MAX_DROP_PATH 0x800
 
+#include <pshpack1.h>
+typedef struct tag_DragImageBits {
+	DWORD nWidth, nHeight; // XP max 301x301
+	DWORD nXCursor, nYCursor; // Позиция курсора захвата, относительно драгнутой картинки
+	DWORD nRes1; // тут какой-то мусор - заняты все байты DWORD'а
+	DWORD nRes2; // всегда 0xffffffff
+	RGBQUAD pix[1];
+} DragImageBits;
+#include <poppack.h>
+
 class CDragDrop :public CBaseDropTarget
 {
 public:
@@ -45,13 +55,6 @@ protected:
 		SHFILEOPSTRUCT fop;
 	} ShlOpInfo;
 	static DWORD WINAPI ShellOpThreadProc(LPVOID lpParameter);
-	typedef struct tag_DragImageBits {
-		DWORD nWidth, nHeight; // XP max 301x301
-		DWORD nXCursor, nYCursor; // Позиция курсора захвата, относительно драгнутой картинки
-		DWORD nRes1; // тут какой-то мусор - заняты все байты DWORD'а
-		DWORD nRes2; // всегда 0xffffffff
-		RGBQUAD pix[1];
-	} DragImageBits;
 	//DragImageBits m_BitsInfo;
 	HWND mh_Overlapped;
 	HDC mh_BitsDC;
