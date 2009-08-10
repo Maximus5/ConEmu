@@ -173,9 +173,63 @@ void Help();
 void ExitWaitForKey(WORD vkKey, LPCWSTR asConfirm, BOOL abNewLine, BOOL abDontShowConsole);
 
 
+/* Console Handles */
+class MConHandle {
+private:
+	wchar_t   ms_Name[10];
+	HANDLE    mh_Handle;
+	MSection  mcs_Handle;
+
+public:
+	operator const HANDLE()
+    {
+    	if (mh_Handle == INVALID_HANDLE_VALUE)
+		{
+    		// Чтобы случайно не открыть хэндл несколько раз в разных потоках
+    		MSectionLock CS; CS.Lock(&mcs_Handle, TRUE);
+    		// Во время ожидания хэндл мог быт открыт в другом потоке
+			if (mh_Handle == INVALID_HANDLE_VALUE) {
+    			mh_Handle = CreateFile(ms_Name, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_READ,
+                	0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+				if (mh_Handle == INVALID_HANDLE_VALUE) {
+					DWORD dwErr = GetLastError();
+					wprintf(L"CreateFile(%s) failed, ErrCode=0x%08X\n", ms_Name, dwErr); 
+				}
+    		}
+    	}
+   		return mh_Handle;
+    };
+    
+public:
+	void Close()
+	{
+		if (mh_Handle != INVALID_HANDLE_VALUE) {
+			HANDLE h = mh_Handle;
+			mh_Handle = INVALID_HANDLE_VALUE;
+			CloseHandle(h);
+		}
+	};
+	
+public:
+	MConHandle(LPCWSTR asName)
+	{
+		mh_Handle = INVALID_HANDLE_VALUE;
+		lstrcpynW(ms_Name, asName, 9);
+	};
+	
+	~MConHandle()
+	{
+		Close();
+	};
+	
+};
+
+
 /*  Global  */
 DWORD   gnSelfPID = 0;
-HANDLE  ghConIn = NULL, ghConOut = NULL;
+//HANDLE  ghConIn = NULL, ghConOut = NULL;
+MConHandle ghConIn ( L"CONIN$" );
+MConHandle ghConOut ( L"CONOUT$" );
 HWND    ghConWnd = NULL;
 HWND    ghConEmuWnd = NULL; // Root! window
 HANDLE  ghExitEvent = NULL;
@@ -222,6 +276,7 @@ struct tag_Srv {
 	UINT nProcessCount, nMaxProcesses;
 	DWORD* pnProcesses, *pnProcessesCopy, nProcessStartTick;
 	BOOL bNtvdmActive; DWORD nNtvdmPID;
+	BOOL bTelnetActive;
     //
     wchar_t szPipename[MAX_PATH], szInputname[MAX_PATH], szGuiPipeName[MAX_PATH];
     //
@@ -403,17 +458,17 @@ int main()
     ResetEvent(ghFinalizeEvent);
 
     // Дескрипторы
-    ghConIn  = CreateFile(L"CONIN$", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_READ,
-                0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
-    if (ghConIn == INVALID_HANDLE_VALUE) {
+    //ghConIn  = CreateFile(L"CONIN$", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_READ,
+    //            0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+    if ((HANDLE)ghConIn == INVALID_HANDLE_VALUE) {
         dwErr = GetLastError();
         wprintf(L"CreateFile(CONIN$) failed, ErrCode=0x%08X\n", dwErr); 
         iRc = CERR_CONINFAILED; goto wrap;
     }
     // Дескрипторы
-    ghConOut = CreateFile(L"CONOUT$", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_READ,
-                0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
-    if (ghConOut == INVALID_HANDLE_VALUE) {
+    //ghConOut = CreateFile(L"CONOUT$", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_READ,
+    //            0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+    if ((HANDLE)ghConOut == INVALID_HANDLE_VALUE) {
         dwErr = GetLastError();
         wprintf(L"CreateFile(CONOUT$) failed, ErrCode=0x%08X\n", dwErr); 
         iRc = CERR_CONOUTFAILED; goto wrap;
@@ -689,12 +744,8 @@ wrap:
         Free(gpszPrevConTitle);
     }
     
-    if (ghConIn && ghConIn!=INVALID_HANDLE_VALUE) {
-        SafeCloseHandle(ghConIn);
-    }
-    if (ghConOut && ghConOut!=INVALID_HANDLE_VALUE) {
-        SafeCloseHandle(ghConOut);
-    }
+    ghConIn.Close();
+	ghConOut.Close();
 
     SafeCloseHandle(ghLogSize);
     if (wpszLogSizeFile) {
@@ -2316,6 +2367,12 @@ BOOL CheckProcessCount(BOOL abForce/*=FALSE*/)
 					Free(pnPID);
 			}
 		} else {
+			// Сбросить в 0 ячейки со старыми процессами
+			_ASSERTE(srv.nProcessCount < srv.nMaxProcesses);
+			if (nCurCount < srv.nProcessCount) {
+				UINT nSize = sizeof(DWORD)*(srv.nProcessCount - nCurCount);
+				memset(srv.pnProcesses + nCurCount, 0, nSize);
+			}
 			srv.nProcessCount = nCurCount;
 		}
 
@@ -2327,15 +2384,14 @@ BOOL CheckProcessCount(BOOL abForce/*=FALSE*/)
 			#endif
 			lbChanged = memcmp(srv.pnProcessesCopy, srv.pnProcesses, nSize) != 0;
 			MCHKHEAP
-			memmove(srv.pnProcessesCopy, srv.pnProcesses, nSize);
+			if (lbChanged)
+				memmove(srv.pnProcessesCopy, srv.pnProcesses, nSize);
 			MCHKHEAP
 		}
 		
-		if (lbChanged
-		    && ( (srv.hWinHook == NULL && srv.bWinHookAllow) || (srv.hWinHook != NULL) )
-		   )
+		if (lbChanged)
 		{
-			BOOL lbFarExists = FALSE;
+			BOOL lbFarExists = FALSE, lbTelnetExist = FALSE;
 			if (srv.nProcessCount > 1)
 			{
 				HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS,0);
@@ -2350,17 +2406,29 @@ BOOL CheckProcessCount(BOOL abForce/*=FALSE*/)
                     				&& prc.th32ProcessID == srv.pnProcesses[i])
                 				{
                 		    		if (lstrcmpiW(prc.szExeFile, L"far.exe")==0) {
-                		    			lbFarExists = TRUE; break;
+                		    			lbFarExists = TRUE;
+										if (srv.nProcessCount <= 2)
+											break; // возможно, в консоли еще есть и telnet?
+                		    		}
+									// Во время работы Telnet тоже нужно ловить все события!
+                		    		if (lstrcmpiW(prc.szExeFile, L"telnet.exe")==0) {
+										// сразу хэндлы передернуть
+										ghConIn.Close(); ghConOut.Close();
+										srv.bWinHookAllow = TRUE; // Попробуем разрешить события для телнета
+                		    			lbFarExists = TRUE; lbTelnetExist = TRUE; break;
                 		    		}
                     			}
                     		}
-						} while (!lbFarExists && Process32Next(hSnap, &prc));
+						} while (!(lbFarExists && lbTelnetExist) && Process32Next(hSnap, &prc));
 					}
 					CloseHandle(hSnap);
 				}
 			}
+			srv.bTelnetActive = lbTelnetExist;
 			
-			if (srv.nProcessCount >= 2)
+			if (srv.nProcessCount >= 2
+				&& ( (srv.hWinHook == NULL && srv.bWinHookAllow) || (srv.hWinHook != NULL) )
+			    )
 			{
 				if (lbFarExists) srv.nWinHookMode = 2; else srv.nWinHookMode = 1;
 				
@@ -2650,17 +2718,6 @@ void ProcessInputMessage(MSG &msg)
 				== (r.Event.KeyEvent.dwControlKeyState & CTRL_MODIFIERS))
 				)
 			{
-				#ifdef _DEBUG
-					SafeCloseHandle(ghConIn);
-					SafeCloseHandle(ghConOut);
-					Sleep(100);
-					// Дескрипторы
-					ghConIn  = CreateFile(L"CONIN$", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_READ,
-						0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
-					// Дескрипторы
-					ghConOut = CreateFile(L"CONOUT$", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_READ,
-						0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
-				#endif
 				// Вроде работает, Главное не запускать процесс с флагом CREATE_NEW_PROCESS_GROUP
 				// иначе у микрософтовской консоли (WinXP SP3) сносит крышу, и она реагирует
 				// на Ctrl-Break, но напрочь игнорирует Ctrl-C
@@ -4023,6 +4080,11 @@ void WINAPI WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LO
             //// Перечитать размер, положение курсора, и пр.
             //if (!ReloadConsoleInfo())
             //  return;
+
+			// Смена размера консоли или буфера (telnet, etc.)
+			ghConIn.Close();
+			ghConOut.Close();
+
             srv.bNeedFullReload = TRUE;
             if (USER_ACTIVITY)
                 SetEvent(srv.hRefreshEvent);
@@ -4123,7 +4185,7 @@ void SendConsoleChanges(CESERVER_REQ* pOut)
         NULL);    // don't set maximum time 
     _ASSERT(fSuccess);
     if (!fSuccess) {
-        CloseHandle(hPipe);
+        SafeCloseHandle(hPipe);
         return;
     }
 
@@ -4142,6 +4204,8 @@ void SendConsoleChanges(CESERVER_REQ* pOut)
             TODO("Какие-то действия... показать консольное окно, или еще что-то");
         }
     }
+    
+    SafeCloseHandle(hPipe);
 }
 
 CESERVER_REQ* CreateConsoleInfo(CESERVER_CHAR* pRgnOnly, BOOL bCharAttrBuff)
