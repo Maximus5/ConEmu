@@ -1178,6 +1178,8 @@ DragImageBits* CDragDrop::CreateDragImageBits(wchar_t* pszFiles)
 			LPCWSTR pszText = wcsrchr(psz, L'\\');
 			if (!pszText) pszText = psz; else psz++;
 			GetTextExtentPoint32(hDrawDC, pszText, lstrlen(pszText), &sz);
+			if (sz.cx > MAX_OVERLAY_WIDTH)
+				sz.cx = MAX_OVERLAY_WIDTH;
 			if (sz.cx > nMaxX)
 				nMaxX = sz.cx;
 			psz += lstrlen(psz)+1; // длина полного пути и длина имени файла разные ;)
@@ -1349,6 +1351,8 @@ BOOL CDragDrop::DrawImageBits ( HDC hDrawDC, wchar_t* pszFile, int *nMaxX, int n
 	if (!pszText) pszText = pszFile; else pszText++;
 	SIZE sz = {0};
 	GetTextExtentPoint32(hDrawDC, pszText, lstrlen(pszText), &sz);
+	if (sz.cx > MAX_OVERLAY_WIDTH)
+		sz.cx = MAX_OVERLAY_WIDTH;
 	if (sz.cx > *nMaxX)
 		*nMaxX = sz.cx;
 
