@@ -3427,7 +3427,7 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
                 //memmove(&crNewSize, in.Data+sizeof(USHORT), sizeof(COORD));
                 crNewSize = in.SetSize.size;
                 //memmove(&nNewTopVisible, in.Data+sizeof(USHORT)+sizeof(COORD), sizeof(SHORT));
-                nNewTopVisible = in.SetSize.nSendTopLine
+                nNewTopVisible = in.SetSize.nSendTopLine;
                 //memmove(&rNewRect, in.Data+sizeof(USHORT)+sizeof(COORD)+sizeof(SHORT), sizeof(SMALL_RECT));
                 rNewRect = in.SetSize.rcWindow;
 

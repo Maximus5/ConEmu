@@ -119,23 +119,24 @@ extern wchar_t gszDbgModLabel[6];
 #define CECMD_ATTACH2GUI    18 // Выполнить подключение видимой (отключенной) консоли к GUI. Без аргументов
 #define CECMD_FARLOADED     19 // Посылается плагином в сервер
 
-#define CESERVER_REQ_VER    11
+#define CESERVER_REQ_VER    12
 
 #define PIPEBUFSIZE 4096
 
 
+// x64 ready?
+#include <pshpack8.h>
 
-//#pragma pack(push, 1)
-#include <pshpack1.h>
 
-
+TODO("Restrict CONEMUTABMAX to 128 chars. Only filename, and may be ellipsed...");
 #define CONEMUTABMAX 0x400
+// x64 ready?
 typedef struct tag_ConEmuTab {
-	int  Pos;
-	int  Current;
-	int  Type; // Panels=1, Viewer=2, Editor=3
-	int  Modified;
-	wchar_t Name[CONEMUTABMAX];
+	__int64  Pos;
+	__int64  Current;
+	__int64  Type; // Panels=1, Viewer=2, Editor=3
+	__int64  Modified;
+	wchar_t  Name[CONEMUTABMAX];
 	//  int  Modified;
 	//  int isEditor;
 } ConEmuTab;
@@ -170,7 +171,7 @@ typedef struct tag_ForwardedFileInfo {
 } ForwardedFileInfo;
 
 
-typedef struct tag_CESERVER_REQ_HDR {
+typedef __declspec(align(32)) struct tag_CESERVER_REQ_HDR {
 	DWORD   nSize;
 	DWORD   nCmd;
 	DWORD   nVersion;
@@ -291,7 +292,7 @@ typedef struct tag_CESERVER_REQ {
 } CESERVER_REQ;
 
 
-//#pragma pack(pop)
+
 #include <poppack.h>
 
 

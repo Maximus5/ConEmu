@@ -2591,7 +2591,7 @@ void CRealConsole::ApplyConsoleInfo(CESERVER_REQ* pInfo)
         MCHKHEAP
         _ASSERTE(dwSbiSize == sizeof(con.m_sbi));
         //memmove(&con.m_sbi, &pInfo->ConInfo.inf.sbi, dwSbiSize);
-        con.m_sbi = &pInfo->ConInfo.inf.sbi;
+        con.m_sbi = pInfo->ConInfo.inf.sbi;
         if (GetConWindowSize(con.m_sbi, nNewWidth, nNewHeight)) {
             if (con.bBufferHeight != (nNewHeight < con.m_sbi.dwSize.Y))
                 SetBufferHeightMode(nNewHeight < con.m_sbi.dwSize.Y);

@@ -370,6 +370,7 @@
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
+				StructMemberAlignment="5"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				DebugInformationFormat="4"
@@ -386,7 +387,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="comctl32.lib Shlwapi.lib version.lib gdiplus.lib"
-				OutputFile="F:\VCProject\FarPlugin\#FAR180\ConEmu.exe"
+				OutputFile="C:\Program Files\FAR\Tools\ConEmu\ConEmu.exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
 				GenerateMapFile="true"
