@@ -156,6 +156,7 @@ protected:
 	UINT mn_MsgTabCommand;
 	UINT mn_MsgSheelHook;
 	UINT mn_ShellExecuteEx;
+	UINT mn_PostConsoleResize;
 	
 	//
 	static DWORD CALLBACK ServerThread(LPVOID lpvParam);
@@ -243,6 +244,7 @@ public:
 public:
 	void OnBufferHeight(BOOL abBufferHeight);
 	LRESULT OnClose(HWND hWnd);
+	void OnConsoleResize(BOOL abPosted=FALSE);
 	LRESULT OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate);
 	LRESULT OnDestroy(HWND hWnd);
 	LRESULT OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);

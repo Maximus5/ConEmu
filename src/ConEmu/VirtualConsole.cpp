@@ -901,6 +901,12 @@ bool CVirtualConsole::UpdatePrepare(bool isForce, HDC *ahDc, MSectionLock *pSDC)
             pSDC->Lock(&csDC, TRUE, 200); // но по таймауту, чтобы не повисли ненароком
         if (!InitDC(ahDc!=NULL && !isForce/*abNoDc*/, false/*abNoWndResize*/))
             return false;
+		#ifdef _DEBUG
+		if (TextWidth == 80 && !mp_RCon->isNtvdm()) {
+			TextWidth = TextWidth;
+		}
+		#endif
+        gConEmu.OnConsoleResize();
     }
 
     // “ребуетс€ полна€ перерисовка!
@@ -1677,7 +1683,7 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, COORD pos, UINT dwSize)
 	//}
 
 	// “еперь в rect нужно отобразить курсор (XOR'ом попробуем?)
-	if (gSet.isCursorColor)
+	if (gSet.isCursorColor || gSet.isForceMonospace)
 	{
 		HBRUSH hBr = CreateSolidBrush(0xC0C0C0);
 		HBRUSH hOld = (HBRUSH)SelectObject ( hPaintDC, hBr );

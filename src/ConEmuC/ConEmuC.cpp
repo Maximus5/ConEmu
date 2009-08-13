@@ -57,6 +57,7 @@ CRITICAL_SECTION gcsHeap;
 #define MCHKHEAP HeapValidate(ghHeap, 0, NULL);
 //#define HEAP_LOGGING
 #define DEBUGLOG(s) //OutputDebugString(s)
+#define DEBUGLOGINPUT(s) //OutputDebugString(s)
 #else
 #define MCHKHEAP
 #define DEBUGLOG(s)
@@ -1089,7 +1090,17 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
                 wcscat(pszNewCmd, pszAddNewConArgs);
             }
             // –азмеры должны быть такими-же
-            //wsprintf(pszNewCmd+wcslen(pszNewCmd), L" /BW=%i /BH=%i /BZ=%i ", gcrBufferSize.X, gcrBufferSize.Y, gnBufferHeight);
+			//2009-08-13 было закомментарено (в режиме ComSpec аргументы /BW /BH /BZ отсутствуют, т.к. запуск идет из FAR)
+			//			 иногда получалось, что требуемый размер (он запрашиваетс€ из GUI) 
+			//			 не успевал установитьс€ и в некоторых случа€х возникал
+			//			 глюк размера (видимой высоты в GUI) в ReadConsoleData
+			if (MyGetConsoleScreenBufferInfo(ghConOut, &cmd.sbi)) {
+				int nBW = cmd.sbi.dwSize.X;
+				int nBH = cmd.sbi.srWindow.Bottom - cmd.sbi.srWindow.Top + 1;
+				int nBZ = cmd.sbi.dwSize.Y;
+				if (nBZ <= nBH) nBZ = 0;
+				wsprintf(pszNewCmd+wcslen(pszNewCmd), L" /BW=%i /BH=%i /BZ=%i ", nBW, nBH, nBZ);
+			}
             //wcscat(pszNewCmd, L" </BW=9999 /BH=9999 /BZ=9999> ");
             // —формировать новую команду
             // "cmd" потому что пока не хочетс€ обрезать кавычки и думать, реально ли он нужен
@@ -1394,7 +1405,7 @@ int ComspecInit()
 
     //int nNewBufferHeight = 0;
     //COORD crNewSize = {0,0};
-    SMALL_RECT rNewWindow = cmd.sbi.srWindow;
+    //SMALL_RECT rNewWindow = cmd.sbi.srWindow;
     BOOL lbSbiRc = FALSE;
     
 	gbRootWasFoundInCon = 2; // не добавл€ть к "Press Enter to close console" - "or wait"
@@ -2737,7 +2748,7 @@ void ProcessInputMessage(MSG &msg)
 		#ifdef _DEBUG
 		if (r.EventType == MOUSE_EVENT) {
 			wchar_t szDbg[60]; wsprintf(szDbg, L"ConEmuC.MouseEvent(X=%i,Y=%i,Btns=0x%04x,Moved=%i)\n", r.Event.MouseEvent.dwMousePosition.X, r.Event.MouseEvent.dwMousePosition.Y, r.Event.MouseEvent.dwButtonState, (r.Event.MouseEvent.dwEventFlags & MOUSE_MOVED));
-			OutputDebugString(szDbg);
+			DEBUGLOGINPUT(szDbg);
 		}
 		#endif
 
@@ -3016,6 +3027,10 @@ Loop1:
     COORD coord;
 
     MCHKHEAP
+
+	#ifdef _DEBUG
+	CONSOLE_SCREEN_BUFFER_INFO dbgSbi = srv.sbi;
+	#endif
     
     TextWidth = srv.sbi.dwSize.X;
     // ”же должно быть поправлено в CorrectVisibleRect
@@ -3034,10 +3049,14 @@ Loop1:
 
 #ifdef _DEBUG
     // ¬друг случайно gnBufferHeight не установлен?
-    _ASSERTE(TextHeight<=150);
+	if (TextHeight>150) {
+		_ASSERTE(TextHeight<=150);
+	}
     // ¬ысота окна в консоли должна быть равна высоте в GUI, иначе мы будем тер€ть строку с курсором при прокрутке
 	if (!srv.bNtvdmActive) {
-		_ASSERTE(TextHeight==(srv.sbi.srWindow.Bottom-srv.sbi.srWindow.Top+1));
+		if (TextHeight != (srv.sbi.srWindow.Bottom-srv.sbi.srWindow.Top+1)) {
+			_ASSERTE(TextHeight==(srv.sbi.srWindow.Bottom-srv.sbi.srWindow.Top+1));
+		}
 	}
 #endif
     
@@ -3398,15 +3417,19 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
             (*out)->hdr.nSize = nOutSize;
             (*out)->hdr.nVersion = CESERVER_REQ_VER;
             MCHKHEAP
-            if (in.hdr.nSize >= (sizeof(CESERVER_REQ_HDR) + sizeof(USHORT)+sizeof(COORD)+sizeof(SHORT)+sizeof(SMALL_RECT))) {
+            if (in.hdr.nSize >= (sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_SETSIZE))) {
                 USHORT nBufferHeight = 0;
                 COORD  crNewSize = {0,0};
                 SMALL_RECT rNewRect = {0};
                 SHORT  nNewTopVisible = -1;
-                memmove(&nBufferHeight, in.Data, sizeof(USHORT));
-                memmove(&crNewSize, in.Data+sizeof(USHORT), sizeof(COORD));
-                memmove(&nNewTopVisible, in.Data+sizeof(USHORT)+sizeof(COORD), sizeof(SHORT));
-                memmove(&rNewRect, in.Data+sizeof(USHORT)+sizeof(COORD)+sizeof(SHORT), sizeof(SMALL_RECT));
+                //memmove(&nBufferHeight, in.Data, sizeof(USHORT));
+                nBufferHeight = in.SetSize.nBufferHeight;
+                //memmove(&crNewSize, in.Data+sizeof(USHORT), sizeof(COORD));
+                crNewSize = in.SetSize.size;
+                //memmove(&nNewTopVisible, in.Data+sizeof(USHORT)+sizeof(COORD), sizeof(SHORT));
+                nNewTopVisible = in.SetSize.nSendTopLine
+                //memmove(&rNewRect, in.Data+sizeof(USHORT)+sizeof(COORD)+sizeof(SHORT), sizeof(SMALL_RECT));
+                rNewRect = in.SetSize.rcWindow;
 
                 MCHKHEAP
 
@@ -3952,7 +3975,11 @@ void WINAPI WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LO
         //The idObject parameter is a COORD structure that specifies the start of the changed region. 
         //The idChild parameter is a COORD structure that specifies the end of the changed region.
             #ifdef _DEBUG
-            COORD crStart, crEnd; memmove(&crStart, &idObject, sizeof(idObject)); memmove(&crEnd, &idChild, sizeof(idChild));
+            COORD crStart, crEnd; 
+            //memmove(&crStart, &idObject, sizeof(idObject));
+            crStart.X = LOWORD(idObject); crStart.Y = HIWORD(idObject);
+            //memmove(&crEnd, &idChild, sizeof(idChild));
+            crEnd.X = LOWORD(idChild); crEnd.Y = HIWORD(idChild);
             wsprintfW(szDbg, L"EVENT_CONSOLE_UPDATE_REGION({%i, %i} - {%i, %i})\n", crStart.X,crStart.Y, crEnd.X,crEnd.Y);
             DEBUGSTR(szDbg);
             #endif
@@ -3990,7 +4017,8 @@ void WINAPI WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LO
         //The idObject parameter is a COORD structure that specifies the character that has changed.
         //Warning! ¬ писании от  микрософта тут ошибка!
         //The idChild parameter specifies the character in the low word and the character attributes in the high word.
-            memmove(&ch.hdr.cr1, &idObject, sizeof(idObject));
+            //memmove(&ch.hdr.cr1, &idObject, sizeof(idObject));
+            ch.hdr.cr1.X = LOWORD(idObject); ch.hdr.cr1.Y = HIWORD(idObject);
             ch.hdr.cr2 = ch.hdr.cr1;
             ch.data[0] = (WCHAR)LOWORD(idChild); ch.data[1] = HIWORD(idChild);
             #ifdef _DEBUG
@@ -4050,7 +4078,9 @@ void WINAPI WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LO
         //The idObject parameter is one or more of the following values:
         //      CONSOLE_CARET_SELECTION or CONSOLE_CARET_VISIBLE.
         //The idChild parameter is a COORD structure that specifies the cursor's current position.
-            COORD crWhere; memmove(&crWhere, &idChild, sizeof(idChild));
+            COORD crWhere; 
+            //memmove(&crWhere, &idChild, sizeof(idChild));
+            crWhere.X = LOWORD(idChild); crWhere.Y = HIWORD(idChild);
             #ifdef _DEBUG
             wsprintfW(szDbg, L"EVENT_CONSOLE_CARET({%i, %i} Sel=%c, Vis=%c\n", crWhere.X,crWhere.Y, 
                 ((idObject & CONSOLE_CARET_SELECTION)==CONSOLE_CARET_SELECTION) ? L'Y' : L'N',
@@ -4288,7 +4318,8 @@ CESERVER_REQ* CreateConsoleInfo(CESERVER_CHAR* pRgnOnly, BOOL bCharAttrBuff)
     nSize = sizeof(srv.ci);
     pOut->ConInfo.inf.dwCiSize = (srv.dwCiRc == 0) ? nSize : 0;
     if (srv.dwCiRc == 0) {
-        memmove(&pOut->ConInfo.inf.ci, &srv.ci, nSize);
+        //memmove(&pOut->ConInfo.inf.ci, &srv.ci, nSize);
+        pOut->ConInfo.inf.ci = srv.ci;
     }
 
     // 5
@@ -4302,7 +4333,8 @@ CESERVER_REQ* CreateConsoleInfo(CESERVER_CHAR* pRgnOnly, BOOL bCharAttrBuff)
     nSize=sizeof(srv.sbi);
     pOut->ConInfo.inf.dwSbiSize = (srv.dwSbiRc == 0) ? nSize : 0;
     if (srv.dwSbiRc == 0) {
-        memmove(&pOut->ConInfo.inf.sbi, &srv.sbi, nSize);
+        //memmove(&pOut->ConInfo.inf.sbi, &srv.sbi, nSize);
+        pOut->ConInfo.inf.sbi = srv.sbi;
     }
 
     // 9
@@ -5107,7 +5139,8 @@ void CheckKeyboardLayout()
                     pIn->hdr.nCmd = CECMD_LANGCHANGE;
                     pIn->hdr.nSrcThreadId = GetCurrentThreadId();
                     pIn->hdr.nVersion = CESERVER_REQ_VER;
-                    memmove(pIn->Data, &dwLayout, 4);
+                    //memmove(pIn->Data, &dwLayout, 4);
+                    pIn->dwData[0] = dwLayout;
 
                     CESERVER_REQ* pOut = NULL;
                     pOut = ExecuteGuiCmd(ghConWnd, pIn);
@@ -5144,7 +5177,8 @@ void CmdOutputStore()
         gpStoredOutput->hdr.cbMaxOneBufferSize = nOneBufferSize;
     }
     // «апомнить sbi
-    memmove(&gpStoredOutput->hdr.sbi, &lsbi, sizeof(lsbi));
+    //memmove(&gpStoredOutput->hdr.sbi, &lsbi, sizeof(lsbi));
+    gpStoredOutput->hdr.sbi = lsbi;
     // “еперь читаем данные
     COORD coord = {0,0};
     DWORD nbActuallyRead = 0;

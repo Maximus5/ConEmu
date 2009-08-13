@@ -127,6 +127,7 @@ CConEmuMain::CConEmuMain()
     mn_MsgTabCommand = ++nAppMsg;
     mn_MsgSheelHook = RegisterWindowMessage(L"SHELLHOOK");
 	mn_ShellExecuteEx = ++nAppMsg;
+	mn_PostConsoleResize = ++nAppMsg;
 }
 
 BOOL CConEmuMain::Init()
@@ -1222,6 +1223,79 @@ void CConEmuMain::ReSize(BOOL abCorrect2Ideal /*= FALSE*/)
 	if (abCorrect2Ideal) {
 		
 	}
+}
+
+void CConEmuMain::OnConsoleResize(BOOL abPosted/*=FALSE*/)
+{
+	// Выполняться должно в нити окна, иначе можем повиснуть
+	static bool lbPosted = false;
+	if (!abPosted) {
+		if (!lbPosted) {
+			lbPosted = true; // чтобы post не накапливались
+			PostMessage(ghWnd, mn_PostConsoleResize, 0,0);
+		}
+		return;
+	}
+	lbPosted = false;
+	
+	if (IsIconic(ghWnd))
+		return; // если минимизировано - ничего не делать
+
+    // Было ли реальное изменение размеров?
+    BOOL lbSizingToDo  = (mouse.state & MOUSE_SIZING_TODO) == MOUSE_SIZING_TODO;
+
+    if (isSizing() && !isPressed(VK_LBUTTON)) {
+        // Сборс всех флагов ресайза мышкой
+        mouse.state &= ~(MOUSE_SIZING_BEGIN|MOUSE_SIZING_TODO);
+    }
+
+    //COORD c = ConsoleSizeFromWindow();
+    RECT client; GetClientRect(ghWnd, &client);
+    // Проверим, вдруг не отработал IsIconic
+    if (client.bottom > 10 )
+    {
+        RECT c = CalcRect(CER_CONSOLE, client, CER_MAINCLIENT);
+        // чтобы не насиловать консоль лишний раз - реальное измененение ее размеров только
+        // при отпускании мышкой рамки окна
+        BOOL lbSizeChanged = FALSE;
+        if (pVCon) {
+            lbSizeChanged = (c.right != (int)pVCon->RCon()->TextWidth() 
+                    || c.bottom != (int)pVCon->RCon()->TextHeight());
+        }
+        if (!isSizing() &&
+            (lbSizingToDo /*после реального ресайза мышкой*/ ||
+             gbPostUpdateWindowSize /*после появления/скрытия табов*/ || 
+             lbSizeChanged /*или размер в виртуальной консоли не совпадает с расчетным*/))
+        {
+            gbPostUpdateWindowSize = false;
+            if (isNtvdm())
+                SyncNtvdm();
+            else {
+                if (!gSet.isFullScreen && !IsZoomed(ghWnd) && !lbSizingToDo)
+                    SyncWindowToConsole();
+                else
+                    SyncConsoleToWindow();
+                OnSize(0, client.right, client.bottom);
+            }
+            //_ASSERTE(pVCon!=NULL);
+            if (pVCon) {
+                m_LastConSize = MakeCoord(pVCon->TextWidth,pVCon->TextHeight);
+            }
+			// Запомнить "идеальный" размер окна, выбранный пользователем
+			if (lbSizingToDo && !gSet.isFullScreen && !IsZoomed(ghWnd) && !IsIconic(ghWnd)) {
+				GetWindowRect(ghWnd, &mrc_Ideal);
+			}
+        }
+        else if (pVCon 
+            && (m_LastConSize.X != (int)pVCon->TextWidth 
+                || m_LastConSize.Y != (int)pVCon->TextHeight))
+        {
+            // По идее, сюда мы попадаем только для 16-бит приложений
+            if (isNtvdm())
+                SyncNtvdm();
+            m_LastConSize = MakeCoord(pVCon->TextWidth,pVCon->TextHeight);
+        }
+    }
 }
 
 LRESULT CConEmuMain::OnSize(WPARAM wParam, WORD newClientWidth, WORD newClientHeight)
@@ -2335,10 +2409,10 @@ INT_PTR CConEmuMain::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARA
             SetDlgItemText(hDlg, IDC_RESTART_CMD, pszCmd);
             
             SetDlgItemText(hDlg, IDC_STARTUP_DIR, gConEmu.ms_ConEmuCurDir);
-            EnableWindow(GetDlgItem(hDlg, IDC_STARTUP_DIR), FALSE);
-            #ifndef _DEBUG
-            EnableWindow(GetDlgItem(hDlg, IDC_CHOOSE_DIR), FALSE);
-            #endif
+            //EnableWindow(GetDlgItem(hDlg, IDC_STARTUP_DIR), FALSE);
+            //#ifndef _DEBUG
+            //EnableWindow(GetDlgItem(hDlg, IDC_CHOOSE_DIR), FALSE);
+            //#endif
             
 
 			RConStartArgs* pArgs = (RConStartArgs*)lParam;
@@ -2450,14 +2524,16 @@ INT_PTR CConEmuMain::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARA
                 	wchar_t szTitle[100];
                 	bi.lpszTitle = wcscpy(szTitle, L"Choose startup directory");
                 	bi.ulFlags = BIF_EDITBOX | BIF_RETURNONLYFSDIRS | BIF_VALIDATE;
-                	// bi.lpfn = int CALLBACK BrowseCallbackProc(HWND hwnd, UINT uMsg, LPARAM lParam, LPARAM lpData);
+                	bi.lpfn = BrowseCallbackProc;
                 	bi.lParam = (LPARAM)szFolder;
                 	
                 	LPITEMIDLIST pRc = SHBrowseForFolder(&bi);
                 	if (pRc) {
+                		if (SHGetPathFromIDList(pRc, szFolder)) {
+                			SetDlgItemText(hDlg, IDC_STARTUP_DIR, szFolder);
+						}
+
                 		CoTaskMemFree(pRc);
-                		
-                		SetDlgItemText(hDlg, IDC_STARTUP_DIR, szFolder);
                 	}
                 	return 1;
                 }
@@ -2476,12 +2552,23 @@ INT_PTR CConEmuMain::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARA
                 {
 					RConStartArgs* pArgs = (RConStartArgs*)GetWindowLongPtr(hDlg, DWLP_USER);
 					_ASSERTE(pArgs);
+					// Command
                     HWND hEdit = GetDlgItem(hDlg, IDC_RESTART_CMD);
                     int nLen = GetWindowTextLength(hEdit);
                     if (nLen > 0) {
+						_ASSERTE(pArgs->pszSpecialCmd==NULL);
                         pArgs->pszSpecialCmd = (wchar_t*)calloc(nLen+1,2);
                         if (pArgs->pszSpecialCmd)
                             GetWindowText(hEdit, pArgs->pszSpecialCmd, nLen+1);
+                    }
+					// StartupDir
+					hEdit = GetDlgItem(hDlg, IDC_STARTUP_DIR);
+					nLen = GetWindowTextLength(hEdit);
+                    if (nLen > 0) {
+						_ASSERTE(pArgs->pszStartupDir==NULL);
+                        pArgs->pszStartupDir = (wchar_t*)calloc(nLen+1,2);
+                        if (pArgs->pszStartupDir)
+                            GetWindowText(hEdit, pArgs->pszStartupDir, nLen+1);
                     }
 					pArgs->bRunAsAdministrator = SendDlgItemMessage(hDlg, cbRunAs, BM_GETCHECK, 0, 0);
                     EndDialog(hDlg, IDC_START);
@@ -4683,63 +4770,16 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 
         if (!IsIconic(ghWnd))
         {
-            // Было ли реальное изменение размеров?
-            BOOL lbSizingToDo  = (mouse.state & MOUSE_SIZING_TODO) == MOUSE_SIZING_TODO;
+            //// Было ли реальное изменение размеров?
+            //BOOL lbSizingToDo  = (mouse.state & MOUSE_SIZING_TODO) == MOUSE_SIZING_TODO;
 
-            if (isSizing() && !isPressed(VK_LBUTTON)) {
-                // Сборс всех флагов ресайза мышкой
-                mouse.state &= ~(MOUSE_SIZING_BEGIN|MOUSE_SIZING_TODO);
-            }
+            //if (isSizing() && !isPressed(VK_LBUTTON)) {
+            //    // Сборс всех флагов ресайза мышкой
+            //    mouse.state &= ~(MOUSE_SIZING_BEGIN|MOUSE_SIZING_TODO);
+            //}
 
-            TODO("возможно весь ресайз (кроме SyncNtvdm?) нужно перенести в нить консоли")
-
-            //COORD c = ConsoleSizeFromWindow();
-            RECT client; GetClientRect(ghWnd, &client);
-            // Проверим, вдруг не отработал IsIconic
-            if (client.bottom > 10 )
-            {
-                RECT c = CalcRect(CER_CONSOLE, client, CER_MAINCLIENT);
-                // чтобы не насиловать консоль лишний раз - реальное измененение ее размеров только
-                // при отпускании мышкой рамки окна
-                BOOL lbSizeChanged = FALSE;
-                if (pVCon) {
-                    lbSizeChanged = (c.right != (int)pVCon->RCon()->TextWidth() 
-                            || c.bottom != (int)pVCon->RCon()->TextHeight());
-                }
-                if (!isSizing() &&
-                    (lbSizingToDo /*после реального ресайза мышкой*/ ||
-                     gbPostUpdateWindowSize /*после появления/скрытия табов*/ || 
-                     lbSizeChanged /*или размер в виртуальной консоли не совпадает с расчетным*/))
-                {
-                    gbPostUpdateWindowSize = false;
-                    if (isNtvdm())
-                        SyncNtvdm();
-                    else {
-                        if (!gSet.isFullScreen && !IsZoomed(ghWnd) && !lbSizingToDo)
-                            SyncWindowToConsole();
-                        else
-                            SyncConsoleToWindow();
-                        OnSize(0, client.right, client.bottom);
-                    }
-                    //_ASSERTE(pVCon!=NULL);
-                    if (pVCon) {
-                        m_LastConSize = MakeCoord(pVCon->TextWidth,pVCon->TextHeight);
-                    }
-					// Запомнить "идеальный" размер окна, выбранный пользователем
-					if (lbSizingToDo && !gSet.isFullScreen && !IsZoomed(ghWnd) && !IsIconic(ghWnd)) {
-						GetWindowRect(ghWnd, &mrc_Ideal);
-					}
-                }
-                else if (pVCon 
-                    && (m_LastConSize.X != (int)pVCon->TextWidth 
-                        || m_LastConSize.Y != (int)pVCon->TextHeight))
-                {
-                    // По идее, сюда мы попадаем только для 16-бит приложений
-                    if (isNtvdm())
-                        SyncNtvdm();
-                    m_LastConSize = MakeCoord(pVCon->TextWidth,pVCon->TextHeight);
-                }
-            }
+            //TODO("возможно весь ресайз (кроме SyncNtvdm?) нужно перенести в нить консоли")
+			//OnConsoleResize();
 
             // update scrollbar
             pVCon->RCon()->UpdateScrollInfo();
@@ -5279,6 +5319,9 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
             return 0;
 		} else if (messg == gConEmu.mn_ShellExecuteEx) {
 			return gConEmu.GuiShellExecuteEx((SHELLEXECUTEINFO*)lParam, wParam);
+		} else if (messg == gConEmu.mn_PostConsoleResize) {
+			gConEmu.OnConsoleResize(TRUE);
+			return 0;
 		}
         //else if (messg == gConEmu.mn_MsgCmdStarted || messg == gConEmu.mn_MsgCmdStopped) {
         //  return gConEmu.OnConEmuCmd( (messg == gConEmu.mn_MsgCmdStarted), (HWND)wParam, (DWORD)lParam);

@@ -100,7 +100,7 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
     mh_PacketArrived = CreateEvent(NULL,FALSE,FALSE,NULL);
     //mh_CursorChanged = NULL;
     //mb_Detached = FALSE;
-    m_Args.pszSpecialCmd = NULL;
+    //m_Args.pszSpecialCmd = NULL; -- не требуется
     mb_FullRetrieveNeeded = FALSE;
     memset(&m_LastMouse, 0, sizeof(m_LastMouse));
     mb_DataChanged = FALSE;
@@ -163,8 +163,11 @@ CRealConsole::~CRealConsole()
     if (con.pConAttr)
         { Free(con.pConAttr); con.pConAttr = NULL; }
 
+	// Требутся, т.к. сам объект делает SafeFree, а не Free
     if (m_Args.pszSpecialCmd)
         { Free(m_Args.pszSpecialCmd); m_Args.pszSpecialCmd = NULL; }
+    if (m_Args.pszStartupDir)
+        { Free(m_Args.pszStartupDir); m_Args.pszStartupDir = NULL; }
 
 
     SafeCloseHandle(mh_ConEmuC); mn_ConEmuC_PID = 0; mn_ConEmuC_Input_TID = 0;
@@ -195,13 +198,26 @@ BOOL CRealConsole::PreCreate(RConStartArgs *args)
 {
     mb_NeedStartProcess = FALSE;
 
-    if (args->pszSpecialCmd && !m_Args.pszSpecialCmd) {
+    if (args->pszSpecialCmd /*&& !m_Args.pszSpecialCmd*/) {
+		if (m_Args.pszSpecialCmd) {
+			Free(m_Args.pszSpecialCmd); m_Args.pszSpecialCmd = NULL;
+		}
         _ASSERTE(args->bDetached == FALSE);
         int nLen = lstrlenW(args->pszSpecialCmd);
         m_Args.pszSpecialCmd = (wchar_t*)Alloc(nLen+1,2);
         if (!m_Args.pszSpecialCmd)
             return FALSE;
         lstrcpyW(m_Args.pszSpecialCmd, args->pszSpecialCmd);
+    }
+    if (args->pszStartupDir) {
+		if (m_Args.pszStartupDir) {
+			Free(m_Args.pszStartupDir); m_Args.pszStartupDir = NULL;
+		}
+        int nLen = lstrlenW(args->pszStartupDir);
+        m_Args.pszStartupDir = (wchar_t*)Alloc(nLen+1,2);
+        if (!m_Args.pszStartupDir)
+            return FALSE;
+        lstrcpyW(m_Args.pszStartupDir, args->pszStartupDir);
     }
 
 	m_Args.bRunAsAdministrator = args->bRunAsAdministrator;
@@ -351,7 +367,8 @@ BOOL CRealConsole::SetConsoleSize(COORD size, DWORD anCmdID/*=CECMD_SETSIZE*/)
         if (pOut->hdr.nCmd == pIn->hdr.nCmd) {
             con.nPacketIdx = pOut->SetSizeRet.nNextPacketId;
             CONSOLE_SCREEN_BUFFER_INFO sbi = {{0,0}};
-            memmove(&sbi, &pOut->SetSizeRet.SetSizeRet, sizeof(sbi));
+            //memmove(&sbi, &pOut->SetSizeRet.SetSizeRet, sizeof(sbi));
+            sbi = pOut->SetSizeRet.SetSizeRet;
             if (con.bBufferHeight) {
                 _ASSERTE((sbi.srWindow.Bottom-sbi.srWindow.Top)<200);
                 if (sbi.dwSize.X == size.X && sbi.dwSize.Y == pIn->SetSize.nBufferHeight)
@@ -1132,7 +1149,7 @@ BOOL CRealConsole::StartProcess()
 						NORMAL_PRIORITY_CLASS|
 						CREATE_DEFAULT_ERROR_MODE|CREATE_NEW_CONSOLE
 						//|CREATE_NEW_PROCESS_GROUP - низя! перестает срабатывать Ctrl-C
-						, NULL, NULL, &si, &pi);
+						, NULL, m_Args.pszStartupDir, &si, &pi);
 					if (!lbRc)
 						dwLastError = GetLastError();
 					DEBUGSTRPROC(_T("CreateProcess finished\n"));
@@ -1157,7 +1174,9 @@ BOOL CRealConsole::StartProcess()
                         }
 
                         wchar_t szCurrentDirectory[MAX_PATH+1];
-                        if (!GetCurrentDirectory(MAX_PATH+1, szCurrentDirectory))
+						if (m_Args.pszStartupDir)
+							wcscpy(szCurrentDirectory, m_Args.pszStartupDir);
+						else if (!GetCurrentDirectory(MAX_PATH+1, szCurrentDirectory))
                         	szCurrentDirectory[0] = 0;
                         
                         int nWholeSize = sizeof(SHELLEXECUTEINFO)
@@ -2333,11 +2352,15 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
     				DEBUGSTRCMD(L"16 bit application TERMINATED (aquired from CECMD_CMDFINISHED)\n");
                     mn_ProgramStatus &= ~CES_NTVDM;
     				SyncConsole2Window(); // После выхода из 16bit режима хорошо бы отресайзить консоль по размеру GUI
+					lbNeedResizeWnd = FALSE;
+					crNewSize.X = TextWidth();
+					crNewSize.Y = TextHeight();
 				} //else {
 				// Восстановить размер через серверный ConEmuC
 				mb_BuferModeChangeLocked = TRUE;
 				con.m_sbi.dwSize.Y = crNewSize.Y;
 				SetBufferHeightMode(FALSE, TRUE); // Сразу выключаем, иначе команда неправильно сформируется
+				// Обязательно. Иначе сервер не узнает, что команда завершена
 				SetConsoleSize(crNewSize, CECMD_CMDFINISHED);
 				if (lbNeedResizeWnd) {
 					RECT rcCon = MakeRect(nNewWidth, nNewHeight);
@@ -2554,7 +2577,8 @@ void CRealConsole::ApplyConsoleInfo(CESERVER_REQ* pInfo)
     DWORD dwCiSize = pInfo->ConInfo.inf.dwCiSize;
     if (dwCiSize != 0) {
         _ASSERTE(dwCiSize == sizeof(con.m_ci));
-        memmove(&con.m_ci, &pInfo->ConInfo.inf.ci, dwCiSize);
+        //memmove(&con.m_ci, &pInfo->ConInfo.inf.ci, dwCiSize);
+        con.m_ci = pInfo->ConInfo.inf.ci;
     }
     // 5, 6, 7
     con.m_dwConsoleCP = pInfo->ConInfo.inf.dwConsoleCP;
@@ -2566,7 +2590,8 @@ void CRealConsole::ApplyConsoleInfo(CESERVER_REQ* pInfo)
     if (dwSbiSize != 0) {
         MCHKHEAP
         _ASSERTE(dwSbiSize == sizeof(con.m_sbi));
-        memmove(&con.m_sbi, &pInfo->ConInfo.inf.sbi, dwSbiSize);
+        //memmove(&con.m_sbi, &pInfo->ConInfo.inf.sbi, dwSbiSize);
+        con.m_sbi = &pInfo->ConInfo.inf.sbi;
         if (GetConWindowSize(con.m_sbi, nNewWidth, nNewHeight)) {
             if (con.bBufferHeight != (nNewHeight < con.m_sbi.dwSize.Y))
                 SetBufferHeightMode(nNewHeight < con.m_sbi.dwSize.Y);
@@ -3737,6 +3762,14 @@ BOOL CRealConsole::RecreateProcess(RConStartArgs *args)
             return FALSE;
         }
         lstrcpyW(m_Args.pszSpecialCmd, args->pszSpecialCmd);
+    }
+    if (args->pszStartupDir) {
+		if (m_Args.pszStartupDir) Free(m_Args.pszStartupDir);
+        int nLen = lstrlenW(args->pszStartupDir);
+        m_Args.pszStartupDir = (wchar_t*)Alloc(nLen+1,2);
+        if (!m_Args.pszStartupDir)
+            return FALSE;
+        lstrcpyW(m_Args.pszStartupDir, args->pszStartupDir);
     }
 
 	m_Args.bRunAsAdministrator = args->bRunAsAdministrator;

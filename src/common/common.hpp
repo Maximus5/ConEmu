@@ -571,6 +571,7 @@ protected:
 			// Если есть ExclusiveLock (в другой нити) - дождется сама EnterCriticalSection
 			#ifdef _DEBUG
 			BOOL lbPrev = mb_Exclusive;
+			DWORD nPrevTID = mn_TID;
 			#endif
 			mb_Exclusive = TRUE; // Сразу, чтобы в nonexclusive не нарваться
 			TODO("Need to check, if MyEnterCriticalSection failed on timeout!\n");

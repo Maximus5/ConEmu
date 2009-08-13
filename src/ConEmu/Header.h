@@ -112,14 +112,17 @@
 typedef struct tag_RConStartArgs {
 	BOOL     bDetached;
 	wchar_t* pszSpecialCmd;
+	wchar_t* pszStartupDir;
 	BOOL     bRunAsAdministrator;
 	BOOL     bRecreate; // !!! Информационно !!!
 
 	tag_RConStartArgs() {
-		bDetached = FALSE; pszSpecialCmd = NULL; bRunAsAdministrator = FALSE; bRecreate = FALSE;
+		bDetached = FALSE; bRunAsAdministrator = FALSE; bRecreate = FALSE;
+		pszSpecialCmd = NULL; pszStartupDir = NULL;
 	};
 	~tag_RConStartArgs() {
 		SafeFree(pszSpecialCmd); // именно SafeFree
+		SafeFree(pszStartupDir); // именно SafeFree
 	};
 } RConStartArgs;
 
