@@ -366,7 +366,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;MSGLOGGER;HIDE_TODO;SHOWDEBUGSTR"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;MSGLOGGER;HIDE_TODO"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -694,7 +694,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="comctl32.lib Shlwapi.lib version.lib gdiplus.lib"
-				OutputFile="\\MAX2K3\c$\Program Files\FAR\ConEmu.exe"
+				OutputFile="F:\VCProject\FarPlugin\#FAR175\ConEmu.exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
 				GenerateMapFile="true"

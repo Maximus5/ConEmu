@@ -1380,7 +1380,6 @@ BOOL AddTab(int &tabCount, bool losingFocus, bool editorSave,
 
 void SendTabs(int tabCount, BOOL abForceSend/*=FALSE*/)
 {
-	//EnterCriticalSection(&csTabs);
 	MSectionLock SC; SC.Lock(&csTabs);
 
 	if (!gpTabs) {
@@ -1389,8 +1388,10 @@ void SendTabs(int tabCount, BOOL abForceSend/*=FALSE*/)
 	}
 
 	gnCurTabCount = tabCount; // сразу запомним!, А то при ретриве табов количество еще старым будет...
+
 	gpTabs->Tabs.nTabCount = tabCount;
-	gpTabs->hdr.nSize = sizeof(CESERVER_REQ_HDR) + sizeof(ConEmuTab) * tabCount + sizeof(DWORD);
+	gpTabs->hdr.nSize = sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_CONEMUTAB) 
+		+ sizeof(ConEmuTab) * ((tabCount > 1) ? (tabCount - 1) : 0);
 
 	// Обновляем структуру сразу, чтобы она была готова к отправке в любой момент
 	gpTabs->hdr.nCmd = CECMD_TABSCHANGED;
@@ -1400,16 +1401,27 @@ void SendTabs(int tabCount, BOOL abForceSend/*=FALSE*/)
 	// Это нужно делать только если инициировано ФАРОМ. Если запрос прислал ConEmu - не посылать...
 	if (tabCount && ConEmuHwnd && IsWindow(ConEmuHwnd) && abForceSend)
 	{
-		if (IsMacroActive()) {
-			// Отослать после того, как макрос завершится
-			gbNeedPostTabSend = TRUE;
-			gnNeedPostTabSendTick = GetTickCount();
+		gpTabs->Tabs.bMacroActive = IsMacroActive();
+		// Если выполняется макрос и отложенная отсылка (по окончанию) уже запрошена
+		if (gpTabs->Tabs.bMacroActive && gbNeedPostTabSend) {
+			gnNeedPostTabSendTick = GetTickCount(); // Обновить тик
 			return;
 		}
+
 		gbNeedPostTabSend = FALSE;
+
 		CESERVER_REQ* pOut =
 			ExecuteGuiCmd(FarHwnd, gpTabs);
-		if (pOut) ExecuteFreeResult(pOut);
+		if (pOut) {
+			if (pOut->hdr.nSize >= (sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_CONEMUTAB_RET))) {
+				if (gpTabs->Tabs.bMacroActive && pOut->TabsRet.bNeedPostTabSend) {
+					// Отослать после того, как макрос завершится
+					gbNeedPostTabSend = TRUE;
+					gnNeedPostTabSendTick = GetTickCount();
+				}
+			}
+			ExecuteFreeResult(pOut);
+		}
 	}
     
 	SC.Unlock();
@@ -2016,6 +2028,7 @@ DWORD WINAPI ServerThreadCommand(LPVOID ahPipe)
 		}
 
 		if (gpTabs) {
+
 			fSuccess = WriteFile( hPipe, gpTabs, gpTabs->hdr.nSize, &cbWritten, NULL);
 		}
 

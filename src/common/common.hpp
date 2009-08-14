@@ -119,7 +119,7 @@ extern wchar_t gszDbgModLabel[6];
 #define CECMD_ATTACH2GUI    18 // Выполнить подключение видимой (отключенной) консоли к GUI. Без аргументов
 #define CECMD_FARLOADED     19 // Посылается плагином в сервер
 
-#define CESERVER_REQ_VER    11
+#define CESERVER_REQ_VER    12
 
 #define PIPEBUFSIZE 4096
 
@@ -143,8 +143,13 @@ typedef struct tag_ConEmuTab {
 
 typedef struct tag_CESERVER_REQ_CONEMUTAB {
 	DWORD nTabCount;
+	BOOL  bMacroActive;
 	ConEmuTab tabs[1];
 } CESERVER_REQ_CONEMUTAB;
+
+typedef struct tag_CESERVER_REQ_CONEMUTAB_RET {
+	BOOL  bNeedPostTabSend;
+} CESERVER_REQ_CONEMUTAB_RET;
 
 typedef struct tag_ForwardedPanelInfo {
 	RECT ActiveRect;
@@ -288,6 +293,7 @@ typedef struct tag_CESERVER_REQ {
 		CESERVER_REQ_STARTSTOP StartStop;
 		CESERVER_REQ_STARTSTOPRET StartStopRet;
 		CESERVER_REQ_CONEMUTAB Tabs;
+		CESERVER_REQ_CONEMUTAB_RET TabsRet;
 	};
 } CESERVER_REQ;
 

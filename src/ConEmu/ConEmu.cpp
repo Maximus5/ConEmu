@@ -1,10 +1,14 @@
 
+#define SHOWDEBUGSTR
+
 #include "Header.h"
 #include <Tlhelp32.h>
 #include <Shlobj.h>
 extern "C" {
 #include "../common/ConEmuCheck.h"
 }
+
+#define DEBUGSTRSYS(s) //DEBUGSTR(s)
 
 #define PROCESS_WAIT_START_TIME 1000
 
@@ -4652,6 +4656,7 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
         break;
 
     case SC_MAXIMIZE:
+		DEBUGSTRSYS(L"OnSysCommand(SC_MAXIMIZE)\n");
         if (!mb_PassSysCommand) {
             if (isPictureView())
                 break;;
@@ -4661,6 +4666,7 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
         }
         break;
     case SC_RESTORE:
+		DEBUGSTRSYS(L"OnSysCommand(SC_RESTORE)\n");
         if (!mb_PassSysCommand) {
             if (!IsIconic(ghWnd) && isPictureView())
                 break;
@@ -4671,6 +4677,7 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
         }
         break;
     case SC_MINIMIZE:
+		DEBUGSTRSYS(L"OnSysCommand(SC_MINIMIZE)\n");
         if (gSet.isMinToTray) {
             Icon.HideWindowToTray();
             break;
@@ -4681,6 +4688,10 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
     default:
         if (wParam != 0xF100)
         {
+			#ifdef _DEBUG
+			wchar_t szDbg[64]; wsprintf(szDbg, L"OnSysCommand(%i)\n", wParam);
+			DEBUGSTRSYS(szDbg);
+			#endif
             // иначе это приводит к потере фокуса и активации невидимой консоли,
             // перехвате стрелок клавиатуры, и прочей фигни...
             if (wParam<0xF000) {

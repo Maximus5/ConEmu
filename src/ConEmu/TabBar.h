@@ -71,7 +71,7 @@ public:
 	void Invalidate();
 	bool IsActive();
 	bool IsShown();
-	BOOL IsAllowed();
+	//BOOL IsAllowed();
 	RECT GetMargins();
 	void Activate();
 	HWND CreateToolbar();

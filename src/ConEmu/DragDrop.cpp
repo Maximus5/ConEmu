@@ -1,3 +1,6 @@
+
+#define SHOWDEBUGSTR
+
 #include <shlobj.h>
 #include "Header.h"
 #include "ScreenDump.h"
@@ -8,6 +11,7 @@
 #define OVERLAY_COLUMN_SHIFT 5
 
 #define DEBUGSTROVL(s) DEBUGSTR(s)
+#define DEBUGSTRBACK(s) //DEBUGSTR(s)
 
 
 CDragDrop::CDragDrop(HWND hWnd)
@@ -1119,8 +1123,10 @@ void CDragDrop::Drag()
 						if (!m_pfpi) // если это уже не сделали
 							RetrieveDragToInfo(mp_DataObject);
 						
-						if (LoadDragImageBits(mp_DataObject))
+						if (LoadDragImageBits(mp_DataObject)) {
+							mb_DragWithinNow = TRUE;
 							CreateDragImageWindow();
+						}
 
 						//gConEmu.DebugStep(_T("DnD: Finally, DoDragDrop"));
 						gConEmu.DebugStep(NULL);
@@ -1568,11 +1574,11 @@ BOOL CDragDrop::CreateDragImageWindow()
 void CDragDrop::MoveDragWindow(BOOL abVisible/*=TRUE*/)
 {
 	if (!mh_Overlapped) {
-		DEBUGSTROVL(L"MoveDragWindow skipped, Overlay was not created\n");
+		DEBUGSTRBACK(L"MoveDragWindow skipped, Overlay was not created\n");
 		return;
 	}
 
-	DEBUGSTROVL(L"MoveDragWindow()\n");
+	DEBUGSTRBACK(L"MoveDragWindow()\n");
 
 	BLENDFUNCTION bf;
 	bf.BlendOp = AC_SRC_OVER;
@@ -1633,7 +1639,7 @@ void CDragDrop::DragFeedBack(DWORD dwEffect)
 {
 #ifdef _DEBUG
 	wchar_t szDbg[128]; wsprintf(szDbg, L"DragFeedBack(%i)\n", (int)dwEffect);
-	DEBUGSTROVL(szDbg);
+	DEBUGSTRBACK(szDbg);
 #endif
 	// Drop или отмена драга, когда источник - ConEmu
 	if (dwEffect == (DWORD)-1) {

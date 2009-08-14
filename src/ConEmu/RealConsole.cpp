@@ -1,11 +1,12 @@
 
-// WARNING!!! Содержит юникодные символы !!!
-
 #define SHOWDEBUGSTR
 //#define ALLOWUSEFARSYNCHRO
 
 #include "Header.h"
 #include <Tlhelp32.h>
+extern "C" {
+#include "../common/ConEmuCheck.h"
+}
 
 #define DEBUGSTRDRAW(s) //DEBUGSTR(s)
 #define DEBUGSTRINPUT(s) //DEBUGSTR(s)
@@ -2385,15 +2386,9 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 
     } else if (pIn->hdr.nCmd == CECMD_GETGUIHWND) {
         DEBUGSTRCMD(L"GUI recieved CECMD_GETGUIHWND\n");
-        CESERVER_REQ *pRet = NULL;
-        int nSize = sizeof(CESERVER_REQ_HDR) + 2*sizeof(DWORD);
-        pRet = (CESERVER_REQ*)calloc(nSize, 1);
-        pRet->hdr.nSize = nSize;
-        pRet->hdr.nCmd = pIn->hdr.nCmd;
-        pRet->hdr.nSrcThreadId = GetCurrentThreadId();
-        pRet->hdr.nVersion = CESERVER_REQ_VER;
-        ((DWORD*)pRet->Data)[0] = (DWORD)ghWnd;
-        ((DWORD*)pRet->Data)[1] = (DWORD)ghWndDC;
+        CESERVER_REQ *pRet = ExecuteNewCmd(pIn->hdr.nCmd, sizeof(CESERVER_REQ_HDR) + 2*sizeof(DWORD));
+        pRet->dwData[0] = (DWORD)ghWnd;
+        pRet->dwData[1] = (DWORD)ghWndDC;
         // Отправляем
         fSuccess = WriteFile( 
             hPipe,        // handle to pipe 
@@ -2401,7 +2396,7 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
             pRet->hdr.nSize,  // number of bytes to write 
             &cbWritten,   // number of bytes written 
             NULL);        // not overlapped I/O 
-        free(pRet);
+        ExecuteFreeResult(pRet);
             
     } else if (pIn->hdr.nCmd == CECMD_TABSCHANGED) {
         DEBUGSTRCMD(L"GUI recieved CECMD_TABSCHANGED\n");
@@ -2410,8 +2405,29 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
             SetTabs(NULL, 1);
         } else {
             _ASSERTE(nDataSize>=4);
-            _ASSERTE((pIn->Tabs.nTabCount*sizeof(ConEmuTab))==(nDataSize-4));
-            SetTabs(pIn->Tabs.tabs, pIn->Tabs.nTabCount);
+            _ASSERTE((pIn->Tabs.nTabCount*sizeof(ConEmuTab))==(nDataSize-8));
+			BOOL lbCanUpdate = TRUE;
+			// Если выполняется макрос - изменение размеров окна FAR при авто-табах нежелательно
+			if (pIn->Tabs.bMacroActive) {
+				if (gSet.isTabs == 2) {
+					lbCanUpdate = FALSE;
+					// Нужно вернуть в плагин информацию, что нужно отложенное обновление
+					CESERVER_REQ *pRet = ExecuteNewCmd(CECMD_TABSCHANGED, sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_CONEMUTAB_RET));
+					if (pRet) {
+						pRet->TabsRet.bNeedPostTabSend = TRUE;
+						// Отправляем
+						fSuccess = WriteFile( 
+							hPipe,        // handle to pipe 
+							pRet,         // buffer to write from 
+							pRet->hdr.nSize,  // number of bytes to write 
+							&cbWritten,   // number of bytes written 
+							NULL);        // not overlapped I/O 
+						ExecuteFreeResult(pRet);
+					}
+				}
+			}
+			if (lbCanUpdate)
+				SetTabs(pIn->Tabs.tabs, pIn->Tabs.nTabCount);
         }
 
     } else if (pIn->hdr.nCmd == CECMD_GETOUTPUTFILE) {

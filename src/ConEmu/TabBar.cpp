@@ -1,4 +1,6 @@
 
+#define SHOWDEBUGSTR
+
 #include <windows.h>
 #include <commctrl.h>
 #include "header.h"
@@ -321,19 +323,19 @@ bool TabBarClass::IsShown()
     return _active && IsWindowVisible(mh_Tabbar);
 }
 
-BOOL TabBarClass::IsAllowed()
-{
-    BOOL lbTabsAllowed = TRUE;
-    TODO("пока убрал");
-    //if (gConEmu.BufferHeight) {
-        CVirtualConsole* pCon = gConEmu.ActiveCon();
-        if (!pCon) 
-            lbTabsAllowed = FALSE;
-        else
-            lbTabsAllowed = !pCon->RCon()->isBufferHeight();
-    //}
-    return lbTabsAllowed;
-}
+//BOOL TabBarClass::IsAllowed()
+//{
+//    BOOL lbTabsAllowed = TRUE;
+//    TODO("пока убрал");
+//    //if (gConEmu.BufferHeight) {
+//        CVirtualConsole* pCon = gConEmu.ActiveCon();
+//        if (!pCon) 
+//            lbTabsAllowed = FALSE;
+//        else
+//            lbTabsAllowed = !pCon->RCon()->isBufferHeight();
+//    //}
+//    return lbTabsAllowed;
+//}
 
 void TabBarClass::Activate()
 {
