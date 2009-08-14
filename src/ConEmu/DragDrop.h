@@ -69,9 +69,13 @@ protected:
 	DragImageBits* CreateDragImageBits(wchar_t* pszFiles);
 	BOOL DrawImageBits ( HDC hDrawDC, wchar_t* pszFile, int *nMaxX, int nX, int *nMaxY );
 	void DestroyDragImageBits();
-	void MoveDragWindow();
+	void MoveDragWindow(BOOL abVisible=TRUE);
 	//DragImageBits m_ImgInfo;
 	//LPBYTE mp_ImgData;
 	DragImageBits *mp_Bits;
 	BOOL mb_DragWithinNow;
+	//
+	static DWORD WINAPI ExtractIconsThread(LPVOID lpParameter);
+	DWORD mn_ExtractIconsTID;
+	HANDLE mh_ExtractIcons;
 };

@@ -5,6 +5,9 @@
 #define EXT_GNUC_LOG
 #endif
 
+#define DEBUGSTRDRAW(s) //DEBUGSTR(s)
+#define DEBUGSTRTABS(s) //DEBUGSTR(s)
+#define DEBUGSTRLANG(s) //DEBUGSTR(s)
 
 CConEmuChild::CConEmuChild()
 {
@@ -105,7 +108,7 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 			wsprintf(szMsg, L"InChild %s(CP:%i, HKL:0x%08X)\n",
 				(messg == WM_INPUTLANGCHANGE) ? L"WM_INPUTLANGCHANGE" : L"WM_INPUTLANGCHANGEREQUEST",
 				wParam, lParam);
-			DEBUGSTR(szMsg);
+			DEBUGSTRLANG(szMsg);
 
 		}
 		#endif
@@ -134,7 +137,7 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 				//изменились табы, их нужно перечитать
 				#ifdef MSGLOGGER
 					WCHAR szDbg[128]; swprintf(szDbg, L"Tabs:Notified(%i)\n", wParam);
-					DEBUGSTR(szDbg);
+					DEBUGSTRTABS(szDbg);
 				#endif
 				TODO("здесь хорошо бы вместо OnTimer реально обновить mn_TopProcessID")
 				// иначе во время запуска PID фара еще может быть не известен...
@@ -240,10 +243,10 @@ void CConEmuChild::Redraw()
 	}
 
 	if (mb_DisableRedraw) {
-		DEBUGSTR(L" +++ RedrawWindow on DC window will be ignored!\n");
+		DEBUGSTRDRAW(L" +++ RedrawWindow on DC window will be ignored!\n");
 		return;
 	} else {
-		DEBUGSTR(L" +++ RedrawWindow on DC window called\n");
+		DEBUGSTRDRAW(L" +++ RedrawWindow on DC window called\n");
 	}
 	#ifdef _DEBUG
 	BOOL lbRc =
@@ -262,11 +265,11 @@ void CConEmuChild::Invalidate()
 	//2009-06-22 Опять поперла непрорисовка. Причем если по экрану окошко повозить - изображение нормальное
 	// Так что пока лучше два раза нарисуем...
 	//if (mb_Invalidated) {
-	//	DEBUGSTR(L" ### Warning! Invalidate on DC window will be duplicated\n");
+	//	DEBUGSTRDRAW(L" ### Warning! Invalidate on DC window will be duplicated\n");
 	////	return;
 	//}
 	if (ghWndDC) {
-		DEBUGSTR(L" +++ Invalidate on DC window called\n");
+		DEBUGSTRDRAW(L" +++ Invalidate on DC window called\n");
 		//mb_Invalidated = TRUE;
 		RECT rcClient; GetClientRect(ghWndDC, &rcClient);
 		InvalidateRect(ghWndDC, &rcClient, FALSE);
@@ -280,7 +283,7 @@ void CConEmuChild::Invalidate()
 void CConEmuChild::Validate()
 {
 	//mb_Invalidated = FALSE;
-	//DEBUGSTR(L" +++ Validate on DC window called\n");
+	//DEBUGSTRDRAW(L" +++ Validate on DC window called\n");
 	//if (ghWndDC) ValidateRect(ghWnd, NULL);
 }
 

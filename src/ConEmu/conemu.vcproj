@@ -366,11 +366,10 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;MSGLOGGER;HIDE_TODO"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;MSGLOGGER;HIDE_TODO;SHOWDEBUGSTR"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
-				StructMemberAlignment="5"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				DebugInformationFormat="4"

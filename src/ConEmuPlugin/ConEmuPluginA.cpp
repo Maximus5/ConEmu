@@ -357,6 +357,12 @@ int WINAPI _export ProcessEditorEvent(int Event, void *Param)
 {
 	if (/*!ConEmuHwnd ||*/ !InfoA) // иногда событие от QuickView приходит ƒќ инициализации плагина
 		return 0; // ƒаже если мы не под эмул€тором - просто запомним текущее состо€ние
+		
+	if (gbNeedPostTabSend && Event == EE_REDRAW) {
+		if (!IsMacroActive())
+			gbHandleOneRedraw = TRUE;
+	}
+		
 	switch (Event)
 	{
 	case EE_READ: // в этот момент количество окон еще не изменилось
@@ -617,4 +623,15 @@ void GetMsgA(int aiMsg, wchar_t* rsMsg/*MAX_PATH*/)
 	} else {
 		rsMsg[0] = 0;
 	}
+}
+
+BOOL IsMacroActiveA()
+{
+	if (!InfoA) return FALSE;
+
+	ActlKeyMacro akm = {MCMD_GETSTATE};
+	int liRc = InfoA->AdvControl(InfoA->ModuleNumber, ACTL_KEYMACRO, &akm);
+	if (liRc == MACROSTATE_NOMACRO)
+		return FALSE;
+	return TRUE;
 }

@@ -35,6 +35,7 @@ extern int lastModifiedStateW;
 extern HANDLE hThread;
 extern WCHAR gcPlugKey;
 extern HANDLE ghConIn;
+extern BOOL gbNeedPostTabSend;
 
 typedef struct tag_SynchroArg {
 	enum {
@@ -134,3 +135,8 @@ BOOL Attach2Gui();
 
 BOOL FUNC_X(CallSynchro)(SynchroArg *Param);
 BOOL FUNC_Y(CallSynchro)(SynchroArg *Param);
+
+BOOL IsMacroActive();
+BOOL IsMacroActiveA();
+BOOL FUNC_X(IsMacroActive)();
+BOOL FUNC_Y(IsMacroActive)();

@@ -7,6 +7,9 @@
 #define OVERLAY_TEXT_SHIFT   (gSet.isDragShowIcons ? 18 : 0)
 #define OVERLAY_COLUMN_SHIFT 5
 
+#define DEBUGSTROVL(s) DEBUGSTR(s)
+
+
 CDragDrop::CDragDrop(HWND hWnd)
 {
 	m_hWnd = hWnd;
@@ -20,6 +23,8 @@ CDragDrop::CDragDrop(HWND hWnd)
 	mp_Bits = NULL;
 	mn_AllFiles = 0; mn_CurWritten = 0; mn_CurFile = 0;
 	mb_DragWithinNow = FALSE;
+	mn_ExtractIconsTID = 0;
+	mh_ExtractIcons = NULL;
 	
 	InitializeCriticalSection(&m_CrThreads);
 }
@@ -675,7 +680,7 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragOver(DWORD grfKeyState,POINTL pt,DWORD 
 
 	if (!mb_selfdrag) {
 		if (*pdwEffect == DROPEFFECT_NONE) {
-			DestroyDragImageWindow();
+			MoveDragWindow(FALSE);
 		} else if (mh_Overlapped && mp_Bits) {
 			MoveDragWindow();
 		} else if (mp_Bits) {
@@ -756,12 +761,13 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragEnter(IDataObject * pDataObject,DWORD g
 
 	if (gSet.isDropEnabled || mb_selfdrag)
 	{
-		if (!mb_selfdrag) // при "своем" драге - информация уже получена
+		if (!mb_selfdrag) {
+			// при "своем" драге - информация уже получена
 			RetrieveDragToInfo(pDataObject);
 
-		if (LoadDragImageBits(pDataObject))
-			CreateDragImageWindow();
-
+			if (LoadDragImageBits(pDataObject))
+				CreateDragImageWindow();
+		}
 	} else {
 		gConEmu.DebugStep(_T("DnD: Drop disabled"));
 	}
@@ -809,9 +815,12 @@ void CDragDrop::RetrieveDragToInfo(IDataObject * pDataObject)
 HRESULT STDMETHODCALLTYPE CDragDrop::DragLeave(void)
 {
 	mb_DragWithinNow = FALSE;
-	if (!mb_selfdrag)
+	if (mb_selfdrag) {
+		MoveDragWindow(FALSE);
+	} else {
 		DestroyDragImageBits();
-	DestroyDragImageWindow();
+		DestroyDragImageWindow();
+	}
 	return 0;
 }
 
@@ -1110,6 +1119,9 @@ void CDragDrop::Drag()
 						if (!m_pfpi) // если это уже не сделали
 							RetrieveDragToInfo(mp_DataObject);
 						
+						if (LoadDragImageBits(mp_DataObject))
+							CreateDragImageWindow();
+
 						//gConEmu.DebugStep(_T("DnD: Finally, DoDragDrop"));
 						gConEmu.DebugStep(NULL);
 
@@ -1133,6 +1145,7 @@ void CDragDrop::Drag()
 
 BOOL CDragDrop::CreateDragImageBits(IDataObject * pDataObject)
 {
+	DEBUGSTROVL(L"CreateDragImageBits(IDataObject) - NOT IMPLEMENTED\n");
 	return FALSE;
 }
 
@@ -1153,12 +1166,15 @@ typedef struct tag_MyRgbQuad {
 DragImageBits* CDragDrop::CreateDragImageBits(wchar_t* pszFiles)
 {
 	if (!pszFiles) {
+		DEBUGSTROVL(L"CreateDragImageBits failed, pszFiles is NULL\n");
 		_ASSERTE(pszFiles!=NULL);
 		return NULL;
 	}
 
 	DestroyDragImageBits();
 	DestroyDragImageWindow();
+
+	DEBUGSTROVL(L"CreateDragImageBits()\n");
 
 	DragImageBits* pBits = NULL;
 
@@ -1489,22 +1505,28 @@ BOOL CDragDrop::LoadDragImageBits(IDataObject * pDataObject)
 
 void CDragDrop::DestroyDragImageBits()
 {
-	if (mh_BitsDC)  {
-		DeleteDC(mh_BitsDC);
-		mh_BitsDC = NULL;
-	}
-	if (mh_BitsBMP) {
-		DeleteObject(mh_BitsBMP);
-		mh_BitsBMP = NULL;
-	}
-	if (mp_Bits) {
-		free(mp_Bits);
-		mp_Bits = NULL;
+	if (mh_BitsDC || mh_BitsBMP || mp_Bits)
+	{
+		DEBUGSTROVL(L"DestroyDragImageBits()\n");
+		if (mh_BitsDC)  {
+			DeleteDC(mh_BitsDC);
+			mh_BitsDC = NULL;
+		}
+		if (mh_BitsBMP) {
+			DeleteObject(mh_BitsBMP);
+			mh_BitsBMP = NULL;
+		}
+		if (mp_Bits) {
+			free(mp_Bits);
+			mp_Bits = NULL;
+		}
 	}
 }
 
 BOOL CDragDrop::CreateDragImageWindow()
 {
+	DEBUGSTROVL(L"CreateDragImageWindow()\n");
+
 	#define DRAGBITSCLASS L"ConEmuDragBits"
 	static BOOL bClassRegistered = FALSE;
 	if (!bClassRegistered) {
@@ -1538,21 +1560,25 @@ BOOL CDragDrop::CreateDragImageWindow()
 		return NULL;
 	}
 
-	MoveDragWindow();
+	MoveDragWindow(FALSE);
 	
 	return TRUE;
 }
 
-void CDragDrop::MoveDragWindow()
+void CDragDrop::MoveDragWindow(BOOL abVisible/*=TRUE*/)
 {
-	if (!mh_Overlapped || !mp_Bits)
+	if (!mh_Overlapped) {
+		DEBUGSTROVL(L"MoveDragWindow skipped, Overlay was not created\n");
 		return;
+	}
+
+	DEBUGSTROVL(L"MoveDragWindow()\n");
 
 	BLENDFUNCTION bf;
 	bf.BlendOp = AC_SRC_OVER;
 	bf.AlphaFormat = AC_SRC_ALPHA;
 	bf.BlendFlags = 0;
-	bf.SourceConstantAlpha = 255;
+	bf.SourceConstantAlpha = abVisible ? 255 : 0;
 
 	POINT p = {0};
 	GetCursorPos(&p);
@@ -1574,6 +1600,7 @@ void CDragDrop::MoveDragWindow()
 void CDragDrop::DestroyDragImageWindow()
 {
 	if (mh_Overlapped) {
+		DEBUGSTROVL(L"DestroyDragImageWindow()\n");
 		DestroyWindow(mh_Overlapped);
 		mh_Overlapped = NULL;
 	}
@@ -1604,12 +1631,16 @@ BOOL CDragDrop::InDragDrop()
 
 void CDragDrop::DragFeedBack(DWORD dwEffect)
 {
+#ifdef _DEBUG
+	wchar_t szDbg[128]; wsprintf(szDbg, L"DragFeedBack(%i)\n", (int)dwEffect);
+	DEBUGSTROVL(szDbg);
+#endif
 	// Drop или отмена драга, когда источник - ConEmu
 	if (dwEffect == (DWORD)-1) {
 		mb_DragWithinNow = FALSE;
 		DestroyDragImageWindow();
 	} else if (dwEffect == DROPEFFECT_NONE) {
-		DestroyDragImageWindow();
+		MoveDragWindow(FALSE);
 	} else {
 		if (!mh_Overlapped && mp_Bits)
 			CreateDragImageWindow();

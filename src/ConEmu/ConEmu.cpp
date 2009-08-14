@@ -2408,7 +2408,7 @@ INT_PTR CConEmuMain::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARA
             }
             SetDlgItemText(hDlg, IDC_RESTART_CMD, pszCmd);
             
-            SetDlgItemText(hDlg, IDC_STARTUP_DIR, gConEmu.ms_ConEmuCurDir);
+            SetDlgItemText(hDlg, IDC_STARTUP_DIR, gConEmu.ActiveCon()->RCon()->GetDir());
             //EnableWindow(GetDlgItem(hDlg, IDC_STARTUP_DIR), FALSE);
             //#ifndef _DEBUG
             //EnableWindow(GetDlgItem(hDlg, IDC_CHOOSE_DIR), FALSE);

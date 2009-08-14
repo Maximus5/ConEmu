@@ -691,9 +691,11 @@ void CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec)
     	// On Vista PostThreadMessage failed with code 5, if target process created 'As administrator'
 	    if (!PostThreadMessage(dwTID, msg.message, msg.wParam, msg.lParam)) {
 	    	DWORD dwErr = GetLastError();
-			if (dwErr == 5) {
+			if (dwErr == ERROR_ACCESS_DENIED/*5*/) {
 				mb_UseOnlyPipeInput = TRUE;
 				PostConsoleEventPipe(&msg);
+			} else if (dwErr == ERROR_INVALID_THREAD_ID/*1444*/) {
+				// In shutdown?
 			} else {
 	    		wchar_t szErr[100];
 	    		wsprintfW(szErr, L"ConEmu: PostThreadMessage(%i) failed, code=0x%08X", dwTID, dwErr);
@@ -5159,10 +5161,20 @@ bool CRealConsole::isNtvdm()
 
 LPCWSTR CRealConsole::GetCmd()
 {
+	if (!this) return L"";
     if (m_Args.pszSpecialCmd)
         return m_Args.pszSpecialCmd;
     else
         return gSet.GetCmd();
+}
+
+LPCWSTR CRealConsole::GetDir()
+{
+	if (!this) return L"";
+    if (m_Args.pszSpecialCmd)
+        return m_Args.pszStartupDir;
+    else
+        return gConEmu.ms_ConEmuCurDir;
 }
 
 short CRealConsole::GetProgress(BOOL *rpbError)

@@ -1,7 +1,7 @@
 
 #ifdef _DEBUG
 //  Раскомментировать, чтобы сразу после загрузки плагина показать MessageBox, чтобы прицепиться дебаггером
-  #define SHOW_STARTED_MSGBOX
+//  #define SHOW_STARTED_MSGBOX
 #endif
 
 //#include <stdio.h>
@@ -90,6 +90,9 @@ HANDLE ghPluginSemaphore = NULL;
 wchar_t gsFarLang[64] = {0};
 BOOL FindServerCmd(DWORD nServerCmd, DWORD &dwServerPID);
 SECURITY_ATTRIBUTES* gpNullSecurity = NULL;
+BOOL gbNeedPostTabSend = FALSE;
+DWORD gnNeedPostTabSendTick = 0;
+#define NEEDPOSTTABSENDDELTA 100
 
 
 
@@ -652,6 +655,21 @@ DWORD WINAPI MonitorThreadProcW(LPVOID lpParameter)
 				InitResources();
 			}
 		}
+
+		if (gbNeedPostTabSend) {
+			DWORD nDelta = GetTickCount() - gnNeedPostTabSendTick;
+			if (nDelta > NEEDPOSTTABSENDDELTA) {
+				if (IsMacroActive()) {
+					gnNeedPostTabSendTick = GetTickCount();
+				} else {
+					// Force Send tabs to ConEmu
+					MSectionLock SC; SC.Lock(&csTabs, TRUE);
+					SendTabs(gnCurTabCount, TRUE);
+					SC.Unlock();
+				}
+			}
+		}
+
 
 		//SafeCloseHandle(ghMapping);
 		//// Поставим флажок, что мы приступили к обработке
@@ -1382,6 +1400,13 @@ void SendTabs(int tabCount, BOOL abForceSend/*=FALSE*/)
 	// Это нужно делать только если инициировано ФАРОМ. Если запрос прислал ConEmu - не посылать...
 	if (tabCount && ConEmuHwnd && IsWindow(ConEmuHwnd) && abForceSend)
 	{
+		if (IsMacroActive()) {
+			// Отослать после того, как макрос завершится
+			gbNeedPostTabSend = TRUE;
+			gnNeedPostTabSendTick = GetTickCount();
+			return;
+		}
+		gbNeedPostTabSend = FALSE;
 		CESERVER_REQ* pOut =
 			ExecuteGuiCmd(FarHwnd, gpTabs);
 		if (pOut) ExecuteFreeResult(pOut);
@@ -1414,6 +1439,12 @@ int WINAPI _export ProcessEditorEventW(int Event, void *Param)
 	else
 		return FUNC_X(ProcessEditorEventW)(Event,Param);*/
 	//static bool sbEditorReading = false;
+
+	if (gbNeedPostTabSend && Event == EE_REDRAW) {
+		if (!IsMacroActive())
+			gbHandleOneRedraw = TRUE;
+	}
+
 	// Вроде коды событий не различаются, да и от ANSI не отличаются...
 	switch (Event)
 	{
@@ -1575,7 +1606,7 @@ void CheckResources()
 	if (lstrcmpW(szLang, gsFarLang)) {
 		wchar_t szTitle[1024] = {0};
 		GetConsoleTitleW(szTitle, 1024);
-		SetConsoleTitleW(L"ConEmu: CheckResources started");
+		SetConsoleTitleW(L"ConEmuC: CheckResources started");
 
 		InitResources();
 		
@@ -2188,4 +2219,20 @@ BOOL Attach2Gui()
 	}
 	
 	return lbRc;
+}
+
+
+BOOL IsMacroActive()
+{
+	if (!FarHwnd) return FALSE;
+
+	BOOL lbActive = FALSE;
+	if (gFarVersion.dwVerMajor==1)
+		lbActive = IsMacroActiveA();
+	else if (gFarVersion.dwBuild>=FAR_Y_VER)
+		lbActive = FUNC_Y(IsMacroActive)();
+	else
+		lbActive = FUNC_X(IsMacroActive)();
+
+	return lbActive;
 }

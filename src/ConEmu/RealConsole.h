@@ -180,6 +180,7 @@ public:
 	bool isNtvdm();
 	bool isPackets();
 	LPCWSTR GetCmd();
+	LPCWSTR GetDir();
 	short GetProgress(BOOL* rpbError);
 	void EnableComSpec(DWORD anFarPID, BOOL abSwitch);
 	int CoordInPanel(COORD cr);

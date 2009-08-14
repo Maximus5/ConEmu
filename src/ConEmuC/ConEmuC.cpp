@@ -828,7 +828,14 @@ BOOL IsNeedCmd(LPCWSTR asCmdLine, BOOL *rbNeedCutStartEndQuot)
 			pwszCopy ++; // Отбросить первую кавычку в командах типа: ""c:\program files\arc\7z.exe" -?"
 			if (rbNeedCutStartEndQuot) *rbNeedCutStartEndQuot = TRUE;
 		} else if (wcschr(pwszCopy+1, L'"') == (pwszCopy+nLastChar)) {
+			LPCWSTR pwszTemp = pwszCopy;
+			// Получим первую команду (исполняемый файл?)
+			if ((iRc = NextArg(&pwszTemp, szArg)) != 0) {
+				//Parsing command line failed
+				return TRUE;
+			}
 			pwszCopy ++; // Отбросить первую кавычку в командах типа: "c:\arc\7z.exe -?"
+			lbFirstWasGot = TRUE;
 			if (rbNeedCutStartEndQuot) *rbNeedCutStartEndQuot = TRUE;
 		} else {
 			// отбросить первую кавычку в: "C:\GCC\msys\bin\make.EXE -f "makefile" COMMON="../../../plugins/common""
@@ -4198,12 +4205,23 @@ void SendConsoleChanges(CESERVER_REQ* pOut)
 
         // Exit if an error other than ERROR_PIPE_BUSY occurs. 
         dwErr = GetLastError();
-        if (dwErr != ERROR_PIPE_BUSY) 
+		if (dwErr != ERROR_PIPE_BUSY) {
+			wchar_t szErr[MAX_PATH*2];
+			wsprintf(szErr, L"ConEmuC: CreateFile(%s) failed, code=0x%08X", srv.szGuiPipeName, dwErr);
+			SetConsoleTitle(szErr);
+			//srv.bRequestPostFullReload = TRUE;
             return;
+		}
 
         // All pipe instances are busy, so wait for 100 ms.
-        if (!WaitNamedPipe(srv.szGuiPipeName, 100) ) 
+		if (!WaitNamedPipe(srv.szGuiPipeName, 100) ) {
+			dwErr = GetLastError();
+			wchar_t szErr[MAX_PATH*2];
+			wsprintf(szErr, L"ConEmuC: WaitNamedPipe(%s) failed, code=0x%08X", srv.szGuiPipeName, dwErr);
+			SetConsoleTitle(szErr);
+			//srv.bRequestPostFullReload = TRUE;
             return;
+		}
     }
 
     // The pipe connected; change to message-read mode. 

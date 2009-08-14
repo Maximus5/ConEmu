@@ -938,7 +938,7 @@ bool CVirtualConsole::UpdatePrepare(bool isForce, HDC *ahDc, MSectionLock *pSDC)
 
     // get selection info in buffer mode
     
-    doSelect = mp_RCon > 0;
+    doSelect = mp_RCon->isBufferHeight();
     if (doSelect)
     {
         select1 = SelectionInfo;
