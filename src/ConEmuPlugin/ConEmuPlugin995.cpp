@@ -280,6 +280,7 @@ int ProcessEditorInputW995(LPCVOID aRec)
 			lastModifiedStateW = currentModifiedState;
 		} else {
 			gbHandleOneRedraw = true;
+			//gbHandleOneRedrawCh = true;
 		}
 	}
 	return 0;
@@ -369,6 +370,8 @@ void UpdateConEmuTabsW995(int event, bool losingFocus, bool editorSave, void* Pa
 			lbCh |= AddTab(tabCount, losingFocus, editorSave, 
 				WInfo.Type, WInfo.Name, /*editorSave ? ei.FileName :*/ NULL, 
 				WInfo.Current, WInfo.Modified);
+			//if (WInfo.Type == WTYPE_EDITOR && WInfo.Current) //2009-08-17
+			//	lastModifiedStateW = WInfo.Modified;
 		}
 		//InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_FREEWINDOWINFO, (void*)&WInfo);
 	}
@@ -395,11 +398,18 @@ void UpdateConEmuTabsW995(int event, bool losingFocus, bool editorSave, void* Pa
 						lbCh |= AddTab(tabCount, losingFocus, editorSave, 
 							WTYPE_EDITOR, pszEditorFileName, NULL, 
 							1, ei.CurState == ECSTATE_MODIFIED);
+						//lastModifiedStateW = ei.CurState == ECSTATE_MODIFIED;
 					}
 					free(pszEditorFileName);
 				}
 			}
 		}
+	}
+	
+	// 2009-08-17
+	if (gbHandleOneRedraw && gbHandleOneRedrawCh && lbCh) {
+		gbHandleOneRedraw = false;
+		gbHandleOneRedrawCh = false;
 	}
 	
 

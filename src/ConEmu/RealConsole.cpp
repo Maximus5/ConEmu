@@ -4418,9 +4418,11 @@ BOOL CRealConsole::ActivateFarWindow(int anWndIndex)
         if (pipe.Execute(CMD_SETWINDOW, &anWndIndex, 4))
         {
             DWORD cbBytesRead=0;
-            DWORD tabCount = 0;
+            DWORD tabCount = 0, nInMacro = 0, nTemp = 0;
             ConEmuTab* tabs = NULL;
-            if (pipe.Read(&tabCount, sizeof(DWORD), &cbBytesRead)) {
+            if (pipe.Read(&tabCount, sizeof(DWORD), &cbBytesRead) &&
+				pipe.Read(&nInMacro, sizeof(DWORD), &nTemp))
+			{
                 tabs = (ConEmuTab*)pipe.GetPtr(&cbBytesRead);
                 _ASSERTE(cbBytesRead==(tabCount*sizeof(ConEmuTab)));
                 if (cbBytesRead == (tabCount*sizeof(ConEmuTab))) {

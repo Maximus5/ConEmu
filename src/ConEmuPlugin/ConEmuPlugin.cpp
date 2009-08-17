@@ -1362,10 +1362,10 @@ BOOL AddTab(int &tabCount, bool losingFocus, bool editorSave,
 		{
 			lastModifiedStateW = Modified != 0 ? 1 : 0;
 		}
-		else
-		{
-			lastModifiedStateW = -1;
-		}
+		//else
+		//{
+		//	lastModifiedStateW = -1; //2009-08-17 при наличии более одного редактора - сносит крышу
+		//}
 
 		int nLen = min(lstrlen(Name),(CONEMUTABMAX-1));
 		lstrcpyn(gpTabs->Tabs.tabs[tabCount].Name, Name, nLen+1);
@@ -1430,7 +1430,7 @@ void SendTabs(int tabCount, BOOL abForceSend/*=FALSE*/)
 // watch non-modified -> modified editor status change
 
 int lastModifiedStateW = -1;
-bool gbHandleOneRedraw = false;
+bool gbHandleOneRedraw = false, gbHandleOneRedrawCh = false;
 
 int WINAPI _export ProcessEditorInputW(void* Rec)
 {
@@ -1454,7 +1454,7 @@ int WINAPI _export ProcessEditorEventW(int Event, void *Param)
 
 	if (gbNeedPostTabSend && Event == EE_REDRAW) {
 		if (!IsMacroActive())
-			gbHandleOneRedraw = TRUE;
+			gbHandleOneRedraw = true;
 	}
 
 	// Вроде коды событий не различаются, да и от ANSI не отличаются...
@@ -1462,12 +1462,14 @@ int WINAPI _export ProcessEditorEventW(int Event, void *Param)
 	{
 	case EE_READ: // в этот момент количество окон еще не изменилось
 		gbHandleOneRedraw = true;
+		gbHandleOneRedrawCh = false;
 		return 0;
 	case EE_REDRAW:
 		if (!gbHandleOneRedraw)
 			return 0;
-		gbHandleOneRedraw = false;
-		OUTPUTDEBUGSTRING(L"EE_REDRAW(first)\n");
+		if (!gbHandleOneRedrawCh)
+			gbHandleOneRedraw = false; //2009-08-17 - сбрасываем в UpdateConEmuTabsW т.к. на Input не сразу * появляется
+		OUTPUTDEBUGSTRING(L"EE_REDRAW(HandleOneRedraw)\n");
 		break;
 	case EE_CLOSE:
 		OUTPUTDEBUGSTRING(L"EE_CLOSE\n"); break;
@@ -1476,6 +1478,7 @@ int WINAPI _export ProcessEditorEventW(int Event, void *Param)
 	case EE_KILLFOCUS:
 		OUTPUTDEBUGSTRING(L"EE_KILLFOCUS\n"); break;
 	case EE_SAVE:
+		gbHandleOneRedraw = true;
 		OUTPUTDEBUGSTRING(L"EE_SAVE\n"); break;
 	default:
 		return 0;

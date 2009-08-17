@@ -348,6 +348,7 @@ int WINAPI _export ProcessEditorInput(const INPUT_RECORD *Rec)
 			lastModifiedStateW = currentModifiedState;
 		} else {
 			gbHandleOneRedraw = true;
+			//gbHandleOneRedrawCh = true;
 		}
 	}
 	return 0;
@@ -359,25 +360,29 @@ int WINAPI _export ProcessEditorEvent(int Event, void *Param)
 		return 0; // ƒаже если мы не под эмул€тором - просто запомним текущее состо€ние
 		
 	if (gbNeedPostTabSend && Event == EE_REDRAW) {
+		// ћакрос завершилс€, нужно обновить табы
 		if (!IsMacroActive())
-			gbHandleOneRedraw = TRUE;
+			gbHandleOneRedraw = true;
 	}
 		
 	switch (Event)
 	{
 	case EE_READ: // в этот момент количество окон еще не изменилось
 		gbHandleOneRedraw = true;
+		gbHandleOneRedrawCh = false;
 		return 0;
 	case EE_REDRAW:
 		if (!gbHandleOneRedraw)
 			return 0;
-		gbHandleOneRedraw = false;
-		OUTPUTDEBUGSTRING(L"EE_REDRAW(first)\n");
+		if (!gbHandleOneRedrawCh)
+			gbHandleOneRedraw = false; //2009-08-17 - сбрасываем в UpdateConEmuTabsW т.к. на Input не сразу * по€вл€етс€
+		OUTPUTDEBUGSTRING(L"EE_REDRAW(HandleOneRedraw)\n");
 		break;
 	case EE_CLOSE:
 	case EE_GOTFOCUS:
 	case EE_KILLFOCUS:
 	case EE_SAVE:
+		gbHandleOneRedraw = true;
 		break;
 	default:
 		return 0;
@@ -463,6 +468,8 @@ void UpdateConEmuTabsA(int event, bool losingFocus, bool editorSave, void *Param
 			lbCh |= AddTab(tabCount, losingFocus, editorSave, 
 				WInfo.Type, pszName, editorSave ? pszFileName : NULL, 
 				WInfo.Current, WInfo.Modified);
+			//if (WInfo.Type == WTYPE_EDITOR && WInfo.Current) //2009-08-17
+			//	lastModifiedStateW = WInfo.Modified;
 		}
 	}
 
@@ -472,6 +479,12 @@ void UpdateConEmuTabsA(int event, bool losingFocus, bool editorSave, void *Param
 		lbCh |= AddTab(tabCount, losingFocus, editorSave, 
 			WTYPE_VIEWER, pszFileName, NULL, 
 			1, 0);
+	}
+	
+	// 2009-08-17
+	if (gbHandleOneRedraw && gbHandleOneRedrawCh && lbCh) {
+		gbHandleOneRedraw = false;
+		gbHandleOneRedrawCh = false;
 	}
 
 	// —корее всего это модальный редактор (или вьювер?)

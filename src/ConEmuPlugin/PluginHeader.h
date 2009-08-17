@@ -22,7 +22,7 @@
 
 
 extern int lastModifiedStateW;
-extern bool gbHandleOneRedraw;
+extern bool gbHandleOneRedraw, gbHandleOneRedrawCh;
 extern WCHAR gszDir1[CONEMUTABMAX], gszDir2[CONEMUTABMAX], gszRootKey[MAX_PATH*2];
 extern int maxTabCount, lastWindowCount;
 extern CESERVER_REQ* tabs; //(ConEmuTab*) calloc(maxTabCount, sizeof(ConEmuTab));

@@ -122,6 +122,275 @@ CDragDrop::~CDragDrop()
 	DeleteCriticalSection(&m_CrThreads);
 }
 
+void CDragDrop::Drag()
+{
+	if (!gSet.isDragEnabled /*|| isInDrag */|| gConEmu.isDragging()) {
+		gConEmu.DebugStep(_T("DnD: Drag disabled"));
+		return;
+	}
+
+	//gConEmu.isDragProcessed=true; // чтобы не сработало два раза на один драг
+	gConEmu.mouse.state |= (gConEmu.mouse.state & DRAG_R_ALLOWED) ? DRAG_R_STARTED : DRAG_L_STARTED;
+
+	MCHKHEAP
+	
+	if (m_pfpi) {free(m_pfpi); m_pfpi=NULL;}
+
+	CConEmuPipe pipe(gConEmu.GetFarPID(), CONEMUREADYTIMEOUT);
+	if (pipe.Init(_T("CDragDrop::Drag")))
+	{
+		//DWORD cbWritten=0;
+		if (pipe.Execute(CMD_DRAGFROM))
+		{
+					gConEmu.DebugStep(_T("DnD: Recieving data"));
+					DWORD cbBytesRead=0;
+					int nWholeSize=0;
+					pipe.Read(&nWholeSize, sizeof(nWholeSize), &cbBytesRead); 
+					if (nWholeSize==0) { // защита смены формата
+						if (!pipe.Read(&nWholeSize, sizeof(nWholeSize), &cbBytesRead))
+							nWholeSize = 0;
+					} else {
+						nWholeSize=0;
+					}
+
+					MCHKHEAP
+
+					if (nWholeSize<=0) {
+						gConEmu.DebugStep(_T("DnD: Data is empty"));
+					}
+					else
+					{
+						gConEmu.DebugStep(_T("DnD: Recieving data..."));
+						wchar_t *szDraggedPath=NULL; //ASCIIZZ
+						szDraggedPath=new wchar_t[nWholeSize/*(MAX_PATH+1)*FilesCount*/+1];	
+						ZeroMemory(szDraggedPath, /*((MAX_PATH+1)*FilesCount+1)*/(nWholeSize+1)*sizeof(wchar_t));
+						wchar_t  *curr=szDraggedPath;
+						UINT nFilesCount = 0;
+						
+						for (;;)
+						{
+							int nCurSize=0;
+							if (!pipe.Read(&nCurSize, sizeof(nCurSize), &cbBytesRead)) break;
+							if (nCurSize==0) break;
+
+							pipe.Read(curr, sizeof(WCHAR)*nCurSize, &cbBytesRead); 
+
+							curr+=wcslen(curr)+1;
+							nFilesCount ++;
+						}
+
+						int cbStructSize=0;
+						if (m_pfpi) {free(m_pfpi); m_pfpi=NULL;}
+						if (pipe.Read(&cbStructSize, sizeof(int), &cbBytesRead))
+						{
+							if ((DWORD)cbStructSize>sizeof(ForwardedPanelInfo)) {
+								m_pfpi = (ForwardedPanelInfo*)calloc(cbStructSize, 1);
+
+								pipe.Read(m_pfpi, cbStructSize, &cbBytesRead);
+
+								m_pfpi->pszActivePath = (WCHAR*)(((char*)m_pfpi)+m_pfpi->ActivePathShift);
+								//Slash на конце нам не нужен
+								int nPathLen = lstrlenW( m_pfpi->pszActivePath );
+								if (nPathLen>0 && m_pfpi->pszActivePath[nPathLen-1]==_T('\\'))
+									m_pfpi->pszActivePath[nPathLen-1] = 0;
+								
+								m_pfpi->pszPassivePath = (WCHAR*)(((char*)m_pfpi)+m_pfpi->PassivePathShift);
+								//Slash на конце нам не нужен
+								nPathLen = lstrlenW( m_pfpi->pszPassivePath );
+								if (nPathLen>0 && m_pfpi->pszPassivePath[nPathLen-1]==_T('\\'))
+									m_pfpi->pszPassivePath[nPathLen-1] = 0;
+							}
+						}
+						// —разу закроем
+						pipe.Close();
+						
+						int size=(curr-szDraggedPath)*sizeof(wchar_t)+2;
+						
+						MCHKHEAP
+
+						HGLOBAL file_nameW = NULL, file_PIDLs = NULL;
+						if (nFilesCount==1 && mp_DesktopID)
+						{
+							HRESULT hr = S_OK;
+							try {
+								file_nameW = GlobalAlloc(GPTR, sizeof(WCHAR)*(lstrlenW(szDraggedPath)+1));
+								lstrcpyW(((WCHAR*)file_nameW), szDraggedPath);
+
+								//TODO: обработка ошибок hr!
+								WCHAR* pszSlash = wcsrchr(szDraggedPath, L'\\');
+								if (pszSlash) {
+									// —начала нужно получить PIDL дл€ родительской папки
+									SFGAOF tmp;
+									LPITEMIDLIST pItem=NULL;
+									DWORD nParentSize=0, nItemSize=0;
+									IShellFolder *pDesktop=NULL;
+									
+									MCHKHEAP
+
+									//hr = SHGetSpecialFolderLocation ( ghWnd, CSIDL_DESKTOP, &pParent );
+									//hr = SHGetFolderLocation ( ghWnd, CSIDL_DESKTOP, NULL, 0, &pParent );
+									//hr = SHGetFolderLocation ( ghWnd, CSIDL_DESKTOP, NULL, 0, &pItem );
+
+									hr = SHGetDesktopFolder ( &pDesktop );
+
+									if (hr == S_OK && pDesktop)
+									{
+										MCHKHEAP
+										
+										// ѕотом и дл€ собственно файла/папки...
+										ULONG nEaten=0;
+										
+										hr = pDesktop->ParseDisplayName(ghWnd, NULL, szDraggedPath, &nEaten, &pItem, &(tmp=0));
+										pDesktop->Release(); pDesktop = NULL;
+
+										if (hr == S_OK && pItem && mp_DesktopID)
+										{
+											SHITEMID *pCur = (SHITEMID*)mp_DesktopID;
+											while (pCur->cb) {
+												pCur = (SHITEMID*)(((LPBYTE)pCur) + pCur->cb);
+											}
+											nParentSize = ((LPBYTE)pCur) - ((LPBYTE)mp_DesktopID)+2;
+
+											pCur = (SHITEMID*)pItem;
+											while (pCur->cb) {
+												pCur = (SHITEMID*)(((LPBYTE)pCur) + pCur->cb);
+											}
+											nItemSize = ((LPBYTE)pCur) - ((LPBYTE)pItem)+2;
+
+											pCur = NULL;
+
+											MCHKHEAP
+
+											file_PIDLs = GlobalAlloc(GPTR, 3*sizeof(UINT)+nParentSize+nItemSize);
+											if (file_PIDLs) {
+												CIDA* pida = (CIDA*)file_PIDLs;
+												pida->cidl = 1;
+												pida->aoffset[0] = 3*sizeof(UINT);
+												pida->aoffset[1] = pida->aoffset[0]+nParentSize;
+												memmove((((LPBYTE)pida)+(pida)->aoffset[0]), mp_DesktopID, nParentSize);
+												memmove((((LPBYTE)pida)+(pida)->aoffset[1]), pItem, nItemSize);
+											}
+
+											MCHKHEAP
+										}
+										if (pItem)
+											CoTaskMemFree(pItem);
+									}
+								}
+							} catch(...) {
+								hr = -1;
+							}
+							if (hr == -1) {
+								gConEmu.DebugStep(_T("DnD: Exception in shell"));
+								return;
+							}
+						}
+					    
+						MCHKHEAP
+
+						IDropSource *pDropSource = NULL;
+
+						DROPFILES drop_struct = { sizeof(drop_struct), { 0, 0 }, 0, 1 };
+					    
+						HGLOBAL drop_data = GlobalAlloc(GPTR, size+sizeof(drop_struct));
+						_ASSERTE(drop_data);
+						if (!drop_data) {
+							gConEmu.DebugStep(_T("DnD: Memory allocation failed!"));
+							return;
+						}
+						memcpy(drop_data, &drop_struct, sizeof(drop_struct));
+
+						memcpy(((byte*)drop_data) + sizeof(drop_struct), szDraggedPath, size);
+						//Maximus5 - а пам€ть освобождать кто будет?
+						delete szDraggedPath; szDraggedPath=NULL;
+						
+						HGLOBAL drop_preferredeffect = GlobalAlloc(GPTR, sizeof(DWORD));
+						if (gConEmu.mouse.state & DRAG_R_STARTED)
+							*((DWORD*)drop_preferredeffect) = DROPEFFECT_LINK;
+						else if (gSet.isDefCopy)
+							*((DWORD*)drop_preferredeffect) = DROPEFFECT_COPY;
+						else
+							*((DWORD*)drop_preferredeffect) = DROPEFFECT_MOVE;
+
+						MCHKHEAP
+							
+						HGLOBAL drag_loop = GlobalAlloc(GPTR, sizeof(DWORD));
+						*((DWORD*)drag_loop) = 1;
+
+						DragImageBits *pDragBits = CreateDragImageBits ( (wchar_t*)(((byte*)drop_data) + sizeof(drop_struct)) );
+
+						DWORD           dwEffect;
+						DWORD           dwResult;
+						FORMATETC       fmtetc[] = {
+							{ CF_HDROP, 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL },
+							{ RegisterClipboardFormat(CFSTR_PREFERREDDROPEFFECT), 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL },
+							{ RegisterClipboardFormat(L"InShellDragLoop"), 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL },
+							{ RegisterClipboardFormat(L"DragImageBits"), 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL },
+							// Ёти должны идти последними
+							{ RegisterClipboardFormat(CFSTR_SHELLIDLIST), 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL},
+							{ RegisterClipboardFormat(L"FileNameW"), 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL }
+						};
+						STGMEDIUM       stgmed[] = {
+							{ TYMED_HGLOBAL, { (HBITMAP)drop_data }, 0 }, //чтобы не морочитьс€ с последующими присвоени€ми
+							{ TYMED_HGLOBAL, { (HBITMAP)drop_preferredeffect }, 0 },
+							{ TYMED_HGLOBAL, { (HBITMAP)drag_loop }, 0 },
+							{ TYMED_HGLOBAL, { (HBITMAP)pDragBits }, 0 },
+							// Ёти должны идти последними, нужны только дл€ создани€ €рлыков с нажатым Alt
+							{ TYMED_HGLOBAL, { (HBITMAP)file_PIDLs }, 0},
+							{ TYMED_HGLOBAL, { (HBITMAP)file_nameW }, 0 }
+						};
+						//stgmed.hGlobal = drop_data ;
+						//--stgmed.lpszFileName=szDraggedPath;
+						CreateDropSource(&pDropSource, this);
+						
+						MCHKHEAP
+
+						int nCount = sizeof(fmtetc)/sizeof(*fmtetc);
+						if (!pDragBits) {
+							nCount --;
+							stgmed[nCount-2] = stgmed[nCount-1]; fmtetc[nCount-2] = fmtetc[nCount-1];
+							stgmed[nCount-1] = stgmed[nCount];   fmtetc[nCount-1] = fmtetc[nCount];
+						}
+						if (!file_PIDLs) nCount -= 2;
+						CreateDataObject(fmtetc, stgmed, nCount, &mp_DataObject) ;//   |   ѕосмотреть ниже... 
+						
+						// –азрешаем все
+						DWORD dwAllowedEffects = (file_PIDLs ? DROPEFFECT_LINK : 0)|DROPEFFECT_COPY|DROPEFFECT_MOVE;
+						
+						MCHKHEAP
+						
+
+						//CFSTR_PREFERREDDROPEFFECT, FD_LINKUI 
+						
+						// —разу получим информацию о пут€х панелей...
+						if (!m_pfpi) // если это уже не сделали
+							RetrieveDragToInfo(mp_DataObject);
+						
+						if (LoadDragImageBits(mp_DataObject)) {
+							mb_DragWithinNow = TRUE;
+							CreateDragImageWindow();
+						}
+
+						//gConEmu.DebugStep(_T("DnD: Finally, DoDragDrop"));
+						gConEmu.DebugStep(NULL);
+
+						MCHKHEAP
+						
+						dwResult = DoDragDrop(mp_DataObject, pDropSource, dwAllowedEffects, &dwEffect);
+
+						MCHKHEAP
+
+						mp_DataObject->Release(); mp_DataObject = NULL;
+						pDropSource->Release();		
+						//isLBDown=false; -- а ReleaseCapture кто будет делать?
+					}
+				//}
+			//}
+		}
+	}
+	//isInDrag=false;
+	//isDragProcessed=false; -- иначе при бросании в пассивную панель больших файлов дроп может вызватьс€ еще раз???
+}
 
 HANDLE CDragDrop::FileStart(BOOL abActive, BOOL abWide, LPVOID asFileName)
 {
@@ -877,276 +1146,6 @@ HRESULT CDragDrop::CreateLink(LPCTSTR lpszPathObj, LPCTSTR lpszPathLink, LPCTSTR
         psl->Release(); 
     }
     return hres; 
-}
-
-void CDragDrop::Drag()
-{
-	if (!gSet.isDragEnabled /*|| isInDrag */|| gConEmu.isDragging()) {
-		gConEmu.DebugStep(_T("DnD: Drag disabled"));
-		return;
-	}
-
-	//gConEmu.isDragProcessed=true; // чтобы не сработало два раза на один драг
-	gConEmu.mouse.state |= (gConEmu.mouse.state & DRAG_R_ALLOWED) ? DRAG_R_STARTED : DRAG_L_STARTED;
-
-	MCHKHEAP
-	
-	if (m_pfpi) {free(m_pfpi); m_pfpi=NULL;}
-
-	CConEmuPipe pipe(gConEmu.GetFarPID(), CONEMUREADYTIMEOUT);
-	if (pipe.Init(_T("CDragDrop::Drag")))
-	{
-		//DWORD cbWritten=0;
-		if (pipe.Execute(CMD_DRAGFROM))
-		{
-					gConEmu.DebugStep(_T("DnD: Recieving data"));
-					DWORD cbBytesRead=0;
-					int nWholeSize=0;
-					pipe.Read(&nWholeSize, sizeof(nWholeSize), &cbBytesRead); 
-					if (nWholeSize==0) { // защита смены формата
-						if (!pipe.Read(&nWholeSize, sizeof(nWholeSize), &cbBytesRead))
-							nWholeSize = 0;
-					} else {
-						nWholeSize=0;
-					}
-
-					MCHKHEAP
-
-					if (nWholeSize<=0) {
-						gConEmu.DebugStep(_T("DnD: Data is empty"));
-					}
-					else
-					{
-						gConEmu.DebugStep(_T("DnD: Recieving data..."));
-						wchar_t *szDraggedPath=NULL; //ASCIIZZ
-						szDraggedPath=new wchar_t[nWholeSize/*(MAX_PATH+1)*FilesCount*/+1];	
-						ZeroMemory(szDraggedPath, /*((MAX_PATH+1)*FilesCount+1)*/(nWholeSize+1)*sizeof(wchar_t));
-						wchar_t  *curr=szDraggedPath;
-						UINT nFilesCount = 0;
-						
-						for (;;)
-						{
-							int nCurSize=0;
-							if (!pipe.Read(&nCurSize, sizeof(nCurSize), &cbBytesRead)) break;
-							if (nCurSize==0) break;
-
-							pipe.Read(curr, sizeof(WCHAR)*nCurSize, &cbBytesRead); 
-
-							curr+=wcslen(curr)+1;
-							nFilesCount ++;
-						}
-
-						int cbStructSize=0;
-						if (m_pfpi) {free(m_pfpi); m_pfpi=NULL;}
-						if (pipe.Read(&cbStructSize, sizeof(int), &cbBytesRead))
-						{
-							if ((DWORD)cbStructSize>sizeof(ForwardedPanelInfo)) {
-								m_pfpi = (ForwardedPanelInfo*)calloc(cbStructSize, 1);
-
-								pipe.Read(m_pfpi, cbStructSize, &cbBytesRead);
-
-								m_pfpi->pszActivePath = (WCHAR*)(((char*)m_pfpi)+m_pfpi->ActivePathShift);
-								//Slash на конце нам не нужен
-								int nPathLen = lstrlenW( m_pfpi->pszActivePath );
-								if (nPathLen>0 && m_pfpi->pszActivePath[nPathLen-1]==_T('\\'))
-									m_pfpi->pszActivePath[nPathLen-1] = 0;
-								
-								m_pfpi->pszPassivePath = (WCHAR*)(((char*)m_pfpi)+m_pfpi->PassivePathShift);
-								//Slash на конце нам не нужен
-								nPathLen = lstrlenW( m_pfpi->pszPassivePath );
-								if (nPathLen>0 && m_pfpi->pszPassivePath[nPathLen-1]==_T('\\'))
-									m_pfpi->pszPassivePath[nPathLen-1] = 0;
-							}
-						}
-						// —разу закроем
-						pipe.Close();
-						
-						int size=(curr-szDraggedPath)*sizeof(wchar_t)+2;
-						
-						MCHKHEAP
-
-						HGLOBAL file_nameW = NULL, file_PIDLs = NULL;
-						if (nFilesCount==1 && mp_DesktopID)
-						{
-							HRESULT hr = S_OK;
-							try {
-								file_nameW = GlobalAlloc(GPTR, sizeof(WCHAR)*(lstrlenW(szDraggedPath)+1));
-								lstrcpyW(((WCHAR*)file_nameW), szDraggedPath);
-
-								//TODO: обработка ошибок hr!
-								WCHAR* pszSlash = wcsrchr(szDraggedPath, L'\\');
-								if (pszSlash) {
-									// —начала нужно получить PIDL дл€ родительской папки
-									SFGAOF tmp;
-									LPITEMIDLIST pItem=NULL;
-									DWORD nParentSize=0, nItemSize=0;
-									IShellFolder *pDesktop=NULL;
-									
-									MCHKHEAP
-
-									//hr = SHGetSpecialFolderLocation ( ghWnd, CSIDL_DESKTOP, &pParent );
-									//hr = SHGetFolderLocation ( ghWnd, CSIDL_DESKTOP, NULL, 0, &pParent );
-									//hr = SHGetFolderLocation ( ghWnd, CSIDL_DESKTOP, NULL, 0, &pItem );
-
-									hr = SHGetDesktopFolder ( &pDesktop );
-
-									if (hr == S_OK && pDesktop)
-									{
-										MCHKHEAP
-										
-										// ѕотом и дл€ собственно файла/папки...
-										ULONG nEaten=0;
-										
-										hr = pDesktop->ParseDisplayName(ghWnd, NULL, szDraggedPath, &nEaten, &pItem, &(tmp=0));
-										pDesktop->Release(); pDesktop = NULL;
-
-										if (hr == S_OK && pItem && mp_DesktopID)
-										{
-											SHITEMID *pCur = (SHITEMID*)mp_DesktopID;
-											while (pCur->cb) {
-												pCur = (SHITEMID*)(((LPBYTE)pCur) + pCur->cb);
-											}
-											nParentSize = ((LPBYTE)pCur) - ((LPBYTE)mp_DesktopID)+2;
-
-											pCur = (SHITEMID*)pItem;
-											while (pCur->cb) {
-												pCur = (SHITEMID*)(((LPBYTE)pCur) + pCur->cb);
-											}
-											nItemSize = ((LPBYTE)pCur) - ((LPBYTE)pItem)+2;
-
-											pCur = NULL;
-
-											MCHKHEAP
-
-											file_PIDLs = GlobalAlloc(GPTR, 3*sizeof(UINT)+nParentSize+nItemSize);
-											if (file_PIDLs) {
-												CIDA* pida = (CIDA*)file_PIDLs;
-												pida->cidl = 1;
-												pida->aoffset[0] = 3*sizeof(UINT);
-												pida->aoffset[1] = pida->aoffset[0]+nParentSize;
-												memmove((((LPBYTE)pida)+(pida)->aoffset[0]), mp_DesktopID, nParentSize);
-												memmove((((LPBYTE)pida)+(pida)->aoffset[1]), pItem, nItemSize);
-											}
-
-											MCHKHEAP
-										}
-										if (pItem)
-											CoTaskMemFree(pItem);
-									}
-								}
-							} catch(...) {
-								hr = -1;
-							}
-							if (hr == -1) {
-								gConEmu.DebugStep(_T("DnD: Exception in shell"));
-								return;
-							}
-						}
-					    
-						MCHKHEAP
-
-						IDropSource *pDropSource = NULL;
-
-						DROPFILES drop_struct = { sizeof(drop_struct), { 0, 0 }, 0, 1 };
-					    
-						HGLOBAL drop_data = GlobalAlloc(GPTR, size+sizeof(drop_struct));
-						_ASSERTE(drop_data);
-						if (!drop_data) {
-							gConEmu.DebugStep(_T("DnD: Memory allocation failed!"));
-							return;
-						}
-						memcpy(drop_data, &drop_struct, sizeof(drop_struct));
-
-						memcpy(((byte*)drop_data) + sizeof(drop_struct), szDraggedPath, size);
-						//Maximus5 - а пам€ть освобождать кто будет?
-						delete szDraggedPath; szDraggedPath=NULL;
-						
-						HGLOBAL drop_preferredeffect = GlobalAlloc(GPTR, sizeof(DWORD));
-						if (gConEmu.mouse.state & DRAG_R_STARTED)
-							*((DWORD*)drop_preferredeffect) = DROPEFFECT_LINK;
-						else if (gSet.isDefCopy)
-							*((DWORD*)drop_preferredeffect) = DROPEFFECT_COPY;
-						else
-							*((DWORD*)drop_preferredeffect) = DROPEFFECT_MOVE;
-
-						MCHKHEAP
-							
-						HGLOBAL drag_loop = GlobalAlloc(GPTR, sizeof(DWORD));
-						*((DWORD*)drag_loop) = 1;
-
-						DragImageBits *pDragBits = CreateDragImageBits ( (wchar_t*)(((byte*)drop_data) + sizeof(drop_struct)) );
-
-						DWORD           dwEffect;
-						DWORD           dwResult;
-						FORMATETC       fmtetc[] = {
-							{ CF_HDROP, 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL },
-							{ RegisterClipboardFormat(CFSTR_PREFERREDDROPEFFECT), 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL },
-							{ RegisterClipboardFormat(L"InShellDragLoop"), 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL },
-							{ RegisterClipboardFormat(L"DragImageBits"), 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL },
-							// Ёти должны идти последними
-							{ RegisterClipboardFormat(CFSTR_SHELLIDLIST), 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL},
-							{ RegisterClipboardFormat(L"FileNameW"), 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL }
-						};
-						STGMEDIUM       stgmed[] = {
-							{ TYMED_HGLOBAL, { (HBITMAP)drop_data }, 0 }, //чтобы не морочитьс€ с последующими присвоени€ми
-							{ TYMED_HGLOBAL, { (HBITMAP)drop_preferredeffect }, 0 },
-							{ TYMED_HGLOBAL, { (HBITMAP)drag_loop }, 0 },
-							{ TYMED_HGLOBAL, { (HBITMAP)pDragBits }, 0 },
-							// Ёти должны идти последними, нужны только дл€ создани€ €рлыков с нажатым Alt
-							{ TYMED_HGLOBAL, { (HBITMAP)file_PIDLs }, 0},
-							{ TYMED_HGLOBAL, { (HBITMAP)file_nameW }, 0 }
-						};
-						//stgmed.hGlobal = drop_data ;
-						//--stgmed.lpszFileName=szDraggedPath;
-						CreateDropSource(&pDropSource, this);
-						
-						MCHKHEAP
-
-						int nCount = sizeof(fmtetc)/sizeof(*fmtetc);
-						if (!pDragBits) {
-							nCount --;
-							stgmed[nCount-2] = stgmed[nCount-1]; fmtetc[nCount-2] = fmtetc[nCount-1];
-							stgmed[nCount-1] = stgmed[nCount];   fmtetc[nCount-1] = fmtetc[nCount];
-						}
-						if (!file_PIDLs) nCount -= 2;
-						CreateDataObject(fmtetc, stgmed, nCount, &mp_DataObject) ;//   |   ѕосмотреть ниже... 
-						
-						// –азрешаем все
-						DWORD dwAllowedEffects = (file_PIDLs ? DROPEFFECT_LINK : 0)|DROPEFFECT_COPY|DROPEFFECT_MOVE;
-						
-						MCHKHEAP
-						
-
-						//CFSTR_PREFERREDDROPEFFECT, FD_LINKUI 
-						
-						// —разу получим информацию о пут€х панелей...
-						if (!m_pfpi) // если это уже не сделали
-							RetrieveDragToInfo(mp_DataObject);
-						
-						if (LoadDragImageBits(mp_DataObject)) {
-							mb_DragWithinNow = TRUE;
-							CreateDragImageWindow();
-						}
-
-						//gConEmu.DebugStep(_T("DnD: Finally, DoDragDrop"));
-						gConEmu.DebugStep(NULL);
-
-						MCHKHEAP
-						
-						dwResult = DoDragDrop(mp_DataObject, pDropSource, dwAllowedEffects, &dwEffect);
-
-						MCHKHEAP
-
-						mp_DataObject->Release(); mp_DataObject = NULL;
-						pDropSource->Release();		
-						//isLBDown=false; -- а ReleaseCapture кто будет делать?
-					}
-				//}
-			//}
-		}
-	}
-	//isInDrag=false;
-	//isDragProcessed=false; -- иначе при бросании в пассивную панель больших файлов дроп может вызватьс€ еще раз???
 }
 
 BOOL CDragDrop::CreateDragImageBits(IDataObject * pDataObject)
