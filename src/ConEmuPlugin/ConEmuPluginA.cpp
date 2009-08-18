@@ -488,7 +488,6 @@ void UpdateConEmuTabsA(int event, bool losingFocus, bool editorSave, void *Param
 	}
 
 	// Скорее всего это модальный редактор (или вьювер?)
-	/*
 	if (!lbActiveFound && !losingFocus) {
 		if (!bEditorRetrieved) { // Если информацию о редакторе еще не получили
 			InfoA->EditorControl(ECTL_GETINFO, &ei);
@@ -504,7 +503,6 @@ void UpdateConEmuTabsA(int event, bool losingFocus, bool editorSave, void *Param
 				1, ei.CurState == ECSTATE_MODIFIED);
 		}
 	}
-	*/
 
 	SendTabs(tabCount, lbCh && (gnReqCommand==(DWORD)-1));
 }

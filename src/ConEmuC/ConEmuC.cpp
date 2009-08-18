@@ -4206,20 +4206,28 @@ void SendConsoleChanges(CESERVER_REQ* pOut)
         // Exit if an error other than ERROR_PIPE_BUSY occurs. 
         dwErr = GetLastError();
 		if (dwErr != ERROR_PIPE_BUSY) {
+			#ifdef _DEBUG
 			wchar_t szErr[MAX_PATH*2];
 			wsprintf(szErr, L"ConEmuC: CreateFile(%s) failed, code=0x%08X", srv.szGuiPipeName, dwErr);
 			SetConsoleTitle(szErr);
-			//srv.bRequestPostFullReload = TRUE;
+			#else
+    		srv.bForceFullSend = TRUE;
+    		srv.bRequestPostFullReload = TRUE;
+			#endif
             return;
 		}
 
         // All pipe instances are busy, so wait for 100 ms.
 		if (!WaitNamedPipe(srv.szGuiPipeName, 100) ) {
+			#ifdef _DEBUG
 			dwErr = GetLastError();
 			wchar_t szErr[MAX_PATH*2];
 			wsprintf(szErr, L"ConEmuC: WaitNamedPipe(%s) failed, code=0x%08X", srv.szGuiPipeName, dwErr);
 			SetConsoleTitle(szErr);
-			//srv.bRequestPostFullReload = TRUE;
+			#else
+    		srv.bForceFullSend = TRUE;
+    		srv.bRequestPostFullReload = TRUE;
+			#endif
             return;
 		}
     }

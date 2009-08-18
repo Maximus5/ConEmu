@@ -485,7 +485,7 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
     // удалить лишние закладки (визуально)
     int nCurCount = GetItemCount();
     for (I = tabIdx; I < nCurCount; I++)
-        DeleteItem(I);
+        DeleteItem(tabIdx);
 
     if (mb_InKeySwitching) {
 	    if (mn_CurSelTab >= nCurCount) // ≈сли выбранный таб вылез за границы

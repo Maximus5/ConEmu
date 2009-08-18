@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="windows-1251"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9,00"
+	Version="9.00"
 	Name="ConEmuPlugin"
 	ProjectGUID="{21152801-8744-4787-83F4-BE4564A367B4}"
 	RootNamespace="ConEmuPlugin"
@@ -702,7 +702,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="version.lib"
-				OutputFile="F:\VCProject\FarPlugin\#FAR175\plugins\conEmu\conemu.dll"
+				OutputFile="C:\Program Files\far17\plugins\conEmu\conemu.dll"
 				LinkIncremental="2"
 				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"
