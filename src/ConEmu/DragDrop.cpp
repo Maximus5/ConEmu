@@ -29,6 +29,7 @@ CDragDrop::CDragDrop(HWND hWnd)
 	mb_DragWithinNow = FALSE;
 	mn_ExtractIconsTID = 0;
 	mh_ExtractIcons = NULL;
+	mh_DragThread = NULL; mn_DragThreadId = 0;
 	
 	InitializeCriticalSection(&m_CrThreads);
 }
@@ -116,6 +117,12 @@ CDragDrop::~CDragDrop()
 		LeaveCriticalSection(&m_CrThreads);
 	}
 
+	// ≈сли драг нормально завершить не удалось
+	if (mh_DragThread && mn_DragThreadId) {
+		TerminateThread(mh_DragThread, 100);
+	}
+	SafeCloseHandle(mh_DragThread); mn_DragThreadId = 0;
+
 	if (m_pfpi) free(m_pfpi); m_pfpi=NULL;
 	if (mp_DesktopID) { CoTaskMemFree(mp_DesktopID); mp_DesktopID = NULL; }
 	
@@ -126,6 +133,11 @@ void CDragDrop::Drag()
 {
 	if (!gSet.isDragEnabled /*|| isInDrag */|| gConEmu.isDragging()) {
 		gConEmu.DebugStep(_T("DnD: Drag disabled"));
+		return;
+	}
+
+	if (mh_DragThread) {
+		gConEmu.DebugStep(L"DnD: Drag thread already created!");
 		return;
 	}
 
@@ -319,8 +331,6 @@ void CDragDrop::Drag()
 
 						DragImageBits *pDragBits = CreateDragImageBits ( (wchar_t*)(((byte*)drop_data) + sizeof(drop_struct)) );
 
-						DWORD           dwEffect;
-						DWORD           dwResult;
 						FORMATETC       fmtetc[] = {
 							{ CF_HDROP, 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL },
 							{ RegisterClipboardFormat(CFSTR_PREFERREDDROPEFFECT), 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL },
@@ -375,14 +385,28 @@ void CDragDrop::Drag()
 						gConEmu.DebugStep(NULL);
 
 						MCHKHEAP
+
+						//// 2009-08-20 ¬ынесем в отдельную нить, иначе при длителной операции Drop - весь ConEmu блокируетс€
+						//DragThreadArg *pArg = new DragThreadArg;
+						//if (!pArg) {
+						//	DisplayLastError(L"Memory allocation error (DragThreadArg)", -1);
+						//} else {
+						//	pArg->pThis = this;
+						//	pArg->pDataObject = mp_DataObject;
+						//	pArg->pDropSource = pDropSource;
+						//	pArg->dwAllowedEffects = dwAllowedEffects;
+						//	// —обственно запуск драга
+						//	mh_DragThread = CreateThread(NULL, 0, CDragDrop::DragOpThreadProc, pArg, 0, &mn_DragThreadId);
+						//}
 						
+						DWORD dwResult = 0, dwEffect = 0;
 						dwResult = DoDragDrop(mp_DataObject, pDropSource, dwAllowedEffects, &dwEffect);
 
 						MCHKHEAP
 
 						mp_DataObject->Release(); mp_DataObject = NULL;
 						pDropSource->Release();		
-						//isLBDown=false; -- а ReleaseCapture кто будет делать?
+						////isLBDown=false; -- а ReleaseCapture кто будет делать?
 					}
 				//}
 			//}
@@ -390,6 +414,43 @@ void CDragDrop::Drag()
 	}
 	//isInDrag=false;
 	//isDragProcessed=false; -- иначе при бросании в пассивную панель больших файлов дроп может вызватьс€ еще раз???
+}
+
+DWORD CDragDrop::DragOpThreadProc(LPVOID lpParameter)
+{
+	DragThreadArg *pArg = (DragThreadArg*)lpParameter;
+	_ASSERTE(pArg);
+	if (!pArg) {
+		DisplayLastError(L"DragThreadArg is NULL", -1);
+		return 0;
+	}
+
+	DWORD dwResult = 0, dwEffect = 0;
+		
+    HRESULT hr = S_OK;
+    hr = OleInitialize (NULL); // как бы попробовать включать Ole только во врем€ драга. кажетс€ что из-за него глючит переключалка €зыка
+
+	dwResult = DoDragDrop(pArg->pDataObject, pArg->pDropSource, pArg->dwAllowedEffects, &dwEffect);
+
+	MCHKHEAP
+
+	if (pArg->pThis->mp_DataObject == pArg->pDataObject) {
+		pArg->pThis->mp_DataObject = NULL;
+	}
+
+	pArg->pDataObject->Release();
+		pArg->pDataObject = NULL;
+	pArg->pDropSource->Release();
+		pArg->pDropSource = NULL;
+
+	if (pArg->pThis->mn_DragThreadId == GetCurrentThreadId()) {
+		SafeCloseHandle(pArg->pThis->mh_DragThread);
+		pArg->pThis->mn_DragThreadId = 0;
+	}
+
+	delete pArg;
+
+	return 0;
 }
 
 HANDLE CDragDrop::FileStart(BOOL abActive, BOOL abWide, LPVOID asFileName)
@@ -1556,8 +1617,9 @@ BOOL CDragDrop::CreateDragImageWindow()
 	//int nCount = mp_Bits->nWidth * mp_Bits->nHeight;
 	
 	// |WS_BORDER|WS_SYSMENU - создает проводник. попробуем?
+	//2009-08-20 [+] WS_EX_NOACTIVATE
 	mh_Overlapped = CreateWindowEx(
-		WS_EX_LAYERED|WS_EX_TRANSPARENT|WS_EX_PALETTEWINDOW|WS_EX_TOOLWINDOW|WS_EX_TOPMOST,
+		WS_EX_LAYERED|WS_EX_TRANSPARENT|WS_EX_PALETTEWINDOW|WS_EX_TOOLWINDOW|WS_EX_TOPMOST|WS_EX_NOACTIVATE,
 		DRAGBITSCLASS, L"Drag", WS_POPUP|WS_VISIBLE|WS_CLIPSIBLINGS|WS_BORDER|WS_SYSMENU,
 		0, 0, mp_Bits->nWidth, mp_Bits->nHeight, ghWnd, NULL, g_hInstance, (LPVOID)this);
 	if (!mh_Overlapped) {
@@ -1652,4 +1714,12 @@ void CDragDrop::DragFeedBack(DWORD dwEffect)
 		if (mh_Overlapped)
 			MoveDragWindow();
 	}
+
+	//2009-08-20
+	//MSG Msg = {NULL};
+	//while (PeekMessage(&Msg, NULL, 0, 0, PM_REMOVE))
+	//{
+	//	TranslateMessage(&Msg);
+	//	DispatchMessage(&Msg);
+	//}
 }

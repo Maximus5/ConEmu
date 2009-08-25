@@ -29,6 +29,86 @@ typedef HWND (APIENTRY *FGetConsoleWindow)();
 //};
 //#endif
 
+HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t** pszErr/*[MAX_PATH*2]*/, const wchar_t* szModule)
+{
+    HANDLE hPipe = NULL;
+    DWORD dwErr = 0, dwMode = 0;
+    BOOL fSuccess = FALSE;
+    DWORD dwStartTick = GetTickCount();
+
+    // Try to open a named pipe; wait for it, if necessary. 
+    while (1)
+
+    { 
+        hPipe = CreateFile( 
+            szPipeName,     // pipe name 
+            GENERIC_WRITE, 
+            0,              // no sharing 
+            NULL,           // default security attributes
+            OPEN_EXISTING,  // opens existing pipe 
+            0,              // default attributes 
+            NULL);          // no template file 
+
+        // Break if the pipe handle is valid. 
+        if (hPipe != INVALID_HANDLE_VALUE) 
+            break; // OK, открыли
+        dwErr = GetLastError();
+        
+        if ((GetTickCount() - dwStartTick) > 1000) {
+			if (pszErr) {
+				wsprintf(pszErr, L"%s: CreateFile(%s) failed, code=0x%08X, Timeout", 
+					szModule ? szModule : L"Unknown", szPipeName, dwErr);
+			}
+            return NULL;
+        }
+        
+        // Может быть пайп еще не создан (в процессе срабатывания семафора)
+        if (dwErr == ERROR_FILE_NOT_FOUND) {
+        	Sleep(10);
+        	continue;
+        }
+
+        // Exit if an error other than ERROR_PIPE_BUSY occurs. 
+		if (dwErr != ERROR_PIPE_BUSY) {
+			if (pszErr) {
+				wsprintf(pszErr, L"%s: CreateFile(%s) failed, code=0x%08X", 
+					szModule ? szModule : L"Unknown", szPipeName, dwErr);
+			}
+            return NULL;
+		}
+
+        // All pipe instances are busy, so wait for 100 ms.
+		if (!WaitNamedPipe(srv.szGuiPipeName, 100) ) {
+			if (pszErr) {
+				wsprintf(pszErr, L"%s: WaitNamedPipe(%s) failed, code=0x%08X, Timeout", 
+					szModule ? szModule : L"Unknown", szPipeName, dwErr);
+			}
+            return NULL;
+		}
+    }
+
+    // The pipe connected; change to message-read mode. 
+    dwMode = PIPE_READMODE_MESSAGE; 
+    fSuccess = SetNamedPipeHandleState( 
+        hPipe,    // pipe handle 
+        &dwMode,  // new pipe mode 
+        NULL,     // don't set maximum bytes 
+        NULL);    // don't set maximum time 
+    if (!fSuccess) {
+    	dwErr = GetLastError();
+    	_ASSERT(fSuccess);
+		if (pszErr) {
+			wsprintf(pszErr, L"%s: SetNamedPipeHandleState(%s) failed, code=0x%08X", 
+				szModule ? szModule : L"Unknown", szPipeName, dwErr);
+		}
+        CloseHandle(hPipe);
+        return NULL;
+    }
+    
+    return hPipe;
+}
+
+
 CESERVER_REQ* ExecuteNewCmd(DWORD nCmd, DWORD nSize)
 {
     CESERVER_REQ* pIn = NULL;
@@ -45,10 +125,10 @@ CESERVER_REQ* ExecuteNewCmd(DWORD nCmd, DWORD nSize)
 }
 
 // Forward
-CESERVER_REQ* ExecuteCmd(const wchar_t* szGuiPipeName, const CESERVER_REQ* pIn, DWORD nWaitPipe);
+CESERVER_REQ* ExecuteCmd(const wchar_t* szGuiPipeName, const CESERVER_REQ* pIn, DWORD nWaitPipe, HWND hOwner);
 
 // Выполнить в GUI (в CRealConsole)
-CESERVER_REQ* ExecuteGuiCmd(HWND hConWnd, const CESERVER_REQ* pIn)
+CESERVER_REQ* ExecuteGuiCmd(HWND hConWnd, const CESERVER_REQ* pIn, HWND hOwner)
 {
 	wchar_t szGuiPipeName[MAX_PATH];
 	
@@ -57,11 +137,11 @@ CESERVER_REQ* ExecuteGuiCmd(HWND hConWnd, const CESERVER_REQ* pIn)
 
 	wsprintfW(szGuiPipeName, CEGUIPIPENAME, L".", (DWORD)hConWnd);
 	
-	return ExecuteCmd(szGuiPipeName, pIn, 1000);
+	return ExecuteCmd(szGuiPipeName, pIn, 1000, hOwner);
 }
 
 // Выполнить в ConEmuC
-CESERVER_REQ* ExecuteSrvCmd(DWORD dwSrvPID, const CESERVER_REQ* pIn)
+CESERVER_REQ* ExecuteSrvCmd(DWORD dwSrvPID, const CESERVER_REQ* pIn, HWND hOwner)
 {
 	wchar_t szGuiPipeName[MAX_PATH];
 	
@@ -70,7 +150,7 @@ CESERVER_REQ* ExecuteSrvCmd(DWORD dwSrvPID, const CESERVER_REQ* pIn)
 
 	wsprintfW(szGuiPipeName, CESERVERPIPENAME, L".", (DWORD)dwSrvPID);
 	
-	return ExecuteCmd(szGuiPipeName, pIn, 1000);
+	return ExecuteCmd(szGuiPipeName, pIn, 1000, hOwner);
 }
 
 //Arguments:
@@ -80,61 +160,74 @@ CESERVER_REQ* ExecuteSrvCmd(DWORD dwSrvPID, const CESERVER_REQ* pIn)
 //   CESERVER_REQ. Его необходимо освободить через free(...);
 //WARNING!!!
 //   Эта процедура не может получить с сервера более 600 байт данных!
-CESERVER_REQ* ExecuteCmd(const wchar_t* szGuiPipeName, const CESERVER_REQ* pIn, DWORD nWaitPipe)
+// В заголовке hOwner в дебаге может быть отображена ошибка
+CESERVER_REQ* ExecuteCmd(const wchar_t* szGuiPipeName, const CESERVER_REQ* pIn, DWORD nWaitPipe, HWND hOwner)
 {
 	CESERVER_REQ* pOut = NULL;
 	
 	HANDLE hPipe = NULL; 
 	BYTE cbReadBuf[600]; // чтобы CESERVER_REQ_OUTPUTFILE поместился
+	wchar_t szErr[MAX_PATH*2];
 	BOOL fSuccess = FALSE;
-	DWORD cbRead = 0, dwMode = 0, dwErr = 0;
+	DWORD cbRead = 0, /*dwMode = 0,*/ dwErr = 0;
 
-	if (!pIn || !szGuiPipeName)
-		return NULL;
-
-	// Try to open a named pipe; wait for it, if necessary. 
-	while (1) 
-	{ 
-		hPipe = CreateFile( 
-			szGuiPipeName,  // pipe name 
-			GENERIC_READ |  // read and write access 
-			GENERIC_WRITE, 
-			0,              // no sharing 
-			NULL,           // default security attributes
-			OPEN_EXISTING,  // opens existing pipe 
-			0,              // default attributes 
-			NULL);          // no template file 
-
-		// Break if the pipe handle is valid. 
-		if (hPipe != INVALID_HANDLE_VALUE) 
-			break; 
-
-		// Exit if an error other than ERROR_PIPE_BUSY occurs. 
-		dwErr = GetLastError();
-		if (dwErr != ERROR_PIPE_BUSY) 
-		{
-			return NULL;
-		}
-
-		// All pipe instances are busy, so wait for 1 second.
-		if (!WaitNamedPipe(szGuiPipeName, nWaitPipe) ) 
-		{
-			return NULL;
-		}
-	} 
-
-	// The pipe connected; change to message-read mode. 
-	dwMode = PIPE_READMODE_MESSAGE; 
-	fSuccess = SetNamedPipeHandleState( 
-		hPipe,    // pipe handle 
-		&dwMode,  // new pipe mode 
-		NULL,     // don't set maximum bytes 
-		NULL);    // don't set maximum time 
-	if (!fSuccess) 
-	{
-		CloseHandle(hPipe);
+	if (!pIn || !szGuiPipeName) {
+		_ASSERTE(pIn && szGuiPipeName);
 		return NULL;
 	}
+		
+	hPipe = ExecuteOpenPipe(szGuiPipeName, &szErr, NULL/*Сюда хорошо бы имя модуля подкрутить*/);
+	if (hPipe == NULL || hPipe == INVALID_HANDLE_VALUE) {
+		#ifdef _DEBUG
+		if (hOwner)
+			SetWindowText(hOwner, szErr);
+		#endif
+		return NULL;
+	}
+
+	//// Try to open a named pipe; wait for it, if necessary. 
+	//while (1) 
+	//{ 
+	//	hPipe = CreateFile( 
+	//		szGuiPipeName,  // pipe name 
+	//		GENERIC_READ |  // read and write access 
+	//		GENERIC_WRITE, 
+	//		0,              // no sharing 
+	//		NULL,           // default security attributes
+	//		OPEN_EXISTING,  // opens existing pipe 
+	//		0,              // default attributes 
+	//		NULL);          // no template file 
+	//
+	//	// Break if the pipe handle is valid. 
+	//	if (hPipe != INVALID_HANDLE_VALUE) 
+	//		break; 
+	//
+	//	// Exit if an error other than ERROR_PIPE_BUSY occurs. 
+	//	dwErr = GetLastError();
+	//	if (dwErr != ERROR_PIPE_BUSY) 
+	//	{
+	//		return NULL;
+	//	}
+	//
+	//	// All pipe instances are busy, so wait for 1 second.
+	//	if (!WaitNamedPipe(szGuiPipeName, nWaitPipe) ) 
+	//	{
+	//		return NULL;
+	//	}
+	//} 
+	//
+	//// The pipe connected; change to message-read mode. 
+	//dwMode = PIPE_READMODE_MESSAGE; 
+	//fSuccess = SetNamedPipeHandleState( 
+	//	hPipe,    // pipe handle 
+	//	&dwMode,  // new pipe mode 
+	//	NULL,     // don't set maximum bytes 
+	//	NULL);    // don't set maximum time 
+	//if (!fSuccess) 
+	//{
+	//	CloseHandle(hPipe);
+	//	return NULL;
+	//}
 
 	_ASSERTE(pIn->hdr.nSrcThreadId==GetCurrentThreadId());
 

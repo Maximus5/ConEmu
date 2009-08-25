@@ -2108,7 +2108,9 @@ DWORD CRealConsole::ServerThread(LPVOID lpvParam)
                 return 0;
             }
 
-            if (!fConnected)
+            if (fConnected)
+            	break;
+            else
                 SafeCloseHandle(hPipe);
         }
 

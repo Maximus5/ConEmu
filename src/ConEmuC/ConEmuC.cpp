@@ -44,6 +44,7 @@ wchar_t gszDbgModLabel[6] = {0};
 #define MIN_FORCEREFRESH_INTERVAL 100
 #define MAX_FORCEREFRESH_INTERVAL 1000
 #define MAX_SYNCSETSIZE_WAIT 1000
+#define GUI_PIPE_TIMEOUT 300
 
 #define IMAGE_SUBSYSTEM_DOS_EXECUTABLE  255
 
@@ -4184,66 +4185,96 @@ void SendConsoleChanges(CESERVER_REQ* pOut)
         return;
 
     HANDLE hPipe = NULL;
-    DWORD dwErr = 0, dwMode = 0;
+    DWORD dwErr = 0; //, dwMode = 0;
     BOOL fSuccess = FALSE;
-
-    // Try to open a named pipe; wait for it, if necessary. 
-    while (1) 
-    { 
-        hPipe = CreateFile( 
-            srv.szGuiPipeName,  // pipe name 
-            GENERIC_WRITE, 
-            0,              // no sharing 
-            NULL,           // default security attributes
-            OPEN_EXISTING,  // opens existing pipe 
-            0,              // default attributes 
-            NULL);          // no template file 
-
-        // Break if the pipe handle is valid. 
-        if (hPipe != INVALID_HANDLE_VALUE) 
-            break; // OK, открыли
-
-        // Exit if an error other than ERROR_PIPE_BUSY occurs. 
-        dwErr = GetLastError();
-		if (dwErr != ERROR_PIPE_BUSY) {
-			#ifdef _DEBUG
-			wchar_t szErr[MAX_PATH*2];
-			wsprintf(szErr, L"ConEmuC: CreateFile(%s) failed, code=0x%08X", srv.szGuiPipeName, dwErr);
-			SetConsoleTitle(szErr);
-			#else
-    		srv.bForceFullSend = TRUE;
-    		srv.bRequestPostFullReload = TRUE;
-			#endif
-            return;
-		}
-
-        // All pipe instances are busy, so wait for 100 ms.
-		if (!WaitNamedPipe(srv.szGuiPipeName, 100) ) {
-			#ifdef _DEBUG
-			dwErr = GetLastError();
-			wchar_t szErr[MAX_PATH*2];
-			wsprintf(szErr, L"ConEmuC: WaitNamedPipe(%s) failed, code=0x%08X", srv.szGuiPipeName, dwErr);
-			SetConsoleTitle(szErr);
-			#else
-    		srv.bForceFullSend = TRUE;
-    		srv.bRequestPostFullReload = TRUE;
-			#endif
-            return;
-		}
-    }
-
-    // The pipe connected; change to message-read mode. 
-    dwMode = PIPE_READMODE_MESSAGE; 
-    fSuccess = SetNamedPipeHandleState( 
-        hPipe,    // pipe handle 
-        &dwMode,  // new pipe mode 
-        NULL,     // don't set maximum bytes 
-        NULL);    // don't set maximum time 
-    _ASSERT(fSuccess);
-    if (!fSuccess) {
-        SafeCloseHandle(hPipe);
+    wchar_t szErr[MAX_PATH*2];
+    
+    hPipe = ExecuteOpenPipe(srv.szGuiPipeName, &szErr, L"ConEmuC");
+    if (!hPipe || hPipe == INVALID_HANDLE_VALUE) {
+		#ifdef _DEBUG
+		SetConsoleTitle(szErr);
+		#else
+		srv.bForceFullSend = TRUE;
+		srv.bRequestPostFullReload = TRUE;
+		#endif
         return;
     }
+
+    //// Try to open a named pipe; wait for it, if necessary. 
+    //while (1)
+    //{ 
+    //    hPipe = CreateFile( 
+    //        srv.szGuiPipeName,  // pipe name 
+    //        GENERIC_WRITE, 
+    //        0,              // no sharing 
+    //        NULL,           // default security attributes
+    //        OPEN_EXISTING,  // opens existing pipe 
+    //        0,              // default attributes 
+    //        NULL);          // no template file 
+    //
+    //    // Break if the pipe handle is valid. 
+    //    if (hPipe != INVALID_HANDLE_VALUE) 
+    //        break; // OK, открыли
+    //    dwErr = GetLastError();
+    //    
+    //    if ((GetTickCount() - dwStartTick) > GUI_PIPE_TIMEOUT) {
+	//		#ifdef _DEBUG
+	//		wchar_t szErr[MAX_PATH*2];
+	//		wsprintf(szErr, L"ConEmuC: CreateFile(%s) failed, code=0x%08X, Timeout", srv.szGuiPipeName, dwErr);
+	//		SetConsoleTitle(szErr);
+	//		#else
+    //		srv.bForceFullSend = TRUE;
+    //		srv.bRequestPostFullReload = TRUE;
+	//		#endif
+    //        return;
+    //    }
+    //    
+    //    // Может быть пайп еще не создан (в процессе срабатывания семафора)
+    //    if (dwErr == ERROR_FILE_NOT_FOUND) {
+    //    	Sleep(10);
+    //    	continue;
+    //    }
+    //
+    //    // Exit if an error other than ERROR_PIPE_BUSY occurs. 
+	//	if (dwErr != ERROR_PIPE_BUSY) {
+	//		#ifdef _DEBUG
+	//		wchar_t szErr[MAX_PATH*2];
+	//		wsprintf(szErr, L"ConEmuC: CreateFile(%s) failed, code=0x%08X", srv.szGuiPipeName, dwErr);
+	//		SetConsoleTitle(szErr);
+	//		#else
+    //		srv.bForceFullSend = TRUE;
+    //		srv.bRequestPostFullReload = TRUE;
+	//		#endif
+    //        return;
+	//	}
+	//
+    //    // All pipe instances are busy, so wait for 100 ms.
+	//	if (!WaitNamedPipe(srv.szGuiPipeName, 100) ) {
+	//		#ifdef _DEBUG
+	//		dwErr = GetLastError();
+	//		wchar_t szErr[MAX_PATH*2];
+	//		wsprintf(szErr, L"ConEmuC: WaitNamedPipe(%s) failed, code=0x%08X", srv.szGuiPipeName, dwErr);
+	//		SetConsoleTitle(szErr);
+	//		#else
+    //		srv.bForceFullSend = TRUE;
+    //		srv.bRequestPostFullReload = TRUE;
+	//		#endif
+    //        return;
+	//	}
+    //}
+    //
+    //// The pipe connected; change to message-read mode. 
+    //dwMode = PIPE_READMODE_MESSAGE; 
+    //fSuccess = SetNamedPipeHandleState( 
+    //    hPipe,    // pipe handle 
+    //    &dwMode,  // new pipe mode 
+    //    NULL,     // don't set maximum bytes 
+    //    NULL);    // don't set maximum time 
+    //_ASSERT(fSuccess);
+    //if (!fSuccess) {
+    //    SafeCloseHandle(hPipe);
+    //    return;
+    //}
 
 
     // Собственно запись в пайп

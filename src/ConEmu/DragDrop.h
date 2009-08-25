@@ -78,4 +78,13 @@ protected:
 	static DWORD WINAPI ExtractIconsThread(LPVOID lpParameter);
 	DWORD mn_ExtractIconsTID;
 	HANDLE mh_ExtractIcons;
+	//
+	typedef struct _DragThreadArg {
+		CDragDrop   *pThis;
+		IDataObject *pDataObject;
+		IDropSource *pDropSource;
+		DWORD        dwAllowedEffects;
+	} DragThreadArg;
+	static DWORD WINAPI DragOpThreadProc(LPVOID lpParameter);
+	HANDLE mh_DragThread; DWORD mn_DragThreadId;
 };
