@@ -931,7 +931,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\common\ConEmuCheck.c"
+				RelativePath="..\common\ConEmuCheck.cpp"
 				>
 			</File>
 			<File

@@ -4,9 +4,7 @@
 #include "Header.h"
 #include <Tlhelp32.h>
 #include <Shlobj.h>
-extern "C" {
 #include "../common/ConEmuCheck.h"
-}
 
 #define DEBUGSTRSYS(s) //DEBUGSTR(s)
 
@@ -124,6 +122,7 @@ CConEmuMain::CConEmuMain()
     mn_MsgSetWindowMode = ++nAppMsg;
     mn_MsgUpdateTitle = ++nAppMsg;
     mn_MsgAttach = RegisterWindowMessage(CONEMUMSG_ATTACH);
+	mn_MsgSrvStarted = RegisterWindowMessage(CONEMUMSG_SRVSTARTED);
     mn_MsgVConTerminated = ++nAppMsg;
     mn_MsgUpdateScrollInfo = ++nAppMsg;
     mn_MsgUpdateTabs = RegisterWindowMessage(CONEMUMSG_UPDATETABS);
@@ -5312,6 +5311,9 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
             return 0;
         } else if (messg == gConEmu.mn_MsgAttach) {
             return gConEmu.AttachRequested ( (HWND)wParam, (DWORD)lParam );
+		} else if (messg == gConEmu.mn_MsgSrvStarted) {
+			gConEmu.WinEventProc(NULL, EVENT_CONSOLE_START_APPLICATION, (HWND)wParam, lParam, 0, 0, 0);
+			return 0;
         } else if (messg == gConEmu.mn_MsgVConTerminated) {
             return gConEmu.OnVConTerminated ( (CVirtualConsole*)lParam, TRUE );
         } else if (messg == gConEmu.mn_MsgUpdateScrollInfo) {

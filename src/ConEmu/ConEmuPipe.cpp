@@ -1,4 +1,5 @@
 #include "header.h"
+#include "../common/ConEmuCheck.h"
 
 WARNING("!!! Обязательно нужно сделать возможность отваливаться по таймауту!");
 
@@ -32,7 +33,7 @@ void CConEmuPipe::Close()
 BOOL CConEmuPipe::Init(LPCTSTR asOp, BOOL abSilent)
 {
 	wchar_t szErr[MAX_PATH*2];
-	mh_Pipe = ExecuteOpenPipe(ms_PipeName, &szErr, L"ConEmu");
+	mh_Pipe = ExecuteOpenPipe(ms_PipeName, szErr, L"ConEmu");
 	if (!mh_Pipe || mh_Pipe == INVALID_HANDLE_VALUE) {
 		MBoxA(szErr);
 		return FALSE;

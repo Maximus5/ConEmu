@@ -3,6 +3,8 @@
 #define _T(s) s
 #include "ConEmuCheck.h"
 
+SECURITY_ATTRIBUTES* gpNullSecurity = NULL;
+
 #ifdef _DEBUG
 	#include <crtdbg.h>
 #else
@@ -29,12 +31,14 @@ typedef HWND (APIENTRY *FGetConsoleWindow)();
 //};
 //#endif
 
-HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t** pszErr/*[MAX_PATH*2]*/, const wchar_t* szModule)
+HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t* pszErr/*[MAX_PATH*2]*/, const wchar_t* szModule)
 {
     HANDLE hPipe = NULL;
     DWORD dwErr = 0, dwMode = 0;
     BOOL fSuccess = FALSE;
     DWORD dwStartTick = GetTickCount();
+
+	_ASSERTE(gpNullSecurity!=NULL);
 
     // Try to open a named pipe; wait for it, if necessary. 
     while (1)
@@ -42,9 +46,9 @@ HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t** pszErr/*[MAX_PATH*2]
     { 
         hPipe = CreateFile( 
             szPipeName,     // pipe name 
-            GENERIC_WRITE, 
+            GENERIC_READ|GENERIC_WRITE, 
             0,              // no sharing 
-            NULL,           // default security attributes
+            gpNullSecurity, // default security attributes
             OPEN_EXISTING,  // opens existing pipe 
             0,              // default attributes 
             NULL);          // no template file 
@@ -78,7 +82,7 @@ HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t** pszErr/*[MAX_PATH*2]
 		}
 
         // All pipe instances are busy, so wait for 100 ms.
-		if (!WaitNamedPipe(srv.szGuiPipeName, 100) ) {
+		if (!WaitNamedPipe(szPipeName, 100) ) {
 			if (pszErr) {
 				wsprintf(pszErr, L"%s: WaitNamedPipe(%s) failed, code=0x%08X, Timeout", 
 					szModule ? szModule : L"Unknown", szPipeName, dwErr);
@@ -176,11 +180,15 @@ CESERVER_REQ* ExecuteCmd(const wchar_t* szGuiPipeName, const CESERVER_REQ* pIn, 
 		return NULL;
 	}
 		
-	hPipe = ExecuteOpenPipe(szGuiPipeName, &szErr, NULL/*—юда хорошо бы им€ модул€ подкрутить*/);
+	hPipe = ExecuteOpenPipe(szGuiPipeName, szErr, NULL/*—юда хорошо бы им€ модул€ подкрутить*/);
 	if (hPipe == NULL || hPipe == INVALID_HANDLE_VALUE) {
 		#ifdef _DEBUG
-		if (hOwner)
-			SetWindowText(hOwner, szErr);
+		if (hOwner) {
+			if (hOwner == GetConsoleWindow())
+				SetConsoleTitle(szErr);
+			else
+				SetWindowText(hOwner, szErr);
+		}
 		#endif
 		return NULL;
 	}
@@ -309,7 +317,7 @@ HWND GetConEmuHWND(BOOL abRoot)
 	in.hdr.nCmd  = CECMD_GETGUIHWND;
 	in.hdr.nSrcThreadId = GetCurrentThreadId();
 
-	pOut = ExecuteGuiCmd(FarHwnd, &in);
+	pOut = ExecuteGuiCmd(FarHwnd, &in, NULL);
 	if (!pOut)
 		return NULL;
 	

@@ -149,6 +149,7 @@ protected:
 	UINT mn_MsgSetWindowMode;
 	UINT mn_MsgUpdateTitle;
 	UINT mn_MsgAttach;
+	UINT mn_MsgSrvStarted;
 	UINT mn_MsgVConTerminated;
 	UINT mn_MsgUpdateScrollInfo;
 	UINT mn_MsgUpdateTabs;

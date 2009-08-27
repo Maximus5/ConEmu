@@ -96,9 +96,10 @@ extern wchar_t gszDbgModLabel[6];
 #define CESERVERINPUTNAME   L"\\\\%s\\pipe\\ConEmuSrvInput%u" // ConEmuC_PID
 #define CEGUIPIPENAME       L"\\\\%s\\pipe\\ConEmuGui%u"      // GetConsoleWindow() // необходимо, чтобы плагин мог общаться с GUI
 #define CEPLUGINPIPENAME    L"\\\\%s\\pipe\\ConEmuPlugin%u"   // Far_PID
-#define CEGUIATTACHED       L"ConEmuGuiAttached.%u"
-#define CESIGNAL_C          L"ConEmuC_C_Signal.%u"
-#define CESIGNAL_BREAK      L"ConEmuC_Break_Signal.%u"
+//#define CEGUIATTACHED       L"ConEmuGuiAttached.%u"
+#define CEGUIRCONSTARTED    L"ConEmuGuiRConStarted.%u"
+//#define CESIGNAL_C          L"ConEmuC_C_Signal.%u"
+//#define CESIGNAL_BREAK      L"ConEmuC_Break_Signal.%u"
 #define CECMD_GETSHORTINFO  1
 #define CECMD_GETFULLINFO   2
 #define CECMD_SETSIZE       3
@@ -302,7 +303,8 @@ typedef struct tag_CESERVER_REQ {
 #include <poppack.h>
 
 
-#define CONEMUMSG_ATTACH L"ConEmuMain::Attach"        // wParam == hConWnd, lParam == ConEmuC_PID
+#define CONEMUMSG_ATTACH L"ConEmuMain::Attach"            // wParam == hConWnd, lParam == ConEmuC_PID
+#define CONEMUMSG_SRVSTARTED L"ConEmuMain::SrvStarted"    // wParam == hConWnd, lParam == ConEmuC_PID
 //#define CONEMUCMDSTARTED L"ConEmuMain::CmdStarted"    // wParam == hConWnd, lParam == ConEmuC_PID (as ComSpec)
 //#define CONEMUCMDSTOPPED L"ConEmuMain::CmdTerminated" // wParam == hConWnd, lParam == ConEmuC_PID (as ComSpec)
 

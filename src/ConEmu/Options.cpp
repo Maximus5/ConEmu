@@ -1,9 +1,7 @@
 
 #include "Header.h"
 #include <commctrl.h>
-extern "C" {
 #include "../common/ConEmuCheck.h"
-}
 
 #define COUNTER_REFRESH 5000
 

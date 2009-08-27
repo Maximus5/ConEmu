@@ -15,9 +15,7 @@
 #include <Tlhelp32.h>
 #include <vector>
 
-extern "C" {
 #include "../common/ConEmuCheck.h"
-}
 
 #define Free free
 #define Alloc calloc
@@ -89,7 +87,6 @@ HANDLE ghServerTerminateEvent = NULL;
 HANDLE ghPluginSemaphore = NULL;
 wchar_t gsFarLang[64] = {0};
 BOOL FindServerCmd(DWORD nServerCmd, DWORD &dwServerPID);
-SECURITY_ATTRIBUTES* gpNullSecurity = NULL;
 BOOL gbNeedPostTabSend = FALSE;
 DWORD gnNeedPostTabSendTick = 0;
 #define NEEDPOSTTABSENDDELTA 100
@@ -1411,7 +1408,7 @@ void SendTabs(int tabCount, BOOL abForceSend/*=FALSE*/)
 		gbNeedPostTabSend = FALSE;
 
 		CESERVER_REQ* pOut =
-			ExecuteGuiCmd(FarHwnd, gpTabs);
+			ExecuteGuiCmd(FarHwnd, gpTabs, FarHwnd);
 		if (pOut) {
 			if (pOut->hdr.nSize >= (sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_CONEMUTAB_RET))) {
 				if (gpTabs->Tabs.bMacroActive && pOut->TabsRet.bNeedPostTabSend) {
@@ -1658,7 +1655,7 @@ void InitResources()
 			lstrcpyW(pszRes, GetMsgW(12)); pszRes += lstrlenW(pszRes)+1;
 		}
 		pIn->hdr.nSize = ((LPBYTE)pszRes) - ((LPBYTE)pIn);
-		CESERVER_REQ* pOut = ExecuteGuiCmd(FarHwnd, pIn);
+		CESERVER_REQ* pOut = ExecuteGuiCmd(FarHwnd, pIn, FarHwnd);
 		if (pOut) ExecuteFreeResult(pOut);
 		Free(pIn);
 
@@ -1673,7 +1670,7 @@ void CloseTabs()
 		in.hdr.nCmd = CECMD_TABSCHANGED;
 		in.hdr.nSrcThreadId = GetCurrentThreadId();
 		in.hdr.nVersion = CESERVER_REQ_VER;
-		CESERVER_REQ* pOut = ExecuteGuiCmd(FarHwnd, &in);
+		CESERVER_REQ* pOut = ExecuteGuiCmd(FarHwnd, &in, FarHwnd);
 		if (pOut) ExecuteFreeResult(pOut);
 	}
 }
@@ -2099,7 +2096,7 @@ void ShowPluginMenu()
 			pIn->hdr.nSrcThreadId = GetCurrentThreadId();
 			pIn->hdr.nVersion = CESERVER_REQ_VER;
 			pIn->OutputFile.bUnicode = (gFarVersion.dwVerMajor>=2);
-			pOut = ExecuteGuiCmd(FarHwnd, pIn);
+			pOut = ExecuteGuiCmd(FarHwnd, pIn, FarHwnd);
 			if (pOut) {
 				if (pOut->OutputFile.szFilePathName[0]) {
 					BOOL lbRc = FALSE;
@@ -2126,7 +2123,7 @@ void ShowPluginMenu()
 			in.hdr.nSrcThreadId = GetCurrentThreadId();
 			in.hdr.nVersion = CESERVER_REQ_VER;
 			in.Data[0] = nItem - 3;
-			pOut = ExecuteGuiCmd(FarHwnd, &in);
+			pOut = ExecuteGuiCmd(FarHwnd, &in, FarHwnd);
 			if (pOut) ExecuteFreeResult(pOut);
 		} break;
 		case 8: // Attach to GUI (если FAR был CtrlAltTab)
@@ -2175,7 +2172,7 @@ BOOL FindServerCmd(DWORD nServerCmd, DWORD &dwServerPID)
         					if (lstrcmpiW(prc.szExeFile, L"conemuc.exe")==0) {
         						CESERVER_REQ* pIn = ExecuteNewCmd(nServerCmd, sizeof(CESERVER_REQ_HDR)+sizeof(DWORD));
         						pIn->dwData[0] = GetCurrentProcessId();
-        						CESERVER_REQ* pOut = ExecuteSrvCmd(prc.th32ProcessID, pIn);
+        						CESERVER_REQ* pOut = ExecuteSrvCmd(prc.th32ProcessID, pIn, FarHwnd);
         						if (pOut) dwServerPID = prc.th32ProcessID;
         						ExecuteFreeResult(pIn); ExecuteFreeResult(pOut);
         						// ≈сли команда успешно выполнена - выходим

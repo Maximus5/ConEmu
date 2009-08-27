@@ -4,9 +4,7 @@
 
 #include "Header.h"
 #include <Tlhelp32.h>
-extern "C" {
 #include "../common/ConEmuCheck.h"
-}
 
 #define DEBUGSTRDRAW(s) //DEBUGSTR(s)
 #define DEBUGSTRINPUT(s) //DEBUGSTR(s)
@@ -2071,6 +2069,7 @@ DWORD CRealConsole::ServerThread(LPVOID lpvParam)
                 }
             }
 
+			_ASSERTE(gpNullSecurity);
             hPipe = CreateNamedPipe( 
                 pRCon->ms_VConServer_Pipe, // pipe name 
                 PIPE_ACCESS_DUPLEX,       // read/write access 
@@ -2092,6 +2091,12 @@ DWORD CRealConsole::ServerThread(LPVOID lpvParam)
                 Sleep(50);
                 continue;
             }
+
+			// „тобы ConEmuC знал, что серверный пайп готов
+			if (pRCon->mh_GuiAttached) {
+        		SetEvent(pRCon->mh_GuiAttached);
+        		SafeCloseHandle(pRCon->mh_GuiAttached);
+   			}
 
             // Wait for the client to connect; if it succeeds, 
             // the function returns a nonzero value. If the function
@@ -3547,15 +3552,15 @@ void CRealConsole::SetHwnd(HWND ahConWnd)
     mb_ProcessRestarted = FALSE; //  онсоль запущена
 
     if (ms_VConServer_Pipe[0] == 0) {
-        // временно используем эту переменную, чтобы не плодить локальных
-        wsprintfW(ms_VConServer_Pipe, CEGUIATTACHED, (DWORD)hConWnd);
-        // —корее всего событие в сервере еще не создано
-        mh_GuiAttached = OpenEvent(EVENT_MODIFY_STATE, FALSE, ms_VConServer_Pipe);
-        // ¬роде, когда используетс€ run as administrator - event открыть не получаетс€?
-        if (!mh_GuiAttached) {
-        	mh_GuiAttached = CreateEvent(gpNullSecurity, TRUE, FALSE, ms_VConServer_Pipe);
-        	_ASSERTE(mh_GuiAttached!=NULL);
-        }
+        wchar_t szEvent[64];
+        wsprintfW(szEvent, CEGUIRCONSTARTED, (DWORD)hConWnd);
+        //// —корее всего событие в сервере еще не создано
+        //mh_GuiAttached = OpenEvent(EVENT_MODIFY_STATE, FALSE, ms_VConServer_Pipe);
+        //// ¬роде, когда используетс€ run as administrator - event открыть не получаетс€?
+        //if (!mh_GuiAttached) {
+    	mh_GuiAttached = CreateEvent(gpNullSecurity, TRUE, FALSE, szEvent);
+    	_ASSERTE(mh_GuiAttached!=NULL);
+        //}
 
         // «апустить серверный пайп
         wsprintf(ms_VConServer_Pipe, CEGUIPIPENAME, L".", (DWORD)hConWnd); //был mn_ConEmuC_PID
@@ -3567,10 +3572,11 @@ void CRealConsole::SetHwnd(HWND ahConWnd)
         }
 
         // чтобы ConEmuC знал, что мы готовы
-        if (mh_GuiAttached) {
-        	SetEvent(mh_GuiAttached);
-        	SafeCloseHandle(mh_GuiAttached);
-   		}
+	   //     if (mh_GuiAttached) {
+	   //     	SetEvent(mh_GuiAttached);
+				//Sleep(10);
+	   //     	SafeCloseHandle(mh_GuiAttached);
+	   //		}
     }
 
     if (gSet.isConVisible)

@@ -1,9 +1,7 @@
 
 #include "Header.h"
 #include <commctrl.h>
-extern "C" {
 #include "../common/ConEmuCheck.h"
-}
 
 #define DEBUGSTRMOVE(s) //DEBUGSTR(s)
 
@@ -33,7 +31,6 @@ CSettings gSet;
 //TCHAR temp[MAX_PATH]; -- низзя, очень велик шанс нарваться при многопоточности
 HICON hClassIcon = NULL, hClassIconSm = NULL;
 BOOL gbDontEnable = FALSE;
-SECURITY_ATTRIBUTES* gpNullSecurity = NULL;
 
 
 const TCHAR *const szClassName = VirtualConsoleClass;
@@ -1115,7 +1112,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					if (GetWindowThreadProcessId(ConEmuHwnd, &dwPID))
 						AllowSetForegroundWindow(dwPID);
 					
-					pOut = ExecuteGuiCmd(ConEmuHwnd, pIn);
+					pOut = ExecuteGuiCmd(ConEmuHwnd, pIn, NULL);
 					if (pOut && pOut->Data[0])
 						lbAccepted = TRUE;
 				}

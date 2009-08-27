@@ -21,9 +21,7 @@
 #include <Tlhelp32.h>
 #include <vector>
 #include "..\common\common.hpp"
-extern "C" {
 #include "..\common\ConEmuCheck.h"
-}
 
 WARNING("Обязательно после запуска сделать SetForegroundWindow на GUI окно, если в фокусе консоль");
 WARNING("Обязательно получить код и имя родительского процесса");
@@ -148,6 +146,7 @@ void CmdOutputRestore();
 LPVOID Alloc(size_t nCount, size_t nSize);
 void Free(LPVOID ptr);
 void CheckConEmuHwnd();
+HWND FindConEmuByPID();
 typedef BOOL (__stdcall *FGetConsoleKeyboardLayoutName)(wchar_t*);
 FGetConsoleKeyboardLayoutName pfnGetConsoleKeyboardLayoutName = NULL;
 void CheckKeyboardLayout();
@@ -161,7 +160,6 @@ BOOL FileExists(LPCWSTR asFile);
 extern bool GetImageSubsystem(const wchar_t *FileName,DWORD& ImageSubsystem);
 void SendStarted();
 BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount);
-SECURITY_ATTRIBUTES* gpNullSecurity = NULL;
 
 
 #else
@@ -863,6 +861,10 @@ BOOL IsNeedCmd(LPCWSTR asCmdLine, BOOL *rbNeedCutStartEndQuot)
 		}
 	}
 	pwszCopy = wcsrchr(szArg, L'\\'); if (!pwszCopy) pwszCopy = szArg; else pwszCopy ++;
+	//2009-08-27
+	wchar_t *pwszEndSpace = szArg + lstrlenW(szArg) - 1;
+	while (*pwszEndSpace == L' ' && pwszEndSpace > szArg)
+		*(pwszEndSpace--) = 0;
 
 	#pragma warning( push )
 	#pragma warning(disable : 6400)
@@ -1062,7 +1064,7 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
     	        pIn->dwData[1] = lbIsNeedCmd;
     	        
                 PRINT_COMSPEC(L"Retrieve new console add args (begin)\n",0);
-                pOut = ExecuteGuiCmd(ghConWnd, pIn);
+                pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
                 PRINT_COMSPEC(L"Retrieve new console add args (begin)\n",0);
                 
                 if (pOut) {
@@ -1515,7 +1517,7 @@ void SendStarted()
 		GetConsoleScreenBufferInfo(ghConOut, &pIn->StartStop.sbi);
 
         PRINT_COMSPEC(L"Starting comspec mode (ExecuteGuiCmd started)\n",0);
-        pOut = ExecuteGuiCmd(ghConWnd, pIn);
+        pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
         PRINT_COMSPEC(L"Starting comspec mode (ExecuteGuiCmd finished)\n",0);
         if (pOut) {
 			BOOL  bAlreadyBufferHeight = pOut->StartStopRet.bWasBufferHeight;
@@ -1598,7 +1600,7 @@ void ComspecDone(int aiRc)
 				&pIn->StartStop.sbi);
 
             PRINT_COMSPEC(L"Finalizing comspec mode (ExecuteGuiCmd started)\n",0);
-            pOut = ExecuteGuiCmd(ghConWnd, pIn);
+            pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
             PRINT_COMSPEC(L"Finalizing comspec mode (ExecuteGuiCmd finished)\n",0);
             if (pOut) {
 				if (!pOut->StartStopRet.bWasBufferHeight) {
@@ -1814,6 +1816,7 @@ HWND Attach2Gui(DWORD nTimeout)
                 
                 // Установить переменную среды с дескриптором окна
                 SetConEmuEnvVar(ghConEmuWnd);
+				CheckConEmuHwnd();
                 
                 break;
             }
@@ -1838,6 +1841,17 @@ int ServerInit()
     wchar_t szComSpec[MAX_PATH+1], szSelf[MAX_PATH+3];
     wchar_t* pszSelf = szSelf+1;
     //HMODULE hKernel = GetModuleHandleW (L"kernel32.dll");
+
+	//2009-08-27 Перенес снизу
+	if (!srv.hConEmuGuiAttached) {
+		wchar_t szTempName[MAX_PATH];
+		wsprintfW(szTempName, CEGUIRCONSTARTED, (DWORD)ghConWnd);
+		//srv.hConEmuGuiAttached = OpenEvent(EVENT_ALL_ACCESS, FALSE, szTempName);
+		//if (srv.hConEmuGuiAttached == NULL)
+   		srv.hConEmuGuiAttached = CreateEvent(gpNullSecurity, TRUE, FALSE, szTempName);
+		_ASSERTE(srv.hConEmuGuiAttached!=NULL);
+		//if (srv.hConEmuGuiAttached) ResetEvent(srv.hConEmuGuiAttached); -- низя. может уже быть создано/установлено в GUI
+	}
     
     srv.nMaxFPS = 10;
     
@@ -1898,8 +1912,17 @@ int ServerInit()
 		iRc = CERR_CREATEINPUTTHREAD; goto wrap;
 	}
 
-
     if (!gbAttachMode) {
+		HWND hConEmuWnd = FindConEmuByPID();
+		if (hConEmuWnd) {
+			UINT nMsgSrvStarted = RegisterWindowMessage(CONEMUMSG_SRVSTARTED);
+			DWORD_PTR nRc = 0;
+			SendMessageTimeout(hConEmuWnd, nMsgSrvStarted, (WPARAM)ghConWnd, gnSelfPID, 
+				SMTO_BLOCK, 500, &nRc);
+		}
+        if (srv.hConEmuGuiAttached) {
+            WaitForSingleObject(srv.hConEmuGuiAttached, 500);
+		}
         CheckConEmuHwnd();
     }
 
@@ -1935,7 +1958,7 @@ int ServerInit()
                 				{
                 					if (lstrcmpiW(prc.szExeFile, L"conemuc.exe")==0) {
                 						CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_ATTACH2GUI, 0);
-                						CESERVER_REQ* pOut = ExecuteSrvCmd(prc.th32ProcessID, pIn);
+                						CESERVER_REQ* pOut = ExecuteSrvCmd(prc.th32ProcessID, pIn, ghConWnd);
                 						if (pOut) dwServerPID = prc.th32ProcessID;
                 						ExecuteFreeResult(pIn); ExecuteFreeResult(pOut);
                 						// Если команда успешно выполнена - выходим
@@ -2082,13 +2105,6 @@ int ServerInit()
 
     
 
-    wchar_t szTempName[MAX_PATH];
-    wsprintfW(szTempName, CEGUIATTACHED, (DWORD)ghConWnd);
-    srv.hConEmuGuiAttached = OpenEvent(EVENT_ALL_ACCESS, FALSE, szTempName);
-    if (srv.hConEmuGuiAttached == NULL)
-    	srv.hConEmuGuiAttached = CreateEvent(gpNullSecurity, TRUE, FALSE, szTempName);
-    _ASSERTE(srv.hConEmuGuiAttached!=NULL);
-    if (srv.hConEmuGuiAttached) ResetEvent(srv.hConEmuGuiAttached);
 
     // Размер шрифта и Lucida. Обязательно для серверного режима.
     if (srv.szConsoleFont[0]) {
@@ -2530,6 +2546,41 @@ int CALLBACK FontEnumProc(ENUMLOGFONTEX *lpelfe, NEWTEXTMETRICEX *lpntme, DWORD 
     return TRUE; // ищем следующий фонт
 }
 
+HWND FindConEmuByPID()
+{
+	HWND hConEmuWnd = NULL;
+	DWORD dwGuiThreadId = 0, dwGuiProcessId = 0;
+
+    // GUI может еще "висеть" в ожидании или в отладчике, так что пробуем и через Snapshoot
+    DWORD dwGuiPID = 0;
+    HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS,0);
+    if (hSnap != INVALID_HANDLE_VALUE) {
+        PROCESSENTRY32 prc = {sizeof(PROCESSENTRY32)};
+        if (Process32First(hSnap, &prc)) {
+            do {
+                if (prc.th32ProcessID == gnSelfPID) {
+                    dwGuiPID = prc.th32ParentProcessID;
+                    break;
+                }
+            } while (Process32Next(hSnap, &prc));
+        }
+        CloseHandle(hSnap);
+    }
+    if (dwGuiPID) {
+        HWND hGui = NULL;
+        while ((hGui = FindWindowEx(NULL, hGui, VirtualConsoleClassMain, NULL)) != NULL) {
+            dwGuiThreadId = GetWindowThreadProcessId(hGui, &dwGuiProcessId);
+            if (dwGuiProcessId == dwGuiPID) {
+                hConEmuWnd = hGui;
+                
+                break;
+            }
+        }
+    }
+
+	return hConEmuWnd;
+}
+
 void CheckConEmuHwnd()
 {
     //HWND hWndFore = GetForegroundWindow();
@@ -2552,7 +2603,7 @@ void CheckConEmuHwnd()
 			// НЕ MyGet..., а то можем заблокироваться...
 			GetConsoleScreenBufferInfo(ghConOut, &pIn->StartStop.sbi);
 
-            pOut = ExecuteGuiCmd(ghConWnd, pIn);
+            pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
             if (pOut) {
                 #ifdef _DEBUG
 				BOOL  bAlreadyBufferHeight = pOut->StartStopRet.bWasBufferHeight;
@@ -2564,9 +2615,6 @@ void CheckConEmuHwnd()
 
                 ghConEmuWnd = hGuiWnd;
                 
-                // Установить переменную среды с дескриптором окна
-                SetConEmuEnvVar(ghConEmuWnd);
-
                 ExecuteFreeResult(pOut);
             }
             Free(pIn);
@@ -2574,50 +2622,23 @@ void CheckConEmuHwnd()
     }
     // GUI может еще "висеть" в ожидании или в отладчике, так что пробуем и через Snapshoot
     if (ghConEmuWnd == NULL) {
-        DWORD dwGuiPID = 0;
-        HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS,0);
-        if (hSnap != INVALID_HANDLE_VALUE) {
-            PROCESSENTRY32 prc = {sizeof(PROCESSENTRY32)};
-            if (Process32First(hSnap, &prc)) {
-                do {
-                    if (prc.th32ProcessID == gnSelfPID) {
-                        dwGuiPID = prc.th32ParentProcessID;
-                        break;
-                    }
-                } while (Process32Next(hSnap, &prc));
-            }
-            CloseHandle(hSnap);
-        }
-        if (dwGuiPID) {
-            HWND hGui = NULL;
-            while ((hGui = FindWindowEx(NULL, hGui, VirtualConsoleClassMain, NULL)) != NULL) {
-                dwGuiThreadId = GetWindowThreadProcessId(hGui, &dwGuiProcessId);
-                if (dwGuiProcessId == dwGuiPID) {
-                    ghConEmuWnd = hGui;
-                    
-                    // Установить переменную среды с дескриптором окна
-                    SetConEmuEnvVar(ghConEmuWnd);
-                    
-                    break;
-                }
-            }
-        }
+		ghConEmuWnd = FindConEmuByPID();
     }
     if (ghConEmuWnd == NULL) { // Если уж ничего не помогло...
         ghConEmuWnd = GetConEmuHWND(TRUE/*abRoot*/);
-        
-        // Установить переменную среды с дескриптором окна
-        SetConEmuEnvVar(ghConEmuWnd);
     }
     if (ghConEmuWnd) {
-        dwGuiThreadId = GetWindowThreadProcessId(ghConEmuWnd, &dwGuiProcessId);
+        // Установить переменную среды с дескриптором окна
+        SetConEmuEnvVar(ghConEmuWnd);
 
-        AllowSetForegroundWindow(dwGuiProcessId);
+		dwGuiThreadId = GetWindowThreadProcessId(ghConEmuWnd, &dwGuiProcessId);
 
-        //if (hWndFore == ghConWnd || hWndFocus == ghConWnd)
-        //if (hWndFore != ghConEmuWnd)
+		AllowSetForegroundWindow(dwGuiProcessId);
 
-        SetForegroundWindow(ghConWnd);
+		//if (hWndFore == ghConWnd || hWndFocus == ghConWnd)
+		//if (hWndFore != ghConEmuWnd)
+
+		SetForegroundWindow(ghConWnd);
 
     } else {
 		// да и фиг сним. нас могли просто так, без gui запустить
@@ -4189,7 +4210,7 @@ void SendConsoleChanges(CESERVER_REQ* pOut)
     BOOL fSuccess = FALSE;
     wchar_t szErr[MAX_PATH*2];
     
-    hPipe = ExecuteOpenPipe(srv.szGuiPipeName, &szErr, L"ConEmuC");
+    hPipe = ExecuteOpenPipe(srv.szGuiPipeName, szErr, L"ConEmuC");
     if (!hPipe || hPipe == INVALID_HANDLE_VALUE) {
 		#ifdef _DEBUG
 		SetConsoleTitle(szErr);
@@ -5200,7 +5221,7 @@ void CheckKeyboardLayout()
                     pIn->dwData[0] = dwLayout;
 
                     CESERVER_REQ* pOut = NULL;
-                    pOut = ExecuteGuiCmd(ghConWnd, pIn);
+                    pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
                     if (pOut) ExecuteFreeResult(pOut);
                     Free(pIn);
                 }
