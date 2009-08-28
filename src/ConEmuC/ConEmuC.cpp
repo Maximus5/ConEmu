@@ -826,17 +826,20 @@ BOOL IsNeedCmd(LPCWSTR asCmdLine, BOOL *rbNeedCutStartEndQuot)
 		if (pwszCopy[1] == L'"' && pwszCopy[2]) {
 			pwszCopy ++; // Отбросить первую кавычку в командах типа: ""c:\program files\arc\7z.exe" -?"
 			if (rbNeedCutStartEndQuot) *rbNeedCutStartEndQuot = TRUE;
-		} else if (wcschr(pwszCopy+1, L'"') == (pwszCopy+nLastChar)) {
-			LPCWSTR pwszTemp = pwszCopy;
-			// Получим первую команду (исполняемый файл?)
-			if ((iRc = NextArg(&pwszTemp, szArg)) != 0) {
-				//Parsing command line failed
-				return TRUE;
-			}
-			pwszCopy ++; // Отбросить первую кавычку в командах типа: "c:\arc\7z.exe -?"
-			lbFirstWasGot = TRUE;
-			if (rbNeedCutStartEndQuot) *rbNeedCutStartEndQuot = TRUE;
-		} else {
+		} else
+		// глючила на ""F:\VCProject\FarPlugin\#FAR180\far.exe  -new_console""
+		//if (wcschr(pwszCopy+1, L'"') == (pwszCopy+nLastChar)) {
+		//	LPCWSTR pwszTemp = pwszCopy;
+		//	// Получим первую команду (исполняемый файл?)
+		//	if ((iRc = NextArg(&pwszTemp, szArg)) != 0) {
+		//		//Parsing command line failed
+		//		return TRUE;
+		//	}
+		//	pwszCopy ++; // Отбросить первую кавычку в командах типа: "c:\arc\7z.exe -?"
+		//	lbFirstWasGot = TRUE;
+		//	if (rbNeedCutStartEndQuot) *rbNeedCutStartEndQuot = TRUE;
+		//} else
+		{
 			// отбросить первую кавычку в: "C:\GCC\msys\bin\make.EXE -f "makefile" COMMON="../../../plugins/common""
 			LPCWSTR pwszTemp = pwszCopy + 1;
 			// Получим первую команду (исполняемый файл?)

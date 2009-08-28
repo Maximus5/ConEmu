@@ -2069,6 +2069,8 @@ DWORD CRealConsole::ServerThread(LPVOID lpvParam)
                 }
             }
 
+			TODO("ѕроверить, возможно семафором можно ограничить только ConnectNamedPipe - это будет быстрее чем целиком");
+
 			_ASSERTE(gpNullSecurity);
             hPipe = CreateNamedPipe( 
                 pRCon->ms_VConServer_Pipe, // pipe name 
@@ -2088,7 +2090,9 @@ DWORD CRealConsole::ServerThread(LPVOID lpvParam)
             {
                 //DisplayLastError(L"CreateNamedPipe failed"); 
                 hPipe = NULL;
-                Sleep(50);
+				// –азрешить этой или другой нити создать серверный пайп
+				ReleaseSemaphore(hWait[1], 1, NULL);
+                //Sleep(50);
                 continue;
             }
 
@@ -2104,11 +2108,13 @@ DWORD CRealConsole::ServerThread(LPVOID lpvParam)
 
             fConnected = ConnectNamedPipe(hPipe, NULL) ? TRUE : ((dwErr = GetLastError()) == ERROR_PIPE_CONNECTED); 
 
+            // сразу разрешить другой нити прин€ть вызов
+            ReleaseSemaphore(hWait[1], 1, NULL);
+
             //  онсоль закрываетс€!
             if (WaitForSingleObject ( hWait[0], 0 ) == WAIT_OBJECT_0) {
                 //FlushFileBuffers(hPipe); -- это не нужно, мы ничего не возвращали
                 //DisconnectNamedPipe(hPipe); 
-                ReleaseSemaphore(hWait[1], 1, NULL);
                 SafeCloseHandle(hPipe);
                 return 0;
             }
@@ -2122,8 +2128,8 @@ DWORD CRealConsole::ServerThread(LPVOID lpvParam)
         if (fConnected) {
             // сразу сбросим, чтобы не забыть
             fConnected = FALSE;
-            // разрешить другой нити прин€ть вызов
-            ReleaseSemaphore(hWait[1], 1, NULL);
+            //// разрешить другой нити прин€ть вызов //2009-08-28 перенесено сразу после ConnectNamedPipe
+            //ReleaseSemaphore(hWait[1], 1, NULL);
             
 			if (gConEmu.isValid(pVCon)) {
 				_ASSERTE(pVCon==pRCon->mp_VCon);
