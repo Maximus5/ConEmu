@@ -3585,6 +3585,11 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 				srv.nProcessStartTick = GetTickCount() - 2*CHECK_ROOTSTART_TIMEOUT;
         	}
         } break;
+        
+        case CECMD_SHOWCONSOLE:
+        {
+        	ShowWindow(ghConWnd, in.dwData[0]);
+        } break;
     }
     
     if (gbInRecreateRoot) gbInRecreateRoot = FALSE;
@@ -4209,7 +4214,7 @@ void SendConsoleChanges(CESERVER_REQ* pOut)
         return;
 
     HANDLE hPipe = NULL;
-    DWORD dwErr = 0; //, dwMode = 0;
+    //DWORD dwErr = 0; //, dwMode = 0;
     BOOL fSuccess = FALSE;
     wchar_t szErr[MAX_PATH*2];
     

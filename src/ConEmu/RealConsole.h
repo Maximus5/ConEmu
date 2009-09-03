@@ -201,7 +201,13 @@ protected:
     DWORD mn_ConEmuC_PID, mn_ConEmuC_Input_TID; HANDLE mh_ConEmuC, mh_ConEmuCInput;
 	BOOL mb_UseOnlyPipeInput;
     TCHAR ms_ConEmuC_Pipe[MAX_PATH], ms_ConEmuCInput_Pipe[MAX_PATH], ms_VConServer_Pipe[MAX_PATH];
-    TCHAR Title[MAX_TITLE_SIZE+1], TitleCmp[MAX_TITLE_SIZE+1];
+    // “екущий заголовок консоли и его значение дл€ сравнени€ (дл€ определени€ изменений)
+    WCHAR Title[MAX_TITLE_SIZE+1], TitleCmp[MAX_TITLE_SIZE+1];
+    // ј здесь содержитс€ то, что отображаетс€ в ConEmu (может быть добавлено " (Admin)")
+    WCHAR TitleFull[MAX_TITLE_SIZE+65];
+    // «десь сохран€етс€ заголовок окна (с панел€ми), когда FAR фокус с панелей уходит (переходит в редактор...).
+    WCHAR ms_PanelTitle[CONEMUTABMAX];
+    // ѕроцентики
     short mn_Progress, mn_PreWarningProgress;
 
     BOOL AttachPID(DWORD dwPID);
@@ -255,7 +261,6 @@ private:
     //
     ConEmuTab* mp_tabs;
     int mn_tabsCount, mn_ActiveTab;
-    WCHAR ms_PanelTitle[CONEMUTABMAX];
     void CheckPanelTitle();
     //
     //void ProcessAdd(DWORD addPID);

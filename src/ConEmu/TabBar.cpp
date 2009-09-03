@@ -508,7 +508,7 @@ void TabBarClass::UpdatePosition()
     if (!mh_Rebar)
         return;
 
-	if (IsIconic(ghWnd))
+	if (gConEmu.isIconic())
 		return; // иначе расчет размеров будет некорректным!
 
     RECT client;

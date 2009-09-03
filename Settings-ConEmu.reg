@@ -77,6 +77,8 @@ REGEDIT4
 
 ;; Window mode. 51f - Normal, 520 - Maximized, 521 - Fullscreen
 "WindowMode"=dword:0000051f
+;; Set to hex:01 to hide window caption in Maximized mode
+;"HideCaption"=hex:00 -- does not work still
 
 ;; Auto minimize to the Tray
 ;"Min2Tray"=hex:01
@@ -143,6 +145,9 @@ REGEDIT4
 ;; Прокручивать заголовок в кнопке на панели задач (пока не работает)
 ;"ScrollTitle"=hex:01
 ;"ScrollTitleLen"=hex:16,00,00,00
+
+;; Used for consoles, started under Administrator
+;"AdminTitleSuffix"=" (Admin)"
 
 ;; Tabs: 0 - don't show, 1 - always, 2 - auto
 "Tabs"=hex:02

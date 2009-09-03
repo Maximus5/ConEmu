@@ -11,7 +11,11 @@ HWND ghOpWnd=NULL;
 const DWORD dwDefColors[0x10] = {
 	0x00000000, 0x00800000, 0x00008000, 0x00808000, 0x00000080, 0x00800080, 0x00008080, 0x00c0c0c0, 
 	0x00808080, 0x00ff0000, 0x0000ff00, 0x00ffff00, 0x000000ff, 0x00ff00ff, 0x0000ffff, 0x00ffffff};
-
+const DWORD dwDefColors1[0x10] = {
+	0x00000000, 0x00960000, 0x0000aa00, 0x00aaaa00, 0x000000aa, 0x00800080, 0x0000aaaa, 0x00c0c0c0, 
+	0x00808080, 0x00ff0000, 0x0000ff00, 0x00ffff00, 0x000000ff, 0x00ff00ff, 0x0000ffff, 0x00ffffff};
+DWORD gdwLastColors[0x10] = {0};
+BOOL  gbLastColorsOk = FALSE;
 
 
 
@@ -165,6 +169,9 @@ void CSettings::InitSettings()
     wndHeight = 25;
 	ntvdmHeight = 0; // Подбирать автоматически
     wndWidth = 80;
+    //WindowMode=rNormal; -- устанавливается в конструкторе CConEmuMain
+    isFullScreen = false;
+    isHideCaption = false;
     wndX = 0; wndY = 0; wndCascade = true;
     isConVisible = false;
     nSlideShowElapse = 2500;
@@ -193,6 +200,7 @@ void CSettings::InitSettings()
     isCreateAppWindow = false;
     isScrollTitle = true;
     ScrollTitleLen = 22;
+    lstrcpy(szAdminTitleSuffix, L" (Admin)");
     
 	isRSelFix = true; isMouseSkipActivation = true; isMouseSkipMoving = true;
 
@@ -266,6 +274,7 @@ void CSettings::LoadSettings()
 		reg.Load(L"ConsoleFontHeight", ConsoleFont.lfHeight);
 
         reg.Load(L"WindowMode", gConEmu.WindowMode);
+        reg.Load(L"HideCaption", isHideCaption);
         reg.Load(L"ConWnd X", wndX); /*if (wndX<-10) wndX = 0;*/
         reg.Load(L"ConWnd Y", wndY); /*if (wndY<-10) wndY = 0;*/
 		// ЭТО не влияет на szDefCmd. Только прямое указание флажка "/BufferHeight N" 
@@ -383,6 +392,7 @@ void CSettings::LoadSettings()
         reg.Load(L"TabLenMax", nTabLenMax);
         reg.Load(L"ScrollTitle", isScrollTitle);
         reg.Load(L"ScrollTitleLen", ScrollTitleLen);
+        reg.Load(L"AdminTitleSuffix", szAdminTitleSuffix); szAdminTitleSuffix[sizeofarray(szAdminTitleSuffix)-1] = 0;
         reg.Load(L"TryToCenter", isTryToCenter);
         //reg.Load(L"CreateAppWindow", isCreateAppWindow);
         //reg.Load(L"AllowDetach", isAllowDetach);
@@ -551,7 +561,7 @@ BOOL CSettings::SaveSettings()
                 }
                 GetDlgItemText(hMain, tCmdLine, psCmd, nLen+1);
             }
-            /*if (!isFullScreen && !IsZoomed(ghWnd) && !IsIconic(ghWnd))
+            /*if (!isFullScreen && !gConEmu.isZoomed() && !gConEmu.isIconic())
             {
                 RECT rcPos; GetWindowRect(ghWnd, &rcPos);
                 wndX = rcPos.left;
@@ -581,7 +591,8 @@ BOOL CSettings::SaveSettings()
             reg.Save(L"FontSizeX3", FontSizeX3);
             reg.Save(L"FontCharSet", LogFont.lfCharSet);
             reg.Save(L"Anti-aliasing", LogFont.lfQuality);
-            reg.Save(L"WindowMode", isFullScreen ? rFullScreen : IsZoomed(ghWnd) ? rMaximized : rNormal);
+            reg.Save(L"WindowMode", isFullScreen ? rFullScreen : gConEmu.isZoomed() ? rMaximized : rNormal);
+            reg.Save(L"HideCaption", isHideCaption);
             
 			reg.Save(L"DefaultBufferHeight", DefaultBufferHeight);
 			reg.Save(L"AutoBufferHeight", AutoBufferHeight);
@@ -729,6 +740,7 @@ LRESULT CSettings::OnInitDialog()
 {
 	_ASSERTE(!hMain && !hColors && !hInfo);
 	hMain = NULL; hExt = NULL; hColors = NULL; hInfo = NULL;
+	gbLastColorsOk = FALSE;
 
 	RegisterTabs();
 
@@ -925,7 +937,7 @@ LRESULT CSettings::OnInitDialog_Main()
 
 	if (isFullScreen)
 		CheckRadioButton(hMain, rNormal, rFullScreen, rFullScreen);
-	else if (IsZoomed(ghWnd))
+	else if (gConEmu.isZoomed())
 		CheckRadioButton(hMain, rNormal, rFullScreen, rMaximized);
 	else
 		CheckRadioButton(hMain, rNormal, rFullScreen, rNormal);
@@ -943,7 +955,7 @@ LRESULT CSettings::OnInitDialog_Main()
 
 	MCHKHEAP
 
-	if (!isFullScreen && !IsZoomed(ghWnd))
+	if (!isFullScreen && !gConEmu.isZoomed())
 	{
 		EnableWindow(GetDlgItem(hMain, tWndWidth), true);
 		EnableWindow(GetDlgItem(hMain, tWndHeight), true);
@@ -951,7 +963,7 @@ LRESULT CSettings::OnInitDialog_Main()
 		EnableWindow(GetDlgItem(hMain, tWndY), true);
 		EnableWindow(GetDlgItem(hMain, rFixed), true);
 		EnableWindow(GetDlgItem(hMain, rCascade), true);
-		if (!IsIconic(ghWnd)) {
+		if (!gConEmu.isIconic()) {
 			RECT rc; GetWindowRect(ghWnd, &rc);
 			wndX = rc.left; wndY = rc.top;
 		}
@@ -1093,6 +1105,14 @@ LRESULT CSettings::OnInitDialog_Color()
 	CheckDlgButton(hColors, cbExtendColors, isExtendColors ? BST_CHECKED : BST_UNCHECKED);
 	OnColorButtonClicked(cbExtendColors, 0);
 
+	// Default colors
+	memmove(gdwLastColors, Colors, sizeof(gdwLastColors));
+	gbLastColorsOk = TRUE;
+	SendDlgItemMessage(hColors, lbDefaultColors, CB_ADDSTRING, 0, (LPARAM) L"<Current color scheme>");
+	SendDlgItemMessage(hColors, lbDefaultColors, CB_ADDSTRING, 0, (LPARAM) L"Default color sheme (Windows standard)");
+	SendDlgItemMessage(hColors, lbDefaultColors, CB_ADDSTRING, 0, (LPARAM) L"Gamma 1 (for use with dark monitors)");
+	SendDlgItemMessage(hColors, lbDefaultColors, CB_SETCURSEL, 0, 0);
+
 	// Visualizer
 	CheckDlgButton(hColors, cbVisualizer, isVisualizer ? BST_CHECKED : BST_UNCHECKED);
 	SendDlgItemMessage(hColors, lbVisFore, CB_SETCURSEL, nVizFore, 0);
@@ -1179,13 +1199,13 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
 	        GetDlgItemText(hMain, tWndWidth, temp, MAX_PATH);  newX = klatoi(temp);
 	        GetDlgItemText(hMain, tWndHeight, temp, MAX_PATH); newY = klatoi(temp);
 		    SetFocus(GetDlgItem(hMain, rNormal));
-		    if (IsZoomed(ghWnd) || IsIconic(ghWnd) || isFullScreen)
+		    if (gConEmu.isZoomed() || gConEmu.isIconic() || isFullScreen)
 			    gConEmu.SetWindowMode(rNormal);
 			// Установить размер
 	        gConEmu.SetConsoleWindowSize(MakeCoord(newX, newY), true);
 	    } else if (IsChecked(hMain, rMaximized) == BST_CHECKED) {
 		    SetFocus(GetDlgItem(hMain, rMaximized));
-		    if (!IsZoomed(ghWnd))
+		    if (!gConEmu.isZoomed())
 			    gConEmu.SetWindowMode(rMaximized);
 	    } else if (IsChecked(hMain, rFullScreen) == BST_CHECKED) {
 		    SetFocus(GetDlgItem(hMain, rFullScreen));
@@ -1447,6 +1467,30 @@ LRESULT CSettings::OnColorButtonClicked(WPARAM wParam, LPARAM lParam)
             gConEmu.Update(true);
         }
         break;
+	case cbDefaultColors:
+		{
+			const DWORD* pdwDefData = NULL;
+			wchar_t temp[32];
+			int nIdx = SendDlgItemMessage(hColors, lbDefaultColors, CB_GETCURSEL, 0, 0);
+			if (nIdx == 0)
+				pdwDefData = gdwLastColors;
+			else if (nIdx == 1)
+				pdwDefData = dwDefColors;
+			else if (nIdx == 2)
+				pdwDefData = dwDefColors1;
+			else
+				break; // неизвестный набор
+			uint nCount = sizeofarray(dwDefColors);
+			for (uint i = 0; i < nCount; i++)
+			{
+				Colors[i] = pdwDefData[i];
+				wsprintf(temp, L"%i %i %i", getR(Colors[i]), getG(Colors[i]), getB(Colors[i]));
+				SetDlgItemText(hColors, 1100 + i, temp);
+			}
+
+            gConEmu.Update(true);
+		} break;
+
     default:
         if (CB >= 1000 && CB <= 1031)
         {
@@ -1577,7 +1621,10 @@ LRESULT CSettings::OnColorComboBox(WPARAM wParam, LPARAM lParam)
         nVizEOL = SendDlgItemMessage(hColors, wId, CB_GETCURSEL, 0, 0);
     } else if (wId==lbVisEOF) {
         nVizEOF = SendDlgItemMessage(hColors, wId, CB_GETCURSEL, 0, 0);
-    }
+	} else if (wId==lbDefaultColors) {
+		int nIdx = SendDlgItemMessage(hColors, wId, CB_GETCURSEL, 0, 0);
+		EnableWindow(GetDlgItem(hColors, cbDefaultColors), nIdx>0 || (gbLastColorsOk && !nIdx));
+	}
     
     gConEmu.Update(true);
 
@@ -1895,6 +1942,7 @@ INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPara
         if (gSet.hwndTip) {DestroyWindow(gSet.hwndTip); gSet.hwndTip = NULL;}
         //EndDialog(hWnd2, TRUE);
         ghOpWnd = NULL; gSet.hMain = NULL; gSet.hExt = NULL; gSet.hColors = NULL; gSet.hInfo = NULL;
+        gbLastColorsOk = FALSE;
         break;
 	case WM_HOTKEY:
 		if (wParam == 0x101) {
@@ -2327,7 +2375,7 @@ void CSettings::RecreateFont(WORD wFromID)
 		DeleteObject(hOldF);
 
 		gConEmu.Update(true);
-		if (!isFullScreen && !IsZoomed(ghWnd))
+		if (!isFullScreen && !gConEmu.isZoomed())
 			gConEmu.SyncWindowToConsole();
 		else
 			gConEmu.SyncConsoleToWindow();

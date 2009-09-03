@@ -74,6 +74,7 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
 	mb_MouseButtonDown = FALSE;
 
     wcscpy(Title, L"ConEmu");
+    wcscpy(TitleFull, Title);
     wcscpy(ms_PanelTitle, Title);
     mn_Progress = -1; mn_PreWarningProgress = -1; // ѕроцентов нет
 
@@ -399,7 +400,7 @@ BOOL CRealConsole::SetConsoleSize(COORD size, DWORD anCmdID/*=CECMD_SETSIZE*/)
 
     if (lbRc && isActive()) {
         // update size info
-        //if (!gSet.isFullScreen && !IsZoomed(ghWnd) && !IsIconic(ghWnd))
+        //if (!gSet.isFullScreen && !gConEmu.isZoomed() && !gConEmu.isIconic())
         if (gConEmu.isWindowNormal())
         {
             gSet.UpdateSize(size.X, size.Y);
@@ -790,7 +791,7 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 
         
         bActive = pRCon->isActive();
-        bIconic = IsIconic(ghWnd);
+        bIconic = gConEmu.isIconic();
 
         // в минимизированном/неактивном режиме - сократить расходы
         nWait = WaitForMultipleObjects(nEvents, hEvents, FALSE, (bIconic || !bActive) ? max(1000,nElapse) : nElapse);
@@ -876,8 +877,8 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
             {
                 pRCon->OnTitleChanged();
             } else if (bActive) {
-                if (wcscmp(pRCon->Title, gConEmu.GetTitle()))
-                    gConEmu.UpdateTitle(pRCon->TitleCmp);
+                if (wcscmp(pRCon->TitleFull, gConEmu.GetTitle()))
+                    gConEmu.UpdateTitle(pRCon->TitleFull);
             }
 
             bool lbIsActive = pRCon->isActive();
@@ -1012,7 +1013,7 @@ BOOL CRealConsole::PreInit(BOOL abCreateBuffers/*=TRUE*/)
     //      rcWnd.right += GetSystemMetrics(SM_CXVSCROLL);
     //}
     RECT rcCon;
-    if (IsIconic(ghWnd))
+    if (gConEmu.isIconic())
         rcCon = MakeRect(gSet.wndWidth, gSet.wndHeight);
     else
         rcCon = gConEmu.CalcRect(CER_CONSOLE, rcWnd, CER_MAINCLIENT);
@@ -1726,7 +1727,7 @@ LPCTSTR CRealConsole::GetTitle()
     // Ќа старте mn_ProcessCount==0, а кнопку в тулбаре показывать уже нужно
     if (!this /*|| !mn_ProcessCount*/)
         return NULL;
-    return Title;
+    return TitleFull;
 }
 
 LRESULT CRealConsole::OnScroll(int nDirection)
@@ -1847,7 +1848,7 @@ void CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
         }
         else if (messg == WM_KEYUP && wParam == VK_MENU && isSkipNextAltUp) isSkipNextAltUp = false;
         else if (messg == WM_SYSKEYDOWN && wParam == VK_F9 && lParam & (1<<29)/*Ѕред. это 29-й бит, а не число 29*/ && !isPressed(VK_SHIFT))
-            gConEmu.SetWindowMode((IsZoomed(ghWnd)||(gSet.isFullScreen&&gConEmu.isWndNotFSMaximized)) ? rNormal : rMaximized);
+            gConEmu.SetWindowMode((gConEmu.isZoomed()||(gSet.isFullScreen&&gConEmu.isWndNotFSMaximized)) ? rNormal : rMaximized);
         else {
             INPUT_RECORD r = {KEY_EVENT};
 
@@ -2343,7 +2344,7 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 				COORD crNewSize = {TextWidth(),TextHeight()};
 				int nNewWidth=0, nNewHeight=0; BOOL bBufferHeight = FALSE;
 				if ((mn_ProgramStatus & CES_NTVDM) == 0
-					&& !(gSet.isFullScreen || IsZoomed(ghWnd)))
+					&& !(gSet.isFullScreen || gConEmu.isZoomed()))
 				{
 					if (GetConWindowSize(pIn->StartStop.sbi, nNewWidth, nNewHeight, &bBufferHeight)) {
 						if (crNewSize.X != nNewWidth || crNewSize.Y != nNewHeight) {
@@ -3530,18 +3531,42 @@ void CRealConsole::ShowConsole(int nMode) // -1 Toggle, 0 - Hide, 1 - Show
         //if (setParent) SetParent(hConWnd, 0);
         RECT rcCon, rcWnd; GetWindowRect(hConWnd, &rcCon); GetWindowRect(ghWnd, &rcWnd);
         //if (!IsDebuggerPresent())
-        /* */ SetWindowPos(hConWnd, HWND_TOPMOST, 
+        if (SetWindowPos(hConWnd, HWND_TOPMOST, 
             rcWnd.right-rcCon.right+rcCon.left, rcWnd.bottom-rcCon.bottom+rcCon.top,
-            0,0, SWP_NOSIZE|SWP_SHOWWINDOW);
-        EnableWindow(hConWnd, true);
-        SetFocus(ghWnd);
+            0,0, SWP_NOSIZE|SWP_SHOWWINDOW))
+		{
+			EnableWindow(hConWnd, true);
+			SetFocus(ghWnd);
+		} else {
+			if (isAdministrator()) {
+				// ≈сли оно запущено в Win7 as admin
+		        CESERVER_REQ *pIn = ExecuteNewCmd(CECMD_SHOWCONSOLE, sizeof(CESERVER_REQ_HDR) + sizeof(DWORD));
+				if (pIn) {
+					pIn->dwData[0] = SW_SHOWNORMAL;
+					CESERVER_REQ *pOut = ExecuteSrvCmd(GetServerPID(), pIn, ghWnd);
+					ExecuteFreeResult(pOut);
+					ExecuteFreeResult(pIn);
+				}
+			}
+		}
         //if (setParent) SetParent(hConWnd, 0);
     }
     else
     {
         isShowConsole = false;
         //if (!gSet.isConVisible)
-        ShowWindow(hConWnd, SW_HIDE);
+		if (!ShowWindow(hConWnd, SW_HIDE)) {
+			if (isAdministrator()) {
+				// ≈сли оно запущено в Win7 as admin
+		        CESERVER_REQ *pIn = ExecuteNewCmd(CECMD_SHOWCONSOLE, sizeof(CESERVER_REQ_HDR) + sizeof(DWORD));
+				if (pIn) {
+					pIn->dwData[0] = SW_HIDE;
+					CESERVER_REQ *pOut = ExecuteSrvCmd(GetServerPID(), pIn, ghWnd);
+					ExecuteFreeResult(pOut);
+					ExecuteFreeResult(pIn);
+				}
+			}
+		}
         //if (setParent) SetParent(hConWnd, setParent2 ? ghWnd : ghWndDC);
         //if (!gSet.isConVisible)
         //EnableWindow(hConWnd, false); -- наверное не нужно
@@ -3587,6 +3612,8 @@ void CRealConsole::SetHwnd(HWND ahConWnd)
 
     if (gSet.isConVisible)
         ShowConsole(1); // установить консольному окну флаг AlwaysOnTop
+    else if (isAdministrator())
+    	ShowConsole(0); // ¬ Win7 оно таки по€вл€етс€ видимым
 
     if ((gSet.isMonitorConsoleLang & 2) == 2) // ќдин Layout на все консоли
         SwitchKeyboardLayout(gConEmu.GetActiveKeyboardLayout());
@@ -4010,7 +4037,7 @@ void CRealConsole::OnActivate(int nNewNum, int nOldNum)
         gConEmu.SwitchKeyboardLayout(con.dwKeybLayout);
 
     WARNING("Ќе работало обновление заголовка");
-    gConEmu.UpdateTitle(Title);
+    gConEmu.UpdateTitle(TitleFull);
 
     UpdateScrollInfo();
 
@@ -4260,8 +4287,8 @@ BOOL CRealConsole::GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab)
 		// вернем просто заголовок консоли
 		if (tabIdx == 0) {
 			pTab->Pos = 0; pTab->Current = 1; pTab->Type = 1; pTab->Modified = 0;
-            int nMaxLen = max(countof(Title) , countof(pTab->Name));
-            lstrcpyn(pTab->Name, Title, nMaxLen);
+            int nMaxLen = max(countof(TitleFull) , countof(pTab->Name));
+            lstrcpyn(pTab->Name, TitleFull, nMaxLen);
 			return TRUE;
 		}
         return FALSE;
@@ -4269,18 +4296,20 @@ BOOL CRealConsole::GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab)
     
     memmove(pTab, mp_tabs+tabIdx, sizeof(ConEmuTab));
     if (mn_tabsCount == 1 && pTab->Type == 1) {
-        if (Title[0]) { // ≈сли панель единственна€ - точно показываем заголовок консоли
-            int nMaxLen = max(countof(Title) , countof(pTab->Name));
-            lstrcpyn(pTab->Name, Title, nMaxLen);
+        if (TitleFull[0]) { // ≈сли панель единственна€ - точно показываем заголовок консоли
+            int nMaxLen = max(countof(TitleFull) , countof(pTab->Name));
+            lstrcpyn(pTab->Name, TitleFull, nMaxLen);
         }
     }
     if (pTab->Name[0] == 0) {
         if (ms_PanelTitle[0]) { // скорее всего - это Panels?
-            int nMaxLen = max(countof(ms_PanelTitle) , countof(pTab->Name));
+        	// 03.09.2009 Maks -> min
+            int nMaxLen = min(countof(ms_PanelTitle) , countof(pTab->Name));
             lstrcpyn(pTab->Name, ms_PanelTitle, nMaxLen);
-        } else if (mn_tabsCount == 1 && Title[0]) { // ≈сли панель единственна€ - точно показываем заголовок консоли
-            int nMaxLen = max(countof(Title) , countof(pTab->Name));
-            lstrcpyn(pTab->Name, Title, nMaxLen);
+        } else if (mn_tabsCount == 1 && TitleFull[0]) { // ≈сли панель единственна€ - точно показываем заголовок консоли
+        	// 03.09.2009 Maks -> min
+            int nMaxLen = min(countof(TitleFull) , countof(pTab->Name));
+            lstrcpyn(pTab->Name, TitleFull, nMaxLen);
         }
     }
     wchar_t* pszAmp = pTab->Name;
@@ -5079,6 +5108,9 @@ void CRealConsole::OnTitleChanged()
     if (!this) return;
 
     wcscpy(Title, TitleCmp);
+    wcscpy(TitleFull, TitleCmp);
+    if (isAdministrator() && gSet.szAdminTitleSuffix)
+    	wcscat(TitleFull, gSet.szAdminTitleSuffix);
 
     // ќбработка прогресса операций
     short nLastProgress = mn_Progress;

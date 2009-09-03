@@ -119,8 +119,9 @@ extern wchar_t gszDbgModLabel[6];
 #define CECMD_SETSIZESYNC   17 // Синхронно, ждет (но недолго), пока FAR обработает изменение размера (то есть отрисуется)
 #define CECMD_ATTACH2GUI    18 // Выполнить подключение видимой (отключенной) консоли к GUI. Без аргументов
 #define CECMD_FARLOADED     19 // Посылается плагином в сервер
+#define CECMD_SHOWCONSOLE   20 // В Win7 релизе нельзя скрывать окно консоли, запущенной в режиме администратора
 
-#define CESERVER_REQ_VER    12
+#define CESERVER_REQ_VER    13
 
 #define PIPEBUFSIZE 4096
 

@@ -52,7 +52,7 @@ public:
     DWORD FontSizeX;
     DWORD FontSizeX2;
     DWORD FontSizeX3;
-    bool isFullScreen;
+    bool isFullScreen, isHideCaption;
     char isFixFarBorders;
 	bool isMouseSkipActivation, isMouseSkipMoving;
 	struct tag_CharRanges {
@@ -107,6 +107,7 @@ public:
     bool isCreateAppWindow; 
     bool isScrollTitle;
     DWORD ScrollTitleLen;
+    wchar_t szAdminTitleSuffix[64]; //" (Admin)"
     
     UINT nMainTimerElapse; // периодичность, с которой из консоли считывается текст
     //bool isAdvLangChange; // в Висте без ConIme в самой консоли не меняется язык, пока не послать WM_SETFOCUS. Но при этом исчезает диалог быстрого поиска

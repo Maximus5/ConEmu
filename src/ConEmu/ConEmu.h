@@ -206,6 +206,7 @@ public:
 	bool isEditor();
 	bool isFar();
 	bool isFilePanel(bool abPluginAllowed=false);
+	bool isIconic();
 	bool isLBDown();
 	bool isMainThread();
 	bool isMeForeground();
@@ -215,6 +216,7 @@ public:
 	bool isValid(CVirtualConsole* apVCon);
 	bool isViewer();
 	bool isWindowNormal();
+	bool isZoomed();
 	void LoadIcons();
 	bool LoadVersionInfo(wchar_t* pFullPath);
 	static RECT MapRect(RECT rFrom, BOOL bFrame2Client);

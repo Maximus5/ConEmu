@@ -122,7 +122,7 @@ void NotifyChangeKey();
 DWORD WINAPI ServerThread(LPVOID lpvParam);
 DWORD WINAPI ServerThreadCommand(LPVOID ahPipe);
 
-void ShowPluginMenu();
+void ShowPluginMenu(int nID = -1);
 int ShowPluginMenuA();
 int FUNC_Y(ShowPluginMenu)();
 int FUNC_X(ShowPluginMenu)();

@@ -7,6 +7,7 @@
 #include "../common/ConEmuCheck.h"
 
 #define DEBUGSTRSYS(s) //DEBUGSTR(s)
+#define DEBUGSTRSIZE(s) DEBUGSTR(s)
 
 #define PROCESS_WAIT_START_TIME 1000
 
@@ -317,7 +318,7 @@ RECT CConEmuMain::CalcMargins(enum ConEmuMargins mg)
         case CEM_FRAME: // –азница между размером всего окна и клиентской области окна (рамка + заголовок)
         {
             //RECT cRect, wRect;
-            //if (!ghWnd || IsIconic(ghWnd)) {
+            //if (!ghWnd || isIconic()) {
                 rc.left = rc.right = GetSystemMetrics(SM_CXSIZEFRAME);
                 rc.bottom = GetSystemMetrics(SM_CYSIZEFRAME);
                 rc.top = rc.bottom + GetSystemMetrics(SM_CYCAPTION);
@@ -583,6 +584,8 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tF
                     break;
                 case CER_MAXIMIZED:
                     rc = mi.rcWork;
+                    if (gSet.isHideCaption)
+                    	rc.top -= GetSystemMetrics(SM_CYCAPTION);
                     break;
                 default:
                     _ASSERTE(tFrom==CER_FULLSCREEN || tFrom==CER_MAXIMIZED);
@@ -595,6 +598,8 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tF
                     break;
                 case CER_MAXIMIZED:
                     rc = MakeRect(GetSystemMetrics(SM_CXMAXIMIZED),GetSystemMetrics(SM_CYMAXIMIZED));
+                    if (gSet.isHideCaption)
+                    	rc.top -= GetSystemMetrics(SM_CYCAPTION);
                     break;
                 default:
                     _ASSERTE(tFrom==CER_FULLSCREEN || tFrom==CER_MAXIMIZED);
@@ -819,7 +824,7 @@ void CConEmuMain::SetConsoleWindowSize(const COORD& size, bool updateInfo)
     // update size info
     // !!! Ёто вроде делает консоль
     WARNING("updateInfo убить");
-    /*if (updateInfo && !gSet.isFullScreen && !IsZoomed(ghWnd) && !IsIconic(ghWnd))
+    /*if (updateInfo && !gSet.isFullScreen && !isZoomed() && !isIconic())
     {
         gSet.UpdateSize(size.X, size.Y);
     }*/
@@ -861,7 +866,7 @@ void CConEmuMain::SyncConsoleToWindow()
     pVCon->SetConsoleSize(MakeCoord(newCon.right, newCon.bottom));
     */
 
-    /*if (!IsZoomed(ghWnd) && !IsIconic(ghWnd) && !gSet.isFullScreen)
+    /*if (!isZoomed() && !isIconic() && !gSet.isFullScreen)
         gSet.UpdateSize(pVCon->TextWidth, pVCon->TextHeight);*/
 
     /*
@@ -968,7 +973,7 @@ bool CConEmuMain::SetWindowMode(uint inMode)
                 goto wrap;
             }
 
-            if (IsIconic(ghWnd) || IsZoomed(ghWnd)) {
+            if (isIconic() || isZoomed()) {
                 //ShowWindow(ghWnd, SW_SHOWNORMAL); // WM_SYSCOMMAND использовать не хочетс€...
                 mb_IgnoreSizeChange = TRUE;
                 if (IsWindowVisible(ghWnd))
@@ -986,6 +991,7 @@ bool CConEmuMain::SetWindowMode(uint inMode)
             rcNew.left+=gSet.wndX; rcNew.top+=gSet.wndY;
             rcNew.right+=gSet.wndX; rcNew.bottom+=gSet.wndY;
 
+            // ѕараметры именно такие, результат - просто подгонка rcNew под рабочую область текущего монитора
             rcNew = CalcRect(CER_CORRECTED, rcNew, CER_MAXIMIZED);
 
             #ifdef _DEBUG
@@ -1006,8 +1012,8 @@ bool CConEmuMain::SetWindowMode(uint inMode)
             #ifdef _DEBUG
             GetWindowPlacement(ghWnd, &wpl);
             #endif
-            // ≈сли это во врем€ загрузки - то до первого ShowWindow - IsIconic возвращает FALSE
-            if (IsIconic(ghWnd) || IsZoomed(ghWnd))
+            // ≈сли это во врем€ загрузки - то до первого ShowWindow - isIconic возвращает FALSE
+            if (isIconic() || isZoomed())
                 ShowWindow(ghWnd, SW_SHOWNORMAL); // WM_SYSCOMMAND использовать не хочетс€...
             #ifdef _DEBUG
             GetWindowPlacement(ghWnd, &wpl);
@@ -1019,7 +1025,7 @@ bool CConEmuMain::SetWindowMode(uint inMode)
             DEBUGLOGFILE("SetWindowMode(rMaximized)\n");
 
             // ќбновить коордианты в gSet, если требуетс€
-            if (!gSet.isFullScreen && !IsZoomed(ghWnd) && !IsIconic(ghWnd))
+            if (!gSet.isFullScreen && !isZoomed() && !isIconic())
             {
                 gSet.UpdatePos(rcWnd.left, rcWnd.top);
                 if (pVCon)
@@ -1027,17 +1033,20 @@ bool CConEmuMain::SetWindowMode(uint inMode)
             }
 
             RECT rcMax = CalcRect(CER_MAXIMIZED, MakeRect(0,0), CER_MAXIMIZED);
+            // —корректируем размер окна до видимого на мониторе (рамка при максимизации уезжает за пределы экрана)
             rcMax.left -= GetSystemMetrics(SM_CXSIZEFRAME);
             rcMax.right += GetSystemMetrics(SM_CXSIZEFRAME);
             rcMax.top -= GetSystemMetrics(SM_CYSIZEFRAME);
             rcMax.bottom += GetSystemMetrics(SM_CYSIZEFRAME);
+            /*if (gSet.isHideCaption)
+            	rcMax.top -= GetSystemMetrics(SM_CYCAPTION);*/
             RECT rcCon = CalcRect(CER_CONSOLE, rcMax, CER_MAIN);
             if (pVCon && !pVCon->RCon()->SetConsoleSize(MakeCoord(rcCon.right,rcCon.bottom))) {
                 mb_PassSysCommand = false;
                 goto wrap;
             }
 
-            if (!IsZoomed(ghWnd)) {
+            if (!isZoomed()) {
                 mb_IgnoreSizeChange = TRUE;
                 InvalidateAll();
                 ShowWindow(ghWnd, SW_SHOWMAXIMIZED);
@@ -1060,10 +1069,10 @@ bool CConEmuMain::SetWindowMode(uint inMode)
 
     case rFullScreen:
         DEBUGLOGFILE("SetWindowMode(rFullScreen)\n");
-        if (!gSet.isFullScreen)
+        if (!gSet.isFullScreen || (isZoomed() || isIconic()))
         {
             // ќбновить коордианты в gSet, если требуетс€
-            if (!gSet.isFullScreen && !IsZoomed(ghWnd) && !IsIconic(ghWnd))
+            if (!gSet.isFullScreen && !isZoomed() && !isIconic())
             {
                 gSet.UpdatePos(rcWnd.left, rcWnd.top);
                 if (pVCon)
@@ -1078,7 +1087,7 @@ bool CConEmuMain::SetWindowMode(uint inMode)
             }
 
             gSet.isFullScreen = true;
-            isWndNotFSMaximized = IsZoomed(ghWnd);
+            isWndNotFSMaximized = isZoomed();
             
             RECT rcShift = CalcMargins(CEM_FRAME);
             //GetCWShift(ghWnd, &rcShift); // ќбновить, на вс€кий случай
@@ -1096,7 +1105,7 @@ bool CConEmuMain::SetWindowMode(uint inMode)
                 }
             }
 
-            if (IsIconic(ghWnd) || IsZoomed(ghWnd)) {
+            if (isIconic() || isZoomed()) {
                 mb_IgnoreSizeChange = TRUE;
                 ShowWindow(ghWnd, SW_SHOWNORMAL);
                 mb_IgnoreSizeChange = FALSE;
@@ -1177,9 +1186,21 @@ void CConEmuMain::ForceShowTabs(BOOL abShow)
     //}
 }
 
+bool CConEmuMain::isIconic()
+{
+	bool bIconic = ::IsIconic(ghWnd);
+	return bIconic;
+}
+
+bool CConEmuMain::isZoomed()
+{
+	bool bZoomed = ::IsZoomed(ghWnd);
+	return bZoomed;
+}
+
 void CConEmuMain::ReSize(BOOL abCorrect2Ideal /*= FALSE*/)
 {
-    if (IsIconic(ghWnd))
+    if (isIconic())
         return;
 
 	RECT client; GetClientRect(ghWnd, &client);
@@ -1187,7 +1208,7 @@ void CConEmuMain::ReSize(BOOL abCorrect2Ideal /*= FALSE*/)
 	if (abCorrect2Ideal) {
 		
 
-		if (!IsZoomed(ghWnd) && !gSet.isFullScreen) {
+		if (!isZoomed() && !gSet.isFullScreen) {
 			// ¬ыполн€ем всегда, даже если размер уже соответсвует...
 			RECT rcWnd; GetWindowRect(ghWnd, &rcWnd);
 			RECT rcConsole = CalcRect(CER_CONSOLE, mrc_Ideal, CER_MAIN);
@@ -1220,7 +1241,7 @@ void CConEmuMain::ReSize(BOOL abCorrect2Ideal /*= FALSE*/)
 		}
 	}
 
-    OnSize(IsZoomed(ghWnd) ? SIZE_MAXIMIZED : SIZE_RESTORED,
+    OnSize(isZoomed() ? SIZE_MAXIMIZED : SIZE_RESTORED,
         client.right, client.bottom);
 
 	if (abCorrect2Ideal) {
@@ -1241,7 +1262,7 @@ void CConEmuMain::OnConsoleResize(BOOL abPosted/*=FALSE*/)
 	}
 	lbPosted = false;
 	
-	if (IsIconic(ghWnd))
+	if (isIconic())
 		return; // если минимизировано - ничего не делать
 
     // Ѕыло ли реальное изменение размеров?
@@ -1254,7 +1275,7 @@ void CConEmuMain::OnConsoleResize(BOOL abPosted/*=FALSE*/)
 
     //COORD c = ConsoleSizeFromWindow();
     RECT client; GetClientRect(ghWnd, &client);
-    // ѕроверим, вдруг не отработал IsIconic
+    // ѕроверим, вдруг не отработал isIconic
     if (client.bottom > 10 )
     {
         RECT c = CalcRect(CER_CONSOLE, client, CER_MAINCLIENT);
@@ -1274,7 +1295,7 @@ void CConEmuMain::OnConsoleResize(BOOL abPosted/*=FALSE*/)
             if (isNtvdm())
                 SyncNtvdm();
             else {
-                if (!gSet.isFullScreen && !IsZoomed(ghWnd) && !lbSizingToDo)
+                if (!gSet.isFullScreen && !isZoomed() && !lbSizingToDo)
                     SyncWindowToConsole();
                 else
                     SyncConsoleToWindow();
@@ -1285,7 +1306,7 @@ void CConEmuMain::OnConsoleResize(BOOL abPosted/*=FALSE*/)
                 m_LastConSize = MakeCoord(pVCon->TextWidth,pVCon->TextHeight);
             }
 			// «апомнить "идеальный" размер окна, выбранный пользователем
-			if (lbSizingToDo && !gSet.isFullScreen && !IsZoomed(ghWnd) && !IsIconic(ghWnd)) {
+			if (lbSizingToDo && !gSet.isFullScreen && !isZoomed() && !isIconic()) {
 				GetWindowRect(ghWnd, &mrc_Ideal);
 			}
         }
@@ -1309,11 +1330,11 @@ LRESULT CConEmuMain::OnSize(WPARAM wParam, WORD newClientWidth, WORD newClientHe
     char szDbg[255];
     wsprintfA(szDbg, "CConEmuMain::OnSize(wParam=%i, Width=%i, Height=%i, "
         "IsIconic=%i, IgnoreSizeChange=%i)\n",
-        wParam, newClientWidth, newClientHeight, IsIconic(ghWnd), mb_IgnoreSizeChange);
+        wParam, newClientWidth, newClientHeight, isIconic(), mb_IgnoreSizeChange);
     pVCon->RCon()->LogString(szDbg);
     #endif
 
-    if (wParam == SIZE_MINIMIZED || IsIconic(ghWnd)) {
+    if (wParam == SIZE_MINIMIZED || isIconic()) {
         return 0;
     }
 
@@ -1344,7 +1365,7 @@ LRESULT CConEmuMain::OnSize(WPARAM wParam, WORD newClientWidth, WORD newClientHe
     }
 
 	// «апомнить "идеальный" размер окна, выбранный пользователем
-	if (isSizing() && !gSet.isFullScreen && !IsZoomed(ghWnd) && !IsIconic(ghWnd)) {
+	if (isSizing() && !gSet.isFullScreen && !isZoomed() && !isIconic()) {
 		GetWindowRect(ghWnd, &mrc_Ideal);
 	}
 
@@ -1390,7 +1411,7 @@ LRESULT CConEmuMain::OnSize(WPARAM wParam, WORD newClientWidth, WORD newClientHe
 
     RECT rcNewCon; memset(&rcNewCon,0,sizeof(rcNewCon));
     if (pVCon && pVCon->Width && pVCon->Height) {
-        if ((gSet.isTryToCenter && (IsZoomed(ghWnd) || gSet.isFullScreen))
+        if ((gSet.isTryToCenter && (isZoomed() || gSet.isFullScreen))
 			|| isNtvdm())
         {
             rcNewCon.left = (client.right+client.left-(int)pVCon->Width)/2;
@@ -1453,7 +1474,7 @@ LRESULT CConEmuMain::OnSizing(WPARAM wParam, LPARAM lParam)
     if (isNtvdm()) {
         // не мен€ть дл€ 16бит приложений
     } else
-    if (!gSet.isFullScreen && !IsZoomed(ghWnd)) {
+    if (!gSet.isFullScreen && !isZoomed()) {
         RECT srctWindow;
         RECT wndSizeRect, restrictRect;
         RECT *pRect = (RECT*)lParam; // с рамкой
@@ -2615,8 +2636,8 @@ void CConEmuMain::ShowOldCmdVersion(DWORD nCmd, DWORD nVersion)
 
 void CConEmuMain::ShowSysmenu(HWND Wnd, HWND Owner, int x, int y)
 {
-    bool iconic = IsIconic(Wnd);
-    bool zoomed = IsZoomed(Wnd);
+    bool iconic = isIconic();
+    bool zoomed = isZoomed();
     bool visible = IsWindowVisible(Wnd);
     int style = GetWindowLong(Wnd, GWL_STYLE);
 
@@ -3220,7 +3241,7 @@ bool CConEmuMain::isWindowNormal()
     if (change2WindowMode != (DWORD)-1) {
         return (change2WindowMode == rNormal);
     }
-    if (gSet.isFullScreen || IsZoomed(ghWnd) || IsIconic(ghWnd))
+    if (gSet.isFullScreen || isZoomed() || isIconic())
         return false;
     return true;
 }
@@ -3682,6 +3703,11 @@ LRESULT CConEmuMain::OnGetMinMaxInfo(LPMINMAXINFO pInfo)
     if (gSet.isFullScreen) {
         pInfo->ptMaxTrackSize = ptFullScreenSize;
         pInfo->ptMaxSize = ptFullScreenSize;
+    }
+    
+    if (gSet.isHideCaption) {
+    	pInfo->ptMaxPosition.y -= GetSystemMetrics(SM_CYCAPTION);
+    	//pInfo->ptMaxSize.y += GetSystemMetrics(SM_CYCAPTION);
     }
 
     return result;
@@ -4532,6 +4558,11 @@ HSHELL_APPCOMMAND The APPCOMMAND which has been unhandled by the application or 
 
 LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 {
+	#ifdef _DEBUG
+	wchar_t szDbg[128]; wsprintf(szDbg, L"OnSysCommand (%i(0x%X), %i)\n", wParam, wParam, lParam);
+	DEBUGSTRSIZE(szDbg);
+	#endif
+
     LRESULT result = 0;
     switch(LOWORD(wParam))
     {
@@ -4667,9 +4698,9 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
     case SC_RESTORE:
 		DEBUGSTRSYS(L"OnSysCommand(SC_RESTORE)\n");
         if (!mb_PassSysCommand) {
-            if (!IsIconic(ghWnd) && isPictureView())
+            if (!isIconic() && isPictureView())
                 break;
-            if (!SetWindowMode(IsIconic(ghWnd) ? WindowMode : rNormal))
+            if (!SetWindowMode(isIconic() ? WindowMode : rNormal))
                 result = DefWindowProc(hWnd, WM_SYSCOMMAND, wParam, lParam);
         } else {
             result = DefWindowProc(hWnd, WM_SYSCOMMAND, wParam, lParam);
@@ -4778,7 +4809,7 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
         }
 
 
-        if (!IsIconic(ghWnd))
+        if (!isIconic())
         {
             //// Ѕыло ли реальное изменение размеров?
             //BOOL lbSizingToDo  = (mouse.state & MOUSE_SIZING_TODO) == MOUSE_SIZING_TODO;
@@ -5024,7 +5055,7 @@ void CConEmuMain::ServerThreadCommand(HANDLE hPipe)
         pIn->Data[0] = FALSE;
         pIn->hdr.nSize = sizeof(CESERVER_REQ_HDR) + 1;
 
-        if (IsIconic(ghWnd))
+        if (isIconic())
             SendMessage(ghWnd, WM_SYSCOMMAND, SC_RESTORE, 0);
         SetForegroundWindow(ghWnd);
 
@@ -5132,29 +5163,70 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
         break;
 
     case WM_SIZING:
-        if (!IsIconic(ghWnd))
-            result = gConEmu.OnSizing(wParam, lParam);
-        break;
+		{
+			RECT* pRc = (RECT*)lParam;
+			wchar_t szDbg[128]; wsprintf(szDbg, L"WM_SIZING (Edge%i, {%i-%i}-{%i-%i})\n", wParam, pRc->left, pRc->top, pRc->right, pRc->bottom);
+			DEBUGSTRSIZE(szDbg);
+
+			if (!isIconic())
+				result = gConEmu.OnSizing(wParam, lParam);
+		} break;
+
+#ifdef _DEBUG
+	case WM_WINDOWPOSCHANGING:
+		{
+			WINDOWPOS *p = (WINDOWPOS*)lParam;
+			wchar_t szDbg[128]; wsprintf(szDbg, L"WM_WINDOWPOSCHANGING ({%i-%i}x{%i-%i} Flags=0x%08X)\n", p->x, p->y, p->cx, p->cy, p->flags);
+			DEBUGSTRSIZE(szDbg);
+			result = 0; //DefWindowProc(hWnd, messg, wParam, lParam);
+		} break;
+
+	case WM_WINDOWPOSCHANGED:
+		{
+			WINDOWPOS *p = (WINDOWPOS*)lParam;
+			wchar_t szDbg[128]; wsprintf(szDbg, L"WM_WINDOWPOSCHANGED ({%i-%i}x{%i-%i} Flags=0x%08X)\n", p->x, p->y, p->cx, p->cy, p->flags);
+			DEBUGSTRSIZE(szDbg);
+			result = 0; //DefWindowProc(hWnd, messg, wParam, lParam);
+		} break;
+
+	case WM_SHOWWINDOW:
+		{
+			wchar_t szDbg[128]; wsprintf(szDbg, L"WM_SHOWWINDOW (Show=%i, Status=%i)\n", wParam, lParam);
+			DEBUGSTRSIZE(szDbg);
+			result = DefWindowProc(hWnd, messg, wParam, lParam);
+		} break;
+#endif
 
     case WM_SIZE:
-        if (!IsIconic(ghWnd))
-            result = gConEmu.OnSize(wParam, LOWORD(lParam), HIWORD(lParam));
-        break;
+		{
+			#ifdef _DEBUG
+			wchar_t szDbg[128]; wsprintf(szDbg, L"WM_SIZE (Type:%i, {%i-%i})\n", wParam, LOWORD(lParam), HIWORD(lParam));
+			DEBUGSTRSIZE(szDbg);
+			#endif
+			if (!isIconic())
+				result = gConEmu.OnSize(wParam, LOWORD(lParam), HIWORD(lParam));
+		} break;
 
     case WM_MOVE:
-        // вызываетс€ когда не надо...
-        if (hWnd == ghWnd /*&& ghOpWnd*/) { //2009-05-08 запоминать wndX/wndY всегда, а не только если окно настроек открыто
-            if (!gSet.isFullScreen && !IsZoomed(ghWnd) && !IsIconic(ghWnd))
-            {
-                RECT rc; GetWindowRect(ghWnd, &rc);
-                gSet.UpdatePos(rc.left, rc.top);
-                if (hPictureView)
-                    mrc_WndPosOnPicView = rc;
-            }
-        } else if (hPictureView) {
-            GetWindowRect(ghWnd, &mrc_WndPosOnPicView);
-        }
-        break;
+		{
+			#ifdef _DEBUG
+			wchar_t szDbg[128]; wsprintf(szDbg, L"WM_MOVE ({%i-%i})\n", LOWORD(lParam), HIWORD(lParam));
+			DEBUGSTRSIZE(szDbg);
+			#endif
+
+			// вызываетс€ когда не надо...
+			if (hWnd == ghWnd /*&& ghOpWnd*/) { //2009-05-08 запоминать wndX/wndY всегда, а не только если окно настроек открыто
+				if (!gSet.isFullScreen && !isZoomed() && !isIconic())
+				{
+					RECT rc; GetWindowRect(ghWnd, &rc);
+					gSet.UpdatePos(rc.left, rc.top);
+					if (hPictureView)
+						mrc_WndPosOnPicView = rc;
+				}
+			} else if (hPictureView) {
+				GetWindowRect(ghWnd, &mrc_WndPosOnPicView);
+			}
+		} break;
 
     case WM_GETMINMAXINFO:
         {

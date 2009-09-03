@@ -160,10 +160,10 @@ BEGIN
                     WS_TABSTOP,200,36,50,8
 END
 
-IDD_DIALOG2 DIALOGEX 0, 0, 328, 197
+IDD_DIALOG2 DIALOGEX 0, 0, 328, 209
 STYLE DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
-FONT 8, "MS Shell Dlg", 0, 0, 0x1
+FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        "Standard colors (""red green blue"")",gbStandardColors,
                     4,4,319,67
@@ -302,24 +302,28 @@ BEGIN
                     84,161,10
     COMBOBOX        lbExtendIdx,192,82,45,30,CBS_DROPDOWNLIST | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
-    GROUPBOX        "",IDC_STATIC,4,164,319,28
+    GROUPBOX        "",IDC_STATIC,4,178,319,28
     CONTROL         "Extend visualizer (editor plugin)",cbVisualizer,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,10,163,113,10
-    RTEXT           "Normal:",IDC_STATIC,9,177,25,8
-    COMBOBOX        lbVisNormal,37,175,32,30,CBS_DROPDOWNLIST | CBS_SORT | 
+                    BS_AUTOCHECKBOX | WS_TABSTOP,10,177,113,10
+    RTEXT           "Normal:",IDC_STATIC,9,191,25,8
+    COMBOBOX        lbVisNormal,37,189,32,30,CBS_DROPDOWNLIST | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
-    RTEXT           "Tab:",IDC_STATIC,144,177,18,8
-    COMBOBOX        lbVisTab,166,175,32,30,CBS_DROPDOWNLIST | CBS_SORT | 
+    RTEXT           "Tab:",IDC_STATIC,144,191,18,8
+    COMBOBOX        lbVisTab,166,189,32,30,CBS_DROPDOWNLIST | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
-    RTEXT           "EOL:",IDC_STATIC,198,177,22,8
-    COMBOBOX        lbVisEOL,224,175,32,30,CBS_DROPDOWNLIST | CBS_SORT | 
+    RTEXT           "EOL:",IDC_STATIC,198,191,22,8
+    COMBOBOX        lbVisEOL,224,189,32,30,CBS_DROPDOWNLIST | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
-    RTEXT           "EOF:",IDC_STATIC,259,177,22,8
-    COMBOBOX        lbVisEOF,286,175,32,30,CBS_DROPDOWNLIST | CBS_SORT | 
+    RTEXT           "EOF:",IDC_STATIC,259,191,22,8
+    COMBOBOX        lbVisEOF,286,189,32,30,CBS_DROPDOWNLIST | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
-    CTEXT           "/",IDC_STATIC,71,177,8,8
-    COMBOBOX        lbVisFore,83,175,32,30,CBS_DROPDOWNLIST | CBS_SORT | 
+    CTEXT           "/",IDC_STATIC,71,191,8,8
+    COMBOBOX        lbVisFore,83,189,32,30,CBS_DROPDOWNLIST | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Default color shemes:",IDC_STATIC,7,162,77,8
+    COMBOBOX        lbDefaultColors,87,160,182,59,CBS_DROPDOWNLIST | 
+                    WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Load",cbDefaultColors,273,160,50,12,WS_DISABLED
 END
 
 IDD_DIALOGM DIALOGEX 0, 0, 341, 259
@@ -389,7 +393,7 @@ END
 IDD_DIALOG4 DIALOGEX 0, 0, 328, 198
 STYLE DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
-FONT 8, "MS Shell Dlg"
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     GROUPBOX        "Tabs (panels, editors, viewers)",IDC_STATIC,4,2,319,28
     CONTROL         "Enable Tabs",cbTabs,"Button",BS_AUTO3STATE | WS_TABSTOP,

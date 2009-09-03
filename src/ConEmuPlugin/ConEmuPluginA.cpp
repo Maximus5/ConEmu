@@ -387,7 +387,9 @@ int WINAPI _export ProcessEditorEvent(int Event, void *Param)
 	default:
 		return 0;
 	}
-	UpdateConEmuTabsA(Event+100, Event == EE_KILLFOCUS, Event == EE_SAVE);
+	//2009-06-03 EE_KILLFOCUS при закрытии редактора не приходит. Только EE_CLOSE
+	bool loosingFocus = (Event == EE_KILLFOCUS) || (Event == EE_CLOSE);
+	UpdateConEmuTabsA(Event+100, loosingFocus, Event == EE_SAVE);
 	return 0;
 }
 
@@ -395,18 +397,38 @@ int WINAPI _export ProcessViewerEvent(int Event, void *Param)
 {
 	if (/*!ConEmuHwnd ||*/ !InfoA) // иногда событие от QuickView приходит ДО инициализации плагина
 		return 0; // Даже если мы не под эмулятором - просто запомним текущее состояние
+
 	switch (Event)
 	{
 	case VE_CLOSE:
+		OUTPUTDEBUGSTRING(L"VE_CLOSE"); break;
 	//case VE_READ:
+	//	OUTPUTDEBUGSTRING(L"VE_CLOSE"); break;
 	case VE_KILLFOCUS:
+		OUTPUTDEBUGSTRING(L"VE_KILLFOCUS"); break;
 	case VE_GOTFOCUS:
-		{
-			UpdateConEmuTabsA(Event+200, Event == VE_KILLFOCUS, false, Param);
-		}
+		OUTPUTDEBUGSTRING(L"VE_GOTFOCUS"); break;
+	default:
+		return 0;
 	}
-
+	// !!! Именно UpdateConEmuTabsW, без версии !!!
+	//2009-06-03 VE_KILLFOCUS при закрытии редактора не приходит. Только VE_CLOSE
+	bool loosingFocus = (Event == VE_KILLFOCUS || Event == VE_CLOSE);
+	UpdateConEmuTabsA(Event+200, loosingFocus, false, Param);
 	return 0;
+
+	//switch (Event)
+	//{
+	//case VE_CLOSE:
+	////case VE_READ:
+	//case VE_KILLFOCUS:
+	//case VE_GOTFOCUS:
+	//	{
+	//		UpdateConEmuTabsA(Event+200, Event == VE_KILLFOCUS, false, Param);
+	//	}
+	//}
+
+	//return 0;
 }
 
 extern MSection csTabs;

@@ -137,10 +137,15 @@ HANDLE WINAPI _export OpenPluginW(int OpenFrom,INT_PTR Item)
 		gnPluginOpenFrom = (OpenFrom && 0xFFFF);
 		ProcessCommand(gnReqCommand, FALSE/*bReqMainThread*/, gpReqCommandData);
 	} else {
-		if (!gbCmdCallObsolete)
-			ShowPluginMenu();
-		else
+		if (!gbCmdCallObsolete) {
+			int nID = -1; // выбор из меню
+			if (((OpenFrom & OPEN_FROMMACRO) == OPEN_FROMMACRO) && (Item >= 1 && Item <= 7)) {
+				nID = Item - 1; // Будет сразу выполнена команда
+			}
+			ShowPluginMenu(nID);
+		} else {
 			gbCmdCallObsolete = FALSE;
+		}
 	}
 	return INVALID_HANDLE_VALUE;
 }
@@ -1482,7 +1487,8 @@ int WINAPI _export ProcessEditorEventW(int Event, void *Param)
 	}
 	// !!! Именно UpdateConEmuTabsW, без версии !!!
 	//2009-06-03 EE_KILLFOCUS при закрытии редактора не приходит. Только EE_CLOSE
-	UpdateConEmuTabsW(Event+100, (Event == EE_KILLFOCUS || Event == EE_CLOSE), Event == EE_SAVE);
+	bool loosingFocus = (Event == EE_KILLFOCUS) || (Event == EE_CLOSE);
+	UpdateConEmuTabsW(Event+100, loosingFocus, Event == EE_SAVE);
 	return 0;
 }
 
@@ -1510,7 +1516,8 @@ int WINAPI _export ProcessViewerEventW(int Event, void *Param)
 	}
 	// !!! Именно UpdateConEmuTabsW, без версии !!!
 	//2009-06-03 VE_KILLFOCUS при закрытии редактора не приходит. Только VE_CLOSE
-	UpdateConEmuTabsW(Event+200, (Event == VE_KILLFOCUS || Event == VE_CLOSE), false, Param);
+	bool loosingFocus = (Event == VE_KILLFOCUS || Event == VE_CLOSE);
+	UpdateConEmuTabsW(Event+200, loosingFocus, false, Param);
 	return 0;
 }
 
@@ -2069,13 +2076,16 @@ DWORD WINAPI ServerThreadCommand(LPVOID ahPipe)
     return 0;
 }
 
-void ShowPluginMenu()
+void ShowPluginMenu(int nID /*= -1*/)
 {
 	int nItem = -1;
 	if (!FarHwnd)
 		return;
 
-	if (gFarVersion.dwVerMajor==1)
+	if (nID != -1) {
+		nItem = nID;
+		if (nItem >= 7) nItem++; //Separator
+	} else if (gFarVersion.dwVerMajor==1)
 		nItem = ShowPluginMenuA();
 	else if (gFarVersion.dwBuild>=FAR_Y_VER)
 		nItem = FUNC_Y(ShowPluginMenu)();
