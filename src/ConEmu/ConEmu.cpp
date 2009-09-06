@@ -7,7 +7,9 @@
 #include "../common/ConEmuCheck.h"
 
 #define DEBUGSTRSYS(s) //DEBUGSTR(s)
-#define DEBUGSTRSIZE(s) DEBUGSTR(s)
+#define DEBUGSTRSIZE(s) //DEBUGSTR(s)
+#define DEBUGSTRCONS(s) DEBUGSTR(s)
+#define DEBUGSTRTABS(s) DEBUGSTR(s)
 
 #define PROCESS_WAIT_START_TIME 1000
 
@@ -2151,13 +2153,13 @@ LRESULT CConEmuMain::GuiShellExecuteEx(SHELLEXECUTEINFO* lpShellExecute, BOOL ab
 		else
 			lRc = SendMessage(ghWnd, mn_ShellExecuteEx, abAllowAsync, (LPARAM)lpShellExecute);
 	} else {
-		if (IsDebuggerPresent()) {
+		/*if (IsDebuggerPresent()) { -- не требуетс€. был баг с пам€тью
 			BOOL b = gbDontEnable; gbDontEnable = TRUE;
 			int nBtn = MessageBox(ghWnd, L"Debugger active!\nShellExecuteEx(runas) my fails, when VC IDE\ncatches Microsoft C++ exceptions.\nContinue?", L"ConEmu", MB_ICONASTERISK|MB_YESNO|MB_DEFBUTTON2);
 			gbDontEnable = b;
 			if (nBtn != IDYES)
 				return (FALSE);
-		}
+		}*/
 		lRc = ::ShellExecuteEx(lpShellExecute);
 		
 		if (abAllowAsync && lRc == 0) {
@@ -2901,7 +2903,8 @@ VOID CConEmuMain::WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hw
         //The idObject parameter contains the process identifier of the terminated process.
 
         #ifdef _DEBUG
-        wsprintfW(szDbg, L"EVENT_CONSOLE_END_APPLICATION(HWND=0x%08X, PID=%i%s)\n", hwnd, idObject, (idChild == CONSOLE_APPLICATION_16BIT) ? L" 16bit" : L"");
+        wsprintfW(szDbg, L"EVENT_CONSOLE_END_APPLICATION(HWND=0x%08X, PID=%i%s)\n", hwnd, idObject, 
+			(idChild == CONSOLE_APPLICATION_16BIT) ? L" 16bit" : L"");
         OutputDebugString(szDbg);
         #endif
         break;
@@ -4888,7 +4891,8 @@ LRESULT CConEmuMain::OnVConTerminated(CVirtualConsole* apVCon, BOOL abPosted /*=
             break;
         }
     }
-    TODO("Alternative?");
+    TabBar.Update(); // »наче не будет обновлены закладки
+	// ј теперь можно обновить активную закладку
     TabBar.OnConsoleActivated(ActiveConNum()+1/*, FALSE*/);
     return 0;
 }
@@ -5178,16 +5182,17 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			WINDOWPOS *p = (WINDOWPOS*)lParam;
 			wchar_t szDbg[128]; wsprintf(szDbg, L"WM_WINDOWPOSCHANGING ({%i-%i}x{%i-%i} Flags=0x%08X)\n", p->x, p->y, p->cx, p->cy, p->flags);
 			DEBUGSTRSIZE(szDbg);
-			result = 0; //DefWindowProc(hWnd, messg, wParam, lParam);
+			// »наче могут не вызватьс€ событи€ WM_SIZE/WM_MOVE
+			result = DefWindowProc(hWnd, messg, wParam, lParam);
 		} break;
 
-	case WM_WINDOWPOSCHANGED:
-		{
-			WINDOWPOS *p = (WINDOWPOS*)lParam;
-			wchar_t szDbg[128]; wsprintf(szDbg, L"WM_WINDOWPOSCHANGED ({%i-%i}x{%i-%i} Flags=0x%08X)\n", p->x, p->y, p->cx, p->cy, p->flags);
-			DEBUGSTRSIZE(szDbg);
-			result = 0; //DefWindowProc(hWnd, messg, wParam, lParam);
-		} break;
+	//case WM_WINDOWPOSCHANGED:
+	//	{
+	//		WINDOWPOS *p = (WINDOWPOS*)lParam;
+	//		wchar_t szDbg[128]; wsprintf(szDbg, L"WM_WINDOWPOSCHANGED ({%i-%i}x{%i-%i} Flags=0x%08X)\n", p->x, p->y, p->cx, p->cy, p->flags);
+	//		DEBUGSTRSIZE(szDbg);
+	//		result = 0; //DefWindowProc(hWnd, messg, wParam, lParam);
+	//	} break;
 
 	case WM_SHOWWINDOW:
 		{
@@ -5207,14 +5212,23 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 				result = gConEmu.OnSize(wParam, LOWORD(lParam), HIWORD(lParam));
 		} break;
 
+	// WM_MOVE не зоветс€, возможно из-за WM_WINDOWPOSCHANGED
     case WM_MOVE:
 		{
 			#ifdef _DEBUG
 			wchar_t szDbg[128]; wsprintf(szDbg, L"WM_MOVE ({%i-%i})\n", LOWORD(lParam), HIWORD(lParam));
 			DEBUGSTRSIZE(szDbg);
 			#endif
+		} break;
 
-			// вызываетс€ когда не надо...
+	case WM_WINDOWPOSCHANGED:
+		{
+			WINDOWPOS *p = (WINDOWPOS*)lParam;
+			wchar_t szDbg[128]; wsprintf(szDbg, L"WM_WINDOWPOSCHANGED ({%i-%i}x{%i-%i} Flags=0x%08X)\n", p->x, p->y, p->cx, p->cy, p->flags);
+			DEBUGSTRSIZE(szDbg);
+			// »наче могут не вызватьс€ событи€ WM_SIZE/WM_MOVE
+			result = DefWindowProc(hWnd, messg, wParam, lParam);
+
 			if (hWnd == ghWnd /*&& ghOpWnd*/) { //2009-05-08 запоминать wndX/wndY всегда, а не только если окно настроек открыто
 				if (!gSet.isFullScreen && !isZoomed() && !isIconic())
 				{
@@ -5387,10 +5401,29 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			gConEmu.WinEventProc(NULL, EVENT_CONSOLE_START_APPLICATION, (HWND)wParam, lParam, 0, 0, 0);
 			return 0;
         } else if (messg == gConEmu.mn_MsgVConTerminated) {
+
+			#ifdef _DEBUG
+				wchar_t szDbg[200];
+				lstrcpy(szDbg, L"OnVConTerminated");
+				CVirtualConsole* pCon = (CVirtualConsole*)lParam;
+				for (int i = 0; pCon && i < MAX_CONSOLE_COUNT; i++) {
+					if (pCon == mp_VCon[i]) {
+						ConEmuTab tab = {0};
+						pCon->RCon()->GetTab(0, &tab);
+						tab.Name[128] = 0; // чтобы не вылезло из szDbg
+						wsprintf(szDbg+lstrlen(szDbg), L": #%i: %s", i+1, tab.Name);
+						break;						
+					}
+				}
+				lstrcat(szDbg, L"\n");
+				DEBUGSTRCONS(szDbg);
+			#endif
+
             return gConEmu.OnVConTerminated ( (CVirtualConsole*)lParam, TRUE );
         } else if (messg == gConEmu.mn_MsgUpdateScrollInfo) {
             return OnUpdateScrollInfo(TRUE);
         } else if (messg == gConEmu.mn_MsgUpdateTabs) {
+			DEBUGSTRTABS(L"OnUpdateTabs\n");
             TabBar.Update(TRUE);
             return 0;
         } else if (messg == gConEmu.mn_MsgOldCmdVer) {

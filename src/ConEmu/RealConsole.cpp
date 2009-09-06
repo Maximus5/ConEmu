@@ -12,6 +12,7 @@
 #define DEBUGSTRPROC(s) //DEBUGSTR(s)
 #define DEBUGSTRCMD(s) //DEBUGSTR(s)
 #define DEBUGSTRPKT(s) //DEBUGSTR(s)
+#define DEBUGSTRCON(s) DEBUGSTR(s)
 
 WARNING("При быстром наборе текста курсор часто 'замерзает' на одной из букв, но продолжает двигаться дальше");
 
@@ -154,6 +155,7 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
 
 CRealConsole::~CRealConsole()
 {
+	DEBUGSTRCON(L"CRealConsole::~CRealConsole()\n");
     StopThread();
     
     MCHKHEAP
@@ -369,6 +371,7 @@ BOOL CRealConsole::SetConsoleSize(COORD size, DWORD anCmdID/*=CECMD_SETSIZE*/)
             CONSOLE_SCREEN_BUFFER_INFO sbi = {{0,0}};
             //memmove(&sbi, &pOut->SetSizeRet.SetSizeRet, sizeof(sbi));
             sbi = pOut->SetSizeRet.SetSizeRet;
+			WARNING("!!! Здесь часто возникают _ASSERT'ы. Видимо высота буфера меняется в другой нити и con.bBufferHeight просто не успевает?");
             if (con.bBufferHeight) {
                 _ASSERTE((sbi.srWindow.Bottom-sbi.srWindow.Top)<200);
                 if (sbi.dwSize.X == size.X && sbi.dwSize.Y == pIn->SetSize.nBufferHeight)
@@ -1133,6 +1136,7 @@ BOOL CRealConsole::StartProcess()
                 wcscat(psCurCmd, L"\"");
             }*/
             if (gSet.isAdvLogging) wcscat(psCurCmd, L" /LOG");
+			if (!gSet.isConVisible) wcscat(psCurCmd, L" /HIDE");
             wcscat(psCurCmd, L" /CMD ");
             wcscat(psCurCmd, lpszCmd);
             MCHKHEAP
@@ -1470,9 +1474,9 @@ void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y)
     //       {
     //           bInitialized = true; // выполнить эту операцию один раз
     //           /*if (gConEmu.isConmanAlternative()) {
-    //               POSTMESSAGE(hConWnd, WM_COMMAND, SC_PASTE_SECRET, 0, TRUE);
+    //               PostConsoleMessage(hConWnd, WM_COMMAND, SC_PASTE_SECRET, 0, TRUE);
     //           } else {*/
-    //               POSTMESSAGE(hConWnd, WM_COMMAND, (messg == WM_LBUTTONDOWN) ? SC_MARK_SECRET : SC_PASTE_SECRET, 0, TRUE);
+    //               PostConsoleMessage(hConWnd, WM_COMMAND, (messg == WM_LBUTTONDOWN) ? SC_MARK_SECRET : SC_PASTE_SECRET, 0, TRUE);
     //               if (messg == WM_RBUTTONDOWN)
     //                   return; // достаточно SC_PASTE_SECRET
     //           //}
@@ -1483,7 +1487,7 @@ void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y)
     //       short newX = MulDiv(x, conRect.right, klMax<uint>(1, mp_VCon->Width));
     //       short newY = MulDiv(y, conRect.bottom, klMax<uint>(1, mp_VCon->Height));
 
-    //       POSTMESSAGE(hConWnd, messg, wParam, MAKELPARAM( newX, newY ), TRUE);
+    //       PostConsoleMessage(hConWnd, messg, wParam, MAKELPARAM( newX, newY ), TRUE);
     //   }
 }
 
@@ -1587,9 +1591,32 @@ void CRealConsole::PostConsoleEventPipe(MSG *pMsg)
     }
 }
 
+LRESULT CRealConsole::PostConsoleMessage(UINT nMsg, WPARAM wParam, LPARAM lParam)
+{
+	LRESULT lRc = 0;
+	if (!isAdministrator()) {
+		POSTMESSAGE(hConWnd, nMsg, wParam, lParam, FALSE);
+	} else {
+		CESERVER_REQ in;
+		in.hdr.nCmd = CECMD_POSTCONMSG;
+		in.hdr.nSize = sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_POSTMSG);
+		in.hdr.nSrcThreadId = GetCurrentThreadId();
+		in.hdr.nVersion = CESERVER_REQ_VER;
+		// Собственно, аргументы
+		in.Msg.bPost = TRUE;
+		in.Msg.nMsg = nMsg;
+		in.Msg.wParam = wParam;
+		in.Msg.lParam = lParam;
+
+		CESERVER_REQ *pOut = ExecuteSrvCmd(GetServerPID(), &in, ghWnd);
+		if (pOut) ExecuteFreeResult(pOut);
+	}
+	return lRc;
+}
 
 void CRealConsole::StopSignal()
 {
+	DEBUGSTRCON(L"CRealConsole::StopSignal()\n");
     if (!this)
         return;
 
@@ -1732,9 +1759,10 @@ LPCTSTR CRealConsole::GetTitle()
 
 LRESULT CRealConsole::OnScroll(int nDirection)
 {
+	if (!this) return 0;
     // SB_LINEDOWN / SB_LINEUP / SB_PAGEDOWN / SB_PAGEUP
     TODO("Переделать в команду пайпа");
-    POSTMESSAGE(hConWnd, WM_VSCROLL, nDirection, NULL, FALSE);
+	PostConsoleMessage(WM_VSCROLL, nDirection, NULL);
     return 0;
 }
 
@@ -1870,7 +1898,7 @@ void CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
             //    r.Event.KeyEvent.wVirtualKeyCode = mn_LastVKeyPressed;
             //} else {
                 mn_LastVKeyPressed = wParam & 0xFFFF;
-                ////POSTMESSAGE(hConWnd, messg, wParam, lParam, FALSE);
+                ////PostConsoleMessage(hConWnd, messg, wParam, lParam, FALSE);
                 //if ((wParam >= VK_F1 && wParam <= /*VK_F24*/ VK_SCROLL) || wParam <= 32 ||
                 //    (wParam >= VK_LSHIFT/*0xA0*/ && wParam <= /*VK_RMENU=0xA5*/ 0xB7 /*=VK_LAUNCH_APP2*/) ||
                 //    (wParam >= VK_LWIN/*0x5B*/ && wParam <= VK_APPS/*0x5D*/) ||
@@ -1997,6 +2025,7 @@ void CRealConsole::OnWinEvent(DWORD event, HWND hwnd, LONG idObject, LONG idChil
             //Process Add(idObject);
             
             // Если запущено 16битное приложение - необходимо повысить приоритет нашего процесса, иначе будут тормоза
+			#ifndef WIN64
             _ASSERTE(CONSOLE_APPLICATION_16BIT==1);
             if (idChild == CONSOLE_APPLICATION_16BIT) {
 				DEBUGSTRPROC(L"16 bit application STARTED\n");
@@ -2005,6 +2034,7 @@ void CRealConsole::OnWinEvent(DWORD event, HWND hwnd, LONG idObject, LONG idChil
 					mb_IgnoreCmdStop = TRUE;
                 SetPriorityClass(GetCurrentProcess(), HIGH_PRIORITY_CLASS);
             }
+			#endif
         } break;
     case EVENT_CONSOLE_END_APPLICATION:
         //A console process has exited. 
@@ -2014,6 +2044,7 @@ void CRealConsole::OnWinEvent(DWORD event, HWND hwnd, LONG idObject, LONG idChil
             //Process Delete(idObject);
             
             //
+			#ifndef WIN64
             if (idChild == CONSOLE_APPLICATION_16BIT) {
                 //gConEmu.gbPostUpdateWindowSize = true;
 				DEBUGSTRPROC(L"16 bit application TERMINATED\n");
@@ -2022,6 +2053,7 @@ void CRealConsole::OnWinEvent(DWORD event, HWND hwnd, LONG idObject, LONG idChil
                 TODO("Вообще-то хорошо бы проверить, что 16бит не осталось в других консолях");
                 SetPriorityClass(GetCurrentProcess(), NORMAL_PRIORITY_CLASS);
             }
+			#endif
         } break;
     }
 }
@@ -3544,7 +3576,7 @@ void CRealConsole::ShowConsole(int nMode) // -1 Toggle, 0 - Hide, 1 - Show
 				if (pIn) {
 					pIn->dwData[0] = SW_SHOWNORMAL;
 					CESERVER_REQ *pOut = ExecuteSrvCmd(GetServerPID(), pIn, ghWnd);
-					ExecuteFreeResult(pOut);
+					if (pOut) ExecuteFreeResult(pOut);
 					ExecuteFreeResult(pIn);
 				}
 			}
@@ -3562,7 +3594,7 @@ void CRealConsole::ShowConsole(int nMode) // -1 Toggle, 0 - Hide, 1 - Show
 				if (pIn) {
 					pIn->dwData[0] = SW_HIDE;
 					CESERVER_REQ *pOut = ExecuteSrvCmd(GetServerPID(), pIn, ghWnd);
-					ExecuteFreeResult(pOut);
+					if (pOut) ExecuteFreeResult(pOut);
 					ExecuteFreeResult(pIn);
 				}
 			}
@@ -3612,8 +3644,8 @@ void CRealConsole::SetHwnd(HWND ahConWnd)
 
     if (gSet.isConVisible)
         ShowConsole(1); // установить консольному окну флаг AlwaysOnTop
-    else if (isAdministrator())
-    	ShowConsole(0); // В Win7 оно таки появляется видимым
+    //else if (isAdministrator())
+    //	ShowConsole(0); // В Win7 оно таки появляется видимым - проверка вынесена в ConEmuC
 
     if ((gSet.isMonitorConsoleLang & 2) == 2) // Один Layout на все консоли
         SwitchKeyboardLayout(gConEmu.GetActiveKeyboardLayout());
@@ -4224,7 +4256,7 @@ void CRealConsole::SetTabs(ConEmuTab* tabs, int tabsCount)
 {
     ConEmuTab* lpNewTabs = NULL;
     
-    int nActiveTab = 0;
+    int nActiveTab = 0, i;
     if (tabs && tabsCount) {
         int nNewSize = sizeof(ConEmuTab)*tabsCount;
         lpNewTabs = (ConEmuTab*)Alloc(nNewSize, 1);
@@ -4239,19 +4271,29 @@ void CRealConsole::SetTabs(ConEmuTab* tabs, int tabsCount)
         if (tabsCount == 1)
             lpNewTabs[0].Current = 1;
         
-        for (int i=(tabsCount-1); i>=0; i--) {
+        for (i=(tabsCount-1); i>=0; i--) {
             if (lpNewTabs[i].Current) {
                 nActiveTab = i; break;
             }
         }
         #ifdef _DEBUG
-        for (int i=1; i<tabsCount; i++) {
+        for (i=1; i<tabsCount; i++) {
             if (lpNewTabs[i].Name[0] == 0) {
                 _ASSERTE(lpNewTabs[i].Name[0]!=0);
                 //wcscpy(lpNewTabs[i].Name, L"ConEmu");
             }
         }
         #endif
+
+		if (isAdministrator() && gSet.szAdminTitleSuffix[0]) {
+			int nAddLen = lstrlen(gSet.szAdminTitleSuffix) + 1;
+	        for (i=0; i<tabsCount; i++) {
+		        if (lpNewTabs[i].Name[0]) {
+					if (lstrlen(lpNewTabs[i].Name) < (int)(sizeofarray(lpNewTabs[i].Name) + nAddLen))
+						lstrcat(lpNewTabs[i].Name, gSet.szAdminTitleSuffix);
+				}
+			}
+		}
 
     } else if (tabsCount == 1 && tabs == NULL) {
         lpNewTabs = (ConEmuTab*)Alloc(sizeof(ConEmuTab),1);
@@ -4306,6 +4348,10 @@ BOOL CRealConsole::GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab)
         	// 03.09.2009 Maks -> min
             int nMaxLen = min(countof(ms_PanelTitle) , countof(pTab->Name));
             lstrcpyn(pTab->Name, ms_PanelTitle, nMaxLen);
+			if (isAdministrator() && gSet.szAdminTitleSuffix[0]) {
+				if (lstrlen(ms_PanelTitle) < (int)(sizeofarray(pTab->Name) + lstrlen(gSet.szAdminTitleSuffix) + 1))
+					lstrcat(pTab->Name, gSet.szAdminTitleSuffix);
+			}
         } else if (mn_tabsCount == 1 && TitleFull[0]) { // Если панель единственная - точно показываем заголовок консоли
         	// 03.09.2009 Maks -> min
             int nMaxLen = min(countof(TitleFull) , countof(pTab->Name));
@@ -4911,8 +4957,8 @@ void CRealConsole::SwitchKeyboardLayout(DWORD dwNewKeyboardLayout)
     if (!hConWnd) return;
 
     // В FAR при XLat делается так:
-    //PostMessageW(hFarWnd,WM_INPUTLANGCHANGEREQUEST, INPUTLANGCHANGE_FORWARD, 0);
-    PostMessageW(hConWnd, WM_INPUTLANGCHANGEREQUEST, 0, dwNewKeyboardLayout);
+    //PostConsoleMessageW(hFarWnd,WM_INPUTLANGCHANGEREQUEST, INPUTLANGCHANGE_FORWARD, 0);
+    PostConsoleMessage(WM_INPUTLANGCHANGEREQUEST, 0, dwNewKeyboardLayout);
     
 
     //   int nInSize = sizeof(CESERVER_REQ_HDR)+sizeof(DWORD);
@@ -4943,7 +4989,7 @@ void CRealConsole::Paste()
     
 #ifndef RCON_INTERNAL_PASTE
     // Можно так
-    PostMessage(hConWnd, WM_COMMAND, SC_PASTE_SECRET, 0);
+    PostConsoleMessage(WM_COMMAND, SC_PASTE_SECRET, 0);
 #endif
 
 #ifdef RCON_INTERNAL_PASTE
@@ -5010,7 +5056,7 @@ void CRealConsole::CloseConsole()
     if (!this) return;
     _ASSERTE(!mb_ProcessRestarted);
 	if (hConWnd) {
-        PostMessage(hConWnd, WM_CLOSE, 0, 0);
+        PostConsoleMessage(WM_CLOSE, 0, 0);
 	} else {
 		m_Args.bDetached = FALSE;
 		if (mp_VCon)

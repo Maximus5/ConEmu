@@ -10,7 +10,7 @@
 #define VirtualConsoleClassScroll L"VirtualConsoleClassScroll"
 
 // Service function
-HWND AtoH(char *Str, int Len);
+//HWND AtoH(char *Str, int Len);
 
 
 // 0 -- All OK (ConEmu found, Version OK)

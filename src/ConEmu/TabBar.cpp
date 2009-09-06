@@ -1,6 +1,8 @@
 
 #define SHOWDEBUGSTR
 
+#define DEBUGSTRTABS(s) DEBUGSTR(s)
+
 #include <windows.h>
 #include <commctrl.h>
 #include "header.h"
@@ -373,6 +375,7 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
     if (!gConEmu.isMainThread()) {
         if (mb_PostUpdateCalled) return;
         mb_PostUpdateCalled = TRUE;
+		DEBUGSTRTABS(L"   Posting TabBarClass::Update\n");
         PostMessage(ghWnd, mn_MsgUpdateTabs, 0, 0);
         return;
     }
@@ -383,7 +386,7 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
     
     int V, I, tabIdx = 0, nCurTab = -1;
 	CVirtualConsole* pVCon = NULL;
-    VConTabs vct = {{NULL}};
+    VConTabs vct = {NULL};
 
     // Выполняться должно только в основной нити, так что CriticalSection не нужна
     m_Tab2VCon.clear();
@@ -484,8 +487,18 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
 
     // удалить лишние закладки (визуально)
     int nCurCount = GetItemCount();
-    for (I = tabIdx; I < nCurCount; I++)
+	#ifdef _DEBUG
+	wchar_t szDbg[128];
+	wsprintf(szDbg, L"TabBarClass::Update.  ItemCount=%i, PrevItemCount=%i\n", tabIdx, nCurCount);
+	DEBUGSTRTABS(szDbg);
+	#endif
+	for (I = tabIdx; I < nCurCount; I++) {
+		#ifdef _DEBUG
+		wsprintf(szDbg, L"   Deleting tab=%i\n", I+1);
+		DEBUGSTRTABS(szDbg);
+		#endif
         DeleteItem(tabIdx);
+	}
 
     if (mb_InKeySwitching) {
 	    if (mn_CurSelTab >= nCurCount) // Если выбранный таб вылез за границы
@@ -1128,7 +1141,7 @@ int TabBarClass::GetIndexByTab(VConTabs tab)
 	std::vector<VConTabs>::iterator iter = m_Tab2VCon.begin();
 	while (iter != m_Tab2VCon.end()) {
 		nIdx ++;
-		if (iter->ID == tab.ID)
+		if (*iter == tab)
 			return nIdx;
 		iter ++;
 	}
@@ -1140,7 +1153,7 @@ int TabBarClass::GetNextTab(BOOL abForward, BOOL abAltStyle/*=FALSE*/)
     BOOL lbRecentMode = (abAltStyle == FALSE) ? gSet.isTabRecent : !gSet.isTabRecent;
     int nCurSel = GetCurSel();
     int nCurCount = GetItemCount();
-    VConTabs cur; cur.ID = 0;
+	VConTabs cur = {NULL};
     
     _ASSERTE(nCurCount == m_Tab2VCon.size());
     if (nCurCount < 1)
@@ -1158,7 +1171,7 @@ int TabBarClass::GetNextTab(BOOL abForward, BOOL abAltStyle/*=FALSE*/)
         	std::vector<VConTabs>::iterator iter = m_TabStack.begin();
         	while (iter != m_TabStack.end()) {
         		// Найти в стеке выделенный таб
-        		if (iter->ID == cur.ID) {
+        		if (*iter == cur) {
         			// Определить следующий таб, который мы можем активировать
         			do {
 	        			iter ++; // Если дошли до конца (сейчас выделен последний таб) вернуть первый
@@ -1168,7 +1181,7 @@ int TabBarClass::GetNextTab(BOOL abForward, BOOL abAltStyle/*=FALSE*/)
     	    			if (CanActivateTab(i)) {
     	    				return i;
         				}
-        			} while (iter->ID != cur.ID);
+        			} while (*iter != cur);
         			break;
         		}
 				iter ++;
@@ -1188,7 +1201,7 @@ int TabBarClass::GetNextTab(BOOL abForward, BOOL abAltStyle/*=FALSE*/)
         	std::vector<VConTabs>::reverse_iterator iter = m_TabStack.rbegin();
         	while (iter != m_TabStack.rend()) {
         		// Найти в стеке выделенный таб
-        		if (iter->ID == cur.ID) {
+        		if (*iter == cur) {
         			// Определить следующий таб, который мы можем активировать
         			do {
 	        			iter ++; // Если дошли до конца (сейчас выделен последний таб) вернуть первый
@@ -1198,7 +1211,7 @@ int TabBarClass::GetNextTab(BOOL abForward, BOOL abAltStyle/*=FALSE*/)
     	    			if (CanActivateTab(i)) {
     	    				return i;
         				}
-        			} while (iter->ID != cur.ID);
+        			} while (*iter != cur);
         			break;
         		}
 				iter++;
@@ -1278,7 +1291,7 @@ void TabBarClass::CheckStack()
 	while (j != m_TabStack.end()) {
 		lbExist = FALSE;
 		for (i = m_Tab2VCon.begin(); i != m_Tab2VCon.end(); i++) {
-			if (i->ID == j->ID) {
+			if (*i == *j) {
 				lbExist = TRUE; break;
 			}
 		}
@@ -1291,7 +1304,7 @@ void TabBarClass::CheckStack()
 	for (i = m_Tab2VCon.begin(); i != m_Tab2VCon.end(); i++) {
 		lbExist = FALSE;
 		for (j = m_TabStack.begin(); j != m_TabStack.end(); j++) {
-			if (i->ID == j->ID) {
+			if (*i == *j) {
 				lbExist = TRUE; break;
 			}
 		}
@@ -1310,7 +1323,7 @@ void TabBarClass::AddStack(VConTabs tab)
 		//VConTabs tmp;
 		std::vector<VConTabs>::iterator iter = m_TabStack.begin();
 		while (iter != m_TabStack.end()) {
-			if (iter->ID == tab.ID) {
+			if (*iter == tab) {
 				if (iter == m_TabStack.begin()) {
 					lbExist = TRUE;
 				} else {

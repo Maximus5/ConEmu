@@ -90,7 +90,9 @@ BOOL FindServerCmd(DWORD nServerCmd, DWORD &dwServerPID);
 BOOL gbNeedPostTabSend = FALSE;
 DWORD gnNeedPostTabSendTick = 0;
 #define NEEDPOSTTABSENDDELTA 100
-
+wchar_t gsMonitorEnvVar[0x1000];
+bool gbMonitorEnvVar = false;
+#define MONITORENVVARDELTA 1000
 
 
 // minimal(?) FAR version 2.0 alpha build FAR_X_VER
@@ -506,6 +508,7 @@ DWORD WINAPI MonitorThreadProcW(LPVOID lpParameter)
 	//DWORD dwProcId = GetCurrentProcessId();
 
 	DWORD dwStartTick = GetTickCount();
+	DWORD dwMonitorTick = dwStartTick;
 	BOOL lbStartedNoConEmu = (ConEmuHwnd == NULL);
 	//_ASSERTE(ConEmuHwnd!=NULL); -- ConEmu может подцепитьс€ позднее!
 
@@ -656,6 +659,24 @@ DWORD WINAPI MonitorThreadProcW(LPVOID lpParameter)
 			
 				InitResources();
 			}
+		}
+
+		if (ConEmuHwnd && gbMonitorEnvVar && gsMonitorEnvVar[0]
+			&& (GetTickCount() - dwMonitorTick) > MONITORENVVARDELTA)
+		{
+			wchar_t *pszName  = gsMonitorEnvVar;
+			wchar_t *pszValue = pszName + lstrlenW(pszName) + 1;
+
+			while (*pszName && *pszValue) {
+				// ≈сли в pszValue пуста€ строка - удаление переменной
+				SetEnvironmentVariableW(pszName, (*pszValue != 0) ? pszValue : NULL);
+				//
+				pszName = pszValue + lstrlenW(pszValue) + 1;
+				if (*pszName == 0) break;
+				pszValue = pszName + lstrlenW(pszName) + 1;
+			}
+
+			dwMonitorTick = GetTickCount();
 		}
 
 		if (gbNeedPostTabSend) {
@@ -2000,9 +2021,7 @@ DWORD WINAPI ServerThreadCommand(LPVOID ahPipe)
         return 0; // удалось считать не все данные
     }
 
-    #ifdef _DEBUG
-	UINT nDataSize = pIn->hdr.nSize - sizeof(CESERVER_REQ) + 1;
-	#endif
+	UINT nDataSize = pIn->hdr.nSize - sizeof(CESERVER_REQ_HDR);
 
     // ¬се данные из пайпа получены, обрабатываем команду и возвращаем (если нужно) результат
 	//fSuccess = WriteFile( hPipe, pOut, pOut->nSize, &cbWritten, NULL);
@@ -2043,9 +2062,20 @@ DWORD WINAPI ServerThreadCommand(LPVOID ahPipe)
 
 	} else if (pIn->hdr.nCmd == CMD_SETENVVAR) {
 		// ”становить переменные окружени€
+		// ѕлагин это получает в ответ на CECMD_RESOURCES, посланное в GUI при загрузке плагина
 		_ASSERTE(nDataSize>=4);
 		wchar_t *pszName  = (wchar_t*)pIn->Data;
 		wchar_t *pszValue = pszName + lstrlenW(pszName) + 1;
+
+		_ASSERTE(nDataSize<sizeof(gsMonitorEnvVar));
+		gbMonitorEnvVar = false;
+		// ѕлагин FarCall "нарушает" COMSPEC (копирует содержимое запускаемого процесса)
+		bool lbOk = false;
+		if (nDataSize<sizeof(gsMonitorEnvVar)) {
+			memcpy(gsMonitorEnvVar, pszName, nDataSize);
+			lbOk = true;
+		}
+
 		while (*pszName && *pszValue) {
 			// ≈сли в pszValue пуста€ строка - удаление переменной
 			SetEnvironmentVariableW(pszName, (*pszValue != 0) ? pszValue : NULL);
@@ -2054,6 +2084,8 @@ DWORD WINAPI ServerThreadCommand(LPVOID ahPipe)
 			if (*pszName == 0) break;
 			pszValue = pszName + lstrlenW(pszName) + 1;
 		}
+
+		gbMonitorEnvVar = lbOk;
 
 	} else {
 		CESERVER_REQ* pCmdRet = ProcessCommand(pIn->hdr.nCmd, TRUE/*bReqMainThread*/, pIn->Data);
@@ -2258,4 +2290,15 @@ BOOL IsMacroActive()
 		lbActive = FUNC_X(IsMacroActive)();
 
 	return lbActive;
+}
+
+/* »спользуютс€ как extern в ConEmuCheck.cpp */
+LPVOID _calloc(size_t nCount,size_t nSize) {
+	return calloc(nCount,nSize);
+}
+LPVOID _malloc(size_t nCount) {
+	return malloc(nCount);
+}
+void   _free(LPVOID ptr) {
+	free(ptr);
 }

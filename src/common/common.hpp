@@ -120,8 +120,9 @@ extern wchar_t gszDbgModLabel[6];
 #define CECMD_ATTACH2GUI    18 // Выполнить подключение видимой (отключенной) консоли к GUI. Без аргументов
 #define CECMD_FARLOADED     19 // Посылается плагином в сервер
 #define CECMD_SHOWCONSOLE   20 // В Win7 релизе нельзя скрывать окно консоли, запущенной в режиме администратора
+#define CECMD_POSTCONMSG    21 // В Win7 релизе нельзя посылать сообщения окну консоли, запущенной в режиме администратора
 
-#define CESERVER_REQ_VER    13
+#define CESERVER_REQ_VER    14
 
 #define PIPEBUFSIZE 4096
 
@@ -130,6 +131,20 @@ extern wchar_t gszDbgModLabel[6];
 //#pragma pack(push, 1)
 #include <pshpack1.h>
 
+#define u64 unsigned __int64
+typedef struct tag_HWND2 {
+	unsigned __int64 u;
+	operator HWND() {
+		return (HWND)u;
+	};
+	operator DWORD() {
+		return (DWORD)u;
+	};
+	struct tag_HWND2& operator=(HWND h) {
+		u = (u64)h;
+		return *this;
+	};
+} HWND2;
 
 TODO("Restrict CONEMUTABMAX to 128 chars. Only filename, and may be ellipsed...");
 #define CONEMUTABMAX 0x400
@@ -158,8 +173,14 @@ typedef struct tag_ForwardedPanelInfo {
 	RECT PassiveRect;
 	int ActivePathShift; // сдвиг в этой структуре в байтах
 	int PassivePathShift; // сдвиг в этой структуре в байтах
-	WCHAR* pszActivePath/*[MAX_PATH+1]*/;
-	WCHAR* pszPassivePath/*[MAX_PATH+1]*/;
+	union { //x64 ready
+		WCHAR* pszActivePath/*[MAX_PATH+1]*/;
+		u64 Reserved1;
+	};
+	union { //x64 ready
+		WCHAR* pszPassivePath/*[MAX_PATH+1]*/;
+		u64 Reserved2;
+	};
 } ForwardedPanelInfo;
 
 typedef struct tag_FarVersion {
@@ -221,7 +242,7 @@ typedef struct tag_CESERVER_REQ_FULLCONDATA {
 } CESERVER_REQ_FULLCONDATA;
 
 typedef struct tag_CESERVER_REQ_CONINFO_HDR {
-	/* 1*/HWND hConWnd;
+	/* 1*/HWND2 hConWnd;
 	/* 2*/DWORD nPacketId;
 	      DWORD nInputTID;
 	/* 3*/DWORD nProcesses[20];
@@ -267,7 +288,7 @@ typedef struct tag_CESERVER_REQ_NEWCMD {
 
 typedef struct tag_CESERVER_REQ_STARTSTOP {
 	DWORD nStarted; // 0 - ServerStart, 1 - ServerStop, 2 - ComspecStart, 3 - ComspecStop
-	HWND  hWnd; // при передаче В GUI - консоль, при возврате в консоль - GUI
+	HWND2 hWnd; // при передаче В GUI - консоль, при возврате в консоль - GUI
 	DWORD dwPID, dwInputTID;
 	DWORD nSubSystem; // 255 для DOS программ, 0x100 - аттач из FAR плагина
 	// А это приходит из консоли, вдруго консольная программа успела поменять размер буфера
@@ -276,10 +297,17 @@ typedef struct tag_CESERVER_REQ_STARTSTOP {
 
 typedef struct tag_CESERVER_REQ_STARTSTOPRET {
 	BOOL  bWasBufferHeight;
-	HWND  hWnd; // при передаче В GUI - консоль, при возврате в консоль - GUI
+	HWND2 hWnd; // при передаче В GUI - консоль, при возврате в консоль - GUI
 	DWORD dwPID;
 	DWORD nBufferHeight, nWidth, nHeight;
 } CESERVER_REQ_STARTSTOPRET;
+
+typedef struct tag_CESERVER_REQ_POSTMSG {
+	BOOL    bPost;
+	UINT    nMsg;
+	// Заложимся на унификацию x86 & x64
+	unsigned __int64 wParam, lParam;
+} CESERVER_REQ_POSTMSG;
 
 typedef struct tag_CESERVER_REQ {
     CESERVER_REQ_HDR hdr;
@@ -287,6 +315,7 @@ typedef struct tag_CESERVER_REQ {
 		BYTE    Data[1]; // variable(!) length
 		WORD    wData[1];
 		DWORD   dwData[1];
+		u64     qwData[1];
 		CESERVER_REQ_CONINFO ConInfo; // Informational only! Some fields ARE VARIABLE LENGTH
 		CESERVER_REQ_SETSIZE SetSize;
 		CESERVER_REQ_RETSIZE SetSizeRet;
@@ -296,6 +325,7 @@ typedef struct tag_CESERVER_REQ {
 		CESERVER_REQ_STARTSTOPRET StartStopRet;
 		CESERVER_REQ_CONEMUTAB Tabs;
 		CESERVER_REQ_CONEMUTAB_RET TabsRet;
+		CESERVER_REQ_POSTMSG Msg;
 	};
 } CESERVER_REQ;
 

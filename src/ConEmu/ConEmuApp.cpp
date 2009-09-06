@@ -288,6 +288,18 @@ int __stdcall _MDEBUG_TRAP(LPCSTR asFile, int anLine)
 int MDEBUG_CHK = TRUE;
 #endif
 
+/* Используются как extern в ConEmuCheck.cpp */
+LPVOID _calloc(size_t nCount,size_t nSize) {
+	return calloc(nCount,nSize);
+}
+LPVOID _malloc(size_t nCount) {
+	return malloc(nCount);
+}
+void   _free(LPVOID ptr) {
+	free(ptr);
+}
+
+
 LRESULT CALLBACK AppWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 {
     LRESULT result = 0;

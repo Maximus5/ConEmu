@@ -1432,7 +1432,16 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
 
 	case cbVisible:
 		isConVisible = IsChecked(hExt, cbVisible);
-		gConEmu.ActiveCon()->RCon()->ShowConsole(isConVisible);
+		if (isConVisible) {
+			// Если показывать - то только текущую (иначе на экране мешанина консолей будет
+			gConEmu.ActiveCon()->RCon()->ShowConsole(isConVisible);
+		} else {
+			// А если скрывать - то все сразу
+			for (int i=0; i<MAX_CONSOLE_COUNT; i++) {
+				CVirtualConsole *pCon = gConEmu.GetVCon(i);
+				if (pCon) pCon->RCon()->ShowConsole(FALSE);
+			}
+		}
 		break;
 
     default:

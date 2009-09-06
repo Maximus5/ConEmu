@@ -17,6 +17,10 @@ SECURITY_ATTRIBUTES* gpNullSecurity = NULL;
 	#endif
 #endif
 
+extern LPVOID _calloc(size_t,size_t);
+extern LPVOID _malloc(size_t);
+extern void   _free(LPVOID);
+
 typedef HWND (APIENTRY *FGetConsoleWindow)();
 //typedef DWORD (APIENTRY *FGetConsoleProcessList)(LPDWORD,DWORD);
 
@@ -117,7 +121,7 @@ CESERVER_REQ* ExecuteNewCmd(DWORD nCmd, DWORD nSize)
 {
     CESERVER_REQ* pIn = NULL;
     if (nSize) {
-        pIn = (CESERVER_REQ*)calloc(nSize, 1);
+        pIn = (CESERVER_REQ*)_calloc(nSize, 1);
         if (pIn) {
 	        pIn->hdr.nCmd = nCmd;
 	        pIn->hdr.nSrcThreadId = GetCurrentThreadId();
@@ -272,7 +276,7 @@ CESERVER_REQ* ExecuteCmd(const wchar_t* szGuiPipeName, const CESERVER_REQ* pIn, 
 		return NULL;
 	}
 	
-	pOut = (CESERVER_REQ*)malloc(cbRead);
+	pOut = (CESERVER_REQ*)_malloc(cbRead);
 	_ASSERTE(pOut);
 	if (!pOut) return NULL;
 	memmove(pOut, cbReadBuf, cbRead);
@@ -283,7 +287,7 @@ CESERVER_REQ* ExecuteCmd(const wchar_t* szGuiPipeName, const CESERVER_REQ* pIn, 
 void ExecuteFreeResult(CESERVER_REQ* pOut)
 {
 	if (!pOut) return;
-	free(pOut);
+	_free(pOut);
 }
 
 HWND myGetConsoleWindow()
@@ -322,14 +326,14 @@ HWND GetConEmuHWND(BOOL abRoot)
 		return NULL;
 	
 	if (pOut->hdr.nSize != (sizeof(CESERVER_REQ_HDR)+2*sizeof(DWORD)) || pOut->hdr.nCmd != in.hdr.nCmd) {
-		free(pOut);
+		ExecuteFreeResult(pOut);
 		return NULL;
 	}
 
 	ConEmuRoot = (HWND)pOut->dwData[0];
 	ConEmuHwnd = (HWND)pOut->dwData[1];
 
-	free(pOut);
+	ExecuteFreeResult(pOut);
 	
 	return (abRoot) ? ConEmuRoot : ConEmuHwnd;
 }
@@ -371,178 +375,7 @@ int ConEmuCheck(HWND* ahConEmuWnd)
     }
 }
 
-
-//// Returns HWND of Gui console DC window
-////     pnConsoleIsChild [out]
-////        -1 -- Non ConEmu mode
-////         0 -- console is standalone window
-////         1 -- console is child of ConEmu DC window
-////         2 -- console is child of Main ConEmu window (why?)
-////         3 -- same as 2, but ConEmu DC window - absent (old conemu version?)
-////         4 -- same as 0, but ConEmu DC window - absent (old conemu version?)
-//HWND CheckConEmuChild(HWND ConEmuHwnd, int* pnConsoleIsChild/*=NULL*/)
-//{
-//	char className[100];
-//	HWND hParent=NULL;
-//	
-//	// начальный сброс
-//	if (pnConsoleIsChild) *pnConsoleIsChild = -1;
-//	if (!ConEmuHwnd) return NULL;
-//
-//	
-//	GetClassNameA(ConEmuHwnd, className, 100);
-//	if (lstrcmpiA(className, VirtualConsoleClass) != 0 &&
-//		lstrcmpiA(className, VirtualConsoleClassMain) != 0)
-//	{   // Родитель консоли - НЕ КонЭму
-//		ConEmuHwnd = NULL; // будем определять его дальше
-//	} else {
-//		//bWasSetParent = TRUE;
-//		if (pnConsoleIsChild) *pnConsoleIsChild = 2; // init
-//		// Проверяем родителя родителя консоли
-//		hParent = GetAncestor(ConEmuHwnd, GA_PARENT);
-//		if (hParent) {
-//		    // Должен быть таким
-//			GetClassNameA(hParent, className, 100);
-//			if (lstrcmpiA(className, VirtualConsoleClassMain) == 0) {
-//				if (pnConsoleIsChild) *pnConsoleIsChild = 1; // console is child of ConEmu DC window
-//			} else {
-//				hParent = NULL; // непорядок, имя класса неправильное, значит консоль в основном окне ConEmu
-//			}
-//		}
-//		if (!hParent) {
-//			// 2 -- console is child of Main ConEmu window (why?)
-//			if (pnConsoleIsChild) *pnConsoleIsChild = 2;
-//			hParent = ConEmuHwnd;
-//			ConEmuHwnd = FindWindowExA(hParent, NULL, VirtualConsoleClass, NULL);
-//			if (ConEmuHwnd==NULL) {
-//			    // same as 2, but ConEmu DC windows - absent (old conemu version?)
-//				if (pnConsoleIsChild) *pnConsoleIsChild = 3;
-//				ConEmuHwnd = hParent;
-//			}
-//		}
-//	}
-//	
-//	return ConEmuHwnd;
-//}
-//
-//// Returns HWND of Gui console DC window
-////     pnConsoleIsChild [out]
-////        -1 -- Non ConEmu mode
-////         0 -- console is standalone window
-////         1 -- console is child of ConEmu DC window
-////         2 -- console is child of Main ConEmu window (why?)
-////         3 -- same as 2, but ConEmu DC window - absent (old conemu version?)
-////         4 -- same as 0, but ConEmu DC window - absent (old conemu version?)
-//HWND GetConEmuHWND(BOOL abRoot, int* pnConsoleIsChild/*=NULL*/)
-//{
-//	HWND FarHwnd=NULL, ConEmuHwnd=NULL, ConEmuRoot=NULL;
-//	FGetConsoleWindow fGetConsoleWindow = NULL;
-//	int nChk = -1;
-//	
-//	fGetConsoleWindow = (FGetConsoleWindow)GetProcAddress( GetModuleHandleA("kernel32.dll"), "GetConsoleWindow" );
-//
-//	if (fGetConsoleWindow)
-//		FarHwnd = fGetConsoleWindow();
-//	// начальный сброс
-//	if (pnConsoleIsChild) *pnConsoleIsChild = nChk;
-//
-//	// Если удалось получить хэндл окна консоли - проверяем его родителя
-//	if (FarHwnd)
-//		ConEmuHwnd = GetAncestor(FarHwnd, GA_PARENT);
-//	if (ConEmuHwnd == (HWND)0x10014)
-//		ConEmuHwnd = NULL; else
-//	if (ConEmuHwnd != NULL)
-//	{
-//		// Теоретически, если был сделан SetParent - то в дочернее окно с отрисовкой, но фиг его знает. проверим
-//		ConEmuHwnd = CheckConEmuChild(ConEmuHwnd, &nChk);
-//	}
-//
-//
-//#ifndef CONMANSERVER
-//	if (!ConEmuHwnd) {
-//		char className[100];
-//		if (GetEnvironmentVariableA("ConEmuHWND", className, 99)) {
-//			if (className[0]==L'0' && className[1]==L'x') {
-//				// Получаем хэндл окна ConEmu из переменной среды
-//				ConEmuHwnd = AtoH(className+2, 8);
-//				
-//				if (ConEmuHwnd) {
-//					
-//					GetClassNameA(ConEmuHwnd, className, 100);
-//					if (lstrcmpiA(className, VirtualConsoleClass) != 0)
-//					{
-//						ConEmuHwnd = NULL;
-//					} else {
-//						// Нужно проверить, что консоль принадлежит процессу ConEmu
-//						DWORD dwEmuPID = 0;
-//						GetWindowThreadProcessId(ConEmuHwnd, &dwEmuPID);
-//						if (dwEmuPID == 0) {
-//							// Ошибка, не удалось получить код процесса ConEmu, оставим полученный хэндл
-//						} else {
-//							DWORD *ProcList = (DWORD*)calloc(1000,sizeof(DWORD));
-//							DWORD dwCount = 0;
-//							FGetConsoleProcessList fGetConsoleProcessList = 
-//								(FGetConsoleProcessList)GetProcAddress(
-//									GetModuleHandleA("kernel32.dll"), "GetConsoleProcessList");
-//	                        if (!fGetConsoleProcessList)
-//		                        dwCount = 1001;
-//		                    else
-//                                dwCount = fGetConsoleProcessList(ProcList,1000);
-//                                
-//							if(dwCount>1000) {
-//								// Ошибка, в консоли слишком много процессов, оставим полученный хэндл
-//							} else {
-//								DWORD dw=0;
-//								for (dw=0; dw<dwCount; dw++) {
-//									if (dwEmuPID == ProcList[dw]) {
-//										dwEmuPID = 0; break;
-//									}
-//								}
-//								if (dwEmuPID)
-//									ConEmuHwnd = NULL; // Консоль не принадлежит ConEmu
-//							}
-//							free(ProcList);
-//						}
-//					}
-//				}
-//				// Проверить "правильность" хэндла
-//				ConEmuHwnd = CheckConEmuChild(ConEmuHwnd, &nChk);
-//				// Если мы дошли сюда, значит консоль не дочернее окно, и возвращать нужно 4
-//				if (nChk==3) nChk=4;
-//				else if (nChk==1 || nChk==2) nChk=0;
-//			}
-//		}
-//	}
-//#endif
-//
-//	if (!ConEmuHwnd && FarHwnd) {
-//		while((ConEmuHwnd = FindWindowExA(NULL, ConEmuHwnd, VirtualConsoleClassMain, NULL))!=NULL)
-//		{
-//			HWND hCheck = (HWND)GetWindowLongPtr(ConEmuHwnd, GWLP_USERDATA);
-//			if (hCheck == FarHwnd) {
-//				// Нашли нужный ConEmu
-//				// Проверить "правильность" хэндла
-//				ConEmuHwnd = CheckConEmuChild(ConEmuHwnd, &nChk);
-//				// Если мы дошли сюда, значит консоль не дочернее окно, и возвращать нужно 4
-//				if (nChk==3) nChk=4;
-//				else if (nChk==1 || nChk==2) nChk=0;
-//				break;
-//			}
-//		}
-//		
-//	}
-//
-//    if (abRoot && ConEmuHwnd && (nChk<3))
-//	    ConEmuRoot = GetAncestor(ConEmuHwnd, GA_PARENT);
-//	
-//	if (pnConsoleIsChild) *pnConsoleIsChild = nChk;
-//	
-//	if (abRoot)
-//		return ConEmuRoot;
-//	return ConEmuHwnd;
-//}
-
-HWND AtoH(char *Str, int Len)
+/*HWND AtoH(char *Str, int Len)
 {
   DWORD Ret=0;
   for (; Len && *Str; Len--, Str++)
@@ -555,4 +388,4 @@ HWND AtoH(char *Str, int Len)
       Ret = (Ret<<4)+(*Str-'A'+10);
   }
   return (HWND)Ret;
-}
+}*/

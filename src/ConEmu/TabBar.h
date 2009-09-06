@@ -40,17 +40,28 @@ protected:
 	static WNDPROC _defaultBarProc;
 	
 	// Пока - банально. VCon, номер в FAR
-	typedef union tag_FAR_WND_ID { 
-		struct {
-			CVirtualConsole* pVCon;
-			int nFarWindowId/*HighPart*/;
+	typedef struct tag_FAR_WND_ID {
+		CVirtualConsole* pVCon;
+		int nFarWindowId;
+
+		bool operator==(struct tag_FAR_WND_ID c) {
+			return (this->pVCon==c.pVCon) && (this->nFarWindowId==c.nFarWindowId);
 		};
-		struct {
-			CVirtualConsole* pVCon;
-			int nFarWindowId/*HighPart*/;
-		} u;
-		ULONGLONG ID;
+		bool operator!=(struct tag_FAR_WND_ID c) {
+			return (this->pVCon!=c.pVCon) || (this->nFarWindowId!=c.nFarWindowId);
+		};
 	} VConTabs;
+	//typedef union tag_FAR_WND_ID { 
+	//	struct {
+	//		CVirtualConsole* pVCon;
+	//		int nFarWindowId/*HighPart*/;
+	//	};
+	//	struct {
+	//		CVirtualConsole* pVCon;
+	//		int nFarWindowId/*HighPart*/;
+	//	} u;
+	//	ULONGLONG ID;
+	//} VConTabs;
 	std::vector<VConTabs> m_Tab2VCon;
 	BOOL mb_PostUpdateCalled;
 	UINT mn_MsgUpdateTabs;

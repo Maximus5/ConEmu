@@ -237,6 +237,7 @@ HANDLE  ghFinalizeEvent = NULL;
 BOOL    gbAlwaysConfirmExit = FALSE, gbInShutdown = FALSE, gbAutoDisableConfirmExit = FALSE;
 int     gbRootWasFoundInCon = 0;
 BOOL    gbAttachMode = FALSE;
+BOOL    gbForceHideConWnd = FALSE;
 DWORD   gdwMainThreadId = 0;
 //int       gnBufferHeight = 0;
 wchar_t* gpszRunCmd = NULL;
@@ -255,6 +256,13 @@ enum tag_RunMode {
 
 BOOL gbNoCreateProcess = FALSE;
 
+#ifndef WIN64
+	#pragma message("ComEmuC compiled in X64 mode")
+	#define NTVDMACTIVE (srv.bNtvdmActive)
+#else
+	#pragma message("ComEmuC compiled in X86 mode")
+	#define NTVDMACTIVE FALSE
+#endif
 
 struct tag_Srv {
     HANDLE hRootProcess;    DWORD dwRootProcess;  DWORD dwRootStartTime;
@@ -275,7 +283,9 @@ struct tag_Srv {
     //std::vector<DWORD> nProcesses;
 	UINT nProcessCount, nMaxProcesses;
 	DWORD* pnProcesses, *pnProcessesCopy, nProcessStartTick;
+	#ifndef WIN64
 	BOOL bNtvdmActive; DWORD nNtvdmPID;
+	#endif
 	BOOL bTelnetActive;
     //
     wchar_t szPipename[MAX_PATH], szInputname[MAX_PATH], szGuiPipeName[MAX_PATH];
@@ -943,6 +953,10 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
             gnRunMode = RM_SERVER;
         } else
 
+		if (wcscmp(szArg, L"/HIDE")==0) {
+			gbForceHideConWnd = TRUE;
+		} else
+
         if (wcsncmp(szArg, L"/B", 2)==0) {
             if (wcsncmp(szArg, L"/BW=", 4)==0) {
                 gcrBufferSize.X = _wtoi(szArg+4); gbParmBufferSize = TRUE;
@@ -1490,12 +1504,8 @@ void SendStarted()
     
     CESERVER_REQ *pIn = NULL, *pOut = NULL;
     int nSize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_STARTSTOP);
-    pIn = (CESERVER_REQ*)Alloc(nSize,1);
+	pIn = ExecuteNewCmd(CECMD_CMDSTARTSTOP, nSize);
     if (pIn) {
-        pIn->hdr.nCmd = CECMD_CMDSTARTSTOP;
-        pIn->hdr.nSrcThreadId = GetCurrentThreadId();
-        pIn->hdr.nSize = nSize;
-        pIn->hdr.nVersion = CESERVER_REQ_VER;
 		pIn->StartStop.nStarted = (gnRunMode == RM_COMSPEC) ? 2 : 0; // Cmd/Srv режим начат
 		pIn->StartStop.hWnd = ghConWnd;
 		pIn->StartStop.dwPID = gnSelfPID;
@@ -1555,7 +1565,7 @@ void SendStarted()
         } else {
             cmd.bNonGuiMode = TRUE; // Не посылать ExecuteGuiCmd при выходе. Это не наша консоль
         }
-        Free(pIn); pIn = NULL;
+        ExecuteFreeResult(pIn); pIn = NULL;
     }
 }
 
@@ -1587,12 +1597,8 @@ void ComspecDone(int aiRc)
 
         CESERVER_REQ *pIn = NULL, *pOut = NULL;
         int nSize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_STARTSTOP);
-        pIn = (CESERVER_REQ*)Alloc(nSize,1);
+        pIn = ExecuteNewCmd(CECMD_CMDSTARTSTOP,nSize);
         if (pIn) {
-            pIn->hdr.nCmd = CECMD_CMDSTARTSTOP;
-            pIn->hdr.nSrcThreadId = GetCurrentThreadId();
-            pIn->hdr.nSize = nSize;
-            pIn->hdr.nVersion = CESERVER_REQ_VER;
 			pIn->StartStop.nStarted = 3; // Cmd режим завершен
 			pIn->StartStop.hWnd = ghConWnd;
 			pIn->StartStop.dwPID = gnSelfPID;
@@ -1610,8 +1616,9 @@ void ComspecDone(int aiRc)
 					//cmd.sbi.dwSize = pIn->StartStop.sbi.dwSize;
 					lbRc1 = FALSE; // Консольное приложение самостоятельно сбросило буферный режим. Не дергаться...
 				}
-                ExecuteFreeResult(pOut);
+                ExecuteFreeResult(pOut); pOut = NULL;
             }
+			ExecuteFreeResult(pIn); pIn = NULL; // не освобождалось
         }
 
         lbRc2 = GetConsoleScreenBufferInfo(ghConOut, &sbi2);
@@ -1816,6 +1823,11 @@ HWND Attach2Gui(DWORD nTimeout)
             hDcWnd = (HWND)SendMessage(hGui, nMsg, (WPARAM)ghConWnd, (LPARAM)gnSelfPID);
             if (hDcWnd != NULL) {
                 ghConEmuWnd = hGui;
+
+				// В принципе, консоль может действительно запуститься видимой. В этом случае ее скрывать не нужно
+				// Но скорее всего, консоль запущенная под Админом в Win7 будет отображена ошибочно
+				if (gbForceHideConWnd)
+					ShowWindow(ghConWnd, SW_HIDE);
                 
                 // Установить переменную среды с дескриптором окна
                 SetConEmuEnvVar(ghConEmuWnd);
@@ -2508,6 +2520,7 @@ BOOL CheckProcessCount(BOOL abForce/*=FALSE*/)
 	}
 
 	// Процессов в консоли не осталось?
+	#ifndef WIN64
 	if (srv.nProcessCount == 2 && !srv.bNtvdmActive && srv.nNtvdmPID) {
 		// Возможно было запущено 16битное приложение, а ntvdm.exe не выгружается при его закрытии
 		// gnSelfPID не обязательно будет в srv.pnProcesses[0]
@@ -2518,6 +2531,7 @@ BOOL CheckProcessCount(BOOL abForce/*=FALSE*/)
 			PostMessage(ghConWnd, WM_CLOSE, 0, 0);
 		}
 	}
+	#endif
 	WARNING("Если в консоли ДО этого были процессы - все условия вида 'srv.nProcessCount == 1' обломаются");
 	// Пример - запускаемся из фара. Количество процессов ИЗНАЧАЛЬНО - 5
 	// cmd вываливается сразу (path not found)
@@ -2593,12 +2607,8 @@ void CheckConEmuHwnd()
     if (ghConEmuWnd == NULL) {
         CESERVER_REQ *pIn = NULL, *pOut = NULL;
         int nSize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_STARTSTOP);
-        pIn = (CESERVER_REQ*)Alloc(nSize,1);
+        pIn = ExecuteNewCmd(CECMD_CMDSTARTSTOP,nSize);
         if (pIn) {
-            pIn->hdr.nCmd = CECMD_CMDSTARTSTOP;
-            pIn->hdr.nSrcThreadId = GetCurrentThreadId();
-            pIn->hdr.nSize = nSize;
-            pIn->hdr.nVersion = CESERVER_REQ_VER;
 			pIn->StartStop.nStarted = 0; // Server режим начат
 			pIn->StartStop.hWnd = ghConWnd;
 			pIn->StartStop.dwPID = gnSelfPID;
@@ -2620,7 +2630,7 @@ void CheckConEmuHwnd()
                 
                 ExecuteFreeResult(pOut);
             }
-            Free(pIn);
+            ExecuteFreeResult(pIn);
         }
     }
     // GUI может еще "висеть" в ожидании или в отладчике, так что пробуем и через Snapshoot
@@ -2973,11 +2983,13 @@ DWORD WINAPI InstanceThread(LPVOID lpvParam)
     if (in.hdr.nSize > cbBytesRead)
     {
         DWORD cbNextRead = 0;
+		// Тут именно Alloc, а не ExecuteNewCmd, т.к. данные пришли снаружи, а не заполняются здесь
         pIn = (CESERVER_REQ*)Alloc(in.hdr.nSize, 1);
         if (!pIn)
             goto wrap;
-        *pIn = in;
-        fSuccess = ReadFile(
+		memmove(pIn, &in, in.hdr.nSize); // стояло ошибочное присвоение
+
+		fSuccess = ReadFile(
             hPipe,        // handle to pipe 
             ((LPBYTE)pIn)+cbBytesRead,  // buffer to receive data 
             in.hdr.nSize - cbBytesRead,   // size of buffer 
@@ -3014,8 +3026,12 @@ DWORD WINAPI InstanceThread(LPVOID lpvParam)
 
 	    // освободить память
 	    if ((LPVOID)pOut != (LPVOID)gpStoredOutput) // Если это НЕ сохраненный вывод
-	        Free(pOut);
+			ExecuteFreeResult(pOut);
     }
+
+	if (pIn) { // не освобождалась, хотя, таких длинных команд наверное не было
+		Free(pIn); pIn = NULL;
+	}
 
     MCHKHEAP
     //if (!fSuccess || pOut->hdr.nSize != cbWritten) break; 
@@ -3071,7 +3087,8 @@ Loop1:
     //  if (srv.sbi.dwMaximumWindowSize.Y < srv.sbi.dwSize.Y)
     //      gnBufferHeight = srv.sbi.dwSize.Y; // Это однозначно буферный режим
     //}
-    if (gnBufferHeight == 0 || srv.bNtvdmActive) {
+    if (gnBufferHeight == 0 || NTVDMACTIVE)
+	{
         TextHeight = srv.sbi.dwSize.Y; //srv.sbi.srWindow.Bottom - srv.sbi.srWindow.Top + 1;
     } else {
         //Для режима BufferHeight нужно считать по другому!
@@ -3085,7 +3102,7 @@ Loop1:
 		_ASSERTE(TextHeight<=150);
 	}
     // Высота окна в консоли должна быть равна высоте в GUI, иначе мы будем терять строку с курсором при прокрутке
-	if (!srv.bNtvdmActive) {
+	if (!NTVDMACTIVE) {
 		if (TextHeight != (srv.sbi.srWindow.Bottom-srv.sbi.srWindow.Top+1)) {
 			_ASSERTE(TextHeight==(srv.sbi.srWindow.Bottom-srv.sbi.srWindow.Top+1));
 		}
@@ -3442,12 +3459,8 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
         {
             MCHKHEAP
             int nOutSize = sizeof(CESERVER_REQ_HDR) + sizeof(CONSOLE_SCREEN_BUFFER_INFO) + sizeof(DWORD);
-            *out = (CESERVER_REQ*)Alloc(nOutSize,1);
+            *out = ExecuteNewCmd(0,nOutSize);
             if (*out == NULL) return FALSE;
-            (*out)->hdr.nCmd = 0;
-            (*out)->hdr.nSrcThreadId = GetCurrentThreadId();
-            (*out)->hdr.nSize = nOutSize;
-            (*out)->hdr.nVersion = CESERVER_REQ_VER;
             MCHKHEAP
             if (in.hdr.nSize >= (sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_SETSIZE))) {
                 USHORT nBufferHeight = 0;
@@ -3565,12 +3578,8 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 			HWND hDc = Attach2Gui(1000);
 			if (hDc != NULL) {
 				int nOutSize = sizeof(CESERVER_REQ_HDR) + sizeof(DWORD);
-				*out = (CESERVER_REQ*)Alloc(nOutSize,1);
+				*out = ExecuteNewCmd(CECMD_ATTACH2GUI,nOutSize);
 				if (*out != NULL) {
-					(*out)->hdr.nCmd = 0;
-					(*out)->hdr.nSrcThreadId = GetCurrentThreadId();
-					(*out)->hdr.nSize = nOutSize;
-					(*out)->hdr.nVersion = CESERVER_REQ_VER;
 					(*out)->dwData[0] = (DWORD)hDc;
 					lbRc = TRUE;
 				}
@@ -3590,6 +3599,21 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
         {
         	ShowWindow(ghConWnd, in.dwData[0]);
         } break;
+
+		case CECMD_POSTCONMSG:
+		{
+			if (in.Msg.bPost) {
+				PostMessage(ghConWnd, in.Msg.nMsg, (WPARAM)in.Msg.wParam, (LPARAM)in.Msg.lParam);
+			} else {
+				LRESULT lRc = SendMessage(ghConWnd, in.Msg.nMsg, (WPARAM)in.Msg.wParam, (LPARAM)in.Msg.lParam);
+				int nOutSize = sizeof(CESERVER_REQ_HDR) + sizeof(u64);
+				*out = ExecuteNewCmd(CECMD_POSTCONMSG,nOutSize);
+				if (*out != NULL) {
+					(*out)->qwData[0] = lRc;
+					lbRc = TRUE;
+				}
+			}
+		} break;
     }
     
     if (gbInRecreateRoot) gbInRecreateRoot = FALSE;
@@ -3917,8 +3941,11 @@ void WINAPI WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LO
         //If the application is a 16-bit application, the idChild parameter is CONSOLE_APPLICATION_16BIT and idObject is the process identifier of the NTVDM session associated with the console.
 
         #ifdef _DEBUG
+		#ifndef WIN64
         _ASSERTE(CONSOLE_APPLICATION_16BIT==1);
-        wsprintfW(szDbg, L"EVENT_CONSOLE_START_APPLICATION(PID=%i%s)\n", idObject, (idChild == CONSOLE_APPLICATION_16BIT) ? L" 16bit" : L"");
+		#endif
+        wsprintfW(szDbg, L"EVENT_CONSOLE_START_APPLICATION(PID=%i%s)\n", idObject, 
+			(idChild == CONSOLE_APPLICATION_16BIT) ? L" 16bit" : L"");
         DEBUGSTR(szDbg);
         #endif
 
@@ -3930,6 +3957,7 @@ void WINAPI WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LO
             LeaveCriticalSection(&srv.csProc);
 				*/
 
+			#ifndef WIN64
 			_ASSERTE(CONSOLE_APPLICATION_16BIT==1);
             if (idChild == CONSOLE_APPLICATION_16BIT) {
 				srv.bNtvdmActive = TRUE;
@@ -3940,6 +3968,7 @@ void WINAPI WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LO
 				// Возможные значения высоты - 25/28/50 строк. При старте - обычно 28
 				// Ширина - только 80 символов
             }
+			#endif
             //
             //HANDLE hIn = CreateFile(L"CONIN$", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_READ,
             //                  0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
@@ -3956,13 +3985,15 @@ void WINAPI WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LO
         //The idObject parameter contains the process identifier of the terminated process.
 
         #ifdef _DEBUG
-        wsprintfW(szDbg, L"EVENT_CONSOLE_END_APPLICATION(PID=%i%s)\n", idObject, (idChild == CONSOLE_APPLICATION_16BIT) ? L" 16bit" : L"");
+        wsprintfW(szDbg, L"EVENT_CONSOLE_END_APPLICATION(PID=%i%s)\n", idObject, 
+			(idChild == CONSOLE_APPLICATION_16BIT) ? L" 16bit" : L"");
         DEBUGSTR(szDbg);
         #endif
 
         if (((DWORD)idObject) != gnSelfPID) {
 			CheckProcessCount(TRUE);
 
+			#ifndef WIN64
 			_ASSERTE(CONSOLE_APPLICATION_16BIT==1);
 			if (idChild == CONSOLE_APPLICATION_16BIT) {
 				//DWORD ntvdmPID = idObject;
@@ -3971,6 +4002,7 @@ void WINAPI WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LO
 				//TODO: возможно стоит прибить процесс NTVDM?
 				SetPriorityClass(GetCurrentProcess(), NORMAL_PRIORITY_CLASS);
 			}
+			#endif
 
 				/*
             std::vector<DWORD>::iterator iter;
@@ -4373,17 +4405,14 @@ CESERVER_REQ* CreateConsoleInfo(CESERVER_CHAR* pRgnOnly, BOOL bCharAttrBuff)
     }
 
     // Выделение буфера // Размер заголовка уже учтен!
-    pOut = (CESERVER_REQ*)Alloc(dwAllSize, 1); // размер считали в байтах
+    pOut = ExecuteNewCmd(0,dwAllSize); // размер считали в байтах
     _ASSERT(pOut!=NULL);
     if (pOut == NULL) {
         return FALSE;
     }
 
     // инициализация
-    pOut->hdr.nSize = dwAllSize;
     pOut->hdr.nCmd = bCharAttrBuff ? CECMD_GETFULLINFO : CECMD_GETSHORTINFO;
-    pOut->hdr.nSrcThreadId = GetCurrentThreadId();
-    pOut->hdr.nVersion = CESERVER_REQ_VER;
 
     // поехали
 
@@ -4497,7 +4526,7 @@ BOOL ReloadConsoleInfo(CESERVER_CHAR* pChangedRgn/*=NULL*/)
 
     if (!MyGetConsoleScreenBufferInfo(ghConOut, &lsbi)) { srv.dwSbiRc = GetLastError(); if (!srv.dwSbiRc) srv.dwSbiRc = -1; } else {
 		// Консольное приложение могло изменить размер буфера
-		if (!srv.bNtvdmActive
+		if (!NTVDMACTIVE
 			&& (gcrBufferSize.Y != lsbi.dwSize.Y || gnBufferHeight != 0)
 			&& (lsbi.srWindow.Top == 0 && lsbi.dwSize.Y == (lsbi.srWindow.Bottom - lsbi.srWindow.Top + 1)))
 		{
@@ -5219,19 +5248,15 @@ void CheckKeyboardLayout()
                 // Отошлем в GUI
                 wchar_t *pszEnd = szCurKeybLayout+8;
                 DWORD dwLayout = wcstol(szCurKeybLayout, &pszEnd, 16);
-                CESERVER_REQ* pIn = (CESERVER_REQ*)Alloc(sizeof(CESERVER_REQ_HDR)+4,1);
+                CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_LANGCHANGE,sizeof(CESERVER_REQ_HDR)+4);
                 if (pIn) {
-                    pIn->hdr.nSize = sizeof(CESERVER_REQ_HDR)+4;
-                    pIn->hdr.nCmd = CECMD_LANGCHANGE;
-                    pIn->hdr.nSrcThreadId = GetCurrentThreadId();
-                    pIn->hdr.nVersion = CESERVER_REQ_VER;
                     //memmove(pIn->Data, &dwLayout, 4);
                     pIn->dwData[0] = dwLayout;
 
                     CESERVER_REQ* pOut = NULL;
                     pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
                     if (pOut) ExecuteFreeResult(pOut);
-                    Free(pIn);
+                    ExecuteFreeResult(pIn);
                 }
             }
         }
@@ -5358,6 +5383,17 @@ void Free(LPVOID ptr)
             gnHeapUsed -= nMemSize;
         #endif
     }
+}
+
+/* Используются как extern в ConEmuCheck.cpp */
+LPVOID _calloc(size_t nCount,size_t nSize) {
+	return Alloc(nCount,nSize);
+}
+LPVOID _malloc(size_t nCount) {
+	return Alloc(nCount,1);
+}
+void   _free(LPVOID ptr) {
+	Free(ptr);
 }
 
 #endif

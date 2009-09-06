@@ -126,6 +126,7 @@ private:
 public:
     void PostConsoleEvent(INPUT_RECORD* piRec);
 	void PostConsoleEventPipe(MSG *pMsg);
+	LRESULT PostConsoleMessage(UINT nMsg, WPARAM wParam, LPARAM lParam);
     BOOL FlushInputQueue(DWORD nTimeout = 500);
     void OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, wchar_t *pszChars);
     void OnMouse(UINT messg, WPARAM wParam, int x, int y);
