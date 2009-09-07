@@ -139,7 +139,7 @@ protected:
 	void RegisterHotKeys();
 	void UnRegisterHotKeys();
 	void CtrlWinAltSpace();
-	//DWORD mn_CurrentKeybLayout;
+	//u64 mn_CurrentKeybLayout;
 	// Registered messages
 	DWORD mn_MainThreadId;
 	UINT mn_MsgPostCreate;
@@ -196,7 +196,7 @@ public:
 	void DebugStep(LPCTSTR asMsg);
 	void EnableComSpec(BOOL abSwitch);
 	void ForceShowTabs(BOOL abShow);
-	DWORD GetActiveKeyboardLayout();
+	u64 GetActiveKeyboardLayout();
 	LRESULT GuiShellExecuteEx(SHELLEXECUTEINFO* lpShellExecute, BOOL abAllowAsync);
 	BOOL Init();
 	void InvalidateAll();
@@ -237,7 +237,7 @@ public:
 	void SyncConsoleToWindow();
 	void SyncNtvdm();
 	void SyncWindowToConsole();
-	void SwitchKeyboardLayout(DWORD dwNewKeybLayout);
+	void SwitchKeyboardLayout(u64 dwNewKeybLayout);
 	void TabCommand(UINT nTabCmd);
 	void Update(bool isForce = false);
 	void UpdateTitle(LPCTSTR asNewTitle);

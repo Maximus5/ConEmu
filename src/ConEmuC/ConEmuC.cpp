@@ -5236,22 +5236,24 @@ void EnlargeRegion(CESERVER_CHAR_HDR& rgn, const COORD crNew)
     }
 }
 
+WARNING("BUGBUG: x64 US-Dvorak");
 void CheckKeyboardLayout()
 {
     if (pfnGetConsoleKeyboardLayoutName) {
         wchar_t szCurKeybLayout[KL_NAMELENGTH+1];
-        // Возвращает строку в виде "00000419"
+        // Возвращает строку в виде "00000419" -- может тут 16 цифр?
         if (pfnGetConsoleKeyboardLayoutName(szCurKeybLayout)) {
             if (lstrcmpW(szCurKeybLayout, srv.szKeybLayout)) {
                 // Сменился
                 lstrcpyW(srv.szKeybLayout, szCurKeybLayout);
                 // Отошлем в GUI
                 wchar_t *pszEnd = szCurKeybLayout+8;
-                DWORD dwLayout = wcstol(szCurKeybLayout, &pszEnd, 16);
-                CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_LANGCHANGE,sizeof(CESERVER_REQ_HDR)+4);
+                WARNING("BUGBUG: 16 цифр не вернет");
+                u64 dwLayout = wcstol(szCurKeybLayout, &pszEnd, 16);
+                CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_LANGCHANGE,sizeof(CESERVER_REQ_HDR)+sizeof(u64));
                 if (pIn) {
                     //memmove(pIn->Data, &dwLayout, 4);
-                    pIn->dwData[0] = dwLayout;
+                    pIn->qwData[0] = dwLayout;
 
                     CESERVER_REQ* pOut = NULL;
                     pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);

@@ -133,7 +133,7 @@ extern wchar_t gszDbgModLabel[6];
 
 #define u64 unsigned __int64
 typedef struct tag_HWND2 {
-	unsigned __int64 u;
+	u64 u;
 	operator HWND() {
 		return (HWND)u;
 	};
@@ -306,7 +306,7 @@ typedef struct tag_CESERVER_REQ_POSTMSG {
 	BOOL    bPost;
 	UINT    nMsg;
 	// Заложимся на унификацию x86 & x64
-	unsigned __int64 wParam, lParam;
+	u64     wParam, lParam;
 } CESERVER_REQ_POSTMSG;
 
 typedef struct tag_CESERVER_REQ {

@@ -2507,8 +2507,8 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 
     } else if (pIn->hdr.nCmd == CECMD_LANGCHANGE) {
         DEBUGSTRCMD(L"GUI recieved CECMD_LANGCHANGE\n");
-        _ASSERTE(nDataSize>=4);
-        DWORD dwNewKeybLayout = *(DWORD*)pIn->Data;
+        _ASSERTE(nDataSize>=8);
+        u64 dwNewKeybLayout = pIn->qwData[0];
         if ((gSet.isMonitorConsoleLang & 1) == 1) {
             if (con.dwKeybLayout != dwNewKeybLayout) {
                 con.dwKeybLayout = dwNewKeybLayout;
@@ -3328,7 +3328,7 @@ BOOL CRealConsole::RetrieveConsoleInfo(UINT anWaitSize)
       return 0;
     }
 
-    int nAllSize = *((DWORD*)cbReadBuf);
+    int nAllSize = pOut->nSize;
     if (nAllSize == 0) {
        DEBUGSTRPKT(L" - FAILED!\n");
        DisplayLastError(L"Empty data recieved from server", 0);
@@ -4838,7 +4838,7 @@ BOOL CRealConsole::PrepareOutputFile(BOOL abUnicodeText, wchar_t* pszFilePathNam
         return 0;
     }
 
-    int nAllSize = *((DWORD*)cbReadBuf);
+    int nAllSize = pOut->nSize;
     if (nAllSize==0) {
         DEBUGSTRCMD(L" - FAILED!\n");
         DisplayLastError(L"Empty data recieved from server", 0);
@@ -4950,7 +4950,7 @@ BOOL CRealConsole::PrepareOutputFile(BOOL abUnicodeText, wchar_t* pszFilePathNam
     return lbRc;
 }
 
-void CRealConsole::SwitchKeyboardLayout(DWORD dwNewKeyboardLayout)
+void CRealConsole::SwitchKeyboardLayout(u64 dwNewKeyboardLayout)
 {
     if (!this) return;
     if (ms_ConEmuC_Pipe[0] == 0) return;
@@ -4958,28 +4958,7 @@ void CRealConsole::SwitchKeyboardLayout(DWORD dwNewKeyboardLayout)
 
     // В FAR при XLat делается так:
     //PostConsoleMessageW(hFarWnd,WM_INPUTLANGCHANGEREQUEST, INPUTLANGCHANGE_FORWARD, 0);
-    PostConsoleMessage(WM_INPUTLANGCHANGEREQUEST, 0, dwNewKeyboardLayout);
-    
-
-    //   int nInSize = sizeof(CESERVER_REQ_HDR)+sizeof(DWORD);
-    //   CESERVER_REQ *pIn = (CESERVER_REQ*)calloc(nInSize,1);
-    //CESERVER_REQ *pOut = (CESERVER_REQ*)calloc(nInSize,1);
-    //DWORD dwRead = 0;
-    //BOOL fSuccess = FALSE;
-
-    //if (pIn) {
-    //  pIn->hdr.nCmd = CECMD_LANGCHANGE;
-    //  pIn->hdr.nSize = nInSize;
-    //  pIn->hdr.nSrcThreadId = GetCurrentThreadId();
-    //  pIn->hdr.nVersion = CESERVER_REQ_VER;
-    //  memmove(pIn->Data, &dwNewKeyboardLayout, sizeof(dwNewKeyboardLayout));
-
-    //  
-    //  fSuccess = CallNamedPipe(ms_ConEmuC_Pipe, pIn, pIn->hdr.nSize, pOut, nInSize, &dwRead, 200);
-    //}
-
-    //SafeFree(pIn);
-    //SafeFree(pOut);
+    PostConsoleMessage(WM_INPUTLANGCHANGEREQUEST, 0, (LPARAM)dwNewKeyboardLayout);
 }
 
 void CRealConsole::Paste()

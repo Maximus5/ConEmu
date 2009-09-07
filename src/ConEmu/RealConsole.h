@@ -170,7 +170,7 @@ public:
     int GetTabCount();
     BOOL ActivateFarWindow(int anWndIndex);
     DWORD CanActivateFarWindow(int anWndIndex);
-    void SwitchKeyboardLayout(DWORD dwNewKeybLayout);
+    void SwitchKeyboardLayout(u64 dwNewKeybLayout);
     void CloseConsole();
     void Paste();
     void LogString(LPCSTR asText);
@@ -249,7 +249,7 @@ private:
         int nChange2TextWidth, nChange2TextHeight;
         BOOL bBufferHeight;
         DWORD nPacketIdx;
-        DWORD dwKeybLayout;
+        u64 dwKeybLayout;
         BOOL bRBtnDrag; // в консоль посылается драг правой кнопкой (выделение в FAR)
         COORD crRBtnDrag;
     } con;

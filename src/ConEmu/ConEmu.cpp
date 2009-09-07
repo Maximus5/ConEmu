@@ -65,7 +65,7 @@ CConEmuMain::CConEmuMain()
     //mh_ConMan = NULL;
     //ConMan_MainProc = NULL; ConMan_LookForKeyboard = NULL; ConMan_ProcessCommand = NULL; 
     mb_IgnoreSizeChange = false;
-    //mn_CurrentKeybLayout = (DWORD)GetKeyboardLayout(0);
+    //mn_CurrentKeybLayout = (u64)GetKeyboardLayout(0);
     mn_ServerThreadId = 0; mh_ServerThread = NULL; mh_ServerThreadTerminate = NULL;
     //mpsz_RecreateCmd = NULL;
 	ZeroStruct(mrc_Ideal);
@@ -2131,9 +2131,9 @@ void CConEmuMain::DebugStep(LPCTSTR asMsg)
         SetWindowText(ghWnd, asMsg ? asMsg : Title);
 }
 
-DWORD CConEmuMain::GetActiveKeyboardLayout()
+u64 CConEmuMain::GetActiveKeyboardLayout()
 {
-    DWORD dwActive = (DWORD)GetKeyboardLayout(mn_MainThreadId);
+    u64 dwActive = (u64)GetKeyboardLayout(mn_MainThreadId);
     return dwActive;
 }
 
@@ -3310,7 +3310,7 @@ bool CConEmuMain::isSizing()
 }
 
 // Сюда может придти только LOWORD от HKL
-void CConEmuMain::SwitchKeyboardLayout(DWORD dwNewKeybLayout)
+void CConEmuMain::SwitchKeyboardLayout(u64 dwNewKeybLayout)
 {
     if ((gSet.isMonitorConsoleLang & 1) == 0)
         return;
@@ -3321,19 +3321,21 @@ void CConEmuMain::SwitchKeyboardLayout(DWORD dwNewKeybLayout)
         if (hKeyb[i] == (HKL)dwNewKeybLayout)
             lbFound = TRUE;
     }
+    WARNING("Похоже с другими раскладками будет глючить. US Dvorak?");
     for (i = 0; !lbFound && i < nCount; i++) {
-        if ((LOWORD((DWORD)hKeyb[i]) == LOWORD(dwNewKeybLayout))) {
-            lbFound = TRUE; dwNewKeybLayout = (DWORD)hKeyb[i];
+        if ((hKeyb[i] & 0xFFFF) == (dwNewKeybLayout & 0xFFFF)) {
+            lbFound = TRUE; dwNewKeybLayout = (u64)hKeyb[i];
         }
     }
-    if (!lbFound && (dwNewKeybLayout == LOWORD(dwNewKeybLayout)))
+    // Если не задана раскладка (только язык?) формируем по умолчанию
+    if (!lbFound && (dwNewKeybLayout == (dwNewKeybLayout & 0xFFFF)))
         dwNewKeybLayout |= (dwNewKeybLayout << 16);
 
     // Может она сейчас и активна?
     if (dwNewKeybLayout != GetActiveKeyboardLayout()) {
         // Теперь переключаем раскладку
-        PostMessage ( ghWnd, WM_INPUTLANGCHANGEREQUEST, 0, dwNewKeybLayout );
-        PostMessage ( ghWnd, WM_INPUTLANGCHANGE, 0, dwNewKeybLayout );
+        PostMessage ( ghWnd, WM_INPUTLANGCHANGEREQUEST, 0, (LPARAM)dwNewKeybLayout );
+        PostMessage ( ghWnd, WM_INPUTLANGCHANGE, 0, (LPARAM)dwNewKeybLayout );
     }
 }
 
@@ -3734,6 +3736,7 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 		HKL hkl = (HKL)GetActiveKeyboardLayout();
 		UINT nVK = wParam & 0xFFFF;
 		UINT nSC = ((DWORD)lParam & 0xFF0000) >> 16;
+		WARNING("BUGBUG: похоже глючит в x64 на US-Dvorak");
 		nTranslatedChars = ToUnicodeEx(nVK, nSC, m_KeybStates, szTranslatedChars, 10, 0, hkl);
 		if (nTranslatedChars>0) szTranslatedChars[max(10,nTranslatedChars)] = 0; else szTranslatedChars[0] = 0;
 	}

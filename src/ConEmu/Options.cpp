@@ -8,12 +8,36 @@
 const u8 chSetsNums[19] = {0, 178, 186, 136, 1, 238, 134, 161, 177, 129, 130, 77, 255, 204, 128, 2, 222, 162, 163};
 int upToFontHeight=0;
 HWND ghOpWnd=NULL;
-const DWORD dwDefColors[0x10] = {
+
+;
+
+typedef struct tagCONEMUDEFCOLORS {
+	const wchar_t* pszTitle;
+	DWORD dwDefColors[0x10];
+} CONEMUDEFCOLORS;
+
+const CONEMUDEFCOLORS DefColors[] = {
+	{ L"Default color scheme (Windows standard)", {
 	0x00000000, 0x00800000, 0x00008000, 0x00808000, 0x00000080, 0x00800080, 0x00008080, 0x00c0c0c0, 
-	0x00808080, 0x00ff0000, 0x0000ff00, 0x00ffff00, 0x000000ff, 0x00ff00ff, 0x0000ffff, 0x00ffffff};
-const DWORD dwDefColors1[0x10] = {
+	0x00808080, 0x00ff0000, 0x0000ff00, 0x00ffff00, 0x000000ff, 0x00ff00ff, 0x0000ffff, 0x00ffffff}},
+	{ L"Gamma 1 (for use with dark monitors)", {
 	0x00000000, 0x00960000, 0x0000aa00, 0x00aaaa00, 0x000000aa, 0x00800080, 0x0000aaaa, 0x00c0c0c0, 
-	0x00808080, 0x00ff0000, 0x0000ff00, 0x00ffff00, 0x000000ff, 0x00ff00ff, 0x0000ffff, 0x00ffffff};
+	0x00808080, 0x00ff0000, 0x0000ff00, 0x00ffff00, 0x000000ff, 0x00ff00ff, 0x0000ffff, 0x00ffffff}},
+    { L"Murena scheme", {
+    0x00000000, 0x00644100, 0x00008000, 0x00808000, 0x00000080, 0x00800080, 0x00008080, 0x00c0c0c0,
+    0x00808080, 0x00ff0000, 0x0076c587, 0x00ffff00, 0x00004bff, 0x00d78ce6, 0x0000ffff, 0x00ffffff}},
+    
+};
+const DWORD *dwDefColors = DefColors->dwDefColors;
+//const DWORD dwDefColors[0x10] = {
+//	0x00000000, 0x00800000, 0x00008000, 0x00808000, 0x00000080, 0x00800080, 0x00008080, 0x00c0c0c0, 
+//	0x00808080, 0x00ff0000, 0x0000ff00, 0x00ffff00, 0x000000ff, 0x00ff00ff, 0x0000ffff, 0x00ffffff};
+//const DWORD dwDefColors1[0x10] = {
+//	0x00000000, 0x00960000, 0x0000aa00, 0x00aaaa00, 0x000000aa, 0x00800080, 0x0000aaaa, 0x00c0c0c0, 
+//	0x00808080, 0x00ff0000, 0x0000ff00, 0x00ffff00, 0x000000ff, 0x00ff00ff, 0x0000ffff, 0x00ffffff};
+//const DWORD dwDefColors1[0x10] = {
+//    0x00000000, 0x00644100, 0x00008000, 0x00808000, 0x00000080, 0x00800080, 0x00008080, 0x00c0c0c0,
+//    0x00808080, 0x00ff0000, 0x0076c587, 0x00ffff00, 0x00004bff, 0x00d78ce6, 0x0000ffff, 0x00ffffff};
 DWORD gdwLastColors[0x10] = {0};
 BOOL  gbLastColorsOk = FALSE;
 
@@ -1109,8 +1133,10 @@ LRESULT CSettings::OnInitDialog_Color()
 	memmove(gdwLastColors, Colors, sizeof(gdwLastColors));
 	gbLastColorsOk = TRUE;
 	SendDlgItemMessage(hColors, lbDefaultColors, CB_ADDSTRING, 0, (LPARAM) L"<Current color scheme>");
-	SendDlgItemMessage(hColors, lbDefaultColors, CB_ADDSTRING, 0, (LPARAM) L"Default color sheme (Windows standard)");
-	SendDlgItemMessage(hColors, lbDefaultColors, CB_ADDSTRING, 0, (LPARAM) L"Gamma 1 (for use with dark monitors)");
+	//SendDlgItemMessage(hColors, lbDefaultColors, CB_ADDSTRING, 0, (LPARAM) L"Default color sheme (Windows standard)");
+	//SendDlgItemMessage(hColors, lbDefaultColors, CB_ADDSTRING, 0, (LPARAM) L"Gamma 1 (for use with dark monitors)");
+	for (uint i=0; i<sizeofarray(DefColors); i++)
+		SendDlgItemMessage(hColors, lbDefaultColors, CB_ADDSTRING, 0, (LPARAM) DefColors[i].pszTitle);
 	SendDlgItemMessage(hColors, lbDefaultColors, CB_SETCURSEL, 0, 0);
 
 	// Visualizer
@@ -1483,18 +1509,17 @@ LRESULT CSettings::OnColorButtonClicked(WPARAM wParam, LPARAM lParam)
 			int nIdx = SendDlgItemMessage(hColors, lbDefaultColors, CB_GETCURSEL, 0, 0);
 			if (nIdx == 0)
 				pdwDefData = gdwLastColors;
-			else if (nIdx == 1)
-				pdwDefData = dwDefColors;
-			else if (nIdx == 2)
-				pdwDefData = dwDefColors1;
+			else if (nIdx >= 1 && nIdx <= (int)sizeofarray(DefColors))
+				pdwDefData = DefColors[nIdx-1].dwDefColors;
 			else
 				break; // неизвестный набор
-			uint nCount = sizeofarray(dwDefColors);
+			uint nCount = sizeofarray(DefColors->dwDefColors);
 			for (uint i = 0; i < nCount; i++)
 			{
 				Colors[i] = pdwDefData[i];
 				wsprintf(temp, L"%i %i %i", getR(Colors[i]), getG(Colors[i]), getB(Colors[i]));
 				SetDlgItemText(hColors, 1100 + i, temp);
+				InvalidateRect(GetDlgItem(hColors, 1000+i), 0, 1);
 			}
 
             gConEmu.Update(true);

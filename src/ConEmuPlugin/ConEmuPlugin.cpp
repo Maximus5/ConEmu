@@ -2027,12 +2027,12 @@ DWORD WINAPI ServerThreadCommand(LPVOID ahPipe)
 	//fSuccess = WriteFile( hPipe, pOut, pOut->nSize, &cbWritten, NULL);
 
 	if (pIn->hdr.nCmd == CMD_LANGCHANGE) {
-		_ASSERTE(nDataSize>=4);
-		HKL hkl = 0;
-		memmove(&hkl, pIn->Data, 4);
+		_ASSERTE(nDataSize>=8);
+		HKL hkl = (HKL)pIn->qwData[0];
 		if (hkl) {
 			DWORD dwLastError = 0;
-			WCHAR szLoc[10]; wsprintf(szLoc, L"%08x", (DWORD)(((DWORD)hkl) & 0xFFFF));
+			WARNING("BUGBUG: тут 16 цифр может быть?");
+			WCHAR szLoc[20]; wsprintf(szLoc, L"%08I64x", (u64)hkl);
 			HKL hkl1 = LoadKeyboardLayout(szLoc, KLF_ACTIVATE|KLF_REORDER|KLF_SUBSTITUTE_OK|KLF_SETFORPROCESS);
 			HKL hkl2 = ActivateKeyboardLayout(hkl1, KLF_SETFORPROCESS|KLF_REORDER);
 			if (!hkl2) {
