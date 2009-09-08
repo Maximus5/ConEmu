@@ -93,7 +93,7 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
 
     ms_ConEmuC_Pipe[0] = 0; ms_ConEmuCInput_Pipe[0] = 0; ms_VConServer_Pipe[0] = 0;
     mh_TermEvent = CreateEvent(NULL,TRUE/*MANUAL - используется в нескольких нитях!*/,FALSE,NULL); ResetEvent(mh_TermEvent);
-    mh_MonitorThreadEvent = CreateEvent(NULL,FALSE,FALSE,NULL);
+    mh_MonitorThreadEvent = CreateEvent(NULL,TRUE,FALSE,NULL); //2009-09-09 Поставил Manual. Нужно для определения, что можно убирать флаг Detached
     //mh_EndUpdateEvent = CreateEvent(NULL,FALSE,FALSE,NULL);
     //WARNING("mh_Sync2WindowEvent убрать");
     //mh_Sync2WindowEvent = CreateEvent(NULL,FALSE,FALSE,NULL);
@@ -785,7 +785,9 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
     {
         gSet.Performance(tPerfInterval, TRUE); // именно обратный отсчет. Мы смотрим на промежуток МЕЖДУ таймерами
 
-        if (hEvents[IDEVENT_CONCLOSED] == NULL && pRCon->mh_ConEmuC /*&& pRCon->mh_CursorChanged*/) {
+        if (hEvents[IDEVENT_CONCLOSED] == NULL && pRCon->mh_ConEmuC /*&& pRCon->mh_CursorChanged*/
+			&& WaitForSingleObject(hEvents[IDEVENV_MONITORTHREADEVENT],0) == WAIT_OBJECT_0)
+		{
             bDetached = FALSE;
             //hEvents[IDEVENT_CURSORCHANGED] = pRCon->mh_CursorChanged;
             hEvents[IDEVENT_CONCLOSED] = pRCon->mh_ConEmuC;
@@ -806,6 +808,12 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
             }
             break; // требование завершения нити
         }
+		// Это событие теперь ManualReset
+		if (nWait == IDEVENV_MONITORTHREADEVENT
+			|| WaitForSingleObject(hEvents[IDEVENV_MONITORTHREADEVENT],0) == WAIT_OBJECT_0)
+		{
+			ResetEvent(hEvents[IDEVENV_MONITORTHREADEVENT]);
+		}
 
         // Проверим, что ConEmuC жив
         if (pRCon->mh_ConEmuC) {

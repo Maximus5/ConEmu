@@ -1131,13 +1131,13 @@ LRESULT CSettings::OnInitDialog_Color()
 
 	// Default colors
 	memmove(gdwLastColors, Colors, sizeof(gdwLastColors));
-	gbLastColorsOk = TRUE;
 	SendDlgItemMessage(hColors, lbDefaultColors, CB_ADDSTRING, 0, (LPARAM) L"<Current color scheme>");
 	//SendDlgItemMessage(hColors, lbDefaultColors, CB_ADDSTRING, 0, (LPARAM) L"Default color sheme (Windows standard)");
 	//SendDlgItemMessage(hColors, lbDefaultColors, CB_ADDSTRING, 0, (LPARAM) L"Gamma 1 (for use with dark monitors)");
 	for (uint i=0; i<sizeofarray(DefColors); i++)
 		SendDlgItemMessage(hColors, lbDefaultColors, CB_ADDSTRING, 0, (LPARAM) DefColors[i].pszTitle);
 	SendDlgItemMessage(hColors, lbDefaultColors, CB_SETCURSEL, 0, 0);
+	gbLastColorsOk = TRUE;
 
 	// Visualizer
 	CheckDlgButton(hColors, cbVisualizer, isVisualizer ? BST_CHECKED : BST_UNCHECKED);
@@ -1165,6 +1165,8 @@ LRESULT CSettings::OnInitDialog_Info()
 
 	gConEmu.UpdateProcessDisplay(TRUE);
 	gConEmu.UpdateSizes();
+
+	UpdateFontInfo();
 
 	RegisterTipsFor(hInfo);
 
@@ -1502,28 +1504,6 @@ LRESULT CSettings::OnColorButtonClicked(WPARAM wParam, LPARAM lParam)
             gConEmu.Update(true);
         }
         break;
-	case cbDefaultColors:
-		{
-			const DWORD* pdwDefData = NULL;
-			wchar_t temp[32];
-			int nIdx = SendDlgItemMessage(hColors, lbDefaultColors, CB_GETCURSEL, 0, 0);
-			if (nIdx == 0)
-				pdwDefData = gdwLastColors;
-			else if (nIdx >= 1 && nIdx <= (int)sizeofarray(DefColors))
-				pdwDefData = DefColors[nIdx-1].dwDefColors;
-			else
-				break; // неизвестный набор
-			uint nCount = sizeofarray(DefColors->dwDefColors);
-			for (uint i = 0; i < nCount; i++)
-			{
-				Colors[i] = pdwDefData[i];
-				wsprintf(temp, L"%i %i %i", getR(Colors[i]), getG(Colors[i]), getB(Colors[i]));
-				SetDlgItemText(hColors, 1100 + i, temp);
-				InvalidateRect(GetDlgItem(hColors, 1000+i), 0, 1);
-			}
-
-            gConEmu.Update(true);
-		} break;
 
     default:
         if (CB >= 1000 && CB <= 1031)
@@ -1657,7 +1637,27 @@ LRESULT CSettings::OnColorComboBox(WPARAM wParam, LPARAM lParam)
         nVizEOF = SendDlgItemMessage(hColors, wId, CB_GETCURSEL, 0, 0);
 	} else if (wId==lbDefaultColors) {
 		int nIdx = SendDlgItemMessage(hColors, wId, CB_GETCURSEL, 0, 0);
-		EnableWindow(GetDlgItem(hColors, cbDefaultColors), nIdx>0 || (gbLastColorsOk && !nIdx));
+		//EnableWindow(GetDlgItem(hColors, cbDefaultColors), nIdx>0 || (gbLastColorsOk && !nIdx));
+		if (gbLastColorsOk) // только если инициализация палитр завершилась
+		{
+			const DWORD* pdwDefData = NULL;
+			wchar_t temp[32];
+			int nIdx = SendDlgItemMessage(hColors, lbDefaultColors, CB_GETCURSEL, 0, 0);
+			if (nIdx == 0)
+				pdwDefData = gdwLastColors;
+			else if (nIdx >= 1 && nIdx <= (int)sizeofarray(DefColors))
+				pdwDefData = DefColors[nIdx-1].dwDefColors;
+			else
+				return 0; // неизвестный набор
+			uint nCount = sizeofarray(DefColors->dwDefColors);
+			for (uint i = 0; i < nCount; i++)
+			{
+				Colors[i] = pdwDefData[i];
+				wsprintf(temp, L"%i %i %i", getR(Colors[i]), getG(Colors[i]), getB(Colors[i]));
+				SetDlgItemText(hColors, 1100 + i, temp);
+				InvalidateRect(GetDlgItem(hColors, 1000+i), 0, 1);
+			}
+		}
 	}
     
     gConEmu.Update(true);
@@ -2252,6 +2252,17 @@ void CSettings::UpdateTTF(BOOL bNewTTF)
         gSet.isProportional ? BST_UNCHECKED : BST_CHECKED);
 }
 
+void CSettings::UpdateFontInfo()
+{
+	if (!ghOpWnd || !hInfo) return;
+
+	wchar_t szTemp[32];
+	wsprintf(szTemp, L"%ix%ix%i", LogFont.lfHeight, LogFont.lfWidth, tm.tmAveCharWidth);
+	SetDlgItemText(hInfo, tRealFontMain, szTemp);
+	wsprintf(szTemp, L"%ix%i", LogFont2.lfHeight, LogFont2.lfWidth);
+	SetDlgItemText(hInfo, tRealFontBorders, szTemp);
+}
+
 void CSettings::Performance(UINT nID, BOOL bEnd)
 {
     if (nID == gbPerformance) //groupbox ctrl id
@@ -2422,6 +2433,8 @@ void CSettings::RecreateFont(WORD wFromID)
 		SetDlgItemText(hMain, tFontSizeY, szSize);
 	}
 
+	UpdateFontInfo();
+
 	mb_IgnoreTtfChange = TRUE;
 }
 
@@ -2439,7 +2452,7 @@ HFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
         {
             HFONT hOldF = (HFONT)SelectObject(hDC, hFont);
             TODO("Для пропорциональных шрифтов наверное имеет смысл сохранять в реестре оптимальный lfWidth")
-            TEXTMETRIC tm;
+            ZeroStruct(tm);
             GetTextMetrics(hDC, &tm);
             if (isForceMonospace)
                 //Maximus - у Arial'а например MaxWidth слишком большой

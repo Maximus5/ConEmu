@@ -17,6 +17,7 @@ public:
 	BYTE FontCharSet();
 private:
     LOGFONT LogFont, LogFont2;
+	TEXTMETRIC tm;
     BOOL mb_Name1Ok, mb_Name2Ok;
 public:
 	bool isAutoRegisterFonts;
@@ -148,6 +149,7 @@ public:
     void UpdatePos(int x, int y);
     void UpdateSize(UINT w, UINT h);
     void UpdateTTF(BOOL bNewTTF);
+	void UpdateFontInfo();
     void Performance(UINT nID, BOOL bEnd);
 	void SetArgBufferHeight(int anBufferHeight);
 	void InitFont(LPCWSTR asFontName=NULL, int anFontHeight=-1, int anQuality=-1);

@@ -163,7 +163,7 @@ END
 IDD_DIALOG2 DIALOGEX 0, 0, 328, 209
 STYLE DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
-FONT 8, "MS Shell Dlg"
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     GROUPBOX        "Standard colors (""red green blue"")",gbStandardColors,
                     4,4,319,67
@@ -321,9 +321,8 @@ BEGIN
     COMBOBOX        lbVisFore,83,189,32,30,CBS_DROPDOWNLIST | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
     LTEXT           "Default color shemes:",IDC_STATIC,7,162,77,8
-    COMBOBOX        lbDefaultColors,87,160,182,59,CBS_DROPDOWNLIST | 
+    COMBOBOX        lbDefaultColors,87,160,235,59,CBS_DROPDOWNLIST | 
                     WS_VSCROLL | WS_TABSTOP
-    PUSHBUTTON      "Load",cbDefaultColors,273,160,50,12,WS_DISABLED
 END
 
 IDD_DIALOGM DIALOGEX 0, 0, 341, 259
@@ -339,10 +338,10 @@ BEGIN
     CONTROL         "Tab1",tabMain,"SysTabControl32",WS_TABSTOP,4,4,334,234
 END
 
-IDD_DIALOG3 DIALOGEX 0, 0, 328, 199
+IDD_DIALOG3 DIALOGEX 0, 0, 328, 216
 STYLE DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
-FONT 8, "MS Shell Dlg", 0, 0, 0x1
+FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        "Performance counters",gbPerformance,4,4,319,30
     RTEXT           "Render:",IDC_STATIC,92,17,27,8
@@ -362,32 +361,38 @@ BEGIN
                     WS_TABSTOP
     CHECKBOX        "Viewer",cbsViewer,184,50,37,10,WS_DISABLED | NOT 
                     WS_TABSTOP
-    GROUPBOX        "Processes",IDC_STATIC,4,68,185,92
+    GROUPBOX        "Processes",IDC_STATIC,4,68,185,111
     EDITTEXT        tsTopPID,75,49,32,12,ES_AUTOHSCROLL | ES_READONLY
-    LISTBOX         lbProcesses,9,79,173,74,NOT LBS_NOTIFY | 
+    LISTBOX         lbProcesses,9,79,173,94,NOT LBS_NOTIFY | 
                     LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_HSCROLL | 
                     WS_TABSTOP
     RTEXT           "FPS:",IDC_STATIC,9,17,23,8
     EDITTEXT        tPerfFPS,36,16,43,12,ES_AUTOHSCROLL | ES_READONLY
     EDITTEXT        tPerfInterval,274,16,43,12,ES_AUTOHSCROLL | ES_READONLY
     RTEXT           "Interval:",IDC_STATIC,240,17,31,8
-    GROUPBOX        "Current command line",IDC_STATIC,4,163,319,30
-    EDITTEXT        tCurCmdLine,9,174,307,12,ES_AUTOHSCROLL | ES_READONLY
-    GROUPBOX        "Sizes",IDC_STATIC,195,68,128,92
+    GROUPBOX        "Current command line",IDC_STATIC,4,181,319,30
+    EDITTEXT        tCurCmdLine,9,192,307,12,ES_AUTOHSCROLL | ES_READONLY
+    GROUPBOX        "Sizes",IDC_STATIC,195,68,128,111
     RTEXT           "Console (chars):",IDC_STATIC,200,79,59,8
     EDITTEXT        tConSizeChr,264,77,54,12,ES_AUTOHSCROLL | ES_READONLY
     RTEXT           "(pixels):",IDC_STATIC,229,94,30,8
     EDITTEXT        tConSizePix,264,92,54,12,ES_AUTOHSCROLL | ES_READONLY
     RTEXT           "DC window:",IDC_STATIC,214,110,45,8
     EDITTEXT        tDCSize,264,108,54,12,ES_AUTOHSCROLL | ES_READONLY
-    RTEXT           "Left:",IDC_STATIC,198,128,26,8
-    EDITTEXT        tPanelLeft,228,126,90,12,ES_AUTOHSCROLL | ES_READONLY
-    RTEXT           "Right:",IDC_STATIC,197,145,27,8
-    EDITTEXT        tPanelRight,228,143,90,12,ES_AUTOHSCROLL | ES_READONLY
+    RTEXT           "Left:",IDC_STATIC,198,126,26,8
+    EDITTEXT        tPanelLeft,228,124,90,12,ES_AUTOHSCROLL | ES_READONLY
+    RTEXT           "Right:",IDC_STATIC,197,142,27,8
+    EDITTEXT        tPanelRight,228,140,90,12,ES_AUTOHSCROLL | ES_READONLY
     CONTROL         "%%",cbsProgress,"Button",BS_AUTOCHECKBOX | WS_DISABLED | 
                     WS_TABSTOP,223,50,27,10
     CONTROL         "Error",cbsProgressError,"Button",BS_AUTOCHECKBOX | 
                     WS_DISABLED | WS_TABSTOP,251,50,31,10
+    RTEXT           "Main:",IDC_STATIC,200,163,20,8
+    EDITTEXT        tRealFontMain,223,161,43,12,ES_AUTOHSCROLL | ES_READONLY
+    RTEXT           "Fix:",IDC_STATIC,271,163,13,8
+    EDITTEXT        tRealFontBorders,287,161,31,12,ES_AUTOHSCROLL | 
+                    ES_READONLY
+    GROUPBOX        "Font",IDC_STATIC,195,153,128,26
 END
 
 IDD_DIALOG4 DIALOGEX 0, 0, 328, 198
@@ -511,6 +516,22 @@ IDC_MOVE                CURSOR  DISCARDABLE     "CursorDragMove.cur"
 
 /////////////////////////////////////////////////////////////////////////////
 //
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO DISCARDABLE 
+BEGIN
+    IDD_DIALOG3, DIALOG
+    BEGIN
+        BOTTOMMARGIN, 200
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
 // String Table
 //
 
@@ -532,6 +553,8 @@ BEGIN
     tFontCharset            "Main font charset"
     tFontFace2              "Font face used to draw FAR borders"
     cbExtendColors          "You can use up to 32 foreground colors\n(instead of console standard 16) at the\nexpense of one of background colors"
+    tRealFontMain           "Real sizes of main font:\nHeight x Width x AveWidth"
+    tRealFontBorders        "Real sizes of FixFarBorders font:\nHeight x Width"
 END
 
 STRINGTABLE DISCARDABLE 
@@ -599,6 +622,7 @@ END
 STRINGTABLE DISCARDABLE 
 BEGIN
     cbDragIcons             "Show icons of dragged iterms"
+    lbDefaultColors         "You may choose one of predefined color schemes.\nEach scheme customize first (main) 16 colors."
 END
 
 #endif    // English (U.S.) resources

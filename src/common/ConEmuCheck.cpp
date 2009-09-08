@@ -64,7 +64,7 @@ HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t* pszErr/*[MAX_PATH*2]*
         dwErr = GetLastError();
 
         // Сделаем так, чтобы хотя бы пару раз он попробовал повторить
-        if ((nTries <= 0) && (GetTickCount() - dwStartTick) > 1000) {
+        if ((nTries <= 0) && (GetTickCount() - dwStartTick) > 100) {
 			if (pszErr) {
 				wsprintf(pszErr, L"%s: CreateFile(%s) failed, code=0x%08X, Timeout", 
 					szModule ? szModule : L"Unknown", szPipeName, dwErr);

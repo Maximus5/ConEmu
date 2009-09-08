@@ -161,6 +161,8 @@
 #define tPanelLeft                      1515
 #define tCmdLine                        1516
 #define tPanelRight                     1516
+#define tRealFontMain                   1517
+#define tRealFontBorders                1518
 #define cbApplyPos                      1520
 #define cbCursorBlink                   1522
 #define IDC_RESTART_ICON                1523
@@ -197,7 +199,6 @@
 #define cbDebugSteps                    1551
 #define cbDragIcons                     1553
 #define lbDefaultColors                 1554
-#define cbDefaultColors                 1556
 
 // Next default values for new objects
 // 

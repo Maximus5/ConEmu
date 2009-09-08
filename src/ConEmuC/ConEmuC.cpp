@@ -2,6 +2,7 @@
 #ifdef _DEBUG
 //  Раскомментировать, чтобы сразу после запуска процесса (conemuc.exe) показать MessageBox, чтобы прицепиться дебаггером
 //  #define SHOW_STARTED_MSGBOX
+//  #define SHOW_STARTED_ASSERT
 // Раскомментировать для вывода в консоль информации режима Comspec
     #define PRINT_COMSPEC(f,a) //wprintf(f,a)
 #elif defined(__GNUC__)
@@ -435,7 +436,13 @@ int main()
 #ifdef SHOW_STARTED_MSGBOX
 	if (!IsDebuggerPresent()) {
 		wchar_t szTitle[100]; wsprintf(szTitle, L"ConEmuC Loaded (PID=%i)", gnSelfPID);
-		MessageBox(NULL,GetCommandLineW(),szTitle,0);
+		const wchar_t* pszCmdLine = GetCommandLineW();
+		MessageBox(NULL,pszCmdLine,szTitle,0);
+	}
+#endif
+#ifdef SHOW_STARTED_ASSERT
+	if (!IsDebuggerPresent()) {
+		_ASSERT(FALSE);
 	}
 #endif
 
@@ -1111,7 +1118,7 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
             nNewLen = pszC - pwszStartCmdLine;
             _ASSERTE(nNewLen>0);
             wcsncpy(pszNewCmd, pwszStartCmdLine, nNewLen);
-            pszNewCmd[nNewLen] = 0;
+            pszNewCmd[nNewLen] = 0; // !!! wcsncpy не ставит завершающий '\0'
             // Поправим режимы открытия
             if (!gbAttachMode) // Если ключа еще нет в ком.строке - добавим
                 wcscat(pszNewCmd, L" /ATTACH ");
@@ -1148,7 +1155,9 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 			// убрать из запускаемой команды "-new_console"
             nNewLen = pwszCopy - asCmdLine;
             psFilePart = pszNewCmd + lstrlenW(pszNewCmd);
-            wcsncpy(psFilePart, asCmdLine, nNewLen); psFilePart += nNewLen;
+            wcsncpy(psFilePart, asCmdLine, nNewLen);
+			psFilePart[nNewLen] = 0; // !!! wcsncpy не ставит завершающий '\0'
+			psFilePart += nNewLen;
             pwszCopy += nArgLen;
 			// добавить в команду запуска собственно программу с аргументами
             if (*pwszCopy) wcscpy(psFilePart, pwszCopy);
@@ -3448,8 +3457,13 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
             if (ghConOut==NULL || ghConOut==INVALID_HANDLE_VALUE)
                 return FALSE;
 
-            if (in.hdr.nCmd == CECMD_GETFULLINFO)
+			if (in.hdr.nCmd == CECMD_GETFULLINFO) {
+				// Размер консоли мог только что измениться, и еще не обновилась srv.sbi
+				// Секцию блокируем заранее, чтобы не было расхождений в размерах
+				CSection cs(&srv.csChangeSize, &srv.ncsTChangeSize);
+				MyGetConsoleScreenBufferInfo(ghConOut, &srv.sbi);
                 ReadConsoleData(NULL);
+			}
 
             MCHKHEAP
 
