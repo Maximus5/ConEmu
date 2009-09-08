@@ -587,15 +587,15 @@ int ShowPluginMenuA()
 		return -1;
 
 	FarMenuItemEx items[] = {
-		{ConEmuHwnd ? MIF_SELECTED : MIF_DISABLE},
-		{ConEmuHwnd ? 0 : MIF_DISABLE},
+		{MIF_USETEXTPTR|(ConEmuHwnd ? MIF_SELECTED : MIF_DISABLE)},
+		{MIF_USETEXTPTR|(ConEmuHwnd ? 0 : MIF_DISABLE)},
 		{MIF_SEPARATOR},
-		{ConEmuHwnd ? 0 : MIF_DISABLE},
-		{ConEmuHwnd ? 0 : MIF_DISABLE},
-		{ConEmuHwnd ? 0 : MIF_DISABLE},
-		{ConEmuHwnd ? 0 : MIF_DISABLE},
+		{MIF_USETEXTPTR|(ConEmuHwnd ? 0 : MIF_DISABLE)},
+		{MIF_USETEXTPTR|(ConEmuHwnd ? 0 : MIF_DISABLE)},
+		{MIF_USETEXTPTR|(ConEmuHwnd ? 0 : MIF_DISABLE)},
+		{MIF_USETEXTPTR|(ConEmuHwnd ? 0 : MIF_DISABLE)},
 		{MIF_SEPARATOR},
-		{ConEmuHwnd ? MIF_DISABLE : MIF_SELECTED}
+		{MIF_USETEXTPTR|(ConEmuHwnd ? MIF_DISABLE : MIF_SELECTED)}
 	};
 	items[0].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,3);
 	items[1].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,4);
@@ -649,7 +649,7 @@ void GetMsgA(int aiMsg, wchar_t* rsMsg/*MAX_PATH*/)
 		return;
 	LPCSTR pszMsg = InfoA->GetMsg(InfoA->ModuleNumber,aiMsg);
 	if (pszMsg && *pszMsg) {
-		int nLen = strlen(pszMsg);
+		size_t nLen = strlen(pszMsg);
 		if (nLen>=MAX_PATH) nLen = MAX_PATH - 1;
 		nLen = MultiByteToWideChar(CP_OEMCP, 0, pszMsg, nLen, rsMsg, MAX_PATH-1);
 		if (nLen>=0) rsMsg[nLen] = 0;
@@ -663,7 +663,7 @@ BOOL IsMacroActiveA()
 	if (!InfoA) return FALSE;
 
 	ActlKeyMacro akm = {MCMD_GETSTATE};
-	int liRc = InfoA->AdvControl(InfoA->ModuleNumber, ACTL_KEYMACRO, &akm);
+	INT_PTR liRc = InfoA->AdvControl(InfoA->ModuleNumber, ACTL_KEYMACRO, &akm);
 	if (liRc == MACROSTATE_NOMACRO)
 		return FALSE;
 	return TRUE;

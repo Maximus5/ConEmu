@@ -7,7 +7,7 @@
 #include "../common/ConEmuCheck.h"
 
 #define DEBUGSTRSYS(s) //DEBUGSTR(s)
-#define DEBUGSTRSIZE(s) //DEBUGSTR(s)
+#define DEBUGSTRSIZE(s) DEBUGSTR(s)
 #define DEBUGSTRCONS(s) DEBUGSTR(s)
 #define DEBUGSTRTABS(s) DEBUGSTR(s)
 
@@ -65,7 +65,7 @@ CConEmuMain::CConEmuMain()
     //mh_ConMan = NULL;
     //ConMan_MainProc = NULL; ConMan_LookForKeyboard = NULL; ConMan_ProcessCommand = NULL; 
     mb_IgnoreSizeChange = false;
-    //mn_CurrentKeybLayout = (u64)GetKeyboardLayout(0);
+    //mn_CurrentKeybLayout = (DWORD_PTR)GetKeyboardLayout(0);
     mn_ServerThreadId = 0; mh_ServerThread = NULL; mh_ServerThreadTerminate = NULL;
     //mpsz_RecreateCmd = NULL;
 	ZeroStruct(mrc_Ideal);
@@ -2131,9 +2131,9 @@ void CConEmuMain::DebugStep(LPCTSTR asMsg)
         SetWindowText(ghWnd, asMsg ? asMsg : Title);
 }
 
-u64 CConEmuMain::GetActiveKeyboardLayout()
+DWORD_PTR CConEmuMain::GetActiveKeyboardLayout()
 {
-    u64 dwActive = (u64)GetKeyboardLayout(mn_MainThreadId);
+    DWORD_PTR dwActive = (DWORD_PTR)GetKeyboardLayout(mn_MainThreadId);
     return dwActive;
 }
 
@@ -3310,7 +3310,7 @@ bool CConEmuMain::isSizing()
 }
 
 // Сюда может придти только LOWORD от HKL
-void CConEmuMain::SwitchKeyboardLayout(u64 dwNewKeybLayout)
+void CConEmuMain::SwitchKeyboardLayout(DWORD_PTR dwNewKeybLayout)
 {
     if ((gSet.isMonitorConsoleLang & 1) == 0)
         return;
@@ -3323,8 +3323,8 @@ void CConEmuMain::SwitchKeyboardLayout(u64 dwNewKeybLayout)
     }
     WARNING("Похоже с другими раскладками будет глючить. US Dvorak?");
     for (i = 0; !lbFound && i < nCount; i++) {
-        if ((hKeyb[i] & 0xFFFF) == (dwNewKeybLayout & 0xFFFF)) {
-            lbFound = TRUE; dwNewKeybLayout = (u64)hKeyb[i];
+        if ((((DWORD_PTR)hKeyb[i]) & 0xFFFF) == (dwNewKeybLayout & 0xFFFF)) {
+            lbFound = TRUE; dwNewKeybLayout = (DWORD_PTR)hKeyb[i];
         }
     }
     // Если не задана раскладка (только язык?) формируем по умолчанию
@@ -3930,7 +3930,7 @@ LRESULT CConEmuMain::OnLangChange(UINT messg, WPARAM wParam, LPARAM lParam)
     #ifdef MSGLOGGER
     {
         WCHAR szMsg[128];
-        wsprintf(szMsg, L"%s(CP:%i, HKL:0x%08X)\n",
+        wsprintf(szMsg, L"%s(CP:%i, HKL:0x%08I64X)\n",
             (messg == WM_INPUTLANGCHANGE) ? L"WM_INPUTLANGCHANGE" : L"WM_INPUTLANGCHANGEREQUEST",
             wParam, lParam);
         DEBUGSTR(szMsg);

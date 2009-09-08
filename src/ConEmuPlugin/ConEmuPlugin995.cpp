@@ -565,7 +565,7 @@ BOOL IsMacroActive995()
 	if (!InfoW995) return FALSE;
 
 	ActlKeyMacro akm = {MCMD_GETSTATE};
-	int liRc = InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_KEYMACRO, &akm);
+	INT_PTR liRc = InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_KEYMACRO, &akm);
 	if (liRc == MACROSTATE_NOMACRO)
 		return FALSE;
 	return TRUE;

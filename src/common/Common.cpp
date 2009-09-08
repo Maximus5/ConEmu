@@ -27,7 +27,7 @@ wchar_t* GetShortFileNameEx(LPCWSTR asLong)
 	wchar_t* pszCur = wcschr(pszShort+3, L'\\');
 	wchar_t* pszSlash;
 	wchar_t  szName[MAX_PATH+1];
-	int nLen = 0;
+	size_t nLen = 0;
 
 	while (pszCur) {
 		*pszCur = 0;
@@ -59,7 +59,7 @@ int NextArg(const wchar_t** asCmdLine, wchar_t* rsArg/*[MAX_PATH+1]*/)
 {
     LPCWSTR psCmdLine = *asCmdLine, pch = NULL;
     wchar_t ch = *psCmdLine;
-    int nArgLen = 0;
+    size_t nArgLen = 0;
     
     while (ch == L' ' || ch == L'\t' || ch == L'\r' || ch == L'\n') ch = *(++psCmdLine);
     if (ch == 0) return CERR_CMDLINEEMPTY;

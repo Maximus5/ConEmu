@@ -137,7 +137,7 @@ BOOL SetConsoleInfo(HWND hwndConsole, CONSOLE_INFO *pci)
 
 			} else {
 				//  Send console window the "update" message
-				DWORD dwConInfoRc = 0;
+				LRESULT dwConInfoRc = 0;
 				DWORD dwConInfoErr = 0;
 				
 				dwConInfoRc = SendMessage(hwndConsole, WM_SETCONSOLEINFO, (WPARAM)hDupSection, 0);

@@ -140,7 +140,7 @@ HANDLE WINAPI _export OpenPluginW(int OpenFrom,INT_PTR Item)
 		ProcessCommand(gnReqCommand, FALSE/*bReqMainThread*/, gpReqCommandData);
 	} else {
 		if (!gbCmdCallObsolete) {
-			int nID = -1; // выбор из меню
+			INT_PTR nID = -1; // выбор из меню
 			if (((OpenFrom & OPEN_FROMMACRO) == OPEN_FROMMACRO) && (Item >= 1 && Item <= 7)) {
 				nID = Item - 1; // Будет сразу выполнена команда
 			}
@@ -2027,12 +2027,14 @@ DWORD WINAPI ServerThreadCommand(LPVOID ahPipe)
 	//fSuccess = WriteFile( hPipe, pOut, pOut->nSize, &cbWritten, NULL);
 
 	if (pIn->hdr.nCmd == CMD_LANGCHANGE) {
-		_ASSERTE(nDataSize>=8);
-		HKL hkl = (HKL)pIn->qwData[0];
+		_ASSERTE(nDataSize>=4);
+		// LayoutName: "00000409", "00010409", ...
+		// А HKL от него отличается, так что передаем DWORD
+		// HKL в x64 выглядит как: "0x0000000000020409", "0xFFFFFFFFF0010409"
+		DWORD hkl = pIn->dwData[0];
 		if (hkl) {
 			DWORD dwLastError = 0;
-			WARNING("BUGBUG: тут 16 цифр может быть?");
-			WCHAR szLoc[20]; wsprintf(szLoc, L"%08I64x", (u64)hkl);
+			WCHAR szLoc[10]; wsprintf(szLoc, L"%08x", hkl);
 			HKL hkl1 = LoadKeyboardLayout(szLoc, KLF_ACTIVATE|KLF_REORDER|KLF_SUBSTITUTE_OK|KLF_SETFORPROCESS);
 			HKL hkl2 = ActivateKeyboardLayout(hkl1, KLF_SETFORPROCESS|KLF_REORDER);
 			if (!hkl2) {

@@ -122,7 +122,7 @@ extern wchar_t gszDbgModLabel[6];
 #define CECMD_SHOWCONSOLE   20 // ¬ Win7 релизе нельз€ скрывать окно консоли, запущенной в режиме администратора
 #define CECMD_POSTCONMSG    21 // ¬ Win7 релизе нельз€ посылать сообщени€ окну консоли, запущенной в режиме администратора
 
-#define CESERVER_REQ_VER    14
+#define CESERVER_REQ_VER    15
 
 #define PIPEBUFSIZE 4096
 

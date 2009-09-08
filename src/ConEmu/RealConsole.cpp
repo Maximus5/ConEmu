@@ -8,7 +8,7 @@
 
 #define DEBUGSTRDRAW(s) //DEBUGSTR(s)
 #define DEBUGSTRINPUT(s) //DEBUGSTR(s)
-#define DEBUGSTRSIZE(s) //DEBUGSTR(s)
+#define DEBUGSTRSIZE(s) DEBUGSTR(s)
 #define DEBUGSTRPROC(s) //DEBUGSTR(s)
 #define DEBUGSTRCMD(s) //DEBUGSTR(s)
 #define DEBUGSTRPKT(s) //DEBUGSTR(s)
@@ -2090,19 +2090,20 @@ DWORD CRealConsole::ServerThread(LPVOID lpvParam)
         { 
             _ASSERTE(hPipe == NULL);
 
-            // Дождаться разрешения семафора, или закрытия консоли
-            dwErr = WaitForMultipleObjects ( 2, hWait, FALSE, INFINITE );
-            if (dwErr == WAIT_OBJECT_0) {
-                return 0; // Консоль закрывается
-            }
+			// !!! Переносить проверку семафора ПОСЛЕ CreateNamedPipe нельзя, т.к. в этом случае
+			//     нити дерутся и клиент не может подцепиться к серверу
+			
+			// Дождаться разрешения семафора, или закрытия консоли
+			dwErr = WaitForMultipleObjects ( 2, hWait, FALSE, INFINITE );
+			if (dwErr == WAIT_OBJECT_0) {
+				return 0; // Консоль закрывается
+			}
 
-            for (int i=0; i<MAX_SERVER_THREADS; i++) {
-                if (pRCon->mn_ServerThreadsId[i] == dwTID) {
-                    pRCon->mh_ActiveServerThread = pRCon->mh_ServerThreads[i]; break;
-                }
-            }
-
-			TODO("Проверить, возможно семафором можно ограничить только ConnectNamedPipe - это будет быстрее чем целиком");
+			for (int i=0; i<MAX_SERVER_THREADS; i++) {
+				if (pRCon->mn_ServerThreadsId[i] == dwTID) {
+					pRCon->mh_ActiveServerThread = pRCon->mh_ServerThreads[i]; break;
+				}
+			}
 
 			_ASSERTE(gpNullSecurity);
             hPipe = CreateNamedPipe( 
@@ -2134,6 +2135,7 @@ DWORD CRealConsole::ServerThread(LPVOID lpvParam)
         		SetEvent(pRCon->mh_GuiAttached);
         		SafeCloseHandle(pRCon->mh_GuiAttached);
    			}
+
 
             // Wait for the client to connect; if it succeeds, 
             // the function returns a nonzero value. If the function
@@ -2358,7 +2360,7 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 					pIn->StartStopRet.nHeight = con.m_sbi.dwSize.Y;
             	}
 
-				con.bBufferHeight = (pIn->StartStopRet.nBufferHeight != 0);
+				SetBufferHeightMode((pIn->StartStopRet.nBufferHeight != 0), TRUE);
 				con.nChange2TextWidth = pIn->StartStopRet.nWidth;
 				con.nChange2TextHeight = pIn->StartStopRet.nHeight;
             }
@@ -2507,8 +2509,13 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 
     } else if (pIn->hdr.nCmd == CECMD_LANGCHANGE) {
         DEBUGSTRCMD(L"GUI recieved CECMD_LANGCHANGE\n");
-        _ASSERTE(nDataSize>=8);
-        u64 dwNewKeybLayout = pIn->qwData[0];
+        _ASSERTE(nDataSize>=4);
+		// LayoutName: "00000409", "00010409", ...
+		// А HKL от него отличается, так что передаем DWORD
+		// HKL в x64 выглядит как: "0x0000000000020409", "0xFFFFFFFFF0010409"
+		DWORD dwName = pIn->dwData[0];
+		wchar_t szName[10]; wsprintf(szName, L"%08X", dwName);
+        DWORD_PTR dwNewKeybLayout = (DWORD_PTR)LoadKeyboardLayout(szName, 0);
         if ((gSet.isMonitorConsoleLang & 1) == 1) {
             if (con.dwKeybLayout != dwNewKeybLayout) {
                 con.dwKeybLayout = dwNewKeybLayout;
@@ -3328,7 +3335,7 @@ BOOL CRealConsole::RetrieveConsoleInfo(UINT anWaitSize)
       return 0;
     }
 
-    int nAllSize = pOut->nSize;
+    int nAllSize = pOut->hdr.nSize;
     if (nAllSize == 0) {
        DEBUGSTRPKT(L" - FAILED!\n");
        DisplayLastError(L"Empty data recieved from server", 0);
@@ -4838,7 +4845,7 @@ BOOL CRealConsole::PrepareOutputFile(BOOL abUnicodeText, wchar_t* pszFilePathNam
         return 0;
     }
 
-    int nAllSize = pOut->nSize;
+    int nAllSize = pOut->hdr.nSize;
     if (nAllSize==0) {
         DEBUGSTRCMD(L" - FAILED!\n");
         DisplayLastError(L"Empty data recieved from server", 0);
@@ -4950,7 +4957,7 @@ BOOL CRealConsole::PrepareOutputFile(BOOL abUnicodeText, wchar_t* pszFilePathNam
     return lbRc;
 }
 
-void CRealConsole::SwitchKeyboardLayout(u64 dwNewKeyboardLayout)
+void CRealConsole::SwitchKeyboardLayout(DWORD_PTR dwNewKeyboardLayout)
 {
     if (!this) return;
     if (ms_ConEmuC_Pipe[0] == 0) return;

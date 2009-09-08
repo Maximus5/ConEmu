@@ -41,6 +41,7 @@ HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t* pszErr/*[MAX_PATH*2]*
     DWORD dwErr = 0, dwMode = 0;
     BOOL fSuccess = FALSE;
     DWORD dwStartTick = GetTickCount();
+    int nTries = 2;
 
 	_ASSERTE(gpNullSecurity!=NULL);
 
@@ -61,13 +62,16 @@ HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t* pszErr/*[MAX_PATH*2]*
         if (hPipe != INVALID_HANDLE_VALUE) 
             break; // OK, открыли
         dwErr = GetLastError();
-        
-        if ((GetTickCount() - dwStartTick) > 1000) {
+
+        // Сделаем так, чтобы хотя бы пару раз он попробовал повторить
+        if ((nTries <= 0) && (GetTickCount() - dwStartTick) > 1000) {
 			if (pszErr) {
 				wsprintf(pszErr, L"%s: CreateFile(%s) failed, code=0x%08X, Timeout", 
 					szModule ? szModule : L"Unknown", szPipeName, dwErr);
 			}
             return NULL;
+        } else {
+        	nTries--;
         }
         
         // Может быть пайп еще не создан (в процессе срабатывания семафора)
@@ -85,10 +89,11 @@ HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t* pszErr/*[MAX_PATH*2]*
             return NULL;
 		}
 
-        // All pipe instances are busy, so wait for 100 ms.
-		if (!WaitNamedPipe(szPipeName, 100) ) {
+        // All pipe instances are busy, so wait for 1000 ms.
+		if (!WaitNamedPipe(szPipeName, 1000) ) {
+			dwErr = GetLastError();
 			if (pszErr) {
-				wsprintf(pszErr, L"%s: WaitNamedPipe(%s) failed, code=0x%08X, Timeout", 
+				wsprintf(pszErr, L"%s: WaitNamedPipe(%s) failed, code=0x%08X, WaitNamedPipe", 
 					szModule ? szModule : L"Unknown", szPipeName, dwErr);
 			}
             return NULL;

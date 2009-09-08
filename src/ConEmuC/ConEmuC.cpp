@@ -255,13 +255,14 @@ enum tag_RunMode {
 } gnRunMode = RM_UNDEFINED;
 
 BOOL gbNoCreateProcess = FALSE;
+BOOL gbCmdUnicodeMode = FALSE;
 
-#ifndef WIN64
+#ifdef WIN64
 	#pragma message("ComEmuC compiled in X64 mode")
-	#define NTVDMACTIVE (srv.bNtvdmActive)
+	#define NTVDMACTIVE FALSE
 #else
 	#pragma message("ComEmuC compiled in X86 mode")
-	#define NTVDMACTIVE FALSE
+	#define NTVDMACTIVE (srv.bNtvdmActive)
 #endif
 
 struct tag_Srv {
@@ -778,7 +779,7 @@ void Help()
     wprintf(
         L"ConEmuC. Copyright (c) 2009, Maximus5\n"
         L"This is a console part of ConEmu product.\n"
-        L"Usage: ConEmuC [switches] /C <command line, passed to %%COMSPEC%%>\n"
+        L"Usage: ConEmuC [switches] [/U] /C <command line, passed to %%COMSPEC%%>\n"
         L"   or: ConEmuC [switches] /CMD <program with arguments, far.exe for example>\n"
         L"   or: ConEmuC /ATTACH /NOCMD\n"
         L"   or: ConEmuC /?\n"
@@ -997,6 +998,10 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 				return CERR_CARGUMENT;
 			}
         } else
+        
+        if (wcscmp(szArg, L"/U")==0 || wcscmp(szArg, L"/u")==0) {
+        	gbCmdUnicodeMode = TRUE;
+        } else
 
         // После этих аргументов - идет то, что передается в CreateProcess!
         if (wcscmp(szArg, L"/C")==0 || wcscmp(szArg, L"/c")==0 || wcscmp(szArg, L"/K")==0 || wcscmp(szArg, L"/k")==0) {
@@ -1068,7 +1073,7 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
             // тогда обрабатываем
             cmd.bNewConsole = TRUE;
             //
-            int nNewLen = wcslen(pwszStartCmdLine) + 130;
+            size_t nNewLen = wcslen(pwszStartCmdLine) + 130;
             //
             BOOL lbIsNeedCmd = IsNeedCmd(asCmdLine, &lbNeedCutStartEndQuot);
             
@@ -1135,10 +1140,11 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
             // cmd /c "dir c:\"
             // и пр.
 			// Попытаться определить необходимость cmd
-			if (lbIsNeedCmd)
-				wcscat(pszNewCmd, L" /CMD cmd /C ");
-			else
+			if (lbIsNeedCmd) {
+				wcscat(pszNewCmd, gbCmdUnicodeMode ? L" /CMD cmd /U /C " : L" /CMD cmd /C ");
+			} else {
 				wcscat(pszNewCmd, L" /CMD ");
+			}
 			// убрать из запускаемой команды "-new_console"
             nNewLen = pwszCopy - asCmdLine;
             psFilePart = pszNewCmd + lstrlenW(pszNewCmd);
@@ -1204,7 +1210,7 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
             }
         }
 
-        nCmdLine += lstrlenW(szComSpec)+10; // "/C" и кавычки
+        nCmdLine += lstrlenW(szComSpec)+15; // "/C", кавычки и возможный "/U"
     }
 
     *psNewCmd = new wchar_t[nCmdLine];
@@ -1260,9 +1266,11 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
         if (wcschr(szComSpec, L' ')) {
             (*psNewCmd)[0] = L'"';
             lstrcpyW( (*psNewCmd)+1, szComSpec );
+            if (gbCmdUnicodeMode) lstrcatW( (*psNewCmd), L" /U");
             lstrcatW( (*psNewCmd), cmd.bK ? L"\" /K " : L"\" /C " );
         } else {
             lstrcpyW( (*psNewCmd), szComSpec );
+            if (gbCmdUnicodeMode) lstrcatW( (*psNewCmd), L" /U");
             lstrcatW( (*psNewCmd), cmd.bK ? L" /K " : L" /C " );
         }
 		BOOL lbNeedQuatete = TRUE;
@@ -1668,7 +1676,7 @@ void CreateLogSizeFile()
     // OK, лог создали
     LPCSTR pszCmdLine = GetCommandLineA();
     if (pszCmdLine) {
-        WriteFile(ghLogSize, pszCmdLine, strlen(pszCmdLine), &dwErr, 0);
+        WriteFile(ghLogSize, pszCmdLine, (DWORD)strlen(pszCmdLine), &dwErr, 0);
         WriteFile(ghLogSize, "\r\n", 2, &dwErr, 0);
     }
     LogSize(NULL, "Startup");
@@ -1722,7 +1730,7 @@ void LogSize(COORD* pcrSize, LPCSTR pszLabel)
     //if (hInp) CloseDesktop ( hInp );
     
     DWORD dwLen = 0;
-    WriteFile(ghLogSize, szInfo, strlen(szInfo), &dwLen, 0);
+    WriteFile(ghLogSize, szInfo, (DWORD)strlen(szInfo), &dwLen, 0);
     FlushFileBuffers(ghLogSize);
 }
 
@@ -3606,6 +3614,7 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 				PostMessage(ghConWnd, in.Msg.nMsg, (WPARAM)in.Msg.wParam, (LPARAM)in.Msg.lParam);
 			} else {
 				LRESULT lRc = SendMessage(ghConWnd, in.Msg.nMsg, (WPARAM)in.Msg.wParam, (LPARAM)in.Msg.lParam);
+				// Возвращаем результат
 				int nOutSize = sizeof(CESERVER_REQ_HDR) + sizeof(u64);
 				*out = ExecuteNewCmd(CECMD_POSTCONMSG,nOutSize);
 				if (*out != NULL) {
@@ -3774,6 +3783,12 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
         	dwTimeout = 10;
        	}
 
+		if (ghConEmuWnd && !IsWindow(ghConEmuWnd)) {
+			ghConEmuWnd = NULL;
+			ShowWindowAsync(ghConWnd, SW_SHOWNORMAL);
+			EnableWindow(ghConWnd, true);
+		}
+
         if (ghConEmuWnd && GetForegroundWindow() == ghConWnd) {
             if (lbFirstForeground || !IsWindowVisible(ghConWnd)) {
                 DEBUGSTR(L"...SetForegroundWindow(ghConEmuWnd);\n");
@@ -3781,7 +3796,7 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
                 lbFirstForeground = FALSE;
             }
         }
-            
+
         // Проверим, реальный это таймаут - или изменение по событию от консоли
         lbEventualChange = (nWait == (WAIT_OBJECT_0+1));
         
@@ -5240,20 +5255,28 @@ WARNING("BUGBUG: x64 US-Dvorak");
 void CheckKeyboardLayout()
 {
     if (pfnGetConsoleKeyboardLayoutName) {
-        wchar_t szCurKeybLayout[KL_NAMELENGTH+1];
+        wchar_t szCurKeybLayout[32];
         // Возвращает строку в виде "00000419" -- может тут 16 цифр?
         if (pfnGetConsoleKeyboardLayoutName(szCurKeybLayout)) {
             if (lstrcmpW(szCurKeybLayout, srv.szKeybLayout)) {
+				#ifdef _DEBUG
+				wchar_t szDbg[128];
+				wsprintfW(szDbg, L"ConEmuC: InputLayoutChanged to '%s'\n", szCurKeybLayout);
+				OutputDebugString(szDbg);
+				#endif
                 // Сменился
                 lstrcpyW(srv.szKeybLayout, szCurKeybLayout);
                 // Отошлем в GUI
                 wchar_t *pszEnd = szCurKeybLayout+8;
                 WARNING("BUGBUG: 16 цифр не вернет");
-                u64 dwLayout = wcstol(szCurKeybLayout, &pszEnd, 16);
-                CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_LANGCHANGE,sizeof(CESERVER_REQ_HDR)+sizeof(u64));
+				// LayoutName: "00000409", "00010409", ...
+				// А HKL от него отличается, так что передаем DWORD
+				// HKL в x64 выглядит как: "0x0000000000020409", "0xFFFFFFFFF0010409"
+                DWORD dwLayout = wcstol(szCurKeybLayout, &pszEnd, 16);
+                CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_LANGCHANGE,sizeof(CESERVER_REQ_HDR)+sizeof(DWORD));
                 if (pIn) {
                     //memmove(pIn->Data, &dwLayout, 4);
-                    pIn->qwData[0] = dwLayout;
+                    pIn->dwData[0] = dwLayout;
 
                     CESERVER_REQ* pOut = NULL;
                     pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
