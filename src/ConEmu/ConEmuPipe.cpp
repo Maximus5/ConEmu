@@ -176,10 +176,9 @@ BOOL CConEmuPipe::Execute(int nCmd, LPCVOID apData, UINT anDataSize)
 		Close();
 		return FALSE;
 	}
+	nAllSize = pOut->hdr.nSize;
 	pOut = NULL;
-
-
-    nAllSize = *((DWORD*)cbReadBuf);
+    
     if (nAllSize==0) {
        DEBUGSTR(L" - FAILED!\n");
        DisplayLastError(L"Empty data recieved from server", 0);

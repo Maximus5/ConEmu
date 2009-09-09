@@ -1636,7 +1636,7 @@ LRESULT CSettings::OnColorComboBox(WPARAM wParam, LPARAM lParam)
     } else if (wId==lbVisEOF) {
         nVizEOF = SendDlgItemMessage(hColors, wId, CB_GETCURSEL, 0, 0);
 	} else if (wId==lbDefaultColors) {
-		int nIdx = SendDlgItemMessage(hColors, wId, CB_GETCURSEL, 0, 0);
+		//int nIdx = SendDlgItemMessage(hColors, wId, CB_GETCURSEL, 0, 0);
 		//EnableWindow(GetDlgItem(hColors, cbDefaultColors), nIdx>0 || (gbLastColorsOk && !nIdx));
 		if (gbLastColorsOk) // только если инициализация палитр завершилась
 		{
@@ -1657,7 +1657,7 @@ LRESULT CSettings::OnColorComboBox(WPARAM wParam, LPARAM lParam)
 				SetDlgItemText(hColors, 1100 + i, temp);
 				InvalidateRect(GetDlgItem(hColors, 1000+i), 0, 1);
 			}
-		}
+		} else return 0;
 	}
     
     gConEmu.Update(true);

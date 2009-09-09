@@ -1637,8 +1637,13 @@ void CRealConsole::StopSignal()
 
     SetEvent(mh_TermEvent);
 
-    if (!mn_InRecreate)
+	if (!mn_InRecreate) {
+		// Чтобы при закрытии не было попытка активировать 
+		// другую вкладку ЭТОЙ консоли
+		mn_tabsCount = 0; 
+		// Очистка массива консолей и обновление вкладок
         gConEmu.OnVConTerminated(mp_VCon);
+	}
 }
 
 void CRealConsole::StopThread(BOOL abRecreating)
@@ -5287,7 +5292,7 @@ short CRealConsole::GetProgress(BOOL *rpbError)
 	if (mn_Progress >= 0)
 		return mn_Progress;
 	if (mn_PreWarningProgress >= 0) {
-		*rpbError = TRUE;
+		if (rpbError) *rpbError = TRUE;
 		return mn_PreWarningProgress;
 	}
 	return -1;

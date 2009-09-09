@@ -1170,8 +1170,9 @@ int TabBarClass::GetNextTab(BOOL abForward, BOOL abAltStyle/*=FALSE*/)
     	if (lbRecentMode) {
         	std::vector<VConTabs>::iterator iter = m_TabStack.begin();
         	while (iter != m_TabStack.end()) {
+				VConTabs Item = *iter;
         		// Найти в стеке выделенный таб
-        		if (*iter == cur) {
+        		if (Item == cur) {
         			// Определить следующий таб, который мы можем активировать
         			do {
 	        			iter ++; // Если дошли до конца (сейчас выделен последний таб) вернуть первый
@@ -1200,8 +1201,9 @@ int TabBarClass::GetNextTab(BOOL abForward, BOOL abAltStyle/*=FALSE*/)
     	if (lbRecentMode) {
         	std::vector<VConTabs>::reverse_iterator iter = m_TabStack.rbegin();
         	while (iter != m_TabStack.rend()) {
+				VConTabs Item = *iter;
         		// Найти в стеке выделенный таб
-        		if (*iter == cur) {
+        		if (Item == cur) {
         			// Определить следующий таб, который мы можем активировать
         			do {
 	        			iter ++; // Если дошли до конца (сейчас выделен последний таб) вернуть первый

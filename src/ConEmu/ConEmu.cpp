@@ -4668,7 +4668,33 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
         //SENDMESSAGE(ghConWnd ? ghConWnd : ghWnd, WM_CLOSE, 0, 0); // ?? фар не ловит сообщение, ExitFAR не вызываются
         {
             int nConCount = 0, nDetachedCount = 0;
-            for (int i=(MAX_CONSOLE_COUNT-1); i>=0; i--) {
+			int nEditors = 0, nProgress = 0, i;
+			for (i=(MAX_CONSOLE_COUNT-1); i>=0; i--) {
+				CRealConsole* pRCon = NULL;
+				ConEmuTab tab = {0};
+				if (mp_VCon[i] && (pRCon = mp_VCon[i]->RCon())!=NULL) {
+					if (pRCon->GetProgress(NULL) != -1)
+						nProgress ++;
+					for (int j = 0; TRUE; j++) {
+						if (!pRCon->GetTab(j, &tab))
+							break;
+						if (tab.Modified)
+							nEditors ++;
+					}
+				}
+			}
+			if (nProgress || nEditors) {
+				wchar_t szText[255], *pszText;
+				lstrcpy(szText, L"Close confirmation.\r\n\r\n"); pszText = szText+lstrlen(szText);
+				if (nProgress) { wsprintf(pszText, L"Incomplete opetations: %i\r\n", nProgress); pszText += lstrlen(pszText); }
+				if (nEditors) { wsprintf(pszText, L"Unsaved editor windows: %i\r\n", nEditors); pszText += lstrlen(pszText); }
+				lstrcpy(pszText, L"\r\nDo you want to cancel shutdown?");
+				int nBtn = MessageBoxW(ghWnd, szText, L"ConEmu", MB_YESNO|MB_ICONEXCLAMATION);
+				if (nBtn != IDNO)
+					return 0; // не закрывать
+			}
+
+            for (i=(MAX_CONSOLE_COUNT-1); i>=0; i--) {
                 if (mp_VCon[i] && mp_VCon[i]->RCon()) {
                     if (mp_VCon[i]->RCon()->isDetached()) {
                         nDetachedCount ++;
@@ -4865,7 +4891,22 @@ LRESULT CConEmuMain::OnVConTerminated(CVirtualConsole* apVCon, BOOL abPosted /*=
 
     for (int i=0; i<MAX_CONSOLE_COUNT; i++) {
         if (mp_VCon[i] == apVCon) {
-            mp_VCon[i] = NULL;
+
+			// Сначала нужно обновить закладки, иначе в закрываемой консоли
+			// может быть несколько вкладок и вместо активации другой консоли
+			// будет попытка активировать другую вкладку закрываемой консоли
+			//TabBar.Update(TRUE); -- а и не сможет он другую активировать, т.к. RCon вернет FALSE
+
+			// Эта комбинация должна активировать предыдущую консоль
+			if (gSet.isTabRecent) {
+				TabBar.SwitchRollback();
+				TabBar.SwitchNext();
+				TabBar.SwitchCommit();
+			}
+
+			// Теперь можно очистить переменную массива
+			mp_VCon[i] = NULL;
+
 
             WARNING("Вообще-то это нужно бы в CriticalSection закрыть. Несколько консолей может одновременно закрыться");
             if (pVCon == apVCon) {
