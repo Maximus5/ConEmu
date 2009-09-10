@@ -2118,6 +2118,7 @@ void ShowPluginMenu(int nID /*= -1*/)
 
 	if (nID != -1) {
 		nItem = nID;
+		if (nItem >= 2) nItem++; //Separator
 		if (nItem >= 7) nItem++; //Separator
 	} else if (gFarVersion.dwVerMajor==1)
 		nItem = ShowPluginMenuA();

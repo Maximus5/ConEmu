@@ -15,7 +15,7 @@ private:
 	RECT m_Margins;
 	bool _titleShouldChange;
 	int _prevTab;
-	BOOL mb_ChangeAllowed, mb_Enabled;
+	BOOL mb_ChangeAllowed; //, mb_Enabled;
 	void AddTab(LPCWSTR text, int i);
 	void SelectTab(int i);
 	CVirtualConsole* FarSendChangeTab(int tabIndex);
@@ -75,8 +75,8 @@ protected:
 
 public:
 	TabBarClass();
-	void Enable(BOOL abEnabled);
-	void Refresh(BOOL abFarActive);
+	//void Enable(BOOL abEnabled);
+	//void Refresh(BOOL abFarActive);
 	void Retrieve();
 	void Reset();
 	void Invalidate();

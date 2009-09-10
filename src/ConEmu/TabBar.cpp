@@ -39,7 +39,7 @@ TabBarClass::TabBarClass()
     _titleShouldChange = false;
     _prevTab = -1;
     mb_ChangeAllowed = FALSE;
-    mb_Enabled = TRUE;
+    //mb_Enabled = TRUE;
     mh_Toolbar = NULL; mh_Tabbar = NULL; mh_Rebar = NULL; mn_LastToolbarWidth = 0;
     mb_PostUpdateCalled = FALSE;
     mn_MsgUpdateTabs = RegisterWindowMessage(CONEMUMSG_UPDATETABS);
@@ -50,14 +50,14 @@ TabBarClass::TabBarClass()
 	mn_ThemeHeightDiff = 0;
 }
 
-void TabBarClass::Enable(BOOL abEnabled)
-{
-    if (mh_Tabbar && mb_Enabled!=abEnabled)
-    {
-        //EnableWindow(mh_Tabbar, abEnabled);
-        mb_Enabled = abEnabled;
-    }
-}
+//void TabBarClass::Enable(BOOL abEnabled)
+//{
+//    if (mh_Tabbar && mb_Enabled!=abEnabled)
+//    {
+//        //EnableWindow(mh_Tabbar, abEnabled);
+//        mb_Enabled = abEnabled;
+//    }
+//}
 
 void TabBarClass::RePaint()
 {
@@ -74,10 +74,10 @@ void TabBarClass::RePaint()
     UpdateWindow(mh_Rebar);
 }
 
-void TabBarClass::Refresh(BOOL abFarActive)
-{
-    Enable(abFarActive);
-}
+//void TabBarClass::Refresh(BOOL abFarActive)
+//{
+//    Enable(abFarActive);
+//}
 
 void TabBarClass::Reset()
 {

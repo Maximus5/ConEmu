@@ -2934,7 +2934,9 @@ void CRealConsole::ProcessUpdateFlags(BOOL abProcessChanged)
     // Обновить список процессов в окне настроек и закладки
     if (abProcessChanged) {
         gConEmu.UpdateProcessDisplay(abProcessChanged);
-        TabBar.Refresh(mn_ProgramStatus & CES_FARACTIVE);
+        //2009-09-10
+        //TabBar.Refresh(mn_ProgramStatus & CES_FARACTIVE);
+        TabBar.Update();
     }
 }
 
@@ -4343,7 +4345,7 @@ BOOL CRealConsole::GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab)
 {
     if (!this)
         return FALSE;
-        
+
 	if (!mp_tabs || tabIdx<0 || tabIdx>=mn_tabsCount) {
 		// На всякий случай, даже если табы не инициализированы, а просят первый -
 		// вернем просто заголовок консоли
@@ -4355,9 +4357,12 @@ BOOL CRealConsole::GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab)
 		}
         return FALSE;
 	}
+	// На время выполнения DOS-команд - только один таб
+	if ((mn_ProgramStatus & CES_FARACTIVE) == 0 && tabIdx > 0)
+		return FALSE;
     
     memmove(pTab, mp_tabs+tabIdx, sizeof(ConEmuTab));
-    if (mn_tabsCount == 1 && pTab->Type == 1) {
+    if (((mn_tabsCount == 1) || (mn_ProgramStatus & CES_FARACTIVE) == 0) && pTab->Type == 1) {
         if (TitleFull[0]) { // Если панель единственная - точно показываем заголовок консоли
             int nMaxLen = max(countof(TitleFull) , countof(pTab->Name));
             lstrcpyn(pTab->Name, TitleFull, nMaxLen);
@@ -4385,7 +4390,7 @@ BOOL CRealConsole::GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab)
             *pszAmp = L'_';
             pszAmp ++;
         } else {
-            wmemmove(pszAmp+1, pszAmp, nCurLen-(pszAmp-pTab->Name)-1);
+            wmemmove(pszAmp+1, pszAmp, nCurLen-(pszAmp-pTab->Name));
             nCurLen ++;
             pszAmp += 2;
         }
@@ -4397,7 +4402,10 @@ int CRealConsole::GetTabCount()
 {
     if (!this)
         return 0;
-        
+
+    if ((mn_ProgramStatus & CES_FARACTIVE) == 0)
+    	return 1; // На время выполнения команд - ТОЛЬКО одна закладка
+
     return max(mn_tabsCount,1);
 }
 

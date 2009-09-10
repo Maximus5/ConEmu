@@ -63,14 +63,14 @@ CRITICAL_SECTION gcsHeap;
 #define DEBUGLOG(s)
 #endif
 
-#ifndef _DEBUG
+//#ifndef _DEBUG
 // Релизный режим
 #define FORCE_REDRAW_FIX
 #define RELATIVE_TRANSMIT_DISABLE
-#else
-// Отладочный режим
-//#define FORCE_REDRAW_FIX
-#endif
+//#else
+//// Отладочный режим
+////#define FORCE_REDRAW_FIX
+//#endif
 
 #if !defined(CONSOLE_APPLICATION_16BIT)
 #define CONSOLE_APPLICATION_16BIT       0x0001

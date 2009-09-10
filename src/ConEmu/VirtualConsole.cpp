@@ -634,6 +634,8 @@ WORD CVirtualConsole::CharWidth(TCHAR ch)
         return gSet.FontWidth();
 
 	if (gSet.isFixFarBorders && isCharBorder(ch))
+		//2009-09-09 Ёто некорректно. Ўипина шрифта рамки может быть больше знакоместа
+		//return gSet.BorderFontWidth();
 		return gSet.FontWidth();
 
 	if (!gSet.isProportional)
@@ -2125,14 +2127,20 @@ void CVirtualConsole::DistributeSpaces(wchar_t* ConCharLine, WORD* ConAttrLine, 
 		if (j2>=(int)TextWidth) { // конец строки
 			ConCharXLine[j2-1] = Width;
 		} else {
-			int nBordWidth = gSet.FontWidth(); //if (!nBordWidth) nBordWidth = gSet.FontWidth();
+			//2009-09-09 Ёто некорректно. Ўирина шрифта рамки может быть больше знакоместа
+			//int nBordWidth = gSet.BorderFontWidth(); if (!nBordWidth) nBordWidth = gSet.FontWidth();
+			int nBordWidth = gSet.FontWidth();
 
 			// ќпределить координату конца последовательности
 			if (isCharBorderVertical(ConCharLine[j2])) {
-				ConCharXLine[j2-1] = j2 * nBordWidth; // или тут [j] должен быть?
+				//2009-09-09 а это соответственно не нужно (пока gSet.FontWidth() == nBordWidth)
+				//ConCharXLine[j2-1] = (j2-1) * gSet.FontWidth() + nBordWidth; // или тут [j] должен быть?
+				ConCharXLine[j2-1] = j2 * nBordWidth;
 			} else {
 				TODO("ƒл€ пропорциональных шрифтов надо делать как-то по другому!");
-				ConCharXLine[j2-1] = j2 * nBordWidth; // или тут [j] должен быть?
+				//2009-09-09 а это соответственно не нужно (пока gSet.FontWidth() == nBordWidth)
+				//ConCharXLine[j2-1] = (j2-1) * gSet.FontWidth() + nBordWidth; // или тут [j] должен быть?
+				ConCharXLine[j2-1] = j2 * nBordWidth;
 			}
 		}
 
