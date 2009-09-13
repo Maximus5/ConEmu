@@ -47,6 +47,7 @@
 //#define CONMAN_RECREATELAST (CONMAN_RECREATE+MAX_CONSOLE_COUNT-1) // это все зарезервировано
 
 #define CON_RECREATE_TIMEOUT 30000
+#define CON_REDRAW_TIMOUT 5
 
 #ifndef CLEARTYPE_NATURAL_QUALITY
 #define CLEARTYPE_QUALITY       5
@@ -216,6 +217,13 @@ public:
 	{
 		Save(regKey, (const TCHAR *)value);
 	}
+	void SaveMSZ(const TCHAR *regKey, const TCHAR *value, DWORD nSize) // size in BYTES!!!
+	{
+		if (!value || !*value)
+			RegDeleteValue(regMy, regKey);
+		else
+			RegSetValueExW(regMy, regKey, NULL, REG_MULTI_SZ, (LPBYTE)(value), nSize);
+	}
 
 	template <class T> bool Load(const TCHAR *regKey, T &value)
 	{
@@ -231,19 +239,22 @@ public:
 			return true;
 		return false;
 	}*/
-	bool Load(const TCHAR *regKey, TCHAR **value)
+	bool Load(const TCHAR *regKey, wchar_t **value, LPDWORD pnSize = NULL)
 	{
 		DWORD len = 0;
 		if (*value) {free(*value); *value = NULL;}
-		if (RegQueryValueEx(regMy, regKey, NULL, NULL, NULL, &len) == ERROR_SUCCESS && len) {
-			*value = (TCHAR*)malloc(len); **value = 0;
-			if (RegQueryValueEx(regMy, regKey, NULL, NULL, (LPBYTE)(*value), &len) == ERROR_SUCCESS) {
+		if (RegQueryValueExW(regMy, regKey, NULL, NULL, NULL, &len) == ERROR_SUCCESS && len) {
+			int nChLen = len/2;
+			*value = (TCHAR*)malloc((nChLen+2)*sizeof(wchar_t));
+			(*value)[nChLen] = 0; (*value)[nChLen+1] = 0;
+			if (RegQueryValueExW(regMy, regKey, NULL, NULL, (LPBYTE)(*value), &len) == ERROR_SUCCESS) {
+				if (pnSize) *pnSize = len+1;
 				return true;
 			}
 		} else {
-			*value = (TCHAR*)malloc(sizeof(TCHAR));
-			**value = 0;
+			*value = (TCHAR*)malloc(sizeof(TCHAR)*2);
 		}
+		(*value)[0] = 0; (*value)[1] = 0; // На случай REG_MULTI_SZ
 		return false;
 	}
 };

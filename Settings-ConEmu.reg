@@ -94,16 +94,28 @@ REGEDIT4
 ;; Console buffer height (default). min=300 lines
 ;"DefaultBufferHeight"=dword:000003E8 ; 1000 lines
 
-;; Buffer height for 16bit applications
-;"16bit Height"=dword:00000019
+;; Buffer height for 16bit applications (is not supported in x64 OS)
+;; Allowed values: 
+;;   dword:00000032 (50 lines), dword:0000002B (43 lines), 
+;;   dword:0000001C (28 lines), dword:00000019 (25 lines), 
+;;   dword:00000000 - means autoselection
+"16bit Height"=dword:00000000
 
-;; Положение UpperLeft в пикселах (int)
+;; You can force output of internal cmd.exe commands to Unicode or Ansi (OEM actually).
+;; ConEmu can do this, by using /U or /A switches of cmd.exe
+;; dword:00000000 - Don't use /U or /A switches
+;; dword:00000002 - cmd.exe is forced to Unicode output (/U switch in cmd.exe arguments)
+;; dword:00000003 - cmd.exe is forced to OEM output (/A switch in cmd.exe arguments)
+;; dword:00000001 - Automatic selection. Unicode in FAR 2.x and OEM in FAR 1.7x
+"CmdOutputCP"=dword:00000001
+
+;; UpperLeft ConEmu window corner (pixels)
 "ConWnd X"=dword:0000001a
 "ConWnd Y"=dword:00000060
 ;; Cascaded, when WindowMode is Normal (51f)
 "Cascaded"=hex:01
 
-;; 1 - Посылать Alt+Enter в консоль. Режим FullScreen будет недоступен
+;; 1 - Send Alt+Enter to console, so you can't switch Fullscreen mode from keyboard
 "AltEnter"=hex:00
 
 ;; GUI progress bars on Copy/Move

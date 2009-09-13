@@ -38,6 +38,8 @@
 
 CConEmuMain::CConEmuMain()
 {
+	ms_ConEmuAliveEvent[0] = 0;	mb_AliveInitialized = FALSE; mh_ConEmuAliveEvent = NULL; mb_ConEmuAliveOwned = FALSE;
+
     mn_MainThreadId = GetCurrentThreadId();
     wcscpy(szConEmuVersion, L"?.?.?.?");
     WindowMode=rNormal; mb_PassSysCommand = false; change2WindowMode = -1;
@@ -2405,6 +2407,42 @@ void CConEmuMain::Recreate(BOOL abRecreate, BOOL abConfirm)
     SafeFree(args.pszSpecialCmd);
 }
 
+BOOL CConEmuMain::RunSingleInstance()
+{
+	BOOL lbAccepted = FALSE;
+	LPCWSTR lpszCmd = gSet.GetCmd();
+	if (lpszCmd && *lpszCmd) {
+		HWND ConEmuHwnd = FindWindowExW(NULL, NULL, VirtualConsoleClassMain, NULL);
+		if (ConEmuHwnd) {
+			CESERVER_REQ *pIn = NULL, *pOut = NULL;
+			int nCmdLen = lstrlenW(lpszCmd);
+			int nSize = sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_NEWCMD);
+			if (nCmdLen >= MAX_PATH) {
+				nSize += (nCmdLen - MAX_PATH + 2) * 2;
+			}
+			pIn = (CESERVER_REQ*)calloc(nSize,1);
+			if (pIn) {
+				pIn->hdr.nSize = nSize;
+				pIn->hdr.nCmd = CECMD_NEWCMD;
+				pIn->hdr.nVersion = CESERVER_REQ_VER;
+				pIn->hdr.nSrcThreadId = GetCurrentThreadId();
+				lstrcpyW(pIn->NewCmd.szCommand, lpszCmd);
+
+				DWORD dwPID = 0;
+				if (GetWindowThreadProcessId(ConEmuHwnd, &dwPID))
+					AllowSetForegroundWindow(dwPID);
+
+				pOut = ExecuteGuiCmd(ConEmuHwnd, pIn, NULL);
+				if (pOut && pOut->Data[0])
+					lbAccepted = TRUE;
+			}
+			if (pIn) {free(pIn); pIn = NULL;}
+			if (pOut) ExecuteFreeResult(pOut);
+		}
+	}
+	return lbAccepted;
+}
+
 int CConEmuMain::BrowseCallbackProc(HWND hwnd, UINT uMsg, LPARAM lParam, LPARAM lpData)
 {
     if (uMsg==BFFM_INITIALIZED) {
@@ -2432,6 +2470,14 @@ INT_PTR CConEmuMain::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARA
                 int nId = SendDlgItemMessage(hDlg, IDC_RESTART_CMD, CB_FINDSTRINGEXACT, -1, (LPARAM)pszSystem);
                 if (nId < 0) SendDlgItemMessage(hDlg, IDC_RESTART_CMD, CB_INSERTSTRING, 0, (LPARAM)pszSystem);
             }
+			pszSystem = gSet.HistoryGet();
+			if (pszSystem) {
+				while (*pszSystem) {
+					int nId = SendDlgItemMessage(hDlg, IDC_RESTART_CMD, CB_FINDSTRINGEXACT, -1, (LPARAM)pszSystem);
+					if (nId < 0) SendDlgItemMessage(hDlg, IDC_RESTART_CMD, CB_INSERTSTRING, -1, (LPARAM)pszSystem);
+					pszSystem += lstrlen(pszSystem)+1;
+				}
+			}
             SetDlgItemText(hDlg, IDC_RESTART_CMD, pszCmd);
             
             SetDlgItemText(hDlg, IDC_STARTUP_DIR, gConEmu.ActiveCon()->RCon()->GetDir());
@@ -2584,8 +2630,10 @@ INT_PTR CConEmuMain::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARA
                     if (nLen > 0) {
 						_ASSERTE(pArgs->pszSpecialCmd==NULL);
                         pArgs->pszSpecialCmd = (wchar_t*)calloc(nLen+1,2);
-                        if (pArgs->pszSpecialCmd)
+						if (pArgs->pszSpecialCmd) {
                             GetWindowText(hEdit, pArgs->pszSpecialCmd, nLen+1);
+							gSet.HistoryAdd(pArgs->pszSpecialCmd);
+						}
                     }
 					// StartupDir
 					hEdit = GetDlgItem(hDlg, IDC_STARTUP_DIR);
@@ -3168,6 +3216,35 @@ bool CConEmuMain::isFilePanel(bool abPluginAllowed/*=false*/)
     return pVCon->RCon()->isFilePanel(abPluginAllowed);
 }
 
+bool CConEmuMain::isFirstInstance()
+{
+	if (!mb_AliveInitialized) {
+		// создадим событие, чтобы не было проблем с ключем /SINGLE
+		lstrcpy(ms_ConEmuAliveEvent, CEGUI_ALIVE_EVENT);
+		DWORD nSize = MAX_PATH;
+		// Добавим имя текущего юзера. Нам не нужны конфликты при наличии нескольких юзеров.
+		GetUserName(ms_ConEmuAliveEvent+lstrlen(ms_ConEmuAliveEvent), &nSize);
+		mh_ConEmuAliveEvent = CreateEvent(NULL, TRUE, TRUE, ms_ConEmuAliveEvent);
+		nSize = GetLastError();
+		// имя пользователя теоретически может содержать символы, которые недопустимы в имени Event
+		if (!mh_ConEmuAliveEvent /* || nSize == ERROR_PATH_NOT_FOUND */) {
+			lstrcpy(ms_ConEmuAliveEvent, CEGUI_ALIVE_EVENT);
+			mh_ConEmuAliveEvent = CreateEvent(NULL, TRUE, TRUE, ms_ConEmuAliveEvent);
+			nSize = GetLastError();
+		}
+		mb_ConEmuAliveOwned = mh_ConEmuAliveEvent && (nSize!=ERROR_ALREADY_EXISTS);
+	}
+
+	if (mh_ConEmuAliveEvent && !mb_ConEmuAliveOwned) {
+		if (WaitForSingleObject(mh_ConEmuAliveEvent,0) == WAIT_TIMEOUT) {
+			SetEvent(mh_ConEmuAliveEvent);
+			mb_ConEmuAliveOwned = TRUE;
+		}
+	}
+
+	return mb_ConEmuAliveOwned;
+}
+
 bool CConEmuMain::isEditor()
 {
     if (!pVCon) return false;
@@ -3557,11 +3634,19 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
         DWORD dw = GetLastError();
         #endif
         n = 0;
+        n = SetTimer(ghWnd, 1, CON_REDRAW_TIMOUT*2, NULL);
     }
 }
 
 LRESULT CConEmuMain::OnDestroy(HWND hWnd)
 {
+	if (mb_ConEmuAliveOwned && mh_ConEmuAliveEvent)
+	{
+		ResetEvent(mh_ConEmuAliveEvent); // Дадим другим процессам "завладеть" первенством
+		SafeCloseHandle(mh_ConEmuAliveEvent);
+		mb_ConEmuAliveOwned = FALSE;
+	}
+
 	if (mb_MouseCaptured) {
 		ReleaseCapture();
 		mb_MouseCaptured = FALSE;
@@ -4777,86 +4862,99 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
     switch (wParam)
     {
     case 0:
-        //Maximus5. Hack - если какая-то зараза задизеблила окно
-        if (!gbDontEnable) {
-            DWORD dwStyle = GetWindowLong(ghWnd, GWL_STYLE);
-            if (dwStyle & WS_DISABLED)
-                EnableWindow(ghWnd, TRUE);
-        }
+	    {
+	        //Maximus5. Hack - если какая-то зараза задизеблила окно
+	        if (!gbDontEnable) {
+	            DWORD dwStyle = GetWindowLong(ghWnd, GWL_STYLE);
+	            if (dwStyle & WS_DISABLED)
+	                EnableWindow(ghWnd, TRUE);
+	        }
 
-        CheckProcesses(); //m_ActiveConmanIDX, FALSE/*bTitleChanged*/);
+	        CheckProcesses(); //m_ActiveConmanIDX, FALSE/*bTitleChanged*/);
 
-        TODO("Теперь это условие не работает. 1 - раньше это был сам ConEmu.exe");
-        if (m_ProcCount == 0) {
-            // При ошибках запуска консольного приложения хотя бы можно будет увидеть, что оно написало...
-            if (mb_ProcessCreated) {
-                Destroy();
-                break;
-            }
-        } else if (!mb_ProcessCreated && m_ProcCount>=1) {
-            if ((GetTickCount() - mn_StartTick)>PROCESS_WAIT_START_TIME)
-                mb_ProcessCreated = TRUE;
-        }
-
-
-        // TODO: поддержку SlideShow повесить на отдельный таймер
-        BOOL lbIsPicView = isPictureView();
-        if (bPicViewSlideShow) {
-            DWORD dwTicks = GetTickCount();
-            DWORD dwElapse = dwTicks - dwLastSlideShowTick;
-            if (dwElapse > gSet.nSlideShowElapse)
-            {
-                if (IsWindow(hPictureView)) {
-                    //
-                    bPicViewSlideShow = false;
-                    SendMessage(ghConWnd, WM_KEYDOWN, VK_NEXT, 0x01510001);
-                    SendMessage(ghConWnd, WM_KEYUP, VK_NEXT, 0xc1510001);
-
-                    // Окно могло измениться?
-                    isPictureView();
-
-                    dwLastSlideShowTick = GetTickCount();
-                    bPicViewSlideShow = true;
-                } else {
-                    hPictureView = NULL;
-                    bPicViewSlideShow = false;
-                }
-            }
-        }
-
-        
-        //2009-04-22 - вроде не требуется
-        /*if (lbIsPicView && !isPiewUpdate)
-        {
-            // чтобы принудительно обновиться после закрытия PicView
-            isPiewUpdate = true; 
-        }*/
-
-        if (!lbIsPicView && isPiewUpdate)
-        {   // После скрытия/закрытия PictureView нужно передернуть консоль - ее размер мог измениться
-            isPiewUpdate = false;
-            SyncConsoleToWindow();
-            //INVALIDATE(); //InvalidateRect(HDCWND, NULL, FALSE);
-            InvalidateAll();
-        }
+	        TODO("Теперь это условие не работает. 1 - раньше это был сам ConEmu.exe");
+	        if (m_ProcCount == 0) {
+	            // При ошибках запуска консольного приложения хотя бы можно будет увидеть, что оно написало...
+	            if (mb_ProcessCreated) {
+	                Destroy();
+	                break;
+	            }
+	        } else if (!mb_ProcessCreated && m_ProcCount>=1) {
+	            if ((GetTickCount() - mn_StartTick)>PROCESS_WAIT_START_TIME)
+	                mb_ProcessCreated = TRUE;
+	        }
 
 
-        if (!isIconic())
-        {
-            //// Было ли реальное изменение размеров?
-            //BOOL lbSizingToDo  = (mouse.state & MOUSE_SIZING_TODO) == MOUSE_SIZING_TODO;
+	        // TODO: поддержку SlideShow повесить на отдельный таймер
+	        BOOL lbIsPicView = isPictureView();
+	        if (bPicViewSlideShow) {
+	            DWORD dwTicks = GetTickCount();
+	            DWORD dwElapse = dwTicks - dwLastSlideShowTick;
+	            if (dwElapse > gSet.nSlideShowElapse)
+	            {
+	                if (IsWindow(hPictureView)) {
+	                    //
+	                    bPicViewSlideShow = false;
+	                    SendMessage(ghConWnd, WM_KEYDOWN, VK_NEXT, 0x01510001);
+	                    SendMessage(ghConWnd, WM_KEYUP, VK_NEXT, 0xc1510001);
 
-            //if (isSizing() && !isPressed(VK_LBUTTON)) {
-            //    // Сборс всех флагов ресайза мышкой
-            //    mouse.state &= ~(MOUSE_SIZING_BEGIN|MOUSE_SIZING_TODO);
-            //}
+	                    // Окно могло измениться?
+	                    isPictureView();
 
-            //TODO("возможно весь ресайз (кроме SyncNtvdm?) нужно перенести в нить консоли")
-			//OnConsoleResize();
+	                    dwLastSlideShowTick = GetTickCount();
+	                    bPicViewSlideShow = true;
+	                } else {
+	                    hPictureView = NULL;
+	                    bPicViewSlideShow = false;
+	                }
+	            }
+	        }
 
-            // update scrollbar
-            pVCon->RCon()->UpdateScrollInfo();
-        }
+	        
+	        //2009-04-22 - вроде не требуется
+	        /*if (lbIsPicView && !isPiewUpdate)
+	        {
+	            // чтобы принудительно обновиться после закрытия PicView
+	            isPiewUpdate = true; 
+	        }*/
+
+	        if (!lbIsPicView && isPiewUpdate)
+	        {   // После скрытия/закрытия PictureView нужно передернуть консоль - ее размер мог измениться
+	            isPiewUpdate = false;
+	            SyncConsoleToWindow();
+	            //INVALIDATE(); //InvalidateRect(HDCWND, NULL, FALSE);
+	            InvalidateAll();
+	        }
+
+
+	        if (!isIconic())
+	        {
+	            //// Было ли реальное изменение размеров?
+	            //BOOL lbSizingToDo  = (mouse.state & MOUSE_SIZING_TODO) == MOUSE_SIZING_TODO;
+
+	            //if (isSizing() && !isPressed(VK_LBUTTON)) {
+	            //    // Сборс всех флагов ресайза мышкой
+	            //    mouse.state &= ~(MOUSE_SIZING_BEGIN|MOUSE_SIZING_TODO);
+	            //}
+
+	            //TODO("возможно весь ресайз (кроме SyncNtvdm?) нужно перенести в нить консоли")
+				//OnConsoleResize();
+
+	            // update scrollbar
+	            pVCon->RCon()->UpdateScrollInfo();
+	        }
+
+			if (mh_ConEmuAliveEvent && !mb_ConEmuAliveOwned)
+				isFirstInstance(); // Заодно и проверит...
+
+	    } break; // case 0:
+	case 1:
+		{
+	        if (!isIconic())
+	        {
+	        	m_Child.CheckPostRedraw();
+	        }
+		} break; // case 1:
     }
 
     mb_InTimer = FALSE;

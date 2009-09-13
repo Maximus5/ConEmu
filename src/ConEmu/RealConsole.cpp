@@ -1134,16 +1134,17 @@ BOOL CRealConsole::StartProcess()
             int nWndWidth = con.m_sbi.dwSize.X;
             int nWndHeight = con.m_sbi.dwSize.Y;
             GetConWindowSize(con.m_sbi, nWndWidth, nWndHeight);
-            wsprintf(psCurCmd+wcslen(psCurCmd), L"/BW=%i /BH=%i /BZ=%i \"/FN=%s\" /FW=%i /FH=%i", 
-                nWndWidth, nWndHeight,
-                (con.bBufferHeight ? gSet.DefaultBufferHeight : 0),
+            wsprintf(psCurCmd+wcslen(psCurCmd), 
+            	L"/BW=%i /BH=%i /BZ=%i \"/FN=%s\" /FW=%i /FH=%i", 
+                nWndWidth, nWndHeight, gSet.DefaultBufferHeight,
+                //(con.bBufferHeight ? gSet.DefaultBufferHeight : 0), // пусть с буфером сервер разбирается
                 gSet.ConsoleFont.lfFaceName, gSet.ConsoleFont.lfWidth, gSet.ConsoleFont.lfHeight);
             /*if (gSet.FontFile[0]) { --  РЕГИСТРАЦИЯ ШРИФТА НА КОНСОЛЬ НЕ РАБОТАЕТ!
                 wcscat(psCurCmd, L" \"/FF=");
                 wcscat(psCurCmd, gSet.FontFile);
                 wcscat(psCurCmd, L"\"");
             }*/
-            if (gSet.isAdvLogging) wcscat(psCurCmd, L" /LOG");
+            if (gSet.isAdvLogging) wcscat(psCurCmd, (gSet.isAdvLogging==2) ? L" /LOG0" : L" /LOG");
 			if (!gSet.isConVisible) wcscat(psCurCmd, L" /HIDE");
             wcscat(psCurCmd, L" /CMD ");
             wcscat(psCurCmd, lpszCmd);
@@ -2301,6 +2302,7 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
         DWORD nPID     = pIn->StartStop.dwPID;
         DEBUGSTRCMD(L"GUI recieved CECMD_CMDSTARTSTOP\n");
 		DWORD nSubSystem = pIn->StartStop.nSubSystem;
+		BOOL bRunViaCmdExe = pIn->StartStop.bRootIsCmdExe;
 
 		_ASSERTE(sizeof(CESERVER_REQ_STARTSTOPRET) <= sizeof(CESERVER_REQ_STARTSTOP));
 		pIn->hdr.nSize = sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_STARTSTOPRET);
@@ -2365,7 +2367,7 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 					pIn->StartStopRet.nWidth = cr16bit.X;
 					pIn->StartStopRet.nHeight = cr16bit.Y;
             	} else {
-            		if (gSet.DefaultBufferHeight && nSubSystem != 0x100)
+            		if (gSet.DefaultBufferHeight && nSubSystem != 0x100 && bRunViaCmdExe)
 						pIn->StartStopRet.nBufferHeight = gSet.DefaultBufferHeight;
 					else
 						pIn->StartStopRet.nBufferHeight = 0;
@@ -3808,26 +3810,26 @@ void CRealConsole::CloseLogFiles()
         free(mpsz_LogInputFile); mpsz_LogInputFile = NULL;
     }
     if (mpsz_LogPackets) {
-        wchar_t szMask[MAX_PATH*2]; wcscpy(szMask, mpsz_LogPackets);
-        wchar_t *psz = wcsrchr(szMask, L'%');
-        if (psz) {
-            wcscpy(psz, L"*.*");
-            psz = wcsrchr(szMask, L'\\'); 
-            if (psz) {
-                psz++;
-                WIN32_FIND_DATA fnd;
-                HANDLE hFind = FindFirstFile(szMask, &fnd);
-                if (hFind != INVALID_HANDLE_VALUE) {
-                    do {
-                        if ((fnd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)==0) {
-                            wcscpy(psz, fnd.cFileName);
-                            DeleteFile(szMask);
-                        }
-                    } while (FindNextFile(hFind, &fnd));
-                    FindClose(hFind);
-                }
-            }
-        }
+        //wchar_t szMask[MAX_PATH*2]; wcscpy(szMask, mpsz_LogPackets);
+        //wchar_t *psz = wcsrchr(szMask, L'%');
+        //if (psz) {
+        //    wcscpy(psz, L"*.*");
+        //    psz = wcsrchr(szMask, L'\\'); 
+        //    if (psz) {
+        //        psz++;
+        //        WIN32_FIND_DATA fnd;
+        //        HANDLE hFind = FindFirstFile(szMask, &fnd);
+        //        if (hFind != INVALID_HANDLE_VALUE) {
+        //            do {
+        //                if ((fnd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)==0) {
+        //                    wcscpy(psz, fnd.cFileName);
+        //                    DeleteFile(szMask);
+        //                }
+        //            } while (FindNextFile(hFind, &fnd));
+        //            FindClose(hFind);
+        //        }
+        //    }
+        //}
         free(mpsz_LogPackets); mpsz_LogPackets = NULL;
     }
 }
@@ -5313,7 +5315,7 @@ void CRealConsole::EnableComSpec(DWORD anFarPID, BOOL abSwitch)
 
     //int nLen = /*ComSpec\0*/ 8 + /*ComSpecC\0*/ 9 + 20 +  2*lstrlenW(gConEmu.ms_ConEmuExe);
     wchar_t szCMD[MAX_PATH+1];
-    wchar_t szData[MAX_PATH*4];
+    wchar_t szData[MAX_PATH*4+64];
 
     // Если определена ComSpecC - значит переопределен стандартный ComSpec
     if (!GetEnvironmentVariable(L"ComSpecC", szCMD, MAX_PATH) || szCMD[0] == 0)
@@ -5361,8 +5363,14 @@ void CRealConsole::EnableComSpec(DWORD anFarPID, BOOL abSwitch)
     if (lbNeedQuot) *(pszValue++) = L'"';
     lstrcpy(pszValue, szCMD);
     if (lbNeedQuot) lstrcat(pszValue, L"\"");
-
     pszName = pszValue + lstrlenW(pszValue) + 1;
+
+	lstrcpy(pszName, L"ConEmuOutput");
+	pszName = pszName + lstrlenW(pszName) + 1;
+	lstrcpy(pszName, !gSet.nCmdOutputCP ? L"" : ((gSet.nCmdOutputCP == 1) ? L"AUTO" 
+		: (((gSet.nCmdOutputCP == 2) ? L"UNICODE" : L"ANSI"))));
+	pszName = pszName + lstrlenW(pszName) + 1;
+
     *(pszName++) = 0;
     *(pszName++) = 0;
 

@@ -4,12 +4,18 @@
 #include "../common/ConEmuCheck.h"
 
 #define COUNTER_REFRESH 5000
+#define MAX_CMD_HISTORY 100
 
 const u8 chSetsNums[19] = {0, 178, 186, 136, 1, 238, 134, 161, 177, 129, 130, 77, 255, 204, 128, 2, 222, 162, 163};
 int upToFontHeight=0;
 HWND ghOpWnd=NULL;
 
-;
+#ifdef _DEBUG
+#define HEAPVAL HeapValidate(GetProcessHeap(), 0, NULL);
+#else
+#define HEAPVAL 
+#endif
+
 
 typedef struct tagCONEMUDEFCOLORS {
 	const wchar_t* pszTitle;
@@ -94,6 +100,7 @@ CSettings::~CSettings()
     if (mh_Font) { DeleteObject(mh_Font); mh_Font = NULL; }
     if (mh_Font2) { DeleteObject(mh_Font2); mh_Font2 = NULL; }
     if (psCmd) {free(psCmd); psCmd = NULL;}
+	if (psCmdHistory) {free(psCmdHistory); psCmdHistory = NULL;}
     if (psCurCmd) {free(psCurCmd); psCurCmd = NULL;}
 	if (sTabCloseMacro) {free(sTabCloseMacro); sTabCloseMacro = NULL;}
 	if (sRClickMacro) {free(sRClickMacro); sRClickMacro = NULL;}
@@ -114,6 +121,7 @@ void CSettings::InitSettings()
 	isAutoRegisterFonts = true;
     
     psCmd = NULL; psCurCmd = NULL; wcscpy(szDefCmd, L"far");
+	psCmdHistory = NULL; nCmdHistorySize = 0;
     isMulti = true; icMultiNew = 'W'; icMultiNext = 'Q'; icMultiRecreate = 192/*VK_тильда*/; isMultiNewConfirm = true;
     // Logging
     isAdvLogging = 0;
@@ -126,6 +134,7 @@ void CSettings::InitSettings()
     //isLangChangeWsPlugin = false;
 	isMonitorConsoleLang = 3;
     DefaultBufferHeight = 1000; AutoBufferHeight = true;
+	nCmdOutputCP = 0;
 	ForceBufferHeight = false; /* устанавливается в true, из ком.строки /BufferHeight */
 	AutoScroll = true;
     LogFont.lfHeight = 16;
@@ -280,6 +289,7 @@ void CSettings::LoadSettings()
         	isAutoRegisterFonts = true;
         
         reg.Load(L"CmdLine", &psCmd);
+		reg.Load(L"CmdLineHistory", &psCmdHistory, &nCmdHistorySize); HistoryCheck();
         reg.Load(L"Multi", isMulti);
 			reg.Load(L"Multi.NewConsole", icMultiNew);
 			reg.Load(L"Multi.Next", icMultiNext);
@@ -326,6 +336,7 @@ void CSettings::LoadSettings()
 		reg.Load(L"DefaultBufferHeight", DefaultBufferHeight);
 			if (DefaultBufferHeight < 300) DefaultBufferHeight = 300;
 		reg.Load(L"AutoBufferHeight", AutoBufferHeight);
+		reg.Load(L"CmdOutputCP", nCmdOutputCP);
 
         reg.Load(L"CursorType", isCursorV);
         reg.Load(L"CursorColor", isCursorColor);
@@ -620,6 +631,7 @@ BOOL CSettings::SaveSettings()
             
 			reg.Save(L"DefaultBufferHeight", DefaultBufferHeight);
 			reg.Save(L"AutoBufferHeight", AutoBufferHeight);
+			reg.Save(L"CmdOutputCP", nCmdOutputCP);
 
 			reg.Save(L"CursorType", isCursorV);
             reg.Save(L"CursorColor", isCursorColor);
@@ -656,6 +668,7 @@ BOOL CSettings::SaveSettings()
 
             reg.Save(L"ConWnd Width", wndWidth);
             reg.Save(L"ConWnd Height", wndHeight);
+			reg.Save(L"16bit Height", ntvdmHeight);
             reg.Save(L"ConWnd X", wndX);
             reg.Save(L"ConWnd Y", wndY);
             reg.Save(L"Cascaded", wndCascade);
@@ -1088,6 +1101,22 @@ LRESULT CSettings::OnInitDialog_Ext()
 	SendDlgItemMessage(hExt, hkSwitchConsole, HKM_SETHOTKEY, icMultiNext, 0);
 	SendDlgItemMessage(hExt, hkCloseConsole, HKM_SETRULES, HKCOMB_A|HKCOMB_C|HKCOMB_CA|HKCOMB_S|HKCOMB_SA|HKCOMB_SC|HKCOMB_SCA, 0);
 	SendDlgItemMessage(hExt, hkCloseConsole, HKM_SETHOTKEY, icMultiRecreate, 0);
+	// 16bit Height
+	SendDlgItemMessage(hExt, lbNtvdmHeight, CB_ADDSTRING, 0, (LPARAM) L"Auto");
+	SendDlgItemMessage(hExt, lbNtvdmHeight, CB_ADDSTRING, 0, (LPARAM) L"25 lines");
+	SendDlgItemMessage(hExt, lbNtvdmHeight, CB_ADDSTRING, 0, (LPARAM) L"28 lines");
+	SendDlgItemMessage(hExt, lbNtvdmHeight, CB_ADDSTRING, 0, (LPARAM) L"43 lines");
+	SendDlgItemMessage(hExt, lbNtvdmHeight, CB_ADDSTRING, 0, (LPARAM) L"50 lines");
+	SendDlgItemMessage(hExt, lbNtvdmHeight, CB_SETCURSEL, !ntvdmHeight ? 0 :
+		((ntvdmHeight == 25) ? 1 : ((ntvdmHeight == 28) ? 2 : ((ntvdmHeight == 43) ? 3 : 4))), 0);
+	// Cmd.exe output cp
+	SendDlgItemMessage(hExt, lbCmdOutputCP, CB_ADDSTRING, 0, (LPARAM) L"Undefined");
+	SendDlgItemMessage(hExt, lbCmdOutputCP, CB_ADDSTRING, 0, (LPARAM) L"Automatic");
+	SendDlgItemMessage(hExt, lbCmdOutputCP, CB_ADDSTRING, 0, (LPARAM) L"Unicode");
+	SendDlgItemMessage(hExt, lbCmdOutputCP, CB_ADDSTRING, 0, (LPARAM) L"OEM");
+	SendDlgItemMessage(hExt, lbCmdOutputCP, CB_SETCURSEL, nCmdOutputCP, 0);
+	
+
 
 	if (isConVisible)
 		CheckDlgButton(hExt, cbVisible, BST_CHECKED);
@@ -1697,7 +1726,14 @@ LRESULT CSettings::OnComboBox(WPARAM wParam, LPARAM lParam)
             if (num) // Invalid index?
                 SendDlgItemMessage(hExt, wId, CB_SETCURSEL, num=0, 0);
         }
-    }
+	} else if (wId == lbNtvdmHeight) {
+		int num = SendDlgItemMessage(hExt, wId, CB_GETCURSEL, 0, 0);
+		ntvdmHeight = (num == 1) ? 25 : ((num == 2) ? 28 : ((num == 3) ? 43 : ((num == 4) ? 50 : 0)));
+	} else if (wId == lbCmdOutputCP) {
+		nCmdOutputCP = SendDlgItemMessage(hExt, wId, CB_GETCURSEL, 0, 0);
+		if (nCmdOutputCP == -1) nCmdOutputCP = 0;
+		gConEmu.EnableComSpec(AutoBufferHeight);
+	}
     return 0;
 }
 
@@ -2915,4 +2951,83 @@ BOOL CSettings::GetFontNameFromFile(LPCTSTR lpszFilePath, LPTSTR rsFontName/* [3
 	if (lbRc)
 		wcscpy(rsFontName, szRetVal);
 	return lbRc;
+}
+
+void CSettings::HistoryCheck()
+{
+	if (!psCmdHistory || !*psCmdHistory) {
+		nCmdHistorySize = 0;
+	} else {
+		const wchar_t* psz = psCmdHistory;
+		while (*psz)
+			psz += lstrlen(psz)+1;
+
+		if (psz == psCmdHistory)
+			nCmdHistorySize = 0;
+		else
+			nCmdHistorySize = (psz - psCmdHistory + 1)*sizeof(wchar_t);
+	}
+}
+
+void CSettings::HistoryAdd(LPCWSTR asCmd)
+{
+	if (!asCmd || !*asCmd)
+		return;
+	if (psCmd && lstrcmp(psCmd, asCmd)==0)
+		return;
+	if (psCurCmd && lstrcmp(psCurCmd, asCmd)==0)
+		return;
+
+	HEAPVAL
+
+	wchar_t *pszNewHistory, *psz, *pszOld;
+	int nCount = 0;
+
+	DWORD nNewSize = nCmdHistorySize + (DWORD)((lstrlen(asCmd) + 2)*sizeof(wchar_t));
+	pszNewHistory = (wchar_t*)malloc(nNewSize);
+	//wchar_t* pszEnd = pszNewHistory + nNewSize/sizeof(wchar_t);
+	if (!pszNewHistory) return;
+
+	lstrcpy(pszNewHistory, asCmd);
+	psz = pszNewHistory + lstrlen(pszNewHistory) + 1;
+	nCount++;
+	pszOld = psCmdHistory;
+	int nLen;
+	HEAPVAL
+	while (nCount < MAX_CMD_HISTORY && *pszOld /*&& psz < pszEnd*/) {
+		const wchar_t *pszCur = pszOld;
+		pszOld += lstrlen(pszOld) + 1;
+
+		if (lstrcmp(pszCur, asCmd) == 0)
+			continue;
+
+		lstrcpy(psz, pszCur);
+		psz += (nLen = (lstrlen(psz)+1));
+		nCount ++;
+	}
+	*psz = 0;
+
+	HEAPVAL
+
+	free(psCmdHistory);
+	psCmdHistory = pszNewHistory;
+	nCmdHistorySize = (psz - pszNewHistory + 1)*sizeof(wchar_t);
+
+	HEAPVAL
+
+	// И сразу сохранить в настройках
+	Registry reg;
+	if (reg.OpenKey(Config, KEY_WRITE)) {
+		HEAPVAL
+		reg.SaveMSZ(L"CmdLineHistory", psCmdHistory, nCmdHistorySize);
+		HEAPVAL
+		reg.CloseKey();
+	}
+}
+
+LPCWSTR CSettings::HistoryGet()
+{
+	if (psCmdHistory && *psCmdHistory)
+		return psCmdHistory;
+	return NULL;
 }

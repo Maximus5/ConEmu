@@ -1101,39 +1101,21 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 ///////////////////////////////////
 
 	if (SingleInstance) {
-		BOOL lbAccepted = FALSE;
-		LPCWSTR lpszCmd = gSet.GetCmd();
-		if (lpszCmd && *lpszCmd) {
-			HWND ConEmuHwnd = FindWindowExW(NULL, NULL, VirtualConsoleClassMain, NULL);
-			if (ConEmuHwnd) {
-				CESERVER_REQ *pIn = NULL, *pOut = NULL;
-				int nCmdLen = lstrlenW(lpszCmd);
-				int nSize = sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_NEWCMD);
-				if (nCmdLen >= MAX_PATH) {
-					nSize += (nCmdLen - MAX_PATH + 2) * 2;
-				}
-				pIn = (CESERVER_REQ*)calloc(nSize,1);
-				if (pIn) {
-					pIn->hdr.nSize = nSize;
-					pIn->hdr.nCmd = CECMD_NEWCMD;
-					pIn->hdr.nVersion = CESERVER_REQ_VER;
-					pIn->hdr.nSrcThreadId = GetCurrentThreadId();
-					lstrcpyW(pIn->NewCmd.szCommand, lpszCmd);
+		// При запуске серии закладок из cmd файла второму экземпляру лучше чуть-чуть подождать
+		Sleep(1000);
+		// Поехали
+		DWORD dwStart = GetTickCount();
+		while (!gConEmu.isFirstInstance()) {
+			if (gConEmu.RunSingleInstance())
+				return 0; // командная строка успешно запущена в существующем экземпляре
 
-					DWORD dwPID = 0;
-					if (GetWindowThreadProcessId(ConEmuHwnd, &dwPID))
-						AllowSetForegroundWindow(dwPID);
-					
-					pOut = ExecuteGuiCmd(ConEmuHwnd, pIn, NULL);
-					if (pOut && pOut->Data[0])
-						lbAccepted = TRUE;
-				}
-				if (pIn) {free(pIn); pIn = NULL;}
-				if (pOut) ExecuteFreeResult(pOut);
-			}
+			// Если ожидание длится более 10 секунд - запускаемся самостоятельно
+			if ((GetTickCount() - dwStart) > 10*1000)
+				break;
 		}
-		if (lbAccepted)
-			return 0;
+	} else {
+		// Иницилизировать событие все-равно нужно
+		gConEmu.isFirstInstance();
 	}
  
     

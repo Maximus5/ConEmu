@@ -14,6 +14,9 @@ CConEmuChild::CConEmuChild()
 	mn_MsgTabChanged = RegisterWindowMessage(CONEMUTABCHANGED);
 	mn_MsgPostFullPaint = RegisterWindowMessage(L"CConEmuChild::PostFullPaint");
 	mb_PostFullPaint = FALSE;
+	mn_LastPostRedrawTick = 0;
+	mb_IsPendingRedraw = FALSE;
+	mb_RedrawPosted = FALSE;
 	memset(&Caret, 0, sizeof(Caret));
 }
 
@@ -237,9 +240,30 @@ LRESULT CConEmuChild::OnSize(WPARAM wParam, LPARAM lParam)
 	return result;
 }
 
+void CConEmuChild::CheckPostRedraw()
+{
+	// Если был "Отмененный" Redraw, но 
+	if (mb_IsPendingRedraw && mn_LastPostRedrawTick && ((GetTickCount() - mn_LastPostRedrawTick) >= CON_REDRAW_TIMOUT)) {
+		mb_IsPendingRedraw = FALSE;
+		_ASSERTE(gConEmu.isMainThread());
+
+		Redraw();
+	}
+}
+
 void CConEmuChild::Redraw()
 {
 	if (!gConEmu.isMainThread()) {
+		if (mb_RedrawPosted ||
+			(mn_LastPostRedrawTick && ((GetTickCount() - mn_LastPostRedrawTick) < CON_REDRAW_TIMOUT)))
+		{
+			mb_IsPendingRedraw = TRUE;
+			return; // Блокируем СЛИШКОМ частые обновления
+		} else {
+			mn_LastPostRedrawTick = GetTickCount();
+			mb_IsPendingRedraw = FALSE;
+		}
+		mb_RedrawPosted = TRUE; // чтобы не было кумулятивного эффекта
 		PostMessage(ghWndDC, mn_MsgPostFullPaint, 0, 0);
 		return;
 	}
@@ -255,6 +279,8 @@ void CConEmuChild::Redraw()
 	#endif
 	RedrawWindow(ghWndDC, NULL, NULL,
 		RDW_INTERNALPAINT|RDW_NOERASE|RDW_UPDATENOW);
+
+	mb_RedrawPosted = FALSE; // Чтобы другие нити могли сделать еще пост
 }
 
 void CConEmuChild::SetRedraw(BOOL abRedrawEnabled)

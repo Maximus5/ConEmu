@@ -98,6 +98,7 @@ extern wchar_t gszDbgModLabel[6];
 #define CEPLUGINPIPENAME    L"\\\\%s\\pipe\\ConEmuPlugin%u"   // Far_PID
 //#define CEGUIATTACHED       L"ConEmuGuiAttached.%u"
 #define CEGUIRCONSTARTED    L"ConEmuGuiRConStarted.%u"
+#define CEGUI_ALIVE_EVENT   L"ConEmuGuiStarted"
 //#define CESIGNAL_C          L"ConEmuC_C_Signal.%u"
 //#define CESIGNAL_BREAK      L"ConEmuC_Break_Signal.%u"
 #define CECMD_GETSHORTINFO  1
@@ -122,7 +123,7 @@ extern wchar_t gszDbgModLabel[6];
 #define CECMD_SHOWCONSOLE   20 // В Win7 релизе нельзя скрывать окно консоли, запущенной в режиме администратора
 #define CECMD_POSTCONMSG    21 // В Win7 релизе нельзя посылать сообщения окну консоли, запущенной в режиме администратора
 
-#define CESERVER_REQ_VER    15
+#define CESERVER_REQ_VER    16
 
 #define PIPEBUFSIZE 4096
 
@@ -291,6 +292,7 @@ typedef struct tag_CESERVER_REQ_STARTSTOP {
 	HWND2 hWnd; // при передаче В GUI - консоль, при возврате в консоль - GUI
 	DWORD dwPID, dwInputTID;
 	DWORD nSubSystem; // 255 для DOS программ, 0x100 - аттач из FAR плагина
+	BOOL  bRootIsCmdExe;
 	// А это приходит из консоли, вдруго консольная программа успела поменять размер буфера
 	CONSOLE_SCREEN_BUFFER_INFO sbi;
 } CESERVER_REQ_STARTSTOP;
@@ -355,8 +357,8 @@ typedef struct tag_CESERVER_REQ {
 #define CMD_DRAGTO       1
 #define CMD_REQTABS      2
 #define CMD_SETWINDOW    3
-#define CMD_POSTMACRO    4
-//#define CMD_DEFFONT      5
+#define CMD_POSTMACRO    4 // Если первый символ макроса '@' и после него НЕ пробел - макрос выполняется в DisabledOutput
+//#define CMD_DEFFONT    5
 #define CMD_LANGCHANGE   6
 #define CMD_SETENVVAR    7 // Установить переменные окружения (FAR plugin)
 // +2
@@ -731,6 +733,11 @@ public:
 	}
 	bool Enter(CRITICAL_SECTION* pcs, DWORD* pTID, DWORD nTimeout=(DWORD)-1)
 	{
+		#ifdef _DEBUG
+		if (*((DWORD_PTR*)pcs) == NULL) {
+			_ASSERTE(*((DWORD_PTR*)pcs) != NULL);
+		}
+		#endif
 		Leave(); // если было
 
 		mp_TID = pTID;

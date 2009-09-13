@@ -134,6 +134,8 @@ protected:
 	RECT mrc_Ideal;
 	BOOL mb_MouseCaptured;
 	BYTE m_KeybStates[256];
+	wchar_t ms_ConEmuAliveEvent[MAX_PATH+64];
+	HANDLE mh_ConEmuAliveEvent; BOOL mb_ConEmuAliveOwned, mb_AliveInitialized;
 	//
 	BOOL mb_HotKeyRegistered;
 	void RegisterHotKeys();
@@ -206,6 +208,7 @@ public:
 	bool isEditor();
 	bool isFar();
 	bool isFilePanel(bool abPluginAllowed=false);
+	bool isFirstInstance();
 	bool isIconic();
 	bool isLBDown();
 	bool isMainThread();
@@ -230,6 +233,7 @@ public:
 	static int CALLBACK BrowseCallbackProc(HWND hwnd, UINT uMsg, LPARAM lParam, LPARAM lpData);
 	void RePaint();
 	void ReSize(BOOL abCorrect2Ideal = FALSE);
+	BOOL RunSingleInstance();
 	void SetConsoleWindowSize(const COORD& size, bool updateInfo);
 	bool SetWindowMode(uint inMode);
 	void ShowOldCmdVersion(DWORD nCmd, DWORD nVersion);

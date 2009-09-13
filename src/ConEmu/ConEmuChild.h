@@ -23,6 +23,8 @@ public:
 
 	void SetRedraw(BOOL abRedrawEnabled);
 
+	void CheckPostRedraw();
+
 protected:
 	UINT mn_MsgTabChanged;
 	UINT mn_MsgPostFullPaint;
@@ -38,6 +40,8 @@ protected:
     	BOOL  bVisible;
     	BOOL  bCreated;
     } Caret;
+    DWORD mn_LastPostRedrawTick;
+    BOOL  mb_IsPendingRedraw, mb_RedrawPosted;
 };
 
 class CConEmuBack

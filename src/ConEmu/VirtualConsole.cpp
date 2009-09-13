@@ -186,26 +186,26 @@ CVirtualConsole::~CVirtualConsole()
     }
 
     if (mpsz_LogScreen) {
-        wchar_t szMask[MAX_PATH*2]; wcscpy(szMask, mpsz_LogScreen);
-        wchar_t *psz = wcsrchr(szMask, L'%');
-        if (psz) {
-            wcscpy(psz, L"*.*");
-            psz = wcsrchr(szMask, L'\\'); 
-            if (psz) {
-                psz++;
-                WIN32_FIND_DATA fnd;
-                HANDLE hFind = FindFirstFile(szMask, &fnd);
-                if (hFind != INVALID_HANDLE_VALUE) {
-                    do {
-                        if ((fnd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)==0) {
-                            wcscpy(psz, fnd.cFileName);
-                            DeleteFile(szMask);
-                        }
-                    } while (FindNextFile(hFind, &fnd));
-                    FindClose(hFind);
-                }
-            }
-        }
+        //wchar_t szMask[MAX_PATH*2]; wcscpy(szMask, mpsz_LogScreen);
+        //wchar_t *psz = wcsrchr(szMask, L'%');
+        //if (psz) {
+        //    wcscpy(psz, L"*.*");
+        //    psz = wcsrchr(szMask, L'\\'); 
+        //    if (psz) {
+        //        psz++;
+        //        WIN32_FIND_DATA fnd;
+        //        HANDLE hFind = FindFirstFile(szMask, &fnd);
+        //        if (hFind != INVALID_HANDLE_VALUE) {
+        //            do {
+        //                if ((fnd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)==0) {
+        //                    wcscpy(psz, fnd.cFileName);
+        //                    DeleteFile(szMask);
+        //                }
+        //            } while (FindNextFile(hFind, &fnd));
+        //            FindClose(hFind);
+        //        }
+        //    }
+        //}
         free(mpsz_LogScreen); mpsz_LogScreen = NULL;
     }
     

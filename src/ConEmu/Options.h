@@ -10,6 +10,7 @@ public:
     TCHAR Config[MAX_PATH];
 
     int DefaultBufferHeight; bool ForceBufferHeight; bool AutoScroll; bool AutoBufferHeight;
+	int nCmdOutputCP;
     
 	LONG FontWidth();
 	LONG FontHeight();
@@ -32,6 +33,9 @@ public:
     char isShowBgImage;
 	bool isBackgroundImageValid;
 	u8 bgImageDarker;
+
+	/* Command Line History (from start dialog) */
+	LPWSTR psCmdHistory; DWORD nCmdHistorySize;
 
     /* Command Line (Registry) */
     LPTSTR psCmd;
@@ -157,6 +161,9 @@ public:
 	void RegisterFonts();
 	void UnregisterFonts();
 	BOOL GetFontNameFromFile(LPCTSTR lpszFilePath, LPTSTR rsFontName);
+	void HistoryCheck();
+	void HistoryAdd(LPCWSTR asCmd);
+	LPCWSTR HistoryGet();
 protected:
     LRESULT OnInitDialog();
 	LRESULT OnInitDialog_Main();

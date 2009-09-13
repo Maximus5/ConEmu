@@ -93,6 +93,7 @@ DWORD gnNeedPostTabSendTick = 0;
 wchar_t gsMonitorEnvVar[0x1000];
 bool gbMonitorEnvVar = false;
 #define MONITORENVVARDELTA 1000
+void UpdateEnvVar(const wchar_t* pszList);
 
 
 // minimal(?) FAR version 2.0 alpha build FAR_X_VER
@@ -144,7 +145,7 @@ HANDLE WINAPI _export OpenPluginW(int OpenFrom,INT_PTR Item)
 			if (((OpenFrom & OPEN_FROMMACRO) == OPEN_FROMMACRO) && (Item >= 1 && Item <= 7)) {
 				nID = Item - 1; // Будет сразу выполнена команда
 			}
-			ShowPluginMenu(nID);
+			ShowPluginMenu((int)nID);
 		} else {
 			gbCmdCallObsolete = FALSE;
 		}
@@ -174,7 +175,7 @@ int WINAPI _export ProcessSynchroEventW(int Event,void *Param)
     		}
 		} else if (pArg->SynchroType == SynchroArg::eInput) {
 			INPUT_RECORD *pRec = (INPUT_RECORD*)(pArg->Param1);
-			UINT nCount = pArg->Param2;
+			UINT nCount = (UINT)pArg->Param2;
 
 			if (nCount>0) {
 				DWORD cbWritten = 0;
@@ -664,17 +665,7 @@ DWORD WINAPI MonitorThreadProcW(LPVOID lpParameter)
 		if (ConEmuHwnd && gbMonitorEnvVar && gsMonitorEnvVar[0]
 			&& (GetTickCount() - dwMonitorTick) > MONITORENVVARDELTA)
 		{
-			wchar_t *pszName  = gsMonitorEnvVar;
-			wchar_t *pszValue = pszName + lstrlenW(pszName) + 1;
-
-			while (*pszName && *pszValue) {
-				// Если в pszValue пустая строка - удаление переменной
-				SetEnvironmentVariableW(pszName, (*pszValue != 0) ? pszValue : NULL);
-				//
-				pszName = pszValue + lstrlenW(pszValue) + 1;
-				if (*pszName == 0) break;
-				pszValue = pszName + lstrlenW(pszName) + 1;
-			}
+			UpdateEnvVar(gsMonitorEnvVar);
 
 			dwMonitorTick = GetTickCount();
 		}
@@ -1250,7 +1241,7 @@ void CheckMacro(BOOL abAllowAPI)
 				0, KEY_ALL_ACCESS, 0, &hkey, &disp))
 			{
 				lstrcpyA(szValue, "ConEmu support");
-				RegSetValueExA(hkey, "", 0, REG_SZ, (LPBYTE)szValue, (dwSize=strlen(szValue)+1));
+				RegSetValueExA(hkey, "", 0, REG_SZ, (LPBYTE)szValue, (dwSize=(DWORD)strlen(szValue)+1));
 
 				//lstrcpyA(szValue, 
 				//	"$If (Shell || Info || QView || Tree || Viewer || Editor) F12 $Else waitkey(100) $End");
@@ -1259,11 +1250,11 @@ void CheckMacro(BOOL abAllowAPI)
 				/*if (gFarVersion.dwVerMajor==1) {
 					RegSetValueExA(hkey, "Sequence", 0, REG_SZ, (LPBYTE)szCheckKey, (dwSize=strlen((char*)szCheckKey)+1));
 				} else {*/
-					RegSetValueExW(hkey, L"Sequence", 0, REG_SZ, (LPBYTE)szCheckKey, (dwSize=2*(lstrlenW((WCHAR*)szCheckKey)+1)));
+					RegSetValueExW(hkey, L"Sequence", 0, REG_SZ, (LPBYTE)szCheckKey, (dwSize=2*((DWORD)lstrlenW((WCHAR*)szCheckKey)+1)));
 				//}
 
 				lstrcpyA(szValue, "For ConEmu - plugin activation from listening thread");
-				RegSetValueExA(hkey, "Description", 0, REG_SZ, (LPBYTE)szValue, (dwSize=strlen(szValue)+1));
+				RegSetValueExA(hkey, "Description", 0, REG_SZ, (LPBYTE)szValue, (dwSize=(DWORD)strlen(szValue)+1));
 
 				RegSetValueExA(hkey, "DisableOutput", 0, REG_DWORD, (LPBYTE)&(disp=1), (dwSize=4));
 
@@ -1682,7 +1673,7 @@ void InitResources()
 			lstrcpyW(pszRes, GetMsgW(11)); pszRes += lstrlenW(pszRes)+1;
 			lstrcpyW(pszRes, GetMsgW(12)); pszRes += lstrlenW(pszRes)+1;
 		}
-		pIn->hdr.nSize = ((LPBYTE)pszRes) - ((LPBYTE)pIn);
+		pIn->hdr.nSize = (DWORD)(((LPBYTE)pszRes) - ((LPBYTE)pIn));
 		CESERVER_REQ* pOut = ExecuteGuiCmd(FarHwnd, pIn, FarHwnd);
 		if (pOut) ExecuteFreeResult(pOut);
 		Free(pIn);
@@ -2067,7 +2058,7 @@ DWORD WINAPI ServerThreadCommand(LPVOID ahPipe)
 		// Плагин это получает в ответ на CECMD_RESOURCES, посланное в GUI при загрузке плагина
 		_ASSERTE(nDataSize>=4);
 		wchar_t *pszName  = (wchar_t*)pIn->Data;
-		wchar_t *pszValue = pszName + lstrlenW(pszName) + 1;
+		//wchar_t *pszValue = pszName + lstrlenW(pszName) + 1;
 
 		_ASSERTE(nDataSize<sizeof(gsMonitorEnvVar));
 		gbMonitorEnvVar = false;
@@ -2078,14 +2069,24 @@ DWORD WINAPI ServerThreadCommand(LPVOID ahPipe)
 			lbOk = true;
 		}
 
-		while (*pszName && *pszValue) {
-			// Если в pszValue пустая строка - удаление переменной
-			SetEnvironmentVariableW(pszName, (*pszValue != 0) ? pszValue : NULL);
-			//
-			pszName = pszValue + lstrlenW(pszValue) + 1;
-			if (*pszName == 0) break;
-			pszValue = pszName + lstrlenW(pszName) + 1;
-		}
+		UpdateEnvVar(pszName);
+
+		//while (*pszName && *pszValue) {
+		//	const wchar_t* pszChanged = pszValue;
+		//	// Для ConEmuOutput == AUTO выбирается по версии ФАРа
+		//	if (!lstrcmpi(pszName, L"ConEmuOutput") && !lstrcmp(pszChanged, L"AUTO")) {
+		//		if (gFarVersion.dwVerMajor==1)
+		//			pszChanged = L"ANSI";
+		//		else
+		//			pszChanged = L"UNICODE";
+		//	}
+		//	// Если в pszValue пустая строка - удаление переменной
+		//	SetEnvironmentVariableW(pszName, (*pszChanged != 0) ? pszChanged : NULL);
+		//	//
+		//	pszName = pszValue + lstrlenW(pszValue) + 1;
+		//	if (*pszName == 0) break;
+		//	pszValue = pszName + lstrlenW(pszName) + 1;
+		//}
 
 		gbMonitorEnvVar = lbOk;
 
@@ -2293,6 +2294,30 @@ BOOL IsMacroActive()
 		lbActive = FUNC_X(IsMacroActive)();
 
 	return lbActive;
+}
+
+// <Name>\0<Value>\0<Name2>\0<Value2>\0\0
+void UpdateEnvVar(const wchar_t* pszList)
+{
+	const wchar_t *pszName  = (wchar_t*)pszList;
+	const wchar_t *pszValue = pszName + lstrlenW(pszName) + 1;
+
+	while (*pszName && *pszValue) {
+		const wchar_t* pszChanged = pszValue;
+		// Для ConEmuOutput == AUTO выбирается по версии ФАРа
+		if (!lstrcmpi(pszName, L"ConEmuOutput") && !lstrcmp(pszChanged, L"AUTO")) {
+			if (gFarVersion.dwVerMajor==1)
+				pszChanged = L"ANSI";
+			else
+				pszChanged = L"UNICODE";
+		}
+		// Если в pszValue пустая строка - удаление переменной
+		SetEnvironmentVariableW(pszName, (*pszChanged != 0) ? pszChanged : NULL);
+		//
+		pszName = pszValue + lstrlenW(pszValue) + 1;
+		if (*pszName == 0) break;
+		pszValue = pszName + lstrlenW(pszName) + 1;
+	}
 }
 
 /* Используются как extern в ConEmuCheck.cpp */

@@ -451,8 +451,12 @@ void PostMacro789(wchar_t* asMacro)
 
 	ActlKeyMacro mcr;
 	mcr.Command = MCMD_POSTMACROSTRING;
+	mcr.Param.PlainText.Flags = 0; // ѕо умолчанию - вывод на экран разрешен
+	if (*asMacro == L'@' && asMacro[1] && asMacro[1] != L' ') {
+		mcr.Param.PlainText.Flags |= KSFLAGS_DISABLEOUTPUT;
+		asMacro ++;
+	}
 	mcr.Param.PlainText.SequenceText = asMacro;
-	mcr.Param.PlainText.Flags = 0; //KSFLAGS_DISABLEOUTPUT; -- убрал. иначе FAR может виснуть в некоторых местах
 	InfoW789->AdvControl(InfoW789->ModuleNumber, ACTL_KEYMACRO, (void*)&mcr);
 }
 
