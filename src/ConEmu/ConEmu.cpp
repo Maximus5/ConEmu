@@ -4995,8 +4995,8 @@ LRESULT CConEmuMain::OnVConTerminated(CVirtualConsole* apVCon, BOOL abPosted /*=
 			// будет попытка активировать другую вкладку закрываемой консоли
 			//TabBar.Update(TRUE); -- а и не сможет он другую активировать, т.к. RCon вернет FALSE
 
-			// Эта комбинация должна активировать предыдущую консоль
-			if (gSet.isTabRecent) {
+			// Эта комбинация должна активировать предыдущую консоль (если активна текущая)
+			if (gSet.isTabRecent && apVCon == pVCon) {
 				TabBar.SwitchRollback();
 				TabBar.SwitchNext();
 				TabBar.SwitchCommit();

@@ -2132,10 +2132,11 @@ DWORD CRealConsole::ServerThread(LPVOID lpvParam)
                 0,                        // client time-out 
                 gpNullSecurity);          // default security attribute 
 
-            _ASSERTE(hPipe != INVALID_HANDLE_VALUE);
-
             if (hPipe == INVALID_HANDLE_VALUE) 
             {
+				dwErr = GetLastError();
+
+				_ASSERTE(hPipe != INVALID_HANDLE_VALUE);
                 //DisplayLastError(L"CreateNamedPipe failed"); 
                 hPipe = NULL;
 				// Разрешить этой или другой нити создать серверный пайп
@@ -2203,6 +2204,9 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
     CESERVER_REQ in={{0}}, *pIn=NULL;
     DWORD cbRead = 0, cbWritten = 0, dwErr = 0;
     BOOL fSuccess = FALSE;
+	#ifdef _DEBUG
+	HANDLE lhConEmuC = mh_ConEmuC;
+	#endif
 
     // Send a message to the pipe server and read the response. 
     fSuccess = ReadFile( 
@@ -2214,7 +2218,19 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 
     if (!fSuccess && ((dwErr = GetLastError()) != ERROR_MORE_DATA)) 
     {
-        _ASSERTE("ReadFile(pipe) failed"==NULL);
+		#ifdef _DEBUG
+		// Если консоль закрывается - MonitorThread в ближайшее время это поймет
+		DEBUGSTRPROC(L"!!! ReadFile(pipe) failed - console in close?\n");
+		//DWORD dwWait = WaitForSingleObject ( mh_TermEvent, 0 );
+		//if (dwWait == WAIT_OBJECT_0) return;
+		//Sleep(1000);
+		//if (lhConEmuC != mh_ConEmuC)
+		//	dwWait = WAIT_OBJECT_0;
+		//else
+		//	dwWait = WaitForSingleObject ( mh_ConEmuC, 0 );
+		//if (dwWait == WAIT_OBJECT_0) return;
+		//_ASSERTE("ReadFile(pipe) failed"==NULL);
+		#endif
         //CloseHandle(hPipe);
         return;
     }
@@ -2707,7 +2723,8 @@ void CRealConsole::ApplyConsoleInfo(CESERVER_REQ* pInfo)
 			RetrieveConsoleInfo(0);
 		} else
         if (!bBufRecreated && con.pConChar && con.pConAttr) {
-            MSectionLock sc2; sc2.Lock(&csCON);
+            //MSectionLock sc2; sc2.Lock(&csCON);
+			sc.Lock(&csCON);
 
             DEBUGSTRPKT(L"                   *** Relative dump received!\n");
             MCHKHEAP
@@ -2747,7 +2764,8 @@ void CRealConsole::ApplyConsoleInfo(CESERVER_REQ* pInfo)
         // 10
         DWORD OneBufferSize = pInfo->ConInfo.FullData.dwOneBufferSize;
         if (OneBufferSize != 0) {
-            MSectionLock sc2; sc2.Lock(&csCON);
+            //MSectionLock sc2; sc2.Lock(&csCON);
+			sc.Lock(&csCON);
 
             DEBUGSTRPKT(L"                   *** FULL dump received!\n");
             MCHKHEAP
