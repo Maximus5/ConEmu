@@ -488,16 +488,20 @@ protected:
 		}
 		_ASSERTE(j != -1);
 	};
-	void ReleaseRef(DWORD dwTID) {
+	int ReleaseRef(DWORD dwTID) {
 		_ASSERTE(mn_Locked>0);
+		int nInThreadLeft = 0;
 		if (mn_Locked > 0) mn_Locked --;
 		if (mn_Locked == 0)
 			SetEvent(mh_ReleaseEvent); // Больше nonexclusive locks не осталось
 		for (int i=1; i<10; i++) {
 			if (mn_LockedTID[i] == dwTID) {
-				mn_LockedCount[i] --; break;
+				mn_LockedCount[i] --; 
+				nInThreadLeft = mn_LockedCount[i];
+				break;
 			}
 		}
+		return nInThreadLeft;
 	};
 	void WaitUnlocked(DWORD dwTID, DWORD anTimeout) {
 		DWORD dwStartTick = GetTickCount();
@@ -588,7 +592,10 @@ protected:
 			
 			// Если другая нить уже захватила exclusive
 			if (mb_Exclusive) {
-				ReleaseRef(dwTID); // Иначе можем попасть на взаимную блокировку
+				int nLeft = ReleaseRef(dwTID); // Иначе можем попасть на взаимную блокировку
+				if (nLeft > 0) {
+					_ASSERTE(nLeft == 0);
+				}
 
 				DEBUGSTR(L"!!! Failed non exclusive lock, trying to use CriticalSection\n");
 				bool lbEntered = MyEnterCriticalSection(anTimeout); // дождаться пока секцию отпустят
@@ -675,7 +682,7 @@ protected:
 	BOOL mb_Locked, mb_Exclusive;
 public:
 	BOOL Lock(MSection* apS, BOOL abExclusive=FALSE, DWORD anTimeout=-1) {
-		if (mb_Locked && apS == mp_S && abExclusive == mb_Exclusive)
+		if (mb_Locked && apS == mp_S && (abExclusive == mb_Exclusive || mb_Exclusive))
 			return FALSE; // уже заблокирован
 		_ASSERTE(!mb_Locked);
 		mb_Exclusive = abExclusive;
