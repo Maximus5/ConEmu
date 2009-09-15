@@ -61,7 +61,8 @@ REGEDIT4
 "RightClick opens context menu"=hex:02
 ;; You may specify special macro, used to display menu.
 ;; By default (value is absent) ConEmu simply send 'Apps' key to console
-;"RightClickMacro"="F11 e Enter"
+;; Prepend macro with '@' to 'DisableOutput'
+;"RightClickMacro"="@F11 e Enter Enter"
 
 ;; Turn on multiconsole (sort of 'ConMan' functionality)
 "Multi"=hex:00

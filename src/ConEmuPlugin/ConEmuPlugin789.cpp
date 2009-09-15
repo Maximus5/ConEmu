@@ -511,7 +511,7 @@ BOOL EditOutput789(LPCWSTR asFileName, BOOL abView)
 	return lbRc;
 }
 
-BOOL CallSynchro789(SynchroArg *Param)
+BOOL CallSynchro789(SynchroArg *Param, DWORD nTimeout /*= 10000*/)
 {
 	return FALSE;
 }

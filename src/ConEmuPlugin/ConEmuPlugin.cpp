@@ -156,21 +156,28 @@ HANDLE WINAPI _export OpenPluginW(int OpenFrom,INT_PTR Item)
 int WINAPI _export ProcessSynchroEventW(int Event,void *Param)
 {
 	if (Event == SE_COMMONSYNCHRO) {
-    	if (!gbInfoW_OK)
+    	if (!gbInfoW_OK) {
+    		if (Param) free(Param);
     		return 0;
+		}
 
 		SynchroArg *pArg = (SynchroArg*)Param;
 		_ASSERTE(pArg!=NULL);
-		if (pArg->Processed) {
-			// Два раза подряд вызвалось с одинаковыми арументами?
-			_ASSERTE(pArg->Processed==FALSE);
-			return 0;
-		}
+		//if (pArg->Processed) {
+		//	// Два раза подряд вызвалось с одинаковыми арументами?
+		//	_ASSERTE(pArg->Processed==FALSE);
+		//	free(pArg);
+		//	return 0;
+		//}
 
 		if (pArg->SynchroType == SynchroArg::eCommand) {
     		if (gnReqCommand != (DWORD)-1) {
+    			_ASSERTE(gnReqCommand==(DWORD)-1);
+    		} else {
     			TODO("Определить текущую область... (panel/editor/viewer/menu/...");
     			gnPluginOpenFrom = 0;
+    			gnReqCommand = (DWORD)pArg->Param1;
+				gpReqCommandData = (LPVOID)pArg->Param2;
     			ProcessCommand(gnReqCommand, FALSE/*bReqMainThread*/, gpReqCommandData);
     		}
 		} else if (pArg->SynchroType == SynchroArg::eInput) {
@@ -188,8 +195,9 @@ int WINAPI _export ProcessSynchroEventW(int Event,void *Param)
 
 		if (pArg->hEvent)
 			SetEvent(pArg->hEvent);
-		pArg->Processed = TRUE;
+		//pArg->Processed = TRUE;
 		//pArg->Executed = TRUE;
+		free(pArg);
 	}
 	return 0;
 }
@@ -349,6 +357,91 @@ BOOL IsKeyChanged(BOOL abAllowReload)
 	return lbKeyChanged;
 }
 
+
+BOOL ActivatePluginA(DWORD nCmd, LPVOID pCommandData)
+{
+	BOOL lbRc = FALSE;
+	gnReqCommand = nCmd; gnPluginOpenFrom = -1;
+	gpReqCommandData = pCommandData;
+	ResetEvent(ghReqCommandEvent);
+
+	// Проверить, не изменилась ли горячая клавиша плагина, и если да - пересоздать макросы
+	IsKeyChanged(TRUE);
+
+	INPUT_RECORD evt[10];
+	DWORD dwStartWait, dwCur, dwTimeout, dwInputs = 0, dwInputsFirst = 0;
+	//BOOL  lbInputs = FALSE;
+	HANDLE hInput = GetStdHandle(STD_INPUT_HANDLE);
+
+	BOOL lbInput = PeekConsoleInput(hInput, evt, 10, &dwInputsFirst);
+
+	// Нужен вызов плагина в остновной нити
+	WARNING("Переделать на WriteConsoleInput");
+	gbCmdCallObsolete = FALSE;
+	SendMessage(FarHwnd, WM_KEYDOWN, VK_F14, 0);
+	SendMessage(FarHwnd, WM_KEYUP, VK_F14, (LPARAM)(3<<30));
+
+	
+	DWORD dwWait;
+	HANDLE hEvents[2];
+	hEvents[0] = ghReqCommandEvent;
+	hEvents[1] = ghServerTerminateEvent;
+
+	dwTimeout = CONEMUFARTIMEOUT;
+	dwStartWait = GetTickCount();
+	//DuplicateHandle(GetCurrentProcess(), ghReqCommandEvent, GetCurrentProcess(), hEvents, 0, 0, DUPLICATE_SAME_ACCESS);
+	do {
+		dwWait = WaitForMultipleObjects ( 2, hEvents, FALSE, 200 );
+		if (dwWait == WAIT_TIMEOUT) {
+			lbInput = PeekConsoleInput(hInput, evt, 10, &dwInputs);
+			if (lbInput && dwInputs == 0) {
+				//Раз из буфера ввода убралось "Отпускание F14" - значит ловить уже нечего, выходим
+				gbCmdCallObsolete = TRUE; // иначе может всплыть меню, когда не надо 
+				break;
+			}
+
+			dwCur = GetTickCount();
+			if ((dwCur - dwStartWait) > dwTimeout)
+				break;
+		}
+	} while (dwWait == WAIT_TIMEOUT);
+	if (dwWait)
+		ResetEvent(ghReqCommandEvent); // Сразу сбросим, вдруг не дождались?
+	else
+		lbRc = TRUE;
+
+	gpReqCommandData = NULL;
+	gnReqCommand = -1; gnPluginOpenFrom = -1;
+
+	return lbRc;
+}
+
+BOOL ActivatePluginW(DWORD nCmd, LPVOID pCommandData)
+{
+	BOOL lbRc = FALSE;
+	gnReqCommand = -1; gnPluginOpenFrom = -1; gpReqCommandData = NULL;
+	ResetEvent(ghReqCommandEvent);
+
+	// Нужен вызов плагина в остновной нити
+	gbCmdCallObsolete = FALSE;
+
+	SynchroArg *Param = (SynchroArg*)calloc(sizeof(SynchroArg),1);
+	Param->SynchroType = SynchroArg::eCommand;
+	Param->Param1 = nCmd;
+	Param->Param2 = (LPARAM)pCommandData;
+	Param->hEvent = ghReqCommandEvent;
+
+	lbRc = CallSynchro995(Param, CONEMUFARTIMEOUT);
+	
+	if (!lbRc)
+		ResetEvent(ghReqCommandEvent); // Сразу сбросим, вдруг не дождались?
+
+	gpReqCommandData = NULL;
+	gnReqCommand = -1; gnPluginOpenFrom = -1;
+
+	return lbRc;
+}
+
 WARNING("Обязательно сделать возможность отваливаться по таймауту, если плагин не удалось активировать");
 // Проверку можно сделать чтением буфера ввода - если там еще есть событие отпускания F11 - значит
 // меню плагинов еще загружается. Иначе можно еще чуть-чуть подождать, и отваливаться - активироваться не получится
@@ -373,55 +466,67 @@ CESERVER_REQ* ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandDat
 			return NULL;
 		}
 
-		gnReqCommand = nCmd; gnPluginOpenFrom = -1;
-		gpReqCommandData = pCommandData;
-		ResetEvent(ghReqCommandEvent);
-		
-		// Проверить, не изменилась ли горячая клавиша плагина, и если да - пересоздать макросы
-		IsKeyChanged(TRUE);
+		if (gFarVersion.dwVerMajor == 2 && gFarVersion.dwBuild >= 1007
+			&& nCmd != CMD_SETWINDOW)
+		{
+			TODO("Пока ProcessSynchroEventW не научится определять текущую макрообласть - переключение окон по старому");
+			ActivatePluginW(nCmd, pCommandData);
+		} else {
+			ActivatePluginA(nCmd, pCommandData);
+		}
 
-		INPUT_RECORD evt[10];
-		DWORD dwStartWait, dwCur, dwTimeout, dwInputs = 0, dwInputsFirst = 0;
-		//BOOL  lbInputs = FALSE;
-		HANDLE hInput = GetStdHandle(STD_INPUT_HANDLE);
 
-		BOOL lbInput = PeekConsoleInput(hInput, evt, 10, &dwInputsFirst);
-
-		// Нужен вызов плагина в остновной нити
-		WARNING("Переделать на WriteConsoleInput");
-		gbCmdCallObsolete = FALSE;
-		SendMessage(FarHwnd, WM_KEYDOWN, VK_F14, 0);
-		SendMessage(FarHwnd, WM_KEYUP, VK_F14, (LPARAM)(3<<30));
-
-		
-		//HANDLE hEvents[2] = {ghReqCommandEvent, hEventCmd[CMD_EXIT]};
-		hEvents[0] = ghReqCommandEvent;
-		hEvents[1] = ghServerTerminateEvent;
-
-		dwTimeout = CONEMUFARTIMEOUT;
-		dwStartWait = GetTickCount();
-		//DuplicateHandle(GetCurrentProcess(), ghReqCommandEvent, GetCurrentProcess(), hEvents, 0, 0, DUPLICATE_SAME_ACCESS);
-		do {
-			dwWait = WaitForMultipleObjects ( 2, hEvents, FALSE, 200 );
-			if (dwWait == WAIT_TIMEOUT) {
-				lbInput = PeekConsoleInput(hInput, evt, 10, &dwInputs);
-				if (lbInput && dwInputs == 0) {
-					//Раз из буфера ввода убралось "Отпускание F14" - значит ловить уже нечего, выходим
-					gbCmdCallObsolete = TRUE; // иначе может всплыть меню, когда не надо 
-					break;
-				}
-
-				dwCur = GetTickCount();
-				if ((dwCur - dwStartWait) > dwTimeout)
-					break;
-			}
-		} while (dwWait == WAIT_TIMEOUT);
-		if (dwWait) ResetEvent(ghReqCommandEvent); // Сразу сбросим, вдруг не дождались?
+		//gnReqCommand = nCmd; gnPluginOpenFrom = -1;
+		//gpReqCommandData = pCommandData;
+		//ResetEvent(ghReqCommandEvent);
+		//
+		////
+		//
+		//// Проверить, не изменилась ли горячая клавиша плагина, и если да - пересоздать макросы
+		//IsKeyChanged(TRUE);
+		//
+		//INPUT_RECORD evt[10];
+		//DWORD dwStartWait, dwCur, dwTimeout, dwInputs = 0, dwInputsFirst = 0;
+		////BOOL  lbInputs = FALSE;
+		//HANDLE hInput = GetStdHandle(STD_INPUT_HANDLE);
+		//
+		//BOOL lbInput = PeekConsoleInput(hInput, evt, 10, &dwInputsFirst);
+		//
+		//// Нужен вызов плагина в остновной нити
+		//WARNING("Переделать на WriteConsoleInput");
+		//gbCmdCallObsolete = FALSE;
+		//SendMessage(FarHwnd, WM_KEYDOWN, VK_F14, 0);
+		//SendMessage(FarHwnd, WM_KEYUP, VK_F14, (LPARAM)(3<<30));
+		//
+		//
+		////HANDLE hEvents[2] = {ghReqCommandEvent, hEventCmd[CMD_EXIT]};
+		//hEvents[0] = ghReqCommandEvent;
+		//hEvents[1] = ghServerTerminateEvent;
+		//
+		//dwTimeout = CONEMUFARTIMEOUT;
+		//dwStartWait = GetTickCount();
+		////DuplicateHandle(GetCurrentProcess(), ghReqCommandEvent, GetCurrentProcess(), hEvents, 0, 0, DUPLICATE_SAME_ACCESS);
+		//do {
+		//	dwWait = WaitForMultipleObjects ( 2, hEvents, FALSE, 200 );
+		//	if (dwWait == WAIT_TIMEOUT) {
+		//		lbInput = PeekConsoleInput(hInput, evt, 10, &dwInputs);
+		//		if (lbInput && dwInputs == 0) {
+		//			//Раз из буфера ввода убралось "Отпускание F14" - значит ловить уже нечего, выходим
+		//			gbCmdCallObsolete = TRUE; // иначе может всплыть меню, когда не надо 
+		//			break;
+		//		}
+		//
+		//		dwCur = GetTickCount();
+		//		if ((dwCur - dwStartWait) > dwTimeout)
+		//			break;
+		//	}
+		//} while (dwWait == WAIT_TIMEOUT);
+		//if (dwWait) ResetEvent(ghReqCommandEvent); // Сразу сбросим, вдруг не дождались?
 
 		ReleaseSemaphore(ghPluginSemaphore, 1, NULL);
 
-		gpReqCommandData = NULL;
-		gnReqCommand = -1; gnPluginOpenFrom = -1;
+		//gpReqCommandData = NULL;
+		//gnReqCommand = -1; gnPluginOpenFrom = -1;
 		return gpCmdRet; // Результат выполнения команды
 	}
 	

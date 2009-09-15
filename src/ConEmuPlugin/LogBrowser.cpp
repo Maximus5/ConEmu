@@ -180,7 +180,7 @@ void ShowConPacket(CESERVER_REQ* pReq)
 				cr.X = 0; cr.Y = 0; psz = pszText;
 				while (*psz && cr.Y<csbi.dwSize.Y) {
 					pszEnd = wcschr(psz, L'\n');
-					dwLen = min((pszEnd-psz),csbi.dwSize.X);
+					dwLen = min(((int)(pszEnd-psz)),csbi.dwSize.X);
 					SetConsoleCursorPosition(hO, cr);
 					if (dwLen>0)
 						WriteConsoleOutputCharacter(hO, psz, dwLen, cr, &dw);

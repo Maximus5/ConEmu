@@ -36,6 +36,7 @@ extern HANDLE hThread;
 extern WCHAR gcPlugKey;
 extern HANDLE ghConIn;
 extern BOOL gbNeedPostTabSend;
+extern HANDLE ghServerTerminateEvent;
 
 typedef struct tag_SynchroArg {
 	enum {
@@ -45,7 +46,7 @@ typedef struct tag_SynchroArg {
 	HANDLE hEvent;
 	LPARAM Result;
 	LPARAM Param1, Param2;
-	BOOL Processed;
+	//BOOL Processed;
 } SynchroArg;
 
 BOOL CreateTabs(int windowCount);
@@ -133,8 +134,8 @@ BOOL FUNC_X(EditOutput)(LPCWSTR asFileName, BOOL abView);
 
 BOOL Attach2Gui();
 
-BOOL FUNC_X(CallSynchro)(SynchroArg *Param);
-BOOL FUNC_Y(CallSynchro)(SynchroArg *Param);
+BOOL FUNC_X(CallSynchro)(SynchroArg *Param, DWORD nTimeout = 10000);
+BOOL FUNC_Y(CallSynchro)(SynchroArg *Param, DWORD nTimeout = 10000);
 
 BOOL IsMacroActive();
 BOOL IsMacroActiveA();

@@ -653,7 +653,7 @@ void GetMsgA(int aiMsg, wchar_t* rsMsg/*MAX_PATH*/)
 		return;
 	LPCSTR pszMsg = InfoA->GetMsg(InfoA->ModuleNumber,aiMsg);
 	if (pszMsg && *pszMsg) {
-		size_t nLen = strlen(pszMsg);
+		int nLen = (int)strlen(pszMsg);
 		if (nLen>=MAX_PATH) nLen = MAX_PATH - 1;
 		nLen = MultiByteToWideChar(CP_OEMCP, 0, pszMsg, nLen, rsMsg, MAX_PATH-1);
 		if (nLen>=0) rsMsg[nLen] = 0;

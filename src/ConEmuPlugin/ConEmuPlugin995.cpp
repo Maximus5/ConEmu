@@ -534,7 +534,8 @@ BOOL EditOutput995(LPCWSTR asFileName, BOOL abView)
 	return lbRc;
 }
 
-BOOL CallSynchro995(SynchroArg *Param)
+// Param должен быть выделен в куче. Память освобождается в ProcessSynchroEventW.
+BOOL CallSynchro995(SynchroArg *Param, DWORD nTimeout /*= 10000*/)
 {
 	if (!InfoW995 || !Param)
 		return FALSE;
@@ -544,18 +545,18 @@ BOOL CallSynchro995(SynchroArg *Param)
 		if (Param->hEvent)
 			ResetEvent(Param->hEvent);
 
-		Param->Processed = FALSE;
+		//Param->Processed = FALSE;
 
 		InfoW995->AdvControl ( InfoW995->ModuleNumber, ACTL_SYNCHRO, Param);
 
+		HANDLE hEvents[2] = {ghServerTerminateEvent, Param->hEvent};
+		int nCount = Param->hEvent ? 2 : 1;
+		_ASSERTE(Param->hEvent != NULL);
+
 		DWORD nWait = 100;
-		if (Param->hEvent) {
-			nWait = WaitForSingleObject(Param->hEvent, 10000);
-			if (nWait != WAIT_OBJECT_0) {
-				_ASSERTE(nWait==WAIT_OBJECT_0);
-			}
-		} else {
-			_ASSERTE(Param->hEvent);
+		nWait = WaitForMultipleObjects(nCount, hEvents, FALSE, nTimeout);
+		if (nWait != WAIT_OBJECT_0 && nWait != (WAIT_OBJECT_0+1)) {
+			_ASSERTE(nWait==WAIT_OBJECT_0);
 		}
 
 		return (nWait == 0);
