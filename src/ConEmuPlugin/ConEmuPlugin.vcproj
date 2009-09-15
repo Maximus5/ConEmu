@@ -296,7 +296,7 @@
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
-				DebugInformationFormat="0"
+				DebugInformationFormat="3"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -313,7 +313,8 @@
 				OutputFile="..\..\Release.x64\plugins\ConEmu\conemu.dll"
 				LinkIncremental="1"
 				ModuleDefinitionFile="export.def"
-				GenerateDebugInformation="false"
+				GenerateDebugInformation="true"
+				GenerateMapFile="true"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"

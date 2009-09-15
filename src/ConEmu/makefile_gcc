@@ -145,7 +145,7 @@ $(RES): $(RC_NAME)
 
 $(EXEFULLNAME): $(OBJS) $(DEF)
 	@echo linking $@
-	@$(CXX) -o $(EXENAME) $(OBJS) $(LNKFLAGS)
+	@$(CXX) -o $(EXENAME) $(OBJS) $(LNKFLAGS) -Xlinker -Map -Xlinker $(MAP)
 	@$(MV) $(EXENAME) $(EXEDIR)
 #$(EXEFULLNAME): $(OBJS) $(DEF)
 #	@echo linking $@
