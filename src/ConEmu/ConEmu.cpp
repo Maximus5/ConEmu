@@ -1175,6 +1175,9 @@ void CConEmuMain::ForceShowTabs(BOOL abShow)
         //gbPostUpdateWindowSize = true; // 2009-07-04 Resize выполняет сам TabBar
     }
 
+    // При отключенных табах нужно показать "[n/n] " а при выключенных - спрятать
+    UpdateTitle(NULL); // сам перечитает
+
 	// 2009-07-04 Resize выполняет сам TabBar
     //if (gbPostUpdateWindowSize) { // значит мы что-то поменяли
     //    ReSize();
@@ -2793,8 +2796,8 @@ void CConEmuMain::UpdateSizes()
 // !!!Warning!!! Никаких return. в конце функции вызывается необходимый CheckProcesses
 void CConEmuMain::UpdateTitle(LPCTSTR asNewTitle)
 {
-    if (!asNewTitle)
-        return;
+    //if (!asNewTitle)
+    //    return;
 
     if (GetCurrentThreadId() != mn_MainThreadId) {
         /*if (TitleCmp != asNewTitle) -- можем наколоться на многопоточности. Лучше получим повторно
@@ -2802,9 +2805,14 @@ void CConEmuMain::UpdateTitle(LPCTSTR asNewTitle)
         PostMessage(ghWnd, mn_MsgUpdateTitle, 0, 0);
         return;
     }
+
+    if (!asNewTitle)
+    	if ((asNewTitle = pVCon->RCon()->GetTitle()) == NULL)
+    		return;
     
     wcscpy(Title, asNewTitle);
 
+    // Там же обновится L"[%i/%i] " если несколько консолей а табы отключены
     UpdateProgress(TRUE);
 
     //BOOL  lbTitleChanged = TRUE;
@@ -5033,6 +5041,9 @@ LRESULT CConEmuMain::OnVConTerminated(CVirtualConsole* apVCon, BOOL abPosted /*=
             break;
         }
     }
+    // Теперь перетряхнуть заголовок (табы могут быть отключены и в заголовке отображается количество консолей)
+    UpdateTitle(NULL); // сам перечитает
+    //
     TabBar.Update(); // Иначе не будет обновлены закладки
 	// А теперь можно обновить активную закладку
     TabBar.OnConsoleActivated(ActiveConNum()+1/*, FALSE*/);

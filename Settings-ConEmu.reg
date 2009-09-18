@@ -182,6 +182,13 @@ REGEDIT4
 "TabEditorModified"="%i-[%s] *"
 "TabViewer"="%i-{%s}"
 "TabLenMax"=dword:00000014
+;; Tab font facename. Default is "Tahoma"
+;"TabFontFace"="Tahoma"
+;; Tab font charset. Default is ANSI_CHARSET = 0.
+;"TabFontCharSet"=dword:00000000
+;; Tab font height. Default is 16
+;"TabFontHeight"=dword:00000010
+
 
 ;; Debug. 1 - Create 'app' window on taskbar
 ;"CreateAppWindow"=hex:00 - does not working still

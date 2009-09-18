@@ -14,6 +14,7 @@
 #endif
 
 #define ISALPHA(c) ((((c) >= (BYTE)'c') && ((c) <= (BYTE)'z')) || (((c) >= (BYTE)'C') && ((c) <= (BYTE)'Z')))
+#define isPressed(inp) ((GetKeyState(inp) & 0x8000) == 0x8000)
 
 #define FAR_X_VER 789
 #define FAR_Y_VER 995
@@ -141,3 +142,5 @@ BOOL IsMacroActive();
 BOOL IsMacroActiveA();
 BOOL FUNC_X(IsMacroActive)();
 BOOL FUNC_Y(IsMacroActive)();
+
+BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount);

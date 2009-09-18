@@ -20,8 +20,8 @@ extern TabBarClass TabBar;
 extern OSVERSIONINFO gOSVer;
 //extern SECURITY_ATTRIBUTES* gpNullSecurity;
 
-extern const int TAB_FONT_HEIGTH;
-extern wchar_t TAB_FONT_FACE[];
+//extern const int TAB_FONT_HEIGTH;
+//extern wchar_t TAB_FONT_FACE[];
 
 
 //extern TCHAR szIconPath[MAX_PATH];

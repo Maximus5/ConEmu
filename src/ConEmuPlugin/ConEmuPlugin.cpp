@@ -608,6 +608,13 @@ CESERVER_REQ* ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandDat
 	return pCmdRet;
 }
 
+void EmergencyShow()
+{
+	SetWindowPos(FarHwnd, HWND_TOP, 50,50,0,0, SWP_NOSIZE);
+	ShowWindowAsync(FarHwnd, SW_SHOWNORMAL);
+	EnableWindow(FarHwnd, true);
+}
+
 // Эту нить нужно оставить, чтобы была возможность отобразить консоль при падении ConEmu
 DWORD WINAPI MonitorThreadProcW(LPVOID lpParameter)
 {
@@ -637,8 +644,7 @@ DWORD WINAPI MonitorThreadProcW(LPVOID lpParameter)
 			if (dwDelta > GUI_ATTACH_TIMEOUT) {
 				lbStartedNoConEmu = FALSE;
 				if (!TerminalMode && !IsWindowVisible(FarHwnd)) {
-					ShowWindowAsync(FarHwnd, SW_SHOWNORMAL);
-					EnableWindow(FarHwnd, true);
+					EmergencyShow();
 				}
 			}
 		}
@@ -654,8 +660,7 @@ DWORD WINAPI MonitorThreadProcW(LPVOID lpParameter)
 			    SetConEmuEnvVar(NULL);
 
 				if (!TerminalMode && !IsWindowVisible(FarHwnd)) {
-					ShowWindowAsync(FarHwnd, SW_SHOWNORMAL);
-					EnableWindow(FarHwnd, true);
+					EmergencyShow();
 				}
 
 				if (hConWnd!=FarHwnd || !IsWindow(FarHwnd))
@@ -738,8 +743,7 @@ DWORD WINAPI MonitorThreadProcW(LPVOID lpParameter)
 					//	SetParent(FarHwnd, NULL);
 					//}
 				    
-					ShowWindowAsync(FarHwnd, SW_SHOWNORMAL);
-					EnableWindow(FarHwnd, true);
+					EmergencyShow();
 				}
 			    
 				//goto closethread;
@@ -846,7 +850,7 @@ DWORD WINAPI MonitorThreadProcW(LPVOID lpParameter)
 		//}
 
 		//// Подготовиться к передаче данных
-		//EnterCriticalSection(&csData);
+		//Enter CriticalSection(&csData);
 		//wsprintf(gszDir1, CONEMUMAPPING, dwProcId);
 		//gnDataSize = gpData ? (gpCursor - gpData) : 0;
 		//#ifdef _DEBUG
@@ -1410,7 +1414,7 @@ BOOL CreateTabs(int windowCount)
 		return TRUE; 
 	}
 
-	//EnterCriticalSection(&csTabs);
+	//Enter CriticalSection(&csTabs);
 
 	if ((gpTabs==NULL) || (maxTabCount <= (windowCount + 1)))
 	{

@@ -14,8 +14,8 @@ WARNING("не меняются табы при переключении на другую консоль");
 TODO("Для WinXP можно поиграться стилем WS_EX_COMPOSITED");
 
 TabBarClass TabBar;
-const int TAB_FONT_HEIGTH = 16;
-wchar_t TAB_FONT_FACE[] = L"Tahoma";
+//const int TAB_FONT_HEIGTH = 16;
+//wchar_t TAB_FONT_FACE[] = L"Tahoma";
 WNDPROC TabBarClass::_defaultTabProc = NULL;
 WNDPROC TabBarClass::_defaultBarProc = NULL;
 typedef BOOL (WINAPI* FAppThemed)();
@@ -929,8 +929,8 @@ HWND TabBarClass::CreateTabbar()
             SetWindowPos(mh_TabTip, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE);
             TabCtrl_SetToolTips ( mh_Tabbar, mh_TabTip );
         }
-        HFONT hFont = CreateFont(TAB_FONT_HEIGTH, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, ANSI_CHARSET, OUT_DEFAULT_PRECIS, 
-            CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_SWISS, TAB_FONT_FACE);
+        HFONT hFont = CreateFont(gSet.nTabFontHeight, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, gSet.nTabFontCharSet, OUT_DEFAULT_PRECIS, 
+            CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_SWISS, gSet.sTabFontFace);
         SendMessage(mh_Tabbar, WM_SETFONT, WPARAM (hFont), TRUE);
         
 
@@ -1150,7 +1150,8 @@ int TabBarClass::GetIndexByTab(VConTabs tab)
 
 int TabBarClass::GetNextTab(BOOL abForward, BOOL abAltStyle/*=FALSE*/)
 {
-    BOOL lbRecentMode = (abAltStyle == FALSE) ? gSet.isTabRecent : !gSet.isTabRecent;
+    BOOL lbRecentMode = (gSet.isTabs != 0) &&
+		(((abAltStyle == FALSE) ? gSet.isTabRecent : !gSet.isTabRecent));
     int nCurSel = GetCurSel();
     int nCurCount = GetItemCount();
 	VConTabs cur = {NULL};
@@ -1246,13 +1247,14 @@ void TabBarClass::Switch(BOOL abForward, BOOL abAltStyle/*=FALSE*/)
     int nNewSel = GetNextTab ( abForward, abAltStyle );
     
     if (nNewSel != -1) {
-        if (gSet.isTabLazy && mh_Tabbar) {
+		// mh_Tabbar может быть и создан, Но отключен пользователем!
+        if (gSet.isTabLazy && mh_Tabbar && gSet.isTabs) {
             mb_InKeySwitching = TRUE;
             // Пока Ctrl не отпущен - только подсвечиваем таб, а не переключаем реально
             SelectTab ( nNewSel );
         } else {
             FarSendChangeTab ( nNewSel );
-            mb_InKeySwitching = FALSE;
+			mb_InKeySwitching = FALSE;
         }
     }
 }

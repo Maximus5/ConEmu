@@ -417,6 +417,8 @@ BOOL CRealConsole::SetConsoleSize(COORD size, DWORD anCmdID/*=CECMD_SETSIZE*/)
 			DEBUGSTRSIZE(L"SetConsoleSize.RetrieveConsoleInfo is not needed, size already match\n");
 		} else {
 			DEBUGSTRSIZE(L"SetConsoleSize.RetrieveConsoleInfo\n");
+			//BUGBUG: тут виснет
+			WARNING("!!! При CtrlShiftT в фаре - это повисло");
 			if (!RetrieveConsoleInfo(size.Y)) {
 				DEBUGSTRSIZE(L"SetConsoleSize.RetrieveConsoleInfo - height failed, waiting\n");
 				Sleep(300);
@@ -3840,7 +3842,7 @@ void CRealConsole::CloseLogFiles()
 {
     SafeCloseHandle(mh_LogInput);
     if (mpsz_LogInputFile) {
-        DeleteFile(mpsz_LogInputFile);
+        //DeleteFile(mpsz_LogInputFile);
         free(mpsz_LogInputFile); mpsz_LogInputFile = NULL;
     }
     if (mpsz_LogPackets) {

@@ -52,8 +52,8 @@ WARNING("!!!! Пока можно при появлении события запоминать текущий тик");
 // то принудительно перечитать консоль и сбросить тик в 0.
 
 #ifdef _DEBUG
-CRITICAL_SECTION gcsHeap;
-//#define MCHKHEAP { EnterCriticalSection(&gcsHeap); int MDEBUG_CHK=_CrtCheckMemory(); _ASSERTE(MDEBUG_CHK); LeaveCriticalSection(&gcsHeap); }
+//CRITICAL_ SECTION gcsHeap;
+//#define MCHKHEAP { Enter CriticalSection(&gcsHeap); int MDEBUG_CHK=_CrtCheckMemory(); _ASSERTE(MDEBUG_CHK); LeaveCriticalSection(&gcsHeap); }
 #define MCHKHEAP HeapValidate(ghHeap, 0, NULL);
 //#define HEAP_LOGGING
 #define DEBUGLOG(s) //OutputDebugString(s)
@@ -312,7 +312,8 @@ struct tag_Srv {
     BOOL  bConsoleActive;
     HANDLE hRefreshEvent; // ServerMode, перечитать консоль, и если есть изменения - отослать в GUI
     //HANDLE hChangingSize; // FALSE на время смены размера консоли
-    CRITICAL_SECTION csChangeSize; DWORD ncsTChangeSize;
+    //CRITICAL_ SECTION csChangeSize; DWORD ncsTChangeSize;
+    MSection cChangeSize;
 	HANDLE hAllowInputEvent; BOOL bInSyncResize;
     BOOL  bNeedFullReload;  // Нужен полный скан консоли
     BOOL  bForceFullSend; // Необходимо отослать ПОЛНОЕ содержимое консоли, а не только измененное
@@ -399,9 +400,9 @@ int main()
 {
     TODO("можно при ошибках показать консоль, предварительно поставив 80x25 и установив крупный шрифт");
 
-#ifdef _DEBUG
-    InitializeCriticalSection(&gcsHeap);
-#endif
+	//#ifdef _DEBUG
+    //InitializeCriticalSection(&gcsHeap);
+	//#endif
 
     int iRc = 100;
     PROCESS_INFORMATION pi; memset(&pi, 0, sizeof(pi));
@@ -757,7 +758,7 @@ wrap:
 
     SafeCloseHandle(ghLogSize);
     if (wpszLogSizeFile) {
-        DeleteFile(wpszLogSizeFile);
+        //DeleteFile(wpszLogSizeFile);
         Free(wpszLogSizeFile); wpszLogSizeFile = NULL;
     }
     
@@ -1393,6 +1394,13 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 //    return 0;
 //}
 
+void EmergencyShow()
+{
+	SetWindowPos(ghConWnd, HWND_TOP, 50,50,0,0, SWP_NOSIZE);
+	ShowWindowAsync(ghConWnd, SW_SHOWNORMAL);
+	EnableWindow(ghConWnd, true);
+}
+
 void ExitWaitForKey(WORD vkKey, LPCWSTR asConfirm, BOOL abNewLine, BOOL abDontShowConsole)
 {
     // Чтобы ошибку было нормально видно
@@ -1414,7 +1422,8 @@ void ExitWaitForKey(WORD vkKey, LPCWSTR asConfirm, BOOL abNewLine, BOOL abDontSh
 					// не надо наверное... // поставить "стандартный" 80x25, или то, что было передано к ком.строке
 					//SMALL_RECT rcNil = {0}; SetConsoleSize(0, gcrBufferSize, rcNil, ":Exiting");
 					//SetConsoleFontSizeTo(ghConWnd, 8, 12); // установим шрифт побольше
-					ShowWindow(ghConWnd, SW_SHOWNORMAL); // и покажем окошко
+					//ShowWindow(ghConWnd, SW_SHOWNORMAL); // и покажем окошко
+					EmergencyShow();
 				}
 			}
 		}
@@ -1980,7 +1989,7 @@ int ServerInit()
 		iRc = CERR_CREATEINPUTTHREAD; goto wrap;
 	}
 
-    InitializeCriticalSection(&srv.csChangeSize);
+    //InitializeCriticalSection(&srv.csChangeSize);
     InitializeCriticalSection(&srv.csConBuf);
     InitializeCriticalSection(&srv.csChar);
 
@@ -2390,7 +2399,7 @@ void ServerDone(int aiRc)
     if (srv.ptrLineCmp) { Free(srv.ptrLineCmp); srv.ptrLineCmp = NULL; }
     DeleteCriticalSection(&srv.csConBuf);
     DeleteCriticalSection(&srv.csChar);
-    DeleteCriticalSection(&srv.csChangeSize);
+    //DeleteCriticalSection(&srv.csChangeSize);
 
 	SafeCloseHandle(srv.hAllowInputEvent);
 
@@ -3093,7 +3102,8 @@ BOOL ReadConsoleData(CESERVER_CHAR* pCheck /*= NULL*/)
     //RECT rcReadRect = {0};
     // Если во время чтения консоли приходит ресайз - консоль глючит
     // может отдать совершенно левые данные (например не с той строки, с которой просили)
-    CSection cs(&srv.csChangeSize, &srv.ncsTChangeSize);
+    //CSection cs(&srv.csChangeSize, &srv.ncsTChangeSize);
+    MSectionLock CSCS; CSCS.Lock(&srv.cChangeSize);
 
     BOOL lbFirstLoop = TRUE;
 
@@ -3472,7 +3482,8 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 			if (in.hdr.nCmd == CECMD_GETFULLINFO) {
 				// Размер консоли мог только что измениться, и еще не обновилась srv.sbi
 				// Секцию блокируем заранее, чтобы не было расхождений в размерах
-				CSection cs(&srv.csChangeSize, &srv.ncsTChangeSize);
+				//CSection cs(&srv.csChangeSize, &srv.ncsTChangeSize);
+				MSectionLock CSCS; CSCS.Lock(&srv.cChangeSize);
 				MyGetConsoleScreenBufferInfo(ghConOut, &srv.sbi);
                 ReadConsoleData(NULL);
 			}
@@ -3811,8 +3822,9 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 
 		if (ghConEmuWnd && !IsWindow(ghConEmuWnd)) {
 			ghConEmuWnd = NULL;
-			ShowWindowAsync(ghConWnd, SW_SHOWNORMAL);
-			EnableWindow(ghConWnd, true);
+			//ShowWindowAsync(ghConWnd, SW_SHOWNORMAL);
+			//EnableWindow(ghConWnd, true);
+			EmergencyShow();
 		}
 
         if (ghConEmuWnd && GetForegroundWindow() == ghConWnd) {
@@ -4626,9 +4638,11 @@ BOOL MyGetConsoleScreenBufferInfo(HANDLE ahConOut, PCONSOLE_SCREEN_BUFFER_INFO a
 {
     BOOL lbRc = FALSE;
 
-    CSection cs(NULL,NULL);
+    //CSection cs(NULL,NULL);
+    MSectionLock CSCS;
     if (gnRunMode == RM_SERVER)
-        cs.Enter(&srv.csChangeSize, &srv.ncsTChangeSize);
+    	CSCS.Lock(&srv.cChangeSize);
+        //cs.Enter(&srv.csChangeSize, &srv.ncsTChangeSize);
 
     if (gnRunMode == RM_SERVER) // ComSpec окно менять НЕ ДОЛЖЕН!
     {
@@ -4697,7 +4711,8 @@ BOOL MyGetConsoleScreenBufferInfo(HANDLE ahConOut, PCONSOLE_SCREEN_BUFFER_INFO a
         CorrectVisibleRect(apsc);
     }
 
-    cs.Leave();
+    //cs.Leave();
+    CSCS.Unlock();
 
     #ifdef _DEBUG
     if ((apsc->srWindow.Bottom - apsc->srWindow.Top)>apsc->dwMaximumWindowSize.Y) {
@@ -5003,9 +5018,11 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
     _ASSERTE(ghConWnd);
     if (!ghConWnd) return FALSE;
 
-    CSection cs(NULL,NULL);
+    //CSection cs(NULL,NULL);
+    MSectionLock CSCS;
     if (gnRunMode == RM_SERVER)
-        cs.Enter(&srv.csChangeSize, &srv.ncsTChangeSize);
+    	CSCS.Lock(&srv.cChangeSize, TRUE, 10000);
+        //cs.Enter(&srv.csChangeSize, &srv.ncsTChangeSize);
     
     if (ghLogSize) LogSize(&crNewSize, asLabel);
 
@@ -5107,7 +5124,8 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
         SetEvent(srv.hRefreshEvent);
     }
 
-    cs.Leave();
+    //cs.Leave();
+    CSCS.Unlock();
 
     return lbRc;
 }

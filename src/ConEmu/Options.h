@@ -86,6 +86,7 @@ public:
     bool isDebugSteps;
     bool isGUIpb; // GUI Progress bars
     char isTabs; bool isTabSelf, isTabRecent, isTabLazy;
+    wchar_t sTabFontFace[LF_FACESIZE]; DWORD nTabFontCharSet; int nTabFontHeight;
 	wchar_t *sTabCloseMacro;
     DWORD wndWidth, wndHeight, ntvdmHeight; // в символах
     int wndX, wndY; // в пикселях

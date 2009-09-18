@@ -223,6 +223,7 @@ void CSettings::InitSettings()
 	isCursorColor = false;
     
     isTabs = 1; isTabSelf = true; isTabRecent = true; isTabLazy = true;
+    lstrcpyW(sTabFontFace, L"Tahoma"); nTabFontCharSet = ANSI_CHARSET; nTabFontHeight = 16;
 	sTabCloseMacro = NULL;
     
     isVisualizer = false;
@@ -409,6 +410,9 @@ void CSettings::LoadSettings()
 	        reg.Load(L"TabLazy", isTabLazy);
 	        reg.Load(L"TabRecent", isTabRecent);
 			if (!reg.Load(L"TabCloseMacro", &sTabCloseMacro) && sTabCloseMacro && !*sTabCloseMacro) { free(sTabCloseMacro); sTabCloseMacro = NULL; }
+			reg.Load(L"TabFontFace", sTabFontFace);
+			reg.Load(L"TabFontCharSet", nTabFontCharSet);
+			reg.Load(L"TabFontHeight", nTabFontHeight);
         reg.Load(L"TabFrame", isTabFrame);
         reg.Load(L"TabMargins", rcTabMargins);
         reg.Load(L"SlideShowElapse", nSlideShowElapse);
@@ -808,8 +812,8 @@ LRESULT CSettings::OnInitDialog()
         tie.pszText = wcscpy(szTitle, L"Info");
         TabCtrl_InsertItem(_hwndTab, 3, &tie);
         
-        HFONT hFont = CreateFont(TAB_FONT_HEIGTH, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, ANSI_CHARSET, OUT_DEFAULT_PRECIS, 
-            CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_SWISS, TAB_FONT_FACE);
+        HFONT hFont = CreateFont(nTabFontHeight/*TAB_FONT_HEIGTH*/, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, nTabFontCharSet /*ANSI_CHARSET*/, OUT_DEFAULT_PRECIS, 
+            CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_SWISS, /* L"Tahoma" */ sTabFontFace);
         SendMessage(_hwndTab, WM_SETFONT, WPARAM (hFont), TRUE);
         
         RECT rcClient; GetWindowRect(_hwndTab, &rcClient);
