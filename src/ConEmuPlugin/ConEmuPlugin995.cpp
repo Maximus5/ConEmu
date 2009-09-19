@@ -510,9 +510,10 @@ void PostMacro995(wchar_t* asMacro)
 			}
 		}
 		DWORD cbWritten = 0;
-		BOOL fSuccess = WriteConsoleInput(ghConIn, ir, 2, &cbWritten);
-		_ASSERTE(fSuccess && cbWritten==2);
+		BOOL fSuccess = WriteConsoleInput(ghConIn, ir, 1, &cbWritten);
+		_ASSERTE(fSuccess && cbWritten==1);
 	}
+	//InfoW995->AdvControl(InfoW995->ModuleNumber,ACTL_REDRAWALL,NULL);
 }
 
 int ShowPluginMenu995()
