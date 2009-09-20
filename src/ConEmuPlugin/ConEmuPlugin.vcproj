@@ -423,8 +423,8 @@
 		</Configuration>
 		<Configuration
 			Name="DebugA|x64"
-			OutputDirectory="E:\Temp\VCProject\ConEmu\$(ConfigurationName).$(PlatformName)"
-			IntermediateDirectory="E:\Temp\VCProject\ConEmu\$(ConfigurationName).$(PlatformName)"
+			OutputDirectory="C:\Temp\VCProject\$(ProjectName)\$(PlatformName)\$(ConfigurationName)"
+			IntermediateDirectory="C:\Temp\VCProject\$(ProjectName)\$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="2"
 			CharacterSet="1"
 			>
@@ -469,7 +469,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="version.lib"
-				OutputFile="\\MAXW7\FAR\FAR2.x64\plugins\conEmu\conemu.dll"
+				OutputFile="C:\Users\Max\Desktop\FAR\FAR2.x64\plugins\conEmu\conemu.dll"
 				LinkIncremental="2"
 				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"

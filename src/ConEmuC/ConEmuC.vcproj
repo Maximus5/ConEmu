@@ -396,8 +396,8 @@
 		</Configuration>
 		<Configuration
 			Name="DebugA|x64"
-			OutputDirectory="E:\Temp\VCProject\ConEmu\$(ConfigurationName).$(PlatformName)"
-			IntermediateDirectory="E:\Temp\VCProject\ConEmu\$(ConfigurationName).$(PlatformName)"
+			OutputDirectory="C:\Temp\VCProject\$(ProjectName)\$(PlatformName)\$(ConfigurationName)"
+			IntermediateDirectory="C:\Temp\VCProject\$(ProjectName)\$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="1"
 			CharacterSet="1"
 			>
@@ -439,7 +439,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="\\MAXW7\FAR\FAR2.x64\ConEmuC.exe"
+				OutputFile="C:\Users\Max\Desktop\FAR\FAR2.x64\ConEmuC.exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
 				SubSystem="1"

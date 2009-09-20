@@ -236,6 +236,12 @@ public:
 		/* [out] */ ULONG *pcbWritten)
 	{
 		DWORD dwWritten=0;
+		if (!mp_Data) {
+			ULARGE_INTEGER lNewSize; lNewSize.QuadPart = cb;
+			HRESULT hr;
+			if (FAILED(hr = SetSize(lNewSize)))
+				return hr;
+		}
 		if (mp_Data) {
 			if ((mn_DataPos+cb)>mn_DataSize) {
 				// Нужно увеличить буфер, но сохранить текущий размер
@@ -269,6 +275,7 @@ public:
 			return STG_E_INVALIDFUNCTION;
 
 		if (mp_Data) {
+			_ASSERTE(mn_DataSize);
 			LARGE_INTEGER lNew;
 			if (dwOrigin==STREAM_SEEK_SET) {
 				lNew.QuadPart = dlibMove.QuadPart;
@@ -282,6 +289,8 @@ public:
 			if (lNew.QuadPart>mn_DataSize)
 				return S_FALSE;
 			mn_DataPos = lNew.LowPart;
+			if (plibNewPosition)
+				plibNewPosition->QuadPart = mn_DataPos;
 		} else {
 			return S_FALSE;
 		}
@@ -295,22 +304,29 @@ public:
 		ULARGE_INTEGER llTest; llTest.QuadPart = 0;
 		LARGE_INTEGER llShift; llShift.QuadPart = 0;
 
+		if (libNewSize.HighPart)
+			return E_OUTOFMEMORY;
+
 		if (mp_Data) {
-			if (libNewSize.HighPart!=0) {
-				hr = E_INVALIDARG;
-			} else {
 				if (libNewSize.LowPart>mn_DataSize) {
 					char* pNew = (char*)realloc(mp_Data, libNewSize.LowPart);
 					if (pNew==NULL)
-						return E_UNEXPECTED;
+					return E_OUTOFMEMORY;
 					mp_Data = pNew;
 				}
 				mn_DataLen = libNewSize.LowPart;
 				if (mn_DataPos>mn_DataLen) // Если размер уменьшили - проверить позицию
 					mn_DataPos = mn_DataLen;
-			}
+			hr = S_OK;
+
 		} else {
-			hr = S_FALSE;
+			mp_Data = (char*)calloc(libNewSize.LowPart,1);
+			if (mp_Data==NULL)
+				return E_OUTOFMEMORY;
+			mn_DataSize = libNewSize.LowPart;
+			mn_DataLen = libNewSize.LowPart;
+			mn_DataPos = 0;
+			hr = S_OK;
 		}
 		return hr;
 	};

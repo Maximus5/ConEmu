@@ -205,11 +205,11 @@ protected:
     // “екущий заголовок консоли и его значение дл€ сравнени€ (дл€ определени€ изменений)
     WCHAR Title[MAX_TITLE_SIZE+1], TitleCmp[MAX_TITLE_SIZE+1];
     // ј здесь содержитс€ то, что отображаетс€ в ConEmu (может быть добавлено " (Admin)")
-    WCHAR TitleFull[MAX_TITLE_SIZE+65];
+    WCHAR TitleFull[MAX_TITLE_SIZE+96];
     // «десь сохран€етс€ заголовок окна (с панел€ми), когда FAR фокус с панелей уходит (переходит в редактор...).
     WCHAR ms_PanelTitle[CONEMUTABMAX];
     // ѕроцентики
-    short mn_Progress, mn_PreWarningProgress;
+    short mn_Progress, mn_PreWarningProgress, mn_ConsoleProgress;
 
     BOOL AttachPID(DWORD dwPID);
     BOOL StartProcess();

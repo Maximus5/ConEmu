@@ -77,7 +77,7 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
     wcscpy(Title, L"ConEmu");
     wcscpy(TitleFull, Title);
     wcscpy(ms_PanelTitle, Title);
-    mn_Progress = -1; mn_PreWarningProgress = -1; // Процентов нет
+    mn_Progress = -1; mn_PreWarningProgress = -1; mn_ConsoleProgress = -1; // Процентов нет
 
     hPictureView = NULL; mb_PicViewWasHidden = FALSE;
 
@@ -5199,9 +5199,7 @@ void CRealConsole::OnTitleChanged()
     if (!this) return;
 
     wcscpy(Title, TitleCmp);
-    wcscpy(TitleFull, TitleCmp);
-    if (isAdministrator() && gSet.szAdminTitleSuffix)
-    	wcscat(TitleFull, gSet.szAdminTitleSuffix);
+	TitleFull[0] = 0;
 
     // Обработка прогресса операций
     short nLastProgress = mn_Progress;
@@ -5233,9 +5231,22 @@ void CRealConsole::OnTitleChanged()
         } else {
             mn_Progress = -1;
         }
+    } else if ((mn_ProgramStatus & CES_FARACTIVE) == 0 && mn_ConsoleProgress != -1) {
+    	// Обработка прогресса NeroCMD и пр. консольных программ
+		// Если курсор находится в видимой области
+    	mn_Progress = mn_ConsoleProgress; // mn_ConsoleProgress заполняется в FindPanels
+
+		TitleFull[0] = L'{';
+		_ltow(mn_Progress, TitleFull+1, 10);
+		lstrcatW(TitleFull, L"%} ");
+
     } else {
         mn_Progress = -1;
     }
+
+    wcscat(TitleFull, TitleCmp);
+    if (isAdministrator() && gSet.szAdminTitleSuffix)
+    	wcscat(TitleFull, gSet.szAdminTitleSuffix);
 
 	CheckFarStates();
 
@@ -5247,7 +5258,7 @@ void CRealConsole::OnTitleChanged()
 
     if (gConEmu.isActive(mp_VCon)) {
         // Для активной консоли - обновляем заголовок. Прогресс обновится там же
-        gConEmu.UpdateTitle(TitleCmp);
+        gConEmu.UpdateTitle(TitleFull); // 20.09.2009 Maks - было TitleCmd
     } else if (nLastProgress != mn_Progress) {
         // Для НЕ активной консоли - уведомить главное окно, что у нас сменились проценты
         gConEmu.UpdateProgress(TRUE/*abUpdateTitle*/);
@@ -5513,6 +5524,29 @@ void CRealConsole::FindPanels(BOOL abResetOnly/* = FALSE */)
             }
         }
     }
+
+
+    short nLastProgress = mn_ConsoleProgress;
+    mn_ConsoleProgress = -1;
+    if ((mn_ProgramStatus & CES_FARACTIVE) == 0) {
+    	// Обработка прогресса NeroCMD и пр. консольных программ
+		// Если курсор находится в видимой области
+		int nY = con.m_sbi.dwCursorPosition.Y - con.m_sbi.srWindow.Top;
+	    if (con.m_sbi.dwCursorPosition.X >= 0 && con.m_sbi.dwCursorPosition.X < con.nTextWidth
+			&& nY >= 0 && nY < con.nTextHeight)
+        {
+        	int nIdx = nY * con.nTextWidth;
+        	if (isDigit(con.pConChar[nIdx]) && isDigit(con.pConChar[nIdx+1]) && isDigit(con.pConChar[nIdx+2]) && con.pConChar[nIdx+3]==L'%') {
+        		mn_ConsoleProgress = 100*(con.pConChar[nIdx] - L'0') + 10*(con.pConChar[nIdx+1] - L'0') + (con.pConChar[nIdx+2] - L'0');
+        	} else if (isDigit(con.pConChar[nIdx]) && isDigit(con.pConChar[nIdx+1]) && con.pConChar[nIdx+2]==L'%') {
+        		mn_ConsoleProgress = 10*(con.pConChar[nIdx] - L'0') + (con.pConChar[nIdx+1] - L'0');
+        	} else if (isDigit(con.pConChar[nIdx]) && con.pConChar[nIdx+1]==L'%') {
+        		mn_ConsoleProgress = (con.pConChar[nIdx] - L'0');
+    		}
+        }
+    }
+    if (nLastProgress != mn_ConsoleProgress || mn_Progress != mn_ConsoleProgress)
+    	OnTitleChanged();
 }
 
 int CRealConsole::CoordInPanel(COORD cr)

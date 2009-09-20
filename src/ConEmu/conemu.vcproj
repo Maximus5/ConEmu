@@ -422,8 +422,8 @@
 		</Configuration>
 		<Configuration
 			Name="DebugA|x64"
-			OutputDirectory="E:\Temp\VCProject\ConEmu\$(ConfigurationName).$(PlatformName)"
-			IntermediateDirectory="E:\Temp\VCProject\ConEmu\$(ConfigurationName).$(PlatformName)"
+			OutputDirectory="C:\Temp\VCProject\$(ProjectName)\$(PlatformName)\$(ConfigurationName)"
+			IntermediateDirectory="C:\Temp\VCProject\$(ProjectName)\$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="1"
 			CharacterSet="1"
 			>
@@ -466,7 +466,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="comctl32.lib Shlwapi.lib version.lib gdiplus.lib"
-				OutputFile="\\MAXW7\FAR\FAR2.x64\ConEmu.exe"
+				OutputFile="C:\Users\Max\Desktop\FAR\FAR2.x64\ConEmu.exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
 				GenerateMapFile="true"

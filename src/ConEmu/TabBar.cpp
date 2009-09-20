@@ -1112,6 +1112,14 @@ void TabBarClass::PrepareTab(ConEmuTab* pTab)
         _tcsncat(fileName, tFileName + origLength - 10, 10);*/
         if (!nSplit)
 	        nSplit = nMaxLen*2/3;
+		// 2009-09-20 Если в заголовке нет расширения (отсутствует точка)
+		const wchar_t* pszAdmin = gSet.szAdminTitleSuffix;
+		const wchar_t* pszFrom = tFileName + origLength - (nMaxLen - nSplit);
+		if (!wcschr(pszFrom, L'.') && (*pszAdmin && !wcsstr(tFileName, pszAdmin)))
+		{
+			// то троеточие ставить в конец, а не середину
+			nSplit = nMaxLen;
+		}
         
         _tcsncpy(szEllip, tFileName, nSplit); szEllip[nSplit]=0;
         _tcscat(szEllip, L"\x2026" /*"…"*/);
