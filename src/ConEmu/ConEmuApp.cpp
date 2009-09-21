@@ -49,7 +49,7 @@ void DebugLogMessage(HWND h, UINT m, WPARAM w, LPARAM l, BOOL posted, BOOL extra
     if (bBlockDebugLog || (!bSendToFile && !IsDebuggerPresent()))
         return;
 
-    static char szMess[32], szWP[32], szLP[32], szWhole[255];
+    static char szMess[32], szWP[32], szLP[48], szWhole[255];
     //static SYSTEMTIME st;
     szMess[0]=0; szWP[0]=0; szLP[0]=0; szWhole[0]=0;
     
@@ -167,7 +167,7 @@ void DebugLogMessage(HWND h, UINT m, WPARAM w, LPARAM l, BOOL posted, BOOL extra
     if (bSendToDebugger || bSendToFile) {
         if (!szMess[0]) wsprintfA(szMess, "%i", m);
         if (!szWP[0]) wsprintfA(szWP, "%i", w);
-        if (!szLP[0]) wsprintfA(szLP, "%i", l);
+        if (!szLP[0]) wsprintfA(szLP, "%i(0x%08X)", l, l);
         
 
         if (bSendToDebugger) {

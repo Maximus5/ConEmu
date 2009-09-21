@@ -7,9 +7,11 @@
 #include "../common/ConEmuCheck.h"
 
 #define DEBUGSTRSYS(s) //DEBUGSTR(s)
-#define DEBUGSTRSIZE(s) DEBUGSTR(s)
-#define DEBUGSTRCONS(s) DEBUGSTR(s)
-#define DEBUGSTRTABS(s) DEBUGSTR(s)
+#define DEBUGSTRSIZE(s) //DEBUGSTR(s)
+#define DEBUGSTRCONS(s) //DEBUGSTR(s)
+#define DEBUGSTRTABS(s) //DEBUGSTR(s)
+#define DEBUGSTRLANG(s) DEBUGSTR(s)// ; Sleep(2000)
+#define DEBUGSTRMOUSE(s) //DEBUGSTR(s)
 
 #define PROCESS_WAIT_START_TIME 1000
 
@@ -136,6 +138,7 @@ CConEmuMain::CConEmuMain()
     mn_MsgSheelHook = RegisterWindowMessage(L"SHELLHOOK");
 	mn_ShellExecuteEx = ++nAppMsg;
 	mn_PostConsoleResize = ++nAppMsg;
+	mn_ConsoleLangChanged = ++nAppMsg;
 }
 
 BOOL CConEmuMain::Init()
@@ -3400,7 +3403,12 @@ void CConEmuMain::SwitchKeyboardLayout(DWORD_PTR dwNewKeybLayout)
     if ((gSet.isMonitorConsoleLang & 1) == 0)
         return;
 
-    HKL hKeyb[10]; UINT nCount, i; BOOL lbFound = FALSE;
+	#ifdef _DEBUG
+	wchar_t szDbg[128]; wsprintfW(szDbg, L"CConEmuMain::SwitchKeyboardLayout(0x%08I64X)\n", (unsigned __int64)dwNewKeybLayout);
+	DEBUGSTRLANG(szDbg);
+	#endif
+
+    HKL hKeyb[20]; UINT nCount, i; BOOL lbFound = FALSE;
     nCount = GetKeyboardLayoutList ( countof(hKeyb), hKeyb );
     for (i = 0; !lbFound && i < nCount; i++) {
         if (hKeyb[i] == (HKL)dwNewKeybLayout)
@@ -3418,6 +3426,12 @@ void CConEmuMain::SwitchKeyboardLayout(DWORD_PTR dwNewKeybLayout)
 
     // Может она сейчас и активна?
     if (dwNewKeybLayout != GetActiveKeyboardLayout()) {
+
+		#ifdef _DEBUG
+		wsprintfW(szDbg, L"CConEmuMain::SwitchKeyboardLayout change to(0x%08I64X)\n", (unsigned __int64)dwNewKeybLayout);
+		DEBUGSTRLANG(szDbg);
+		#endif
+
         // Теперь переключаем раскладку
         PostMessage ( ghWnd, WM_INPUTLANGCHANGEREQUEST, 0, (LPARAM)dwNewKeybLayout );
         PostMessage ( ghWnd, WM_INPUTLANGCHANGE, 0, (LPARAM)dwNewKeybLayout );
@@ -4019,16 +4033,57 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 
 LRESULT CConEmuMain::OnLangChange(UINT messg, WPARAM wParam, LPARAM lParam)
 {
-    LRESULT result = 1;
-    #ifdef MSGLOGGER
-    {
-        WCHAR szMsg[128];
-        wsprintf(szMsg, L"%s(CP:%i, HKL:0x%08I64X)\n",
-            (messg == WM_INPUTLANGCHANGE) ? L"WM_INPUTLANGCHANGE" : L"WM_INPUTLANGCHANGEREQUEST",
-            wParam, lParam);
-        DEBUGSTR(szMsg);
+	
+	/*
+	**********
+	Вызовы идут в следующем порядке (WinXP SP3)
+	**********
+	En -> Ru : --> Слетает после этого!
+	**********
+	19:17:15.043(gui.4720) ConEmu: WM_INPUTLANGCHANGEREQUEST(CP:1, HKL:0x04190419)
+	19:17:17.043(gui.4720) ConEmu: WM_INPUTLANGCHANGE(CP:204, HKL:0x04190419)
+	19:17:19.043(gui.4720) ConEmu: GetKeyboardLayout(0) after DefWindowProc(WM_INPUTLANGCHANGE) = 0x04190419)
+	19:17:21.043(gui.4720) ConEmu: GetKeyboardLayout(0) after DefWindowProc(WM_INPUTLANGCHANGEREQUEST) = 0x04190419)
+	19:17:23.043(gui.4720) CRealConsole::SwitchKeyboardLayout(CP:1, HKL:0x04190419)
+	19:17:25.044(gui.4720) RealConsole: WM_INPUTLANGCHANGEREQUEST, CP:1, HKL:0x04190419 via CmdExecute
+	19:17:27.044(gui.3072) GUI recieved CECMD_LANGCHANGE
+	19:17:29.044(gui.4720) ConEmu: GetKeyboardLayout(0) in OnLangChangeConsole after GetKeyboardLayout(0) = 0x04190419
+	19:17:31.044(gui.4720) ConEmu: GetKeyboardLayout(0) in OnLangChangeConsole after GetKeyboardLayout(0) = 0x04190419
+	--> Слетает после этого!
+	'ConEmu.exe': Loaded 'C:\WINDOWS\system32\kbdru.dll'
+	'ConEmu.exe': Unloaded 'C:\WINDOWS\system32\kbdru.dll'
+	19:17:33.075(gui.4720) ConEmu: Calling GetKeyboardLayout(0)
+	19:17:35.075(gui.4720) ConEmu: GetKeyboardLayout(0) after LoadKeyboardLayout = 0x04190419
+	19:17:37.075(gui.4720) ConEmu: GetKeyboardLayout(0) after SwitchKeyboardLayout = 0x04190419
+	**********
+	Ru -> En : --> Слетает после этого!
+	**********
+	17:23:36.013(gui.3152) ConEmu: WM_INPUTLANGCHANGEREQUEST(CP:1, HKL:0x04090409)
+	17:23:36.013(gui.3152) ConEmu: WM_INPUTLANGCHANGE(CP:0, HKL:0x04090409)
+	17:23:36.013(gui.3152) ConEmu: GetKeyboardLayout(0) after DefWindowProc(WM_INPUTLANGCHANGE) = 0x04090409)
+	17:23:36.013(gui.3152) ConEmu: GetKeyboardLayout(0) after DefWindowProc(WM_INPUTLANGCHANGEREQUEST) = 0x04090409)
+	17:23:36.013(gui.3152) CRealConsole::SwitchKeyboardLayout(CP:1, HKL:0x04090409)
+	17:23:36.013(gui.3152) RealConsole: WM_INPUTLANGCHANGEREQUEST, CP:1, HKL:0x04090409 via CmdExecute
+	ConEmuC: PostMessage(WM_INPUTLANGCHANGEREQUEST, CP:1, HKL:0x04090409)
+	The thread 'Win32 Thread' (0x3f0) has exited with code 1 (0x1).
+	ConEmuC: InputLayoutChanged (GetConsoleKeyboardLayoutName returns) '00000409'
+	17:23:38.013(gui.4460) GUI recieved CECMD_LANGCHANGE
+	17:23:40.028(gui.4460) ConEmu: GetKeyboardLayout(0) on CECMD_LANGCHANGE after GetKeyboardLayout(0) = 0x04090409
+	--> Слетает после этого!
+	'ConEmu.exe': Loaded 'C:\WINDOWS\system32\kbdus.dll'
+	'ConEmu.exe': Unloaded 'C:\WINDOWS\system32\kbdus.dll'
+	17:23:42.044(gui.4460) ConEmu: Calling GetKeyboardLayout(0)
+	17:23:44.044(gui.4460) ConEmu: GetKeyboardLayout(0) after LoadKeyboardLayout = 0x04090409
+	17:23:46.044(gui.4460) ConEmu: GetKeyboardLayout(0) after SwitchKeyboardLayout = 0x04090409
+	*/
 
-    }
+    LRESULT result = 1;
+    #ifdef _DEBUG
+    WCHAR szMsg[255];
+    wsprintf(szMsg, L"ConEmu: %s(CP:%i, HKL:0x%08I64X)\n",
+        (messg == WM_INPUTLANGCHANGE) ? L"WM_INPUTLANGCHANGE" : L"WM_INPUTLANGCHANGEREQUEST",
+        (DWORD)wParam, (unsigned __int64)(DWORD_PTR)lParam);
+    DEBUGSTRLANG(szMsg);
     #endif
     
     //POSTMESSAGE(ghConWnd, messg, wParam, lParam, FALSE);
@@ -4037,7 +4092,16 @@ LRESULT CConEmuMain::OnLangChange(UINT messg, WPARAM wParam, LPARAM lParam)
 
     result = DefWindowProc(ghWnd, messg, wParam, lParam);
 
-    pVCon->RCon()->SwitchKeyboardLayout(lParam);
+    #ifdef _DEBUG
+    HKL hkl = GetKeyboardLayout(0);
+    wsprintf(szMsg, L"ConEmu: GetKeyboardLayout(0) after DefWindowProc(%s) = 0x%08I64X)\n",
+		(messg == WM_INPUTLANGCHANGE) ? L"WM_INPUTLANGCHANGE" : L"WM_INPUTLANGCHANGEREQUEST",
+		(unsigned __int64)(DWORD_PTR)hkl);
+    DEBUGSTRLANG(szMsg);
+    #endif
+	if (messg == WM_INPUTLANGCHANGEREQUEST) {
+		pVCon->RCon()->SwitchKeyboardLayout(wParam,lParam);
+	}
     
   //  if (isFar() && gSet.isLangChangeWsPlugin)
   //  {
@@ -4082,6 +4146,70 @@ LRESULT CConEmuMain::OnLangChange(UINT messg, WPARAM wParam, LPARAM lParam)
   //  }
 
     return result;
+}
+
+LRESULT CConEmuMain::OnLangChangeConsole(CVirtualConsole *apVCon, DWORD dwLayoutName)
+{
+	if ((gSet.isMonitorConsoleLang & 1) != 1)
+		return 0;
+
+	if (!isValid(apVCon))
+		return 0;
+	
+	if (!isMainThread()) {
+		PostMessage(ghWnd, mn_ConsoleLangChanged, dwLayoutName, (LPARAM)apVCon);
+		return 0;
+	}
+
+	#ifdef _DEBUG
+	//Sleep(2000);
+	WCHAR szMsg[255];
+	// --> Видимо именно это не "нравится" руслату. Нужно переправить Post'ом в основную нить
+	HKL hkl = GetKeyboardLayout(0);
+	wsprintf(szMsg, L"ConEmu: GetKeyboardLayout(0) in OnLangChangeConsole after GetKeyboardLayout(0) = 0x%08I64X\n",
+		(unsigned __int64)(DWORD_PTR)hkl);
+	DEBUGSTRLANG(szMsg);
+	//Sleep(2000);
+	#endif
+
+	wchar_t szName[10]; wsprintf(szName, L"%08X", dwLayoutName);
+	#ifdef _DEBUG
+	DEBUGSTRLANG(szName);
+	#endif
+	// --> Тут слетает!
+    DWORD_PTR dwNewKeybLayout = dwLayoutName; //(DWORD_PTR)LoadKeyboardLayout(szName, 0);
+
+	HKL hKeyb[20]; UINT nCount, i; BOOL lbFound = FALSE;
+	nCount = GetKeyboardLayoutList ( countof(hKeyb), hKeyb );
+	for (i = 0; !lbFound && i < nCount; i++) {
+		if (hKeyb[i] == (HKL)dwNewKeybLayout)
+			lbFound = TRUE;
+	}
+	WARNING("Похоже с другими раскладками будет глючить. US Dvorak?");
+	for (i = 0; !lbFound && i < nCount; i++) {
+		if ((((DWORD_PTR)hKeyb[i]) & 0xFFFF) == (dwNewKeybLayout & 0xFFFF)) {
+			lbFound = TRUE; dwNewKeybLayout = (DWORD_PTR)hKeyb[i];
+		}
+	}
+	// Если не задана раскладка (только язык?) формируем по умолчанию
+	if (!lbFound && (dwNewKeybLayout == (dwNewKeybLayout & 0xFFFF)))
+		dwNewKeybLayout |= (dwNewKeybLayout << 16);
+
+
+	#ifdef _DEBUG
+	DEBUGSTRLANG(L"ConEmu: Calling GetKeyboardLayout(0)\n");
+	//Sleep(2000);
+	hkl = GetKeyboardLayout(0);
+	wsprintf(szMsg, L"ConEmu: GetKeyboardLayout(0) after LoadKeyboardLayout = 0x%08I64X\n",
+		(unsigned __int64)(DWORD_PTR)hkl);
+	DEBUGSTRLANG(szMsg);
+	//Sleep(2000);
+	#endif
+
+	if (isActive(apVCon))
+		apVCon->RCon()->OnConsoleLangChange(dwNewKeybLayout);
+
+	return 0;
 }
 
 LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
@@ -4191,15 +4319,15 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
     {
 		if (gConEmu.mouse.nSkipEvents[0] == messg) {
 			gConEmu.mouse.nSkipEvents[0] = 0;
-			DEBUGSTR(L"Skipping Mouse down\n");
+			DEBUGSTRMOUSE(L"Skipping Mouse down\n");
 		} else
 		if (gConEmu.mouse.nSkipEvents[1] == messg) {
 			gConEmu.mouse.nSkipEvents[1] = 0;
-			DEBUGSTR(L"Skipping Mouse up\n");
+			DEBUGSTRMOUSE(L"Skipping Mouse up\n");
 		} 
 		#ifdef _DEBUG
 		else if (messg == WM_MOUSEMOVE) {
-			DEBUGSTR(L"Skipping Mouse move\n");
+			DEBUGSTRMOUSE(L"Skipping Mouse move\n");
 		}
 		#endif
     	DEBUGLOGFILE("ConEmu was not foreground window, mouse activation event skipped");
@@ -5592,6 +5720,9 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			return gConEmu.GuiShellExecuteEx((SHELLEXECUTEINFO*)lParam, wParam);
 		} else if (messg == gConEmu.mn_PostConsoleResize) {
 			gConEmu.OnConsoleResize(TRUE);
+			return 0;
+		} else if (messg == gConEmu.mn_ConsoleLangChanged) {
+			gConEmu.OnLangChangeConsole((CVirtualConsole*)lParam, (DWORD)wParam);
 			return 0;
 		}
         //else if (messg == gConEmu.mn_MsgCmdStarted || messg == gConEmu.mn_MsgCmdStopped) {

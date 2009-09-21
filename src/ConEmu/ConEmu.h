@@ -160,6 +160,7 @@ protected:
 	UINT mn_MsgSheelHook;
 	UINT mn_ShellExecuteEx;
 	UINT mn_PostConsoleResize;
+	UINT mn_ConsoleLangChanged;
 	
 	//
 	static DWORD CALLBACK ServerThread(LPVOID lpvParam);
@@ -258,6 +259,7 @@ public:
 	LRESULT OnGetMinMaxInfo(LPMINMAXINFO pInfo);
 	LRESULT OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnLangChange(UINT messg, WPARAM wParam, LPARAM lParam);
+	LRESULT OnLangChangeConsole(CVirtualConsole *apVCon, DWORD dwLayoutName);
 	LRESULT OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnPaint(WPARAM wParam, LPARAM lParam);
 	LRESULT OnSize(WPARAM wParam=0, WORD newClientWidth=(WORD)-1, WORD newClientHeight=(WORD)-1);

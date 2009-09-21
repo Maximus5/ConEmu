@@ -1,7 +1,7 @@
 
 #define SHOWDEBUGSTR
 
-#define DEBUGSTRTABS(s) DEBUGSTR(s)
+#define DEBUGSTRTABS(s) //DEBUGSTR(s)
 
 #include <windows.h>
 #include <commctrl.h>

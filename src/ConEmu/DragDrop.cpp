@@ -10,7 +10,7 @@
 #define OVERLAY_TEXT_SHIFT   (gSet.isDragShowIcons ? 18 : 0)
 #define OVERLAY_COLUMN_SHIFT 5
 
-#define DEBUGSTROVL(s) DEBUGSTR(s)
+#define DEBUGSTROVL(s) //DEBUGSTR(s)
 #define DEBUGSTRBACK(s) //DEBUGSTR(s)
 
 

@@ -170,7 +170,7 @@ public:
     int GetTabCount();
     BOOL ActivateFarWindow(int anWndIndex);
     DWORD CanActivateFarWindow(int anWndIndex);
-    void SwitchKeyboardLayout(DWORD_PTR dwNewKeybLayout);
+    void SwitchKeyboardLayout(WPARAM wParam,DWORD_PTR dwNewKeybLayout);
     void CloseConsole();
     void Paste();
     void LogString(LPCSTR asText);
@@ -188,6 +188,7 @@ public:
 	void GetPanelRect(BOOL abRight, RECT* prc);
 	bool isAdministrator();
 	BOOL isMouseButtonDown();
+	void OnConsoleLangChange(DWORD_PTR dwNewKeybLayout);
 
 public:
     // Вызываются из CVirtualConsole

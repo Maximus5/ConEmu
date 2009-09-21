@@ -8,11 +8,12 @@
 
 #define DEBUGSTRDRAW(s) //DEBUGSTR(s)
 #define DEBUGSTRINPUT(s) //DEBUGSTR(s)
-#define DEBUGSTRSIZE(s) DEBUGSTR(s)
+#define DEBUGSTRSIZE(s) //DEBUGSTR(s)
 #define DEBUGSTRPROC(s) //DEBUGSTR(s)
 #define DEBUGSTRCMD(s) //DEBUGSTR(s)
 #define DEBUGSTRPKT(s) //DEBUGSTR(s)
-#define DEBUGSTRCON(s) DEBUGSTR(s)
+#define DEBUGSTRCON(s) //DEBUGSTR(s)
+#define DEBUGSTRLANG(s) DEBUGSTR(s)// ; Sleep(2000)
 
 WARNING("При быстром наборе текста курсор часто 'замерзает' на одной из букв, но продолжает двигаться дальше");
 
@@ -1605,7 +1606,20 @@ void CRealConsole::PostConsoleEventPipe(MSG *pMsg)
 LRESULT CRealConsole::PostConsoleMessage(UINT nMsg, WPARAM wParam, LPARAM lParam)
 {
 	LRESULT lRc = 0;
-	if (!isAdministrator()) {
+	bool bNeedCmd = isAdministrator();
+	if (nMsg == WM_INPUTLANGCHANGE || nMsg == WM_INPUTLANGCHANGEREQUEST)
+		bNeedCmd = true;
+	#ifdef _DEBUG
+	if (nMsg == WM_INPUTLANGCHANGE || nMsg == WM_INPUTLANGCHANGEREQUEST) {
+		wchar_t szDbg[255];
+		const wchar_t* pszMsgID = (nMsg == WM_INPUTLANGCHANGE) ? L"WM_INPUTLANGCHANGE" : L"WM_INPUTLANGCHANGEREQUEST";
+		const wchar_t* pszVia = bNeedCmd ? L"CmdExecute" : L"PostThreadMessage";
+		wsprintf(szDbg, L"RealConsole: %s, CP:%i, HKL:0x%08I64X via %s\n",
+			pszMsgID, (DWORD)wParam, (unsigned __int64)(DWORD_PTR)lParam, pszVia);
+		DEBUGSTRLANG(szDbg);
+	}
+	#endif
+	if (!bNeedCmd) {
 		POSTMESSAGE(hConWnd, nMsg, wParam, lParam, FALSE);
 	} else {
 		CESERVER_REQ in;
@@ -2557,21 +2571,55 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
         free(pRet);
 
     } else if (pIn->hdr.nCmd == CECMD_LANGCHANGE) {
-        DEBUGSTRCMD(L"GUI recieved CECMD_LANGCHANGE\n");
+        DEBUGSTRLANG(L"GUI recieved CECMD_LANGCHANGE\n");
         _ASSERTE(nDataSize>=4);
 		// LayoutName: "00000409", "00010409", ...
 		// А HKL от него отличается, так что передаем DWORD
 		// HKL в x64 выглядит как: "0x0000000000020409", "0xFFFFFFFFF0010409"
 		DWORD dwName = pIn->dwData[0];
-		wchar_t szName[10]; wsprintf(szName, L"%08X", dwName);
-        DWORD_PTR dwNewKeybLayout = (DWORD_PTR)LoadKeyboardLayout(szName, 0);
-        if ((gSet.isMonitorConsoleLang & 1) == 1) {
-            if (con.dwKeybLayout != dwNewKeybLayout) {
-                con.dwKeybLayout = dwNewKeybLayout;
-                if (isActive())
-                    gConEmu.SwitchKeyboardLayout(dwNewKeybLayout);
-            }
-        }
+
+		gConEmu.OnLangChangeConsole(mp_VCon, dwName);
+
+		//#ifdef _DEBUG
+		////Sleep(2000);
+		//WCHAR szMsg[255];
+		//// --> Видимо именно это не "нравится" руслату. Нужно переправить Post'ом в основную нить
+		//HKL hkl = GetKeyboardLayout(0);
+		//wsprintf(szMsg, L"ConEmu: GetKeyboardLayout(0) on CECMD_LANGCHANGE after GetKeyboardLayout(0) = 0x%08I64X\n",
+		//	(unsigned __int64)(DWORD_PTR)hkl);
+		//DEBUGSTRLANG(szMsg);
+		////Sleep(2000);
+		//#endif
+		//
+		//wchar_t szName[10]; wsprintf(szName, L"%08X", dwName);
+        //DWORD_PTR dwNewKeybLayout = (DWORD_PTR)LoadKeyboardLayout(szName, 0);
+        //
+		//#ifdef _DEBUG
+		//DEBUGSTRLANG(L"ConEmu: Calling GetKeyboardLayout(0)\n");
+		////Sleep(2000);
+		//hkl = GetKeyboardLayout(0);
+		//wsprintf(szMsg, L"ConEmu: GetKeyboardLayout(0) after LoadKeyboardLayout = 0x%08I64X\n",
+		//	(unsigned __int64)(DWORD_PTR)hkl);
+		//DEBUGSTRLANG(szMsg);
+		////Sleep(2000);
+		//#endif
+		//
+        //if ((gSet.isMonitorConsoleLang & 1) == 1) {
+        //    if (con.dwKeybLayout != dwNewKeybLayout) {
+        //        con.dwKeybLayout = dwNewKeybLayout;
+		//		if (isActive()) {
+        //            gConEmu.SwitchKeyboardLayout(dwNewKeybLayout);
+        //
+		//			#ifdef _DEBUG
+		//			hkl = GetKeyboardLayout(0);
+		//			wsprintf(szMsg, L"ConEmu: GetKeyboardLayout(0) after SwitchKeyboardLayout = 0x%08I64X\n",
+		//				(unsigned __int64)(DWORD_PTR)hkl);
+		//			DEBUGSTRLANG(szMsg);
+		//			//Sleep(2000);
+		//			#endif
+		//		}
+        //    }
+        //}
 
     } else if (pIn->hdr.nCmd == CECMD_TABSCMD) {
         // 0: спрятать/показать табы, 1: перейти на следующую, 2: перейти на предыдущую, 3: commit switch
@@ -3708,7 +3756,7 @@ void CRealConsole::SetHwnd(HWND ahConWnd)
     //	ShowConsole(0); // В Win7 оно таки появляется видимым - проверка вынесена в ConEmuC
 
     if ((gSet.isMonitorConsoleLang & 2) == 2) // Один Layout на все консоли
-        SwitchKeyboardLayout(gConEmu.GetActiveKeyboardLayout());
+        SwitchKeyboardLayout(INPUTLANGCHANGE_SYSCHARSET,gConEmu.GetActiveKeyboardLayout());
 
     if (isActive()) {
         ghConWnd = hConWnd;
@@ -4124,7 +4172,7 @@ void CRealConsole::OnActivate(int nNewNum, int nOldNum)
     //if (mh_MonitorThread) SetThreadPriority(mh_MonitorThread, THREAD_PRIORITY_ABOVE_NORMAL);
 
     if ((gSet.isMonitorConsoleLang & 2) == 2) // Один Layout на все консоли
-        SwitchKeyboardLayout(gConEmu.GetActiveKeyboardLayout());
+        SwitchKeyboardLayout(INPUTLANGCHANGE_SYSCHARSET,gConEmu.GetActiveKeyboardLayout());
     else if (con.dwKeybLayout && (gSet.isMonitorConsoleLang & 1) == 1) // Следить за Layout'ом в консоли
         gConEmu.SwitchKeyboardLayout(con.dwKeybLayout);
 
@@ -5016,15 +5064,22 @@ BOOL CRealConsole::PrepareOutputFile(BOOL abUnicodeText, wchar_t* pszFilePathNam
     return lbRc;
 }
 
-void CRealConsole::SwitchKeyboardLayout(DWORD_PTR dwNewKeyboardLayout)
+void CRealConsole::SwitchKeyboardLayout(WPARAM wParam,DWORD_PTR dwNewKeyboardLayout)
 {
     if (!this) return;
     if (ms_ConEmuC_Pipe[0] == 0) return;
     if (!hConWnd) return;
 
+	#ifdef _DEBUG
+	WCHAR szMsg[255];
+	wsprintf(szMsg, L"CRealConsole::SwitchKeyboardLayout(CP:%i, HKL:0x%08I64X)\n",
+		wParam, (unsigned __int64)(DWORD_PTR)dwNewKeyboardLayout);
+	DEBUGSTRLANG(szMsg);
+	#endif
+
     // В FAR при XLat делается так:
     //PostConsoleMessageW(hFarWnd,WM_INPUTLANGCHANGEREQUEST, INPUTLANGCHANGE_FORWARD, 0);
-    PostConsoleMessage(WM_INPUTLANGCHANGEREQUEST, 0, (LPARAM)dwNewKeyboardLayout);
+    PostConsoleMessage(WM_INPUTLANGCHANGEREQUEST, wParam, (LPARAM)dwNewKeyboardLayout);
 }
 
 void CRealConsole::Paste()
@@ -5589,4 +5644,23 @@ BOOL CRealConsole::isMouseButtonDown()
 {
 	if (!this) return FALSE;
 	return mb_MouseButtonDown;
+}
+
+// Вызывается из CConEmuMain::OnLangChangeConsole в главной нити
+void CRealConsole::OnConsoleLangChange(DWORD_PTR dwNewKeybLayout)
+{
+    if (con.dwKeybLayout != dwNewKeybLayout) {
+        con.dwKeybLayout = dwNewKeybLayout;
+
+		gConEmu.SwitchKeyboardLayout(dwNewKeybLayout);
+
+		#ifdef _DEBUG
+		WCHAR szMsg[255];
+		HKL hkl = GetKeyboardLayout(0);
+		wsprintf(szMsg, L"ConEmu: GetKeyboardLayout(0) after SwitchKeyboardLayout = 0x%08I64X\n",
+			(unsigned __int64)(DWORD_PTR)hkl);
+		DEBUGSTRLANG(szMsg);
+		//Sleep(2000);
+		#endif
+    }
 }

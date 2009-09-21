@@ -1,4 +1,8 @@
 
+#define DEBUGLOG(s) //OutputDebugString(s)
+#define DEBUGLOGINPUT(s) //OutputDebugString(s)
+#define DEBUGLOGLANG(s) OutputDebugString(s) //; Sleep(2000)
+
 #ifdef _DEBUG
 //  Раскомментировать, чтобы сразу после запуска процесса (conemuc.exe) показать MessageBox, чтобы прицепиться дебаггером
 //  #define SHOW_STARTED_MSGBOX
@@ -56,11 +60,8 @@ WARNING("!!!! Пока можно при появлении события запоминать текущий тик");
 //#define MCHKHEAP { Enter CriticalSection(&gcsHeap); int MDEBUG_CHK=_CrtCheckMemory(); _ASSERTE(MDEBUG_CHK); LeaveCriticalSection(&gcsHeap); }
 #define MCHKHEAP HeapValidate(ghHeap, 0, NULL);
 //#define HEAP_LOGGING
-#define DEBUGLOG(s) //OutputDebugString(s)
-#define DEBUGLOGINPUT(s) OutputDebugString(s)
 #else
 #define MCHKHEAP
-#define DEBUGLOG(s)
 #endif
 
 //#ifndef _DEBUG
@@ -3647,6 +3648,20 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 
 		case CECMD_POSTCONMSG:
 		{
+			WPARAM wParam = in.Msg.wParam;
+			LPARAM lParam = in.Msg.lParam;
+			#ifdef _DEBUG
+			if (in.Msg.nMsg == WM_INPUTLANGCHANGE || in.Msg.nMsg == WM_INPUTLANGCHANGEREQUEST) {
+				unsigned __int64 l = lParam;
+				wchar_t szDbg[255];
+				wsprintf(szDbg, L"ConEmuC: %s(%s, CP:%i, HKL:0x%08I64X)\n",
+					in.Msg.bPost ? L"PostMessage" : L"SendMessage",
+					(in.Msg.nMsg == WM_INPUTLANGCHANGE) ? L"WM_INPUTLANGCHANGE" : L"WM_INPUTLANGCHANGEREQUEST",
+					(DWORD)wParam, l);
+				DEBUGLOGLANG(szDbg);
+			}
+			#endif
+
 			if (in.Msg.bPost) {
 				PostMessage(ghConWnd, in.Msg.nMsg, (WPARAM)in.Msg.wParam, (LPARAM)in.Msg.lParam);
 			} else {
@@ -5242,7 +5257,9 @@ void CheckKeyboardLayout()
             if (lstrcmpW(szCurKeybLayout, srv.szKeybLayout)) {
 				#ifdef _DEBUG
 				wchar_t szDbg[128];
-				wsprintfW(szDbg, L"ConEmuC: InputLayoutChanged to '%s'\n", szCurKeybLayout);
+				wsprintfW(szDbg, 
+					L"ConEmuC: InputLayoutChanged (GetConsoleKeyboardLayoutName returns) '%s'\n", 
+					szCurKeybLayout);
 				OutputDebugString(szDbg);
 				#endif
                 // Сменился
