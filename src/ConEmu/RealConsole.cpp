@@ -5494,11 +5494,14 @@ HWND CRealConsole::isPictureView()
     }
 
     if (!hPictureView) {
-        hPictureView = FindWindowEx(ghWnd, NULL, L"FarPictureViewControlClass", NULL);
+        //hPictureView = FindWindowEx(ghWnd, NULL, L"FarPictureViewControlClass", NULL);
+        hPictureView = FindWindowEx(ghWnd, NULL, NULL, L"PictureView");
         if (!hPictureView)
-            hPictureView = FindWindowEx(ghWndDC, NULL, L"FarPictureViewControlClass", NULL);
+            //hPictureView = FindWindowEx(ghWndDC, NULL, L"FarPictureViewControlClass", NULL);
+            hPictureView = FindWindowEx(ghWndDC, NULL, NULL, L"PictureView");
         if (!hPictureView) { // FullScreen?
-            hPictureView = FindWindowEx(NULL, NULL, L"FarPictureViewControlClass", NULL);
+            //hPictureView = FindWindowEx(NULL, NULL, L"FarPictureViewControlClass", NULL);
+            hPictureView = FindWindowEx(NULL, NULL, NULL, L"PictureView");
         }
         if (hPictureView) {
             // Проверить на принадлежность фару

@@ -3355,21 +3355,6 @@ bool CConEmuMain::isPictureView()
     else
         hPictureView = NULL;
     
-    //if (!hPictureView) {
-    //    hPictureView = FindWindowEx(ghWnd, NULL, L"FarPictureViewControlClass", NULL);
-    //    if (!hPictureView)
-    //        hPictureView = FindWindowEx(ghWndDC, NULL, L"FarPictureViewControlClass", NULL);
-    //    if (!hPictureView) { // FullScreen?
-    //        hPictureView = FindWindowEx(NULL, NULL, L"FarPictureViewControlClass", NULL);
-    //    }
-    //    if (hPictureView) {
-    //        // Проверить на принадлежность фару
-    //        DWORD dwPID, dwTID;
-    //        dwTID = GetWindowThreadProcessId ( hPictureView, &dwPID );
-    //        if (dwPID != pVCon->RCon()->GetFarPID())
-    //            hPictureView = NULL;
-    //    }
-    //}
 
     lbRc = hPictureView!=NULL;
 
