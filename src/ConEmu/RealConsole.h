@@ -135,7 +135,7 @@ public:
     void StopSignal();
     void StopThread(BOOL abRecreating=FALSE);
     BOOL isBufferHeight();
-	HWND isPictureView();
+	HWND isPictureView(BOOL abIgnoreNonModal=FALSE);
 	BOOL isWindowVisible();
     LPCTSTR GetTitle();
     void GetConsoleScreenBufferInfo(CONSOLE_SCREEN_BUFFER_INFO* sbi) { *sbi = con.m_sbi; };

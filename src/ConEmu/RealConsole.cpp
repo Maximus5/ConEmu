@@ -4531,7 +4531,7 @@ DWORD CRealConsole::CanActivateFarWindow(int anWndIndex)
     if (mn_ActiveTab == anWndIndex)
         return (DWORD)-1; // Ќужное окно уже выделено, лучше не дергатьс€...
 
-    if (isPictureView())
+    if (isPictureView(TRUE))
         return 0; // ѕри наличии PictureView переключитьс€ на другой таб этой консоли не получитс€
 
     if (!GetWindowText(hConWnd, TitleCmp, countof(TitleCmp)-2))
@@ -5484,7 +5484,7 @@ void CRealConsole::EnableComSpec(DWORD anFarPID, BOOL abSwitch)
 
 // «аголовок окна дл€ PictureView вообще может пользователем настраиватьс€, так что
 // рассчитывать на него при определени€ "ѕросмотра" - нельз€
-HWND CRealConsole::isPictureView()
+HWND CRealConsole::isPictureView(BOOL abIgnoreNonModal/*=FALSE*/)
 {
     if (!this) return NULL;
 
@@ -5524,6 +5524,18 @@ HWND CRealConsole::isPictureView()
     }
 
     if (mb_PicViewWasHidden && !hPictureView) mb_PicViewWasHidden = FALSE;
+
+	if (hPictureView && abIgnoreNonModal) {
+		wchar_t szClassName[128];
+		if (GetClassName(hPictureView, szClassName, sizeofarray(szClassName))) {
+			if (wcscmp(szClassName, L"FarMultiViewControlClass") == 0) {
+				// ѕока оно строго немодальное, но потом может быть по другому
+				DWORD_PTR dwValue = GetWindowLongPtr(hPictureView, 0);
+				if (dwValue != 0x200)
+					return NULL;
+			}
+		}
+	}
 
     return hPictureView;
 }
