@@ -51,8 +51,9 @@ void ProcessDragFrom995()
 		//WriteFile(hPipe, &nNull, sizeof(int), &cout, NULL);
 		OutDataWrite(&nNull/*ItemsCount*/, sizeof(int));
 		
-		if (PInfo.SelectedItemsNumber>0)
-		{
+		if (PInfo.SelectedItemsNumber<=0) {
+			OutDataWrite(&nNull/*ItemsCount*/, sizeof(int));
+		} else {
 			PluginPanelItem **pi = (PluginPanelItem**)calloc(PInfo.SelectedItemsNumber, sizeof(PluginPanelItem*));
 			bool *bIsFull = (bool*)calloc(PInfo.SelectedItemsNumber, sizeof(bool));
 			int ItemsCount=PInfo.SelectedItemsNumber, i;
@@ -66,8 +67,17 @@ void ProcessDragFrom995()
 				if (!sz)
 					continue;
 				pi[i] = (PluginPanelItem*)calloc(sz, 1); // размер возвращается в байтах
-				if (!InfoW995->Control(PANEL_ACTIVE, FCTL_GETSELECTEDPANELITEM, i, (LONG_PTR)(pi[i])))
+				if (!InfoW995->Control(PANEL_ACTIVE, FCTL_GETSELECTEDPANELITEM, i, (LONG_PTR)(pi[i]))) {
+					free(pi[i]); pi[i] = NULL;
 					continue;
+				}
+				if (i == 0 
+					&& ((pi[i]->FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == FILE_ATTRIBUTE_DIRECTORY)
+					&& !wcscmp(pi[i]->FindData.lpwszFileName, L".."))
+				{
+					free(pi[i]); pi[i] = NULL;
+					continue;
+				}
 
 				int nLen=nDirLen+nDirNoSlash;
 				if ((pi[i]->FindData.lpwszFileName[0] == L'\\' && pi[i]->FindData.lpwszFileName[1] == L'\\') ||

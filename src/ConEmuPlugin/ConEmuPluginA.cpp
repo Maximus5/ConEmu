@@ -91,8 +91,9 @@ void ProcessDragFromA()
 		//WriteFile(hPipe, &nNull/*ItemsCount*/, sizeof(int), &cout, NULL);
 		OutDataWrite(&nNull/*ItemsCount*/, sizeof(int));
 		
-		if (PInfo.SelectedItemsNumber>0)
-		{
+		if (PInfo.SelectedItemsNumber<=0) {
+			OutDataWrite(&nNull/*ItemsCount*/, sizeof(int));
+		} else {
 			int ItemsCount=PInfo.SelectedItemsNumber, i;
 			bool *bIsFull = (bool*)calloc(PInfo.SelectedItemsNumber, sizeof(bool));
 
@@ -117,6 +118,13 @@ void ProcessDragFromA()
 
 			for (i=0;i<ItemsCount;i++)
 			{
+				if (i == 0
+					&& ((PInfo.SelectedItems[i].FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == FILE_ATTRIBUTE_DIRECTORY)
+					&& !strcmp(PInfo.SelectedItems[i].FindData.cFileName, ".."))
+				{
+					continue;
+				}
+
 				//WCHAR Path[MAX_PATH+1];
 				//ZeroMemory(Path, MAX_PATH+1);
 				//Maximus5 - засада с корнем диска и возможностью overflow

@@ -186,6 +186,7 @@ void CDragDrop::Drag()
 							if (nCurSize==0) break;
 
 							pipe.Read(curr, sizeof(WCHAR)*nCurSize, &cbBytesRead); 
+							_ASSERTE(*curr);
 
 							curr+=wcslen(curr)+1;
 							nFilesCount ++;
