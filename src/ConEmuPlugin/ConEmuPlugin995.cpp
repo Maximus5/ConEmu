@@ -600,6 +600,10 @@ BOOL CallSynchro995(SynchroArg *Param, DWORD nTimeout /*= 10000*/)
 		nWait = WaitForMultipleObjects(nCount, hEvents, FALSE, nTimeout);
 		if (nWait != WAIT_OBJECT_0 && nWait != (WAIT_OBJECT_0+1)) {
 			_ASSERTE(nWait==WAIT_OBJECT_0);
+			if (nWait == (WAIT_OBJECT_0+1)) {
+				// “аймаут, эту команду плагин должен пропустить, когда фар таки соберетс€ ее выполнить
+				Param->Obsolete = TRUE;
+			}
 		}
 
 		return (nWait == 0);
@@ -617,4 +621,11 @@ BOOL IsMacroActive995()
 	if (liRc == MACROSTATE_NOMACRO)
 		return FALSE;
 	return TRUE;
+}
+
+
+void RedrawAll995()
+{
+	if (!InfoW995) return;
+	InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_REDRAWALL, NULL);
 }

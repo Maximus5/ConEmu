@@ -176,62 +176,13 @@ void ExitWaitForKey(WORD vkKey, LPCWSTR asConfirm, BOOL abNewLine, BOOL abDontSh
 
 
 /* Console Handles */
-class MConHandle {
-private:
-	wchar_t   ms_Name[10];
-	HANDLE    mh_Handle;
-	MSection  mcs_Handle;
-
-public:
-	operator const HANDLE()
-    {
-    	if (mh_Handle == INVALID_HANDLE_VALUE)
-		{
-    		// Чтобы случайно не открыть хэндл несколько раз в разных потоках
-    		MSectionLock CS; CS.Lock(&mcs_Handle, TRUE);
-    		// Во время ожидания хэндл мог быт открыт в другом потоке
-			if (mh_Handle == INVALID_HANDLE_VALUE) {
-    			mh_Handle = CreateFile(ms_Name, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_READ,
-                	0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
-				if (mh_Handle == INVALID_HANDLE_VALUE) {
-					DWORD dwErr = GetLastError();
-					wprintf(L"CreateFile(%s) failed, ErrCode=0x%08X\n", ms_Name, dwErr); 
-				}
-    		}
-    	}
-   		return mh_Handle;
-    };
-    
-public:
-	void Close()
-	{
-		if (mh_Handle != INVALID_HANDLE_VALUE) {
-			HANDLE h = mh_Handle;
-			mh_Handle = INVALID_HANDLE_VALUE;
-			CloseHandle(h);
-		}
-	};
-	
-public:
-	MConHandle(LPCWSTR asName)
-	{
-		mh_Handle = INVALID_HANDLE_VALUE;
-		lstrcpynW(ms_Name, asName, 9);
-	};
-	
-	~MConHandle()
-	{
-		Close();
-	};
-	
-};
+MConHandle ghConIn ( L"CONIN$" );
+MConHandle ghConOut ( L"CONOUT$" );
 
 
 /*  Global  */
 DWORD   gnSelfPID = 0;
 //HANDLE  ghConIn = NULL, ghConOut = NULL;
-MConHandle ghConIn ( L"CONIN$" );
-MConHandle ghConOut ( L"CONOUT$" );
 HWND    ghConWnd = NULL;
 HWND    ghConEmuWnd = NULL; // Root! window
 HANDLE  ghExitEvent = NULL;
@@ -312,6 +263,7 @@ struct tag_Srv {
     DWORD nMainTimerElapse;
     BOOL  bConsoleActive;
     HANDLE hRefreshEvent; // ServerMode, перечитать консоль, и если есть изменения - отослать в GUI
+	HANDLE hDataSentEvent; // Флаг, что изменения отосланы в GUI
     //HANDLE hChangingSize; // FALSE на время смены размера консоли
     //CRITICAL_ SECTION csChangeSize; DWORD ncsTChangeSize;
     MSection cChangeSize;
@@ -2238,6 +2190,12 @@ int ServerInit()
         wprintf(L"CreateEvent(hRefreshEvent) failed, ErrCode=0x%08X\n", dwErr); 
         iRc = CERR_REFRESHEVENT; goto wrap;
     }
+	srv.hDataSentEvent = CreateEvent(NULL,FALSE,FALSE,NULL);
+	if (!srv.hDataSentEvent) {
+		dwErr = GetLastError();
+		wprintf(L"CreateEvent(hDataSentEvent) failed, ErrCode=0x%08X\n", dwErr); 
+		iRc = CERR_REFRESHEVENT; goto wrap;
+	}
 
 
     
@@ -2387,6 +2345,9 @@ void ServerDone(int aiRc)
     if (srv.hRefreshEvent) {
         SafeCloseHandle(srv.hRefreshEvent);
     }
+	if (srv.hDataSentEvent) {
+		SafeCloseHandle(srv.hDataSentEvent);
+	}
     //if (srv.hChangingSize) {
     //    SafeCloseHandle(srv.hChangingSize);
     //}
@@ -2790,33 +2751,52 @@ void ProcessInputMessage(MSG &msg)
 	} else {
 		TODO("Сделать обработку пачки сообщений, вдруг они накопились в очереди?");
 
+		bool lbProcessEvent = false;
+		bool lbIngoreKey = false;
 		if (r.EventType == KEY_EVENT && r.Event.KeyEvent.bKeyDown &&
 			(r.Event.KeyEvent.wVirtualKeyCode == 'C' || r.Event.KeyEvent.wVirtualKeyCode == VK_CANCEL)
 			)
 		{
-			#define ALL_MODIFIERS (LEFT_ALT_PRESSED|RIGHT_ALT_PRESSED|LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED|SHIFT_PRESSED)
-			#define CTRL_MODIFIERS (LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED)
+			lbProcessEvent = true;
 
-			BOOL lbRc = FALSE;
-			DWORD dwEvent = (r.Event.KeyEvent.wVirtualKeyCode == 'C') ? CTRL_C_EVENT : CTRL_BREAK_EVENT;
-			//&& (srv.dwConsoleMode & ENABLE_PROCESSED_INPUT)
+			DWORD dwMode = 0;
+			GetConsoleMode(ghConIn, &dwMode);
 
-			//The SetConsoleMode function can disable the ENABLE_PROCESSED_INPUT mode for a console's input buffer, 
-			//so CTRL+C is reported as keyboard input rather than as a signal. 
-			// CTRL+BREAK is always treated as a signal
-			if ( // Удерживается ТОЛЬКО Ctrl
-				(r.Event.KeyEvent.dwControlKeyState & CTRL_MODIFIERS) &&
-				((r.Event.KeyEvent.dwControlKeyState & ALL_MODIFIERS) 
-				== (r.Event.KeyEvent.dwControlKeyState & CTRL_MODIFIERS))
-				)
-			{
-				// Вроде работает, Главное не запускать процесс с флагом CREATE_NEW_PROCESS_GROUP
-				// иначе у микрософтовской консоли (WinXP SP3) сносит крышу, и она реагирует
-				// на Ctrl-Break, но напрочь игнорирует Ctrl-C
-				lbRc = GenerateConsoleCtrlEvent(dwEvent, 0);
+			// CTRL+C (and Ctrl+Break?) is processed by the system and is not placed in the input buffer
+			if ((dwMode & ENABLE_PROCESSED_INPUT) == ENABLE_PROCESSED_INPUT)
+				lbIngoreKey = lbProcessEvent = true;
+			else
+				lbProcessEvent = false;
 
-				// Это событие (Ctrl+C) в буфер помещается(!) иначе до фара не дойдет собственно клавиша C с нажатым Ctrl
+
+			if (lbProcessEvent) {
+				#define ALL_MODIFIERS (LEFT_ALT_PRESSED|RIGHT_ALT_PRESSED|LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED|SHIFT_PRESSED)
+				#define CTRL_MODIFIERS (LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED)
+
+				BOOL lbRc = FALSE;
+				DWORD dwEvent = (r.Event.KeyEvent.wVirtualKeyCode == 'C') ? CTRL_C_EVENT : CTRL_BREAK_EVENT;
+				//&& (srv.dwConsoleMode & ENABLE_PROCESSED_INPUT)
+
+				//The SetConsoleMode function can disable the ENABLE_PROCESSED_INPUT mode for a console's input buffer, 
+				//so CTRL+C is reported as keyboard input rather than as a signal. 
+				// CTRL+BREAK is always treated as a signal
+				if ( // Удерживается ТОЛЬКО Ctrl
+					(r.Event.KeyEvent.dwControlKeyState & CTRL_MODIFIERS) &&
+					((r.Event.KeyEvent.dwControlKeyState & ALL_MODIFIERS) 
+					== (r.Event.KeyEvent.dwControlKeyState & CTRL_MODIFIERS))
+					)
+				{
+					// Вроде работает, Главное не запускать процесс с флагом CREATE_NEW_PROCESS_GROUP
+					// иначе у микрософтовской консоли (WinXP SP3) сносит крышу, и она реагирует
+					// на Ctrl-Break, но напрочь игнорирует Ctrl-C
+					lbRc = GenerateConsoleCtrlEvent(dwEvent, 0);
+
+					// Это событие (Ctrl+C) в буфер помещается(!) иначе до фара не дойдет собственно клавиша C с нажатым Ctrl
+				}
 			}
+
+			if (lbIngoreKey)
+				return;
 		}
 
 		#ifdef _DEBUG
@@ -3498,6 +3478,17 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 
             lbRc = TRUE;
         } break;
+		case CECMD_REQUESTFULLINFO:
+		{
+			// Готовим к ForceSend
+			ResetEvent(srv.hDataSentEvent);
+			srv.bRequestPostFullReload = TRUE;
+			srv.bForceFullSend = TRUE;
+			SetEvent(srv.hRefreshEvent);
+			// Ожидание, пока сработает RefreshThread
+			DWORD nWait = WaitForSingleObject(srv.hDataSentEvent, 500);
+			lbRc = (nWait == WAIT_OBJECT_0);
+		} break;
         case CECMD_SETSIZE:
 		case CECMD_SETSIZESYNC:
         case CECMD_CMDSTARTED:
@@ -3648,8 +3639,8 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 
 		case CECMD_POSTCONMSG:
 		{
-			WPARAM wParam = in.Msg.wParam;
-			LPARAM lParam = in.Msg.lParam;
+			WPARAM wParam = (WPARAM)in.Msg.wParam;
+			LPARAM lParam = (LPARAM)in.Msg.lParam;
 			#ifdef _DEBUG
 			if (in.Msg.nMsg == WM_INPUTLANGCHANGE || in.Msg.nMsg == WM_INPUTLANGCHANGEREQUEST) {
 				unsigned __int64 l = lParam;
@@ -3805,6 +3796,7 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
     DWORD dwTimeout = 10; // задержка чтения информации об окне (размеров, курсора,...)
     BOOL  lbFirstForeground = TRUE;
     BOOL  lbLocalForced = FALSE;
+	HANDLE hDataSent = NULL;
     
     BOOL lbQuit = FALSE;
 
@@ -3881,6 +3873,8 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
             nWait = (WAIT_OBJECT_0+1); // Принудительно
             memset(&srv.CharChanged.hdr, 0, sizeof(srv.CharChanged.hdr));
             lbEventualChange = TRUE; // чтобы следующий интервал чтения не увеличился
+
+			hDataSent = srv.hDataSentEvent;
         }
 
 
@@ -3967,6 +3961,11 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
             }
             DEBUGLOG(L"\n");
         }
+
+		if (hDataSent) {
+			SetEvent(hDataSent);
+			hDataSent = NULL;
+		}
         
         WARNING("Win2k скорее всего события вообще не ходят, так что timeout нужно ставить вообще минимальный (10)");
         // Если Refresh пришел по событию из консоли - сбрасываем задержку в минимальную

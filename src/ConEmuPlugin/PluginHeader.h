@@ -47,6 +47,7 @@ typedef struct tag_SynchroArg {
 	HANDLE hEvent;
 	LPARAM Result;
 	LPARAM Param1, Param2;
+	BOOL Obsolete;
 	//BOOL Processed;
 } SynchroArg;
 
@@ -144,3 +145,10 @@ BOOL FUNC_X(IsMacroActive)();
 BOOL FUNC_Y(IsMacroActive)();
 
 BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount);
+
+void RedrawAll();
+void RedrawAllA();
+void FUNC_Y(RedrawAll)();
+void FUNC_X(RedrawAll)();
+
+BOOL SetConsoleSize(SHORT nNewWidth, SHORT nNewHeight);

@@ -259,37 +259,29 @@ void CRealConsole::DumpConsole(HANDLE ahFile)
     }
 }
 
-BOOL CRealConsole::SetConsoleSize(COORD size, DWORD anCmdID/*=CECMD_SETSIZE*/)
+BOOL CRealConsole::SetConsoleSizeSrv(COORD size, DWORD anCmdID/*=CECMD_SETSIZE*/)
 {
     if (!this) return FALSE;
-    //_ASSERTE(hConWnd && ms_ConEmuC_Pipe[0]);
 
     if (!hConWnd || ms_ConEmuC_Pipe[0] == 0) {
         // 19.06.2009 Maks - Она действительно может быть еще не создана
         //Box(_T("Console was not created (CRealConsole::SetConsoleSize)"));
 		DEBUGSTRSIZE(L"SetConsoleSize skipped (!hConWnd)\n");
-        return false; // консоль пока не создана?
+        return FALSE; // консоль пока не создана?
     }
-    
-    _ASSERTE(size.X>=MIN_CON_WIDTH && size.Y>=MIN_CON_HEIGHT);
-    
-    if (size.X</*4*/MIN_CON_WIDTH)
-        size.X = /*4*/MIN_CON_WIDTH;
-    if (size.Y</*3*/MIN_CON_HEIGHT)
-        size.Y = /*3*/MIN_CON_HEIGHT;
 
-    bool lbRc = false;
+    BOOL lbRc = FALSE;
     BOOL fSuccess = FALSE;
     DWORD dwRead = 0;
     int nInSize = sizeof(CESERVER_REQ_HDR)+sizeof(USHORT)+sizeof(COORD)+sizeof(SHORT)+sizeof(SMALL_RECT);
     CESERVER_REQ *pIn = (CESERVER_REQ*)calloc(nInSize,1);
     _ASSERTE(pIn);
-    if (!pIn) return false;
+	if (!pIn) return FALSE;
     pIn->hdr.nSize = nInSize;
     int nOutSize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_RETSIZE);
     CESERVER_REQ *pOut = (CESERVER_REQ*)calloc(nOutSize,1);
     _ASSERTE(pOut);
-    if (!pOut) { free(pIn); return false; }
+	if (!pOut) { free(pIn); return FALSE; }
     pOut->hdr.nSize = nOutSize;
     SMALL_RECT rect = {0};
 
@@ -392,7 +384,7 @@ BOOL CRealConsole::SetConsoleSize(COORD size, DWORD anCmdID/*=CECMD_SETSIZE*/)
             //    lbRc = true;
             //}
             if (lbRc) { // Попробуем сразу менять nTextWidth/nTextHeight. Иначе синхронизация размеров консоли глючит...
-				DEBUGSTRSIZE(L"SetConsoleSize.lbRc == TRUE\n");
+				DEBUGSTRSIZE(L"SetConsoleSizeSrv.lbRc == TRUE\n");
                 con.nChange2TextWidth = sbi.dwSize.X;
                 con.nChange2TextHeight = con.bBufferHeight ? (sbi.srWindow.Bottom-sbi.srWindow.Top+1) : sbi.dwSize.Y;
                 if (con.nChange2TextHeight > 200) {
@@ -401,6 +393,80 @@ BOOL CRealConsole::SetConsoleSize(COORD size, DWORD anCmdID/*=CECMD_SETSIZE*/)
             }
         }
     }
+
+	return lbRc;
+}
+
+BOOL CRealConsole::SetConsoleSizePlugin(COORD size, DWORD anCmdID/*=CECMD_SETSIZE*/)
+{
+    if (!this) return FALSE;
+
+	BOOL lbRc = FALSE, lbProcessed = FALSE;
+	DWORD dwPID = 0;
+
+	if ((dwPID = GetFarPID()) != 0) {
+		CConEmuPipe pipe(gConEmu.GetFarPID(), 200);
+		if (pipe.Init(_T("CRealConsole::SetConsoleSizePlugin")))
+		{
+			DWORD nHILO = ((DWORD)size.X) | (((DWORD)(WORD)size.Y) << 16);
+			if (pipe.Execute(CMD_SETSIZE, &nHILO, sizeof(nHILO)))
+			{
+					lbProcessed = TRUE;
+
+				DWORD nRcHILO = 0, nSize = 0;
+				if (pipe.Read(&nRcHILO, sizeof(nRcHILO), &nSize) && nSize == sizeof(nRcHILO)) {
+					if (nRcHILO == nHILO) {
+						lbRc = TRUE;
+
+						DEBUGSTRSIZE(L"SetConsoleSizeSrv.lbRc == TRUE\n");
+						con.nChange2TextWidth = size.X;
+						con.nChange2TextHeight = size.Y;
+						if (con.nChange2TextHeight > 200) {
+							_ASSERTE(con.nChange2TextHeight<=200);
+						}
+					}
+				}
+			}
+		}
+    }
+
+	if (!lbProcessed)
+		lbRc = SetConsoleSizeSrv(size, anCmdID);
+
+	return lbRc;
+}
+
+BOOL CRealConsole::SetConsoleSize(COORD size, DWORD anCmdID/*=CECMD_SETSIZE*/)
+{
+    if (!this) return FALSE;
+    //_ASSERTE(hConWnd && ms_ConEmuC_Pipe[0]);
+
+    if (!hConWnd || ms_ConEmuC_Pipe[0] == 0) {
+        // 19.06.2009 Maks - Она действительно может быть еще не создана
+        //Box(_T("Console was not created (CRealConsole::SetConsoleSize)"));
+		DEBUGSTRSIZE(L"SetConsoleSize skipped (!hConWnd)\n");
+        return false; // консоль пока не создана?
+    }
+    
+    _ASSERTE(size.X>=MIN_CON_WIDTH && size.Y>=MIN_CON_HEIGHT);
+    
+    if (size.X</*4*/MIN_CON_WIDTH)
+        size.X = /*4*/MIN_CON_WIDTH;
+    if (size.Y</*3*/MIN_CON_HEIGHT)
+        size.Y = /*3*/MIN_CON_HEIGHT;
+
+	BOOL lbRc = FALSE;
+
+	DWORD dwPID = GetFarPID();
+	if (dwPID) {
+		if (!mb_PluginDetected || dwPID != mn_FarPID_PluginDetected)
+			dwPID = 0;
+	}
+	if (!con.bBufferHeight && dwPID)
+		lbRc = SetConsoleSizePlugin(size, anCmdID);
+	else
+		lbRc = SetConsoleSizeSrv(size, anCmdID);
+
 
     if (lbRc && isActive()) {
         // update size info
@@ -411,6 +477,7 @@ BOOL CRealConsole::SetConsoleSize(COORD size, DWORD anCmdID/*=CECMD_SETSIZE*/)
         }
     }
 
+
 	DEBUGSTRSIZE(L"SetConsoleSize.finalizing\n");
 	if (anCmdID == CECMD_SETSIZESYNC) {
 		// ConEmuC должен сам послать изменения
@@ -419,9 +486,12 @@ BOOL CRealConsole::SetConsoleSize(COORD size, DWORD anCmdID/*=CECMD_SETSIZE*/)
 		} else {
 			DEBUGSTRSIZE(L"SetConsoleSize.RetrieveConsoleInfo\n");
 			//BUGBUG: тут виснет
+			WARNING("CtrlShiftT в фаре можно и самим обработать? плуг посылает запрос в GUI и сразу размер меняет, даже Synch вызывать не нужно");
 			WARNING("!!! При CtrlShiftT в фаре - это повисло");
-			if (!RetrieveConsoleInfo(size.Y)) {
+			WaitConsoleSize(size.Y, 2000);
+			/*if (!RetrieveConsoleInfo(size.Y)) {
 				DEBUGSTRSIZE(L"SetConsoleSize.RetrieveConsoleInfo - height failed, waiting\n");
+				gConEmu.DebugStep(L"ConEmu: SetConsoleSize.RetrieveConsoleInfo - height failed, waiting\n");
 				Sleep(300);
 				// Ждем, пока mn_MonitorThreadID получит изменения
 				DWORD dwStartTick = GetTickCount();
@@ -439,9 +509,10 @@ BOOL CRealConsole::SetConsoleSize(COORD size, DWORD anCmdID/*=CECMD_SETSIZE*/)
 				#ifdef _DEBUG
 				nTimeout = 2000;
 				#endif
+				gConEmu.DebugStep(NULL);
 			} else {
 				DEBUGSTRSIZE(L"SetConsoleSize.RetrieveConsoleInfo - height ok, exiting\n");
-			}
+			}*/
 		}
 		//if (GetCurrentThreadId() != mn_MonitorThreadID) {
 		//	// Ждем, пока mn_MonitorThreadID получит изменения
@@ -2537,6 +2608,48 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 					}
 				}
 			}
+			// Если включены автотабы - попытаться изменить размер консоли СРАЗУ (в самом FAR)
+			if (lbCanUpdate && gSet.isTabs == 2) {
+				TODO("расчитать новый размер, если сменилась видимость табов");
+				bool lbCurrentActive = TabBar.IsActive();
+				bool lbNewActive = lbCurrentActive;
+				// Если консолей более одной - видимость табов не изменится
+				if (gConEmu.GetVCon(1) == NULL) {
+					lbNewActive = (pIn->Tabs.nTabCount > 1);
+				}
+
+				if (lbCurrentActive != lbNewActive) {
+					enum ConEmuMargins tTabAction = lbNewActive ? CEM_TABACTIVATE : CEM_TABDEACTIVATE;
+					RECT rcConsole = gConEmu.CalcRect(CER_CONSOLE, gConEmu.GetIdealRect(), CER_MAIN, NULL, tTabAction);
+
+					con.nChange2TextWidth = rcConsole.right;
+					con.nChange2TextHeight = rcConsole.bottom;
+
+					gConEmu.m_Child.SetRedraw(FALSE);
+					fSuccess = FALSE;
+
+					// Нужно вернуть в плагин информацию, что нужно размер консоли
+					CESERVER_REQ *pRet = ExecuteNewCmd(CECMD_TABSCHANGED, sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_CONEMUTAB_RET));
+					if (pRet) {
+						pRet->TabsRet.bNeedResize = TRUE;
+						pRet->TabsRet.crNewSize.X = rcConsole.right;
+						pRet->TabsRet.crNewSize.Y = rcConsole.bottom;
+						// Отправляем
+						fSuccess = WriteFile( 
+							hPipe,        // handle to pipe 
+							pRet,         // buffer to write from 
+							pRet->hdr.nSize,  // number of bytes to write 
+							&cbWritten,   // number of bytes written 
+							NULL);        // not overlapped I/O 
+						ExecuteFreeResult(pRet);
+					}
+
+					if (fSuccess) { // Дождаться, пока из сервера придут изменения консоли
+						WaitConsoleSize(rcConsole.bottom, 500);
+					}
+					gConEmu.m_Child.SetRedraw(TRUE);
+				}
+			}
 			if (lbCanUpdate)
 				SetTabs(pIn->Tabs.tabs, pIn->Tabs.nTabCount);
         }
@@ -2751,6 +2864,10 @@ void CRealConsole::ApplyConsoleInfo(CESERVER_REQ* pInfo)
     // 5, 6, 7
     con.m_dwConsoleCP = pInfo->ConInfo.inf.dwConsoleCP;
     con.m_dwConsoleOutputCP = pInfo->ConInfo.inf.dwConsoleOutputCP;
+    if (con.m_dwConsoleMode != pInfo->ConInfo.inf.dwConsoleMode) {
+    	if (ghOpWnd && isActive())
+    		gSet.UpdateConsoleMode(pInfo->ConInfo.inf.dwConsoleMode);
+    }
     con.m_dwConsoleMode = pInfo->ConInfo.inf.dwConsoleMode;
     // 8
     DWORD dwSbiSize = pInfo->ConInfo.inf.dwSbiSize;
@@ -3331,6 +3448,24 @@ void CRealConsole::ProcessCheckName(struct ConProcess &ConPrc, LPWSTR asFullFile
     ConPrc.NameChecked = true;
 }
 
+BOOL CRealConsole::WaitConsoleSize(UINT anWaitSize, DWORD nTimeout)
+{
+	BOOL lbRc = FALSE;
+	CESERVER_REQ *pIn = NULL, *pOut = NULL;
+
+	pIn = ExecuteNewCmd(CECMD_REQUESTFULLINFO, sizeof(CESERVER_REQ_HDR) + sizeof(DWORD));
+	if (pIn) {
+		pIn->dwData[0] = anWaitSize;
+		pOut = ExecuteSrvCmd(mn_ConEmuC_PID, pIn, ghWnd);
+		if (pOut) {
+			lbRc = TRUE;
+		} else {
+			ExecuteFreeResult(pIn);
+			ExecuteFreeResult(pOut);
+		}
+	}
+	return TRUE;
+}
 
 BOOL CRealConsole::RetrieveConsoleInfo(UINT anWaitSize)
 {
@@ -4194,6 +4329,9 @@ void CRealConsole::OnActivate(int nNewNum, int nOldNum)
             ShowWindow(hPic, SW_SHOWNA);
     }
     mb_PicViewWasHidden = FALSE;
+
+	if (ghOpWnd && isActive())
+		gSet.UpdateConsoleMode(con.m_dwConsoleMode);
 }
 
 void CRealConsole::OnDeactivate(int nNewNum)
@@ -5678,4 +5816,10 @@ void CRealConsole::OnConsoleLangChange(DWORD_PTR dwNewKeybLayout)
 		//Sleep(2000);
 		#endif
     }
+}
+
+DWORD CRealConsole::GetConsoleStates()
+{
+	if (!this) return 0;
+	return con.m_dwConsoleMode;
 }

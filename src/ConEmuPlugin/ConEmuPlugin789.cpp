@@ -537,3 +537,9 @@ BOOL IsMacroActive789()
 		return FALSE;
 	return TRUE;
 }
+
+void RedrawAll789()
+{
+	if (!InfoW789) return;
+	InfoW789->AdvControl(InfoW789->ModuleNumber, ACTL_REDRAWALL, NULL);
+}

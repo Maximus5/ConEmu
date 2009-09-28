@@ -341,10 +341,13 @@ RECT CConEmuMain::CalcMargins(enum ConEmuMargins mg)
         }   break;
         // Далее все отступы считаются в клиентской части (дочерние окна)!
         case CEM_TAB:   // Отступы от краев таба (если он видим) до окна фона (с прокруткой)
+		case CEM_TABACTIVATE:
+		case CEM_TABDEACTIVATE:
         {
             if (ghWnd) {
+				bool lbTabActive = (mg == CEM_TAB) ? TabBar.IsActive() : (mg == CEM_TABACTIVATE);
                 // Главное окно уже создано, наличие таба определено
-                if (TabBar.IsActive()) { //TODO: + IsAllowed()?
+                if (lbTabActive) { //TODO: + IsAllowed()?
                     rc = TabBar.GetMargins();
                 } else {
                     rc = MakeRect(0,0); // раз таба нет - значит дополнительные отступы не нужны
@@ -380,7 +383,7 @@ RECT CConEmuMain::CalcMargins(enum ConEmuMargins mg)
 /*!!!static!!*/
 // Для приблизительного расчета размеров - нужен только (размер главного окна)|(размер консоли)
 // Для точного расчета размеров - требуется (размер главного окна) и (размер окна отрисовки) для корректировки
-RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFrom, RECT* prDC/*=NULL*/)
+RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFrom, RECT* prDC/*=NULL*/, enum ConEmuMargins tTabAction/*=CEM_TAB*/)
 {
     RECT rc = rFrom; // инициализация, если уж не получится...
     RECT rcShift = MakeRect(0,0);
@@ -412,7 +415,7 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tF
                     {
                         //rcShift = CalcMargins(CEM_BACK);
                         //AddMargins(rc, rcShift, TRUE/*abExpand*/);
-                        rcShift = CalcMargins(CEM_TAB);
+                        rcShift = CalcMargins(tTabAction);
                         AddMargins(rc, rcShift, TRUE/*abExpand*/);
                         rcShift = CalcMargins(CEM_FRAME);
                         AddMargins(rc, rcShift, TRUE/*abExpand*/);
@@ -421,14 +424,14 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tF
                     {
                         //rcShift = CalcMargins(CEM_BACK);
                         //AddMargins(rc, rcShift, TRUE/*abExpand*/);
-                        rcShift = CalcMargins(CEM_TAB);
+                        rcShift = CalcMargins(tTabAction);
                         AddMargins(rc, rcShift, TRUE/*abExpand*/);
                     } break;
                     case CER_TAB:
                     {
                         //rcShift = CalcMargins(CEM_BACK);
                         //AddMargins(rc, rcShift, TRUE/*abExpand*/);
-                        rcShift = CalcMargins(CEM_TAB);
+                        rcShift = CalcMargins(tTabAction);
                         AddMargins(rc, rcShift, TRUE/*abExpand*/);
                     } break;
                     case CER_BACK:
@@ -498,14 +501,14 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tF
         } break;
         case CER_BACK:
         {
-            rcShift = CalcMargins(CEM_TAB);
+            rcShift = CalcMargins(tTabAction);
             AddMargins(rc, rcShift);
         } break;
         case CER_DC:
         case CER_CONSOLE:
         {
 			// Учесть высоту закладок (табов)
-            rcShift = CalcMargins(CEM_TAB);
+            rcShift = CalcMargins(tTabAction);
             AddMargins(rc, rcShift);
 
 			// Для корректного деления на размер знакоместа...
@@ -3129,6 +3132,14 @@ void CConEmuMain::PaintCon()
     if (ProgressBars)
         ProgressBars->OnTimer();
     pVCon->Paint();
+
+#ifdef _DEBUG
+	if (GetKeyState(VK_SCROLL) & 1) {
+		DebugStep(L"ConEmu: Sleeping in PaintCon for 1s");
+		Sleep(1000);
+		DebugStep(NULL);
+	}
+#endif
 }
 
 void CConEmuMain::RePaint()

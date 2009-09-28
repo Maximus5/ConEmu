@@ -38,6 +38,8 @@ enum ConEmuMargins {
 	CEM_FRAME = 0, // Разница между размером всего окна и клиентской области окна (рамка + заголовок)
 	// Далее все отступы считаются в клиентской части (дочерние окна)!
 	CEM_TAB,       // Отступы от краев таба (если он видим) до окна фона (с прокруткой)
+	CEM_TABACTIVATE,
+	CEM_TABDEACTIVATE,
 	//2009-06-07 Это был только SM_CXVSCROLL, который сейчас всплывает и не занимает место!
 	//CEM_BACK,      // Отступы от краев окна фона (с прокруткой) до окна с отрисовкой (DC)
 	CEM_BACKFORCESCROLL,
@@ -189,7 +191,7 @@ public:
 	static void AddMargins(RECT& rc, RECT& rcAddShift, BOOL abExpand=FALSE);
 	LPARAM AttachRequested(HWND ahConWnd, DWORD anConemuC_PID);
 	static RECT CalcMargins(enum ConEmuMargins mg);
-	static RECT CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFrom, RECT* prDC=NULL);
+	static RECT CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFrom, RECT* prDC=NULL, enum ConEmuMargins tTabAction=CEM_TAB);
 	bool ConActivate(int nCon);
 	bool ConActivateNext(BOOL abNext);
 	void CheckGuiBarsCreated();
@@ -200,6 +202,7 @@ public:
 	void EnableComSpec(BOOL abSwitch);
 	void ForceShowTabs(BOOL abShow);
 	DWORD_PTR GetActiveKeyboardLayout();
+	RECT GetIdealRect() { return mrc_Ideal; };
 	LRESULT GuiShellExecuteEx(SHELLEXECUTEINFO* lpShellExecute, BOOL abAllowAsync);
 	BOOL Init();
 	void InvalidateAll();

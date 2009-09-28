@@ -221,7 +221,9 @@ REGEDIT4
 ;; Slideshow mode may be activated by 'Pause/Break' key.
 ;"SlideShowElapse"=dword:00001000
 
-;; Value for SetProcessAffinityMask
+;; Value for SetProcessAffinityMask (Processors used)
+;; 0 - don't change default affinity (this is default)
+;; 3 - means use of 'CPU 0' & 'CPU 1'
 ;"AffinityMask"=dword:00000003
 
 ;; Real Console font. Use very carefully.

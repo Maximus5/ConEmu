@@ -163,12 +163,12 @@ int WINAPI _export ProcessSynchroEventW(int Event,void *Param)
 
 		SynchroArg *pArg = (SynchroArg*)Param;
 		_ASSERTE(pArg!=NULL);
-		//if (pArg->Processed) {
-		//	// Два раза подряд вызвалось с одинаковыми арументами?
-		//	_ASSERTE(pArg->Processed==FALSE);
-		//	free(pArg);
-		//	return 0;
-		//}
+
+		// Если предыдущая активация отвалилась по таймауту - не выполнять
+		if (pArg->Obsolete) {
+			free(pArg);
+			return 0;
+		}
 
 		if (pArg->SynchroType == SynchroArg::eCommand) {
     		if (gnReqCommand != (DWORD)-1) {
@@ -416,7 +416,7 @@ BOOL ActivatePluginA(DWORD nCmd, LPVOID pCommandData)
 	return lbRc;
 }
 
-BOOL ActivatePluginW(DWORD nCmd, LPVOID pCommandData)
+BOOL ActivatePluginW(DWORD nCmd, LPVOID pCommandData, DWORD nTimeout = CONEMUFARTIMEOUT)
 {
 	BOOL lbRc = FALSE;
 	gnReqCommand = -1; gnPluginOpenFrom = -1; gpReqCommandData = NULL;
@@ -430,8 +430,9 @@ BOOL ActivatePluginW(DWORD nCmd, LPVOID pCommandData)
 	Param->Param1 = nCmd;
 	Param->Param2 = (LPARAM)pCommandData;
 	Param->hEvent = ghReqCommandEvent;
+	Param->Obsolete = FALSE;
 
-	lbRc = CallSynchro995(Param, CONEMUFARTIMEOUT);
+	lbRc = CallSynchro995(Param, nTimeout);
 	
 	if (!lbRc)
 		ResetEvent(ghReqCommandEvent); // Сразу сбросим, вдруг не дождались?
@@ -458,6 +459,27 @@ CESERVER_REQ* ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandDat
 	if (bReqMainThread && (gnMainThreadId != GetCurrentThreadId())) {
 		_ASSERTE(ghPluginSemaphore!=NULL);
 		_ASSERTE(ghServerTerminateEvent!=NULL);
+
+		// Некоторые команды можно выполнить сразу
+		if (nCmd == CMD_SETSIZE) {
+			DWORD nHILO = *((DWORD*)pCommandData);
+			SHORT nWidth = LOWORD(nHILO);
+			SHORT nHeight = HIWORD(nHILO);
+			MConHandle hConOut ( L"CONOUT$" );
+			CONSOLE_SCREEN_BUFFER_INFO csbi = {{0,0}};
+			BOOL lbRc = GetConsoleScreenBufferInfo(hConOut, &csbi);
+			hConOut.Close();
+			if (lbRc) {
+				// Если размер консоли менять вообще не нужно
+				if (csbi.dwSize.X == nWidth && csbi.dwSize.Y == nHeight) {
+					OutDataAlloc(sizeof(nHILO));
+					OutDataWrite(&nHILO, sizeof(nHILO));
+					return gpCmdRet;
+				}
+			}
+		}
+
+
 		// Засемафорить, чтобы несколько команд одновременно не пошли...
 		HANDLE hEvents[2] = {ghServerTerminateEvent, ghPluginSemaphore};
 		DWORD dwWait = WaitForMultipleObjects(2, hEvents, FALSE, INFINITE);
@@ -475,53 +497,6 @@ CESERVER_REQ* ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandDat
 			ActivatePluginA(nCmd, pCommandData);
 		}
 
-
-		//gnReqCommand = nCmd; gnPluginOpenFrom = -1;
-		//gpReqCommandData = pCommandData;
-		//ResetEvent(ghReqCommandEvent);
-		//
-		////
-		//
-		//// Проверить, не изменилась ли горячая клавиша плагина, и если да - пересоздать макросы
-		//IsKeyChanged(TRUE);
-		//
-		//INPUT_RECORD evt[10];
-		//DWORD dwStartWait, dwCur, dwTimeout, dwInputs = 0, dwInputsFirst = 0;
-		////BOOL  lbInputs = FALSE;
-		//HANDLE hInput = GetStdHandle(STD_INPUT_HANDLE);
-		//
-		//BOOL lbInput = PeekConsoleInput(hInput, evt, 10, &dwInputsFirst);
-		//
-		//// Нужен вызов плагина в остновной нити
-		//WARNING("Переделать на WriteConsoleInput");
-		//gbCmdCallObsolete = FALSE;
-		//SendMessage(FarHwnd, WM_KEYDOWN, VK_F14, 0);
-		//SendMessage(FarHwnd, WM_KEYUP, VK_F14, (LPARAM)(3<<30));
-		//
-		//
-		////HANDLE hEvents[2] = {ghReqCommandEvent, hEventCmd[CMD_EXIT]};
-		//hEvents[0] = ghReqCommandEvent;
-		//hEvents[1] = ghServerTerminateEvent;
-		//
-		//dwTimeout = CONEMUFARTIMEOUT;
-		//dwStartWait = GetTickCount();
-		////DuplicateHandle(GetCurrentProcess(), ghReqCommandEvent, GetCurrentProcess(), hEvents, 0, 0, DUPLICATE_SAME_ACCESS);
-		//do {
-		//	dwWait = WaitForMultipleObjects ( 2, hEvents, FALSE, 200 );
-		//	if (dwWait == WAIT_TIMEOUT) {
-		//		lbInput = PeekConsoleInput(hInput, evt, 10, &dwInputs);
-		//		if (lbInput && dwInputs == 0) {
-		//			//Раз из буфера ввода убралось "Отпускание F14" - значит ловить уже нечего, выходим
-		//			gbCmdCallObsolete = TRUE; // иначе может всплыть меню, когда не надо 
-		//			break;
-		//		}
-		//
-		//		dwCur = GetTickCount();
-		//		if ((dwCur - dwStartWait) > dwTimeout)
-		//			break;
-		//	}
-		//} while (dwWait == WAIT_TIMEOUT);
-		//if (dwWait) ResetEvent(ghReqCommandEvent); // Сразу сбросим, вдруг не дождались?
 
 		ReleaseSemaphore(ghPluginSemaphore, 1, NULL);
 
@@ -595,6 +570,28 @@ CESERVER_REQ* ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandDat
 				PostMacro((wchar_t*)pCommandData);
 			break;
 		}
+		case (CMD_SETSIZE):
+		{
+			_ASSERTE(pCommandData!=NULL);
+			BOOL lbNeedChange = TRUE;
+			DWORD nHILO = *((DWORD*)pCommandData);
+			SHORT nWidth = LOWORD(nHILO);
+			SHORT nHeight = HIWORD(nHILO);
+
+			BOOL lbRc = SetConsoleSize(nWidth, nHeight);
+
+			MConHandle hConOut ( L"CONOUT$" );
+			CONSOLE_SCREEN_BUFFER_INFO csbi = {{0,0}};
+			lbRc = GetConsoleScreenBufferInfo(hConOut, &csbi);
+			hConOut.Close();
+			if (lbRc) {
+				OutDataAlloc(sizeof(nHILO));
+				nHILO = ((WORD)csbi.dwSize.X) | (((DWORD)(WORD)csbi.dwSize.Y) << 16);
+				OutDataWrite(&nHILO, sizeof(nHILO));
+			}
+
+			//REDRAWALL
+		}
 	}
 
 	LeaveCriticalSection(&csData);
@@ -606,6 +603,54 @@ CESERVER_REQ* ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandDat
 		pCmdRet = gpCmdRet;
 
 	return pCmdRet;
+}
+
+BOOL SetConsoleSize(SHORT nNewWidth, SHORT nNewHeight)
+{
+#ifdef _DEBUG
+	if (GetCurrentThreadId() != gnMainThreadId) {
+		_ASSERTE(GetCurrentThreadId() == gnMainThreadId);
+	}
+#endif
+
+	BOOL lbRc = FALSE, lbNeedChange = TRUE;
+	SHORT nWidth = nNewWidth; if (nWidth</*4*/MIN_CON_WIDTH) nWidth = /*4*/MIN_CON_WIDTH;
+	SHORT nHeight = nNewHeight; if (nHeight</*3*/MIN_CON_HEIGHT) nHeight = /*3*/MIN_CON_HEIGHT;
+	MConHandle hConOut ( L"CONOUT$" );
+	COORD crMax = GetLargestConsoleWindowSize(hConOut);
+	if (crMax.X && nWidth > crMax.X) nWidth = crMax.X;
+	if (crMax.Y && nHeight > crMax.Y) nHeight = crMax.Y;
+
+	CONSOLE_SCREEN_BUFFER_INFO csbi = {{0,0}};
+	if (GetConsoleScreenBufferInfo(hConOut, &csbi)) {
+		if (csbi.dwSize.X == nWidth && csbi.dwSize.Y == nHeight
+			&& csbi.srWindow.Top == 0 && csbi.srWindow.Left == 0
+			&& csbi.srWindow.Bottom == (nWidth-1) 
+			&& csbi.srWindow.Bottom == (nHeight-1))
+		{
+			lbNeedChange = FALSE;
+		}
+	}
+
+	if (lbNeedChange) {
+		DWORD dwErr = 0;
+
+		// Если этого не сделать - размер консоли нельзя УМЕНЬШИТЬ
+		RECT rcConPos = {0}; GetWindowRect(FarHwnd, &rcConPos);
+		MoveWindow(FarHwnd, rcConPos.left, rcConPos.top, 1, 1, 1);
+
+		//specified width and height cannot be less than the width and height of the console screen buffer's window
+		COORD crNewSize = {nWidth, nHeight};
+		lbRc = SetConsoleScreenBufferSize(hConOut, crNewSize);
+		if (!lbRc) dwErr = GetLastError();
+
+		SMALL_RECT rNewRect = {0,0,nWidth-1,nHeight-1};
+		SetConsoleWindowInfo(hConOut, TRUE, &rNewRect);
+
+		RedrawAll();
+	}
+
+	return lbRc;
 }
 
 void EmergencyShow()
@@ -1541,8 +1586,10 @@ void SendTabs(int tabCount, BOOL abForceSend/*=FALSE*/)
 					// Отослать после того, как макрос завершится
 					gbNeedPostTabSend = TRUE;
 					gnNeedPostTabSendTick = GetTickCount();
+				} else if (pOut->TabsRet.bNeedResize) {
+					SetConsoleSize(pOut->TabsRet.crNewSize.X, pOut->TabsRet.crNewSize.Y);
+					}
 				}
-			}
 			ExecuteFreeResult(pOut);
 		}
 	}
@@ -2404,6 +2451,20 @@ BOOL IsMacroActive()
 
 	return lbActive;
 }
+
+
+void RedrawAll()
+{
+	if (!FarHwnd) return;
+
+	if (gFarVersion.dwVerMajor==1)
+		RedrawAllA();
+	else if (gFarVersion.dwBuild>=FAR_Y_VER)
+		FUNC_Y(RedrawAll)();
+	else
+		FUNC_X(RedrawAll)();
+}
+
 
 // <Name>\0<Value>\0<Name2>\0<Value2>\0\0
 void UpdateEnvVar(const wchar_t* pszList)

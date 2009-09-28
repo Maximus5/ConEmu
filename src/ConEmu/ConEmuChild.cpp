@@ -164,6 +164,10 @@ LRESULT CConEmuChild::OnPaint()
 	BOOL lbSkipDraw = FALSE;
     //if (gbInPaint)
 	//    break;
+
+	//2009-09-28 может так (autotabs)
+	if (mb_DisableRedraw)
+		return 0;
 	
 	mb_PostFullPaint = FALSE;
 

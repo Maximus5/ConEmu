@@ -3,6 +3,7 @@
 #define _COMMON_HEADER_HPP_
 
 #include <windows.h>
+#include <wchar.h>
 #if !defined(__GNUC__)
 #include <crtdbg.h>
 #else
@@ -122,8 +123,9 @@ extern wchar_t gszDbgModLabel[6];
 #define CECMD_FARLOADED     19 // Посылается плагином в сервер
 #define CECMD_SHOWCONSOLE   20 // В Win7 релизе нельзя скрывать окно консоли, запущенной в режиме администратора
 #define CECMD_POSTCONMSG    21 // В Win7 релизе нельзя посылать сообщения окну консоли, запущенной в режиме администратора
+#define CECMD_REQUESTFULLINFO 22
 
-#define CESERVER_REQ_VER    16
+#define CESERVER_REQ_VER    18
 
 #define PIPEBUFSIZE 4096
 
@@ -167,6 +169,8 @@ typedef struct tag_CESERVER_REQ_CONEMUTAB {
 
 typedef struct tag_CESERVER_REQ_CONEMUTAB_RET {
 	BOOL  bNeedPostTabSend;
+	BOOL  bNeedResize;
+	COORD crNewSize;
 } CESERVER_REQ_CONEMUTAB_RET;
 
 typedef struct tag_ForwardedPanelInfo {
@@ -361,8 +365,9 @@ typedef struct tag_CESERVER_REQ {
 //#define CMD_DEFFONT    5
 #define CMD_LANGCHANGE   6
 #define CMD_SETENVVAR    7 // Установить переменные окружения (FAR plugin)
+#define CMD_SETSIZE      8
 // +2
-#define MAXCMDCOUNT      9
+#define MAXCMDCOUNT      10
 #define CMD_EXIT         MAXCMDCOUNT-1
 
 //#define GWL_TABINDEX     0
@@ -717,6 +722,58 @@ public:
 	~MSectionLock() {
 		if (mb_Locked) Unlock();
 	};
+};
+
+
+/* Console Handles */
+class MConHandle {
+private:
+	wchar_t   ms_Name[10];
+	HANDLE    mh_Handle;
+	MSection  mcs_Handle;
+
+public:
+	operator const HANDLE()
+	{
+		if (mh_Handle == INVALID_HANDLE_VALUE)
+		{
+			// Чтобы случайно не открыть хэндл несколько раз в разных потоках
+			MSectionLock CS; CS.Lock(&mcs_Handle, TRUE);
+			// Во время ожидания хэндл мог быт открыт в другом потоке
+			if (mh_Handle == INVALID_HANDLE_VALUE) {
+				mh_Handle = CreateFile(ms_Name, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_READ,
+					0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+				if (mh_Handle == INVALID_HANDLE_VALUE) {
+					DWORD dwErr = GetLastError();
+					wprintf(L"CreateFile(%s) failed, ErrCode=0x%08X\n", ms_Name, dwErr); 
+				}
+			}
+		}
+		return mh_Handle;
+	};
+
+public:
+	void Close()
+	{
+		if (mh_Handle != INVALID_HANDLE_VALUE) {
+			HANDLE h = mh_Handle;
+			mh_Handle = INVALID_HANDLE_VALUE;
+			CloseHandle(h);
+		}
+	};
+
+public:
+	MConHandle(LPCWSTR asName)
+	{
+		mh_Handle = INVALID_HANDLE_VALUE;
+		lstrcpynW(ms_Name, asName, 9);
+	};
+
+	~MConHandle()
+	{
+		Close();
+	};
+
 };
 
 

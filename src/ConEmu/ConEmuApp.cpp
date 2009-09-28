@@ -320,9 +320,9 @@ LRESULT CALLBACK AppWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 BOOL CreateAppWindow()
 {
 	//2009-03-05 - нельзя этого делать. а то дочерние процессы с тем же Affinity запускаются...
-	// На тормоза - не влияет. Но вроде бы на многопроцессорных из-зп глюков
-	// в железе могут быть ошибки подсчета производительности, если этого не сделать
-	SetProcessAffinityMask(GetCurrentProcess(), gSet.nAffinity);
+	// На тормоза - не влияет. Но вроде бы на многопроцессорных из-за глюков в железе могут быть ошибки подсчета производительности, если этого не сделать
+	if (gSet.nAffinity)
+		SetProcessAffinityMask(GetCurrentProcess(), gSet.nAffinity);
 	//SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_ABOVE_NORMAL);
 	//SetThreadAffinityMask(GetCurrentThread(), 1);
 

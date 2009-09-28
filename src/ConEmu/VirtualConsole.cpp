@@ -1081,6 +1081,11 @@ void CVirtualConsole::ParseLine(int row, TCHAR *ConCharLine, WORD *ConAttrLine)
     pEnd->partType = pNull;
 }
 
+wchar_t gszAnalogues[32] = {
+	  32, 9786, 9787, 9829, 9830, 9827, 9824, 8226, 9688, 9675, 9689, 9794, 9792, 9834, 9835, 9788,
+	9658, 9668, 8597, 8252,  182,  167, 9632, 8616, 8593, 8595, 8594, 8592, 8735, 8596, 9650, 9660
+};
+
 void CVirtualConsole::UpdateText(bool isForce, bool updateText, bool updateCursor)
 {
     if (!updateText) {
@@ -1145,6 +1150,15 @@ void CVirtualConsole::UpdateText(bool isForce, bool updateText, bool updateCurso
         ConCharLine += TextWidth, ConAttrLine += TextWidth, ConCharXLine += TextWidth,
         pos += gSet.FontHeight(), row++)
     {
+		//2009-09-25. Некоторые (старые?) программы умудряются засунуть в консоль символы (ASC<32)
+		//            их нужно заменить на юникодные аналоги
+		{
+			wchar_t* pszEnd = ConCharLine + TextWidth;
+			for (wchar_t* pch = ConCharLine; pch < pszEnd; pch++) {
+				if (((WORD)*pch) < 32) *pch = gszAnalogues[(WORD)*pch];
+			}
+		}
+
         // the line
         const WORD* const ConAttrLine2 = mpn_ConAttrSave + (ConAttrLine - mpn_ConAttr);
         const TCHAR* const ConCharLine2 = mpsz_ConCharSave + (ConCharLine - mpsz_ConChar);

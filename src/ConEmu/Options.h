@@ -165,6 +165,7 @@ public:
 	void HistoryCheck();
 	void HistoryAdd(LPCWSTR asCmd);
 	LPCWSTR HistoryGet();
+	void UpdateConsoleMode(DWORD nMode);
 protected:
     LRESULT OnInitDialog();
 	LRESULT OnInitDialog_Main();

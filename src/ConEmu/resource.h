@@ -201,6 +201,7 @@
 #define lbDefaultColors                 1554
 #define lbCmdOutputCP                   1558
 #define lbNtvdmHeight                   1559
+#define IDC_CONSOLE_STATES              1560
 
 // Next default values for new objects
 // 
@@ -208,7 +209,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        115
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1560
+#define _APS_NEXT_CONTROL_VALUE         1561
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

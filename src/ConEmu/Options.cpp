@@ -128,7 +128,7 @@ void CSettings::InitSettings()
 	//wcscpy(szDumpPackets, L"c:\\temp\\ConEmuVCon-%i-%i.dat");
 
     nMainTimerElapse = 10;
-    nAffinity = 3;
+    nAffinity = 0; // 0 - don't change default affinity
     //isAdvLangChange = true;
     isSkipFocusEvents = false;
     //isLangChangeWsPlugin = false;
@@ -1200,6 +1200,8 @@ LRESULT CSettings::OnInitDialog_Info()
 	gConEmu.UpdateSizes();
 
 	UpdateFontInfo();
+
+	UpdateConsoleMode(gConEmu.ActiveCon()->RCon()->GetConsoleStates());
 
 	RegisterTipsFor(hInfo);
 
@@ -3034,4 +3036,14 @@ LPCWSTR CSettings::HistoryGet()
 	if (psCmdHistory && *psCmdHistory)
 		return psCmdHistory;
 	return NULL;
+}
+
+// Показать в "Инфо" текущий режим консоли
+void CSettings::UpdateConsoleMode(DWORD nMode)
+{
+	if (hInfo && IsWindow(hInfo)) {
+		wchar_t szInfo[255];
+		wsprintf(szInfo, L"Console states (0x%X)", nMode);
+		SetDlgItemText(hInfo, IDC_CONSOLE_STATES, szInfo);
+	}
 }

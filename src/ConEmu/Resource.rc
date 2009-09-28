@@ -348,7 +348,7 @@ BEGIN
     EDITTEXT        tPerfRender,121,16,43,12,ES_AUTOHSCROLL | ES_READONLY
     EDITTEXT        tPerfBlt,190,16,43,12,ES_AUTOHSCROLL | ES_READONLY
     RTEXT           "Blt:",IDC_STATIC,176,17,12,8
-    GROUPBOX        "Console states",IDC_STATIC,4,39,319,27
+    GROUPBOX        "Console states",IDC_CONSOLE_STATES,4,39,319,27
     CHECKBOX        "Telnet",cbsTelnetActive,11,50,35,10,WS_DISABLED | NOT 
                     WS_TABSTOP
     CHECKBOX        "16bit",cbsNtvdmActive,285,50,32,10,WS_DISABLED | NOT 

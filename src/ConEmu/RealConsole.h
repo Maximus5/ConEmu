@@ -121,6 +121,9 @@ public:
 
     BOOL SetConsoleSize(COORD size, DWORD anCmdID=CECMD_SETSIZE);
 private:
+	BOOL SetConsoleSizeSrv(COORD size, DWORD anCmdID=CECMD_SETSIZE);
+	BOOL SetConsoleSizePlugin(COORD size, DWORD anCmdID=CECMD_SETSIZE);
+private:
     //void SendConsoleEvent(INPUT_RECORD* piRec);
     DWORD mn_FlushIn, mn_FlushOut;
 public:
@@ -189,6 +192,7 @@ public:
 	bool isAdministrator();
 	BOOL isMouseButtonDown();
 	void OnConsoleLangChange(DWORD_PTR dwNewKeybLayout);
+	DWORD GetConsoleStates();
 
 public:
     // Вызываются из CVirtualConsole
@@ -234,6 +238,7 @@ protected:
     void Box(LPCTSTR szText);
 
     BOOL RetrieveConsoleInfo(/*BOOL bShortOnly,*/ UINT anWaitSize);
+	BOOL WaitConsoleSize(UINT anWaitSize, DWORD nTimeout);
     BOOL InitBuffers(DWORD OneBufferSize);
 private:
     // Эти переменные инициализируются в RetrieveConsoleInfo()

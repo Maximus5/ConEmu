@@ -126,6 +126,7 @@ CESERVER_REQ* ExecuteNewCmd(DWORD nCmd, DWORD nSize)
 {
     CESERVER_REQ* pIn = NULL;
     if (nSize) {
+		// Обязательно с обнулением выделяемой памяти
         pIn = (CESERVER_REQ*)_calloc(nSize, 1);
         if (pIn) {
 	        pIn->hdr.nCmd = nCmd;
