@@ -2311,6 +2311,8 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 	HANDLE lhConEmuC = mh_ConEmuC;
 	#endif
 
+	MCHKHEAP;
+
     // Send a message to the pipe server and read the response. 
     fSuccess = ReadFile( 
         hPipe,            // pipe handle 
@@ -2587,7 +2589,7 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
             SetTabs(NULL, 1);
         } else {
             _ASSERTE(nDataSize>=4);
-            _ASSERTE((pIn->Tabs.nTabCount*sizeof(ConEmuTab))==(nDataSize-8));
+            _ASSERTE(((pIn->Tabs.nTabCount-1)*sizeof(ConEmuTab))==(nDataSize-sizeof(CESERVER_REQ_CONEMUTAB)));
 			BOOL lbCanUpdate = TRUE;
 			// Если выполняется макрос - изменение размеров окна FAR при авто-табах нежелательно
 			if (pIn->Tabs.bMacroActive) {
@@ -2609,7 +2611,8 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 				}
 			}
 			// Если включены автотабы - попытаться изменить размер консоли СРАЗУ (в самом FAR)
-			if (lbCanUpdate && gSet.isTabs == 2) {
+			// Но только если вызов SendTabs был сделан из основной нити фара (чтобы небыло потребности в Synchro)
+			if (pIn->Tabs.bMainThread && lbCanUpdate && gSet.isTabs == 2) {
 				TODO("расчитать новый размер, если сменилась видимость табов");
 				bool lbCurrentActive = TabBar.IsActive();
 				bool lbNewActive = lbCurrentActive;
@@ -2778,6 +2781,8 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
     if (pIn && (LPVOID)pIn != (LPVOID)&in) {
         free(pIn); pIn = NULL;
     }
+
+	MCHKHEAP;
 
     //CloseHandle(hPipe);
     return;
@@ -4759,10 +4764,12 @@ BOOL CRealConsole::ActivateFarWindow(int anWndIndex)
         if (pipe.Execute(CMD_SETWINDOW, &anWndIndex, 4))
         {
             DWORD cbBytesRead=0;
-            DWORD tabCount = 0, nInMacro = 0, nTemp = 0;
+            DWORD tabCount = 0, nInMacro = 0, nTemp = 0, nFromMainThread = 0;
             ConEmuTab* tabs = NULL;
             if (pipe.Read(&tabCount, sizeof(DWORD), &cbBytesRead) &&
-				pipe.Read(&nInMacro, sizeof(DWORD), &nTemp))
+				pipe.Read(&nInMacro, sizeof(DWORD), &nTemp) &&
+				pipe.Read(&nFromMainThread, sizeof(DWORD), &nTemp)
+				)
 			{
                 tabs = (ConEmuTab*)pipe.GetPtr(&cbBytesRead);
                 _ASSERTE(cbBytesRead==(tabCount*sizeof(ConEmuTab)));
@@ -4770,6 +4777,7 @@ BOOL CRealConsole::ActivateFarWindow(int anWndIndex)
                     SetTabs(tabs, tabCount);
                     lbRc = TRUE;
                 }
+				MCHKHEAP;
             }
 
             pipe.Close();

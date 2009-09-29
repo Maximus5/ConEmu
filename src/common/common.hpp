@@ -164,6 +164,7 @@ typedef struct tag_ConEmuTab {
 typedef struct tag_CESERVER_REQ_CONEMUTAB {
 	DWORD nTabCount;
 	BOOL  bMacroActive;
+	BOOL  bMainThread;
 	ConEmuTab tabs[1];
 } CESERVER_REQ_CONEMUTAB;
 

@@ -596,6 +596,10 @@ CESERVER_REQ* ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandDat
 
 	LeaveCriticalSection(&csData);
 
+#ifdef _DEBUG
+	_ASSERTE(_CrtCheckMemory());
+#endif
+
 	if (ghReqCommandEvent)
 		SetEvent(ghReqCommandEvent);
 
@@ -1570,6 +1574,7 @@ void SendTabs(int tabCount, BOOL abForceSend/*=FALSE*/)
 	if (tabCount && ConEmuHwnd && IsWindow(ConEmuHwnd) && abForceSend)
 	{
 		gpTabs->Tabs.bMacroActive = IsMacroActive();
+		gpTabs->Tabs.bMainThread = (GetCurrentThreadId() == gnMainThreadId);
 		// ≈сли выполн€етс€ макрос и отложенна€ отсылка (по окончанию) уже запрошена
 		if (gpTabs->Tabs.bMacroActive && gbNeedPostTabSend) {
 			gnNeedPostTabSendTick = GetTickCount(); // ќбновить тик
@@ -1587,9 +1592,12 @@ void SendTabs(int tabCount, BOOL abForceSend/*=FALSE*/)
 					gbNeedPostTabSend = TRUE;
 					gnNeedPostTabSendTick = GetTickCount();
 				} else if (pOut->TabsRet.bNeedResize) {
-					SetConsoleSize(pOut->TabsRet.crNewSize.X, pOut->TabsRet.crNewSize.Y);
+					// ≈сли это отложенна€ отсылка табов после выполнени€ макросов
+					if (GetCurrentThreadId() == gnMainThreadId) {
+						SetConsoleSize(pOut->TabsRet.crNewSize.X, pOut->TabsRet.crNewSize.Y);
 					}
 				}
+			}
 			ExecuteFreeResult(pOut);
 		}
 	}
