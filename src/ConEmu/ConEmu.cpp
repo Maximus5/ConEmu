@@ -2837,6 +2837,7 @@ void CConEmuMain::UpdateTitle(LPCTSTR asNewTitle)
     //else if (isFilePanel(true))
     //    mn_ActiveStatus |= CES_FILEPANEL;
 
+    Icon.UpdateTitle();
 
     // Под конец - проверить список процессов консоли
     CheckProcesses();
@@ -3241,6 +3242,8 @@ bool CConEmuMain::isFilePanel(bool abPluginAllowed/*=false*/)
 bool CConEmuMain::isFirstInstance()
 {
 	if (!mb_AliveInitialized) {
+		mb_AliveInitialized = TRUE;
+		
 		// создадим событие, чтобы не было проблем с ключем /SINGLE
 		lstrcpy(ms_ConEmuAliveEvent, CEGUI_ALIVE_EVENT);
 		DWORD nSize = MAX_PATH;

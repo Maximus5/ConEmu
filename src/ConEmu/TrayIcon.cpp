@@ -5,7 +5,7 @@ TrayIcon Icon;
 TrayIcon::TrayIcon()
 {
     memset(&IconData, 0, sizeof(IconData));
-    isWindowInTray = NULL;
+    isWindowInTray = false;
 }
 
 TrayIcon::~TrayIcon()
@@ -14,10 +14,20 @@ TrayIcon::~TrayIcon()
 
 void TrayIcon::HideWindowToTray()
 {
-    GetWindowText(ghWnd, IconData.szTip, 127);
+	_ASSERTE(IconData.hIcon!=NULL);
+    GetWindowText(ghWnd, IconData.szTip, countof(IconData.szTip));
     Shell_NotifyIcon(NIM_ADD, &IconData);
     ShowWindow(ghWnd, SW_HIDE);
     isWindowInTray = true;
+}
+
+void TrayIcon::UpdateTitle()
+{
+	if (!isWindowInTray || !IconData.hIcon)
+		return;
+		
+    GetWindowText(ghWnd, IconData.szTip, countof(IconData.szTip));
+    Shell_NotifyIcon(NIM_MODIFY, &IconData);
 }
 
 void TrayIcon::RestoreWindowFromTray()
@@ -45,6 +55,7 @@ void TrayIcon::LoadIcon(HWND inWnd, int inIconResource)
 void TrayIcon::Delete()
 {
     Shell_NotifyIcon(NIM_DELETE, &IconData);
+    memset(&IconData, 0, sizeof(IconData));
 }
 
 LRESULT TrayIcon::OnTryIcon(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
