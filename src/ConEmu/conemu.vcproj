@@ -99,8 +99,8 @@
 		</Configuration>
 		<Configuration
 			Name="Debug|x64"
-			OutputDirectory="E:\Temp\VCProject\ConEmu\$(ConfigurationName).$(PlatformName)"
-			IntermediateDirectory="E:\Temp\VCProject\ConEmu\$(ConfigurationName).$(PlatformName)"
+			OutputDirectory="C:\Temp\VCProject\ConEmu\$(ConfigurationName).$(PlatformName)"
+			IntermediateDirectory="C:\Temp\VCProject\ConEmu\$(ConfigurationName).$(PlatformName)"
 			ConfigurationType="1"
 			CharacterSet="1"
 			>
@@ -144,7 +144,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="comctl32.lib Shlwapi.lib version.lib gdiplus.lib"
-				OutputFile="\\MAXVSX64\FAR\FAR.x64\ConEmu.exe"
+				OutputFile="C:\Users\Max\Desktop\FAR\FAR2.x64\ConEmu.exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
 				SubSystem="2"
@@ -261,8 +261,8 @@
 		</Configuration>
 		<Configuration
 			Name="Release|x64"
-			OutputDirectory="E:\Temp\VCProject\ConEmu\$(ConfigurationName).$(PlatformName)"
-			IntermediateDirectory="E:\Temp\VCProject\ConEmu\$(ConfigurationName).$(PlatformName)"
+			OutputDirectory="C:\Temp\VCProject\ConEmu\$(ConfigurationName).$(PlatformName)"
+			IntermediateDirectory="C:\Temp\VCProject\ConEmu\$(ConfigurationName).$(PlatformName)"
 			ConfigurationType="1"
 			CharacterSet="1"
 			WholeProgramOptimization="1"

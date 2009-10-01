@@ -94,8 +94,8 @@
 		</Configuration>
 		<Configuration
 			Name="Debug|x64"
-			OutputDirectory="E:\Temp\VCProject\ConEmuC\$(ConfigurationName).$(PlatformName)"
-			IntermediateDirectory="E:\Temp\VCProject\ConEmuC\$(ConfigurationName).$(PlatformName)"
+			OutputDirectory="C:\Temp\VCProject\ConEmuC\$(ConfigurationName).$(PlatformName)"
+			IntermediateDirectory="C:\Temp\VCProject\ConEmuC\$(ConfigurationName).$(PlatformName)"
 			ConfigurationType="1"
 			CharacterSet="1"
 			>
@@ -137,7 +137,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="\\MAXVSX64\FAR\FAR.x64\ConEmuC.exe"
+				OutputFile="C:\Users\Max\Desktop\FAR\FAR2.x64\ConEmuC.exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
 				SubSystem="1"
@@ -245,8 +245,8 @@
 		</Configuration>
 		<Configuration
 			Name="Release|x64"
-			OutputDirectory="E:\Temp\VCProject\ConEmuÑ\$(ConfigurationName).$(PlatformName)"
-			IntermediateDirectory="E:\Temp\VCProject\ConEmuÑ\$(ConfigurationName).$(PlatformName)"
+			OutputDirectory="C:\Temp\VCProject\ConEmuÑ\$(ConfigurationName).$(PlatformName)"
+			IntermediateDirectory="C:\Temp\VCProject\ConEmuÑ\$(ConfigurationName).$(PlatformName)"
 			ConfigurationType="1"
 			CharacterSet="1"
 			WholeProgramOptimization="1"

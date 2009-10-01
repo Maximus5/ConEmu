@@ -2085,7 +2085,7 @@ COORD CVirtualConsole::ClientToConsole(LONG x, LONG y)
         cr.X = x/gSet.FontWidth();
     // ј теперь, если возможно, уточним X координату
     if (this) {
-    	if (ConCharX && cr.Y < (int)TextHeight) {
+    	if (ConCharX && cr.Y >= 0 && cr.Y < (int)TextHeight) {
     		DWORD* ConCharXLine = ConCharX + cr.Y * TextWidth;
 			for (uint i = 0; i < TextWidth; i++, ConCharXLine++) {
 				if (((int)*ConCharXLine) >= x) {
