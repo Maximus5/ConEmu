@@ -118,7 +118,7 @@ CConEmuMain::CConEmuMain()
 	//mh_PopupHook = NULL;
     mp_TaskBar = NULL;
 
-    pVCon = NULL;
+    mp_VActive = NULL; mp_VCon1 = NULL; mp_VCon2 = NULL;
     memset(mp_VCon, 0, sizeof(mp_VCon));
     
 	UINT nAppMsg = WM_APP+10;
@@ -367,7 +367,7 @@ RECT CConEmuMain::CalcMargins(enum ConEmuMargins mg)
         }   break;
         //case CEM_BACK:  // Отступы от краев окна фона (с прокруткой) до окна с отрисовкой (DC)
         //{
-        //    if (gConEmu.pVCon && gConEmu.pVCon->RCon()->isBufferHeight()) { //TODO: а показывается ли сейчас прокрутка?
+        //    if (gConEmu.mp_VActive && gConEmu.mp_VActive->RCon()->isBufferHeight()) { //TODO: а показывается ли сейчас прокрутка?
         //        rc = MakeRect(0,0,GetSystemMetrics(SM_CXVSCROLL),0);
         //    } else {
         //        rc = MakeRect(0,0); // раз прокрутки нет - значит дополнительные отступы не нужны
@@ -450,8 +450,8 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tF
                 MBoxAssert(tWhat!=CER_CONSOLE);
                 
                 if (gSet.FontWidth()==0) {
-                    MBoxAssert(gConEmu.pVCon!=NULL);
-                    gConEmu.pVCon->InitDC(false, true); // инициализировать ширину шрифта по умолчанию
+                    MBoxAssert(gConEmu.mp_VActive!=NULL);
+                    gConEmu.mp_VActive->InitDC(false, true); // инициализировать ширину шрифта по умолчанию
                 }
                 
                 // ЭТО размер окна отрисовки DC
@@ -513,7 +513,7 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tF
 
 			// Для корректного деления на размер знакоместа...
             if (gSet.FontWidth()==0 || gSet.FontHeight()==0)
-                gConEmu.pVCon->InitDC(false, true); // инициализировать ширину шрифта по умолчанию
+                gConEmu.mp_VActive->InitDC(false, true); // инициализировать ширину шрифта по умолчанию
 			//rc.right ++;
 			//int nShift = (gSet.FontWidth() - 1) / 2; if (nShift < 1) nShift = 1;
 			//rc.right += nShift;
@@ -525,8 +525,8 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tF
                 // NTVDM устанавливает ВЫСОТУ экранного буфера... в 25/28/43/50 строк
                 // путем округления текущей высоты (то есть если до запуска 16bit
                 // было 27 строк, то скорее всего будет установлена высота в 28 строк)
-                RECT rc1 = MakeRect(gConEmu.pVCon->TextWidth*gSet.FontWidth(), gConEmu.pVCon->TextHeight*gSet.FontHeight());
-                	//gSet.ntvdmHeight/*pVCon->TextHeight*/*gSet.FontHeight());
+                RECT rc1 = MakeRect(gConEmu.mp_VActive->TextWidth*gSet.FontWidth(), gConEmu.mp_VActive->TextHeight*gSet.FontHeight());
+                	//gSet.ntvdmHeight/*mp_VActive->TextHeight*/*gSet.FontHeight());
                 if (rc1.bottom > (rc.bottom - rc.top))
                 	rc1.bottom = (rc.bottom - rc.top); // Если размер вылез за текущий - обрежем снизу :(
                     
@@ -556,7 +556,7 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tF
                 
 				//2009-07-09 - ClientToConsole использовать нельзя, т.к. после его
 				//  приближений высота может получиться больше Ideal, а ширина - меньше
-                //COORD cr = gConEmu.pVCon->ClientToConsole( (rc.right - rc.left), (rc.bottom - rc.top) );
+                //COORD cr = gConEmu.mp_VActive->ClientToConsole( (rc.right - rc.left), (rc.bottom - rc.top) );
                 //rc.right = (rc.right - rc.left) / gSet.Log Font.lfWidth;
                 //rc.bottom = (rc.bottom - rc.top) / gSet.Log Font.lfHeight;
                 //rc.right = cr.X; rc.bottom = cr.Y;
@@ -756,7 +756,7 @@ RECT CConEmuMain::MapRect(RECT rFrom, BOOL bFrame2Client)
 //      MBoxAssert(FALSE);
 //      // размер шрифта еще не инициализирован! вернем текущий размер консоли! TODO:
 //      CONSOLE_SCREEN_BUFFER_INFO inf; memset(&inf, 0, sizeof(inf));
-//      GetConsoleScreenBufferInfo(pVCon->hConOut(), &inf);
+//      GetConsoleScreenBufferInfo(mp_VActive->hConOut(), &inf);
 //      size = inf.dwSize;
 //      return size; 
 //  }
@@ -840,9 +840,9 @@ void CConEmuMain::SetConsoleWindowSize(const COORD& size, bool updateInfo)
     }*/
 
     RECT rcCon = MakeRect(size.X,size.Y);
-    if (pVCon) {
-        if (!pVCon->RCon()->SetConsoleSize(size))
-            rcCon = MakeRect(pVCon->TextWidth,pVCon->TextHeight);
+    if (mp_VActive) {
+        if (!mp_VActive->RCon()->SetConsoleSize(size))
+            rcCon = MakeRect(mp_VActive->TextWidth,mp_VActive->TextHeight);
     }
     RECT rcWnd = CalcRect(CER_MAIN, rcCon, CER_CONSOLE);
 
@@ -854,7 +854,7 @@ void CConEmuMain::SetConsoleWindowSize(const COORD& size, bool updateInfo)
 // Изменить размер консоли по размеру окна (главного)
 void CConEmuMain::SyncConsoleToWindow()
 {
-    if (mb_SkipSyncSize || isNtvdm() || !pVCon)
+    if (mb_SkipSyncSize || isNtvdm() || !mp_VActive)
         return;
 
     #ifdef _DEBUG
@@ -863,7 +863,7 @@ void CConEmuMain::SyncConsoleToWindow()
     }
     #endif
 
-    pVCon->RCon()->SyncConsole2Window();
+    mp_VActive->RCon()->SyncConsole2Window();
 
     /*
     DEBUGLOGFILE("SyncConsoleToWindow\n");
@@ -873,54 +873,54 @@ void CConEmuMain::SyncConsoleToWindow()
     // Посчитать нужный размер консоли
     RECT newCon = CalcRect(CER_CONSOLE, rcClient, CER_MAINCLIENT);
 
-    pVCon->SetConsoleSize(MakeCoord(newCon.right, newCon.bottom));
+    mp_VActive->SetConsoleSize(MakeCoord(newCon.right, newCon.bottom));
     */
 
     /*if (!isZoomed() && !isIconic() && !gSet.isFullScreen)
-        gSet.UpdateSize(pVCon->TextWidth, pVCon->TextHeight);*/
+        gSet.UpdateSize(mp_VActive->TextWidth, mp_VActive->TextHeight);*/
 
     /*
     // Посчитать нужный размер консоли
     //COORD newConSize = ConsoleSizeFromWindow();
     // Получить текущий размер консольного окна
     CONSOLE_SCREEN_BUFFER_INFO inf; memset(&inf, 0, sizeof(inf));
-    //GetConsoleScreenBufferInfo(pVCon->hConOut(), &inf);
+    //GetConsoleScreenBufferInfo(mp_VActive->hConOut(), &inf);
 
     // Если нужно менять - ...
     if (newCon.right != (inf.srWindow.Right-inf.srWindow.Left+1) ||
         newCon.bottom != (inf.srWindow.Bottom-inf.srWindow.Top+1))
     {
         SetConsoleWindowSize(MakeCoord(newCon.right,newCon.bottom), true);
-        if (pVCon)
-            pVCon->InitDC(false);
+        if (mp_VActive)
+            mp_VActive->InitDC(false);
     }
     */
 }
 
 void CConEmuMain::SyncNtvdm()
 {
-    //COORD sz = {pVCon->TextWidth, pVCon->TextHeight};
+    //COORD sz = {mp_VActive->TextWidth, mp_VActive->TextHeight};
     //SetConsoleWindowSize(sz, false);
 
     OnSize();
 }
 
-// Установить размер основного окна по текущему размеру pVCon
+// Установить размер основного окна по текущему размеру mp_VActive
 void CConEmuMain::SyncWindowToConsole()
 {
     DEBUGLOGFILE("SyncWindowToConsole\n");
 
-    if (mb_SkipSyncSize || !pVCon)
+    if (mb_SkipSyncSize || !mp_VActive)
         return;
 
     #ifdef _DEBUG
     _ASSERT(GetCurrentThreadId() == mn_MainThreadId);
     #endif
 
-    RECT rcDC = pVCon->GetRect();
-        /*MakeRect(pVCon->Width, pVCon->Height);
-    if (pVCon->Width == 0 || pVCon->Height == 0) {
-        rcDC = MakeRect(pVCon->winSize.X, pVCon->winSize.Y);
+    RECT rcDC = mp_VActive->GetRect();
+        /*MakeRect(mp_VActive->Width, mp_VActive->Height);
+    if (mp_VActive->Width == 0 || mp_VActive->Height == 0) {
+        rcDC = MakeRect(mp_VActive->winSize.X, mp_VActive->winSize.Y);
     }*/
 
     //_ASSERT(rcDC.right>250 && rcDC.bottom>200);
@@ -931,18 +931,18 @@ void CConEmuMain::SyncWindowToConsole()
     
     RECT wndR; GetWindowRect(ghWnd, &wndR); // текущий XY
 
-    gSet.UpdateSize(pVCon->TextWidth, pVCon->TextHeight);
+    gSet.UpdateSize(mp_VActive->TextWidth, mp_VActive->TextHeight);
 
     MOVEWINDOW ( ghWnd, wndR.left, wndR.top, rcWnd.right, rcWnd.bottom, 1);
     
     //RECT consoleRect = ConsoleOffsetRect();
 
     //#ifdef MSGLOGGER
-    //    char szDbg[100]; wsprintfA(szDbg, "   pVCon:Size={%i,%i}\n", pVCon->Width,pVCon->Height);
+    //    char szDbg[100]; wsprintfA(szDbg, "   mp_VActive:Size={%i,%i}\n", mp_VActive->Width,mp_VActive->Height);
     //    DEBUGLOGFILE(szDbg);
     //#endif
     //
-    //MOVEWINDOW ( ghWnd, wndR.left, wndR.top, pVCon->Width + cwShift.x + consoleRect.left + consoleRect.right, pVCon->Height + cwShift.y + consoleRect.top + consoleRect.bottom, 1);
+    //MOVEWINDOW ( ghWnd, wndR.left, wndR.top, mp_VActive->Width + cwShift.x + consoleRect.left + consoleRect.right, mp_VActive->Height + cwShift.y + consoleRect.top + consoleRect.bottom, 1);
 }
 
 bool CConEmuMain::SetWindowMode(uint inMode)
@@ -978,7 +978,7 @@ bool CConEmuMain::SetWindowMode(uint inMode)
 			// Расчитать размер по оптимальному WindowRect
 			RECT rcCon = CalcRect(CER_CONSOLE, mrc_Ideal, CER_MAIN);
 			if (!rcCon.right || !rcCon.bottom) { rcCon.right = gSet.wndWidth; rcCon.bottom = gSet.wndHeight; }
-            if (pVCon && !pVCon->RCon()->SetConsoleSize(MakeCoord(rcCon.right, rcCon.bottom))) {
+            if (mp_VActive && !mp_VActive->RCon()->SetConsoleSize(MakeCoord(rcCon.right, rcCon.bottom))) {
                 mb_PassSysCommand = false;
                 goto wrap;
             }
@@ -1038,8 +1038,8 @@ bool CConEmuMain::SetWindowMode(uint inMode)
             if (!gSet.isFullScreen && !isZoomed() && !isIconic())
             {
                 gSet.UpdatePos(rcWnd.left, rcWnd.top);
-                if (pVCon)
-                    gSet.UpdateSize(pVCon->TextWidth, pVCon->TextHeight);
+                if (mp_VActive)
+                    gSet.UpdateSize(mp_VActive->TextWidth, mp_VActive->TextHeight);
             }
 
             RECT rcMax = CalcRect(CER_MAXIMIZED, MakeRect(0,0), CER_MAXIMIZED);
@@ -1051,7 +1051,7 @@ bool CConEmuMain::SetWindowMode(uint inMode)
             /*if (gSet.isHideCaption)
             	rcMax.top -= GetSystemMetrics(SM_CYCAPTION);*/
             RECT rcCon = CalcRect(CER_CONSOLE, rcMax, CER_MAIN);
-            if (pVCon && !pVCon->RCon()->SetConsoleSize(MakeCoord(rcCon.right,rcCon.bottom))) {
+            if (mp_VActive && !mp_VActive->RCon()->SetConsoleSize(MakeCoord(rcCon.right,rcCon.bottom))) {
                 mb_PassSysCommand = false;
                 goto wrap;
             }
@@ -1085,13 +1085,13 @@ bool CConEmuMain::SetWindowMode(uint inMode)
             if (!gSet.isFullScreen && !isZoomed() && !isIconic())
             {
                 gSet.UpdatePos(rcWnd.left, rcWnd.top);
-                if (pVCon)
-                    gSet.UpdateSize(pVCon->TextWidth, pVCon->TextHeight);
+                if (mp_VActive)
+                    gSet.UpdateSize(mp_VActive->TextWidth, mp_VActive->TextHeight);
             }
 
             RECT rcMax = CalcRect(CER_FULLSCREEN, MakeRect(0,0), CER_FULLSCREEN);
             RECT rcCon = CalcRect(CER_CONSOLE, rcMax, CER_MAINCLIENT);
-            if (pVCon && !pVCon->RCon()->SetConsoleSize(MakeCoord(rcCon.right,rcCon.bottom))) {
+            if (mp_VActive && !mp_VActive->RCon()->SetConsoleSize(MakeCoord(rcCon.right,rcCon.bottom))) {
                 mb_PassSysCommand = false;
                 goto wrap;
             }
@@ -1159,7 +1159,7 @@ wrap:
 
 void CConEmuMain::ForceShowTabs(BOOL abShow)
 {
-    //if (!pVCon)
+    //if (!mp_VActive)
     //  return;
 
     //2009-05-20 Раз это Force - значит на возможность получить табы из фара забиваем! Для консоли показывается "Console"
@@ -1173,7 +1173,7 @@ void CConEmuMain::ForceShowTabs(BOOL abShow)
         //tab.Current=1;
         //tab.Type = 1;
         //TabBar.Update(&tab, 1);
-        //pVCon->RCon()->SetTabs(&tab, 1);
+        //mp_VActive->RCon()->SetTabs(&tab, 1);
         TabBar.Update();
         //gbPostUpdateWindowSize = true; // 2009-07-04 Resize выполняет сам TabBar
     } else if (!abShow) {
@@ -1232,7 +1232,7 @@ void CConEmuMain::ReSize(BOOL abCorrect2Ideal /*= FALSE*/)
 			_ASSERTE(isMainThread());
 
 			m_Child.SetRedraw(FALSE);
-			pVCon->RCon()->SetConsoleSize(MakeCoord(rcConsole.right, rcConsole.bottom), CECMD_SETSIZESYNC);
+			mp_VActive->RCon()->SetConsoleSize(MakeCoord(rcConsole.right, rcConsole.bottom), CECMD_SETSIZESYNC);
 			m_Child.SetRedraw(TRUE);
 			m_Child.Redraw();
 
@@ -1248,7 +1248,7 @@ void CConEmuMain::ReSize(BOOL abCorrect2Ideal /*= FALSE*/)
 			RECT rcConsole = CalcRect(CER_CONSOLE, client, CER_MAINCLIENT);
 
 			m_Child.SetRedraw(FALSE);
-			pVCon->RCon()->SetConsoleSize(MakeCoord(rcConsole.right, rcConsole.bottom), CECMD_SETSIZESYNC);
+			mp_VActive->RCon()->SetConsoleSize(MakeCoord(rcConsole.right, rcConsole.bottom), CECMD_SETSIZESYNC);
 			m_Child.SetRedraw(TRUE);
 			m_Child.Redraw();
 		}
@@ -1295,9 +1295,9 @@ void CConEmuMain::OnConsoleResize(BOOL abPosted/*=FALSE*/)
         // чтобы не насиловать консоль лишний раз - реальное измененение ее размеров только
         // при отпускании мышкой рамки окна
         BOOL lbSizeChanged = FALSE;
-        if (pVCon) {
-            lbSizeChanged = (c.right != (int)pVCon->RCon()->TextWidth() 
-                    || c.bottom != (int)pVCon->RCon()->TextHeight());
+        if (mp_VActive) {
+            lbSizeChanged = (c.right != (int)mp_VActive->RCon()->TextWidth() 
+                    || c.bottom != (int)mp_VActive->RCon()->TextHeight());
         }
         if (!isSizing() &&
             (lbSizingToDo /*после реального ресайза мышкой*/ ||
@@ -1314,23 +1314,23 @@ void CConEmuMain::OnConsoleResize(BOOL abPosted/*=FALSE*/)
                     SyncConsoleToWindow();
                 OnSize(0, client.right, client.bottom);
             }
-            //_ASSERTE(pVCon!=NULL);
-            if (pVCon) {
-                m_LastConSize = MakeCoord(pVCon->TextWidth,pVCon->TextHeight);
+            //_ASSERTE(mp_VActive!=NULL);
+            if (mp_VActive) {
+                m_LastConSize = MakeCoord(mp_VActive->TextWidth,mp_VActive->TextHeight);
             }
 			// Запомнить "идеальный" размер окна, выбранный пользователем
 			if (lbSizingToDo && !gSet.isFullScreen && !isZoomed() && !isIconic()) {
 				GetWindowRect(ghWnd, &mrc_Ideal);
 			}
         }
-        else if (pVCon 
-            && (m_LastConSize.X != (int)pVCon->TextWidth 
-                || m_LastConSize.Y != (int)pVCon->TextHeight))
+        else if (mp_VActive 
+            && (m_LastConSize.X != (int)mp_VActive->TextWidth 
+                || m_LastConSize.Y != (int)mp_VActive->TextHeight))
         {
             // По идее, сюда мы попадаем только для 16-бит приложений
             if (isNtvdm())
                 SyncNtvdm();
-            m_LastConSize = MakeCoord(pVCon->TextWidth,pVCon->TextHeight);
+            m_LastConSize = MakeCoord(mp_VActive->TextWidth,mp_VActive->TextHeight);
         }
     }
 }
@@ -1344,7 +1344,7 @@ LRESULT CConEmuMain::OnSize(WPARAM wParam, WORD newClientWidth, WORD newClientHe
     wsprintfA(szDbg, "CConEmuMain::OnSize(wParam=%i, Width=%i, Height=%i, "
         "IsIconic=%i, IgnoreSizeChange=%i)\n",
         wParam, newClientWidth, newClientHeight, isIconic(), mb_IgnoreSizeChange);
-    pVCon->RCon()->LogString(szDbg);
+    mp_VActive->RCon()->LogString(szDbg);
     #endif
 
     if (wParam == SIZE_MINIMIZED || isIconic()) {
@@ -1369,11 +1369,11 @@ LRESULT CConEmuMain::OnSize(WPARAM wParam, WORD newClientWidth, WORD newClientHe
         #if defined(EXT_GNUC_LOG)
         char szDbg[255];
         wsprintfA(szDbg, "  --  RealSize(Width=%i, Height=%i)", newClientWidth, newClientHeight);
-        pVCon->RCon()->LogString(szDbg);
+        mp_VActive->RCon()->LogString(szDbg);
         #endif
     } else {
         #if defined(EXT_GNUC_LOG)
-        pVCon->RCon()->LogString("  -- normal mode\n");
+        mp_VActive->RCon()->LogString("  -- normal mode\n");
         #endif
     }
 
@@ -1396,7 +1396,7 @@ LRESULT CConEmuMain::OnSize(WPARAM wParam, WORD newClientWidth, WORD newClientHe
 
     if (wParam != (DWORD)-1 && change2WindowMode == (DWORD)-1) {
         #if defined(EXT_GNUC_LOG)
-        pVCon->RCon()->LogString("  --  Executing SyncConsoleToWindow");
+        mp_VActive->RCon()->LogString("  --  Executing SyncConsoleToWindow");
         #endif
         SyncConsoleToWindow();
     }
@@ -1404,59 +1404,59 @@ LRESULT CConEmuMain::OnSize(WPARAM wParam, WORD newClientWidth, WORD newClientHe
     RECT mainClient = MakeRect(newClientWidth,newClientHeight);
     #if defined(EXT_GNUC_LOG)
     wsprintfA(szDbg, "  --  mainClient=(%i,%i,%i,%i)", mainClient.left, mainClient.top, mainClient.right, mainClient.bottom);
-    pVCon->RCon()->LogString(szDbg);
+    mp_VActive->RCon()->LogString(szDbg);
     #endif
     //RECT dcSize; GetClientRect(ghWndDC, &dcSize);
     RECT dcSize = CalcRect(CER_DC, mainClient, CER_MAINCLIENT);
     #if defined(EXT_GNUC_LOG)
     if (dcSize.top > 40) {
-        pVCon->RCon()->LogString("  **  Error");
+        mp_VActive->RCon()->LogString("  **  Error");
     }
     wsprintfA(szDbg, "  --  dcSize=(%i,%i,%i,%i)", dcSize.left, dcSize.top, dcSize.right, dcSize.bottom);
-    pVCon->RCon()->LogString(szDbg);
+    mp_VActive->RCon()->LogString(szDbg);
     #endif
     //DCClientRect(&client);
     RECT client = CalcRect(CER_DC, mainClient, CER_MAINCLIENT, &dcSize);
     #if defined(EXT_GNUC_LOG)
     wsprintfA(szDbg, "  --  client=(%i,%i,%i,%i)", client.left, client.top, client.right, client.bottom);
-    pVCon->RCon()->LogString(szDbg);
+    mp_VActive->RCon()->LogString(szDbg);
     #endif
 
     RECT rcNewCon; memset(&rcNewCon,0,sizeof(rcNewCon));
-    if (pVCon && pVCon->Width && pVCon->Height) {
+    if (mp_VActive && mp_VActive->Width && mp_VActive->Height) {
         if ((gSet.isTryToCenter && (isZoomed() || gSet.isFullScreen))
 			|| isNtvdm())
         {
-            rcNewCon.left = (client.right+client.left-(int)pVCon->Width)/2;
-            rcNewCon.top = (client.bottom+client.top-(int)pVCon->Height)/2;
+            rcNewCon.left = (client.right+client.left-(int)mp_VActive->Width)/2;
+            rcNewCon.top = (client.bottom+client.top-(int)mp_VActive->Height)/2;
         }
 
         if (rcNewCon.left<client.left) rcNewCon.left=client.left;
         if (rcNewCon.top<client.top) rcNewCon.top=client.top;
 
-        rcNewCon.right = rcNewCon.left + pVCon->Width;
-        rcNewCon.bottom = rcNewCon.top + pVCon->Height;
+        rcNewCon.right = rcNewCon.left + mp_VActive->Width;
+        rcNewCon.bottom = rcNewCon.top + mp_VActive->Height;
         
         if (rcNewCon.right>client.right) rcNewCon.right=client.right;
         if (rcNewCon.bottom>client.bottom) rcNewCon.bottom=client.bottom;
         
         #if defined(EXT_GNUC_LOG)
-        wsprintfA(szDbg, "  --  rcNewCon=(%i,%i,%i,%i) pVCon=(%ix%i) client=(%i,%i,%i,%i)", 
-            rcNewCon.left, rcNewCon.top, rcNewCon.right, rcNewCon.bottom, pVCon->Width, pVCon->Height,
+        wsprintfA(szDbg, "  --  rcNewCon=(%i,%i,%i,%i) mp_VActive=(%ix%i) client=(%i,%i,%i,%i)", 
+            rcNewCon.left, rcNewCon.top, rcNewCon.right, rcNewCon.bottom, mp_VActive->Width, mp_VActive->Height,
             client.left, client.top, client.right, client.bottom);
-        pVCon->RCon()->LogString(szDbg);
+        mp_VActive->RCon()->LogString(szDbg);
         #endif
     } else {
         rcNewCon = client;
         #if defined(EXT_GNUC_LOG)
         wsprintfA(szDbg, "  --  rcNewCon=client(%i,%i,%i,%i)", rcNewCon.left, rcNewCon.top, rcNewCon.right, rcNewCon.bottom);
-        pVCon->RCon()->LogString(szDbg);
+        mp_VActive->RCon()->LogString(szDbg);
         #endif
     }
     // Двигаем/ресайзим окошко DC
     #if defined(EXT_GNUC_LOG)
     wsprintfA(szDbg, "  --  Moving DC window(X=%i, Y=%i, Width=%i, Height=%i)", rcNewCon.left, rcNewCon.top, rcNewCon.right - rcNewCon.left, rcNewCon.bottom - rcNewCon.top);
-    pVCon->RCon()->LogString(szDbg);
+    mp_VActive->RCon()->LogString(szDbg);
     #endif
     MoveWindow(ghWndDC, rcNewCon.left, rcNewCon.top, rcNewCon.right - rcNewCon.left, rcNewCon.bottom - rcNewCon.top, 1);
 
@@ -1471,7 +1471,7 @@ LRESULT CConEmuMain::OnSizing(WPARAM wParam, LPARAM lParam)
     char szDbg[255];
     wsprintfA(szDbg, "CConEmuMain::OnSizing(wParam=%i, L.Lo=%i, L.Hi=%i)\n",
         wParam, LOWORD(lParam), HIWORD(lParam));
-    pVCon->RCon()->LogString(szDbg);
+    mp_VActive->RCon()->LogString(szDbg);
     #endif
 
 
@@ -1586,10 +1586,10 @@ BOOL CConEmuMain::Activate(CVirtualConsole* apVCon)
     if (!isValid(apVCon))
         return FALSE;
     BOOL lbRc = FALSE;
-    for (int i=0; pVCon && i<MAX_CONSOLE_COUNT; i++) {
+    for (int i=0; mp_VActive && i<MAX_CONSOLE_COUNT; i++) {
         if (mp_VCon[i] == apVCon) {
             ConActivate(i);
-            lbRc = (pVCon == apVCon);
+            lbRc = (mp_VActive == apVCon);
             break;
         }
     }
@@ -1598,7 +1598,7 @@ BOOL CConEmuMain::Activate(CVirtualConsole* apVCon)
 
 CVirtualConsole* CConEmuMain::ActiveCon()
 {
-    return pVCon;
+    return mp_VActive;
     /*if (mn_ActiveCon >= MAX_CONSOLE_COUNT)
         mn_ActiveCon = -1;
     if (mn_ActiveCon < 0)
@@ -1610,8 +1610,8 @@ CVirtualConsole* CConEmuMain::ActiveCon()
 int CConEmuMain::ActiveConNum()
 {
     int nActive = -1;
-    for (int i=0; pVCon && i<MAX_CONSOLE_COUNT; i++) {
-        if (mp_VCon[i] == pVCon) {
+    for (int i=0; mp_VActive && i<MAX_CONSOLE_COUNT; i++) {
+        if (mp_VCon[i] == mp_VActive) {
             nActive = i; break;
         }
     }
@@ -1691,8 +1691,8 @@ DWORD CConEmuMain::CheckProcesses()
             dwAllCount += nCount;
     }
 
-    //if (pVCon) {
-    //    mn_ActiveStatus |= pVCon->RCon()->GetProgramStatus();
+    //if (mp_VActive) {
+    //    mn_ActiveStatus |= mp_VActive->RCon()->GetProgramStatus();
     //}
 
     m_ProcCount = dwAllCount;
@@ -2073,18 +2073,18 @@ bool CConEmuMain::ConActivate(int nCon)
         CVirtualConsole* pCon = mp_VCon[nCon];
         if (pCon == NULL)
             return false; // консоль с этим номером не была создана!
-        if (pCon == pVCon)
+        if (pCon == mp_VActive)
             return true; // уже
         bool lbSizeOK = true;
         int nOldConNum = ActiveConNum();
 
         // Спрятать PictureView, или еще чего...
-        if (pVCon) pVCon->RCon()->OnDeactivate(nCon);
+        if (mp_VActive) mp_VActive->RCon()->OnDeactivate(nCon);
         
         // ПЕРЕД переключением на новую консоль - обновить ее размеры
-        if (pVCon) {
-            int nOldConWidth = pVCon->RCon()->TextWidth();
-            int nOldConHeight = pVCon->RCon()->TextHeight();
+        if (mp_VActive) {
+            int nOldConWidth = mp_VActive->RCon()->TextWidth();
+            int nOldConHeight = mp_VActive->RCon()->TextHeight();
             int nNewConWidth = pCon->RCon()->TextWidth();
             int nNewConHeight = pCon->RCon()->TextHeight();
             if (nOldConWidth != nNewConWidth || nOldConHeight != nNewConHeight) {
@@ -2092,7 +2092,7 @@ bool CConEmuMain::ConActivate(int nCon)
             }
         }
 
-        pVCon = pCon;
+        mp_VActive = pCon;
 
         pCon->RCon()->OnActivate(nCon, nOldConNum);
         
@@ -2110,9 +2110,9 @@ CVirtualConsole* CConEmuMain::CreateCon(RConStartArgs *args)
         if (!mp_VCon[i]) {
             pCon = CVirtualConsole::CreateVCon(args);
             if (pCon) {
-                if (pVCon) pVCon->RCon()->OnDeactivate(i);
+                if (mp_VActive) mp_VActive->RCon()->OnDeactivate(i);
                 mp_VCon[i] = pCon;
-                pVCon = pCon;
+                mp_VActive = pCon;
                 pCon->RCon()->OnActivate(i, ActiveConNum());
                 
                 //mn_ActiveCon = i;
@@ -2174,7 +2174,7 @@ LRESULT CConEmuMain::GuiShellExecuteEx(SHELLEXECUTEINFO* lpShellExecute, BOOL ab
 		lRc = ::ShellExecuteEx(lpShellExecute);
 		
 		if (abAllowAsync && lRc == 0) {
-			pVCon->RCon()->CloseConsole();
+			mp_VActive->RCon()->CloseConsole();
 		}
 	}
 
@@ -2328,8 +2328,8 @@ void CConEmuMain::UnRegisterHotKeys()
 
 void CConEmuMain::CtrlWinAltSpace()
 {
-    if (!pVCon) {
-    	//MBox(L"CtrlWinAltSpace: pVCon==NULL");
+    if (!mp_VActive) {
+    	//MBox(L"CtrlWinAltSpace: mp_VActive==NULL");
     	return;
 	}
     
@@ -2345,7 +2345,7 @@ void CConEmuMain::CtrlWinAltSpace()
     dwLastSpaceTick = GetTickCount();
 
     //MBox(L"CtrlWinAltSpace: Toggle");
-    pVCon->RCon()->ShowConsole(-1); // Toggle visibility
+    mp_VActive->RCon()->ShowConsole(-1); // Toggle visibility
 }
 
 void CConEmuMain::Recreate(BOOL abRecreate, BOOL abConfirm)
@@ -2395,21 +2395,21 @@ void CConEmuMain::Recreate(BOOL abRecreate, BOOL abConfirm)
         // Restart or close console
         int nActive = ActiveConNum();
         if (nActive >=0) {
-			args.bRunAsAdministrator = pVCon->RCon()->isAdministrator();
+			args.bRunAsAdministrator = mp_VActive->RCon()->isAdministrator();
 
             BOOL b = gbDontEnable;
             gbDontEnable = TRUE;
             int nRc = DialogBoxParam(g_hInstance, MAKEINTRESOURCE(IDD_RESTART), ghWnd, RecreateDlgProc, (LPARAM)&args);
             gbDontEnable = b;
             if (nRc == IDC_TERMINATE) {
-                pVCon->RCon()->CloseConsole();
+                mp_VActive->RCon()->CloseConsole();
                 return;
             }
             if (nRc != IDC_START)
                 return;
 			m_Child.Redraw();
             // Собственно, Recreate
-            pVCon->RCon()->RecreateProcess(&args);
+            mp_VActive->RCon()->RecreateProcess(&args);
         }
     }
     
@@ -2739,15 +2739,15 @@ void CConEmuMain::UpdateProcessDisplay(BOOL abForce)
         return;
 
     wchar_t szNo[32];
-    DWORD nProgramStatus = pVCon->RCon()->GetProgramStatus();
-    DWORD nFarStatus = pVCon->RCon()->GetFarStatus();
+    DWORD nProgramStatus = mp_VActive->RCon()->GetProgramStatus();
+    DWORD nFarStatus = mp_VActive->RCon()->GetFarStatus();
     CheckDlgButton(gSet.hInfo, cbsTelnetActive, (nProgramStatus&CES_TELNETACTIVE) ? BST_CHECKED : BST_UNCHECKED);
     CheckDlgButton(gSet.hInfo, cbsNtvdmActive, (nProgramStatus&CES_NTVDM) ? BST_CHECKED : BST_UNCHECKED);
     CheckDlgButton(gSet.hInfo, cbsFarActive, (nProgramStatus&CES_FARACTIVE) ? BST_CHECKED : BST_UNCHECKED);
     CheckDlgButton(gSet.hInfo, cbsFilePanel, (nFarStatus&CES_FILEPANEL) ? BST_CHECKED : BST_UNCHECKED);
     CheckDlgButton(gSet.hInfo, cbsEditor, (nFarStatus&CES_EDITOR) ? BST_CHECKED : BST_UNCHECKED);
     CheckDlgButton(gSet.hInfo, cbsViewer, (nFarStatus&CES_VIEWER) ? BST_CHECKED : BST_UNCHECKED);
-    SetDlgItemText(gSet.hInfo, tsTopPID, _itow(pVCon->RCon()->GetFarPID(), szNo, 10));
+    SetDlgItemText(gSet.hInfo, tsTopPID, _itow(mp_VActive->RCon()->GetFarPID(), szNo, 10));
 	CheckDlgButton(gSet.hInfo, cbsProgress, (nFarStatus&CES_WASPROGRESS) ? BST_CHECKED : BST_UNCHECKED);
 	CheckDlgButton(gSet.hInfo, cbsProgressError, (nFarStatus&CES_OPER_ERROR) ? BST_CHECKED : BST_UNCHECKED);
 
@@ -2763,7 +2763,7 @@ void CConEmuMain::UpdateProcessDisplay(BOOL abForce)
         ConProcess* pPrc = NULL;
         int nCount = mp_VCon[j]->RCon()->GetProcesses(&pPrc);
         for (int i=0; i<nCount; i++) {
-            if (mp_VCon[j] == pVCon)
+            if (mp_VCon[j] == mp_VActive)
                 _tcscpy(temp, _T("(*) "));
             else
                 temp[0] = 0;
@@ -2786,8 +2786,8 @@ void CConEmuMain::UpdateSizes()
         return;
     }
 
-    if (pVCon)
-        pVCon->UpdateInfo();
+    if (mp_VActive)
+        mp_VActive->UpdateInfo();
     else {
         SetDlgItemText(gSet.hInfo, tConSizeChr, _T("?"));
         SetDlgItemText(gSet.hInfo, tConSizePix, _T("?"));
@@ -2813,7 +2813,7 @@ void CConEmuMain::UpdateTitle(LPCTSTR asNewTitle)
     }
 
     if (!asNewTitle)
-    	if ((asNewTitle = pVCon->RCon()->GetTitle()) == NULL)
+    	if ((asNewTitle = mp_VActive->RCon()->GetTitle()) == NULL)
     		return;
     
     wcscpy(Title, asNewTitle);
@@ -2853,7 +2853,7 @@ void CConEmuMain::UpdateProgress(BOOL abUpdateTitle)
     short nProgress = -1, n;
     BOOL bActiveHasProgress = FALSE;
 	BOOL bWasError = FALSE;
-    if ((nProgress = pVCon->RCon()->GetProgress(&bWasError)) >= 0) {
+    if ((nProgress = mp_VActive->RCon()->GetProgress(&bWasError)) >= 0) {
         mn_Progress = nProgress;
         bActiveHasProgress = TRUE;
     }
@@ -2895,7 +2895,7 @@ void CConEmuMain::UpdateProgress(BOOL abUpdateTitle)
         for (int n=0; n<MAX_CONSOLE_COUNT; n++) {
             if (mp_VCon[n]) {
                 nCount ++;
-                if (pVCon == mp_VCon[n])
+                if (mp_VActive == mp_VCon[n])
                     nCur = n+1;
             }
         }
@@ -3102,6 +3102,13 @@ VOID CConEmuMain::WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hw
     }
 #endif
 
+void CConEmuMain::Invalidate(CVirtualConsole* apVCon)
+{
+	if (!this || !apVCon) return;
+	TODO("После добавления второго viewport'а потребуется доработка");
+	m_Child.Invalidate();
+}
+
 void CConEmuMain::InvalidateAll()
 {
     InvalidateRect(ghWnd, NULL, TRUE);
@@ -3132,7 +3139,7 @@ void CConEmuMain::PaintCon()
 {
     if (ProgressBars)
         ProgressBars->OnTimer();
-    pVCon->Paint();
+    mp_VActive->Paint();
 
 #ifdef _DEBUG
 	if (GetKeyState(VK_SCROLL) & 1) {
@@ -3147,7 +3154,7 @@ void CConEmuMain::RePaint()
 {
     TabBar.RePaint();
     m_Back.RePaint();
-    pVCon->Paint(); // если pVCon==NULL - будет просто выполнена заливка фоном.
+    mp_VActive->Paint(); // если mp_VActive==NULL - будет просто выполнена заливка фоном.
 }
 
 void CConEmuMain::Update(bool isForce /*= false*/)
@@ -3159,8 +3166,8 @@ void CConEmuMain::Update(bool isForce /*= false*/)
         }
     }
     
-    if (pVCon) {
-        pVCon->Update(isForce);
+    if (mp_VActive) {
+        mp_VActive->Update(isForce);
         //InvalidateAll();
     }
 }
@@ -3180,8 +3187,8 @@ void CConEmuMain::Update(bool isForce /*= false*/)
 DWORD CConEmuMain::GetFarPID()
 {
     DWORD dwPID = 0;
-    if (pVCon)
-        dwPID = pVCon->RCon()->GetFarPID();
+    if (mp_VActive)
+        dwPID = mp_VActive->RCon()->GetFarPID();
     return dwPID;
 }
 
@@ -3210,10 +3217,10 @@ CVirtualConsole* CConEmuMain::GetVCon(int nIdx)
 
 bool CConEmuMain::isActive(CVirtualConsole* apVCon)
 {
-    if (!this)
+    if (!this || !apVCon)
         return false;
         
-    if (apVCon == pVCon)
+    if (apVCon == mp_VActive)
         return true;
         
     return false;
@@ -3223,8 +3230,8 @@ bool CConEmuMain::isConSelectMode()
 {
     //TODO: По курсору, что-ли попробовать определять?
     //return gb_ConsoleSelectMode;
-    if (pVCon)
-        return pVCon->RCon()->isConSelectMode();
+    if (mp_VActive)
+        return mp_VActive->RCon()->isConSelectMode();
     return false;
 }
 
@@ -3235,8 +3242,8 @@ bool CConEmuMain::isDragging()
 
 bool CConEmuMain::isFilePanel(bool abPluginAllowed/*=false*/)
 {
-    if (!pVCon) return false;
-    return pVCon->RCon()->isFilePanel(abPluginAllowed);
+    if (!mp_VActive) return false;
+    return mp_VActive->RCon()->isFilePanel(abPluginAllowed);
 }
 
 bool CConEmuMain::isFirstInstance()
@@ -3272,14 +3279,14 @@ bool CConEmuMain::isFirstInstance()
 
 bool CConEmuMain::isEditor()
 {
-    if (!pVCon) return false;
-    return pVCon->RCon()->isEditor();
+    if (!mp_VActive) return false;
+    return mp_VActive->RCon()->isEditor();
 }
 
 bool CConEmuMain::isFar()
 {
-    if (!pVCon) return false;
-    return pVCon->RCon()->isFar();
+    if (!mp_VActive) return false;
+    return mp_VActive->RCon()->isFar();
 }
 
 bool CConEmuMain::isLBDown()
@@ -3318,8 +3325,8 @@ bool CConEmuMain::isMeForeground()
 
 bool CConEmuMain::isNtvdm()
 {
-    if (!pVCon) return false;
-    return pVCon->RCon()->isNtvdm();
+    if (!mp_VActive) return false;
+    return mp_VActive->RCon()->isNtvdm();
 }
 
 bool CConEmuMain::isValid(CVirtualConsole* apVCon)
@@ -3337,8 +3344,20 @@ bool CConEmuMain::isValid(CVirtualConsole* apVCon)
 
 bool CConEmuMain::isViewer()
 {
-    if (!pVCon) return false;
-    return pVCon->RCon()->isViewer();
+    if (!mp_VActive) return false;
+    return mp_VActive->RCon()->isViewer();
+}
+
+bool CConEmuMain::isVisible(CVirtualConsole* apVCon)
+{
+    if (!this || !apVCon)
+        return false;
+        
+    TODO("После добавления второго viewport'а потребуется коррекция");
+    if (apVCon == mp_VActive || apVCon == mp_VCon1 || apVCon == mp_VCon2)
+        return true;
+        
+    return false;
 }
 
 bool CConEmuMain::isWindowNormal()
@@ -3364,8 +3383,8 @@ bool CConEmuMain::isPictureView()
 
     bool lbPrevPicView = (hPictureView != NULL);
 
-    if (pVCon && pVCon->RCon())
-        hPictureView = pVCon->RCon()->isPictureView();
+    if (mp_VActive && mp_VActive->RCon())
+        hPictureView = mp_VActive->RCon()->isPictureView();
     else
         hPictureView = NULL;
     
@@ -3497,7 +3516,7 @@ LRESULT CConEmuMain::OnClose(HWND hWnd)
     //Icon.Delete(); - перенес в WM_DESTROY
     //mb_InClose = TRUE;
     if (ghConWnd) {
-        pVCon->RCon()->CloseConsole();
+        mp_VActive->RCon()->CloseConsole();
     } else {
         Destroy();
     }
@@ -3604,7 +3623,7 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
         
         PostMessage(ghWnd, mn_MsgPostCreate, 0, 0);
     } else {
-        if (pVCon == NULL || !gConEmu.mb_StartDetached) { // Консоль уже может быть создана, если пришел Attach из ConEmuC
+        if (mp_VActive == NULL || !gConEmu.mb_StartDetached) { // Консоль уже может быть создана, если пришел Attach из ConEmuC
 			RConStartArgs args; args.bDetached = gConEmu.mb_StartDetached;
             if (!CreateCon(&args)) {
                 DisplayLastError(L"Can't create new virtual console!");
@@ -3783,8 +3802,8 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
     }*/
 #endif
 
-    if (pVCon /*&& (messg == WM_SETFOCUS || messg == WM_KILLFOCUS)*/) {
-        pVCon->RCon()->OnFocus(lbSetFocus);
+    if (mp_VActive /*&& (messg == WM_SETFOCUS || messg == WM_KILLFOCUS)*/) {
+        mp_VActive->RCon()->OnFocus(lbSetFocus);
     }
     return 0;
 }
@@ -3898,23 +3917,23 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
     }
 
     // Прокрутка в "буферном" режиме
-    if (gConEmu.pVCon->RCon()->isBufferHeight() && (messg == WM_KEYDOWN || messg == WM_KEYUP) &&
+    if (gConEmu.mp_VActive->RCon()->isBufferHeight() && (messg == WM_KEYDOWN || messg == WM_KEYUP) &&
         (wParam == VK_DOWN || wParam == VK_UP || wParam == VK_NEXT || wParam == VK_PRIOR) &&
         isPressed(VK_CONTROL)
     ) {
-        if (messg != WM_KEYDOWN || !pVCon)
+        if (messg != WM_KEYDOWN || !mp_VActive)
             return 0;
             
         switch(wParam)
         {
         case VK_DOWN:
-            return pVCon->RCon()->OnScroll(SB_LINEDOWN);
+            return mp_VActive->RCon()->OnScroll(SB_LINEDOWN);
         case VK_UP:
-            return pVCon->RCon()->OnScroll(SB_LINEUP);
+            return mp_VActive->RCon()->OnScroll(SB_LINEUP);
         case VK_NEXT:
-            return pVCon->RCon()->OnScroll(SB_PAGEDOWN);
+            return mp_VActive->RCon()->OnScroll(SB_PAGEDOWN);
         case VK_PRIOR:
-            return pVCon->RCon()->OnScroll(SB_PAGEUP);
+            return mp_VActive->RCon()->OnScroll(SB_PAGEUP);
         }
         return 0;
     }
@@ -4023,8 +4042,8 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 			bEscPressed = false;
 	}
 
-    if (pVCon) {
-        pVCon->RCon()->OnKeyboard(hWnd, messg, wParam, lParam, szTranslatedChars);
+    if (mp_VActive) {
+        mp_VActive->RCon()->OnKeyboard(hWnd, messg, wParam, lParam, szTranslatedChars);
     }
 
     return 0;
@@ -4099,7 +4118,7 @@ LRESULT CConEmuMain::OnLangChange(UINT messg, WPARAM wParam, LPARAM lParam)
     DEBUGSTRLANG(szMsg);
     #endif
 	if (messg == WM_INPUTLANGCHANGEREQUEST) {
-		pVCon->RCon()->SwitchKeyboardLayout(wParam,lParam);
+		mp_VActive->RCon()->SwitchKeyboardLayout(wParam,lParam);
 	}
     
   //  if (isFar() && gSet.isLangChangeWsPlugin)
@@ -4236,7 +4255,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			ReleaseCapture();
 			mb_MouseCaptured = FALSE;
 
-			if (pVCon->RCon()->isMouseButtonDown()) {
+			if (mp_VActive->RCon()->isMouseButtonDown()) {
 				if (ptCur.x < dcRect.left)
 					ptCur.x = dcRect.left;
 				else if (ptCur.x >= dcRect.right)
@@ -4250,7 +4269,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		}
 	}
 	
-    if (!pVCon)
+    if (!mp_VActive)
         return 0;
 
     if (gSet.FontWidth()==0 || gSet.FontHeight()==0)
@@ -4260,11 +4279,11 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
     if (messg != WM_MOUSEMOVE) {
         TODO("SetConsoleMode");
         /*DWORD mode = 0;
-        BOOL lb = GetConsoleMode(pVCon->hConIn(), &mode);
+        BOOL lb = GetConsoleMode(mp_VActive->hConIn(), &mode);
         if (!(mode & ENABLE_MOUSE_INPUT)) {
             mode |= ENABLE_MOUSE_INPUT;
             DEBUGSTR(L"!!! Enabling mouse input in console\n");
-            lb = SetConsoleMode(pVCon->hConIn(), mode);
+            lb = SetConsoleMode(mp_VActive->hConIn(), mode);
         }*/
     }
 #endif
@@ -4298,7 +4317,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	ptCur.x -= dcRect.left; ptCur.y -= dcRect.top;
     GetClientRect(ghConWnd, &conRect);
 
-    COORD cr = pVCon->ClientToConsole(ptCur.x,ptCur.y);
+    COORD cr = mp_VActive->ClientToConsole(ptCur.x,ptCur.y);
     short conX = cr.X; //winX/gSet.Log Font.lfWidth;
     short conY = cr.Y; //winY/gSet.Log Font.lfHeight;
 
@@ -4364,7 +4383,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
     }
 
     ///*&& isPressed(VK_LBUTTON)*/) && // Если этого не делать - при выделении мышкой консоль может самопроизвольно прокрутиться
-    CRealConsole* pRCon = pVCon->RCon();
+    CRealConsole* pRCon = mp_VActive->RCon();
     // Только при скрытой консоли. Иначе мы ConEmu видеть вообще не будем
     if (pRCon && (/*pRCon->isBufferHeight() ||*/ !pRCon->isWindowVisible())
         && (messg == WM_LBUTTONDOWN || messg == WM_RBUTTONDOWN || messg == WM_LBUTTONDBLCLK || messg == WM_RBUTTONDBLCLK
@@ -4374,8 +4393,8 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
        // buffer mode: cheat the console window: adjust its position exactly to the cursor
        RECT win;
        GetWindowRect(ghWnd, &win);
-       short x = win.left + ptCur.x - MulDiv(ptCur.x, conRect.right, klMax<uint>(1, pVCon->Width));
-       short y = win.top + ptCur.y - MulDiv(ptCur.y, conRect.bottom, klMax<uint>(1, pVCon->Height));
+       short x = win.left + ptCur.x - MulDiv(ptCur.x, conRect.right, klMax<uint>(1, mp_VActive->Width));
+       short y = win.top + ptCur.y - MulDiv(ptCur.y, conRect.bottom, klMax<uint>(1, mp_VActive->Height));
        RECT con;
        GetWindowRect(ghConWnd, &con);
        if (con.left != x || con.top != y)
@@ -4426,7 +4445,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 
 					BOOL lbLeftDrag = (mouse.state & DRAG_L_ALLOWED) == DRAG_L_ALLOWED;
 
-					pVCon->RCon()->LogString(lbLeftDrag ? "Left drag about to start" : "Right drag about to start");
+					mp_VActive->RCon()->LogString(lbLeftDrag ? "Left drag about to start" : "Right drag about to start");
 
 					// Если сначала фокус был на файловой панели, но после LClick он попал на НЕ файловую - отменить ShellDrag
 					bool bFilePanel = isFilePanel();
@@ -4436,7 +4455,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 						mouse.state &= ~(DRAG_L_ALLOWED | DRAG_L_STARTED | DRAG_R_ALLOWED | DRAG_R_STARTED);
 						mouse.bIgnoreMouseMove = false;
 						//POSTMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( newX, newY ), TRUE);     //посылаем консоли отпускание
-						pVCon->RCon()->OnMouse(WM_LBUTTONUP, wParam, ptCur.x, ptCur.x);
+						mp_VActive->RCon()->OnMouse(WM_LBUTTONUP, wParam, ptCur.x, ptCur.x);
 						//ReleaseCapture(); --2009-03-14
 						return 0;
 					}
@@ -4447,17 +4466,18 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 					// вроде валится, если перед Drag
 					//POSTMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( newX, newY ), TRUE);     //посылаем консоли отпускание
 
+					TODO("Тут бы не посылать мышь в очередь, а передавать через аргумент команды GetDragInfo в плагин");
 					if (lbLeftDrag) { // сразу "отпустить" клавишу
 						//POSTMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( mouse.LClkCon.X, mouse.LClkCon.Y ), TRUE);     //посылаем консоли отпускание
-						pVCon->RCon()->OnMouse(WM_LBUTTONUP, wParam, mouse.LClkDC.X, mouse.LClkDC.Y);
+						mp_VActive->RCon()->OnMouse(WM_LBUTTONUP, wParam, mouse.LClkDC.X, mouse.LClkDC.Y);
 					} else {
 						//POSTMESSAGE(ghConWnd, WM_LBUTTONDOWN, wParam, MAKELPARAM( mouse.RClkCon.X, mouse.RClkCon.Y ), TRUE);     //посылаем консоли отпускание
-						pVCon->RCon()->OnMouse(WM_LBUTTONDOWN, wParam, mouse.RClkDC.X, mouse.RClkDC.Y);
+						mp_VActive->RCon()->OnMouse(WM_LBUTTONDOWN, wParam, mouse.RClkDC.X, mouse.RClkDC.Y);
 						//POSTMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( mouse.RClkCon.X, mouse.RClkCon.Y ), TRUE);     //посылаем консоли отпускание
-						pVCon->RCon()->OnMouse(WM_LBUTTONUP, wParam, mouse.RClkDC.X, mouse.RClkDC.Y);
+						mp_VActive->RCon()->OnMouse(WM_LBUTTONUP, wParam, mouse.RClkDC.X, mouse.RClkDC.Y);
 					}
 
-					pVCon->RCon()->FlushInputQueue();
+					mp_VActive->RCon()->FlushInputQueue();
 	                
 					// Иначе иногда срабатывает FAR'овский D'n'D
 					//SENDMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( newX, newY ));     //посылаем консоли отпускание
@@ -4474,8 +4494,8 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 					//#ifdef NEWMOUSESTYLE
 					//newX = cursor.x; newY = cursor.y;
 					//#else
-					//newX = MulDiv(cursor.x, conRect.right, klMax<uint>(1, pVCon->Width));
-					//newY = MulDiv(cursor.y, conRect.bottom, klMax<uint>(1, pVCon->Height));
+					//newX = MulDiv(cursor.x, conRect.right, klMax<uint>(1, mp_VActive->Width));
+					//newY = MulDiv(cursor.y, conRect.bottom, klMax<uint>(1, mp_VActive->Height));
 					//#endif
 					//if (lbLeftDrag)
 					//  POSTMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( newX, newY ), TRUE);     //посылаем консоли отпускание
@@ -4493,7 +4513,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
                 //isRBDown=false;
                 mouse.state &= ~(DRAG_R_ALLOWED | DRAG_R_STARTED | MOUSE_R_LOCKED);
                 //POSTMESSAGE(ghConWnd, WM_RBUTTONDOWN, 0, MAKELPARAM( mouse.RClkCon.X, mouse.RClkCon.Y ), TRUE);
-                pVCon->RCon()->OnMouse(WM_RBUTTONDOWN, 0, mouse.RClkDC.X, mouse.RClkDC.Y);
+                mp_VActive->RCon()->OnMouse(WM_RBUTTONDOWN, 0, mouse.RClkDC.X, mouse.RClkDC.Y);
             }
             return 0;
         }
@@ -4520,8 +4540,8 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
             mouse.bIgnoreMouseMove = false;
             mouse.LClkCon = MakeCoord(conX,conY);
             mouse.LClkDC = MakeCoord(ptCur.x,ptCur.y);
-            if (!isConSelectMode() && isFilePanel() && pVCon &&
-				pVCon->RCon()->CoordInPanel(mouse.LClkCon))
+            if (!isConSelectMode() && isFilePanel() && mp_VActive &&
+				mp_VActive->RCon()->CoordInPanel(mouse.LClkCon))
             {
                 //SetCapture(ghWndDC); --2009-03-14
                 cursor.x = LOWORD(lParam);
@@ -4534,7 +4554,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
                 }
                 //if (gSet.is DnD) mouse.bIgnoreMouseMove = true;
                 //POSTMESSAGE(ghConWnd, messg, wParam, MAKELPARAM( newX, newY ), FALSE); // было SEND
-                pVCon->RCon()->OnMouse(messg, wParam, ptCur.x, ptCur.y);
+                mp_VActive->RCon()->OnMouse(messg, wParam, ptCur.x, ptCur.y);
                 return 0;
             }
         }
@@ -4549,11 +4569,11 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
                 //#ifdef NEWMOUSESTYLE
                 //newX = cursor.x; newY = cursor.y;
                 //#else
-                //newX = MulDiv(cursor.x, conRect.right, klMax<uint>(1, pVCon->Width));
-                //newY = MulDiv(cursor.y, conRect.bottom, klMax<uint>(1, pVCon->Height));
+                //newX = MulDiv(cursor.x, conRect.right, klMax<uint>(1, mp_VActive->Width));
+                //newY = MulDiv(cursor.y, conRect.bottom, klMax<uint>(1, mp_VActive->Height));
                 //#endif
                 //POSTMESSAGE(ghConWnd, messg, wParam, MAKELPARAM( newX, newY ), FALSE);
-                pVCon->RCon()->OnMouse(messg, wParam, cursor.x, cursor.y);
+                mp_VActive->RCon()->OnMouse(messg, wParam, cursor.x, cursor.y);
                 return 0;
             }
         }
@@ -4568,8 +4588,8 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
             mouse.bIgnoreMouseMove = false;
 
             //if (isFilePanel()) // Maximus5
-            if (!isConSelectMode() && isFilePanel() && pVCon &&
-				pVCon->RCon()->CoordInPanel(mouse.RClkCon))
+            if (!isConSelectMode() && isFilePanel() && mp_VActive &&
+				mp_VActive->RCon()->CoordInPanel(mouse.RClkCon))
             {
                 if (gSet.isDragEnabled & DRAG_R_ALLOWED) {
                     if (!gSet.nRDragKey || isPressed(gSet.nRDragKey)) {
@@ -4608,20 +4628,20 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
                     {
                         // Сначала выделить файл под курсором
                         //POSTMESSAGE(ghConWnd, WM_LBUTTONDOWN, MK_LBUTTON, MAKELPARAM( mouse.RClkCon.X, mouse.RClkCon.Y ), TRUE);
-                        pVCon->RCon()->OnMouse(WM_LBUTTONDOWN, MK_LBUTTON, mouse.RClkDC.X, mouse.RClkDC.Y);
+                        mp_VActive->RCon()->OnMouse(WM_LBUTTONDOWN, MK_LBUTTON, mouse.RClkDC.X, mouse.RClkDC.Y);
                         //POSTMESSAGE(ghConWnd, WM_LBUTTONUP, 0, MAKELPARAM( mouse.RClkCon.X, mouse.RClkCon.Y ), TRUE);
-                        pVCon->RCon()->OnMouse(WM_LBUTTONUP, 0, mouse.RClkDC.X, mouse.RClkDC.Y);
+                        mp_VActive->RCon()->OnMouse(WM_LBUTTONUP, 0, mouse.RClkDC.X, mouse.RClkDC.Y);
                         
-                        pVCon->RCon()->FlushInputQueue();
+                        mp_VActive->RCon()->FlushInputQueue();
                     
-                        //pVCon->Update(true);
+                        //mp_VActive->Update(true);
                         //INVALIDATE(); //InvalidateRect(HDCWND, NULL, FALSE);
 
                         // А теперь можно и Apps нажать
                         mouse.bSkipRDblClk=true; // чтобы пока FAR думает в консоль не проскочило мышиное сообщение
                         //POSTMESSAGE(ghConWnd, WM_KEYDOWN, VK_APPS, 0, TRUE);
 
-                        DWORD dwFarPID = pVCon->RCon()->GetFarPID();
+                        DWORD dwFarPID = mp_VActive->RCon()->GetFarPID();
                         if (dwFarPID) AllowSetForegroundWindow(dwFarPID);
 
                         if (gSet.sRClickMacro && *gSet.sRClickMacro) {
@@ -4629,37 +4649,37 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
                             PostMacro(gSet.sRClickMacro);
                         } else {
 							INPUT_RECORD r = {KEY_EVENT};
-                            //pVCon->RCon()->On Keyboard(ghConWnd, WM_KEYDOWN, VK_APPS, (VK_APPS << 16) | (1 << 24));
-                            //pVCon->RCon()->On Keyboard(ghConWnd, WM_KEYUP, VK_APPS, (VK_APPS << 16) | (1 << 24));
+                            //mp_VActive->RCon()->On Keyboard(ghConWnd, WM_KEYDOWN, VK_APPS, (VK_APPS << 16) | (1 << 24));
+                            //mp_VActive->RCon()->On Keyboard(ghConWnd, WM_KEYUP, VK_APPS, (VK_APPS << 16) | (1 << 24));
 							r.Event.KeyEvent.bKeyDown = TRUE;
 							r.Event.KeyEvent.wVirtualKeyCode = VK_APPS;
 							r.Event.KeyEvent.wVirtualScanCode = /*28 на моей клавиатуре*/MapVirtualKey(VK_APPS, 0/*MAPVK_VK_TO_VSC*/);
 							r.Event.KeyEvent.dwControlKeyState = 0x120;
-							pVCon->RCon()->PostConsoleEvent(&r);
+							mp_VActive->RCon()->PostConsoleEvent(&r);
 
 							//On Keyboard(hConWnd, WM_KEYUP, VK_RETURN, 0);
 							r.Event.KeyEvent.bKeyDown = FALSE;
 							r.Event.KeyEvent.dwControlKeyState = 0x120;
-							pVCon->RCon()->PostConsoleEvent(&r);
+							mp_VActive->RCon()->PostConsoleEvent(&r);
                         }
                         return 0;
                     } else {
                         char szLog[100];
                         wsprintfA(szLog, "RightClicked, but condition failed (RCSK:%i, Delay:%i)", (int)gSet.isRClickSendKey, (int)dwDelta);
-                        pVCon->RCon()->LogString(szLog);
+                        mp_VActive->RCon()->LogString(szLog);
                     }
                 } else {
                     char szLog[100];
                     wsprintfA(szLog, "RightClicked, but mouse was moved {%i-%i}->{%i-%i}", Rcursor.x, Rcursor.y, LOWORD(lParam), HIWORD(lParam));
-                    pVCon->RCon()->LogString(szLog);
+                    mp_VActive->RCon()->LogString(szLog);
                 }
                 // Иначе нужно сначала послать WM_RBUTTONDOWN
                 //POSTMESSAGE(ghConWnd, WM_RBUTTONDOWN, wParam, MAKELPARAM( newX, newY ), TRUE);
-                pVCon->RCon()->OnMouse(WM_RBUTTONDOWN, wParam, ptCur.x, ptCur.y);
+                mp_VActive->RCon()->OnMouse(WM_RBUTTONDOWN, wParam, ptCur.x, ptCur.y);
             } else {
                 char szLog[100];
                 wsprintfA(szLog, "RightClicked, but condition failed (RCSK:%i, State:%u)", (int)gSet.isRClickSendKey, (DWORD)mouse.state);
-                pVCon->RCon()->LogString(szLog);
+                mp_VActive->RCon()->LogString(szLog);
             }
             //isRBDown=false; // чтобы не осталось случайно
             mouse.state &= ~(DRAG_R_ALLOWED | DRAG_R_STARTED | MOUSE_R_LOCKED);
@@ -4679,7 +4699,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 fin:
     // заменим даблклик вторым обычным
     //POSTMESSAGE(ghConWnd, messg == WM_RBUTTONDBLCLK ? WM_RBUTTONDOWN : messg, wParam, MAKELPARAM( newX, newY ), FALSE);
-    pVCon->RCon()->OnMouse(messg == WM_RBUTTONDBLCLK ? WM_RBUTTONDOWN : messg, wParam, ptCur.x, ptCur.y);
+    mp_VActive->RCon()->OnMouse(messg == WM_RBUTTONDBLCLK ? WM_RBUTTONDOWN : messg, wParam, ptCur.x, ptCur.y);
     return 0;
 }
 
@@ -4711,7 +4731,7 @@ HSHELL_APPCOMMAND The APPCOMMAND which has been unhandled by the application or 
                 if (mp_VCon[i]->RCon()->ConWnd() == hCon) {
                     FLASHWINFO fl = {sizeof(FLASHWINFO)};
                     if (isMeForeground()) {
-                    	if (mp_VCon[i] != pVCon) { // Только для неактивной консоли
+                    	if (mp_VCon[i] != mp_VActive) { // Только для неактивной консоли
                             fl.dwFlags = FLASHW_STOP; fl.hwnd = ghWnd;
                             FlashWindowEx(&fl); // Чтобы мигание не накапливалось
                     		fl.uCount = 4; fl.dwFlags = FLASHW_ALL; fl.hwnd = ghWnd;
@@ -4804,7 +4824,7 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
         return 0;
         //break;
     case ID_CON_PASTE:
-        pVCon->RCon()->Paste();
+        mp_VActive->RCon()->Paste();
         return 0;
         //break;
     case ID_AUTOSCROLL:
@@ -4814,13 +4834,13 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
         return 0;
         //break;
     case ID_DUMPCONSOLE:
-        if (pVCon)
-            pVCon->DumpConsole();
+        if (mp_VActive)
+            mp_VActive->DumpConsole();
         return 0;
         //break;
     case ID_CON_TOGGLE_VISIBLE:
-        if (pVCon)
-            pVCon->RCon()->ShowConsole(-1); // Toggle visibility
+        if (mp_VActive)
+            mp_VActive->RCon()->ShowConsole(-1); // Toggle visibility
         return 0;
     case ID_HELP:
         {
@@ -5076,7 +5096,7 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 				//OnConsoleResize();
 
 	            // update scrollbar
-	            pVCon->RCon()->UpdateScrollInfo();
+	            mp_VActive->RCon()->UpdateScrollInfo();
 	        }
 
 			if (mh_ConEmuAliveEvent && !mb_ConEmuAliveOwned)
@@ -5105,9 +5125,9 @@ LRESULT CConEmuMain::OnUpdateScrollInfo(BOOL abPosted/* = FALSE*/)
         return 0;
     }
 
-    if (!pVCon)
+    if (!mp_VActive)
         return 0;
-    pVCon->RCon()->UpdateScrollInfo();
+    mp_VActive->RCon()->UpdateScrollInfo();
     return 0;
 }
 
@@ -5131,7 +5151,7 @@ LRESULT CConEmuMain::OnVConTerminated(CVirtualConsole* apVCon, BOOL abPosted /*=
 			//TabBar.Update(TRUE); -- а и не сможет он другую активировать, т.к. RCon вернет FALSE
 
 			// Эта комбинация должна активировать предыдущую консоль (если активна текущая)
-			if (gSet.isTabRecent && apVCon == pVCon) {
+			if (gSet.isTabRecent && apVCon == mp_VActive) {
 				TabBar.SwitchRollback();
 				TabBar.SwitchNext();
 				TabBar.SwitchCommit();
@@ -5142,14 +5162,14 @@ LRESULT CConEmuMain::OnVConTerminated(CVirtualConsole* apVCon, BOOL abPosted /*=
 
 
             WARNING("Вообще-то это нужно бы в CriticalSection закрыть. Несколько консолей может одновременно закрыться");
-            if (pVCon == apVCon) {
+            if (mp_VActive == apVCon) {
                 for (int j=(i-1); j>=0; j--) {
                     if (mp_VCon[j]) {
                         ConActivate(j);
                         break;
                     }
                 }
-                if (pVCon == apVCon) {
+                if (mp_VActive == apVCon) {
                     for (int j=(i+1); j<MAX_CONSOLE_COUNT; j++) {
                         if (mp_VCon[j]) {
                             ConActivate(j);
@@ -5162,8 +5182,8 @@ LRESULT CConEmuMain::OnVConTerminated(CVirtualConsole* apVCon, BOOL abPosted /*=
                 mp_VCon[j-1] = mp_VCon[j];
             }
 			mp_VCon[MAX_CONSOLE_COUNT-1] = NULL;
-            if (pVCon == apVCon)
-                pVCon = NULL;
+            if (mp_VActive == apVCon)
+                mp_VActive = NULL;
             delete apVCon;
             break;
         }
@@ -5673,7 +5693,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
             return 0;
         } else if (messg == gConEmu.mn_MsgUpdateTitle) {
             //gConEmu.UpdateTitle(TitleCmp);
-            gConEmu.UpdateTitle(pVCon->RCon()->GetTitle());
+            gConEmu.UpdateTitle(mp_VActive->RCon()->GetTitle());
             return 0;
         } else if (messg == gConEmu.mn_MsgAttach) {
             return gConEmu.AttachRequested ( (HWND)wParam, (DWORD)lParam );

@@ -181,6 +181,7 @@ public:
 	bool isFilePanel(bool abPluginAllowed=false);
 	bool isEditor();
 	bool isViewer();
+	bool isVisible();
 	bool isNtvdm();
 	bool isPackets();
 	LPCWSTR GetCmd();

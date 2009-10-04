@@ -374,7 +374,7 @@ bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize)
 
             //if (!lbWasInitialized) // если зовется InitDC значит размер консоли изменился
             if (!abNoWndResize) {
-                if (gConEmu.isActive(this))
+                if (gConEmu.isVisible(this))
                     gConEmu.OnSize(-1);
             }
 
@@ -707,13 +707,9 @@ bool CVirtualConsole::Update(bool isForce, HDC *ahDc)
 
 		//if (mb_RequiredForceUpdate || updateText || updateCursor)
 		{
-			if (gConEmu.isActive(this)) {
+			if (gConEmu.isVisible(this)) {
 				mp_RCon->LogString("Invalidating from CVirtualConsole::Update.1");
-				gConEmu.m_Child.Invalidate();
-				//UpdateWindow(ghWndDC); // оно посылает сообщение в окно, и ждет окончания отрисовки
-				//#ifdef _DEBUG
-				//_ASSERTE(!gConEmu.m_Child.mb_Invalidated);
-				//#endif
+				gConEmu.Invalidate(this);
 			}
 
 			return true;
@@ -832,18 +828,22 @@ bool CVirtualConsole::Update(bool isForce, HDC *ahDc)
     //SDC.Leave();
     SCON.Unlock();
 
-    if (lRes && gConEmu.isActive(this)) {
+    // После успешного обновления внутренних буферов (символы/атрибуты)
+    // 
+    if (lRes && gConEmu.isVisible(this)) {
         if (mpsz_LogScreen && mp_RCon && mp_RCon->GetServerPID()) {
+        	// Скинуть буферы в лог
             mn_LogScreenIdx++;
             wchar_t szLogPath[MAX_PATH]; wsprintfW(szLogPath, mpsz_LogScreen, mp_RCon->GetServerPID(), mn_LogScreenIdx);
             Dump(szLogPath);
         }
 
+        // Если допустимо - передернуть обновление viewport'а
 		if (!mb_InPaintCall) {
 			// должен вызываться в основной нити
 			_ASSERTE(gConEmu.isMainThread());
 			mb_PaintRequested = TRUE;
-			gConEmu.m_Child.Invalidate();
+			gConEmu.Invalidate(this);
 			mp_RCon->LogString("Invalidating from CVirtualConsole::Update.2");
 			//09.06.13 а если так? быстрее изменения на экране не появятся?
 			//UpdateWindow(ghWndDC); // оно посылает сообщение в окно, и ждет окончания отрисовки
@@ -1771,7 +1771,7 @@ void CVirtualConsole::UpdateCursor(bool& lRes)
     Cursor.isVisiblePrevFromInfo = cinf.bVisible;
 
     BOOL lbUpdateTick = FALSE;
-    bool bConActive = gConEmu.isActive(this) 
+    bool bConActive = gConEmu.isActive(this) // а тут именно Active, т.к. курсор должен мигать в активной консоли
         #ifndef _DEBUG
         && gConEmu.isMeForeground()
         #endif

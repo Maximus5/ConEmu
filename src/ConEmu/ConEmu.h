@@ -128,7 +128,7 @@ protected:
 	BOOL mb_ProcessCreated; DWORD mn_StartTick;
 	HWINEVENTHOOK mh_WinHook; //, mh_PopupHook;
 	static VOID CALLBACK WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime);
-	CVirtualConsole *mp_VCon[MAX_CONSOLE_COUNT], *pVCon;
+	CVirtualConsole *mp_VCon[MAX_CONSOLE_COUNT], *mp_VActive;
 	bool mb_SkipSyncSize, mb_PassSysCommand;
 	//wchar_t *mpsz_RecreateCmd;
 	ITaskbarList3 *mp_TaskBar;
@@ -205,6 +205,7 @@ public:
 	RECT GetIdealRect() { return mrc_Ideal; };
 	LRESULT GuiShellExecuteEx(SHELLEXECUTEINFO* lpShellExecute, BOOL abAllowAsync);
 	BOOL Init();
+	void Invalidate(CVirtualConsole* apVCon);
 	void InvalidateAll();
 	bool isActive(CVirtualConsole* apVCon);
 	bool isConSelectMode();
@@ -222,6 +223,7 @@ public:
 	bool isSizing();
 	bool isValid(CVirtualConsole* apVCon);
 	bool isViewer();
+	bool isVisible(CVirtualConsole* apVCon);
 	bool isWindowNormal();
 	bool isZoomed();
 	void LoadIcons();

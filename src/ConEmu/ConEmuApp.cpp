@@ -739,11 +739,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	TCHAR *psUnknown = NULL;
     TCHAR *curCommand = cmdLine;
     {
-#ifdef KL_MEM
-        uint params = klSplitCommandLine(curCommand);
-#else
         uint params; klSplitCommandLine(curCommand, &params);
-#endif
 
 		if(params < 2) {
             curCommand = NULL;

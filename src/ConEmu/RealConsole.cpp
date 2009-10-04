@@ -459,6 +459,9 @@ BOOL CRealConsole::SetConsoleSize(COORD size, DWORD anCmdID/*=CECMD_SETSIZE*/)
 
 	DWORD dwPID = GetFarPID();
 	if (dwPID) {
+		// Если это СТАРЫЙ FAR (нет Synchro) - может быть не ресайзить через плагин?
+		// Хотя тут плюс в том, что хоть активация и идет чуть медленнее, но
+		// возврат из ресайза получается строго после обновления консоли
 		if (!mb_PluginDetected || dwPID != mn_FarPID_PluginDetected)
 			dwPID = 0;
 	}
@@ -5339,6 +5342,13 @@ bool CRealConsole::isActive()
     if (!this) return false;
     if (!mp_VCon) return false;
     return gConEmu.isActive(mp_VCon);
+}
+
+bool CRealConsole::isVisible()
+{
+    if (!this) return false;
+    if (!mp_VCon) return false;
+    return gConEmu.isVisible(mp_VCon);
 }
 
 void CRealConsole::CheckFarStates()
