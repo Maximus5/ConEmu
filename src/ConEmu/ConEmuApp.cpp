@@ -739,6 +739,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	TCHAR *psUnknown = NULL;
     TCHAR *curCommand = cmdLine;
     {
+		TODO("Если первый (после запускаемого файла) аргумент начинается НЕ с '/' - завершить разбор параметров и не заменять '""' на пробелы");
         uint params; klSplitCommandLine(curCommand, &params);
 
 		if(params < 2) {

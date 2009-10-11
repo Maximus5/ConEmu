@@ -79,7 +79,6 @@ struct klFile
 __forceinline void klSplitCommandLine(wchar_t *str, uint *n)
 {
 	*n = 0;
-	TODO("Если первый (после запускаемого файла) аргумент начинается НЕ с '/' - завершить разбор параметров и не заменять '""' на пробелы");
 	wchar_t *dst = str, ts;
 	while (*str == ' ')
 		str++;

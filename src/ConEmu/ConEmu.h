@@ -128,7 +128,8 @@ protected:
 	BOOL mb_ProcessCreated; DWORD mn_StartTick;
 	HWINEVENTHOOK mh_WinHook; //, mh_PopupHook;
 	static VOID CALLBACK WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime);
-	CVirtualConsole *mp_VCon[MAX_CONSOLE_COUNT], *mp_VActive;
+	CVirtualConsole *mp_VCon[MAX_CONSOLE_COUNT];
+	CVirtualConsole *mp_VActive, *mp_VCon1, *mp_VCon2;
 	bool mb_SkipSyncSize, mb_PassSysCommand;
 	//wchar_t *mpsz_RecreateCmd;
 	ITaskbarList3 *mp_TaskBar;
