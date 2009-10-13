@@ -2751,10 +2751,18 @@ void ProcessInputMessage(MSG &msg)
 	} else {
 		TODO("Сделать обработку пачки сообщений, вдруг они накопились в очереди?");
 
+		#define ALL_MODIFIERS (LEFT_ALT_PRESSED|RIGHT_ALT_PRESSED|LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED|SHIFT_PRESSED)
+		#define CTRL_MODIFIERS (LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED)
+
 		bool lbProcessEvent = false;
 		bool lbIngoreKey = false;
 		if (r.EventType == KEY_EVENT && r.Event.KeyEvent.bKeyDown &&
 			(r.Event.KeyEvent.wVirtualKeyCode == 'C' || r.Event.KeyEvent.wVirtualKeyCode == VK_CANCEL)
+			&&      ( // Удерживается ТОЛЬКО Ctrl
+					(r.Event.KeyEvent.dwControlKeyState & CTRL_MODIFIERS) &&
+					((r.Event.KeyEvent.dwControlKeyState & ALL_MODIFIERS) 
+					== (r.Event.KeyEvent.dwControlKeyState & CTRL_MODIFIERS))
+					)
 			)
 		{
 			lbProcessEvent = true;
@@ -2770,8 +2778,6 @@ void ProcessInputMessage(MSG &msg)
 
 
 			if (lbProcessEvent) {
-				#define ALL_MODIFIERS (LEFT_ALT_PRESSED|RIGHT_ALT_PRESSED|LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED|SHIFT_PRESSED)
-				#define CTRL_MODIFIERS (LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED)
 
 				BOOL lbRc = FALSE;
 				DWORD dwEvent = (r.Event.KeyEvent.wVirtualKeyCode == 'C') ? CTRL_C_EVENT : CTRL_BREAK_EVENT;
@@ -4311,6 +4317,10 @@ void SendConsoleChanges(CESERVER_REQ* pOut)
     //srv.szGuiPipeName инициализируется только после того, как GUI узнал хэндл консольного окна
     if (srv.szGuiPipeName[0] == 0)
         return;
+	// Иначе после падения (или до начала инициализации?) возникают лишние ошибки
+	TODO("Однако нужно проверить, как оно себя ведет при запуске от имени администратора");
+	if (!ghConEmuWnd)
+		return;
 
     HANDLE hPipe = NULL;
     //DWORD dwErr = 0; //, dwMode = 0;
