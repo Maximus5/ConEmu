@@ -3082,7 +3082,8 @@ DWORD CRealConsole::GetFarPID()
     if (!this)
         return 0;
 
-    if ((mn_ProgramStatus & CES_FARACTIVE) == 0)
+	// 2009-10-16 Если активна 16бит программа - значит фар точно не доступен
+    if (((mn_ProgramStatus & CES_FARACTIVE) == 0) || ((mn_ProgramStatus & CES_NTVDM) == CES_NTVDM))
         return 0;
 
     return mn_FarPID;

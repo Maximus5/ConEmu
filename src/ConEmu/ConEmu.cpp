@@ -4246,6 +4246,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			// ¬ клиентской области (области отрисовки)
 			if (PtInRect(&dcRect, ptCur)) {
 				mb_MouseCaptured = TRUE;
+				TODO("ѕосле скрыти€ ViewPort наверное SetCapture нужно будет делать на ghWnd");
 				SetCapture(ghWndDC);
 			}
 		}
