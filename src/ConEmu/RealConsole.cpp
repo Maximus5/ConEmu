@@ -1911,7 +1911,7 @@ void CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 			// При быстром нажатии Alt-Tab (переключение в другое окно)
 			// в консоль проваливается {press Alt/release Alt}
 			// В результате, может выполниться макрос, повешенный на Alt.
-			if (!gConEmu.isMeForeground()) {
+			if (!gConEmu.isMeForeground() && GetFarPID()) {
 				if (/*isPressed(VK_MENU) &&*/ !isPressed(VK_CONTROL) && !isPressed(VK_SHIFT)) {
 					INPUT_RECORD r = {KEY_EVENT};
 				
@@ -1924,7 +1924,7 @@ void CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 	                
 	                //On Keyboard(hConWnd, WM_KEYUP, VK_TAB, 0);
 					r.Event.KeyEvent.bKeyDown = FALSE;
-					r.Event.KeyEvent.dwControlKeyState = 0x20;
+					r.Event.KeyEvent.dwControlKeyState = 0x22; // было 0x20
 					PostConsoleEvent(&r);
 				}
 			}
