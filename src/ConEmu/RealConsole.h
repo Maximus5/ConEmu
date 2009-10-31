@@ -106,6 +106,7 @@ public:
 
     uint TextWidth();
     uint TextHeight();
+	uint BufferHeight(uint nNewBufferHeight=0);
     
 private:
     HWND    hConWnd;
@@ -119,10 +120,10 @@ public:
     BOOL PreInit(BOOL abCreateBuffers=TRUE);
     void DumpConsole(HANDLE ahFile);
 
-    BOOL SetConsoleSize(COORD size, DWORD anCmdID=CECMD_SETSIZE);
+    BOOL SetConsoleSize(/*COORD size,*/ USHORT sizeX, USHORT sizeY, USHORT sizeBuffer=0, DWORD anCmdID=CECMD_SETSIZE);
 private:
-	BOOL SetConsoleSizeSrv(COORD size, DWORD anCmdID=CECMD_SETSIZE);
-	BOOL SetConsoleSizePlugin(COORD size, DWORD anCmdID=CECMD_SETSIZE);
+	BOOL SetConsoleSizeSrv(/*COORD size,*/ USHORT sizeX, USHORT sizeY, USHORT sizeBuffer, DWORD anCmdID=CECMD_SETSIZE);
+	BOOL SetConsoleSizePlugin(/*COORD size,*/ USHORT sizeX, USHORT sizeY, USHORT sizeBuffer, DWORD anCmdID=CECMD_SETSIZE);
 private:
     //void SendConsoleEvent(INPUT_RECORD* piRec);
     DWORD mn_FlushIn, mn_FlushOut;
@@ -252,9 +253,9 @@ private:
         USHORT nTopVisibleLine; // может отличаться от m_sbi.srWindow.Top, если прокрутка заблокирована
         wchar_t *pConChar;
         WORD  *pConAttr;
-        int nTextWidth, nTextHeight;
+        int nTextWidth, nTextHeight, nBufferHeight;
         int nChange2TextWidth, nChange2TextHeight;
-        BOOL bBufferHeight;
+        BOOL bBufferHeight; // TRUE, tckb tcnm ghjrhenrf
         DWORD nPacketIdx;
         DWORD_PTR dwKeybLayout;
         BOOL bRBtnDrag; // в консоль посылается драг правой кнопкой (выделение в FAR)

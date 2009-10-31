@@ -164,6 +164,7 @@ protected:
 	UINT mn_ShellExecuteEx;
 	UINT mn_PostConsoleResize;
 	UINT mn_ConsoleLangChanged;
+	UINT mn_MsgPostOnBufferHeight;
 	
 	//
 	static DWORD CALLBACK ServerThread(LPVOID lpvParam);
@@ -256,7 +257,7 @@ public:
 	static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 	LRESULT WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 public:
-	void OnBufferHeight(BOOL abBufferHeight);
+	void OnBufferHeight(); //BOOL abBufferHeight);
 	LRESULT OnClose(HWND hWnd);
 	void OnConsoleResize(BOOL abPosted=FALSE);
 	LRESULT OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate);

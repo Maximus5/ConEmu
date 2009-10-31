@@ -6,7 +6,14 @@
 #define COUNTER_REFRESH 5000
 #define MAX_CMD_HISTORY 100
 
-const u8 chSetsNums[19] = {0, 178, 186, 136, 1, 238, 134, 161, 177, 129, 130, 77, 255, 204, 128, 2, 222, 162, 163};
+#ifdef _DEBUG
+#define RASTER_FONTS_NAME L"@Raster fonts"
+#endif
+
+const u8 chSetsNums[] = {0, 178, 186, 136, 1, 238, 134, 161, 177, 129, 130, 77, 255, 204, 128, 2, 222, 162, 163};
+const char *ChSets[] = {"ANSI", "Arabic", "Baltic", "Chinese Big 5", "Default", "East Europe",
+		"GB 2312", "Greek", "Hebrew", "Hangul", "Johab", "Mac", "OEM", "Russian", "Shiftjis",
+		"Symbol", "Thai", "Turkish", "Vietnamese"};
 int upToFontHeight=0;
 HWND ghOpWnd=NULL;
 
@@ -67,6 +74,7 @@ CSettings::CSettings()
     mb_StopRegisterFonts = FALSE;
     mb_IgnoreEditChanged = FALSE;
     mb_IgnoreTtfChange = TRUE;
+	mb_CharSetWasSet = FALSE;
 	mb_TabHotKeyRegistered = FALSE;
     hMain = NULL; hExt = NULL; hColors = NULL; hInfo = NULL; hwndTip = NULL;
     QueryPerformanceFrequency((LARGE_INTEGER *)&mn_Freq);
@@ -258,7 +266,7 @@ void CSettings::LoadSettings()
     _tcscpy(inFont2, LogFont2.lfFaceName);
     DWORD Quality = LogFont.lfQuality;
     //gConEmu.WindowMode = rMaximized;
-    DWORD FontCharSet = LogFont.lfCharSet;
+    mn_LoadFontCharSet = LogFont.lfCharSet;
     bool isBold = (LogFont.lfWeight>=FW_BOLD), isItalic = (LogFont.lfItalic!=FALSE);
     
 //------------------------------------------------------------------------
@@ -304,7 +312,7 @@ void CSettings::LoadSettings()
         reg.Load(L"FontSizeX", FontSizeX);
         reg.Load(L"FontSizeX3", FontSizeX3);
         reg.Load(L"FontSizeX2", FontSizeX2);
-        reg.Load(L"FontCharSet", FontCharSet);
+        reg.Load(L"FontCharSet", mn_LoadFontCharSet);
         reg.Load(L"Anti-aliasing", Quality);
 
 		reg.Load(L"ConsoleFontName", ConsoleFont.lfFaceName);
@@ -480,7 +488,7 @@ void CSettings::LoadSettings()
     LogFont.lfQuality = Quality;
     if (isBold)
         LogFont.lfWeight = FW_BOLD;
-    LogFont.lfCharSet = (BYTE) FontCharSet;
+    LogFont.lfCharSet = (BYTE) mn_LoadFontCharSet;
     if (isItalic)
         LogFont.lfItalic = true;
 
@@ -631,7 +639,7 @@ BOOL CSettings::SaveSettings()
             reg.Save(L"FontSizeX", FontSizeX);
             reg.Save(L"FontSizeX2", FontSizeX2);
             reg.Save(L"FontSizeX3", FontSizeX3);
-            reg.Save(L"FontCharSet", LogFont.lfCharSet);
+            reg.Save(L"FontCharSet", mn_LoadFontCharSet = LogFont.lfCharSet);
             reg.Save(L"Anti-aliasing", LogFont.lfQuality);
             reg.Save(L"WindowMode", isFullScreen ? rFullScreen : gConEmu.isZoomed() ? rMaximized : rNormal);
             reg.Save(L"HideCaption", isHideCaption);
@@ -740,12 +748,16 @@ int CSettings::EnumFamCallBack(LPLOGFONT lplf, LPNEWTEXTMETRIC lpntm, DWORD Font
     // Record the number of raster, TrueType, and vector
     // fonts in the font-count array.
 
-    if (FontType & RASTER_FONTTYPE)
+	if (FontType & RASTER_FONTTYPE) {
         aiFontCount[0]++;
-    else if (FontType & TRUETYPE_FONTTYPE)
+		#ifdef _DEBUG
+		OutputDebugString(L"Raster font: "); OutputDebugString(lplf->lfFaceName); OutputDebugString(L"\n");
+		#endif
+	} else if (FontType & TRUETYPE_FONTTYPE) {
         aiFontCount[2]++;
-    else
+	} else {
         aiFontCount[1]++;
+	}
 
 	if (SendDlgItemMessage(gSet.hMain, tFontFace, CB_FINDSTRINGEXACT, -1, (LPARAM) lplf->lfFaceName)==-1) {
 		SendDlgItemMessage(gSet.hMain, tFontFace, CB_ADDSTRING, 0, (LPARAM) lplf->lfFaceName);
@@ -768,6 +780,11 @@ DWORD CSettings::EnumFontsThread(LPVOID apArg)
 	int aFontCount[] = { 0, 0, 0 };
 	EnumFontFamilies(hdc, (LPCTSTR) NULL, (FONTENUMPROC) EnumFamCallBack, (LPARAM) aFontCount);
 	DeleteDC(hdc);
+
+	#ifdef _DEBUG
+	SendDlgItemMessage(gSet.hMain, tFontFace, CB_INSERTSTRING, 0, (LPARAM)RASTER_FONTS_NAME);
+	#endif
+	
 
 	wchar_t szName[MAX_PATH];
 	GetDlgItemText(gSet.hMain, tFontFace, szName, MAX_PATH);
@@ -907,12 +924,9 @@ LRESULT CSettings::OnInitDialog_Main()
 	}
 
 	{
-		const char *ChSets[] = {"ANSI", "Arabic", "Baltic", "Chinese Big 5", "Default", "East Europe",
-			"GB 2312", "Greek", "Hebrew", "Hangul", "Johab", "Mac", "OEM", "Russian", "Shiftjis",
-			"Symbol", "Thai", "Turkish", "Vietnamese"};
-
+		_ASSERTE(countof(chSetsNums) == countof(ChSets));
 		u8 num = 4;
-		for (uint i=0; i < 19; i++)
+		for (uint i=0; i < countof(ChSets); i++)
 		{
 			SendDlgItemMessageA(hMain, tFontCharset, CB_ADDSTRING, 0, (LPARAM) ChSets[i]);
 			if (chSetsNums[i] == LogFont.lfCharSet) num = i;
@@ -1708,6 +1722,7 @@ LRESULT CSettings::OnComboBox(WPARAM wParam, LPARAM lParam)
     WORD wId = LOWORD(wParam);
     if (wId == tFontCharset)
     {
+		mb_CharSetWasSet = TRUE;
 		PostMessage(hMain, gSet.mn_MsgRecreateFont, wParam, 0);
     }
     else if (wId == tFontFace || wId == tFontFace2 || 
@@ -2439,10 +2454,15 @@ void CSettings::RecreateFont(WORD wFromID)
 	LF.lfWeight = IsChecked(hMain, cbBold) ? FW_BOLD : FW_NORMAL;
 	LF.lfItalic = IsChecked(hMain, cbItalic);
 
-	LF.lfCharSet = LogFont.lfCharSet;
-	int newCharSet = SendDlgItemMessage(hMain, tFontCharset, CB_GETCURSEL, 0, 0);
-	if (newCharSet != CB_ERR && newCharSet >= 0 && newCharSet < 19)
-		LogFont.lfCharSet = chSetsNums[newCharSet];
+	LF.lfCharSet = mn_LoadFontCharSet;
+	if (mb_CharSetWasSet) {
+		mb_CharSetWasSet = FALSE;
+		int newCharSet = SendDlgItemMessage(hMain, tFontCharset, CB_GETCURSEL, 0, 0);
+		if (newCharSet != CB_ERR && newCharSet >= 0 && newCharSet < countof(chSetsNums))
+			LF.lfCharSet = chSetsNums[newCharSet];
+		else
+			LF.lfCharSet = DEFAULT_CHARSET;
+	}
 
 	if (IsChecked(hMain, rNoneAA))
 		LF.lfQuality = NONANTIALIASED_QUALITY;
@@ -2487,7 +2507,23 @@ HFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 {
     memset(CharWidth, 0, sizeof(*CharWidth)*0x10000);
 
-    HFONT hFont = CreateFontIndirect(inFont);
+	//lfOutPrecision = OUT_RASTER_PRECIS, 
+
+    HFONT hFont = NULL;
+	#ifdef _DEBUG
+	if (wcscmp(inFont->lfFaceName, RASTER_FONTS_NAME)) {
+		hFont = CreateFontIndirect(inFont);
+	} else {
+		LOGFONT lfRast = *inFont;
+		lfRast.lfFaceName[0] = 0;
+		lfRast.lfOutPrecision = OUT_RASTER_PRECIS;
+		lfRast.lfQuality = PROOF_QUALITY;
+		lfRast.lfPitchAndFamily = FIXED_PITCH | FF_MODERN;
+		hFont = CreateFontIndirect(&lfRast);
+	}
+	#else
+		hFont = CreateFontIndirect(inFont);
+	#endif
 
     if (hFont) {
         HDC hScreenDC = GetDC(0);
@@ -2498,13 +2534,24 @@ HFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
             HFONT hOldF = (HFONT)SelectObject(hDC, hFont);
             TODO("Для пропорциональных шрифтов наверное имеет смысл сохранять в реестре оптимальный lfWidth")
             ZeroStruct(tm);
-            GetTextMetrics(hDC, &tm);
+            BOOL lbTM = GetTextMetrics(hDC, &tm);
+			_ASSERTE(lbTM);
             if (isForceMonospace)
                 //Maximus - у Arial'а например MaxWidth слишком большой
                 inFont->lfWidth = FontSizeX3 ? FontSizeX3 : tm.tmMaxCharWidth;
             else
                 inFont->lfWidth = tm.tmAveCharWidth;
             inFont->lfHeight = tm.tmHeight; TODO("Здесь нужно обновить реальный размер шрифта в диалоге настройки!");
+			if (lbTM && tm.tmCharSet != DEFAULT_CHARSET) {
+				inFont->lfCharSet = tm.tmCharSet;
+				for (uint i=0; i < countof(ChSets); i++)
+				{
+					if (chSetsNums[i] == tm.tmCharSet) {
+						SendDlgItemMessage(hMain, tFontCharset, CB_SETCURSEL, i, 0);
+						break;
+					}
+				}
+			}
 			
             if (ghOpWnd) // устанавливать только при листании шрифта в настройке
                 UpdateTTF ( (tm.tmMaxCharWidth - tm.tmAveCharWidth)>2 );

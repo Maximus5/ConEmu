@@ -1071,6 +1071,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\ConEmu\DragDrop.h"
+				>
+			</File>
+			<File
 				RelativePath=".\PluginHeader.h"
 				>
 			</File>

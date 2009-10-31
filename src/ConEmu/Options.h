@@ -18,6 +18,7 @@ public:
 	BYTE FontCharSet();
 private:
     LOGFONT LogFont, LogFont2;
+	BYTE mn_LoadFontCharSet; // То что загружено изначально (или уже сохранено в реестр)
 	TEXTMETRIC tm;
     BOOL mb_Name1Ok, mb_Name2Ok;
 public:
@@ -181,7 +182,7 @@ protected:
     LRESULT OnTab(LPNMHDR phdr);
 private:
     COLORREF acrCustClr[16]; // array of custom colors
-    BOOL mb_IgnoreEditChanged, mb_IgnoreTtfChange;
+    BOOL mb_IgnoreEditChanged, mb_IgnoreTtfChange, mb_CharSetWasSet;
     i64 mn_Freq;
     i64 mn_FPS[20]; int mn_FPS_CUR_FRAME;
     i64 mn_Counter[tPerfInterval-gbPerformance];

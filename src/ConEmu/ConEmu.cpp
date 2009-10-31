@@ -7,10 +7,10 @@
 #include "../common/ConEmuCheck.h"
 
 #define DEBUGSTRSYS(s) //DEBUGSTR(s)
-#define DEBUGSTRSIZE(s) //DEBUGSTR(s)
+#define DEBUGSTRSIZE(s) DEBUGSTR(s)
 #define DEBUGSTRCONS(s) //DEBUGSTR(s)
 #define DEBUGSTRTABS(s) //DEBUGSTR(s)
-#define DEBUGSTRLANG(s) DEBUGSTR(s)// ; Sleep(2000)
+#define DEBUGSTRLANG(s) //DEBUGSTR(s)// ; Sleep(2000)
 #define DEBUGSTRMOUSE(s) //DEBUGSTR(s)
 
 #define PROCESS_WAIT_START_TIME 1000
@@ -139,6 +139,7 @@ CConEmuMain::CConEmuMain()
 	mn_ShellExecuteEx = ++nAppMsg;
 	mn_PostConsoleResize = ++nAppMsg;
 	mn_ConsoleLangChanged = ++nAppMsg;
+	mn_MsgPostOnBufferHeight = ++nAppMsg;
 }
 
 BOOL CConEmuMain::Init()
@@ -841,7 +842,7 @@ void CConEmuMain::SetConsoleWindowSize(const COORD& size, bool updateInfo)
 
     RECT rcCon = MakeRect(size.X,size.Y);
     if (mp_VActive) {
-        if (!mp_VActive->RCon()->SetConsoleSize(size))
+        if (!mp_VActive->RCon()->SetConsoleSize(size.X,size.Y))
             rcCon = MakeRect(mp_VActive->TextWidth,mp_VActive->TextHeight);
     }
     RECT rcWnd = CalcRect(CER_MAIN, rcCon, CER_CONSOLE);
@@ -978,7 +979,7 @@ bool CConEmuMain::SetWindowMode(uint inMode)
 			// Расчитать размер по оптимальному WindowRect
 			RECT rcCon = CalcRect(CER_CONSOLE, mrc_Ideal, CER_MAIN);
 			if (!rcCon.right || !rcCon.bottom) { rcCon.right = gSet.wndWidth; rcCon.bottom = gSet.wndHeight; }
-            if (mp_VActive && !mp_VActive->RCon()->SetConsoleSize(MakeCoord(rcCon.right, rcCon.bottom))) {
+            if (mp_VActive && !mp_VActive->RCon()->SetConsoleSize(rcCon.right, rcCon.bottom)) {
                 mb_PassSysCommand = false;
                 goto wrap;
             }
@@ -1051,7 +1052,7 @@ bool CConEmuMain::SetWindowMode(uint inMode)
             /*if (gSet.isHideCaption)
             	rcMax.top -= GetSystemMetrics(SM_CYCAPTION);*/
             RECT rcCon = CalcRect(CER_CONSOLE, rcMax, CER_MAIN);
-            if (mp_VActive && !mp_VActive->RCon()->SetConsoleSize(MakeCoord(rcCon.right,rcCon.bottom))) {
+            if (mp_VActive && !mp_VActive->RCon()->SetConsoleSize(rcCon.right,rcCon.bottom)) {
                 mb_PassSysCommand = false;
                 goto wrap;
             }
@@ -1091,7 +1092,7 @@ bool CConEmuMain::SetWindowMode(uint inMode)
 
             RECT rcMax = CalcRect(CER_FULLSCREEN, MakeRect(0,0), CER_FULLSCREEN);
             RECT rcCon = CalcRect(CER_CONSOLE, rcMax, CER_MAINCLIENT);
-            if (mp_VActive && !mp_VActive->RCon()->SetConsoleSize(MakeCoord(rcCon.right,rcCon.bottom))) {
+            if (mp_VActive && !mp_VActive->RCon()->SetConsoleSize(rcCon.right,rcCon.bottom)) {
                 mb_PassSysCommand = false;
                 goto wrap;
             }
@@ -1232,7 +1233,7 @@ void CConEmuMain::ReSize(BOOL abCorrect2Ideal /*= FALSE*/)
 			_ASSERTE(isMainThread());
 
 			m_Child.SetRedraw(FALSE);
-			mp_VActive->RCon()->SetConsoleSize(MakeCoord(rcConsole.right, rcConsole.bottom), CECMD_SETSIZESYNC);
+			mp_VActive->RCon()->SetConsoleSize(rcConsole.right, rcConsole.bottom, 0, CECMD_SETSIZESYNC);
 			m_Child.SetRedraw(TRUE);
 			m_Child.Redraw();
 
@@ -1248,7 +1249,7 @@ void CConEmuMain::ReSize(BOOL abCorrect2Ideal /*= FALSE*/)
 			RECT rcConsole = CalcRect(CER_CONSOLE, client, CER_MAINCLIENT);
 
 			m_Child.SetRedraw(FALSE);
-			mp_VActive->RCon()->SetConsoleSize(MakeCoord(rcConsole.right, rcConsole.bottom), CECMD_SETSIZESYNC);
+			mp_VActive->RCon()->SetConsoleSize(rcConsole.right, rcConsole.bottom, 0, CECMD_SETSIZESYNC);
 			m_Child.SetRedraw(TRUE);
 			m_Child.Redraw();
 		}
@@ -2088,7 +2089,7 @@ bool CConEmuMain::ConActivate(int nCon)
             int nNewConWidth = pCon->RCon()->TextWidth();
             int nNewConHeight = pCon->RCon()->TextHeight();
             if (nOldConWidth != nNewConWidth || nOldConHeight != nNewConHeight) {
-                lbSizeOK = pCon->RCon()->SetConsoleSize(MakeCoord(nOldConWidth,nOldConHeight));
+                lbSizeOK = pCon->RCon()->SetConsoleSize(nOldConWidth,nOldConHeight);
             }
         }
 
@@ -2431,10 +2432,7 @@ BOOL CConEmuMain::RunSingleInstance()
 			}
 			pIn = (CESERVER_REQ*)calloc(nSize,1);
 			if (pIn) {
-				pIn->hdr.nSize = nSize;
-				pIn->hdr.nCmd = CECMD_NEWCMD;
-				pIn->hdr.nVersion = CESERVER_REQ_VER;
-				pIn->hdr.nSrcThreadId = GetCurrentThreadId();
+				ExecutePrepareCmd(pIn, CECMD_NEWCMD, nSize);
 				lstrcpyW(pIn->NewCmd.szCommand, lpszCmd);
 
 				DWORD dwPID = 0;
@@ -3503,10 +3501,15 @@ void CConEmuMain::TabCommand(UINT nTabCmd)
     }
 #endif
 
-void CConEmuMain::OnBufferHeight(BOOL abBufferHeight)
+void CConEmuMain::OnBufferHeight() //BOOL abBufferHeight)
 {
+	if (!gConEmu.isMainThread()) {
+		return;
+	}
+
+	BOOL lbBufferHeight = mp_VActive->RCon()->isBufferHeight();
     gConEmu.m_Back.TrackMouse(); // спрятать или показать прокрутку, если над ней мышка
-    TabBar.OnBufferHeight(abBufferHeight);
+    TabBar.OnBufferHeight(lbBufferHeight);
 }
 
 TODO("И вообще, похоже это событие не вызывается");
@@ -5153,9 +5156,11 @@ LRESULT CConEmuMain::OnVConTerminated(CVirtualConsole* apVCon, BOOL abPosted /*=
 
 			// Эта комбинация должна активировать предыдущую консоль (если активна текущая)
 			if (gSet.isTabRecent && apVCon == mp_VActive) {
-				TabBar.SwitchRollback();
-				TabBar.SwitchNext();
-				TabBar.SwitchCommit();
+				if (gConEmu.GetVCon(1)) {
+					TabBar.SwitchRollback();
+					TabBar.SwitchNext();
+					TabBar.SwitchCommit();
+				}
 			}
 
 			// Теперь можно очистить переменную массива
@@ -5744,6 +5749,8 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		} else if (messg == gConEmu.mn_ConsoleLangChanged) {
 			gConEmu.OnLangChangeConsole((CVirtualConsole*)lParam, (DWORD)wParam);
 			return 0;
+		} else if (messg == gConEmu.mn_MsgPostOnBufferHeight) {
+			gConEmu.OnBufferHeight();
 		}
         //else if (messg == gConEmu.mn_MsgCmdStarted || messg == gConEmu.mn_MsgCmdStopped) {
         //  return gConEmu.OnConEmuCmd( (messg == gConEmu.mn_MsgCmdStarted), (HWND)wParam, (DWORD)lParam);
