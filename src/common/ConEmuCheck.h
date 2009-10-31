@@ -27,7 +27,6 @@ void SetConEmuEnvVar(HWND hConEmuWnd);
 
 HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t* pszErr/*[MAX_PATH*2]*/, const wchar_t* szModule);
 CESERVER_REQ* ExecuteNewCmd(DWORD nCmd, DWORD nSize);
-void ExecutePrepareCmd(CESERVER_REQ* pIn, DWORD nCmd, DWORD nSize);
 CESERVER_REQ* ExecuteGuiCmd(HWND hConWnd, const CESERVER_REQ* pIn, HWND hOwner);
 CESERVER_REQ* ExecuteSrvCmd(DWORD dwSrvPID, const CESERVER_REQ* pIn, HWND hOwner);
 void ExecuteFreeResult(CESERVER_REQ* pOut);

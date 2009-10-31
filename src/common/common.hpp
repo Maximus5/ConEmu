@@ -210,7 +210,6 @@ typedef struct tag_CESERVER_REQ_HDR {
 	DWORD   nCmd;
 	DWORD   nVersion;
 	DWORD   nSrcThreadId;
-	DWORD   nSrcPID;
 } CESERVER_REQ_HDR;
 
 

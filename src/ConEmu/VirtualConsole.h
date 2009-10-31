@@ -73,7 +73,7 @@ public:
 	void BlitPictureTo(int inX, int inY, int inWidth, int inHeight);
 	bool CheckSelection(const CONSOLE_SELECTION_INFO& select, SHORT row, SHORT col);
 	bool GetCharAttr(TCHAR ch, WORD atr, TCHAR& rch, BYTE& foreColorNum, BYTE& backColorNum);
-	void Paint();
+	void Paint(HDC hDc, RECT rcClient);
 	void UpdateInfo();
 	void GetConsoleSelectionInfo(CONSOLE_SELECTION_INFO *sel) {	mp_RCon->GetConsoleSelectionInfo(sel); };
 	void GetConsoleCursorInfo(CONSOLE_CURSOR_INFO *ci) { mp_RCon->GetConsoleCursorInfo(ci); };
@@ -114,7 +114,7 @@ protected:
 	uint TextLen;
 	bool isCursorValid, drawImage, doSelect, textChanged, attrChanged;
 	char *tmpOem;
-	void UpdateCursorDraw(HDC hPaintDC, COORD pos, UINT dwSize);
+	void UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, UINT dwSize);
 	bool UpdatePrepare(bool isForce, HDC *ahDc, MSectionLock *pSDC);
 	void UpdateText(bool isForce, bool updateText, bool updateCursor);
 	WORD CharWidth(TCHAR ch);

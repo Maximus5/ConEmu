@@ -8,20 +8,6 @@
 class TabBarClass
 {
 private:
-	// Пока - банально. VCon, номер в FAR
-	typedef struct tag_FAR_WND_ID {
-		CVirtualConsole* pVCon;
-		int nFarWindowId;
-
-		bool operator==(struct tag_FAR_WND_ID c) {
-			return (this->pVCon==c.pVCon) && (this->nFarWindowId==c.nFarWindowId);
-		};
-		bool operator!=(struct tag_FAR_WND_ID c) {
-			return (this->pVCon!=c.pVCon) || (this->nFarWindowId!=c.nFarWindowId);
-		};
-	} VConTabs;
-
-private:
 	HWND mh_Tabbar, mh_Toolbar, mh_Rebar, mh_TabTip;
 	bool _active;
 	int _tabHeight;
@@ -46,7 +32,6 @@ private:
 	int GetCurSel();
 	int GetItemCount();
 	void DeleteItem(int I);
-	void AddTab2VCon(VConTabs& vct);
 
 protected:
 	static LRESULT CALLBACK TabProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -54,6 +39,18 @@ protected:
 	static LRESULT CALLBACK BarProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 	static WNDPROC _defaultBarProc;
 	
+	// Пока - банально. VCon, номер в FAR
+	typedef struct tag_FAR_WND_ID {
+		CVirtualConsole* pVCon;
+		int nFarWindowId;
+
+		bool operator==(struct tag_FAR_WND_ID c) {
+			return (this->pVCon==c.pVCon) && (this->nFarWindowId==c.nFarWindowId);
+		};
+		bool operator!=(struct tag_FAR_WND_ID c) {
+			return (this->pVCon!=c.pVCon) || (this->nFarWindowId!=c.nFarWindowId);
+		};
+	} VConTabs;
 	//typedef union tag_FAR_WND_ID { 
 	//	struct {
 	//		CVirtualConsole* pVCon;
@@ -66,12 +63,10 @@ protected:
 	//	ULONGLONG ID;
 	//} VConTabs;
 	std::vector<VConTabs> m_Tab2VCon;
-	BOOL mb_PostUpdateCalled, mb_PostUpdateRequested;
-	void RequestPostUpdate();
+	BOOL mb_PostUpdateCalled;
 	UINT mn_MsgUpdateTabs;
 	int mn_CurSelTab;
 	int GetIndexByTab(VConTabs tab);
-	int mn_InUpdate;
 	
 	// Tab stack
 	std::vector<VConTabs> m_TabStack;

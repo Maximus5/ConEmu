@@ -164,7 +164,6 @@ protected:
 	UINT mn_ShellExecuteEx;
 	UINT mn_PostConsoleResize;
 	UINT mn_ConsoleLangChanged;
-	UINT mn_MsgPostOnBufferHeight;
 	
 	//
 	static DWORD CALLBACK ServerThread(LPVOID lpvParam);
@@ -231,7 +230,7 @@ public:
 	void LoadIcons();
 	bool LoadVersionInfo(wchar_t* pFullPath);
 	static RECT MapRect(RECT rFrom, BOOL bFrame2Client);
-	void PaintCon();
+	void PaintCon(HDC hPaintDC);
 	void PostCopy(wchar_t* apszMacro, BOOL abRecieved=FALSE);
 	void PostMacro(LPCWSTR asMacro);
 	void PostCreate(BOOL abRecieved=FALSE);
@@ -257,7 +256,7 @@ public:
 	static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 	LRESULT WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 public:
-	void OnBufferHeight(); //BOOL abBufferHeight);
+	void OnBufferHeight(BOOL abBufferHeight);
 	LRESULT OnClose(HWND hWnd);
 	void OnConsoleResize(BOOL abPosted=FALSE);
 	LRESULT OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate);

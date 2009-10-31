@@ -122,18 +122,6 @@ HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t* pszErr/*[MAX_PATH*2]*
 }
 
 
-void ExecutePrepareCmd(CESERVER_REQ* pIn, DWORD nCmd, DWORD nSize)
-{
-	if (!pIn)
-		return;
-
-	pIn->hdr.nCmd = nCmd;
-	pIn->hdr.nSrcThreadId = GetCurrentThreadId();
-	pIn->hdr.nSrcPID = GetCurrentProcessId();
-	pIn->hdr.nSize = nSize;
-	pIn->hdr.nVersion = CESERVER_REQ_VER;
-}
-
 CESERVER_REQ* ExecuteNewCmd(DWORD nCmd, DWORD nSize)
 {
     CESERVER_REQ* pIn = NULL;
@@ -141,7 +129,10 @@ CESERVER_REQ* ExecuteNewCmd(DWORD nCmd, DWORD nSize)
 		// Обязательно с обнулением выделяемой памяти
         pIn = (CESERVER_REQ*)_calloc(nSize, 1);
         if (pIn) {
-			ExecutePrepareCmd(pIn, nCmd, nSize);
+	        pIn->hdr.nCmd = nCmd;
+	        pIn->hdr.nSrcThreadId = GetCurrentThreadId();
+	        pIn->hdr.nSize = nSize;
+	        pIn->hdr.nVersion = CESERVER_REQ_VER;
         }
     }
     return pIn;
@@ -198,9 +189,6 @@ CESERVER_REQ* ExecuteCmd(const wchar_t* szGuiPipeName, const CESERVER_REQ* pIn, 
 		_ASSERTE(pIn && szGuiPipeName);
 		return NULL;
 	}
-
-	_ASSERTE(pIn->hdr.nSrcPID && pIn->hdr.nSrcThreadId);
-	_ASSERTE(pIn->hdr.nSize >= sizeof(pIn->hdr));
 		
 	hPipe = ExecuteOpenPipe(szGuiPipeName, szErr, NULL/*Сюда хорошо бы имя модуля подкрутить*/);
 	if (hPipe == NULL || hPipe == INVALID_HANDLE_VALUE) {
@@ -334,7 +322,10 @@ HWND GetConEmuHWND(BOOL abRoot)
 	if ( !FarHwnd )
 		return NULL;
 
-	ExecutePrepareCmd(&in, CECMD_GETGUIHWND, sizeof(CESERVER_REQ_HDR));
+	in.hdr.nSize = sizeof(CESERVER_REQ_HDR);
+	in.hdr.nVersion = CESERVER_REQ_VER;
+	in.hdr.nCmd  = CECMD_GETGUIHWND;
+	in.hdr.nSrcThreadId = GetCurrentThreadId();
 
 	pOut = ExecuteGuiCmd(FarHwnd, &in, NULL);
 	if (!pOut)

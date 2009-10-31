@@ -130,7 +130,10 @@ BOOL CConEmuPipe::Execute(int nCmd, LPCVOID apData, UINT anDataSize)
 		return FALSE;
 	}
 
-	ExecutePrepareCmd(pIn, nCmd, nAllSize);
+	pIn->hdr.nCmd = nCmd;
+	pIn->hdr.nSrcThreadId = GetCurrentThreadId();
+	pIn->hdr.nSize = nAllSize;
+	pIn->hdr.nVersion = CESERVER_REQ_VER;
 	if (apData && anDataSize) {
 		memmove(pIn->Data, apData, anDataSize);
 	}

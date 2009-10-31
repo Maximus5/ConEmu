@@ -1,7 +1,7 @@
 
 #define SHOWDEBUGSTR
 
-#define DEBUGSTRTABS(s) DEBUGSTR(s)
+#define DEBUGSTRTABS(s) //DEBUGSTR(s)
 
 #include <windows.h>
 #include <commctrl.h>
@@ -42,7 +42,6 @@ TabBarClass::TabBarClass()
     //mb_Enabled = TRUE;
     mh_Toolbar = NULL; mh_Tabbar = NULL; mh_Rebar = NULL; mn_LastToolbarWidth = 0;
     mb_PostUpdateCalled = FALSE;
-	mb_PostUpdateRequested = FALSE;
     mn_MsgUpdateTabs = RegisterWindowMessage(CONEMUMSG_UPDATETABS);
     memset(&m_Tab4Tip, 0, sizeof(m_Tab4Tip));
     mb_InKeySwitching = FALSE;
@@ -213,21 +212,6 @@ void TabBarClass::DeleteItem(int I)
     return tabIndex < 10 ? '0' + tabIndex : 'A' + tabIndex - 10;
 }*/
 
-void TabBarClass::RequestPostUpdate()
-{
-	if (mb_PostUpdateCalled)
-		return; // Уже
-
-	if (mn_InUpdate > 0) {
-		mb_PostUpdateRequested = TRUE;
-		DEBUGSTRTABS(L"   PostRequesting TabBarClass::Update\n");
-	} else {
-		mb_PostUpdateCalled = TRUE;
-		DEBUGSTRTABS(L"   Posting TabBarClass::Update\n");
-		PostMessage(ghWnd, mn_MsgUpdateTabs, 0, 0);
-	}
-}
-
 BOOL TabBarClass::GetVConFromTab(int nTabIdx, CVirtualConsole** rpVCon, DWORD* rpWndIndex)
 {
     BOOL lbRc = FALSE;
@@ -239,12 +223,11 @@ BOOL TabBarClass::GetVConFromTab(int nTabIdx, CVirtualConsole** rpVCon, DWORD* r
         wndIndex = m_Tab2VCon[nTabIdx].nFarWindowId;
 
         if (!gConEmu.isValid(pVCon)) {
-			RequestPostUpdate();
-            //if (!mb_PostUpdateCalled)
-            //{
-            //    mb_PostUpdateCalled = TRUE;
-            //    PostMessage(ghWnd, mn_Msg UpdateTabs, 0, 0);
-            //}
+            if (!mb_PostUpdateCalled)
+            {
+                mb_PostUpdateCalled = TRUE;
+                PostMessage(ghWnd, mn_MsgUpdateTabs, 0, 0);
+            }
         } else {
             lbRc = TRUE;
         }
@@ -390,27 +373,14 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
     }*/ // Теперь - ВСЕГДА! т.к. сами управляем мультиконсолью
     
     if (!gConEmu.isMainThread()) {
-		RequestPostUpdate();
-		//if (mb_PostUpdateCalled) return;
-		//if (mn_InUpdate > 0) {
-		//	_ASSERTE(mn_InUpdate == 0);
-		//} else {
-		//mb_PostUpdateRequested
-		//mb_PostUpdateCalled = TRUE;
-		//DEBUGSTRTABS(L"   Posting TabBarClass::Update\n");
-		//PostMessage(ghWnd, mn_MsgUpdateTabs, 0, 0);
+        if (mb_PostUpdateCalled) return;
+        mb_PostUpdateCalled = TRUE;
+		DEBUGSTRTABS(L"   Posting TabBarClass::Update\n");
+        PostMessage(ghWnd, mn_MsgUpdateTabs, 0, 0);
         return;
     }
     
     mb_PostUpdateCalled = FALSE;
-
-	#ifdef _DEBUG
-	_ASSERTE(mn_InUpdate >= 0);
-	if (mn_InUpdate > 0) {
-		_ASSERTE(mn_InUpdate == 0);
-	}
-	#endif
-	mn_InUpdate ++;
 
     ConEmuTab tab = {0};
     
@@ -420,7 +390,6 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
 
     // Выполняться должно только в основной нити, так что CriticalSection не нужна
     m_Tab2VCon.clear();
-	_ASSERTE(m_Tab2VCon.size()==0);
 
 	#ifdef _DEBUG
 	if (this != &TabBar) {
@@ -431,31 +400,19 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
 	if (!TabBar.IsActive() && gSet.isTabs) {
 		int nTabs = 0;
 		for (V = 0; V < MAX_CONSOLE_COUNT && nTabs < 2; V++) {
-			_ASSERTE(m_Tab2VCon.size()==0);
 			if (!(pVCon = gConEmu.GetVCon(V))) continue;
-			_ASSERTE(m_Tab2VCon.size()==0);
 			nTabs += pVCon->RCon()->GetTabCount();
-			_ASSERTE(m_Tab2VCon.size()==0);
 		}
-		if (nTabs > 1) {
-			_ASSERTE(m_Tab2VCon.size()==0);
+		if (nTabs > 1)
 			Activate();
-			_ASSERTE(m_Tab2VCon.size()==0);
-		}
 	} else if (TabBar.IsActive() && gSet.isTabs==2) {
 		int nTabs = 0;
 		for (V = 0; V < MAX_CONSOLE_COUNT && nTabs < 2; V++) {
-			_ASSERTE(m_Tab2VCon.size()==0);
 			if (!(pVCon = gConEmu.GetVCon(V))) continue;
-			_ASSERTE(m_Tab2VCon.size()==0);
 			nTabs += pVCon->RCon()->GetTabCount();
-			_ASSERTE(m_Tab2VCon.size()==0);
 		}
-		if (nTabs <= 1) {
-			_ASSERTE(m_Tab2VCon.size()==0);
+		if (nTabs <= 1)
 			Deactivate();
-			_ASSERTE(m_Tab2VCon.size()==0);
-		}
 	}
 
 	#ifdef _DEBUG
@@ -463,8 +420,6 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
 		_ASSERTE(this == &TabBar);
 	}
 	#endif
-
-	_ASSERTE(m_Tab2VCon.size()==0);
 
     for (V = 0; V < MAX_CONSOLE_COUNT; V++) {
         if (!(pVCon = gConEmu.GetVCon(V))) continue;
@@ -474,10 +429,6 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
         
         for (I = 0; TRUE; I++) {
 			#ifdef _DEBUG
-			if (!I && !V) {
-				_ASSERTE(m_Tab2VCon.size()==0);
-			}
-
 			if (this != &TabBar) {
 				_ASSERTE(this == &TabBar);
 			}
@@ -498,14 +449,7 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
             
             vct.pVCon = pVCon;
             vct.nFarWindowId = I;
-
-			#ifdef _DEBUG
-			if (!I && !V) {
-				_ASSERTE(m_Tab2VCon.size()==0);
-			}
-			#endif
-
-            AddTab2VCon(vct);
+            m_Tab2VCon.push_back(vct);
             // Добавляет закладку, или меняет (при необходимости) заголовок существующей
             AddTab(tab.Name, tabIdx);
             
@@ -527,7 +471,7 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
         
         vct.pVCon = NULL;
         vct.nFarWindowId = 0;
-		AddTab2VCon(vct); //2009-06-14. Не было!
+		m_Tab2VCon.push_back(vct); //2009-06-14. Не было!
 
         // Добавляет закладку, или меняет (при необходимости) заголовок существующей
         AddTab(tab.Name, tabIdx);
@@ -564,25 +508,8 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
     if (!mb_InKeySwitching && nCurTab != -1) {
         SelectTab(nCurTab);
     }
-
-	mn_InUpdate --;
-	if (mb_PostUpdateRequested) {
-		mb_PostUpdateRequested = FALSE;
-		RequestPostUpdate();
-	}
 }
 
-void TabBarClass::AddTab2VCon(VConTabs& vct)
-{
-	#ifdef _DEBUG
-	std::vector<VConTabs>::iterator i = m_Tab2VCon.begin();
-	while (i != m_Tab2VCon.end()) {
-		_ASSERTE(i->pVCon!=vct.pVCon || i->nFarWindowId!=vct.nFarWindowId);
-		i++;
-	}
-	#endif
-	m_Tab2VCon.push_back(vct);
-}
 
 RECT TabBarClass::GetMargins()
 {
@@ -1237,11 +1164,7 @@ int TabBarClass::GetNextTab(BOOL abForward, BOOL abAltStyle/*=FALSE*/)
     int nCurCount = GetItemCount();
 	VConTabs cur = {NULL};
     
-	#ifdef _DEBUG
-	if (nCurCount != m_Tab2VCon.size()) {
-		_ASSERTE(nCurCount == m_Tab2VCon.size());
-	}
-	#endif
+    _ASSERTE(nCurCount == m_Tab2VCon.size());
     if (nCurCount < 1)
     	return 0; // хотя такого и не должно быть
     
