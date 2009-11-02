@@ -1566,9 +1566,7 @@ void SendTabs(int tabCount, BOOL abForceSend/*=FALSE*/)
 		+ sizeof(ConEmuTab) * ((tabCount > 1) ? (tabCount - 1) : 0);
 
 	// Обновляем структуру сразу, чтобы она была готова к отправке в любой момент
-	gpTabs->hdr.nCmd = CECMD_TABSCHANGED;
-	gpTabs->hdr.nVersion = CESERVER_REQ_VER;
-	gpTabs->hdr.nSrcThreadId = GetCurrentThreadId();
+	ExecutePrepareCmd(gpTabs, CECMD_TABSCHANGED, gpTabs->hdr.nSize);
 
 	// Это нужно делать только если инициировано ФАРОМ. Если запрос прислал ConEmu - не посылать...
 	if (tabCount && ConEmuHwnd && IsWindow(ConEmuHwnd) && abForceSend)
@@ -1822,9 +1820,7 @@ void InitResources()
 		+ 3*(MAX_PATH+1)*2; // + 3 строковых ресурса
 	CESERVER_REQ *pIn = (CESERVER_REQ*)Alloc(nSize,1);;
 	if (pIn) {
-		pIn->hdr.nCmd = CECMD_RESOURCES;
-		pIn->hdr.nSrcThreadId = GetCurrentThreadId();
-		pIn->hdr.nVersion = CESERVER_REQ_VER;
+		ExecutePrepareCmd(pIn, CECMD_RESOURCES, nSize);
 		pIn->dwData[0] = GetCurrentProcessId();
 		pIn->dwData[1] = gnInputThreadId;
 		wchar_t* pszRes = (wchar_t*)&(pIn->dwData[2]);
@@ -1837,6 +1833,8 @@ void InitResources()
 			lstrcpyW(pszRes, GetMsgW(11)); pszRes += lstrlenW(pszRes)+1;
 			lstrcpyW(pszRes, GetMsgW(12)); pszRes += lstrlenW(pszRes)+1;
 		}
+		// Поправить nSize (он должен быть меньше)
+		_ASSERTE(pIn->hdr.nSize >= (DWORD)(((LPBYTE)pszRes) - ((LPBYTE)pIn)));
 		pIn->hdr.nSize = (DWORD)(((LPBYTE)pszRes) - ((LPBYTE)pIn));
 		CESERVER_REQ* pOut = ExecuteGuiCmd(FarHwnd, pIn, FarHwnd);
 		if (pOut) ExecuteFreeResult(pOut);
@@ -1849,10 +1847,9 @@ void InitResources()
 void CloseTabs()
 {
 	if (ConEmuHwnd && IsWindow(ConEmuHwnd) && FarHwnd) {
-		CESERVER_REQ in = {{sizeof(CESERVER_REQ_HDR)}};
-		in.hdr.nCmd = CECMD_TABSCHANGED;
-		in.hdr.nSrcThreadId = GetCurrentThreadId();
-		in.hdr.nVersion = CESERVER_REQ_VER;
+		CESERVER_REQ in; // Пустая команда - значит FAR закрывается
+		ExecutePrepareCmd(&in, CECMD_TABSCHANGED, sizeof(CESERVER_REQ_HDR));
+
 		CESERVER_REQ* pOut = ExecuteGuiCmd(FarHwnd, &in, FarHwnd);
 		if (pOut) ExecuteFreeResult(pOut);
 	}
@@ -1868,9 +1865,8 @@ BOOL OutDataAlloc(DWORD anSize)
 	if (!gpCmdRet)
 		return FALSE;
 
-	gpCmdRet->hdr.nSize = anSize+sizeof(CESERVER_REQ_HDR);
-	gpCmdRet->hdr.nVersion = CESERVER_REQ_VER;
-	gpCmdRet->hdr.nSrcThreadId = GetCurrentThreadId();
+	// Код команды пока не известен - установит вызывающая функция
+	ExecutePrepareCmd(gpCmdRet, 0, anSize+sizeof(CESERVER_REQ_HDR));
 
 	gpData = gpCmdRet->Data;
 	gnDataSize = anSize;
@@ -1893,10 +1889,8 @@ BOOL OutDataRealloc(DWORD anNewSize)
 	CESERVER_REQ* lpNewCmdRet = (CESERVER_REQ*)Alloc(sizeof(CESERVER_REQ_HDR)+anNewSize,1);
 	if (!lpNewCmdRet)
 		return FALSE;
-	lpNewCmdRet->hdr.nCmd = gpCmdRet->hdr.nCmd;
-	lpNewCmdRet->hdr.nSize = anNewSize+sizeof(CESERVER_REQ_HDR);
-	lpNewCmdRet->hdr.nVersion = gpCmdRet->hdr.nVersion;
-	lpNewCmdRet->hdr.nSrcThreadId = GetCurrentThreadId();
+
+	ExecutePrepareCmd(lpNewCmdRet, gpCmdRet->hdr.nCmd, anNewSize+sizeof(CESERVER_REQ_HDR));
 
 	LPBYTE lpNewData = lpNewCmdRet->Data;
 	if (!lpNewData)
@@ -2301,10 +2295,7 @@ void ShowPluginMenu(int nID /*= -1*/)
 			CESERVER_REQ* pIn = (CESERVER_REQ*)calloc(sizeof(CESERVER_REQ_HDR)+4,1);
 			if (!pIn) return;
 			CESERVER_REQ* pOut = NULL;
-			pIn->hdr.nSize = sizeof(CESERVER_REQ_HDR)+4;
-			pIn->hdr.nCmd = CECMD_GETOUTPUTFILE;
-			pIn->hdr.nSrcThreadId = GetCurrentThreadId();
-			pIn->hdr.nVersion = CESERVER_REQ_VER;
+			ExecutePrepareCmd(pIn, CECMD_GETOUTPUTFILE, sizeof(CESERVER_REQ_HDR)+4);
 			pIn->OutputFile.bUnicode = (gFarVersion.dwVerMajor>=2);
 			pOut = ExecuteGuiCmd(FarHwnd, pIn, FarHwnd);
 			if (pOut) {
@@ -2328,10 +2319,7 @@ void ShowPluginMenu(int nID /*= -1*/)
 		case 4: case 5: case 6:
 		{
 			CESERVER_REQ in, *pOut = NULL;
-			in.hdr.nSize = sizeof(CESERVER_REQ_HDR)+1;
-			in.hdr.nCmd = CECMD_TABSCMD;
-			in.hdr.nSrcThreadId = GetCurrentThreadId();
-			in.hdr.nVersion = CESERVER_REQ_VER;
+			ExecutePrepareCmd(&in, CECMD_TABSCMD, sizeof(CESERVER_REQ_HDR)+1);
 			in.Data[0] = nItem - 3;
 			pOut = ExecuteGuiCmd(FarHwnd, &in, FarHwnd);
 			if (pOut) ExecuteFreeResult(pOut);

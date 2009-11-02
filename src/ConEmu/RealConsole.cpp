@@ -10,7 +10,7 @@
 #define DEBUGSTRINPUT(s) //DEBUGSTR(s)
 #define DEBUGSTRSIZE(s) //DEBUGSTR(s)
 #define DEBUGSTRPROC(s) //DEBUGSTR(s)
-#define DEBUGSTRCMD(s) //DEBUGSTR(s)
+#define DEBUGSTRCMD(s) DEBUGSTR(s)
 #define DEBUGSTRPKT(s) //DEBUGSTR(s)
 #define DEBUGSTRCON(s) //DEBUGSTR(s)
 #define DEBUGSTRLANG(s) DEBUGSTR(s)// ; Sleep(2000)
@@ -259,7 +259,7 @@ void CRealConsole::DumpConsole(HANDLE ahFile)
     }
 }
 
-BOOL CRealConsole::SetConsoleSizeSrv(COORD size, DWORD anCmdID/*=CECMD_SETSIZE*/)
+BOOL CRealConsole::SetConsoleSizeSrv(/*COORD size,*/ USHORT sizeX, USHORT sizeY, USHORT sizeBuffer, DWORD anCmdID/*=CECMD_SETSIZE*/)
 {
     if (!this) return FALSE;
 
@@ -285,10 +285,8 @@ BOOL CRealConsole::SetConsoleSizeSrv(COORD size, DWORD anCmdID/*=CECMD_SETSIZE*/
     pOut->hdr.nSize = nOutSize;
     SMALL_RECT rect = {0};
 
-    pIn->hdr.nVersion = CESERVER_REQ_VER;
     _ASSERTE(anCmdID==CECMD_SETSIZE || anCmdID==CECMD_SETSIZESYNC || anCmdID==CECMD_CMDSTARTED || anCmdID==CECMD_CMDFINISHED);
-    pIn->hdr.nCmd = anCmdID;
-    pIn->hdr.nSrcThreadId = GetCurrentThreadId();
+	ExecutePrepareCmd(pIn, anCmdID, pIn->hdr.nSize);
 
 
 
@@ -302,27 +300,31 @@ BOOL CRealConsole::SetConsoleSizeSrv(COORD size, DWORD anCmdID/*=CECMD_SETSIZE*/
         // case: buffer mode: change buffer
         CONSOLE_SCREEN_BUFFER_INFO sbi = con.m_sbi;
 
-        sbi.dwSize.X = size.X; // new
-        if (s_isFirstCall)
-        {
-            // first call: buffer height = from settings
-            s_isFirstCall = false;
-            sbi.dwSize.Y = max(gSet.DefaultBufferHeight, size.Y);
-        }
-        else
-        {
-            if (sbi.dwSize.Y == sbi.srWindow.Bottom - sbi.srWindow.Top + 1)
-                // no y-scroll: buffer height = new window height
-                sbi.dwSize.Y = size.Y;
-            else
-                // y-scroll: buffer height = old buffer height
-                sbi.dwSize.Y = max(sbi.dwSize.Y, size.Y);
-        }
+        sbi.dwSize.X = sizeX; // new
+		sizeBuffer = BufferHeight(sizeBuffer); // Если нужно - скорректировать
+		_ASSERTE(sizeBuffer > 0);
+		sbi.dwSize.Y = sizeBuffer;
+   //     if (s_isFirstCall)
+   //     {
+   //         // first call: buffer height = from settings
+   //         s_isFirstCall = false;
+   //         sbi.dwSize.Y = max(gSet.DefaultBufferHeight, sizeBuffer);
+   //     }
+   //     else
+   //     {
+			//if (sbi.dwSize.Y == sbi.srWindow.Bottom - sbi.srWindow.Top + 1) {
+   //             // no y-scroll: buffer height = new window height
+   //             sbi.dwSize.Y = sizeBuffer;
+			//} else {
+   //             // y-scroll: buffer height = old buffer height
+   //             sbi.dwSize.Y = max(sbi.dwSize.Y, sizeY);
+			//}
+   //     }
 
         rect.Top = sbi.srWindow.Top;
         rect.Left = sbi.srWindow.Left;
-        rect.Right = rect.Left + size.X - 1;
-        rect.Bottom = rect.Top + size.Y - 1;
+        rect.Right = rect.Left + sizeX - 1;
+        rect.Bottom = rect.Top + sizeY - 1;
         if (rect.Right >= sbi.dwSize.X)
         {
             int shift = sbi.dwSize.X - 1 - rect.Right;
@@ -337,10 +339,12 @@ BOOL CRealConsole::SetConsoleSizeSrv(COORD size, DWORD anCmdID/*=CECMD_SETSIZE*/
         }
 
         // В size передаем видимую область
-        size.Y = TextHeight();
-    }
+        //sizeY = TextHeight(); -- sizeY уже(!) должен содержать требуемую высоту видимой области!
+	} else {
+		_ASSERTE(sizeBuffer == 0);
+	}
 
-    _ASSERTE(size.Y>0 && size.Y<200);
+    _ASSERTE(sizeY>0 && sizeY<200);
 
     // Устанавливаем параметры для передачи в ConEmuC
     //*((USHORT*)pIn->Data) = con.bBufferHeight ? gSet.DefaultBufferHeight : 0;
@@ -349,8 +353,9 @@ BOOL CRealConsole::SetConsoleSizeSrv(COORD size, DWORD anCmdID/*=CECMD_SETSIZE*/
     //memmove(pIn->Data + sizeof(USHORT)+sizeof(COORD), &nSendTopLine, sizeof(SHORT));
     //// Видимый прямоугольник
     //memmove(pIn->Data + sizeof(USHORT) + sizeof(COORD) + sizeof(SHORT), &rect, sizeof(rect));
-    pIn->SetSize.nBufferHeight = con.bBufferHeight ? gSet.DefaultBufferHeight : 0;
-    pIn->SetSize.size = size;
+    pIn->SetSize.nBufferHeight = sizeBuffer; //con.bBufferHeight ? gSet.DefaultBufferHeight : 0;
+    pIn->SetSize.size.X = sizeX;
+	pIn->SetSize.size.Y = sizeY;
     pIn->SetSize.nSendTopLine = (gSet.AutoScroll || !con.bBufferHeight) ? -1 : con.nTopVisibleLine;
     pIn->SetSize.rcWindow = rect;
 
@@ -367,13 +372,13 @@ BOOL CRealConsole::SetConsoleSizeSrv(COORD size, DWORD anCmdID/*=CECMD_SETSIZE*/
 			WARNING("!!! Здесь часто возникают _ASSERT'ы. Видимо высота буфера меняется в другой нити и con.bBufferHeight просто не успевает?");
             if (con.bBufferHeight) {
                 _ASSERTE((sbi.srWindow.Bottom-sbi.srWindow.Top)<200);
-                if (sbi.dwSize.X == size.X && sbi.dwSize.Y == pIn->SetSize.nBufferHeight)
+                if (sbi.dwSize.X == sizeX && sbi.dwSize.Y == pIn->SetSize.nBufferHeight)
                     lbRc = TRUE;
             } else {
                 if (sbi.dwSize.Y > 200) {
                     _ASSERTE(sbi.dwSize.Y<200);
                 }
-                if (sbi.dwSize.X == size.X && sbi.dwSize.Y == size.Y)
+                if (sbi.dwSize.X == sizeX && sbi.dwSize.Y == sizeY)
                     lbRc = TRUE;
             }
             //if (sbi.dwSize.X == size.X && sbi.dwSize.Y == size.Y) {
@@ -387,6 +392,11 @@ BOOL CRealConsole::SetConsoleSizeSrv(COORD size, DWORD anCmdID/*=CECMD_SETSIZE*/
 				DEBUGSTRSIZE(L"SetConsoleSizeSrv.lbRc == TRUE\n");
                 con.nChange2TextWidth = sbi.dwSize.X;
                 con.nChange2TextHeight = con.bBufferHeight ? (sbi.srWindow.Bottom-sbi.srWindow.Top+1) : sbi.dwSize.Y;
+				#ifdef _DEBUG
+				if (con.bBufferHeight)
+					_ASSERTE(con.nBufferHeight == sbi.dwSize.Y);
+				#endif
+				con.nBufferHeight = con.bBufferHeight ? sbi.dwSize.Y : 0;
                 if (con.nChange2TextHeight > 200) {
                     _ASSERTE(con.nChange2TextHeight<=200);
                 }
@@ -397,7 +407,7 @@ BOOL CRealConsole::SetConsoleSizeSrv(COORD size, DWORD anCmdID/*=CECMD_SETSIZE*/
 	return lbRc;
 }
 
-BOOL CRealConsole::SetConsoleSizePlugin(COORD size, DWORD anCmdID/*=CECMD_SETSIZE*/)
+BOOL CRealConsole::SetConsoleSizePlugin(/*COORD size,*/ USHORT sizeX, USHORT sizeY, USHORT sizeBuffer, DWORD anCmdID/*=CECMD_SETSIZE*/)
 {
     if (!this) return FALSE;
 
@@ -405,10 +415,12 @@ BOOL CRealConsole::SetConsoleSizePlugin(COORD size, DWORD anCmdID/*=CECMD_SETSIZ
 	DWORD dwPID = 0;
 
 	if ((dwPID = GetFarPID()) != 0) {
-		CConEmuPipe pipe(gConEmu.GetFarPID(), 200);
+		CConEmuPipe pipe(dwPID, 200);
 		if (pipe.Init(_T("CRealConsole::SetConsoleSizePlugin")))
 		{
-			DWORD nHILO = ((DWORD)size.X) | (((DWORD)(WORD)size.Y) << 16);
+			_ASSERTE(sizeBuffer == 0);
+			_ASSERTE(sizeY <= 200);
+			DWORD nHILO = ((DWORD)sizeX) | (((DWORD)(WORD)sizeY) << 16);
 			if (pipe.Execute(CMD_SETSIZE, &nHILO, sizeof(nHILO)))
 			{
 					lbProcessed = TRUE;
@@ -419,8 +431,8 @@ BOOL CRealConsole::SetConsoleSizePlugin(COORD size, DWORD anCmdID/*=CECMD_SETSIZ
 						lbRc = TRUE;
 
 						DEBUGSTRSIZE(L"SetConsoleSizeSrv.lbRc == TRUE\n");
-						con.nChange2TextWidth = size.X;
-						con.nChange2TextHeight = size.Y;
+						con.nChange2TextWidth = sizeX;
+						con.nChange2TextHeight = sizeY;
 						if (con.nChange2TextHeight > 200) {
 							_ASSERTE(con.nChange2TextHeight<=200);
 						}
@@ -431,12 +443,12 @@ BOOL CRealConsole::SetConsoleSizePlugin(COORD size, DWORD anCmdID/*=CECMD_SETSIZ
     }
 
 	if (!lbProcessed)
-		lbRc = SetConsoleSizeSrv(size, anCmdID);
+		lbRc = SetConsoleSizeSrv(sizeX, sizeY, sizeBuffer, anCmdID);
 
 	return lbRc;
 }
 
-BOOL CRealConsole::SetConsoleSize(COORD size, DWORD anCmdID/*=CECMD_SETSIZE*/)
+BOOL CRealConsole::SetConsoleSize(/*COORD size,*/ USHORT sizeX, USHORT sizeY, USHORT sizeBuffer, DWORD anCmdID/*=CECMD_SETSIZE*/)
 {
     if (!this) return FALSE;
     //_ASSERTE(hConWnd && ms_ConEmuC_Pipe[0]);
@@ -448,12 +460,17 @@ BOOL CRealConsole::SetConsoleSize(COORD size, DWORD anCmdID/*=CECMD_SETSIZE*/)
         return false; // консоль пока не создана?
     }
     
-    _ASSERTE(size.X>=MIN_CON_WIDTH && size.Y>=MIN_CON_HEIGHT);
+    _ASSERTE(sizeX>=MIN_CON_WIDTH && sizeY>=MIN_CON_HEIGHT);
     
-    if (size.X</*4*/MIN_CON_WIDTH)
-        size.X = /*4*/MIN_CON_WIDTH;
-    if (size.Y</*3*/MIN_CON_HEIGHT)
-        size.Y = /*3*/MIN_CON_HEIGHT;
+    if (sizeX</*4*/MIN_CON_WIDTH)
+        sizeX = /*4*/MIN_CON_WIDTH;
+    if (sizeY</*3*/MIN_CON_HEIGHT)
+        sizeY = /*3*/MIN_CON_HEIGHT;
+
+	_ASSERTE(con.bBufferHeight || (!con.bBufferHeight && !sizeBuffer));
+	if (con.bBufferHeight && !sizeBuffer)
+		sizeBuffer = BufferHeight(sizeBuffer);
+	_ASSERTE(!con.bBufferHeight || (sizeBuffer >= sizeY));
 
 	BOOL lbRc = FALSE;
 
@@ -465,10 +482,11 @@ BOOL CRealConsole::SetConsoleSize(COORD size, DWORD anCmdID/*=CECMD_SETSIZE*/)
 		if (!mb_PluginDetected || dwPID != mn_FarPID_PluginDetected)
 			dwPID = 0;
 	}
+	_ASSERTE(sizeY <= 200);
 	if (!con.bBufferHeight && dwPID)
-		lbRc = SetConsoleSizePlugin(size, anCmdID);
+		lbRc = SetConsoleSizePlugin(sizeX, sizeY, sizeBuffer, anCmdID);
 	else
-		lbRc = SetConsoleSizeSrv(size, anCmdID);
+		lbRc = SetConsoleSizeSrv(sizeX, sizeY, sizeBuffer, anCmdID);
 
 
     if (lbRc && isActive()) {
@@ -476,7 +494,8 @@ BOOL CRealConsole::SetConsoleSize(COORD size, DWORD anCmdID/*=CECMD_SETSIZE*/)
         //if (!gSet.isFullScreen && !gConEmu.isZoomed() && !gConEmu.isIconic())
         if (gConEmu.isWindowNormal())
         {
-            gSet.UpdateSize(size.X, size.Y);
+			int nHeight = TextHeight();
+			gSet.UpdateSize(sizeX, nHeight);
         }
     }
 
@@ -484,14 +503,14 @@ BOOL CRealConsole::SetConsoleSize(COORD size, DWORD anCmdID/*=CECMD_SETSIZE*/)
 	DEBUGSTRSIZE(L"SetConsoleSize.finalizing\n");
 	if (anCmdID == CECMD_SETSIZESYNC) {
 		// ConEmuC должен сам послать изменения
-		if (con.nTextWidth == size.X && con.nTextHeight == size.Y) {
+		if (con.nTextWidth == sizeX && con.nTextHeight == sizeY) {
 			DEBUGSTRSIZE(L"SetConsoleSize.RetrieveConsoleInfo is not needed, size already match\n");
 		} else {
 			DEBUGSTRSIZE(L"SetConsoleSize.RetrieveConsoleInfo\n");
 			//BUGBUG: тут виснет
 			WARNING("CtrlShiftT в фаре можно и самим обработать? плуг посылает запрос в GUI и сразу размер меняет, даже Synch вызывать не нужно");
 			WARNING("!!! При CtrlShiftT в фаре - это повисло");
-			WaitConsoleSize(size.Y, 2000);
+			WaitConsoleSize(sizeY, 2000);
 			/*if (!RetrieveConsoleInfo(size.Y)) {
 				DEBUGSTRSIZE(L"SetConsoleSize.RetrieveConsoleInfo - height failed, waiting\n");
 				gConEmu.DebugStep(L"ConEmu: SetConsoleSize.RetrieveConsoleInfo - height failed, waiting\n");
@@ -567,7 +586,7 @@ void CRealConsole::SyncConsole2Window()
     RECT newCon = gConEmu.CalcRect(CER_CONSOLE, rcClient, CER_MAINCLIENT);
     _ASSERTE(newCon.right>20 && newCon.bottom>6);
 
-    SetConsoleSize(MakeCoord(newCon.right, newCon.bottom));
+    SetConsoleSize(newCon.right, newCon.bottom);
 }
 
 BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID)
@@ -613,7 +632,7 @@ BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID)
     //SetConsoleSize(MakeCoord(TextWidth,TextHeight));
     RECT rcWnd; GetClientRect(ghWnd, &rcWnd);
     RECT rcCon = gConEmu.CalcRect(CER_CONSOLE, rcWnd, CER_MAINCLIENT);
-    SetConsoleSize(MakeCoord(rcCon.right,rcCon.bottom));
+    SetConsoleSize(rcCon.right,rcCon.bottom);
 
     // Передернуть нить MonitorThread
     SetEvent(mh_MonitorThreadEvent);
@@ -1708,10 +1727,7 @@ LRESULT CRealConsole::PostConsoleMessage(UINT nMsg, WPARAM wParam, LPARAM lParam
 		POSTMESSAGE(hConWnd, nMsg, wParam, lParam, FALSE);
 	} else {
 		CESERVER_REQ in;
-		in.hdr.nCmd = CECMD_POSTCONMSG;
-		in.hdr.nSize = sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_POSTMSG);
-		in.hdr.nSrcThreadId = GetCurrentThreadId();
-		in.hdr.nVersion = CESERVER_REQ_VER;
+		ExecutePrepareCmd(&in, CECMD_POSTCONMSG, sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_POSTMSG));
 		// Собственно, аргументы
 		in.Msg.bPost = TRUE;
 		in.Msg.nMsg = nMsg;
@@ -2435,7 +2451,12 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 		HWND  hWnd     = (HWND)pIn->StartStop.hWnd;
         #endif
         DWORD nPID     = pIn->StartStop.dwPID;
-        DEBUGSTRCMD(L"GUI recieved CECMD_CMDSTARTSTOP\n");
+		switch (nStarted) {
+			case 0: DEBUGSTRCMD(L"GUI recieved CECMD_CMDSTARTSTOP(ServerStart)\n"); break;
+			case 1: DEBUGSTRCMD(L"GUI recieved CECMD_CMDSTARTSTOP(ServerStop)\n"); break;
+			case 2: DEBUGSTRCMD(L"GUI recieved CECMD_CMDSTARTSTOP(ComspecStart)\n"); break;
+			case 3: DEBUGSTRCMD(L"GUI recieved CECMD_CMDSTARTSTOP(ComspecStop)\n"); break;
+		}        
 		DWORD nSubSystem = pIn->StartStop.nSubSystem;
 		BOOL bRunViaCmdExe = pIn->StartStop.bRootIsCmdExe;
 
@@ -2473,7 +2494,7 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 					mn_ProgramStatus |= CES_NTVDM;
 					mb_IgnoreCmdStop = TRUE;
 					
-					SetConsoleSize(cr16bit, CECMD_CMDSTARTED);
+					SetConsoleSize(cr16bit.X, cr16bit.Y, 0, CECMD_CMDSTARTED);
 					
 					pIn->StartStopRet.nBufferHeight = 0;
 					pIn->StartStopRet.nWidth = cr16bit.X;
@@ -2491,7 +2512,7 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 						con.m_sbi.dwSize.Y = gSet.DefaultBufferHeight;
 						mb_BuferModeChangeLocked = TRUE;
 						SetBufferHeightMode(TRUE, TRUE); // Сразу включаем, иначе команда неправильно сформируется
-						SetConsoleSize(con.m_sbi.dwSize, CECMD_CMDSTARTED);
+						SetConsoleSize(con.m_sbi.dwSize.X, TextHeight(), 0, CECMD_CMDSTARTED);
 						mb_BuferModeChangeLocked = FALSE;
 					}
 				}
@@ -2503,11 +2524,18 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 					pIn->StartStopRet.nHeight = cr16bit.Y;
             	} else {
 					pIn->StartStopRet.nWidth = con.m_sbi.dwSize.X;
-					if (gSet.DefaultBufferHeight && nSubSystem != 0x100 && bRunViaCmdExe) {
-						pIn->StartStopRet.nBufferHeight = gSet.DefaultBufferHeight;
+					if (nSubSystem != 0x100  // 0x100 - Аттач из фар-плагина
+						&& (con.bBufferHeight
+							|| (gSet.DefaultBufferHeight && bRunViaCmdExe)))
+					{
+						_ASSERTE(gSet.DefaultBufferHeight == con.m_sbi.dwSize.Y);
+						con.bBufferHeight = TRUE;
+						con.nBufferHeight = max(con.m_sbi.dwSize.Y,gSet.DefaultBufferHeight);
+						pIn->StartStopRet.nBufferHeight = con.nBufferHeight;
 						_ASSERTE(con.nTextHeight > 5);
 						pIn->StartStopRet.nHeight = con.nTextHeight;
 					} else {
+						_ASSERTE(!con.bBufferHeight);
 						pIn->StartStopRet.nBufferHeight = 0;
 						pIn->StartStopRet.nHeight = con.m_sbi.dwSize.Y;
 					}					
@@ -2516,6 +2544,9 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 				SetBufferHeightMode((pIn->StartStopRet.nBufferHeight != 0), TRUE);
 				con.nChange2TextWidth = pIn->StartStopRet.nWidth;
 				con.nChange2TextHeight = pIn->StartStopRet.nHeight;
+				if (con.nChange2TextHeight > 200) {
+					_ASSERTE(con.nChange2TextHeight <= 200);
+				}
             }
 
             // 23.06.2009 Maks - уберем пока. Должно работать в ApplyConsoleInfo
@@ -2565,7 +2596,7 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 				con.m_sbi.dwSize.Y = crNewSize.Y;
 				SetBufferHeightMode(FALSE, TRUE); // Сразу выключаем, иначе команда неправильно сформируется
 				// Обязательно. Иначе сервер не узнает, что команда завершена
-				SetConsoleSize(crNewSize, CECMD_CMDFINISHED);
+				SetConsoleSize(crNewSize.X, crNewSize.Y, 0, CECMD_CMDFINISHED);
 				if (lbNeedResizeWnd) {
 					RECT rcCon = MakeRect(nNewWidth, nNewHeight);
 					RECT rcNew = gConEmu.CalcRect(CER_MAIN, rcCon, CER_CONSOLE);
@@ -2603,6 +2634,10 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
         DEBUGSTRCMD(L"GUI recieved CECMD_TABSCHANGED\n");
         if (nDataSize == 0) {
             // ФАР закрывается
+			if (pIn->hdr.nSrcPID == mn_FarPID) {
+				mn_ProgramStatus &= ~CES_FARACTIVE;
+				mn_FarPID_PluginDetected = mn_FarPID = 0;
+			}
             SetTabs(NULL, 1);
         } else {
             _ASSERTE(nDataSize>=4);
@@ -2644,6 +2679,9 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 
 					con.nChange2TextWidth = rcConsole.right;
 					con.nChange2TextHeight = rcConsole.bottom;
+					if (con.nChange2TextHeight > 200) {
+						_ASSERTE(con.nChange2TextHeight <= 200);
+					}
 
 					gConEmu.m_Child.SetRedraw(FALSE);
 					fSuccess = FALSE;
@@ -2682,10 +2720,7 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
         CESERVER_REQ *pRet = NULL;
         int nSize = sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_OUTPUTFILE);
         pRet = (CESERVER_REQ*)calloc(nSize, 1);
-        pRet->hdr.nSize = nSize;
-        pRet->hdr.nCmd = pIn->hdr.nCmd;
-        pRet->hdr.nSrcThreadId = GetCurrentThreadId();
-        pRet->hdr.nVersion = CESERVER_REQ_VER;
+		ExecutePrepareCmd(pRet, pIn->hdr.nCmd, nSize);
 
         pRet->OutputFile.bUnicode = lbUnicode;
         pRet->OutputFile.szFilePathName[0] = 0; // Сформирует PrepareOutputFile
@@ -3138,8 +3173,14 @@ void CRealConsole::ProcessUpdateFlags(BOOL abProcessChanged)
     }
         
     mn_ProgramStatus = 0;
-    if (bIsFar) mn_ProgramStatus |= CES_FARACTIVE;
-    if (bIsTelnet) mn_ProgramStatus |= CES_TELNETACTIVE;
+    if (bIsFar)
+		mn_ProgramStatus |= CES_FARACTIVE;
+	#ifdef _DEBUG
+	else
+		mn_ProgramStatus = mn_ProgramStatus;
+	#endif
+    if (bIsTelnet)
+		mn_ProgramStatus |= CES_TELNETACTIVE;
     if (bIsNtvdm)
         mn_ProgramStatus |= CES_NTVDM;
 
@@ -3563,10 +3604,7 @@ BOOL CRealConsole::RetrieveConsoleInfo(UINT anWaitSize)
       return 0;
     }
 
-    in.nSize = sizeof(CESERVER_REQ_HDR);
-    in.nVersion = CESERVER_REQ_VER;
-    in.nCmd  = CECMD_GETFULLINFO;
-    in.nSrcThreadId = GetCurrentThreadId();
+	ExecutePrepareCmd((CESERVER_REQ*)&in, CECMD_GETFULLINFO, sizeof(CESERVER_REQ_HDR));
 
     // Send a message to the pipe server and read the response. 
     fSuccess = TransactNamedPipe( 
@@ -4342,7 +4380,7 @@ void CRealConsole::OnActivate(int nNewNum, int nOldNum)
     TabBar.OnConsoleActivated(nNewNum+1/*, isBufferHeight()*/);
     TabBar.Update();
 
-    gConEmu.OnBufferHeight(con.bBufferHeight);
+    gConEmu.OnBufferHeight(); //con.bBufferHeight);
 
     gConEmu.UpdateProcessDisplay(TRUE);
 
@@ -4995,7 +5033,7 @@ void CRealConsole::SetBufferHeightMode(BOOL abBufferHeight, BOOL abLock/*=FALSE*
 
     con.bBufferHeight = abBufferHeight;
     if (isActive())
-        gConEmu.OnBufferHeight(abBufferHeight);
+        gConEmu.OnBufferHeight(); //abBufferHeight);
 }
 
 HANDLE CRealConsole::PrepareOutputFileCreate(wchar_t* pszFilePathName)
@@ -5082,10 +5120,7 @@ BOOL CRealConsole::PrepareOutputFile(BOOL abUnicodeText, wchar_t* pszFilePathNam
         return 0;
     }
 
-    in.nSize = sizeof(CESERVER_REQ_HDR);
-    in.nVersion = CESERVER_REQ_VER;
-    in.nCmd  = CECMD_GETOUTPUT;
-    in.nSrcThreadId = GetCurrentThreadId();
+	ExecutePrepareCmd((CESERVER_REQ*)&in, CECMD_GETOUTPUT, sizeof(CESERVER_REQ_HDR));
 
     // Send a message to the pipe server and read the response. 
     fSuccess = TransactNamedPipe( 
@@ -5350,6 +5385,27 @@ uint CRealConsole::TextHeight()
         _ASSERTE(nRet<=200);
     }
     return nRet;
+}
+
+uint CRealConsole::BufferHeight(uint nNewBufferHeight/*=0*/)
+{
+	uint nBufferHeight = 0;
+	if (con.bBufferHeight) {
+		if (nNewBufferHeight) {
+			nBufferHeight = nNewBufferHeight;
+			con.nBufferHeight = nNewBufferHeight;
+		} else if (con.nBufferHeight) {
+			nBufferHeight = con.nBufferHeight;
+		} else {
+			nBufferHeight = gSet.DefaultBufferHeight;
+		}
+	} else {
+		// После выхода из буферного режима сбрасываем запомненную высоту, чтобы
+		// в следующий раз установить высоту из настроек (gSet.DefaultBufferHeight)
+		_ASSERTE(nNewBufferHeight == 0);
+		con.nBufferHeight = 0;
+	}
+	return nBufferHeight;
 }
 
 bool CRealConsole::isActive()

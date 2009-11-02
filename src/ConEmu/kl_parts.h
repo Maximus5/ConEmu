@@ -76,33 +76,6 @@ struct klFile
 };
 
 
-__forceinline void klSplitCommandLine(wchar_t *str, uint *n)
-{
-	*n = 0;
-	wchar_t *dst = str, ts;
-	while (*str == ' ')
-		str++;
-	ts = ' ';
-	while (*str)
-	{
-		if (*str == '"')
-		{
-			ts ^= 2; // ' ' <-> '"'
-			str++;
-		}
-		while (*str && *str != '"' && *str != ts)
-			*dst++ = *str++;
-		if (*str == '"')
-			continue;
-		while (*str == ' ')
-			str++;
-		*dst++ = 0;
-		(*n)++;
-	}
-	return;
-}
-
-
 
 __forceinline u32 __cdecl klMulDivU32(u32 a, u32 b, u32 c)
 {

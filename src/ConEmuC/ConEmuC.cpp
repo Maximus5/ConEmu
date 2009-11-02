@@ -742,7 +742,8 @@ void Help()
         L"        /CONFIRM  - confirm closing console on program termination\n"
         L"        /ATTACH   - auto attach to ConEmu GUI\n"
         L"        /NOCMD    - attach current (existing) console to GUI\n"
-        L"        /B{W|H|Z} - define buffer width, height, window height\n"
+        L"        /B{W|H|Z} - define window width, height and buffer height\n"
+        L"        /F{N|W|H} - define console font name, width, height\n"
         L"        /LOG[0]   - create (debug) log file\n"
     );
 }
@@ -3027,10 +3028,7 @@ DWORD WINAPI InstanceThread(LPVOID lpvParam)
     if (!GetAnswerToRequest(pIn ? *pIn : in, &pOut) || pOut==NULL) {
     	// ≈сли результата нет - все равно что-нибудь запишем, иначе TransactNamedPipe может виснуть?
     	CESERVER_REQ_HDR Out={0};
-        Out.nCmd = in.hdr.nCmd;
-        Out.nSrcThreadId = GetCurrentThreadId();
-        Out.nSize = sizeof(Out);
-        Out.nVersion = CESERVER_REQ_VER;
+		ExecutePrepareCmd((CESERVER_REQ*)&Out, in.hdr.nCmd, sizeof(Out));
     	
 	    fSuccess = WriteFile( 
 	        hPipe,        // handle to pipe 
@@ -3522,7 +3520,7 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
                 MCHKHEAP
 
                 (*out)->hdr.nCmd = in.hdr.nCmd;
-                (*out)->hdr.nSrcThreadId = GetCurrentThreadId();
+				// ¬се остальные пол€ заголовка уже заполнены в ExecuteNewCmd
 
                 //#ifdef _DEBUG
                 if (in.hdr.nCmd == CECMD_CMDFINISHED) {
@@ -3602,13 +3600,11 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
         case CECMD_GETOUTPUT:
         {
             if (gpStoredOutput) {
-                gpStoredOutput->hdr.hdr.nCmd = CECMD_GETOUTPUT;
-                gpStoredOutput->hdr.hdr.nSize = 
-                    sizeof(CESERVER_CONSAVE_HDR)
-                    + min((int)gpStoredOutput->hdr.cbMaxOneBufferSize, 
-                          (gpStoredOutput->hdr.sbi.dwSize.X*gpStoredOutput->hdr.sbi.dwSize.Y*2));
-                gpStoredOutput->hdr.hdr.nVersion = CESERVER_REQ_VER;
-                gpStoredOutput->hdr.hdr.nSrcThreadId = GetCurrentThreadId();
+				DWORD nSize = sizeof(CESERVER_CONSAVE_HDR)
+					+ min((int)gpStoredOutput->hdr.cbMaxOneBufferSize, 
+					(gpStoredOutput->hdr.sbi.dwSize.X*gpStoredOutput->hdr.sbi.dwSize.Y*2));
+				ExecutePrepareCmd(
+					(CESERVER_REQ*)&(gpStoredOutput->hdr), CECMD_GETOUTPUT, nSize);
 
                 *out = (CESERVER_REQ*)gpStoredOutput;
 

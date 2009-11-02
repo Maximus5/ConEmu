@@ -662,16 +662,159 @@ void MessageLoop()
 	gbMessagingStarted = FALSE;
 }
 
+/* С командной строкой (GetCommandLineW) у нас засада */
+/*
+
+ShellExecute("open", "ShowArg.exe", "\"test1\" test2");
+GetCommandLineW(): "T:\XChange\VCProject\TestRunArg\ShowArg.exe" "test1" test2
+
+CreateProcess("ShowArg.exe", "\"test1\" test2");
+GetCommandLineW(): "test1" test2
+
+CreateProcess(NULL, "\"ShowArg.exe\" \"test1\" test2");
+GetCommandLineW(): "ShowArg.exe" "test1" test2
+
+*/
+
+void SplitCommandLine(wchar_t *str, uint *n)
+{
+	*n = 0;
+	wchar_t *dst = str, ts;
+	while (*str == ' ')
+		str++;
+	ts = ' ';
+	while (*str)
+	{
+		if (*str == '"')
+		{
+			ts ^= 2; // ' ' <-> '"'
+			str++;
+		}
+		while (*str && *str != '"' && *str != ts)
+			*dst++ = *str++;
+		if (*str == '"')
+			continue;
+		while (*str == ' ')
+			str++;
+		*dst++ = 0;
+		(*n)++;
+	}
+	return;
+}
+
+//Result:
+//  cmdLine - указатель на буфер с аргументами (!) он будет освобожден через free(cmdLine)
+//  cmdNew  - то что запускается (после аргумента /cmd)
+//  params  - количество аргументов 
+//            0 - ком.строка пустая
+//            ((uint)-1) - весь cmdNew должен быть ПРИКЛЕЕН к строке запуска по умолчанию
+BOOL PrepareCommandLine(TCHAR*& cmdLine, TCHAR*& cmdNew, uint& params)
+{
+	params = 0;
+    cmdNew = NULL;
+    LPCWSTR pszCmdLine = GetCommandLine();
+    int nInitLen = lstrlen(pszCmdLine);
+    cmdLine = _tcsdup(pszCmdLine);
+    
+	
+	// Имя исполняемого файла (conemu.exe)
+	const wchar_t* pszExeName = wcsrchr(gConEmu.ms_ConEmuExe, L'\\');
+	if (pszExeName) pszExeName++; else pszExeName = gConEmu.ms_ConEmuExe;
+	
+	wchar_t *pszNext = NULL, *pszStart = NULL, chSave = 0;
+	
+	if (*cmdLine == L' ') {
+		// Исполняемого файла нет - сразу начинаются аргументы
+		pszNext = NULL;
+	} else if (*cmdLine == L'"') {
+		// Имя между кавычками
+		pszStart = cmdLine+1;
+		pszNext = wcschr ( pszStart, L'"' );
+		if (!pszNext) {
+			MBoxA(L"Invalid command line: quates are not balanced");
+			return FALSE;
+		}
+		chSave = *pszNext;
+		*pszNext = 0;
+	} else {
+		pszStart = cmdLine;
+		pszNext = wcschr ( pszStart, L' ' );
+		if (!pszNext) pszNext = pszStart + lstrlen(pszStart);
+		chSave = *pszNext;
+		*pszNext = 0;
+	}
+	
+	if (pszNext) {
+		wchar_t* pszFN = wcsrchr(pszStart, L'\\');
+		if (pszFN) pszFN++; else pszFN = pszStart;
+		// Если первый параметр - наш conemu.exe или его путь - нужно его выбросить
+		if (!lstrcmpi(pszFN, pszExeName)) {
+			// Нужно отрезать
+			int nCopy = (nInitLen - (pszNext - cmdLine)) * sizeof(wchar_t);
+			TODO("Проверить, чтобы длину корректно посчитать");
+			if (nCopy > 0)
+				memmove(cmdLine, pszNext+1, nCopy);
+			else
+				*cmdLine = 0;
+		} else {
+			*pszNext = chSave;
+		}
+	}
+	
+	// AI. Если первый аргумент начинается НЕ с '/' - считаем что эта строка должна полностью передаваться в 
+	// запускаемую программу (прилепляться к концу ком.строки по умолчанию)
+	pszStart = cmdLine;
+	while (*pszStart == L' ' || *pszStart == L'"') pszStart++; // пропустить пробелы и кавычки
+	
+	if (*pszStart == 0) {
+		params = 0;
+		*cmdLine = 0;
+		cmdNew = NULL;
+		
+		// Эта переменная нужна для того, чтобы conemu можно было перезапустить
+		// из cmd файла с теми же аргументами (selfupdate)
+		SetEnvironmentVariableW(L"ConEmuArgs", L"");
+		
+	} else {
+		// Эта переменная нужна для того, чтобы conemu можно было перезапустить
+		// из cmd файла с теми же аргументами (selfupdate)
+		SetEnvironmentVariableW(L"ConEmuArgs", cmdLine);
+		
+		// Теперь проверяем наличие слеша
+		if (*pszStart != L'/') {
+			params = (uint)-1;
+			cmdNew = cmdLine;
+			
+		} else {
+			// Если ком.строка содержит "/cmd" - все что после него используется для создания нового процесса
+		    cmdNew = wcsstr(cmdLine, L"/cmd");
+		    if (cmdNew)
+		    {
+		        *cmdNew = 0;
+		        cmdNew += 5;
+		    }
+			// cmdLine готов к разбору
+			SplitCommandLine(cmdLine, &params);
+		}
+	}
+	
+	return TRUE;
+}
+
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
     g_hInstance = hInstance;
     gpNullSecurity = NullSecurity();
 
+    #ifdef _DEBUG
 	if (_tcsstr(GetCommandLine(), L"/debugi")) {
 		if (!IsDebuggerPresent()) _ASSERT(FALSE);
-	} else if (_tcsstr(GetCommandLine(), L"/debug")) {
+	} else
+	#endif
+	if (_tcsstr(GetCommandLine(), L"/debug")) {
 		if (!IsDebuggerPresent()) MBoxA(L"Conemu started");
 	}
+	
 
     //pVCon = NULL;
 
@@ -715,36 +858,26 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 //------------------------------------------------------------------------
 
     TCHAR* cmdNew = NULL;
-    //STARTUPINFO stInf; -- Maximus5 - не используется
-    //GetStartupInfo(&stInf);
+    TCHAR *cmdLine = NULL;
+    TCHAR *psUnknown = NULL;
+    uint  params = 0;
+    
+    
+    
+    if (!PrepareCommandLine(/*OUT*/cmdLine, /*OUT*/cmdNew, /*OUT*/params))
+		return 100;
 
-    //Maximus5 - размер командной строки может быть и поболе...
-    //_tcsncpy(cmdLine, GetCommandLine(), 0x1000); cmdLine[0x1000-1]=0;
-    TCHAR *cmdLine = _tcsdup(GetCommandLine());
-	cmdNew = _tcschr(cmdLine, _T('/'));
-	if (!cmdNew) cmdNew=(TCHAR*)"";
-    SetEnvironmentVariableW(L"ConEmuArgs", cmdNew);
-	cmdNew = NULL;
-
+	
+    
+	if (params && params != (uint)-1)
     {
-        cmdNew = _tcsstr(cmdLine, _T("/cmd"));
-        if (cmdNew)
-        {
-            *cmdNew = 0;
-            cmdNew += 5;
-        }
-    }
-
-
-	TCHAR *psUnknown = NULL;
-    TCHAR *curCommand = cmdLine;
-    {
+    	TCHAR *curCommand = cmdLine;
 		TODO("Если первый (после запускаемого файла) аргумент начинается НЕ с '/' - завершить разбор параметров и не заменять '""' на пробелы");
-        uint params; klSplitCommandLine(curCommand, &params);
+        //uint params; SplitCommandLine(curCommand, &params);
 
-		if(params < 2) {
-            curCommand = NULL;
-		}
+		//if(params < 1) {
+        //    curCommand = NULL;
+		//}
         // Parse parameters.
         // Duplicated parameters are permitted, the first value is used.
 		uint i = 0; // ммать... curCommand увеличивался, а i НЕТ
@@ -1023,21 +1156,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     // load settings from registry
     gSet.LoadSettings();
 
-    // Установка параметров из командной строки
-	if (cmdNew) {
-		MCHKHEAP
-		int nLen = _tcslen(cmdNew)+1;
-		//TCHAR *pszSlash=NULL;
-		//nLen += _tcslen(gConEmu.ms_ConEmuExe) + 20;
-		gSet.psCurCmd = (TCHAR*)malloc(nLen*sizeof(TCHAR));
-		_ASSERTE(gSet.psCurCmd);
-		//wcscpy(gSet.psCurCmd, L"\"");
-		//wcscat(gSet.psCurCmd, gConEmu.ms_ConEmuExe);
-		//pszSlash = wcsrchr(gSet.psCurCmd, _T('\\'));
-		//wcscpy(pszSlash+1, L"ConEmuC.exe\" /CMD ");
-		wcscpy(gSet.psCurCmd, cmdNew);
-		MCHKHEAP
-	}
 	//#pragma message("Win2k: CLEARTYPE_NATURAL_QUALITY")
     //if (ClearTypePrm)
     //    gSet.LogFont.lfQuality = CLEARTYPE_NATURAL_QUALITY;
@@ -1063,6 +1181,35 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		gSet.isUpdConHandle = TRUE;
 
 
+    // Установка параметров из командной строки
+	if (cmdNew) {
+		MCHKHEAP
+		const wchar_t* pszDefCmd = NULL;
+		wchar_t* pszReady = NULL;
+		
+		int nLen = lstrlen(cmdNew)+1;
+		if (params == (uint)-1) {
+			pszDefCmd = gSet.GetCmd();
+			_ASSERTE(pszDefCmd && *pszDefCmd);
+			nLen += 3 + lstrlen(pszDefCmd);
+		}
+		
+		pszReady = (TCHAR*)malloc(nLen*sizeof(TCHAR));
+		_ASSERTE(pszReady);
+		
+		if (pszDefCmd) {
+			lstrcpy(pszReady, pszDefCmd);
+			lstrcat(pszReady, L" ");
+			lstrcat(pszReady, cmdNew);
+		} else {
+			lstrcpy(pszReady, cmdNew);
+		}
+		MCHKHEAP
+		
+		SafeFree(gSet.psCurCmd); // могло быть создано в gSet.GetCmd()
+		gSet.psCurCmd = pszReady; pszReady = NULL;
+	}
+		
 	//if (FontFilePrm) {
 	//	if (!AddFontResourceEx(FontFile, FR_PRIVATE, NULL)) //ADD fontname; by Mors
 	//	{

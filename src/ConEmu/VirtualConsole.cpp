@@ -1613,7 +1613,7 @@ HBRUSH CVirtualConsole::PartBrush(wchar_t ch, SHORT nBackIdx, SHORT nForeIdx)
     return pb.hBrush;
 }
 
-void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, UINT dwSize)
+void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, COORD pos, UINT dwSize)
 {
     Cursor.x = csbi.dwCursorPosition.X;
     Cursor.y = csbi.dwCursorPosition.Y;
@@ -1697,11 +1697,6 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
 	//} else {
 	//	gConEmu.m_Child.SetCaret ( -1 ); // Если был создан системный курсор - он разрушится
 	//}
-
-	rect.left += rcClient.left;
-	rect.right += rcClient.left;
-	rect.top += rcClient.top;
-	rect.bottom += rcClient.top;
 
 	// Теперь в rect нужно отобразить курсор (XOR'ом попробуем?)
 	if (gSet.isCursorColor || gSet.isForceMonospace)
@@ -1850,14 +1845,11 @@ void CVirtualConsole::Free(LPVOID ptr)
 }
 
 
-// hdc - это DC родительского окна (ghWnd)
-// rcClient - это место, куда нужно "положить" битмап. может быть произвольным!
-void CVirtualConsole::Paint(HDC hDc, RECT rcClient)
+// hPaintDC - это DC окна отрисовки (ghWndDC)
+void CVirtualConsole::Paint()
 {
     if (!ghWndDC)
         return;
-	_ASSERTE(hDc);
-	_ASSERTE(rcClient.left!=rcClient.right && rcClient.top!=rcClient.bottom);
 
 #ifdef _DEBUG
     if (this) {
@@ -1881,16 +1873,15 @@ void CVirtualConsole::Paint(HDC hDc, RECT rcClient)
         #else
             int nBackColorIdx = 0;
         #endif
-
         HBRUSH hBr = CreateSolidBrush(gSet.Colors[nBackColorIdx]);
-        //RECT rcClient; GetClientRect(ghWndDC, &rcClient);
-        //PAINTSTRUCT ps;
-        //HDC hDc = BeginPaint(ghWndDC, &ps);
+        RECT rcClient; GetClientRect(ghWndDC, &rcClient);
+        PAINTSTRUCT ps;
+        HDC hDc = BeginPaint(ghWndDC, &ps);
         #ifndef SKIP_ALL_FILLRECT
         FillRect(hDc, &rcClient, hBr);
         #endif
         DeleteObject(hBr);
-        //EndPaint(ghWndDC, &ps);
+        EndPaint(ghWndDC, &ps);
         return;
     }
     
@@ -1901,12 +1892,12 @@ void CVirtualConsole::Paint(HDC hDc, RECT rcClient)
 	mb_InPaintCall = FALSE;
 
     BOOL lbExcept = FALSE;
-    RECT client = rcClient;
-    //PAINTSTRUCT ps;
-    //HDC hPaintDc = NULL;
+    RECT client;
+    PAINTSTRUCT ps;
+    HDC hPaintDc = NULL;
 
 
-    //GetClientRect(ghWndDC, &client);
+    GetClientRect(ghWndDC, &client);
 
     if (!gConEmu.isNtvdm()) {
         // после глюков с ресайзом могут быть проблемы с размером окна DC
@@ -1916,29 +1907,29 @@ void CVirtualConsole::Paint(HDC hDc, RECT rcClient)
     
     MSectionLock S; //&csDC, &ncsTDC);
 
-	//RECT rcUpdateRect = {0};
-	//BOOL lbInval = GetUpdateRect(ghWndDC, &rcUpdateRect, FALSE);
+	RECT rcUpdateRect = {0};
+	BOOL lbInval = GetUpdateRect(ghWndDC, &rcUpdateRect, FALSE);
 
-	//if (lbInval)
-	//  hPaintDc = BeginPaint(ghWndDC, &ps);
-	//else
-	//	hPaintDc = GetDC(ghWndDC);
+	if (lbInval)
+        hPaintDc = BeginPaint(ghWndDC, &ps);
+	else
+		hPaintDc = GetDC(ghWndDC);
 
     // Если окно больше готового DC - залить края (справа/снизу) фоновым цветом
     HBRUSH hBr = NULL;
     if (((ULONG)client.right) > Width) {
         if (!hBr) hBr = CreateSolidBrush(gSet.Colors[mn_BackColorIdx]);
-        RECT rcFill = MakeRect(Width, client.top, client.right, client.bottom);
+        RECT rcFill = MakeRect(Width, 0, client.right, client.bottom);
         #ifndef SKIP_ALL_FILLRECT
-        FillRect(hDc, &rcFill, hBr);
+        FillRect(hPaintDc, &rcFill, hBr);
         #endif
         client.right = Width;
     }
     if (((ULONG)client.bottom) > Height) {
         if (!hBr) hBr = CreateSolidBrush(gSet.Colors[mn_BackColorIdx]);
-        RECT rcFill = MakeRect(client.left, Height, client.right, client.bottom);
+        RECT rcFill = MakeRect(0, Height, client.right, client.bottom);
         #ifndef SKIP_ALL_FILLRECT
-        FillRect(hDc, &rcFill, hBr);
+        FillRect(hPaintDc, &rcFill, hBr);
         #endif
         client.bottom = Height;
     }
@@ -1956,15 +1947,13 @@ void CVirtualConsole::Paint(HDC hDc, RECT rcClient)
         // Обычный режим
 		mp_RCon->LogString("Blitting to Display");
 
-        BitBlt(hDc, client.left, client.top, client.right-client.left, client.bottom-client.top, hDC, 0, 0, SRCCOPY);
+        BitBlt(hPaintDc, 0, 0, client.right, client.bottom, hDC, 0, 0, SRCCOPY);
     } else {
         GdiSetBatchLimit(1); // отключить буферизацию вывода для текущей нити
 
         GdiFlush();
         // Рисуем сразу на канвасе, без буферизации
-		// Это для отладки отрисовки, поэтому недопустимы табы и прочее
-		_ASSERTE(gSet.isTabs == 0);
-        Update(true, &hDc);
+        Update(true, &hPaintDc);
     }
 
     S.Unlock();
@@ -1983,7 +1972,7 @@ void CVirtualConsole::Paint(HDC hDc, RECT rcClient)
         {
 			if (mpsz_ConChar && mpsz_ConChar)
 			{
-				HFONT hOldFont = (HFONT)SelectObject(hDc, gSet.mh_Font);
+				HFONT hOldFont = (HFONT)SelectObject(hPaintDc, gSet.mh_Font);
 
 				MSectionLock SCON; SCON.Lock(&csCON);
 
@@ -1997,11 +1986,11 @@ void CVirtualConsole::Paint(HDC hDc, RECT rcClient)
 					Cursor.bgColor = gSet.Colors[Cursor.bgColorNum];
 				}
 
-				UpdateCursorDraw(hDc, rcClient, csbi.dwCursorPosition, cinf.dwSize);
+				UpdateCursorDraw(hPaintDc, csbi.dwCursorPosition, cinf.dwSize);
 
 				Cursor.isVisiblePrev = Cursor.isVisible;
 
-				SelectObject(hDc, hOldFont);
+				SelectObject(hPaintDc, hOldFont);
 
 				SCON.Unlock();
 			}
@@ -2012,12 +2001,12 @@ void CVirtualConsole::Paint(HDC hDc, RECT rcClient)
     if (lbExcept)
         Box(_T("Exception triggered in CVirtualConsole::Paint"));
 
-  //  if (hPaintDc && ghWndDC) {
-		//if (lbInval)
-		//	EndPaint(ghWndDC, &ps);
-		//else
-		//	ReleaseDC(ghWndDC, hPaintDc);
-  //  }
+    if (hPaintDc && ghWndDC) {
+		if (lbInval)
+			EndPaint(ghWndDC, &ps);
+		else
+			ReleaseDC(ghWndDC, hPaintDc);
+    }
     
     //gSet.Performance(tPerfFPS, FALSE); // Обратный
 }
