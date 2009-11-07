@@ -8,6 +8,9 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ConEmuC", "ConEmuC\ConEmuC.vcproj", "{3939C0DF-8E00-440F-AC8A-CB579C56A5CB}"
 EndProject
 Global
+	GlobalSection(DPCodeReviewSolutionGUID) = preSolution
+		DPCodeReviewSolutionGUID = {00000000-0000-0000-0000-000000000000}
+	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
 		Debug|x64 = Debug|x64
@@ -60,7 +63,6 @@ Global
 		{21152801-8744-4787-83F4-BE4564A367B4}.DebugA|x64.ActiveCfg = DebugA|x64
 		{21152801-8744-4787-83F4-BE4564A367B4}.DebugA|x64.Build.0 = DebugA|x64
 		{21152801-8744-4787-83F4-BE4564A367B4}.DebugEEE|Win32.ActiveCfg = DebugEEE|Win32
-		{21152801-8744-4787-83F4-BE4564A367B4}.DebugEEE|Win32.Build.0 = DebugEEE|Win32
 		{21152801-8744-4787-83F4-BE4564A367B4}.DebugEEE|x64.ActiveCfg = DebugEEE|x64
 		{21152801-8744-4787-83F4-BE4564A367B4}.DebugEEE|x64.Build.0 = DebugEEE|x64
 		{21152801-8744-4787-83F4-BE4564A367B4}.Instrument|Win32.ActiveCfg = Instrument|Win32

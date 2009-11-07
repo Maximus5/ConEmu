@@ -147,6 +147,7 @@ void DebugLogMessage(HWND h, UINT m, WPARAM w, LPARAM l, BOOL posted, BOOL extra
         WP1(SC_PROPERTIES_SECRET);
         WP1(ID_SETTINGS);
         WP1(ID_HELP);
+        WP1(ID_ABOUT);
         WP1(ID_TOTRAY);
         WP1(ID_CONPROP);
         }

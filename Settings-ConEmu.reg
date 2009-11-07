@@ -94,6 +94,8 @@ REGEDIT4
 "AutoBufferHeight"=hex:01
 ;; Console buffer height (default). min=300 lines
 ;"DefaultBufferHeight"=dword:000003E8 ; 1000 lines
+;; Synchronous resize of FAR via ConEmu plugin. Slower, but more accurate.
+;"FarSyncSize"=hex:01
 
 ;; Buffer height for 16bit applications (is not supported in x64 OS)
 ;; Allowed values: 

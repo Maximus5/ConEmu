@@ -45,6 +45,7 @@ extern "C"{
 #endif
 
 
+HMODULE ghPluginModule = NULL; // ConEmu.dll - сам плагин
 HWND ConEmuHwnd = NULL; // Содержит хэндл окна отрисовки. Это ДОЧЕРНЕЕ окно.
 BOOL TerminalMode = FALSE;
 HWND FarHwnd = NULL;
@@ -94,6 +95,7 @@ wchar_t gsMonitorEnvVar[0x1000];
 bool gbMonitorEnvVar = false;
 #define MONITORENVVARDELTA 1000
 void UpdateEnvVar(const wchar_t* pszList);
+BOOL StartupHooks();
 
 
 // minimal(?) FAR version 2.0 alpha build FAR_X_VER
@@ -217,6 +219,8 @@ BOOL WINAPI DllMain( HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserve
 	switch (ul_reason_for_call) {
 		case DLL_PROCESS_ATTACH:
 			{
+				ghPluginModule = (HMODULE)hModule;
+				
 				_ASSERTE(FAR_X_VER<FAR_Y_VER);
 				#ifdef SHOW_STARTED_MSGBOX
 				if (!IsDebuggerPresent()) MessageBoxA(NULL, "ConEmu.dll loaded", "ConEmu plugin", 0);
@@ -230,6 +234,11 @@ BOOL WINAPI DllMain( HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserve
 				HWND hConWnd = GetConsoleWindow();
 				gnMainThreadId = GetCurrentThreadId();
 				InitHWND(hConWnd);
+				
+				if (!StartupHooks()) {
+					_ASSERT(FALSE);
+					OutputDebugString(L"!!! Can't install injects!!!\n");
+				}
 				
 			    // Check Terminal mode
 			    TCHAR szVarValue[MAX_PATH];

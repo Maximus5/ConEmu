@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="windows-1251"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9.00"
+	Version="9,00"
 	Name="ConEmuC"
 	ProjectGUID="{3939C0DF-8E00-440F-AC8A-CB579C56A5CB}"
 	RootNamespace="ConEmuC"
@@ -137,7 +137,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="C:\Users\Max\Desktop\FAR\FAR2.x64\ConEmuC.exe"
+				OutputFile="\\MAXW7\FAR\FAR2.x64\ConEmuC.exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
 				SubSystem="1"
@@ -439,7 +439,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="C:\Users\Max\Desktop\FAR\FAR2.x64\ConEmuC.exe"
+				OutputFile="\\MAXW7\FAR\FAR2.x64\ConEmuC.exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
 				SubSystem="1"
@@ -512,7 +512,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="C:\Program Files\FAR\ConEmuC.exe"
+				OutputFile="\\MAXW7\FAR\ConEmuC.exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
 				SubSystem="1"

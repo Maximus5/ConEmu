@@ -8,12 +8,12 @@
 
 #define DEBUGSTRDRAW(s) //DEBUGSTR(s)
 #define DEBUGSTRINPUT(s) //DEBUGSTR(s)
-#define DEBUGSTRSIZE(s) //DEBUGSTR(s)
+#define DEBUGSTRSIZE(s) DEBUGSTR(s)
 #define DEBUGSTRPROC(s) //DEBUGSTR(s)
 #define DEBUGSTRCMD(s) DEBUGSTR(s)
 #define DEBUGSTRPKT(s) //DEBUGSTR(s)
 #define DEBUGSTRCON(s) //DEBUGSTR(s)
-#define DEBUGSTRLANG(s) DEBUGSTR(s)// ; Sleep(2000)
+#define DEBUGSTRLANG(s) //DEBUGSTR(s)// ; Sleep(2000)
 
 WARNING("При быстром наборе текста курсор часто 'замерзает' на одной из букв, но продолжает двигаться дальше");
 
@@ -119,6 +119,7 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
     memset(mn_ServerThreadsId, 0, sizeof(mn_ServerThreadsId));
 
     ZeroStruct(con); //WARNING! Содержит CriticalSection, поэтому сброс выполнять ПЕРЕД InitializeCriticalSection(&csCON);
+	con.hInSetSize = CreateEvent(0,TRUE,TRUE,0);
     mb_BuferModeChangeLocked = FALSE;
 
 	ZeroStruct(m_Args);
@@ -165,6 +166,8 @@ CRealConsole::~CRealConsole()
         { Free(con.pConChar); con.pConChar = NULL; }
     if (con.pConAttr)
         { Free(con.pConAttr); con.pConAttr = NULL; }
+	if (con.hInSetSize)
+		{ CloseHandle(con.hInSetSize); con.hInSetSize = NULL; }
 
 	// Требутся, т.к. сам объект делает SafeFree, а не Free
     if (m_Args.pszSpecialCmd)
@@ -273,7 +276,7 @@ BOOL CRealConsole::SetConsoleSizeSrv(/*COORD size,*/ USHORT sizeX, USHORT sizeY,
     BOOL lbRc = FALSE;
     BOOL fSuccess = FALSE;
     DWORD dwRead = 0;
-    int nInSize = sizeof(CESERVER_REQ_HDR)+sizeof(USHORT)+sizeof(COORD)+sizeof(SHORT)+sizeof(SMALL_RECT);
+    int nInSize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_SETSIZE);
     CESERVER_REQ *pIn = (CESERVER_REQ*)calloc(nInSize,1);
     _ASSERTE(pIn);
 	if (!pIn) return FALSE;
@@ -358,6 +361,7 @@ BOOL CRealConsole::SetConsoleSizeSrv(/*COORD size,*/ USHORT sizeX, USHORT sizeY,
 	pIn->SetSize.size.Y = sizeY;
     pIn->SetSize.nSendTopLine = (gSet.AutoScroll || !con.bBufferHeight) ? -1 : con.nTopVisibleLine;
     pIn->SetSize.rcWindow = rect;
+	pIn->SetSize.dwFarPID = con.bBufferHeight ? 0 : GetFarPID();
 
 	DEBUGSTRSIZE(L"SetConsoleSize.CallNamedPipe\n");
     fSuccess = CallNamedPipe(ms_ConEmuC_Pipe, pIn, pIn->hdr.nSize, pOut, pOut->hdr.nSize, &dwRead, 500);
@@ -365,7 +369,8 @@ BOOL CRealConsole::SetConsoleSizeSrv(/*COORD size,*/ USHORT sizeX, USHORT sizeY,
     if (fSuccess && dwRead>=(DWORD)nOutSize) {
 		DEBUGSTRSIZE(L"SetConsoleSize.fSuccess == TRUE\n");
         if (pOut->hdr.nCmd == pIn->hdr.nCmd) {
-            con.nPacketIdx = pOut->SetSizeRet.nNextPacketId;
+            //con.nPacketIdx = pOut->SetSizeRet.nNextPacketId;
+			mn_LastProcessedPkt = pOut->SetSizeRet.nNextPacketId;
             CONSOLE_SCREEN_BUFFER_INFO sbi = {{0,0}};
             //memmove(&sbi, &pOut->SetSizeRet.SetSizeRet, sizeof(sbi));
             sbi = pOut->SetSizeRet.SetSizeRet;
@@ -407,46 +412,46 @@ BOOL CRealConsole::SetConsoleSizeSrv(/*COORD size,*/ USHORT sizeX, USHORT sizeY,
 	return lbRc;
 }
 
-BOOL CRealConsole::SetConsoleSizePlugin(/*COORD size,*/ USHORT sizeX, USHORT sizeY, USHORT sizeBuffer, DWORD anCmdID/*=CECMD_SETSIZE*/)
-{
-    if (!this) return FALSE;
-
-	BOOL lbRc = FALSE, lbProcessed = FALSE;
-	DWORD dwPID = 0;
-
-	if ((dwPID = GetFarPID()) != 0) {
-		CConEmuPipe pipe(dwPID, 200);
-		if (pipe.Init(_T("CRealConsole::SetConsoleSizePlugin")))
-		{
-			_ASSERTE(sizeBuffer == 0);
-			_ASSERTE(sizeY <= 200);
-			DWORD nHILO = ((DWORD)sizeX) | (((DWORD)(WORD)sizeY) << 16);
-			if (pipe.Execute(CMD_SETSIZE, &nHILO, sizeof(nHILO)))
-			{
-					lbProcessed = TRUE;
-
-				DWORD nRcHILO = 0, nSize = 0;
-				if (pipe.Read(&nRcHILO, sizeof(nRcHILO), &nSize) && nSize == sizeof(nRcHILO)) {
-					if (nRcHILO == nHILO) {
-						lbRc = TRUE;
-
-						DEBUGSTRSIZE(L"SetConsoleSizeSrv.lbRc == TRUE\n");
-						con.nChange2TextWidth = sizeX;
-						con.nChange2TextHeight = sizeY;
-						if (con.nChange2TextHeight > 200) {
-							_ASSERTE(con.nChange2TextHeight<=200);
-						}
-					}
-				}
-			}
-		}
-    }
-
-	if (!lbProcessed)
-		lbRc = SetConsoleSizeSrv(sizeX, sizeY, sizeBuffer, anCmdID);
-
-	return lbRc;
-}
+//BOOL CRealConsole::SetConsoleSizePlugin(/*COORD size,*/ USHORT sizeX, USHORT sizeY, USHORT sizeBuffer, DWORD anCmdID/*=CECMD_SETSIZE*/)
+//{
+//    if (!this) return FALSE;
+//
+//	BOOL lbRc = FALSE, lbProcessed = FALSE;
+//	DWORD dwPID = 0;
+//
+//	if ((dwPID = GetFarPID()) != 0) {
+//		CConEmuPipe pipe(dwPID, 200);
+//		if (pipe.Init(_T("CRealConsole::SetConsoleSizePlugin")))
+//		{
+//			_ASSERTE(sizeBuffer == 0);
+//			_ASSERTE(sizeY <= 200);
+//			DWORD nHILO = ((DWORD)sizeX) | (((DWORD)(WORD)sizeY) << 16);
+//			if (pipe.Execute(CMD_SETSIZE, &nHILO, sizeof(nHILO)))
+//			{
+//					lbProcessed = TRUE;
+//
+//				DWORD nRcHILO = 0, nSize = 0;
+//				if (pipe.Read(&nRcHILO, sizeof(nRcHILO), &nSize) && nSize == sizeof(nRcHILO)) {
+//					if (nRcHILO == nHILO) {
+//						lbRc = TRUE;
+//
+//						DEBUGSTRSIZE(L"SetConsoleSizeSrv.lbRc == TRUE\n");
+//						con.nChange2TextWidth = sizeX;
+//						con.nChange2TextHeight = sizeY;
+//						if (con.nChange2TextHeight > 200) {
+//							_ASSERTE(con.nChange2TextHeight<=200);
+//						}
+//					}
+//				}
+//			}
+//		}
+//    }
+//
+//	if (!lbProcessed)
+//		lbRc = SetConsoleSizeSrv(sizeX, sizeY, sizeBuffer, anCmdID);
+//
+//	return lbRc;
+//}
 
 BOOL CRealConsole::SetConsoleSize(/*COORD size,*/ USHORT sizeX, USHORT sizeY, USHORT sizeBuffer, DWORD anCmdID/*=CECMD_SETSIZE*/)
 {
@@ -460,6 +465,7 @@ BOOL CRealConsole::SetConsoleSize(/*COORD size,*/ USHORT sizeX, USHORT sizeY, US
         return false; // консоль пока не создана?
     }
     
+	HEAPVAL
     _ASSERTE(sizeX>=MIN_CON_WIDTH && sizeY>=MIN_CON_HEIGHT);
     
     if (sizeX</*4*/MIN_CON_WIDTH)
@@ -483,12 +489,19 @@ BOOL CRealConsole::SetConsoleSize(/*COORD size,*/ USHORT sizeX, USHORT sizeY, US
 			dwPID = 0;
 	}
 	_ASSERTE(sizeY <= 200);
-	if (!con.bBufferHeight && dwPID)
+	/*if (!con.bBufferHeight && dwPID)
 		lbRc = SetConsoleSizePlugin(sizeX, sizeY, sizeBuffer, anCmdID);
-	else
-		lbRc = SetConsoleSizeSrv(sizeX, sizeY, sizeBuffer, anCmdID);
+	else*/
+
+	HEAPVAL;
+
+	// Чтобы ВО время ресайза пакеты НЕ обрабатывались
+	ResetEvent(con.hInSetSize); con.bInSetSize = TRUE;
+	lbRc = SetConsoleSizeSrv(sizeX, sizeY, sizeBuffer, anCmdID);
+	con.bInSetSize = FALSE; SetEvent(con.hInSetSize);
 
 
+	HEAPVAL
     if (lbRc && isActive()) {
         // update size info
         //if (!gSet.isFullScreen && !gConEmu.isZoomed() && !gConEmu.isIconic())
@@ -500,6 +513,7 @@ BOOL CRealConsole::SetConsoleSize(/*COORD size,*/ USHORT sizeX, USHORT sizeY, US
     }
 
 
+	HEAPVAL;
 	DEBUGSTRSIZE(L"SetConsoleSize.finalizing\n");
 	if (anCmdID == CECMD_SETSIZESYNC) {
 		// ConEmuC должен сам послать изменения
@@ -550,6 +564,7 @@ BOOL CRealConsole::SetConsoleSize(/*COORD size,*/ USHORT sizeX, USHORT sizeY, US
 		//	}
 		//}
 	}
+	HEAPVAL
 
     return lbRc;
 }
@@ -586,7 +601,8 @@ void CRealConsole::SyncConsole2Window()
     RECT newCon = gConEmu.CalcRect(CER_CONSOLE, rcClient, CER_MAINCLIENT);
     _ASSERTE(newCon.right>20 && newCon.bottom>6);
 
-    SetConsoleSize(newCon.right, newCon.bottom);
+	SetConsoleSize(newCon.right, newCon.bottom, 0/*Auto*/, 
+		(gSet.FarSyncSize && GetFarPID()) ? CECMD_SETSIZESYNC : CECMD_SETSIZE);
 }
 
 BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID)
@@ -2216,6 +2232,7 @@ DWORD CRealConsole::ServerThread(LPVOID lpvParam)
     HANDLE hWait[2] = {NULL,NULL};
     DWORD dwTID = GetCurrentThreadId();
 
+	MCHKHEAP
 	_ASSERTE(pVCon!=NULL);
     _ASSERTE(pRCon->hConWnd!=NULL);
     _ASSERTE(pRCon->ms_VConServer_Pipe[0]!=0);
@@ -2230,6 +2247,8 @@ DWORD CRealConsole::ServerThread(LPVOID lpvParam)
     
     hWait[0] = pRCon->mh_TermEvent;
     hWait[1] = pRCon->mh_ServerSemaphore;
+
+	MCHKHEAP
 
     // Пока не затребовано завершение консоли
     do {
@@ -2246,6 +2265,7 @@ DWORD CRealConsole::ServerThread(LPVOID lpvParam)
 				return 0; // Консоль закрывается
 			}
 
+			MCHKHEAP
 			for (int i=0; i<MAX_SERVER_THREADS; i++) {
 				if (pRCon->mn_ServerThreadsId[i] == dwTID) {
 					pRCon->mh_ActiveServerThread = pRCon->mh_ServerThreads[i]; break;
@@ -2265,6 +2285,7 @@ DWORD CRealConsole::ServerThread(LPVOID lpvParam)
                 0,                        // client time-out 
                 gpNullSecurity);          // default security attribute 
 
+			MCHKHEAP
             if (hPipe == INVALID_HANDLE_VALUE) 
             {
 				dwErr = GetLastError();
@@ -2277,6 +2298,7 @@ DWORD CRealConsole::ServerThread(LPVOID lpvParam)
                 //Sleep(50);
                 continue;
             }
+			MCHKHEAP
 
 			// Чтобы ConEmuC знал, что серверный пайп готов
 			if (pRCon->mh_GuiAttached) {
@@ -2291,6 +2313,7 @@ DWORD CRealConsole::ServerThread(LPVOID lpvParam)
 
             fConnected = ConnectNamedPipe(hPipe, NULL) ? TRUE : ((dwErr = GetLastError()) == ERROR_PIPE_CONNECTED); 
 
+			MCHKHEAP
             // сразу разрешить другой нити принять вызов
             ReleaseSemaphore(hWait[1], 1, NULL);
 
@@ -2302,6 +2325,7 @@ DWORD CRealConsole::ServerThread(LPVOID lpvParam)
                 return 0;
             }
 
+			MCHKHEAP
             if (fConnected)
             	break;
             else
@@ -2314,6 +2338,7 @@ DWORD CRealConsole::ServerThread(LPVOID lpvParam)
             //// разрешить другой нити принять вызов //2009-08-28 перенесено сразу после ConnectNamedPipe
             //ReleaseSemaphore(hWait[1], 1, NULL);
             
+			MCHKHEAP
 			if (gConEmu.isValid(pVCon)) {
 				_ASSERTE(pVCon==pRCon->mp_VCon);
 	            pRCon->ServerThreadCommand ( hPipe ); // При необходимости - записывает в пайп результат сама
@@ -2322,6 +2347,7 @@ DWORD CRealConsole::ServerThread(LPVOID lpvParam)
 			}
         }
 
+		MCHKHEAP
         FlushFileBuffers(hPipe); 
         //DisconnectNamedPipe(hPipe); 
         SafeCloseHandle(hPipe);
@@ -2428,10 +2454,14 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
     // Все данные из пайпа получены, обрабатываем команду и возвращаем (если нужно) результат
     if (pIn->hdr.nCmd == CECMD_GETFULLINFO || pIn->hdr.nCmd == CECMD_GETSHORTINFO) {
 		#ifdef _DEBUG
-		wchar_t szDbg[255]; wsprintf(szDbg, L"GUI recieved %s, PktID=%i\n", 
+		wchar_t szDbg[255]; wsprintf(szDbg, L"GUI recieved %s, PktID=%i, Tick=%i\n", 
 			(pIn->hdr.nCmd == CECMD_GETFULLINFO) ? L"CECMD_GETFULLINFO" : L"CECMD_GETSHORTINFO",
-			pIn->ConInfo.inf.nPacketId);
+			pIn->ConInfo.inf.nPacketId, pIn->hdr.nCreateTick);
         DEBUGSTRCMD(szDbg);
+		// только если мы НЕ в цикле ресайза. иначе не страшно, устаревшие пакеты пропустит PopPacket
+		if (!con.bInSetSize && !con.bBufferHeight && pIn->ConInfo.inf.sbi.dwSize.Y > 200) {
+			_ASSERTE(con.bBufferHeight || pIn->ConInfo.inf.sbi.dwSize.Y <= 200);
+		}
 		#endif
         //ApplyConsoleInfo(pIn);
         if (((LPVOID)&in)==((LPVOID)pIn)) {
@@ -2447,16 +2477,20 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
     } else if (pIn->hdr.nCmd == CECMD_CMDSTARTSTOP) {
         //
 		DWORD nStarted = pIn->StartStop.nStarted;
+
         #ifdef _DEBUG
 		HWND  hWnd     = (HWND)pIn->StartStop.hWnd;
-        #endif
-        DWORD nPID     = pIn->StartStop.dwPID;
+		wchar_t szDbg[128];
 		switch (nStarted) {
-			case 0: DEBUGSTRCMD(L"GUI recieved CECMD_CMDSTARTSTOP(ServerStart)\n"); break;
-			case 1: DEBUGSTRCMD(L"GUI recieved CECMD_CMDSTARTSTOP(ServerStop)\n"); break;
-			case 2: DEBUGSTRCMD(L"GUI recieved CECMD_CMDSTARTSTOP(ComspecStart)\n"); break;
-			case 3: DEBUGSTRCMD(L"GUI recieved CECMD_CMDSTARTSTOP(ComspecStop)\n"); break;
-		}        
+			case 0: wsprintf(szDbg, L"GUI recieved CECMD_CMDSTARTSTOP(ServerStart,%i)\n", pIn->hdr.nCreateTick); break;
+			case 1: wsprintf(szDbg, L"GUI recieved CECMD_CMDSTARTSTOP(ServerStop,%i)\n", pIn->hdr.nCreateTick); break;
+			case 2: wsprintf(szDbg, L"GUI recieved CECMD_CMDSTARTSTOP(ComspecStart,%i)\n", pIn->hdr.nCreateTick); break;
+			case 3: wsprintf(szDbg, L"GUI recieved CECMD_CMDSTARTSTOP(ComspecStop,%i)\n", pIn->hdr.nCreateTick); break;
+		}
+		DEBUGSTRCMD(szDbg);
+        #endif
+
+        DWORD nPID     = pIn->StartStop.dwPID;
 		DWORD nSubSystem = pIn->StartStop.nSubSystem;
 		BOOL bRunViaCmdExe = pIn->StartStop.bRootIsCmdExe;
 
@@ -2564,13 +2598,14 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 				if ((mn_ProgramStatus & CES_NTVDM) == 0
 					&& !(gSet.isFullScreen || gConEmu.isZoomed()))
 				{
+					pIn->StartStopRet.bWasBufferHeight = FALSE;
 					if (GetConWindowSize(pIn->StartStop.sbi, nNewWidth, nNewHeight, &bBufferHeight)) {
-						if (crNewSize.X != nNewWidth || crNewSize.Y != nNewHeight) {
+						if (bBufferHeight || crNewSize.X != nNewWidth || crNewSize.Y != nNewHeight) {
 							//gConEmu.SyncWindowToConsole(); - его использовать нельзя. во первых это не главная нить, во вторых - размер pVCon может быть еще не изменен
 							lbNeedResizeWnd = TRUE;
 							crNewSize.X = nNewWidth;
 							crNewSize.Y = nNewHeight;
-							pIn->StartStopRet.bWasBufferHeight = FALSE;
+							pIn->StartStopRet.bWasBufferHeight = TRUE;
 						}
 					}
 				}
@@ -2595,8 +2630,27 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 				mb_BuferModeChangeLocked = TRUE;
 				con.m_sbi.dwSize.Y = crNewSize.Y;
 				SetBufferHeightMode(FALSE, TRUE); // Сразу выключаем, иначе команда неправильно сформируется
+
+				#ifdef _DEBUG
+				wsprintf(szDbg, L"Returns normal window size begin at %i\n", GetTickCount());
+				DEBUGSTRCMD(szDbg);
+				#endif
+
 				// Обязательно. Иначе сервер не узнает, что команда завершена
 				SetConsoleSize(crNewSize.X, crNewSize.Y, 0, CECMD_CMDFINISHED);
+
+				#ifdef _DEBUG
+				wsprintf(szDbg, L"Finished returns normal window size begin at %i\n", GetTickCount());
+				DEBUGSTRCMD(szDbg);
+				#endif
+
+#ifdef _DEBUG
+		#ifdef WIN64
+//				PRAGMA_ERROR("Есть подозрение, что после этого на Win7 x64 приходит старый пакет с буферной высотой и возникает уже некорректная синхронизация размера!");
+		#endif
+#endif
+				// может nChange2TextWidth, nChange2TextHeight нужно использовать?
+				
 				if (lbNeedResizeWnd) {
 					RECT rcCon = MakeRect(nNewWidth, nNewHeight);
 					RECT rcNew = gConEmu.CalcRect(CER_MAIN, rcCon, CER_CONSOLE);
@@ -2605,6 +2659,9 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 				}
 				mb_BuferModeChangeLocked = FALSE;
 				//}
+            } else {
+            	// сюда мы попадать не должны!
+            	_ASSERT(FALSE);
             }
         }
         
@@ -3760,6 +3817,8 @@ BOOL CRealConsole::GetConWindowSize(const CONSOLE_SCREEN_BUFFER_INFO& sbi, int& 
     }
     WARNING("Здесь нужно выполнить коррекцию, если nNewHeight велико - включить режим BufferHeight");
 
+	if (pbBufferHeight)
+		*pbBufferHeight = lbBufferHeight;
 
     _ASSERTE(nNewWidth>=MIN_CON_WIDTH && nNewHeight>=MIN_CON_HEIGHT);
 
@@ -4939,6 +4998,17 @@ CESERVER_REQ* CRealConsole::PopPacket()
 
     MCHKHEAP
 
+	DWORD nWait = 0;
+	if (con.bInSetSize) {
+		_ASSERTE(con.hInSetSize!=NULL);
+		nWait = WaitForSingleObject(con.hInSetSize, 1000);
+		#ifdef _DEBUG
+		if (nWait != WAIT_OBJECT_0) {
+			_ASSERTE(nWait == WAIT_OBJECT_0);
+		}
+		#endif
+	}
+
     CESERVER_REQ* pRet = NULL, *pCmp = NULL;
 
     //MSectionLock cs; cs.Lock(&csPKT, TRUE);
@@ -5476,33 +5546,69 @@ void CRealConsole::CheckFarStates()
 		gConEmu.UpdateProcessDisplay(FALSE);
 }
 
-void CRealConsole::OnTitleChanged()
+void CRealConsole::CheckProgressInConsole(const wchar_t* pszCurLine)
 {
-    if (!this) return;
+	// Обработка прогресса NeroCMD и пр. консольных программ (если курсор находится в видимой области)
+	
+	int nIdx = 0;
+	
+	TODO("Хорошо бы и русские названия обрабатывать?");
+	
+	if (pszCurLine[nIdx] == L' ' && isDigit(pszCurLine[nIdx+1]))
+		nIdx++;
+	
+	// Менять mn_ConsoleProgress только если нашли проценты в строке с курсором
+	if (isDigit(pszCurLine[nIdx]) && isDigit(pszCurLine[nIdx+1]) && isDigit(pszCurLine[nIdx+2]) 
+		&& (pszCurLine[nIdx+3]==L'%' 
+		    || !wcsncmp(pszCurLine+nIdx+3,L" percent",8)))
+	{
+		mn_ConsoleProgress = 100*(pszCurLine[nIdx] - L'0') + 10*(pszCurLine[nIdx+1] - L'0') + (pszCurLine[nIdx+2] - L'0');
+	}
+	else if (isDigit(pszCurLine[nIdx]) && isDigit(pszCurLine[nIdx+1]) 
+		&& (pszCurLine[nIdx+2]==L'%'
+			|| !wcsncmp(pszCurLine+nIdx+2,L" percent",8)))
+	{
+		mn_ConsoleProgress = 10*(pszCurLine[nIdx] - L'0') + (pszCurLine[nIdx+1] - L'0');
+	}
+	else if (isDigit(pszCurLine[nIdx]) 
+		&& (pszCurLine[nIdx+1]==L'%'
+			|| !wcsncmp(pszCurLine+nIdx+1,L" percent",8)))
+	{
+		mn_ConsoleProgress = (pszCurLine[nIdx] - L'0');
+	}
+}
 
-    wcscpy(Title, TitleCmp);
-	TitleFull[0] = 0;
+void CRealConsole::CheckProgressInTitle()
+{
+	// Обработка прогресса NeroCMD и пр. консольных программ (если курсор находится в видимой области)
+	// выполняется в CheckProgressInConsole (-> mn_ConsoleProgress), вызывается из FindPanels 
 
-    // Обработка прогресса операций
-    short nLastProgress = mn_Progress;
+	// Менять mn_Progress только если нашли проценты в заголовке!
     if (Title[0] == L'{' || Title[0] == L'(' || Title[0] == L'[') {
-        if (isDigit(Title[1])) {
-            if (isDigit(Title[2]) && isDigit(Title[3]) 
-                && (Title[4] == L'%' || (Title[4] == L'.' && isDigit(Title[5]) && Title[6] == L'%'))
+    	int i = 1;
+    	if (Title[i] == L' ') {
+    		i++;
+    		if (Title[i] == L' ')
+    			i++;
+    	}
+    	
+        if (isDigit(Title[i])) {
+            if (isDigit(Title[i+1]) && isDigit(Title[i+2]) 
+                && (Title[i+3] == L'%' || (Title[i+3] == L'.' && isDigit(Title[i+4]) && Title[i+7] == L'%'))
                 )
             {
                 // По идее больше 100% быть не должно :)
-                mn_Progress = 100*(Title[1] - L'0') + 10*(Title[2] - L'0') + (Title[3] - L'0');
-            } else if (isDigit(Title[2]) 
-                && (Title[3] == L'%' || (Title[3] == L'.' && isDigit(Title[4]) && Title[5] == L'%') )
+                mn_Progress = 100*(Title[i] - L'0') + 10*(Title[i+1] - L'0') + (Title[i+2] - L'0');
+            } else if (isDigit(Title[i+1]) 
+                && (Title[i+2] == L'%' || (Title[i+2] == L'.' && isDigit(Title[i+3]) && Title[i+4] == L'%') )
                 )
             {
                 // 10 .. 99 %
-                mn_Progress = 10*(Title[1] - L'0') + (Title[2] - L'0');
-            } else if (Title[2] == L'%' || (Title[2] == L'.' && isDigit(Title[3]) && Title[4] == L'%'))
+                mn_Progress = 10*(Title[i] - L'0') + (Title[i+1] - L'0');
+            } else if (Title[i+1] == L'%' || (Title[i+1] == L'.' && isDigit(Title[i+2]) && Title[i+3] == L'%'))
             {
                 // 0 .. 9 %
-                mn_Progress = (Title[1] - L'0');
+                mn_Progress = (Title[i] - L'0');
             } else {
                 // Процентов нет
                 mn_Progress = -1;
@@ -5513,6 +5619,22 @@ void CRealConsole::OnTitleChanged()
         } else {
             mn_Progress = -1;
         }
+    }
+}
+
+void CRealConsole::OnTitleChanged()
+{
+    if (!this) return;
+
+    wcscpy(Title, TitleCmp);
+	TitleFull[0] = 0;
+
+    // Обработка прогресса операций
+    short nLastProgress = mn_Progress;
+    if (Title[0] == L'{' || Title[0] == L'(' || Title[0] == L'[') {
+    	// Меняет mn_Progress только если нашли проценты в заголовке!
+    	CheckProgressInTitle();
+    	
     } else if ((mn_ProgramStatus & CES_FARACTIVE) == 0 && mn_ConsoleProgress != -1) {
     	// Обработка прогресса NeroCMD и пр. консольных программ
 		// Если курсор находится в видимой области
@@ -5833,13 +5955,17 @@ void CRealConsole::FindPanels(BOOL abResetOnly/* = FALSE */)
 			&& nY >= 0 && nY < con.nTextHeight)
         {
         	int nIdx = nY * con.nTextWidth;
-        	if (isDigit(con.pConChar[nIdx]) && isDigit(con.pConChar[nIdx+1]) && isDigit(con.pConChar[nIdx+2]) && con.pConChar[nIdx+3]==L'%') {
-        		mn_ConsoleProgress = 100*(con.pConChar[nIdx] - L'0') + 10*(con.pConChar[nIdx+1] - L'0') + (con.pConChar[nIdx+2] - L'0');
-        	} else if (isDigit(con.pConChar[nIdx]) && isDigit(con.pConChar[nIdx+1]) && con.pConChar[nIdx+2]==L'%') {
-        		mn_ConsoleProgress = 10*(con.pConChar[nIdx] - L'0') + (con.pConChar[nIdx+1] - L'0');
-        	} else if (isDigit(con.pConChar[nIdx]) && con.pConChar[nIdx+1]==L'%') {
-        		mn_ConsoleProgress = (con.pConChar[nIdx] - L'0');
-    		}
+        	
+			// Обработка прогресса NeroCMD и пр. консольных программ (если курсор находится в видимой области)
+        	CheckProgressInConsole(con.pConChar+nIdx);
+        	
+        	//if (isDigit(con.pConChar[nIdx]) && isDigit(con.pConChar[nIdx+1]) && isDigit(con.pConChar[nIdx+2]) && con.pConChar[nIdx+3]==L'%') {
+        	//	mn_ConsoleProgress = 100*(con.pConChar[nIdx] - L'0') + 10*(con.pConChar[nIdx+1] - L'0') + (con.pConChar[nIdx+2] - L'0');
+        	//} else if (isDigit(con.pConChar[nIdx]) && isDigit(con.pConChar[nIdx+1]) && con.pConChar[nIdx+2]==L'%') {
+        	//	mn_ConsoleProgress = 10*(con.pConChar[nIdx] - L'0') + (con.pConChar[nIdx+1] - L'0');
+        	//} else if (isDigit(con.pConChar[nIdx]) && con.pConChar[nIdx+1]==L'%') {
+        	//	mn_ConsoleProgress = (con.pConChar[nIdx] - L'0');
+    		//}
         }
     }
     if (nLastProgress != mn_ConsoleProgress || mn_Progress != mn_ConsoleProgress)

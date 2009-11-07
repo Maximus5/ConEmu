@@ -7,7 +7,7 @@
 #include "../common/ConEmuCheck.h"
 
 #define DEBUGSTRSYS(s) //DEBUGSTR(s)
-#define DEBUGSTRSIZE(s) DEBUGSTR(s)
+#define DEBUGSTRSIZE(s) //DEBUGSTR(s)
 #define DEBUGSTRCONS(s) //DEBUGSTR(s)
 #define DEBUGSTRTABS(s) //DEBUGSTR(s)
 #define DEBUGSTRLANG(s) //DEBUGSTR(s)// ; Sleep(2000)
@@ -90,8 +90,13 @@ CConEmuMain::CConEmuMain()
     LoadVersionInfo(ms_ConEmuExe);
     // Добавить в окружение переменную с папкой к ConEmu.exe
     *pszSlash = 0;
+    lstrcpy(ms_ConEmuChm, ms_ConEmuExe); lstrcat(ms_ConEmuChm, L"\\ConEmu.chm");
     SetEnvironmentVariable(L"ConEmuDir", ms_ConEmuExe);
     *pszSlash = L'\\';
+    
+    DWORD dwAttr = GetFileAttributes(ms_ConEmuChm);
+    if (dwAttr == (DWORD)-1 || (dwAttr & FILE_ATTRIBUTE_DIRECTORY))
+    	ms_ConEmuChm[0] = 0;
 
 	ms_ConEmuCExe[0] = 0;
 	if (ms_ConEmuExe[0] == L'\\' /*|| wcschr(ms_ConEmuExe, L' ') == NULL*/) // Сетевые пути не менять
@@ -140,6 +145,8 @@ CConEmuMain::CConEmuMain()
 	mn_PostConsoleResize = ++nAppMsg;
 	mn_ConsoleLangChanged = ++nAppMsg;
 	mn_MsgPostOnBufferHeight = ++nAppMsg;
+	mn_MsgSetForeground = RegisterWindowMessage(CONEMUMSG_SETFOREGROUND);
+	mn_MsgFlashWindow = RegisterWindowMessage(CONEMUMSG_FLASHWINDOW);
 }
 
 BOOL CConEmuMain::Init()
@@ -3504,6 +3511,7 @@ void CConEmuMain::TabCommand(UINT nTabCmd)
 void CConEmuMain::OnBufferHeight() //BOOL abBufferHeight)
 {
 	if (!gConEmu.isMainThread()) {
+		PostMessage(ghWnd, mn_MsgPostOnBufferHeight, 0, 0);
 		return;
 	}
 
@@ -3582,7 +3590,9 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
     HMENU hwndMain = GetSystemMenu(ghWnd, FALSE), hDebug = NULL;
     InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_TOTRAY, _T("Hide to &tray"));
     InsertMenu(hwndMain, 0, MF_BYPOSITION, MF_SEPARATOR, 0);
-    InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_HELP, _T("&About"));
+    InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_ABOUT, _T("&About"));
+    if (ms_ConEmuChm[0]) //Показывать пункт только если есть conemu.chm
+    	InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_HELP, _T("&Help"));
     InsertMenu(hwndMain, 0, MF_BYPOSITION, MF_SEPARATOR, 0);
     hDebug = CreatePopupMenu();
     AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_CON_TOGGLE_VISIBLE, _T("&Real console"));
@@ -3766,6 +3776,39 @@ LRESULT CConEmuMain::OnDestroy(HWND hWnd)
     PostQuitMessage(0);
 
     return 0;
+}
+
+LRESULT CConEmuMain::OnFlashWindow(DWORD nFlags, DWORD nCount, HWND hCon)
+{
+    if (!hCon) return 0;
+    
+    BOOL lbRc = FALSE;
+    for (int i = 0; i<MAX_CONSOLE_COUNT; i++) {
+        if (!mp_VCon[i]) continue;
+        
+        if (mp_VCon[i]->RCon()->ConWnd() == hCon) {
+            FLASHWINFO fl = {sizeof(FLASHWINFO)};
+            
+            if (isMeForeground()) {
+            	if (mp_VCon[i] != mp_VActive) { // Только для неактивной консоли
+                    fl.dwFlags = FLASHW_STOP; fl.hwnd = ghWnd;
+                    FlashWindowEx(&fl); // Чтобы мигание не накапливалось
+                    
+            		fl.uCount = 4; fl.dwFlags = FLASHW_ALL; fl.hwnd = ghWnd;
+            		FlashWindowEx(&fl);
+            	}
+            } else {
+            	fl.dwFlags = FLASHW_ALL|FLASHW_TIMERNOFG; fl.hwnd = ghWnd;
+            	FlashWindowEx(&fl); // Помигать в GUI
+            }
+            
+            //fl.dwFlags = FLASHW_STOP; fl.hwnd = hCon; -- не требуется, т.к. это хучится
+            //FlashWindowEx(&fl);
+            break;
+        }
+    }
+            
+	return lbRc;
 }
 
 LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
@@ -3999,14 +4042,14 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
                 else if (wParam=='0')
                     ConActivate(9);
                     
-                else if (wParam == gSet.icMultiNext)
+				else if (wParam == gSet.icMultiNext /* L'Q' */) { // Win-Q
                     ConActivateNext(isPressed(VK_SHIFT) ? FALSE : TRUE);
                     
-                else if (wParam == gSet.icMultiNew) {
+				} else if (wParam == gSet.icMultiNew /* L'W' */) { // Win-W
                     // Создать новую консоль
                     Recreate ( FALSE, gSet.isMultiNewConfirm );
                     
-                } else if (wParam == gSet.icMultiRecreate) {
+                } else if (wParam == gSet.icMultiRecreate /* L'~' */) { // Win-~
                     Recreate ( TRUE, TRUE );
 
                 }
@@ -4728,29 +4771,29 @@ HSHELL_APPCOMMAND The APPCOMMAND which has been unhandled by the application or 
     switch (wParam) {
     case HSHELL_FLASH:
         {
-            HWND hCon = (HWND)lParam;
-            if (!hCon) return 0;
-            for (int i = 0; i<MAX_CONSOLE_COUNT; i++) {
-                if (!mp_VCon[i]) continue;
-                if (mp_VCon[i]->RCon()->ConWnd() == hCon) {
-                    FLASHWINFO fl = {sizeof(FLASHWINFO)};
-                    if (isMeForeground()) {
-                    	if (mp_VCon[i] != mp_VActive) { // Только для неактивной консоли
-                            fl.dwFlags = FLASHW_STOP; fl.hwnd = ghWnd;
-                            FlashWindowEx(&fl); // Чтобы мигание не накапливалось
-                    		fl.uCount = 4; fl.dwFlags = FLASHW_ALL; fl.hwnd = ghWnd;
-                    		FlashWindowEx(&fl);
-                    	}
-                    } else {
-                    	fl.dwFlags = FLASHW_ALL|FLASHW_TIMERNOFG; fl.hwnd = ghWnd;
-                    	FlashWindowEx(&fl); // Помигать в GUI
-                    }
-                    
-                    fl.dwFlags = FLASHW_STOP; fl.hwnd = hCon;
-                    FlashWindowEx(&fl);
-                    break;
-                }
-            }
+            //HWND hCon = (HWND)lParam;
+            //if (!hCon) return 0;
+            //for (int i = 0; i<MAX_CONSOLE_COUNT; i++) {
+            //    if (!mp_VCon[i]) continue;
+            //    if (mp_VCon[i]->RCon()->ConWnd() == hCon) {
+            //        FLASHWINFO fl = {sizeof(FLASHWINFO)};
+            //        if (isMeForeground()) {
+            //        	if (mp_VCon[i] != mp_VActive) { // Только для неактивной консоли
+            //                fl.dwFlags = FLASHW_STOP; fl.hwnd = ghWnd;
+            //                FlashWindowEx(&fl); // Чтобы мигание не накапливалось
+            //        		fl.uCount = 4; fl.dwFlags = FLASHW_ALL; fl.hwnd = ghWnd;
+            //        		FlashWindowEx(&fl);
+            //        	}
+            //        } else {
+            //        	fl.dwFlags = FLASHW_ALL|FLASHW_TIMERNOFG; fl.hwnd = ghWnd;
+            //        	FlashWindowEx(&fl); // Помигать в GUI
+            //        }
+            //        
+            //        fl.dwFlags = FLASHW_STOP; fl.hwnd = hCon;
+            //        FlashWindowEx(&fl);
+            //        break;
+            //    }
+            //}
         }
         break;
     case HSHELL_WINDOWCREATED:
@@ -4847,6 +4890,30 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
             mp_VActive->RCon()->ShowConsole(-1); // Toggle visibility
         return 0;
     case ID_HELP:
+    	{
+    		static HMODULE hhctrl = NULL;
+    		if (!hhctrl) hhctrl = GetModuleHandle(L"hhctrl.ocx");
+    		if (!hhctrl) hhctrl = LoadLibrary(L"hhctrl.ocx");
+    		if (hhctrl) {
+    			typedef BOOL (WINAPI* HTMLHelpW_t)(HWND hWnd, LPCWSTR pszFile, INT uCommand, INT dwData);
+    			HTMLHelpW_t fHTMLHelpW = (HTMLHelpW_t)GetProcAddress(hhctrl, "HtmlHelpW");
+    			if (fHTMLHelpW) {
+    				wchar_t szHelpFile[MAX_PATH*2];
+    				lstrcpy(szHelpFile, ms_ConEmuChm);
+    				//wchar_t* pszSlash = wcsrchr(szHelpFile, L'\\');
+    				//if (pszSlash) pszSlash++; else pszSlash = szHelpFile;
+    				//lstrcpy(pszSlash, L"ConEmu.chm");
+    				// lstrcat(szHelpFile, L::/Intro.htm");
+    				
+    				#define HH_HELP_CONTEXT 0x000F
+    				#define HH_DISPLAY_TOC  0x0001
+    				//fHTMLHelpW(NULL /*чтобы окно не блокировалось*/, szHelpFile, HH_HELP_CONTEXT, contextID);
+    				fHTMLHelpW(NULL /*чтобы окно не блокировалось*/, szHelpFile, HH_DISPLAY_TOC, 0);
+    			}
+			}
+    	}
+    	return 0;
+    case ID_ABOUT:
         {
             WCHAR szTitle[255];
             #ifdef _DEBUG
@@ -5751,6 +5818,12 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			return 0;
 		} else if (messg == gConEmu.mn_MsgPostOnBufferHeight) {
 			gConEmu.OnBufferHeight();
+			return 0;
+		} else if (messg == gConEmu.mn_MsgSetForeground) {
+			SetForegroundWindow((HWND)lParam);
+			return 0;
+		} else if (messg == gConEmu.mn_MsgFlashWindow) {
+			return OnFlashWindow((wParam & 0xFF000000) >> 24, wParam & 0xFFFFFF, (HWND)lParam);
 		}
         //else if (messg == gConEmu.mn_MsgCmdStarted || messg == gConEmu.mn_MsgCmdStopped) {
         //  return gConEmu.OnConEmuCmd( (messg == gConEmu.mn_MsgCmdStarted), (HWND)wParam, (DWORD)lParam);

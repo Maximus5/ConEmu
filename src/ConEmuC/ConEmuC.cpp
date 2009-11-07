@@ -1631,6 +1631,8 @@ void ComspecDone(int aiRc)
 				if (!pOut->StartStopRet.bWasBufferHeight) {
 					//cmd.sbi.dwSize = pIn->StartStop.sbi.dwSize;
 					lbRc1 = FALSE; // Консольное приложение самостоятельно сбросило буферный режим. Не дергаться...
+				} else {
+					lbRc1 = TRUE;
 				}
                 ExecuteFreeResult(pOut); pOut = NULL;
             }
@@ -1638,6 +1640,12 @@ void ComspecDone(int aiRc)
         }
 
         lbRc2 = GetConsoleScreenBufferInfo(ghConOut, &sbi2);
+		#ifdef _DEBUG
+		if (sbi2.dwSize.Y > 200) {
+			wchar_t szTitle[128]; wsprintfW(szTitle, L"ConEmuC (PID=%i)", GetCurrentProcessId());
+			MessageBox(NULL, L"BufferHeight was not turned OFF", szTitle, MB_SETFOREGROUND|MB_SYSTEMMODAL);
+		}
+		#endif
         if (lbRc1 && lbRc2 && sbi2.dwSize.Y == sbi1.dwSize.Y) {
             // GUI не смог вернуть высоту буфера... 
             // Это плохо, т.к. фар высоту буфера не меняет и будет сильно глючить на N сотнях строк...
@@ -3123,6 +3131,11 @@ Loop1:
 #ifdef _DEBUG
     // Вдруг случайно gnBufferHeight не установлен?
 	if (TextHeight>150) {
+		#ifdef _DEBUG
+			#ifdef WIN64
+//				PRAGMA_ERROR("Вот тут слетает в Win x64");
+			#endif
+		#endif
 		_ASSERTE(TextHeight<=150);
 	}
     // Высота окна в консоли должна быть равна высоте в GUI, иначе мы будем терять строку с курсором при прокрутке
@@ -3556,17 +3569,29 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
                 SetConsoleSize(nBufferHeight, crNewSize, rNewRect, ":CECMD_SETSIZE");
 
 				if (in.hdr.nCmd == CECMD_SETSIZESYNC) {
-					INPUT_RECORD r = {WINDOW_BUFFER_SIZE_EVENT};
-					r.Event.WindowBufferSizeEvent.dwSize = crNewSize;
-					DWORD dwWritten = 0;
-					if (WriteConsoleInput(ghConIn, &r, 1, &dwWritten)) {
-						if (PeekConsoleInput(ghConIn, &r, 1, &(dwWritten = 0)) && dwWritten > 0) {
-							DWORD dwStartTick = GetTickCount();
-							do {
-								Sleep(5);
-								if (!PeekConsoleInput(ghConIn, &r, 1, &(dwWritten = 0)))
-									dwWritten = 0;
-							} while ((dwWritten > 0) && ((GetTickCount() - dwStartTick) < MAX_SYNCSETSIZE_WAIT));
+					CESERVER_REQ *pPlgIn = NULL, *pPlgOut = NULL;
+					if (in.SetSize.dwFarPID && !nBufferHeight) {
+						// Команду можно выполнить через плагин FARа
+						wchar_t szPipeName[128];
+						wsprintf(szPipeName, CEPLUGINPIPENAME, L".", in.SetSize.dwFarPID);
+						DWORD nHILO = ((DWORD)crNewSize.X) | (((DWORD)(WORD)crNewSize.Y) << 16);
+						pPlgIn = ExecuteNewCmd(CMD_SETSIZE, sizeof(CESERVER_REQ_HDR)+sizeof(nHILO));
+						pPlgIn->dwData[0] = nHILO;
+						pPlgOut = ExecuteCmd(szPipeName, pPlgIn, 500, ghConWnd);
+						if (pPlgOut) ExecuteFreeResult(pPlgOut);
+					} else {
+						INPUT_RECORD r = {WINDOW_BUFFER_SIZE_EVENT};
+						r.Event.WindowBufferSizeEvent.dwSize = crNewSize;
+						DWORD dwWritten = 0;
+						if (WriteConsoleInput(ghConIn, &r, 1, &dwWritten)) {
+							if (PeekConsoleInput(ghConIn, &r, 1, &(dwWritten = 0)) && dwWritten > 0) {
+								DWORD dwStartTick = GetTickCount();
+								do {
+									Sleep(5);
+									if (!PeekConsoleInput(ghConIn, &r, 1, &(dwWritten = 0)))
+										dwWritten = 0;
+								} while ((dwWritten > 0) && ((GetTickCount() - dwStartTick) < MAX_SYNCSETSIZE_WAIT));
+							}
 						}
 					}
 
@@ -4527,7 +4552,9 @@ BOOL ReloadConsoleInfo(CESERVER_CHAR* pChangedRgn/*=NULL*/)
 
     MCHKHEAP
 
-    if (!MyGetConsoleScreenBufferInfo(ghConOut, &lsbi)) { srv.dwSbiRc = GetLastError(); if (!srv.dwSbiRc) srv.dwSbiRc = -1; } else {
+    if (!MyGetConsoleScreenBufferInfo(ghConOut, &lsbi)) {
+		srv.dwSbiRc = GetLastError(); if (!srv.dwSbiRc) srv.dwSbiRc = -1;
+	} else {
 		// Консольное приложение могло изменить размер буфера
 		if (!NTVDMACTIVE
 			&& (gcrBufferSize.Y != lsbi.dwSize.Y || gnBufferHeight != 0)
@@ -4646,6 +4673,12 @@ BOOL ReloadConsoleInfo(CESERVER_CHAR* pChangedRgn/*=NULL*/)
             lbChanged = TRUE;
         }
     }
+
+#ifdef _DEBUG
+	if (!gnBufferHeight && srv.sbi.dwSize.Y > 200) {
+		_ASSERTE(srv.sbi.dwSize.Y <= 200);
+	}
+#endif
 
     return lbChanged;
 }

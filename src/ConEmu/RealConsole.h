@@ -123,7 +123,7 @@ public:
     BOOL SetConsoleSize(/*COORD size,*/ USHORT sizeX, USHORT sizeY, USHORT sizeBuffer=0, DWORD anCmdID=CECMD_SETSIZE);
 private:
 	BOOL SetConsoleSizeSrv(/*COORD size,*/ USHORT sizeX, USHORT sizeY, USHORT sizeBuffer, DWORD anCmdID=CECMD_SETSIZE);
-	BOOL SetConsoleSizePlugin(/*COORD size,*/ USHORT sizeX, USHORT sizeY, USHORT sizeBuffer, DWORD anCmdID=CECMD_SETSIZE);
+	//BOOL SetConsoleSizePlugin(/*COORD size,*/ USHORT sizeX, USHORT sizeY, USHORT sizeBuffer, DWORD anCmdID=CECMD_SETSIZE);
 private:
     //void SendConsoleEvent(INPUT_RECORD* piRec);
     DWORD mn_FlushIn, mn_FlushOut;
@@ -217,6 +217,8 @@ protected:
     WCHAR ms_PanelTitle[CONEMUTABMAX];
     // Процентики
     short mn_Progress, mn_PreWarningProgress, mn_ConsoleProgress;
+    void CheckProgressInTitle();
+    void CheckProgressInConsole(const wchar_t* pszCurLine);
 
     BOOL AttachPID(DWORD dwPID);
     BOOL StartProcess();
@@ -256,10 +258,11 @@ private:
         int nTextWidth, nTextHeight, nBufferHeight;
         int nChange2TextWidth, nChange2TextHeight;
         BOOL bBufferHeight; // TRUE, tckb tcnm ghjrhenrf
-        DWORD nPacketIdx;
+        //DWORD nPacketIdx;
         DWORD_PTR dwKeybLayout;
         BOOL bRBtnDrag; // в консоль посылается драг правой кнопкой (выделение в FAR)
         COORD crRBtnDrag;
+		BOOL bInSetSize; HANDLE hInSetSize;
     } con;
     // 
     MSection csPRC; //DWORD ncsTPRC;

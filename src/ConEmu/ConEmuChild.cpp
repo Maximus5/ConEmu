@@ -675,6 +675,7 @@ void CConEmuBack::Invalidate()
 BOOL CConEmuBack::TrackMouse()
 {
 	BOOL lbRc = FALSE; // ѕо умолчанию - мышь не перехватывать
+	BOOL lbHided = FALSE;
 	BOOL lbBufferMode = gConEmu.ActiveCon()->RCon()->isBufferHeight();
 	if (/*!mb_ScrollVisible &&*/ lbBufferMode) {
 		// ≈сли мышь в над скроллбаром - показать его
@@ -691,10 +692,24 @@ BOOL CConEmuBack::TrackMouse()
 		} else if (mb_ScrollVisible) {
 			mb_ScrollVisible = FALSE;
 			ShowWindow(mh_WndScroll, SW_HIDE);
+			lbHided = TRUE;
 		}
 	} else if (mb_ScrollVisible && !lbBufferMode) {
 		mb_ScrollVisible = FALSE;
 		ShowWindow(mh_WndScroll, SW_HIDE);
+		lbHided = TRUE;
+	}
+	
+	if (lbHided)
+	{
+		RECT rcScroll; GetWindowRect(mh_WndScroll, &rcScroll);
+		if (IsWindowVisible(ghWndDC)) {
+			MapWindowPoints(NULL, ghWndDC, (LPPOINT)&rcScroll, 2);
+			InvalidateRect(ghWndDC, &rcScroll, FALSE);
+		} else { // задел на будущее, когда viewport станет невидимым
+			MapWindowPoints(NULL, ghWnd, (LPPOINT)&rcScroll, 2);
+			InvalidateRect(ghWnd, &rcScroll, FALSE);
+		}
 	}
 	return lbRc;
 }

@@ -9,13 +9,14 @@ typedef interface ITaskbarList3 ITaskbarList3;
 #endif 	/* __ITaskbarList3_FWD_DEFINED__ */
 
 #define WM_TRAYNOTIFY WM_USER+1
+#define ID_HELP 0xABC7
 #define ID_CON_TOGGLE_VISIBLE 0xABC8
 #define ID_CON_PASTE 0xABC9
 #define ID_AUTOSCROLL 0xABCA
 #define ID_DUMPCONSOLE 0xABCB
 #define ID_CONPROP 0xABCC
 #define ID_SETTINGS 0xABCD
-#define ID_HELP 0xABCE
+#define ID_ABOUT 0xABCE
 #define ID_TOTRAY 0xABCF
 
 #define IID_IShellLink IID_IShellLinkW 
@@ -65,6 +66,7 @@ public:
 	//HMODULE mh_Psapi;
 	//FGetModuleFileNameEx GetModuleFileNameEx;
 	wchar_t ms_ConEmuExe[MAX_PATH+1];
+	wchar_t ms_ConEmuChm[MAX_PATH+1];
 	wchar_t ms_ConEmuCExe[MAX_PATH+1];
 	wchar_t ms_ConEmuCurDir[MAX_PATH+1];
 public:
@@ -165,6 +167,8 @@ protected:
 	UINT mn_PostConsoleResize;
 	UINT mn_ConsoleLangChanged;
 	UINT mn_MsgPostOnBufferHeight;
+	UINT mn_MsgSetForeground;
+	UINT mn_MsgFlashWindow;
 	
 	//
 	static DWORD CALLBACK ServerThread(LPVOID lpvParam);
@@ -262,6 +266,7 @@ public:
 	void OnConsoleResize(BOOL abPosted=FALSE);
 	LRESULT OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate);
 	LRESULT OnDestroy(HWND hWnd);
+	LRESULT OnFlashWindow(DWORD nFlags, DWORD nCount, HWND hCon);
 	LRESULT OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnGetMinMaxInfo(LPMINMAXINFO pInfo);
 	LRESULT OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);

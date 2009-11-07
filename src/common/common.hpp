@@ -80,7 +80,7 @@ extern wchar_t gszDbgModLabel[6];
 	else lstrcpyW(gszDbgModLabel, L"dll"); \
 }
 #ifdef SHOWDEBUGSTR
-#define DEBUGSTR(s) { CHEKCDBGMODLABEL; SYSTEMTIME st; GetLocalTime(&st); wchar_t szDEBUGSTRTime[40]; wsprintf(szDEBUGSTRTime, L"%i:%02i:%02i.%03i(%s.%i) ", st.wHour, st.wMinute, st.wSecond, st.wMilliseconds, gszDbgModLabel, GetCurrentThreadId()); OutputDebugString(szDEBUGSTRTime); OutputDebugString(s); }
+#define DEBUGSTR(s) { MCHKHEAP; CHEKCDBGMODLABEL; SYSTEMTIME st; GetLocalTime(&st); wchar_t szDEBUGSTRTime[40]; wsprintf(szDEBUGSTRTime, L"%i:%02i:%02i.%03i(%s.%i) ", st.wHour, st.wMinute, st.wSecond, st.wMilliseconds, gszDbgModLabel, GetCurrentThreadId()); OutputDebugString(szDEBUGSTRTime); OutputDebugString(s); }
 #else
 #define DEBUGSTR(s)
 #endif
@@ -125,7 +125,7 @@ extern wchar_t gszDbgModLabel[6];
 #define CECMD_POSTCONMSG    21 // В Win7 релизе нельзя посылать сообщения окну консоли, запущенной в режиме администратора
 #define CECMD_REQUESTFULLINFO 22
 
-#define CESERVER_REQ_VER    18
+#define CESERVER_REQ_VER    19
 
 #define PIPEBUFSIZE 4096
 
@@ -211,6 +211,9 @@ typedef struct tag_CESERVER_REQ_HDR {
 	DWORD   nVersion;
 	DWORD   nSrcThreadId;
 	DWORD   nSrcPID;
+#ifdef _DEBUG
+	DWORD   nCreateTick;
+#endif
 } CESERVER_REQ_HDR;
 
 
@@ -276,6 +279,7 @@ typedef struct tag_CESERVER_REQ_SETSIZE {
 	COORD  size;
 	SHORT  nSendTopLine;  // -1 или 0based номер строки зафиксированной в GUI (только для режима с прокруткой)
 	SMALL_RECT rcWindow;  // координаты видимой области для режима с прокруткой
+	DWORD  dwFarPID;      // Если передано - сервер должен сам достучаться до FAR'а и обновить его размер через плагин ПЕРЕД возвратом
 } CESERVER_REQ_SETSIZE;
 
 typedef struct tag_CESERVER_REQ_OUTPUTFILE {
@@ -344,6 +348,8 @@ typedef struct tag_CESERVER_REQ {
 
 #define CONEMUMSG_ATTACH L"ConEmuMain::Attach"            // wParam == hConWnd, lParam == ConEmuC_PID
 #define CONEMUMSG_SRVSTARTED L"ConEmuMain::SrvStarted"    // wParam == hConWnd, lParam == ConEmuC_PID
+#define CONEMUMSG_SETFOREGROUND L"ConEmuMain::SetForeground"            // wParam == hConWnd, lParam == ConEmuC_PID
+#define CONEMUMSG_FLASHWINDOW L"ConEmuMain::FlashWindow"
 //#define CONEMUCMDSTARTED L"ConEmuMain::CmdStarted"    // wParam == hConWnd, lParam == ConEmuC_PID (as ComSpec)
 //#define CONEMUCMDSTOPPED L"ConEmuMain::CmdTerminated" // wParam == hConWnd, lParam == ConEmuC_PID (as ComSpec)
 

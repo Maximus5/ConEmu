@@ -1,7 +1,7 @@
 
 #define SHOWDEBUGSTR
 
-#define DEBUGSTRTABS(s) DEBUGSTR(s)
+#define DEBUGSTRTABS(s) //DEBUGSTR(s)
 
 #include <windows.h>
 #include <commctrl.h>
@@ -384,6 +384,7 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
 	}
 	#endif
 
+	MCHKHEAP 
     /*if (!_active)
     {
         return;
@@ -414,6 +415,7 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
 
     ConEmuTab tab = {0};
     
+	MCHKHEAP
     int V, I, tabIdx = 0, nCurTab = -1;
 	CVirtualConsole* pVCon = NULL;
     VConTabs vct = {NULL};
@@ -428,6 +430,7 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
 	}
 	#endif
 
+	MCHKHEAP
 	if (!TabBar.IsActive() && gSet.isTabs) {
 		int nTabs = 0;
 		for (V = 0; V < MAX_CONSOLE_COUNT && nTabs < 2; V++) {
@@ -464,6 +467,7 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
 	}
 	#endif
 
+	MCHKHEAP
 	_ASSERTE(m_Tab2VCon.size()==0);
 
     for (V = 0; V < MAX_CONSOLE_COUNT; V++) {
@@ -521,6 +525,7 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
 			#endif
         }
     }
+	MCHKHEAP
     if (tabIdx == 0) // хот€ бы "Console" покажем
     {
         PrepareTab(&tab);
@@ -556,6 +561,7 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
         DeleteItem(tabIdx);
 	}
 
+	MCHKHEAP
     if (mb_InKeySwitching) {
 	    if (mn_CurSelTab >= nCurCount) // ≈сли выбранный таб вылез за границы
 		    mb_InKeySwitching = FALSE;
@@ -570,6 +576,7 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
 		mb_PostUpdateRequested = FALSE;
 		RequestPostUpdate();
 	}
+	MCHKHEAP
 }
 
 void TabBarClass::AddTab2VCon(VConTabs& vct)
@@ -844,10 +851,14 @@ void TabBarClass::OnMouse(int message, int x, int y)
         {
             CVirtualConsole* pVCon = NULL;
 
-            pVCon = FarSendChangeTab(iPage);
+			pVCon = FarSendChangeTab(iPage);
 
 			if (pVCon) {
-				gConEmu.PostMacro(gSet.sTabCloseMacro ? gSet.sTabCloseMacro : L"F10");
+				if (pVCon->RCon()->GetFarPID()) {
+					gConEmu.PostMacro(gSet.sTabCloseMacro ? gSet.sTabCloseMacro : L"F10");
+				} else {
+					gConEmu.Recreate ( TRUE, TRUE );
+				}
 			}
         }
     }
@@ -1122,6 +1133,7 @@ void TabBarClass::PrepareTab(ConEmuTab* pTab)
 	}
 	#endif
 
+	MCHKHEAP
     // get file name
     TCHAR dummy[MAX_PATH*2];
     TCHAR fileName[MAX_PATH+4];
@@ -1210,6 +1222,7 @@ void TabBarClass::PrepareTab(ConEmuTab* pTab)
         wsprintf(fileName, szFormat, tFileName, pTab->Pos);
 
     wcscpy(pTab->Name, fileName);
+	MCHKHEAP
 }
 
 

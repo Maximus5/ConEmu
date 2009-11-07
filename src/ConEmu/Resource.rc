@@ -613,7 +613,7 @@ STRINGTABLE DISCARDABLE
 BEGIN
     cbDragIcons             "Show icons of dragged iterms"
     lbDefaultColors         "You may choose one of predefined color schemes.\nEach scheme customize first (main) 16 colors."
-    lbCmdOutputCP           "Windows command processor (cmd.exe) may cause then output of internal commands to be OEM or Unicode.\nYou may force this selection, or use automatic selection (FAR2 !92 Unicode)."
+    lbCmdOutputCP           "Windows command processor (cmd.exe) may cause then output of internal commands to be OEM or Unicode.\nYou may force this selection, or use automatic selection (FAR2 -> Unicode)."
     lbNtvdmHeight           "Old DOS programs may be runned under console sizes: 80x25, 80x28, 80x43 or 80x50. You may force window size selection, or left the automatic selection.\nThis feature is not available in x64 OS."
 END
 

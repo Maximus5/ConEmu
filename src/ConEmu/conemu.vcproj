@@ -144,7 +144,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="comctl32.lib Shlwapi.lib version.lib gdiplus.lib"
-				OutputFile="C:\Users\Max\Desktop\FAR\FAR2.x64\ConEmu.exe"
+				OutputFile="\\MAXW7\FAR\FAR2.x64\ConEmu.exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
 				SubSystem="2"
@@ -466,7 +466,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="comctl32.lib Shlwapi.lib version.lib gdiplus.lib"
-				OutputFile="C:\Users\Max\Desktop\FAR\FAR2.x64\ConEmu.exe"
+				OutputFile="\\MAXW7\FAR\FAR2.x64\ConEmu.exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
 				GenerateMapFile="true"
@@ -543,7 +543,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="comctl32.lib Shlwapi.lib version.lib gdiplus.lib"
-				OutputFile="C:\Program Files\FAR\ConEmu.exe"
+				OutputFile="\\MAXW7\FAR\ConEmu.exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
 				GenerateMapFile="true"

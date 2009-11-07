@@ -145,6 +145,7 @@ void CSettings::InitSettings()
     //isLangChangeWsPlugin = false;
 	isMonitorConsoleLang = 3;
     DefaultBufferHeight = 1000; AutoBufferHeight = true;
+	FarSyncSize = false;
 	nCmdOutputCP = 0;
 	ForceBufferHeight = false; /* устанавливается в true, из ком.строки /BufferHeight */
 	AutoScroll = true;
@@ -348,6 +349,7 @@ void CSettings::LoadSettings()
 		reg.Load(L"DefaultBufferHeight", DefaultBufferHeight);
 			if (DefaultBufferHeight < 300) DefaultBufferHeight = 300;
 		reg.Load(L"AutoBufferHeight", AutoBufferHeight);
+		reg.Load(L"FarSyncSize", FarSyncSize);
 		reg.Load(L"CmdOutputCP", nCmdOutputCP);
 
         reg.Load(L"CursorType", isCursorV);

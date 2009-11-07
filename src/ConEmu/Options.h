@@ -10,6 +10,7 @@ public:
     TCHAR Config[MAX_PATH];
 
     int DefaultBufferHeight; bool ForceBufferHeight; bool AutoScroll; bool AutoBufferHeight;
+	bool FarSyncSize;
 	int nCmdOutputCP;
     
 	LONG FontWidth();
