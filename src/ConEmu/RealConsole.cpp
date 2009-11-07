@@ -2884,7 +2884,21 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
                 }
             }
         }
-    }
+	} else if (pIn->hdr.nCmd == CECMD_SETFOREGROUND) {
+		AllowSetForegroundWindow(pIn->hdr.nSrcPID);
+		SetForegroundWindow((HWND)pIn->qwData[0]);
+
+	} else if (pIn->hdr.nCmd == CECMD_FLASHWINDOW) {
+		UINT nFlash = RegisterWindowMessage(CONEMUMSG_FLASHWINDOW);
+		WPARAM wParam = 0;
+		if (pIn->Flash.bSimple) {
+			wParam = (pIn->Flash.bInvert ? 2 : 1) << 25;
+		} else {
+			wParam = ((pIn->Flash.dwFlags & 0xF) << 24) | (pIn->Flash.uCount & 0xFFFFFF);
+		}
+		PostMessage(ghWnd, nFlash, wParam, (LPARAM)pIn->Flash.hWnd.u);
+
+	}
 
     // Освободить память
     if (pIn && (LPVOID)pIn != (LPVOID)&in) {
@@ -5556,22 +5570,43 @@ void CRealConsole::CheckProgressInConsole(const wchar_t* pszCurLine)
 	
 	if (pszCurLine[nIdx] == L' ' && isDigit(pszCurLine[nIdx+1]))
 		nIdx++;
+	else if (pszCurLine[nIdx] == L' ' && pszCurLine[nIdx+1] == L' ' && isDigit(pszCurLine[nIdx+2]))
+		nIdx += 2;
+	else {
+		static int nRusLen = 0;
+		static wchar_t szComplRus[32] = {0};
+		if (!szComplRus[0]) {
+			MultiByteToWideChar(CP_ACP,0,"Завершено:",-1,szComplRus,sizeofarray(szComplRus));
+			nRusLen = lstrlen(szComplRus);
+		}
+		static int nEngLen = lstrlen(L"Completed:");
+
+		if (!wcsncmp(pszCurLine, szComplRus, nRusLen)) {
+			nIdx += nRusLen;
+			if (pszCurLine[nIdx] == L' ') nIdx++;
+			if (pszCurLine[nIdx] == L' ') nIdx++;
+		} else if (!wcsncmp(pszCurLine, L"Completed:", nEngLen)) {
+			nIdx += nRusLen;
+			if (pszCurLine[nIdx] == L' ') nIdx++;
+			if (pszCurLine[nIdx] == L' ') nIdx++;
+		}
+	}
 	
 	// Менять mn_ConsoleProgress только если нашли проценты в строке с курсором
 	if (isDigit(pszCurLine[nIdx]) && isDigit(pszCurLine[nIdx+1]) && isDigit(pszCurLine[nIdx+2]) 
-		&& (pszCurLine[nIdx+3]==L'%' 
+		&& (pszCurLine[nIdx+3]==L'%' || pszCurLine[nIdx+3]==L'.' 
 		    || !wcsncmp(pszCurLine+nIdx+3,L" percent",8)))
 	{
 		mn_ConsoleProgress = 100*(pszCurLine[nIdx] - L'0') + 10*(pszCurLine[nIdx+1] - L'0') + (pszCurLine[nIdx+2] - L'0');
 	}
 	else if (isDigit(pszCurLine[nIdx]) && isDigit(pszCurLine[nIdx+1]) 
-		&& (pszCurLine[nIdx+2]==L'%'
+		&& (pszCurLine[nIdx+2]==L'%' || pszCurLine[nIdx+2]==L'.'
 			|| !wcsncmp(pszCurLine+nIdx+2,L" percent",8)))
 	{
 		mn_ConsoleProgress = 10*(pszCurLine[nIdx] - L'0') + (pszCurLine[nIdx+1] - L'0');
 	}
 	else if (isDigit(pszCurLine[nIdx]) 
-		&& (pszCurLine[nIdx+1]==L'%'
+		&& (pszCurLine[nIdx+1]==L'%' || pszCurLine[nIdx+1]==L'.'
 			|| !wcsncmp(pszCurLine+nIdx+1,L" percent",8)))
 	{
 		mn_ConsoleProgress = (pszCurLine[nIdx] - L'0');

@@ -167,7 +167,7 @@ protected:
 	UINT mn_PostConsoleResize;
 	UINT mn_ConsoleLangChanged;
 	UINT mn_MsgPostOnBufferHeight;
-	UINT mn_MsgSetForeground;
+	//UINT mn_MsgSetForeground;
 	UINT mn_MsgFlashWindow;
 	
 	//

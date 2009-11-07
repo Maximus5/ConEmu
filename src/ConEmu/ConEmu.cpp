@@ -145,7 +145,7 @@ CConEmuMain::CConEmuMain()
 	mn_PostConsoleResize = ++nAppMsg;
 	mn_ConsoleLangChanged = ++nAppMsg;
 	mn_MsgPostOnBufferHeight = ++nAppMsg;
-	mn_MsgSetForeground = RegisterWindowMessage(CONEMUMSG_SETFOREGROUND);
+	//mn_MsgSetForeground = RegisterWindowMessage(CONEMUMSG_SETFOREGROUND);
 	mn_MsgFlashWindow = RegisterWindowMessage(CONEMUMSG_FLASHWINDOW);
 }
 
@@ -3146,13 +3146,13 @@ void CConEmuMain::PaintCon()
         ProgressBars->OnTimer();
     mp_VActive->Paint();
 
-#ifdef _DEBUG
-	if (GetKeyState(VK_SCROLL) & 1) {
-		DebugStep(L"ConEmu: Sleeping in PaintCon for 1s");
-		Sleep(1000);
-		DebugStep(NULL);
-	}
-#endif
+//#ifdef _DEBUG
+//	if (GetKeyState(VK_SCROLL) & 1) {
+//		DebugStep(L"ConEmu: Sleeping in PaintCon for 1s");
+//		Sleep(1000);
+//		DebugStep(NULL);
+//	}
+//#endif
 }
 
 void CConEmuMain::RePaint()
@@ -5819,9 +5819,9 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		} else if (messg == gConEmu.mn_MsgPostOnBufferHeight) {
 			gConEmu.OnBufferHeight();
 			return 0;
-		} else if (messg == gConEmu.mn_MsgSetForeground) {
-			SetForegroundWindow((HWND)lParam);
-			return 0;
+		//} else if (messg == gConEmu.mn_MsgSetForeground) {
+		//	SetForegroundWindow((HWND)lParam);
+		//	return 0;
 		} else if (messg == gConEmu.mn_MsgFlashWindow) {
 			return OnFlashWindow((wParam & 0xFF000000) >> 24, wParam & 0xFFFFFF, (HWND)lParam);
 		}

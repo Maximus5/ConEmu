@@ -124,6 +124,8 @@ extern wchar_t gszDbgModLabel[6];
 #define CECMD_SHOWCONSOLE   20 // ¬ Win7 релизе нельз€ скрывать окно консоли, запущенной в режиме администратора
 #define CECMD_POSTCONMSG    21 // ¬ Win7 релизе нельз€ посылать сообщени€ окну консоли, запущенной в режиме администратора
 #define CECMD_REQUESTFULLINFO 22
+#define CECMD_SETFOREGROUND 23
+#define CECMD_FLASHWINDOW   24
 
 #define CESERVER_REQ_VER    19
 
@@ -321,6 +323,15 @@ typedef struct tag_CESERVER_REQ_POSTMSG {
 	u64     wParam, lParam;
 } CESERVER_REQ_POSTMSG;
 
+typedef struct tag_CESERVER_REQ_FLASHWINFO {
+	BOOL  bSimple;
+	HWND2 hWnd;
+	BOOL  bInvert; // только если bSimple == TRUE
+	DWORD dwFlags; // а это и далее, если bSimple == FALSE
+	UINT  uCount;
+	DWORD dwTimeout;
+} CESERVER_REQ_FLASHWINFO;
+
 typedef struct tag_CESERVER_REQ {
     CESERVER_REQ_HDR hdr;
 	union {
@@ -338,6 +349,7 @@ typedef struct tag_CESERVER_REQ {
 		CESERVER_REQ_CONEMUTAB Tabs;
 		CESERVER_REQ_CONEMUTAB_RET TabsRet;
 		CESERVER_REQ_POSTMSG Msg;
+		CESERVER_REQ_FLASHWINFO Flash;
 	};
 } CESERVER_REQ;
 
@@ -348,7 +360,7 @@ typedef struct tag_CESERVER_REQ {
 
 #define CONEMUMSG_ATTACH L"ConEmuMain::Attach"            // wParam == hConWnd, lParam == ConEmuC_PID
 #define CONEMUMSG_SRVSTARTED L"ConEmuMain::SrvStarted"    // wParam == hConWnd, lParam == ConEmuC_PID
-#define CONEMUMSG_SETFOREGROUND L"ConEmuMain::SetForeground"            // wParam == hConWnd, lParam == ConEmuC_PID
+//#define CONEMUMSG_SETFOREGROUND L"ConEmuMain::SetForeground"            // wParam == hConWnd, lParam == ConEmuC_PID
 #define CONEMUMSG_FLASHWINDOW L"ConEmuMain::FlashWindow"
 //#define CONEMUCMDSTARTED L"ConEmuMain::CmdStarted"    // wParam == hConWnd, lParam == ConEmuC_PID (as ComSpec)
 //#define CONEMUCMDSTOPPED L"ConEmuMain::CmdTerminated" // wParam == hConWnd, lParam == ConEmuC_PID (as ComSpec)

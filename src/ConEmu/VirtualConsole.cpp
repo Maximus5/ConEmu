@@ -1996,6 +1996,16 @@ void CVirtualConsole::Paint()
 			}
         }
 
+#ifdef _DEBUG
+	if (mp_RCon && (GetKeyState(VK_SCROLL) & 1)) {
+		HWND hConWnd = mp_RCon->hConWnd;
+		RECT rcCon; GetWindowRect(hConWnd, &rcCon);
+		MapWindowPoints(NULL, ghWndDC, (LPPOINT)&rcCon, 2);
+		SelectObject(hPaintDc, GetStockObject(WHITE_PEN));
+		SelectObject(hPaintDc, GetStockObject(HOLLOW_BRUSH));
+		Rectangle(hPaintDc, rcCon.left, rcCon.top, rcCon.right, rcCon.bottom);
+	}
+#endif
 
     
     if (lbExcept)

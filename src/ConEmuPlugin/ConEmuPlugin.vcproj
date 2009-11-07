@@ -704,7 +704,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="version.lib"
-				OutputFile="\\MAXW7\FAR\FAR.x86\plugins\conEmu\conemu.dll"
+				OutputFile="C:\Utils\FAR170\plugins\conEmu\conemu.dll"
 				LinkIncremental="2"
 				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"

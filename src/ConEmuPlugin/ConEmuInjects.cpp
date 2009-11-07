@@ -3,6 +3,7 @@
 #include <TCHAR.h>
 #include <Tlhelp32.h>
 #include "..\common\common.hpp"
+#include "..\common\ConEmuCheck.h"
 
 #ifdef _DEBUG
 	#include <crtdbg.h>
@@ -19,9 +20,43 @@ extern HWND ConEmuHwnd; // Содержит хэндл окна отрисовки. Это ДОЧЕРНЕЕ окно.
 
 static bool gbConEmuInput = false; // TRUE если консоль спрятана и должна работать через очередь ConEmu
 
-WARNING("Все SendMessage нужно переделать на PipeExecute, т.к. из 'Run as' в Win7 нифига не пошлется");
+//WARNING("Все SendMessage нужно переделать на PipeExecute, т.к. из 'Run as' в Win7 нифига не пошлется");
 
 static void* GetOriginalAddress( HINSTANCE module, const char* name );
+static HMODULE WINAPI OnLoadLibraryW( const WCHAR* lpFileName );
+static HMODULE WINAPI OnLoadLibraryA( const char* lpFileName );
+static HMODULE WINAPI OnLoadLibraryExW( const WCHAR* lpFileName, HANDLE hFile, DWORD dwFlags );
+static HMODULE WINAPI OnLoadLibraryExA( const char* lpFileName, HANDLE hFile, DWORD dwFlags );
+
+static void GuiSetForeground(HWND hWnd)
+{
+	if (ConEmuHwnd) {
+		CESERVER_REQ In, *pOut;
+		ExecutePrepareCmd(&In, CECMD_SETFOREGROUND, sizeof(CESERVER_REQ_HDR)+sizeof(u64));
+		In.qwData[0] = (u64)hWnd;
+		HWND hConWnd = GetConsoleWindow();
+		pOut = ExecuteGuiCmd(hConWnd, &In, hConWnd);
+		if (pOut) ExecuteFreeResult(pOut);
+	}
+}
+
+static void GuiFlashWindow(BOOL bSimple, HWND hWnd, BOOL bInvert, DWORD dwFlags, UINT uCount, DWORD dwTimeout)
+{
+	if (ConEmuHwnd) {
+		CESERVER_REQ In, *pOut;
+		ExecutePrepareCmd(&In, CECMD_FLASHWINDOW, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_FLASHWINFO));
+		In.Flash.bSimple = bSimple;
+		In.Flash.hWnd = hWnd;
+		In.Flash.bInvert = bInvert;
+		In.Flash.dwFlags = dwFlags;
+		In.Flash.uCount = uCount;
+		In.Flash.dwTimeout = dwTimeout;
+		HWND hConWnd = GetConsoleWindow();
+		pOut = ExecuteGuiCmd(hConWnd, &In, hConWnd);
+		if (pOut) ExecuteFreeResult(pOut);
+	}
+}
+
 
 static BOOL WINAPI OnTrackPopupMenu(HMENU hMenu, UINT uFlags, int x, int y, int nReserved, HWND hWnd, CONST RECT * prcRect)
 {
@@ -32,10 +67,11 @@ static BOOL WINAPI OnTrackPopupMenu(HMENU hMenu, UINT uFlags, int x, int y, int 
 		DebugString(szMsg);
 	#endif
 	
-	if (ConEmuHwnd && IsWindow(ConEmuHwnd)) {
-		UINT nSetFore = RegisterWindowMessage(CONEMUMSG_SETFOREGROUND);
-		DWORD_PTR dwRc = 0;
-		SendMessageTimeout(GetParent(ConEmuHwnd), nSetFore, 0, (LPARAM)hWnd, SMTO_NORMAL, 1000, &dwRc);
+	if (ConEmuHwnd /*&& IsWindow(ConEmuHwnd)*/) {
+		//UINT nSetFore = RegisterWindowMessage(CONEMUMSG_SETFOREGROUND);
+		//DWORD_PTR dwRc = 0;
+		//SendMessageTimeout(GetParent(ConEmuHwnd), nSetFore, 0, (LPARAM)hWnd, SMTO_NORMAL, 1000, &dwRc);
+		GuiSetForeground(hWnd);
 	}
 	return TrackPopupMenu(hMenu, uFlags, x, y, nReserved, hWnd, prcRect);
 }
@@ -49,10 +85,11 @@ static BOOL WINAPI OnTrackPopupMenuEx(HMENU hmenu, UINT fuFlags, int x, int y, H
 		DebugString(szMsg);
 	#endif
 	
-	if (ConEmuHwnd && IsWindow(ConEmuHwnd)) {
-		UINT nSetFore = RegisterWindowMessage(CONEMUMSG_SETFOREGROUND);
-		DWORD_PTR dwRc = 0;
-		SendMessageTimeout(GetParent(ConEmuHwnd), nSetFore, 0, (LPARAM)hWnd, SMTO_NORMAL, 1000, &dwRc);
+	if (ConEmuHwnd /*&& IsWindow(ConEmuHwnd)*/) {
+		//UINT nSetFore = RegisterWindowMessage(CONEMUMSG_SETFOREGROUND);
+		//DWORD_PTR dwRc = 0;
+		//SendMessageTimeout(GetParent(ConEmuHwnd), nSetFore, 0, (LPARAM)hWnd, SMTO_NORMAL, 1000, &dwRc);
+		GuiSetForeground(hWnd);
 	}
 	return TrackPopupMenuEx(hmenu, fuFlags, x, y, hWnd, lptpm);
 }
@@ -61,7 +98,7 @@ static BOOL WINAPI OnShellExecuteExA(LPSHELLEXECUTEINFOA lpExecInfo)
 {
 	_ASSERTE(OnShellExecuteExA != ShellExecuteExA);
 	
-	if (ConEmuHwnd && IsWindow(ConEmuHwnd)) {
+	if (ConEmuHwnd /*&& IsWindow(ConEmuHwnd)*/) {
 		if (!lpExecInfo->hwnd || lpExecInfo->hwnd == GetConsoleWindow())
 			lpExecInfo->hwnd = GetParent(ConEmuHwnd);
 	}
@@ -71,7 +108,7 @@ static BOOL WINAPI OnShellExecuteExW(LPSHELLEXECUTEINFOW lpExecInfo)
 {
 	_ASSERTE(OnShellExecuteExW != ShellExecuteExW);
 	
-	if (ConEmuHwnd && IsWindow(ConEmuHwnd)) {
+	if (ConEmuHwnd /*&& IsWindow(ConEmuHwnd)*/) {
 		if (!lpExecInfo->hwnd || lpExecInfo->hwnd == GetConsoleWindow())
 			lpExecInfo->hwnd = GetParent(ConEmuHwnd);
 	}
@@ -82,7 +119,7 @@ static HINSTANCE WINAPI OnShellExecuteA(HWND hwnd, LPCSTR lpOperation, LPCSTR lp
 {
 	_ASSERTE(OnShellExecuteA != ShellExecuteA);
 	
-	if (ConEmuHwnd && IsWindow(ConEmuHwnd)) {
+	if (ConEmuHwnd /*&& IsWindow(ConEmuHwnd)*/) {
 		if (!hwnd || hwnd == GetConsoleWindow())
 			hwnd = GetParent(ConEmuHwnd);
 	}
@@ -92,7 +129,7 @@ static HINSTANCE WINAPI OnShellExecuteW(HWND hwnd, LPCWSTR lpOperation, LPCWSTR 
 {
 	_ASSERTE(OnShellExecuteW != ShellExecuteW);
 	
-	if (ConEmuHwnd && IsWindow(ConEmuHwnd)) {
+	if (ConEmuHwnd /*&& IsWindow(ConEmuHwnd)*/) {
 		if (!hwnd || hwnd == GetConsoleWindow())
 			hwnd = GetParent(ConEmuHwnd);
 	}
@@ -103,12 +140,14 @@ static BOOL WINAPI OnFlashWindow(HWND hWnd, BOOL bInvert)
 {
 	_ASSERTE(FlashWindow != OnFlashWindow);
 
-	if (ConEmuHwnd && IsWindow(ConEmuHwnd)) {
-		UINT nFlash = RegisterWindowMessage(CONEMUMSG_FLASHWINDOW);
-		DWORD_PTR dwRc = 0;
-		WPARAM wParam = (bInvert ? 2 : 1) << 25;
-		LRESULT lRc = SendMessageTimeout(GetParent(ConEmuHwnd), nFlash, wParam, (LPARAM)hWnd, SMTO_NORMAL, 1000, &dwRc);
-		return dwRc!=0;
+	if (ConEmuHwnd /*&& IsWindow(ConEmuHwnd)*/) {
+		GuiFlashWindow(TRUE, hWnd, bInvert, 0,0,0);
+		return TRUE;
+		//UINT nFlash = RegisterWindowMessage(CONEMUMSG_FLASHWINDOW);
+		//DWORD_PTR dwRc = 0;
+		//WPARAM wParam = (bInvert ? 2 : 1) << 25;
+		//LRESULT lRc = SendMessageTimeout(GetParent(ConEmuHwnd), nFlash, wParam, (LPARAM)hWnd, SMTO_NORMAL, 1000, &dwRc);
+		//return dwRc!=0;
 	}
 	return FlashWindow(hWnd, bInvert);
 }
@@ -116,12 +155,14 @@ static BOOL WINAPI OnFlashWindowEx(PFLASHWINFO pfwi)
 {
 	_ASSERTE(FlashWindowEx != OnFlashWindowEx);
 
-	if (ConEmuHwnd && IsWindow(ConEmuHwnd)) {
-		UINT nFlash = RegisterWindowMessage(CONEMUMSG_FLASHWINDOW);
-		DWORD_PTR dwRc = 0;
-		WPARAM wParam = ((pfwi->dwFlags & 0xF) << 24) | (pfwi->uCount & 0xFFFFFF);
-		LRESULT lRc = SendMessageTimeout(GetParent(ConEmuHwnd), nFlash, wParam, (LPARAM)pfwi->hwnd, SMTO_NORMAL, 1000, &dwRc);
-		return dwRc!=0;
+	if (ConEmuHwnd /*&& IsWindow(ConEmuHwnd)*/) {
+		GuiFlashWindow(FALSE, pfwi->hwnd, 0, pfwi->dwFlags, pfwi->uCount, pfwi->dwTimeout);
+		return TRUE;
+		//UINT nFlash = RegisterWindowMessage(CONEMUMSG_FLASHWINDOW);
+		//DWORD_PTR dwRc = 0;
+		//WPARAM wParam = ((pfwi->dwFlags & 0xF) << 24) | (pfwi->uCount & 0xFFFFFF);
+		//LRESULT lRc = SendMessageTimeout(GetParent(ConEmuHwnd), nFlash, wParam, (LPARAM)pfwi->hwnd, SMTO_NORMAL, 1000, &dwRc);
+		//return dwRc!=0;
 	}
 	return FlashWindowEx(pfwi);
 }
@@ -130,11 +171,12 @@ static BOOL WINAPI OnSetForegroundWindow(HWND hWnd)
 {
 	_ASSERTE(SetForegroundWindow != OnSetForegroundWindow);
 	
-	if (ConEmuHwnd && IsWindow(ConEmuHwnd)) {
-		UINT nSetFore = RegisterWindowMessage(CONEMUMSG_SETFOREGROUND);
-		DWORD_PTR dwRc = 0;
-		LRESULT lRc = SendMessageTimeout(GetParent(ConEmuHwnd), nSetFore, 0, (LPARAM)hWnd, SMTO_NORMAL, 1000, &dwRc);
-		return lRc!=0;
+	if (ConEmuHwnd /*&& IsWindow(ConEmuHwnd)*/) {
+		GuiSetForeground(hWnd);
+		//UINT nSetFore = RegisterWindowMessage(CONEMUMSG_SETFOREGROUND);
+		//DWORD_PTR dwRc = 0;
+		//LRESULT lRc = SendMessageTimeout(GetParent(ConEmuHwnd), nSetFore, 0, (LPARAM)hWnd, SMTO_NORMAL, 1000, &dwRc);
+		//return lRc!=0;
 	}
 	
 	return SetForegroundWindow(hWnd);
@@ -150,10 +192,14 @@ typedef struct HookItem
 
 static TCHAR kernel32[] = _T("kernel32.dll");
 static TCHAR user32[]   = _T("user32.dll");
-static TCHAR shell32[]   = _T("shell32.dll");
+static TCHAR shell32[]  = _T("shell32.dll");
 
 static HookItem Hooks[] = {
 	// My
+    {OnLoadLibraryA,        "LoadLibraryA",        kernel32, 0},
+	{OnLoadLibraryW,        "LoadLibraryW",        kernel32, 0},
+    {OnLoadLibraryExA,      "LoadLibraryExA",      kernel32, 0},
+	{OnLoadLibraryExW,      "LoadLibraryExW",      kernel32, 0},
 	{OnTrackPopupMenu,      "TrackPopupMenu",      user32,   0},
 	{OnTrackPopupMenuEx,    "TrackPopupMenuEx",    user32,   0},
 	{OnFlashWindow,         "FlashWindow",         user32,   0},
@@ -214,10 +260,6 @@ static HookItem Hooks[] = {
 // когда подменяемые библиотеки (user32.dll) НЕ были загружены
 // до загрузки самой infis.dll
 //static HookItem LoadLibraryHooks[] = {
-//    {OnLoadLibraryW,      "LoadLibraryW",     kernel32, 0},
-//    {OnLoadLibraryA,      "LoadLibraryA",     kernel32, 0}, // --
-//    {OnLoadLibraryExW,    "LoadLibraryExW",   kernel32, 0}, // --
-//    {OnLoadLibraryExA,    "LoadLibraryExA",   kernel32, 0},
 //    {0, 0, 0}
 //};
 
@@ -325,73 +367,8 @@ static bool InitHooks( HookItem* item )
     return true;
 }
 
-// Заменить в модуле Module ЭКСпортируемые функции на подменяемые плагином
-static bool SetExports( const HookItem* item, HMODULE Module )
-{
-    if( !Module )
-        return false;
-    
-    //DebugString(_T("SetExports Module:"));
-    //TCHAR _tmp[500];
-    //lltoa((long)Module, _tmp);
-    //DebugString(_tmp);
 
-    DWORD ExportDir = 0;
-    IMAGE_DOS_HEADER* dos_header = (IMAGE_DOS_HEADER*)Module;
-    IMAGE_NT_HEADERS* nt_header = 0;
-    if( dos_header->e_magic == 'ZM' )
-    {
-        nt_header = (IMAGE_NT_HEADERS*)((char*)Module + dos_header->e_lfanew);
-        if( nt_header->Signature != 0x004550 )
-            return false;
-        else
-            ExportDir = (DWORD)(nt_header->OptionalHeader.
-                                         DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].
-                                         VirtualAddress);
-    }
-    if( !ExportDir )
-        return false;
-
-    IMAGE_SECTION_HEADER* section = (IMAGE_SECTION_HEADER*)IMAGE_FIRST_SECTION (nt_header);
-
-    int s = 0;
-    for(s = 0; s < nt_header->FileHeader.NumberOfSections; s++)
-    {
-        if((section[s].VirtualAddress == ExportDir) ||
-           (section[s].VirtualAddress <= ExportDir &&
-           (section[s].Misc.VirtualSize + section[s].VirtualAddress > ExportDir)))
-        {
-            int nDiff = 0;//section[s].VirtualAddress - section[s].PointerToRawData;
-            IMAGE_EXPORT_DIRECTORY* Export = (IMAGE_EXPORT_DIRECTORY*)((char*)Module + (ExportDir-nDiff));
-            DWORD* Name = (DWORD*)((char*)Module + Export->AddressOfNames);
-            DWORD* Ptr  = (DWORD*)((char*)Module + Export->AddressOfFunctions);
-
-            DWORD old_protect;
-            if( !VirtualProtect( Ptr, Export->NumberOfFunctions * sizeof( DWORD ), PAGE_READWRITE, &old_protect ) )
-                return false;
-
-            for( UINT i = 0; i < Export->NumberOfNames; i++ )
-            {
-                for( int j = 0; item[j].Name; j++ )
-                    if( item[j].NewAddress && !lstrcmpiA( item[j].Name, (char*)Module + Name[i]) )
-                    {
-						DWORD_PTR addr = (DWORD_PTR)item[j].NewAddress;
-						DWORD_PTR modl = (DWORD_PTR)Module;
-                        Ptr[i] = (DWORD)(addr - modl);
-                        //DebugString( _T("Hooked export:") );
-                        //DebugString( ToTchar( (char*)Module + ((DWORD)Name[i]) ) );
-                        break;
-                    }
-            }
-
-            //DebugString(_T("done..."));
-            VirtualProtect( Ptr, Export->NumberOfFunctions * sizeof( DWORD ), old_protect, &old_protect );
-        }
-    }
-    return true;
-}
-
-// Подменить Импортируемые функции в модуле, загруженном ДО conemu.dll
+// Подменить Импортируемые функции в модуле
 static bool SetHook( const HookItem* item, HMODULE Module = 0 )
 {
     if( !item )
@@ -480,28 +457,6 @@ static bool SetHookEx( const HookItem* item, HMODULE inst )
         CloseHandle(snapshot);
     }
 
-    /*while( VirtualQuery( pb, &minfo, sizeof( minfo ) ) == sizeof( minfo ) )
-    {
-        if( minfo.State == MEM_FREE )
-            minfo.AllocationBase = minfo.BaseAddress;
-
-        if( minfo.AllocationBase != inst &&
-            minfo.AllocationBase == minfo.BaseAddress &&
-            minfo.AllocationBase &&
-            minfo.State != MEM_FREE )
-        {
-            TCHAR buffer[MAX_PATH + 1];
-            if( GetModuleFileName( (HMODULE)minfo.AllocationBase, buffer, MAX_PATH ) &&
-                !IsModuleExcluded( (HMODULE)minfo.AllocationBase ) )
-            {
-                //printf( "module %s\n", buffer );
-                //DebugString( buffer );
-                SetHook( item, (HMODULE)minfo.AllocationBase );
-            }
-        }
-        pb += minfo.RegionSize;
-    }*/
-
     return true;
 }
 
@@ -539,10 +494,10 @@ BOOL StartupHooks()
 	// Подменить Импортируемые функции во всех модулях процесса, загруженных ДО conemu.dll
 	SetHookEx( Hooks, InfisInstance );
 
-	// Заменить в модуле Module ЭКСпортируемые функции на подменяемые плагином	
-	SetExports( Hooks, hKernel ); // kernel32.dll
-	SetExports( Hooks, hUser ); // user32.dll
-	SetExports( Hooks, hShell ); // shell32.dll
+	// Заменить в модуле Module ЭКСпортируемые функции на подменяемые плагином нихрена
+	// НЕ получится, т.к. в Win32 библиотека shell32 может быть загружена ПОСЛЕ conemu.dll
+	//   что вызовет некорректные смещения функций,
+	// а в Win64 смещения вообще должны быть 64битными, а структура модуля хранит только 32битные смещения
 	
 	return TRUE;
 }
@@ -550,109 +505,59 @@ BOOL StartupHooks()
 
 
 
-// хуки на LoadLibraryXXX требовались conman'у в тех случаях,
-// когда подменяемые библиотеки (user32.dll) НЕ были загружены
-// до загрузки самой infis.dll
+// Заменить в модуле Module ЭКСпортируемые функции на подменяемые плагином нихрена
+// НЕ получится, т.к. в Win32 библиотека shell32 может быть загружена ПОСЛЕ conemu.dll
+//   что вызовет некорректные смещения функций,
+// а в Win64 смещения вообще должны быть 64битными, а структура модуля хранит только 32битные смещения
 
-//static HMODULE WINAPI OnLoadLibraryW( const WCHAR* lpFileName )
-//{
-//    if( Detached )
-//        return LoadLibraryW( lpFileName );
-//
-//    HMODULE module = LoadLibraryW( lpFileName );
-//    if( !module )
-//        return module;
-//
-//    int i;
-//    for( i = 0; Hooks[i].Name; i++ )
-//        if( !Hooks[i].OldAddress )
-//            break;
-//
-//    if( !Hooks[i].Name )
-//        return module;
-//
-//    if( module && module != InfisInstance )
-//    {
-//        InitHooks( Hooks );
-//        SetExports( Hooks, module );
-//    }
-//    return module;
-//}
-//
-//static HMODULE WINAPI OnLoadLibraryA( const char* lpFileName )
-//{
-//    if( Detached )
-//        return LoadLibraryA( lpFileName );
-//
-//
-//    HMODULE module = LoadLibraryA( lpFileName );
-//    if( !module )
-//        return module;
-//
-//    int i;
-//    for( i = 0; Hooks[i].Name; i++ )
-//        if( !Hooks[i].OldAddress )
-//            break;
-//
-//    if( !Hooks[i].Name )
-//        return module;
-//
-//    if( module && module != InfisInstance )
-//    {
-//        InitHooks( Hooks );
-//        SetExports( Hooks, module );
-//    }
-//    return module;
-//}
-//
-//static HMODULE WINAPI OnLoadLibraryExW( const WCHAR* lpFileName, HANDLE hFile, DWORD dwFlags )
-//{
-//    if( Detached )
-//        return LoadLibraryExW( lpFileName, hFile, dwFlags );
-//
-//    HMODULE module = LoadLibraryExW( lpFileName, hFile, dwFlags );
-//    if( !module )
-//        return module;
-//
-//    int i;
-//    for( i = 0; Hooks[i].Name; i++ )
-//        if( !Hooks[i].OldAddress )
-//            break;
-//
-//    if( !Hooks[i].Name )
-//        return module;
-//
-//    if( module && module != InfisInstance )
-//    {
-//        InitHooks( Hooks );
-//        SetExports( Hooks, module );
-//    }
-//
-//    return module;
-//}
-//
-//static HMODULE WINAPI OnLoadLibraryExA( const char* lpFileName, HANDLE hFile, DWORD dwFlags )
-//{
-//    if( Detached )
-//        return LoadLibraryExA( lpFileName, hFile, dwFlags );
-//
-//    HMODULE module = LoadLibraryExA( lpFileName, hFile, dwFlags );
-//    if( !module )
-//        return module;
-//
-//    int i;
-//    for( i = 0; Hooks[i].Name; i++ )
-//        if( !Hooks[i].OldAddress )
-//            break;
-//
-//    if( !Hooks[i].Name )
-//        return module;
-//
-//    if( module && module != InfisInstance )
-//    {
-//        InitHooks( Hooks );
-//        SetExports( Hooks, module );
-//    }
-//    return module;
-//}
+static HMODULE WINAPI OnLoadLibraryA( const char* lpFileName )
+{
+	_ASSERTE(LoadLibraryA!=OnLoadLibraryA);
 
+    HMODULE module = LoadLibraryA( lpFileName );
+    if( !module || module == ghPluginModule )
+        return module;
+
+    SetHook( Hooks, module );
+
+	return module;
+}
+
+static HMODULE WINAPI OnLoadLibraryW( const WCHAR* lpFileName )
+{
+	_ASSERTE(LoadLibraryW!=OnLoadLibraryW);
+
+	HMODULE module = LoadLibraryW( lpFileName );
+	if( !module || module == ghPluginModule )
+		return module;
+
+	SetHook( Hooks, module );
+
+	return module;
+}
+
+static HMODULE WINAPI OnLoadLibraryExA( const char* lpFileName, HANDLE hFile, DWORD dwFlags )
+{
+	_ASSERTE(LoadLibraryExW!=OnLoadLibraryExW);
+
+	HMODULE module = LoadLibraryExA( lpFileName, hFile, dwFlags );
+	if( !module || module == ghPluginModule )
+		return module;
+
+	SetHook( Hooks, module );
+
+	return module;
+}
+
+static HMODULE WINAPI OnLoadLibraryExW( const WCHAR* lpFileName, HANDLE hFile, DWORD dwFlags )
+{
+    _ASSERTE(LoadLibraryExW!=OnLoadLibraryExW);
+
+    HMODULE module = LoadLibraryExW( lpFileName, hFile, dwFlags );
+	if( !module || module == ghPluginModule )
+		return module;
+
+	SetHook( Hooks, module );
+
+	return module;
+}
