@@ -64,7 +64,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="comctl32.lib Shlwapi.lib version.lib gdiplus.lib"
+				AdditionalDependencies="comctl32.lib Shlwapi.lib version.lib gdiplus.lib Winmm.lib"
 				OutputFile="E:\Source\FARUnicode\trunk\unicode_far\Debug.32.vc\ConEmu.exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
@@ -79,7 +79,7 @@
 			/>
 			<Tool
 				Name="VCManifestTool"
-				AdditionalManifestFiles="conemu.manifest"
+				AdditionalManifestFiles="conemu.manifest;DeclareDPIAware.manifest"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
@@ -143,7 +143,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="comctl32.lib Shlwapi.lib version.lib gdiplus.lib"
+				AdditionalDependencies="comctl32.lib Shlwapi.lib version.lib gdiplus.lib Winmm.lib"
 				OutputFile="\\MAXW7\FAR\FAR2.x64\ConEmu.exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
@@ -223,7 +223,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="comctl32.lib UxTheme.lib Shlwapi.lib version.lib"
+				AdditionalDependencies="comctl32.lib UxTheme.lib Shlwapi.lib version.lib Winmm.lib"
 				OutputFile="..\..\ConEmu.exe"
 				LinkIncremental="1"
 				GenerateDebugInformation="true"
@@ -307,7 +307,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="comctl32.lib UxTheme.lib Shlwapi.lib version.lib"
+				AdditionalDependencies="comctl32.lib UxTheme.lib Shlwapi.lib version.lib Winmm.lib"
 				OutputFile="..\..\Release.x64\ConEmu.exe"
 				LinkIncremental="1"
 				GenerateDebugInformation="true"
@@ -387,7 +387,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="comctl32.lib Shlwapi.lib version.lib gdiplus.lib"
+				AdditionalDependencies="comctl32.lib Shlwapi.lib version.lib gdiplus.lib Winmm.lib"
 				OutputFile="C:\Program Files\FAR\Tools\ConEmu\ConEmu.exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
@@ -465,7 +465,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="comctl32.lib Shlwapi.lib version.lib gdiplus.lib"
+				AdditionalDependencies="comctl32.lib Shlwapi.lib version.lib gdiplus.lib Winmm.lib"
 				OutputFile="\\MAXW7\FAR\FAR2.x64\ConEmu.exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
@@ -542,7 +542,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="comctl32.lib Shlwapi.lib version.lib gdiplus.lib"
+				AdditionalDependencies="comctl32.lib Shlwapi.lib version.lib gdiplus.lib Winmm.lib"
 				OutputFile="\\MAXW7\FAR\ConEmu.exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
@@ -619,7 +619,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="comctl32.lib Shlwapi.lib version.lib gdiplus.lib"
+				AdditionalDependencies="comctl32.lib Shlwapi.lib version.lib gdiplus.lib Winmm.lib"
 				OutputFile="C:\Utils\Far.Test\ConEmu.exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
@@ -695,8 +695,8 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="comctl32.lib Shlwapi.lib version.lib gdiplus.lib"
-				OutputFile="C:\Utils\FAR170\ConEmu.exe"
+				AdditionalDependencies="comctl32.lib Shlwapi.lib version.lib gdiplus.lib Winmm.lib"
+				OutputFile="J:\ConEmu.exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
 				GenerateMapFile="true"
@@ -773,7 +773,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="comctl32.lib Shlwapi.lib version.lib gdiplus.lib"
+				AdditionalDependencies="comctl32.lib Shlwapi.lib version.lib gdiplus.lib Winmm.lib"
 				OutputFile="F:\VCProject\FarPlugin\#FAR175\ConEmu.exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
@@ -854,7 +854,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="comctl32.lib Shlwapi.lib version.lib gdiplus.lib"
+				AdditionalDependencies="comctl32.lib Shlwapi.lib version.lib gdiplus.lib Winmm.lib"
 				OutputFile="F:\VCProject\FarPlugin\#FAR180\ConEmu.exe"
 				LinkIncremental="1"
 				GenerateDebugInformation="true"
@@ -938,7 +938,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="comctl32.lib Shlwapi.lib version.lib gdiplus.lib"
+				AdditionalDependencies="comctl32.lib Shlwapi.lib version.lib gdiplus.lib Winmm.lib"
 				OutputFile="F:\VCProject\FarPlugin\#FAR180\ConEmu.exe"
 				LinkIncremental="1"
 				GenerateDebugInformation="true"

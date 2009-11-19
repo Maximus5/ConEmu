@@ -23,7 +23,7 @@
 
 
 extern int lastModifiedStateW;
-extern bool gbHandleOneRedraw, gbHandleOneRedrawCh;
+extern bool gbHandleOneRedraw; //, gbHandleOneRedrawCh;
 extern WCHAR gszDir1[CONEMUTABMAX], gszDir2[CONEMUTABMAX], gszRootKey[MAX_PATH*2];
 extern int maxTabCount, lastWindowCount;
 extern CESERVER_REQ* tabs; //(ConEmuTab*) calloc(maxTabCount, sizeof(ConEmuTab));
@@ -151,4 +151,14 @@ void RedrawAllA();
 void FUNC_Y(RedrawAll)();
 void FUNC_X(RedrawAll)();
 
+bool FUNC_Y(LoadPlugin)(wchar_t* pszPluginPath);
+bool FUNC_X(LoadPlugin)(wchar_t* pszPluginPath);
+
+DWORD FUNC_Y(GetEditorModifiedState)();
+DWORD FUNC_X(GetEditorModifiedState)();
+DWORD GetEditorModifiedStateA();
+DWORD GetEditorModifiedState();
+
 BOOL SetConsoleSize(SHORT nNewWidth, SHORT nNewHeight);
+
+void UnsetAllHooks();

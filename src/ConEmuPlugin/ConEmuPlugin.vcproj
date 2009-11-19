@@ -389,7 +389,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="version.lib"
+				AdditionalDependencies="shlwapi.lib version.lib"
 				OutputFile="C:\Program Files\FAR\Plugins\ConEmu\ConEmu.dll"
 				LinkIncremental="2"
 				ModuleDefinitionFile="export.def"
@@ -659,8 +659,8 @@
 		</Configuration>
 		<Configuration
 			Name="Debug75|Win32"
-			OutputDirectory="C:\Temp\VCProject\ConEmuC\$(ConfigurationName)"
-			IntermediateDirectory="C:\Temp\VCProject\ConEmuC\$(ConfigurationName)"
+			OutputDirectory="C:\Temp\VCProject\ConEmuDll\$(ConfigurationName)"
+			IntermediateDirectory="C:\Temp\VCProject\ConEmuDll\$(ConfigurationName)"
 			ConfigurationType="2"
 			CharacterSet="1"
 			>
@@ -704,7 +704,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="version.lib"
-				OutputFile="C:\Utils\FAR170\plugins\conEmu\conemu.dll"
+				OutputFile="J:\Plugins\ConEmu\conemu.dll"
 				LinkIncremental="2"
 				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"

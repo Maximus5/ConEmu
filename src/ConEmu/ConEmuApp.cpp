@@ -804,6 +804,16 @@ BOOL PrepareCommandLine(TCHAR*& cmdLine, TCHAR*& cmdNew, uint& params)
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
+	int nCmp;
+	nCmp = StrCmpI(L" ", L"A"); // -1
+	nCmp = StrCmpI(L" ", L"+");
+	nCmp = StrCmpI(L" ", L"-");
+	nCmp = wcscmp(L" ", L"-");
+	nCmp = wcsicmp(L" ", L"-");
+	nCmp = lstrcmp(L" ", L"-");
+	nCmp = lstrcmpi(L" ", L"-");
+	nCmp = StrCmpI(L" ", L"\\");
+
     g_hInstance = hInstance;
     gpNullSecurity = NullSecurity();
 
@@ -1058,13 +1068,17 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             {
                 WindowModeVal = rMaximized; WindowPrm = true;
             }
-            else if ( !klstricmp(curCommand, _T("/log")))
+            else if ( !klstricmp(curCommand, L"/log") || !klstricmp(curCommand, L"/log0") )
             {
 	            gSet.isAdvLogging = 1;
 	        }
-            else if ( !klstricmp(curCommand, _T("/log0")))
+            else if ( !klstricmp(curCommand, _T("/log1")))
             {
 	            gSet.isAdvLogging = 2;
+	        }
+            else if ( !klstricmp(curCommand, _T("/log2")))
+            {
+	            gSet.isAdvLogging = 3;
 	        }
 	        else if ( !klstricmp(curCommand, _T("/single")) )
 	        {

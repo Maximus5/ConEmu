@@ -42,7 +42,7 @@ REGEDIT4
 ;"FontSizeX2"=dword:00000000
 ;; You may redefine default character ranges for 'Fix far borders' feature.
 ;; Charset - Unicode, one char - 4 hex digits, max - 10 ranges.
-;"FixFarBordersRanges"="2013-2015;2190-21AF;2500-25C4"
+;"FixFarBordersRanges"="2013-2015;2190-21AF;2500-25C4;3B2-3B2"
 ;; For "Experimental" == 2 You may specify the weights of parts (5..250)
 ;"PartBrush75"=hex:C8
 ;"PartBrush50"=hex:96
@@ -55,14 +55,14 @@ REGEDIT4
 "CursorBlink"=hex:01
 
 ;; 0 - don't handle - always send RClick to console
-;; 1 - always show context menu (look at "RightClickMacro" value)
+;; 1 - always show context menu (look at "RightClickMacro2" value)
 ;; 2 - ShortClick - send RClick, LongClick - show menu
 ;; Needs EMenu & macro on 'Apps' button
 "RightClick opens context menu"=hex:02
 ;; You may specify special macro, used to display menu.
 ;; By default (value is absent) ConEmu simply send 'Apps' key to console
 ;; Prepend macro with '@' to 'DisableOutput'
-;"RightClickMacro"="@F11 e Enter Enter"
+;"RightClickMacro2"="@F11 e Enter Enter"
 
 ;; Turn on multiconsole (sort of 'ConMan' functionality)
 "Multi"=hex:00
@@ -130,6 +130,15 @@ REGEDIT4
 
 ;; Disable focus events send to console (search in panels will never be closed).
 ;"SkipFocusEvents"=hex:01
+
+;; !!! HIGHLY EXPERIMENTAL. Use of ASCII string sort in FAR
+;"FARuseASCIIsort"=hex:01
+
+;; Sometimes on AltTab press Alt is sended in Console
+;; This may be annoying, when you have macro on Alt or RAlt key
+;; Fix this issue, by sending AltTab before Alt release
+;"FixAltOnAltTab"=hex:01
+
 
 ;; Debug. 1 - Don't hide console window
 "ConVisible"=hex:00

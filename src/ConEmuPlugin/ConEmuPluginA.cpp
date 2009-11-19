@@ -322,6 +322,23 @@ void WINAPI _export GetPluginInfo(struct PluginInfo *pi)
 	pi->Reserved = 0;	
 }
 
+DWORD GetEditorModifiedStateA()
+{
+	EditorInfo ei;
+	InfoA->EditorControl(ECTL_GETINFO, &ei);
+
+	#ifdef SHOW_DEBUG_EVENTS
+		char szDbg[255];
+		wsprintfA(szDbg, "Editor:State=%i\n", ei.CurState);
+		OutputDebugStringA(szDbg);
+	#endif
+
+	// Если он сохранен, то уже НЕ модифицирован
+	DWORD currentModifiedState = ((ei.CurState & (ECSTATE_MODIFIED|ECSTATE_SAVED)) == ECSTATE_MODIFIED) ? 1 : 0;
+
+	return currentModifiedState;
+}
+
 // watch non-modified -> modified editor status change
 int WINAPI _export ProcessEditorInput(const INPUT_RECORD *Rec)
 {
@@ -335,21 +352,14 @@ int WINAPI _export ProcessEditorInput(const INPUT_RECORD *Rec)
 		&& (Rec->Event.KeyEvent.wVirtualKeyCode || Rec->Event.KeyEvent.wVirtualScanCode || Rec->Event.KeyEvent.uChar.AsciiChar)
 		&& Rec->Event.KeyEvent.bKeyDown)
 	{
-#ifdef SHOW_DEBUG_EVENTS
-		char szDbg[255]; wsprintfA(szDbg, "ProcessEditorInput(E=%i, VK=%i, SC=%i, CH=%i, Down=%i)\n", 
-			Rec->EventType, Rec->Event.KeyEvent.wVirtualKeyCode, 
-			Rec->Event.KeyEvent.wVirtualScanCode, Rec->Event.KeyEvent.uChar.AsciiChar,
-			Rec->Event.KeyEvent.bKeyDown);
-		OutputDebugStringA(szDbg);
-#endif
+		#ifdef SHOW_DEBUG_EVENTS
+			char szDbg[255]; wsprintfA(szDbg, "ProcessEditorInput(E=%i, VK=%i, SC=%i, CH=%i, Down=%i)\n", Rec->EventType, Rec->Event.KeyEvent.wVirtualKeyCode, Rec->Event.KeyEvent.wVirtualScanCode, Rec->Event.KeyEvent.uChar.AsciiChar, Rec->Event.KeyEvent.bKeyDown);
+			OutputDebugStringA(szDbg);
+		#endif
 
-		EditorInfo ei;
-		InfoA->EditorControl(ECTL_GETINFO, &ei);
-#ifdef SHOW_DEBUG_EVENTS
-		wsprintfA(szDbg, "Editor:State=%i\n", ei.CurState);
-		OutputDebugStringA(szDbg);
-#endif
-		int currentModifiedState = ei.CurState == ECSTATE_MODIFIED ? 1 : 0;
+
+		DWORD currentModifiedState = GetEditorModifiedStateA();
+
 		if (lastModifiedStateW != currentModifiedState)
 		{
 			UpdateConEmuTabsA(0, false, false);
@@ -377,13 +387,16 @@ int WINAPI _export ProcessEditorEvent(int Event, void *Param)
 	{
 	case EE_READ: // в этот момент количество окон еще не изменилось
 		gbHandleOneRedraw = true;
-		gbHandleOneRedrawCh = false;
+		//gbHandleOneRedrawCh = false;
 		return 0;
 	case EE_REDRAW:
 		if (!gbHandleOneRedraw)
 			return 0;
-		if (!gbHandleOneRedrawCh)
-			gbHandleOneRedraw = false; //2009-08-17 - сбрасываем в UpdateConEmuTabsW т.к. на Input не сразу * появляется
+		//if (!gbHandleOneRedrawCh)
+		//	gbHandleOneRedraw = false; //2009-08-17 - сбрасываем в UpdateConEmuTabsW т.к. на Input не сразу * появляется
+		gbHandleOneRedraw = false;
+		if (lastModifiedStateW == GetEditorModifiedState())
+			return 0;
 		OUTPUTDEBUGSTRING(L"EE_REDRAW(HandleOneRedraw)\n");
 		break;
 	case EE_CLOSE:
@@ -445,7 +458,8 @@ void UpdateConEmuTabsA(int event, bool losingFocus, bool editorSave, void *Param
 {
 	if (!InfoA) return;
 
-	CheckResources();
+	if (ConEmuHwnd && FarHwnd)
+		CheckResources();
 
 	MSectionLock SC; SC.Lock(&csTabs);
 
@@ -511,11 +525,11 @@ void UpdateConEmuTabsA(int event, bool losingFocus, bool editorSave, void *Param
 			1, 0);
 	}
 	
-	// 2009-08-17
-	if (gbHandleOneRedraw && gbHandleOneRedrawCh && lbCh) {
-		gbHandleOneRedraw = false;
-		gbHandleOneRedrawCh = false;
-	}
+	//// 2009-08-17
+	//if (gbHandleOneRedraw && gbHandleOneRedrawCh && lbCh) {
+	//	gbHandleOneRedraw = false;
+	//	gbHandleOneRedrawCh = false;
+	//}
 
 	// Скорее всего это модальный редактор (или вьювер?)
 	if (!lbActiveFound && !losingFocus) {
@@ -530,7 +544,7 @@ void UpdateConEmuTabsA(int event, bool losingFocus, bool editorSave, void *Param
 			tabCount = 0;
 			lbCh |= AddTab(tabCount, losingFocus, editorSave, 
 				WTYPE_EDITOR, pszFileName, NULL, 
-				1, ei.CurState == ECSTATE_MODIFIED);
+				1, (ei.CurState & (ECSTATE_MODIFIED|ECSTATE_SAVED)) == ECSTATE_MODIFIED);
 		}
 	}
 
@@ -539,6 +553,8 @@ void UpdateConEmuTabsA(int event, bool losingFocus, bool editorSave, void *Param
 
 void   WINAPI _export ExitFAR(void)
 {
+	UnsetAllHooks();
+	
 	StopThread();
 
 	if (InfoA) {

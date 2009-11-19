@@ -99,6 +99,7 @@ public:
     RECT rcTabMargins;
     bool isTabFrame;
     bool isMulti; BYTE icMultiNew, icMultiNext, icMultiRecreate; bool isMultiNewConfirm;
+    bool isFARuseASCIIsort, isFixAltOnAltTab;
 
     // Заголовки табов
     WCHAR szTabConsole[32];

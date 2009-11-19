@@ -20,11 +20,11 @@
 #define Free free
 #define Alloc calloc
 
-WARNING("Подозреваю, что в gszRootKey не учитывается имя пользователя/конфигурации");
-
 #define MAKEFARVERSION(major,minor,build) ( ((major)<<8) | (minor) | ((build)<<16))
 
 #define ConEmu_SysID 0x43454D55 // 'CEMU'
+#define SETWND_CALLPLUGIN_SENDTABS 100
+#define SETWND_CALLPLUGIN_BASE (SETWND_CALLPLUGIN_SENDTABS+1)
 
 #ifdef _DEBUG
 wchar_t gszDbgModLabel[6] = {0};
@@ -47,6 +47,7 @@ extern "C"{
 
 HMODULE ghPluginModule = NULL; // ConEmu.dll - сам плагин
 HWND ConEmuHwnd = NULL; // Содержит хэндл окна отрисовки. Это ДОЧЕРНЕЕ окно.
+DWORD gdwServerPID = 0;
 BOOL TerminalMode = FALSE;
 HWND FarHwnd = NULL;
 HANDLE ghConIn = NULL;
@@ -96,12 +97,18 @@ bool gbMonitorEnvVar = false;
 #define MONITORENVVARDELTA 1000
 void UpdateEnvVar(const wchar_t* pszList);
 BOOL StartupHooks();
+BOOL gbFARuseASCIIsort = FALSE; // попытаться перехватить строковую сортировку в FAR
 
 
 // minimal(?) FAR version 2.0 alpha build FAR_X_VER
 int WINAPI _export GetMinFarVersionW(void)
 {
+	// Необходимо наличие Synchro
+#if FAR_X_VER<1007
+	return MAKEFARVERSION(2,0,1007);
+#else
 	return MAKEFARVERSION(2,0,FAR_X_VER);
+#endif
 }
 
 /* COMMON - пока структуры не различаются */
@@ -113,10 +120,10 @@ void WINAPI _export GetPluginInfoW(struct PluginInfo *pi)
     //szMenu[0][2] = 0x2560;
 
 	// Проверить, не изменилась ли горячая клавиша плагина, и если да - пересоздать макросы
-	IsKeyChanged(TRUE);
-
-	if (gcPlugKey) szMenu1[0]=0; else lstrcpyW(szMenu1, L"[&\x2584] ");
-	lstrcpynW(szMenu1+lstrlenW(szMenu1), GetMsgW(2), 240);
+	//IsKeyChanged(TRUE); -- в FAR2 устарело, используем Synchro
+	//if (gcPlugKey) szMenu1[0]=0; else lstrcpyW(szMenu1, L"[&\x2584] ");
+	//lstrcpynW(szMenu1+lstrlenW(szMenu1), GetMsgW(2), 240);
+	lstrcpynW(szMenu1, GetMsgW(2), 240);
 
 
 	pi->StructSize = sizeof(struct PluginInfo);
@@ -144,8 +151,25 @@ HANDLE WINAPI _export OpenPluginW(int OpenFrom,INT_PTR Item)
 	} else {
 		if (!gbCmdCallObsolete) {
 			INT_PTR nID = -1; // выбор из меню
-			if (((OpenFrom & OPEN_FROMMACRO) == OPEN_FROMMACRO) && (Item >= 1 && Item <= 7)) {
-				nID = Item - 1; // Будет сразу выполнена команда
+			if ((OpenFrom & OPEN_FROMMACRO) == OPEN_FROMMACRO)
+			{
+				if (Item >= 1 && Item <= 7)
+				{
+					nID = Item - 1; // Будет сразу выполнена команда
+					
+				} else if (Item >= SETWND_CALLPLUGIN_BASE) {
+					gnPluginOpenFrom = OPEN_PLUGINSMENU;
+					DWORD nTab = Item - SETWND_CALLPLUGIN_BASE;
+					ProcessCommand(CMD_SETWINDOW, FALSE, &nTab);
+					return INVALID_HANDLE_VALUE;
+					
+				} else if (Item == SETWND_CALLPLUGIN_SENDTABS) {
+					// Force Send tabs to ConEmu
+					MSectionLock SC; SC.Lock(&csTabs, TRUE);
+					SendTabs(gnCurTabCount, TRUE);
+					SC.Unlock();
+					return INVALID_HANDLE_VALUE;
+				}
 			}
 			ShowPluginMenu((int)nID);
 		} else {
@@ -180,7 +204,23 @@ int WINAPI _export ProcessSynchroEventW(int Event,void *Param)
     			gnPluginOpenFrom = 0;
     			gnReqCommand = (DWORD)pArg->Param1;
 				gpReqCommandData = (LPVOID)pArg->Param2;
-    			ProcessCommand(gnReqCommand, FALSE/*bReqMainThread*/, gpReqCommandData);
+				
+				if (gnReqCommand == CMD_SETWINDOW) {
+					// Необходимо быть в panel/editor/viewer
+					wchar_t szMacro[255];
+					DWORD nTabShift = SETWND_CALLPLUGIN_BASE + *((DWORD*)gpReqCommandData);
+					
+					// Если панели-редактор-вьювер - сменить окно. Иначе - отослать в GUI табы
+					wsprintf(szMacro, L"$if (Shell||Viewer||Editor) callplugin(0x%08X,%i) $else callplugin(0x%08X,%i) $end",
+						ConEmu_SysID, nTabShift, ConEmu_SysID, SETWND_CALLPLUGIN_SENDTABS);
+						
+					gnReqCommand = -1;
+					gpReqCommandData = NULL;
+					PostMacro(szMacro);
+					// Done
+				} else {
+	    			ProcessCommand(gnReqCommand, FALSE/*bReqMainThread*/, gpReqCommandData);
+    			}
     		}
 		} else if (pArg->SynchroType == SynchroArg::eInput) {
 			INPUT_RECORD *pRec = (INPUT_RECORD*)(pArg->Param1);
@@ -188,6 +228,7 @@ int WINAPI _export ProcessSynchroEventW(int Event,void *Param)
 
 			if (nCount>0) {
 				DWORD cbWritten = 0;
+				_ASSERTE(ghConIn);
 				BOOL fSuccess = WriteConsoleInput(ghConIn, pRec, nCount, &cbWritten);
 				if (!fSuccess || cbWritten != nCount) {
 					_ASSERTE(fSuccess && cbWritten==nCount);
@@ -223,7 +264,7 @@ BOOL WINAPI DllMain( HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserve
 				
 				_ASSERTE(FAR_X_VER<FAR_Y_VER);
 				#ifdef SHOW_STARTED_MSGBOX
-				if (!IsDebuggerPresent()) MessageBoxA(NULL, "ConEmu.dll loaded", "ConEmu plugin", 0);
+				if (!IsDebuggerPresent()) MessageBoxA(NULL, "ConEmu*.dll loaded", "ConEmu plugin", 0);
 				#endif
 				//#if defined(__GNUC__)
 				//GetConsoleWindow = (FGetConsoleWindow)GetProcAddress(GetModuleHandle(L"kernel32.dll"),"GetConsoleWindow");
@@ -452,6 +493,8 @@ BOOL ActivatePluginW(DWORD nCmd, LPVOID pCommandData, DWORD nTimeout = CONEMUFAR
 	return lbRc;
 }
 
+typedef HANDLE (WINAPI *OpenPlugin_t)(int OpenFrom,INT_PTR Item);
+
 WARNING("Обязательно сделать возможность отваливаться по таймауту, если плагин не удалось активировать");
 // Проверку можно сделать чтением буфера ввода - если там еще есть событие отпускания F11 - значит
 // меню плагинов еще загружается. Иначе можно еще чуть-чуть подождать, и отваливаться - активироваться не получится
@@ -488,7 +531,6 @@ CESERVER_REQ* ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandDat
 			}
 		}
 
-
 		// Засемафорить, чтобы несколько команд одновременно не пошли...
 		HANDLE hEvents[2] = {ghServerTerminateEvent, ghPluginSemaphore};
 		DWORD dwWait = WaitForMultipleObjects(2, hEvents, FALSE, INFINITE);
@@ -497,17 +539,25 @@ CESERVER_REQ* ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandDat
 			return NULL;
 		}
 
-		if (gFarVersion.dwVerMajor == 2 && gFarVersion.dwBuild >= 1007
-			&& nCmd != CMD_SETWINDOW)
+		if (gFarVersion.dwVerMajor == 2 /*&& gFarVersion.dwBuild >= 1007*/)
+		//	&& nCmd != CMD_SETWINDOW)
 		{
-			TODO("Пока ProcessSynchroEventW не научится определять текущую макрообласть - переключение окон по старому");
+			// Пока ProcessSynchroEventW не научится определять текущую макрообласть - переключение окон по старому
 			ActivatePluginW(nCmd, pCommandData);
 		} else {
 			ActivatePluginA(nCmd, pCommandData);
 		}
 
-
 		ReleaseSemaphore(ghPluginSemaphore, 1, NULL);
+		
+		if (nCmd == CMD_LEFTCLKSYNC) {
+			DWORD nTestEvents = 0, dwTicks = GetTickCount();
+			GetNumberOfConsoleInputEvents(ghConIn, &nTestEvents);
+			while (nTestEvents > 0 && (dwTicks - GetTickCount()) < 300) {
+				Sleep(10);
+				GetNumberOfConsoleInputEvents(ghConIn, &nTestEvents);
+			}
+		}
 
 		//gpReqCommandData = NULL;
 		//gnReqCommand = -1; gnPluginOpenFrom = -1;
@@ -577,6 +627,110 @@ CESERVER_REQ* ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandDat
 			_ASSERTE(pCommandData!=NULL);
 			if (pCommandData!=NULL)
 				PostMacro((wchar_t*)pCommandData);
+			break;
+		}
+		case (CMD_LEFTCLKSYNC):
+		{
+			COORD *crMouse = (COORD *)pCommandData;
+			
+			INPUT_RECORD clk[2] = {{MOUSE_EVENT},{MOUSE_EVENT}};
+			clk[0].Event.MouseEvent.dwButtonState = FROM_LEFT_1ST_BUTTON_PRESSED;
+			clk[0].Event.MouseEvent.dwMousePosition = *crMouse;
+			clk[1].Event.MouseEvent.dwMousePosition = *crMouse;
+			
+			DWORD cbWritten = 0;
+			if (!ghConIn)
+				ghConIn  = CreateFile(L"CONIN$", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_READ,
+					0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+			_ASSERTE(ghConIn);
+			BOOL fSuccess = WriteConsoleInput(ghConIn, clk, 2, &cbWritten);
+			if (!fSuccess || cbWritten != 2) {
+				_ASSERTE(fSuccess && cbWritten==2);
+			}
+			break;
+		}
+		case (CMD_EMENU):
+		{
+			// Тоже нихрена не работает. FAR обрабатывает мышку ПОСЛЕ выполнения макроса
+			COORD *crMouse = (COORD *)pCommandData;
+			const wchar_t *pszUserMacro = (wchar_t*)(crMouse+1);
+			
+			// Чтобы на чистой системе менюшка всплывала под курсором и не выскакивало сообщение ""
+			HKEY hRClkKey = NULL;
+			DWORD disp = 0;
+			WCHAR szEMenuKey[MAX_PATH*2+64];
+			lstrcpyW(szEMenuKey, gszRootKey);
+			lstrcatW(szEMenuKey, L"\\Plugins\\RightClick");
+			// Ключа может и не быть, если настройки ни разу не сохранялись
+			if (0 == RegCreateKeyExW(HKEY_CURRENT_USER, szEMenuKey, 0, 0, 0, KEY_ALL_ACCESS, 0, &hRClkKey, &disp))
+			{
+				if (disp == REG_CREATED_NEW_KEY) {
+					RegSetValueExW(hRClkKey, L"WaitToContinue", 0, REG_DWORD, (LPBYTE)&(disp = 0), sizeof(disp));
+					RegSetValueExW(hRClkKey, L"GuiPos", 0, REG_DWORD, (LPBYTE)&(disp = 0), sizeof(disp));
+				}
+				RegCloseKey(hRClkKey);
+			}
+			
+			//INPUT_RECORD clk[2] = {{MOUSE_EVENT},{MOUSE_EVENT}};
+			//clk[0].Event.MouseEvent.dwButtonState = FROM_LEFT_1ST_BUTTON_PRESSED;
+			//clk[0].Event.MouseEvent.dwMousePosition = *crMouse;
+			//clk[1].Event.MouseEvent.dwMousePosition = *crMouse;
+			//
+			//DWORD cbWritten = 0;
+			//ghConIn  = CreateFile(L"CONIN$", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_READ,
+			//	0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+			//_ASSERTE(ghConIn);
+			//BOOL fSuccess = WriteConsoleInput(ghConIn, clk, 2, &cbWritten);
+			//if (!fSuccess || cbWritten != 2) {
+			//	_ASSERTE(fSuccess && cbWritten==2);
+			//}
+			
+			//PostMacro((wchar_t*)L"@F11 %N=Menu.Select(\"EMenu\",0); $if (%N==0) %N=Menu.Select(\"EMenu\",2); $end $if(%N>0) Enter $while (Menu) Enter $end $else $MMode 1 MsgBox(\"ConEmu\",\"EMenu not found in F11\",0x00010001) $end");
+			const wchar_t* pszMacro = L"@$If (!CmdLine.Empty) %Flg_Cmd=1; %CmdCurPos=CmdLine.ItemCount-CmdLine.CurPos+1; %CmdVal=CmdLine.Value; Esc $Else %Flg_Cmd=0; $End $Text \"rclk_gui:\" Enter $If (%Flg_Cmd==1) $Text %CmdVal %Flg_Cmd=0; %Num=%CmdCurPos; $While (%Num!=0) %Num=%Num-1; CtrlS $End $End";
+			if (*pszUserMacro)
+				pszMacro = pszUserMacro;
+				
+			PostMacro((wchar_t*)pszMacro);
+			
+			//// Чтобы GUI не дожидался окончания всплытия EMenu
+			//LeaveCriticalSection(&csData);
+			//SetEvent(ghReqCommandEvent);
+			////
+			//HMODULE hEMenu = GetModuleHandle(L"emenu.dll");
+			//if (!hEMenu)
+			//{
+			//	if (gFarVersion.dwVerMajor==2) {
+			//		TCHAR temp[NM*5];
+			//		ExpandEnvironmentStringsW(L"%FARHOME%\\Plugins\\emenu\\EMenu.dll",temp,countof(temp));
+			//		if (gFarVersion.dwBuild>=FAR_Y_VER) {
+			//			FUNC_Y(LoadPlugin)(temp);
+			//		} else {
+			//			FUNC_X(LoadPlugin)(temp);
+			//		}
+			//		// Фактически FAR НЕ загружает длл-ку к сожалению, так что тут мы обломаемся
+			//		hEMenu = GetModuleHandle(L"emenu.dll");
+			//	}
+			//
+			//	if (!hEMenu) {
+			//		PostMacro((wchar_t*)L"@F11 %N=Menu.Select(\"EMenu\",0); $if (%N==0) %N=Menu.Select(\"EMenu\",2); $end $if(%N>0) Enter $while (Menu) Enter $end $else $MMode 1 MsgBox(\"ConEmu\",\"EMenu not found in F11\",0x00010001) $end");
+			//		break; // уже все что мог - сделал макрос
+			//	}
+			//}
+			//if (hEMenu)
+			//{
+			//	OpenPlugin_t fnOpenPluginW = (OpenPlugin_t)GetProcAddress(hEMenu, (gFarVersion.dwVerMajor==1) ? "OpenPlugin" : "OpenPluginW");
+			//	_ASSERTE(fnOpenPluginW);
+			//	if (fnOpenPluginW) {
+			//		if (gFarVersion.dwVerMajor==1) {
+			//			fnOpenPluginW(OPEN_COMMANDLINE, (INT_PTR)"rclk_gui:");
+			//		} else {
+			//			fnOpenPluginW(OPEN_COMMANDLINE, (INT_PTR)L"rclk_gui:");
+			//		}
+			//	} else {
+			//		// Ругнуться?
+			//	}
+			//}
+			//return NULL;
 			break;
 		}
 		case (CMD_SETSIZE):
@@ -1111,7 +1265,8 @@ void WINAPI _export SetStartupInfoW(void *aInfo)
 
 	gbInfoW_OK = TRUE;
 
-	CheckMacro(TRUE);
+	// в FAR2 устарело - Synchro
+	//CheckMacro(TRUE);
 
 	CheckResources();
 }
@@ -1226,7 +1381,7 @@ BOOL CheckPlugKey()
 	HKEY hkey=NULL;
 	WCHAR szMacroKey[2][MAX_PATH], szCheckKey[32];
 	
-	//Прочитать назначенные плагинам клавиши, и если для ConEmu.dll указана клавиша активации - запомнить ее
+	//Прочитать назначенные плагинам клавиши, и если для ConEmu*.dll указана клавиша активации - запомнить ее
 	wsprintfW(szMacroKey[0], L"%s\\PluginHotkeys", gszRootKey/*, szCheckKey*/);
 	if (0==RegOpenKeyExW(HKEY_CURRENT_USER, szMacroKey[0], 0, KEY_READ, &hkey))
 	{
@@ -1237,7 +1392,7 @@ BOOL CheckPlugKey()
 			#if !defined(__GNUC__)
 			#pragma warning(disable : 6400)
 			#endif
-			if (lstrcmpiW(pszSlash, L"/conemu.dll")==0) {
+			if (lstrcmpiW(pszSlash, L"/conemu.dll")==0 || lstrcmpiW(pszSlash, L"/conemu.x64.dll")==0) {
 				WCHAR lsFullPath[MAX_PATH*2];
 				lstrcpy(lsFullPath, szMacroKey[0]);
 				lstrcat(lsFullPath, L"\\");
@@ -1283,45 +1438,8 @@ void CheckMacro(BOOL abAllowAPI)
 	DWORD dwSize = 0;
 	//bool lbMacroDontCheck = false;
 
-	//Прочитать назначенные плагинам клавиши, и если для ConEmu.dll указана клавиша активации - запомнить ее
+	//Прочитать назначенные плагинам клавиши, и если для ConEmu*.dll указана клавиша активации - запомнить ее
 	CheckPlugKey();
-	//wsprintfW(szMacroKey[0], L"%s\\PluginHotkeys",
-	//		gszRootKey, szCheckKey);
-	//if (0==RegOpenKeyExW(HKEY_CURRENT_USER, szMacroKey[0], 0, KEY_READ, &hkey))
-	//{
-	//	DWORD dwIndex = 0, dwSize; FILETIME ft;
-	//	while (0==RegEnumKeyEx(hkey, dwIndex++, szMacroKey[1], &(dwSize=MAX_PATH), NULL, NULL, NULL, &ft)) {
-	//		WCHAR* pszSlash = szMacroKey[1]+lstrlenW(szMacroKey[1])-1;
-	//		while (pszSlash>szMacroKey[1] && *pszSlash!=L'/') pszSlash--;
-	//		if (lstrcmpiW(pszSlash, L"/conemu.dll")==0) {
-	//			WCHAR lsFullPath[MAX_PATH*2];
-	//			lstrcpy(lsFullPath, szMacroKey[0]);
-	//			lstrcat(lsFullPath, L"\\");
-	//			lstrcat(lsFullPath, szMacroKey[1]);
-	//
-	//			RegCloseKey(hkey); hkey=NULL;
-	//
-	//			if (0==RegOpenKeyExW(HKEY_CURRENT_USER, lsFullPath, 0, KEY_READ, &hkey)) {
-	//				dwSize = sizeof(szCheckKey);
-	//				if (0==RegQueryValueExW(hkey, L"Hotkey", NULL, NULL, (LPBYTE)szCheckKey, &dwSize)) {
-	//					if (gFarVersion.dwVerMajor==1) {
-	//						char cAnsi; // чтобы не возникло проблем с приведением к WCHAR
-	//						WideCharToMultiByte(CP_OEMCP, 0, szCheckKey, 1, &cAnsi, 1, 0,0);
-	//						gcPlugKey = cAnsi;
-	//					} else {
-	//						gcPlugKey = szCheckKey[0];
-	//					}
-	//				}
-	//			}
-	//			//
-	//			//
-	//			break;
-	//		}
-	//	}
-	//
-	//	// Закончили
-	//	if (hkey) {RegCloseKey(hkey); hkey=NULL;}
-	//}
 
 
 	for (n=0; n<MODCOUNT; n++) {
@@ -1333,22 +1451,6 @@ void CheckMacro(BOOL abAllowAPI)
 		}
 		wsprintfW(szMacroKey[n], L"%s\\KeyMacros\\Common\\%s", gszRootKey, szCheckKey);
 	}
-	//lstrcpyA(szCheckKey, "F14DontCheck2");
-
-	//if (0==RegOpenKeyExA(HKEY_CURRENT_USER, "Software\\ConEmu", 0, KEY_ALL_ACCESS, &hkey))
-	//{
-	//
-	//	if (RegQueryValueExA(hkey, szCheckKey, 0, 0, (LPBYTE)&lbMacroDontCheck, &(dwSize=sizeof(lbMacroDontCheck))))
-	//		lbMacroDontCheck = false;
-	//	RegCloseKey(hkey); hkey=NULL;
-	//}
-
-	/*if (gFarVersion.dwVerMajor==1) {
-		lstrcpyA((char*)szCheckKey, "F11  ");
-		((char*)szCheckKey)[4] = (char)((gcPlugKey ? gcPlugKey : 0xCC) & 0xFF);
-		//lstrcpyW((wchar_t*)szCheckKey, L"F11  ");
-		//szCheckKey[4] = (wchar_t)(gcPlugKey ? gcPlugKey : 0xCC);
-	} else {*/
 	if (gFarVersion.dwVerMajor==1) {
 		lstrcpyW(szCheckKey, L"F11  "); //TODO: для ANSI может другой код по умолчанию?
 		szCheckKey[4] = (wchar_t)(gcPlugKey ? gcPlugKey : ((gFarVersion.dwVerMajor==1) ? 0x42C/*0xDC - аналог для OEM*/ : 0x2584));
@@ -1356,7 +1458,6 @@ void CheckMacro(BOOL abAllowAPI)
 		// Пока можно так. (пока GUID не появились)
 		wsprintfW(szCheckKey, L"callplugin(0x%08X,0)", ConEmu_SysID);
 	}
-	//}
 
 	//if (!lbMacroDontCheck)
 	for (n=0; n<MODCOUNT && !lbNeedMacro; n++)
@@ -1452,7 +1553,8 @@ void UpdateConEmuTabsW(int event, bool losingFocus, bool editorSave, void* Param
 	if (!gbInfoW_OK)
 		return;
 
-	CheckResources();
+	if (ConEmuHwnd && FarHwnd)
+		CheckResources();
 
 	MSectionLock SC; SC.Lock(&csTabs);
 
@@ -1515,6 +1617,7 @@ BOOL AddTab(int &tabCount, bool losingFocus, bool editorSave,
 		gpTabs->Tabs.tabs[0].Name[0] = 0;
 		gpTabs->Tabs.tabs[0].Pos = 0;
 		gpTabs->Tabs.tabs[0].Type = WTYPE_PANELS;
+		gpTabs->Tabs.tabs[0].Modified = 0; // Иначе GUI может ошибочно считать, что есть несохраненные редакторы
 		if (!tabCount) tabCount++;
 	} else
 	if (Type == WTYPE_EDITOR || Type == WTYPE_VIEWER)
@@ -1615,7 +1718,7 @@ void SendTabs(int tabCount, BOOL abForceSend/*=FALSE*/)
 // watch non-modified -> modified editor status change
 
 int lastModifiedStateW = -1;
-bool gbHandleOneRedraw = false, gbHandleOneRedrawCh = false;
+bool gbHandleOneRedraw = false; //, gbHandleOneRedrawCh = false;
 
 int WINAPI _export ProcessEditorInputW(void* Rec)
 {
@@ -1647,13 +1750,16 @@ int WINAPI _export ProcessEditorEventW(int Event, void *Param)
 	{
 	case EE_READ: // в этот момент количество окон еще не изменилось
 		gbHandleOneRedraw = true;
-		gbHandleOneRedrawCh = false;
+		//gbHandleOneRedrawCh = false;
 		return 0;
 	case EE_REDRAW:
 		if (!gbHandleOneRedraw)
 			return 0;
-		if (!gbHandleOneRedrawCh)
-			gbHandleOneRedraw = false; //2009-08-17 - сбрасываем в UpdateConEmuTabsW т.к. на Input не сразу * появляется
+		//if (!gbHandleOneRedrawCh)//2009-08-17 - сбрасываем в UpdateConEmuTabsW т.к. на Input не сразу * появляется
+		//	gbHandleOneRedraw = false; //2009-08-17 - сбрасываем в UpdateConEmuTabsW т.к. на Input не сразу * появляется
+		gbHandleOneRedraw = false;
+		if (lastModifiedStateW == GetEditorModifiedState())
+			return 0;
 		OUTPUTDEBUGSTRING(L"EE_REDRAW(HandleOneRedraw)\n");
 		break;
 	case EE_CLOSE:
@@ -1785,6 +1891,8 @@ void StopThread(void)
 
 void   WINAPI _export ExitFARW(void)
 {
+	UnsetAllHooks();
+	
 	StopThread();
 
 	if (gFarVersion.dwBuild>=FAR_Y_VER)
@@ -1814,6 +1922,7 @@ void CheckResources()
 		
 		DWORD dwServerPID = 0;
 		FindServerCmd(CECMD_FARLOADED, dwServerPID);
+		gdwServerPID = dwServerPID;
 
 		SetConsoleTitleW(szTitle);
 	}
@@ -2223,9 +2332,14 @@ DWORD WINAPI ServerThreadCommand(LPVOID ahPipe)
 	} else if (pIn->hdr.nCmd == CMD_SETENVVAR) {
 		// Установить переменные окружения
 		// Плагин это получает в ответ на CECMD_RESOURCES, посланное в GUI при загрузке плагина
-		_ASSERTE(nDataSize>=4);
-		wchar_t *pszName  = (wchar_t*)pIn->Data;
-		//wchar_t *pszValue = pszName + lstrlenW(pszName) + 1;
+		_ASSERTE(nDataSize>=8);
+		//wchar_t *pszName  = (wchar_t*)pIn->Data;
+		
+	    FAR_REQ_SETENVVAR *pSetEnvVar = (FAR_REQ_SETENVVAR*)pIn->Data;
+	    wchar_t *pszName = pSetEnvVar->szEnv;
+	    
+	    gbFARuseASCIIsort = pSetEnvVar->bFARuseASCIIsort;
+		
 
 		_ASSERTE(nDataSize<sizeof(gsMonitorEnvVar));
 		gbMonitorEnvVar = false;
@@ -2256,6 +2370,19 @@ DWORD WINAPI ServerThreadCommand(LPVOID ahPipe)
 		//}
 
 		gbMonitorEnvVar = lbOk;
+		
+	} else if (pIn->hdr.nCmd == CMD_EMENU) {
+		#ifdef _DEBUG
+		COORD *crMouse = (COORD *)pIn->Data;
+		const wchar_t *pszUserMacro = (wchar_t*)(crMouse+1);
+		#endif
+
+		// Выделить файл под курсором
+		ProcessCommand(CMD_LEFTCLKSYNC, TRUE/*bReqMainThread*/, pIn->Data);
+		
+		// А теперь, собственно вызовем меню
+		ProcessCommand(pIn->hdr.nCmd, TRUE/*bReqMainThread*/, pIn->Data);
+
 
 	} else {
 		CESERVER_REQ* pCmdRet = ProcessCommand(pIn->hdr.nCmd, TRUE/*bReqMainThread*/, pIn->Data);
@@ -2405,8 +2532,10 @@ BOOL Attach2Gui()
 	
 	if (FindServerCmd(CECMD_ATTACH2GUI, dwServerPID) && dwServerPID != 0) {
 		// "Server was already started. PID=%i. Exiting...\n", dwServerPID
+		gdwServerPID = dwServerPID;
 		return TRUE;
 	}
+	gdwServerPID = 0;
 	
 	// Create process, with flag /Attach GetCurrentProcessId()
 	// Sleep for sometimes, try InitHWND(hConWnd); several times
@@ -2435,6 +2564,7 @@ BOOL Attach2Gui()
 	{
 		// Хорошо бы ошибку показать?
 	} else {
+		gdwServerPID = pi.dwProcessId;
 		lbRc = TRUE;
 	}
 	
@@ -2469,6 +2599,17 @@ void RedrawAll()
 	else
 		FUNC_X(RedrawAll)();
 }
+
+DWORD GetEditorModifiedState()
+{
+	if (gFarVersion.dwVerMajor==1)
+		return GetEditorModifiedStateA();
+	else if (gFarVersion.dwBuild>=FAR_Y_VER)
+		return FUNC_Y(GetEditorModifiedState)();
+	else
+		return FUNC_X(GetEditorModifiedState)();
+}
+
 
 
 // <Name>\0<Value>\0<Name2>\0<Value2>\0\0

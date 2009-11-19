@@ -126,8 +126,9 @@ extern wchar_t gszDbgModLabel[6];
 #define CECMD_REQUESTFULLINFO 22
 #define CECMD_SETFOREGROUND 23
 #define CECMD_FLASHWINDOW   24
+#define CECMD_SETCONSOLECP  25
 
-#define CESERVER_REQ_VER    19
+#define CESERVER_REQ_VER    21
 
 #define PIPEBUFSIZE 4096
 
@@ -332,6 +333,17 @@ typedef struct tag_CESERVER_REQ_FLASHWINFO {
 	DWORD dwTimeout;
 } CESERVER_REQ_FLASHWINFO;
 
+// CMD_SETENVVAR - FAR plugin
+typedef struct tag_FAR_REQ_SETENVVAR {
+	BOOL    bFARuseASCIIsort;
+	wchar_t szEnv[1]; // Variable length: <Name>\0<Value>\0<Name2>\0<Value2>\0\0
+} FAR_REQ_SETENVVAR;
+
+typedef struct tag_CESERVER_REQ_SETCONCP {
+	BOOL    bSetOutputCP; // [IN], [Out]=result
+	DWORD   nCP;          // [IN], [Out]=LastError
+} CESERVER_REQ_SETCONCP;
+
 typedef struct tag_CESERVER_REQ {
     CESERVER_REQ_HDR hdr;
 	union {
@@ -350,6 +362,8 @@ typedef struct tag_CESERVER_REQ {
 		CESERVER_REQ_CONEMUTAB_RET TabsRet;
 		CESERVER_REQ_POSTMSG Msg;
 		CESERVER_REQ_FLASHWINFO Flash;
+		FAR_REQ_SETENVVAR SetEnvVar;
+		CESERVER_REQ_SETCONCP SetConCP;
 	};
 } CESERVER_REQ;
 
@@ -386,8 +400,10 @@ typedef struct tag_CESERVER_REQ {
 #define CMD_LANGCHANGE   6
 #define CMD_SETENVVAR    7 // Установить переменные окружения (FAR plugin)
 #define CMD_SETSIZE      8
+#define CMD_EMENU        9
+#define CMD_LEFTCLKSYNC  10
 // +2
-#define MAXCMDCOUNT      10
+#define MAXCMDCOUNT      12
 #define CMD_EXIT         MAXCMDCOUNT-1
 
 //#define GWL_TABINDEX     0

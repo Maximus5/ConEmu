@@ -258,12 +258,6 @@ BOOL TabBarClass::GetVConFromTab(int nTabIdx, CVirtualConsole** rpVCon, DWORD* r
 
 CVirtualConsole* TabBarClass::FarSendChangeTab(int tabIndex)
 {
-    //SetWindowLong(ghWndDC, GWL_TABINDEX, tabIndex);
-    //PostMessage(ghConWnd, WM_KEYDOWN, VK_F14, 0);
-    //PostMessage(ghConWnd, WM_KEYUP, VK_F14, 0);
-    //PostMessage(ghConWnd, WM_KEYDOWN, FarTabShortcut(tabIndex), 0);
-    //PostMessage(ghConWnd, WM_KEYUP, FarTabShortcut(tabIndex), 0);
-
     CVirtualConsole *pVCon = NULL;
     DWORD wndIndex = 0;
     BOOL  bNeedActivate = FALSE, bChangeOk = FALSE;
@@ -302,6 +296,15 @@ LRESULT CALLBACK TabBarClass::TabProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARA
 {
     switch (uMsg)
     {
+    case WM_WINDOWPOSCHANGING:
+        {
+        	if (TabBar.mh_Rebar) {
+	        	LPWINDOWPOS pos = (LPWINDOWPOS)lParam;
+	            pos->y = 2; // иначе в Win7 он смещается в {0x0} и снизу видна некрасивая полоса
+	            return 0;
+            }
+            break;
+        }
     case WM_MBUTTONUP:
     case WM_RBUTTONUP:
         {

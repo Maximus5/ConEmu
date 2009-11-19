@@ -171,7 +171,8 @@ LRESULT CConEmuChild::OnPaint()
 	
 	mb_PostFullPaint = FALSE;
 
-	gConEmu.ActiveCon()->RCon()->LogString("CConEmuChild::OnPaint");
+	if (gSet.isAdvLogging>1) 
+		gConEmu.ActiveCon()->RCon()->LogString("CConEmuChild::OnPaint");
 
 	gSet.Performance(tPerfBlt, FALSE);
 
@@ -583,7 +584,8 @@ void CConEmuBack::Resize()
 	
 	if (!mh_WndBack || !IsWindow(mh_WndBack)) {
     	#if defined(EXT_GNUC_LOG)
-        pVCon->RCon()->LogString("  --  CConEmuBack::Resize() - exiting, mh_WndBack failed");
+    	if (gSet.isAdvLogging>1) 
+        	pVCon->RCon()->LogString("  --  CConEmuBack::Resize() - exiting, mh_WndBack failed");
         #endif
 		return;
 	}
@@ -599,7 +601,8 @@ void CConEmuBack::Resize()
         	wsprintfA(szDbg, "  --  CConEmuBack::Resize() - exiting, (%i,%i,%i,%i)==(%i,%i,%i,%i)",
         		rcClient.left, rcClient.top, rcClient.right, rcClient.bottom,
         		mrc_LastClient.left, mrc_LastClient.top, mrc_LastClient.right, mrc_LastClient.bottom);
-            pVCon->RCon()->LogString(szDbg);
+        	if (gSet.isAdvLogging>1) 
+            	pVCon->RCon()->LogString(szDbg);
             #endif
 			return; // ничего не менялось
 		}
@@ -617,7 +620,8 @@ void CConEmuBack::Resize()
 
 	#if defined(EXT_GNUC_LOG)
 	char szDbg[255]; wsprintfA(szDbg, "  --  CConEmuBack::Resize() - X=%i, Y=%i, W=%i, H=%i", rc.left, rc.top, 	rc.right - rc.left,	rc.bottom - rc.top );
-    pVCon->RCon()->LogString(szDbg);
+	if (gSet.isAdvLogging>1) 
+    	pVCon->RCon()->LogString(szDbg);
     #endif
     
 	MoveWindow(mh_WndBack, 

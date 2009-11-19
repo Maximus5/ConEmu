@@ -960,9 +960,11 @@ bool CConEmuMain::SetWindowMode(uint inMode)
         return false;
     }
 
+    #ifndef _DEBUG
     //2009-04-22 Если открыт PictureView - лучше не дергаться...
     if (isPictureView())
         return false;
+    #endif
 
     SetCursor(LoadCursor(NULL,IDC_WAIT));
 
@@ -1352,7 +1354,8 @@ LRESULT CConEmuMain::OnSize(WPARAM wParam, WORD newClientWidth, WORD newClientHe
     wsprintfA(szDbg, "CConEmuMain::OnSize(wParam=%i, Width=%i, Height=%i, "
         "IsIconic=%i, IgnoreSizeChange=%i)\n",
         wParam, newClientWidth, newClientHeight, isIconic(), mb_IgnoreSizeChange);
-    mp_VActive->RCon()->LogString(szDbg);
+    if (gSet.isAdvLogging>1)
+    	mp_VActive->RCon()->LogString(szDbg);
     #endif
 
     if (wParam == SIZE_MINIMIZED || isIconic()) {
@@ -1377,11 +1380,13 @@ LRESULT CConEmuMain::OnSize(WPARAM wParam, WORD newClientWidth, WORD newClientHe
         #if defined(EXT_GNUC_LOG)
         char szDbg[255];
         wsprintfA(szDbg, "  --  RealSize(Width=%i, Height=%i)", newClientWidth, newClientHeight);
-        mp_VActive->RCon()->LogString(szDbg);
+        if (gSet.isAdvLogging>1) 
+        	mp_VActive->RCon()->LogString(szDbg);
         #endif
     } else {
         #if defined(EXT_GNUC_LOG)
-        mp_VActive->RCon()->LogString("  -- normal mode\n");
+        if (gSet.isAdvLogging>1) 
+        	mp_VActive->RCon()->LogString("  -- normal mode\n");
         #endif
     }
 
@@ -1404,7 +1409,8 @@ LRESULT CConEmuMain::OnSize(WPARAM wParam, WORD newClientWidth, WORD newClientHe
 
     if (wParam != (DWORD)-1 && change2WindowMode == (DWORD)-1) {
         #if defined(EXT_GNUC_LOG)
-        mp_VActive->RCon()->LogString("  --  Executing SyncConsoleToWindow");
+        if (gSet.isAdvLogging>1) 
+        	mp_VActive->RCon()->LogString("  --  Executing SyncConsoleToWindow");
         #endif
         SyncConsoleToWindow();
     }
@@ -1412,22 +1418,26 @@ LRESULT CConEmuMain::OnSize(WPARAM wParam, WORD newClientWidth, WORD newClientHe
     RECT mainClient = MakeRect(newClientWidth,newClientHeight);
     #if defined(EXT_GNUC_LOG)
     wsprintfA(szDbg, "  --  mainClient=(%i,%i,%i,%i)", mainClient.left, mainClient.top, mainClient.right, mainClient.bottom);
-    mp_VActive->RCon()->LogString(szDbg);
+    if (gSet.isAdvLogging>1) 
+    	mp_VActive->RCon()->LogString(szDbg);
     #endif
     //RECT dcSize; GetClientRect(ghWndDC, &dcSize);
     RECT dcSize = CalcRect(CER_DC, mainClient, CER_MAINCLIENT);
     #if defined(EXT_GNUC_LOG)
     if (dcSize.top > 40) {
-        mp_VActive->RCon()->LogString("  **  Error");
+    	if (gSet.isAdvLogging>1) 
+        	mp_VActive->RCon()->LogString("  **  Error");
     }
     wsprintfA(szDbg, "  --  dcSize=(%i,%i,%i,%i)", dcSize.left, dcSize.top, dcSize.right, dcSize.bottom);
-    mp_VActive->RCon()->LogString(szDbg);
+    if (gSet.isAdvLogging>1) 
+    	mp_VActive->RCon()->LogString(szDbg);
     #endif
     //DCClientRect(&client);
     RECT client = CalcRect(CER_DC, mainClient, CER_MAINCLIENT, &dcSize);
     #if defined(EXT_GNUC_LOG)
     wsprintfA(szDbg, "  --  client=(%i,%i,%i,%i)", client.left, client.top, client.right, client.bottom);
-    mp_VActive->RCon()->LogString(szDbg);
+    if (gSet.isAdvLogging>1) 
+    	mp_VActive->RCon()->LogString(szDbg);
     #endif
 
     RECT rcNewCon; memset(&rcNewCon,0,sizeof(rcNewCon));
@@ -1452,19 +1462,22 @@ LRESULT CConEmuMain::OnSize(WPARAM wParam, WORD newClientWidth, WORD newClientHe
         wsprintfA(szDbg, "  --  rcNewCon=(%i,%i,%i,%i) mp_VActive=(%ix%i) client=(%i,%i,%i,%i)", 
             rcNewCon.left, rcNewCon.top, rcNewCon.right, rcNewCon.bottom, mp_VActive->Width, mp_VActive->Height,
             client.left, client.top, client.right, client.bottom);
-        mp_VActive->RCon()->LogString(szDbg);
+        if (gSet.isAdvLogging>1) 
+        	mp_VActive->RCon()->LogString(szDbg);
         #endif
     } else {
         rcNewCon = client;
         #if defined(EXT_GNUC_LOG)
         wsprintfA(szDbg, "  --  rcNewCon=client(%i,%i,%i,%i)", rcNewCon.left, rcNewCon.top, rcNewCon.right, rcNewCon.bottom);
-        mp_VActive->RCon()->LogString(szDbg);
+        if (gSet.isAdvLogging>1) 
+        	mp_VActive->RCon()->LogString(szDbg);
         #endif
     }
     // Двигаем/ресайзим окошко DC
     #if defined(EXT_GNUC_LOG)
     wsprintfA(szDbg, "  --  Moving DC window(X=%i, Y=%i, Width=%i, Height=%i)", rcNewCon.left, rcNewCon.top, rcNewCon.right - rcNewCon.left, rcNewCon.bottom - rcNewCon.top);
-    mp_VActive->RCon()->LogString(szDbg);
+    if (gSet.isAdvLogging>1) 
+    	mp_VActive->RCon()->LogString(szDbg);
     #endif
     MoveWindow(ghWndDC, rcNewCon.left, rcNewCon.top, rcNewCon.right - rcNewCon.left, rcNewCon.bottom - rcNewCon.top, 1);
 
@@ -1479,16 +1492,19 @@ LRESULT CConEmuMain::OnSizing(WPARAM wParam, LPARAM lParam)
     char szDbg[255];
     wsprintfA(szDbg, "CConEmuMain::OnSizing(wParam=%i, L.Lo=%i, L.Hi=%i)\n",
         wParam, LOWORD(lParam), HIWORD(lParam));
-    mp_VActive->RCon()->LogString(szDbg);
+    if (gSet.isAdvLogging>1) 
+    	mp_VActive->RCon()->LogString(szDbg);
     #endif
 
 
+    #ifndef _DEBUG
     if (isPictureView()) {
         RECT *pRect = (RECT*)lParam; // с рамкой
         *pRect = mrc_WndPosOnPicView;
         //pRect->right = pRect->left + (mrc_WndPosOnPicView.right-mrc_WndPosOnPicView.left);
         //pRect->bottom = pRect->top + (mrc_WndPosOnPicView.bottom-mrc_WndPosOnPicView.top);
     } else
+    #endif
     if (mb_IgnoreSizeChange) {
         // на время обработки WM_SYSCOMMAND
     } else
@@ -2133,14 +2149,16 @@ CVirtualConsole* CConEmuMain::CreateCon(RConStartArgs *args)
     return pCon;
 }
 
-void CConEmuMain::EnableComSpec(BOOL abSwitch)
+void CConEmuMain::UpdateFarSettings()
 {
 	for (int i = 0; i<MAX_CONSOLE_COUNT; i++) {
 		if (mp_VCon[i] == NULL) continue;
 		CRealConsole* pRCon = mp_VCon[i]->RCon();
-		DWORD dwFarPID = pRCon->GetFarPID();
-		if (!dwFarPID) continue;
-		pRCon->EnableComSpec(dwFarPID, abSwitch);
+		if (pRCon)
+			pRCon->UpdateFarSettings();
+		//DWORD dwFarPID = pRCon->GetFarPID();
+		//if (!dwFarPID) continue;
+		//pRCon->EnableComSpec(dwFarPID, gSet.AutoBufferHeight);
 	}
 }
 
@@ -2677,13 +2695,13 @@ INT_PTR CConEmuMain::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARA
     return 0;
 }
 
-void CConEmuMain::ShowOldCmdVersion(DWORD nCmd, DWORD nVersion)
+void CConEmuMain::ShowOldCmdVersion(DWORD nCmd, DWORD nVersion, int bFromServer)
 {
     if (!isMainThread()) {
         if (mb_InShowOldCmdVersion)
             return; // уже послано
         mb_InShowOldCmdVersion = TRUE;
-        PostMessage(ghWnd, mn_MsgOldCmdVer, nCmd, nVersion);
+        PostMessage(ghWnd, mn_MsgOldCmdVer, (nCmd & 0xFFFF) | (((DWORD)(unsigned short)bFromServer) << 16), nVersion);
         return;
     }
 
@@ -2692,7 +2710,9 @@ void CConEmuMain::ShowOldCmdVersion(DWORD nCmd, DWORD nVersion)
 	lbErrorShowed = true;
 
     wchar_t szMsg[255];
-    wsprintf(szMsg, L"ConEmu received old version packet!\nCommandID: %i, Version: %i\nPlease check ConEmuC.exe and ConEmu.dll", nCmd, nVersion);
+    wsprintf(szMsg, L"ConEmu received old version packet!\nCommandID: %i, Version: %i, ReqVersion: %i\nPlease check %s",
+    	nCmd, nVersion, CESERVER_REQ_VER,
+    	(bFromServer==1) ? L"ConEmuC.exe" : (bFromServer==0) ? L"ConEmu.dll" : L"ConEmuC.exe and ConEmu.dll");
     MBox(szMsg);
 
     mb_InShowOldCmdVersion = FALSE; // теперь можно показать еще одно...
@@ -3637,11 +3657,162 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
         PostMessage(ghWnd, mn_MsgPostCreate, 0, 0);
     } else {
         if (mp_VActive == NULL || !gConEmu.mb_StartDetached) { // Консоль уже может быть создана, если пришел Attach из ConEmuC
-			RConStartArgs args; args.bDetached = gConEmu.mb_StartDetached;
-            if (!CreateCon(&args)) {
-                DisplayLastError(L"Can't create new virtual console!");
-                Destroy();
-                return;
+        	BOOL lbCreated = FALSE;
+        	LPCWSTR pszCmd = gSet.GetCmd();
+        	if (*pszCmd == L'@' && !gConEmu.mb_StartDetached) {
+        		// В качестве "команды" указан "пакетный файл" одновременного запуска нескольких консолей
+        		HANDLE hFile = CreateFile(pszCmd+1, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, 0);
+        		if (!hFile) {
+        			DWORD dwErr = GetLastError();
+        			wchar_t* pszErrMsg = (wchar_t*)calloc(lstrlen(pszCmd)+100,2);
+        			lstrcpy(pszErrMsg, L"Can't open console batch file:\n«"); lstrcat(pszErrMsg, pszCmd+1); lstrcat(pszErrMsg, L"»");
+	                DisplayLastError(pszErrMsg, dwErr);
+	                free(pszErrMsg);
+	                Destroy();
+	                return;
+        		}
+        		DWORD nSize = GetFileSize(hFile, NULL);
+        		if (!nSize || nSize > (1<<20)) {
+        			DWORD dwErr = GetLastError();
+        			CloseHandle(hFile);
+        			wchar_t* pszErrMsg = (wchar_t*)calloc(lstrlen(pszCmd)+100,2);
+        			lstrcpy(pszErrMsg, L"Console batch file is too large or empty:\n«"); lstrcat(pszErrMsg, pszCmd+1); lstrcat(pszErrMsg, L"»");
+	                DisplayLastError(pszErrMsg, dwErr);
+	                free(pszErrMsg);
+	                Destroy();
+	                return;
+        		}
+        		char* pszDataA = (char*)calloc(nSize+4,1);
+        		_ASSERTE(pszDataA);
+        		DWORD nRead = 0;
+        		BOOL lbRead = ReadFile(hFile, pszDataA, nSize, &nRead, 0);
+        		DWORD dwErr = GetLastError();
+        		CloseHandle(hFile);
+        		if (!lbRead || nRead != nSize) {
+        			free(pszDataA);
+        			wchar_t* pszErrMsg = (wchar_t*)calloc(lstrlen(pszCmd)+100,2);
+        			lstrcpy(pszErrMsg, L"Reading console batch file failed:\n«"); lstrcat(pszErrMsg, pszCmd+1); lstrcat(pszErrMsg, L"»");
+	                DisplayLastError(pszErrMsg, dwErr);
+	                free(pszErrMsg);
+	                Destroy();
+	                return;
+        		}
+        		// Опредлить код.страницу файла
+        		wchar_t* pszDataW = NULL; BOOL lbNeedFreeW = FALSE;
+        		if (pszDataA[0] == 0xEF && pszDataA[1] == 0xBB && pszDataA[2] == 0xBF) {
+        			// UTF-8 BOM
+        			pszDataW = (wchar_t*)calloc(nSize+2,2); lbNeedFreeW = TRUE;
+        			_ASSERTE(pszDataW);
+        			MultiByteToWideChar(CP_UTF8, 0, pszDataA+3, -1, pszDataW, nSize);
+        		} else if (pszDataA[0] == 0xFF && pszDataA[1] == 0xFE) {
+        			// CP-1200 BOM
+        			pszDataW = (wchar_t*)(pszDataA+2);
+        		} else {
+        			// Plain ANSI
+        			pszDataW = (wchar_t*)calloc(nSize+2,2); lbNeedFreeW = TRUE;
+        			_ASSERTE(pszDataW);
+        			MultiByteToWideChar(CP_ACP, 0, pszDataA, -1, pszDataW, nSize+1);
+        		}
+        		// Поехали
+        		wchar_t *pszLine = pszDataW;
+        		wchar_t *pszNewLine = wcschr(pszLine, L'\r');
+        		CVirtualConsole *pSetActive = NULL, *pCon = NULL;
+        		BOOL lbSetActive = FALSE, lbOneCreated = FALSE, lbRunAdmin = FALSE;
+        		while (*pszLine) {
+        			lbSetActive = lbRunAdmin = FALSE;
+        			while (*pszLine == L'>' || *pszLine == L'*') {
+        				if (*pszLine == L'>') lbSetActive = TRUE;
+        				if (*pszLine == L'*') lbRunAdmin = TRUE;
+	        			pszLine++;
+    	    		}
+        			
+        			if (pszNewLine) *pszNewLine = 0;
+        			while (*pszLine == L' ') pszLine++;
+        			
+        			if (*pszLine) {
+        				while (pszLine[0] == L'/') {
+        					if (CSTR_EQUAL == CompareString(LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE|SORT_STRINGSORT,
+        							pszLine, 14, L"/bufferheight ", 14))
+							{
+								pszLine += 14;
+								while (*pszLine == L' ') pszLine++;
+								wchar_t* pszEnd = NULL;
+								long lBufHeight = wcstol(pszLine, &pszEnd, 10);
+								gSet.SetArgBufferHeight ( lBufHeight );
+								if (pszEnd) pszLine = pszEnd;
+							}
+							
+        					if (CSTR_EQUAL == CompareString(LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE|SORT_STRINGSORT,
+        							pszLine, 5, L"/cmd ", 5))
+							{
+								pszLine += 5;
+							}
+							
+							while (*pszLine == L' ') pszLine++;
+        				}
+
+        				if (*pszLine) {
+							RConStartArgs args;
+							args.pszSpecialCmd = _wcsdup(pszLine);
+							args.bRunAsAdministrator = lbRunAdmin;
+							pCon = CreateCon(&args);
+				            if (!pCon) {
+				                DisplayLastError(L"Can't create new virtual console!");
+				                if (!lbOneCreated) {
+					                Destroy();
+					                return;
+				                }
+				            } else {
+				            	lbOneCreated = TRUE;
+				            	if (lbSetActive && !pSetActive)
+				            		pSetActive = pCon;
+				            		
+				            	if (GetVCon(MAX_CONSOLE_COUNT-1))
+				            		break; // Больше создать не получится
+		            		}
+		            	}
+
+						MSG Msg;
+						while (PeekMessage(&Msg,0,0,0,PM_REMOVE)) {
+							if (Msg.message == WM_QUIT)
+								return;
+							BOOL lbDlgMsg = FALSE;
+							if (ghOpWnd) {
+								if (IsWindow(ghOpWnd))
+									lbDlgMsg = IsDialogMessage(ghOpWnd, &Msg);
+							}
+							if (!lbDlgMsg)
+							{
+								TranslateMessage(&Msg);
+								DispatchMessage(&Msg);
+							}
+						}
+						if (!ghWnd || !IsWindow(ghWnd))
+							return;
+	            	}
+	            	
+	            	pszLine = pszNewLine+1;
+	            	if (!*pszLine) break;
+	            	if (*pszLine == L'\n') pszLine++;
+	            	pszNewLine = wcschr(pszLine, L'\r');
+        		}
+        		if (pSetActive) {
+        			Activate(pSetActive);
+        		}
+        		if (pszDataW && lbNeedFreeW) free(pszDataW); pszDataW = NULL;
+        		if (pszDataA) free(pszDataA); pszDataA = NULL;
+
+				lbCreated = TRUE;
+        	}
+        	
+        	if (!lbCreated)
+        	{
+				RConStartArgs args; args.bDetached = gConEmu.mb_StartDetached;
+	            if (!CreateCon(&args)) {
+	                DisplayLastError(L"Can't create new virtual console!");
+	                Destroy();
+	                return;
+	            }
             }
         }
         if (gConEmu.mb_StartDetached) gConEmu.mb_StartDetached = FALSE; // действует только на первую консоль
@@ -4089,6 +4260,15 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 	}
 
     if (mp_VActive) {
+		//#ifdef _DEBUG
+		//if (wParam == VK_LEFT) {
+		//	if (messg == WM_KEYDOWN)
+		//		OutputDebugString(L"VK_LEFT pressed\n");
+		//	else if (messg == WM_KEYUP)
+		//		OutputDebugString(L"VK_LEFT released\n");
+		//}
+		//#endif
+
         mp_VActive->RCon()->OnKeyboard(hWnd, messg, wParam, lParam, szTranslatedChars);
     }
 
@@ -4487,8 +4667,19 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 				if (!lbDiffTest && !isDragging() && !isSizing())
 				{
 					// 2009-06-19 Выполнялось сразу после "if (gSet.isDragEnabled & (mouse.state & (DRAG_L_ALLOWED|DRAG_R_ALLOWED)))"
-					if (mouse.state & MOUSE_R_LOCKED) // чтобы при RightUp не ушел APPS
+					if (mouse.state & MOUSE_R_LOCKED) {
+						// чтобы при RightUp не ушел APPS
 						mouse.state &= ~MOUSE_R_LOCKED;
+						
+						//PtDiffTest(C, LOWORD(lParam), HIWORD(lParam), D)
+		                char szLog[255];
+		                wsprintfA(szLog, "Right drag started, MOUSE_R_LOCKED cleared: cursor={%i-%i}, Rcursor={%i-%i}, Now={%i-%i}, MinDelta=%i",
+		                	(int)cursor.x, (int)cursor.y,
+		                	(int)Rcursor.x, (int)Rcursor.y,
+		                	(int)LOWORD(lParam), (int)HIWORD(lParam),
+		                	(int)DRAG_DELTA);
+		                mp_VActive->RCon()->LogString(szLog);
+					}
 
 					BOOL lbLeftDrag = (mouse.state & DRAG_L_ALLOWED) == DRAG_L_ALLOWED;
 
@@ -4559,6 +4750,14 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
             {
                 //isRBDown=false;
                 mouse.state &= ~(DRAG_R_ALLOWED | DRAG_R_STARTED | MOUSE_R_LOCKED);
+                
+                char szLog[255];
+                wsprintfA(szLog, "Mouse was moved, MOUSE_R_LOCKED cleared: Rcursor={%i-%i}, Now={%i-%i}, MinDelta=%i",
+                	(int)Rcursor.x, (int)Rcursor.y,
+                	(int)LOWORD(lParam), (int)HIWORD(lParam),
+                	(int)RCLICKAPPSDELTA);
+                mp_VActive->RCon()->LogString(szLog);
+                
                 //POSTMESSAGE(ghConWnd, WM_RBUTTONDOWN, 0, MAKELPARAM( mouse.RClkCon.X, mouse.RClkCon.Y ), TRUE);
                 mp_VActive->RCon()->OnMouse(WM_RBUTTONDOWN, 0, mouse.RClkDC.X, mouse.RClkDC.Y);
             }
@@ -4634,6 +4833,12 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
             mouse.state &= ~(DRAG_R_ALLOWED | DRAG_R_STARTED | MOUSE_R_LOCKED);
             mouse.bIgnoreMouseMove = false;
 
+            {
+                char szLog[100];
+                wsprintfA(szLog, "Right button down: Rcursor={%i-%i}", (int)Rcursor.x, (int)Rcursor.y);
+                mp_VActive->RCon()->LogString(szLog);
+            }
+            
             //if (isFilePanel()) // Maximus5
             if (!isConSelectMode() && isFilePanel() && mp_VActive &&
 				mp_VActive->RCon()->CoordInPanel(mouse.RClkCon))
@@ -4650,8 +4855,13 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
                     //заведем таймер на .3
                     //если больше - пошлем apps
                     mouse.state |= MOUSE_R_LOCKED; mouse.bSkipRDblClk = false;
+                    
+	                char szLog[100];
+	                wsprintfA(szLog, "MOUSE_R_LOCKED was set: Rcursor={%i-%i}", (int)Rcursor.x, (int)Rcursor.y);
+	                mp_VActive->RCon()->LogString(szLog);
+                    
                     //SetTimer(hWnd, 1, 300, 0); -- Maximus5, откажемся от таймера
-                    mouse.RClkTick = GetTickCount();
+                    mouse.RClkTick = timeGetTime(); //GetTickCount();
                     return 0;
                 }
             }
@@ -4667,19 +4877,19 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
                     //держали зажатой <.3
                     //убьем таймер, кликнием правой кнопкой
                     //KillTimer(hWnd, 1); -- Maximus5, таймер более не используется
-                    DWORD dwCurTick=GetTickCount();
+                    DWORD dwCurTick = timeGetTime(); //GetTickCount();
                     DWORD dwDelta=dwCurTick-mouse.RClkTick;
                     // Если держали дольше .3с, но не слишком долго :)
                     if ((gSet.isRClickSendKey==1) ||
                         (dwDelta>RCLICKAPPSTIMEOUT && dwDelta<10000))
                     {
-                        // Сначала выделить файл под курсором
-                        //POSTMESSAGE(ghConWnd, WM_LBUTTONDOWN, MK_LBUTTON, MAKELPARAM( mouse.RClkCon.X, mouse.RClkCon.Y ), TRUE);
-                        mp_VActive->RCon()->OnMouse(WM_LBUTTONDOWN, MK_LBUTTON, mouse.RClkDC.X, mouse.RClkDC.Y);
-                        //POSTMESSAGE(ghConWnd, WM_LBUTTONUP, 0, MAKELPARAM( mouse.RClkCon.X, mouse.RClkCon.Y ), TRUE);
-                        mp_VActive->RCon()->OnMouse(WM_LBUTTONUP, 0, mouse.RClkDC.X, mouse.RClkDC.Y);
-                        
-                        mp_VActive->RCon()->FlushInputQueue();
+                        //// Сначала выделить файл под курсором
+                        ////POSTMESSAGE(ghConWnd, WM_LBUTTONDOWN, MK_LBUTTON, MAKELPARAM( mouse.RClkCon.X, mouse.RClkCon.Y ), TRUE);
+                        //mp_VActive->RCon()->OnMouse(WM_LBUTTONDOWN, MK_LBUTTON, mouse.RClkDC.X, mouse.RClkDC.Y);
+                        ////POSTMESSAGE(ghConWnd, WM_LBUTTONUP, 0, MAKELPARAM( mouse.RClkCon.X, mouse.RClkCon.Y ), TRUE);
+                        //mp_VActive->RCon()->OnMouse(WM_LBUTTONUP, 0, mouse.RClkDC.X, mouse.RClkDC.Y);
+                        //
+                        //mp_VActive->RCon()->FlushInputQueue();
                     
                         //mp_VActive->Update(true);
                         //INVALIDATE(); //InvalidateRect(HDCWND, NULL, FALSE);
@@ -4689,43 +4899,113 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
                         //POSTMESSAGE(ghConWnd, WM_KEYDOWN, VK_APPS, 0, TRUE);
 
                         DWORD dwFarPID = mp_VActive->RCon()->GetFarPID();
-                        if (dwFarPID) AllowSetForegroundWindow(dwFarPID);
+                        if (dwFarPID)
+                        {
+                        	AllowSetForegroundWindow(dwFarPID);
 
-                        if (gSet.sRClickMacro && *gSet.sRClickMacro) {
-                            // Если юзер задал свой макрос - выполняем его
-                            PostMacro(gSet.sRClickMacro);
+	                        //if (gSet.sRClickMacro && *gSet.sRClickMacro) {
+		                    //    //// Сначала выделить файл под курсором
+		                    //    ////POSTMESSAGE(ghConWnd, WM_LBUTTONDOWN, MK_LBUTTON, MAKELPARAM( mouse.RClkCon.X, mouse.RClkCon.Y ), TRUE);
+		                    //    //mp_VActive->RCon()->OnMouse(WM_LBUTTONDOWN, MK_LBUTTON, mouse.RClkDC.X, mouse.RClkDC.Y);
+		                    //    ////POSTMESSAGE(ghConWnd, WM_LBUTTONUP, 0, MAKELPARAM( mouse.RClkCon.X, mouse.RClkCon.Y ), TRUE);
+		                    //    //mp_VActive->RCon()->OnMouse(WM_LBUTTONUP, 0, mouse.RClkDC.X, mouse.RClkDC.Y);
+		                    //    //
+		                    //    //mp_VActive->RCon()->FlushInputQueue();
+		                    //
+	                        //    // Если юзер задал свой макрос - выполняем его
+	                        //    PostMacro(gSet.sRClickMacro);
+	                        //} else {
+                        
+                        	COORD crMouse = mp_VActive->ClientToConsole(mouse.RClkDC.X, mouse.RClkDC.Y);
+                        	
+							CConEmuPipe pipe(GetFarPID(), CONEMUREADYTIMEOUT);
+							if (pipe.Init(_T("CConEmuMain::EMenu"), TRUE))
+							{
+								//DWORD cbWritten=0;
+								DebugStep(_T("EMenu: Waiting for result (10 sec)"));
+								
+								int nLen = 0;
+								int nSize = sizeof(crMouse) + sizeof(wchar_t);
+								if (gSet.sRClickMacro && *gSet.sRClickMacro) {
+									int nLen = lstrlen(gSet.sRClickMacro);
+									nSize += nLen*2;
+								}
+								LPBYTE pcbData = (LPBYTE)calloc(nSize,1);
+								_ASSERTE(pcbData);
+								
+								memmove(pcbData, &crMouse, sizeof(crMouse));
+								if (nLen)
+									lstrcpy((wchar_t*)(pcbData+sizeof(crMouse)), gSet.sRClickMacro);
+								
+								if (!pipe.Execute(CMD_EMENU, pcbData, nSize)) {
+			                        mp_VActive->RCon()->LogString("RightClicked, but pipe.Execute(CMD_EMENU) failed");
+			                    }
+								DebugStep(NULL);
+								
+								free(pcbData);
+
+							} else {
+								mp_VActive->RCon()->LogString("RightClicked, but pipe.Init() failed");
+							}
+
+							//INPUT_RECORD r = {KEY_EVENT};
+							////mp_VActive->RCon()->On Keyboard(ghConWnd, WM_KEYDOWN, VK_APPS, (VK_APPS << 16) | (1 << 24));
+							////mp_VActive->RCon()->On Keyboard(ghConWnd, WM_KEYUP, VK_APPS, (VK_APPS << 16) | (1 << 24));
+							//r.Event.KeyEvent.bKeyDown = TRUE;
+							//r.Event.KeyEvent.wVirtualKeyCode = VK_APPS;
+							//r.Event.KeyEvent.wVirtualScanCode = /*28 на моей клавиатуре*/MapVirtualKey(VK_APPS, 0/*MAPVK_VK_TO_VSC*/);
+							//r.Event.KeyEvent.dwControlKeyState = 0x120;
+							//mp_VActive->RCon()->PostConsoleEvent(&r);
+
+							////On Keyboard(hConWnd, WM_KEYUP, VK_RETURN, 0);
+							//r.Event.KeyEvent.bKeyDown = FALSE;
+							//r.Event.KeyEvent.dwControlKeyState = 0x120;
+							//mp_VActive->RCon()->PostConsoleEvent(&r);
                         } else {
-							INPUT_RECORD r = {KEY_EVENT};
-                            //mp_VActive->RCon()->On Keyboard(ghConWnd, WM_KEYDOWN, VK_APPS, (VK_APPS << 16) | (1 << 24));
-                            //mp_VActive->RCon()->On Keyboard(ghConWnd, WM_KEYUP, VK_APPS, (VK_APPS << 16) | (1 << 24));
-							r.Event.KeyEvent.bKeyDown = TRUE;
-							r.Event.KeyEvent.wVirtualKeyCode = VK_APPS;
-							r.Event.KeyEvent.wVirtualScanCode = /*28 на моей клавиатуре*/MapVirtualKey(VK_APPS, 0/*MAPVK_VK_TO_VSC*/);
-							r.Event.KeyEvent.dwControlKeyState = 0x120;
-							mp_VActive->RCon()->PostConsoleEvent(&r);
-
-							//On Keyboard(hConWnd, WM_KEYUP, VK_RETURN, 0);
-							r.Event.KeyEvent.bKeyDown = FALSE;
-							r.Event.KeyEvent.dwControlKeyState = 0x120;
-							mp_VActive->RCon()->PostConsoleEvent(&r);
+	                        mp_VActive->RCon()->LogString("RightClicked, but FAR PID is 0");
                         }
                         return 0;
                     } else {
-                        char szLog[100];
-                        wsprintfA(szLog, "RightClicked, but condition failed (RCSK:%i, Delay:%i)", (int)gSet.isRClickSendKey, (int)dwDelta);
+                        char szLog[255];
+                        // if ((gSet.isRClickSendKey==1) || (dwDelta>RCLICKAPPSTIMEOUT && dwDelta<10000))
+                        lstrcpyA(szLog, "RightClicked, but condition failed: ");
+                        if (gSet.isRClickSendKey!=1) {
+                        	wsprintfA(szLog+lstrlenA(szLog), "((isRClickSendKey=%i)!=1)", (UINT)gSet.isRClickSendKey);
+                    	} else {
+                    		wsprintfA(szLog+lstrlenA(szLog), "(isRClickSendKey==%i)", (UINT)gSet.isRClickSendKey);
+                    	}
+                        if (dwDelta <= RCLICKAPPSTIMEOUT) {
+                        	wsprintfA(szLog+lstrlenA(szLog), ", ((Delay=%i)<=%i)", dwDelta, (int)RCLICKAPPSTIMEOUT);
+                        } else if (dwDelta >= 10000) {
+                        	wsprintfA(szLog+lstrlenA(szLog), ", ((Delay=%i)>=10000)", dwDelta);
+                        } else {
+                        	wsprintfA(szLog+lstrlenA(szLog), ", (Delay==%i)", dwDelta);
+                        }
                         mp_VActive->RCon()->LogString(szLog);
                     }
                 } else {
                     char szLog[100];
-                    wsprintfA(szLog, "RightClicked, but mouse was moved {%i-%i}->{%i-%i}", Rcursor.x, Rcursor.y, LOWORD(lParam), HIWORD(lParam));
+                    wsprintfA(szLog, "RightClicked, but mouse was moved abs({%i-%i}-{%i-%i})>%i", (int)Rcursor.x, (int)Rcursor.y, (int)LOWORD(lParam), (int)HIWORD(lParam), (int)RCLICKAPPSDELTA);
                     mp_VActive->RCon()->LogString(szLog);
                 }
                 // Иначе нужно сначала послать WM_RBUTTONDOWN
                 //POSTMESSAGE(ghConWnd, WM_RBUTTONDOWN, wParam, MAKELPARAM( newX, newY ), TRUE);
                 mp_VActive->RCon()->OnMouse(WM_RBUTTONDOWN, wParam, ptCur.x, ptCur.y);
             } else {
-                char szLog[100];
-                wsprintfA(szLog, "RightClicked, but condition failed (RCSK:%i, State:%u)", (int)gSet.isRClickSendKey, (DWORD)mouse.state);
+                char szLog[255];
+                // if (gSet.isRClickSendKey && (mouse.state & MOUSE_R_LOCKED))
+                //wsprintfA(szLog, "RightClicked, but condition failed (RCSK:%i, State:%u)", (int)gSet.isRClickSendKey, (DWORD)mouse.state);
+                lstrcpyA(szLog, "RightClicked, but condition failed: ");
+                if (gSet.isRClickSendKey==0) {
+                	wsprintfA(szLog+lstrlenA(szLog), "((isRClickSendKey=%i)==0)", (UINT)gSet.isRClickSendKey);
+            	} else {
+            		wsprintfA(szLog+lstrlenA(szLog), "(isRClickSendKey==%i)", (UINT)gSet.isRClickSendKey);
+            	}
+                if ((mouse.state & MOUSE_R_LOCKED) == 0) {
+                	wsprintfA(szLog+lstrlenA(szLog), ", (((state=0x%X)&MOUSE_R_LOCKED)==0)", (DWORD)mouse.state);
+                } else {
+                	wsprintfA(szLog+lstrlenA(szLog), ", (state==0x%X)", (DWORD)mouse.state);
+                }
                 mp_VActive->RCon()->LogString(szLog);
             }
             //isRBDown=false; // чтобы не осталось случайно
@@ -4999,9 +5279,9 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 				lstrcpy(szText, L"Close confirmation.\r\n\r\n"); pszText = szText+lstrlen(szText);
 				if (nProgress) { wsprintf(pszText, L"Incomplete opetations: %i\r\n", nProgress); pszText += lstrlen(pszText); }
 				if (nEditors) { wsprintf(pszText, L"Unsaved editor windows: %i\r\n", nEditors); pszText += lstrlen(pszText); }
-				lstrcpy(pszText, L"\r\nDo you want to cancel shutdown?");
-				int nBtn = MessageBoxW(ghWnd, szText, L"ConEmu", MB_YESNO|MB_ICONEXCLAMATION);
-				if (nBtn != IDNO)
+				lstrcpy(pszText, L"\r\nProceed with shutdown?");
+				int nBtn = MessageBoxW(ghWnd, szText, L"ConEmu", MB_OKCANCEL|MB_ICONEXCLAMATION);
+				if (nBtn != IDOK)
 					return 0; // не закрывать
 			}
 
@@ -5031,8 +5311,10 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
     case SC_MAXIMIZE:
 		DEBUGSTRSYS(L"OnSysCommand(SC_MAXIMIZE)\n");
         if (!mb_PassSysCommand) {
+        	#ifndef _DEBUG
             if (isPictureView())
-                break;;
+                break;
+            #endif
             SetWindowMode(rMaximized);
         } else {
             result = DefWindowProc(hWnd, WM_SYSCOMMAND, wParam, lParam);
@@ -5041,8 +5323,10 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
     case SC_RESTORE:
 		DEBUGSTRSYS(L"OnSysCommand(SC_RESTORE)\n");
         if (!mb_PassSysCommand) {
+        	#ifndef _DEBUG
             if (!isIconic() && isPictureView())
                 break;
+            #endif
             if (!SetWindowMode(isIconic() ? WindowMode : rNormal))
                 result = DefWindowProc(hWnd, WM_SYSCOMMAND, wParam, lParam);
         } else {
@@ -5370,7 +5654,7 @@ void CConEmuMain::ServerThreadCommand(HANDLE hPipe)
         return;
     }
     if (in.hdr.nVersion != CESERVER_REQ_VER) {
-        gConEmu.ShowOldCmdVersion(in.hdr.nCmd, in.hdr.nVersion);
+        gConEmu.ShowOldCmdVersion(in.hdr.nCmd, in.hdr.nVersion, -1);
         return;
     }
     _ASSERTE(in.hdr.nSize>=sizeof(CESERVER_REQ_HDR) && cbRead>=sizeof(CESERVER_REQ_HDR));
@@ -5800,7 +6084,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
             TabBar.Update(TRUE);
             return 0;
         } else if (messg == gConEmu.mn_MsgOldCmdVer) {
-            gConEmu.ShowOldCmdVersion(wParam, lParam);
+            gConEmu.ShowOldCmdVersion(wParam & 0xFFFF, lParam, (SHORT)((wParam & 0xFFFF0000)>>16));
             return 0;
         } else if (messg == gConEmu.mn_MsgTabCommand) {
             gConEmu.TabCommand(wParam);

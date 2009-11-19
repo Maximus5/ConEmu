@@ -398,7 +398,7 @@ END
 IDD_DIALOG4 DIALOGEX 0, 0, 328, 216
 STYLE DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
-FONT 8, "MS Shell Dlg", 0, 0, 0x1
+FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        "Tabs (panels, editors, viewers)",IDC_STATIC,4,2,319,28
     CONTROL         "Enable Tabs",cbTabs,"Button",BS_AUTO3STATE | WS_TABSTOP,
@@ -409,74 +409,79 @@ BEGIN
                     WS_TABSTOP,154,15,71,8
     CONTROL         "Recent mode",cbTabRecent,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,233,15,75,8
-    GROUPBOX        "Tweaks",IDC_STATIC,4,34,137,55
+    GROUPBOX        "Tweaks",IDC_STATIC,4,32,137,55
     CONTROL         "Auto minimize to tray",cbMinToTray,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,10,44,123,8
-    GROUPBOX        "Drag and drop (Shell style)",IDC_STATIC,147,34,176,55
+                    BS_AUTOCHECKBOX | WS_TABSTOP,10,42,123,8
+    GROUPBOX        "Drag and drop (Shell style)",IDC_STATIC,147,32,176,55
     CONTROL         "LDrag",cbDragL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
-                    154,44,36,8
-    COMBOBOX        lbLDragKey,192,43,56,30,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    154,42,36,8
+    COMBOBOX        lbLDragKey,192,41,56,30,CBS_DROPDOWNLIST | WS_VSCROLL | 
                     WS_TABSTOP
     CONTROL         "Allow 'Drop'",cbDropEnabled,"Button",BS_AUTO3STATE | 
-                    WS_TABSTOP,252,44,53,8
+                    WS_TABSTOP,252,42,53,8
     CONTROL         "RDrag",cbDragR,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
-                    154,59,36,8
-    COMBOBOX        lbRDragKey,192,57,56,30,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    154,57,36,8
+    COMBOBOX        lbRDragKey,192,55,56,30,CBS_DROPDOWNLIST | WS_VSCROLL | 
                     WS_TABSTOP
     CONTROL         "Copy by default",cbDnDCopy,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,252,59,66,8
-    GROUPBOX        "Multi console",IDC_STATIC,4,90,319,59
+                    WS_TABSTOP,252,57,66,8
+    GROUPBOX        "Multi console",IDC_STATIC,4,88,319,59
     CONTROL         "MultiCon",cbConMan,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,10,107,43,8
+                    WS_TABSTOP,10,105,43,8
     CONTROL         "Long console output",cbLongOutput,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,10,126,84,8
-    EDITTEXT        tLongOutputHeight,98,124,40,12,ES_AUTOHSCROLL
-    GROUPBOX        "Win+hotkeys",IDC_STATIC,250,90,73,59
-    RTEXT           "New:",IDC_STATIC,265,103,25,8
+                    BS_AUTOCHECKBOX | WS_TABSTOP,10,124,84,8
+    EDITTEXT        tLongOutputHeight,98,122,40,12,ES_AUTOHSCROLL
+    GROUPBOX        "Win+hotkeys",IDC_STATIC,250,88,73,59
+    RTEXT           "New:",IDC_STATIC,265,101,25,8
     CONTROL         "HotKey1",hkNewConsole,"msctls_hotkey32",WS_BORDER | 
-                    WS_TABSTOP,294,101,23,13
-    RTEXT           "Switch:",IDC_STATIC,259,117,31,8
+                    WS_TABSTOP,294,99,23,13
+    RTEXT           "Switch:",IDC_STATIC,259,115,31,8
     CONTROL         "HotKey1",hkSwitchConsole,"msctls_hotkey32",WS_BORDER | 
-                    WS_TABSTOP,294,115,23,13
-    RTEXT           "Recreate:",IDC_STATIC,255,132,35,8
+                    WS_TABSTOP,294,113,23,13
+    RTEXT           "Recreate:",IDC_STATIC,255,130,35,8
     CONTROL         "HotKey1",hkCloseConsole,"msctls_hotkey32",WS_BORDER | 
-                    WS_TABSTOP,294,130,23,13
-    GROUPBOX        "Mouse",IDC_STATIC,4,152,319,28
+                    WS_TABSTOP,294,128,23,13
+    GROUPBOX        "Mouse",IDC_STATIC,4,148,319,25
     CONTROL         "&RightClick 4 context menu",cbRClick,"Button",
-                    BS_AUTO3STATE | WS_TABSTOP,9,165,102,8
+                    BS_AUTO3STATE | WS_TABSTOP,9,160,102,8
     CONTROL         "Right selection fix",cbRSelectionFix,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,114,165,76,8
+                    BS_AUTOCHECKBOX | WS_TABSTOP,114,160,76,8
     CONTROL         "Skip activation",cbSkipActivation,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,193,165,63,8
+                    BS_AUTOCHECKBOX | WS_TABSTOP,193,160,63,8
     CONTROL         "Skip moving",cbSkipMove,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,262,165,55,8
-    GROUPBOX        "Real console tweaks",IDC_STATIC,4,183,319,28
+                    WS_TABSTOP,262,160,55,8
+    GROUPBOX        "Real console tweaks",IDC_STATIC,4,175,319,36
     CONTROL         "Monitor console lang",cbMonitorConsoleLang,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,10,196,85,8
+                    BS_AUTOCHECKBOX | WS_TABSTOP,10,185,85,8
     CONTROL         "Skip focus events",cbSkipFocusEvents,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,97,196,78,8
+                    BS_AUTOCHECKBOX | WS_TABSTOP,97,185,78,8
     CONTROL         "Send Alt+Enter to console",cbSendAE,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,176,196,100,8
+                    BS_AUTOCHECKBOX | WS_TABSTOP,176,185,100,8
     CONTROL         "Visible",cbVisible,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,280,196,38,8
+                    WS_TABSTOP,280,185,38,8
     CONTROL         "Create confirmation",cbNewConfirm,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,63,107,77,8
+                    BS_AUTOCHECKBOX | WS_TABSTOP,63,105,77,8
     CONTROL         "Overlay",cbDragImage,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,154,74,41,8
+                    WS_TABSTOP,154,72,41,8
     CONTROL         "Plugins allowed",cbDragAllPlugins,"Button",
-                    BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,252,74,67,8
+                    BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,252,72,67,8
     CONTROL         "Auto register fonts",cbAutoRegFonts,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,10,59,123,8
+                    BS_AUTOCHECKBOX | WS_TABSTOP,10,57,123,8
     CONTROL         "Show debug steps",cbDebugSteps,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,10,74,123,8
+                    WS_TABSTOP,10,72,123,8
     CONTROL         "Shell icons",cbDragIcons,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,197,74,49,8
-    RTEXT           "Cmd output:",IDC_STATIC,143,126,43,8
-    COMBOBOX        lbCmdOutputCP,189,124,54,30,CBS_DROPDOWNLIST | 
+                    WS_TABSTOP,197,72,49,8
+    RTEXT           "Cmd output:",IDC_STATIC,143,124,43,8
+    COMBOBOX        lbCmdOutputCP,189,122,54,30,CBS_DROPDOWNLIST | 
                     WS_TABSTOP
-    RTEXT           "16bit height:",IDC_STATIC,142,107,44,8
-    COMBOBOX        lbNtvdmHeight,189,105,54,30,CBS_DROPDOWNLIST | 
+    RTEXT           "16bit height:",IDC_STATIC,142,105,44,8
+    COMBOBOX        lbNtvdmHeight,189,103,54,30,CBS_DROPDOWNLIST | 
                     WS_TABSTOP
+    CONTROL         "ASCII sort function in FAR (highly experimental)",
+                    cbFARuseASCIIsort,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
+                    97,197,192,8
+    CONTROL         "Fix Alt on AltTab",cbFixAltOnAltTab,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,10,197,85,8
 END
 
 IDD_RESTART DIALOG DISCARDABLE  0, 0, 310, 98
@@ -565,7 +570,7 @@ END
 
 STRINGTABLE DISCARDABLE 
 BEGIN
-    cbRClick                "Off - all RClicks passed to console\nOn - Apps passed to console instead of RClick\n3s - Short RClick passed, Long RClick -> Apps\nWarning! This may conflict with RDrag"
+    cbRClick                "Off - all RClicks passed to console\nOn - EMenu called instead of RClick\n3s - Short RClick passed, Long RClick -> EMenu\nWarning! This may conflict with RDrag"
 END
 
 STRINGTABLE DISCARDABLE 
@@ -615,6 +620,8 @@ BEGIN
     lbDefaultColors         "You may choose one of predefined color schemes.\nEach scheme customize first (main) 16 colors."
     lbCmdOutputCP           "Windows command processor (cmd.exe) may cause then output of internal commands to be OEM or Unicode.\nYou may force this selection, or use automatic selection (FAR2 -> Unicode)."
     lbNtvdmHeight           "Old DOS programs may be runned under console sizes: 80x25, 80x28, 80x43 or 80x50. You may force window size selection, or left the automatic selection.\nThis feature is not available in x64 OS."
+    cbFARuseASCIIsort       "Hook FAR string sort functions.\n!!!HIGHLY EXPERIMENTAL!!!"
+    cbFixAltOnAltTab        "When You set a macro on Alt (RAlt) it can unexpectedly activates on AltTab. This issue can be fixed by sending to console AltTab instead of Alt"
 END
 
 #endif    // English (U.S.) resources

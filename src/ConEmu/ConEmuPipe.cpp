@@ -168,7 +168,7 @@ BOOL CConEmuPipe::Execute(int nCmd, LPCVOID apData, UINT anDataSize)
 	// Информационно!
 	pOut = (CESERVER_REQ*)cbReadBuf;
 	if (pOut->hdr.nVersion != CESERVER_REQ_VER) {
-		gConEmu.ShowOldCmdVersion(pOut->hdr.nCmd, pOut->hdr.nVersion);
+		gConEmu.ShowOldCmdVersion(pOut->hdr.nCmd, pOut->hdr.nVersion, -1);
 		pOut = NULL;
 		Close();
 		return FALSE;

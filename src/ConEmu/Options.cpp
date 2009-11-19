@@ -1,4 +1,6 @@
 
+// cbFARuseASCIIsort, cbFixAltOnAltTab
+
 #include "Header.h"
 #include <commctrl.h>
 #include "../common/ConEmuCheck.h"
@@ -134,6 +136,7 @@ void CSettings::InitSettings()
     psCmd = NULL; psCurCmd = NULL; wcscpy(szDefCmd, L"far");
 	psCmdHistory = NULL; nCmdHistorySize = 0;
     isMulti = true; icMultiNew = 'W'; icMultiNext = 'Q'; icMultiRecreate = 192/*VK_тильда*/; isMultiNewConfirm = true;
+    isFARuseASCIIsort = false; isFixAltOnAltTab = false;
     // Logging
     isAdvLogging = 0;
 	//wcscpy(szDumpPackets, L"c:\\temp\\ConEmuVCon-%i-%i.dat");
@@ -145,7 +148,7 @@ void CSettings::InitSettings()
     //isLangChangeWsPlugin = false;
 	isMonitorConsoleLang = 3;
     DefaultBufferHeight = 1000; AutoBufferHeight = true;
-	FarSyncSize = false;
+	FarSyncSize = true;
 	nCmdOutputCP = 0;
 	ForceBufferHeight = false; /* устанавливается в true, из ком.строки /BufferHeight */
 	AutoScroll = true;
@@ -391,9 +394,12 @@ void CSettings::LoadSettings()
         if (isPartBrush25>=isPartBrush50) isPartBrush25=isPartBrush50-10;
         
         reg.Load(L"RightClick opens context menu", isRClickSendKey);
-        	reg.Load(L"RightClickMacro", &sRClickMacro);
+        	reg.Load(L"RightClickMacro2", &sRClickMacro);
         reg.Load(L"AltEnter", isSentAltEnter);
         reg.Load(L"Min2Tray", isMinToTray);
+        
+        reg.Load(L"FARuseASCIIsort", isFARuseASCIIsort);
+        reg.Load(L"FixAltOnAltTab", isFixAltOnAltTab);
 
         reg.Load(L"BackGround Image show", isShowBgImage);
 			if (isShowBgImage!=0 && isShowBgImage!=1 && isShowBgImage!=2) isShowBgImage = 0;
@@ -658,6 +664,10 @@ BOOL CSettings::SaveSettings()
             reg.Save(L"RightClick opens context menu", isRClickSendKey);
             reg.Save(L"AltEnter", isSentAltEnter);
             reg.Save(L"Min2Tray", isMinToTray);
+            
+	        reg.Save(L"FARuseASCIIsort", isFARuseASCIIsort);
+	        reg.Save(L"FixAltOnAltTab", isFixAltOnAltTab);
+            
             reg.Save(L"RSelectionFix", isRSelFix);
 			reg.Save(L"MouseSkipActivation", isMouseSkipActivation);
 			reg.Save(L"MouseSkipMoving", isMouseSkipMoving);
@@ -1057,6 +1067,9 @@ LRESULT CSettings::OnInitDialog_Ext()
 	if (isMinToTray) CheckDlgButton(hExt, cbMinToTray, BST_CHECKED);
 	if (isAutoRegisterFonts) CheckDlgButton(hExt, cbAutoRegFonts, BST_CHECKED);
 	if (isDebugSteps) CheckDlgButton(hExt, cbDebugSteps, BST_CHECKED);
+	
+	if (isFARuseASCIIsort) CheckDlgButton(hExt, cbFARuseASCIIsort, BST_CHECKED);
+	if (isFixAltOnAltTab) CheckDlgButton(hExt, cbFixAltOnAltTab, BST_CHECKED);
 
 	if (isDragEnabled) {
 		//CheckDlgButton(hExt, cbDragEnabled, BST_CHECKED);
@@ -1336,7 +1349,7 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
 
 	case cbLongOutput:
 		AutoBufferHeight = IsChecked(hExt, cbLongOutput);
-		gConEmu.EnableComSpec(AutoBufferHeight);
+		gConEmu.UpdateFarSettings();
 		EnableWindow(GetDlgItem(hExt, tLongOutputHeight), AutoBufferHeight);
 		break;
 
@@ -1389,6 +1402,15 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
     case cbMinToTray:
         isMinToTray = IsChecked(hExt, cbMinToTray);
         break;
+
+    case cbFARuseASCIIsort:
+    	isFARuseASCIIsort = IsChecked(hExt, cbFARuseASCIIsort);
+    	gConEmu.UpdateFarSettings();
+    	break;
+    	
+    case cbFixAltOnAltTab:
+    	isFixAltOnAltTab = IsChecked(hExt, cbFixAltOnAltTab);
+		break;
         
     case cbAutoRegFonts:
     	isAutoRegisterFonts = IsChecked(hExt, cbAutoRegFonts);
@@ -1758,7 +1780,7 @@ LRESULT CSettings::OnComboBox(WPARAM wParam, LPARAM lParam)
 	} else if (wId == lbCmdOutputCP) {
 		nCmdOutputCP = SendDlgItemMessage(hExt, wId, CB_GETCURSEL, 0, 0);
 		if (nCmdOutputCP == -1) nCmdOutputCP = 0;
-		gConEmu.EnableComSpec(AutoBufferHeight);
+		gConEmu.UpdateFarSettings();
 	}
     return 0;
 }

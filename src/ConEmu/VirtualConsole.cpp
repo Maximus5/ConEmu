@@ -131,7 +131,7 @@ CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
     if (gSet.isShowBgImage)
         gSet.LoadImageFrom(gSet.sBgImage);
 
-    if (gSet.isAdvLogging != 2) {
+    if (gSet.isAdvLogging != 3) {
         mpsz_LogScreen = NULL;
     } else {
         mn_LogScreenIdx = 0;
@@ -708,7 +708,7 @@ bool CVirtualConsole::Update(bool isForce, HDC *ahDc)
 		//if (mb_RequiredForceUpdate || updateText || updateCursor)
 		{
 			if (gConEmu.isVisible(this)) {
-				mp_RCon->LogString("Invalidating from CVirtualConsole::Update.1");
+				if (gSet.isAdvLogging>1) mp_RCon->LogString("Invalidating from CVirtualConsole::Update.1");
 				gConEmu.Invalidate(this);
 			}
 
@@ -844,7 +844,7 @@ bool CVirtualConsole::Update(bool isForce, HDC *ahDc)
 			_ASSERTE(gConEmu.isMainThread());
 			mb_PaintRequested = TRUE;
 			gConEmu.Invalidate(this);
-			mp_RCon->LogString("Invalidating from CVirtualConsole::Update.2");
+			if (gSet.isAdvLogging>1) mp_RCon->LogString("Invalidating from CVirtualConsole::Update.2");
 			//09.06.13 а если так? быстрее изменения на экране не появятся?
 			//UpdateWindow(ghWndDC); // оно посылает сообщение в окно, и ждет окончания отрисовки
 			#ifdef _DEBUG
@@ -1945,7 +1945,7 @@ void CVirtualConsole::Paint()
     // Собственно, копирование готового bitmap
     if (!gbNoDblBuffer) {
         // Обычный режим
-		mp_RCon->LogString("Blitting to Display");
+		if (gSet.isAdvLogging>1) mp_RCon->LogString("Blitting to Display");
 
         BitBlt(hPaintDc, 0, 0, client.right, client.bottom, hDC, 0, 0, SRCCOPY);
     } else {

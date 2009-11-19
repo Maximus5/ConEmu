@@ -188,7 +188,7 @@ public:
 	LPCWSTR GetCmd();
 	LPCWSTR GetDir();
 	short GetProgress(BOOL* rpbError);
-	void EnableComSpec(DWORD anFarPID, BOOL abSwitch);
+	void UpdateFarSettings(DWORD anFarPID=0);
 	int CoordInPanel(COORD cr);
 	void GetPanelRect(BOOL abRight, RECT* prc);
 	bool isAdministrator();
@@ -263,6 +263,7 @@ private:
         BOOL bRBtnDrag; // в консоль посылается драг правой кнопкой (выделение в FAR)
         COORD crRBtnDrag;
 		BOOL bInSetSize; HANDLE hInSetSize;
+		int DefaultBufferHeight;
     } con;
     // 
     MSection csPRC; //DWORD ncsTPRC;

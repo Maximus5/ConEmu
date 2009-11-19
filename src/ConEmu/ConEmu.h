@@ -205,7 +205,7 @@ public:
 	BOOL CreateMainWindow();
 	void Destroy();
 	void DebugStep(LPCTSTR asMsg);
-	void EnableComSpec(BOOL abSwitch);
+	void UpdateFarSettings();
 	void ForceShowTabs(BOOL abShow);
 	DWORD_PTR GetActiveKeyboardLayout();
 	RECT GetIdealRect() { return mrc_Ideal; };
@@ -248,7 +248,7 @@ public:
 	BOOL RunSingleInstance();
 	void SetConsoleWindowSize(const COORD& size, bool updateInfo);
 	bool SetWindowMode(uint inMode);
-	void ShowOldCmdVersion(DWORD nCmd, DWORD nVersion);
+	void ShowOldCmdVersion(DWORD nCmd, DWORD nVersion, int bFromServer);
 	void ShowSysmenu(HWND Wnd, HWND Owner, int x, int y);
 	void SyncConsoleToWindow();
 	void SyncNtvdm();

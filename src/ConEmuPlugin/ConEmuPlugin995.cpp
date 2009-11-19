@@ -255,6 +255,23 @@ void SetStartupInfoW995(void *aInfo)
 		InitHWND((HWND)InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETFARHWND, 0));*/
 }
 
+DWORD GetEditorModifiedState995()
+{
+	EditorInfo ei;
+	InfoW995->EditorControl(ECTL_GETINFO, &ei);
+
+	#ifdef SHOW_DEBUG_EVENTS
+		char szDbg[255];
+		wsprintfA(szDbg, "Editor:State=%i\n", ei.CurState);
+		OutputDebugStringA(szDbg);
+	#endif
+
+	// Если он сохранен, то уже НЕ модифицирован
+	DWORD currentModifiedState = ((ei.CurState & (ECSTATE_MODIFIED|ECSTATE_SAVED)) == ECSTATE_MODIFIED) ? 1 : 0;
+
+	return currentModifiedState;
+}
+
 extern int lastModifiedStateW;
 // watch non-modified -> modified editor status change
 int ProcessEditorInputW995(LPCVOID aRec)
@@ -268,21 +285,13 @@ int ProcessEditorInputW995(LPCVOID aRec)
 		&& (Rec->Event.KeyEvent.wVirtualKeyCode || Rec->Event.KeyEvent.wVirtualScanCode || Rec->Event.KeyEvent.uChar.UnicodeChar)
 		&& Rec->Event.KeyEvent.bKeyDown)
 	{
-#ifdef SHOW_DEBUG_EVENTS
-		char szDbg[255]; wsprintfA(szDbg, "ProcessEditorInput(E=%i, VK=%i, SC=%i, CH=%i, Down=%i)\n", 
-			Rec->EventType, Rec->Event.KeyEvent.wVirtualKeyCode, 
-			Rec->Event.KeyEvent.wVirtualScanCode, Rec->Event.KeyEvent.uChar.AsciiChar,
-			Rec->Event.KeyEvent.bKeyDown);
-		OutputDebugStringA(szDbg);
-#endif
+		#ifdef SHOW_DEBUG_EVENTS
+			char szDbg[255]; wsprintfA(szDbg, "ProcessEditorInput(E=%i, VK=%i, SC=%i, CH=%i, Down=%i)\n", Rec->EventType, Rec->Event.KeyEvent.wVirtualKeyCode, Rec->Event.KeyEvent.wVirtualScanCode, Rec->Event.KeyEvent.uChar.AsciiChar,Rec->Event.KeyEvent.bKeyDown);
+			OutputDebugStringA(szDbg);
+		#endif
 
-		EditorInfo ei;
-		InfoW995->EditorControl(ECTL_GETINFO, &ei);
-#ifdef SHOW_DEBUG_EVENTS
-		wsprintfA(szDbg, "Editor:State=%i\n", ei.CurState);
-		OutputDebugStringA(szDbg);
-#endif
-		int currentModifiedState = ei.CurState == ECSTATE_MODIFIED ? 1 : 0;
+		DWORD currentModifiedState = GetEditorModifiedState995();
+
 		if (lastModifiedStateW != currentModifiedState)
 		{
 			// !!! Именно UpdateConEmuTabsW, без версии !!!
@@ -407,7 +416,7 @@ void UpdateConEmuTabsW995(int event, bool losingFocus, bool editorSave, void* Pa
 						tabCount = 0;
 						lbCh |= AddTab(tabCount, losingFocus, editorSave, 
 							WTYPE_EDITOR, pszEditorFileName, NULL, 
-							1, ei.CurState == ECSTATE_MODIFIED);
+							1, (ei.CurState & (ECSTATE_MODIFIED|ECSTATE_SAVED)) == ECSTATE_MODIFIED);
 						//lastModifiedStateW = ei.CurState == ECSTATE_MODIFIED;
 					}
 					free(pszEditorFileName);
@@ -416,11 +425,11 @@ void UpdateConEmuTabsW995(int event, bool losingFocus, bool editorSave, void* Pa
 		}
 	}
 	
-	// 2009-08-17
-	if (gbHandleOneRedraw && gbHandleOneRedrawCh && lbCh) {
-		gbHandleOneRedraw = false;
-		gbHandleOneRedrawCh = false;
-	}
+	//// 2009-08-17
+	//if (gbHandleOneRedraw && gbHandleOneRedrawCh && lbCh) {
+	//	gbHandleOneRedraw = false;
+	//	gbHandleOneRedrawCh = false;
+	//}
 	
 
 #ifdef _DEBUG
@@ -628,4 +637,11 @@ void RedrawAll995()
 {
 	if (!InfoW995) return;
 	InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_REDRAWALL, NULL);
+}
+
+bool LoadPlugin995(wchar_t* pszPluginPath)
+{
+	if (!InfoW995) return false;
+	InfoW995->PluginsControl(INVALID_HANDLE_VALUE,PCTL_LOADPLUGIN,PLT_PATH,(LONG_PTR)pszPluginPath);
+	return true;
 }

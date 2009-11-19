@@ -659,7 +659,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="C:\Utils\FAR170\ConEmuC.exe"
+				OutputFile="J:\ConEmuC.exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
 				SubSystem="1"
