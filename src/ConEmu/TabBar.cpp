@@ -18,6 +18,7 @@ TabBarClass TabBar;
 //wchar_t TAB_FONT_FACE[] = L"Tahoma";
 WNDPROC TabBarClass::_defaultTabProc = NULL;
 WNDPROC TabBarClass::_defaultBarProc = NULL;
+WNDPROC TabBarClass::_defaultReBarProc = NULL;
 typedef BOOL (WINAPI* FAppThemed)();
 
 #ifndef TBN_GETINFOTIP
@@ -292,6 +293,27 @@ CVirtualConsole* TabBarClass::FarSendChangeTab(int tabIndex)
     return pVCon;
 }
 
+LRESULT CALLBACK TabBarClass::ReBarProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	switch (uMsg)
+	{
+	case WM_WINDOWPOSCHANGING:
+		{
+			if (TabBar._tabHeight) {
+				LPWINDOWPOS pos = (LPWINDOWPOS)lParam;
+				pos->cy = TabBar._tabHeight;
+				return 0;
+			}
+		}
+	case WM_SETFOCUS:
+		{
+			SetFocus(ghWnd);
+			return 0;
+		}
+	}
+	return CallWindowProc(_defaultReBarProc, hwnd, uMsg, wParam, lParam);
+}
+
 LRESULT CALLBACK TabBarClass::TabProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     switch (uMsg)
@@ -301,6 +323,7 @@ LRESULT CALLBACK TabBarClass::TabProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARA
         	if (TabBar.mh_Rebar) {
 	        	LPWINDOWPOS pos = (LPWINDOWPOS)lParam;
 	            pos->y = 2; // иначе в Win7 он смещается в {0x0} и снизу видна некрасивая полоса
+				pos->cy = TabBar._tabHeight+2; // на всякий случай
 	            return 0;
             }
             break;
@@ -834,6 +857,7 @@ void TabBarClass::OnCommand(WPARAM wParam, LPARAM lParam)
         gConEmu.Recreate ( FALSE, gSet.isMultiNewConfirm );
     } else if (wParam == TID_BUFFERHEIGHT) {
 		SendMessage(mh_Toolbar, TB_CHECKBUTTON, TID_BUFFERHEIGHT, gConEmu.ActiveCon()->RCon()->isBufferHeight());
+		gConEmu.AskChangeBufferHeight();
     }
 }
 
@@ -1045,6 +1069,12 @@ void TabBarClass::CreateRebar()
                 RBS_FIXEDORDER|RBS_AUTOSIZE|/*RBS_VARHEIGHT|*/CCS_NODIVIDER,
                 0,0,rcWnd.right,16, ghWnd, NULL, g_hInstance, NULL)))
         return;
+
+	#if !defined(__GNUC__)
+	#pragma warning (disable : 4312)
+	#endif
+	// Надо
+	_defaultReBarProc = (WNDPROC)SetWindowLongPtr(mh_Rebar, GWLP_WNDPROC, (LONG_PTR)ReBarProc);
 
     REBARINFO     rbi={sizeof(REBARINFO)};
     REBARBANDINFO rbBand={80}; // не используем size, т.к. приходит "новый" размер из висты и в XP обламываемся

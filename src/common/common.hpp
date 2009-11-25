@@ -80,12 +80,16 @@ extern wchar_t gszDbgModLabel[6];
 	else lstrcpyW(gszDbgModLabel, L"dll"); \
 }
 #ifdef SHOWDEBUGSTR
-#define DEBUGSTR(s) { MCHKHEAP; CHEKCDBGMODLABEL; SYSTEMTIME st; GetLocalTime(&st); wchar_t szDEBUGSTRTime[40]; wsprintf(szDEBUGSTRTime, L"%i:%02i:%02i.%03i(%s.%i) ", st.wHour, st.wMinute, st.wSecond, st.wMilliseconds, gszDbgModLabel, GetCurrentThreadId()); OutputDebugString(szDEBUGSTRTime); OutputDebugString(s); }
+	#define DEBUGSTR(s) { MCHKHEAP; CHEKCDBGMODLABEL; SYSTEMTIME st; GetLocalTime(&st); wchar_t szDEBUGSTRTime[40]; wsprintf(szDEBUGSTRTime, L"%i:%02i:%02i.%03i(%s.%i) ", st.wHour, st.wMinute, st.wSecond, st.wMilliseconds, gszDbgModLabel, GetCurrentThreadId()); OutputDebugString(szDEBUGSTRTime); OutputDebugString(s); }
 #else
-#define DEBUGSTR(s)
+	#ifndef DEBUGSTR
+		#define DEBUGSTR(s)
+	#endif
 #endif
 #else
-#define DEBUGSTR(s)
+	#ifndef DEBUGSTR
+		#define DEBUGSTR(s)
+	#endif
 #endif
 
 

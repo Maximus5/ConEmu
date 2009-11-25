@@ -15,6 +15,8 @@
 #include <Tlhelp32.h>
 #include <vector>
 
+WARNING("Перевести ghCommandThreads с vector<> на обычный класс. Это позволит собрать с минимальным размером файла");
+
 #include "../common/ConEmuCheck.h"
 
 #define Free free
@@ -55,6 +57,7 @@ DWORD gnMainThreadId = 0;
 //HANDLE hEventCmd[MAXCMDCOUNT], hEventAlive=NULL, hEventReady=NULL;
 HANDLE ghMonitorThread = NULL; DWORD gnMonitorThreadId = 0;
 HANDLE ghInputThread = NULL; DWORD gnInputThreadId = 0;
+HANDLE ghSetWndSendTabsEvent = NULL;
 FarVersion gFarVersion;
 WCHAR gszDir1[CONEMUTABMAX], gszDir2[CONEMUTABMAX];
 WCHAR gszRootKey[MAX_PATH*2];
@@ -153,21 +156,23 @@ HANDLE WINAPI _export OpenPluginW(int OpenFrom,INT_PTR Item)
 			INT_PTR nID = -1; // выбор из меню
 			if ((OpenFrom & OPEN_FROMMACRO) == OPEN_FROMMACRO)
 			{
-				if (Item >= 1 && Item <= 7)
+				if (Item >= 1 && Item <= 8)
 				{
 					nID = Item - 1; // Будет сразу выполнена команда
 					
 				} else if (Item >= SETWND_CALLPLUGIN_BASE) {
 					gnPluginOpenFrom = OPEN_PLUGINSMENU;
-					DWORD nTab = Item - SETWND_CALLPLUGIN_BASE;
+					DWORD nTab = (DWORD)(Item - SETWND_CALLPLUGIN_BASE);
 					ProcessCommand(CMD_SETWINDOW, FALSE, &nTab);
+					SetEvent(ghSetWndSendTabsEvent);
 					return INVALID_HANDLE_VALUE;
 					
 				} else if (Item == SETWND_CALLPLUGIN_SENDTABS) {
 					// Force Send tabs to ConEmu
-					MSectionLock SC; SC.Lock(&csTabs, TRUE);
-					SendTabs(gnCurTabCount, TRUE);
-					SC.Unlock();
+					//MSectionLock SC; SC.Lock(&csTabs, TRUE);
+					//SendTabs(gnCurTabCount, TRUE);
+					//SC.Unlock();
+					SetEvent(ghSetWndSendTabsEvent);
 					return INVALID_HANDLE_VALUE;
 				}
 			}
@@ -262,7 +267,7 @@ BOOL WINAPI DllMain( HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserve
 			{
 				ghPluginModule = (HMODULE)hModule;
 				
-				_ASSERTE(FAR_X_VER<FAR_Y_VER);
+				_ASSERTE(FAR_X_VER<=FAR_Y_VER);
 				#ifdef SHOW_STARTED_MSGBOX
 				if (!IsDebuggerPresent()) MessageBoxA(NULL, "ConEmu*.dll loaded", "ConEmu plugin", 0);
 				#endif
@@ -1149,9 +1154,9 @@ BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount)
 		arg.Param2 = nCount;
 
 		if (gFarVersion.dwBuild>=FAR_Y_VER)
-			fSuccess = FUNC_Y(CallSynchro)(&arg);
+			fSuccess = FUNC_Y(CallSynchro)(&arg,DEFAULT_SYNCHRO_TIMEOUT);
 		else
-			fSuccess = FUNC_X(CallSynchro)(&arg);
+			fSuccess = FUNC_X(CallSynchro)(&arg,DEFAULT_SYNCHRO_TIMEOUT);
 	} 
 	
 	if (!fSuccess)
@@ -1303,6 +1308,8 @@ void InitHWND(HWND ahFarHwnd)
     SetConEmuEnvVar(ConEmuHwnd);
 	
 	gnMsgTabChanged = RegisterWindowMessage(CONEMUTABCHANGED);
+
+	if (!ghSetWndSendTabsEvent) ghSetWndSendTabsEvent = CreateEvent(0,0,0,0);
 
 	// Даже если мы не в ConEmu - все равно запустить нить, т.к. в ConEmu теперь есть возможность /Attach!
 	//WCHAR szEventName[128];
@@ -1887,6 +1894,7 @@ void StopThread(void)
 	SafeCloseHandle(ghServerTerminateEvent);
 	SafeCloseHandle(ghConIn);
 	SafeCloseHandle(ghInputSynchroExecuted);
+	SafeCloseHandle(ghSetWndSendTabsEvent);
 }
 
 void   WINAPI _export ExitFARW(void)
@@ -2319,11 +2327,16 @@ DWORD WINAPI ServerThreadCommand(LPVOID ahPipe)
 		MSectionLock SC; SC.Lock(&csTabs, FALSE, 1000);
 
 		if (pIn->hdr.nCmd == CMD_SETWINDOW) {
+			ResetEvent(ghSetWndSendTabsEvent);
+
 			ProcessCommand(pIn->hdr.nCmd, TRUE/*bReqMainThread*/, pIn->Data);
+
+			if (gFarVersion.dwVerMajor == 2) {
+				WaitForSingleObject(ghSetWndSendTabsEvent, 2000);
+			}
 		}
 
-		if (gpTabs) {
-
+		if (gpTabs) { 
 			fSuccess = WriteFile( hPipe, gpTabs, gpTabs->hdr.nSize, &cbWritten, NULL);
 		}
 
@@ -2415,6 +2428,7 @@ void ShowPluginMenu(int nID /*= -1*/)
 		nItem = nID;
 		if (nItem >= 2) nItem++; //Separator
 		if (nItem >= 7) nItem++; //Separator
+		if (nItem >= 9) nItem++; //Separator
 	} else if (gFarVersion.dwVerMajor==1)
 		nItem = ShowPluginMenuA();
 	else if (gFarVersion.dwBuild>=FAR_Y_VER)
@@ -2466,6 +2480,11 @@ void ShowPluginMenu(int nID /*= -1*/)
 			if (ConEmuHwnd && IsWindow(ConEmuHwnd)) break; // Мы и так подключены?
 			Attach2Gui();
 		} break;
+		case 10: // Start "ConEmuC.exe /DEBUGPID="
+		{
+			if (TerminalMode) break; // низзя
+			StartDebugger();
+		}
 	}
 }
 
@@ -2565,6 +2584,59 @@ BOOL Attach2Gui()
 		// Хорошо бы ошибку показать?
 	} else {
 		gdwServerPID = pi.dwProcessId;
+		lbRc = TRUE;
+	}
+	
+	return lbRc;
+}
+
+BOOL StartDebugger()
+{
+	if (IsDebuggerPresent()) {
+		ShowMessage(15,1); // "ConEmu plugin\nDebugger is already attached to current process\nOK"
+		return FALSE; // Уже
+	}
+	if (IsTerminalMode()) {
+		ShowMessage(16,1); // "ConEmu plugin\nDebugger is not available in terminal mode\nOK"
+		return FALSE; // Уже
+	}
+		
+	DWORD dwServerPID = 0;
+	
+	// Create process, with flag /Attach GetCurrentProcessId()
+	// Sleep for sometimes, try InitHWND(hConWnd); several times
+	WCHAR  szExe[0x200] = {0};
+	BOOL lbRc = FALSE;
+	
+	DWORD nLen = 0;
+	PROCESS_INFORMATION pi; memset(&pi, 0, sizeof(pi));
+	STARTUPINFO si; memset(&si, 0, sizeof(si));
+	si.cb = sizeof(si);
+	DWORD dwSelfPID = GetCurrentProcessId();
+	
+	szExe[0] = L'"';
+	if ((nLen = GetEnvironmentVariableW(L"ConEmuDir", szExe+1, MAX_PATH)) > 0) {
+		if (szExe[nLen] != L'\\') { szExe[nLen+1] = L'\\'; szExe[nLen+2] = 0; }
+	} else if ((nLen=GetModuleFileName(0, szExe+1, MAX_PATH)) > 0) {
+		wchar_t* pszSlash = wcsrchr ( szExe, L'\\' );
+		if (pszSlash) pszSlash[1] = 0;
+	}
+	
+	wsprintf(szExe+wcslen(szExe), L"ConEmuC.exe\" %s /DEBUGPID=%i /BW=80 /BH=25 /BZ=1000", 
+		ConEmuHwnd ? L"/ATTACH" : L"", dwSelfPID);
+	
+	if (ConEmuHwnd) {
+		si.dwFlags |= STARTF_USESHOWWINDOW;
+		si.wShowWindow = SW_HIDE;
+	}
+	
+	if (!CreateProcess(NULL, szExe, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS|CREATE_NEW_CONSOLE, NULL,
+			NULL, &si, &pi))
+	{
+		// Хорошо бы ошибку показать?
+		DWORD dwErr = GetLastError();
+		ShowMessage(17,1); // "ConEmu plugin\nНе удалось запустить процесс отладчика\nOK"
+	} else {
 		lbRc = TRUE;
 	}
 	

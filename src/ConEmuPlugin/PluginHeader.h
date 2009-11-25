@@ -16,9 +16,10 @@
 #define ISALPHA(c) ((((c) >= (BYTE)'c') && ((c) <= (BYTE)'z')) || (((c) >= (BYTE)'C') && ((c) <= (BYTE)'Z')))
 #define isPressed(inp) ((GetKeyState(inp) & 0x8000) == 0x8000)
 
-#define FAR_X_VER 789
+// X - меньшая, Y - большая
+#define FAR_X_VER 995
 #define FAR_Y_VER 995
-#define FUNC_X(fn) fn##789
+#define FUNC_X(fn) fn##995
 #define FUNC_Y(fn) fn##995
 
 
@@ -69,8 +70,8 @@ int FUNC_Y(ProcessViewerEventW)(int Event, void *Param);
 void StopThread(void);
 void FUNC_X(ExitFARW)(void);
 void FUNC_Y(ExitFARW)(void);
-void FUNC_X(UpdateConEmuTabsW)(int event, bool losingFocus, bool editorSave, void* Param=NULL);
-void FUNC_Y(UpdateConEmuTabsW)(int event, bool losingFocus, bool editorSave, void* Param=NULL);
+void FUNC_X(UpdateConEmuTabsW)(int event, bool losingFocus, bool editorSave, void* Param/*=NULL*/);
+void FUNC_Y(UpdateConEmuTabsW)(int event, bool losingFocus, bool editorSave, void* Param/*=NULL*/);
 void FUNC_X(SetStartupInfoW)(void *aInfo);
 void FUNC_Y(SetStartupInfoW)(void *aInfo);
 void FUNC_X(ProcessDragFrom)();
@@ -121,6 +122,7 @@ extern LPVOID gpReqCommandData;
 CESERVER_REQ* ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData);
 BOOL CheckPlugKey();
 void NotifyChangeKey();
+BOOL WINAPI IsTerminalMode();
 
 DWORD WINAPI ServerThread(LPVOID lpvParam);
 DWORD WINAPI ServerThreadCommand(LPVOID ahPipe);
@@ -135,9 +137,11 @@ BOOL FUNC_Y(EditOutput)(LPCWSTR asFileName, BOOL abView);
 BOOL FUNC_X(EditOutput)(LPCWSTR asFileName, BOOL abView);
 
 BOOL Attach2Gui();
+BOOL StartDebugger();
 
-BOOL FUNC_X(CallSynchro)(SynchroArg *Param, DWORD nTimeout = 10000);
-BOOL FUNC_Y(CallSynchro)(SynchroArg *Param, DWORD nTimeout = 10000);
+#define DEFAULT_SYNCHRO_TIMEOUT 10000
+BOOL FUNC_X(CallSynchro)(SynchroArg *Param, DWORD nTimeout /*= 10000*/);
+BOOL FUNC_Y(CallSynchro)(SynchroArg *Param, DWORD nTimeout /*= 10000*/);
 
 BOOL IsMacroActive();
 BOOL IsMacroActiveA();

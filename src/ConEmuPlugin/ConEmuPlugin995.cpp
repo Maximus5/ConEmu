@@ -549,7 +549,9 @@ int ShowPluginMenu995()
 		{ConEmuHwnd ? 0 : MIF_DISABLE,             InfoW995->GetMsg(InfoW995->ModuleNumber,8)},
 		{ConEmuHwnd ? 0 : MIF_DISABLE,             InfoW995->GetMsg(InfoW995->ModuleNumber,9)},
 		{MIF_SEPARATOR},
-		{ConEmuHwnd ? MIF_DISABLE : MIF_SELECTED,  InfoW995->GetMsg(InfoW995->ModuleNumber,13)}
+		{ConEmuHwnd||IsTerminalMode() ? MIF_DISABLE : MIF_SELECTED,  InfoW995->GetMsg(InfoW995->ModuleNumber,13)},
+		{MIF_SEPARATOR},
+		{IsDebuggerPresent()||IsTerminalMode() ? MIF_DISABLE : 0,    InfoW995->GetMsg(InfoW995->ModuleNumber,14)}
 	};
 	int nCount = sizeof(items)/sizeof(items[0]);
 

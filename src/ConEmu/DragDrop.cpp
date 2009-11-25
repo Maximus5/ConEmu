@@ -141,6 +141,8 @@ void CDragDrop::Drag()
 		return;
 	}
 
+	_ASSERTE(!gConEmu.isPictureView());
+
 	//gConEmu.isDragProcessed=true; // чтобы не сработало два раза на один драг
 	gConEmu.mouse.state |= (gConEmu.mouse.state & DRAG_R_ALLOWED) ? DRAG_R_STARTED : DRAG_L_STARTED;
 

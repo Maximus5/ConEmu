@@ -1,0 +1,36 @@
+!if exists(../make_vc_defs)
+!include ../make_vc_defs
+!endif
+
+DEF_NAME = export
+
+!if defined(AMD64) || "$(CPU)" == "AMD64"
+OUTNAME = conemu.x64
+!else
+OUTNAME = conemu
+!endif                   
+
+NAME = conemu
+
+LINK_OBJS = \
+$(OBJDIR)\ConEmuInjects.obj \
+$(OBJDIR)\ConEmuPlugin.obj \
+$(OBJDIR)\ConEmuPlugin789.obj \
+$(OBJDIR)\ConEmuPlugin995.obj \
+$(OBJDIR)\ConEmuPluginA.obj \
+$(OBJDIR)\LogBrowser.obj \
+$(OBJDIR)\setconsoleinfo.obj
+
+USERLIBS = version.lib
+
+!include makefile_vc_def_inc
+
+!include makefile_vc_target_inc
+
+$(OBJDIR)\ConEmuInjects.obj: ConEmuInjects.cpp
+$(OBJDIR)\ConEmuPlugin.obj: ConEmuPlugin.cpp
+$(OBJDIR)\ConEmuPlugin789.obj: ConEmuPlugin789.cpp
+$(OBJDIR)\ConEmuPlugin995.obj: ConEmuPlugin995.cpp
+$(OBJDIR)\ConEmuPluginA.obj: ConEmuPluginA.cpp
+$(OBJDIR)\LogBrowser.obj: LogBrowser.cpp
+$(OBJDIR)\setconsoleinfo.obj: setconsoleinfo.cpp

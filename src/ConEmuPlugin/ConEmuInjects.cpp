@@ -237,25 +237,39 @@ static BOOL WINAPI OnSetForegroundWindow(HWND hWnd)
 	return SetForegroundWindow(hWnd);
 }
 
-static int WINAPI OnCompareStringA(LCID Locale, DWORD dwCmpFlags, LPCSTR lpString1, int cchCount1, LPCSTR lpString2, int cchCount2)
-{
-	_ASSERTE(OnCompareStringA!=CompareStringA);
-	int nCmp = -1;
-	
-	if (gbFARuseASCIIsort)
-	{
-		if (dwCmpFlags == (NORM_IGNORECASE|SORT_STRINGSORT) && cchCount1 == -1 && cchCount2 == -1)
-			nCmp = lstrcmpiA(lpString1, lpString2)+2;
-	}
-
-	if (nCmp == -1)
-		nCmp = CompareStringA(Locale, dwCmpFlags, lpString1, cchCount1, lpString2, cchCount2);
-	return nCmp;
-}
-
 #ifndef NORM_STOP_ON_NULL
 #define NORM_STOP_ON_NULL 0x10000000
 #endif
+
+//static int WINAPI OnCompareStringA(LCID Locale, DWORD dwCmpFlags, LPCSTR lpString1, int cchCount1, LPCSTR lpString2, int cchCount2)
+//static int WINAPI OnlstrcmpiA(LPCSTR lpString1, LPCSTR lpString2)
+//{
+//	_ASSERTE(OnlstrcmpiA!=lstrcmpiA);
+//	int nCmp = 0;
+//	
+//	if (gbFARuseASCIIsort)
+//	{
+//		char ch1 = *lpString1++, ch10 = 0, ch2 = *lpString2++, ch20 = 0;
+//		while (!nCmp && ch1)
+//		{
+//			if (ch1==ch2) {
+//				if (!ch1) break;
+//			} else if (ch1<0x80 && ch2<0x80) {
+//				if (ch1>='A' && ch1<='Z') ch1 |= 0x20;
+//				if (ch2>='A' && ch2<='Z') ch2 |= 0x20;
+//				nCmp = (ch1==ch2) ? 0 : (ch1<ch2) ? -1 : 1;
+//			} else {
+//				nCmp = CompareStringA(LOCALE_USER_DEFAULT, NORM_IGNORECASE|NORM_STOP_ON_NULL|SORT_STRINGSORT, &ch1, 1, &ch2, 1)-2;
+//			}
+//			if (!ch1 || !ch2 || !nCmp) break;
+//			ch1 = *lpString1++;
+//			ch2 = *lpString2++;
+//		}
+//	} else {
+//		nCmp = lstrcmpiA(lpString1, lpString2);
+//	}
+//	return nCmp;
+//}
 
 static int WINAPI OnCompareStringW(LCID Locale, DWORD dwCmpFlags, LPCWSTR lpString1, int cchCount1, LPCWSTR lpString2, int cchCount2)
 {
@@ -373,7 +387,7 @@ static HookItem HooksWin2k3R2Only[] = {
 };
 
 static HookItem HooksFarOnly[] = {
-	{OnCompareStringA, "CompareStringA", kernel32, 0},
+//	{OnlstrcmpiA,      "lstrcmpiA",      kernel32, 0},
 	{OnCompareStringW, "CompareStringW", kernel32, 0},
 };
 

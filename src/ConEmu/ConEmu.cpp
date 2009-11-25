@@ -321,6 +321,42 @@ void CConEmuMain::AddMargins(RECT& rc, RECT& rcAddShift, BOOL abExpand/*=FALSE*/
     }
 }
 
+void CConEmuMain::AskChangeBufferHeight()
+{
+	CRealConsole *pRCon = ActiveCon()->RCon();
+	if (!pRCon) return;
+	BOOL lbBufferHeight = pRCon->isBufferHeight();
+	BOOL b = gbDontEnable; gbDontEnable = TRUE;
+	int nBtn = MessageBox(ghWnd, lbBufferHeight ? 
+			L"Do You want to turn bufferheight OFF?" :
+			L"Do You want to turn bufferheight ON?",
+			L"ConEmu", MB_ICONQUESTION|MB_OKCANCEL);
+	gbDontEnable = b;
+	if (nBtn != IDOK) return;
+
+#ifdef _DEBUG
+	HANDLE hFarInExecuteEvent = NULL;
+	if (!lbBufferHeight) {
+		DWORD dwFarPID = pRCon->GetFarPID();
+		if (dwFarPID) {
+			// Ёто событие дергаетс€ в отладочной (мной поправленной) версии фара
+			wchar_t szEvtName[64]; wsprintf(szEvtName, L"FARconEXEC:%08X", (DWORD)pRCon->ConWnd());
+			hFarInExecuteEvent = OpenEvent(EVENT_ALL_ACCESS, FALSE, szEvtName);
+			if (hFarInExecuteEvent) // »наче ConEmuC вызовет _ASSERTE в отладочном режиме
+				SetEvent(hFarInExecuteEvent);
+		}
+	}
+#endif
+
+	pRCon->ChangeBufferHeightMode(!lbBufferHeight);
+
+#ifdef _DEBUG
+	if (hFarInExecuteEvent)
+		ResetEvent(hFarInExecuteEvent);
+#endif
+
+	OnBufferHeight();
+}
 
 /*!!!static!!*/
 // ‘ункци€ расчитывает 
@@ -1349,15 +1385,6 @@ LRESULT CConEmuMain::OnSize(WPARAM wParam, WORD newClientWidth, WORD newClientHe
 {
     LRESULT result = 0;
     
-    #if defined(EXT_GNUC_LOG)
-    char szDbg[255];
-    wsprintfA(szDbg, "CConEmuMain::OnSize(wParam=%i, Width=%i, Height=%i, "
-        "IsIconic=%i, IgnoreSizeChange=%i)\n",
-        wParam, newClientWidth, newClientHeight, isIconic(), mb_IgnoreSizeChange);
-    if (gSet.isAdvLogging>1)
-    	mp_VActive->RCon()->LogString(szDbg);
-    #endif
-
     if (wParam == SIZE_MINIMIZED || isIconic()) {
         return 0;
     }
@@ -1377,17 +1404,6 @@ LRESULT CConEmuMain::OnSize(WPARAM wParam, WORD newClientWidth, WORD newClientHe
         RECT rcClient; GetClientRect(ghWnd, &rcClient);
         newClientWidth = rcClient.right;
         newClientHeight = rcClient.bottom;
-        #if defined(EXT_GNUC_LOG)
-        char szDbg[255];
-        wsprintfA(szDbg, "  --  RealSize(Width=%i, Height=%i)", newClientWidth, newClientHeight);
-        if (gSet.isAdvLogging>1) 
-        	mp_VActive->RCon()->LogString(szDbg);
-        #endif
-    } else {
-        #if defined(EXT_GNUC_LOG)
-        if (gSet.isAdvLogging>1) 
-        	mp_VActive->RCon()->LogString("  -- normal mode\n");
-        #endif
     }
 
 	// «апомнить "идеальный" размер окна, выбранный пользователем
@@ -1408,37 +1424,14 @@ LRESULT CConEmuMain::OnSize(WPARAM wParam, WORD newClientWidth, WORD newClientHe
     isPictureView();
 
     if (wParam != (DWORD)-1 && change2WindowMode == (DWORD)-1) {
-        #if defined(EXT_GNUC_LOG)
-        if (gSet.isAdvLogging>1) 
-        	mp_VActive->RCon()->LogString("  --  Executing SyncConsoleToWindow");
-        #endif
         SyncConsoleToWindow();
     }
     
     RECT mainClient = MakeRect(newClientWidth,newClientHeight);
-    #if defined(EXT_GNUC_LOG)
-    wsprintfA(szDbg, "  --  mainClient=(%i,%i,%i,%i)", mainClient.left, mainClient.top, mainClient.right, mainClient.bottom);
-    if (gSet.isAdvLogging>1) 
-    	mp_VActive->RCon()->LogString(szDbg);
-    #endif
-    //RECT dcSize; GetClientRect(ghWndDC, &dcSize);
-    RECT dcSize = CalcRect(CER_DC, mainClient, CER_MAINCLIENT);
-    #if defined(EXT_GNUC_LOG)
-    if (dcSize.top > 40) {
-    	if (gSet.isAdvLogging>1) 
-        	mp_VActive->RCon()->LogString("  **  Error");
-    }
-    wsprintfA(szDbg, "  --  dcSize=(%i,%i,%i,%i)", dcSize.left, dcSize.top, dcSize.right, dcSize.bottom);
-    if (gSet.isAdvLogging>1) 
-    	mp_VActive->RCon()->LogString(szDbg);
-    #endif
-    //DCClientRect(&client);
-    RECT client = CalcRect(CER_DC, mainClient, CER_MAINCLIENT, &dcSize);
-    #if defined(EXT_GNUC_LOG)
-    wsprintfA(szDbg, "  --  client=(%i,%i,%i,%i)", client.left, client.top, client.right, client.bottom);
-    if (gSet.isAdvLogging>1) 
-    	mp_VActive->RCon()->LogString(szDbg);
-    #endif
+
+	RECT dcSize = CalcRect(CER_DC, mainClient, CER_MAINCLIENT);
+
+	RECT client = CalcRect(CER_DC, mainClient, CER_MAINCLIENT, &dcSize);
 
     RECT rcNewCon; memset(&rcNewCon,0,sizeof(rcNewCon));
     if (mp_VActive && mp_VActive->Width && mp_VActive->Height) {
@@ -1458,28 +1451,12 @@ LRESULT CConEmuMain::OnSize(WPARAM wParam, WORD newClientWidth, WORD newClientHe
         if (rcNewCon.right>client.right) rcNewCon.right=client.right;
         if (rcNewCon.bottom>client.bottom) rcNewCon.bottom=client.bottom;
         
-        #if defined(EXT_GNUC_LOG)
-        wsprintfA(szDbg, "  --  rcNewCon=(%i,%i,%i,%i) mp_VActive=(%ix%i) client=(%i,%i,%i,%i)", 
-            rcNewCon.left, rcNewCon.top, rcNewCon.right, rcNewCon.bottom, mp_VActive->Width, mp_VActive->Height,
-            client.left, client.top, client.right, client.bottom);
-        if (gSet.isAdvLogging>1) 
-        	mp_VActive->RCon()->LogString(szDbg);
-        #endif
     } else {
         rcNewCon = client;
-        #if defined(EXT_GNUC_LOG)
-        wsprintfA(szDbg, "  --  rcNewCon=client(%i,%i,%i,%i)", rcNewCon.left, rcNewCon.top, rcNewCon.right, rcNewCon.bottom);
-        if (gSet.isAdvLogging>1) 
-        	mp_VActive->RCon()->LogString(szDbg);
-        #endif
     }
     // ƒвигаем/ресайзим окошко DC
-    #if defined(EXT_GNUC_LOG)
-    wsprintfA(szDbg, "  --  Moving DC window(X=%i, Y=%i, Width=%i, Height=%i)", rcNewCon.left, rcNewCon.top, rcNewCon.right - rcNewCon.left, rcNewCon.bottom - rcNewCon.top);
-    if (gSet.isAdvLogging>1) 
-    	mp_VActive->RCon()->LogString(szDbg);
-    #endif
     MoveWindow(ghWndDC, rcNewCon.left, rcNewCon.top, rcNewCon.right - rcNewCon.left, rcNewCon.bottom - rcNewCon.top, 1);
+	m_Child.Invalidate();
 
     return result;
 }
@@ -3151,35 +3128,132 @@ LRESULT CConEmuMain::OnPaint(WPARAM wParam, LPARAM lParam)
     HDC hDc = 
     #endif
     BeginPaint(ghWnd, &ps);
+	//RECT rcClient; GetClientRect(ghWnd, &rcClient);
+	//RECT rcTabMargins = CalcMargins(CEM_TAB);
+	//AddMargins(rcClient, rcTabMargins, FALSE);
 
-    //PaintGaps(hDc);
+	//HDC hdc = GetDC(ghWnd);
+
+    PaintGaps(ps.hdc);
+
+	PaintCon(ps.hdc);
+	//PaintCon(hdc);
 
     EndPaint(ghWnd, &ps);
-    result = DefWindowProc(ghWnd, WM_PAINT, wParam, lParam);
+    //result = DefWindowProc(ghWnd, WM_PAINT, wParam, lParam);
+
+	//ReleaseDC(ghWnd, hdc);
+
+	//ValidateRect(ghWnd, &rcClient);
 
     return result;
 }
 
-void CConEmuMain::PaintCon()
+void CConEmuMain::PaintGaps(HDC hDC)
+{
+	if (hDC==NULL)
+		hDC = GetDC(ghWnd); // √лавное окно!
+
+	int
+	#ifdef _DEBUG
+		mn_ColorIdx = 1;
+	#else
+		mn_ColorIdx = 0;
+	#endif
+	HBRUSH hBrush = CreateSolidBrush(gSet.Colors[mn_ColorIdx]);
+
+	RECT rcClient; GetClientRect(ghWnd, &rcClient); //  лиентска€ часть главного окна
+	RECT rcMargins = CalcMargins(CEM_TAB);
+	AddMargins(rcClient, rcMargins, FALSE);
+
+	RECT offsetRect; GetClientRect(ghWndDC, &offsetRect);
+	//WINDOWPLACEMENT wpl; memset(&wpl, 0, sizeof(wpl)); wpl.length = sizeof(wpl);
+	//GetWindowPlacement(ghWndDC, &wpl); // ѕоложение окна, в котором идет отрисовка
+
+	////RECT offsetRect = ConsoleOffsetRect(); // смещение с учетом табов
+	//RECT dcRect; GetClientRect(ghWndDC, &dcRect);
+	//RECT offsetRect = dcRect;
+	MapWindowPoints(ghWndDC, ghWnd, (LPPOINT)&offsetRect, 2);
+
+
+	// paint gaps between console and window client area with first color
+
+	RECT rect;
+
+	//TODO:!!!
+	// top
+	rect = rcClient;
+	rect.bottom = offsetRect.top;
+	if (!IsRectEmpty(&rect))
+		FillRect(hDC, &rect, hBrush);
+#ifdef _DEBUG
+	GdiFlush();
+#endif
+
+	// right
+	rect.left = offsetRect.right;
+	rect.bottom = rcClient.bottom;
+	if (!IsRectEmpty(&rect))
+		FillRect(hDC, &rect, hBrush);
+#ifdef _DEBUG
+	GdiFlush();
+#endif
+
+	// left
+	rect.left = 0;
+	rect.right = offsetRect.left;
+	rect.bottom = rcClient.bottom;
+	if (!IsRectEmpty(&rect))
+		FillRect(hDC, &rect, hBrush);
+#ifdef _DEBUG
+	GdiFlush();
+#endif
+
+	// bottom
+	rect.left = 0;
+	rect.right = rcClient.right;
+	rect.top = offsetRect.bottom;
+	rect.bottom = rcClient.bottom;
+	if (!IsRectEmpty(&rect))
+		FillRect(hDC, &rect, hBrush);
+#ifdef _DEBUG
+	GdiFlush();
+#endif
+
+	DeleteObject(hBrush);
+}
+
+void CConEmuMain::PaintCon(HDC hPaintDC)
 {
     if (ProgressBars)
         ProgressBars->OnTimer();
-    mp_VActive->Paint();
 
-//#ifdef _DEBUG
-//	if (GetKeyState(VK_SCROLL) & 1) {
-//		DebugStep(L"ConEmu: Sleeping in PaintCon for 1s");
-//		Sleep(1000);
-//		DebugStep(NULL);
-//	}
-//#endif
+	RECT rcClient = {0};
+	if (ghWndDC) {
+		GetClientRect(ghWndDC, &rcClient);
+		MapWindowPoints(ghWndDC, ghWnd, (LPPOINT)&rcClient, 2);
+	}
+
+	// если mp_VActive==NULL - будет просто выполнена заливка фоном.
+    mp_VActive->Paint(hPaintDC, rcClient);
+
+#ifdef _DEBUG
+	if (GetKeyState(VK_SCROLL) & 1) {
+		DebugStep(L"ConEmu: Sleeping in PaintCon for 1s");
+		Sleep(1000);
+		DebugStep(NULL);
+	}
+#endif
 }
 
 void CConEmuMain::RePaint()
 {
     TabBar.RePaint();
     m_Back.RePaint();
-    mp_VActive->Paint(); // если mp_VActive==NULL - будет просто выполнена заливка фоном.
+	HDC hDc = GetDC(ghWnd);
+    //mp_VActive->Paint(hDc); // если mp_VActive==NULL - будет просто выполнена заливка фоном.
+	PaintCon(hDc);
+	ReleaseDC(ghWnd, hDc);
 }
 
 void CConEmuMain::Update(bool isForce /*= false*/)
@@ -4656,7 +4730,8 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 
         //TODO: вроде бы иногда isSizing() не сбрасываетс€?
         //? может так: if (gSet.isDragEnabled & mouse.state)
-        if ((gSet.isDragEnabled & (mouse.state & (DRAG_L_ALLOWED|DRAG_R_ALLOWED)))!=0)
+        if (gSet.isDragEnabled & ((mouse.state & (DRAG_L_ALLOWED|DRAG_R_ALLOWED))!=0)
+			&& !isPictureView())
         {
 			if (mp_DragDrop==NULL) {
 				DebugStep(_T("DnD: Drag-n-Drop is null"));

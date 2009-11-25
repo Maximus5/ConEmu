@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="windows-1251"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9,00"
+	Version="9.00"
 	Name="ConEmuPlugin"
 	ProjectGUID="{21152801-8744-4787-83F4-BE4564A367B4}"
 	RootNamespace="ConEmuPlugin"
@@ -148,7 +148,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="version.lib"
-				OutputFile="\\MAXW7\FAR\FAR2.x64\Plugins\ConEmu\conemu.dll"
+				OutputFile="\\MAXW7\FAR\FAR2.x64\Plugins\ConEmu\conemu.x64.dll"
 				LinkIncremental="2"
 				GenerateManifest="true"
 				ModuleDefinitionFile="export.def"
@@ -311,7 +311,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="version.lib"
-				OutputFile="..\..\Release.x64\plugins\ConEmu\conemu.dll"
+				OutputFile="..\..\Release.x64\plugins\ConEmu\conemu.x64.dll"
 				LinkIncremental="1"
 				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"
@@ -469,7 +469,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="version.lib"
-				OutputFile="\\MAXW7\FAR\FAR2.x64\plugins\conEmu\conemu.dll"
+				OutputFile="\\MAXW7\FAR\FAR2.x64\plugins\conEmu\conemu.x64.dll"
 				LinkIncremental="2"
 				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"
@@ -626,7 +626,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="version.lib"
-				OutputFile="C:\Utils\Far.Test\plugins\conEmu\conemu.dll"
+				OutputFile="C:\Utils\Far.Test\plugins\conEmu\conemu.x64.dll"
 				LinkIncremental="2"
 				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"
@@ -704,7 +704,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="version.lib"
-				OutputFile="J:\Plugins\ConEmu\conemu.dll"
+				OutputFile="E:\Far\Plugins\ConEmu\conemu.dll"
 				LinkIncremental="2"
 				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"
@@ -783,7 +783,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="version.lib"
-				OutputFile="F:\VCProject\FarPlugin\#FAR175\plugins\conEmu\conemu.dll"
+				OutputFile="F:\VCProject\FarPlugin\#FAR175\plugins\conEmu\conemu.x64.dll"
 				LinkIncremental="2"
 				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"
@@ -942,7 +942,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="version.lib"
-				OutputFile="F:\VCProject\FarPlugin\#FAR180\plugins\ConEmu\conemu.dll"
+				OutputFile="F:\VCProject\FarPlugin\#FAR180\plugins\ConEmu\conemu.x64.dll"
 				LinkIncremental="1"
 				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"
@@ -1001,6 +1001,102 @@
 			<File
 				RelativePath=".\ConEmuPlugin789.cpp"
 				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|x64"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|x64"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="DebugA|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="DebugA|x64"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="DebugEEE|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="DebugEEE|x64"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug75|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug75|x64"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Instrument|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Instrument|x64"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath=".\ConEmuPlugin995.cpp"

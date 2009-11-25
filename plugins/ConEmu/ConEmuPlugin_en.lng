@@ -14,3 +14,7 @@
 "view"
 "{Temporary panel"
 "&7. Attach to ConEmu"
+"&8. Start ConEmu debug"
+"ConEmu plugin\nDebugger is already attached to current process\nOK"
+"ConEmu plugin\nDebugger is not available in terminal mode\nOK"
+"ConEmu plugin\nCan't create debugger process\nOK"

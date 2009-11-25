@@ -53,6 +53,8 @@ protected:
 	static WNDPROC _defaultTabProc;
 	static LRESULT CALLBACK BarProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 	static WNDPROC _defaultBarProc;
+	static LRESULT CALLBACK ReBarProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+	static WNDPROC _defaultReBarProc;
 	
 	//typedef union tag_FAR_WND_ID { 
 	//	struct {

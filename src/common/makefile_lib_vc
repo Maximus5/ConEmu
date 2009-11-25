@@ -1,0 +1,94 @@
+!if defined(AMD64) || "$(CPU)" == "AMD64"
+!undef AMD64
+!undef CPU
+AMD64=1
+CPU=AMD64
+!elseif defined(IA64) || "$(CPU)" == "IA64"
+!undef IA64
+!undef CPU
+IA64=1
+CPU=IA64
+!endif
+
+CC=$(_BIN_PATH_)cl.exe
+LIBR=$(_BIN_PATH_)lib.exe
+
+!ifdef AMD64
+OBJDIR = obj.64.vc
+DLLNAME = CE_CRT64.lib
+MASM=$(_BIN_PATH_)ml64.exe
+!elseif DEFINED(IA64)
+OBJDIR = obj.IA64.vc
+DLLNAME = CE_CRTIA64.lib
+!else
+OBJDIR = obj.32.vc
+DLLNAME = CE_CRT.lib
+MASM=$(_BIN_PATH_)ml.exe
+MASM_OPT=/coff
+!endif
+OUTDIR = ..
+
+!ifdef VC8
+COMPAT64=/Wp64
+NOWIN98=/OPT:NOWIN98
+!endif
+
+
+LINK_OBJS = \
+$(OBJDIR)\Common.obj \
+$(OBJDIR)\ConEmuCheck.obj
+
+CPP_BASE=$(MP) /nologo /c /Gy /J /Gr /GR- /GS- /D_CRT_SECURE_NO_DEPRECATE /EHs-c- /LD /Oi /O2 /W3 $(ENV_INC_OPT)
+!ifdef AMD64
+CPP_PROJ=$(CPP_BASE) /Oy /Zp8 $(COMPAT64)
+!elseif defined(IA64) 
+CPP_PROJ=$(CPP_BASE) /Zp8 $(COMPAT64)
+!else
+CPP_PROJ=$(CPP_BASE) /Oy
+!endif
+
+LINK_FLAGS=/nologo /nodefaultlib /out:"$(DLLNAME)"
+
+ALL: dirs $(DLLNAME) clean
+
+$(DLLNAME) : $(LINK_OBJS)
+!ifndef __MAKE__
+	@$(LIBR) @<<
+	$(LINK_FLAGS) $(LINK_OBJS)
+<<
+!else
+	@$(LIBR) @&&<
+	$(LINK_FLAGS) $(LINK_OBJS)
+<
+!endif
+
+!ifdef __MAKE__
+.path.c=.
+.path.cpp=.
+.path.h=.
+.path.hpp=.
+.path.asm=.
+!endif
+
+!ifndef __MAKE__
+.cpp{$(OBJDIR)}.obj::
+	@$(CC) @<<
+	$(CPP_PROJ) /DUNICODE /D_UNICODE /Fo"$(OBJDIR)\\" $<
+<<
+!else
+.cpp{$(OBJDIR)}.obj:
+	@$(CC) $(CPP_PROJ) /Fo"$(OBJDIR)\\" { $< }
+!endif
+
+$(OBJDIR)\Common.obj: Common.cpp common.hpp
+$(OBJDIR)\ConEmuCheck.obj: ConEmuCheck.cpp ConEmuCheck.h
+
+.PHONY: dirs
+dirs:
+	@if not exist "$(OBJDIR)\$(NULL)" mkdir "$(OBJDIR)"
+
+.PHONY: clean
+clean:
+	@echo final cleaning
+	@del $(OBJDIR)\*.obj
+	@rd $(OBJDIR)

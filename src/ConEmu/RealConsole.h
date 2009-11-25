@@ -195,6 +195,7 @@ public:
 	BOOL isMouseButtonDown();
 	void OnConsoleLangChange(DWORD_PTR dwNewKeybLayout);
 	DWORD GetConsoleStates();
+    void ChangeBufferHeightMode(BOOL abBufferHeight); // Вызывается из TabBar->ConEmu
 
 public:
     // Вызываются из CVirtualConsole
@@ -338,4 +339,6 @@ private:
 	BOOL mb_MouseButtonDown;
 	//
 	SHELLEXECUTEINFO *mp_sei;
+	//
+	HWND FindPicViewFrom(HWND hFrom);
 };

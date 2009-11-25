@@ -1,4 +1,3 @@
-LIBRARY	"ConEmu"
 EXPORTS
 	SetStartupInfoW      @1
 	GetPluginInfoW       @2

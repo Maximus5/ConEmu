@@ -14,6 +14,7 @@
 #define DEBUGSTRPKT(s) //DEBUGSTR(s)
 #define DEBUGSTRCON(s) //DEBUGSTR(s)
 #define DEBUGSTRLANG(s) //DEBUGSTR(s)// ; Sleep(2000)
+#define DEBUGSTRLOG(s) OutputDebugStringA(s)
 
 WARNING("При быстром наборе текста курсор часто 'замерзает' на одной из букв, но продолжает двигаться дальше");
 
@@ -604,6 +605,11 @@ void CRealConsole::SyncConsole2Window()
 
 	SetConsoleSize(newCon.right, newCon.bottom, 0/*Auto*/, 
 		(gSet.FarSyncSize && GetFarPID()) ? CECMD_SETSIZESYNC : CECMD_SETSIZE);
+
+	if (isActive() && gConEmu.isMainThread()) {
+		// Сразу обновить DC чтобы скорректировать Width & Height
+		mp_VCon->OnConsoleSizeChanged();
+	}
 }
 
 BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID)
@@ -2564,6 +2570,7 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 					pIn->StartStopRet.nHeight = cr16bit.Y;
             	} else {
 					pIn->StartStopRet.nWidth = con.m_sbi.dwSize.X;
+					//0x101 - запуск отладчика
 					if (nSubSystem != 0x100  // 0x100 - Аттач из фар-плагина
 						&& (con.bBufferHeight
 							|| (con.DefaultBufferHeight && bRunViaCmdExe)))
@@ -4102,11 +4109,17 @@ void CRealConsole::LogString(LPCSTR asText)
 {
     if (!this) return;
     if (!asText) return;
-    DWORD dwLen = strlen(asText);
-    if (dwLen)
-        WriteFile(mh_LogInput, asText, dwLen, &dwLen, 0);
-    WriteFile(mh_LogInput, "\r\n", 2, &dwLen, 0);
-    FlushFileBuffers(mh_LogInput);
+	if (mh_LogInput) {
+		DWORD dwLen = strlen(asText);
+		if (dwLen)
+			WriteFile(mh_LogInput, asText, dwLen, &dwLen, 0);
+		WriteFile(mh_LogInput, "\r\n", 2, &dwLen, 0);
+		FlushFileBuffers(mh_LogInput);
+	} else {
+		#ifdef _DEBUG
+			DEBUGSTRLOG(asText); DEBUGSTRLOG("\n");
+		#endif
+	}
 }
 
 void CRealConsole::LogInput(INPUT_RECORD* pRec)
@@ -5116,6 +5129,16 @@ CESERVER_REQ* CRealConsole::PopPacket()
     return pRet;
 }
 
+// Вызывается из TabBar->ConEmu
+void CRealConsole::ChangeBufferHeightMode(BOOL abBufferHeight)
+{
+	_ASSERTE(!mb_BuferModeChangeLocked);
+	BOOL lb = mb_BuferModeChangeLocked; mb_BuferModeChangeLocked = TRUE;
+	con.bBufferHeight = abBufferHeight;
+	SetConsoleSize(TextWidth(), TextHeight(), abBufferHeight ? con.nBufferHeight : 0, CECMD_SETSIZESYNC);
+	mb_BuferModeChangeLocked = lb;
+}
+
 void CRealConsole::SetBufferHeightMode(BOOL abBufferHeight, BOOL abLock/*=FALSE*/)
 {
     if (mb_BuferModeChangeLocked) {
@@ -5893,6 +5916,25 @@ void CRealConsole::UpdateFarSettings(DWORD anFarPID/*=0*/)
     free(pSetEnvVar); pSetEnvVar = NULL;
 }
 
+HWND CRealConsole::FindPicViewFrom(HWND hFrom)
+{
+	// !!! PicView может быть несколько, по каждому на открытый ФАР
+	HWND hPicView = NULL;
+
+	//hPictureView = FindWindowEx(ghWnd, NULL, L"FarPictureViewControlClass", NULL);
+	// Класс может быть как "FarPictureViewControlClass", так и "FarMultiViewControlClass"
+	// А вот заголовок у них пока один
+	while ((hPicView = FindWindowEx(hFrom, hPicView, NULL, L"PictureView")) != NULL) {
+		// Проверить на принадлежность фару
+		DWORD dwPID, dwTID;
+		dwTID = GetWindowThreadProcessId ( hPicView, &dwPID );
+		if (dwPID == mn_FarPID)
+			break;
+	}
+
+	return hPicView;
+}
+
 // Заголовок окна для PictureView вообще может пользователем настраиваться, так что
 // рассчитывать на него при определения "Просмотра" - нельзя
 HWND CRealConsole::isPictureView(BOOL abIgnoreNonModal/*=FALSE*/)
@@ -5904,24 +5946,26 @@ HWND CRealConsole::isPictureView(BOOL abIgnoreNonModal/*=FALSE*/)
         gConEmu.InvalidateAll();
     }
 
+	// !!! PicView может быть несколько, по каждому на открытый ФАР
     if (!hPictureView) {
         //hPictureView = FindWindowEx(ghWnd, NULL, L"FarPictureViewControlClass", NULL);
-        hPictureView = FindWindowEx(ghWnd, NULL, NULL, L"PictureView");
+        hPictureView = FindPicViewFrom(ghWnd);
         if (!hPictureView)
             //hPictureView = FindWindowEx(ghWndDC, NULL, L"FarPictureViewControlClass", NULL);
-            hPictureView = FindWindowEx(ghWndDC, NULL, NULL, L"PictureView");
+            hPictureView = FindPicViewFrom(ghWndDC);
         if (!hPictureView) { // FullScreen?
             //hPictureView = FindWindowEx(NULL, NULL, L"FarPictureViewControlClass", NULL);
-            hPictureView = FindWindowEx(NULL, NULL, NULL, L"PictureView");
+            hPictureView = FindPicViewFrom(NULL);
         }
-        if (hPictureView) {
-            // Проверить на принадлежность фару
-            DWORD dwPID, dwTID;
-            dwTID = GetWindowThreadProcessId ( hPictureView, &dwPID );
-            if (dwPID != mn_FarPID) {
-                hPictureView = NULL; mb_PicViewWasHidden = FALSE;
-            }
-        }
+		// Принадлежность процессу фара уже проверила сама FindPicViewFrom
+        //if (hPictureView) {
+        //    // Проверить на принадлежность фару
+        //    DWORD dwPID, dwTID;
+        //    dwTID = GetWindowThreadProcessId ( hPictureView, &dwPID );
+        //    if (dwPID != mn_FarPID) {
+        //        hPictureView = NULL; mb_PicViewWasHidden = FALSE;
+        //    }
+        //}
     }
 
     

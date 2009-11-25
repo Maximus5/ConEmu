@@ -27,7 +27,7 @@ CConEmuChild::~CConEmuChild()
 HWND CConEmuChild::Create()
 {
 	// »м€ класса - то же самое, что и у главного окна
-	DWORD style = WS_VISIBLE | WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
+	DWORD style = /*WS_VISIBLE |*/ WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
 	//RECT rc = gConEmu.DCClientRect();
 	RECT rcMain; GetClientRect(ghWnd, &rcMain);
 	RECT rc = gConEmu.CalcRect(CER_DC, rcMain, CER_MAINCLIENT);
@@ -97,7 +97,12 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 	case WM_XBUTTONDBLCLK:
     case WM_VSCROLL:
         // ¬с€ обработка в родителе
-        result = gConEmu.WndProc(hWnd, messg, wParam, lParam);
+		{
+			POINT pt = {LOWORD(lParam),HIWORD(lParam)};
+			MapWindowPoints(hWnd, ghWnd, &pt, 1);
+			lParam = MAKELONG(pt.x,pt.y);
+			result = gConEmu.WndProc(hWnd, messg, wParam, lParam);
+		}
         return result;
 
 	case WM_IME_NOTIFY:
@@ -165,6 +170,8 @@ LRESULT CConEmuChild::OnPaint()
     //if (gbInPaint)
 	//    break;
 
+	_ASSERT(FALSE);
+
 	//2009-09-28 может так (autotabs)
 	if (mb_DisableRedraw)
 		return 0;
@@ -203,7 +210,7 @@ LRESULT CConEmuChild::OnPaint()
 	}
 	if (!lbSkipDraw)
 	{
-		gConEmu.PaintCon();
+		//gConEmu.PaintCon();
 	}
 
 	Validate();
@@ -279,11 +286,15 @@ void CConEmuChild::Redraw()
 	} else {
 		DEBUGSTRDRAW(L" +++ RedrawWindow on DC window called\n");
 	}
-	#ifdef _DEBUG
-	BOOL lbRc =
-	#endif
-	RedrawWindow(ghWndDC, NULL, NULL,
-		RDW_INTERNALPAINT|RDW_NOERASE|RDW_UPDATENOW);
+	RECT rcClient; GetClientRect(ghWndDC, &rcClient);
+	MapWindowPoints(ghWndDC, ghWnd, (LPPOINT)&rcClient, 2);
+	InvalidateRect(ghWnd, &rcClient, FALSE);
+	gConEmu.OnPaint(0,0);
+	//#ifdef _DEBUG
+	//BOOL lbRc =
+	//#endif
+	//RedrawWindow(ghWnd, NULL, NULL,
+	//	RDW_INTERNALPAINT|RDW_NOERASE|RDW_UPDATENOW);
 
 	mb_RedrawPosted = FALSE; // „тобы другие нити могли сделать еще пост
 }
@@ -305,7 +316,10 @@ void CConEmuChild::Invalidate()
 		DEBUGSTRDRAW(L" +++ Invalidate on DC window called\n");
 		//mb_Invalidated = TRUE;
 		RECT rcClient; GetClientRect(ghWndDC, &rcClient);
-		InvalidateRect(ghWndDC, &rcClient, FALSE);
+		//InvalidateRect(ghWndDC, &rcClient, FALSE);
+		MapWindowPoints(ghWndDC, ghWnd, (LPPOINT)&rcClient, 2);
+		InvalidateRect(ghWnd, &rcClient, FALSE);
+
 		/*if (!mb_Invalidated) {
 			mb_Invalidated = TRUE;
 			PostMessage(ghWndDC, WM_PAINT, 0,0);
@@ -418,7 +432,7 @@ HWND CConEmuBack::Create()
 		return NULL;
 	}
 
-	DWORD style = WS_VISIBLE | WS_CHILD | WS_CLIPSIBLINGS ;
+	DWORD style = /*WS_VISIBLE |*/ WS_CHILD | WS_CLIPSIBLINGS ;
 	//RECT rc = gConEmu.ConsoleOffsetRect();
 	RECT rcClient; GetClientRect(ghWnd, &rcClient);
 	RECT rc = gConEmu.CalcRect(CER_BACK, rcClient, CER_MAINCLIENT);

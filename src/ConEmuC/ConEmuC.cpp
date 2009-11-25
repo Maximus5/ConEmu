@@ -167,6 +167,12 @@ BOOL FileExists(LPCWSTR asFile);
 extern bool GetImageSubsystem(const wchar_t *FileName,DWORD& ImageSubsystem);
 void SendStarted();
 BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount);
+typedef BOOL (WINAPI *FDebugActiveProcessStop)(DWORD dwProcessId);
+FDebugActiveProcessStop pfnDebugActiveProcessStop = NULL;
+typedef BOOL (WINAPI *FDebugSetProcessKillOnExit)(BOOL KillOnExit);
+FDebugSetProcessKillOnExit pfnDebugSetProcessKillOnExit = NULL;
+void ProcessDebugEvent();
+
 
 
 #else
@@ -204,6 +210,7 @@ DWORD   gnImageSubsystem = 0;
 HANDLE ghHeap = NULL; //HeapCreate(HEAP_GENERATE_EXCEPTIONS, nMinHeapSize, 0);
 #ifdef _DEBUG
 size_t gnHeapUsed = 0, gnHeapMax = 0;
+HANDLE ghFarInExecuteEvent;
 #endif
 
 enum tag_RunMode {
@@ -213,6 +220,7 @@ enum tag_RunMode {
 } gnRunMode = RM_UNDEFINED;
 
 BOOL gbNoCreateProcess = FALSE;
+BOOL gbDebugProcess = FALSE;
 int  gnCmdUnicodeMode = 0;
 BOOL gbRootIsCmdExe = TRUE;
 
@@ -225,7 +233,7 @@ BOOL gbRootIsCmdExe = TRUE;
 #endif
 
 struct tag_Srv {
-    HANDLE hRootProcess;    DWORD dwRootProcess;  DWORD dwRootStartTime;
+    HANDLE hRootProcess;    DWORD dwRootProcess;  DWORD dwRootStartTime; BOOL bDebuggerActive;
     //
     HANDLE hServerThread;   DWORD dwServerThreadId;
     HANDLE hRefreshThread;  DWORD dwRefreshThread;
@@ -355,6 +363,7 @@ BOOL gbInRecreateRoot = FALSE;
 #define CERR_HELPREQUESTED 118
 #define CERR_ATTACHFAILED 119
 #define CERR_RUNNEWCONSOLE 121
+#define CERR_CANTSTARTDEBUGGER 122
 
 
 int main()
@@ -396,6 +405,13 @@ int main()
     // PID
     gnSelfPID = GetCurrentProcessId();
     gdwMainThreadId = GetCurrentThreadId();
+
+#ifdef _DEBUG
+	// Это событие дергается в отладочной (мной поправленной) версии фара
+	wchar_t szEvtName[64]; wsprintf(szEvtName, L"FARconEXEC:%08X", (DWORD)ghConWnd);
+	ghFarInExecuteEvent = CreateEvent(0, TRUE, FALSE, szEvtName);
+#endif
+
     
 #ifdef SHOW_STARTED_MSGBOX
 	if (!IsDebuggerPresent()) {
@@ -576,7 +592,7 @@ int main()
 		// Скорее всего процесс в консольном списке уже будет
 		CheckProcessCount(TRUE);
 		#ifdef _DEBUG
-		if (srv.nProcessCount) {
+		if (srv.nProcessCount && !srv.bDebuggerActive) {
 			_ASSERTE(srv.pnProcesses[srv.nProcessCount-1]!=0);
 		}
 		#endif
@@ -597,7 +613,7 @@ int main()
         if (nWait != WAIT_OBJECT_0) { // Если таймаут
             iRc = srv.nProcessCount;
             // И процессов в консоли все еще нет
-            if (iRc == 1) {
+            if (iRc == 1 && !srv.bDebuggerActive) {
                 wprintf (L"Process was not attached to console. Is it GUI?\nCommand to be executed:\n%s\n", gpszRunCmd);
                 iRc = CERR_PROCESSTIMEOUT; goto wrap;
             }
@@ -620,8 +636,17 @@ wait:
     if (gnRunMode == RM_SERVER) {
         // По крайней мере один процесс в консоли запустился. Ждем пока в консоли не останется никого кроме нас
 		nWait = WAIT_TIMEOUT;
-        while (nWait == WAIT_TIMEOUT)
-			nWait = WaitForSingleObject(ghFinalizeEvent, 10);
+		if (!srv.bDebuggerActive) {
+	        while (nWait == WAIT_TIMEOUT) {
+				nWait = WaitForSingleObject(ghFinalizeEvent, 10);
+			}
+		} else {
+			while (nWait == WAIT_TIMEOUT) {
+				ProcessDebugEvent();
+				nWait = WaitForSingleObject(ghFinalizeEvent, 0);
+			}
+			gbAlwaysConfirmExit = TRUE;
+		}
 		#ifdef _DEBUG
 		if (nWait == WAIT_OBJECT_0) {
 			DEBUGSTR(L"*** FinilizeEvent was set!\n");
@@ -683,7 +708,7 @@ wrap:
         ExitWaitForKey(VK_RETURN, pszMsg, TRUE, lbDontShowConsole);
         if (iRc == CERR_PROCESSTIMEOUT) {
             int nCount = srv.nProcessCount;
-            if (nCount > 1) {
+            if (nCount > 1 || srv.bDebuggerActive) {
                 // Процесс таки запустился!
                 goto wait;
             }
@@ -724,6 +749,10 @@ wrap:
         //DeleteFile(wpszLogSizeFile);
         Free(wpszLogSizeFile); wpszLogSizeFile = NULL;
     }
+
+#ifdef _DEBUG
+	SafeCloseHandle(ghFarInExecuteEvent);
+#endif
     
     if (gpszRunCmd) { delete gpszRunCmd; gpszRunCmd = NULL; }
 
@@ -986,6 +1015,16 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 				return CERR_CARGUMENT;
 			}
         } else
+
+        if (wcsncmp(szArg, L"/DEBUGPID=", 10)==0) {
+        	gnRunMode = RM_SERVER;
+        	gbNoCreateProcess = gbDebugProcess = TRUE;
+			srv.dwRootProcess = _wtol(szArg+10);
+			if (srv.dwRootProcess == 0) {
+				wprintf (L"Debug of process was requested, but invalid PID specified:\n%s\n", GetCommandLineW());
+				return CERR_CARGUMENT;
+			}
+        } else
         
 		if (wcscmp(szArg, L"/A")==0 || wcscmp(szArg, L"/a")==0) {
 			gnCmdUnicodeMode = 1;
@@ -1005,36 +1044,57 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
         }
     }
     
-    if (gnRunMode == RM_SERVER && gbNoCreateProcess && gbAttachMode) {
-		if (pfnGetConsoleProcessList==NULL) {
-            wprintf (L"Attach to GUI was requested, but required WinXP or higher:\n%s\n", GetCommandLineW());
-            return CERR_CARGUMENT;
-		}
-		DWORD nProcesses[10];
-    	DWORD nProcCount = pfnGetConsoleProcessList ( nProcesses, 10 );
-    	if (nProcCount < 2) {
-            wprintf (L"Attach to GUI was requested, but there is no console processes:\n%s\n", GetCommandLineW());
-            return CERR_CARGUMENT;
-    	}
-    	// Если cmd.exe запущен из cmd.exe (в консоли уже больше двух процессов) - ничего не делать
-    	if (nProcCount > 2) {
-    		// И ругаться только под отладчиком
-    		wchar_t szProc[128] ={0}, szTmp[10]; //wsprintfW(szProc, L"%i, %i, %i", nProcesses[0], nProcesses[1], nProcesses[2]);
-    		for (DWORD n=0; n<nProcCount; n++) {
-    			if (n) lstrcatW(szProc, L", ");
-    			lstrcatW(szProc, _ltow(nProcesses[0], szTmp, 10));
+    if (gnRunMode == RM_SERVER) {
+    	if (gbDebugProcess) {
+    		if (!DebugActiveProcess(srv.dwRootProcess)) {
+    			DWORD dwErr = GetLastError();
+    			wprintf(L"Can't start debugger! ErrCode=0x%08X\n", dwErr);
+    			return CERR_CANTSTARTDEBUGGER;
     		}
-    		PRINT_COMSPEC(L"Attach to GUI was requested, but there is more then 2 console processes: %s\n", szProc);
-    		return CERR_CARGUMENT;
-    	}
+    		pfnDebugActiveProcessStop = (FDebugActiveProcessStop)GetProcAddress(GetModuleHandle(L"kernel32.dll"),"DebugActiveProcessStop");
+    		pfnDebugSetProcessKillOnExit = (FDebugSetProcessKillOnExit)GetProcAddress(GetModuleHandle(L"kernel32.dll"),"DebugSetProcessKillOnExit");
+    		if (pfnDebugSetProcessKillOnExit) pfnDebugSetProcessKillOnExit(FALSE/*KillOnExit*/);
+    		srv.bDebuggerActive = TRUE;
+    	
+	        wchar_t* pszNewCmd = new wchar_t[1];
+	        if (!pszNewCmd) {
+	            wprintf (L"Can't allocate 1 wchar!\n");
+	            return CERR_NOTENOUGHMEM1;
+	        }
+	        pszNewCmd[0] = 0;
+	        return 0;
+    	} else
+    	if (gbNoCreateProcess && gbAttachMode) {
+			if (pfnGetConsoleProcessList==NULL) {
+	            wprintf (L"Attach to GUI was requested, but required WinXP or higher:\n%s\n", GetCommandLineW());
+	            return CERR_CARGUMENT;
+			}
+			DWORD nProcesses[10];
+	    	DWORD nProcCount = pfnGetConsoleProcessList ( nProcesses, 10 );
+	    	if (nProcCount < 2) {
+	            wprintf (L"Attach to GUI was requested, but there is no console processes:\n%s\n", GetCommandLineW());
+	            return CERR_CARGUMENT;
+	    	}
+	    	// Если cmd.exe запущен из cmd.exe (в консоли уже больше двух процессов) - ничего не делать
+	    	if (nProcCount > 2) {
+	    		// И ругаться только под отладчиком
+	    		wchar_t szProc[128] ={0}, szTmp[10]; //wsprintfW(szProc, L"%i, %i, %i", nProcesses[0], nProcesses[1], nProcesses[2]);
+	    		for (DWORD n=0; n<nProcCount; n++) {
+	    			if (n) lstrcatW(szProc, L", ");
+	    			lstrcatW(szProc, _ltow(nProcesses[0], szTmp, 10));
+	    		}
+	    		PRINT_COMSPEC(L"Attach to GUI was requested, but there is more then 2 console processes: %s\n", szProc);
+	    		return CERR_CARGUMENT;
+	    	}
 
-        wchar_t* pszNewCmd = new wchar_t[1];
-        if (!pszNewCmd) {
-            wprintf (L"Can't allocate 1 wchar!\n");
-            return CERR_NOTENOUGHMEM1;
+	        wchar_t* pszNewCmd = new wchar_t[1];
+	        if (!pszNewCmd) {
+	            wprintf (L"Can't allocate 1 wchar!\n");
+	            return CERR_NOTENOUGHMEM1;
+	        }
+	        pszNewCmd[0] = 0;
+	        return 0;
         }
-        pszNewCmd[0] = 0;
-        return 0;
     }
 
     if (iRc != 0) {
@@ -1537,6 +1597,11 @@ void SendStarted()
 		gnImageSubsystem = 0;
         LPCWSTR pszTemp = gpszRunCmd;
         wchar_t lsRoot[MAX_PATH+1] = {0};
+        if (gnRunMode == RM_SERVER && srv.bDebuggerActive) {
+			// "Отладчик"
+			gnImageSubsystem = 0x101;
+			gbRootIsCmdExe = TRUE; // Чтобы буфер появился
+        } else
 		if (!gpszRunCmd) {
 			// Аттач из фар-плагина
 			gnImageSubsystem = 0x100;
@@ -1569,8 +1634,9 @@ void SendStarted()
             gcrBufferSize.X = (SHORT)pOut->StartStopRet.nWidth;
             gcrBufferSize.Y = (SHORT)pOut->StartStopRet.nHeight;
 			gbParmBufferSize = TRUE;
-
+			
             if (gnRunMode == RM_SERVER) {
+            	if (srv.bDebuggerActive && !gnBufferHeight) gnBufferHeight = 1000;
             	SMALL_RECT rcNil = {0};
             	SetConsoleSize(gnBufferHeight, gcrBufferSize, rcNil, "::SendStarted");
             } else
@@ -1902,6 +1968,7 @@ int ServerInit()
 	}
     
     srv.nMaxFPS = 10;
+
     
     //if (hKernel) {
     //    pfnGetConsoleKeyboardLayoutName = (FGetConsoleKeyboardLayoutName)GetProcAddress (hKernel, "GetConsoleKeyboardLayoutNameW");
@@ -1925,7 +1992,7 @@ int ServerInit()
 	CheckProcessCount(TRUE); // Сначала добавит себя
 	// в принципе, серверный режим может быть вызван из фара, чтобы подцепиться к GUI 
 	// но больше двух процессов в консоли не ожидается!
-	_ASSERTE(srv.nProcessCount<=2); 
+	_ASSERTE(srv.bDebuggerActive || srv.nProcessCount<=2); 
 
 
 	// Запустить нить обработки событий (клавиатура, мышь, и пр.)
@@ -1982,20 +2049,22 @@ int ServerInit()
 
 
     if (gbNoCreateProcess && gbAttachMode) {
-    	if (!IsWindowVisible(ghConWnd)) {
+    	if (!srv.bDebuggerActive && !IsWindowVisible(ghConWnd)) {
 			PRINT_COMSPEC(L"Console windows is not visible. Attach is unavailable. Exiting...\n", 0);
 			gbAlwaysConfirmExit = FALSE;
 			srv.nProcessStartTick = GetTickCount() - 2*CHECK_ROOTSTART_TIMEOUT;
 			return CERR_RUNNEWCONSOLE;
     	}
     	
-		if (srv.dwRootProcess == 0) {
+		if (srv.dwRootProcess == 0 && !srv.bDebuggerActive) {
     		// Нужно попытаться определить PID корневого процесса.
     		// Родительским может быть cmd (comspec, запущенный из FAR)
     		DWORD dwParentPID = 0, dwFarPID = 0;
     		DWORD dwServerPID = 0; // Вдруг в этой консоли уже есть сервер?
+    		
+    		_ASSERTE(!srv.bDebuggerActive);
 	    	
-    		if (srv.nProcessCount >= 2) {
+    		if (srv.nProcessCount >= 2 && !srv.bDebuggerActive) {
 				HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS,0);
 				if (hSnap != INVALID_HANDLE_VALUE) {
 					PROCESSENTRY32 prc = {sizeof(PROCESSENTRY32)};
@@ -2100,7 +2169,10 @@ int ServerInit()
 
 		} else {
     		// Нужно открыть HANDLE корневого процесса
-    		srv.hRootProcess = OpenProcess(PROCESS_QUERY_INFORMATION|SYNCHRONIZE, FALSE, srv.dwRootProcess);
+    		DWORD dwFlags = PROCESS_QUERY_INFORMATION|SYNCHRONIZE;
+    		if (srv.bDebuggerActive)
+    			dwFlags |= PROCESS_VM_READ;
+    		srv.hRootProcess = OpenProcess(dwFlags, FALSE, srv.dwRootProcess);
     		if (!srv.hRootProcess) {
     			dwErr = GetLastError();
     			wchar_t* lpMsgBuf = NULL;
@@ -2112,6 +2184,12 @@ int ServerInit()
 	            
 				if (lpMsgBuf) LocalFree(lpMsgBuf);
 				return CERR_CREATEPROCESS;
+    		}
+    		
+    		if (srv.bDebuggerActive) {
+    			wchar_t szTitle[64];
+    			wsprintf(szTitle, L"Debug PID=%i", srv.dwRootProcess);
+    			SetConsoleTitleW(szTitle);
     		}
 		}
     }
@@ -2282,6 +2360,12 @@ void ServerDone(int aiRc)
 	// На всякий случай - выставим событие
 	if (ghExitEvent) SetEvent(ghExitEvent);
 
+	// Остановить отладчик, иначе отлаживаемый процесс тоже схлопнется	
+    if (srv.bDebuggerActive) {
+    	if (pfnDebugActiveProcessStop) pfnDebugActiveProcessStop(srv.dwRootProcess);
+    	srv.bDebuggerActive = FALSE;
+    }
+
 	// Пошлем события сразу во все нити, а потом будем ждать
 	if (srv.dwWinEventThread && srv.hWinEventThread)
 		PostThreadMessage(srv.dwWinEventThread, WM_QUIT, 0, 0);
@@ -2385,6 +2469,7 @@ void ServerDone(int aiRc)
 
     SafeCloseHandle(srv.hRootProcess); 
 
+
 	if (srv.csProc) {
 		delete srv.csProc;
 		srv.csProc = NULL;
@@ -2419,6 +2504,18 @@ BOOL CheckProcessCount(BOOL abForce/*=FALSE*/)
 	if (srv.nProcessCount == 0) {
 		srv.pnProcesses[0] = gnSelfPID;
 		srv.nProcessCount = 1;
+	}
+
+	if (srv.bDebuggerActive) {
+		//if (srv.hRootProcess) {
+		//	if (WaitForSingleObject(srv.hRootProcess, 0) == WAIT_OBJECT_0) {
+		//		srv.nProcessCount = 1;
+		//		return TRUE;
+		//	}
+		//}
+		//srv.pnProcesses[1] = srv.dwRootProcess;
+		//srv.nProcessCount = 2;
+		return FALSE;
 	}
 
 	if (!pfnGetConsoleProcessList) {
@@ -2676,6 +2773,230 @@ void CheckConEmuHwnd()
         //_ASSERTE(ghConEmuWnd!=NULL);
     }
 }
+
+void ProcessDebugEvent()
+{
+	static wchar_t wszDbgText[1024];
+	static char szDbgText[1024];
+	BOOL lbNonContinuable = FALSE;
+
+	DEBUG_EVENT evt = {0};
+	if (WaitForDebugEvent(&evt,10)) {
+		lbNonContinuable = FALSE;
+		
+		switch (evt.dwDebugEventCode) {
+		case CREATE_PROCESS_DEBUG_EVENT:
+		//3 Reports a create-process debugging event. The value of u.CreateProcessInfo specifies a CREATE_PROCESS_DEBUG_INFO structure.
+		wprintf(L"{%i.%i} CREATE_PROCESS_DEBUG_EVENT\n", evt.dwProcessId,evt.dwThreadId);
+		break;
+		
+		case CREATE_THREAD_DEBUG_EVENT:
+		//2 Reports a create-thread debugging event. The value of u.CreateThread specifies a CREATE_THREAD_DEBUG_INFO structure.
+		wprintf(L"{%i.%i} CREATE_THREAD_DEBUG_EVENT\n", evt.dwProcessId,evt.dwThreadId);
+		break;
+		
+		case EXCEPTION_DEBUG_EVENT:
+		//1 Reports an exception debugging event. The value of u.Exception specifies an EXCEPTION_DEBUG_INFO structure.
+		{
+			lbNonContinuable = (evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE)==EXCEPTION_NONCONTINUABLE;
+			switch(evt.u.Exception.ExceptionRecord.ExceptionCode)
+			{
+			case EXCEPTION_ACCESS_VIOLATION: // The thread tried to read from or write to a virtual address for which it does not have the appropriate access.
+			if (evt.u.Exception.ExceptionRecord.NumberParameters>=2) {
+				wprintf(L"{%i.%i} EXCEPTION_ACCESS_VIOLATION at 0x%08X flags 0x%08X%s %s of 0x%08X\n", evt.dwProcessId,evt.dwThreadId,
+					evt.u.Exception.ExceptionRecord.ExceptionAddress,
+					evt.u.Exception.ExceptionRecord.ExceptionFlags,
+					((evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE) ? L"(EXCEPTION_NONCONTINUABLE)" : L""),
+					((evt.u.Exception.ExceptionRecord.ExceptionInformation[0]==0) ? L"Read" :
+					(evt.u.Exception.ExceptionRecord.ExceptionInformation[0]==1) ? L"Write" :
+					(evt.u.Exception.ExceptionRecord.ExceptionInformation[0]==8) ? L"DEP" : L"???"),
+					evt.u.Exception.ExceptionRecord.ExceptionInformation[1]
+					);
+			} else {
+				wprintf(L"{%i.%i} EXCEPTION_ACCESS_VIOLATION at 0x%08X flags 0x%08X%s\n", evt.dwProcessId,evt.dwThreadId,
+					evt.u.Exception.ExceptionRecord.ExceptionAddress,
+					evt.u.Exception.ExceptionRecord.ExceptionFlags,
+					(evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE) ? L"(EXCEPTION_NONCONTINUABLE)" : L"");
+			}
+			break; 
+			case EXCEPTION_ARRAY_BOUNDS_EXCEEDED: // The thread tried to access an array element that is out of bounds and the underlying hardware supports bounds checking.
+				wprintf(L"{%i.%i} EXCEPTION_ARRAY_BOUNDS_EXCEEDED at 0x%08X flags 0x%08X%s\n", evt.dwProcessId,evt.dwThreadId,
+					evt.u.Exception.ExceptionRecord.ExceptionAddress,
+					evt.u.Exception.ExceptionRecord.ExceptionFlags,
+					(evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE) ? L"(EXCEPTION_NONCONTINUABLE)" : L"");
+			break;
+			case EXCEPTION_BREAKPOINT: // A breakpoint was encountered.
+				wprintf(L"{%i.%i} EXCEPTION_BREAKPOINT at 0x%08X flags 0x%08X%s\n", evt.dwProcessId,evt.dwThreadId,
+					evt.u.Exception.ExceptionRecord.ExceptionAddress,
+					evt.u.Exception.ExceptionRecord.ExceptionFlags,
+					(evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE) ? L"(EXCEPTION_NONCONTINUABLE)" : L"");
+			break;
+			case EXCEPTION_DATATYPE_MISALIGNMENT: // The thread tried to read or write data that is misaligned on hardware that does not provide alignment. For example, 16-bit values must be aligned on 2-byte boundaries; 32-bit values on 4-byte boundaries, and so on.
+				wprintf(L"{%i.%i} EXCEPTION_DATATYPE_MISALIGNMENT at 0x%08X flags 0x%08X%s\n", evt.dwProcessId,evt.dwThreadId,
+					evt.u.Exception.ExceptionRecord.ExceptionAddress,
+					evt.u.Exception.ExceptionRecord.ExceptionFlags,
+					(evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE) ? L"(EXCEPTION_NONCONTINUABLE)" : L"");
+			break;
+			case EXCEPTION_FLT_DENORMAL_OPERAND: // One of the operands in a floating-point operation is denormal. A denormal value is one that is too small to represent as a standard floating-point value.
+				wprintf(L"{%i.%i} EXCEPTION_FLT_DENORMAL_OPERAND at 0x%08X flags 0x%08X%s\n", evt.dwProcessId,evt.dwThreadId,
+					evt.u.Exception.ExceptionRecord.ExceptionAddress,
+					evt.u.Exception.ExceptionRecord.ExceptionFlags,
+					(evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE) ? L"(EXCEPTION_NONCONTINUABLE)" : L"");
+			break;
+			case EXCEPTION_FLT_DIVIDE_BY_ZERO: // The thread tried to divide a floating-point value by a floating-point divisor of zero.
+				wprintf(L"{%i.%i} EXCEPTION_FLT_DIVIDE_BY_ZERO at 0x%08X flags 0x%08X%s\n", evt.dwProcessId,evt.dwThreadId,
+					evt.u.Exception.ExceptionRecord.ExceptionAddress,
+					evt.u.Exception.ExceptionRecord.ExceptionFlags,
+					(evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE) ? L"(EXCEPTION_NONCONTINUABLE)" : L"");
+			break;
+			case EXCEPTION_FLT_INEXACT_RESULT: // The result of a floating-point operation cannot be represented exactly as a decimal fraction.
+				wprintf(L"{%i.%i} EXCEPTION_FLT_INEXACT_RESULT at 0x%08X flags 0x%08X%s\n", evt.dwProcessId,evt.dwThreadId,
+					evt.u.Exception.ExceptionRecord.ExceptionAddress,
+					evt.u.Exception.ExceptionRecord.ExceptionFlags,
+					(evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE) ? L"(EXCEPTION_NONCONTINUABLE)" : L"");
+			break;
+			case EXCEPTION_FLT_INVALID_OPERATION: // This exception represents any floating-point exception not included in this list.
+				wprintf(L"{%i.%i} EXCEPTION_FLT_INVALID_OPERATION at 0x%08X flags 0x%08X%s\n", evt.dwProcessId,evt.dwThreadId,
+					evt.u.Exception.ExceptionRecord.ExceptionAddress,
+					evt.u.Exception.ExceptionRecord.ExceptionFlags,
+					(evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE) ? L"(EXCEPTION_NONCONTINUABLE)" : L"");
+			break;
+			case EXCEPTION_FLT_OVERFLOW: // The exponent of a floating-point operation is greater than the magnitude allowed by the corresponding type.
+				wprintf(L"{%i.%i} EXCEPTION_FLT_OVERFLOW at 0x%08X flags 0x%08X%s\n", evt.dwProcessId,evt.dwThreadId,
+					evt.u.Exception.ExceptionRecord.ExceptionAddress,
+					evt.u.Exception.ExceptionRecord.ExceptionFlags,
+					(evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE) ? L"(EXCEPTION_NONCONTINUABLE)" : L"");
+			break;
+			case EXCEPTION_FLT_STACK_CHECK: // The stack overflowed or underflowed as the result of a floating-point operation.
+				wprintf(L"{%i.%i} EXCEPTION_FLT_STACK_CHECK at 0x%08X flags 0x%08X%s\n", evt.dwProcessId,evt.dwThreadId,
+					evt.u.Exception.ExceptionRecord.ExceptionAddress,
+					evt.u.Exception.ExceptionRecord.ExceptionFlags,
+					(evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE) ? L"(EXCEPTION_NONCONTINUABLE)" : L"");
+			break;
+			case EXCEPTION_FLT_UNDERFLOW: // The exponent of a floating-point operation is less than the magnitude allowed by the corresponding type.
+				wprintf(L"{%i.%i} EXCEPTION_FLT_UNDERFLOW at 0x%08X flags 0x%08X%s\n", evt.dwProcessId,evt.dwThreadId,
+					evt.u.Exception.ExceptionRecord.ExceptionAddress,
+					evt.u.Exception.ExceptionRecord.ExceptionFlags,
+					(evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE) ? L"(EXCEPTION_NONCONTINUABLE)" : L"");
+			break;
+			case EXCEPTION_ILLEGAL_INSTRUCTION: // The thread tried to execute an invalid instruction.
+				wprintf(L"{%i.%i} EXCEPTION_ILLEGAL_INSTRUCTION at 0x%08X flags 0x%08X%s\n", evt.dwProcessId,evt.dwThreadId,
+					evt.u.Exception.ExceptionRecord.ExceptionAddress,
+					evt.u.Exception.ExceptionRecord.ExceptionFlags,
+					(evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE) ? L"(EXCEPTION_NONCONTINUABLE)" : L"");
+			break;
+			case EXCEPTION_IN_PAGE_ERROR: // The thread tried to access a page that was not present, and the system was unable to load the page. For example, this exception might occur if a network connection is lost while running a program over the network.
+				wprintf(L"{%i.%i} EXCEPTION_IN_PAGE_ERROR at 0x%08X flags 0x%08X%s\n", evt.dwProcessId,evt.dwThreadId,
+					evt.u.Exception.ExceptionRecord.ExceptionAddress,
+					evt.u.Exception.ExceptionRecord.ExceptionFlags,
+					(evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE) ? L"(EXCEPTION_NONCONTINUABLE)" : L"");
+			break;
+			case EXCEPTION_INT_DIVIDE_BY_ZERO: // The thread tried to divide an integer value by an integer divisor of zero.
+				wprintf(L"{%i.%i} EXCEPTION_INT_DIVIDE_BY_ZERO at 0x%08X flags 0x%08X%s\n", evt.dwProcessId,evt.dwThreadId,
+					evt.u.Exception.ExceptionRecord.ExceptionAddress,
+					evt.u.Exception.ExceptionRecord.ExceptionFlags,
+					(evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE) ? L"(EXCEPTION_NONCONTINUABLE)" : L"");
+			break;
+			case EXCEPTION_INT_OVERFLOW: // The result of an integer operation caused a carry out of the most significant bit of the result.
+				wprintf(L"{%i.%i} EXCEPTION_INT_OVERFLOW at 0x%08X flags 0x%08X%s\n", evt.dwProcessId,evt.dwThreadId,
+					evt.u.Exception.ExceptionRecord.ExceptionAddress,
+					evt.u.Exception.ExceptionRecord.ExceptionFlags,
+					(evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE) ? L"(EXCEPTION_NONCONTINUABLE)" : L"");
+			break;
+			case EXCEPTION_INVALID_DISPOSITION: // An exception handler returned an invalid disposition to the exception dispatcher. Programmers using a high-level language such as C should never encounter this exception.
+				wprintf(L"{%i.%i} EXCEPTION_INVALID_DISPOSITION at 0x%08X flags 0x%08X%s\n", evt.dwProcessId,evt.dwThreadId,
+					evt.u.Exception.ExceptionRecord.ExceptionAddress,
+					evt.u.Exception.ExceptionRecord.ExceptionFlags,
+					(evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE) ? L"(EXCEPTION_NONCONTINUABLE)" : L"");
+			break;
+			case EXCEPTION_NONCONTINUABLE_EXCEPTION: // The thread tried to continue execution after a noncontinuable exception occurred.
+				wprintf(L"{%i.%i} EXCEPTION_NONCONTINUABLE_EXCEPTION at 0x%08X flags 0x%08X%s\n", evt.dwProcessId,evt.dwThreadId,
+					evt.u.Exception.ExceptionRecord.ExceptionAddress,
+					evt.u.Exception.ExceptionRecord.ExceptionFlags,
+					(evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE) ? L"(EXCEPTION_NONCONTINUABLE)" : L"");
+			break;
+			case EXCEPTION_PRIV_INSTRUCTION: // The thread tried to execute an instruction whose operation is not allowed in the current machine mode.
+				wprintf(L"{%i.%i} EXCEPTION_PRIV_INSTRUCTION at 0x%08X flags 0x%08X%s\n", evt.dwProcessId,evt.dwThreadId,
+					evt.u.Exception.ExceptionRecord.ExceptionAddress,
+					evt.u.Exception.ExceptionRecord.ExceptionFlags,
+					(evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE) ? L"(EXCEPTION_NONCONTINUABLE)" : L"");
+			break;
+			case EXCEPTION_SINGLE_STEP: // A trace trap or other single-instruction mechanism signaled that one instruction has been executed.
+				wprintf(L"{%i.%i} EXCEPTION_SINGLE_STEP at 0x%08X flags 0x%08X%s\n", evt.dwProcessId,evt.dwThreadId,
+					evt.u.Exception.ExceptionRecord.ExceptionAddress,
+					evt.u.Exception.ExceptionRecord.ExceptionFlags,
+					(evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE) ? L"(EXCEPTION_NONCONTINUABLE)" : L"");
+			break;
+			case EXCEPTION_STACK_OVERFLOW: // The thread used up its stack.
+				wprintf(L"{%i.%i} EXCEPTION_STACK_OVERFLOW at 0x%08X flags 0x%08X%s\n", evt.dwProcessId,evt.dwThreadId,
+					evt.u.Exception.ExceptionRecord.ExceptionAddress,
+					evt.u.Exception.ExceptionRecord.ExceptionFlags,
+					(evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE) ? L"(EXCEPTION_NONCONTINUABLE)" : L"");
+			break;
+			default:
+			wprintf(L"{%i.%i} Exception 0x%08X at 0x%08X flags 0x%08X%s\n", evt.dwProcessId,evt.dwThreadId,
+				evt.u.Exception.ExceptionRecord.ExceptionCode,
+				evt.u.Exception.ExceptionRecord.ExceptionAddress,
+				evt.u.Exception.ExceptionRecord.ExceptionFlags,
+				(evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE) ? L"(EXCEPTION_NONCONTINUABLE)" : L"");
+			}
+		}
+		break;
+		
+		case EXIT_PROCESS_DEBUG_EVENT:
+		//5 Reports an exit-process debugging event. The value of u.ExitProcess specifies an EXIT_PROCESS_DEBUG_INFO structure.
+		wprintf(L"{%i.%i} EXIT_PROCESS_DEBUG_EVENT\n", evt.dwProcessId,evt.dwThreadId);
+		break;
+		
+		case EXIT_THREAD_DEBUG_EVENT:
+		//4 Reports an exit-thread debugging event. The value of u.ExitThread specifies an EXIT_THREAD_DEBUG_INFO structure.
+		wprintf(L"{%i.%i} EXIT_THREAD_DEBUG_EVENT\n", evt.dwProcessId,evt.dwThreadId);
+		break;
+		
+		case LOAD_DLL_DEBUG_EVENT:
+		//6 Reports a load-dynamic-link-library (DLL) debugging event. The value of u.LoadDll specifies a LOAD_DLL_DEBUG_INFO structure.
+		wprintf(L"{%i.%i} LOAD_DLL_DEBUG_EVENT\n", evt.dwProcessId,evt.dwThreadId);
+		break;
+		
+		case OUTPUT_DEBUG_STRING_EVENT:
+		//8 Reports an output-debugging-string debugging event. The value of u.DebugString specifies an OUTPUT_DEBUG_STRING_INFO structure.
+		{
+			wszDbgText[0] = 0;
+			if (evt.u.DebugString.nDebugStringLength >= 1024) evt.u.DebugString.nDebugStringLength = 1023;
+			DWORD nRead = 0;
+			if (evt.u.DebugString.fUnicode) {
+				if (!ReadProcessMemory(srv.hRootProcess, evt.u.DebugString.lpDebugStringData, wszDbgText, 2*evt.u.DebugString.nDebugStringLength, &nRead))
+					lstrcpy(wszDbgText, L"???");
+				else
+					wszDbgText[min(1023,nRead+1)] = 0;
+			} else {
+				if (!ReadProcessMemory(srv.hRootProcess, evt.u.DebugString.lpDebugStringData, szDbgText, evt.u.DebugString.nDebugStringLength, &nRead))
+					lstrcpy(wszDbgText, L"???");
+				else {
+					szDbgText[min(1023,nRead+1)] = 0;
+					MultiByteToWideChar(CP_ACP, 0, szDbgText, -1, wszDbgText, 1024);
+				}
+			}
+			wprintf(L"{%i.%i} %s\n", evt.dwProcessId,evt.dwThreadId, wszDbgText);
+		}
+		break;
+		
+		case RIP_EVENT:
+		//9 Reports a RIP-debugging event (system debugging error). The value of u.RipInfo specifies a RIP_INFO structure.
+		wprintf(L"{%i.%i} RIP_EVENT\n", evt.dwProcessId,evt.dwThreadId);
+		break;
+		
+		case UNLOAD_DLL_DEBUG_EVENT:
+		//7 Reports an unload-DLL debugging event. The value of u.UnloadDll specifies an UNLOAD_DLL_DEBUG_INFO structure.
+		wprintf(L"{%i.%i} UNLOAD_DLL_DEBUG_EVENT\n", evt.dwProcessId,evt.dwThreadId);
+		break;
+		}
+		
+		// Продолжить отлаживаемый процесс
+		ContinueDebugEvent(evt.dwProcessId, evt.dwThreadId, DBG_EXCEPTION_NOT_HANDLED);
+	}
+}
+
 
 
 
@@ -3680,9 +4001,10 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 
 		case CECMD_POSTCONMSG:
 		{
+			#ifdef _DEBUG
 			WPARAM wParam = (WPARAM)in.Msg.wParam;
 			LPARAM lParam = (LPARAM)in.Msg.lParam;
-			#ifdef _DEBUG
+			
 			if (in.Msg.nMsg == WM_INPUTLANGCHANGE || in.Msg.nMsg == WM_INPUTLANGCHANGEREQUEST) {
 				unsigned __int64 l = lParam;
 				wchar_t szDbg[255];
@@ -5146,6 +5468,18 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
     _ASSERTE(ghConWnd);
     if (!ghConWnd) return FALSE;
 
+#ifdef _DEBUG
+	if (gnRunMode != RM_SERVER || !srv.bDebuggerActive)
+	{
+		BOOL bFarInExecute = WaitForSingleObject(ghFarInExecuteEvent, 0) == WAIT_OBJECT_0;
+		if (BufferHeight) {
+			if (!bFarInExecute) {
+				_ASSERTE(BufferHeight && bFarInExecute);
+			}
+		}
+	}
+#endif
+
     //CSection cs(NULL,NULL);
     MSectionLock CSCS;
     if (gnRunMode == RM_SERVER)
@@ -5264,6 +5598,12 @@ BOOL WINAPI HandlerRoutine(DWORD dwCtrlType)
 	if (dwCtrlType >= CTRL_CLOSE_EVENT && dwCtrlType <= CTRL_SHUTDOWN_EVENT) {
     	PRINT_COMSPEC(L"Console about to be closed\n", 0);
 		gbInShutdown = TRUE;
+		
+		// Остановить отладчик, иначе отлаживаемый процесс тоже схлопнется	
+	    if (srv.bDebuggerActive) {
+	    	if (pfnDebugActiveProcessStop) pfnDebugActiveProcessStop(srv.dwRootProcess);
+	    	srv.bDebuggerActive = FALSE;
+	    }
 	}
     /*SafeCloseHandle(ghLogSize);
     if (wpszLogSizeFile) {

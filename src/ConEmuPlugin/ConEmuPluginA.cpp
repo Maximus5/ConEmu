@@ -623,7 +623,9 @@ int ShowPluginMenuA()
 		{MIF_USETEXTPTR|(ConEmuHwnd ? 0 : MIF_DISABLE)},
 		{MIF_USETEXTPTR|(ConEmuHwnd ? 0 : MIF_DISABLE)},
 		{MIF_SEPARATOR},
-		{MIF_USETEXTPTR|(ConEmuHwnd ? MIF_DISABLE : MIF_SELECTED)}
+		{MIF_USETEXTPTR|(ConEmuHwnd||IsTerminalMode() ? MIF_DISABLE : MIF_SELECTED)},
+		{MIF_SEPARATOR},
+		{MIF_USETEXTPTR|(IsDebuggerPresent()||IsTerminalMode() ? MIF_DISABLE : 0)}
 	};
 	items[0].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,3);
 	items[1].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,4);
@@ -632,6 +634,7 @@ int ShowPluginMenuA()
 	items[5].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,8);
 	items[6].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,9);
 	items[8].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,13);
+	items[10].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,14);
 
 	int nCount = sizeof(items)/sizeof(items[0]);
 

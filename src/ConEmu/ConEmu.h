@@ -195,6 +195,7 @@ public:
 	BOOL Activate(CVirtualConsole* apVCon);
 	int ActiveConNum(); // 0-based
 	static void AddMargins(RECT& rc, RECT& rcAddShift, BOOL abExpand=FALSE);
+	void AskChangeBufferHeight();
 	LPARAM AttachRequested(HWND ahConWnd, DWORD anConemuC_PID);
 	static RECT CalcMargins(enum ConEmuMargins mg);
 	static RECT CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFrom, RECT* prDC=NULL, enum ConEmuMargins tTabAction=CEM_TAB);
@@ -235,7 +236,8 @@ public:
 	void LoadIcons();
 	bool LoadVersionInfo(wchar_t* pFullPath);
 	static RECT MapRect(RECT rFrom, BOOL bFrame2Client);
-	void PaintCon();
+	void PaintCon(HDC hPaintDC);
+	void PaintGaps(HDC hDC);
 	void PostCopy(wchar_t* apszMacro, BOOL abRecieved=FALSE);
 	void PostMacro(LPCWSTR asMacro);
 	void PostCreate(BOOL abRecieved=FALSE);
