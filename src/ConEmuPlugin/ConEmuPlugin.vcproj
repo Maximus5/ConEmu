@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="windows-1251"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9.00"
+	Version="9,00"
 	Name="ConEmuPlugin"
 	ProjectGUID="{21152801-8744-4787-83F4-BE4564A367B4}"
 	RootNamespace="ConEmuPlugin"
@@ -260,6 +260,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+				CommandLine="copy $(TargetPath) $(SolutionDir)..\Release.x64\Plugins\ConEmu\"
 			/>
 		</Configuration>
 		<Configuration
@@ -341,6 +342,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+				CommandLine="copy $(TargetPath) $(SolutionDir)..\Plugins\ConEmu\"
 			/>
 		</Configuration>
 		<Configuration
@@ -1187,6 +1189,54 @@
 			<File
 				RelativePath=".\ConEmu.rc"
 				>
+				<FileConfiguration
+					Name="Debug|x64"
+					>
+					<Tool
+						Name="VCResourceCompilerTool"
+						PreprocessorDefinitions="_UNICODE;UNICODE;_WIN64;WIN64"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|x64"
+					>
+					<Tool
+						Name="VCResourceCompilerTool"
+						PreprocessorDefinitions="_UNICODE;UNICODE;_WIN64;WIN64"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="DebugA|x64"
+					>
+					<Tool
+						Name="VCResourceCompilerTool"
+						PreprocessorDefinitions="_UNICODE;UNICODE;_WIN64;WIN64"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="DebugEEE|x64"
+					>
+					<Tool
+						Name="VCResourceCompilerTool"
+						PreprocessorDefinitions="_UNICODE;UNICODE;_WIN64;WIN64"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug75|x64"
+					>
+					<Tool
+						Name="VCResourceCompilerTool"
+						PreprocessorDefinitions="_UNICODE;UNICODE;_WIN64;WIN64"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Instrument|x64"
+					>
+					<Tool
+						Name="VCResourceCompilerTool"
+						PreprocessorDefinitions="_UNICODE;UNICODE;_WIN64;WIN64"
+					/>
+				</FileConfiguration>
 			</File>
 		</Filter>
 	</Files>

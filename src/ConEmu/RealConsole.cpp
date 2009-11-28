@@ -603,12 +603,16 @@ void CRealConsole::SyncConsole2Window()
     RECT newCon = gConEmu.CalcRect(CER_CONSOLE, rcClient, CER_MAINCLIENT);
     _ASSERTE(newCon.right>20 && newCon.bottom>6);
 
-	SetConsoleSize(newCon.right, newCon.bottom, 0/*Auto*/, 
-		(gSet.FarSyncSize && GetFarPID()) ? CECMD_SETSIZESYNC : CECMD_SETSIZE);
+	// Во избежание лишних движений да и зацикливания...
+	if (con.nTextWidth != newCon.right || con.nTextHeight != newCon.bottom)
+	{
+		SetConsoleSize(newCon.right, newCon.bottom, 0/*Auto*/, 
+			(gSet.FarSyncSize && GetFarPID()) ? CECMD_SETSIZESYNC : CECMD_SETSIZE);
 
-	if (isActive() && gConEmu.isMainThread()) {
-		// Сразу обновить DC чтобы скорректировать Width & Height
-		mp_VCon->OnConsoleSizeChanged();
+		if (isActive() && gConEmu.isMainThread()) {
+			// Сразу обновить DC чтобы скорректировать Width & Height
+			mp_VCon->OnConsoleSizeChanged();
+		}
 	}
 }
 

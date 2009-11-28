@@ -37,13 +37,18 @@ REGEDIT4
 ;; hex:00 - borders are drawn using main font.
 ;; hex:01 - using FontName2.
 ;; hex:02 - same as hex:01 & progress symbols are filled.
+
 "FixFarBorders"=hex:01
 ;"FontName2"="Lucida Console"
 ;"FontSizeX2"=dword:00000000
+
 ;; You may redefine default character ranges for 'Fix far borders' feature.
 ;; Charset - Unicode, one char - 4 hex digits, max - 10 ranges.
 ;"FixFarBordersRanges"="2013-2015;2190-21AF;2500-25C4;3B2-3B2"
-;; For "Experimental" == 2 You may specify the weights of parts (5..250)
+
+;; Enhance appearence of progressbars and scrollbars
+"EnhanceGraphics"=hex:01
+;; For "EnhanceGraphics" == 1 You may specify the weights of parts (5..250)
 ;"PartBrush75"=hex:C8
 ;"PartBrush50"=hex:96
 ;"PartBrush25"=hex:5A
@@ -120,9 +125,6 @@ REGEDIT4
 
 ;; 1 - Send Alt+Enter to console, so you can't switch Fullscreen mode from keyboard
 "AltEnter"=hex:00
-
-;; GUI progress bars on Copy/Move
-"GUIpb"=hex:00
 
 ;; Monitor input language change in console (i.e. XLat switching support)
 ;; 00 - disabled, 01 - monitor console, 02 - one lang for all consoles, 03 == 01 & 02

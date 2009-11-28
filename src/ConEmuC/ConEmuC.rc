@@ -66,7 +66,7 @@ END
 
 VS_VERSION_INFO VERSIONINFO
  FILEVERSION CONEMUVERN
- PRODUCTVERSION 1,0,0,1
+ PRODUCTVERSION CONEMUVERN
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -82,12 +82,12 @@ BEGIN
         BLOCK "000004b0"
         BEGIN
             VALUE "CompanyName", " "
-            VALUE "FileDescription", "ConEmu console extender"
+            VALUE "FileDescription", "ConEmu console extender" CONEMUPLTFRM "\0"
             VALUE "FileVersion", CONEMUVERS
             VALUE "LegalCopyright", "2009"
             VALUE "OriginalFilename", "ConEmuC.exe"
             VALUE "ProductName", "ConEmu"
-            VALUE "ProductVersion", "1, 0, 0, 1"
+            VALUE "ProductVersion", CONEMUVERS
         END
     END
     BLOCK "VarFileInfo"

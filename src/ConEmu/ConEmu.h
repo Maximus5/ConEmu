@@ -122,7 +122,7 @@ public:
 	//TCHAR ms_EditorRus[16], ms_ViewerRus[16], ms_TempPanel[32], ms_TempPanelRus[32];
 protected:
 	CDragDrop *mp_DragDrop;
-	CProgressBars *ProgressBars;
+	//CProgressBars *ProgressBars;
 	TCHAR Title[MAX_TITLE_SIZE], TitleCmp[MAX_TITLE_SIZE], MultiTitle[MAX_TITLE_SIZE+30];
 	short mn_Progress;
 	LPTSTR GetTitleStart();
@@ -137,6 +137,7 @@ protected:
 	ITaskbarList3 *mp_TaskBar;
 	typedef BOOL (WINAPI* FRegisterShellHookWindow)(HWND);
 	RECT mrc_Ideal;
+	BOOL mn_InResize;
 	BOOL mb_MouseCaptured;
 	BYTE m_KeybStates[256];
 	wchar_t ms_ConEmuAliveEvent[MAX_PATH+64];
@@ -201,7 +202,7 @@ public:
 	static RECT CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFrom, RECT* prDC=NULL, enum ConEmuMargins tTabAction=CEM_TAB);
 	bool ConActivate(int nCon);
 	bool ConActivateNext(BOOL abNext);
-	void CheckGuiBarsCreated();
+	//void CheckGuiBarsCreated();
 	CVirtualConsole* CreateCon(RConStartArgs *args);
 	BOOL CreateMainWindow();
 	void Destroy();

@@ -84,9 +84,9 @@ public:
     bool isDefCopy;
 	BYTE isDragOverlay;
 	bool isDragShowIcons;
-    //bool 
+    //bool
     bool isDebugSteps;
-    bool isGUIpb; // GUI Progress bars
+    bool isEnhanceGraphics; // Progressbars and scrollbars (pseudographics)
     char isTabs; bool isTabSelf, isTabRecent, isTabLazy;
     wchar_t sTabFontFace[LF_FACESIZE]; DWORD nTabFontCharSet; int nTabFontHeight;
 	wchar_t *sTabCloseMacro;

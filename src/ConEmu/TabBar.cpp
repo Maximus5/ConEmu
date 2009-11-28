@@ -323,7 +323,7 @@ LRESULT CALLBACK TabBarClass::TabProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARA
         	if (TabBar.mh_Rebar) {
 	        	LPWINDOWPOS pos = (LPWINDOWPOS)lParam;
 	            pos->y = 2; // иначе в Win7 он смещается в {0x0} и снизу видна некрасивая полоса
-				pos->cy = TabBar._tabHeight+2; // на всякий случай
+				pos->cy = TabBar._tabHeight-3; // на всякий случай
 	            return 0;
             }
             break;

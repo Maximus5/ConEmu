@@ -123,10 +123,6 @@ SOURCE=.\Options.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\ProgressBars.cpp
-# End Source File
-# Begin Source File
-
 SOURCE=.\RealConsole.cpp
 # End Source File
 # Begin Source File
@@ -196,10 +192,6 @@ SOURCE=.\kl_parts_gcc.h
 # Begin Source File
 
 SOURCE=.\Options.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\ProgressBars.h
 # End Source File
 # Begin Source File
 

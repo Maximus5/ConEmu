@@ -2963,7 +2963,7 @@ void ProcessDebugEvent()
 		{
 			wszDbgText[0] = 0;
 			if (evt.u.DebugString.nDebugStringLength >= 1024) evt.u.DebugString.nDebugStringLength = 1023;
-			DWORD nRead = 0;
+			DWORD_PTR nRead = 0;
 			if (evt.u.DebugString.fUnicode) {
 				if (!ReadProcessMemory(srv.hRootProcess, evt.u.DebugString.lpDebugStringData, wszDbgText, 2*evt.u.DebugString.nDebugStringLength, &nRead))
 					lstrcpy(wszDbgText, L"???");

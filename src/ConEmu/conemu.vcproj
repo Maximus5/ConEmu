@@ -1019,10 +1019,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\ProgressBars.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\RealConsole.cpp"
 				>
 			</File>
@@ -1090,10 +1086,6 @@
 			</File>
 			<File
 				RelativePath=".\Options.h"
-				>
-			</File>
-			<File
-				RelativePath=".\ProgressBars.h"
 				>
 			</File>
 			<File

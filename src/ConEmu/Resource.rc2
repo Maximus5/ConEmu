@@ -16,7 +16,7 @@ IDI_ICON3               ICON    DISCARDABLE     "Far2.ico"
 
 VS_VERSION_INFO VERSIONINFO
  FILEVERSION CONEMUVERN
- PRODUCTVERSION 0,0,0,0
+ PRODUCTVERSION CONEMUVERN
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -29,19 +29,19 @@ VS_VERSION_INFO VERSIONINFO
 BEGIN
     BLOCK "StringFileInfo"
     BEGIN
-        BLOCK "041904b0"
+        BLOCK "000004b0"
         BEGIN
             VALUE "Comments", "\0"
             VALUE "CompanyName", "\0"
-            VALUE "FileDescription", "Console Emulator\0"
+            VALUE "FileDescription", "Console Emulator" CONEMUPLTFRM "\0"
             VALUE "FileVersion", CONEMUVERS
             VALUE "InternalName", "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2006-2008 - Zoin; (C) 2009 - Far community :)\0"
+            VALUE "LegalCopyright", "Copyright (C) 2006-2008 - Zoin; (C) 2009 - Maximus5\0"
             VALUE "LegalTrademarks", "\0"
             VALUE "OriginalFilename", "ConEmu.exe\0"
             VALUE "PrivateBuild", "\0"
             VALUE "ProductName", "\0"
-            VALUE "ProductVersion", "1, 0, 0, 1\0"
+            VALUE "ProductVersion", CONEMUVERS
             VALUE "SpecialBuild", "\0"
         END
     END

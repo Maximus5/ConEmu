@@ -70,7 +70,7 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 IDD_DIALOG1 DIALOGEX 0, 0, 328, 216
 STYLE DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
-FONT 8, "MS Shell Dlg", 0, 0, 0x1
+FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        "Anti-aliasing",IDC_STATIC,263,4,60,45,WS_GROUP
     CONTROL         "&None",rNoneAA,"Button",BS_AUTORADIOBUTTON | WS_GROUP,
@@ -104,8 +104,8 @@ BEGIN
                     44,67,31,8
     CONTROL         "&Monospace",cbNonProportional,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,79,67,54,8
-    CONTROL         "&Fix Far borders",cbFixFarBorders,"Button",
-                    BS_AUTO3STATE | WS_TABSTOP,10,96,64,8
+    CONTROL         "&Fix FAR borders",cbFixFarBorders,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,10,96,64,8
     GROUPBOX        "Window size",IDC_STATIC,147,50,110,50
     CONTROL         "Normal",rNormal,"Button",BS_AUTORADIOBUTTON | WS_GROUP,
                     151,61,38,8
@@ -130,7 +130,7 @@ BEGIN
     CONTROL         "",slDarker,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | 
                     WS_TABSTOP,52,160,177,12
     EDITTEXT        tDarker,233,160,30,12,ES_AUTOHSCROLL | ES_NUMBER
-    CONTROL         "GUI progress bars (standard copy/move only)",cbGUIpb,
+    CONTROL         "Enhance progressbars and scrollbars",cbEnhanceGraphics,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,153,112,164,8
     COMBOBOX        tFontFace2,9,107,88,72,CBS_DROPDOWN | CBS_AUTOHSCROLL | 
                     CBS_SORT | WS_VSCROLL | WS_TABSTOP
@@ -353,7 +353,7 @@ BEGIN
                     WS_TABSTOP
     CHECKBOX        "16bit",cbsNtvdmActive,285,50,32,10,WS_DISABLED | NOT 
                     WS_TABSTOP
-    CHECKBOX        "Far",cbsFarActive,48,50,25,10,WS_DISABLED | NOT 
+    CHECKBOX        "FAR",cbsFarActive,48,50,25,10,WS_DISABLED | NOT 
                     WS_TABSTOP
     CHECKBOX        "Panel",cbsFilePanel,112,50,32,10,WS_DISABLED | NOT 
                     WS_TABSTOP
@@ -398,7 +398,7 @@ END
 IDD_DIALOG4 DIALOGEX 0, 0, 328, 216
 STYLE DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
-FONT 8, "MS Shell Dlg"
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     GROUPBOX        "Tabs (panels, editors, viewers)",IDC_STATIC,4,2,319,28
     CONTROL         "Enable Tabs",cbTabs,"Button",BS_AUTO3STATE | WS_TABSTOP,
@@ -549,7 +549,7 @@ BEGIN
     tFontFace2              "Font face used to draw FAR borders"
     cbExtendColors          "You can use up to 32 foreground colors\n(instead of console standard 16) at the\nexpense of one of background colors"
     tRealFontMain           "Real sizes of main font:\nHeight x Width x AveWidth"
-    tRealFontBorders        "Real sizes of FixFarBorders font:\nHeight x Width"
+    tRealFontBorders        "Real sizes of 'Fix FAR borders' font:\nHeight x Width"
 END
 
 STRINGTABLE DISCARDABLE 
@@ -565,7 +565,7 @@ BEGIN
     cbSendAE                "When is on, You can't enter fullscreen mode\nfrom keyboard, but You can use 'Alt+Enter'\nfor macros in FAR"
     cbDnDCopy               "Forced 'Copy' action as default,\nYou can use Ctrl, Shift or Alt\nduring drag to change action"
     cbTabs                  "Show tabs (all opened panels, editors and viewers)\non the top of ConEmu window"
-    cbGUIpb                 "Enhancement of standart (only) copy/move progressbars.\nYou may choose 3state of 'Fix Far Borders' instead of..."
+    cbEnhanceGraphics       "Enhance appearence of progressbars and scrollbars"
 END
 
 STRINGTABLE DISCARDABLE 
@@ -610,7 +610,7 @@ END
 
 STRINGTABLE DISCARDABLE 
 BEGIN
-    cbFixFarBorders         "You can specify additional font for drawing FAR borders.\nI.e. Main font is 'Fixedsys', additional is 'Lucida Console'.\n3s - enhance scrollbars and progresbars."
+    cbFixFarBorders         "You can specify additional font for drawing FAR borders.\nI.e. Main font is 'Fixedsys', additional is 'Lucida Console'."
     cbCursorColor           "ON - cursor emulates console behaviour (sort of colors inversion)\nOFF - cursor is white (color#15) on dark backgrounds,\nand black (color#0) on light backgrounds"
 END
 

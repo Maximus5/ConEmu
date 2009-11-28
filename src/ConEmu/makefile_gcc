@@ -6,14 +6,13 @@ SRCS =  BaseDragDrops.cpp  \
 		ConEmuPipe.cpp     \
 		DragDrop.cpp       \
 		Options.cpp        \
-		ProgressBars.cpp   \
 		RealConsole.cpp    \
 		ScreenDump.cpp     \
 		TabBar.cpp         \
 		TrayIcon.cpp       \
 		VirtualConsole.cpp \
 		../common/Common.cpp \
-        ../common/ConEmuCheck.c
+		../common/ConEmuCheck.c
 
 USERLIBS = -lversion -lshlwapi
 

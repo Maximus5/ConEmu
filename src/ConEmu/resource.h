@@ -64,7 +64,7 @@
 #define cbSendAE                        1051
 #define cbDnDCopy                       1053
 #define cbTabs                          1054
-#define cbGUIpb                         1055
+#define cbEnhanceGraphics               1055
 #define tFontSizeX3                     1056
 #define bBgImage                        1057
 #define rBgStretch                      1058

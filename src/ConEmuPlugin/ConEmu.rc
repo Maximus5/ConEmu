@@ -73,7 +73,7 @@ BEGIN
         BEGIN
             VALUE "Comments", "\0"
             VALUE "CompanyName", " \0"
-            VALUE "FileDescription", "ConEmu plugin for FAR manager 1.7x and 2.x\0"
+            VALUE "FileDescription", "ConEmu plugin for FAR manager 1.7x and 2.x" CONEMUPLTFRM "\0"
             VALUE "FileVersion", CONEMUVERS
             VALUE "InternalName", "\0"
             VALUE "LegalCopyright", "2009\0"

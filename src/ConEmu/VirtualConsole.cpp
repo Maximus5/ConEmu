@@ -633,10 +633,14 @@ WORD CVirtualConsole::CharWidth(TCHAR ch)
     if (gSet.isForceMonospace)
         return gSet.FontWidth();
 
-	if (gSet.isFixFarBorders && isCharBorder(ch))
-		//2009-09-09 Это некорректно. Шипина шрифта рамки может быть больше знакоместа
+	if (gSet.isFixFarBorders && isCharBorder(ch)) {
+		//2009-09-09 Это некорректно. Ширина шрифта рамки может быть больше знакоместа
 		//return gSet.BorderFontWidth();
 		return gSet.FontWidth();
+	}
+	if (gSet.isEnhanceGraphics && isCharProgress(ch)) {
+		return gSet.FontWidth();
+	}
 
 	if (!gSet.isProportional)
 		return gSet.FontWidth();
@@ -1243,7 +1247,7 @@ void CVirtualConsole::UpdateText(bool isForce, bool updateText, bool updateCurso
                 isUnicode = true;
 
             if (isUnicode)
-                isProgress = gSet.isFixFarBorders == 2 && isCharProgress(c); // ucBox25 / ucBox50 / ucBox75 / ucBox100
+                isProgress = gSet.isEnhanceGraphics && isCharProgress(c); // ucBox25 / ucBox50 / ucBox75 / ucBox100
             else
                 isSpace = (c == ucSpace || c == ucNoBreakSpace || c == 0);
 
@@ -1440,6 +1444,15 @@ void CVirtualConsole::UpdateText(bool isForce, bool updateText, bool updateCurso
                 j2 = j + 1; MCHKHEAP
                 if (!doSelect) // doSelect инициализируется только для BufferHeight>0
                 {
+					if (gSet.isEnhanceGraphics && isProgress) {
+						TCHAR ch;
+						ch = c; // Графическая отрисовка прокрутки и прогресса
+						while(j2 < end && ConAttrLine[j2] == attr && ch == ConCharLine[j2+1])
+						{
+							ConCharXLine[j2] = (j2 ? ConCharXLine[j2-1] : 0)+CharWidth(ch);
+							j2++;
+						}
+					} else
                     if (!gSet.isFixFarBorders)
                     {
                         TCHAR ch;
@@ -1451,24 +1464,15 @@ void CVirtualConsole::UpdateText(bool isForce, bool updateText, bool updateCurso
                     }
                     else
                     {
-                        TCHAR ch;
-                        if (isProgress) {
-                            ch = c; // Графическая отрисовка прокрутки и прогресса
-                            while(j2 < end && ConAttrLine[j2] == attr && ch == ConCharLine[j2+1])
-                            {
-                                ConCharXLine[j2] = (j2 ? ConCharXLine[j2-1] : 0)+CharWidth(ch);
-                                j2++;
-                            }
-                        } else {
-							WARNING("Тут обламывается на ucBoxDblVert в первой позиции. Ее ширину ставит в ...");
-							DistributeSpaces(ConCharLine, ConAttrLine, ConCharXLine, j, j2, end);
-                            //while(j2 < end && ConAttrLine[j2] == attr && 
-                            //    isCharBorder(ch = ConCharLine[j2]) && ch == ConCharLine[j2+1])
-                            //{
-                            //    ConCharXLine[j2] = (j2 ? ConCharXLine[j2-1] : 0)+CharWidth(ch);
-                            //    j2++;
-                            //}
-                        }
+                        //TCHAR ch;
+						WARNING("Тут обламывается на ucBoxDblVert в первой позиции. Ее ширину ставит в ...");
+						DistributeSpaces(ConCharLine, ConAttrLine, ConCharXLine, j, j2, end);
+                        //while(j2 < end && ConAttrLine[j2] == attr && 
+                        //    isCharBorder(ch = ConCharLine[j2]) && ch == ConCharLine[j2+1])
+                        //{
+                        //    ConCharXLine[j2] = (j2 ? ConCharXLine[j2-1] : 0)+CharWidth(ch);
+                        //    j2++;
+                        //}
                     }
                 }
                 if (gSet.isFixFarBorders)
@@ -1730,7 +1734,7 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
 	lbDark = (R <= 0xC0) && (G <= 0xC0) && (B <= 0xC0);
 	clr = lbDark ? gSet.Colors[15] : gSet.Colors[0];
 
-	if (gSet.isFixFarBorders == 2 && lbIsProgr) {
+	if (gSet.isEnhanceGraphics && lbIsProgr) {
 		HBRUSH hBr = CreateSolidBrush(clr);
 		FillRect(hPaintDC, &rect, hBr);
 		DeleteObject ( hBr );

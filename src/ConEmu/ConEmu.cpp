@@ -56,7 +56,7 @@ CConEmuMain::CConEmuMain()
     cursor.x=0; cursor.y=0; Rcursor=cursor;
     m_LastConSize = MakeCoord(0,0);
     mp_DragDrop = NULL;
-    ProgressBars = NULL;
+    //ProgressBars = NULL;
     //cBlinkShift=0;
     Title[0] = 0; TitleCmp[0] = 0; MultiTitle[0] = 0; mn_Progress = -1;
     mb_InTimer = FALSE;
@@ -73,6 +73,7 @@ CConEmuMain::CConEmuMain()
     mn_ServerThreadId = 0; mh_ServerThread = NULL; mh_ServerThreadTerminate = NULL;
     //mpsz_RecreateCmd = NULL;
 	ZeroStruct(mrc_Ideal);
+	mn_InResize = 0;
 	mb_MouseCaptured = FALSE;
 	mb_HotKeyRegistered = FALSE;
 
@@ -279,10 +280,10 @@ CConEmuMain::~CConEmuMain()
         delete mp_DragDrop;
         mp_DragDrop = NULL;
     }
-    if (ProgressBars) {
-        delete ProgressBars;
-        ProgressBars = NULL;
-    }
+    //if (ProgressBars) {
+    //    delete ProgressBars;
+    //    ProgressBars = NULL;
+    //}
 }
 
 
@@ -901,6 +902,8 @@ void CConEmuMain::SyncConsoleToWindow()
     if (mb_SkipSyncSize || isNtvdm() || !mp_VActive)
         return;
 
+	_ASSERTE(mn_InResize <= 1);
+
     #ifdef _DEBUG
     if (change2WindowMode!=(DWORD)-1) {
         _ASSERTE(change2WindowMode==(DWORD)-1);
@@ -1400,6 +1403,15 @@ LRESULT CConEmuMain::OnSize(WPARAM wParam, WORD newClientWidth, WORD newClientHe
         return 0;
     }
 
+	
+	//if (mb_InResize) {
+	//	_ASSERTE(!mb_InResize);
+	//	PostMessage(ghWnd, WM_SIZE, wParam, MAKELONG(newClientWidth,newClientHeight));
+	//	return 0;
+	//}
+
+	mn_InResize++;
+
     if (newClientWidth==(WORD)-1 || newClientHeight==(WORD)-1) {
         RECT rcClient; GetClientRect(ghWnd, &rcClient);
         newClientWidth = rcClient.right;
@@ -1423,7 +1435,7 @@ LRESULT CConEmuMain::OnSize(WPARAM wParam, WORD newClientWidth, WORD newClientHe
     #endif
     isPictureView();
 
-    if (wParam != (DWORD)-1 && change2WindowMode == (DWORD)-1) {
+    if (wParam != (DWORD)-1 && change2WindowMode == (DWORD)-1 && mn_InResize <= 1) {
         SyncConsoleToWindow();
     }
     
@@ -1457,6 +1469,9 @@ LRESULT CConEmuMain::OnSize(WPARAM wParam, WORD newClientWidth, WORD newClientHe
     // Двигаем/ресайзим окошко DC
     MoveWindow(ghWndDC, rcNewCon.left, rcNewCon.top, rcNewCon.right - rcNewCon.left, rcNewCon.bottom - rcNewCon.top, 1);
 	m_Child.Invalidate();
+
+	if (mn_InResize>0)
+		mn_InResize--;
 
     return result;
 }
@@ -1672,12 +1687,12 @@ LPARAM CConEmuMain::AttachRequested(HWND ahConWnd, DWORD anConemuC_PID)
 //    ConPrc.NameChecked = true;
 //}
 
-void CConEmuMain::CheckGuiBarsCreated()
-{
-    if (gSet.isGUIpb && !ProgressBars) {
-    	ProgressBars = new CProgressBars(ghWnd, g_hInstance);
-    }
-}
+//void CConEmuMain::CheckGuiBarsCreated()
+//{
+//    if (gSet.isGUIpb && !ProgressBars) {
+//    	ProgressBars = new CProgressBars(ghWnd, g_hInstance);
+//    }
+//}
 
 // Вернуть общее количество процессов по всем консолям
 DWORD CConEmuMain::CheckProcesses()
@@ -3225,8 +3240,8 @@ void CConEmuMain::PaintGaps(HDC hDC)
 
 void CConEmuMain::PaintCon(HDC hPaintDC)
 {
-    if (ProgressBars)
-        ProgressBars->OnTimer();
+    //if (ProgressBars)
+    //    ProgressBars->OnTimer();
 
 	RECT rcClient = {0};
 	if (ghWndDC) {
@@ -3238,7 +3253,7 @@ void CConEmuMain::PaintCon(HDC hPaintDC)
     mp_VActive->Paint(hPaintDC, rcClient);
 
 #ifdef _DEBUG
-	if (GetKeyState(VK_SCROLL) & 1) {
+	if ((GetKeyState(VK_SCROLL) & 1) && (GetKeyState(VK_CAPITAL) & 1)) {
 		DebugStep(L"ConEmu: Sleeping in PaintCon for 1s");
 		Sleep(1000);
 		DebugStep(NULL);
@@ -3673,9 +3688,9 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
     mn_StartTick = GetTickCount();
 
 
-    if (gSet.isGUIpb && !ProgressBars) {
-    	ProgressBars = new CProgressBars(ghWnd, g_hInstance);
-    }
+    //if (gSet.isGUIpb && !ProgressBars) {
+    //	ProgressBars = new CProgressBars(ghWnd, g_hInstance);
+    //}
 
     // Установить переменную среды с дескриптором окна
     SetConEmuEnvVar(ghWndDC);
@@ -3794,7 +3809,7 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
         		BOOL lbSetActive = FALSE, lbOneCreated = FALSE, lbRunAdmin = FALSE;
         		while (*pszLine) {
         			lbSetActive = lbRunAdmin = FALSE;
-        			while (*pszLine == L'>' || *pszLine == L'*') {
+        			while (*pszLine == L'>' || *pszLine == L'*' || *pszLine == L' ' || *pszLine == L'\t') {
         				if (*pszLine == L'>') lbSetActive = TRUE;
         				if (*pszLine == L'*') lbRunAdmin = TRUE;
 	        			pszLine++;
@@ -4002,10 +4017,10 @@ LRESULT CConEmuMain::OnDestroy(HWND hWnd)
         delete mp_DragDrop;
         mp_DragDrop = NULL;
     }
-    if (ProgressBars) {
-        delete ProgressBars;
-        ProgressBars = NULL;
-    }
+    //if (ProgressBars) {
+    //    delete ProgressBars;
+    //    ProgressBars = NULL;
+    //}
 
     Icon.Delete();
     

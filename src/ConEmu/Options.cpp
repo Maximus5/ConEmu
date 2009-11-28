@@ -210,7 +210,7 @@ void CSettings::InitSettings()
     _tcscpy(sBgImage, L"c:\\back.bmp");
 	bgImageDarker = 0x46;
 
-    isFixFarBorders = 2; isPartBrush75 = 0xC8; isPartBrush50 = 0x96; isPartBrush25 = 0x5A;
+    isFixFarBorders = 1; isEnhanceGraphics = true; isPartBrush75 = 0xC8; isPartBrush50 = 0x96; isPartBrush25 = 0x5A;
 	memset(icFixFarBorderRanges, 0, sizeof(icFixFarBorderRanges));
 	icFixFarBorderRanges[0].bUsed = true; icFixFarBorderRanges[0].cBegin = 0x2013; icFixFarBorderRanges[0].cEnd = 0x25C4;
     
@@ -392,6 +392,13 @@ void CSettings::LoadSettings()
         reg.Load(L"PartBrush25", isPartBrush25); if (isPartBrush25<5) isPartBrush25=5; else if (isPartBrush25>250) isPartBrush25=250;
         if (isPartBrush50>=isPartBrush75) isPartBrush50=isPartBrush75-10;
         if (isPartBrush25>=isPartBrush50) isPartBrush25=isPartBrush50-10;
+
+        // Выделим в отдельную настройку
+        reg.Load(L"EnhanceGraphics", isEnhanceGraphics);
+        if (isFixFarBorders == 2 && !isEnhanceGraphics) {
+        	isFixFarBorders = 1;
+        	isEnhanceGraphics = true;
+    	}
         
         reg.Load(L"RightClick opens context menu", isRClickSendKey);
         	reg.Load(L"RightClickMacro2", &sRClickMacro);
@@ -423,7 +430,7 @@ void CSettings::LoadSettings()
 		reg.Load(L"DragOverlay", isDragOverlay);
 		reg.Load(L"DragShowIcons", isDragShowIcons);
         reg.Load(L"DebugSteps", isDebugSteps);
-        reg.Load(L"GUIpb", isGUIpb);
+        //reg.Load(L"GUIpb", isGUIpb);
         reg.Load(L"Tabs", isTabs);
 	        reg.Load(L"TabSelf", isTabSelf);
 	        reg.Load(L"TabLazy", isTabLazy);
@@ -661,6 +668,7 @@ BOOL CSettings::SaveSettings()
 			reg.Save(L"CursorBlink", isCursorBlink);
 
             reg.Save(L"FixFarBorders", isFixFarBorders);
+            reg.Save(L"EnhanceGraphics", isEnhanceGraphics);
             reg.Save(L"RightClick opens context menu", isRClickSendKey);
             reg.Save(L"AltEnter", isSentAltEnter);
             reg.Save(L"Min2Tray", isMinToTray);
@@ -680,7 +688,7 @@ BOOL CSettings::SaveSettings()
 			reg.Save(L"DragShowIcons", isDragShowIcons);
             reg.Save(L"DebugSteps", isDebugSteps);
 
-            reg.Save(L"GUIpb", isGUIpb);
+            //reg.Save(L"GUIpb", isGUIpb);
 
             reg.Save(L"Tabs", isTabs);
 		        reg.Save(L"TabSelf", isTabSelf);
@@ -987,7 +995,7 @@ LRESULT CSettings::OnInitDialog_Main()
 	if (isCursorBlink) CheckDlgButton(hMain, cbCursorBlink, BST_CHECKED);
 
 
-	if (isGUIpb) CheckDlgButton(hMain, cbGUIpb, BST_CHECKED);
+	if (isEnhanceGraphics) CheckDlgButton(hMain, cbEnhanceGraphics, BST_CHECKED);
 	
 	if (isCursorV)
 		CheckDlgButton(hMain, rCursorV, BST_CHECKED);
@@ -1440,10 +1448,9 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
 		isDragShowIcons = IsChecked(hExt, cbDragIcons) == BST_CHECKED;
 		break;
     
-    case cbGUIpb: // GUI Progress Bars
-        isGUIpb = IsChecked(hMain, cbGUIpb);
-        if (isGUIpb)
-        	gConEmu.CheckGuiBarsCreated();
+    case cbEnhanceGraphics: // Progressbars and scrollbars
+        isEnhanceGraphics = IsChecked(hMain, cbEnhanceGraphics);
+        gConEmu.Update(true);
         break;
     
     case cbTabs:
