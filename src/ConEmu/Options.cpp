@@ -12,6 +12,9 @@
 #define RASTER_FONTS_NAME L"@Raster fonts"
 #endif
 
+#define TEST_FONT_WIDTH_STRING_EN L"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+#define TEST_FONT_WIDTH_STRING_RU L"јЅ¬√ƒ≈∆«»… ЋћЌќѕ–—“”‘’÷„ЎўЏџ№Ёёя"
+
 const u8 chSetsNums[] = {0, 178, 186, 136, 1, 238, 134, 161, 177, 129, 130, 77, 255, 204, 128, 2, 222, 162, 163};
 const char *ChSets[] = {"ANSI", "Arabic", "Baltic", "Chinese Big 5", "Default", "East Europe",
 		"GB 2312", "Greek", "Hebrew", "Hangul", "Johab", "Mac", "OEM", "Russian", "Shiftjis",
@@ -2567,6 +2570,18 @@ HFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
             ZeroStruct(tm);
             BOOL lbTM = GetTextMetrics(hDC, &tm);
 			_ASSERTE(lbTM);
+				//  ак оказалось, в некоторых моноширных TTF шрифтах tm.tmAveCharWidth 
+				// при включенном ClearType возвращаетс€ совсем некорректно
+				if (abs(tm.tmMaxCharWidth - tm.tmAveCharWidth)<=2)
+				{
+					SIZE szTest = {0,0}; int nTestLen;
+					if (GetTextExtentPoint32(hDC, TEST_FONT_WIDTH_STRING_EN, nTestLen=lstrlen(TEST_FONT_WIDTH_STRING_EN), &szTest)) {
+						int nAveWidth = (szTest.cx + nTestLen - 1) / nTestLen;
+						if (nAveWidth > tm.tmAveCharWidth || nAveWidth > tm.tmMaxCharWidth)
+							tm.tmMaxCharWidth = tm.tmAveCharWidth = nAveWidth;
+					}
+				}
+
             if (isForceMonospace)
                 //Maximus - у Arial'а например MaxWidth слишком большой
                 inFont->lfWidth = FontSizeX3 ? FontSizeX3 : tm.tmMaxCharWidth;

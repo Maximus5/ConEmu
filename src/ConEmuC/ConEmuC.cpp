@@ -2048,7 +2048,7 @@ int ServerInit()
 
 
 
-    if (gbNoCreateProcess && gbAttachMode) {
+    if (gbNoCreateProcess && (gbAttachMode || srv.bDebuggerActive)) {
     	if (!srv.bDebuggerActive && !IsWindowVisible(ghConWnd)) {
 			PRINT_COMSPEC(L"Console windows is not visible. Attach is unavailable. Exiting...\n", 0);
 			gbAlwaysConfirmExit = FALSE;
@@ -2260,9 +2260,13 @@ int ServerInit()
     }
     //if (srv.szConsoleFontFile[0])
     //  AddFontResourceEx(srv.szConsoleFontFile, FR_PRIVATE, NULL);
-    if (ghLogSize) LogSize(NULL, ":SetConsoleFontSizeTo.before");
-    SetConsoleFontSizeTo(ghConWnd, srv.nConFontHeight, srv.nConFontWidth, srv.szConsoleFont);
-    if (ghLogSize) LogSize(NULL, ":SetConsoleFontSizeTo.after");
+    if (!srv.bDebuggerActive || gbAttachMode) {
+	    if (ghLogSize) LogSize(NULL, ":SetConsoleFontSizeTo.before");
+	    SetConsoleFontSizeTo(ghConWnd, srv.nConFontHeight, srv.nConFontWidth, srv.szConsoleFont);
+	    if (ghLogSize) LogSize(NULL, ":SetConsoleFontSizeTo.after");
+    } else {
+    	SetWindowPos(ghConWnd, HWND_TOPMOST, 0,0,0,0, SWP_NOSIZE|SWP_NOMOVE);
+    }
     if (gbParmBufferSize && gcrBufferSize.X && gcrBufferSize.Y) {
         SMALL_RECT rc = {0};
         SetConsoleSize(gnBufferHeight, gcrBufferSize, rc, ":ServerInit.SetFromArg"); // למזוע מבכמלאעüסÿ? וסכט רנטפע ושו במכüרמי

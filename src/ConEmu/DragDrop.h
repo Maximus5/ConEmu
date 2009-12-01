@@ -39,9 +39,7 @@ protected:
 	DWORD mn_AllFiles, mn_CurFile; __int64 mn_CurWritten;
 	HANDLE FileStart(BOOL abActive, BOOL abWide, LPVOID asFileName);
 	HRESULT FileWrite(HANDLE ahFile, DWORD anSize, LPVOID apData);
-	#ifdef MSGLOGGER
 	void EnumDragFormats(IDataObject * pDataObject);
-	#endif
 	HRESULT DropFromStream(IDataObject * pDataObject, BOOL abActive);
 	HRESULT DropLinks(HDROP hDrop, int iQuantity, BOOL abActive);
 	HRESULT DropNames(HDROP hDrop, int iQuantity, BOOL abActive);

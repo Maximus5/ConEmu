@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="windows-1251"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9.00"
+	Version="9,00"
 	Name="ConEmuC"
 	ProjectGUID="{3939C0DF-8E00-440F-AC8A-CB579C56A5CB}"
 	RootNamespace="ConEmuC"
@@ -975,6 +975,54 @@
 			<File
 				RelativePath=".\ConEmuC.rc"
 				>
+				<FileConfiguration
+					Name="Debug|x64"
+					>
+					<Tool
+						Name="VCResourceCompilerTool"
+						PreprocessorDefinitions="_UNICODE;UNICODE;_WIN64;WIN64"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|x64"
+					>
+					<Tool
+						Name="VCResourceCompilerTool"
+						PreprocessorDefinitions="_UNICODE;UNICODE;_WIN64;WIN64"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="DebugA|x64"
+					>
+					<Tool
+						Name="VCResourceCompilerTool"
+						PreprocessorDefinitions="_UNICODE;UNICODE;_WIN64;WIN64"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="DebugEEE|x64"
+					>
+					<Tool
+						Name="VCResourceCompilerTool"
+						PreprocessorDefinitions="_UNICODE;UNICODE;_WIN64;WIN64"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug75|x64"
+					>
+					<Tool
+						Name="VCResourceCompilerTool"
+						PreprocessorDefinitions="_UNICODE;UNICODE;_WIN64;WIN64"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Instrument|x64"
+					>
+					<Tool
+						Name="VCResourceCompilerTool"
+						PreprocessorDefinitions="_UNICODE;UNICODE;_WIN64;WIN64"
+					/>
+				</FileConfiguration>
 			</File>
 		</Filter>
 	</Files>

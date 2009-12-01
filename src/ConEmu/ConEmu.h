@@ -9,6 +9,7 @@ typedef interface ITaskbarList3 ITaskbarList3;
 #endif 	/* __ITaskbarList3_FWD_DEFINED__ */
 
 #define WM_TRAYNOTIFY WM_USER+1
+#define ID_DEBUGGUI 0xABC6
 #define ID_HELP 0xABC7
 #define ID_CON_TOGGLE_VISIBLE 0xABC8
 #define ID_CON_PASTE 0xABC9
@@ -253,6 +254,7 @@ public:
 	bool SetWindowMode(uint inMode);
 	void ShowOldCmdVersion(DWORD nCmd, DWORD nVersion, int bFromServer);
 	void ShowSysmenu(HWND Wnd, HWND Owner, int x, int y);
+	void StartDebugLogConsole();
 	void SyncConsoleToWindow();
 	void SyncNtvdm();
 	void SyncWindowToConsole();

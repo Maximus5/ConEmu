@@ -19,6 +19,7 @@ class TabBarClass;
 extern TabBarClass TabBar;
 extern OSVERSIONINFO gOSVer;
 //extern SECURITY_ATTRIBUTES* gpNullSecurity;
+extern BOOL gbDebugLogStarted;
 
 //extern const int TAB_FONT_HEIGTH;
 //extern wchar_t TAB_FONT_FACE[];

@@ -1029,11 +1029,11 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragOver(DWORD grfKeyState,POINTL pt,DWORD 
 	return hr;
 }
 
-#ifdef MSGLOGGER
+
 void CDragDrop::EnumDragFormats(IDataObject * pDataObject)
 {
-	BOOL lbDoEnum = FALSE;
-	if (!lbDoEnum) return;
+	//BOOL lbDoEnum = FALSE;
+	//if (!lbDoEnum) return;
 
 	HRESULT hr = S_OK;
 	IEnumFORMATETC *pEnum = NULL;
@@ -1041,7 +1041,7 @@ void CDragDrop::EnumDragFormats(IDataObject * pDataObject)
 	STGMEDIUM stg[20];
 	LPCWSTR psz[20];
 	SIZE_T memsize[20];
-	TCHAR szName[20][MAX_PATH];
+	TCHAR szName[20][MAX_PATH*2];
 	ULONG nCnt = sizeof(fmt)/sizeof(*fmt);
 	UINT i;
 
@@ -1064,18 +1064,51 @@ void CDragDrop::EnumDragFormats(IDataObject * pDataObject)
 			szName[i][0] = 0;
 			if (!GetClipboardFormatName(fmt[i].cfFormat, szName[i], MAX_PATH))
 				wsprintf(szName[i], L"ClipFormatID=%i", fmt[i].cfFormat);
+			
 				
 			stg[i].tymed = TYMED_HGLOBAL;
 			TODO("А освобождать полученное надо?");
 			hr = pDataObject->GetData(fmt+i, stg+i);
 			if (hr == S_OK && stg[i].hGlobal) {
 				psz[i] = (LPCWSTR)GlobalLock(stg[i].hGlobal);
-				memsize[i] = GlobalSize(stg[i].hGlobal);
+				if (psz[i]) {
+					memsize[i] = GlobalSize(stg[i].hGlobal);
+					wsprintf(szName[i]+lstrlen(szName[i]), L", DataSize=%i", memsize[i]);
+					if (memsize[i] == 1) {
+						wsprintf(szName[i]+lstrlen(szName[i]), L", Data=0x%02X", (DWORD)*((LPBYTE)(psz[i])));
+					} if (memsize[i] == 4) {
+						wsprintf(szName[i]+lstrlen(szName[i]), L", Data=0x%08X", (DWORD)*((LPDWORD)(psz[i])));
+					} else if (memsize[i] == 8) {
+						wsprintf(szName[i]+lstrlen(szName[i]), L", Data=0x%08X%08X", (DWORD)((LPDWORD)(psz[i]))[0], (DWORD)((LPDWORD)psz[i])[1]);
+					} else {
+						lstrcat(szName[i], L", ");
+						const wchar_t* pwsz = (const wchar_t*)(psz[i]);
+						const char* pasz = (const char*)(psz[i]);
+						if (pasz[0] && pasz[1]) {
+							int nMaxLen = min(200,memsize[i]);
+							wchar_t* pwszDst = szName[i]+lstrlen(szName[i]);
+							MultiByteToWideChar(CP_ACP, 0, pasz, nMaxLen, pwszDst, nMaxLen);
+							pwszDst[nMaxLen] = 0;
+						} else {
+							int nMaxLen = min(200,memsize[i]/2);
+							lstrcpyn(szName[i]+lstrlen(szName[i]), pwsz, nMaxLen);
+						}
+					}
+				} else {
+					lstrcat(szName[i], L", hGlobal not available");
+				}
+			} else {
+				lstrcat(szName[i], L", hGlobal not available");
 			}
 
+			#ifdef _DEBUG
 			if (wcscmp(szName[i], L"DragImageBits") == 0) {
 				stg[i].tymed = TYMED_HGLOBAL;
 			}
+			#endif
+
+			lstrcat(szName[i], L"\n");
+			OutputDebugStringW(szName[i]);
 		}
 		
 		for (i=0; i<nCnt; i++) {
@@ -1085,16 +1118,15 @@ void CDragDrop::EnumDragFormats(IDataObject * pDataObject)
 	}
 	hr = S_OK;
 }
-#endif
+
 
 HRESULT STDMETHODCALLTYPE CDragDrop::DragEnter(IDataObject * pDataObject,DWORD grfKeyState,POINTL pt,DWORD * pdwEffect)
 {
 	mb_selfdrag = (pDataObject == mp_DataObject);
 	mb_DragWithinNow = TRUE;
 
-	#ifdef MSGLOGGER
-	EnumDragFormats(pDataObject);
-	#endif
+	if (gbDebugLogStarted || IsDebuggerPresent())
+		EnumDragFormats(pDataObject);
 
 	if (gSet.isDropEnabled || mb_selfdrag)
 	{

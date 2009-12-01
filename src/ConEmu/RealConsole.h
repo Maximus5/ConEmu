@@ -196,6 +196,7 @@ public:
 	void OnConsoleLangChange(DWORD_PTR dwNewKeybLayout);
 	DWORD GetConsoleStates();
     void ChangeBufferHeightMode(BOOL abBufferHeight); // Вызывается из TabBar->ConEmu
+	void RemoveFromCursor();
 
 public:
     // Вызываются из CVirtualConsole

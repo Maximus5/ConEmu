@@ -2124,16 +2124,7 @@ void CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 			// —делано (пока) только чтобы текстовое EMenu активировалось по центру консоли,
 		    // а не в положении мыши (что смотритс€ отвратно - оно может сплющитьс€ до 2-3 строк).
 		    // “олько при скрытой консоли.
-		    if (!isWindowVisible())
-		    {  // просто подвинем скрытое окно консоли так, чтобы курсор был ¬Ќ≈ него
-		       RECT con; POINT ptCur;
-		       GetWindowRect(hConWnd, &con);
-		       GetCursorPos(&ptCur);
-		       short x = ptCur.x + 1;
-		       short y = ptCur.y + 1;
-		       if (con.left != x || con.top != y)
-		           MOVEWINDOW(hConWnd, x, y, con.right - con.left + 1, con.bottom - con.top + 1, TRUE);
-		    }
+			RemoveFromCursor();
 
             
             if (mn_FarPID && mn_FarPID != mn_LastSetForegroundPID) {
@@ -3619,6 +3610,24 @@ BOOL CRealConsole::WaitConsoleSize(UINT anWaitSize, DWORD nTimeout)
 		}
 	}
 	return TRUE;
+}
+
+void CRealConsole::RemoveFromCursor()
+{
+	if (!this) return;
+	// —делано (пока) только чтобы текстовое EMenu активировалось по центру консоли,
+	// а не в положении мыши (что смотритс€ отвратно - оно может сплющитьс€ до 2-3 строк).
+	// “олько при скрытой консоли.
+	if (!isWindowVisible())
+	{  // просто подвинем скрытое окно консоли так, чтобы курсор был ¬Ќ≈ него
+		RECT con; POINT ptCur;
+		GetWindowRect(hConWnd, &con);
+		GetCursorPos(&ptCur);
+		short x = ptCur.x + 1;
+		short y = ptCur.y + 1;
+		if (con.left != x || con.top != y)
+			MOVEWINDOW(hConWnd, x, y, con.right - con.left + 1, con.bottom - con.top + 1, TRUE);
+	}
 }
 
 BOOL CRealConsole::RetrieveConsoleInfo(UINT anWaitSize)

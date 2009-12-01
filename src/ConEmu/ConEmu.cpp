@@ -2750,6 +2750,38 @@ void CConEmuMain::ShowSysmenu(HWND Wnd, HWND Owner, int x, int y)
         PostMessage(Wnd, WM_SYSCOMMAND, (WPARAM)command, 0);
 }
 
+void CConEmuMain::StartDebugLogConsole()
+{
+	if (IsDebuggerPresent())
+		return; // УЖЕ!
+
+	// Create process, with flag /Attach GetCurrentProcessId()
+	// Sleep for sometimes, try InitHWND(hConWnd); several times
+	WCHAR  szExe[0x200] = {0};
+	BOOL lbRc = FALSE;
+	
+	DWORD nLen = 0;
+	PROCESS_INFORMATION pi; memset(&pi, 0, sizeof(pi));
+	STARTUPINFO si; memset(&si, 0, sizeof(si));
+	si.cb = sizeof(si);
+	DWORD dwSelfPID = GetCurrentProcessId();
+	
+	// "/ATTACH" - низя, а то заблокируемся при попытке подключения к "отлаживаемому" GUI
+	wsprintf(szExe, L"\"%s\" /DEBUGPID=%i /BW=80 /BH=25 /BZ=1000", 
+		ms_ConEmuCExe, dwSelfPID);
+	
+	if (!CreateProcess(NULL, szExe, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS|CREATE_NEW_CONSOLE, NULL,
+			NULL, &si, &pi))
+	{
+		// Хорошо бы ошибку показать?
+		DWORD dwErr = GetLastError();
+		MBoxA(L"Can't create debugger console!");
+	} else {
+		gbDebugLogStarted = TRUE;
+		lbRc = TRUE;
+	}
+}
+
 void CConEmuMain::UpdateProcessDisplay(BOOL abForce)
 {
     if (!ghOpWnd)
@@ -3707,6 +3739,7 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
     AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_CON_TOGGLE_VISIBLE, _T("&Real console"));
     AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_CONPROP, _T("&Properties..."));
     AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_DUMPCONSOLE, _T("&Dump..."));
+    AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_DEBUGGUI, _T("&Debug log..."));
     InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_POPUP | MF_ENABLED, (UINT_PTR)hDebug, _T("&Debug"));
     InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_CON_PASTE, _T("Paste"));
     InsertMenu(hwndMain, 0, MF_BYPOSITION, MF_SEPARATOR, 0);
@@ -5017,8 +5050,9 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 								int nLen = 0;
 								int nSize = sizeof(crMouse) + sizeof(wchar_t);
 								if (gSet.sRClickMacro && *gSet.sRClickMacro) {
-									int nLen = lstrlen(gSet.sRClickMacro);
+									nLen = lstrlen(gSet.sRClickMacro);
 									nSize += nLen*2;
+									mp_VActive->RCon()->RemoveFromCursor();
 								}
 								LPBYTE pcbData = (LPBYTE)calloc(nSize,1);
 								_ASSERTE(pcbData);
@@ -5255,6 +5289,9 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
             mp_VActive->DumpConsole();
         return 0;
         //break;
+    case ID_DEBUGGUI:
+    	StartDebugLogConsole();
+    	return 0;
     case ID_CON_TOGGLE_VISIBLE:
         if (mp_VActive)
             mp_VActive->RCon()->ShowConsole(-1); // Toggle visibility
