@@ -515,6 +515,7 @@ END
 //
 
 IDB_CONMAN1             BITMAP  DISCARDABLE     "toolbar1.bmp"
+IDB_SHIELD              BITMAP  DISCARDABLE     "Shield.bmp"
 
 /////////////////////////////////////////////////////////////////////////////
 //

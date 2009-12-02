@@ -138,7 +138,8 @@ void CSettings::InitSettings()
     
     psCmd = NULL; psCurCmd = NULL; wcscpy(szDefCmd, L"far");
 	psCmdHistory = NULL; nCmdHistorySize = 0;
-    isMulti = true; icMultiNew = 'W'; icMultiNext = 'Q'; icMultiRecreate = 192/*VK_тильда*/; isMultiNewConfirm = true;
+    isMulti = true; icMultiNew = 'W'; icMultiNext = 'Q'; icMultiRecreate = 192/*VK_тильда*/; icMultiBuffer = 'A'; 
+    isMultiNewConfirm = true; nMultiHotkeyModifier = 0;
     isFARuseASCIIsort = false; isFixAltOnAltTab = false;
     // Logging
     isAdvLogging = 0;
@@ -253,6 +254,7 @@ void CSettings::InitSettings()
     isScrollTitle = true;
     ScrollTitleLen = 22;
     lstrcpy(szAdminTitleSuffix, L" (Admin)");
+    bAdminShield = true;
     
 	isRSelFix = true; isMouseSkipActivation = true; isMouseSkipMoving = true;
 
@@ -310,10 +312,12 @@ void CSettings::LoadSettings()
         reg.Load(L"CmdLine", &psCmd);
 		reg.Load(L"CmdLineHistory", &psCmdHistory, &nCmdHistorySize); HistoryCheck();
         reg.Load(L"Multi", isMulti);
+        	reg.Load(L"Multi.Modifier", nMultiHotkeyModifier);
 			reg.Load(L"Multi.NewConsole", icMultiNew);
 			reg.Load(L"Multi.Next", icMultiNext);
 			reg.Load(L"Multi.Recreate", icMultiRecreate);
 			reg.Load(L"Multi.NewConfirm", isMultiNewConfirm);
+			reg.Load(L"Multi.Buffer", icMultiBuffer);
 
         reg.Load(L"FontSize", inSize);
         reg.Load(L"FontSizeX", FontSizeX);
@@ -461,6 +465,7 @@ void CSettings::LoadSettings()
         reg.Load(L"ScrollTitle", isScrollTitle);
         reg.Load(L"ScrollTitleLen", ScrollTitleLen);
         reg.Load(L"AdminTitleSuffix", szAdminTitleSuffix); szAdminTitleSuffix[sizeofarray(szAdminTitleSuffix)-1] = 0;
+        reg.Load(L"AdminShowShield", bAdminShield);
         reg.Load(L"TryToCenter", isTryToCenter);
         //reg.Load(L"CreateAppWindow", isCreateAppWindow);
         //reg.Load(L"AllowDetach", isAllowDetach);

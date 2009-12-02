@@ -172,6 +172,7 @@ FDebugActiveProcessStop pfnDebugActiveProcessStop = NULL;
 typedef BOOL (WINAPI *FDebugSetProcessKillOnExit)(BOOL KillOnExit);
 FDebugSetProcessKillOnExit pfnDebugSetProcessKillOnExit = NULL;
 void ProcessDebugEvent();
+BOOL IsUserAdmin();
 
 
 
@@ -515,6 +516,12 @@ int main()
 		pi.hProcess = srv.hRootProcess;
 		pi.dwProcessId = srv.dwRootProcess;
 	} else {
+
+		#ifdef _DEBUG
+		if (ghFarInExecuteEvent && wcsstr(gpszRunCmd,L"far.exe"))
+			ResetEvent(ghFarInExecuteEvent);
+		#endif
+
         lbRc = CreateProcessW(NULL, gpszRunCmd, NULL,NULL, TRUE, 
                 NORMAL_PRIORITY_CLASS/*|CREATE_NEW_PROCESS_GROUP*/, 
                 NULL, NULL, &si, &pi);
@@ -680,7 +687,7 @@ wrap:
 	// в самой процедуре ExitWaitForKey вставлена проверка флага gbInShutdown
     PRINT_COMSPEC(L"Finalizing. gbInShutdown=%i\n", gbInShutdown);
 	#ifdef SHOW_STARTED_MSGBOX
-	MessageBox(GetConsoleWindow(), L"Finalizing", L"ConEmuC.ComSpec", 0);
+	MessageBox(GetConsoleWindow(), L"Finalizing", (gnRunMode == RM_SERVER) ? L"ConEmuC.Server" : L"ConEmuC.ComSpec", 0);
 	#endif
     if (!gbInShutdown
 		&& ((iRc!=0 && iRc!=CERR_RUNNEWCONSOLE) || gbAlwaysConfirmExit)
@@ -765,6 +772,10 @@ wrap:
 	if (iRc == 0 && gnRunMode == RM_COMSPEC)
 		iRc = cmd.nExitCode;
 
+	#ifdef SHOW_STARTED_MSGBOX
+	MessageBox(GetConsoleWindow(), L"Exiting", (gnRunMode == RM_SERVER) ? L"ConEmuC.Server" : L"ConEmuC.ComSpec", 0);
+	#endif
+		
     return iRc;
 }
 
@@ -1592,6 +1603,8 @@ void SendStarted()
 		pIn->StartStop.hWnd = ghConWnd;
 		pIn->StartStop.dwPID = gnSelfPID;
 		pIn->StartStop.dwInputTID = (gnRunMode == RM_SERVER) ? srv.dwInputThreadId : 0;
+		if (gnRunMode == RM_SERVER)
+			pIn->StartStop.bUserIsAdmin = IsUserAdmin();
 
 		// Перед запуском 16бит приложений нужно подресайзить консоль...
 		gnImageSubsystem = 0;
@@ -1968,6 +1981,11 @@ int ServerInit()
 	}
     
     srv.nMaxFPS = 10;
+
+#ifdef _DEBUG
+	if (ghFarInExecuteEvent)
+		SetEvent(ghFarInExecuteEvent);
+#endif
 
     
     //if (hKernel) {
@@ -5702,6 +5720,36 @@ void EnlargeRegion(CESERVER_CHAR_HDR& rgn, const COORD crNew)
         else if (crNew.X > rgn.cr2.X)
             rgn.cr2.X = crNew.X;
     }
+}
+
+BOOL IsUserAdmin()
+{
+	OSVERSIONINFO osv = {sizeof(OSVERSIONINFO)};
+	GetVersionEx(&osv);
+	// Проверять нужно только для висты, чтобы на XP лишний "Щит" не отображался
+	if (osv.dwMajorVersion < 6)
+		return FALSE;
+
+	BOOL b;
+	SID_IDENTIFIER_AUTHORITY NtAuthority = SECURITY_NT_AUTHORITY;
+	PSID AdministratorsGroup;
+
+	b = AllocateAndInitializeSid(
+		&NtAuthority,
+		2,
+		SECURITY_BUILTIN_DOMAIN_RID,
+		DOMAIN_ALIAS_RID_ADMINS,
+		0, 0, 0, 0, 0, 0,
+		&AdministratorsGroup); 
+	if(b) 
+	{
+		if (!CheckTokenMembership(NULL, AdministratorsGroup, &b)) 
+		{
+			b = FALSE;
+		}
+		FreeSid(AdministratorsGroup);
+	}
+	return(b);
 }
 
 WARNING("BUGBUG: x64 US-Dvorak");

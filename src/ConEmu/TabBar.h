@@ -2,6 +2,7 @@
 #pragma once
 
 #include <vector>
+#include <commctrl.h>
 
 #define CONEMUMSG_UPDATETABS _T("ConEmuMain::UpdateTabs")
 
@@ -23,6 +24,7 @@ private:
 
 private:
 	HWND mh_Tabbar, mh_Toolbar, mh_Rebar, mh_TabTip;
+	HIMAGELIST mh_TabIcons;
 	bool _active;
 	int _tabHeight;
 	int mn_ThemeHeightDiff;
@@ -30,7 +32,7 @@ private:
 	bool _titleShouldChange;
 	int _prevTab;
 	BOOL mb_ChangeAllowed; //, mb_Enabled;
-	void AddTab(LPCWSTR text, int i);
+	void AddTab(LPCWSTR text, int i, bool bAdmin);
 	void SelectTab(int i);
 	CVirtualConsole* FarSendChangeTab(int tabIndex);
 	LONG mn_LastToolbarWidth;

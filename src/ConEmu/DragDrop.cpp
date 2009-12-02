@@ -1063,7 +1063,33 @@ void CDragDrop::EnumDragFormats(IDataObject * pDataObject)
 		for (i=0; i<nCnt; i++) {
 			szName[i][0] = 0;
 			if (!GetClipboardFormatName(fmt[i].cfFormat, szName[i], MAX_PATH))
-				wsprintf(szName[i], L"ClipFormatID=%i", fmt[i].cfFormat);
+			{
+				switch (fmt[i].cfFormat) {
+				case 1: lstrcpy(szName[i], L"CF_TEXT"); break;
+				case 2: lstrcpy(szName[i], L"CF_BITMAP"); break;
+				case 3: lstrcpy(szName[i], L"CF_METAFILEPICT"); break;
+				case 4: lstrcpy(szName[i], L"CF_SYLK"); break;
+				case 5: lstrcpy(szName[i], L"CF_DIF"); break;
+				case 6: lstrcpy(szName[i], L"CF_TIFF"); break;
+				case 7: lstrcpy(szName[i], L"CF_OEMTEXT"); break;
+				case 8: lstrcpy(szName[i], L"CF_DIB"); break;
+				case 9: lstrcpy(szName[i], L"CF_PALETTE"); break;
+				case 10: lstrcpy(szName[i], L"CF_PENDATA"); break;
+				case 11: lstrcpy(szName[i], L"CF_RIFF"); break;
+				case 12: lstrcpy(szName[i], L"CF_WAVE"); break;
+				case 13: lstrcpy(szName[i], L"CF_UNICODETEXT"); break;
+				case 14: lstrcpy(szName[i], L"CF_ENHMETAFILE"); break;
+				case 15: lstrcpy(szName[i], L"CF_HDROP"); break;
+				case 16: lstrcpy(szName[i], L"CF_LOCALE"); break;
+				case 17: lstrcpy(szName[i], L"CF_DIBV5"); break;
+				case 0x0080: lstrcpy(szName[i], L"CF_OWNERDISPLAY"); break;
+				case 0x0081: lstrcpy(szName[i], L"CF_DSPTEXT"); break;
+				case 0x0082: lstrcpy(szName[i], L"CF_DSPBITMAP"); break;
+				case 0x0083: lstrcpy(szName[i], L"CF_DSPMETAFILEPICT"); break;
+				case 0x008E: lstrcpy(szName[i], L"CF_DSPENHMETAFILE"); break;
+				default: wsprintf(szName[i], L"ClipFormatID=%i", fmt[i].cfFormat);
+				}
+			}
 			
 				
 			stg[i].tymed = TYMED_HGLOBAL;

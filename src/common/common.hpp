@@ -132,7 +132,7 @@ extern wchar_t gszDbgModLabel[6];
 #define CECMD_FLASHWINDOW   24
 #define CECMD_SETCONSOLECP  25
 
-#define CESERVER_REQ_VER    21
+#define CESERVER_REQ_VER    22
 
 #define PIPEBUFSIZE 4096
 
@@ -161,7 +161,7 @@ TODO("Restrict CONEMUTABMAX to 128 chars. Only filename, and may be ellipsed..."
 typedef struct tag_ConEmuTab {
 	int  Pos;
 	int  Current;
-	int  Type; // Panels=1, Viewer=2, Editor=3
+	int  Type; // (Panels=1, Viewer=2, Editor=3) | (Elevated=0x100)
 	int  Modified;
 	wchar_t Name[CONEMUTABMAX];
 	//  int  Modified;
@@ -310,6 +310,7 @@ typedef struct tag_CESERVER_REQ_STARTSTOP {
 	DWORD dwPID, dwInputTID;
 	DWORD nSubSystem; // 255 для DOS программ, 0x100 - аттач из FAR плагина
 	BOOL  bRootIsCmdExe;
+	BOOL  bUserIsAdmin;
 	// А это приходит из консоли, вдруго консольная программа успела поменять размер буфера
 	CONSOLE_SCREEN_BUFFER_INFO sbi;
 } CESERVER_REQ_STARTSTOP;

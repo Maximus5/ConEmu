@@ -1,3 +1,6 @@
+Ctrl+Wheel - листание страницами в BufferHeight
+
+
 Maximus5 - 2009.12.01
 [%] Не учитывался макрос, задаваемый в "RightClickMacro2".
 

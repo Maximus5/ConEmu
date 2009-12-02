@@ -809,6 +809,9 @@ void CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec)
     MSG msg = {NULL};
     
     if (PackInputRecord ( piRec, &msg )) {
+		if (m_UseLogs>=2)
+			LogInput(piRec);
+
     	_ASSERTE(msg.message!=0);
 		if (mb_UseOnlyPipeInput) {
 			PostConsoleEventPipe(&msg);
@@ -1030,7 +1033,7 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
                 pRCon->mb_DataChanged = FALSE;
                 if (lbIsActive) {
                     gConEmu.m_Child.Validate(); // сбросить флажок
-                    if (pRCon->m_UseLogs>1) pRCon->LogString("mp_VCon->Update from CRealConsole::MonitorThread");
+                    if (pRCon->m_UseLogs>2) pRCon->LogString("mp_VCon->Update from CRealConsole::MonitorThread");
                     if (pRCon->mp_VCon->Update(lbForceUpdate))
                         gConEmu.m_Child.Redraw();
                     pRCon->mn_LastInvalidateTick = GetTickCount();
@@ -1042,7 +1045,7 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
                     pRCon->mp_VCon->UpdateCursor(lbNeedBlink);
                     // UpdateCursor Invalidate не зовет
                     if (lbNeedBlink) {
-                        if (pRCon->m_UseLogs>1) pRCon->LogString("Invalidating from CRealConsole::MonitorThread.1");
+                        if (pRCon->m_UseLogs>2) pRCon->LogString("Invalidating from CRealConsole::MonitorThread.1");
                         gConEmu.m_Child.Redraw();
                         /*gConEmu.m_Child.Validate(); // сбросить флажок
                         gConEmu.m_Child.Invalidate();
@@ -1051,7 +1054,7 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
                     }
                 } else if (((GetTickCount() - pRCon->mn_LastInvalidateTick) > FORCE_INVALIDATE_TIMEOUT)) {
                     DEBUGSTRDRAW(L"+++ Force invalidate by timeout\n");
-                    if (pRCon->m_UseLogs>1) pRCon->LogString("Invalidating from CRealConsole::MonitorThread.2");
+                    if (pRCon->m_UseLogs>2) pRCon->LogString("Invalidating from CRealConsole::MonitorThread.2");
                     gConEmu.m_Child.Redraw();
                     /*gConEmu.m_Child.Validate(); // сбросить флажок
                     gConEmu.m_Child.Invalidate();
@@ -1491,11 +1494,12 @@ void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y)
         TODO("Ручная обработка выделения, на консоль полагаться не следует...");
         if (messg == WM_MOUSEWHEEL) {
             SHORT nDir = (SHORT)HIWORD(wParam);
+            BOOL lbCtrl = isPressed(VK_CONTROL);
             if (nDir > 0) {
-                OnScroll(SB_LINEUP);
+                OnScroll(lbCtrl ? SB_PAGEUP : SB_LINEUP);
                 //OnScroll(SB_PAGEUP);
             } else if (nDir < 0) {
-                OnScroll(SB_LINEDOWN);
+                OnScroll(lbCtrl ? SB_PAGEDOWN : SB_LINEDOWN);
                 //OnScroll(SB_PAGEDOWN);
             }
         }
@@ -1547,9 +1551,17 @@ void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y)
         else if (messg == WM_MOUSEMOVE)
             r.Event.MouseEvent.dwEventFlags = MOUSE_MOVED;
         else if (messg == WM_MOUSEWHEEL) {
+			if (m_UseLogs>=2) {
+				char szDbgMsg[128]; wsprintfA(szDbgMsg, "WM_MOUSEWHEEL(wParam=0x%08X, x=%i, y=%i)", wParam, x, y);
+				LogString(szDbgMsg);
+			}
             r.Event.MouseEvent.dwEventFlags = MOUSE_WHEELED;
             r.Event.MouseEvent.dwButtonState |= (0xFFFF0000 & wParam);
         } else if (messg == WM_MOUSEHWHEEL) {
+			if (m_UseLogs>=2) {
+				char szDbgMsg[128]; wsprintfA(szDbgMsg, "WM_MOUSEHWHEEL(wParam=0x%08X, x=%i, y=%i)", wParam, x, y);
+				LogString(szDbgMsg);
+			}
             r.Event.MouseEvent.dwEventFlags = 8; //MOUSE_HWHEELED
             r.Event.MouseEvent.dwButtonState |= (0xFFFF0000 & wParam);
         }
@@ -1648,8 +1660,6 @@ void CRealConsole::PostConsoleEventPipe(MSG *pMsg)
         //DisplayLastError(L"ConEmuC was terminated");
         return;
     }
-
-    //LogInput(piRec);
 
     TODO("Если пайп с таким именем не появится в течении 10 секунд (минуты?) - закрыть VirtualConsole показав ошибку");
     if (mh_ConEmuCInput==NULL || mh_ConEmuCInput==INVALID_HANDLE_VALUE) {
@@ -2513,6 +2523,9 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 				_ASSERTE(pIn->StartStop.dwInputTID);
 				_ASSERTE(mn_ConEmuC_Input_TID==0 || mn_ConEmuC_Input_TID==pIn->StartStop.dwInputTID);
 				mn_ConEmuC_Input_TID = pIn->StartStop.dwInputTID;
+				//
+				if (!m_Args.bRunAsAdministrator && pIn->StartStop.bUserIsAdmin)
+					m_Args.bRunAsAdministrator = TRUE;
 			}
 
             AllowSetForegroundWindow(nPID);
@@ -4137,7 +4150,7 @@ void CRealConsole::LogString(LPCSTR asText)
 
 void CRealConsole::LogInput(INPUT_RECORD* pRec)
 {
-    if (!mh_LogInput) return;
+    if (!mh_LogInput || m_UseLogs<=2) return;
 
     char szInfo[192] = {0};
 
@@ -4223,7 +4236,7 @@ void CRealConsole::CloseLogFiles()
 
 void CRealConsole::LogPacket(CESERVER_REQ* pInfo)
 {
-    if (!mpsz_LogPackets || m_UseLogs!=2) return;
+    if (!mpsz_LogPackets || m_UseLogs<3) return;
 
     wchar_t szPath[MAX_PATH];
     wsprintf(szPath, mpsz_LogPackets, ++mn_LogPackets);
@@ -4701,12 +4714,16 @@ void CRealConsole::SetTabs(ConEmuTab* tabs, int tabsCount)
         }
         #endif
 
-		if (isAdministrator() && gSet.szAdminTitleSuffix[0]) {
-			int nAddLen = lstrlen(gSet.szAdminTitleSuffix) + 1;
-	        for (i=0; i<tabsCount; i++) {
-		        if (lpNewTabs[i].Name[0]) {
-					if (lstrlen(lpNewTabs[i].Name) < (int)(sizeofarray(lpNewTabs[i].Name) + nAddLen))
-						lstrcat(lpNewTabs[i].Name, gSet.szAdminTitleSuffix);
+		if (isAdministrator() && (gSet.bAdminShield || gSet.szAdminTitleSuffix[0])) {
+			if (gSet.bAdminShield) {
+				lpNewTabs->Type |= 0x100;
+			} else {
+				int nAddLen = lstrlen(gSet.szAdminTitleSuffix) + 1;
+		        for (i=0; i<tabsCount; i++) {
+			        if (lpNewTabs[i].Name[0]) {
+						if (lstrlen(lpNewTabs[i].Name) < (int)(sizeofarray(lpNewTabs[i].Name) + nAddLen))
+							lstrcat(lpNewTabs[i].Name, gSet.szAdminTitleSuffix);
+					}
 				}
 			}
 		}
@@ -4719,6 +4736,9 @@ void CRealConsole::SetTabs(ConEmuTab* tabs, int tabsCount)
         lpNewTabs->Current = 1;
         lpNewTabs->Type = 1;
         //wcscpy(lpNewTabs->Name, L"ConEmu");
+        if (isAdministrator() && gSet.bAdminShield) {
+			lpNewTabs->Type |= 0x100;
+		}
     }
     
     mn_tabsCount = 0; Free(mp_tabs); mn_ActiveTab = nActiveTab;
@@ -4767,9 +4787,13 @@ BOOL CRealConsole::GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab)
         	// 03.09.2009 Maks -> min
             int nMaxLen = min(countof(ms_PanelTitle) , countof(pTab->Name));
             lstrcpyn(pTab->Name, ms_PanelTitle, nMaxLen);
-			if (isAdministrator() && gSet.szAdminTitleSuffix[0]) {
-				if (lstrlen(ms_PanelTitle) < (int)(sizeofarray(pTab->Name) + lstrlen(gSet.szAdminTitleSuffix) + 1))
-					lstrcat(pTab->Name, gSet.szAdminTitleSuffix);
+			if (isAdministrator() && (gSet.bAdminShield || gSet.szAdminTitleSuffix[0])) {
+				if (gSet.bAdminShield) {
+					pTab->Type |= 0x100;
+				} else {
+					if (lstrlen(ms_PanelTitle) < (int)(sizeofarray(pTab->Name) + lstrlen(gSet.szAdminTitleSuffix) + 1))
+						lstrcat(pTab->Name, gSet.szAdminTitleSuffix);
+				}
 			}
         } else if (mn_tabsCount == 1 && TitleFull[0]) { // Если панель единственная - точно показываем заголовок консоли
         	// 03.09.2009 Maks -> min
@@ -4777,6 +4801,9 @@ BOOL CRealConsole::GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab)
             lstrcpyn(pTab->Name, TitleFull, nMaxLen);
         }
     }
+	if (tabIdx == 0 && isAdministrator() && gSet.bAdminShield) {
+		pTab->Type |= 0x100;
+	}
     wchar_t* pszAmp = pTab->Name;
     int nCurLen = lstrlenW(pTab->Name), nMaxLen = countof(pTab->Name)-1;
     while ((pszAmp = wcschr(pszAmp, L'&')) != NULL) {
@@ -5735,8 +5762,10 @@ void CRealConsole::OnTitleChanged()
     }
 
     wcscat(TitleFull, TitleCmp);
-    if (isAdministrator() && gSet.szAdminTitleSuffix)
-    	wcscat(TitleFull, gSet.szAdminTitleSuffix);
+	if (isAdministrator() && (gSet.bAdminShield || gSet.szAdminTitleSuffix)) {
+		if (!gSet.bAdminShield)
+    		wcscat(TitleFull, gSet.szAdminTitleSuffix);
+	}
 
 	CheckFarStates();
 

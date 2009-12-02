@@ -41,7 +41,7 @@ TabBarClass::TabBarClass()
     _prevTab = -1;
     mb_ChangeAllowed = FALSE;
     //mb_Enabled = TRUE;
-    mh_Toolbar = NULL; mh_Tabbar = NULL; mh_Rebar = NULL; mn_LastToolbarWidth = 0;
+    mh_Toolbar = NULL; mh_Tabbar = NULL; mh_Rebar = NULL; mh_TabIcons = NULL; mn_LastToolbarWidth = 0;
     mb_PostUpdateCalled = FALSE;
 	mb_PostUpdateRequested = FALSE;
     mn_MsgUpdateTabs = RegisterWindowMessage(CONEMUMSG_UPDATETABS);
@@ -153,13 +153,15 @@ void TabBarClass::Retrieve()
 }
 
 // ƒобавл€ет закладку, или мен€ет (при необходимости) заголовок существующей
-void TabBarClass::AddTab(LPCWSTR text, int i)
+void TabBarClass::AddTab(LPCWSTR text, int i, bool bAdmin)
 {
 	if (mh_Tabbar) {
 		TCITEM tie;
-		tie.mask = TCIF_TEXT;
+		// иконку обновл€ем всегда. она может изменитьс€ дл€ таба
+		tie.mask = TCIF_TEXT | (mh_TabIcons ? TCIF_IMAGE : 0);
 		tie.iImage = -1; 
 		tie.pszText = (LPWSTR)text ;
+		tie.iImage = bAdmin ? 0 : -1; // ѕока иконка только одна - дл€ табов со щитом
 
 		int nCurCount = GetItemCount();
 		if (i>=nCurCount) {
@@ -537,7 +539,7 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
 
             AddTab2VCon(vct);
             // ƒобавл€ет закладку, или мен€ет (при необходимости) заголовок существующей
-            AddTab(tab.Name, tabIdx);
+            AddTab(tab.Name, tabIdx, (tab.Type & 0x100)==0x100);
             
             if (lbActive && tab.Current)
                 nCurTab = tabIdx;
@@ -561,7 +563,7 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
 		AddTab2VCon(vct); //2009-06-14. Ќе было!
 
         // ƒобавл€ет закладку, или мен€ет (при необходимости) заголовок существующей
-        AddTab(tab.Name, tabIdx);
+        AddTab(tab.Name, tabIdx, (tab.Type & 0x100)==0x100);
         nCurTab = tabIdx;
         tabIdx++;
     }
@@ -994,6 +996,10 @@ HWND TabBarClass::CreateTabbar()
         return NULL; // нет табов - нет и тулбара
     if (mh_Tabbar)
         return mh_Tabbar; // ”же создали
+        
+    if (!mh_TabIcons) {
+    	mh_TabIcons = ImageList_LoadImage(g_hInstance, MAKEINTRESOURCE(IDB_SHIELD), 16, 1, RGB(128,0,0), IMAGE_BITMAP, LR_CREATEDIBSECTION);
+    }
 
 	// ¬ажно проверку делать после создани€ главного окна, иначе IsAppThemed будет возвращать FALSE
     BOOL bAppThemed = FALSE, bThemeActive = FALSE;
@@ -1029,6 +1035,8 @@ HWND TabBarClass::CreateTabbar()
         #endif
         // Ќадо
         _defaultTabProc = (WNDPROC)SetWindowLongPtr(mh_Tabbar, GWLP_WNDPROC, (LONG_PTR)TabProc);
+        
+        SendMessage(mh_Tabbar, TCM_SETIMAGELIST, 0, (LPARAM)mh_TabIcons);
 
         if (!mh_TabTip || !IsWindow(mh_TabTip)) {
             mh_TabTip = CreateWindowEx(WS_EX_TOPMOST, TOOLTIPS_CLASS, NULL,
@@ -1047,7 +1055,7 @@ HWND TabBarClass::CreateTabbar()
 
         // ƒобавл€ет закладку, или мен€ет (при необходимости) заголовок существующей
         //AddTab(gConEmu.isFar() ? gSet.szTabPanels : gSet.pszTabConsole, 0);
-        AddTab(gConEmu.GetTitle(), 0);
+        AddTab(gConEmu.GetTitle(), 0, false);
 
 		GetClientRect(ghWnd, &rcClient); 
 		TabCtrl_AdjustRect(mh_Tabbar, FALSE, &rcClient);
@@ -1176,7 +1184,7 @@ void TabBarClass::PrepareTab(ConEmuTab* pTab)
     int nSplit = 0;
     int nMaxLen = 0; //gSet.nTabLenMax - _tcslen(szFormat) + 2/* %s */;
     int origLength = 0; //_tcslen(tFileName);
-    if (pTab->Name[0]==0 || pTab->Type == 1/*WTYPE_PANELS*/) {
+    if (pTab->Name[0]==0 || (pTab->Type & 0xFF) == 1/*WTYPE_PANELS*/) {
 	    //_tcscpy(szFormat, _T("%s"));
 	    _tcscpy(szFormat, gSet.szTabConsole);
 	    nMaxLen = gSet.nTabLenMax - _tcslen(szFormat) + 2/* %s */;
@@ -1206,13 +1214,13 @@ void TabBarClass::PrepareTab(ConEmuTab* pTab)
         if (!tFileName)
             tFileName = pTab->Name;
 
-        if (pTab->Type == 3/*WTYPE_EDITOR*/) {
+        if ((pTab->Type & 0xFF) == 3/*WTYPE_EDITOR*/) {
             if (pTab->Modified)
                 _tcscpy(szFormat, gSet.szTabEditorModified);
             else
                 _tcscpy(szFormat, gSet.szTabEditor);
         } 
-        else if (pTab->Type == 2/*WTYPE_VIEWER*/)
+        else if ((pTab->Type & 0xFF) == 2/*WTYPE_VIEWER*/)
             _tcscpy(szFormat, gSet.szTabViewer);
     }
     // restrict length

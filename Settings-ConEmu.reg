@@ -62,20 +62,28 @@ REGEDIT4
 ;; 0 - don't handle - always send RClick to console
 ;; 1 - always show context menu (look at "RightClickMacro2" value)
 ;; 2 - ShortClick - send RClick, LongClick - show menu
-;; Needs EMenu & macro on 'Apps' button
 "RightClick opens context menu"=hex:02
 ;; You may specify special macro, used to display menu.
-;; By default (value is absent) ConEmu simply send 'Apps' key to console
+;; By default (value is absent or empty) ConEmu simply send next macro:
+;;   $If (!CmdLine.Empty) %Flg_Cmd=1; %CmdCurPos=CmdLine.ItemCount-CmdLine.CurPos+1;
+;;   %CmdVal=CmdLine.Value; Esc $Else %Flg_Cmd=0; $End $Text "rclk_gui:" Enter 
+;;   $If (%Flg_Cmd==1) $Text %CmdVal %Flg_Cmd=0; %Num=%CmdCurPos; 
+;;   $While (%Num!=0) %Num=%Num-1; CtrlS $End $End
 ;; Prepend macro with '@' to 'DisableOutput'
 ;"RightClickMacro2"="@F11 e Enter Enter"
 
 ;; Turn on multiconsole (sort of 'ConMan' functionality)
 "Multi"=hex:00
 ;; Some hotkeys for multiconsole
-;"Multi.NewConsole"=hex:57 ; win + w
+;"Multi.NewConsole"=hex:57 ; "win + w" - Create new console hotkey
 ;"Multi.NewConfirm"=hex:01 ; Confirm new console creation from shortcut
-;"Multi.Next"=hex:51       ; win + q
-;"Multi.Restart"=hex:C0    ; win + ~
+;"Multi.Next"=hex:51       ; "win + q" - Switch next console hotkey
+;"Multi.Restart"=hex:C0    ; "win + ~" - Restart or terminate console hotkey
+;"Multi.Buffer"=hex:41     ; "win + a" - Turn bufferheight mode on/off hotkey. This value does not depend on "Multi"
+;; Hotkey modifiers ('Win' by default), or...
+;"Multi.Modifier"=dword:00111210 ; Ctrl-Alt-Shift+key
+;"Multi.Modifier"=dword:00001110 ; Ctrl-Shift+key
+;"Multi.Modifier"=dword:00001112 ; Ctrl-Alt+key
 
 ;; Some programs uses several console buffers (i.e. telnet, conman)
 ;; Set 'hex:01' to support them (activated automatically for known applications)
@@ -174,6 +182,8 @@ REGEDIT4
 
 ;; Used for consoles, started under Administrator
 ;"AdminTitleSuffix"=" (Admin)"
+;; By default - show Tab icon 'Shield' instead of suffix
+;"AdminShowShield"=hex:01
 
 ;; Tabs: 0 - don't show, 1 - always, 2 - auto
 "Tabs"=hex:02

@@ -4317,11 +4317,14 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
     static bool sb_SkipConmanChar = false;
     static DWORD sn_SkipConmanVk[2] = {0,0};
     bool lbLWin = false, lbRWin = false;
+    TODO("gSet.nMultiHotkeyModifier - байты содержат VK_CONTROL, VK_MENU, VK_SHIFT");
+    TODO("gSet.icMultiBuffer - хоткей дл€ включени€-отключени€ режима буфера - AskChangeBufferHeight()");
     if (gSet.isMulti && wParam && ((lbLWin = isPressed(VK_LWIN)) || (lbRWin = isPressed(VK_RWIN)) || sb_SkipConmanChar)) {
         if (messg == WM_KEYDOWN && (lbLWin || lbRWin) && (wParam != VK_LWIN && wParam != VK_RWIN)) {
-            if (wParam==gSet.icMultiNext || wParam==gSet.icMultiNew || (wParam>='0' && wParam<='9')
+            if (wParam==gSet.icMultiNext || wParam==gSet.icMultiNew || wParam==gSet.icMultiRecreate
+            	|| (wParam>='0' && wParam<='9')
 				|| ((lbLWin || lbRWin) && (wParam==VK_F11 || wParam==VK_F12)) // KeyDown дл€ этого не проходит, но на вс€кий случай
-                || wParam==gSet.icMultiRecreate)
+                )
             {
                 // «апомнить, что не нужно пускать в консоль
                 sb_SkipConmanChar = true;

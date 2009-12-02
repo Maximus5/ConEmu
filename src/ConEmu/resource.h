@@ -16,6 +16,7 @@
 #define IDC_LINK                        109
 #define IDC_MOVE                        110
 #define IDD_RESTART                     112
+#define IDB_SHIELD                      113
 #define c0                              1000
 #define c1                              1001
 #define c2                              1002

@@ -98,7 +98,8 @@ public:
     bool isTryToCenter;
     RECT rcTabMargins;
     bool isTabFrame;
-    bool isMulti; BYTE icMultiNew, icMultiNext, icMultiRecreate; bool isMultiNewConfirm;
+    bool isMulti; BYTE icMultiNew, icMultiNext, icMultiRecreate, icMultiBuffer;
+    bool isMultiNewConfirm; DWORD nMultiHotkeyModifier;
     bool isFARuseASCIIsort, isFixAltOnAltTab;
 
     // Заголовки табов
@@ -117,6 +118,7 @@ public:
     bool isScrollTitle;
     DWORD ScrollTitleLen;
     wchar_t szAdminTitleSuffix[64]; //" (Admin)"
+    bool bAdminShield;
     
     UINT nMainTimerElapse; // периодичность, с которой из консоли считывается текст
     //bool isAdvLangChange; // в Висте без ConIme в самой консоли не меняется язык, пока не послать WM_SETFOCUS. Но при этом исчезает диалог быстрого поиска
