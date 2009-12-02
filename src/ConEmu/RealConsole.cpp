@@ -1555,8 +1555,9 @@ void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y)
 				char szDbgMsg[128]; wsprintfA(szDbgMsg, "WM_MOUSEWHEEL(wParam=0x%08X, x=%i, y=%i)", wParam, x, y);
 				LogString(szDbgMsg);
 			}
+			SHORT nScroll = (SHORT)(((DWORD)wParam & 0xFFFF0000)>>16);
             r.Event.MouseEvent.dwEventFlags = MOUSE_WHEELED;
-            r.Event.MouseEvent.dwButtonState |= (0xFFFF0000 & wParam);
+            r.Event.MouseEvent.dwButtonState |= /*(0xFFFF0000 & wParam)*/ (nScroll > 0) ? 0x00780000 : 0xFF880000;
         } else if (messg == WM_MOUSEHWHEEL) {
 			if (m_UseLogs>=2) {
 				char szDbgMsg[128]; wsprintfA(szDbgMsg, "WM_MOUSEHWHEEL(wParam=0x%08X, x=%i, y=%i)", wParam, x, y);
