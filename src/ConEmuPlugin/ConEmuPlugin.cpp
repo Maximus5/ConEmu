@@ -1,8 +1,8 @@
 
-#ifdef _DEBUG
+//#ifdef DEBUG
 //  –аскомментировать, чтобы сразу после загрузки плагина показать MessageBox, чтобы прицепитьс€ дебаггером
 //  #define SHOW_STARTED_MSGBOX
-#endif
+//#endif
 
 //#include <stdio.h>
 #include <windows.h>
@@ -13,9 +13,9 @@
 #include "..\common\pluginW1007.hpp"
 #include "PluginHeader.h"
 #include <Tlhelp32.h>
-#include <vector>
+//#include <vector>
 
-WARNING("ѕеревести ghCommandThreads с vector<> на обычный класс. Ёто позволит собрать с минимальным размером файла");
+//WARNING("ѕеревести ghCommandThreads с vector<> на обычный класс. Ёто позволит собрать с минимальным размером файла");
 
 #include "../common/ConEmuCheck.h"
 
@@ -75,7 +75,7 @@ LPVOID gpReqCommandData = NULL;
 HANDLE ghReqCommandEvent = NULL;
 UINT gnMsgTabChanged = 0;
 CRITICAL_SECTION csData;
-MSection csTabs;
+MSection *csTabs = NULL;
 WCHAR gcPlugKey=0;
 BOOL  gbPlugKeyChanged=FALSE;
 HKEY  ghRegMonitorKey=NULL; HANDLE ghRegMonitorEvt=NULL;
@@ -86,7 +86,6 @@ WCHAR gszPluginServerPipe[MAX_PATH];
 //HANDLE ghActiveServerThread = NULL;
 HANDLE ghServerThread = NULL;
 DWORD  gnServerThreadId = 0;
-std::vector<HANDLE> ghCommandThreads;
 //DWORD  gnServerThreadsId[MAX_SERVER_THREADS] = {0,0,0};
 HANDLE ghServerTerminateEvent = NULL;
 HANDLE ghPluginSemaphore = NULL;
@@ -101,6 +100,51 @@ bool gbMonitorEnvVar = false;
 void UpdateEnvVar(const wchar_t* pszList);
 BOOL StartupHooks();
 BOOL gbFARuseASCIIsort = FALSE; // попытатьс€ перехватить строковую сортировку в FAR
+
+
+//std::vector<HANDLE> ghCommandThreads;
+class CommandThreads {
+public:
+	HANDLE h[20];
+public:
+	CommandThreads() {
+		memset(h, 0, sizeof(h));
+	};
+	~CommandThreads() {
+	};
+	void CheckTerminated() {
+		// ѕроверить, может какие-то командные нити уже завершились
+		for (size_t i = 0; i < sizeof(h)/sizeof(h[0]); i++) {
+			if (h[i] == NULL) continue;
+			if (WaitForSingleObject(h[i], 0) == WAIT_OBJECT_0) {
+				CloseHandle ( h[i] );
+				h[i] = NULL;
+			}
+		}
+	};
+	void push_back(HANDLE hThread) {
+		for (size_t i = 0; i < sizeof(h)/sizeof(h[0]); i++) {
+			if (h[i] == NULL) {
+				h[i] = hThread;
+				return;
+			}
+		}
+		_ASSERT(FALSE);
+	};
+	void KillAllThreads() {
+		// ѕрибивание всех запущенных нитей
+		for (size_t i = 0; i < sizeof(h)/sizeof(h[0]); i++) {
+			if (h[i] == NULL) continue;
+			if (WaitForSingleObject(h[i], 100) != WAIT_OBJECT_0) {
+				TerminateThread(h[i], 100);
+			}
+			CloseHandle ( h[i] );
+			h[i] = NULL;
+		}
+	};
+};
+
+CommandThreads *ghCommandThreads;
 
 
 // minimal(?) FAR version 2.0 alpha build FAR_X_VER
@@ -169,7 +213,7 @@ HANDLE WINAPI _export OpenPluginW(int OpenFrom,INT_PTR Item)
 					
 				} else if (Item == SETWND_CALLPLUGIN_SENDTABS) {
 					// Force Send tabs to ConEmu
-					//MSectionLock SC; SC.Lock(&csTabs, TRUE);
+					//MSectionLock SC; SC.Lock(csTabs, TRUE);
 					//SendTabs(gnCurTabCount, TRUE);
 					//SC.Unlock();
 					SetEvent(ghSetWndSendTabsEvent);
@@ -277,6 +321,9 @@ BOOL WINAPI DllMain( HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserve
 				
 				gpNullSecurity = NullSecurity();
 				
+				csTabs = new MSection();
+				ghCommandThreads = new CommandThreads();
+				
 				HWND hConWnd = GetConsoleWindow();
 				gnMainThreadId = GetCurrentThreadId();
 				InitHWND(hConWnd);
@@ -309,10 +356,31 @@ BOOL WINAPI DllMain( HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserve
 				FreeLibrary(ghFarHintsFix);
 				ghFarHintsFix = NULL;
 			}
+			if (csTabs) {
+				delete csTabs;
+				csTabs = NULL;
+			}
+			if (ghCommandThreads) {
+				delete ghCommandThreads;
+				ghCommandThreads = NULL;
+			}
 			break;
 	}
 	return TRUE;
 }
+
+#if defined(CRTSTARTUP)
+extern "C"{
+  BOOL WINAPI _DllMainCRTStartup(HANDLE hDll,DWORD dwReason,LPVOID lpReserved);
+};
+
+BOOL WINAPI _DllMainCRTStartup(HANDLE hDll,DWORD dwReason,LPVOID lpReserved)
+{
+  DllMain(hDll, dwReason, lpReserved);
+  return TRUE;
+}
+#endif
+
 
 BOOL WINAPI IsConsoleActive()
 {
@@ -581,6 +649,10 @@ CESERVER_REQ* ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandDat
 	{
 		case (CMD_DRAGFROM):
 		{
+			//BOOL  *pbClickNeed = (BOOL*)pCommandData;
+			//COORD *crMouse = (COORD *)(pbClickNeed+1);
+			//ProcessCommand(CMD_LEFTCLKSYNC, TRUE/*bReqMainThread*/, pCommandData);
+
 			if (gFarVersion.dwVerMajor==1) {
 				ProcessDragFromA();
 				ProcessDragToA();
@@ -636,12 +708,19 @@ CESERVER_REQ* ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandDat
 		}
 		case (CMD_LEFTCLKSYNC):
 		{
-			COORD *crMouse = (COORD *)pCommandData;
+			//COORD *crMouse = (COORD *)pCommandData;
+			BOOL  *pbClickNeed = (BOOL*)pCommandData;
+			COORD *crMouse = (COORD *)(pbClickNeed+1);
 			
 			INPUT_RECORD clk[2] = {{MOUSE_EVENT},{MOUSE_EVENT}};
-			clk[0].Event.MouseEvent.dwButtonState = FROM_LEFT_1ST_BUTTON_PRESSED;
-			clk[0].Event.MouseEvent.dwMousePosition = *crMouse;
-			clk[1].Event.MouseEvent.dwMousePosition = *crMouse;
+			int i = 0;
+			if (*pbClickNeed) {
+				clk[i].Event.MouseEvent.dwButtonState = FROM_LEFT_1ST_BUTTON_PRESSED;
+				clk[i].Event.MouseEvent.dwMousePosition = *crMouse;
+				i++;
+			}
+			clk[i].Event.MouseEvent.dwMousePosition = *crMouse;
+			i++;
 			
 			DWORD cbWritten = 0;
 			if (!ghConIn)
@@ -991,7 +1070,7 @@ DWORD WINAPI MonitorThreadProcW(LPVOID lpParameter)
 					gnNeedPostTabSendTick = GetTickCount();
 				} else {
 					// Force Send tabs to ConEmu
-					MSectionLock SC; SC.Lock(&csTabs, TRUE);
+					MSectionLock SC; SC.Lock(csTabs, TRUE);
 					SendTabs(gnCurTabCount, TRUE);
 					SC.Unlock();
 				}
@@ -1272,16 +1351,16 @@ void WINAPI _export SetStartupInfoW(void *aInfo)
 void InitHWND(HWND ahFarHwnd)
 {
 	gsFarLang[0] = 0;
-	//InitializeCriticalSection(&csTabs);
+	//InitializeCriticalSection(csTabs);
 	InitializeCriticalSection(&csData);
 	LoadFarVersion(); // пригодитс€ уже здесь!
 
 	// начальна€ инициализаци€. в SetStartupInfo поправим
 	wsprintfW(gszRootKey, L"Software\\%s", (gFarVersion.dwVerMajor==2) ? L"FAR2" : L"FAR");
 	// Ќужно учесть, что FAR мог запуститьс€ с ключом /u (выбор конфигурации)
-	wchar_t* pszUserSlash = gszRootKey+wcslen(gszRootKey);
+	wchar_t* pszUserSlash = gszRootKey+lstrlenW(gszRootKey);
 	lstrcpyW(pszUserSlash, L"\\Users\\");
-	wchar_t* pszUserAdd = pszUserSlash+wcslen(pszUserSlash);
+	wchar_t* pszUserAdd = pszUserSlash+lstrlenW(pszUserSlash);
 	if (GetEnvironmentVariable(L"FARUSER", pszUserAdd, MAX_PATH) == 0)
 		*pszUserSlash = 0;
 
@@ -1337,7 +1416,7 @@ void InitHWND(HWND ahFarHwnd)
 		}
 		// дернуть табы, если они нужны
 		int tabCount = 0;
-		MSectionLock SC; SC.Lock(&csTabs);
+		MSectionLock SC; SC.Lock(csTabs);
 		CreateTabs(1);
 		AddTab(tabCount, true, false, WTYPE_PANELS, NULL, NULL, 0, 0);
 		SendTabs(tabCount=1, TRUE);
@@ -1504,20 +1583,20 @@ void CheckMacro(BOOL abAllowAPI)
 				0, KEY_ALL_ACCESS, 0, &hkey, &disp))
 			{
 				lstrcpyA(szValue, "ConEmu support");
-				RegSetValueExA(hkey, "", 0, REG_SZ, (LPBYTE)szValue, (dwSize=(DWORD)strlen(szValue)+1));
+				RegSetValueExA(hkey, "", 0, REG_SZ, (LPBYTE)szValue, (dwSize=(DWORD)lstrlenA(szValue)+1));
 
 				//lstrcpyA(szValue, 
 				//	"$If (Shell || Info || QView || Tree || Viewer || Editor) F12 $Else waitkey(100) $End");
-				//RegSetValueExA(hkey, "Sequence", 0, REG_SZ, (LPBYTE)szValue, (dwSize=strlen(szValue)+1));
+				//RegSetValueExA(hkey, "Sequence", 0, REG_SZ, (LPBYTE)szValue, (dwSize=lstrlenA(szValue)+1));
 				
 				/*if (gFarVersion.dwVerMajor==1) {
-					RegSetValueExA(hkey, "Sequence", 0, REG_SZ, (LPBYTE)szCheckKey, (dwSize=strlen((char*)szCheckKey)+1));
+					RegSetValueExA(hkey, "Sequence", 0, REG_SZ, (LPBYTE)szCheckKey, (dwSize=lstrlenA((char*)szCheckKey)+1));
 				} else {*/
 					RegSetValueExW(hkey, L"Sequence", 0, REG_SZ, (LPBYTE)szCheckKey, (dwSize=2*((DWORD)lstrlenW((WCHAR*)szCheckKey)+1)));
 				//}
 
 				lstrcpyA(szValue, "For ConEmu - plugin activation from listening thread");
-				RegSetValueExA(hkey, "Description", 0, REG_SZ, (LPBYTE)szValue, (dwSize=(DWORD)strlen(szValue)+1));
+				RegSetValueExA(hkey, "Description", 0, REG_SZ, (LPBYTE)szValue, (dwSize=(DWORD)lstrlenA(szValue)+1));
 
 				RegSetValueExA(hkey, "DisableOutput", 0, REG_DWORD, (LPBYTE)&(disp=1), (dwSize=4));
 
@@ -1551,7 +1630,7 @@ void UpdateConEmuTabsW(int event, bool losingFocus, bool editorSave, void* Param
 	if (ConEmuHwnd && FarHwnd)
 		CheckResources();
 
-	MSectionLock SC; SC.Lock(&csTabs);
+	MSectionLock SC; SC.Lock(csTabs);
 
 	if (gFarVersion.dwBuild>=FAR_Y_VER)
 		FUNC_Y(UpdateConEmuTabsW)(event, losingFocus, editorSave, Param);
@@ -1569,11 +1648,11 @@ BOOL CreateTabs(int windowCount)
 		return TRUE; 
 	}
 
-	//Enter CriticalSection(&csTabs);
+	//Enter CriticalSection(csTabs);
 
 	if ((gpTabs==NULL) || (maxTabCount <= (windowCount + 1)))
 	{
-		MSectionLock SC; SC.Lock(&csTabs, TRUE);
+		MSectionLock SC; SC.Lock(csTabs, TRUE);
 
 		maxTabCount = windowCount + 20; // с запасом
 		if (gpTabs) {
@@ -1585,7 +1664,7 @@ BOOL CreateTabs(int windowCount)
 	
 	lastWindowCount = windowCount;
 	
-	//if (!gpTabs) LeaveCriticalSection(&csTabs);
+	//if (!gpTabs) LeaveCriticalSection(csTabs);
 	return gpTabs!=NULL;
 }
 
@@ -1659,7 +1738,7 @@ BOOL AddTab(int &tabCount, bool losingFocus, bool editorSave,
 
 void SendTabs(int tabCount, BOOL abForceSend/*=FALSE*/)
 {
-	MSectionLock SC; SC.Lock(&csTabs);
+	MSectionLock SC; SC.Lock(csTabs);
 
 	if (!gpTabs) {
 		_ASSERTE(gpTabs!=NULL);
@@ -1874,7 +1953,7 @@ void StopThread(void)
 	    CloseHandle(ghReqCommandEvent); ghReqCommandEvent = NULL;
     }
 
-	//DeleteCriticalSection(&csTabs); memset(&csTabs,0,sizeof(csTabs));
+	//DeleteCriticalSection(csTabs); memset(csTabs,0,sizeof(csTabs));
 	DeleteCriticalSection(&csData); memset(&csData,0,sizeof(csData));
 	
 	if (ghRegMonitorKey) { RegCloseKey(ghRegMonitorKey); ghRegMonitorKey = NULL; }
@@ -1883,6 +1962,8 @@ void StopThread(void)
 	SafeCloseHandle(ghConIn);
 	SafeCloseHandle(ghInputSynchroExecuted);
 	SafeCloseHandle(ghSetWndSendTabsEvent);
+	
+	CommonShutdown();
 }
 
 void   WINAPI _export ExitFARW(void)
@@ -2089,7 +2170,7 @@ DWORD WINAPI ServerThread(LPVOID lpvParam)
     HANDLE hPipe = NULL; 
     //HANDLE hWait[2] = {NULL,NULL};
 	//DWORD dwTID = GetCurrentThreadId();
-	std::vector<HANDLE>::iterator iter;
+	//std::vector<HANDLE>::iterator iter;
 
     _ASSERTE(gszPluginServerPipe[0]!=0);
     //_ASSERTE(ghServerSemaphore!=NULL);
@@ -2110,16 +2191,17 @@ DWORD WINAPI ServerThread(LPVOID lpvParam)
             _ASSERTE(hPipe == NULL);
 
 			// ѕроверить, может какие-то командные нити уже завершились
-			iter = ghCommandThreads.begin();
-			while (iter != ghCommandThreads.end()) {
-				HANDLE hThread = *iter; dwErr = 0;
-				if (WaitForSingleObject(hThread, 0) == WAIT_OBJECT_0) {
-					CloseHandle ( hThread );
-					iter = ghCommandThreads.erase(iter);
-				} else {
-					iter++;
-				}
-			}
+			ghCommandThreads->CheckTerminated();
+			//iter = ghCommandThreads.begin();
+			//while (iter != ghCommandThreads.end()) {
+			//	HANDLE hThread = *iter; dwErr = 0;
+			//	if (WaitForSingleObject(hThread, 0) == WAIT_OBJECT_0) {
+			//		CloseHandle ( hThread );
+			//		iter = ghCommandThreads.erase(iter);
+			//	} else {
+			//		iter++;
+			//	}
+			//}
 
             //// ƒождатьс€ разрешени€ семафора, или закрыти€ консоли
             //dwErr = WaitForMultipleObjects ( 2, hWait, FALSE, INFINITE );
@@ -2180,7 +2262,7 @@ DWORD WINAPI ServerThread(LPVOID lpvParam)
 				// –аз не удалось запустить нить - можно попробовать так обработать...
 				ServerThreadCommand((LPVOID)hPipe);
 			} else {
-				ghCommandThreads.push_back ( hThread );
+				ghCommandThreads->push_back ( hThread );
 			}
 			hPipe = NULL; // закрывает ServerThreadCommand
         }
@@ -2198,15 +2280,16 @@ DWORD WINAPI ServerThread(LPVOID lpvParam)
 
 wrap:
 	// ѕрибивание всех запущенных нитей
-	iter = ghCommandThreads.begin();
-	while (iter != ghCommandThreads.end()) {
-		HANDLE hThread = *iter; dwErr = 0;
-		if (WaitForSingleObject(hThread, 100) != WAIT_OBJECT_0) {
-			TerminateThread(hThread, 100);
-		}
-		CloseHandle ( hThread );
-		iter = ghCommandThreads.erase(iter);
-	}
+	ghCommandThreads->KillAllThreads();
+	//iter = ghCommandThreads.begin();
+	//while (iter != ghCommandThreads.end()) {
+	//	HANDLE hThread = *iter; dwErr = 0;
+	//	if (WaitForSingleObject(hThread, 100) != WAIT_OBJECT_0) {
+	//		TerminateThread(hThread, 100);
+	//	}
+	//	CloseHandle ( hThread );
+	//	iter = ghCommandThreads.erase(iter);
+	//}
 
     return 0; 
 }
@@ -2219,7 +2302,7 @@ DWORD WINAPI ServerThreadCommand(LPVOID ahPipe)
     DWORD cbRead = 0, cbWritten = 0, dwErr = 0;
     BOOL fSuccess = FALSE;
 
-	MSectionThread SCT(&csTabs);
+	MSectionThread SCT(csTabs);
 
     // Send a message to the pipe server and read the response. 
     fSuccess = ReadFile( hPipe, cbBuffer, sizeof(cbBuffer), &cbRead, NULL);
@@ -2312,7 +2395,7 @@ DWORD WINAPI ServerThreadCommand(LPVOID ahPipe)
 	//	MoveWindow(FarHwnd, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), 1); // чтобы убрать возможные полосы прокрутки...
 
 	} else if (pIn->hdr.nCmd == CMD_REQTABS || pIn->hdr.nCmd == CMD_SETWINDOW) {
-		MSectionLock SC; SC.Lock(&csTabs, FALSE, 1000);
+		MSectionLock SC; SC.Lock(csTabs, FALSE, 1000);
 
 		if (pIn->hdr.nCmd == CMD_SETWINDOW) {
 			ResetEvent(ghSetWndSendTabsEvent);
@@ -2371,15 +2454,41 @@ DWORD WINAPI ServerThreadCommand(LPVOID ahPipe)
 		//}
 
 		gbMonitorEnvVar = lbOk;
+
+	} else if (pIn->hdr.nCmd == CMD_DRAGFROM ) {
+		#ifdef _DEBUG
+			BOOL  *pbClickNeed = (BOOL*)pIn->Data;
+			COORD *crMouse = (COORD *)(pbClickNeed+1);
+		#endif
+		
+		ProcessCommand(CMD_LEFTCLKSYNC, TRUE/*bReqMainThread*/, pIn->Data);
+
+		CESERVER_REQ* pCmdRet = ProcessCommand(pIn->hdr.nCmd, TRUE/*bReqMainThread*/, pIn->Data);
+
+		if (pCmdRet) {
+			fSuccess = WriteFile( hPipe, pCmdRet, pCmdRet->hdr.nSize, &cbWritten, NULL);
+		}
+		if (gpCmdRet && gpCmdRet == pCmdRet) {
+			Free(gpCmdRet);
+			gpCmdRet = NULL; gpData = NULL; gpCursor = NULL;
+		}
 		
 	} else if (pIn->hdr.nCmd == CMD_EMENU) {
-		#ifdef _DEBUG
 		COORD *crMouse = (COORD *)pIn->Data;
+
+		#ifdef _DEBUG
 		const wchar_t *pszUserMacro = (wchar_t*)(crMouse+1);
 		#endif
 
+		struct {
+			BOOL  bClickNeed;
+			COORD crMouse;
+		} DragArg;
+		DragArg.bClickNeed = TRUE;
+		DragArg.crMouse = *crMouse;
+
 		// ¬ыделить файл под курсором
-		ProcessCommand(CMD_LEFTCLKSYNC, TRUE/*bReqMainThread*/, pIn->Data);
+		ProcessCommand(CMD_LEFTCLKSYNC, TRUE/*bReqMainThread*/, &DragArg/*pIn->Data*/);
 		
 		// ј теперь, собственно вызовем меню
 		ProcessCommand(pIn->hdr.nCmd, TRUE/*bReqMainThread*/, pIn->Data);
@@ -2563,7 +2672,7 @@ BOOL Attach2Gui()
 		if (pszSlash) pszSlash[1] = 0;
 	}
 	
-	wsprintf(szExe+wcslen(szExe), L"ConEmuC.exe\" /ATTACH /PID=%i", dwSelfPID);
+	wsprintf(szExe+lstrlenW(szExe), L"ConEmuC.exe\" /ATTACH /PID=%i", dwSelfPID);
 	
 	
 	if (!CreateProcess(NULL, szExe, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL,
@@ -2610,7 +2719,7 @@ BOOL StartDebugger()
 		if (pszSlash) pszSlash[1] = 0;
 	}
 	
-	wsprintf(szExe+wcslen(szExe), L"ConEmuC.exe\" %s /DEBUGPID=%i /BW=80 /BH=25 /BZ=1000", 
+	wsprintf(szExe+lstrlenW(szExe), L"ConEmuC.exe\" %s /DEBUGPID=%i /BW=80 /BH=25 /BZ=1000", 
 		ConEmuHwnd ? L"/ATTACH" : L"", dwSelfPID);
 	
 	if (ConEmuHwnd) {

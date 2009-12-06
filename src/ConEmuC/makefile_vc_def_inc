@@ -70,10 +70,6 @@ CPU=IA64
 RC_NAME=$(NAME)
 !endif
 
-!ifndef DEF_NAME
-DEF_NAME=$(NAME)
-!endif
-
 !ifndef DEBUG
 DIRNAME=final
 !else
@@ -86,16 +82,13 @@ DIRSUFF = W
 
 !ifdef AMD64
 DIRBIT = 64
-RELEASEDIR = Release.x64\plugins\ConEmu
-RCBITS = /d_WIN64
+RELEASEDIR = Release.x64
 !elseif defined(IA64)
 DIRBIT = IA64
 RELEASEDIR = bin.IA64
-RCBITS = /d_WIN64
 !else
 DIRBIT = 32
-RELEASEDIR = plugins\ConEmu
-RCBITS =
+RELEASEDIR = .
 !endif
 WORKDIR = $(DIRNAME).$(DIRBIT)$(DIRSUFF).vc
 !ifdef INSTALL
@@ -108,11 +101,10 @@ OBJDIR = $(WORKDIR)\obj$(ADDOBJDIR)
 #COMMON = ..
 COMINC = ..
 CPP_WIDE = /DUNICODE /D_UNICODE
-RC_WIDE = /dUNICODE $(RCBITS)
-EXT = dll
+RC_WIDE = /dUNICODE
+EXT = exe
 DLLNAME = $(OUTNAME).$(EXT)
 DLLFULLNAME = $(OUTDIR)$(ADDOUTDIR)\$(DLLNAME)
-DEF = $(DEF_NAME).def
 MAP = $(OUTDIR)$(ADDOUTDIR)\$(OUTNAME).map
 RES = $(OBJDIR)\$(NAME).res
 
@@ -179,7 +171,7 @@ NOENTRY = /noentry
 !ifndef NEEDDEFLIB
 NODEFLIB = /nodefaultlib
 !endif
-LINK_FLAGS=/nologo /dll /release /merge:.rdata=.text $(LINK_MACHINE) $(NOWIN98) $(NOENTRY) $(NODEFLIB) $(ENV_LIB_OPT) /def:"$(DEF)" /map:"$(MAP)" /out:"$(DLLFULLNAME)"
+LINK_FLAGS=/nologo /SUBSYSTEM:CONSOLE /release /merge:.rdata=.text $(LINK_MACHINE) $(NOWIN98) $(NOENTRY) $(NODEFLIB) $(ENV_LIB_OPT) /map:"$(MAP)" /out:"$(DLLFULLNAME)"
 !else
 LINK_DEBUG=-v
 CPP_DEBUG=/Z7
@@ -190,7 +182,7 @@ NOENTRY = -e-
 !ifndef NEEDDEFLIB
 NODEFLIB = -n
 !endif
-LINK_FLAGS=-q $(ULOUT) -Gz -m- -Gh -Gh- $(LINK_MACHINE) $(NOENTRY) $(NODEFLIB) /ZD:"$(DEF)" /ZM:"$(MAP)" /ZO:"$(DLLFULLNAME)" $(ENV_LIB_OPT)
+LINK_FLAGS=-q $(ULOUT) -Gz -m- -Gh -Gh- $(LINK_MACHINE) $(NOENTRY) $(NODEFLIB) /ZM:"$(MAP)" /ZO:"$(DLLFULLNAME)" $(ENV_LIB_OPT)
 !endif
 
 !ifndef DEBUG
@@ -214,11 +206,10 @@ RC=$(_RC_PATH)rc.exe
 !endif
 
 !if !defined(SRC_PATHS_DEFINED) && defined(__MAKE__)
-SRC_PATHS=.;..\common
+SRC_PATHS=.;..\common;..\ConEmuPlugin
 .path.cpp=$(SRC_PATHS)
 .path.c=$(SRC_PATHS)
 .path.hpp=$(SRC_PATHS)
 .path.h=$(SRC_PATHS)
 .path.rc=$(SRC_PATHS)
-.path.def=$(SRC_PATHS)
 !endif

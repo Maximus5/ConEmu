@@ -29,11 +29,18 @@ $(DLLFULLNAME) : $(LINK_OBJS) $(RES) $(LINK_DEP)
 	$(CC) @<<
 	$(CFLAGS) $<
 <<
+{../ConEmuPlugin/}.cpp{$(OBJDIR)}.obj::
+	$(CC) @<<
+	$(CFLAGS) $<
+<<
 !else
 .cpp{$(OBJDIR)}.obj:
 	@$(CC) $(CFLAGS) { $< } 
 
 {../common/}.cpp{$(OBJDIR)}.obj:
+	@$(CC) $(CFLAGS) { $< } 
+
+{../ConEmuPlugin/}.cpp{$(OBJDIR)}.obj:
 	@$(CC) $(CFLAGS) { $< } 
 !endif
 

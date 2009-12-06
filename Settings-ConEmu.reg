@@ -207,6 +207,9 @@ REGEDIT4
 "TabLenMax"=dword:00000014
 ;; Tab font facename. Default is "Tahoma"
 ;"TabFontFace"="Tahoma"
+;; However, Tahoma does not contains much unicode glyphs (i.e. hieroglyph)
+;; You may choose other font, for example "Arial Unicode MS"
+;"TabFontFace"="Arial Unicode MS"
 ;; Tab font charset. Default is ANSI_CHARSET = 0.
 ;"TabFontCharSet"=dword:00000000
 ;; Tab font height. Default is 16

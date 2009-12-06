@@ -772,6 +772,9 @@ int CSettings::EnumFamCallBack(LPLOGFONT lplf, LPNEWTEXTMETRIC lpntm, DWORD Font
 {
     MCHKHEAP
     int far * aiFontCount = (int far *) aFontCount;
+    
+    if (!ghOpWnd)
+    	return FALSE;
 
     // Record the number of raster, TrueType, and vector
     // fonts in the font-count array.
@@ -793,10 +796,11 @@ int CSettings::EnumFamCallBack(LPLOGFONT lplf, LPNEWTEXTMETRIC lpntm, DWORD Font
 	}
 
     MCHKHEAP
-    if (aiFontCount[0] || aiFontCount[1] || aiFontCount[2])
-        return TRUE;
-    else
-        return FALSE;
+    return TRUE;
+    //if (aiFontCount[0] || aiFontCount[1] || aiFontCount[2])
+    //    return TRUE;
+    //else
+    //    return FALSE;
 
     UNREFERENCED_PARAMETER( lplf );
     UNREFERENCED_PARAMETER( lpntm );
@@ -2658,6 +2662,9 @@ int CSettings::GetNumber(HWND hParent, WORD nCtrlId)
 
 int CSettings::SelectString(HWND hParent, WORD nCtrlId, LPCWSTR asText)
 {
+	if (!ghOpWnd)
+    	return -1;
+
 	#ifdef _DEBUG
 	HWND hChild = GetDlgItem(hParent, nCtrlId);
 	_ASSERTE(hChild!=NULL);

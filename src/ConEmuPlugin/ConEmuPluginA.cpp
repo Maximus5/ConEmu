@@ -120,7 +120,7 @@ void ProcessDragFromA()
 			{
 				if (i == 0
 					&& ((PInfo.SelectedItems[i].FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == FILE_ATTRIBUTE_DIRECTORY)
-					&& !strcmp(PInfo.SelectedItems[i].FindData.cFileName, ".."))
+					&& !lstrcmpA(PInfo.SelectedItems[i].FindData.cFileName, ".."))
 				{
 					continue;
 				}
@@ -452,7 +452,7 @@ int WINAPI _export ProcessViewerEvent(int Event, void *Param)
 	//return 0;
 }
 
-extern MSection csTabs;
+extern MSection *csTabs;
 
 void UpdateConEmuTabsA(int event, bool losingFocus, bool editorSave, void *Param/*=NULL*/)
 {
@@ -461,7 +461,7 @@ void UpdateConEmuTabsA(int event, bool losingFocus, bool editorSave, void *Param
 	if (ConEmuHwnd && FarHwnd)
 		CheckResources();
 
-	MSectionLock SC; SC.Lock(&csTabs);
+	MSectionLock SC; SC.Lock(csTabs);
 
     BOOL lbCh = FALSE;
 	WindowInfo WInfo;
@@ -680,7 +680,7 @@ void GetMsgA(int aiMsg, wchar_t* rsMsg/*MAX_PATH*/)
 		return;
 	LPCSTR pszMsg = InfoA->GetMsg(InfoA->ModuleNumber,aiMsg);
 	if (pszMsg && *pszMsg) {
-		int nLen = (int)strlen(pszMsg);
+		int nLen = (int)lstrlenA(pszMsg);
 		if (nLen>=MAX_PATH) nLen = MAX_PATH - 1;
 		nLen = MultiByteToWideChar(CP_OEMCP, 0, pszMsg, nLen, rsMsg, MAX_PATH-1);
 		if (nLen>=0) rsMsg[nLen] = 0;

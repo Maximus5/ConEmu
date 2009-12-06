@@ -10,7 +10,7 @@ BOOL GetShortFileName(LPCWSTR asFullPath, wchar_t* rsShortName/*name only, MAX_P
 		return FALSE;
 	FindClose(hFind);
 	if (fnd.cAlternateFileName[0]) {
-		if (wcslen(fnd.cAlternateFileName) < wcslen(fnd.cFileName)) {
+		if (lstrlenW(fnd.cAlternateFileName) < lstrlenW(fnd.cFileName)) {
 			lstrcpyW(rsShortName, fnd.cAlternateFileName);
 			return TRUE;
 		}
@@ -22,8 +22,10 @@ BOOL GetShortFileName(LPCWSTR asFullPath, wchar_t* rsShortName/*name only, MAX_P
 wchar_t* GetShortFileNameEx(LPCWSTR asLong)
 {
 	TODO("хорошо бы и сетевые диски обрабатывать");
-
-	wchar_t* pszShort = _wcsdup(asLong);
+	if (!asLong) return NULL;
+	
+	wchar_t* pszShort = /*_wcsdup(asLong);*/(wchar_t*)malloc((lstrlenW(asLong)+1)*2);
+	lstrcpyW(pszShort, asLong);
 	wchar_t* pszCur = wcschr(pszShort+3, L'\\');
 	wchar_t* pszSlash;
 	wchar_t  szName[MAX_PATH+1];
@@ -36,7 +38,7 @@ wchar_t* GetShortFileNameEx(LPCWSTR asLong)
 				if ((pszSlash = wcsrchr(pszShort, L'\\'))==0)
 					goto wrap;
 				lstrcpyW(pszSlash+1, szName);
-				pszSlash += 1+wcslen(szName);
+				pszSlash += 1+lstrlenW(szName);
 				lstrcpyW(pszSlash+1, pszCur+1);
 				pszCur = pszSlash;
 			}
@@ -44,7 +46,7 @@ wchar_t* GetShortFileNameEx(LPCWSTR asLong)
 		*pszCur = L'\\';
 		pszCur = wcschr(pszCur+1, L'\\');
 	}
-	nLen = wcslen(pszShort);
+	nLen = lstrlenW(pszShort);
 	if (nLen>0 && pszShort[nLen-1]==L'\\')
 		pszShort[--nLen] = 0;
 	if (nLen <= MAX_PATH)
@@ -81,7 +83,7 @@ int NextArg(const wchar_t** asCmdLine, wchar_t* rsArg/*[MAX_PATH+1]*/)
         // 09.06.2009 Maks - обломался на: cmd /c" echo Y "
         pch = psCmdLine;
         while (*pch && *pch!=L' ' && *pch!=L'"') pch++;
-        //if (!pch) pch = psCmdLine + wcslen(psCmdLine); // до конца строки
+        //if (!pch) pch = psCmdLine + lstrlenW(psCmdLine); // до конца строки
     }
     
     nArgLen = pch - psCmdLine;
@@ -297,9 +299,18 @@ public:
 		return (&m_NullSecurity);
 	};
 };
-MNullDesc gNullDesc;
+MNullDesc *gNullDesc = NULL;
 
 SECURITY_ATTRIBUTES* NullSecurity()
 {
-	return gNullDesc.NullSecurity();
+	if (!gNullDesc) gNullDesc = new MNullDesc();
+	return gNullDesc->NullSecurity();
+}
+
+void CommonShutdown()
+{
+	if (gNullDesc) {
+		delete gNullDesc;
+		gNullDesc = NULL;
+	}
 }

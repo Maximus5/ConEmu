@@ -70,65 +70,65 @@ void ShowConPacket(CESERVER_REQ* pReq)
 	}
 	wsprintf(psz, L"Packet size: %i;  Command: %i (%s);  Version: %i\n",
 		pReq->hdr.nSize, pReq->hdr.nCmd, pszEnd, pReq->hdr.nVersion);
-	psz += wcslen(psz);
+	psz += lstrlenW(psz);
 
 	if (pReq->hdr.nCmd == CECMD_GETSHORTINFO || pReq->hdr.nCmd == CECMD_GETFULLINFO) {
 		lstrcpyW(psz, L"\n"); psz ++;
 		//LPBYTE ptr = pReq->Data;
 		// 1
-		wsprintf(psz, L"ConHwnd:    0x%08X\n", (DWORD)pReq->ConInfo.inf.hConWnd); psz += wcslen(psz);
+		wsprintf(psz, L"ConHwnd:    0x%08X\n", (DWORD)pReq->ConInfo.inf.hConWnd); psz += lstrlenW(psz);
 		// 2 - GetTickCount последнего чтения
-		wsprintf(psz, L"PacketID: %i\n", pReq->ConInfo.inf.nPacketId); psz += wcslen(psz);
+		wsprintf(psz, L"PacketID: %i\n", pReq->ConInfo.inf.nPacketId); psz += lstrlenW(psz);
 		// 3
-		lstrcpyW(psz, L"Processes:  {"); psz += wcslen(psz);
-		//if (dw) { lstrcpyW(psz, L" {"); psz += wcslen(psz); }
+		lstrcpyW(psz, L"Processes:  {"); psz += lstrlenW(psz);
+		//if (dw) { lstrcpyW(psz, L" {"); psz += lstrlenW(psz); }
 		for (UINT n=0; n<countof(pReq->ConInfo.inf.nProcesses); n++) {
 			if (pReq->ConInfo.inf.nProcesses[n] == 0) break;
 			if (n) { lstrcpyW(psz, L","); psz++; }
-			wsprintf(psz, L"%i", pReq->ConInfo.inf.nProcesses[n]); psz += wcslen(psz);
+			wsprintf(psz, L"%i", pReq->ConInfo.inf.nProcesses[n]); psz += lstrlenW(psz);
 		}
-		lstrcpyW(psz, L"}\n"); psz += wcslen(psz);
+		lstrcpyW(psz, L"}\n"); psz += lstrlenW(psz);
 		// 4
 		CONSOLE_CURSOR_INFO ci = {0};
 		dw = pReq->ConInfo.inf.dwCiSize;
 		if (dw>0) {
 			memmove(&ci, &pReq->ConInfo.inf.ci, min(dw,sizeof(ci)));
-			wsprintf(psz, L"CursorInf:  size=%i, visible=%i\n", ci.dwSize, ci.bVisible); psz += wcslen(psz);
+			wsprintf(psz, L"CursorInf:  size=%i, visible=%i\n", ci.dwSize, ci.bVisible); psz += lstrlenW(psz);
 		}
 		// 5, 6, 7
-		wsprintf(psz, L"ConsoleCP:  %i\n", pReq->ConInfo.inf.dwConsoleCP); psz += wcslen(psz);
-		wsprintf(psz, L"OutputCP:   %i\n", pReq->ConInfo.inf.dwConsoleOutputCP); psz += wcslen(psz);
-		wsprintf(psz, L"ConMode:    0x%08X\n", pReq->ConInfo.inf.dwConsoleMode); psz += wcslen(psz);
+		wsprintf(psz, L"ConsoleCP:  %i\n", pReq->ConInfo.inf.dwConsoleCP); psz += lstrlenW(psz);
+		wsprintf(psz, L"OutputCP:   %i\n", pReq->ConInfo.inf.dwConsoleOutputCP); psz += lstrlenW(psz);
+		wsprintf(psz, L"ConMode:    0x%08X\n", pReq->ConInfo.inf.dwConsoleMode); psz += lstrlenW(psz);
 		// 8
 		dw = pReq->ConInfo.inf.dwSbiSize;
 		if (dw>0) {
 			memmove(&sbi, &pReq->ConInfo.inf.sbi, min(dw,sizeof(sbi)));
-			lstrcpyW(psz, L"\nConsole window layout\n"); psz += wcslen(psz);
-			wsprintf(psz, L"  BufferSize: {%i x %i}%\n", sbi.dwSize.X, sbi.dwSize.Y); psz += wcslen(psz);
-			wsprintf(psz, L"  CursorPos:  {%i x %i}%\n", sbi.dwCursorPosition.X, sbi.dwCursorPosition.Y); psz += wcslen(psz);
-			wsprintf(psz, L"  MaxWndSize: {%i x %i}%\n", sbi.dwMaximumWindowSize.X, sbi.dwMaximumWindowSize.Y); psz += wcslen(psz);
-			wsprintf(psz, L"  WindowSize: {L=%i, T=%i, R=%i, B=%i}\n", sbi.srWindow.Left, sbi.srWindow.Top, sbi.srWindow.Right, sbi.srWindow.Bottom); psz += wcslen(psz);
-			lstrcpyW(psz, L"\n"); psz += wcslen(psz);
+			lstrcpyW(psz, L"\nConsole window layout\n"); psz += lstrlenW(psz);
+			wsprintf(psz, L"  BufferSize: {%i x %i}%\n", sbi.dwSize.X, sbi.dwSize.Y); psz += lstrlenW(psz);
+			wsprintf(psz, L"  CursorPos:  {%i x %i}%\n", sbi.dwCursorPosition.X, sbi.dwCursorPosition.Y); psz += lstrlenW(psz);
+			wsprintf(psz, L"  MaxWndSize: {%i x %i}%\n", sbi.dwMaximumWindowSize.X, sbi.dwMaximumWindowSize.Y); psz += lstrlenW(psz);
+			wsprintf(psz, L"  WindowSize: {L=%i, T=%i, R=%i, B=%i}\n", sbi.srWindow.Left, sbi.srWindow.Top, sbi.srWindow.Right, sbi.srWindow.Bottom); psz += lstrlenW(psz);
+			lstrcpyW(psz, L"\n"); psz += lstrlenW(psz);
 		}
 		// 9
 		dw = pReq->ConInfo.dwRgnInfoSize;
 		if (dw>0) {
 			if (dw >= sizeof(CESERVER_CHAR)) {
 				pceChar = &pReq->ConInfo.RgnInfo.RgnInfo;
-				lstrcpyW(psz, L"\nConsole region changes\n"); psz += wcslen(psz);
+				lstrcpyW(psz, L"\nConsole region changes\n"); psz += lstrlenW(psz);
 				sbi.dwSize.X = (pceChar->hdr.cr2.X-pceChar->hdr.cr1.X+1);
 				sbi.dwSize.Y = (pceChar->hdr.cr2.Y-pceChar->hdr.cr1.Y+1);
 				dwConDataBufSize = sbi.dwSize.X*sbi.dwSize.Y;
 				wsprintf(psz, L"  Region:    {L=%i, T=%i, R=%i, B=%i}  {%i x %i}\n",
 					pceChar->hdr.cr1.X, pceChar->hdr.cr1.Y, pceChar->hdr.cr2.X, pceChar->hdr.cr2.Y,
-					sbi.dwSize.X, sbi.dwSize.Y); psz += wcslen(psz);
-				wsprintf(psz, L"  FirstChar: '%c'\n", pceChar->data[0]); psz += wcslen(psz);
-				lstrcpyW(psz, L"Press 'PgDn' to display it\n"); psz += wcslen(psz);
+					sbi.dwSize.X, sbi.dwSize.Y); psz += lstrlenW(psz);
+				wsprintf(psz, L"  FirstChar: '%c'\n", pceChar->data[0]); psz += lstrlenW(psz);
+				lstrcpyW(psz, L"Press 'PgDn' to display it\n"); psz += lstrlenW(psz);
 				pszConData = (wchar_t*)pceChar->data;
 				pnConData = (WORD*)(pszConData+dwConDataBufSize);
 			} else {
 				pceChar = NULL;
-				wsprintf(psz, L"\nInvalid length of CESERVER_CHAR (%i)\n", dw); psz += wcslen(psz);
+				wsprintf(psz, L"\nInvalid length of CESERVER_CHAR (%i)\n", dw); psz += lstrlenW(psz);
 			}
 		} else {
 			// 10
@@ -138,15 +138,15 @@ void ShowConPacket(CESERVER_REQ* pReq)
 				dw = sbi.dwSize.X*sbi.dwSize.Y*2;
 				wsprintf(psz, L"Full console dump. Size: %i %s %i*%i*2\n", 
 					dwConDataBufSize, (dw==dwConDataBufSize) ? L"==" : L"<>", sbi.dwSize.X, sbi.dwSize.Y); 
-				psz += wcslen(psz);
-				lstrcpyW(psz, L"Press 'PgDn' to display it\n"); psz += wcslen(psz);
+				psz += lstrlenW(psz);
+				lstrcpyW(psz, L"Press 'PgDn' to display it\n"); psz += lstrlenW(psz);
 				pszConData = (wchar_t*)pReq->ConInfo.FullData.Data;
 				pnConData = (WORD*)((LPBYTE)pszConData)+dwConDataBufSize;
 			}
 		}
 	} else {
 		int nMax = min(((UINT)(csbi.dwSize.X/4)),(pReq->hdr.nSize-sizeof(CESERVER_REQ_HDR)));
-		lstrcpyW(psz, L"\n\nPacket data:\n"); psz += wcslen(psz);
+		lstrcpyW(psz, L"\n\nPacket data:\n"); psz += lstrlenW(psz);
 		for (int i=0; i<nMax; i++) {
 			wsprintf(psz, L"%02X ", (BYTE)pReq->Data[i]); psz += 3;
 		}
@@ -248,7 +248,7 @@ void ShowConDump(wchar_t* pszText)
 	*pszRN = 0;
 	crSize.Y = (SHORT)wcstol(pszSize, &pszRN, 10);
 
-	pszTitle = (WCHAR*)calloc(wcslen(pszDumpTitle)+200,2);
+	pszTitle = (WCHAR*)calloc(lstrlenW(pszDumpTitle)+200,2);
 
 	DWORD dwConDataBufSize = crSize.X * crSize.Y;
 	pnBuffers[0] = ((WORD*)(pszBuffers[0])) + dwConDataBufSize;
@@ -286,8 +286,16 @@ void ShowConDump(wchar_t* pszText)
 				FillConsoleOutputAttribute(hO, 7, csbi.dwSize.X*csbi.dwSize.Y, cr, &dw);
 				FillConsoleOutputCharacter(hO, L' ', csbi.dwSize.X*csbi.dwSize.Y, cr, &dw);
 				cr.X = 0; cr.Y = 0; SetConsoleCursorPosition(hO, cr);
-				wprintf(L"Console screen dump viewer\nTitle: %s\nSize: {%i x %i}\n",
-					pszDumpTitle, crSize.X, crSize.Y);
+				//wprintf(L"Console screen dump viewer\nTitle: %s\nSize: {%i x %i}\n",
+				//	pszDumpTitle, crSize.X, crSize.Y);
+				LPCWSTR psz = L"Console screen dump viewer";
+				WriteConsoleOutputCharacter(hO, psz, lstrlenW(psz), cr, &dw); cr.Y++;
+				psz = L"Title: ";
+				WriteConsoleOutputCharacter(hO, psz, lstrlenW(psz), cr, &dw); cr.X += lstrlenW(psz);
+				WriteConsoleOutputCharacter(hO, pszDumpTitle, lstrlenW(pszDumpTitle), cr, &dw); cr.X = 0; cr.Y++;
+				wchar_t szSize[64]; wsprintf(szSize, L"Size: {%i x %i}", crSize.X, crSize.Y);
+				WriteConsoleOutputCharacter(hO, szSize, lstrlenW(szSize), cr, &dw); cr.Y++;
+				SetConsoleCursorPosition(hO, cr);
 				
 			} else if (gnPage >= 1 && gnPage <= 3) {
 				FillConsoleOutputAttribute(hO, gbShowAttrsOnly ? 0xF : 0x10, csbi.dwSize.X*csbi.dwSize.Y, cr, &dw);
@@ -330,7 +338,8 @@ HANDLE WINAPI OpenFilePluginW(const wchar_t *Name,const unsigned char *Data,int 
 	if (!InfoW995) return INVALID_HANDLE_VALUE;
 	if (OpMode || Name == NULL) return INVALID_HANDLE_VALUE; // только из панелей в обычном режиме
 	const wchar_t* pszDot = wcsrchr(Name, L'.');
-	if (!pszDot || lstrcmpi(pszDot, L".con")) return INVALID_HANDLE_VALUE;
+	if (!pszDot) return INVALID_HANDLE_VALUE;
+	if (lstrcmpi(pszDot, L".con")) return INVALID_HANDLE_VALUE;
 	if (DataSize < sizeof(CESERVER_REQ_HDR)) return INVALID_HANDLE_VALUE;
 
 	HANDLE hFile = CreateFile(Name, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, 0);
@@ -366,7 +375,7 @@ HANDLE WINAPI OpenFilePluginW(const wchar_t *Name,const unsigned char *Data,int 
 	CESERVER_REQ* pReq = (CESERVER_REQ*)pszData;
 	if (pReq->hdr.nSize == dwSizeLow)
 	{
-		if (pReq->hdr.nVersion != CESERVER_REQ_VER && pReq->hdr.nVersion < 20) {
+		if (pReq->hdr.nVersion != CESERVER_REQ_VER && pReq->hdr.nVersion < 40) {
 			InfoW995->Message(InfoW995->ModuleNumber, FMSG_ALLINONE|FMSG_MB_OK|FMSG_WARNING,
 				NULL, (const wchar_t* const*)L"ConEmu plugin\nUnknown version of packet", 0,0);
 		} else {

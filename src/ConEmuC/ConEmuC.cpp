@@ -29,7 +29,7 @@
 #include <stdio.h>
 #include <Shlwapi.h>
 #include <Tlhelp32.h>
-#include <vector>
+//#include <vector>
 #include "..\common\common.hpp"
 #include "..\common\ConEmuCheck.h"
 
@@ -173,7 +173,11 @@ typedef BOOL (WINAPI *FDebugSetProcessKillOnExit)(BOOL KillOnExit);
 FDebugSetProcessKillOnExit pfnDebugSetProcessKillOnExit = NULL;
 void ProcessDebugEvent();
 BOOL IsUserAdmin();
-
+void _wprintf(LPCWSTR asBuffer);
+void _printf(LPCSTR asBuffer);
+void _printf(LPCSTR asFormat, DWORD dwErr);
+void _printf(LPCSTR asFormat, DWORD dwErr, LPCWSTR asAddLine);
+void _printf(LPCSTR asFormat, DWORD dw1, DWORD dw2, LPCWSTR asAddLine=NULL);
 
 
 #else
@@ -366,8 +370,8 @@ BOOL gbInRecreateRoot = FALSE;
 #define CERR_RUNNEWCONSOLE 121
 #define CERR_CANTSTARTDEBUGGER 122
 
-
-int main()
+// 04.12.2009 Maks + "__cdecl"
+int __cdecl main()
 {
     TODO("можно при ошибках показать консоль, предварительно поставив 80x25 и установив крупный шрифт");
 
@@ -400,7 +404,7 @@ int main()
     _ASSERTE(ghConWnd!=NULL);
     if (!ghConWnd) {
         dwErr = GetLastError();
-        wprintf(L"ghConWnd==NULL, ErrCode=0x%08X\n", dwErr); 
+        _printf("ghConWnd==NULL, ErrCode=0x%08X\n", dwErr);
         iRc = CERR_GETCONSOLEWINDOW; goto wrap;
     }
     // PID
@@ -444,14 +448,14 @@ int main()
     ghExitEvent = CreateEvent(NULL, TRUE/*используется в нескольких нитях, manual*/, FALSE, NULL);
     if (!ghExitEvent) {
         dwErr = GetLastError();
-        wprintf(L"CreateEvent() failed, ErrCode=0x%08X\n", dwErr); 
+        _printf("CreateEvent() failed, ErrCode=0x%08X\n", dwErr); 
         iRc = CERR_EXITEVENT; goto wrap;
     }
     ResetEvent(ghExitEvent);
     ghFinalizeEvent = CreateEvent(NULL, TRUE/*используется в нескольких нитях, manual*/, FALSE, NULL);
     if (!ghFinalizeEvent) {
         dwErr = GetLastError();
-        wprintf(L"CreateEvent() failed, ErrCode=0x%08X\n", dwErr); 
+        _printf("CreateEvent() failed, ErrCode=0x%08X\n", dwErr); 
         iRc = CERR_EXITEVENT; goto wrap;
     }
     ResetEvent(ghFinalizeEvent);
@@ -461,7 +465,7 @@ int main()
     //            0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
     if ((HANDLE)ghConIn == INVALID_HANDLE_VALUE) {
         dwErr = GetLastError();
-        wprintf(L"CreateFile(CONIN$) failed, ErrCode=0x%08X\n", dwErr); 
+        _printf("CreateFile(CONIN$) failed, ErrCode=0x%08X\n", dwErr); 
         iRc = CERR_CONINFAILED; goto wrap;
     }
     // Дескрипторы
@@ -469,7 +473,7 @@ int main()
     //            0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
     if ((HANDLE)ghConOut == INVALID_HANDLE_VALUE) {
         dwErr = GetLastError();
-        wprintf(L"CreateFile(CONOUT$) failed, ErrCode=0x%08X\n", dwErr); 
+        _printf("CreateFile(CONOUT$) failed, ErrCode=0x%08X\n", dwErr); 
         iRc = CERR_CONOUTFAILED; goto wrap;
     }
     
@@ -575,8 +579,11 @@ int main()
 			FormatMessage( FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, NULL, dwErr, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPWSTR)&lpMsgBuf, 0, NULL );
 		}
 		
-        wprintf (L"Can't create process, ErrCode=0x%08X, Description:\n%s\nCommand to be executed:\n%s\n", 
-        	dwErr, (lpMsgBuf == NULL) ? L"<Unknown error>" : lpMsgBuf, gpszRunCmd);
+        _printf("Can't create process, ErrCode=0x%08X, Description:\n", dwErr);
+        _wprintf((lpMsgBuf == NULL) ? L"<Unknown error>" : lpMsgBuf);
+        _printf("\nCommand to be executed:\n");
+        _wprintf(gpszRunCmd);
+        _printf("\n");
         
         if (lpMsgBuf) LocalFree(lpMsgBuf);
         iRc = CERR_CREATEPROCESS; goto wrap;
@@ -621,7 +628,9 @@ int main()
             iRc = srv.nProcessCount;
             // И процессов в консоли все еще нет
             if (iRc == 1 && !srv.bDebuggerActive) {
-                wprintf (L"Process was not attached to console. Is it GUI?\nCommand to be executed:\n%s\n", gpszRunCmd);
+                _printf ("Process was not attached to console. Is it GUI?\nCommand to be executed:\n");
+                _wprintf (gpszRunCmd);
+                _printf ("\n");
                 iRc = CERR_PROCESSTIMEOUT; goto wrap;
             }
         }
@@ -762,6 +771,8 @@ wrap:
 #endif
     
     if (gpszRunCmd) { delete gpszRunCmd; gpszRunCmd = NULL; }
+    
+    CommonShutdown();
 
     if (ghHeap) {
         HeapDestroy(ghHeap);
@@ -779,22 +790,35 @@ wrap:
     return iRc;
 }
 
+//#if defined(CRTSTARTUP)
+//extern "C"{
+//  BOOL WINAPI _DllMainCRTStartup(HANDLE hDll,DWORD dwReason,LPVOID lpReserved);
+//};
+//
+//BOOL WINAPI mainCRTStartup(HANDLE hDll,DWORD dwReason,LPVOID lpReserved)
+//{
+//  DllMain(hDll, dwReason, lpReserved);
+//  return TRUE;
+//}
+//#endif
+
+
 void Help()
 {
-    wprintf(
-        L"ConEmuC. Copyright (c) 2009, Maximus5\n"
-        L"This is a console part of ConEmu product.\n"
-        L"Usage: ConEmuC [switches] [/U | /A] /C <command line, passed to %%COMSPEC%%>\n"
-        L"   or: ConEmuC [switches] /CMD <program with arguments, far.exe for example>\n"
-        L"   or: ConEmuC /ATTACH /NOCMD\n"
-        L"   or: ConEmuC /?\n"
-        L"Switches:\n"
-        L"        /CONFIRM  - confirm closing console on program termination\n"
-        L"        /ATTACH   - auto attach to ConEmu GUI\n"
-        L"        /NOCMD    - attach current (existing) console to GUI\n"
-        L"        /B{W|H|Z} - define window width, height and buffer height\n"
-        L"        /F{N|W|H} - define console font name, width, height\n"
-        L"        /LOG[N]   - create (debug) log file, N is number from 0 to 2\n"
+    _printf(
+        "ConEmuC. Copyright (c) 2009, Maximus5\n"
+        "This is a console part of ConEmu product.\n"
+        "Usage: ConEmuC [switches] [/U | /A] /C <command line, passed to %COMSPEC%>\n"
+        "   or: ConEmuC [switches] /CMD <program with arguments, far.exe for example>\n"
+        "   or: ConEmuC /ATTACH /NOCMD\n"
+        "   or: ConEmuC /?\n"
+        "Switches:\n"
+        "        /CONFIRM  - confirm closing console on program termination\n"
+        "        /ATTACH   - auto attach to ConEmu GUI\n"
+        "        /NOCMD    - attach current (existing) console to GUI\n"
+        "        /B{W|H|Z} - define window width, height and buffer height\n"
+        "        /F{N|W|H} - define console font name, width, height\n"
+        "        /LOG[N]   - create (debug) log file, N is number from 0 to 3\n"
     );
 }
 
@@ -957,7 +981,7 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
     if (!asCmdLine || !*asCmdLine)
     {
         DWORD dwErr = GetLastError();
-        wprintf (L"GetCommandLineW failed! ErrCode=0x%08X\n", dwErr);
+        _printf("GetCommandLineW failed! ErrCode=0x%08X\n", dwErr);
         return CERR_GETCOMMANDLINE;
     }
 
@@ -985,22 +1009,24 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 		} else
 
         if (wcsncmp(szArg, L"/B", 2)==0) {
+        	wchar_t* pszEnd = NULL;
             if (wcsncmp(szArg, L"/BW=", 4)==0) {
-                gcrBufferSize.X = _wtoi(szArg+4); gbParmBufferSize = TRUE;
+                gcrBufferSize.X = /*_wtoi(szArg+4);*/(SHORT)wcstol(szArg+4,&pszEnd,10); gbParmBufferSize = TRUE;
             } else if (wcsncmp(szArg, L"/BH=", 4)==0) {
-                gcrBufferSize.Y = _wtoi(szArg+4); gbParmBufferSize = TRUE;
+                gcrBufferSize.Y = /*_wtoi(szArg+4);*/(SHORT)wcstol(szArg+4,&pszEnd,10); gbParmBufferSize = TRUE;
             } else if (wcsncmp(szArg, L"/BZ=", 4)==0) {
-                gnBufferHeight = _wtoi(szArg+4); gbParmBufferSize = TRUE;
+                gnBufferHeight = /*_wtoi(szArg+4);*/(SHORT)wcstol(szArg+4,&pszEnd,10); gbParmBufferSize = TRUE;
             }
         } else
 
         if (wcsncmp(szArg, L"/F", 2)==0) {
+        	wchar_t* pszEnd = NULL;
             if (wcsncmp(szArg, L"/FN=", 4)==0) {
                 lstrcpynW(srv.szConsoleFont, szArg+4, 32);
             } else if (wcsncmp(szArg, L"/FW=", 4)==0) {
-                srv.nConFontWidth = _wtoi(szArg+4);
+                srv.nConFontWidth = /*_wtoi(szArg+4);*/(SHORT)wcstol(szArg+4,&pszEnd,10);
             } else if (wcsncmp(szArg, L"/FH=", 4)==0) {
-                srv.nConFontHeight = _wtoi(szArg+4);
+                srv.nConFontHeight = /*_wtoi(szArg+4);*/(SHORT)wcstol(szArg+4,&pszEnd,10);
             //} else if (wcsncmp(szArg, L"/FF=", 4)==0) {
             //  lstrcpynW(srv.szConsoleFontFile, szArg+4, MAX_PATH);
             }
@@ -1008,7 +1034,7 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
         
         if (wcsncmp(szArg, L"/LOG",4)==0) {
         	int nLevel = 0;
-        	if (szArg[4]==L'1') nLevel = 1; else if (szArg[4]==L'2') nLevel = 2;
+        	if (szArg[4]==L'1') nLevel = 1; else if (szArg[4]>=L'2') nLevel = 2;
             CreateLogSizeFile(nLevel);
         } else
         
@@ -1020,9 +1046,13 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
         if (wcsncmp(szArg, L"/PID=", 5)==0) {
         	gnRunMode = RM_SERVER;
         	gbNoCreateProcess = TRUE;
-			srv.dwRootProcess = _wtol(szArg+5);
+        	wchar_t* pszEnd = NULL;
+			//srv.dwRootProcess = _wtol(szArg+5);
+			srv.dwRootProcess = wcstol(szArg+5, &pszEnd, 10);
 			if (srv.dwRootProcess == 0) {
-				wprintf (L"Attach to GUI was requested, but invalid PID specified:\n%s\n", GetCommandLineW());
+				_printf ("Attach to GUI was requested, but invalid PID specified:\n");
+				_wprintf (GetCommandLineW());
+				_printf ("\n");
 				return CERR_CARGUMENT;
 			}
         } else
@@ -1030,9 +1060,13 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
         if (wcsncmp(szArg, L"/DEBUGPID=", 10)==0) {
         	gnRunMode = RM_SERVER;
         	gbNoCreateProcess = gbDebugProcess = TRUE;
-			srv.dwRootProcess = _wtol(szArg+10);
+        	wchar_t* pszEnd = NULL;
+			//srv.dwRootProcess = _wtol(szArg+10);
+			srv.dwRootProcess = wcstol(szArg+10, &pszEnd, 10);
 			if (srv.dwRootProcess == 0) {
-				wprintf (L"Debug of process was requested, but invalid PID specified:\n%s\n", GetCommandLineW());
+				_printf ("Debug of process was requested, but invalid PID specified:\n");
+				_wprintf (GetCommandLineW());
+				_printf ("\n");
 				return CERR_CARGUMENT;
 			}
         } else
@@ -1059,7 +1093,7 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
     	if (gbDebugProcess) {
     		if (!DebugActiveProcess(srv.dwRootProcess)) {
     			DWORD dwErr = GetLastError();
-    			wprintf(L"Can't start debugger! ErrCode=0x%08X\n", dwErr);
+    			_printf("Can't start debugger! ErrCode=0x%08X\n", dwErr);
     			return CERR_CANTSTARTDEBUGGER;
     		}
     		pfnDebugActiveProcessStop = (FDebugActiveProcessStop)GetProcAddress(GetModuleHandle(L"kernel32.dll"),"DebugActiveProcessStop");
@@ -1069,7 +1103,7 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
     	
 	        wchar_t* pszNewCmd = new wchar_t[1];
 	        if (!pszNewCmd) {
-	            wprintf (L"Can't allocate 1 wchar!\n");
+	            _printf ("Can't allocate 1 wchar!\n");
 	            return CERR_NOTENOUGHMEM1;
 	        }
 	        pszNewCmd[0] = 0;
@@ -1077,22 +1111,28 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
     	} else
     	if (gbNoCreateProcess && gbAttachMode) {
 			if (pfnGetConsoleProcessList==NULL) {
-	            wprintf (L"Attach to GUI was requested, but required WinXP or higher:\n%s\n", GetCommandLineW());
+	            _printf ("Attach to GUI was requested, but required WinXP or higher:\n");
+	            _wprintf (GetCommandLineW());
+	            _printf ("\n");
 	            return CERR_CARGUMENT;
 			}
 			DWORD nProcesses[10];
 	    	DWORD nProcCount = pfnGetConsoleProcessList ( nProcesses, 10 );
 	    	if (nProcCount < 2) {
-	            wprintf (L"Attach to GUI was requested, but there is no console processes:\n%s\n", GetCommandLineW());
+	            _printf ("Attach to GUI was requested, but there is no console processes:\n");
+	            _wprintf (GetCommandLineW());
+	            _printf ("\n");
 	            return CERR_CARGUMENT;
 	    	}
 	    	// Если cmd.exe запущен из cmd.exe (в консоли уже больше двух процессов) - ничего не делать
 	    	if (nProcCount > 2) {
 	    		// И ругаться только под отладчиком
-	    		wchar_t szProc[128] ={0}, szTmp[10]; //wsprintfW(szProc, L"%i, %i, %i", nProcesses[0], nProcesses[1], nProcesses[2]);
-	    		for (DWORD n=0; n<nProcCount; n++) {
+	    		wchar_t szProc[255] ={0}, szTmp[10]; //wsprintfW(szProc, L"%i, %i, %i", nProcesses[0], nProcesses[1], nProcesses[2]);
+	    		for (DWORD n=0; n<nProcCount && n<20; n++) {
 	    			if (n) lstrcatW(szProc, L", ");
-	    			lstrcatW(szProc, _ltow(nProcesses[0], szTmp, 10));
+	    			wsprintf(szTmp, L"%i", nProcesses[0]);
+	    			//lstrcatW(szProc, _ltow(nProcesses[0], szTmp, 10));
+	    			lstrcatW(szProc, szTmp);
 	    		}
 	    		PRINT_COMSPEC(L"Attach to GUI was requested, but there is more then 2 console processes: %s\n", szProc);
 	    		return CERR_CARGUMENT;
@@ -1100,7 +1140,7 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 
 	        wchar_t* pszNewCmd = new wchar_t[1];
 	        if (!pszNewCmd) {
-	            wprintf (L"Can't allocate 1 wchar!\n");
+	            _printf ("Can't allocate 1 wchar!\n");
 	            return CERR_NOTENOUGHMEM1;
 	        }
 	        pszNewCmd[0] = 0;
@@ -1111,14 +1151,20 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
     if (iRc != 0) {
         if (iRc == CERR_CMDLINEEMPTY) {
             Help();
-            wprintf (L"\n\nParsing command line failed (/C argument not found):\n%s\n", GetCommandLineW());
+            _printf ("\n\nParsing command line failed (/C argument not found):\n");
+            _wprintf (GetCommandLineW());
+            _printf ("\n");
         } else {
-            wprintf (L"Parsing command line failed:\n%s\n", asCmdLine);
+            _printf ("Parsing command line failed:\n");
+            _wprintf (asCmdLine);
+            _printf ("\n");
         }
         return iRc;
     }
     if (gnRunMode == RM_UNDEFINED) {
-        wprintf (L"Parsing command line failed (/C argument not found):\n%s\n", GetCommandLineW());
+        _printf ("Parsing command line failed (/C argument not found):\n");
+        _wprintf (GetCommandLineW());
+        _printf ("\n");
         return CERR_CARGUMENT;
     }
 
@@ -1164,7 +1210,7 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
             //
             wchar_t* pszNewCmd = new wchar_t[nNewLen];
             if (!pszNewCmd) {
-                wprintf (L"Can't allocate %i wchars!\n", nNewLen);
+                _printf ("Can't allocate %i wchars!\n", (DWORD)nNewLen);
                 return CERR_NOTENOUGHMEM1;
             }
             // Сначала скопировать все, что было ДО /c
@@ -1275,7 +1321,7 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
         if (szComSpec[0] == 0) {
             if (!SearchPathW(NULL, L"cmd.exe", NULL, MAX_PATH, szComSpec, &psFilePart))
             {
-                wprintf (L"Can't find cmd.exe!\n");
+                _printf ("Can't find cmd.exe!\n");
                 return CERR_CMDEXENOTFOUND;
             }
         }
@@ -1286,7 +1332,7 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
     *psNewCmd = new wchar_t[nCmdLine];
     if (!(*psNewCmd))
     {
-        wprintf (L"Can't allocate %i wchars!\n", nCmdLine);
+        _printf ("Can't allocate %i wchars!\n", (DWORD)nCmdLine);
         return CERR_NOTENOUGHMEM1;
     }
     
@@ -1471,7 +1517,7 @@ void ExitWaitForKey(WORD vkKey, LPCWSTR asConfirm, BOOL abNewLine, BOOL abDontSh
     if (gbInShutdown)
         return; // Event закрытия мог припоздниться
     //
-    wprintf(asConfirm);
+    _wprintf(asConfirm);
 
     //if (lbNeedVisible)
     // Если окошко опять было скрыто - значит GUI часть жива, и опять отображаться не нужно
@@ -1501,7 +1547,7 @@ void ExitWaitForKey(WORD vkKey, LPCWSTR asConfirm, BOOL abNewLine, BOOL abDontSh
     //MessageBox(0,L"Debug message...............1",L"ConEmuC",0);
     //int nCh = _getch();
     if (abNewLine)
-        wprintf(L"\n");
+        _printf("\n");
 }
 
 
@@ -1549,7 +1595,7 @@ int ComspecInit()
         DWORD dwErr = GetLastError();
         if (!lbRc)
         {
-            wprintf (L"Can't create process, ErrCode=0x%08X! Command to be executed:\n%s\n", dwErr, gpszRunCmd);
+            _printf ("Can't create process, ErrCode=0x%08X! Command to be executed:\n", dwErr, gpszRunCmd);
             return CERR_CREATEPROCESS;
         }
         //delete psNewCmd; psNewCmd = NULL;
@@ -1757,13 +1803,14 @@ void CreateLogSizeFile(int nLevel)
     
     DWORD dwErr = 0;
     wchar_t szFile[MAX_PATH+64], *pszDot;
+    
     if (!GetModuleFileName(NULL, szFile, MAX_PATH)) {
         dwErr = GetLastError();
-        wprintf(L"GetModuleFileName failed! ErrCode=0x%08X\n", dwErr);
+        _printf("GetModuleFileName failed! ErrCode=0x%08X\n", dwErr);
         return; // не удалось
     }
     if ((pszDot = wcsrchr(szFile, L'.')) == NULL) {
-        wprintf(L"wcsrchr failed!\n%s\n", szFile);
+        _printf("wcsrchr failed!\n", 0, szFile);
         return; // ошибка
     }
     wsprintfW(pszDot, L"-size-%i.log", gnSelfPID);
@@ -1772,11 +1819,13 @@ void CreateLogSizeFile(int nLevel)
     if (ghLogSize == INVALID_HANDLE_VALUE) {
         ghLogSize = NULL;
         dwErr = GetLastError();
-        wprintf(L"CreateFile failed! ErrCode=0x%08X\n%s\n", dwErr, szFile);
+        _printf("CreateFile failed! ErrCode=0x%08X\n", dwErr, szFile);
         return;
     }
     
-    wpszLogSizeFile = _wcsdup(szFile);
+    int nLen = lstrlen(szFile);
+    wpszLogSizeFile = /*_wcsdup(szFile);*/(wchar_t*)calloc(nLen+1,2);
+    lstrcpy(wpszLogSizeFile, szFile);
     // OK, лог создали
     LPCSTR pszCmdLine = GetCommandLineA();
     if (pszCmdLine) {
@@ -1822,11 +1871,11 @@ void LogSize(COORD* pcrSize, LPCSTR pszLabel)
             
     SYSTEMTIME st; GetLocalTime(&st);
     if (pcrSize) {
-        sprintf(szInfo, "%i:%02i:%02i CurSize={%ix%i} ChangeTo={%ix%i} %s %s\r\n",
+        wsprintfA(szInfo, "%i:%02i:%02i CurSize={%ix%i} ChangeTo={%ix%i} %s %s\r\n",
             st.wHour, st.wMinute, st.wSecond,
             lsbi.dwSize.X, lsbi.dwSize.Y, pcrSize->X, pcrSize->Y, pszThread, (pszLabel ? pszLabel : ""));
     } else {
-        sprintf(szInfo, "%i:%02i:%02i CurSize={%ix%i} %s %s\r\n",
+        wsprintfA(szInfo, "%i:%02i:%02i CurSize={%ix%i} %s %s\r\n",
             st.wHour, st.wMinute, st.wSecond,
             lsbi.dwSize.X, lsbi.dwSize.Y, pszThread, (pszLabel ? pszLabel : ""));
     }
@@ -1875,12 +1924,12 @@ HWND Attach2Gui(DWORD nTimeout)
 		wchar_t* pszSelf = szSelf+1, *pszSlash = NULL;
 		if (!GetModuleFileName(NULL, pszSelf, MAX_PATH)) {
 			dwErr = GetLastError();
-			wprintf (L"GetModuleFileName failed, ErrCode=0x%08X\n", dwErr);
+			_printf ("GetModuleFileName failed, ErrCode=0x%08X\n", dwErr);
 			return NULL;
 		}
 		pszSlash = wcsrchr(pszSelf, L'\\');
 		if (!pszSlash) {
-			wprintf (L"Invalid GetModuleFileName, backslash not found!\n%s\n", pszSelf);
+			_printf ("Invalid GetModuleFileName, backslash not found!\n", 0, pszSelf);
 			return NULL;
 		}
 		pszSlash++;
@@ -1904,7 +1953,7 @@ HWND Attach2Gui(DWORD nTimeout)
 		dwErr = GetLastError();
 		if (!lbRc)
 		{
-			wprintf (L"Can't create process, ErrCode=0x%08X! Command to be executed:\n%s\n", dwErr, pszSelf);
+			_printf ("Can't create process, ErrCode=0x%08X! Command to be executed:\n", dwErr, pszSelf);
 			return NULL;
 		}
 		//delete psNewCmd; psNewCmd = NULL;
@@ -2004,7 +2053,7 @@ int ServerInit()
 	srv.pnProcessesCopy = (DWORD*)Alloc(START_MAX_PROCESSES, sizeof(DWORD));
 	MCHKHEAP
 	if (srv.pnProcesses == NULL || srv.pnProcessesCopy == NULL) {
-		wprintf (L"Can't allocate %i DWORDS!\n", srv.nMaxProcesses);
+		_printf ("Can't allocate %i DWORDS!\n", srv.nMaxProcesses);
 		iRc = CERR_NOTENOUGHMEM1; goto wrap;
 	}
 	CheckProcessCount(TRUE); // Сначала добавит себя
@@ -2025,7 +2074,7 @@ int ServerInit()
 	if (srv.hInputThread == NULL) 
 	{
 		dwErr = GetLastError();
-		wprintf(L"CreateThread(InputThread) failed, ErrCode=0x%08X\n", dwErr); 
+		_printf("CreateThread(InputThread) failed, ErrCode=0x%08X\n", dwErr); 
 		iRc = CERR_CREATEINPUTTHREAD; goto wrap;
 	}
 	//SetThreadPriority(srv.hInputThread, THREAD_PRIORITY_ABOVE_NORMAL);
@@ -2041,7 +2090,7 @@ int ServerInit()
 	if (srv.hInputPipeThread == NULL) 
 	{
 		dwErr = GetLastError();
-		wprintf(L"CreateThread(InputPipeThread) failed, ErrCode=0x%08X\n", dwErr); 
+		_printf("CreateThread(InputPipeThread) failed, ErrCode=0x%08X\n", dwErr);
 		iRc = CERR_CREATEINPUTTHREAD; goto wrap;
 	}
 
@@ -2128,7 +2177,7 @@ int ServerInit()
 			}
 	        
     		if (!dwParentPID) {
-				wprintf (L"Attach to GUI was requested, but there is no console processes:\n%s\n", GetCommandLineW());
+				_printf ("Attach to GUI was requested, but there is no console processes:\n", 0, GetCommandLineW());
 				return CERR_CARGUMENT;
     		}
 	    	
@@ -2140,7 +2189,7 @@ int ServerInit()
 	    		
    				FormatMessage( FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, NULL, dwErr, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPWSTR)&lpMsgBuf, 0, NULL );
 	    		
-				wprintf (L"Can't open process (%i) handle, ErrCode=0x%08X, Description:\n%s\n", 
+				_printf("Can't open process (%i) handle, ErrCode=0x%08X, Description:\n", 
             		dwParentPID, dwErr, (lpMsgBuf == NULL) ? L"<Unknown error>" : lpMsgBuf);
 	            
 				if (lpMsgBuf) LocalFree(lpMsgBuf);
@@ -2153,7 +2202,7 @@ int ServerInit()
 			wchar_t* pszSelf = szSelf+1;
 			if (!GetModuleFileName(NULL, pszSelf, MAX_PATH)) {
 				dwErr = GetLastError();
-				wprintf (L"GetModuleFileName failed, ErrCode=0x%08X\n", dwErr);
+				_printf("GetModuleFileName failed, ErrCode=0x%08X\n", dwErr);
 				return CERR_CREATEPROCESS;
 			}
 			if (wcschr(pszSelf, L' ')) {
@@ -2174,7 +2223,7 @@ int ServerInit()
 			dwErr = GetLastError();
 			if (!lbRc)
 			{
-				wprintf (L"Can't create process, ErrCode=0x%08X! Command to be executed:\n%s\n", dwErr, pszSelf);
+				_printf("Can't create process, ErrCode=0x%08X! Command to be executed:\n", dwErr, pszSelf);
 				return CERR_CREATEPROCESS;
 			}
 			//delete psNewCmd; psNewCmd = NULL;
@@ -2197,7 +2246,7 @@ int ServerInit()
 	    		
    				FormatMessage( FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, NULL, dwErr, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPWSTR)&lpMsgBuf, 0, NULL );
 	    		
-				wprintf (L"Can't open process (%i) handle, ErrCode=0x%08X, Description:\n%s\n", 
+				_printf ("Can't open process (%i) handle, ErrCode=0x%08X, Description:\n", 
             		srv.dwRootProcess, dwErr, (lpMsgBuf == NULL) ? L"<Unknown error>" : lpMsgBuf);
 	            
 				if (lpMsgBuf) LocalFree(lpMsgBuf);
@@ -2305,13 +2354,13 @@ int ServerInit()
     srv.hRefreshEvent = CreateEvent(NULL,FALSE,FALSE,NULL);
     if (!srv.hRefreshEvent) {
         dwErr = GetLastError();
-        wprintf(L"CreateEvent(hRefreshEvent) failed, ErrCode=0x%08X\n", dwErr); 
+        _printf("CreateEvent(hRefreshEvent) failed, ErrCode=0x%08X\n", dwErr); 
         iRc = CERR_REFRESHEVENT; goto wrap;
     }
 	srv.hDataSentEvent = CreateEvent(NULL,FALSE,FALSE,NULL);
 	if (!srv.hDataSentEvent) {
 		dwErr = GetLastError();
-		wprintf(L"CreateEvent(hDataSentEvent) failed, ErrCode=0x%08X\n", dwErr); 
+		_printf("CreateEvent(hDataSentEvent) failed, ErrCode=0x%08X\n", dwErr); 
 		iRc = CERR_REFRESHEVENT; goto wrap;
 	}
 
@@ -2329,7 +2378,7 @@ int ServerInit()
     if (srv.hRefreshThread == NULL) 
     {
         dwErr = GetLastError();
-        wprintf(L"CreateThread(RefreshThread) failed, ErrCode=0x%08X\n", dwErr); 
+        _printf("CreateThread(RefreshThread) failed, ErrCode=0x%08X\n", dwErr); 
         iRc = CERR_CREATEREFRESHTHREAD; goto wrap;
     }
     
@@ -2340,7 +2389,7 @@ int ServerInit()
     if (srv.hWinEventThread == NULL) 
     {
         dwErr = GetLastError();
-        wprintf(L"CreateThread(WinEventThread) failed, ErrCode=0x%08X\n", dwErr); 
+        _printf("CreateThread(WinEventThread) failed, ErrCode=0x%08X\n", dwErr); 
         iRc = CERR_WINEVENTTHREAD; goto wrap;
     }
 
@@ -2349,7 +2398,7 @@ int ServerInit()
     if (srv.hServerThread == NULL) 
     {
         dwErr = GetLastError();
-        wprintf(L"CreateThread(ServerThread) failed, ErrCode=0x%08X\n", dwErr); 
+        _printf("CreateThread(ServerThread) failed, ErrCode=0x%08X\n", dwErr); 
         iRc = CERR_CREATESERVERTHREAD; goto wrap;
     }
 
@@ -2362,7 +2411,7 @@ int ServerInit()
         //	SendStarted();
 
         if (!hDcWnd) {
-            wprintf(L"Available ConEmu GUI window not found!\n");
+            _printf("Available ConEmu GUI window not found!\n");
             iRc = CERR_ATTACHFAILED; goto wrap;
         }
     }
@@ -2809,12 +2858,12 @@ void ProcessDebugEvent()
 		switch (evt.dwDebugEventCode) {
 		case CREATE_PROCESS_DEBUG_EVENT:
 		//3 Reports a create-process debugging event. The value of u.CreateProcessInfo specifies a CREATE_PROCESS_DEBUG_INFO structure.
-		wprintf(L"{%i.%i} CREATE_PROCESS_DEBUG_EVENT\n", evt.dwProcessId,evt.dwThreadId);
+		_printf("{%i.%i} CREATE_PROCESS_DEBUG_EVENT\n", evt.dwProcessId,evt.dwThreadId);
 		break;
 		
 		case CREATE_THREAD_DEBUG_EVENT:
 		//2 Reports a create-thread debugging event. The value of u.CreateThread specifies a CREATE_THREAD_DEBUG_INFO structure.
-		wprintf(L"{%i.%i} CREATE_THREAD_DEBUG_EVENT\n", evt.dwProcessId,evt.dwThreadId);
+		_printf("{%i.%i} CREATE_THREAD_DEBUG_EVENT\n", evt.dwProcessId,evt.dwThreadId);
 		break;
 		
 		case EXCEPTION_DEBUG_EVENT:
@@ -2825,159 +2874,180 @@ void ProcessDebugEvent()
 			{
 			case EXCEPTION_ACCESS_VIOLATION: // The thread tried to read from or write to a virtual address for which it does not have the appropriate access.
 			if (evt.u.Exception.ExceptionRecord.NumberParameters>=2) {
-				wprintf(L"{%i.%i} EXCEPTION_ACCESS_VIOLATION at 0x%08X flags 0x%08X%s %s of 0x%08X\n", evt.dwProcessId,evt.dwThreadId,
+				wsprintfA(szDbgText,"{%i.%i} EXCEPTION_ACCESS_VIOLATION at 0x%08X flags 0x%08X%s %s of 0x%08X\n", evt.dwProcessId,evt.dwThreadId,
 					evt.u.Exception.ExceptionRecord.ExceptionAddress,
 					evt.u.Exception.ExceptionRecord.ExceptionFlags,
-					((evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE) ? L"(EXCEPTION_NONCONTINUABLE)" : L""),
-					((evt.u.Exception.ExceptionRecord.ExceptionInformation[0]==0) ? L"Read" :
-					(evt.u.Exception.ExceptionRecord.ExceptionInformation[0]==1) ? L"Write" :
-					(evt.u.Exception.ExceptionRecord.ExceptionInformation[0]==8) ? L"DEP" : L"???"),
+					((evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE) ? "(EXCEPTION_NONCONTINUABLE)" : ""),
+					((evt.u.Exception.ExceptionRecord.ExceptionInformation[0]==0) ? "Read" :
+					(evt.u.Exception.ExceptionRecord.ExceptionInformation[0]==1) ? "Write" :
+					(evt.u.Exception.ExceptionRecord.ExceptionInformation[0]==8) ? "DEP" : "???"),
 					evt.u.Exception.ExceptionRecord.ExceptionInformation[1]
 					);
 			} else {
-				wprintf(L"{%i.%i} EXCEPTION_ACCESS_VIOLATION at 0x%08X flags 0x%08X%s\n", evt.dwProcessId,evt.dwThreadId,
+				wsprintfA(szDbgText,"{%i.%i} EXCEPTION_ACCESS_VIOLATION at 0x%08X flags 0x%08X%s\n", evt.dwProcessId,evt.dwThreadId,
 					evt.u.Exception.ExceptionRecord.ExceptionAddress,
 					evt.u.Exception.ExceptionRecord.ExceptionFlags,
-					(evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE) ? L"(EXCEPTION_NONCONTINUABLE)" : L"");
+					(evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE) ? "(EXCEPTION_NONCONTINUABLE)" : "");
 			}
+			_printf(szDbgText);
 			break; 
 			case EXCEPTION_ARRAY_BOUNDS_EXCEEDED: // The thread tried to access an array element that is out of bounds and the underlying hardware supports bounds checking.
-				wprintf(L"{%i.%i} EXCEPTION_ARRAY_BOUNDS_EXCEEDED at 0x%08X flags 0x%08X%s\n", evt.dwProcessId,evt.dwThreadId,
+				wsprintfA(szDbgText,"{%i.%i} EXCEPTION_ARRAY_BOUNDS_EXCEEDED at 0x%08X flags 0x%08X%s\n", evt.dwProcessId,evt.dwThreadId,
 					evt.u.Exception.ExceptionRecord.ExceptionAddress,
 					evt.u.Exception.ExceptionRecord.ExceptionFlags,
-					(evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE) ? L"(EXCEPTION_NONCONTINUABLE)" : L"");
+					(evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE) ? "(EXCEPTION_NONCONTINUABLE)" : "");
+				_printf(szDbgText);
 			break;
 			case EXCEPTION_BREAKPOINT: // A breakpoint was encountered.
-				wprintf(L"{%i.%i} EXCEPTION_BREAKPOINT at 0x%08X flags 0x%08X%s\n", evt.dwProcessId,evt.dwThreadId,
+				wsprintfA(szDbgText,"{%i.%i} EXCEPTION_BREAKPOINT at 0x%08X flags 0x%08X%s\n", evt.dwProcessId,evt.dwThreadId,
 					evt.u.Exception.ExceptionRecord.ExceptionAddress,
 					evt.u.Exception.ExceptionRecord.ExceptionFlags,
-					(evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE) ? L"(EXCEPTION_NONCONTINUABLE)" : L"");
+					(evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE) ? "(EXCEPTION_NONCONTINUABLE)" : "");
+				_printf(szDbgText);
 			break;
 			case EXCEPTION_DATATYPE_MISALIGNMENT: // The thread tried to read or write data that is misaligned on hardware that does not provide alignment. For example, 16-bit values must be aligned on 2-byte boundaries; 32-bit values on 4-byte boundaries, and so on.
-				wprintf(L"{%i.%i} EXCEPTION_DATATYPE_MISALIGNMENT at 0x%08X flags 0x%08X%s\n", evt.dwProcessId,evt.dwThreadId,
+				wsprintfA(szDbgText,"{%i.%i} EXCEPTION_DATATYPE_MISALIGNMENT at 0x%08X flags 0x%08X%s\n", evt.dwProcessId,evt.dwThreadId,
 					evt.u.Exception.ExceptionRecord.ExceptionAddress,
 					evt.u.Exception.ExceptionRecord.ExceptionFlags,
-					(evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE) ? L"(EXCEPTION_NONCONTINUABLE)" : L"");
+					(evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE) ? "(EXCEPTION_NONCONTINUABLE)" : "");
+				_printf(szDbgText);
 			break;
 			case EXCEPTION_FLT_DENORMAL_OPERAND: // One of the operands in a floating-point operation is denormal. A denormal value is one that is too small to represent as a standard floating-point value.
-				wprintf(L"{%i.%i} EXCEPTION_FLT_DENORMAL_OPERAND at 0x%08X flags 0x%08X%s\n", evt.dwProcessId,evt.dwThreadId,
+				wsprintfA(szDbgText,"{%i.%i} EXCEPTION_FLT_DENORMAL_OPERAND at 0x%08X flags 0x%08X%s\n", evt.dwProcessId,evt.dwThreadId,
 					evt.u.Exception.ExceptionRecord.ExceptionAddress,
 					evt.u.Exception.ExceptionRecord.ExceptionFlags,
-					(evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE) ? L"(EXCEPTION_NONCONTINUABLE)" : L"");
+					(evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE) ? "(EXCEPTION_NONCONTINUABLE)" : "");
+				_printf(szDbgText);
 			break;
 			case EXCEPTION_FLT_DIVIDE_BY_ZERO: // The thread tried to divide a floating-point value by a floating-point divisor of zero.
-				wprintf(L"{%i.%i} EXCEPTION_FLT_DIVIDE_BY_ZERO at 0x%08X flags 0x%08X%s\n", evt.dwProcessId,evt.dwThreadId,
+				wsprintfA(szDbgText,"{%i.%i} EXCEPTION_FLT_DIVIDE_BY_ZERO at 0x%08X flags 0x%08X%s\n", evt.dwProcessId,evt.dwThreadId,
 					evt.u.Exception.ExceptionRecord.ExceptionAddress,
 					evt.u.Exception.ExceptionRecord.ExceptionFlags,
-					(evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE) ? L"(EXCEPTION_NONCONTINUABLE)" : L"");
+					(evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE) ? "(EXCEPTION_NONCONTINUABLE)" : "");
+				_printf(szDbgText);
 			break;
 			case EXCEPTION_FLT_INEXACT_RESULT: // The result of a floating-point operation cannot be represented exactly as a decimal fraction.
-				wprintf(L"{%i.%i} EXCEPTION_FLT_INEXACT_RESULT at 0x%08X flags 0x%08X%s\n", evt.dwProcessId,evt.dwThreadId,
+				wsprintfA(szDbgText,"{%i.%i} EXCEPTION_FLT_INEXACT_RESULT at 0x%08X flags 0x%08X%s\n", evt.dwProcessId,evt.dwThreadId,
 					evt.u.Exception.ExceptionRecord.ExceptionAddress,
 					evt.u.Exception.ExceptionRecord.ExceptionFlags,
-					(evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE) ? L"(EXCEPTION_NONCONTINUABLE)" : L"");
+					(evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE) ? "(EXCEPTION_NONCONTINUABLE)" : "");
+				_printf(szDbgText);
 			break;
 			case EXCEPTION_FLT_INVALID_OPERATION: // This exception represents any floating-point exception not included in this list.
-				wprintf(L"{%i.%i} EXCEPTION_FLT_INVALID_OPERATION at 0x%08X flags 0x%08X%s\n", evt.dwProcessId,evt.dwThreadId,
+				wsprintfA(szDbgText,"{%i.%i} EXCEPTION_FLT_INVALID_OPERATION at 0x%08X flags 0x%08X%s\n", evt.dwProcessId,evt.dwThreadId,
 					evt.u.Exception.ExceptionRecord.ExceptionAddress,
 					evt.u.Exception.ExceptionRecord.ExceptionFlags,
-					(evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE) ? L"(EXCEPTION_NONCONTINUABLE)" : L"");
+					(evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE) ? "(EXCEPTION_NONCONTINUABLE)" : "");
+				_printf(szDbgText);
 			break;
 			case EXCEPTION_FLT_OVERFLOW: // The exponent of a floating-point operation is greater than the magnitude allowed by the corresponding type.
-				wprintf(L"{%i.%i} EXCEPTION_FLT_OVERFLOW at 0x%08X flags 0x%08X%s\n", evt.dwProcessId,evt.dwThreadId,
+				wsprintfA(szDbgText,"{%i.%i} EXCEPTION_FLT_OVERFLOW at 0x%08X flags 0x%08X%s\n", evt.dwProcessId,evt.dwThreadId,
 					evt.u.Exception.ExceptionRecord.ExceptionAddress,
 					evt.u.Exception.ExceptionRecord.ExceptionFlags,
-					(evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE) ? L"(EXCEPTION_NONCONTINUABLE)" : L"");
+					(evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE) ? "(EXCEPTION_NONCONTINUABLE)" : "");
+				_printf(szDbgText);
 			break;
 			case EXCEPTION_FLT_STACK_CHECK: // The stack overflowed or underflowed as the result of a floating-point operation.
-				wprintf(L"{%i.%i} EXCEPTION_FLT_STACK_CHECK at 0x%08X flags 0x%08X%s\n", evt.dwProcessId,evt.dwThreadId,
+				wsprintfA(szDbgText,"{%i.%i} EXCEPTION_FLT_STACK_CHECK at 0x%08X flags 0x%08X%s\n", evt.dwProcessId,evt.dwThreadId,
 					evt.u.Exception.ExceptionRecord.ExceptionAddress,
 					evt.u.Exception.ExceptionRecord.ExceptionFlags,
-					(evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE) ? L"(EXCEPTION_NONCONTINUABLE)" : L"");
+					(evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE) ? "(EXCEPTION_NONCONTINUABLE)" : "");
+				_printf(szDbgText);
 			break;
 			case EXCEPTION_FLT_UNDERFLOW: // The exponent of a floating-point operation is less than the magnitude allowed by the corresponding type.
-				wprintf(L"{%i.%i} EXCEPTION_FLT_UNDERFLOW at 0x%08X flags 0x%08X%s\n", evt.dwProcessId,evt.dwThreadId,
+				wsprintfA(szDbgText,"{%i.%i} EXCEPTION_FLT_UNDERFLOW at 0x%08X flags 0x%08X%s\n", evt.dwProcessId,evt.dwThreadId,
 					evt.u.Exception.ExceptionRecord.ExceptionAddress,
 					evt.u.Exception.ExceptionRecord.ExceptionFlags,
-					(evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE) ? L"(EXCEPTION_NONCONTINUABLE)" : L"");
+					(evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE) ? "(EXCEPTION_NONCONTINUABLE)" : "");
+				_printf(szDbgText);
 			break;
 			case EXCEPTION_ILLEGAL_INSTRUCTION: // The thread tried to execute an invalid instruction.
-				wprintf(L"{%i.%i} EXCEPTION_ILLEGAL_INSTRUCTION at 0x%08X flags 0x%08X%s\n", evt.dwProcessId,evt.dwThreadId,
+				wsprintfA(szDbgText,"{%i.%i} EXCEPTION_ILLEGAL_INSTRUCTION at 0x%08X flags 0x%08X%s\n", evt.dwProcessId,evt.dwThreadId,
 					evt.u.Exception.ExceptionRecord.ExceptionAddress,
 					evt.u.Exception.ExceptionRecord.ExceptionFlags,
-					(evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE) ? L"(EXCEPTION_NONCONTINUABLE)" : L"");
+					(evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE) ? "(EXCEPTION_NONCONTINUABLE)" : "");
+				_printf(szDbgText);
 			break;
 			case EXCEPTION_IN_PAGE_ERROR: // The thread tried to access a page that was not present, and the system was unable to load the page. For example, this exception might occur if a network connection is lost while running a program over the network.
-				wprintf(L"{%i.%i} EXCEPTION_IN_PAGE_ERROR at 0x%08X flags 0x%08X%s\n", evt.dwProcessId,evt.dwThreadId,
+				wsprintfA(szDbgText,"{%i.%i} EXCEPTION_IN_PAGE_ERROR at 0x%08X flags 0x%08X%s\n", evt.dwProcessId,evt.dwThreadId,
 					evt.u.Exception.ExceptionRecord.ExceptionAddress,
 					evt.u.Exception.ExceptionRecord.ExceptionFlags,
-					(evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE) ? L"(EXCEPTION_NONCONTINUABLE)" : L"");
+					(evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE) ? "(EXCEPTION_NONCONTINUABLE)" : "");
+				_printf(szDbgText);
 			break;
 			case EXCEPTION_INT_DIVIDE_BY_ZERO: // The thread tried to divide an integer value by an integer divisor of zero.
-				wprintf(L"{%i.%i} EXCEPTION_INT_DIVIDE_BY_ZERO at 0x%08X flags 0x%08X%s\n", evt.dwProcessId,evt.dwThreadId,
+				wsprintfA(szDbgText,"{%i.%i} EXCEPTION_INT_DIVIDE_BY_ZERO at 0x%08X flags 0x%08X%s\n", evt.dwProcessId,evt.dwThreadId,
 					evt.u.Exception.ExceptionRecord.ExceptionAddress,
 					evt.u.Exception.ExceptionRecord.ExceptionFlags,
-					(evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE) ? L"(EXCEPTION_NONCONTINUABLE)" : L"");
+					(evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE) ? "(EXCEPTION_NONCONTINUABLE)" : "");
+				_printf(szDbgText);
 			break;
 			case EXCEPTION_INT_OVERFLOW: // The result of an integer operation caused a carry out of the most significant bit of the result.
-				wprintf(L"{%i.%i} EXCEPTION_INT_OVERFLOW at 0x%08X flags 0x%08X%s\n", evt.dwProcessId,evt.dwThreadId,
+				wsprintfA(szDbgText,"{%i.%i} EXCEPTION_INT_OVERFLOW at 0x%08X flags 0x%08X%s\n", evt.dwProcessId,evt.dwThreadId,
 					evt.u.Exception.ExceptionRecord.ExceptionAddress,
 					evt.u.Exception.ExceptionRecord.ExceptionFlags,
-					(evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE) ? L"(EXCEPTION_NONCONTINUABLE)" : L"");
+					(evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE) ? "(EXCEPTION_NONCONTINUABLE)" : "");
+				_printf(szDbgText);
 			break;
 			case EXCEPTION_INVALID_DISPOSITION: // An exception handler returned an invalid disposition to the exception dispatcher. Programmers using a high-level language such as C should never encounter this exception.
-				wprintf(L"{%i.%i} EXCEPTION_INVALID_DISPOSITION at 0x%08X flags 0x%08X%s\n", evt.dwProcessId,evt.dwThreadId,
+				wsprintfA(szDbgText,"{%i.%i} EXCEPTION_INVALID_DISPOSITION at 0x%08X flags 0x%08X%s\n", evt.dwProcessId,evt.dwThreadId,
 					evt.u.Exception.ExceptionRecord.ExceptionAddress,
 					evt.u.Exception.ExceptionRecord.ExceptionFlags,
-					(evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE) ? L"(EXCEPTION_NONCONTINUABLE)" : L"");
+					(evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE) ? "(EXCEPTION_NONCONTINUABLE)" : "");
+				_printf(szDbgText);
 			break;
 			case EXCEPTION_NONCONTINUABLE_EXCEPTION: // The thread tried to continue execution after a noncontinuable exception occurred.
-				wprintf(L"{%i.%i} EXCEPTION_NONCONTINUABLE_EXCEPTION at 0x%08X flags 0x%08X%s\n", evt.dwProcessId,evt.dwThreadId,
+				wsprintfA(szDbgText,"{%i.%i} EXCEPTION_NONCONTINUABLE_EXCEPTION at 0x%08X flags 0x%08X%s\n", evt.dwProcessId,evt.dwThreadId,
 					evt.u.Exception.ExceptionRecord.ExceptionAddress,
 					evt.u.Exception.ExceptionRecord.ExceptionFlags,
-					(evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE) ? L"(EXCEPTION_NONCONTINUABLE)" : L"");
+					(evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE) ? "(EXCEPTION_NONCONTINUABLE)" : "");
+				_printf(szDbgText);
 			break;
 			case EXCEPTION_PRIV_INSTRUCTION: // The thread tried to execute an instruction whose operation is not allowed in the current machine mode.
-				wprintf(L"{%i.%i} EXCEPTION_PRIV_INSTRUCTION at 0x%08X flags 0x%08X%s\n", evt.dwProcessId,evt.dwThreadId,
+				wsprintfA(szDbgText,"{%i.%i} EXCEPTION_PRIV_INSTRUCTION at 0x%08X flags 0x%08X%s\n", evt.dwProcessId,evt.dwThreadId,
 					evt.u.Exception.ExceptionRecord.ExceptionAddress,
 					evt.u.Exception.ExceptionRecord.ExceptionFlags,
-					(evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE) ? L"(EXCEPTION_NONCONTINUABLE)" : L"");
+					(evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE) ? "(EXCEPTION_NONCONTINUABLE)" : "");
+				_printf(szDbgText);
 			break;
 			case EXCEPTION_SINGLE_STEP: // A trace trap or other single-instruction mechanism signaled that one instruction has been executed.
-				wprintf(L"{%i.%i} EXCEPTION_SINGLE_STEP at 0x%08X flags 0x%08X%s\n", evt.dwProcessId,evt.dwThreadId,
+				wsprintfA(szDbgText,"{%i.%i} EXCEPTION_SINGLE_STEP at 0x%08X flags 0x%08X%s\n", evt.dwProcessId,evt.dwThreadId,
 					evt.u.Exception.ExceptionRecord.ExceptionAddress,
 					evt.u.Exception.ExceptionRecord.ExceptionFlags,
-					(evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE) ? L"(EXCEPTION_NONCONTINUABLE)" : L"");
+					(evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE) ? "(EXCEPTION_NONCONTINUABLE)" : "");
+				_printf(szDbgText);
 			break;
 			case EXCEPTION_STACK_OVERFLOW: // The thread used up its stack.
-				wprintf(L"{%i.%i} EXCEPTION_STACK_OVERFLOW at 0x%08X flags 0x%08X%s\n", evt.dwProcessId,evt.dwThreadId,
+				wsprintfA(szDbgText,"{%i.%i} EXCEPTION_STACK_OVERFLOW at 0x%08X flags 0x%08X%s\n", evt.dwProcessId,evt.dwThreadId,
 					evt.u.Exception.ExceptionRecord.ExceptionAddress,
 					evt.u.Exception.ExceptionRecord.ExceptionFlags,
-					(evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE) ? L"(EXCEPTION_NONCONTINUABLE)" : L"");
+					(evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE) ? "(EXCEPTION_NONCONTINUABLE)" : "");
+				_printf(szDbgText);
 			break;
 			default:
-			wprintf(L"{%i.%i} Exception 0x%08X at 0x%08X flags 0x%08X%s\n", evt.dwProcessId,evt.dwThreadId,
+			wsprintfA(szDbgText,"{%i.%i} Exception 0x%08X at 0x%08X flags 0x%08X%s\n", evt.dwProcessId,evt.dwThreadId,
 				evt.u.Exception.ExceptionRecord.ExceptionCode,
 				evt.u.Exception.ExceptionRecord.ExceptionAddress,
 				evt.u.Exception.ExceptionRecord.ExceptionFlags,
-				(evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE) ? L"(EXCEPTION_NONCONTINUABLE)" : L"");
+				(evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE) ? "(EXCEPTION_NONCONTINUABLE)" : "");
+			_printf(szDbgText);
 			}
 		}
 		break;
 		
 		case EXIT_PROCESS_DEBUG_EVENT:
 		//5 Reports an exit-process debugging event. The value of u.ExitProcess specifies an EXIT_PROCESS_DEBUG_INFO structure.
-		wprintf(L"{%i.%i} EXIT_PROCESS_DEBUG_EVENT\n", evt.dwProcessId,evt.dwThreadId);
+		_printf("{%i.%i} EXIT_PROCESS_DEBUG_EVENT\n", evt.dwProcessId,evt.dwThreadId);
 		break;
 		
 		case EXIT_THREAD_DEBUG_EVENT:
 		//4 Reports an exit-thread debugging event. The value of u.ExitThread specifies an EXIT_THREAD_DEBUG_INFO structure.
-		wprintf(L"{%i.%i} EXIT_THREAD_DEBUG_EVENT\n", evt.dwProcessId,evt.dwThreadId);
+		_printf("{%i.%i} EXIT_THREAD_DEBUG_EVENT\n", evt.dwProcessId,evt.dwThreadId);
 		break;
 		
 		case LOAD_DLL_DEBUG_EVENT:
 		//6 Reports a load-dynamic-link-library (DLL) debugging event. The value of u.LoadDll specifies a LOAD_DLL_DEBUG_INFO structure.
-		wprintf(L"{%i.%i} LOAD_DLL_DEBUG_EVENT\n", evt.dwProcessId,evt.dwThreadId);
+		_printf("{%i.%i} LOAD_DLL_DEBUG_EVENT\n", evt.dwProcessId,evt.dwThreadId);
 		break;
 		
 		case OUTPUT_DEBUG_STRING_EVENT:
@@ -2999,18 +3069,18 @@ void ProcessDebugEvent()
 					MultiByteToWideChar(CP_ACP, 0, szDbgText, -1, wszDbgText, 1024);
 				}
 			}
-			wprintf(L"{%i.%i} %s\n", evt.dwProcessId,evt.dwThreadId, wszDbgText);
+			_printf("{%i.%i} ", evt.dwProcessId,evt.dwThreadId, wszDbgText);
 		}
 		break;
 		
 		case RIP_EVENT:
 		//9 Reports a RIP-debugging event (system debugging error). The value of u.RipInfo specifies a RIP_INFO structure.
-		wprintf(L"{%i.%i} RIP_EVENT\n", evt.dwProcessId,evt.dwThreadId);
+		_printf("{%i.%i} RIP_EVENT\n", evt.dwProcessId,evt.dwThreadId);
 		break;
 		
 		case UNLOAD_DLL_DEBUG_EVENT:
 		//7 Reports an unload-DLL debugging event. The value of u.UnloadDll specifies an UNLOAD_DLL_DEBUG_INFO structure.
-		wprintf(L"{%i.%i} UNLOAD_DLL_DEBUG_EVENT\n", evt.dwProcessId,evt.dwThreadId);
+		_printf("{%i.%i} UNLOAD_DLL_DEBUG_EVENT\n", evt.dwProcessId,evt.dwThreadId);
 		break;
 		}
 		
@@ -3054,7 +3124,7 @@ DWORD WINAPI ServerThread(LPVOID lpvParam)
       if (hPipe == INVALID_HANDLE_VALUE) 
       {
           dwErr = GetLastError();
-          wprintf(L"CreateNamedPipe failed, ErrCode=0x%08X\n", dwErr); 
+          _printf("CreateNamedPipe failed, ErrCode=0x%08X\n", dwErr); 
           Sleep(50);
           //return 99;
           continue;
@@ -3084,7 +3154,7 @@ DWORD WINAPI ServerThread(LPVOID lpvParam)
          if (hInstanceThread == NULL) 
          {
             dwErr = GetLastError();
-            wprintf(L"CreateThread(Instance) failed, ErrCode=0x%08X\n", dwErr);
+            _printf("CreateThread(Instance) failed, ErrCode=0x%08X\n", dwErr);
             Sleep(50);
             //return 0;
             continue;
@@ -3257,7 +3327,7 @@ DWORD WINAPI InputPipeThread(LPVOID lpvParam)
       {
           dwErr = GetLastError();
 		  _ASSERTE(hPipe != INVALID_HANDLE_VALUE);
-          wprintf(L"CreatePipe failed, ErrCode=0x%08X\n", dwErr);
+          _printf("CreatePipe failed, ErrCode=0x%08X\n", dwErr);
           Sleep(50);
           //return 99;
           continue;
@@ -4199,9 +4269,10 @@ DWORD WINAPI WinEventThread(LPVOID lpvParam)
     		continue;
     	}
         MCHKHEAP
-        //if (lpMsg.message == WM_QUIT) { // GetMessage возвращает FALSE при получении этого сообщения
-        //  lbQuit = TRUE; break;
-        //}
+        if (lpMsg.message == WM_QUIT) { // GetMessage возвращает FALSE при получении этого сообщения
+          //lbQuit = TRUE;
+			break;
+        }
         TranslateMessage(&lpMsg);
         DispatchMessage(&lpMsg);
         MCHKHEAP
@@ -4416,7 +4487,7 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
                 #ifdef FORCE_REDRAW_FIX
                 DEBUGLOG(L"...increasing delay refresh\n");
                 #endif
-                nDelayRefresh = (DWORD)(nDelayRefresh * 1.3);
+                nDelayRefresh = (DWORD)(nDelayRefresh * 13 / 10);
             }
         }
         MCHKHEAP
@@ -5149,8 +5220,8 @@ BOOL MyGetConsoleScreenBufferInfo(HANDLE ahConOut, PCONSOLE_SCREEN_BUFFER_INFO a
                 // Перенесено в SetConsoleSize
                 //     if (gnBufferHeight) {
                 //// Если мы знаем о режиме BufferHeight - можно подкорректировать размер (зачем это было сделано?)
-                //         if (gnBufferHeight <= (apsc->dwMaximumWindowSize.Y * 1.2))
-                //             gnBufferHeight = max(300, (SHORT)(apsc->dwMaximumWindowSize.Y * 1.2));
+                //         if (gnBufferHeight <= (apsc->dwMaximumWindowSize.Y * 12 / 10))
+                //             gnBufferHeight = max(300, (SHORT)(apsc->dwMaximumWindowSize.Y * 12 / 10));
                 //     }
 
         // Если прокрутки быть не должно - по возможности уберем ее, иначе при запуске FAR
@@ -5163,7 +5234,7 @@ BOOL MyGetConsoleScreenBufferInfo(HANDLE ahConOut, PCONSOLE_SCREEN_BUFFER_INFO a
             lbNeedCorrect = TRUE; apsc->srWindow.Right = (apsc->dwSize.X - 1);
         }
         BOOL lbBufferHeight = FALSE;
-        if (apsc->dwSize.Y >= (apsc->dwMaximumWindowSize.Y * 1.2))
+        if (apsc->dwSize.Y >= (apsc->dwMaximumWindowSize.Y * 12 / 10))
             lbBufferHeight = TRUE;
 
         if (!lbBufferHeight) {
@@ -5412,9 +5483,9 @@ BOOL ReloadFullConsoleInfo(/*CESERVER_CHAR* pCharOnly/ *=NULL*/)
                 //COORD    coord = pChangedBuffer->hdr.cr1;
                 //DWORD    nbActuallyRead = 0;
                 //for (coord.Y = pChangedBuffer->hdr.cr1.Y; coord.Y <= pChangedBuffer->hdr.cr2.Y; coord.Y++) {
-                //  ReadConsoleOutputCharacter(ghConOut, pszLine, nLineLen, coord, &nbActuallyRead); 
+                //  Read ConsoleOutputCharacter(ghConOut, pszLine, nLineLen, coord, &nbActuallyRead); 
                 //      pszLine += nLineLen;
-                //  ReadConsoleOutputAttribute(ghConOut, pnLine, nLineLen, coord, &nbActuallyRead);
+                //  Read ConsoleOutputAttribute(ghConOut, pnLine, nLineLen, coord, &nbActuallyRead);
                 //      pnLine += nLineLen;
                 //}
             }
@@ -5542,8 +5613,8 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
     if (gnBufferHeight) {
         // В режиме BufferHeight - высота ДОЛЖНА быть больше допустимого размера окна консоли
         // иначе мы запутаемся при проверках "буферный ли это режим"...
-        if (gnBufferHeight <= (csbi.dwMaximumWindowSize.Y * 1.2))
-            gnBufferHeight = max(300, (SHORT)(csbi.dwMaximumWindowSize.Y * 1.2));
+        if (gnBufferHeight <= (csbi.dwMaximumWindowSize.Y * 12 / 10))
+            gnBufferHeight = max(300, (SHORT)(csbi.dwMaximumWindowSize.Y * 12 / 10));
 
         // В режиме cmd сразу уменьшим максимальный FPS
         srv.dwLastUserTick = GetTickCount() - USER_IDLE_TIMEOUT - 1;
@@ -5720,6 +5791,60 @@ void EnlargeRegion(CESERVER_CHAR_HDR& rgn, const COORD crNew)
         else if (crNew.X > rgn.cr2.X)
             rgn.cr2.X = crNew.X;
     }
+}
+
+void _printf(LPCSTR asFormat, DWORD dw1, DWORD dw2, LPCWSTR asAddLine)
+{
+	char szError[MAX_PATH];
+	wsprintfA(szError, asFormat, dw1, dw2);
+	_printf(szError);
+	if (asAddLine) {
+		_wprintf(asAddLine);
+		_printf("\n");
+	}
+}
+
+void _printf(LPCSTR asFormat, DWORD dwErr, LPCWSTR asAddLine)
+{
+	char szError[MAX_PATH];
+	wsprintfA(szError, asFormat, dwErr);
+	_printf(szError);
+	_wprintf(asAddLine);
+	_printf("\n");
+}
+
+void _printf(LPCSTR asFormat, DWORD dwErr)
+{
+	char szError[MAX_PATH];
+	wsprintfA(szError, asFormat, dwErr);
+	_printf(szError);
+}
+
+void _printf(LPCSTR asBuffer)
+{
+	if (!asBuffer) return;
+	int nAllLen = lstrlenA(asBuffer);
+	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+	DWORD dwWritten = 0;
+	WriteFile(hOut, asBuffer, nAllLen, &dwWritten, 0);
+}
+
+void _wprintf(LPCWSTR asBuffer)
+{
+	if (!asBuffer) return;
+	int nAllLen = lstrlenW(asBuffer);
+	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+	DWORD dwWritten = 0;
+	UINT nOldCP = GetConsoleOutputCP();
+	char* pszOEM = (char*)malloc(nAllLen+1);
+	if (pszOEM) {
+		WideCharToMultiByte(nOldCP,0, asBuffer, nAllLen, pszOEM, nAllLen, 0,0);
+		pszOEM[nAllLen] = 0;
+		WriteFile(hOut, pszOEM, nAllLen, &dwWritten, 0);
+		free(pszOEM);
+	} else {
+		WriteFile(hOut, asBuffer, nAllLen*2, &dwWritten, 0);
+	}
 }
 
 BOOL IsUserAdmin()

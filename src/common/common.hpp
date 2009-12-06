@@ -132,7 +132,7 @@ extern wchar_t gszDbgModLabel[6];
 #define CECMD_FLASHWINDOW   24
 #define CECMD_SETCONSOLECP  25
 
-#define CESERVER_REQ_VER    22
+#define CESERVER_REQ_VER    23
 
 #define PIPEBUFSIZE 4096
 
@@ -218,9 +218,7 @@ typedef struct tag_CESERVER_REQ_HDR {
 	DWORD   nVersion;
 	DWORD   nSrcThreadId;
 	DWORD   nSrcPID;
-#ifdef _DEBUG
 	DWORD   nCreateTick;
-#endif
 } CESERVER_REQ_HDR;
 
 
@@ -470,6 +468,7 @@ BOOL PackInputRecord(const INPUT_RECORD* piRec, MSG* pMsg);
 BOOL UnpackInputRecord(const MSG* piMsg, INPUT_RECORD* pRec);
 SECURITY_ATTRIBUTES* NullSecurity();
 wchar_t* GetShortFileNameEx(LPCWSTR asLong);
+void CommonShutdown();
 
 //------------------------------------------------------------------------
 ///| Section |////////////////////////////////////////////////////////////
@@ -782,11 +781,16 @@ public:
 			MSectionLock CS; CS.Lock(&mcs_Handle, TRUE);
 			// Во время ожидания хэндл мог быт открыт в другом потоке
 			if (mh_Handle == INVALID_HANDLE_VALUE) {
-				mh_Handle = CreateFile(ms_Name, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_READ,
+				mh_Handle = CreateFileW(ms_Name, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_READ,
 					0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
 				if (mh_Handle == INVALID_HANDLE_VALUE) {
 					DWORD dwErr = GetLastError();
-					wprintf(L"CreateFile(%s) failed, ErrCode=0x%08X\n", ms_Name, dwErr); 
+					char szErrMsg[255], szNameA[10];
+					WideCharToMultiByte(CP_OEMCP, 0, ms_Name, -1, szNameA, sizeof(szNameA), 0,0);
+					wsprintfA(szErrMsg, "CreateFile(%s) failed, ErrCode=0x%08X\n", szNameA, dwErr); 
+					HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
+					if (h && h!=INVALID_HANDLE_VALUE)
+						WriteFile(h, szErrMsg, lstrlenA(szErrMsg), &dwErr, 0);
 				}
 			}
 		}

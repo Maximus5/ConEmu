@@ -284,6 +284,8 @@ CConEmuMain::~CConEmuMain()
     //    delete ProgressBars;
     //    ProgressBars = NULL;
     //}
+    
+    CommonShutdown();
 }
 
 
@@ -4830,24 +4832,26 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 					// вроде валится, если перед Drag
 					//POSTMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( newX, newY ), TRUE);     //посылаем консоли отпускание
 
-					TODO("Тут бы не посылать мышь в очередь, а передавать через аргумент команды GetDragInfo в плагин");
-					if (lbLeftDrag) { // сразу "отпустить" клавишу
-						//POSTMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( mouse.LClkCon.X, mouse.LClkCon.Y ), TRUE);     //посылаем консоли отпускание
-						mp_VActive->RCon()->OnMouse(WM_LBUTTONUP, wParam, mouse.LClkDC.X, mouse.LClkDC.Y);
-					} else {
-						//POSTMESSAGE(ghConWnd, WM_LBUTTONDOWN, wParam, MAKELPARAM( mouse.RClkCon.X, mouse.RClkCon.Y ), TRUE);     //посылаем консоли отпускание
-						mp_VActive->RCon()->OnMouse(WM_LBUTTONDOWN, wParam, mouse.RClkDC.X, mouse.RClkDC.Y);
-						//POSTMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( mouse.RClkCon.X, mouse.RClkCon.Y ), TRUE);     //посылаем консоли отпускание
-						mp_VActive->RCon()->OnMouse(WM_LBUTTONUP, wParam, mouse.RClkDC.X, mouse.RClkDC.Y);
-					}
-
-					mp_VActive->RCon()->FlushInputQueue();
+					//TODO("Тут бы не посылать мышь в очередь, а передавать через аргумент команды GetDragInfo в плагин");
+					//if (lbLeftDrag) { // сразу "отпустить" клавишу
+					//	//POSTMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( mouse.LClkCon.X, mouse.LClkCon.Y ), TRUE);     //посылаем консоли отпускание
+					//	mp_VActive->RCon()->OnMouse(WM_LBUTTONUP, wParam, mouse.LClkDC.X, mouse.LClkDC.Y);
+					//} else {
+					//	//POSTMESSAGE(ghConWnd, WM_LBUTTONDOWN, wParam, MAKELPARAM( mouse.RClkCon.X, mouse.RClkCon.Y ), TRUE);     //посылаем консоли отпускание
+					//	mp_VActive->RCon()->OnMouse(WM_LBUTTONDOWN, wParam, mouse.RClkDC.X, mouse.RClkDC.Y);
+					//	//POSTMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( mouse.RClkCon.X, mouse.RClkCon.Y ), TRUE);     //посылаем консоли отпускание
+					//	mp_VActive->RCon()->OnMouse(WM_LBUTTONUP, wParam, mouse.RClkDC.X, mouse.RClkDC.Y);
+					//}
+					//mp_VActive->RCon()->FlushInputQueue();
 	                
 					// Иначе иногда срабатывает FAR'овский D'n'D
 					//SENDMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( newX, newY ));     //посылаем консоли отпускание
 					if (mp_DragDrop) {
+						//COORD crMouse = mp_VActive->ClientToConsole(
+						//	lbLeftDrag ? mouse.LClkDC.X : mouse.RClkDC.X,
+						//	lbLeftDrag ? mouse.LClkDC.Y : mouse.RClkDC.Y);
 						DebugStep(_T("DnD: Drag-n-Drop starting"));
-						mp_DragDrop->Drag(); //сдвинулись при зажатой левой
+						mp_DragDrop->Drag(!lbLeftDrag, lbLeftDrag ? mouse.LClkDC : mouse.RClkDC);
 						DebugStep(Title); // вернуть заголовок
 					} else {
 						_ASSERTE(mp_DragDrop); // должно быть обработано выше
@@ -5407,7 +5411,7 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 			if (nProgress || nEditors) {
 				wchar_t szText[255], *pszText;
 				lstrcpy(szText, L"Close confirmation.\r\n\r\n"); pszText = szText+lstrlen(szText);
-				if (nProgress) { wsprintf(pszText, L"Incomplete opetations: %i\r\n", nProgress); pszText += lstrlen(pszText); }
+				if (nProgress) { wsprintf(pszText, L"Incomplete operations: %i\r\n", nProgress); pszText += lstrlen(pszText); }
 				if (nEditors) { wsprintf(pszText, L"Unsaved editor windows: %i\r\n", nEditors); pszText += lstrlen(pszText); }
 				lstrcpy(pszText, L"\r\nProceed with shutdown?");
 				int nBtn = MessageBoxW(ghWnd, szText, L"ConEmu", MB_OKCANCEL|MB_ICONEXCLAMATION);

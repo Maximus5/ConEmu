@@ -129,16 +129,20 @@ CDragDrop::~CDragDrop()
 	DeleteCriticalSection(&m_CrThreads);
 }
 
-void CDragDrop::Drag()
+void CDragDrop::Drag(BOOL abClickNeed, COORD crMouseDC)
 {
+	BOOL lbNeedLBtnUp = !abClickNeed;
+
+	CConEmuPipe pipe(gConEmu.GetFarPID(), CONEMUREADYTIMEOUT);
+
 	if (!gSet.isDragEnabled /*|| isInDrag */|| gConEmu.isDragging()) {
 		gConEmu.DebugStep(_T("DnD: Drag disabled"));
-		return;
+		goto wrap;
 	}
 
 	if (mh_DragThread) {
 		gConEmu.DebugStep(L"DnD: Drag thread already created!");
-		return;
+		goto wrap;
 	}
 
 	_ASSERTE(!gConEmu.isPictureView());
@@ -150,12 +154,20 @@ void CDragDrop::Drag()
 	
 	if (m_pfpi) {free(m_pfpi); m_pfpi=NULL;}
 
-	CConEmuPipe pipe(gConEmu.GetFarPID(), CONEMUREADYTIMEOUT);
 	if (pipe.Init(_T("CDragDrop::Drag")))
 	{
 		//DWORD cbWritten=0;
-		if (pipe.Execute(CMD_DRAGFROM))
+		struct {
+			BOOL  bClickNeed;
+			COORD crMouse;
+		} DragArg;
+		DragArg.bClickNeed = abClickNeed;
+		DragArg.crMouse = gConEmu.ActiveCon()->ClientToConsole(crMouseDC.X, crMouseDC.Y);
+
+		if (pipe.Execute(CMD_DRAGFROM, &DragArg, sizeof(DragArg)))
 		{
+			lbNeedLBtnUp = FALSE; // мышка уже обработана в плагине
+
 					gConEmu.DebugStep(_T("DnD: Recieving data"));
 					DWORD cbBytesRead=0;
 					int nWholeSize=0;
@@ -297,7 +309,7 @@ void CDragDrop::Drag()
 							}
 							if (hr == -1) {
 								gConEmu.DebugStep(_T("DnD: Exception in shell"));
-								return;
+								goto wrap;
 							}
 						}
 					    
@@ -311,7 +323,7 @@ void CDragDrop::Drag()
 						_ASSERTE(drop_data);
 						if (!drop_data) {
 							gConEmu.DebugStep(_T("DnD: Memory allocation failed!"));
-							return;
+							goto wrap;
 						}
 						memcpy(drop_data, &drop_struct, sizeof(drop_struct));
 
@@ -417,6 +429,12 @@ void CDragDrop::Drag()
 	}
 	//isInDrag=false;
 	//isDragProcessed=false; -- иначе при бросании в пассивную панель больших файлов дроп может вызваться еще раз???
+wrap:
+	if (lbNeedLBtnUp) {
+		//Т.к. D&D не начали - нужно хоть "отпустить" левую кнопку мышки в ФАРе
+		gConEmu.ActiveCon()->RCon()->OnMouse(WM_LBUTTONUP, 0, crMouseDC.X, crMouseDC.Y);
+	}
+	return;
 }
 
 DWORD CDragDrop::DragOpThreadProc(LPVOID lpParameter)

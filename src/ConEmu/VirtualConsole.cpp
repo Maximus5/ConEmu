@@ -712,7 +712,7 @@ bool CVirtualConsole::Update(bool isForce, HDC *ahDc)
 		//if (mb_RequiredForceUpdate || updateText || updateCursor)
 		{
 			if (gConEmu.isVisible(this)) {
-				if (gSet.isAdvLogging>1) mp_RCon->LogString("Invalidating from CVirtualConsole::Update.1");
+				if (gSet.isAdvLogging>=3) mp_RCon->LogString("Invalidating from CVirtualConsole::Update.1");
 				gConEmu.Invalidate(this);
 			}
 
@@ -754,7 +754,7 @@ bool CVirtualConsole::Update(bool isForce, HDC *ahDc)
 
     GetConsoleScreenBufferInfo(&csbi);
 
-    // start timer before ReadConsoleOutput* calls, they do take time
+    // start timer before "Read Console Output*" calls, they do take time
     //gSet.Performance(tPerfRead, FALSE);
 
     //if (gbNoDblBuffer) isForce = TRUE; // Debug, dblbuffer
@@ -848,7 +848,7 @@ bool CVirtualConsole::Update(bool isForce, HDC *ahDc)
 			_ASSERTE(gConEmu.isMainThread());
 			mb_PaintRequested = TRUE;
 			gConEmu.Invalidate(this);
-			if (gSet.isAdvLogging>1) mp_RCon->LogString("Invalidating from CVirtualConsole::Update.2");
+			if (gSet.isAdvLogging>=3) mp_RCon->LogString("Invalidating from CVirtualConsole::Update.2");
 			//09.06.13 а если так? быстрее изменения на экране не появятся?
 			//UpdateWindow(ghWndDC); // оно посылает сообщение в окно, и ждет окончания отрисовки
 			#ifdef _DEBUG
@@ -1957,7 +1957,7 @@ void CVirtualConsole::Paint(HDC hDc, RECT rcClient)
     // Собственно, копирование готового bitmap
     if (!gbNoDblBuffer) {
         // Обычный режим
-		if (gSet.isAdvLogging>1) mp_RCon->LogString("Blitting to Display");
+		if (gSet.isAdvLogging>=3) mp_RCon->LogString("Blitting to Display");
 
         BitBlt(hDc, client.left, client.top, client.right-client.left, client.bottom-client.top, hDC, 0, 0, SRCCOPY);
     } else {
@@ -2059,10 +2059,16 @@ void CVirtualConsole::UpdateInfo()
 		
 		RECT rcPanel;
 		RCon()->GetPanelRect(FALSE, &rcPanel);
-		wsprintf(szSize, _T("(%i, %i)-(%i, %i), %ix%i"), rcPanel.left+1, rcPanel.top+1, rcPanel.right+1, rcPanel.bottom+1, rcPanel.right-rcPanel.left+1, rcPanel.bottom-rcPanel.top+1);
+		if (rcPanel.right>rcPanel.left)
+			wsprintf(szSize, L"(%i, %i)-(%i, %i), %ix%i", rcPanel.left+1, rcPanel.top+1, rcPanel.right+1, rcPanel.bottom+1, rcPanel.right-rcPanel.left+1, rcPanel.bottom-rcPanel.top+1);
+		else
+			lstrcpy(szSize, L"<Absent>");
 		SetDlgItemText(gSet.hInfo, tPanelLeft, szSize);
 		RCon()->GetPanelRect(TRUE, &rcPanel);
-		wsprintf(szSize, _T("(%i, %i)-(%i, %i), %ix%i"), rcPanel.left+1, rcPanel.top+1, rcPanel.right+1, rcPanel.bottom+1, rcPanel.right-rcPanel.left+1, rcPanel.bottom-rcPanel.top+1);
+		if (rcPanel.right>rcPanel.left)
+			wsprintf(szSize, L"(%i, %i)-(%i, %i), %ix%i", rcPanel.left+1, rcPanel.top+1, rcPanel.right+1, rcPanel.bottom+1, rcPanel.right-rcPanel.left+1, rcPanel.bottom-rcPanel.top+1);
+		else
+			lstrcpy(szSize, L"<Absent>");
 		SetDlgItemText(gSet.hInfo, tPanelRight, szSize);
 	}
 }

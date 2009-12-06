@@ -1069,15 +1069,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             {
                 WindowModeVal = rMaximized; WindowPrm = true;
             }
-            else if ( !klstricmp(curCommand, L"/log") || !klstricmp(curCommand, L"/log0") )
+            else if ( !klstricmp(curCommand, L"/log") || !klstricmp(curCommand, L"/log0")  || !klstricmp(curCommand, L"/log1") )
             {
 	            gSet.isAdvLogging = 1;
 	        }
-            else if ( !klstricmp(curCommand, _T("/log1")))
+            else if ( !klstricmp(curCommand, _T("/log2")))
             {
 	            gSet.isAdvLogging = 2;
 	        }
-            else if ( !klstricmp(curCommand, _T("/log2")))
+            else if ( !klstricmp(curCommand, _T("/log3")))
             {
 	            gSet.isAdvLogging = 3;
 	        }

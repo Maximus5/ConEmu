@@ -132,9 +132,7 @@ void ExecutePrepareCmd(CESERVER_REQ* pIn, DWORD nCmd, DWORD nSize)
 	pIn->hdr.nSrcPID = GetCurrentProcessId();
 	pIn->hdr.nSize = nSize;
 	pIn->hdr.nVersion = CESERVER_REQ_VER;
-#ifdef _DEBUG
 	pIn->hdr.nCreateTick = GetTickCount();
-#endif
 }
 
 CESERVER_REQ* ExecuteNewCmd(DWORD nCmd, DWORD nSize)

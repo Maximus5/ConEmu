@@ -73,7 +73,7 @@ void ProcessDragFrom995()
 				}
 				if (i == 0 
 					&& ((pi[i]->FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == FILE_ATTRIBUTE_DIRECTORY)
-					&& !wcscmp(pi[i]->FindData.lpwszFileName, L".."))
+					&& !lstrcmpW(pi[i]->FindData.lpwszFileName, L".."))
 				{
 					free(pi[i]); pi[i] = NULL;
 					continue;

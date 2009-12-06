@@ -334,7 +334,7 @@ private:
 	//
 	HWND hPictureView; BOOL mb_PicViewWasHidden;
 	// координаты панелей в символах
-	RECT mr_LeftPanel, mr_RightPanel;
+	RECT mr_LeftPanel, mr_RightPanel; BOOL mb_LeftPanel, mb_RightPanel;
 	void FindPanels(BOOL abResetOnly=FALSE);
 	// 
 	BOOL mb_MouseButtonDown;

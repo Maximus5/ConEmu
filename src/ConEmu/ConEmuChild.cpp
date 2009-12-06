@@ -578,6 +578,7 @@ LRESULT CALLBACK CConEmuBack::ScrollWndProc(HWND hWnd, UINT messg, WPARAM wParam
 			gConEmu.m_Back.mh_WndScroll = hWnd;
 			break;
 		case WM_VSCROLL:
+			WARNING("Переделать в команду пайпа");
 			POSTMESSAGE(ghConWnd, messg, wParam, lParam, FALSE);
 			break;
 		case WM_SETFOCUS:

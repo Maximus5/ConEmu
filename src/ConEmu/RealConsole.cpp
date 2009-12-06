@@ -73,6 +73,7 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
     mn_FlushIn = mn_FlushOut = 0;
 
     mr_LeftPanel = mr_RightPanel = MakeRect(-1,-1);
+	mb_LeftPanel = mb_RightPanel = FALSE;
 
 	mb_MouseButtonDown = FALSE;
 
@@ -1283,7 +1284,7 @@ BOOL CRealConsole::StartProcess()
                 wcscat(psCurCmd, gSet.FontFile);
                 wcscat(psCurCmd, L"\"");
             }*/
-            if (m_UseLogs) wcscat(psCurCmd, (m_UseLogs==3) ? L" /LOG2" : (m_UseLogs==2) ? L" /LOG1" : L" /LOG");
+            if (m_UseLogs) wcscat(psCurCmd, (m_UseLogs==3) ? L" /LOG3" : (m_UseLogs==2) ? L" /LOG2" : L" /LOG");
 			if (!gSet.isConVisible) wcscat(psCurCmd, L" /HIDE");
             wcscat(psCurCmd, L" /CMD ");
             wcscat(psCurCmd, lpszCmd);
@@ -1555,16 +1556,29 @@ void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y)
 				char szDbgMsg[128]; wsprintfA(szDbgMsg, "WM_MOUSEWHEEL(wParam=0x%08X, x=%i, y=%i)", wParam, x, y);
 				LogString(szDbgMsg);
 			}
-			SHORT nScroll = (SHORT)(((DWORD)wParam & 0xFFFF0000)>>16);
+			
+			WARNING("Если включен режим прокрутки - посылать команду пайпа, а не мышиное событие");
+			// Иначе на 2008 server вообще не крутится
+			
             r.Event.MouseEvent.dwEventFlags = MOUSE_WHEELED;
-            r.Event.MouseEvent.dwButtonState |= /*(0xFFFF0000 & wParam)*/ (nScroll > 0) ? 0x00780000 : 0xFF880000;
+            SHORT nScroll = (SHORT)(((DWORD)wParam & 0xFFFF0000)>>16);
+            if (nScroll<0) { if (nScroll>-120) nScroll=-120; } else { if (nScroll<120) nScroll=120; }
+            if (nScroll<-120 || nScroll>120)
+            	nScroll = ((SHORT)(nScroll / 120)) * 120;
+            r.Event.MouseEvent.dwButtonState |= ((DWORD)(WORD)nScroll) << 16;
+            //r.Event.MouseEvent.dwButtonState |= /*(0xFFFF0000 & wParam)*/ (nScroll > 0) ? 0x00780000 : 0xFF880000;
         } else if (messg == WM_MOUSEHWHEEL) {
 			if (m_UseLogs>=2) {
 				char szDbgMsg[128]; wsprintfA(szDbgMsg, "WM_MOUSEHWHEEL(wParam=0x%08X, x=%i, y=%i)", wParam, x, y);
 				LogString(szDbgMsg);
 			}
             r.Event.MouseEvent.dwEventFlags = 8; //MOUSE_HWHEELED
-            r.Event.MouseEvent.dwButtonState |= (0xFFFF0000 & wParam);
+            SHORT nScroll = (SHORT)(((DWORD)wParam & 0xFFFF0000)>>16);
+            if (nScroll<0) { if (nScroll>-120) nScroll=-120; } else { if (nScroll<120) nScroll=120; }
+            if (nScroll<-120 || nScroll>120)
+            	nScroll = ((SHORT)(nScroll / 120)) * 120;
+            r.Event.MouseEvent.dwButtonState |= ((DWORD)(WORD)nScroll) << 16;
+            //r.Event.MouseEvent.dwButtonState |= (0xFFFF0000 & wParam);
         }
 
         //TODO("а здесь хорошо бы получать известные координаты символов, а не простым делением");
@@ -1932,7 +1946,7 @@ LRESULT CRealConsole::OnScroll(int nDirection)
 {
 	if (!this) return 0;
     // SB_LINEDOWN / SB_LINEUP / SB_PAGEDOWN / SB_PAGEUP
-    TODO("Переделать в команду пайпа");
+    WARNING("Переделать в команду пайпа");
 	PostConsoleMessage(WM_VSCROLL, nDirection, NULL);
     return 0;
 }
@@ -4151,7 +4165,7 @@ void CRealConsole::LogString(LPCSTR asText)
 
 void CRealConsole::LogInput(INPUT_RECORD* pRec)
 {
-    if (!mh_LogInput || m_UseLogs<=2) return;
+    if (!mh_LogInput || m_UseLogs<2) return;
 
     char szInfo[192] = {0};
 
@@ -4171,6 +4185,9 @@ void CRealConsole::LogInput(INPUT_RECORD* pRec)
             if (pRec->Event.MouseEvent.dwButtonState & 4) strcat(pszAdd, "M1");
             if (pRec->Event.MouseEvent.dwButtonState & 8) strcat(pszAdd, "M2");
             if (pRec->Event.MouseEvent.dwButtonState & 0x10) strcat(pszAdd, "M3");
+            pszAdd += strlen(pszAdd);
+            if (pRec->Event.MouseEvent.dwButtonState & 0xFFFF0000)
+            	wsprintfA(pszAdd, "x%04X", (pRec->Event.MouseEvent.dwButtonState & 0xFFFF0000)>>16);
             strcat(pszAdd, "} "); pszAdd += strlen(pszAdd);
             wsprintfA(pszAdd, "KeyState: 0x%08X ", pRec->Event.MouseEvent.dwControlKeyState);
             if (pRec->Event.MouseEvent.dwEventFlags & 0x01) strcat(pszAdd, "|MOUSE_MOVED");
@@ -5632,6 +5649,13 @@ void CRealConsole::CheckFarStates()
 	if ((mn_FarStatus & CES_WASPROGRESS) == 0 && mn_Progress == -1)
 		mn_PreWarningProgress = -1;
 
+	if (mn_Progress == -1 && mn_PreWarningProgress != -1) {
+		if (isFilePanel(true)) {
+			mn_FarStatus &= ~(CES_OPER_ERROR|CES_WASPROGRESS);
+			mn_PreWarningProgress = -1;
+		}
+	}
+
 	if (mn_FarStatus != nLastState)
 		gConEmu.UpdateProcessDisplay(FALSE);
 }
@@ -5806,8 +5830,10 @@ bool CRealConsole::isFilePanel(bool abPluginAllowed/*=false*/)
         (Title[0] == _T('{') && isDriveLetter(Title[1]) && Title[2] == _T(':') && Title[3] == _T('\\')))
     {
         TCHAR *Br = _tcsrchr(Title, _T('}'));
-        if (Br && _tcscmp(Br, _T("} - Far"))==0)
-            return true;
+		if (Br && _tcsstr(Br, _T("} - Far"))) {
+			if (mb_LeftPanel || mb_RightPanel)
+				return true;
+		}
     }
     //TCHAR *BrF = _tcschr(Title, '{'), *BrS = _tcschr(Title, '}'), *Slash = _tcschr(Title, '\\');
     //if (BrF && BrS && Slash && BrF == Title && (Slash == Title+1 || Slash == Title+3))
@@ -6047,17 +6073,110 @@ HWND CRealConsole::ConWnd()
 TODO("Если панели реально есть (это можно узнать из плагина) то нужно гашение правой/левой панели");
 void CRealConsole::FindPanels(BOOL abResetOnly/* = FALSE */)
 {
-    mr_LeftPanel = mr_RightPanel = MakeRect(-1,-1);
+    RECT rLeftPanel = MakeRect(-1,-1);
+	RECT rRightPanel = rLeftPanel;
+	BOOL bLeftPanel = FALSE;
+	BOOL bRightPanel = FALSE;
     if (isFar() && con.nTextHeight >= MIN_CON_HEIGHT && con.nTextWidth >= MIN_CON_WIDTH)
     {
         uint nY = 0;
-        if (con.pConChar[0] == L' ')
-            nY ++; // скорее всего, первая строка - меню
-        else if (con.pConChar[0] == L'R' && con.pConChar[1] == L' ')
-            nY ++; // скорее всего, первая строка - меню, при включенной записи макроса
+		BOOL lbIsMenu = FALSE;
+		if (con.pConChar[0] == L' ') {
+			lbIsMenu = TRUE;
+			for (int i=0; i<con.nTextWidth; i++) {
+				if (con.pConChar[i]==ucBoxDblHorz || con.pConChar[i]==ucBoxDblDownRight || con.pConChar[i]==ucBoxDblDownLeft) {
+					lbIsMenu = FALSE; break;
+				}
+			}
+			if (lbIsMenu)
+				nY ++; // скорее всего, первая строка - меню
+		} else if (con.pConChar[0] == L'R' && con.pConChar[1] == L' ') {
+			for (int i=1; i<con.nTextWidth; i++) {
+				if (con.pConChar[i]==ucBoxDblHorz || con.pConChar[i]==ucBoxDblDownRight || con.pConChar[i]==ucBoxDblDownLeft) {
+					lbIsMenu = FALSE; break;
+				}
+			}
+			if (lbIsMenu)
+				nY ++; // скорее всего, первая строка - меню, при включенной записи макроса
+		}
             
         uint nIdx = nY*con.nTextWidth;
-        
+
+		// Левая панель
+		if (( (con.pConChar[nIdx] == L'[' && (con.pConChar[nIdx+1]>=L'0' && con.pConChar[nIdx+1]<=L'9')) // открыто несколько редакторов/вьюверов
+			|| (con.pConChar[nIdx] == ucBoxDblDownRight && con.pConChar[nIdx+1] == ucBoxDblHorz) // доп.окон нет, только рамка
+			) && con.pConChar[nIdx+con.nTextWidth] == ucBoxDblVert)
+		{
+			for (int i=2; !bLeftPanel && i<con.nTextWidth; i++) {
+				if (con.pConChar[nIdx+i] == ucBoxDblDownLeft && con.pConChar[nIdx+i-1] == ucBoxDblHorz
+					&& con.pConChar[nIdx+i+con.nTextWidth] == ucBoxDblVert)
+				{
+					uint nBottom = con.nTextHeight - 1;
+					while (nBottom > 4) {
+						if (con.pConChar[con.nTextWidth*nBottom] == ucBoxDblUpRight 
+							&& con.pConChar[con.nTextWidth*nBottom+i] == ucBoxDblUpLeft)
+						{
+							rLeftPanel.left = 1;
+							rLeftPanel.top = nY + 2;
+							rLeftPanel.right = i-1;
+							rLeftPanel.bottom = nBottom - 3;
+							bLeftPanel = TRUE;
+							break;
+						}
+						nBottom --;
+					}
+				}
+			}
+		}
+
+		// (Если есть левая панель и она не FullScreen) или левой панели нет вообще
+		if ((bLeftPanel && (rLeftPanel.right+1) < con.nTextWidth) || !bLeftPanel)
+		{
+			if (bLeftPanel) {
+				// Положение известно, нужно только проверить наличие
+				if (con.pConChar[nIdx+rLeftPanel.right+2] == ucBoxDblDownRight
+					&& con.pConChar[nIdx+rLeftPanel.right+2+con.nTextWidth] == ucBoxDblVert
+					&& con.pConChar[nIdx+con.nTextWidth*2] == ucBoxDblVert
+					&& con.pConChar[(rLeftPanel.bottom+3)*con.nTextWidth+rLeftPanel.right+2] == ucBoxDblUpRight
+					&& con.pConChar[(rLeftPanel.bottom+4)*con.nTextWidth-1] == ucBoxDblUpLeft
+					)
+				{
+					rRightPanel = rLeftPanel;
+					rRightPanel.left = rLeftPanel.right+3;
+					rRightPanel.right = con.nTextWidth-2;
+					bRightPanel = TRUE;
+				}
+			} else {
+				// нужно определить положение панели
+				if (((con.pConChar[nIdx+con.nTextWidth-1]>=L'0' && con.pConChar[nIdx+con.nTextWidth-1]<=L'9') // справа часы
+					|| con.pConChar[nIdx+con.nTextWidth-1] == ucBoxDblDownLeft) // или рамка
+					&& con.pConChar[nIdx+con.nTextWidth*2-1] == ucBoxDblVert) // ну и правая граница панели
+				{
+					for (int i=con.nTextWidth-3; !bRightPanel && i>2; i--) {
+						// ищем левую границу правой панели
+						if (con.pConChar[nIdx+i] == ucBoxDblDownRight && con.pConChar[nIdx+i+1] == ucBoxDblHorz
+							&& con.pConChar[nIdx+i+con.nTextWidth] == ucBoxDblVert)
+						{
+							uint nBottom = con.nTextHeight - 1;
+							while (nBottom > 4) {
+								if (con.pConChar[con.nTextWidth*nBottom+i] == ucBoxDblUpRight 
+									&& con.pConChar[con.nTextWidth*(nBottom+1)-1] == ucBoxDblUpLeft)
+								{
+									rRightPanel.left = i+1;
+									rRightPanel.top = nY + 2;
+									rRightPanel.right = con.nTextWidth-2;
+									rRightPanel.bottom = nBottom - 3;
+									bRightPanel = TRUE;
+									break;
+								}
+								nBottom --;
+							}
+						}
+					}
+				}
+			}
+		}
+		/*
         if (( (con.pConChar[nIdx] == L'[' && (con.pConChar[nIdx+1]>=L'0' && con.pConChar[nIdx+1]<=L'9')) // открыто несколько редакторов/вьюверов
               || (con.pConChar[nIdx] == 0x2554 && con.pConChar[nIdx+1] == 0x2550) // доп.окон нет, только рамка
             ) && con.pConChar[nIdx+con.nTextWidth] == 0x2551)
@@ -6079,19 +6198,25 @@ void CRealConsole::FindPanels(BOOL abResetOnly/* = FALSE */)
                 nBottom --;
             }
             
+			WARNING("Будет глючить, если погашена одна из панелей левая/правая")
             if (pszCenter && nBottom > 4) {
-                mr_LeftPanel.left = 1;
-                mr_LeftPanel.top = nY + 2;
-                mr_LeftPanel.right = nCenter - 1;
-                mr_LeftPanel.bottom = nBottom - 3;
+                rLeftPanel.left = 1;
+                rLeftPanel.top = nY + 2;
+                rLeftPanel.right = nCenter - 1;
+                rLeftPanel.bottom = nBottom - 3;
+				bLeftPanel = TRUE;
                 
-                mr_RightPanel.left = nCenter + 3;
-                mr_RightPanel.top = nY + 2;
-                mr_RightPanel.right = con.nTextWidth - 2;
-                mr_RightPanel.bottom = mr_LeftPanel.bottom;
+                rRightPanel.left = nCenter + 3;
+                rRightPanel.top = nY + 2;
+                rRightPanel.right = con.nTextWidth - 2;
+                rRightPanel.bottom = rLeftPanel.bottom;
+				bRightPanel = TRUE;
             }
-        }
+        }*/
     }
+	BOOL lbNeedUpdateSizes = (memcmp(&mr_LeftPanel,&rLeftPanel,sizeof(mr_LeftPanel)) || memcmp(&mr_RightPanel,&rRightPanel,sizeof(mr_RightPanel)));
+	mr_LeftPanel = rLeftPanel; mb_LeftPanel = bLeftPanel;
+	mr_RightPanel = rRightPanel; mb_RightPanel = bRightPanel;
 
 
     short nLastProgress = mn_ConsoleProgress;
@@ -6119,6 +6244,9 @@ void CRealConsole::FindPanels(BOOL abResetOnly/* = FALSE */)
     }
     if (nLastProgress != mn_ConsoleProgress || mn_Progress != mn_ConsoleProgress)
     	OnTitleChanged();
+
+	if (lbNeedUpdateSizes)
+		gConEmu.UpdateSizes();
 }
 
 int CRealConsole::CoordInPanel(COORD cr)

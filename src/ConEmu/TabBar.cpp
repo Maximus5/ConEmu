@@ -1205,6 +1205,7 @@ void TabBarClass::PrepareTab(ConEmuTab* pTab)
         if (origLength>6) {
 	        // Чтобы в заголовке было что-то вроде "{C:\Program Fil...- Far"
 	        //                              вместо "{C:\Program F...} - Far"
+			// После добавления суффиков к заголовку фара - оно уже влезать не будет в любом случае...
 	        if (lstrcmp(tFileName + origLength - 6, L" - Far") == 0)
 		        nSplit = nMaxLen - 6;
 	    }
