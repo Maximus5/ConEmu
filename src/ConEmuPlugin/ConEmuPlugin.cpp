@@ -181,7 +181,7 @@ void WINAPI _export GetPluginInfoW(struct PluginInfo *pi)
 	pi->PluginMenuStringsNumber = 1;
 	pi->PluginConfigStrings = NULL;
 	pi->PluginConfigStringsNumber = 0;
-	pi->CommandPrefix = NULL;
+	pi->CommandPrefix = L"ConEmu";
 	pi->Reserved = ConEmu_SysID; // 'CEMU'
 }
 
@@ -191,6 +191,14 @@ HANDLE WINAPI _export OpenPluginW(int OpenFrom,INT_PTR Item)
 {
 	if (!gbInfoW_OK)
 		return INVALID_HANDLE_VALUE;
+
+	if (OpenFrom == OPEN_COMMANDLINE && Item) {
+		if (gFarVersion.dwBuild>=FAR_Y_VER)
+			FUNC_Y(ProcessCommandLine)((wchar_t*)Item);
+		else
+			FUNC_X(ProcessCommandLine)((wchar_t*)Item);
+		return INVALID_HANDLE_VALUE;
+	}
 
 	if (gnReqCommand != (DWORD)-1) {
 		gnPluginOpenFrom = (OpenFrom && 0xFFFF);
@@ -225,6 +233,7 @@ HANDLE WINAPI _export OpenPluginW(int OpenFrom,INT_PTR Item)
 			gbCmdCallObsolete = FALSE;
 		}
 	}
+
 	return INVALID_HANDLE_VALUE;
 }
 
@@ -2687,6 +2696,7 @@ BOOL Attach2Gui()
 	return lbRc;
 }
 
+
 BOOL StartDebugger()
 {
 	if (IsDebuggerPresent()) {
@@ -2777,6 +2787,51 @@ DWORD GetEditorModifiedState()
 		return FUNC_Y(GetEditorModifiedState)();
 	else
 		return FUNC_X(GetEditorModifiedState)();
+}
+
+
+bool RunExternalProgramW(wchar_t* pszCommand, wchar_t* pszCurDir)
+{	
+	//wchar_t strCmd[MAX_PATH+1];
+	//wchar_t* strArgs = pszCommand;
+	//NextArg((const wchar_t**)&strArgs, strCmd);
+	//wchar_t strDir[10]; lstrcpy(strDir, L"C:\\");
+	STARTUPINFO cif={sizeof(STARTUPINFO)};
+	PROCESS_INFORMATION pri={0};
+	
+	HANDLE hStdin = GetStdHandle(STD_INPUT_HANDLE);
+	DWORD oldConsoleMode;
+	DWORD nErr = 0;
+	DWORD nExitCode = 0;
+	GetConsoleMode(hStdin, &oldConsoleMode);
+	SetConsoleMode(hStdin, ENABLE_ECHO_INPUT | ENABLE_LINE_INPUT | ENABLE_PROCESSED_INPUT); // подбиралось методом тыка
+
+	#ifdef _DEBUG
+	WARNING("Посмотреть, как Update в консоль выводит.");
+	wprintf(L"\nCmd: <%s>\nDir: <%s>\n\n", pszCommand, pszCurDir);
+	#endif
+
+	if( CreateProcess( /*strCmd, strArgs,*/ NULL, pszCommand, NULL, NULL, TRUE, 
+		NORMAL_PRIORITY_CLASS|CREATE_DEFAULT_ERROR_MODE, NULL, pszCurDir, &cif, &pri ) )
+	{
+		WaitForSingleObject( pri.hProcess, INFINITE );
+		GetExitCodeProcess(pri.hProcess, &nExitCode);
+		CloseHandle( pri.hProcess );
+		CloseHandle( pri.hThread );         
+		nErr = GetLastError();
+		#ifdef _DEBUG
+		wprintf(L"\nConEmuC: Process was terminated, ExitCode=%i\n\n", nExitCode);
+		#endif
+	} else {
+		nErr = GetLastError();
+		#ifdef _DEBUG
+		wprintf(L"\nConEmuC: CreateProcess failed, ErrCode=0x%08X\n\n", nErr);
+		#endif
+	}
+	//wprintf(L"Cmd: <%s>\nArg: <%s>\nDir: <%s>\n\n", strCmd, strArgs, pszCurDir);
+
+	SetConsoleMode(hStdin, oldConsoleMode);
+	return true;
 }
 
 

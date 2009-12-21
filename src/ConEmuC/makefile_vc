@@ -39,12 +39,12 @@
 !undef CPU
 AMD64=1
 DIRBIT=64
-RCWIN64=/D_WIN64
+RCWIN64=/D_WIN64 /DWIN64
 !elseif defined(IA64) || "$(CPU)" == "IA64" || "$(PLATFORM)" == "Itanium"
 !undef CPU
 IA64=1
 DIRBIT=IA64
-RCWIN64=/D_WIN64
+RCWIN64=/D_WIN64 /DWIN64
 !else
 X86=1
 DIRBIT=32
@@ -77,7 +77,7 @@ DEPFILE=far.vc.dep
 
 OUTDIR=$(DIRNAME).$(DIRBIT).vc
 
-FARINCLUDE=Include
+#FARINCLUDE=Include
 
 LINK=link.exe
 ULINK=ulink.exe
@@ -140,11 +140,11 @@ LINKFLAGS=$(LINKFLAGS) /incremental:no /OPT:REF /OPT:ICF
 CPPFLAGS=$(CPPFLAGS) /Zp4
 LINKFLAGS=$(LINKFLAGS) /machine:i386
 !elseifdef AMD64
-CPPFLAGS=$(CPPFLAGS) /Zp8
+CPPFLAGS=$(CPPFLAGS) /Zp8 /D_WIN64 /DWIN64
 LINKFLAGS=$(LINKFLAGS) /machine:amd64
 ULINKFLAGS=$(ULINKFLAGS) -Tpe+
 !elseifdef IA64
-CPPFLAGS=$(CPPFLAGS) /Zp8
+CPPFLAGS=$(CPPFLAGS) /Zp8 /D_WIN64 /DWIN64
 LINKFLAGS=$(LINKFLAGS) /machine:IA64
 !endif
 
@@ -175,7 +175,6 @@ build: "$(OUTDIR)\ConEmuC.exe"
 .PHONY: AllDirs
 AllDirs:
 	if not exist "$(OUTDIR)\" mkdir "$(OUTDIR)"
-	if not exist "$(FARINCLUDE)\" mkdir "$(FARINCLUDE)"
 	if not exist "$(INTDIR)\" mkdir "$(INTDIR)"
 	if not exist "$(CODDIR)\" mkdir "$(CODDIR)"
 

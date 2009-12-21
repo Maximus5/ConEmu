@@ -554,6 +554,9 @@ int ShowPluginMenu995()
 		{IsDebuggerPresent()||IsTerminalMode() ? MIF_DISABLE : 0,    InfoW995->GetMsg(InfoW995->ModuleNumber,14)}
 	};
 	int nCount = sizeof(items)/sizeof(items[0]);
+#ifdef _DEBUG
+	items[nCount-1].Flags = 0;
+#endif
 
 	int nRc = InfoW995->Menu(InfoW995->ModuleNumber, -1,-1, 0, 
 		FMENU_USEEXT|FMENU_AUTOHIGHLIGHT|FMENU_CHANGECONSOLETITLE|FMENU_WRAPMODE,
@@ -646,4 +649,56 @@ bool LoadPlugin995(wchar_t* pszPluginPath)
 	if (!InfoW995) return false;
 	InfoW995->PluginsControl(INVALID_HANDLE_VALUE,PCTL_LOADPLUGIN,PLT_PATH,(LONG_PTR)pszPluginPath);
 	return true;
+}
+
+bool RunExternalProgramW(wchar_t* pszCommand, wchar_t* pszCurDir);
+
+bool RunExternalProgram995(wchar_t* pszCommand)
+{
+	wchar_t strTemp[MAX_PATH+1];
+	
+	if (!pszCommand || !*pszCommand)
+	{
+		lstrcpy(strTemp, L"cmd");
+		if (!InfoW995->InputBox(L"ConEmu", L"Start console program", L"ConEmu.CreateProcess", 
+			strTemp, strTemp, MAX_PATH, NULL, FIB_BUTTONS))
+			return false;
+		pszCommand = strTemp;
+	}
+
+	wchar_t *pszCurDir = NULL;
+	if (size_t len = InfoW995->Control(INVALID_HANDLE_VALUE, FCTL_GETCURRENTDIRECTORY, 0, 0)) {
+		if (pszCurDir = (wchar_t*)malloc(len*2)) {
+			if (!InfoW995->Control(INVALID_HANDLE_VALUE, FCTL_GETCURRENTDIRECTORY, (int)len, (LONG_PTR)pszCurDir)) {
+				free(pszCurDir); pszCurDir = NULL;
+			}
+		}
+	}
+	if (!pszCurDir) {
+		pszCurDir = (wchar_t*)malloc(10);
+		lstrcpy(pszCurDir, L"C:\\");
+	}
+
+	InfoW995->Control(INVALID_HANDLE_VALUE,FCTL_GETUSERSCREEN,0,0);
+
+	RunExternalProgramW(pszCommand, pszCurDir);
+
+	InfoW995->Control(INVALID_HANDLE_VALUE,FCTL_SETUSERSCREEN,0,0);
+	InfoW995->AdvControl(InfoW995->ModuleNumber,ACTL_REDRAWALL,0);
+
+	free(pszCurDir); pszCurDir = NULL;
+	return TRUE;
+}
+
+
+bool ProcessCommandLine995(wchar_t* pszCommand)
+{
+	if (!InfoW995 || !FSFW995) return false;
+
+	if (FSFW995->LStrnicmp(pszCommand, L"run:", 4)==0) {
+		RunExternalProgram995(pszCommand+4);
+		return true;
+	}
+
+	return false;
 }

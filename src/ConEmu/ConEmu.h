@@ -121,6 +121,8 @@ public:
 	DWORD m_ProcCount;
 	//DWORD mn_ActiveStatus;
 	//TCHAR ms_EditorRus[16], ms_ViewerRus[16], ms_TempPanel[32], ms_TempPanelRus[32];
+	OSVERSIONINFO m_osv;
+	BOOL mb_IsUacAdmin;
 protected:
 	CDragDrop *mp_DragDrop;
 	//CProgressBars *ProgressBars;

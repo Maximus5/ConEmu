@@ -119,6 +119,17 @@ CConEmuMain::CConEmuMain()
     DWORD nDirLen = GetCurrentDirectory(MAX_PATH, ms_ConEmuCurDir);
     if (!nDirLen || nDirLen>MAX_PATH)
     	ms_ConEmuCurDir[0] = 0;
+    	
+
+    memset(&m_osv,0,sizeof(m_osv));	
+    m_osv.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
+	GetVersionEx(&m_osv);
+	if (m_osv.dwMajorVersion >= 6) {
+		mb_IsUacAdmin = IsUserAdmin(); // Чтобы знать, может мы уже запущены под UAC админом?
+	} else {
+		mb_IsUacAdmin = FALSE;
+	}
+
 
     mh_WinHook = NULL;
 	//mh_PopupHook = NULL;
@@ -2517,14 +2528,22 @@ INT_PTR CConEmuMain::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARA
 			_ASSERTE(pArgs);
 			SetWindowLongPtr(hDlg, DWLP_USER, (LONG_PTR)lParam);
 
-			// Finally, if all you need is to determine whether or not you are currently elevated you can 
-			// simply call the IsUserAnAdmin function. If you need more precision you can also use GetTokenInformation 
-			// but in most cases that is overkill.
-			TODO("Если GUI запущено под администратором - флажок включить и задизэблить!");
-
-			if (pArgs && pArgs->bRunAsAdministrator) {
+	
+			if (gConEmu.m_osv.dwMajorVersion < 6) {
+				// В XP и ниже это просто RunAs - с возможностью ввода имени пользователя и пароля
+				SetDlgItemTextA(hDlg, cbRunAs, "&Run as..."); //GCC hack. иначе не собирается
+				// И уменьшить длину
+                RECT rcBox; GetWindowRect(GetDlgItem(hDlg, cbRunAs), &rcBox);
+                SetWindowPos(GetDlgItem(hDlg, cbRunAs), NULL, 0, 0, (rcBox.right-rcBox.left)/2, rcBox.bottom-rcBox.top,
+                	SWP_NOMOVE|SWP_NOZORDER);
+			}
+			if (gConEmu.mb_IsUacAdmin || (pArgs && pArgs->bRunAsAdministrator)) {
 				CheckDlgButton(hDlg, cbRunAs, BST_CHECKED);
-				RecreateDlgProc(hDlg, WM_COMMAND, cbRunAs, 0);
+				if (gConEmu.mb_IsUacAdmin) { // Только в Vista+ если GUI уже запущен под админом
+					EnableWindow(GetDlgItem(hDlg, cbRunAs), FALSE);
+				} else {
+					RecreateDlgProc(hDlg, WM_COMMAND, cbRunAs, 0);
+				}
 			}
 
             SetClassLongPtr(hDlg, GCLP_HICON, (LONG)hClassIcon);
@@ -2544,10 +2563,13 @@ INT_PTR CConEmuMain::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARA
                 SetWindowPos(GetDlgItem(hDlg, IDC_START), NULL, pt.x, pt.y, 0,0, SWP_NOSIZE|SWP_NOZORDER);
                 SetDlgItemText(hDlg, IDC_START, L"&Start");
                 DestroyWindow(GetDlgItem(hDlg, IDC_WARNING));
+                
+                // Выровнять флажок по кнопке
+				RECT rcBtn; GetWindowRect(GetDlgItem(hDlg, IDC_START), &rcBtn);
                 RECT rcBox; GetWindowRect(GetDlgItem(hDlg, cbRunAs), &rcBox);
                 pt.x = pt.x - (rcBox.right - rcBox.left) - 5;
-                MapWindowPoints(NULL, hDlg, (LPPOINT)&rcBox, 1);
-                pt.y = rcBox.top;
+                //MapWindowPoints(NULL, hDlg, (LPPOINT)&rcBox, 1);
+                pt.y += ((rcBtn.bottom-rcBtn.top) - (rcBox.bottom-rcBox.top))/2;
                 SetWindowPos(GetDlgItem(hDlg, cbRunAs), NULL, pt.x, pt.y, 0,0, SWP_NOSIZE|SWP_NOZORDER);
                 
                 SetFocus(GetDlgItem(hDlg, IDC_RESTART_CMD));

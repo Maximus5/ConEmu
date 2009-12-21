@@ -42,6 +42,7 @@ TabBarClass::TabBarClass()
     mb_ChangeAllowed = FALSE;
     //mb_Enabled = TRUE;
     mh_Toolbar = NULL; mh_Tabbar = NULL; mh_Rebar = NULL; mh_TabIcons = NULL; mn_LastToolbarWidth = 0;
+	mn_AdminIcon = 0;
     mb_PostUpdateCalled = FALSE;
 	mb_PostUpdateRequested = FALSE;
     mn_MsgUpdateTabs = RegisterWindowMessage(CONEMUMSG_UPDATETABS);
@@ -161,13 +162,25 @@ void TabBarClass::AddTab(LPCWSTR text, int i, bool bAdmin)
 		tie.mask = TCIF_TEXT | (mh_TabIcons ? TCIF_IMAGE : 0);
 		tie.iImage = -1; 
 		tie.pszText = (LPWSTR)text ;
-		tie.iImage = bAdmin ? 0 : -1; // Пока иконка только одна - для табов со щитом
+		tie.iImage = bAdmin ? mn_AdminIcon : -1; // Пока иконка только одна - для табов со щитом
 
 		int nCurCount = GetItemCount();
 		if (i>=nCurCount) {
 			TabCtrl_InsertItem(mh_Tabbar, i, &tie);
 		} else {
-			if (wcscmp(GetTabText(i), text)) // "меняем" только если он реально меняется
+			// Проверим, изменился ли текст
+			if (!wcscmp(GetTabText(i), text))
+				tie.mask &= ~TCIF_TEXT;
+			// Изменилась ли иконка
+			if (tie.iImage & TCIF_IMAGE) {
+				TCITEM told;
+				told.mask = TCIF_IMAGE;
+				TabCtrl_GetItem(mh_Tabbar, i, &told);
+				if (told.iImage == tie.iImage)
+					tie.mask &= ~TCIF_IMAGE;
+			}
+			// "меняем" только если он реально меняется
+			if (tie.mask)
 				TabCtrl_SetItem(mh_Tabbar, i, &tie);
 		}
 	}
@@ -998,7 +1011,8 @@ HWND TabBarClass::CreateTabbar()
         return mh_Tabbar; // Уже создали
         
     if (!mh_TabIcons) {
-    	mh_TabIcons = ImageList_LoadImage(g_hInstance, MAKEINTRESOURCE(IDB_SHIELD), 16, 1, RGB(128,0,0), IMAGE_BITMAP, LR_CREATEDIBSECTION);
+    	mh_TabIcons = ImageList_LoadImage(g_hInstance, MAKEINTRESOURCE(IDB_SHIELD), 14, 1, RGB(128,0,0), IMAGE_BITMAP, LR_CREATEDIBSECTION);
+		mn_AdminIcon = (gConEmu.m_osv.dwMajorVersion >= 6) ? 0 : 1;
     }
 
 	// Важно проверку делать после создания главного окна, иначе IsAppThemed будет возвращать FALSE
@@ -1205,7 +1219,7 @@ void TabBarClass::PrepareTab(ConEmuTab* pTab)
         if (origLength>6) {
 	        // Чтобы в заголовке было что-то вроде "{C:\Program Fil...- Far"
 	        //                              вместо "{C:\Program F...} - Far"
-			// После добавления суффиков к заголовку фара - оно уже влезать не будет в любом случае...
+			TODO("После добавления суффиков к заголовку фара - оно уже влезать не будет в любом случае... Так что если панели - '...' строго ставить в конце");
 	        if (lstrcmp(tFileName + origLength - 6, L" - Far") == 0)
 		        nSplit = nMaxLen - 6;
 	    }

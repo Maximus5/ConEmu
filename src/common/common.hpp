@@ -131,8 +131,10 @@ extern wchar_t gszDbgModLabel[6];
 #define CECMD_SETFOREGROUND 23
 #define CECMD_FLASHWINDOW   24
 #define CECMD_SETCONSOLECP  25
+#define CECMD_SAVEALIASES   26
+#define CECMD_GETALIASES    27
 
-#define CESERVER_REQ_VER    23
+#define CESERVER_REQ_VER    24
 
 #define PIPEBUFSIZE 4096
 
@@ -318,6 +320,7 @@ typedef struct tag_CESERVER_REQ_STARTSTOPRET {
 	HWND2 hWnd; // при передаче ¬ GUI - консоль, при возврате в консоль - GUI
 	DWORD dwPID;
 	DWORD nBufferHeight, nWidth, nHeight;
+	DWORD dwSrvPID;
 } CESERVER_REQ_STARTSTOPRET;
 
 typedef struct tag_CESERVER_REQ_POSTMSG {
@@ -463,12 +466,13 @@ typedef struct tag_CESERVER_REQ {
 #define MAX_INPUT_QUEUE_EMPTY_WAIT 100
 
 
-int NextArg(const wchar_t** asCmdLine, wchar_t* rsArg/*[MAX_PATH+1]*/);
+int NextArg(const wchar_t** asCmdLine, wchar_t* rsArg/*[MAX_PATH+1]*/, const wchar_t** rsArgStart=NULL);
 BOOL PackInputRecord(const INPUT_RECORD* piRec, MSG* pMsg);
 BOOL UnpackInputRecord(const MSG* piMsg, INPUT_RECORD* pRec);
 SECURITY_ATTRIBUTES* NullSecurity();
 wchar_t* GetShortFileNameEx(LPCWSTR asLong);
 void CommonShutdown();
+BOOL IsUserAdmin();
 
 //------------------------------------------------------------------------
 ///| Section |////////////////////////////////////////////////////////////

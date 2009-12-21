@@ -57,7 +57,7 @@ wrap:
 	return NULL;
 }
 
-int NextArg(const wchar_t** asCmdLine, wchar_t* rsArg/*[MAX_PATH+1]*/)
+int NextArg(const wchar_t** asCmdLine, wchar_t* rsArg/*[MAX_PATH+1]*/, const wchar_t** rsArgStart/*=NULL*/)
 {
     LPCWSTR psCmdLine = *asCmdLine, pch = NULL;
     wchar_t ch = *psCmdLine;
@@ -91,6 +91,7 @@ int NextArg(const wchar_t** asCmdLine, wchar_t* rsArg/*[MAX_PATH+1]*/)
 
     // Вернуть аргумент
     memcpy(rsArg, psCmdLine, nArgLen*sizeof(wchar_t));
+    if (rsArgStart) *rsArgStart = psCmdLine;
     rsArg[nArgLen] = 0;
 
     psCmdLine = pch;
@@ -313,4 +314,34 @@ void CommonShutdown()
 		delete gNullDesc;
 		gNullDesc = NULL;
 	}
+}
+
+BOOL IsUserAdmin()
+{
+	OSVERSIONINFO osv = {sizeof(OSVERSIONINFO)};
+	GetVersionEx(&osv);
+	// Проверять нужно только для висты, чтобы на XP лишний "Щит" не отображался
+	if (osv.dwMajorVersion < 6)
+		return FALSE;
+
+	BOOL b;
+	SID_IDENTIFIER_AUTHORITY NtAuthority = SECURITY_NT_AUTHORITY;
+	PSID AdministratorsGroup;
+
+	b = AllocateAndInitializeSid(
+		&NtAuthority,
+		2,
+		SECURITY_BUILTIN_DOMAIN_RID,
+		DOMAIN_ALIAS_RID_ADMINS,
+		0, 0, 0, 0, 0, 0,
+		&AdministratorsGroup); 
+	if(b) 
+	{
+		if (!CheckTokenMembership(NULL, AdministratorsGroup, &b)) 
+		{
+			b = FALSE;
+		}
+		FreeSid(AdministratorsGroup);
+	}
+	return(b);
 }

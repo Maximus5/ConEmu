@@ -31,6 +31,11 @@ HANDLE WINAPI _export OpenPlugin(int OpenFrom,INT_PTR Item)
 	if (InfoA == NULL)
 		return INVALID_HANDLE_VALUE;
 
+	if (OpenFrom == OPEN_COMMANDLINE && Item) {
+		ProcessCommandLineA((char*)Item);
+		return INVALID_HANDLE_VALUE;
+	}
+
 	if (gnReqCommand != (DWORD)-1) {
 		gnPluginOpenFrom = OpenFrom;
 		ProcessCommand(gnReqCommand, FALSE/*bReqMainThread*/, gpReqCommandData);
@@ -40,6 +45,7 @@ HANDLE WINAPI _export OpenPlugin(int OpenFrom,INT_PTR Item)
 		else
 			gbCmdCallObsolete = FALSE;
 	}
+
 	return INVALID_HANDLE_VALUE;
 }
 
@@ -318,7 +324,7 @@ void WINAPI _export GetPluginInfo(struct PluginInfo *pi)
 	pi->PluginMenuStringsNumber = 1;
 	pi->PluginConfigStrings = NULL;
 	pi->PluginConfigStringsNumber = 0;
-	pi->CommandPrefix = NULL;
+	pi->CommandPrefix = "ConEmu";
 	pi->Reserved = 0;	
 }
 
@@ -704,4 +710,47 @@ void RedrawAllA()
 {
 	if (!InfoA) return;
 	InfoA->AdvControl(InfoA->ModuleNumber, ACTL_REDRAWALL, NULL);
+}
+
+bool RunExternalProgramW(wchar_t* pszCommand, wchar_t* pszCurDir);
+
+bool RunExternalProgramA(char* pszCommand)
+{
+	char strTemp[MAX_PATH+1];;
+	
+	if (!pszCommand || !*pszCommand)
+	{
+		lstrcpyA(strTemp, "cmd");
+		if (!InfoA->InputBox("ConEmu", "Start console program", "ConEmu.CreateProcess", 
+			strTemp, strTemp, MAX_PATH, NULL, FIB_BUTTONS))
+			return false;
+		pszCommand = strTemp;
+	}
+
+	wchar_t strCurDir[MAX_PATH+1]; GetCurrentDirectory(MAX_PATH, strCurDir);
+	int nLen = lstrlenA(pszCommand)+1;
+	wchar_t* pwszCommand = (wchar_t*)calloc(nLen,2);
+	MultiByteToWideChar(CP_OEMCP, 0, pszCommand, nLen, pwszCommand, nLen);
+
+	InfoA->Control(INVALID_HANDLE_VALUE,FCTL_GETUSERSCREEN,0);
+
+	RunExternalProgramW(pwszCommand, strCurDir);
+
+	InfoA->Control(INVALID_HANDLE_VALUE,FCTL_SETUSERSCREEN,0);
+	InfoA->AdvControl(InfoA->ModuleNumber,ACTL_REDRAWALL,0);
+
+	free(pwszCommand);
+	return true;
+}
+
+bool ProcessCommandLineA(char* pszCommand)
+{
+	if (!InfoA || !FSFA) return false;
+
+	if (FSFA->LStrnicmp(pszCommand, "run:", 4)==0) {
+		RunExternalProgramA(pszCommand+4);
+		return true;
+	}
+
+	return false;
 }

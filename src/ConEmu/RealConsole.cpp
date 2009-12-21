@@ -2524,6 +2524,8 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
         DWORD nPID     = pIn->StartStop.dwPID;
 		DWORD nSubSystem = pIn->StartStop.nSubSystem;
 		BOOL bRunViaCmdExe = pIn->StartStop.bRootIsCmdExe;
+		BOOL bUserIsAdmin = pIn->StartStop.bUserIsAdmin;
+		DWORD nInputTID = pIn->StartStop.dwInputTID;
 
 		_ASSERTE(sizeof(CESERVER_REQ_STARTSTOPRET) <= sizeof(CESERVER_REQ_STARTSTOP));
 		pIn->hdr.nSize = sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_STARTSTOPRET);
@@ -2533,13 +2535,14 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
             pIn->StartStopRet.bWasBufferHeight = isBufferHeight(); // чтобы comspec знал, что буфер нужно будет отключить
 			pIn->StartStopRet.hWnd = ghWnd;
 			pIn->StartStopRet.dwPID = GetCurrentProcessId();
+			pIn->StartStopRet.dwSrvPID = mn_ConEmuC_PID;
 
 			if (nStarted == 0) {
-				_ASSERTE(pIn->StartStop.dwInputTID);
-				_ASSERTE(mn_ConEmuC_Input_TID==0 || mn_ConEmuC_Input_TID==pIn->StartStop.dwInputTID);
-				mn_ConEmuC_Input_TID = pIn->StartStop.dwInputTID;
+				_ASSERTE(nInputTID);
+				_ASSERTE(mn_ConEmuC_Input_TID==0 || mn_ConEmuC_Input_TID==nInputTID);
+				mn_ConEmuC_Input_TID = nInputTID;
 				//
-				if (!m_Args.bRunAsAdministrator && pIn->StartStop.bUserIsAdmin)
+				if (!m_Args.bRunAsAdministrator && bUserIsAdmin)
 					m_Args.bRunAsAdministrator = TRUE;
 			}
 

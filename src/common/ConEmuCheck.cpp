@@ -273,32 +273,68 @@ CESERVER_REQ* ExecuteCmd(const wchar_t* szGuiPipeName, const CESERVER_REQ* pIn, 
 		NULL);                  // not overlapped 
 
 	dwErr = GetLastError();
-	CloseHandle(hPipe);
+	//CloseHandle(hPipe);
 
-	if (!fSuccess /*&& (dwErr != ERROR_MORE_DATA)*/)
+	if (!fSuccess && (dwErr != ERROR_MORE_DATA))
 	{
+		CloseHandle(hPipe);
 		return NULL;
 	}
 
 	if (cbRead < sizeof(CESERVER_REQ_HDR))
+	{
+		CloseHandle(hPipe);
 		return NULL;
+	}
 
 	pOut = (CESERVER_REQ*)cbReadBuf; // temporary
 	
-	if (pOut->hdr.nSize != cbRead) {
+	if (pOut->hdr.nSize < cbRead) {
+		CloseHandle(hPipe);
 		OutputDebugString(L"!!! Wrong nSize received from GUI server !!!\n");
 		return NULL;
 	}
 
 	if (pOut->hdr.nVersion != CESERVER_REQ_VER) {
+		CloseHandle(hPipe);
 		OutputDebugString(L"!!! Wrong nVersion received from GUI server !!!\n");
 		return NULL;
 	}
 	
-	pOut = (CESERVER_REQ*)_malloc(cbRead);
+	int nAllSize = pOut->hdr.nSize;
+	pOut = (CESERVER_REQ*)_malloc(nAllSize);
 	_ASSERTE(pOut);
-	if (!pOut) return NULL;
+	if (!pOut) {
+		CloseHandle(hPipe);
+		return NULL;
+	}
 	memmove(pOut, cbReadBuf, cbRead);
+
+	LPBYTE ptrData = ((LPBYTE)pOut)+cbRead;
+	nAllSize -= cbRead;
+
+	while (nAllSize>0)
+	{ 
+		// Break if TransactNamedPipe or ReadFile is successful
+		if(fSuccess)
+			break;
+
+		// Read from the pipe if there is more data in the message.
+		fSuccess = ReadFile( 
+			hPipe,      // pipe handle 
+			ptrData,    // buffer to receive reply 
+			nAllSize,   // size of buffer 
+			&cbRead,    // number of bytes read 
+			NULL);      // not overlapped 
+
+		// Exit if an error other than ERROR_MORE_DATA occurs.
+		if( !fSuccess && (GetLastError() != ERROR_MORE_DATA)) 
+			break;
+		ptrData += cbRead;
+		nAllSize -= cbRead;
+	}
+
+	CloseHandle(hPipe);
 
 	return pOut;
 }

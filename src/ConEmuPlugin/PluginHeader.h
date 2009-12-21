@@ -166,3 +166,7 @@ DWORD GetEditorModifiedState();
 BOOL SetConsoleSize(SHORT nNewWidth, SHORT nNewHeight);
 
 void UnsetAllHooks();
+
+bool FUNC_Y(ProcessCommandLine)(wchar_t* pszCommand);
+bool FUNC_X(ProcessCommandLine)(wchar_t* pszCommand);
+bool ProcessCommandLineA(char* pszCommand);

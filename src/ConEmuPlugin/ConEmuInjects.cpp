@@ -1,6 +1,10 @@
 
 #define DROP_SETCP_ON_WIN2K3R2
 
+// Иначе не опередяется GetConsoleAliases (хотя он должен быть доступен в Win2k)
+#undef _WIN32_WINNT
+#define _WIN32_WINNT 0x0501
+
 #include <windows.h>
 #include <TCHAR.h>
 #include <Tlhelp32.h>
@@ -342,6 +346,33 @@ static int WINAPI OnCompareStringW(LCID Locale, DWORD dwCmpFlags, LPCWSTR lpStri
 	return nCmp;
 }
 
+static DWORD WINAPI OnGetConsoleAliasesW(LPWSTR AliasBuffer, DWORD AliasBufferLength, LPWSTR ExeName)
+{
+	_ASSERTE(OnGetConsoleAliasesW!=GetConsoleAliasesW);
+	DWORD nError = 0;
+	DWORD nRc = GetConsoleAliasesW(AliasBuffer,AliasBufferLength,ExeName);
+	if (!nRc) {
+		nError = GetLastError();
+		// финт ушами
+		if (nError == ERROR_NOT_ENOUGH_MEMORY && gdwServerPID) {
+			CESERVER_REQ_HDR In;
+			ExecutePrepareCmd((CESERVER_REQ*)&In, CECMD_GETALIASES,sizeof(CESERVER_REQ_HDR));
+			CESERVER_REQ* pOut = ExecuteSrvCmd(gdwServerPID, (CESERVER_REQ*)&In, GetConsoleWindow());
+			if (pOut) {
+				DWORD nData = min(AliasBufferLength,(pOut->hdr.nSize-sizeof(pOut->hdr)));
+				if (nData) {
+					memmove(AliasBuffer, pOut->Data, nData);
+					nRc = TRUE;
+				}
+				ExecuteFreeResult(pOut);
+			}
+			if (!nRc)
+				SetLastError(nError); // вернуть, вдруг какая функция его поменяла
+		}
+	}
+	return nRc;
+}
+
 static BOOL WINAPI OnSetConsoleCP(UINT wCodePageID)
 {
 	_ASSERTE(OnSetConsoleCP!=SetConsoleCP);
@@ -397,6 +428,7 @@ static HookItem Hooks[] = {
 	{OnLoadLibraryW,        "LoadLibraryW",        kernel32, 0},
     {OnLoadLibraryExA,      "LoadLibraryExA",      kernel32, 0},
 	{OnLoadLibraryExW,      "LoadLibraryExW",      kernel32, 0},
+	{OnGetConsoleAliasesW,  "GetConsoleAliasesW",  kernel32, 0},
 	{OnTrackPopupMenu,      "TrackPopupMenu",      user32,   0},
 	{OnTrackPopupMenuEx,    "TrackPopupMenuEx",    user32,   0},
 	{OnFlashWindow,         "FlashWindow",         user32,   0},

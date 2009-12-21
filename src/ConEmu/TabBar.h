@@ -24,7 +24,7 @@ private:
 
 private:
 	HWND mh_Tabbar, mh_Toolbar, mh_Rebar, mh_TabTip;
-	HIMAGELIST mh_TabIcons;
+	HIMAGELIST mh_TabIcons; int mn_AdminIcon;
 	bool _active;
 	int _tabHeight;
 	int mn_ThemeHeightDiff;
