@@ -1824,9 +1824,9 @@ void ComspecDone(int aiRc)
 			if (pszPostAliases) wprintf(pszPostAliases);
 		} else {
 			if (!lbChanged) {
-				lbChanged = (cmd.nPreAliasSize!=nPostAliasSize);
+				lbChanged = (cmd.nPreAliasSize!=nPostAliasSize) && (nPostAliasSize!=0);
 			}
-			if (!lbChanged) {
+			if (!lbChanged && nPostAliasSize) {
 				lbChanged = memcmp(cmd.pszPreAliases,pszPostAliases,cmd.nPreAliasSize)!=0;
 			}
 			if (lbChanged) {
@@ -1835,7 +1835,8 @@ void ComspecDone(int aiRc)
 					CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_SAVEALIASES,sizeof(CESERVER_REQ_HDR)+nPostAliasSize);
 					if (pIn) {
 						MCHKHEAP;
-						memmove(pIn->Data, pszPostAliases, nPostAliasSize);
+						if (nPostAliasSize)
+							memmove(pIn->Data, pszPostAliases, nPostAliasSize);
 						MCHKHEAP;
 						CESERVER_REQ* pOut = ExecuteSrvCmd(cmd.dwSrvPID, pIn, GetConsoleWindow());
 						MCHKHEAP;
@@ -1845,17 +1846,19 @@ void ComspecDone(int aiRc)
 					}
 				}
 
-				wchar_t *pszNewName = pszPostAliases, *pszNewTarget, *pszNewLine;
-				while (*pszNewName) {
-					pszNewLine = pszNewName + lstrlen(pszNewName);
-					pszNewTarget = wcschr(pszNewName, L'=');
-					if (pszNewTarget) {
-						*pszNewTarget = 0;
-						pszNewTarget++;
+				if (nPostAliasSize) {
+					wchar_t *pszNewName = pszPostAliases, *pszNewTarget, *pszNewLine;
+					while (*pszNewName) {
+						pszNewLine = pszNewName + lstrlen(pszNewName);
+						pszNewTarget = wcschr(pszNewName, L'=');
+						if (pszNewTarget) {
+							*pszNewTarget = 0;
+							pszNewTarget++;
+						}
+						if (*pszNewTarget == 0) pszNewTarget = NULL;
+						AddConsoleAlias(pszNewName, pszNewTarget, cmd.szSelfName);
+						pszNewName = pszNewLine+1;
 					}
-					if (*pszNewTarget == 0) pszNewTarget = NULL;
-					AddConsoleAlias(pszNewName, pszNewTarget, cmd.szSelfName);
-					pszNewName = pszNewLine+1;
 				}
 			}
 		}
