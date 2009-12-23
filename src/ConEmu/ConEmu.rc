@@ -625,6 +625,12 @@ BEGIN
     cbFixAltOnAltTab        "When You set a macro on Alt (RAlt) it can unexpectedly activates on AltTab. This issue can be fixed by sending to console AltTab instead of Alt"
 END
 
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDI_ICON1               ICON    DISCARDABLE     "ConEmu.ico"
+IDI_ICON2               ICON    DISCARDABLE     "Far.ico"
+IDI_ICON3               ICON    DISCARDABLE     "Far2.ico"
+
 #endif    // English (U.S.) resources
 /////////////////////////////////////////////////////////////////////////////
 

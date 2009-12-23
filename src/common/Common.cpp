@@ -325,7 +325,7 @@ BOOL IsUserAdmin()
 		return FALSE;
 
 	BOOL b;
-	SID_IDENTIFIER_AUTHORITY NtAuthority = SECURITY_NT_AUTHORITY;
+	SID_IDENTIFIER_AUTHORITY NtAuthority = {SECURITY_NT_AUTHORITY};
 	PSID AdministratorsGroup;
 
 	b = AllocateAndInitializeSid(

@@ -31,6 +31,8 @@ extern DWORD gdwServerPID;
 
 static bool gbConEmuInput = false; // TRUE если консоль спрятана и должна работать через очередь ConEmu
 
+extern CESERVER_REQ_CONINFO_HDR *gpConsoleInfo;
+
 //WARNING("Все SendMessage нужно переделать на PipeExecute, т.к. из 'Run as' в Win7 нифига не пошлется");
 
 static void* GetOriginalAddress( HINSTANCE module, const char* name );
@@ -398,6 +400,60 @@ static BOOL WINAPI OnSetConsoleOutputCP(UINT wCodePageID)
 	return lbRc;
 }
 
+static BOOL WINAPI OnGetNumberOfConsoleInputEvents(HANDLE hConsoleInput, LPDWORD lpcNumberOfEvents)
+{
+	_ASSERTE(OnGetNumberOfConsoleInputEvents!=GetNumberOfConsoleInputEvents);
+	if (gpConsoleInfo) {
+		if (GetCurrentThreadId() == gnMainThreadId)
+			gpConsoleInfo->nFarReadTick = GetTickCount();
+	}
+	BOOL lbRc = GetNumberOfConsoleInputEvents(hConsoleInput, lpcNumberOfEvents);
+	return lbRc;
+}
+
+static BOOL WINAPI OnPeekConsoleInputA(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsRead)
+{
+	_ASSERTE(OnPeekConsoleInputA!=PeekConsoleInputA);
+	if (gpConsoleInfo) {
+		if (GetCurrentThreadId() == gnMainThreadId)
+			gpConsoleInfo->nFarReadTick = GetTickCount();
+	}
+	BOOL lbRc = PeekConsoleInputA(hConsoleInput, lpBuffer, nLength, lpNumberOfEventsRead);
+	return lbRc;
+}
+
+static BOOL WINAPI OnPeekConsoleInputW(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsRead)
+{
+	_ASSERTE(OnPeekConsoleInputW!=PeekConsoleInputW);
+	if (gpConsoleInfo) {
+		if (GetCurrentThreadId() == gnMainThreadId)
+			gpConsoleInfo->nFarReadTick = GetTickCount();
+	}
+	BOOL lbRc = PeekConsoleInputW(hConsoleInput, lpBuffer, nLength, lpNumberOfEventsRead);
+	return lbRc;
+}
+
+static BOOL WINAPI OnReadConsoleInputA(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsRead)
+{
+	_ASSERTE(OnReadConsoleInputA!=ReadConsoleInputA);
+	if (gpConsoleInfo) {
+		if (GetCurrentThreadId() == gnMainThreadId)
+			gpConsoleInfo->nFarReadTick = GetTickCount();
+	}
+	BOOL lbRc = ReadConsoleInputA(hConsoleInput, lpBuffer, nLength, lpNumberOfEventsRead);
+	return lbRc;
+}
+
+static BOOL WINAPI OnReadConsoleInputW(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsRead)
+{
+	_ASSERTE(OnReadConsoleInputW!=ReadConsoleInputW);
+	if (gpConsoleInfo) {
+		if (GetCurrentThreadId() == gnMainThreadId)
+			gpConsoleInfo->nFarReadTick = GetTickCount();
+	}
+	BOOL lbRc = ReadConsoleInputW(hConsoleInput, lpBuffer, nLength, lpNumberOfEventsRead);
+	return lbRc;
+}
 
 typedef struct HookItem
 {
@@ -405,6 +461,7 @@ typedef struct HookItem
     char*  Name;
     TCHAR* DllName;
     void*  OldAddress;
+	BOOL   ReplacedInExe;
 } HookItem;
 
 static TCHAR kernel32[] = _T("kernel32.dll");
@@ -424,20 +481,27 @@ static HookItem HooksFarOnly[] = {
 
 static HookItem Hooks[] = {
 	// My
-    {OnLoadLibraryA,        "LoadLibraryA",        kernel32, 0},
-	{OnLoadLibraryW,        "LoadLibraryW",        kernel32, 0},
-    {OnLoadLibraryExA,      "LoadLibraryExA",      kernel32, 0},
-	{OnLoadLibraryExW,      "LoadLibraryExW",      kernel32, 0},
-	{OnGetConsoleAliasesW,  "GetConsoleAliasesW",  kernel32, 0},
-	{OnTrackPopupMenu,      "TrackPopupMenu",      user32,   0},
-	{OnTrackPopupMenuEx,    "TrackPopupMenuEx",    user32,   0},
-	{OnFlashWindow,         "FlashWindow",         user32,   0},
-	{OnFlashWindowEx,       "FlashWindowEx",       user32,   0},
-	{OnSetForegroundWindow, "SetForegroundWindow", user32,   0},
-	{OnShellExecuteExA,     "ShellExecuteExA",     shell32,  0},
-	{OnShellExecuteExW,     "ShellExecuteExW",     shell32,  0},
-	{OnShellExecuteA,       "ShellExecuteA",       shell32,  0},
-	{OnShellExecuteW,       "ShellExecuteW",       shell32,  0},
+	{OnPeekConsoleInputW,	"PeekConsoleInputW",	kernel32, 0},
+	{OnPeekConsoleInputA,	"PeekConsoleInputA",	kernel32, 0},
+	{OnReadConsoleInputW,	"ReadConsoleInputW",	kernel32, 0},
+	{OnReadConsoleInputA,	"ReadConsoleInputA",	kernel32, 0},
+    {OnLoadLibraryA,        "LoadLibraryA",			kernel32, 0},
+	{OnLoadLibraryW,        "LoadLibraryW",			kernel32, 0},
+    {OnLoadLibraryExA,      "LoadLibraryExA",		kernel32, 0},
+	{OnLoadLibraryExW,      "LoadLibraryExW",		kernel32, 0},
+	{OnGetConsoleAliasesW,  "GetConsoleAliasesW",	kernel32, 0},
+	{OnGetNumberOfConsoleInputEvents,
+							"GetNumberOfConsoleInputEvents",
+													kernel32, 0},
+	{OnTrackPopupMenu,      "TrackPopupMenu",		user32,   0},
+	{OnTrackPopupMenuEx,    "TrackPopupMenuEx",		user32,   0},
+	{OnFlashWindow,         "FlashWindow",			user32,   0},
+	{OnFlashWindowEx,       "FlashWindowEx",		user32,   0},
+	{OnSetForegroundWindow, "SetForegroundWindow",	user32,   0},
+	{OnShellExecuteExA,     "ShellExecuteExA",		shell32,  0},
+	{OnShellExecuteExW,     "ShellExecuteExW",		shell32,  0},
+	{OnShellExecuteA,       "ShellExecuteA",		shell32,  0},
+	{OnShellExecuteW,       "ShellExecuteW",		shell32,  0},
 /*
     {OnCreateProcessW,    "CreateProcessW",   kernel32, 0},
     {OnCreateProcessA,    "CreateProcessA",   kernel32, 0},
@@ -591,7 +655,7 @@ static bool InitHooks( HookItem* item )
 
 
 // Подменить Импортируемые функции в модуле
-static bool SetHook( const HookItem* item, HMODULE Module = 0 )
+static bool SetHook( HookItem* item, HMODULE Module = 0, BOOL abExecutable = FALSE )
 {
     if( !item )
         return false;
@@ -624,8 +688,13 @@ static bool SetHook( const HookItem* item, HMODULE Module = 0 )
         return false;
 
     bool res = false;
-    for( int i = 0; Import[i].Name; i++ )
+	int i;
+	int nCount = Size / sizeof(IMAGE_IMPORT_DESCRIPTOR);
+	//_ASSERTE(Size == (nCount * sizeof(IMAGE_IMPORT_DESCRIPTOR))); -- ровно быть не обязано
+    for( i = 0; i < nCount; i++ )
     {
+		if (Import[i].Name == 0)
+			break;
         //DebugString( ToTchar( (char*)Module + Import[i].Name ) );
         //char* mod_name = (char*)Module + Import[i].Name;
         //-- не используется -- IMAGE_IMPORT_BY_NAME** byname = (IMAGE_IMPORT_BY_NAME**)(Import[i].Characteristics + (DWORD_PTR)Module);
@@ -634,7 +703,8 @@ static bool SetHook( const HookItem* item, HMODULE Module = 0 )
                 IMAGE_THUNK_DATA* thunk = (IMAGE_THUNK_DATA*)((char*)Module + Import[i].FirstThunk);
                 for( ; thunk->u1.Function; thunk++/*, byname++*/) // byname не используется
                 {
-                    for( int j = 0; item[j].Name; j++ )
+					int j = 0;
+                    for( j = 0; item[j].Name; j++ )
                         if( item[j].OldAddress && (void*)thunk->u1.Function == item[j].OldAddress )
                         {
                             DWORD old_protect;
@@ -642,6 +712,8 @@ static bool SetHook( const HookItem* item, HMODULE Module = 0 )
                                             PAGE_READWRITE, &old_protect );
                             thunk->u1.Function = (DWORD_PTR)item[j].NewAddress;
                             VirtualProtect( &thunk->u1.Function, sizeof( DWORD ), old_protect, &old_protect );
+							if (abExecutable)
+								item[j].ReplacedInExe = TRUE;
                             //DebugString( ToTchar( item[j].Name ) );
                             res = true;
                             break;
@@ -655,7 +727,7 @@ static bool SetHook( const HookItem* item, HMODULE Module = 0 )
 }
 
 // Подменить Импортируемые функции во всех модулях процесса, загруженных ДО conemu.dll
-static bool SetHookEx( const HookItem* item, HMODULE inst )
+static bool SetHookEx( HookItem* item, HMODULE inst )
 {
     if( !item )
         return false;
@@ -666,13 +738,15 @@ static bool SetHookEx( const HookItem* item, HMODULE inst )
     if(snapshot != INVALID_HANDLE_VALUE)
     {
         MODULEENTRY32 module = {sizeof(module)};
+		BOOL bFirst = TRUE;
 
         for(BOOL res = Module32First(snapshot, &module); res; res = Module32Next(snapshot, &module))
         {
             if(module.hModule != inst && !IsModuleExcluded(module.hModule))
             {
                 DebugString( module.szModule );
-                SetHook( item, module.hModule );
+                SetHook( item, module.hModule, bFirst );
+				if (bFirst) bFirst = FALSE;
             }
         }
 
@@ -816,7 +890,7 @@ BOOL StartupHooks()
 	InitHooks( HooksWin2k3R2Only );
 
 	//  Подменить Импортируемые функции в FAR.exe (пока это только сравнивание строк)
-	SetHook( HooksFarOnly, NULL );
+	SetHook( HooksFarOnly, NULL, TRUE );
 	
 	// Windows Server 2003 R2
 	

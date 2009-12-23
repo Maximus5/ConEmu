@@ -100,6 +100,8 @@ bool gbMonitorEnvVar = false;
 void UpdateEnvVar(const wchar_t* pszList);
 BOOL StartupHooks();
 BOOL gbFARuseASCIIsort = FALSE; // попытаться перехватить строковую сортировку в FAR
+HANDLE ghFileMapping = NULL;
+CESERVER_REQ_CONINFO_HDR *gpConsoleInfo = NULL;
 
 
 //std::vector<HANDLE> ghCommandThreads;
@@ -233,7 +235,6 @@ HANDLE WINAPI _export OpenPluginW(int OpenFrom,INT_PTR Item)
 			gbCmdCallObsolete = FALSE;
 		}
 	}
-
 	return INVALID_HANDLE_VALUE;
 }
 
@@ -908,6 +909,8 @@ void EmergencyShow()
 	EnableWindow(FarHwnd, true);
 }
 
+int OpenMapHeader();
+
 // Эту нить нужно оставить, чтобы была возможность отобразить консоль при падении ConEmu
 DWORD WINAPI MonitorThreadProcW(LPVOID lpParameter)
 {
@@ -945,9 +948,15 @@ DWORD WINAPI MonitorThreadProcW(LPVOID lpParameter)
 		// Теоретически, нить обработки может запуститься и без ConEmuHwnd (под телнетом)
 	    if (ConEmuHwnd && FarHwnd && (dwWait>=(WAIT_OBJECT_0+MAXCMDCOUNT))) {
 
-			// Мог быть сделан Detach! (CtrlAltTab)
+			// Мог быть сделан Detach (детач)! (CtrlAltTab)
 			HWND hConWnd = GetConsoleWindow();
-		    if (!IsWindow(ConEmuHwnd) || hConWnd!=FarHwnd) {
+			BOOL lbWasDetached = FALSE;
+			if (hConWnd && hConWnd != FarHwnd) {
+				FarHwnd = hConWnd;
+				lbWasDetached = TRUE;
+				OpenMapHeader();
+			}
+		    if (!IsWindow(ConEmuHwnd) || lbWasDetached) {
 			    ConEmuHwnd = NULL;
 			    //
 			    SetConEmuEnvVar(NULL);
@@ -956,9 +965,9 @@ DWORD WINAPI MonitorThreadProcW(LPVOID lpParameter)
 					EmergencyShow();
 				}
 
-				if (hConWnd!=FarHwnd || !IsWindow(FarHwnd))
+				if (lbWasDetached || !IsWindow(FarHwnd))
 				{
-					if (hConWnd != FarHwnd && IsWindow(hConWnd)) {
+					if (IsWindow(hConWnd)) {
 						FarHwnd = hConWnd;
 						//int nBtn = ShowMessage(1, 2);
 						//if (nBtn == 0) {
@@ -1356,6 +1365,46 @@ void WINAPI _export SetStartupInfoW(void *aInfo)
 //		wsprintf(szEventName, fmt, dwCurProcId ); 
 //		h = CreateEvent(NULL, FALSE, FALSE, szEventName); 
 //		if (h==INVALID_HANDLE_VALUE) h=NULL;
+
+int OpenMapHeader()
+{
+	int iRc = -1;
+	wchar_t szMapName[64];
+	DWORD dwErr = 0;
+	int nConInfoSize = sizeof(CESERVER_REQ_CONINFO_HDR);
+	
+	if (gpConsoleInfo) {
+		UnmapViewOfFile(gpConsoleInfo);
+		gpConsoleInfo = NULL;
+	}
+	if (ghFileMapping) {
+		CloseHandle(ghFileMapping);
+		ghFileMapping = NULL;
+	}
+	
+	if (FarHwnd) {
+		wsprintf(szMapName, CECONMAPNAME, (DWORD)FarHwnd);
+		ghFileMapping = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, szMapName);
+		if (ghFileMapping) {
+			gpConsoleInfo = (CESERVER_REQ_CONINFO_HDR*)MapViewOfFile(ghFileMapping, FILE_MAP_ALL_ACCESS,0,0,0);
+			if (gpConsoleInfo) {
+				iRc = 0;
+			} else {
+				#ifdef _DEBUG
+				dwErr = GetLastError();
+				#endif
+				CloseHandle(ghFileMapping);
+				ghFileMapping = NULL;
+			}
+		} else {
+			#ifdef _DEBUG
+			dwErr = GetLastError();
+			#endif
+		}
+	}
+
+	return iRc;
+}
 	
 void InitHWND(HWND ahFarHwnd)
 {
@@ -1375,6 +1424,8 @@ void InitHWND(HWND ahFarHwnd)
 
 	ConEmuHwnd = NULL;
 	FarHwnd = ahFarHwnd;
+	
+	OpenMapHeader();
 
 	//memset(hEventCmd, 0, sizeof(HANDLE)*MAXCMDCOUNT);
 	
@@ -1895,6 +1946,8 @@ int WINAPI _export ProcessViewerEventW(int Event, void *Param)
 
 void StopThread(void)
 {
+	LPVOID lpPtrConInfo = gpConsoleInfo; gpConsoleInfo = NULL;
+
 	CloseTabs();
 
 	//if (hEventCmd[CMD_EXIT])
@@ -1971,6 +2024,14 @@ void StopThread(void)
 	SafeCloseHandle(ghConIn);
 	SafeCloseHandle(ghInputSynchroExecuted);
 	SafeCloseHandle(ghSetWndSendTabsEvent);
+	
+	if (lpPtrConInfo) {
+		UnmapViewOfFile(lpPtrConInfo);
+	}
+	if (ghFileMapping) {
+		CloseHandle(ghFileMapping);
+		ghFileMapping = NULL;
+	}
 	
 	CommonShutdown();
 }
@@ -2695,7 +2756,6 @@ BOOL Attach2Gui()
 	
 	return lbRc;
 }
-
 
 BOOL StartDebugger()
 {

@@ -45,7 +45,6 @@ HANDLE WINAPI _export OpenPlugin(int OpenFrom,INT_PTR Item)
 		else
 			gbCmdCallObsolete = FALSE;
 	}
-
 	return INVALID_HANDLE_VALUE;
 }
 

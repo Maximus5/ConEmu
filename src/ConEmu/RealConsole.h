@@ -39,6 +39,8 @@
 
 #define MAX_TITLE_SIZE 0x400
 
+#define FAR_ALIVE_TIMEOUT 1000
+
 #pragma pack(push, 1)
 
 
@@ -93,7 +95,7 @@ struct ConProcess {
 };
 
 #define MAX_SERVER_THREADS 3
-#define MAX_THREAD_PACKETS 100
+//#define MAX_THREAD_PACKETS 100
 
 class CVirtualConsole;
 
@@ -110,6 +112,9 @@ public:
     
 private:
     HWND    hConWnd;
+	//HANDLE  hFileMapping;
+	//CESERVER_REQ_CONINFO* pConsoleData;
+	//void CloseMapping();
 
 public:
 	HWND    ConWnd();
@@ -184,7 +189,7 @@ public:
 	bool isViewer();
 	bool isVisible();
 	bool isNtvdm();
-	bool isPackets();
+	//bool isPackets();
 	LPCWSTR GetCmd();
 	LPCWSTR GetDir();
 	short GetProgress(BOOL* rpbError);
@@ -197,6 +202,7 @@ public:
 	DWORD GetConsoleStates();
     void ChangeBufferHeightMode(BOOL abBufferHeight); // Вызывается из TabBar->ConEmu
 	void RemoveFromCursor();
+	bool isAlive();
 
 public:
     // Вызываются из CVirtualConsole
@@ -243,7 +249,7 @@ protected:
 
     void Box(LPCTSTR szText);
 
-    BOOL RetrieveConsoleInfo(/*BOOL bShortOnly,*/ UINT anWaitSize);
+    //BOOL RetrieveConsoleInfo(/*BOOL bShortOnly,*/ UINT anWaitSize);
 	BOOL WaitConsoleSize(UINT anWaitSize, DWORD nTimeout);
     BOOL InitBuffers(DWORD OneBufferSize);
 private:
@@ -280,7 +286,7 @@ private:
     //
     //void ProcessAdd(DWORD addPID);
     //void ProcessDelete(DWORD addPID);
-    void ProcessUpdate(DWORD *apPID, UINT anCount);
+    void ProcessUpdate(const DWORD *apPID, UINT anCount);
     void ProcessUpdateFlags(BOOL abProcessChanged);
     void ProcessCheckName(struct ConProcess &ConPrc, LPWSTR asFullFileName);
     DWORD mn_ProgramStatus, mn_FarStatus;
@@ -295,7 +301,7 @@ private:
     BOOL mb_BuferModeChangeLocked;
 
     void ServerThreadCommand(HANDLE hPipe);
-    void ApplyConsoleInfo(CESERVER_REQ* pInfo);
+    //void ApplyConsoleInfo(CESERVER_REQ* pInfo);
     void SetHwnd(HWND ahConWnd);
     WORD mn_LastVKeyPressed;
     BOOL GetConWindowSize(const CONSOLE_SCREEN_BUFFER_INFO& sbi, int& nNewWidth, int& nNewHeight, BOOL* pbBufferHeight=NULL);
@@ -304,19 +310,29 @@ private:
     BOOL mb_ProcessRestarted;
     // Логи
     BYTE m_UseLogs;
-    HANDLE mh_LogInput; wchar_t *mpsz_LogInputFile, *mpsz_LogPackets; UINT mn_LogPackets;
+    HANDLE mh_LogInput; wchar_t *mpsz_LogInputFile/*, *mpsz_LogPackets*/; //UINT mn_LogPackets;
     void CreateLogFiles();
     void CloseLogFiles();
     void LogInput(INPUT_RECORD* pRec);
-    void LogPacket(CESERVER_REQ* pInfo);
+    //void LogPacket(CESERVER_REQ* pInfo);
     BOOL RecreateProcessStart();
     // Прием и обработка пакетов
     //MSection csPKT; //DWORD ncsTPKT;
-    DWORD mn_LastProcessedPkt; HANDLE mh_PacketArrived;
+    DWORD mn_LastProcessedPkt; //HANDLE mh_PacketArrived;
     //std::vector<CESERVER_REQ*> m_Packets;
-    CESERVER_REQ* m_PacketQueue[(MAX_SERVER_THREADS+1)*MAX_THREAD_PACKETS];
-    void PushPacket(CESERVER_REQ* pPkt);
-    CESERVER_REQ* PopPacket();
+    //CESERVER_REQ* m_PacketQueue[(MAX_SERVER_THREADS+1)*MAX_THREAD_PACKETS];
+    //void PushPacket(CESERVER_REQ* pPkt);
+    //CESERVER_REQ* PopPacket();
+	HANDLE mh_FileMapping, mh_FileMappingData;
+	wchar_t ms_HeaderMapName[64], ms_DataMapName[64];
+	CESERVER_REQ_CONINFO_HDR *mp_ConsoleInfo;
+	CHAR_INFO *mp_ConsoleData; // Mapping
+	DWORD mn_LastConsoleDataIdx, mn_LastConsolePacketIdx;
+	BOOL OpenMapHeader();
+	void CloseMapData();
+	BOOL ReopenMapData();
+	void CloseMapHeader();
+	void ApplyConsoleInfo();
 	BOOL mb_DataChanged;
     //
     BOOL PrepareOutputFile(BOOL abUnicodeText, wchar_t* pszFilePathName);

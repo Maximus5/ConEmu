@@ -54,6 +54,30 @@
 #VC8 - set to build with VC8, VC9 intended by default
 #
 
+
+
+!if exists(../make_vc_defs)
+!include ../make_vc_defs
+!endif
+
+#DEF_NAME = export
+
+NEEDENTRY = 1
+
+OUTNAME = ConEmuC
+
+NAME = ConEmuC
+
+LINK_OBJS = \
+$(OBJDIR)\ConEmuC.obj \
+$(OBJDIR)\ConEmuSrv.obj \
+$(OBJDIR)\execute.obj \
+$(OBJDIR)\setconsoleinfo.obj \
+$(OBJDIR)\Common.obj \
+$(OBJDIR)\ConEmuCheck.obj
+
+USERLIBS = version.lib
+
 !if defined(AMD64) || "$(CPU)" == "AMD64"
 !undef AMD64
 !undef CPU
@@ -213,3 +237,85 @@ SRC_PATHS=.;..\common;..\ConEmuPlugin
 .path.h=$(SRC_PATHS)
 .path.rc=$(SRC_PATHS)
 !endif
+
+ALL: dirs $(INSTALL) $(DLLFULLNAME) clean
+
+$(DLLFULLNAME) : $(LINK_OBJS) $(RES) $(LINK_DEP)
+!ifndef __MAKE__
+	@$(LNK) @<<
+	$(LINK_FLAGS) $(LINK_DEBUG) $(LIBS) $(LINK_OBJS) $(RES)
+<<
+!else
+	@$(LNK) $(LINK_FLAGS) $(LINK_DEBUG) $(LIBS) $(LINK_OBJS) $(RES)
+!endif
+!ifdef DOCS
+!ifndef WIDE
+!ifndef __MAKE__
+	@for %%i in ($(DOCS)) do @copy /Y %%i $(OUTDIR)$(ADDOUTDIR) > nul 2> nul
+!else
+	@for %i in ($(DOCS)) do @copy /Y %i $(OUTDIR)$(ADDOUTDIR) > nul 2> nul
+!endif
+!else
+	@$(COMMON)\convert.exe $(DOCS) $(OUTDIR)$(ADDOUTDIR)
+!endif
+!endif
+
+!ifndef __MAKE__
+.cpp{$(OBJDIR)}.obj::
+	@$(CC) @<<
+	$(CFLAGS) $<
+<<
+{../common/}.cpp{$(OBJDIR)}.obj::
+	$(CC) @<<
+	$(CFLAGS) $<
+<<
+{../ConEmuPlugin/}.cpp{$(OBJDIR)}.obj::
+	$(CC) @<<
+	$(CFLAGS) $<
+<<
+!else
+.cpp{$(OBJDIR)}.obj:
+	@$(CC) $(CFLAGS) { $< } 
+
+{../common/}.cpp{$(OBJDIR)}.obj:
+	@$(CC) $(CFLAGS) { $< } 
+
+{../ConEmuPlugin/}.cpp{$(OBJDIR)}.obj:
+	@$(CC) $(CFLAGS) { $< } 
+!endif
+
+$(RES): $(RC_NAME).rc
+	@$(RC) /I"$(COMINC)" $(ENV_INC_OPT) $(RC_WIDE) /fo"$(RES)" $(RC_NAME).rc
+
+.PHONY: dirs
+dirs:
+!ifdef INSTALL
+	@if not exist "$(WORKDIR)\$(NULL)" mkdir "$(WORKDIR)"
+!endif
+	@if not exist "$(OBJDIR)\$(NULL)" mkdir "$(OBJDIR)"
+	@if not exist "$(OUTDIR)\$(NULL)" mkdir "$(OUTDIR)"
+	@if not exist "$(OUTDIR)$(ADDOUTDIR)\$(NULL)" mkdir "$(OUTDIR)$(ADDOUTDIR)"
+
+.PHONY: clean
+clean:
+	@echo final cleaning
+#	copy $(DLLFULLNAME) ..\..\$(RELEASEDIRx64)
+#	move $(DLLFULLNAME) ..\..\$(RELEASEDIRx86)
+#	@del /Q $(OBJDIR)\*.*
+#	@rd $(OBJDIR)
+#	@del $(OUTDIR)$(ADDOUTDIR)\*.exp
+#	@del $(OUTDIR)$(ADDOUTDIR)\*.lib
+#	@del $(OBJDIR)\*.obj
+#	@rd $(OBJDIR)
+
+$(INTDIR)\ConEmuC.obj: ConEmuC.cpp ConEmuC.h ..\common\Common.hpp
+
+$(INTDIR)\ConEmuSrv.obj: ConEmuSrv.cpp ConEmuC.h ..\common\Common.hpp
+
+$(INTDIR)\execute.obj: execute.cpp
+
+$(INTDIR)\setconsoleinfo.obj: ..\ConEmuPlugin\setconsoleinfo.cpp
+
+$(INTDIR)\Common.obj: ..\common\Common.cpp ..\common\Common.hpp
+
+$(INTDIR)\ConEmuCheck.obj: ..\common\ConEmuCheck.cpp

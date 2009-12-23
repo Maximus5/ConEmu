@@ -2501,7 +2501,7 @@ void CSettings::RecreateFont(WORD wFromID)
 	if (mb_CharSetWasSet) {
 		mb_CharSetWasSet = FALSE;
 		int newCharSet = SendDlgItemMessage(hMain, tFontCharset, CB_GETCURSEL, 0, 0);
-		if (newCharSet != CB_ERR && newCharSet >= 0 && newCharSet < countof(chSetsNums))
+		if (newCharSet != CB_ERR && newCharSet >= 0 && newCharSet < (int)countof(chSetsNums))
 			LF.lfCharSet = chSetsNums[newCharSet];
 		else
 			LF.lfCharSet = DEFAULT_CHARSET;

@@ -1216,13 +1216,13 @@ void TabBarClass::PrepareTab(ConEmuTab* pTab)
         }
         tFileName = pTab->Name;
         origLength = _tcslen(tFileName);
-        if (origLength>6) {
-	        // Чтобы в заголовке было что-то вроде "{C:\Program Fil...- Far"
-	        //                              вместо "{C:\Program F...} - Far"
-			TODO("После добавления суффиков к заголовку фара - оно уже влезать не будет в любом случае... Так что если панели - '...' строго ставить в конце");
-	        if (lstrcmp(tFileName + origLength - 6, L" - Far") == 0)
-		        nSplit = nMaxLen - 6;
-	    }
+        //if (origLength>6) {
+	    //    // Чтобы в заголовке было что-то вроде "{C:\Program Fil...- Far"
+	    //    //                              вместо "{C:\Program F...} - Far"
+		//	После добавления суффиков к заголовку фара - оно уже влезать не будет в любом случае... Так что если панели - '...' строго ставить в конце
+	    //    if (lstrcmp(tFileName + origLength - 6, L" - Far") == 0)
+		//        nSplit = nMaxLen - 6;
+	    //}
 	        
     } else {
         GetFullPathName(pTab->Name, MAX_PATH*2, dummy, &tFileName);
@@ -1251,23 +1251,31 @@ void TabBarClass::PrepareTab(ConEmuTab* pTab)
         _tcsncat(fileName, tFileName, 10);
         _tcsncat(fileName, _T("..."), 3);
         _tcsncat(fileName, tFileName + origLength - 10, 10);*/
-        if (!nSplit)
-	        nSplit = nMaxLen*2/3;
-		// 2009-09-20 Если в заголовке нет расширения (отсутствует точка)
-		const wchar_t* pszAdmin = gSet.szAdminTitleSuffix;
-		const wchar_t* pszFrom = tFileName + origLength - (nMaxLen - nSplit);
-		if (!wcschr(pszFrom, L'.') && (*pszAdmin && !wcsstr(tFileName, pszAdmin)))
-		{
-			// то троеточие ставить в конец, а не середину
-			nSplit = nMaxLen;
-		}
+        //if (!nSplit)
+	    //    nSplit = nMaxLen*2/3;
+		//// 2009-09-20 Если в заголовке нет расширения (отсутствует точка)
+		//const wchar_t* pszAdmin = gSet.szAdminTitleSuffix;
+		//const wchar_t* pszFrom = tFileName + origLength - (nMaxLen - nSplit);
+		//if (!wcschr(pszFrom, L'.') && (*pszAdmin && !wcsstr(tFileName, pszAdmin)))
+		//{
+		//	// то троеточие ставить в конец, а не середину
+		//	nSplit = nMaxLen;
+		//}
+		
+		// "{C:\Program Files} - Far 2.1283 Administrator x64"
+		// После добавления суффиков к заголовку фара - оно уже влезать не будет в любом случае... Так что если панели - '...' строго ставить в конце
+		nSplit = nMaxLen;
         
         _tcsncpy(szEllip, tFileName, nSplit); szEllip[nSplit]=0;
-        _tcscat(szEllip, L"\x2026" /*"…"*/);
-        _tcscat(szEllip, tFileName + origLength - (nMaxLen - nSplit));
+        szEllip[nSplit] = L'\x2026' /*"…"*/;
+        szEllip[nSplit+1] = 0;
+        //_tcscat(szEllip, L"\x2026" /*"…"*/);
+        //_tcscat(szEllip, tFileName + origLength - (nMaxLen - nSplit));
         
         tFileName = szEllip;
     }
+    // szFormat различается для Panel/Viewer(*)/Editor(*)
+    // Пример: "%i-[%s] *"
     pszNo = wcsstr(szFormat, L"%i");
     pszTitle = wcsstr(szFormat, L"%s");
     if (pszNo == NULL)

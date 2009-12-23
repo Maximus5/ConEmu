@@ -554,9 +554,6 @@ int ShowPluginMenu995()
 		{IsDebuggerPresent()||IsTerminalMode() ? MIF_DISABLE : 0,    InfoW995->GetMsg(InfoW995->ModuleNumber,14)}
 	};
 	int nCount = sizeof(items)/sizeof(items[0]);
-#ifdef _DEBUG
-	items[nCount-1].Flags = 0;
-#endif
 
 	int nRc = InfoW995->Menu(InfoW995->ModuleNumber, -1,-1, 0, 
 		FMENU_USEEXT|FMENU_AUTOHIGHLIGHT|FMENU_CHANGECONSOLETITLE|FMENU_WRAPMODE,

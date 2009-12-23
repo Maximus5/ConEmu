@@ -1,0 +1,12 @@
+ALLDIRS = ConEmu ConEmuC ConEmuPlugin
+
+all: $(ALLDIRS)
+
+FICTIVE=_fictive_
+$(FICTIVE):
+
+$(ALLDIRS): $(FICTIVE)
+	@echo ===========$@
+	@cd $@
+	@$(MAKE) -s -f makefile_vc $(_MDEFS)
+	@cd ..

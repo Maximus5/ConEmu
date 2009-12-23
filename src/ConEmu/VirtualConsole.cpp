@@ -1863,15 +1863,15 @@ void CVirtualConsole::Paint(HDC hDc, RECT rcClient)
 	_ASSERTE(hDc);
 	_ASSERTE(rcClient.left!=rcClient.right && rcClient.top!=rcClient.bottom);
 
-#ifdef _DEBUG
-    if (this) {
-        if (!mp_RCon || !mp_RCon->isPackets()) {
-        	DEBUGSTRDRAW(L"*** Painting ***\n");
-        } else {
-            DEBUGSTRDRAW(L"*** Painting (!!! Non processed packets are queued !!!) ***\n");
-        }
-    }
-#endif
+//#ifdef _DEBUG
+//    if (this) {
+//        if (!mp_RCon || !mp_RCon->isPackets()) {
+//        	DEBUGSTRDRAW(L"*** Painting ***\n");
+//        } else {
+//            DEBUGSTRDRAW(L"*** Painting (!!! Non processed packets are queued !!!) ***\n");
+//        }
+//    }
+//#endif
     
 	BOOL lbSimpleBlack = FALSE;
 	if (!this) 

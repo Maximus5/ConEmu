@@ -11,6 +11,12 @@
 #include <crtdbg.h>
 #endif
 
+#ifdef __GNUC__
+#define TimeGetTime GetTickCount
+#else
+#define TimeGetTime timeGetTime
+#endif
+
 #ifdef KL_MEM
 #include "c:\\lang\\kl.h"
 #else

@@ -1231,6 +1231,10 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath=".\ConEmu.rc"
+				>
+			</File>
+			<File
 				RelativePath=".\CursorDragCopy.cur"
 				>
 				<FileConfiguration
@@ -1727,58 +1731,6 @@
 					>
 					<Tool
 						Name="VCCustomBuildTool"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath=".\Resource.rc"
-				>
-				<FileConfiguration
-					Name="Debug|x64"
-					>
-					<Tool
-						Name="VCResourceCompilerTool"
-						PreprocessorDefinitions="_UNICODE;UNICODE;_WIN64;WIN64"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|x64"
-					>
-					<Tool
-						Name="VCResourceCompilerTool"
-						PreprocessorDefinitions="_UNICODE;UNICODE;_WIN64;WIN64"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="DebugA|x64"
-					>
-					<Tool
-						Name="VCResourceCompilerTool"
-						PreprocessorDefinitions="_UNICODE;UNICODE;_WIN64;WIN64"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="DebugEEE|x64"
-					>
-					<Tool
-						Name="VCResourceCompilerTool"
-						PreprocessorDefinitions="_UNICODE;UNICODE;_WIN64;WIN64"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug75|x64"
-					>
-					<Tool
-						Name="VCResourceCompilerTool"
-						PreprocessorDefinitions="_UNICODE;UNICODE;_WIN64;WIN64"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Instrument|x64"
-					>
-					<Tool
-						Name="VCResourceCompilerTool"
-						PreprocessorDefinitions="_UNICODE;UNICODE;_WIN64;WIN64"
 					/>
 				</FileConfiguration>
 			</File>

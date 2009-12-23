@@ -1,7 +1,7 @@
 #include <windows.h>
 #include <wchar.h>
 #include "..\common\common.hpp"
-#include "..\common\pluginW995.hpp"
+#include "..\common\pluginW1007.hpp"
 #include "PluginHeader.h"
 
 // Можно бы добавить обработку Up/Down для перехода между пакетами
@@ -57,8 +57,8 @@ void ShowConPacket(CESERVER_REQ* pReq)
 
 	psz = pszText;
 	switch (pReq->hdr.nCmd) {
-		case CECMD_GETSHORTINFO: pszEnd = L"CECMD_GETSHORTINFO"; break;
-		case CECMD_GETFULLINFO: pszEnd = L"CECMD_GETFULLINFO"; break;
+		//case CECMD_GETSHORTINFO: pszEnd = L"CECMD_GETSHORTINFO"; break;
+		//case CECMD_GETFULLINFO: pszEnd = L"CECMD_GETFULLINFO"; break;
 		case CECMD_SETSIZE: pszEnd = L"CECMD_SETSIZE"; break;
 		case CECMD_CMDSTARTSTOP: pszEnd = L"CECMD_CMDSTARTSTOP"; break;
 		case CECMD_GETGUIHWND: pszEnd = L"CECMD_GETGUIHWND"; break;
@@ -72,86 +72,86 @@ void ShowConPacket(CESERVER_REQ* pReq)
 		pReq->hdr.nSize, pReq->hdr.nCmd, pszEnd, pReq->hdr.nVersion);
 	psz += lstrlenW(psz);
 
-	if (pReq->hdr.nCmd == CECMD_GETSHORTINFO || pReq->hdr.nCmd == CECMD_GETFULLINFO) {
-		lstrcpyW(psz, L"\n"); psz ++;
-		//LPBYTE ptr = pReq->Data;
-		// 1
-		wsprintf(psz, L"ConHwnd:    0x%08X\n", (DWORD)pReq->ConInfo.inf.hConWnd); psz += lstrlenW(psz);
-		// 2 - GetTickCount последнего чтения
-		wsprintf(psz, L"PacketID: %i\n", pReq->ConInfo.inf.nPacketId); psz += lstrlenW(psz);
-		// 3
-		lstrcpyW(psz, L"Processes:  {"); psz += lstrlenW(psz);
-		//if (dw) { lstrcpyW(psz, L" {"); psz += lstrlenW(psz); }
-		for (UINT n=0; n<countof(pReq->ConInfo.inf.nProcesses); n++) {
-			if (pReq->ConInfo.inf.nProcesses[n] == 0) break;
-			if (n) { lstrcpyW(psz, L","); psz++; }
-			wsprintf(psz, L"%i", pReq->ConInfo.inf.nProcesses[n]); psz += lstrlenW(psz);
-		}
-		lstrcpyW(psz, L"}\n"); psz += lstrlenW(psz);
-		// 4
-		CONSOLE_CURSOR_INFO ci = {0};
-		dw = pReq->ConInfo.inf.dwCiSize;
-		if (dw>0) {
-			memmove(&ci, &pReq->ConInfo.inf.ci, min(dw,sizeof(ci)));
-			wsprintf(psz, L"CursorInf:  size=%i, visible=%i\n", ci.dwSize, ci.bVisible); psz += lstrlenW(psz);
-		}
-		// 5, 6, 7
-		wsprintf(psz, L"ConsoleCP:  %i\n", pReq->ConInfo.inf.dwConsoleCP); psz += lstrlenW(psz);
-		wsprintf(psz, L"OutputCP:   %i\n", pReq->ConInfo.inf.dwConsoleOutputCP); psz += lstrlenW(psz);
-		wsprintf(psz, L"ConMode:    0x%08X\n", pReq->ConInfo.inf.dwConsoleMode); psz += lstrlenW(psz);
-		// 8
-		dw = pReq->ConInfo.inf.dwSbiSize;
-		if (dw>0) {
-			memmove(&sbi, &pReq->ConInfo.inf.sbi, min(dw,sizeof(sbi)));
-			lstrcpyW(psz, L"\nConsole window layout\n"); psz += lstrlenW(psz);
-			wsprintf(psz, L"  BufferSize: {%i x %i}%\n", sbi.dwSize.X, sbi.dwSize.Y); psz += lstrlenW(psz);
-			wsprintf(psz, L"  CursorPos:  {%i x %i}%\n", sbi.dwCursorPosition.X, sbi.dwCursorPosition.Y); psz += lstrlenW(psz);
-			wsprintf(psz, L"  MaxWndSize: {%i x %i}%\n", sbi.dwMaximumWindowSize.X, sbi.dwMaximumWindowSize.Y); psz += lstrlenW(psz);
-			wsprintf(psz, L"  WindowSize: {L=%i, T=%i, R=%i, B=%i}\n", sbi.srWindow.Left, sbi.srWindow.Top, sbi.srWindow.Right, sbi.srWindow.Bottom); psz += lstrlenW(psz);
-			lstrcpyW(psz, L"\n"); psz += lstrlenW(psz);
-		}
-		// 9
-		dw = pReq->ConInfo.dwRgnInfoSize;
-		if (dw>0) {
-			if (dw >= sizeof(CESERVER_CHAR)) {
-				pceChar = &pReq->ConInfo.RgnInfo.RgnInfo;
-				lstrcpyW(psz, L"\nConsole region changes\n"); psz += lstrlenW(psz);
-				sbi.dwSize.X = (pceChar->hdr.cr2.X-pceChar->hdr.cr1.X+1);
-				sbi.dwSize.Y = (pceChar->hdr.cr2.Y-pceChar->hdr.cr1.Y+1);
-				dwConDataBufSize = sbi.dwSize.X*sbi.dwSize.Y;
-				wsprintf(psz, L"  Region:    {L=%i, T=%i, R=%i, B=%i}  {%i x %i}\n",
-					pceChar->hdr.cr1.X, pceChar->hdr.cr1.Y, pceChar->hdr.cr2.X, pceChar->hdr.cr2.Y,
-					sbi.dwSize.X, sbi.dwSize.Y); psz += lstrlenW(psz);
-				wsprintf(psz, L"  FirstChar: '%c'\n", pceChar->data[0]); psz += lstrlenW(psz);
-				lstrcpyW(psz, L"Press 'PgDn' to display it\n"); psz += lstrlenW(psz);
-				pszConData = (wchar_t*)pceChar->data;
-				pnConData = (WORD*)(pszConData+dwConDataBufSize);
-			} else {
-				pceChar = NULL;
-				wsprintf(psz, L"\nInvalid length of CESERVER_CHAR (%i)\n", dw); psz += lstrlenW(psz);
-			}
-		} else {
-			// 10
-			dw = pReq->ConInfo.FullData.dwOneBufferSize;
-			if (dw != 0) {
-				dwConDataBufSize = dw;
-				dw = sbi.dwSize.X*sbi.dwSize.Y*2;
-				wsprintf(psz, L"Full console dump. Size: %i %s %i*%i*2\n", 
-					dwConDataBufSize, (dw==dwConDataBufSize) ? L"==" : L"<>", sbi.dwSize.X, sbi.dwSize.Y); 
-				psz += lstrlenW(psz);
-				lstrcpyW(psz, L"Press 'PgDn' to display it\n"); psz += lstrlenW(psz);
-				pszConData = (wchar_t*)pReq->ConInfo.FullData.Data;
-				pnConData = (WORD*)((LPBYTE)pszConData)+dwConDataBufSize;
-			}
-		}
-	} else {
-		int nMax = min(((UINT)(csbi.dwSize.X/4)),(pReq->hdr.nSize-sizeof(CESERVER_REQ_HDR)));
-		lstrcpyW(psz, L"\n\nPacket data:\n"); psz += lstrlenW(psz);
-		for (int i=0; i<nMax; i++) {
-			wsprintf(psz, L"%02X ", (BYTE)pReq->Data[i]); psz += 3;
-		}
-		lstrcpyW(psz, L"\n");
-	}
+	//if (/*pReq->hdr.nCmd == CECMD_GETSHORTINFO ||*/ pReq->hdr.nCmd == CECMD_GETFULLINFO) {
+	//	lstrcpyW(psz, L"\n"); psz ++;
+	//	//LPBYTE ptr = pReq->Data;
+	//	// 1
+	//	wsprintf(psz, L"ConHwnd:    0x%08X\n", (DWORD)pReq->ConInfo.inf.hConWnd); psz += lstrlenW(psz);
+	//	// 2 - GetTickCount последнего чтения
+	//	wsprintf(psz, L"PacketID: %i\n", pReq->ConInfo.inf.nPacketId); psz += lstrlenW(psz);
+	//	// 3
+	//	lstrcpyW(psz, L"Processes:  {"); psz += lstrlenW(psz);
+	//	//if (dw) { lstrcpyW(psz, L" {"); psz += lstrlenW(psz); }
+	//	for (UINT n=0; n<countof(pReq->ConInfo.inf.nProcesses); n++) {
+	//		if (pReq->ConInfo.inf.nProcesses[n] == 0) break;
+	//		if (n) { lstrcpyW(psz, L","); psz++; }
+	//		wsprintf(psz, L"%i", pReq->ConInfo.inf.nProcesses[n]); psz += lstrlenW(psz);
+	//	}
+	//	lstrcpyW(psz, L"}\n"); psz += lstrlenW(psz);
+	//	// 4
+	//	CONSOLE_CURSOR_INFO ci = {0};
+	//	dw = pReq->ConInfo.inf.dwCiSize;
+	//	if (dw>0) {
+	//		memmove(&ci, &pReq->ConInfo.inf.ci, min(dw,sizeof(ci)));
+	//		wsprintf(psz, L"CursorInf:  size=%i, visible=%i\n", ci.dwSize, ci.bVisible); psz += lstrlenW(psz);
+	//	}
+	//	// 5, 6, 7
+	//	wsprintf(psz, L"ConsoleCP:  %i\n", pReq->ConInfo.inf.dwConsoleCP); psz += lstrlenW(psz);
+	//	wsprintf(psz, L"OutputCP:   %i\n", pReq->ConInfo.inf.dwConsoleOutputCP); psz += lstrlenW(psz);
+	//	wsprintf(psz, L"ConMode:    0x%08X\n", pReq->ConInfo.inf.dwConsoleMode); psz += lstrlenW(psz);
+	//	// 8
+	//	dw = pReq->ConInfo.inf.dwSbiSize;
+	//	if (dw>0) {
+	//		memmove(&sbi, &pReq->ConInfo.inf.sbi, min(dw,sizeof(sbi)));
+	//		lstrcpyW(psz, L"\nConsole window layout\n"); psz += lstrlenW(psz);
+	//		wsprintf(psz, L"  BufferSize: {%i x %i}%\n", sbi.dwSize.X, sbi.dwSize.Y); psz += lstrlenW(psz);
+	//		wsprintf(psz, L"  CursorPos:  {%i x %i}%\n", sbi.dwCursorPosition.X, sbi.dwCursorPosition.Y); psz += lstrlenW(psz);
+	//		wsprintf(psz, L"  MaxWndSize: {%i x %i}%\n", sbi.dwMaximumWindowSize.X, sbi.dwMaximumWindowSize.Y); psz += lstrlenW(psz);
+	//		wsprintf(psz, L"  WindowSize: {L=%i, T=%i, R=%i, B=%i}\n", sbi.srWindow.Left, sbi.srWindow.Top, sbi.srWindow.Right, sbi.srWindow.Bottom); psz += lstrlenW(psz);
+	//		lstrcpyW(psz, L"\n"); psz += lstrlenW(psz);
+	//	}
+	//	// 9
+	//	dw = pReq->ConInfo.dwRgnInfoSize;
+	//	if (dw>0) {
+	//		if (dw >= sizeof(CESERVER_CHAR)) {
+	//			pceChar = &pReq->ConInfo.RgnInfo.RgnInfo;
+	//			lstrcpyW(psz, L"\nConsole region changes\n"); psz += lstrlenW(psz);
+	//			sbi.dwSize.X = (pceChar->hdr.cr2.X-pceChar->hdr.cr1.X+1);
+	//			sbi.dwSize.Y = (pceChar->hdr.cr2.Y-pceChar->hdr.cr1.Y+1);
+	//			dwConDataBufSize = sbi.dwSize.X*sbi.dwSize.Y;
+	//			wsprintf(psz, L"  Region:    {L=%i, T=%i, R=%i, B=%i}  {%i x %i}\n",
+	//				pceChar->hdr.cr1.X, pceChar->hdr.cr1.Y, pceChar->hdr.cr2.X, pceChar->hdr.cr2.Y,
+	//				sbi.dwSize.X, sbi.dwSize.Y); psz += lstrlenW(psz);
+	//			wsprintf(psz, L"  FirstChar: '%c'\n", pceChar->data[0]); psz += lstrlenW(psz);
+	//			lstrcpyW(psz, L"Press 'PgDn' to display it\n"); psz += lstrlenW(psz);
+	//			pszConData = (wchar_t*)pceChar->data;
+	//			pnConData = (WORD*)(pszConData+dwConDataBufSize);
+	//		} else {
+	//			pceChar = NULL;
+	//			wsprintf(psz, L"\nInvalid length of CESERVER_CHAR (%i)\n", dw); psz += lstrlenW(psz);
+	//		}
+	//	} else {
+	//		// 10
+	//		dw = pReq->ConInfo.FullData.dwOneBufferSize;
+	//		if (dw != 0) {
+	//			dwConDataBufSize = dw;
+	//			dw = sbi.dwSize.X*sbi.dwSize.Y*2;
+	//			wsprintf(psz, L"Full console dump. Size: %i %s %i*%i*2\n", 
+	//				dwConDataBufSize, (dw==dwConDataBufSize) ? L"==" : L"<>", sbi.dwSize.X, sbi.dwSize.Y); 
+	//			psz += lstrlenW(psz);
+	//			lstrcpyW(psz, L"Press 'PgDn' to display it\n"); psz += lstrlenW(psz);
+	//			pszConData = (wchar_t*)pReq->ConInfo.FullData.Data;
+	//			pnConData = (WORD*)((LPBYTE)pszConData)+dwConDataBufSize;
+	//		}
+	//	}
+	//} else {
+	//	int nMax = min(((UINT)(csbi.dwSize.X/4)),(pReq->hdr.nSize-sizeof(CESERVER_REQ_HDR)));
+	//	lstrcpyW(psz, L"\n\nPacket data:\n"); psz += lstrlenW(psz);
+	//	for (int i=0; i<nMax; i++) {
+	//		wsprintf(psz, L"%02X ", (BYTE)pReq->Data[i]); psz += 3;
+	//	}
+	//	lstrcpyW(psz, L"\n");
+	//}
 
 	r->EventType = WINDOW_BUFFER_SIZE_EVENT;
 

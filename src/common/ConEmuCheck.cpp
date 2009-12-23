@@ -206,6 +206,7 @@ CESERVER_REQ* ExecuteCmd(const wchar_t* szGuiPipeName, const CESERVER_REQ* pIn, 
 	hPipe = ExecuteOpenPipe(szGuiPipeName, szErr, NULL/*—юда хорошо бы им€ модул€ подкрутить*/);
 	if (hPipe == NULL || hPipe == INVALID_HANDLE_VALUE) {
 		#ifdef _DEBUG
+		//_ASSERTE(hPipe != NULL && hPipe != INVALID_HANDLE_VALUE);
 		if (hOwner) {
 			if (hOwner == GetConsoleWindow())
 				SetConsoleTitle(szErr);
@@ -266,7 +267,7 @@ CESERVER_REQ* ExecuteCmd(const wchar_t* szGuiPipeName, const CESERVER_REQ* pIn, 
 	fSuccess = TransactNamedPipe( 
 		hPipe,                  // pipe handle 
 		(LPVOID)pIn,            // message to server
-		pIn->hdr.nSize,             // message length 
+		pIn->hdr.nSize,         // message length 
 		cbReadBuf,              // buffer to receive reply
 		sizeof(cbReadBuf),      // size of read buffer
 		&cbRead,                // bytes read
@@ -277,6 +278,7 @@ CESERVER_REQ* ExecuteCmd(const wchar_t* szGuiPipeName, const CESERVER_REQ* pIn, 
 
 	if (!fSuccess && (dwErr != ERROR_MORE_DATA))
 	{
+		//_ASSERTE(fSuccess || (dwErr == ERROR_MORE_DATA));
 		CloseHandle(hPipe);
 		return NULL;
 	}

@@ -2546,6 +2546,7 @@ INT_PTR CConEmuMain::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARA
 				}
 			}
 
+
             SetClassLongPtr(hDlg, GCLP_HICON, (LONG)hClassIcon);
             if (pArgs->bRecreate) {
                 //GCC hack. иначе не собирается
@@ -2784,7 +2785,7 @@ void CConEmuMain::StartDebugLogConsole()
 	WCHAR  szExe[0x200] = {0};
 	BOOL lbRc = FALSE;
 	
-	DWORD nLen = 0;
+	//DWORD nLen = 0;
 	PROCESS_INFORMATION pi; memset(&pi, 0, sizeof(pi));
 	STARTUPINFO si; memset(&si, 0, sizeof(si));
 	si.cb = sizeof(si);
@@ -2799,7 +2800,8 @@ void CConEmuMain::StartDebugLogConsole()
 	{
 		// Хорошо бы ошибку показать?
 		DWORD dwErr = GetLastError();
-		MBoxA(L"Can't create debugger console!");
+		wchar_t szErr[128]; wsprintf(szErr, L"Can't create debugger console! ErrCode=0x%08X", dwErr);
+		MBoxA(szErr);
 	} else {
 		gbDebugLogStarted = TRUE;
 		lbRc = TRUE;
@@ -3811,7 +3813,7 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
         		if (!hFile) {
         			DWORD dwErr = GetLastError();
         			wchar_t* pszErrMsg = (wchar_t*)calloc(lstrlen(pszCmd)+100,2);
-        			lstrcpy(pszErrMsg, L"Can't open console batch file:\n«"); lstrcat(pszErrMsg, pszCmd+1); lstrcat(pszErrMsg, L"»");
+        			lstrcpy(pszErrMsg, L"Can't open console batch file:\n\xAB"/*«*/); lstrcat(pszErrMsg, pszCmd+1); lstrcat(pszErrMsg, L"\xBB"/*»*/);
 	                DisplayLastError(pszErrMsg, dwErr);
 	                free(pszErrMsg);
 	                Destroy();
@@ -3822,7 +3824,7 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
         			DWORD dwErr = GetLastError();
         			CloseHandle(hFile);
         			wchar_t* pszErrMsg = (wchar_t*)calloc(lstrlen(pszCmd)+100,2);
-        			lstrcpy(pszErrMsg, L"Console batch file is too large or empty:\n«"); lstrcat(pszErrMsg, pszCmd+1); lstrcat(pszErrMsg, L"»");
+        			lstrcpy(pszErrMsg, L"Console batch file is too large or empty:\n\xAB"/*«*/); lstrcat(pszErrMsg, pszCmd+1); lstrcat(pszErrMsg, L"\xBB"/*»*/);
 	                DisplayLastError(pszErrMsg, dwErr);
 	                free(pszErrMsg);
 	                Destroy();
@@ -3837,7 +3839,7 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
         		if (!lbRead || nRead != nSize) {
         			free(pszDataA);
         			wchar_t* pszErrMsg = (wchar_t*)calloc(lstrlen(pszCmd)+100,2);
-        			lstrcpy(pszErrMsg, L"Reading console batch file failed:\n«"); lstrcat(pszErrMsg, pszCmd+1); lstrcat(pszErrMsg, L"»");
+        			lstrcpy(pszErrMsg, L"Reading console batch file failed:\n\xAB"/*«*/); lstrcat(pszErrMsg, pszCmd+1); lstrcat(pszErrMsg, L"\xBB"/*»*/);
 	                DisplayLastError(pszErrMsg, dwErr);
 	                free(pszErrMsg);
 	                Destroy();
@@ -5013,7 +5015,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	                mp_VActive->RCon()->LogString(szLog);
                     
                     //SetTimer(hWnd, 1, 300, 0); -- Maximus5, откажемся от таймера
-                    mouse.RClkTick = timeGetTime(); //GetTickCount();
+                    mouse.RClkTick = TimeGetTime(); //GetTickCount();
                     return 0;
                 }
             }
@@ -5029,7 +5031,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
                     //держали зажатой <.3
                     //убьем таймер, кликнием правой кнопкой
                     //KillTimer(hWnd, 1); -- Maximus5, таймер более не используется
-                    DWORD dwCurTick = timeGetTime(); //GetTickCount();
+                    DWORD dwCurTick = TimeGetTime(); //GetTickCount();
                     DWORD dwDelta=dwCurTick-mouse.RClkTick;
                     // Если держали дольше .3с, но не слишком долго :)
                     if ((gSet.isRClickSendKey==1) ||
@@ -5181,6 +5183,24 @@ fin:
     //POSTMESSAGE(ghConWnd, messg == WM_RBUTTONDBLCLK ? WM_RBUTTONDOWN : messg, wParam, MAKELPARAM( newX, newY ), FALSE);
     mp_VActive->RCon()->OnMouse(messg == WM_RBUTTONDBLCLK ? WM_RBUTTONDOWN : messg, wParam, ptCur.x, ptCur.y);
     return 0;
+}
+
+LRESULT CConEmuMain::OnSetCursor(WPARAM wParam, LPARAM lParam)
+{
+	if (((HWND)wParam) == ghWnd && (LOWORD(lParam) == HTCLIENT)) {
+		CRealConsole *pRCon = mp_VActive->RCon();
+		if (pRCon) {
+			if (!pRCon->isAlive()) {
+				static HCURSOR hWait = NULL;
+				if (!hWait)
+					hWait = LoadCursor(NULL, IDC_APPSTARTING);
+				WARNING("Что-то не срабатывает isAlive");
+				//SetCursor(hWait);
+				//return TRUE;
+			}
+		}
+	}
+	return FALSE;
 }
 
 LRESULT CConEmuMain::OnShellHook(WPARAM wParam, LPARAM lParam)
@@ -6171,6 +6191,11 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			CtrlWinAltSpace();
 		}
 		return 0;
+
+	case WM_SETCURSOR:
+		result = gConEmu.OnSetCursor(wParam, lParam);
+		// If an application processes this message, it should return TRUE to halt further processing or FALSE to continue.
+		return result;
 
     case WM_DESTROY:
         result = gConEmu.OnDestroy(hWnd);

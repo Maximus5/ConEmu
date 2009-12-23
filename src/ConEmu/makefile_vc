@@ -35,7 +35,7 @@
 !include $(DEFFILE)
 !endif
 
-NAME = ConEmuC
+NAME = ConEmu
 
 !if defined(AMD64) || "$(CPU)" == "AMD64" || "$(PLATFORM)" == "x64"
 !undef CPU
@@ -96,22 +96,30 @@ INTDIR=$(INTDIR)log
 
 CODDIR=$(OUTDIR)\cod
 
-DEF_FILE = ".\$(NAME).def"
+#DEF_FILE = ".\$(NAME).def"
 
 RES_FILE = "$(INTDIR)\$(NAME).res"
 
 #PCH_FILE = "$(INTDIR)\headers.pch"
 
 LINK_OBJS = \
-$(INTDIR)\ConEmuC.obj \
-$(INTDIR)\ConEmuSrv.obj \
-$(INTDIR)\execute.obj \
-$(INTDIR)\setconsoleinfo.obj \
+$(INTDIR)\BaseDragDrops.obj \
+$(INTDIR)\ConEmu.obj \
+$(INTDIR)\ConEmuApp.obj \
+$(INTDIR)\ConEmuChild.obj \
+$(INTDIR)\ConEmuPipe.obj \
+$(INTDIR)\DragDrop.obj \
+$(INTDIR)\Options.obj \
+$(INTDIR)\RealConsole.obj \
+$(INTDIR)\ScreenDump.obj \
+$(INTDIR)\TabBar.obj \
+$(INTDIR)\TrayIcon.obj \
+$(INTDIR)\VirtualConsole.obj \
 $(INTDIR)\Common.obj \
 $(INTDIR)\ConEmuCheck.obj
 
 
-LINK_LIBS=kernel32.lib user32.lib winspool.lib advapi32.lib shell32.lib mpr.lib ole32.lib secur32.lib gdi32.lib
+LINK_LIBS=kernel32.lib user32.lib winspool.lib advapi32.lib shell32.lib mpr.lib ole32.lib secur32.lib gdi32.lib version.lib shlwapi.lib comctl32.lib Comdlg32.lib Winmm.lib
 
 DEFINES=\
 	/DUNICODE \
@@ -123,10 +131,11 @@ DEFINES=\
 	/D_CRT_NON_CONFORMING_SWPRINTFS
 
 # common
-CPPFLAGS=/nologo $(MP) /W3 $(FARSYSLOG) /EHs-c- $(DEFINES) /GS- /GR- /Gy /GF /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /J /c /FAcs /Fa"$(CODDIR)\\"
-LINKFLAGS=/nologo /subsystem:console /def:"$(DEF_FILE)" /out:"$(OUTDIR)\$(NAME).exe" /map:"$(OUTDIR)\$(NAME).map" /pdb:"$(OUTDIR)\$(NAME).pdb" /release /nxcompat
+CPPFLAGS=/nologo $(MP) /W3 $(FARSYSLOG) /EHsc $(DEFINES) /GS- /GR- /Gy /GF /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /J /c /FAcs /Fa"$(CODDIR)\\"
+LINKFLAGS=/nologo /subsystem:WINDOWS /out:"$(OUTDIR)\$(NAME).exe" /map:"$(OUTDIR)\$(NAME).map" /pdb:"$(OUTDIR)\$(NAME).pdb" /release /nxcompat
 ULINKFLAGS=-q -m- -ap -Gz -O- -o- -Gh -Gh-
-RFLAGS=$(RCWIN64) /l 0x409 /fo"$(RES_FILE)" /d $(USEDEBUG)
+#__GNUC__ чтобы манифест включился
+RFLAGS=$(RCWIN64) /D__GNUC__ /l 0x409 /fo"$(RES_FILE)" /d $(USEDEBUG)
 
 # config-cpecific
 !ifdef DEBUG
@@ -185,7 +194,7 @@ AllDirs:
 	if not exist "$(INTDIR)\" mkdir "$(INTDIR)"
 	if not exist "$(CODDIR)\" mkdir "$(CODDIR)"
 
-"$(OUTDIR)\$(NAME).exe": $(DEF_FILE) $(LINK_OBJS) $(RES_FILE) $(NAME).exe.manifest $(NAME).rc
+"$(OUTDIR)\$(NAME).exe": $(DEF_FILE) $(LINK_OBJS) $(RES_FILE) conemu.gcc.manifest
 	echo linking $@
 !ifndef LINK_ULINK
 	$(LINK) @<<
@@ -234,9 +243,9 @@ AllDirs:
 #	$(CPPFLAGS) $<
 #<<
 
-$(RES_FILE): $(NAME).rc ..\ConEmu\Version.h
+$(RES_FILE): ConEmu.rc ..\ConEmu\Version.h
 	echo compiling resource file
-	$(RC) $(RFLAGS) $(NAME).rc
+	$(RC) $(RFLAGS) ConEmu.rc
 
 #!ifdef USEDEPS
 #!include "$(DEPFILE)"
@@ -252,13 +261,29 @@ MSG=echo generating $@
 #	$(MSG)
 #	$(M4) $@.m4 > $@
 
-$(INTDIR)\ConEmuC.obj: ConEmuC.cpp ConEmuC.h ..\common\Common.hpp
+$(INTDIR)\BaseDragDrops.obj: BaseDragDrops.cpp
 
-$(INTDIR)\ConEmuSrv.obj: ConEmuSrv.cpp ConEmuC.h ..\common\Common.hpp
+$(INTDIR)\ConEmu.obj: ConEmu.cpp
 
-$(INTDIR)\execute.obj: execute.cpp
+$(INTDIR)\ConEmuApp.obj: ConEmuApp.cpp
 
-$(INTDIR)\setconsoleinfo.obj: ..\ConEmuPlugin\setconsoleinfo.cpp
+$(INTDIR)\ConEmuChild.obj: ConEmuChild.cpp
+
+$(INTDIR)\ConEmuPipe.obj: ConEmuPipe.cpp
+
+$(INTDIR)\DragDrop.obj: DragDrop.cpp
+
+$(INTDIR)\Options.obj: Options.cpp
+
+$(INTDIR)\RealConsole.obj: RealConsole.cpp RealConsole.h  ..\common\Common.hpp
+
+$(INTDIR)\ScreenDump.obj: ScreenDump.cpp
+
+$(INTDIR)\TabBar.obj: TabBar.cpp
+
+$(INTDIR)\TrayIcon.obj: TrayIcon.cpp
+
+$(INTDIR)\VirtualConsole.obj: VirtualConsole.cpp
 
 $(INTDIR)\Common.obj: ..\common\Common.cpp ..\common\Common.hpp
 

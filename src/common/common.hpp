@@ -101,13 +101,17 @@ extern wchar_t gszDbgModLabel[6];
 #define CESERVERINPUTNAME   L"\\\\%s\\pipe\\ConEmuSrvInput%u" // ConEmuC_PID
 #define CEGUIPIPENAME       L"\\\\%s\\pipe\\ConEmuGui%u"      // GetConsoleWindow() // необходимо, чтобы плагин мог общатьс€ с GUI
 #define CEPLUGINPIPENAME    L"\\\\%s\\pipe\\ConEmuPlugin%u"   // Far_PID
+//
+//#define MAXCONMAPCELLS      (600*400)
+#define CECONMAPNAME        L"ConEmuFileMapping.%08X"
+//#define CECONMAPNAMESIZE    (sizeof(CESERVER_REQ_CONINFO)+(MAXCONMAPCELLS*sizeof(CHAR_INFO)))
 //#define CEGUIATTACHED       L"ConEmuGuiAttached.%u"
 #define CEGUIRCONSTARTED    L"ConEmuGuiRConStarted.%u"
 #define CEGUI_ALIVE_EVENT   L"ConEmuGuiStarted"
 //#define CESIGNAL_C          L"ConEmuC_C_Signal.%u"
 //#define CESIGNAL_BREAK      L"ConEmuC_Break_Signal.%u"
-#define CECMD_GETSHORTINFO  1
-#define CECMD_GETFULLINFO   2
+//#define CECMD_GETSHORTINFO  1
+#define CECMD_GETCONSOLEINFO   2 // было CECMD_GETFULLINFO
 #define CECMD_SETSIZE       3
 #define CECMD_CMDSTARTSTOP  4 // 0 - ServerStart, 1 - ServerStop, 2 - ComspecStart, 3 - ComspecStop
 #define CECMD_GETGUIHWND    5
@@ -127,7 +131,7 @@ extern wchar_t gszDbgModLabel[6];
 #define CECMD_FARLOADED     19 // ѕосылаетс€ плагином в сервер
 #define CECMD_SHOWCONSOLE   20 // ¬ Win7 релизе нельз€ скрывать окно консоли, запущенной в режиме администратора
 #define CECMD_POSTCONMSG    21 // ¬ Win7 релизе нельз€ посылать сообщени€ окну консоли, запущенной в режиме администратора
-#define CECMD_REQUESTFULLINFO 22
+#define CECMD_REQUESTCONSOLEINFO 22 // было CECMD_REQUESTFULLINFO
 #define CECMD_SETFOREGROUND 23
 #define CECMD_FLASHWINDOW   24
 #define CECMD_SETCONSOLECP  25
@@ -260,7 +264,13 @@ typedef struct tag_CESERVER_REQ_FULLCONDATA {
 
 typedef struct tag_CESERVER_REQ_CONINFO_HDR {
 	/* 1*/HWND2 hConWnd;
+	      DWORD nCurDataMapIdx; // суффикс дл€ текущего MAP файла с данными
+	      DWORD nCurDataMaxSize; // ћаксимальный размер буфера nCurDataMapIdx
 	/* 2*/DWORD nPacketId;
+	      DWORD nFarUpdateTick0;// GetTickCount(), устанавливаетс€ в начале обновлени€ консоли из фара (вдруг что свалитс€...)
+	      DWORD nFarUpdateTick; // GetTickCount(), когда консоль была обновлена в последний раз из фара
+	      DWORD nFarReadTick;   // GetTickCount(), когда фар в последний раз позвал (Read|Peek)ConsoleInput или GetConsoleInputCount
+		  DWORD nSrvUpdateTick; // GetTickCount(), когда консоль была считана в последний раз в сервере
 	      DWORD nInputTID;
 	/* 3*/DWORD nProcesses[20];
     /* 4*/DWORD dwCiSize;
@@ -272,14 +282,14 @@ typedef struct tag_CESERVER_REQ_CONINFO_HDR {
 	      CONSOLE_SCREEN_BUFFER_INFO sbi;
 } CESERVER_REQ_CONINFO_HDR;
 
-typedef struct tag_CESERVER_REQ_CONINFO {
-	CESERVER_REQ_CONINFO_HDR inf;
-    union {
-	/* 9*/DWORD dwRgnInfoSize;
-	      CESERVER_REQ_RGNINFO RgnInfo;
-    /*10*/CESERVER_REQ_FULLCONDATA FullData;
-	};
-} CESERVER_REQ_CONINFO;
+//typedef struct tag_CESERVER_REQ_CONINFO {
+//	CESERVER_REQ_CONINFO_HDR inf;
+//    union {
+//	/* 9*/DWORD dwRgnInfoSize;
+//	      CESERVER_REQ_RGNINFO RgnInfo;
+//    /*10*/CESERVER_REQ_FULLCONDATA FullData;
+//	};
+//} CESERVER_REQ_CONINFO;
 
 typedef struct tag_CESERVER_REQ_SETSIZE {
 	USHORT nBufferHeight; // 0 или высота буфера (режим с прокруткой)
@@ -357,7 +367,7 @@ typedef struct tag_CESERVER_REQ {
 		WORD    wData[1];
 		DWORD   dwData[1];
 		u64     qwData[1];
-		CESERVER_REQ_CONINFO ConInfo; // Informational only! Some fields ARE VARIABLE LENGTH
+		CESERVER_REQ_CONINFO_HDR ConInfo;
 		CESERVER_REQ_SETSIZE SetSize;
 		CESERVER_REQ_RETSIZE SetSizeRet;
 		CESERVER_REQ_OUTPUTFILE OutputFile;
