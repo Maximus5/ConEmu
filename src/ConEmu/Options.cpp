@@ -1270,7 +1270,7 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
     case IDCLOSE:
         if (isTabs==1) gConEmu.ForceShowTabs(TRUE); else
         if (isTabs==0) gConEmu.ForceShowTabs(FALSE); else
-			TabBar.Update();
+			gConEmu.mp_TabBar->Update();
         SendMessage(ghOpWnd, WM_CLOSE, 0, 0);
         break;
 

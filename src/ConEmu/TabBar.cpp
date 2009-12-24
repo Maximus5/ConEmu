@@ -13,7 +13,7 @@ WARNING("не меняются табы при переключении на другую консоль");
 
 TODO("Для WinXP можно поиграться стилем WS_EX_COMPOSITED");
 
-TabBarClass TabBar;
+//TabBarClass TabBar;
 //const int TAB_FONT_HEIGTH = 16;
 //wchar_t TAB_FONT_FACE[] = L"Tahoma";
 WNDPROC TabBarClass::_defaultTabProc = NULL;
@@ -31,6 +31,8 @@ typedef BOOL (WINAPI* FAppThemed)();
 
 #define TID_CREATE_CON   13
 #define TID_BUFFERHEIGHT 14
+
+typedef long (WINAPI* ThemeFunction_t)();
 
 TabBarClass::TabBarClass()
 {
@@ -51,6 +53,34 @@ TabBarClass::TabBarClass()
     ms_TmpTabText[0] = 0;
 	mn_CurSelTab = 0;
 	mn_ThemeHeightDiff = 0;
+	mn_InUpdate = 0;
+	mb_ThemingEnabled = FALSE;
+	mh_TabTip = NULL;
+}
+
+void TabBarClass::CheckTheming()
+{
+	static bool bChecked = false;
+	if (bChecked) return;
+	bChecked = true;
+
+	if (gOSVer.dwMajorVersion >= 6 || (gOSVer.dwMajorVersion == 5 && gOSVer.dwMinorVersion >= 1)) {
+		ThemeFunction_t fIsAppThemed = NULL;
+		ThemeFunction_t fIsThemeActive = NULL;
+		HMODULE hUxTheme = GetModuleHandle ( L"UxTheme.dll" );
+		if (hUxTheme)
+		{
+			fIsAppThemed = (ThemeFunction_t)GetProcAddress(hUxTheme, "IsAppThemed");
+			fIsThemeActive = (ThemeFunction_t)GetProcAddress(hUxTheme, "IsThemeActive");
+			if (fIsAppThemed && fIsThemeActive)
+			{
+				long llThemed = fIsAppThemed();
+				long llActive = fIsThemeActive();
+				if (llThemed && llActive)
+					mb_ThemingEnabled = TRUE;
+			}
+		}
+	}
 }
 
 //void TabBarClass::Enable(BOOL abEnabled)
@@ -93,7 +123,7 @@ void TabBarClass::Reset()
     tab.Pos=0;
     tab.Current=1;
     tab.Type = 1;*/
-    //TabBar.Update(&tab, 1);
+    //gConEmu.mp_TabBar->Update(&tab, 1);
     Update();
 }
 
@@ -314,9 +344,9 @@ LRESULT CALLBACK TabBarClass::ReBarProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPA
 	{
 	case WM_WINDOWPOSCHANGING:
 		{
-			if (TabBar._tabHeight) {
+			if (gConEmu.mp_TabBar->_tabHeight) {
 				LPWINDOWPOS pos = (LPWINDOWPOS)lParam;
-				pos->cy = TabBar._tabHeight;
+				pos->cy = gConEmu.mp_TabBar->_tabHeight;
 				return 0;
 			}
 		}
@@ -335,10 +365,15 @@ LRESULT CALLBACK TabBarClass::TabProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARA
     {
     case WM_WINDOWPOSCHANGING:
         {
-        	if (TabBar.mh_Rebar) {
+        	if (gConEmu.mp_TabBar->mh_Rebar) {
 	        	LPWINDOWPOS pos = (LPWINDOWPOS)lParam;
-	            pos->y = 2; // иначе в Win7 он смещается в {0x0} и снизу видна некрасивая полоса
-				pos->cy = TabBar._tabHeight-3; // на всякий случай
+				if (gConEmu.mp_TabBar->mb_ThemingEnabled) {
+		            pos->y = 2; // иначе в Win7 он смещается в {0x0} и снизу видна некрасивая полоса
+					pos->cy = gConEmu.mp_TabBar->_tabHeight -3; // на всякий случай
+				} else {
+					pos->y = 1;
+					pos->cy = gConEmu.mp_TabBar->_tabHeight + 1;
+				}
 	            return 0;
             }
             break;
@@ -346,7 +381,7 @@ LRESULT CALLBACK TabBarClass::TabProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARA
     case WM_MBUTTONUP:
     case WM_RBUTTONUP:
         {
-            TabBar.OnMouse(uMsg, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+            gConEmu.mp_TabBar->OnMouse(uMsg, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
             return 0;
         }
     case WM_SETFOCUS:
@@ -365,7 +400,7 @@ LRESULT CALLBACK TabBarClass::BarProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARA
     case WM_WINDOWPOSCHANGING:
         {
         	LPWINDOWPOS pos = (LPWINDOWPOS)lParam;
-            pos->y = (TabBar.mn_ThemeHeightDiff == 0) ? 1 : 0;
+            pos->y = (gConEmu.mp_TabBar->mn_ThemeHeightDiff == 0) ? 1 : 0;
             return 0;
         }
     }
@@ -420,8 +455,8 @@ void TabBarClass::Deactivate()
 void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
 {
 	#ifdef _DEBUG
-	if (this != &TabBar) {
-		_ASSERTE(this == &TabBar);
+	if (this != gConEmu.mp_TabBar) {
+		_ASSERTE(this == gConEmu.mp_TabBar);
 	}
 	#endif
 
@@ -466,13 +501,13 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
 	_ASSERTE(m_Tab2VCon.size()==0);
 
 	#ifdef _DEBUG
-	if (this != &TabBar) {
-		_ASSERTE(this == &TabBar);
+	if (this != gConEmu.mp_TabBar) {
+		_ASSERTE(this == gConEmu.mp_TabBar);
 	}
 	#endif
 
 	MCHKHEAP
-	if (!TabBar.IsActive() && gSet.isTabs) {
+	if (!gConEmu.mp_TabBar->IsActive() && gSet.isTabs) {
 		int nTabs = 0;
 		for (V = 0; V < MAX_CONSOLE_COUNT && nTabs < 2; V++) {
 			_ASSERTE(m_Tab2VCon.size()==0);
@@ -486,7 +521,7 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
 			Activate();
 			_ASSERTE(m_Tab2VCon.size()==0);
 		}
-	} else if (TabBar.IsActive() && gSet.isTabs==2) {
+	} else if (gConEmu.mp_TabBar->IsActive() && gSet.isTabs==2) {
 		int nTabs = 0;
 		for (V = 0; V < MAX_CONSOLE_COUNT && nTabs < 2; V++) {
 			_ASSERTE(m_Tab2VCon.size()==0);
@@ -503,8 +538,8 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
 	}
 
 	#ifdef _DEBUG
-	if (this != &TabBar) {
-		_ASSERTE(this == &TabBar);
+	if (this != gConEmu.mp_TabBar) {
+		_ASSERTE(this == gConEmu.mp_TabBar);
 	}
 	#endif
 
@@ -523,8 +558,8 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
 				_ASSERTE(m_Tab2VCon.size()==0);
 			}
 
-			if (this != &TabBar) {
-				_ASSERTE(this == &TabBar);
+			if (this != gConEmu.mp_TabBar) {
+				_ASSERTE(this == gConEmu.mp_TabBar);
 			}
 			MCHKHEAP;
 			#endif
@@ -533,8 +568,8 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
 				break;
 
 			#ifdef _DEBUG
-			if (this != &TabBar) {
-				_ASSERTE(this == &TabBar);
+			if (this != gConEmu.mp_TabBar) {
+				_ASSERTE(this == gConEmu.mp_TabBar);
 			}
 			MCHKHEAP;
 			#endif
@@ -560,8 +595,8 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
             tabIdx++;
 
 			#ifdef _DEBUG
-			if (this != &TabBar) {
-				_ASSERTE(this == &TabBar);
+			if (this != gConEmu.mp_TabBar) {
+				_ASSERTE(this == gConEmu.mp_TabBar);
 			}
 			#endif
         }
@@ -908,7 +943,7 @@ void TabBarClass::OnMouse(int message, int x, int y)
 
 void TabBarClass::Invalidate()
 {
-    if (TabBar.IsActive())
+    if (gConEmu.mp_TabBar->IsActive())
         InvalidateRect(mh_Rebar, NULL, TRUE);
 }
 
@@ -950,6 +985,8 @@ void TabBarClass::OnBufferHeight(BOOL abBufferHeight)
 
 HWND TabBarClass::CreateToolbar()
 {
+	CheckTheming();
+
     if (!mh_Rebar || !gSet.isMulti)
         return NULL; // нет табов - нет и тулбара
     if (mh_Toolbar)
@@ -1005,6 +1042,8 @@ HWND TabBarClass::CreateToolbar()
 
 HWND TabBarClass::CreateTabbar()
 {
+	CheckTheming();
+
     if (!mh_Rebar)
         return NULL; // нет табов - нет и тулбара
     if (mh_Tabbar)
@@ -1084,6 +1123,7 @@ void TabBarClass::CreateRebar()
 {
     RECT rcWnd; GetClientRect(ghWnd, &rcWnd);
 
+	CheckTheming();
 
     if (NULL == (mh_Rebar = CreateWindowEx(WS_EX_TOOLWINDOW, REBARCLASSNAME, NULL,
                 WS_VISIBLE |WS_CHILD|WS_VISIBLE|WS_CLIPSIBLINGS|WS_CLIPCHILDREN|
@@ -1183,8 +1223,8 @@ void TabBarClass::CreateRebar()
 void TabBarClass::PrepareTab(ConEmuTab* pTab)
 {
 	#ifdef _DEBUG
-	if (this != &TabBar) {
-		_ASSERTE(this == &TabBar);
+	if (this != gConEmu.mp_TabBar) {
+		_ASSERTE(this == gConEmu.mp_TabBar);
 	}
 	#endif
 

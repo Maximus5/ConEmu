@@ -1,7 +1,7 @@
 
 #pragma once
 
-#define HDCWND ghWndDC
+//#define HDCWND ghWndDC
 
 #ifndef __ITaskbarList3_FWD_DEFINED__
 #define __ITaskbarList3_FWD_DEFINED__
@@ -34,6 +34,7 @@ typedef interface ITaskbarList3 ITaskbarList3;
 
 class CConEmuChild;
 class CConEmuBack;
+class TabBarClass;
 
 WARNING("Проверить, чтобы DC нормально центрировалось после удаления CEM_BACK");
 enum ConEmuMargins {
@@ -73,6 +74,7 @@ public:
 public:
 	CConEmuChild m_Child;
 	CConEmuBack  m_Back;
+	TabBarClass *mp_TabBar;
 	//POINT cwShift; // difference between window size and client area size for main ConEmu window
 	POINT ptFullScreenSize; // size for GetMinMaxInfo in Fullscreen mode
 	//DWORD gnLastProcessCount;
@@ -136,6 +138,8 @@ protected:
 	CVirtualConsole *mp_VCon[MAX_CONSOLE_COUNT];
 	CVirtualConsole *mp_VActive, *mp_VCon1, *mp_VCon2;
 	bool mb_SkipSyncSize, mb_PassSysCommand;
+	BOOL mb_WaitCursor;
+	HCURSOR mh_CursorWait, mh_CursorArrow, mh_CursorAppStarting;
 	//wchar_t *mpsz_RecreateCmd;
 	ITaskbarList3 *mp_TaskBar;
 	typedef BOOL (WINAPI* FRegisterShellHookWindow)(HWND);
@@ -253,6 +257,7 @@ public:
 	void ReSize(BOOL abCorrect2Ideal = FALSE);
 	BOOL RunSingleInstance();
 	void SetConsoleWindowSize(const COORD& size, bool updateInfo);
+	void SetWaitCursor(BOOL abWait);
 	bool SetWindowMode(uint inMode);
 	void ShowOldCmdVersion(DWORD nCmd, DWORD nVersion, int bFromServer);
 	void ShowSysmenu(HWND Wnd, HWND Owner, int x, int y);

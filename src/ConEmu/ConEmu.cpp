@@ -12,6 +12,7 @@
 #define DEBUGSTRTABS(s) //DEBUGSTR(s)
 #define DEBUGSTRLANG(s) //DEBUGSTR(s)// ; Sleep(2000)
 #define DEBUGSTRMOUSE(s) //DEBUGSTR(s)
+#define DEBUGSTRSETCURSOR(s) //DEBUGSTR(s)
 
 #define PROCESS_WAIT_START_TIME 1000
 
@@ -40,6 +41,7 @@
 
 CConEmuMain::CConEmuMain()
 {
+	mp_TabBar = NULL;
 	ms_ConEmuAliveEvent[0] = 0;	mb_AliveInitialized = FALSE; mh_ConEmuAliveEvent = NULL; mb_ConEmuAliveOwned = FALSE;
 
     mn_MainThreadId = GetCurrentThreadId();
@@ -76,6 +78,10 @@ CConEmuMain::CConEmuMain()
 	mn_InResize = 0;
 	mb_MouseCaptured = FALSE;
 	mb_HotKeyRegistered = FALSE;
+	mb_WaitCursor = FALSE;
+	mh_CursorWait = LoadCursor(NULL, IDC_WAIT);
+	mh_CursorArrow = LoadCursor(NULL, IDC_ARROW);
+	mh_CursorAppStarting = LoadCursor(NULL, IDC_APPSTARTING);
 
     memset(&mouse, 0, sizeof(mouse));
     mouse.lastMMW=-1;
@@ -163,6 +169,9 @@ CConEmuMain::CConEmuMain()
 
 BOOL CConEmuMain::Init()
 {
+	_ASSERTE(mp_TabBar == NULL);
+	mp_TabBar = new TabBarClass();
+
     //#pragma message("Win2k: EVENT_CONSOLE_START_APPLICATION, EVENT_CONSOLE_END_APPLICATION")
     //Ќас интересуют только START и END. ¬се остальные событи€ приход€т от ConEmuC через серверный пайп
     //#if defined(__GNUC__)
@@ -296,6 +305,11 @@ CConEmuMain::~CConEmuMain()
     //    ProgressBars = NULL;
     //}
     
+	if (mp_TabBar) {
+		delete mp_TabBar;
+		mp_TabBar = NULL;
+	}
+
     CommonShutdown();
 }
 
@@ -403,10 +417,10 @@ RECT CConEmuMain::CalcMargins(enum ConEmuMargins mg)
 		case CEM_TABDEACTIVATE:
         {
             if (ghWnd) {
-				bool lbTabActive = (mg == CEM_TAB) ? TabBar.IsActive() : (mg == CEM_TABACTIVATE);
+				bool lbTabActive = (mg == CEM_TAB) ? gConEmu.mp_TabBar->IsActive() : (mg == CEM_TABACTIVATE);
                 // √лавное окно уже создано, наличие таба определено
                 if (lbTabActive) { //TODO: + IsAllowed()?
-                    rc = TabBar.GetMargins();
+                    rc = gConEmu.mp_TabBar->GetMargins();
                 } else {
                     rc = MakeRect(0,0); // раз таба нет - значит дополнительные отступы не нужны
                 }
@@ -771,10 +785,10 @@ RECT CConEmuMain::MapRect(RECT rFrom, BOOL bFrame2Client)
 //{
 //    RECT rect; memset(&rect, 0, sizeof(rect));
 //
-//  if (TabBar.IsActive())
-//      rect = TabBar.GetMargins();
+//  if (gConEmu.mp_TabBar->IsActive())
+//      rect = gConEmu.mp_TabBar->GetMargins();
 //
-//  /*rect.top = TabBar.IsActive()?TabBar.Height():0;
+//  /*rect.top = gConEmu.mp_TabBar->IsActive()?gConEmu.mp_TabBar->Height():0;
 //    rect.left = 0;
 //    rect.bottom = 0;
 //    rect.right = 0;*/
@@ -790,9 +804,9 @@ RECT CConEmuMain::MapRect(RECT rFrom, BOOL bFrame2Client)
 //      rect = *pClient;
 //  else
 //      GetClientRect(ghWnd, &rect);
-//  if (TabBar.IsActive()) {
-//      RECT mr = TabBar.GetMargins();
-//      //rect.top += TabBar.Height();
+//  if (gConEmu.mp_TabBar->IsActive()) {
+//      RECT mr = gConEmu.mp_TabBar->GetMargins();
+//      //rect.top += gConEmu.mp_TabBar->Height();
 //      rect.top += mr.top;
 //      rect.left += mr.left;
 //      rect.right -= mr.right;
@@ -1215,6 +1229,7 @@ bool CConEmuMain::SetWindowMode(uint inMode)
     mb_PassSysCommand = false;
     lbRc = true;
 wrap:
+	SetCursor(LoadCursor(NULL,IDC_ARROW));
     change2WindowMode = -1;
     return lbRc;
 }
@@ -1225,21 +1240,21 @@ void CConEmuMain::ForceShowTabs(BOOL abShow)
     //  return;
 
     //2009-05-20 –аз это Force - значит на возможность получить табы из фара забиваем! ƒл€ консоли показываетс€ "Console"
-    BOOL lbTabsAllowed = abShow /*&& TabBar.IsAllowed()*/;
+    BOOL lbTabsAllowed = abShow /*&& gConEmu.mp_TabBar->IsAllowed()*/;
 
-    if (abShow && !TabBar.IsShown() && gSet.isTabs && lbTabsAllowed)
+    if (abShow && !gConEmu.mp_TabBar->IsShown() && gSet.isTabs && lbTabsAllowed)
     {
-        TabBar.Activate();
+        gConEmu.mp_TabBar->Activate();
         //ConEmuTab tab; memset(&tab, 0, sizeof(tab));
         //tab.Pos=0;
         //tab.Current=1;
         //tab.Type = 1;
-        //TabBar.Update(&tab, 1);
+        //gConEmu.mp_TabBar->Update(&tab, 1);
         //mp_VActive->RCon()->SetTabs(&tab, 1);
-        TabBar.Update();
+        gConEmu.mp_TabBar->Update();
         //gbPostUpdateWindowSize = true; // 2009-07-04 Resize выполн€ет сам TabBar
     } else if (!abShow) {
-        TabBar.Deactivate();
+        gConEmu.mp_TabBar->Deactivate();
         //gbPostUpdateWindowSize = true; // 2009-07-04 Resize выполн€ет сам TabBar
     }
 
@@ -1436,8 +1451,8 @@ LRESULT CConEmuMain::OnSize(WPARAM wParam, WORD newClientWidth, WORD newClientHe
 		GetWindowRect(ghWnd, &mrc_Ideal);
 	}
 
-    if (TabBar.IsActive())
-        TabBar.UpdateWidth();
+    if (gConEmu.mp_TabBar->IsActive())
+        gConEmu.mp_TabBar->UpdateWidth();
 
     // Background - должен зан€ть все клиентское место под тулбаром
     // “ам же ресайзитс€ ScrollBar
@@ -1984,10 +1999,10 @@ DWORD CConEmuMain::CheckProcesses()
 //        lbProcessChanged = m_ActiveConmanIDX != nConmanIDX;
 //        
 //    if (lbProcessChanged && ghWnd) {
-//        TabBar.Reset();
+//        gConEmu.mp_TabBar->Reset();
 //        if (mn_TopProcessID) {
 //            // ƒернуть событие дл€ этого процесса фара - он перешлет текущие табы
-//            TabBar.Retrieve();
+//            gConEmu.mp_TabBar->Retrieve();
 //            /*swprintf(temp, CONEMUREQTABS, mn_TopProcessID);
 //            HANDLE hEvent = OpenEvent(EVENT_ALL_ACCESS, FALSE, temp);
 //            if (hEvent) {
@@ -1999,7 +2014,7 @@ DWORD CConEmuMain::CheckProcesses()
 //
 //    //TODO: Alternative console?
 //    if (m_ActiveConmanIDX != nConmanIDX || lbProcessChanged) {
-//        TabBar.OnConman ( m_ActiveConmanIDX, isConmanAlternative() );
+//        gConEmu.mp_TabBar->OnConman ( m_ActiveConmanIDX, isConmanAlternative() );
 //    }
 //
 //    m_ProcCount = nProcCount;
@@ -2010,7 +2025,7 @@ DWORD CConEmuMain::CheckProcesses()
 //        UpdateProcessDisplay(lbProcessChanged);
 //    }
 //
-//    TabBar.Refresh(mn_ActiveStatus & CES_FARACTIVE);
+//    gConEmu.mp_TabBar->Refresh(mn_ActiveStatus & CES_FARACTIVE);
 //    
 //    
 //    //if (m_ProcCount>=2) {
@@ -2055,7 +2070,7 @@ DWORD CConEmuMain::CheckProcesses()
 //    //      }
 //    //
 //    //  }
-//    //  TabBar.Refresh(mb_FarActive);
+//    //  gConEmu.mp_TabBar->Refresh(mb_FarActive);
 //    //}
 //
 //    return m_ProcCount;
@@ -2965,7 +2980,7 @@ void CConEmuMain::UpdateProgress(BOOL abUpdateTitle)
         wsprintf(MultiTitle+lstrlen(MultiTitle), L"{*%i%%} ", mn_Progress);
     }
 
-    if (gSet.isMulti && !TabBar.IsShown()) {
+    if (gSet.isMulti && !gConEmu.mp_TabBar->IsShown()) {
         int nCur = 1, nCount = 0;
         for (int n=0; n<MAX_CONSOLE_COUNT; n++) {
             if (mp_VCon[n]) {
@@ -3189,7 +3204,7 @@ void CConEmuMain::InvalidateAll()
     InvalidateRect(ghWnd, NULL, TRUE);
     m_Child.Invalidate();
     m_Back.Invalidate();
-    TabBar.Invalidate();
+    gConEmu.mp_TabBar->Invalidate();
 }
 
 LRESULT CConEmuMain::OnPaint(WPARAM wParam, LPARAM lParam)
@@ -3321,7 +3336,7 @@ void CConEmuMain::PaintCon(HDC hPaintDC)
 
 void CConEmuMain::RePaint()
 {
-    TabBar.RePaint();
+    gConEmu.mp_TabBar->RePaint();
     m_Back.RePaint();
 	HDC hDc = GetDC(ghWnd);
     //mp_VActive->Paint(hDc); // если mp_VActive==NULL - будет просто выполнена заливка фоном.
@@ -3638,7 +3653,7 @@ void CConEmuMain::TabCommand(UINT nTabCmd)
     switch (nTabCmd) {
         case 0:
             {
-                if (TabBar.IsShown())
+                if (gConEmu.mp_TabBar->IsShown())
                     gSet.isTabs = 0;
                 else
                     gSet.isTabs = 1;
@@ -3646,15 +3661,15 @@ void CConEmuMain::TabCommand(UINT nTabCmd)
             } break;
         case 1:
             {
-                TabBar.SwitchNext();
+                gConEmu.mp_TabBar->SwitchNext();
             } break;
         case 2:
             {
-                TabBar.SwitchPrev();
+                gConEmu.mp_TabBar->SwitchPrev();
             } break;
         case 3:
             {
-                TabBar.SwitchCommit();
+                gConEmu.mp_TabBar->SwitchCommit();
             } break;
     };
 }
@@ -3684,7 +3699,7 @@ void CConEmuMain::OnBufferHeight() //BOOL abBufferHeight)
 
 	BOOL lbBufferHeight = mp_VActive->RCon()->isBufferHeight();
     gConEmu.m_Back.TrackMouse(); // спр€тать или показать прокрутку, если над ней мышка
-    TabBar.OnBufferHeight(lbBufferHeight);
+    gConEmu.mp_TabBar->OnBufferHeight(lbBufferHeight);
 }
 
 TODO("» вообще, похоже это событие не вызываетс€");
@@ -4141,7 +4156,7 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
         lbSetFocus = (wParam!=0);
 
     if (!lbSetFocus) {
-        TabBar.SwitchRollback();
+        gConEmu.mp_TabBar->SwitchRollback();
         
         UnRegisterHotKeys();
     }
@@ -4314,27 +4329,27 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
     }
     
     // Tabs
-    if (/*gSet.isTabs &&*/ gSet.isTabSelf && /*TabBar.IsShown() &&*/
+    if (/*gSet.isTabs &&*/ gSet.isTabSelf && /*gConEmu.mp_TabBar->IsShown() &&*/
         (
          ((messg == WM_KEYDOWN || messg == WM_KEYUP) 
            && (wParam == VK_TAB 
-               || (TabBar.IsInSwitch() 
+               || (gConEmu.mp_TabBar->IsInSwitch() 
                    && (wParam == VK_UP || wParam == VK_DOWN || wParam == VK_LEFT || wParam == VK_RIGHT))))
          //|| (messg == WM_CHAR && wParam == VK_TAB)
         ))
     {
         if (isPressed(VK_CONTROL) /*&& !isPressed(VK_MENU)*/ && !isPressed(VK_LWIN) && !isPressed(VK_LWIN))
         {
-            if (TabBar.OnKeyboard(messg, wParam, lParam))
+            if (gConEmu.mp_TabBar->OnKeyboard(messg, wParam, lParam))
                 return 0;
         }
     }
     // !!! «апрос на переключение мог быть инициирован из плагина
     if (messg == WM_KEYUP && (wParam == VK_CONTROL || wParam == VK_LCONTROL || wParam == VK_RCONTROL))
-	{/*&& TabBar.IsShown()*/
-		if (gSet.isTabSelf || (gSet.isTabLazy && TabBar.IsInSwitch()))
+	{/*&& gConEmu.mp_TabBar->IsShown()*/
+		if (gSet.isTabSelf || (gSet.isTabLazy && gConEmu.mp_TabBar->IsInSwitch()))
 		{
-			TabBar.SwitchCommit(); // ≈сли переключени€ не было - ничего не делает
+			gConEmu.mp_TabBar->SwitchCommit(); // ≈сли переключени€ не было - ничего не делает
 			// ¬ фар отпускание кнопки таки пропустим
 		}
     }
@@ -5185,22 +5200,55 @@ fin:
     return 0;
 }
 
+void CConEmuMain::SetWaitCursor(BOOL abWait)
+{
+	mb_WaitCursor = abWait;
+	if (mb_WaitCursor)
+		SetCursor(mh_CursorWait);
+	else
+		SetCursor(mh_CursorArrow);
+}
+
 LRESULT CConEmuMain::OnSetCursor(WPARAM wParam, LPARAM lParam)
 {
-	if (((HWND)wParam) == ghWnd && (LOWORD(lParam) == HTCLIENT)) {
+	if (lParam == (LPARAM)-1) {
+		RECT rcWnd; GetWindowRect(ghWndDC, &rcWnd);
+		POINT ptCur; GetCursorPos(&ptCur);
+		if (!PtInRect(&rcWnd, ptCur))
+			return FALSE;
+		wParam = (WPARAM)ghWnd;
+		lParam = HTCLIENT;
+	}
+
+	if (((HWND)wParam) != ghWnd || (LOWORD(lParam) != HTCLIENT))
+		return FALSE;
+	
+	HCURSOR hCur = NULL;
+
+	DEBUGSTRSETCURSOR(L"WM_SETCURSOR");
+
+	if (mb_WaitCursor) {
+		hCur = mh_CursorWait;
+		DEBUGSTRSETCURSOR(L" ---> CursorWait\n");
+	} else {
 		CRealConsole *pRCon = mp_VActive->RCon();
 		if (pRCon) {
-			if (!pRCon->isAlive()) {
-				static HCURSOR hWait = NULL;
-				if (!hWait)
-					hWait = LoadCursor(NULL, IDC_APPSTARTING);
-				WARNING("„то-то не срабатывает isAlive");
-				//SetCursor(hWait);
-				//return TRUE;
+			BOOL lbAlive = pRCon->isAlive();
+			
+			if (!lbAlive) {
+				hCur = mh_CursorAppStarting;
+				DEBUGSTRSETCURSOR(L" ---> AppStarting\n");
 			}
 		}
 	}
-	return FALSE;
+	if (!hCur) {
+		hCur = mh_CursorArrow;
+		DEBUGSTRSETCURSOR(L" ---> Arrow\n");
+	}
+
+	SetCursor(hCur);
+
+	return TRUE;
 }
 
 LRESULT CConEmuMain::OnShellHook(WPARAM wParam, LPARAM lParam)
@@ -5679,14 +5727,14 @@ LRESULT CConEmuMain::OnVConTerminated(CVirtualConsole* apVCon, BOOL abPosted /*=
 			// —начала нужно обновить закладки, иначе в закрываемой консоли
 			// может быть несколько вкладок и вместо активации другой консоли
 			// будет попытка активировать другую вкладку закрываемой консоли
-			//TabBar.Update(TRUE); -- а и не сможет он другую активировать, т.к. RCon вернет FALSE
+			//gConEmu.mp_TabBar->Update(TRUE); -- а и не сможет он другую активировать, т.к. RCon вернет FALSE
 
 			// Ёта комбинаци€ должна активировать предыдущую консоль (если активна текуща€)
 			if (gSet.isTabRecent && apVCon == mp_VActive) {
 				if (gConEmu.GetVCon(1)) {
-					TabBar.SwitchRollback();
-					TabBar.SwitchNext();
-					TabBar.SwitchCommit();
+					gConEmu.mp_TabBar->SwitchRollback();
+					gConEmu.mp_TabBar->SwitchNext();
+					gConEmu.mp_TabBar->SwitchCommit();
 				}
 			}
 
@@ -5724,9 +5772,9 @@ LRESULT CConEmuMain::OnVConTerminated(CVirtualConsole* apVCon, BOOL abPosted /*=
     // “еперь перетр€хнуть заголовок (табы могут быть отключены и в заголовке отображаетс€ количество консолей)
     UpdateTitle(NULL); // сам перечитает
     //
-    TabBar.Update(); // »наче не будет обновлены закладки
+    gConEmu.mp_TabBar->Update(); // »наче не будет обновлены закладки
 	// ј теперь можно обновить активную закладку
-    TabBar.OnConsoleActivated(ActiveConNum()+1/*, FALSE*/);
+    gConEmu.mp_TabBar->OnConsoleActivated(ActiveConNum()+1/*, FALSE*/);
     return 0;
 }
 
@@ -5740,6 +5788,8 @@ DWORD CConEmuMain::ServerThread(LPVOID lpvParam)
     #endif
     wchar_t szServerPipe[MAX_PATH];
 
+	MCHKHEAP;
+
     _ASSERTE(ghWnd!=NULL);
     wsprintf(szServerPipe, CEGUIPIPENAME, L".", (DWORD)ghWnd);
 
@@ -5748,6 +5798,7 @@ DWORD CConEmuMain::ServerThread(LPVOID lpvParam)
     // connects, a thread is created to handle communications 
     // with that client, and the loop is repeated.
     
+	MCHKHEAP;
 
     // ѕока окно не закрыто
     do {
@@ -5776,6 +5827,8 @@ DWORD CConEmuMain::ServerThread(LPVOID lpvParam)
                 Sleep(50);
                 continue;
             }
+
+			MCHKHEAP;
 
             // Wait for the client to connect; if it succeeds, 
             // the function returns a nonzero value. If the function
@@ -5972,13 +6025,13 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 
     case WM_NOTIFY:
     {
-        result = TabBar.OnNotify((LPNMHDR)lParam);
+        result = gConEmu.mp_TabBar->OnNotify((LPNMHDR)lParam);
         break;
     }
 
     case WM_COMMAND:
     {
-        TabBar.OnCommand(wParam, lParam);
+        gConEmu.mp_TabBar->OnCommand(wParam, lParam);
         result = 0;
         break;
     }
@@ -6194,6 +6247,9 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 
 	case WM_SETCURSOR:
 		result = gConEmu.OnSetCursor(wParam, lParam);
+		if (!result)
+			result = DefWindowProc(hWnd, messg, wParam, lParam);
+		MCHKHEAP;
 		// If an application processes this message, it should return TRUE to halt further processing or FALSE to continue.
 		return result;
 
@@ -6262,7 +6318,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
             return OnUpdateScrollInfo(TRUE);
         } else if (messg == gConEmu.mn_MsgUpdateTabs) {
 			DEBUGSTRTABS(L"OnUpdateTabs\n");
-            TabBar.Update(TRUE);
+            gConEmu.mp_TabBar->Update(TRUE);
             return 0;
         } else if (messg == gConEmu.mn_MsgOldCmdVer) {
             gConEmu.ShowOldCmdVersion(wParam & 0xFFFF, lParam, (SHORT)((wParam & 0xFFFF0000)>>16));

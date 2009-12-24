@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="windows-1251"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9,00"
-	Name="conemu"
+	Version="9.00"
+	Name="ConEmu"
 	ProjectGUID="{EEE25AC6-D94D-472D-8D4A-3C6C382CFD3D}"
 	RootNamespace="conemu"
 	Keyword="Win32Proj"

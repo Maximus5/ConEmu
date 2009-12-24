@@ -269,7 +269,7 @@ typedef struct tag_CESERVER_REQ_CONINFO_HDR {
 	/* 2*/DWORD nPacketId;
 	      DWORD nFarUpdateTick0;// GetTickCount(), устанавливается в начале обновления консоли из фара (вдруг что свалится...)
 	      DWORD nFarUpdateTick; // GetTickCount(), когда консоль была обновлена в последний раз из фара
-	      DWORD nFarReadTick;   // GetTickCount(), когда фар в последний раз позвал (Read|Peek)ConsoleInput или GetConsoleInputCount
+	      DWORD nFarReadIdx;    // index, +1, когда фар в последний раз позвал (Read|Peek)ConsoleInput или GetConsoleInputCount
 		  DWORD nSrvUpdateTick; // GetTickCount(), когда консоль была считана в последний раз в сервере
 	      DWORD nInputTID;
 	/* 3*/DWORD nProcesses[20];

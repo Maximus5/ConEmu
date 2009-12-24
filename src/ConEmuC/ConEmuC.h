@@ -57,6 +57,7 @@ extern wchar_t gszDbgModLabel[6];
 //CRITICAL_ SECTION gcsHeap;
 //#define MCHKHEAP { Enter CriticalSection(&gcsHeap); int MDEBUG_CHK=_CrtCheckMemory(); _ASSERTE(MDEBUG_CHK); LeaveCriticalSection(&gcsHeap); }
 #define MCHKHEAP HeapValidate(ghHeap, 0, NULL);
+//#define MCHKHEAP { int MDEBUG_CHK=_CrtCheckMemory(); _ASSERTE(MDEBUG_CHK); }
 //#define HEAP_LOGGING
 #else
 #define MCHKHEAP

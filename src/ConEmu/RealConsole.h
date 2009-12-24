@@ -327,7 +327,8 @@ private:
 	wchar_t ms_HeaderMapName[64], ms_DataMapName[64];
 	CESERVER_REQ_CONINFO_HDR *mp_ConsoleInfo;
 	CHAR_INFO *mp_ConsoleData; // Mapping
-	DWORD mn_LastConsoleDataIdx, mn_LastConsolePacketIdx;
+	DWORD mn_LastConsoleDataIdx, mn_LastConsolePacketIdx, mn_LastFarReadIdx;
+	DWORD mn_LastFarReadTick;
 	BOOL OpenMapHeader();
 	void CloseMapData();
 	BOOL ReopenMapData();

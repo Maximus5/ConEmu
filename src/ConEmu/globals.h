@@ -16,7 +16,7 @@ extern CConEmuMain gConEmu;
 extern HWND ghWnd, ghConWnd, ghWndDC, ghOpWnd, ghWndApp;
 extern BOOL gbMessagingStarted, gbDontEnable;
 class TabBarClass;
-extern TabBarClass TabBar;
+//extern TabBarClass TabBar;
 extern OSVERSIONINFO gOSVer;
 //extern SECURITY_ATTRIBUTES* gpNullSecurity;
 extern BOOL gbDebugLogStarted;
@@ -53,7 +53,7 @@ extern HWND gh_MDEBUG_TRAP_PARENT_WND;
     extern char gsz_MDEBUG_TRAP_MSG_APPEND[2000];
     #define MDEBUG_TRAP1(S1) {strcpy(gsz_MDEBUG_TRAP_MSG_APPEND,(S1));_MDEBUG_TRAP(__FILE__,__LINE__);}
     #include <crtdbg.h>
-    #define MCHKHEAP //{ MDEBUG_CHK=_CrtCheckMemory(); if (!MDEBUG_CHK) { MDEBUG_TRAP1("_CrtCheckMemory failed"); } }
+    #define MCHKHEAP { MDEBUG_CHK=_CrtCheckMemory(); if (!MDEBUG_CHK) { MDEBUG_TRAP1("_CrtCheckMemory failed"); } }
     //#define MCHKHEAP
 #else
     #define MCHKHEAP

@@ -35,11 +35,15 @@ extern CESERVER_REQ_CONINFO_HDR *gpConsoleInfo;
 
 //WARNING("Все SendMessage нужно переделать на PipeExecute, т.к. из 'Run as' в Win7 нифига не пошлется");
 
-static void* GetOriginalAddress( HINSTANCE module, const char* name );
+static void* GetOriginalAddress( void* OurFunction, void* DefaultFunction, BOOL abAllowModified );
 static HMODULE WINAPI OnLoadLibraryW( const WCHAR* lpFileName );
 static HMODULE WINAPI OnLoadLibraryA( const char* lpFileName );
 static HMODULE WINAPI OnLoadLibraryExW( const WCHAR* lpFileName, HANDLE hFile, DWORD dwFlags );
 static HMODULE WINAPI OnLoadLibraryExA( const char* lpFileName, HANDLE hFile, DWORD dwFlags );
+
+#define ORIGINAL(n) \
+	BOOL bMainThread = (GetCurrentThreadId() == gnMainThreadId); \
+	void* f##n = GetOriginalAddress(On##n, ##n, bMainThread);
 
 static void GuiSetForeground(HWND hWnd)
 {
@@ -405,31 +409,33 @@ static BOOL WINAPI OnGetNumberOfConsoleInputEvents(HANDLE hConsoleInput, LPDWORD
 	_ASSERTE(OnGetNumberOfConsoleInputEvents!=GetNumberOfConsoleInputEvents);
 	if (gpConsoleInfo) {
 		if (GetCurrentThreadId() == gnMainThreadId)
-			gpConsoleInfo->nFarReadTick = GetTickCount();
+			gpConsoleInfo->nFarReadIdx++;
 	}
 	BOOL lbRc = GetNumberOfConsoleInputEvents(hConsoleInput, lpcNumberOfEvents);
 	return lbRc;
 }
 
+typedef BOOL (WINAPI* PeekConsoleInput_t)(HANDLE,PINPUT_RECORD,DWORD,LPDWORD);
+
 static BOOL WINAPI OnPeekConsoleInputA(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsRead)
 {
-	_ASSERTE(OnPeekConsoleInputA!=PeekConsoleInputA);
-	if (gpConsoleInfo) {
-		if (GetCurrentThreadId() == gnMainThreadId)
-			gpConsoleInfo->nFarReadTick = GetTickCount();
+	ORIGINAL(PeekConsoleInputA);
+	_ASSERTE(OnPeekConsoleInputA!=fPeekConsoleInputA);
+	if (gpConsoleInfo && bMainThread) {
+		gpConsoleInfo->nFarReadIdx++;
 	}
-	BOOL lbRc = PeekConsoleInputA(hConsoleInput, lpBuffer, nLength, lpNumberOfEventsRead);
+	BOOL lbRc = ((PeekConsoleInput_t)fPeekConsoleInputA)(hConsoleInput, lpBuffer, nLength, lpNumberOfEventsRead);
 	return lbRc;
 }
 
 static BOOL WINAPI OnPeekConsoleInputW(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsRead)
 {
-	_ASSERTE(OnPeekConsoleInputW!=PeekConsoleInputW);
-	if (gpConsoleInfo) {
-		if (GetCurrentThreadId() == gnMainThreadId)
-			gpConsoleInfo->nFarReadTick = GetTickCount();
+	ORIGINAL(PeekConsoleInputW);
+	_ASSERTE(OnPeekConsoleInputW!=fPeekConsoleInputW);
+	if (gpConsoleInfo && bMainThread) {
+		gpConsoleInfo->nFarReadIdx++;
 	}
-	BOOL lbRc = PeekConsoleInputW(hConsoleInput, lpBuffer, nLength, lpNumberOfEventsRead);
+	BOOL lbRc = ((PeekConsoleInput_t)fPeekConsoleInputW)(hConsoleInput, lpBuffer, nLength, lpNumberOfEventsRead);
 	return lbRc;
 }
 
@@ -438,7 +444,7 @@ static BOOL WINAPI OnReadConsoleInputA(HANDLE hConsoleInput, PINPUT_RECORD lpBuf
 	_ASSERTE(OnReadConsoleInputA!=ReadConsoleInputA);
 	if (gpConsoleInfo) {
 		if (GetCurrentThreadId() == gnMainThreadId)
-			gpConsoleInfo->nFarReadTick = GetTickCount();
+			gpConsoleInfo->nFarReadIdx++;
 	}
 	BOOL lbRc = ReadConsoleInputA(hConsoleInput, lpBuffer, nLength, lpNumberOfEventsRead);
 	return lbRc;
@@ -449,7 +455,7 @@ static BOOL WINAPI OnReadConsoleInputW(HANDLE hConsoleInput, PINPUT_RECORD lpBuf
 	_ASSERTE(OnReadConsoleInputW!=ReadConsoleInputW);
 	if (gpConsoleInfo) {
 		if (GetCurrentThreadId() == gnMainThreadId)
-			gpConsoleInfo->nFarReadTick = GetTickCount();
+			gpConsoleInfo->nFarReadIdx++;
 	}
 	BOOL lbRc = ReadConsoleInputW(hConsoleInput, lpBuffer, nLength, lpNumberOfEventsRead);
 	return lbRc;
@@ -462,21 +468,26 @@ typedef struct HookItem
     TCHAR* DllName;
     void*  OldAddress;
 	BOOL   ReplacedInExe;
+	void*  ExeOldAddress;
 } HookItem;
 
 static TCHAR kernel32[] = _T("kernel32.dll");
 static TCHAR user32[]   = _T("user32.dll");
 static TCHAR shell32[]  = _T("shell32.dll");
 
-static BOOL bHooksWin2k3R2Only = FALSE;
-static HookItem HooksWin2k3R2Only[] = {
-	{OnSetConsoleCP, "SetConsoleCP", kernel32, 0},
-	{OnSetConsoleOutputCP, "SetConsoleOutputCP", kernel32, 0},
-};
+//static BOOL bHooksWin2k3R2Only = FALSE;
+//static HookItem HooksWin2k3R2Only[] = {
+//	{OnSetConsoleCP, "SetConsoleCP", kernel32, 0},
+//	{OnSetConsoleOutputCP, "SetConsoleOutputCP", kernel32, 0},
+//	/* ************************ */
+//	{0, 0, 0}
+//};
 
 static HookItem HooksFarOnly[] = {
 //	{OnlstrcmpiA,      "lstrcmpiA",      kernel32, 0},
 	{OnCompareStringW, "CompareStringW", kernel32, 0},
+	/* ************************ */
+	{0, 0, 0}
 };
 
 static HookItem Hooks[] = {
@@ -502,50 +513,8 @@ static HookItem Hooks[] = {
 	{OnShellExecuteExW,     "ShellExecuteExW",		shell32,  0},
 	{OnShellExecuteA,       "ShellExecuteA",		shell32,  0},
 	{OnShellExecuteW,       "ShellExecuteW",		shell32,  0},
-/*
-    {OnCreateProcessW,    "CreateProcessW",   kernel32, 0},
-    {OnCreateProcessA,    "CreateProcessA",   kernel32, 0},
-    {OnGetConsoleTitleA,  "GetConsoleTitleA", kernel32, 0},
-    {OnGetConsoleTitleW,  "GetConsoleTitleW", kernel32, 0},
-    {OnSetConsoleTitleA,  "SetConsoleTitleA", kernel32, 0},
-    {OnSetConsoleTitleW,  "SetConsoleTitleW", kernel32, 0},
-    {OnSetConsoleCtrlHandler, "SetConsoleCtrlHandler", kernel32, 0},
-    {OnGetConsoleMode,    "GetConsoleMode",   kernel32, 0},
-    {OnSetConsoleMode,    "SetConsoleMode",   kernel32, 0},
-    {OnReadConsoleW,      "ReadConsoleW",     kernel32, 0},
-    {OnReadConsoleA,      "ReadConsoleA",     kernel32, 0},
-    {OnReadFile,          "ReadFile",         kernel32, 0},
-    {OnWriteFile,         "WriteFile",        kernel32, 0},
-    {OnWriteConsoleA,     "WriteConsoleA",    kernel32, 0},
-    {OnWriteConsoleW,     "WriteConsoleW",    kernel32, 0},
-    {OnReadConsoleInputW, "ReadConsoleInputW",kernel32, 0},
-    {OnReadConsoleInputA, "ReadConsoleInputA",kernel32, 0},
-    {OnPeekConsoleInputW, "PeekConsoleInputW",kernel32, 0},
-    {OnPeekConsoleInputA, "PeekConsoleInputA",kernel32, 0},
-    {OnGetNumberOfConsoleInputEvents, "GetNumberOfConsoleInputEvents",kernel32, 0},
-    {OnWaitForSingleObjectEx, "WaitForSingleObjectEx",   kernel32, 0},
-    {OnWaitForSingleObject, "WaitForSingleObject",   kernel32, 0},
-    {OnWaitForMultipleObjectsEx, "WaitForMultipleObjectsEx",   kernel32, 0},
-    {OnWaitForMultipleObjects, "WaitForMultipleObjects",   kernel32, 0},
-    {OnSetConsoleCP,      "SetConsoleCP",     kernel32, 0},
-    {OnGetConsoleCP,      "GetConsoleCP",     kernel32, 0},
-    {OnGetConsoleOutputCP,"GetConsoleOutputCP",kernel32, 0},
-    {OnSetConsoleOutputCP,"SetConsoleOutputCP",kernel32, 0},
-    {OnSetConsoleActiveScreenBuffer,"SetConsoleActiveScreenBuffer",kernel32, 0},
-    {OnCreateFileA,       "CreateFileA",      kernel32, 0},
-    {OnCreateFileW,       "CreateFileW",      kernel32, 0},
-    {OnFreeConsole,       "FreeConsole",      kernel32, 0},
-    {OnAllocConsole,      "AllocConsole",     kernel32, 0},
-    {OnSetConsoleCursorInfo, "SetConsoleCursorInfo",    kernel32, 0},
-    {OnGetConsoleCursorInfo, "GetConsoleCursorInfo",    kernel32, 0},
-    {OnFindWindowA,       "FindWindowA",      user32, 0},
-    {OnFindWindowW,       "FindWindowW",      user32, 0},
-    {OnFindWindowExA,     "FindWindowExA",    user32, 0},
-    {OnFindWindowExW,     "FindWindowExW",    user32, 0},
-    {OnGetWindowTextA,    "GetWindowTextA",   user32, 0},
-    {OnGetWindowTextW,    "GetWindowTextW",   user32, 0},
-*/
-    {0, 0, 0}
+	/* ************************ */
+	{0, 0, 0}
 };
 
 
@@ -556,67 +525,6 @@ static TCHAR* ExcludedModules[] = {
     // а user32.dll не нужно?
     0
 };
-
-
-
-//static BOOL WINAPI OnReadConsoleInputW( HANDLE input, INPUT_RECORD* buffer, DWORD size, DWORD* read )
-//{
-//    if( Detached )
-//        return ReadConsoleInputW( input, buffer, size, read );
-//
-//    if( !buffer || !read || !size )
-//        return FALSE;
-//    if( !IsHandleConsole( input, false ) )
-//        return FALSE;
-//
-//    HANDLE ar[] = { input, isActive };
-//    WaitForMultipleObjects( 2, ar, TRUE, INFINITE );
-//    return ReadConsoleInputW( input, buffer, size, read );
-//}
-//
-//static BOOL WINAPI OnReadConsoleInputA( HANDLE input, INPUT_RECORD* buffer, DWORD size, DWORD* read )
-//{
-//    if( Detached )
-//        return ReadConsoleInputA( input, buffer, size, read );
-//
-//    if( !buffer || !read || !size )
-//        return FALSE;
-//    if( !IsHandleConsole( input, false ) )
-//        return FALSE;
-//
-//    HANDLE ar[] = { input, isActive };
-//    WaitForMultipleObjects( 2, ar, TRUE, INFINITE );
-//    return ReadConsoleInputA( input, buffer, size, read );
-//}
-//
-//
-//static HWND WINAPI OnFindWindowA( char* class_name, char* title )
-//{
-//    typedef HWND WINAPI FindWindowA_t( char* class_name, char* title );
-//    static bool Init = false;
-//    static FindWindowA_t* FindWindowA_f = 0;
-//    if( !Init )
-//    {
-//        FindWindowA_f = (FindWindowA_t*)GetOriginalAddress( GetModuleHandle( user32 ),
-//                                                            "FindWindowA" );
-//        Init = true;
-//    }
-//
-//    assert( FindWindowA_f );
-//
-//    if( (!title || Detached) && FindWindowA_f )
-//        return FindWindowA_f( class_name, title );
-//
-//    char buffer[1000];
-//    OnGetConsoleTitleA( buffer, 1000 );
-//
-//    if( !lstrcmpiA( buffer, title ) )
-//        return MainWindow;
-//    else
-//        return FindWindowA_f( class_name, title );
-//}
-
-
 
 
 
@@ -687,6 +595,18 @@ static bool SetHook( HookItem* item, HMODULE Module = 0, BOOL abExecutable = FAL
     if( Module == INVALID_HANDLE_VALUE || !Import )
         return false;
 
+	#ifdef _WIN64
+	_ASSERTE(sizeof(DWORD_PTR)==8);
+	#else
+	_ASSERTE(sizeof(DWORD_PTR)==4);
+	#endif
+
+	#ifdef _WIN64
+		#define TOP_SHIFT 60
+	#else
+		#define TOP_SHIFT 28
+	#endif
+
     bool res = false;
 	int i;
 	int nCount = Size / sizeof(IMAGE_IMPORT_DESCRIPTOR);
@@ -696,30 +616,60 @@ static bool SetHook( HookItem* item, HMODULE Module = 0, BOOL abExecutable = FAL
 		if (Import[i].Name == 0)
 			break;
         //DebugString( ToTchar( (char*)Module + Import[i].Name ) );
-        //char* mod_name = (char*)Module + Import[i].Name;
-        //-- не используется -- IMAGE_IMPORT_BY_NAME** byname = (IMAGE_IMPORT_BY_NAME**)(Import[i].Characteristics + (DWORD_PTR)Module);
+		#ifdef _DEBUG
+		char* mod_name = (char*)Module + Import[i].Name;
+		#endif
+        IMAGE_IMPORT_BY_NAME** byname = (IMAGE_IMPORT_BY_NAME**)(Import[i].Characteristics + (DWORD_PTR)Module);
+        IMAGE_THUNK_DATA* thunk = (IMAGE_THUNK_DATA*)((char*)Module + Import[i].FirstThunk);
+		IMAGE_THUNK_DATA* thunkO = (IMAGE_THUNK_DATA*)((char*)Module + Import[i].OriginalFirstThunk);
+        for( ; thunk->u1.Function; thunk++, thunkO++, byname++)
         {
-            {
-                IMAGE_THUNK_DATA* thunk = (IMAGE_THUNK_DATA*)((char*)Module + Import[i].FirstThunk);
-                for( ; thunk->u1.Function; thunk++/*, byname++*/) // byname не используется
+			DWORD dwIsOrdinal = (DWORD)(((DWORD_PTR)(*byname)) >> TOP_SHIFT);
+			const char* pszFuncName = NULL;
+			// Только для испольняемого файла (первый модуль) и если известно имя функции
+			if (dwIsOrdinal != 8 && abExecutable) {
+				BOOL lbValidPtr = !IsBadReadPtr(*byname, sizeof(DWORD_PTR));
+				_ASSERTE(lbValidPtr);
+				if (lbValidPtr) {
+					lbValidPtr = !IsBadReadPtr((*byname)->Name, sizeof(DWORD_PTR));
+					_ASSERTE(lbValidPtr);
+					if (lbValidPtr) {
+						pszFuncName = ((char*)Module)+(DWORD_PTR)((*byname)->Name);
+						lbValidPtr = !IsBadStringPtrA(pszFuncName, 10);
+						_ASSERTE(lbValidPtr);
+						if (!lbValidPtr)
+							pszFuncName = NULL;
+					}
+				}
+			}
+
+			int j = 0;
+            for( j = 0; item[j].Name; j++ )
+			{
+				// OldAddress уже может отличаться от оригинального экспорта библиотеки
+				// Это происходит например с PeekConsoleIntputW при наличии плагина Anamorphosis
+                if( !item[j].OldAddress || (void*)thunk->u1.Function != item[j].OldAddress )
                 {
-					int j = 0;
-                    for( j = 0; item[j].Name; j++ )
-                        if( item[j].OldAddress && (void*)thunk->u1.Function == item[j].OldAddress )
-                        {
-                            DWORD old_protect;
-                            VirtualProtect( &thunk->u1.Function, sizeof( thunk->u1.Function ),
-                                            PAGE_READWRITE, &old_protect );
-                            thunk->u1.Function = (DWORD_PTR)item[j].NewAddress;
-                            VirtualProtect( &thunk->u1.Function, sizeof( DWORD ), old_protect, &old_protect );
-							if (abExecutable)
-								item[j].ReplacedInExe = TRUE;
-                            //DebugString( ToTchar( item[j].Name ) );
-                            res = true;
-                            break;
-                        }
-                }
-            }
+					if (!pszFuncName || !abExecutable) {
+						continue;
+					} else {
+						if (strcmp(pszFuncName, item[j].Name))
+							continue;
+					}
+					item[j].ExeOldAddress = (void*)thunk->u1.Function;
+				}
+
+				DWORD old_protect = 0;
+				VirtualProtect( &thunk->u1.Function, sizeof( thunk->u1.Function ),
+					PAGE_READWRITE, &old_protect );
+				thunk->u1.Function = (DWORD_PTR)item[j].NewAddress;
+				VirtualProtect( &thunk->u1.Function, sizeof( DWORD ), old_protect, &old_protect );
+				if (abExecutable)
+					item[j].ReplacedInExe = TRUE;
+				//DebugString( ToTchar( item[j].Name ) );
+				res = true;
+				break;
+			}
         }
     }
 
@@ -760,7 +710,7 @@ static bool SetHookEx( HookItem* item, HMODULE inst )
 
 
 // Подменить Импортируемые функции в модуле
-static bool UnsetHook( const HookItem* item, HMODULE Module = 0 )
+static bool UnsetHook( const HookItem* item, HMODULE Module = 0, BOOL abExecutable = FALSE )
 {
     if( !item )
         return false;
@@ -805,13 +755,18 @@ static bool UnsetHook( const HookItem* item, HMODULE Module = 0 )
                 {
                     for( int j = 0; item[j].Name; j++ )
                     {
-                    	// BugBug: в принципе, эту функцию мог захукать и другой модуль (уже после нас), но лучше вернуть оригинальную, чем потом свалиться
+                    	// BugBug: в принципе, эту функцию мог захукать и другой модуль (уже после нас),
+						// но лучше вернуть оригинальную, чем потом свалиться
                         if( item[j].OldAddress && (void*)thunk->u1.Function == item[j].NewAddress )
                         {
                             DWORD old_protect;
                             VirtualProtect( &thunk->u1.Function, sizeof( thunk->u1.Function ),
                                             PAGE_READWRITE, &old_protect );
-                            thunk->u1.Function = (DWORD_PTR)item[j].OldAddress;
+							// BugBug: ExeOldAddress может отличаться от оригинального, если функция была перехвачена ДО нас
+							//if (abExecutable && item[j].ExeOldAddress)
+							//	thunk->u1.Function = (DWORD_PTR)item[j].ExeOldAddress;
+							//else
+								thunk->u1.Function = (DWORD_PTR)item[j].OldAddress;
                             VirtualProtect( &thunk->u1.Function, sizeof( DWORD ), old_protect, &old_protect );
                             //DebugString( ToTchar( item[j].Name ) );
                             res = true;
@@ -828,24 +783,26 @@ static bool UnsetHook( const HookItem* item, HMODULE Module = 0 )
 
 void UnsetAllHooks()
 {
-	UnsetHook( HooksFarOnly, NULL );
+	UnsetHook( HooksFarOnly, NULL, TRUE );
 	
-	if (bHooksWin2k3R2Only) {
+	/*if (bHooksWin2k3R2Only) {
 		bHooksWin2k3R2Only = FALSE;
-		UnsetHook( HooksWin2k3R2Only, NULL );
-	}
+		UnsetHook( HooksWin2k3R2Only, NULL, TRUE );
+	}*/
 	
     HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, 0);
     if(snapshot != INVALID_HANDLE_VALUE)
     {
         MODULEENTRY32 module = {sizeof(module)};
+		BOOL lbExecutable = TRUE;
 
         for(BOOL res = Module32First(snapshot, &module); res; res = Module32Next(snapshot, &module))
         {
             if(module.hModule != ghPluginModule && !IsModuleExcluded(module.hModule))
             {
                 DebugString( module.szModule );
-                UnsetHook( Hooks, module.hModule );
+                UnsetHook( Hooks, module.hModule, lbExecutable );
+				if (lbExecutable) lbExecutable = FALSE;
             }
         }
 
@@ -856,16 +813,16 @@ void UnsetAllHooks()
 
 
 // Используется в том случае, если требуется выполнить оригинальную функцию, без нашей обертки
-// пример в OnFindWindowA
-static void* GetOriginalAddress( HINSTANCE module, const char* name )
+// пример в OnPeekConsoleInputW
+static void* GetOriginalAddress( void* OurFunction, void* DefaultFunction, BOOL abAllowModified )
 {
-    if( !name )
-        return 0;
-
-    for( int i = 0; Hooks[i].Name; i++ )
-        if( !lstrcmpiA( name, Hooks[i].Name ) )
-            return Hooks[i].OldAddress;
-    return GetProcAddress( module, name );
+	for( int i = 0; Hooks[i].Name; i++ ) {
+		if ( Hooks[i].NewAddress == OurFunction) {
+			return (abAllowModified && Hooks[i].ExeOldAddress) ? Hooks[i].ExeOldAddress : Hooks[i].OldAddress;
+		}
+	}
+    _ASSERT(FALSE); // сюда мы попадать не должны
+    return DefaultFunction;
 }
 
 
@@ -887,19 +844,19 @@ BOOL StartupHooks()
 	// Заполнить поле HookItem.OldAddress (реальные процедуры из внешних библиотек)
 	InitHooks( Hooks );
 	InitHooks( HooksFarOnly );
-	InitHooks( HooksWin2k3R2Only );
+	//InitHooks( HooksWin2k3R2Only );
 
 	//  Подменить Импортируемые функции в FAR.exe (пока это только сравнивание строк)
 	SetHook( HooksFarOnly, NULL, TRUE );
 	
 	// Windows Server 2003 R2
 	
-	if (osv.dwMajorVersion==5 && osv.dwMinorVersion==2 && osv.wServicePackMajor>=2)
+	/*if (osv.dwMajorVersion==5 && osv.dwMinorVersion==2 && osv.wServicePackMajor>=2)
 	{
 		//DWORD dwBuild = GetSystemMetrics(SM_SERVERR2); // нихрена оно не возвращает. 0 тут :(
 		bHooksWin2k3R2Only = TRUE;
 		SetHook( HooksWin2k3R2Only, NULL );
-	}
+	}*/
 	
 	// Подменить Импортируемые функции во всех модулях процесса, загруженных ДО conemu.dll
 	SetHookEx( Hooks, ghPluginModule );

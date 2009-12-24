@@ -150,9 +150,9 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 				TODO("здесь хорошо бы вместо OnTimer реально обновить mn_TopProcessID")
 				// иначе во время запуска PID фара еще может быть не известен...
 				//gConEmu.OnTimer(0,0); не получилось. индекс конмана не менялся, из-за этого индекс активного фара так и остался 0
-				WARNING("TabBar.Retrieve() ничего уже не делает вообще");
+				WARNING("gConEmu.mp_TabBar->Retrieve() ничего уже не делает вообще");
 				_ASSERT(FALSE);
-				TabBar.Retrieve();
+				gConEmu.mp_TabBar->Retrieve();
 			}
 		} else if (messg == gConEmu.m_Child.mn_MsgPostFullPaint) {
 			gConEmu.m_Child.Redraw();		
@@ -608,7 +608,7 @@ void CConEmuBack::Resize()
 	//RECT rc = gConEmu.ConsoleOffsetRect();
 	RECT rcClient; GetClientRect(ghWnd, &rcClient);
 
-	bool bTabsShown = TabBar.IsShown();
+	bool bTabsShown = gConEmu.mp_TabBar->IsShown();
 	if (mb_LastTabVisible == bTabsShown) {
 		if (memcmp(&rcClient, &mrc_LastClient, sizeof(RECT))==0) {
         	#if defined(EXT_GNUC_LOG)

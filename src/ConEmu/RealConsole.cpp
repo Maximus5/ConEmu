@@ -15,6 +15,7 @@
 #define DEBUGSTRCON(s) //DEBUGSTR(s)
 #define DEBUGSTRLANG(s) //DEBUGSTR(s)// ; Sleep(2000)
 #define DEBUGSTRLOG(s) OutputDebugStringA(s)
+#define DEBUGSTRALIVE(s) //DEBUGSTR(s)
 
 WARNING("При быстром наборе текста курсор часто 'замерзает' на одной из букв, но продолжает двигаться дальше");
 
@@ -69,14 +70,19 @@ WARNING("Часто после разблокирования компьютера размер консоли изменяется (OK), 
 
 CRealConsole::CRealConsole(CVirtualConsole* apVCon)
 {
+	MCHKHEAP;
+
+	PostMessage(ghWnd, WM_SETCURSOR, 0, 0);
+
     mp_VCon = apVCon;
     memset(Title,0,sizeof(Title)); memset(TitleCmp,0,sizeof(TitleCmp));
     mp_tabs = NULL; mn_tabsCount = 0; ms_PanelTitle[0] = 0; mn_ActiveTab = 0;
     //memset(&m_PacketQueue, 0, sizeof(m_PacketQueue));
-    
+
     mn_FlushIn = mn_FlushOut = 0;
 
     mr_LeftPanel = mr_RightPanel = MakeRect(-1,-1);
+
 	mb_LeftPanel = mb_RightPanel = FALSE;
 
 	mb_MouseButtonDown = FALSE;
@@ -121,7 +127,8 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
 	mn_InRecreate = 0; mb_ProcessRestarted = FALSE;
     mn_LastSetForegroundPID = 0;
     mh_ServerSemaphore = NULL;
-    memset(mh_ServerThreads, 0, sizeof(mh_ServerThreads)); mh_ActiveServerThread = NULL;
+    memset(mh_ServerThreads, 0, sizeof(mh_ServerThreads));
+	mh_ActiveServerThread = NULL;
     memset(mn_ServerThreadsId, 0, sizeof(mn_ServerThreadsId));
 
     ZeroStruct(con); //WARNING! Содержит CriticalSection, поэтому сброс выполнять ПЕРЕД InitializeCriticalSection(&csCON);
@@ -145,11 +152,11 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
     mn_Focused = -1;
     mn_LastVKeyPressed = 0;
     mh_LogInput = NULL; mpsz_LogInputFile = NULL; //mpsz_LogPackets = NULL; mn_LogPackets = 0;
-    
-    mh_FileMapping = mh_FileMappingData = NULL;
+
+	mh_FileMapping = mh_FileMappingData = NULL;
     mp_ConsoleInfo = NULL;
     mp_ConsoleData = NULL;
-    mn_LastConsoleDataIdx = mn_LastConsolePacketIdx = -1;
+    mn_LastConsoleDataIdx = mn_LastConsolePacketIdx = mn_LastFarReadIdx = -1;
 	ms_HeaderMapName[0] = ms_DataMapName[0] = 0;
 
     m_UseLogs = gSet.isAdvLogging;
@@ -163,10 +170,11 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
     lstrcpy(ms_TempPanel, L"{Temporary panel");
     MultiByteToWideChar(CP_ACP, 0, "{Временная панель", -1, ms_TempPanelRus, 32);
 
-
     SetTabs(NULL,1); // Для начала - показывать вкладку Console, а там ФАР разберется
-    
+
     PreInit(FALSE); // просто инициализировать переменные размеров...
+
+	MCHKHEAP;
 }
 
 CRealConsole::~CRealConsole()
@@ -993,6 +1001,30 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
             //ResetEvent(pRCon->mh_EndUpdateEvent);
             
             if (pRCon->mp_ConsoleInfo) {
+				// Alive?
+				static DWORD nLastFarPID = 0;
+				static bool bLastAlive = false;
+				DWORD nCurFarPID = pRCon->GetFarPID();
+				if (!nCurFarPID || nLastFarPID != nCurFarPID) {
+					pRCon->mn_LastFarReadIdx = -1;
+					nLastFarPID = nCurFarPID;
+				}
+				bool bAlive = false;
+				if (nCurFarPID && pRCon->mn_LastFarReadIdx != pRCon->mp_ConsoleInfo->nFarReadIdx) {
+					pRCon->mn_LastFarReadIdx = pRCon->mp_ConsoleInfo->nFarReadIdx;
+					pRCon->mn_LastFarReadTick = GetTickCount();
+					DEBUGSTRALIVE(L"*** FAR ReadTick updated\n");
+					bAlive = true;
+				} else {
+					bAlive = pRCon->isAlive();
+				}
+				if (bLastAlive != bAlive && pRCon->isActive()) {
+					bLastAlive = bAlive;
+					DEBUGSTRALIVE(bAlive ? L"MonitorThread: Alive changed to TRUE\n" : L"MonitorThread: Alive changed to FALSE\n");
+					PostMessage(ghWnd, WM_SETCURSOR, -1, -1);
+				}
+
+				// Загрузить изменения из консоли
             	if (pRCon->mp_ConsoleInfo->hConWnd && pRCon->mp_ConsoleInfo->nCurDataMapIdx &&
 					pRCon->mn_LastConsolePacketIdx != pRCon->mp_ConsoleInfo->nPacketId)
 				{
@@ -1158,13 +1190,19 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 
 BOOL CRealConsole::PreInit(BOOL abCreateBuffers/*=TRUE*/)
 {
+	MCHKHEAP;
+
     // Инициализировать переменные m_sbi, m_ci, m_sel
     RECT rcWnd; GetClientRect(ghWnd, &rcWnd);
     // isBufferHeight использовать нельзя, т.к. con.m_sbi еще не инициализирован!
     if (gSet.ForceBufferHeight && con.DefaultBufferHeight && !con.bBufferHeight) {
+		MCHKHEAP;
         SetBufferHeightMode(TRUE);
+		MCHKHEAP;
         BufferHeight(con.DefaultBufferHeight);
     }
+
+	MCHKHEAP;
 
     //if (con.bBufferHeight) {
     //  // скорректировать ширину окна на ширину появляющейся полосы прокрутки
@@ -1230,272 +1268,276 @@ BOOL CRealConsole::StartProcess()
     
 	mb_UseOnlyPipeInput = FALSE;
     
-                        if (mp_sei) {
-                        	SafeCloseHandle(mp_sei->hProcess);
-                        	GlobalFree(mp_sei); mp_sei = NULL;
-                        }
+    if (mp_sei) {
+    	SafeCloseHandle(mp_sei->hProcess);
+    	GlobalFree(mp_sei); mp_sei = NULL;
+    }
 
-    
-        STARTUPINFO si;
-        PROCESS_INFORMATION pi;
-        wchar_t szInitConTitle[255];
 
-        ZeroMemory( &si, sizeof(si) );
-        si.cb = sizeof(si);
-        si.dwFlags = STARTF_USESHOWWINDOW|STARTF_USECOUNTCHARS|STARTF_USESIZE/*|STARTF_USEPOSITION*/;
-        si.lpTitle = wcscpy(szInitConTitle, CEC_INITTITLE);
-		// К сожалению, можно задать только размер БУФЕРА в символах.
-		si.dwXCountChars = con.m_sbi.dwSize.X;
-		si.dwYCountChars = con.m_sbi.dwSize.Y;
-		// Размер окна нужно задавать в пикселях, а мы заранее не знаем сколько будет нужно...
-		// Но можно задать хоть что-то, чтобы окошко сразу не разъехалось (в расчете на шрифт 4*6)...
-		if (con.bBufferHeight) {
-			si.dwXSize = 4 * con.m_sbi.dwSize.X + 2*GetSystemMetrics(SM_CXFRAME) + GetSystemMetrics(SM_CXVSCROLL);
-			si.dwYSize = 6 * con.nTextHeight + 2*GetSystemMetrics(SM_CYFRAME) + GetSystemMetrics(SM_CYCAPTION);
-		} else {
-			si.dwXSize = 4 * con.m_sbi.dwSize.X + 2*GetSystemMetrics(SM_CXFRAME);
-			si.dwYSize = 6 * con.m_sbi.dwSize.Y + 2*GetSystemMetrics(SM_CYFRAME) + GetSystemMetrics(SM_CYCAPTION);
+    STARTUPINFO si;
+    PROCESS_INFORMATION pi;
+    wchar_t szInitConTitle[255];
+	MCHKHEAP;
+
+    ZeroMemory( &si, sizeof(si) );
+    si.cb = sizeof(si);
+    si.dwFlags = STARTF_USESHOWWINDOW|STARTF_USECOUNTCHARS|STARTF_USESIZE/*|STARTF_USEPOSITION*/;
+    si.lpTitle = wcscpy(szInitConTitle, CEC_INITTITLE);
+	// К сожалению, можно задать только размер БУФЕРА в символах.
+	si.dwXCountChars = con.m_sbi.dwSize.X;
+	si.dwYCountChars = con.m_sbi.dwSize.Y;
+	// Размер окна нужно задавать в пикселях, а мы заранее не знаем сколько будет нужно...
+	// Но можно задать хоть что-то, чтобы окошко сразу не разъехалось (в расчете на шрифт 4*6)...
+	if (con.bBufferHeight) {
+		si.dwXSize = 4 * con.m_sbi.dwSize.X + 2*GetSystemMetrics(SM_CXFRAME) + GetSystemMetrics(SM_CXVSCROLL);
+		si.dwYSize = 6 * con.nTextHeight + 2*GetSystemMetrics(SM_CYFRAME) + GetSystemMetrics(SM_CYCAPTION);
+	} else {
+		si.dwXSize = 4 * con.m_sbi.dwSize.X + 2*GetSystemMetrics(SM_CXFRAME);
+		si.dwYSize = 6 * con.m_sbi.dwSize.Y + 2*GetSystemMetrics(SM_CYFRAME) + GetSystemMetrics(SM_CYCAPTION);
+	}
+	// Если просят "отладочный" режим - покажем окошко
+    si.wShowWindow = gSet.isConVisible ? SW_SHOWNORMAL : SW_HIDE;
+    //RECT rcDC; GetWindowRect(ghWndDC, &rcDC);
+    //si.dwX = rcDC.left; si.dwY = rcDC.top;
+    ZeroMemory( &pi, sizeof(pi) );
+	MCHKHEAP;
+
+    int nStep = (m_Args.pszSpecialCmd!=NULL) ? 2 : 1;
+    wchar_t* psCurCmd = NULL;
+    while (nStep <= 2)
+    {
+        MCHKHEAP;
+        /*if (!*gSet.GetCmd()) {
+            gSet.psCurCmd = _tcsdup(gSet.Buffer Height == 0 ? _T("far") : _T("cmd"));
+            nStep ++;
+        }*/
+
+		MCHKHEAP;
+        LPCWSTR lpszCmd = NULL;
+        if (m_Args.pszSpecialCmd)
+            lpszCmd = m_Args.pszSpecialCmd;
+        else
+            lpszCmd = gSet.GetCmd();
+
+        int nLen = _tcslen(lpszCmd);
+        TCHAR *pszSlash=NULL;
+        nLen += _tcslen(gConEmu.ms_ConEmuCExe) + 260 + MAX_PATH;
+		MCHKHEAP;
+        psCurCmd = (wchar_t*)malloc(nLen*sizeof(wchar_t));
+        _ASSERTE(psCurCmd);
+        wcscpy(psCurCmd, L"\"");
+        wcscat(psCurCmd, gConEmu.ms_ConEmuExe);
+        pszSlash = wcsrchr(psCurCmd, _T('\\'));
+        MCHKHEAP;
+        wcscpy(pszSlash+1, L"ConEmuC.exe\" ");
+
+		if (m_Args.bRunAsAdministrator) {
+			m_Args.bDetached = TRUE;
+			wcscat(pszSlash, L" /ATTACH ");
 		}
-		// Если просят "отладочный" режим - покажем окошко
-        si.wShowWindow = gSet.isConVisible ? SW_SHOWNORMAL : SW_HIDE;
-        //RECT rcDC; GetWindowRect(ghWndDC, &rcDC);
-        //si.dwX = rcDC.left; si.dwY = rcDC.top;
-        ZeroMemory( &pi, sizeof(pi) );
 
-        int nStep = (m_Args.pszSpecialCmd!=NULL) ? 2 : 1;
-        wchar_t* psCurCmd = NULL;
-        while (nStep <= 2)
-        {
-            MCHKHEAP
-            /*if (!*gSet.GetCmd()) {
-                gSet.psCurCmd = _tcsdup(gSet.Buffer Height == 0 ? _T("far") : _T("cmd"));
-                nStep ++;
-            }*/
-
-            LPCWSTR lpszCmd = NULL;
-            if (m_Args.pszSpecialCmd)
-                lpszCmd = m_Args.pszSpecialCmd;
-            else
-                lpszCmd = gSet.GetCmd();
-
-            int nLen = _tcslen(lpszCmd);
-            TCHAR *pszSlash=NULL;
-            nLen += _tcslen(gConEmu.ms_ConEmuCExe) + 260 + MAX_PATH;
-            psCurCmd = (wchar_t*)malloc(nLen*sizeof(wchar_t));
-            _ASSERTE(psCurCmd);
-            wcscpy(psCurCmd, L"\"");
-            wcscat(psCurCmd, gConEmu.ms_ConEmuExe);
-            pszSlash = wcsrchr(psCurCmd, _T('\\'));
-            MCHKHEAP
-            wcscpy(pszSlash+1, L"ConEmuC.exe\" ");
-
-			if (m_Args.bRunAsAdministrator) {
-				m_Args.bDetached = TRUE;
-				wcscat(pszSlash, L" /ATTACH ");
-			}
-
-            int nWndWidth = con.m_sbi.dwSize.X;
-            int nWndHeight = con.m_sbi.dwSize.Y;
-            GetConWindowSize(con.m_sbi, nWndWidth, nWndHeight);
-            wsprintf(psCurCmd+wcslen(psCurCmd), 
-            	L"/BW=%i /BH=%i /BZ=%i \"/FN=%s\" /FW=%i /FH=%i", 
-                nWndWidth, nWndHeight, con.DefaultBufferHeight,
-                //(con.bBufferHeight ? gSet.Default BufferHeight : 0), // пусть с буфером сервер разбирается
-                gSet.ConsoleFont.lfFaceName, gSet.ConsoleFont.lfWidth, gSet.ConsoleFont.lfHeight);
-            /*if (gSet.FontFile[0]) { --  РЕГИСТРАЦИЯ ШРИФТА НА КОНСОЛЬ НЕ РАБОТАЕТ!
-                wcscat(psCurCmd, L" \"/FF=");
-                wcscat(psCurCmd, gSet.FontFile);
-                wcscat(psCurCmd, L"\"");
-            }*/
-            if (m_UseLogs) wcscat(psCurCmd, (m_UseLogs==3) ? L" /LOG3" : (m_UseLogs==2) ? L" /LOG2" : L" /LOG");
-			if (!gSet.isConVisible) wcscat(psCurCmd, L" /HIDE");
-            wcscat(psCurCmd, L" /ROOT ");
-            wcscat(psCurCmd, lpszCmd);
-            MCHKHEAP
-
-			DWORD dwLastError = 0;
-
-            #ifdef MSGLOGGER
-            DEBUGSTRPROC(psCurCmd);DEBUGSTRPROC(_T("\n"));
-            #endif
-            
-            //try {
-				if (!m_Args.bRunAsAdministrator) {
-					LockSetForegroundWindow ( LSFW_LOCK );
-
-					lbRc = CreateProcess(NULL, psCurCmd, NULL, NULL, FALSE, 
-						NORMAL_PRIORITY_CLASS|
-						CREATE_DEFAULT_ERROR_MODE|CREATE_NEW_CONSOLE
-						//|CREATE_NEW_PROCESS_GROUP - низя! перестает срабатывать Ctrl-C
-						, NULL, m_Args.pszStartupDir, &si, &pi);
-					if (!lbRc)
-						dwLastError = GetLastError();
-					DEBUGSTRPROC(_T("CreateProcess finished\n"));
-
-					LockSetForegroundWindow ( LSFW_UNLOCK );
-
-				} else {
-					LPCWSTR pszCmd = psCurCmd;
-					wchar_t szExec[MAX_PATH+1];
-					if (NextArg(&pszCmd, szExec) != 0) {
-						lbRc = FALSE;
-						dwLastError = -1;
-					} else {
-						// Почему-то валится.
-                        // Попробовать GlobalAlloc на строки (может ему чего не нравится...) сделать копии
-                        // Если не прокатит: CreateProcessAsUser with an unrestricted administrator token
-                        // http://weblogs.asp.net/kennykerr/archive/2006/09/29/Windows-Vista-for-Developers-_1320_-Part-4-_1320_-User-Account-Control.aspx
-                        
-                        if (mp_sei) {
-                        	SafeCloseHandle(mp_sei->hProcess);
-                        	GlobalFree(mp_sei); mp_sei = NULL;
-                        }
-
-                        wchar_t szCurrentDirectory[MAX_PATH+1];
-						if (m_Args.pszStartupDir)
-							wcscpy(szCurrentDirectory, m_Args.pszStartupDir);
-						else if (!GetCurrentDirectory(MAX_PATH+1, szCurrentDirectory))
-                        	szCurrentDirectory[0] = 0;
-                        
-                        int nWholeSize = sizeof(SHELLEXECUTEINFO)
-                        	+ sizeof(wchar_t) *
-                        	  ( 10 /* Verb */
-                        	  + wcslen(szExec)+2
-                        	  + ((pszCmd == NULL) ? 0 : (wcslen(pszCmd)+2))
-                        	  + wcslen(szCurrentDirectory) + 2
-                        	  );
-						mp_sei = (SHELLEXECUTEINFO*)GlobalAlloc(GPTR, nWholeSize);
-						mp_sei->hwnd = ghWnd;
-						mp_sei->cbSize = sizeof(SHELLEXECUTEINFO);
-						mp_sei->hwnd = /*NULL; */ ghWnd; // почему я тут NULL ставил?
-						mp_sei->fMask = SEE_MASK_NO_CONSOLE|SEE_MASK_NOCLOSEPROCESS;
-						mp_sei->lpVerb = (wchar_t*)(mp_sei+1);
-							wcscpy((wchar_t*)mp_sei->lpVerb, L"runas");
-						mp_sei->lpFile = mp_sei->lpVerb + wcslen(mp_sei->lpVerb) + 2;
-							wcscpy((wchar_t*)mp_sei->lpFile, szExec);
-						mp_sei->lpParameters = mp_sei->lpFile + wcslen(mp_sei->lpFile) + 2;
-							if (pszCmd) {
-								*(wchar_t*)mp_sei->lpParameters = L' ';
-								wcscpy((wchar_t*)(mp_sei->lpParameters+1), pszCmd);
-							}
-						mp_sei->lpDirectory = mp_sei->lpParameters + wcslen(mp_sei->lpParameters) + 2;
-							if (szCurrentDirectory[0])
-								wcscpy((wchar_t*)mp_sei->lpDirectory, szCurrentDirectory);
-							else
-								mp_sei->lpDirectory = NULL;
-						//mp_sei->nShow = gSet.isConVisible ? SW_SHOWNORMAL : SW_HIDE;
-						mp_sei->nShow = SW_SHOWMINIMIZED;
-						lbRc = gConEmu.GuiShellExecuteEx(mp_sei, TRUE);
-						//lbRc = 32 < (int)::ShellExecute(0, // owner window
-						//	L"runas",
-						//	L"C:\\Windows\\Notepad.exe",
-						//	0, // params
-						//	0, // directory
-						//	SW_SHOWNORMAL);
-						// ошибку покажем дальше
-						dwLastError = GetLastError();
-					}
-				}
-            //} catch(...) {
-            //    lbRc = FALSE;
-            //}
-
-            
-
-            if (lbRc)
-            {
-				if (!m_Args.bRunAsAdministrator) {
-					ProcessUpdate(&pi.dwProcessId, 1);
-
-					AllowSetForegroundWindow(pi.dwProcessId);
-				}
-                SetForegroundWindow(ghWnd);
-
-                DEBUGSTRPROC(_T("CreateProcess OK\n"));
-                lbRc = TRUE;
-
-                /*if (!AttachPID(pi.dwProcessId)) {
-                    DEBUGSTRPROC(_T("AttachPID failed\n"));
-                    return FALSE;
-                }
-                DEBUGSTRPROC(_T("AttachPID OK\n"));*/
-
-                break; // OK, запустили
-            } else {
-                //Box("Cannot execute the command.");
-                //DWORD dwLastError = GetLastError();
-                DEBUGSTRPROC(_T("CreateProcess failed\n"));
-                int nLen = _tcslen(psCurCmd);
-                TCHAR* pszErr=(TCHAR*)Alloc(nLen+100,sizeof(TCHAR));
-                
-                if (0==FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-                    NULL, dwLastError, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
-                    pszErr, 1024, NULL))
-                {
-                    wsprintf(pszErr, _T("Unknown system error: 0x%x"), dwLastError);
-                }
-                
-                nLen += _tcslen(pszErr);
-                TCHAR* psz=(TCHAR*)Alloc(nLen+100,sizeof(TCHAR));
-                int nButtons = MB_OK|MB_ICONEXCLAMATION|MB_SETFOREGROUND;
-                
-                _tcscpy(psz, _T("Cannot execute the command.\r\n"));
-                _tcscat(psz, psCurCmd); _tcscat(psz, _T("\r\n"));
-                _tcscat(psz, pszErr);
-                if (m_Args.pszSpecialCmd == NULL)
-                {
-                    if (psz[_tcslen(psz)-1]!=_T('\n')) _tcscat(psz, _T("\r\n"));
-                    if (!gSet.psCurCmd && StrStrI(gSet.GetCmd(), gSet.GetDefaultCmd())==NULL) {
-                        _tcscat(psz, _T("\r\n\r\n"));
-                        _tcscat(psz, _T("Do You want to simply start "));
-                        _tcscat(psz, gSet.GetDefaultCmd());
-                        _tcscat(psz, _T("?"));
-                        nButtons |= MB_YESNO;
-                    }
-                }
-                MCHKHEAP
-                //Box(psz);
-                int nBrc = MessageBox(NULL, psz, _T("ConEmu"), nButtons);
-                Free(psz); Free(pszErr);
-                if (nBrc!=IDYES) {
-                    // ??? Может ведь быть НЕСКОЛЬКО консолей. Нельзя так разрушать основное окно!
-                    //gConEmu.Destroy();
-					CloseConsole();
-                    return FALSE;
-                }
-                // Выполнить стандартную команду...
-                if (m_Args.pszSpecialCmd == NULL)
-                {
-                    gSet.psCurCmd = _tcsdup(gSet.GetDefaultCmd());
-                }
-                nStep ++;
-                MCHKHEAP
-                if (psCurCmd) free(psCurCmd); psCurCmd = NULL;
-            }
-        }
-
-        MCHKHEAP
-        if (psCurCmd) free(psCurCmd); psCurCmd = NULL;
+        int nWndWidth = con.m_sbi.dwSize.X;
+        int nWndHeight = con.m_sbi.dwSize.Y;
+        GetConWindowSize(con.m_sbi, nWndWidth, nWndHeight);
+        wsprintf(psCurCmd+wcslen(psCurCmd), 
+        	L"/BW=%i /BH=%i /BZ=%i \"/FN=%s\" /FW=%i /FH=%i", 
+            nWndWidth, nWndHeight, con.DefaultBufferHeight,
+            //(con.bBufferHeight ? gSet.Default BufferHeight : 0), // пусть с буфером сервер разбирается
+            gSet.ConsoleFont.lfFaceName, gSet.ConsoleFont.lfWidth, gSet.ConsoleFont.lfHeight);
+        /*if (gSet.FontFile[0]) { --  РЕГИСТРАЦИЯ ШРИФТА НА КОНСОЛЬ НЕ РАБОТАЕТ!
+            wcscat(psCurCmd, L" \"/FF=");
+            wcscat(psCurCmd, gSet.FontFile);
+            wcscat(psCurCmd, L"\"");
+        }*/
+        if (m_UseLogs) wcscat(psCurCmd, (m_UseLogs==3) ? L" /LOG3" : (m_UseLogs==2) ? L" /LOG2" : L" /LOG");
+		if (!gSet.isConVisible) wcscat(psCurCmd, L" /HIDE");
+        wcscat(psCurCmd, L" /ROOT ");
+        wcscat(psCurCmd, lpszCmd);
         MCHKHEAP
 
-        //TODO: а делать ли это?
-        SafeCloseHandle(pi.hThread); pi.hThread = NULL;
-        //CloseHandle(pi.hProcess); pi.hProcess = NULL;
-        mn_ConEmuC_PID = pi.dwProcessId;
-        mh_ConEmuC = pi.hProcess; pi.hProcess = NULL;
+		DWORD dwLastError = 0;
 
-		if (!m_Args.bRunAsAdministrator) {
-			CreateLogFiles();
+        #ifdef MSGLOGGER
+        DEBUGSTRPROC(psCurCmd);DEBUGSTRPROC(_T("\n"));
+        #endif
         
-			//// Событие "изменения" консоль //2009-05-14 Теперь события обрабатываются в GUI, но прийти из консоли может изменение размера курсора
-			//wsprintfW(ms_ConEmuC_Pipe, CE_CURSORUPDATE, mn_ConEmuC_PID);
-			//mh_CursorChanged = CreateEvent ( NULL, FALSE, FALSE, ms_ConEmuC_Pipe );
-	        
-			// Имя пайпа для управления ConEmuC
-			wsprintfW(ms_ConEmuC_Pipe, CESERVERPIPENAME, L".", mn_ConEmuC_PID);
-			wsprintfW(ms_ConEmuCInput_Pipe, CESERVERINPUTNAME, L".", mn_ConEmuC_PID);
-			MCHKHEAP
-		}
+        //try {
+			if (!m_Args.bRunAsAdministrator) {
+				LockSetForegroundWindow ( LSFW_LOCK );
+
+				lbRc = CreateProcess(NULL, psCurCmd, NULL, NULL, FALSE, 
+					NORMAL_PRIORITY_CLASS|
+					CREATE_DEFAULT_ERROR_MODE|CREATE_NEW_CONSOLE
+					//|CREATE_NEW_PROCESS_GROUP - низя! перестает срабатывать Ctrl-C
+					, NULL, m_Args.pszStartupDir, &si, &pi);
+				if (!lbRc)
+					dwLastError = GetLastError();
+				DEBUGSTRPROC(_T("CreateProcess finished\n"));
+
+				LockSetForegroundWindow ( LSFW_UNLOCK );
+
+			} else {
+				LPCWSTR pszCmd = psCurCmd;
+				wchar_t szExec[MAX_PATH+1];
+				if (NextArg(&pszCmd, szExec) != 0) {
+					lbRc = FALSE;
+					dwLastError = -1;
+				} else {
+					// Почему-то валится.
+                    // Попробовать GlobalAlloc на строки (может ему чего не нравится...) сделать копии
+                    // Если не прокатит: CreateProcessAsUser with an unrestricted administrator token
+                    // http://weblogs.asp.net/kennykerr/archive/2006/09/29/Windows-Vista-for-Developers-_1320_-Part-4-_1320_-User-Account-Control.aspx
+                    
+                    if (mp_sei) {
+                    	SafeCloseHandle(mp_sei->hProcess);
+                    	GlobalFree(mp_sei); mp_sei = NULL;
+                    }
+
+                    wchar_t szCurrentDirectory[MAX_PATH+1];
+					if (m_Args.pszStartupDir)
+						wcscpy(szCurrentDirectory, m_Args.pszStartupDir);
+					else if (!GetCurrentDirectory(MAX_PATH+1, szCurrentDirectory))
+                    	szCurrentDirectory[0] = 0;
+                    
+                    int nWholeSize = sizeof(SHELLEXECUTEINFO)
+                    	+ sizeof(wchar_t) *
+                    	  ( 10 /* Verb */
+                    	  + wcslen(szExec)+2
+                    	  + ((pszCmd == NULL) ? 0 : (wcslen(pszCmd)+2))
+                    	  + wcslen(szCurrentDirectory) + 2
+                    	  );
+					mp_sei = (SHELLEXECUTEINFO*)GlobalAlloc(GPTR, nWholeSize);
+					mp_sei->hwnd = ghWnd;
+					mp_sei->cbSize = sizeof(SHELLEXECUTEINFO);
+					mp_sei->hwnd = /*NULL; */ ghWnd; // почему я тут NULL ставил?
+					mp_sei->fMask = SEE_MASK_NO_CONSOLE|SEE_MASK_NOCLOSEPROCESS;
+					mp_sei->lpVerb = (wchar_t*)(mp_sei+1);
+						wcscpy((wchar_t*)mp_sei->lpVerb, L"runas");
+					mp_sei->lpFile = mp_sei->lpVerb + wcslen(mp_sei->lpVerb) + 2;
+						wcscpy((wchar_t*)mp_sei->lpFile, szExec);
+					mp_sei->lpParameters = mp_sei->lpFile + wcslen(mp_sei->lpFile) + 2;
+						if (pszCmd) {
+							*(wchar_t*)mp_sei->lpParameters = L' ';
+							wcscpy((wchar_t*)(mp_sei->lpParameters+1), pszCmd);
+						}
+					mp_sei->lpDirectory = mp_sei->lpParameters + wcslen(mp_sei->lpParameters) + 2;
+						if (szCurrentDirectory[0])
+							wcscpy((wchar_t*)mp_sei->lpDirectory, szCurrentDirectory);
+						else
+							mp_sei->lpDirectory = NULL;
+					//mp_sei->nShow = gSet.isConVisible ? SW_SHOWNORMAL : SW_HIDE;
+					mp_sei->nShow = SW_SHOWMINIMIZED;
+					lbRc = gConEmu.GuiShellExecuteEx(mp_sei, TRUE);
+					//lbRc = 32 < (int)::ShellExecute(0, // owner window
+					//	L"runas",
+					//	L"C:\\Windows\\Notepad.exe",
+					//	0, // params
+					//	0, // directory
+					//	SW_SHOWNORMAL);
+					// ошибку покажем дальше
+					dwLastError = GetLastError();
+				}
+			}
+        //} catch(...) {
+        //    lbRc = FALSE;
+        //}
+
+        
+
+        if (lbRc)
+        {
+			if (!m_Args.bRunAsAdministrator) {
+				ProcessUpdate(&pi.dwProcessId, 1);
+
+				AllowSetForegroundWindow(pi.dwProcessId);
+			}
+            SetForegroundWindow(ghWnd);
+
+            DEBUGSTRPROC(_T("CreateProcess OK\n"));
+            lbRc = TRUE;
+
+            /*if (!AttachPID(pi.dwProcessId)) {
+                DEBUGSTRPROC(_T("AttachPID failed\n"));
+                return FALSE;
+            }
+            DEBUGSTRPROC(_T("AttachPID OK\n"));*/
+
+            break; // OK, запустили
+        } else {
+            //Box("Cannot execute the command.");
+            //DWORD dwLastError = GetLastError();
+            DEBUGSTRPROC(_T("CreateProcess failed\n"));
+            int nLen = _tcslen(psCurCmd);
+            TCHAR* pszErr=(TCHAR*)Alloc(nLen+100,sizeof(TCHAR));
+            
+            if (0==FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+                NULL, dwLastError, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
+                pszErr, 1024, NULL))
+            {
+                wsprintf(pszErr, _T("Unknown system error: 0x%x"), dwLastError);
+            }
+            
+            nLen += _tcslen(pszErr);
+            TCHAR* psz=(TCHAR*)Alloc(nLen+100,sizeof(TCHAR));
+            int nButtons = MB_OK|MB_ICONEXCLAMATION|MB_SETFOREGROUND;
+            
+            _tcscpy(psz, _T("Cannot execute the command.\r\n"));
+            _tcscat(psz, psCurCmd); _tcscat(psz, _T("\r\n"));
+            _tcscat(psz, pszErr);
+            if (m_Args.pszSpecialCmd == NULL)
+            {
+                if (psz[_tcslen(psz)-1]!=_T('\n')) _tcscat(psz, _T("\r\n"));
+                if (!gSet.psCurCmd && StrStrI(gSet.GetCmd(), gSet.GetDefaultCmd())==NULL) {
+                    _tcscat(psz, _T("\r\n\r\n"));
+                    _tcscat(psz, _T("Do You want to simply start "));
+                    _tcscat(psz, gSet.GetDefaultCmd());
+                    _tcscat(psz, _T("?"));
+                    nButtons |= MB_YESNO;
+                }
+            }
+            MCHKHEAP
+            //Box(psz);
+            int nBrc = MessageBox(NULL, psz, _T("ConEmu"), nButtons);
+            Free(psz); Free(pszErr);
+            if (nBrc!=IDYES) {
+                // ??? Может ведь быть НЕСКОЛЬКО консолей. Нельзя так разрушать основное окно!
+                //gConEmu.Destroy();
+				CloseConsole();
+                return FALSE;
+            }
+            // Выполнить стандартную команду...
+            if (m_Args.pszSpecialCmd == NULL)
+            {
+                gSet.psCurCmd = _tcsdup(gSet.GetDefaultCmd());
+            }
+            nStep ++;
+            MCHKHEAP
+            if (psCurCmd) free(psCurCmd); psCurCmd = NULL;
+        }
+    }
+
+    MCHKHEAP
+    if (psCurCmd) free(psCurCmd); psCurCmd = NULL;
+    MCHKHEAP
+
+    //TODO: а делать ли это?
+    SafeCloseHandle(pi.hThread); pi.hThread = NULL;
+    //CloseHandle(pi.hProcess); pi.hProcess = NULL;
+    mn_ConEmuC_PID = pi.dwProcessId;
+    mh_ConEmuC = pi.hProcess; pi.hProcess = NULL;
+
+	if (!m_Args.bRunAsAdministrator) {
+		CreateLogFiles();
+    
+		//// Событие "изменения" консоль //2009-05-14 Теперь события обрабатываются в GUI, но прийти из консоли может изменение размера курсора
+		//wsprintfW(ms_ConEmuC_Pipe, CE_CURSORUPDATE, mn_ConEmuC_PID);
+		//mh_CursorChanged = CreateEvent ( NULL, FALSE, FALSE, ms_ConEmuC_Pipe );
+        
+		// Имя пайпа для управления ConEmuC
+		wsprintfW(ms_ConEmuC_Pipe, CESERVERPIPENAME, L".", mn_ConEmuC_PID);
+		wsprintfW(ms_ConEmuCInput_Pipe, CESERVERINPUTNAME, L".", mn_ConEmuC_PID);
+		MCHKHEAP
+	}
 
     return lbRc;
 }
@@ -2793,7 +2835,7 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 			// Но только если вызов SendTabs был сделан из основной нити фара (чтобы небыло потребности в Synchro)
 			if (pIn->Tabs.bMainThread && lbCanUpdate && gSet.isTabs == 2) {
 				TODO("расчитать новый размер, если сменилась видимость табов");
-				bool lbCurrentActive = TabBar.IsActive();
+				bool lbCurrentActive = gConEmu.mp_TabBar->IsActive();
 				bool lbNewActive = lbCurrentActive;
 				// Если консолей более одной - видимость табов не изменится
 				if (gConEmu.GetVCon(1) == NULL) {
@@ -3344,8 +3386,8 @@ void CRealConsole::ProcessUpdateFlags(BOOL abProcessChanged)
     if (abProcessChanged) {
         gConEmu.UpdateProcessDisplay(abProcessChanged);
         //2009-09-10
-        //TabBar.Refresh(mn_ProgramStatus & CES_FARACTIVE);
-        TabBar.Update();
+        //gConEmu.mp_TabBar->Refresh(mn_ProgramStatus & CES_FARACTIVE);
+        gConEmu.mp_TabBar->Update();
     }
 }
 
@@ -3968,6 +4010,8 @@ BOOL CRealConsole::InitBuffers(DWORD OneBufferSize)
     BOOL lbRc = FALSE;
     int nNewWidth = 0, nNewHeight = 0;
 
+	MCHKHEAP;
+
     if (!GetConWindowSize(con.m_sbi, nNewWidth, nNewHeight))
         return FALSE;
 
@@ -3986,20 +4030,17 @@ BOOL CRealConsole::InitBuffers(DWORD OneBufferSize)
     {
         MSectionLock sc; sc.Lock(&csCON, TRUE);
 
-        //try {
+        MCHKHEAP;
+
         if (con.pConChar)
             { Free(con.pConChar); con.pConChar = NULL; }
         if (con.pConAttr)
             { Free(con.pConAttr); con.pConAttr = NULL; }
 
-        MCHKHEAP
+        MCHKHEAP;
 
         con.pConChar = (TCHAR*)Alloc((nNewWidth * nNewHeight * 2), sizeof(*con.pConChar));
         con.pConAttr = (WORD*)Alloc((nNewWidth * nNewHeight * 2), sizeof(*con.pConAttr));
-        //} catch(...) {
-        //    con.pConChar = NULL;
-        //    con.pConAttr = NULL;
-        //}
 
         sc.Unlock();
 
@@ -4584,8 +4625,8 @@ void CRealConsole::OnActivate(int nNewNum, int nOldNum)
 
     UpdateScrollInfo();
 
-    TabBar.OnConsoleActivated(nNewNum+1/*, isBufferHeight()*/);
-    TabBar.Update();
+    gConEmu.mp_TabBar->OnConsoleActivated(nNewNum+1/*, isBufferHeight()*/);
+    gConEmu.mp_TabBar->Update();
 
     gConEmu.OnBufferHeight(); //con.bBufferHeight);
 
@@ -4836,9 +4877,9 @@ void CRealConsole::SetTabs(ConEmuTab* tabs, int tabsCount)
         CheckFarStates();
     }
     
-    // Передернуть TabBar...
+    // Передернуть gConEmu.mp_TabBar->..
     if (gConEmu.isValid(mp_VCon)) // Во время создания консоли она еще не добавлена в список...
-        TabBar.Update();
+        gConEmu.mp_TabBar->Update();
 }
 
 // Если такого таба нет - pTab НЕ ОБНУЛЯТЬ!!!
@@ -5876,7 +5917,7 @@ void CRealConsole::OnTitleChanged()
         // Для НЕ активной консоли - уведомить главное окно, что у нас сменились проценты
         gConEmu.UpdateProgress(TRUE/*abUpdateTitle*/);
     }
-    TabBar.Update(); // сменить заголовок закладки?
+    gConEmu.mp_TabBar->Update(); // сменить заголовок закладки?
 }
 
 bool CRealConsole::isFilePanel(bool abPluginAllowed/*=false*/)
@@ -6435,7 +6476,7 @@ void CRealConsole::CloseMapData()
 		CloseHandle(mh_FileMappingData);
 		mh_FileMappingData = NULL;
 	}
-	mn_LastConsoleDataIdx = mn_LastConsolePacketIdx = -1;
+	mn_LastConsoleDataIdx = mn_LastConsolePacketIdx = mn_LastFarReadIdx = -1;
 }
 
 BOOL CRealConsole::ReopenMapData()
@@ -6666,10 +6707,10 @@ bool CRealConsole::isAlive()
 {
 	if (!this) return false;
 
-	if (GetFarPID()!=0) {
+	if (GetFarPID()!=0 && mn_LastFarReadIdx != (DWORD)-1) {
 		bool lbAlive = false;
 		if (mp_ConsoleInfo) {
-			DWORD nLastReadTick = mp_ConsoleInfo->nFarReadTick;
+			DWORD nLastReadTick = mn_LastFarReadTick;
 			if (nLastReadTick) {
 				DWORD nCurTick = GetTickCount();
 				DWORD nDelta = nCurTick - nLastReadTick;
