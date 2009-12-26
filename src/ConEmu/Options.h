@@ -35,6 +35,7 @@ public:
     char isShowBgImage;
 	bool isBackgroundImageValid;
 	u8 bgImageDarker;
+	DWORD nBgImageColors;
 
 	/* Command Line History (from start dialog) */
 	LPWSTR psCmdHistory; DWORD nCmdHistorySize;
@@ -62,6 +63,7 @@ public:
     bool isFullScreen, isHideCaption;
     char isFixFarBorders;
 	bool isMouseSkipActivation, isMouseSkipMoving;
+	bool isFarHourglass; DWORD nFarHourglassDelay;
 	struct tag_CharRanges {
 		bool bUsed;
 		wchar_t cBegin, cEnd;

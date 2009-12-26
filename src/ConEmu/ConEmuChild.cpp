@@ -334,44 +334,6 @@ void CConEmuChild::Validate()
 	//if (ghWndDC) ValidateRect(ghWnd, NULL);
 }
 
-void CConEmuChild::SetCaret ( int Visible, UINT X, UINT Y, UINT nWidth, UINT nHeight )
-{
-	if (Visible == -1) {
-		if (Caret.bCreated) {
-			DestroyCaret();
-			Caret.bCreated = FALSE;
-			Caret.bVisible = FALSE;
-		}
-		return;
-	}
-	
-	if (Caret.bCreated && (nWidth != Caret.nWidth || nHeight != Caret.nHeight)) {
-		DestroyCaret();
-		Caret.bCreated = FALSE;
-		Caret.bVisible = FALSE;
-	}
-	if (!Caret.bCreated) {
-		//If second parameter is (HBITMAP)1 - the caret dotted
-		Caret.bCreated = CreateCaret ( ghWndDC, (HBITMAP)0, nWidth, nHeight );
-		Caret.nWidth = nWidth; Caret.nHeight = nHeight;
-	}
-	
-	if (Visible == 0 && Caret.bVisible) {
-		ShowCaret ( ghWndDC );
-		Caret.bVisible = FALSE;
-	}
-
-	if (Caret.X != X || Caret.Y != Y) {	
-		SetCaretPos ( X, Y );
-		Caret.X = X; Caret.Y = Y;
-	}
-	
-	if (Visible == 1 && !Caret.bVisible) {
-		ShowCaret ( ghWndDC );
-		Caret.bVisible = TRUE;
-	}
-}
-
 
 
 

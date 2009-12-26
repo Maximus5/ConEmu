@@ -213,6 +213,7 @@ void CSettings::InitSettings()
 	isShowBgImage = 0;
     _tcscpy(sBgImage, L"c:\\back.bmp");
 	bgImageDarker = 0x46;
+	nBgImageColors = 1|2;
 
     isFixFarBorders = 1; isEnhanceGraphics = true; isPartBrush75 = 0xC8; isPartBrush50 = 0x96; isPartBrush25 = 0x5A;
 	memset(icFixFarBorderRanges, 0, sizeof(icFixFarBorderRanges));
@@ -257,6 +258,8 @@ void CSettings::InitSettings()
     bAdminShield = true;
     
 	isRSelFix = true; isMouseSkipActivation = true; isMouseSkipMoving = true;
+
+	isFarHourglass = true; nFarHourglassDelay = 500;
 
     isDragEnabled = DRAG_L_ALLOWED; isDropEnabled = (BYTE)1; isDefCopy = true;
     nLDragKey = 0; nRDragKey = VK_LCONTROL; 
@@ -419,6 +422,8 @@ void CSettings::LoadSettings()
 			if (isShowBgImage!=0 && isShowBgImage!=1 && isShowBgImage!=2) isShowBgImage = 0;
 		reg.Load(L"BackGround Image", sBgImage);
 		reg.Load(L"bgImageDarker", bgImageDarker);
+		reg.Load(L"bgImageColors", nBgImageColors);
+			if (!nBgImageColors) nBgImageColors = 1|2;
 
         reg.Load(L"FontBold", isBold);
         reg.Load(L"FontItalic", isItalic);
@@ -428,7 +433,9 @@ void CSettings::LoadSettings()
 		reg.Load(L"RSelectionFix", isRSelFix);
 		reg.Load(L"MouseSkipActivation", isMouseSkipActivation);
 		reg.Load(L"MouseSkipMoving", isMouseSkipMoving);
-        reg.Load(L"Dnd", isDragEnabled); 
+		reg.Load(L"FarHourglass", isFarHourglass);
+		reg.Load(L"FarHourglassDelay", nFarHourglassDelay);
+        reg.Load(L"Dnd", isDragEnabled);
         isDropEnabled = (BYTE)(isDragEnabled ? 1 : 0); // ранее "DndDrop" не было, поэтому ставим default
         reg.Load(L"DndLKey", nLDragKey);
         reg.Load(L"DndRKey", nRDragKey);
@@ -687,6 +694,7 @@ BOOL CSettings::SaveSettings()
             reg.Save(L"RSelectionFix", isRSelFix);
 			reg.Save(L"MouseSkipActivation", isMouseSkipActivation);
 			reg.Save(L"MouseSkipMoving", isMouseSkipMoving);
+			reg.Save(L"FarHourglass", isFarHourglass);
             reg.Save(L"Dnd", isDragEnabled);
             reg.Save(L"DndLKey", nLDragKey);
             reg.Save(L"DndRKey", nRDragKey);
@@ -1091,6 +1099,8 @@ LRESULT CSettings::OnInitDialog_Ext()
 	if (isFARuseASCIIsort) CheckDlgButton(hExt, cbFARuseASCIIsort, BST_CHECKED);
 	if (isFixAltOnAltTab) CheckDlgButton(hExt, cbFixAltOnAltTab, BST_CHECKED);
 
+	if (isFarHourglass) CheckDlgButton(hExt, cbFarHourglass, BST_CHECKED);
+
 	if (isDragEnabled) {
 		//CheckDlgButton(hExt, cbDragEnabled, BST_CHECKED);
 		if (isDragEnabled & DRAG_L_ALLOWED) CheckDlgButton(hExt, cbDragL, BST_CHECKED);
@@ -1427,6 +1437,11 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
     	isFARuseASCIIsort = IsChecked(hExt, cbFARuseASCIIsort);
     	gConEmu.UpdateFarSettings();
     	break;
+
+	case cbFarHourglass:
+		isFarHourglass = IsChecked(hExt, cbFarHourglass);
+		gConEmu.OnSetCursor(-1,-1);
+		break;
     	
     case cbFixAltOnAltTab:
     	isFixAltOnAltTab = IsChecked(hExt, cbFixAltOnAltTab);
@@ -2578,18 +2593,46 @@ HFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
             TODO("Для пропорциональных шрифтов наверное имеет смысл сохранять в реестре оптимальный lfWidth")
             ZeroStruct(tm);
             BOOL lbTM = GetTextMetrics(hDC, &tm);
+
+			ABC abc;
+			//This function succeeds only with TrueType fonts
+			BOOL lb1 =
+				GetCharABCWidths(hDC, L'M', L'M', &abc);
+
 			_ASSERTE(lbTM);
-				// Как оказалось, в некоторых моноширных TTF шрифтах tm.tmAveCharWidth 
-				// при включенном ClearType возвращается совсем некорректно
-				if (abs(tm.tmMaxCharWidth - tm.tmAveCharWidth)<=2)
-				{
-					SIZE szTest = {0,0}; int nTestLen;
-					if (GetTextExtentPoint32(hDC, TEST_FONT_WIDTH_STRING_EN, nTestLen=lstrlen(TEST_FONT_WIDTH_STRING_EN), &szTest)) {
-						int nAveWidth = (szTest.cx + nTestLen - 1) / nTestLen;
-						if (nAveWidth > tm.tmAveCharWidth || nAveWidth > tm.tmMaxCharWidth)
-							tm.tmMaxCharWidth = tm.tmAveCharWidth = nAveWidth;
-					}
+			int nTestLen;
+			SIZE szTest = {0,0}; 
+			#ifdef _DEBUG
+			INT nDX[30] = {0};
+			BOOL lbExtRc = GetTextExtentExPoint(hDC, TEST_FONT_WIDTH_STRING_EN, lstrlen(TEST_FONT_WIDTH_STRING_EN),
+				0,0, nDX, &szTest);
+			#endif
+
+			#ifdef _DEBUG
+			nTestLen=lstrlen(TEST_FONT_WIDTH_STRING_EN);
+			int nCaret[30] = {0};
+			UINT nOrder[30] = {0};
+			GCP_RESULTS gcpr = {sizeof(GCP_RESULTS)};
+			gcpr.lpDx = nDX; gcpr.lpCaretPos = nCaret; gcpr.lpOrder = nOrder; gcpr.nMaxFit = 30;
+			gcpr.nGlyphs = nTestLen;
+			// GetCharacterPlacement не работает, видимо еще что-то заполнять нужно
+			DWORD nSize = GetCharacterPlacement(hDC, TEST_FONT_WIDTH_STRING_EN, nTestLen, 0, &gcpr, 0);
+			nSize = GetOutlineTextMetrics(hDC, 0, 0);
+			LPOUTLINETEXTMETRIC pMt = (LPOUTLINETEXTMETRIC)malloc(nSize);
+			nSize = GetOutlineTextMetrics(hDC, nSize, pMt);
+			free(pMt);
+			#endif
+
+			// Как оказалось, в некоторых моноширных TTF шрифтах tm.tmAveCharWidth 
+			// при включенном ClearType возвращается совсем некорректно
+			if (abs(tm.tmMaxCharWidth - tm.tmAveCharWidth)<=2)
+			{
+				if (GetTextExtentPoint32(hDC, TEST_FONT_WIDTH_STRING_EN, nTestLen=lstrlen(TEST_FONT_WIDTH_STRING_EN), &szTest)) {
+					int nAveWidth = (szTest.cx + nTestLen - 1) / nTestLen;
+					if (nAveWidth > tm.tmAveCharWidth || nAveWidth > tm.tmMaxCharWidth)
+						tm.tmMaxCharWidth = tm.tmAveCharWidth = nAveWidth;
 				}
+			}
 
             if (isForceMonospace)
                 //Maximus - у Arial'а например MaxWidth слишком большой

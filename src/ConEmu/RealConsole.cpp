@@ -2119,13 +2119,16 @@ void CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
                 isSkipNextAltUp = true;
             }
         }
-        else if (messg == WM_SYSKEYDOWN && wParam == VK_SPACE && lParam & (1<<29)/*Ѕред. это 29-й бит, а не число 29*/ && !isPressed(VK_SHIFT))
+		//AltSpace - показать системное меню
+        else if ((messg == WM_SYSKEYDOWN || messg == WM_SYSKEYUP) && wParam == VK_SPACE && lParam & (1<<29) && !isPressed(VK_SHIFT))
         {   // Ќада, или системное меню будет недоступно
-            RECT rect, cRect;
-            GetWindowRect(ghWnd, &rect);
-            GetClientRect(ghWnd, &cRect);
-            WINDOWINFO wInfo;   GetWindowInfo(ghWnd, &wInfo);
-            gConEmu.ShowSysmenu(ghWnd, ghWnd, rect.right - cRect.right - wInfo.cxWindowBorders, rect.bottom - cRect.bottom - wInfo.cyWindowBorders);
+			if (messg == WM_SYSKEYUP) { // “олько по UP, чтобы не "булькало"
+				RECT rect, cRect;
+				GetWindowRect(ghWnd, &rect);
+				GetClientRect(ghWnd, &cRect);
+				WINDOWINFO wInfo;   GetWindowInfo(ghWnd, &wInfo);
+				gConEmu.ShowSysmenu(ghWnd, ghWnd, rect.right - cRect.right - wInfo.cxWindowBorders, rect.bottom - cRect.bottom - wInfo.cyWindowBorders);
+			}
         }
         else if (messg == WM_KEYUP && wParam == VK_MENU && isSkipNextAltUp) isSkipNextAltUp = false;
         else if (messg == WM_SYSKEYDOWN && wParam == VK_F9 && lParam & (1<<29)/*Ѕред. это 29-й бит, а не число 29*/ && !isPressed(VK_SHIFT))
@@ -6187,6 +6190,7 @@ void CRealConsole::FindPanels(BOOL abResetOnly/* = FALSE */)
 	RECT rRightPanel = rLeftPanel;
 	BOOL bLeftPanel = FALSE;
 	BOOL bRightPanel = FALSE;
+
     if (!abResetOnly && isFar() && con.nTextHeight >= MIN_CON_HEIGHT && con.nTextWidth >= MIN_CON_WIDTH)
     {
         uint nY = 0;
@@ -6256,7 +6260,10 @@ void CRealConsole::FindPanels(BOOL abResetOnly/* = FALSE */)
 					rRightPanel.right = con.nTextWidth-2;
 					bRightPanel = TRUE;
 				}
-			} else {
+			}
+			// Ќачина€ с FAR2 build 1295 панели могут быть разной высоты
+			if (!bRightPanel)
+			{
 				// нужно определить положение панели
 				if (((con.pConChar[nIdx+con.nTextWidth-1]>=L'0' && con.pConChar[nIdx+con.nTextWidth-1]<=L'9') // справа часы
 					|| con.pConChar[nIdx+con.nTextWidth-1] == ucBoxDblDownLeft) // или рамка

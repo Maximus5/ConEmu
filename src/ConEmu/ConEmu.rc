@@ -42,7 +42,7 @@ END
 
 3 TEXTINCLUDE MOVEABLE PURE 
 BEGIN
-    "#include ""resource.rc2""\r\n"
+    "#include ""resource2.rc""\r\n"
     "\r\n"
     "\0"
 END
@@ -70,7 +70,7 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 IDD_DIALOG1 DIALOGEX 0, 0, 328, 216
 STYLE DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
-FONT 8, "MS Shell Dlg"
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     GROUPBOX        "Anti-aliasing",IDC_STATIC,263,4,60,45,WS_GROUP
     CONTROL         "&None",rNoneAA,"Button",BS_AUTORADIOBUTTON | WS_GROUP,
@@ -104,8 +104,8 @@ BEGIN
                     44,67,31,8
     CONTROL         "&Monospace",cbNonProportional,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,79,67,54,8
-    CONTROL         "&Fix FAR borders",cbFixFarBorders,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,10,96,64,8
+    CONTROL         "&Fix FAR borders",cbFixFarBorders,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,10,96,64,8
     GROUPBOX        "Window size",IDC_STATIC,147,50,110,50
     CONTROL         "Normal",rNormal,"Button",BS_AUTORADIOBUTTON | WS_GROUP,
                     151,61,38,8
@@ -479,9 +479,11 @@ BEGIN
                     WS_TABSTOP
     CONTROL         "ASCII sort function in FAR (highly experimental)",
                     cbFARuseASCIIsort,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
-                    97,197,192,8
+                    97,197,166,8
     CONTROL         "Fix Alt on AltTab",cbFixAltOnAltTab,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,10,197,85,8
+    CONTROL         "Hourglass",cbFarHourglass,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,270,197,47,8
 END
 
 IDD_RESTART DIALOG DISCARDABLE  0, 0, 310, 98
@@ -525,6 +527,17 @@ IDB_SHIELD              BITMAP  DISCARDABLE     "Shield.bmp"
 IDC_COPY                CURSOR  DISCARDABLE     "CursorDragCopy.cur"
 IDC_LINK                CURSOR  DISCARDABLE     "CursorDragLink.cur"
 IDC_MOVE                CURSOR  DISCARDABLE     "CursorDragMove.cur"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDI_ICON1               ICON    DISCARDABLE     "ConEmu.ico"
+IDI_ICON2               ICON    DISCARDABLE     "Far.ico"
+IDI_ICON3               ICON    DISCARDABLE     "Far2.ico"
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -572,6 +585,7 @@ END
 STRINGTABLE DISCARDABLE 
 BEGIN
     cbRClick                "Off - all RClicks passed to console\nOn - EMenu called instead of RClick\n3s - Short RClick passed, Long RClick -> EMenu\nWarning! This may conflict with RDrag"
+    cbBgImage               "Show background image instead standard\ncolors #0 and #1 (black and blue)\n3d state - don't draw in viewer/editor"
 END
 
 STRINGTABLE DISCARDABLE 
@@ -623,13 +637,8 @@ BEGIN
     lbNtvdmHeight           "Old DOS programs may be runned under console sizes: 80x25, 80x28, 80x43 or 80x50. You may force window size selection, or left the automatic selection.\nThis feature is not available in x64 OS."
     cbFARuseASCIIsort       "Hook FAR string sort functions.\n!!!HIGHLY EXPERIMENTAL!!!"
     cbFixAltOnAltTab        "When You set a macro on Alt (RAlt) it can unexpectedly activates on AltTab. This issue can be fixed by sending to console AltTab instead of Alt"
+    cbFarHourglass          "Show AppStarting cursor (arrow with a small hourglass) when FAR is not responding (during long operations)"
 END
-
-// Icon with lowest ID value placed first to ensure application icon
-// remains consistent on all systems.
-IDI_ICON1               ICON    DISCARDABLE     "ConEmu.ico"
-IDI_ICON2               ICON    DISCARDABLE     "Far.ico"
-IDI_ICON3               ICON    DISCARDABLE     "Far2.ico"
 
 #endif    // English (U.S.) resources
 /////////////////////////////////////////////////////////////////////////////
@@ -641,7 +650,7 @@ IDI_ICON3               ICON    DISCARDABLE     "Far2.ico"
 //
 // Generated from the TEXTINCLUDE 3 resource.
 //
-#include "resource.rc2"
+#include "resource2.rc"
 
 
 /////////////////////////////////////////////////////////////////////////////

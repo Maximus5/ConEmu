@@ -19,8 +19,6 @@ public:
 	void Validate();
 	void Redraw();
 	
-	void SetCaret ( int Visible, UINT X=0, UINT Y=0, UINT nWidth=0, UINT nHeight=0 );
-
 	void SetRedraw(BOOL abRedrawEnabled);
 
 	void CheckPostRedraw();

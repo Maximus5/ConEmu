@@ -48,6 +48,8 @@ WARNING("! А нафига КУРСОР (мигающий) отрисовывать в VirtualConsole? Не лучше ли
 #define CURSOR_ALWAYS_VISIBLE
 #endif
 
+#define ISBGIMGCOLOR(a) (gSet.nBgImageColors & (1 << a))
+
 #ifndef CONSOLE_SELECTION_NOT_EMPTY
 #define CONSOLE_SELECTION_NOT_EMPTY     0x0002   // non-null select rectangle
 #endif
@@ -651,12 +653,11 @@ WORD CVirtualConsole::CharWidth(TCHAR ch)
     if (!gSet.CharWidth[ch]) {
         SelectFont(gSet.mh_Font);
         SIZE sz;
-        ABC abc;
         //This function succeeds only with TrueType fonts
         #ifdef _DEBUG
-        BOOL lb1 =
+		ABC abc;
+        BOOL lb1 = GetCharABCWidths(hDC, ch, ch, &abc);
         #endif
-        GetCharABCWidths(hDC, ch, ch, &abc);
 
         if (GetTextExtentPoint32(hDC, &ch, 1, &sz) && sz.cx)
             gSet.CharWidth[ch] = sz.cx;
@@ -1147,6 +1148,8 @@ void CVirtualConsole::UpdateText(bool isForce, bool updateText, bool updateCurso
     else
         SetBkMode(hDC, TRANSPARENT);
 
+	int nDX[500];
+
     // rows
     //TODO: а зачем в isForceMonospace принудительно перерисовывать все?
     const bool skipNotChanged = !isForce /*&& !gSet.isForceMonospace*/;
@@ -1317,14 +1320,14 @@ void CVirtualConsole::UpdateText(bool isForce, bool updateText, bool updateCurso
                     rect.bottom = rect.top + gSet.FontHeight();
 
                     if (gbNoDblBuffer) GdiFlush();
-                    if (! (drawImage && (attrBack) < 2)) {
+                    if (! (drawImage && ISBGIMGCOLOR(attrBack))) {
                         SetBkColor(hDC, gSet.Colors[attrBack]);
                         #ifdef _DEBUG
                         int nCnt = ((rect.right - rect.left) / CharWidth(L' '))+1;
                         #endif
 
                         //UINT nFlags = ETO_CLIPPED; // || ETO_OPAQUE;
-                        //ExtTextOut(hDC, rect.left, rect.top, nFlags, &rect, Spaces, min(nSpaceCount, nCnt), 0);
+                        //Ext Text Out(hDC, rect.left, rect.top, nFlags, &rect, Spaces, min(nSpaceCount, nCnt), 0);
 
 						FillRect(hDC, &rect, PartBrush(c, attrBack, attrFore));
 
@@ -1363,7 +1366,7 @@ void CVirtualConsole::UpdateText(bool isForce, bool updateText, bool updateCurso
                     rect.right = (TextWidth>(UINT)j2) ? ConCharXLine[j2-1] : Width;
                     rect.bottom = rect.top + gSet.FontHeight();
                 }
-                UINT nFlags = ETO_CLIPPED | ((drawImage && (attrBack) < 2) ? 0 : ETO_OPAQUE);
+                UINT nFlags = ETO_CLIPPED | ((drawImage && ISBGIMGCOLOR(attrBack)) ? 0 : ETO_OPAQUE);
                 int nShift = 0;
 
                 MCHKHEAP
@@ -1383,12 +1386,12 @@ void CVirtualConsole::UpdateText(bool isForce, bool updateText, bool updateCurso
                 }
 
                 MCHKHEAP
-                if (! (drawImage && (attrBack) < 2)) {
+                if (! (drawImage && ISBGIMGCOLOR(attrBack))) {
                     SetBkColor(hDC, gSet.Colors[attrBack]);
-                    //TODO: надо раскомментарить и куда-то приткнуть...
-					TODO("А это зачем делается? Ниже идет еще один ExtTextOut");
-                    if (nShift>0 && !isSpace && !isProgress)
-						ExtTextOut(hDC, rect.left, rect.top, nFlags, &rect, L" ", 1, 0);
+					// В режиме ForceMonospace символы пытаемся рисовать по центру (если они уже знакоместа)
+					// чтобы не оставалось мусора от предыдущей отрисовки - нужно залить знакоместо фоном
+					if (nShift>0 && !isSpace && !isProgress)
+						FillRect(hDC, &rect, PartBrush(L' ', attrBack, attrFore));
                 } else if (drawImage) {
                     BlitPictureTo(rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top);
                 }
@@ -1404,6 +1407,7 @@ void CVirtualConsole::UpdateText(bool isForce, bool updateText, bool updateCurso
 				if (isSpace || isProgress) {
 					FillRect(hDC, &rect, PartBrush(c, attrBack, attrFore));
 				} else {
+					// Это режим Force monospace
 					ExtTextOut(hDC, rect.left, rect.top, nFlags, &rect, &c, 1, 0);
 				}
                 if (gbNoDblBuffer) GdiFlush();
@@ -1495,14 +1499,14 @@ void CVirtualConsole::UpdateText(bool isForce, bool updateText, bool updateCurso
 
                 MCHKHEAP
 				BOOL lbImgDrawn = FALSE;
-                if (! (drawImage && (attrBack) < 2))
+                if (! (drawImage && ISBGIMGCOLOR(attrBack)))
                     SetBkColor(hDC, gSet.Colors[attrBack]);
 				else if (drawImage) {
                     BlitPictureTo(rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top);
 					lbImgDrawn = TRUE;
 				}
 
-                UINT nFlags = ETO_CLIPPED | ((drawImage && (attrBack) < 2) ? 0 : ETO_OPAQUE);
+                UINT nFlags = ETO_CLIPPED | ((drawImage && ISBGIMGCOLOR(attrBack)) ? 0 : ETO_OPAQUE);
 
                 MCHKHEAP
                 if (gbNoDblBuffer) GdiFlush();
@@ -1511,26 +1515,34 @@ void CVirtualConsole::UpdateText(bool isForce, bool updateText, bool updateCurso
                 } else
                 if (/*gSet.isProportional &&*/ isSpace/*c == ' '*/) {
                     //int nCnt = ((rect.right - rect.left) / CharWidth(L' '))+1;
-                    //ExtTextOut(hDC, rect.left, rect.top, nFlags, &rect, Spaces, nCnt, 0);
+                    //Ext Text Out(hDC, rect.left, rect.top, nFlags, &rect, Spaces, nCnt, 0);
 					TODO("Проверить, что будет если картинка МЕНЬШЕ по ширине чем область отрисовки");
 					if (!lbImgDrawn)
 						FillRect(hDC, &rect, PartBrush(c, attrBack, attrFore));
-                } else
-                if (gSet.FontCharSet() == OEM_CHARSET && !isUnicode)
-                {
-                    WideCharToMultiByte(CP_OEMCP, 0, ConCharLine + j, j2 - j, tmpOem, TextWidth+4, 0, 0);
-                    ExtTextOutA(hDC, rect.left, rect.top, nFlags,
-                        &rect, tmpOem, j2 - j, 0);
-                }
-                else
-                {
-                    if ((j2-j)==1) // support visualizer change
-                    ExtTextOut(hDC, rect.left, rect.top, nFlags, &rect,
-                        &c/*ConCharLine + j*/, 1, 0);
-                    else
-                    ExtTextOut(hDC, rect.left, rect.top, nFlags, &rect,
-                        ConCharLine + j, j2 - j, 0);
-                }
+				} else {
+					if (gSet.FontCharSet() == OEM_CHARSET && !isUnicode)
+					{
+						WideCharToMultiByte(CP_OEMCP, 0, ConCharLine + j, j2 - j, tmpOem, TextWidth+4, 0, 0);
+						if (!gSet.isProportional)
+							for (int idx = 0, n = (j2-j); n; idx++, n--)
+								nDX[idx] = CharWidth(tmpOem[idx]);
+						ExtTextOutA(hDC, rect.left, rect.top, nFlags,
+							&rect, tmpOem, j2 - j, gSet.isProportional ? 0 : nDX);
+					}
+					else
+					{
+						if ((j2-j)==1) // support visualizer change
+						ExtTextOut(hDC, rect.left, rect.top, nFlags, &rect,
+							&c/*ConCharLine + j*/, 1, 0);
+						else {
+							if (!gSet.isProportional)
+								for (int idx = 0, n = (j2-j); n; idx++, n--)
+									nDX[idx] = CharWidth(ConCharLine[j]);
+							ExtTextOut(hDC, rect.left, rect.top, nFlags, &rect,
+								ConCharLine + j, j2 - j, gSet.isProportional ? 0 : nDX);
+						}
+					}
+				}
                 if (gbNoDblBuffer) GdiFlush();
                 MCHKHEAP
             }
@@ -1624,11 +1636,9 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
 
     int CurChar = pos.Y * TextWidth + pos.X;
     if (CurChar < 0 || CurChar>=(int)(TextWidth * TextHeight)) {
-    	gConEmu.m_Child.SetCaret ( -1 ); // Если был создан системный курсор - он разрушится
         return; // может быть или глюк - или размер консоли был резко уменьшен и предыдущая позиция курсора пропала с экрана
     }
     if (!ConCharX) {
-    	gConEmu.m_Child.SetCaret ( -1 ); // Если был создан системный курсор - он разрушится
         return; // защита
     }
     COORD pix;
@@ -1707,8 +1717,13 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
 	rect.top += rcClient.top;
 	rect.bottom += rcClient.top;
 
+	// Если курсор занимает более 40% площади - принудительно включим 
+	// XOR режим, иначе (тем более при немигающем) курсор закрывает 
+	// весь символ и его не видно
+	bool bCursorColor = gSet.isCursorColor | (dwSize >= 40);
+
 	// Теперь в rect нужно отобразить курсор (XOR'ом попробуем?)
-	if (gSet.isCursorColor || gSet.isForceMonospace)
+	if (bCursorColor || gSet.isForceMonospace)
 	{
 		HBRUSH hBr = CreateSolidBrush(0xC0C0C0);
 		HBRUSH hOld = (HBRUSH)SelectObject ( hPaintDC, hBr );
@@ -1734,42 +1749,9 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
 	lbDark = (R <= 0xC0) && (G <= 0xC0) && (B <= 0xC0);
 	clr = lbDark ? gSet.Colors[15] : gSet.Colors[0];
 
-	if (gSet.isEnhanceGraphics && lbIsProgr) {
-		HBRUSH hBr = CreateSolidBrush(clr);
-		FillRect(hPaintDC, &rect, hBr);
-		DeleteObject ( hBr );
-	}
-	else
-	{
-		SetTextColor(hPaintDC, Cursor.bgColor);
-		SetBkColor(hPaintDC, clr);
-
-		HFONT hOldFont = NULL;
-
-		if (gSet.FontCharSet() == OEM_CHARSET && !isCharBorder(Cursor.ch[0]))
-		{
-			hOldFont = (HFONT)SelectObject(hPaintDC, gSet.mh_Font);
-
-			char tmp[2];
-			WideCharToMultiByte(CP_OEMCP, 0, Cursor.ch, 1, tmp, 1, 0, 0);
-			ExtTextOutA(hPaintDC, pix.X, pix.Y,
-				ETO_CLIPPED | ETO_OPAQUE, &rect, tmp, 1, 0);
-				//((drawImage && (Cursor.foreColorNum < 2) && !vis) ? 0 : ETO_OPAQUE),&rect, tmp, 1, 0);
-		}
-		else
-		{
-			if (gSet.isFixFarBorders && isCharBorder(Cursor.ch[0]))
-				hOldFont = (HFONT)SelectObject(hPaintDC, gSet.mh_Font2);
-			else
-				hOldFont = (HFONT)SelectObject(hPaintDC, gSet.mh_Font);
-
-			ExtTextOut(hPaintDC, pix.X, pix.Y,
-				ETO_CLIPPED | ETO_OPAQUE, &rect, Cursor.ch, 1, 0);
-				//((drawImage && (Cursor.foreColorNum < 2) && !vis) ? 0 : ETO_OPAQUE), &rect, Cursor.ch, 1, 0);
-		}
-
-		SelectObject(hPaintDC, hOldFont);
-	}
+	HBRUSH hBr = CreateSolidBrush(clr);
+	FillRect(hPaintDC, &rect, hBr);
+	DeleteObject ( hBr );
 }
 
 void CVirtualConsole::UpdateCursor(bool& lRes)

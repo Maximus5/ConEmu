@@ -39,7 +39,7 @@
 
 #define MAX_TITLE_SIZE 0x400
 
-#define FAR_ALIVE_TIMEOUT 1000
+#define FAR_ALIVE_TIMEOUT gSet.nFarHourglassDelay //1000
 
 #pragma pack(push, 1)
 

@@ -1,6 +1,6 @@
 //{{NO_DEPENDENCIES}}
 // Microsoft Developer Studio generated include file.
-// Used by Resource.rc
+// Used by ConEmu.rc
 //
 #define IDI_ICON1                       1
 #define IDI_ICON2                       2
@@ -205,6 +205,7 @@
 #define IDC_CONSOLE_STATES              1560
 #define cbFARuseASCIIsort               1561
 #define cbFixAltOnAltTab                1562
+#define cbFarHourglass                  1563
 
 // Next default values for new objects
 // 
@@ -212,7 +213,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        115
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1563
+#define _APS_NEXT_CONTROL_VALUE         1564
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

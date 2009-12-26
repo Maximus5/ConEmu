@@ -417,13 +417,51 @@ static BOOL WINAPI OnGetNumberOfConsoleInputEvents(HANDLE hConsoleInput, LPDWORD
 
 typedef BOOL (WINAPI* PeekConsoleInput_t)(HANDLE,PINPUT_RECORD,DWORD,LPDWORD);
 
+static void TouchReadPeekConsoleInputs(bool Peek)
+{
+	_ASSERTE(gpConsoleInfo);
+	if (!gpConsoleInfo) return;
+	gpConsoleInfo->nFarReadIdx++;
+
+#ifdef _DEBUG
+	if ((GetKeyState(VK_SCROLL)&1) == 0)
+		return;
+	static DWORD nLastTick;
+	DWORD nCurTick = GetTickCount();
+	DWORD nDelta = nCurTick - nLastTick;
+	static CONSOLE_SCREEN_BUFFER_INFO sbi;
+	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+	if (nDelta > 1000) {
+		GetConsoleScreenBufferInfo(hOut, &sbi);
+		nCurTick = nCurTick;
+	}
+	static wchar_t Chars[] = L"-\\|/-\\|/";
+	int nNextChar = 0;
+	if (Peek) {
+		static int nPeekChar = 0;
+		nNextChar = nPeekChar++;
+		if (nPeekChar >= 8) nPeekChar = 0;
+	} else {
+		static int nReadChar = 0;
+		nNextChar = nReadChar++;
+		if (nReadChar >= 8) nReadChar = 0;
+	}
+	CHAR_INFO chi;
+	chi.Char.UnicodeChar = Chars[nNextChar];
+	chi.Attributes = 15;
+	COORD crBufSize = {1,1};
+	COORD crBufCoord = {0,0};
+	SMALL_RECT rc = {sbi.srWindow.Left+(Peek?0:1),sbi.srWindow.Bottom,sbi.srWindow.Left+(Peek?0:1),sbi.srWindow.Bottom};
+	WriteConsoleOutputW(hOut, &chi, crBufSize, crBufCoord, &rc);
+#endif
+}
+
 static BOOL WINAPI OnPeekConsoleInputA(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsRead)
 {
 	ORIGINAL(PeekConsoleInputA);
 	_ASSERTE(OnPeekConsoleInputA!=fPeekConsoleInputA);
-	if (gpConsoleInfo && bMainThread) {
-		gpConsoleInfo->nFarReadIdx++;
-	}
+	if (gpConsoleInfo && bMainThread)
+		TouchReadPeekConsoleInputs(true);
 	BOOL lbRc = ((PeekConsoleInput_t)fPeekConsoleInputA)(hConsoleInput, lpBuffer, nLength, lpNumberOfEventsRead);
 	return lbRc;
 }
@@ -432,9 +470,8 @@ static BOOL WINAPI OnPeekConsoleInputW(HANDLE hConsoleInput, PINPUT_RECORD lpBuf
 {
 	ORIGINAL(PeekConsoleInputW);
 	_ASSERTE(OnPeekConsoleInputW!=fPeekConsoleInputW);
-	if (gpConsoleInfo && bMainThread) {
-		gpConsoleInfo->nFarReadIdx++;
-	}
+	if (gpConsoleInfo && bMainThread)
+		TouchReadPeekConsoleInputs(true);
 	BOOL lbRc = ((PeekConsoleInput_t)fPeekConsoleInputW)(hConsoleInput, lpBuffer, nLength, lpNumberOfEventsRead);
 	return lbRc;
 }
@@ -443,8 +480,9 @@ static BOOL WINAPI OnReadConsoleInputA(HANDLE hConsoleInput, PINPUT_RECORD lpBuf
 {
 	_ASSERTE(OnReadConsoleInputA!=ReadConsoleInputA);
 	if (gpConsoleInfo) {
-		if (GetCurrentThreadId() == gnMainThreadId)
-			gpConsoleInfo->nFarReadIdx++;
+		if (GetCurrentThreadId() == gnMainThreadId) {
+			TouchReadPeekConsoleInputs(false);
+		}
 	}
 	BOOL lbRc = ReadConsoleInputA(hConsoleInput, lpBuffer, nLength, lpNumberOfEventsRead);
 	return lbRc;
@@ -454,8 +492,9 @@ static BOOL WINAPI OnReadConsoleInputW(HANDLE hConsoleInput, PINPUT_RECORD lpBuf
 {
 	_ASSERTE(OnReadConsoleInputW!=ReadConsoleInputW);
 	if (gpConsoleInfo) {
-		if (GetCurrentThreadId() == gnMainThreadId)
-			gpConsoleInfo->nFarReadIdx++;
+		if (GetCurrentThreadId() == gnMainThreadId) {
+			TouchReadPeekConsoleInputs(false);
+		}
 	}
 	BOOL lbRc = ReadConsoleInputW(hConsoleInput, lpBuffer, nLength, lpNumberOfEventsRead);
 	return lbRc;
@@ -561,6 +600,46 @@ static bool InitHooks( HookItem* item )
     return true;
 }
 
+#ifdef _DEBUG
+static PIMAGE_SECTION_HEADER GetEnclosingSectionHeader(DWORD_PTR rva, PIMAGE_NT_HEADERS pNTHeader)
+{
+	PIMAGE_SECTION_HEADER section = IMAGE_FIRST_SECTION(pNTHeader);
+	unsigned i;
+
+	for ( i=0; i < pNTHeader->FileHeader.NumberOfSections; i++, section++ )
+	{
+		// This 3 line idiocy is because Watcom's linker actually sets the
+		// Misc.VirtualSize field to 0.  (!!! - Retards....!!!)
+		DWORD size = section->Misc.VirtualSize;
+		if ( 0 == size )
+			size = section->SizeOfRawData;
+
+		// Is the RVA within this section?
+		if ( (rva >= section->VirtualAddress) && 
+			(rva < (section->VirtualAddress + size)))
+			return section;
+	}
+
+	return 0;
+}
+#endif
+
+static LPVOID GetPtrFromRVA( DWORD_PTR rva, PIMAGE_NT_HEADERS pNTHeader, PBYTE imageBase )
+{
+#ifdef _DEBUG
+	PIMAGE_SECTION_HEADER pSectionHdr;
+	INT delta;
+
+	pSectionHdr = GetEnclosingSectionHeader( rva, pNTHeader );
+	if ( !pSectionHdr )
+		; //return 0;
+	else
+		delta = (INT)(pSectionHdr->VirtualAddress-pSectionHdr->PointerToRawData);
+#endif
+
+	return (PVOID) ( imageBase + rva /*- delta*/ );
+}
+
 
 // Подменить Импортируемые функции в модуле
 static bool SetHook( HookItem* item, HMODULE Module = 0, BOOL abExecutable = FALSE )
@@ -573,9 +652,10 @@ static bool SetHook( HookItem* item, HMODULE Module = 0, BOOL abExecutable = FAL
     if( !Module )
         Module = GetModuleHandle( 0 );
     IMAGE_DOS_HEADER* dos_header = (IMAGE_DOS_HEADER*)Module;
+	IMAGE_NT_HEADERS* nt_header = NULL;
     if( dos_header->e_magic == 'ZM' )
     {
-        IMAGE_NT_HEADERS* nt_header = (IMAGE_NT_HEADERS*)((char*)Module + dos_header->e_lfanew);
+        nt_header = (IMAGE_NT_HEADERS*)((char*)Module + dos_header->e_lfanew);
         if( nt_header->Signature != 0x004550 )
             return false;
         else
@@ -594,6 +674,10 @@ static bool SetHook( HookItem* item, HMODULE Module = 0, BOOL abExecutable = FAL
     // if wrong module or no import table
     if( Module == INVALID_HANDLE_VALUE || !Import )
         return false;
+
+#ifdef _DEBUG
+	PIMAGE_SECTION_HEADER section = IMAGE_FIRST_SECTION(nt_header);
+#endif
 
 	#ifdef _WIN64
 	_ASSERTE(sizeof(DWORD_PTR)==8);
@@ -619,26 +703,45 @@ static bool SetHook( HookItem* item, HMODULE Module = 0, BOOL abExecutable = FAL
 		#ifdef _DEBUG
 		char* mod_name = (char*)Module + Import[i].Name;
 		#endif
-        IMAGE_IMPORT_BY_NAME** byname = (IMAGE_IMPORT_BY_NAME**)(Import[i].Characteristics + (DWORD_PTR)Module);
-        IMAGE_THUNK_DATA* thunk = (IMAGE_THUNK_DATA*)((char*)Module + Import[i].FirstThunk);
-		IMAGE_THUNK_DATA* thunkO = (IMAGE_THUNK_DATA*)((char*)Module + Import[i].OriginalFirstThunk);
-        for( ; thunk->u1.Function; thunk++, thunkO++, byname++)
+
+		DWORD_PTR rvaINT = Import[i].OriginalFirstThunk;
+		DWORD_PTR rvaIAT = Import[i].FirstThunk;
+		if ( rvaINT == 0 )   // No Characteristics field?
+		{
+			// Yes! Gotta have a non-zero FirstThunk field then.
+			rvaINT = rvaIAT;
+			if ( rvaINT == 0 )   // No FirstThunk field?  Ooops!!!
+				break;
+		}
+
+		PIMAGE_IMPORT_BY_NAME pOrdinalName = NULL, pOrdinalNameO = NULL;
+		IMAGE_IMPORT_BY_NAME** byname = (IMAGE_IMPORT_BY_NAME**)((char*)Module + rvaINT);
+        //IMAGE_THUNK_DATA* thunk = (IMAGE_THUNK_DATA*)((char*)Module + rvaIAT);
+		IMAGE_THUNK_DATA* thunk = (IMAGE_THUNK_DATA*)GetPtrFromRVA( rvaIAT, nt_header, (PBYTE)Module );
+		IMAGE_THUNK_DATA* thunkO = (IMAGE_THUNK_DATA*)GetPtrFromRVA( rvaINT, nt_header, (PBYTE)Module );
+		if (!thunk ||  !thunkO) {
+			_ASSERTE(thunk && thunkO);
+			continue;
+		}
+
+		int f = 0;
+        for(f = 0 ; thunk->u1.Function; thunk++, thunkO++, f++)
         {
-			DWORD dwIsOrdinal = (DWORD)(((DWORD_PTR)(*byname)) >> TOP_SHIFT);
 			const char* pszFuncName = NULL;
-			// Только для испольняемого файла (первый модуль) и если известно имя функции
-			if (dwIsOrdinal != 8 && abExecutable) {
-				BOOL lbValidPtr = !IsBadReadPtr(*byname, sizeof(DWORD_PTR));
-				_ASSERTE(lbValidPtr);
-				if (lbValidPtr) {
-					lbValidPtr = !IsBadReadPtr((*byname)->Name, sizeof(DWORD_PTR));
+			ULONGLONG ordinalO = -1;
+			if (abExecutable) {
+				if ( IMAGE_SNAP_BY_ORDINAL(thunkO->u1.Ordinal) ) {
+					ordinalO = IMAGE_ORDINAL(thunkO->u1.Ordinal);
+					pOrdinalNameO = NULL;
+				} else {
+					pOrdinalNameO = (PIMAGE_IMPORT_BY_NAME)GetPtrFromRVA(thunkO->u1.AddressOfData, nt_header, (PBYTE)Module);
+					BOOL lbValidPtr = !IsBadReadPtr(pOrdinalNameO, sizeof(IMAGE_IMPORT_BY_NAME));
 					_ASSERTE(lbValidPtr);
 					if (lbValidPtr) {
-						pszFuncName = ((char*)Module)+(DWORD_PTR)((*byname)->Name);
-						lbValidPtr = !IsBadStringPtrA(pszFuncName, 10);
+						lbValidPtr = !IsBadStringPtrA((LPCSTR)pOrdinalNameO->Name, 10);
 						_ASSERTE(lbValidPtr);
-						if (!lbValidPtr)
-							pszFuncName = NULL;
+						if (lbValidPtr)
+							pszFuncName = (LPCSTR)pOrdinalNameO->Name;
 					}
 				}
 			}

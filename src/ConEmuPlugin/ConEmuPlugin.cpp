@@ -1,8 +1,8 @@
 
-//#ifdef DEBUG
+#ifdef _DEBUG
 //  Раскомментировать, чтобы сразу после загрузки плагина показать MessageBox, чтобы прицепиться дебаггером
 //  #define SHOW_STARTED_MSGBOX
-//#endif
+#endif
 
 //#include <stdio.h>
 #include <windows.h>

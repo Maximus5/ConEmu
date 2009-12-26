@@ -5230,7 +5230,7 @@ LRESULT CConEmuMain::OnSetCursor(WPARAM wParam, LPARAM lParam)
 	if (mb_WaitCursor) {
 		hCur = mh_CursorWait;
 		DEBUGSTRSETCURSOR(L" ---> CursorWait\n");
-	} else {
+	} else if (gSet.isFarHourglass) {
 		CRealConsole *pRCon = mp_VActive->RCon();
 		if (pRCon) {
 			BOOL lbAlive = pRCon->isAlive();
@@ -6142,6 +6142,8 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
     //case WM_CHAR: -- убрал. Теперь пользуем ToUnicodeEx.
     //case WM_SYSCHAR:
         result = gConEmu.OnKeyboard(hWnd, messg, wParam, lParam);
+		if (messg == WM_SYSKEYUP || messg == WM_SYSKEYDOWN)
+			result = TRUE;
         //if (messg == WM_SYSCHAR)
         //    return TRUE;
         break;

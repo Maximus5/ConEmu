@@ -8,6 +8,9 @@ REGEDIT4
 "BackGround Image show"=hex:00
 "BackGround Image"="c:\\back.bmp"
 "bgImageDarker"=hex:46
+;; BitMask for background colors replaced with background image
+;; Default is 3 (black & blue)
+;"bgImageColors"=dword:00000003
 
 ;; hex:01 - Search, register for process, and use first *.ttf file in conemu folder
 ;; hex:00 - ConEmu will use only preregistered, system fonts
@@ -175,6 +178,12 @@ REGEDIT4
 "MouseSkipActivation"=hex:01
 ;; Skip mouse move events, while ConEmu is not foreground window
 "MouseSkipMoving"=hex:01
+
+;; Show AppStarting cursor (arrow with a small hourglass)
+;; when FAR is not responding (during long operations)
+"FarHourglass"=hex:01
+;; Delay for FarHourglass, default = 500 ms
+;"FarHourglassDelay"=dword:000001F4
 
 ;; Прокручивать заголовок в кнопке на панели задач (пока не работает)
 ;"ScrollTitle"=hex:01
