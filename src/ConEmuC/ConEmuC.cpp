@@ -2,7 +2,7 @@
 #ifdef _DEBUG
 //  Раскомментировать, чтобы сразу после запуска процесса (conemuc.exe) показать MessageBox, чтобы прицепиться дебаггером
 //  #define SHOW_STARTED_MSGBOX
-//  #define SHOW_COMSPEC_STARTED_MSGBOX
+  #define SHOW_COMSPEC_STARTED_MSGBOX
 //  #define SHOW_STARTED_ASSERT
 #elif defined(__GNUC__)
 //  Раскомментировать, чтобы сразу после запуска процесса (conemuc.exe) показать MessageBox, чтобы прицепиться дебаггером
@@ -57,8 +57,8 @@ DWORD   gnSelfPID = 0;
 //HANDLE  ghConIn = NULL, ghConOut = NULL;
 HWND    ghConWnd = NULL;
 HWND    ghConEmuWnd = NULL; // Root! window
-HANDLE  ghExitEvent = NULL;
-//HANDLE  ghFinalizeEvent = NULL;
+HANDLE  ghExitQueryEvent = NULL;
+HANDLE  ghQuitEvent = NULL;
 BOOL    gbAlwaysConfirmExit = FALSE, gbInShutdown = FALSE, gbAutoDisableConfirmExit = FALSE;
 int     gbRootWasFoundInCon = 0;
 BOOL    gbAttachMode = FALSE;
@@ -179,20 +179,20 @@ int __cdecl main()
     
     
     // Событие используется для всех режимов
-    ghExitEvent = CreateEvent(NULL, TRUE/*используется в нескольких нитях, manual*/, FALSE, NULL);
-    if (!ghExitEvent) {
+    ghExitQueryEvent = CreateEvent(NULL, TRUE/*используется в нескольких нитях, manual*/, FALSE, NULL);
+    if (!ghExitQueryEvent) {
         dwErr = GetLastError();
         _printf("CreateEvent() failed, ErrCode=0x%08X\n", dwErr); 
         iRc = CERR_EXITEVENT; goto wrap;
     }
-    ResetEvent(ghExitEvent);
-    //ghFinalizeEvent = CreateEvent(NULL, TRUE/*используется в нескольких нитях, manual*/, FALSE, NULL);
-    //if (!ghFinalizeEvent) {
-    //    dwErr = GetLastError();
-    //    _printf("CreateEvent() failed, ErrCode=0x%08X\n", dwErr); 
-    //    iRc = CERR_EXITEVENT; goto wrap;
-    //}
-    //ResetEvent(ghFinalizeEvent);
+    ResetEvent(ghExitQueryEvent);
+    ghQuitEvent = CreateEvent(NULL, TRUE/*используется в нескольких нитях, manual*/, FALSE, NULL);
+    if (!ghQuitEvent) {
+        dwErr = GetLastError();
+        _printf("CreateEvent() failed, ErrCode=0x%08X\n", dwErr); 
+        iRc = CERR_EXITEVENT; goto wrap;
+    }
+    ResetEvent(ghQuitEvent);
 
     // Дескрипторы
     //ghConIn  = CreateFile(L"CONIN$", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_READ,
@@ -357,7 +357,7 @@ int __cdecl main()
     
         // Ждем, пока в консоли не останется процессов (кроме нашего)
         TODO("Проверить, может ли так получиться, что CreateProcess прошел, а к консоли он не прицепился? Может, если процесс GUI");
-        nWait = WaitForSingleObject(ghExitEvent, CHECK_ANTIVIRUS_TIMEOUT); //Запуск процесса наверное может задержать антивирус
+        nWait = WaitForSingleObject(ghExitQueryEvent, CHECK_ANTIVIRUS_TIMEOUT); //Запуск процесса наверное может задержать антивирус
         if (nWait != WAIT_OBJECT_0) { // Если таймаут
             iRc = srv.nProcessCount;
             // И процессов в консоли все еще нет
@@ -388,12 +388,12 @@ wait:
 		nWait = WAIT_TIMEOUT;
 		if (!srv.bDebuggerActive) {
 	        while (nWait == WAIT_TIMEOUT) {
-				nWait = WaitForSingleObject(ghExitEvent, 10);
+				nWait = WaitForSingleObject(ghExitQueryEvent, 10);
 			}
 		} else {
 			while (nWait == WAIT_TIMEOUT) {
 				ProcessDebugEvent();
-				nWait = WaitForSingleObject(ghExitEvent, 0);
+				nWait = WaitForSingleObject(ghExitQueryEvent, 0);
 			}
 			gbAlwaysConfirmExit = TRUE;
 		}
@@ -466,7 +466,10 @@ wrap:
     }
 
     // На всякий случай - выставим событие
-    if (ghExitEvent) SetEvent(ghExitEvent);
+    if (ghExitQueryEvent) SetEvent(ghExitQueryEvent);
+    
+    // Завершение RefreshThread, InputThread
+    if (ghQuitEvent) SetEvent(ghQuitEvent);
     
     
     /* ***************************** */
@@ -1349,6 +1352,9 @@ int ComspecInit()
     TODO("Определить код родительского процесса, и если это FAR - запомнить его (для подключения к пайпу плагина)");
     TODO("Размер получить из GUI, если оно есть, иначе - по умолчанию");
     TODO("GUI может скорректировать размер с учетом полосы прокрутки");
+    
+    WARNING("CreateFile(CONOUT$) по идее возвращает текущий ScreenBuffer. Можно его самим возвращать в ComspecDone");
+    // Правда нужно проверить, что там происходит с ghConOut.Close(),... 
 
     // Размер должен менять сам GUI, через серверный ConEmuC!
     #ifdef SHOW_STARTED_MSGBOX
@@ -1439,6 +1445,8 @@ int ComspecInit()
     }
     
     SendStarted();
+    
+    ghConOut.Close();
     
     return 0;
 }
@@ -1559,6 +1567,10 @@ void ComspecDone(int aiRc)
 {
     //WARNING("Послать в GUI CONEMUCMDSTOPPED");
 
+	// Это необходимо делать, т.к. при смене буфера (SetConsoleActiveScreenBuffer) приложением,
+	// дескриптор нужно закрыть, иначе conhost может не вернуть предыдущий буфер
+	ghConOut.Close();
+
     // Поддержка алиасов
     if (cmd.szComSpecName[0] && cmd.szSelfName[0]) {
     	// Скопировать алиасы из cmd.exe в conemuc.exe
@@ -1572,7 +1584,7 @@ void ComspecDone(int aiRc)
 			if (!lbChanged) {
 				lbChanged = (cmd.nPreAliasSize!=nPostAliasSize);
 			}
-			if (!lbChanged) {
+			if (!lbChanged && cmd.nPreAliasSize && cmd.pszPreAliases && pszPostAliases) {
 				lbChanged = memcmp(cmd.pszPreAliases,pszPostAliases,cmd.nPreAliasSize)!=0;
 			}
 			if (lbChanged) {
@@ -1630,6 +1642,8 @@ void ComspecDone(int aiRc)
         //    SMALL_RECT rc = {0};
         //    SetConsoleSize(0, cmd.sbi.dwSize, rc, "ComspecDone");
         //}
+        
+        ghConOut.Close();
 
         CESERVER_REQ *pIn = NULL, *pOut = NULL;
         int nSize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_STARTSTOP);
@@ -1641,8 +1655,11 @@ void ComspecDone(int aiRc)
 			pIn->StartStop.nSubSystem = gnImageSubsystem;
 			// НЕ MyGet..., а то можем заблокироваться...
 			// ghConOut может быть NULL, если ошибка произошла во время разбора аргументов
-			GetConsoleScreenBufferInfo(ghConOut ? ghConOut : GetStdHandle(STD_OUTPUT_HANDLE),
-				&pIn->StartStop.sbi);
+			HANDLE hOut = (HANDLE)ghConOut;
+			if (hOut == INVALID_HANDLE_VALUE)
+				hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+			GetConsoleScreenBufferInfo(hOut, &pIn->StartStop.sbi);
+			ghConOut.Close();
 
             PRINT_COMSPEC(L"Finalizing comspec mode (ExecuteGuiCmd started)\n",0);
             pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
@@ -1924,7 +1941,6 @@ int ServerInit()
 	if (ghFarInExecuteEvent)
 		SetEvent(ghFarInExecuteEvent);
 #endif
-
 
 	// Создать MapFile для заголовка (СРАЗУ!!!)
 	iRc = CreateMapHeader();
@@ -2330,7 +2346,7 @@ wrap:
 void ServerDone(int aiRc)
 {
 	// На всякий случай - выставим событие
-	if (ghExitEvent) SetEvent(ghExitEvent);
+	if (ghExitQueryEvent) SetEvent(ghExitQueryEvent);
 
 	// Остановить отладчик, иначе отлаживаемый процесс тоже схлопнется	
     if (srv.bDebuggerActive) {
@@ -2576,12 +2592,13 @@ BOOL CheckProcessCount(BOOL abForce/*=FALSE*/)
 											break; // возможно, в консоли еще есть и telnet?
                 		    		}
 									// Во время работы Telnet тоже нужно ловить все события!
-                		    		if (lstrcmpiW(prc.szExeFile, L"telnet.exe")==0) {
-										// сразу хэндлы передернуть
-										ghConIn.Close(); ghConOut.Close();
-										//srv.bWinHookAllow = TRUE; // Попробуем разрешить события для телнета
-                		    			lbFarExists = TRUE; lbTelnetExist = TRUE; break;
-                		    		}
+									//2009-12-28 убрал. все должно быть само...
+									//if (lstrcmpiW(prc.szExeFile, L"telnet.exe")==0) {
+									//	// сразу хэндлы передернуть
+									//	ghConIn.Close(); ghConOut.Close();
+									//	//srv.bWinHookAllow = TRUE; // Попробуем разрешить события для телнета
+									//	lbFarExists = TRUE; lbTelnetExist = TRUE; break;
+									//}
                     			}
                     		}
 						} while (!(lbFarExists && lbTelnetExist) && Process32Next(hSnap, &prc));
@@ -2653,7 +2670,7 @@ BOOL CheckProcessCount(BOOL abForce/*=FALSE*/)
 	// количество процессов ОСТАЕТСЯ 5 и ни одно из ниже условий не проходит
 	if (nPrevCount == 1 && srv.nProcessCount == 1 && srv.nProcessStartTick &&
 		((dwLastCheckTick - srv.nProcessStartTick) > CHECK_ROOTSTART_TIMEOUT) &&
-		WaitForSingleObject(ghExitEvent,0) == WAIT_TIMEOUT)
+		WaitForSingleObject(ghExitQueryEvent,0) == WAIT_TIMEOUT)
 	{
 		nPrevCount = 2; // чтобы сработало следующее условие
 		if (!gbAlwaysConfirmExit) gbAlwaysConfirmExit = TRUE; // чтобы консоль не схлопнулась
@@ -2662,7 +2679,7 @@ BOOL CheckProcessCount(BOOL abForce/*=FALSE*/)
 		CS.Unlock();
 		if (!gbAlwaysConfirmExit && (dwLastCheckTick - srv.nProcessStartTick) <= CHECK_ROOTSTART_TIMEOUT)
 			gbAlwaysConfirmExit = TRUE; // чтобы консоль не схлопнулась
-		SetEvent(ghExitEvent);
+		SetEvent(ghExitQueryEvent);
 	}
 
 	return lbChanged;
@@ -2938,7 +2955,7 @@ DWORD WINAPI ServerThread(LPVOID lpvParam)
       fConnected = ConnectNamedPipe(hPipe, NULL) ? 
          TRUE : (GetLastError() == ERROR_PIPE_CONNECTED); 
 
-	  if (WaitForSingleObject(ghExitEvent, 0) == WAIT_OBJECT_0) break;
+	  if (WaitForSingleObject(ghExitQueryEvent, 0) == WAIT_OBJECT_0) break;
  
       MCHKHEAP;
       if (fConnected) 
@@ -3076,8 +3093,8 @@ DWORD WINAPI InputThread(LPVOID lpvParam)
 		if (msg.message == WM_QUIT)
 			break;
 
-		if (ghExitEvent) {
-			if (WaitForSingleObject(ghExitEvent, 0) == WAIT_OBJECT_0)
+		if (ghQuitEvent) {
+			if (WaitForSingleObject(ghQuitEvent, 0) == WAIT_OBJECT_0)
 				break;
 		}
 		if (msg.message == 0) continue;
@@ -3772,10 +3789,10 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 		
 		//dwWait = WaitForSingleObject(srv.hReqSizeChanged, REQSIZE_TIMEOUT);
 		// Ожидание, пока сработает RefreshThread
-		HANDLE hEvents[2] = {ghExitEvent, srv.hReqSizeChanged};
+		HANDLE hEvents[2] = {ghQuitEvent, srv.hReqSizeChanged};
 		DWORD nWait = WaitForMultipleObjects ( 2, hEvents, FALSE, REQSIZE_TIMEOUT );
 		if (dwWait == (WAIT_OBJECT_0)) {
-			// ghExitEvent !!
+			// ghQuitEvent !!
 			return FALSE;
 		}
 		if (dwWait == (WAIT_OBJECT_0+1)) {
@@ -3986,6 +4003,14 @@ const wchar_t* PointToName(const wchar_t* asFullPath)
 }
 
 #ifdef CRTPRINTF
+WARNING("Можно облегчить... заменить на wvsprintf");
+//void _printf(LPCSTR asFormat, ...)
+//{
+//    va_list argList; va_start(argList, an_StrResId);
+//    char szError[2000]; -- только нужно учесть длину %s
+//    wvsprintf(szError, asFormat, argList);
+//}
+
 void _printf(LPCSTR asFormat, DWORD dw1, DWORD dw2, LPCWSTR asAddLine)
 {
 	char szError[MAX_PATH];
@@ -4113,6 +4138,8 @@ void CheckKeyboardLayout()
 // Сохранить данные ВСЕЙ консоли в gpStoredOutput
 void CmdOutputStore()
 {
+	ghConOut.Close();
+	WARNING("А вот это нужно бы делать в RefreshThread!!!");
     DEBUGSTR(L"--- CmdOutputStore begin\n");
     CONSOLE_SCREEN_BUFFER_INFO lsbi = {{0,0}};
     // !!! Нас интересует реальное положение дел в консоли, 

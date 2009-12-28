@@ -191,3 +191,9 @@ Q. Как импортировать в корневые доверенные сертификаты?
 A. С помощью утилиты CertMgr из Windows SDK:
    "C:\Program Files\Microsoft SDKs\Windows\v7.0\Bin\CertMgr" -add -c ConEmu.cer -s root
 A. Через MMC -> оснастка Certificates.
+
+Q. Что означает: ConEmuC: CreateFile(CONOUT$) failed, ErrCode=0x00000005
+A. Запускаемая программа создала и установила в консоли собственный буфер,
+   созданный как CreateConsoleScreenBuffer(..., 0/*No sharing*/, ...).
+   Просите автора программы создавать буфер корректно, а не только для себя:
+   (GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE,...)

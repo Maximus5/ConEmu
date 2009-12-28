@@ -50,6 +50,7 @@ extern wchar_t gszDbgModLabel[6];
 #define RELOAD_INFO_TIMEOUT 500
 #define REQSIZE_TIMEOUT 500
 #define GUIREADY_TIMEOUT 10000
+#define UPDATECONHANDLE_TIMEOUT 1000
 
 #define IMAGE_SUBSYSTEM_DOS_EXECUTABLE  255
 
@@ -190,8 +191,8 @@ extern DWORD   gnSelfPID;
 //HANDLE  ghConIn = NULL, ghConOut = NULL;
 extern HWND    ghConWnd;
 extern HWND    ghConEmuWnd; // Root! window
-extern HANDLE  ghExitEvent;
-extern HANDLE  ghFinalizeEvent;
+extern HANDLE  ghExitQueryEvent; // выставляется когда в консоли не остается процессов
+extern HANDLE  ghQuitEvent;      // когда мы в процессе закрытия (юзер уже нажал кнопку "Press to close console")
 extern BOOL    gbAlwaysConfirmExit, gbInShutdown, gbAutoDisableConfirmExit;
 extern int     gbRootWasFoundInCon;
 extern BOOL    gbAttachMode;

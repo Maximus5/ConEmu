@@ -6446,14 +6446,14 @@ BOOL CRealConsole::OpenMapHeader()
 	CloseMapData();
 	
 	wsprintf(ms_HeaderMapName, CECONMAPNAME, (DWORD)hConWnd);
-	mh_FileMapping = OpenFileMapping(FILE_MAP_READ, FALSE, ms_HeaderMapName);
+	mh_FileMapping = OpenFileMapping(FILE_MAP_READ|FILE_MAP_WRITE, FALSE, ms_HeaderMapName);
 	if (!mh_FileMapping) {
 		DWORD dwErr = GetLastError();
 		wsprintf (szErr, L"ConEmu: Can't open console data file mapping. ErrCode=0x%08X. %s", dwErr, ms_HeaderMapName);
 		goto wrap;
 	}
 	
-	mp_ConsoleInfo = (CESERVER_REQ_CONINFO_HDR*)MapViewOfFile(mh_FileMapping, FILE_MAP_READ,0,0,0);
+	mp_ConsoleInfo = (CESERVER_REQ_CONINFO_HDR*)MapViewOfFile(mh_FileMapping, FILE_MAP_READ|FILE_MAP_WRITE,0,0,0);
 	if (!mp_ConsoleInfo) {
 		DWORD dwErr = GetLastError();
 		wchar_t szErr[512];
@@ -6461,8 +6461,13 @@ BOOL CRealConsole::OpenMapHeader()
 		goto wrap;
 	}
 	
-	if (mp_ConsoleInfo->hConWnd && mp_ConsoleInfo->nCurDataMapIdx)
-		ApplyConsoleInfo();
+	mp_ConsoleInfo->nGuiPID = GetCurrentProcessId();
+	
+	if (mp_ConsoleInfo->hConWnd && mp_ConsoleInfo->nCurDataMapIdx) {
+		// Только если MonitorThread еще не был запущен
+		if (mn_MonitorThreadID == 0)
+			ApplyConsoleInfo();
+	}
 
 	lbResult = TRUE;
 wrap:
@@ -6584,6 +6589,12 @@ void CRealConsole::ApplyConsoleInfo()
     if (mn_LastConsoleDataIdx != mp_ConsoleInfo->nCurDataMapIdx) {
     	ReopenMapData();
     }
+    
+    DWORD nPID = GetCurrentProcessId();
+    if (nPID != mp_ConsoleInfo->nGuiPID) {
+    	_ASSERTE(mp_ConsoleInfo->nGuiPID == nPID);
+    	mp_ConsoleInfo->nGuiPID = nPID;
+	}
     
     #ifdef _DEBUG
     HWND hWnd = mp_ConsoleInfo->hConWnd;

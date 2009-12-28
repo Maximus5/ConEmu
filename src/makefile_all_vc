@@ -1,12 +1,18 @@
 ALLDIRS = ConEmu ConEmuC ConEmuPlugin
 
+!if defined(AMD64) || "$(CPU)" == "AMD64" || "$(PLATFORM)" == "x64"
+BUILD_SUFFUX=x64
+!else
+BUILD_SUFFUX=x86
+!endif
+
 all: $(ALLDIRS)
 
 FICTIVE=_fictive_
 $(FICTIVE):
 
 $(ALLDIRS): $(FICTIVE)
-	@echo ===========$@
+	@echo ===========$@.$(BUILD_SUFFUX)
 	@cd $@
 	@$(MAKE) -s -f makefile_vc $(_MDEFS)
 	@cd ..

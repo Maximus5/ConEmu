@@ -50,6 +50,8 @@ int CreateMapHeader()
 		iRc = CERR_MAPVIEWFILEERR; goto wrap;
 	}
 	memset(srv.pConsoleInfo, 0, nConInfoSize);
+	
+	srv.pConsoleInfo->nServerPID = GetCurrentProcessId();
 
 wrap:	
 	return iRc;
@@ -164,7 +166,11 @@ BOOL CorrectVisibleRect(CONSOLE_SCREEN_BUFFER_INFO* pSbi)
 		// Сервер мог еще не успеть среагировать на изменение режима BufferHeight
 		if (pSbi->dwMaximumWindowSize.Y < pSbi->dwSize.Y) {
 			// Это однозначно буферный режим, т.к. высота буфера больше максимально допустимого размера окна
-			_ASSERTE(pSbi->dwMaximumWindowSize.Y >= pSbi->dwSize.Y);
+
+			// Вполне нормальная ситуация. Запуская VBinDiff который ставит свой буфер,
+			// соответственно сам убирая прокрутку, а при выходе возвращая ее...
+			//_ASSERTE(pSbi->dwMaximumWindowSize.Y >= pSbi->dwSize.Y);
+
 			gnBufferHeight = pSbi->dwSize.Y; 
 		}
 	}
@@ -236,10 +242,14 @@ static BOOL ReadConsoleInfo()
 	DWORD ldwConsoleCP=0, ldwConsoleOutputCP=0, ldwConsoleMode=0;
 	CONSOLE_SCREEN_BUFFER_INFO lsbi = {{0,0}}; // MyGetConsoleScreenBufferInfo
 
+	HANDLE hOut = (HANDLE)ghConOut;
+	if (hOut == INVALID_HANDLE_VALUE)
+		hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+
 	// Могут возникать проблемы при закрытии ComSpec и уменьшении высоты буфера
 	MCHKHEAP;
 
-	if (!GetConsoleCursorInfo(ghConOut, &lci)) { srv.dwCiRc = GetLastError(); if (!srv.dwCiRc) srv.dwCiRc = -1; } else {
+	if (!GetConsoleCursorInfo(hOut, &lci)) { srv.dwCiRc = GetLastError(); if (!srv.dwCiRc) srv.dwCiRc = -1; } else {
 		srv.dwCiRc = 0;
 		if (memcmp(&srv.ci, &lci, sizeof(srv.ci))) {
 			srv.ci = lci;
@@ -264,7 +274,7 @@ static BOOL ReadConsoleInfo()
 
 	MCHKHEAP;
 
-	if (!MyGetConsoleScreenBufferInfo(ghConOut, &lsbi)) {
+	if (!MyGetConsoleScreenBufferInfo(hOut, &lsbi)) {
 		srv.dwSbiRc = GetLastError(); if (!srv.dwSbiRc) srv.dwSbiRc = -1;
 		lbRc = FALSE;
 	} else {
@@ -293,16 +303,9 @@ static BOOL ReadConsoleInfo()
 	}
 	
 	// Лучше всегда делать, чтобы данные были гарантированно актуальные
-	//if (lbChanged) {
 	srv.pConsoleInfo->hConWnd = ghConWnd;
-	//srv.pConsoleInfo->nCurDataMapIdx; // суффикс для текущего MAP файла с данными  
-	//srv.pConsoleInfo->nPacketId;
-	//srv.pConsoleInfo->nFarUpdateTick0;// GetTickCount(), устанавливается в начале обновления консоли из фара (вдруг что свалится...)
-	//srv.pConsoleInfo->nFarUpdateTick; // GetTickCount(), когда консоль была обновлена в последний раз из фара
-	//srv.pConsoleInfo->nFarReadTick;   // GetTickCount(), когда фар в последний раз позвал (Read|Peek)ConsoleInput или GetConsoleInputCount
-	//srv.pConsoleInfo->nSrvUpdateTick; // GetTickCount(), когда консоль была считана в последний раз в сервере
+	srv.pConsoleInfo->nServerPID = GetCurrentProcessId();
 	srv.pConsoleInfo->nInputTID = srv.dwInputThreadId;
-	//srv.pConsoleInfo->nProcesses[20];
     srv.pConsoleInfo->dwCiSize = sizeof(srv.ci);
 	srv.pConsoleInfo->ci = srv.ci;
     srv.pConsoleInfo->dwConsoleCP = srv.dwConsoleCP;
@@ -310,8 +313,9 @@ static BOOL ReadConsoleInfo()
 	srv.pConsoleInfo->dwConsoleMode = srv.dwConsoleMode;
 	srv.pConsoleInfo->dwSbiSize = sizeof(srv.sbi);
 	srv.pConsoleInfo->sbi = srv.sbi;
-	//}
 
+
+//wrap:
 	// Если есть возможность (WinXP+) - получим реальный список процессов из консоли
 	//CheckProcessCount(); -- уже должно быть вызвано !!!
 	GetProcessCount(srv.pConsoleInfo->nProcesses, countof(srv.pConsoleInfo->nProcesses));
@@ -363,6 +367,9 @@ static BOOL ReadConsoleData()
 		_ASSERTE(srv.nConsoleDataSize >= nCurSize);
 	}
 
+	HANDLE hOut = (HANDLE)ghConOut;
+	if (hOut == INVALID_HANDLE_VALUE)
+		hOut = GetStdHandle(STD_OUTPUT_HANDLE);
 
 	lbRc = FALSE;
 	
@@ -371,7 +378,7 @@ static BOOL ReadConsoleData()
 		bufSize.X = TextWidth; bufSize.Y = TextHeight;
 		bufCoord.X = 0; bufCoord.Y = 0;
 		rgn = srv.sbi.srWindow;
-		if (ReadConsoleOutput(ghConOut, srv.pConsoleDataCopy, bufSize, bufCoord, &rgn))
+		if (ReadConsoleOutput(hOut, srv.pConsoleDataCopy, bufSize, bufCoord, &rgn))
 			lbRc = TRUE;
 	}
 	
@@ -385,7 +392,7 @@ static BOOL ReadConsoleData()
 		for(int y = 0; y < (int)TextHeight; y++, rgn.Top++, pLine+=TextWidth)
 		{
 			rgn.Bottom = rgn.Top;
-			ReadConsoleOutput(ghConOut, pLine, bufSize, bufCoord, &rgn);
+			ReadConsoleOutput(hOut, pLine, bufSize, bufCoord, &rgn);
 		}
 	}
 	
@@ -415,7 +422,7 @@ BOOL ReloadFullConsoleInfo(BOOL abForceSend)
 		
 		SetEvent(srv.hRefreshEvent);
 		// Ожидание, пока сработает RefreshThread
-		HANDLE hEvents[2] = {ghExitEvent, srv.hRefreshEvent};
+		HANDLE hEvents[2] = {ghQuitEvent, srv.hRefreshEvent};
 		DWORD nWait = WaitForMultipleObjects ( 2, hEvents, FALSE, RELOAD_INFO_TIMEOUT );
 		lbChanged = (nWait == (WAIT_OBJECT_0+1));
 		
@@ -635,9 +642,10 @@ void WINAPI WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LO
 DWORD WINAPI RefreshThread(LPVOID lpvParam)
 {
 	DWORD nWait = 0;
-	HANDLE hEvents[2] = {ghExitEvent, srv.hRefreshEvent};
+	HANDLE hEvents[2] = {ghQuitEvent, srv.hRefreshEvent};
 	DWORD nDelta = 0;
 	DWORD nLastUpdateTick = GetTickCount();
+	DWORD nLastConHandleTick = nLastUpdateTick;
 	BOOL  lbEventualChange = FALSE, lbForceSend = FALSE, lbChanged = FALSE, lbProcessChanged = FALSE;
 	DWORD dwTimeout = 10; // периодичность чтения информации об окне (размеров, курсора,...)
 
@@ -648,6 +656,19 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 		lbForceSend = FALSE;
 		MCHKHEAP;
 
+		// Alwas update con handle, мягкий вариант
+		if ((GetTickCount() - nLastConHandleTick) > UPDATECONHANDLE_TIMEOUT) {
+			WARNING("!!! MS - дебилы. В Win7 закрытие дескриптора в ДРУГОМ процессе - закрывает консольный буфер ПОЛНОСТЬЮ!!!");
+			#ifdef _DEBUG
+			HANDLE hHandle = CreateFileW(L"CONOUT$", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE,
+				0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+			if (hHandle)
+				CloseHandle(hHandle);
+			#endif
+			// В итоге, буфер вывода telnet'а схлопывается!
+			ghConOut.Close();
+			nLastConHandleTick = GetTickCount();
+		}
 		
 		// Попытка поправить CECMD_SETCONSOLECP
 		if (srv.hLockRefreshBegin) {
@@ -669,7 +690,7 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 		
 		
 		// Проверить количество процессов в консоли.
-		// Функция выставит ghExitEvent, если все процессы завершились.
+		// Функция выставит ghExitQueryEvent, если все процессы завершились.
 		lbProcessChanged = CheckProcessCount();
 		
 		

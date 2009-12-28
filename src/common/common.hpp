@@ -138,7 +138,7 @@ extern wchar_t gszDbgModLabel[6];
 #define CECMD_SAVEALIASES   26
 #define CECMD_GETALIASES    27
 
-#define CESERVER_REQ_VER    24
+#define CESERVER_REQ_VER    25
 
 #define PIPEBUFSIZE 4096
 
@@ -263,23 +263,25 @@ typedef struct tag_CESERVER_REQ_FULLCONDATA {
 } CESERVER_REQ_FULLCONDATA;
 
 typedef struct tag_CESERVER_REQ_CONINFO_HDR {
-	/* 1*/HWND2 hConWnd;
-	      DWORD nCurDataMapIdx; // суффикс дл€ текущего MAP файла с данными
-	      DWORD nCurDataMaxSize; // ћаксимальный размер буфера nCurDataMapIdx
-	/* 2*/DWORD nPacketId;
-	      DWORD nFarUpdateTick0;// GetTickCount(), устанавливаетс€ в начале обновлени€ консоли из фара (вдруг что свалитс€...)
-	      DWORD nFarUpdateTick; // GetTickCount(), когда консоль была обновлена в последний раз из фара
-	      DWORD nFarReadIdx;    // index, +1, когда фар в последний раз позвал (Read|Peek)ConsoleInput или GetConsoleInputCount
-		  DWORD nSrvUpdateTick; // GetTickCount(), когда консоль была считана в последний раз в сервере
-	      DWORD nInputTID;
-	/* 3*/DWORD nProcesses[20];
-    /* 4*/DWORD dwCiSize;
-	      CONSOLE_CURSOR_INFO ci;
-    /* 5*/DWORD dwConsoleCP;
-	/* 6*/DWORD dwConsoleOutputCP;
-	/* 7*/DWORD dwConsoleMode;
-	/* 8*/DWORD dwSbiSize;
-	      CONSOLE_SCREEN_BUFFER_INFO sbi;
+	HWND2 hConWnd;
+	DWORD nServerPID;
+	DWORD nGuiPID;
+	DWORD nCurDataMapIdx; // суффикс дл€ текущего MAP файла с данными
+	DWORD nCurDataMaxSize; // ћаксимальный размер буфера nCurDataMapIdx
+	DWORD nPacketId;
+	DWORD nFarUpdateTick0;// GetTickCount(), устанавливаетс€ в начале обновлени€ консоли из фара (вдруг что свалитс€...)
+	DWORD nFarUpdateTick; // GetTickCount(), когда консоль была обновлена в последний раз из фара
+	DWORD nFarReadIdx;    // index, +1, когда фар в последний раз позвал (Read|Peek)ConsoleInput или GetConsoleInputCount
+	DWORD nSrvUpdateTick; // GetTickCount(), когда консоль была считана в последний раз в сервере
+	DWORD nInputTID;
+	DWORD nProcesses[20];
+    DWORD dwCiSize;
+	CONSOLE_CURSOR_INFO ci;
+    DWORD dwConsoleCP;
+	DWORD dwConsoleOutputCP;
+	DWORD dwConsoleMode;
+	DWORD dwSbiSize;
+	CONSOLE_SCREEN_BUFFER_INFO sbi;
 } CESERVER_REQ_CONINFO_HDR;
 
 //typedef struct tag_CESERVER_REQ_CONINFO {
@@ -785,54 +787,18 @@ private:
 	wchar_t   ms_Name[10];
 	HANDLE    mh_Handle;
 	MSection  mcs_Handle;
+	BOOL      mb_OpenFailed;
+	DWORD     mn_LastError;
 
 public:
-	operator const HANDLE()
-	{
-		if (mh_Handle == INVALID_HANDLE_VALUE)
-		{
-			// „тобы случайно не открыть хэндл несколько раз в разных потоках
-			MSectionLock CS; CS.Lock(&mcs_Handle, TRUE);
-			// ¬о врем€ ожидани€ хэндл мог быт открыт в другом потоке
-			if (mh_Handle == INVALID_HANDLE_VALUE) {
-				mh_Handle = CreateFileW(ms_Name, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_READ,
-					0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
-				if (mh_Handle == INVALID_HANDLE_VALUE) {
-					DWORD dwErr = GetLastError();
-					char szErrMsg[255], szNameA[10];
-					WideCharToMultiByte(CP_OEMCP, 0, ms_Name, -1, szNameA, sizeof(szNameA), 0,0);
-					wsprintfA(szErrMsg, "CreateFile(%s) failed, ErrCode=0x%08X\n", szNameA, dwErr); 
-					HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
-					if (h && h!=INVALID_HANDLE_VALUE)
-						WriteFile(h, szErrMsg, lstrlenA(szErrMsg), &dwErr, 0);
-				}
-			}
-		}
-		return mh_Handle;
-	};
+	operator const HANDLE();
 
 public:
-	void Close()
-	{
-		if (mh_Handle != INVALID_HANDLE_VALUE) {
-			HANDLE h = mh_Handle;
-			mh_Handle = INVALID_HANDLE_VALUE;
-			CloseHandle(h);
-		}
-	};
+	void Close();
 
 public:
-	MConHandle(LPCWSTR asName)
-	{
-		mh_Handle = INVALID_HANDLE_VALUE;
-		lstrcpynW(ms_Name, asName, 9);
-	};
-
-	~MConHandle()
-	{
-		Close();
-	};
-
+	MConHandle(LPCWSTR asName);
+	~MConHandle();
 };
 
 
