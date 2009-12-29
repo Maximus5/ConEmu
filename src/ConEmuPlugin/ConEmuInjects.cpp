@@ -500,6 +500,16 @@ static BOOL WINAPI OnReadConsoleInputW(HANDLE hConsoleInput, PINPUT_RECORD lpBuf
 	return lbRc;
 }
 
+static HANDLE WINAPI OnCreateConsoleScreenBuffer(DWORD dwDesiredAccess, DWORD dwShareMode, const SECURITY_ATTRIBUTES *lpSecurityAttributes, DWORD dwFlags, LPVOID lpScreenBufferData)
+{
+	_ASSERTE(OnCreateConsoleScreenBuffer!=CreateConsoleScreenBuffer);
+	if ((dwShareMode & (FILE_SHARE_READ|FILE_SHARE_WRITE)) != (FILE_SHARE_READ|FILE_SHARE_WRITE))
+		dwShareMode |= (FILE_SHARE_READ|FILE_SHARE_WRITE);
+	HANDLE h = CreateConsoleScreenBuffer(dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwFlags, lpScreenBufferData);
+	return h;
+}
+
+
 typedef struct HookItem
 {
     void*  NewAddress;
@@ -542,6 +552,9 @@ static HookItem Hooks[] = {
 	{OnGetConsoleAliasesW,  "GetConsoleAliasesW",	kernel32, 0},
 	{OnGetNumberOfConsoleInputEvents,
 							"GetNumberOfConsoleInputEvents",
+													kernel32, 0},
+	{OnCreateConsoleScreenBuffer,
+							"CreateConsoleScreenBuffer",
 													kernel32, 0},
 	{OnTrackPopupMenu,      "TrackPopupMenu",		user32,   0},
 	{OnTrackPopupMenuEx,    "TrackPopupMenuEx",		user32,   0},

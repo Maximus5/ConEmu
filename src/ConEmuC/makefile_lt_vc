@@ -70,6 +70,7 @@ NAME = ConEmuC
 
 LINK_OBJS = \
 $(OBJDIR)\ConEmuC.obj \
+$(OBJDIR)\ConEmuCmd.obj \
 $(OBJDIR)\ConEmuSrv.obj \
 $(OBJDIR)\execute.obj \
 $(OBJDIR)\setconsoleinfo.obj \
@@ -309,6 +310,8 @@ clean:
 #	@rd $(OBJDIR)
 
 $(INTDIR)\ConEmuC.obj: ConEmuC.cpp ConEmuC.h ..\common\Common.hpp
+
+$(INTDIR)\ConEmuCmd.obj: ConEmuCmd.cpp ConEmuC.h ..\common\Common.hpp
 
 $(INTDIR)\ConEmuSrv.obj: ConEmuSrv.cpp ConEmuC.h ..\common\Common.hpp
 

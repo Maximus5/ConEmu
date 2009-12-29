@@ -125,7 +125,7 @@ BEGIN
     CTEXT           "x",IDC_STATIC,101,83,8,8
     COMBOBOX        tFontSizeX3,109,81,24,66,CBS_DROPDOWN | WS_VSCROLL | 
                     WS_TABSTOP
-    LTEXT           "Path:",IDC_STATIC,10,142,18,8
+    LTEXT           "Path:",IDC_STATIC,10,144,18,8
     LTEXT           "Darkening:",IDC_STATIC,10,161,36,8
     CONTROL         "",slDarker,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | 
                     WS_TABSTOP,52,160,177,12
@@ -163,7 +163,7 @@ END
 IDD_DIALOG2 DIALOGEX 0, 0, 328, 209
 STYLE DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
-FONT 8, "MS Shell Dlg", 0, 0, 0x1
+FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        "Standard colors (""red green blue"")",gbStandardColors,
                     4,4,319,67
@@ -302,27 +302,14 @@ BEGIN
                     84,161,10
     COMBOBOX        lbExtendIdx,192,82,45,30,CBS_DROPDOWNLIST | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
-    GROUPBOX        "",IDC_STATIC,4,178,319,28
-    CONTROL         "Extend visualizer (editor plugin)",cbVisualizer,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,10,177,113,10
-    RTEXT           "Normal:",IDC_STATIC,9,191,25,8
-    COMBOBOX        lbVisNormal,37,189,32,30,CBS_DROPDOWNLIST | CBS_SORT | 
-                    WS_VSCROLL | WS_TABSTOP
-    RTEXT           "Tab:",IDC_STATIC,144,191,18,8
-    COMBOBOX        lbVisTab,166,189,32,30,CBS_DROPDOWNLIST | CBS_SORT | 
-                    WS_VSCROLL | WS_TABSTOP
-    RTEXT           "EOL:",IDC_STATIC,198,191,22,8
-    COMBOBOX        lbVisEOL,224,189,32,30,CBS_DROPDOWNLIST | CBS_SORT | 
-                    WS_VSCROLL | WS_TABSTOP
-    RTEXT           "EOF:",IDC_STATIC,259,191,22,8
-    COMBOBOX        lbVisEOF,286,189,32,30,CBS_DROPDOWNLIST | CBS_SORT | 
-                    WS_VSCROLL | WS_TABSTOP
-    CTEXT           "/",IDC_STATIC,71,191,8,8
-    COMBOBOX        lbVisFore,83,189,32,30,CBS_DROPDOWNLIST | CBS_SORT | 
-                    WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        "Graphic enhancement",IDC_STATIC,4,178,319,28
     LTEXT           "Default color shemes:",IDC_STATIC,7,162,77,8
     COMBOBOX        lbDefaultColors,87,160,235,59,CBS_DROPDOWNLIST | 
                     WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Transparent",IDC_STATIC,10,191,48,8
+    CONTROL         "",slTransparent,"msctls_trackbar32",TBS_BOTH | 
+                    TBS_NOTICKS | WS_TABSTOP,62,190,218,12
+    RTEXT           "Opaque",IDC_STATIC,284,191,31,8
 END
 
 IDD_DIALOGM DIALOGEX 0, 0, 341, 259
@@ -638,6 +625,7 @@ BEGIN
     cbFARuseASCIIsort       "Hook FAR string sort functions.\n!!!HIGHLY EXPERIMENTAL!!!"
     cbFixAltOnAltTab        "When You set a macro on Alt (RAlt) it can unexpectedly activates on AltTab. This issue can be fixed by sending to console AltTab instead of Alt"
     cbFarHourglass          "Show AppStarting cursor (arrow with a small hourglass) when FAR is not responding (during long operations)"
+    slTransparent           "Transparency of the main ConEmu window"
 END
 
 #endif    // English (U.S.) resources

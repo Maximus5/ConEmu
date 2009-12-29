@@ -104,6 +104,7 @@ RES_FILE = "$(INTDIR)\$(NAME).res"
 
 LINK_OBJS = \
 $(INTDIR)\ConEmuC.obj \
+$(INTDIR)\ConEmuCmd.obj \
 $(INTDIR)\ConEmuSrv.obj \
 $(INTDIR)\execute.obj \
 $(INTDIR)\setconsoleinfo.obj \
@@ -253,6 +254,8 @@ MSG=echo generating $@
 #	$(M4) $@.m4 > $@
 
 $(INTDIR)\ConEmuC.obj: ConEmuC.cpp ConEmuC.h ..\common\Common.hpp
+
+$(INTDIR)\ConEmuCmd.obj: ConEmuCmd.cpp ConEmuC.h ..\common\Common.hpp
 
 $(INTDIR)\ConEmuSrv.obj: ConEmuSrv.cpp ConEmuC.h ..\common\Common.hpp
 

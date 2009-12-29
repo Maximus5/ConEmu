@@ -219,11 +219,14 @@ BOOL CConEmuMain::CreateMainWindow()
 	if (!RegisterClassEx(&wc))
 		return -1;
 
+	DWORD styleEx = 0;
 	DWORD style = WS_CLIPCHILDREN | WS_CLIPSIBLINGS;
 	if (ghWndApp)
 		style |= WS_POPUPWINDOW | WS_CAPTION | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX;
 	else
 		style |= WS_OVERLAPPEDWINDOW;
+	if (gSet.nTransparent < 255)
+		styleEx |= WS_EX_LAYERED;
 	int nWidth=CW_USEDEFAULT, nHeight=CW_USEDEFAULT;
 
 	// Расчет размеров окна в Normal режиме
@@ -246,12 +249,13 @@ BOOL CConEmuMain::CreateMainWindow()
 	//if (gConEmu.WindowMode == rMaximized) style |= WS_MAXIMIZE;
 	//style |= WS_VISIBLE;
 	// cRect.right - cRect.left - 4, cRect.bottom - cRect.top - 4; -- все равно это было не правильно
-	ghWnd = CreateWindow(szClassNameParent, gSet.GetCmd(), style, 
+	ghWnd = CreateWindowEx(styleEx, szClassNameParent, gSet.GetCmd(), style, 
 		gSet.wndX, gSet.wndY, nWidth, nHeight, ghWndApp, NULL, (HINSTANCE)g_hInstance, NULL);
 	if (!ghWnd) {
 		if (!ghWndDC) MBoxA(_T("Can't create main window!"));
 		return FALSE;
 	}
+	OnTransparent();
 	//if (gConEmu.WindowMode == rFullScreen || gConEmu.WindowMode == rMaximized)
 	//	gConEmu.SetWindowMode(gConEmu.WindowMode);
 	return TRUE;
@@ -5694,6 +5698,27 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
     mb_InTimer = FALSE;
 
     return result;
+}
+
+void CConEmuMain::OnTransparent()
+{
+	UINT nTransparent = max(MIN_ALPHA_VALUE,gSet.nTransparent);
+	DWORD dwExStyle = GetWindowLongPtr(ghWnd, GWL_EXSTYLE);
+	if (nTransparent == 255) {
+		// Прозрачность отключается (полностью непрозрачный)
+		//SetLayeredWindowAttributes(ghWnd, 0, 255, LWA_ALPHA);
+		if ((dwExStyle & WS_EX_LAYERED) == WS_EX_LAYERED) {
+			dwExStyle &= ~WS_EX_LAYERED;
+			SetLayeredWindowAttributes(ghWnd, 0, 255, LWA_ALPHA);
+			SetWindowLongPtr(ghWnd, GWL_EXSTYLE, dwExStyle);
+		}
+	} else {
+		if ((dwExStyle & WS_EX_LAYERED) == 0) {
+			dwExStyle |= WS_EX_LAYERED;
+			SetWindowLongPtr(ghWnd, GWL_EXSTYLE, dwExStyle);
+		}
+		SetLayeredWindowAttributes(ghWnd, 0, nTransparent, LWA_ALPHA);
+	}
 }
 
 // Вызовем UpdateScrollPos для АКТИВНОЙ консоли

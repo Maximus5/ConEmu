@@ -1,6 +1,8 @@
 
 #pragma once
 
+#define MIN_ALPHA_VALUE 40
+
 class CSettings
 {
 public:
@@ -36,6 +38,9 @@ public:
 	bool isBackgroundImageValid;
 	u8 bgImageDarker;
 	DWORD nBgImageColors;
+
+    /* Transparency */
+    u8 nTransparent;
 
 	/* Command Line History (from start dialog) */
 	LPWSTR psCmdHistory; DWORD nCmdHistorySize;
@@ -111,9 +116,9 @@ public:
     WCHAR szTabViewer[32];
     DWORD nTabLenMax;
 
-    bool isVisualizer;
-    char nVizNormal, nVizFore, nVizTab, nVizEOL, nVizEOF;
-    wchar_t cVizTab, cVizEOL, cVizEOF;
+    //bool isVisualizer;
+    //char nVizNormal, nVizFore, nVizTab, nVizEOL, nVizEOF;
+    //wchar_t cVizTab, cVizEOL, cVizEOF;
 
     char isAllowDetach;
     bool isCreateAppWindow; 

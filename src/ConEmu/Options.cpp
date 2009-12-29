@@ -215,6 +215,8 @@ void CSettings::InitSettings()
 	bgImageDarker = 0x46;
 	nBgImageColors = 1|2;
 
+	nTransparent = 255;
+
     isFixFarBorders = 1; isEnhanceGraphics = true; isPartBrush75 = 0xC8; isPartBrush50 = 0x96; isPartBrush25 = 0x5A;
 	memset(icFixFarBorderRanges, 0, sizeof(icFixFarBorderRanges));
 	icFixFarBorderRanges[0].bUsed = true; icFixFarBorderRanges[0].cBegin = 0x2013; icFixFarBorderRanges[0].cEnd = 0x25C4;
@@ -246,9 +248,9 @@ void CSettings::InitSettings()
     lstrcpyW(sTabFontFace, L"Tahoma"); nTabFontCharSet = ANSI_CHARSET; nTabFontHeight = 16;
 	sTabCloseMacro = NULL;
     
-    isVisualizer = false;
-    nVizNormal = 1; nVizFore = 15; nVizTab = 15; nVizEOL = 8; nVizEOF = 12;
-    cVizTab = 0x2192; cVizEOL = 0x2193; cVizEOF = 0x2640;
+    //isVisualizer = false;
+    //nVizNormal = 1; nVizFore = 15; nVizTab = 15; nVizEOL = 8; nVizEOF = 12;
+    //cVizTab = 0x2192; cVizEOL = 0x2193; cVizEOF = 0x2640;
 
     isAllowDetach = 0;
     isCreateAppWindow = false;
@@ -425,6 +427,9 @@ void CSettings::LoadSettings()
 		reg.Load(L"bgImageColors", nBgImageColors);
 			if (!nBgImageColors) nBgImageColors = 1|2;
 
+		reg.Load(L"AlphaValue", nTransparent);
+			if (nTransparent < MIN_ALPHA_VALUE) nTransparent = MIN_ALPHA_VALUE;
+
         reg.Load(L"FontBold", isBold);
         reg.Load(L"FontItalic", isItalic);
         reg.Load(L"ForceMonospace", isForceMonospace);
@@ -477,15 +482,15 @@ void CSettings::LoadSettings()
         //reg.Load(L"CreateAppWindow", isCreateAppWindow);
         //reg.Load(L"AllowDetach", isAllowDetach);
         
-        reg.Load(L"Visualizer", isVisualizer);
-        reg.Load(L"VizNormal", nVizNormal);
-        reg.Load(L"VizFore", nVizFore);
-        reg.Load(L"VizTab", nVizTab);
-        reg.Load(L"VizEol", nVizEOL);
-        reg.Load(L"VizEof", nVizEOF);
-        reg.Load(L"VizTabCh", cVizTab);
-        reg.Load(L"VizEolCh", cVizEOL);
-        reg.Load(L"VizEofCh", cVizEOF);
+        //reg.Load(L"Visualizer", isVisualizer);
+        //reg.Load(L"VizNormal", nVizNormal);
+        //reg.Load(L"VizFore", nVizFore);
+        //reg.Load(L"VizTab", nVizTab);
+        //reg.Load(L"VizEol", nVizEOL);
+        //reg.Load(L"VizEof", nVizEOF);
+        //reg.Load(L"VizTabCh", cVizTab);
+        //reg.Load(L"VizEolCh", cVizEOL);
+        //reg.Load(L"VizEofCh", cVizEOF);
         
         reg.Load(L"MainTimerElapse", nMainTimerElapse); if (nMainTimerElapse>1000) nMainTimerElapse = 1000;
         reg.Load(L"AffinityMask", nAffinity);
@@ -665,6 +670,8 @@ BOOL CSettings::SaveSettings()
             reg.Save(L"bgImageDarker", bgImageDarker);
 			reg.Save(L"BackGround Image show", isShowBgImage);
 
+			reg.Save(L"AlphaValue", nTransparent);
+
             reg.Save(L"FontSize", LogFont.lfHeight);
             reg.Save(L"FontSizeX", FontSizeX);
             reg.Save(L"FontSizeX2", FontSizeX2);
@@ -727,15 +734,15 @@ BOOL CSettings::SaveSettings()
             reg.Save(L"ScrollTitle", isScrollTitle);
             reg.Save(L"ScrollTitleLen", ScrollTitleLen);
             
-            reg.Save(L"Visualizer", isVisualizer);
-            reg.Save(L"VizNormal", nVizNormal);
-            reg.Save(L"VizFore", nVizFore);
-            reg.Save(L"VizTab", nVizTab);
-            reg.Save(L"VizEol", nVizEOL);
-            reg.Save(L"VizEof", nVizEOF);
-            reg.Save(L"VizTabCh", cVizTab);
-            reg.Save(L"VizEolCh", cVizEOL);
-            reg.Save(L"VizEofCh", cVizEOF);
+            //reg.Save(L"Visualizer", isVisualizer);
+            //reg.Save(L"VizNormal", nVizNormal);
+            //reg.Save(L"VizFore", nVizFore);
+            //reg.Save(L"VizTab", nVizTab);
+            //reg.Save(L"VizEol", nVizEOL);
+            //reg.Save(L"VizEof", nVizEOF);
+            //reg.Save(L"VizTabCh", cVizTab);
+            //reg.Save(L"VizEolCh", cVizEOL);
+            //reg.Save(L"VizEofCh", cVizEOF);
             
             reg.Save(L"SkipFocusEvents", isSkipFocusEvents);
     		reg.Save(L"MonitorConsoleLang", isMonitorConsoleLang);
@@ -1214,11 +1221,11 @@ LRESULT CSettings::OnInitDialog_Color()
 	{
 		wsprintf(temp, (i<10) ? L"# %i" : L"#%i", i);
 		SendDlgItemMessage(hColors, lbExtendIdx, CB_ADDSTRING, 0, (LPARAM) temp);
-		SendDlgItemMessage(hColors, lbVisFore, CB_ADDSTRING, 0, (LPARAM) temp);
-		SendDlgItemMessage(hColors, lbVisNormal, CB_ADDSTRING, 0, (LPARAM) temp);
-		SendDlgItemMessage(hColors, lbVisTab, CB_ADDSTRING, 0, (LPARAM) temp);
-		SendDlgItemMessage(hColors, lbVisEOL, CB_ADDSTRING, 0, (LPARAM) temp);
-		SendDlgItemMessage(hColors, lbVisEOF, CB_ADDSTRING, 0, (LPARAM) temp);
+		//SendDlgItemMessage(hColors, lbVisFore, CB_ADDSTRING, 0, (LPARAM) temp);
+		//SendDlgItemMessage(hColors, lbVisNormal, CB_ADDSTRING, 0, (LPARAM) temp);
+		//SendDlgItemMessage(hColors, lbVisTab, CB_ADDSTRING, 0, (LPARAM) temp);
+		//SendDlgItemMessage(hColors, lbVisEOL, CB_ADDSTRING, 0, (LPARAM) temp);
+		//SendDlgItemMessage(hColors, lbVisEOF, CB_ADDSTRING, 0, (LPARAM) temp);
 	}
 	SendDlgItemMessage(hColors, lbExtendIdx, CB_SETCURSEL, nExtendColor, 0);
 	CheckDlgButton(hColors, cbExtendColors, isExtendColors ? BST_CHECKED : BST_UNCHECKED);
@@ -1234,14 +1241,18 @@ LRESULT CSettings::OnInitDialog_Color()
 	SendDlgItemMessage(hColors, lbDefaultColors, CB_SETCURSEL, 0, 0);
 	gbLastColorsOk = TRUE;
 
-	// Visualizer
-	CheckDlgButton(hColors, cbVisualizer, isVisualizer ? BST_CHECKED : BST_UNCHECKED);
-	SendDlgItemMessage(hColors, lbVisFore, CB_SETCURSEL, nVizFore, 0);
-	SendDlgItemMessage(hColors, lbVisNormal, CB_SETCURSEL, nVizNormal, 0);
-	SendDlgItemMessage(hColors, lbVisTab, CB_SETCURSEL, nVizTab, 0);
-	SendDlgItemMessage(hColors, lbVisEOL, CB_SETCURSEL, nVizEOL, 0);
-	SendDlgItemMessage(hColors, lbVisEOF, CB_SETCURSEL, nVizEOF, 0);
-	OnColorButtonClicked(cbVisualizer, 0);
+	//// Visualizer
+	//CheckDlgButton(hColors, cbVisualizer, isVisualizer ? BST_CHECKED : BST_UNCHECKED);
+	//SendDlgItemMessage(hColors, lbVisFore, CB_SETCURSEL, nVizFore, 0);
+	//SendDlgItemMessage(hColors, lbVisNormal, CB_SETCURSEL, nVizNormal, 0);
+	//SendDlgItemMessage(hColors, lbVisTab, CB_SETCURSEL, nVizTab, 0);
+	//SendDlgItemMessage(hColors, lbVisEOL, CB_SETCURSEL, nVizEOL, 0);
+	//SendDlgItemMessage(hColors, lbVisEOF, CB_SETCURSEL, nVizEOF, 0);
+	//OnColorButtonClicked(cbVisualizer, 0);
+
+	SendDlgItemMessage(hColors, slTransparent, TBM_SETRANGE, (WPARAM) true, (LPARAM) MAKELONG(MIN_ALPHA_VALUE, 255));
+	SendDlgItemMessage(hColors, slTransparent, TBM_SETPOS  , (WPARAM) true, (LPARAM) nTransparent);
+
 
 	RegisterTipsFor(hColors);
 
@@ -1603,17 +1614,17 @@ LRESULT CSettings::OnColorButtonClicked(WPARAM wParam, LPARAM lParam)
             gConEmu.Update(true);
         }
         break;
-    case cbVisualizer:
-        isVisualizer = IsChecked(hColors, cbVisualizer) == BST_CHECKED ? true : false;
-        EnableWindow(GetDlgItem(hColors, lbVisNormal), isVisualizer);
-        EnableWindow(GetDlgItem(hColors, lbVisFore), isVisualizer);
-        EnableWindow(GetDlgItem(hColors, lbVisTab), isVisualizer);
-        EnableWindow(GetDlgItem(hColors, lbVisEOL), isVisualizer);
-        EnableWindow(GetDlgItem(hColors, lbVisEOF), isVisualizer);
-        if (lParam) {
-            gConEmu.Update(true);
-        }
-        break;
+    //case cbVisualizer:
+    //    isVisualizer = IsChecked(hColors, cbVisualizer) == BST_CHECKED ? true : false;
+    //    EnableWindow(GetDlgItem(hColors, lbVisNormal), isVisualizer);
+    //    EnableWindow(GetDlgItem(hColors, lbVisFore), isVisualizer);
+    //    EnableWindow(GetDlgItem(hColors, lbVisTab), isVisualizer);
+    //    EnableWindow(GetDlgItem(hColors, lbVisEOL), isVisualizer);
+    //    EnableWindow(GetDlgItem(hColors, lbVisEOF), isVisualizer);
+    //    if (lParam) {
+    //        gConEmu.Update(true);
+    //    }
+    //    break;
 
     default:
         if (CB >= 1000 && CB <= 1031)
@@ -1735,16 +1746,16 @@ LRESULT CSettings::OnColorComboBox(WPARAM wParam, LPARAM lParam)
     WORD wId = LOWORD(wParam);
     if (wId == lbExtendIdx) {
         nExtendColor = SendDlgItemMessage(hColors, wId, CB_GETCURSEL, 0, 0);
-    } else if (wId==lbVisFore) {
-        nVizFore = SendDlgItemMessage(hColors, wId, CB_GETCURSEL, 0, 0);
-    } else if (wId==lbVisNormal) {
-        nVizNormal = SendDlgItemMessage(hColors, wId, CB_GETCURSEL, 0, 0);
-    } else if (wId==lbVisTab) {
-        nVizTab = SendDlgItemMessage(hColors, wId, CB_GETCURSEL, 0, 0);
-    } else if (wId==lbVisEOL) {
-        nVizEOL = SendDlgItemMessage(hColors, wId, CB_GETCURSEL, 0, 0);
-    } else if (wId==lbVisEOF) {
-        nVizEOF = SendDlgItemMessage(hColors, wId, CB_GETCURSEL, 0, 0);
+    //} else if (wId==lbVisFore) {
+    //    nVizFore = SendDlgItemMessage(hColors, wId, CB_GETCURSEL, 0, 0);
+    //} else if (wId==lbVisNormal) {
+    //    nVizNormal = SendDlgItemMessage(hColors, wId, CB_GETCURSEL, 0, 0);
+    //} else if (wId==lbVisTab) {
+    //    nVizTab = SendDlgItemMessage(hColors, wId, CB_GETCURSEL, 0, 0);
+    //} else if (wId==lbVisEOL) {
+    //    nVizEOL = SendDlgItemMessage(hColors, wId, CB_GETCURSEL, 0, 0);
+    //} else if (wId==lbVisEOF) {
+    //    nVizEOF = SendDlgItemMessage(hColors, wId, CB_GETCURSEL, 0, 0);
 	} else if (wId==lbDefaultColors) {
 		//int nIdx = SendDlgItemMessage(hColors, wId, CB_GETCURSEL, 0, 0);
 		//EnableWindow(GetDlgItem(hColors, cbDefaultColors), nIdx>0 || (gbLastColorsOk && !nIdx));
@@ -2050,20 +2061,21 @@ INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPara
     //        SendMessage(hWnd2, WM_CLOSE, 0, 0);
     //    break;
 
-    case WM_HSCROLL:
-        {
-            int newV = SendDlgItemMessage(hWnd2, slDarker, TBM_GETPOS, 0, 0);
-            if (newV != gSet.bgImageDarker)
-            {
-                gSet.bgImageDarker = newV;
-                TCHAR tmp[10];
-                wsprintf(tmp, L"%i", gSet.bgImageDarker);
-                SetDlgItemText(hWnd2, tDarker, tmp);
-                gSet.LoadImageFrom(gSet.sBgImage);
-                gConEmu.Update(true);
-            }
-        }
-        break;
+   // case WM_HSCROLL:
+   //     {
+			//WORD wID = LOWORD(wParam);
+   //         int newV = SendDlgItemMessage(hWnd2, wID, TBM_GETPOS, 0, 0);
+   //         if (newV != gSet.bgImageDarker)
+   //         {
+   //             gSet.bgImageDarker = newV;
+   //             TCHAR tmp[10];
+   //             wsprintf(tmp, L"%i", gSet.bgImageDarker);
+   //             SetDlgItemText(hWnd2, tDarker, tmp);
+   //             gSet.LoadImageFrom(gSet.sBgImage);
+   //             gConEmu.Update(true);
+   //         }
+   //     }
+   //     break;
 
     case WM_COMMAND:
         if (HIWORD(wParam) == BN_CLICKED)
@@ -2153,16 +2165,18 @@ INT_PTR CSettings::mainOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 
     case WM_HSCROLL:
         {
-            int newV = SendDlgItemMessage(hWnd2, slDarker, TBM_GETPOS, 0, 0);
-            if (newV != gSet.bgImageDarker)
-            {
-                gSet.bgImageDarker = newV;
-                TCHAR tmp[10];
-                wsprintf(tmp, L"%i", gSet.bgImageDarker);
-                SetDlgItemText(hWnd2, tDarker, tmp);
-                gSet.LoadImageFrom(gSet.sBgImage);
-                gConEmu.Update(true);
-            }
+			if (gSet.hMain && (HWND)lParam == GetDlgItem(gSet.hMain, slDarker)) {
+				int newV = SendDlgItemMessage(hWnd2, slDarker, TBM_GETPOS, 0, 0);
+				if (newV != gSet.bgImageDarker)
+				{
+					gSet.bgImageDarker = newV;
+					TCHAR tmp[10];
+					wsprintf(tmp, L"%i", gSet.bgImageDarker);
+					SetDlgItemText(hWnd2, tDarker, tmp);
+					gSet.LoadImageFrom(gSet.sBgImage);
+					gConEmu.Update(true);
+				}
+			}
         }
         break;
 
@@ -2272,6 +2286,18 @@ INT_PTR CSettings::colorOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPa
             gSet.OnColorComboBox(wParam, lParam);
         }
         break;
+	case WM_HSCROLL:
+		{
+			if (gSet.hColors && (HWND)lParam == GetDlgItem(gSet.hColors, slTransparent)) {
+				int newV = SendDlgItemMessage(hWnd2, slTransparent, TBM_GETPOS, 0, 0);
+				if (newV != gSet.nTransparent)
+				{
+					gSet.nTransparent = newV;
+					gConEmu.OnTransparent();
+				}
+			}
+		}
+		break;
     default:
         return 0;
     }

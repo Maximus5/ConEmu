@@ -6218,11 +6218,13 @@ void CRealConsole::FindPanels(BOOL abResetOnly/* = FALSE */)
 
 		// Левая панель
 		if (( (con.pConChar[nIdx] == L'[' && (con.pConChar[nIdx+1]>=L'0' && con.pConChar[nIdx+1]<=L'9')) // открыто несколько редакторов/вьюверов
-			|| (con.pConChar[nIdx] == ucBoxDblDownRight && con.pConChar[nIdx+1] == ucBoxDblHorz) // доп.окон нет, только рамка
+			|| (con.pConChar[nIdx] == ucBoxDblDownRight 
+				&& (con.pConChar[nIdx+1] == ucBoxDblHorz || con.pConChar[nIdx+1] == ucBoxSinglDownDblHorz)) // доп.окон нет, только рамка
 			) && con.pConChar[nIdx+con.nTextWidth] == ucBoxDblVert)
 		{
 			for (int i=2; !bLeftPanel && i<con.nTextWidth; i++) {
-				if (con.pConChar[nIdx+i] == ucBoxDblDownLeft && con.pConChar[nIdx+i-1] == ucBoxDblHorz
+				if (con.pConChar[nIdx+i] == ucBoxDblDownLeft
+					&& (con.pConChar[nIdx+i-1] == ucBoxDblHorz || con.pConChar[nIdx+i-1] == ucBoxSinglDownDblHorz)
 					&& con.pConChar[nIdx+i+con.nTextWidth] == ucBoxDblVert)
 				{
 					uint nBottom = con.nTextHeight - 1;
@@ -6271,7 +6273,8 @@ void CRealConsole::FindPanels(BOOL abResetOnly/* = FALSE */)
 				{
 					for (int i=con.nTextWidth-3; !bRightPanel && i>2; i--) {
 						// ищем левую границу правой панели
-						if (con.pConChar[nIdx+i] == ucBoxDblDownRight && con.pConChar[nIdx+i+1] == ucBoxDblHorz
+						if (con.pConChar[nIdx+i] == ucBoxDblDownRight
+							&& (con.pConChar[nIdx+i+1] == ucBoxDblHorz || con.pConChar[nIdx+i+1] == ucBoxSinglDownDblHorz)
 							&& con.pConChar[nIdx+i+con.nTextWidth] == ucBoxDblVert)
 						{
 							uint nBottom = con.nTextHeight - 1;

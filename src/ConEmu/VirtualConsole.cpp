@@ -605,19 +605,19 @@ bool CVirtualConsole::GetCharAttr(TCHAR ch, WORD atr, TCHAR& rch, BYTE& foreColo
     foreColorNum = atr & 0x0F;
     backColorNum = atr >> 4 & 0x0F;
     rch = ch; // по умолчанию!
-    if (isEditor && gSet.isVisualizer && ch==L' ' &&
-        (backColorNum==gSet.nVizTab || backColorNum==gSet.nVizEOL || backColorNum==gSet.nVizEOF))
-    {
-        if (backColorNum==gSet.nVizTab)
-            rch = gSet.cVizTab; else
-        if (backColorNum==gSet.nVizEOL)
-            rch = gSet.cVizEOL; else
-        if (backColorNum==gSet.nVizEOF)
-            rch = gSet.cVizEOF;
-        backColorNum = gSet.nVizNormal;
-        foreColorNum = gSet.nVizFore;
-        bChanged = true;
-    } else
+    //if (isEditor && gSet.isVisualizer && ch==L' ' &&
+    //    (backColorNum==gSet.nVizTab || backColorNum==gSet.nVizEOL || backColorNum==gSet.nVizEOF))
+    //{
+    //    if (backColorNum==gSet.nVizTab)
+    //        rch = gSet.cVizTab; else
+    //    if (backColorNum==gSet.nVizEOL)
+    //        rch = gSet.cVizEOL; else
+    //    if (backColorNum==gSet.nVizEOF)
+    //        rch = gSet.cVizEOF;
+    //    backColorNum = gSet.nVizNormal;
+    //    foreColorNum = gSet.nVizFore;
+    //    bChanged = true;
+    //} else
     if (gSet.isExtendColors) {
         if (backColorNum==gSet.nExtendColor) {
             backColorNum = attrBackLast;

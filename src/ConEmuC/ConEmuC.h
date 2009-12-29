@@ -169,6 +169,7 @@ void _printf(LPCSTR asFormat, DWORD dw1, DWORD dw2, LPCWSTR asAddLine=NULL);
 #define _wprintf wprintf
 #endif
 const wchar_t* PointToName(const wchar_t* asFullPath);
+HWND Attach2Gui(DWORD nTimeout);
 
 
 int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd); // –азбор параметров командной строки
@@ -182,7 +183,7 @@ void EmergencyShow();
 
 
 /* Console Handles */
-extern MConHandle ghConIn;
+//extern MConHandle ghConIn;
 extern MConHandle ghConOut;
 
 
@@ -236,6 +237,8 @@ typedef struct tag_SrvInfo {
 	HANDLE hInputThread;    DWORD dwInputThreadId;
 	HANDLE hInputPipeThread;DWORD dwInputPipeThreadId; // Needed in Vista & administrator
 	//
+	OSVERSIONINFO osv;
+	BOOL bReopenHandleAllowed;
 	//UINT nMsgHookEnableDisable;
 	UINT nMaxFPS;
 	//

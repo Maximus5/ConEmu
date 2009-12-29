@@ -12,6 +12,9 @@ REGEDIT4
 ;; Default is 3 (black & blue)
 ;"bgImageColors"=dword:00000003
 
+;; Transparency of the main window (28..FF). FF - opaque.
+"AlphaValue"=hex:ff
+
 ;; hex:01 - Search, register for process, and use first *.ttf file in conemu folder
 ;; hex:00 - ConEmu will use only preregistered, system fonts
 "AutoRegisterFonts"=hex:01
@@ -227,17 +230,6 @@ REGEDIT4
 
 ;; Debug. 1 - Create 'app' window on taskbar
 ;"CreateAppWindow"=hex:00 - does not working still
-
-;; Visualizer plugin extensions
-"Visualizer"=hex:01
-"VizNormal"=hex:01
-"VizFore"=hex:0f
-"VizTab"=hex:0f
-"VizEol"=hex:08
-"VizEof"=hex:0c
-"VizTabCh"=hex:92,21
-"VizEolCh"=hex:93,21
-"VizEofCh"=hex:40,26
 
 ;; Console colors (16..31 used with ExtendColors=01)
 ;"ColorTable00"=hex:ff,ff,ff,00

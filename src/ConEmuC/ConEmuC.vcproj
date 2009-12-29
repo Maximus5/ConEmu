@@ -937,6 +937,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\ConEmuCmd.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\ConEmuSrv.cpp"
 				>
 			</File>

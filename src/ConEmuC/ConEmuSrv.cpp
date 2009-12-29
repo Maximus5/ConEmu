@@ -2,6 +2,782 @@
 #include "ConEmuC.h"
 
 
+// Создать необходимые события и нити
+int ServerInit()
+{
+    int iRc = 0;
+    DWORD dwErr = 0;
+    wchar_t szComSpec[MAX_PATH+1], szSelf[MAX_PATH+3];
+    wchar_t* pszSelf = szSelf+1;
+    //HMODULE hKernel = GetModuleHandleW (L"kernel32.dll");
+    
+	srv.osv.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
+	GetVersionEx(&srv.osv);
+	TODO("Проверить, а в висте не падает?");
+	if (srv.osv.dwMajorVersion == 6 && srv.osv.dwMinorVersion == 1)
+		srv.bReopenHandleAllowed = FALSE;
+	else
+		srv.bReopenHandleAllowed = TRUE;
+
+
+	//2009-08-27 Перенес снизу
+	if (!srv.hConEmuGuiAttached) {
+		wchar_t szTempName[MAX_PATH];
+		wsprintfW(szTempName, CEGUIRCONSTARTED, (DWORD)ghConWnd);
+		//srv.hConEmuGuiAttached = OpenEvent(EVENT_ALL_ACCESS, FALSE, szTempName);
+		//if (srv.hConEmuGuiAttached == NULL)
+   		srv.hConEmuGuiAttached = CreateEvent(gpNullSecurity, TRUE, FALSE, szTempName);
+		_ASSERTE(srv.hConEmuGuiAttached!=NULL);
+		//if (srv.hConEmuGuiAttached) ResetEvent(srv.hConEmuGuiAttached); -- низя. может уже быть создано/установлено в GUI
+	}
+    
+	// Было 10, чтобы не перенапрягать консоль при ее быстром обновлении ("dir /s" и т.п.)
+    srv.nMaxFPS = 100;
+
+#ifdef _DEBUG
+	if (ghFarInExecuteEvent)
+		SetEvent(ghFarInExecuteEvent);
+#endif
+
+	// Создать MapFile для заголовка (СРАЗУ!!!)
+	iRc = CreateMapHeader();
+	if (iRc != 0)
+		goto wrap;
+
+
+    
+    //if (hKernel) {
+    //    pfnGetConsoleKeyboardLayoutName = (FGetConsoleKeyboardLayoutName)GetProcAddress (hKernel, "GetConsoleKeyboardLayoutNameW");
+    //    pfnGetConsoleProcessList = (FGetConsoleProcessList)GetProcAddress (hKernel, "GetConsoleProcessList");
+    //}
+    
+	srv.csProc = new MSection();
+
+    // Инициализация имен пайпов
+    wsprintfW(srv.szPipename, CESERVERPIPENAME, L".", gnSelfPID);
+    wsprintfW(srv.szInputname, CESERVERINPUTNAME, L".", gnSelfPID);
+
+	srv.nMaxProcesses = START_MAX_PROCESSES; srv.nProcessCount = 0;
+	srv.pnProcesses = (DWORD*)Alloc(START_MAX_PROCESSES, sizeof(DWORD));
+	srv.pnProcessesCopy = (DWORD*)Alloc(START_MAX_PROCESSES, sizeof(DWORD));
+	MCHKHEAP;
+	if (srv.pnProcesses == NULL || srv.pnProcessesCopy == NULL) {
+		_printf ("Can't allocate %i DWORDS!\n", srv.nMaxProcesses);
+		iRc = CERR_NOTENOUGHMEM1; goto wrap;
+	}
+	CheckProcessCount(TRUE); // Сначала добавит себя
+	// в принципе, серверный режим может быть вызван из фара, чтобы подцепиться к GUI 
+	// но больше двух процессов в консоли не ожидается!
+	_ASSERTE(srv.bDebuggerActive || srv.nProcessCount<=2); 
+
+
+	// Запустить нить обработки событий (клавиатура, мышь, и пр.)
+	srv.hInputThread = CreateThread( 
+		NULL,              // no security attribute 
+		0,                 // default stack size 
+		InputThread,       // thread proc
+		NULL,              // thread parameter 
+		0,                 // not suspended 
+		&srv.dwInputThreadId);      // returns thread ID 
+
+	if (srv.hInputThread == NULL) 
+	{
+		dwErr = GetLastError();
+		_printf("CreateThread(InputThread) failed, ErrCode=0x%08X\n", dwErr); 
+		iRc = CERR_CREATEINPUTTHREAD; goto wrap;
+	}
+	//SetThreadPriority(srv.hInputThread, THREAD_PRIORITY_ABOVE_NORMAL);
+	// Запустить нить обработки событий (клавиатура, мышь, и пр.)
+	srv.hInputPipeThread = CreateThread( 
+		NULL,              // no security attribute 
+		0,                 // default stack size 
+		InputPipeThread,   // thread proc
+		NULL,              // thread parameter 
+		0,                 // not suspended 
+		&srv.dwInputPipeThreadId);      // returns thread ID 
+
+	if (srv.hInputPipeThread == NULL) 
+	{
+		dwErr = GetLastError();
+		_printf("CreateThread(InputPipeThread) failed, ErrCode=0x%08X\n", dwErr);
+		iRc = CERR_CREATEINPUTTHREAD; goto wrap;
+	}
+
+    //InitializeCriticalSection(&srv.csChangeSize);
+    //InitializeCriticalSection(&srv.csConBuf);
+    //InitializeCriticalSection(&srv.csChar);
+
+    if (!gbAttachMode) {
+		HWND hConEmuWnd = FindConEmuByPID();
+		if (hConEmuWnd) {
+			UINT nMsgSrvStarted = RegisterWindowMessage(CONEMUMSG_SRVSTARTED);
+			DWORD_PTR nRc = 0;
+			SendMessageTimeout(hConEmuWnd, nMsgSrvStarted, (WPARAM)ghConWnd, gnSelfPID, 
+				SMTO_BLOCK, 500, &nRc);
+		}
+        if (srv.hConEmuGuiAttached) {
+            WaitForSingleObject(srv.hConEmuGuiAttached, 500);
+		}
+        CheckConEmuHwnd();
+    }
+
+
+
+
+    if (gbNoCreateProcess && (gbAttachMode || srv.bDebuggerActive)) {
+    	if (!srv.bDebuggerActive && !IsWindowVisible(ghConWnd)) {
+			PRINT_COMSPEC(L"Console windows is not visible. Attach is unavailable. Exiting...\n", 0);
+			gbAlwaysConfirmExit = FALSE;
+			srv.nProcessStartTick = GetTickCount() - 2*CHECK_ROOTSTART_TIMEOUT;
+			return CERR_RUNNEWCONSOLE;
+    	}
+    	
+		if (srv.dwRootProcess == 0 && !srv.bDebuggerActive) {
+    		// Нужно попытаться определить PID корневого процесса.
+    		// Родительским может быть cmd (comspec, запущенный из FAR)
+    		DWORD dwParentPID = 0, dwFarPID = 0;
+    		DWORD dwServerPID = 0; // Вдруг в этой консоли уже есть сервер?
+    		
+    		_ASSERTE(!srv.bDebuggerActive);
+	    	
+    		if (srv.nProcessCount >= 2 && !srv.bDebuggerActive) {
+				HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS,0);
+				if (hSnap != INVALID_HANDLE_VALUE) {
+					PROCESSENTRY32 prc = {sizeof(PROCESSENTRY32)};
+					if (Process32First(hSnap, &prc)) {
+						do {
+                    		for (UINT i = 0; i < srv.nProcessCount; i++) {
+                    			if (prc.th32ProcessID != gnSelfPID
+                    				&& prc.th32ProcessID == srv.pnProcesses[i])
+                				{
+                					if (lstrcmpiW(prc.szExeFile, L"conemuc.exe")==0) {
+                						CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_ATTACH2GUI, 0);
+                						CESERVER_REQ* pOut = ExecuteSrvCmd(prc.th32ProcessID, pIn, ghConWnd);
+                						if (pOut) dwServerPID = prc.th32ProcessID;
+                						ExecuteFreeResult(pIn); ExecuteFreeResult(pOut);
+                						// Если команда успешно выполнена - выходим
+                						if (dwServerPID)
+                							break;
+                					}
+                		    		if (!dwFarPID && lstrcmpiW(prc.szExeFile, L"far.exe")==0) {
+                		    			dwFarPID = prc.th32ProcessID;
+                		    		}
+                		    		if (!dwParentPID)
+                		    			dwParentPID = prc.th32ProcessID;
+                    			}
+                    		}
+                    		// Если уже выполнили команду в сервере - выходим, перебор больше не нужен
+    						if (dwServerPID)
+    							break;
+						} while (Process32Next(hSnap, &prc));
+					}
+					CloseHandle(hSnap);
+					
+					if (dwFarPID) dwParentPID = dwFarPID;
+				}
+			}
+			
+			if (dwServerPID) {
+    			AllowSetForegroundWindow(dwServerPID);
+    			PRINT_COMSPEC(L"Server was already started. PID=%i. Exiting...\n", dwServerPID);
+    			gbAlwaysConfirmExit = FALSE;
+				srv.nProcessStartTick = GetTickCount() - 2*CHECK_ROOTSTART_TIMEOUT;
+    			return CERR_RUNNEWCONSOLE;
+			}
+	        
+    		if (!dwParentPID) {
+				_printf ("Attach to GUI was requested, but there is no console processes:\n", 0, GetCommandLineW());
+				return CERR_CARGUMENT;
+    		}
+	    	
+    		// Нужно открыть HANDLE корневого процесса
+    		srv.hRootProcess = OpenProcess(PROCESS_QUERY_INFORMATION|SYNCHRONIZE, FALSE, dwParentPID);
+    		if (!srv.hRootProcess) {
+    			dwErr = GetLastError();
+    			wchar_t* lpMsgBuf = NULL;
+	    		
+   				FormatMessage( FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, NULL, dwErr, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPWSTR)&lpMsgBuf, 0, NULL );
+	    		
+				_printf("Can't open process (%i) handle, ErrCode=0x%08X, Description:\n", 
+            		dwParentPID, dwErr, (lpMsgBuf == NULL) ? L"<Unknown error>" : lpMsgBuf);
+	            
+				if (lpMsgBuf) LocalFree(lpMsgBuf);
+				return CERR_CREATEPROCESS;
+    		}
+    		srv.dwRootProcess = dwParentPID;
+
+			// Запустить вторую копию ConEmuC НЕМОДАЛЬНО!
+			wchar_t szSelf[MAX_PATH+100];
+			wchar_t* pszSelf = szSelf+1;
+			if (!GetModuleFileName(NULL, pszSelf, MAX_PATH)) {
+				dwErr = GetLastError();
+				_printf("GetModuleFileName failed, ErrCode=0x%08X\n", dwErr);
+				return CERR_CREATEPROCESS;
+			}
+			if (wcschr(pszSelf, L' ')) {
+				*(--pszSelf) = L'"';
+				lstrcatW(pszSelf, L"\"");
+			}
+			
+			wsprintf(pszSelf+wcslen(pszSelf), L" /ATTACH /PID=%i", dwParentPID);
+
+			PROCESS_INFORMATION pi; memset(&pi, 0, sizeof(pi));
+			STARTUPINFOW si; memset(&si, 0, sizeof(si)); si.cb = sizeof(si);
+	        
+			PRINT_COMSPEC(L"Starting modeless:\n%s\n", pszSelf);
+	    
+			// CREATE_NEW_PROCESS_GROUP - низя, перестает работать Ctrl-C
+			BOOL lbRc = CreateProcessW(NULL, pszSelf, NULL,NULL, TRUE, 
+					NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi);
+			dwErr = GetLastError();
+			if (!lbRc)
+			{
+				_printf("Can't create process, ErrCode=0x%08X! Command to be executed:\n", dwErr, pszSelf);
+				return CERR_CREATEPROCESS;
+			}
+			//delete psNewCmd; psNewCmd = NULL;
+			AllowSetForegroundWindow(pi.dwProcessId);
+			PRINT_COMSPEC(L"Modeless server was started. PID=%i. Exiting...\n", pi.dwProcessId);
+			SafeCloseHandle(pi.hProcess); SafeCloseHandle(pi.hThread);
+			gbAlwaysConfirmExit = FALSE;
+			srv.nProcessStartTick = GetTickCount() - 2*CHECK_ROOTSTART_TIMEOUT;
+			return CERR_RUNNEWCONSOLE;
+
+		} else {
+    		// Нужно открыть HANDLE корневого процесса
+    		DWORD dwFlags = PROCESS_QUERY_INFORMATION|SYNCHRONIZE;
+    		if (srv.bDebuggerActive)
+    			dwFlags |= PROCESS_VM_READ;
+    		srv.hRootProcess = OpenProcess(dwFlags, FALSE, srv.dwRootProcess);
+    		if (!srv.hRootProcess) {
+    			dwErr = GetLastError();
+    			wchar_t* lpMsgBuf = NULL;
+	    		
+   				FormatMessage( FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, NULL, dwErr, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPWSTR)&lpMsgBuf, 0, NULL );
+	    		
+				_printf ("Can't open process (%i) handle, ErrCode=0x%08X, Description:\n", 
+            		srv.dwRootProcess, dwErr, (lpMsgBuf == NULL) ? L"<Unknown error>" : lpMsgBuf);
+	            
+				if (lpMsgBuf) LocalFree(lpMsgBuf);
+				return CERR_CREATEPROCESS;
+    		}
+    		
+    		if (srv.bDebuggerActive) {
+    			wchar_t szTitle[64];
+    			wsprintf(szTitle, L"Debug PID=%i", srv.dwRootProcess);
+    			SetConsoleTitleW(szTitle);
+    		}
+		}
+    }
+
+
+	srv.hAllowInputEvent = CreateEvent(NULL, TRUE, TRUE, NULL);
+	if (!srv.hAllowInputEvent) SetEvent(srv.hAllowInputEvent);
+
+    TODO("Сразу проверить, может ComSpecC уже есть?");
+    if (GetEnvironmentVariable(L"ComSpec", szComSpec, MAX_PATH)) {
+        wchar_t* pszSlash = wcsrchr(szComSpec, L'\\');
+        if (pszSlash) {
+            if (_wcsnicmp(pszSlash, L"\\conemuc.", 9)) {
+                // Если это НЕ мы - сохранить в ComSpecC
+                SetEnvironmentVariable(L"ComSpecC", szComSpec);
+            }
+        }
+    }
+    if (GetModuleFileName(NULL, pszSelf, MAX_PATH)) {
+		wchar_t *pszShort = NULL;
+		if (pszSelf[0] != L'\\')
+			pszShort = GetShortFileNameEx(pszSelf);
+	    if (!pszShort && wcschr(pszSelf, L' ')) {
+		    *(--pszSelf) = L'"';
+		    lstrcatW(pszSelf, L"\"");
+	    }
+		if (pszShort) {
+			SetEnvironmentVariable(L"ComSpec", pszShort);
+			free(pszShort);
+		} else {
+			SetEnvironmentVariable(L"ComSpec", pszSelf);
+		}
+    }
+
+    //srv.bContentsChanged = TRUE;
+    srv.nMainTimerElapse = 10;
+    srv.bConsoleActive = TRUE; TODO("Обрабатывать консольные события Activate/Deactivate");
+    //srv.bNeedFullReload = FALSE; srv.bForceFullSend = TRUE;
+    srv.nTopVisibleLine = -1; // блокировка прокрутки не включена
+
+    
+
+
+    // Размер шрифта и Lucida. Обязательно для серверного режима.
+    if (srv.szConsoleFont[0]) {
+        // Требуется проверить наличие такого шрифта!
+        LOGFONT fnt = {0};
+        lstrcpynW(fnt.lfFaceName, srv.szConsoleFont, LF_FACESIZE);
+        srv.szConsoleFont[0] = 0; // сразу сбросим. Если шрифт есть - имя будет скопировано в FontEnumProc
+        HDC hdc = GetDC(NULL);
+        EnumFontFamiliesEx(hdc, &fnt, (FONTENUMPROCW) FontEnumProc, (LPARAM)&fnt, 0);
+        DeleteDC(hdc);
+    }
+    if (srv.szConsoleFont[0] == 0) {
+        lstrcpyW(srv.szConsoleFont, L"Lucida Console");
+        srv.nConFontWidth = 4; srv.nConFontHeight = 6;
+    }
+    if (srv.nConFontHeight<6) srv.nConFontHeight = 6;
+    if (srv.nConFontWidth==0 && srv.nConFontHeight==0) {
+        srv.nConFontWidth = 4; srv.nConFontHeight = 6;
+    } else if (srv.nConFontWidth==0) {
+        srv.nConFontWidth = srv.nConFontHeight * 2 / 3;
+    } else if (srv.nConFontHeight==0) {
+        srv.nConFontHeight = srv.nConFontWidth * 3 / 2;
+    }
+    if (srv.nConFontHeight<6 || srv.nConFontWidth <4) {
+        srv.nConFontWidth = 4; srv.nConFontHeight = 6;
+    }
+    //if (srv.szConsoleFontFile[0])
+    //  AddFontResourceEx(srv.szConsoleFontFile, FR_PRIVATE, NULL);
+    if (!srv.bDebuggerActive || gbAttachMode) {
+	    if (ghLogSize) LogSize(NULL, ":SetConsoleFontSizeTo.before");
+	    SetConsoleFontSizeTo(ghConWnd, srv.nConFontHeight, srv.nConFontWidth, srv.szConsoleFont);
+	    if (ghLogSize) LogSize(NULL, ":SetConsoleFontSizeTo.after");
+    } else {
+    	SetWindowPos(ghConWnd, HWND_TOPMOST, 0,0,0,0, SWP_NOSIZE|SWP_NOMOVE);
+    }
+    if (gbParmBufferSize && gcrBufferSize.X && gcrBufferSize.Y) {
+        SMALL_RECT rc = {0};
+        SetConsoleSize(gnBufferHeight, gcrBufferSize, rc, ":ServerInit.SetFromArg"); // может обломаться? если шрифт еще большой
+    }
+
+    if (IsIconic(ghConWnd)) { // окошко нужно развернуть!
+        WINDOWPLACEMENT wplCon = {sizeof(wplCon)};
+        GetWindowPlacement(ghConWnd, &wplCon);
+        wplCon.showCmd = SW_RESTORE;
+        SetWindowPlacement(ghConWnd, &wplCon);
+    }
+
+	// Сразу получить текущее состояние консоли
+	ReloadFullConsoleInfo(TRUE);
+
+
+    //
+    srv.hRefreshEvent = CreateEvent(NULL,FALSE,FALSE,NULL);
+    if (!srv.hRefreshEvent) {
+        dwErr = GetLastError();
+        _printf("CreateEvent(hRefreshEvent) failed, ErrCode=0x%08X\n", dwErr); 
+        iRc = CERR_REFRESHEVENT; goto wrap;
+    }
+	srv.hDataSentEvent = CreateEvent(NULL,FALSE,FALSE,NULL);
+	if (!srv.hDataSentEvent) {
+		dwErr = GetLastError();
+		_printf("CreateEvent(hDataSentEvent) failed, ErrCode=0x%08X\n", dwErr); 
+		iRc = CERR_REFRESHEVENT; goto wrap;
+	}
+    srv.hReqSizeChanged = CreateEvent(NULL,FALSE,FALSE,NULL);
+    if (!srv.hReqSizeChanged) {
+        dwErr = GetLastError();
+        _printf("CreateEvent(hReqSizeChanged) failed, ErrCode=0x%08X\n", dwErr); 
+        iRc = CERR_REFRESHEVENT; goto wrap;
+    }
+
+    
+    // Запустить нить наблюдения за консолью
+    srv.hRefreshThread = CreateThread( 
+        NULL,              // no security attribute 
+        0,                 // default stack size 
+        RefreshThread,     // thread proc
+        NULL,              // thread parameter 
+        0,                 // not suspended 
+        &srv.dwRefreshThread); // returns thread ID 
+
+    if (srv.hRefreshThread == NULL) 
+    {
+        dwErr = GetLastError();
+        _printf("CreateThread(RefreshThread) failed, ErrCode=0x%08X\n", dwErr); 
+        iRc = CERR_CREATEREFRESHTHREAD; goto wrap;
+    }
+    
+    
+    //srv.nMsgHookEnableDisable = RegisterWindowMessage(L"ConEmuC::HookEnableDisable");
+    // The client thread that calls SetWinEventHook must have a message loop in order to receive events.");
+    srv.hWinEventThread = CreateThread( NULL, 0, WinEventThread, NULL, 0, &srv.dwWinEventThread);
+    if (srv.hWinEventThread == NULL) 
+    {
+        dwErr = GetLastError();
+        _printf("CreateThread(WinEventThread) failed, ErrCode=0x%08X\n", dwErr); 
+        iRc = CERR_WINEVENTTHREAD; goto wrap;
+    }
+
+    // Запустить нить обработки команд  
+    srv.hServerThread = CreateThread( NULL, 0, ServerThread, NULL, 0, &srv.dwServerThreadId);
+    if (srv.hServerThread == NULL) 
+    {
+        dwErr = GetLastError();
+        _printf("CreateThread(ServerThread) failed, ErrCode=0x%08X\n", dwErr); 
+        iRc = CERR_CREATESERVERTHREAD; goto wrap;
+    }
+
+    if (gbAttachMode) {
+        HWND hDcWnd = Attach2Gui(5000);
+        
+		// 090719 попробуем в сервере это делать всегда. Нужно передать в GUI - TID нити ввода
+        //// Если это НЕ новая консоль (-new_console) и не /ATTACH уже существующей консоли
+        //if (!gbNoCreateProcess)
+        //	SendStarted();
+
+        if (!hDcWnd) {
+            _printf("Available ConEmu GUI window not found!\n");
+            iRc = CERR_ATTACHFAILED; goto wrap;
+        }
+    }
+
+	SendStarted();
+
+    CheckConEmuHwnd();
+
+
+wrap:
+    return iRc;
+}
+
+// Завершить все нити и закрыть дескрипторы
+void ServerDone(int aiRc)
+{
+	// На всякий случай - выставим событие
+	if (ghExitQueryEvent) SetEvent(ghExitQueryEvent);
+
+	// Остановить отладчик, иначе отлаживаемый процесс тоже схлопнется	
+    if (srv.bDebuggerActive) {
+    	if (pfnDebugActiveProcessStop) pfnDebugActiveProcessStop(srv.dwRootProcess);
+    	srv.bDebuggerActive = FALSE;
+    }
+
+	// Пошлем события сразу во все нити, а потом будем ждать
+	if (srv.dwWinEventThread && srv.hWinEventThread)
+		PostThreadMessage(srv.dwWinEventThread, WM_QUIT, 0, 0);
+	if (srv.dwInputThreadId && srv.hInputThread)
+		PostThreadMessage(srv.dwInputThreadId, WM_QUIT, 0, 0);
+	// Передернуть пайп серверной нити
+	HANDLE hPipe = CreateFile(srv.szPipename,GENERIC_WRITE,0,NULL,OPEN_EXISTING,0,NULL);
+	if (hPipe == INVALID_HANDLE_VALUE) {
+		DEBUGSTR(L"All pipe instances closed?\n");
+	}
+	// Передернуть нить ввода
+	HANDLE hInputPipe = CreateFile(srv.szInputname,GENERIC_WRITE,0,NULL,OPEN_EXISTING,0,NULL);
+	if (hInputPipe == INVALID_HANDLE_VALUE) {
+		DEBUGSTR(L"Input pipe was not created?\n");
+	} else {
+		MSG msg = {NULL}; msg.message = 0xFFFF; DWORD dwOut = 0;
+		WriteFile(hInputPipe, &msg, sizeof(msg), &dwOut, 0);
+	}
+
+
+    // Закрываем дескрипторы и выходим
+    if (srv.dwWinEventThread && srv.hWinEventThread) {
+        // Подождем немножко, пока нить сама завершится
+        if (WaitForSingleObject(srv.hWinEventThread, 500) != WAIT_OBJECT_0) {
+            #pragma warning( push )
+            #pragma warning( disable : 6258 )
+            TerminateThread ( srv.hWinEventThread, 100 ); // раз корректно не хочет...
+            #pragma warning( pop )
+        }
+        SafeCloseHandle(srv.hWinEventThread);
+        srv.dwWinEventThread = 0;
+    }
+    if (srv.hInputThread) {
+		// Подождем немножко, пока нить сама завершится
+		if (WaitForSingleObject(srv.hInputThread, 500) != WAIT_OBJECT_0) {
+			#pragma warning( push )
+			#pragma warning( disable : 6258 )
+			TerminateThread ( srv.hInputThread, 100 ); // раз корректно не хочет...
+			#pragma warning( pop )
+		}
+		SafeCloseHandle(srv.hInputThread);
+		srv.dwInputThreadId = 0;
+    }
+    if (srv.hInputPipeThread) {
+		// Подождем немножко, пока нить сама завершится
+		if (WaitForSingleObject(srv.hInputPipeThread, 500) != WAIT_OBJECT_0) {
+			#pragma warning( push )
+			#pragma warning( disable : 6258 )
+			TerminateThread ( srv.hInputPipeThread, 100 ); // раз корректно не хочет...
+			#pragma warning( pop )
+		}
+		SafeCloseHandle(srv.hInputPipeThread);
+		srv.dwInputPipeThreadId = 0;
+    }
+    SafeCloseHandle(hInputPipe);
+
+    if (srv.hServerThread) {
+		// Подождем немножко, пока нить сама завершится
+		if (WaitForSingleObject(srv.hServerThread, 500) != WAIT_OBJECT_0) {
+			#pragma warning( push )
+			#pragma warning( disable : 6258 )
+			TerminateThread ( srv.hServerThread, 100 ); // раз корректно не хочет...
+			#pragma warning( pop )
+		}
+        SafeCloseHandle(srv.hServerThread);
+    }
+    SafeCloseHandle(hPipe);
+    if (srv.hRefreshThread) {
+        if (WaitForSingleObject(srv.hRefreshThread, 100)!=WAIT_OBJECT_0) {
+            _ASSERT(FALSE);
+            #pragma warning( push )
+            #pragma warning( disable : 6258 )
+            TerminateThread(srv.hRefreshThread, 100);
+            #pragma warning( pop )
+        }
+        SafeCloseHandle(srv.hRefreshThread);
+    }
+    
+    if (srv.hRefreshEvent) {
+        SafeCloseHandle(srv.hRefreshEvent);
+    }
+	if (srv.hDataSentEvent) {
+		SafeCloseHandle(srv.hDataSentEvent);
+	}
+    //if (srv.hChangingSize) {
+    //    SafeCloseHandle(srv.hChangingSize);
+    //}
+    // Отключить все хуки
+    //srv.bWinHookAllow = FALSE; srv.nWinHookMode = 0;
+    //HookWinEvents ( -1 );
+    
+    if (gpStoredOutput) { Free(gpStoredOutput); gpStoredOutput = NULL; }
+    if (srv.pszAliases) { Free(srv.pszAliases); srv.pszAliases = NULL; }
+    //if (srv.psChars) { Free(srv.psChars); srv.psChars = NULL; }
+    //if (srv.pnAttrs) { Free(srv.pnAttrs); srv.pnAttrs = NULL; }
+    //if (srv.ptrLineCmp) { Free(srv.ptrLineCmp); srv.ptrLineCmp = NULL; }
+    //DeleteCriticalSection(&srv.csConBuf);
+    //DeleteCriticalSection(&srv.csChar);
+    //DeleteCriticalSection(&srv.csChangeSize);
+
+	SafeCloseHandle(srv.hAllowInputEvent);
+
+	SafeCloseHandle(srv.hRootProcess); 
+
+
+	if (srv.csProc) {
+		delete srv.csProc;
+		srv.csProc = NULL;
+	}
+
+	if (srv.pnProcesses) {
+		Free(srv.pnProcesses); srv.pnProcesses = NULL;
+	}
+	if (srv.pnProcessesCopy) {
+		Free(srv.pnProcessesCopy); srv.pnProcessesCopy = NULL;
+	}
+
+	CloseMapHeader();
+}
+
+
+
+// Сохранить данные ВСЕЙ консоли в gpStoredOutput
+void CmdOutputStore()
+{
+	// В Win7 закрытие дескриптора в ДРУГОМ процессе - закрывает консольный буфер ПОЛНОСТЬЮ!!!
+	// В итоге, буфер вывода telnet'а схлопывается!
+	if (srv.bReopenHandleAllowed) {
+		ghConOut.Close();
+	}
+	
+	WARNING("А вот это нужно бы делать в RefreshThread!!!");
+    DEBUGSTR(L"--- CmdOutputStore begin\n");
+    CONSOLE_SCREEN_BUFFER_INFO lsbi = {{0,0}};
+    // !!! Нас интересует реальное положение дел в консоли, 
+    //     а не скорректированное функцией MyGetConsoleScreenBufferInfo
+    if (!GetConsoleScreenBufferInfo(ghConOut, &lsbi)) {
+        if (gpStoredOutput) { Free(gpStoredOutput); gpStoredOutput = NULL; }
+        return; // Не смогли получить информацию о консоли...
+    }
+    int nOneBufferSize = lsbi.dwSize.X * lsbi.dwSize.Y * 2; // Читаем всю консоль целиком!
+    // Если требуется увеличение размера выделенной памяти
+    if (gpStoredOutput && gpStoredOutput->hdr.cbMaxOneBufferSize < (DWORD)nOneBufferSize) {
+        Free(gpStoredOutput); gpStoredOutput = NULL;
+    }
+    if (gpStoredOutput == NULL) {
+        // Выделяем память: заголовок + буфер текста (на атрибуты забьем)
+        gpStoredOutput = (CESERVER_CONSAVE*)Alloc(sizeof(CESERVER_CONSAVE_HDR)+nOneBufferSize,1);
+        _ASSERTE(gpStoredOutput!=NULL);
+        if (gpStoredOutput == NULL)
+            return; // Не смогли выделить память
+        gpStoredOutput->hdr.cbMaxOneBufferSize = nOneBufferSize;
+    }
+    // Запомнить sbi
+    //memmove(&gpStoredOutput->hdr.sbi, &lsbi, sizeof(lsbi));
+    gpStoredOutput->hdr.sbi = lsbi;
+    // Теперь читаем данные
+    COORD coord = {0,0};
+    DWORD nbActuallyRead = 0;
+    DWORD nReadLen = lsbi.dwSize.X * lsbi.dwSize.Y;
+
+    // [Roman Kuzmin]
+    // In FAR Manager source code this is mentioned as "fucked method". Yes, it is.
+    // Functions ReadConsoleOutput* fail if requested data size exceeds their buffer;
+    // MSDN says 64K is max but it does not say how much actually we can request now.
+    // Experiments show that this limit is floating and it can be much less than 64K.
+    // The solution below is not optimal when a user sets small font and large window,
+    // but it is safe and practically optimal, because most of users set larger fonts
+    // for large window and ReadConsoleOutput works OK. More optimal solution for all
+    // cases is not that difficult to develop but it will be increased complexity and
+    // overhead often for nothing, not sure that we really should use it.
+
+    if (!ReadConsoleOutputCharacter(ghConOut, gpStoredOutput->Data, nReadLen, coord, &nbActuallyRead)
+        || (nbActuallyRead != nReadLen))
+    {
+        DEBUGSTR(L"--- Full block read failed: read line by line\n");
+        wchar_t* ConCharNow = gpStoredOutput->Data;
+        nReadLen = lsbi.dwSize.X;
+        for(int y = 0; y < (int)lsbi.dwSize.Y; y++, coord.Y++)
+        {
+            ReadConsoleOutputCharacter(ghConOut, ConCharNow, nReadLen, coord, &nbActuallyRead);
+                ConCharNow += lsbi.dwSize.X;
+        }
+    }
+    DEBUGSTR(L"--- CmdOutputStore end\n");
+}
+
+void CmdOutputRestore()
+{
+    if (gpStoredOutput) {
+        TODO("Восстановить текст скрытой (прокрученной вверх) части консоли");
+        // Учесть, что ширина консоли могла измениться со времени выполнения предыдущей команды.
+        // Сейчас у нас в верхней части консоли может оставаться кусочек предыдущего вывода (восстановил FAR).
+        // 1) Этот кусочек нужно считать
+        // 2) Скопировать в нижнюю часть консоли (до которой докрутилась предыдущая команда)
+        // 3) прокрутить консоль до предыдущей команды (куда мы только что скопировали данные сверху)
+        // 4) восстановить оставшуюся часть консоли. Учесть, что фар может
+        //    выполнять некоторые команды сам и курсор вообще-то мог несколько уехать...
+    }
+}
+
+
+HWND Attach2Gui(DWORD nTimeout)
+{
+    HWND hGui = NULL, hDcWnd = NULL;
+    UINT nMsg = RegisterWindowMessage(CONEMUMSG_ATTACH);
+    BOOL bNeedStartGui = FALSE;
+    DWORD dwErr = 0;
+    
+    hGui = FindWindowEx(NULL, hGui, VirtualConsoleClassMain, NULL);
+    if (!hGui)
+    {
+    	DWORD dwGuiPID = 0;
+		HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS,0);
+		if (hSnap != INVALID_HANDLE_VALUE) {
+			PROCESSENTRY32 prc = {sizeof(PROCESSENTRY32)};
+			if (Process32First(hSnap, &prc)) {
+				do {
+            		for (UINT i = 0; i < srv.nProcessCount; i++) {
+    					if (lstrcmpiW(prc.szExeFile, L"conemu.exe")==0) {
+    						dwGuiPID = prc.th32ProcessID;
+    						break;
+    					}
+            		}
+					if (dwGuiPID) break;
+				} while (Process32Next(hSnap, &prc));
+			}
+			CloseHandle(hSnap);
+			
+			if (!dwGuiPID) bNeedStartGui = TRUE;
+		}
+	}
+    
+    
+    if (bNeedStartGui) {
+		wchar_t szSelf[MAX_PATH+100];
+		wchar_t* pszSelf = szSelf+1, *pszSlash = NULL;
+		if (!GetModuleFileName(NULL, pszSelf, MAX_PATH)) {
+			dwErr = GetLastError();
+			_printf ("GetModuleFileName failed, ErrCode=0x%08X\n", dwErr);
+			return NULL;
+		}
+		pszSlash = wcsrchr(pszSelf, L'\\');
+		if (!pszSlash) {
+			_printf ("Invalid GetModuleFileName, backslash not found!\n", 0, pszSelf);
+			return NULL;
+		}
+		pszSlash++;
+		if (wcschr(pszSelf, L' ')) {
+			*(--pszSelf) = L'"';
+			lstrcpyW(pszSlash, L"ConEmu.exe\"");
+		} else {
+			lstrcpyW(pszSlash, L"ConEmu.exe");
+		}
+		
+		lstrcatW(pszSelf, L" /detached");
+		
+		PROCESS_INFORMATION pi; memset(&pi, 0, sizeof(pi));
+		STARTUPINFOW si; memset(&si, 0, sizeof(si)); si.cb = sizeof(si);
+        
+		PRINT_COMSPEC(L"Starting GUI:\n%s\n", pszSelf);
+    
+		// CREATE_NEW_PROCESS_GROUP - низя, перестает работать Ctrl-C
+		BOOL lbRc = CreateProcessW(NULL, pszSelf, NULL,NULL, TRUE, 
+				NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi);
+		dwErr = GetLastError();
+		if (!lbRc)
+		{
+			_printf ("Can't create process, ErrCode=0x%08X! Command to be executed:\n", dwErr, pszSelf);
+			return NULL;
+		}
+		//delete psNewCmd; psNewCmd = NULL;
+		AllowSetForegroundWindow(pi.dwProcessId);
+		PRINT_COMSPEC(L"Detached GUI was started. PID=%i, Attaching...\n", pi.dwProcessId);
+		WaitForInputIdle(pi.hProcess, nTimeout);
+		SafeCloseHandle(pi.hProcess); SafeCloseHandle(pi.hThread);
+		
+		if (nTimeout > 1000) nTimeout = 1000;
+    }
+    
+    
+    DWORD dwStart = GetTickCount(), dwDelta = 0, dwCur = 0;
+    BOOL lbNeedSetFont = TRUE;
+    // Нужно сбросить. Могли уже искать...
+    hGui = NULL;
+    // Если с первого раза не получится (GUI мог еще не загрузиться) пробуем еще
+    while (!hDcWnd && dwDelta <= nTimeout) {
+        while ((hGui = FindWindowEx(NULL, hGui, VirtualConsoleClassMain, NULL)) != NULL) {
+        	if (lbNeedSetFont) {
+        		lbNeedSetFont = FALSE;
+        		
+                if (ghLogSize) LogSize(NULL, ":SetConsoleFontSizeTo.before");
+                SetConsoleFontSizeTo(ghConWnd, srv.nConFontHeight, srv.nConFontWidth, srv.szConsoleFont);
+                if (ghLogSize) LogSize(NULL, ":SetConsoleFontSizeTo.after");
+        	}
+        
+            hDcWnd = (HWND)SendMessage(hGui, nMsg, (WPARAM)ghConWnd, (LPARAM)gnSelfPID);
+            if (hDcWnd != NULL) {
+                ghConEmuWnd = hGui;
+
+				// В принципе, консоль может действительно запуститься видимой. В этом случае ее скрывать не нужно
+				// Но скорее всего, консоль запущенная под Админом в Win7 будет отображена ошибочно
+				if (gbForceHideConWnd)
+					ShowWindow(ghConWnd, SW_HIDE);
+                
+                // Установить переменную среды с дескриптором окна
+                SetConEmuEnvVar(ghConEmuWnd);
+				CheckConEmuHwnd();
+                
+                break;
+            }
+        }
+        if (hDcWnd) break;
+
+        dwCur = GetTickCount(); dwDelta = dwCur - dwStart;
+        if (dwDelta > nTimeout) break;
+        
+        Sleep(500);
+        dwCur = GetTickCount(); dwDelta = dwCur - dwStart;
+    }
+    
+    return hDcWnd;
+}
+
+
+
+
 /*
 !! Во избежание растранжиривания памяти фиксированно создавать MAP только для шапки (Info), сами же данные
    загружать в дополнительный MAP, "ConEmuFileMapping.%08X.N", где N == nCurDataMapIdx
@@ -267,7 +1043,7 @@ static BOOL ReadConsoleInfo()
 		srv.dwConsoleOutputCP = ldwConsoleOutputCP; lbChanged = TRUE;
 	}
 
-	ldwConsoleMode = 0;	GetConsoleMode(ghConIn, &ldwConsoleMode);
+	ldwConsoleMode = 0;	GetConsoleMode(/*ghConIn*/GetStdHandle(STD_INPUT_HANDLE), &ldwConsoleMode);
 	if (srv.dwConsoleMode!=ldwConsoleMode) {
 		srv.dwConsoleMode = ldwConsoleMode; lbChanged = TRUE;
 	}
@@ -476,7 +1252,12 @@ DWORD WINAPI WinEventThread(LPVOID lpvParam)
 	_ASSERTE(srv.hWinHookStartEnd==NULL);
 
 	// "Ловим" (Start/End)
-	srv.hWinHookStartEnd = SetWinEventHook(EVENT_CONSOLE_START_APPLICATION,EVENT_CONSOLE_END_APPLICATION,
+	srv.hWinHookStartEnd = SetWinEventHook(
+		//EVENT_CONSOLE_LAYOUT, -- к сожалению, EVENT_CONSOLE_LAYOUT кроме реакции на смену буфера
+		//                      -- "ловит" и все scroll & resize & focus, а их может быть ОЧЕНЬ много
+		//                      -- так что для детектирования смены буфера это не подходит
+		EVENT_CONSOLE_START_APPLICATION,
+		EVENT_CONSOLE_END_APPLICATION,
 		NULL, (WINEVENTPROC)WinEventProc, 0,0, WINEVENT_OUTOFCONTEXT /*| WINEVENT_SKIPOWNPROCESS ?*/);
 
 	if (!srv.hWinHookStartEnd) {
@@ -623,6 +1404,17 @@ void WINAPI WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LO
 			//}
 		}
 		return; // обновление экрана не требуется
+    case EVENT_CONSOLE_LAYOUT: //0x4005
+        {
+        //The console layout has changed.
+		//EVENT_CONSOLE_LAYOUT, -- к сожалению, EVENT_CONSOLE_LAYOUT кроме реакции на смену буфера
+		//                      -- "ловит" и все scroll & resize & focus, а их может быть ОЧЕНЬ много
+		//                      -- так что для детектирования смены буфера это не подходит
+        #ifdef _DEBUG
+        DEBUGSTR(L"EVENT_CONSOLE_LAYOUT\n");
+        #endif
+        }
+        return; // Обновление по событию в нити
 	}
 }
 
@@ -659,15 +1451,11 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 		// Alwas update con handle, мягкий вариант
 		if ((GetTickCount() - nLastConHandleTick) > UPDATECONHANDLE_TIMEOUT) {
 			WARNING("!!! MS - дебилы. В Win7 закрытие дескриптора в ДРУГОМ процессе - закрывает консольный буфер ПОЛНОСТЬЮ!!!");
-			#ifdef _DEBUG
-			HANDLE hHandle = CreateFileW(L"CONOUT$", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE,
-				0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
-			if (hHandle)
-				CloseHandle(hHandle);
-			#endif
 			// В итоге, буфер вывода telnet'а схлопывается!
-			ghConOut.Close();
-			nLastConHandleTick = GetTickCount();
+			if (srv.bReopenHandleAllowed) {
+				ghConOut.Close();
+				nLastConHandleTick = GetTickCount();
+			}
 		}
 		
 		// Попытка поправить CECMD_SETCONSOLECP

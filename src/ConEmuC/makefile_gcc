@@ -1,5 +1,6 @@
 NAME = ConEmuC
 SRCS = ConEmuC.cpp \
+       ConEmuCmd.cpp \
        ConEmuSrv.cpp \
        execute.cpp \
        ../common/Common.cpp \

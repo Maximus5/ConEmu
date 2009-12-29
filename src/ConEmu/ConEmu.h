@@ -292,6 +292,7 @@ public:
 	LRESULT OnShellHook(WPARAM wParam, LPARAM lParam);
 	LRESULT OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam);
 	LRESULT OnTimer(WPARAM wParam, LPARAM lParam);
+	void OnTransparent();
 	LRESULT OnVConTerminated(CVirtualConsole* apVCon, BOOL abPosted = FALSE);
 	LRESULT OnUpdateScrollInfo(BOOL abPosted = FALSE);
 };
