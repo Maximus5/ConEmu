@@ -1311,6 +1311,32 @@ void SendStarted()
 	
     //crNewSize = cmd.sbi.dwSize;
     //_ASSERTE(crNewSize.X>=MIN_CON_WIDTH && crNewSize.Y>=MIN_CON_HEIGHT);
+
+	HWND hConWnd = GetConsoleWindow();
+	_ASSERTE(hConWnd == ghConWnd);
+	ghConWnd = hConWnd;
+	// Для ComSpec-а сразу можно проверить, а есть-ли сервер в этой консоли...
+	if (gnRunMode == RM_COMSPEC) {
+		DWORD nServerPID = 0, nGuiPID = 0;
+
+		WCHAR sHeaderMapName[64];
+		wsprintf(sHeaderMapName, CECONMAPNAME, (DWORD)hConWnd);
+		HANDLE hFileMapping = OpenFileMapping(FILE_MAP_READ|FILE_MAP_WRITE, FALSE, sHeaderMapName);
+		if (hFileMapping) {
+			CESERVER_REQ_CONINFO_HDR* pConsoleInfo = (CESERVER_REQ_CONINFO_HDR*)MapViewOfFile(hFileMapping, FILE_MAP_READ|FILE_MAP_WRITE,0,0,0);
+			if (pConsoleInfo) {
+				nServerPID = pConsoleInfo->nServerPID;
+				nGuiPID = pConsoleInfo->nGuiPID;
+				UnmapViewOfFile(pConsoleInfo);
+			}
+			CloseHandle(hFileMapping);
+		}
+
+		if (nServerPID == 0) {
+			cmd.bNonGuiMode = TRUE; // Не посылать ExecuteGuiCmd при выходе. Это не наша консоль
+			return; // Режим ComSpec, но сервера нет, соответственно, в GUI ничего посылать не нужно
+		}
+	}
     
     CESERVER_REQ *pIn = NULL, *pOut = NULL;
     int nSize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_STARTSTOP);

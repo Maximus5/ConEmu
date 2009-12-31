@@ -928,6 +928,10 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
     BOOL   bLoop = TRUE, bIconic = FALSE, /*bFirst = TRUE,*/ bActive = TRUE;
 
     DWORD nElapse = max(10,gSet.nMainTimerElapse);
+
+	DWORD nLastFarPID = 0;
+	bool bLastAlive = false, bLastAliveActive = false;
+
     
     TODO("Нить не завершается при F10 в фаре - процессы пока не инициализированы...")
     while (TRUE/*bLoop*/)
@@ -1002,8 +1006,6 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
             
             if (pRCon->mp_ConsoleInfo) {
 				// Alive?
-				static DWORD nLastFarPID = 0;
-				static bool bLastAlive = false;
 				DWORD nCurFarPID = pRCon->GetFarPID();
 				if (!nCurFarPID || nLastFarPID != nCurFarPID) {
 					pRCon->mn_LastFarReadIdx = -1;
@@ -1018,11 +1020,16 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 				} else {
 					bAlive = pRCon->isAlive();
 				}
-				if (bLastAlive != bAlive && pRCon->isActive()) {
-					bLastAlive = bAlive;
-					DEBUGSTRALIVE(bAlive ? L"MonitorThread: Alive changed to TRUE\n" : L"MonitorThread: Alive changed to FALSE\n");
-					PostMessage(ghWnd, WM_SETCURSOR, -1, -1);
+				if (pRCon->isActive()) {
+					if (bLastAlive != bAlive || !bLastAliveActive) {
+						DEBUGSTRALIVE(bAlive ? L"MonitorThread: Alive changed to TRUE\n" : L"MonitorThread: Alive changed to FALSE\n");
+						PostMessage(ghWnd, WM_SETCURSOR, -1, -1);
+					}
+					bLastAliveActive = true;
+				} else {
+					bLastAliveActive = false;
 				}
+				bLastAlive = bAlive;
 
 				// Загрузить изменения из консоли
             	if (pRCon->mp_ConsoleInfo->hConWnd && pRCon->mp_ConsoleInfo->nCurDataMapIdx &&
@@ -4644,6 +4651,9 @@ void CRealConsole::OnActivate(int nNewNum, int nOldNum)
 
 	if (ghOpWnd && isActive())
 		gSet.UpdateConsoleMode(con.m_dwConsoleMode);
+
+	if (isActive())
+		gConEmu.OnSetCursor(-1,-1);
 }
 
 void CRealConsole::OnDeactivate(int nNewNum)

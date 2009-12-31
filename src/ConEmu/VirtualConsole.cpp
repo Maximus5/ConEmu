@@ -1430,6 +1430,7 @@ void CVirtualConsole::UpdateText(bool isForce, bool updateText, bool updateCurso
                     #ifndef DRAWEACHCHAR
                     // Если этого не делать - в пропорциональных шрифтах буквы будут наезжать одна на другую
                     TCHAR ch;
+					WARNING("*** сомнение в следующей строчке: (!gSet.isProportional || !isFilePanel || (ch != L'}' && ch!=L' '))");
                     while(j2 < end && ConAttrLine[j2] == attr && 
                         !isCharBorder(ch = ConCharLine[j2]) 
                         && (!gSet.isProportional || !isFilePanel || (ch != L'}' && ch!=L' '))) // корректировка имен в колонках
@@ -1506,6 +1507,7 @@ void CVirtualConsole::UpdateText(bool isForce, bool updateText, bool updateCurso
 					lbImgDrawn = TRUE;
 				}
 
+				WARNING("ETO_CLIPPED вроде вообще не нарисует символ, если его часть не влезает?");
                 UINT nFlags = ETO_CLIPPED | ((drawImage && ISBGIMGCOLOR(attrBack)) ? 0 : ETO_OPAQUE);
 
                 MCHKHEAP
@@ -2155,7 +2157,7 @@ void CVirtualConsole::DistributeSpaces(wchar_t* ConCharLine, WORD* ConAttrLine, 
 				j2++;
 		}
 
-		_ASSERTE(j2 > 0);
+		_ASSERTE(j2 > j && j >= 0);
 
 		// Ширину каждого "пробела" (или символа рамки) будем считать пропорционально занимаемому ИМИ месту
 
@@ -2175,7 +2177,12 @@ void CVirtualConsole::DistributeSpaces(wchar_t* ConCharLine, WORD* ConAttrLine, 
 				TODO("Для пропорциональных шрифтов надо делать как-то по другому!");
 				//2009-09-09 а это соответственно не нужно (пока gSet.FontWidth() == nBordWidth)
 				//ConCharXLine[j2-1] = (j2-1) * gSet.FontWidth() + nBordWidth; // или тут [j] должен быть?
-				ConCharXLine[j2-1] = j2 * nBordWidth;
+				if (gSet.isProportional && j > 1) {
+					//2009-12-31 нужно плясать от предыдущего символа!
+					ConCharXLine[j2-1] = ConCharXLine[j-1] + (j2 - j) * nBordWidth;
+				} else {
+					ConCharXLine[j2-1] = j2 * nBordWidth;
+				}
 			}
 		}
 
