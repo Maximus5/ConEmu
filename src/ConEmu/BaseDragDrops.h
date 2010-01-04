@@ -5,7 +5,7 @@
 class CBaseDropTarget : public IDropTarget
 {
 public:
-	CBaseDropTarget(HWND hwnd);
+	//CBaseDropTarget(/*HWND hwnd*/);
 	CBaseDropTarget();
 	~CBaseDropTarget();
 	// IUnknown implementation
@@ -20,7 +20,7 @@ public:
 	virtual HRESULT __stdcall Drop (IDataObject * pDataObject,DWORD grfKeyState,POINTL pt,DWORD * pdwEffect);
 
 	LONG	m_lRefCount;
-	HWND	m_hWnd;
+	//HWND	m_hWnd;
 
 public:
 	virtual void DragFeedBack(DWORD dwEffect) {};

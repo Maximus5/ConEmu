@@ -58,7 +58,7 @@
 #define cbItalic                        1043
 #define tWndWidth                       1045
 #define tWndHeight                      1046
-#define cbMonospace                     1047
+#define cbForceMonospace                1047
 #define cbNonProportional               1048
 #define tFontSizeX2                     1049
 #define slDarker                        1050

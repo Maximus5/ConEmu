@@ -784,6 +784,8 @@ void TabBarClass::UpdateToolbarPos()
 
 bool TabBarClass::OnNotify(LPNMHDR nmhdr)
 {
+	if (!this)
+		return false;
     if (!_active)
     {
         return false;
@@ -895,6 +897,8 @@ LPCWSTR TabBarClass::GetTabText(int nTabIdx)
 
 void TabBarClass::OnCommand(WPARAM wParam, LPARAM lParam)
 {
+	if (!this)
+		return;
     if (mh_Toolbar != (HWND)lParam)
         return;
 
@@ -913,6 +917,8 @@ void TabBarClass::OnCommand(WPARAM wParam, LPARAM lParam)
 
 void TabBarClass::OnMouse(int message, int x, int y)
 {
+	if (!this)
+		return;
     if (!_active)
     {
         return;

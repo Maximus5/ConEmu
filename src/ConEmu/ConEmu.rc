@@ -120,7 +120,7 @@ BEGIN
     EDITTEXT        tWndWidth,199,60,20,12,ES_AUTOHSCROLL | ES_NUMBER
     EDITTEXT        tWndHeight,229,60,20,12,ES_AUTOHSCROLL | ES_NUMBER
     CTEXT           "x",IDC_STATIC,221,61,8,8
-    CONTROL         "Force monospace",cbMonospace,"Button",BS_AUTOCHECKBOX | 
+    CONTROL         "Force monospace",cbForceMonospace,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,10,83,70,8
     CTEXT           "x",IDC_STATIC,101,83,8,8
     COMBOBOX        tFontSizeX3,109,81,24,66,CBS_DROPDOWN | WS_VSCROLL | 
@@ -560,7 +560,7 @@ BEGIN
     cbItalic                "Main font italic"
     tWndWidth               "Width of console window\nThis is in characters"
     tWndHeight              "Height of console window\nThis is in characters"
-    cbMonospace             "Draw characters one by one. It's much(!) slower,\nbut allows to use proportional fonts (Arial, etc.)\nas monospaced."
+    cbForceMonospace        "Draw characters one by one. It's much(!) slower,\nbut allows to use proportional fonts (Arial, etc.)\nas monospaced."
     cbNonProportional       "Check it for non proportional\n(monospaced) fonts"
     tFontSizeX2             "WIDTH for additional font.\nIt must be wider than main font,\notherwise, You get 'dashed' borders."
     cbSendAE                "When is on, You can't enter fullscreen mode\nfrom keyboard, but You can use 'Alt+Enter'\nfor macros in FAR"

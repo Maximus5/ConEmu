@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="windows-1251"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9.00"
+	Version="9,00"
 	Name="ConEmuC"
 	ProjectGUID="{3939C0DF-8E00-440F-AC8A-CB579C56A5CB}"
 	RootNamespace="ConEmuC"
@@ -764,8 +764,8 @@
 		</Configuration>
 		<Configuration
 			Name="Instrument|Win32"
-			OutputDirectory="c:\Temp\VCProject\ConEmu\$(ConfigurationName)"
-			IntermediateDirectory="c:\Temp\VCProject\ConEmu\$(ConfigurationName)"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="1"
 			CharacterSet="1"
 			WholeProgramOptimization="1"
@@ -794,7 +794,7 @@
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
-				DebugInformationFormat="3"
+				DebugInformationFormat="0"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -807,9 +807,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="F:\VCProject\FarPlugin\#FAR180\ConEmuC.exe"
+				OutputFile="C:\Program Files\FAR\ConEmuC.exe"
 				LinkIncremental="1"
 				GenerateDebugInformation="true"
+				GenerateMapFile="true"
 				SubSystem="1"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
@@ -840,8 +841,8 @@
 		</Configuration>
 		<Configuration
 			Name="Instrument|x64"
-			OutputDirectory="E:\Temp\VCProject\ConEmu\$(ConfigurationName).$(PlatformName)"
-			IntermediateDirectory="E:\Temp\VCProject\ConEmu\$(ConfigurationName).$(PlatformName)"
+			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
+			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="1"
 			CharacterSet="1"
 			WholeProgramOptimization="1"
@@ -866,7 +867,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS"
+				PreprocessorDefinitions="WIN64;WIN32;NDEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;HIDE_TODO"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="0"
@@ -884,9 +885,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="F:\VCProject\FarPlugin\#FAR180\ConEmuC.exe"
+				OutputFile="..\..\Release.x64\ConEmuC.exe"
 				LinkIncremental="1"
 				GenerateDebugInformation="true"
+				GenerateMapFile="true"
 				SubSystem="1"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
@@ -1039,5 +1041,9 @@
 		</Filter>
 	</Files>
 	<Globals>
+		<Global
+			Name="DevPartner_IsInstrumented"
+			Value="0"
+		/>
 	</Globals>
 </VisualStudioProject>

@@ -147,9 +147,10 @@ public:
 	HWND isPictureView(BOOL abIgnoreNonModal=FALSE);
 	BOOL isWindowVisible();
     LPCTSTR GetTitle();
-    void GetConsoleScreenBufferInfo(CONSOLE_SCREEN_BUFFER_INFO* sbi) { *sbi = con.m_sbi; };
-    void GetConsoleSelectionInfo(CONSOLE_SELECTION_INFO *sel) { *sel = con.m_sel; };
-    void GetConsoleCursorInfo(CONSOLE_CURSOR_INFO *ci) { *ci = con.m_ci; };
+    void GetConsoleScreenBufferInfo(CONSOLE_SCREEN_BUFFER_INFO* sbi);
+    bool GetConsoleSelectionInfo(CONSOLE_SELECTION_INFO *sel);
+	bool IsSelectionAllowed();
+    void GetConsoleCursorInfo(CONSOLE_CURSOR_INFO *ci);
     DWORD GetConsoleCP() { return con.m_dwConsoleCP; };
     DWORD GetConsoleOutputCP() { return con.m_dwConsoleOutputCP; };
     DWORD GetConsoleMode() { return con.m_dwConsoleMode; };

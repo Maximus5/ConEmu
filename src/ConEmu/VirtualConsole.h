@@ -4,6 +4,7 @@
 
 #include "RealConsole.h"
 
+#define MAX_COUNT_PART_BRUSHES 16*16*4
 
 class CVirtualConsole
 {
@@ -29,7 +30,7 @@ private:
 		COLORREF foreColor;
 		COLORREF bgColor;
 		BYTE foreColorNum, bgColorNum;
-		TCHAR ch[2];
+		wchar_t ch;
 		DWORD nBlinkTime, nLastBlink;
 		RECT lastRect;
 		UINT lastSize; // предыдущая высота курсора (в процентах)
@@ -54,7 +55,7 @@ public:
 	DWORD *ConCharX;
 	TCHAR *Spaces; WORD nSpaceCount;
 
-	CONSOLE_SELECTION_INFO SelectionInfo;
+	//CONSOLE_SELECTION_INFO SelectionInfo;
 
 	CVirtualConsole(/*HANDLE hConsoleOutput = NULL*/);
 	~CVirtualConsole();
@@ -67,24 +68,26 @@ public:
 	void UpdateCursor(bool& lRes);
 	void SelectFont(HFONT hNew);
 	void SelectBrush(HBRUSH hNew);
-	bool isCharBorder(WCHAR inChar);
+	inline bool isCharBorder(WCHAR inChar);
 	bool isCharBorderVertical(WCHAR inChar);
 	bool isCharProgress(WCHAR inChar);
+	bool isCharScroll(WCHAR inChar);
 	void BlitPictureTo(int inX, int inY, int inWidth, int inHeight);
 	bool CheckSelection(const CONSOLE_SELECTION_INFO& select, SHORT row, SHORT col);
-	bool GetCharAttr(TCHAR ch, WORD atr, TCHAR& rch, BYTE& foreColorNum, BYTE& backColorNum);
+	//bool GetCharAttr(TCHAR ch, WORD atr, TCHAR& rch, BYTE& foreColorNum, BYTE& backColorNum);
+	void GetCharAttr(WORD atr, BYTE& foreColorNum, BYTE& backColorNum);
 	void Paint(HDC hDc, RECT rcClient);
 	void UpdateInfo();
-	void GetConsoleSelectionInfo(CONSOLE_SELECTION_INFO *sel) {	mp_RCon->GetConsoleSelectionInfo(sel); };
-	void GetConsoleCursorInfo(CONSOLE_CURSOR_INFO *ci) { mp_RCon->GetConsoleCursorInfo(ci); };
-	DWORD GetConsoleCP() { return mp_RCon->GetConsoleCP(); };
-	DWORD GetConsoleOutputCP() { return mp_RCon->GetConsoleOutputCP(); };
-	DWORD GetConsoleMode() { return mp_RCon->GetConsoleMode(); };
-	void GetConsoleScreenBufferInfo(CONSOLE_SCREEN_BUFFER_INFO *sbi) { mp_RCon->GetConsoleScreenBufferInfo(sbi); };
+	//void GetConsoleCursorInfo(CONSOLE_CURSOR_INFO *ci) { mp_RCon->GetConsoleCursorInfo(ci); };
+	//DWORD GetConsoleCP() { return mp_RCon->GetConsoleCP(); };
+	//DWORD GetConsoleOutputCP() { return mp_RCon->GetConsoleOutputCP(); };
+	//DWORD GetConsoleMode() { return mp_RCon->GetConsoleMode(); };
+	//void GetConsoleScreenBufferInfo(CONSOLE_SCREEN_BUFFER_INFO *sbi) { mp_RCon->GetConsoleScreenBufferInfo(sbi); };
 	RECT GetRect();
 	void OnFontChanged();
 	COORD ClientToConsole(LONG x, LONG y);
 	void OnConsoleSizeChanged();
+	static void ClearPartBrushes();
 
 protected:
 	wchar_t* mpsz_LogScreen; DWORD mn_LogScreenIdx;
@@ -111,13 +114,13 @@ protected:
 	CONSOLE_SCREEN_BUFFER_INFO csbi; DWORD mdw_LastError;
 	CONSOLE_CURSOR_INFO	cinf;
 	COORD winSize, coord;
-	CONSOLE_SELECTION_INFO select1, select2;
+	//CONSOLE_SELECTION_INFO select1, select2;
 	uint TextLen;
-	bool isCursorValid, drawImage, doSelect, textChanged, attrChanged;
+	bool isCursorValid, drawImage, textChanged, attrChanged;
 	char *tmpOem;
 	void UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, UINT dwSize);
 	bool UpdatePrepare(bool isForce, HDC *ahDc, MSectionLock *pSDC);
-	void UpdateText(bool isForce, bool updateText, bool updateCursor);
+	void UpdateText(bool isForce); //, bool updateText, bool updateCursor);
 	WORD CharWidth(TCHAR ch);
 	bool CheckChangedTextAttr();
 	void ParseLine(int row, TCHAR *ConCharLine, WORD *ConAttrLine);
@@ -135,11 +138,13 @@ protected:
 		SHORT   nForeIdx;
 		HBRUSH  hBrush;
 	} PARTBRUSHES;
-	std::vector<PARTBRUSHES> m_PartBrushes;
-	HBRUSH PartBrush(wchar_t ch, SHORT nBackIdx, SHORT nForeIdx);
+	//std::vector<PARTBRUSHES> m_PartBrushes;
+	static PARTBRUSHES m_PartBrushes[MAX_COUNT_PART_BRUSHES];
+	static HBRUSH PartBrush(wchar_t ch, SHORT nBackIdx, SHORT nForeIdx);
 	BOOL mb_InPaintCall;
 	//
-	void DistributeSpaces(wchar_t* ConCharLine, WORD* ConAttrLine, DWORD* ConCharXLine, int &j, int &j2, int &end);
+	void DistributeSpaces(wchar_t* ConCharLine, WORD* ConAttrLine, DWORD* ConCharXLine, const int j, const int j2, const int end);
+	LONG nFontHeight, nFontWidth;
 };
 
 #include <pshpack1.h>

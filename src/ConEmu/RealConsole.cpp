@@ -68,6 +68,12 @@ WARNING("Часто после разблокирования компьютера размер консоли изменяется (OK), 
 #endif
 
 
+const wchar_t gszAnalogues[32] = {
+	32, 9786, 9787, 9829, 9830, 9827, 9824, 8226, 9688, 9675, 9689, 9794, 9792, 9834, 9835, 9788,
+	9658, 9668, 8597, 8252,  182,  167, 9632, 8616, 8593, 8595, 8594, 8592, 8735, 8596, 9650, 9660
+};
+
+
 CRealConsole::CRealConsole(CVirtualConsole* apVCon)
 {
 	MCHKHEAP;
@@ -4700,25 +4706,43 @@ void CRealConsole::UpdateScrollInfo()
         return;
 
     if (!gConEmu.isMainThread()) {
-        
         return;
     }
 
+	// Не нужно? само спрячется
+	if (!con.bBufferHeight) {
+		return;
+	}
+
     TODO("Как-то кэшировать нужно вызовы что-ли... и SetScrollInfo можно бы перенести в m_Back");
+	static SHORT nLastHeight = 0, nLastVisible = 0, nLastTop = 0;
+
+	if (nLastHeight == con.m_sbi.dwSize.Y
+		&& nLastVisible == (con.m_sbi.srWindow.Bottom - con.m_sbi.srWindow.Top + 1)
+		&& nLastTop == con.m_sbi.srWindow.Top)
+		return; // не менялось
+
+	nLastHeight = con.m_sbi.dwSize.Y;
+	nLastVisible = (con.m_sbi.srWindow.Bottom - con.m_sbi.srWindow.Top + 1);
+	nLastTop = con.m_sbi.srWindow.Top;
 
     int nCurPos = 0;
     BOOL lbScrollRc = FALSE;
     SCROLLINFO si;
     ZeroMemory(&si, sizeof(si));
     si.cbSize = sizeof(si);
-    si.fMask = SIF_PAGE | SIF_POS | SIF_RANGE | SIF_TRACKPOS;
+    si.fMask = SIF_PAGE | SIF_POS | SIF_RANGE; // | SIF_TRACKPOS;
+	si.nPage = nLastVisible - 1;
+	si.nPos = nLastTop;
+	si.nMin = 0;
+	si.nMax = nLastHeight;
 
-    // Если режим "BufferHeight" включен - получить из консольного окна текущее состояние полосы прокрутки
-    if (con.bBufferHeight) {
-        lbScrollRc = GetScrollInfo(hConWnd, SB_VERT, &si);
-    } else {
-        // Сбросываем параметры так, чтобы полоса не отображалась (все на 0)
-    }
+	//// Если режим "BufferHeight" включен - получить из консольного окна текущее состояние полосы прокрутки
+	//if (con.bBufferHeight) {
+	//    lbScrollRc = GetScrollInfo(hConWnd, SB_VERT, &si);
+	//} else {
+	//    // Сбросываем параметры так, чтобы полоса не отображалась (все на 0)
+	//}
 
     TODO("Нужно при необходимости 'всплыть' полосу прокрутки");
     nCurPos = SetScrollInfo(gConEmu.m_Back.mh_WndScroll, SB_VERT, &si, true);
@@ -6404,6 +6428,46 @@ void CRealConsole::GetPanelRect(BOOL abRight, RECT* prc)
 		*prc = mr_LeftPanel;
 }
 
+bool CRealConsole::IsSelectionAllowed()
+{
+	TODO("Пока выделение не работает");
+	// Должно ориентироваться на флаги консоли, допустимо ли выделение мышкой (Quick Edit checkbox)
+	return false;
+}
+
+bool CRealConsole::GetConsoleSelectionInfo(CONSOLE_SELECTION_INFO *sel)
+{
+	if (!this)
+		return false;
+	if (!IsSelectionAllowed())
+		return false;
+
+	if (sel) {
+		*sel = con.m_sel;
+	}
+	TODO("Пока выделение не работает");
+	return false;
+	// return (con.m_sel.dwFlags & CONSOLE_SELECTION_NOT_EMPTY) == CONSOLE_SELECTION_NOT_EMPTY;
+}
+
+void CRealConsole::GetConsoleCursorInfo(CONSOLE_CURSOR_INFO *ci)
+{
+	if (!this) return;
+	*ci = con.m_ci;
+	// Если сейчас выделяется текст мышкой (ConEmu internal)
+	// то курсор нужно переключить в половину знакоместа!
+	if (GetConsoleSelectionInfo(NULL)) {
+		if (ci->dwSize < 50)
+			ci->dwSize = 50;
+	}
+}
+
+void CRealConsole::GetConsoleScreenBufferInfo(CONSOLE_SCREEN_BUFFER_INFO* sbi)
+{
+	if (!this) return;
+	*sbi = con.m_sbi;
+}
+
 // В дальнейшем надо бы возвращать значение для активного приложения
 // По крайней мене в фаре мы можем проверить токены.
 // В свойствах приложения проводником может быть установлен флажок "Run as administrator"
@@ -6682,9 +6746,17 @@ void CRealConsole::ApplyConsoleInfo()
                 CHAR_INFO* lpCur = (CHAR_INFO*)mp_ConsoleData;
                 wchar_t* lpChar = con.pConChar;
                 WORD* lpAttr = con.pConAttr;
+				CONSOLE_SELECTION_INFO sel;
+				bool bSelectionPresent = GetConsoleSelectionInfo(&sel);
+				// Когда вернется возможность выделения - нужно сразу применять данные в атрибуты
+				_ASSERTE(!bSelectionPresent);
                 for (DWORD n = 0; n < CharCount; n++, lpCur++) {
-                	*(lpChar++) = lpCur->Char.UnicodeChar;
-                	*(lpAttr++) = lpCur->Attributes;
+					*(lpAttr++) = lpCur->Attributes;
+
+					wchar_t ch = lpCur->Char.UnicodeChar;
+					//2009-09-25. Некоторые (старые?) программы умудряются засунуть в консоль символы (ASC<32)
+					//            их нужно заменить на юникодные аналоги
+					*(lpChar++) = (ch < 32) ? gszAnalogues[(WORD)ch] : ch;
                 }
                 //memmove(con.pConChar, lpCur, OneBufferSize); lpCur += OneBufferSize;
                 //memmove(con.pConAttr, lpCur, OneBufferSize); lpCur += OneBufferSize;

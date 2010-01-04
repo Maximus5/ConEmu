@@ -21,6 +21,7 @@ public:
 	BYTE FontCharSet();
 private:
     LOGFONT LogFont, LogFont2;
+	LONG mn_FontWidth, mn_FontHeight, mn_BorderFontWidth;
 	BYTE mn_LoadFontCharSet; // То что загружено изначально (или уже сохранено в реестр)
 	TEXTMETRIC tm;
     BOOL mb_Name1Ok, mb_Name2Ok;
@@ -69,10 +70,15 @@ public:
     char isFixFarBorders;
 	bool isMouseSkipActivation, isMouseSkipMoving;
 	bool isFarHourglass; DWORD nFarHourglassDelay;
-	struct tag_CharRanges {
+protected:
+	typedef struct tag_CharRanges {
 		bool bUsed;
 		wchar_t cBegin, cEnd;
-	} icFixFarBorderRanges[10];
+	} CharRanges;
+	CharRanges icFixFarBorderRanges[10];
+	bool *mpc_FixFarBorderValues;
+public:
+	bool isCharBorder(wchar_t inChar);
     BYTE isPartBrush75, isPartBrush50, isPartBrush25;
     bool isCursorV;
 	bool isCursorBlink;

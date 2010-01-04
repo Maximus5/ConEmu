@@ -156,8 +156,8 @@ void CSettings::InitSettings()
 	nCmdOutputCP = 0;
 	ForceBufferHeight = false; /* устанавливается в true, из ком.строки /BufferHeight */
 	AutoScroll = true;
-    LogFont.lfHeight = 16;
-    LogFont.lfWidth = 0;
+    LogFont.lfHeight = mn_FontHeight = 16;
+    LogFont.lfWidth = mn_FontWidth = 0;
     LogFont.lfEscapement = LogFont.lfOrientation = 0;
     LogFont.lfWeight = FW_NORMAL;
     LogFont.lfItalic = LogFont.lfUnderline = LogFont.lfStrikeOut = FALSE;
@@ -220,6 +220,7 @@ void CSettings::InitSettings()
     isFixFarBorders = 1; isEnhanceGraphics = true; isPartBrush75 = 0xC8; isPartBrush50 = 0x96; isPartBrush25 = 0x5A;
 	memset(icFixFarBorderRanges, 0, sizeof(icFixFarBorderRanges));
 	icFixFarBorderRanges[0].bUsed = true; icFixFarBorderRanges[0].cBegin = 0x2013; icFixFarBorderRanges[0].cEnd = 0x25C4;
+	mpc_FixFarBorderValues = (bool*)calloc(65536,sizeof(bool));
     
     wndHeight = 25;
 	ntvdmHeight = 0; // Подбирать автоматически
@@ -398,6 +399,12 @@ void CSettings::LoadSettings()
 					icFixFarBorderRanges[n].bUsed = false;
 			}
 		}
+		//memset(mpc_FixFarBorderValues, 0, 65536*sizeof(bool)); -- т.к. calloc - то не нужно
+		for (int n = 0; n < sizeofarray(icFixFarBorderRanges); n++) {
+			if (!icFixFarBorderRanges[n].bUsed) break;
+			for (WORD x = (WORD)(icFixFarBorderRanges[n].cBegin); x <= (WORD)(icFixFarBorderRanges[n].cEnd); x++)
+				mpc_FixFarBorderValues[x] = true;
+		}
         
         reg.Load(L"PartBrush75", isPartBrush75); if (isPartBrush75<5) isPartBrush75=5; else if (isPartBrush75>250) isPartBrush75=250;
         reg.Load(L"PartBrush50", isPartBrush50); if (isPartBrush50<5) isPartBrush50=5; else if (isPartBrush50>250) isPartBrush50=250;
@@ -516,8 +523,8 @@ void CSettings::LoadSettings()
       //MoveWindow(hConWnd, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), 0);
     }*/
 
-    LogFont.lfHeight = inSize;
-    LogFont.lfWidth = FontSizeX;
+    LogFont.lfHeight = mn_FontHeight = inSize;
+    LogFont.lfWidth = mn_FontWidth = FontSizeX;
     _tcscpy(LogFont.lfFaceName, inFont);
     _tcscpy(LogFont2.lfFaceName, inFont2);
     LogFont.lfQuality = Quality;
@@ -544,8 +551,8 @@ void CSettings::InitFont(LPCWSTR asFontName/*=NULL*/, int anFontHeight/*=-1*/, i
 		mb_Name1Ok = TRUE;
 	}
 	if (anFontHeight!=-1) {
-		LogFont.lfHeight = anFontHeight;
-		LogFont.lfWidth = 0;
+		LogFont.lfHeight = mn_FontHeight = anFontHeight;
+		LogFont.lfWidth = mn_FontWidth = 0;
 	}
 	if (anQuality!=-1) {
 		LogFont.lfQuality = ANTIALIASED_QUALITY;
@@ -591,6 +598,8 @@ void CSettings::InitFont(LPCWSTR asFontName/*=NULL*/, int anFontHeight/*=-1*/, i
 
     mh_Font = CreateFontIndirectMy(&LogFont);
 	//2009-06-07 Реальный размер созданного шрифта мог измениться
+	mn_FontWidth = LogFont.lfWidth;
+	mn_FontHeight = LogFont.lfHeight;
 
     MCHKHEAP
 }
@@ -1030,7 +1039,7 @@ LRESULT CSettings::OnInitDialog_Main()
 		CheckDlgButton(hMain, rCursorH, BST_CHECKED);
 		
 	if (isForceMonospace)
-		CheckDlgButton(hMain, cbMonospace, BST_CHECKED);
+		CheckDlgButton(hMain, cbForceMonospace, BST_CHECKED);
 	if (!isProportional)
 		CheckDlgButton(hMain, cbNonProportional, BST_CHECKED);
 		
@@ -1538,7 +1547,7 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
         mb_IgnoreEditChanged = FALSE;
         break;
 
-    case cbMonospace:
+    case cbForceMonospace:
         isForceMonospace = !isForceMonospace;
 		RecreateFont(tFontSizeX3);
         gConEmu.Update(true);
@@ -2523,7 +2532,16 @@ void CSettings::RegisterTipsFor(HWND hChildDlg)
 
 void CSettings::RecreateFont(WORD wFromID)
 {
-	if (wFromID == tFontFace)
+	if (wFromID == tFontFace 
+		|| wFromID == tFontSizeY 
+		|| wFromID == tFontSizeX
+		|| wFromID == tFontCharset
+		|| wFromID == cbBold
+		|| wFromID == cbItalic
+		|| wFromID == rNoneAA
+		|| wFromID == rStandardAA
+		|| wFromID == rCTAA
+		)
 		mb_IgnoreTtfChange = FALSE;
 
 	LOGFONT LF = {0};
@@ -2565,6 +2583,8 @@ void CSettings::RecreateFont(WORD wFromID)
 	if (hf) {
 		HFONT hOldF = mh_Font;
 		LogFont = LF;
+		mn_FontWidth = LF.lfWidth;
+		mn_FontHeight = LF.lfHeight;
 		mh_Font = hf;
 		DeleteObject(hOldF);
 
@@ -2594,20 +2614,20 @@ HFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 	//lfOutPrecision = OUT_RASTER_PRECIS, 
 
     HFONT hFont = NULL;
-	#ifdef _DEBUG
-	if (wcscmp(inFont->lfFaceName, RASTER_FONTS_NAME)) {
-		hFont = CreateFontIndirect(inFont);
-	} else {
-		LOGFONT lfRast = *inFont;
-		lfRast.lfFaceName[0] = 0;
-		lfRast.lfOutPrecision = OUT_RASTER_PRECIS;
-		lfRast.lfQuality = PROOF_QUALITY;
-		lfRast.lfPitchAndFamily = FIXED_PITCH | FF_MODERN;
-		hFont = CreateFontIndirect(&lfRast);
-	}
-	#else
-		hFont = CreateFontIndirect(inFont);
-	#endif
+	//#ifdef _DEBUG
+	//if (wcscmp(inFont->lfFaceName, RASTER_FONTS_NAME)) {
+	//	hFont = CreateFontIndirect(inFont);
+	//} else {
+	//	LOGFONT lfRast = *inFont;
+	//	lfRast.lfFaceName[0] = 0;
+	//	lfRast.lfOutPrecision = OUT_RASTER_PRECIS;
+	//	lfRast.lfQuality = PROOF_QUALITY;
+	//	lfRast.lfPitchAndFamily = FIXED_PITCH | FF_MODERN;
+	//	hFont = CreateFontIndirect(&lfRast);
+	//}
+	//#else
+	hFont = CreateFontIndirect(inFont);
+	//#endif
 
     if (hFont) {
         HDC hScreenDC = GetDC(0);
@@ -2616,55 +2636,47 @@ HFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
         if (hDC)
         {
             HFONT hOldF = (HFONT)SelectObject(hDC, hFont);
-            TODO("Для пропорциональных шрифтов наверное имеет смысл сохранять в реестре оптимальный lfWidth")
+            // Для пропорциональных шрифтов имеет смысл сохранять в реестре оптимальный lfWidth (это FontSizeX3)
             ZeroStruct(tm);
             BOOL lbTM = GetTextMetrics(hDC, &tm);
-
-			ABC abc;
-			//This function succeeds only with TrueType fonts
-			BOOL lb1 =
-				GetCharABCWidths(hDC, L'M', L'M', &abc);
-
 			_ASSERTE(lbTM);
-			int nTestLen;
-			SIZE szTest = {0,0}; 
-			#ifdef _DEBUG
-			INT nDX[30] = {0};
-			BOOL lbExtRc = GetTextExtentExPoint(hDC, TEST_FONT_WIDTH_STRING_EN, lstrlen(TEST_FONT_WIDTH_STRING_EN),
-				0,0, nDX, &szTest);
-			#endif
 
-			#ifdef _DEBUG
-			nTestLen=lstrlen(TEST_FONT_WIDTH_STRING_EN);
-			int nCaret[30] = {0};
-			UINT nOrder[30] = {0};
-			GCP_RESULTS gcpr = {sizeof(GCP_RESULTS)};
-			gcpr.lpDx = nDX; gcpr.lpCaretPos = nCaret; gcpr.lpOrder = nOrder; gcpr.nMaxFit = 30;
-			gcpr.nGlyphs = nTestLen;
-			// GetCharacterPlacement не работает, видимо еще что-то заполнять нужно
-			DWORD nSize = GetCharacterPlacement(hDC, TEST_FONT_WIDTH_STRING_EN, nTestLen, 0, &gcpr, 0);
-			nSize = GetOutlineTextMetrics(hDC, 0, 0);
-			LPOUTLINETEXTMETRIC pMt = (LPOUTLINETEXTMETRIC)malloc(nSize);
-			nSize = GetOutlineTextMetrics(hDC, nSize, pMt);
-			free(pMt);
-			#endif
-
-			// Как оказалось, в некоторых моноширных TTF шрифтах tm.tmAveCharWidth 
-			// при включенном ClearType возвращается совсем некорректно
-			if (abs(tm.tmMaxCharWidth - tm.tmAveCharWidth)<=2)
+			// у Arial'а например MaxWidth слишком большой (в два и более раз больше ВЫСОТЫ шрифта)
+			bool bAlmostMonospace = false;
+			if (tm.tmMaxCharWidth && tm.tmAveCharWidth && tm.tmHeight)
 			{
-				if (GetTextExtentPoint32(hDC, TEST_FONT_WIDTH_STRING_EN, nTestLen=lstrlen(TEST_FONT_WIDTH_STRING_EN), &szTest)) {
-					int nAveWidth = (szTest.cx + nTestLen - 1) / nTestLen;
-					if (nAveWidth > tm.tmAveCharWidth || nAveWidth > tm.tmMaxCharWidth)
-						tm.tmMaxCharWidth = tm.tmAveCharWidth = nAveWidth;
-				}
+				int nRelativeDelta = (tm.tmMaxCharWidth - tm.tmAveCharWidth) * 100 / tm.tmHeight;
+				// Если расхождение менее 15% высоты - считаем шрифт моноширным
+				if (nRelativeDelta < 15)
+					bAlmostMonospace = true;			
+
+				//if (abs(tm.tmMaxCharWidth - tm.tmAveCharWidth)<=2)
+				//{ -- это была попытка прикинуть среднюю ширину по английским буквам
+				//  -- не нужно, т.к. затевалось из-за проблем с ClearType на больших размерах
+				//  -- шрифтов, а это лечится аргументом pDX в TextOut
+				//	int nTestLen = lstrlen(TEST_FONT_WIDTH_STRING_EN);
+				//	SIZE szTest = {0,0};
+				//	if (GetTextExtentPoint32(hDC, TEST_FONT_WIDTH_STRING_EN, nTestLen, &szTest)) {
+				//		int nAveWidth = (szTest.cx + nTestLen - 1) / nTestLen;
+				//		if (nAveWidth > tm.tmAveCharWidth || nAveWidth > tm.tmMaxCharWidth)
+				//			tm.tmMaxCharWidth = tm.tmAveCharWidth = nAveWidth;
+				//	}
+				//}
+			} else {
+				_ASSERTE(tm.tmMaxCharWidth);
+				_ASSERTE(tm.tmAveCharWidth);
+				_ASSERTE(tm.tmHeight);
 			}
 
-            if (isForceMonospace)
+			if (isForceMonospace) {
                 //Maximus - у Arial'а например MaxWidth слишком большой
+				if (tm.tmMaxCharWidth > (tm.tmHeight * 15 / 10))
+					tm.tmMaxCharWidth = tm.tmHeight; // иначе зашкалит - текст очень сильно разъедется
                 inFont->lfWidth = FontSizeX3 ? FontSizeX3 : tm.tmMaxCharWidth;
-            else
-                inFont->lfWidth = tm.tmAveCharWidth;
+			} else {
+				// Если указан FontSizeX3 (это принудительная ширина знакоместа)
+                inFont->lfWidth = FontSizeX3 ? FontSizeX3 : tm.tmAveCharWidth;
+			}
             inFont->lfHeight = tm.tmHeight; TODO("Здесь нужно обновить реальный размер шрифта в диалоге настройки!");
 			if (lbTM && tm.tmCharSet != DEFAULT_CHARSET) {
 				inFont->lfCharSet = tm.tmCharSet;
@@ -2677,8 +2689,11 @@ HFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 				}
 			}
 			
-            if (ghOpWnd) // устанавливать только при листании шрифта в настройке
-                UpdateTTF ( (tm.tmMaxCharWidth - tm.tmAveCharWidth)>2 );
+			if (ghOpWnd) {
+				// устанавливать только при листании шрифта в настройке
+				// при кликах по самому флажку "Monospace" шрифт не пересоздается (CreateFont... не вызывается)
+                UpdateTTF ( !bAlmostMonospace ); //(tm.tmMaxCharWidth - tm.tmAveCharWidth)>2
+			}
 
             SelectObject(hDC, hOldF);
             DeleteDC(hDC);
@@ -2688,7 +2703,7 @@ HFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 		if (mh_Font2) { DeleteObject(mh_Font2); mh_Font2 = NULL; }
 
 		//int width = FontSizeX2 ? FontSizeX2 : inFont->lfWidth;
-		LogFont2.lfWidth = FontSizeX2 ? FontSizeX2 : inFont->lfWidth;
+		LogFont2.lfWidth = mn_BorderFontWidth = FontSizeX2 ? FontSizeX2 : inFont->lfWidth;
 		LogFont2.lfHeight = abs(inFont->lfHeight);
 		// Иначе рамки прерывистыми получаются... поставил NONANTIALIASED_QUALITY
 		mh_Font2 = CreateFont(LogFont2.lfHeight, LogFont2.lfWidth, 0, 0, FW_NORMAL,
@@ -2806,19 +2821,22 @@ LPCTSTR CSettings::GetCmd()
 LONG CSettings::FontWidth()
 {
 	_ASSERTE(LogFont.lfWidth);
-	return LogFont.lfWidth;
+	_ASSERTE(mn_FontWidth==LogFont.lfWidth);
+	return mn_FontWidth;
 }
 
 LONG CSettings::FontHeight()
 {
 	_ASSERTE(LogFont.lfHeight);
-	return LogFont.lfHeight;
+	_ASSERTE(mn_FontHeight==LogFont.lfHeight);
+	return mn_FontHeight;
 }
 
 LONG CSettings::BorderFontWidth()
 {
 	_ASSERTE(LogFont2.lfWidth);
-	return LogFont2.lfWidth;
+	_ASSERTE(mn_BorderFontWidth==LogFont2.lfWidth);
+	return mn_BorderFontWidth;
 }
 
 BYTE CSettings::FontCharSet()
@@ -3223,4 +3241,9 @@ void CSettings::UpdateConsoleMode(DWORD nMode)
 		wsprintf(szInfo, L"Console states (0x%X)", nMode);
 		SetDlgItemText(hInfo, IDC_CONSOLE_STATES, szInfo);
 	}
+}
+
+bool CSettings::isCharBorder(wchar_t inChar)
+{
+	return mpc_FixFarBorderValues[(WORD)inChar];
 }

@@ -287,6 +287,8 @@ CConEmuMain::~CConEmuMain()
         }
     }
 
+	CVirtualConsole::ClearPartBrushes();
+
     /*if (mh_ConMan && mh_ConMan!=INVALID_HANDLE_VALUE)
         FreeLibrary(mh_ConMan);
     mh_ConMan = NULL;*/
@@ -3356,6 +3358,8 @@ void CConEmuMain::Update(bool isForce /*= false*/)
                 mp_VCon[i]->OnFontChanged();
         }
     }
+
+	CVirtualConsole::ClearPartBrushes();
     
     if (mp_VActive) {
         mp_VActive->Update(isForce);
@@ -4003,7 +4007,7 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
         if (!mp_DragDrop) {
         	// было ghWndDC. Попробуем на главное окно, было бы удобно 
         	// "бросать" на таб (с автоматической активацией консоли)
-            mp_DragDrop = new CDragDrop(ghWnd);
+            mp_DragDrop = new CDragDrop();
             if (!mp_DragDrop->Init()) {
             	CDragDrop *p = mp_DragDrop; mp_DragDrop = NULL;
             	delete p;
@@ -4778,6 +4782,12 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
     		}
 		}
     }
+
+	// Forwarding сообщений в нить драга
+	if (mp_DragDrop->IsDragStarting()) {
+		if (mp_DragDrop->ForwardMessage(hWnd, messg, wParam, lParam))
+			return 0;
+	}
 
     ///*&& isPressed(VK_LBUTTON)*/) && // Если этого не делать - при выделении мышкой консоль может самопроизвольно прокрутиться
     CRealConsole* pRCon = mp_VActive->RCon();
@@ -6050,13 +6060,15 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 
     case WM_NOTIFY:
     {
-        result = gConEmu.mp_TabBar->OnNotify((LPNMHDR)lParam);
+		if (gConEmu.mp_TabBar)
+			result = gConEmu.mp_TabBar->OnNotify((LPNMHDR)lParam);
         break;
     }
 
     case WM_COMMAND:
     {
-        gConEmu.mp_TabBar->OnCommand(wParam, lParam);
+		if (gConEmu.mp_TabBar)
+			gConEmu.mp_TabBar->OnCommand(wParam, lParam);
         result = 0;
         break;
     }

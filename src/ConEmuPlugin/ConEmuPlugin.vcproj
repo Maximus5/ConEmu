@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="windows-1251"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9.00"
+	Version="9,00"
 	Name="ConEmuPlugin"
 	ProjectGUID="{21152801-8744-4787-83F4-BE4564A367B4}"
 	RootNamespace="ConEmuPlugin"
@@ -818,8 +818,8 @@
 		</Configuration>
 		<Configuration
 			Name="Instrument|Win32"
-			OutputDirectory="c:\Temp\VCProject\ConEmu\$(ConfigurationName)"
-			IntermediateDirectory="c:\Temp\VCProject\ConEmu\$(ConfigurationName)"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="2"
 			CharacterSet="1"
 			WholeProgramOptimization="1"
@@ -850,7 +850,7 @@
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
-				DebugInformationFormat="3"
+				DebugInformationFormat="0"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -864,10 +864,11 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="version.lib"
-				OutputFile="F:\VCProject\FarPlugin\#FAR180\plugins\ConEmu\conemu.dll"
+				OutputFile="C:\Program Files\FAR\plugins\ConEmu\conemu.dll"
 				LinkIncremental="1"
 				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"
+				GenerateMapFile="true"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
@@ -893,12 +894,13 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+				CommandLine="copy $(TargetPath) $(SolutionDir)..\Release.x64\Plugins\ConEmu\"
 			/>
 		</Configuration>
 		<Configuration
 			Name="Instrument|x64"
-			OutputDirectory="E:\Temp\VCProject\ConEmu\$(ConfigurationName).$(PlatformName)"
-			IntermediateDirectory="E:\Temp\VCProject\ConEmu\$(ConfigurationName).$(PlatformName)"
+			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
+			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="2"
 			CharacterSet="1"
 			WholeProgramOptimization="1"
@@ -924,7 +926,7 @@
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
 				AdditionalIncludeDirectories=""
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_CRT_NON_CONFORMING_SWPRINTFS"
+				PreprocessorDefinitions="WIN64;WIN32;NDEBUG;_WINDOWS;_CRT_NON_CONFORMING_SWPRINTFS;HIDE_TODO"
 				RuntimeLibrary="0"
 				StructMemberAlignment="0"
 				EnableFunctionLevelLinking="true"
@@ -944,10 +946,11 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="version.lib"
-				OutputFile="F:\VCProject\FarPlugin\#FAR180\plugins\ConEmu\conemu.x64.dll"
+				OutputFile="..\..\Release.x64\plugins\ConEmu\conemu.x64.dll"
 				LinkIncremental="1"
 				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"
+				GenerateMapFile="true"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
@@ -973,6 +976,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+				CommandLine="copy $(TargetPath) $(SolutionDir)..\Plugins\ConEmu\"
 			/>
 		</Configuration>
 	</Configurations>
@@ -1241,5 +1245,9 @@
 		</Filter>
 	</Files>
 	<Globals>
+		<Global
+			Name="DevPartner_IsInstrumented"
+			Value="0"
+		/>
 	</Globals>
 </VisualStudioProject>

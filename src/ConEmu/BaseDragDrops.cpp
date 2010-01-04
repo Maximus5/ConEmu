@@ -22,11 +22,11 @@ extern HINSTANCE g_hInstance;
 */
 
 
-CBaseDropTarget::CBaseDropTarget(HWND hwnd)
-{
-	m_hWnd = hwnd;
-	m_lRefCount = 1;
-}
+//CBaseDropTarget::CBaseDropTarget(/*HWND hwnd*/)
+//{
+//	//m_hWnd = hwnd;
+//	m_lRefCount = 1;
+//}
 
 CBaseDropTarget::CBaseDropTarget()
 {

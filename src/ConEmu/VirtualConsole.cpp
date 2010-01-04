@@ -60,6 +60,10 @@ WARNING("! А нафига КУРСОР (мигающий) отрисовывать в VirtualConsole? Не лучше ли
 #define DUMPDC(f)
 #endif
 
+#define isCharSpace(c) (c == ucSpace || c == ucNoBreakSpace || c == 0)
+
+CVirtualConsole::PARTBRUSHES CVirtualConsole::m_PartBrushes[MAX_COUNT_PART_BRUSHES] = {{0}};
+
 CVirtualConsole* CVirtualConsole::CreateVCon(RConStartArgs *args)
 {
     CVirtualConsole* pCon = new CVirtualConsole();
@@ -80,7 +84,7 @@ CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
     mh_Heap = HeapCreate(HEAP_GENERATE_EXCEPTIONS, nMinHeapSize, 0);
    
     cinf.dwSize = 15; cinf.bVisible = TRUE;
-    ZeroStruct(winSize); ZeroStruct(coord); ZeroStruct(select1); ZeroStruct(select2);
+    ZeroStruct(winSize); ZeroStruct(coord);
     TextLen = 0;
 	mb_RequiredForceUpdate = true;
   
@@ -90,6 +94,8 @@ CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
 
 	mb_InPaintCall = FALSE;
 
+	nFontHeight = gSet.FontHeight();
+	nFontWidth = gSet.FontWidth();
 
 #ifdef _DEBUG
     mn_BackColorIdx = 2;
@@ -107,7 +113,6 @@ CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
     ConCharX = NULL; 
     tmpOem = NULL; 
     TextParts = NULL;
-    memset(&SelectionInfo, 0, sizeof(SelectionInfo));
     mb_IsForceUpdate = false;
     hBrush0 = NULL; hSelectedBrush = NULL; hOldBrush = NULL;
     isEditor = false;
@@ -115,7 +120,7 @@ CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
 
     nSpaceCount = 1000;
     Spaces = (TCHAR*)Alloc(nSpaceCount,sizeof(TCHAR));
-    for (UINT i=0; i<nSpaceCount; i++) Spaces[i]=L' ';
+    //for (UINT i=0; i<nSpaceCount; i++) Spaces[i]=L' ';
 
     hOldBrush = NULL;
     hOldFont = NULL;
@@ -158,8 +163,8 @@ CVirtualConsole::~CVirtualConsole()
 {
     if (mp_RCon)
         mp_RCon->StopThread();
-    
-    MCHKHEAP
+
+    MCHKHEAP;
     if (hDC)
         { DeleteDC(hDC); hDC = NULL; }
     if (hBitmap)
@@ -341,8 +346,6 @@ bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize)
 
     HEAPVAL
 
-    SelectionInfo.dwFlags = 0;
-
     hSelectedFont = NULL;
 
     // Это может быть, если отключена буферизация (debug) и вывод идет сразу на экран
@@ -362,13 +365,15 @@ bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize)
         if ((hDC = CreateCompatibleDC(hScreenDC)) != NULL)
         {
             Assert ( gSet.FontWidth() && gSet.FontHeight() );
+			nFontHeight = gSet.FontHeight();
+			nFontWidth = gSet.FontWidth();
 
             #ifdef _DEBUG
             BOOL lbWasInitialized = TextWidth && TextHeight;
             #endif
             // Посчитать новый размер в пикселях
-            Width = TextWidth * gSet.FontWidth();
-            Height = TextHeight * gSet.FontHeight();
+            Width = TextWidth * nFontWidth;
+            Height = TextHeight * nFontHeight;
             _ASSERTE(Height <= 1200);
 
             if (ghOpWnd)
@@ -445,11 +450,16 @@ BOOL CVirtualConsole::Dump(LPCWSTR asFile)
 //#define isCharBorder(inChar) (inChar>=0x2013 && inChar<=0x266B)
 bool CVirtualConsole::isCharBorder(WCHAR inChar)
 {
-	for (int i=0; i<10 && gSet.icFixFarBorderRanges[i].bUsed; i++)
-		if (inChar>=gSet.icFixFarBorderRanges[i].cBegin && inChar<=gSet.icFixFarBorderRanges[i].cEnd)
-			return true;
+	return gSet.isCharBorder(inChar);
 
-	return false;
+	//CSettings::CharRanges *pcr = gSet.icFixFarBorderRanges;
+	//for (int i = 10; --i && pcr->bUsed; pcr++) {
+	//	CSettings::CharRanges cr = *pcr;
+	//	if (inChar>=cr.cBegin && inChar<=cr.cEnd)
+	//		return true;
+	//}
+
+	//return false;
 
     //if (inChar>=0x2013 && inChar<=0x266B)
     //    return true;
@@ -495,6 +505,13 @@ bool CVirtualConsole::isCharProgress(WCHAR inChar)
 {
     bool isProgress = (inChar == ucBox25 || inChar == ucBox50 || inChar == ucBox75 || inChar == ucBox100);
     return isProgress;
+}
+
+bool CVirtualConsole::isCharScroll(WCHAR inChar)
+{
+	bool isScrollbar = (inChar == ucBox25 || inChar == ucBox50 || inChar == ucBox75 || inChar == ucBox100
+		|| inChar == ucUpScroll || inChar == ucDnScroll);
+	return isScrollbar;
 }
 
 void CVirtualConsole::BlitPictureTo(int inX, int inY, int inWidth, int inHeight)
@@ -565,13 +582,15 @@ void CVirtualConsole::SelectBrush(HBRUSH hNew)
 
 bool CVirtualConsole::CheckSelection(const CONSOLE_SELECTION_INFO& select, SHORT row, SHORT col)
 {
-    if ((select.dwFlags & CONSOLE_SELECTION_NOT_EMPTY) == 0)
-        return false;
-    if (row < select.srSelection.Top || row > select.srSelection.Bottom)
-        return false;
-    if (col < select.srSelection.Left || col > select.srSelection.Right)
-        return false;
-    return true;
+	TODO("Выделение пока не живет");
+	return false;
+    //if ((select.dwFlags & CONSOLE_SELECTION_NOT_EMPTY) == 0)
+    //    return false;
+    //if (row < select.srSelection.Top || row > select.srSelection.Bottom)
+    //    return false;
+    //if (col < select.srSelection.Left || col > select.srSelection.Right)
+    //    return false;
+    //return true;
 }
 
 #ifdef MSGLOGGER
@@ -598,13 +617,14 @@ protected:
 };
 #endif
 
-// Возвращает true, если процедура изменила отображаемый символ
-bool CVirtualConsole::GetCharAttr(TCHAR ch, WORD atr, TCHAR& rch, BYTE& foreColorNum, BYTE& backColorNum)
+// Преобразовать консольный цветовой атрибут (фон+текст) в цвета фона и текста
+// (!) Количество цветов текста могут быть расширено за счет одного цвета фона
+void CVirtualConsole::GetCharAttr(WORD atr, BYTE& foreColorNum, BYTE& backColorNum)
 {
     bool bChanged = false;
     foreColorNum = atr & 0x0F;
     backColorNum = atr >> 4 & 0x0F;
-    rch = ch; // по умолчанию!
+    //rch = ch; // по умолчанию!
     //if (isEditor && gSet.isVisualizer && ch==L' ' &&
     //    (backColorNum==gSet.nVizTab || backColorNum==gSet.nVizEOL || backColorNum==gSet.nVizEOF))
     //{
@@ -626,47 +646,50 @@ bool CVirtualConsole::GetCharAttr(TCHAR ch, WORD atr, TCHAR& rch, BYTE& foreColo
             attrBackLast = backColorNum;
         }
     }
-    return bChanged;
+    //return bChanged;
 }
 
 // Возвращает ширину символа, учитывает FixBorders
 WORD CVirtualConsole::CharWidth(TCHAR ch)
 {
-    if (gSet.isForceMonospace)
-        return gSet.FontWidth();
+	// Проверяем сразу, чтобы по условиям не бегать
+	WORD nWidth = gSet.CharWidth[ch];
+	if (nWidth)
+		return nWidth;
 
-	if (gSet.isFixFarBorders && isCharBorder(ch)) {
+	if (!gSet.isProportional
+		|| gSet.isForceMonospace 
+		|| (gSet.isFixFarBorders && isCharBorder(ch))
+		|| (gSet.isEnhanceGraphics && isCharProgress(ch))
+		)
+	{
 		//2009-09-09 Это некорректно. Ширина шрифта рамки может быть больше знакоместа
 		//return gSet.BorderFontWidth();
-		return gSet.FontWidth();
-	}
-	if (gSet.isEnhanceGraphics && isCharProgress(ch)) {
-		return gSet.FontWidth();
+		gSet.CharWidth[ch] = nFontWidth;
+		return nFontWidth;
 	}
 
-	if (!gSet.isProportional)
-		return gSet.FontWidth();
-
-    WORD nWidth = gSet.FontWidth();
+    //nWidth = nFontWidth;
     //bool isBorder = false; //, isVBorder = false;
 
-    if (!gSet.CharWidth[ch]) {
-        SelectFont(gSet.mh_Font);
-        SIZE sz;
-        //This function succeeds only with TrueType fonts
-        #ifdef _DEBUG
-		ABC abc;
-        BOOL lb1 = GetCharABCWidths(hDC, ch, ch, &abc);
-        #endif
 
-        if (GetTextExtentPoint32(hDC, &ch, 1, &sz) && sz.cx)
-            gSet.CharWidth[ch] = sz.cx;
-        else
-            gSet.CharWidth[ch] = nWidth;
-    }
+	SelectFont(gSet.mh_Font);
+    SIZE sz;
+    //This function succeeds only with TrueType fonts
+    #ifdef _DEBUG
+	ABC abc;
+    BOOL lb1 = GetCharABCWidths(hDC, ch, ch, &abc);
+    #endif
 
-    nWidth = gSet.CharWidth[ch];
-    if (!nWidth) nWidth = 1; // на всякий случай, чтобы деления на 0 не возникло
+    if (GetTextExtentPoint32(hDC, &ch, 1, &sz) && sz.cx)
+        nWidth = sz.cx;
+    else
+        nWidth = nFontWidth;
+
+	if (!nWidth)
+		nWidth = 1; // на всякий случай, чтобы деления на 0 не возникло
+
+    gSet.CharWidth[ch] = nWidth;
 
     return nWidth;
 }
@@ -753,7 +776,7 @@ bool CVirtualConsole::Update(bool isForce, HDC *ahDc)
         SDC.Lock(&csDC, TRUE, 200); // но по таймауту, чтобы не повисли ненароком
 
 
-    GetConsoleScreenBufferInfo(&csbi);
+    mp_RCon->GetConsoleScreenBufferInfo(&csbi);
 
     // start timer before "Read Console Output*" calls, they do take time
     //gSet.Performance(tPerfRead, FALSE);
@@ -784,7 +807,7 @@ bool CVirtualConsole::Update(bool isForce, HDC *ahDc)
     {
 
         // Do we have to update changed text?
-        updateText = doSelect || CheckChangedTextAttr();
+        updateText = CheckChangedTextAttr();
 
         // Do we have to update text under changed cursor?
         // Important: check both 'cinf.bVisible' and 'Cursor.isVisible',
@@ -811,7 +834,7 @@ bool CVirtualConsole::Update(bool isForce, HDC *ahDc)
         //------------------------------------------------------------------------
         ///| Drawing modified text |//////////////////////////////////////////////
         //------------------------------------------------------------------------
-        UpdateText(isForce, updateText, updateCursor);
+        UpdateText(isForce);
 
 
         //MCHKHEAP
@@ -868,10 +891,12 @@ bool CVirtualConsole::Update(bool isForce, HDC *ahDc)
     if (hBrush0) { // создается в BlitPictureTo
         DeleteObject(hBrush0); hBrush0 = NULL;
     }
+	/*
     for (UINT br=0; br<m_PartBrushes.size(); br++) {
         DeleteObject(m_PartBrushes[br].hBrush);
     }
     m_PartBrushes.clear();
+	*/
     SelectFont(NULL);
     MCHKHEAP
     return lRes;
@@ -941,31 +966,7 @@ bool CVirtualConsole::UpdatePrepare(bool isForce, HDC *ahDc, MSectionLock *pSDC)
     // Определить координаты панелей (Переехало в CRealConsole)
 
     // get cursor info
-    GetConsoleCursorInfo(/*hConOut(),*/ &cinf);
-
-    // get selection info in buffer mode
-    
-    doSelect = mp_RCon->isBufferHeight();
-    if (doSelect)
-    {
-        select1 = SelectionInfo;
-        GetConsoleSelectionInfo(&select2);
-        select2.srSelection.Top -= csbi.srWindow.Top;
-        select2.srSelection.Bottom -= csbi.srWindow.Top;
-        SelectionInfo = select2;
-        doSelect = (select1.dwFlags & CONSOLE_SELECTION_NOT_EMPTY) || (select2.dwFlags & CONSOLE_SELECTION_NOT_EMPTY);
-        if (doSelect)
-        {
-            if (select1.dwFlags == select2.dwFlags &&
-                select1.srSelection.Top == select2.srSelection.Top &&
-                select1.srSelection.Left == select2.srSelection.Left &&
-                select1.srSelection.Right == select2.srSelection.Right &&
-                select1.srSelection.Bottom == select2.srSelection.Bottom)
-            {
-                doSelect = false;
-            }
-        }
-    }
+    mp_RCon->GetConsoleCursorInfo(/*hConOut(),*/ &cinf);
 
     MCHKHEAP
     return true;
@@ -993,6 +994,22 @@ enum CVirtualConsole::_PartType CVirtualConsole::GetCharType(TCHAR ch)
     return cType;
 }
 
+//#define GetCharAttr(ch,atr,rch,foreColorNum,backColorNum) \
+//{ \
+//	foreColorNum = atr & 0x0F; \
+//	backColorNum = atr >> 4 & 0x0F; \
+//	rch = ch; \
+//	if (gSet.isExtendColors) { \
+//		if (backColorNum==gSet.nExtendColor) { \
+//			backColorNum = attrBackLast; \
+//			foreColorNum += 0x10; \
+//		} else { \
+//			attrBackLast = backColorNum; \
+//		} \
+//	} \
+//}
+
+
 // row - 0-based
 void CVirtualConsole::ParseLine(int row, TCHAR *ConCharLine, WORD *ConAttrLine)
 {
@@ -1008,7 +1025,9 @@ void CVirtualConsole::ParseLine(int row, TCHAR *ConCharLine, WORD *ConAttrLine)
     DWORD pixels;
     while (i1<TextWidth)
     {
-        GetCharAttr(ConCharLine[i1], ConAttrLine[i1], ch1, af1, ab1);
+        //GetCharAttr(ConCharLine[i1], ConAttrLine[i1], ch1, af1, ab1);
+		ch1 = ConCharLine[i1];
+		GetCharAttr(ConAttrLine[i1], af1, ab1);
         cType1 = GetCharType(ch1);
         if (cType1 == pRBracket) {
             if (!(row>=2 && isCharBorderVertical(mpsz_ConChar[TextWidth+i1]))
@@ -1022,7 +1041,9 @@ void CVirtualConsole::ParseLine(int row, TCHAR *ConCharLine, WORD *ConAttrLine)
         if (!gSet.isForceMonospace && i2 < TextWidth && 
             (cType1 != pVBorder && cType1 != pRBracket))
         {
-            GetCharAttr(ConCharLine[i2], ConAttrLine[i2], ch2, af2, ab2);
+            //GetCharAttr(ConCharLine[i2], ConAttrLine[i2], ch2, af2, ab2);
+			ch2 = ConCharLine[i2];
+			GetCharAttr(ConAttrLine[i2], af2, ab2);
             // Получить блок символов с аналогичными цветами
             while (i2 < TextWidth && af2 == af1 && ab2 == ab1) {
                 // если символ отличается от первого
@@ -1041,7 +1062,9 @@ void CVirtualConsole::ParseLine(int row, TCHAR *ConCharLine, WORD *ConAttrLine)
                 }
                 pixels += CharWidth(ch2); // добавить ширину символа в пикселях
                 i2++; // следующий символ
-                GetCharAttr(ConCharLine[i2], ConAttrLine[i2], ch2, af2, ab2);
+                //GetCharAttr(ConCharLine[i2], ConAttrLine[i2], ch2, af2, ab2);
+				ch2 = ConCharLine[i2];
+				GetCharAttr(ConAttrLine[i2], af2, ab2);
                 if (cType2 == pRBracket) {
                     if (!(row>=2 && isCharBorderVertical(mpsz_ConChar[TextWidth+i2]))
                         && (((UINT)row)<=(TextHeight-4)))
@@ -1086,17 +1109,12 @@ void CVirtualConsole::ParseLine(int row, TCHAR *ConCharLine, WORD *ConAttrLine)
     pEnd->partType = pNull;
 }
 
-wchar_t gszAnalogues[32] = {
-	  32, 9786, 9787, 9829, 9830, 9827, 9824, 8226, 9688, 9675, 9689, 9794, 9792, 9834, 9835, 9788,
-	9658, 9668, 8597, 8252,  182,  167, 9632, 8616, 8593, 8595, 8594, 8592, 8735, 8596, 9650, 9660
-};
-
-void CVirtualConsole::UpdateText(bool isForce, bool updateText, bool updateCursor)
+void CVirtualConsole::UpdateText(bool isForce) //, bool updateText, bool updateCursor)
 {
-    if (!updateText) {
-        _ASSERTE(updateText);
-        return;
-    }
+    //if (!updateText) {
+    //    _ASSERTE(updateText);
+    //    return;
+    //}
 
 #ifdef _DEBUG
     if (mp_RCon->IsConsoleThread()) {
@@ -1121,6 +1139,8 @@ void CVirtualConsole::UpdateText(bool isForce, bool updateText, bool updateCurso
     //_ASSERTE(lbDataValid);
 #endif
 
+	nFontHeight = gSet.FontHeight();
+	nFontWidth = gSet.FontWidth();
 
     SelectFont(gSet.mh_Font);
 
@@ -1134,14 +1154,14 @@ void CVirtualConsole::UpdateText(bool isForce, bool updateText, bool updateCurso
         int i;
 
         i = 0; //TextLen - TextWidth; // TextLen = TextWidth/*80*/ * TextHeight/*25*/;
-        pos = 0; //Height - gSet.FontHeight(); // Height = TextHeight * gSet.FontHeight();
+        pos = 0; //Height - nFontHeight; // Height = TextHeight * nFontHeight;
         row = 0; //TextHeight - 1;
 
 		ConCharLine = mpsz_ConChar + i;
         ConAttrLine = mpn_ConAttr + i;
         ConCharXLine = ConCharX + i;
     }
-    int nMaxPos = Height - gSet.FontHeight();
+    int nMaxPos = Height - nFontHeight;
 
     if (/*gSet.isForceMonospace ||*/ !drawImage)
         SetBkMode(hDC, OPAQUE);
@@ -1151,20 +1171,21 @@ void CVirtualConsole::UpdateText(bool isForce, bool updateText, bool updateCurso
 	int nDX[500];
 
     // rows
-    //TODO: а зачем в isForceMonospace принудительно перерисовывать все?
-    const bool skipNotChanged = !isForce /*&& !gSet.isForceMonospace*/;
+    // зачем в isForceMonospace принудительно перерисовывать все?
+    // const bool skipNotChanged = !isForce /*&& !gSet.isForceMonospace*/;
+    const bool skipNotChanged = !isForce;
     for (; pos <= nMaxPos; 
         ConCharLine += TextWidth, ConAttrLine += TextWidth, ConCharXLine += TextWidth,
-        pos += gSet.FontHeight(), row++)
+        pos += nFontHeight, row++)
     {
 		//2009-09-25. Некоторые (старые?) программы умудряются засунуть в консоль символы (ASC<32)
 		//            их нужно заменить на юникодные аналоги
-		{
-			wchar_t* pszEnd = ConCharLine + TextWidth;
-			for (wchar_t* pch = ConCharLine; pch < pszEnd; pch++) {
-				if (((WORD)*pch) < 32) *pch = gszAnalogues[(WORD)*pch];
-			}
-		}
+		//{
+		//	wchar_t* pszEnd = ConCharLine + TextWidth;
+		//	for (wchar_t* pch = ConCharLine; pch < pszEnd; pch++) {
+		//		if (((WORD)*pch) < 32) *pch = gszAnalogues[(WORD)*pch];
+		//	}
+		//}
 
         // the line
         const WORD* const ConAttrLine2 = mpn_ConAttrSave + (ConAttrLine - mpn_ConAttr);
@@ -1172,50 +1193,34 @@ void CVirtualConsole::UpdateText(bool isForce, bool updateText, bool updateCurso
 
         // skip not changed symbols except the old cursor or selection
         int j = 0, end = TextWidth;
+		// В режиме пропорциональных шрифтов или isForce==true - отрисовываем линию ЦЕЛИКОМ
+		// Для пропорциональных это обусловлено тем, что при перерисовке измененная часть
+		// может оказаться КОРОЧЕ предыдущего значения, в результате появятся артефакты
         if (skipNotChanged)
         {
-            // *) Skip not changed tail symbols.
-            while(--end >= 0 && ConCharLine[end] == ConCharLine2[end] && ConAttrLine[end] == ConAttrLine2[end])
-            {
-                if (updateCursor && row == Cursor.y && end == Cursor.x)
-                    break;
-                if (doSelect)
-                {
-                    if (CheckSelection(select1, row, end))
-                        break;
-                    if (CheckSelection(select2, row, end))
-                        break;
-                }
-            }
-			// [%] ClearType, proportional fonts
-			if (end >= 0  // Если есть хоть какие-то изменения
-				&& end < (int)(TextWidth - 1) // до конца строки
-				&& (ConCharLine[end+1] == ucSpace || ConCharLine[end+1] == ucNoBreakSpace || isCharProgress(ConCharLine[end+1])) // будем отрисовывать все проблеы
-				)
-			{
-				int n = TextWidth - 1;
-				while ((end < n) 
-				&& (ConCharLine[end+1] == ucSpace || ConCharLine[end+1] == ucNoBreakSpace || isCharProgress(ConCharLine[end+1])))
-					end++;
+            // *) Skip not changed tail symbols. но только если шрифт моноширный
+			if (!gSet.isProportional) {
+				while(--end >= 0 && ConCharLine[end] == ConCharLine2[end] && ConAttrLine[end] == ConAttrLine2[end])
+					;
+				// [%] ClearType, TTF fonts (isProportional может быть и отключен)
+				if (end >= 0  // Если есть хоть какие-то изменения
+					&& end < (int)(TextWidth - 1) // до конца строки
+					&& (ConCharLine[end+1] == ucSpace || ConCharLine[end+1] == ucNoBreakSpace || isCharProgress(ConCharLine[end+1])) // будем отрисовывать все проблеы
+					)
+				{
+					int n = TextWidth - 1;
+					while ((end < n) 
+					&& (ConCharLine[end+1] == ucSpace || ConCharLine[end+1] == ucNoBreakSpace || isCharProgress(ConCharLine[end+1])))
+						end++;
+				}
+				if (end < j)
+					continue;
+				++end;
 			}
-            if (end < j)
-                continue;
-            ++end;
 
             // *) Skip not changed head symbols.
             while(j < end && ConCharLine[j] == ConCharLine2[j] && ConAttrLine[j] == ConAttrLine2[j])
-            {
-                if (updateCursor && row == Cursor.y && j == Cursor.x)
-                    break;
-                if (doSelect)
-                {
-                    if (CheckSelection(select1, row, j))
-                        break;
-                    if (CheckSelection(select2, row, j))
-                        break;
-                }
                 ++j;
-            }
 			// [%] ClearType, proportional fonts
 			if (j > 0 // если с начала строки
 				&& (ConCharLine[j-1] == ucSpace || ConCharLine[j-1] == ucNoBreakSpace || isCharProgress(ConCharLine[j-1])) // есть пробелы
@@ -1225,9 +1230,13 @@ void CVirtualConsole::UpdateText(bool isForce, bool updateText, bool updateCurso
 			    && (ConCharLine[j-1] == ucSpace || ConCharLine[j-1] == ucNoBreakSpace || isCharProgress(ConCharLine[j-1])))
 					j--;
 			}
-            if (j >= end) // по идее это условие никогда не должно выполняться
+			if (j >= end) {
+				// Для пропорциональных шрифтов сравнение выполняется только с начала строки,
+				// поэтому сюда мы вполне можем попасть - значит строка не менялась
                 continue;
-        }
+			}
+
+        } // if (skipNotChanged)
         
         if (Cursor.isVisiblePrev && row == Cursor.y
             && (j <= Cursor.x && Cursor.x <= end))
@@ -1246,13 +1255,18 @@ void CVirtualConsole::UpdateText(bool isForce, bool updateText, bool updateCurso
             bool lbS1 = false, lbS2 = false;
             int nS11 = 0, nS12 = 0, nS21 = 0, nS22 = 0;
 
-            if (GetCharAttr(c, attr, c, attrFore, attrBack))
-                isUnicode = true;
+			//GetCharAttr(c, attr, c, attrFore, attrBack);
+			GetCharAttr(attr, attrFore, attrBack);
+            //if (GetCharAttr(c, attr, c, attrFore, attrBack))
+            //    isUnicode = true;
 
             if (isUnicode)
                 isProgress = gSet.isEnhanceGraphics && isCharProgress(c); // ucBox25 / ucBox50 / ucBox75 / ucBox100
             else
-                isSpace = (c == ucSpace || c == ucNoBreakSpace || c == 0);
+                isSpace = isCharSpace(c);
+
+			TODO("При позиционировании (наверное в DistrubuteSpaces) пытаться ориентироваться по координатам предыдущей строки");
+			// Иначе окантовка диалогов съезжает на пропорциональных шрифтах
 
             MCHKHEAP
             // корректировка лидирующих пробелов и рамок
@@ -1282,34 +1296,50 @@ void CVirtualConsole::UpdateText(bool isForce, bool updateText, bool updateCurso
                     nS12 ++;
             }*/
 
-            // Возможно это тоже нужно вынести в GetCharAttr?
-            if (doSelect && CheckSelection(select2, row, j))
-            {
-                WORD tmp = attrFore;
-                attrFore = attrBack;
-                attrBack = tmp;
-            }
 
             SetTextColor(hDC, gSet.Colors[attrFore]);
 
-            // корректировка положения вертикальной рамки
+            // корректировка положения вертикальной рамки (Coord.X>0)
             if (gSet.isProportional && j)
             {
-                MCHKHEAP
+                MCHKHEAP;
                 DWORD nPrevX = ConCharXLine[j-1];
-                if (isCharBorderVertical(c)) {
-                    //2009-04-21 было (j-1) * gSet.FontWidth();
-                    ConCharXLine[j-1] = j * gSet.FontWidth();
-                } else if (isFilePanel && c==L'}') {
-                    // Символом } фар помечает имена файлов вылезшие за пределы колонки...
-                    // Если сверху или снизу на той же позиции рамки (или тот же '}')
-                    // корректируем позицию
-                    if ((row>=2 && isCharBorderVertical(mpsz_ConChar[TextWidth+j]))
-                        && (((UINT)row)<=(TextHeight-4)))
-                        //2009-04-21 было (j-1) * gSet.FontWidth();
-                        ConCharXLine[j-1] = j * gSet.FontWidth();
-                    //row = TextHeight - 1;
-                } MCHKHEAP
+				// Рамки (их вертикальные части) и полосы прокрутки;
+				// Символом } фар помечает имена файлов вылезшие за пределы колонки...
+				// Если сверху или снизу на той же позиции рамки (или тот же '}')
+				// корректируем позицию
+				bool bBord = isCharBorderVertical(c);
+                if (bBord || isCharScroll(c) || (isFilePanel && c==L'}')) {
+                    //2009-04-21 было (j-1) * nFontWidth;
+                    //ConCharXLine[j-1] = j * nFontWidth;
+					bool bMayBeFrame = true;
+					if (!bBord)
+					{
+						int R;
+						wchar_t prevC;
+						for (R = (row-1); bMayBeFrame && !bBord && R; R--) {
+							prevC = mpsz_ConChar[R*TextWidth+j];
+							bBord = isCharBorderVertical(prevC);
+							bMayBeFrame = (bBord || isCharScroll(prevC) || (isFilePanel && prevC==L'}'));
+						}
+						for (R = (row+1); bMayBeFrame && !bBord && R < (int)TextHeight; R++) {
+							prevC = mpsz_ConChar[R*TextWidth+j];
+							bBord = isCharBorderVertical(prevC);
+							bMayBeFrame = (bBord || isCharScroll(prevC) || (isFilePanel && prevC==L'}'));
+						}
+					}
+					if (bMayBeFrame)
+						ConCharXLine[j-1] = j * nFontWidth;
+                }
+				//else if (isFilePanel && c==L'}') {
+				//    if ((row>=2 && isCharBorderVertical(mpsz_ConChar[TextWidth+j]))
+				//        && (((UINT)row)<=(TextHeight-4)))
+				//        //2009-04-21 было (j-1) * nFontWidth;
+				//        ConCharXLine[j-1] = j * nFontWidth;
+				//    //row = TextHeight - 1;
+				//}
+				MCHKHEAP;
+
                 if (nPrevX < ConCharXLine[j-1]) {
                     // Требуется зарисовать пропущенную область. пробелами что-ли?
 
@@ -1317,19 +1347,49 @@ void CVirtualConsole::UpdateText(bool isForce, bool updateText, bool updateCurso
                     rect.left = nPrevX;
                     rect.top = pos;
                     rect.right = ConCharXLine[j-1];
-                    rect.bottom = rect.top + gSet.FontHeight();
+                    rect.bottom = rect.top + nFontHeight;
 
                     if (gbNoDblBuffer) GdiFlush();
                     if (! (drawImage && ISBGIMGCOLOR(attrBack))) {
-                        SetBkColor(hDC, gSet.Colors[attrBack]);
-                        #ifdef _DEBUG
-                        int nCnt = ((rect.right - rect.left) / CharWidth(L' '))+1;
-                        #endif
 
-                        //UINT nFlags = ETO_CLIPPED; // || ETO_OPAQUE;
-                        //Ext Text Out(hDC, rect.left, rect.top, nFlags, &rect, Spaces, min(nSpaceCount, nCnt), 0);
+						BYTE PrevAttrFore = attrFore, PrevAttrBack = attrBack;
+						const WORD PrevAttr = ConAttrLine[j-1];
+						WCHAR PrevC = ConCharLine[j-1];
 
-						FillRect(hDC, &rect, PartBrush(c, attrBack, attrFore));
+						//GetCharAttr(PrevC, PrevAttr, PrevC, PrevAttrFore, PrevAttrBack);
+						GetCharAttr(PrevAttr, PrevAttrFore, PrevAttrBack);
+						//if (GetCharAttr(PrevC, PrevAttr, PrevC, PrevAttrFore, PrevAttrBack))
+						//	isUnicode = true;
+
+						// Если текущий символ - вертикальная рамка, а предыдущий символ - рамка
+						// нужно продлить рамку до текущего символа
+						if (isCharBorderVertical(c) && isCharBorder(PrevC)) {
+							SetBkColor(hDC, gSet.Colors[attrBack]);
+							wchar_t chBorder = (c == ucBoxDblDownLeft || c == ucBoxDblUpLeft 
+								|| c == ucBoxSinglDownDblHorz || c == ucBoxSinglUpDblHorz || c == ucBoxDblVertLeft
+								|| c == ucBoxDblVertHorz) ? ucBoxDblHorz : ucBoxSinglHorz;
+							int nCnt = ((rect.right - rect.left) / CharWidth(chBorder))+1;
+							if (nCnt >= nSpaceCount) {
+								_ASSERTE(nCnt<nSpaceCount);
+								nCnt = nSpaceCount;
+							}
+							//UINT nFlags = ETO_CLIPPED; // || ETO_OPAQUE;
+							//ExtTextOut(hDC, rect.left, rect.top, nFlags, &rect, Spaces, min(nSpaceCount, nCnt), 0);
+							if (! (drawImage && ISBGIMGCOLOR(attrBack)))
+								SetBkColor(hDC, gSet.Colors[attrBack]);
+							else if (drawImage)
+								BlitPictureTo(rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top);
+							UINT nFlags = ETO_CLIPPED | ((drawImage && ISBGIMGCOLOR(attrBack)) ? 0 : ETO_OPAQUE);
+							wmemset(Spaces, chBorder, nCnt);
+							if (gSet.isFixFarBorders)
+								SelectFont(gSet.mh_Font2);
+							ExtTextOut(hDC, rect.left, rect.top, nFlags, &rect, Spaces, nCnt, 0);
+
+						} else {
+							HBRUSH hbr = PartBrush(L' ', PrevAttrBack, PrevAttrFore);
+							FillRect(hDC, &rect, hbr);
+
+						}
 
                     } else if (drawImage) {
                         BlitPictureTo(rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top);
@@ -1352,19 +1412,19 @@ void CVirtualConsole::UpdateText(bool isForce, bool updateText, bool updateCurso
                 if (gSet.isFixFarBorders) {
                     if (!isUnicode)
                         SelectFont(gSet.mh_Font);
-                    else if (isUnicode)
+                    else //if (isUnicode)
                         SelectFont(gSet.mh_Font2);
                 }
 
 
                 RECT rect;
                 if (!gSet.isProportional)
-                    rect = MakeRect(j * gSet.FontWidth(), pos, j2 * gSet.FontWidth(), pos + gSet.FontHeight());
+                    rect = MakeRect(j * nFontWidth, pos, j2 * nFontWidth, pos + nFontHeight);
                 else {
                     rect.left = j ? ConCharXLine[j-1] : 0;
                     rect.top = pos;
                     rect.right = (TextWidth>(UINT)j2) ? ConCharXLine[j2-1] : Width;
-                    rect.bottom = rect.top + gSet.FontHeight();
+                    rect.bottom = rect.top + nFontHeight;
                 }
                 UINT nFlags = ETO_CLIPPED | ((drawImage && ISBGIMGCOLOR(attrBack)) ? 0 : ETO_OPAQUE);
                 int nShift = 0;
@@ -1378,9 +1438,9 @@ void CVirtualConsole::UpdateText(bool isForce, bool updateText, bool updateCurso
                         if (abc.abcA<0) {
                             // иначе символ наверное налезет на предыдущий?
                             nShift = -abc.abcA;
-                        } else if (abc.abcA<(((int)gSet.FontWidth()-(int)abc.abcB-1)/2)) {
+                        } else if (abc.abcA<(((int)nFontWidth-(int)abc.abcB-1)/2)) {
                             // символ I, i, и др. очень тонкие - рисуем посередине
-                            nShift = ((gSet.FontWidth()-abc.abcB)/2)-abc.abcA;
+                            nShift = ((nFontWidth-abc.abcB)/2)-abc.abcA;
                         }
                     }
                 }
@@ -1390,8 +1450,10 @@ void CVirtualConsole::UpdateText(bool isForce, bool updateText, bool updateCurso
                     SetBkColor(hDC, gSet.Colors[attrBack]);
 					// В режиме ForceMonospace символы пытаемся рисовать по центру (если они уже знакоместа)
 					// чтобы не оставалось мусора от предыдущей отрисовки - нужно залить знакоместо фоном
-					if (nShift>0 && !isSpace && !isProgress)
-						FillRect(hDC, &rect, PartBrush(L' ', attrBack, attrFore));
+					if (nShift>0 && !isSpace && !isProgress) {
+						HBRUSH hbr = PartBrush(L' ', attrBack, attrFore);
+						FillRect(hDC, &rect, hbr);
+					}
                 } else if (drawImage) {
                     BlitPictureTo(rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top);
                 }
@@ -1405,7 +1467,8 @@ void CVirtualConsole::UpdateText(bool isForce, bool updateText, bool updateCurso
 
                 if (gbNoDblBuffer) GdiFlush();
 				if (isSpace || isProgress) {
-					FillRect(hDC, &rect, PartBrush(c, attrBack, attrFore));
+					HBRUSH hbr = PartBrush(c, attrBack, attrFore);
+					FillRect(hDC, &rect, hbr);
 				} else {
 					// Это режим Force monospace
 					ExtTextOut(hDC, rect.left, rect.top, nFlags, &rect, &c, 1, 0);
@@ -1413,42 +1476,48 @@ void CVirtualConsole::UpdateText(bool isForce, bool updateText, bool updateCurso
                 if (gbNoDblBuffer) GdiFlush();
                 MCHKHEAP
 
-            }
-            //else if (/*gSet.isProportional &&*/ (c==ucSpace || c==ucNoBreakSpace || c==0))
-			else if (isSpace)
-            {
-                j2 = j + 1; MCHKHEAP
+            } // end  - if (gSet.isForceMonospace)
+			else
+			{
+				wchar_t* pszDraw = NULL;
+				int      nDrawLen = -1;
+				bool     bDrawReplaced = false;
+				RECT rect;
 
-				DistributeSpaces(ConCharLine, ConAttrLine, ConCharXLine, j, j2, end);
+				//else if (/*gSet.isProportional &&*/ (c==ucSpace || c==ucNoBreakSpace || c==0))
+				if (isSpace)
+				{
+					j2 = j + 1; MCHKHEAP;
+					while(j2 < end && ConAttrLine[j2] == attr && isCharSpace(ConCharLine[j2]))
+						j2++;
+					DistributeSpaces(ConCharLine, ConAttrLine, ConCharXLine, j, j2, end);
 
-			}
-            else if (!isUnicode)
-            {
-                j2 = j + 1; MCHKHEAP
-                if (!doSelect) // doSelect инициализируется только для BufferHeight>0
-                {
-                    #ifndef DRAWEACHCHAR
-                    // Если этого не делать - в пропорциональных шрифтах буквы будут наезжать одна на другую
-                    TCHAR ch;
+				}
+				else if (!isUnicode)
+				{
+					j2 = j + 1; MCHKHEAP
+
+					#ifndef DRAWEACHCHAR
+					// Если этого не делать - в пропорциональных шрифтах буквы будут наезжать одна на другую
+					TCHAR ch;
 					WARNING("*** сомнение в следующей строчке: (!gSet.isProportional || !isFilePanel || (ch != L'}' && ch!=L' '))");
-                    while(j2 < end && ConAttrLine[j2] == attr && 
-                        !isCharBorder(ch = ConCharLine[j2]) 
-                        && (!gSet.isProportional || !isFilePanel || (ch != L'}' && ch!=L' '))) // корректировка имен в колонках
-                    {
-                        ConCharXLine[j2] = (j2 ? ConCharXLine[j2-1] : 0)+CharWidth(ch);
-                        j2++;
-                    }
-                    #endif
-                }
-                if (gSet.isFixFarBorders)
-                    SelectFont(gSet.mh_Font);
-                MCHKHEAP
-            }
-            else //Border and specials
-            {
-                j2 = j + 1; MCHKHEAP
-                if (!doSelect) // doSelect инициализируется только для BufferHeight>0
-                {
+					while(j2 < end && ConAttrLine[j2] == attr && 
+						!isCharBorder(ch = ConCharLine[j2]) 
+						&& (!gSet.isProportional || !isFilePanel || (ch != L'}' && ch!=L' '))) // корректировка имен в колонках
+					{
+						ConCharXLine[j2] = (j2 ? ConCharXLine[j2-1] : 0)+CharWidth(ch);
+						j2++;
+					}
+					#endif
+
+					if (gSet.isFixFarBorders)
+						SelectFont(gSet.mh_Font);
+					MCHKHEAP
+				}
+				else //Border and specials
+				{
+					j2 = j + 1; MCHKHEAP
+
 					if (gSet.isEnhanceGraphics && isProgress) {
 						TCHAR ch;
 						ch = c; // Графическая отрисовка прокрутки и прогресса
@@ -1458,44 +1527,67 @@ void CVirtualConsole::UpdateText(bool isForce, bool updateText, bool updateCurso
 							j2++;
 						}
 					} else
-                    if (!gSet.isFixFarBorders)
-                    {
-                        TCHAR ch;
-                        while(j2 < end && ConAttrLine[j2] == attr && isCharBorder(ch = ConCharLine[j2]))
-                        {
-                            ConCharXLine[j2] = (j2 ? ConCharXLine[j2-1] : 0)+CharWidth(ch);
-                            j2++;
-                        }
-                    }
-                    else
-                    {
-                        //TCHAR ch;
-						WARNING("Тут обламывается на ucBoxDblVert в первой позиции. Ее ширину ставит в ...");
-						DistributeSpaces(ConCharLine, ConAttrLine, ConCharXLine, j, j2, end);
-                        //while(j2 < end && ConAttrLine[j2] == attr && 
-                        //    isCharBorder(ch = ConCharLine[j2]) && ch == ConCharLine[j2+1])
-                        //{
-                        //    ConCharXLine[j2] = (j2 ? ConCharXLine[j2-1] : 0)+CharWidth(ch);
-                        //    j2++;
-                        //}
-                    }
-                }
-                if (gSet.isFixFarBorders)
-                    SelectFont(gSet.mh_Font2);
-                MCHKHEAP
-            }
+					if (!gSet.isFixFarBorders)
+					{
+						TCHAR ch;
+						while(j2 < end && ConAttrLine[j2] == attr && isCharBorder(ch = ConCharLine[j2]))
+						{
+							ConCharXLine[j2] = (j2 ? ConCharXLine[j2-1] : 0)+CharWidth(ch);
+							j2++;
+						}
+					}
+					else
+					{
+						//TCHAR ch;
+						//WARNING("Тут обламывается на ucBoxDblVert в первой позиции. Ее ширину ставит в ...");
 
-            if (!gSet.isForceMonospace)
-            {
-                RECT rect;
+						// Для отрисовки рамок (ucBoxDblHorz) за один проход
+						if (c == ucBoxDblHorz || c == ucBoxSinglHorz)
+						{
+							while(j2 < end && ConAttrLine[j2] == attr && c == ConCharLine[j2])
+								j2++;
+						}
+						DistributeSpaces(ConCharLine, ConAttrLine, ConCharXLine, j, j2, end);
+						int nBorderWidth = CharWidth(c);
+						rect.left = j ? ConCharXLine[j-1] : 0;
+						rect.right = (TextWidth>(UINT)j2) ? ConCharXLine[j2-1] : Width;
+						int nCnt = (rect.right - rect.left + (nBorderWidth>>1)) / nBorderWidth;
+						if (nCnt > (j2 - j)) {
+							_ASSERTE(nCnt < nSpaceCount);
+							if (nCnt >= nSpaceCount) nCnt = nSpaceCount - 1;
+							bDrawReplaced = true;
+							nDrawLen = nCnt;
+							pszDraw = Spaces;
+							wmemset(Spaces, c, nCnt);
+						}
+						//while(j2 < end && ConAttrLine[j2] == attr && 
+						//    isCharBorder(ch = ConCharLine[j2]) && ch == ConCharLine[j2+1])
+						//{
+						//    ConCharXLine[j2] = (j2 ? ConCharXLine[j2-1] : 0)+CharWidth(ch);
+						//    j2++;
+						//}
+					}
+
+					if (gSet.isFixFarBorders)
+						SelectFont(gSet.mh_Font2);
+					MCHKHEAP
+				}
+
+
+				if (!pszDraw) {
+					pszDraw = ConCharLine + j;
+					nDrawLen = j2 - j;
+				}
+
+
 				//if (!gSet.isProportional) {
 				//	TODO("Что-то как-то... ведь положения уже вроде расчитали?");
-				//  rect = MakeRect(j * gSet.FontWidth(), pos, j2 * gSet.FontWidth(), pos + gSet.FontHeight());
+				//  rect = MakeRect(j * nFontWidth, pos, j2 * nFontWidth, pos + nFontHeight);
 				//} else {
                 rect.left = j ? ConCharXLine[j-1] : 0;
                 rect.top = pos;
                 rect.right = (TextWidth>(UINT)j2) ? ConCharXLine[j2-1] : Width;
-                rect.bottom = rect.top + gSet.FontHeight();
+                rect.bottom = rect.top + nFontHeight;
                 //}
 
                 MCHKHEAP
@@ -1513,18 +1605,21 @@ void CVirtualConsole::UpdateText(bool isForce, bool updateText, bool updateCurso
                 MCHKHEAP
                 if (gbNoDblBuffer) GdiFlush();
                 if (isProgress) {
-					FillRect(hDC, &rect, PartBrush(c, attrBack, attrFore));
+					HBRUSH hbr = PartBrush(c, attrBack, attrFore);
+					FillRect(hDC, &rect, hbr);
                 } else
                 if (/*gSet.isProportional &&*/ isSpace/*c == ' '*/) {
                     //int nCnt = ((rect.right - rect.left) / CharWidth(L' '))+1;
                     //Ext Text Out(hDC, rect.left, rect.top, nFlags, &rect, Spaces, nCnt, 0);
 					TODO("Проверить, что будет если картинка МЕНЬШЕ по ширине чем область отрисовки");
-					if (!lbImgDrawn)
-						FillRect(hDC, &rect, PartBrush(c, attrBack, attrFore));
+					if (!lbImgDrawn) {
+						HBRUSH hbr = PartBrush(c, attrBack, attrFore);
+						FillRect(hDC, &rect, hbr);
+					}
 				} else {
 					if (gSet.FontCharSet() == OEM_CHARSET && !isUnicode)
 					{
-						WideCharToMultiByte(CP_OEMCP, 0, ConCharLine + j, j2 - j, tmpOem, TextWidth+4, 0, 0);
+						WideCharToMultiByte(CP_OEMCP, 0, pszDraw, nDrawLen, tmpOem, TextWidth+4, 0, 0);
 						if (!gSet.isProportional)
 							for (int idx = 0, n = (j2-j); n; idx++, n--)
 								nDX[idx] = CharWidth(tmpOem[idx]);
@@ -1533,15 +1628,15 @@ void CVirtualConsole::UpdateText(bool isForce, bool updateText, bool updateCurso
 					}
 					else
 					{
-						if ((j2-j)==1) // support visualizer change
+						if (nDrawLen == 1) // support visualizer change
 						ExtTextOut(hDC, rect.left, rect.top, nFlags, &rect,
 							&c/*ConCharLine + j*/, 1, 0);
 						else {
 							if (!gSet.isProportional)
-								for (int idx = 0, n = (j2-j); n; idx++, n--)
-									nDX[idx] = CharWidth(ConCharLine[j]);
+								for (int idx = 0, n = nDrawLen; n; idx++, n--)
+									nDX[idx] = CharWidth(pszDraw[idx]);
 							ExtTextOut(hDC, rect.left, rect.top, nFlags, &rect,
-								ConCharLine + j, j2 - j, gSet.isProportional ? 0 : nDX);
+								pszDraw, nDrawLen, gSet.isProportional ? 0 : nDX);
 						}
 					}
 				}
@@ -1552,40 +1647,46 @@ void CVirtualConsole::UpdateText(bool isForce, bool updateText, bool updateCurso
 			DUMPDC(L"F:\\vcon.png");
         
 
-            // skip next not changed symbols again
-            if (skipNotChanged)
-            {
-                MCHKHEAP
-				wchar_t ch;
-                // skip the same except spaces
-                while(j2 < end && (ch = ConCharLine[j2]) == ConCharLine2[j2] && ConAttrLine[j2] == ConAttrLine2[j2]
-					&& (ch != ucSpace && ch != ucNoBreakSpace && ch != 0))
-                {
-                    //if (updateCursor && row == Cursor.y && j2 == Cursor.x)
-                    //    break;
-                    //if (doSelect)
-                    //{
-                    //    if (CheckSelection(select1, row, j2))
-                    //        break;
-                    //    if (CheckSelection(select2, row, j2))
-                    //        break;
-                    //}
-                    ++j2;
-                }
-            }
+			//-- во избежание проблем с пропорциональными шрифтами и ClearType
+			//-- рисуем измененные строки целиком
+			//// skip next not changed symbols again
+			//if (skipNotChanged)
+			//{
+			//    MCHKHEAP
+			//	wchar_t ch;
+			//    // skip the same except spaces
+			//    while(j2 < end && (ch = ConCharLine[j2]) == ConCharLine2[j2] && ConAttrLine[j2] == ConAttrLine2[j2]
+			//		&& (ch != ucSpace && ch != ucNoBreakSpace && ch != 0))
+			//    {
+			//        ++j2;
+			//    }
+			//}
         }
     }
 
 	return;
 }
 
+void CVirtualConsole::ClearPartBrushes()
+{
+	_ASSERTE(gConEmu.isMainThread());
+	for (UINT br=0; br<sizeofarray(m_PartBrushes); br++) {
+		DeleteObject(m_PartBrushes[br].hBrush);
+	}
+	memset(m_PartBrushes, 0, sizeof(m_PartBrushes));
+}
+
 HBRUSH CVirtualConsole::PartBrush(wchar_t ch, SHORT nBackIdx, SHORT nForeIdx)
 {
-    std::vector<PARTBRUSHES>::iterator iter = m_PartBrushes.begin();
-    while (iter != m_PartBrushes.end()) {
-        if (iter->ch == ch && iter->nBackIdx == nBackIdx && iter->nForeIdx == nForeIdx)
-            return iter->hBrush;
-        iter ++;
+	_ASSERTE(gConEmu.isMainThread());
+    //std::vector<PARTBRUSHES>::iterator iter = m_PartBrushes.begin();
+    //while (iter != m_PartBrushes.end()) {
+	PARTBRUSHES *pbr = m_PartBrushes;
+	for (UINT br=0; pbr->ch && br<MAX_COUNT_PART_BRUSHES; br++, pbr++) {
+		if (pbr->ch == ch && pbr->nBackIdx == nBackIdx && pbr->nForeIdx == nForeIdx) {
+			_ASSERTE(pbr->hBrush);
+            return pbr->hBrush;
+		}
     }
 
     MYRGB clrBack, clrFore, clrMy;
@@ -1627,7 +1728,8 @@ HBRUSH CVirtualConsole::PartBrush(wchar_t ch, SHORT nBackIdx, SHORT nForeIdx)
     pb.ch = ch; pb.nBackIdx = nBackIdx; pb.nForeIdx = nForeIdx;
     pb.hBrush = CreateSolidBrush(clrMy.color);
 
-    m_PartBrushes.push_back(pb);
+    //m_PartBrushes.push_back(pb);
+	*pbr = pb;
     return pb.hBrush;
 }
 
@@ -1645,8 +1747,8 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
     }
     COORD pix;
     
-    pix.X = pos.X * gSet.FontWidth();
-    pix.Y = pos.Y * gSet.FontHeight();
+    pix.X = pos.X * nFontWidth;
+    pix.Y = pos.Y * nFontHeight;
     if (pos.X && ConCharX[CurChar-1])
         pix.X = ConCharX[CurChar-1];
 
@@ -1656,19 +1758,19 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
     if (!gSet.isCursorV)
     {
         if (gSet.isProportional) {
-            rect.left = pix.X; /*Cursor.x * gSet.FontWidth();*/
-            rect.right = pix.X + gSet.FontWidth(); /*(Cursor.x+1) * gSet.FontWidth();*/ //TODO: а ведь позиция следующего символа известна!
+            rect.left = pix.X; /*Cursor.x * nFontWidth;*/
+            rect.right = pix.X + nFontWidth; /*(Cursor.x+1) * nFontWidth;*/ //TODO: а ведь позиция следующего символа известна!
         } else {
-            rect.left = pos.X * gSet.FontWidth();
-            rect.right = (pos.X+1) * gSet.FontWidth();
+            rect.left = pos.X * nFontWidth;
+            rect.right = (pos.X+1) * nFontWidth;
         }
-        //rect.top = (Cursor.y+1) * gSet.FontHeight() - MulDiv(gSet.FontHeight(), cinf.dwSize, 100);
-        rect.bottom = (pos.Y+1) * gSet.FontHeight();
-        rect.top = (pos.Y * gSet.FontHeight()) /*+ 1*/;
+        //rect.top = (Cursor.y+1) * nFontHeight - MulDiv(nFontHeight, cinf.dwSize, 100);
+        rect.bottom = (pos.Y+1) * nFontHeight;
+        rect.top = (pos.Y * nFontHeight) /*+ 1*/;
         //if (cinf.dwSize<50)
         int nHeight = 0;
         if (dwSize) {
-            nHeight = MulDiv(gSet.FontHeight(), dwSize, 100);
+            nHeight = MulDiv(nFontHeight, dwSize, 100);
             if (nHeight < HCURSORHEIGHT) nHeight = HCURSORHEIGHT;
         }
         //if (nHeight < HCURSORHEIGHT) nHeight = HCURSORHEIGHT;
@@ -1677,19 +1779,19 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
     else
     {
         if (gSet.isProportional) {
-            rect.left = pix.X; /*Cursor.x * gSet.FontWidth();*/
-            //rect.right = rect.left/*Cursor.x * gSet.FontWidth()*/ //TODO: а ведь позиция следующего символа известна!
-            //  + klMax(1, MulDiv(gSet.FontWidth(), cinf.dwSize, 100) 
+            rect.left = pix.X; /*Cursor.x * nFontWidth;*/
+            //rect.right = rect.left/*Cursor.x * nFontWidth*/ //TODO: а ведь позиция следующего символа известна!
+            //  + klMax(1, MulDiv(nFontWidth, cinf.dwSize, 100) 
             //  + (cinf.dwSize > 10 ? 1 : 0));
         } else {
-            rect.left = pos.X * gSet.FontWidth();
-            //rect.right = Cursor.x * gSet.FontWidth()
-            //  + klMax(1, MulDiv(gSet.FontWidth(), cinf.dwSize, 100) 
+            rect.left = pos.X * nFontWidth;
+            //rect.right = Cursor.x * nFontWidth
+            //  + klMax(1, MulDiv(nFontWidth, cinf.dwSize, 100) 
             //  + (cinf.dwSize > 10 ? 1 : 0));
         }
-        rect.top = pos.Y * gSet.FontHeight();
+        rect.top = pos.Y * nFontHeight;
         int nR = (gSet.isProportional && ConCharX[CurChar]) // правая граница
-            ? ConCharX[CurChar] : ((pos.X+1) * gSet.FontWidth());
+            ? ConCharX[CurChar] : ((pos.X+1) * nFontWidth);
         //if (cinf.dwSize>=50)
         //  rect.right = nR;
         //else
@@ -1700,10 +1802,10 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
             if (nWidth < VCURSORWIDTH) nWidth = VCURSORWIDTH;
         }
         rect.right = min(nR, (rect.left+nWidth));
-        //rect.right = rect.left/*Cursor.x * gSet.FontWidth()*/ //TODO: а ведь позиция следующего символа известна!
-        //      + klMax(1, MulDiv(gSet.FontWidth(), cinf.dwSize, 100) 
+        //rect.right = rect.left/*Cursor.x * nFontWidth*/ //TODO: а ведь позиция следующего символа известна!
+        //      + klMax(1, MulDiv(nFontWidth, cinf.dwSize, 100) 
         //      + (cinf.dwSize > 10 ? 1 : 0));
-        rect.bottom = (pos.Y+1) * gSet.FontHeight();
+        rect.bottom = (pos.Y+1) * nFontHeight;
     }
     
     
@@ -1741,10 +1843,10 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
 
 
 	//lbDark = Cursor.foreColorNum < 5; // Было раньше
-	BOOL lbIsProgr = isCharProgress(Cursor.ch[0]);
+	//BOOL lbIsProgr = isCharProgress(Cursor.ch[0]);
     
 	BOOL lbDark = FALSE;
-	DWORD clr = (Cursor.ch[0] != ucBox100 && Cursor.ch[0] != ucBox75) ? Cursor.bgColor : Cursor.foreColor;
+	DWORD clr = (Cursor.ch != ucBox100 && Cursor.ch != ucBox75) ? Cursor.bgColor : Cursor.foreColor;
 	BYTE R = (clr & 0xFF);
 	BYTE G = (clr & 0xFF00) >> 8;
 	BYTE B = (clr & 0xFF0000) >> 16;
@@ -1977,9 +2079,11 @@ void CVirtualConsole::Paint(HDC hDc, RECT rcClient)
 				if (mpsz_ConChar && mpn_ConAttr)
 				{
 					int CurChar = csbi.dwCursorPosition.Y * TextWidth + csbi.dwCursorPosition.X;
-					Cursor.ch[1] = 0;
+					//Cursor.ch[1] = 0;
 					//CVirtualConsole* p = this;
-					GetCharAttr(mpsz_ConChar[CurChar], mpn_ConAttr[CurChar], Cursor.ch[0], Cursor.foreColorNum, Cursor.bgColorNum);
+					//GetCharAttr(mpsz_ConChar[CurChar], mpn_ConAttr[CurChar], Cursor.ch[0], Cursor.foreColorNum, Cursor.bgColorNum);
+					Cursor.ch = mpsz_ConChar[CurChar];
+					GetCharAttr(mpn_ConAttr[CurChar], Cursor.foreColorNum, Cursor.bgColorNum);
 					Cursor.foreColor = gSet.Colors[Cursor.foreColorNum];
 					Cursor.bgColor = gSet.Colors[Cursor.bgColorNum];
 				}
@@ -2084,6 +2188,7 @@ void CVirtualConsole::OnFontChanged()
 {
     if (!this) return;
     mb_RequiredForceUpdate = true;
+	//ClearPartBrushes();
 }
 
 void CVirtualConsole::OnConsoleSizeChanged()
@@ -2099,13 +2204,13 @@ void CVirtualConsole::OnConsoleSizeChanged()
 COORD CVirtualConsole::ClientToConsole(LONG x, LONG y)
 {
     TODO("X координаты нам известны, так что можно бы более корректно позицию определять...");
-    _ASSERTE(gSet.FontWidth()!=0 && gSet.FontHeight()!=0);
+    _ASSERTE(nFontWidth!=0 && nFontHeight!=0);
     COORD cr = {0,0};
     // Сначала приблизительный пересчет по размерам шрифта
-    if (gSet.FontHeight())
-        cr.Y = y/gSet.FontHeight();
-    if (gSet.FontWidth())
-        cr.X = x/gSet.FontWidth();
+    if (nFontHeight)
+        cr.Y = y/nFontHeight;
+    if (nFontWidth)
+        cr.X = x/nFontWidth;
     // А теперь, если возможно, уточним X координату
     if (this) {
     	if (ConCharX && cr.Y >= 0 && cr.Y < (int)TextHeight) {
@@ -2130,81 +2235,77 @@ COORD CVirtualConsole::ClientToConsole(LONG x, LONG y)
 }
 
 // На самом деле не только пробелы, но и ucBoxSinglHorz/ucBoxDblVertHorz
-void CVirtualConsole::DistributeSpaces(wchar_t* ConCharLine, WORD* ConAttrLine, DWORD* ConCharXLine, int &j, int &j2, int &end)
+void CVirtualConsole::DistributeSpaces(wchar_t* ConCharLine, WORD* ConAttrLine, DWORD* ConCharXLine, const int j, const int j2, const int end)
 {
-	WORD attr = ConAttrLine[j];
+	//WORD attr = ConAttrLine[j];
+	//wchar_t ch, c;
+	//
+	//if ((c=ConCharLine[j]) == ucSpace || c == ucNoBreakSpace || c == 0)
+	//{
+	//	while(j2 < end && ConAttrLine[j2] == attr
+	//		// также и для &nbsp; и 0x00
+	//		&& ((ch=ConCharLine[j2]) == ucSpace || ch == ucNoBreakSpace || ch == 0))
+	//		j2++;
+	//} else
+	//if ((c=ConCharLine[j]) == ucBoxSinglHorz || c == ucBoxDblVertHorz)
+	//{
+	//	while(j2 < end && ConAttrLine[j2] == attr
+	//		&& ((ch=ConCharLine[j2]) == ucBoxSinglHorz || ch == ucBoxDblVertHorz))
+	//		j2++;
+	//} else
+	//if (isCharProgress(c=ConCharLine[j]))
+	//{
+	//	while(j2 < end && ConAttrLine[j2] == attr && (ch=ConCharLine[j2]) == c)
+	//		j2++;
+	//}
 
-	//if (!doSelect) // doSelect инициализируется только для BufferHeight>0
-	{
-		wchar_t ch, c;
-		
-		if ((c=ConCharLine[j]) == ucSpace || c == ucNoBreakSpace || c == 0)
-		{
-			while(j2 < end && ConAttrLine[j2] == attr
-				// также и для &nbsp; и 0x00
-				&& ((ch=ConCharLine[j2]) == ucSpace || ch == ucNoBreakSpace || ch == 0))
-				j2++;
-		} else
-		if ((c=ConCharLine[j]) == ucBoxSinglHorz || c == ucBoxDblVertHorz)
-		{
-			while(j2 < end && ConAttrLine[j2] == attr
-				&& ((ch=ConCharLine[j2]) == ucBoxSinglHorz || ch == ucBoxDblVertHorz))
-				j2++;
-		} else
-		if (isCharProgress(c=ConCharLine[j]))
-		{
-			while(j2 < end && ConAttrLine[j2] == attr && (ch=ConCharLine[j2]) == c)
-				j2++;
-		}
+	_ASSERTE(j2 > j && j >= 0);
 
-		_ASSERTE(j2 > j && j >= 0);
+	// Ширину каждого "пробела" (или символа рамки) будем считать пропорционально занимаемому ИМИ месту
 
-		// Ширину каждого "пробела" (или символа рамки) будем считать пропорционально занимаемому ИМИ месту
+	if (j2>=(int)TextWidth) { // конец строки
+		ConCharXLine[j2-1] = Width;
+	} else {
+		//2009-09-09 Это некорректно. Ширина шрифта рамки может быть больше знакоместа
+		//int nBordWidth = gSet.BorderFontWidth(); if (!nBordWidth) nBordWidth = nFontWidth;
+		int nBordWidth = nFontWidth;
 
-		if (j2>=(int)TextWidth) { // конец строки
-			ConCharXLine[j2-1] = Width;
+		// Определить координату конца последовательности
+		if (isCharBorderVertical(ConCharLine[j2])) {
+			//2009-09-09 а это соответственно не нужно (пока nFontWidth == nBordWidth)
+			//ConCharXLine[j2-1] = (j2-1) * nFontWidth + nBordWidth; // или тут [j] должен быть?
+			ConCharXLine[j2-1] = j2 * nBordWidth;
 		} else {
-			//2009-09-09 Это некорректно. Ширина шрифта рамки может быть больше знакоместа
-			//int nBordWidth = gSet.BorderFontWidth(); if (!nBordWidth) nBordWidth = gSet.FontWidth();
-			int nBordWidth = gSet.FontWidth();
-
-			// Определить координату конца последовательности
-			if (isCharBorderVertical(ConCharLine[j2])) {
-				//2009-09-09 а это соответственно не нужно (пока gSet.FontWidth() == nBordWidth)
-				//ConCharXLine[j2-1] = (j2-1) * gSet.FontWidth() + nBordWidth; // или тут [j] должен быть?
-				ConCharXLine[j2-1] = j2 * nBordWidth;
+			TODO("Для пропорциональных шрифтов надо делать как-то по другому!");
+			//2009-09-09 а это соответственно не нужно (пока nFontWidth == nBordWidth)
+			//ConCharXLine[j2-1] = (j2-1) * nFontWidth + nBordWidth; // или тут [j] должен быть?
+			if (gSet.isProportional && j > 1) {
+				//2009-12-31 нужно плясать от предыдущего символа!
+				ConCharXLine[j2-1] = ConCharXLine[j-1] + (j2 - j) * nBordWidth;
 			} else {
-				TODO("Для пропорциональных шрифтов надо делать как-то по другому!");
-				//2009-09-09 а это соответственно не нужно (пока gSet.FontWidth() == nBordWidth)
-				//ConCharXLine[j2-1] = (j2-1) * gSet.FontWidth() + nBordWidth; // или тут [j] должен быть?
-				if (gSet.isProportional && j > 1) {
-					//2009-12-31 нужно плясать от предыдущего символа!
-					ConCharXLine[j2-1] = ConCharXLine[j-1] + (j2 - j) * nBordWidth;
-				} else {
-					ConCharXLine[j2-1] = j2 * nBordWidth;
-				}
+				ConCharXLine[j2-1] = j2 * nBordWidth;
 			}
 		}
+	}
 
-		if (j2 > (j + 1))
-		{
-			MCHKHEAP
-			DWORD n1 = (j ? ConCharXLine[j-1] : 0); // j? если j==0 то тут у нас 10 (правая граница 0го символа в строке)
-			DWORD n3 = j2-j; // кол-во символов
-			_ASSERTE(n3>0);
-			DWORD n2 = ConCharXLine[j2-1] - n1; // выделенная на пробелы ширина
-			MCHKHEAP
+	if (j2 > (j + 1))
+	{
+		MCHKHEAP
+		DWORD n1 = (j ? ConCharXLine[j-1] : 0); // j? если j==0 то тут у нас 10 (правая граница 0го символа в строке)
+		DWORD n3 = j2-j; // кол-во символов
+		_ASSERTE(n3>0);
+		DWORD n2 = ConCharXLine[j2-1] - n1; // выделенная на пробелы ширина
+		MCHKHEAP
 
-			for (int k=j, l=1; k<(j2-1); k++, l++) {
-				#ifdef _DEBUG
-				DWORD nn = n1 + (n3 ? klMulDivU32(l, n2, n3) : 0);
-				if (nn != ConCharXLine[k])
-					ConCharXLine[k] = nn;
-				#endif
-				ConCharXLine[k] = n1 + (n3 ? klMulDivU32(l, n2, n3) : 0);
-				//n1 + (n3 ? klMulDivU32(k-j, n2, n3) : 0);
-				MCHKHEAP
-			}
+		for (int k=j, l=1; k<(j2-1); k++, l++) {
+			#ifdef _DEBUG
+			DWORD nn = n1 + (n3 ? klMulDivU32(l, n2, n3) : 0);
+			if (nn != ConCharXLine[k])
+				ConCharXLine[k] = nn;
+			#endif
+			ConCharXLine[k] = n1 + (n3 ? klMulDivU32(l, n2, n3) : 0);
+			//n1 + (n3 ? klMulDivU32(k-j, n2, n3) : 0);
+			MCHKHEAP
 		}
 	}
 }
