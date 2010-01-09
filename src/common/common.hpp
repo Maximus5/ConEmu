@@ -112,7 +112,7 @@ extern wchar_t gszDbgModLabel[6];
 //#define CESIGNAL_BREAK      L"ConEmuC_Break_Signal.%u"
 //#define CECMD_GETSHORTINFO  1
 #define CECMD_GETCONSOLEINFO   2 // было CECMD_GETFULLINFO
-#define CECMD_SETSIZE       3
+//#define CECMD_SETSIZE       3
 #define CECMD_CMDSTARTSTOP  4 // 0 - ServerStart, 1 - ServerStop, 2 - ComspecStart, 3 - ComspecStop
 #define CECMD_GETGUIHWND    5
 //#define CECMD_RECREATE      6

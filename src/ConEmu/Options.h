@@ -25,6 +25,7 @@ private:
 	BYTE mn_LoadFontCharSet; // То что загружено изначально (или уже сохранено в реестр)
 	TEXTMETRIC tm;
     BOOL mb_Name1Ok, mb_Name2Ok;
+	void ResetFontWidth();
 public:
 	bool isAutoRegisterFonts;
 	//wchar_t FontFile[MAX_PATH];
@@ -63,9 +64,9 @@ public:
     /* If Attach to PID requested */
     DWORD nAttachPID; HWND hAttachConWnd;
 
-    DWORD FontSizeX;
-    DWORD FontSizeX2;
-    DWORD FontSizeX3;
+    DWORD FontSizeX;  // ширина основного шрифта
+    DWORD FontSizeX2; // ширина для FixFarBorders (ширина создаваемого шрифта для отрисовки рамок, не путать со знакоместом)
+    DWORD FontSizeX3; // ширина знакоместа при моноширном режиме (не путать с FontSizeX2)
     bool isFullScreen, isHideCaption;
     char isFixFarBorders;
 	bool isMouseSkipActivation, isMouseSkipMoving;
@@ -153,6 +154,7 @@ public:
     HDC     hBgDc;
     HFONT   mh_Font, mh_Font2;
     WORD    CharWidth[0x10000]; //, Font2Width[0x10000];
+	ABC     CharABC[0x10000];
 
     HWND hMain, hExt, hColors, hInfo;
 

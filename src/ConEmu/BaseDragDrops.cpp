@@ -1,4 +1,6 @@
+
 //#include "StdAfx.h"
+#include <shlobj.h>
 #include ".\basedragdrops.h"
 #include "resource.h"
 #include "header.h"
@@ -271,10 +273,11 @@ HRESULT CreateDropSource(IDropSource **ppDropSource, CBaseDropTarget* pCallback)
 CDataObject::CDataObject(FORMATETC *fmtetc, STGMEDIUM *stgmed, int count) 
 {
 	m_lRefCount  = 1;
+	m_nMaxNumFormats = 32 + max(32,count);
 	m_nNumFormats = count;
 	
-	m_pFormatEtc  = new FORMATETC[count];
-	m_pStgMedium  = new STGMEDIUM[count];
+	m_pFormatEtc  = new FORMATETC[m_nMaxNumFormats];
+	m_pStgMedium  = new STGMEDIUM[m_nMaxNumFormats];
 
 	for(int i = 0; i < count; i++)
 	{
@@ -288,6 +291,8 @@ CDataObject::CDataObject(FORMATETC *fmtetc, STGMEDIUM *stgmed, int count)
 //
 CDataObject::~CDataObject()
 {
+	WARNING("Освобождать данные в m_pStgMedium.hGlobal, и т.п.?");
+
 	// cleanup
 	if(m_pFormatEtc) delete[] m_pFormatEtc;
 	if(m_pStgMedium) delete[] m_pStgMedium;
@@ -451,7 +456,36 @@ HRESULT __stdcall CDataObject::GetCanonicalFormatEtc (FORMATETC *pFormatEct, FOR
 //
 HRESULT __stdcall CDataObject::SetData (FORMATETC *pFormatEtc, STGMEDIUM *pMedium,  BOOL fRelease)
 {
-	return E_NOTIMPL;
+	_ASSERTE(fRelease);
+
+	// Если нужно - увеличим размерность массивов
+	if (m_nNumFormats >= m_nMaxNumFormats) {
+		_ASSERTE(m_nNumFormats == m_nMaxNumFormats);
+		LONG nNewMaxNumFormats = m_nNumFormats + 32;
+		FORMATETC *pNewFormatEtc = new FORMATETC[nNewMaxNumFormats];
+		STGMEDIUM *pNewStgMedium = new STGMEDIUM[nNewMaxNumFormats];
+		if (!pNewFormatEtc || !pNewStgMedium) {
+			if(pNewFormatEtc) delete[] pNewFormatEtc;
+			if(pNewStgMedium) delete[] pNewStgMedium;
+			return E_OUTOFMEMORY;
+		}
+		for (LONG i = 0; i < m_nNumFormats; i++) {
+			pNewFormatEtc[i] = m_pFormatEtc[i];
+			pNewStgMedium[i] = m_pStgMedium[i];
+		}
+
+		m_nMaxNumFormats = nNewMaxNumFormats;
+		if(m_pFormatEtc) delete[] m_pFormatEtc;
+		m_pFormatEtc = pNewFormatEtc;
+		if(m_pStgMedium) delete[] m_pStgMedium;
+		m_pStgMedium = pNewStgMedium;
+	}
+
+	m_pFormatEtc[m_nNumFormats] = *pFormatEtc;
+	m_pStgMedium[m_nNumFormats] = *pMedium;
+	m_nNumFormats++;
+
+	return S_OK;
 }
 
 //

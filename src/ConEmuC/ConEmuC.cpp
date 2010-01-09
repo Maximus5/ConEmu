@@ -2425,7 +2425,7 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 
             lbRc = TRUE;
         } break;
-        case CECMD_SETSIZE:
+        //case CECMD_SETSIZE:
 		case CECMD_SETSIZESYNC:
         case CECMD_CMDSTARTED:
         case CECMD_CMDFINISHED:
@@ -2489,7 +2489,7 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 				}
 
                 srv.nTopVisibleLine = nNewTopVisible;
-                SetConsoleSize(nBufferHeight, crNewSize, rNewRect, ":CECMD_SETSIZE");
+                SetConsoleSize(nBufferHeight, crNewSize, rNewRect, ":CECMD_SETSIZESYNC");
 
 				if (in.hdr.nCmd == CECMD_SETSIZESYNC) {
 					CESERVER_REQ *pPlgIn = NULL, *pPlgOut = NULL;

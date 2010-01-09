@@ -8,9 +8,8 @@
 #define COUNTER_REFRESH 5000
 #define MAX_CMD_HISTORY 100
 
-#ifdef _DEBUG
-#define RASTER_FONTS_NAME L"@Raster fonts"
-#endif
+#define RASTER_FONTS_NAME L"Raster Fonts"
+const SIZE szRasterSizes[] = {{16,8},{6,9},{8,9},{5,12},{7,12},{8,12},{16,12},{12,16},{10,18}};
 
 #define TEST_FONT_WIDTH_STRING_EN L"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 #define TEST_FONT_WIDTH_STRING_RU L"јЅ¬√ƒ≈∆«»… ЋћЌќѕ–—“”‘’÷„ЎўЏџ№Ёёя"
@@ -19,7 +18,7 @@ const u8 chSetsNums[] = {0, 178, 186, 136, 1, 238, 134, 161, 177, 129, 130, 77, 
 const char *ChSets[] = {"ANSI", "Arabic", "Baltic", "Chinese Big 5", "Default", "East Europe",
 		"GB 2312", "Greek", "Hebrew", "Hangul", "Johab", "Mac", "OEM", "Russian", "Shiftjis",
 		"Symbol", "Thai", "Turkish", "Vietnamese"};
-int upToFontHeight=0;
+//int upToFontHeight=0;
 HWND ghOpWnd=NULL;
 
 #ifdef _DEBUG
@@ -88,13 +87,13 @@ CSettings::CSettings()
     memset(mn_FPS, 0, sizeof(mn_FPS)); mn_FPS_CUR_FRAME = 0;
     memset(mn_CounterTick, 0, sizeof(*mn_CounterTick)*(tPerfInterval-gbPerformance));
     hBgBitmap = NULL; bgBmp = MakeCoord(0,0); hBgDc = NULL; mh_Font = NULL; mh_Font2 = NULL;
-    memset(CharWidth, 0, sizeof(CharWidth));
+    ResetFontWidth();
     nAttachPID = 0; hAttachConWnd = NULL;
     memset(&ourSI, 0, sizeof(ourSI));
     ourSI.cb = sizeof(ourSI);
     try {
         GetStartupInfoW(&ourSI);
-    } catch(...) {
+    }catch(...){
         memset(&ourSI, 0, sizeof(ourSI));
     }
 	mn_LastChangingFontCtrlId = 0;
@@ -282,6 +281,7 @@ void CSettings::LoadSettings()
     DWORD Quality = LogFont.lfQuality;
     //gConEmu.WindowMode = rMaximized;
     mn_LoadFontCharSet = LogFont.lfCharSet;
+	mb_CharSetWasSet = FALSE;
     bool isBold = (LogFont.lfWeight>=FW_BOLD), isItalic = (LogFont.lfItalic!=FALSE);
     
 //------------------------------------------------------------------------
@@ -329,7 +329,7 @@ void CSettings::LoadSettings()
         reg.Load(L"FontSizeX", FontSizeX);
         reg.Load(L"FontSizeX3", FontSizeX3);
         reg.Load(L"FontSizeX2", FontSizeX2);
-        reg.Load(L"FontCharSet", mn_LoadFontCharSet);
+        reg.Load(L"FontCharSet", mn_LoadFontCharSet); mb_CharSetWasSet = FALSE;
         reg.Load(L"Anti-aliasing", Quality);
 
 		reg.Load(L"ConsoleFontName", ConsoleFont.lfFaceName);
@@ -685,7 +685,7 @@ BOOL CSettings::SaveSettings()
             reg.Save(L"FontSizeX", FontSizeX);
             reg.Save(L"FontSizeX2", FontSizeX2);
             reg.Save(L"FontSizeX3", FontSizeX3);
-            reg.Save(L"FontCharSet", mn_LoadFontCharSet = LogFont.lfCharSet);
+            reg.Save(L"FontCharSet", mn_LoadFontCharSet = LogFont.lfCharSet); mb_CharSetWasSet = FALSE;
             reg.Save(L"Anti-aliasing", LogFont.lfQuality);
             reg.Save(L"WindowMode", isFullScreen ? rFullScreen : gConEmu.isZoomed() ? rMaximized : rNormal);
             reg.Save(L"HideCaption", isHideCaption);
@@ -834,15 +834,16 @@ DWORD CSettings::EnumFontsThread(LPVOID apArg)
 {
 	HDC hdc = GetDC(NULL);
 	int aFontCount[] = { 0, 0, 0 };
+	wchar_t szName[MAX_PATH];
+
 	EnumFontFamilies(hdc, (LPCTSTR) NULL, (FONTENUMPROC) EnumFamCallBack, (LPARAM) aFontCount);
 	DeleteDC(hdc);
 
-	#ifdef _DEBUG
-	SendDlgItemMessage(gSet.hMain, tFontFace, CB_INSERTSTRING, 0, (LPARAM)RASTER_FONTS_NAME);
-	#endif
-	
+	for (int sz=0; sz<sizeofarray(szRasterSizes); sz++) {
+		wsprintf(szName, L"[%s %ix%i]", RASTER_FONTS_NAME, szRasterSizes[sz].cx, szRasterSizes[sz].cy);
+		SendDlgItemMessage(gSet.hMain, tFontFace, CB_INSERTSTRING, sz, (LPARAM)szName);
+	}
 
-	wchar_t szName[MAX_PATH];
 	GetDlgItemText(gSet.hMain, tFontFace, szName, MAX_PATH);
 	gSet.SelectString(gSet.hMain, tFontFace, szName);
 	GetDlgItemText(gSet.hMain, tFontFace2, szName, MAX_PATH);
@@ -966,7 +967,7 @@ LRESULT CSettings::OnInitDialog_Main()
 		}
 
 		wsprintf(temp, L"%i", LogFont.lfHeight);
-		upToFontHeight = LogFont.lfHeight;
+		//upToFontHeight = LogFont.lfHeight;
 		SelectStringExact(hMain, tFontSizeY, temp);
 
 		wsprintf(temp, L"%i", FontSizeX);
@@ -1308,13 +1309,6 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
     case rStandardAA:
     case rCTAA:
 		PostMessage(hMain, gSet.mn_MsgRecreateFont, wParam, 0);
-		/*
-        LogFont.lfQuality = wParam == rNoneAA ? NONANTIALIASED_QUALITY : wParam == rStandardAA ? ANTIALIASED_QUALITY : CLEARTYPE_NATURAL_QUALITY;
-        DeleteObject(mh_Font);
-        mh_Font = CreateFontIndirectMy(&LogFont);
-        if (FontSizeX) LogFont.lfWidth = FontSizeX;
-        gConEmu.Update(true);
-		*/
         break;
 
     case bSaveSettings:
@@ -1543,12 +1537,14 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
     case cbNonProportional:
         isProportional = !isProportional;
         mb_IgnoreEditChanged = TRUE;
+		ResetFontWidth();
         gConEmu.Update(true);
         mb_IgnoreEditChanged = FALSE;
         break;
 
     case cbForceMonospace:
         isForceMonospace = !isForceMonospace;
+		ResetFontWidth();
 		RecreateFont(tFontSizeX3);
         gConEmu.Update(true);
         break;
@@ -2558,7 +2554,7 @@ void CSettings::RecreateFont(WORD wFromID)
 
 	LF.lfCharSet = mn_LoadFontCharSet;
 	if (mb_CharSetWasSet) {
-		mb_CharSetWasSet = FALSE;
+		//mb_CharSetWasSet = FALSE;
 		int newCharSet = SendDlgItemMessage(hMain, tFontCharset, CB_GETCURSEL, 0, 0);
 		if (newCharSet != CB_ERR && newCharSet >= 0 && newCharSet < (int)countof(chSetsNums))
 			LF.lfCharSet = chSetsNums[newCharSet];
@@ -2609,25 +2605,44 @@ void CSettings::RecreateFont(WORD wFromID)
 
 HFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 {
-    memset(CharWidth, 0, sizeof(*CharWidth)*0x10000);
+    ResetFontWidth();
 
 	//lfOutPrecision = OUT_RASTER_PRECIS, 
 
     HFONT hFont = NULL;
-	//#ifdef _DEBUG
-	//if (wcscmp(inFont->lfFaceName, RASTER_FONTS_NAME)) {
-	//	hFont = CreateFontIndirect(inFont);
-	//} else {
-	//	LOGFONT lfRast = *inFont;
-	//	lfRast.lfFaceName[0] = 0;
-	//	lfRast.lfOutPrecision = OUT_RASTER_PRECIS;
-	//	lfRast.lfQuality = PROOF_QUALITY;
-	//	lfRast.lfPitchAndFamily = FIXED_PITCH | FF_MODERN;
-	//	hFont = CreateFontIndirect(&lfRast);
-	//}
-	//#else
-	hFont = CreateFontIndirect(inFont);
-	//#endif
+	static int nRastNameLen = lstrlen(RASTER_FONTS_NAME);
+	int nRastHeight = 0, nRastWidth = 0;
+	bool bRasterFont = false;
+	LOGFONT tmpFont = *inFont;
+	if (inFont->lfFaceName[0] == L'[' && wcsncmp(inFont->lfFaceName+1, RASTER_FONTS_NAME, nRastNameLen) == 0) {
+		wchar_t *pszEnd = NULL;
+		wchar_t *pszSize = inFont->lfFaceName + nRastNameLen + 2;
+		nRastWidth = wcstol(pszSize, &pszEnd, 10);
+		if (nRastWidth && pszEnd && *pszEnd == L'x') {
+			pszSize = pszEnd + 1;
+			nRastHeight = wcstol(pszSize, &pszEnd, 10);
+			if (nRastHeight) {
+				bRasterFont = true;
+				inFont->lfHeight = nRastHeight;
+				inFont->lfWidth = nRastWidth;
+				FontSizeX = FontSizeX3 = nRastWidth;
+
+				if (ghOpWnd && hMain) {
+					wchar_t temp[32];
+					wsprintf(temp, L"%i", nRastHeight);
+					SelectStringExact(hMain, tFontSizeY, temp);
+
+					wsprintf(temp, L"%i", nRastWidth);
+					SelectStringExact(hMain, tFontSizeX, temp);
+					SelectStringExact(hMain, tFontSizeX3, temp);
+				}
+			}
+		}
+		inFont->lfCharSet = OEM_CHARSET;
+		tmpFont = *inFont;
+		lstrcpy(tmpFont.lfFaceName, L"Terminal");
+	}
+	hFont = CreateFontIndirect(&tmpFont);
 
     if (hFont) {
         HDC hScreenDC = GetDC(0);
@@ -2640,6 +2655,10 @@ HFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
             ZeroStruct(tm);
             BOOL lbTM = GetTextMetrics(hDC, &tm);
 			_ASSERTE(lbTM);
+			if (bRasterFont) {
+				tm.tmHeight = nRastHeight;
+				tm.tmAveCharWidth = tm.tmMaxCharWidth = nRastWidth;
+			}
 
 			// у Arial'а например MaxWidth слишком большой (в два и более раз больше ¬џ—ќ“џ шрифта)
 			bool bAlmostMonospace = false;
@@ -2689,6 +2708,13 @@ HFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 				}
 			}
 			
+			// если ширина шрифта стала больше ширины FixFarBorders - сбросить его в 0
+			if (FontSizeX2 && (LONG)FontSizeX2 < inFont->lfWidth) {
+				FontSizeX2 = 0;
+				if (ghOpWnd && hMain)
+					SelectStringExact(hMain, tFontSizeX2, L"0");
+			}
+
 			if (ghOpWnd) {
 				// устанавливать только при листании шрифта в настройке
 				// при кликах по самому флажку "Monospace" шрифт не пересоздаетс€ (CreateFont... не вызываетс€)
@@ -3246,4 +3272,10 @@ void CSettings::UpdateConsoleMode(DWORD nMode)
 bool CSettings::isCharBorder(wchar_t inChar)
 {
 	return mpc_FixFarBorderValues[(WORD)inChar];
+}
+
+void CSettings::ResetFontWidth()
+{
+	memset(CharWidth, 0, sizeof(*CharWidth)*0x10000);
+	memset(CharABC, 0, sizeof(*CharABC)*0x10000);
 }

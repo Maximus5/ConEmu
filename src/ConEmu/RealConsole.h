@@ -12,12 +12,14 @@
 #define CES_PROGRAMS2 0xFF
 
 #define CES_FILEPANEL      0x0001
-#define CES_TEMPPANEL      0x0002
-#define CES_PLUGINPANEL    0x0004
+#define CES_FARPANELS      0x000F // на будущее, должен содержать все возможные флаги возможных панелей
+//#define CES_TEMPPANEL      0x0002
+//#define CES_PLUGINPANEL    0x0004
 #define CES_EDITOR         0x0010
 #define CES_VIEWER         0x0020
 #define CES_COPYING        0x0040
 #define CES_MOVING         0x0080
+#define CES_NOTPANELFLAGS  0xFFF0
 #define CES_FARFLAGS       0xFFFF
 #define CES_MAYBEPANEL   0x010000
 #define CES_WASPROGRESS  0x020000
@@ -125,10 +127,9 @@ public:
     BOOL PreInit(BOOL abCreateBuffers=TRUE);
     void DumpConsole(HANDLE ahFile);
 
-    BOOL SetConsoleSize(/*COORD size,*/ USHORT sizeX, USHORT sizeY, USHORT sizeBuffer=0, DWORD anCmdID=CECMD_SETSIZE);
+    BOOL SetConsoleSize(USHORT sizeX, USHORT sizeY, USHORT sizeBuffer=0, DWORD anCmdID=CECMD_SETSIZESYNC);
 private:
-	BOOL SetConsoleSizeSrv(/*COORD size,*/ USHORT sizeX, USHORT sizeY, USHORT sizeBuffer, DWORD anCmdID=CECMD_SETSIZE);
-	//BOOL SetConsoleSizePlugin(/*COORD size,*/ USHORT sizeX, USHORT sizeY, USHORT sizeBuffer, DWORD anCmdID=CECMD_SETSIZE);
+	BOOL SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffer, DWORD anCmdID=CECMD_SETSIZESYNC);
 private:
     //void SendConsoleEvent(INPUT_RECORD* piRec);
     DWORD mn_FlushIn, mn_FlushOut;
@@ -222,12 +223,14 @@ protected:
     WCHAR Title[MAX_TITLE_SIZE+1], TitleCmp[MAX_TITLE_SIZE+1];
     // ј здесь содержитс€ то, что отображаетс€ в ConEmu (может быть добавлено " (Admin)")
     WCHAR TitleFull[MAX_TITLE_SIZE+96];
+	// ѕринудительно дернуть OnTitleChanged, например, при изменении процентов в консоли
+	BOOL mb_ForceTitleChanged;
     // «десь сохран€етс€ заголовок окна (с панел€ми), когда FAR фокус с панелей уходит (переходит в редактор...).
     WCHAR ms_PanelTitle[CONEMUTABMAX];
     // ѕроцентики
     short mn_Progress, mn_PreWarningProgress, mn_ConsoleProgress;
-    void CheckProgressInTitle();
-    void CheckProgressInConsole(const wchar_t* pszCurLine);
+    short CheckProgressInTitle();
+    short CheckProgressInConsole(const wchar_t* pszCurLine);
 
     BOOL AttachPID(DWORD dwPID);
     BOOL StartProcess();
@@ -241,7 +244,7 @@ protected:
     //static DWORD WINAPI InputThread(LPVOID lpParameter);
     //HANDLE mh_InputThread; DWORD mn_InputThreadID;
     
-    HANDLE mh_TermEvent, mh_MonitorThreadEvent; //, mh_Sync2WindowEvent;
+    HANDLE mh_TermEvent, mh_MonitorThreadEvent, mh_ApplyFinished;
     BOOL mb_FullRetrieveNeeded; //, mb_Detached;
 	RConStartArgs m_Args;
     //wchar_t* ms_SpecialCmd;
@@ -264,9 +267,10 @@ private:
         USHORT nTopVisibleLine; // может отличатьс€ от m_sbi.srWindow.Top, если прокрутка заблокирована
         wchar_t *pConChar;
         WORD  *pConAttr;
+		CHAR_INFO *pCopy;
         int nTextWidth, nTextHeight, nBufferHeight;
         int nChange2TextWidth, nChange2TextHeight;
-        BOOL bBufferHeight; // TRUE, tckb tcnm ghjrhenrf
+        BOOL bBufferHeight; // TRUE, если есть прокрутка
         //DWORD nPacketIdx;
         DWORD_PTR dwKeybLayout;
         BOOL bRBtnDrag; // в консоль посылаетс€ драг правой кнопкой (выделение в FAR)
@@ -282,7 +286,9 @@ private:
     DWORD mn_FarPID, mn_FarInputTID, mn_LastSetForegroundPID;
     //
     ConEmuTab* mp_tabs;
-    int mn_tabsCount, mn_ActiveTab;
+	MSection   msc_Tabs;
+    int mn_tabsCount, mn_MaxTabs, mn_ActiveTab;
+	BOOL mb_TabsWasChanged;
     void CheckPanelTitle();
     //
     //void ProcessAdd(DWORD addPID);
@@ -319,7 +325,7 @@ private:
     BOOL RecreateProcessStart();
     // ѕрием и обработка пакетов
     //MSection csPKT; //DWORD ncsTPKT;
-    DWORD mn_LastProcessedPkt; //HANDLE mh_PacketArrived;
+    //DWORD mn_LastProcessedPkt; //HANDLE mh_PacketArrived;
     //std::vector<CESERVER_REQ*> m_Packets;
     //CESERVER_REQ* m_PacketQueue[(MAX_SERVER_THREADS+1)*MAX_THREAD_PACKETS];
     //void PushPacket(CESERVER_REQ* pPkt);
@@ -353,7 +359,7 @@ private:
 	HWND hPictureView; BOOL mb_PicViewWasHidden;
 	// координаты панелей в символах
 	RECT mr_LeftPanel, mr_RightPanel; BOOL mb_LeftPanel, mb_RightPanel;
-	void FindPanels(BOOL abResetOnly=FALSE);
+	void FindPanels();
 	// 
 	BOOL mb_MouseButtonDown;
 	//

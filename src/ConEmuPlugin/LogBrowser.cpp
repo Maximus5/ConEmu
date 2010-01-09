@@ -59,7 +59,7 @@ void ShowConPacket(CESERVER_REQ* pReq)
 	switch (pReq->hdr.nCmd) {
 		//case CECMD_GETSHORTINFO: pszEnd = L"CECMD_GETSHORTINFO"; break;
 		//case CECMD_GETFULLINFO: pszEnd = L"CECMD_GETFULLINFO"; break;
-		case CECMD_SETSIZE: pszEnd = L"CECMD_SETSIZE"; break;
+		case CECMD_SETSIZESYNC: pszEnd = L"CECMD_SETSIZESYNC"; break;
 		case CECMD_CMDSTARTSTOP: pszEnd = L"CECMD_CMDSTARTSTOP"; break;
 		case CECMD_GETGUIHWND: pszEnd = L"CECMD_GETGUIHWND"; break;
 //		case CECMD_RECREATE: pszEnd = L"CECMD_RECREATE"; break;
@@ -221,7 +221,7 @@ void ShowConDump(wchar_t* pszText)
 	BOOL lbNeedRedraw = TRUE;
 	HANDLE hO = GetStdHandle(STD_OUTPUT_HANDLE);
 	//CONSOLE_SCREEN_BUFFER_INFO sbi = {{0,0}};
-	COORD cr, crSize;
+	COORD cr, crSize, crCursor;
 	WCHAR* pszBuffers[3];
 	WORD*  pnBuffers[3];
 	WCHAR* pszDumpTitle, *pszRN, *pszSize, *pszTitle = NULL;
@@ -240,13 +240,30 @@ void ShowConDump(wchar_t* pszText)
 	pszBuffers[0] = pszRN + 2;
 
 	pszSize += 6;
-	if ((pszRN = wcschr(pszSize, L'x'))==NULL) return;
-	*pszRN = 0;
+	//if ((pszRN = wcschr(pszSize, L'x'))==NULL) return;
+	//*pszRN = 0;
 	crSize.X = (SHORT)wcstol(pszSize, &pszRN, 10);
+	if (!pszRN || *pszRN!=L'x') return;
 	pszSize = pszRN + 1;
-	if ((pszRN = wcschr(pszSize, L'\r'))==NULL) return;
-	*pszRN = 0;
+	//if ((pszRN = wcschr(pszSize, L'\r'))==NULL) return;
+	//*pszRN = 0;
 	crSize.Y = (SHORT)wcstol(pszSize, &pszRN, 10);
+	if (!pszRN || (*pszRN!=L' ' && *pszRN!=L'\r')) return;
+	pszSize = pszRN;
+	crCursor.X = 0; crCursor.Y = crSize.Y-1;
+	if (*pszSize == L' ') {
+		while (*pszSize == L' ') pszSize++;
+		if (wcsncmp(pszSize, L"Cursor: ", 8)==0) {
+			pszSize += 8;
+			cr.X = (SHORT)wcstol(pszSize, &pszRN, 10);
+			if (!pszRN || *pszRN!=L'x') return;
+			pszSize = pszRN + 1;
+			cr.Y = (SHORT)wcstol(pszSize, &pszRN, 10);
+			if (cr.X>0 && cr.Y>0) {
+				crCursor.X = cr.X - 1; crCursor.Y = cr.Y - 1;
+			}
+		}
+	}
 
 	pszTitle = (WCHAR*)calloc(lstrlenW(pszDumpTitle)+200,2);
 
@@ -321,8 +338,8 @@ void ShowConDump(wchar_t* pszText)
 						pszSrc += crSize.X; pnSrc += crSize.X; cr.Y++;
 					}
 				}
-				cr.Y = nMaxY-1;
-				SetConsoleCursorPosition(hO, cr);
+				//cr.Y = nMaxY-1;
+				SetConsoleCursorPosition(hO, crCursor);
 			}
 		}
 

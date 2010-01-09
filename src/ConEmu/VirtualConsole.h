@@ -122,6 +122,7 @@ protected:
 	bool UpdatePrepare(bool isForce, HDC *ahDc, MSectionLock *pSDC);
 	void UpdateText(bool isForce); //, bool updateText, bool updateCursor);
 	WORD CharWidth(TCHAR ch);
+	void CharABC(TCHAR ch, ABC *abc);
 	bool CheckChangedTextAttr();
 	void ParseLine(int row, TCHAR *ConCharLine, WORD *ConAttrLine);
 	HANDLE mh_Heap;
@@ -131,6 +132,8 @@ protected:
 	MSection csCON; /*DWORD ncsTCON;*/
 	int mn_BackColorIdx; //==0
 	void Box(LPCTSTR szText);
+	static wchar_t mc_Uni2Oem[0x10000];
+	wchar_t Uni2Oem(wchar_t ch);
 	//BOOL RetrieveConsoleInfo(BOOL bShortOnly);
 	typedef struct tag_PARTBRUSHES {
 		wchar_t ch; // 0x2591 0x2592 0x2593 0x2588 - по увеличению плотности
@@ -145,6 +148,7 @@ protected:
 	//
 	void DistributeSpaces(wchar_t* ConCharLine, WORD* ConAttrLine, DWORD* ConCharXLine, const int j, const int j2, const int end);
 	LONG nFontHeight, nFontWidth;
+	BYTE nFontCharSet;
 };
 
 #include <pshpack1.h>

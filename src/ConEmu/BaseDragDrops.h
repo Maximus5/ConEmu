@@ -104,7 +104,7 @@ private:
 	FORMATETC *m_pFormatEtc;
 	STGMEDIUM *m_pStgMedium;
 	LONG	   m_nNumFormats;
-
+	LONG       m_nMaxNumFormats;
 };
 
 

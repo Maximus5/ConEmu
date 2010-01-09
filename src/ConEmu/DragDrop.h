@@ -17,23 +17,6 @@ typedef struct tag_DragImageBits {
 
 class CDragDrop :public CBaseDropTarget
 {
-protected:
-	typedef struct tag_CEDragSource {
-		BOOL    bInDrag;
-		CDragDrop* pDrag;
-		DWORD   nTID;
-		HANDLE  hReady;
-		HANDLE  hThread;
-		HWND    hWnd;
-	} CEDragSource;
-	std::vector<CEDragSource*> m_Sources;
-	BOOL mb_DragStarting;
-	static LRESULT WINAPI DragProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
-	static DWORD WINAPI DragThread(LPVOID lpParameter);
-	CEDragSource* InitialCreateSource();
-	CEDragSource* GetFreeSource();
-	wchar_t ms_SourceClass[32];
-	ATOM mh_SourceClass;
 public:
 	CDragDrop();
 	BOOL Init();
@@ -48,11 +31,9 @@ public:
 	ForwardedPanelInfo *m_pfpi;
 	HRESULT CreateLink(LPCTSTR lpszPathObj, LPCTSTR lpszPathLink, LPCTSTR lpszDesc);
 	BOOL InDragDrop();
-	BOOL IsPending();
-	BOOL IsDragStarting();
 	virtual void DragFeedBack(DWORD dwEffect);
-	void Terminate();
-	BOOL ForwardMessage(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
+	BOOL IsDragStarting() {return FALSE;};
+	BOOL ForwardMessage(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam) { return FALSE;};
 protected:
 	BOOL mb_DragDropRegistered;
 	void RetrieveDragToInfo(IDataObject * pDataObject);
@@ -98,12 +79,12 @@ protected:
 	DWORD mn_ExtractIconsTID;
 	HANDLE mh_ExtractIcons;
 	//
-	//typedef struct _DragThreadArg {
-	//	CDragDrop   *pThis;
-	//	IDataObject *pDataObject;
-	//	IDropSource *pDropSource;
-	//	DWORD        dwAllowedEffects;
-	//} DragThreadArg;
-	//static DWORD WINAPI DragOpThreadProc(LPVOID lpParameter);
-	//HANDLE mh_DragThread; DWORD mn_DragThreadId;
+	typedef struct _DragThreadArg {
+		CDragDrop   *pThis;
+		IDataObject *pDataObject;
+		IDropSource *pDropSource;
+		DWORD        dwAllowedEffects;
+	} DragThreadArg;
+	static DWORD WINAPI DragOpThreadProc(LPVOID lpParameter);
+	HANDLE mh_DragThread; DWORD mn_DragThreadId;
 };

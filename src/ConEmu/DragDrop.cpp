@@ -1,13 +1,9 @@
 
-//#define SHOWDROPMSG
 #define SHOWDEBUGSTR
-
-#define DRAGTHREAD
 
 #include <shlobj.h>
 #include "Header.h"
 #include "ScreenDump.h"
-#include "..\common\ConEmuCheck.h"
 
 #define MAX_OVERLAY_WIDTH    300
 #define MAX_OVERLAY_HEIGHT   300
@@ -17,13 +13,9 @@
 #define DEBUGSTROVL(s) //DEBUGSTR(s)
 #define DEBUGSTRBACK(s) //DEBUGSTR(s)
 
-#define MSG_STARTDRAG (WM_APP+10)
-
 
 CDragDrop::CDragDrop()
 {
-	mh_SourceClass = NULL;
-	mh_SourceClass = NULL;
 	//m_hWnd = hWnd;
 	mb_DragDropRegistered = FALSE;
 	m_lRefCount = 1;
@@ -37,8 +29,7 @@ CDragDrop::CDragDrop()
 	mb_DragWithinNow = FALSE;
 	mn_ExtractIconsTID = 0;
 	mh_ExtractIcons = NULL;
-	mb_DragStarting = FALSE;
-	//mh_DragThread = NULL; mn_DragThreadId = 0;
+	mh_DragThread = NULL; mn_DragThreadId = 0;
 	
 	InitializeCriticalSection(&m_CrThreads);
 }
@@ -71,10 +62,6 @@ BOOL CDragDrop::Init()
 		DisplayLastError(szError);
 	}
 
-	// Инициалиция для Drag
-	InitialCreateSource();
-
-	// Инициализация окна для Drop
 	hr = RegisterDragDrop(ghWnd, this);
 	if (hr != S_OK) {
 		DisplayLastError(L"Can't register Drop target", hr);
@@ -130,13 +117,11 @@ CDragDrop::~CDragDrop()
 		LeaveCriticalSection(&m_CrThreads);
 	}
 
-	//// Если драг нормально завершить не удалось
-	//if (mh_DragThread && mn_DragThreadId) {
-	//	TerminateThread(mh_DragThread, 100);
-	//}
-	//SafeCloseHandle(mh_DragThread); mn_DragThreadId = 0;
-
-	Terminate();
+	// Если драг нормально завершить не удалось
+	if (mh_DragThread && mn_DragThreadId) {
+		TerminateThread(mh_DragThread, 100);
+	}
+	SafeCloseHandle(mh_DragThread); mn_DragThreadId = 0;
 
 	if (m_pfpi) free(m_pfpi); m_pfpi=NULL;
 	if (mp_DesktopID) { CoTaskMemFree(mp_DesktopID); mp_DesktopID = NULL; }
@@ -155,10 +140,10 @@ void CDragDrop::Drag(BOOL abClickNeed, COORD crMouseDC)
 		goto wrap;
 	}
 
-	//if (mh_DragThread) {
-	//	gConEmu.DebugStep(L"DnD: Drag thread already created!");
-	//	goto wrap;
-	//}
+	if (mh_DragThread) {
+		gConEmu.DebugStep(L"DnD: Drag thread already created!");
+		goto wrap;
+	}
 
 	_ASSERTE(!gConEmu.isPictureView());
 
@@ -428,26 +413,14 @@ void CDragDrop::Drag(BOOL abClickNeed, COORD crMouseDC)
 						//	// Собственно запуск драга
 						//	mh_DragThread = CreateThread(NULL, 0, CDragDrop::DragOpThreadProc, pArg, 0, &mn_DragThreadId);
 						//}
+						
+						DWORD dwResult = 0, dwEffect = 0;
+						dwResult = DoDragDrop(mp_DataObject, pDropSource, dwAllowedEffects, &dwEffect);
 
-						#ifdef DRAGTHREAD
-						CEDragSource *pds = GetFreeSource();
-						if (pds && pds->hWnd) {
-							pds->bInDrag = TRUE;
-							PostMessage(pds->hWnd, MSG_STARTDRAG, dwAllowedEffects, (LPARAM)pDropSource);
-						} else {
-							if (pds && !pds->hWnd) {
-								MBoxA(L"Drag failed!\nDrag thread was created, but hWnd is NULL");
-							}
-						#else
-							DWORD dwResult = 0, dwEffect = 0;
-							dwResult = DoDragDrop(mp_DataObject, pDropSource, dwAllowedEffects, &dwEffect);
-						#endif
+						MCHKHEAP
 
-							mp_DataObject->Release(); mp_DataObject = NULL;
-							pDropSource->Release();
-						#ifdef DRAGTHREAD
-						}
-						#endif
+						mp_DataObject->Release(); mp_DataObject = NULL;
+						pDropSource->Release();		
 						////isLBDown=false; -- а ReleaseCapture кто будет делать?
 					}
 				//}
@@ -464,42 +437,42 @@ wrap:
 	return;
 }
 
-//DWORD CDragDrop::DragOpThreadProc(LPVOID lpParameter)
-//{
-//	DragThreadArg *pArg = (DragThreadArg*)lpParameter;
-//	_ASSERTE(pArg);
-//	if (!pArg) {
-//		DisplayLastError(L"DragThreadArg is NULL", -1);
-//		return 0;
-//	}
-//
-//	DWORD dwResult = 0, dwEffect = 0;
-//		
-//    HRESULT hr = S_OK;
-//    hr = OleInitialize (NULL); // как бы попробовать включать Ole только во время драга. кажется что из-за него глючит переключалка языка
-//
-//	dwResult = DoDragDrop(pArg->pDataObject, pArg->pDropSource, pArg->dwAllowedEffects, &dwEffect);
-//
-//	MCHKHEAP
-//
-//	if (pArg->pThis->mp_DataObject == pArg->pDataObject) {
-//		pArg->pThis->mp_DataObject = NULL;
-//	}
-//
-//	pArg->pDataObject->Release();
-//		pArg->pDataObject = NULL;
-//	pArg->pDropSource->Release();
-//		pArg->pDropSource = NULL;
-//
-//	if (pArg->pThis->mn_DragThreadId == GetCurrentThreadId()) {
-//		SafeCloseHandle(pArg->pThis->mh_DragThread);
-//		pArg->pThis->mn_DragThreadId = 0;
-//	}
-//
-//	delete pArg;
-//
-//	return 0;
-//}
+DWORD CDragDrop::DragOpThreadProc(LPVOID lpParameter)
+{
+	DragThreadArg *pArg = (DragThreadArg*)lpParameter;
+	_ASSERTE(pArg);
+	if (!pArg) {
+		DisplayLastError(L"DragThreadArg is NULL", -1);
+		return 0;
+	}
+
+	DWORD dwResult = 0, dwEffect = 0;
+		
+    HRESULT hr = S_OK;
+    hr = OleInitialize (NULL); // как бы попробовать включать Ole только во время драга. кажется что из-за него глючит переключалка языка
+
+	dwResult = DoDragDrop(pArg->pDataObject, pArg->pDropSource, pArg->dwAllowedEffects, &dwEffect);
+
+	MCHKHEAP
+
+	if (pArg->pThis->mp_DataObject == pArg->pDataObject) {
+		pArg->pThis->mp_DataObject = NULL;
+	}
+
+	pArg->pDataObject->Release();
+		pArg->pDataObject = NULL;
+	pArg->pDropSource->Release();
+		pArg->pDropSource = NULL;
+
+	if (pArg->pThis->mn_DragThreadId == GetCurrentThreadId()) {
+		SafeCloseHandle(pArg->pThis->mh_DragThread);
+		pArg->pThis->mn_DragThreadId = 0;
+	}
+
+	delete pArg;
+
+	return 0;
+}
 
 HANDLE CDragDrop::FileStart(BOOL abActive, BOOL abWide, LPVOID asFileName)
 {
@@ -823,11 +796,6 @@ HRESULT CDragDrop::DropLinks(HDROP hDrop, int iQuantity, BOOL abActive)
 
 HRESULT STDMETHODCALLTYPE CDragDrop::Drop (IDataObject * pDataObject,DWORD grfKeyState,POINTL pt,DWORD * pdwEffect)
 {
-	#ifdef SHOWDROPMSG
-	wchar_t szTitle[64]; wsprintf(szTitle, L"ConEmu, PID=%i", GetCurrentProcessId());
-	MessageBox(NULL, L"CDragDrop::Drop", szTitle, MB_OK|MB_ICONEXCLAMATION|MB_SETFOREGROUND);
-	#endif
-
 	mb_DragWithinNow = FALSE;
 	DestroyDragImageBits();
 	DestroyDragImageWindow();
@@ -1005,9 +973,6 @@ DWORD CDragDrop::ShellOpThreadProc(LPVOID lpParameter)
 HRESULT STDMETHODCALLTYPE CDragDrop::DragOver(DWORD grfKeyState,POINTL pt,DWORD * pdwEffect)
 {
 	HRESULT hr = S_OK;
-
-	mb_DragStarting = FALSE;
-
 	if (!gSet.isDropEnabled && !gConEmu.isDragging()) {
 		*pdwEffect = DROPEFFECT_NONE;
 		gConEmu.DebugStep(_T("DnD: Drop disabled"));
@@ -1203,8 +1168,6 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragEnter(IDataObject * pDataObject,DWORD g
 {
 	mb_selfdrag = (pDataObject == mp_DataObject);
 	mb_DragWithinNow = TRUE;
-
-	mb_DragStarting = FALSE;
 
 	if (gbDebugLogStarted || IsDebuggerPresent())
 		EnumDragFormats(pDataObject);
@@ -1838,229 +1801,4 @@ void CDragDrop::DragFeedBack(DWORD dwEffect)
 	//	TranslateMessage(&Msg);
 	//	DispatchMessage(&Msg);
 	//}
-}
-
-DWORD CDragDrop::DragThread(LPVOID lpParameter)
-{
-	DWORD nResult = 0;
-	CEDragSource* pds = (CEDragSource*)lpParameter;
-
-	//CoInitialize();
-	OleInitialize(NULL);
-
-	pds->hWnd = CreateWindowEx(WS_EX_TOOLWINDOW, pds->pDrag->ms_SourceClass, L"ConEmu Drag Source", 
-		WS_POPUP, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, NULL, NULL, (HINSTANCE)g_hInstance, pds);
-	if (pds->hWnd == NULL) {
-		DisplayLastError(L"Can't create drag source window.");
-		return 100;
-	}
-
-	TODO("Может RegisterDragDrop не нужен?");
-	// Инициализация окна для Drop
-	//HRESULT hr = RegisterDragDrop(pds->hWnd, pds->pDrag);
-	//if (hr != S_OK) {
-	//	DisplayLastError(L"Can't register Drop target (thread)", hr);
-	//	DestroyWindow(pds->hWnd);
-	//	pds->hWnd = NULL;
-	//	nResult = 100;
-	//} else {
-		MSG msg;
-		SetEvent(pds->hReady);
-		// Чтобы драг жил - запускаем обработку сообщений
-		// Сама обработка (Оконная процедура) происходит в DragProc (ниже)
-		while (GetMessage(&msg, 0,0,0)) {
-			TranslateMessage(&msg);
-			DispatchMessage(&msg);
-		}
-		ResetEvent(pds->hReady);
-	//}
-
-	return nResult;
-}
-
-LRESULT CDragDrop::DragProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
-{
-	LRESULT lRc = 0;
-	switch (messg) {
-	case WM_CREATE:
-		{
-			LPCREATESTRUCT pc = (LPCREATESTRUCT)lParam;
-			CEDragSource *pds = (CEDragSource*)pc->lpCreateParams;
-			_ASSERTE(pds);
-			_ASSERTE(pds->pDrag);
-			SetWindowLongPtr(hWnd, GWLP_USERDATA, (LONG_PTR)pds);
-			lRc = 0;
-		}
-		break;
-	case MSG_STARTDRAG:
-		{
-			CEDragSource* pds = (CEDragSource*)GetWindowLongPtr(hWnd, GWLP_USERDATA);
-			_ASSERTE(pds);
-			_ASSERTE(pds->pDrag);
-			DWORD dwResult = 0, dwEffect = 0;
-			DWORD dwAllowedEffects = wParam;
-			IDropSource *pDropSource = (IDropSource*)lParam;
-			RECT rcWnd; GetWindowRect(ghWnd, &rcWnd);
-
-			// Чтобы движения мышки "могли" обработаться
-			MoveWindow(hWnd, rcWnd.left, rcWnd.top, rcWnd.right-rcWnd.left, rcWnd.bottom-rcWnd.top, 0);
-
-			pds->bInDrag = TRUE;
-			pds->pDrag->mb_DragStarting = TRUE;
-
-			dwResult = DoDragDrop(pds->pDrag->mp_DataObject, pDropSource, dwAllowedEffects, &dwEffect);
-
-			MCHKHEAP;
-
-			pds->pDrag->mp_DataObject->Release();
-			pds->pDrag->mp_DataObject = NULL;
-			pDropSource->Release();
-
-			pds->pDrag->mb_DragStarting = FALSE;
-			pds->bInDrag = FALSE;
-			// может другая нить есть?
-			pds->pDrag->mb_DragStarting = pds->pDrag->IsDragStarting();
-
-			lRc = 0;
-		}
-		break;
-	default:
-		lRc = DefWindowProc(hWnd, messg, wParam, lParam);
-	}
-	return lRc;
-}
-
-BOOL CDragDrop::IsPending()
-{
-	return FALSE;
-}
-
-CDragDrop::CEDragSource* CDragDrop::InitialCreateSource()
-{
-	if (!mh_SourceClass) {
-		lstrcpy(ms_SourceClass, VirtualConsoleClass);
-		lstrcat(ms_SourceClass, L"DragSource");
-		WNDCLASSEX wc = {sizeof(WNDCLASSEX), CS_CLASSDC, DragProc, 0, 0, 
-			g_hInstance, hClassIcon, LoadCursor(NULL, IDC_ARROW), 
-			NULL, NULL, ms_SourceClass, hClassIconSm};// | CS_DROPSHADOW
-		mh_SourceClass = RegisterClassEx(&wc);
-		if (!mh_SourceClass) {
-			DisplayLastError(L"Can't register drag class.");
-			return NULL;
-		}
-	}
-
-	CEDragSource *pds = (CEDragSource*)calloc(sizeof(CEDragSource),1);
-	pds->hReady = CreateEvent(0,TRUE,FALSE,0);
-	pds->pDrag = this;
-
-	pds->hThread = CreateThread(0,0,DragThread,pds,0,&(pds->nTID));
-	if (pds->hThread == NULL) {
-		DisplayLastError(L"Can't create drag thread");
-		CloseHandle(pds->hReady);
-		free(pds);
-		return NULL;
-	}
-
-	m_Sources.push_back(pds);
-
-	return pds;
-}
-
-void CDragDrop::Terminate()
-{
-	std::vector<CEDragSource*>::iterator iter;
-	CEDragSource* pds = NULL;
-
-	// Сначала во все нити послать QUIT
-	for (iter = m_Sources.begin(); iter != m_Sources.end(); iter++) {
-		pds = *iter;
-		if (!pds->hThread) continue;
-		if (WaitForSingleObject(pds->hThread,0)!=WAIT_OBJECT_0)
-			PostThreadMessage(pds->nTID, WM_QUIT, 0, 0);
-	}
-
-	// После этого попробовать немного подождать, и Terminate...
-	for (iter = m_Sources.begin(); iter != m_Sources.end(); iter = m_Sources.erase(iter)) {
-		pds = *iter;
-		if (pds->hThread) {
-			if (WaitForSingleObject(pds->hThread,100)!=WAIT_OBJECT_0) {
-				TerminateThread(pds->hThread, 100);
-			}
-			CloseHandle(pds->hThread);
-		}
-		CloseHandle(pds->hReady);
-		free(pds);
-	}
-}
-
-CDragDrop::CEDragSource* CDragDrop::GetFreeSource()
-{
-	std::vector<CEDragSource*>::iterator iter;
-	CEDragSource* pds = NULL;
-
-	for (iter = m_Sources.begin(); iter != m_Sources.end(); iter++) {
-		pds = *iter;
-		if (!pds->hThread || pds->bInDrag) continue; // ищем готовый поток
-		if (WaitForSingleObject(pds->hThread,0)!=WAIT_OBJECT_0) {
-			// OK
-			break;
-		}
-	}
-
-	if (!pds)
-		pds = InitialCreateSource();
-
-	if (pds) {
-		gConEmu.DebugStep(L"Drag: waiting for drag thread initialization");
-		DWORD nWait = WaitForSingleObject(pds->hReady, 10000);
-		gConEmu.DebugStep(NULL);
-		if (nWait != WAIT_OBJECT_0) {
-			MBoxA(L"Drag thread initialization failed!");
-			pds = NULL;
-		}
-	}
-
-	return pds;
-}
-
-BOOL CDragDrop::IsDragStarting()
-{
-	if (!mb_DragStarting)
-		return FALSE;
-
-	BOOL lbDragStarting = FALSE;
-	std::vector<CEDragSource*>::iterator iter;
-	CEDragSource* pds = NULL;
-
-	for (iter = m_Sources.begin(); iter != m_Sources.end(); iter++) {
-		pds = *iter;
-		if (pds->hThread && pds->bInDrag) {
-			lbDragStarting = TRUE;
-			break;
-		}
-	}
-
-	return lbDragStarting;
-}
-
-BOOL CDragDrop::ForwardMessage(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
-{
-	if (!mb_DragStarting)
-		return FALSE;
-
-	BOOL lbDragStarting = FALSE;
-	std::vector<CEDragSource*>::iterator iter;
-	CEDragSource* pds = NULL;
-
-	for (iter = m_Sources.begin(); iter != m_Sources.end(); iter++) {
-		pds = *iter;
-		if (pds->hThread && pds->bInDrag) {
-			PostMessage(pds->hWnd, messg, wParam, lParam);
-			lbDragStarting = TRUE;
-			break;
-		}
-	}
-
-	return lbDragStarting;
 }
