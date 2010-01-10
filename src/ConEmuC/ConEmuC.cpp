@@ -2,7 +2,7 @@
 #ifdef _DEBUG
 //  Раскомментировать, чтобы сразу после запуска процесса (conemuc.exe) показать MessageBox, чтобы прицепиться дебаггером
 //  #define SHOW_STARTED_MSGBOX
-//  #define SHOW_COMSPEC_STARTED_MSGBOX
+  #define SHOW_COMSPEC_STARTED_MSGBOX
 //  #define SHOW_STARTED_ASSERT
 #elif defined(__GNUC__)
 //  Раскомментировать, чтобы сразу после запуска процесса (conemuc.exe) показать MessageBox, чтобы прицепиться дебаггером
@@ -205,11 +205,13 @@ int __cdecl main()
     // Дескрипторы
     //ghConOut = CreateFile(L"CONOUT$", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_READ,
     //            0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
-    if ((HANDLE)ghConOut == INVALID_HANDLE_VALUE) {
-        dwErr = GetLastError();
-        _printf("CreateFile(CONOUT$) failed, ErrCode=0x%08X\n", dwErr); 
-        iRc = CERR_CONOUTFAILED; goto wrap;
-    }
+	if (gnRunMode == RM_SERVER) {
+		if ((HANDLE)ghConOut == INVALID_HANDLE_VALUE) {
+			dwErr = GetLastError();
+			_printf("CreateFile(CONOUT$) failed, ErrCode=0x%08X\n", dwErr); 
+			iRc = CERR_CONOUTFAILED; goto wrap;
+		}
+	}
     
     //2009-05-30 попробуем без этого ?
     //SetHandleInformation(GetStdHandle(STD_INPUT_HANDLE), HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT);
@@ -1372,7 +1374,14 @@ void SendStarted()
 		pIn->StartStop.nSubSystem = gnImageSubsystem;
 		pIn->StartStop.bRootIsCmdExe = gbRootIsCmdExe; //2009-09-14
 		// НЕ MyGet..., а то можем заблокироваться...
-		GetConsoleScreenBufferInfo(ghConOut, &pIn->StartStop.sbi);
+		HANDLE hOut = NULL;
+		if (gnRunMode == RM_SERVER)
+			hOut = (HANDLE)ghConOut;
+		else
+			hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+		DWORD dwErr1 = 0;
+		BOOL lbRc1 = GetConsoleScreenBufferInfo(hOut, &pIn->StartStop.sbi);
+		if (!lbRc1) dwErr1 = GetLastError();
 
 		PRINT_COMSPEC(L"Starting %s mode (ExecuteGuiCmd started)\n",(RunMode==RM_SERVER) ? L"Server" : L"ComSpec");
         

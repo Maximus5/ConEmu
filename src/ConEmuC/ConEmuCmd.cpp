@@ -169,11 +169,20 @@ void ComspecDone(int aiRc)
 
     //TODO("Уведомить плагин через пайп (если родитель - FAR) что процесс завершен. Плагин должен считать и запомнить содержимое консоли и только потом вернуть управление в ConEmuC!");
 
+	DWORD dwErr1 = 0, dwErr2 = 0;
+	HANDLE hOut1 = NULL, hOut2 = NULL;
     BOOL lbRc1 = FALSE, lbRc2 = FALSE;
     CONSOLE_SCREEN_BUFFER_INFO sbi1 = {{0,0}}, sbi2 = {{0,0}};
+	#ifdef _DEBUG
+	HWND hWndCon = GetConsoleWindow();
+	#endif
     // Тут нужна реальная, а не скорректированная информация!
-    if (!cmd.bNonGuiMode) // Если GUI не сможет через сервер вернуть высоту буфера - это нужно сделать нам!
-        lbRc1 = GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &sbi1);
+	if (!cmd.bNonGuiMode) {
+		// Если GUI не сможет через сервер вернуть высоту буфера - это нужно сделать нам!
+        lbRc1 = GetConsoleScreenBufferInfo(hOut1 = GetStdHandle(STD_OUTPUT_HANDLE), &sbi1);
+		if (!lbRc1)
+			dwErr1 = GetLastError();
+	}
 
 
     //PRAGMA_ERROR("Размер должен возвращать сам GUI, через серверный ConEmuC!");
@@ -201,7 +210,9 @@ void ComspecDone(int aiRc)
 			pIn->StartStop.nSubSystem = gnImageSubsystem;
 			// НЕ MyGet..., а то можем заблокироваться...
 			// ghConOut может быть NULL, если ошибка произошла во время разбора аргументов
-			GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &pIn->StartStop.sbi);
+			lbRc2 = GetConsoleScreenBufferInfo(hOut2 = GetStdHandle(STD_OUTPUT_HANDLE), &pIn->StartStop.sbi);
+			if (!lbRc2)
+				dwErr2 = GetLastError();
 
             PRINT_COMSPEC(L"Finalizing comspec mode (ExecuteGuiCmd started)\n",0);
             pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);

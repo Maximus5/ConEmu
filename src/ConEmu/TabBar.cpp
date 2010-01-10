@@ -202,7 +202,7 @@ void TabBarClass::AddTab(LPCWSTR text, int i, bool bAdmin)
 			if (!wcscmp(GetTabText(i), text))
 				tie.mask &= ~TCIF_TEXT;
 			// Изменилась ли иконка
-			if (tie.iImage & TCIF_IMAGE) {
+			if (tie.mask & TCIF_IMAGE) {
 				TCITEM told;
 				told.mask = TCIF_IMAGE;
 				TabCtrl_GetItem(mh_Tabbar, i, &told);

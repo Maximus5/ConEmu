@@ -2633,13 +2633,16 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 					&& !(gSet.isFullScreen || gConEmu.isZoomed()))
 				{
 					pIn->StartStopRet.bWasBufferHeight = FALSE;
-					if (GetConWindowSize(pIn->StartStop.sbi, nNewWidth, nNewHeight, &bBufferHeight)) {
-						if (bBufferHeight || crNewSize.X != nNewWidth || crNewSize.Y != nNewHeight) {
-							//gConEmu.SyncWindowToConsole(); - его использовать нельзя. во первых это не главная нить, во вторых - размер pVCon может быть еще не изменен
-							lbNeedResizeWnd = TRUE;
-							crNewSize.X = nNewWidth;
-							crNewSize.Y = nNewHeight;
-							pIn->StartStopRet.bWasBufferHeight = TRUE;
+					// В некоторых случаях (comspec без консоли?) GetConsoleScreenBufferInfo обламывается
+					if (pIn->StartStop.sbi.dwSize.X && pIn->StartStop.sbi.dwSize.Y) {
+						if (GetConWindowSize(pIn->StartStop.sbi, nNewWidth, nNewHeight, &bBufferHeight)) {
+							if (bBufferHeight || crNewSize.X != nNewWidth || crNewSize.Y != nNewHeight) {
+								//gConEmu.SyncWindowToConsole(); - его использовать нельзя. во первых это не главная нить, во вторых - размер pVCon может быть еще не изменен
+								lbNeedResizeWnd = TRUE;
+								crNewSize.X = nNewWidth;
+								crNewSize.Y = nNewHeight;
+								pIn->StartStopRet.bWasBufferHeight = TRUE;
+							}
 						}
 					}
 				}
