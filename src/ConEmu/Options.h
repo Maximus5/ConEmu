@@ -33,6 +33,8 @@ public:
     COLORREF Colors[0x20];
     bool isExtendColors;
     char nExtendColor;
+    bool isExtendFonts;
+    char nFontNormalColor, nFontBoldColor, nFontItalicColor;
 
     /* Background image */
     WCHAR sBgImage[MAX_PATH];
@@ -152,7 +154,7 @@ public:
     HBITMAP hBgBitmap;
     COORD   bgBmp;
     HDC     hBgDc;
-    HFONT   mh_Font, mh_Font2;
+    HFONT   mh_Font, mh_FontI, mh_FontB, mh_Font2;
     WORD    CharWidth[0x10000]; //, Font2Width[0x10000];
 	ABC     CharABC[0x10000];
 

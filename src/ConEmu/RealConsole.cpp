@@ -99,6 +99,7 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
     wcscpy(Title, L"ConEmu");
     wcscpy(TitleFull, Title);
     wcscpy(ms_PanelTitle, Title);
+	mb_ForceTitleChanged = FALSE;
     mn_Progress = -1; mn_PreWarningProgress = -1; mn_ConsoleProgress = -1; // Процентов нет
 
     hPictureView = NULL; mb_PicViewWasHidden = FALSE;
@@ -1001,6 +1002,7 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 			if (pRCon->mb_ForceTitleChanged
                 || wcscmp(pRCon->Title, pRCon->TitleCmp))
             {
+				pRCon->mb_ForceTitleChanged = FALSE;
                 pRCon->OnTitleChanged();
 
             } else if (bActive) {

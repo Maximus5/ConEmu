@@ -74,8 +74,8 @@ public:
 	bool isCharScroll(WCHAR inChar);
 	void BlitPictureTo(int inX, int inY, int inWidth, int inHeight);
 	bool CheckSelection(const CONSOLE_SELECTION_INFO& select, SHORT row, SHORT col);
-	//bool GetCharAttr(TCHAR ch, WORD atr, TCHAR& rch, BYTE& foreColorNum, BYTE& backColorNum);
-	void GetCharAttr(WORD atr, BYTE& foreColorNum, BYTE& backColorNum);
+	//bool GetCharAttr(TCHAR ch, WORD atr, TCHAR& rch, BYTE& foreColorNum, BYTE& backColorNum, FONT* pFont);
+	void GetCharAttr(WORD atr, BYTE& foreColorNum, BYTE& backColorNum, HFONT* pFont);
 	void Paint(HDC hDc, RECT rcClient);
 	void UpdateInfo();
 	//void GetConsoleCursorInfo(CONSOLE_CURSOR_INFO *ci) { mp_RCon->GetConsoleCursorInfo(ci); };
@@ -149,6 +149,9 @@ protected:
 	void DistributeSpaces(wchar_t* ConCharLine, WORD* ConAttrLine, DWORD* ConCharXLine, const int j, const int j2, const int end);
 	LONG nFontHeight, nFontWidth;
 	BYTE nFontCharSet;
+	BYTE nLastNormalBack;
+    bool bExtendFonts, bExtendColors;
+    BYTE nFontNormalColor, nFontBoldColor, nFontItalicColor, nExtendColor;
 };
 
 #include <pshpack1.h>

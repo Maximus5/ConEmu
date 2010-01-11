@@ -1,4 +1,4 @@
-// Microsoft Visual C++ generated resource script.
+//Microsoft Developer Studio generated resource script.
 //
 #include "resource.h"
 
@@ -9,11 +9,6 @@
 //
 #include "../ConEmu/afxres.h"
 #include "../ConEmu/version.h"
-
-// Manifest 4 GCC
-#if defined(__GNUC__)
-1 24 DISCARDABLE "../conemu/conemu.gcc.manifest"
-#endif
 
 /////////////////////////////////////////////////////////////////////////////
 #undef APSTUDIO_READONLY_SYMBOLS
@@ -33,24 +28,19 @@ LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
 // TEXTINCLUDE
 //
 
-1 TEXTINCLUDE 
+1 TEXTINCLUDE DISCARDABLE 
 BEGIN
     "resource.h\0"
 END
 
-2 TEXTINCLUDE 
+2 TEXTINCLUDE DISCARDABLE 
 BEGIN
     "#include ""../ConEmu/afxres.h""\r\n"
     "#include ""../ConEmu/version.h""\r\n"
-    "\r\n"
-    "// Manifest 4 GCC\r\n"
-    "#if defined(__GNUC__)\r\n"
-    "1 24 DISCARDABLE ""conemu.gcc.manifest""\r\n"
-    "#endif\r\n"
     "\0"
 END
 
-3 TEXTINCLUDE 
+3 TEXTINCLUDE DISCARDABLE 
 BEGIN
     "\r\n"
     "\0"
@@ -81,10 +71,10 @@ BEGIN
     BEGIN
         BLOCK "000004b0"
         BEGIN
-            VALUE "FileDescription", "ConEmu console extender" CONEMUPLTFRM "\0"
+            VALUE "FileDescription", "ConEmu injects" CONEMUPLTFRM
             VALUE "FileVersion", CONEMUVERS
             VALUE "LegalCopyright", "Copyright (C) 2009-2010 Maximus5"
-            VALUE "OriginalFilename", "ConEmuC.exe"
+            VALUE "OriginalFilename", "ConEmu.dll"
             VALUE "ProductName", "ConEmu"
             VALUE "ProductVersion", CONEMUVERS
         END
@@ -96,14 +86,6 @@ BEGIN
 END
 
 
-/////////////////////////////////////////////////////////////////////////////
-//
-// Icon
-//
-
-// Icon with lowest ID value placed first to ensure application icon
-// remains consistent on all systems.
-IDI_ICON1               ICON                    "..\\ConEmu\\ConEmu.ico"
 #endif    // Russian resources
 /////////////////////////////////////////////////////////////////////////////
 

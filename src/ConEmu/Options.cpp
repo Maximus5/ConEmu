@@ -86,7 +86,8 @@ CSettings::CSettings()
     memset(mn_CounterMax, 0, sizeof(*mn_CounterMax)*(tPerfInterval-gbPerformance));
     memset(mn_FPS, 0, sizeof(mn_FPS)); mn_FPS_CUR_FRAME = 0;
     memset(mn_CounterTick, 0, sizeof(*mn_CounterTick)*(tPerfInterval-gbPerformance));
-    hBgBitmap = NULL; bgBmp = MakeCoord(0,0); hBgDc = NULL; mh_Font = NULL; mh_Font2 = NULL;
+    hBgBitmap = NULL; bgBmp = MakeCoord(0,0); hBgDc = NULL;
+    mh_Font = mh_FontI = mh_FontB = mh_Font2 = NULL;
     ResetFontWidth();
     nAttachPID = 0; hAttachConWnd = NULL;
     memset(&ourSI, 0, sizeof(ourSI));
@@ -113,6 +114,8 @@ CSettings::CSettings()
 CSettings::~CSettings()
 {
     if (mh_Font) { DeleteObject(mh_Font); mh_Font = NULL; }
+    if (mh_FontI) { DeleteObject(mh_FontI); mh_FontI = NULL; }
+    if (mh_FontB) { DeleteObject(mh_FontB); mh_FontB = NULL; }
     if (mh_Font2) { DeleteObject(mh_Font2); mh_Font2 = NULL; }
     if (psCmd) {free(psCmd); psCmd = NULL;}
 	if (psCmdHistory) {free(psCmdHistory); psCmdHistory = NULL;}
@@ -205,6 +208,11 @@ void CSettings::InitSettings()
     }
     isExtendColors = false;
     nExtendColor = 14;
+    isExtendFonts = false;
+    #ifdef _DEBUG
+    isExtendFonts = true;
+    #endif
+    nFontNormalColor = 1; nFontBoldColor = 12; nFontItalicColor = 13;
 
 //------------------------------------------------------------------------
 ///| Default settings |///////////////////////////////////////////////////
@@ -301,6 +309,14 @@ void CSettings::LoadSettings()
         reg.Load(L"ExtendColors", isExtendColors);
         reg.Load(L"ExtendColorIdx", nExtendColor);
             if (nExtendColor<0 || nExtendColor>15) nExtendColor=14;
+            
+        reg.Load(L"ExtendFonts", isExtendFonts);
+        reg.Load(L"ExtendFontNormalIdx", nFontNormalColor);
+            if (nFontNormalColor<0 || nFontNormalColor>15) nFontNormalColor=1;
+        reg.Load(L"ExtendFontBoldIdx", nFontBoldColor);
+            if (nFontBoldColor<0 || nFontBoldColor>15) nFontBoldColor=12;
+        reg.Load(L"ExtendFontItalicIdx", nFontItalicColor);
+            if (nFontItalicColor<0 || nFontItalicColor>15) nFontItalicColor=13;
 
 		// Debugging
 		reg.Load(L"ConVisible", isConVisible);
@@ -2725,6 +2741,16 @@ HFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
             DeleteDC(hDC);
         }
         ReleaseDC(0, hScreenDC);
+        
+        
+        if (mh_FontB) { DeleteObject(mh_FontB); mh_FontB = NULL; }
+        tmpFont.lfWeight = (tmpFont.lfWeight == FW_NORMAL) ? FW_BOLD : FW_NORMAL;
+        mh_FontB = CreateFontIndirect(&tmpFont);
+        if (mh_FontI) { DeleteObject(mh_FontI); mh_FontI = NULL; }
+        tmpFont.lfWeight = inFont->lfWeight;
+        tmpFont.lfItalic = !tmpFont.lfItalic;
+        mh_FontI = CreateFontIndirect(&tmpFont);
+    	
 
 		if (mh_Font2) { DeleteObject(mh_Font2); mh_Font2 = NULL; }
 

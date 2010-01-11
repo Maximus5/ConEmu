@@ -62,6 +62,8 @@ WARNING("! А нафига КУРСОР (мигающий) отрисовывать в VirtualConsole? Не лучше ли
 
 #define isCharSpace(c) (c == ucSpace || c == ucNoBreakSpace || c == 0)
 
+
+
 CVirtualConsole::PARTBRUSHES CVirtualConsole::m_PartBrushes[MAX_COUNT_PART_BRUSHES] = {{0}};
 wchar_t CVirtualConsole::mc_Uni2Oem[0x10000];
 
@@ -98,6 +100,7 @@ CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
 	nFontHeight = gSet.FontHeight();
 	nFontWidth = gSet.FontWidth();
 	nFontCharSet = gSet.FontCharSet();
+	nLastNormalBack = 255;
 
 #ifdef _DEBUG
     mn_BackColorIdx = 2;
@@ -622,13 +625,40 @@ protected:
 };
 #endif
 
+WARNING("!!! Намного быстрее будет создать заранее массив с цветами, обращение будет по индексу");
+
 // Преобразовать консольный цветовой атрибут (фон+текст) в цвета фона и текста
 // (!) Количество цветов текста могут быть расширено за счет одного цвета фона
-void CVirtualConsole::GetCharAttr(WORD atr, BYTE& foreColorNum, BYTE& backColorNum)
+void CVirtualConsole::GetCharAttr(WORD atr, BYTE& foreColorNum, BYTE& backColorNum, HFONT* pFont)
 {
     bool bChanged = false;
     foreColorNum = atr & 0x0F;
     backColorNum = atr >> 4 & 0x0F;
+    
+    
+	if (bExtendFonts /*&& nLastNormalBack != backColorNum*/) {
+	
+		if (!pFont) {
+		
+			if (backColorNum == nFontBoldColor || backColorNum == nFontItalicColor)
+				backColorNum = nFontNormalColor;
+				
+		} else {
+			//nLastNormalBack = backColorNum;
+			
+			if (backColorNum == nFontBoldColor) {
+				backColorNum = nFontNormalColor;
+				*pFont = gSet.mh_FontB;
+			} else if (backColorNum == nFontItalicColor) {
+				backColorNum = nFontNormalColor;
+				*pFont = gSet.mh_FontI;
+			} else {
+				*pFont = gSet.mh_Font;
+			}
+		}
+		
+	}
+    
     //rch = ch; // по умолчанию!
     //if (isEditor && gSet.isVisualizer && ch==L' ' &&
     //    (backColorNum==gSet.nVizTab || backColorNum==gSet.nVizEOL || backColorNum==gSet.nVizEOF))
@@ -643,8 +673,8 @@ void CVirtualConsole::GetCharAttr(WORD atr, BYTE& foreColorNum, BYTE& backColorN
     //    foreColorNum = gSet.nVizFore;
     //    bChanged = true;
     //} else
-    if (gSet.isExtendColors) {
-        if (backColorNum==gSet.nExtendColor) {
+    if (bExtendColors) {
+        if (backColorNum == nExtendColor) {
             backColorNum = attrBackLast;
             foreColorNum += 0x10;
         } else {
@@ -958,6 +988,19 @@ bool CVirtualConsole::UpdatePrepare(bool isForce, HDC *ahDc, MSectionLock *pSDC)
 	isViewer = gConEmu.isViewer();
     isFilePanel = gConEmu.isFilePanel(true);
 
+
+	nFontHeight = gSet.FontHeight();
+	nFontWidth = gSet.FontWidth();
+	nFontCharSet = gSet.FontCharSet();
+	
+	bExtendColors = gSet.isExtendColors;
+	nExtendColor = gSet.nExtendColor;
+    bExtendFonts = gSet.isExtendFonts;
+    nFontNormalColor = gSet.nFontNormalColor;
+    nFontBoldColor = gSet.nFontBoldColor;
+    nFontItalicColor = gSet.nFontItalicColor;
+
+
     //winSize.X = csbi.srWindow.Right - csbi.srWindow.Left + 1; winSize.Y = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
     //if (winSize.X < csbi.dwSize.X)
     //    winSize.X = csbi.dwSize.X;
@@ -1074,7 +1117,7 @@ void CVirtualConsole::ParseLine(int row, TCHAR *ConCharLine, WORD *ConAttrLine)
     {
         //GetCharAttr(ConCharLine[i1], ConAttrLine[i1], ch1, af1, ab1);
 		ch1 = ConCharLine[i1];
-		GetCharAttr(ConAttrLine[i1], af1, ab1);
+		GetCharAttr(ConAttrLine[i1], af1, ab1, NULL);
         cType1 = GetCharType(ch1);
         if (cType1 == pRBracket) {
             if (!(row>=2 && isCharBorderVertical(mpsz_ConChar[TextWidth+i1]))
@@ -1090,7 +1133,7 @@ void CVirtualConsole::ParseLine(int row, TCHAR *ConCharLine, WORD *ConAttrLine)
         {
             //GetCharAttr(ConCharLine[i2], ConAttrLine[i2], ch2, af2, ab2);
 			ch2 = ConCharLine[i2];
-			GetCharAttr(ConAttrLine[i2], af2, ab2);
+			GetCharAttr(ConAttrLine[i2], af2, ab2, NULL);
             // Получить блок символов с аналогичными цветами
             while (i2 < TextWidth && af2 == af1 && ab2 == ab1) {
                 // если символ отличается от первого
@@ -1111,7 +1154,7 @@ void CVirtualConsole::ParseLine(int row, TCHAR *ConCharLine, WORD *ConAttrLine)
                 i2++; // следующий символ
                 //GetCharAttr(ConCharLine[i2], ConAttrLine[i2], ch2, af2, ab2);
 				ch2 = ConCharLine[i2];
-				GetCharAttr(ConAttrLine[i2], af2, ab2);
+				GetCharAttr(ConAttrLine[i2], af2, ab2, NULL);
                 if (cType2 == pRBracket) {
                     if (!(row>=2 && isCharBorderVertical(mpsz_ConChar[TextWidth+i2]))
                         && (((UINT)row)<=(TextHeight-4)))
@@ -1156,7 +1199,7 @@ void CVirtualConsole::ParseLine(int row, TCHAR *ConCharLine, WORD *ConAttrLine)
     pEnd->partType = pNull;
 }
 
-void CVirtualConsole::UpdateText(bool isForce) //, bool updateText, bool updateCursor)
+void CVirtualConsole::UpdateText(bool isForce)
 {
     //if (!updateText) {
     //    _ASSERTE(updateText);
@@ -1186,9 +1229,7 @@ void CVirtualConsole::UpdateText(bool isForce) //, bool updateText, bool updateC
     //_ASSERTE(lbDataValid);
 #endif
 
-	nFontHeight = gSet.FontHeight();
-	nFontWidth = gSet.FontWidth();
-	nFontCharSet = gSet.FontCharSet();
+	
 
     SelectFont(gSet.mh_Font);
 
@@ -1226,6 +1267,8 @@ void CVirtualConsole::UpdateText(bool isForce) //, bool updateText, bool updateC
 	bool bProportional = gSet.isProportional;
 	bool bForceMonospace = gSet.isForceMonospace;
 	bool bFixFarBorders = gSet.isFixFarBorders;
+	HFONT hFont = gSet.mh_Font;
+	HFONT hFont2 = gSet.mh_Font2;
     for (; pos <= nMaxPos; 
         ConCharLine += TextWidth, ConAttrLine += TextWidth, ConCharXLine += TextWidth,
         pos += nFontHeight, row++)
@@ -1308,7 +1351,7 @@ void CVirtualConsole::UpdateText(bool isForce) //, bool updateText, bool updateC
             int nS11 = 0, nS12 = 0, nS21 = 0, nS22 = 0;
 
 			//GetCharAttr(c, attr, c, attrFore, attrBack);
-			GetCharAttr(attr, attrFore, attrBack);
+			GetCharAttr(attr, attrFore, attrBack, &hFont);
             //if (GetCharAttr(c, attr, c, attrFore, attrBack))
             //    isUnicode = true;
 
@@ -1317,6 +1360,7 @@ void CVirtualConsole::UpdateText(bool isForce) //, bool updateText, bool updateC
 			isUnicodeOrProgress = isUnicode || isProgress;
             if (!isUnicodeOrProgress)
                 isSpace = isCharSpace(c);
+                
 
 			TODO("При позиционировании (наверное в DistrubuteSpaces) пытаться ориентироваться по координатам предыдущей строки");
 			// Иначе окантовка диалогов съезжает на пропорциональных шрифтах
@@ -1410,7 +1454,7 @@ void CVirtualConsole::UpdateText(bool isForce) //, bool updateText, bool updateC
 						WCHAR PrevC = ConCharLine[j-1];
 
 						//GetCharAttr(PrevC, PrevAttr, PrevC, PrevAttrFore, PrevAttrBack);
-						GetCharAttr(PrevAttr, PrevAttrFore, PrevAttrBack);
+						GetCharAttr(PrevAttr, PrevAttrFore, PrevAttrBack, NULL);
 						//if (GetCharAttr(PrevC, PrevAttr, PrevC, PrevAttrFore, PrevAttrBack))
 						//	isUnicode = true;
 
@@ -1464,7 +1508,7 @@ void CVirtualConsole::UpdateText(bool isForce) //, bool updateText, bool updateC
 
                 if (bFixFarBorders) {
                     if (!isUnicode)
-                        SelectFont(gSet.mh_Font);
+                        SelectFont(hFont);
                     else //if (isUnicode)
                         SelectFont(gSet.mh_Font2);
                 }
@@ -1569,7 +1613,7 @@ void CVirtualConsole::UpdateText(bool isForce) //, bool updateText, bool updateC
 					#endif
 
 					if (bFixFarBorders)
-						SelectFont(gSet.mh_Font);
+						SelectFont(hFont);
 					MCHKHEAP
 				}
 				else //Border and specials
@@ -2142,7 +2186,7 @@ void CVirtualConsole::Paint(HDC hDc, RECT rcClient)
 					//CVirtualConsole* p = this;
 					//GetCharAttr(mpsz_ConChar[CurChar], mpn_ConAttr[CurChar], Cursor.ch[0], Cursor.foreColorNum, Cursor.bgColorNum);
 					Cursor.ch = mpsz_ConChar[CurChar];
-					GetCharAttr(mpn_ConAttr[CurChar], Cursor.foreColorNum, Cursor.bgColorNum);
+					GetCharAttr(mpn_ConAttr[CurChar], Cursor.foreColorNum, Cursor.bgColorNum, NULL);
 					Cursor.foreColor = gSet.Colors[Cursor.foreColorNum];
 					Cursor.bgColor = gSet.Colors[Cursor.bgColorNum];
 				}

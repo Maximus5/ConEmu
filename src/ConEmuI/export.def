@@ -1,0 +1,4 @@
+EXPORTS
+	GetOriginalAddress  @1
+	InitHooks           @2
+	SetAllHooks         @3

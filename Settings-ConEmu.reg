@@ -34,6 +34,13 @@ REGEDIT4
 ;; 
 "Anti-aliasing"=hex:04
 
+;; 
+"ExtendFonts"=hex:01
+"ExtendFontNormalIdx"=hex:01
+"ExtendFontBoldIdx"=hex:0E
+"ExtendFontItalicIdx"=hex:0D
+
+
 ;; Font width fot 'Force monospace' mode
 ;"FontSizeX3"=dword:0000000c
 ;; and the one
