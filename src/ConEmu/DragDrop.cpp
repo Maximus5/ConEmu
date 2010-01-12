@@ -23,7 +23,7 @@ CDragDrop::CDragDrop()
 	mp_DataObject = NULL;
 	mb_selfdrag = NULL;
 	mp_DesktopID = NULL;
-	mh_Overlapped = NULL; mh_BitsDC = NULL; mh_BitsBMP = NULL;
+	mh_Overlapped = NULL; mh_BitsDC = NULL; mh_BitsBMP = mh_BitsBMP_Old = NULL;
 	mp_Bits = NULL;
 	mn_AllFiles = 0; mn_CurWritten = 0; mn_CurFile = 0;
 	mb_DragWithinNow = FALSE;
@@ -608,7 +608,10 @@ HRESULT CDragDrop::DropFromStream(IDataObject * pDataObject, BOOL abActive)
 
 	// CF_HDROP в структуре отсутсвует!
 	fmtetc.cfFormat = RegisterClipboardFormat(CFSTR_FILEDESCRIPTORW);
-	TODO("А освобождать полученное надо?");
+	
+	TODO("Опитизировать. Можно объединить юникодную и ансишную ветки");
+	
+	// !! The caller then assumes responsibility for releasing the STGMEDIUM structure.
 	if (S_OK == pDataObject->GetData(&fmtetc, &stgMedium)) {
 		lbWide = TRUE;
 		HGLOBAL hDesc = stgMedium.hGlobal;
@@ -621,8 +624,12 @@ HRESULT CDragDrop::DropFromStream(IDataObject * pDataObject, BOOL abActive)
 			fmtetc.lindex = mn_CurFile;
 
 			fmtetc.tymed = TYMED_ISTREAM; // Сначала пробуем IStream
-			TODO("А освобождать полученное надо?");
-			if (S_OK == pDataObject->GetData(&fmtetc, &stgMedium) || !stgMedium.pstm) {
+			stgMedium.tymed = TYMED_ISTREAM;
+			stgMedium.pstm = NULL;
+			
+			// !! The caller then assumes responsibility for releasing the STGMEDIUM structure.
+			//было if (S_OK == pDataObject->GetData(&fmtetc, &stgMedium) || !stgMedium.pstm)
+			if (S_OK == pDataObject->GetData(&fmtetc, &stgMedium) && stgMedium.pstm) {
 				IStream* pFile = stgMedium.pstm;
 
 				hFile = FileStart(abActive, lbWide, pDesc->fgd[mn_CurFile].cFileName);
@@ -635,17 +642,23 @@ HRESULT CDragDrop::DropFromStream(IDataObject * pDataObject, BOOL abActive)
 					if (FAILED(hr))
 						DisplayLastError(_T("Can't read medium!"), hr);
 				}
+				
+				pFile->Release();
+				
 				continue;
 			}
 			MBoxA(_T("Drag object does not contains known medium!"));
 		}
 		GlobalUnlock(hDesc);
+		GlobalFree(hDesc);
 		gConEmu.DebugStep(NULL);
 		return S_OK;
 	}
+	
 	// Outlook 2k передает ANSI!
 	fmtetc.cfFormat = RegisterClipboardFormat(CFSTR_FILEDESCRIPTORA);
-	TODO("А освобождать полученное надо?");
+	
+	// !! The caller then assumes responsibility for releasing the STGMEDIUM structure.
 	if (S_OK == pDataObject->GetData(&fmtetc, &stgMedium)) {
 		lbWide = FALSE;
 		HGLOBAL hDesc = stgMedium.hGlobal;
@@ -658,8 +671,12 @@ HRESULT CDragDrop::DropFromStream(IDataObject * pDataObject, BOOL abActive)
 			fmtetc.lindex = mn_CurFile;
 
 			fmtetc.tymed = TYMED_ISTREAM; // Сначала пробуем IStream
-			TODO("А освобождать полученное надо?");
-			if (S_OK == pDataObject->GetData(&fmtetc, &stgMedium) || !stgMedium.pstm) {
+			stgMedium.tymed = TYMED_ISTREAM;
+			stgMedium.pstm = NULL;
+			
+			// !! The caller then assumes responsibility for releasing the STGMEDIUM structure.
+			//было if (S_OK == pDataObject->GetData(&fmtetc, &stgMedium) || !stgMedium.pstm)
+			if (S_OK == pDataObject->GetData(&fmtetc, &stgMedium) && stgMedium.pstm) {
 				IStream* pFile = stgMedium.pstm;
 
 				hFile = FileStart(abActive, lbWide, pDesc->fgd[mn_CurFile].cFileName);
@@ -672,11 +689,15 @@ HRESULT CDragDrop::DropFromStream(IDataObject * pDataObject, BOOL abActive)
 					if (FAILED(hr))
 						DisplayLastError(_T("Can't read medium!"), hr);
 				}
+				
+				pFile->Release();
+				
 				continue;
 			}
 			MBoxA(_T("Drag object does not contains known medium!"));
 		}
 		GlobalUnlock(hDesc);
+		GlobalFree(hDesc);
 		gConEmu.DebugStep(NULL);
 		return S_OK;
 	}
@@ -714,7 +735,7 @@ HRESULT CDragDrop::DropNames(HDROP hDrop, int iQuantity, BOOL abActive)
 		nLen = wcslen(psz);
 		while (nLen>0 && *psz) {
 			if (*psz == L'"' || *psz == L'\\') {
-				wmemmove(psz+1, psz, nLen+1);
+				wmemmove_s(psz+1, nLen+1, psz, nLen+1);
 				if (*psz == L'"') *psz = L'\\';
 				psz++;
 			}
@@ -754,6 +775,8 @@ HRESULT CDragDrop::DropNames(HDROP hDrop, int iQuantity, BOOL abActive)
 		}
 	}
 	
+	GlobalFree(hDrop);
+	
 	return S_OK;
 }
 
@@ -790,6 +813,8 @@ HRESULT CDragDrop::DropLinks(HDROP hDrop, int iQuantity, BOOL abActive)
 		
 		delete szLnkPath;
 	}
+	
+	GlobalFree(hDrop);
 	
 	return S_OK;
 }
@@ -838,7 +863,8 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop (IDataObject * pDataObject,DWORD grfKe
 
 	STGMEDIUM stgMedium = { 0 };
 	FORMATETC fmtetc = { CF_HDROP, 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
-	TODO("А освобождать полученное надо?");
+	
+	// !! The caller then assumes responsibility for releasing the STGMEDIUM structure.
 	HRESULT hr = pDataObject->GetData(&fmtetc, &stgMedium);
 	HDROP hDrop = NULL;
 
@@ -858,18 +884,21 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop (IDataObject * pDataObject,DWORD grfKe
 
 	int iQuantity = DragQueryFile(hDrop,0xFFFFFFFF,NULL,NULL);
 	if (iQuantity < 1) {
+		GlobalFree(stgMedium.hGlobal);
 		return S_OK; // ничего нет, выходим
 	}
 
 	gConEmu.DebugStep(_T("DnD: Drop starting"));
 
 	if (lbDropFileNamesOnly) {
+		// GlobalFree выполнит функция
 		hr = DropNames(hDrop, iQuantity, lbActive);
 		return hr;
 	}
 	
 	// Если создавать линки - делаем сразу и выходим
 	if (*pdwEffect == DROPEFFECT_LINK) {
+		// GlobalFree выполнит функция
 		hr = DropLinks(hDrop, iQuantity, lbActive);
 		return hr;
 	}
@@ -904,6 +933,7 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop (IDataObject * pDataObject,DWORD grfKe
 			curr+=wcslen(curr)+1;
 		}
 		
+		GlobalFree(stgMedium.hGlobal); hDrop = NULL;
 		
 		if (*pdwEffect == DROPEFFECT_MOVE)
 			sfop->fop.wFunc=FO_MOVE;
@@ -1111,7 +1141,8 @@ void CDragDrop::EnumDragFormats(IDataObject * pDataObject)
 			
 				
 			stg[i].tymed = TYMED_HGLOBAL;
-			TODO("А освобождать полученное надо?");
+			
+			// !! The caller then assumes responsibility for releasing the STGMEDIUM structure.
 			hr = pDataObject->GetData(fmt+i, stg+i);
 			if (hr == S_OK && stg[i].hGlobal) {
 				psz[i] = (LPCWSTR)GlobalLock(stg[i].hGlobal);
@@ -1140,9 +1171,11 @@ void CDragDrop::EnumDragFormats(IDataObject * pDataObject)
 					}
 				} else {
 					lstrcat(szName[i], L", hGlobal not available");
+					stg[i].hGlobal = NULL;
 				}
 			} else {
 				lstrcat(szName[i], L", hGlobal not available");
+				stg[i].hGlobal = NULL;
 			}
 
 			#ifdef _DEBUG
@@ -1156,8 +1189,10 @@ void CDragDrop::EnumDragFormats(IDataObject * pDataObject)
 		}
 		
 		for (i=0; i<nCnt; i++) {
-			if (psz[i] && stg[i].hGlobal)
+			if (psz[i] && stg[i].hGlobal) {
 				GlobalUnlock(stg[i].hGlobal);
+				GlobalFree(stg[i].hGlobal);
+			}
 		}
 	}
 	hr = S_OK;
@@ -1578,22 +1613,30 @@ BOOL CDragDrop::LoadDragImageBits(IDataObject * pDataObject)
 	//}
 
 	fmtetc.cfFormat = RegisterClipboardFormat(L"DragImageBits");
-	TODO("А освобождать полученное надо?");
+	
 	if (S_OK != pDataObject->QueryGetData(&fmtetc)) {
 		return FALSE; // Формат отсутствует
 	}
+	// !! The caller then assumes responsibility for releasing the STGMEDIUM structure.
 	if (S_OK != pDataObject->GetData(&fmtetc, &stgMedium) || stgMedium.hGlobal == NULL) {
 		return FALSE; // Формат отсутствует
 	}
 
 	SIZE_T nInfoSize = GlobalSize(stgMedium.hGlobal);
-	if (!nInfoSize) return FALSE; // пусто
+	if (!nInfoSize) {
+		GlobalFree(stgMedium.hGlobal);
+		return FALSE; // пусто
+	}
 	DragImageBits* pInfo = (DragImageBits*)GlobalLock(stgMedium.hGlobal);
-	if (!pInfo) return FALSE; // Не удалось получить данные
+	if (!pInfo) {
+		GlobalFree(stgMedium.hGlobal);
+		return FALSE; // Не удалось получить данные
+	}
 	_ASSERTE(pInfo->nWidth>0 && pInfo->nWidth<=400);
 	_ASSERTE(pInfo->nHeight>0 && pInfo->nHeight<=400);
 	if (nInfoSize != (sizeof(DragImageBits)+(pInfo->nWidth * pInfo->nHeight - 1)*4)) {
 		_ASSERT(FALSE); // Неизвестный формат?
+		GlobalFree(stgMedium.hGlobal);
 		return FALSE;
 	}
 
@@ -1620,9 +1663,10 @@ BOOL CDragDrop::LoadDragImageBits(IDataObject * pDataObject)
 			bih.biYPelsPerMeter = 96;
 
 			LPBYTE pDst = NULL;
+			mh_BitsBMP_Old = NULL;
 			mh_BitsBMP = CreateDIBSection(hdc, (BITMAPINFO*)&bih, DIB_RGB_COLORS, (void**)&pDst, NULL, 0);
 			if (mh_BitsBMP && pDst) {
-				SelectObject(mh_BitsDC, mh_BitsBMP);
+				mh_BitsBMP_Old = (HBITMAP)SelectObject(mh_BitsDC, mh_BitsBMP);
 
 				int cbSize = pInfo->nWidth * pInfo->nHeight * 4;
 				memmove(pDst, pInfo->pix, cbSize);
@@ -1641,6 +1685,7 @@ BOOL CDragDrop::LoadDragImageBits(IDataObject * pDataObject)
 
 	// Освободим данные
 	GlobalUnlock(stgMedium.hGlobal);
+	GlobalFree(stgMedium.hGlobal);
 
 	if (!lbRc)
 		DestroyDragImageBits();
@@ -1654,6 +1699,9 @@ void CDragDrop::DestroyDragImageBits()
 	{
 		DEBUGSTROVL(L"DestroyDragImageBits()\n");
 		if (mh_BitsDC)  {
+			if (mh_BitsBMP_Old) {
+				SelectObject(mh_BitsDC, mh_BitsBMP_Old); mh_BitsBMP_Old = NULL;
+			}
 			DeleteDC(mh_BitsDC);
 			mh_BitsDC = NULL;
 		}

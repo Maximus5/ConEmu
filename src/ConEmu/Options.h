@@ -188,6 +188,8 @@ public:
 	void HistoryAdd(LPCWSTR asCmd);
 	LPCWSTR HistoryGet();
 	void UpdateConsoleMode(DWORD nMode);
+	BOOL CheckConIme();
+	SettingsBase* CreateSettings();
 protected:
     LRESULT OnInitDialog();
 	LRESULT OnInitDialog_Main();

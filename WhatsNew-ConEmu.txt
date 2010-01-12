@@ -1,5 +1,12 @@
+Maximus5 - 2010.01.12
+[%] Issue 154: Моргание заголовка окна.
+[%] Issue 155: Не отключалась опция "Enhance progressbars and scrollbars".
+[%] Утечки при D&D.
+[+] Одновременное использование шрифта Normal/Bold/Italic. Жирность/курсивность управляется цветом фона. Настраивается через реестр ("ExtendFonts", "ExtendFontBoldIdx", "ExtendFontItalicIdx", "ExtendFontNormalIdx").
+
+
 Maximus5 - 2010.01.10
-[%] Моргание иконки "Администратора" в закладке.
+[%] Issue 151: Моргание иконки "Администратора" в закладке.
 [%] Some fixes in ConEmuC.
 
 

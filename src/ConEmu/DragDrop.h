@@ -59,7 +59,7 @@ protected:
 	//DragImageBits m_BitsInfo;
 	HWND mh_Overlapped;
 	HDC mh_BitsDC;
-	HBITMAP mh_BitsBMP;
+	HBITMAP mh_BitsBMP, mh_BitsBMP_Old;
 	//int m_iBPP;
 	static LRESULT CALLBACK DragBitsWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 	BOOL CreateDragImageWindow();

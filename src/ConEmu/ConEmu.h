@@ -188,7 +188,7 @@ public:
 	DWORD GetFarPID();
 	
 public:
-	LPCTSTR GetTitle();
+	LPCTSTR GetTitle(bool abUseDefault=true);
 	LPCTSTR GetTitle(int nIdx);
 	CVirtualConsole* GetVCon(int nIdx);
 	void UpdateProcessDisplay(BOOL abForce);

@@ -31,14 +31,21 @@ REGEDIT4
 ;; hex:01 - ... as proportional font (i.e. Arial, Tahoma, ...)
 ;"Proportional"=hex:00
 
-;; 
+;; Anti-aliasing. 3 - Disabled, 4 - Standard, 5 - ClearType
 "Anti-aliasing"=hex:04
 
-;; 
+;; ConEmu is able to use normal, bold and italic fonts side by side.
+;; Set "ExtendFonts"=hex:01 to enable this feature
 "ExtendFonts"=hex:01
-"ExtendFontNormalIdx"=hex:01
+;; "ExtendFontBoldIdx" and "ExtendFontItalicIdx" are background color indecies,
+;; for which Bold and Italic font properties are inverted.
+;; Allowed values: 0..F (indecies), FF - disabled
 "ExtendFontBoldIdx"=hex:0E
 "ExtendFontItalicIdx"=hex:0D
+;; When Bold or Italic font property was inverted, ConEmu may
+;; change background to default color (blue, for example).
+;; Allowed values: 0..F (indecies), FF - don't touch background
+"ExtendFontNormalIdx"=hex:01
 
 
 ;; Font width fot 'Force monospace' mode
@@ -49,8 +56,6 @@ REGEDIT4
 ;; Fix far borders. 
 ;; hex:00 - borders are drawn using main font.
 ;; hex:01 - using FontName2.
-;; hex:02 - same as hex:01 & progress symbols are filled.
-
 "FixFarBorders"=hex:01
 ;"FontName2"="Lucida Console"
 ;"FontSizeX2"=dword:00000000

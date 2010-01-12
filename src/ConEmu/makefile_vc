@@ -111,6 +111,7 @@ $(INTDIR)\ConEmuPipe.obj \
 $(INTDIR)\DragDrop.obj \
 $(INTDIR)\Options.obj \
 $(INTDIR)\RealConsole.obj \
+$(INTDIR)\Registry.obj \
 $(INTDIR)\ScreenDump.obj \
 $(INTDIR)\TabBar.obj \
 $(INTDIR)\TrayIcon.obj \
@@ -276,6 +277,8 @@ $(INTDIR)\DragDrop.obj: DragDrop.cpp
 $(INTDIR)\Options.obj: Options.cpp
 
 $(INTDIR)\RealConsole.obj: RealConsole.cpp RealConsole.h  ..\common\Common.hpp
+
+$(INTDIR)\RealConsole.obj: RealConsole.cpp RealConsole.h
 
 $(INTDIR)\ScreenDump.obj: ScreenDump.cpp
 

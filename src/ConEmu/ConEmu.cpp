@@ -2318,7 +2318,7 @@ bool CConEmuMain::LoadVersionInfo(wchar_t* pFullPath)
            *pVersion = 0;
     }
     
-    delete pBuffer;
+    delete[] pBuffer;
     
     return true;
 }
@@ -3387,9 +3387,9 @@ DWORD CConEmuMain::GetFarPID()
     return dwPID;
 }
 
-LPCTSTR CConEmuMain::GetTitle()
+LPCTSTR CConEmuMain::GetTitle(bool abUseDefault/*=true*/)
 {
-    if (!Title[0])
+    if (!Title[0] && abUseDefault)
         return _T("ConEmu");
     return Title;
 }

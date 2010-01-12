@@ -5,6 +5,7 @@
 #include "RealConsole.h"
 
 #define MAX_COUNT_PART_BRUSHES 16*16*4
+#define MAX_SPACES 0x400
 
 class CVirtualConsole
 {
@@ -53,7 +54,11 @@ public:
 	wchar_t *mpsz_ConChar, *mpsz_ConCharSave;
 	WORD  *mpn_ConAttr, *mpn_ConAttrSave;
 	DWORD *ConCharX;
-	TCHAR *Spaces; WORD nSpaceCount;
+	//TCHAR *Spaces; WORD nSpaceCount;
+	static wchar_t ms_Spaces[MAX_SPACES], ms_HorzDbl[MAX_SPACES], ms_HorzSingl[MAX_SPACES];
+	// Для ускорения получения индексов цвета
+	BYTE  m_ForegroundColors[0x100], m_BackgroundColors[0x100];
+	HFONT mh_FontByIndex[0x100]; // содержит ссылки (не копии) на шрифты normal/bold/italic
 
 	//CONSOLE_SELECTION_INFO SelectionInfo;
 
@@ -75,7 +80,6 @@ public:
 	void BlitPictureTo(int inX, int inY, int inWidth, int inHeight);
 	bool CheckSelection(const CONSOLE_SELECTION_INFO& select, SHORT row, SHORT col);
 	//bool GetCharAttr(TCHAR ch, WORD atr, TCHAR& rch, BYTE& foreColorNum, BYTE& backColorNum, FONT* pFont);
-	void GetCharAttr(WORD atr, BYTE& foreColorNum, BYTE& backColorNum, HFONT* pFont);
 	void Paint(HDC hDc, RECT rcClient);
 	void UpdateInfo();
 	//void GetConsoleCursorInfo(CONSOLE_CURSOR_INFO *ci) { mp_RCon->GetConsoleCursorInfo(ci); };
@@ -90,6 +94,7 @@ public:
 	static void ClearPartBrushes();
 
 protected:
+	inline void GetCharAttr(WORD atr, BYTE& foreColorNum, BYTE& backColorNum, HFONT* pFont);
 	wchar_t* mpsz_LogScreen; DWORD mn_LogScreenIdx;
 	enum _PartType{
 		pNull,  // конец строки/последний, неотображаемый элемент

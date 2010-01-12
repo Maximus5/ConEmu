@@ -1007,7 +1007,7 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 
             } else if (bActive) {
 				// Если в консоли заголовок не менялся, но он отличается от заголовка в ConEmu
-                if (wcscmp(pRCon->TitleFull, gConEmu.GetTitle()))
+                if (wcscmp(pRCon->TitleFull, gConEmu.GetTitle(false)))
                     gConEmu.UpdateTitle(pRCon->TitleFull);
             }
 
@@ -4723,7 +4723,8 @@ BOOL CRealConsole::GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab)
             *pszAmp = L'_';
             pszAmp ++;
         } else {
-            wmemmove(pszAmp+1, pszAmp, nCurLen-(pszAmp-pTab->Name));
+			size_t nMove = nCurLen-(pszAmp-pTab->Name);
+            wmemmove_s(pszAmp+1, nMove, pszAmp, nMove);
             nCurLen ++;
             pszAmp += 2;
         }
@@ -5598,6 +5599,22 @@ short CRealConsole::CheckProgressInConsole(const wchar_t* pszCurLine)
 			if (pszCurLine[nIdx] == L' ') nIdx++;
 			bAllowDot = true;
 		}
+
+		if (!nIdx) {
+			int i = con.nTextWidth - 1;
+			while (i>3 && pszCurLine[i] == L' ')
+				i--;
+			if (pszCurLine[i] == L'%' && isDigit(pszCurLine[i-1])) {
+				i -= 2;
+				if (isDigit(pszCurLine[i-1]))
+					i--;
+				if (pszCurLine[i-1] == L'1' && !isDigit(pszCurLine[i-2])) {
+					nIdx = i - 1;
+				} else
+				if (!isDigit(pszCurLine[i-1]))
+					nIdx = i;
+			}
+		}
 	}
 	
 	// Менять nProgress только если нашли проценты в строке с курсором
@@ -5689,7 +5706,7 @@ void CRealConsole::OnTitleChanged()
 
 	TitleFull[0] = 0;
 	nNewProgress = CheckProgressInTitle();
-	if (nNewProgress > -1) {
+	if (nNewProgress == -1) {
 		// mn_ConsoleProgress обновляется в FindPanels, должен быть уже вызван
 		if (mn_ConsoleProgress != -1) {
     		// Обработка прогресса NeroCMD и пр. консольных программ
@@ -5727,7 +5744,8 @@ void CRealConsole::OnTitleChanged()
 
     if (gConEmu.isActive(mp_VCon)) {
         // Для активной консоли - обновляем заголовок. Прогресс обновится там же
-        gConEmu.UpdateTitle(TitleFull); // 20.09.2009 Maks - было TitleCmd
+		if (wcscmp(TitleFull, gConEmu.GetTitle(false)))
+			gConEmu.UpdateTitle(TitleFull); // 20.09.2009 Maks - было TitleCmd
     } else if (nLastProgress != mn_Progress) {
         // Для НЕ активной консоли - уведомить главное окно, что у нас сменились проценты
         gConEmu.UpdateProgress(TRUE/*abUpdateTitle*/);
@@ -6141,7 +6159,8 @@ void CRealConsole::FindPanels()
     	// Обработка прогресса NeroCMD и пр. консольных программ
 		// Если курсор находится в видимой области
 		int nY = con.m_sbi.dwCursorPosition.Y - con.m_sbi.srWindow.Top;
-	    if (con.m_sbi.dwCursorPosition.X >= 0 && con.m_sbi.dwCursorPosition.X < con.nTextWidth
+	    if (/*con.m_ci.bVisible && con.m_ci.dwSize -- Update прячет курсор?
+			&&*/ con.m_sbi.dwCursorPosition.X >= 0 && con.m_sbi.dwCursorPosition.X < con.nTextWidth
 			&& nY >= 0 && nY < con.nTextHeight)
         {
         	int nIdx = nY * con.nTextWidth;
@@ -6152,7 +6171,8 @@ void CRealConsole::FindPanels()
         }
     }
 	
-	if (mn_ConsoleProgress != nNewProgress || nLastProgress != nNewProgress || mn_Progress != mn_ConsoleProgress) {
+	if (mn_ConsoleProgress != nNewProgress || nLastProgress != nNewProgress /*|| mn_Progress != mn_ConsoleProgress*/)
+	{
 		// Запомнить, что получили из консоли
 		mn_ConsoleProgress = nNewProgress;
 

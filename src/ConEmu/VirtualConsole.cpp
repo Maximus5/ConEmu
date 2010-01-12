@@ -66,6 +66,10 @@ WARNING("! А нафига КУРСОР (мигающий) отрисовывать в VirtualConsole? Не лучше ли
 
 CVirtualConsole::PARTBRUSHES CVirtualConsole::m_PartBrushes[MAX_COUNT_PART_BRUSHES] = {{0}};
 wchar_t CVirtualConsole::mc_Uni2Oem[0x10000];
+// MAX_SPACES == 0x400
+wchar_t CVirtualConsole::ms_Spaces[MAX_SPACES];
+wchar_t CVirtualConsole::ms_HorzDbl[MAX_SPACES];
+wchar_t CVirtualConsole::ms_HorzSingl[MAX_SPACES];
 
 CVirtualConsole* CVirtualConsole::CreateVCon(RConStartArgs *args)
 {
@@ -123,9 +127,15 @@ CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
     isEditor = false;
     memset(&csbi, 0, sizeof(csbi)); mdw_LastError = 0;
 
-    nSpaceCount = 1000;
-    Spaces = (TCHAR*)Alloc(nSpaceCount,sizeof(TCHAR));
+    //nSpaceCount = 1000;
+    //Spaces = (TCHAR*)Alloc(nSpaceCount,sizeof(TCHAR));
     //for (UINT i=0; i<nSpaceCount; i++) Spaces[i]=L' ';
+    if (!ms_Spaces[0]) {
+    	wmemset(ms_Spaces, L' ', MAX_SPACES);
+    	wmemset(ms_HorzDbl, ucBoxDblHorz, MAX_SPACES);
+    	wmemset(ms_HorzSingl, ucBoxSinglHorz, MAX_SPACES);
+	}
+
 
     hOldBrush = NULL;
     hOldFont = NULL;
@@ -188,8 +198,8 @@ CVirtualConsole::~CVirtualConsole()
         { Free(tmpOem); tmpOem = NULL; }
     if (TextParts)
         { Free(TextParts); TextParts = NULL; }
-    if (Spaces) 
-        { Free(Spaces); Spaces = NULL; nSpaceCount = 0; }
+    //if (Spaces) 
+    //    { Free(Spaces); Spaces = NULL; nSpaceCount = 0; }
 
     // Куча больше не нужна
     if (mh_Heap) {
@@ -625,63 +635,27 @@ protected:
 };
 #endif
 
-WARNING("!!! Намного быстрее будет создать заранее массив с цветами, обращение будет по индексу");
-
 // Преобразовать консольный цветовой атрибут (фон+текст) в цвета фона и текста
 // (!) Количество цветов текста могут быть расширено за счет одного цвета фона
+// atr принудительно в BYTE, т.к. верхние флаги нас не интересуют
 void CVirtualConsole::GetCharAttr(WORD atr, BYTE& foreColorNum, BYTE& backColorNum, HFONT* pFont)
 {
-    bool bChanged = false;
-    foreColorNum = atr & 0x0F;
-    backColorNum = atr >> 4 & 0x0F;
+	// Нас интересует только нижний байт
+    atr &= 0xFF;
     
-    
-	if (bExtendFonts /*&& nLastNormalBack != backColorNum*/) {
-	
-		if (!pFont) {
-		
-			if (backColorNum == nFontBoldColor || backColorNum == nFontItalicColor)
-				backColorNum = nFontNormalColor;
-				
-		} else {
-			//nLastNormalBack = backColorNum;
-			
-			if (backColorNum == nFontBoldColor) {
-				backColorNum = nFontNormalColor;
-				*pFont = gSet.mh_FontB;
-			} else if (backColorNum == nFontItalicColor) {
-				backColorNum = nFontNormalColor;
-				*pFont = gSet.mh_FontI;
-			} else {
-				*pFont = gSet.mh_Font;
-			}
-		}
-		
-	}
-    
-    //rch = ch; // по умолчанию!
-    //if (isEditor && gSet.isVisualizer && ch==L' ' &&
-    //    (backColorNum==gSet.nVizTab || backColorNum==gSet.nVizEOL || backColorNum==gSet.nVizEOF))
-    //{
-    //    if (backColorNum==gSet.nVizTab)
-    //        rch = gSet.cVizTab; else
-    //    if (backColorNum==gSet.nVizEOL)
-    //        rch = gSet.cVizEOL; else
-    //    if (backColorNum==gSet.nVizEOF)
-    //        rch = gSet.cVizEOF;
-    //    backColorNum = gSet.nVizNormal;
-    //    foreColorNum = gSet.nVizFore;
-    //    bChanged = true;
-    //} else
+    // быстрее будет создать заранее массив с цветами, и получять нужное по индексу
+    foreColorNum = m_ForegroundColors[atr];
+    backColorNum = m_BackgroundColors[atr];
+    if (pFont) *pFont = mh_FontByIndex[atr];
+
     if (bExtendColors) {
         if (backColorNum == nExtendColor) {
-            backColorNum = attrBackLast;
+            backColorNum = attrBackLast; // фон нужно заменить на обычный цвет из соседней ячейки
             foreColorNum += 0x10;
         } else {
-            attrBackLast = backColorNum;
+            attrBackLast = backColorNum; // запомним обычный цвет соседней ячейки
         }
     }
-    //return bChanged;
 }
 
 void CVirtualConsole::CharABC(TCHAR ch, ABC *abc)
@@ -995,10 +969,32 @@ bool CVirtualConsole::UpdatePrepare(bool isForce, HDC *ahDc, MSectionLock *pSDC)
 	
 	bExtendColors = gSet.isExtendColors;
 	nExtendColor = gSet.nExtendColor;
+	
     bExtendFonts = gSet.isExtendFonts;
     nFontNormalColor = gSet.nFontNormalColor;
     nFontBoldColor = gSet.nFontBoldColor;
     nFontItalicColor = gSet.nFontItalicColor;
+    
+    //m_ForegroundColors[0x100], m_BackgroundColors[0x100];
+    int nColorIndex = 0;
+    for (int nBack = 0; nBack <= 0xF; nBack++) {
+    	for (int nFore = 0; nFore <= 0xF; nFore++, nColorIndex++) {
+    		m_ForegroundColors[nColorIndex] = nFore;
+    		m_BackgroundColors[nColorIndex] = nBack;
+    		mh_FontByIndex[nColorIndex] = gSet.mh_Font;
+			if (bExtendFonts) {
+				if (nBack == nFontBoldColor) { // nFontBoldColor may be -1, тогда мы сюда не попадаем
+					if (nFontNormalColor != 0xFF)
+						m_BackgroundColors[nColorIndex] = nFontNormalColor;
+					mh_FontByIndex[nColorIndex] = gSet.mh_FontB;
+				} else if (nBack == nFontItalicColor) { // nFontItalicColor may be -1, тогда мы сюда не попадаем
+					if (nFontNormalColor != 0xFF)
+						m_BackgroundColors[nColorIndex] = nFontNormalColor;
+					mh_FontByIndex[nColorIndex] = gSet.mh_FontI;
+				}
+			}
+		}
+    }
 
 
     //winSize.X = csbi.srWindow.Right - csbi.srWindow.Left + 1; winSize.Y = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
@@ -1199,6 +1195,8 @@ void CVirtualConsole::ParseLine(int row, TCHAR *ConCharLine, WORD *ConAttrLine)
     pEnd->partType = pNull;
 }
 
+WARNING("!!! Оптимизация. Перевести GetCharAttr в массив");
+WARNING("!!! Оптимизация. Расчитать ширины и ABC шрифтов заранее, чтобы потом обращаться строго к массивам");
 void CVirtualConsole::UpdateText(bool isForce)
 {
     //if (!updateText) {
@@ -1462,13 +1460,13 @@ void CVirtualConsole::UpdateText(bool isForce)
 						// нужно продлить рамку до текущего символа
 						if (isCharBorderVertical(c) && isCharBorder(PrevC)) {
 							SetBkColor(hDC, gSet.Colors[attrBack]);
-							wchar_t chBorder = (c == ucBoxDblDownLeft || c == ucBoxDblUpLeft 
+							wchar_t *pchBorder = (c == ucBoxDblDownLeft || c == ucBoxDblUpLeft 
 								|| c == ucBoxSinglDownDblHorz || c == ucBoxSinglUpDblHorz || c == ucBoxDblVertLeft
-								|| c == ucBoxDblVertHorz) ? ucBoxDblHorz : ucBoxSinglHorz;
-							int nCnt = ((rect.right - rect.left) / CharWidth(chBorder))+1;
-							if (nCnt >= nSpaceCount) {
-								_ASSERTE(nCnt<nSpaceCount);
-								nCnt = nSpaceCount;
+								|| c == ucBoxDblVertHorz) ? ms_HorzDbl : ms_HorzSingl;
+							int nCnt = ((rect.right - rect.left) / CharWidth(pchBorder[0]))+1;
+							if (nCnt > MAX_SPACES) {
+								_ASSERTE(nCnt<=MAX_SPACES);
+								nCnt = MAX_SPACES;
 							}
 							//UINT nFlags = ETO_CLIPPED; // || ETO_OPAQUE;
 							//ExtTextOut(hDC, rect.left, rect.top, nFlags, &rect, Spaces, min(nSpaceCount, nCnt), 0);
@@ -1477,10 +1475,10 @@ void CVirtualConsole::UpdateText(bool isForce)
 							else if (drawImage)
 								BlitPictureTo(rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top);
 							UINT nFlags = ETO_CLIPPED | ((drawImage && ISBGIMGCOLOR(attrBack)) ? 0 : ETO_OPAQUE);
-							wmemset(Spaces, chBorder, nCnt);
+							//wmemset(Spaces, chBorder, nCnt);
 							if (bFixFarBorders)
 								SelectFont(gSet.mh_Font2);
-							ExtTextOut(hDC, rect.left, rect.top, nFlags, &rect, Spaces, nCnt, 0);
+							ExtTextOut(hDC, rect.left, rect.top, nFlags, &rect, pchBorder, nCnt, 0);
 
 						} else {
 							HBRUSH hbr = PartBrush(L' ', PrevAttrBack, PrevAttrFore);
@@ -1566,7 +1564,7 @@ void CVirtualConsole::UpdateText(bool isForce)
                 }
 
                 if (gbNoDblBuffer) GdiFlush();
-				if (isSpace || isProgress) {
+				if (isSpace || (isProgress && bEnhanceGraphics)) {
 					HBRUSH hbr = PartBrush(c, attrBack, attrFore);
 					FillRect(hDC, &rect, hbr);
 				} else {
@@ -1655,13 +1653,15 @@ void CVirtualConsole::UpdateText(bool isForce)
 						rect.right = (TextWidth>(UINT)j2) ? ConCharXLine[j2-1] : Width;
 						int nCnt = (rect.right - rect.left + (nBorderWidth>>1)) / nBorderWidth;
 						if (nCnt > (j2 - j)) {
-							_ASSERTE(nCnt < nSpaceCount);
-							if (nCnt >= nSpaceCount) nCnt = nSpaceCount - 1;
-							bDrawReplaced = true;
-							nDrawLen = nCnt;
-							pszDraw = Spaces;
-							_ASSERTE(c==ucBoxDblHorz || c==ucBoxSinglHorz);
-							wmemset(Spaces, c, nCnt);
+							if (c==ucBoxDblHorz || c==ucBoxSinglHorz) {
+								_ASSERTE(nCnt <= MAX_SPACES);
+								if (nCnt > MAX_SPACES) nCnt = MAX_SPACES;
+								bDrawReplaced = true;
+								nDrawLen = nCnt;
+								pszDraw = (c==ucBoxDblHorz) ? ms_HorzDbl : ms_HorzSingl;
+							} else {
+								_ASSERTE(c==ucBoxDblHorz || c==ucBoxSinglHorz);
+							}
 						}
 						//while(j2 < end && ConAttrLine[j2] == attr && 
 						//    isCharBorder(ch = ConCharLine[j2]) && ch == ConCharLine[j2+1])
@@ -1707,7 +1707,7 @@ void CVirtualConsole::UpdateText(bool isForce)
 
                 MCHKHEAP
                 if (gbNoDblBuffer) GdiFlush();
-                if (isProgress) {
+                if (isProgress && bEnhanceGraphics) {
 					HBRUSH hbr = PartBrush(c, attrBack, attrFore);
 					FillRect(hDC, &rect, hbr);
                 } else
@@ -1716,7 +1716,7 @@ void CVirtualConsole::UpdateText(bool isForce)
                     //Ext Text Out(hDC, rect.left, rect.top, nFlags, &rect, Spaces, nCnt, 0);
 					TODO("Проверить, что будет если картинка МЕНЬШЕ по ширине чем область отрисовки");
 					if (!lbImgDrawn) {
-						HBRUSH hbr = PartBrush(c, attrBack, attrFore);
+						HBRUSH hbr = PartBrush(L' ', attrBack, attrFore);
 						FillRect(hDC, &rect, hbr);
 					}
 				} else {
@@ -1773,7 +1773,7 @@ void CVirtualConsole::UpdateText(bool isForce)
 void CVirtualConsole::ClearPartBrushes()
 {
 	_ASSERTE(gConEmu.isMainThread());
-	for (UINT br=0; br<sizeofarray(m_PartBrushes); br++) {
+	for (UINT br=0; br<MAX_COUNT_PART_BRUSHES; br++) {
 		DeleteObject(m_PartBrushes[br].hBrush);
 	}
 	memset(m_PartBrushes, 0, sizeof(m_PartBrushes));

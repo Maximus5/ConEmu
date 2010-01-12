@@ -13,6 +13,7 @@
 
 #ifdef __GNUC__
 #define TimeGetTime GetTickCount
+#define wmemmove_s(d,ds,s,ss) wmemmove(d,s,ss)
 #else
 #define TimeGetTime timeGetTime
 #endif
@@ -186,84 +187,7 @@ BOOL __forceinline CoordInRect(COORD& c, RECT& r)
 ///| Registry |///////////////////////////////////////////////////////////
 //------------------------------------------------------------------------
 
-class Registry
-{
-
-public:
-	HKEY regMy;
-	bool OpenKey(HKEY inHKEY, const TCHAR *regPath, uint access)
-	{
-		bool res = false;
-		if (access == KEY_READ)
-			res = RegOpenKeyEx(inHKEY, regPath, 0, KEY_READ, &regMy) == ERROR_SUCCESS;
-		else
-			res = RegCreateKeyEx(inHKEY, regPath, 0, NULL, 0, access, 0, &regMy, 0) == ERROR_SUCCESS;
-		return res;
-	}
-	bool OpenKey(const TCHAR *regPath, uint access)
-	{
-		return OpenKey(HKEY_CURRENT_USER, regPath, access);
-	}
-	void CloseKey()
-	{
-		RegCloseKey(regMy);
-	}
-
-	template <class T> void Save(const TCHAR *regKey, T value)
-	{
-		DWORD len = sizeof(T);
-		RegSetValueEx(regMy, regKey, NULL, (len == 4) ? REG_DWORD : REG_BINARY, (LPBYTE)(&value), len); 
-	}
-	void Save(const TCHAR *regKey, const TCHAR *value)
-	{
-		if (!value) value = _T(""); // сюда мог придти и NULL
-		RegSetValueEx(regMy, regKey, NULL, REG_SZ, (LPBYTE)(value), _tcslen(value) * sizeof(TCHAR));
-	}
-	void Save(const TCHAR *regKey, TCHAR *value)
-	{
-		Save(regKey, (const TCHAR *)value);
-	}
-	void SaveMSZ(const TCHAR *regKey, const TCHAR *value, DWORD nSize) // size in BYTES!!!
-	{
-		if (!value || !*value)
-			RegDeleteValue(regMy, regKey);
-		else
-			RegSetValueExW(regMy, regKey, NULL, REG_MULTI_SZ, (LPBYTE)(value), nSize);
-	}
-
-	template <class T> bool Load(const TCHAR *regKey, T &value)
-	{
-		DWORD len = sizeof(T);
-		if (RegQueryValueEx(regMy, regKey, NULL, NULL, (LPBYTE)&(value), &len) == ERROR_SUCCESS)
-			return true;
-		return false;
-	}
-	/*bool Load(const TCHAR *regKey, TCHAR *value, UINT nMaxLen)
-	{
-		DWORD len = nMaxLen * sizeof(TCHAR);
-		if (RegQueryValueEx(regMy, regKey, NULL, NULL, (LPBYTE)(value), &len) == ERROR_SUCCESS)
-			return true;
-		return false;
-	}*/
-	bool Load(const TCHAR *regKey, wchar_t **value, LPDWORD pnSize = NULL)
-	{
-		DWORD len = 0;
-		if (*value) {free(*value); *value = NULL;}
-		if (RegQueryValueExW(regMy, regKey, NULL, NULL, NULL, &len) == ERROR_SUCCESS && len) {
-			int nChLen = len/2;
-			*value = (TCHAR*)malloc((nChLen+2)*sizeof(wchar_t));
-			(*value)[nChLen] = 0; (*value)[nChLen+1] = 0;
-			if (RegQueryValueExW(regMy, regKey, NULL, NULL, (LPBYTE)(*value), &len) == ERROR_SUCCESS) {
-				if (pnSize) *pnSize = len+1;
-				return true;
-			}
-		} else {
-			*value = (TCHAR*)malloc(sizeof(TCHAR)*2);
-		}
-		(*value)[0] = 0; (*value)[1] = 0; // На случай REG_MULTI_SZ
-		return false;
-	}
-};
+#include "Registry.h"
 
 //------------------------------------------------------------------------
 ///| Global variables |///////////////////////////////////////////////////

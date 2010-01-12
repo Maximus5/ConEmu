@@ -7,6 +7,7 @@ SRCS =  BaseDragDrops.cpp  \
 		DragDrop.cpp       \
 		Options.cpp        \
 		RealConsole.cpp    \
+		Registry.cpp       \
 		ScreenDump.cpp     \
 		TabBar.cpp         \
 		TrayIcon.cpp       \
