@@ -3352,7 +3352,18 @@ BOOL CSettings::CheckConIme()
 SettingsBase* CSettings::CreateSettings()
 {
 	SettingsBase* pReg = NULL;
-	TODO("XML");
-	pReg = new SettingsRegistry();
+	BOOL lbXml = FALSE;
+	DWORD dwAttr = -1;
+	
+	if (gConEmu.ms_ConEmuXml[0]) {
+		dwAttr = GetFileAttributes(gConEmu.ms_ConEmuXml);
+    	if (dwAttr != (DWORD)-1 && !(dwAttr & FILE_ATTRIBUTE_DIRECTORY))
+    		lbXml = TRUE;
+	}
+
+	if (lbXml)
+		pReg = new SettingsXML();
+	else
+		pReg = new SettingsRegistry();
 	return pReg;
 }

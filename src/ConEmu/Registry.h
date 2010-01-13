@@ -28,6 +28,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <msxml2.h>
+
 class SettingsBase
 {
 public:
@@ -54,6 +56,10 @@ public:
 			Delete(regName);
 		else
 			Save(regName, (LPBYTE)value, REG_MULTI_SZ, nSize); 
+	}
+	void Save(const wchar_t *regName, wchar_t *value)
+	{	// нада, чтобы вниз в template не провалился
+		Save(regName, (const wchar_t*)value);
 	}
 	// bool, dword, rect, etc.
 	template <class T> void Save(const wchar_t *regName, T value)
@@ -92,6 +98,8 @@ public:
 class SettingsXML : public SettingsBase
 {
 protected:
+	IXMLDOMDocument* mp_File;
+	IXMLDOMNode* mp_Key;
 public:
 	virtual bool OpenKey(const wchar_t *regPath, uint access);
 	virtual void CloseKey();
@@ -103,6 +111,9 @@ public:
 	
 	virtual void Save(const wchar_t *regName, const wchar_t *value); // value = _T(""); // сюда мог придти и NULL
 	virtual void Save(const wchar_t *regName, LPCBYTE value, DWORD nType, DWORD nSize);
+	
+protected:
+	IXMLDOMNode* FindItem(IXMLDOMNode* apFrom, const wchar_t* asType, const wchar_t* asName, bool abAllowCreate);
 	
 public:
 	SettingsXML();

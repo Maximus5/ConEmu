@@ -68,6 +68,7 @@ public:
 	//HMODULE mh_Psapi;
 	//FGetModuleFileNameEx GetModuleFileNameEx;
 	wchar_t ms_ConEmuExe[MAX_PATH+1];
+	wchar_t ms_ConEmuXml[MAX_PATH+1];
 	wchar_t ms_ConEmuChm[MAX_PATH+1];
 	wchar_t ms_ConEmuCExe[MAX_PATH+1];
 	wchar_t ms_ConEmuCurDir[MAX_PATH+1];

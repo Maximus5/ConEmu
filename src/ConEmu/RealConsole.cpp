@@ -5566,8 +5566,13 @@ short CRealConsole::CheckProgressInConsole(const wchar_t* pszCurLine)
 {
 	// Обработка прогресса NeroCMD и пр. консольных программ (если курсор находится в видимой области)
 
-	//Обработка прогрессов типа:
+
+	//Плагин Update
 	//"Downloading Far                                               99%"
+	//NeroCMD
+    //"012% ########.................................................................."
+    //ChkDsk
+    //"Completed: 25%"
 	
 	int nIdx = 0;
 	bool bAllowDot = false;
@@ -5579,7 +5584,7 @@ short CRealConsole::CheckProgressInConsole(const wchar_t* pszCurLine)
 		nIdx++;
 	else if (pszCurLine[nIdx] == L' ' && pszCurLine[nIdx+1] == L' ' && isDigit(pszCurLine[nIdx+2]))
 		nIdx += 2;
-	else {
+	else if (!isDigit(pszCurLine[nIdx])) {
 		static int nRusLen = 0;
 		static wchar_t szComplRus[32] = {0};
 		if (!szComplRus[0]) {
@@ -5612,29 +5617,42 @@ short CRealConsole::CheckProgressInConsole(const wchar_t* pszCurLine)
 					nIdx = i - 1;
 				} else
 				if (!isDigit(pszCurLine[i-1]))
+				{
 					nIdx = i;
+                }
+				// Может ошибочно детектировать прогресс, если его ввести в строке запуска при погашенных панелях
+				// Если в строке есть символ '>' - не прогресс
+                while (i>=0) {
+                	if (pszCurLine[i] == L'>') {
+                		nIdx = 0;
+                		break;
+                	}
+                	i--;
+                }
 			}
 		}
 	}
 	
 	// Менять nProgress только если нашли проценты в строке с курсором
-	if (isDigit(pszCurLine[nIdx]) && isDigit(pszCurLine[nIdx+1]) && isDigit(pszCurLine[nIdx+2]) 
-		&& (pszCurLine[nIdx+3]==L'%' || (bAllowDot && pszCurLine[nIdx+3]==L'.')
-		    || !wcsncmp(pszCurLine+nIdx+3,L" percent",8)))
+	if (isDigit(pszCurLine[nIdx]))
 	{
-		nProgress = 100*(pszCurLine[nIdx] - L'0') + 10*(pszCurLine[nIdx+1] - L'0') + (pszCurLine[nIdx+2] - L'0');
-	}
-	else if (isDigit(pszCurLine[nIdx]) && isDigit(pszCurLine[nIdx+1]) 
-		&& (pszCurLine[nIdx+2]==L'%' || (bAllowDot && pszCurLine[nIdx+2]==L'.')
-			|| !wcsncmp(pszCurLine+nIdx+2,L" percent",8)))
-	{
-		nProgress = 10*(pszCurLine[nIdx] - L'0') + (pszCurLine[nIdx+1] - L'0');
-	}
-	else if (isDigit(pszCurLine[nIdx]) 
-		&& (pszCurLine[nIdx+1]==L'%' || (bAllowDot && pszCurLine[nIdx+1]==L'.')
-			|| !wcsncmp(pszCurLine+nIdx+1,L" percent",8)))
-	{
-		nProgress = (pszCurLine[nIdx] - L'0');
+		if (isDigit(pszCurLine[nIdx+1]) && isDigit(pszCurLine[nIdx+2]) 
+			&& (pszCurLine[nIdx+3]==L'%' || (bAllowDot && pszCurLine[nIdx+3]==L'.')
+			    || !wcsncmp(pszCurLine+nIdx+3,L" percent",8)))
+		{
+			nProgress = 100*(pszCurLine[nIdx] - L'0') + 10*(pszCurLine[nIdx+1] - L'0') + (pszCurLine[nIdx+2] - L'0');
+		}
+		else if (isDigit(pszCurLine[nIdx+1]) 
+			&& (pszCurLine[nIdx+2]==L'%' || (bAllowDot && pszCurLine[nIdx+2]==L'.')
+				|| !wcsncmp(pszCurLine+nIdx+2,L" percent",8)))
+		{
+			nProgress = 10*(pszCurLine[nIdx] - L'0') + (pszCurLine[nIdx+1] - L'0');
+		}
+		else if (pszCurLine[nIdx+1]==L'%' || (bAllowDot && pszCurLine[nIdx+1]==L'.')
+				|| !wcsncmp(pszCurLine+nIdx+1,L" percent",8))
+		{
+			nProgress = (pszCurLine[nIdx] - L'0');
+		}
 	}
 
 	return nProgress;

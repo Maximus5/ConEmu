@@ -99,6 +99,7 @@ CConEmuMain::CConEmuMain()
     *pszSlash = 0;
     lstrcpy(ms_ConEmuChm, ms_ConEmuExe); lstrcat(ms_ConEmuChm, L"\\ConEmu.chm");
     SetEnvironmentVariable(L"ConEmuDir", ms_ConEmuExe);
+    lstrcpy(ms_ConEmuXml, ms_ConEmuExe); lstrcat(ms_ConEmuXml, L"\\ConEmu.xml");
     *pszSlash = L'\\';
     
     DWORD dwAttr = GetFileAttributes(ms_ConEmuChm);
