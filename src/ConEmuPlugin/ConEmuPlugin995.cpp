@@ -1,3 +1,31 @@
+
+/*
+Copyright (c) 2009-2010 Maximus5
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+1. Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+3. The name of the authors may not be used to endorse or promote products
+   derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
 #include <windows.h>
 #include "..\common\common.hpp"
 #include "..\common\pluginW1007.hpp" // Отличается от 995 наличием SynchoApi
@@ -292,7 +320,7 @@ int ProcessEditorInputW995(LPCVOID aRec)
 
 		DWORD currentModifiedState = GetEditorModifiedState995();
 
-		if (lastModifiedStateW != currentModifiedState)
+		if (lastModifiedStateW != (int)currentModifiedState)
 		{
 			// !!! Именно UpdateConEmuTabsW, без версии !!!
 			UpdateConEmuTabsW(0, false, false);
@@ -529,7 +557,10 @@ void PostMacro995(wchar_t* asMacro)
 			}
 		}
 		DWORD cbWritten = 0;
-		BOOL fSuccess = WriteConsoleInput(ghConIn, ir, 1, &cbWritten);
+		#ifdef _DEBUG
+		BOOL fSuccess = 
+		#endif
+		WriteConsoleInput(ghConIn, ir, 1, &cbWritten);
 		_ASSERTE(fSuccess && cbWritten==1);
 	}
 	//InfoW995->AdvControl(InfoW995->ModuleNumber,ACTL_REDRAWALL,NULL);
@@ -664,8 +695,9 @@ bool RunExternalProgram995(wchar_t* pszCommand)
 	}
 
 	wchar_t *pszCurDir = NULL;
-	if (size_t len = InfoW995->Control(INVALID_HANDLE_VALUE, FCTL_GETCURRENTDIRECTORY, 0, 0)) {
-		if (pszCurDir = (wchar_t*)malloc(len*2)) {
+	size_t len;
+	if ((len = InfoW995->Control(INVALID_HANDLE_VALUE, FCTL_GETCURRENTDIRECTORY, 0, 0)) != 0) {
+		if ((pszCurDir = (wchar_t*)malloc(len*2)) != NULL) {
 			if (!InfoW995->Control(INVALID_HANDLE_VALUE, FCTL_GETCURRENTDIRECTORY, (int)len, (LONG_PTR)pszCurDir)) {
 				free(pszCurDir); pszCurDir = NULL;
 			}

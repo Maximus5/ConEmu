@@ -488,7 +488,9 @@ LRESULT CALLBACK CConEmuBack::BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, 
 			SetFocus(ghWnd); // Фокус должен быть в главном окне!
 			return 0;
 	    case WM_VSCROLL:
-	        POSTMESSAGE(ghConWnd, messg, wParam, lParam, FALSE);
+	        //POSTMESSAGE(ghConWnd, messg, wParam, lParam, FALSE);
+			// -- не должно вызываться вообще
+			_ASSERTE(messg!=WM_VSCROLL);
 	        break;
 		case WM_PAINT:
 			{
@@ -540,8 +542,8 @@ LRESULT CALLBACK CConEmuBack::ScrollWndProc(HWND hWnd, UINT messg, WPARAM wParam
 			gConEmu.m_Back.mh_WndScroll = hWnd;
 			break;
 		case WM_VSCROLL:
-			WARNING("Переделать в команду пайпа");
-			POSTMESSAGE(ghConWnd, messg, wParam, lParam, FALSE);
+			//POSTMESSAGE(ghConWnd, messg, wParam, lParam, FALSE);
+			gConEmu.ActiveCon()->RCon()->OnSetScrollPos(wParam);
 			break;
 		case WM_SETFOCUS:
 			SetFocus(ghWnd); // Фокус должен быть в главном окне!

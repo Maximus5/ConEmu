@@ -137,8 +137,8 @@ protected:
 	MSection csCON; /*DWORD ncsTCON;*/
 	int mn_BackColorIdx; //==0
 	void Box(LPCTSTR szText);
-	static wchar_t mc_Uni2Oem[0x10000];
-	wchar_t Uni2Oem(wchar_t ch);
+	static char mc_Uni2Oem[0x10000];
+	char Uni2Oem(wchar_t ch);
 	//BOOL RetrieveConsoleInfo(BOOL bShortOnly);
 	typedef struct tag_PARTBRUSHES {
 		wchar_t ch; // 0x2591 0x2592 0x2593 0x2588 - по увеличению плотности

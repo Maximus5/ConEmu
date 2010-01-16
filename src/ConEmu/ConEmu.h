@@ -8,6 +8,11 @@
 typedef interface ITaskbarList3 ITaskbarList3;
 #endif 	/* __ITaskbarList3_FWD_DEFINED__ */
 
+#ifndef __ITaskbarList2_FWD_DEFINED__
+#define __ITaskbarList2_FWD_DEFINED__
+typedef interface ITaskbarList2 ITaskbarList2;
+#endif 	/* __ITaskbarList2_FWD_DEFINED__ */
+
 #define WM_TRAYNOTIFY WM_USER+1
 #define ID_DEBUGGUI 0xABC6
 #define ID_HELP 0xABC7
@@ -142,7 +147,8 @@ protected:
 	BOOL mb_WaitCursor;
 	HCURSOR mh_CursorWait, mh_CursorArrow, mh_CursorAppStarting;
 	//wchar_t *mpsz_RecreateCmd;
-	ITaskbarList3 *mp_TaskBar;
+	ITaskbarList3 *mp_TaskBar3;
+	ITaskbarList2 *mp_TaskBar2;
 	typedef BOOL (WINAPI* FRegisterShellHookWindow)(HWND);
 	RECT mrc_Ideal;
 	BOOL mn_InResize;

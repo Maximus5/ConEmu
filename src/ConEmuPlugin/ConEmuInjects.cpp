@@ -1,4 +1,32 @@
 
+/*
+Copyright (c) 2009-2010 Maximus5
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+1. Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+3. The name of the authors may not be used to endorse or promote products
+   derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
+
 #define DROP_SETCP_ON_WIN2K3R2
 
 // Иначе не опередяется GetConsoleAliases (хотя он должен быть доступен в Win2k)
@@ -29,7 +57,7 @@ extern DWORD gnMainThreadId;
 extern BOOL gbFARuseASCIIsort;
 extern DWORD gdwServerPID;
 
-static bool gbConEmuInput = false; // TRUE если консоль спрятана и должна работать через очередь ConEmu
+//static bool gbConEmuInput = false; // TRUE если консоль спрятана и должна работать через очередь ConEmu
 
 extern CESERVER_REQ_CONINFO_HDR *gpConsoleInfo;
 
@@ -41,9 +69,20 @@ static HMODULE WINAPI OnLoadLibraryA( const char* lpFileName );
 static HMODULE WINAPI OnLoadLibraryExW( const WCHAR* lpFileName, HANDLE hFile, DWORD dwFlags );
 static HMODULE WINAPI OnLoadLibraryExA( const char* lpFileName, HANDLE hFile, DWORD dwFlags );
 
+#if __GNUC__
+extern "C" {
+	#ifndef GetConsoleAliases
+		DWORD WINAPI GetConsoleAliasesA(LPSTR AliasBuffer, DWORD AliasBufferLength, LPSTR ExeName);
+		DWORD WINAPI GetConsoleAliasesW(LPWSTR AliasBuffer, DWORD AliasBufferLength, LPWSTR ExeName);
+		#define GetConsoleAliases  GetConsoleAliasesW
+	#endif
+}
+#endif
+
+
 #define ORIGINAL(n) \
 	BOOL bMainThread = (GetCurrentThreadId() == gnMainThreadId); \
-	void* f##n = GetOriginalAddress(On##n, ##n, bMainThread);
+	void* f##n = (void*)GetOriginalAddress((void*)(On##n) , (void*)n , bMainThread);
 
 static void GuiSetForeground(HWND hWnd)
 {
@@ -74,52 +113,52 @@ static void GuiFlashWindow(BOOL bSimple, HWND hWnd, BOOL bInvert, DWORD dwFlags,
 	}
 }
 
-static BOOL SrvSetConsoleCP(BOOL bSetOutputCP, DWORD nCP)
-{
-	_ASSERTE(ConEmuHwnd);
-
-	BOOL lbRc = FALSE;
-
-	if (gdwServerPID) {
-		// Проверить живость процесса
-		HANDLE hProcess = OpenProcess(SYNCHRONIZE, FALSE, gdwServerPID);
-		if (hProcess) {
-			if (WaitForSingleObject(hProcess,0) == WAIT_OBJECT_0)
-				gdwServerPID = 0; // Процесс сервера завершился
-			CloseHandle(hProcess);
-		} else {
-			gdwServerPID = 0;
-		}
-	}
-
-	if (gdwServerPID) {
-#ifndef DROP_SETCP_ON_WIN2K3R2
-		CESERVER_REQ In, *pOut;
-		ExecutePrepareCmd(&In, CECMD_SETCONSOLECP, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_SETCONCP));
-		In.SetConCP.bSetOutputCP = bSetOutputCP;
-		In.SetConCP.nCP = nCP;
-		HWND hConWnd = GetConsoleWindow();
-		pOut = ExecuteSrvCmd(gdwServerPID, &In, hConWnd);
-		if (pOut) {
-			if (pOut->hdr.nSize >= In.hdr.nSize) {
-				lbRc = pOut->SetConCP.bSetOutputCP;
-				if (!lbRc)
-					SetLastError(pOut->SetConCP.nCP);
-			}
-			ExecuteFreeResult(pOut);
-		}
-#else
-		lbRc = TRUE;
-#endif
-	} else {
-		if (bSetOutputCP)
-			lbRc = SetConsoleOutputCP(nCP);
-		else
-			lbRc = SetConsoleCP(nCP);
-	}
-
-	return lbRc;
-}
+//static BOOL SrvSetConsoleCP(BOOL bSetOutputCP, DWORD nCP)
+//{
+//	_ASSERTE(ConEmuHwnd);
+//
+//	BOOL lbRc = FALSE;
+//
+//	if (gdwServerPID) {
+//		// Проверить живость процесса
+//		HANDLE hProcess = OpenProcess(SYNCHRONIZE, FALSE, gdwServerPID);
+//		if (hProcess) {
+//			if (WaitForSingleObject(hProcess,0) == WAIT_OBJECT_0)
+//				gdwServerPID = 0; // Процесс сервера завершился
+//			CloseHandle(hProcess);
+//		} else {
+//			gdwServerPID = 0;
+//		}
+//	}
+//
+//	if (gdwServerPID) {
+//#ifndef DROP_SETCP_ON_WIN2K3R2
+//		CESERVER_REQ In, *pOut;
+//		ExecutePrepareCmd(&In, CECMD_SETCONSOLECP, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_SETCONCP));
+//		In.SetConCP.bSetOutputCP = bSetOutputCP;
+//		In.SetConCP.nCP = nCP;
+//		HWND hConWnd = GetConsoleWindow();
+//		pOut = ExecuteSrvCmd(gdwServerPID, &In, hConWnd);
+//		if (pOut) {
+//			if (pOut->hdr.nSize >= In.hdr.nSize) {
+//				lbRc = pOut->SetConCP.bSetOutputCP;
+//				if (!lbRc)
+//					SetLastError(pOut->SetConCP.nCP);
+//			}
+//			ExecuteFreeResult(pOut);
+//		}
+//#else
+//		lbRc = TRUE;
+//#endif
+//	} else {
+//		if (bSetOutputCP)
+//			lbRc = SetConsoleOutputCP(nCP);
+//		else
+//			lbRc = SetConsoleCP(nCP);
+//	}
+//
+//	return lbRc;
+//}
 
 
 
@@ -303,7 +342,7 @@ static int WINAPI OnCompareStringW(LCID Locale, DWORD dwCmpFlags, LPCWSTR lpStri
 				//nCmp = CompareStringW(Locale, dwCmpFlags, lpString1, cchCount1, lpString2, cchCount2);
 				int n = 0;
 				//WCHAR ch1[2], ch2[2]; ch1[1] = ch2[1] = 0;
-				WCHAR ch1 = *lpString1++, ch10 = 0, ch2 = *lpString2++, ch20 = 0;
+				WCHAR ch1 = *lpString1++, /*ch10 = 0,*/ ch2 = *lpString2++ /*,ch20 = 0*/;
 				int n1 = (cchCount1==cchCount2) ? cchCount1
 					: (cchCount1!=-1 && cchCount2!=-1) ? -1 
 						: (cchCount1!=-1) ? cchCount2 
@@ -379,30 +418,30 @@ static DWORD WINAPI OnGetConsoleAliasesW(LPWSTR AliasBuffer, DWORD AliasBufferLe
 	return nRc;
 }
 
-static BOOL WINAPI OnSetConsoleCP(UINT wCodePageID)
-{
-	_ASSERTE(OnSetConsoleCP!=SetConsoleCP);
-	TODO("Виснет в 2k3R2 при 'chcp 866 <enter> chcp 20866 <enter>");
-	BOOL lbRc = FALSE;
-	if (gdwServerPID) {
-		lbRc = SrvSetConsoleCP(FALSE/*bSetOutputCP*/, wCodePageID);
-	} else {
-		lbRc = SetConsoleCP(wCodePageID);
-	}
-	return lbRc;
-}
-
-static BOOL WINAPI OnSetConsoleOutputCP(UINT wCodePageID)
-{
-	_ASSERTE(OnSetConsoleOutputCP!=SetConsoleOutputCP);
-	BOOL lbRc = FALSE;
-	if (gdwServerPID) {
-		lbRc = SrvSetConsoleCP(TRUE/*bSetOutputCP*/, wCodePageID);
-	} else {
-		lbRc = SetConsoleOutputCP(wCodePageID);
-	}
-	return lbRc;
-}
+//static BOOL WINAPI OnSetConsoleCP(UINT wCodePageID)
+//{
+//	_ASSERTE(OnSetConsoleCP!=SetConsoleCP);
+//	TODO("Виснет в 2k3R2 при 'chcp 866 <enter> chcp 20866 <enter>");
+//	BOOL lbRc = FALSE;
+//	if (gdwServerPID) {
+//		lbRc = SrvSetConsoleCP(FALSE/*bSetOutputCP*/, wCodePageID);
+//	} else {
+//		lbRc = SetConsoleCP(wCodePageID);
+//	}
+//	return lbRc;
+//}
+//
+//static BOOL WINAPI OnSetConsoleOutputCP(UINT wCodePageID)
+//{
+//	_ASSERTE(OnSetConsoleOutputCP!=SetConsoleOutputCP);
+//	BOOL lbRc = FALSE;
+//	if (gdwServerPID) {
+//		lbRc = SrvSetConsoleCP(TRUE/*bSetOutputCP*/, wCodePageID);
+//	} else {
+//		lbRc = SetConsoleOutputCP(wCodePageID);
+//	}
+//	return lbRc;
+//}
 
 static BOOL WINAPI OnGetNumberOfConsoleInputEvents(HANDLE hConsoleInput, LPDWORD lpcNumberOfEvents)
 {
@@ -534,37 +573,37 @@ static TCHAR shell32[]  = _T("shell32.dll");
 
 static HookItem HooksFarOnly[] = {
 //	{OnlstrcmpiA,      "lstrcmpiA",      kernel32, 0},
-	{OnCompareStringW, "CompareStringW", kernel32, 0},
+	{(void*)OnCompareStringW, "CompareStringW", kernel32, 0},
 	/* ************************ */
 	{0, 0, 0}
 };
 
 static HookItem Hooks[] = {
 	// My
-	{OnPeekConsoleInputW,	"PeekConsoleInputW",	kernel32, 0},
-	{OnPeekConsoleInputA,	"PeekConsoleInputA",	kernel32, 0},
-	{OnReadConsoleInputW,	"ReadConsoleInputW",	kernel32, 0},
-	{OnReadConsoleInputA,	"ReadConsoleInputA",	kernel32, 0},
-    {OnLoadLibraryA,        "LoadLibraryA",			kernel32, 0},
-	{OnLoadLibraryW,        "LoadLibraryW",			kernel32, 0},
-    {OnLoadLibraryExA,      "LoadLibraryExA",		kernel32, 0},
-	{OnLoadLibraryExW,      "LoadLibraryExW",		kernel32, 0},
-	{OnGetConsoleAliasesW,  "GetConsoleAliasesW",	kernel32, 0},
-	{OnGetNumberOfConsoleInputEvents,
+	{(void*)OnPeekConsoleInputW,	"PeekConsoleInputW",	kernel32, 0},
+	{(void*)OnPeekConsoleInputA,	"PeekConsoleInputA",	kernel32, 0},
+	{(void*)OnReadConsoleInputW,	"ReadConsoleInputW",	kernel32, 0},
+	{(void*)OnReadConsoleInputA,	"ReadConsoleInputA",	kernel32, 0},
+    {(void*)OnLoadLibraryA,        "LoadLibraryA",			kernel32, 0},
+	{(void*)OnLoadLibraryW,        "LoadLibraryW",			kernel32, 0},
+    {(void*)OnLoadLibraryExA,      "LoadLibraryExA",		kernel32, 0},
+	{(void*)OnLoadLibraryExW,      "LoadLibraryExW",		kernel32, 0},
+	{(void*)OnGetConsoleAliasesW,  "GetConsoleAliasesW",	kernel32, 0},
+	{(void*)OnGetNumberOfConsoleInputEvents,
 							"GetNumberOfConsoleInputEvents",
 													kernel32, 0},
-	{OnCreateConsoleScreenBuffer,
+	{(void*)OnCreateConsoleScreenBuffer,
 							"CreateConsoleScreenBuffer",
 													kernel32, 0},
-	{OnTrackPopupMenu,      "TrackPopupMenu",		user32,   0},
-	{OnTrackPopupMenuEx,    "TrackPopupMenuEx",		user32,   0},
-	{OnFlashWindow,         "FlashWindow",			user32,   0},
-	{OnFlashWindowEx,       "FlashWindowEx",		user32,   0},
-	{OnSetForegroundWindow, "SetForegroundWindow",	user32,   0},
-	{OnShellExecuteExA,     "ShellExecuteExA",		shell32,  0},
-	{OnShellExecuteExW,     "ShellExecuteExW",		shell32,  0},
-	{OnShellExecuteA,       "ShellExecuteA",		shell32,  0},
-	{OnShellExecuteW,       "ShellExecuteW",		shell32,  0},
+	{(void*)OnTrackPopupMenu,      "TrackPopupMenu",		user32,   0},
+	{(void*)OnTrackPopupMenuEx,    "TrackPopupMenuEx",		user32,   0},
+	{(void*)OnFlashWindow,         "FlashWindow",			user32,   0},
+	{(void*)OnFlashWindowEx,       "FlashWindowEx",		user32,   0},
+	{(void*)OnSetForegroundWindow, "SetForegroundWindow",	user32,   0},
+	{(void*)OnShellExecuteExA,     "ShellExecuteExA",		shell32,  0},
+	{(void*)OnShellExecuteExW,     "ShellExecuteExW",		shell32,  0},
+	{(void*)OnShellExecuteA,       "ShellExecuteA",		shell32,  0},
+	{(void*)OnShellExecuteW,       "ShellExecuteW",		shell32,  0},
 	/* ************************ */
 	{0, 0, 0}
 };
@@ -607,7 +646,7 @@ static bool InitHooks( HookItem* item )
         {
             HMODULE mod = GetModuleHandle( item[i].DllName );
             if( mod )
-                item[i].OldAddress = GetProcAddress( mod, item[i].Name );
+                item[i].OldAddress = (void*)GetProcAddress( mod, item[i].Name );
         }
     }
     return true;
@@ -727,8 +766,8 @@ static bool SetHook( HookItem* item, HMODULE Module = 0, BOOL abExecutable = FAL
 				break;
 		}
 
-		PIMAGE_IMPORT_BY_NAME pOrdinalName = NULL, pOrdinalNameO = NULL;
-		IMAGE_IMPORT_BY_NAME** byname = (IMAGE_IMPORT_BY_NAME**)((char*)Module + rvaINT);
+		PIMAGE_IMPORT_BY_NAME /*pOrdinalName = NULL,*/ pOrdinalNameO = NULL;
+		//IMAGE_IMPORT_BY_NAME** byname = (IMAGE_IMPORT_BY_NAME**)((char*)Module + rvaINT);
         //IMAGE_THUNK_DATA* thunk = (IMAGE_THUNK_DATA*)((char*)Module + rvaIAT);
 		IMAGE_THUNK_DATA* thunk = (IMAGE_THUNK_DATA*)GetPtrFromRVA( rvaIAT, nt_header, (PBYTE)Module );
 		IMAGE_THUNK_DATA* thunkO = (IMAGE_THUNK_DATA*)GetPtrFromRVA( rvaINT, nt_header, (PBYTE)Module );

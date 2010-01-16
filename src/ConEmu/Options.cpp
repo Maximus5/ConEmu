@@ -134,6 +134,7 @@ void CSettings::InitSettings()
 ///| Moved from CVirtualConsole |/////////////////////////////////////////
 //------------------------------------------------------------------------
     _tcscpy(Config, L"Software\\ConEmu");
+    Type[0] = 0;
 
 	//FontFile[0] = 0;
 	isAutoRegisterFonts = true;
@@ -306,6 +307,7 @@ void CSettings::LoadSettings()
 ///| Loading from registry |//////////////////////////////////////////////
 //------------------------------------------------------------------------
     SettingsBase* reg = CreateSettings();
+    lstrcpy(Type, reg->Type);
     if (reg->OpenKey(Config, KEY_READ)) // NightRoman
     {
         TCHAR ColorName[] = L"ColorTable00";
@@ -342,7 +344,7 @@ void CSettings::LoadSettings()
         	isAutoRegisterFonts = true;
         
         reg->Load(L"CmdLine", &psCmd);
-		reg->Load(L"CmdLineHistory", &psCmdHistory, &nCmdHistorySize); HistoryCheck();
+		reg->Load(L"CmdLineHistory", &psCmdHistory); nCmdHistorySize = 0; HistoryCheck();
         reg->Load(L"Multi", isMulti);
         	reg->Load(L"Multi.Modifier", nMultiHotkeyModifier);
 			reg->Load(L"Multi.NewConsole", icMultiNew);
@@ -369,21 +371,8 @@ void CSettings::LoadSettings()
 		// ЭТО не влияет на szDefCmd. Только прямое указание флажка "/BufferHeight N" 
 		// может сменить (умолчательную) команду запуска на "cmd" или "far"
         reg->Load(L"Cascaded", wndCascade);
-        if (wndCascade) {
-	        HWND hPrev = FindWindow(VirtualConsoleClassMain, NULL);
-	        while (hPrev) {
-				if (IsIconic(hPrev) || IsZoomed(hPrev)) {
-					hPrev = FindWindowEx(NULL, hPrev, VirtualConsoleClassMain, NULL);
-					continue;
-				}
-		        RECT rcWnd; GetWindowRect(hPrev, &rcWnd);
-		        int nShift = (GetSystemMetrics(SM_CYSIZEFRAME)+GetSystemMetrics(SM_CYCAPTION))*1.5;
-		        wndX = rcWnd.left + nShift;
-		        wndY = rcWnd.top + nShift;
-				break;
-	        }
-        }
-        reg->Load(L"ConWnd Width", wndWidth); if (!wndWidth) wndWidth = 80; else if (wndWidth>1000) wndWidth = 1000;
+
+		reg->Load(L"ConWnd Width", wndWidth); if (!wndWidth) wndWidth = 80; else if (wndWidth>1000) wndWidth = 1000;
         reg->Load(L"ConWnd Height", wndHeight); if (!wndHeight) wndHeight = 25; else if (wndHeight>500) wndHeight = 500;
         //TODO: Эти два параметра не сохраняются
         reg->Load(L"16bit Height", ntvdmHeight);
@@ -424,12 +413,6 @@ void CSettings::LoadSettings()
 				for ( ; n < nMax; n++)
 					icFixFarBorderRanges[n].bUsed = false;
 			}
-		}
-		//memset(mpc_FixFarBorderValues, 0, 65536*sizeof(bool)); -- т.к. calloc - то не нужно
-		for (int n = 0; n < sizeofarray(icFixFarBorderRanges); n++) {
-			if (!icFixFarBorderRanges[n].bUsed) break;
-			for (WORD x = (WORD)(icFixFarBorderRanges[n].cBegin); x <= (WORD)(icFixFarBorderRanges[n].cEnd); x++)
-				mpc_FixFarBorderValues[x] = true;
 		}
         
         reg->Load(L"PartBrush75", isPartBrush75); if (isPartBrush75<5) isPartBrush75=5; else if (isPartBrush75>250) isPartBrush75=250;
@@ -536,6 +519,38 @@ void CSettings::LoadSettings()
     }
     delete reg;
 
+	if (!gConEmu.WindowMode) {
+		// Иначе окно вообще не отображается
+		_ASSERTE(gConEmu.WindowMode!=0);
+		gConEmu.WindowMode = rNormal;
+	}
+
+	if (wndCascade) {
+		HWND hPrev = FindWindow(VirtualConsoleClassMain, NULL);
+		while (hPrev) {
+			if (IsIconic(hPrev) || IsZoomed(hPrev)) {
+				hPrev = FindWindowEx(NULL, hPrev, VirtualConsoleClassMain, NULL);
+				continue;
+			}
+			RECT rcWnd; GetWindowRect(hPrev, &rcWnd);
+			int nShift = (GetSystemMetrics(SM_CYSIZEFRAME)+GetSystemMetrics(SM_CYCAPTION))*1.5;
+			wndX = rcWnd.left + nShift;
+			wndY = rcWnd.top + nShift;
+			break;
+		}
+	}
+
+	if (!psCmdHistory) {
+		psCmdHistory = (wchar_t*)calloc(2,2);
+	}
+
+	for (UINT n = 0; n < sizeofarray(icFixFarBorderRanges); n++) {
+		if (!icFixFarBorderRanges[n].bUsed) break;
+		for (WORD x = (WORD)(icFixFarBorderRanges[n].cBegin); x <= (WORD)(icFixFarBorderRanges[n].cEnd); x++)
+			mpc_FixFarBorderValues[x] = true;
+	}
+
+
     /*if (wndWidth)
         pVCon->TextWidth = wndWidth;
     if (wndHeight)
@@ -552,8 +567,8 @@ void CSettings::LoadSettings()
 
     LogFont.lfHeight = mn_FontHeight = inSize;
     LogFont.lfWidth = mn_FontWidth = FontSizeX;
-    _tcscpy(LogFont.lfFaceName, inFont);
-    _tcscpy(LogFont2.lfFaceName, inFont2);
+    lstrcpyn(LogFont.lfFaceName, inFont, 32);
+    lstrcpyn(LogFont2.lfFaceName, inFont2, 32);
     LogFont.lfQuality = Quality;
     if (isBold)
         LogFont.lfWeight = FW_BOLD;
@@ -653,8 +668,10 @@ BOOL CSettings::SaveSettings()
     
       if (reg->OpenKey(Config, KEY_WRITE))
         {
+        	lstrcpy(Type, reg->Type);
+        	
             TCHAR ColorName[] = L"ColorTable00";
-            for (uint i = 0x20; i--;)
+            for (uint i = 0; i<0x20; i++)
             {
                 ColorName[10] = i/10 + '0';
                 ColorName[11] = i%10 + '0';
@@ -705,7 +722,8 @@ BOOL CSettings::SaveSettings()
             reg->Save(L"FontSizeX3", FontSizeX3);
             reg->Save(L"FontCharSet", mn_LoadFontCharSet = LogFont.lfCharSet); mb_CharSetWasSet = FALSE;
             reg->Save(L"Anti-aliasing", LogFont.lfQuality);
-            reg->Save(L"WindowMode", isFullScreen ? rFullScreen : gConEmu.isZoomed() ? rMaximized : rNormal);
+			DWORD saveMode = isFullScreen ? rFullScreen : gConEmu.isZoomed() ? rMaximized : rNormal;
+            reg->Save(L"WindowMode", saveMode);
             reg->Save(L"HideCaption", isHideCaption);
             
 			reg->Save(L"DefaultBufferHeight", DefaultBufferHeight);
@@ -859,7 +877,7 @@ DWORD CSettings::EnumFontsThread(LPVOID apArg)
 	EnumFontFamilies(hdc, (LPCTSTR) NULL, (FONTENUMPROC) EnumFamCallBack, (LPARAM) aFontCount);
 	DeleteDC(hdc);
 
-	for (int sz=0; sz<sizeofarray(szRasterSizes); sz++) {
+	for (UINT sz=0; sz<sizeofarray(szRasterSizes); sz++) {
 		wsprintf(szName, L"[%s %ix%i]", RASTER_FONTS_NAME, szRasterSizes[sz].cx, szRasterSizes[sz].cy);
 		SendDlgItemMessage(gSet.hMain, tFontFace, CB_INSERTSTRING, sz, (LPARAM)szName);
 	}
@@ -884,13 +902,34 @@ LRESULT CSettings::OnInitDialog()
 
 	mn_LastChangingFontCtrlId = 0;
 
-	TCHAR szTitle[MAX_PATH]; szTitle[0]=0;
+	wchar_t szTitle[MAX_PATH*2]; szTitle[0]=0;
+	const wchar_t* pszType = L"[reg]";
 	int nConfLen = _tcslen(Config);
 	int nStdLen = strlen("Software\\ConEmu");
+	
+	#ifndef __GNUC__
+	HANDLE hFile = NULL;
+	hFile = CreateFile ( gConEmu.ms_ConEmuXml, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE,
+		NULL, OPEN_EXISTING, 0, 0 );
+	// XML-файл есть
+	if (hFile != INVALID_HANDLE_VALUE) {
+		CloseHandle(hFile); hFile = NULL;
+		pszType = L"[xml]";
+		// Проверим, сможем ли мы в него записать
+		hFile = CreateFile ( gConEmu.ms_ConEmuXml, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE,
+			NULL, OPEN_EXISTING, 0, 0 );
+		if (hFile != INVALID_HANDLE_VALUE) {
+			CloseHandle(hFile); hFile = NULL; // OK
+		} else {
+			EnableWindow(GetDlgItem(ghOpWnd, bSaveSettings), FALSE); // Сохранение запрещено
+		}
+	}
+	#endif
+	
 	if (nConfLen>(nStdLen+1))
-		wsprintf(szTitle, L"Settings (%s)...", (Config+nStdLen+1));
+		wsprintf(szTitle, L"Settings (%s) %s", (Config+nStdLen+1), pszType);
 	else
-		_tcscpy(szTitle, L"Settings...");
+		wsprintf(szTitle, L"Settings %s", pszType);
 	SetWindowText ( ghOpWnd, szTitle );
 
 	MCHKHEAP
@@ -2629,6 +2668,7 @@ HFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 
 	//lfOutPrecision = OUT_RASTER_PRECIS, 
 
+	szFontError[0] = 0;
     HFONT hFont = NULL;
 	static int nRastNameLen = lstrlen(RASTER_FONTS_NAME);
 	int nRastHeight = 0, nRastWidth = 0;
@@ -2664,87 +2704,99 @@ HFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 	}
 	hFont = CreateFontIndirect(&tmpFont);
 
+	wchar_t szFontFace[32];
+	HDC hScreenDC = GetDC(0);
+	HDC hDC = CreateCompatibleDC(hScreenDC);
+	ReleaseDC(0, hScreenDC);
+	hScreenDC = NULL;
+	MBoxAssert(hDC);
+
     if (hFont) {
-        HDC hScreenDC = GetDC(0);
-        HDC hDC = CreateCompatibleDC(hScreenDC);
-        MBoxAssert(hDC);
-        if (hDC)
-        {
-            HFONT hOldF = (HFONT)SelectObject(hDC, hFont);
-            // Для пропорциональных шрифтов имеет смысл сохранять в реестре оптимальный lfWidth (это FontSizeX3)
-            ZeroStruct(tm);
-            BOOL lbTM = GetTextMetrics(hDC, &tm);
-			_ASSERTE(lbTM);
-			if (bRasterFont) {
-				tm.tmHeight = nRastHeight;
-				tm.tmAveCharWidth = tm.tmMaxCharWidth = nRastWidth;
-			}
-
-			// у Arial'а например MaxWidth слишком большой (в два и более раз больше ВЫСОТЫ шрифта)
-			bool bAlmostMonospace = false;
-			if (tm.tmMaxCharWidth && tm.tmAveCharWidth && tm.tmHeight)
-			{
-				int nRelativeDelta = (tm.tmMaxCharWidth - tm.tmAveCharWidth) * 100 / tm.tmHeight;
-				// Если расхождение менее 15% высоты - считаем шрифт моноширным
-				if (nRelativeDelta < 15)
-					bAlmostMonospace = true;			
-
-				//if (abs(tm.tmMaxCharWidth - tm.tmAveCharWidth)<=2)
-				//{ -- это была попытка прикинуть среднюю ширину по английским буквам
-				//  -- не нужно, т.к. затевалось из-за проблем с ClearType на больших размерах
-				//  -- шрифтов, а это лечится аргументом pDX в TextOut
-				//	int nTestLen = lstrlen(TEST_FONT_WIDTH_STRING_EN);
-				//	SIZE szTest = {0,0};
-				//	if (GetTextExtentPoint32(hDC, TEST_FONT_WIDTH_STRING_EN, nTestLen, &szTest)) {
-				//		int nAveWidth = (szTest.cx + nTestLen - 1) / nTestLen;
-				//		if (nAveWidth > tm.tmAveCharWidth || nAveWidth > tm.tmMaxCharWidth)
-				//			tm.tmMaxCharWidth = tm.tmAveCharWidth = nAveWidth;
-				//	}
-				//}
-			} else {
-				_ASSERTE(tm.tmMaxCharWidth);
-				_ASSERTE(tm.tmAveCharWidth);
-				_ASSERTE(tm.tmHeight);
-			}
-
-			if (isForceMonospace) {
-                //Maximus - у Arial'а например MaxWidth слишком большой
-				if (tm.tmMaxCharWidth > (tm.tmHeight * 15 / 10))
-					tm.tmMaxCharWidth = tm.tmHeight; // иначе зашкалит - текст очень сильно разъедется
-                inFont->lfWidth = FontSizeX3 ? FontSizeX3 : tm.tmMaxCharWidth;
-			} else {
-				// Если указан FontSizeX3 (это принудительная ширина знакоместа)
-                inFont->lfWidth = FontSizeX3 ? FontSizeX3 : tm.tmAveCharWidth;
-			}
-            inFont->lfHeight = tm.tmHeight; TODO("Здесь нужно обновить реальный размер шрифта в диалоге настройки!");
-			if (lbTM && tm.tmCharSet != DEFAULT_CHARSET) {
-				inFont->lfCharSet = tm.tmCharSet;
-				for (uint i=0; i < countof(ChSets); i++)
-				{
-					if (chSetsNums[i] == tm.tmCharSet) {
-						SendDlgItemMessage(hMain, tFontCharset, CB_SETCURSEL, i, 0);
-						break;
-					}
+        HFONT hOldF = (HFONT)SelectObject(hDC, hFont);
+        // Для пропорциональных шрифтов имеет смысл сохранять в реестре оптимальный lfWidth (это FontSizeX3)
+        ZeroStruct(tm);
+        BOOL lbTM = GetTextMetrics(hDC, &tm);
+		_ASSERTE(lbTM);
+		if (bRasterFont) {
+			tm.tmHeight = nRastHeight;
+			tm.tmAveCharWidth = tm.tmMaxCharWidth = nRastWidth;
+		}
+		
+		if (GetTextFace(hDC, 32, szFontFace)) {
+			if (!bRasterFont) {
+				szFontFace[31] = 0;
+				if (lstrcmpi(inFont->lfFaceName, szFontFace)) {
+					wsprintf(szFontError+lstrlen(szFontError),
+						L"Failed to create main font!\nRequested: %s\nCreated: %s\n", inFont->lfFaceName, szFontFace);
+					lstrcpyn(inFont->lfFaceName, szFontFace, 32);
+					lstrcpy(tmpFont.lfFaceName, inFont->lfFaceName);
 				}
 			}
-			
-			// если ширина шрифта стала больше ширины FixFarBorders - сбросить его в 0
-			if (FontSizeX2 && (LONG)FontSizeX2 < inFont->lfWidth) {
-				FontSizeX2 = 0;
-				if (ghOpWnd && hMain)
-					SelectStringExact(hMain, tFontSizeX2, L"0");
-			}
+		}
 
-			if (ghOpWnd) {
-				// устанавливать только при листании шрифта в настройке
-				// при кликах по самому флажку "Monospace" шрифт не пересоздается (CreateFont... не вызывается)
-                UpdateTTF ( !bAlmostMonospace ); //(tm.tmMaxCharWidth - tm.tmAveCharWidth)>2
-			}
+		// у Arial'а например MaxWidth слишком большой (в два и более раз больше ВЫСОТЫ шрифта)
+		bool bAlmostMonospace = false;
+		if (tm.tmMaxCharWidth && tm.tmAveCharWidth && tm.tmHeight)
+		{
+			int nRelativeDelta = (tm.tmMaxCharWidth - tm.tmAveCharWidth) * 100 / tm.tmHeight;
+			// Если расхождение менее 15% высоты - считаем шрифт моноширным
+			if (nRelativeDelta < 15)
+				bAlmostMonospace = true;			
 
-            SelectObject(hDC, hOldF);
-            DeleteDC(hDC);
-        }
-        ReleaseDC(0, hScreenDC);
+			//if (abs(tm.tmMaxCharWidth - tm.tmAveCharWidth)<=2)
+			//{ -- это была попытка прикинуть среднюю ширину по английским буквам
+			//  -- не нужно, т.к. затевалось из-за проблем с ClearType на больших размерах
+			//  -- шрифтов, а это лечится аргументом pDX в TextOut
+			//	int nTestLen = lstrlen(TEST_FONT_WIDTH_STRING_EN);
+			//	SIZE szTest = {0,0};
+			//	if (GetTextExtentPoint32(hDC, TEST_FONT_WIDTH_STRING_EN, nTestLen, &szTest)) {
+			//		int nAveWidth = (szTest.cx + nTestLen - 1) / nTestLen;
+			//		if (nAveWidth > tm.tmAveCharWidth || nAveWidth > tm.tmMaxCharWidth)
+			//			tm.tmMaxCharWidth = tm.tmAveCharWidth = nAveWidth;
+			//	}
+			//}
+		} else {
+			_ASSERTE(tm.tmMaxCharWidth);
+			_ASSERTE(tm.tmAveCharWidth);
+			_ASSERTE(tm.tmHeight);
+		}
+
+		if (isForceMonospace) {
+            //Maximus - у Arial'а например MaxWidth слишком большой
+			if (tm.tmMaxCharWidth > (tm.tmHeight * 15 / 10))
+				tm.tmMaxCharWidth = tm.tmHeight; // иначе зашкалит - текст очень сильно разъедется
+            inFont->lfWidth = FontSizeX3 ? FontSizeX3 : tm.tmMaxCharWidth;
+		} else {
+			// Если указан FontSizeX3 (это принудительная ширина знакоместа)
+            inFont->lfWidth = FontSizeX3 ? FontSizeX3 : tm.tmAveCharWidth;
+		}
+        inFont->lfHeight = tm.tmHeight; TODO("Здесь нужно обновить реальный размер шрифта в диалоге настройки!");
+		if (lbTM && tm.tmCharSet != DEFAULT_CHARSET) {
+			inFont->lfCharSet = tm.tmCharSet;
+			for (uint i=0; i < countof(ChSets); i++)
+			{
+				if (chSetsNums[i] == tm.tmCharSet) {
+					SendDlgItemMessage(hMain, tFontCharset, CB_SETCURSEL, i, 0);
+					break;
+				}
+			}
+		}
+		
+		// если ширина шрифта стала больше ширины FixFarBorders - сбросить его в 0
+		if (FontSizeX2 && (LONG)FontSizeX2 < inFont->lfWidth) {
+			FontSizeX2 = 0;
+			if (ghOpWnd && hMain)
+				SelectStringExact(hMain, tFontSizeX2, L"0");
+		}
+
+		if (ghOpWnd) {
+			// устанавливать только при листании шрифта в настройке
+			// при кликах по самому флажку "Monospace" шрифт не пересоздается (CreateFont... не вызывается)
+            UpdateTTF ( !bAlmostMonospace ); //(tm.tmMaxCharWidth - tm.tmAveCharWidth)>2
+		}
+
+        SelectObject(hDC, hOldF);
+        
         
         
         if (mh_FontB) { DeleteObject(mh_FontB); mh_FontB = NULL; }
@@ -2765,6 +2817,44 @@ HFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 		mh_Font2 = CreateFont(LogFont2.lfHeight, LogFont2.lfWidth, 0, 0, FW_NORMAL,
 			0, 0, 0, DEFAULT_CHARSET, OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS, 
 			NONANTIALIASED_QUALITY/*ANTIALIASED_QUALITY*/, 0, LogFont2.lfFaceName);
+		if (mh_Font2) {
+			hOldF = (HFONT)SelectObject(hDC, mh_Font2);
+
+			if (GetTextFace(hDC, 32, szFontFace)) {
+				szFontFace[31] = 0;
+				if (lstrcmpi(LogFont2.lfFaceName, szFontFace)) {
+					if (szFontError[0]) lstrcat(szFontError, L"\n");
+					wsprintf(szFontError+lstrlen(szFontError),
+						L"Failed to create border font!\nRequested: %s\nCreated: ", LogFont2.lfFaceName);
+					if (lstrcmpi(LogFont2.lfFaceName, L"Lucida Console") == 0) {
+						lstrcpyn(LogFont2.lfFaceName, szFontFace, 32);
+					} else {
+						lstrcpy(LogFont2.lfFaceName, L"Lucida Console");
+						SelectObject(hDC, hOldF);
+						DeleteObject(mh_Font2);
+						mh_Font2 = CreateFont(LogFont2.lfHeight, LogFont2.lfWidth, 0, 0, FW_NORMAL,
+							0, 0, 0, DEFAULT_CHARSET, OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS, 
+							NONANTIALIASED_QUALITY/*ANTIALIASED_QUALITY*/, 0, LogFont2.lfFaceName);
+						hOldF = (HFONT)SelectObject(hDC, mh_Font2);
+
+						wchar_t szFontFace2[32];
+						if (GetTextFace(hDC, 32, szFontFace2)) {
+							szFontFace2[31] = 0;
+							if (lstrcmpi(LogFont2.lfFaceName, szFontFace2) != 0) {
+								lstrcat(szFontError, szFontFace2);
+							} else {
+								lstrcat(szFontError, szFontFace);
+								lstrcat(szFontError, L"\nUsing: Lucida Console");
+							}
+						}
+					}
+				}
+			}
+
+			SelectObject(hDC, hOldF);
+		}
+		
+		DeleteDC(hDC);
     }
 
     return hFont;
@@ -3237,7 +3327,7 @@ void CSettings::HistoryAdd(LPCWSTR asCmd)
 
 	HEAPVAL
 
-	wchar_t *pszNewHistory, *psz, *pszOld;
+	wchar_t *pszNewHistory, *psz;
 	int nCount = 0;
 
 	DWORD nNewSize = nCmdHistorySize + (DWORD)((lstrlen(asCmd) + 2)*sizeof(wchar_t));
@@ -3248,19 +3338,21 @@ void CSettings::HistoryAdd(LPCWSTR asCmd)
 	lstrcpy(pszNewHistory, asCmd);
 	psz = pszNewHistory + lstrlen(pszNewHistory) + 1;
 	nCount++;
-	pszOld = psCmdHistory;
-	int nLen;
-	HEAPVAL
-	while (nCount < MAX_CMD_HISTORY && *pszOld /*&& psz < pszEnd*/) {
-		const wchar_t *pszCur = pszOld;
-		pszOld += lstrlen(pszOld) + 1;
+	if (psCmdHistory) {
+		wchar_t* pszOld = psCmdHistory;
+		int nLen;
+		HEAPVAL
+		while (nCount < MAX_CMD_HISTORY && *pszOld /*&& psz < pszEnd*/) {
+			const wchar_t *pszCur = pszOld;
+			pszOld += lstrlen(pszOld) + 1;
 
-		if (lstrcmp(pszCur, asCmd) == 0)
-			continue;
+			if (lstrcmp(pszCur, asCmd) == 0)
+				continue;
 
-		lstrcpy(psz, pszCur);
-		psz += (nLen = (lstrlen(psz)+1));
-		nCount ++;
+			lstrcpy(psz, pszCur);
+			psz += (nLen = (lstrlen(psz)+1));
+			nCount ++;
+		}
 	}
 	*psz = 0;
 
@@ -3351,6 +3443,7 @@ BOOL CSettings::CheckConIme()
 
 SettingsBase* CSettings::CreateSettings()
 {
+#ifndef __GNUC__
 	SettingsBase* pReg = NULL;
 	BOOL lbXml = FALSE;
 	DWORD dwAttr = -1;
@@ -3366,4 +3459,7 @@ SettingsBase* CSettings::CreateSettings()
 	else
 		pReg = new SettingsRegistry();
 	return pReg;
+#else
+	return new SettingsRegistry();
+#endif
 }

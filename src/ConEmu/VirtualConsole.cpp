@@ -65,7 +65,7 @@ WARNING("! А нафига КУРСОР (мигающий) отрисовывать в VirtualConsole? Не лучше ли
 
 
 CVirtualConsole::PARTBRUSHES CVirtualConsole::m_PartBrushes[MAX_COUNT_PART_BRUSHES] = {{0}};
-wchar_t CVirtualConsole::mc_Uni2Oem[0x10000];
+char CVirtualConsole::mc_Uni2Oem[0x10000];
 // MAX_SPACES == 0x400
 wchar_t CVirtualConsole::ms_Spaces[MAX_SPACES];
 wchar_t CVirtualConsole::ms_HorzDbl[MAX_SPACES];
@@ -732,17 +732,15 @@ WORD CVirtualConsole::CharWidth(TCHAR ch)
     return nWidth;
 }
 
-wchar_t CVirtualConsole::Uni2Oem(wchar_t ch)
+char CVirtualConsole::Uni2Oem(wchar_t ch)
 {
 	if (mc_Uni2Oem[ch])
 		return mc_Uni2Oem[ch];
 
 	char c = '?';
-	wchar_t chOem = L'?';
 	WideCharToMultiByte(CP_OEMCP, 0, &ch, 1, &c, 1, 0, 0);
-	MultiByteToWideChar(CP_ACP, 0, &c, 1, &chOem, 1);
-	mc_Uni2Oem[ch] = chOem;
-	return chOem;
+	mc_Uni2Oem[ch] = c;
+	return c;
 }
 
 bool CVirtualConsole::CheckChangedTextAttr()
@@ -1080,20 +1078,6 @@ enum CVirtualConsole::_PartType CVirtualConsole::GetCharType(TCHAR ch)
     return cType;
 }
 
-//#define GetCharAttr(ch,atr,rch,foreColorNum,backColorNum) \
-//{ \
-//	foreColorNum = atr & 0x0F; \
-//	backColorNum = atr >> 4 & 0x0F; \
-//	rch = ch; \
-//	if (gSet.isExtendColors) { \
-//		if (backColorNum==gSet.nExtendColor) { \
-//			backColorNum = attrBackLast; \
-//			foreColorNum += 0x10; \
-//		} else { \
-//			attrBackLast = backColorNum; \
-//		} \
-//	} \
-//}
 
 
 // row - 0-based
@@ -1477,7 +1461,7 @@ void CVirtualConsole::UpdateText(bool isForce)
 							UINT nFlags = ETO_CLIPPED | ((drawImage && ISBGIMGCOLOR(attrBack)) ? 0 : ETO_OPAQUE);
 							//wmemset(Spaces, chBorder, nCnt);
 							if (bFixFarBorders)
-								SelectFont(gSet.mh_Font2);
+								SelectFont(hFont2);
 							ExtTextOut(hDC, rect.left, rect.top, nFlags, &rect, pchBorder, nCnt, 0);
 
 						} else {
@@ -1508,7 +1492,7 @@ void CVirtualConsole::UpdateText(bool isForce)
                     if (!isUnicode)
                         SelectFont(hFont);
                     else //if (isUnicode)
-                        SelectFont(gSet.mh_Font2);
+                        SelectFont(hFont2);
                 }
 
 
@@ -1569,9 +1553,12 @@ void CVirtualConsole::UpdateText(bool isForce)
 					FillRect(hDC, &rect, hbr);
 				} else {
 					// Это режим Force monospace
-					if (nFontCharSet == OEM_CHARSET && !isUnicode)
-						c = Uni2Oem(c);
-					ExtTextOut(hDC, rect.left, rect.top, nFlags, &rect, &c, 1, 0);
+					if (nFontCharSet == OEM_CHARSET && !isUnicode) {
+						char cOem = Uni2Oem(c);
+						ExtTextOutA(hDC, rect.left, rect.top, nFlags, &rect, &cOem, 1, 0);
+					} else {
+						ExtTextOut(hDC, rect.left, rect.top, nFlags, &rect, &c, 1, 0);
+					}
 				}
                 if (gbNoDblBuffer) GdiFlush();
                 MCHKHEAP
@@ -1672,7 +1659,7 @@ void CVirtualConsole::UpdateText(bool isForce)
 					}
 
 					if (bFixFarBorders)
-						SelectFont(gSet.mh_Font2);
+						SelectFont(hFont2);
 					MCHKHEAP
 				}
 

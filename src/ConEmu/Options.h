@@ -9,7 +9,8 @@ public:
     CSettings();
     ~CSettings();
 
-    TCHAR Config[MAX_PATH];
+    wchar_t Config[MAX_PATH], Type[16];
+	wchar_t szFontError[512];
 
     int DefaultBufferHeight; bool ForceBufferHeight; bool AutoScroll; bool AutoBufferHeight;
 	bool FarSyncSize;

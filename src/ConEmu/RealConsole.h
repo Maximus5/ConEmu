@@ -163,6 +163,7 @@ public:
 	DWORD GetFarStatus();
     DWORD GetServerPID();
     LRESULT OnScroll(int nDirection);
+	LRESULT OnSetScrollPos(WPARAM wParam);
     BOOL isConSelectMode();
     BOOL isFar();
     void ShowConsole(int nMode); // -1 Toggle, 0 - Hide, 1 - Show
@@ -256,6 +257,7 @@ protected:
     //BOOL RetrieveConsoleInfo(/*BOOL bShortOnly,*/ UINT anWaitSize);
 	BOOL WaitConsoleSize(UINT anWaitSize, DWORD nTimeout);
     BOOL InitBuffers(DWORD OneBufferSize);
+	BOOL LoadDataFromMap(DWORD CharCount);
 private:
     // Эти переменные инициализируются в RetrieveConsoleInfo()
 	MSection csCON; //DWORD ncsT;
@@ -267,7 +269,7 @@ private:
         USHORT nTopVisibleLine; // может отличаться от m_sbi.srWindow.Top, если прокрутка заблокирована
         wchar_t *pConChar;
         WORD  *pConAttr;
-		CHAR_INFO *pCopy;
+		CHAR_INFO *pCopy, *pCmp;
         int nTextWidth, nTextHeight, nBufferHeight;
         int nChange2TextWidth, nChange2TextHeight;
         BOOL bBufferHeight; // TRUE, если есть прокрутка

@@ -25,6 +25,7 @@
 	#include "ShObjIdl_Part.h"
 	const CLSID CLSID_TaskbarList = {0x56FDF344, 0xFD6D, 0x11d0, {0x95, 0x8A, 0x00, 0x60, 0x97, 0xC9, 0xA0, 0x90}};
 	const IID IID_ITaskbarList3 = {0xea1afb91, 0x9e28, 0x4b86, {0x90, 0xe9, 0x9e, 0x9f, 0x8a, 0x5e, 0xef, 0xaf}};
+	const IID IID_ITaskbarList2 = {0x602D4995, 0xB13A, 0x429b, {0xA6, 0x6E, 0x19, 0x35, 0xE4, 0x4F, 0x43, 0x17}};
 #else
 	#include <ShObjIdl.h>
 	#ifndef __ITaskbarList3_INTERFACE_DEFINED__
@@ -140,7 +141,8 @@ CConEmuMain::CConEmuMain()
 
     mh_WinHook = NULL;
 	//mh_PopupHook = NULL;
-    mp_TaskBar = NULL;
+    mp_TaskBar2 = NULL;
+	mp_TaskBar3 = NULL;
 
     mp_VActive = NULL; mp_VCon1 = NULL; mp_VCon2 = NULL;
     memset(mp_VCon, 0, sizeof(mp_VCon));
@@ -1028,6 +1030,9 @@ void CConEmuMain::SyncWindowToConsole()
 
 bool CConEmuMain::SetWindowMode(uint inMode)
 {
+	if (inMode != rNormal && inMode != rMaximized && inMode != rFullScreen)
+		inMode = rNormal; // ошибка загрузки настроек?
+
     if (!isMainThread()) {
         PostMessage(ghWnd, mn_MsgSetWindowMode, inMode, 0);
         return false;
@@ -1048,8 +1053,16 @@ bool CConEmuMain::SetWindowMode(uint inMode)
     RECT consoleSize = MakeRect(gSet.wndWidth, gSet.wndHeight);
     bool canEditWindowSizes = false;
     bool lbRc = false;
+	static bool bWasSetFullscreen = false;
 
     change2WindowMode = inMode;
+
+	if (bWasSetFullscreen && inMode != rFullScreen) {
+		if (mp_TaskBar2) {
+			mp_TaskBar2->MarkFullscreenWindow(ghWnd, FALSE);
+			bWasSetFullscreen = false;
+		}
+	}
 
     //!!!
     switch(inMode)
@@ -1204,6 +1217,11 @@ bool CConEmuMain::SetWindowMode(uint inMode)
                 mb_IgnoreSizeChange = FALSE;
                 RePaint();
             }
+
+			if (mp_TaskBar2) {
+				mp_TaskBar2->MarkFullscreenWindow(ghWnd, TRUE);
+				bWasSetFullscreen = true;
+			}
 
             // for virtual screend mi.rcMonitor. may contains negative values...
 
@@ -2969,13 +2987,13 @@ void CConEmuMain::UpdateProgress(BOOL abUpdateTitle)
 	static BOOL  bLastProgressError = FALSE;
     if (nLastProgress != mn_Progress  || bLastProgressError != bWasError) {
         HRESULT hr = S_OK;
-        if (mp_TaskBar) {
+        if (mp_TaskBar3) {
             if (mn_Progress >= 0) {
-                hr = mp_TaskBar->SetProgressValue(ghWnd, mn_Progress, 100);
+                hr = mp_TaskBar3->SetProgressValue(ghWnd, mn_Progress, 100);
                 if (nLastProgress == -1 || bLastProgressError != bWasError)
-					hr = mp_TaskBar->SetProgressState(ghWnd, bWasError ? TBPF_ERROR : TBPF_NORMAL);
+					hr = mp_TaskBar3->SetProgressState(ghWnd, bWasError ? TBPF_ERROR : TBPF_NORMAL);
             } else {
-                hr = mp_TaskBar->SetProgressState(ghWnd, TBPF_NOPROGRESS);
+                hr = mp_TaskBar3->SetProgressState(ghWnd, TBPF_NOPROGRESS);
             }
         }
         // Запомнить последнее
@@ -3828,6 +3846,11 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
         
         PostMessage(ghWnd, mn_MsgPostCreate, 0, 0);
     } else {
+		if (gSet.szFontError[0]) {
+			MBoxA(gSet.szFontError);
+			gSet.szFontError[0] = 0;
+		}
+
         if (mp_VActive == NULL || !gConEmu.mb_StartDetached) { // Консоль уже может быть создана, если пришел Attach из ConEmuC
         	BOOL lbCreated = FALSE;
         	LPCWSTR pszCmd = gSet.GetCmd();
@@ -3994,15 +4017,18 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
         //CoInitializeEx(NULL, COINIT_MULTITHREADED);
 
          
-        if (!mp_TaskBar) {
-            hr = CoCreateInstance(CLSID_TaskbarList,NULL,CLSCTX_INPROC_SERVER,IID_ITaskbarList3,(void**)&mp_TaskBar);
-            if (hr == S_OK && mp_TaskBar) {
-                hr = mp_TaskBar->HrInit();
-            }
-            if (hr != S_OK && mp_TaskBar) {
-                if (mp_TaskBar) mp_TaskBar->Release();
-                mp_TaskBar = NULL;
-            }
+		if (!mp_TaskBar2) {
+			hr = CoCreateInstance(CLSID_TaskbarList,NULL,CLSCTX_INPROC_SERVER,IID_ITaskbarList2,(void**)&mp_TaskBar2);
+			if (hr == S_OK && mp_TaskBar2) {
+				hr = mp_TaskBar2->HrInit();
+			}
+			if (hr != S_OK && mp_TaskBar2) {
+				if (mp_TaskBar2) mp_TaskBar2->Release();
+				mp_TaskBar2 = NULL;
+			}
+		}
+        if (!mp_TaskBar3) {
+			hr = mp_TaskBar2->QueryInterface(IID_ITaskbarList3, (void**)&mp_TaskBar3);
         }
 
         if (!mp_DragDrop) {
@@ -4107,10 +4133,14 @@ LRESULT CConEmuMain::OnDestroy(HWND hWnd)
 
     Icon.Delete();
     
-    if (mp_TaskBar) {
-        mp_TaskBar->Release();
-        mp_TaskBar = NULL;
-    }
+	if (mp_TaskBar3) {
+		mp_TaskBar3->Release();
+		mp_TaskBar3 = NULL;
+	}
+	if (mp_TaskBar2) {
+		mp_TaskBar2->Release();
+		mp_TaskBar2 = NULL;
+	}
     
     UnRegisterHotKeys();
 
@@ -6154,7 +6184,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			result = DefWindowProc(hWnd, messg, wParam, lParam);
 
 			if (hWnd == ghWnd /*&& ghOpWnd*/) { //2009-05-08 запоминать wndX/wndY всегда, а не только если окно настроек открыто
-				if (!gSet.isFullScreen && !isZoomed() && !isIconic())
+				if (!gConEmu.mb_IgnoreSizeChange && !gSet.isFullScreen && !isZoomed() && !isIconic())
 				{
 					RECT rc; GetWindowRect(ghWnd, &rc);
 					gSet.UpdatePos(rc.left, rc.top);

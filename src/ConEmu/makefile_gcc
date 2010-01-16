@@ -70,12 +70,13 @@ OBJDIR = ../../gcc/conemu
 REOBJDIR = \.\.\/\.\.\/gcc\/conemu
 EXEDIR = ../..
 COMMON = ../common
+#COMINC = "C:\Program Files\Microsoft SDKs\Windows\v7.0\Include"
 COMINC = $(COMMON)
 EXT = exe
 EXENAME = $(NAME).$(EXT)
 EXEFULLNAME = $(EXEDIR)/$(EXENAME)
 #DEF = export.gcc.def
-RC_NAME = Resource.rc
+RC_NAME = ConEmu.rc
 RES = $(OBJDIR)/$(NAME).res.o
 
 NOSTART = -nostartfiles

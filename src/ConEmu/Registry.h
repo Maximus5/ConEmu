@@ -28,7 +28,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <msxml2.h>
+#ifndef __GNUC__
+#include <msxml.h>
+#endif
+
+#ifndef LPCBYTE
+#define LPCBYTE const BYTE*
+#endif
 
 class SettingsBase
 {
@@ -36,7 +42,7 @@ public:
 	virtual bool OpenKey(const wchar_t *regPath, uint access) = 0;
 	virtual void CloseKey() = 0;
 
-	virtual bool Load(const wchar_t *regName, wchar_t **value, LPDWORD pnSize = NULL) = 0;
+	virtual bool Load(const wchar_t *regName, wchar_t **value) = 0;
 	virtual bool Load(const wchar_t *regName, LPBYTE value, DWORD nSize) = 0;
 	template <class T> bool Load(const wchar_t *regName, T &value)
 	{
@@ -69,7 +75,9 @@ public:
 	}
 	
 public:
-	SettingsBase() {};
+	wchar_t Type[16];
+
+	SettingsBase() {Type[0] = 0;};
 	virtual ~SettingsBase() {};
 };
 
@@ -82,7 +90,7 @@ public:
 	virtual bool OpenKey(const wchar_t *regPath, uint access);
 	virtual void CloseKey();
 
-	virtual bool Load(const wchar_t *regName, wchar_t **value, LPDWORD pnSize = NULL);
+	virtual bool Load(const wchar_t *regName, wchar_t **value);
 	virtual bool Load(const wchar_t *regName, LPBYTE value, DWORD nSize);
 	
 	virtual void Delete(const wchar_t *regName);
@@ -95,16 +103,18 @@ public:
 	virtual ~SettingsRegistry();
 };
 
+#ifndef __GNUC__
 class SettingsXML : public SettingsBase
 {
 protected:
 	IXMLDOMDocument* mp_File;
 	IXMLDOMNode* mp_Key;
+	bool mb_Modified;
 public:
 	virtual bool OpenKey(const wchar_t *regPath, uint access);
 	virtual void CloseKey();
 
-	virtual bool Load(const wchar_t *regName, wchar_t **value, LPDWORD pnSize = NULL);
+	virtual bool Load(const wchar_t *regName, wchar_t **value);
 	virtual bool Load(const wchar_t *regName, LPBYTE value, DWORD nSize);
 	
 	virtual void Delete(const wchar_t *regName);
@@ -114,8 +124,13 @@ public:
 	
 protected:
 	IXMLDOMNode* FindItem(IXMLDOMNode* apFrom, const wchar_t* asType, const wchar_t* asName, bool abAllowCreate);
+	bool SetAttr(IXMLDOMNode* apNode, const wchar_t* asName, const wchar_t* asValue);
+	bool SetAttr(IXMLDOMNode* apNode, IXMLDOMNamedNodeMap* apAttrs, const wchar_t* asName, const wchar_t* asValue);
+	BSTR GetAttr(IXMLDOMNode* apNode, const wchar_t* asName);
+	BSTR GetAttr(IXMLDOMNode* apNode, IXMLDOMNamedNodeMap* apAttrs, const wchar_t* asName);
 	
 public:
 	SettingsXML();
 	virtual ~SettingsXML();
 };
+#endif

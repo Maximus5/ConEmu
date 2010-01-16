@@ -421,7 +421,10 @@ BOOL CRealConsole::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuff
 				ResetEvent(mh_ApplyFinished);
 				mn_LastConsolePacketIdx--;
 				SetEvent(mh_MonitorThreadEvent);
-				DWORD nWait = WaitForSingleObject(mh_ApplyFinished, SETSYNCSIZEAPPLYTIMEOUT);
+				#ifdef _DEBUG
+				DWORD nWait = 
+				#endif
+				WaitForSingleObject(mh_ApplyFinished, SETSYNCSIZEAPPLYTIMEOUT);
 
 				sbi = con.m_sbi;
 				nBufHeight = con.nBufferHeight;
@@ -940,7 +943,10 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 
         DWORD dwT1 = GetTickCount();
 
-        __try {
+        #ifndef __GNUC__
+        __try
+        #endif
+        {
             //ResetEvent(pRCon->mh_EndUpdateEvent);
             
 			// Тут и ApplyConsole вызывается
@@ -1046,9 +1052,12 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 				}
 			}
 
-        }__except(EXCEPTION_EXECUTE_HANDLER){
+        }
+        #ifndef __GNUC__
+        __except(EXCEPTION_EXECUTE_HANDLER){
             bException = TRUE;
         }
+        #endif
 
 
 		// Чтобы не было слишком быстрой отрисовки (тогда процессор загружается на 100%)
@@ -1935,6 +1944,15 @@ LRESULT CRealConsole::OnScroll(int nDirection)
     WARNING("Переделать в команду пайпа");
 	PostConsoleMessage(WM_VSCROLL, nDirection, NULL);
     return 0;
+}
+
+LRESULT CRealConsole::OnSetScrollPos(WPARAM wParam)
+{
+	if (!this) return 0;
+	// SB_LINEDOWN / SB_LINEUP / SB_PAGEDOWN / SB_PAGEUP
+	WARNING("Переделать в команду пайпа");
+	PostConsoleMessage(WM_VSCROLL, wParam, NULL);
+	return 0;
 }
 
 void CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, wchar_t *pszChars)
@@ -3731,7 +3749,7 @@ BOOL CRealConsole::InitBuffers(DWORD OneBufferSize)
             _ASSERTE((nNewWidth * nNewHeight * sizeof(*con.pConChar)) == OneBufferSize);
 		} else if (con.nTextWidth == nNewWidth && con.nTextHeight == nNewHeight) {
 			// Не будем зря передергивать буферы и прочее
-			if (con.pConChar!=NULL && con.pConAttr!=NULL && con.pCopy!=NULL) {
+			if (con.pConChar!=NULL && con.pConAttr!=NULL && con.pCopy!=NULL && con.pCmp) {
 				return TRUE;
 			}
 		}
@@ -3752,28 +3770,33 @@ BOOL CRealConsole::InitBuffers(DWORD OneBufferSize)
             { Free(con.pConAttr); con.pConAttr = NULL; }
 		if (con.pCopy)
 			{ Free(con.pCopy); con.pCopy = NULL; }
+		if (con.pCmp)
+			{ Free(con.pCmp); con.pCmp = NULL; }
 
         MCHKHEAP;
 
         con.pConChar = (TCHAR*)Alloc((nNewWidth * nNewHeight * 2), sizeof(*con.pConChar));
         con.pConAttr = (WORD*)Alloc((nNewWidth * nNewHeight * 2), sizeof(*con.pConAttr));
 		con.pCopy = (CHAR_INFO*)Alloc((nNewWidth * nNewHeight), sizeof(*con.pCopy));
+		con.pCmp = (CHAR_INFO*)Alloc((nNewWidth * nNewHeight), sizeof(*con.pCmp));
 
         sc.Unlock();
 
         _ASSERTE(con.pConChar!=NULL);
         _ASSERTE(con.pConAttr!=NULL);
 		_ASSERTE(con.pCopy!=NULL);
+		_ASSERTE(con.pCmp!=NULL);
 
         MCHKHEAP
 
-        lbRc = con.pConChar!=NULL && con.pConAttr!=NULL && con.pCopy!=NULL;
+        lbRc = con.pConChar!=NULL && con.pConAttr!=NULL && con.pCopy!=NULL && con.pCmp!=NULL;
     } else if (con.nTextWidth!=nNewWidth || con.nTextHeight!=nNewHeight) {
         MCHKHEAP
         MSectionLock sc; sc.Lock(&csCON);
         memset(con.pConChar, 0, (nNewWidth * nNewHeight * 2) * sizeof(*con.pConChar));
         memset(con.pConAttr, 0, (nNewWidth * nNewHeight * 2) * sizeof(*con.pConAttr));
 		memset(con.pCopy, 0, (nNewWidth * nNewHeight) * sizeof(*con.pCopy));
+		memset(con.pCmp, 0, (nNewWidth * nNewHeight) * sizeof(*con.pCmp));
         sc.Unlock();
         MCHKHEAP
 
@@ -4434,7 +4457,7 @@ void CRealConsole::UpdateScrollInfo()
 	nLastTop = con.m_sbi.srWindow.Top;
 
     int nCurPos = 0;
-    BOOL lbScrollRc = FALSE;
+    //BOOL lbScrollRc = FALSE;
     SCROLLINFO si;
     ZeroMemory(&si, sizeof(si));
     si.cbSize = sizeof(si);
@@ -6543,37 +6566,8 @@ void CRealConsole::ApplyConsoleInfo()
 
 				MCHKHEAP;
 				if (InitBuffers(OneBufferSize)) {
-					MCHKHEAP;
-					BOOL lbScreenChanged = FALSE;
-	                
-					wchar_t* lpChar = con.pConChar;
-					WORD* lpAttr = con.pConAttr;
-					CONSOLE_SELECTION_INFO sel;
-					bool bSelectionPresent = GetConsoleSelectionInfo(&sel);
-
-					lbScreenChanged = memcmp(con.pCopy, mp_ConsoleData, CharCount*sizeof(*con.pCopy));
-					if (lbScreenChanged)
-					{
-						memmove(con.pCopy, mp_ConsoleData, CharCount*sizeof(*con.pCopy));
-						CHAR_INFO* lpCur = (CHAR_INFO*)con.pCopy;
-
-						// Когда вернется возможность выделения - нужно сразу применять данные в атрибуты
-						_ASSERTE(!bSelectionPresent);
-						for (DWORD n = 0; n < CharCount; n++, lpCur++) {
-							*(lpAttr++) = lpCur->Attributes;
-
-							wchar_t ch = lpCur->Char.UnicodeChar;
-							//2009-09-25. Некоторые (старые?) программы умудряются засунуть в консоль символы (ASC<32)
-							//            их нужно заменить на юникодные аналоги
-							*(lpChar++) = (ch < 32) ? gszAnalogues[(WORD)ch] : ch;
-						}
-						//memmove(con.pConChar, lpCur, OneBufferSize); lpCur += OneBufferSize;
-						//memmove(con.pConAttr, lpCur, OneBufferSize); lpCur += OneBufferSize;
-						MCHKHEAP
-
-						//FindPanels();
+					if (LoadDataFromMap(CharCount))
 						lbChanged = TRUE;
-					}
 				}
 			}
 		}
@@ -6624,6 +6618,52 @@ void CRealConsole::ApplyConsoleInfo()
 
 	if (lbChanged)
 		mb_DataChanged = TRUE;
+}
+
+BOOL CRealConsole::LoadDataFromMap(DWORD CharCount)
+{
+	MCHKHEAP;
+	BOOL lbScreenChanged = FALSE;
+
+	wchar_t* lpChar = con.pConChar;
+	WORD* lpAttr = con.pConAttr;
+	CONSOLE_SELECTION_INFO sel;
+	bool bSelectionPresent = GetConsoleSelectionInfo(&sel);
+	#ifdef __GNUC__
+	if (bSelectionPresent)
+		bSelectionPresent = bSelectionPresent;
+	#endif
+
+	#ifndef __GNUC__
+	__try {
+	#endif
+		// Теоретически, может возникнуть исключение при чтении? когда размер резко увеличивается (maximize)
+		memmove(con.pCmp, mp_ConsoleData, CharCount*sizeof(*con.pCopy));
+	#ifndef __GNUC__
+	}__except(EXCEPTION_EXECUTE_HANDLER){
+		_ASSERT(FALSE);
+	}
+	#endif
+
+	lbScreenChanged = memcmp(con.pCopy, con.pCmp, CharCount*sizeof(*con.pCopy));
+	if (lbScreenChanged)
+	{
+		memmove(con.pCopy, con.pCmp, CharCount*sizeof(*con.pCopy));
+		CHAR_INFO* lpCur = (CHAR_INFO*)con.pCopy;
+
+		// Когда вернется возможность выделения - нужно сразу применять данные в атрибуты
+		_ASSERTE(!bSelectionPresent);
+		for (DWORD n = 0; n < CharCount; n++, lpCur++) {
+			*(lpAttr++) = lpCur->Attributes;
+
+			wchar_t ch = lpCur->Char.UnicodeChar;
+			//2009-09-25. Некоторые (старые?) программы умудряются засунуть в консоль символы (ASC<32)
+			//            их нужно заменить на юникодные аналоги
+			*(lpChar++) = (ch < 32) ? gszAnalogues[(WORD)ch] : ch;
+		}
+		MCHKHEAP
+	}
+	return lbScreenChanged;
 }
 
 bool CRealConsole::isAlive()
