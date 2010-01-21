@@ -400,7 +400,8 @@ int ServerInit()
 		_printf("CreateEvent(hDataSentEvent) failed, ErrCode=0x%08X\n", dwErr); 
 		iRc = CERR_REFRESHEVENT; goto wrap;
 	}
-    srv.hReqSizeChanged = CreateEvent(NULL,FALSE,FALSE,NULL);
+	// !! Event может ожидаться в нескольких нитях !!
+    srv.hReqSizeChanged = CreateEvent(NULL,TRUE,FALSE,NULL);
     if (!srv.hReqSizeChanged) {
         dwErr = GetLastError();
         _printf("CreateEvent(hReqSizeChanged) failed, ErrCode=0x%08X\n", dwErr); 
@@ -472,6 +473,7 @@ void ServerDone(int aiRc)
 {
 	// На всякий случай - выставим событие
 	if (ghExitQueryEvent) SetEvent(ghExitQueryEvent);
+	if (ghQuitEvent) SetEvent(ghQuitEvent);
 
 	// Остановить отладчик, иначе отлаживаемый процесс тоже схлопнется	
     if (srv.bDebuggerActive) {
@@ -775,6 +777,7 @@ HWND Attach2Gui(DWORD nTimeout)
                 if (ghLogSize) LogSize(NULL, ":SetConsoleFontSizeTo.after");
         	}
         
+			WARNING("Переделать на команду пайпа!!! AttachRequested");
             hDcWnd = (HWND)SendMessage(hGui, nMsg, (WPARAM)ghConWnd, (LPARAM)gnSelfPID);
             if (hDcWnd != NULL) {
                 ghConEmuWnd = hGui;
@@ -854,6 +857,7 @@ int CreateMapHeader()
 		iRc = CERR_MAPVIEWFILEERR; goto wrap;
 	}
 	memset(srv.pConsoleInfo, 0, nConInfoSize);
+	srv.pConsoleInfo->cbSize = nConInfoSize;
 	
 	srv.pConsoleInfo->nServerPID = GetCurrentProcessId();
 
@@ -882,7 +886,7 @@ static BOOL RecreateMapData()
 	BOOL lbRc = FALSE;
 	DWORD dwErr = 0;
 	DWORD nNewIndex = 0;
-	DWORD nMaxSize = (srv.sbi.dwMaximumWindowSize.X * srv.sbi.dwMaximumWindowSize.Y * 2) * sizeof(CHAR_INFO);
+	DWORD nMaxSize = (srv.sbi.dwMaximumWindowSize.X * srv.sbi.dwMaximumWindowSize.Y * 2) * sizeof(CHAR_INFO)+sizeof(CESERVER_REQ_CONINFO_DATA);
 	wchar_t szErr[255]; szErr[0] = 0;
 	wchar_t szMapName[64];
 	
@@ -896,7 +900,7 @@ static BOOL RecreateMapData()
 		CloseMapData();
 		
 		
-	srv.pConsoleDataCopy = (CHAR_INFO*)Alloc(nMaxSize,1);
+	srv.pConsoleDataCopy = (CESERVER_REQ_CONINFO_DATA*)Alloc(nMaxSize,1);
 	if (!srv.pConsoleDataCopy) {
 		wsprintf (szErr, L"ConEmuC: Alloc(%i) failed, pConsoleDataCopy is null", nMaxSize);
 		goto wrap;
@@ -917,7 +921,7 @@ static BOOL RecreateMapData()
 		goto wrap;
 	}
 	
-	srv.pConsoleData = (CHAR_INFO*)MapViewOfFile(srv.hFileMappingData, FILE_MAP_ALL_ACCESS,0,0,0);
+	srv.pConsoleData = (CESERVER_REQ_CONINFO_DATA*)MapViewOfFile(srv.hFileMappingData, FILE_MAP_ALL_ACCESS,0,0,0);
 	if (!srv.pConsoleData) {
 		dwErr = GetLastError();
 		CloseHandle(srv.hFileMappingData); srv.hFileMappingData = NULL;
@@ -925,6 +929,8 @@ static BOOL RecreateMapData()
 		goto wrap;
 	}
 	memset(srv.pConsoleData, 0, nMaxSize);
+	srv.pConsoleData->crBufSize.X = srv.sbi.dwMaximumWindowSize.X;
+	srv.pConsoleData->crBufSize.Y = srv.sbi.dwMaximumWindowSize.Y;
 	
 	srv.nConsoleDataSize = nMaxSize;
 	
@@ -1159,8 +1165,9 @@ static BOOL ReadConsoleData()
 	TextLen = TextWidth * TextHeight;
 	
 	DWORD nCurSize = TextLen * sizeof(CHAR_INFO);
+	DWORD nHdrSize = sizeof(CESERVER_REQ_CONINFO_DATA)-sizeof(CHAR_INFO);
 	
-	if (!srv.pConsoleData || srv.nConsoleDataSize < nCurSize)
+	if (!srv.pConsoleData || srv.nConsoleDataSize < (nCurSize+nHdrSize))
 	{
 		// Если MapFile еще не создавался, или был увеличен размер консоли
 		if (!RecreateMapData())
@@ -1169,7 +1176,7 @@ static BOOL ReadConsoleData()
 			goto wrap;
 		}
 		
-		_ASSERTE(srv.nConsoleDataSize >= nCurSize);
+		_ASSERTE(srv.nConsoleDataSize >= (nCurSize+nHdrSize));
 	}
 
 	hOut = (HANDLE)ghConOut;
@@ -1183,7 +1190,7 @@ static BOOL ReadConsoleData()
 		bufSize.X = TextWidth; bufSize.Y = TextHeight;
 		bufCoord.X = 0; bufCoord.Y = 0;
 		rgn = srv.sbi.srWindow;
-		if (ReadConsoleOutput(hOut, srv.pConsoleDataCopy, bufSize, bufCoord, &rgn))
+		if (ReadConsoleOutput(hOut, srv.pConsoleDataCopy->Buf, bufSize, bufCoord, &rgn))
 			lbRc = TRUE;
 	}
 	
@@ -1193,18 +1200,22 @@ static BOOL ReadConsoleData()
 		bufSize.X = TextWidth; bufSize.Y = 1;
 		bufCoord.X = 0; bufCoord.Y = 0;
 		rgn = srv.sbi.srWindow;
-		CHAR_INFO* pLine = srv.pConsoleDataCopy;
+		CHAR_INFO* pLine = srv.pConsoleDataCopy->Buf;
 		for(int y = 0; y < (int)TextHeight; y++, rgn.Top++, pLine+=TextWidth)
 		{
 			rgn.Bottom = rgn.Top;
 			ReadConsoleOutput(hOut, pLine, bufSize, bufCoord, &rgn);
 		}
 	}
+
+	srv.pConsoleDataCopy->crBufSize.X = TextWidth;
+	srv.pConsoleDataCopy->crBufSize.Y = TextHeight;
 	
-	if (memcmp(srv.pConsoleData, srv.pConsoleDataCopy, nCurSize)) {
-		memmove(srv.pConsoleData, srv.pConsoleDataCopy, nCurSize);
+	if (memcmp(srv.pConsoleData->Buf, srv.pConsoleDataCopy->Buf, nCurSize)) {
+		memmove(srv.pConsoleData->Buf, srv.pConsoleDataCopy->Buf, nCurSize);
 		lbChanged = TRUE;
 	}
+	srv.pConsoleData->crBufSize = srv.pConsoleDataCopy->crBufSize;
 	
 wrap:
 	return lbChanged;
@@ -1499,8 +1510,7 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 		
 		
 		// Из другой нити поступил запрос на изменение размера консоли
-		if (srv.bRequestChangeSize) {
-			srv.bRequestChangeSize = FALSE;
+		if (srv.nRequestChangeSize) {
 			SetConsoleSize(srv.nReqSizeBufferHeight, srv.crReqSizeNewSize, srv.rReqSizeNewRect, srv.sReqSizeLabel);
 			SetEvent(srv.hReqSizeChanged);
 		}

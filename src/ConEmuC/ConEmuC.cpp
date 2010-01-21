@@ -498,7 +498,7 @@ wrap:
     // На всякий случай - выставим событие
     if (ghExitQueryEvent) SetEvent(ghExitQueryEvent);
     
-    // Завершение RefreshThread, InputThread
+    // Завершение RefreshThread, InputThread, ServerThread
     if (ghQuitEvent) SetEvent(ghQuitEvent);
     
     
@@ -1502,7 +1502,7 @@ void CreateLogSizeFile(int nLevel)
     if (ghLogSize == INVALID_HANDLE_VALUE) {
         ghLogSize = NULL;
         dwErr = GetLastError();
-        _printf("CreateFile failed! ErrCode=0x%08X\n", dwErr, szFile);
+        _printf("Create console log file failed! ErrCode=0x%08X\n", dwErr, szFile);
         return;
     }
     
@@ -2041,8 +2041,7 @@ DWORD WINAPI ServerThread(LPVOID lpvParam)
       {
           dwErr = GetLastError();
           _printf("CreateNamedPipe failed, ErrCode=0x%08X\n", dwErr); 
-          Sleep(50);
-          //return 99;
+          Sleep(10);
           continue;
       }
  
@@ -2053,7 +2052,8 @@ DWORD WINAPI ServerThread(LPVOID lpvParam)
       fConnected = ConnectNamedPipe(hPipe, NULL) ? 
          TRUE : (GetLastError() == ERROR_PIPE_CONNECTED); 
 
-	  if (WaitForSingleObject(ghExitQueryEvent, 0) == WAIT_OBJECT_0) break;
+	  if (WaitForSingleObject(ghQuitEvent, 0) == WAIT_OBJECT_0)
+		  break;
  
       MCHKHEAP;
       if (fConnected) 
@@ -2071,8 +2071,7 @@ DWORD WINAPI ServerThread(LPVOID lpvParam)
          {
             dwErr = GetLastError();
             _printf("CreateThread(Instance) failed, ErrCode=0x%08X\n", dwErr);
-            Sleep(50);
-            //return 0;
+            Sleep(10);
             continue;
          }
          else {
@@ -2080,8 +2079,8 @@ DWORD WINAPI ServerThread(LPVOID lpvParam)
          }
        } 
       else {
-        // The client could not connect, so close the pipe. 
-         SafeCloseHandle(hPipe); 
+		// The client could not connect, so close the pipe. 
+        SafeCloseHandle(hPipe); 
       }
       MCHKHEAP;
    } 
@@ -2464,11 +2463,10 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
         } break;
         //case CECMD_SETSIZE:
 		case CECMD_SETSIZESYNC:
+		case CECMD_SETSIZENOSYNC:
         case CECMD_CMDSTARTED:
         case CECMD_CMDFINISHED:
         {
-        	WARNING("Переделать нафиг, весь ресайз должен быть в RefreshThread");
-        
             MCHKHEAP;
             int nOutSize = sizeof(CESERVER_REQ_HDR) + sizeof(CONSOLE_SCREEN_BUFFER_INFO) + sizeof(DWORD);
             *out = ExecuteNewCmd(0,nOutSize);
@@ -2526,6 +2524,7 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 				}
 
                 srv.nTopVisibleLine = nNewTopVisible;
+				WARNING("Если указан dwFarPID - это что-ли два раза подряд выполнится?");
                 SetConsoleSize(nBufferHeight, crNewSize, rNewRect, ":CECMD_SETSIZESYNC");
 
 				if (in.hdr.nCmd == CECMD_SETSIZESYNC) {
@@ -2534,27 +2533,28 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 						// Команду можно выполнить через плагин FARа
 						wchar_t szPipeName[128];
 						wsprintf(szPipeName, CEPLUGINPIPENAME, L".", in.SetSize.dwFarPID);
-						DWORD nHILO = ((DWORD)crNewSize.X) | (((DWORD)(WORD)crNewSize.Y) << 16);
-						pPlgIn = ExecuteNewCmd(CMD_SETSIZE, sizeof(CESERVER_REQ_HDR)+sizeof(nHILO));
-						pPlgIn->dwData[0] = nHILO;
+						//DWORD nHILO = ((DWORD)crNewSize.X) | (((DWORD)(WORD)crNewSize.Y) << 16);
+						//pPlgIn = ExecuteNewCmd(CMD_SETSIZE, sizeof(CESERVER_REQ_HDR)+sizeof(nHILO));
+						pPlgIn = ExecuteNewCmd(CMD_REDRAWFAR, sizeof(CESERVER_REQ_HDR));
+						//pPlgIn->dwData[0] = nHILO;
 						pPlgOut = ExecuteCmd(szPipeName, pPlgIn, 500, ghConWnd);
 						if (pPlgOut) ExecuteFreeResult(pPlgOut);
-					} else {
-						INPUT_RECORD r = {WINDOW_BUFFER_SIZE_EVENT};
-						r.Event.WindowBufferSizeEvent.dwSize = crNewSize;
-						DWORD dwWritten = 0;
-						// тут был ghConIn
-						HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE);
-						if (WriteConsoleInput(hIn, &r, 1, &dwWritten)) {
-							if (PeekConsoleInput(hIn, &r, 1, &(dwWritten = 0)) && dwWritten > 0) {
-								DWORD dwStartTick = GetTickCount();
-								do {
-									Sleep(5);
-									if (!PeekConsoleInput(hIn, &r, 1, &(dwWritten = 0)))
-										dwWritten = 0;
-								} while ((dwWritten > 0) && ((GetTickCount() - dwStartTick) < MAX_SYNCSETSIZE_WAIT));
-							}
-						}
+					//} else {
+					//	INPUT_RECORD r = {WINDOW_BUFFER_SIZE_EVENT};
+					//	r.Event.WindowBufferSizeEvent.dwSize = crNewSize;
+					//	DWORD dwWritten = 0;
+					//	// тут был ghConIn
+					//	HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE);
+					//	if (WriteConsoleInput(hIn, &r, 1, &dwWritten)) {
+					//		if (PeekConsoleInput(hIn, &r, 1, &(dwWritten = 0)) && dwWritten > 0) {
+					//			DWORD dwStartTick = GetTickCount();
+					//			do {
+					//				Sleep(5);
+					//				if (!PeekConsoleInput(hIn, &r, 1, &(dwWritten = 0)))
+					//					dwWritten = 0;
+					//			} while ((dwWritten > 0) && ((GetTickCount() - dwStartTick) < MAX_SYNCSETSIZE_WAIT));
+					//		}
+					//	}
 					}
 
 					SetEvent(srv.hAllowInputEvent);
@@ -2758,7 +2758,7 @@ BOOL MyGetConsoleScreenBufferInfo(HANDLE ahConOut, PCONSOLE_SCREEN_BUFFER_INFO a
     	//CSCS.Lock(&srv.cChangeSize);
         //cs.Enter(&srv.csChangeSize, &srv.ncsTChangeSize);
 
-    if (gnRunMode == RM_SERVER) // ComSpec окно менять НЕ ДОЛЖЕН!
+    if (gnRunMode == RM_SERVER && ghConEmuWnd && IsWindow(ghConEmuWnd)) // ComSpec окно менять НЕ ДОЛЖЕН!
     {
         // Если юзер случайно нажал максимизацию, когда консольное окно видимо - ничего хорошего не будет
         if (IsZoomed(ghConWnd)) {
@@ -2887,12 +2887,22 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 		srv.rReqSizeNewRect = rNewRect;
 		srv.sReqSizeLabel = asLabel;
 		ResetEvent(srv.hReqSizeChanged);
-		srv.bRequestChangeSize = TRUE;
+		srv.nRequestChangeSize++;
 		
 		//dwWait = WaitForSingleObject(srv.hReqSizeChanged, REQSIZE_TIMEOUT);
 		// Ожидание, пока сработает RefreshThread
 		HANDLE hEvents[2] = {ghQuitEvent, srv.hReqSizeChanged};
-		dwWait = WaitForMultipleObjects ( 2, hEvents, FALSE, REQSIZE_TIMEOUT );
+		DWORD nSizeTimeout = REQSIZE_TIMEOUT;
+		#ifdef _DEBUG
+		if (IsDebuggerPresent())
+			nSizeTimeout = INFINITE;
+		#endif
+		dwWait = WaitForMultipleObjects ( 2, hEvents, FALSE, nSizeTimeout );
+		if (srv.nRequestChangeSize > 0) {
+			srv.nRequestChangeSize --;
+		} else {
+			_ASSERTE(srv.nRequestChangeSize>0);
+		}
 		if (dwWait == WAIT_OBJECT_0) {
 			// ghQuitEvent !!
 			return FALSE;
@@ -2969,7 +2979,8 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
         if (lbNeedChange) {
             DWORD dwErr = 0;
             // Если этого не сделать - размер консоли нельзя УМЕНЬШИТЬ
-            MoveWindow(ghConWnd, rcConPos.left, rcConPos.top, 1, 1, 1);
+			if (crNewSize.X < csbi.dwSize.X || crNewSize.Y < csbi.dwSize.Y)
+				MoveWindow(ghConWnd, rcConPos.left, rcConPos.top, 1, 1, 1);
             //specified width and height cannot be less than the width and height of the console screen buffer's window
             lbRc = SetConsoleScreenBufferSize(ghConOut, crNewSize);
             if (!lbRc) dwErr = GetLastError();
@@ -2986,8 +2997,12 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
         // Начался ресайз для BufferHeight
         COORD crHeight = {crNewSize.X, BufferHeight};
 
-        GetWindowRect(ghConWnd, &rcConPos);
-        MoveWindow(ghConWnd, rcConPos.left, rcConPos.top, 1, 1, 1);
+        //GetWindowRect(ghConWnd, &rcConPos); -- уже сделано выше
+
+		// Если этого не сделать - размер консоли нельзя УМЕНЬШИТЬ
+		if (crNewSize.X < csbi.dwSize.X || crNewSize.Y < csbi.dwSize.Y)
+	        MoveWindow(ghConWnd, rcConPos.left, rcConPos.top, 1, 1, 1);
+
         lbRc = SetConsoleScreenBufferSize(ghConOut, crHeight); // а не crNewSize - там "оконные" размеры
         //окошко раздвигаем только по ширине!
         //RECT rcCurConPos = {0};

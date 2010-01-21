@@ -77,7 +77,7 @@ extern wchar_t gszDbgModLabel[6];
 #define GUI_PIPE_TIMEOUT 300
 #define MAX_CONREAD_SIZE 30000 // в байтах
 #define RELOAD_INFO_TIMEOUT 500
-#define REQSIZE_TIMEOUT 500
+#define REQSIZE_TIMEOUT 5000
 #define GUIREADY_TIMEOUT 10000
 #define UPDATECONHANDLE_TIMEOUT 1000
 
@@ -287,8 +287,8 @@ typedef struct tag_SrvInfo {
 	//
 	HANDLE hFileMapping, hFileMappingData;
 	CESERVER_REQ_CONINFO_HDR *pConsoleInfo;
-	CHAR_INFO *pConsoleData; // Mapping
-	CHAR_INFO *pConsoleDataCopy; // Local (Alloc)
+	CESERVER_REQ_CONINFO_DATA *pConsoleData; // Mapping
+	CESERVER_REQ_CONINFO_DATA *pConsoleDataCopy; // Local (Alloc)
 	DWORD nConsoleDataSize;
 	//
 	HANDLE hConEmuGuiAttached;
@@ -311,7 +311,7 @@ typedef struct tag_SrvInfo {
 	HANDLE hRefreshEvent; // ServerMode, перечитать консоль, и если есть изменения - отослать в GUI
 	HANDLE hDataSentEvent; // Флаг, что изменения отосланы в GUI
 	// Смена размера консоли через RefreshThread
-	BOOL bRequestChangeSize;
+	int nRequestChangeSize;
 	USHORT nReqSizeBufferHeight;
 	COORD crReqSizeNewSize;
 	SMALL_RECT rReqSizeNewRect;

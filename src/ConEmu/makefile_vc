@@ -217,7 +217,7 @@ AllDirs:
 #.c{$(INTDIR)}.obj::
 #	$(CPP) @<<
 #	$(CPPFLAGS) $<
-#<<
+# << 
 
 .cpp{$(INTDIR)}.obj::
 	$(CPP) @<<
@@ -237,12 +237,12 @@ AllDirs:
 #{UCD}.c{$(INTDIR)}.obj::
 #	$(CPP) @<<
 #	$(CPPFLAGS) $<
-#<<
+# <<
 
 #{UCD}.cpp{$(INTDIR)}.obj::
 #	$(CPP) @<<
 #	$(CPPFLAGS) $<
-#<<
+# <<
 
 $(RES_FILE): ConEmu.rc ..\ConEmu\Version.h
 	echo compiling resource file

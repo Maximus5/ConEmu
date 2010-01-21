@@ -1,4 +1,32 @@
 
+/*
+Copyright (c) 2009-2010 Maximus5
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+1. Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+3. The name of the authors may not be used to endorse or promote products
+   derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
+
 #ifndef _COMMON_HEADER_HPP_
 #define _COMMON_HEADER_HPP_
 
@@ -137,8 +165,9 @@ extern wchar_t gszDbgModLabel[6];
 #define CECMD_SETCONSOLECP  25
 #define CECMD_SAVEALIASES   26
 #define CECMD_GETALIASES    27
+#define CECMD_SETSIZENOSYNC 28 // Почти CECMD_SETSIZE. Вызывается из плагина.
 
-#define CESERVER_REQ_VER    25
+#define CESERVER_REQ_VER    27
 
 #define PIPEBUFSIZE 4096
 
@@ -263,6 +292,7 @@ typedef struct tag_CESERVER_REQ_FULLCONDATA {
 } CESERVER_REQ_FULLCONDATA;
 
 typedef struct tag_CESERVER_REQ_CONINFO_HDR {
+	DWORD cbSize;
 	HWND2 hConWnd;
 	DWORD nServerPID;
 	DWORD nGuiPID;
@@ -282,7 +312,15 @@ typedef struct tag_CESERVER_REQ_CONINFO_HDR {
 	DWORD dwConsoleMode;
 	DWORD dwSbiSize;
 	CONSOLE_SCREEN_BUFFER_INFO sbi;
+	BYTE nFarColors[0x100]; // Массив цветов фара
+	DWORD nFarInterfaceSettings;
+	DWORD nFarConfirmationSettings;
 } CESERVER_REQ_CONINFO_HDR;
+
+typedef struct tag_CESERVER_REQ_CONINFO_DATA {
+	COORD      crBufSize;
+	CHAR_INFO  Buf[1];
+} CESERVER_REQ_CONINFO_DATA;
 
 //typedef struct tag_CESERVER_REQ_CONINFO {
 //	CESERVER_REQ_CONINFO_HDR inf;
@@ -417,11 +455,12 @@ typedef struct tag_CESERVER_REQ {
 //#define CMD_DEFFONT    5
 #define CMD_LANGCHANGE   6
 #define CMD_SETENVVAR    7 // Установить переменные окружения (FAR plugin)
-#define CMD_SETSIZE      8
+//#define CMD_SETSIZE    8
 #define CMD_EMENU        9
 #define CMD_LEFTCLKSYNC  10
+#define CMD_REDRAWFAR    11
 // +2
-#define MAXCMDCOUNT      12
+#define MAXCMDCOUNT      13
 #define CMD_EXIT         MAXCMDCOUNT-1
 
 //#define GWL_TABINDEX     0

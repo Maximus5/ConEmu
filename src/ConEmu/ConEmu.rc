@@ -70,7 +70,7 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 IDD_DIALOG1 DIALOGEX 0, 0, 328, 216
 STYLE DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
-FONT 8, "MS Shell Dlg", 0, 0, 0x1
+FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        "Anti-aliasing",IDC_STATIC,263,4,60,45,WS_GROUP
     CONTROL         "&None",rNoneAA,"Button",BS_AUTORADIOBUTTON | WS_GROUP,
@@ -92,9 +92,9 @@ BEGIN
     EDITTEXT        tBgImage,34,142,209,12,ES_AUTOHSCROLL
     COMBOBOX        tFontFace,10,16,123,72,CBS_DROPDOWN | CBS_AUTOHSCROLL | 
                     CBS_SORT | WS_VSCROLL | WS_TABSTOP
-    COMBOBOX        tFontSizeY,47,34,38,66,CBS_DROPDOWN | CBS_AUTOHSCROLL | 
+    COMBOBOX        tFontSizeY,67,34,24,66,CBS_DROPDOWN | CBS_AUTOHSCROLL | 
                     WS_VSCROLL | WS_TABSTOP
-    COMBOBOX        tFontSizeX,97,34,36,66,CBS_DROPDOWN | WS_VSCROLL | 
+    COMBOBOX        tFontSizeX,109,34,24,66,CBS_DROPDOWN | WS_VSCROLL | 
                     WS_TABSTOP
     COMBOBOX        tFontCharset,47,50,86,67,CBS_DROPDOWNLIST | 
                     CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
@@ -114,14 +114,14 @@ BEGIN
     CONTROL         "Full screen",rFullScreen,"Button",BS_AUTORADIOBUTTON,
                     151,87,49,8
     GROUPBOX        "Font",IDC_STATIC,4,4,136,122
-    RTEXT           "Size:",IDC_STATIC,9,37,32,8
-    CTEXT           "x",IDC_STATIC,89,35,8,8
+    RTEXT           "H:",IDC_STATIC,50,37,12,8
+    RTEXT           "W:",IDC_STATIC,94,37,11,8
     RTEXT           "Charset:",IDC_STATIC,9,53,32,8
     EDITTEXT        tWndWidth,199,60,20,12,ES_AUTOHSCROLL | ES_NUMBER
     EDITTEXT        tWndHeight,229,60,20,12,ES_AUTOHSCROLL | ES_NUMBER
     CTEXT           "x",IDC_STATIC,221,61,8,8
-    CONTROL         "Force monospace",cbForceMonospace,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,10,83,70,8
+    CONTROL         "Force monospace",cbForceMonospace,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,10,83,70,8
     CTEXT           "x",IDC_STATIC,101,83,8,8
     COMBOBOX        tFontSizeX3,109,81,24,66,CBS_DROPDOWN | WS_VSCROLL | 
                     WS_TABSTOP
@@ -158,12 +158,14 @@ BEGIN
     PUSHBUTTON      "Apply",cbApplyPos,214,83,36,12
     CONTROL         "Blinking",cbCursorBlink,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,200,36,50,8
+    CONTROL         "Auto",cbFontAuto,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
+                    10,36,39,9
 END
 
 IDD_DIALOG2 DIALOGEX 0, 0, 328, 209
 STYLE DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
-FONT 8, "MS Shell Dlg"
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     GROUPBOX        "Standard colors (""red green blue"")",gbStandardColors,
                     4,4,319,67
@@ -385,7 +387,7 @@ END
 IDD_DIALOG4 DIALOGEX 0, 0, 328, 216
 STYLE DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
-FONT 8, "MS Shell Dlg", 0, 0, 0x1
+FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        "Tabs (panels, editors, viewers)",IDC_STATIC,4,2,319,28
     CONTROL         "Enable Tabs",cbTabs,"Button",BS_AUTO3STATE | WS_TABSTOP,
@@ -398,7 +400,7 @@ BEGIN
                     WS_TABSTOP,233,15,75,8
     GROUPBOX        "Tweaks",IDC_STATIC,4,32,137,55
     CONTROL         "Auto minimize to tray",cbMinToTray,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,10,42,123,8
+                    BS_AUTOCHECKBOX | WS_TABSTOP,10,41,123,8
     GROUPBOX        "Drag and drop (Shell style)",IDC_STATIC,147,32,176,55
     CONTROL         "LDrag",cbDragL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
                     154,42,36,8
@@ -453,9 +455,9 @@ BEGIN
     CONTROL         "Plugins allowed",cbDragAllPlugins,"Button",
                     BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,252,72,67,8
     CONTROL         "Auto register fonts",cbAutoRegFonts,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,10,57,123,8
+                    BS_AUTOCHECKBOX | WS_TABSTOP,10,52,123,8
     CONTROL         "Show debug steps",cbDebugSteps,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,10,72,123,8
+                    WS_TABSTOP,10,63,123,8
     CONTROL         "Shell icons",cbDragIcons,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,197,72,49,8
     RTEXT           "Cmd output:",IDC_STATIC,143,124,43,8
@@ -471,6 +473,8 @@ BEGIN
                     BS_AUTOCHECKBOX | WS_TABSTOP,10,197,85,8
     CONTROL         "Hourglass",cbFarHourglass,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,270,197,47,8
+    CONTROL         "Hide caption when maximized",cbHideCaption,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,10,74,123,8
 END
 
 IDD_RESTART DIALOG DISCARDABLE  0, 0, 310, 98
@@ -626,6 +630,8 @@ BEGIN
     cbFixAltOnAltTab        "When You set a macro on Alt (RAlt) it can unexpectedly activates on AltTab. This issue can be fixed by sending to console AltTab instead of Alt"
     cbFarHourglass          "Show AppStarting cursor (arrow with a small hourglass) when FAR is not responding (during long operations)"
     slTransparent           "Transparency of the main ConEmu window"
+    cbHideCaption           "Hide main window caption, when maximized (Alt-F9)"
+    cbFontAuto              "Automatic font resize for the fixed real console width"
 END
 
 #endif    // English (U.S.) resources

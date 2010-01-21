@@ -1,3 +1,31 @@
+
+/*
+Copyright (c) 2009-2010 Maximus5
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+1. Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+3. The name of the authors may not be used to endorse or promote products
+   derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
 #pragma once
 #include "kl_parts.h"
 #include "../Common/common.hpp"
@@ -6,7 +34,7 @@
 #define CES_TELNETACTIVE 0x02
 #define CES_FARACTIVE 0x04
 #define CES_CONALTERNATIVE 0x08
-#define CES_PROGRAMS (0x0F) // - CES_CONMANACTIVE)
+#define CES_PROGRAMS (0x0F)
 
 //#define CES_NTVDM 0x10 -- common.hpp
 #define CES_PROGRAMS2 0xFF
@@ -185,7 +213,7 @@ public:
     void SwitchKeyboardLayout(WPARAM wParam,DWORD_PTR dwNewKeybLayout);
     void CloseConsole();
     void Paste();
-    void LogString(LPCSTR asText);
+    void LogString(LPCSTR asText, BOOL abShowTime = FALSE);
 	bool isActive();
 	bool isFilePanel(bool abPluginAllowed=false);
 	bool isEditor();
@@ -214,6 +242,7 @@ public:
     BOOL IsConsoleThread();
     void SetForceRead();
     //DWORD WaitEndUpdate(DWORD dwTimeout=1000);
+    LPCWSTR GetConStatus();
 
 protected:
     CVirtualConsole* mp_VCon; // соответствующая виртуальная консоль
@@ -269,7 +298,7 @@ private:
         USHORT nTopVisibleLine; // может отличаться от m_sbi.srWindow.Top, если прокрутка заблокирована
         wchar_t *pConChar;
         WORD  *pConAttr;
-		CHAR_INFO *pCopy, *pCmp;
+		CESERVER_REQ_CONINFO_DATA *pCopy, *pCmp;
         int nTextWidth, nTextHeight, nBufferHeight;
         int nChange2TextWidth, nChange2TextHeight;
         BOOL bBufferHeight; // TRUE, если есть прокрутка
@@ -335,7 +364,7 @@ private:
 	HANDLE mh_FileMapping, mh_FileMappingData;
 	wchar_t ms_HeaderMapName[64], ms_DataMapName[64];
 	CESERVER_REQ_CONINFO_HDR *mp_ConsoleInfo;
-	CHAR_INFO *mp_ConsoleData; // Mapping
+	CESERVER_REQ_CONINFO_DATA *mp_ConsoleData; // Mapping
 	DWORD mn_LastConsoleDataIdx, mn_LastConsolePacketIdx, mn_LastFarReadIdx;
 	DWORD mn_LastFarReadTick;
 	BOOL OpenMapHeader();
@@ -368,4 +397,7 @@ private:
 	SHELLEXECUTEINFO *mp_sei;
 	//
 	HWND FindPicViewFrom(HWND hFrom);
+	//
+	wchar_t ms_ConStatus[80];
+	void SetConStatus(LPCWSTR asStatus);
 };

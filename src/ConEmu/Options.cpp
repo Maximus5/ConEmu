@@ -1,4 +1,32 @@
 
+/*
+Copyright (c) 2009-2010 Maximus5
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+1. Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+3. The name of the authors may not be used to endorse or promote products
+   derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
+
 // cbFARuseASCIIsort, cbFixAltOnAltTab
 
 #include "Header.h"
@@ -9,7 +37,7 @@
 #define MAX_CMD_HISTORY 100
 
 #define RASTER_FONTS_NAME L"Raster Fonts"
-const SIZE szRasterSizes[] = {{16,8},{6,9},{8,9},{5,12},{7,12},{8,12},{16,12},{12,16},{10,18}};
+SIZE szRasterSizes[100] = {{0,0}}; // {{16,8},{6,9},{8,9},{5,12},{7,12},{8,12},{16,12},{12,16},{10,18}};
 
 #define TEST_FONT_WIDTH_STRING_EN L"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 #define TEST_FONT_WIDTH_STRING_RU L"АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ"
@@ -155,7 +183,7 @@ void CSettings::InitSettings()
     //isLangChangeWsPlugin = false;
 	isMonitorConsoleLang = 3;
     DefaultBufferHeight = 1000; AutoBufferHeight = true;
-	FarSyncSize = true;
+	//FarSyncSize = true;
 	nCmdOutputCP = 0;
 	ForceBufferHeight = false; /* устанавливается в true, из ком.строки /BufferHeight */
 	AutoScroll = true;
@@ -176,7 +204,9 @@ void CSettings::InitSettings()
     isTabFrame = true;
     isForceMonospace = false; isProportional = false;
     isMinToTray = false;
+	memset(&rcTabMargins, 0, sizeof(rcTabMargins));
 
+	isFontAutoSize = false; mn_AutoFontWidth = mn_AutoFontHeight = -1;
 	ConsoleFont.lfHeight = 6;
 	ConsoleFont.lfWidth = 4;
 	_tcscpy(ConsoleFont.lfFaceName, L"Lucida Console");
@@ -297,6 +327,13 @@ void CSettings::LoadSettings()
 	mb_CharSetWasSet = FALSE;
     bool isBold = (LogFont.lfWeight>=FW_BOLD), isItalic = (LogFont.lfItalic!=FALSE);
     
+	// Вроде бы проблема была только с Vista, но оставим пока, на всякий случай
+	//;; Q. В Windows Vista зависают другие консольные процессы.
+	//	;; A. "Виноват" процесс ConIme.exe. Вроде бы он служит для ввода иероглифов
+	//	;;    (китай и т.п.). Зачем он нужен, если ввод теперь идет в графическом окне?
+	//	;;    Нужно запретить его автозапуск или вообще переименовать этот файл, например
+	//	;;    в 'ConIme.ex1' (видимо это возможно только в безопасном режиме).
+	//	;;    Запретить автозапуск: Внесите в реестр и перезагрузитесь
     if (gOSVer.dwMajorVersion>=6)
     {
 	    CheckConIme();
@@ -336,9 +373,9 @@ void CSettings::LoadSettings()
 		
 		reg->Load(L"AutoRegisterFonts", isAutoRegisterFonts);
 		
-		if (reg->Load(L"FontName", inFont))
+		if (reg->Load(L"FontName", inFont, sizeofarray(inFont)))
 			mb_Name1Ok = TRUE;
-        if (reg->Load(L"FontName2", inFont2))
+        if (reg->Load(L"FontName2", inFont2, sizeofarray(inFont2)))
         	mb_Name2Ok = TRUE;
         if (!mb_Name1Ok || !mb_Name2Ok)
         	isAutoRegisterFonts = true;
@@ -353,6 +390,7 @@ void CSettings::LoadSettings()
 			reg->Load(L"Multi.NewConfirm", isMultiNewConfirm);
 			reg->Load(L"Multi.Buffer", icMultiBuffer);
 
+		reg->Load(L"FontAutoSize", isFontAutoSize);
         reg->Load(L"FontSize", inSize);
         reg->Load(L"FontSizeX", FontSizeX);
         reg->Load(L"FontSizeX3", FontSizeX3);
@@ -360,7 +398,7 @@ void CSettings::LoadSettings()
         reg->Load(L"FontCharSet", mn_LoadFontCharSet); mb_CharSetWasSet = FALSE;
         reg->Load(L"Anti-aliasing", Quality);
 
-		reg->Load(L"ConsoleFontName", ConsoleFont.lfFaceName);
+		reg->Load(L"ConsoleFontName", ConsoleFont.lfFaceName, sizeofarray(ConsoleFont.lfFaceName));
 		reg->Load(L"ConsoleCharWidth", ConsoleFont.lfWidth);
 		reg->Load(L"ConsoleFontHeight", ConsoleFont.lfHeight);
 
@@ -380,7 +418,7 @@ void CSettings::LoadSettings()
 		reg->Load(L"DefaultBufferHeight", DefaultBufferHeight);
 			if (DefaultBufferHeight < 300) DefaultBufferHeight = 300;
 		reg->Load(L"AutoBufferHeight", AutoBufferHeight);
-		reg->Load(L"FarSyncSize", FarSyncSize);
+		//reg->Load(L"FarSyncSize", FarSyncSize);
 		reg->Load(L"CmdOutputCP", nCmdOutputCP);
 
         reg->Load(L"CursorType", isCursorV);
@@ -391,7 +429,7 @@ void CSettings::LoadSettings()
 			reg->Load(L"Experimental", isFixFarBorders);
 		{
 			wchar_t szCharRanges[120]; // max 10 ranges x 10 chars + a little ;)
-			if (reg->Load(L"FixFarBordersRanges", szCharRanges)) {
+			if (reg->Load(L"FixFarBordersRanges", szCharRanges, sizeofarray(szCharRanges))) {
 				int n = 0, nMax = countof(icFixFarBorderRanges);
 				wchar_t *pszRange = szCharRanges, *pszNext = NULL;
 				wchar_t cBegin, cEnd;
@@ -438,7 +476,7 @@ void CSettings::LoadSettings()
 
         reg->Load(L"BackGround Image show", isShowBgImage);
 			if (isShowBgImage!=0 && isShowBgImage!=1 && isShowBgImage!=2) isShowBgImage = 0;
-		reg->Load(L"BackGround Image", sBgImage);
+		reg->Load(L"BackGround Image", sBgImage, sizeofarray(sBgImage));
 		reg->Load(L"bgImageDarker", bgImageDarker);
 		reg->Load(L"bgImageColors", nBgImageColors);
 			if (!nBgImageColors) nBgImageColors = 1|2;
@@ -471,14 +509,14 @@ void CSettings::LoadSettings()
 	        reg->Load(L"TabLazy", isTabLazy);
 	        reg->Load(L"TabRecent", isTabRecent);
 			if (!reg->Load(L"TabCloseMacro", &sTabCloseMacro) && sTabCloseMacro && !*sTabCloseMacro) { free(sTabCloseMacro); sTabCloseMacro = NULL; }
-			reg->Load(L"TabFontFace", sTabFontFace);
+			reg->Load(L"TabFontFace", sTabFontFace, sizeofarray(sTabFontFace));
 			reg->Load(L"TabFontCharSet", nTabFontCharSet);
 			reg->Load(L"TabFontHeight", nTabFontHeight);
         reg->Load(L"TabFrame", isTabFrame);
         reg->Load(L"TabMargins", rcTabMargins);
         reg->Load(L"SlideShowElapse", nSlideShowElapse);
         reg->Load(L"IconID", nIconID);
-        reg->Load(L"TabConsole", szTabConsole);
+        reg->Load(L"TabConsole", szTabConsole, sizeofarray(szTabConsole));
             //WCHAR* pszVert = wcschr(szTabPanels, L'|');
             //if (!pszVert) {
             //    if (wcslen(szTabPanels)>54) szTabPanels[54] = 0;
@@ -486,13 +524,13 @@ void CSettings::LoadSettings()
             //    wcscpy(pszVert+1, L"Console");
             //}
             //*pszVert = 0; pszTabConsole = pszVert+1;
-        reg->Load(L"TabEditor", szTabEditor);
-        reg->Load(L"TabEditorModified", szTabEditorModified);
-        reg->Load(L"TabViewer", szTabViewer);
+        reg->Load(L"TabEditor", szTabEditor, sizeofarray(szTabEditor));
+        reg->Load(L"TabEditorModified", szTabEditorModified, sizeofarray(szTabEditorModified));
+        reg->Load(L"TabViewer", szTabViewer, sizeofarray(szTabViewer));
         reg->Load(L"TabLenMax", nTabLenMax);
         reg->Load(L"ScrollTitle", isScrollTitle);
         reg->Load(L"ScrollTitleLen", ScrollTitleLen);
-        reg->Load(L"AdminTitleSuffix", szAdminTitleSuffix); szAdminTitleSuffix[sizeofarray(szAdminTitleSuffix)-1] = 0;
+        reg->Load(L"AdminTitleSuffix", szAdminTitleSuffix, sizeofarray(szAdminTitleSuffix)); szAdminTitleSuffix[sizeofarray(szAdminTitleSuffix)-1] = 0;
         reg->Load(L"AdminShowShield", bAdminShield);
         reg->Load(L"TryToCenter", isTryToCenter);
         //reg->Load(L"CreateAppWindow", isCreateAppWindow);
@@ -528,10 +566,24 @@ void CSettings::LoadSettings()
 	if (wndCascade) {
 		HWND hPrev = FindWindow(VirtualConsoleClassMain, NULL);
 		while (hPrev) {
-			if (IsIconic(hPrev) || IsZoomed(hPrev)) {
+			/*if (Is Iconic(hPrev) || Is Zoomed(hPrev)) {
+				hPrev = FindWindowEx(NULL, hPrev, VirtualConsoleClassMain, NULL);
+				continue;
+			}*/
+			WINDOWPLACEMENT wpl = {sizeof(WINDOWPLACEMENT)}; // Workspace coordinates!!!
+			if (!GetWindowPlacement(hPrev, &wpl)) {
+				break;
+			}
+			if (wpl.showCmd == SW_HIDE || !IsWindowVisible(hPrev)
+				|| wpl.showCmd == SW_SHOWMINIMIZED || wpl.showCmd == SW_SHOWMAXIMIZED
+				/* Max в режиме скрытия заголовка */
+				|| (wpl.rcNormalPosition.left<0 || wpl.rcNormalPosition.top<0) )
+			{
 				hPrev = FindWindowEx(NULL, hPrev, VirtualConsoleClassMain, NULL);
 				continue;
 			}
+
+			// Screen coordinates!
 			RECT rcWnd; GetWindowRect(hPrev, &rcWnd);
 			int nShift = (GetSystemMetrics(SM_CYSIZEFRAME)+GetSystemMetrics(SM_CYCAPTION))*1.5;
 			wndX = rcWnd.left + nShift;
@@ -539,6 +591,10 @@ void CSettings::LoadSettings()
 			break;
 		}
 	}
+
+	if (rcTabMargins.top > 100) rcTabMargins.top = 100;
+	_ASSERTE(!rcTabMargins.bottom && !rcTabMargins.left && !rcTabMargins.right);
+	rcTabMargins.bottom = rcTabMargins.left = rcTabMargins.right = 0;
 
 	if (!psCmdHistory) {
 		psCmdHistory = (wchar_t*)calloc(2,2);
@@ -640,8 +696,7 @@ void CSettings::InitFont(LPCWSTR asFontName/*=NULL*/, int anFontHeight/*=-1*/, i
 
     mh_Font = CreateFontIndirectMy(&LogFont);
 	//2009-06-07 Реальный размер созданного шрифта мог измениться
-	mn_FontWidth = LogFont.lfWidth;
-	mn_FontHeight = LogFont.lfHeight;
+	SaveFontSizes(&LogFont, (mn_AutoFontWidth == -1));
 
     MCHKHEAP
 }
@@ -716,6 +771,7 @@ BOOL CSettings::SaveSettings()
 
 			reg->Save(L"AlphaValue", nTransparent);
 
+			reg->Save(L"FontAutoSize", isFontAutoSize);
             reg->Save(L"FontSize", LogFont.lfHeight);
             reg->Save(L"FontSizeX", FontSizeX);
             reg->Save(L"FontSizeX2", FontSizeX2);
@@ -868,6 +924,33 @@ int CSettings::EnumFamCallBack(LPLOGFONT lplf, LPNEWTEXTMETRIC lpntm, DWORD Font
     UNREFERENCED_PARAMETER( lpntm );
 }
 
+int CSettings::EnumFontCallBackEx(ENUMLOGFONTEX *lpelfe, NEWTEXTMETRICEX *lpntme, DWORD FontType, LPARAM lParam)
+{
+	UINT sz = 0;
+	LONG nHeight = lpelfe->elfLogFont.lfHeight;
+	if (nHeight < 8)
+		return TRUE; // такие мелкие - не интересуют
+
+	LONG nWidth  = lpelfe->elfLogFont.lfWidth;
+	UINT nMaxCount = sizeofarray(szRasterSizes);
+
+	while (sz<nMaxCount && szRasterSizes[sz].cy) {
+		if (szRasterSizes[sz].cx == nWidth && szRasterSizes[sz].cy == nHeight)
+			return TRUE; // Этот размер уже добавили
+		sz++;
+	}
+	if (sz >= nMaxCount)
+		return FALSE; // место кончилось
+
+	szRasterSizes[sz].cx = nWidth; szRasterSizes[sz].cy = nHeight;
+
+	return TRUE;
+    UNREFERENCED_PARAMETER( lpelfe );
+    UNREFERENCED_PARAMETER( lpntme );
+    UNREFERENCED_PARAMETER( FontType );
+    UNREFERENCED_PARAMETER( lParam );
+}
+
 DWORD CSettings::EnumFontsThread(LPVOID apArg)
 {
 	HDC hdc = GetDC(NULL);
@@ -875,9 +958,28 @@ DWORD CSettings::EnumFontsThread(LPVOID apArg)
 	wchar_t szName[MAX_PATH];
 
 	EnumFontFamilies(hdc, (LPCTSTR) NULL, (FONTENUMPROC) EnumFamCallBack, (LPARAM) aFontCount);
+	LOGFONT term = {0}; term.lfCharSet = OEM_CHARSET; lstrcpy(term.lfFaceName, L"Terminal"); 
+	szRasterSizes[0].cx = szRasterSizes[0].cy = 0;
+	EnumFontFamiliesEx(hdc, &term, (FONTENUMPROCW) EnumFontCallBackEx, 0/*LPARAM*/, 0);
+	UINT nMaxCount = sizeofarray(szRasterSizes);
+	for (UINT i = 0; i<(nMaxCount-1) && szRasterSizes[i].cy; i++) {
+		UINT k = i;
+		for (UINT j = i+1; j<nMaxCount && szRasterSizes[j].cy; j++) {
+			if (szRasterSizes[j].cy < szRasterSizes[k].cy)
+				k = j;
+			else if (szRasterSizes[j].cy == szRasterSizes[k].cy
+				&& szRasterSizes[j].cx < szRasterSizes[k].cx)
+				k = j;
+		}
+		if (k != i) {
+			SIZE sz = szRasterSizes[k];
+			szRasterSizes[k] = szRasterSizes[i];
+			szRasterSizes[i] = sz;
+		}
+	}
 	DeleteDC(hdc);
 
-	for (UINT sz=0; sz<sizeofarray(szRasterSizes); sz++) {
+	for (UINT sz=0; sz<sizeofarray(szRasterSizes) && szRasterSizes[sz].cy; sz++) {
 		wsprintf(szName, L"[%s %ix%i]", RASTER_FONTS_NAME, szRasterSizes[sz].cx, szRasterSizes[sz].cy);
 		SendDlgItemMessage(gSet.hMain, tFontFace, CB_INSERTSTRING, sz, (LPARAM)szName);
 	}
@@ -1025,6 +1127,8 @@ LRESULT CSettings::OnInitDialog_Main()
 			SendDlgItemMessage(hMain, tFontSizeX3, CB_ADDSTRING, 0, (LPARAM) temp);
 		}
 
+		if (isFontAutoSize) CheckDlgButton(hMain, cbFontAuto, BST_CHECKED);
+
 		wsprintf(temp, L"%i", LogFont.lfHeight);
 		//upToFontHeight = LogFont.lfHeight;
 		SelectStringExact(hMain, tFontSizeY, temp);
@@ -1171,6 +1275,7 @@ LRESULT CSettings::OnInitDialog_Ext()
 	if (isMinToTray) CheckDlgButton(hExt, cbMinToTray, BST_CHECKED);
 	if (isAutoRegisterFonts) CheckDlgButton(hExt, cbAutoRegFonts, BST_CHECKED);
 	if (isDebugSteps) CheckDlgButton(hExt, cbDebugSteps, BST_CHECKED);
+	if (isHideCaption) CheckDlgButton(hExt, cbHideCaption, BST_CHECKED);
 	
 	if (isFARuseASCIIsort) CheckDlgButton(hExt, cbFARuseASCIIsort, BST_CHECKED);
 	if (isFixAltOnAltTab) CheckDlgButton(hExt, cbFixAltOnAltTab, BST_CHECKED);
@@ -1419,6 +1524,10 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
 	    wndCascade = CB == rCascade;
 	    break;
 
+	case cbFontAuto:
+		isFontAutoSize = IsChecked(hMain, cbFontAuto);
+		break;
+
     case cbFixFarBorders:
         //isFixFarBorders = !isFixFarBorders;
 		switch(IsChecked(hMain, cbFixFarBorders)) {
@@ -1505,6 +1614,10 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
     case cbMinToTray:
         isMinToTray = IsChecked(hExt, cbMinToTray);
         break;
+
+	case cbHideCaption:
+		isHideCaption = IsChecked(hExt, cbHideCaption);
+		break;
 
     case cbFARuseASCIIsort:
     	isFARuseASCIIsort = IsChecked(hExt, cbFARuseASCIIsort);
@@ -2636,10 +2749,10 @@ void CSettings::RecreateFont(WORD wFromID)
 
 	HFONT hf = CreateFontIndirectMy(&LF);
 	if (hf) {
+		SaveFontSizes(&LF, (mn_AutoFontWidth == -1));
+
 		HFONT hOldF = mh_Font;
 		LogFont = LF;
-		mn_FontWidth = LF.lfWidth;
-		mn_FontHeight = LF.lfHeight;
 		mh_Font = hf;
 		DeleteObject(hOldF);
 
@@ -2660,6 +2773,48 @@ void CSettings::RecreateFont(WORD wFromID)
 	UpdateFontInfo();
 
 	mb_IgnoreTtfChange = TRUE;
+}
+
+void CSettings::SaveFontSizes(LOGFONT *pCreated, bool bAuto)
+{
+	mn_FontWidth = pCreated->lfWidth;
+	mn_FontHeight = pCreated->lfHeight;
+
+	if (bAuto) {
+		mn_AutoFontWidth = pCreated->lfWidth;
+		mn_AutoFontHeight = pCreated->lfHeight;
+	}
+}
+
+bool CSettings::AutoRecreateFont(int nFontW, int nFontH)
+{
+	if (mn_AutoFontWidth == nFontW && mn_AutoFontHeight == nFontH)
+		return false; // ничего не делали
+
+	// Сразу запомним, какой размер просили в последний раз
+	mn_AutoFontWidth = nFontW; mn_AutoFontHeight = nFontH;
+
+	// Пытаемся создать новый шрифт
+	LOGFONT LF = LogFont;
+	LF.lfWidth = nFontW;
+	LF.lfHeight = nFontH;
+	HFONT hf = CreateFontIndirectMy(&LF);
+	if (hf) {
+		// Запомнить размер шрифта (AutoFontWidth/Height - может быть другим, он запоминается выше)
+		SaveFontSizes(&LF, false);
+
+		HFONT hOldF = mh_Font;
+		LogFont = LF;
+		mh_Font = hf;
+		DeleteObject(hOldF);
+
+		// Передернуть флажки, что шрифт поменялся
+		gConEmu.Update(true);
+
+		return true;
+	}
+
+	return false;
 }
 
 HFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
@@ -3405,7 +3560,7 @@ void CSettings::ResetFontWidth()
 
 BOOL CSettings::CheckConIme()
 {
-    BOOL  lbStopWarning = FALSE;
+    long  lbStopWarning = FALSE;
     DWORD dwValue=1;
     SettingsBase* reg = CreateSettings();
     if (reg->OpenKey(_T("Software\\ConEmu"), KEY_READ)) {
@@ -3415,12 +3570,15 @@ BOOL CSettings::CheckConIme()
     }
     if (!lbStopWarning)
     {
-	    if (reg->OpenKey(_T("Console"), KEY_READ))
+		HKEY hk = NULL;
+		if (0 == RegOpenKeyEx(HKEY_CURRENT_USER, L"Console", 0, KEY_READ, &hk))
 	    {
-	        if (!reg->Load(_T("LoadConIme"), dwValue))
+			DWORD dwType = REG_DWORD, nSize = sizeof(DWORD);
+			if (0 != RegQueryValueEx(hk, L"LoadConIme", 0, &dwType, (LPBYTE)&dwValue, &nSize))
 				dwValue = 1;
-	        reg->CloseKey();
-	        if (dwValue!=0) {
+			RegCloseKey(hk);
+
+			if (dwValue!=0) {
 		        if (IDCANCEL==MessageBox(0,_T("Unwanted value of 'LoadConIme' registry parameter!\r\nPress 'Cancel' to stop this message.\r\nTake a look at 'FAQ-ConEmu.txt'.\r\nYou may simply import file 'Disable_ConIme.reg'\r\nlocated in 'ConEmu.Addons' folder."), _T("ConEmu"),MB_OKCANCEL|MB_ICONEXCLAMATION))
 			        lbStopWarning = TRUE;
 		    }
@@ -3428,6 +3586,7 @@ BOOL CSettings::CheckConIme()
 		    if (IDCANCEL==MessageBox(0,_T("Can't determine a value of 'LoadConIme' registry parameter!\r\nPress 'Cancel' to stop this message.\r\nTake a look at 'FAQ-ConEmu.txt'"), _T("ConEmu"),MB_OKCANCEL|MB_ICONEXCLAMATION))
 		        lbStopWarning = TRUE;
 	    }
+
 	    if (lbStopWarning)
 	    {
 		    if (reg->OpenKey(_T("Software\\ConEmu"), KEY_WRITE)) {

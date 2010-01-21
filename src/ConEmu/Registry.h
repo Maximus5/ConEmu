@@ -44,12 +44,20 @@ public:
 
 	virtual bool Load(const wchar_t *regName, wchar_t **value) = 0;
 	virtual bool Load(const wchar_t *regName, LPBYTE value, DWORD nSize) = 0;
-	template <class T> bool Load(const wchar_t *regName, T &value)
+	virtual bool Load(const wchar_t *regName, wchar_t *value, int maxLen) = 0; // нада, для проверки валидности типа реестра
+	/*template <class T> bool Load(const wchar_t *regName, T &value)
 	{
 		DWORD len = sizeof(T);
 		bool lbRc = Load(regName, (LPBYTE)&(value), len);
 		return lbRc;
-	}
+	}*/
+	bool Load(const wchar_t *regName, char &value) { return Load(regName, (LPBYTE)&value, 1); }
+	bool Load(const wchar_t *regName, bool &value) { return Load(regName, (LPBYTE)&value, 1); }
+	bool Load(const wchar_t *regName, BYTE &value) { return Load(regName, (LPBYTE)&value, 1); }
+	bool Load(const wchar_t *regName, DWORD &value) { return Load(regName, (LPBYTE)&value, 4); }
+	bool Load(const wchar_t *regName, LONG &value) { return Load(regName, (LPBYTE)&value, 4); }
+	bool Load(const wchar_t *regName, int &value) { return Load(regName, (LPBYTE)&value, 4); }
+	bool Load(const wchar_t *regName, RECT &value) { return Load(regName, (LPBYTE)&value, sizeof(value)); }
 	
 	virtual void Delete(const wchar_t *regName) = 0;
 	
@@ -92,6 +100,7 @@ public:
 
 	virtual bool Load(const wchar_t *regName, wchar_t **value);
 	virtual bool Load(const wchar_t *regName, LPBYTE value, DWORD nSize);
+	virtual bool Load(const wchar_t *regName, wchar_t *value, int maxLen); // нада, для проверки валидности типа реестра
 	
 	virtual void Delete(const wchar_t *regName);
 	
@@ -116,6 +125,7 @@ public:
 
 	virtual bool Load(const wchar_t *regName, wchar_t **value);
 	virtual bool Load(const wchar_t *regName, LPBYTE value, DWORD nSize);
+	virtual bool Load(const wchar_t *regName, wchar_t *value, int maxLen); // нада, для проверки валидности типа реестра
 	
 	virtual void Delete(const wchar_t *regName);
 	

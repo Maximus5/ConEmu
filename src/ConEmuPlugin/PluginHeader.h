@@ -201,7 +201,7 @@ DWORD FUNC_X(GetEditorModifiedState)();
 DWORD GetEditorModifiedStateA();
 DWORD GetEditorModifiedState();
 
-BOOL SetConsoleSize(SHORT nNewWidth, SHORT nNewHeight);
+BOOL FarSetConsoleSize(SHORT nNewWidth, SHORT nNewHeight);
 
 void UnsetAllHooks();
 

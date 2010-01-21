@@ -1,7 +1,35 @@
 
+/*
+Copyright (c) 2009-2010 Maximus5
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+1. Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+3. The name of the authors may not be used to endorse or promote products
+   derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
+
 #define SHOWDEBUGSTR
 
-#define DEBUGSTRTABS(s) //DEBUGSTR(s)
+#define DEBUGSTRTABS(s) DEBUGSTR(s)
 
 #include <windows.h>
 #include <commctrl.h>
@@ -32,13 +60,17 @@ typedef BOOL (WINAPI* FAppThemed)();
 #define TID_CREATE_CON   13
 #define TID_BUFFERHEIGHT 14
 
+#define POST_UPDATE_TIMEOUT 2000
+
 typedef long (WINAPI* ThemeFunction_t)();
 
 TabBarClass::TabBarClass()
 {
     _active = false;
     _tabHeight = 0;
-	memset(&m_Margins, 0, sizeof(m_Margins));
+	mb_DisableRedraw = FALSE;
+	//memset(&m_Margins, 0, sizeof(m_Margins));
+	m_Margins = gSet.rcTabMargins; // !! Значения отступов
     _titleShouldChange = false;
     _prevTab = -1;
     mb_ChangeAllowed = FALSE;
@@ -47,6 +79,7 @@ TabBarClass::TabBarClass()
 	mn_AdminIcon = 0;
     mb_PostUpdateCalled = FALSE;
 	mb_PostUpdateRequested = FALSE;
+	mn_PostUpdateTick = 0;
     mn_MsgUpdateTabs = RegisterWindowMessage(CONEMUMSG_UPDATETABS);
     memset(&m_Tab4Tip, 0, sizeof(m_Tab4Tip));
     mb_InKeySwitching = FALSE;
@@ -259,10 +292,19 @@ void TabBarClass::DeleteItem(int I)
     return tabIndex < 10 ? '0' + tabIndex : 'A' + tabIndex - 10;
 }*/
 
+BOOL TabBarClass::NeedPostUpdate()
+{
+	return (mb_PostUpdateCalled || mb_PostUpdateRequested);
+}
+
 void TabBarClass::RequestPostUpdate()
 {
-	if (mb_PostUpdateCalled)
-		return; // Уже
+	if (mb_PostUpdateCalled) {
+		DWORD nDelta = GetTickCount() - mn_PostUpdateTick;
+		// Может так получиться, что флажок остался, а Post не вызвался
+		if (nDelta <= POST_UPDATE_TIMEOUT)
+			return; // Уже
+	}
 
 	if (mn_InUpdate > 0) {
 		mb_PostUpdateRequested = TRUE;
@@ -271,6 +313,7 @@ void TabBarClass::RequestPostUpdate()
 		mb_PostUpdateCalled = TRUE;
 		DEBUGSTRTABS(L"   Posting TabBarClass::Update\n");
 		PostMessage(ghWnd, mn_MsgUpdateTabs, 0, 0);
+		mn_PostUpdateTick = GetTickCount();
 	}
 }
 
@@ -465,17 +508,12 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
     {
         return;
     }*/ // Теперь - ВСЕГДА! т.к. сами управляем мультиконсолью
+
+	if (mb_DisableRedraw)
+		return;
     
     if (!gConEmu.isMainThread()) {
 		RequestPostUpdate();
-		//if (mb_PostUpdateCalled) return;
-		//if (mn_InUpdate > 0) {
-		//	_ASSERTE(mn_InUpdate == 0);
-		//} else {
-		//mb_PostUpdateRequested
-		//mb_PostUpdateCalled = TRUE;
-		//DEBUGSTRTABS(L"   Posting TabBarClass::Update\n");
-		//PostMessage(ghWnd, mn_MsgUpdateTabs, 0, 0);
         return;
     }
     
@@ -649,6 +687,7 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
 
 	mn_InUpdate --;
 	if (mb_PostUpdateRequested) {
+		mb_PostUpdateCalled = FALSE;
 		mb_PostUpdateRequested = FALSE;
 		RequestPostUpdate();
 	}
@@ -682,6 +721,8 @@ void TabBarClass::UpdatePosition()
 
     RECT client;
     GetClientRect(ghWnd, &client); // нас интересует ширина окна
+
+	DEBUGSTRTABS(_active ? L"TabBarClass::UpdatePosition(activate)\n" : L"TabBarClass::UpdatePosition(DEactivate)\n");
     
     if (_active) {
         if (mh_Rebar) {
@@ -1588,4 +1629,9 @@ BOOL TabBarClass::OnKeyboard(UINT messg, WPARAM wParam, LPARAM lParam)
     }
         
     return TRUE;
+}
+
+void TabBarClass::SetRedraw(BOOL abEnableRedraw)
+{
+	mb_DisableRedraw = !abEnableRedraw;
 }

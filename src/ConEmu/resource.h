@@ -201,6 +201,8 @@
 #define cbFixAltOnAltTab                1562
 #define cbFarHourglass                  1563
 #define slTransparent                   1564
+#define cbHideCaption                   1565
+#define cbFontAuto                      1566
 
 // Next default values for new objects
 // 
@@ -208,7 +210,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        115
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1565
+#define _APS_NEXT_CONTROL_VALUE         1567
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

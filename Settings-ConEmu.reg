@@ -4,6 +4,13 @@ REGEDIT4
 ;; 'default' command line. May be empty
 "CmdLine"="Far.exe"
 
+;; You may choose program icon
+;; 1 - standard ConEmu icon
+;; 2 - Far manager icon
+;; 3 - "Far Unicode" icon
+;; Btw, You may place any 'ConEmu.ico' file with 'ConEmu.exe'
+"IconID"=dword:00000001
+
 ;; hex:01 - enabled, hex:02 - enabled only in panels
 "BackGround Image show"=hex:00
 "BackGround Image"="c:\\back.bmp"
@@ -110,7 +117,7 @@ REGEDIT4
 ;; Window mode. 51f - Normal, 520 - Maximized, 521 - Fullscreen
 "WindowMode"=dword:0000051f
 ;; Set to hex:01 to hide window caption in Maximized mode
-;"HideCaption"=hex:00 -- does not work still
+;"HideCaption"=hex:00
 
 ;; Auto minimize to the Tray
 ;"Min2Tray"=hex:01
@@ -125,8 +132,6 @@ REGEDIT4
 "AutoBufferHeight"=hex:01
 ;; Console buffer height (default). min=300 lines
 ;"DefaultBufferHeight"=dword:000003E8 ; 1000 lines
-;; Synchronous resize of FAR via ConEmu plugin. Slower, but more accurate.
-;"FarSyncSize"=hex:01
 
 ;; Buffer height for 16bit applications (is not supported in x64 OS)
 ;; Allowed values: 

@@ -1,4 +1,32 @@
 
+/*
+Copyright (c) 2009-2010 Maximus5
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+1. Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+3. The name of the authors may not be used to endorse or promote products
+   derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
+
 #pragma once
 
 //#define HDCWND ghWndDC
@@ -143,7 +171,7 @@ protected:
 	static VOID CALLBACK WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime);
 	CVirtualConsole *mp_VCon[MAX_CONSOLE_COUNT];
 	CVirtualConsole *mp_VActive, *mp_VCon1, *mp_VCon2;
-	bool mb_SkipSyncSize, mb_PassSysCommand;
+	bool mb_SkipSyncSize, mb_PassSysCommand, mb_CreatingActive;
 	BOOL mb_WaitCursor;
 	HCURSOR mh_CursorWait, mh_CursorArrow, mh_CursorAppStarting;
 	//wchar_t *mpsz_RecreateCmd;
@@ -152,6 +180,7 @@ protected:
 	typedef BOOL (WINAPI* FRegisterShellHookWindow)(HWND);
 	RECT mrc_Ideal;
 	BOOL mn_InResize;
+	BOOL mb_MaximizedHideCaption; // в режиме HideCaption
 	BOOL mb_MouseCaptured;
 	BYTE m_KeybStates[256];
 	wchar_t ms_ConEmuAliveEvent[MAX_PATH+64];
@@ -212,10 +241,12 @@ public:
 	static void AddMargins(RECT& rc, RECT& rcAddShift, BOOL abExpand=FALSE);
 	void AskChangeBufferHeight();
 	LPARAM AttachRequested(HWND ahConWnd, DWORD anConemuC_PID);
+	void AutoSizeFont(RECT rFrom, enum ConEmuRect tFrom);
 	static RECT CalcMargins(enum ConEmuMargins mg);
 	static RECT CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFrom, RECT* prDC=NULL, enum ConEmuMargins tTabAction=CEM_TAB);
 	bool ConActivate(int nCon);
 	bool ConActivateNext(BOOL abNext);
+	bool CorrectWindowPos(WINDOWPOS *wp);
 	//void CheckGuiBarsCreated();
 	CVirtualConsole* CreateCon(RConStartArgs *args);
 	BOOL CreateMainWindow();
@@ -300,6 +331,7 @@ public:
 	LRESULT OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam);
 	LRESULT OnTimer(WPARAM wParam, LPARAM lParam);
 	void OnTransparent();
+	void OnVConCreated(CVirtualConsole* apVCon);
 	LRESULT OnVConTerminated(CVirtualConsole* apVCon, BOOL abPosted = FALSE);
 	LRESULT OnUpdateScrollInfo(BOOL abPosted = FALSE);
 };

@@ -1,4 +1,32 @@
 
+/*
+Copyright (c) 2009-2010 Maximus5
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+1. Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+3. The name of the authors may not be used to endorse or promote products
+   derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
+
 #include "Header.h"
 
 #if defined(__GNUC__)
@@ -265,6 +293,11 @@ void CConEmuChild::CheckPostRedraw()
 
 void CConEmuChild::Redraw()
 {
+	if (mb_DisableRedraw) {
+		DEBUGSTRDRAW(L" +++ RedrawWindow on DC window will be ignored!\n");
+		return;
+	}
+
 	if (!gConEmu.isMainThread()) {
 		if (mb_RedrawPosted ||
 			(mn_LastPostRedrawTick && ((GetTickCount() - mn_LastPostRedrawTick) < CON_REDRAW_TIMOUT)))
@@ -280,12 +313,8 @@ void CConEmuChild::Redraw()
 		return;
 	}
 
-	if (mb_DisableRedraw) {
-		DEBUGSTRDRAW(L" +++ RedrawWindow on DC window will be ignored!\n");
-		return;
-	} else {
-		DEBUGSTRDRAW(L" +++ RedrawWindow on DC window called\n");
-	}
+	DEBUGSTRDRAW(L" +++ RedrawWindow on DC window called\n");
+
 	RECT rcClient; GetClientRect(ghWndDC, &rcClient);
 	MapWindowPoints(ghWndDC, ghWnd, (LPPOINT)&rcClient, 2);
 	InvalidateRect(ghWnd, &rcClient, FALSE);
@@ -306,6 +335,12 @@ void CConEmuChild::SetRedraw(BOOL abRedrawEnabled)
 
 void CConEmuChild::Invalidate()
 {
+	if (mb_DisableRedraw)
+		return; // Иначе, при автотабах начинаются глюки
+
+	// Здесь нужно invalidate'ить и GAPS !!!
+	// Иначе при запуске "conemu.exe /max" - gaps остаются зелеными, что означает потенциальную проблему
+	
 	//2009-06-22 Опять поперла непрорисовка. Причем если по экрану окошко повозить - изображение нормальное
 	// Так что пока лучше два раза нарисуем...
 	//if (mb_Invalidated) {
@@ -314,16 +349,14 @@ void CConEmuChild::Invalidate()
 	//}
 	if (ghWndDC) {
 		DEBUGSTRDRAW(L" +++ Invalidate on DC window called\n");
-		//mb_Invalidated = TRUE;
-		RECT rcClient; GetClientRect(ghWndDC, &rcClient);
-		//InvalidateRect(ghWndDC, &rcClient, FALSE);
-		MapWindowPoints(ghWndDC, ghWnd, (LPPOINT)&rcClient, 2);
-		InvalidateRect(ghWnd, &rcClient, FALSE);
 
-		/*if (!mb_Invalidated) {
-			mb_Invalidated = TRUE;
-			PostMessage(ghWndDC, WM_PAINT, 0,0);
-		}*/
+		//RECT rcClient; GetClientRect(ghWndDC, &rcClient);
+		//MapWindowPoints(ghWndDC, ghWnd, (LPPOINT)&rcClient, 2);
+		//InvalidateRect(ghWnd, &rcClient, FALSE);
+
+		RECT rcMainClient; GetClientRect(ghWnd, &rcMainClient);
+		RECT rcClient = gConEmu.CalcRect(CER_BACK, rcMainClient, CER_MAINCLIENT);
+		InvalidateRect(ghWnd, &rcClient, FALSE);
 	}
 }
 

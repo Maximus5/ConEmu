@@ -1,4 +1,32 @@
 
+/*
+Copyright (c) 2009-2010 Maximus5
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+1. Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+3. The name of the authors may not be used to endorse or promote products
+   derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
+
 #define SHOWDEBUGSTR
 //#define ALLOWUSEFARSYNCHRO
 
@@ -16,10 +44,8 @@
 #define DEBUGSTRLANG(s) //DEBUGSTR(s)// ; Sleep(2000)
 #define DEBUGSTRLOG(s) OutputDebugStringA(s)
 #define DEBUGSTRALIVE(s) //DEBUGSTR(s)
+#define DEBUGSTRTABS(s) DEBUGSTR(s)
 
-WARNING("При быстром наборе текста курсор часто 'замерзает' на одной из букв, но продолжает двигаться дальше");
-
-WARNING("Глюк с частичной отрисовкой экрана часто появляется при Alt-F7, Enter. Особенно, если файла нет");
 // Иногда не отрисовывается диалог поиска полностью - только бежит текущая сканируемая директория.
 // Иногда диалог отрисовался, но часть до текста "..." отсутствует
 
@@ -61,7 +87,7 @@ WARNING("Часто после разблокирования компьютера размер консоли изменяется (OK), 
 #else
     #define FORCE_INVALIDATE_TIMEOUT 300
 #endif
-#define SETSYNCSIZEAPPLYTIMEOUT 500
+#define SETSYNCSIZEAPPLYTIMEOUT 2000
 
 
 #ifndef INPUTLANGCHANGE_SYSCHARSET
@@ -78,6 +104,8 @@ const wchar_t gszAnalogues[32] = {
 CRealConsole::CRealConsole(CVirtualConsole* apVCon)
 {
 	MCHKHEAP;
+
+	SetConStatus(L"Initializing ConEmu..");
 
 	PostMessage(ghWnd, WM_SETCURSOR, 0, 0);
 
@@ -305,7 +333,8 @@ BOOL CRealConsole::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuff
     if (!hConWnd || ms_ConEmuC_Pipe[0] == 0) {
         // 19.06.2009 Maks - Она действительно может быть еще не создана
         //Box(_T("Console was not created (CRealConsole::SetConsoleSize)"));
-		DEBUGSTRSIZE(L"SetConsoleSize skipped (!hConWnd)\n");
+		DEBUGSTRSIZE(L"SetConsoleSize skipped (!hConWnd || !ms_ConEmuC_Pipe)\n");
+		if (gSet.isAdvLogging) LogString("SetConsoleSize skipped (!hConWnd || !ms_ConEmuC_Pipe)");
         return FALSE; // консоль пока не создана?
     }
 
@@ -315,7 +344,10 @@ BOOL CRealConsole::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuff
     int nInSize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_SETSIZE);
     CESERVER_REQ *pIn = (CESERVER_REQ*)calloc(nInSize,1);
     _ASSERTE(pIn);
-	if (!pIn) return FALSE;
+	if (!pIn) {
+		if (gSet.isAdvLogging) LogString("Memory allocation error in SetConsoleSize ");
+		return FALSE;
+	}
     pIn->hdr.nSize = nInSize;
     int nOutSize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_RETSIZE);
     CESERVER_REQ *pOut = (CESERVER_REQ*)calloc(nOutSize,1);
@@ -399,10 +431,27 @@ BOOL CRealConsole::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuff
     pIn->SetSize.rcWindow = rect;
 	pIn->SetSize.dwFarPID = con.bBufferHeight ? 0 : GetFarPID();
 
+	if (gSet.isAdvLogging) {
+		char szInfo[128];
+		wsprintfA(szInfo, "%s(Cols=%i, Rows=%i, Buf=%i, Top=%i)",
+			(anCmdID==CECMD_SETSIZESYNC) ? "CECMD_SETSIZESYNC" :
+			(anCmdID==CECMD_CMDSTARTED) ? "CECMD_CMDSTARTED" :
+			(anCmdID==CECMD_CMDFINISHED) ? "CECMD_CMDFINISHED" :
+			"UnknownSizeCommand", sizeX, sizeY, sizeBuffer, pIn->SetSize.nSendTopLine);
+		LogString(szInfo);
+	}
+
 	DEBUGSTRSIZE(L"SetConsoleSize.CallNamedPipe\n");
     fSuccess = CallNamedPipe(ms_ConEmuC_Pipe, pIn, pIn->hdr.nSize, pOut, pOut->hdr.nSize, &dwRead, 500);
 
-    if (fSuccess && dwRead>=(DWORD)nOutSize) {
+    if (!fSuccess || dwRead<(DWORD)nOutSize) {
+		if (gSet.isAdvLogging) {
+			char szInfo[128]; DWORD dwErr = GetLastError();
+			wsprintfA(szInfo, "SetConsoleSizeSrv.CallNamedPipe FAILED!!! ErrCode=0x%08X, Bytes read=%i", dwErr, dwRead);
+			LogString(szInfo);
+		}
+		DEBUGSTRSIZE(L"SetConsoleSize.CallNamedPipe FAILED!!!\n");
+	} else {
 		_ASSERTE(mp_ConsoleInfo!=NULL);
 
 		bool bNeedApplyConsole = mp_ConsoleInfo 
@@ -410,7 +459,13 @@ BOOL CRealConsole::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuff
 			&& (mn_MonitorThreadID != GetCurrentThreadId());
 
 		DEBUGSTRSIZE(L"SetConsoleSize.fSuccess == TRUE\n");
-        if (pOut->hdr.nCmd == pIn->hdr.nCmd) {
+        if (pOut->hdr.nCmd != pIn->hdr.nCmd) {
+			_ASSERTE(pOut->hdr.nCmd == pIn->hdr.nCmd);
+			if (gSet.isAdvLogging) {
+				char szInfo[128]; wsprintfA(szInfo, "SetConsoleSizeSrv FAILED!!! OutCmd(%i)!=InCmd(%i)", pOut->hdr.nCmd, pIn->hdr.nCmd);
+				LogString(szInfo);
+			}
+		} else {
             //con.nPacketIdx = pOut->SetSizeRet.nNextPacketId;
 			//mn_LastProcessedPkt = pOut->SetSizeRet.nNextPacketId;
             CONSOLE_SCREEN_BUFFER_INFO sbi = {{0,0}};
@@ -421,28 +476,77 @@ BOOL CRealConsole::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuff
 				ResetEvent(mh_ApplyFinished);
 				mn_LastConsolePacketIdx--;
 				SetEvent(mh_MonitorThreadEvent);
+
+				DWORD nWait = WaitForSingleObject(mh_ApplyFinished, SETSYNCSIZEAPPLYTIMEOUT);
+
 				#ifdef _DEBUG
-				DWORD nWait = 
+				COORD crDebugCurSize = mp_ConsoleInfo->sbi.dwSize;
+				if (crDebugCurSize.X != sizeX) {
+					_ASSERTE(crDebugCurSize.X == sizeX);
+				}
 				#endif
-				WaitForSingleObject(mh_ApplyFinished, SETSYNCSIZEAPPLYTIMEOUT);
+
+				if (gSet.isAdvLogging){
+					LogString((nWait != WAIT_OBJECT_0) ?
+						"SetConsoleSizeSrv.WaitForSingleObject(mh_ApplyFinished) TIMEOUT!!!" :
+						"SetConsoleSizeSrv.WaitForSingleObject(mh_ApplyFinished) succeded");
+				}
 
 				sbi = con.m_sbi;
 				nBufHeight = con.nBufferHeight;
 			} else {
+				WARNING("pOut не освобождается?");
 		        sbi = pOut->SetSizeRet.SetSizeRet;
 				nBufHeight = pIn->SetSize.nBufferHeight;
+				if (gSet.isAdvLogging)
+					LogString("SetConsoleSizeSrv.Not waiting for ApplyFinished");
 			}
+
 			WARNING("!!! Здесь часто возникают _ASSERT'ы. Видимо высота буфера меняется в другой нити и con.bBufferHeight просто не успевает?");
             if (con.bBufferHeight) {
                 _ASSERTE((sbi.srWindow.Bottom-sbi.srWindow.Top)<200);
-                if (sbi.dwSize.X == sizeX && sbi.dwSize.Y == nBufHeight)
+
+				if (gSet.isAdvLogging) {
+					char szInfo[128]; wsprintfA(szInfo, "Current size: Cols=%i, Buf=%i", sbi.dwSize.X, sbi.dwSize.Y);
+					LogString(szInfo);
+				}
+
+				if (sbi.dwSize.X == sizeX && sbi.dwSize.Y == nBufHeight) {
                     lbRc = TRUE;
+				} else {
+					if (gSet.isAdvLogging) {
+						char szInfo[128]; wsprintfA(szInfo, "SetConsoleSizeSrv FAILED! Ask={%ix%i}, Cur={%ix%i}, Ret={%ix%i}",
+							sizeX, sizeY,
+							sbi.dwSize.X, sbi.dwSize.Y,
+							pOut->SetSizeRet.SetSizeRet.dwSize.X, pOut->SetSizeRet.SetSizeRet.dwSize.Y
+							);
+						LogString(szInfo);
+					}
+					lbRc = FALSE;
+				}
             } else {
                 if (sbi.dwSize.Y > 200) {
                     _ASSERTE(sbi.dwSize.Y<200);
                 }
-                if (sbi.dwSize.X == sizeX && sbi.dwSize.Y == sizeY)
-                    lbRc = TRUE;
+
+				if (gSet.isAdvLogging) {
+					char szInfo[128]; wsprintfA(szInfo, "Current size: Cols=%i, Rows=%i", sbi.dwSize.X, sbi.dwSize.Y);
+					LogString(szInfo);
+				}
+
+				if (sbi.dwSize.X == sizeX && sbi.dwSize.Y == sizeY) {
+					lbRc = TRUE;
+				} else {
+					if (gSet.isAdvLogging) {
+						char szInfo[128]; wsprintfA(szInfo, "SetConsoleSizeSrv FAILED! Ask={%ix%i}, Cur={%ix%i}, Ret={%ix%i}",
+							sizeX, sizeY,
+							sbi.dwSize.X, sbi.dwSize.Y,
+							pOut->SetSizeRet.SetSizeRet.dwSize.X, pOut->SetSizeRet.SetSizeRet.dwSize.Y
+							);
+						LogString(szInfo);
+					}
+					lbRc = FALSE;
+				}
             }
             //if (sbi.dwSize.X == size.X && sbi.dwSize.Y == size.Y) {
             //    con.m_sbi = sbi;
@@ -467,6 +571,9 @@ BOOL CRealConsole::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuff
         }
     }
 
+	if (pOut) { free(pOut); pOut = NULL; }
+	if (pIn) { free(pIn); pIn = NULL; }
+
 	return lbRc;
 }
 
@@ -478,7 +585,8 @@ BOOL CRealConsole::SetConsoleSize(USHORT sizeX, USHORT sizeY, USHORT sizeBuffer,
     if (!hConWnd || ms_ConEmuC_Pipe[0] == 0) {
         // 19.06.2009 Maks - Она действительно может быть еще не создана
         //Box(_T("Console was not created (CRealConsole::SetConsoleSize)"));
-		DEBUGSTRSIZE(L"SetConsoleSize skipped (!hConWnd)\n");
+		if (gSet.isAdvLogging) LogString("SetConsoleSize skipped (!hConWnd || !ms_ConEmuC_Pipe)");
+		DEBUGSTRSIZE(L"SetConsoleSize skipped (!hConWnd || !ms_ConEmuC_Pipe)\n");
         return false; // консоль пока не создана?
     }
     
@@ -565,12 +673,18 @@ void CRealConsole::SyncConsole2Window()
     //_ASSERTE(rcClient.right>140 && rcClient.bottom>100);
 
     // Посчитать нужный размер консоли
+	gConEmu.AutoSizeFont(rcClient, CER_MAINCLIENT);
     RECT newCon = gConEmu.CalcRect(CER_CONSOLE, rcClient, CER_MAINCLIENT);
     _ASSERTE(newCon.right>20 && newCon.bottom>6);
 
 	// Во избежание лишних движений да и зацикливания...
 	if (con.nTextWidth != newCon.right || con.nTextHeight != newCon.bottom)
 	{
+		if (gSet.isAdvLogging>=2) {
+			char szInfo[128]; wsprintfA(szInfo, "SyncConsoleToWindow(Cols=%i, Rows=%i)", newCon.right, newCon.bottom);
+			LogString(szInfo);
+		}
+
 		SetConsoleSize(newCon.right, newCon.bottom, 0/*Auto*/);
 
 		if (isActive() && gConEmu.isMainThread()) {
@@ -620,8 +734,12 @@ BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID)
     wsprintfW(ms_ConEmuCInput_Pipe, CESERVERINPUTNAME, L".", mn_ConEmuC_PID);
     MCHKHEAP
 
+	// Открыть map с данными, он уже должен быть создан
+	OpenMapHeader();
+
     //SetConsoleSize(MakeCoord(TextWidth,TextHeight));
     RECT rcWnd; GetClientRect(ghWnd, &rcWnd);
+	gConEmu.AutoSizeFont(rcWnd, CER_MAINCLIENT);
     RECT rcCon = gConEmu.CalcRect(CER_CONSOLE, rcWnd, CER_MAINCLIENT);
     SetConsoleSize(rcCon.right,rcCon.bottom);
 
@@ -1021,8 +1139,9 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 			bool lbIsActive = pRCon->isActive();
 
 			if (lbIsActive) {
-				if (lbForceUpdate) // размер текущего консольного окна был изменен
-					gConEmu.OnSize(-1); // послать в главную нить запрос на обновление размера
+				//2009-01-21 сомнительно, что здесь действительно нужно подресайзивать дочерние окна
+				//if (lbForceUpdate) // размер текущего консольного окна был изменен
+				//	gConEmu.OnSize(-1); // послать в главную нить запрос на обновление размера
 
 				bool lbNeedRedraw = false;
 				if ((nWait == (WAIT_OBJECT_0+1)) || lbForceUpdate) {
@@ -1047,7 +1166,10 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 				}
 				// Если нужна отрисовка - дернем основную нить
 				if (lbNeedRedraw) {
+					//#ifndef _DEBUG
+					//WARNING("******************");
 					gConEmu.m_Child.Redraw();
+					//#endif
 					pRCon->mn_LastInvalidateTick = GetTickCount();
 				}
 			}
@@ -1175,6 +1297,8 @@ BOOL CRealConsole::StartMonitorThread()
     //_ASSERT(mh_InputThread==NULL);
     //_ASSERTE(mb_Detached || mh_ConEmuC!=NULL); -- процесс теперь запускаем в MonitorThread
 
+	SetConStatus(L"Initializing ConEmu...");
+
     mh_MonitorThread = CreateThread(NULL, 0, MonitorThread, (LPVOID)this, 0, &mn_MonitorThreadID);
     
     //mh_InputThread = CreateThread(NULL, 0, InputThread, (LPVOID)this, 0, &mn_InputThreadID);
@@ -1193,6 +1317,7 @@ BOOL CRealConsole::StartProcess()
 {
     BOOL lbRc = FALSE;
 
+	SetConStatus(L"Preparing process startup line...");
 
     if (!mb_ProcessRestarted) {
         if (!PreInit())
@@ -1298,6 +1423,7 @@ BOOL CRealConsole::StartProcess()
 		if (!m_Args.bRunAsAdministrator) {
 			LockSetForegroundWindow ( LSFW_LOCK );
 
+			SetConStatus(L"Starting root process...");
 			lbRc = CreateProcess(NULL, psCurCmd, NULL, NULL, FALSE, 
 				NORMAL_PRIORITY_CLASS|
 				CREATE_DEFAULT_ERROR_MODE|CREATE_NEW_CONSOLE
@@ -1360,6 +1486,7 @@ BOOL CRealConsole::StartProcess()
 						mp_sei->lpDirectory = NULL;
 				//mp_sei->nShow = gSet.isConVisible ? SW_SHOWNORMAL : SW_HIDE;
 				mp_sei->nShow = SW_SHOWMINIMIZED;
+				SetConStatus(L"Starting root process as user...");
 				lbRc = gConEmu.GuiShellExecuteEx(mp_sei, TRUE);
 				//lbRc = 32 < (int)::ShellExecute(0, // owner window
 				//	L"runas",
@@ -2201,8 +2328,10 @@ void CRealConsole::OnWinEvent(DWORD event, HWND hwnd, LONG idObject, LONG idChil
 {
     _ASSERTE(hwnd!=NULL);
     
-    if (hConWnd == NULL && event == EVENT_CONSOLE_START_APPLICATION && idObject == (LONG)mn_ConEmuC_PID)
+	if (hConWnd == NULL && event == EVENT_CONSOLE_START_APPLICATION && idObject == (LONG)mn_ConEmuC_PID) {
+		SetConStatus(L"Waiting for console server...");
         SetHwnd ( hwnd );
+	}
 
     _ASSERTE(hConWnd!=NULL && hwnd==hConWnd);
     
@@ -2798,6 +2927,7 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 					}
 
 					gConEmu.m_Child.SetRedraw(FALSE);
+					gConEmu.mp_TabBar->SetRedraw(FALSE);
 					fSuccess = FALSE;
 
 					// Нужно вернуть в плагин информацию, что нужно размер консоли
@@ -2822,8 +2952,12 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 					gConEmu.m_Child.SetRedraw(TRUE);
 				}
 			}
-			if (lbCanUpdate)
+			if (lbCanUpdate) {
+				gConEmu.m_Child.Invalidate();
 				SetTabs(pIn->Tabs.tabs, pIn->Tabs.nTabCount);
+				gConEmu.mp_TabBar->SetRedraw(TRUE);
+				gConEmu.m_Child.Redraw();
+			}
         }
 
     } else if (pIn->hdr.nCmd == CECMD_GETOUTPUTFILE) {
@@ -3437,27 +3571,50 @@ BOOL CRealConsole::WaitConsoleSize(UINT anWaitSize, DWORD nTimeout)
 	if (nTimeout > 10000) nTimeout = 10000;
 	if (nTimeout == 0) nTimeout = 100;
 
+	if (GetCurrentThreadId() == mn_MonitorThreadID) {
+		_ASSERTE(GetCurrentThreadId() != mn_MonitorThreadID);
+		return FALSE;
+	}
+
+	#ifdef _DEBUG
+	wchar_t szDbg[128]; wsprintf(szDbg, L"CRealConsole::WaitConsoleSize(H=%i, Timeout=%i)\n", anWaitSize, nTimeout);
+	DEBUGSTRTABS(szDbg);
+	#endif
+
+	WARNING("Вообще, команду в сервер может и не посылать? Сам справится? Просто проверять значения из FileMap");
+
 	while (nDelta < nTimeout)
 	{
-		pIn = ExecuteNewCmd(CECMD_GETCONSOLEINFO, sizeof(CESERVER_REQ_HDR) + sizeof(DWORD));
-		if (pIn) {
-			pIn->dwData[0] = anWaitSize;
-			pOut = ExecuteSrvCmd(mn_ConEmuC_PID, pIn, ghWnd);
-			if (pOut) {
-				if (GetConWindowSize(pOut->ConInfo.sbi, nNewWidth, nNewHeight, &lbBufferHeight)) {
-					if (nNewHeight == (int)anWaitSize)
-						lbRc = TRUE;
-				}
-				
-			}
-			ExecuteFreeResult(pIn);
-			ExecuteFreeResult(pOut);
+		if (GetConWindowSize(con.m_sbi, nNewWidth, nNewHeight, &lbBufferHeight)) {
+			if (nNewHeight == (int)anWaitSize)
+				lbRc = TRUE;
 		}
+
+		//pIn = ExecuteNewCmd(CECMD_GETCONSOLEINFO, sizeof(CESERVER_REQ_HDR) + sizeof(DWORD));
+		//if (pIn) {
+		//	pIn->dwData[0] = anWaitSize;
+		//	pOut = ExecuteSrvCmd(mn_ConEmuC_PID, pIn, ghWnd);
+		//	if (pOut) {
+		//		if (GetConWindowSize(pOut->ConInfo.sbi, nNewWidth, nNewHeight, &lbBufferHeight)) {
+		//			if (nNewHeight == (int)anWaitSize)
+		//				lbRc = TRUE;
+		//		}
+		//		
+		//	}
+		//	ExecuteFreeResult(pIn);
+		//	ExecuteFreeResult(pOut);
+		//}
 		
+		if (lbRc) break;
+
+		SetEvent(mh_MonitorThreadEvent);
 		Sleep(10);
 		nDelta = GetTickCount() - nStart;
 	}
-	return TRUE;
+
+	DEBUGSTRTABS(lbRc ? L"CRealConsole::WaitConsoleSize SUCCEEDED\n" : L"CRealConsole::WaitConsoleSize FAILED!!!\n");
+
+	return lbRc;
 }
 
 void CRealConsole::RemoveFromCursor()
@@ -3777,8 +3934,8 @@ BOOL CRealConsole::InitBuffers(DWORD OneBufferSize)
 
         con.pConChar = (TCHAR*)Alloc((nNewWidth * nNewHeight * 2), sizeof(*con.pConChar));
         con.pConAttr = (WORD*)Alloc((nNewWidth * nNewHeight * 2), sizeof(*con.pConAttr));
-		con.pCopy = (CHAR_INFO*)Alloc((nNewWidth * nNewHeight), sizeof(*con.pCopy));
-		con.pCmp = (CHAR_INFO*)Alloc((nNewWidth * nNewHeight), sizeof(*con.pCmp));
+		con.pCopy = (CESERVER_REQ_CONINFO_DATA*)Alloc((nNewWidth * nNewHeight)*sizeof(CHAR_INFO)+sizeof(CESERVER_REQ_CONINFO_DATA),1);
+		con.pCmp = (CESERVER_REQ_CONINFO_DATA*)Alloc((nNewWidth * nNewHeight)*sizeof(CHAR_INFO)+sizeof(CESERVER_REQ_CONINFO_DATA),1);
 
         sc.Unlock();
 
@@ -3795,8 +3952,8 @@ BOOL CRealConsole::InitBuffers(DWORD OneBufferSize)
         MSectionLock sc; sc.Lock(&csCON);
         memset(con.pConChar, 0, (nNewWidth * nNewHeight * 2) * sizeof(*con.pConChar));
         memset(con.pConAttr, 0, (nNewWidth * nNewHeight * 2) * sizeof(*con.pConAttr));
-		memset(con.pCopy, 0, (nNewWidth * nNewHeight) * sizeof(*con.pCopy));
-		memset(con.pCmp, 0, (nNewWidth * nNewHeight) * sizeof(*con.pCmp));
+		memset(con.pCopy->Buf, 0, (nNewWidth * nNewHeight) * sizeof(CHAR_INFO));
+		memset(con.pCmp->Buf, 0, (nNewWidth * nNewHeight) * sizeof(CHAR_INFO));
         sc.Unlock();
         MCHKHEAP
 
@@ -3990,7 +4147,9 @@ void CRealConsole::CreateLogFiles()
     if (mh_LogInput == INVALID_HANDLE_VALUE) {
         mh_LogInput = NULL;
         dwErr = GetLastError();
-        wprintf(L"CreateFile failed! ErrCode=0x%08X\n%s\n", dwErr, szFile);
+		wchar_t szError[MAX_PATH*2];
+        wsprintf(szError, L"Create log file failed! ErrCode=0x%08X\n%s\n", dwErr, szFile);
+		MBoxA(szError);
         return;
     }
 
@@ -3998,15 +4157,25 @@ void CRealConsole::CreateLogFiles()
     // OK, лог создали
 }
 
-void CRealConsole::LogString(LPCSTR asText)
+void CRealConsole::LogString(LPCSTR asText, BOOL abShowTime /*= FALSE*/)
 {
     if (!this) return;
     if (!asText) return;
 	if (mh_LogInput) {
-		DWORD dwLen = strlen(asText);
-		if (dwLen)
+		DWORD dwLen;
+
+		if (abShowTime) {
+			SYSTEMTIME st; GetLocalTime(&st);
+			char szTime[32];
+			wsprintfA(szTime, "%i:%02i:%02i.%03i ", st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
+			WriteFile(mh_LogInput, szTime, dwLen=strlen(szTime), &dwLen, 0);
+		}
+
+		if ((dwLen = strlen(asText))>0)
 			WriteFile(mh_LogInput, asText, dwLen, &dwLen, 0);
+
 		WriteFile(mh_LogInput, "\r\n", 2, &dwLen, 0);
+
 		FlushFileBuffers(mh_LogInput);
 	} else {
 		#ifdef _DEBUG
@@ -4169,6 +4338,8 @@ BOOL CRealConsole::RecreateProcess(RConStartArgs *args)
     }
 
     CloseConsole();
+
+	SetConStatus(L"Restarting process...");
 
     return true;
 
@@ -4344,6 +4515,13 @@ void CRealConsole::GetData(wchar_t* pChar, WORD* pAttr, int nWidth, int nHeight)
             pnDst += nWidth;
         }
     }
+	if (ms_ConStatus[0]) {
+		int nLen = lstrlen(ms_ConStatus);
+		wmemcpy(pChar, ms_ConStatus, nLen);
+		if (nWidth>nLen)
+			wmemset(pChar+nLen, L' ', nWidth-nLen);
+		wmemset((wchar_t*)pAttr, 7, nWidth);
+	}
     HEAPVAL
     csData.Unlock();
 }
@@ -4576,6 +4754,12 @@ BOOL CRealConsole::CheckBufferSize()
 
 void CRealConsole::SetTabs(ConEmuTab* tabs, int tabsCount)
 {
+#ifdef _DEBUG
+	wchar_t szDbg[128];
+	wsprintf(szDbg, L"CRealConsole::SetTabs.  ItemCount=%i, PrevItemCount=%i\n", tabsCount, mn_tabsCount);
+	DEBUGSTRTABS(szDbg);
+#endif
+
     ConEmuTab* lpTmpTabs = NULL;
 
 	const int nMaxTabName = sizeofarray(tabs->Name);
@@ -4685,8 +4869,11 @@ void CRealConsole::SetTabs(ConEmuTab* tabs, int tabsCount)
 	//}
     
     // Передернуть gConEmu.mp_TabBar->..
-    if (gConEmu.isValid(mp_VCon)) // Во время создания консоли она еще не добавлена в список...
+	if (gConEmu.isValid(mp_VCon)) { // Во время создания консоли она еще не добавлена в список...
+		// На время появления автотабов - отключалось
+		gConEmu.mp_TabBar->SetRedraw(TRUE);
         gConEmu.mp_TabBar->Update();
+	}
 }
 
 // Если такого таба нет - pTab НЕ ОБНУЛЯТЬ!!!
@@ -6382,6 +6569,7 @@ void CRealConsole::CloseMapData()
 	if (mp_ConsoleData) {
 		UnmapViewOfFile(mp_ConsoleData);
 		mp_ConsoleData = NULL;
+		lstrcpy(ms_ConStatus, L"Console data was not opened!");
 	}
 	if (mh_FileMappingData) {
 		CloseHandle(mh_FileMappingData);
@@ -6424,7 +6612,7 @@ BOOL CRealConsole::ReopenMapData()
 		goto wrap;
 	}
 	
-	mp_ConsoleData = (CHAR_INFO*)MapViewOfFile(mh_FileMappingData, FILE_MAP_READ,0,0,0);
+	mp_ConsoleData = (CESERVER_REQ_CONINFO_DATA*)MapViewOfFile(mh_FileMappingData, FILE_MAP_READ,0,0,0);
 	if (!mp_ConsoleData) {
 		dwErr = GetLastError();
 		CloseHandle(mh_FileMappingData); mh_FileMappingData = NULL;
@@ -6433,6 +6621,8 @@ BOOL CRealConsole::ReopenMapData()
 	}
 	
 	mn_LastConsoleDataIdx = nNewIndex;
+
+	ms_ConStatus[0] = 0; // сброс
 	
 	// Done
 	lbRc = TRUE;
@@ -6638,18 +6828,21 @@ BOOL CRealConsole::LoadDataFromMap(DWORD CharCount)
 	__try {
 	#endif
 		// Теоретически, может возникнуть исключение при чтении? когда размер резко увеличивается (maximize)
-		memmove(con.pCmp, mp_ConsoleData, CharCount*sizeof(*con.pCopy));
+		con.pCmp->crBufSize = mp_ConsoleData->crBufSize;
+		_ASSERTE((int)CharCount <= (con.pCmp->crBufSize.X*con.pCmp->crBufSize.Y));
+		memmove(con.pCmp->Buf, mp_ConsoleData->Buf, CharCount*sizeof(CHAR_INFO));
 	#ifndef __GNUC__
 	}__except(EXCEPTION_EXECUTE_HANDLER){
 		_ASSERT(FALSE);
 	}
 	#endif
 
-	lbScreenChanged = memcmp(con.pCopy, con.pCmp, CharCount*sizeof(*con.pCopy));
+	lbScreenChanged = memcmp(con.pCopy->Buf, con.pCmp->Buf, CharCount*sizeof(CHAR_INFO));
 	if (lbScreenChanged)
 	{
-		memmove(con.pCopy, con.pCmp, CharCount*sizeof(*con.pCopy));
-		CHAR_INFO* lpCur = (CHAR_INFO*)con.pCopy;
+		con.pCopy->crBufSize = con.pCmp->crBufSize;
+		memmove(con.pCopy->Buf, con.pCmp->Buf, CharCount*sizeof(CHAR_INFO));
+		CHAR_INFO* lpCur = con.pCopy->Buf;
 
 		// Когда вернется возможность выделения - нужно сразу применять данные в атрибуты
 		_ASSERTE(!bSelectionPresent);
@@ -6685,4 +6878,18 @@ bool CRealConsole::isAlive()
 	}
 
 	return true;
+}
+
+LPCWSTR CRealConsole::GetConStatus()
+{
+	return ms_ConStatus;
+}
+
+void CRealConsole::SetConStatus(LPCWSTR asStatus)
+{
+	lstrcpyn(ms_ConStatus, asStatus ? asStatus : L"", sizeofarray(ms_ConStatus));
+	if (isActive()) {
+		if (mp_VCon->Update(false))
+			gConEmu.m_Child.Redraw();
+	}
 }

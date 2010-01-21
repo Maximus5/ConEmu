@@ -623,24 +623,25 @@ CESERVER_REQ* ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandDat
 		_ASSERTE(ghPluginSemaphore!=NULL);
 		_ASSERTE(ghServerTerminateEvent!=NULL);
 
-		// Некоторые команды можно выполнить сразу
-		if (nCmd == CMD_SETSIZE) {
-			DWORD nHILO = *((DWORD*)pCommandData);
-			SHORT nWidth = LOWORD(nHILO);
-			SHORT nHeight = HIWORD(nHILO);
-			MConHandle hConOut ( L"CONOUT$" );
-			CONSOLE_SCREEN_BUFFER_INFO csbi = {{0,0}};
-			BOOL lbRc = GetConsoleScreenBufferInfo(hConOut, &csbi);
-			hConOut.Close();
-			if (lbRc) {
-				// Если размер консоли менять вообще не нужно
-				if (csbi.dwSize.X == nWidth && csbi.dwSize.Y == nHeight) {
-					OutDataAlloc(sizeof(nHILO));
-					OutDataWrite(&nHILO, sizeof(nHILO));
-					return gpCmdRet;
-				}
-			}
-		}
+		//// Некоторые команды можно выполнить сразу
+		//if (nCmd == CMD_SETSIZE) {
+		//	DWORD nHILO = *((DWORD*)pCommandData);
+		//	SHORT nWidth = LOWORD(nHILO);
+		//	SHORT nHeight = HIWORD(nHILO);
+		//	WARNING("Низя CONOUT$ открывать/закрывать - у Win7 крышу сносит");
+		//	MConHandle hConOut ( L"CONOUT$" );
+		//	CONSOLE_SCREEN_BUFFER_INFO csbi = {{0,0}};
+		//	BOOL lbRc = GetConsoleScreenBufferInfo(hConOut, &csbi);
+		//	hConOut.Close();
+		//	if (lbRc) {
+		//		// Если размер консоли менять вообще не нужно
+		//		if (csbi.dwSize.X == nWidth && csbi.dwSize.Y == nHeight) {
+		//			OutDataAlloc(sizeof(nHILO));
+		//			OutDataWrite(&nHILO, sizeof(nHILO));
+		//			return gpCmdRet;
+		//		}
+		//	}
+		//}
 
 		// Засемафорить, чтобы несколько команд одновременно не пошли...
 		HANDLE hEvents[2] = {ghServerTerminateEvent, ghPluginSemaphore};
@@ -843,28 +844,31 @@ CESERVER_REQ* ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandDat
 			//return NULL;
 			break;
 		}
-		case (CMD_SETSIZE):
-		{
-			_ASSERTE(pCommandData!=NULL);
-			//BOOL lbNeedChange = TRUE;
-			DWORD nHILO = *((DWORD*)pCommandData);
-			SHORT nWidth = LOWORD(nHILO);
-			SHORT nHeight = HIWORD(nHILO);
+		case (CMD_REDRAWFAR):
+			RedrawAll();
+			break;
+		//case (CMD_SETSIZE):
+		//{
+		//	_ASSERTE(pCommandData!=NULL);
+		//	//BOOL lbNeedChange = TRUE;
+		//	DWORD nHILO = *((DWORD*)pCommandData);
+		//	SHORT nWidth = LOWORD(nHILO);
+		//	SHORT nHeight = HIWORD(nHILO);
 
-			BOOL lbRc = SetConsoleSize(nWidth, nHeight);
+		//	BOOL lbRc = SetConsoleSize(nWidth, nHeight);
 
-			MConHandle hConOut ( L"CONOUT$" );
-			CONSOLE_SCREEN_BUFFER_INFO csbi = {{0,0}};
-			lbRc = GetConsoleScreenBufferInfo(hConOut, &csbi);
-			hConOut.Close();
-			if (lbRc) {
-				OutDataAlloc(sizeof(nHILO));
-				nHILO = ((WORD)csbi.dwSize.X) | (((DWORD)(WORD)csbi.dwSize.Y) << 16);
-				OutDataWrite(&nHILO, sizeof(nHILO));
-			}
+		//	MConHandle hConOut ( L"CONOUT$" );
+		//	CONSOLE_SCREEN_BUFFER_INFO csbi = {{0,0}};
+		//	lbRc = GetConsoleScreenBufferInfo(hConOut, &csbi);
+		//	hConOut.Close();
+		//	if (lbRc) {
+		//		OutDataAlloc(sizeof(nHILO));
+		//		nHILO = ((WORD)csbi.dwSize.X) | (((DWORD)(WORD)csbi.dwSize.Y) << 16);
+		//		OutDataWrite(&nHILO, sizeof(nHILO));
+		//	}
 
-			//REDRAWALL
-		}
+		//	//REDRAWALL
+		//}
 	}
 
 	LeaveCriticalSection(&csData);
@@ -882,50 +886,69 @@ CESERVER_REQ* ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandDat
 	return pCmdRet;
 }
 
-BOOL SetConsoleSize(SHORT nNewWidth, SHORT nNewHeight)
+// Изменить размер консоли. Собственно сам ресайз - выполняется сервером!
+BOOL FarSetConsoleSize(SHORT nNewWidth, SHORT nNewHeight)
 {
-#ifdef _DEBUG
-	if (GetCurrentThreadId() != gnMainThreadId) {
-		_ASSERTE(GetCurrentThreadId() == gnMainThreadId);
-	}
-#endif
+	BOOL lbRc = FALSE;
+	if (!gdwServerPID) {
+		_ASSERTE(gdwServerPID!=0);
+	} else {
+		CESERVER_REQ In;
+		ExecutePrepareCmd((CESERVER_REQ*)&In, CECMD_SETSIZENOSYNC, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_SETSIZE));
+		memset(&In.SetSize, 0, sizeof(In.SetSize));
 
-	BOOL lbRc = FALSE, lbNeedChange = TRUE;
-	SHORT nWidth = nNewWidth; if (nWidth</*4*/MIN_CON_WIDTH) nWidth = /*4*/MIN_CON_WIDTH;
-	SHORT nHeight = nNewHeight; if (nHeight</*3*/MIN_CON_HEIGHT) nHeight = /*3*/MIN_CON_HEIGHT;
-	MConHandle hConOut ( L"CONOUT$" );
-	COORD crMax = GetLargestConsoleWindowSize(hConOut);
-	if (crMax.X && nWidth > crMax.X) nWidth = crMax.X;
-	if (crMax.Y && nHeight > crMax.Y) nHeight = crMax.Y;
+		In.SetSize.size.X = nNewWidth; In.SetSize.size.Y = nNewHeight;
 
-	CONSOLE_SCREEN_BUFFER_INFO csbi = {{0,0}};
-	if (GetConsoleScreenBufferInfo(hConOut, &csbi)) {
-		if (csbi.dwSize.X == nWidth && csbi.dwSize.Y == nHeight
-			&& csbi.srWindow.Top == 0 && csbi.srWindow.Left == 0
-			&& csbi.srWindow.Bottom == (nWidth-1) 
-			&& csbi.srWindow.Bottom == (nHeight-1))
-		{
-			lbNeedChange = FALSE;
+		CESERVER_REQ* pOut = ExecuteSrvCmd(gdwServerPID, &In, GetConsoleWindow());
+		if (pOut) {
+			ExecuteFreeResult(pOut);
 		}
-	}
-
-	if (lbNeedChange) {
-		DWORD dwErr = 0;
-
-		// Если этого не сделать - размер консоли нельзя УМЕНЬШИТЬ
-		RECT rcConPos = {0}; GetWindowRect(FarHwnd, &rcConPos);
-		MoveWindow(FarHwnd, rcConPos.left, rcConPos.top, 1, 1, 1);
-
-		//specified width and height cannot be less than the width and height of the console screen buffer's window
-		COORD crNewSize = {nWidth, nHeight};
-		lbRc = SetConsoleScreenBufferSize(hConOut, crNewSize);
-		if (!lbRc) dwErr = GetLastError();
-
-		SMALL_RECT rNewRect = {0,0,nWidth-1,nHeight-1};
-		SetConsoleWindowInfo(hConOut, TRUE, &rNewRect);
 
 		RedrawAll();
 	}
+
+//#ifdef _DEBUG
+//	if (GetCurrentThreadId() != gnMainThreadId) {
+//		_ASSERTE(GetCurrentThreadId() == gnMainThreadId);
+//	}
+//#endif
+//
+//	BOOL lbRc = FALSE, lbNeedChange = TRUE;
+//	SHORT nWidth = nNewWidth; if (nWidth</*4*/MIN_CON_WIDTH) nWidth = /*4*/MIN_CON_WIDTH;
+//	SHORT nHeight = nNewHeight; if (nHeight</*3*/MIN_CON_HEIGHT) nHeight = /*3*/MIN_CON_HEIGHT;
+//	MConHandle hConOut ( L"CONOUT$" );
+//	COORD crMax = GetLargestConsoleWindowSize(hConOut);
+//	if (crMax.X && nWidth > crMax.X) nWidth = crMax.X;
+//	if (crMax.Y && nHeight > crMax.Y) nHeight = crMax.Y;
+//
+//	CONSOLE_SCREEN_BUFFER_INFO csbi = {{0,0}};
+//	if (GetConsoleScreenBufferInfo(hConOut, &csbi)) {
+//		if (csbi.dwSize.X == nWidth && csbi.dwSize.Y == nHeight
+//			&& csbi.srWindow.Top == 0 && csbi.srWindow.Left == 0
+//			&& csbi.srWindow.Bottom == (nWidth-1) 
+//			&& csbi.srWindow.Bottom == (nHeight-1))
+//		{
+//			lbNeedChange = FALSE;
+//		}
+//	}
+//
+//	if (lbNeedChange) {
+//		DWORD dwErr = 0;
+//
+//		// Если этого не сделать - размер консоли нельзя УМЕНЬШИТЬ
+//		RECT rcConPos = {0}; GetWindowRect(FarHwnd, &rcConPos);
+//		MoveWindow(FarHwnd, rcConPos.left, rcConPos.top, 1, 1, 1);
+//
+//		//specified width and height cannot be less than the width and height of the console screen buffer's window
+//		COORD crNewSize = {nWidth, nHeight};
+//		lbRc = SetConsoleScreenBufferSize(hConOut, crNewSize);
+//		if (!lbRc) dwErr = GetLastError();
+//
+//		SMALL_RECT rNewRect = {0,0,nWidth-1,nHeight-1};
+//		SetConsoleWindowInfo(hConOut, TRUE, &rNewRect);
+//
+//		RedrawAll();
+//	}
 
 	return lbRc;
 }
@@ -1868,7 +1891,7 @@ void SendTabs(int tabCount, BOOL abForceSend/*=FALSE*/)
 				} else if (pOut->TabsRet.bNeedResize) {
 					// Если это отложенная отсылка табов после выполнения макросов
 					if (GetCurrentThreadId() == gnMainThreadId) {
-						SetConsoleSize(pOut->TabsRet.crNewSize.X, pOut->TabsRet.crNewSize.Y);
+						FarSetConsoleSize(pOut->TabsRet.crNewSize.X, pOut->TabsRet.crNewSize.Y);
 					}
 				}
 			}

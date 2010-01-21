@@ -84,6 +84,7 @@ bool SettingsRegistry::Load(const wchar_t *regName, LPBYTE value, DWORD nSize)
 		return true;
 	return false;
 }
+// После вызова ЭТОЙ функции - про старое значение в *value строго забываем
 bool SettingsRegistry::Load(const wchar_t *regName, wchar_t **value)
 {
 	DWORD len = 0;
@@ -99,6 +100,20 @@ bool SettingsRegistry::Load(const wchar_t *regName, wchar_t **value)
 		*value = (wchar_t*)malloc(sizeof(wchar_t)*2);
 	}
 	(*value)[0] = 0; (*value)[1] = 0; // На случай REG_MULTI_SZ
+	return false;
+}
+// А эта функция, если значения нет (или тип некорректный) value НЕ трогает
+bool SettingsRegistry::Load(const wchar_t *regName, wchar_t *value, int maxLen)
+{
+	_ASSERTE(maxLen>1);
+	DWORD len = 0, dwType = 0;
+	if (RegQueryValueExW(regMy, regName, NULL, &dwType, NULL, &len) == ERROR_SUCCESS && dwType == REG_SZ) {
+		len = maxLen*2; // max size in BYTES
+		if (RegQueryValueExW(regMy, regName, NULL, NULL, (LPBYTE)value, &len) == ERROR_SUCCESS) {
+			value[maxLen-1] = 0; // на всякий случай, чтобы ASCIIZ был однозначно
+			return true;
+		}
+	}
 	return false;
 }
 
@@ -452,6 +467,7 @@ void SettingsXML::CloseKey()
 	mb_Modified = false;
 }
 
+// После вызова ЭТОЙ функции - про старое значение в *value строго забываем
 bool SettingsXML::Load(const wchar_t *regName, wchar_t **value)
 {
 	bool lbRc = false;
@@ -574,6 +590,22 @@ bool SettingsXML::Load(const wchar_t *regName, wchar_t **value)
 		(*value)[0] = 0; (*value)[1] = 0; // На случай REG_MULTI_SZ
 	}
 		
+	return lbRc;
+}
+// А эта функция, если значения нет (или тип некорректный) value НЕ трогает
+bool SettingsXML::Load(const wchar_t *regName, wchar_t *value, int maxLen)
+{
+	_ASSERTE(maxLen>1);
+	bool lbRc = false;
+	wchar_t* pszValue = NULL;
+	if (Load(regName, &pszValue)) {
+		if (pszValue)
+			lstrcpyn(value, pszValue, maxLen);
+		else
+			value[0] = 0;
+		lbRc = true;
+	}
+	if (pszValue) free(pszValue);
 	return lbRc;
 }
 bool SettingsXML::Load(const wchar_t *regName, LPBYTE value, DWORD nSize)

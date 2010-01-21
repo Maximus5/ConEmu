@@ -1,4 +1,32 @@
 
+/*
+Copyright (c) 2009-2010 Maximus5
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+1. Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+3. The name of the authors may not be used to endorse or promote products
+   derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
+
 #define SHOWDEBUGSTR
 
 #include "Header.h"
@@ -17,8 +45,6 @@ WARNING("Глюк с частичной отрисовкой экрана часто появляется при Alt-F7, Enter. 
 // Иногда диалог отрисовался, но часть до текста "..." отсутствует
 
 //PRAGMA_ERROR("При попытке компиляции F:\\VCProject\\FarPlugin\\PPCReg\\compile.cmd - Enter в консоль не прошел");
-
-TODO("CES_CONMANACTIVE deprecated");
 
 WARNING("Может быть хватит ServerThread? А StartProcessThread зарезервировать только для запуска процесса, и сразу из него выйти");
 
@@ -86,6 +112,8 @@ CVirtualConsole* CVirtualConsole::CreateVCon(RConStartArgs *args)
 CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
 {
     mp_RCon = new CRealConsole(this);
+
+	gConEmu.OnVConCreated(this);
 
     SIZE_T nMinHeapSize = (1000 + (200 * 90 * 2) * 6 + MAX_PATH*2)*2 + 210*sizeof(*TextParts);
     mh_Heap = HeapCreate(HEAP_GENERATE_EXCEPTIONS, nMinHeapSize, 0);
@@ -325,7 +353,7 @@ bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize)
         if (nMaxTextHeight < TextHeight)
             nMaxTextHeight = TextHeight;
 
-        HEAPVAL
+        HEAPVAL;
         mpsz_ConChar = (TCHAR*)Alloc((nMaxTextWidth * nMaxTextHeight), sizeof(*mpsz_ConChar));
         mpsz_ConCharSave = (TCHAR*)Alloc((nMaxTextWidth * nMaxTextHeight), sizeof(*mpsz_ConCharSave));
         mpn_ConAttr = (WORD*)Alloc((nMaxTextWidth * nMaxTextHeight), sizeof(*mpn_ConAttr));
@@ -333,7 +361,7 @@ bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize)
         ConCharX = (DWORD*)Alloc((nMaxTextWidth * nMaxTextHeight), sizeof(*ConCharX));
         tmpOem = (char*)Alloc((nMaxTextWidth + 5), sizeof(*tmpOem));
         TextParts = (struct _TextParts*)Alloc((nMaxTextWidth + 2), sizeof(*TextParts));
-        HEAPVAL
+        HEAPVAL;
     }
     //MCHKHEAP
     if (!mpsz_ConChar || !mpsz_ConCharSave || !mpn_ConAttr || !mpn_ConAttrSave || !ConCharX || !tmpOem || !TextParts) {
@@ -2052,6 +2080,11 @@ void CVirtualConsole::Paint(HDC hDc, RECT rcClient)
 	BOOL lbSimpleBlack = FALSE;
 	if (!this) 
 		lbSimpleBlack = TRUE;
+	else if (!mp_RCon)
+		lbSimpleBlack = TRUE;
+	else if (!mp_RCon->ConWnd())
+		lbSimpleBlack = TRUE;
+
 	//else if (!mpsz_ConChar || !mpn_ConAttr)
 	//	lbSimpleBlack = TRUE;
     if (lbSimpleBlack) {
@@ -2068,6 +2101,17 @@ void CVirtualConsole::Paint(HDC hDc, RECT rcClient)
         #ifndef SKIP_ALL_FILLRECT
         FillRect(hDc, &rcClient, hBr);
         #endif
+		HFONT hOldF = (HFONT)SelectObject(hDc, gSet.mh_Font);
+		LPCWSTR pszStarting = L"Initializing ConEmu.";
+		if (this) {
+			if (mp_RCon)
+				pszStarting = mp_RCon->GetConStatus();
+		}
+		UINT nFlags = ETO_CLIPPED;
+		SetTextColor(hDc, gSet.Colors[7]);
+		SetBkColor(hDc, gSet.Colors[0]);
+		ExtTextOut(hDc, rcClient.left, rcClient.top, nFlags, &rcClient, pszStarting, wcslen(pszStarting), 0);
+		SelectObject(hDc, hOldF);
         DeleteObject(hBr);
         //EndPaint(ghWndDC, &ps);
         return;
@@ -2090,7 +2134,10 @@ void CVirtualConsole::Paint(HDC hDc, RECT rcClient)
     if (!gConEmu.isNtvdm()) {
         // после глюков с ресайзом могут быть проблемы с размером окна DC
         if ((client.right-client.left) < (LONG)Width || (client.bottom-client.top) < (LONG)Height)
+		{
+			WARNING("Зацикливается. Вызывает Paint, который вызывает OnSize. В итоге - 100% загрузки проц.");
             gConEmu.OnSize(-1); // Только ресайз дочерних окон
+		}
     }
     
     MSectionLock S; //&csDC, &ncsTDC);

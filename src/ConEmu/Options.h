@@ -1,4 +1,32 @@
 
+/*
+Copyright (c) 2009-2010 Maximus5
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+1. Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+3. The name of the authors may not be used to endorse or promote products
+   derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
+
 #pragma once
 
 #define MIN_ALPHA_VALUE 40
@@ -13,7 +41,7 @@ public:
 	wchar_t szFontError[512];
 
     int DefaultBufferHeight; bool ForceBufferHeight; bool AutoScroll; bool AutoBufferHeight;
-	bool FarSyncSize;
+	//bool FarSyncSize;
 	int nCmdOutputCP;
     
 	LONG FontWidth();
@@ -22,12 +50,15 @@ public:
 	BYTE FontCharSet();
 private:
     LOGFONT LogFont, LogFont2;
-	LONG mn_FontWidth, mn_FontHeight, mn_BorderFontWidth;
+	LONG mn_AutoFontWidth, mn_AutoFontHeight; // размеры шрифтов, которые были запрошены при авторесайзе шрифта
+	LONG mn_FontWidth, mn_FontHeight, mn_BorderFontWidth; // реальные размеры шрифтов
 	BYTE mn_LoadFontCharSet; // То что загружено изначально (или уже сохранено в реестр)
 	TEXTMETRIC tm;
     BOOL mb_Name1Ok, mb_Name2Ok;
 	void ResetFontWidth();
+	void SaveFontSizes(LOGFONT *pCreated, bool bAuto);
 public:
+	bool isFontAutoSize;
 	bool isAutoRegisterFonts;
 	//wchar_t FontFile[MAX_PATH];
 	LOGFONT ConsoleFont;
@@ -137,7 +168,7 @@ public:
     wchar_t szAdminTitleSuffix[64]; //" (Admin)"
     bool bAdminShield;
     
-    UINT nMainTimerElapse; // периодичность, с которой из консоли считывается текст
+    DWORD nMainTimerElapse; // периодичность, с которой из консоли считывается текст
     //bool isAdvLangChange; // в Висте без ConIme в самой консоли не меняется язык, пока не послать WM_SETFOCUS. Но при этом исчезает диалог быстрого поиска
     bool isSkipFocusEvents;
     //bool isLangChangeWsPlugin;
@@ -172,6 +203,7 @@ public:
     BOOL SaveSettings();
     bool ShowColorDialog(HWND HWndOwner, COLORREF *inColor);
     static int CALLBACK EnumFamCallBack(LPLOGFONT lplf, LPNEWTEXTMETRIC lpntm, DWORD FontType, LPVOID aFontCount);
+    static int CALLBACK EnumFontCallBackEx(ENUMLOGFONTEX *lpelfe, NEWTEXTMETRICEX *lpntme, DWORD FontType, LPARAM lParam);
     void UpdateMargins(RECT arcMargins);
     static void Dialog();
     void UpdatePos(int x, int y);
@@ -191,6 +223,7 @@ public:
 	void UpdateConsoleMode(DWORD nMode);
 	BOOL CheckConIme();
 	SettingsBase* CreateSettings();
+	bool AutoRecreateFont(int nFontW, int nFontH);
 protected:
     LRESULT OnInitDialog();
 	LRESULT OnInitDialog_Main();
