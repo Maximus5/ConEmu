@@ -1,4 +1,0 @@
-EXPORTS
-	GetOriginalAddress=GetOriginalAddress@12
-	InitHooks=InitHooks@8
-	SetAllHooks=SetAllHooks@8
