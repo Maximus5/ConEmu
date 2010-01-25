@@ -962,7 +962,10 @@ void EmergencyShow()
 	EnableWindow(FarHwnd, true);
 }
 
+static BOOL bTryOpenMapHeader = FALSE;
 int OpenMapHeader();
+void CloseMapHeader();
+//void ResetExeHooks();
 
 // Ёту нить нужно оставить, чтобы была возможность отобразить консоль при падении ConEmu
 DWORD WINAPI MonitorThreadProcW(LPVOID lpParameter)
@@ -972,6 +975,7 @@ DWORD WINAPI MonitorThreadProcW(LPVOID lpParameter)
 	DWORD dwStartTick = GetTickCount();
 	DWORD dwMonitorTick = dwStartTick;
 	BOOL lbStartedNoConEmu = (ConEmuHwnd == NULL);
+	BOOL lbTryOpenMapHeader = FALSE;
 	//_ASSERTE(ConEmuHwnd!=NULL); -- ConEmu может подцепитьс€ позднее!
 
 	while (true)
@@ -1007,7 +1011,7 @@ DWORD WINAPI MonitorThreadProcW(LPVOID lpParameter)
 			if (hConWnd && hConWnd != FarHwnd) {
 				FarHwnd = hConWnd;
 				lbWasDetached = TRUE;
-				OpenMapHeader();
+				CloseMapHeader();
 			}
 		    if (!IsWindow(ConEmuHwnd) || lbWasDetached) {
 			    ConEmuHwnd = NULL;
@@ -1030,8 +1034,11 @@ DWORD WINAPI MonitorThreadProcW(LPVOID lpParameter)
 								#endif
 							#endif
 							WARNING("Ќужно перехучить функции в far.exe");
-							// »наче PeekConsoleInputEvents уже не детектитс€...
-							Attach2Gui(); // сразу подцепимс€ к GUI
+							//-- »наче PeekConsoleInputEvents уже не детектитс€...
+							//ResetExeHooks();
+
+							// сразу подцепимс€ к GUI
+							Attach2Gui();
 						}
 						//int nBtn = ShowMessage(1, 2);
 						//if (nBtn == 0) {
@@ -1156,6 +1163,17 @@ DWORD WINAPI MonitorThreadProcW(LPVOID lpParameter)
 					SendTabs(gnCurTabCount, TRUE);
 					SC.Unlock();
 				}
+			}
+		}
+
+		if (ConEmuHwnd && bTryOpenMapHeader) {
+			if (gpConsoleInfo) {
+				_ASSERTE(gpConsoleInfo == NULL);
+				bTryOpenMapHeader = FALSE;
+			} else
+			if (OpenMapHeader() == 0) {
+				// OK, переподцепились
+				bTryOpenMapHeader = FALSE;
 			}
 		}
 
@@ -1430,6 +1448,18 @@ void WINAPI _export SetStartupInfoW(void *aInfo)
 //		h = CreateEvent(NULL, FALSE, FALSE, szEventName); 
 //		if (h==INVALID_HANDLE_VALUE) h=NULL;
 
+void CloseMapHeader()
+{
+	if (gpConsoleInfo) {
+		UnmapViewOfFile(gpConsoleInfo);
+		gpConsoleInfo = NULL;
+	}
+	if (ghFileMapping) {
+		CloseHandle(ghFileMapping);
+		ghFileMapping = NULL;
+	}
+}
+
 int OpenMapHeader()
 {
 	int iRc = -1;
@@ -1439,14 +1469,7 @@ int OpenMapHeader()
 	#endif
 	//int nConInfoSize = sizeof(CESERVER_REQ_CONINFO_HDR);
 	
-	if (gpConsoleInfo) {
-		UnmapViewOfFile(gpConsoleInfo);
-		gpConsoleInfo = NULL;
-	}
-	if (ghFileMapping) {
-		CloseHandle(ghFileMapping);
-		ghFileMapping = NULL;
-	}
+	CloseMapHeader();
 	
 	if (FarHwnd) {
 		wsprintf(szMapName, CECONMAPNAME, (DWORD)FarHwnd);
@@ -2857,6 +2880,8 @@ BOOL Attach2Gui()
 	} else {
 		gdwServerPID = pi.dwProcessId;
 		lbRc = TRUE;
+		// „тобы MonitorThread пыталс€ открыть Mapping
+		bTryOpenMapHeader = TRUE;
 	}
 	
 	return lbRc;

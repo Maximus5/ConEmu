@@ -801,6 +801,9 @@ static bool SetHook( HookItem* item, HMODULE Module = 0, BOOL abExecutable = FAL
 			int j = 0;
             for( j = 0; item[j].Name; j++ )
 			{
+				if (item[j].NewAddress == (void*)thunk->u1.Function)
+					continue; // это уже захучено
+
 				// OldAddress уже может отличаться от оригинального экспорта библиотеки
 				// Это происходит например с PeekConsoleIntputW при наличии плагина Anamorphosis
                 if( !item[j].OldAddress || (void*)thunk->u1.Function != item[j].OldAddress )
@@ -830,6 +833,11 @@ static bool SetHook( HookItem* item, HMODULE Module = 0, BOOL abExecutable = FAL
 
     return res;
 }
+
+//void ResetExeHooks()
+//{
+//	SetHook( Hooks, NULL, TRUE );
+//}
 
 // Подменить Импортируемые функции во всех модулях процесса, загруженных ДО conemu.dll
 static bool SetHookEx( HookItem* item, HMODULE inst )
