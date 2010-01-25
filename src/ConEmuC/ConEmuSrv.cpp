@@ -28,6 +28,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #include "ConEmuC.h"
+#include "..\common\ConsoleAnnotation.h"
 
 
 // Создать необходимые события и нити
@@ -599,6 +600,7 @@ void ServerDone(int aiRc)
 	}
 
 	CloseMapHeader();
+	SafeCloseHandle(srv.hColorerMapping);
 }
 
 
@@ -862,6 +864,36 @@ int CreateMapHeader()
 	srv.pConsoleInfo->nServerPID = GetCurrentProcessId();
 
 wrap:	
+	return iRc;
+}
+
+int CreateColorerHeader(DWORD anID)
+{
+	int iRc = -1;
+	wchar_t szMapName[64];
+	DWORD dwErr = 0;
+	//int nConInfoSize = sizeof(CESERVER_REQ_CONINFO_HDR);
+	DWORD nMapSize = 0;
+
+	_ASSERTE(srv.hColorerMapping == NULL);
+
+	COORD crMaxSize = GetLargestConsoleWindowSize(GetStdHandle(STD_OUTPUT_HANDLE));
+	nMapSize = max(crMaxSize.X,200) * max(crMaxSize.Y,200) * sizeof(AnnotationInfo);
+
+	wsprintf(szMapName, AnnotationShareName, sizeof(AnnotationInfo), anID);
+
+	//ghFileMapping = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, szMapName); -- Create!
+	srv.hColorerMapping = CreateFileMapping(INVALID_HANDLE_VALUE, 
+		gpNullSecurity, PAGE_READWRITE, 0, nMapSize, szMapName);
+
+	if (!srv.hColorerMapping) {
+		dwErr = GetLastError();
+		_printf ("Can't create console data file mapping. ErrCode=0x%08X\n", dwErr, szMapName);
+		iRc = CERR_COLORERMAPPINGERR;
+	} else {
+		iRc = 0;
+	}
+
 	return iRc;
 }
 

@@ -1329,12 +1329,17 @@ void CVirtualConsole::UpdateText(bool isForce)
                 ++j;
 			// [%] ClearType, proportional fonts
 			if (j > 0 // если с начала строки
-				&& (ConCharLine[j-1] == ucSpace || ConCharLine[j-1] == ucNoBreakSpace || isCharProgress(ConCharLine[j-1])) // есть пробелы
+				&& (ConCharLine[j-1] == ucSpace || ConCharLine[j-1] == ucNoBreakSpace || isCharProgress(ConCharLine[j-1]) // есть пробелы
+					|| (gSet.FontItalic() || ConAttrLine[j-1].nFontIndex) ) // Или сейчас курсив/жирный?
 				)
 			{
-				while ((j > 0)
-			    && (ConCharLine[j-1] == ucSpace || ConCharLine[j-1] == ucNoBreakSpace || isCharProgress(ConCharLine[j-1])))
-					j--;
+				if (gSet.FontItalic() || ConAttrLine[j-1].nFontIndex) {
+					j = 0; // с частичной отрисовкой заморачиваться не будем, а то еще ClearType вылезет...
+				} else {
+					while ((j > 0)
+					&& (ConCharLine[j-1] == ucSpace || ConCharLine[j-1] == ucNoBreakSpace || isCharProgress(ConCharLine[j-1])))
+						j--;
+				}
 			}
 			if (j >= end) {
 				// Для пропорциональных шрифтов сравнение выполняется только с начала строки,

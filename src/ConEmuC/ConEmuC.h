@@ -210,6 +210,7 @@ void CloseMapHeader();
 
 void EmergencyShow();
 
+int CreateColorerHeader(DWORD anID);
 
 /* Console Handles */
 //extern MConHandle ghConIn;
@@ -290,6 +291,8 @@ typedef struct tag_SrvInfo {
 	CESERVER_REQ_CONINFO_DATA *pConsoleData; // Mapping
 	CESERVER_REQ_CONINFO_DATA *pConsoleDataCopy; // Local (Alloc)
 	DWORD nConsoleDataSize;
+	// TrueColorer buffer
+	HANDLE hColorerMapping;
 	//
 	HANDLE hConEmuGuiAttached;
 	HWINEVENTHOOK /*hWinHook,*/ hWinHookStartEnd; //BOOL bWinHookAllow; int nWinHookMode;
@@ -419,3 +422,4 @@ extern BOOL gbInRecreateRoot;
 #define CERR_CANTSTARTDEBUGGER 122
 #define CERR_CREATEMAPPINGERR 123
 #define CERR_MAPVIEWFILEERR 124
+#define CERR_COLORERMAPPINGERR 125

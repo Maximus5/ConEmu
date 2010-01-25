@@ -1,3 +1,8 @@
+Maximus5 - 2010.01.25
+[+] FarColorer truemod ready.
+[+] Улучшена отрисовка курсивом.
+
+
 Maximus5 - 2010.01.21
 [%] Зависание при переключении в консоль, в которой висит 'Press Enter to close console...'.
 [%] Issue 161: Тормоза при AutoTabs.

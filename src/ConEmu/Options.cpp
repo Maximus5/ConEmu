@@ -3133,6 +3133,11 @@ LONG CSettings::FontHeight()
 	return mn_FontHeight;
 }
 
+BOOL CSettings::FontItalic()
+{
+	return LogFont.lfItalic!=0;
+}
+
 LONG CSettings::BorderFontWidth()
 {
 	_ASSERTE(LogFont2.lfWidth);

@@ -48,6 +48,7 @@ public:
 	LONG FontHeight();
 	LONG BorderFontWidth();
 	BYTE FontCharSet();
+	BOOL FontItalic();
 private:
     LOGFONT LogFont, LogFont2;
 	LONG mn_AutoFontWidth, mn_AutoFontHeight; // размеры шрифтов, которые были запрошены при авторесайзе шрифта

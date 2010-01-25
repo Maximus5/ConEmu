@@ -39,7 +39,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#include <tchar.h>
 #include "..\common\common.hpp"
 #include "..\common\pluginW1007.hpp"
-#include "..\common\ConsoleAnnotation.h"
+//#include "..\common\ConsoleAnnotation.h"
 #include "PluginHeader.h"
 #include <Tlhelp32.h>
 //#include <vector>
@@ -129,7 +129,7 @@ bool gbMonitorEnvVar = false;
 void UpdateEnvVar(const wchar_t* pszList);
 BOOL StartupHooks();
 BOOL gbFARuseASCIIsort = FALSE; // попытаться перехватить строковую сортировку в FAR
-HANDLE ghFileMapping = NULL, ghColorMapping = NULL;
+HANDLE ghFileMapping = NULL; //, ghColorMapping = NULL;
 CESERVER_REQ_CONINFO_HDR *gpConsoleInfo = NULL;
 //AnnotationInfo *gpColorerInfo = NULL;
 
@@ -1022,6 +1022,17 @@ DWORD WINAPI MonitorThreadProcW(LPVOID lpParameter)
 				{
 					if (IsWindow(hConWnd)) {
 						FarHwnd = hConWnd;
+
+						if (lbWasDetached) {
+							#ifdef _DEBUG
+								#ifdef SHOW_STARTED_MSGBOX
+									if (!IsDebuggerPresent()) MessageBoxA(NULL, "FAR was detached\nCalling Attach2Gui now", "ConEmu plugin", 0);
+								#endif
+							#endif
+							WARNING("Нужно перехучить функции в far.exe");
+							// Иначе PeekConsoleInputEvents уже не детектится...
+							Attach2Gui(); // сразу подцепимся к GUI
+						}
 						//int nBtn = ShowMessage(1, 2);
 						//if (nBtn == 0) {
 						//	// Create process, with flag /Attach GetCurrentProcessId()
@@ -1461,36 +1472,36 @@ int OpenMapHeader()
 	return iRc;
 }
 	
-int CreateColorerHeader()
-{
-	int iRc = -1;
-	wchar_t szMapName[64];
-	#ifdef _DEBUG
-	DWORD dwErr = 0;
-	#endif
-	//int nConInfoSize = sizeof(CESERVER_REQ_CONINFO_HDR);
-	DWORD nMapSize = 0;
-	
-	_ASSERTE(ghColorMapping == NULL);
-
-	COORD crMaxSize = GetLargestConsoleWindowSize(GetStdHandle(STD_OUTPUT_HANDLE));
-	nMapSize = max(crMaxSize.X,200) * max(crMaxSize.Y,200) * sizeof(AnnotationInfo);
-	
-	wsprintf(szMapName, AnnotationShareName, sizeof(AnnotationInfo), (DWORD)GetCurrentProcessId());
-	
-	//ghFileMapping = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, szMapName); -- Create!
-	ghFileMapping = CreateFileMapping(INVALID_HANDLE_VALUE, 
-		gpNullSecurity, PAGE_READWRITE, 0, nMapSize, szMapName);
-	
-	if (!ghFileMapping) {
-		#ifdef _DEBUG
-		dwErr = GetLastError();
-		#endif
-		TODO("Показать ошибку создания MAP для Colorer.AnnotationInfo");
-	}
-
-	return iRc;
-}
+//int CreateColorerHeader()
+//{
+//	int iRc = -1;
+//	wchar_t szMapName[64];
+//	#ifdef _DEBUG
+//	DWORD dwErr = 0;
+//	#endif
+//	//int nConInfoSize = sizeof(CESERVER_REQ_CONINFO_HDR);
+//	DWORD nMapSize = 0;
+//	
+//	_ASSERTE(ghColorMapping == NULL);
+//
+//	COORD crMaxSize = GetLargestConsoleWindowSize(GetStdHandle(STD_OUTPUT_HANDLE));
+//	nMapSize = max(crMaxSize.X,200) * max(crMaxSize.Y,200) * sizeof(AnnotationInfo);
+//	
+//	wsprintf(szMapName, AnnotationShareName, sizeof(AnnotationInfo), (DWORD)GetCurrentProcessId());
+//	
+//	//ghColorMapping = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, szMapName); -- Create!
+//	ghColorMapping = CreateFileMapping(INVALID_HANDLE_VALUE, 
+//		gpNullSecurity, PAGE_READWRITE, 0, nMapSize, szMapName);
+//	
+//	if (!ghColorMapping) {
+//		#ifdef _DEBUG
+//		dwErr = GetLastError();
+//		#endif
+//		TODO("Показать ошибку создания MAP для Colorer.AnnotationInfo");
+//	}
+//
+//	return iRc;
+//}
 	
 void InitHWND(HWND ahFarHwnd)
 {
@@ -1513,7 +1524,7 @@ void InitHWND(HWND ahFarHwnd)
 	
 	OpenMapHeader();
 	
-	CreateColorerHeader();
+	//CreateColorerHeader();
 
 	//memset(hEventCmd, 0, sizeof(HANDLE)*MAXCMDCOUNT);
 	
@@ -2121,10 +2132,10 @@ void StopThread(void)
 		CloseHandle(ghFileMapping);
 		ghFileMapping = NULL;
 	}
-	if (ghColorMapping) {
-		CloseHandle(ghColorMapping);
-		ghColorMapping = NULL;
-	}
+	//if (ghColorMapping) {
+	//	CloseHandle(ghColorMapping);
+	//	ghColorMapping = NULL;
+	//}
 	
 	CommonShutdown();
 }
