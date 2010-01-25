@@ -29,6 +29,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 #include "kl_parts.h"
 #include "../Common/common.hpp"
+#include "../Common/ConsoleAnnotation.h"
 
 #define CES_CMDACTIVE 0x01
 #define CES_TELNETACTIVE 0x02
@@ -124,6 +125,36 @@ struct ConProcess {
     TCHAR Name[64]; // чтобы полная инфа об ошибке влезала
 };
 
+typedef struct tag_CharAttr
+{
+	union {
+		// Собственно цвета/шрифты
+		struct {
+			COLORREF crBackColor; // Старший байт зарезервируем, вдруг для прозрачности понадобится
+			COLORREF crForeColor : 24; // чтобы в ui64 поместился и nFontIndex
+			BYTE     nFontIndex; // 0 - normal, 1 - bold, 2 - italic
+		};
+		// А это для сравнения (поиск изменений)
+		unsigned __int64 All;
+	};
+	BYTE nForeIdx, nBackIdx; // может понадобиться для ExtendColors
+	COLORREF crOrigForeColor, crOrigBackColor; // Реальные цвета в консоли, crForeColor и crBackColor могут быть изменены колорером
+	//
+	//DWORD dwAttrubutes; // может когда понадобятся дополнительные флаги...
+	//
+    ///**
+    // * Used exclusively by ConsoleView to append annotations to each character
+    // */
+    //AnnotationInfo annotationInfo;
+} CharAttr;
+
+inline bool operator==(const CharAttr& s1, const CharAttr& s2)
+{
+    return s1.All == s2.All;
+}
+
+
+
 #define MAX_SERVER_THREADS 3
 //#define MAX_THREAD_PACKETS 100
 
@@ -198,7 +229,7 @@ public:
     BOOL isDetached();
     BOOL AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID);
     BOOL RecreateProcess(RConStartArgs *args);
-    void GetData(wchar_t* pChar, WORD* pAttr, int nWidth, int nHeight);
+    void GetData(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight);
     void OnActivate(int nNewNum, int nOldNum);
     void OnDeactivate(int nNewNum);
     BOOL CheckBufferSize();
@@ -365,6 +396,13 @@ private:
 	wchar_t ms_HeaderMapName[64], ms_DataMapName[64];
 	CESERVER_REQ_CONINFO_HDR *mp_ConsoleInfo;
 	CESERVER_REQ_CONINFO_DATA *mp_ConsoleData; // Mapping
+	// Colorer Mapping
+	HANDLE mh_ColorMapping;
+	AnnotationInfo *mp_ColorData;
+	DWORD mn_LastColorFarID;
+	void CheckColorMapping(DWORD dwPID);
+	void CloseColorMapping();
+	//
 	DWORD mn_LastConsoleDataIdx, mn_LastConsolePacketIdx, mn_LastFarReadIdx;
 	DWORD mn_LastFarReadTick;
 	BOOL OpenMapHeader();

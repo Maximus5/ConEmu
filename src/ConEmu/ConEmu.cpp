@@ -5612,6 +5612,14 @@ void CConEmuMain::OnTransparent()
 			SetWindowLongPtr(ghWnd, GWL_EXSTYLE, dwExStyle);
 		}
 		SetLayeredWindowAttributes(ghWnd, 0, nTransparent, LWA_ALPHA);
+		
+		if (ghOpWnd) {
+			// Ask the window and its children to repaint
+			RedrawWindow(ghOpWnd, 
+			             NULL, 
+			             NULL, 
+			             RDW_ERASE | RDW_INVALIDATE | RDW_FRAME | RDW_ALLCHILDREN);
+		}
 	}
 }
 

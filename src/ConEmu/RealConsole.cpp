@@ -198,6 +198,10 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
     mn_LastConsoleDataIdx = mn_LastConsolePacketIdx = mn_LastFarReadIdx = -1;
 	ms_HeaderMapName[0] = ms_DataMapName[0] = 0;
 
+	mh_ColorMapping = NULL;
+	mp_ColorData = NULL;
+	mn_LastColorFarID = 0;
+	
     m_UseLogs = gSet.isAdvLogging;
 
     mb_PluginDetected = FALSE; mn_FarPID_PluginDetected = 0; mn_Far_PluginInputThreadId = 0;
@@ -261,6 +265,7 @@ CRealConsole::~CRealConsole()
 
 	//CloseMapping();
 	CloseMapHeader(); // CloseMapData() зовет сам CloseMapHeader
+	CloseColorMapping(); // Colorer data
 }
 
 BOOL CRealConsole::PreCreate(RConStartArgs *args)
@@ -3050,6 +3055,9 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
         mb_PluginDetected = TRUE; // Запомним, что в фаре есть плагин (хотя фар может быть закрыт)
         mn_FarPID_PluginDetected = pIn->dwData[0];
         mn_Far_PluginInputThreadId      = pIn->dwData[1];
+        
+        CheckColorMapping(mn_FarPID_PluginDetected);
+        
         // 23.06.2009 Maks - уберем пока. Должно работать в ApplyConsoleInfo
         //Process Add(mn_FarPID_PluginDetected); // На всякий случай, вдруг он еще не в нашем списке?
         wchar_t* pszRes = (wchar_t*)(&(pIn->dwData[2])), *pszNext;
@@ -3233,6 +3241,7 @@ void CRealConsole::ProcessUpdateFlags(BOOL abProcessChanged)
     if (mn_FarPID != dwPID)
         AllowSetForegroundWindow(dwPID);
     mn_FarPID = dwPID;
+    TODO("Если сменился FAR - переоткрыть данные для Colorer - CheckColorMapping();");
 	mn_FarInputTID = dwInputTID;
 
     if (mn_ProcessCount == 0) {
@@ -4451,39 +4460,82 @@ BOOL CRealConsole::RecreateProcessStart()
 }
 
 // nWidth и nHeight это размеры, которые хочет получить VCon (оно могло еще не среагировать на изменения?
-void CRealConsole::GetData(wchar_t* pChar, WORD* pAttr, int nWidth, int nHeight)
+void CRealConsole::GetData(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight)
 {
-    DWORD cbDstBufSize = nWidth * nHeight * 2;
+    //DWORD cbDstBufSize = nWidth * nHeight * 2;
     DWORD cwDstBufSize = nWidth * nHeight;
 
     _ASSERT(nWidth != 0 && nHeight != 0);
     if (nWidth == 0 || nHeight == 0)
         return;
+        
+    // формирование умолчательных цветов, по атрибутам консоли
+    TODO("В принципе, это можно делать не всегда, а только при изменениях");
+    int  nColorIndex = 0;
+	bool bExtendColors = gSet.isExtendColors;
+	BYTE nExtendColor = gSet.nExtendColor;
+    bool bExtendFonts = gSet.isExtendFonts;
+    BYTE nFontNormalColor = gSet.nFontNormalColor;
+    BYTE nFontBoldColor = gSet.nFontBoldColor;
+    BYTE nFontItalicColor = gSet.nFontItalicColor;
+    CharAttr lca, lcaTable[0x100]; // crForeColor, crBackColor, nFontIndex, nForeIdx, nBackIdx, crOrigForeColor, crOrigBackColor
+    //COLORREF lcrForegroundColors[0x100], lcrBackgroundColors[0x100];
+    //BYTE lnForegroundColors[0x100], lnBackgroundColors[0x100], lnFontByIndex[0x100];
+    for (int nBack = 0; nBack <= 0xF; nBack++) {
+    	for (int nFore = 0; nFore <= 0xF; nFore++, nColorIndex++) {
+    		lca.nForeIdx = nFore;
+    		lca.nBackIdx = nBack;
+    		lca.nFontIndex = 0;
+			if (bExtendFonts) {
+				if (nBack == nFontBoldColor) { // nFontBoldColor may be -1, тогда мы сюда не попадаем
+					if (nFontNormalColor != 0xFF)
+						lca.nBackIdx = nFontNormalColor;
+					lca.nFontIndex = 1; //  Bold
+				} else if (nBack == nFontItalicColor) { // nFontItalicColor may be -1, тогда мы сюда не попадаем
+					if (nFontNormalColor != 0xFF)
+						lca.nBackIdx = nFontNormalColor;
+					lca.nFontIndex = 2; // Italic
+				}
+			}
+	    	lca.crForeColor = lca.crOrigForeColor = gSet.Colors[lca.nForeIdx];
+	    	lca.crBackColor = lca.crOrigBackColor = gSet.Colors[lca.nBackIdx];
+	    	lcaTable[nColorIndex] = lca;
+		}
+    }
+    
     
     MSectionLock csData; csData.Lock(&csCON);
     HEAPVAL
 
     wchar_t wSetChar = L' ';
-    WORD    wSetAttr = 7;
+    CharAttr lcaDef;
+    lcaDef = lcaTable[7]; // LtGray on Black
+    //WORD    wSetAttr = 7;
     #ifdef _DEBUG
-    wSetChar = (wchar_t)8776; wSetAttr = 12;
+    wSetChar = (wchar_t)8776; //wSetAttr = 12;
+    lcaDef = lcaTable[12]; // Red on Black
     #endif
 
     if (!con.pConChar || !con.pConAttr) {
         wmemset(pChar, wSetChar, cwDstBufSize);
-        wmemset((wchar_t*)pAttr, wSetAttr, cbDstBufSize);
-    } else if (nWidth == con.nTextWidth && nHeight == con.nTextHeight) {
-        TODO("Во время ресайза консоль может подглючивать - отдает не то что нужно...");
-        //_ASSERTE(*con.pConChar!=ucBoxDblVert);
-        memmove(pChar, con.pConChar, cbDstBufSize);
-        memmove(pAttr, con.pConAttr, cbDstBufSize);
+        for (DWORD i = 0; i < cwDstBufSize; i++)
+        	pAttr[i] = lcaDef;
+        //wmemset((wchar_t*)pAttr, wSetAttr, cbDstBufSize);
+    //} else if (nWidth == con.nTextWidth && nHeight == con.nTextHeight) {
+    //    TODO("Во время ресайза консоль может подглючивать - отдает не то что нужно...");
+    //    //_ASSERTE(*con.pConChar!=ucBoxDblVert);
+    //    memmove(pChar, con.pConChar, cbDstBufSize);
+    //    PRAGMA_ERROR("Это заменить на for");
+    //    memmove(pAttr, con.pConAttr, cbDstBufSize);
     } else {
         TODO("Во время ресайза консоль может подглючивать - отдает не то что нужно...");
         //_ASSERTE(*con.pConChar!=ucBoxDblVert);
 
         int nYMax = min(nHeight,con.nTextHeight);
-        wchar_t *pszDst = pChar, *pszSrc = con.pConChar;
-        WORD    *pnDst = pAttr, *pnSrc = con.pConAttr;
+        wchar_t  *pszDst = pChar, *pszSrc = con.pConChar;
+        CharAttr *pnDst = pAttr;
+        WORD     *pnSrc = con.pConAttr;
+        AnnotationInfo *pcolSrc = mp_ColorData;
         DWORD cbDstLineSize = nWidth * 2;
         DWORD cnSrcLineLen = con.nTextWidth;
         DWORD cbSrcLineSize = cnSrcLineLen * 2;
@@ -4494,27 +4546,61 @@ void CRealConsole::GetData(wchar_t* pChar, WORD* pAttr, int nWidth, int nHeight)
 		#endif
         DWORD cbLineSize = min(cbDstLineSize,cbSrcLineSize);
         int nCharsLeft = max(0, (nWidth-con.nTextWidth));
-        int nY;
+        int nY, nX;
+        BYTE attrBackLast = 0;
 
+        // Собственно данные
         for (nY = 0; nY < nYMax; nY++) {
+        	// Текст
             memmove(pszDst, pszSrc, cbLineSize);
             if (nCharsLeft > 0)
                 wmemset(pszDst+cnSrcLineLen, wSetChar, nCharsLeft);
-            pszDst += nWidth; pszSrc += con.nTextWidth;
+            pszDst += nWidth; pszSrc += cnSrcLineLen;
 
-            memmove(pnDst, pnSrc, cbLineSize);
-            if (nCharsLeft > 0)
-                wmemset((wchar_t*)pnDst+cnSrcLineLen, wSetAttr, nCharsLeft);
-            pnDst += nWidth; pnSrc += con.nTextWidth;
+            // Атрибуты
+            for (nX = 0; nX < (int)cnSrcLineLen; nX++, pnSrc++, pcolSrc++)
+            {
+	            DWORD atr = (*pnSrc) & 0xFF; // интересут только нижний байт - там индексы цветов
+	            lca = lcaTable[atr];
+
+			    if (bExtendColors) {
+			        if (lca.nBackIdx == nExtendColor) {
+			            lca.nBackIdx = attrBackLast; // фон нужно заменить на обычный цвет из соседней ячейки
+			            lca.nForeIdx += 0x10;
+				    	lca.crForeColor = lca.crOrigForeColor = gSet.Colors[lca.nForeIdx];
+				    	lca.crBackColor = lca.crOrigBackColor = gSet.Colors[lca.nBackIdx];
+			        } else {
+			            attrBackLast = lca.nBackIdx; // запомним обычный цвет предыдущей ячейки
+			        }
+			    }
+			    if (mp_ColorData) {
+			    	if (pcolSrc->fg_valid)
+			    		lca.crForeColor = pcolSrc->fg_color;
+			    	if (pcolSrc->bk_valid)
+			    		lca.crBackColor = pcolSrc->bk_color;
+			    }
+	            
+	            pnDst[nX] = lca;
+	            //memmove(pnDst, pnSrc, cbLineSize);
+            }
+            for (nX = cnSrcLineLen; nX < nWidth; nX++) {
+            	pnDst[nX] = lcaDef;
+            }
+            pnDst += nWidth; //pnSrc += con.nTextWidth;
         }
+        // Если вдруг запросили большую высоту, чем текущая в консоли - почистить низ
         for (nY = nYMax; nY < nHeight; nY++) {
             wmemset(pszDst, wSetChar, nWidth);
             pszDst += nWidth;
 
-            wmemset((wchar_t*)pnDst, wSetAttr, nWidth);
+            //wmemset((wchar_t*)pnDst, wSetAttr, nWidth);
+            for (nX = 0; nX < nWidth; nX++) {
+            	pnDst[nX] = lcaDef;
+            }
             pnDst += nWidth;
         }
     }
+    // Если требуется показать "статус" - принудительно перебиваем первую видимую строку возвращаемого буфера
 	if (ms_ConStatus[0]) {
 		int nLen = lstrlen(ms_ConStatus);
 		wmemcpy(pChar, ms_ConStatus, nLen);
@@ -4522,6 +4608,8 @@ void CRealConsole::GetData(wchar_t* pChar, WORD* pAttr, int nWidth, int nHeight)
 			wmemset(pChar+nLen, L' ', nWidth-nLen);
 		wmemset((wchar_t*)pAttr, 7, nWidth);
 	}
+	
+	//FIN
     HEAPVAL
     csData.Unlock();
 }
@@ -6520,6 +6608,66 @@ DWORD CRealConsole::GetConsoleStates()
 }
 
 
+void CRealConsole::CloseColorMapping()
+{
+	if (mp_ColorData) {
+		UnmapViewOfFile(mp_ColorData);
+		mp_ColorData = NULL;
+	}
+	if (mh_ColorMapping) {
+		CloseHandle(mh_ColorMapping);
+		mh_ColorMapping = NULL;
+	}
+
+	mb_DataChanged = TRUE;
+	mn_LastColorFarID = 0;
+}
+
+void CRealConsole::CheckColorMapping(DWORD dwPID)
+{
+	if (!dwPID)
+		dwPID = GetFarPID();
+	if ((!dwPID && mp_ColorData) || (dwPID != mn_LastColorFarID)) {
+		CloseColorMapping();
+		if (!dwPID)
+			return;
+	}
+	
+	if (dwPID == mn_LastColorFarID)
+		return; // Для этого фара - наличие уже проверяли!
+		
+	mn_LastColorFarID = dwPID; // сразу запомним
+	
+	BOOL lbResult = FALSE;
+	wchar_t szErr[512]; szErr[0] = 0;
+	wchar_t szMapName[512]; szErr[0] = 0;
+	
+	_ASSERTE(mh_ColorMapping == NULL);
+
+	wsprintf(szMapName, AnnotationShareName, sizeof(AnnotationInfo), dwPID);
+	mh_ColorMapping = OpenFileMapping(FILE_MAP_READ, FALSE, szMapName);
+	if (!mh_ColorMapping) {
+		DWORD dwErr = GetLastError();
+		wsprintf (szErr, L"ConEmu: Can't open colorer file mapping. ErrCode=0x%08X. %s", dwErr, szMapName);
+		goto wrap;
+	}
+	
+	mp_ColorData = (AnnotationInfo*)MapViewOfFile(mh_ColorMapping, FILE_MAP_READ,0,0,0);
+	if (!mp_ConsoleInfo) {
+		DWORD dwErr = GetLastError();
+		wchar_t szErr[512];
+		wsprintf (szErr, L"ConEmu: Can't map colorer info. ErrCode=0x%08X. %s", dwErr, szMapName);
+		goto wrap;
+	}
+
+	lbResult = TRUE;
+wrap:
+	if (!lbResult && szErr[0]) {
+		gConEmu.DebugStep(szErr);
+		MBoxA(szErr);
+	}
+	//return lbResult;
+}
 
 BOOL CRealConsole::OpenMapHeader()
 {

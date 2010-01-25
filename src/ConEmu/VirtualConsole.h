@@ -79,14 +79,15 @@ public:
 	bool isEditor, isViewer, isFilePanel;
 	BYTE attrBackLast;
 
-	wchar_t *mpsz_ConChar, *mpsz_ConCharSave;
-	WORD  *mpn_ConAttr, *mpn_ConAttrSave;
+	wchar_t  *mpsz_ConChar, *mpsz_ConCharSave;
+	CharAttr *mpn_ConAttrEx, *mpn_ConAttrExSave;
 	DWORD *ConCharX;
 	//TCHAR *Spaces; WORD nSpaceCount;
 	static wchar_t ms_Spaces[MAX_SPACES], ms_HorzDbl[MAX_SPACES], ms_HorzSingl[MAX_SPACES];
 	// Для ускорения получения индексов цвета
-	BYTE  m_ForegroundColors[0x100], m_BackgroundColors[0x100];
-	HFONT mh_FontByIndex[0x100]; // содержит ссылки (не копии) на шрифты normal/bold/italic
+	//BYTE  m_ForegroundColors[0x100], m_BackgroundColors[0x100];
+	//HFONT mh_FontByIndex[0x100]; // содержит ссылки (не копии) на шрифты normal/bold/italic
+	HFONT mh_FontByIndex[3]; // ссылки на Normal/Bold/Italic
 
 	//CONSOLE_SELECTION_INFO SelectionInfo;
 
@@ -122,7 +123,7 @@ public:
 	static void ClearPartBrushes();
 
 protected:
-	inline void GetCharAttr(WORD atr, BYTE& foreColorNum, BYTE& backColorNum, HFONT* pFont);
+	//inline void GetCharAttr(WORD atr, BYTE& foreColorNum, BYTE& backColorNum, HFONT* pFont);
 	wchar_t* mpsz_LogScreen; DWORD mn_LogScreenIdx;
 	enum _PartType{
 		pNull,  // конец строки/последний, неотображаемый элемент
@@ -157,7 +158,7 @@ protected:
 	WORD CharWidth(TCHAR ch);
 	void CharABC(TCHAR ch, ABC *abc);
 	bool CheckChangedTextAttr();
-	void ParseLine(int row, TCHAR *ConCharLine, WORD *ConAttrLine);
+	//void ParseLine(int row, TCHAR *ConCharLine, WORD *ConAttrLine);
 	HANDLE mh_Heap;
 	LPVOID Alloc(size_t nCount, size_t nSize);
 	void Free(LPVOID ptr);
@@ -170,16 +171,17 @@ protected:
 	//BOOL RetrieveConsoleInfo(BOOL bShortOnly);
 	typedef struct tag_PARTBRUSHES {
 		wchar_t ch; // 0x2591 0x2592 0x2593 0x2588 - по увеличению плотности
-		SHORT   nBackIdx;
-		SHORT   nForeIdx;
+		COLORREF nBackCol;
+		COLORREF nForeCol;
 		HBRUSH  hBrush;
 	} PARTBRUSHES;
 	//std::vector<PARTBRUSHES> m_PartBrushes;
 	static PARTBRUSHES m_PartBrushes[MAX_COUNT_PART_BRUSHES];
-	static HBRUSH PartBrush(wchar_t ch, SHORT nBackIdx, SHORT nForeIdx);
+	//static HBRUSH PartBrush(wchar_t ch, SHORT nBackIdx, SHORT nForeIdx);
+	static HBRUSH PartBrush(wchar_t ch, COLORREF nBackCol, COLORREF nForeCol);
 	BOOL mb_InPaintCall;
 	//
-	void DistributeSpaces(wchar_t* ConCharLine, WORD* ConAttrLine, DWORD* ConCharXLine, const int j, const int j2, const int end);
+	void DistributeSpaces(wchar_t* ConCharLine, CharAttr* ConAttrLine, DWORD* ConCharXLine, const int j, const int j2, const int end);
 	LONG nFontHeight, nFontWidth;
 	BYTE nFontCharSet;
 	BYTE nLastNormalBack;

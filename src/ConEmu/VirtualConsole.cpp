@@ -122,6 +122,8 @@ CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
     ZeroStruct(winSize); ZeroStruct(coord);
     TextLen = 0;
 	mb_RequiredForceUpdate = true;
+	
+	mh_FontByIndex[0] = gSet.mh_Font; mh_FontByIndex[1] = gSet.mh_FontB; mh_FontByIndex[2] = gSet.mh_FontI;
   
     //InitializeCriticalSection(&csDC); ncsTDC = 0; 
 	mb_PaintRequested = FALSE; mb_PaintLocked = FALSE;
@@ -145,8 +147,8 @@ CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
     TextWidth = TextHeight = Width = Height = nMaxTextWidth = nMaxTextHeight = 0;
     hDC = NULL; hBitmap = NULL;
     hSelectedFont = NULL; hOldFont = NULL;
-    mpsz_ConChar = NULL; mpsz_ConCharSave = NULL;
-    mpn_ConAttr = NULL; mpn_ConAttrSave = NULL;
+    mpsz_ConChar = mpsz_ConCharSave = NULL;
+    mpn_ConAttrEx = mpn_ConAttrExSave = NULL;
     ConCharX = NULL; 
     tmpOem = NULL; 
     TextParts = NULL;
@@ -216,10 +218,10 @@ CVirtualConsole::~CVirtualConsole()
         { Free(mpsz_ConChar); mpsz_ConChar = NULL; }
     if (mpsz_ConCharSave)
         { Free(mpsz_ConCharSave); mpsz_ConCharSave = NULL; }
-    if (mpn_ConAttr)
-        { Free(mpn_ConAttr); mpn_ConAttr = NULL; }
-    if (mpn_ConAttrSave)
-        { Free(mpn_ConAttrSave); mpn_ConAttrSave = NULL; }
+    if (mpn_ConAttrEx)
+        { Free(mpn_ConAttrEx); mpn_ConAttrEx = NULL; }
+    if (mpn_ConAttrExSave)
+        { Free(mpn_ConAttrExSave); mpn_ConAttrExSave = NULL; }
     if (ConCharX)
         { Free(ConCharX); ConCharX = NULL; }
     if (tmpOem)
@@ -288,7 +290,7 @@ bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize)
 #endif
 
     // Буфер пересоздаем только если требуется его увеличение
-    if (!mpsz_ConChar || !mpsz_ConCharSave || !mpn_ConAttr || !mpn_ConAttrSave || !ConCharX || !tmpOem || !TextParts ||
+    if (!mpsz_ConChar || !mpsz_ConCharSave || !mpn_ConAttrEx || !mpn_ConAttrExSave || !ConCharX || !tmpOem || !TextParts ||
         (nMaxTextWidth * nMaxTextHeight) < (mp_RCon->TextWidth() * mp_RCon->TextHeight()) ||
         (nMaxTextWidth < mp_RCon->TextWidth()) // а это нужно для TextParts & tmpOem
         )
@@ -311,10 +313,10 @@ bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize)
             { Free(mpsz_ConChar); mpsz_ConChar = NULL; }
         if (mpsz_ConCharSave)
             { Free(mpsz_ConCharSave); mpsz_ConCharSave = NULL; }
-        if (mpn_ConAttr)
-            { Free(mpn_ConAttr); mpn_ConAttr = NULL; }
-        if (mpn_ConAttrSave)
-            { Free(mpn_ConAttrSave); mpn_ConAttrSave = NULL; }
+        if (mpn_ConAttrEx)
+            { Free(mpn_ConAttrEx); mpn_ConAttrEx = NULL; }
+        if (mpn_ConAttrExSave)
+            { Free(mpn_ConAttrExSave); mpn_ConAttrExSave = NULL; }
         if (ConCharX)
             { Free(ConCharX); ConCharX = NULL; }
         if (tmpOem)
@@ -356,15 +358,15 @@ bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize)
         HEAPVAL;
         mpsz_ConChar = (TCHAR*)Alloc((nMaxTextWidth * nMaxTextHeight), sizeof(*mpsz_ConChar));
         mpsz_ConCharSave = (TCHAR*)Alloc((nMaxTextWidth * nMaxTextHeight), sizeof(*mpsz_ConCharSave));
-        mpn_ConAttr = (WORD*)Alloc((nMaxTextWidth * nMaxTextHeight), sizeof(*mpn_ConAttr));
-        mpn_ConAttrSave = (WORD*)Alloc((nMaxTextWidth * nMaxTextHeight), sizeof(*mpn_ConAttrSave));
+        mpn_ConAttrEx = (CharAttr*)Alloc((nMaxTextWidth * nMaxTextHeight), sizeof(*mpn_ConAttrEx));
+        mpn_ConAttrExSave = (CharAttr*)Alloc((nMaxTextWidth * nMaxTextHeight), sizeof(*mpn_ConAttrExSave));
         ConCharX = (DWORD*)Alloc((nMaxTextWidth * nMaxTextHeight), sizeof(*ConCharX));
         tmpOem = (char*)Alloc((nMaxTextWidth + 5), sizeof(*tmpOem));
         TextParts = (struct _TextParts*)Alloc((nMaxTextWidth + 2), sizeof(*TextParts));
         HEAPVAL;
     }
     //MCHKHEAP
-    if (!mpsz_ConChar || !mpsz_ConCharSave || !mpn_ConAttr || !mpn_ConAttrSave || !ConCharX || !tmpOem || !TextParts) {
+    if (!mpsz_ConChar || !mpsz_ConCharSave || !mpn_ConAttrEx || !mpn_ConAttrExSave || !ConCharX || !tmpOem || !TextParts) {
         WARNING("Если тут ошибка - будет просто DC Initialization failed, что не понятно...");
         return false;
     }
@@ -374,8 +376,8 @@ bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize)
         ZeroMemory(mpsz_ConChar, (TextWidth * TextHeight)*sizeof(*mpsz_ConChar));
         ZeroMemory(mpsz_ConCharSave, (TextWidth * TextHeight)*sizeof(*mpsz_ConChar));
         HEAPVAL
-        ZeroMemory(mpn_ConAttr, (TextWidth * TextHeight)*sizeof(*mpn_ConAttr));
-        ZeroMemory(mpn_ConAttrSave, (TextWidth * TextHeight)*sizeof(*mpn_ConAttr));
+        ZeroMemory(mpn_ConAttrEx, (TextWidth * TextHeight)*sizeof(*mpn_ConAttrEx));
+        ZeroMemory(mpn_ConAttrExSave, (TextWidth * TextHeight)*sizeof(*mpn_ConAttrExSave));
         HEAPVAL
         ZeroMemory(ConCharX, (TextWidth * TextHeight)*sizeof(*ConCharX));
         HEAPVAL
@@ -479,10 +481,10 @@ BOOL CVirtualConsole::Dump(LPCWSTR asFile)
     wchar_t temp[100];
 	swprintf(temp, _T("\r\nSize: %ix%i   Cursor: %ix%i\r\n"), TextWidth, TextHeight, Cursor.x, Cursor.y);
     WriteFile(hFile, temp, _tcslen(temp)*sizeof(TCHAR), &dw, NULL);
-    WriteFile(hFile, mpsz_ConChar, TextWidth * TextHeight * 2, &dw, NULL);
-    WriteFile(hFile, mpn_ConAttr, TextWidth * TextHeight * 2, &dw, NULL);
-    WriteFile(hFile, mpsz_ConCharSave, TextWidth * TextHeight * 2, &dw, NULL);
-    WriteFile(hFile, mpn_ConAttrSave, TextWidth * TextHeight * 2, &dw, NULL);
+    WriteFile(hFile, mpsz_ConChar, TextWidth * TextHeight * sizeof(*mpsz_ConChar), &dw, NULL);
+    WriteFile(hFile, mpn_ConAttrEx, TextWidth * TextHeight * sizeof(*mpn_ConAttrEx), &dw, NULL);
+    WriteFile(hFile, mpsz_ConCharSave, TextWidth * TextHeight * sizeof(*mpsz_ConCharSave), &dw, NULL);
+    WriteFile(hFile, mpn_ConAttrExSave, TextWidth * TextHeight * sizeof(*mpn_ConAttrExSave), &dw, NULL);
     if (mp_RCon) {
         mp_RCon->DumpConsole(hFile);
     }
@@ -666,25 +668,25 @@ protected:
 // Преобразовать консольный цветовой атрибут (фон+текст) в цвета фона и текста
 // (!) Количество цветов текста могут быть расширено за счет одного цвета фона
 // atr принудительно в BYTE, т.к. верхние флаги нас не интересуют
-void CVirtualConsole::GetCharAttr(WORD atr, BYTE& foreColorNum, BYTE& backColorNum, HFONT* pFont)
-{
-	// Нас интересует только нижний байт
-    atr &= 0xFF;
-    
-    // быстрее будет создать заранее массив с цветами, и получять нужное по индексу
-    foreColorNum = m_ForegroundColors[atr];
-    backColorNum = m_BackgroundColors[atr];
-    if (pFont) *pFont = mh_FontByIndex[atr];
-
-    if (bExtendColors) {
-        if (backColorNum == nExtendColor) {
-            backColorNum = attrBackLast; // фон нужно заменить на обычный цвет из соседней ячейки
-            foreColorNum += 0x10;
-        } else {
-            attrBackLast = backColorNum; // запомним обычный цвет соседней ячейки
-        }
-    }
-}
+//void CVirtualConsole::GetCharAttr(WORD atr, BYTE& foreColorNum, BYTE& backColorNum, HFONT* pFont)
+//{
+//	// Нас интересует только нижний байт
+//    atr &= 0xFF;
+//    
+//    // быстрее будет создать заранее массив с цветами, и получять нужное по индексу
+//    foreColorNum = m_ForegroundColors[atr];
+//    backColorNum = m_BackgroundColors[atr];
+//    if (pFont) *pFont = mh_FontByIndex[atr];
+//
+//    if (bExtendColors) {
+//        if (backColorNum == nExtendColor) {
+//            backColorNum = attrBackLast; // фон нужно заменить на обычный цвет из соседней ячейки
+//            foreColorNum += 0x10;
+//        } else {
+//            attrBackLast = backColorNum; // запомним обычный цвет соседней ячейки
+//        }
+//    }
+//}
 
 void CVirtualConsole::CharABC(TCHAR ch, ABC *abc)
 {
@@ -774,29 +776,29 @@ char CVirtualConsole::Uni2Oem(wchar_t ch)
 bool CVirtualConsole::CheckChangedTextAttr()
 {
     textChanged = 0!=memcmp(mpsz_ConChar, mpsz_ConCharSave, TextLen * sizeof(*mpsz_ConChar));
-    attrChanged = 0!=memcmp(mpn_ConAttr, mpn_ConAttrSave, TextLen * sizeof(*mpn_ConAttr));
+    attrChanged = 0!=memcmp(mpn_ConAttrEx, mpn_ConAttrExSave, TextLen * sizeof(*mpn_ConAttrEx));
 
-#ifdef MSGLOGGER
-    COORD ch;
-    if (textChanged) {
-        for (UINT i=0; i<TextLen; i++) {
-            if (mpsz_ConChar[i] != mpsz_ConCharSave[i]) {
-                ch.Y = i % TextWidth;
-                ch.X = i - TextWidth * ch.Y;
-                break;
-            }
-        }
-    }
-    if (attrChanged) {
-        for (UINT i=0; i<TextLen; i++) {
-            if (mpn_ConAttr[i] != mpn_ConAttrSave[i]) {
-                ch.Y = i % TextWidth;
-                ch.X = i - TextWidth * ch.Y;
-                break;
-            }
-        }
-    }
-#endif
+//#ifdef MSGLOGGER
+//    COORD ch;
+//    if (textChanged) {
+//        for (UINT i=0; i<TextLen; i++) {
+//            if (mpsz_ConChar[i] != mpsz_ConCharSave[i]) {
+//                ch.Y = i % TextWidth;
+//                ch.X = i - TextWidth * ch.Y;
+//                break;
+//            }
+//        }
+//    }
+//    if (attrChanged) {
+//        for (UINT i=0; i<TextLen; i++) {
+//            if (mpn_ConAttr[i] != mpn_ConAttrSave[i]) {
+//                ch.Y = i % TextWidth;
+//                ch.X = i - TextWidth * ch.Y;
+//                break;
+//            }
+//        }
+//    }
+//#endif
 
     return textChanged || attrChanged;
 }
@@ -919,7 +921,7 @@ bool CVirtualConsole::Update(bool isForce, HDC *ahDc)
         ///| Now, store data for further comparison |/////////////////////////////
         //------------------------------------------------------------------------
         memcpy(mpsz_ConCharSave, mpsz_ConChar, TextLen * sizeof(*mpsz_ConChar));
-        memcpy(mpn_ConAttrSave, mpn_ConAttr, TextLen * sizeof(*mpn_ConAttr));
+        memcpy(mpn_ConAttrExSave, mpn_ConAttrEx, TextLen * sizeof(*mpn_ConAttrEx));
     }
 
     //MCHKHEAP
@@ -1002,25 +1004,26 @@ bool CVirtualConsole::UpdatePrepare(bool isForce, HDC *ahDc, MSectionLock *pSDC)
     nFontItalicColor = gSet.nFontItalicColor;
     
     //m_ForegroundColors[0x100], m_BackgroundColors[0x100];
-    int nColorIndex = 0;
-    for (int nBack = 0; nBack <= 0xF; nBack++) {
-    	for (int nFore = 0; nFore <= 0xF; nFore++, nColorIndex++) {
-    		m_ForegroundColors[nColorIndex] = nFore;
-    		m_BackgroundColors[nColorIndex] = nBack;
-    		mh_FontByIndex[nColorIndex] = gSet.mh_Font;
-			if (bExtendFonts) {
-				if (nBack == nFontBoldColor) { // nFontBoldColor may be -1, тогда мы сюда не попадаем
-					if (nFontNormalColor != 0xFF)
-						m_BackgroundColors[nColorIndex] = nFontNormalColor;
-					mh_FontByIndex[nColorIndex] = gSet.mh_FontB;
-				} else if (nBack == nFontItalicColor) { // nFontItalicColor may be -1, тогда мы сюда не попадаем
-					if (nFontNormalColor != 0xFF)
-						m_BackgroundColors[nColorIndex] = nFontNormalColor;
-					mh_FontByIndex[nColorIndex] = gSet.mh_FontI;
-				}
-			}
-		}
-    }
+    //TODO("В принципе, это можно делать не всегда, а только при изменениях");
+    //int nColorIndex = 0;
+    //for (int nBack = 0; nBack <= 0xF; nBack++) {
+    //	for (int nFore = 0; nFore <= 0xF; nFore++, nColorIndex++) {
+    //		m_ForegroundColors[nColorIndex] = nFore;
+    //		m_BackgroundColors[nColorIndex] = nBack;
+    //		mh_FontByIndex[nColorIndex] = gSet.mh_Font;
+	//		if (bExtendFonts) {
+	//			if (nBack == nFontBoldColor) { // nFontBoldColor may be -1, тогда мы сюда не попадаем
+	//				if (nFontNormalColor != 0xFF)
+	//					m_BackgroundColors[nColorIndex] = nFontNormalColor;
+	//				mh_FontByIndex[nColorIndex] = gSet.mh_FontB;
+	//			} else if (nBack == nFontItalicColor) { // nFontItalicColor may be -1, тогда мы сюда не попадаем
+	//				if (nFontNormalColor != 0xFF)
+	//					m_BackgroundColors[nColorIndex] = nFontNormalColor;
+	//				mh_FontByIndex[nColorIndex] = gSet.mh_FontI;
+	//			}
+	//		}
+	//	}
+    //}
 
 
     //winSize.X = csbi.srWindow.Right - csbi.srWindow.Left + 1; winSize.Y = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
@@ -1069,8 +1072,8 @@ bool CVirtualConsole::UpdatePrepare(bool isForce, HDC *ahDc, MSectionLock *pSDC)
     TextLen = TextWidth * TextHeight;
     coord.X = csbi.srWindow.Left; coord.Y = csbi.srWindow.Top;
 
-    // скопировать данные из состояния консоли В mpn_ConAttr/mpsz_ConChar
-    mp_RCon->GetData(mpsz_ConChar, mpn_ConAttr, TextWidth, TextHeight); //TextLen*2);
+    // скопировать данные из состояния консоли В mpn_ConAttrEx/mpsz_ConChar
+    mp_RCon->GetData(mpsz_ConChar, mpn_ConAttrEx, TextWidth, TextHeight); //TextLen*2);
 
     HEAPVAL
  
@@ -1109,106 +1112,104 @@ enum CVirtualConsole::_PartType CVirtualConsole::GetCharType(TCHAR ch)
 
 
 // row - 0-based
-void CVirtualConsole::ParseLine(int row, TCHAR *ConCharLine, WORD *ConAttrLine)
-{
-    //UINT idx = 0;
-    struct _TextParts *pStart=TextParts, *pEnd=TextParts;
-    enum _PartType cType1, cType2;
-    UINT i1=0, i2=0;
-    
-    pEnd->partType = pNull; // сразу ограничим строку
-    
-    TCHAR ch1, ch2;
-    BYTE af1, ab1, af2, ab2;
-    DWORD pixels;
-    while (i1<TextWidth)
-    {
-        //GetCharAttr(ConCharLine[i1], ConAttrLine[i1], ch1, af1, ab1);
-		ch1 = ConCharLine[i1];
-		GetCharAttr(ConAttrLine[i1], af1, ab1, NULL);
-        cType1 = GetCharType(ch1);
-        if (cType1 == pRBracket) {
-            if (!(row>=2 && isCharBorderVertical(mpsz_ConChar[TextWidth+i1]))
-                && (((UINT)row)<=(TextHeight-4)))
-                cType1 = pText;
-        }
-        pixels = CharWidth(ch1);
+//void CVirtualConsole::ParseLine(int row, TCHAR *ConCharLine, WORD *ConAttrLine)
+//{
+//    //UINT idx = 0;
+//    struct _TextParts *pStart=TextParts, *pEnd=TextParts;
+//    enum _PartType cType1, cType2;
+//    UINT i1=0, i2=0;
+//    
+//    pEnd->partType = pNull; // сразу ограничим строку
+//    
+//    TCHAR ch1, ch2;
+//    BYTE af1, ab1, af2, ab2;
+//    DWORD pixels;
+//    while (i1<TextWidth)
+//    {
+//        //GetCharAttr(ConCharLine[i1], ConAttrLine[i1], ch1, af1, ab1);
+//		ch1 = ConCharLine[i1];
+//		GetCharAttr(ConAttrLine[i1], af1, ab1, NULL);
+//        cType1 = GetCharType(ch1);
+//        if (cType1 == pRBracket) {
+//            if (!(row>=2 && isCharBorderVertical(mpsz_ConChar[TextWidth+i1]))
+//                && (((UINT)row)<=(TextHeight-4)))
+//                cType1 = pText;
+//        }
+//        pixels = CharWidth(ch1);
+//
+//        i2 = i1+1;
+//        // в режиме Force Monospace отрисовка идет по одному символу
+//        if (!gSet.isForceMonospace && i2 < TextWidth && 
+//            (cType1 != pVBorder && cType1 != pRBracket))
+//        {
+//            //GetCharAttr(ConCharLine[i2], ConAttrLine[i2], ch2, af2, ab2);
+//			ch2 = ConCharLine[i2];
+//			GetCharAttr(ConAttrLine[i2], af2, ab2, NULL);
+//            // Получить блок символов с аналогичными цветами
+//            while (i2 < TextWidth && af2 == af1 && ab2 == ab1) {
+//                // если символ отличается от первого
+//
+//                cType2 = GetCharType(ch2);
+//                if ((ch2 = ConCharLine[i2]) != ch1) {
+//                    if (cType2 == pRBracket) {
+//                        if (!(row>=2 && isCharBorderVertical(mpsz_ConChar[TextWidth+i2]))
+//                            && (((UINT)row)<=(TextHeight-4)))
+//                            cType2 = pText;
+//                    }
+//
+//                    // и он вообще из другой группы
+//                    if (cType2 != cType1)
+//                        break; // то завершаем поиск
+//                }
+//                pixels += CharWidth(ch2); // добавить ширину символа в пикселях
+//                i2++; // следующий символ
+//                //GetCharAttr(ConCharLine[i2], ConAttrLine[i2], ch2, af2, ab2);
+//				ch2 = ConCharLine[i2];
+//				GetCharAttr(ConAttrLine[i2], af2, ab2, NULL);
+//                if (cType2 == pRBracket) {
+//                    if (!(row>=2 && isCharBorderVertical(mpsz_ConChar[TextWidth+i2]))
+//                        && (((UINT)row)<=(TextHeight-4)))
+//                        cType2 = pText;
+//                }
+//            }
+//        }
+//
+//        // при разборе строки будем смотреть, если нашли pText,pSpace,pText то pSpace,pText добавить в первый pText
+//        if (cType1 == pText && (pEnd - pStart) >= 2) {
+//            if (pEnd[-1].partType == pSpace && pEnd[-2].partType == pText &&
+//                pEnd[-1].attrBack == ab1 && pEnd[-1].attrFore == af1 &&
+//                pEnd[-2].attrBack == ab1 && pEnd[-2].attrFore == af1
+//                )
+//            {   
+//                pEnd -= 2;
+//                pEnd->i2 = i2 - 1;
+//                pEnd->iwidth = i2 - pEnd->i1;
+//                pEnd->width += pEnd[1].width + pixels;
+//                pEnd ++;
+//                i1 = i2;
+//                continue;
+//            }
+//        }
+//        pEnd->i1 = i1; pEnd->i2 = i2 - 1; // конец "включая"
+//        pEnd->partType = cType1;
+//        pEnd->attrBack = ab1; pEnd->attrFore = af1;
+//        pEnd->iwidth = i2 - i1;
+//        pEnd->width = pixels;
+//        if (gSet.isForceMonospace ||
+//            (gSet.isProportional && (cType1 == pVBorder || cType1 == pRBracket)))
+//        {
+//            pEnd->x1 = i1 * gSet.FontWidth();
+//        } else {
+//            pEnd->x1 = -1;
+//        }
+//
+//        pEnd ++; // блоков не может быть больше количества символов в строке, так что с размерностью все ОК
+//        i1 = i2;
+//    }
+//    // пока поставим конец блоков, потом, если ширины не хватит - добавим pDummy
+//    pEnd->partType = pNull;
+//}
 
-        i2 = i1+1;
-        // в режиме Force Monospace отрисовка идет по одному символу
-        if (!gSet.isForceMonospace && i2 < TextWidth && 
-            (cType1 != pVBorder && cType1 != pRBracket))
-        {
-            //GetCharAttr(ConCharLine[i2], ConAttrLine[i2], ch2, af2, ab2);
-			ch2 = ConCharLine[i2];
-			GetCharAttr(ConAttrLine[i2], af2, ab2, NULL);
-            // Получить блок символов с аналогичными цветами
-            while (i2 < TextWidth && af2 == af1 && ab2 == ab1) {
-                // если символ отличается от первого
-
-                cType2 = GetCharType(ch2);
-                if ((ch2 = ConCharLine[i2]) != ch1) {
-                    if (cType2 == pRBracket) {
-                        if (!(row>=2 && isCharBorderVertical(mpsz_ConChar[TextWidth+i2]))
-                            && (((UINT)row)<=(TextHeight-4)))
-                            cType2 = pText;
-                    }
-
-                    // и он вообще из другой группы
-                    if (cType2 != cType1)
-                        break; // то завершаем поиск
-                }
-                pixels += CharWidth(ch2); // добавить ширину символа в пикселях
-                i2++; // следующий символ
-                //GetCharAttr(ConCharLine[i2], ConAttrLine[i2], ch2, af2, ab2);
-				ch2 = ConCharLine[i2];
-				GetCharAttr(ConAttrLine[i2], af2, ab2, NULL);
-                if (cType2 == pRBracket) {
-                    if (!(row>=2 && isCharBorderVertical(mpsz_ConChar[TextWidth+i2]))
-                        && (((UINT)row)<=(TextHeight-4)))
-                        cType2 = pText;
-                }
-            }
-        }
-
-        // при разборе строки будем смотреть, если нашли pText,pSpace,pText то pSpace,pText добавить в первый pText
-        if (cType1 == pText && (pEnd - pStart) >= 2) {
-            if (pEnd[-1].partType == pSpace && pEnd[-2].partType == pText &&
-                pEnd[-1].attrBack == ab1 && pEnd[-1].attrFore == af1 &&
-                pEnd[-2].attrBack == ab1 && pEnd[-2].attrFore == af1
-                )
-            {   
-                pEnd -= 2;
-                pEnd->i2 = i2 - 1;
-                pEnd->iwidth = i2 - pEnd->i1;
-                pEnd->width += pEnd[1].width + pixels;
-                pEnd ++;
-                i1 = i2;
-                continue;
-            }
-        }
-        pEnd->i1 = i1; pEnd->i2 = i2 - 1; // конец "включая"
-        pEnd->partType = cType1;
-        pEnd->attrBack = ab1; pEnd->attrFore = af1;
-        pEnd->iwidth = i2 - i1;
-        pEnd->width = pixels;
-        if (gSet.isForceMonospace ||
-            (gSet.isProportional && (cType1 == pVBorder || cType1 == pRBracket)))
-        {
-            pEnd->x1 = i1 * gSet.FontWidth();
-        } else {
-            pEnd->x1 = -1;
-        }
-
-        pEnd ++; // блоков не может быть больше количества символов в строке, так что с размерностью все ОК
-        i1 = i2;
-    }
-    // пока поставим конец блоков, потом, если ширины не хватит - добавим pDummy
-    pEnd->partType = pNull;
-}
-
-WARNING("!!! Оптимизация. Перевести GetCharAttr в массив");
-WARNING("!!! Оптимизация. Расчитать ширины и ABC шрифтов заранее, чтобы потом обращаться строго к массивам");
 void CVirtualConsole::UpdateText(bool isForce)
 {
     //if (!updateText) {
@@ -1220,23 +1221,23 @@ void CVirtualConsole::UpdateText(bool isForce)
     if (mp_RCon->IsConsoleThread()) {
         //_ASSERTE(!mp_RCon->IsConsoleThread());
     }
-    // Данные уже должны быть заполнены, и там не должно быть лажы
-    BOOL lbDataValid = TRUE; uint n = 0;
-    while (n<TextLen) {
-        if (mpsz_ConChar[n] == 0) {
-            lbDataValid = FALSE; //break;
-            mpsz_ConChar[n] = L'¤';
-            mpn_ConAttr[n] = 12;
-        } else if (mpsz_ConChar[n] != L' ') {
-            // 0 - может быть только для пробела. Иначе символ будет скрытым, чего по идее, быть не должно
-            if (mpn_ConAttr[n] == 0) {
-                lbDataValid = FALSE; //break;
-                mpn_ConAttr[n] = 12;
-            }
-        }
-        n++;
-    }
-    //_ASSERTE(lbDataValid);
+    //// Данные уже должны быть заполнены, и там не должно быть лажы
+    //BOOL lbDataValid = TRUE; uint n = 0;
+    //while (n<TextLen) {
+    //    if (mpsz_ConChar[n] == 0) {
+    //        lbDataValid = FALSE; //break;
+    //        mpsz_ConChar[n] = L'¤';
+    //        mpn_ConAttr[n] = 12;
+    //    } else if (mpsz_ConChar[n] != L' ') {
+    //        // 0 - может быть только для пробела. Иначе символ будет скрытым, чего по идее, быть не должно
+    //        if (mpn_ConAttr[n] == 0) {
+    //            lbDataValid = FALSE; //break;
+    //            mpn_ConAttr[n] = 12;
+    //        }
+    //    }
+    //    n++;
+    //}
+    ////_ASSERTE(lbDataValid);
 #endif
 
 	
@@ -1245,7 +1246,7 @@ void CVirtualConsole::UpdateText(bool isForce)
 
     // pointers
     wchar_t* ConCharLine;
-    WORD* ConAttrLine;
+    CharAttr* ConAttrLine;
     DWORD* ConCharXLine;
     // counters
     int pos, row;
@@ -1257,7 +1258,7 @@ void CVirtualConsole::UpdateText(bool isForce)
         row = 0; //TextHeight - 1;
 
 		ConCharLine = mpsz_ConChar + i;
-        ConAttrLine = mpn_ConAttr + i;
+        ConAttrLine = mpn_ConAttrEx + i;
         ConCharXLine = ConCharX + i;
     }
     int nMaxPos = Height - nFontHeight;
@@ -1293,8 +1294,8 @@ void CVirtualConsole::UpdateText(bool isForce)
 		//}
 
         // the line
-        const WORD* const ConAttrLine2 = mpn_ConAttrSave + (ConAttrLine - mpn_ConAttr);
-        const TCHAR* const ConCharLine2 = mpsz_ConCharSave + (ConCharLine - mpsz_ConChar);
+        const CharAttr* const ConAttrLine2 = mpn_ConAttrExSave + (ConAttrLine - mpn_ConAttrEx);
+        const wchar_t* const ConCharLine2 = mpsz_ConCharSave + (ConCharLine - mpsz_ConChar);
 
         // skip not changed symbols except the old cursor or selection
         int j = 0, end = TextWidth;
@@ -1352,18 +1353,20 @@ void CVirtualConsole::UpdateText(bool isForce)
         int j2=j+1;
         for (; j < end; j = j2)
         {
-            const WORD attr = ConAttrLine[j];
+            const CharAttr attr = ConAttrLine[j];
             WCHAR c = ConCharLine[j];
-            BYTE attrFore, attrBack;
+            //BYTE attrForeIdx, attrBackIdx;
+            //COLORREF attrForeClr, attrBackClr;
             bool isUnicode = isCharBorder(c/*ConCharLine[j]*/);
             bool isProgress = false, isSpace = false, isUnicodeOrProgress = false;
             bool lbS1 = false, lbS2 = false;
             int nS11 = 0, nS12 = 0, nS21 = 0, nS22 = 0;
 
 			//GetCharAttr(c, attr, c, attrFore, attrBack);
-			GetCharAttr(attr, attrFore, attrBack, &hFont);
+			//GetCharAttr(attr, attrFore, attrBack, &hFont);
             //if (GetCharAttr(c, attr, c, attrFore, attrBack))
             //    isUnicode = true;
+            hFont = mh_FontByIndex[attr.nFontIndex];
 
             if (isUnicode || bEnhanceGraphics)
                 isProgress = isCharProgress(c); // ucBox25 / ucBox50 / ucBox75 / ucBox100
@@ -1404,7 +1407,8 @@ void CVirtualConsole::UpdateText(bool isForce)
             }*/
 
 
-            SetTextColor(hDC, gSet.Colors[attrFore]);
+            //SetTextColor(hDC, gSet.Colors[attrFore]);
+            SetTextColor(hDC, attr.crForeColor);
 
             // корректировка положения вертикальной рамки (Coord.X>0)
             if (bProportional && j)
@@ -1457,21 +1461,23 @@ void CVirtualConsole::UpdateText(bool isForce)
                     rect.bottom = rect.top + nFontHeight;
 
                     if (gbNoDblBuffer) GdiFlush();
-                    if (! (drawImage && ISBGIMGCOLOR(attrBack))) {
+                    // Если не отрисовка фона картинкой
+                    if (! (drawImage && ISBGIMGCOLOR(attr.nBackIdx))) {
 
-						BYTE PrevAttrFore = attrFore, PrevAttrBack = attrBack;
-						const WORD PrevAttr = ConAttrLine[j-1];
+						//BYTE PrevAttrFore = attrFore, PrevAttrBack = attrBack;
+						const CharAttr PrevAttr = ConAttrLine[j-1];
 						WCHAR PrevC = ConCharLine[j-1];
 
 						//GetCharAttr(PrevC, PrevAttr, PrevC, PrevAttrFore, PrevAttrBack);
-						GetCharAttr(PrevAttr, PrevAttrFore, PrevAttrBack, NULL);
+						//GetCharAttr(PrevAttr, PrevAttrFore, PrevAttrBack, NULL);
 						//if (GetCharAttr(PrevC, PrevAttr, PrevC, PrevAttrFore, PrevAttrBack))
 						//	isUnicode = true;
 
 						// Если текущий символ - вертикальная рамка, а предыдущий символ - рамка
 						// нужно продлить рамку до текущего символа
 						if (isCharBorderVertical(c) && isCharBorder(PrevC)) {
-							SetBkColor(hDC, gSet.Colors[attrBack]);
+							//SetBkColor(hDC, gSet.Colors[attrBack]);
+							SetBkColor(hDC, attr.crBackColor);
 							wchar_t *pchBorder = (c == ucBoxDblDownLeft || c == ucBoxDblUpLeft 
 								|| c == ucBoxSinglDownDblHorz || c == ucBoxSinglUpDblHorz || c == ucBoxDblVertLeft
 								|| c == ucBoxDblVertHorz) ? ms_HorzDbl : ms_HorzSingl;
@@ -1482,18 +1488,20 @@ void CVirtualConsole::UpdateText(bool isForce)
 							}
 							//UINT nFlags = ETO_CLIPPED; // || ETO_OPAQUE;
 							//ExtTextOut(hDC, rect.left, rect.top, nFlags, &rect, Spaces, min(nSpaceCount, nCnt), 0);
-							if (! (drawImage && ISBGIMGCOLOR(attrBack)))
-								SetBkColor(hDC, gSet.Colors[attrBack]);
-							else if (drawImage)
-								BlitPictureTo(rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top);
-							UINT nFlags = ETO_CLIPPED | ((drawImage && ISBGIMGCOLOR(attrBack)) ? 0 : ETO_OPAQUE);
+							//if (! (drawImage && ISBGIMGCOLOR(attr.nBackIdx)))
+							//	SetBkColor(hDC, gSet.Colors[attrBack]);
+							//else if (drawImage)
+							//	BlitPictureTo(rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top);
+							UINT nFlags = ETO_CLIPPED | ETO_OPAQUE;
 							//wmemset(Spaces, chBorder, nCnt);
 							if (bFixFarBorders)
 								SelectFont(hFont2);
+							SetTextColor(hDC, PrevAttr.crForeColor);
 							ExtTextOut(hDC, rect.left, rect.top, nFlags, &rect, pchBorder, nCnt, 0);
+							SetTextColor(hDC, attr.crForeColor); // Вернуть
 
 						} else {
-							HBRUSH hbr = PartBrush(L' ', PrevAttrBack, PrevAttrFore);
+							HBRUSH hbr = PartBrush(L' ', attr.crBackColor, attr.crForeColor);
 							FillRect(hDC, &rect, hbr);
 
 						}
@@ -1512,7 +1520,8 @@ void CVirtualConsole::UpdateText(bool isForce)
             if (bForceMonospace)
             {
                 MCHKHEAP
-                SetBkColor(hDC, gSet.Colors[attrBack]);
+                //SetBkColor(hDC, gSet.Colors[attrBack]);
+                SetBkColor(hDC, attr.crBackColor);
 
                 j2 = j + 1;
 
@@ -1533,7 +1542,7 @@ void CVirtualConsole::UpdateText(bool isForce)
                     rect.right = (TextWidth>(UINT)j2) ? ConCharXLine[j2-1] : Width;
                     rect.bottom = rect.top + nFontHeight;
                 }
-                UINT nFlags = ETO_CLIPPED | ((drawImage && ISBGIMGCOLOR(attrBack)) ? 0 : ETO_OPAQUE);
+                UINT nFlags = ETO_CLIPPED | ((drawImage && ISBGIMGCOLOR(attr.nBackIdx)) ? 0 : ETO_OPAQUE);
                 int nShift = 0;
 
                 MCHKHEAP
@@ -1556,12 +1565,13 @@ void CVirtualConsole::UpdateText(bool isForce)
                 }
 
                 MCHKHEAP
-                if (! (drawImage && ISBGIMGCOLOR(attrBack))) {
-                    SetBkColor(hDC, gSet.Colors[attrBack]);
+                if (! (drawImage && ISBGIMGCOLOR(attr.nBackIdx))) {
+                    //SetBkColor(hDC, gSet.Colors[attrBack]);
+                    SetBkColor(hDC, attr.crBackColor);
 					// В режиме ForceMonospace символы пытаемся рисовать по центру (если они уже знакоместа)
 					// чтобы не оставалось мусора от предыдущей отрисовки - нужно залить знакоместо фоном
 					if (nShift>0 && !isSpace && !isProgress) {
-						HBRUSH hbr = PartBrush(L' ', attrBack, attrFore);
+						HBRUSH hbr = PartBrush(L' ', attr.crBackColor, attr.crForeColor);
 						FillRect(hDC, &rect, hbr);
 					}
                 } else if (drawImage) {
@@ -1577,7 +1587,7 @@ void CVirtualConsole::UpdateText(bool isForce)
 
                 if (gbNoDblBuffer) GdiFlush();
 				if (isSpace || (isProgress && bEnhanceGraphics)) {
-					HBRUSH hbr = PartBrush(c, attrBack, attrFore);
+					HBRUSH hbr = PartBrush(c, attr.crBackColor, attr.crForeColor);
 					FillRect(hDC, &rect, hbr);
 				} else {
 					// Это режим Force monospace
@@ -1710,20 +1720,21 @@ void CVirtualConsole::UpdateText(bool isForce)
 
                 MCHKHEAP
 				BOOL lbImgDrawn = FALSE;
-                if (! (drawImage && ISBGIMGCOLOR(attrBack)))
-                    SetBkColor(hDC, gSet.Colors[attrBack]);
-				else if (drawImage) {
+                if (! (drawImage && ISBGIMGCOLOR(attr.nBackIdx))) {
+                    //SetBkColor(hDC, gSet.Colors[attrBack]);
+                    SetBkColor(hDC, attr.crBackColor);
+				} else if (drawImage) {
                     BlitPictureTo(rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top);
 					lbImgDrawn = TRUE;
 				}
 
 				WARNING("ETO_CLIPPED вроде вообще не нарисует символ, если его часть не влезает?");
-                UINT nFlags = ETO_CLIPPED | ((drawImage && ISBGIMGCOLOR(attrBack)) ? 0 : ETO_OPAQUE);
+                UINT nFlags = ETO_CLIPPED | ((drawImage && ISBGIMGCOLOR(attr.nBackIdx)) ? 0 : ETO_OPAQUE);
 
                 MCHKHEAP
                 if (gbNoDblBuffer) GdiFlush();
                 if (isProgress && bEnhanceGraphics) {
-					HBRUSH hbr = PartBrush(c, attrBack, attrFore);
+					HBRUSH hbr = PartBrush(c, attr.crBackColor, attr.crForeColor);
 					FillRect(hDC, &rect, hbr);
                 } else
                 if (/*gSet.isProportional &&*/ isSpace/*c == ' '*/) {
@@ -1731,7 +1742,7 @@ void CVirtualConsole::UpdateText(bool isForce)
                     //Ext Text Out(hDC, rect.left, rect.top, nFlags, &rect, Spaces, nCnt, 0);
 					TODO("Проверить, что будет если картинка МЕНЬШЕ по ширине чем область отрисовки");
 					if (!lbImgDrawn) {
-						HBRUSH hbr = PartBrush(L' ', attrBack, attrFore);
+						HBRUSH hbr = PartBrush(L' ', attr.crBackColor, attr.crForeColor);
 						FillRect(hDC, &rect, hbr);
 					}
 				} else {
@@ -1794,22 +1805,22 @@ void CVirtualConsole::ClearPartBrushes()
 	memset(m_PartBrushes, 0, sizeof(m_PartBrushes));
 }
 
-HBRUSH CVirtualConsole::PartBrush(wchar_t ch, SHORT nBackIdx, SHORT nForeIdx)
+HBRUSH CVirtualConsole::PartBrush(wchar_t ch, COLORREF nBackCol, COLORREF nForeCol)
 {
 	_ASSERTE(gConEmu.isMainThread());
     //std::vector<PARTBRUSHES>::iterator iter = m_PartBrushes.begin();
     //while (iter != m_PartBrushes.end()) {
 	PARTBRUSHES *pbr = m_PartBrushes;
 	for (UINT br=0; pbr->ch && br<MAX_COUNT_PART_BRUSHES; br++, pbr++) {
-		if (pbr->ch == ch && pbr->nBackIdx == nBackIdx && pbr->nForeIdx == nForeIdx) {
+		if (pbr->ch == ch && pbr->nBackCol == nBackCol && pbr->nForeCol == nForeCol) {
 			_ASSERTE(pbr->hBrush);
             return pbr->hBrush;
 		}
     }
 
     MYRGB clrBack, clrFore, clrMy;
-    clrBack.color = gSet.Colors[nBackIdx];
-    clrFore.color = gSet.Colors[nForeIdx];
+    clrBack.color = nBackCol;
+    clrFore.color = nForeCol;
 
     clrMy.color = clrFore.color; // 100 %
 
@@ -1843,7 +1854,7 @@ HBRUSH CVirtualConsole::PartBrush(wchar_t ch, SHORT nBackIdx, SHORT nForeIdx)
     }
 
     PARTBRUSHES pb;
-    pb.ch = ch; pb.nBackIdx = nBackIdx; pb.nForeIdx = nForeIdx;
+    pb.ch = ch; pb.nBackCol = nBackCol; pb.nForeCol = nForeCol;
     pb.hBrush = CreateSolidBrush(clrMy.color);
 
     //m_PartBrushes.push_back(pb);
@@ -2085,7 +2096,7 @@ void CVirtualConsole::Paint(HDC hDc, RECT rcClient)
 	else if (!mp_RCon->ConWnd())
 		lbSimpleBlack = TRUE;
 
-	//else if (!mpsz_ConChar || !mpn_ConAttr)
+	//else if (!mpsz_ConChar || !mpn_ConAttrEx)
 	//	lbSimpleBlack = TRUE;
     if (lbSimpleBlack) {
         // Залить цветом 0
@@ -2213,16 +2224,18 @@ void CVirtualConsole::Paint(HDC hDc, RECT rcClient)
 
 				MSectionLock SCON; SCON.Lock(&csCON);
 
-				if (mpsz_ConChar && mpn_ConAttr)
+				if (mpsz_ConChar && mpn_ConAttrEx)
 				{
 					int CurChar = csbi.dwCursorPosition.Y * TextWidth + csbi.dwCursorPosition.X;
 					//Cursor.ch[1] = 0;
 					//CVirtualConsole* p = this;
 					//GetCharAttr(mpsz_ConChar[CurChar], mpn_ConAttr[CurChar], Cursor.ch[0], Cursor.foreColorNum, Cursor.bgColorNum);
 					Cursor.ch = mpsz_ConChar[CurChar];
-					GetCharAttr(mpn_ConAttr[CurChar], Cursor.foreColorNum, Cursor.bgColorNum, NULL);
-					Cursor.foreColor = gSet.Colors[Cursor.foreColorNum];
-					Cursor.bgColor = gSet.Colors[Cursor.bgColorNum];
+					//GetCharAttr(mpn_ConAttr[CurChar], Cursor.foreColorNum, Cursor.bgColorNum, NULL);
+					//Cursor.foreColor = gSet.Colors[Cursor.foreColorNum];
+					//Cursor.bgColor = gSet.Colors[Cursor.bgColorNum];
+					Cursor.foreColor = mpn_ConAttrEx[CurChar].crForeColor;
+					Cursor.bgColor = mpn_ConAttrEx[CurChar].crBackColor;
 				}
 
 				UpdateCursorDraw(hDc, rcClient, csbi.dwCursorPosition, cinf.dwSize);
@@ -2372,7 +2385,7 @@ COORD CVirtualConsole::ClientToConsole(LONG x, LONG y)
 }
 
 // На самом деле не только пробелы, но и ucBoxSinglHorz/ucBoxDblVertHorz
-void CVirtualConsole::DistributeSpaces(wchar_t* ConCharLine, WORD* ConAttrLine, DWORD* ConCharXLine, const int j, const int j2, const int end)
+void CVirtualConsole::DistributeSpaces(wchar_t* ConCharLine, CharAttr* ConAttrLine, DWORD* ConCharXLine, const int j, const int j2, const int end)
 {
 	//WORD attr = ConAttrLine[j];
 	//wchar_t ch, c;
