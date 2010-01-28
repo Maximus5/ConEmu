@@ -32,14 +32,17 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //  #define SHOW_STARTED_MSGBOX
 #endif
 
+#define TRUE_COLORER_OLD_SUPPORT
+
 //#include <stdio.h>
 #include <windows.h>
 //#include <windowsx.h>
 //#include <string.h>
 //#include <tchar.h>
 #include "..\common\common.hpp"
+#include "..\common\SetHook.h"
 #include "..\common\pluginW1007.hpp"
-//#include "..\common\ConsoleAnnotation.h"
+#include "..\common\ConsoleAnnotation.h"
 #include "PluginHeader.h"
 #include <Tlhelp32.h>
 //#include <vector>
@@ -129,9 +132,19 @@ bool gbMonitorEnvVar = false;
 void UpdateEnvVar(const wchar_t* pszList);
 BOOL StartupHooks();
 BOOL gbFARuseASCIIsort = FALSE; // попытаться перехватить строковую сортировку в FAR
-HANDLE ghFileMapping = NULL; //, ghColorMapping = NULL;
+HANDLE ghFileMapping = NULL;
+HANDLE ghColorMapping = NULL; // Создается при детаче консоли сразу после AllocConsole
+BOOL gbHasColorMapping = FALSE; // Чтобы знать, что буфер True-Colorer создан
+#ifdef TRUE_COLORER_OLD_SUPPORT
+HANDLE ghColorMappingOld = NULL;
+BOOL gbHasColorMappingOld = FALSE;
+#endif
 CESERVER_REQ_CONINFO_HDR *gpConsoleInfo = NULL;
 //AnnotationInfo *gpColorerInfo = NULL;
+BOOL gbStartedUnderConsole2 = FALSE;
+void CheckColorerHeader();
+int CreateColorerHeader();
+void CloseColorerHeader();
 
 
 //std::vector<HANDLE> ghCommandThreads;
@@ -368,7 +381,7 @@ BOOL WINAPI DllMain( HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserve
 				gnMainThreadId = GetCurrentThreadId();
 				InitHWND(hConWnd);
 				
-				if (!StartupHooks()) {
+				if (!StartupHooks(ghPluginModule)) {
 					_ASSERT(FALSE);
 					OutputDebugString(L"!!! Can't install injects!!!\n");
 				}
@@ -962,10 +975,187 @@ void EmergencyShow()
 	EnableWindow(FarHwnd, true);
 }
 
-static BOOL bTryOpenMapHeader = FALSE;
+static BOOL gbTryOpenMapHeader = FALSE;
 int OpenMapHeader();
 void CloseMapHeader();
 //void ResetExeHooks();
+
+void CheckColorerHeader()
+{
+	wchar_t szMapName[64];
+	HWND lhConWnd = NULL;
+	HANDLE h;
+	
+	lhConWnd = GetConsoleWindow();
+	
+	wsprintf(szMapName, AnnotationShareNameNew, sizeof(AnnotationInfo), (DWORD)lhConWnd);
+	
+	h = OpenFileMapping(FILE_MAP_READ, FALSE, szMapName);
+	gbHasColorMapping = (h!=NULL);
+	if (h) CloseHandle(h);
+		
+	#ifdef TRUE_COLORER_OLD_SUPPORT
+	wsprintf(szMapName, L"Console2_annotationInfo_%d_%d", sizeof(AnnotationInfo), (DWORD)GetCurrentProcessId());
+	h = OpenFileMapping(FILE_MAP_READ, FALSE, szMapName);
+	gbHasColorMappingOld = (h!=NULL);
+	if (h) CloseHandle(h);
+	#endif
+}
+
+// Функции вызываются в основной нити, вполне можно дергать FAR-API
+int CreateColorerHeader()
+{
+	int iRc = -1;
+	wchar_t szMapName[64];
+	#ifdef _DEBUG
+	DWORD dwErr = 0;
+	#endif
+	//int nConInfoSize = sizeof(CESERVER_REQ_CONINFO_HDR);
+	DWORD nMapCells = 0, nMapSize = 0;
+	HWND lhConWnd = NULL;
+	
+	if (ghColorMapping) {
+		CloseHandle(ghColorMapping); ghColorMapping = NULL;
+	}
+	#ifdef TRUE_COLORER_OLD_SUPPORT
+		if (ghColorMappingOld) {
+			CloseHandle(ghColorMappingOld); ghColorMappingOld = NULL;
+		}
+	#endif
+
+	COORD crMaxSize = GetLargestConsoleWindowSize(GetStdHandle(STD_OUTPUT_HANDLE));
+	nMapCells = max(crMaxSize.X,200) * max(crMaxSize.Y,200);
+	nMapSize = nMapCells * sizeof(AnnotationInfo) + sizeof(AnnotationHeader);
+	lhConWnd = GetConsoleWindow();
+	
+	if (gbHasColorMapping) {
+		wsprintf(szMapName, AnnotationShareNameNew, sizeof(AnnotationInfo), (DWORD)lhConWnd);
+		
+		// Создаем! т.к. должна вызываться только после Detach!
+		ghColorMapping = CreateFileMapping(INVALID_HANDLE_VALUE, 
+			gpNullSecurity, PAGE_READWRITE, 0, nMapSize, szMapName);
+		
+		if (!ghColorMapping) {
+			#ifdef _DEBUG
+			dwErr = GetLastError();
+			#endif
+			// Функции вызываются в основной нити, вполне можно дергать FAR-API
+			TODO("Показать ошибку создания MAP для Colorer.AnnotationInfo");
+		} else {
+			// Заголовок мэппинга содержит информацию о размере, нужно заполнить!
+			AnnotationHeader* pHdr = (AnnotationHeader*)MapViewOfFile(ghColorMapping, FILE_MAP_ALL_ACCESS,0,0,0);
+			if (!pHdr) {
+				#ifdef _DEBUG
+				dwErr = GetLastError();
+				#endif
+				CloseHandle(ghColorMapping); ghColorMapping = NULL;
+				// Функции вызываются в основной нити, вполне можно дергать FAR-API
+				TODO("Показать ошибку создания MAP для Colorer.AnnotationInfo");
+			} else {
+				pHdr->struct_size = sizeof(AnnotationHeader);
+				pHdr->bufferSize = nMapCells;
+				pHdr->locked = 0; pHdr->flushCounter = 0;
+				// В плагине - данные не нужны
+				UnmapViewOfFile(pHdr);
+			}
+		}
+	}
+	
+	#ifdef TRUE_COLORER_OLD_SUPPORT
+	if (gbHasColorMappingOld) {
+		wsprintf(szMapName, L"Console2_annotationInfo_%d_%d", sizeof(AnnotationInfo), (DWORD)GetCurrentProcessId());
+		nMapSize = nMapCells * sizeof(AnnotationInfo);
+		ghColorMappingOld = CreateFileMapping(INVALID_HANDLE_VALUE, 
+			gpNullSecurity, PAGE_READWRITE, 0, nMapSize, szMapName);
+	}
+	#endif
+
+	return iRc;
+}
+
+void CloseColorerHeader()
+{
+	if (ghColorMapping) {
+		CloseHandle(ghColorMapping);
+		ghColorMapping = NULL;
+	}
+	#ifdef TRUE_COLORER_OLD_SUPPORT
+	if (ghColorMappingOld) {
+		CloseHandle(ghColorMappingOld);
+		ghColorMappingOld = NULL;
+	}
+	#endif
+}
+
+
+
+BOOL gbWasDetached = FALSE;
+CONSOLE_SCREEN_BUFFER_INFO gsbiDetached;
+
+BOOL WINAPI OnConsoleDetaching(HookCallbackArg* pArgs)
+{
+	gbWasDetached = (ConEmuHwnd!=NULL && IsWindow(ConEmuHwnd));
+
+	if (gbWasDetached) {
+		HANDLE hOutput = GetStdHandle(STD_OUTPUT_HANDLE);
+		GetConsoleScreenBufferInfo(hOutput, &gsbiDetached);
+
+		// Нужно уведомить ТЕКУЩИЙ сервер, что закрываться по окончании команды не нужно
+		if (gdwServerPID == 0) {
+			_ASSERTE(gdwServerPID != NULL);
+		} else {
+			CESERVER_REQ In, *pOut = NULL;
+			ExecutePrepareCmd(&In, CECMD_SETDONTCLOSE, sizeof(CESERVER_REQ_HDR));
+			pOut = ExecuteSrvCmd(gdwServerPID, &In, FarHwnd);
+			if (pOut) ExecuteFreeResult(pOut);
+		}
+	}
+
+	CloseColorerHeader(); // Если было
+	CloseMapHeader();
+    ConEmuHwnd = NULL;
+    SetConEmuEnvVar(NULL);
+
+	if (ghConIn) {
+		CloseHandle(ghConIn);
+		ghConIn = NULL;
+	}
+    
+    // Потом еще и FarHwnd сбросить нужно будет... Ну этим MonitorThreadProcW займется
+	
+	return TRUE; // продолжить выполнение функции
+}
+// Функции вызываются в основной нити, вполне можно дергать FAR-API
+VOID WINAPI OnConsoleWasAttached(HookCallbackArg* pArgs)
+{
+	FarHwnd = GetConsoleWindow();
+
+	if (gbWasDetached) {
+		// Сразу спрятать окошко
+		//ShowWindow(FarHwnd, SW_HIDE);
+	}
+
+	// Если ранее были созданы мэппинги для цвета - пересоздать
+	CreateColorerHeader();
+	
+	if (gbWasDetached) {
+		/*
+		HANDLE hOutput = GetStdHandle(STD_OUTPUT_HANDLE);
+		SetConsoleScreenBufferSize(hOutput,sbi.dwSize);
+		SetConsoleWindowInfo(hOutput,TRUE,&sbi.srWindow);
+		SetConsoleScreenBufferSize(hOutput,sbi.dwSize);
+		*/
+
+		// сразу переподцепимся к GUI
+		if (!Attach2Gui()) {
+			EmergencyShow();
+		}
+		
+		// Сбрасываем после Attach2Gui, чтобы MonitorThreadProcW случайно
+		// не среагировал раньше времени
+		gbWasDetached = FALSE;
+	}
+}
 
 // Эту нить нужно оставить, чтобы была возможность отобразить консоль при падении ConEmu
 DWORD WINAPI MonitorThreadProcW(LPVOID lpParameter)
@@ -974,8 +1164,8 @@ DWORD WINAPI MonitorThreadProcW(LPVOID lpParameter)
 
 	DWORD dwStartTick = GetTickCount();
 	DWORD dwMonitorTick = dwStartTick;
-	BOOL lbStartedNoConEmu = (ConEmuHwnd == NULL);
-	BOOL lbTryOpenMapHeader = FALSE;
+	BOOL lbStartedNoConEmu = (ConEmuHwnd == NULL) && !gbStartedUnderConsole2;
+	//BOOL lbTryOpenMapHeader = FALSE;
 	//_ASSERTE(ConEmuHwnd!=NULL); -- ConEmu может подцепиться позднее!
 
 	while (true)
@@ -991,6 +1181,8 @@ DWORD WINAPI MonitorThreadProcW(LPVOID lpParameter)
 		if (dwWait == WAIT_OBJECT_0)
 			break; // завершение плагина
 
+		// Если FAR запущен в "невидимом" режиме и по истечении таймаута
+		// так и не подцепились к ConEmu - всплыть окошко консоли
 		if (lbStartedNoConEmu && ConEmuHwnd == NULL && FarHwnd != NULL) {
 			DWORD dwCurTick = GetTickCount();
 			DWORD dwDelta = dwCurTick - dwStartTick;
@@ -1004,143 +1196,35 @@ DWORD WINAPI MonitorThreadProcW(LPVOID lpParameter)
 
 		// Теоретически, нить обработки может запуститься и без ConEmuHwnd (под телнетом)
 	    if (ConEmuHwnd && FarHwnd && (dwWait>=(WAIT_OBJECT_0+MAXCMDCOUNT))) {
+	    
+	    	// Может быть ConEmu свалилось
+	    	if (!IsWindow(ConEmuHwnd) && ConEmuHwnd) {
+	    		HWND hConWnd = GetConsoleWindow();
+	    		if (hConWnd && !IsWindow(hConWnd)) {
+					// hConWnd не валидно
+					MessageBox(0, L"ConEmu was abnormally termintated!\r\nExiting from FAR", L"ConEmu plugin", MB_OK|MB_ICONSTOP|MB_SETFOREGROUND);
+					TerminateProcess(GetCurrentProcess(), 100);
+					return 0;
+	    		}
 
-			// Мог быть сделан Detach (детач)! (CtrlAltTab)
-			HWND hConWnd = GetConsoleWindow();
-			BOOL lbWasDetached = FALSE;
-			if (hConWnd && hConWnd != FarHwnd) {
-				FarHwnd = hConWnd;
-				lbWasDetached = TRUE;
-				CloseMapHeader();
-			}
-		    if (!IsWindow(ConEmuHwnd) || lbWasDetached) {
-			    ConEmuHwnd = NULL;
-			    //
-			    SetConEmuEnvVar(NULL);
-
-				if (!TerminalMode && !IsWindowVisible(FarHwnd)) {
+	    		if (!TerminalMode && !IsWindowVisible(FarHwnd)) {
 					EmergencyShow();
 				}
-
-				if (lbWasDetached || !IsWindow(FarHwnd))
-				{
-					if (IsWindow(hConWnd)) {
-						FarHwnd = hConWnd;
-
-						if (lbWasDetached) {
-							#ifdef _DEBUG
-								#ifdef SHOW_STARTED_MSGBOX
-									if (!IsDebuggerPresent()) MessageBoxA(NULL, "FAR was detached\nCalling Attach2Gui now", "ConEmu plugin", 0);
-								#endif
-							#endif
-							WARNING("Нужно перехучить функции в far.exe");
-							//-- Иначе PeekConsoleInputEvents уже не детектится...
-							//ResetExeHooks();
-
-							// сразу подцепимся к GUI
-							Attach2Gui();
-						}
-						//int nBtn = ShowMessage(1, 2);
-						//if (nBtn == 0) {
-						//	// Create process, with flag /Attach GetCurrentProcessId()
-						//	// Sleep for sometimes, try InitHWND(hConWnd); several times
-						//	WCHAR  szExe[0x200];
-						//	WCHAR  szCurArgs[0x600];
-						//	
-						//	PROCESS_INFORMATION pi; memset(&pi, 0, sizeof(pi));
-						//	STARTUPINFO si; memset(&si, 0, sizeof(si));
-						//	si.cb = sizeof(si);
-						//	
-						//	//TODO: ConEmu.exe
-						//	int nLen = 0;
-						//	if ((nLen=GetModuleFileName(0, szExe, 0x190))==0) {
-						//		goto closethread;
-						//	}
-						//	WCHAR* pszSlash = szExe+nLen-1;
-			   //             while (pszSlash>szExe && *(pszSlash-1)!=L'\\') pszSlash--;
-			   //             lstrcpyW(pszSlash, L"ConEmu.exe");
-			   //             
-						//	DWORD dwPID = GetCurrentProcessId();
-						//	wsprintf(szCurArgs, L"\"%s\" /Attach %i ", szExe, dwPID);
-						//	
-						//	GetEnvironmentVariableW(L"ConEmuArgs", szCurArgs+lstrlenW(szCurArgs), 0x380);
-			   //             
-						//	
-						//	if (!CreateProcess(NULL, szCurArgs, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL,
-						//			NULL, &si, &pi))
-						//	{
-						//		// Хорошо бы ошибку показать?
-						//		goto closethread;
-						//	}
-						//	
-						//	// Ждем
-						//	while (TRUE)
-						//	{
-						//		dwWait = WaitForSingleObject(hEventCmd[CMD_EXIT], 200);
-						//		// ФАР закрывается
-						//		if (dwWait == WAIT_OBJECT_0) {
-						//			CloseHandle(pi.hProcess); CloseHandle(pi.hThread);
-						//			goto closethread;
-						//		}
-						//		if (!GetExitCodeProcess(pi.hProcess, &dwPID) || dwPID!=STILL_ACTIVE) {
-						//			CloseHandle(pi.hProcess); CloseHandle(pi.hThread);
-						//			goto closethread;
-						//		}
-						//		InitHWND(hConWnd);
-						//		if (ConEmuHwnd) {
-						//			// Справились, но шрифт ConEmu скорее всего поменять не смог...
-						//			SetConsoleFontSizeTo(FarHwnd, 4, 6);
-						//			MoveWindow(FarHwnd, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), 1); // чтобы убрать возможные полосы прокрутки...
-						//			break;
-						//		}
-						//	}
-						//	
-						//	// Закрыть хэндлы
-						//	CloseHandle(pi.hProcess); CloseHandle(pi.hThread);
-						//	// Хорошо бы сразу Табы обновить...
-						//	Send Tabs(gnCurTabCount, TRUE);
-						//	continue;
-						//} else {
-						//	// Пользователь отказался, выходим из нити обработки
-						//	goto closethread;
-						//}
-					} else {
-						// hConWnd не валидно
-						MessageBox(0, L"ConEmu was abnormally termintated!\r\nExiting from FAR", L"ConEmu plugin", MB_OK|MB_ICONSTOP|MB_SETFOREGROUND);
-						TerminateProcess(GetCurrentProcess(), 100);
-					}
-				}
-				else 
-				{
-					//if (bWasSetParent) { -- все равно уже не поможет, если она была дочерней - сдохла
-					//	SetParent(FarHwnd, NULL);
-					//}
-				    
-					EmergencyShow();
-				}
-			    
-				//goto closethread;
 		    }
 	    }
 
-		//if (dwWait == (WAIT_OBJECT_0+CMD_EXIT))
-		//{
-		//	goto closethread;
-		//}
 
-		//if (dwWait>=(WAIT_OBJECT_0+MAXCMDCOUNT))
-		//{
-		//	continue;
-		//}
-
-		if (!ConEmuHwnd) {
+		if (!gbWasDetached && !ConEmuHwnd) {
 			// ConEmu могло подцепиться
-			//int nChk = 0;
+			TODO("Переделать функцию на получение HWND из Map");
 			ConEmuHwnd = GetConEmuHWND ( FALSE/*abRoot*/  /*, &nChk*/ );
 			if (ConEmuHwnd) {
                 SetConEmuEnvVar(ConEmuHwnd);
 			
 				InitResources();
+
+				// Обновить ТАБЫ после детача!
+				SendTabs(gnCurTabCount, TRUE);
 			}
 		}
 
@@ -1166,129 +1250,20 @@ DWORD WINAPI MonitorThreadProcW(LPVOID lpParameter)
 			}
 		}
 
-		if (ConEmuHwnd && bTryOpenMapHeader) {
+		if (/*ConEmuHwnd &&*/ gbTryOpenMapHeader) {
 			if (gpConsoleInfo) {
 				_ASSERTE(gpConsoleInfo == NULL);
-				bTryOpenMapHeader = FALSE;
+				gbTryOpenMapHeader = FALSE;
 			} else
 			if (OpenMapHeader() == 0) {
 				// OK, переподцепились
-				bTryOpenMapHeader = FALSE;
+				gbTryOpenMapHeader = FALSE;
 			}
 		}
 
 
-		//SafeCloseHandle(ghMapping);
-		//// Поставим флажок, что мы приступили к обработке
-		//// Хоть табы и не загружаются из фара, а пересылаются в текущем виде, но делается это обычным образом
-		////if (dwWait != (WAIT_OBJECT_0+CMD_REQTABS)) // исключение - запрос табов. он асинхронный
-		//SetEvent(hEventAlive);
-
-
-		//switch (dwWait)
-		//{
-		//	case (WAIT_OBJECT_0+CMD_REQTABS):
-		//	{
-		//		/*if (!gnCurTabCount || !gpTabs) {
-		//			CreateTabs(1);
-		//			int nTabs=0; --низзя! это теперь идет через CriticalSection
-		//			AddTab(nTabs, false, false, WTYPE_PANELS, 0,0,1,0); 
-		//		}*/
-		//		Send Tabs(gnCurTabCount, TRUE);
-		//		// пересылка тоже обычным образом
-		//		//// исключение - запрос табов. он асинхронный
-		//		//continue;
-		//		break;
-		//	}
-		//	
-		//	case (WAIT_OBJECT_0+CMD_DEFFONT):
-		//	{
-		//		// исключение - асинхронный, результат не требуется
-		//		ResetEvent(hEventAlive);
-		//		SetConsoleFontSizeTo(FarHwnd, 4, 6);
-		//		MoveWindow(FarHwnd, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), 1); // чтобы убрать возможные полосы прокрутки...
-		//		continue;
-		//	}
-		//	
-		//	case (WAIT_OBJECT_0+CMD_LANGCHANGE):
-		//	{
-		//		// исключение - асинхронный, результат не требуется
-		//		ResetEvent(hEventAlive);
-		//		HKL hkl = (HKL)GetWindowLong(ConEmuHwnd, GWL_LANGCHANGE);
-		//		if (hkl) {
-		//			DWORD dwLastError = 0;
-		//			WCHAR szLoc[10]; wsprintf(szLoc, L"%08x", (DWORD)(((DWORD)hkl) & 0xFFFF));
-		//			HKL hkl1 = LoadKeyboardLayout(szLoc, KLF_ACTIVATE|KLF_REORDER|KLF_SUBSTITUTE_OK|KLF_SETFORPROCESS);
-		//			HKL hkl2 = ActivateKeyboardLayout(hkl1, KLF_SETFORPROCESS|KLF_REORDER);
-		//			if (!hkl2) {
-		//				dwLastError = GetLastError();
-		//			}
-		//			dwLastError = dwLastError;
-		//		}
-		//		continue;
-		//	}
-		//	
-		//	default:
-		//	// Все остальные команды нужно выполнять в нити FAR'а
-		//	ProcessCommand(dwWait/*nCmd*/, TRUE/*bReqMainThread*/, NULL);
-		//}
-
-		//// Подготовиться к передаче данных
-		//Enter CriticalSection(&csData);
-		//wsprintf(gszDir1, CONEMUMAPPING, dwProcId);
-		//gnDataSize = gpData ? (gpCursor - gpData) : 0;
-		//#ifdef _DEBUG
-		//int nSize = gnDataSize; // чего-то там происходит...
-		//#endif
-		//SetLastError(0);
-		//ghMapping = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, gnDataSize+4, gszDir1);
-		//#ifdef _DEBUG
-		//DWORD dwCreateError = GetLastError();
-		//#endif
-		//if (ghMapping) {
-		//	LPBYTE lpMap = (LPBYTE)MapViewOfFile(ghMapping, FILE_MAP_ALL_ACCESS, 0,0,0);
-		//	if (!lpMap) {
-		//		// Ошибка
-		//		SafeCloseHandle(ghMapping);
-		//	} else {
-		//		// copy data
-		//		if (gpData && gnDataSize) {
-		//			*((DWORD*)lpMap) = gnDataSize+4;
-		//			#ifdef _DEBUG
-		//			LPBYTE dst=lpMap+4; LPBYTE src=gpData;
-		//			for (DWORD n=gnDataSize;n>0;n--)
-		//				*(dst++) = *(src++);
-		//			#else
-		//			memcpy(lpMap+4, gpData, gnDataSize);
-		//			#endif
-		//		} else {
-		//			*((DWORD*)lpMap) = 0;
-		//		}
-
-		//		//unmaps a mapped view of a file from the calling process's address space
-		//		UnmapViewOfFile(lpMap);
-		//	}
-		//}
-		//if (gpData) {
-		//	Free(gpCmdRet);
-		//	gpCmdRet = NULL; gpData = NULL; gpCursor = NULL;
-		//}
-		//LeaveCriticalSection(&csData);
-
-		// Поставим флажок, что плагин жив и закончил
-		//SetEvent(hEventReady);
-
-		//Sleep(1);
 	}
 
-
-//closethread:
-	// Закрываем все хэндлы и выходим
-	//for (int i=0; i<MAXCMDCOUNT; i++)
-	//	SafeCloseHandle(hEventCmd[i]);
-	//SafeCloseHandle(hEventAlive);
-	//SafeCloseHandle(hEventReady);
-	//SafeCloseHandle(ghMapping);
 
 	return 0;
 }
@@ -1495,36 +1470,6 @@ int OpenMapHeader()
 	return iRc;
 }
 	
-//int CreateColorerHeader()
-//{
-//	int iRc = -1;
-//	wchar_t szMapName[64];
-//	#ifdef _DEBUG
-//	DWORD dwErr = 0;
-//	#endif
-//	//int nConInfoSize = sizeof(CESERVER_REQ_CONINFO_HDR);
-//	DWORD nMapSize = 0;
-//	
-//	_ASSERTE(ghColorMapping == NULL);
-//
-//	COORD crMaxSize = GetLargestConsoleWindowSize(GetStdHandle(STD_OUTPUT_HANDLE));
-//	nMapSize = max(crMaxSize.X,200) * max(crMaxSize.Y,200) * sizeof(AnnotationInfo);
-//	
-//	wsprintf(szMapName, AnnotationShareName, sizeof(AnnotationInfo), (DWORD)GetCurrentProcessId());
-//	
-//	//ghColorMapping = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, szMapName); -- Create!
-//	ghColorMapping = CreateFileMapping(INVALID_HANDLE_VALUE, 
-//		gpNullSecurity, PAGE_READWRITE, 0, nMapSize, szMapName);
-//	
-//	if (!ghColorMapping) {
-//		#ifdef _DEBUG
-//		dwErr = GetLastError();
-//		#endif
-//		TODO("Показать ошибку создания MAP для Colorer.AnnotationInfo");
-//	}
-//
-//	return iRc;
-//}
 	
 void InitHWND(HWND ahFarHwnd)
 {
@@ -1545,9 +1490,21 @@ void InitHWND(HWND ahFarHwnd)
 	ConEmuHwnd = NULL;
 	FarHwnd = ahFarHwnd;
 	
+	{
+		// Console2 check
+		wchar_t szMapName[64];
+		wsprintf(szMapName, L"Console2_consoleBuffer_%d", (DWORD)GetCurrentProcessId());
+		HANDLE hConsole2 = OpenFileMapping(FILE_MAP_READ, FALSE, szMapName);
+		gbStartedUnderConsole2 = (hConsole2 != NULL);
+		if (hConsole2)
+			CloseHandle(hConsole2);
+	}
+	
 	OpenMapHeader();
 	
-	//CreateColorerHeader();
+	// Проверить, созданы ли буферы для True-Colorer
+	// Это для того, чтобы пересоздать их при детаче
+	CheckColorerHeader();
 
 	//memset(hEventCmd, 0, sizeof(HANDLE)*MAXCMDCOUNT);
 	
@@ -2155,17 +2112,15 @@ void StopThread(void)
 		CloseHandle(ghFileMapping);
 		ghFileMapping = NULL;
 	}
-	//if (ghColorMapping) {
-	//	CloseHandle(ghColorMapping);
-	//	ghColorMapping = NULL;
-	//}
+	
+	CloseColorerHeader();
 	
 	CommonShutdown();
 }
 
 void   WINAPI _export ExitFARW(void)
 {
-	UnsetAllHooks();
+	ShutdownHooks();
 	
 	StopThread();
 
@@ -2838,7 +2793,9 @@ BOOL FindServerCmd(DWORD nServerCmd, DWORD &dwServerPID)
 	
 	return lbRc;
 }
-	
+
+void SetConsoleFontSizeTo(HWND inConWnd, int inSizeY, int inSizeX, wchar_t *asFontName);
+
 BOOL Attach2Gui()
 {
 	DWORD dwServerPID = 0;
@@ -2846,9 +2803,13 @@ BOOL Attach2Gui()
 	if (FindServerCmd(CECMD_ATTACH2GUI, dwServerPID) && dwServerPID != 0) {
 		// "Server was already started. PID=%i. Exiting...\n", dwServerPID
 		gdwServerPID = dwServerPID;
+		gbTryOpenMapHeader = (gpConsoleInfo==NULL);
 		return TRUE;
 	}
 	gdwServerPID = 0;
+
+	TODO("У сервера пока не получается менять шрифт в консоли, которую создал FAR");
+	SetConsoleFontSizeTo(GetConsoleWindow(), 6, 4, L"Lucida Console");
 	
 	// Create process, with flag /Attach GetCurrentProcessId()
 	// Sleep for sometimes, try InitHWND(hConWnd); several times
@@ -2881,7 +2842,7 @@ BOOL Attach2Gui()
 		gdwServerPID = pi.dwProcessId;
 		lbRc = TRUE;
 		// Чтобы MonitorThread пытался открыть Mapping
-		bTryOpenMapHeader = TRUE;
+		gbTryOpenMapHeader = TRUE;
 	}
 	
 	return lbRc;

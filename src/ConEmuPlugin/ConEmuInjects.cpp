@@ -39,6 +39,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <shlwapi.h>
 #include "..\common\common.hpp"
 #include "..\common\ConEmuCheck.h"
+#include "..\common\SetHook.h"
 
 #ifdef _DEBUG
 	#include <crtdbg.h>
@@ -48,520 +49,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	#endif
 #endif
 
-#define DebugString(s) OutputDebugString(s)
-
-extern HMODULE ghPluginModule;
-
-extern HWND ConEmuHwnd; // Содержит хэндл окна отрисовки. Это ДОЧЕРНЕЕ окно.
-extern DWORD gnMainThreadId;
-extern BOOL gbFARuseASCIIsort;
-extern DWORD gdwServerPID;
-
-//static bool gbConEmuInput = false; // TRUE если консоль спрятана и должна работать через очередь ConEmu
-
-extern CESERVER_REQ_CONINFO_HDR *gpConsoleInfo;
-
-//WARNING("Все SendMessage нужно переделать на PipeExecute, т.к. из 'Run as' в Win7 нифига не пошлется");
-
-static void* GetOriginalAddress( void* OurFunction, void* DefaultFunction, BOOL abAllowModified );
-static HMODULE WINAPI OnLoadLibraryW( const WCHAR* lpFileName );
-static HMODULE WINAPI OnLoadLibraryA( const char* lpFileName );
-static HMODULE WINAPI OnLoadLibraryExW( const WCHAR* lpFileName, HANDLE hFile, DWORD dwFlags );
-static HMODULE WINAPI OnLoadLibraryExA( const char* lpFileName, HANDLE hFile, DWORD dwFlags );
-
-#if __GNUC__
-extern "C" {
-	#ifndef GetConsoleAliases
-		DWORD WINAPI GetConsoleAliasesA(LPSTR AliasBuffer, DWORD AliasBufferLength, LPSTR ExeName);
-		DWORD WINAPI GetConsoleAliasesW(LPWSTR AliasBuffer, DWORD AliasBufferLength, LPWSTR ExeName);
-		#define GetConsoleAliases  GetConsoleAliasesW
-	#endif
-}
-#endif
-
-
-#define ORIGINAL(n) \
-	BOOL bMainThread = (GetCurrentThreadId() == gnMainThreadId); \
-	void* f##n = (void*)GetOriginalAddress((void*)(On##n) , (void*)n , bMainThread);
-
-static void GuiSetForeground(HWND hWnd)
-{
-	if (ConEmuHwnd) {
-		CESERVER_REQ In, *pOut;
-		ExecutePrepareCmd(&In, CECMD_SETFOREGROUND, sizeof(CESERVER_REQ_HDR)+sizeof(u64));
-		In.qwData[0] = (u64)hWnd;
-		HWND hConWnd = GetConsoleWindow();
-		pOut = ExecuteGuiCmd(hConWnd, &In, hConWnd);
-		if (pOut) ExecuteFreeResult(pOut);
-	}
-}
-
-static void GuiFlashWindow(BOOL bSimple, HWND hWnd, BOOL bInvert, DWORD dwFlags, UINT uCount, DWORD dwTimeout)
-{
-	if (ConEmuHwnd) {
-		CESERVER_REQ In, *pOut;
-		ExecutePrepareCmd(&In, CECMD_FLASHWINDOW, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_FLASHWINFO));
-		In.Flash.bSimple = bSimple;
-		In.Flash.hWnd = hWnd;
-		In.Flash.bInvert = bInvert;
-		In.Flash.dwFlags = dwFlags;
-		In.Flash.uCount = uCount;
-		In.Flash.dwTimeout = dwTimeout;
-		HWND hConWnd = GetConsoleWindow();
-		pOut = ExecuteGuiCmd(hConWnd, &In, hConWnd);
-		if (pOut) ExecuteFreeResult(pOut);
-	}
-}
-
-//static BOOL SrvSetConsoleCP(BOOL bSetOutputCP, DWORD nCP)
-//{
-//	_ASSERTE(ConEmuHwnd);
-//
-//	BOOL lbRc = FALSE;
-//
-//	if (gdwServerPID) {
-//		// Проверить живость процесса
-//		HANDLE hProcess = OpenProcess(SYNCHRONIZE, FALSE, gdwServerPID);
-//		if (hProcess) {
-//			if (WaitForSingleObject(hProcess,0) == WAIT_OBJECT_0)
-//				gdwServerPID = 0; // Процесс сервера завершился
-//			CloseHandle(hProcess);
-//		} else {
-//			gdwServerPID = 0;
-//		}
-//	}
-//
-//	if (gdwServerPID) {
-//#ifndef DROP_SETCP_ON_WIN2K3R2
-//		CESERVER_REQ In, *pOut;
-//		ExecutePrepareCmd(&In, CECMD_SETCONSOLECP, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_SETCONCP));
-//		In.SetConCP.bSetOutputCP = bSetOutputCP;
-//		In.SetConCP.nCP = nCP;
-//		HWND hConWnd = GetConsoleWindow();
-//		pOut = ExecuteSrvCmd(gdwServerPID, &In, hConWnd);
-//		if (pOut) {
-//			if (pOut->hdr.nSize >= In.hdr.nSize) {
-//				lbRc = pOut->SetConCP.bSetOutputCP;
-//				if (!lbRc)
-//					SetLastError(pOut->SetConCP.nCP);
-//			}
-//			ExecuteFreeResult(pOut);
-//		}
-//#else
-//		lbRc = TRUE;
-//#endif
-//	} else {
-//		if (bSetOutputCP)
-//			lbRc = SetConsoleOutputCP(nCP);
-//		else
-//			lbRc = SetConsoleCP(nCP);
-//	}
-//
-//	return lbRc;
-//}
-
-
-
-static BOOL WINAPI OnTrackPopupMenu(HMENU hMenu, UINT uFlags, int x, int y, int nReserved, HWND hWnd, CONST RECT * prcRect)
-{
-	_ASSERTE(TrackPopupMenu!=OnTrackPopupMenu);
-	
-	#ifdef _DEBUG
-		WCHAR szMsg[128]; wsprintf(szMsg, L"TrackPopupMenu(hwnd=0x%08X)\n", (DWORD)hWnd);
-		DebugString(szMsg);
-	#endif
-	
-	if (ConEmuHwnd /*&& IsWindow(ConEmuHwnd)*/) {
-		//UINT nSetFore = RegisterWindowMessage(CONEMUMSG_SETFOREGROUND);
-		//DWORD_PTR dwRc = 0;
-		//SendMessageTimeout(GetParent(ConEmuHwnd), nSetFore, 0, (LPARAM)hWnd, SMTO_NORMAL, 1000, &dwRc);
-		GuiSetForeground(hWnd);
-	}
-	return TrackPopupMenu(hMenu, uFlags, x, y, nReserved, hWnd, prcRect);
-}
-
-static BOOL WINAPI OnTrackPopupMenuEx(HMENU hmenu, UINT fuFlags, int x, int y, HWND hWnd, LPTPMPARAMS lptpm)
-{
-	_ASSERTE(OnTrackPopupMenuEx != TrackPopupMenuEx);
-	
-	#ifdef _DEBUG
-		WCHAR szMsg[128]; wsprintf(szMsg, L"TrackPopupMenuEx(hwnd=0x%08X)\n", (DWORD)hWnd);
-		DebugString(szMsg);
-	#endif
-	
-	if (ConEmuHwnd /*&& IsWindow(ConEmuHwnd)*/) {
-		//UINT nSetFore = RegisterWindowMessage(CONEMUMSG_SETFOREGROUND);
-		//DWORD_PTR dwRc = 0;
-		//SendMessageTimeout(GetParent(ConEmuHwnd), nSetFore, 0, (LPARAM)hWnd, SMTO_NORMAL, 1000, &dwRc);
-		GuiSetForeground(hWnd);
-	}
-	return TrackPopupMenuEx(hmenu, fuFlags, x, y, hWnd, lptpm);
-}
-
-static BOOL WINAPI OnShellExecuteExA(LPSHELLEXECUTEINFOA lpExecInfo)
-{
-	_ASSERTE(OnShellExecuteExA != ShellExecuteExA);
-	
-	if (ConEmuHwnd /*&& IsWindow(ConEmuHwnd)*/) {
-		if (!lpExecInfo->hwnd || lpExecInfo->hwnd == GetConsoleWindow())
-			lpExecInfo->hwnd = GetParent(ConEmuHwnd);
-	}
-	return ShellExecuteExA(lpExecInfo);
-}
-static BOOL WINAPI OnShellExecuteExW(LPSHELLEXECUTEINFOW lpExecInfo)
-{
-	_ASSERTE(OnShellExecuteExW != ShellExecuteExW);
-	
-	if (ConEmuHwnd /*&& IsWindow(ConEmuHwnd)*/) {
-		if (!lpExecInfo->hwnd || lpExecInfo->hwnd == GetConsoleWindow())
-			lpExecInfo->hwnd = GetParent(ConEmuHwnd);
-	}
-	return ShellExecuteExW(lpExecInfo);
-}
-
-static HINSTANCE WINAPI OnShellExecuteA(HWND hwnd, LPCSTR lpOperation, LPCSTR lpFile, LPCSTR lpParameters, LPCSTR lpDirectory, INT nShowCmd)
-{
-	_ASSERTE(OnShellExecuteA != ShellExecuteA);
-	
-	if (ConEmuHwnd /*&& IsWindow(ConEmuHwnd)*/) {
-		if (!hwnd || hwnd == GetConsoleWindow())
-			hwnd = GetParent(ConEmuHwnd);
-	}
-	return ShellExecuteA(hwnd, lpOperation, lpFile, lpParameters, lpDirectory, nShowCmd);
-}
-static HINSTANCE WINAPI OnShellExecuteW(HWND hwnd, LPCWSTR lpOperation, LPCWSTR lpFile, LPCWSTR lpParameters, LPCWSTR lpDirectory, INT nShowCmd)
-{
-	_ASSERTE(OnShellExecuteW != ShellExecuteW);
-	
-	if (ConEmuHwnd /*&& IsWindow(ConEmuHwnd)*/) {
-		if (!hwnd || hwnd == GetConsoleWindow())
-			hwnd = GetParent(ConEmuHwnd);
-	}
-	return ShellExecuteW(hwnd, lpOperation, lpFile, lpParameters, lpDirectory, nShowCmd);
-}
-
-static BOOL WINAPI OnFlashWindow(HWND hWnd, BOOL bInvert)
-{
-	_ASSERTE(FlashWindow != OnFlashWindow);
-
-	if (ConEmuHwnd /*&& IsWindow(ConEmuHwnd)*/) {
-		GuiFlashWindow(TRUE, hWnd, bInvert, 0,0,0);
-		return TRUE;
-		//UINT nFlash = RegisterWindowMessage(CONEMUMSG_FLASHWINDOW);
-		//DWORD_PTR dwRc = 0;
-		//WPARAM wParam = (bInvert ? 2 : 1) << 25;
-		//LRESULT lRc = SendMessageTimeout(GetParent(ConEmuHwnd), nFlash, wParam, (LPARAM)hWnd, SMTO_NORMAL, 1000, &dwRc);
-		//return dwRc!=0;
-	}
-	return FlashWindow(hWnd, bInvert);
-}
-static BOOL WINAPI OnFlashWindowEx(PFLASHWINFO pfwi)
-{
-	_ASSERTE(FlashWindowEx != OnFlashWindowEx);
-
-	if (ConEmuHwnd /*&& IsWindow(ConEmuHwnd)*/) {
-		GuiFlashWindow(FALSE, pfwi->hwnd, 0, pfwi->dwFlags, pfwi->uCount, pfwi->dwTimeout);
-		return TRUE;
-		//UINT nFlash = RegisterWindowMessage(CONEMUMSG_FLASHWINDOW);
-		//DWORD_PTR dwRc = 0;
-		//WPARAM wParam = ((pfwi->dwFlags & 0xF) << 24) | (pfwi->uCount & 0xFFFFFF);
-		//LRESULT lRc = SendMessageTimeout(GetParent(ConEmuHwnd), nFlash, wParam, (LPARAM)pfwi->hwnd, SMTO_NORMAL, 1000, &dwRc);
-		//return dwRc!=0;
-	}
-	return FlashWindowEx(pfwi);
-}
-
-static BOOL WINAPI OnSetForegroundWindow(HWND hWnd)
-{
-	_ASSERTE(SetForegroundWindow != OnSetForegroundWindow);
-	
-	if (ConEmuHwnd /*&& IsWindow(ConEmuHwnd)*/) {
-		GuiSetForeground(hWnd);
-		//UINT nSetFore = RegisterWindowMessage(CONEMUMSG_SETFOREGROUND);
-		//DWORD_PTR dwRc = 0;
-		//LRESULT lRc = SendMessageTimeout(GetParent(ConEmuHwnd), nSetFore, 0, (LPARAM)hWnd, SMTO_NORMAL, 1000, &dwRc);
-		//return lRc!=0;
-	}
-	
-	return SetForegroundWindow(hWnd);
-}
-
-#ifndef NORM_STOP_ON_NULL
-#define NORM_STOP_ON_NULL 0x10000000
-#endif
-
-//static int WINAPI OnCompareStringA(LCID Locale, DWORD dwCmpFlags, LPCSTR lpString1, int cchCount1, LPCSTR lpString2, int cchCount2)
-//static int WINAPI OnlstrcmpiA(LPCSTR lpString1, LPCSTR lpString2)
-//{
-//	_ASSERTE(OnlstrcmpiA!=lstrcmpiA);
-//	int nCmp = 0;
-//	
-//	if (gbFARuseASCIIsort)
-//	{
-//		char ch1 = *lpString1++, ch10 = 0, ch2 = *lpString2++, ch20 = 0;
-//		while (!nCmp && ch1)
-//		{
-//			if (ch1==ch2) {
-//				if (!ch1) break;
-//			} else if (ch1<0x80 && ch2<0x80) {
-//				if (ch1>='A' && ch1<='Z') ch1 |= 0x20;
-//				if (ch2>='A' && ch2<='Z') ch2 |= 0x20;
-//				nCmp = (ch1==ch2) ? 0 : (ch1<ch2) ? -1 : 1;
-//			} else {
-//				nCmp = CompareStringA(LOCALE_USER_DEFAULT, NORM_IGNORECASE|NORM_STOP_ON_NULL|SORT_STRINGSORT, &ch1, 1, &ch2, 1)-2;
-//			}
-//			if (!ch1 || !ch2 || !nCmp) break;
-//			ch1 = *lpString1++;
-//			ch2 = *lpString2++;
-//		}
-//	} else {
-//		nCmp = lstrcmpiA(lpString1, lpString2);
-//	}
-//	return nCmp;
-//}
-
-static int WINAPI OnCompareStringW(LCID Locale, DWORD dwCmpFlags, LPCWSTR lpString1, int cchCount1, LPCWSTR lpString2, int cchCount2)
-{
-	_ASSERTE(OnCompareStringW!=CompareStringW);
-	int nCmp = -1;
-	
-	if (gbFARuseASCIIsort)
-	{
-		//if (dwCmpFlags == (NORM_IGNORECASE|SORT_STRINGSORT) && cchCount1 == -1 && cchCount2 == -1) {
-		//	//int n = lstrcmpiW(lpString1, lpString2);
-		//	//nCmp = (n<0) ? 1 : (n>0) ? 3 : 2;
-		//	
-		//} else
-		
-		if (dwCmpFlags == (NORM_IGNORECASE|NORM_STOP_ON_NULL|SORT_STRINGSORT) /*&& GetCurrentThreadId()==gnMainThreadId*/) {
-			//size_t nLen1 = lstrlen(lpString1), nLen2 = lstrlen(lpString2);
-			
-			//bool bUseWcs = true; // выбор типа сравнивания
-			
-			//if (bUseWcs) {
-				//nCmp = CompareStringW(Locale, dwCmpFlags, lpString1, cchCount1, lpString2, cchCount2);
-				int n = 0;
-				//WCHAR ch1[2], ch2[2]; ch1[1] = ch2[1] = 0;
-				WCHAR ch1 = *lpString1++, /*ch10 = 0,*/ ch2 = *lpString2++ /*,ch20 = 0*/;
-				int n1 = (cchCount1==cchCount2) ? cchCount1
-					: (cchCount1!=-1 && cchCount2!=-1) ? -1 
-						: (cchCount1!=-1) ? cchCount2 
-							: (cchCount2!=-1) ? cchCount1 : min(cchCount1,cchCount2);
-				while (!n && /*(ch1=*lpString1++) && (ch2=*lpString2++) &&*/ n1--)
-				{
-					if (ch1==ch2) {
-						if (!ch1) break;
-						// n = 0;
-					} else if (ch1<0x80 && ch2<0x80) {
-						if (ch1>=L'A' && ch1<=L'Z') ch1 |= 0x20;
-						if (ch2>=L'A' && ch2<=L'Z') ch2 |= 0x20;
-						n = (ch1==ch2) ? 0 : (ch1<ch2) ? -1 : 1;
-					} else {
-						n = CompareStringW(Locale, dwCmpFlags, &ch1, 1, &ch2, 1)-2;
-					}
-					if (!ch1 || !ch2 || !n1) break;
-					ch1 = *lpString1++;
-					ch2 = *lpString2++;
-				}
-				//if (!n && ((ch1!=0) ^ (ch2!=0)))
-					//n = _wcsnicmp(ch1, ch2, 1);
-					//nCmp = lstrcmpiW(ch1, ch2);
-					//nCmp = StrCmpNI(lpString1++, lpString2++, 1);
-				nCmp = (n<0) ? 1 : (n>0) ? 3 : 2;
-			//}
-			//nCmp += 2;
-			//static WCHAR temp[MAX_PATH+1];
-			//size_t nLen1 = lstrlen(lpString1), nLen2 = lstrlen(lpString2);
-			//if (nLen1 && nLen2 && nLen1 <= MAX_PATH && nLen2 <= MAX_PATH) {
-			//	if (nLen1 == nLen2) {
-			//		nCmp = lstrcmpiW(lpString1, lpString2)+2;
-			//	} else if (nLen1 < nLen2) {
-			//		lstrcpyn(temp, lpString2, nLen1+1);
-			//		nCmp = lstrcmpiW(lpString1, temp)+2;
-			//	} else if (nLen1 > nLen2) {
-			//		lstrcpyn(temp, lpString1, nLen2+1);
-			//		nCmp = lstrcmpiW(temp, lpString2)+2;
-			//	}
-			//}
-		}
-	}
-	
-	if (nCmp == -1)
-		nCmp = CompareStringW(Locale, dwCmpFlags, lpString1, cchCount1, lpString2, cchCount2);
-	return nCmp;
-}
-
-static DWORD WINAPI OnGetConsoleAliasesW(LPWSTR AliasBuffer, DWORD AliasBufferLength, LPWSTR ExeName)
-{
-	_ASSERTE(OnGetConsoleAliasesW!=GetConsoleAliasesW);
-	DWORD nError = 0;
-	DWORD nRc = GetConsoleAliasesW(AliasBuffer,AliasBufferLength,ExeName);
-	if (!nRc) {
-		nError = GetLastError();
-		// финт ушами
-		if (nError == ERROR_NOT_ENOUGH_MEMORY && gdwServerPID) {
-			CESERVER_REQ_HDR In;
-			ExecutePrepareCmd((CESERVER_REQ*)&In, CECMD_GETALIASES,sizeof(CESERVER_REQ_HDR));
-			CESERVER_REQ* pOut = ExecuteSrvCmd(gdwServerPID, (CESERVER_REQ*)&In, GetConsoleWindow());
-			if (pOut) {
-				DWORD nData = min(AliasBufferLength,(pOut->hdr.nSize-sizeof(pOut->hdr)));
-				if (nData) {
-					memmove(AliasBuffer, pOut->Data, nData);
-					nRc = TRUE;
-				}
-				ExecuteFreeResult(pOut);
-			}
-			if (!nRc)
-				SetLastError(nError); // вернуть, вдруг какая функция его поменяла
-		}
-	}
-	return nRc;
-}
-
-//static BOOL WINAPI OnSetConsoleCP(UINT wCodePageID)
-//{
-//	_ASSERTE(OnSetConsoleCP!=SetConsoleCP);
-//	TODO("Виснет в 2k3R2 при 'chcp 866 <enter> chcp 20866 <enter>");
-//	BOOL lbRc = FALSE;
-//	if (gdwServerPID) {
-//		lbRc = SrvSetConsoleCP(FALSE/*bSetOutputCP*/, wCodePageID);
-//	} else {
-//		lbRc = SetConsoleCP(wCodePageID);
-//	}
-//	return lbRc;
-//}
-//
-//static BOOL WINAPI OnSetConsoleOutputCP(UINT wCodePageID)
-//{
-//	_ASSERTE(OnSetConsoleOutputCP!=SetConsoleOutputCP);
-//	BOOL lbRc = FALSE;
-//	if (gdwServerPID) {
-//		lbRc = SrvSetConsoleCP(TRUE/*bSetOutputCP*/, wCodePageID);
-//	} else {
-//		lbRc = SetConsoleOutputCP(wCodePageID);
-//	}
-//	return lbRc;
-//}
-
-static BOOL WINAPI OnGetNumberOfConsoleInputEvents(HANDLE hConsoleInput, LPDWORD lpcNumberOfEvents)
-{
-	_ASSERTE(OnGetNumberOfConsoleInputEvents!=GetNumberOfConsoleInputEvents);
-	if (gpConsoleInfo) {
-		if (GetCurrentThreadId() == gnMainThreadId)
-			gpConsoleInfo->nFarReadIdx++;
-	}
-	BOOL lbRc = GetNumberOfConsoleInputEvents(hConsoleInput, lpcNumberOfEvents);
-	return lbRc;
-}
-
-typedef BOOL (WINAPI* PeekConsoleInput_t)(HANDLE,PINPUT_RECORD,DWORD,LPDWORD);
-
-static void TouchReadPeekConsoleInputs(bool Peek)
-{
-	_ASSERTE(gpConsoleInfo);
-	if (!gpConsoleInfo) return;
-	gpConsoleInfo->nFarReadIdx++;
-
-#ifdef _DEBUG
-	if ((GetKeyState(VK_SCROLL)&1) == 0)
-		return;
-	static DWORD nLastTick;
-	DWORD nCurTick = GetTickCount();
-	DWORD nDelta = nCurTick - nLastTick;
-	static CONSOLE_SCREEN_BUFFER_INFO sbi;
-	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
-	if (nDelta > 1000) {
-		GetConsoleScreenBufferInfo(hOut, &sbi);
-		nCurTick = nCurTick;
-	}
-	static wchar_t Chars[] = L"-\\|/-\\|/";
-	int nNextChar = 0;
-	if (Peek) {
-		static int nPeekChar = 0;
-		nNextChar = nPeekChar++;
-		if (nPeekChar >= 8) nPeekChar = 0;
-	} else {
-		static int nReadChar = 0;
-		nNextChar = nReadChar++;
-		if (nReadChar >= 8) nReadChar = 0;
-	}
-	CHAR_INFO chi;
-	chi.Char.UnicodeChar = Chars[nNextChar];
-	chi.Attributes = 15;
-	COORD crBufSize = {1,1};
-	COORD crBufCoord = {0,0};
-	SMALL_RECT rc = {sbi.srWindow.Left+(Peek?0:1),sbi.srWindow.Bottom,sbi.srWindow.Left+(Peek?0:1),sbi.srWindow.Bottom};
-	WriteConsoleOutputW(hOut, &chi, crBufSize, crBufCoord, &rc);
-#endif
-}
-
-static BOOL WINAPI OnPeekConsoleInputA(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsRead)
-{
-	ORIGINAL(PeekConsoleInputA);
-	_ASSERTE(OnPeekConsoleInputA!=fPeekConsoleInputA);
-	if (gpConsoleInfo && bMainThread)
-		TouchReadPeekConsoleInputs(true);
-	BOOL lbRc = ((PeekConsoleInput_t)fPeekConsoleInputA)(hConsoleInput, lpBuffer, nLength, lpNumberOfEventsRead);
-	return lbRc;
-}
-
-static BOOL WINAPI OnPeekConsoleInputW(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsRead)
-{
-	ORIGINAL(PeekConsoleInputW);
-	_ASSERTE(OnPeekConsoleInputW!=fPeekConsoleInputW);
-	if (gpConsoleInfo && bMainThread)
-		TouchReadPeekConsoleInputs(true);
-	BOOL lbRc = ((PeekConsoleInput_t)fPeekConsoleInputW)(hConsoleInput, lpBuffer, nLength, lpNumberOfEventsRead);
-	return lbRc;
-}
-
-static BOOL WINAPI OnReadConsoleInputA(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsRead)
-{
-	_ASSERTE(OnReadConsoleInputA!=ReadConsoleInputA);
-	if (gpConsoleInfo) {
-		if (GetCurrentThreadId() == gnMainThreadId) {
-			TouchReadPeekConsoleInputs(false);
-		}
-	}
-	BOOL lbRc = ReadConsoleInputA(hConsoleInput, lpBuffer, nLength, lpNumberOfEventsRead);
-	return lbRc;
-}
-
-static BOOL WINAPI OnReadConsoleInputW(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsRead)
-{
-	_ASSERTE(OnReadConsoleInputW!=ReadConsoleInputW);
-	if (gpConsoleInfo) {
-		if (GetCurrentThreadId() == gnMainThreadId) {
-			TouchReadPeekConsoleInputs(false);
-		}
-	}
-	BOOL lbRc = ReadConsoleInputW(hConsoleInput, lpBuffer, nLength, lpNumberOfEventsRead);
-	return lbRc;
-}
-
-static HANDLE WINAPI OnCreateConsoleScreenBuffer(DWORD dwDesiredAccess, DWORD dwShareMode, const SECURITY_ATTRIBUTES *lpSecurityAttributes, DWORD dwFlags, LPVOID lpScreenBufferData)
-{
-	_ASSERTE(OnCreateConsoleScreenBuffer!=CreateConsoleScreenBuffer);
-	if ((dwShareMode & (FILE_SHARE_READ|FILE_SHARE_WRITE)) != (FILE_SHARE_READ|FILE_SHARE_WRITE))
-		dwShareMode |= (FILE_SHARE_READ|FILE_SHARE_WRITE);
-	HANDLE h = CreateConsoleScreenBuffer(dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwFlags, lpScreenBufferData);
-	return h;
-}
-
-
-typedef struct HookItem
-{
-    void*  NewAddress;
-    char*  Name;
-    TCHAR* DllName;
-    void*  OldAddress;
-	BOOL   ReplacedInExe;
-	void*  ExeOldAddress;
-} HookItem;
 
 static TCHAR kernel32[] = _T("kernel32.dll");
-static TCHAR user32[]   = _T("user32.dll");
-static TCHAR shell32[]  = _T("shell32.dll");
+//static TCHAR user32[]   = _T("user32.dll");
+//static TCHAR shell32[]  = _T("shell32.dll");
 
 //static BOOL bHooksWin2k3R2Only = FALSE;
 //static HookItem HooksWin2k3R2Only[] = {
@@ -571,6 +62,8 @@ static TCHAR shell32[]  = _T("shell32.dll");
 //	{0, 0, 0}
 //};
 
+extern int WINAPI OnCompareStringW(LCID Locale, DWORD dwCmpFlags, LPCWSTR lpString1, int cchCount1, LPCWSTR lpString2, int cchCount2);
+
 static HookItem HooksFarOnly[] = {
 //	{OnlstrcmpiA,      "lstrcmpiA",      kernel32, 0},
 	{(void*)OnCompareStringW, "CompareStringW", kernel32, 0},
@@ -578,516 +71,93 @@ static HookItem HooksFarOnly[] = {
 	{0, 0, 0}
 };
 
-static HookItem Hooks[] = {
-	// My
-	{(void*)OnPeekConsoleInputW,	"PeekConsoleInputW",	kernel32, 0},
-	{(void*)OnPeekConsoleInputA,	"PeekConsoleInputA",	kernel32, 0},
-	{(void*)OnReadConsoleInputW,	"ReadConsoleInputW",	kernel32, 0},
-	{(void*)OnReadConsoleInputA,	"ReadConsoleInputA",	kernel32, 0},
-    {(void*)OnLoadLibraryA,        "LoadLibraryA",			kernel32, 0},
-	{(void*)OnLoadLibraryW,        "LoadLibraryW",			kernel32, 0},
-    {(void*)OnLoadLibraryExA,      "LoadLibraryExA",		kernel32, 0},
-	{(void*)OnLoadLibraryExW,      "LoadLibraryExW",		kernel32, 0},
-	{(void*)OnGetConsoleAliasesW,  "GetConsoleAliasesW",	kernel32, 0},
-	{(void*)OnGetNumberOfConsoleInputEvents,
-							"GetNumberOfConsoleInputEvents",
-													kernel32, 0},
-	{(void*)OnCreateConsoleScreenBuffer,
-							"CreateConsoleScreenBuffer",
-													kernel32, 0},
-	{(void*)OnTrackPopupMenu,      "TrackPopupMenu",		user32,   0},
-	{(void*)OnTrackPopupMenuEx,    "TrackPopupMenuEx",		user32,   0},
-	{(void*)OnFlashWindow,         "FlashWindow",			user32,   0},
-	{(void*)OnFlashWindowEx,       "FlashWindowEx",		user32,   0},
-	{(void*)OnSetForegroundWindow, "SetForegroundWindow",	user32,   0},
-	{(void*)OnShellExecuteExA,     "ShellExecuteExA",		shell32,  0},
-	{(void*)OnShellExecuteExW,     "ShellExecuteExW",		shell32,  0},
-	{(void*)OnShellExecuteA,       "ShellExecuteA",		shell32,  0},
-	{(void*)OnShellExecuteW,       "ShellExecuteW",		shell32,  0},
-	/* ************************ */
-	{0, 0, 0}
-};
 
-
-
-static TCHAR* ExcludedModules[] = {
-    _T("conemu.dll"), _T("conemu.x64.dll"), // по идее не нужно - должно по ghPluginModule пропускаться. Но на всякий случай!
-    _T("kernel32.dll"),
-    // а user32.dll не нужно?
-    0
-};
-
-
-
-
-
-
-
-
-
-static bool IsModuleExcluded( HMODULE module )
-{
-    for( int i = 0; ExcludedModules[i]; i++ )
-        if( module == GetModuleHandle( ExcludedModules[i] ) )
-            return true;
-    return false;
-}
-
-
-// Заполнить поле HookItem.OldAddress (реальные процедуры из внешних библиотек)
-static bool InitHooks( HookItem* item )
-{
-    if( !item )
-        return false;
-
-    for( int i = 0; item[i].Name; i++ )
-    {
-        if( !item[i].OldAddress )
-        {
-            HMODULE mod = GetModuleHandle( item[i].DllName );
-            if( mod )
-                item[i].OldAddress = (void*)GetProcAddress( mod, item[i].Name );
-        }
-    }
-    return true;
-}
-
-#ifdef _DEBUG
-static PIMAGE_SECTION_HEADER GetEnclosingSectionHeader(DWORD_PTR rva, PIMAGE_NT_HEADERS pNTHeader)
-{
-	PIMAGE_SECTION_HEADER section = IMAGE_FIRST_SECTION(pNTHeader);
-	unsigned i;
-
-	for ( i=0; i < pNTHeader->FileHeader.NumberOfSections; i++, section++ )
-	{
-		// This 3 line idiocy is because Watcom's linker actually sets the
-		// Misc.VirtualSize field to 0.  (!!! - Retards....!!!)
-		DWORD size = section->Misc.VirtualSize;
-		if ( 0 == size )
-			size = section->SizeOfRawData;
-
-		// Is the RVA within this section?
-		if ( (rva >= section->VirtualAddress) && 
-			(rva < (section->VirtualAddress + size)))
-			return section;
-	}
-
-	return 0;
-}
-#endif
-
-static LPVOID GetPtrFromRVA( DWORD_PTR rva, PIMAGE_NT_HEADERS pNTHeader, PBYTE imageBase )
-{
-#ifdef _DEBUG
-	PIMAGE_SECTION_HEADER pSectionHdr;
-	INT delta;
-
-	pSectionHdr = GetEnclosingSectionHeader( rva, pNTHeader );
-	if ( !pSectionHdr )
-		; //return 0;
-	else
-		delta = (INT)(pSectionHdr->VirtualAddress-pSectionHdr->PointerToRawData);
-#endif
-
-	return (PVOID) ( imageBase + rva /*- delta*/ );
-}
-
-
-// Подменить Импортируемые функции в модуле
-static bool SetHook( HookItem* item, HMODULE Module = 0, BOOL abExecutable = FALSE )
-{
-    if( !item )
-        return false;
-//    __try{
-    IMAGE_IMPORT_DESCRIPTOR* Import = 0;
-    DWORD Size = 0;
-    if( !Module )
-        Module = GetModuleHandle( 0 );
-    IMAGE_DOS_HEADER* dos_header = (IMAGE_DOS_HEADER*)Module;
-	IMAGE_NT_HEADERS* nt_header = NULL;
-    if( dos_header->e_magic == 'ZM' )
-    {
-        nt_header = (IMAGE_NT_HEADERS*)((char*)Module + dos_header->e_lfanew);
-        if( nt_header->Signature != 0x004550 )
-            return false;
-        else
-        {
-            Import = (IMAGE_IMPORT_DESCRIPTOR*)((char*)Module +
-                                         (DWORD)(nt_header->OptionalHeader.
-                                         DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].
-                                         VirtualAddress));
-            Size = nt_header->OptionalHeader.
-                                         DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].Size;
-        }
-    }
-    else
-        return false;
-
-    // if wrong module or no import table
-    if( Module == INVALID_HANDLE_VALUE || !Import )
-        return false;
-
-#ifdef _DEBUG
-	PIMAGE_SECTION_HEADER section = IMAGE_FIRST_SECTION(nt_header);
-#endif
-
-	#ifdef _WIN64
-	_ASSERTE(sizeof(DWORD_PTR)==8);
-	#else
-	_ASSERTE(sizeof(DWORD_PTR)==4);
-	#endif
-
-	#ifdef _WIN64
-		#define TOP_SHIFT 60
-	#else
-		#define TOP_SHIFT 28
-	#endif
-
-    bool res = false;
-	int i;
-	int nCount = Size / sizeof(IMAGE_IMPORT_DESCRIPTOR);
-	//_ASSERTE(Size == (nCount * sizeof(IMAGE_IMPORT_DESCRIPTOR))); -- ровно быть не обязано
-    for( i = 0; i < nCount; i++ )
-    {
-		if (Import[i].Name == 0)
-			break;
-        //DebugString( ToTchar( (char*)Module + Import[i].Name ) );
-		#ifdef _DEBUG
-		char* mod_name = (char*)Module + Import[i].Name;
-		#endif
-
-		DWORD_PTR rvaINT = Import[i].OriginalFirstThunk;
-		DWORD_PTR rvaIAT = Import[i].FirstThunk;
-		if ( rvaINT == 0 )   // No Characteristics field?
-		{
-			// Yes! Gotta have a non-zero FirstThunk field then.
-			rvaINT = rvaIAT;
-			if ( rvaINT == 0 )   // No FirstThunk field?  Ooops!!!
-				break;
-		}
-
-		PIMAGE_IMPORT_BY_NAME /*pOrdinalName = NULL,*/ pOrdinalNameO = NULL;
-		//IMAGE_IMPORT_BY_NAME** byname = (IMAGE_IMPORT_BY_NAME**)((char*)Module + rvaINT);
-        //IMAGE_THUNK_DATA* thunk = (IMAGE_THUNK_DATA*)((char*)Module + rvaIAT);
-		IMAGE_THUNK_DATA* thunk = (IMAGE_THUNK_DATA*)GetPtrFromRVA( rvaIAT, nt_header, (PBYTE)Module );
-		IMAGE_THUNK_DATA* thunkO = (IMAGE_THUNK_DATA*)GetPtrFromRVA( rvaINT, nt_header, (PBYTE)Module );
-		if (!thunk ||  !thunkO) {
-			_ASSERTE(thunk && thunkO);
-			continue;
-		}
-
-		int f = 0;
-        for(f = 0 ; thunk->u1.Function; thunk++, thunkO++, f++)
-        {
-			const char* pszFuncName = NULL;
-			ULONGLONG ordinalO = -1;
-			if (abExecutable) {
-				if ( IMAGE_SNAP_BY_ORDINAL(thunkO->u1.Ordinal) ) {
-					ordinalO = IMAGE_ORDINAL(thunkO->u1.Ordinal);
-					pOrdinalNameO = NULL;
-				} else {
-					pOrdinalNameO = (PIMAGE_IMPORT_BY_NAME)GetPtrFromRVA(thunkO->u1.AddressOfData, nt_header, (PBYTE)Module);
-					BOOL lbValidPtr = !IsBadReadPtr(pOrdinalNameO, sizeof(IMAGE_IMPORT_BY_NAME));
-					_ASSERTE(lbValidPtr);
-					if (lbValidPtr) {
-						lbValidPtr = !IsBadStringPtrA((LPCSTR)pOrdinalNameO->Name, 10);
-						_ASSERTE(lbValidPtr);
-						if (lbValidPtr)
-							pszFuncName = (LPCSTR)pOrdinalNameO->Name;
-					}
-				}
-			}
-
-			int j = 0;
-            for( j = 0; item[j].Name; j++ )
-			{
-				if (item[j].NewAddress == (void*)thunk->u1.Function)
-					continue; // это уже захучено
-
-				// OldAddress уже может отличаться от оригинального экспорта библиотеки
-				// Это происходит например с PeekConsoleIntputW при наличии плагина Anamorphosis
-                if( !item[j].OldAddress || (void*)thunk->u1.Function != item[j].OldAddress )
-                {
-					if (!pszFuncName || !abExecutable) {
-						continue;
-					} else {
-						if (strcmp(pszFuncName, item[j].Name))
-							continue;
-					}
-					item[j].ExeOldAddress = (void*)thunk->u1.Function;
-				}
-
-				DWORD old_protect = 0;
-				VirtualProtect( &thunk->u1.Function, sizeof( thunk->u1.Function ),
-					PAGE_READWRITE, &old_protect );
-				thunk->u1.Function = (DWORD_PTR)item[j].NewAddress;
-				VirtualProtect( &thunk->u1.Function, sizeof( DWORD ), old_protect, &old_protect );
-				if (abExecutable)
-					item[j].ReplacedInExe = TRUE;
-				//DebugString( ToTchar( item[j].Name ) );
-				res = true;
-				break;
-			}
-        }
-    }
-
-    return res;
-}
-
-//void ResetExeHooks()
+//void UnsetAllHooks()
 //{
-//	SetHook( Hooks, NULL, TRUE );
+//	UnsetHook( HooksFarOnly, NULL, TRUE );
+//	
+//	/*if (bHooksWin2k3R2Only) {
+//		bHooksWin2k3R2Only = FALSE;
+//		UnsetHook( HooksWin2k3R2Only, NULL, TRUE );
+//	}*/
+//	
+//    HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, 0);
+//    if(snapshot != INVALID_HANDLE_VALUE)
+//    {
+//        MODULEENTRY32 module = {sizeof(module)};
+//		BOOL lbExecutable = TRUE;
+//
+//        for(BOOL res = Module32First(snapshot, &module); res; res = Module32Next(snapshot, &module))
+//        {
+//            if(module.hModule != ghPluginModule && !IsModuleExcluded(module.hModule))
+//            {
+//                DebugString( module.szModule );
+//                UnsetHook( Hooks, module.hModule, lbExecutable );
+//				if (lbExecutable) lbExecutable = FALSE;
+//            }
+//        }
+//
+//        CloseHandle(snapshot);
+//    }
 //}
 
-// Подменить Импортируемые функции во всех модулях процесса, загруженных ДО conemu.dll
-static bool SetHookEx( HookItem* item, HMODULE inst )
-{
-    if( !item )
-        return false;
-    //MEMORY_BASIC_INFORMATION minfo;
-    //char* pb = (char*)GetModuleHandle( 0 );
 
-    HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, 0);
-    if(snapshot != INVALID_HANDLE_VALUE)
-    {
-        MODULEENTRY32 module = {sizeof(module)};
-		BOOL bFirst = TRUE;
-
-        for(BOOL res = Module32First(snapshot, &module); res; res = Module32Next(snapshot, &module))
-        {
-            if(module.hModule != inst && !IsModuleExcluded(module.hModule))
-            {
-                DebugString( module.szModule );
-                SetHook( item, module.hModule, bFirst );
-				if (bFirst) bFirst = FALSE;
-            }
-        }
-
-        CloseHandle(snapshot);
-    }
-
-    return true;
-}
-
-
-
-
-// Подменить Импортируемые функции в модуле
-static bool UnsetHook( const HookItem* item, HMODULE Module = 0, BOOL abExecutable = FALSE )
-{
-    if( !item )
-        return false;
-//    __try{
-    IMAGE_IMPORT_DESCRIPTOR* Import = 0;
-    DWORD Size = 0;
-    if( !Module )
-        Module = GetModuleHandle( 0 );
-    IMAGE_DOS_HEADER* dos_header = (IMAGE_DOS_HEADER*)Module;
-    if( dos_header->e_magic == 'ZM' )
-    {
-        IMAGE_NT_HEADERS* nt_header = (IMAGE_NT_HEADERS*)((char*)Module + dos_header->e_lfanew);
-        if( nt_header->Signature != 0x004550 )
-            return false;
-        else
-        {
-            Import = (IMAGE_IMPORT_DESCRIPTOR*)((char*)Module +
-                                         (DWORD)(nt_header->OptionalHeader.
-                                         DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].
-                                         VirtualAddress));
-            Size = nt_header->OptionalHeader.
-                                         DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].Size;
-        }
-    }
-    else
-        return false;
-
-    // if wrong module or no import table
-    if( Module == INVALID_HANDLE_VALUE || !Import )
-        return false;
-
-    bool res = false;
-    for( int i = 0; Import[i].Name; i++ )
-    {
-        //DebugString( ToTchar( (char*)Module + Import[i].Name ) );
-        //char* mod_name = (char*)Module + Import[i].Name;
-        //-- не используется -- IMAGE_IMPORT_BY_NAME** byname = (IMAGE_IMPORT_BY_NAME**)(Import[i].Characteristics + (DWORD_PTR)Module);
-        {
-            {
-                IMAGE_THUNK_DATA* thunk = (IMAGE_THUNK_DATA*)((char*)Module + Import[i].FirstThunk);
-                for( ; thunk->u1.Function; thunk++/*, byname++*/) // byname не используется
-                {
-                    for( int j = 0; item[j].Name; j++ )
-                    {
-                    	// BugBug: в принципе, эту функцию мог захукать и другой модуль (уже после нас),
-						// но лучше вернуть оригинальную, чем потом свалиться
-                        if( item[j].OldAddress && (void*)thunk->u1.Function == item[j].NewAddress )
-                        {
-                            DWORD old_protect;
-                            VirtualProtect( &thunk->u1.Function, sizeof( thunk->u1.Function ),
-                                            PAGE_READWRITE, &old_protect );
-							// BugBug: ExeOldAddress может отличаться от оригинального, если функция была перехвачена ДО нас
-							//if (abExecutable && item[j].ExeOldAddress)
-							//	thunk->u1.Function = (DWORD_PTR)item[j].ExeOldAddress;
-							//else
-								thunk->u1.Function = (DWORD_PTR)item[j].OldAddress;
-                            VirtualProtect( &thunk->u1.Function, sizeof( DWORD ), old_protect, &old_protect );
-                            //DebugString( ToTchar( item[j].Name ) );
-                            res = true;
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    return res;
-}
-
-void UnsetAllHooks()
-{
-	UnsetHook( HooksFarOnly, NULL, TRUE );
-	
-	/*if (bHooksWin2k3R2Only) {
-		bHooksWin2k3R2Only = FALSE;
-		UnsetHook( HooksWin2k3R2Only, NULL, TRUE );
-	}*/
-	
-    HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, 0);
-    if(snapshot != INVALID_HANDLE_VALUE)
-    {
-        MODULEENTRY32 module = {sizeof(module)};
-		BOOL lbExecutable = TRUE;
-
-        for(BOOL res = Module32First(snapshot, &module); res; res = Module32Next(snapshot, &module))
-        {
-            if(module.hModule != ghPluginModule && !IsModuleExcluded(module.hModule))
-            {
-                DebugString( module.szModule );
-                UnsetHook( Hooks, module.hModule, lbExecutable );
-				if (lbExecutable) lbExecutable = FALSE;
-            }
-        }
-
-        CloseHandle(snapshot);
-    }
-}
-
-
-
-// Используется в том случае, если требуется выполнить оригинальную функцию, без нашей обертки
-// пример в OnPeekConsoleInputW
-static void* GetOriginalAddress( void* OurFunction, void* DefaultFunction, BOOL abAllowModified )
-{
-	for( int i = 0; Hooks[i].Name; i++ ) {
-		if ( Hooks[i].NewAddress == OurFunction) {
-			return (abAllowModified && Hooks[i].ExeOldAddress) ? Hooks[i].ExeOldAddress : Hooks[i].OldAddress;
-		}
-	}
-    _ASSERT(FALSE); // сюда мы попадать не должны
-    return DefaultFunction;
-}
+extern BOOL WINAPI OnConsoleDetaching(HookCallbackArg* pArgs);
+extern VOID WINAPI OnConsoleWasAttached(HookCallbackArg* pArgs);
 
 
 
 // Эту функцию нужно позвать из DllMain плагина
-BOOL StartupHooks()
+BOOL StartupHooks(HMODULE ahOurDll)
 {
-	HMODULE hKernel = GetModuleHandle( kernel32 );
-	HMODULE hUser   = GetModuleHandle( user32 );
-	HMODULE hShell  = GetModuleHandle( shell32 );
-	if (!hShell) hShell = LoadLibrary ( shell32 );
-	_ASSERTE(hKernel && hUser && hShell);
-	if (!hKernel || !hUser || !hShell)
-		return FALSE; // модули должны быть загружены ДО conemu.dll
-
-	OSVERSIONINFOEX osv = {sizeof(OSVERSIONINFOEX)};
-	GetVersionEx((LPOSVERSIONINFO)&osv);
-
-	// Заполнить поле HookItem.OldAddress (реальные процедуры из внешних библиотек)
-	InitHooks( Hooks );
 	InitHooks( HooksFarOnly );
-	//InitHooks( HooksWin2k3R2Only );
+	
+	SetHookCallbacks( "FreeConsole",  kernel32, OnConsoleDetaching, NULL );
+	SetHookCallbacks( "AllocConsole", kernel32, NULL, OnConsoleWasAttached );
 
-	//  Подменить Импортируемые функции в FAR.exe (пока это только сравнивание строк)
-	SetHook( HooksFarOnly, NULL, TRUE );
-	
-	// Windows Server 2003 R2
-	
-	/*if (osv.dwMajorVersion==5 && osv.dwMinorVersion==2 && osv.wServicePackMajor>=2)
-	{
-		//DWORD dwBuild = GetSystemMetrics(SM_SERVERR2); // нихрена оно не возвращает. 0 тут :(
-		bHooksWin2k3R2Only = TRUE;
-		SetHook( HooksWin2k3R2Only, NULL );
-	}*/
-	
-	// Подменить Импортируемые функции во всех модулях процесса, загруженных ДО conemu.dll
-	SetHookEx( Hooks, ghPluginModule );
+	return SetAllHooks(ahOurDll);
 
-	// Заменить в модуле Module ЭКСпортируемые функции на подменяемые плагином нихрена
-	// НЕ получится, т.к. в Win32 библиотека shell32 может быть загружена ПОСЛЕ conemu.dll
-	//   что вызовет некорректные смещения функций,
-	// а в Win64 смещения вообще должны быть 64битными, а структура модуля хранит только 32битные смещения
-	
-	return TRUE;
+	//HMODULE hKernel = GetModuleHandle( kernel32 );
+	//HMODULE hUser   = GetModuleHandle( user32 );
+	//HMODULE hShell  = GetModuleHandle( shell32 );
+	//if (!hShell) hShell = LoadLibrary ( shell32 );
+	//_ASSERTE(hKernel && hUser && hShell);
+	//if (!hKernel || !hUser || !hShell)
+	//	return FALSE; // модули должны быть загружены ДО conemu.dll
+	//
+	//OSVERSIONINFOEX osv = {sizeof(OSVERSIONINFOEX)};
+	//GetVersionEx((LPOSVERSIONINFO)&osv);
+	//
+	//// Заполнить поле HookItem.OldAddress (реальные процедуры из внешних библиотек)
+	//InitHooks( Hooks );
+	//InitHooks( HooksFarOnly );
+	////InitHooks( HooksWin2k3R2Only );
+	//
+	////  Подменить Импортируемые функции в FAR.exe (пока это только сравнивание строк)
+	//SetHook( HooksFarOnly, NULL, TRUE );
+	//
+	//// Windows Server 2003 R2
+	//
+	///*if (osv.dwMajorVersion==5 && osv.dwMinorVersion==2 && osv.wServicePackMajor>=2)
+	//{
+	//	//DWORD dwBuild = GetSystemMetrics(SM_SERVERR2); // нихрена оно не возвращает. 0 тут :(
+	//	bHooksWin2k3R2Only = TRUE;
+	//	SetHook( HooksWin2k3R2Only, NULL );
+	//}*/
+	//
+	//// Подменить Импортируемые функции во всех модулях процесса, загруженных ДО conemu.dll
+	//SetHookEx( Hooks, ghPluginModule );
+	//
+	//// Заменить в модуле Module ЭКСпортируемые функции на подменяемые плагином нихрена
+	//// НЕ получится, т.к. в Win32 библиотека shell32 может быть загружена ПОСЛЕ conemu.dll
+	////   что вызовет некорректные смещения функций,
+	//// а в Win64 смещения вообще должны быть 64битными, а структура модуля хранит только 32битные смещения
+	//
+	//return TRUE;
 }
 
 
-
-
-// Заменить в модуле Module ЭКСпортируемые функции на подменяемые плагином нихрена
-// НЕ получится, т.к. в Win32 библиотека shell32 может быть загружена ПОСЛЕ conemu.dll
-//   что вызовет некорректные смещения функций,
-// а в Win64 смещения вообще должны быть 64битными, а структура модуля хранит только 32битные смещения
-
-static HMODULE WINAPI OnLoadLibraryA( const char* lpFileName )
+void ShutdownHooks()
 {
-	_ASSERTE(LoadLibraryA!=OnLoadLibraryA);
-
-    HMODULE module = LoadLibraryA( lpFileName );
-    if( !module || module == ghPluginModule )
-        return module;
-
-    SetHook( Hooks, module );
-
-	return module;
-}
-
-static HMODULE WINAPI OnLoadLibraryW( const WCHAR* lpFileName )
-{
-	_ASSERTE(LoadLibraryW!=OnLoadLibraryW);
-
-	HMODULE module = LoadLibraryW( lpFileName );
-	if( !module || module == ghPluginModule )
-		return module;
-
-	SetHook( Hooks, module );
-
-	return module;
-}
-
-static HMODULE WINAPI OnLoadLibraryExA( const char* lpFileName, HANDLE hFile, DWORD dwFlags )
-{
-	_ASSERTE(LoadLibraryExW!=OnLoadLibraryExW);
-
-	HMODULE module = LoadLibraryExA( lpFileName, hFile, dwFlags );
-	if( !module || module == ghPluginModule )
-		return module;
-
-	SetHook( Hooks, module );
-
-	return module;
-}
-
-static HMODULE WINAPI OnLoadLibraryExW( const WCHAR* lpFileName, HANDLE hFile, DWORD dwFlags )
-{
-    _ASSERTE(LoadLibraryExW!=OnLoadLibraryExW);
-
-    HMODULE module = LoadLibraryExW( lpFileName, hFile, dwFlags );
-	if( !module || module == ghPluginModule )
-		return module;
-
-	SetHook( Hooks, module );
-
-	return module;
+	UnsetAllHooks();
 }

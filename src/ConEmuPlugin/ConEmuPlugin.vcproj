@@ -1162,6 +1162,14 @@
 				RelativePath=".\LogBrowser.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\SetConsoleInfo.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\common\SetHook.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -1182,6 +1190,10 @@
 			</File>
 			<File
 				RelativePath=".\PluginHeader.h"
+				>
+			</File>
+			<File
+				RelativePath="..\common\SetHook.h"
 				>
 			</File>
 		</Filter>

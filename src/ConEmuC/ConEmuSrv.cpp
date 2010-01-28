@@ -880,7 +880,7 @@ int CreateColorerHeader(DWORD anID)
 	COORD crMaxSize = GetLargestConsoleWindowSize(GetStdHandle(STD_OUTPUT_HANDLE));
 	nMapSize = max(crMaxSize.X,200) * max(crMaxSize.Y,200) * sizeof(AnnotationInfo);
 
-	wsprintf(szMapName, AnnotationShareName, sizeof(AnnotationInfo), anID);
+	wsprintf(szMapName, AnnotationShareNameOld, sizeof(AnnotationInfo), anID);
 
 	//ghFileMapping = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, szMapName); -- Create!
 	srv.hColorerMapping = CreateFileMapping(INVALID_HANDLE_VALUE, 

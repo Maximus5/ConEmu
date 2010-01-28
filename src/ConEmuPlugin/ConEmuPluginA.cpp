@@ -586,7 +586,7 @@ void UpdateConEmuTabsA(int event, bool losingFocus, bool editorSave, void *Param
 
 void   WINAPI _export ExitFAR(void)
 {
-	UnsetAllHooks();
+	ShutdownHooks();
 	
 	StopThread();
 

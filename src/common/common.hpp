@@ -166,8 +166,9 @@ extern wchar_t gszDbgModLabel[6];
 #define CECMD_SAVEALIASES   26
 #define CECMD_GETALIASES    27
 #define CECMD_SETSIZENOSYNC 28 // Почти CECMD_SETSIZE. Вызывается из плагина.
+#define CECMD_SETDONTCLOSE  29
 
-#define CESERVER_REQ_VER    27
+#define CESERVER_REQ_VER    28
 
 #define PIPEBUFSIZE 4096
 

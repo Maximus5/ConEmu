@@ -405,13 +405,14 @@ MConHandle::operator const HANDLE()
 				if (!mb_OpenFailed) {
 					mb_OpenFailed = TRUE; // чтобы ошибка вываливалась только один раз!
 					char szErrMsg[512], szNameA[10], szSelfFull[MAX_PATH];
-					char *pszSelf, *pszDot;
+					const char *pszSelf;
+					char *pszDot;
 					if (!GetModuleFileNameA(0,szSelfFull,MAX_PATH)) {
 						pszSelf = "???";
 					} else {
 						pszSelf = strrchr(szSelfFull, '\\');
 						if (pszSelf) pszSelf++; else pszSelf = szSelfFull;
-						pszDot = strrchr(pszSelf, '.');
+						pszDot = strrchr((char*)pszSelf, '.');
 						if (pszDot) *pszDot = 0;
 					}
 					WideCharToMultiByte(CP_OEMCP, 0, ms_Name, -1, szNameA, sizeof(szNameA), 0,0);

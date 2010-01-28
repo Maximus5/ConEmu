@@ -69,7 +69,7 @@ typedef struct _CONSOLE_INFO
 //
 BOOL SetConsoleInfo(HWND hwndConsole, CONSOLE_INFO *pci)
 {
-	DWORD   dwConsoleOwnerPid, dwCurProcId;
+	DWORD   dwConsoleOwnerPid, dwCurProcId, dwConsoleThreadId;
 	HANDLE  hProcess=NULL;
 	HANDLE	hSection=NULL, hDupSection=NULL;
 	PVOID   ptrView = 0;
@@ -80,8 +80,10 @@ BOOL SetConsoleInfo(HWND hwndConsole, CONSOLE_INFO *pci)
 	//	Open the process which "owns" the console
 	//	
 	dwCurProcId = GetCurrentProcessId();
-	dwConsoleOwnerPid = dwCurProcId;
+	dwConsoleThreadId = GetWindowThreadProcessId(hwndConsole, &dwConsoleOwnerPid);
 	hProcess = GetCurrentProcess();
+
+	// ≈сли dwConsoleOwnerPid не совпадает с dwCurProcId - скорее всего мы обломимс€
 	
 	// ≈сли уж мы к консоли подцепились - считаем ее своей!
 	/*GetWindowThreadProcessId(hwndConsole, &dwConsoleOwnerPid);

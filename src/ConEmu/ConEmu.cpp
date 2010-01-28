@@ -37,10 +37,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRSYS(s) //DEBUGSTR(s)
 #define DEBUGSTRSIZE(s) //DEBUGSTR(s)
 #define DEBUGSTRCONS(s) //DEBUGSTR(s)
-#define DEBUGSTRTABS(s) DEBUGSTR(s)
+#define DEBUGSTRTABS(s) //DEBUGSTR(s)
 #define DEBUGSTRLANG(s) //DEBUGSTR(s)// ; Sleep(2000)
-#define DEBUGSTRMOUSE(s) //DEBUGSTR(s)
+#define DEBUGSTRMOUSE(s) DEBUGSTR(s)
 #define DEBUGSTRSETCURSOR(s) //DEBUGSTR(s)
+#define DEBUGSTRCONEVENT(s) //DEBUGSTR(s)
 
 #define PROCESS_WAIT_START_TIME 1000
 
@@ -2920,7 +2921,7 @@ VOID CConEmuMain::WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hw
 
         #ifdef _DEBUG
         WCHAR szDbg[128]; wsprintfW(szDbg, L"EVENT_CONSOLE_START_APPLICATION(HWND=0x%08X, PID=%i%s)\n", hwnd, idObject, (idChild == CONSOLE_APPLICATION_16BIT) ? L" 16bit" : L"");
-        OutputDebugString(szDbg);
+        DEBUGSTRCONEVENT(szDbg);
         #endif
         break;
 
@@ -2931,7 +2932,7 @@ VOID CConEmuMain::WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hw
         #ifdef _DEBUG
         wsprintfW(szDbg, L"EVENT_CONSOLE_END_APPLICATION(HWND=0x%08X, PID=%i%s)\n", hwnd, idObject, 
 			(idChild == CONSOLE_APPLICATION_16BIT) ? L" 16bit" : L"");
-        OutputDebugString(szDbg);
+        DEBUGSTRCONEVENT(szDbg);
         #endif
         break;
 
@@ -2943,7 +2944,7 @@ VOID CConEmuMain::WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hw
         #ifdef _DEBUG
         COORD crStart, crEnd; memmove(&crStart, &idObject, sizeof(idObject)); memmove(&crEnd, &idChild, sizeof(idChild));
         WCHAR szDbg[128]; wsprintfW(szDbg, L"EVENT_CONSOLE_UPDATE_REGION({%i, %i} - {%i, %i})\n", crStart.X,crStart.Y, crEnd.X,crEnd.Y);
-        OutputDebugString(szDbg);
+        DEBUGSTRCONEVENT(szDbg);
         #endif
         } break;
     case EVENT_CONSOLE_UPDATE_SCROLL: //0x4004
@@ -2953,7 +2954,7 @@ VOID CConEmuMain::WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hw
         //The idChild parameter is the vertical distance the console has scrolled.
         #ifdef _DEBUG
         WCHAR szDbg[128]; wsprintfW(szDbg, L"EVENT_CONSOLE_UPDATE_SCROLL(X=%i, Y=%i)\n", idObject, idChild);
-        OutputDebugString(szDbg);
+        DEBUGSTRCONEVENT(szDbg);
         #endif
         } break;
     case EVENT_CONSOLE_UPDATE_SIMPLE: //0x4003
@@ -2966,7 +2967,7 @@ VOID CConEmuMain::WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hw
         COORD crWhere; memmove(&crWhere, &idObject, sizeof(idObject));
         WCHAR ch = (WCHAR)LOWORD(idChild); WORD wA = HIWORD(idChild);
         WCHAR szDbg[128]; wsprintfW(szDbg, L"EVENT_CONSOLE_UPDATE_SIMPLE({%i, %i} '%c'(\\x%04X) A=%i)\n", crWhere.X,crWhere.Y, ch, ch, wA);
-        OutputDebugString(szDbg);
+        DEBUGSTRCONEVENT(szDbg);
         #endif
         } break;
     case EVENT_CONSOLE_CARET: //0x4001
@@ -2982,13 +2983,13 @@ VOID CConEmuMain::WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hw
         WCHAR szDbg[128]; wsprintfW(szDbg, L"EVENT_CONSOLE_CARET({%i, %i} Sel=%c, Vis=%c\n", crWhere.X,crWhere.Y, 
             ((idObject & CONSOLE_CARET_SELECTION)==CONSOLE_CARET_SELECTION) ? L'Y' : L'N',
             ((idObject & CONSOLE_CARET_VISIBLE)==CONSOLE_CARET_VISIBLE) ? L'Y' : L'N');
-        OutputDebugString(szDbg);
+        DEBUGSTRCONEVENT(szDbg);
         #endif
         } break;
     case EVENT_CONSOLE_LAYOUT: //0x4005
         {
         //The console layout has changed.
-        OutputDebugString(L"EVENT_CONSOLE_LAYOUT\n");
+        DEBUGSTRCONEVENT(L"EVENT_CONSOLE_LAYOUT\n");
         } break;
     }
 #endif
@@ -4861,7 +4862,11 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
                 cursor.y = HIWORD(lParam); 
                 //isLBDown=true;
                 //isDragProcessed=false;
-                if (gSet.isDragEnabled & DRAG_L_ALLOWED) {
+				CONSOLE_CURSOR_INFO ci;
+				mp_VActive->RCon()->GetConsoleCursorInfo(&ci);
+                if ((ci.bVisible && ci.dwSize>0) // курсор должен быть видим, иначе это чье-то меню
+					&& gSet.isDragEnabled & DRAG_L_ALLOWED)
+				{
                     if (!gSet.nLDragKey || isPressed(gSet.nLDragKey))
                         mouse.state = DRAG_L_ALLOWED;
                 }

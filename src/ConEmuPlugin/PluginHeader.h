@@ -203,7 +203,8 @@ DWORD GetEditorModifiedState();
 
 BOOL FarSetConsoleSize(SHORT nNewWidth, SHORT nNewHeight);
 
-void UnsetAllHooks();
+BOOL StartupHooks(HMODULE ahOurDll);
+void ShutdownHooks();
 
 bool FUNC_Y(ProcessCommandLine)(wchar_t* pszCommand);
 bool FUNC_X(ProcessCommandLine)(wchar_t* pszCommand);

@@ -393,6 +393,8 @@ HWND myGetConsoleWindow()
 // Returns HWND of Gui console DC window
 HWND GetConEmuHWND(BOOL abRoot)
 {
+	TODO("Переделать функцию на получение HWND из Map");
+	
 	//BOOL lbRc = FALSE;
 	HWND FarHwnd=NULL, ConEmuHwnd=NULL, ConEmuRoot=NULL;
 	CESERVER_REQ in = {{0}}, *pOut = NULL;

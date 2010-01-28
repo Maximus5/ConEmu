@@ -70,7 +70,7 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 IDD_DIALOG1 DIALOGEX 0, 0, 328, 216
 STYLE DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
-FONT 8, "MS Shell Dlg"
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     GROUPBOX        "Anti-aliasing",IDC_STATIC,263,4,60,45,WS_GROUP
     CONTROL         "&None",rNoneAA,"Button",BS_AUTORADIOBUTTON | WS_GROUP,
@@ -457,7 +457,7 @@ BEGIN
     CONTROL         "Auto register fonts",cbAutoRegFonts,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,10,52,123,8
     CONTROL         "Show debug steps",cbDebugSteps,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,10,63,123,8
+                    WS_TABSTOP,10,73,86,8
     CONTROL         "Shell icons",cbDragIcons,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,197,72,49,8
     RTEXT           "Cmd output:",IDC_STATIC,143,124,43,8
@@ -474,7 +474,9 @@ BEGIN
     CONTROL         "Hourglass",cbFarHourglass,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,270,197,47,8
     CONTROL         "Hide caption when maximized",cbHideCaption,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,10,74,123,8
+                    BS_AUTOCHECKBOX | WS_TABSTOP,10,63,123,8
+    CONTROL         "Logs",cbLogs,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,99,
+                    73,36,8
 END
 
 IDD_RESTART DIALOG DISCARDABLE  0, 0, 310, 98

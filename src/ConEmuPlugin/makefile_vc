@@ -75,6 +75,7 @@ NAME = conemu
 
 LINK_OBJS = \
 $(OBJDIR)\ConEmuInjects.obj \
+$(OBJDIR)\SetHook.obj \
 $(OBJDIR)\ConEmuPlugin.obj \
 $(OBJDIR)\ConEmuPlugin995.obj \
 $(OBJDIR)\ConEmuPluginA.obj \
@@ -291,6 +292,7 @@ $(DLLFULLNAME) : $(LINK_OBJS) $(RES) $(LINK_DEP)
 
 {../common/}.cpp{$(OBJDIR)}.obj:
 	@$(CC) $(CFLAGS) { $< } 
+
 !endif
 
 $(RES): $(RC_NAME).rc
@@ -326,10 +328,10 @@ $(OBJDIR)\ConEmuPlugin995.obj: ConEmuPlugin995.cpp
 
 $(OBJDIR)\ConEmuPluginA.obj: ConEmuPluginA.cpp
 
-#$(OBJDIR)\LogBrowser.obj: LogBrowser.cpp
-
-$(OBJDIR)\setconsoleinfo.obj: setconsoleinfo.cpp
+$(OBJDIR)\SetConsoleInfo.obj: SetConsoleInfo.cpp
 
 $(OBJDIR)\Common.obj: ..\common\Common.cpp
 
 $(OBJDIR)\ConEmuCheck.obj: ..\common\ConEmuCheck.cpp
+
+$(OBJDIR)\SetHook.obj: ..\common\SetHook.cpp

@@ -1436,6 +1436,7 @@ void SendStarted()
 				dwDelta = GetTickCount() - dwStart;
 			}
 			if (!pOut) {
+				// ¬озможно под отладчиком, или скорее всего GUI свалилс€
 				_ASSERTE(pOut != NULL);
 			}
 		}
@@ -2739,6 +2740,13 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 					memmove((*out)->Data, srv.pszAliases, srv.nAliasesSize);
 				lbRc = TRUE;
 			}
+		} break;
+
+		case CECMD_SETDONTCLOSE:
+		{
+			// ѕосле детача в фаре команда (например dir) схлопнетс€, чтобы
+			// консоль неожиданно не закрылась...
+			gbAlwaysConfirmExit = TRUE;
 		} break;
     }
     

@@ -36,15 +36,15 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define DEBUGSTRDRAW(s) //DEBUGSTR(s)
 #define DEBUGSTRINPUT(s) //DEBUGSTR(s)
-#define DEBUGSTRSIZE(s) DEBUGSTR(s)
+#define DEBUGSTRSIZE(s) //DEBUGSTR(s)
 #define DEBUGSTRPROC(s) //DEBUGSTR(s)
-#define DEBUGSTRCMD(s) DEBUGSTR(s)
+#define DEBUGSTRCMD(s) //DEBUGSTR(s)
 #define DEBUGSTRPKT(s) //DEBUGSTR(s)
 #define DEBUGSTRCON(s) //DEBUGSTR(s)
 #define DEBUGSTRLANG(s) //DEBUGSTR(s)// ; Sleep(2000)
-#define DEBUGSTRLOG(s) OutputDebugStringA(s)
+#define DEBUGSTRLOG(s) //OutputDebugStringA(s)
 #define DEBUGSTRALIVE(s) //DEBUGSTR(s)
-#define DEBUGSTRTABS(s) DEBUGSTR(s)
+#define DEBUGSTRTABS(s) //DEBUGSTR(s)
 
 // Иногда не отрисовывается диалог поиска полностью - только бежит текущая сканируемая директория.
 // Иногда диалог отрисовался, но часть до текста "..." отсутствует
@@ -87,7 +87,8 @@ WARNING("Часто после разблокирования компьютера размер консоли изменяется (OK), 
 #else
     #define FORCE_INVALIDATE_TIMEOUT 300
 #endif
-#define SETSYNCSIZEAPPLYTIMEOUT 2000
+#define SETSYNCSIZEAPPLYTIMEOUT 500
+#define SETSYNCSIZEMAPPINGTIMEOUT 300
 
 
 #ifndef INPUTLANGCHANGE_SYSCHARSET
@@ -477,22 +478,43 @@ BOOL CRealConsole::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuff
 			int nBufHeight;
 			_ASSERTE(mp_ConsoleInfo);
 			if (bNeedApplyConsole && mp_ConsoleInfo->nCurDataMapIdx && mp_ConsoleInfo->hConWnd) {
+				// Если Apply еще не прошел - ждем
+				DWORD nWait = -1;
+				if (con.m_sbi.dwSize.X != sizeX || con.m_sbi.dwSize.Y != (sizeBuffer ? sizeBuffer : sizeY))
+				{
+					// Проходит некоторое (короткое) время, пока обновится FileMapping в нашем процессе
+					_ASSERTE(mp_ConsoleInfo!=NULL);
+					COORD crCurSize = mp_ConsoleInfo->sbi.dwSize;
+					if (crCurSize.X != sizeX || crCurSize.Y != (sizeBuffer ? sizeBuffer : sizeY))
+					{
+						DWORD dwStart = GetTickCount();
+						do {
+							Sleep(1);
+							crCurSize = mp_ConsoleInfo->sbi.dwSize;
+							if (crCurSize.X == sizeX && crCurSize.Y == (sizeBuffer ? sizeBuffer : sizeY))
+								break;
+						} while ((GetTickCount() - dwStart) < SETSYNCSIZEMAPPINGTIMEOUT);
+					}
 
-				ResetEvent(mh_ApplyFinished);
-				mn_LastConsolePacketIdx--;
-				SetEvent(mh_MonitorThreadEvent);
+					ResetEvent(mh_ApplyFinished);
+					mn_LastConsolePacketIdx--;
+					SetEvent(mh_MonitorThreadEvent);
 
-				DWORD nWait = WaitForSingleObject(mh_ApplyFinished, SETSYNCSIZEAPPLYTIMEOUT);
+					nWait = WaitForSingleObject(mh_ApplyFinished, SETSYNCSIZEAPPLYTIMEOUT);
 
-				#ifdef _DEBUG
-				COORD crDebugCurSize = mp_ConsoleInfo->sbi.dwSize;
-				if (crDebugCurSize.X != sizeX) {
-					_ASSERTE(crDebugCurSize.X == sizeX);
+					#ifdef _DEBUG
+					COORD crDebugCurSize = mp_ConsoleInfo->sbi.dwSize;
+					if (crDebugCurSize.X != sizeX) {
+						_ASSERTE(crDebugCurSize.X == sizeX);
+					}
+					#endif
 				}
-				#endif
 
 				if (gSet.isAdvLogging){
-					LogString((nWait != WAIT_OBJECT_0) ?
+					LogString(
+					(nWait == (DWORD)-1) ?
+						"SetConsoleSizeSrv: does not need wait" :
+					(nWait != WAIT_OBJECT_0) ?
 						"SetConsoleSizeSrv.WaitForSingleObject(mh_ApplyFinished) TIMEOUT!!!" :
 						"SetConsoleSizeSrv.WaitForSingleObject(mh_ApplyFinished) succeded");
 				}
@@ -2690,8 +2712,10 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 
 				// Теперь мы гарантированно знаем дескриптор окна консоли
 				SetHwnd(hWnd);
+
 				// Открыть map с данными, теперь он уже должен быть создан
-				OpenMapHeader();
+				if (!mp_ConsoleInfo)
+					OpenMapHeader();
 			}
 
             AllowSetForegroundWindow(nPID);
@@ -2877,7 +2901,7 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
             &cbWritten,   // number of bytes written 
             NULL);        // not overlapped I/O 
         ExecuteFreeResult(pRet);
-            
+
     } else if (pIn->hdr.nCmd == CECMD_TABSCHANGED) {
         DEBUGSTRCMD(L"GUI recieved CECMD_TABSCHANGED\n");
         if (nDataSize == 0) {
@@ -4056,30 +4080,49 @@ void CRealConsole::ShowConsole(int nMode) // -1 Toggle, 0 - Hide, 1 - Show
 
 void CRealConsole::SetHwnd(HWND ahConWnd)
 {
+	// Мог быть уже вызван (AttachGui/ConsoleEvent/CMD_START)
+	if (hConWnd != NULL) {
+		if (hConWnd != ahConWnd) {
+			if (mp_ConsoleInfo) {
+				_ASSERTE(mp_ConsoleInfo == NULL);
+
+				CloseMapHeader(); // вдруг был подцеплен к другому окну? хотя не должен
+				// OpenMapHeader() пока не зовем, т.к. map мог быть еще не создан
+			}
+
+			Assert(hConWnd == ahConWnd);
+			return;
+		}
+	}
+
     hConWnd = ahConWnd;
     //if (mb_Detached && ahConWnd) // Не сбрасываем, а то нить может не успеть!
     //  mb_Detached = FALSE; // Сброс флажка, мы уже подключились
-
-	CloseMapHeader(); // вдруг был подцеплен к другому окну? хотя не должен
-	// OpenMapHeader() пока не зовем, т.к. map мог быть еще не создан
         
     mb_ProcessRestarted = FALSE; // Консоль запущена
 
     if (ms_VConServer_Pipe[0] == 0) {
         wchar_t szEvent[64];
-        wsprintfW(szEvent, CEGUIRCONSTARTED, (DWORD)hConWnd);
-        //// Скорее всего событие в сервере еще не создано
-        //mh_GuiAttached = OpenEvent(EVENT_MODIFY_STATE, FALSE, ms_VConServer_Pipe);
-        //// Вроде, когда используется run as administrator - event открыть не получается?
-        //if (!mh_GuiAttached) {
-    	mh_GuiAttached = CreateEvent(gpNullSecurity, TRUE, FALSE, szEvent);
-    	_ASSERTE(mh_GuiAttached!=NULL);
-        //}
+
+		if (!mh_GuiAttached) {
+			wsprintfW(szEvent, CEGUIRCONSTARTED, (DWORD)hConWnd);
+			//// Скорее всего событие в сервере еще не создано
+			//mh_GuiAttached = OpenEvent(EVENT_MODIFY_STATE, FALSE, ms_VConServer_Pipe);
+			//// Вроде, когда используется run as administrator - event открыть не получается?
+			//if (!mh_GuiAttached) {
+    		mh_GuiAttached = CreateEvent(gpNullSecurity, TRUE, FALSE, szEvent);
+    		_ASSERTE(mh_GuiAttached!=NULL);
+			//}
+		}
 
         // Запустить серверный пайп
         wsprintf(ms_VConServer_Pipe, CEGUIPIPENAME, L".", (DWORD)hConWnd); //был mn_ConEmuC_PID
-        mh_ServerSemaphore = CreateSemaphore(NULL, 1, 1, NULL);
+		if (!mh_ServerSemaphore)
+			mh_ServerSemaphore = CreateSemaphore(NULL, 1, 1, NULL);
+
         for (int i=0; i<MAX_SERVER_THREADS; i++) {
+			if (mh_ServerThreads[i])
+				continue;
             mn_ServerThreadsId[i] = 0;
             mh_ServerThreads[i] = CreateThread(NULL, 0, ServerThread, (LPVOID)this, 0, &mn_ServerThreadsId[i]);
             _ASSERTE(mh_ServerThreads[i]!=NULL);
@@ -6644,7 +6687,7 @@ void CRealConsole::CheckColorMapping(DWORD dwPID)
 	
 	_ASSERTE(mh_ColorMapping == NULL);
 
-	wsprintf(szMapName, AnnotationShareName, sizeof(AnnotationInfo), dwPID);
+	wsprintf(szMapName, AnnotationShareNameOld, sizeof(AnnotationInfo), dwPID);
 	mh_ColorMapping = OpenFileMapping(FILE_MAP_READ, FALSE, szMapName);
 	if (!mh_ColorMapping) {
 		DWORD dwErr = GetLastError();
@@ -6653,7 +6696,7 @@ void CRealConsole::CheckColorMapping(DWORD dwPID)
 	}
 	
 	mp_ColorData = (AnnotationInfo*)MapViewOfFile(mh_ColorMapping, FILE_MAP_READ,0,0,0);
-	if (!mp_ConsoleInfo) {
+	if (!mp_ColorData) {
 		DWORD dwErr = GetLastError();
 		wchar_t szErr[512];
 		wsprintf (szErr, L"ConEmu: Can't map colorer info. ErrCode=0x%08X. %s", dwErr, szMapName);
@@ -6674,6 +6717,13 @@ BOOL CRealConsole::OpenMapHeader()
 	BOOL lbResult = FALSE;
 	wchar_t szErr[512]; szErr[0] = 0;
 	//int nConInfoSize = sizeof(CESERVER_REQ_CONINFO_HDR);
+
+	if (mp_ConsoleInfo) {
+		if (hConWnd == (HWND)mp_ConsoleInfo->hConWnd) {
+			_ASSERTE(mp_ConsoleInfo == NULL);
+			return TRUE;
+		}
+	}
 	
 	_ASSERTE(mh_FileMapping == NULL);
 
