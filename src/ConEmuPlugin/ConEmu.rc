@@ -73,7 +73,7 @@ BEGIN
         BEGIN
             VALUE "FileDescription", "ConEmu plugin for FAR manager 1.7x and 2.x" CONEMUPLTFRM
             VALUE "FileVersion", CONEMUVERS
-            VALUE "LegalCopyright", "Copyright (C) 2009-2010 Maximus5"
+            VALUE "LegalCopyright", "(C) 2009-2010 Maximus5"
             VALUE "OriginalFilename", "ConEmu.dll"
             VALUE "ProductName", "ConEmu"
             VALUE "ProductVersion", CONEMUVERS
