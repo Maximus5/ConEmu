@@ -289,16 +289,15 @@ int __cdecl main()
 		if (ghFarInExecuteEvent && wcsstr(gpszRunCmd,L"far.exe"))
 			ResetEvent(ghFarInExecuteEvent);
 		#endif
-
+		
         lbRc = CreateProcessW(NULL, gpszRunCmd, NULL,NULL, TRUE, 
                 NORMAL_PRIORITY_CLASS/*|CREATE_NEW_PROCESS_GROUP*/
 				|((gnRunMode == RM_SERVER) ? CREATE_SUSPENDED : 0), 
                 NULL, NULL, &si, &pi);
         dwErr = GetLastError();
 		if (lbRc && (gnRunMode == RM_SERVER)) {
-			// Создать мэппинг для Colorer
-			TODO("Планируется переделать имя мэппинга на хэндл окна, что будет правильнее");
-			CreateColorerHeader(pi.dwProcessId);
+			TODO("Injects");
+		
 			// Отпустить процесс
 			ResumeThread(pi.hThread);
 		}

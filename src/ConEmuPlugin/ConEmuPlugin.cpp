@@ -84,6 +84,7 @@ HWND ConEmuHwnd = NULL; // Содержит хэндл окна отрисовки. Это ДОЧЕРНЕЕ окно.
 DWORD gdwServerPID = 0;
 BOOL TerminalMode = FALSE;
 HWND FarHwnd = NULL;
+WARNING("Убрать, заменить ghConIn на GetStdHandle()"); // Иначе в Win7 будет буфер разрушаться
 HANDLE ghConIn = NULL;
 DWORD gnMainThreadId = 0;
 //HANDLE hEventCmd[MAXCMDCOUNT], hEventAlive=NULL, hEventReady=NULL;
@@ -111,7 +112,7 @@ MSection *csTabs = NULL;
 WCHAR gcPlugKey=0;
 BOOL  gbPlugKeyChanged=FALSE;
 HKEY  ghRegMonitorKey=NULL; HANDLE ghRegMonitorEvt=NULL;
-HMODULE ghFarHintsFix = NULL;
+//HMODULE ghFarHintsFix = NULL;
 WCHAR gszPluginServerPipe[MAX_PATH];
 #define MAX_SERVER_THREADS 3
 //HANDLE ghServerThreads[MAX_SERVER_THREADS] = {NULL,NULL,NULL};
@@ -331,6 +332,7 @@ int WINAPI _export ProcessSynchroEventW(int Event,void *Param)
 			if (nCount>0) {
 				DWORD cbWritten = 0;
 				_ASSERTE(ghConIn);
+				WARNING("Убрать, заменить ghConIn на GetStdHandle()"); // Иначе в Win7 будет буфер разрушаться
 				BOOL fSuccess = WriteConsoleInput(ghConIn, pRec, nCount, &cbWritten);
 				if (!fSuccess || cbWritten != nCount) {
 					_ASSERTE(fSuccess && cbWritten==nCount);
@@ -392,23 +394,24 @@ BOOL WINAPI DllMain( HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserve
 			    if (GetEnvironmentVariable(L"TERM", szVarValue, 63)) {
 				    TerminalMode = TRUE;
 			    }
-			    
-			    if (!TerminalMode) {
-					// FarHints fix for multiconsole mode...
-					if (GetModuleFileName((HMODULE)hModule, szVarValue, MAX_PATH)) {
-						WCHAR *pszSlash = wcsrchr(szVarValue, L'\\');
-						if (pszSlash) pszSlash++; else pszSlash = szVarValue;
-						lstrcpyW(pszSlash, L"infis.dll");
-						ghFarHintsFix = LoadLibrary(szVarValue);
-					}
-			    }
+
+				//2010-01-29 ConMan давно не поддерживается - все встроено 
+			    //if (!TerminalMode) {
+				//	// FarHints fix for multiconsole mode...
+				//	if (GetModuleFileName((HMODULE)hModule, szVarValue, MAX_PATH)) {
+				//		WCHAR *pszSlash = wcsrchr(szVarValue, L'\\');
+				//		if (pszSlash) pszSlash++; else pszSlash = szVarValue;
+				//		lstrcpyW(pszSlash, L"infis.dll");
+				//		ghFarHintsFix = LoadLibrary(szVarValue);
+				//	}
+			    //}
 			}
 			break;
 		case DLL_PROCESS_DETACH:
-			if (ghFarHintsFix) {
-				FreeLibrary(ghFarHintsFix);
-				ghFarHintsFix = NULL;
-			}
+			//if (ghFarHintsFix) {
+			//	FreeLibrary(ghFarHintsFix);
+			//	ghFarHintsFix = NULL;
+			//}
 			if (csTabs) {
 				delete csTabs;
 				csTabs = NULL;
@@ -679,6 +682,7 @@ CESERVER_REQ* ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandDat
 		
 		if (nCmd == CMD_LEFTCLKSYNC) {
 			DWORD nTestEvents = 0, dwTicks = GetTickCount();
+			WARNING("Убрать, заменить ghConIn на GetStdHandle()"); // Иначе в Win7 будет буфер разрушаться
 			GetNumberOfConsoleInputEvents(ghConIn, &nTestEvents);
 			while (nTestEvents > 0 && (dwTicks - GetTickCount()) < 300) {
 				Sleep(10);
@@ -777,6 +781,7 @@ CESERVER_REQ* ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandDat
 			i++;
 			
 			DWORD cbWritten = 0;
+			WARNING("Убрать, заменить ghConIn на GetStdHandle()"); // Иначе в Win7 будет буфер разрушаться
 			if (!ghConIn)
 				ghConIn  = CreateFile(L"CONIN$", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_READ,
 					0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
@@ -988,7 +993,7 @@ void CheckColorerHeader()
 	
 	lhConWnd = GetConsoleWindow();
 	
-	wsprintf(szMapName, AnnotationShareNameNew, sizeof(AnnotationInfo), (DWORD)lhConWnd);
+	wsprintf(szMapName, AnnotationShareName, sizeof(AnnotationInfo), (DWORD)lhConWnd);
 	
 	h = OpenFileMapping(FILE_MAP_READ, FALSE, szMapName);
 	gbHasColorMapping = (h!=NULL);
@@ -1029,7 +1034,7 @@ int CreateColorerHeader()
 	lhConWnd = GetConsoleWindow();
 	
 	if (gbHasColorMapping) {
-		wsprintf(szMapName, AnnotationShareNameNew, sizeof(AnnotationInfo), (DWORD)lhConWnd);
+		wsprintf(szMapName, AnnotationShareName, sizeof(AnnotationInfo), (DWORD)lhConWnd);
 		
 		// Создаем! т.к. должна вызываться только после Detach!
 		ghColorMapping = CreateFileMapping(INVALID_HANDLE_VALUE, 
@@ -1116,6 +1121,7 @@ BOOL WINAPI OnConsoleDetaching(HookCallbackArg* pArgs)
     ConEmuHwnd = NULL;
     SetConEmuEnvVar(NULL);
 
+    WARNING("Убрать, заменить ghConIn на GetStdHandle()"); // Иначе в Win7 будет буфер разрушаться
 	if (ghConIn) {
 		CloseHandle(ghConIn);
 		ghConIn = NULL;
@@ -1273,6 +1279,7 @@ BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount)
 	_ASSERTE(nCount>0);
 	BOOL fSuccess = FALSE;
 
+	WARNING("Убрать, заменить ghConIn на GetStdHandle()"); // Иначе в Win7 будет буфер разрушаться
 	if (!ghConIn) {
 		ghConIn  = CreateFile(L"CONIN$", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_READ,
 			0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
@@ -1307,6 +1314,7 @@ BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount)
 		INPUT_RECORD irDummy[2] = {{0},{0}};
 
 		// 27.06.2009 Maks - If input queue is not empty - wait for a while, to avoid conflicts with FAR reading queue
+		WARNING("Убрать, заменить ghConIn на GetStdHandle()"); // Иначе в Win7 будет буфер разрушаться
 		if (PeekConsoleInput(ghConIn, irDummy, 1, &(nCurInputCount = 0)) && nCurInputCount > 0) {
 			DWORD dwStartTick = GetTickCount();
 			WARNING("Do NOT wait, but place event in Cyclic queue");
@@ -2101,6 +2109,7 @@ void StopThread(void)
 	if (ghRegMonitorKey) { RegCloseKey(ghRegMonitorKey); ghRegMonitorKey = NULL; }
 	SafeCloseHandle(ghRegMonitorEvt);
 	SafeCloseHandle(ghServerTerminateEvent);
+	WARNING("Убрать, заменить ghConIn на GetStdHandle()"); // Иначе в Win7 будет буфер разрушаться
 	SafeCloseHandle(ghConIn);
 	SafeCloseHandle(ghInputSynchroExecuted);
 	SafeCloseHandle(ghSetWndSendTabsEvent);

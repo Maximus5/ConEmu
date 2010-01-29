@@ -26,9 +26,8 @@
  *   %d sizeof(AnnotationInfo) - compatibility/versioning field.
  *   %d console window handle
  */
-//#define AnnotationShareNameA "Console_annotationInfo_%x_%x"
-#define AnnotationShareNameNew L"Console_annotationInfo_%x_%x"
-#define AnnotationShareNameOld L"Console2_annotationInfo_%d_%d"
+#define AnnotationShareNameA "Console_annotationInfo_%x_%x"
+#define AnnotationShareName L"Console_annotationInfo_%x_%x"
 
 /**
  * Header structure, located at offset <0> within shared annotation buffer.
@@ -65,29 +64,13 @@ struct AnnotationHeader
  * Annotation Information for each character on the screen.
  * 
  */
- 
 struct AnnotationInfo
 {
-    union{
-      struct{
-        int bk_color;
-        int bk_valid :1;
-
-        int fg_color;
-        int fg_valid :1;
-
-        /* bit 0 - left, bit 1 - top, bit 2 - right, bit 3 - bottom */
-        int border_visible :4;
-        /* 0 - no border, 1 - i pixel */
-        int border_style :4;
-        int border_color :24;
-      };
-      int raw[8];
-    };
-};
- 
-struct AnnotationInfoNew
-{
+    //AnnotationInfo()
+    //{
+    //  for (int i = 0; i < sizeof(raw)/sizeof(raw[0]); i++)
+    //    raw[i] = 0;
+    //}
     union{
       struct{
         /**

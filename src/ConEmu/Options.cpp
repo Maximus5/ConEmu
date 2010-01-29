@@ -29,9 +29,14 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // cbFARuseASCIIsort, cbFixAltOnAltTab
 
+#define SHOWDEBUGSTR
+
 #include "Header.h"
 #include <commctrl.h>
 #include "../common/ConEmuCheck.h"
+
+
+#define DEBUGSTRFONT(s) DEBUGSTR(s)
 
 #define COUNTER_REFRESH 5000
 #define MAX_CMD_HISTORY 100
@@ -115,7 +120,9 @@ CSettings::CSettings()
     memset(mn_FPS, 0, sizeof(mn_FPS)); mn_FPS_CUR_FRAME = 0;
     memset(mn_CounterTick, 0, sizeof(*mn_CounterTick)*(tPerfInterval-gbPerformance));
     hBgBitmap = NULL; bgBmp = MakeCoord(0,0); hBgDc = NULL;
-    mh_Font = mh_FontI = mh_FontB = mh_Font2 = NULL;
+    mh_Font = mh_FontI = mh_FontB = mh_FontBI = mh_Font2 = NULL;
+	ZeroStruct(tm); ZeroStruct(tmB); ZeroStruct(tmI); ZeroStruct(tmBI);
+	otm = otmB = otmI = otmBI = NULL;
     ResetFontWidth();
     nAttachPID = 0; hAttachConWnd = NULL;
     memset(&ourSI, 0, sizeof(ourSI));
@@ -144,6 +151,7 @@ CSettings::~CSettings()
     if (mh_Font) { DeleteObject(mh_Font); mh_Font = NULL; }
     if (mh_FontI) { DeleteObject(mh_FontI); mh_FontI = NULL; }
     if (mh_FontB) { DeleteObject(mh_FontB); mh_FontB = NULL; }
+	if (mh_FontBI) { DeleteObject(mh_FontBI); mh_FontBI = NULL; }
     if (mh_Font2) { DeleteObject(mh_Font2); mh_Font2 = NULL; }
     if (psCmd) {free(psCmd); psCmd = NULL;}
 	if (psCmdHistory) {free(psCmdHistory); psCmdHistory = NULL;}
@@ -151,6 +159,10 @@ CSettings::~CSettings()
 	if (sTabCloseMacro) {free(sTabCloseMacro); sTabCloseMacro = NULL;}
 	if (sRClickMacro) {free(sRClickMacro); sRClickMacro = NULL;}
     if (mh_Uxtheme!=NULL) { FreeLibrary(mh_Uxtheme); mh_Uxtheme = NULL; }
+	if (otm) {free(otm); otm = NULL;}
+	if (otmB) {free(otmB); otmB = NULL;}
+	if (otmI) {free(otmI); otmI = NULL;}
+	if (otmBI) {free(otmBI); otmBI = NULL;}
 }
 
 void CSettings::InitSettings()
@@ -2772,6 +2784,11 @@ void CSettings::RecreateFont(WORD wFromID)
 
 	UpdateFontInfo();
 
+	if (ghOpWnd && gSet.szFontError[0]) {
+		MessageBox(ghOpWnd, gSet.szFontError, L"ConEmu", MB_OK|MB_ICONEXCLAMATION);
+		gSet.szFontError[0] = 0;
+	}
+
 	mb_IgnoreTtfChange = TRUE;
 }
 
@@ -2829,6 +2846,8 @@ HFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 	int nRastHeight = 0, nRastWidth = 0;
 	bool bRasterFont = false;
 	LOGFONT tmpFont = *inFont;
+	LPOUTLINETEXTMETRIC lpOutl = NULL;
+
 	if (inFont->lfFaceName[0] == L'[' && wcsncmp(inFont->lfFaceName+1, RASTER_FONTS_NAME, nRastNameLen) == 0) {
 		wchar_t *pszEnd = NULL;
 		wchar_t *pszSize = inFont->lfFaceName + nRastNameLen + 2;
@@ -2869,12 +2888,17 @@ HFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
     if (hFont) {
         HFONT hOldF = (HFONT)SelectObject(hDC, hFont);
         // Для пропорциональных шрифтов имеет смысл сохранять в реестре оптимальный lfWidth (это FontSizeX3)
-        ZeroStruct(tm);
+        ZeroStruct(tm); ZeroStruct(tmB); ZeroStruct(tmI); ZeroStruct(tmBI);
         BOOL lbTM = GetTextMetrics(hDC, &tm);
 		_ASSERTE(lbTM);
 		if (bRasterFont) {
 			tm.tmHeight = nRastHeight;
 			tm.tmAveCharWidth = tm.tmMaxCharWidth = nRastWidth;
+		}
+		lpOutl = LoadOutline(hDC, hFont);
+		if (lpOutl) {
+			if (otm) free(otm);
+			otm = lpOutl; lpOutl = NULL;
 		}
 		
 		if (GetTextFace(hDC, 32, szFontFace)) {
@@ -2950,18 +2974,59 @@ HFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
             UpdateTTF ( !bAlmostMonospace ); //(tm.tmMaxCharWidth - tm.tmAveCharWidth)>2
 		}
 
-        SelectObject(hDC, hOldF);
+        
         
         
         
         if (mh_FontB) { DeleteObject(mh_FontB); mh_FontB = NULL; }
         tmpFont.lfWeight = (tmpFont.lfWeight == FW_NORMAL) ? FW_BOLD : FW_NORMAL;
         mh_FontB = CreateFontIndirect(&tmpFont);
+		SelectObject(hDC, mh_FontB);
+		lbTM = GetTextMetrics(hDC, &tmB);
+		_ASSERTE(lbTM);
+		lpOutl = LoadOutline(hDC, mh_FontB);
+		if (lpOutl) {
+			if (otmB) free(otmB);
+			otmB = lpOutl; lpOutl = NULL;
+		}
+
         if (mh_FontI) { DeleteObject(mh_FontI); mh_FontI = NULL; }
         tmpFont.lfWeight = inFont->lfWeight;
         tmpFont.lfItalic = !tmpFont.lfItalic;
         mh_FontI = CreateFontIndirect(&tmpFont);
-    	
+		SelectObject(hDC, mh_FontI);
+		lbTM = GetTextMetrics(hDC, &tmI);
+		_ASSERTE(lbTM);
+		lpOutl = LoadOutline(hDC, mh_FontI);
+		if (lpOutl) {
+			if (otmI) free(otmI);
+			otmI = lpOutl; lpOutl = NULL;
+		}
+
+		if (mh_FontBI) { DeleteObject(mh_FontBI); mh_FontBI = NULL; }
+		tmpFont.lfWeight = (tmpFont.lfWeight == FW_NORMAL) ? FW_BOLD : FW_NORMAL;
+		tmpFont.lfItalic = !tmpFont.lfItalic;
+		mh_FontBI = CreateFontIndirect(&tmpFont);
+		SelectObject(hDC, mh_FontBI);
+		lbTM = GetTextMetrics(hDC, &tmBI);
+		_ASSERTE(lbTM);
+		lpOutl = LoadOutline(hDC, mh_FontBI);
+		if (lpOutl) {
+			if (otmBI) free(otmBI);
+			otmBI = lpOutl; lpOutl = NULL;
+		}
+
+
+		#ifdef _DEBUG
+			DumpFontMetrics(L"mh_Font", hDC, hFont, otm);
+			DumpFontMetrics(L"mh_FontB", hDC, mh_FontB, otmB);
+			DumpFontMetrics(L"mh_FontI", hDC, mh_FontI, otmI);
+			DumpFontMetrics(L"mh_FontBI", hDC, mh_FontBI, otmBI);
+		#endif
+
+
+		SelectObject(hDC, hOldF);
+
 
 		if (mh_Font2) { DeleteObject(mh_Font2); mh_Font2 = NULL; }
 
@@ -3006,6 +3071,10 @@ HFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 				}
 			}
 
+			#ifdef _DEBUG
+				DumpFontMetrics(L"mh_Font2", hDC, mh_Font2);
+			#endif
+
 			SelectObject(hDC, hOldF);
 		}
 		
@@ -3013,6 +3082,46 @@ HFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
     }
 
     return hFont;
+}
+
+LPOUTLINETEXTMETRIC CSettings::LoadOutline(HDC hDC, HFONT hFont)
+{
+	SelectObject(hDC, hFont);
+
+	LPOUTLINETEXTMETRIC pOut = NULL;
+	UINT nSize = GetOutlineTextMetrics(hDC, 0, NULL);
+	if (nSize) {
+		pOut = (LPOUTLINETEXTMETRIC)calloc(nSize,1);
+		if (pOut) {
+			pOut->otmSize = nSize;
+			if (!GetOutlineTextMetrics(hDC, nSize, pOut)) {
+				free(pOut); pOut = NULL;
+			} else {
+				pOut->otmpFamilyName = (PSTR)(((LPBYTE)pOut) + (DWORD_PTR)pOut->otmpFamilyName);
+				pOut->otmpFaceName = (PSTR)(((LPBYTE)pOut) + (DWORD_PTR)pOut->otmpFaceName);
+				pOut->otmpStyleName = (PSTR)(((LPBYTE)pOut) + (DWORD_PTR)pOut->otmpStyleName);
+				pOut->otmpFullName = (PSTR)(((LPBYTE)pOut) + (DWORD_PTR)pOut->otmpFullName);
+			}
+		}
+	}
+
+	return pOut;
+}
+
+void CSettings::DumpFontMetrics(LPCWSTR szType, HDC hDC, HFONT hFont, LPOUTLINETEXTMETRIC lpOutl)
+{
+	wchar_t szFontFace[32], szFontDump[255];
+	TEXTMETRIC ltm;
+
+	if (!hFont) { wsprintf(szFontDump, L"*** gSet.%s: WAS NOT CREATED!\n", szType); } else {
+		SelectObject(hDC, hFont); // вернуть шрифт должна вызывающая функция!
+		GetTextMetrics(hDC, &ltm);
+		GetTextFace(hDC, 32, szFontFace);
+		wsprintf(szFontDump, L"*** gSet.%s: '%s', Height=%i, Ave=%i, Max=%i, Over=%i, Angle*10=%i\n",
+			szType, szFontFace, ltm.tmHeight, ltm.tmAveCharWidth, ltm.tmMaxCharWidth, ltm.tmOverhang,
+			lpOutl ? lpOutl->otmItalicAngle : 0);
+	}
+	DEBUGSTRFONT(szFontDump);
 }
 
 // FALSE - выключена

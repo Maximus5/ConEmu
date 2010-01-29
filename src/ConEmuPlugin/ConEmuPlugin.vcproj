@@ -1185,6 +1185,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\common\ConsoleAnnotation.h"
+				>
+			</File>
+			<File
 				RelativePath="..\ConEmu\DragDrop.h"
 				>
 			</File>

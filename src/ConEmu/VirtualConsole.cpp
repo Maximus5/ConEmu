@@ -35,7 +35,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define DEBUGSTRDRAW(s) //DEBUGSTR(s)
 #define DEBUGSTRCOORD(s) //DEBUGSTR(s)
-#define DEBUGSTRFONT(s) DEBUGSTR(s)
 
 // WARNING("не появляются табы во второй консоли");
 WARNING("На предыдущей строке символы под курсором прыгают влево");
@@ -124,7 +123,7 @@ CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
     TextLen = 0;
 	mb_RequiredForceUpdate = true;
 	
-	mh_FontByIndex[0] = gSet.mh_Font; mh_FontByIndex[1] = gSet.mh_FontB; mh_FontByIndex[2] = gSet.mh_FontI;
+	mh_FontByIndex[0] = gSet.mh_Font; mh_FontByIndex[1] = gSet.mh_FontB; mh_FontByIndex[2] = gSet.mh_FontI; mh_FontByIndex[3] = gSet.mh_FontBI;
   
     //InitializeCriticalSection(&csDC); ncsTDC = 0; 
 	mb_PaintRequested = FALSE; mb_PaintLocked = FALSE;
@@ -598,7 +597,7 @@ void CVirtualConsole::BlitPictureTo(int inX, int inY, int inWidth, int inHeight)
 
 void CVirtualConsole::SelectFont(HFONT hNew)
 {
-    if (!hNew) {
+    if (hNew == NULL) {
         if (hOldFont)
             SelectObject(hDC, hOldFont);
         hOldFont = NULL;
@@ -1242,49 +1241,6 @@ void CVirtualConsole::UpdateText(bool isForce)
 #endif
 
 
-	#ifdef _DEBUG
-	if (isForce || isPressed(VK_SCROLL)) {
-		wchar_t szFontFace[32], szFontDump[128];
-		TEXTMETRIC tm;
-		// Main
-		if (!gSet.mh_Font) { lstrcpy(szFontDump, L"gSet.mh_Font: WAS NOT CREATED!\n"); } else {
-			SelectFont(gSet.mh_Font);
-			GetTextMetrics(hDC, &tm);
-			GetTextFace(hDC, 32, szFontFace);
-			wsprintf(szFontDump, L"gSet.mh_Font: '%s', Height=%i, Ave=%i, Max=%i\n",
-				szFontFace, tm.tmHeight, tm.tmAveCharWidth, tm.tmMaxCharWidth);
-		}
-		DEBUGSTRFONT(szFontDump);
-		// Bold
-		if (!gSet.mh_FontB) { lstrcpy(szFontDump, L"gSet.mh_FontB: WAS NOT CREATED!\n"); } else {
-			SelectFont(gSet.mh_FontB);
-			GetTextMetrics(hDC, &tm);
-			GetTextFace(hDC, 32, szFontFace);
-			wsprintf(szFontDump, L"gSet.mh_FontB: '%s', Height=%i, Ave=%i, Max=%i\n",
-				szFontFace, tm.tmHeight, tm.tmAveCharWidth, tm.tmMaxCharWidth);
-		}
-		DEBUGSTRFONT(szFontDump);
-		// Italic
-		if (!gSet.mh_FontI) { lstrcpy(szFontDump, L"gSet.mh_FontI: WAS NOT CREATED!\n"); } else {
-			SelectFont(gSet.mh_FontI);
-			GetTextMetrics(hDC, &tm);
-			GetTextFace(hDC, 32, szFontFace);
-			wsprintf(szFontDump, L"gSet.mh_FontI: '%s', Height=%i, Ave=%i, Max=%i\n",
-				szFontFace, tm.tmHeight, tm.tmAveCharWidth, tm.tmMaxCharWidth);
-		}
-		DEBUGSTRFONT(szFontDump);
-		// Border
-		if (!gSet.mh_Font2) { lstrcpy(szFontDump, L"gSet.mh_Font2: WAS NOT CREATED!\n"); } else {
-			SelectFont(gSet.mh_Font2);
-			GetTextMetrics(hDC, &tm);
-			GetTextFace(hDC, 32, szFontFace);
-			wsprintf(szFontDump, L"gSet.mh_Font2: '%s', Height=%i, Ave=%i, Max=%i\n",
-				szFontFace, tm.tmHeight, tm.tmAveCharWidth, tm.tmMaxCharWidth);
-		}
-		DEBUGSTRFONT(szFontDump);
-	}
-	#endif
-
     SelectFont(gSet.mh_Font);
 
     // pointers
@@ -1321,7 +1277,7 @@ void CVirtualConsole::UpdateText(bool isForce)
 	bool bProportional = gSet.isProportional;
 	bool bForceMonospace = gSet.isForceMonospace;
 	bool bFixFarBorders = gSet.isFixFarBorders;
-	mh_FontByIndex[0] = gSet.mh_Font; mh_FontByIndex[1] = gSet.mh_FontB; mh_FontByIndex[2] = gSet.mh_FontI;
+	mh_FontByIndex[0] = gSet.mh_Font; mh_FontByIndex[1] = gSet.mh_FontB; mh_FontByIndex[2] = gSet.mh_FontI; mh_FontByIndex[3] = gSet.mh_FontBI;
 	HFONT hFont = gSet.mh_Font;
 	HFONT hFont2 = gSet.mh_Font2;
     for (; pos <= nMaxPos; 

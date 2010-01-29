@@ -973,6 +973,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\common\ConsoleAnnotation.h"
+				>
+			</File>
+			<File
 				RelativePath=".\resource.h"
 				>
 			</File>

@@ -73,6 +73,8 @@ int ServerInit()
 	if (iRc != 0)
 		goto wrap;
 
+	// Создать мэппинг для Colorer
+	CreateColorerHeader(); // ошибку не обрабатываем - не критическая
 
     
     //if (hKernel) {
@@ -867,30 +869,58 @@ wrap:
 	return iRc;
 }
 
-int CreateColorerHeader(DWORD anID)
+int CreateColorerHeader()
 {
 	int iRc = -1;
 	wchar_t szMapName[64];
 	DWORD dwErr = 0;
 	//int nConInfoSize = sizeof(CESERVER_REQ_CONINFO_HDR);
-	DWORD nMapSize = 0;
+	DWORD nMapCells = 0, nMapSize = 0;
+	HWND lhConWnd = NULL;
 
 	_ASSERTE(srv.hColorerMapping == NULL);
 
+	
+	lhConWnd = GetConsoleWindow();
+	if (!lhConWnd) {
+		_ASSERTE(lhConWnd != NULL);
+		dwErr = GetLastError();
+		_printf ("Can't create console data file mapping. Console window is NULL.\n");
+		iRc = CERR_COLORERMAPPINGERR;
+		return 0;
+	}
+
+	
 	COORD crMaxSize = GetLargestConsoleWindowSize(GetStdHandle(STD_OUTPUT_HANDLE));
-	nMapSize = max(crMaxSize.X,200) * max(crMaxSize.Y,200) * sizeof(AnnotationInfo);
-
-	wsprintf(szMapName, AnnotationShareNameOld, sizeof(AnnotationInfo), anID);
-
-	//ghFileMapping = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, szMapName); -- Create!
+	nMapCells = max(crMaxSize.X,200) * max(crMaxSize.Y,200);
+	nMapSize = nMapCells * sizeof(AnnotationInfo) + sizeof(AnnotationHeader);
+	
+	
+	wsprintf(szMapName, AnnotationShareName, sizeof(AnnotationInfo), (DWORD)lhConWnd);
+	
 	srv.hColorerMapping = CreateFileMapping(INVALID_HANDLE_VALUE, 
 		gpNullSecurity, PAGE_READWRITE, 0, nMapSize, szMapName);
-
+	
 	if (!srv.hColorerMapping) {
 		dwErr = GetLastError();
-		_printf ("Can't create console data file mapping. ErrCode=0x%08X\n", dwErr, szMapName);
+		_printf ("Can't create colorer data mapping. ErrCode=0x%08X\n", dwErr, szMapName);
 		iRc = CERR_COLORERMAPPINGERR;
 	} else {
+		// Заголовок мэппинга содержит информацию о размере, нужно заполнить!
+		AnnotationHeader* pHdr = (AnnotationHeader*)MapViewOfFile(srv.hColorerMapping, FILE_MAP_ALL_ACCESS,0,0,0);
+		if (!pHdr) {
+			dwErr = GetLastError();
+			_printf ("Can't map colorer data mapping. ErrCode=0x%08X\n", dwErr, szMapName);
+			iRc = CERR_COLORERMAPPINGERR;
+			CloseHandle(srv.hColorerMapping); srv.hColorerMapping = NULL;
+		} else {
+			pHdr->struct_size = sizeof(AnnotationHeader);
+			pHdr->bufferSize = nMapCells;
+			pHdr->locked = 0; pHdr->flushCounter = 0;
+			// В плагине - данные не нужны
+			UnmapViewOfFile(pHdr);
+		}
+		// OK
 		iRc = 0;
 	}
 

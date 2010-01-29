@@ -210,7 +210,7 @@ void CloseMapHeader();
 
 void EmergencyShow();
 
-int CreateColorerHeader(DWORD anID);
+int CreateColorerHeader();
 
 /* Console Handles */
 //extern MConHandle ghConIn;

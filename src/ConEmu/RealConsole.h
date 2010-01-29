@@ -125,20 +125,23 @@ struct ConProcess {
     TCHAR Name[64]; // чтобы полная инфа об ошибке влезала
 };
 
+#include <pshpack1.h>
 typedef struct tag_CharAttr
 {
 	union {
 		// Собственно цвета/шрифты
 		struct {
-			COLORREF crBackColor; // Старший байт зарезервируем, вдруг для прозрачности понадобится
-			COLORREF crForeColor : 24; // чтобы в ui64 поместился и nFontIndex
-			BYTE     nFontIndex; // 0 - normal, 1 - bold, 2 - italic
+			unsigned int crBackColor : 32; // Старший байт зарезервируем, вдруг для прозрачности понадобится
+			unsigned int crForeColor : 24; // чтобы в ui64 поместился и nFontIndex
+			unsigned int nFontIndex : 8; // 0 - normal, 1 - bold, 2 - italic
+			unsigned int nForeIdx : 8;
+			unsigned int nBackIdx : 8; // может понадобиться для ExtendColors
+			unsigned int crOrigForeColor : 32;
+			unsigned int crOrigBackColor : 32; // Реальные цвета в консоли, crForeColor и crBackColor могут быть изменены колорером
 		};
 		// А это для сравнения (поиск изменений)
 		unsigned __int64 All;
 	};
-	BYTE nForeIdx, nBackIdx; // может понадобиться для ExtendColors
-	COLORREF crOrigForeColor, crOrigBackColor; // Реальные цвета в консоли, crForeColor и crBackColor могут быть изменены колорером
 	//
 	//DWORD dwAttrubutes; // может когда понадобятся дополнительные флаги...
 	//
@@ -147,6 +150,7 @@ typedef struct tag_CharAttr
     // */
     //AnnotationInfo annotationInfo;
 } CharAttr;
+#include <poppack.h>
 
 inline bool operator==(const CharAttr& s1, const CharAttr& s2)
 {
@@ -398,9 +402,11 @@ private:
 	CESERVER_REQ_CONINFO_DATA *mp_ConsoleData; // Mapping
 	// Colorer Mapping
 	HANDLE mh_ColorMapping;
+	AnnotationHeader *mp_ColorHdr;
 	AnnotationInfo *mp_ColorData;
 	DWORD mn_LastColorFarID;
-	void CheckColorMapping(DWORD dwPID);
+	void OpenColorMapping(); // Открыть мэппинг колорера (по HWND)
+	void CheckColorMapping(DWORD dwPID); // Проверить валидность буфера - todo
 	void CloseColorMapping();
 	//
 	DWORD mn_LastConsoleDataIdx, mn_LastConsolePacketIdx, mn_LastFarReadIdx;

@@ -87,7 +87,7 @@ public:
 	// Для ускорения получения индексов цвета
 	//BYTE  m_ForegroundColors[0x100], m_BackgroundColors[0x100];
 	//HFONT mh_FontByIndex[0x100]; // содержит ссылки (не копии) на шрифты normal/bold/italic
-	HFONT mh_FontByIndex[3]; // ссылки на Normal/Bold/Italic
+	HFONT mh_FontByIndex[4]; // ссылки на Normal/Bold/Italic/Bold&Italic
 
 	//CONSOLE_SELECTION_INFO SelectionInfo;
 

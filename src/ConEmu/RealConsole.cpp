@@ -200,6 +200,7 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
 	ms_HeaderMapName[0] = ms_DataMapName[0] = 0;
 
 	mh_ColorMapping = NULL;
+	mp_ColorHdr = NULL;
 	mp_ColorData = NULL;
 	mn_LastColorFarID = 0;
 	
@@ -2716,6 +2717,9 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 				// Открыть map с данными, теперь он уже должен быть создан
 				if (!mp_ConsoleInfo)
 					OpenMapHeader();
+					
+				// И атрибуты Colorer
+				OpenColorMapping();
 			}
 
             AllowSetForegroundWindow(nPID);
@@ -4080,13 +4084,19 @@ void CRealConsole::ShowConsole(int nMode) // -1 Toggle, 0 - Hide, 1 - Show
 
 void CRealConsole::SetHwnd(HWND ahConWnd)
 {
+	// Окно разрушено? Пересоздание консоли?
+	if (hConWnd && !IsWindow(hConWnd)) {
+		_ASSERTE(IsWindow(hConWnd));
+		hConWnd = NULL;
+	}
+
 	// Мог быть уже вызван (AttachGui/ConsoleEvent/CMD_START)
 	if (hConWnd != NULL) {
 		if (hConWnd != ahConWnd) {
 			if (mp_ConsoleInfo) {
 				_ASSERTE(mp_ConsoleInfo == NULL);
 
-				CloseMapHeader(); // вдруг был подцеплен к другому окну? хотя не должен
+				//CloseMapHeader(); // вдруг был подцеплен к другому окну? хотя не должен
 				// OpenMapHeader() пока не зовем, т.к. map мог быть еще не создан
 			}
 
@@ -4098,6 +4108,8 @@ void CRealConsole::SetHwnd(HWND ahConWnd)
     hConWnd = ahConWnd;
     //if (mb_Detached && ahConWnd) // Не сбрасываем, а то нить может не успеть!
     //  mb_Detached = FALSE; // Сброс флажка, мы уже подключились
+    
+    //OpenColorMapping();
         
     mb_ProcessRestarted = FALSE; // Консоль запущена
 
@@ -4578,7 +4590,14 @@ void CRealConsole::GetData(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHei
         wchar_t  *pszDst = pChar, *pszSrc = con.pConChar;
         CharAttr *pnDst = pAttr;
         WORD     *pnSrc = con.pConAttr;
-        AnnotationInfo *pcolSrc = mp_ColorData;
+        AnnotationInfo *pcolSrc = NULL;
+        AnnotationInfo *pcolEnd = NULL;
+        BOOL bUseColorData = FALSE;
+        if (mp_ColorHdr && mp_ColorData) {
+        	pcolSrc = mp_ColorData;
+        	pcolEnd = mp_ColorData + mp_ColorHdr->bufferSize;
+        	bUseColorData = TRUE;
+    	}
         DWORD cbDstLineSize = nWidth * 2;
         DWORD cnSrcLineLen = con.nTextWidth;
         DWORD cbSrcLineSize = cnSrcLineLen * 2;
@@ -4616,11 +4635,23 @@ void CRealConsole::GetData(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHei
 			            attrBackLast = lca.nBackIdx; // запомним обычный цвет предыдущей ячейки
 			        }
 			    }
-			    if (mp_ColorData) {
-			    	if (pcolSrc->fg_valid)
-			    		lca.crForeColor = pcolSrc->fg_color;
-			    	if (pcolSrc->bk_valid)
-			    		lca.crBackColor = pcolSrc->bk_color;
+			    if (bUseColorData) {
+			    	if (pcolSrc >= pcolEnd) {
+			    		bUseColorData = FALSE;
+		    		} else {
+				    	if (pcolSrc->fg_valid) {
+				    		lca.nFontIndex = 0;
+				    		lca.crForeColor = pcolSrc->fg_color;
+				    		if (pcolSrc->bk_valid)
+				    			lca.crBackColor = pcolSrc->bk_color;
+				    	} else if (pcolSrc->bk_valid) {
+				    		lca.nFontIndex = 0;
+				    		lca.crBackColor = pcolSrc->bk_color;
+			    		}
+			    		// nFontIndex: 0 - normal, 1 - bold, 2 - italic, 3 - bold&italic
+			    		if (pcolSrc->style)
+			    			lca.nFontIndex = pcolSrc->style & 3;
+		    		}
 			    }
 	            
 	            pnDst[nX] = lca;
@@ -6653,8 +6684,9 @@ DWORD CRealConsole::GetConsoleStates()
 
 void CRealConsole::CloseColorMapping()
 {
-	if (mp_ColorData) {
-		UnmapViewOfFile(mp_ColorData);
+	if (mp_ColorHdr) {
+		UnmapViewOfFile(mp_ColorHdr);
+		mp_ColorHdr = NULL;
 		mp_ColorData = NULL;
 	}
 	if (mh_ColorMapping) {
@@ -6671,7 +6703,7 @@ void CRealConsole::CheckColorMapping(DWORD dwPID)
 	if (!dwPID)
 		dwPID = GetFarPID();
 	if ((!dwPID && mp_ColorData) || (dwPID != mn_LastColorFarID)) {
-		CloseColorMapping();
+		//CloseColorMapping();
 		if (!dwPID)
 			return;
 	}
@@ -6681,13 +6713,17 @@ void CRealConsole::CheckColorMapping(DWORD dwPID)
 		
 	mn_LastColorFarID = dwPID; // сразу запомним
 	
+}
+
+void CRealConsole::OpenColorMapping()
+{
 	BOOL lbResult = FALSE;
 	wchar_t szErr[512]; szErr[0] = 0;
 	wchar_t szMapName[512]; szErr[0] = 0;
 	
 	_ASSERTE(mh_ColorMapping == NULL);
 
-	wsprintf(szMapName, AnnotationShareNameOld, sizeof(AnnotationInfo), dwPID);
+	wsprintf(szMapName, AnnotationShareName, sizeof(AnnotationInfo), (DWORD)hConWnd);
 	mh_ColorMapping = OpenFileMapping(FILE_MAP_READ, FALSE, szMapName);
 	if (!mh_ColorMapping) {
 		DWORD dwErr = GetLastError();
@@ -6695,19 +6731,24 @@ void CRealConsole::CheckColorMapping(DWORD dwPID)
 		goto wrap;
 	}
 	
-	mp_ColorData = (AnnotationInfo*)MapViewOfFile(mh_ColorMapping, FILE_MAP_READ,0,0,0);
-	if (!mp_ColorData) {
+	mp_ColorHdr = (AnnotationHeader*)MapViewOfFile(mh_ColorMapping, FILE_MAP_READ,0,0,0);
+	if (!mp_ColorHdr) {
 		DWORD dwErr = GetLastError();
 		wchar_t szErr[512];
 		wsprintf (szErr, L"ConEmu: Can't map colorer info. ErrCode=0x%08X. %s", dwErr, szMapName);
+		CloseHandle(mh_ColorMapping); mh_ColorMapping = NULL;
 		goto wrap;
 	}
+	
+	mp_ColorData = (AnnotationInfo*)(((LPBYTE)mp_ColorHdr)+mp_ColorHdr->struct_size);
 
 	lbResult = TRUE;
 wrap:
 	if (!lbResult && szErr[0]) {
 		gConEmu.DebugStep(szErr);
+		#ifdef _DEBUG
 		MBoxA(szErr);
+		#endif
 	}
 	//return lbResult;
 }
