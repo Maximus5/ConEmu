@@ -30,6 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "kl_parts.h"
 #include "../Common/common.hpp"
 
+#include "Options.h"
 #include "RealConsole.h"
 
 #define MAX_COUNT_PART_BRUSHES 16*16*4
@@ -87,7 +88,7 @@ public:
 	// Для ускорения получения индексов цвета
 	//BYTE  m_ForegroundColors[0x100], m_BackgroundColors[0x100];
 	//HFONT mh_FontByIndex[0x100]; // содержит ссылки (не копии) на шрифты normal/bold/italic
-	HFONT mh_FontByIndex[4]; // ссылки на Normal/Bold/Italic/Bold&Italic
+	HFONT mh_FontByIndex[MAX_FONT_STYLES]; // ссылки на Normal/Bold/Italic/Bold&Italic/...Underline
 
 	//CONSOLE_SELECTION_INFO SelectionInfo;
 

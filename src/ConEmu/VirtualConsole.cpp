@@ -122,8 +122,10 @@ CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
     ZeroStruct(winSize); ZeroStruct(coord);
     TextLen = 0;
 	mb_RequiredForceUpdate = true;
+
+	_ASSERTE(sizeof(mh_FontByIndex) == sizeof(gSet.mh_Font));
+	memmove(mh_FontByIndex, gSet.mh_Font, sizeof(mh_FontByIndex));
 	
-	mh_FontByIndex[0] = gSet.mh_Font; mh_FontByIndex[1] = gSet.mh_FontB; mh_FontByIndex[2] = gSet.mh_FontI; mh_FontByIndex[3] = gSet.mh_FontBI;
   
     //InitializeCriticalSection(&csDC); ncsTDC = 0; 
 	mb_PaintRequested = FALSE; mb_PaintLocked = FALSE;
@@ -693,10 +695,12 @@ void CVirtualConsole::CharABC(TCHAR ch, ABC *abc)
 	BOOL lbCharABCOk;
 
 	if (!gSet.CharABC[ch].abcB) {
-		if (gSet.mh_Font2 && isCharBorder(ch))
+		if (gSet.mh_Font2 && isCharBorder(ch)) {
 			SelectFont(gSet.mh_Font2);
-		else
-			SelectFont(gSet.mh_Font);
+		} else {
+			TODO("Тут надо бы деление по стилям сделать");
+			SelectFont(gSet.mh_Font[0]);
+		}
 
 		//This function succeeds only with TrueType fonts
 		lbCharABCOk = GetCharABCWidths(hDC, ch, ch, &gSet.CharABC[ch]);
@@ -737,11 +741,13 @@ WORD CVirtualConsole::CharWidth(TCHAR ch)
 
 
 	// Наверное все же нужно считать именно в том шрифте, которым будет идти отображение
-	if (gSet.mh_Font2 && isCharBorder(ch))
+	if (gSet.mh_Font2 && isCharBorder(ch)) {
 		SelectFont(gSet.mh_Font2);
-	else
-		SelectFont(gSet.mh_Font);
-	//SelectFont(gSet.mh_Font);
+	} else {
+		TODO("Тут надо бы деление по стилям сделать");
+		SelectFont(gSet.mh_Font[0]);
+	}
+	//SelectFont(gSet.mh_Font[0]);
     SIZE sz;
     //This function succeeds only with TrueType fonts
 	//#ifdef _DEBUG
@@ -1241,7 +1247,8 @@ void CVirtualConsole::UpdateText(bool isForce)
 #endif
 
 
-    SelectFont(gSet.mh_Font);
+	memmove(mh_FontByIndex, gSet.mh_Font, sizeof(mh_FontByIndex));
+    SelectFont(mh_FontByIndex[0]);
 
     // pointers
     wchar_t* ConCharLine;
@@ -1277,8 +1284,8 @@ void CVirtualConsole::UpdateText(bool isForce)
 	bool bProportional = gSet.isProportional;
 	bool bForceMonospace = gSet.isForceMonospace;
 	bool bFixFarBorders = gSet.isFixFarBorders;
-	mh_FontByIndex[0] = gSet.mh_Font; mh_FontByIndex[1] = gSet.mh_FontB; mh_FontByIndex[2] = gSet.mh_FontI; mh_FontByIndex[3] = gSet.mh_FontBI;
-	HFONT hFont = gSet.mh_Font;
+	//mh_FontByIndex[0] = gSet.mh_Font; mh_FontByIndex[1] = gSet.mh_FontB; mh_FontByIndex[2] = gSet.mh_FontI; mh_FontByIndex[3] = gSet.mh_FontBI;
+	HFONT hFont = gSet.mh_Font[0];
 	HFONT hFont2 = gSet.mh_Font2;
     for (; pos <= nMaxPos; 
         ConCharLine += TextWidth, ConAttrLine += TextWidth, ConCharXLine += TextWidth,
@@ -2117,7 +2124,7 @@ void CVirtualConsole::Paint(HDC hDc, RECT rcClient)
         #ifndef SKIP_ALL_FILLRECT
         FillRect(hDc, &rcClient, hBr);
         #endif
-		HFONT hOldF = (HFONT)SelectObject(hDc, gSet.mh_Font);
+		HFONT hOldF = (HFONT)SelectObject(hDc, gSet.mh_Font[0]);
 		LPCWSTR pszStarting = L"Initializing ConEmu.";
 		if (this) {
 			if (mp_RCon)
@@ -2225,7 +2232,7 @@ void CVirtualConsole::Paint(HDC hDc, RECT rcClient)
         {
 			if (mpsz_ConChar && mpsz_ConChar)
 			{
-				HFONT hOldFont = (HFONT)SelectObject(hDc, gSet.mh_Font);
+				HFONT hOldFont = (HFONT)SelectObject(hDc, gSet.mh_Font[0]);
 
 				MSectionLock SCON; SCON.Lock(&csCON);
 

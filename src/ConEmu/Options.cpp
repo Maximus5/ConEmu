@@ -120,9 +120,10 @@ CSettings::CSettings()
     memset(mn_FPS, 0, sizeof(mn_FPS)); mn_FPS_CUR_FRAME = 0;
     memset(mn_CounterTick, 0, sizeof(*mn_CounterTick)*(tPerfInterval-gbPerformance));
     hBgBitmap = NULL; bgBmp = MakeCoord(0,0); hBgDc = NULL;
-    mh_Font = mh_FontI = mh_FontB = mh_FontBI = mh_Font2 = NULL;
-	ZeroStruct(tm); ZeroStruct(tmB); ZeroStruct(tmI); ZeroStruct(tmBI);
-	otm = otmB = otmI = otmBI = NULL;
+    ZeroStruct(mh_Font);
+	mh_Font2 = NULL;
+	ZeroStruct(tm);
+	ZeroStruct(otm);
     ResetFontWidth();
     nAttachPID = 0; hAttachConWnd = NULL;
     memset(&ourSI, 0, sizeof(ourSI));
@@ -148,10 +149,10 @@ CSettings::CSettings()
 
 CSettings::~CSettings()
 {
-    if (mh_Font) { DeleteObject(mh_Font); mh_Font = NULL; }
-    if (mh_FontI) { DeleteObject(mh_FontI); mh_FontI = NULL; }
-    if (mh_FontB) { DeleteObject(mh_FontB); mh_FontB = NULL; }
-	if (mh_FontBI) { DeleteObject(mh_FontBI); mh_FontBI = NULL; }
+	for (int i=0; i<MAX_FONT_STYLES; i++) {
+		if (mh_Font[i]) { DeleteObject(mh_Font[i]); mh_Font[i] = NULL; }
+		if (otm[i]) {free(otm[i]); otm[i] = NULL;}
+	}
     if (mh_Font2) { DeleteObject(mh_Font2); mh_Font2 = NULL; }
     if (psCmd) {free(psCmd); psCmd = NULL;}
 	if (psCmdHistory) {free(psCmdHistory); psCmdHistory = NULL;}
@@ -159,10 +160,6 @@ CSettings::~CSettings()
 	if (sTabCloseMacro) {free(sTabCloseMacro); sTabCloseMacro = NULL;}
 	if (sRClickMacro) {free(sRClickMacro); sRClickMacro = NULL;}
     if (mh_Uxtheme!=NULL) { FreeLibrary(mh_Uxtheme); mh_Uxtheme = NULL; }
-	if (otm) {free(otm); otm = NULL;}
-	if (otmB) {free(otmB); otmB = NULL;}
-	if (otmI) {free(otmI); otmI = NULL;}
-	if (otmBI) {free(otmBI); otmBI = NULL;}
 }
 
 void CSettings::InitSettings()
@@ -706,7 +703,7 @@ void CSettings::InitFont(LPCWSTR asFontName/*=NULL*/, int anFontHeight/*=-1*/, i
 		}
 	}
 
-    mh_Font = CreateFontIndirectMy(&LogFont);
+    mh_Font[0] = CreateFontIndirectMy(&LogFont);
 	//2009-06-07 Реальный размер созданного шрифта мог измениться
 	SaveFontSizes(&LogFont, (mn_AutoFontWidth == -1));
 
@@ -2590,7 +2587,7 @@ void CSettings::UpdateFontInfo()
 	if (!ghOpWnd || !hInfo) return;
 
 	wchar_t szTemp[32];
-	wsprintf(szTemp, L"%ix%ix%i", LogFont.lfHeight, LogFont.lfWidth, tm.tmAveCharWidth);
+	wsprintf(szTemp, L"%ix%ix%i", LogFont.lfHeight, LogFont.lfWidth, tm->tmAveCharWidth);
 	SetDlgItemText(hInfo, tRealFontMain, szTemp);
 	wsprintf(szTemp, L"%ix%i", LogFont2.lfHeight, LogFont2.lfWidth);
 	SetDlgItemText(hInfo, tRealFontBorders, szTemp);
@@ -2763,9 +2760,9 @@ void CSettings::RecreateFont(WORD wFromID)
 	if (hf) {
 		SaveFontSizes(&LF, (mn_AutoFontWidth == -1));
 
-		HFONT hOldF = mh_Font;
+		HFONT hOldF = mh_Font[0];
 		LogFont = LF;
-		mh_Font = hf;
+		mh_Font[0] = hf;
 		DeleteObject(hOldF);
 
 		gConEmu.Update(true);
@@ -2820,9 +2817,9 @@ bool CSettings::AutoRecreateFont(int nFontW, int nFontH)
 		// Запомнить размер шрифта (AutoFontWidth/Height - может быть другим, он запоминается выше)
 		SaveFontSizes(&LF, false);
 
-		HFONT hOldF = mh_Font;
+		HFONT hOldF = mh_Font[0];
 		LogFont = LF;
-		mh_Font = hf;
+		mh_Font[0] = hf;
 		DeleteObject(hOldF);
 
 		// Передернуть флажки, что шрифт поменялся
@@ -2888,17 +2885,20 @@ HFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
     if (hFont) {
         HFONT hOldF = (HFONT)SelectObject(hDC, hFont);
         // Для пропорциональных шрифтов имеет смысл сохранять в реестре оптимальный lfWidth (это FontSizeX3)
-        ZeroStruct(tm); ZeroStruct(tmB); ZeroStruct(tmI); ZeroStruct(tmBI);
-        BOOL lbTM = GetTextMetrics(hDC, &tm);
+        ZeroStruct(tm);
+		for (int i=0; i<MAX_FONT_STYLES; i++) {
+			if (otm[i]) {free(otm[i]); otm[i] = NULL;}
+		}
+
+        BOOL lbTM = GetTextMetrics(hDC, tm);
 		_ASSERTE(lbTM);
 		if (bRasterFont) {
-			tm.tmHeight = nRastHeight;
-			tm.tmAveCharWidth = tm.tmMaxCharWidth = nRastWidth;
+			tm->tmHeight = nRastHeight;
+			tm->tmAveCharWidth = tm->tmMaxCharWidth = nRastWidth;
 		}
 		lpOutl = LoadOutline(hDC, hFont);
 		if (lpOutl) {
-			if (otm) free(otm);
-			otm = lpOutl; lpOutl = NULL;
+			otm[0] = lpOutl; lpOutl = NULL;
 		}
 		
 		if (GetTextFace(hDC, 32, szFontFace)) {
@@ -2915,14 +2915,14 @@ HFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 
 		// у Arial'а например MaxWidth слишком большой (в два и более раз больше ВЫСОТЫ шрифта)
 		bool bAlmostMonospace = false;
-		if (tm.tmMaxCharWidth && tm.tmAveCharWidth && tm.tmHeight)
+		if (tm->tmMaxCharWidth && tm->tmAveCharWidth && tm->tmHeight)
 		{
-			int nRelativeDelta = (tm.tmMaxCharWidth - tm.tmAveCharWidth) * 100 / tm.tmHeight;
+			int nRelativeDelta = (tm->tmMaxCharWidth - tm->tmAveCharWidth) * 100 / tm->tmHeight;
 			// Если расхождение менее 15% высоты - считаем шрифт моноширным
 			if (nRelativeDelta < 15)
 				bAlmostMonospace = true;			
 
-			//if (abs(tm.tmMaxCharWidth - tm.tmAveCharWidth)<=2)
+			//if (abs(tm->tmMaxCharWidth - tm->tmAveCharWidth)<=2)
 			//{ -- это была попытка прикинуть среднюю ширину по английским буквам
 			//  -- не нужно, т.к. затевалось из-за проблем с ClearType на больших размерах
 			//  -- шрифтов, а это лечится аргументом pDX в TextOut
@@ -2930,31 +2930,31 @@ HFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 			//	SIZE szTest = {0,0};
 			//	if (GetTextExtentPoint32(hDC, TEST_FONT_WIDTH_STRING_EN, nTestLen, &szTest)) {
 			//		int nAveWidth = (szTest.cx + nTestLen - 1) / nTestLen;
-			//		if (nAveWidth > tm.tmAveCharWidth || nAveWidth > tm.tmMaxCharWidth)
-			//			tm.tmMaxCharWidth = tm.tmAveCharWidth = nAveWidth;
+			//		if (nAveWidth > tm->tmAveCharWidth || nAveWidth > tm->tmMaxCharWidth)
+			//			tm->tmMaxCharWidth = tm->tmAveCharWidth = nAveWidth;
 			//	}
 			//}
 		} else {
-			_ASSERTE(tm.tmMaxCharWidth);
-			_ASSERTE(tm.tmAveCharWidth);
-			_ASSERTE(tm.tmHeight);
+			_ASSERTE(tm->tmMaxCharWidth);
+			_ASSERTE(tm->tmAveCharWidth);
+			_ASSERTE(tm->tmHeight);
 		}
 
 		if (isForceMonospace) {
             //Maximus - у Arial'а например MaxWidth слишком большой
-			if (tm.tmMaxCharWidth > (tm.tmHeight * 15 / 10))
-				tm.tmMaxCharWidth = tm.tmHeight; // иначе зашкалит - текст очень сильно разъедется
-            inFont->lfWidth = FontSizeX3 ? FontSizeX3 : tm.tmMaxCharWidth;
+			if (tm->tmMaxCharWidth > (tm->tmHeight * 15 / 10))
+				tm->tmMaxCharWidth = tm->tmHeight; // иначе зашкалит - текст очень сильно разъедется
+            inFont->lfWidth = FontSizeX3 ? FontSizeX3 : tm->tmMaxCharWidth;
 		} else {
 			// Если указан FontSizeX3 (это принудительная ширина знакоместа)
-            inFont->lfWidth = FontSizeX3 ? FontSizeX3 : tm.tmAveCharWidth;
+            inFont->lfWidth = FontSizeX3 ? FontSizeX3 : tm->tmAveCharWidth;
 		}
-        inFont->lfHeight = tm.tmHeight; TODO("Здесь нужно обновить реальный размер шрифта в диалоге настройки!");
-		if (lbTM && tm.tmCharSet != DEFAULT_CHARSET) {
-			inFont->lfCharSet = tm.tmCharSet;
+        inFont->lfHeight = tm->tmHeight; TODO("Здесь нужно обновить реальный размер шрифта в диалоге настройки!");
+		if (lbTM && tm->tmCharSet != DEFAULT_CHARSET) {
+			inFont->lfCharSet = tm->tmCharSet;
 			for (uint i=0; i < countof(ChSets); i++)
 			{
-				if (chSetsNums[i] == tm.tmCharSet) {
+				if (chSetsNums[i] == tm->tmCharSet) {
 					SendDlgItemMessage(hMain, tFontCharset, CB_SETCURSEL, i, 0);
 					break;
 				}
@@ -2971,58 +2971,34 @@ HFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 		if (ghOpWnd) {
 			// устанавливать только при листании шрифта в настройке
 			// при кликах по самому флажку "Monospace" шрифт не пересоздается (CreateFont... не вызывается)
-            UpdateTTF ( !bAlmostMonospace ); //(tm.tmMaxCharWidth - tm.tmAveCharWidth)>2
+            UpdateTTF ( !bAlmostMonospace ); //(tm->tmMaxCharWidth - tm->tmAveCharWidth)>2
 		}
 
         
         
         
-        
-        if (mh_FontB) { DeleteObject(mh_FontB); mh_FontB = NULL; }
-        tmpFont.lfWeight = (tmpFont.lfWeight == FW_NORMAL) ? FW_BOLD : FW_NORMAL;
-        mh_FontB = CreateFontIndirect(&tmpFont);
-		SelectObject(hDC, mh_FontB);
-		lbTM = GetTextMetrics(hDC, &tmB);
-		_ASSERTE(lbTM);
-		lpOutl = LoadOutline(hDC, mh_FontB);
-		if (lpOutl) {
-			if (otmB) free(otmB);
-			otmB = lpOutl; lpOutl = NULL;
+        for (int s = 1; s < MAX_FONT_STYLES; s++)
+		{
+			if (mh_Font[s]) { DeleteObject(mh_Font[s]); mh_Font[s] = NULL; }
+
+			if (s & AI_STYLE_BOLD) {
+				tmpFont.lfWeight = (inFont->lfWeight == FW_NORMAL) ? FW_BOLD : FW_NORMAL;
+			} else {
+				tmpFont.lfWeight = inFont->lfWeight;
+			}
+			tmpFont.lfItalic = (s & AI_STYLE_ITALIC) ? !inFont->lfItalic : inFont->lfItalic;
+			tmpFont.lfUnderline = (s & AI_STYLE_UNDERLINE) ? !inFont->lfUnderline : inFont->lfUnderline;
+
+			mh_Font[s] = CreateFontIndirect(&tmpFont);
+			SelectObject(hDC, mh_Font[s]);
+			lbTM = GetTextMetrics(hDC, tm+s);
+			_ASSERTE(lbTM);
+			lpOutl = LoadOutline(hDC, mh_Font[s]);
+			if (lpOutl) {
+				if (otm[s]) free(otm[s]);
+				otm[s] = lpOutl; lpOutl = NULL;
+			}
 		}
-
-        if (mh_FontI) { DeleteObject(mh_FontI); mh_FontI = NULL; }
-        tmpFont.lfWeight = inFont->lfWeight;
-        tmpFont.lfItalic = !tmpFont.lfItalic;
-        mh_FontI = CreateFontIndirect(&tmpFont);
-		SelectObject(hDC, mh_FontI);
-		lbTM = GetTextMetrics(hDC, &tmI);
-		_ASSERTE(lbTM);
-		lpOutl = LoadOutline(hDC, mh_FontI);
-		if (lpOutl) {
-			if (otmI) free(otmI);
-			otmI = lpOutl; lpOutl = NULL;
-		}
-
-		if (mh_FontBI) { DeleteObject(mh_FontBI); mh_FontBI = NULL; }
-		tmpFont.lfWeight = (tmpFont.lfWeight == FW_NORMAL) ? FW_BOLD : FW_NORMAL;
-		tmpFont.lfItalic = !tmpFont.lfItalic;
-		mh_FontBI = CreateFontIndirect(&tmpFont);
-		SelectObject(hDC, mh_FontBI);
-		lbTM = GetTextMetrics(hDC, &tmBI);
-		_ASSERTE(lbTM);
-		lpOutl = LoadOutline(hDC, mh_FontBI);
-		if (lpOutl) {
-			if (otmBI) free(otmBI);
-			otmBI = lpOutl; lpOutl = NULL;
-		}
-
-
-		#ifdef _DEBUG
-			DumpFontMetrics(L"mh_Font", hDC, hFont, otm);
-			DumpFontMetrics(L"mh_FontB", hDC, mh_FontB, otmB);
-			DumpFontMetrics(L"mh_FontI", hDC, mh_FontI, otmI);
-			DumpFontMetrics(L"mh_FontBI", hDC, mh_FontBI, otmBI);
-		#endif
 
 
 		SelectObject(hDC, hOldF);

@@ -4648,9 +4648,9 @@ void CRealConsole::GetData(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHei
 				    		lca.nFontIndex = 0;
 				    		lca.crBackColor = pcolSrc->bk_color;
 			    		}
-			    		// nFontIndex: 0 - normal, 1 - bold, 2 - italic, 3 - bold&italic
+			    		// nFontIndex: 0 - normal, 1 - bold, 2 - italic, 3 - bold&italic,..., 7 - underline
 			    		if (pcolSrc->style)
-			    			lca.nFontIndex = pcolSrc->style & 3;
+			    			lca.nFontIndex = pcolSrc->style & 7;
 		    		}
 			    }
 	            

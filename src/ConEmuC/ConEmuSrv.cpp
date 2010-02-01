@@ -948,9 +948,17 @@ static BOOL RecreateMapData()
 	BOOL lbRc = FALSE;
 	DWORD dwErr = 0;
 	DWORD nNewIndex = 0;
-	DWORD nMaxSize = (srv.sbi.dwMaximumWindowSize.X * srv.sbi.dwMaximumWindowSize.Y * 2) * sizeof(CHAR_INFO)+sizeof(CESERVER_REQ_CONINFO_DATA);
+	DWORD nMaxCells = (srv.sbi.dwMaximumWindowSize.X * srv.sbi.dwMaximumWindowSize.Y);
+	DWORD nMaxSize = (nMaxCells * 2) * sizeof(CHAR_INFO)+sizeof(CESERVER_REQ_CONINFO_DATA);
 	wchar_t szErr[255]; szErr[0] = 0;
 	wchar_t szMapName[64];
+
+	// Тут создавать буфер по наибольшему GetLargestConsoleWindowSize & nMaxSize
+	COORD crMaxSize = GetLargestConsoleWindowSize(GetStdHandle(STD_OUTPUT_HANDLE));
+	if (nMaxCells < (DWORD)(crMaxSize.X * crMaxSize.Y)) {
+		nMaxCells = (crMaxSize.X * crMaxSize.Y);
+		nMaxSize = (nMaxCells * 2) * sizeof(CHAR_INFO)+sizeof(CESERVER_REQ_CONINFO_DATA);
+	}
 	
 	_ASSERTE(srv.pConsoleInfo);
 	if (!srv.pConsoleInfo) {

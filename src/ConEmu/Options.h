@@ -30,6 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #define MIN_ALPHA_VALUE 40
+#define MAX_FONT_STYLES 8 //normal/bold|italic|underline
 
 class CSettings
 {
@@ -54,12 +55,13 @@ private:
 	LONG mn_AutoFontWidth, mn_AutoFontHeight; // размеры шрифтов, которые были запрошены при авторесайзе шрифта
 	LONG mn_FontWidth, mn_FontHeight, mn_BorderFontWidth; // реальные размеры шрифтов
 	BYTE mn_LoadFontCharSet; // То что загружено изначально (или уже сохранено в реестр)
-	TEXTMETRIC tm, tmB, tmI, tmBI;
-	OUTLINETEXTMETRIC *otm, *otmB, *otmI, *otmBI;
+	TEXTMETRIC tm[MAX_FONT_STYLES];
+	LPOUTLINETEXTMETRIC otm[MAX_FONT_STYLES];
     BOOL mb_Name1Ok, mb_Name2Ok;
 	void ResetFontWidth();
 	void SaveFontSizes(LOGFONT *pCreated, bool bAuto);
 	LPOUTLINETEXTMETRIC LoadOutline(HDC hDC, HFONT hFont);
+	void DumpFontMetrics(LPCWSTR szType, HDC hDC, HFONT hFont, LPOUTLINETEXTMETRIC lpOutl = NULL);
 public:
 	bool isFontAutoSize;
 	bool isAutoRegisterFonts;
@@ -189,7 +191,8 @@ public:
     HBITMAP hBgBitmap;
     COORD   bgBmp;
     HDC     hBgDc;
-    HFONT   mh_Font, mh_FontI, mh_FontB, mh_FontBI, mh_Font2;
+    HFONT   mh_Font[MAX_FONT_STYLES], mh_Font2;
+    TODO("По хорошему, CharWidth & CharABC нужно разделять по шрифтам - у Bold ширина может быть больше");
     WORD    CharWidth[0x10000]; //, Font2Width[0x10000];
 	ABC     CharABC[0x10000];
 
@@ -281,5 +284,4 @@ private:
 	} RegFont;
 	std::vector<RegFont> m_RegFonts;
 	BOOL mb_StopRegisterFonts;
-	void DumpFontMetrics(LPCWSTR szType, HDC hDC, HFONT hFont, LPOUTLINETEXTMETRIC lpOutl = NULL);
 };
