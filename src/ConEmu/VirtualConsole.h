@@ -183,6 +183,7 @@ protected:
 	BOOL mb_InPaintCall;
 	//
 	void DistributeSpaces(wchar_t* ConCharLine, CharAttr* ConAttrLine, DWORD* ConCharXLine, const int j, const int j2, const int end);
+	BOOL FindChanges(int &j, int &end, const wchar_t* ConCharLine, const CharAttr* ConAttrLine, const wchar_t* ConCharLine2, const CharAttr* ConAttrLine2);
 	LONG nFontHeight, nFontWidth;
 	BYTE nFontCharSet;
 	BYTE nLastNormalBack;

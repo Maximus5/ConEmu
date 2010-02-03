@@ -2755,6 +2755,10 @@ void CSettings::RecreateFont(WORD wFromID)
 	FontSizeX3 = GetNumber(hMain, tFontSizeX3);
 	
 
+	if (isAdvLogging) {
+		char szInfo[128]; wsprintfA(szInfo, "AutoRecreateFont(H=%i, W=%i)", LF.lfHeight, LF.lfWidth);
+		gConEmu.ActiveCon()->RCon()->LogString(szInfo);
+	}
 
 	HFONT hf = CreateFontIndirectMy(&LF);
 	if (hf) {
@@ -2804,6 +2808,11 @@ bool CSettings::AutoRecreateFont(int nFontW, int nFontH)
 {
 	if (mn_AutoFontWidth == nFontW && mn_AutoFontHeight == nFontH)
 		return false; // ничего не делали
+		
+	if (isAdvLogging) {
+		char szInfo[128]; wsprintfA(szInfo, "AutoRecreateFont(H=%i, W=%i)", nFontH, nFontW);
+		gConEmu.ActiveCon()->RCon()->LogString(szInfo);
+	}
 
 	// Сразу запомним, какой размер просили в последний раз
 	mn_AutoFontWidth = nFontW; mn_AutoFontHeight = nFontH;
@@ -3221,6 +3230,11 @@ LONG CSettings::FontHeight()
 BOOL CSettings::FontItalic()
 {
 	return LogFont.lfItalic!=0;
+}
+
+BOOL CSettings::FontClearType()
+{
+	return (LogFont.lfQuality!=NONANTIALIASED_QUALITY);
 }
 
 LONG CSettings::BorderFontWidth()

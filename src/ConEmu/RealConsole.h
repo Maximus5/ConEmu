@@ -128,6 +128,7 @@ struct ConProcess {
 #include <pshpack1.h>
 typedef struct tag_CharAttr
 {
+	TODO("OPTIMIZE: Заменить бы битовые поля на один DWORD, в котором хранить некий общий ИД стиля, заполняемый при формировании буфера");
 	union {
 		// Собственно цвета/шрифты
 		struct {

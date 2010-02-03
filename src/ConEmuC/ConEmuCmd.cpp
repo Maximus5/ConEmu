@@ -296,11 +296,17 @@ void ComspecDone(int aiRc)
         if (lbRc1 && lbRc2 && sbi2.dwSize.Y == sbi1.dwSize.Y) {
             // GUI не смог вернуть высоту буфера... 
             // Это плохо, т.к. фар высоту буфера не меняет и будет сильно глючить на N сотнях строк...
-            if (sbi2.dwSize.Y != cmd.sbi.dwSize.Y) {
+			int nNeedHeight = cmd.sbi.dwSize.Y;
+			if (nNeedHeight < 10) {
+				nNeedHeight = (sbi2.srWindow.Bottom-sbi2.srWindow.Top+1);
+			}
+            if (sbi2.dwSize.Y != nNeedHeight) {
             	PRINT_COMSPEC(L"Error: BufferHeight was not changed from %i\n", sbi2.dwSize.Y);
                 SMALL_RECT rc = {0};
-                sbi2.dwSize.Y = cmd.sbi.dwSize.Y;
+                sbi2.dwSize.Y = nNeedHeight;
+                if (ghLogSize) LogSize(&sbi2.dwSize, ":ComspecDone.RetSize.before");
                 SetConsoleSize(0, sbi2.dwSize, rc, "ComspecDone.Force");
+                if (ghLogSize) LogSize(NULL, ":ComspecDone.RetSize.after");
             }
         }
     }

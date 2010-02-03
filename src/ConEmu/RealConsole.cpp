@@ -599,6 +599,7 @@ BOOL CRealConsole::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuff
         }
     }
 
+    WARNING("Тут бы использовать ExecuteFree");
 	if (pOut) { free(pOut); pOut = NULL; }
 	if (pIn) { free(pIn); pIn = NULL; }
 
@@ -709,7 +710,7 @@ void CRealConsole::SyncConsole2Window()
 	if (con.nTextWidth != newCon.right || con.nTextHeight != newCon.bottom)
 	{
 		if (gSet.isAdvLogging>=2) {
-			char szInfo[128]; wsprintfA(szInfo, "SyncConsoleToWindow(Cols=%i, Rows=%i)", newCon.right, newCon.bottom);
+			char szInfo[128]; wsprintfA(szInfo, "SyncConsoleToWindow(Cols=%i, Rows=%i, Current={%i,%i})", newCon.right, newCon.bottom, con.nTextWidth, con.nTextHeight);
 			LogString(szInfo);
 		}
 
@@ -1133,6 +1134,7 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
         	}
             
 			// обновить статусы, найти панели, и т.п.
+			bool bCheckStatesFindPanels = false;
 			if (pRCon->mb_DataChanged || pRCon->mb_TabsWasChanged) {
 				lbForceUpdate = true; // чтобы если консоль неактивна - не забыть при ее активации передернуть что нужно...
 				pRCon->mb_TabsWasChanged = FALSE;
@@ -1140,6 +1142,18 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 				// Функция загружает ТОЛЬКО ms_PanelTitle, чтобы показать 
 				// корректный текст в закладке, соответсвующей панелям
 			    pRCon->CheckPanelTitle();
+				// выполнит ниже CheckFarStates & FindPanels
+				bCheckStatesFindPanels = true;
+			}
+			if (!bCheckStatesFindPanels) {
+				// Если была обнаружена "ошибка" прогресса - проверить заново.
+				// Это может также произойти при извлечении файла из архива через MA.
+				// Проценты бегут (панелей нет), проценты исчезают, панели появляются, но
+				// пока не произойдет хоть каких-нибудь изменений в консоли - статус не обновлялся.
+				if (pRCon->mn_FarStatus & (CES_WASPROGRESS|CES_OPER_ERROR))
+					bCheckStatesFindPanels = true;
+			}
+			if (bCheckStatesFindPanels) {
 				// Статусы mn_FarStatus & mn_PreWarningProgress
 			    pRCon->CheckFarStates();
 				// Если возможны панели - найти их в консоли,
@@ -3291,6 +3305,7 @@ void CRealConsole::ProcessUpdateFlags(BOOL abProcessChanged)
 
 void CRealConsole::ProcessUpdate(const DWORD *apPID, UINT anCount)
 {
+	TODO("OPTIMIZE: хорошо бы от секции вообще избавиться, да и не всегда обновлять нужно...");
     MSectionLock SPRC; SPRC.Lock(&csPRC);
 
     BOOL lbRecreateOk = FALSE;
@@ -4525,7 +4540,7 @@ void CRealConsole::GetData(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHei
         return;
         
     // формирование умолчательных цветов, по атрибутам консоли
-    TODO("В принципе, это можно делать не всегда, а только при изменениях");
+    //TODO("В принципе, это можно делать не всегда, а только при изменениях");
     int  nColorIndex = 0;
 	bool bExtendColors = gSet.isExtendColors;
 	BYTE nExtendColor = gSet.nExtendColor;
@@ -4536,6 +4551,7 @@ void CRealConsole::GetData(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHei
     CharAttr lca, lcaTable[0x100]; // crForeColor, crBackColor, nFontIndex, nForeIdx, nBackIdx, crOrigForeColor, crOrigBackColor
     //COLORREF lcrForegroundColors[0x100], lcrBackgroundColors[0x100];
     //BYTE lnForegroundColors[0x100], lnBackgroundColors[0x100], lnFontByIndex[0x100];
+	TODO("OPTIMIZE: В принципе, это можно делать не всегда, а только при изменениях");
     for (int nBack = 0; nBack <= 0xF; nBack++) {
     	for (int nFore = 0; nFore <= 0xF; nFore++, nColorIndex++) {
     		lca.nForeIdx = nFore;
@@ -4623,8 +4639,10 @@ void CRealConsole::GetData(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHei
             for (nX = 0; nX < (int)cnSrcLineLen; nX++, pnSrc++, pcolSrc++)
             {
 	            DWORD atr = (*pnSrc) & 0xFF; // интересут только нижний байт - там индексы цветов
+				TODO("OPTIMIZE: lca = lcaTable[atr];");
 	            lca = lcaTable[atr];
 
+				TODO("OPTIMIZE: вынести проверку bExtendColors за циклы");
 			    if (bExtendColors) {
 			        if (lca.nBackIdx == nExtendColor) {
 			            lca.nBackIdx = attrBackLast; // фон нужно заменить на обычный цвет из соседней ячейки
@@ -4635,10 +4653,12 @@ void CRealConsole::GetData(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHei
 			            attrBackLast = lca.nBackIdx; // запомним обычный цвет предыдущей ячейки
 			        }
 			    }
+				TODO("OPTIMIZE: вынести проверку bUseColorData за циклы");
 			    if (bUseColorData) {
 			    	if (pcolSrc >= pcolEnd) {
 			    		bUseColorData = FALSE;
 		    		} else {
+						TODO("OPTIMIZE: доступ к битовым полям тяжело идет...");
 				    	if (pcolSrc->fg_valid) {
 				    		lca.nFontIndex = 0;
 				    		lca.crForeColor = pcolSrc->fg_color;
@@ -4654,6 +4674,7 @@ void CRealConsole::GetData(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHei
 		    		}
 			    }
 	            
+				TODO("OPTIMIZE: lca = lcaTable[atr];");
 	            pnDst[nX] = lca;
 	            //memmove(pnDst, pnSrc, cbLineSize);
             }
@@ -5908,12 +5929,22 @@ void CRealConsole::CheckFarStates()
 			nNewState &= ~(CES_WASPROGRESS|CES_OPER_ERROR); // Значит СЕЙЧАС процесс копирования не идет
 		}
 
-		if (mn_Progress >= 0 && mn_Progress <= 100) {
-			mn_PreWarningProgress = mn_Progress;
-			if ((nNewState & CES_MAYBEPANEL) == CES_MAYBEPANEL)
+		if (mn_Progress >= 0 && mn_Progress <= 100)
+		{
+			if (mn_ConsoleProgress == mn_Progress) {
+				// При извлечении прогресса из текста консоли - Warning ловить смысла нет
+				mn_PreWarningProgress = -1;
+				nNewState &= ~CES_OPER_ERROR;
 				nNewState |= CES_WASPROGRESS; // Пометить статус, что прогресс был
-			nNewState &= ~CES_OPER_ERROR;
-		} else if ((nNewState & (CES_WASPROGRESS|CES_MAYBEPANEL)) == (CES_WASPROGRESS|CES_MAYBEPANEL)) {
+			} else {
+				mn_PreWarningProgress = mn_Progress;
+				if ((nNewState & CES_MAYBEPANEL) == CES_MAYBEPANEL)
+					nNewState |= CES_WASPROGRESS; // Пометить статус, что прогресс был
+				nNewState &= ~CES_OPER_ERROR;
+			}
+		} else if ((nNewState & (CES_WASPROGRESS|CES_MAYBEPANEL)) == (CES_WASPROGRESS|CES_MAYBEPANEL)
+			&& mn_PreWarningProgress != -1)
+		{
 			nNewState |= CES_OPER_ERROR;
 		}
 	}
@@ -7085,10 +7116,14 @@ BOOL CRealConsole::LoadDataFromMap(DWORD CharCount)
 
 		// Когда вернется возможность выделения - нужно сразу применять данные в атрибуты
 		_ASSERTE(!bSelectionPresent);
+		wchar_t ch;
+		// Расфуговка буфера CHAR_INFO на текст и атрибуты
 		for (DWORD n = 0; n < CharCount; n++, lpCur++) {
+			TODO("OPTIMIZE: *(lpAttr++) = lpCur->Attributes;");
 			*(lpAttr++) = lpCur->Attributes;
 
-			wchar_t ch = lpCur->Char.UnicodeChar;
+			TODO("OPTIMIZE: ch = lpCur->Char.UnicodeChar;");
+			ch = lpCur->Char.UnicodeChar;
 			//2009-09-25. Некоторые (старые?) программы умудряются засунуть в консоль символы (ASC<32)
 			//            их нужно заменить на юникодные аналоги
 			*(lpChar++) = (ch < 32) ? gszAnalogues[(WORD)ch] : ch;

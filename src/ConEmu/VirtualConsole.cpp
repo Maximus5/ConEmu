@@ -1279,7 +1279,7 @@ void CVirtualConsole::UpdateText(bool isForce)
     // rows
     // зачем в isForceMonospace принудительно перерисовывать все?
     // const bool skipNotChanged = !isForce /*&& !gSet.isForceMonospace*/;
-    const bool skipNotChanged = !isForce;
+    const bool skipNotChanged = !isForce && !((gSet.FontItalic() || gSet.FontClearType()));
 	bool bEnhanceGraphics = gSet.isEnhanceGraphics;
 	bool bProportional = gSet.isProportional;
 	bool bForceMonospace = gSet.isForceMonospace;
@@ -1311,49 +1311,9 @@ void CVirtualConsole::UpdateText(bool isForce)
 		// может оказаться КОРОЧЕ предыдущего значения, в результате появятся артефакты
         if (skipNotChanged)
         {
-            // *) Skip not changed tail symbols. но только если шрифт моноширный
-			if (!bProportional) {
-				while(--end >= 0 && ConCharLine[end] == ConCharLine2[end] && ConAttrLine[end] == ConAttrLine2[end])
-					;
-				// [%] ClearType, TTF fonts (isProportional может быть и отключен)
-				if (end >= 0  // Если есть хоть какие-то изменения
-					&& end < (int)(TextWidth - 1) // до конца строки
-					&& (ConCharLine[end+1] == ucSpace || ConCharLine[end+1] == ucNoBreakSpace || isCharProgress(ConCharLine[end+1])) // будем отрисовывать все проблеы
-					)
-				{
-					int n = TextWidth - 1;
-					while ((end < n) 
-					&& (ConCharLine[end+1] == ucSpace || ConCharLine[end+1] == ucNoBreakSpace || isCharProgress(ConCharLine[end+1])))
-						end++;
-				}
-				if (end < j)
-					continue;
-				++end;
-			}
-
-            // *) Skip not changed head symbols.
-            while(j < end && ConCharLine[j] == ConCharLine2[j] && ConAttrLine[j] == ConAttrLine2[j])
-                ++j;
-			// [%] ClearType, proportional fonts
-			if (j > 0 // если с начала строки
-				&& (ConCharLine[j-1] == ucSpace || ConCharLine[j-1] == ucNoBreakSpace || isCharProgress(ConCharLine[j-1]) // есть пробелы
-					|| (gSet.FontItalic() || ConAttrLine[j-1].nFontIndex) ) // Или сейчас курсив/жирный?
-				)
-			{
-				if (gSet.FontItalic() || ConAttrLine[j-1].nFontIndex) {
-					j = 0; // с частичной отрисовкой заморачиваться не будем, а то еще ClearType вылезет...
-				} else {
-					while ((j > 0)
-					&& (ConCharLine[j-1] == ucSpace || ConCharLine[j-1] == ucNoBreakSpace || isCharProgress(ConCharLine[j-1])))
-						j--;
-				}
-			}
-			if (j >= end) {
-				// Для пропорциональных шрифтов сравнение выполняется только с начала строки,
-				// поэтому сюда мы вполне можем попасть - значит строка не менялась
-                continue;
-			}
-
+            // Skip not changed head and tail symbols
+			if (!FindChanges(j, end, ConCharLine, ConAttrLine, ConCharLine2, ConAttrLine2))
+				continue;
         } // if (skipNotChanged)
         
         if (Cursor.isVisiblePrev && row == Cursor.y
@@ -1365,6 +1325,9 @@ void CVirtualConsole::UpdateText(bool isForce)
         int j2=j+1;
         for (; j < end; j = j2)
         {
+			TODO("OPTIMIZE: вынести переменные из цикла");
+			TODO("OPTIMIZE: если символ/атрибут совпадает с предыдущим (j>0 !) то не звать повторно CharWidth, isChar..., isUnicode, ...");
+
             const CharAttr attr = ConAttrLine[j];
             WCHAR c = ConCharLine[j];
             //BYTE attrForeIdx, attrBackIdx;
@@ -1537,12 +1500,10 @@ void CVirtualConsole::UpdateText(bool isForce)
 
                 j2 = j + 1;
 
-                if (bFixFarBorders) {
-                    if (!isUnicode)
-                        SelectFont(hFont);
-                    else //if (isUnicode)
-                        SelectFont(hFont2);
-                }
+                if (bFixFarBorders && isUnicode)
+					SelectFont(hFont2);
+				else
+                    SelectFont(hFont);
 
 
                 RECT rect;
@@ -1647,8 +1608,7 @@ void CVirtualConsole::UpdateText(bool isForce)
 					}
 					#endif
 
-					if (bFixFarBorders)
-						SelectFont(hFont);
+					SelectFont(hFont);
 					MCHKHEAP
 				}
 				else //Border and specials
@@ -1708,8 +1668,7 @@ void CVirtualConsole::UpdateText(bool isForce)
 						//}
 					}
 
-					if (bFixFarBorders)
-						SelectFont(hFont2);
+					SelectFont(bFixFarBorders ? hFont2 : hFont);
 					MCHKHEAP
 				}
 
@@ -2470,4 +2429,84 @@ void CVirtualConsole::DistributeSpaces(wchar_t* ConCharLine, CharAttr* ConAttrLi
 			MCHKHEAP
 		}
 	}
+}
+
+BOOL CVirtualConsole::FindChanges(int &j, int &end, const wchar_t* ConCharLine, const CharAttr* ConAttrLine, const wchar_t* ConCharLine2, const CharAttr* ConAttrLine2)
+{
+	// Default: j = 0, end = TextWidth;
+
+	// Если основной шрифт в консоли курсивный, то
+	// во избежение обрезания правой части буквы нужно рисовать строку целиком
+	TODO("Возможно при включенном ClearType не нужно будет рисовать строку целиком, если переделаю на Transparent отрисовку текста");
+	if (gSet.FontItalic() || gSet.FontClearType())
+		return TRUE;
+
+	// Если изменений в строке вообще нет
+	if (wmemcmp(ConCharLine, ConCharLine2, end) == 0
+		&& memcmp(ConAttrLine, ConAttrLine2, end*sizeof(*ConAttrLine)) == 0)
+		return FALSE;
+
+	// *) Skip not changed tail symbols. но только если шрифт моноширный
+	if (!gSet.isProportional) {
+		TODO("OPTIMIZE:");
+		while(--end >= 0 && ConCharLine[end] == ConCharLine2[end] && ConAttrLine[end] == ConAttrLine2[end])
+		{
+			// Если есть стили шрифта (курсив/жирный), то 
+			// во избежение обрезания правой части буквы нужно рисовать строку целиком
+			if (ConAttrLine[end].nFontIndex) {
+				end = TextWidth;
+				return TRUE;
+			}
+		}
+		// [%] ClearType, TTF fonts (isProportional может быть и отключен)
+		if (end >= 0  // Если есть хоть какие-то изменения
+			&& end < (int)(TextWidth - 1) // до конца строки
+			&& (ConCharLine[end+1] == ucSpace || ConCharLine[end+1] == ucNoBreakSpace || isCharProgress(ConCharLine[end+1])) // будем отрисовывать все проблеы
+			)
+		{
+			int n = TextWidth - 1;
+			while ((end < n) 
+				&& (ConCharLine[end+1] == ucSpace || ConCharLine[end+1] == ucNoBreakSpace || isCharProgress(ConCharLine[end+1])))
+				end++;
+		}
+		if (end < j)
+			return FALSE;
+		++end;
+	}
+
+	// *) Skip not changed head symbols.
+	while(j < end && ConCharLine[j] == ConCharLine2[j] && ConAttrLine[j] == ConAttrLine2[j])
+	{
+		// Если есть стили шрифта (курсив/жирный) то 
+		// во избежение обрезания правой части буквы нужно рисовать строку целиком
+		if (ConAttrLine[j].nFontIndex) {
+			j = 0;
+			end = TextWidth;
+			return TRUE;
+		}
+		++j;
+	}
+	// [%] ClearType, proportional fonts
+	if (j > 0 // если с начала строки
+		&& (ConCharLine[j-1] == ucSpace || ConCharLine[j-1] == ucNoBreakSpace || isCharProgress(ConCharLine[j-1]) // есть пробелы
+		|| (gSet.FontItalic() || ConAttrLine[j-1].nFontIndex) ) // Или сейчас курсив/жирный?
+		)
+	{
+		if (gSet.FontItalic() || ConAttrLine[j-1].nFontIndex) {
+			j = 0; // с частичной отрисовкой заморачиваться не будем, а то еще ClearType вылезет...
+		} else {
+			while ((j > 0)
+				&& (ConCharLine[j-1] == ucSpace || ConCharLine[j-1] == ucNoBreakSpace || isCharProgress(ConCharLine[j-1])))
+			{
+				j--;
+			}
+		}
+	}
+	if (j >= end) {
+		// Для пропорциональных шрифтов сравнение выполняется только с начала строки,
+		// поэтому сюда мы вполне можем попасть - значит строка не менялась
+		return FALSE;
+	}
+
+	return TRUE;
 }

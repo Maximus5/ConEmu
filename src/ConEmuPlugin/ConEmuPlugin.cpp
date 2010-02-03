@@ -1230,7 +1230,8 @@ DWORD WINAPI MonitorThreadProcW(LPVOID lpParameter)
 				InitResources();
 
 				// Обновить ТАБЫ после детача!
-				SendTabs(gnCurTabCount, TRUE);
+				if (gnCurTabCount && gpTabs)
+					SendTabs(gnCurTabCount, TRUE);
 			}
 		}
 

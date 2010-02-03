@@ -316,6 +316,7 @@ typedef struct tag_CESERVER_REQ_CONINFO_HDR {
 	BYTE nFarColors[0x100]; // Массив цветов фара
 	DWORD nFarInterfaceSettings;
 	DWORD nFarConfirmationSettings;
+	DWORD nLogLevel;
 } CESERVER_REQ_CONINFO_HDR;
 
 typedef struct tag_CESERVER_REQ_CONINFO_DATA {
@@ -829,6 +830,7 @@ private:
 	MSection  mcs_Handle;
 	BOOL      mb_OpenFailed;
 	DWORD     mn_LastError;
+	DWORD     mn_StdMode;
 
 public:
 	operator const HANDLE();

@@ -1586,6 +1586,9 @@ void CConEmuMain::OnConsoleResize(BOOL abPosted/*=FALSE*/)
 	// Выполняться должно в нити окна, иначе можем повиснуть
 	static bool lbPosted = false;
 	if (!abPosted) {
+		if (gSet.isAdvLogging)
+			mp_VActive->RCon()->LogString("OnConsoleResize(abPosted==false)");
+	
 		if (!lbPosted) {
 			lbPosted = true; // чтобы post не накапливались
 			PostMessage(ghWnd, mn_PostConsoleResize, 0,0);
@@ -1594,16 +1597,29 @@ void CConEmuMain::OnConsoleResize(BOOL abPosted/*=FALSE*/)
 	}
 	lbPosted = false;
 	
-	if (isIconic())
+	if (isIconic()) {
+		if (gSet.isAdvLogging)
+			mp_VActive->RCon()->LogString("OnConsoleResize ignored, because of iconic");
+	
 		return; // если минимизировано - ничего не делать
+	}
 
     // Было ли реальное изменение размеров?
     BOOL lbSizingToDo  = (mouse.state & MOUSE_SIZING_TODO) == MOUSE_SIZING_TODO;
-
-    if (isSizing() && !isPressed(VK_LBUTTON)) {
+	bool lbIsSizing = isSizing();
+	bool lbLBtnPressed = isPressed(VK_LBUTTON);
+    
+    if (lbIsSizing && !lbLBtnPressed) {
         // Сборс всех флагов ресайза мышкой
         mouse.state &= ~(MOUSE_SIZING_BEGIN|MOUSE_SIZING_TODO);
     }
+    
+	if (gSet.isAdvLogging) {
+		char szInfo[160]; wsprintfA(szInfo, "OnConsoleResize: mouse.state=0x%08X, SizingToDo=%i, IsSizing=%i, LBtnPressed=%i, gbPostUpdateWindowSize=%i", 
+			mouse.state, (int)lbSizingToDo, (int)lbIsSizing, (int)lbLBtnPressed, (int)gbPostUpdateWindowSize);
+		mp_VActive->RCon()->LogString(szInfo);
+	}
+    
 
     //COORD c = ConsoleSizeFromWindow();
     RECT client; GetClientRect(ghWnd, &client);
@@ -1615,10 +1631,19 @@ void CConEmuMain::OnConsoleResize(BOOL abPosted/*=FALSE*/)
         // чтобы не насиловать консоль лишний раз - реальное измененение ее размеров только
         // при отпускании мышкой рамки окна
         BOOL lbSizeChanged = FALSE;
+        int nCurConWidth = (int)mp_VActive->RCon()->TextWidth();
+        int nCurConHeight = (int)mp_VActive->RCon()->TextHeight();
         if (mp_VActive) {
-            lbSizeChanged = (c.right != (int)mp_VActive->RCon()->TextWidth() 
-                    || c.bottom != (int)mp_VActive->RCon()->TextHeight());
+            lbSizeChanged = (c.right != nCurConWidth || c.bottom != nCurConHeight);
         }
+        
+		if (gSet.isAdvLogging) {
+			char szInfo[160]; wsprintfA(szInfo, "OnConsoleResize: lbSizeChanged=%i, client={{%i,%i},{%i,%i}}, CalcCon={%i,%i}, CurCon={%i,%i}", 
+				lbSizeChanged, client.left, client.top, client.right, client.bottom,
+				c.right, c.bottom, nCurConWidth, nCurConHeight);
+			mp_VActive->RCon()->LogString(szInfo);
+		}
+        
         if (!isSizing() &&
             (lbSizingToDo /*после реального ресайза мышкой*/ ||
              gbPostUpdateWindowSize /*после появления/скрытия табов*/ || 
@@ -2001,6 +2026,7 @@ bool CConEmuMain::ConActivate(int nCon)
     FLASHWINFO fl = {sizeof(FLASHWINFO)}; fl.dwFlags = FLASHW_STOP; fl.hwnd = ghWnd;
     FlashWindowEx(&fl); // При многократных созданиях мигать начинает...
 
+    
     if (nCon>=0 && nCon<MAX_CONSOLE_COUNT) {
         CVirtualConsole* pCon = mp_VCon[nCon];
         if (pCon == NULL)
@@ -2729,7 +2755,7 @@ void CConEmuMain::UpdateProcessDisplay(BOOL abForce)
     CheckDlgButton(gSet.hInfo, cbsEditor, (nFarStatus&CES_EDITOR) ? BST_CHECKED : BST_UNCHECKED);
     CheckDlgButton(gSet.hInfo, cbsViewer, (nFarStatus&CES_VIEWER) ? BST_CHECKED : BST_UNCHECKED);
     SetDlgItemText(gSet.hInfo, tsTopPID, _itow(mp_VActive->RCon()->GetFarPID(), szNo, 10));
-	CheckDlgButton(gSet.hInfo, cbsProgress, (nFarStatus&CES_WASPROGRESS) ? BST_CHECKED : BST_UNCHECKED);
+	CheckDlgButton(gSet.hInfo, cbsProgress, ((nFarStatus&CES_WASPROGRESS) /*|| mp_VActive->RCon()->GetProgress(NULL)>=0*/) ? BST_CHECKED : BST_UNCHECKED);
 	CheckDlgButton(gSet.hInfo, cbsProgressError, (nFarStatus&CES_OPER_ERROR) ? BST_CHECKED : BST_UNCHECKED);
 
     if (!abForce)
@@ -3880,7 +3906,7 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
 				mp_TaskBar2 = NULL;
 			}
 		}
-        if (!mp_TaskBar3) {
+        if (!mp_TaskBar3 && mp_TaskBar2) {
 			hr = mp_TaskBar2->QueryInterface(IID_ITaskbarList3, (void**)&mp_TaskBar3);
         }
 

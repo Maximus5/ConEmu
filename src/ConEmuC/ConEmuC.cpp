@@ -470,7 +470,7 @@ wrap:
 	MessageBox(GetConsoleWindow(), L"Finalizing", (gnRunMode == RM_SERVER) ? L"ConEmuC.Server" : L"ConEmuC.ComSpec", 0);
 	#endif
     if (!gbInShutdown
-		&& ((iRc!=0 && iRc!=CERR_RUNNEWCONSOLE) || gbAlwaysConfirmExit)
+		&& ((iRc!=0 && iRc!=CERR_RUNNEWCONSOLE && iRc!=CERR_EMPTY_COMSPEC_CMDLINE) || gbAlwaysConfirmExit)
 		)
 	{
 		BOOL lbProcessesLeft = FALSE, lbDontShowConsole = FALSE;
@@ -768,10 +768,17 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
     
     while ((iRc = NextArg(&asCmdLine, szArg, &pszArgStarts)) == 0)
     {
-        if (wcscmp(szArg, L"/?")==0 || wcscmp(szArg, L"-?")==0 || wcscmp(szArg, L"/h")==0 || wcscmp(szArg, L"-h")==0) {
+		if ((szArg[0] == L'/' || szArg[0] == L'-')
+			&& (szArg[1] == L'?' || ((szArg[1] & ~0x20) == L'H'))
+			&& szArg[2] == 0)
+		{
             Help();
             return CERR_HELPREQUESTED;
-        } else 
+        }
+
+		// Далее - требуется чтобы у аргумента был "/"
+		if (szArg[0] != L'/')
+			continue;
         
         if (wcscmp(szArg, L"/CONFIRM")==0) {
             gbAlwaysConfirmExit = TRUE;
@@ -863,12 +870,23 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
         } else
 
         // После этих аргументов - идет то, что передается в COMSPEC (CreateProcess)!
-        if (wcscmp(szArg, L"/C")==0 || wcscmp(szArg, L"/c")==0 || wcscmp(szArg, L"/K")==0 || wcscmp(szArg, L"/k")==0) {
-            gnRunMode = RM_COMSPEC; gbNoCreateProcess = FALSE;
-            cmd.bK = (wcscmp(szArg, L"/K")==0 || wcscmp(szArg, L"/k")==0);
-            // Поддержка дебильной возможности "cmd /cecho xxx"
-            asCmdLine = pszArgStarts + 2;
-			while (*asCmdLine==L' ' || *asCmdLine==L'\t') asCmdLine++;
+        //if (wcscmp(szArg, L"/C")==0 || wcscmp(szArg, L"/c")==0 || wcscmp(szArg, L"/K")==0 || wcscmp(szArg, L"/k")==0) {
+		if (szArg[0] == L'/' && (((szArg[1] & ~0x20) == L'C') || ((szArg[1] & ~0x20) == L'K'))) {
+			gbNoCreateProcess = FALSE;
+			if (szArg[2] == 0) // "/c" или "/k"
+				gnRunMode = RM_COMSPEC;
+			if (gnRunMode == RM_UNDEFINED && szArg[4] == 0
+				&& ((szArg[2] & ~0x20) == L'M') && ((szArg[3] & ~0x20) == L'D'))
+				gnRunMode = RM_SERVER;
+			// Если тип работа до сих пор не определили - считаем что режим ComSpec
+			// и команда начинается сразу после /c (может быть "cmd /cecho xxx")
+			if (gnRunMode == RM_UNDEFINED) {
+				gnRunMode = RM_COMSPEC;
+				cmd.bK = (szArg[1] & ~0x20) == L'K';
+				// Поддержка дебильной возможности "cmd /cecho xxx"
+				asCmdLine = pszArgStarts + 2;
+				while (*asCmdLine==L' ' || *asCmdLine==L'\t') asCmdLine++;
+			}
             break; // asCmdLine уже указывает на запускаемую программу
         }
     }
@@ -1079,6 +1097,13 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
     //    bViaCmdExe = FALSE; // командным процессором выступает сам ConEmuC (серверный режим)
     }
 
+	if (gnRunMode == RM_COMSPEC && (!asCmdLine || !*asCmdLine)) {
+		// В фаре могут повесить пустую ассоциацию на маску
+		// *.ini -> "@" - тогда фар как бы ничего не делает при запуске этого файла, но ComSpec зовет...
+		cmd.bNonGuiMode = TRUE;
+		gbAlwaysConfirmExit = FALSE;
+		return CERR_EMPTY_COMSPEC_CMDLINE;
+	}
 
 	bViaCmdExe = IsNeedCmd(asCmdLine, &lbNeedCutStartEndQuot);
     
@@ -1364,6 +1389,10 @@ void SendStarted()
 			if (pConsoleInfo) {
 				nServerPID = pConsoleInfo->nServerPID;
 				nGuiPID = pConsoleInfo->nGuiPID;
+				if (pConsoleInfo->cbSize >= sizeof(CESERVER_REQ_CONINFO_HDR)) {
+					if (pConsoleInfo->nLogLevel)
+						CreateLogSizeFile(pConsoleInfo->nLogLevel);
+				}
 				UnmapViewOfFile(pConsoleInfo);
 			}
 			CloseHandle(hFileMapping);
@@ -1561,14 +1590,21 @@ void LogSize(COORD* pcrSize, LPCSTR pszLabel)
     
             
     SYSTEMTIME st; GetLocalTime(&st);
+    char szMapSize[32]; szMapSize[0] = 0;
+    if (srv.pConsoleInfo) {
+    	wsprintfA(szMapSize, " CurMapSize={%ix%ix%i}",
+    		srv.pConsoleInfo->sbi.dwSize.X, srv.pConsoleInfo->sbi.dwSize.Y,
+    		srv.pConsoleInfo->sbi.srWindow.Bottom-srv.pConsoleInfo->sbi.srWindow.Top+1);
+    }
+    
     if (pcrSize) {
-        wsprintfA(szInfo, "%i:%02i:%02i CurSize={%ix%i} ChangeTo={%ix%i} %s %s\r\n",
+        wsprintfA(szInfo, "%i:%02i:%02i CurSize={%ix%i}%s ChangeTo={%ix%i} %s %s\r\n",
             st.wHour, st.wMinute, st.wSecond,
-            lsbi.dwSize.X, lsbi.dwSize.Y, pcrSize->X, pcrSize->Y, pszThread, (pszLabel ? pszLabel : ""));
+            lsbi.dwSize.X, lsbi.dwSize.Y, szMapSize, pcrSize->X, pcrSize->Y, pszThread, (pszLabel ? pszLabel : ""));
     } else {
-        wsprintfA(szInfo, "%i:%02i:%02i CurSize={%ix%i} %s %s\r\n",
+        wsprintfA(szInfo, "%i:%02i:%02i CurSize={%ix%i}%s %s %s\r\n",
             st.wHour, st.wMinute, st.wSecond,
-            lsbi.dwSize.X, lsbi.dwSize.Y, pszThread, (pszLabel ? pszLabel : ""));
+            lsbi.dwSize.X, lsbi.dwSize.Y, szMapSize, pszThread, (pszLabel ? pszLabel : ""));
     }
     
     //if (hInp) CloseDesktop ( hInp );
@@ -2994,8 +3030,16 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
         if (lbNeedChange) {
             DWORD dwErr = 0;
             // Если этого не сделать - размер консоли нельзя УМЕНЬШИТЬ
-			if (crNewSize.X < csbi.dwSize.X || crNewSize.Y < csbi.dwSize.Y)
-				MoveWindow(ghConWnd, rcConPos.left, rcConPos.top, 1, 1, 1);
+			//if (crNewSize.X < csbi.dwSize.X || crNewSize.Y < csbi.dwSize.Y)
+			if (crNewSize.X <= (csbi.srWindow.Right-csbi.srWindow.Left) || crNewSize.Y <= (csbi.srWindow.Bottom-csbi.srWindow.Top))
+			{
+				//MoveWindow(ghConWnd, rcConPos.left, rcConPos.top, 1, 1, 1);
+	            rNewRect.Left = 0; rNewRect.Top = 0;
+	            rNewRect.Right = min((crNewSize.X - 1),(csbi.srWindow.Right-csbi.srWindow.Left));
+	            rNewRect.Bottom = min((crNewSize.Y - 1),(csbi.srWindow.Bottom-csbi.srWindow.Top));
+	            if (!SetConsoleWindowInfo(ghConOut, TRUE, &rNewRect))
+	            	MoveWindow(ghConWnd, rcConPos.left, rcConPos.top, 1, 1, 1);
+			}
             //specified width and height cannot be less than the width and height of the console screen buffer's window
             lbRc = SetConsoleScreenBufferSize(ghConOut, crNewSize);
             if (!lbRc) dwErr = GetLastError();
@@ -3015,8 +3059,16 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
         //GetWindowRect(ghConWnd, &rcConPos); -- уже сделано выше
 
 		// Если этого не сделать - размер консоли нельзя УМЕНЬШИТЬ
-		if (crNewSize.X < csbi.dwSize.X || crNewSize.Y < csbi.dwSize.Y)
-	        MoveWindow(ghConWnd, rcConPos.left, rcConPos.top, 1, 1, 1);
+		//if (crNewSize.X < csbi.dwSize.X || crNewSize.Y < csbi.dwSize.Y)
+		if (crNewSize.X <= (csbi.srWindow.Right-csbi.srWindow.Left) || crNewSize.Y <= (csbi.srWindow.Bottom-csbi.srWindow.Top))
+		{
+			//MoveWindow(ghConWnd, rcConPos.left, rcConPos.top, 1, 1, 1);
+            rNewRect.Left = 0; rNewRect.Top = 0;
+            rNewRect.Right = min((crNewSize.X - 1),(csbi.srWindow.Right-csbi.srWindow.Left));
+            rNewRect.Bottom = min((crNewSize.Y - 1),(csbi.srWindow.Bottom-csbi.srWindow.Top));
+            if (!SetConsoleWindowInfo(ghConOut, TRUE, &rNewRect))
+            	MoveWindow(ghConWnd, rcConPos.left, rcConPos.top, 1, 1, 1);
+		}
 
         lbRc = SetConsoleScreenBufferSize(ghConOut, crHeight); // а не crNewSize - там "оконные" размеры
         //окошко раздвигаем только по ширине!

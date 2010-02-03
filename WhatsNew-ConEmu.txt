@@ -1,3 +1,12 @@
+Maximus5 - 2010.02.03
+[%] Issue 168: null pointer exception when there is no taskbar
+[%] Стили шрифта (ExtendFonts & FarColorer truemod) работали только при включенном 'Fix Far Borders'.
+[%] Issue 170: в некоторых случаях не определялся момент завершения операции.
+[*] ConEmuC. Если выполняется 'пустая команда' (ассоциация '@' в фар, и т.п.), то cmd.exe не запускается, высота буфера консоли не меняется.
+[*] Minor changes in console resize.
+[*] Minor changes in %ComSpec% /c.
+
+
 Maximus5 - 2010.02.01
 [+] Поддержка стиля 'Underline' в FarColorer truemod.
 

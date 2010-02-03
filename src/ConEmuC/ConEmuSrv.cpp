@@ -862,6 +862,7 @@ int CreateMapHeader()
 	}
 	memset(srv.pConsoleInfo, 0, nConInfoSize);
 	srv.pConsoleInfo->cbSize = nConInfoSize;
+	srv.pConsoleInfo->nLogLevel = (ghLogSize!=NULL) ? 1 : 0;
 	
 	srv.pConsoleInfo->nServerPID = GetCurrentProcessId();
 
@@ -1169,6 +1170,8 @@ static BOOL ReadConsoleInfo()
 		}
 
 		if (memcmp(&srv.sbi, &lsbi, sizeof(srv.sbi))) {
+			if (ghLogSize) LogSize(NULL, ":ReadConsoleInfo");
+		
 			srv.sbi = lsbi;
 			lbChanged = TRUE;
 		}

@@ -378,9 +378,105 @@ BOOL IsUserAdmin()
 
 MConHandle::MConHandle(LPCWSTR asName)
 {
+	mn_StdMode = 0;
 	mb_OpenFailed = FALSE; mn_LastError = 0;
 	mh_Handle = INVALID_HANDLE_VALUE;
 	lstrcpynW(ms_Name, asName, 9);
+
+	/*
+FAR2 последний
+Conemu последний
+
+без плагов каких либо
+
+пропиши одну ассоциацию
+
+[HKEY_CURRENT_USER\Software\Far2\Associations\Type0]
+"Mask"="*.ini"
+"Description"=""
+"Execute"="@"
+"AltExec"=""
+"View"=""
+"AltView"=""
+"Edit"=""
+"AltEdit"=""
+"State"=dword:0000003f
+
+ФАР валится по двойному щелчку на INI файле. По Enter - не валится.
+
+
+1:31:11.647 Mouse: {10x15} Btns:{L} KeyState: 0x00000000 |DOUBLE_CLICK
+CECMD_CMDSTARTED(Cols=80, Rows=25, Buf=1000, Top=-1)
+SetConsoleSizeSrv.Not waiting for ApplyFinished
+SyncWindowToConsole(Cols=80, Rows=22)
+Current size: Cols=80, Buf=1000
+CECMD_CMDFINISHED(Cols=80, Rows=22, Buf=0, Top=-1)
+SetConsoleSizeSrv.Not waiting for ApplyFinished
+1:31:11.878 Mouse: {10x15} Btns:{} KeyState: 0x00000000 
+Current size: Cols=80, Rows=22
+1:31:11.906 Mouse: {10x15} Btns:{} KeyState: 0x00000000 |MOUSE_MOVED
+1:31:11.949 Mouse: {10x15} Btns:{L} KeyState: 0x00000000 |DOUBLE_CLICK
+CECMD_CMDSTARTED(Cols=80, Rows=22, Buf=1000, Top=-1)
+SetConsoleSizeSrv.Not waiting for ApplyFinished
+Current size: Cols=80, Buf=1000
+CECMD_CMDFINISHED(Cols=80, Rows=22, Buf=0, Top=-1)
+SetConsoleSizeSrv.Not waiting for ApplyFinished
+1:31:12.163 Mouse: {10x15} Btns:{} KeyState: 0x00000000 
+1:31:12.196 Mouse: {10x15} Btns:{} KeyState: 0x00000000 |MOUSE_MOVED
+Current size: Cols=80, Rows=22
+1:31:12.532 Mouse: {11x15} Btns:{} KeyState: 0x00000000 |MOUSE_MOVED
+1:31:12.545 Mouse: {13x15} Btns:{} KeyState: 0x00000000 |MOUSE_MOVED
+1:31:12.573 Mouse: {14x15} Btns:{} KeyState: 0x00000000 |MOUSE_MOVED
+1:31:12.686 Mouse: {15x15} Btns:{} KeyState: 0x00000000 |MOUSE_MOVED
+1:31:12.779 Mouse: {16x15} Btns:{} KeyState: 0x00000000 |MOUSE_MOVED
+1:31:12.859 Mouse: {16x15} Btns:{L} KeyState: 0x00000000 
+1:31:12.876 Mouse: {16x15} Btns:{L} KeyState: 0x00000000 |MOUSE_MOVED
+1:31:12.944 Mouse: {16x15} Btns:{} KeyState: 0x00000000 
+1:31:12.956 Mouse: {16x15} Btns:{} KeyState: 0x00000000 |MOUSE_MOVED
+1:31:13.010 Mouse: {16x15} Btns:{L} KeyState: 0x00000000 |DOUBLE_CLICK
+CECMD_CMDSTARTED(Cols=80, Rows=22, Buf=1000, Top=-1)
+SetConsoleSizeSrv.Not waiting for ApplyFinished
+SyncWindowToConsole(Cols=80, Rows=19)
+Current size: Cols=80, Buf=1000
+CECMD_CMDFINISHED(Cols=80, Rows=19, Buf=0, Top=-1)
+1:31:13.150 Mouse: {16x15} Btns:{} KeyState: 0x00000000 |MOUSE_MOVED
+1:31:13.175 Mouse: {16x15} Btns:{L} KeyState: 0x00000000 
+1:31:13.206 Mouse: {16x15} Btns:{L} KeyState: 0x00000000 |MOUSE_MOVED
+SetConsoleSizeSrv.Not waiting for ApplyFinished
+1:31:13.240 Mouse: {16x15} Btns:{} KeyState: 0x00000000 
+Current size: Cols=80, Rows=191:31:13.317 Mouse: {16x15} Btns:{} KeyState: 0x00000000 |MOUSE_MOVED
+1:31:13.357 Mouse: {16x15} Btns:{L} KeyState: 0x00000000 |DOUBLE_CLICK
+
+
+1:31:11 CurSize={80x25} ChangeTo={80x25} RefreshThread :CECMD_SETSIZESYNC
+1:31:11 CurSize={80x1000} ChangeTo={80x25} RefreshThread :CECMD_SETSIZESYNC
+1:31:11 CurSize={80x25} ChangeTo={80x25} RefreshThread :CECMD_SETSIZESYNC
+1:31:11 CurSize={80x1000} ChangeTo={80x22} RefreshThread :CECMD_SETSIZESYNC
+1:31:12 CurSize={80x22} ChangeTo={80x22} RefreshThread :CECMD_SETSIZESYNC
+1:31:12 CurSize={80x1000} ChangeTo={80x22} RefreshThread :CECMD_SETSIZESYNC
+1:31:13 CurSize={80x22} ChangeTo={80x22} RefreshThread :CECMD_SETSIZESYNC
+1:31:13 CurSize={80x1000} ChangeTo={80x19} RefreshThread :CECMD_SETSIZESYNC
+1:31:15 CurSize={80x19} ChangeTo={80x19} RefreshThread :CECMD_SETSIZESYNC
+1:31:15 CurSize={80x1000} ChangeTo={80x19} RefreshThread :CECMD_SETSIZESYNC
+1:31:16 CurSize={80x19} ChangeTo={80x19} RefreshThread :CECMD_SETSIZESYNC
+1:31:16 CurSize={80x1000} ChangeTo={80x19} RefreshThread :CECMD_SETSIZESYNC
+1:31:16 CurSize={80x19} ChangeTo={80x19} RefreshThread :CECMD_SETSIZESYNC
+1:31:16 CurSize={80x19} ChangeTo={80x19} RefreshThread :CECMD_SETSIZESYNC
+1:31:16 CurSize={80x1000} ChangeTo={80x16} RefreshThread :CECMD_SETSIZESYNC
+1:31:25 CurSize={80x16} ChangeTo={80x16} RefreshThread :CECMD_SETSIZESYNC
+1:31:25 CurSize={80x1000} ChangeTo={80x16} RefreshThread :CECMD_SETSIZESYNC
+
+
+
+
+    */
+	//OSVERSIONINFO osv = {sizeof(OSVERSIONINFO)}; GetVersionEx(&osv);
+	//if (osv.dwMajorVersion == 6 && osv.dwMinorVersion == 1) {
+	//	if (!lstrcmpW(ms_Name, L"CONOUT$"))
+	//		mn_StdMode = STD_OUTPUT_HANDLE;
+	//	else if (!lstrcmpW(ms_Name, L"CONIN$"))
+	//		mn_StdMode = STD_INPUT_HANDLE;
+	//}
 };
 
 MConHandle::~MConHandle()
@@ -392,6 +488,11 @@ MConHandle::operator const HANDLE()
 {
 	if (mh_Handle == INVALID_HANDLE_VALUE)
 	{
+		if (mn_StdMode) {
+			mh_Handle = GetStdHandle(mn_StdMode);
+			return mh_Handle;
+		}
+
 		// Чтобы случайно не открыть хэндл несколько раз в разных потоках
 		MSectionLock CS; CS.Lock(&mcs_Handle, TRUE);
 		// Во время ожидания хэндл мог быт открыт в другом потоке
@@ -432,9 +533,13 @@ MConHandle::operator const HANDLE()
 void MConHandle::Close()
 {
 	if (mh_Handle != INVALID_HANDLE_VALUE) {
-		HANDLE h = mh_Handle;
-		mh_Handle = INVALID_HANDLE_VALUE;
-		mb_OpenFailed = FALSE;
-		CloseHandle(h);
+		if (mn_StdMode) {
+			mh_Handle = INVALID_HANDLE_VALUE;
+		} else {
+			HANDLE h = mh_Handle;
+			mh_Handle = INVALID_HANDLE_VALUE;
+			mb_OpenFailed = FALSE;
+			CloseHandle(h);
+		}
 	}
 };
