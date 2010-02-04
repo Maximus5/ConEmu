@@ -59,6 +59,23 @@ HANDLE WINAPI _export OpenPlugin(int OpenFrom,INT_PTR Item)
 	if (InfoA == NULL)
 		return INVALID_HANDLE_VALUE;
 
+#ifdef _DEBUG
+	{
+		wchar_t szInfo[128]; wsprintf(szInfo, L"OpenPlugin[Ansi] (%i%s, Item=0x%X, gnReqCmd=%i%s)\n",
+			OpenFrom, (OpenFrom==OPEN_COMMANDLINE) ? L"[OPEN_COMMANDLINE]" :
+				(OpenFrom==OPEN_PLUGINSMENU) ? L"[OPEN_PLUGINSMENU]" : L"",
+			(DWORD)Item, 
+			(int)gnReqCommand,
+			(gnReqCommand == (DWORD)-1) ? L"" :
+			(gnReqCommand == CMD_REDRAWFAR) ? L"[CMD_REDRAWFAR]" :
+			(gnReqCommand == CMD_EMENU) ? L"[CMD_EMENU]" :
+			(gnReqCommand == CMD_SETWINDOW) ? L"[CMD_SETWINDOW]" :
+			(gnReqCommand == CMD_POSTMACRO) ? L"[CMD_POSTMACRO]" :
+			L"");
+		OutputDebugStringW(szInfo);
+	}
+#endif
+
 	if (OpenFrom == OPEN_COMMANDLINE && Item) {
 		ProcessCommandLineA((char*)Item);
 		return INVALID_HANDLE_VALUE;
@@ -66,13 +83,32 @@ HANDLE WINAPI _export OpenPlugin(int OpenFrom,INT_PTR Item)
 
 	if (gnReqCommand != (DWORD)-1) {
 		gnPluginOpenFrom = OpenFrom;
+		SHOWDBGINFO(L"*** Calling ProcessCommand\n");
 		ProcessCommand(gnReqCommand, FALSE/*bReqMainThread*/, gpReqCommandData);
 	} else {
-		if (!gbCmdCallObsolete)
+		if (!gbCmdCallObsolete) {
+			SHOWDBGINFO(L"*** Calling ShowPluginMenu\n");
 			ShowPluginMenu();
-		else
+		} else {
+			SHOWDBGINFO(L"!!! Plugin call is obsolete\n");
 			gbCmdCallObsolete = FALSE;
+		}
 	}
+
+	#ifdef _DEBUG
+	if (gnReqCommand != (DWORD)-1) {
+		wchar_t szInfo[128]; wsprintf(szInfo, L"*** OpenPlugin[Ansi] post gnReqCmd=%i%s\n",
+			(int)gnReqCommand,
+			(gnReqCommand == (DWORD)-1) ? L"" :
+			(gnReqCommand == CMD_REDRAWFAR) ? L"CMD_REDRAWFAR" :
+			(gnReqCommand == CMD_EMENU) ? L"CMD_EMENU" :
+			(gnReqCommand == CMD_SETWINDOW) ? L"CMD_SETWINDOW" :
+			(gnReqCommand == CMD_POSTMACRO) ? L"CMD_POSTMACRO" :
+			L"");
+		OutputDebugStringW(szInfo);
+	}
+	#endif
+
 	return INVALID_HANDLE_VALUE;
 }
 

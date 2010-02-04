@@ -2042,6 +2042,9 @@ void CRealConsole::StopThread(BOOL abRecreating)
         // Имя пайпа для управления ConEmuC
         ms_ConEmuC_Pipe[0] = 0;
         ms_ConEmuCInput_Pipe[0] = 0;
+		// Закрыть все мэппинги
+		CloseMapHeader();
+		CloseColorMapping();
     }
 #ifdef _DEBUG
     /*
@@ -7099,7 +7102,10 @@ BOOL CRealConsole::LoadDataFromMap(DWORD CharCount)
 	#endif
 		// Теоретически, может возникнуть исключение при чтении? когда размер резко увеличивается (maximize)
 		con.pCmp->crBufSize = mp_ConsoleData->crBufSize;
-		_ASSERTE((int)CharCount <= (con.pCmp->crBufSize.X*con.pCmp->crBufSize.Y));
+		if ((int)CharCount > (con.pCmp->crBufSize.X*con.pCmp->crBufSize.Y)) {
+			_ASSERTE((int)CharCount <= (con.pCmp->crBufSize.X*con.pCmp->crBufSize.Y));
+			CharCount = (con.pCmp->crBufSize.X*con.pCmp->crBufSize.Y);
+		}
 		memmove(con.pCmp->Buf, mp_ConsoleData->Buf, CharCount*sizeof(CHAR_INFO));
 	#ifndef __GNUC__
 	}__except(EXCEPTION_EXECUTE_HANDLER){

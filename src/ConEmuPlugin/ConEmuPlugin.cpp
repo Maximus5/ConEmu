@@ -548,17 +548,31 @@ BOOL ActivatePluginA(DWORD nCmd, LPVOID pCommandData)
 	IsKeyChanged(TRUE);
 
 	INPUT_RECORD evt[10];
-	DWORD dwStartWait, dwCur, dwTimeout, dwInputs = 0, dwInputsFirst = 0;
+	DWORD dwStartWait, dwCur, dwTimeout, dwInputs = 0, dwInputsFirst = 0, dwWritten = 0;
 	//BOOL  lbInputs = FALSE;
 	HANDLE hInput = GetStdHandle(STD_INPUT_HANDLE);
 
-	BOOL lbInput = PeekConsoleInput(hInput, evt, 10, &dwInputsFirst);
 
-	// Нужен вызов плагина в остновной нити
-	WARNING("Переделать на WriteConsoleInput");
+	// Нужен вызов плагина в основной нити
+	//WARNING("Переделать на WriteConsoleInput");
 	gbCmdCallObsolete = FALSE;
-	SendMessage(FarHwnd, WM_KEYDOWN, VK_F14, 0);
-	SendMessage(FarHwnd, WM_KEYUP, VK_F14, (LPARAM)(3<<30));
+	//SendMessage(FarHwnd, WM_KEYDOWN, VK_F14, 0);
+	//SendMessage(FarHwnd, WM_KEYUP, VK_F14, (LPARAM)(3<<30));
+	evt[0].EventType = evt[1].EventType = KEY_EVENT;
+	evt[0].Event.KeyEvent.bKeyDown = TRUE; evt[1].Event.KeyEvent.bKeyDown = FALSE;
+	evt[0].Event.KeyEvent.uChar.UnicodeChar = evt[1].Event.KeyEvent.uChar.UnicodeChar = 0;
+	evt[0].Event.KeyEvent.wVirtualKeyCode   = evt[1].Event.KeyEvent.wVirtualKeyCode = VK_F14;
+	evt[0].Event.KeyEvent.wVirtualScanCode  = evt[1].Event.KeyEvent.wVirtualScanCode = 0;
+	evt[0].Event.KeyEvent.dwControlKeyState = evt[1].Event.KeyEvent.dwControlKeyState = 0;
+	evt[0].Event.KeyEvent.wRepeatCount = evt[1].Event.KeyEvent.wRepeatCount = 1;
+	if (!WriteConsoleInput(hInput, evt, 2, &dwWritten)) {
+		DWORD dwErr = GetLastError();
+		_ASSERTE(FALSE);
+		SendMessage(FarHwnd, WM_KEYDOWN, VK_F14, 0);
+		SendMessage(FarHwnd, WM_KEYUP, VK_F14, (LPARAM)(3<<30));
+	}
+
+	BOOL lbInput = PeekConsoleInput(hInput, evt, 10, &dwInputsFirst);
 
 	
 	DWORD dwWait;
@@ -640,6 +654,11 @@ CESERVER_REQ* ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandDat
 	if (bReqMainThread && (gnMainThreadId != GetCurrentThreadId())) {
 		_ASSERTE(ghPluginSemaphore!=NULL);
 		_ASSERTE(ghServerTerminateEvent!=NULL);
+
+		// Активация плагина в анси версии медленная, и для Redraw смысла не имеет
+		if (gFarVersion.dwVerMajor < 2 && nCmd == CMD_REDRAWFAR) {
+			return NULL; // лучше его просто пропустить
+		}
 
 		//// Некоторые команды можно выполнить сразу
 		//if (nCmd == CMD_SETSIZE) {
@@ -2680,23 +2699,37 @@ DWORD WINAPI ServerThreadCommand(LPVOID ahPipe)
 void ShowPluginMenu(int nID /*= -1*/)
 {
 	int nItem = -1;
-	if (!FarHwnd)
+	if (!FarHwnd) {
+		SHOWDBGINFO(L"*** ShowPluginMenu failed, FarHwnd is NULL\n");
 		return;
+	}
 
 	if (nID != -1) {
 		nItem = nID;
 		if (nItem >= 2) nItem++; //Separator
 		if (nItem >= 7) nItem++; //Separator
 		if (nItem >= 9) nItem++; //Separator
-	} else if (gFarVersion.dwVerMajor==1)
+		SHOWDBGINFO(L"*** ShowPluginMenu used default item\n");
+	} else if (gFarVersion.dwVerMajor==1) {
+		SHOWDBGINFO(L"*** calling ShowPluginMenuA\n");
 		nItem = ShowPluginMenuA();
-	else if (gFarVersion.dwBuild>=FAR_Y_VER)
+	} else if (gFarVersion.dwBuild>=FAR_Y_VER) {
+		SHOWDBGINFO(L"*** calling ShowPluginMenuWY\n");
 		nItem = FUNC_Y(ShowPluginMenu)();
-	else
+	} else {
+		SHOWDBGINFO(L"*** calling ShowPluginMenuWX\n");
 		nItem = FUNC_X(ShowPluginMenu)();
+	}
 
-	if (nItem < 0)
+	if (nItem < 0) {
+		SHOWDBGINFO(L"*** ShowPluginMenu cancelled, nItem < 0\n");
 		return;
+	}
+
+	#ifdef _DEBUG
+	wchar_t szInfo[128]; wsprintf(szInfo, L"*** ShowPluginMenu done, nItem == %i\n", nItem);
+	SHOWDBGINFO(szInfo);
+	#endif
 
 	switch (nItem) {
 		case 0: case 1:

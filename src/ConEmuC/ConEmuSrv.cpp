@@ -956,6 +956,8 @@ static BOOL RecreateMapData()
 
 	// Тут создавать буфер по наибольшему GetLargestConsoleWindowSize & nMaxSize
 	COORD crMaxSize = GetLargestConsoleWindowSize(GetStdHandle(STD_OUTPUT_HANDLE));
+	if (crMaxSize.X < srv.sbi.dwMaximumWindowSize.X) crMaxSize.X = srv.sbi.dwMaximumWindowSize.X;
+	if (crMaxSize.Y < srv.sbi.dwMaximumWindowSize.Y) crMaxSize.Y = srv.sbi.dwMaximumWindowSize.Y;
 	if (nMaxCells < (DWORD)(crMaxSize.X * crMaxSize.Y)) {
 		nMaxCells = (crMaxSize.X * crMaxSize.Y);
 		nMaxSize = (nMaxCells * 2) * sizeof(CHAR_INFO)+sizeof(CESERVER_REQ_CONINFO_DATA);
@@ -1000,8 +1002,8 @@ static BOOL RecreateMapData()
 		goto wrap;
 	}
 	memset(srv.pConsoleData, 0, nMaxSize);
-	srv.pConsoleData->crBufSize.X = srv.sbi.dwMaximumWindowSize.X;
-	srv.pConsoleData->crBufSize.Y = srv.sbi.dwMaximumWindowSize.Y;
+	srv.pConsoleData->crBufSize.X = crMaxSize.X; // srv.sbi.dwMaximumWindowSize.X;
+	srv.pConsoleData->crBufSize.Y = crMaxSize.Y; // srv.sbi.dwMaximumWindowSize.Y;
 	
 	srv.nConsoleDataSize = nMaxSize;
 	
@@ -1281,14 +1283,16 @@ static BOOL ReadConsoleData()
 		}
 	}
 
-	srv.pConsoleDataCopy->crBufSize.X = TextWidth;
-	srv.pConsoleDataCopy->crBufSize.Y = TextHeight;
+	// низя - он уже установлен в максимальное значение
+	//srv.pConsoleDataCopy->crBufSize.X = TextWidth;
+	//srv.pConsoleDataCopy->crBufSize.Y = TextHeight;
 	
 	if (memcmp(srv.pConsoleData->Buf, srv.pConsoleDataCopy->Buf, nCurSize)) {
 		memmove(srv.pConsoleData->Buf, srv.pConsoleDataCopy->Buf, nCurSize);
 		lbChanged = TRUE;
 	}
-	srv.pConsoleData->crBufSize = srv.pConsoleDataCopy->crBufSize;
+	// низя - он уже установлен в максимальное значение
+	//srv.pConsoleData->crBufSize = srv.pConsoleDataCopy->crBufSize;
 	
 wrap:
 	return lbChanged;

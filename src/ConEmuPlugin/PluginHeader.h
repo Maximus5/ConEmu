@@ -210,3 +210,9 @@ void ShutdownHooks();
 bool FUNC_Y(ProcessCommandLine)(wchar_t* pszCommand);
 bool FUNC_X(ProcessCommandLine)(wchar_t* pszCommand);
 bool ProcessCommandLineA(char* pszCommand);
+
+#ifdef _DEBUG
+	#define SHOWDBGINFO(x) OutputDebugStringW(x)
+#else
+	#define SHOWDBGINFO(x)
+#endif
