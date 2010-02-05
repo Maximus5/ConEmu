@@ -222,14 +222,14 @@ public:
     void SyncConsole2Window();
     void OnWinEvent(DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime);
     int  GetProcesses(ConProcess** ppPrc);
-    DWORD GetFarPID();
+    DWORD GetFarPID(BOOL abPluginRequired=FALSE);
     DWORD GetProgramStatus();
 	DWORD GetFarStatus();
     DWORD GetServerPID();
     LRESULT OnScroll(int nDirection);
 	LRESULT OnSetScrollPos(WPARAM wParam);
     BOOL isConSelectMode();
-    BOOL isFar();
+    BOOL isFar(BOOL abPluginRequired=FALSE);
     void ShowConsole(int nMode); // -1 Toggle, 0 - Hide, 1 - Show
     BOOL isDetached();
     BOOL AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID);
@@ -262,7 +262,7 @@ public:
 	short GetProgress(BOOL* rpbError);
 	void UpdateFarSettings(DWORD anFarPID=0);
 	int CoordInPanel(COORD cr);
-	void GetPanelRect(BOOL abRight, RECT* prc);
+	BOOL GetPanelRect(BOOL abRight, RECT* prc, BOOL abFull = FALSE);
 	bool isAdministrator();
 	BOOL isMouseButtonDown();
 	void OnConsoleLangChange(DWORD_PTR dwNewKeybLayout);
@@ -434,7 +434,7 @@ private:
 	//
 	HWND hPictureView; BOOL mb_PicViewWasHidden;
 	// координаты панелей в символах
-	RECT mr_LeftPanel, mr_RightPanel; BOOL mb_LeftPanel, mb_RightPanel;
+	RECT mr_LeftPanel, mr_RightPanel, mr_LeftPanelFull, mr_RightPanelFull; BOOL mb_LeftPanel, mb_RightPanel;
 	void FindPanels();
 	// 
 	BOOL mb_MouseButtonDown;

@@ -138,6 +138,7 @@ public:
     bool isDefCopy;
 	BYTE isDragOverlay;
 	bool isDragShowIcons;
+	bool isDragPanel; // изменение размера панелей мышкой
     //bool
     bool isDebugSteps;
     bool isEnhanceGraphics; // Progressbars and scrollbars (pseudographics)

@@ -49,6 +49,14 @@ END
 
 #endif    // APSTUDIO_INVOKED
 
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Cursor
+//
+
+IDC_SPLITV              CURSOR  DISCARDABLE     "vsplit.cur"
+IDC_SPLITH              CURSOR  DISCARDABLE     "hsplit.cur"
 #endif    // Russian resources
 /////////////////////////////////////////////////////////////////////////////
 
@@ -61,6 +69,15 @@ END
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 #pragma code_page(1252)
 #endif //_WIN32
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Cursor
+//
+
+IDC_COPY                CURSOR  DISCARDABLE     "CursorDragCopy.cur"
+IDC_LINK                CURSOR  DISCARDABLE     "CursorDragLink.cur"
+IDC_MOVE                CURSOR  DISCARDABLE     "CursorDragMove.cur"
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -330,7 +347,7 @@ END
 IDD_DIALOG3 DIALOGEX 0, 0, 328, 216
 STYLE DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
-FONT 8, "MS Shell Dlg", 0, 0, 0x1
+FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        "Performance counters",gbPerformance,4,4,319,30
     RTEXT           "Render:",IDC_STATIC,92,17,27,8
@@ -340,18 +357,18 @@ BEGIN
     GROUPBOX        "Console states",IDC_CONSOLE_STATES,4,39,319,27
     CHECKBOX        "Telnet",cbsTelnetActive,11,50,35,10,WS_DISABLED | NOT 
                     WS_TABSTOP
-    CHECKBOX        "16bit",cbsNtvdmActive,285,50,32,10,WS_DISABLED | NOT 
+    CHECKBOX        "16bit",cbsNtvdmActive,289,50,29,10,WS_DISABLED | NOT 
                     WS_TABSTOP
-    CHECKBOX        "FAR",cbsFarActive,48,50,25,10,WS_DISABLED | NOT 
+    CHECKBOX        "FAR",cbsFarActive,47,50,25,10,WS_DISABLED | NOT 
                     WS_TABSTOP
-    CHECKBOX        "Panel",cbsFilePanel,112,50,32,10,WS_DISABLED | NOT 
+    CHECKBOX        "Panel",cbsFilePanel,123,50,31,10,WS_DISABLED | NOT 
                     WS_TABSTOP
-    CHECKBOX        "Editor",cbsEditor,150,50,34,10,WS_DISABLED | NOT 
+    CHECKBOX        "Editor",cbsEditor,158,50,31,10,WS_DISABLED | NOT 
                     WS_TABSTOP
-    CHECKBOX        "Viewer",cbsViewer,184,50,37,10,WS_DISABLED | NOT 
+    CHECKBOX        "Viewer",cbsViewer,192,50,36,10,WS_DISABLED | NOT 
                     WS_TABSTOP
     GROUPBOX        "Processes",IDC_STATIC,4,68,185,111
-    EDITTEXT        tsTopPID,75,49,32,12,ES_AUTOHSCROLL | ES_READONLY
+    EDITTEXT        tsTopPID,76,49,44,12,ES_AUTOHSCROLL | ES_READONLY
     LISTBOX         lbProcesses,9,79,173,94,NOT LBS_NOTIFY | 
                     LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_HSCROLL | 
                     WS_TABSTOP
@@ -373,9 +390,9 @@ BEGIN
     RTEXT           "Right:",IDC_STATIC,197,142,27,8
     EDITTEXT        tPanelRight,228,140,90,12,ES_AUTOHSCROLL | ES_READONLY
     CONTROL         "%%",cbsProgress,"Button",BS_AUTOCHECKBOX | WS_DISABLED | 
-                    WS_TABSTOP,223,50,27,10
+                    WS_TABSTOP,231,50,24,10
     CONTROL         "Error",cbsProgressError,"Button",BS_AUTOCHECKBOX | 
-                    WS_DISABLED | WS_TABSTOP,251,50,31,10
+                    WS_DISABLED | WS_TABSTOP,258,50,28,10
     RTEXT           "Main:",IDC_STATIC,200,163,20,8
     EDITTEXT        tRealFontMain,223,161,43,12,ES_AUTOHSCROLL | ES_READONLY
     RTEXT           "Fix:",IDC_STATIC,271,163,13,8
@@ -387,7 +404,7 @@ END
 IDD_DIALOG4 DIALOGEX 0, 0, 328, 216
 STYLE DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
-FONT 8, "MS Shell Dlg"
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     GROUPBOX        "Tabs (panels, editors, viewers)",IDC_STATIC,4,2,319,28
     CONTROL         "Enable Tabs",cbTabs,"Button",BS_AUTO3STATE | WS_TABSTOP,
@@ -509,17 +526,8 @@ END
 // Bitmap
 //
 
-IDB_CONMAN1             BITMAP  DISCARDABLE     "toolbar1.bmp"
-IDB_SHIELD              BITMAP  DISCARDABLE     "Shield.bmp"
-
-/////////////////////////////////////////////////////////////////////////////
-//
-// Cursor
-//
-
-IDC_COPY                CURSOR  DISCARDABLE     "CursorDragCopy.cur"
-IDC_LINK                CURSOR  DISCARDABLE     "CursorDragLink.cur"
-IDC_MOVE                CURSOR  DISCARDABLE     "CursorDragMove.cur"
+IDB_CONMAN1             BITMAP  MOVEABLE PURE   "toolbar1.bmp"
+IDB_SHIELD              BITMAP  MOVEABLE PURE   "Shield.bmp"
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -550,6 +558,7 @@ BEGIN
     cbDragR                 "Allow drag with right mouse button"
     cbConMan                "Turn on MultiConsole\n(several consoles in one ConEmu, alternative console)\nConEmu restart required"
     cbMinToTray             "Auto minimize to tray\nRight click on 'Close window button'\nin ConEmu title for minimize to tray,\nwhen this checkbox is OFF."
+    tsTopPID                "FAR PID and FAR with plugin PID"
     tFontFace               "Face name for main font"
     tFontSizeY              "Main font height"
     tFontCharset            "Main font charset"

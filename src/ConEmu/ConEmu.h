@@ -95,6 +95,13 @@ enum ConEmuRect {
 	CER_CORRECTED   // скорректированное положение (чтобы окно было видно на текущем мониторе)
 };
 
+enum DragPanelBorder {
+	DPB_NONE = 0,
+	DPB_SPLIT,    // драг влево/вправо
+	DPB_LEFT,     // высота левой
+	DPB_RIGHT,    // высота правой
+};
+
 class CConEmuMain
 {
 public:
@@ -174,6 +181,7 @@ protected:
 	bool mb_SkipSyncSize, mb_PassSysCommand, mb_CreatingActive;
 	BOOL mb_WaitCursor;
 	HCURSOR mh_CursorWait, mh_CursorArrow, mh_CursorAppStarting;
+	HCURSOR mh_SplitV, mh_SplitH;
 	//wchar_t *mpsz_RecreateCmd;
 	ITaskbarList3 *mp_TaskBar3;
 	ITaskbarList2 *mp_TaskBar2;
@@ -244,6 +252,7 @@ public:
 	void AutoSizeFont(RECT rFrom, enum ConEmuRect tFrom);
 	static RECT CalcMargins(enum ConEmuMargins mg);
 	static RECT CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFrom, RECT* prDC=NULL, enum ConEmuMargins tTabAction=CEM_TAB);
+	enum DragPanelBorder CheckPanelDrag(COORD crCon);
 	bool ConActivate(int nCon);
 	bool ConActivateNext(BOOL abNext);
 	bool CorrectWindowPos(WINDOWPOS *wp);

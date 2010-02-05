@@ -39,9 +39,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRCONS(s) //DEBUGSTR(s)
 #define DEBUGSTRTABS(s) //DEBUGSTR(s)
 #define DEBUGSTRLANG(s) //DEBUGSTR(s)// ; Sleep(2000)
-#define DEBUGSTRMOUSE(s) DEBUGSTR(s)
+#define DEBUGSTRMOUSE(s) //DEBUGSTR(s)
 #define DEBUGSTRSETCURSOR(s) //DEBUGSTR(s)
 #define DEBUGSTRCONEVENT(s) //DEBUGSTR(s)
+#define DEBUGSTRMACRO(s) DEBUGSTR(s)
 
 #define PROCESS_WAIT_START_TIME 1000
 
@@ -113,6 +114,9 @@ CConEmuMain::CConEmuMain()
 	mh_CursorWait = LoadCursor(NULL, IDC_WAIT);
 	mh_CursorArrow = LoadCursor(NULL, IDC_ARROW);
 	mh_CursorAppStarting = LoadCursor(NULL, IDC_APPSTARTING);
+	// g_hInstance еще не инициализирован
+	mh_SplitV = LoadCursor(GetModuleHandle(0), MAKEINTRESOURCE(IDC_SPLITV));
+	mh_SplitH = LoadCursor(GetModuleHandle(0), MAKEINTRESOURCE(IDC_SPLITH));
 
     memset(&mouse, 0, sizeof(mouse));
     mouse.lastMMW=-1;
@@ -2249,6 +2253,10 @@ void CConEmuMain::PostMacro(LPCWSTR asMacro)
     if (!asMacro || !*asMacro)
         return;
 
+	#ifdef _DEBUG
+	DEBUGSTRMACRO(asMacro); OutputDebugStringW(L"\n");
+	#endif
+
     CConEmuPipe pipe(GetFarPID(), CONEMUREADYTIMEOUT);
     if (pipe.Init(_T("CConEmuMain::PostMacro"), TRUE))
     {
@@ -2754,7 +2762,8 @@ void CConEmuMain::UpdateProcessDisplay(BOOL abForce)
     CheckDlgButton(gSet.hInfo, cbsFilePanel, (nFarStatus&CES_FILEPANEL) ? BST_CHECKED : BST_UNCHECKED);
     CheckDlgButton(gSet.hInfo, cbsEditor, (nFarStatus&CES_EDITOR) ? BST_CHECKED : BST_UNCHECKED);
     CheckDlgButton(gSet.hInfo, cbsViewer, (nFarStatus&CES_VIEWER) ? BST_CHECKED : BST_UNCHECKED);
-    SetDlgItemText(gSet.hInfo, tsTopPID, _itow(mp_VActive->RCon()->GetFarPID(), szNo, 10));
+    wsprintfW(szNo, L"%i/%i", mp_VActive->RCon()->GetFarPID(), mp_VActive->RCon()->GetFarPID(TRUE));
+    SetDlgItemText(gSet.hInfo, tsTopPID, szNo);
 	CheckDlgButton(gSet.hInfo, cbsProgress, ((nFarStatus&CES_WASPROGRESS) /*|| mp_VActive->RCon()->GetProgress(NULL)>=0*/) ? BST_CHECKED : BST_UNCHECKED);
 	CheckDlgButton(gSet.hInfo, cbsProgressError, (nFarStatus&CES_OPER_ERROR) ? BST_CHECKED : BST_UNCHECKED);
 
@@ -2786,16 +2795,23 @@ void CConEmuMain::UpdateProcessDisplay(BOOL abForce)
 
 void CConEmuMain::UpdateSizes()
 {
-    if (!ghOpWnd)
+    if (!ghOpWnd) {
+    	// Может курсор-сплиттер нужно убрать или поставить
+    	PostMessage(ghWnd, WM_SETCURSOR, -1, -1);
         return;
+    }
+    
     if (!isMainThread()) {
         PostMessage(ghWnd, mn_MsgUpdateSizes, 0, 0);
         return;
     }
 
-    if (mp_VActive)
+	// Может курсор-сплиттер нужно убрать или поставить
+	SendMessage(ghWnd, WM_SETCURSOR, -1, -1);
+    
+    if (mp_VActive) {
         mp_VActive->UpdateInfo();
-    else {
+    } else {
         SetDlgItemText(gSet.hInfo, tConSizeChr, _T("?"));
         SetDlgItemText(gSet.hInfo, tConSizePix, _T("?"));
         SetDlgItemText(gSet.hInfo, tPanelLeft, _T("?"));
@@ -4549,6 +4565,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 
 	RECT conRect = {0}, dcRect = {0}; GetWindowRect(ghWndDC, &dcRect);
 	POINT ptCur = {-1, -1}; GetCursorPos(&ptCur);
+	enum DragPanelBorder dpb = DPB_NONE; //CConEmuMain::CheckPanelDrag(COORD crCon)
 
 	//BOOL lbMouseWasCaptured = mb_MouseCaptured;
 	if (!mb_MouseCaptured) {
@@ -4727,10 +4744,18 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
     if (messg == WM_MOUSEMOVE)
     {
         // WM_MOUSEMOVE вроде бы слишком часто вызывается даже при условии что курсор не двигается...
-        if (wParam==mouse.lastMMW && lParam==mouse.lastMML) {
+        if (wParam==mouse.lastMMW && lParam==mouse.lastMML
+			&& (mouse.state & MOUSE_DRAGPANEL_ALL) == 0)
+		{
             return 0;
         }
         mouse.lastMMW=wParam; mouse.lastMML=lParam;
+        
+        // мог не сброситься, проверим
+        if (isSizing()) {
+        	if (!isPressed(VK_LBUTTON))
+		        mouse.state &= ~MOUSE_SIZING_BEGIN;
+        }
         
         // 18.03.2009 Maks - Если уже тащим - мышь не слать
         if (isDragging()) {
@@ -4739,9 +4764,105 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
                 mouse.state &= ~(DRAG_L_STARTED | DRAG_L_ALLOWED);
             if ((mouse.state & DRAG_R_STARTED) && ((wParam & MK_RBUTTON)==0))
                 mouse.state &= ~(DRAG_R_STARTED | DRAG_R_ALLOWED);
+            // Случайно остался?
+            mouse.state &= ~MOUSE_DRAGPANEL_ALL;
 
             if (mouse.state & (DRAG_L_STARTED | DRAG_R_STARTED))
                 return 0;
+        }
+        
+        if (mouse.state & MOUSE_DRAGPANEL_ALL) {
+			if (!isPressed(VK_LBUTTON)) {
+				mouse.state &= ~MOUSE_DRAGPANEL_ALL;
+				return 0;
+			}
+			if (cr.X == mouse.LClkCon.X && cr.Y == mouse.LClkCon.Y) {
+				return 0;
+			}
+
+        	RECT rcPanel;
+    		INPUT_RECORD r;
+			int nRepeat = 0;
+			wchar_t szKey[32];
+			bool bShifted = isPressed(VK_SHIFT);
+
+    		r.EventType = KEY_EVENT;
+    		r.Event.KeyEvent.dwControlKeyState = 0x128; // Потом добавить SHIFT_PRESSED, если нужно...
+    		r.Event.KeyEvent.wVirtualKeyCode = 0;
+    		
+			// Сразу запомним изменение положения, чтобы не "колбасило" туда-сюда, 
+			// пока фар не отработает изменение положения
+
+        	if (mouse.state & MOUSE_DRAGPANEL_SPLIT) {
+        		
+        		if (!mp_VActive->RCon()->GetPanelRect(TRUE, &rcPanel, TRUE)) {
+        			// Во время изменения размера панелей соответствующий Rect может быть сброшен?
+        			return 0;
+        		}
+				//rcPanel.left = mouse.LClkCon.X; -- делал для макро
+				mouse.LClkCon.Y = cr.Y;
+        		if (cr.X < rcPanel.left) {
+        			r.Event.KeyEvent.wVirtualKeyCode = VK_LEFT;
+					nRepeat = rcPanel.left - cr.X;
+					mouse.LClkCon.X = max(cr.X, (mouse.LClkCon.X-1));
+					wcscpy(szKey, L"CtrlLeft");
+    			} else if (cr.X > rcPanel.left) {
+    				r.Event.KeyEvent.wVirtualKeyCode = VK_RIGHT;
+					nRepeat = cr.X - rcPanel.left;
+					mouse.LClkCon.X = min(cr.X, (mouse.LClkCon.X+1));
+					wcscpy(szKey, L"CtrlRight");
+    			}
+    			
+        	} else {
+        		if (!mp_VActive->RCon()->GetPanelRect((mouse.state & MOUSE_DRAGPANEL_RIGHT), &rcPanel, TRUE)) {
+        			// Во время изменения размера панелей соответствующий Rect может быть сброшен?
+        			return 0;
+        		}
+				//rcPanel.bottom = mouse.LClkCon.Y; -- делал для макро
+				mouse.LClkCon.X = cr.X;
+        		if (cr.Y < rcPanel.bottom) {
+        			r.Event.KeyEvent.wVirtualKeyCode = VK_UP;
+					nRepeat = rcPanel.bottom - cr.Y;
+					mouse.LClkCon.Y = max(cr.Y, (mouse.LClkCon.Y-1));
+					wcscpy(szKey, bShifted ? L"CtrlShiftUp" : L"CtrlUp");
+    			} else if (cr.Y > rcPanel.bottom) {
+    				r.Event.KeyEvent.wVirtualKeyCode = VK_DOWN;
+					nRepeat = cr.Y - rcPanel.bottom;
+					mouse.LClkCon.Y = min(cr.Y, (mouse.LClkCon.Y+1));
+					wcscpy(szKey, bShifted ? L"CtrlShiftDown" : L"CtrlDown");
+    			}
+        	
+        		if (bShifted) {
+        			// Тогда разделение на левую и правую панели
+        			TODO("Активировать нужную, иначе будет меняться размер активной панели, а хотели другую...");
+        			r.Event.KeyEvent.dwControlKeyState |= SHIFT_PRESSED;
+        		}
+        	}
+        	
+        	if (r.Event.KeyEvent.wVirtualKeyCode) {
+				// Макросом не будем - велика вероятность второго вызова, когда еще не закончилась обработка первого макро
+        		/*if (pRCon->isFar(TRUE)) {
+        			mouse.LClkCon = cr;
+        			wchar_t szMacro[128]; szMacro[0] = L'@';
+        			if (nRepeat > 1)
+        				wsprintf(szMacro+1, L"$Rep (%i) %s $End", nRepeat, szKey);
+    				else
+    					wcscpy(szMacro+1, szKey);
+    				PostMacro(szMacro);
+        		} else { */
+
+				// Поехали
+				r.Event.KeyEvent.bKeyDown = TRUE;
+				r.Event.KeyEvent.wVirtualScanCode = MapVirtualKey(r.Event.KeyEvent.wVirtualKeyCode, 0/*MAPVK_VK_TO_VSC*/);
+				r.Event.KeyEvent.wRepeatCount = 1; //nRepeat; -- repeat - что-то глючит...
+				mp_VActive->RCon()->PostConsoleEvent(&r);
+				r.Event.KeyEvent.bKeyDown = FALSE;
+				r.Event.KeyEvent.wRepeatCount = 1;
+				mp_VActive->RCon()->PostConsoleEvent(&r);
+			}
+        	
+        	// Мышь не слать...
+        	return 0;
         }
 
 
@@ -4876,10 +4997,22 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
         {
             //if (isLBDown()) ReleaseCapture(); // Вдруг сглючило? --2009-03-14
             //isLBDown = false;
-            mouse.state &= ~(DRAG_L_ALLOWED | DRAG_L_STARTED);
+            mouse.state &= ~(DRAG_L_ALLOWED | DRAG_L_STARTED | MOUSE_DRAGPANEL_ALL);
             mouse.bIgnoreMouseMove = false;
             mouse.LClkCon = MakeCoord(conX,conY);
             mouse.LClkDC = MakeCoord(ptCur.x,ptCur.y);
+            
+        	dpb = CConEmuMain::CheckPanelDrag(cr);
+        	if (dpb != DPB_NONE) {
+        		if (dpb == DPB_SPLIT)
+        			mouse.state |= MOUSE_DRAGPANEL_SPLIT;
+        		else if (dpb == DPB_LEFT)
+        			mouse.state |= MOUSE_DRAGPANEL_LEFT;
+        		else if (dpb == DPB_RIGHT)
+        			mouse.state |= MOUSE_DRAGPANEL_RIGHT;
+        		return 0;
+        	}
+            
             if (!isConSelectMode() && isFilePanel() && mp_VActive &&
 				mp_VActive->RCon()->CoordInPanel(mouse.LClkCon))
             {
@@ -4905,7 +5038,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
         else if (messg == WM_LBUTTONUP)
         {
             BOOL lbLDrag = (mouse.state & DRAG_L_STARTED) == DRAG_L_STARTED;
-            mouse.state &= ~(DRAG_L_ALLOWED | DRAG_L_STARTED);
+            mouse.state &= ~(DRAG_L_ALLOWED | DRAG_L_STARTED | MOUSE_DRAGPANEL_ALL);
             if (lbLDrag)
                 return 0; // кнопка уже "отпущена"
             if (mouse.bIgnoreMouseMove) {
@@ -5138,35 +5271,114 @@ void CConEmuMain::SetWaitCursor(BOOL abWait)
 		SetCursor(mh_CursorArrow);
 }
 
+enum DragPanelBorder CConEmuMain::CheckPanelDrag(COORD crCon)
+{
+	if (!gSet.isDragPanel || isPictureView())
+		return DPB_NONE;
+
+	CRealConsole* pRCon = mp_VActive->RCon();
+	if (!pRCon)
+		return DPB_NONE;
+	if (!pRCon->isFar() || !pRCon->isFilePanel(true))
+		return DPB_NONE;
+		
+	CONSOLE_CURSOR_INFO ci;
+	mp_VActive->RCon()->GetConsoleCursorInfo(&ci);
+    if (!ci.bVisible || ci.dwSize>40) // Курсор должен быть видим, и не в режиме граба
+    	return DPB_NONE;
+
+	// Теперь - можно проверить	
+	enum DragPanelBorder dpb = DPB_NONE;
+	RECT rcPanel;
+	if (mp_VActive->RCon()->GetPanelRect(TRUE, &rcPanel, TRUE)) {
+		if (crCon.X == rcPanel.left && (rcPanel.top <= crCon.Y && crCon.Y <= rcPanel.bottom))
+			dpb = DPB_SPLIT;
+		else if (crCon.Y == rcPanel.bottom && (rcPanel.left <= crCon.X && crCon.X <= rcPanel.right))
+			dpb = DPB_RIGHT;
+	}
+	if (dpb == DPB_NONE && mp_VActive->RCon()->GetPanelRect(FALSE, &rcPanel, TRUE)) {
+		if (crCon.Y == rcPanel.bottom && (rcPanel.left <= crCon.X && crCon.X <= rcPanel.right))
+			dpb = DPB_LEFT;
+	}
+	return dpb;
+}
+
 LRESULT CConEmuMain::OnSetCursor(WPARAM wParam, LPARAM lParam)
 {
+	POINT ptCur; GetCursorPos(&ptCur);
+
 	if (lParam == (LPARAM)-1) {
-		RECT rcWnd; GetWindowRect(ghWndDC, &rcWnd);
-		POINT ptCur; GetCursorPos(&ptCur);
-		if (!PtInRect(&rcWnd, ptCur))
-			return FALSE;
+		RECT rcWnd; GetWindowRect(ghWnd, &rcWnd);
+		if (!PtInRect(&rcWnd, ptCur)) {
+			if (!isMeForeground())
+				return FALSE;
+			lParam = HTNOWHERE;
+		} else {
+			GetWindowRect(ghWndDC, &rcWnd);
+			if (PtInRect(&rcWnd, ptCur))
+				lParam = HTCLIENT;
+			else
+				lParam = HTCAPTION;
+		}
 		wParam = (WPARAM)ghWnd;
-		lParam = HTCLIENT;
 	}
 
-	if (((HWND)wParam) != ghWnd || (LOWORD(lParam) != HTCLIENT))
+	if (((HWND)wParam) != ghWnd || isSizing()
+		|| (LOWORD(lParam) != HTCLIENT && LOWORD(lParam) != HTNOWHERE))
+	{
 		return FALSE;
+	}
 	
 	HCURSOR hCur = NULL;
 
 	DEBUGSTRSETCURSOR(L"WM_SETCURSOR");
 
-	if (mb_WaitCursor) {
-		hCur = mh_CursorWait;
-		DEBUGSTRSETCURSOR(L" ---> CursorWait\n");
-	} else if (gSet.isFarHourglass) {
-		CRealConsole *pRCon = mp_VActive->RCon();
-		if (pRCon) {
-			BOOL lbAlive = pRCon->isAlive();
-			
-			if (!lbAlive) {
-				hCur = mh_CursorAppStarting;
-				DEBUGSTRSETCURSOR(L" ---> AppStarting\n");
+	
+
+	if (LOWORD(lParam) == HTCLIENT && mp_VActive) {
+		if (mouse.state & MOUSE_DRAGPANEL_ALL) {
+			if (mouse.state & MOUSE_DRAGPANEL_SPLIT)
+				hCur = mh_SplitH;
+			else
+				hCur = mh_SplitV;
+		} else {
+			CRealConsole *pRCon = mp_VActive->RCon();
+			if (pRCon && pRCon->isFar(FALSE)) { // Плагин не нужен, ФАР сам...
+				MapWindowPoints(NULL, ghWndDC, &ptCur, 1);
+				COORD crCon = mp_VActive->ClientToConsole(ptCur.x,ptCur.y);
+				enum DragPanelBorder dpb = CheckPanelDrag(crCon);
+				if (dpb == DPB_SPLIT)
+					hCur = mh_SplitH;
+				else if (dpb != DPB_NONE)
+					hCur = mh_SplitV;
+				//RECT rcPanel;
+				//if (pRCon->GetPanelRect(TRUE, &rcPanel, TRUE)) {
+				//	if (crCon.X == rcPanel.left && (rcPanel.top <= crCon.Y && crCon.Y <= rcPanel.bottom))
+				//		hCur = mh_SplitH;
+				//	else if (crCon.Y == rcPanel.bottom && (rcPanel.left <= crCon.X && crCon.X <= rcPanel.right))
+				//		hCur = mh_SplitV;
+				//}
+				//if (!hCur && pRCon->GetPanelRect(FALSE, &rcPanel, TRUE)) {
+				//	if (crCon.Y == rcPanel.bottom && (rcPanel.left <= crCon.X && crCon.X <= rcPanel.right))
+				//		hCur = mh_SplitV;
+				//}
+			}
+		}
+	}
+
+	if (!hCur) {
+		if (mb_WaitCursor) {
+			hCur = mh_CursorWait;
+			DEBUGSTRSETCURSOR(L" ---> CursorWait\n");
+		} else if (gSet.isFarHourglass) {
+			CRealConsole *pRCon = mp_VActive->RCon();
+			if (pRCon) {
+				BOOL lbAlive = pRCon->isAlive();
+				
+				if (!lbAlive) {
+					hCur = mh_CursorAppStarting;
+					DEBUGSTRSETCURSOR(L" ---> AppStarting\n");
+				}
 			}
 		}
 	}

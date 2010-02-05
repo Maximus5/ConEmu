@@ -2333,7 +2333,8 @@ COORD CVirtualConsole::ClientToConsole(LONG x, LONG y)
     if (nFontWidth)
         cr.X = x/nFontWidth;
     // ј теперь, если возможно, уточним X координату
-    if (this) {
+    if (this && x > 0) {
+		x++; // иначе сбиваетс€ на один пиксел влево
     	if (ConCharX && cr.Y >= 0 && cr.Y < (int)TextHeight) {
     		DWORD* ConCharXLine = ConCharX + cr.Y * TextWidth;
 			for (uint i = 0; i < TextWidth; i++, ConCharXLine++) {

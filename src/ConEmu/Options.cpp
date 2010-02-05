@@ -318,6 +318,8 @@ void CSettings::InitSettings()
     isDragEnabled = DRAG_L_ALLOWED; isDropEnabled = (BYTE)1; isDefCopy = true;
     nLDragKey = 0; nRDragKey = VK_LCONTROL; 
 	isDragOverlay = 1; isDragShowIcons = true;
+	// изменение размера панелей мышкой
+	isDragPanel = true;
 	
 	isDebugSteps = true; 
     MCHKHEAP
@@ -512,6 +514,7 @@ void CSettings::LoadSettings()
 		reg->Load(L"DragOverlay", isDragOverlay);
 		reg->Load(L"DragShowIcons", isDragShowIcons);
         reg->Load(L"DebugSteps", isDebugSteps);
+        reg->Load(L"DragPanel", isDragPanel);
         //reg->Load(L"GUIpb", isGUIpb);
         reg->Load(L"Tabs", isTabs);
 	        reg->Load(L"TabSelf", isTabSelf);
@@ -820,6 +823,7 @@ BOOL CSettings::SaveSettings()
 			reg->Save(L"DragOverlay", isDragOverlay);
 			reg->Save(L"DragShowIcons", isDragShowIcons);
             reg->Save(L"DebugSteps", isDebugSteps);
+            reg->Save(L"DragPanel", isDragPanel);
 
             //reg->Save(L"GUIpb", isGUIpb);
 

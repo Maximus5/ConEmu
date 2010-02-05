@@ -120,7 +120,7 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
 
     mn_FlushIn = mn_FlushOut = 0;
 
-    mr_LeftPanel = mr_RightPanel = MakeRect(-1,-1);
+    mr_LeftPanel = mr_LeftPanelFull = mr_RightPanel = mr_RightPanel = MakeRect(-1,-1);
 	mb_LeftPanel = mb_RightPanel = FALSE;
 
 	mb_MouseButtonDown = FALSE;
@@ -2088,10 +2088,10 @@ BOOL CRealConsole::isDetached()
     return (mh_ConEmuC == NULL);
 }
 
-BOOL CRealConsole::isFar()
+BOOL CRealConsole::isFar(BOOL abPluginRequired/*=FALSE*/)
 {
     if (!this) return false;
-    return GetFarPID()!=0;
+    return GetFarPID(abPluginRequired)!=0;
 }
 
 BOOL CRealConsole::isWindowVisible()
@@ -2930,6 +2930,7 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 			if (pIn->hdr.nSrcPID == mn_FarPID) {
 				mn_ProgramStatus &= ~CES_FARACTIVE;
 				mn_FarPID_PluginDetected = mn_FarPID = 0;
+				if (isActive()) gConEmu.UpdateProcessDisplay(FALSE); // обновить PID в окне настройки
 			}
             SetTabs(NULL, 1);
         } else {
@@ -3099,6 +3100,7 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
         _ASSERTE(nDataSize>=6);
         mb_PluginDetected = TRUE; // Запомним, что в фаре есть плагин (хотя фар может быть закрыт)
         mn_FarPID_PluginDetected = pIn->dwData[0];
+        if (isActive()) gConEmu.UpdateProcessDisplay(FALSE); // обновить PID в окне настройки
         mn_Far_PluginInputThreadId      = pIn->dwData[1];
         
         CheckColorMapping(mn_FarPID_PluginDetected);
@@ -3108,7 +3110,7 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
         wchar_t* pszRes = (wchar_t*)(&(pIn->dwData[2])), *pszNext;
         if (*pszRes) {
             //EnableComSpec(mn_FarPID_PluginDetected, TRUE);
-            UpdateFarSettings(mn_FarPID_PluginDetected);
+            //UpdateFarSettings(mn_FarPID_PluginDetected);
 
             pszNext = pszRes + lstrlen(pszRes)+1;
             if (lstrlen(pszRes)>=30) pszRes[30] = 0;
@@ -3224,16 +3226,17 @@ DWORD CRealConsole::GetServerPID()
     return mn_ConEmuC_PID;
 }
 
-DWORD CRealConsole::GetFarPID()
+DWORD CRealConsole::GetFarPID(BOOL abPluginRequired/*=FALSE*/)
 {
     if (!this)
         return 0;
 
-	// 2009-10-16 Если активна 16бит программа - значит фар точно не доступен
-    if (((mn_ProgramStatus & CES_FARACTIVE) == 0) || ((mn_ProgramStatus & CES_NTVDM) == CES_NTVDM))
+    if (!mn_FarPID // Должен быть известен код PID
+    	|| ((mn_ProgramStatus & CES_FARACTIVE) == 0) // выставлен флаг
+    	|| ((mn_ProgramStatus & CES_NTVDM) == CES_NTVDM)) // Если активна 16бит программа - значит фар точно не доступен
         return 0;
 
-    return mn_FarPID;
+    return abPluginRequired ? mn_FarPID_PluginDetected : mn_FarPID;
 }
 
 // Обновить статус запущенных программ
@@ -6444,7 +6447,9 @@ void CRealConsole::FindPanels()
 	TODO("Положение панелей можно бы узнавать из плагина");
 
     RECT rLeftPanel = MakeRect(-1,-1);
+	RECT rLeftPanelFull = rLeftPanel;
 	RECT rRightPanel = rLeftPanel;
+	RECT rRightPanelFull = rLeftPanel;
 	BOOL bLeftPanel = FALSE;
 	BOOL bRightPanel = FALSE;
 	BOOL bMayBePanels = FALSE;
@@ -6452,6 +6457,8 @@ void CRealConsole::FindPanels()
 	short nLastProgress = mn_ConsoleProgress;
 	short nNewProgress;
 
+	WARNING("Добавить проверки по всем граням панелей, чтобы на них не было некорректных символов");
+	// То есть на грани панели не было других диалогов (вертикальных/угловых бордюров поверх горизонтальной части панели)
 
 	// функция проверяет (mn_ProgramStatus & CES_FARACTIVE) и т.п.
 	if (isFar()) {
@@ -6505,6 +6512,10 @@ void CRealConsole::FindPanels()
 							rLeftPanel.top = nY + 2;
 							rLeftPanel.right = i-1;
 							rLeftPanel.bottom = nBottom - 3;
+							rLeftPanelFull.left = 0;
+							rLeftPanelFull.top = nY;
+							rLeftPanelFull.right = i;
+							rLeftPanelFull.bottom = nBottom;
 							bLeftPanel = TRUE;
 							break;
 						}
@@ -6526,9 +6537,12 @@ void CRealConsole::FindPanels()
 					&& con.pConChar[(rLeftPanel.bottom+4)*con.nTextWidth-1] == ucBoxDblUpLeft
 					)
 				{
-					rRightPanel = rLeftPanel;
+					rRightPanel = rLeftPanel; // bottom & top берем из rLeftPanel
 					rRightPanel.left = rLeftPanel.right+3;
 					rRightPanel.right = con.nTextWidth-2;
+					rRightPanelFull = rLeftPanelFull;
+					rRightPanelFull.left = rLeftPanelFull.right+1;
+					rRightPanelFull.right = con.nTextWidth-1;
 					bRightPanel = TRUE;
 				}
 			}
@@ -6555,6 +6569,10 @@ void CRealConsole::FindPanels()
 									rRightPanel.top = nY + 2;
 									rRightPanel.right = con.nTextWidth-2;
 									rRightPanel.bottom = nBottom - 3;
+									rRightPanelFull.left = i;
+									rRightPanelFull.top = nY;
+									rRightPanelFull.right = con.nTextWidth-1;
+									rRightPanelFull.bottom = nBottom;
 									bRightPanel = TRUE;
 									break;
 								}
@@ -6567,9 +6585,11 @@ void CRealConsole::FindPanels()
 		}
     }
 
-	lbNeedUpdateSizes = (memcmp(&mr_LeftPanel,&rLeftPanel,sizeof(mr_LeftPanel)) || memcmp(&mr_RightPanel,&rRightPanel,sizeof(mr_RightPanel)));
-	mr_LeftPanel = rLeftPanel; mb_LeftPanel = bLeftPanel;
-	mr_RightPanel = rRightPanel; mb_RightPanel = bRightPanel;
+    if (isActive())
+		lbNeedUpdateSizes = (memcmp(&mr_LeftPanel,&rLeftPanel,sizeof(mr_LeftPanel)) || memcmp(&mr_RightPanel,&rRightPanel,sizeof(mr_RightPanel)));
+		
+	mr_LeftPanel = rLeftPanel; mr_LeftPanelFull = rLeftPanelFull; mb_LeftPanel = bLeftPanel;
+	mr_RightPanel = rRightPanel; mr_RightPanelFull = rRightPanelFull; mb_RightPanel = bRightPanel;
 	if (bRightPanel || bLeftPanel)
 		bMayBePanels = TRUE;
 	else
@@ -6620,17 +6640,27 @@ int CRealConsole::CoordInPanel(COORD cr)
 	return 0;
 }
 
-void CRealConsole::GetPanelRect(BOOL abRight, RECT* prc)
+BOOL CRealConsole::GetPanelRect(BOOL abRight, RECT* prc, BOOL abFull /*= FALSE*/)
 {
 	if (!this) {
-		*prc = MakeRect(-1,-1);
-		return;
+		if (prc)
+			*prc = MakeRect(-1,-1);
+		return FALSE;
 	}
 
-	if (abRight)
-		*prc = mr_RightPanel;
-	else
-		*prc = mr_LeftPanel;
+	if (abRight) {
+		if (prc)
+			*prc = abFull ? mr_RightPanelFull : mr_RightPanel;
+		if (mr_RightPanel.right <= mr_RightPanel.left)
+			return FALSE;
+	} else {
+		if (prc)
+			*prc = abFull ? mr_LeftPanelFull : mr_LeftPanel;
+		if (mr_LeftPanel.right <= mr_LeftPanel.left)
+			return FALSE;
+	}
+
+	return TRUE;
 }
 
 bool CRealConsole::IsSelectionAllowed()

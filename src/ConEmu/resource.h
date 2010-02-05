@@ -17,6 +17,8 @@
 #define IDC_MOVE                        110
 #define IDD_RESTART                     112
 #define IDB_SHIELD                      113
+#define IDC_SPLITV                      115
+#define IDC_SPLITH                      116
 #define c0                              1000
 #define c1                              1001
 #define c2                              1002
@@ -209,7 +211,7 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        115
+#define _APS_NEXT_RESOURCE_VALUE        117
 #define _APS_NEXT_COMMAND_VALUE         40001
 #define _APS_NEXT_CONTROL_VALUE         1568
 #define _APS_NEXT_SYMED_VALUE           101
