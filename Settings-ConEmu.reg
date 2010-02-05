@@ -22,9 +22,11 @@ REGEDIT4
 ;; Transparency of the main window (28..FF). FF - opaque.
 "AlphaValue"=hex:ff
 
+
 ;; hex:01 - Search, register for process, and use first *.ttf file in conemu folder
 ;; hex:00 - ConEmu will use only preregistered, system fonts
 "AutoRegisterFonts"=hex:01
+
 
 ;; Main display font
 "FontName"="Lucida Console"
@@ -33,13 +35,29 @@ REGEDIT4
 "FontCharSet"=hex:cc
 "FontBold"=hex:00
 "FontItalic"=hex:00
-;; Not recommended for manual change.
-;; hex:00 - cast main font as MONOSPACE font (i.e. Courier, Lucida Console, ...)
-;; hex:01 - ... as proportional font (i.e. Arial, Tahoma, ...)
-;"Proportional"=hex:00
-
+;; Determine behaviour of symbol placing in the cells.
+;; hex:00 - cast main font as PROPORTIONAL font (i.e. Arial, Tahoma, Times New Roman, ...)
+;; hex:01 - ... as MONOSPACE font (i.e. Courier, Lucida Concole, FixedSys, Terminal, ...)
+;; hex:02 - same as 'hex:01', but ConEmu will try to center symbols in their cells
+"Monospace"=hex:01
+;; Width of the cell for 'Monospace' mode, default is 0
+;"FontSizeX3"=dword:0000000c
 ;; Anti-aliasing. 3 - Disabled, 4 - Standard, 5 - ClearType
 "Anti-aliasing"=hex:04
+
+
+;; ConEmu may draw specified ranges of symbols with alternative NON Anti-Aliased Font.
+;; By default, this range contains pseudographics (borders).
+;; hex:00 - borders are drawn using main font.
+;; hex:01 - using FontName2.
+"FixFarBorders"=hex:01
+;"FontName2"="Lucida Console"
+;"FontSizeX2"=dword:00000000
+;; You may redefine default character ranges for 'Fix far borders' feature.
+;; Charset - Unicode, one char - 4 hex digits, max - 10 ranges.
+;"FixFarBordersRanges"="2013-2015;2190-21AF;2500-25C4;3B2-3B2"
+
+
 
 ;; ConEmu is able to use normal, bold and italic fonts side by side.
 ;; Set "ExtendFonts"=hex:01 to enable this feature
@@ -55,21 +73,6 @@ REGEDIT4
 "ExtendFontNormalIdx"=hex:01
 
 
-;; Font width fot 'Force monospace' mode
-;"FontSizeX3"=dword:0000000c
-;; and the one
-"ForceMonospace"=hex:00
-
-;; Fix far borders. 
-;; hex:00 - borders are drawn using main font.
-;; hex:01 - using FontName2.
-"FixFarBorders"=hex:01
-;"FontName2"="Lucida Console"
-;"FontSizeX2"=dword:00000000
-
-;; You may redefine default character ranges for 'Fix far borders' feature.
-;; Charset - Unicode, one char - 4 hex digits, max - 10 ranges.
-;"FixFarBordersRanges"="2013-2015;2190-21AF;2500-25C4;3B2-3B2"
 
 ;; Enhance appearence of progressbars and scrollbars
 "EnhanceGraphics"=hex:01
@@ -187,6 +190,9 @@ REGEDIT4
 "DndRKey"=dword:000000a2
 ;; 0 - Disable Drop from external apps, 1 - Allow, 2 - Allow w/o confirmation
 "DndDrop"=hex:01
+
+;; Allows FAR panels resizing (height and width) by mouse
+"DragPanel"=hex:01
 
 ;; 1- Отображать в заголовке окна процесс общения с плагином FAR; 0 - не отображать
 "DebugSteps"=hex:01

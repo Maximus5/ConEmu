@@ -87,7 +87,7 @@ IDC_MOVE                CURSOR  DISCARDABLE     "CursorDragMove.cur"
 IDD_DIALOG1 DIALOGEX 0, 0, 328, 216
 STYLE DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
-FONT 8, "MS Shell Dlg", 0, 0, 0x1
+FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        "Anti-aliasing",IDC_STATIC,263,4,60,45,WS_GROUP
     CONTROL         "&None",rNoneAA,"Button",BS_AUTORADIOBUTTON | WS_GROUP,
@@ -113,13 +113,13 @@ BEGIN
                     WS_VSCROLL | WS_TABSTOP
     COMBOBOX        tFontSizeX,109,34,24,66,CBS_DROPDOWN | WS_VSCROLL | 
                     WS_TABSTOP
-    COMBOBOX        tFontCharset,47,50,86,67,CBS_DROPDOWNLIST | 
+    COMBOBOX        tFontCharset,40,50,51,67,CBS_DROPDOWNLIST | 
                     CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
     CONTROL         "&Bold",cbBold,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,
                     67,31,8
     CONTROL         "&Italic",cbItalic,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
                     44,67,31,8
-    CONTROL         "&Monospace",cbNonProportional,"Button",BS_AUTOCHECKBOX | 
+    CONTROL         "&Monospace",cbMonospace,"Button",BS_AUTO3STATE | 
                     WS_TABSTOP,79,67,54,8
     CONTROL         "&Fix FAR borders",cbFixFarBorders,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,10,96,64,8
@@ -133,14 +133,12 @@ BEGIN
     GROUPBOX        "Font",IDC_STATIC,4,4,136,122
     RTEXT           "H:",IDC_STATIC,50,37,12,8
     RTEXT           "W:",IDC_STATIC,94,37,11,8
-    RTEXT           "Charset:",IDC_STATIC,9,53,32,8
+    RTEXT           "Charset:",IDC_STATIC,8,53,28,8
     EDITTEXT        tWndWidth,199,60,20,12,ES_AUTOHSCROLL | ES_NUMBER
     EDITTEXT        tWndHeight,229,60,20,12,ES_AUTOHSCROLL | ES_NUMBER
     CTEXT           "x",IDC_STATIC,221,61,8,8
-    CONTROL         "Force monospace",cbForceMonospace,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,10,83,70,8
-    CTEXT           "x",IDC_STATIC,101,83,8,8
-    COMBOBOX        tFontSizeX3,109,81,24,66,CBS_DROPDOWN | WS_VSCROLL | 
+    RTEXT           "C:",IDC_STATIC,94,53,11,8
+    COMBOBOX        tFontSizeX3,109,50,24,66,CBS_DROPDOWN | WS_VSCROLL | 
                     WS_TABSTOP
     LTEXT           "Path:",IDC_STATIC,10,144,18,8
     LTEXT           "Darkening:",IDC_STATIC,10,161,36,8
@@ -347,7 +345,7 @@ END
 IDD_DIALOG3 DIALOGEX 0, 0, 328, 216
 STYLE DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
-FONT 8, "MS Shell Dlg"
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     GROUPBOX        "Performance counters",gbPerformance,4,4,319,30
     RTEXT           "Render:",IDC_STATIC,92,17,27,8
@@ -575,8 +573,7 @@ BEGIN
     cbItalic                "Main font italic"
     tWndWidth               "Width of console window\nThis is in characters"
     tWndHeight              "Height of console window\nThis is in characters"
-    cbForceMonospace        "Draw characters one by one. It's much(!) slower,\nbut allows to use proportional fonts (Arial, etc.)\nas monospaced."
-    cbNonProportional       "Check it for non proportional\n(monospaced) fonts"
+    cbMonospace             "Check it for non proportional (monospaced) fonts, 3-d state means - center symbols in the cells"
     tFontSizeX2             "WIDTH for additional font.\nIt must be wider than main font,\notherwise, You get 'dashed' borders."
     cbSendAE                "When is on, You can't enter fullscreen mode\nfrom keyboard, but You can use 'Alt+Enter'\nfor macros in FAR"
     cbDnDCopy               "Forced 'Copy' action as default,\nYou can use Ctrl, Shift or Alt\nduring drag to change action"
@@ -620,7 +617,7 @@ END
 
 STRINGTABLE DISCARDABLE 
 BEGIN
-    tFontSizeX3             "Cell width for 'Force monospace' mode"
+    tFontSizeX3             "Cell width for 'Monospace' mode"
     tWndX                   "Upper left corner of ConEmu in Normal mode\nThis is in pixels"
     tWndY                   "Upper left corner of ConEmu in Normal mode\nThis is in pixels"
 END

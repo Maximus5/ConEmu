@@ -724,8 +724,7 @@ WORD CVirtualConsole::CharWidth(TCHAR ch)
 	if (nWidth)
 		return nWidth;
 
-	if (!gSet.isProportional
-		|| gSet.isForceMonospace 
+	if (gSet.isMonospace 
 		|| (gSet.isFixFarBorders && isCharBorder(ch))
 		|| (gSet.isEnhanceGraphics && isCharProgress(ch))
 		)
@@ -1281,8 +1280,8 @@ void CVirtualConsole::UpdateText(bool isForce)
     // const bool skipNotChanged = !isForce /*&& !gSet.isForceMonospace*/;
     const bool skipNotChanged = !isForce && !((gSet.FontItalic() || gSet.FontClearType()));
 	bool bEnhanceGraphics = gSet.isEnhanceGraphics;
-	bool bProportional = gSet.isProportional;
-	bool bForceMonospace = gSet.isForceMonospace;
+	bool bProportional = gSet.isMonospace == 0;
+	bool bForceMonospace = gSet.isMonospace == 2;
 	bool bFixFarBorders = gSet.isFixFarBorders;
 	//mh_FontByIndex[0] = gSet.mh_Font; mh_FontByIndex[1] = gSet.mh_FontB; mh_FontByIndex[2] = gSet.mh_FontI; mh_FontByIndex[3] = gSet.mh_FontBI;
 	HFONT hFont = gSet.mh_Font[0];
@@ -1657,7 +1656,12 @@ void CVirtualConsole::UpdateText(bool isForce)
 								nDrawLen = nCnt;
 								pszDraw = (c==ucBoxDblHorz) ? ms_HorzDbl : ms_HorzSingl;
 							} else {
-								_ASSERTE(c==ucBoxDblHorz || c==ucBoxSinglHorz);
+								#ifdef _DEBUG
+								static bool bShowAssert = true;
+								if (bShowAssert) {
+									_ASSERTE(c==ucBoxDblHorz || c==ucBoxSinglHorz);
+								}
+								#endif
 							}
 						}
 						//while(j2 < end && ConAttrLine[j2] == attr && 
@@ -1717,6 +1721,32 @@ void CVirtualConsole::UpdateText(bool isForce)
 						FillRect(hDC, &rect, hbr);
 					}
 				} else {
+
+					// В целях оптимизации вынесем проверку bProportional за пределы цикла
+					/*if (bProportional) {
+
+						if (!isSpace && !isUnicodeOrProgress) {
+							ABC abc;
+							//Для НЕ TrueType вызывается wrapper (CharWidth)
+							CharABC(c, &abc);
+
+							if (abc.abcA<0) {
+								// иначе символ наверное налезет на предыдущий?
+								nShift = -abc.abcA;
+
+							} else if (abc.abcB < (UINT)nFontWidth)  {
+								int nEdge = (nFontWidth - abc.abcB - 1) >> 1;
+								if (abc.abcA < nEdge) {
+									// символ I, i, и др. очень тонкие - рисуем посередине
+									nShift = nEdge - abc.abcA;
+								}
+							}
+						}
+
+					} else {
+					}*/
+
+
 					if (nFontCharSet == OEM_CHARSET && !isUnicode)
 					{
 						WideCharToMultiByte(CP_OEMCP, 0, pszDraw, nDrawLen, tmpOem, TextWidth+4, 0, 0);
@@ -1857,7 +1887,7 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
     
     if (!gSet.isCursorV)
     {
-        if (gSet.isProportional) {
+        if (!gSet.isMonospace) {
             rect.left = pix.X; /*Cursor.x * nFontWidth;*/
             rect.right = pix.X + nFontWidth; /*(Cursor.x+1) * nFontWidth;*/ //TODO: а ведь позиция следующего символа известна!
         } else {
@@ -1878,7 +1908,7 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
     }
     else
     {
-        if (gSet.isProportional) {
+        if (!gSet.isMonospace) {
             rect.left = pix.X; /*Cursor.x * nFontWidth;*/
             //rect.right = rect.left/*Cursor.x * nFontWidth*/ //TODO: а ведь позиция следующего символа известна!
             //  + klMax(1, MulDiv(nFontWidth, cinf.dwSize, 100) 
@@ -1890,7 +1920,7 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
             //  + (cinf.dwSize > 10 ? 1 : 0));
         }
         rect.top = pos.Y * nFontHeight;
-        int nR = (gSet.isProportional && ConCharX[CurChar]) // правая граница
+        int nR = (!gSet.isMonospace && ConCharX[CurChar]) // правая граница
             ? ConCharX[CurChar] : ((pos.X+1) * nFontWidth);
         //if (cinf.dwSize>=50)
         //  rect.right = nR;
@@ -2401,7 +2431,7 @@ void CVirtualConsole::DistributeSpaces(wchar_t* ConCharLine, CharAttr* ConAttrLi
 			TODO("Для пропорциональных шрифтов надо делать как-то по другому!");
 			//2009-09-09 а это соответственно не нужно (пока nFontWidth == nBordWidth)
 			//ConCharXLine[j2-1] = (j2-1) * nFontWidth + nBordWidth; // или тут [j] должен быть?
-			if (gSet.isProportional && j > 1) {
+			if (!gSet.isMonospace && j > 1) {
 				//2009-12-31 нужно плясать от предыдущего символа!
 				ConCharXLine[j2-1] = ConCharXLine[j-1] + (j2 - j) * nBordWidth;
 			} else {
@@ -2448,7 +2478,7 @@ BOOL CVirtualConsole::FindChanges(int &j, int &end, const wchar_t* ConCharLine, 
 		return FALSE;
 
 	// *) Skip not changed tail symbols. но только если шрифт моноширный
-	if (!gSet.isProportional) {
+	if (gSet.isMonospace) {
 		TODO("OPTIMIZE:");
 		while(--end >= 0 && ConCharLine[end] == ConCharLine2[end] && ConAttrLine[end] == ConAttrLine2[end])
 		{

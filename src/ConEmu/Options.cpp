@@ -47,6 +47,9 @@ SIZE szRasterSizes[100] = {{0,0}}; // {{16,8},{6,9},{8,9},{5,12},{7,12},{8,12},{
 #define TEST_FONT_WIDTH_STRING_EN L"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 #define TEST_FONT_WIDTH_STRING_RU L"јЅ¬√ƒ≈∆«»… ЋћЌќѕ–—“”‘’÷„ЎўЏџ№Ёёя"
 
+#define FAILED_FONT_TIMERID 101
+#define FAILED_FONT_TIMEOUT 3000
+
 const u8 chSetsNums[] = {0, 178, 186, 136, 1, 238, 134, 161, 177, 129, 130, 77, 255, 204, 128, 2, 222, 162, 163};
 const char *ChSets[] = {"ANSI", "Arabic", "Baltic", "Chinese Big 5", "Default", "East Europe",
 		"GB 2312", "Greek", "Hebrew", "Hangul", "Johab", "Mac", "OEM", "Russian", "Shiftjis",
@@ -113,7 +116,7 @@ CSettings::CSettings()
     mb_IgnoreTtfChange = TRUE;
 	mb_CharSetWasSet = FALSE;
 	mb_TabHotKeyRegistered = FALSE;
-    hMain = NULL; hExt = NULL; hColors = NULL; hInfo = NULL; hwndTip = NULL;
+    hMain = NULL; hExt = NULL; hColors = NULL; hInfo = NULL; hwndTip = NULL; hwndBalloon = NULL;
     QueryPerformanceFrequency((LARGE_INTEGER *)&mn_Freq);
     memset(mn_Counter, 0, sizeof(*mn_Counter)*(tPerfInterval-gbPerformance));
     memset(mn_CounterMax, 0, sizeof(*mn_CounterMax)*(tPerfInterval-gbPerformance));
@@ -211,7 +214,8 @@ void CSettings::InitSettings()
     mb_Name1Ok = FALSE; mb_Name2Ok = FALSE;
     isTryToCenter = false;
     isTabFrame = true;
-    isForceMonospace = false; isProportional = false;
+    //isForceMonospace = false; isProportional = false;
+	isMonospace = 1;
     isMinToTray = false;
 	memset(&rcTabMargins, 0, sizeof(rcTabMargins));
 
@@ -497,8 +501,14 @@ void CSettings::LoadSettings()
 
         reg->Load(L"FontBold", isBold);
         reg->Load(L"FontItalic", isItalic);
-        reg->Load(L"ForceMonospace", isForceMonospace);
-        reg->Load(L"Proportional", isProportional);
+		if (!reg->Load(L"Monospace", isMonospace)) {
+			bool bForceMonospace = false, bProportional = false;
+			reg->Load(L"ForceMonospace", bForceMonospace);
+			reg->Load(L"Proportional", bProportional);
+			isMonospace = bForceMonospace ? 2 : bProportional ? 0 : 1;
+		}
+		if (isMonospace > 2) isMonospace = 2;
+		isMonospaceSelected = isMonospace ? isMonospace : 1; // запомнить, чтобы выбирать то что нужно при смене шрифта
         reg->Load(L"Update Console handle", isUpdConHandle);
 		reg->Load(L"RSelectionFix", isRSelFix);
 		reg->Load(L"MouseSkipActivation", isMouseSkipActivation);
@@ -834,8 +844,9 @@ BOOL CSettings::SaveSettings()
             
             reg->Save(L"FontBold", LogFont.lfWeight == FW_BOLD);
             reg->Save(L"FontItalic", LogFont.lfItalic);
-            reg->Save(L"ForceMonospace", isForceMonospace);
-            reg->Save(L"Proportional", isProportional);
+            //reg->Save(L"ForceMonospace", isForceMonospace);
+            //reg->Save(L"Proportional", isProportional);
+			reg->Save(L"Monospace", isMonospace);
             reg->Save(L"Update Console handle", isUpdConHandle);
 
             reg->Save(L"ConWnd Width", wndWidth);
@@ -1215,10 +1226,12 @@ LRESULT CSettings::OnInitDialog_Main()
 	else
 		CheckDlgButton(hMain, rCursorH, BST_CHECKED);
 		
-	if (isForceMonospace)
-		CheckDlgButton(hMain, cbForceMonospace, BST_CHECKED);
-	if (!isProportional)
-		CheckDlgButton(hMain, cbNonProportional, BST_CHECKED);
+	//if (isForceMonospace)
+	//	CheckDlgButton(hMain, cbForceMonospace, BST_CHECKED);
+	//if (!isProportional)
+	//	CheckDlgButton(hMain, cbNonProportional, BST_CHECKED);
+	if (isMonospace) // 3d state - force center symbols in cells
+		CheckDlgButton(hMain, cbMonospace, isMonospace==2 ? BST_INDETERMINATE : BST_CHECKED);
 		
 	if (LogFont.lfWeight == FW_BOLD) CheckDlgButton(hMain, cbBold, BST_CHECKED);
 	if (LogFont.lfItalic)            CheckDlgButton(hMain, cbItalic, BST_CHECKED);
@@ -1719,20 +1732,31 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
 		isSkipFocusEvents = IsChecked(hExt, cbSkipFocusEvents);
 		break;
 
-    case cbNonProportional:
-        isProportional = !isProportional;
-        mb_IgnoreEditChanged = TRUE;
-		ResetFontWidth();
-        gConEmu.Update(true);
-        mb_IgnoreEditChanged = FALSE;
-        break;
+	case cbMonospace:
+		{
+			BYTE cMonospaceNow = isMonospace;
+			isMonospace = IsChecked(hMain, cbMonospace);
+			if (isMonospace) isMonospaceSelected = isMonospace;
+			mb_IgnoreEditChanged = TRUE;
+			ResetFontWidth();
+			gConEmu.Update(true);
+			mb_IgnoreEditChanged = FALSE;
+		} break;
 
-    case cbForceMonospace:
-        isForceMonospace = !isForceMonospace;
-		ResetFontWidth();
-		RecreateFont(tFontSizeX3);
-        gConEmu.Update(true);
-        break;
+	//case cbNonProportional:
+	//    isProportional = !isProportional;
+	//    mb_IgnoreEditChanged = TRUE;
+	//	ResetFontWidth();
+	//    gConEmu.Update(true);
+	//    mb_IgnoreEditChanged = FALSE;
+	//    break;
+	//
+	//case cbForceMonospace:
+	//    isForceMonospace = !isForceMonospace;
+	//	ResetFontWidth();
+	//	RecreateFont(tFontSizeX3);
+	//    gConEmu.Update(true);
+	//    break;
 
     case cbAutoConHandle:
         isUpdConHandle = !isUpdConHandle;
@@ -2022,6 +2046,12 @@ LRESULT CSettings::OnComboBox(WPARAM wParam, LPARAM lParam)
 
 LRESULT CSettings::OnTab(LPNMHDR phdr)
 {
+	if (gSet.szFontError[0]) {
+		gSet.szFontError[0] = 0;
+		SendMessage(hwndBalloon, TTM_TRACKACTIVATE, FALSE, (LPARAM)&tiBalloon);
+		SendMessage(hwndTip, TTM_ACTIVATE, TRUE, 0);
+	}
+
     switch (phdr->code) {
         case TCN_SELCHANGE:
             {
@@ -2294,6 +2324,7 @@ INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPara
     case WM_DESTROY:
 		gSet.UnregisterTabs();
         if (gSet.hwndTip) {DestroyWindow(gSet.hwndTip); gSet.hwndTip = NULL;}
+		if (gSet.hwndBalloon) {DestroyWindow(gSet.hwndBalloon); gSet.hwndBalloon = NULL;}
         //EndDialog(hWnd2, TRUE);
         ghOpWnd = NULL; gSet.hMain = NULL; gSet.hExt = NULL; gSet.hColors = NULL; gSet.hInfo = NULL;
         gbLastColorsOk = FALSE;
@@ -2387,6 +2418,14 @@ INT_PTR CSettings::mainOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 			gSet.mn_LastChangingFontCtrlId = 0;
 		}
         break;
+
+	case WM_TIMER:
+		if (wParam == FAILED_FONT_TIMERID) {
+			KillTimer(gSet.hMain, FAILED_FONT_TIMERID);
+			SendMessage(gSet.hwndBalloon, TTM_TRACKACTIVATE, FALSE, (LPARAM)&gSet.tiBalloon);
+			SendMessage(gSet.hwndTip, TTM_ACTIVATE, TRUE, 0);
+		}
+
     default:
 		if (messg == gSet.mn_MsgRecreateFont) {
 			gSet.RecreateFont(wParam);
@@ -2581,9 +2620,8 @@ void CSettings::UpdateTTF(BOOL bNewTTF)
 {
     if (mb_IgnoreTtfChange) return;
 
-    isProportional = bNewTTF;
-    /* */ CheckDlgButton(hMain, cbNonProportional, 
-        gSet.isProportional ? BST_UNCHECKED : BST_CHECKED);
+	isMonospace = bNewTTF ? 0 : isMonospaceSelected;
+    CheckDlgButton(hMain, cbMonospace, isMonospace); // 3state
 }
 
 void CSettings::UpdateFontInfo()
@@ -2664,6 +2702,29 @@ void CSettings::Performance(UINT nID, BOOL bEnd)
 
 void CSettings::RegisterTipsFor(HWND hChildDlg)
 {
+	if (!hwndBalloon || !IsWindow(hwndBalloon)) {
+		hwndBalloon = CreateWindowEx(WS_EX_TOPMOST, TOOLTIPS_CLASS, NULL,
+			WS_POPUP | TTS_ALWAYSTIP | TTS_BALLOON | TTS_NOPREFIX,
+			CW_USEDEFAULT, CW_USEDEFAULT,
+			CW_USEDEFAULT, CW_USEDEFAULT,
+			ghOpWnd, NULL, 
+			g_hInstance, NULL);
+		SetWindowPos(hwndBalloon, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE);
+
+		// Set up tool information.
+		// In this case, the "tool" is the entire parent window.
+		tiBalloon.cbSize = 44; // был sizeof(TOOLINFO);
+		tiBalloon.uFlags = TTF_IDISHWND | TTF_TRACK | TTF_ABSOLUTE;
+		tiBalloon.hwnd = hMain;
+		tiBalloon.hinst = g_hInstance;
+		tiBalloon.lpszText = L"*";
+		tiBalloon.uId = (UINT_PTR)hMain;
+		GetClientRect (ghOpWnd, &tiBalloon.rect);
+		// Associate the ToolTip with the tool window.
+		SendMessage(hwndBalloon, TTM_ADDTOOL, 0, (LPARAM) (LPTOOLINFO) &tiBalloon);
+		// Allow multiline
+		SendMessage(hwndBalloon, TTM_SETMAXTIPWIDTH, 0, (LPARAM)300);
+	}
     // Create the ToolTip.
     if (!hwndTip || !IsWindow(hwndTip)) {
         hwndTip = CreateWindowEx(WS_EX_TOPMOST, TOOLTIPS_CLASS, NULL,
@@ -2705,6 +2766,17 @@ void CSettings::RegisterTipsFor(HWND hChildDlg)
 				toolInfo.uId = (UINT_PTR)hEdit;
 				lbRc = SendMessage(hwndTip, TTM_ADDTOOL, 0, (LPARAM)&toolInfo);
 			}
+
+			/*if (wID == tFontFace) {
+				toolInfo.uFlags = TTF_IDISHWND | TTF_TRACK | TTF_ABSOLUTE;
+				toolInfo.hwnd = hMain;
+				toolInfo.hinst = g_hInstance;
+				toolInfo.lpszText = L"*";
+				toolInfo.uId = (UINT_PTR)hMain;
+				GetClientRect (ghOpWnd, &toolInfo.rect);
+				// Associate the ToolTip with the tool window.
+				SendMessage(hwndBalloon, TTM_ADDTOOL, 0, (LPARAM) (LPTOOLINFO) &toolInfo);
+			}*/
         }
     }
 
@@ -2789,9 +2861,21 @@ void CSettings::RecreateFont(WORD wFromID)
 
 	UpdateFontInfo();
 
-	if (ghOpWnd && gSet.szFontError[0]) {
-		MessageBox(ghOpWnd, gSet.szFontError, L"ConEmu", MB_OK|MB_ICONEXCLAMATION);
-		gSet.szFontError[0] = 0;
+	if (ghOpWnd) {
+		tiBalloon.lpszText = gSet.szFontError;
+		if (gSet.szFontError[0]) {
+			SendMessage(hwndTip, TTM_ACTIVATE, FALSE, 0);
+			SendMessage(hwndBalloon, TTM_UPDATETIPTEXT, 0, (LPARAM)&tiBalloon);
+			RECT rcControl; GetWindowRect(GetDlgItem(hMain, tFontFace), &rcControl);
+			int ptx = rcControl.right - 10;
+			int pty = (rcControl.top + rcControl.bottom) / 2;
+			SendMessage(hwndBalloon, TTM_TRACKPOSITION, 0, MAKELONG(ptx,pty));
+			SendMessage(hwndBalloon, TTM_TRACKACTIVATE, TRUE, (LPARAM)&tiBalloon);
+			SetTimer(hMain, FAILED_FONT_TIMERID, FAILED_FONT_TIMEOUT, 0);
+		} else {
+			SendMessage(hwndBalloon, TTM_TRACKACTIVATE, FALSE, (LPARAM)&tiBalloon);
+			SendMessage(hwndTip, TTM_ACTIVATE, TRUE, 0);
+		}
 	}
 
 	mb_IgnoreTtfChange = TRUE;
@@ -2953,15 +3037,15 @@ HFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 			_ASSERTE(tm->tmHeight);
 		}
 
-		if (isForceMonospace) {
-            //Maximus - у Arial'а например MaxWidth слишком большой
-			if (tm->tmMaxCharWidth > (tm->tmHeight * 15 / 10))
-				tm->tmMaxCharWidth = tm->tmHeight; // иначе зашкалит - текст очень сильно разъедетс€
-            inFont->lfWidth = FontSizeX3 ? FontSizeX3 : tm->tmMaxCharWidth;
-		} else {
-			// ≈сли указан FontSizeX3 (это принудительна€ ширина знакоместа)
-            inFont->lfWidth = FontSizeX3 ? FontSizeX3 : tm->tmAveCharWidth;
-		}
+		//if (isForceMonospace) {
+        //Maximus - у Arial'а например MaxWidth слишком большой
+		if (tm->tmMaxCharWidth > (tm->tmHeight * 15 / 10))
+			tm->tmMaxCharWidth = tm->tmHeight; // иначе зашкалит - текст очень сильно разъедетс€
+        inFont->lfWidth = FontSizeX3 ? FontSizeX3 : tm->tmMaxCharWidth;
+		//} else {
+		//	// ≈сли указан FontSizeX3 (это принудительна€ ширина знакоместа)
+        //    inFont->lfWidth = FontSizeX3 ? FontSizeX3 : tm->tmAveCharWidth;
+		//}
         inFont->lfHeight = tm->tmHeight; TODO("«десь нужно обновить реальный размер шрифта в диалоге настройки!");
 		if (lbTM && tm->tmCharSet != DEFAULT_CHARSET) {
 			inFont->lfCharSet = tm->tmCharSet;

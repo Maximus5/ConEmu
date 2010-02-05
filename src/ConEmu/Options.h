@@ -29,6 +29,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <commctrl.h>
+
 #define MIN_ALPHA_VALUE 40
 #define MAX_FONT_STYLES 8 //normal/bold|italic|underline
 
@@ -128,7 +130,8 @@ public:
     wchar_t *sRClickMacro;
     bool isSentAltEnter;
     bool isMinToTray;
-    bool isForceMonospace, isProportional;
+    //bool isForceMonospace, isProportional;
+	BYTE isMonospace, isMonospaceSelected;
     bool isUpdConHandle;
 	bool isRSelFix;
 	//Drag
@@ -253,7 +256,8 @@ private:
     i64 mn_Counter[tPerfInterval-gbPerformance];
     i64 mn_CounterMax[tPerfInterval-gbPerformance];
     DWORD mn_CounterTick[tPerfInterval-gbPerformance];
-    HWND hwndTip;
+    HWND hwndTip, hwndBalloon;
+	TOOLINFO tiBalloon;
     void RegisterTipsFor(HWND hChildDlg);
     HFONT CreateFontIndirectMy(LOGFONT *inFont);
 	void RecreateFont(WORD wFromID);
