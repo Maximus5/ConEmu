@@ -125,6 +125,8 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
 
 	mb_MouseButtonDown = FALSE;
 
+	mcr_LastMouseEventPos = MakeCoord(-1,-1);
+
     wcscpy(Title, L"ConEmu");
     wcscpy(TitleFull, Title);
     wcscpy(ms_PanelTitle, Title);
@@ -1671,160 +1673,131 @@ void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y)
         return;
     }
 
-    //if (lbStdMode)
-    {
-        INPUT_RECORD r; memset(&r, 0, sizeof(r));
-        r.EventType = MOUSE_EVENT;
-        
-        // Mouse Buttons
-        if (messg != WM_LBUTTONUP && (messg == WM_LBUTTONDOWN || messg == WM_LBUTTONDBLCLK || isPressed(VK_LBUTTON)))
-            r.Event.MouseEvent.dwButtonState |= FROM_LEFT_1ST_BUTTON_PRESSED;
-        if (messg != WM_RBUTTONUP && (messg == WM_RBUTTONDOWN || messg == WM_RBUTTONDBLCLK || isPressed(VK_RBUTTON)))
-            r.Event.MouseEvent.dwButtonState |= RIGHTMOST_BUTTON_PRESSED;
-        if (messg != WM_MBUTTONUP && (messg == WM_MBUTTONDOWN || messg == WM_MBUTTONDBLCLK || isPressed(VK_MBUTTON)))
-            r.Event.MouseEvent.dwButtonState |= FROM_LEFT_2ND_BUTTON_PRESSED;
-        if (messg != WM_XBUTTONUP && (messg == WM_XBUTTONDOWN || messg == WM_XBUTTONDBLCLK)) {
-            if ((HIWORD(wParam) & 0x0001/*XBUTTON1*/))
-                r.Event.MouseEvent.dwButtonState |= 0x0008/*FROM_LEFT_3ND_BUTTON_PRESSED*/;
-            else if ((HIWORD(wParam) & 0x0002/*XBUTTON2*/))
-                r.Event.MouseEvent.dwButtonState |= 0x0010/*FROM_LEFT_4ND_BUTTON_PRESSED*/;
-        }
 
-		mb_MouseButtonDown = (r.Event.MouseEvent.dwButtonState 
-			& (FROM_LEFT_1ST_BUTTON_PRESSED|FROM_LEFT_2ND_BUTTON_PRESSED|RIGHTMOST_BUTTON_PRESSED)) != 0;
+	// Получить известные координаты символов
+	COORD crMouse = mp_VCon->ClientToConsole(x,y);
 
-        // Key modifiers
-        if (GetKeyState(VK_CAPITAL) & 1)
-            r.Event.MouseEvent.dwControlKeyState |= CAPSLOCK_ON;
-        if (GetKeyState(VK_NUMLOCK) & 1)
-            r.Event.MouseEvent.dwControlKeyState |= NUMLOCK_ON;
-        if (GetKeyState(VK_SCROLL) & 1)
-            r.Event.MouseEvent.dwControlKeyState |= SCROLLLOCK_ON;
-        if (isPressed(VK_LMENU))
-            r.Event.MouseEvent.dwControlKeyState |= LEFT_ALT_PRESSED;
-        if (isPressed(VK_RMENU))
-            r.Event.MouseEvent.dwControlKeyState |= RIGHT_ALT_PRESSED;
-        if (isPressed(VK_LCONTROL))
-            r.Event.MouseEvent.dwControlKeyState |= LEFT_CTRL_PRESSED;
-        if (isPressed(VK_RCONTROL))
-            r.Event.MouseEvent.dwControlKeyState |= RIGHT_CTRL_PRESSED;
-        if (isPressed(VK_SHIFT))
-            r.Event.MouseEvent.dwControlKeyState |= SHIFT_PRESSED;
+	if (messg == WM_MOUSEMOVE /*&& mb_MouseButtonDown*/) {
+		// Issue 172: ConEmu10020304: проблема с правым кликом на PanelTabs
+		if (mcr_LastMouseEventPos.X == crMouse.X && mcr_LastMouseEventPos.Y == crMouse.Y)
+			return; // не посылать в консоль MouseMove на том же месте
+	}
 
-        if (messg == WM_LBUTTONDBLCLK || messg == WM_RBUTTONDBLCLK || messg == WM_MBUTTONDBLCLK)
-            r.Event.MouseEvent.dwEventFlags = DOUBLE_CLICK;
-        else if (messg == WM_MOUSEMOVE)
-            r.Event.MouseEvent.dwEventFlags = MOUSE_MOVED;
-        else if (messg == WM_MOUSEWHEEL) {
-			if (m_UseLogs>=2) {
-				char szDbgMsg[128]; wsprintfA(szDbgMsg, "WM_MOUSEWHEEL(wParam=0x%08X, x=%i, y=%i)", wParam, x, y);
-				LogString(szDbgMsg);
-			}
-			
-			WARNING("Если включен режим прокрутки - посылать команду пайпа, а не мышиное событие");
-			// Иначе на 2008 server вообще не крутится
-			
-            r.Event.MouseEvent.dwEventFlags = MOUSE_WHEELED;
-            SHORT nScroll = (SHORT)(((DWORD)wParam & 0xFFFF0000)>>16);
-            if (nScroll<0) { if (nScroll>-120) nScroll=-120; } else { if (nScroll<120) nScroll=120; }
-            if (nScroll<-120 || nScroll>120)
-            	nScroll = ((SHORT)(nScroll / 120)) * 120;
-            r.Event.MouseEvent.dwButtonState |= ((DWORD)(WORD)nScroll) << 16;
-            //r.Event.MouseEvent.dwButtonState |= /*(0xFFFF0000 & wParam)*/ (nScroll > 0) ? 0x00780000 : 0xFF880000;
-        } else if (messg == WM_MOUSEHWHEEL) {
-			if (m_UseLogs>=2) {
-				char szDbgMsg[128]; wsprintfA(szDbgMsg, "WM_MOUSEHWHEEL(wParam=0x%08X, x=%i, y=%i)", wParam, x, y);
-				LogString(szDbgMsg);
-			}
-            r.Event.MouseEvent.dwEventFlags = 8; //MOUSE_HWHEELED
-            SHORT nScroll = (SHORT)(((DWORD)wParam & 0xFFFF0000)>>16);
-            if (nScroll<0) { if (nScroll>-120) nScroll=-120; } else { if (nScroll<120) nScroll=120; }
-            if (nScroll<-120 || nScroll>120)
-            	nScroll = ((SHORT)(nScroll / 120)) * 120;
-            r.Event.MouseEvent.dwButtonState |= ((DWORD)(WORD)nScroll) << 16;
-            //r.Event.MouseEvent.dwButtonState |= (0xFFFF0000 & wParam);
-        }
+	INPUT_RECORD r; memset(&r, 0, sizeof(r));
+    r.EventType = MOUSE_EVENT;
+    
+    // Mouse Buttons
+    if (messg != WM_LBUTTONUP && (messg == WM_LBUTTONDOWN || messg == WM_LBUTTONDBLCLK || isPressed(VK_LBUTTON)))
+        r.Event.MouseEvent.dwButtonState |= FROM_LEFT_1ST_BUTTON_PRESSED;
+    if (messg != WM_RBUTTONUP && (messg == WM_RBUTTONDOWN || messg == WM_RBUTTONDBLCLK || isPressed(VK_RBUTTON)))
+        r.Event.MouseEvent.dwButtonState |= RIGHTMOST_BUTTON_PRESSED;
+    if (messg != WM_MBUTTONUP && (messg == WM_MBUTTONDOWN || messg == WM_MBUTTONDBLCLK || isPressed(VK_MBUTTON)))
+        r.Event.MouseEvent.dwButtonState |= FROM_LEFT_2ND_BUTTON_PRESSED;
+    if (messg != WM_XBUTTONUP && (messg == WM_XBUTTONDOWN || messg == WM_XBUTTONDBLCLK)) {
+        if ((HIWORD(wParam) & 0x0001/*XBUTTON1*/))
+            r.Event.MouseEvent.dwButtonState |= 0x0008/*FROM_LEFT_3ND_BUTTON_PRESSED*/;
+        else if ((HIWORD(wParam) & 0x0002/*XBUTTON2*/))
+            r.Event.MouseEvent.dwButtonState |= 0x0010/*FROM_LEFT_4ND_BUTTON_PRESSED*/;
+    }
 
-        //TODO("а здесь хорошо бы получать известные координаты символов, а не простым делением");
-        //COORD crMouse = MakeCoord(x/gSet.Log Font.lfWidth, y/gSet.Log Font.lfHeight);
-        COORD crMouse = mp_VCon->ClientToConsole(x,y);
+	mb_MouseButtonDown = (r.Event.MouseEvent.dwButtonState 
+		& (FROM_LEFT_1ST_BUTTON_PRESSED|FROM_LEFT_2ND_BUTTON_PRESSED|RIGHTMOST_BUTTON_PRESSED)) != 0;
 
-        // При БЫСТРОМ драге правой кнопкой мышки выделение в панели получается прерывистым. Исправим это.
-        if (gSet.isRSelFix) {
-            BOOL lbRBtnDrag = (r.Event.MouseEvent.dwButtonState & RIGHTMOST_BUTTON_PRESSED) == RIGHTMOST_BUTTON_PRESSED;
-            if (con.bRBtnDrag && !lbRBtnDrag) {
-                con.bRBtnDrag = FALSE;
-            } else if (con.bRBtnDrag) {
-            	#ifdef _DEBUG
-                SHORT nXDelta = crMouse.X - con.crRBtnDrag.X;
-                #endif
-                SHORT nYDelta = crMouse.Y - con.crRBtnDrag.Y;
-                if (nYDelta < -1 || nYDelta > 1) {
-                    // Если после предыдущего драга прошло более 1 строки
-                    SHORT nYstep = (nYDelta < -1) ? -1 : 1;
-                    SHORT nYend = crMouse.Y; // - nYstep;
-                    crMouse.Y = con.crRBtnDrag.Y + nYstep;
-                    // досылаем пропущенные строки
-                    while (crMouse.Y != nYend) {
-                        #ifdef _DEBUG
-                        wchar_t szDbg[60]; wsprintf(szDbg, L"+++ Add right button drag: {%ix%i}\n", crMouse.X, crMouse.Y);
-                        DEBUGSTRINPUT(szDbg);
-                        #endif
-                        r.Event.MouseEvent.dwMousePosition = crMouse;
-                        PostConsoleEvent ( &r );
-                        crMouse.Y += nYstep;
-                    }
+    // Key modifiers
+    if (GetKeyState(VK_CAPITAL) & 1)
+        r.Event.MouseEvent.dwControlKeyState |= CAPSLOCK_ON;
+    if (GetKeyState(VK_NUMLOCK) & 1)
+        r.Event.MouseEvent.dwControlKeyState |= NUMLOCK_ON;
+    if (GetKeyState(VK_SCROLL) & 1)
+        r.Event.MouseEvent.dwControlKeyState |= SCROLLLOCK_ON;
+    if (isPressed(VK_LMENU))
+        r.Event.MouseEvent.dwControlKeyState |= LEFT_ALT_PRESSED;
+    if (isPressed(VK_RMENU))
+        r.Event.MouseEvent.dwControlKeyState |= RIGHT_ALT_PRESSED;
+    if (isPressed(VK_LCONTROL))
+        r.Event.MouseEvent.dwControlKeyState |= LEFT_CTRL_PRESSED;
+    if (isPressed(VK_RCONTROL))
+        r.Event.MouseEvent.dwControlKeyState |= RIGHT_CTRL_PRESSED;
+    if (isPressed(VK_SHIFT))
+        r.Event.MouseEvent.dwControlKeyState |= SHIFT_PRESSED;
+
+    if (messg == WM_LBUTTONDBLCLK || messg == WM_RBUTTONDBLCLK || messg == WM_MBUTTONDBLCLK)
+        r.Event.MouseEvent.dwEventFlags = DOUBLE_CLICK;
+    else if (messg == WM_MOUSEMOVE)
+        r.Event.MouseEvent.dwEventFlags = MOUSE_MOVED;
+    else if (messg == WM_MOUSEWHEEL) {
+		if (m_UseLogs>=2) {
+			char szDbgMsg[128]; wsprintfA(szDbgMsg, "WM_MOUSEWHEEL(wParam=0x%08X, x=%i, y=%i)", wParam, x, y);
+			LogString(szDbgMsg);
+		}
+		
+		WARNING("Если включен режим прокрутки - посылать команду пайпа, а не мышиное событие");
+		// Иначе на 2008 server вообще не крутится
+		
+        r.Event.MouseEvent.dwEventFlags = MOUSE_WHEELED;
+        SHORT nScroll = (SHORT)(((DWORD)wParam & 0xFFFF0000)>>16);
+        if (nScroll<0) { if (nScroll>-120) nScroll=-120; } else { if (nScroll<120) nScroll=120; }
+        if (nScroll<-120 || nScroll>120)
+        	nScroll = ((SHORT)(nScroll / 120)) * 120;
+        r.Event.MouseEvent.dwButtonState |= ((DWORD)(WORD)nScroll) << 16;
+        //r.Event.MouseEvent.dwButtonState |= /*(0xFFFF0000 & wParam)*/ (nScroll > 0) ? 0x00780000 : 0xFF880000;
+    } else if (messg == WM_MOUSEHWHEEL) {
+		if (m_UseLogs>=2) {
+			char szDbgMsg[128]; wsprintfA(szDbgMsg, "WM_MOUSEHWHEEL(wParam=0x%08X, x=%i, y=%i)", wParam, x, y);
+			LogString(szDbgMsg);
+		}
+        r.Event.MouseEvent.dwEventFlags = 8; //MOUSE_HWHEELED
+        SHORT nScroll = (SHORT)(((DWORD)wParam & 0xFFFF0000)>>16);
+        if (nScroll<0) { if (nScroll>-120) nScroll=-120; } else { if (nScroll<120) nScroll=120; }
+        if (nScroll<-120 || nScroll>120)
+        	nScroll = ((SHORT)(nScroll / 120)) * 120;
+        r.Event.MouseEvent.dwButtonState |= ((DWORD)(WORD)nScroll) << 16;
+    }
+
+
+
+    // При БЫСТРОМ драге правой кнопкой мышки выделение в панели получается прерывистым. Исправим это.
+    if (gSet.isRSelFix) {
+        BOOL lbRBtnDrag = (r.Event.MouseEvent.dwButtonState & RIGHTMOST_BUTTON_PRESSED) == RIGHTMOST_BUTTON_PRESSED;
+        if (con.bRBtnDrag && !lbRBtnDrag) {
+            con.bRBtnDrag = FALSE;
+        } else if (con.bRBtnDrag) {
+        	#ifdef _DEBUG
+            SHORT nXDelta = crMouse.X - con.crRBtnDrag.X;
+            #endif
+            SHORT nYDelta = crMouse.Y - con.crRBtnDrag.Y;
+            if (nYDelta < -1 || nYDelta > 1) {
+                // Если после предыдущего драга прошло более 1 строки
+                SHORT nYstep = (nYDelta < -1) ? -1 : 1;
+                SHORT nYend = crMouse.Y; // - nYstep;
+                crMouse.Y = con.crRBtnDrag.Y + nYstep;
+                // досылаем пропущенные строки
+                while (crMouse.Y != nYend) {
+                    #ifdef _DEBUG
+                    wchar_t szDbg[60]; wsprintf(szDbg, L"+++ Add right button drag: {%ix%i}\n", crMouse.X, crMouse.Y);
+                    DEBUGSTRINPUT(szDbg);
+                    #endif
+                    r.Event.MouseEvent.dwMousePosition = crMouse;
+                    PostConsoleEvent ( &r );
+                    crMouse.Y += nYstep;
                 }
             }
-            if (lbRBtnDrag) {
-                con.bRBtnDrag = TRUE;
-                con.crRBtnDrag = crMouse;
-            }
         }
-        
-        r.Event.MouseEvent.dwMousePosition = crMouse;
-
-        if (mn_FarPID && mn_FarPID != mn_LastSetForegroundPID) {
-            //DWORD dwFarPID = GetFarPID();
-            //if (dwFarPID)
-            AllowSetForegroundWindow(mn_FarPID);
-            mn_LastSetForegroundPID = mn_FarPID;
+        if (lbRBtnDrag) {
+            con.bRBtnDrag = TRUE;
+            con.crRBtnDrag = crMouse;
         }
-
-        // Посылаем событие в консоль через ConEmuC
-        PostConsoleEvent ( &r );
-
-        /*DWORD dwWritten = 0;
-        if (!WriteConsoleInput(hConIn(), &r, 1, &dwWritten)) {
-            DisplayLastError(L"SendMouseEvent failed!");
-        }*/
     }
-    //else {
-    //       /*Если пересылать так - лезут глюки:
-    //       1) левый клик вообще не доходит до консоли
-    //       2) правый клик вызывает "левую" консольную менюшку
-    //       3) проблемы с активацией окна(?)*/
-    //       /* НО! тогда не работает выделение мышкой */
-    //       static bool bInitialized = false;
-    //       if (!bInitialized && (messg == WM_LBUTTONDOWN || messg == WM_RBUTTONDOWN))
-    //       {
-    //           bInitialized = true; // выполнить эту операцию один раз
-    //           /*if (gConEmu.isConmanAlternative()) {
-    //               PostConsoleMessage(hConWnd, WM_COMMAND, SC_PASTE_SECRET, 0, TRUE);
-    //           } else {*/
-    //               PostConsoleMessage(hConWnd, WM_COMMAND, (messg == WM_LBUTTONDOWN) ? SC_MARK_SECRET : SC_PASTE_SECRET, 0, TRUE);
-    //               if (messg == WM_RBUTTONDOWN)
-    //                   return; // достаточно SC_PASTE_SECRET
-    //           //}
-    //       }
+    
+    r.Event.MouseEvent.dwMousePosition = crMouse;
 
-    //       RECT conRect;
-    //       GetClientRect(hConWnd, &conRect);
-    //       short newX = MulDiv(x, conRect.right, klMax<uint>(1, mp_VCon->Width));
-    //       short newY = MulDiv(y, conRect.bottom, klMax<uint>(1, mp_VCon->Height));
+    if (mn_FarPID && mn_FarPID != mn_LastSetForegroundPID) {
+        AllowSetForegroundWindow(mn_FarPID);
+        mn_LastSetForegroundPID = mn_FarPID;
+    }
 
-    //       PostConsoleMessage(hConWnd, messg, wParam, MAKELPARAM( newX, newY ), TRUE);
-    //   }
+    // Посылаем событие в консоль через ConEmuC
+    PostConsoleEvent ( &r );
 }
 
 void CRealConsole::PostConsoleEventPipe(MSG *pMsg)

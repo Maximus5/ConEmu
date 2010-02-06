@@ -1,7 +1,8 @@
 Maximus5 - 2010.02.06
-[%] Не запускалось: conemu /cmd "C:\Program Files\FAR\far.exe"
-[%] Issue 172: 	ConEmu10020304: проблема с правым кликом на PanelTabs
-[+] Теперь мышкой можно менять высоту и ширину панелей
+[%] Не запускалось: conemu /cmd "C:\Program Files\FAR\far.exe".
+[%] Issue 172: 	ConEmu10020304: проблема с правым кликом на PanelTabs.
+[+] Теперь мышкой можно менять высоту и ширину панелей, DblClick - выравнивает панели.
+[*] Флажок 'Force monospace' заменен на 3-е состояние флажка 'Monospace'.
 
 
 Maximus5 - 2010.02.04

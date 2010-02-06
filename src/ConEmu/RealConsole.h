@@ -438,6 +438,7 @@ private:
 	void FindPanels();
 	// 
 	BOOL mb_MouseButtonDown;
+	COORD mcr_LastMouseEventPos;
 	//
 	SHELLEXECUTEINFO *mp_sei;
 	//

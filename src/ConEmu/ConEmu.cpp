@@ -5257,6 +5257,27 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
                 return 0; // не обрабатывать, сейчас висит контекстное меню
             }
         }
+		else if (messg == WM_LBUTTONDBLCLK) {
+			if (pRCon) {
+				dpb = CConEmuMain::CheckPanelDrag(cr);
+				if (dpb != DPB_NONE) {
+					wchar_t szMacro[128]; szMacro[0] = 0;
+					if (dpb == DPB_SPLIT) {
+						RECT rcRight; pRCon->GetPanelRect(TRUE, &rcRight, TRUE);
+						int  nCenter = pRCon->TextWidth() / 2;
+						if (nCenter < rcRight.left)
+							wsprintf(szMacro, L"@$Rep (%i) CtrlLeft $End", rcRight.left - nCenter);
+						else if (nCenter > rcRight.left)
+							wsprintf(szMacro, L"@$Rep (%i) CtrlRight $End", nCenter - rcRight.left);
+					} else {
+						wsprintf(szMacro, L"@$Rep (%i) CtrlDown $End", pRCon->TextHeight());
+					}
+					if (szMacro[0])
+						PostMacro(szMacro);
+					return 0;
+				}
+			}
+		}
     }
 
 #ifdef MSGLOGGER
