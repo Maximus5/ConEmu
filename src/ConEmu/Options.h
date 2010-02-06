@@ -118,6 +118,7 @@ protected:
 		bool bUsed;
 		wchar_t cBegin, cEnd;
 	} CharRanges;
+	wchar_t mszCharRanges[120];
 	CharRanges icFixFarBorderRanges[10];
 	bool *mpc_FixFarBorderValues;
 public:

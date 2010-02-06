@@ -43,6 +43,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRSETCURSOR(s) //DEBUGSTR(s)
 #define DEBUGSTRCONEVENT(s) //DEBUGSTR(s)
 #define DEBUGSTRMACRO(s) DEBUGSTR(s)
+#define DEBUGSTRPANEL(s) DEBUGSTR(s)
+#define DEBUGSTRPANEL2(s) //DEBUGSTR(s)
 
 #define PROCESS_WAIT_START_TIME 1000
 
@@ -4747,6 +4749,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
         if (wParam==mouse.lastMMW && lParam==mouse.lastMML
 			&& (mouse.state & MOUSE_DRAGPANEL_ALL) == 0)
 		{
+			DEBUGSTRPANEL2(L"PanelDrag: Skip of wParam==mouse.lastMMW && lParam==mouse.lastMML\n");
             return 0;
         }
         mouse.lastMMW=wParam; mouse.lastMML=lParam;
@@ -4767,16 +4770,20 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
             // Случайно остался?
             mouse.state &= ~MOUSE_DRAGPANEL_ALL;
 
-            if (mouse.state & (DRAG_L_STARTED | DRAG_R_STARTED))
+			if (mouse.state & (DRAG_L_STARTED | DRAG_R_STARTED)) {
+				DEBUGSTRPANEL2(L"PanelDrag: Skip of isDragging\n");
                 return 0;
+			}
         }
         
         if (mouse.state & MOUSE_DRAGPANEL_ALL) {
 			if (!isPressed(VK_LBUTTON)) {
 				mouse.state &= ~MOUSE_DRAGPANEL_ALL;
+				DEBUGSTRPANEL2(L"PanelDrag: Skip of LButton not pressed\n");
 				return 0;
 			}
 			if (cr.X == mouse.LClkCon.X && cr.Y == mouse.LClkCon.Y) {
+				DEBUGSTRPANEL2(L"PanelDrag: Skip of cr.X == mouse.LClkCon.X && cr.Y == mouse.LClkCon.Y\n");
 				return 0;
 			}
 
@@ -4797,6 +4804,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
         		
         		if (!mp_VActive->RCon()->GetPanelRect(TRUE, &rcPanel, TRUE)) {
         			// Во время изменения размера панелей соответствующий Rect может быть сброшен?
+					DEBUGSTRPANEL2(L"PanelDrag: Skip of NO right panel\n");
         			return 0;
         		}
 				//rcPanel.left = mouse.LClkCon.X; -- делал для макро
@@ -4816,6 +4824,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
         	} else {
         		if (!mp_VActive->RCon()->GetPanelRect((mouse.state & MOUSE_DRAGPANEL_RIGHT), &rcPanel, TRUE)) {
         			// Во время изменения размера панелей соответствующий Rect может быть сброшен?
+					DEBUGSTRPANEL2((mouse.state & MOUSE_DRAGPANEL_RIGHT) ? L"PanelDrag: Skip of NO right panel\n" : L"PanelDrag: Skip of NO left panel\n");
         			return 0;
         		}
 				//rcPanel.bottom = mouse.LClkCon.Y; -- делал для макро
@@ -4851,6 +4860,11 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
     				PostMacro(szMacro);
         		} else { */
 
+				#ifdef _DEBUG
+				wchar_t szDbg[128]; wsprintf(szDbg, L"PanelDrag: Sending '%s'\n", szKey);
+				DEBUGSTRPANEL(szDbg);
+				#endif
+
 				// Поехали
 				r.Event.KeyEvent.bKeyDown = TRUE;
 				r.Event.KeyEvent.wVirtualScanCode = MapVirtualKey(r.Event.KeyEvent.wVirtualKeyCode, 0/*MAPVK_VK_TO_VSC*/);
@@ -4859,6 +4873,8 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 				r.Event.KeyEvent.bKeyDown = FALSE;
 				r.Event.KeyEvent.wRepeatCount = 1;
 				mp_VActive->RCon()->PostConsoleEvent(&r);
+			} else {
+				DEBUGSTRPANEL2(L"PanelDrag: Skip of NO key selected\n");
 			}
         	
         	// Мышь не слать...

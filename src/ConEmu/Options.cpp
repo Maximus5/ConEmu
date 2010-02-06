@@ -274,6 +274,7 @@ void CSettings::InitSettings()
 
     isFixFarBorders = 1; isEnhanceGraphics = true; isPartBrush75 = 0xC8; isPartBrush50 = 0x96; isPartBrush25 = 0x5A;
 	memset(icFixFarBorderRanges, 0, sizeof(icFixFarBorderRanges));
+	wcscpy(mszCharRanges, L"2013-25C4");
 	icFixFarBorderRanges[0].bUsed = true; icFixFarBorderRanges[0].cBegin = 0x2013; icFixFarBorderRanges[0].cEnd = 0x25C4;
 	mpc_FixFarBorderValues = (bool*)calloc(65536,sizeof(bool));
     
@@ -342,14 +343,13 @@ void CSettings::LoadSettings()
 	mb_CharSetWasSet = FALSE;
     bool isBold = (LogFont.lfWeight>=FW_BOLD), isItalic = (LogFont.lfItalic!=FALSE);
     
-	// Вроде бы проблема была только с Vista, но оставим пока, на всякий случай
 	//;; Q. В Windows Vista зависают другие консольные процессы.
 	//	;; A. "Виноват" процесс ConIme.exe. Вроде бы он служит для ввода иероглифов
 	//	;;    (китай и т.п.). Зачем он нужен, если ввод теперь идет в графическом окне?
 	//	;;    Нужно запретить его автозапуск или вообще переименовать этот файл, например
 	//	;;    в 'ConIme.ex1' (видимо это возможно только в безопасном режиме).
 	//	;;    Запретить автозапуск: Внесите в реестр и перезагрузитесь
-    if (gOSVer.dwMajorVersion>=6)
+    if (gOSVer.dwMajorVersion == 6 && gOSVer.dwMinorVersion == 0)
     {
 	    CheckConIme();
     }
@@ -442,30 +442,31 @@ void CSettings::LoadSettings()
 
 		if (!reg->Load(L"FixFarBorders", isFixFarBorders))
 			reg->Load(L"Experimental", isFixFarBorders);
-		{
-			wchar_t szCharRanges[120]; // max 10 ranges x 10 chars + a little ;)
-			if (reg->Load(L"FixFarBordersRanges", szCharRanges, sizeofarray(szCharRanges))) {
-				int n = 0, nMax = countof(icFixFarBorderRanges);
-				wchar_t *pszRange = szCharRanges, *pszNext = NULL;
-				wchar_t cBegin, cEnd;
-				while (*pszRange && n < nMax) {
-					cBegin = (wchar_t)wcstol(pszRange, &pszNext, 16);
-					if (!cBegin || cBegin == 0xFFFF || *pszNext != L'-') break;
-					pszRange = pszNext + 1;
-					cEnd = (wchar_t)wcstol(pszRange, &pszNext, 16);
-					if (!cEnd || cEnd == 0xFFFF) break;
+		mszCharRanges[0] = 0;
+		// max 10 ranges x 10 chars + a little ;)
+		if (reg->Load(L"FixFarBordersRanges", mszCharRanges, sizeofarray(mszCharRanges))) {
+			int n = 0, nMax = countof(icFixFarBorderRanges);
+			wchar_t *pszRange = mszCharRanges, *pszNext = NULL;
+			wchar_t cBegin, cEnd;
+			while (*pszRange && n < nMax) {
+				cBegin = (wchar_t)wcstol(pszRange, &pszNext, 16);
+				if (!cBegin || cBegin == 0xFFFF || *pszNext != L'-') break;
+				pszRange = pszNext + 1;
+				cEnd = (wchar_t)wcstol(pszRange, &pszNext, 16);
+				if (!cEnd || cEnd == 0xFFFF) break;
 
-					icFixFarBorderRanges[n].bUsed = true;
-					icFixFarBorderRanges[n].cBegin = cBegin;
-					icFixFarBorderRanges[n].cEnd = cEnd;
+				icFixFarBorderRanges[n].bUsed = true;
+				icFixFarBorderRanges[n].cBegin = cBegin;
+				icFixFarBorderRanges[n].cEnd = cEnd;
 
-					n ++;
-					if (*pszNext != L';') break;
-					pszRange = pszNext + 1;
-				}
-				for ( ; n < nMax; n++)
-					icFixFarBorderRanges[n].bUsed = false;
+				n ++;
+				if (*pszNext != L';') break;
+				pszRange = pszNext + 1;
 			}
+			for ( ; n < nMax; n++)
+				icFixFarBorderRanges[n].bUsed = false;
+		} else {
+			wcscpy(mszCharRanges, L"2013-25C4"); // default
 		}
         
         reg->Load(L"PartBrush75", isPartBrush75); if (isPartBrush75<5) isPartBrush75=5; else if (isPartBrush75>250) isPartBrush75=250;
@@ -530,13 +531,13 @@ void CSettings::LoadSettings()
 	        reg->Load(L"TabSelf", isTabSelf);
 	        reg->Load(L"TabLazy", isTabLazy);
 	        reg->Load(L"TabRecent", isTabRecent);
-			if (!reg->Load(L"TabCloseMacro", &sTabCloseMacro) && sTabCloseMacro && !*sTabCloseMacro) { free(sTabCloseMacro); sTabCloseMacro = NULL; }
+			if (!reg->Load(L"TabCloseMacro", &sTabCloseMacro) || (sTabCloseMacro && !*sTabCloseMacro)) { free(sTabCloseMacro); sTabCloseMacro = NULL; }
 			reg->Load(L"TabFontFace", sTabFontFace, sizeofarray(sTabFontFace));
 			reg->Load(L"TabFontCharSet", nTabFontCharSet);
 			reg->Load(L"TabFontHeight", nTabFontHeight);
         reg->Load(L"TabFrame", isTabFrame);
         reg->Load(L"TabMargins", rcTabMargins);
-        reg->Load(L"SlideShowElapse", nSlideShowElapse);
+        reg->Load(L"SlideShowElapse", nSlideShowElapse); // obsolete
         reg->Load(L"IconID", nIconID);
         reg->Load(L"TabConsole", szTabConsole, sizeofarray(szTabConsole));
             //WCHAR* pszVert = wcschr(szTabPanels, L'|');
@@ -757,6 +758,12 @@ BOOL CSettings::SaveSettings()
             reg->Save(L"ExtendColors", isExtendColors);
             reg->Save(L"ExtendColorIdx", nExtendColor);
 
+            /* таки сохраним, чтобы настройки переносить можно было */
+	        reg->Save(L"ExtendFonts", isExtendFonts);
+	        reg->Save(L"ExtendFontNormalIdx", nFontNormalColor);
+	        reg->Save(L"ExtendFontBoldIdx", nFontBoldColor);
+	        reg->Save(L"ExtendFontItalicIdx", nFontItalicColor);
+
             int nLen = SendDlgItemMessage(hMain, tCmdLine, WM_GETTEXTLENGTH, 0, 0);
             if (nLen<=0) {
                 if (psCmd) {free(psCmd); psCmd = NULL;}
@@ -776,20 +783,26 @@ BOOL CSettings::SaveSettings()
 
 			reg->Save(L"ConVisible", isConVisible);
             reg->Save(L"CmdLine", psCmd);
+            if (psCmdHistory)
+            	reg->SaveMSZ(L"CmdLineHistory", psCmdHistory, nCmdHistorySize);
             reg->Save(L"Multi", isMulti);
+            	reg->Save(L"Multi.Modifier", nMultiHotkeyModifier);
 				reg->Save(L"Multi.NewConsole", icMultiNew);
 				reg->Save(L"Multi.Next", icMultiNext);
 				reg->Save(L"Multi.Recreate", icMultiRecreate);
 				reg->Save(L"Multi.NewConfirm", isMultiNewConfirm);
+				reg->Save(L"Multi.Buffer", icMultiBuffer);
+
             reg->Save(L"FontName", LogFont.lfFaceName);
             reg->Save(L"FontName2", LogFont2.lfFaceName);
             bool lbTest = isAutoRegisterFonts; // Если в реестре настройка есть, или изменилось значение
             if (reg->Load(L"AutoRegisterFonts", lbTest) || isAutoRegisterFonts != lbTest)
             	reg->Save(L"AutoRegisterFonts", isAutoRegisterFonts);
 
+			reg->Save(L"BackGround Image show", isShowBgImage);
             reg->Save(L"BackGround Image", sBgImage);
             reg->Save(L"bgImageDarker", bgImageDarker);
-			reg->Save(L"BackGround Image show", isShowBgImage);
+			reg->Save(L"bgImageColors", nBgImageColors);
 
 			reg->Save(L"AlphaValue", nTransparent);
 
@@ -804,6 +817,10 @@ BOOL CSettings::SaveSettings()
             reg->Save(L"WindowMode", saveMode);
             reg->Save(L"HideCaption", isHideCaption);
             
+			reg->Save(L"ConsoleFontName", ConsoleFont.lfFaceName);
+			reg->Save(L"ConsoleCharWidth", ConsoleFont.lfWidth);
+			reg->Save(L"ConsoleFontHeight", ConsoleFont.lfHeight);
+
 			reg->Save(L"DefaultBufferHeight", DefaultBufferHeight);
 			reg->Save(L"AutoBufferHeight", AutoBufferHeight);
 			reg->Save(L"CmdOutputCP", nCmdOutputCP);
@@ -813,8 +830,13 @@ BOOL CSettings::SaveSettings()
 			reg->Save(L"CursorBlink", isCursorBlink);
 
             reg->Save(L"FixFarBorders", isFixFarBorders);
+            reg->Save(L"FixFarBordersRanges", mszCharRanges);
             reg->Save(L"EnhanceGraphics", isEnhanceGraphics);
+	        reg->Save(L"PartBrush75", isPartBrush75);
+	        reg->Save(L"PartBrush50", isPartBrush50);
+	        reg->Save(L"PartBrush25", isPartBrush25);
             reg->Save(L"RightClick opens context menu", isRClickSendKey);
+            	reg->Save(L"RightClickMacro2", sRClickMacro);
             reg->Save(L"AltEnter", isSentAltEnter);
             reg->Save(L"Min2Tray", isMinToTray);
             
@@ -825,6 +847,7 @@ BOOL CSettings::SaveSettings()
 			reg->Save(L"MouseSkipActivation", isMouseSkipActivation);
 			reg->Save(L"MouseSkipMoving", isMouseSkipMoving);
 			reg->Save(L"FarHourglass", isFarHourglass);
+			reg->Save(L"FarHourglassDelay", nFarHourglassDelay);
             reg->Save(L"Dnd", isDragEnabled);
             reg->Save(L"DndLKey", nLDragKey);
             reg->Save(L"DndRKey", nRDragKey);
@@ -841,6 +864,22 @@ BOOL CSettings::SaveSettings()
 		        reg->Save(L"TabSelf", isTabSelf);
 		        reg->Save(L"TabLazy", isTabLazy);
 		        reg->Save(L"TabRecent", isTabRecent);
+		        reg->Save(L"TabCloseMacro", sTabCloseMacro ? sTabCloseMacro : L"");
+		        reg->Save(L"TabFontFace", sTabFontFace);
+				reg->Save(L"TabFontCharSet", nTabFontCharSet);
+				reg->Save(L"TabFontHeight", nTabFontHeight);
+			reg->Save(L"TabFrame", isTabFrame);
+			reg->Save(L"TabMargins", rcTabMargins);
+			reg->Save(L"TabConsole", szTabConsole);
+	        reg->Save(L"TabEditor", szTabEditor);
+	        reg->Save(L"TabEditorModified", szTabEditorModified);
+	        reg->Save(L"TabViewer", szTabViewer);
+	        reg->Save(L"TabLenMax", nTabLenMax);
+	        reg->Save(L"AdminTitleSuffix", szAdminTitleSuffix);
+	        reg->Save(L"AdminShowShield", bAdminShield);
+	        reg->Save(L"TryToCenter", isTryToCenter);
+
+			reg->Save(L"IconID", nIconID);
             
             reg->Save(L"FontBold", LogFont.lfWeight == FW_BOLD);
             reg->Save(L"FontItalic", LogFont.lfItalic);
@@ -869,6 +908,9 @@ BOOL CSettings::SaveSettings()
             //reg->Save(L"VizEolCh", cVizEOL);
             //reg->Save(L"VizEofCh", cVizEOF);
             
+			reg->Save(L"MainTimerElapse", nMainTimerElapse);
+			reg->Save(L"AffinityMask", nAffinity);
+
             reg->Save(L"SkipFocusEvents", isSkipFocusEvents);
     		reg->Save(L"MonitorConsoleLang", isMonitorConsoleLang);
             
