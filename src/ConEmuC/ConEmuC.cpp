@@ -343,11 +343,15 @@ int __cdecl main()
     if (!lbRc)
     {
 		wchar_t* lpMsgBuf = NULL;
+		DWORD nFmtRc, nFmtErr = 0;
 		if (dwErr == 5) {
 			lpMsgBuf = (wchar_t*)LocalAlloc(LPTR, 255);
 			wcscpy(lpMsgBuf, L"Access is denied.\nThis may be cause of antiviral or file permissions denial.");
 		} else {
-			FormatMessage( FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, NULL, dwErr, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPWSTR)&lpMsgBuf, 0, NULL );
+			nFmtRc = FormatMessage( FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, 
+				NULL, dwErr, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPWSTR)&lpMsgBuf, 0, NULL );
+			if (!nFmtRc)
+				nFmtErr = GetLastError();
 		}
 		
         _printf("Can't create process, ErrCode=0x%08X, Description:\n", dwErr);
@@ -1158,7 +1162,13 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
             if (pszEndQ > (pszTitle+1) && *pszEndQ == L'"'
 				&& wcschr(pszTitle+1, L'"') == pszEndQ)
 			{
-                *pszEndQ = 0; pszTitle ++; lbNeedCutStartEndQuot = TRUE;
+                *pszEndQ = 0; pszTitle ++;
+				// "C:\Program Files\FAR\far.exe" - кавычки нужны, иначе не запустится
+				DWORD dwFileAttr = GetFileAttributes(pszTitle);
+				if (dwFileAttr != INVALID_FILE_ATTRIBUTES && !(dwFileAttr & FILE_ATTRIBUTE_DIRECTORY))
+					lbNeedCutStartEndQuot = FALSE;
+				else
+					lbNeedCutStartEndQuot = TRUE;
             } else {
                 pszEndQ = NULL;
             }
@@ -2204,8 +2214,14 @@ void ProcessInputMessage(MSG &msg)
 		#endif
 		#ifdef _DEBUG
 		if (r.EventType == MOUSE_EVENT) {
-			wchar_t szDbg[60]; wsprintf(szDbg, L"ConEmuC.MouseEvent(X=%i,Y=%i,Btns=0x%04x,Moved=%i)\n", r.Event.MouseEvent.dwMousePosition.X, r.Event.MouseEvent.dwMousePosition.Y, r.Event.MouseEvent.dwButtonState, (r.Event.MouseEvent.dwEventFlags & MOUSE_MOVED));
+			static DWORD nLastEventTick = 0;
+			if (nLastEventTick && (GetTickCount() - nLastEventTick) > 2000) {
+				OutputDebugString(L".\n");
+			}
+			wchar_t szDbg[60]; 
+			wsprintf(szDbg, L"ConEmuC.MouseEvent(X=%i,Y=%i,Btns=0x%04x,Moved=%i)\n", r.Event.MouseEvent.dwMousePosition.X, r.Event.MouseEvent.dwMousePosition.Y, r.Event.MouseEvent.dwButtonState, (r.Event.MouseEvent.dwEventFlags & MOUSE_MOVED));
 			DEBUGLOGINPUT(szDbg);
+			nLastEventTick = GetTickCount();
 		}
 		#endif
 

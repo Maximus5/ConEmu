@@ -45,7 +45,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 #define DEBUGLOG(s) //DEBUGSTR(s)
-#define DEBUGLOGINPUT(s) //DEBUGSTR(s)
+#define DEBUGLOGINPUT(s) DEBUGSTR(s)
 #define DEBUGLOGSIZE(s) DEBUGSTR(s)
 #define DEBUGLOGLANG(s) //DEBUGSTR(s) //; Sleep(2000)
 
@@ -195,7 +195,7 @@ void _printf(LPCSTR asFormat, DWORD dwErr, LPCWSTR asAddLine);
 void _printf(LPCSTR asFormat, DWORD dw1, DWORD dw2, LPCWSTR asAddLine=NULL);
 #else
 #define _printf printf
-#define _wprintf wprintf
+#define _wprintf(s) wprintf(L"%s",s)
 #endif
 const wchar_t* PointToName(const wchar_t* asFullPath);
 HWND Attach2Gui(DWORD nTimeout);

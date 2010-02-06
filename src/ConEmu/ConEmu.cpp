@@ -5029,6 +5029,10 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
                     if (!gSet.nLDragKey || isPressed(gSet.nLDragKey))
                         mouse.state = DRAG_L_ALLOWED;
                 }
+
+				// иначе после LBtnDown в консоль может СРАЗУ провалиться MOUSEMOVE
+				mouse.lastMMW=wParam; mouse.lastMML=lParam;
+
                 //if (gSet.is DnD) mouse.bIgnoreMouseMove = true;
                 //POSTMESSAGE(ghConWnd, messg, wParam, MAKELPARAM( newX, newY ), FALSE); // было SEND
                 mp_VActive->RCon()->OnMouse(messg, wParam, ptCur.x, ptCur.y);
@@ -5220,6 +5224,10 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
                     wsprintfA(szLog, "RightClicked, but mouse was moved abs({%i-%i}-{%i-%i})>%i", (int)Rcursor.x, (int)Rcursor.y, (int)LOWORD(lParam), (int)HIWORD(lParam), (int)RCLICKAPPSDELTA);
                     mp_VActive->RCon()->LogString(szLog);
                 }
+
+				// иначе после RBtnDown в консоль может СРАЗУ провалиться MOUSEMOVE
+				mouse.lastMMW=MK_RBUTTON|wParam; mouse.lastMML=lParam; // добавляем, т.к. мы в RButtonUp
+
                 // Иначе нужно сначала послать WM_RBUTTONDOWN
                 //POSTMESSAGE(ghConWnd, WM_RBUTTONDOWN, wParam, MAKELPARAM( newX, newY ), TRUE);
                 mp_VActive->RCon()->OnMouse(WM_RBUTTONDOWN, wParam, ptCur.x, ptCur.y);
@@ -5256,6 +5264,10 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
         messg = WM_MOUSEMOVE;
 #endif
 fin:
+
+	// иначе после (например) RBtnDown в консоль может СРАЗУ провалиться MOUSEMOVE
+	mouse.lastMMW=wParam; mouse.lastMML=MAKELPARAM( ptCur.x, ptCur.y );
+
     // заменим даблклик вторым обычным
     //POSTMESSAGE(ghConWnd, messg == WM_RBUTTONDBLCLK ? WM_RBUTTONDOWN : messg, wParam, MAKELPARAM( newX, newY ), FALSE);
     mp_VActive->RCon()->OnMouse(messg == WM_RBUTTONDBLCLK ? WM_RBUTTONDOWN : messg, wParam, ptCur.x, ptCur.y);

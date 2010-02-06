@@ -2465,6 +2465,7 @@ void CVirtualConsole::DistributeSpaces(wchar_t* ConCharLine, CharAttr* ConAttrLi
 BOOL CVirtualConsole::FindChanges(int &j, int &end, const wchar_t* ConCharLine, const CharAttr* ConAttrLine, const wchar_t* ConCharLine2, const CharAttr* ConAttrLine2)
 {
 	// Default: j = 0, end = TextWidth;
+	return TRUE; // пока строку целиком будем рисовать
 
 	// ≈сли основной шрифт в консоли курсивный, то
 	// во избежение обрезани€ правой части буквы нужно рисовать строку целиком
