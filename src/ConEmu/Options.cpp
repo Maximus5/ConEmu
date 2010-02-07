@@ -254,6 +254,7 @@ void CSettings::InitSettings()
 	    }
     }
     
+	isTrueColorer = true;
     isExtendColors = false;
     nExtendColor = 14;
     isExtendFonts = false;
@@ -271,6 +272,8 @@ void CSettings::InitSettings()
 	nBgImageColors = 1|2;
 
 	nTransparent = 255;
+	isColorKey = false;
+	ColorKey = RGB(1,1,1);
 
     isFixFarBorders = 1; isEnhanceGraphics = true; isPartBrush75 = 0xC8; isPartBrush50 = 0x96; isPartBrush25 = 0x5A;
 	memset(icFixFarBorderRanges, 0, sizeof(icFixFarBorderRanges));
@@ -304,6 +307,7 @@ void CSettings::InitSettings()
     isTabs = 1; isTabSelf = true; isTabRecent = true; isTabLazy = true;
     lstrcpyW(sTabFontFace, L"Tahoma"); nTabFontCharSet = ANSI_CHARSET; nTabFontHeight = 16;
 	sTabCloseMacro = NULL;
+	nToolbarAddSpace = 0;
     
     //isVisualizer = false;
     //nVizNormal = 1; nVizFore = 15; nVizTab = 15; nVizEOL = 8; nVizEOF = 12;
@@ -373,6 +377,7 @@ void CSettings::LoadSettings()
         reg->Load(L"ExtendColors", isExtendColors);
         reg->Load(L"ExtendColorIdx", nExtendColor);
             if (nExtendColor<0 || nExtendColor>15) nExtendColor=14;
+		reg->Load(L"TrueColorerSupport", isTrueColorer);
             
         reg->Load(L"ExtendFonts", isExtendFonts);
         reg->Load(L"ExtendFontNormalIdx", nFontNormalColor);
@@ -500,6 +505,8 @@ void CSettings::LoadSettings()
 
 		reg->Load(L"AlphaValue", nTransparent);
 			if (nTransparent < MIN_ALPHA_VALUE) nTransparent = MIN_ALPHA_VALUE;
+		reg->Load(L"UseColorKey", isColorKey);
+		reg->Load(L"ColorKey", ColorKey);
 
         reg->Load(L"FontBold", isBold);
         reg->Load(L"FontItalic", isItalic);
@@ -538,6 +545,7 @@ void CSettings::LoadSettings()
 			reg->Load(L"TabFontHeight", nTabFontHeight);
         reg->Load(L"TabFrame", isTabFrame);
         reg->Load(L"TabMargins", rcTabMargins);
+		reg->Load(L"ToolbarAddSpace", nToolbarAddSpace); if (nToolbarAddSpace<0 || nToolbarAddSpace>100) nToolbarAddSpace = 0;
         reg->Load(L"SlideShowElapse", nSlideShowElapse); // obsolete
         reg->Load(L"IconID", nIconID);
         reg->Load(L"TabConsole", szTabConsole, sizeofarray(szTabConsole));
@@ -759,6 +767,7 @@ BOOL CSettings::SaveSettings()
             }
             reg->Save(L"ExtendColors", isExtendColors);
             reg->Save(L"ExtendColorIdx", nExtendColor);
+			reg->Save(L"TrueColorerSupport", isTrueColorer);
 
             /* таки сохраним, чтобы настройки переносить можно было */
 	        reg->Save(L"ExtendFonts", isExtendFonts);
@@ -807,6 +816,8 @@ BOOL CSettings::SaveSettings()
 			reg->Save(L"bgImageColors", nBgImageColors);
 
 			reg->Save(L"AlphaValue", nTransparent);
+			reg->Save(L"UseColorKey", isColorKey);
+			reg->Save(L"ColorKey", ColorKey);
 
 			reg->Save(L"FontAutoSize", isFontAutoSize);
             reg->Save(L"FontSize", LogFont.lfHeight);
@@ -873,6 +884,7 @@ BOOL CSettings::SaveSettings()
 				reg->Save(L"TabFontHeight", nTabFontHeight);
 			reg->Save(L"TabFrame", isTabFrame);
 			reg->Save(L"TabMargins", rcTabMargins);
+			reg->Save(L"ToolbarAddSpace", nToolbarAddSpace);
 			reg->Save(L"TabConsole", szTabConsole);
 	        reg->Save(L"TabEditor", szTabEditor);
 	        reg->Save(L"TabEditorModified", szTabEditorModified);
@@ -1196,6 +1208,21 @@ LRESULT CSettings::OnInitDialog_Main()
 			SendDlgItemMessage(hMain, tFontSizeX3, CB_ADDSTRING, 0, (LPARAM) temp);
 		}
 
+		for (uint i=0; i <= 16; i++)
+		{
+			wsprintf(temp, (i==16) ? L"None" : L"%2i", i);
+			SendDlgItemMessage(hMain, lbExtendFontBoldIdx, CB_ADDSTRING, 0, (LPARAM) temp);
+			SendDlgItemMessage(hMain, lbExtendFontItalicIdx, CB_ADDSTRING, 0, (LPARAM) temp);
+			SendDlgItemMessage(hMain, lbExtendFontNormalIdx, CB_ADDSTRING, 0, (LPARAM) temp);
+		}
+		if (isExtendFonts) CheckDlgButton(hMain, cbExtendFonts, BST_CHECKED);
+		wsprintf(temp, (nFontBoldColor<16) ? L"%2i" : L"None", nFontBoldColor);
+		SelectStringExact(hMain, lbExtendFontBoldIdx, temp);
+		wsprintf(temp, (nFontItalicColor<16) ? L"%2i" : L"None", nFontItalicColor);
+		SelectStringExact(hMain, lbExtendFontItalicIdx, temp);
+		wsprintf(temp, (nFontNormalColor<16) ? L"%2i" : L"None", nFontNormalColor);
+		SelectStringExact(hMain, lbExtendFontNormalIdx, temp);
+
 		if (isFontAutoSize) CheckDlgButton(hMain, cbFontAuto, BST_CHECKED);
 
 		wsprintf(temp, L"%i", LogFont.lfHeight);
@@ -1223,14 +1250,28 @@ LRESULT CSettings::OnInitDialog_Main()
 		SendDlgItemMessage(hMain, tFontCharset, CB_SETCURSEL, num, 0);
 	}
 
+	TCHAR tmp[255];
+
 	MCHKHEAP
 
 	SetDlgItemText(hMain, tCmdLine, psCmd ? psCmd : L"");
 
 	SetDlgItemText(hMain, tBgImage, sBgImage);
 	CheckDlgButton(hMain, rBgSimple, BST_CHECKED);
+	DWORD nTest = nBgImageColors;
+	wchar_t *pszTemp = tmp; tmp[0] = 0;
+	for (int idx = 0; nTest && idx < 16; idx++) {
+		if (nTest & 1) {
+			if (pszTemp != tmp)
+				*pszTemp++ = L' ';
+			wsprintf(pszTemp, L"#%i", idx);
+			pszTemp += wcslen(pszTemp);
+		}
+		nTest = nTest >> 1;
+	}
+	*pszTemp = 0;
+	SetDlgItemText(hMain, tBgImageColors, tmp);
 
-	TCHAR tmp[10];
 	wsprintf(tmp, L"%i", bgImageDarker);
 	SendDlgItemMessage(hMain, tDarker, EM_SETLIMITTEXT, 3, 0);
 	SetDlgItemText(hMain, tDarker, tmp);
@@ -1479,6 +1520,8 @@ LRESULT CSettings::OnInitDialog_Color()
 	CheckDlgButton(hColors, cbExtendColors, isExtendColors ? BST_CHECKED : BST_UNCHECKED);
 	OnColorButtonClicked(cbExtendColors, 0);
 
+	CheckDlgButton(hColors, cbTrueColorer, isTrueColorer ? BST_CHECKED : BST_UNCHECKED);
+
 	// Default colors
 	memmove(gdwLastColors, Colors, sizeof(gdwLastColors));
 	SendDlgItemMessage(hColors, lbDefaultColors, CB_ADDSTRING, 0, (LPARAM) L"<Current color scheme>");
@@ -1500,6 +1543,7 @@ LRESULT CSettings::OnInitDialog_Color()
 
 	SendDlgItemMessage(hColors, slTransparent, TBM_SETRANGE, (WPARAM) true, (LPARAM) MAKELONG(MIN_ALPHA_VALUE, 255));
 	SendDlgItemMessage(hColors, slTransparent, TBM_SETPOS  , (WPARAM) true, (LPARAM) nTransparent);
+	CheckDlgButton(hColors, cbTransparent, (nTransparent!=255) ? BST_CHECKED : BST_UNCHECKED);
 
 
 	RegisterTipsFor(hColors);
@@ -1589,6 +1633,8 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
 		    if (!isFullScreen)
 			    gConEmu.SetWindowMode(rFullScreen);
 	    }
+		// «апомнить "идеальный" размер окна, выбранный пользователем
+		gConEmu.UpdateIdealRect(TRUE);
 	    EnableWindow(GetDlgItem(hMain, cbApplyPos), FALSE);
 	    SetForegroundWindow(ghOpWnd);
 	    break;
@@ -1807,6 +1853,12 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
 			mb_IgnoreEditChanged = FALSE;
 		} break;
 
+	case cbExtendFonts:
+		{
+			isExtendFonts = IsChecked(hMain, cbExtendFonts);
+			gConEmu.Update(true);
+		} break;
+
 	//case cbNonProportional:
 	//    isProportional = !isProportional;
 	//    mb_IgnoreEditChanged = TRUE;
@@ -1893,6 +1945,25 @@ LRESULT CSettings::OnColorButtonClicked(WPARAM wParam, LPARAM lParam)
             gConEmu.Update(true);
         }
         break;
+
+	case cbTrueColorer:
+		isTrueColorer = IsChecked(hColors, cbTrueColorer);
+		gConEmu.Update(true);
+		break;
+	case cbTransparent:
+		{
+			int newV = nTransparent;
+			if (IsChecked(hColors, cbTransparent)) {
+				if (newV == 255) newV = 200;
+			} else {
+				newV = 255;
+			}
+			if (newV != nTransparent) {
+				nTransparent = newV;
+				SendDlgItemMessage(hColors, slTransparent, TBM_SETPOS, (WPARAM) true, (LPARAM)nTransparent);
+				gConEmu.OnTransparent();
+			}
+		} break;
     //case cbVisualizer:
     //    isVisualizer = IsChecked(hColors, cbVisualizer) == BST_CHECKED ? true : false;
     //    EnableWindow(GetDlgItem(hColors, lbVisNormal), isVisualizer);
@@ -1927,34 +1998,47 @@ LRESULT CSettings::OnColorButtonClicked(WPARAM wParam, LPARAM lParam)
     return 0;
 }
 
+BOOL CSettings::GetColorRef(HWND hDlg, WORD TB, COLORREF* pCR)
+{
+	BOOL result = FALSE;
+	int r, g, b;
+	wchar_t temp[MAX_PATH];
+	GetDlgItemText(hDlg, TB, temp, MAX_PATH);
+	TCHAR *sp1 = wcschr(temp, ' '), *sp2;
+	if (sp1 && *(sp1+1) && *(sp1+1) != ' ')
+	{
+		sp2 = wcschr(sp1+1, ' ');
+		if (sp2 && *(sp2+1) && *(sp2+1) != ' ')
+		{
+			*sp1 = 0;
+			sp1++;
+			*sp2 = 0;
+			sp2++;
+			r = klatoi(temp); g = klatoi(sp1), b = klatoi(sp2);
+			if (r >= 0 && r <= 255 && g >= 0 && g <= 255 && b >= 0 && b <= 255 && Colors[TB - 1100] != RGB(r, g, b))
+			{
+				*pCR = RGB(r, g, b);
+				result = TRUE;
+				//gConEmu.Update(true);
+				//InvalidateRect(GetDlgItem(hColors, TB - 100), 0, 1);
+			}
+		}
+	}
+
+	return result;
+}
+
 LRESULT CSettings::OnColorEditChanged(WPARAM wParam, LPARAM lParam)
 {
     WORD TB = LOWORD(wParam);
     if (TB >= 1100 && TB <= 1131)
     {
-        int r, g, b;
-		wchar_t temp[MAX_PATH];
-        GetDlgItemText(hColors, TB, temp, MAX_PATH);
-        TCHAR *sp1 = _tcschr(temp, ' '), *sp2;
-        if (sp1 && *(sp1+1) && *(sp1+1) != ' ')
-        {
-            sp2 = _tcschr(sp1+1, ' ');
-            if (sp2 && *(sp2+1) && *(sp2+1) != ' ')
-            {
-                *sp1 = 0;
-                sp1++;
-                *sp2 = 0;
-                sp2++;
-                r = klatoi(temp); g = klatoi(sp1), b = klatoi(sp2);
-                if (r >= 0 && r <= 255 && g >= 0 && g <= 255 && b >= 0 && b <= 255 && Colors[TB - 1100] != RGB(r, g, b))
-                {
-                    Colors[TB - 1100] = RGB(r, g, b);
-                    gConEmu.Update(true);
-                    InvalidateRect(GetDlgItem(hColors, TB - 100), 0, 1);
-                }
-            }
-        }
-    }
+		if (GetColorRef(hColors, TB, &(Colors[TB - 1100]))) {
+			gConEmu.Update(true);
+			InvalidateRect(GetDlgItem(hColors, TB - 100), 0, 1);
+		}
+	} else if (TB == tc32) {
+	}
     return 0;
 }
 
@@ -2105,6 +2189,15 @@ LRESULT CSettings::OnComboBox(WPARAM wParam, LPARAM lParam)
 		nCmdOutputCP = SendDlgItemMessage(hExt, wId, CB_GETCURSEL, 0, 0);
 		if (nCmdOutputCP == -1) nCmdOutputCP = 0;
 		gConEmu.UpdateFarSettings();
+	} else if (wId == lbExtendFontNormalIdx || wId == lbExtendFontBoldIdx || wId == lbExtendFontItalicIdx) {
+		if (wId == lbExtendFontNormalIdx)
+			nFontNormalColor = GetNumber(hMain, wId);
+		else if (wId == lbExtendFontBoldIdx)
+			nFontBoldColor = GetNumber(hMain, wId);
+		else if (wId == lbExtendFontItalicIdx)
+			nFontItalicColor = GetNumber(hMain, wId);
+		if (isExtendFonts)
+			gConEmu.Update(true);
 	}
     return 0;
 }
@@ -2586,6 +2679,7 @@ INT_PTR CSettings::colorOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPa
 				int newV = SendDlgItemMessage(hWnd2, slTransparent, TBM_GETPOS, 0, 0);
 				if (newV != gSet.nTransparent)
 				{
+					CheckDlgButton(gSet.hColors, cbTransparent, (newV!=255) ? BST_CHECKED : BST_UNCHECKED);
 					gSet.nTransparent = newV;
 					gConEmu.OnTransparent();
 				}
@@ -3290,8 +3384,12 @@ int CSettings::GetNumber(HWND hParent, WORD nCtrlId)
 	#endif
 	int nValue = 0;
 	wchar_t szNumber[32] = {0};
-	if (GetDlgItemText(hParent, nCtrlId, szNumber, countof(szNumber)))
-		nValue = klatoi(szNumber);
+	if (GetDlgItemText(hParent, nCtrlId, szNumber, countof(szNumber))) {
+		if (!wcscmp(szNumber, L"None"))
+			nValue = 255; // 0xFF дл€ nFontNormalColor, nFontBoldColor, nFontItalicColor;
+		else
+			nValue = klatoi((szNumber[0]==L' ') ? (szNumber+1) : szNumber);
+	}
 	return nValue;
 }
 

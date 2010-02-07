@@ -261,7 +261,6 @@ public:
 	BOOL CreateMainWindow();
 	void Destroy();
 	void DebugStep(LPCTSTR asMsg);
-	void UpdateFarSettings();
 	void ForceShowTabs(BOOL abShow);
 	DWORD_PTR GetActiveKeyboardLayout();
 	RECT GetIdealRect() { return mrc_Ideal; };
@@ -315,6 +314,8 @@ public:
 	void SwitchKeyboardLayout(DWORD_PTR dwNewKeybLayout);
 	void TabCommand(UINT nTabCmd);
 	void Update(bool isForce = false);
+	void UpdateFarSettings();
+	void UpdateIdealRect(BOOL abAllowUseConSize=FALSE);
 	void UpdateTitle(LPCTSTR asNewTitle);
 	void UpdateProgress(BOOL abUpdateTitle);
 	static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);

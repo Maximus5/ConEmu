@@ -45,7 +45,7 @@ TODO("Для WinXP можно поиграться стилем WS_EX_COMPOSITED");
 //const int TAB_FONT_HEIGTH = 16;
 //wchar_t TAB_FONT_FACE[] = L"Tahoma";
 WNDPROC TabBarClass::_defaultTabProc = NULL;
-WNDPROC TabBarClass::_defaultBarProc = NULL;
+WNDPROC TabBarClass::_defaultToolProc = NULL;
 WNDPROC TabBarClass::_defaultReBarProc = NULL;
 typedef BOOL (WINAPI* FAppThemed)();
 
@@ -436,7 +436,8 @@ LRESULT CALLBACK TabBarClass::TabProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARA
     return CallWindowProc(_defaultTabProc, hwnd, uMsg, wParam, lParam);
 }
 
-LRESULT CALLBACK TabBarClass::BarProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+// Window procedure for Toolbar (Multiconsole & BufferHeight)
+LRESULT CALLBACK TabBarClass::ToolProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     switch (uMsg)
     {
@@ -446,8 +447,17 @@ LRESULT CALLBACK TabBarClass::BarProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARA
             pos->y = (gConEmu.mp_TabBar->mn_ThemeHeightDiff == 0) ? 1 : 0;
             return 0;
         }
+	case TB_GETMAXSIZE:
+		{
+			SIZE *psz = (SIZE*)lParam;
+			if (!lParam) return 0;
+			if (CallWindowProc(_defaultToolProc, hwnd, uMsg, wParam, lParam)) {
+				psz->cx += gSet.nToolbarAddSpace;
+				return 1;
+			}
+		} break;
     }
-    return CallWindowProc(_defaultBarProc, hwnd, uMsg, wParam, lParam);
+    return CallWindowProc(_defaultToolProc, hwnd, uMsg, wParam, lParam);
 }
 
 
@@ -779,6 +789,7 @@ void TabBarClass::UpdateWidth()
 		if (mh_Toolbar) {
 			nBarIndex = SendMessage(mh_Rebar, RB_IDTOINDEX, 2, 0);
 			SendMessage(mh_Toolbar, TB_GETMAXSIZE, 0, (LPARAM)&sz);
+			sz.cx += gSet.nToolbarAddSpace;
 			lbWideEnough = (sz.cx + 150) <= client.right;
 			if (!lbWideEnough) {
 				if (IsWindowVisible(mh_Toolbar))
@@ -1053,7 +1064,7 @@ HWND TabBarClass::CreateToolbar()
         WS_CHILD|WS_VISIBLE|TBSTYLE_FLAT|CCS_NOPARENTALIGN|CCS_NORESIZE|CCS_NODIVIDER|TBSTYLE_TOOLTIPS|TBSTYLE_TRANSPARENT, 0, 0, 0, 0, mh_Rebar, 
         NULL, NULL, NULL); 
         
-   _defaultBarProc = (WNDPROC)SetWindowLongPtr(mh_Toolbar, GWLP_WNDPROC, (LONG_PTR)BarProc);
+   _defaultToolProc = (WNDPROC)SetWindowLongPtr(mh_Toolbar, GWLP_WNDPROC, (LONG_PTR)ToolProc);
 
  
    SendMessage(mh_Toolbar, TB_BUTTONSTRUCTSIZE, (WPARAM) sizeof(TBBUTTON), 0); 

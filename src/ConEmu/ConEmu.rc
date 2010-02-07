@@ -84,10 +84,10 @@ IDC_MOVE                CURSOR  DISCARDABLE     "CursorDragMove.cur"
 // Dialog
 //
 
-IDD_DIALOG1 DIALOGEX 0, 0, 328, 216
+IDD_DIALOG1 DIALOGEX 0, 0, 328, 235
 STYLE DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
-FONT 8, "MS Shell Dlg", 0, 0, 0x1
+FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        "Anti-aliasing",IDC_STATIC,263,4,60,45,WS_GROUP
     CONTROL         "&None",rNoneAA,"Button",BS_AUTORADIOBUTTON | WS_GROUP,
@@ -103,24 +103,24 @@ BEGIN
                     BS_AUTORADIOBUTTON,153,25,96,8
     CONTROL         "Co&lor",cbCursorColor,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,153,36,43,8
-    GROUPBOX        "",IDC_STATIC,4,130,319,50
+    GROUPBOX        "",IDC_STATIC,4,130,319,67
     CONTROL         "Back&ground image (bmp):",cbBgImage,"Button",
                     BS_AUTO3STATE | WS_TABSTOP,10,130,96,8
-    EDITTEXT        tBgImage,34,142,209,12,ES_AUTOHSCROLL
+    EDITTEXT        tBgImage,34,142,261,12,ES_AUTOHSCROLL
     COMBOBOX        tFontFace,10,16,123,72,CBS_DROPDOWN | CBS_AUTOHSCROLL | 
                     CBS_SORT | WS_VSCROLL | WS_TABSTOP
     COMBOBOX        tFontSizeY,67,34,24,66,CBS_DROPDOWN | CBS_AUTOHSCROLL | 
                     WS_VSCROLL | WS_TABSTOP
     COMBOBOX        tFontSizeX,109,34,24,66,CBS_DROPDOWN | WS_VSCROLL | 
                     WS_TABSTOP
-    COMBOBOX        tFontCharset,40,52,51,67,CBS_DROPDOWNLIST | 
+    COMBOBOX        tFontCharset,40,50,51,67,CBS_DROPDOWNLIST | 
                     CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
     CONTROL         "&Bold",cbBold,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,
-                    73,31,8
+                    67,31,8
     CONTROL         "&Italic",cbItalic,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
-                    44,73,31,8
+                    44,67,31,8
     CONTROL         "&Monospace",cbMonospace,"Button",BS_AUTO3STATE | 
-                    WS_TABSTOP,79,73,54,8
+                    WS_TABSTOP,80,67,54,8
     CONTROL         "&Fix FAR borders",cbFixFarBorders,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,10,94,64,8
     GROUPBOX        "Window size",IDC_STATIC,147,50,110,50
@@ -133,18 +133,18 @@ BEGIN
     GROUPBOX        "Font",IDC_STATIC,4,4,136,122
     RTEXT           "H:",IDC_STATIC,50,37,12,8
     RTEXT           "W:",IDC_STATIC,94,37,11,8
-    RTEXT           "Charset:",IDC_STATIC,8,55,28,8
+    RTEXT           "Charset:",IDC_STATIC,8,53,28,8
     EDITTEXT        tWndWidth,199,60,20,12,ES_AUTOHSCROLL | ES_NUMBER
     EDITTEXT        tWndHeight,229,60,20,12,ES_AUTOHSCROLL | ES_NUMBER
     CTEXT           "x",IDC_STATIC,221,61,8,8
-    RTEXT           "C:",IDC_STATIC,94,55,11,8
-    COMBOBOX        tFontSizeX3,109,52,24,66,CBS_DROPDOWN | WS_VSCROLL | 
+    RTEXT           "C:",IDC_STATIC,94,53,11,8
+    COMBOBOX        tFontSizeX3,109,50,24,66,CBS_DROPDOWN | WS_VSCROLL | 
                     WS_TABSTOP
     LTEXT           "Path:",IDC_STATIC,10,144,18,8
     LTEXT           "Darkening:",IDC_STATIC,10,161,36,8
     CONTROL         "",slDarker,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | 
-                    WS_TABSTOP,52,160,177,12
-    EDITTEXT        tDarker,233,160,30,12,ES_AUTOHSCROLL | ES_NUMBER
+                    WS_TABSTOP,52,160,228,12
+    EDITTEXT        tDarker,285,160,30,12,ES_AUTOHSCROLL | ES_NUMBER
     CONTROL         "Enhance progressbars and scrollbars",cbEnhanceGraphics,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,153,112,164,8
     COMBOBOX        tFontFace2,9,106,88,72,CBS_DROPDOWN | CBS_AUTOHSCROLL | 
@@ -152,14 +152,13 @@ BEGIN
     COMBOBOX        tFontSizeX2,109,106,24,66,CBS_DROPDOWN | WS_VSCROLL | 
                     WS_TABSTOP
     CTEXT           "x",IDC_STATIC,101,108,8,8
-    PUSHBUTTON      "...",bBgImage,247,142,16,12
+    PUSHBUTTON      "...",bBgImage,299,142,16,12
     CONTROL         "Stretch",rBgStretch,"Button",BS_AUTORADIOBUTTON | 
-                    WS_DISABLED,278,153,39,10
+                    WS_DISABLED,243,182,39,10
     CONTROL         "Tile",rBgTile,"Button",BS_AUTORADIOBUTTON | WS_DISABLED,
-                    278,165,39,10
-    CONTROL         "UpLeft",rBgSimple,"Button",BS_AUTORADIOBUTTON,278,140,
-                    39,10
-    GROUPBOX        "Placement",IDC_STATIC,270,130,53,50
+                    285,182,28,10
+    CONTROL         "UpLeft",rBgSimple,"Button",BS_AUTORADIOBUTTON,201,182,
+                    36,10
     GROUPBOX        "Position",IDC_STATIC,263,50,60,50,WS_DISABLED
     CONTROL         "Cascade",rCascade,"Button",BS_AUTORADIOBUTTON,268,87,44,
                     10
@@ -167,21 +166,31 @@ BEGIN
     EDITTEXT        tWndX,268,60,20,12,ES_AUTOHSCROLL | ES_NUMBER
     EDITTEXT        tWndY,297,60,20,12,ES_AUTOHSCROLL | ES_NUMBER
     CTEXT           "x",IDC_STATIC,289,61,8,8
-    GROUPBOX        "Command Line",IDC_STATIC,4,181,319,30
-    EDITTEXT        tCmdLine,9,192,307,12,ES_AUTOHSCROLL
+    GROUPBOX        "Command Line",IDC_STATIC,4,200,319,30
+    EDITTEXT        tCmdLine,9,211,307,12,ES_AUTOHSCROLL
     GROUPBOX        "Graphic enhancement",IDC_STATIC,147,101,176,25
     PUSHBUTTON      "Apply",cbApplyPos,214,83,36,12
     CONTROL         "Blinking",cbCursorBlink,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,200,36,50,8
     CONTROL         "Auto",cbFontAuto,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
                     10,36,39,9
-    GROUPBOX        "",IDC_STATIC,4,84,136,41
+    LTEXT           "Replace color indexes:",IDC_STATIC,10,180,78,8
+    EDITTEXT        tBgImageColors,91,179,50,12,ES_AUTOHSCROLL
+    GROUPBOX        "Placement",IDC_STATIC,193,173,130,24
+    CONTROL         "Extend",cbExtendFonts,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,10,80,38,10
+    COMBOBOX        lbExtendFontBoldIdx,51,79,24,30,CBS_DROPDOWNLIST | 
+                    CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        lbExtendFontItalicIdx,80,79,24,30,CBS_DROPDOWNLIST | 
+                    CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        lbExtendFontNormalIdx,109,79,24,30,CBS_DROPDOWNLIST | 
+                    CBS_SORT | WS_VSCROLL | WS_TABSTOP
 END
 
-IDD_DIALOG2 DIALOGEX 0, 0, 328, 209
+IDD_DIALOG2 DIALOGEX 0, 0, 328, 228
 STYLE DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
-FONT 8, "MS Shell Dlg", 0, 0, 0x1
+FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        "Standard colors (""red green blue"")",gbStandardColors,
                     4,4,319,67
@@ -320,14 +329,24 @@ BEGIN
                     84,161,10
     COMBOBOX        lbExtendIdx,192,82,45,30,CBS_DROPDOWNLIST | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
-    GROUPBOX        "Graphic enhancement",IDC_STATIC,4,178,319,28
+    GROUPBOX        "Graphic enhancement",IDC_STATIC,4,178,319,45
     LTEXT           "Default color shemes:",IDC_STATIC,7,162,77,8
     COMBOBOX        lbDefaultColors,87,160,235,59,CBS_DROPDOWNLIST | 
                     WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Transparent",IDC_STATIC,10,191,48,8
     CONTROL         "",slTransparent,"msctls_trackbar32",TBS_BOTH | 
-                    TBS_NOTICKS | WS_TABSTOP,62,190,218,12
-    RTEXT           "Opaque",IDC_STATIC,284,191,31,8
+                    TBS_NOTICKS | WS_TABSTOP,70,190,210,12
+    RTEXT           "Opaque",IDC_STATIC,284,190,31,8
+    CONTROL         "Transparent «User screen» while panel(s) is turned off",
+                    cbTransparentColorKey,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,8,207,197,11
+    CONTROL         "Transparent",cbTransparent,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,8,190,54,10
+    RTEXT           "Use color key:",IDC_STATIC,206,208,49,8
+    LTEXT           "",c32,259,206,12,12,SS_NOTIFY | SS_SUNKEN
+    EDITTEXT        tc32,273,206,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,
+                    WS_EX_STATICEDGE
+    CONTROL         "TrueColorer",cbTrueColorer,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,260,84,56,10
 END
 
 IDD_DIALOGM DIALOGEX 0, 0, 341, 284
@@ -400,7 +419,7 @@ END
 IDD_DIALOG4 DIALOGEX 0, 0, 328, 235
 STYLE DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
-FONT 8, "MS Shell Dlg", 0, 0, 0x1
+FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        "Tabs (panels, editors, viewers)",IDC_STATIC,4,2,319,28
     CONTROL         "Enable Tabs",cbTabs,"Button",BS_AUTO3STATE | WS_TABSTOP,
@@ -492,6 +511,10 @@ BEGIN
                     BS_AUTOCHECKBOX | WS_TABSTOP,132,194,81,8
     CONTROL         "Center console",cbTryToCenter,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,233,205,86,8
+    CONTROL         "Show on Taskbar",cbShowOnTaskbar,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,132,216,93,8
+    CONTROL         "Don't minimize",cbDontMinimize,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,233,216,86,8
 END
 
 IDD_RESTART DIALOG DISCARDABLE  0, 0, 310, 98
@@ -620,6 +643,9 @@ BEGIN
     tFontSizeX3             "Cell width for 'Monospace' mode"
     tWndX                   "Upper left corner of ConEmu in Normal mode\nThis is in pixels"
     tWndY                   "Upper left corner of ConEmu in Normal mode\nThis is in pixels"
+    lbExtendIdx             "Choose background color index, used to increase foreground color index"
+    lbExtendFontItalicIdx   "Choose background color index for which «Italic» font properties whill be inverted (default is Magenta #13)"
+    lbExtendFontNormalIdx   "When Bold or Italic font property was inverted, ConEmu may change background to default color (default is Blue #1)"
 END
 
 STRINGTABLE DISCARDABLE 
@@ -648,6 +674,18 @@ BEGIN
     cbDragPanel             "Enable sizing of left and right panel by dragging with mouse.\n3d state - resize on button release with macroses."
     cbHideCaptionAlways     "Remove window border and caption. Only console and tabs will be shown."
     cbTryToCenter           "Draw console content in center of ConEmu window"
+    cbShowOnTaskbar         "Show icon on taskbar"
+    cbDontMinimize          "Skip all minimize requests"
+    cbTransparentColorKey   "Transparent «User screen» while panel(s) is turned off"
+    tBgImageColors          "Choose background color indexes, which will be replaced with background image (default is «#0 #1»)"
+    cbExtendFonts           "ConEmu is able to use normal, bold and italic fonts side by side. This feature is useful with Colorer FAR plugin."
+    lbExtendFontBoldIdx     "Choose background color index for which «Bold» font properties whill be inverted (default is Red #12)"
+    cbTrueColorer           "Colorer truemod support"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    tc32                    "Choose RGB color, wich will be used as ColorKey"
 END
 
 #endif    // English (U.S.) resources

@@ -1695,9 +1695,11 @@ void CConEmuMain::OnConsoleResize(BOOL abPosted/*=FALSE*/)
                 m_LastConSize = MakeCoord(mp_VActive->TextWidth,mp_VActive->TextHeight);
             }
 			// Запомнить "идеальный" размер окна, выбранный пользователем
-			if (lbSizingToDo && !gSet.isFullScreen && !isZoomed() && !isIconic()) {
-				GetWindowRect(ghWnd, &mrc_Ideal);
-			}
+			if (lbSizingToDo)
+				UpdateIdealRect();
+			//if (lbSizingToDo && !gSet.isFullScreen && !isZoomed() && !isIconic()) {
+			//	GetWindowRect(ghWnd, &mrc_Ideal);
+			//}
         }
         else if (mp_VActive 
             && (m_LastConSize.X != (int)mp_VActive->TextWidth 
@@ -2235,6 +2237,21 @@ void CConEmuMain::UpdateFarSettings()
 		//DWORD dwFarPID = pRCon->GetFarPID();
 		//if (!dwFarPID) continue;
 		//pRCon->EnableComSpec(dwFarPID, gSet.AutoBufferHeight);
+	}
+}
+
+void CConEmuMain::UpdateIdealRect(BOOL abAllowUseConSize/*=FALSE*/)
+{
+	// Запомнить "идеальный" размер окна, выбранный пользователем
+	if (!gSet.isFullScreen && !isZoomed() && !isIconic()) {
+		GetWindowRect(ghWnd, &mrc_Ideal);
+	} else if (abAllowUseConSize) {
+		CRealConsole* pRCon = mp_VActive->RCon();
+		if (pRCon) {
+			RECT rcCon = MakeRect(pRCon->TextWidth(),pRCon->TextHeight());
+			RECT rcWnd = CalcRect(CER_MAIN, rcCon, CER_CONSOLE);
+			mrc_Ideal = rcWnd;
+		}
 	}
 }
 
@@ -6068,6 +6085,7 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 
 void CConEmuMain::OnTransparent()
 {
+	BOOL bNeedRedrawOp = FALSE;
 	UINT nTransparent = max(MIN_ALPHA_VALUE,gSet.nTransparent);
 	DWORD dwExStyle = GetWindowLongPtr(ghWnd, GWL_EXSTYLE);
 	if (nTransparent == 255) {
@@ -6082,10 +6100,11 @@ void CConEmuMain::OnTransparent()
 		if ((dwExStyle & WS_EX_LAYERED) == 0) {
 			dwExStyle |= WS_EX_LAYERED;
 			SetWindowLongPtr(ghWnd, GWL_EXSTYLE, dwExStyle);
+			bNeedRedrawOp = TRUE;
 		}
 		SetLayeredWindowAttributes(ghWnd, 0, nTransparent, LWA_ALPHA);
 		
-		if (ghOpWnd) {
+		if (bNeedRedrawOp && ghOpWnd) {
 			// Ask the window and its children to repaint
 			RedrawWindow(ghOpWnd, 
 			             NULL, 

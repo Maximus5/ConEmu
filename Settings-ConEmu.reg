@@ -21,7 +21,9 @@ REGEDIT4
 
 ;; Transparency of the main window (28..FF). FF - opaque.
 "AlphaValue"=hex:ff
-
+;; Transparent «User screen» while panel(s) is turned off
+;"UseColorKey"=hex:01
+;"ColorKey"=dword:00010101
 
 ;; hex:01 - Search, register for process, and use first *.ttf file in conemu folder
 ;; hex:00 - ConEmu will use only preregistered, system fonts
@@ -65,7 +67,7 @@ REGEDIT4
 ;; "ExtendFontBoldIdx" and "ExtendFontItalicIdx" are background color indecies,
 ;; for which Bold and Italic font properties are inverted.
 ;; Allowed values: 0..F (indecies), FF - disabled
-"ExtendFontBoldIdx"=hex:0E
+"ExtendFontBoldIdx"=hex:0C
 "ExtendFontItalicIdx"=hex:0D
 ;; When Bold or Italic font property was inverted, ConEmu may
 ;; change background to default color (blue, for example).
@@ -267,6 +269,9 @@ REGEDIT4
 "ExtendColors"=hex:00
 ;; with background (color index)
 "ExtendColorIdx"=hex:0e
+
+;; Enable Colorer TrueMod support
+"TrueColorerSupport"=hex:01
 
 ;; Time interval between console read in ms (10..1000)
 ;"MainTimerElapse"=dword:0000000A

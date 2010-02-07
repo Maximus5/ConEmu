@@ -1,5 +1,5 @@
 //{{NO_DEPENDENCIES}}
-// Microsoft Visual C++ generated include file.
+// Microsoft Developer Studio generated include file.
 // Used by ConEmu.rc
 //
 #define IDI_ICON1                       1
@@ -51,6 +51,7 @@
 #define c29                             1029
 #define c30                             1030
 #define c31                             1031
+#define c32                             1032
 #define cbRClick                        1034
 #define tBgImage                        1037
 #define tDarker                         1038
@@ -77,6 +78,8 @@
 #define cbPosFixed                      1064
 #define tabMain                         1066
 #define lbExtendIdx                     1067
+#define lbExtendFontItalicIdx           1068
+#define lbExtendFontNormalIdx           1069
 #define cbAutoConHandle                 1074
 #define rCascade                        1075
 #define rFixed                          1076
@@ -119,6 +122,7 @@
 #define tc29                            1129
 #define tc30                            1130
 #define tc31                            1131
+#define tc32                            1132
 #define bChooseFont                     1201
 #define rNoneAA                         1202
 #define rStandardAA                     1203
@@ -208,6 +212,14 @@
 #define cbDragPanel                     1568
 #define cbHideCaptionAlways             1569
 #define cbTryToCenter                   1570
+#define cbShowOnTaskbar                 1571
+#define cbDontMinimize                  1572
+#define cbTransparentColorKey           1573
+#define cbTransparent                   1574
+#define tBgImageColors                  1575
+#define cbExtendFonts                   1576
+#define lbExtendFontBoldIdx             1577
+#define cbTrueColorer                   1578
 
 // Next default values for new objects
 // 
@@ -215,7 +227,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        117
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1571
+#define _APS_NEXT_CONTROL_VALUE         1579
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

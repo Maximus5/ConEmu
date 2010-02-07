@@ -71,9 +71,11 @@ public:
 	//wchar_t FontFile[MAX_PATH];
 	LOGFONT ConsoleFont;
     COLORREF Colors[0x20];
+	bool isColorKey;
+	COLORREF ColorKey;
     bool isExtendColors;
     char nExtendColor;
-    bool isExtendFonts;
+    bool isExtendFonts, isTrueColorer;
     char nFontNormalColor, nFontBoldColor, nFontItalicColor;
 
     /* Background image */
@@ -149,6 +151,7 @@ public:
     char isTabs; bool isTabSelf, isTabRecent, isTabLazy;
     wchar_t sTabFontFace[LF_FACESIZE]; DWORD nTabFontCharSet; int nTabFontHeight;
 	wchar_t *sTabCloseMacro;
+	int nToolbarAddSpace;
     DWORD wndWidth, wndHeight, ntvdmHeight; // в символах
     int wndX, wndY; // в пикселях
     bool wndCascade;
@@ -291,4 +294,6 @@ private:
 	} RegFont;
 	std::vector<RegFont> m_RegFonts;
 	BOOL mb_StopRegisterFonts;
+	//
+	BOOL GetColorRef(HWND hDlg, WORD TB, COLORREF* pCR);
 };

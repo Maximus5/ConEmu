@@ -4591,7 +4591,7 @@ void CRealConsole::GetData(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHei
         AnnotationInfo *pcolSrc = NULL;
         AnnotationInfo *pcolEnd = NULL;
         BOOL bUseColorData = FALSE;
-        if (mp_ColorHdr && mp_ColorData) {
+        if (gSet.isTrueColorer && mp_ColorHdr && mp_ColorData) {
         	pcolSrc = mp_ColorData;
         	pcolEnd = mp_ColorData + mp_ColorHdr->bufferSize;
         	bUseColorData = TRUE;
