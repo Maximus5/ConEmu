@@ -1,5 +1,5 @@
 //{{NO_DEPENDENCIES}}
-// Microsoft Developer Studio generated include file.
+// Microsoft Visual C++ generated include file.
 // Used by ConEmu.rc
 //
 #define IDI_ICON1                       1
@@ -205,6 +205,9 @@
 #define cbHideCaption                   1565
 #define cbFontAuto                      1566
 #define cbLogs                          1567
+#define cbDragPanel                     1568
+#define cbHideCaptionAlways             1569
+#define cbTryToCenter                   1570
 
 // Next default values for new objects
 // 
@@ -212,7 +215,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        117
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1568
+#define _APS_NEXT_CONTROL_VALUE         1571
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

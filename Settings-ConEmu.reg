@@ -192,6 +192,9 @@ REGEDIT4
 "DndDrop"=hex:01
 
 ;; Allows FAR panels resizing (height and width) by mouse
+;; hex:00 - disbaled
+;; hex:01 - Live resizing by Ctrl-Left/Right/Up/Down
+;; hex:02 - Resize on button release by macroses
 "DragPanel"=hex:01
 
 ;; 1- Отображать в заголовке окна процесс общения с плагином FAR; 0 - не отображать

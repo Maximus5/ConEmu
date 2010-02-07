@@ -324,7 +324,7 @@ void CSettings::InitSettings()
     nLDragKey = 0; nRDragKey = VK_LCONTROL; 
 	isDragOverlay = 1; isDragShowIcons = true;
 	// изменение размера панелей мышкой
-	isDragPanel = true;
+	isDragPanel = 1;
 	
 	isDebugSteps = true; 
     MCHKHEAP
@@ -525,7 +525,7 @@ void CSettings::LoadSettings()
 		reg->Load(L"DragOverlay", isDragOverlay);
 		reg->Load(L"DragShowIcons", isDragShowIcons);
         reg->Load(L"DebugSteps", isDebugSteps);
-        reg->Load(L"DragPanel", isDragPanel);
+        reg->Load(L"DragPanel", isDragPanel); if (isDragPanel > 2) isDragPanel = 1;
         //reg->Load(L"GUIpb", isGUIpb);
         reg->Load(L"Tabs", isTabs);
 	        reg->Load(L"TabSelf", isTabSelf);
@@ -1430,7 +1430,9 @@ LRESULT CSettings::OnInitDialog_Ext()
 	SendDlgItemMessage(hExt, lbCmdOutputCP, CB_ADDSTRING, 0, (LPARAM) L"Unicode");
 	SendDlgItemMessage(hExt, lbCmdOutputCP, CB_ADDSTRING, 0, (LPARAM) L"OEM");
 	SendDlgItemMessage(hExt, lbCmdOutputCP, CB_SETCURSEL, nCmdOutputCP, 0);
-	
+	//
+	CheckDlgButton(hExt, cbDragPanel, isDragPanel);
+	CheckDlgButton(hExt, cbTryToCenter, isTryToCenter);
 
 
 	if (isConVisible)
@@ -1692,9 +1694,20 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
     	gConEmu.UpdateFarSettings();
     	break;
 
+	case cbDragPanel:
+		isDragPanel = IsChecked(hExt, cbDragPanel);
+		gConEmu.OnSetCursor();
+		break;
+
+	case cbTryToCenter:
+		isTryToCenter = IsChecked(hExt, cbTryToCenter);
+		gConEmu.OnSize(-1);
+		gConEmu.InvalidateAll();
+		break;
+
 	case cbFarHourglass:
 		isFarHourglass = IsChecked(hExt, cbFarHourglass);
-		gConEmu.OnSetCursor(-1,-1);
+		gConEmu.OnSetCursor();
 		break;
     	
     case cbFixAltOnAltTab:
@@ -1847,6 +1860,7 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
 				if (pCon) pCon->RCon()->ShowConsole(FALSE);
 			}
 		}
+		SetForegroundWindow(ghOpWnd);
 		break;
 
     default:
@@ -2717,7 +2731,7 @@ void CSettings::Performance(UINT nID, BOOL bEnd)
 			PostMessage(gSet.hInfo, mn_MsgUpdateCounter, nID-tPerfFPS, 0);
         }
 	    return;
-	}        
+	}
 
     if (!bEnd) {
         QueryPerformanceCounter((LARGE_INTEGER *)&(mn_Counter[nID-tPerfFPS]));
@@ -3083,7 +3097,10 @@ HFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
         //Maximus - у Arial'а например MaxWidth слишком большой
 		if (tm->tmMaxCharWidth > (tm->tmHeight * 15 / 10))
 			tm->tmMaxCharWidth = tm->tmHeight; // иначе зашкалит - текст очень сильно разъедетс€
-        inFont->lfWidth = FontSizeX3 ? FontSizeX3 : tm->tmMaxCharWidth;
+        //inFont->lfWidth = FontSizeX3 ? FontSizeX3 : tm->tmMaxCharWidth;
+		// Ћучше поставим AveCharWidth. MaxCharWidth дл€ "условно моноширного" Consolas почти равен высоте.
+		inFont->lfWidth = FontSizeX3 ? FontSizeX3 : tm->tmAveCharWidth;
+
 		//} else {
 		//	// ≈сли указан FontSizeX3 (это принудительна€ ширина знакоместа)
         //    inFont->lfWidth = FontSizeX3 ? FontSizeX3 : tm->tmAveCharWidth;

@@ -1893,6 +1893,107 @@ LRESULT CConEmuMain::OnSizing(WPARAM wParam, LPARAM lParam)
     return result;
 }
 
+void CConEmuMain::OnSizePanels(COORD cr)
+{
+	RECT rcPanel;
+	INPUT_RECORD r;
+	int nRepeat = 0;
+	wchar_t szKey[32];
+	bool bShifted = isPressed(VK_SHIFT);
+	CRealConsole* pRCon = mp_VActive->RCon();
+
+	if (!pRCon) {
+		mouse.state &= ~MOUSE_DRAGPANEL_ALL;
+		return; // Некорректно, консоли нет
+	}
+
+	r.EventType = KEY_EVENT;
+	r.Event.KeyEvent.dwControlKeyState = 0x128; // Потом добавить SHIFT_PRESSED, если нужно...
+	r.Event.KeyEvent.wVirtualKeyCode = 0;
+
+	// Сразу запомним изменение положения, чтобы не "колбасило" туда-сюда, 
+	// пока фар не отработает изменение положения
+
+	if (mouse.state & MOUSE_DRAGPANEL_SPLIT) {
+
+		if (!pRCon->GetPanelRect(TRUE, &rcPanel, TRUE)) {
+			// Во время изменения размера панелей соответствующий Rect может быть сброшен?
+			DEBUGSTRPANEL2(L"PanelDrag: Skip of NO right panel\n");
+			return;
+		}
+		//rcPanel.left = mouse.LClkCon.X; -- делал для макро
+		mouse.LClkCon.Y = cr.Y;
+		if (cr.X < rcPanel.left) {
+			r.Event.KeyEvent.wVirtualKeyCode = VK_LEFT;
+			nRepeat = rcPanel.left - cr.X;
+			mouse.LClkCon.X = max(cr.X, (mouse.LClkCon.X-1));
+			wcscpy(szKey, L"CtrlLeft");
+		} else if (cr.X > rcPanel.left) {
+			r.Event.KeyEvent.wVirtualKeyCode = VK_RIGHT;
+			nRepeat = cr.X - rcPanel.left;
+			mouse.LClkCon.X = min(cr.X, (mouse.LClkCon.X+1));
+			wcscpy(szKey, L"CtrlRight");
+		}
+
+	} else {
+		if (!pRCon->GetPanelRect((mouse.state & MOUSE_DRAGPANEL_RIGHT), &rcPanel, TRUE)) {
+			// Во время изменения размера панелей соответствующий Rect может быть сброшен?
+			DEBUGSTRPANEL2((mouse.state & MOUSE_DRAGPANEL_RIGHT) ? L"PanelDrag: Skip of NO right panel\n" : L"PanelDrag: Skip of NO left panel\n");
+			return;
+		}
+		//rcPanel.bottom = mouse.LClkCon.Y; -- делал для макро
+		mouse.LClkCon.X = cr.X;
+		if (cr.Y < rcPanel.bottom) {
+			r.Event.KeyEvent.wVirtualKeyCode = VK_UP;
+			nRepeat = rcPanel.bottom - cr.Y;
+			mouse.LClkCon.Y = max(cr.Y, (mouse.LClkCon.Y-1));
+			wcscpy(szKey, bShifted ? L"CtrlShiftUp" : L"CtrlUp");
+		} else if (cr.Y > rcPanel.bottom) {
+			r.Event.KeyEvent.wVirtualKeyCode = VK_DOWN;
+			nRepeat = cr.Y - rcPanel.bottom;
+			mouse.LClkCon.Y = min(cr.Y, (mouse.LClkCon.Y+1));
+			wcscpy(szKey, bShifted ? L"CtrlShiftDown" : L"CtrlDown");
+		}
+
+		if (bShifted) {
+			// Тогда разделение на левую и правую панели
+			TODO("Активировать нужную, иначе будет меняться размер активной панели, а хотели другую...");
+			r.Event.KeyEvent.dwControlKeyState |= SHIFT_PRESSED;
+		}
+	}
+
+	if (r.Event.KeyEvent.wVirtualKeyCode) {
+		// Макросом не будем - велика вероятность второго вызова, когда еще не закончилась обработка первого макро
+		if (gSet.isDragPanel == 2) {
+			if (pRCon->isFar(TRUE)) {
+				mouse.LClkCon = cr;
+				wchar_t szMacro[128]; szMacro[0] = L'@';
+				if (nRepeat > 1)
+					wsprintf(szMacro+1, L"$Rep (%i) %s $End", nRepeat, szKey);
+				else
+					wcscpy(szMacro+1, szKey);
+				PostMacro(szMacro);
+			}
+		} else {
+
+			#ifdef _DEBUG
+			wchar_t szDbg[128]; wsprintf(szDbg, L"PanelDrag: Sending '%s'\n", szKey);
+			DEBUGSTRPANEL(szDbg);
+			#endif
+
+			// Поехали
+			r.Event.KeyEvent.bKeyDown = TRUE;
+			r.Event.KeyEvent.wVirtualScanCode = MapVirtualKey(r.Event.KeyEvent.wVirtualKeyCode, 0/*MAPVK_VK_TO_VSC*/);
+			r.Event.KeyEvent.wRepeatCount = 1; //nRepeat; -- repeat - что-то глючит...
+			pRCon->PostConsoleEvent(&r);
+			r.Event.KeyEvent.bKeyDown = FALSE;
+			r.Event.KeyEvent.wRepeatCount = 1;
+			pRCon->PostConsoleEvent(&r);
+		}
+	} else {
+		DEBUGSTRPANEL2(L"PanelDrag: Skip of NO key selected\n");
+	}
+}
 
 
 
@@ -4567,7 +4668,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 
 	RECT conRect = {0}, dcRect = {0}; GetWindowRect(ghWndDC, &dcRect);
 	POINT ptCur = {-1, -1}; GetCursorPos(&ptCur);
-	enum DragPanelBorder dpb = DPB_NONE; //CConEmuMain::CheckPanelDrag(COORD crCon)
+	//enum DragPanelBorder dpb = DPB_NONE; //CConEmuMain::CheckPanelDrag(COORD crCon)
 
 	//BOOL lbMouseWasCaptured = mb_MouseCaptured;
 	if (!mb_MouseCaptured) {
@@ -4743,557 +4844,51 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
         goto fin;
     }
     
+
+	// Теперь можно обрабатывать мышку, и если нужно - слать ее в консоль
     if (messg == WM_MOUSEMOVE)
     {
-        // WM_MOUSEMOVE вроде бы слишком часто вызывается даже при условии что курсор не двигается...
-        if (wParam==mouse.lastMMW && lParam==mouse.lastMML
-			&& (mouse.state & MOUSE_DRAGPANEL_ALL) == 0)
-		{
-			DEBUGSTRPANEL2(L"PanelDrag: Skip of wParam==mouse.lastMMW && lParam==mouse.lastMML\n");
-            return 0;
-        }
-        mouse.lastMMW=wParam; mouse.lastMML=lParam;
-        
-        // мог не сброситься, проверим
-        if (isSizing()) {
-        	if (!isPressed(VK_LBUTTON))
-		        mouse.state &= ~MOUSE_SIZING_BEGIN;
-        }
-        
-        // 18.03.2009 Maks - Если уже тащим - мышь не слать
-        if (isDragging()) {
-            // может флажок случайно остался?
-            if ((mouse.state & DRAG_L_STARTED) && ((wParam & MK_LBUTTON)==0))
-                mouse.state &= ~(DRAG_L_STARTED | DRAG_L_ALLOWED);
-            if ((mouse.state & DRAG_R_STARTED) && ((wParam & MK_RBUTTON)==0))
-                mouse.state &= ~(DRAG_R_STARTED | DRAG_R_ALLOWED);
-            // Случайно остался?
-            mouse.state &= ~MOUSE_DRAGPANEL_ALL;
+		if (!OnMouse_Move(hWnd, WM_MOUSEMOVE, wParam, lParam, ptCur, cr))
+			return 0;
 
-			if (mouse.state & (DRAG_L_STARTED | DRAG_R_STARTED)) {
-				DEBUGSTRPANEL2(L"PanelDrag: Skip of isDragging\n");
-                return 0;
-			}
-        }
-        
-        if (mouse.state & MOUSE_DRAGPANEL_ALL) {
-			if (!isPressed(VK_LBUTTON)) {
-				mouse.state &= ~MOUSE_DRAGPANEL_ALL;
-				DEBUGSTRPANEL2(L"PanelDrag: Skip of LButton not pressed\n");
-				return 0;
-			}
-			if (cr.X == mouse.LClkCon.X && cr.Y == mouse.LClkCon.Y) {
-				DEBUGSTRPANEL2(L"PanelDrag: Skip of cr.X == mouse.LClkCon.X && cr.Y == mouse.LClkCon.Y\n");
-				return 0;
-			}
-
-        	RECT rcPanel;
-    		INPUT_RECORD r;
-			int nRepeat = 0;
-			wchar_t szKey[32];
-			bool bShifted = isPressed(VK_SHIFT);
-
-    		r.EventType = KEY_EVENT;
-    		r.Event.KeyEvent.dwControlKeyState = 0x128; // Потом добавить SHIFT_PRESSED, если нужно...
-    		r.Event.KeyEvent.wVirtualKeyCode = 0;
-    		
-			// Сразу запомним изменение положения, чтобы не "колбасило" туда-сюда, 
-			// пока фар не отработает изменение положения
-
-        	if (mouse.state & MOUSE_DRAGPANEL_SPLIT) {
-        		
-        		if (!mp_VActive->RCon()->GetPanelRect(TRUE, &rcPanel, TRUE)) {
-        			// Во время изменения размера панелей соответствующий Rect может быть сброшен?
-					DEBUGSTRPANEL2(L"PanelDrag: Skip of NO right panel\n");
-        			return 0;
-        		}
-				//rcPanel.left = mouse.LClkCon.X; -- делал для макро
-				mouse.LClkCon.Y = cr.Y;
-        		if (cr.X < rcPanel.left) {
-        			r.Event.KeyEvent.wVirtualKeyCode = VK_LEFT;
-					nRepeat = rcPanel.left - cr.X;
-					mouse.LClkCon.X = max(cr.X, (mouse.LClkCon.X-1));
-					wcscpy(szKey, L"CtrlLeft");
-    			} else if (cr.X > rcPanel.left) {
-    				r.Event.KeyEvent.wVirtualKeyCode = VK_RIGHT;
-					nRepeat = cr.X - rcPanel.left;
-					mouse.LClkCon.X = min(cr.X, (mouse.LClkCon.X+1));
-					wcscpy(szKey, L"CtrlRight");
-    			}
-    			
-        	} else {
-        		if (!mp_VActive->RCon()->GetPanelRect((mouse.state & MOUSE_DRAGPANEL_RIGHT), &rcPanel, TRUE)) {
-        			// Во время изменения размера панелей соответствующий Rect может быть сброшен?
-					DEBUGSTRPANEL2((mouse.state & MOUSE_DRAGPANEL_RIGHT) ? L"PanelDrag: Skip of NO right panel\n" : L"PanelDrag: Skip of NO left panel\n");
-        			return 0;
-        		}
-				//rcPanel.bottom = mouse.LClkCon.Y; -- делал для макро
-				mouse.LClkCon.X = cr.X;
-        		if (cr.Y < rcPanel.bottom) {
-        			r.Event.KeyEvent.wVirtualKeyCode = VK_UP;
-					nRepeat = rcPanel.bottom - cr.Y;
-					mouse.LClkCon.Y = max(cr.Y, (mouse.LClkCon.Y-1));
-					wcscpy(szKey, bShifted ? L"CtrlShiftUp" : L"CtrlUp");
-    			} else if (cr.Y > rcPanel.bottom) {
-    				r.Event.KeyEvent.wVirtualKeyCode = VK_DOWN;
-					nRepeat = cr.Y - rcPanel.bottom;
-					mouse.LClkCon.Y = min(cr.Y, (mouse.LClkCon.Y+1));
-					wcscpy(szKey, bShifted ? L"CtrlShiftDown" : L"CtrlDown");
-    			}
-        	
-        		if (bShifted) {
-        			// Тогда разделение на левую и правую панели
-        			TODO("Активировать нужную, иначе будет меняться размер активной панели, а хотели другую...");
-        			r.Event.KeyEvent.dwControlKeyState |= SHIFT_PRESSED;
-        		}
-        	}
-        	
-        	if (r.Event.KeyEvent.wVirtualKeyCode) {
-				// Макросом не будем - велика вероятность второго вызова, когда еще не закончилась обработка первого макро
-        		/*if (pRCon->isFar(TRUE)) {
-        			mouse.LClkCon = cr;
-        			wchar_t szMacro[128]; szMacro[0] = L'@';
-        			if (nRepeat > 1)
-        				wsprintf(szMacro+1, L"$Rep (%i) %s $End", nRepeat, szKey);
-    				else
-    					wcscpy(szMacro+1, szKey);
-    				PostMacro(szMacro);
-        		} else { */
-
-				#ifdef _DEBUG
-				wchar_t szDbg[128]; wsprintf(szDbg, L"PanelDrag: Sending '%s'\n", szKey);
-				DEBUGSTRPANEL(szDbg);
-				#endif
-
-				// Поехали
-				r.Event.KeyEvent.bKeyDown = TRUE;
-				r.Event.KeyEvent.wVirtualScanCode = MapVirtualKey(r.Event.KeyEvent.wVirtualKeyCode, 0/*MAPVK_VK_TO_VSC*/);
-				r.Event.KeyEvent.wRepeatCount = 1; //nRepeat; -- repeat - что-то глючит...
-				mp_VActive->RCon()->PostConsoleEvent(&r);
-				r.Event.KeyEvent.bKeyDown = FALSE;
-				r.Event.KeyEvent.wRepeatCount = 1;
-				mp_VActive->RCon()->PostConsoleEvent(&r);
-			} else {
-				DEBUGSTRPANEL2(L"PanelDrag: Skip of NO key selected\n");
-			}
-        	
-        	// Мышь не слать...
-        	return 0;
-        }
-
-
-        //TODO: вроде бы иногда isSizing() не сбрасывается?
-        //? может так: if (gSet.isDragEnabled & mouse.state)
-        if (gSet.isDragEnabled & ((mouse.state & (DRAG_L_ALLOWED|DRAG_R_ALLOWED))!=0)
-			&& !isPictureView())
-        {
-			if (mp_DragDrop==NULL) {
-				DebugStep(_T("DnD: Drag-n-Drop is null"));
-			} else {
-				mouse.bIgnoreMouseMove = true;
-
-				BOOL lbDiffTest = PTDIFFTEST(cursor,DRAG_DELTA); // TRUE - если курсор НЕ двигался (далеко)
-				if (!lbDiffTest && !isDragging() && !isSizing())
-				{
-					// 2009-06-19 Выполнялось сразу после "if (gSet.isDragEnabled & (mouse.state & (DRAG_L_ALLOWED|DRAG_R_ALLOWED)))"
-					if (mouse.state & MOUSE_R_LOCKED) {
-						// чтобы при RightUp не ушел APPS
-						mouse.state &= ~MOUSE_R_LOCKED;
-						
-						//PtDiffTest(C, LOWORD(lParam), HIWORD(lParam), D)
-		                char szLog[255];
-		                wsprintfA(szLog, "Right drag started, MOUSE_R_LOCKED cleared: cursor={%i-%i}, Rcursor={%i-%i}, Now={%i-%i}, MinDelta=%i",
-		                	(int)cursor.x, (int)cursor.y,
-		                	(int)Rcursor.x, (int)Rcursor.y,
-		                	(int)LOWORD(lParam), (int)HIWORD(lParam),
-		                	(int)DRAG_DELTA);
-		                mp_VActive->RCon()->LogString(szLog);
-					}
-
-					BOOL lbLeftDrag = (mouse.state & DRAG_L_ALLOWED) == DRAG_L_ALLOWED;
-
-					mp_VActive->RCon()->LogString(lbLeftDrag ? "Left drag about to start" : "Right drag about to start");
-
-					// Если сначала фокус был на файловой панели, но после LClick он попал на НЕ файловую - отменить ShellDrag
-					bool bFilePanel = isFilePanel();
-					if (!bFilePanel) {
-						DebugStep(_T("DnD: not file panel"));
-						//isLBDown = false; 
-						mouse.state &= ~(DRAG_L_ALLOWED | DRAG_L_STARTED | DRAG_R_ALLOWED | DRAG_R_STARTED);
-						mouse.bIgnoreMouseMove = false;
-						//POSTMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( newX, newY ), TRUE);     //посылаем консоли отпускание
-						mp_VActive->RCon()->OnMouse(WM_LBUTTONUP, wParam, ptCur.x, ptCur.x);
-						//ReleaseCapture(); --2009-03-14
-						return 0;
-					}
-	                
-					// Чтобы сам фар не дергался на MouseMove...
-					//isLBDown = false;
-					mouse.state &= ~(DRAG_L_ALLOWED | DRAG_L_STARTED | DRAG_R_STARTED); // флажок поставит сам CDragDrop::Drag() по наличию DRAG_R_ALLOWED
-					// вроде валится, если перед Drag
-					//POSTMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( newX, newY ), TRUE);     //посылаем консоли отпускание
-
-					//TODO("Тут бы не посылать мышь в очередь, а передавать через аргумент команды GetDragInfo в плагин");
-					//if (lbLeftDrag) { // сразу "отпустить" клавишу
-					//	//POSTMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( mouse.LClkCon.X, mouse.LClkCon.Y ), TRUE);     //посылаем консоли отпускание
-					//	mp_VActive->RCon()->OnMouse(WM_LBUTTONUP, wParam, mouse.LClkDC.X, mouse.LClkDC.Y);
-					//} else {
-					//	//POSTMESSAGE(ghConWnd, WM_LBUTTONDOWN, wParam, MAKELPARAM( mouse.RClkCon.X, mouse.RClkCon.Y ), TRUE);     //посылаем консоли отпускание
-					//	mp_VActive->RCon()->OnMouse(WM_LBUTTONDOWN, wParam, mouse.RClkDC.X, mouse.RClkDC.Y);
-					//	//POSTMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( mouse.RClkCon.X, mouse.RClkCon.Y ), TRUE);     //посылаем консоли отпускание
-					//	mp_VActive->RCon()->OnMouse(WM_LBUTTONUP, wParam, mouse.RClkDC.X, mouse.RClkDC.Y);
-					//}
-					//mp_VActive->RCon()->FlushInputQueue();
-	                
-					// Иначе иногда срабатывает FAR'овский D'n'D
-					//SENDMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( newX, newY ));     //посылаем консоли отпускание
-					if (mp_DragDrop) {
-						//COORD crMouse = mp_VActive->ClientToConsole(
-						//	lbLeftDrag ? mouse.LClkDC.X : mouse.RClkDC.X,
-						//	lbLeftDrag ? mouse.LClkDC.Y : mouse.RClkDC.Y);
-						DebugStep(_T("DnD: Drag-n-Drop starting"));
-						mp_DragDrop->Drag(!lbLeftDrag, lbLeftDrag ? mouse.LClkDC : mouse.RClkDC);
-						DebugStep(Title); // вернуть заголовок
-					} else {
-						_ASSERTE(mp_DragDrop); // должно быть обработано выше
-						DebugStep(_T("DnD: Drag-n-Drop is null"));
-					}
-					mouse.bIgnoreMouseMove = false;
-	                
-					//#ifdef NEWMOUSESTYLE
-					//newX = cursor.x; newY = cursor.y;
-					//#else
-					//newX = MulDiv(cursor.x, conRect.right, klMax<uint>(1, mp_VActive->Width));
-					//newY = MulDiv(cursor.y, conRect.bottom, klMax<uint>(1, mp_VActive->Height));
-					//#endif
-					//if (lbLeftDrag)
-					//  POSTMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( newX, newY ), TRUE);     //посылаем консоли отпускание
-					//isDragProcessed=false; -- убрал, иначе при бросании в пассивную панель больших файлов дроп может вызваться еще раз???
-					return 0;
-				}
-			}
-        }
-        else if (gSet.isRClickSendKey && (mouse.state & MOUSE_R_LOCKED))
-        {
-            //Если двинули мышкой, а была включена опция RClick - не вызывать
-            //контекстное меню - просто послать правый клик
-            if (!PTDIFFTEST(Rcursor, RCLICKAPPSDELTA))
-            {
-                //isRBDown=false;
-                mouse.state &= ~(DRAG_R_ALLOWED | DRAG_R_STARTED | MOUSE_R_LOCKED);
-                
-                char szLog[255];
-                wsprintfA(szLog, "Mouse was moved, MOUSE_R_LOCKED cleared: Rcursor={%i-%i}, Now={%i-%i}, MinDelta=%i",
-                	(int)Rcursor.x, (int)Rcursor.y,
-                	(int)LOWORD(lParam), (int)HIWORD(lParam),
-                	(int)RCLICKAPPSDELTA);
-                mp_VActive->RCon()->LogString(szLog);
-                
-                //POSTMESSAGE(ghConWnd, WM_RBUTTONDOWN, 0, MAKELPARAM( mouse.RClkCon.X, mouse.RClkCon.Y ), TRUE);
-                mp_VActive->RCon()->OnMouse(WM_RBUTTONDOWN, 0, mouse.RClkDC.X, mouse.RClkDC.Y);
-            }
-            return 0;
-        }
-        /*if (!isRBDown && (wParam==MK_RBUTTON)) {
-            // Чтобы при выделении правой кнопкой файлы не пропускались
-            if ((newY-RBDownNewY)>5) {// пока попробуем для режима сверху вниз
-                for (short y=RBDownNewY;y<newY;y+=5)
-                    POSTMESSAGE(ghConWnd, WM_MOUSEMOVE, wParam, MAKELPARAM( RBDownNewX, y ), TRUE);
-            }
-            RBDownNewX=newX; RBDownNewY=newY;
-        }*/
-        
-        if (mouse.bIgnoreMouseMove)
-            return 0;
-        
     } else {
         mouse.lastMMW=-1; mouse.lastMML=-1;
 
         if (messg == WM_LBUTTONDOWN)
         {
-            //if (isLBDown()) ReleaseCapture(); // Вдруг сглючило? --2009-03-14
-            //isLBDown = false;
-            mouse.state &= ~(DRAG_L_ALLOWED | DRAG_L_STARTED | MOUSE_DRAGPANEL_ALL);
-            mouse.bIgnoreMouseMove = false;
-            mouse.LClkCon = MakeCoord(conX,conY);
-            mouse.LClkDC = MakeCoord(ptCur.x,ptCur.y);
-            
-        	dpb = CConEmuMain::CheckPanelDrag(cr);
-        	if (dpb != DPB_NONE) {
-        		if (dpb == DPB_SPLIT)
-        			mouse.state |= MOUSE_DRAGPANEL_SPLIT;
-        		else if (dpb == DPB_LEFT)
-        			mouse.state |= MOUSE_DRAGPANEL_LEFT;
-        		else if (dpb == DPB_RIGHT)
-        			mouse.state |= MOUSE_DRAGPANEL_RIGHT;
-        		return 0;
-        	}
-            
-            if (!isConSelectMode() && isFilePanel() && mp_VActive &&
-				mp_VActive->RCon()->CoordInPanel(mouse.LClkCon))
-            {
-                //SetCapture(ghWndDC); --2009-03-14
-                cursor.x = LOWORD(lParam);
-                cursor.y = HIWORD(lParam); 
-                //isLBDown=true;
-                //isDragProcessed=false;
-				CONSOLE_CURSOR_INFO ci;
-				mp_VActive->RCon()->GetConsoleCursorInfo(&ci);
-                if ((ci.bVisible && ci.dwSize>0) // курсор должен быть видим, иначе это чье-то меню
-					&& gSet.isDragEnabled & DRAG_L_ALLOWED)
-				{
-                    if (!gSet.nLDragKey || isPressed(gSet.nLDragKey))
-                        mouse.state = DRAG_L_ALLOWED;
-                }
+			if (!OnMouse_LBtnDown(hWnd, WM_LBUTTONDOWN, wParam, lParam, ptCur, cr))
+				return 0;
 
-				// иначе после LBtnDown в консоль может СРАЗУ провалиться MOUSEMOVE
-				mouse.lastMMW=wParam; mouse.lastMML=lParam;
-
-                //if (gSet.is DnD) mouse.bIgnoreMouseMove = true;
-                //POSTMESSAGE(ghConWnd, messg, wParam, MAKELPARAM( newX, newY ), FALSE); // было SEND
-                mp_VActive->RCon()->OnMouse(messg, wParam, ptCur.x, ptCur.y);
-                return 0;
-            }
         }
         else if (messg == WM_LBUTTONUP)
         {
-            BOOL lbLDrag = (mouse.state & DRAG_L_STARTED) == DRAG_L_STARTED;
-            mouse.state &= ~(DRAG_L_ALLOWED | DRAG_L_STARTED | MOUSE_DRAGPANEL_ALL);
-            if (lbLDrag)
-                return 0; // кнопка уже "отпущена"
-            if (mouse.bIgnoreMouseMove) {
-                mouse.bIgnoreMouseMove = false;
-                //#ifdef NEWMOUSESTYLE
-                //newX = cursor.x; newY = cursor.y;
-                //#else
-                //newX = MulDiv(cursor.x, conRect.right, klMax<uint>(1, mp_VActive->Width));
-                //newY = MulDiv(cursor.y, conRect.bottom, klMax<uint>(1, mp_VActive->Height));
-                //#endif
-                //POSTMESSAGE(ghConWnd, messg, wParam, MAKELPARAM( newX, newY ), FALSE);
-                mp_VActive->RCon()->OnMouse(messg, wParam, cursor.x, cursor.y);
-                return 0;
-            }
+			if (!OnMouse_LBtnUp(hWnd, WM_LBUTTONUP, wParam, lParam, ptCur, cr))
+				return 0;
+
         }
+		else if (messg == WM_LBUTTONDBLCLK) {
+			if (!OnMouse_LBtnDblClk(hWnd, WM_LBUTTONDBLCLK, wParam, lParam, ptCur, cr))
+				return 0;
+
+		}
         else if (messg == WM_RBUTTONDOWN)
         {
-            Rcursor.x = LOWORD(lParam);
-            Rcursor.y = HIWORD(lParam);
-            mouse.RClkCon = MakeCoord(conX,conY);
-            mouse.RClkDC = MakeCoord(ptCur.x,ptCur.y);
-            //isRBDown=false;
-            mouse.state &= ~(DRAG_R_ALLOWED | DRAG_R_STARTED | MOUSE_R_LOCKED);
-            mouse.bIgnoreMouseMove = false;
+			if (!OnMouse_RBtnDown(hWnd, WM_RBUTTONDOWN, wParam, lParam, ptCur, cr))
+				return 0;
 
-            {
-                char szLog[100];
-                wsprintfA(szLog, "Right button down: Rcursor={%i-%i}", (int)Rcursor.x, (int)Rcursor.y);
-                mp_VActive->RCon()->LogString(szLog);
-            }
-            
-            //if (isFilePanel()) // Maximus5
-            if (!isConSelectMode() && isFilePanel() && mp_VActive &&
-				mp_VActive->RCon()->CoordInPanel(mouse.RClkCon))
-            {
-                if (gSet.isDragEnabled & DRAG_R_ALLOWED) {
-                    if (!gSet.nRDragKey || isPressed(gSet.nRDragKey)) {
-                        mouse.state = DRAG_R_ALLOWED;
-                        return 0;
-                    }
-                }
-                // Если ничего лишнего не нажато!
-                if (gSet.isRClickSendKey && !(wParam&(MK_CONTROL|MK_LBUTTON|MK_MBUTTON|MK_SHIFT|MK_XBUTTON1|MK_XBUTTON2)))
-                {
-                    //заведем таймер на .3
-                    //если больше - пошлем apps
-                    mouse.state |= MOUSE_R_LOCKED; mouse.bSkipRDblClk = false;
-                    
-	                char szLog[100];
-	                wsprintfA(szLog, "MOUSE_R_LOCKED was set: Rcursor={%i-%i}", (int)Rcursor.x, (int)Rcursor.y);
-	                mp_VActive->RCon()->LogString(szLog);
-                    
-                    //SetTimer(hWnd, 1, 300, 0); -- Maximus5, откажемся от таймера
-                    mouse.RClkTick = TimeGetTime(); //GetTickCount();
-                    return 0;
-                }
-            }
         }
         else if (messg == WM_RBUTTONUP)
         {
-            if (gSet.isRClickSendKey && (mouse.state & MOUSE_R_LOCKED))
-            {
-                //isRBDown=false; // сразу сбросим!
-                mouse.state &= ~(DRAG_R_ALLOWED | DRAG_R_STARTED | MOUSE_R_LOCKED);
-                if (PTDIFFTEST(Rcursor,RCLICKAPPSDELTA))
-                {
-                    //держали зажатой <.3
-                    //убьем таймер, кликнием правой кнопкой
-                    //KillTimer(hWnd, 1); -- Maximus5, таймер более не используется
-                    DWORD dwCurTick = TimeGetTime(); //GetTickCount();
-                    DWORD dwDelta=dwCurTick-mouse.RClkTick;
-                    // Если держали дольше .3с, но не слишком долго :)
-                    if ((gSet.isRClickSendKey==1) ||
-                        (dwDelta>RCLICKAPPSTIMEOUT && dwDelta<10000))
-                    {
-                        //// Сначала выделить файл под курсором
-                        ////POSTMESSAGE(ghConWnd, WM_LBUTTONDOWN, MK_LBUTTON, MAKELPARAM( mouse.RClkCon.X, mouse.RClkCon.Y ), TRUE);
-                        //mp_VActive->RCon()->OnMouse(WM_LBUTTONDOWN, MK_LBUTTON, mouse.RClkDC.X, mouse.RClkDC.Y);
-                        ////POSTMESSAGE(ghConWnd, WM_LBUTTONUP, 0, MAKELPARAM( mouse.RClkCon.X, mouse.RClkCon.Y ), TRUE);
-                        //mp_VActive->RCon()->OnMouse(WM_LBUTTONUP, 0, mouse.RClkDC.X, mouse.RClkDC.Y);
-                        //
-                        //mp_VActive->RCon()->FlushInputQueue();
-                    
-                        //mp_VActive->Update(true);
-                        //INVALIDATE(); //InvalidateRect(HDCWND, NULL, FALSE);
+			if (!OnMouse_RBtnUp(hWnd, WM_RBUTTONUP, wParam, lParam, ptCur, cr))
+				return 0;
 
-                        // А теперь можно и Apps нажать
-                        mouse.bSkipRDblClk=true; // чтобы пока FAR думает в консоль не проскочило мышиное сообщение
-                        //POSTMESSAGE(ghConWnd, WM_KEYDOWN, VK_APPS, 0, TRUE);
-
-                        DWORD dwFarPID = mp_VActive->RCon()->GetFarPID();
-                        if (dwFarPID)
-                        {
-                        	AllowSetForegroundWindow(dwFarPID);
-
-	                        //if (gSet.sRClickMacro && *gSet.sRClickMacro) {
-		                    //    //// Сначала выделить файл под курсором
-		                    //    ////POSTMESSAGE(ghConWnd, WM_LBUTTONDOWN, MK_LBUTTON, MAKELPARAM( mouse.RClkCon.X, mouse.RClkCon.Y ), TRUE);
-		                    //    //mp_VActive->RCon()->OnMouse(WM_LBUTTONDOWN, MK_LBUTTON, mouse.RClkDC.X, mouse.RClkDC.Y);
-		                    //    ////POSTMESSAGE(ghConWnd, WM_LBUTTONUP, 0, MAKELPARAM( mouse.RClkCon.X, mouse.RClkCon.Y ), TRUE);
-		                    //    //mp_VActive->RCon()->OnMouse(WM_LBUTTONUP, 0, mouse.RClkDC.X, mouse.RClkDC.Y);
-		                    //    //
-		                    //    //mp_VActive->RCon()->FlushInputQueue();
-		                    //
-	                        //    // Если юзер задал свой макрос - выполняем его
-	                        //    PostMacro(gSet.sRClickMacro);
-	                        //} else {
-                        
-                        	COORD crMouse = mp_VActive->ClientToConsole(mouse.RClkDC.X, mouse.RClkDC.Y);
-                        	
-							CConEmuPipe pipe(GetFarPID(), CONEMUREADYTIMEOUT);
-							if (pipe.Init(_T("CConEmuMain::EMenu"), TRUE))
-							{
-								//DWORD cbWritten=0;
-								DebugStep(_T("EMenu: Waiting for result (10 sec)"));
-								
-								int nLen = 0;
-								int nSize = sizeof(crMouse) + sizeof(wchar_t);
-								if (gSet.sRClickMacro && *gSet.sRClickMacro) {
-									nLen = lstrlen(gSet.sRClickMacro);
-									nSize += nLen*2;
-									mp_VActive->RCon()->RemoveFromCursor();
-								}
-								LPBYTE pcbData = (LPBYTE)calloc(nSize,1);
-								_ASSERTE(pcbData);
-								
-								memmove(pcbData, &crMouse, sizeof(crMouse));
-								if (nLen)
-									lstrcpy((wchar_t*)(pcbData+sizeof(crMouse)), gSet.sRClickMacro);
-								
-								if (!pipe.Execute(CMD_EMENU, pcbData, nSize)) {
-			                        mp_VActive->RCon()->LogString("RightClicked, but pipe.Execute(CMD_EMENU) failed");
-			                    }
-								DebugStep(NULL);
-								
-								free(pcbData);
-
-							} else {
-								mp_VActive->RCon()->LogString("RightClicked, but pipe.Init() failed");
-							}
-
-							//INPUT_RECORD r = {KEY_EVENT};
-							////mp_VActive->RCon()->On Keyboard(ghConWnd, WM_KEYDOWN, VK_APPS, (VK_APPS << 16) | (1 << 24));
-							////mp_VActive->RCon()->On Keyboard(ghConWnd, WM_KEYUP, VK_APPS, (VK_APPS << 16) | (1 << 24));
-							//r.Event.KeyEvent.bKeyDown = TRUE;
-							//r.Event.KeyEvent.wVirtualKeyCode = VK_APPS;
-							//r.Event.KeyEvent.wVirtualScanCode = /*28 на моей клавиатуре*/MapVirtualKey(VK_APPS, 0/*MAPVK_VK_TO_VSC*/);
-							//r.Event.KeyEvent.dwControlKeyState = 0x120;
-							//mp_VActive->RCon()->PostConsoleEvent(&r);
-
-							////On Keyboard(hConWnd, WM_KEYUP, VK_RETURN, 0);
-							//r.Event.KeyEvent.bKeyDown = FALSE;
-							//r.Event.KeyEvent.dwControlKeyState = 0x120;
-							//mp_VActive->RCon()->PostConsoleEvent(&r);
-                        } else {
-	                        mp_VActive->RCon()->LogString("RightClicked, but FAR PID is 0");
-                        }
-                        return 0;
-                    } else {
-                        char szLog[255];
-                        // if ((gSet.isRClickSendKey==1) || (dwDelta>RCLICKAPPSTIMEOUT && dwDelta<10000))
-                        lstrcpyA(szLog, "RightClicked, but condition failed: ");
-                        if (gSet.isRClickSendKey!=1) {
-                        	wsprintfA(szLog+lstrlenA(szLog), "((isRClickSendKey=%i)!=1)", (UINT)gSet.isRClickSendKey);
-                    	} else {
-                    		wsprintfA(szLog+lstrlenA(szLog), "(isRClickSendKey==%i)", (UINT)gSet.isRClickSendKey);
-                    	}
-                        if (dwDelta <= RCLICKAPPSTIMEOUT) {
-                        	wsprintfA(szLog+lstrlenA(szLog), ", ((Delay=%i)<=%i)", dwDelta, (int)RCLICKAPPSTIMEOUT);
-                        } else if (dwDelta >= 10000) {
-                        	wsprintfA(szLog+lstrlenA(szLog), ", ((Delay=%i)>=10000)", dwDelta);
-                        } else {
-                        	wsprintfA(szLog+lstrlenA(szLog), ", (Delay==%i)", dwDelta);
-                        }
-                        mp_VActive->RCon()->LogString(szLog);
-                    }
-                } else {
-                    char szLog[100];
-                    wsprintfA(szLog, "RightClicked, but mouse was moved abs({%i-%i}-{%i-%i})>%i", (int)Rcursor.x, (int)Rcursor.y, (int)LOWORD(lParam), (int)HIWORD(lParam), (int)RCLICKAPPSDELTA);
-                    mp_VActive->RCon()->LogString(szLog);
-                }
-
-				// иначе после RBtnDown в консоль может СРАЗУ провалиться MOUSEMOVE
-				mouse.lastMMW=MK_RBUTTON|wParam; mouse.lastMML=lParam; // добавляем, т.к. мы в RButtonUp
-
-                // Иначе нужно сначала послать WM_RBUTTONDOWN
-                //POSTMESSAGE(ghConWnd, WM_RBUTTONDOWN, wParam, MAKELPARAM( newX, newY ), TRUE);
-                mp_VActive->RCon()->OnMouse(WM_RBUTTONDOWN, wParam, ptCur.x, ptCur.y);
-            } else {
-                char szLog[255];
-                // if (gSet.isRClickSendKey && (mouse.state & MOUSE_R_LOCKED))
-                //wsprintfA(szLog, "RightClicked, but condition failed (RCSK:%i, State:%u)", (int)gSet.isRClickSendKey, (DWORD)mouse.state);
-                lstrcpyA(szLog, "RightClicked, but condition failed: ");
-                if (gSet.isRClickSendKey==0) {
-                	wsprintfA(szLog+lstrlenA(szLog), "((isRClickSendKey=%i)==0)", (UINT)gSet.isRClickSendKey);
-            	} else {
-            		wsprintfA(szLog+lstrlenA(szLog), "(isRClickSendKey==%i)", (UINT)gSet.isRClickSendKey);
-            	}
-                if ((mouse.state & MOUSE_R_LOCKED) == 0) {
-                	wsprintfA(szLog+lstrlenA(szLog), ", (((state=0x%X)&MOUSE_R_LOCKED)==0)", (DWORD)mouse.state);
-                } else {
-                	wsprintfA(szLog+lstrlenA(szLog), ", (state==0x%X)", (DWORD)mouse.state);
-                }
-                mp_VActive->RCon()->LogString(szLog);
-            }
-            //isRBDown=false; // чтобы не осталось случайно
-            mouse.state &= ~(DRAG_R_ALLOWED | DRAG_R_STARTED | MOUSE_R_LOCKED);
         }
-        else if (messg == WM_RBUTTONDBLCLK) {
-            if (mouse.bSkipRDblClk) {
-                mouse.bSkipRDblClk = false;
-                return 0; // не обрабатывать, сейчас висит контекстное меню
-            }
+        else if (messg == WM_RBUTTONDBLCLK)
+		{
+			if (!OnMouse_RBtnDblClk(hWnd, WM_RBUTTONDBLCLK, wParam, lParam, ptCur, cr))
+				return 0;
+
         }
-		else if (messg == WM_LBUTTONDBLCLK) {
-			if (pRCon) {
-				dpb = CConEmuMain::CheckPanelDrag(cr);
-				if (dpb != DPB_NONE) {
-					wchar_t szMacro[128]; szMacro[0] = 0;
-					if (dpb == DPB_SPLIT) {
-						RECT rcRight; pRCon->GetPanelRect(TRUE, &rcRight, TRUE);
-						int  nCenter = pRCon->TextWidth() / 2;
-						if (nCenter < rcRight.left)
-							wsprintf(szMacro, L"@$Rep (%i) CtrlLeft $End", rcRight.left - nCenter);
-						else if (nCenter > rcRight.left)
-							wsprintf(szMacro, L"@$Rep (%i) CtrlRight $End", nCenter - rcRight.left);
-					} else {
-						wsprintf(szMacro, L"@$Rep (%i) CtrlDown $End", pRCon->TextHeight());
-					}
-					if (szMacro[0])
-						PostMacro(szMacro);
-					return 0;
-				}
-			}
-		}
     }
 
 #ifdef MSGLOGGER
@@ -5306,9 +4901,522 @@ fin:
 	mouse.lastMMW=wParam; mouse.lastMML=MAKELPARAM( ptCur.x, ptCur.y );
 
     // заменим даблклик вторым обычным
-    //POSTMESSAGE(ghConWnd, messg == WM_RBUTTONDBLCLK ? WM_RBUTTONDOWN : messg, wParam, MAKELPARAM( newX, newY ), FALSE);
     mp_VActive->RCon()->OnMouse(messg == WM_RBUTTONDBLCLK ? WM_RBUTTONDOWN : messg, wParam, ptCur.x, ptCur.y);
     return 0;
+}
+
+LRESULT CConEmuMain::OnMouse_Move(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, POINT ptCur, COORD cr)
+{
+	// WM_MOUSEMOVE вроде бы слишком часто вызывается даже при условии что курсор не двигается...
+	if (wParam==mouse.lastMMW && lParam==mouse.lastMML
+		&& (mouse.state & MOUSE_DRAGPANEL_ALL) == 0)
+	{
+		DEBUGSTRPANEL2(L"PanelDrag: Skip of wParam==mouse.lastMMW && lParam==mouse.lastMML\n");
+		return 0;
+	}
+	mouse.lastMMW=wParam; mouse.lastMML=lParam;
+
+	// мог не сброситься, проверим
+	if (isSizing()) {
+		if (!isPressed(VK_LBUTTON))
+			mouse.state &= ~MOUSE_SIZING_BEGIN;
+	}
+
+	// 18.03.2009 Maks - Если уже тащим - мышь не слать
+	if (isDragging()) {
+		// может флажок случайно остался?
+		if ((mouse.state & DRAG_L_STARTED) && ((wParam & MK_LBUTTON)==0))
+			mouse.state &= ~(DRAG_L_STARTED | DRAG_L_ALLOWED);
+		if ((mouse.state & DRAG_R_STARTED) && ((wParam & MK_RBUTTON)==0))
+			mouse.state &= ~(DRAG_R_STARTED | DRAG_R_ALLOWED);
+		// Случайно остался?
+		mouse.state &= ~MOUSE_DRAGPANEL_ALL;
+
+		if (mouse.state & (DRAG_L_STARTED | DRAG_R_STARTED)) {
+			DEBUGSTRPANEL2(L"PanelDrag: Skip of isDragging\n");
+			return 0;
+		}
+	}
+
+	if (mouse.state & MOUSE_DRAGPANEL_ALL) {
+		if (!gSet.isDragPanel) {
+			mouse.state &= ~MOUSE_DRAGPANEL_ALL;
+			DEBUGSTRPANEL2(L"PanelDrag: Skip of isDragPanel==0\n");
+		} else {
+			if (!isPressed(VK_LBUTTON)) {
+				mouse.state &= ~MOUSE_DRAGPANEL_ALL;
+				DEBUGSTRPANEL2(L"PanelDrag: Skip of LButton not pressed\n");
+				return 0;
+			}
+			if (cr.X == mouse.LClkCon.X && cr.Y == mouse.LClkCon.Y) {
+				DEBUGSTRPANEL2(L"PanelDrag: Skip of cr.X == mouse.LClkCon.X && cr.Y == mouse.LClkCon.Y\n");
+				return 0;
+			}
+
+			if (gSet.isDragPanel == 1)
+				OnSizePanels(cr);
+
+			// Мышь не слать...
+			return 0;
+		}        	
+	}
+
+
+	//TODO: вроде бы иногда isSizing() не сбрасывается?
+	//? может так: if (gSet.isDragEnabled & mouse.state)
+	if (gSet.isDragEnabled & ((mouse.state & (DRAG_L_ALLOWED|DRAG_R_ALLOWED))!=0)
+		&& !isPictureView())
+	{
+		if (mp_DragDrop==NULL) {
+			DebugStep(_T("DnD: Drag-n-Drop is null"));
+		} else {
+			mouse.bIgnoreMouseMove = true;
+
+			BOOL lbDiffTest = PTDIFFTEST(cursor,DRAG_DELTA); // TRUE - если курсор НЕ двигался (далеко)
+			if (!lbDiffTest && !isDragging() && !isSizing())
+			{
+				// 2009-06-19 Выполнялось сразу после "if (gSet.isDragEnabled & (mouse.state & (DRAG_L_ALLOWED|DRAG_R_ALLOWED)))"
+				if (mouse.state & MOUSE_R_LOCKED) {
+					// чтобы при RightUp не ушел APPS
+					mouse.state &= ~MOUSE_R_LOCKED;
+
+					//PtDiffTest(C, LOWORD(lParam), HIWORD(lParam), D)
+					char szLog[255];
+					wsprintfA(szLog, "Right drag started, MOUSE_R_LOCKED cleared: cursor={%i-%i}, Rcursor={%i-%i}, Now={%i-%i}, MinDelta=%i",
+						(int)cursor.x, (int)cursor.y,
+						(int)Rcursor.x, (int)Rcursor.y,
+						(int)LOWORD(lParam), (int)HIWORD(lParam),
+						(int)DRAG_DELTA);
+					mp_VActive->RCon()->LogString(szLog);
+				}
+
+				BOOL lbLeftDrag = (mouse.state & DRAG_L_ALLOWED) == DRAG_L_ALLOWED;
+
+				mp_VActive->RCon()->LogString(lbLeftDrag ? "Left drag about to start" : "Right drag about to start");
+
+				// Если сначала фокус был на файловой панели, но после LClick он попал на НЕ файловую - отменить ShellDrag
+				bool bFilePanel = isFilePanel();
+				if (!bFilePanel) {
+					DebugStep(_T("DnD: not file panel"));
+					//isLBDown = false; 
+					mouse.state &= ~(DRAG_L_ALLOWED | DRAG_L_STARTED | DRAG_R_ALLOWED | DRAG_R_STARTED);
+					mouse.bIgnoreMouseMove = false;
+					//POSTMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( newX, newY ), TRUE);     //посылаем консоли отпускание
+					mp_VActive->RCon()->OnMouse(WM_LBUTTONUP, wParam, ptCur.x, ptCur.x);
+					//ReleaseCapture(); --2009-03-14
+					return 0;
+				}
+
+				// Чтобы сам фар не дергался на MouseMove...
+				//isLBDown = false;
+				mouse.state &= ~(DRAG_L_ALLOWED | DRAG_L_STARTED | DRAG_R_STARTED); // флажок поставит сам CDragDrop::Drag() по наличию DRAG_R_ALLOWED
+				// вроде валится, если перед Drag
+				//POSTMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( newX, newY ), TRUE);     //посылаем консоли отпускание
+
+				//TODO("Тут бы не посылать мышь в очередь, а передавать через аргумент команды GetDragInfo в плагин");
+				//if (lbLeftDrag) { // сразу "отпустить" клавишу
+				//	//POSTMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( mouse.LClkCon.X, mouse.LClkCon.Y ), TRUE);     //посылаем консоли отпускание
+				//	mp_VActive->RCon()->OnMouse(WM_LBUTTONUP, wParam, mouse.LClkDC.X, mouse.LClkDC.Y);
+				//} else {
+				//	//POSTMESSAGE(ghConWnd, WM_LBUTTONDOWN, wParam, MAKELPARAM( mouse.RClkCon.X, mouse.RClkCon.Y ), TRUE);     //посылаем консоли отпускание
+				//	mp_VActive->RCon()->OnMouse(WM_LBUTTONDOWN, wParam, mouse.RClkDC.X, mouse.RClkDC.Y);
+				//	//POSTMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( mouse.RClkCon.X, mouse.RClkCon.Y ), TRUE);     //посылаем консоли отпускание
+				//	mp_VActive->RCon()->OnMouse(WM_LBUTTONUP, wParam, mouse.RClkDC.X, mouse.RClkDC.Y);
+				//}
+				//mp_VActive->RCon()->FlushInputQueue();
+
+				// Иначе иногда срабатывает FAR'овский D'n'D
+				//SENDMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( newX, newY ));     //посылаем консоли отпускание
+				if (mp_DragDrop) {
+					//COORD crMouse = mp_VActive->ClientToConsole(
+					//	lbLeftDrag ? mouse.LClkDC.X : mouse.RClkDC.X,
+					//	lbLeftDrag ? mouse.LClkDC.Y : mouse.RClkDC.Y);
+					DebugStep(_T("DnD: Drag-n-Drop starting"));
+					mp_DragDrop->Drag(!lbLeftDrag, lbLeftDrag ? mouse.LClkDC : mouse.RClkDC);
+					DebugStep(Title); // вернуть заголовок
+				} else {
+					_ASSERTE(mp_DragDrop); // должно быть обработано выше
+					DebugStep(_T("DnD: Drag-n-Drop is null"));
+				}
+				mouse.bIgnoreMouseMove = false;
+
+				//#ifdef NEWMOUSESTYLE
+				//newX = cursor.x; newY = cursor.y;
+				//#else
+				//newX = MulDiv(cursor.x, conRect.right, klMax<uint>(1, mp_VActive->Width));
+				//newY = MulDiv(cursor.y, conRect.bottom, klMax<uint>(1, mp_VActive->Height));
+				//#endif
+				//if (lbLeftDrag)
+				//  POSTMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( newX, newY ), TRUE);     //посылаем консоли отпускание
+				//isDragProcessed=false; -- убрал, иначе при бросании в пассивную панель больших файлов дроп может вызваться еще раз???
+				return 0;
+			}
+		}
+	}
+	else if (gSet.isRClickSendKey && (mouse.state & MOUSE_R_LOCKED))
+	{
+		//Если двинули мышкой, а была включена опция RClick - не вызывать
+		//контекстное меню - просто послать правый клик
+		if (!PTDIFFTEST(Rcursor, RCLICKAPPSDELTA))
+		{
+			//isRBDown=false;
+			mouse.state &= ~(DRAG_R_ALLOWED | DRAG_R_STARTED | MOUSE_R_LOCKED);
+
+			char szLog[255];
+			wsprintfA(szLog, "Mouse was moved, MOUSE_R_LOCKED cleared: Rcursor={%i-%i}, Now={%i-%i}, MinDelta=%i",
+				(int)Rcursor.x, (int)Rcursor.y,
+				(int)LOWORD(lParam), (int)HIWORD(lParam),
+				(int)RCLICKAPPSDELTA);
+			mp_VActive->RCon()->LogString(szLog);
+
+			//POSTMESSAGE(ghConWnd, WM_RBUTTONDOWN, 0, MAKELPARAM( mouse.RClkCon.X, mouse.RClkCon.Y ), TRUE);
+			mp_VActive->RCon()->OnMouse(WM_RBUTTONDOWN, 0, mouse.RClkDC.X, mouse.RClkDC.Y);
+		}
+		return 0;
+	}
+	/*if (!isRBDown && (wParam==MK_RBUTTON)) {
+	// Чтобы при выделении правой кнопкой файлы не пропускались
+	if ((newY-RBDownNewY)>5) {// пока попробуем для режима сверху вниз
+	for (short y=RBDownNewY;y<newY;y+=5)
+	POSTMESSAGE(ghConWnd, WM_MOUSEMOVE, wParam, MAKELPARAM( RBDownNewX, y ), TRUE);
+	}
+	RBDownNewX=newX; RBDownNewY=newY;
+	}*/
+
+	if (mouse.bIgnoreMouseMove)
+		return 0;
+
+	return TRUE; // переслать в консоль
+}
+
+LRESULT CConEmuMain::OnMouse_LBtnDown(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, POINT ptCur, COORD cr)
+{
+	enum DragPanelBorder dpb = DPB_NONE;
+
+	//if (isLBDown()) ReleaseCapture(); // Вдруг сглючило? --2009-03-14
+	//isLBDown = false;
+	mouse.state &= ~(DRAG_L_ALLOWED | DRAG_L_STARTED | MOUSE_DRAGPANEL_ALL);
+	mouse.bIgnoreMouseMove = false;
+	mouse.LClkCon = cr;
+	mouse.LClkDC = MakeCoord(ptCur.x,ptCur.y);
+
+	CRealConsole *pRCon = mp_VActive->RCon();
+	if (!pRCon) // если консоли нет - то и слать некуда
+		return 0;
+
+	dpb = CConEmuMain::CheckPanelDrag(cr);
+	if (dpb != DPB_NONE) {
+		if (dpb == DPB_SPLIT)
+			mouse.state |= MOUSE_DRAGPANEL_SPLIT;
+		else if (dpb == DPB_LEFT)
+			mouse.state |= MOUSE_DRAGPANEL_LEFT;
+		else if (dpb == DPB_RIGHT)
+			mouse.state |= MOUSE_DRAGPANEL_RIGHT;
+		// LBtnDown в консоль не посылаем, но попробуем послать MouseMove?
+		// (иначе начинается драка с PanelTabs - он перехватывает и буферизирует всю клавиатуру)
+		INPUT_RECORD r = {MOUSE_EVENT};
+		r.Event.MouseEvent.dwMousePosition = mouse.LClkCon;
+		r.Event.MouseEvent.dwEventFlags = MOUSE_MOVED;
+		mp_VActive->RCon()->PostConsoleEvent ( &r );
+		return 0;
+	}
+
+	if (!isConSelectMode() && isFilePanel() && mp_VActive &&
+		mp_VActive->RCon()->CoordInPanel(mouse.LClkCon))
+	{
+		//SetCapture(ghWndDC); --2009-03-14
+		cursor.x = LOWORD(lParam);
+		cursor.y = HIWORD(lParam); 
+		//isLBDown=true;
+		//isDragProcessed=false;
+		CONSOLE_CURSOR_INFO ci;
+		mp_VActive->RCon()->GetConsoleCursorInfo(&ci);
+		if ((ci.bVisible && ci.dwSize>0) // курсор должен быть видим, иначе это чье-то меню
+			&& gSet.isDragEnabled & DRAG_L_ALLOWED)
+		{
+			if (!gSet.nLDragKey || isPressed(gSet.nLDragKey))
+				mouse.state = DRAG_L_ALLOWED;
+		}
+
+		// иначе после LBtnDown в консоль может СРАЗУ провалиться MOUSEMOVE
+		mouse.lastMMW=wParam; mouse.lastMML=lParam;
+
+		//if (gSet.is DnD) mouse.bIgnoreMouseMove = true;
+		//POSTMESSAGE(ghConWnd, messg, wParam, MAKELPARAM( newX, newY ), FALSE); // было SEND
+		mp_VActive->RCon()->OnMouse(messg, wParam, ptCur.x, ptCur.y);
+		return 0;
+	}
+
+	return TRUE; // переслать в консоль
+}
+LRESULT CConEmuMain::OnMouse_LBtnUp(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, POINT ptCur, COORD cr)
+{
+	BOOL lbLDrag = (mouse.state & DRAG_L_STARTED) == DRAG_L_STARTED;
+
+	if (mouse.state & MOUSE_DRAGPANEL_ALL) {
+		if (gSet.isDragPanel == 2) {
+			OnSizePanels(cr);
+		}
+
+		mouse.state &= ~(DRAG_L_ALLOWED | DRAG_L_STARTED | MOUSE_DRAGPANEL_ALL);
+
+		// Мышь не слать...
+		return 0;
+	}
+
+	mouse.state &= ~(DRAG_L_ALLOWED | DRAG_L_STARTED | MOUSE_DRAGPANEL_ALL);
+
+	if (lbLDrag)
+		return 0; // кнопка уже "отпущена"
+	if (mouse.bIgnoreMouseMove) {
+		mouse.bIgnoreMouseMove = false;
+		//#ifdef NEWMOUSESTYLE
+		//newX = cursor.x; newY = cursor.y;
+		//#else
+		//newX = MulDiv(cursor.x, conRect.right, klMax<uint>(1, mp_VActive->Width));
+		//newY = MulDiv(cursor.y, conRect.bottom, klMax<uint>(1, mp_VActive->Height));
+		//#endif
+		//POSTMESSAGE(ghConWnd, messg, wParam, MAKELPARAM( newX, newY ), FALSE);
+		mp_VActive->RCon()->OnMouse(messg, wParam, cursor.x, cursor.y);
+		return 0;
+	}
+
+	return TRUE; // переслать в консоль
+}
+LRESULT CConEmuMain::OnMouse_LBtnDblClk(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, POINT ptCur, COORD cr)
+{
+	
+	CRealConsole *pRCon = mp_VActive->RCon();
+	if (!pRCon) // Если консоли нет - то слать некуда
+		return 0;
+
+	enum DragPanelBorder dpb = CConEmuMain::CheckPanelDrag(cr);
+
+	if (dpb != DPB_NONE) {
+		wchar_t szMacro[128]; szMacro[0] = 0;
+		if (dpb == DPB_SPLIT) {
+			RECT rcRight; pRCon->GetPanelRect(TRUE, &rcRight, TRUE);
+			int  nCenter = pRCon->TextWidth() / 2;
+			if (nCenter < rcRight.left)
+				wsprintf(szMacro, L"@$Rep (%i) CtrlLeft $End", rcRight.left - nCenter);
+			else if (nCenter > rcRight.left)
+				wsprintf(szMacro, L"@$Rep (%i) CtrlRight $End", nCenter - rcRight.left);
+		} else {
+			wsprintf(szMacro, L"@$Rep (%i) CtrlDown $End", pRCon->TextHeight());
+		}
+		if (szMacro[0])
+			PostMacro(szMacro);
+		return 0;
+	}
+
+	return TRUE; // переслать в консоль
+}
+LRESULT CConEmuMain::OnMouse_RBtnDown(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, POINT ptCur, COORD cr)
+{
+	Rcursor.x = LOWORD(lParam);
+	Rcursor.y = HIWORD(lParam);
+	mouse.RClkCon = cr;
+	mouse.RClkDC = MakeCoord(ptCur.x,ptCur.y);
+	//isRBDown=false;
+	mouse.state &= ~(DRAG_R_ALLOWED | DRAG_R_STARTED | MOUSE_R_LOCKED);
+	mouse.bIgnoreMouseMove = false;
+
+	if (gSet.isAdvLogging)
+	{
+		char szLog[100];
+		wsprintfA(szLog, "Right button down: Rcursor={%i-%i}", (int)Rcursor.x, (int)Rcursor.y);
+		mp_VActive->RCon()->LogString(szLog);
+	}
+
+	//if (isFilePanel()) // Maximus5
+	if (!isConSelectMode() && isFilePanel() && mp_VActive &&
+		mp_VActive->RCon()->CoordInPanel(mouse.RClkCon))
+	{
+		if (gSet.isDragEnabled & DRAG_R_ALLOWED) {
+			if (!gSet.nRDragKey || isPressed(gSet.nRDragKey)) {
+				mouse.state = DRAG_R_ALLOWED;
+				return 0;
+			}
+		}
+		// Если ничего лишнего не нажато!
+		if (gSet.isRClickSendKey && !(wParam&(MK_CONTROL|MK_LBUTTON|MK_MBUTTON|MK_SHIFT|MK_XBUTTON1|MK_XBUTTON2)))
+		{
+			//заведем таймер на .3
+			//если больше - пошлем apps
+			mouse.state |= MOUSE_R_LOCKED; mouse.bSkipRDblClk = false;
+
+			char szLog[100];
+			wsprintfA(szLog, "MOUSE_R_LOCKED was set: Rcursor={%i-%i}", (int)Rcursor.x, (int)Rcursor.y);
+			mp_VActive->RCon()->LogString(szLog);
+
+			//SetTimer(hWnd, 1, 300, 0); -- Maximus5, откажемся от таймера
+			mouse.RClkTick = TimeGetTime(); //GetTickCount();
+			return 0;
+		}
+	}
+
+	return TRUE; // переслать в консоль
+}
+LRESULT CConEmuMain::OnMouse_RBtnUp(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, POINT ptCur, COORD cr)
+{
+	if (gSet.isRClickSendKey && (mouse.state & MOUSE_R_LOCKED))
+	{
+		//isRBDown=false; // сразу сбросим!
+		mouse.state &= ~(DRAG_R_ALLOWED | DRAG_R_STARTED | MOUSE_R_LOCKED);
+		if (PTDIFFTEST(Rcursor,RCLICKAPPSDELTA))
+		{
+			//держали зажатой <.3
+			//убьем таймер, кликнием правой кнопкой
+			//KillTimer(hWnd, 1); -- Maximus5, таймер более не используется
+			DWORD dwCurTick = TimeGetTime(); //GetTickCount();
+			DWORD dwDelta=dwCurTick-mouse.RClkTick;
+			// Если держали дольше .3с, но не слишком долго :)
+			if ((gSet.isRClickSendKey==1) ||
+				(dwDelta>RCLICKAPPSTIMEOUT && dwDelta<10000))
+			{
+				//// Сначала выделить файл под курсором
+				////POSTMESSAGE(ghConWnd, WM_LBUTTONDOWN, MK_LBUTTON, MAKELPARAM( mouse.RClkCon.X, mouse.RClkCon.Y ), TRUE);
+				//mp_VActive->RCon()->OnMouse(WM_LBUTTONDOWN, MK_LBUTTON, mouse.RClkDC.X, mouse.RClkDC.Y);
+				////POSTMESSAGE(ghConWnd, WM_LBUTTONUP, 0, MAKELPARAM( mouse.RClkCon.X, mouse.RClkCon.Y ), TRUE);
+				//mp_VActive->RCon()->OnMouse(WM_LBUTTONUP, 0, mouse.RClkDC.X, mouse.RClkDC.Y);
+				//
+				//mp_VActive->RCon()->FlushInputQueue();
+
+				//mp_VActive->Update(true);
+				//INVALIDATE(); //InvalidateRect(HDCWND, NULL, FALSE);
+
+				// А теперь можно и Apps нажать
+				mouse.bSkipRDblClk=true; // чтобы пока FAR думает в консоль не проскочило мышиное сообщение
+				//POSTMESSAGE(ghConWnd, WM_KEYDOWN, VK_APPS, 0, TRUE);
+
+				DWORD dwFarPID = mp_VActive->RCon()->GetFarPID();
+				if (dwFarPID)
+				{
+					AllowSetForegroundWindow(dwFarPID);
+
+					//if (gSet.sRClickMacro && *gSet.sRClickMacro) {
+					//    //// Сначала выделить файл под курсором
+					//    ////POSTMESSAGE(ghConWnd, WM_LBUTTONDOWN, MK_LBUTTON, MAKELPARAM( mouse.RClkCon.X, mouse.RClkCon.Y ), TRUE);
+					//    //mp_VActive->RCon()->OnMouse(WM_LBUTTONDOWN, MK_LBUTTON, mouse.RClkDC.X, mouse.RClkDC.Y);
+					//    ////POSTMESSAGE(ghConWnd, WM_LBUTTONUP, 0, MAKELPARAM( mouse.RClkCon.X, mouse.RClkCon.Y ), TRUE);
+					//    //mp_VActive->RCon()->OnMouse(WM_LBUTTONUP, 0, mouse.RClkDC.X, mouse.RClkDC.Y);
+					//    //
+					//    //mp_VActive->RCon()->FlushInputQueue();
+					//
+					//    // Если юзер задал свой макрос - выполняем его
+					//    PostMacro(gSet.sRClickMacro);
+					//} else {
+
+					COORD crMouse = mp_VActive->ClientToConsole(mouse.RClkDC.X, mouse.RClkDC.Y);
+
+					CConEmuPipe pipe(GetFarPID(), CONEMUREADYTIMEOUT);
+					if (pipe.Init(_T("CConEmuMain::EMenu"), TRUE))
+					{
+						//DWORD cbWritten=0;
+						DebugStep(_T("EMenu: Waiting for result (10 sec)"));
+
+						int nLen = 0;
+						int nSize = sizeof(crMouse) + sizeof(wchar_t);
+						if (gSet.sRClickMacro && *gSet.sRClickMacro) {
+							nLen = lstrlen(gSet.sRClickMacro);
+							nSize += nLen*2;
+							mp_VActive->RCon()->RemoveFromCursor();
+						}
+						LPBYTE pcbData = (LPBYTE)calloc(nSize,1);
+						_ASSERTE(pcbData);
+
+						memmove(pcbData, &crMouse, sizeof(crMouse));
+						if (nLen)
+							lstrcpy((wchar_t*)(pcbData+sizeof(crMouse)), gSet.sRClickMacro);
+
+						if (!pipe.Execute(CMD_EMENU, pcbData, nSize)) {
+							mp_VActive->RCon()->LogString("RightClicked, but pipe.Execute(CMD_EMENU) failed");
+						}
+						DebugStep(NULL);
+
+						free(pcbData);
+
+					} else {
+						mp_VActive->RCon()->LogString("RightClicked, but pipe.Init() failed");
+					}
+
+					//INPUT_RECORD r = {KEY_EVENT};
+					////mp_VActive->RCon()->On Keyboard(ghConWnd, WM_KEYDOWN, VK_APPS, (VK_APPS << 16) | (1 << 24));
+					////mp_VActive->RCon()->On Keyboard(ghConWnd, WM_KEYUP, VK_APPS, (VK_APPS << 16) | (1 << 24));
+					//r.Event.KeyEvent.bKeyDown = TRUE;
+					//r.Event.KeyEvent.wVirtualKeyCode = VK_APPS;
+					//r.Event.KeyEvent.wVirtualScanCode = /*28 на моей клавиатуре*/MapVirtualKey(VK_APPS, 0/*MAPVK_VK_TO_VSC*/);
+					//r.Event.KeyEvent.dwControlKeyState = 0x120;
+					//mp_VActive->RCon()->PostConsoleEvent(&r);
+
+					////On Keyboard(hConWnd, WM_KEYUP, VK_RETURN, 0);
+					//r.Event.KeyEvent.bKeyDown = FALSE;
+					//r.Event.KeyEvent.dwControlKeyState = 0x120;
+					//mp_VActive->RCon()->PostConsoleEvent(&r);
+				} else {
+					mp_VActive->RCon()->LogString("RightClicked, but FAR PID is 0");
+				}
+				return 0;
+			} else {
+				char szLog[255];
+				// if ((gSet.isRClickSendKey==1) || (dwDelta>RCLICKAPPSTIMEOUT && dwDelta<10000))
+				lstrcpyA(szLog, "RightClicked, but condition failed: ");
+				if (gSet.isRClickSendKey!=1) {
+					wsprintfA(szLog+lstrlenA(szLog), "((isRClickSendKey=%i)!=1)", (UINT)gSet.isRClickSendKey);
+				} else {
+					wsprintfA(szLog+lstrlenA(szLog), "(isRClickSendKey==%i)", (UINT)gSet.isRClickSendKey);
+				}
+				if (dwDelta <= RCLICKAPPSTIMEOUT) {
+					wsprintfA(szLog+lstrlenA(szLog), ", ((Delay=%i)<=%i)", dwDelta, (int)RCLICKAPPSTIMEOUT);
+				} else if (dwDelta >= 10000) {
+					wsprintfA(szLog+lstrlenA(szLog), ", ((Delay=%i)>=10000)", dwDelta);
+				} else {
+					wsprintfA(szLog+lstrlenA(szLog), ", (Delay==%i)", dwDelta);
+				}
+				mp_VActive->RCon()->LogString(szLog);
+			}
+		} else {
+			char szLog[100];
+			wsprintfA(szLog, "RightClicked, but mouse was moved abs({%i-%i}-{%i-%i})>%i", (int)Rcursor.x, (int)Rcursor.y, (int)LOWORD(lParam), (int)HIWORD(lParam), (int)RCLICKAPPSDELTA);
+			mp_VActive->RCon()->LogString(szLog);
+		}
+
+		// иначе после RBtnDown в консоль может СРАЗУ провалиться MOUSEMOVE
+		mouse.lastMMW=MK_RBUTTON|wParam; mouse.lastMML=lParam; // добавляем, т.к. мы в RButtonUp
+
+		// Иначе нужно сначала послать WM_RBUTTONDOWN
+		//POSTMESSAGE(ghConWnd, WM_RBUTTONDOWN, wParam, MAKELPARAM( newX, newY ), TRUE);
+		mp_VActive->RCon()->OnMouse(WM_RBUTTONDOWN, wParam, ptCur.x, ptCur.y);
+	} else {
+		char szLog[255];
+		// if (gSet.isRClickSendKey && (mouse.state & MOUSE_R_LOCKED))
+		//wsprintfA(szLog, "RightClicked, but condition failed (RCSK:%i, State:%u)", (int)gSet.isRClickSendKey, (DWORD)mouse.state);
+		lstrcpyA(szLog, "RightClicked, but condition failed: ");
+		if (gSet.isRClickSendKey==0) {
+			wsprintfA(szLog+lstrlenA(szLog), "((isRClickSendKey=%i)==0)", (UINT)gSet.isRClickSendKey);
+		} else {
+			wsprintfA(szLog+lstrlenA(szLog), "(isRClickSendKey==%i)", (UINT)gSet.isRClickSendKey);
+		}
+		if ((mouse.state & MOUSE_R_LOCKED) == 0) {
+			wsprintfA(szLog+lstrlenA(szLog), ", (((state=0x%X)&MOUSE_R_LOCKED)==0)", (DWORD)mouse.state);
+		} else {
+			wsprintfA(szLog+lstrlenA(szLog), ", (state==0x%X)", (DWORD)mouse.state);
+		}
+		mp_VActive->RCon()->LogString(szLog);
+	}
+	//isRBDown=false; // чтобы не осталось случайно
+	mouse.state &= ~(DRAG_R_ALLOWED | DRAG_R_STARTED | MOUSE_R_LOCKED);
+
+	return TRUE; // переслать в консоль
+}
+LRESULT CConEmuMain::OnMouse_RBtnDblClk(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, POINT ptCur, COORD cr)
+{
+	if (mouse.bSkipRDblClk) {
+		mouse.bSkipRDblClk = false;
+		return 0; // не обрабатывать, сейчас висит контекстное меню
+	}
+
+	return TRUE; // переслать в консоль
 }
 
 void CConEmuMain::SetWaitCursor(BOOL abWait)
