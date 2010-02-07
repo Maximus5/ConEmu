@@ -724,6 +724,10 @@ void TabBarClass::UpdatePosition()
 
 	DEBUGSTRTABS(_active ? L"TabBarClass::UpdatePosition(activate)\n" : L"TabBarClass::UpdatePosition(DEactivate)\n");
     
+	#ifdef _DEBUG
+	DWORD_PTR dwStyle = GetWindowLongPtr(ghWnd, GWL_STYLE);
+	#endif
+
     if (_active) {
         if (mh_Rebar) {
             if (!IsWindowVisible(mh_Rebar))
@@ -738,6 +742,11 @@ void TabBarClass::UpdatePosition()
                 MoveWindow(mh_Tabbar, 0, 0, client.right, _tabHeight, 1);
 
         }
+
+		#ifdef _DEBUG
+		dwStyle = GetWindowLongPtr(ghWnd, GWL_STYLE);
+		#endif
+
 		//gConEmu.SyncConsoleToWindow(); -- 2009.07.04 Sync должен быть выполнен в самом ReSize
 		gConEmu.ReSize(TRUE);
     } else {
@@ -1085,6 +1094,18 @@ HWND TabBarClass::CreateToolbar()
 
 
    return mh_Toolbar;
+}
+
+HWND TabBarClass::GetTabbar()
+{
+	if (!this) return NULL;
+	return mh_Tabbar;
+}
+
+int TabBarClass::GetTabbarHeight()
+{
+	if (!this) return NULL;
+	return _tabHeight;
 }
 
 HWND TabBarClass::CreateTabbar()

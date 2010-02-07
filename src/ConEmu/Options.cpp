@@ -283,7 +283,7 @@ void CSettings::InitSettings()
     wndWidth = 80;
     //WindowMode=rNormal; -- устанавливается в конструкторе CConEmuMain
     isFullScreen = false;
-    isHideCaption = false;
+    isHideCaption = isHideCaptionAlways = false;
     wndX = 0; wndY = 0; wndCascade = true;
     isConVisible = false;
     nSlideShowElapse = 2500;
@@ -419,6 +419,7 @@ void CSettings::LoadSettings()
 
         reg->Load(L"WindowMode", gConEmu.WindowMode);
         reg->Load(L"HideCaption", isHideCaption);
+		reg->Load(L"HideCaptionAlways", isHideCaptionAlways);
         reg->Load(L"ConWnd X", wndX); /*if (wndX<-10) wndX = 0;*/
         reg->Load(L"ConWnd Y", wndY); /*if (wndY<-10) wndY = 0;*/
 		// ЭТО не влияет на szDefCmd. Только прямое указание флажка "/BufferHeight N" 
@@ -608,6 +609,7 @@ void CSettings::LoadSettings()
 
 			// Screen coordinates!
 			RECT rcWnd; GetWindowRect(hPrev, &rcWnd);
+			// Сдвиг при каскаде
 			int nShift = (GetSystemMetrics(SM_CYSIZEFRAME)+GetSystemMetrics(SM_CYCAPTION))*1.5;
 			wndX = rcWnd.left + nShift;
 			wndY = rcWnd.top + nShift;
@@ -816,6 +818,7 @@ BOOL CSettings::SaveSettings()
 			DWORD saveMode = isFullScreen ? rFullScreen : gConEmu.isZoomed() ? rMaximized : rNormal;
             reg->Save(L"WindowMode", saveMode);
             reg->Save(L"HideCaption", isHideCaption);
+			reg->Save(L"HideCaptionAlways", isHideCaptionAlways);
             
 			reg->Save(L"ConsoleFontName", ConsoleFont.lfFaceName);
 			reg->Save(L"ConsoleCharWidth", ConsoleFont.lfWidth);
@@ -1344,6 +1347,7 @@ LRESULT CSettings::OnInitDialog_Ext()
 	if (isAutoRegisterFonts) CheckDlgButton(hExt, cbAutoRegFonts, BST_CHECKED);
 	if (isDebugSteps) CheckDlgButton(hExt, cbDebugSteps, BST_CHECKED);
 	if (isHideCaption) CheckDlgButton(hExt, cbHideCaption, BST_CHECKED);
+	if (isHideCaptionAlways) CheckDlgButton(hExt, cbHideCaptionAlways, BST_CHECKED);
 	
 	if (isFARuseASCIIsort) CheckDlgButton(hExt, cbFARuseASCIIsort, BST_CHECKED);
 	if (isFixAltOnAltTab) CheckDlgButton(hExt, cbFixAltOnAltTab, BST_CHECKED);
@@ -1687,6 +1691,11 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
 
 	case cbHideCaption:
 		isHideCaption = IsChecked(hExt, cbHideCaption);
+		break;
+
+	case cbHideCaptionAlways:
+		isHideCaptionAlways = IsChecked(hExt, cbHideCaptionAlways);
+		gConEmu.OnHideCaption();
 		break;
 
     case cbFARuseASCIIsort:

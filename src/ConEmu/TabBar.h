@@ -130,6 +130,8 @@ public:
 	void Activate();
 	HWND CreateToolbar();
 	HWND CreateTabbar();
+	HWND GetTabbar();
+	int GetTabbarHeight();
 	void CreateRebar();
 	void Deactivate();
 	void RePaint();

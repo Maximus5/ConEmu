@@ -121,6 +121,8 @@ REGEDIT4
 "WindowMode"=dword:0000051f
 ;; Set to hex:01 to hide window caption in Maximized mode
 ;"HideCaption"=hex:00
+;; Set to hex:01 to hide caption in all modes (normal/maximized/fullscreen)
+;"HideCaptionAlways"=hex:00
 
 ;; Auto minimize to the Tray
 ;"Min2Tray"=hex:01

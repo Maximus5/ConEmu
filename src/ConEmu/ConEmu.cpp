@@ -113,8 +113,10 @@ CConEmuMain::CConEmuMain()
 	mb_MouseCaptured = FALSE;
 	mb_HotKeyRegistered = FALSE;
 	mb_WaitCursor = FALSE;
+	mb_InTrackSysMenu = FALSE;
 	mh_CursorWait = LoadCursor(NULL, IDC_WAIT);
 	mh_CursorArrow = LoadCursor(NULL, IDC_ARROW);
+	mh_CursorMove = LoadCursor(NULL, IDC_SIZEALL);
 	mh_CursorAppStarting = LoadCursor(NULL, IDC_APPSTARTING);
 	// g_hInstance еще не инициализирован
 	mh_SplitV = LoadCursor(GetModuleHandle(0), MAKEINTRESOURCE(IDC_SPLITV));
@@ -266,6 +268,8 @@ BOOL CConEmuMain::CreateMainWindow()
 		style |= WS_OVERLAPPEDWINDOW;
 	if (gSet.nTransparent < 255)
 		styleEx |= WS_EX_LAYERED;
+	//if (gSet.isHideCaptionAlways) // сразу создать так почему-то не получается
+	//	style &= ~(WS_CAPTION);
 	int nWidth=CW_USEDEFAULT, nHeight=CW_USEDEFAULT;
 
 	// Расчет размеров окна в Normal режиме
@@ -275,7 +279,7 @@ BOOL CConEmuMain::CreateMainWindow()
 
 		COORD conSize; conSize.X=gSet.wndWidth; conSize.Y=gSet.wndHeight;
 		int nShiftX = GetSystemMetrics(SM_CXSIZEFRAME)*2;
-		int nShiftY = GetSystemMetrics(SM_CYSIZEFRAME)*2 + GetSystemMetrics(SM_CYCAPTION);
+		int nShiftY = GetSystemMetrics(SM_CYSIZEFRAME)*2 + (gSet.isHideCaptionAlways ? 0 : GetSystemMetrics(SM_CYCAPTION));
 		// Если табы показываются всегда - сразу добавим их размер, чтобы размер консоли был заказанным
 		nWidth  = conSize.X * gSet.FontWidth() + nShiftX 
 			+ ((gSet.isTabs == 1) ? (gSet.rcTabMargins.left+gSet.rcTabMargins.right) : 0);
@@ -294,6 +298,12 @@ BOOL CConEmuMain::CreateMainWindow()
 		if (!ghWndDC) MBoxA(_T("Can't create main window!"));
 		return FALSE;
 	}
+	//if (gSet.isHideCaptionAlways)
+	//	OnHideCaption();
+	#ifdef _DEBUG
+	DWORD style2 = GetWindowLongPtr(ghWnd, GWL_STYLE);
+	DWORD styleEx2 = GetWindowLongPtr(ghWnd, GWL_EXSTYLE);
+	#endif
 	OnTransparent();
 	//if (gConEmu.WindowMode == rFullScreen || gConEmu.WindowMode == rMaximized)
 	//	gConEmu.SetWindowMode(gConEmu.WindowMode);
@@ -443,9 +453,9 @@ RECT CConEmuMain::CalcMargins(enum ConEmuMargins mg)
         {
             //RECT cRect, wRect;
             //if (!ghWnd || isIconic()) {
-                rc.left = rc.right = GetSystemMetrics(SM_CXSIZEFRAME);
-                rc.bottom = GetSystemMetrics(SM_CYSIZEFRAME);
-                rc.top = rc.bottom + GetSystemMetrics(SM_CYCAPTION);
+            rc.left = rc.right = GetSystemMetrics(SM_CXSIZEFRAME);
+            rc.bottom = GetSystemMetrics(SM_CYSIZEFRAME);
+			rc.top = rc.bottom + (gSet.isHideCaptionAlways ? 0 : GetSystemMetrics(SM_CYCAPTION));
             /*} else {
                 GetClientRect(ghWnd, &cRect); // The left and top members are zero. The right and bottom members contain the width and height of the window.
                 MapWindowPoints(ghWnd, NULL, (LPPOINT)&cRect, 2);
@@ -714,8 +724,8 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tF
                     break;
                 case CER_MAXIMIZED:
                     rc = mi.rcWork;
-                    if (gSet.isHideCaption && gConEmu.mb_MaximizedHideCaption)
-                    	rc.top -= GetSystemMetrics(SM_CYCAPTION);
+					if (gSet.isHideCaption && gConEmu.mb_MaximizedHideCaption && !gSet.isHideCaptionAlways)
+                		rc.top -= GetSystemMetrics(SM_CYCAPTION);
 					// Скорректируем размер окна до видимого на мониторе (рамка при максимизации уезжает за пределы экрана)
 					rc.left -= GetSystemMetrics(SM_CXSIZEFRAME);
 					rc.right += GetSystemMetrics(SM_CXSIZEFRAME);
@@ -733,7 +743,7 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tF
                     break;
                 case CER_MAXIMIZED:
                     rc = MakeRect(GetSystemMetrics(SM_CXMAXIMIZED),GetSystemMetrics(SM_CYMAXIMIZED));
-                    if (gSet.isHideCaption && gConEmu.mb_MaximizedHideCaption)
+                    if (gSet.isHideCaption && gConEmu.mb_MaximizedHideCaption && !gSet.isHideCaptionAlways)
                     	rc.top -= GetSystemMetrics(SM_CYCAPTION);
                     break;
                 default:
@@ -1124,6 +1134,10 @@ bool CConEmuMain::SetWindowMode(uint inMode)
         return false;
     }
 
+	#ifdef _DEBUG
+	DWORD_PTR dwStyle = GetWindowLongPtr(ghWnd, GWL_STYLE);
+	#endif
+
     #ifndef _DEBUG
     //2009-04-22 Если открыт PictureView - лучше не дергаться...
     if (isPictureView())
@@ -1246,7 +1260,7 @@ bool CConEmuMain::SetWindowMode(uint inMode)
                     gSet.UpdateSize(mp_VActive->TextWidth, mp_VActive->TextHeight);
             }
 
-			if (!gSet.isHideCaption)
+			if (!gSet.isHideCaption && !gSet.isHideCaptionAlways)
 			{
 				RECT rcMax = CalcRect(CER_MAXIMIZED, MakeRect(0,0), CER_MAXIMIZED);
 				AutoSizeFont(rcMax, CER_MAIN);
@@ -1470,6 +1484,10 @@ wrap:
 		}
 	}
 
+	#ifdef _DEBUG
+	dwStyle = GetWindowLongPtr(ghWnd, GWL_STYLE);
+	#endif
+
 	SetCursor(LoadCursor(NULL,IDC_ARROW));
     change2WindowMode = -1;
     return lbRc;
@@ -1541,8 +1559,11 @@ void CConEmuMain::ReSize(BOOL abCorrect2Ideal /*= FALSE*/)
 
 	RECT client; GetClientRect(ghWnd, &client);
 
+	#ifdef _DEBUG
+	DWORD_PTR dwStyle = GetWindowLongPtr(ghWnd, GWL_STYLE);
+	#endif
+
 	if (abCorrect2Ideal) {
-		
 
 		if (!isZoomed() && !gSet.isFullScreen) {
 			// Выполняем всегда, даже если размер уже соответсвует...
@@ -1578,6 +1599,10 @@ void CConEmuMain::ReSize(BOOL abCorrect2Ideal /*= FALSE*/)
 			m_Child.Redraw();
 		}
 	}
+
+	#ifdef _DEBUG
+	dwStyle = GetWindowLongPtr(ghWnd, GWL_STYLE);
+	#endif
 
     OnSize(isZoomed() ? SIZE_MAXIMIZED : SIZE_RESTORED,
         client.right, client.bottom);
@@ -1710,6 +1735,9 @@ LRESULT CConEmuMain::OnSize(WPARAM wParam, WORD newClientWidth, WORD newClientHe
         return 0;
     }
 
+	#ifdef _DEBUG
+	DWORD_PTR dwStyle = GetWindowLongPtr(ghWnd, GWL_STYLE);
+	#endif
 	
 	//if (mb_InResize) {
 	//	_ASSERTE(!mb_InResize);
@@ -1787,6 +1815,10 @@ LRESULT CConEmuMain::OnSize(WPARAM wParam, WORD newClientWidth, WORD newClientHe
 
 	if (mn_InResize>0)
 		mn_InResize--;
+
+	#ifdef _DEBUG
+	dwStyle = GetWindowLongPtr(ghWnd, GWL_STYLE);
+	#endif
 
     return result;
 }
@@ -2800,7 +2832,9 @@ void CConEmuMain::ShowSysmenu(HWND Wnd, HWND Owner, int x, int y)
     SendMessage(Wnd, WM_INITMENUPOPUP, (WPARAM)systemMenu, MAKELPARAM(0, true));
     SetActiveWindow(Owner);
 
+	mb_InTrackSysMenu = TRUE;
     int command = TrackPopupMenu(systemMenu, TPM_RETURNCMD | TPM_LEFTBUTTON | TPM_RIGHTBUTTON, x, y, 0, Owner, NULL);
+	mb_InTrackSysMenu = FALSE;
 
     if (Icon.isWindowInTray)
         switch(command)
@@ -3759,6 +3793,16 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
 {
     ghWnd = hWnd; // ставим сразу, чтобы функции могли пользоваться
 
+	//DWORD_PTR dwStyle = GetWindowLongPtr(hWnd, GWL_STYLE);
+	//if (gSet.isHideCaptionAlways) {
+	//	if ((dwStyle & (WS_CAPTION|WS_THICKFRAME)) != 0) {
+	//		lpCreate->style &= ~(WS_CAPTION|WS_THICKFRAME);
+	//		dwStyle = lpCreate->style;
+	//		SetWindowLongPtr(hWnd, GWL_STYLE, dwStyle);
+	//	}
+	//}
+
+
 	if (!mrc_Ideal.right) {
 		// lpCreate->cx/cy может содержать CW_USEDEFAULT
 		GetWindowRect(ghWnd, &mrc_Ideal);
@@ -3813,6 +3857,9 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
         ID_AUTOSCROLL, _T("Auto scro&ll..."));
     InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_SETTINGS, _T("S&ettings..."));
 
+	#ifdef _DEBUG
+	DWORD_PTR dwStyle = GetWindowLongPtr(ghWnd, GWL_STYLE);
+	#endif
 
     if (gSet.isTabs==1) // "Табы всегда"
         ForceShowTabs(TRUE); // Показать табы
@@ -3842,6 +3889,9 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
         //UpdateWindow(ghWnd);
         //}
         
+		if (gSet.isHideCaptionAlways)
+			OnHideCaption();
+
         PostMessage(ghWnd, mn_MsgPostCreate, 0, 0);
     } else {
 		if (gSet.szFontError[0]) {
@@ -4252,12 +4302,28 @@ LRESULT CConEmuMain::OnGetMinMaxInfo(LPMINMAXINFO pInfo)
         pInfo->ptMaxSize = ptFullScreenSize;
     }
     
-    if (gSet.isHideCaption) {
+    if (gSet.isHideCaption && !gSet.isHideCaptionAlways) {
     	pInfo->ptMaxPosition.y -= GetSystemMetrics(SM_CYCAPTION);
     	//pInfo->ptMaxSize.y += GetSystemMetrics(SM_CYCAPTION);
     }
 
     return result;
+}
+
+void CConEmuMain::OnHideCaption()
+{
+	DWORD_PTR dwStyle = GetWindowLongPtr(ghWnd, GWL_STYLE);
+	if (gSet.isHideCaptionAlways)
+		dwStyle &= ~(WS_CAPTION/*|WS_THICKFRAME*/);
+	else
+		dwStyle |= (WS_CAPTION|/*WS_THICKFRAME|*/WS_MINIMIZEBOX|WS_MAXIMIZEBOX);
+	mb_SkipSyncSize = TRUE;
+	SetWindowLongPtr(ghWnd, GWL_STYLE, dwStyle);
+	OnSize(-1);
+	mb_SkipSyncSize = FALSE;
+#ifdef _DEBUG
+#endif
+	SyncWindowToConsole();
 }
 
 LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
@@ -5483,6 +5549,12 @@ LRESULT CConEmuMain::OnSetCursor(WPARAM wParam, LPARAM lParam)
 	if (((HWND)wParam) != ghWnd || isSizing()
 		|| (LOWORD(lParam) != HTCLIENT && LOWORD(lParam) != HTNOWHERE))
 	{
+		if (gSet.isHideCaptionAlways && !mb_InTrackSysMenu && !isSizing()
+			&& (LOWORD(lParam) == HTTOP || LOWORD(lParam) == HTCAPTION))
+		{
+			SetCursor(mh_CursorMove);
+			return TRUE;
+		}
 		return FALSE;
 	}
 	
@@ -6581,7 +6653,9 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
         break;
 
     case WM_NCRBUTTONUP:
-        Icon.HideWindowToTray();
+		if (wParam != HTCAPTION) {
+			Icon.HideWindowToTray();
+		}
         break;
 
     case WM_TRAYNOTIFY:
@@ -6615,6 +6689,29 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
         else
             break;
         break;
+
+	case WM_NCHITTEST:
+		{
+			result = -1;
+			/*if (gSet.isHideCaptionAlways && gSet.isTabs) {
+				if (gConEmu.mp_TabBar->IsShown()) {
+					HWND hTabBar = gConEmu.mp_TabBar->GetTabbar();
+					RECT rcWnd; GetWindowRect(hTabBar, &rcWnd);
+					TCHITTESTINFO tch = {{LOWORD(lParam),HIWORD(lParam)}};
+					if (PtInRect(&rcWnd, tch.pt)) {
+						tch.pt.x -= rcWnd.left; tch.pt.y -= rcWnd.top;
+						LRESULT nTest = SendMessage(hTabBar, TCM_HITTEST, 0, (LPARAM)&tch);
+						if (nTest == -1) {
+							result = HTCAPTION;
+						}
+					}
+				}
+			}
+			if (result == -1)*/
+			result = DefWindowProc(hWnd, messg, wParam, lParam);
+			if (gSet.isHideCaptionAlways && result == HTTOP)
+				result = HTCAPTION;
+		} break;
         
     default:
         if (messg == gConEmu.mn_MsgPostCreate) {

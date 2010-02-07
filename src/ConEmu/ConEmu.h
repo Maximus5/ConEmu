@@ -179,8 +179,8 @@ protected:
 	CVirtualConsole *mp_VCon[MAX_CONSOLE_COUNT];
 	CVirtualConsole *mp_VActive, *mp_VCon1, *mp_VCon2;
 	bool mb_SkipSyncSize, mb_PassSysCommand, mb_CreatingActive;
-	BOOL mb_WaitCursor;
-	HCURSOR mh_CursorWait, mh_CursorArrow, mh_CursorAppStarting;
+	BOOL mb_WaitCursor, mb_InTrackSysMenu;
+	HCURSOR mh_CursorWait, mh_CursorArrow, mh_CursorAppStarting, mh_CursorMove;
 	HCURSOR mh_SplitV, mh_SplitH;
 	//wchar_t *mpsz_RecreateCmd;
 	ITaskbarList3 *mp_TaskBar3;
@@ -328,6 +328,7 @@ public:
 	LRESULT OnFlashWindow(DWORD nFlags, DWORD nCount, HWND hCon);
 	LRESULT OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnGetMinMaxInfo(LPMINMAXINFO pInfo);
+	void OnHideCaption();
 	LRESULT OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnLangChange(UINT messg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnLangChangeConsole(CVirtualConsole *apVCon, DWORD dwLayoutName);

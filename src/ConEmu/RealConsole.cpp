@@ -2211,7 +2211,10 @@ void CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 				GetWindowRect(ghWnd, &rect);
 				GetClientRect(ghWnd, &cRect);
 				WINDOWINFO wInfo;   GetWindowInfo(ghWnd, &wInfo);
-				gConEmu.ShowSysmenu(ghWnd, ghWnd, rect.right - cRect.right - wInfo.cxWindowBorders, rect.bottom - cRect.bottom - wInfo.cyWindowBorders);
+				int nTabShift = (gSet.isHideCaptionAlways & gConEmu.mp_TabBar->IsShown()) ? gConEmu.mp_TabBar->GetTabbarHeight() : 0;
+				gConEmu.ShowSysmenu(ghWnd, ghWnd, 
+					rect.right - cRect.right - wInfo.cxWindowBorders, 
+					rect.bottom - cRect.bottom - wInfo.cyWindowBorders + nTabShift );
 			}
         }
         else if (messg == WM_KEYUP && wParam == VK_MENU && isSkipNextAltUp) isSkipNextAltUp = false;
