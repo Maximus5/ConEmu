@@ -502,14 +502,14 @@ DWORD CDragDrop::DragOpThreadProc(LPVOID lpParameter)
 	return 0;
 }
 
-HANDLE CDragDrop::FileStart(BOOL abActive, BOOL abWide, LPVOID asFileName)
+wchar_t* CDragDrop::FileCreateName(BOOL abActive, BOOL abWide, LPVOID asFileName)
 {
 	if (!asFileName ||
 		(abWide && ((wchar_t*)asFileName)[0] == 0) ||
 		(!abWide && ((char*)asFileName)[0] == 0))
 	{
 		MBoxA(_T("Can't drop file! Filename is empty!"));
-		return INVALID_HANDLE_VALUE;
+		return NULL;
 	}
 
 	wchar_t *pszFullName = NULL;
@@ -525,7 +525,7 @@ HANDLE CDragDrop::FileStart(BOOL abActive, BOOL abWide, LPVOID asFileName)
 		if (pszSlash) pszNameW = pszSlash+1;
 		if (!*pszNameW) {
 			MBoxA(_T("Can't drop file! Filename is empty (W)!"));
-			return INVALID_HANDLE_VALUE;
+			return NULL;
 		}
 		nSize += wcslen(pszNameW)+1;
 	} else {
@@ -533,7 +533,7 @@ HANDLE CDragDrop::FileStart(BOOL abActive, BOOL abWide, LPVOID asFileName)
 		if (pszSlash) pszNameA = pszSlash+1;
 		if (!*pszNameA) {
 			MBoxA(_T("Can't drop file! Filename is empty (A)!"));
-			return INVALID_HANDLE_VALUE;
+			return NULL;
 		}
 		nSize += strlen(pszNameA)+1;
 	}
@@ -559,7 +559,8 @@ HANDLE CDragDrop::FileStart(BOOL abActive, BOOL abWide, LPVOID asFileName)
 			wcscat(pszMsg, pszFullName);
 			MessageBox(ghWnd, pszMsg, L"ConEmu", MB_ICONSTOP);
 			free(pszMsg);
-			return INVALID_HANDLE_VALUE;
+			free(pszFullName);
+			return NULL;
 		} else {
 			pszMsg = (wchar_t*)calloc(nSize + 255,2);
 			LARGE_INTEGER liSize;
@@ -572,8 +573,10 @@ HANDLE CDragDrop::FileStart(BOOL abActive, BOOL abWide, LPVOID asFileName)
 			int nRc = MessageBox(ghWnd, pszMsg, L"ConEmu", MB_ICONEXCLAMATION|MB_YESNO);
 			free(pszMsg);
 
-			if (nRc != IDYES)
-				return INVALID_HANDLE_VALUE;
+			if (nRc != IDYES) {
+				free(pszFullName);
+				return NULL;
+			}
 
 			// сброс ReadOnly, при необходимости
 			if (fnd.dwFileAttributes & (FILE_ATTRIBUTE_HIDDEN|FILE_ATTRIBUTE_SYSTEM|FILE_ATTRIBUTE_READONLY))
@@ -581,20 +584,32 @@ HANDLE CDragDrop::FileStart(BOOL abActive, BOOL abWide, LPVOID asFileName)
 		}
 	}
 
+	return pszFullName;
+}
+
+HANDLE CDragDrop::FileStart(LPCWSTR pszFullName)
+{
+	_ASSERTE(pszFullName && *pszFullName);
+	if (!pszFullName || !*pszFullName)
+		return INVALID_HANDLE_VALUE;
+
 	// Создаем файл
-	hFind = CreateFile(pszFullName, GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-	if (hFind == INVALID_HANDLE_VALUE) {
+	HANDLE hFile = CreateFile(pszFullName, GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+	if (hFile == INVALID_HANDLE_VALUE) {
 		DWORD dwErr = GetLastError();
+		int nSize = lstrlen(pszFullName);
 		wchar_t* pszMsg = (wchar_t*)calloc(nSize + 100,2);
 		wcscpy(pszMsg, L"Can't create file!\n");
 		wcscat(pszMsg, pszFullName);
 		DisplayLastError(pszMsg, dwErr);
 		free(pszMsg);
+		//free(pszFullName);
 		return INVALID_HANDLE_VALUE;
 	}
 
+	//free(pszFullName);
 	mn_CurWritten = 0;
-	return hFind;
+	return hFile;
 }
 
 HRESULT CDragDrop::FileWrite(HANDLE ahFile, DWORD anSize, LPVOID apData)
@@ -633,6 +648,7 @@ HRESULT CDragDrop::DropFromStream(IDataObject * pDataObject, BOOL abActive)
 	DWORD dwRead = 0;
 	BOOL lbWide = FALSE;
 	HRESULT hr = S_OK;
+	HRESULT hrStg = S_OK;
 
 	// CF_HDROP в структуре отсутсвует!
 	fmtetc.cfFormat = RegisterClipboardFormat(CFSTR_FILEDESCRIPTORW);
@@ -651,29 +667,57 @@ HRESULT CDragDrop::DropFromStream(IDataObject * pDataObject, BOOL abActive)
 		for (mn_CurFile = 0; mn_CurFile<mn_AllFiles; mn_CurFile++) {
 			fmtetc.lindex = mn_CurFile;
 
-			fmtetc.tymed = TYMED_ISTREAM; // Сначала пробуем IStream
-			stgMedium.tymed = TYMED_ISTREAM;
-			stgMedium.pstm = NULL;
-			
-			// !! The caller then assumes responsibility for releasing the STGMEDIUM structure.
-			//было if (S_OK == pDataObject->GetData(&fmtetc, &stgMedium) || !stgMedium.pstm)
-			if (S_OK == pDataObject->GetData(&fmtetc, &stgMedium) && stgMedium.pstm) {
-				IStream* pFile = stgMedium.pstm;
 
-				hFile = FileStart(abActive, lbWide, pDesc->fgd[mn_CurFile].cFileName);
-				if (hFile != INVALID_HANDLE_VALUE) {
-					while ((hr = pFile->Read(cBuffer, BufferSize, &dwRead)) == S_OK && dwRead) {
-						if (FileWrite(hFile, dwRead, cBuffer) != S_OK)
-							break;
-					}
-					SafeCloseHandle(hFile);
-					if (FAILED(hr))
-						DisplayLastError(_T("Can't read medium!"), hr);
+			wchar_t* pszNewFileName = FileCreateName(abActive, lbWide, pDesc->fgd[mn_CurFile].cFileName);
+			if (pszNewFileName)
+			{
+				// !! The caller then assumes responsibility for releasing the STGMEDIUM structure.
+				//было if (S_OK == pDataObject->GetData(&fmtetc, &stgMedium) || !stgMedium.pstm)
+
+				fmtetc.tymed = TYMED_FILE; // Сначала пробуем IStream
+				stgMedium.tymed = TYMED_FILE;
+				stgMedium.pstm = NULL;
+				stgMedium.lpszFileName = ::SysAllocString(pszNewFileName);
+
+				// Попробуем? Но пока не встречал. Возвращают E_NOTIMPL
+				hrStg = pDataObject->GetDataHere(&fmtetc, &stgMedium);
+				::SysFreeString(stgMedium.lpszFileName);
+				if (hrStg == S_OK) {
+					free(pszNewFileName); pszNewFileName = NULL;
+					continue;
 				}
-				
-				pFile->Release();
-				
-				continue;
+
+
+				fmtetc.tymed = TYMED_ISTREAM; // Сначала пробуем IStream
+				stgMedium.tymed = TYMED_ISTREAM;
+				stgMedium.pstm = NULL;
+
+				hrStg = pDataObject->GetData(&fmtetc, &stgMedium);
+				if (S_OK == hrStg && stgMedium.pstm) {
+					IStream* pFile = stgMedium.pstm;
+
+					if (!pszNewFileName)
+						hFile = INVALID_HANDLE_VALUE;
+					else {
+						hFile = FileStart(pszNewFileName);
+						free(pszNewFileName); pszNewFileName = NULL;
+					}
+					if (hFile != INVALID_HANDLE_VALUE) {
+						// Может возвращать и S_FALSE (конец файла?)
+						while (SUCCEEDED(hr = pFile->Read(cBuffer, BufferSize, &dwRead)) && dwRead) {
+							if (FileWrite(hFile, dwRead, cBuffer) != S_OK)
+								break;
+						}
+						SafeCloseHandle(hFile);
+						if (FAILED(hr))
+							DisplayLastError(_T("Can't read medium!"), hr);
+					}
+					
+					pFile->Release();
+					
+					continue;
+				}
+				if (pszNewFileName) free(pszNewFileName); pszNewFileName = NULL;
 			}
 			MBoxA(_T("Drag object does not contains known medium!"));
 		}
@@ -698,29 +742,45 @@ HRESULT CDragDrop::DropFromStream(IDataObject * pDataObject, BOOL abActive)
 		for (mn_CurFile = 0; mn_CurFile<mn_AllFiles; mn_CurFile++) {
 			fmtetc.lindex = mn_CurFile;
 
-			fmtetc.tymed = TYMED_ISTREAM; // Сначала пробуем IStream
-			stgMedium.tymed = TYMED_ISTREAM;
-			stgMedium.pstm = NULL;
 			
-			// !! The caller then assumes responsibility for releasing the STGMEDIUM structure.
-			//было if (S_OK == pDataObject->GetData(&fmtetc, &stgMedium) || !stgMedium.pstm)
-			if (S_OK == pDataObject->GetData(&fmtetc, &stgMedium) && stgMedium.pstm) {
-				IStream* pFile = stgMedium.pstm;
+			wchar_t* pszNewFileName = FileCreateName(abActive, lbWide, pDesc->fgd[mn_CurFile].cFileName);
+			if (pszNewFileName)
+			{
+				// !! The caller then assumes responsibility for releasing the STGMEDIUM structure.
+				//было if (S_OK == pDataObject->GetData(&fmtetc, &stgMedium) || !stgMedium.pstm)
 
-				hFile = FileStart(abActive, lbWide, pDesc->fgd[mn_CurFile].cFileName);
-				if (hFile != INVALID_HANDLE_VALUE) {
-					while ((hr = pFile->Read(cBuffer, BufferSize, &dwRead)) == S_OK && dwRead) {
-						if (FileWrite(hFile, dwRead, cBuffer) != S_OK)
-							break;
+
+				fmtetc.tymed = TYMED_ISTREAM; // Сначала пробуем IStream
+				stgMedium.tymed = TYMED_ISTREAM;
+				stgMedium.pstm = NULL;
+
+				hrStg = pDataObject->GetData(&fmtetc, &stgMedium);
+				if (S_OK == hrStg && stgMedium.pstm) {
+					IStream* pFile = stgMedium.pstm;
+
+					//hFile = FileStart(abActive, lbWide, pDesc->fgd[mn_CurFile].cFileName);
+					if (!pszNewFileName)
+						hFile = INVALID_HANDLE_VALUE;
+					else {
+						hFile = FileStart(pszNewFileName);
+						free(pszNewFileName); pszNewFileName = NULL;
 					}
-					SafeCloseHandle(hFile);
-					if (FAILED(hr))
-						DisplayLastError(_T("Can't read medium!"), hr);
+					if (hFile != INVALID_HANDLE_VALUE) {
+						// Может возвращать и S_FALSE (конец файла?)
+						while (SUCCEEDED(hr = pFile->Read(cBuffer, BufferSize, &dwRead)) && dwRead) {
+							if (FileWrite(hFile, dwRead, cBuffer) != S_OK)
+								break;
+						}
+						SafeCloseHandle(hFile);
+						if (FAILED(hr))
+							DisplayLastError(_T("Can't read medium!"), hr);
+					}
+					
+					pFile->Release();
+					
+					continue;
 				}
-				
-				pFile->Release();
-				
-				continue;
+				if (pszNewFileName) free(pszNewFileName); pszNewFileName = NULL;
 			}
 			MBoxA(_T("Drag object does not contains known medium!"));
 		}
@@ -908,6 +968,10 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop (IDataObject * pDataObject,DWORD grfKe
 		return hr;
 	}
 
+	
+	STGMEDIUM stgMediumMap = { 0 };
+	FORMATETC fmtetcMap = { RegisterClipboardFormat(CFSTR_FILENAMEMAPW), 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
+
 	hDrop = (HDROP)stgMedium.hGlobal;
 
 	int iQuantity = DragQueryFile(hDrop,0xFFFFFFFF,NULL,NULL);
@@ -938,35 +1002,70 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop (IDataObject * pDataObject,DWORD grfKe
 		sfop->fop.hwnd = ghWnd;
 		sfop->pDnD = this;
 
-		if (lbActive) 
-		{
-			sfop->fop.pTo=new WCHAR[lstrlenW(m_pfpi->pszActivePath)+3];
-			wsprintf((LPWSTR)sfop->fop.pTo, _T("%s\\\0\0"), m_pfpi->pszActivePath);
-		}
-		else
-		{
-			sfop->fop.pTo=new WCHAR[lstrlenW(m_pfpi->pszPassivePath)+3];
-			wsprintf((LPWSTR)sfop->fop.pTo, _T("%s\\\0\0"), m_pfpi->pszPassivePath);
-		}
+		hr = pDataObject->GetData(&fmtetcMap, &stgMediumMap);
+		BOOL lbMultiDest = (hr == S_OK && stgMediumMap.hGlobal);
+		TODO("Освободить stgMediumMap");
+		LPCWSTR pszFileMap = (LPCWSTR)GlobalLock(stgMediumMap.hGlobal);
+		if (!pszFileMap) lbMultiDest = FALSE;
+
+		LPCWSTR pszDropPath = lbActive ? m_pfpi->pszActivePath : m_pfpi->pszPassivePath;
 
 		int nCount = MAX_DROP_PATH*iQuantity+iQuantity+1;
+		int nDstCount = 0;
+		int nDstFolderLen = 0;
+
+		if (!lbMultiDest) 
+		{
+			sfop->fop.pTo=new WCHAR[lstrlenW(pszDropPath)+3];
+			wsprintf((LPWSTR)sfop->fop.pTo, _T("%s\\\0\0"), pszDropPath);
+		} else {
+			nDstFolderLen = lstrlenW(pszDropPath);
+			nDstCount = iQuantity*(nDstFolderLen+3+MAX_PATH)+iQuantity+1;
+			sfop->fop.pTo=new WCHAR[nDstCount];
+			ZeroMemory((void*)sfop->fop.pTo,sizeof(WCHAR)*nDstCount);
+		}
+
 		sfop->fop.pFrom=new WCHAR[nCount];
 		ZeroMemory((void*)sfop->fop.pFrom,sizeof(WCHAR)*nCount);
 
-		WCHAR *curr=(WCHAR *)sfop->fop.pFrom;
+		WCHAR *curr = (WCHAR*)sfop->fop.pFrom;
+		WCHAR *dst = lbMultiDest ? (WCHAR*)sfop->fop.pTo : NULL;
 
 		for ( int i = 0 ; i < iQuantity; i++ )
 		{
 			DragQueryFile(hDrop,i,curr,MAX_DROP_PATH);
 			curr+=wcslen(curr)+1;
+
+			if (lbMultiDest) {
+				lstrcpy(dst, pszDropPath);
+				dst += nDstFolderLen;
+				if (*(dst-1) != L'\\') {
+					*dst++ = L'\\'; *dst = 0;
+				}
+				if (pszFileMap && *pszFileMap) {
+					int nNameLen = lstrlen(pszFileMap);
+					lstrcpyn(dst, pszFileMap, MAX_PATH);
+					pszFileMap += nNameLen+1;
+					dst += lstrlen(dst)+1;
+					MCHKHEAP;
+				}
+			}
 		}
+
+		MCHKHEAP;
 		
 		GlobalFree(stgMedium.hGlobal); hDrop = NULL;
+		if (stgMediumMap.hGlobal) {
+			if (pszFileMap) GlobalUnlock(stgMediumMap.hGlobal);
+			GlobalFree(stgMediumMap.hGlobal);
+			stgMediumMap.hGlobal = NULL;
+		}
 		
 		if (*pdwEffect == DROPEFFECT_MOVE)
 			sfop->fop.wFunc=FO_MOVE;
 		else
 			sfop->fop.wFunc=FO_COPY;
+		sfop->fop.fFlags = lbMultiDest ? FOF_MULTIDESTFILES : 0;
 
 		//sfop->fop.fFlags=FOF_SIMPLEPROGRESS; -- пусть полностью показывает
 		gConEmu.DebugStep(_T("DnD: Shell operation starting"));
@@ -995,7 +1094,8 @@ DWORD CDragDrop::ShellOpThreadProc(LPVOID lpParameter)
 
 	// Собственно операция копирования/перемещения...
 	try {
-		sfop->fop.fFlags = 0; //FOF_SIMPLEPROGRESS; -- пусть полную инфу показывает
+		//-- не сбрасывать! может быть установлен FOF_MULTIDESTFILES
+		//sfop->fop.fFlags = 0; //FOF_SIMPLEPROGRESS; -- пусть полную инфу показывает
 
 		hr = SHFileOperation(&(sfop->fop));
 	} catch(...) {
@@ -1031,6 +1131,7 @@ DWORD CDragDrop::ShellOpThreadProc(LPVOID lpParameter)
 HRESULT STDMETHODCALLTYPE CDragDrop::DragOver(DWORD grfKeyState,POINTL pt,DWORD * pdwEffect)
 {
 	HRESULT hr = S_OK;
+	DWORD dwAllowed = *pdwEffect;
 	if (!gSet.isDropEnabled && !gConEmu.isDragging()) {
 		*pdwEffect = DROPEFFECT_NONE;
 		gConEmu.DebugStep(_T("DnD: Drop disabled"));
@@ -1073,8 +1174,10 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragOver(DWORD grfKeyState,POINTL pt,DWORD 
 					*pdwEffect = DROPEFFECT_LINK;
 				else if (gConEmu.mouse.state & DRAG_R_STARTED)
 					*pdwEffect = DROPEFFECT_LINK; // при Drop - правая кнопка уже отпущена
-				else
-					*pdwEffect = (gSet.isDefCopy) ? DROPEFFECT_COPY : DROPEFFECT_MOVE;
+				else {
+					// Смотрим на допустимые эфеекты, определенные источником (иначе драг из корзины не работает)
+					*pdwEffect = (gSet.isDefCopy && (dwAllowed&DROPEFFECT_COPY)==DROPEFFECT_COPY) ? DROPEFFECT_COPY : DROPEFFECT_MOVE;
+				}
 
 				if (*pdwEffect == DROPEFFECT_LINK && lbPassive && m_pfpi->pszPassivePath[0] == 0)
 					*pdwEffect = DROPEFFECT_NONE;

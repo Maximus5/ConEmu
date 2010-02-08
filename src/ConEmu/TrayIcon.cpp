@@ -98,7 +98,7 @@ LRESULT TrayIcon::OnTryIcon(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
         POINT mPos;
         GetCursorPos(&mPos);
         SetForegroundWindow(hWnd);
-        gConEmu.ShowSysmenu(hWnd, hWnd, mPos.x, mPos.y);
+        gConEmu.ShowSysmenu(hWnd, mPos.x, mPos.y);
         PostMessage(hWnd, WM_NULL, 0, 0);
         }
         break;

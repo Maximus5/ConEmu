@@ -59,6 +59,17 @@ typedef BOOL (WINAPI* FAppThemed)();
 
 #define TID_CREATE_CON   13
 #define TID_BUFFERHEIGHT 14
+#define TID_MINIMIZE 15
+#define TID_MAXIMIZE 16
+#define TID_APPCLOSE 17
+#define TID_MINIMIZE_SEP 110
+
+#define BID_NEWCON_IDX 12
+#define BID_BUFHEIGHT_IDX 13
+#define BID_MINIMIZE_IDX 14
+#define BID_MAXIMIZE_IDX 15
+#define BID_RESTORE_IDX 16
+#define BID_APPCLOSE_IDX 17
 
 #define POST_UPDATE_TIMEOUT 2000
 
@@ -381,6 +392,25 @@ CVirtualConsole* TabBarClass::FarSendChangeTab(int tabIndex)
     return pVCon;
 }
 
+LRESULT TabBarClass::TabHitTest()
+{
+	if (gSet.isHideCaptionAlways && gSet.isTabs) {
+		if (gConEmu.mp_TabBar->IsShown()) {
+			TCHITTESTINFO tch = {{0,0}};
+			HWND hTabBar = gConEmu.mp_TabBar->mh_Tabbar;
+			RECT rcWnd; GetWindowRect(hTabBar, &rcWnd);
+			GetCursorPos(&tch.pt); // Screen coordinates
+			if (PtInRect(&rcWnd, tch.pt)) {
+				tch.pt.x -= rcWnd.left; tch.pt.y -= rcWnd.top;
+				LRESULT nTest = SendMessage(hTabBar, TCM_HITTEST, 0, (LPARAM)&tch);
+				if (nTest == -1)
+					return HTCAPTION;
+			}
+		}
+	}
+	return HTNOWHERE;
+}
+
 LRESULT CALLBACK TabBarClass::ReBarProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	switch (uMsg)
@@ -398,6 +428,38 @@ LRESULT CALLBACK TabBarClass::ReBarProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPA
 			SetFocus(ghWnd);
 			return 0;
 		}
+	case WM_SETCURSOR:
+		if (gSet.isHideCaptionAlways && gSet.isTabs && !gSet.isFullScreen && !gConEmu.isZoomed()) {
+			if (TabHitTest()==HTCAPTION) {
+				SetCursor(gConEmu.mh_CursorMove);
+				return TRUE;
+			}
+		}
+		break;
+
+	case WM_MOUSEMOVE:
+	case WM_LBUTTONDOWN: case WM_LBUTTONUP: case WM_LBUTTONDBLCLK:
+	/*case WM_RBUTTONDOWN:*/ case WM_RBUTTONUP: //case WM_RBUTTONDBLCLK:
+		if (gSet.isHideCaptionAlways && gSet.isTabs) {
+			if (TabHitTest()==HTCAPTION) {
+				POINT ptScr; GetCursorPos(&ptScr);
+				lParam = MAKELONG(ptScr.x,ptScr.y);
+				LRESULT lRc = 0;
+				if (uMsg == WM_LBUTTONDBLCLK) {
+					// Чтобы клик случайно не провалился в консоль
+					gConEmu.mouse.state |= MOUSE_SIZING_DBLCKL;
+					// Аналог AltF9
+					//gConEmu.SetWindowMode((gConEmu.isZoomed()||(gSet.isFullScreen&&gConEmu.isWndNotFSMaximized)) ? rNormal : rMaximized);
+					gConEmu.OnAltF9(TRUE);
+				} else if (uMsg == WM_RBUTTONUP) {
+					gConEmu.ShowSysmenu(ghWnd, ptScr.x, -32000);
+				} else if (!gSet.isFullScreen && !gConEmu.isZoomed()) {
+					lRc = gConEmu.WndProc(ghWnd, uMsg-(WM_MOUSEMOVE-WM_NCMOUSEMOVE), HTCAPTION, lParam);
+				}
+				return lRc;
+			}
+		}
+		break;
 	}
 	return CallWindowProc(_defaultReBarProc, hwnd, uMsg, wParam, lParam);
 }
@@ -444,15 +506,24 @@ LRESULT CALLBACK TabBarClass::ToolProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPAR
     case WM_WINDOWPOSCHANGING:
         {
         	LPWINDOWPOS pos = (LPWINDOWPOS)lParam;
-            pos->y = (gConEmu.mp_TabBar->mn_ThemeHeightDiff == 0) ? 1 : 0;
+            pos->y = (gConEmu.mp_TabBar->mn_ThemeHeightDiff == 0) ? 2 : 1;
+            if (gSet.isHideCaptionAlways && gSet.nToolbarAddSpace > 0) {
+            	SIZE sz;
+            	if (CallWindowProc(_defaultToolProc, hwnd, TB_GETIDEALSIZE, 0, (LPARAM)&sz)) {
+            		pos->cx = sz.cx + gSet.nToolbarAddSpace;
+            		RECT rcParent; GetClientRect(GetParent(hwnd), &rcParent);
+            		pos->x = rcParent.right - pos->cx;
+        		}
+            }
             return 0;
         }
 	case TB_GETMAXSIZE:
+	case TB_GETIDEALSIZE:
 		{
 			SIZE *psz = (SIZE*)lParam;
 			if (!lParam) return 0;
 			if (CallWindowProc(_defaultToolProc, hwnd, uMsg, wParam, lParam)) {
-				psz->cx += gSet.nToolbarAddSpace;
+				psz->cx += (gSet.isHideCaptionAlways ? gSet.nToolbarAddSpace : 0);
 				return 1;
 			}
 		} break;
@@ -789,7 +860,7 @@ void TabBarClass::UpdateWidth()
 		if (mh_Toolbar) {
 			nBarIndex = SendMessage(mh_Rebar, RB_IDTOINDEX, 2, 0);
 			SendMessage(mh_Toolbar, TB_GETMAXSIZE, 0, (LPARAM)&sz);
-			sz.cx += gSet.nToolbarAddSpace;
+			sz.cx += (gSet.isHideCaptionAlways ? gSet.nToolbarAddSpace : 0);
 			lbWideEnough = (sz.cx + 150) <= client.right;
 			if (!lbWideEnough) {
 				if (IsWindowVisible(mh_Toolbar))
@@ -904,6 +975,15 @@ bool TabBarClass::OnNotify(LPNMHDR nmhdr)
             lstrcpyn(pDisp->pszText, 
 	            lbPressed ? L"BufferHeight mode is ON" : L"BufferHeight mode is off",
 	            pDisp->cchTextMax);
+        } else
+        if (pDisp->iItem == TID_MINIMIZE) {
+        	lstrcpyn(pDisp->pszText, _T("Minimize window"), pDisp->cchTextMax);
+        } else 
+        if (pDisp->iItem == TID_MAXIMIZE) {
+			lstrcpyn(pDisp->pszText, _T("Maximize window"), pDisp->cchTextMax);
+        } else
+        if (pDisp->iItem == TID_APPCLOSE) {
+        	lstrcpyn(pDisp->pszText, _T("Close ALL consoles"), pDisp->cchTextMax);
         }
         return true;
     }
@@ -973,6 +1053,18 @@ void TabBarClass::OnCommand(WPARAM wParam, LPARAM lParam)
     } else if (wParam == TID_BUFFERHEIGHT) {
 		SendMessage(mh_Toolbar, TB_CHECKBUTTON, TID_BUFFERHEIGHT, gConEmu.ActiveCon()->RCon()->isBufferHeight());
 		gConEmu.AskChangeBufferHeight();
+    } else
+    if (wParam == TID_MINIMIZE) {
+    	PostMessage(ghWnd, WM_SYSCOMMAND, SC_MINIMIZE, 0);
+    } else 
+    if (wParam == TID_MAXIMIZE) {
+		// Чтобы клик случайно не провалился в консоль
+		gConEmu.mouse.state |= MOUSE_SIZING_DBLCKL;
+		// Аналог AltF9
+		gConEmu.SetWindowMode((gConEmu.isZoomed()||(gSet.isFullScreen&&gConEmu.isWndNotFSMaximized)) ? rNormal : rMaximized);
+    } else
+    if (wParam == TID_APPCLOSE) {
+    	PostMessage(ghWnd, WM_SYSCOMMAND, SC_CLOSE, 0);
     }
 }
 
@@ -1012,6 +1104,29 @@ void TabBarClass::Invalidate()
 {
     if (gConEmu.mp_TabBar->IsActive())
         InvalidateRect(mh_Rebar, NULL, TRUE);
+}
+
+void TabBarClass::OnCaptionHidden()
+{
+	if (!this) return;
+	if (mh_Toolbar)
+	{
+		SendMessage(mh_Toolbar, TB_HIDEBUTTON, TID_MINIMIZE_SEP, !gSet.isHideCaptionAlways);
+		SendMessage(mh_Toolbar, TB_HIDEBUTTON, TID_MINIMIZE, !gSet.isHideCaptionAlways);
+		SendMessage(mh_Toolbar, TB_HIDEBUTTON, TID_MAXIMIZE, !gSet.isHideCaptionAlways);
+		SendMessage(mh_Toolbar, TB_HIDEBUTTON, TID_APPCLOSE, !gSet.isHideCaptionAlways);
+	}
+}
+
+void TabBarClass::OnWindowStateChanged()
+{
+	if (!this) return;
+	if (mh_Toolbar)
+	{
+		TBBUTTONINFO tbi = {sizeof(TBBUTTONINFO), TBIF_IMAGE};
+		tbi.iImage = gConEmu.isZoomed() ? BID_MAXIMIZE_IDX : BID_RESTORE_IDX;
+		SendMessage(mh_Toolbar, TB_SETBUTTONINFO, TID_MAXIMIZE, (LPARAM)&tbi);
+	}
 }
 
 // nConNumber - 1based
@@ -1068,12 +1183,13 @@ HWND TabBarClass::CreateToolbar()
 
  
    SendMessage(mh_Toolbar, TB_BUTTONSTRUCTSIZE, (WPARAM) sizeof(TBBUTTON), 0); 
-   SendMessage(mh_Toolbar, TB_SETBITMAPSIZE, 0, MAKELONG(16,16)); 
+   SendMessage(mh_Toolbar, TB_SETBITMAPSIZE, 0, MAKELONG(14,14)); 
    TBADDBITMAP bmp = {g_hInstance,IDB_CONMAN1};
    int nFirst = SendMessage(mh_Toolbar, TB_ADDBITMAP, TID_BUFFERHEIGHT, (LPARAM)&bmp);
 
    //buttons
-   TBBUTTON btn = {0, 1, TBSTATE_ENABLED, TBSTYLE_CHECKGROUP}, sep = {0, 0, TBSTATE_ENABLED, TBSTYLE_SEP};
+   TBBUTTON btn = {0, 1, TBSTATE_ENABLED, TBSTYLE_CHECKGROUP};
+   TBBUTTON sep = {0, 100, TBSTATE_ENABLED, TBSTYLE_SEP};
    int nActiveCon = gConEmu.ActiveConNum()+1;
    // Console numbers
    for (int i = 1; i <= 12; i++) {
@@ -1084,20 +1200,29 @@ HWND TabBarClass::CreateToolbar()
 		   | ((i == nActiveCon) ? TBSTATE_CHECKED : 0);
 	   SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&btn);
    }
-   SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&sep);
-
-   // Номер следующей иконки
-   btn.iBitmap = nFirst + 12;
+   SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&sep); sep.idCommand++;
 
    // New console
    btn.fsStyle = BTNS_BUTTON; btn.idCommand = TID_CREATE_CON; btn.fsState = TBSTATE_ENABLED;
+   btn.iBitmap = nFirst + BID_NEWCON_IDX;
    SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&btn);
-   SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&sep);
+
+   SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&sep); sep.idCommand++;
 
    // Buffer height mode
-   btn.iBitmap++; btn.idCommand = TID_BUFFERHEIGHT; btn.fsState = TBSTATE_ENABLED;
+   btn.iBitmap = nFirst + BID_BUFHEIGHT_IDX; btn.idCommand = TID_BUFFERHEIGHT; btn.fsState = TBSTATE_ENABLED;
    SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&btn);
 
+   sep.fsState |= TBSTATE_HIDDEN; sep.idCommand = TID_MINIMIZE_SEP;
+   SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&sep);
+
+   // Min,Max,Close
+   btn.iBitmap = nFirst + BID_MINIMIZE_IDX; btn.idCommand = TID_MINIMIZE; btn.fsState = TBSTATE_ENABLED|TBSTATE_HIDDEN;
+   SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&btn);
+   btn.iBitmap = nFirst + (gConEmu.isZoomed() ? BID_MAXIMIZE_IDX : BID_RESTORE_IDX); btn.idCommand = TID_MAXIMIZE;
+   SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&btn);
+   btn.iBitmap = nFirst + BID_APPCLOSE_IDX; btn.idCommand = TID_APPCLOSE;
+   SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&btn);
 
    SendMessage(mh_Toolbar, TB_AUTOSIZE, 0, 0);
    SIZE sz; 

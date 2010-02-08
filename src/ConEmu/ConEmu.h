@@ -166,6 +166,8 @@ public:
 	//TCHAR ms_EditorRus[16], ms_ViewerRus[16], ms_TempPanel[32], ms_TempPanelRus[32];
 	OSVERSIONINFO m_osv;
 	BOOL mb_IsUacAdmin;
+	HCURSOR mh_CursorWait, mh_CursorArrow, mh_CursorAppStarting, mh_CursorMove;
+	HCURSOR mh_SplitV, mh_SplitH;
 protected:
 	CDragDrop *mp_DragDrop;
 	//CProgressBars *ProgressBars;
@@ -180,8 +182,6 @@ protected:
 	CVirtualConsole *mp_VActive, *mp_VCon1, *mp_VCon2;
 	bool mb_SkipSyncSize, mb_PassSysCommand, mb_CreatingActive;
 	BOOL mb_WaitCursor, mb_InTrackSysMenu;
-	HCURSOR mh_CursorWait, mh_CursorArrow, mh_CursorAppStarting, mh_CursorMove;
-	HCURSOR mh_SplitV, mh_SplitH;
 	//wchar_t *mpsz_RecreateCmd;
 	ITaskbarList3 *mp_TaskBar3;
 	ITaskbarList2 *mp_TaskBar2;
@@ -219,6 +219,7 @@ protected:
 	UINT mn_PostConsoleResize;
 	UINT mn_ConsoleLangChanged;
 	UINT mn_MsgPostOnBufferHeight;
+	UINT mn_MsgPostAltF9;
 	//UINT mn_MsgSetForeground;
 	UINT mn_MsgFlashWindow;
 	
@@ -306,7 +307,7 @@ public:
 	void SetWaitCursor(BOOL abWait);
 	bool SetWindowMode(uint inMode);
 	void ShowOldCmdVersion(DWORD nCmd, DWORD nVersion, int bFromServer);
-	void ShowSysmenu(HWND Wnd, HWND Owner, int x, int y);
+	void ShowSysmenu(HWND Wnd=NULL, int x=-32000, int y=-32000);
 	void StartDebugLogConsole();
 	void SyncConsoleToWindow();
 	void SyncNtvdm();
@@ -321,6 +322,7 @@ public:
 	static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 	LRESULT WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 public:
+	void OnAltF9(BOOL abPosted=FALSE);
 	void OnBufferHeight(); //BOOL abBufferHeight);
 	LRESULT OnClose(HWND hWnd);
 	void OnConsoleResize(BOOL abPosted=FALSE);

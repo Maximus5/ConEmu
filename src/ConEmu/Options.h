@@ -111,7 +111,7 @@ public:
     DWORD FontSizeX;  // ширина основного шрифта
     DWORD FontSizeX2; // ширина для FixFarBorders (ширина создаваемого шрифта для отрисовки рамок, не путать со знакоместом)
     DWORD FontSizeX3; // ширина знакоместа при моноширном режиме (не путать с FontSizeX2)
-    bool isFullScreen, isHideCaption, isHideCaptionAlways;
+    bool isFullScreen, isHideCaption, isHideCaptionAlways, isHideCaptionAlwaysLoad;
     char isFixFarBorders;
 	bool isMouseSkipActivation, isMouseSkipMoving;
 	bool isFarHourglass; DWORD nFarHourglassDelay;

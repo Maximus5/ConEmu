@@ -1,5 +1,10 @@
-Maximus5 - 2010.02.??
+Maximus5 - 2010.02.08
+[%] Issue 176: files dragged from archives has zero size.
+[+] В файле настроек xml можно использовать тип long (например <value name="ToolbarAddSpace" type="long" data="24"/>).
+[+] При полностью скрытом заголовке окно можно таскать за свободное место бара.
 [+] В интерфейс вынесены настройки TrueColorer, ExtendFonts, bgImageColors.
+[+] Добавлен Drop из Windows Recycle Bin.
+
 
 Maximus5 - 2010.02.07
 [%] В некоторых случаях ресайз панелей конфликтовал с плагином PanelTabs.

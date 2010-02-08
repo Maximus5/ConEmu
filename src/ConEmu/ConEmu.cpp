@@ -206,6 +206,7 @@ CConEmuMain::CConEmuMain()
 	mn_MsgPostOnBufferHeight = ++nAppMsg;
 	//mn_MsgSetForeground = RegisterWindowMessage(CONEMUMSG_SETFOREGROUND);
 	mn_MsgFlashWindow = RegisterWindowMessage(CONEMUMSG_FLASHWINDOW);
+	mn_MsgPostAltF9 = ++nAppMsg;
 }
 
 BOOL CConEmuMain::Init()
@@ -1483,6 +1484,8 @@ wrap:
 			bWasSetFullscreen = gSet.isFullScreen;
 		}
 	}
+
+	mp_TabBar->OnWindowStateChanged();
 
 	#ifdef _DEBUG
 	dwStyle = GetWindowLongPtr(ghWnd, GWL_STYLE);
@@ -2827,8 +2830,21 @@ void CConEmuMain::ShowOldCmdVersion(DWORD nCmd, DWORD nVersion, int bFromServer)
     mb_InShowOldCmdVersion = FALSE; // теперь можно показать еще одно...
 }
 
-void CConEmuMain::ShowSysmenu(HWND Wnd, HWND Owner, int x, int y)
+void CConEmuMain::ShowSysmenu(HWND Wnd, int x, int y)
 {
+	if (!Wnd)
+		Wnd = ghWnd;
+	if ((x == -32000) || (y == -32000)) {
+		RECT rect, cRect;
+		GetWindowRect(ghWnd, &rect);
+		GetClientRect(ghWnd, &cRect);
+		WINDOWINFO wInfo;   GetWindowInfo(ghWnd, &wInfo);
+		int nTabShift = (gSet.isHideCaptionAlways & gConEmu.mp_TabBar->IsShown()) ? gConEmu.mp_TabBar->GetTabbarHeight() : 0;
+		if (x == -32000)
+			x = rect.right - cRect.right - wInfo.cxWindowBorders;
+		if (y == -32000)
+			y = rect.bottom - cRect.bottom - wInfo.cyWindowBorders + nTabShift;
+	}
     bool iconic = isIconic();
     bool zoomed = isZoomed();
     bool visible = IsWindowVisible(Wnd);
@@ -2847,10 +2863,10 @@ void CConEmuMain::ShowSysmenu(HWND Wnd, HWND Owner, int x, int y)
 
     SendMessage(Wnd, WM_INITMENU, (WPARAM)systemMenu, 0);
     SendMessage(Wnd, WM_INITMENUPOPUP, (WPARAM)systemMenu, MAKELPARAM(0, true));
-    SetActiveWindow(Owner);
+    SetActiveWindow(Wnd);
 
 	mb_InTrackSysMenu = TRUE;
-    int command = TrackPopupMenu(systemMenu, TPM_RETURNCMD | TPM_LEFTBUTTON | TPM_RIGHTBUTTON, x, y, 0, Owner, NULL);
+    int command = TrackPopupMenu(systemMenu, TPM_RETURNCMD | TPM_LEFTBUTTON | TPM_RIGHTBUTTON, x, y, 0, Wnd, NULL);
 	mb_InTrackSysMenu = FALSE;
 
     if (Icon.isWindowInTray)
@@ -3906,8 +3922,10 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
         //UpdateWindow(ghWnd);
         //}
         
-		if (gSet.isHideCaptionAlways)
+		if (gSet.isHideCaptionAlwaysLoad) {
+			gSet.isHideCaptionAlways = gSet.isHideCaptionAlwaysLoad;
 			OnHideCaption();
+		}
 
         PostMessage(ghWnd, mn_MsgPostCreate, 0, 0);
     } else {
@@ -4337,10 +4355,30 @@ void CConEmuMain::OnHideCaption()
 	mb_SkipSyncSize = TRUE;
 	SetWindowLongPtr(ghWnd, GWL_STYLE, dwStyle);
 	OnSize(-1);
+	mp_TabBar->OnCaptionHidden();
 	mb_SkipSyncSize = FALSE;
-#ifdef _DEBUG
-#endif
-	SyncWindowToConsole();
+	if (!gSet.isFullScreen && !isZoomed() && !isIconic()) {
+		RECT rcCon = MakeRect(gSet.wndWidth,gSet.wndHeight);
+		RECT rcWnd = CalcRect(CER_MAIN, rcCon, CER_CONSOLE); // размеры окна
+		RECT wndR; GetWindowRect(ghWnd, &wndR); // текущий XY
+		if (gSet.isAdvLogging) {
+			char szInfo[128]; wsprintfA(szInfo, "OnHideCaption(Cols=%i, Rows=%i)", gSet.wndWidth,gSet.wndHeight);
+			mp_VActive->RCon()->LogString(szInfo);
+		}
+		MOVEWINDOW ( ghWnd, wndR.left, wndR.top, rcWnd.right, rcWnd.bottom, 1);
+
+		GetWindowRect(ghWnd, &mrc_Ideal);
+	}
+}
+
+void CConEmuMain::OnAltF9(BOOL abPosted/*=FALSE*/)
+{
+	if (!abPosted) {
+		PostMessage(ghWnd, gConEmu.mn_MsgPostAltF9, 0, 0);
+		return;
+	}
+
+	gConEmu.SetWindowMode((gConEmu.isZoomed()||(gSet.isFullScreen&&gConEmu.isWndNotFSMaximized)) ? rNormal : rMaximized);
 }
 
 LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
@@ -4760,8 +4798,8 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			// В клиентской области (области отрисовки)
 			if (PtInRect(&dcRect, ptCur)) {
 				mb_MouseCaptured = TRUE;
-				TODO("После скрытия ViewPort наверное SetCapture нужно будет делать на ghWnd");
-				SetCapture(ghWndDC);
+				//TODO("После скрытия ViewPort наверное SetCapture нужно будет делать на ghWnd");
+				SetCapture(ghWnd); // 100208 было ghWndDC
 			}
 		}
 	} else {
@@ -5566,12 +5604,12 @@ LRESULT CConEmuMain::OnSetCursor(WPARAM wParam, LPARAM lParam)
 	if (((HWND)wParam) != ghWnd || isSizing()
 		|| (LOWORD(lParam) != HTCLIENT && LOWORD(lParam) != HTNOWHERE))
 	{
-		if (gSet.isHideCaptionAlways && !mb_InTrackSysMenu && !isSizing()
+		/*if (gSet.isHideCaptionAlways && !mb_InTrackSysMenu && !isSizing()
 			&& (LOWORD(lParam) == HTTOP || LOWORD(lParam) == HTCAPTION))
 		{
 			SetCursor(mh_CursorMove);
 			return TRUE;
-		}
+		}*/
 		return FALSE;
 	}
 	
@@ -6711,13 +6749,14 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 
 	case WM_NCHITTEST:
 		{
-			result = -1;
-			/*if (gSet.isHideCaptionAlways && gSet.isTabs) {
+			/*result = -1;
+			if (gSet.isHideCaptionAlways && gSet.isTabs) {
 				if (gConEmu.mp_TabBar->IsShown()) {
 					HWND hTabBar = gConEmu.mp_TabBar->GetTabbar();
 					RECT rcWnd; GetWindowRect(hTabBar, &rcWnd);
 					TCHITTESTINFO tch = {{LOWORD(lParam),HIWORD(lParam)}};
 					if (PtInRect(&rcWnd, tch.pt)) {
+						// Преобразовать в относительные координаты
 						tch.pt.x -= rcWnd.left; tch.pt.y -= rcWnd.top;
 						LRESULT nTest = SendMessage(hTabBar, TCM_HITTEST, 0, (LPARAM)&tch);
 						if (nTest == -1) {
@@ -6728,7 +6767,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			}
 			if (result == -1)*/
 			result = DefWindowProc(hWnd, messg, wParam, lParam);
-			if (gSet.isHideCaptionAlways && result == HTTOP)
+			if (gSet.isHideCaptionAlways && !gConEmu.mp_TabBar->IsShown() && result == HTTOP)
 				result = HTCAPTION;
 		} break;
         
@@ -6810,6 +6849,9 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		//	return 0;
 		} else if (messg == gConEmu.mn_MsgFlashWindow) {
 			return OnFlashWindow((wParam & 0xFF000000) >> 24, wParam & 0xFFFFFF, (HWND)lParam);
+		} else if (messg == gConEmu.mn_MsgPostAltF9) {
+			OnAltF9(TRUE);
+			return 0;
 		}
         //else if (messg == gConEmu.mn_MsgCmdStarted || messg == gConEmu.mn_MsgCmdStopped) {
         //  return gConEmu.OnConEmuCmd( (messg == gConEmu.mn_MsgCmdStarted), (HWND)wParam, (DWORD)lParam);

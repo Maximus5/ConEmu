@@ -654,6 +654,15 @@ bool SettingsXML::Load(const wchar_t *regName, LPBYTE value, DWORD nSize)
 				lbRc = true;
 			}
 		
+		} else if (!lstrcmpi(bsType, L"long")) {
+			wchar_t* pszEnd = NULL;
+			int lVal = wcstol(bsData, &pszEnd, 10);
+			if (nSize > 4) nSize = 4;
+			if (pszEnd && pszEnd != bsData) {
+				memmove(value, &lVal, nSize);
+				lbRc = true;
+			}
+
 		} else if (!lstrcmpi(bsType, L"dword")) {
 			wchar_t* pszEnd = NULL;
 			DWORD lVal = wcstoul(bsData, &pszEnd, 16);
@@ -747,7 +756,7 @@ void SettingsXML::Save(const wchar_t *regName, LPCBYTE value, DWORD nType, DWORD
 	bool bNeedSetType = false;
 	
 	// nType:
-	// REG_DWORD:    сохранение числа в 16-ричном или 10-чном формате, в зависимости от того, что сейчас указано в xml ("dword"/"ulong")
+	// REG_DWORD:    сохранение числа в 16-ричном или 10-чном формате, в зависимости от того, что сейчас указано в xml ("dword"/"ulong"/"long")
 	// REG_BINARY:   строго в hex (FF,FF,...)
 	// REG_SZ:       ASCIIZ строка, можно проконтролировать, чтобы nSize/2 не был меньше длины строки
 	// REG_MULTI_SZ: ASCIIZZ. При формировании <list...> нужно убедиться, что мы не вылезли за пределы nSize
@@ -768,6 +777,8 @@ void SettingsXML::Save(const wchar_t *regName, LPCBYTE value, DWORD nType, DWORD
 		wchar_t szValue[32];
 		if (bsType && (bsType[0] == L'u' || bsType[0] == L'U')) {
 			wsprintf(szValue, L"%u", *(LPDWORD)value);
+		} else if (bsType && (bsType[0] == L'l' || bsType[0] == L'L')) {
+				wsprintf(szValue, L"%i", *(int*)value);
 		} else {
 			wsprintf(szValue, L"%08x", *(LPDWORD)value);
 			if (bsType) ::SysFreeString(bsType);

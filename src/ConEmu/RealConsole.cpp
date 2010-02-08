@@ -2207,19 +2207,14 @@ void CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
         else if ((messg == WM_SYSKEYDOWN || messg == WM_SYSKEYUP) && wParam == VK_SPACE && lParam & (1<<29) && !isPressed(VK_SHIFT))
         {   // Нада, или системное меню будет недоступно
 			if (messg == WM_SYSKEYUP) { // Только по UP, чтобы не "булькало"
-				RECT rect, cRect;
-				GetWindowRect(ghWnd, &rect);
-				GetClientRect(ghWnd, &cRect);
-				WINDOWINFO wInfo;   GetWindowInfo(ghWnd, &wInfo);
-				int nTabShift = (gSet.isHideCaptionAlways & gConEmu.mp_TabBar->IsShown()) ? gConEmu.mp_TabBar->GetTabbarHeight() : 0;
-				gConEmu.ShowSysmenu(ghWnd, ghWnd, 
-					rect.right - cRect.right - wInfo.cxWindowBorders, 
-					rect.bottom - cRect.bottom - wInfo.cyWindowBorders + nTabShift );
+				gConEmu.ShowSysmenu();
 			}
         }
         else if (messg == WM_KEYUP && wParam == VK_MENU && isSkipNextAltUp) isSkipNextAltUp = false;
         else if (messg == WM_SYSKEYDOWN && wParam == VK_F9 && lParam & (1<<29)/*Бред. это 29-й бит, а не число 29*/ && !isPressed(VK_SHIFT))
-            gConEmu.SetWindowMode((gConEmu.isZoomed()||(gSet.isFullScreen&&gConEmu.isWndNotFSMaximized)) ? rNormal : rMaximized);
+			// AltF9
+            //gConEmu.SetWindowMode((gConEmu.isZoomed()||(gSet.isFullScreen&&gConEmu.isWndNotFSMaximized)) ? rNormal : rMaximized);
+            gConEmu.OnAltF9(TRUE);
         else {
             INPUT_RECORD r = {KEY_EVENT};
 

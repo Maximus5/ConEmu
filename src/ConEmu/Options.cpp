@@ -424,7 +424,8 @@ void CSettings::LoadSettings()
 
         reg->Load(L"WindowMode", gConEmu.WindowMode);
         reg->Load(L"HideCaption", isHideCaption);
-		reg->Load(L"HideCaptionAlways", isHideCaptionAlways);
+		// грузим именно в isHideCaptionAlwaysLoad, т.к. есть какие-то проблемы с инициализацией без заголовка
+		reg->Load(L"HideCaptionAlways", isHideCaptionAlwaysLoad);
         reg->Load(L"ConWnd X", wndX); /*if (wndX<-10) wndX = 0;*/
         reg->Load(L"ConWnd Y", wndY); /*if (wndY<-10) wndY = 0;*/
 		// ЭТО не влияет на szDefCmd. Только прямое указание флажка "/BufferHeight N" 
@@ -545,7 +546,8 @@ void CSettings::LoadSettings()
 			reg->Load(L"TabFontHeight", nTabFontHeight);
         reg->Load(L"TabFrame", isTabFrame);
         reg->Load(L"TabMargins", rcTabMargins);
-		reg->Load(L"ToolbarAddSpace", nToolbarAddSpace); if (nToolbarAddSpace<0 || nToolbarAddSpace>100) nToolbarAddSpace = 0;
+		reg->Load(L"ToolbarAddSpace", nToolbarAddSpace);
+			if (nToolbarAddSpace<0 || nToolbarAddSpace>100) nToolbarAddSpace = 0;
         reg->Load(L"SlideShowElapse", nSlideShowElapse); // obsolete
         reg->Load(L"IconID", nIconID);
         reg->Load(L"TabConsole", szTabConsole, sizeofarray(szTabConsole));

@@ -86,6 +86,7 @@ protected:
 	static WNDPROC _defaultToolProc;
 	static LRESULT CALLBACK ReBarProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 	static WNDPROC _defaultReBarProc;
+	static LRESULT TabHitTest();
 	
 	//typedef union tag_FAR_WND_ID { 
 	//	struct {
@@ -141,6 +142,8 @@ public:
 	void UpdatePosition();
 	void UpdateWidth();
 	void OnConsoleActivated(int nConNumber/*, BOOL bAlternative*/);
+	void OnCaptionHidden();
+	void OnWindowStateChanged();
 	void OnBufferHeight(BOOL abBufferHeight);
 	bool OnNotify(LPNMHDR nmhdr);
 	void OnCommand(WPARAM wParam, LPARAM lParam);
