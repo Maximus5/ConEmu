@@ -104,9 +104,9 @@ public:
 	void SelectFont(HFONT hNew);
 	void SelectBrush(HBRUSH hNew);
 	inline bool isCharBorder(WCHAR inChar);
-	bool isCharBorderVertical(WCHAR inChar);
-	bool isCharProgress(WCHAR inChar);
-	bool isCharScroll(WCHAR inChar);
+	static bool isCharBorderVertical(WCHAR inChar);
+	static bool isCharProgress(WCHAR inChar);
+	static bool isCharScroll(WCHAR inChar);
 	void BlitPictureTo(int inX, int inY, int inWidth, int inHeight);
 	bool CheckSelection(const CONSOLE_SELECTION_INFO& select, SHORT row, SHORT col);
 	//bool GetCharAttr(TCHAR ch, WORD atr, TCHAR& rch, BYTE& foreColorNum, BYTE& backColorNum, FONT* pFont);

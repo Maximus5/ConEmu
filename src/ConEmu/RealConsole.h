@@ -446,4 +446,6 @@ private:
 	//
 	wchar_t ms_ConStatus[80];
 	void SetConStatus(LPCWSTR asStatus);
+	bool isCharBorderVertical(WCHAR inChar);
+	bool isCharBorderHorizontal(WCHAR inChar);
 };

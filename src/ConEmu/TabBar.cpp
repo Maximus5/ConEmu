@@ -1184,7 +1184,7 @@ HWND TabBarClass::CreateToolbar()
  
    SendMessage(mh_Toolbar, TB_BUTTONSTRUCTSIZE, (WPARAM) sizeof(TBBUTTON), 0); 
    SendMessage(mh_Toolbar, TB_SETBITMAPSIZE, 0, MAKELONG(14,14)); 
-   TBADDBITMAP bmp = {g_hInstance,IDB_CONMAN1};
+   TBADDBITMAP bmp = {g_hInstance,IDB_MAIN_TOOLBAR};
    int nFirst = SendMessage(mh_Toolbar, TB_ADDBITMAP, TID_BUFFERHEIGHT, (LPARAM)&bmp);
 
    //buttons

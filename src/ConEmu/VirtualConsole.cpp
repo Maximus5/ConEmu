@@ -545,6 +545,7 @@ bool CVirtualConsole::isCharBorderVertical(WCHAR inChar)
     //if (inChar==ucBoxSinglVert || inChar==0x2503 || inChar==0x2506 || inChar==0x2507
     //    || (inChar>=0x250A && inChar<=0x254B) || inChar==0x254E || inChar==0x254F
     //    || (inChar>=0x2551 && inChar<=0x25C5)) // По набору символов Arial Unicode MS
+    TODO("ucBoxSinglHorz отсекать не нужно?");
 	if (inChar != ucBoxDblHorz && (inChar >= ucBoxSinglVert && inChar <= ucBoxDblVertHorz))
         return true;
     else

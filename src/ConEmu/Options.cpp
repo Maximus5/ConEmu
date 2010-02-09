@@ -287,6 +287,8 @@ void CSettings::InitSettings()
     //WindowMode=rNormal; -- устанавливается в конструкторе CConEmuMain
     isFullScreen = false;
     isHideCaption = isHideCaptionAlways = false;
+    isShowOnTaskBar = true;
+    isDontMinimize = false;
     wndX = 0; wndY = 0; wndCascade = true;
     isConVisible = false;
     nSlideShowElapse = 2500;
@@ -1448,7 +1450,7 @@ LRESULT CSettings::OnInitDialog_Ext()
 		CheckDlgButton(hExt, cbSkipFocusEvents, BST_CHECKED);
 
 	if (isMulti)
-		CheckDlgButton(hExt, cbConMan, BST_CHECKED);
+		CheckDlgButton(hExt, cbMultiCon, BST_CHECKED);
 	if (isMultiNewConfirm)
 		CheckDlgButton(hExt, cbNewConfirm, BST_CHECKED);
 	if (AutoBufferHeight)
@@ -1501,11 +1503,16 @@ LRESULT CSettings::OnInitDialog_Color()
 
 	wchar_t temp[MAX_PATH];
 
-	for (uint i = 0; i < 32; i++)
+	for (uint i = 0; i <= 32; i++)
 	{
-		SendDlgItemMessage(hColors, 1100 + i, EM_SETLIMITTEXT, 11, 0);
-		wsprintf(temp, L"%i %i %i", getR(Colors[i]), getG(Colors[i]), getB(Colors[i]));
-		SetDlgItemText(hColors, 1100 + i, temp);
+		SendDlgItemMessage(hColors, tc0 + i, EM_SETLIMITTEXT, 11, 0);
+        COLORREF cr = 0;
+        if (i <= 31)
+        	cr = Colors[i];
+        else if (i == 32)
+        	cr = ColorKey;
+		wsprintf(temp, L"%i %i %i", getR(cr), getG(cr), getB(cr));
+		SetDlgItemText(hColors, tc0 + i, temp);
 	}
 
 	for (uint i=0; i < 16; i++)
@@ -1546,7 +1553,7 @@ LRESULT CSettings::OnInitDialog_Color()
 	SendDlgItemMessage(hColors, slTransparent, TBM_SETRANGE, (WPARAM) true, (LPARAM) MAKELONG(MIN_ALPHA_VALUE, 255));
 	SendDlgItemMessage(hColors, slTransparent, TBM_SETPOS  , (WPARAM) true, (LPARAM) nTransparent);
 	CheckDlgButton(hColors, cbTransparent, (nTransparent!=255) ? BST_CHECKED : BST_UNCHECKED);
-
+	CheckDlgButton(hColors, cbTransparentColorKey, isColorKey ? BST_CHECKED : BST_UNCHECKED);
 
 	RegisterTipsFor(hColors);
 
@@ -1673,8 +1680,8 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
 		isCursorBlink = IsChecked(hMain,cbCursorBlink);
 		break;
         
-    case cbConMan:
-        isMulti = IsChecked(hExt, cbConMan);
+    case cbMultiCon:
+        isMulti = IsChecked(hExt, cbMultiCon);
         break;
 
 	case cbNewConfirm:
@@ -1925,6 +1932,14 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
 		}
 		SetForegroundWindow(ghOpWnd);
 		break;
+		
+	case cbShowOnTaskbar:
+		isShowOnTaskBar = IsChecked(hExt, cbShowOnTaskbar);
+		break;
+		
+	case cbDontMinimize:
+		isDontMinimize = IsChecked(hExt, cbDontMinimize);
+		break;
 
     default:
         break;
@@ -1941,7 +1956,7 @@ LRESULT CSettings::OnColorButtonClicked(WPARAM wParam, LPARAM lParam)
     case cbExtendColors:
         isExtendColors = IsChecked(hColors, cbExtendColors) == BST_CHECKED ? true : false;
         for (int i=16; i<32; i++)
-            EnableWindow(GetDlgItem(hColors, 1100+i), isExtendColors);
+            EnableWindow(GetDlgItem(hColors, tc0+i), isExtendColors);
         EnableWindow(GetDlgItem(hColors, lbExtendIdx), isExtendColors);
         if (lParam) {
             gConEmu.Update(true);
@@ -1966,6 +1981,19 @@ LRESULT CSettings::OnColorButtonClicked(WPARAM wParam, LPARAM lParam)
 				gConEmu.OnTransparent();
 			}
 		} break;
+	case cbTransparentColorKey:
+		{
+			isColorKey = IsChecked(hColors, cbTransparentColorKey);
+			// Чтобы юзеру на экране не мелькал выбранный цвет для ColorKey
+			// порядок действий выбираем в зависимости от флажка
+			if (isColorKey) {
+				gConEmu.OnTransparent();
+				gConEmu.Update(true);
+			} else {
+				gConEmu.Update(true);
+				gConEmu.OnTransparent();
+			}
+		} break;
     //case cbVisualizer:
     //    isVisualizer = IsChecked(hColors, cbVisualizer) == BST_CHECKED ? true : false;
     //    EnableWindow(GetDlgItem(hColors, lbVisNormal), isVisualizer);
@@ -1979,15 +2007,24 @@ LRESULT CSettings::OnColorButtonClicked(WPARAM wParam, LPARAM lParam)
     //    break;
 
     default:
-        if (CB >= 1000 && CB <= 1031)
+        if (CB >= c0 && CB <= c32)
         {
-            COLORREF color = Colors[CB - 1000];
+            COLORREF color = 0;
+            if (CB <= c31)
+            	color = Colors[CB - c0];
+            else if (CB == c32)
+            	color = ColorKey;
+            	
 			wchar_t temp[MAX_PATH];
 			if( ShowColorDialog(ghOpWnd, &color) )
             {
-                Colors[CB - 1000] = color;
+            	if (CB <= c31)
+                	Colors[CB - c0] = color;
+	            else if (CB == c32)
+	            	ColorKey = color;
+                	
                 wsprintf(temp, L"%i %i %i", getR(color), getG(color), getB(color));
-                SetDlgItemText(hColors, CB + 100, temp);
+                SetDlgItemText(hColors, CB + (tc0-c0), temp);
                 InvalidateRect(GetDlgItem(hColors, CB), 0, 1);
 
                 gConEmu.m_Back.Refresh();
@@ -2017,12 +2054,12 @@ BOOL CSettings::GetColorRef(HWND hDlg, WORD TB, COLORREF* pCR)
 			*sp2 = 0;
 			sp2++;
 			r = klatoi(temp); g = klatoi(sp1), b = klatoi(sp2);
-			if (r >= 0 && r <= 255 && g >= 0 && g <= 255 && b >= 0 && b <= 255 && Colors[TB - 1100] != RGB(r, g, b))
+			if (r >= 0 && r <= 255 && g >= 0 && g <= 255 && b >= 0 && b <= 255 && *pCR != RGB(r, g, b))
 			{
 				*pCR = RGB(r, g, b);
 				result = TRUE;
 				//gConEmu.Update(true);
-				//InvalidateRect(GetDlgItem(hColors, TB - 100), 0, 1);
+				//InvalidateRect(GetDlgItem(hColors, TB - (tc0-c0)), 0, 1);
 			}
 		}
 	}
@@ -2033,13 +2070,18 @@ BOOL CSettings::GetColorRef(HWND hDlg, WORD TB, COLORREF* pCR)
 LRESULT CSettings::OnColorEditChanged(WPARAM wParam, LPARAM lParam)
 {
     WORD TB = LOWORD(wParam);
-    if (TB >= 1100 && TB <= 1131)
+    if (TB >= tc0 && TB <= tc31)
     {
-		if (GetColorRef(hColors, TB, &(Colors[TB - 1100]))) {
+		if (GetColorRef(hColors, TB, &(Colors[TB - tc0]))) {
 			gConEmu.Update(true);
-			InvalidateRect(GetDlgItem(hColors, TB - 100), 0, 1);
+			InvalidateRect(GetDlgItem(hColors, TB - (tc0-c0)), 0, 1);
 		}
 	} else if (TB == tc32) {
+		if (GetColorRef(hColors, TB, &ColorKey)) {
+			gConEmu.Update(true);
+			gConEmu.OnTransparent();
+			InvalidateRect(GetDlgItem(hColors, TB - (tc0-c0)), 0, 1);
+		}
 	}
     return 0;
 }
@@ -2141,7 +2183,7 @@ LRESULT CSettings::OnColorComboBox(WPARAM wParam, LPARAM lParam)
 				Colors[i] = pdwDefData[i];
 				wsprintf(temp, L"%i %i %i", getR(Colors[i]), getG(Colors[i]), getB(Colors[i]));
 				SetDlgItemText(hColors, 1100 + i, temp);
-				InvalidateRect(GetDlgItem(hColors, 1000+i), 0, 1);
+				InvalidateRect(GetDlgItem(hColors, c0+i), 0, 1);
 			}
 		} else return 0;
 	}
@@ -2426,16 +2468,21 @@ INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPara
         }
         return 0;
 
-    case WM_CTLCOLORSTATIC:
-        for (uint i = 1000; i < 1016; i++)
-            if (GetDlgItem(hWnd2, i) == (HWND)lParam)
-            {
-                static HBRUSH KillBrush;
-                DeleteObject(KillBrush);
-                KillBrush = CreateSolidBrush(gSet.Colors[i-1000]);
-                return (BOOL)KillBrush;
-            }
-            break;
+    //case WM_CTLCOLORSTATIC:
+    //    for (uint i = c0; i <= c32; i++)
+    //        if (GetDlgItem(hWnd2, i) == (HWND)lParam)
+    //        {
+    //            static HBRUSH KillBrush;
+    //            DeleteObject(KillBrush);
+    //            COLORREF cr = 0;
+	//            if (CB <= c31)
+	//            	cr = Colors[i - c0];
+	//            else if (CB == c32)
+	//            	cr = ColorKey;
+    //            KillBrush = CreateSolidBrush(cr);
+    //            return (BOOL)KillBrush;
+    //        }
+    //        break;
     //case WM_KEYDOWN:
     //    if (wParam == VK_ESCAPE)
     //        SendMessage(hWnd2, WM_CLOSE, 0, 0);
@@ -2529,16 +2576,16 @@ INT_PTR CSettings::mainOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
         gSet.OnInitDialog_Main();
         break;
 
-    case WM_CTLCOLORSTATIC:
-        for (uint i = 1000; i < 1016; i++)
-            if (GetDlgItem(hWnd2, i) == (HWND)lParam)
-            {
-                static HBRUSH KillBrush;
-                DeleteObject(KillBrush);
-                KillBrush = CreateSolidBrush(gSet.Colors[i-1000]);
-                return (BOOL)KillBrush;
-            }
-            break;
+    //case WM_CTLCOLORSTATIC:
+    //    for (uint i = 1 000; i < 1 016; i++)
+    //        if (GetDlgItem(hWnd2, i) == (HWND)lParam)
+    //        {
+    //            static HBRUSH KillBrush;
+    //            DeleteObject(KillBrush);
+    //            KillBrush = CreateSolidBrush(gSet.Colors[i-1 000]);
+    //            return (BOOL)KillBrush;
+    //        }
+    //        break;
     //case WM_KEYDOWN:
     //    if (wParam == VK_ESCAPE)
     //        SendMessage(hWnd2, WM_CLOSE, 0, 0);
@@ -2605,16 +2652,16 @@ INT_PTR CSettings::extOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPara
         gSet.OnInitDialog_Ext();
         break;
 
-    case WM_CTLCOLORSTATIC:
-        for (uint i = 1000; i < 1016; i++)
-            if (GetDlgItem(hWnd2, i) == (HWND)lParam)
-            {
-                static HBRUSH KillBrush;
-                DeleteObject(KillBrush);
-                KillBrush = CreateSolidBrush(gSet.Colors[i-1000]);
-                return (BOOL)KillBrush;
-            }
-            break;
+    //case WM_CTLCOLORSTATIC:
+    //    for (uint i = 1 000; i < 1 016; i++)
+    //        if (GetDlgItem(hWnd2, i) == (HWND)lParam)
+    //        {
+    //            static HBRUSH KillBrush;
+    //            DeleteObject(KillBrush);
+    //            KillBrush = CreateSolidBrush(gSet.Colors[i-1 000]);
+    //            return (BOOL)KillBrush;
+    //        }
+    //        break;
     //case WM_KEYDOWN:
     //    if (wParam == VK_ESCAPE)
     //        SendMessage(hWnd2, WM_CLOSE, 0, 0);
@@ -2651,12 +2698,17 @@ INT_PTR CSettings::colorOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPa
         break;
 
     case WM_CTLCOLORSTATIC:
-        for (uint i = 1000; i < 1032; i++)
+        for (uint i = c0; i <= c32; i++)
             if (GetDlgItem(hWnd2, i) == (HWND)lParam)
             {
                 static HBRUSH KillBrush;
                 DeleteObject(KillBrush);
-                KillBrush = CreateSolidBrush(gSet.Colors[i-1000]);
+                COLORREF cr = 0;
+	            if (i <= c31)
+	            	cr = gSet.Colors[i - c0];
+	            else if (i == c32)
+	            	cr = gSet.ColorKey;
+                KillBrush = CreateSolidBrush(cr);
                 return (BOOL)KillBrush;
             }
             break;

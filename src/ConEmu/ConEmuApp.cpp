@@ -795,6 +795,20 @@ BOOL PrepareCommandLine(TCHAR*& cmdLine, TCHAR*& cmdNew, uint& params)
 	return TRUE;
 }
 
+void ResetConman()
+{
+	HKEY hk = 0;
+	DWORD dw = 0;
+    // сбрость CreateInNewEnvironment для ConMan
+    if (0 == RegCreateKeyEx(HKEY_CURRENT_USER, _T("Software\\HoopoePG_2x"),
+	        NULL, NULL, NULL, KEY_ALL_ACCESS, NULL, &hk, &dw))
+	{
+		RegSetValueEx(hk, _T("CreateInNewEnvironment"), NULL, REG_DWORD,
+			(LPBYTE)&(dw=0), 4);
+		RegCloseKey(hk);
+	}
+}
+
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
 	/*int nCmp;
@@ -831,7 +845,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	//bool FontFilePrm = false; TCHAR* FontFile = NULL; //ADD fontname; by Mors
 	bool WindowPrm = false; int WindowModeVal = 0;
 	bool AttachPrm = false; LONG AttachVal=0;
-	bool ConManPrm = false, ConManValue = false;
+	bool MultiConPrm = false, MultiConValue = false;
 	bool VisPrm = false, VisValue = false;
 	bool SingleInstance = false;
 
@@ -929,20 +943,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			    }
 		        RegCloseKey(hk);
 		        // сбрость CreateInNewEnvironment для ConMan
-		        if (0 == RegCreateKeyEx(HKEY_CURRENT_USER, _T("Software\\HoopoePG_2x"),
-				        NULL, NULL, NULL, KEY_ALL_ACCESS, NULL, &hk, &dw))
-				{
-					RegSetValueEx(hk, _T("CreateInNewEnvironment"), NULL, REG_DWORD,
-						(LPBYTE)&(dw=0), 4);
-					RegCloseKey(hk);
-				}
+		        ResetConman();
 		        return nSetupRc;
 	        }
 			else if ( !klstricmp(curCommand, _T("/multi")) ) {
-				ConManValue = true; ConManPrm = true;
+				MultiConValue = true; MultiConPrm = true;
 			}
 			else if ( !klstricmp(curCommand, _T("/nomulti")) ) {
-				ConManValue = false; ConManPrm = true;
+				MultiConValue = false; MultiConPrm = true;
 			}
 			else if ( !klstricmp(curCommand, _T("/visible")) ) {
 				VisValue = true; VisPrm = true;
@@ -1180,13 +1188,17 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	} else {
 		gConEmu.WindowMode = WindowModeVal;
 	}
-	if (ConManPrm)
-		gSet.isMulti = ConManValue;
+	if (MultiConPrm)
+		gSet.isMulti = MultiConValue;
 	if (VisValue)
 		gSet.isConVisible = VisPrm;
 	// Если запускается conman (нафига?) - принудительно включить флажок "Обновлять handle"
-	if (gSet.isMulti || StrStrI(gSet.GetCmd(), L"conman.exe"))
+	TODO("Deprecated: isUpdConHandle использоваться не должен");
+	if (gSet.isMulti || StrStrI(gSet.GetCmd(), L"conman.exe")) {
 		gSet.isUpdConHandle = TRUE;
+        // сбрость CreateInNewEnvironment для ConMan
+        ResetConman();
+	}
 
 
     // Установка параметров из командной строки
@@ -1305,27 +1317,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	    //delete pVCon;
 	    return 100;
 	}
-
-	//if (AttachPrm) {
-	//	// Заодно, вызвать определение нового окна ConEmu
-	//	TabBar.Retrieve();
-	//}
-	    
-
-    // set parent window of the console window:
-    // *) it is used by ConMan and some FAR plugins, set it for standard mode or if /SetParent switch is set
-    // *) do not set it by default for buffer mode because it causes unwanted selection jumps
-    // WARP ItSelf опытным путем выяснил, что SetParent валит ConEmu в Windows7
-    //if (!setParentDisabled && (setParent || gConEmu.Buffer Height == 0))
-    
-    //gConEmu.SetConParent();
-
-    //// adjust the console window and buffer to settings
-    //// *) after getting all the settings
-    //// *) before running the command
-    //!!! TODO:
-    //COORD size = {gSet.wndWidth, gSet.wndHeight};
-    //gConEmu.SetConsoleWindowSize(size, false); // NightRoman
     
     
 

@@ -6,19 +6,19 @@
 #define IDI_ICON2                       2
 #define IDI_ICON3                       3
 #define bSaveSettings                   4
-#define IDD_DIALOG1                     101
-#define IDB_CONMAN1                     101
-#define IDD_DIALOG2                     103
-#define IDD_DIALOGM                     104
-#define IDD_DIALOG3                     105
-#define IDD_DIALOG4                     106
-#define IDC_COPY                        108
-#define IDC_LINK                        109
-#define IDC_MOVE                        110
-#define IDD_RESTART                     112
-#define IDB_SHIELD                      113
-#define IDC_SPLITV                      115
-#define IDC_SPLITH                      116
+#define IDB_MAIN_TOOLBAR                101
+#define IDB_SHIELD                      102
+#define IDC_COPY                        120
+#define IDC_LINK                        121
+#define IDC_MOVE                        122
+#define IDD_RESTART                     123
+#define IDC_SPLITV                      124
+#define IDC_SPLITH                      125
+#define IDD_DIALOGM                     150
+#define IDD_DIALOG1                     151
+#define IDD_DIALOG2                     152
+#define IDD_DIALOG3                     153
+#define IDD_DIALOG4                     154
 #define c0                              1000
 #define c1                              1001
 #define c2                              1002
@@ -146,7 +146,7 @@
 #define lbRDragKey                      1503
 #define cbDragL                         1504
 #define cbDragR                         1505
-#define cbConMan                        1506
+#define cbMultiCon                      1506
 #define cbMinToTray                     1507
 #define tCurCmdLine                     1508
 #define tsTopPID                        1510
@@ -194,7 +194,6 @@
 #define cbNewConfirm                    1546
 #define cbRunAs                         1547
 #define cbDragImage                     1548
-#define cbDragAllPlugins                1549
 #define cbAutoRegFonts                  1550
 #define cbDebugSteps                    1551
 #define cbDragIcons                     1553
@@ -220,14 +219,16 @@
 #define cbExtendFonts                   1576
 #define lbExtendFontBoldIdx             1577
 #define cbTrueColorer                   1578
+#define cbDropUnlocked                  1579
+#define cbDropUseBCopy                  1580
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        117
+#define _APS_NEXT_RESOURCE_VALUE        200
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1579
+#define _APS_NEXT_CONTROL_VALUE         1581
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

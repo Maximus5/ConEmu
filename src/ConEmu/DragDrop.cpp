@@ -913,7 +913,8 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop (IDataObject * pDataObject,DWORD grfKe
 	DestroyDragImageBits();
 	DestroyDragImageWindow();
 
-	*pdwEffect = DROPEFFECT_NONE;
+	DWORD dwAllowed = *pdwEffect;
+	*pdwEffect = DROPEFFECT_COPY|DROPEFFECT_MOVE;
 	if (S_OK != DragOver(grfKeyState, pt, pdwEffect) ||  *pdwEffect == DROPEFFECT_NONE) {
 		return S_OK;
 	}

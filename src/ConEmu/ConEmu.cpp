@@ -97,12 +97,8 @@ CConEmuMain::CConEmuMain()
     mb_InTimer = FALSE;
     //mb_InClose = FALSE;
     //memset(m_ProcList, 0, 1000*sizeof(DWORD)); 
-    m_ProcCount=0; //mn_ConmanPID = 0; //mh_Infis = NULL; ms_InfisPath[0] = 0;
-    //mn_TopProcessID = 0; //ms_TopProcess[0] = 0; mb_FarActive = FALSE;
-    //mn_ActiveStatus = 0; //m_ActiveConmanIDX = 0; //mn_NeedRetryName = 0;
+    m_ProcCount=0;
     mb_ProcessCreated = FALSE; mn_StartTick = 0;
-    //mh_ConMan = NULL;
-    //ConMan_MainProc = NULL; ConMan_LookForKeyboard = NULL; ConMan_ProcessCommand = NULL; 
     mb_IgnoreSizeChange = false;
     //mn_CurrentKeybLayout = (DWORD_PTR)GetKeyboardLayout(0);
     mn_ServerThreadId = 0; mh_ServerThread = NULL; mh_ServerThreadTerminate = NULL;
@@ -339,9 +335,6 @@ CConEmuMain::~CConEmuMain()
 
 	CVirtualConsole::ClearPartBrushes();
 
-    /*if (mh_ConMan && mh_ConMan!=INVALID_HANDLE_VALUE)
-        FreeLibrary(mh_ConMan);
-    mh_ConMan = NULL;*/
 
     if (mh_WinHook) {
         UnhookWinEvent(mh_WinHook);
@@ -2135,8 +2128,6 @@ DWORD CConEmuMain::CheckProcesses()
 
 bool CConEmuMain::ConActivateNext(BOOL abNext)
 {
-    //if (nCmd == CONMAN_NEXTCONSOLE || nCmd == CONMAN_PREVCONSOLE)
-
     int nActive = ActiveConNum(), i, j, n1, n2, n3;
     for (j=0; j<=1; j++) {
         if (abNext) {
@@ -4192,9 +4183,6 @@ LRESULT CConEmuMain::OnDestroy(HWND hWnd)
         }
     }
 
-    /*if (mh_ConMan && mh_ConMan!=INVALID_HANDLE_VALUE)
-        FreeLibrary(mh_ConMan);
-    mh_ConMan = NULL;*/
 
     if (mh_WinHook) {
         UnhookWinEvent(mh_WinHook);
@@ -4513,13 +4501,13 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 		}
     }
 
-    // Conman
-    static bool sb_SkipConmanChar = false;
-    static DWORD sn_SkipConmanVk[2] = {0,0};
+    // MultiConsole
+    static bool sb_SkipMulticonChar = false;
+    static DWORD sn_SkipMulticonVk[2] = {0,0};
     bool lbLWin = false, lbRWin = false;
     TODO("gSet.nMultiHotkeyModifier - байты содержат VK_CONTROL, VK_MENU, VK_SHIFT");
     TODO("gSet.icMultiBuffer - хоткей для включения-отключения режима буфера - AskChangeBufferHeight()");
-    if (gSet.isMulti && wParam && ((lbLWin = isPressed(VK_LWIN)) || (lbRWin = isPressed(VK_RWIN)) || sb_SkipConmanChar)) {
+    if (gSet.isMulti && wParam && ((lbLWin = isPressed(VK_LWIN)) || (lbRWin = isPressed(VK_RWIN)) || sb_SkipMulticonChar)) {
         if (messg == WM_KEYDOWN && (lbLWin || lbRWin) && (wParam != VK_LWIN && wParam != VK_RWIN)) {
             if (wParam==gSet.icMultiNext || wParam==gSet.icMultiNew || wParam==gSet.icMultiRecreate
             	|| (wParam>='0' && wParam<='9')
@@ -4527,9 +4515,9 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
                 )
             {
                 // Запомнить, что не нужно пускать в консоль
-                sb_SkipConmanChar = true;
-                sn_SkipConmanVk[0] = lbLWin ? VK_LWIN : VK_RWIN;
-                sn_SkipConmanVk[1] = lParam & 0xFF0000;
+                sb_SkipMulticonChar = true;
+                sn_SkipMulticonVk[0] = lbLWin ? VK_LWIN : VK_RWIN;
+                sn_SkipMulticonVk[1] = lParam & 0xFF0000;
                 
                 // Теперь собственно обработка
                 if (wParam>='1' && wParam<='9')
@@ -4552,21 +4540,21 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
                 return 0;
 			}
         //} else if (messg == WM_CHAR) {
-        //    if (sn_SkipConmanVk[1] == (lParam & 0xFF0000))
+        //    if (sn_SkipMulticonVk[1] == (lParam & 0xFF0000))
         //        return 0; // не пропускать букву в консоль
         } else if (messg == WM_KEYUP) {
 			if ((lbLWin || lbRWin) && (wParam==VK_F11 || wParam==VK_F12)) {
 				ConActivate(wParam - VK_F11 + 10);
 				return 0;
 			} else if (wParam == VK_LWIN || wParam == VK_RWIN) {
-                if (sn_SkipConmanVk[0] == wParam) {
-                    sn_SkipConmanVk[0] = 0;
-                    sb_SkipConmanChar = (sn_SkipConmanVk[0] != 0) || (sn_SkipConmanVk[1] != 0);
+                if (sn_SkipMulticonVk[0] == wParam) {
+                    sn_SkipMulticonVk[0] = 0;
+                    sb_SkipMulticonChar = (sn_SkipMulticonVk[0] != 0) || (sn_SkipMulticonVk[1] != 0);
                     return 0;
                 }
-            } else if (sn_SkipConmanVk[1] == (lParam & 0xFF0000)) {
-                sn_SkipConmanVk[1] = 0;
-                sb_SkipConmanChar = (sn_SkipConmanVk[0] != 0) || (sn_SkipConmanVk[1] != 0);
+            } else if (sn_SkipMulticonVk[1] == (lParam & 0xFF0000)) {
+                sn_SkipMulticonVk[1] = 0;
+                sb_SkipMulticonChar = (sn_SkipMulticonVk[0] != 0) || (sn_SkipMulticonVk[1] != 0);
                 return 0;
             }
         }
@@ -6029,7 +6017,7 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 	                EnableWindow(ghWnd, TRUE);
 	        }
 
-	        CheckProcesses(); //m_ActiveConmanIDX, FALSE/*bTitleChanged*/);
+	        CheckProcesses();
 
 	        TODO("Теперь это условие не работает. 1 - раньше это был сам ConEmu.exe");
 	        if (m_ProcCount == 0) {
@@ -6123,10 +6111,12 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 
 void CConEmuMain::OnTransparent()
 {
+	TODO("CConEmuMain::OnTransparentColorKey()");
+	
 	BOOL bNeedRedrawOp = FALSE;
 	UINT nTransparent = max(MIN_ALPHA_VALUE,gSet.nTransparent);
 	DWORD dwExStyle = GetWindowLongPtr(ghWnd, GWL_EXSTYLE);
-	if (nTransparent == 255) {
+	if (nTransparent == 255 && !gSet.isColorKey) {
 		// Прозрачность отключается (полностью непрозрачный)
 		//SetLayeredWindowAttributes(ghWnd, 0, 255, LWA_ALPHA);
 		if ((dwExStyle & WS_EX_LAYERED) == WS_EX_LAYERED) {
@@ -6140,7 +6130,10 @@ void CConEmuMain::OnTransparent()
 			SetWindowLongPtr(ghWnd, GWL_EXSTYLE, dwExStyle);
 			bNeedRedrawOp = TRUE;
 		}
-		SetLayeredWindowAttributes(ghWnd, 0, nTransparent, LWA_ALPHA);
+		
+		SetLayeredWindowAttributes(ghWnd,
+			gSet.ColorKey, nTransparent, 
+			((nTransparent<255) ? LWA_ALPHA : 0) | (gSet.isColorKey ? LWA_COLORKEY : 0));
 		
 		if (bNeedRedrawOp && ghOpWnd) {
 			// Ask the window and its children to repaint

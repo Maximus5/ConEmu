@@ -51,8 +51,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 //PRAGMA_ERROR("При попытке компиляции F:\\VCProject\\FarPlugin\\PPCReg\\compile.cmd - Enter в консоль не прошел");
 
-TODO("CES_CONMANACTIVE deprecated");
-
 WARNING("Может быть хватит ServerThread? А MonitorThread зарезервировать только для запуска процесса, и сразу из него выйти");
 
 WARNING("В каждой VCon создать буфер BYTE[256] для хранения распознанных клавиш (Ctrl,...,Up,PgDn,Add,и пр.");
@@ -4525,7 +4523,24 @@ void CRealConsole::GetData(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHei
     BYTE nFontNormalColor = gSet.nFontNormalColor;
     BYTE nFontBoldColor = gSet.nFontBoldColor;
     BYTE nFontItalicColor = gSet.nFontItalicColor;
+    BOOL bUseColorKey = gSet.isColorKey  // Должен быть включен в настройке
+    		&& isFar(TRUE/*abPluginRequired*/) // в фаре загружен плагин (чтобы с цветами не проколоться)
+    		&& (mp_tabs && mn_tabsCount>0 && mp_tabs->Current) // Текущее окно - панели
+    		&& !(mb_LeftPanel && mb_RightPanel); // и хотя бы одна панель погашена
+    COLORREF crColorKey = gSet.ColorKey;
     CharAttr lca, lcaTable[0x100]; // crForeColor, crBackColor, nFontIndex, nForeIdx, nBackIdx, crOrigForeColor, crOrigBackColor
+        
+    WARNING("!!! Это нужно заменить на реальный цвет, заданный в фаре");
+    COLORREF crUserBack = 0;
+    // При bUseColorKey Если панель погашена (или панели) то 
+    // 1. UserScreen под ним заменяется на crColorKey
+    // 2. а текст - на пробелы
+    WARNING("!!! Проверять наличие KeyBar по настройкам");
+    int nBottomLines = 2; // Keybar + CmdLine
+    WARNING("!!! Проверять наличие MenuBar по настройкам");
+    // Или может быть меню сейчас показано?
+    int nTopLines = 0; // 1 - при видимом сейчас или постоянно меню
+    
     //COLORREF lcrForegroundColors[0x100], lcrBackgroundColors[0x100];
     //BYTE lnForegroundColors[0x100], lnBackgroundColors[0x100], lnFontByIndex[0x100];
 	TODO("OPTIMIZE: В принципе, это можно делать не всегда, а только при изменениях");
@@ -4603,6 +4618,7 @@ void CRealConsole::GetData(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHei
         int nCharsLeft = max(0, (nWidth-con.nTextWidth));
         int nY, nX;
         BYTE attrBackLast = 0;
+        int nPrevDlgBorder = -1;
 
         // Собственно данные
         for (nY = 0; nY < nYMax; nY++) {
@@ -4610,7 +4626,6 @@ void CRealConsole::GetData(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHei
             memmove(pszDst, pszSrc, cbLineSize);
             if (nCharsLeft > 0)
                 wmemset(pszDst+cnSrcLineLen, wSetChar, nCharsLeft);
-            pszDst += nWidth; pszSrc += cnSrcLineLen;
 
             // Атрибуты
             for (nX = 0; nX < (int)cnSrcLineLen; nX++, pnSrc++, pcolSrc++)
@@ -4658,6 +4673,110 @@ void CRealConsole::GetData(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHei
             for (nX = cnSrcLineLen; nX < nWidth; nX++) {
             	pnDst[nX] = lcaDef;
             }
+
+		    if (bUseColorKey && nY >= nTopLines && nY < (con.nTextHeight-nBottomLines)) {
+		    	// ! первый cell - резервируем для скрытия/показа панелей
+		    	int nX1 = 0;
+		    	int nX2 = con.nTextWidth-1; // по умолчанию - на всю ширину
+		    	
+		    	if (!mb_LeftPanel && mb_RightPanel) {
+		    		// Погашена только левая панель
+		    		nX2 = mr_RightPanelFull.left-1;
+		    	} else if (mb_LeftPanel && !mb_RightPanel) {
+		    		// Погашена только правая панель
+		    		nX1 = mr_LeftPanelFull.right+1;
+		    	}
+		    	// направление проверки. сравниваем с 1, т.к. первый cell можем оставить под работу с мышкой.
+		    	int nStep, nStart, nEnd;
+		    	if (nX1 == 0) {
+		    		nStep = 1; nStart = nX1; nEnd = nX2+1;
+		    	} else {
+		    		nStep = -1; nStart = nX2; nEnd = nX1-1;
+		    	}
+		    	// Поехали
+		    	nX = nStart;
+		    	int nDlgBorder = -1;
+		    	if (nY == nTopLines && nX == 0) {
+		    		// чтобы цвет ненароком с ColorKey не совпал
+		    		pnDst[nX].crBackColor = (crUserBack != crColorKey) ? crUserBack : (crUserBack+1);
+		    		// Чтобы сюда пихнуть?
+		    		pszDst[nX] = L' ';
+		    		nX ++;
+		    	}
+		    	while (nX != nEnd) {
+		    		if (pnDst[nX].crBackColor != crUserBack)
+		    		{
+		    			// Кончился цвет UserScreen, или начался диалог
+		    			// Но диалог может кончиться ДО начала следующей панели
+		    			// Проверка пока условная - по цвету фона (заголовок - первая строка диалога)
+		    			if ((nX+nStep) == nEnd)
+		    				break; // чтобы лишних проверок не было
+		    			if (nPrevDlgBorder != -1) {
+		    				// проверим?
+		    				if (pnDst[nPrevDlgBorder-nStep].crBackColor != crUserBack) {
+		    					nDlgBorder = nX = nPrevDlgBorder;
+		    				}
+		    			}
+		    			if (nDlgBorder == -1) {
+			    			nX += nStep;
+			    			while (nX != nEnd) {
+			    				if (pnDst[nX].crBackColor == crUserBack) {
+			    					nDlgBorder = nX;
+			    					break;
+			    				}
+			    				nX += nStep;
+		    				}
+	    				}
+		    			if (nDlgBorder == -1)
+		    				break;
+		    		} else if (isCharBorderVertical(pszDst[nX])) {
+		    			// начался диалог в полностью ч/б режиме
+		    			// Но диалог может кончиться ДО начала следующей панели
+		    			if ((nX+nStep) == nEnd)
+		    				break; // чтобы лишних проверок не было
+		    			if (nPrevDlgBorder != -1) {
+		    				// проверим?
+		    				if (isCharBorderVertical(pszDst[nPrevDlgBorder-nStep])) {
+		    					nDlgBorder = nX = nPrevDlgBorder;
+		    				}
+	    				}
+		    			if (nDlgBorder == -1) {
+			    			int nXX = nEnd-nStep; // пойдем с другого края
+			    			if (nStep == 1) {
+			    				if (nXX <= nX) {
+			    					_ASSERTE(nXX > nX);
+			    					break;
+			    				}
+			    			} else {
+			    				if (nXX >= nX) {
+			    					_ASSERTE(nXX < nX);
+			    					break;
+			    				}
+			    			}
+			    			while (nXX != nX) {
+			    				// пока так (условно)
+			    				if (isCharBorderVertical(pszDst[nXX])) {
+			    					nDlgBorder = nX = nXX + nStep;
+			    					break;
+			    				}
+			    				nXX -= nStep;
+		    				}
+	    				}
+		    			if (nDlgBorder == -1)
+		    				break;
+		    		}
+		    		
+		    		pnDst[nX].crBackColor = crColorKey;
+		    		pszDst[nX] = L' ';
+		    		
+		    		// Next
+		    		nX += nStep;
+		    	}
+		    	nPrevDlgBorder = nDlgBorder;
+		    }
+
+            // Next line
+			pszDst += nWidth; pszSrc += cnSrcLineLen; 
             pnDst += nWidth; //pnSrc += con.nTextWidth;
         }
         // Если вдруг запросили большую высоту, чем текущая в консоли - почистить низ
@@ -6416,6 +6535,8 @@ HWND CRealConsole::ConWnd()
 void CRealConsole::FindPanels()
 {
 	TODO("Положение панелей можно бы узнавать из плагина");
+	
+	WARNING("!!! Нужно еще сохранять флажок 'Меню сейчас показано'");
 
     RECT rLeftPanel = MakeRect(-1,-1);
 	RECT rLeftPanelFull = rLeftPanel;
@@ -7173,4 +7294,25 @@ void CRealConsole::SetConStatus(LPCWSTR asStatus)
 		if (mp_VCon->Update(false))
 			gConEmu.m_Child.Redraw();
 	}
+}
+
+// может отличаться от CVirtualConsole
+bool CRealConsole::isCharBorderVertical(WCHAR inChar)
+{
+	if (inChar != ucBoxDblHorz && inChar != ucBoxSinglHorz
+		&& (inChar >= ucBoxSinglVert && inChar <= ucBoxDblVertHorz))
+        return true;
+    else
+        return false;
+}
+
+// может отличаться от CVirtualConsole
+bool CRealConsole::isCharBorderHorizontal(WCHAR inChar)
+{
+	if (inChar == ucBoxSinglDownDblHorz || inChar == ucBoxSinglUpDblHorz
+		|| inChar == ucBoxSinglDownHorz || inChar == ucBoxSinglUpHorz
+		|| inChar == ucBoxDblHorz)
+        return true;
+    else
+        return false;
 }

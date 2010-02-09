@@ -77,7 +77,7 @@ public:
     char nExtendColor;
     bool isExtendFonts, isTrueColorer;
     char nFontNormalColor, nFontBoldColor, nFontItalicColor;
-
+    
     /* Background image */
     WCHAR sBgImage[MAX_PATH];
     char isShowBgImage;
@@ -112,6 +112,7 @@ public:
     DWORD FontSizeX2; // ширина для FixFarBorders (ширина создаваемого шрифта для отрисовки рамок, не путать со знакоместом)
     DWORD FontSizeX3; // ширина знакоместа при моноширном режиме (не путать с FontSizeX2)
     bool isFullScreen, isHideCaption, isHideCaptionAlways, isHideCaptionAlwaysLoad;
+    bool isDontMinimize, isShowOnTaskBar;
     char isFixFarBorders;
 	bool isMouseSkipActivation, isMouseSkipMoving;
 	bool isFarHourglass; DWORD nFarHourglassDelay;
