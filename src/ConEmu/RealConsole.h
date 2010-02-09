@@ -139,6 +139,11 @@ typedef struct tag_CharAttr
 			unsigned int nBackIdx : 8; // может понадобиться для ExtendColors
 			unsigned int crOrigForeColor : 32;
 			unsigned int crOrigBackColor : 32; // Реальные цвета в консоли, crForeColor и crBackColor могут быть изменены колорером
+			// вспомогательные флаги
+			unsigned int bDialog : 1;
+			unsigned int bDialogVBorder : 1;
+			unsigned int bSomeFilled : 1;
+			unsigned int bTransparent : 1; // UserScreen
 		};
 		// А это для сравнения (поиск изменений)
 		unsigned __int64 All;
@@ -235,6 +240,9 @@ public:
     BOOL AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID);
     BOOL RecreateProcess(RConStartArgs *args);
     void GetData(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight);
+	void PrepareTransparent(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight);
+	void DetectDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int nFromX, int nFromY, int *pnMostRight=NULL, int *pnMostBottom=NULL);
+	void MarkDialog(CharAttr* pAttr, int nWidth, int nHeight, int nX1, int nY1, int nX2, int nY2, BOOL bMarkBorder = FALSE);
     void OnActivate(int nNewNum, int nOldNum);
     void OnDeactivate(int nNewNum);
     BOOL CheckBufferSize();
@@ -447,5 +455,6 @@ private:
 	wchar_t ms_ConStatus[80];
 	void SetConStatus(LPCWSTR asStatus);
 	bool isCharBorderVertical(WCHAR inChar);
+	bool isCharBorderLeftVertical(WCHAR inChar);
 	bool isCharBorderHorizontal(WCHAR inChar);
 };

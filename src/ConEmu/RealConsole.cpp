@@ -4504,6 +4504,368 @@ BOOL CRealConsole::RecreateProcessStart()
     return lbRc;
 }
 
+void CRealConsole::DetectDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int nFromX, int nFromY, int *pnMostRight, int *pnMostBottom)
+{
+	wchar_t wc, wcMostRight, wcMostBottom, wcMostRightBottom, wcMostTop;
+	int nMostRight, nMostBottom, nMostRightBottom, nMostTop, nShift, n;
+	DWORD nBackColor;
+	BOOL bMarkBorder = FALSE;
+
+	// Самое противное - детект диалога, который частично перекрыт другим диалогом
+
+	nShift = nWidth*nFromY;
+	wc = pChar[nShift+nFromX];
+
+
+	WARNING("Доделать detect");
+	/*
+	Если нижний-левый угол диалога не нашли - он может быть закрыт другим диалогом?
+	попытаться найти правый-нижний угол?
+	*/
+
+
+
+
+	if (wc == ucBoxSinglDownRight || wc == ucBoxDblDownRight)
+	{
+		// Диалог без окантовки. Все просто - идем по рамке
+		bMarkBorder = TRUE;
+		nBackColor = pAttr[nFromX+nWidth*nFromY].crBackColor; // но на всякий случай сохраним цвет фона для сравнения
+
+		if (wc == ucBoxSinglDownRight) {
+			wcMostRight = ucBoxSinglDownLeft; wcMostBottom = ucBoxSinglUpRight; wcMostRightBottom = ucBoxSinglUpLeft;
+		} else {
+			wcMostRight = ucBoxDblDownLeft; wcMostBottom = ucBoxDblUpRight; wcMostRightBottom = ucBoxDblUpLeft;
+		}
+		// Найти правую границу
+		nMostRight = nFromX+1;
+		while (nMostRight < nWidth) {
+			n = nShift+nMostRight;
+			//if (pAttr[n].crBackColor != nBackColor)
+			//	break; // конец цвета фона диалога
+			if (pChar[n] == wcMostRight)
+				break; // закрывающая угловая рамка
+			nMostRight++;
+		}
+		// Найти нижнюю границу
+		nMostBottom = nFromY+1;
+		while (nMostBottom < nHeight) {
+			n = nFromX+nMostBottom*nWidth;
+			//if (pAttr[n].crBackColor != nBackColor)
+			//	break; // конец цвета фона диалога
+			wc = pChar[n];
+			if (wc == wcMostBottom)
+				break; // закрывающая угловая рамка
+			if (!isCharBorderVertical(wc))
+				break; // или попадется недопутимый "рамочный" символ
+			nMostBottom++;
+		}
+		// Найти нижнюю границу по правой стороне
+		nMostRightBottom = nFromY+1;
+		while (nMostRightBottom < nHeight) {
+			n = nMostRight+nMostRightBottom*nWidth;
+			//if (pAttr[n].crBackColor != nBackColor)
+			//	break; // конец цвета фона диалога
+			wc = pChar[n];
+			if (wc == wcMostBottom)
+				break; // закрывающая угловая рамка
+			if (!isCharBorderVertical(wc))
+				break; // или попадется недопутимый "рамочный" символ
+			nMostRightBottom++;
+		}
+		// Результатом считаем - наименьшую высоту (перекрытие диалогов?)
+		if (nMostRightBottom < nMostBottom)
+			nMostBottom = nMostRightBottom;
+		goto done;
+	}
+
+
+	// Это может быть нижний кусок диалога
+	// левая граница рамки
+	//if (wc == ucBoxDblVert || wc == ucBoxSinglVert || wc == ucBoxDblVertRight || wc == ucBoxDblVertSinglRight
+	//	|| wc == ucBoxSinglVertRight)
+	if (isCharBorderLeftVertical(wc))
+	{
+		// Диалог без окантовки, но начинается не с угла
+		bMarkBorder = TRUE;
+		nBackColor = pAttr[nFromX+nWidth*nFromY].crBackColor; // но на всякий случай сохраним цвет фона для сравнения
+
+		if (wc == ucBoxSinglVert || wc == ucBoxSinglVertRight) {
+			wcMostRight = ucBoxSinglUpLeft; wcMostBottom = ucBoxSinglUpRight; wcMostRightBottom = ucBoxSinglUpLeft; wcMostTop = ucBoxSinglDownLeft;
+		} else {
+			wcMostRight = ucBoxDblUpLeft; wcMostBottom = ucBoxDblUpRight; wcMostRightBottom = ucBoxDblUpLeft; wcMostTop = ucBoxDblDownLeft;
+		}
+		// Найти нижнюю границу
+		nMostBottom = nFromY+1;
+		while (nMostBottom < nHeight) {
+			n = nFromX+nMostBottom*nWidth;
+			//if (pAttr[n].crBackColor != nBackColor)
+			//	break; // конец цвета фона диалога
+			wc = pChar[n];
+			if (wc == wcMostBottom)
+				break; // закрывающая угловая рамка
+			if (!isCharBorderVertical(wc))
+				break; // или попадется недопутимый "рамочный" символ
+			nMostBottom++;
+		}
+		// Найти правую границу
+		nMostRight = nFromX+1;
+		nShift = nMostBottom*nWidth;
+		while (nMostRight < nWidth) {
+			n = nShift+nMostRight;
+			//if (pAttr[n].crBackColor != nBackColor)
+			//	break; // конец цвета фона диалога
+			if (pChar[n] == wcMostRight)
+				break; // закрывающая угловая рамка
+			nMostRight++;
+		}
+		// Попытаться подняться вверх по правой границе?
+		nMostTop = nFromY;
+		while (nMostTop > 0) {
+			n = nMostRight + (nMostTop-1)*nWidth;
+			wc = pChar[n];
+			if (wc == wcMostTop || !isCharBorderVertical(wc))
+				break;
+			nMostTop--;
+		}
+		nFromY = nMostTop;
+		goto done;
+	}
+
+
+
+
+
+	
+	if (wc == L' ' || wc == ucBox100/*вдруг такие окантовки встретятся:)*/)
+	{
+		// Попытаемся найти рамку?
+		int nFrameX = -1, nFrameY = -1;
+		int nFindFrom = nShift+nFromX;
+		// в этой же строке
+		for (n = 0; n <= 5; n++) {
+			wc = pChar[nFindFrom+n];
+			if (wc == ucBoxSinglDownRight || wc == ucBoxDblDownRight) {
+				nFrameX = nFromX+n; nFrameY = nFromY; break;
+			}
+		}
+		if (nFrameY == -1) {
+			// строкой ниже
+			nFindFrom = nShift+nWidth+nFromX;
+			for (n = 0; n <= 5; n++) {
+				wc = pChar[nFindFrom+n];
+				if (wc == ucBoxSinglDownRight || wc == ucBoxDblDownRight) {
+					nFrameX = nFromX+n; nFrameY = nFromY+1; break;
+				}
+			}
+		}
+		// Если угол нашли - ищем рамку по рамке :)
+		if (nFrameY != -1) {
+			DetectDialog(pChar, pAttr, nWidth, nHeight, nFrameX, nFrameY, &nMostRight, &nMostBottom);
+			// Теперь расширить nMostRight & nMostBottom на окантовку
+			int nMaxMargin = 3+(nFrameX - nFromX);
+				if (nMaxMargin > nWidth) nMaxMargin = nWidth;
+			nFindFrom = nShift+nWidth+nMostRight+1;
+			n = 0;
+			wc = pChar[nShift+nFromX];
+			DWORD nColor = pAttr[nShift+nFromX].crBackColor;
+			while (n < nMaxMargin) {
+				if (pChar[nFindFrom] != wc || pAttr[nFindFrom].crBackColor != nColor)
+					break;
+				n++; nFindFrom++;
+			}
+			nMostRight += n;
+			// nMostBottom
+			if (nFrameY > nFromY && nMostBottom < (nHeight-1)) {
+				n = (nMostBottom+1)*nWidth+nFrameX;
+				if (pChar[n] == wc && pAttr[n].crBackColor == nColor)
+					nMostBottom ++;
+			}
+			//
+			goto done;
+		}
+	}
+	
+	// Придется идти просто по цвету фона
+	// Это может быть диалог, рамка которого закрыта другим диалогом, 
+	// или вообще кусок диалога, у которого видна только часть рамки
+	nBackColor = pAttr[nFromX+nWidth*nFromY].crBackColor;
+	// Найти правую границу
+	nMostRight = nFromX+1;
+	while (nMostRight < nWidth) {
+		n = nShift+nMostRight;
+		if (pAttr[n].crBackColor != nBackColor)
+			break; // конец цвета фона диалога
+		nMostRight++;
+	}
+	nMostRight--;
+	// Найти нижнюю границу
+	nMostBottom = nFromY+1;
+	while (nMostBottom < nHeight) {
+		n = nFromX+nMostBottom*nWidth;
+		if (pAttr[n].crBackColor != nBackColor)
+			break; // конец цвета фона диалога
+		nMostBottom++;
+	}
+	nMostBottom--;
+	// Найти нижнюю границу по правой стороне
+	nMostRightBottom = nFromY+1;
+	while (nMostRightBottom < nHeight) {
+		n = nMostRight+nMostRightBottom*nWidth;
+		if (pAttr[n].crBackColor != nBackColor)
+			break; // конец цвета фона диалога
+		nMostRightBottom++;
+	}
+	nMostRightBottom--;
+	// Результатом считаем - наименьшую высоту (перекрытие диалогов?)
+	if (nMostRightBottom < nMostBottom)
+		nMostBottom = nMostRightBottom;
+
+
+
+done:
+	// Забить атрибуты
+	MarkDialog(pAttr, nWidth, nHeight, nFromX, nFromY, nMostRight, nMostBottom, bMarkBorder);
+
+	// Вернуть размеры, если просили
+	if (pnMostRight) *pnMostRight = nMostRight;
+	if (pnMostBottom) *pnMostBottom = nMostBottom;
+}
+
+void CRealConsole::MarkDialog(CharAttr* pAttr, int nWidth, int nHeight, int nX1, int nY1, int nX2, int nY2, BOOL bMarkBorder)
+{
+	for (int nY = nY1; nY <= nY2; nY++) {
+		int nShift = nY * nWidth + nX1;
+
+		if (bMarkBorder)
+			pAttr[nShift].bDialogVBorder = TRUE;
+
+		for (int nX = nX1; nX <= nX2; nX++, nShift++) {
+			pAttr[nShift].bDialog = TRUE;
+			pAttr[nShift].bTransparent = FALSE;
+		}
+
+		if (bMarkBorder)
+			pAttr[nShift].bDialogVBorder = TRUE;
+	}
+}
+
+void CRealConsole::PrepareTransparent(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight)
+{
+	COLORREF crColorKey = gSet.ColorKey;
+	WARNING("!!! Это нужно заменить на реальный цвет, заданный в фаре");
+	COLORREF crUserBack = 0;
+	// При bUseColorKey Если панель погашена (или панели) то 
+	// 1. UserScreen под ним заменяется на crColorKey
+	// 2. а текст - на пробелы
+	WARNING("!!! Проверять наличие KeyBar по настройкам");
+	int nBottomLines = 2; // Keybar + CmdLine
+	WARNING("!!! Проверять наличие MenuBar по настройкам");
+	// Или может быть меню сейчас показано?
+	int nTopLines = 0; // 1 - при видимом сейчас или постоянно меню
+
+
+	if (mb_LeftPanel)
+		MarkDialog(pAttr, nWidth, nHeight, mr_LeftPanelFull.left, mr_LeftPanelFull.top, mr_LeftPanelFull.right, mr_LeftPanelFull.bottom);
+	if (mb_RightPanel)
+		MarkDialog(pAttr, nWidth, nHeight, mr_RightPanelFull.left, mr_RightPanelFull.top, mr_RightPanelFull.right, mr_RightPanelFull.bottom);
+	// Может быть первая строка - меню? постоянное или текущее
+	if (pAttr[0].crBackColor != crUserBack // однозначно да
+		|| (pChar[0] == L' ' && pChar[1] == L' ' && pChar[2] == L' ' && pChar[3] == L' ' && pChar[4] != L' '))
+		MarkDialog(pAttr, nWidth, nHeight, 0, 0, nWidth-1, 0);
+
+	WARNING("!!! Установку bTransparent делать во второй проход, когда все диалоги уже определены !!!");
+
+
+	wchar_t* pszDst = pChar;
+	CharAttr* pnDst = pAttr;
+	for (int nY = 0; nY < nHeight; nY++)
+	{
+		if (nY >= nTopLines && nY < (nHeight-nBottomLines))
+		{
+			// ! первый cell - резервируем для скрытия/показа панелей
+			int nX1 = 0;
+			int nX2 = nWidth-1; // по умолчанию - на всю ширину
+
+			if (!mb_LeftPanel && mb_RightPanel) {
+				// Погашена только левая панель
+				nX2 = mr_RightPanelFull.left-1;
+			} else if (mb_LeftPanel && !mb_RightPanel) {
+				// Погашена только правая панель
+				nX1 = mr_LeftPanelFull.right+1;
+			} else {
+				//Внимание! Панели могут быть, но они могут быть перекрыты PlugMenu!
+			}
+
+			int nShift = nY*nWidth+nX1;
+			int nX = nX1;
+			while (nX <= nX2)
+			{
+				// Если еще не определен как поле диалога
+				if (!pnDst[nX].bDialogVBorder) {
+					if (isCharBorderLeftVertical(pszDst[nX])) {
+						DetectDialog(pChar, pAttr, nWidth, nHeight, nX, nY, &nX);
+						nX++; nShift++;
+						continue;
+					}
+				}
+				if (!pnDst[nX].bDialog) {
+					if (pnDst[nX].crBackColor != crUserBack) {
+						DetectDialog(pChar, pAttr, nWidth, nHeight, nX, nY, &nX);
+					}
+				}
+				nX++; nShift++;
+			}
+		}
+		pszDst += nWidth;
+		pnDst += nWidth;
+	}
+
+
+	pszDst = pChar;
+	pnDst = pAttr;
+	for (int nY = 0; nY < nHeight; nY++)
+	{
+		if (nY >= nTopLines && nY < (nHeight-nBottomLines))
+		{
+			// ! первый cell - резервируем для скрытия/показа панелей
+			int nX1 = 0;
+			int nX2 = nWidth-1; // по умолчанию - на всю ширину
+
+			if (!mb_LeftPanel && mb_RightPanel) {
+				// Погашена только левая панель
+				nX2 = mr_RightPanelFull.left-1;
+			} else if (mb_LeftPanel && !mb_RightPanel) {
+				// Погашена только правая панель
+				nX1 = mr_LeftPanelFull.right+1;
+			} else {
+				//Внимание! Панели могут быть, но они могут быть перекрыты PlugMenu!
+			}
+
+			PRAGMA_ERROR("0x0 должен быть непрозрачным");
+			PRAGMA_ERROR("Во время запуска неприятно мелькает - пока не появятся панели - становится прозрачным");
+
+			int nShift = nY*nWidth+nX1;
+			int nX = nX1;
+			while (nX <= nX2)
+			{
+				// Если еще не определен как поле диалога
+				if (!pnDst[nX].bDialog) {
+					if (pnDst[nX].crBackColor == crUserBack) {
+						// помечаем прозрачным
+						pnDst[nX].bTransparent = TRUE;
+						pnDst[nX].crBackColor = crColorKey;
+						pszDst[nX] = L' ';
+					}
+				}
+				nX++; nShift++;
+			}
+		}
+		pszDst += nWidth;
+		pnDst += nWidth;
+	}
+}
+
 // nWidth и nHeight это размеры, которые хочет получить VCon (оно могло еще не среагировать на изменения?
 void CRealConsole::GetData(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight)
 {
@@ -4526,29 +4888,20 @@ void CRealConsole::GetData(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHei
     BOOL bUseColorKey = gSet.isColorKey  // Должен быть включен в настройке
     		&& isFar(TRUE/*abPluginRequired*/) // в фаре загружен плагин (чтобы с цветами не проколоться)
     		&& (mp_tabs && mn_tabsCount>0 && mp_tabs->Current) // Текущее окно - панели
-    		&& !(mb_LeftPanel && mb_RightPanel); // и хотя бы одна панель погашена
-    COLORREF crColorKey = gSet.ColorKey;
+    		&& !(mb_LeftPanel && mb_RightPanel) // и хотя бы одна панель погашена
+			&& (!con.m_ci.bVisible || con.m_ci.dwSize<30) // и сейчас НЕ включен режим граббера
+			;
     CharAttr lca, lcaTable[0x100]; // crForeColor, crBackColor, nFontIndex, nForeIdx, nBackIdx, crOrigForeColor, crOrigBackColor
         
-    WARNING("!!! Это нужно заменить на реальный цвет, заданный в фаре");
-    COLORREF crUserBack = 0;
-    // При bUseColorKey Если панель погашена (или панели) то 
-    // 1. UserScreen под ним заменяется на crColorKey
-    // 2. а текст - на пробелы
-    WARNING("!!! Проверять наличие KeyBar по настройкам");
-    int nBottomLines = 2; // Keybar + CmdLine
-    WARNING("!!! Проверять наличие MenuBar по настройкам");
-    // Или может быть меню сейчас показано?
-    int nTopLines = 0; // 1 - при видимом сейчас или постоянно меню
-    
     //COLORREF lcrForegroundColors[0x100], lcrBackgroundColors[0x100];
     //BYTE lnForegroundColors[0x100], lnBackgroundColors[0x100], lnFontByIndex[0x100];
 	TODO("OPTIMIZE: В принципе, это можно делать не всегда, а только при изменениях");
     for (int nBack = 0; nBack <= 0xF; nBack++) {
     	for (int nFore = 0; nFore <= 0xF; nFore++, nColorIndex++) {
+			memset(&lca, 0, sizeof(lca));
     		lca.nForeIdx = nFore;
     		lca.nBackIdx = nBack;
-    		lca.nFontIndex = 0;
+    		//lca.nFontIndex = 0;
 			if (bExtendFonts) {
 				if (nBack == nFontBoldColor) { // nFontBoldColor may be -1, тогда мы сюда не попадаем
 					if (nFontNormalColor != 0xFF)
@@ -4618,7 +4971,7 @@ void CRealConsole::GetData(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHei
         int nCharsLeft = max(0, (nWidth-con.nTextWidth));
         int nY, nX;
         BYTE attrBackLast = 0;
-        int nPrevDlgBorder = -1;
+        //int nPrevDlgBorder = -1;
 
         // Собственно данные
         for (nY = 0; nY < nYMax; nY++) {
@@ -4674,107 +5027,6 @@ void CRealConsole::GetData(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHei
             	pnDst[nX] = lcaDef;
             }
 
-		    if (bUseColorKey && nY >= nTopLines && nY < (con.nTextHeight-nBottomLines)) {
-		    	// ! первый cell - резервируем для скрытия/показа панелей
-		    	int nX1 = 0;
-		    	int nX2 = con.nTextWidth-1; // по умолчанию - на всю ширину
-		    	
-		    	if (!mb_LeftPanel && mb_RightPanel) {
-		    		// Погашена только левая панель
-		    		nX2 = mr_RightPanelFull.left-1;
-		    	} else if (mb_LeftPanel && !mb_RightPanel) {
-		    		// Погашена только правая панель
-		    		nX1 = mr_LeftPanelFull.right+1;
-		    	}
-		    	// направление проверки. сравниваем с 1, т.к. первый cell можем оставить под работу с мышкой.
-		    	int nStep, nStart, nEnd;
-		    	if (nX1 == 0) {
-		    		nStep = 1; nStart = nX1; nEnd = nX2+1;
-		    	} else {
-		    		nStep = -1; nStart = nX2; nEnd = nX1-1;
-		    	}
-		    	// Поехали
-		    	nX = nStart;
-		    	int nDlgBorder = -1;
-		    	if (nY == nTopLines && nX == 0) {
-		    		// чтобы цвет ненароком с ColorKey не совпал
-		    		pnDst[nX].crBackColor = (crUserBack != crColorKey) ? crUserBack : (crUserBack+1);
-		    		// Чтобы сюда пихнуть?
-		    		pszDst[nX] = L' ';
-		    		nX ++;
-		    	}
-		    	while (nX != nEnd) {
-		    		if (pnDst[nX].crBackColor != crUserBack)
-		    		{
-		    			// Кончился цвет UserScreen, или начался диалог
-		    			// Но диалог может кончиться ДО начала следующей панели
-		    			// Проверка пока условная - по цвету фона (заголовок - первая строка диалога)
-		    			if ((nX+nStep) == nEnd)
-		    				break; // чтобы лишних проверок не было
-		    			if (nPrevDlgBorder != -1) {
-		    				// проверим?
-		    				if (pnDst[nPrevDlgBorder-nStep].crBackColor != crUserBack) {
-		    					nDlgBorder = nX = nPrevDlgBorder;
-		    				}
-		    			}
-		    			if (nDlgBorder == -1) {
-			    			nX += nStep;
-			    			while (nX != nEnd) {
-			    				if (pnDst[nX].crBackColor == crUserBack) {
-			    					nDlgBorder = nX;
-			    					break;
-			    				}
-			    				nX += nStep;
-		    				}
-	    				}
-		    			if (nDlgBorder == -1)
-		    				break;
-		    		} else if (isCharBorderVertical(pszDst[nX])) {
-		    			// начался диалог в полностью ч/б режиме
-		    			// Но диалог может кончиться ДО начала следующей панели
-		    			if ((nX+nStep) == nEnd)
-		    				break; // чтобы лишних проверок не было
-		    			if (nPrevDlgBorder != -1) {
-		    				// проверим?
-		    				if (isCharBorderVertical(pszDst[nPrevDlgBorder-nStep])) {
-		    					nDlgBorder = nX = nPrevDlgBorder;
-		    				}
-	    				}
-		    			if (nDlgBorder == -1) {
-			    			int nXX = nEnd-nStep; // пойдем с другого края
-			    			if (nStep == 1) {
-			    				if (nXX <= nX) {
-			    					_ASSERTE(nXX > nX);
-			    					break;
-			    				}
-			    			} else {
-			    				if (nXX >= nX) {
-			    					_ASSERTE(nXX < nX);
-			    					break;
-			    				}
-			    			}
-			    			while (nXX != nX) {
-			    				// пока так (условно)
-			    				if (isCharBorderVertical(pszDst[nXX])) {
-			    					nDlgBorder = nX = nXX + nStep;
-			    					break;
-			    				}
-			    				nXX -= nStep;
-		    				}
-	    				}
-		    			if (nDlgBorder == -1)
-		    				break;
-		    		}
-		    		
-		    		pnDst[nX].crBackColor = crColorKey;
-		    		pszDst[nX] = L' ';
-		    		
-		    		// Next
-		    		nX += nStep;
-		    	}
-		    	nPrevDlgBorder = nDlgBorder;
-		    }
-
             // Next line
 			pszDst += nWidth; pszSrc += cnSrcLineLen; 
             pnDst += nWidth; //pnSrc += con.nTextWidth;
@@ -4790,6 +5042,10 @@ void CRealConsole::GetData(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHei
             }
             pnDst += nWidth;
         }
+
+		// Подготовить данные для Transparent
+		if (bUseColorKey)
+			PrepareTransparent(pChar, pAttr, nWidth, nHeight);
     }
     // Если требуется показать "статус" - принудительно перебиваем первую видимую строку возвращаемого буфера
 	if (ms_ConStatus[0]) {
@@ -6585,8 +6841,9 @@ void CRealConsole::FindPanels()
         uint nIdx = nY*con.nTextWidth;
 
 		// Левая панель
-		if (( (con.pConChar[nIdx] == L'[' && (con.pConChar[nIdx+1]>=L'0' && con.pConChar[nIdx+1]<=L'9')) // открыто несколько редакторов/вьюверов
-			|| (con.pConChar[nIdx] == ucBoxDblDownRight 
+		BOOL bFirstCharOk = (nY == 0) && con.pConChar[0] == L'R' && con.pConAttr[0] == 0x4F; // символ записи макроса
+		if (( ((bFirstCharOk || con.pConChar[nIdx] == L'[') && (con.pConChar[nIdx+1]>=L'0' && con.pConChar[nIdx+1]<=L'9')) // открыто несколько редакторов/вьюверов
+			|| ((bFirstCharOk || con.pConChar[nIdx] == ucBoxDblDownRight)
 				&& (con.pConChar[nIdx+1] == ucBoxDblHorz || con.pConChar[nIdx+1] == ucBoxSinglDownDblHorz)) // доп.окон нет, только рамка
 			) && con.pConChar[nIdx+con.nTextWidth] == ucBoxDblVert)
 		{
@@ -7299,11 +7556,29 @@ void CRealConsole::SetConStatus(LPCWSTR asStatus)
 // может отличаться от CVirtualConsole
 bool CRealConsole::isCharBorderVertical(WCHAR inChar)
 {
-	if (inChar != ucBoxDblHorz && inChar != ucBoxSinglHorz
-		&& (inChar >= ucBoxSinglVert && inChar <= ucBoxDblVertHorz))
+	if ((inChar != ucBoxDblHorz && inChar != ucBoxSinglHorz
+			&& (inChar >= ucBoxSinglVert && inChar <= ucBoxDblVertHorz))
+		|| (inChar >= ucBox25 && inChar <= ucBox75) || inChar == ucBox100
+		|| inChar == ucUpScroll || inChar == ucDnScroll)
         return true;
     else
         return false;
+}
+
+bool CRealConsole::isCharBorderLeftVertical(WCHAR inChar)
+{
+	if (inChar < ucBoxSinglHorz || inChar > ucBoxDblVertHorz)
+		return false; // чтобы лишних сравнений не делать
+
+	if (inChar == ucBoxDblVert || inChar == ucBoxSinglVert 
+		|| inChar == ucBoxDblDownRight || inChar == ucBoxSinglDownRight
+		|| inChar == ucBoxDblVertRight || inChar == ucBoxDblVertSinglRight
+		|| inChar == ucBoxSinglVertRight
+		|| (inChar >= ucBox25 && inChar <= ucBox75) || inChar == ucBox100
+		|| inChar == ucUpScroll || inChar == ucDnScroll)
+		return true;
+	else
+		return false;
 }
 
 // может отличаться от CVirtualConsole
