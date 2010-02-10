@@ -30,6 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 typedef struct HookCallbackArg
 {
+	BOOL      bMainThread;
 	// pointer to variable with result of original function
 	LPVOID    lpResult;
 	// arguments (or pointers to them) of original funciton, casted to DWORD_PTR

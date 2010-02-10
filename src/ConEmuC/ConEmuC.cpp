@@ -2589,33 +2589,18 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 
 				if (in.hdr.nCmd == CECMD_SETSIZESYNC) {
 					CESERVER_REQ *pPlgIn = NULL, *pPlgOut = NULL;
-					if (in.SetSize.dwFarPID && !nBufferHeight) {
-						// Команду можно выполнить через плагин FARа
-						wchar_t szPipeName[128];
-						wsprintf(szPipeName, CEPLUGINPIPENAME, L".", in.SetSize.dwFarPID);
-						//DWORD nHILO = ((DWORD)crNewSize.X) | (((DWORD)(WORD)crNewSize.Y) << 16);
-						//pPlgIn = ExecuteNewCmd(CMD_SETSIZE, sizeof(CESERVER_REQ_HDR)+sizeof(nHILO));
-						pPlgIn = ExecuteNewCmd(CMD_REDRAWFAR, sizeof(CESERVER_REQ_HDR));
-						//pPlgIn->dwData[0] = nHILO;
-						pPlgOut = ExecuteCmd(szPipeName, pPlgIn, 500, ghConWnd);
-						if (pPlgOut) ExecuteFreeResult(pPlgOut);
-					//} else {
-					//	INPUT_RECORD r = {WINDOW_BUFFER_SIZE_EVENT};
-					//	r.Event.WindowBufferSizeEvent.dwSize = crNewSize;
-					//	DWORD dwWritten = 0;
-					//	// тут был ghConIn
-					//	HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE);
-					//	if (WriteConsoleInput(hIn, &r, 1, &dwWritten)) {
-					//		if (PeekConsoleInput(hIn, &r, 1, &(dwWritten = 0)) && dwWritten > 0) {
-					//			DWORD dwStartTick = GetTickCount();
-					//			do {
-					//				Sleep(5);
-					//				if (!PeekConsoleInput(hIn, &r, 1, &(dwWritten = 0)))
-					//					dwWritten = 0;
-					//			} while ((dwWritten > 0) && ((GetTickCount() - dwStartTick) < MAX_SYNCSETSIZE_WAIT));
-					//		}
-					//	}
-					}
+					TODO("Пока закомментарим, чтобы GUI реагировало побыстрее");
+					//if (in.SetSize.dwFarPID && !nBufferHeight) {
+					//	// Команду можно выполнить через плагин FARа
+					//	wchar_t szPipeName[128];
+					//	wsprintf(szPipeName, CEPLUGINPIPENAME, L".", in.SetSize.dwFarPID);
+					//	//DWORD nHILO = ((DWORD)crNewSize.X) | (((DWORD)(WORD)crNewSize.Y) << 16);
+					//	//pPlgIn = ExecuteNewCmd(CMD_SETSIZE, sizeof(CESERVER_REQ_HDR)+sizeof(nHILO));
+					//	pPlgIn = ExecuteNewCmd(CMD_REDRAWFAR, sizeof(CESERVER_REQ_HDR));
+					//	//pPlgIn->dwData[0] = nHILO;
+					//	pPlgOut = ExecuteCmd(szPipeName, pPlgIn, 500, ghConWnd);
+					//	if (pPlgOut) ExecuteFreeResult(pPlgOut);
+					//}
 
 					SetEvent(srv.hAllowInputEvent);
 					srv.bInSyncResize = FALSE;

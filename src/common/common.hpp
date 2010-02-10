@@ -168,7 +168,7 @@ extern wchar_t gszDbgModLabel[6];
 #define CECMD_SETSIZENOSYNC 28 // Почти CECMD_SETSIZE. Вызывается из плагина.
 #define CECMD_SETDONTCLOSE  29
 
-#define CESERVER_REQ_VER    28
+#define CESERVER_REQ_VER    29
 
 #define PIPEBUFSIZE 4096
 
@@ -292,11 +292,30 @@ typedef struct tag_CESERVER_REQ_FULLCONDATA {
 	wchar_t Data[300]; // Variable length!!!
 } CESERVER_REQ_FULLCONDATA;
 
+typedef struct tag_CEFAR_SHORT_PANEL_INFO {
+	int   PanelType;
+	int   Plugin;
+	RECT  PanelRect;
+	int   ItemsNumber;
+	int   SelectedItemsNumber;
+	int   CurrentItem;
+	int   TopPanelItem;
+	int   Visible;
+	int   Focus;
+	int   ViewMode;
+	int   ShortNames;
+	int   SortMode;
+	DWORD Flags;
+} CEFAR_SHORT_PANEL_INFO;
+
 typedef struct tag_CESERVER_REQ_CONINFO_HDR {
 	DWORD cbSize;
+	DWORD nLogLevel;
+	COORD crMaxConSize;
 	HWND2 hConWnd;
 	DWORD nServerPID;
 	DWORD nGuiPID;
+	DWORD nFarPID; // PID последнего фара, обновившего информацию о себе в этой структуре
 	DWORD nCurDataMapIdx; // суффикс для текущего MAP файла с данными
 	DWORD nCurDataMaxSize; // Максимальный размер буфера nCurDataMapIdx
 	DWORD nPacketId;
@@ -313,10 +332,13 @@ typedef struct tag_CESERVER_REQ_CONINFO_HDR {
 	DWORD dwConsoleMode;
 	DWORD dwSbiSize;
 	CONSOLE_SCREEN_BUFFER_INFO sbi;
+	FarVersion FarVersion;
 	BYTE nFarColors[0x100]; // Массив цветов фара
 	DWORD nFarInterfaceSettings;
+	DWORD nFarPanelSettings;
 	DWORD nFarConfirmationSettings;
-	DWORD nLogLevel;
+	BOOL  bFarPanelAllowed, bFarLeftPanel, bFarRightPanel;   // FCTL_CHECKPANELSEXIST, FCTL_GETPANELSHORTINFO,...
+	CEFAR_SHORT_PANEL_INFO FarLeftPanel, FarRightPanel;
 } CESERVER_REQ_CONINFO_HDR;
 
 typedef struct tag_CESERVER_REQ_CONINFO_DATA {

@@ -349,6 +349,7 @@ public:
 	LRESULT OnSizing(WPARAM wParam, LPARAM lParam);
 	void OnSizePanels(COORD cr);
 	LRESULT OnShellHook(WPARAM wParam, LPARAM lParam);
+	void OnShowOnTaskBar();
 	LRESULT OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam);
 	LRESULT OnTimer(WPARAM wParam, LPARAM lParam);
 	void OnTransparent();

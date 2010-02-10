@@ -35,15 +35,15 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/ConEmuCheck.h"
 
 #define DEBUGSTRSYS(s) //DEBUGSTR(s)
-#define DEBUGSTRSIZE(s) //DEBUGSTR(s)
+#define DEBUGSTRSIZE(s) DEBUGSTR(s)
 #define DEBUGSTRCONS(s) //DEBUGSTR(s)
 #define DEBUGSTRTABS(s) //DEBUGSTR(s)
 #define DEBUGSTRLANG(s) //DEBUGSTR(s)// ; Sleep(2000)
 #define DEBUGSTRMOUSE(s) //DEBUGSTR(s)
 #define DEBUGSTRSETCURSOR(s) //DEBUGSTR(s)
 #define DEBUGSTRCONEVENT(s) //DEBUGSTR(s)
-#define DEBUGSTRMACRO(s) DEBUGSTR(s)
-#define DEBUGSTRPANEL(s) DEBUGSTR(s)
+#define DEBUGSTRMACRO(s) //DEBUGSTR(s)
+#define DEBUGSTRPANEL(s) //DEBUGSTR(s)
 #define DEBUGSTRPANEL2(s) //DEBUGSTR(s)
 
 #define PROCESS_WAIT_START_TIME 1000
@@ -259,10 +259,11 @@ BOOL CConEmuMain::CreateMainWindow()
 
 	DWORD styleEx = 0;
 	DWORD style = WS_CLIPCHILDREN | WS_CLIPSIBLINGS;
-	if (ghWndApp)
+	if (gSet.isShowOnTaskBar) // ghWndApp
 		style |= WS_POPUPWINDOW | WS_CAPTION | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX;
 	else
 		style |= WS_OVERLAPPEDWINDOW;
+	
 	if (gSet.nTransparent < 255)
 		styleEx |= WS_EX_LAYERED;
 	//if (gSet.isHideCaptionAlways) // сразу создать так почему-то не получается
@@ -3917,6 +3918,9 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
 			gSet.isHideCaptionAlways = gSet.isHideCaptionAlwaysLoad;
 			OnHideCaption();
 		}
+		
+		if (!gSet.isShowOnTaskBar)
+			OnShowOnTaskBar();
 
         PostMessage(ghWnd, mn_MsgPostCreate, 0, 0);
     } else {
@@ -5763,6 +5767,22 @@ HSHELL_APPCOMMAND The APPCOMMAND which has been unhandled by the application or 
     return 0;
 }
 
+void CConEmuMain::OnShowOnTaskBar()
+{
+	if (!this) return;
+	//if (!mp_TaskBar2) return;
+	
+	DWORD dwStyle = GetWindowLong(ghWnd, GWL_STYLE);
+	
+	if (gSet.isShowOnTaskBar) {
+		dwStyle &= ~WS_POPUP;
+	} else {
+		dwStyle |= WS_POPUP;
+	}
+	
+	SetWindowLong(ghWnd, GWL_STYLE, dwStyle);
+}
+
 LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 {
 	#ifdef _DEBUG
@@ -5976,6 +5996,10 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
             Icon.HideWindowToTray();
             break;
         }
+        if (gSet.isDontMinimize) {
+        	SetWindowPos(ghWnd, HWND_BOTTOM, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
+        	break;
+        }
         result = DefWindowProc(hWnd, WM_SYSCOMMAND, wParam, lParam);
         break;
 
@@ -6143,6 +6167,8 @@ void CConEmuMain::OnTransparent()
 			             RDW_ERASE | RDW_INVALIDATE | RDW_FRAME | RDW_ALLCHILDREN);
 		}
 	}
+	
+	OnSetCursor();
 }
 
 // Вызовем UpdateScrollPos для АКТИВНОЙ консоли
@@ -6520,25 +6546,8 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 				result = gConEmu.OnSizing(wParam, lParam);
 		} break;
 
+
 #ifdef _DEBUG
-	case WM_WINDOWPOSCHANGING:
-		{
-			WINDOWPOS *p = (WINDOWPOS*)lParam;
-			wchar_t szDbg[128]; wsprintf(szDbg, L"WM_WINDOWPOSCHANGING ({%i-%i}x{%i-%i} Flags=0x%08X)\n", p->x, p->y, p->cx, p->cy, p->flags);
-			DEBUGSTRSIZE(szDbg);
-			// Иначе могут не вызваться события WM_SIZE/WM_MOVE
-			result = DefWindowProc(hWnd, messg, wParam, lParam);
-			p = (WINDOWPOS*)lParam;
-		} break;
-
-	//case WM_WINDOWPOSCHANGED:
-	//	{
-	//		WINDOWPOS *p = (WINDOWPOS*)lParam;
-	//		wchar_t szDbg[128]; wsprintf(szDbg, L"WM_WINDOWPOSCHANGED ({%i-%i}x{%i-%i} Flags=0x%08X)\n", p->x, p->y, p->cx, p->cy, p->flags);
-	//		DEBUGSTRSIZE(szDbg);
-	//		result = 0; //DefWindowProc(hWnd, messg, wParam, lParam);
-	//	} break;
-
 	case WM_SHOWWINDOW:
 		{
 			wchar_t szDbg[128]; wsprintf(szDbg, L"WM_SHOWWINDOW (Show=%i, Status=%i)\n", wParam, lParam);
@@ -6550,27 +6559,61 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
     case WM_SIZE:
 		{
 			#ifdef _DEBUG
-			wchar_t szDbg[128]; wsprintf(szDbg, L"WM_SIZE (Type:%i, {%i-%i})\n", wParam, LOWORD(lParam), HIWORD(lParam));
+			DWORD dwStyle = GetWindowLong(ghWnd, GWL_STYLE);
+			wchar_t szDbg[128]; wsprintf(szDbg, L"WM_SIZE (Type:%i, {%i-%i}) style=0x%08X\n", wParam, LOWORD(lParam), HIWORD(lParam), dwStyle);
 			DEBUGSTRSIZE(szDbg);
 			#endif
+			if (gSet.isDontMinimize && wParam == SIZE_MINIMIZED) {
+				result = 0;
+				break;
+			}
 			if (!isIconic())
 				result = gConEmu.OnSize(wParam, LOWORD(lParam), HIWORD(lParam));
 		} break;
 
-	// WM_MOVE не зовется, возможно из-за WM_WINDOWPOSCHANGED
     case WM_MOVE:
 		{
 			#ifdef _DEBUG
-			wchar_t szDbg[128]; wsprintf(szDbg, L"WM_MOVE ({%i-%i})\n", LOWORD(lParam), HIWORD(lParam));
+			wchar_t szDbg[128]; wsprintf(szDbg, L"WM_MOVE ({%i-%i})\n", (int)(SHORT)LOWORD(lParam), (int)(SHORT)HIWORD(lParam));
 			DEBUGSTRSIZE(szDbg);
 			#endif
+		} break;
+
+	case WM_WINDOWPOSCHANGING:
+		{
+			WINDOWPOS *p = (WINDOWPOS*)lParam;
+			DWORD dwStyle = GetWindowLong(ghWnd, GWL_STYLE);
+			#ifdef _DEBUG
+			wchar_t szDbg[128]; wsprintf(szDbg, L"WM_WINDOWPOSCHANGING ({%i-%i}x{%i-%i} Flags=0x%08X) style=0x%08X\n", p->x, p->y, p->cx, p->cy, p->flags, dwStyle);
+			DEBUGSTRSIZE(szDbg);
+			#endif
+			if (gSet.isDontMinimize) {
+				if ((p->flags & (0x8000|SWP_NOACTIVATE)) == (0x8000|SWP_NOACTIVATE)
+					|| ((p->flags & (SWP_NOMOVE|SWP_NOSIZE)) == 0 && p->x < -30000 && p->y < -30000 )
+					)
+				{
+					p->flags = SWP_NOSIZE|SWP_NOMOVE|SWP_NOACTIVATE;
+					p->hwndInsertAfter = HWND_BOTTOM;
+					result = 0;
+					if ((dwStyle & WS_MINIMIZE) == WS_MINIMIZE) {
+						dwStyle &= ~WS_MINIMIZE;
+						SetWindowLong(ghWnd, GWL_STYLE, dwStyle);
+						gConEmu.InvalidateAll();
+					}
+					break;
+				}
+			}
+			// Иначе не вызвутся события WM_SIZE/WM_MOVE
+			result = DefWindowProc(hWnd, messg, wParam, lParam);
+			p = (WINDOWPOS*)lParam;
 		} break;
 
 	case WM_WINDOWPOSCHANGED:
 		{
 			static int WindowPosStackCount = 0;
 			WINDOWPOS *p = (WINDOWPOS*)lParam;
-			wchar_t szDbg[128]; wsprintf(szDbg, L"WM_WINDOWPOSCHANGED ({%i-%i}x{%i-%i} Flags=0x%08X)\n", p->x, p->y, p->cx, p->cy, p->flags);
+			DWORD dwStyle = GetWindowLong(ghWnd, GWL_STYLE);
+			wchar_t szDbg[128]; wsprintf(szDbg, L"WM_WINDOWPOSCHANGED ({%i-%i}x{%i-%i} Flags=0x%08X), style=0x%08X\n", p->x, p->y, p->cx, p->cy, p->flags, dwStyle);
 			DEBUGSTRSIZE(szDbg);
 			WindowPosStackCount++;
 			if (WindowPosStackCount == 1) {
@@ -6596,6 +6639,15 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 				GetWindowRect(ghWnd, &mrc_WndPosOnPicView);
 			}
 		} break;
+
+	case WM_NCCALCSIZE:
+		{
+			NCCALCSIZE_PARAMS *pParms = NULL;
+			LPRECT pRect = NULL;
+			if (wParam) pParms = (NCCALCSIZE_PARAMS*)lParam; else pRect = (LPRECT)lParam;
+			result = DefWindowProc(hWnd, messg, wParam, lParam);
+			break;
+		}
 
     case WM_GETMINMAXINFO:
         {

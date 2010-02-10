@@ -189,7 +189,7 @@ public:
 #define F(n) ((On##n##_t)f##n)
 
 
-#define SETARGS(r) HookCallbackArg args = {NULL}; args.lpResult = (LPVOID)(r)
+#define SETARGS(r) HookCallbackArg args = {bMainThread}; args.lpResult = (LPVOID)(r)
 #define SETARGS1(r,a1) SETARGS(r); args.lArguments[0] = (DWORD_PTR)(a1)
 #define SETARGS2(r,a1,a2) SETARGS1(r,a1); args.lArguments[1] = (DWORD_PTR)(a2)
 #define SETARGS3(r,a1,a2,a3) SETARGS2(r,a1,a2); args.lArguments[2] = (DWORD_PTR)(a3)
@@ -1180,19 +1180,25 @@ typedef BOOL (WINAPI* OnPeekConsoleInputA_t)(HANDLE,PINPUT_RECORD,DWORD,LPDWORD)
 static BOOL WINAPI OnPeekConsoleInputA(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsRead)
 {
 	ORIGINAL(PeekConsoleInputA);
-	//static HookItem *ph = NULL;
-	//BOOL bMainThread = (GetCurrentThreadId() == nMainThreadId);
-	//void* fPeekConsoleInputA = NULL;
-	//static int nMainThCounter = 0; CInFuncCall CounterLocker;
-	//BOOL bAllowModified = bMainThread;
-	//if (bMainThread) bAllowModified = CounterLocker.Inc(&nMainThCounter);
-	//fPeekConsoleInputA = (void*)GetOriginalAddress((void*)(OnPeekConsoleInputA) , (void*)PeekConsoleInputA , bAllowModified, &ph);
-	//_ASSERTE((void*)(OnPeekConsoleInputA)!=(void*)(fPeekConsoleInputA) && (void*)(fPeekConsoleInputA)!=NULL);
 	
 	if (gpConsoleInfo && bMainThread)
 		TouchReadPeekConsoleInputs(1);
 		
-	BOOL lbRc = F(PeekConsoleInputA)(hConsoleInput, lpBuffer, nLength, lpNumberOfEventsRead);
+	BOOL lbRc = FALSE;
+
+	if (ph && ph->PreCallBack) {
+		SETARGS4(&lbRc,hConsoleInput,lpBuffer,nLength,lpNumberOfEventsRead);
+		if (!ph->PreCallBack(&args))
+			return FALSE;
+	}
+
+	lbRc = F(PeekConsoleInputA)(hConsoleInput, lpBuffer, nLength, lpNumberOfEventsRead);
+	
+	if (ph && ph->PostCallBack) {
+		SETARGS4(&lbRc,hConsoleInput,lpBuffer,nLength,lpNumberOfEventsRead);
+		ph->PostCallBack(&args);
+	}
+	
 	return lbRc;
 }
 
@@ -1204,7 +1210,21 @@ static BOOL WINAPI OnPeekConsoleInputW(HANDLE hConsoleInput, PINPUT_RECORD lpBuf
 	if (gpConsoleInfo && bMainThread)
 		TouchReadPeekConsoleInputs(1);
 		
-	BOOL lbRc = F(PeekConsoleInputW)(hConsoleInput, lpBuffer, nLength, lpNumberOfEventsRead);
+	BOOL lbRc = FALSE;
+
+	if (ph && ph->PreCallBack) {
+		SETARGS4(&lbRc,hConsoleInput,lpBuffer,nLength,lpNumberOfEventsRead);
+		if (!ph->PreCallBack(&args))
+			return FALSE;
+	}
+
+	lbRc = F(PeekConsoleInputW)(hConsoleInput, lpBuffer, nLength, lpNumberOfEventsRead);
+
+	if (ph && ph->PostCallBack) {
+		SETARGS4(&lbRc,hConsoleInput,lpBuffer,nLength,lpNumberOfEventsRead);
+		ph->PostCallBack(&args);
+	}
+
 	return lbRc;
 }
 
@@ -1215,8 +1235,22 @@ static BOOL WINAPI OnReadConsoleInputA(HANDLE hConsoleInput, PINPUT_RECORD lpBuf
 	
 	if (gpConsoleInfo&& bMainThread)
 		TouchReadPeekConsoleInputs(0);
+		
+	BOOL lbRc = FALSE;
 
-	BOOL lbRc = F(ReadConsoleInputA)(hConsoleInput, lpBuffer, nLength, lpNumberOfEventsRead);
+	if (ph && ph->PreCallBack) {
+		SETARGS4(&lbRc,hConsoleInput,lpBuffer,nLength,lpNumberOfEventsRead);
+		if (!ph->PreCallBack(&args))
+			return FALSE;
+	}
+
+	lbRc = F(ReadConsoleInputA)(hConsoleInput, lpBuffer, nLength, lpNumberOfEventsRead);
+
+	if (ph && ph->PostCallBack) {
+		SETARGS4(&lbRc,hConsoleInput,lpBuffer,nLength,lpNumberOfEventsRead);
+		ph->PostCallBack(&args);
+	}
+
 	return lbRc;
 }
 
@@ -1227,8 +1261,22 @@ static BOOL WINAPI OnReadConsoleInputW(HANDLE hConsoleInput, PINPUT_RECORD lpBuf
 	
 	if (gpConsoleInfo && bMainThread)
 		TouchReadPeekConsoleInputs(0);
+		
+	BOOL lbRc = FALSE;
 
-	BOOL lbRc = F(ReadConsoleInputW)(hConsoleInput, lpBuffer, nLength, lpNumberOfEventsRead);
+	if (ph && ph->PreCallBack) {
+		SETARGS4(&lbRc,hConsoleInput,lpBuffer,nLength,lpNumberOfEventsRead);
+		if (!ph->PreCallBack(&args))
+			return FALSE;
+	}
+
+	lbRc = F(ReadConsoleInputW)(hConsoleInput, lpBuffer, nLength, lpNumberOfEventsRead);
+
+	if (ph && ph->PostCallBack) {
+		SETARGS4(&lbRc,hConsoleInput,lpBuffer,nLength,lpNumberOfEventsRead);
+		ph->PostCallBack(&args);
+	}
+
 	return lbRc;
 }
 
@@ -1249,6 +1297,7 @@ typedef BOOL (WINAPI* OnAllocConsole_t)(void);
 static BOOL WINAPI OnAllocConsole(void)
 {
 	ORIGINALFAST(AllocConsole);
+	BOOL bMainThread = (GetCurrentThreadId() == nMainThreadId);
 
 	BOOL lbRc = FALSE;
 
@@ -1272,6 +1321,7 @@ typedef BOOL (WINAPI* OnFreeConsole_t)(void);
 static BOOL WINAPI OnFreeConsole(void)
 {
 	ORIGINALFAST(FreeConsole);
+	BOOL bMainThread = (GetCurrentThreadId() == nMainThreadId);
 
 	BOOL lbRc = FALSE;
 

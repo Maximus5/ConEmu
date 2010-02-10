@@ -104,6 +104,8 @@ static HookItem HooksFarOnly[] = {
 
 extern BOOL WINAPI OnConsoleDetaching(HookCallbackArg* pArgs);
 extern VOID WINAPI OnConsoleWasAttached(HookCallbackArg* pArgs);
+extern BOOL WINAPI OnConsolePeekInput(HookCallbackArg* pArgs);
+extern BOOL WINAPI OnConsoleReadInput(HookCallbackArg* pArgs);
 
 
 
@@ -115,6 +117,12 @@ BOOL StartupHooks(HMODULE ahOurDll)
 	SetHookCallbacks( "FreeConsole",  kernel32, OnConsoleDetaching, NULL );
 	SetHookCallbacks( "AllocConsole", kernel32, NULL, OnConsoleWasAttached );
 
+	SetHookCallbacks( "PeekConsoleInputA", kernel32, OnConsolePeekInput, NULL );
+	SetHookCallbacks( "PeekConsoleInputW", kernel32, OnConsolePeekInput, NULL );
+	
+	SetHookCallbacks( "ReadConsoleInputA", kernel32, OnConsoleReadInput, NULL );
+	SetHookCallbacks( "ReadConsoleInputW", kernel32, OnConsoleReadInput, NULL );
+	
 	return SetAllHooks(ahOurDll);
 
 	//HMODULE hKernel = GetModuleHandle( kernel32 );

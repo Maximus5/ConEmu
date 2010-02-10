@@ -843,11 +843,24 @@ int CreateMapHeader()
 	wchar_t szMapName[64];
 	int nConInfoSize = sizeof(CESERVER_REQ_CONINFO_HDR);
 	
+	HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
+	COORD crMax = GetLargestConsoleWindowSize(h);
+	if (crMax.X < 80 || crMax.Y < 25) {
+		#ifdef _DEBUG
+		DWORD dwErr = GetLastError();
+		_ASSERTE(crMax.X >= 80 && crMax.Y >= 25);
+		#endif
+		if (crMax.X < 80) crMax.X = 80;
+		if (crMax.Y < 25) crMax.Y = 25;
+	}
+	TODO("Добавить к nConDataSize размер необходимый для хранения crMax ячеек");
+	int nConDataSize = 0;
+	
 	_ASSERTE(srv.hFileMapping == NULL);
 	
 	wsprintf(szMapName, CECONMAPNAME, (DWORD)ghConWnd);
 	srv.hFileMapping = CreateFileMapping(INVALID_HANDLE_VALUE, 
-		gpNullSecurity, PAGE_READWRITE, 0, nConInfoSize, szMapName);
+		gpNullSecurity, PAGE_READWRITE, 0, nConInfoSize+nConDataSize, szMapName);
 	if (!srv.hFileMapping) {
 		DWORD dwErr = GetLastError();
 		_printf ("Can't create console data file mapping. ErrCode=0x%08X\n", dwErr, szMapName);
@@ -860,11 +873,16 @@ int CreateMapHeader()
 		_printf ("Can't map console info. ErrCode=0x%08X\n", dwErr, szMapName);
 		iRc = CERR_MAPVIEWFILEERR; goto wrap;
 	}
+	// Вообще-то похоже и не надо - мэппинги создаются zero-initialized
+	// но на всякий случай обнулим (только заголовок, на данные - забить)
 	memset(srv.pConsoleInfo, 0, nConInfoSize);
-	srv.pConsoleInfo->cbSize = nConInfoSize;
+	srv.pConsoleInfo->cbSize = nConInfoSize; // Тут - только размер заголовка!
 	srv.pConsoleInfo->nLogLevel = (ghLogSize!=NULL) ? 1 : 0;
 	
 	srv.pConsoleInfo->nServerPID = GetCurrentProcessId();
+	
+	// Максимальный размер буфера
+	srv.pConsoleInfo->crMaxConSize = crMax;
 
 wrap:	
 	return iRc;

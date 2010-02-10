@@ -495,15 +495,15 @@ LPCWSTR GetMsg995(int aiMsg)
 	return InfoW995->GetMsg(InfoW995->ModuleNumber,aiMsg);
 }
 
-void ReloadMacro995()
-{
-	if (!InfoW995 || !InfoW995->AdvControl)
-		return;
-
-	ActlKeyMacro command;
-	command.Command=MCMD_LOADALL;
-	InfoW995->AdvControl(InfoW995->ModuleNumber,ACTL_KEYMACRO,&command);
-}
+//void ReloadMacro995()
+//{
+//	if (!InfoW995 || !InfoW995->AdvControl)
+//		return;
+//
+//	ActlKeyMacro command;
+//	command.Command=MCMD_LOADALL;
+//	InfoW995->AdvControl(InfoW995->ModuleNumber,ACTL_KEYMACRO,&command);
+//}
 
 void SetWindow995(int nTab)
 {
@@ -625,39 +625,39 @@ BOOL EditOutput995(LPCWSTR asFileName, BOOL abView)
 }
 
 // Param должен быть выделен в куче. Память освобождается в ProcessSynchroEventW.
-BOOL CallSynchro995(SynchroArg *Param, DWORD nTimeout /*= 10000*/)
-{
-	if (!InfoW995 || !Param)
-		return FALSE;
-
-	if (gFarVersion.dwVerMajor>1 && (gFarVersion.dwVerMinor>0 || gFarVersion.dwBuild>=1006)) {
-		// Функция всегда возвращает 0
-		if (Param->hEvent)
-			ResetEvent(Param->hEvent);
-
-		//Param->Processed = FALSE;
-
-		InfoW995->AdvControl ( InfoW995->ModuleNumber, ACTL_SYNCHRO, Param);
-
-		HANDLE hEvents[2] = {ghServerTerminateEvent, Param->hEvent};
-		int nCount = Param->hEvent ? 2 : 1;
-		_ASSERTE(Param->hEvent != NULL);
-
-		DWORD nWait = 100;
-		nWait = WaitForMultipleObjects(nCount, hEvents, FALSE, nTimeout);
-		if (nWait != WAIT_OBJECT_0 && nWait != (WAIT_OBJECT_0+1)) {
-			_ASSERTE(nWait==WAIT_OBJECT_0);
-			if (nWait == (WAIT_OBJECT_0+1)) {
-				// Таймаут, эту команду плагин должен пропустить, когда фар таки соберется ее выполнить
-				Param->Obsolete = TRUE;
-			}
-		}
-
-		return (nWait == 0);
-	}
-
-	return FALSE;
-}
+//BOOL CallSynchro995(SynchroArg *Param, DWORD nTimeout /*= 10000*/)
+//{
+//	if (!InfoW995 || !Param)
+//		return FALSE;
+//
+//	if (gFarVersion.dwVerMajor>1 && (gFarVersion.dwVerMinor>0 || gFarVersion.dwBuild>=1006)) {
+//		// Функция всегда возвращает 0
+//		if (Param->hEvent)
+//			ResetEvent(Param->hEvent);
+//
+//		//Param->Processed = FALSE;
+//
+//		InfoW995->AdvControl ( InfoW995->ModuleNumber, ACTL_SYNCHRO, Param);
+//
+//		HANDLE hEvents[2] = {ghServerTerminateEvent, Param->hEvent};
+//		int nCount = Param->hEvent ? 2 : 1;
+//		_ASSERTE(Param->hEvent != NULL);
+//
+//		DWORD nWait = 100;
+//		nWait = WaitForMultipleObjects(nCount, hEvents, FALSE, nTimeout);
+//		if (nWait != WAIT_OBJECT_0 && nWait != (WAIT_OBJECT_0+1)) {
+//			_ASSERTE(nWait==WAIT_OBJECT_0);
+//			if (nWait == (WAIT_OBJECT_0+1)) {
+//				// Таймаут, эту команду плагин должен пропустить, когда фар таки соберется ее выполнить
+//				Param->Obsolete = TRUE;
+//			}
+//		}
+//
+//		return (nWait == 0);
+//	}
+//
+//	return FALSE;
+//}
 
 BOOL IsMacroActive995()
 {
@@ -735,4 +735,88 @@ bool ProcessCommandLine995(wchar_t* pszCommand)
 	}
 
 	return false;
+}
+
+static void FarPanel2CePanel(PanelInfo* pFar, CEFAR_SHORT_PANEL_INFO* pCE)
+{
+	pCE->PanelType = pFar->PanelType;
+	pCE->Plugin = pFar->Plugin;
+	pCE->PanelRect = pFar->PanelRect;
+	pCE->ItemsNumber = pFar->ItemsNumber;
+	pCE->SelectedItemsNumber = pFar->SelectedItemsNumber;
+	pCE->CurrentItem = pFar->CurrentItem;
+	pCE->TopPanelItem = pFar->TopPanelItem;
+	pCE->Visible = pFar->Visible;
+	pCE->Focus = pFar->Focus;
+	pCE->ViewMode = pFar->ViewMode;
+	pCE->ShortNames = pFar->ShortNames;
+	pCE->SortMode = pFar->SortMode;
+	pCE->Flags = pFar->Flags;
+}
+
+void ReloadFarInfo995()
+{
+	if (!InfoW995 || !FSFW995) return;
+	
+	if (!gpConsoleInfo) {
+		_ASSERTE(gpConsoleInfo!=NULL);
+		return;
+	}
+
+	// Заполнить gpConsoleInfo->
+	//BYTE nFarColors[0x100]; // Массив цветов фара
+	//DWORD nFarInterfaceSettings;
+	//DWORD nFarPanelSettings;
+	//DWORD nFarConfirmationSettings;
+	//BOOL  bFarPanelAllowed, bFarLeftPanel, bFarRightPanel;   // FCTL_CHECKPANELSEXIST, FCTL_GETPANELSHORTINFO,...
+	//CEFAR_SHORT_PANEL_INFO FarLeftPanel, FarRightPanel;
+	
+	INT_PTR nColorSize = InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETARRAYCOLOR, NULL);
+	if (nColorSize <= sizeof(gpConsoleInfo->nFarColors)) {
+		nColorSize = InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETARRAYCOLOR, gpConsoleInfo->nFarColors);
+	} else {
+		_ASSERTE(nColorSize <= sizeof(gpConsoleInfo->nFarColors));
+		BYTE* ptr = (BYTE*)calloc(nColorSize,1);
+		if (!ptr) {
+			memset(gpConsoleInfo->nFarColors, 7, sizeof(gpConsoleInfo->nFarColors));
+		} else {
+			nColorSize = InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETARRAYCOLOR, ptr);
+			memmove(gpConsoleInfo->nFarColors, ptr, sizeof(gpConsoleInfo->nFarColors));
+			free(ptr);
+		}
+	}
+	
+	gpConsoleInfo->nFarInterfaceSettings =
+		InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETINTERFACESETTINGS, 0);
+	gpConsoleInfo->nFarPanelSettings =
+		InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETPANELSETTINGS, 0);
+	gpConsoleInfo->nFarConfirmationSettings =
+		InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETCONFIRMATIONS, 0);
+	
+	if (FALSE == (gpConsoleInfo->bFarPanelAllowed = InfoW995->Control(PANEL_NONE, FCTL_CHECKPANELSEXIST, 0, 0))) {
+		gpConsoleInfo->bFarLeftPanel = FALSE;
+		gpConsoleInfo->bFarRightPanel = FALSE;
+	} else {
+		PanelInfo piA = {0}, piP = {0};
+		BOOL lbActive  = InfoW995->Control(PANEL_ACTIVE, FCTL_GETPANELINFO, 0, (LONG_PTR)&piA);
+		BOOL lbPassive = InfoW995->Control(PANEL_PASSIVE, FCTL_GETPANELINFO, 0, (LONG_PTR)&piP);
+		if (!lbActive && !lbPassive)
+		{
+			gpConsoleInfo->bFarLeftPanel = FALSE;
+			gpConsoleInfo->bFarRightPanel = FALSE;
+		} else {
+			PanelInfo *ppiL = NULL;
+			PanelInfo *ppiR = NULL;
+			if (lbActive) {
+				if (piA.Flags & PFLAGS_PANELLEFT) ppiL = &piA; else ppiR = &piA;
+			}
+			if (lbPassive) {
+				if (piP.Flags & PFLAGS_PANELLEFT) ppiL = &piP; else ppiR = &piP;
+			}
+			gpConsoleInfo->bFarLeftPanel = ppiL!=NULL;
+			gpConsoleInfo->bFarRightPanel = ppiR!=NULL;
+			if (ppiL) FarPanel2CePanel(ppiL, &(gpConsoleInfo->FarLeftPanel));
+			if (ppiR) FarPanel2CePanel(ppiR, &(gpConsoleInfo->FarRightPanel));
+		}
+	}
 }

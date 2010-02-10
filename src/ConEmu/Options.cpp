@@ -588,6 +588,9 @@ void CSettings::LoadSettings()
         reg->Load(L"SkipFocusEvents", isSkipFocusEvents);
         //reg->Load(L"LangChangeWsPlugin", isLangChangeWsPlugin);
 		reg->Load(L"MonitorConsoleLang", isMonitorConsoleLang);
+		
+		reg->Load(L"ShowOnTaskBar", isShowOnTaskBar);
+		reg->Load(L"DontMinimize", isDontMinimize);
         
         reg->CloseKey();
     }
@@ -932,6 +935,10 @@ BOOL CSettings::SaveSettings()
 
             reg->Save(L"SkipFocusEvents", isSkipFocusEvents);
     		reg->Save(L"MonitorConsoleLang", isMonitorConsoleLang);
+    		
+			reg->Save(L"ShowOnTaskBar", isShowOnTaskBar);
+			reg->Save(L"DontMinimize", isDontMinimize);
+    		
             
             reg->CloseKey();
             delete reg;
@@ -1483,6 +1490,8 @@ LRESULT CSettings::OnInitDialog_Ext()
 	CheckDlgButton(hExt, cbDragPanel, isDragPanel);
 	CheckDlgButton(hExt, cbTryToCenter, isTryToCenter);
 
+	if (isShowOnTaskBar) CheckDlgButton(hExt, cbShowOnTaskbar, BST_CHECKED);
+	if (isDontMinimize)  CheckDlgButton(hExt, cbDontMinimize, BST_CHECKED);
 
 	if (isConVisible)
 		CheckDlgButton(hExt, cbVisible, BST_CHECKED);
@@ -1935,6 +1944,7 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
 		
 	case cbShowOnTaskbar:
 		isShowOnTaskBar = IsChecked(hExt, cbShowOnTaskbar);
+		gConEmu.OnShowOnTaskBar();
 		break;
 		
 	case cbDontMinimize:

@@ -115,14 +115,14 @@ typedef struct _CONSOLE_INFO
 #pragma pack(pop)
 
 struct ConProcess {
-    DWORD ProcessID, ParentPID, InputTID;
+    DWORD ProcessID, ParentPID; //, InputTID;
     bool  IsFar;
     bool  IsTelnet; // может быть включен ВМЕСТЕ с IsFar, если удалось подцепится к фару через сетевой пайп
     bool  IsNtvdm;  // 16bit приложения
     bool  IsCmd;    // значит фар выполняет команду
     bool  NameChecked, RetryName;
     bool  Alive, inConsole;
-    TCHAR Name[64]; // чтобы полная инфа об ошибке влезала
+    wchar_t Name[64]; // чтобы полная инфа об ошибке влезала
 };
 
 #include <pshpack1.h>
@@ -358,7 +358,7 @@ private:
     std::vector<ConProcess> m_Processes;
     int mn_ProcessCount;
     //
-    DWORD mn_FarPID, mn_FarInputTID, mn_LastSetForegroundPID;
+    DWORD mn_FarPID, /*mn_FarInputTID,*/ mn_LastSetForegroundPID;
     //
     ConEmuTab* mp_tabs;
 	MSection   msc_Tabs;
@@ -435,7 +435,7 @@ private:
 	wchar_t ms_Editor[32], ms_EditorRus[32], ms_Viewer[32], ms_ViewerRus[32];
 	wchar_t ms_TempPanel[32], ms_TempPanelRus[32];
 	//
-	BOOL mb_PluginDetected; DWORD mn_FarPID_PluginDetected, mn_Far_PluginInputThreadId;
+	BOOL mb_PluginDetected; DWORD mn_FarPID_PluginDetected; //, mn_Far_PluginInputThreadId;
 	void CheckFarStates();
 	void OnTitleChanged();
 	DWORD mn_LastInvalidateTick;

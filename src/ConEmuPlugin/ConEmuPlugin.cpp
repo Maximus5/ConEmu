@@ -89,7 +89,7 @@ HANDLE ghConIn = NULL;
 DWORD gnMainThreadId = 0;
 //HANDLE hEventCmd[MAXCMDCOUNT], hEventAlive=NULL, hEventReady=NULL;
 HANDLE ghMonitorThread = NULL; DWORD gnMonitorThreadId = 0;
-HANDLE ghInputThread = NULL; DWORD gnInputThreadId = 0;
+//HANDLE ghInputThread = NULL; DWORD gnInputThreadId = 0;
 HANDLE ghSetWndSendTabsEvent = NULL;
 FarVersion gFarVersion;
 WCHAR gszDir1[CONEMUTABMAX], gszDir2[CONEMUTABMAX];
@@ -103,13 +103,14 @@ DWORD  gnDataSize=0;
 DWORD gnReqCommand = -1;
 int gnPluginOpenFrom = -1;
 HANDLE ghInputSynchroExecuted = NULL;
-BOOL gbCmdCallObsolete = FALSE;
+//BOOL gbCmdCallObsolete = FALSE;
 LPVOID gpReqCommandData = NULL;
 HANDLE ghReqCommandEvent = NULL;
+BOOL   gbReqCommandWaiting = FALSE;
 UINT gnMsgTabChanged = 0;
 CRITICAL_SECTION csData;
 MSection *csTabs = NULL;
-WCHAR gcPlugKey=0;
+//WCHAR gcPlugKey=0;
 BOOL  gbPlugKeyChanged=FALSE;
 HKEY  ghRegMonitorKey=NULL; HANDLE ghRegMonitorEvt=NULL;
 //HMODULE ghFarHintsFix = NULL;
@@ -146,6 +147,9 @@ BOOL gbStartedUnderConsole2 = FALSE;
 void CheckColorerHeader();
 int CreateColorerHeader();
 void CloseColorerHeader();
+void ReloadFarInfo();
+DWORD gnSelfPID = 0; //GetCurrentProcessId();
+BOOL  gbNeedReloadFarInfo = FALSE;
 
 
 //std::vector<HANDLE> ghCommandThreads;
@@ -196,12 +200,7 @@ CommandThreads *ghCommandThreads;
 // minimal(?) FAR version 2.0 alpha build FAR_X_VER
 int WINAPI _export GetMinFarVersionW(void)
 {
-	// Необходимо наличие Synchro
-#if FAR_X_VER<1007
-	return MAKEFARVERSION(2,0,1007);
-#else
 	return MAKEFARVERSION(2,0,FAR_X_VER);
-#endif
 }
 
 /* COMMON - пока структуры не различаются */
@@ -250,7 +249,7 @@ HANDLE WINAPI _export OpenPluginW(int OpenFrom,INT_PTR Item)
 		gnPluginOpenFrom = (OpenFrom && 0xFFFF);
 		ProcessCommand(gnReqCommand, FALSE/*bReqMainThread*/, gpReqCommandData);
 	} else {
-		if (!gbCmdCallObsolete) {
+		//if (!gbCmdCallObsolete) {
 			INT_PTR nID = -1; // выбор из меню
 			if ((OpenFrom & OPEN_FROMMACRO) == OPEN_FROMMACRO)
 			{
@@ -275,79 +274,135 @@ HANDLE WINAPI _export OpenPluginW(int OpenFrom,INT_PTR Item)
 				}
 			}
 			ShowPluginMenu((int)nID);
-		} else {
-			gbCmdCallObsolete = FALSE;
-		}
+		//} else {
+		//	gbCmdCallObsolete = FALSE;
+		//}
 	}
 	return INVALID_HANDLE_VALUE;
 }
 
-int WINAPI _export ProcessSynchroEventW(int Event,void *Param)
+BOOL OnConsolePeekReadInput(BOOL abPeek)
 {
-	if (Event == SE_COMMONSYNCHRO) {
-    	if (!gbInfoW_OK) {
-    		if (Param) free(Param);
-    		return 0;
-		}
-
-		SynchroArg *pArg = (SynchroArg*)Param;
-		_ASSERTE(pArg!=NULL);
-
-		// Если предыдущая активация отвалилась по таймауту - не выполнять
-		if (pArg->Obsolete) {
-			free(pArg);
-			return 0;
-		}
-
-		if (pArg->SynchroType == SynchroArg::eCommand) {
-    		if (gnReqCommand != (DWORD)-1) {
-    			_ASSERTE(gnReqCommand==(DWORD)-1);
-    		} else {
-    			TODO("Определить текущую область... (panel/editor/viewer/menu/...");
-    			gnPluginOpenFrom = 0;
-    			gnReqCommand = (DWORD)pArg->Param1;
-				gpReqCommandData = (LPVOID)pArg->Param2;
-				
-				if (gnReqCommand == CMD_SETWINDOW) {
-					// Необходимо быть в panel/editor/viewer
-					wchar_t szMacro[255];
-					DWORD nTabShift = SETWND_CALLPLUGIN_BASE + *((DWORD*)gpReqCommandData);
-					
-					// Если панели-редактор-вьювер - сменить окно. Иначе - отослать в GUI табы
-					wsprintf(szMacro, L"$if (Shell||Viewer||Editor) callplugin(0x%08X,%i) $else callplugin(0x%08X,%i) $end",
-						ConEmu_SysID, nTabShift, ConEmu_SysID, SETWND_CALLPLUGIN_SENDTABS);
-						
-					gnReqCommand = -1;
-					gpReqCommandData = NULL;
-					PostMacro(szMacro);
-					// Done
-				} else {
-	    			ProcessCommand(gnReqCommand, FALSE/*bReqMainThread*/, gpReqCommandData);
-    			}
-    		}
-		} else if (pArg->SynchroType == SynchroArg::eInput) {
-			INPUT_RECORD *pRec = (INPUT_RECORD*)(pArg->Param1);
-			UINT nCount = (UINT)pArg->Param2;
-
-			if (nCount>0) {
-				DWORD cbWritten = 0;
-				_ASSERTE(ghConIn);
-				WARNING("Убрать, заменить ghConIn на GetStdHandle()"); // Иначе в Win7 будет буфер разрушаться
-				BOOL fSuccess = WriteConsoleInput(ghConIn, pRec, nCount, &cbWritten);
-				if (!fSuccess || cbWritten != nCount) {
-					_ASSERTE(fSuccess && cbWritten==nCount);
-				}
-			}
-		}
-
-		if (pArg->hEvent)
-			SetEvent(pArg->hEvent);
-		//pArg->Processed = TRUE;
-		//pArg->Executed = TRUE;
-		free(pArg);
+	if (gbNeedReloadFarInfo && abPeek == FALSE) {
+		gbNeedReloadFarInfo = FALSE;
+		ReloadFarInfo();
 	}
-	return 0;
+	
+	if (!gbReqCommandWaiting || gnReqCommand == (DWORD)-1) return TRUE; // активация в данный момент не требуется
+	
+	gbReqCommandWaiting = FALSE; // чтобы ожидающая нить случайно не удалила параметры, когда мы работаем
+
+	TODO("Определить текущую область... (panel/editor/viewer/menu/...");
+	gnPluginOpenFrom = 0;
+	
+	// заглушка для Ansi
+	if (gnReqCommand == CMD_SETWINDOW && (gFarVersion.dwVerMajor==1))
+		gnPluginOpenFrom = OPEN_PLUGINSMENU;
+
+	//
+	if ((gnReqCommand == CMD_SETWINDOW) && (gFarVersion.dwVerMajor==2)) {
+		// Необходимо быть в panel/editor/viewer
+		wchar_t szMacro[255];
+		DWORD nTabShift = SETWND_CALLPLUGIN_BASE + *((DWORD*)gpReqCommandData);
+		
+		// Если панели-редактор-вьювер - сменить окно. Иначе - отослать в GUI табы
+		wsprintf(szMacro, L"$if (Shell||Viewer||Editor) callplugin(0x%08X,%i) $else callplugin(0x%08X,%i) $end",
+			ConEmu_SysID, nTabShift, ConEmu_SysID, SETWND_CALLPLUGIN_SENDTABS);
+			
+		gnReqCommand = -1;
+		gpReqCommandData = NULL;
+		PostMacro(szMacro);
+		// Done
+	} else {
+		ProcessCommand(gnReqCommand, FALSE/*bReqMainThread*/, gpReqCommandData);
+	}
+	
+	// Мы закончили
+	SetEvent(ghReqCommandEvent);
+	
+	return TRUE; // продолжить
 }
+
+BOOL WINAPI OnConsolePeekInput(HookCallbackArg* pArgs)
+{
+	if (!pArgs->bMainThread) return TRUE; // обработку делаем только в основной нити
+	OnConsolePeekReadInput(TRUE/*abPeek*/);
+	return TRUE; // продолжить
+}
+
+BOOL WINAPI OnConsoleReadInput(HookCallbackArg* pArgs)
+{
+	if (!pArgs->bMainThread) return TRUE; // обработку делаем только в основной нити
+	OnConsolePeekReadInput(FALSE/*abPeek*/);
+	return TRUE; // продолжить
+}
+
+//int WINAPI _export ProcessSynchroEventW(int Event,void *Param)
+//{
+//	if (Event == SE_COMMONSYNCHRO) {
+//    	if (!gbInfoW_OK) {
+//    		if (Param) free(Param);
+//    		return 0;
+//		}
+//
+//		SynchroArg *pArg = (SynchroArg*)Param;
+//		_ASSERTE(pArg!=NULL);
+//
+//		// Если предыдущая активация отвалилась по таймауту - не выполнять
+//		if (pArg->Obsolete) {
+//			free(pArg);
+//			return 0;
+//		}
+//
+//		if (pArg->SynchroType == SynchroArg::eCommand) {
+//    		if (gnReqCommand != (DWORD)-1) {
+//    			_ASSERTE(gnReqCommand==(DWORD)-1);
+//    		} else {
+//    			TODO("Определить текущую область... (panel/editor/viewer/menu/...");
+//    			gnPluginOpenFrom = 0;
+//    			gnReqCommand = (DWORD)pArg->Param1;
+//				gpReqCommandData = (LPVOID)pArg->Param2;
+//				
+//				if (gnReqCommand == CMD_SETWINDOW) {
+//					// Необходимо быть в panel/editor/viewer
+//					wchar_t szMacro[255];
+//					DWORD nTabShift = SETWND_CALLPLUGIN_BASE + *((DWORD*)gpReqCommandData);
+//					
+//					// Если панели-редактор-вьювер - сменить окно. Иначе - отослать в GUI табы
+//					wsprintf(szMacro, L"$if (Shell||Viewer||Editor) callplugin(0x%08X,%i) $else callplugin(0x%08X,%i) $end",
+//						ConEmu_SysID, nTabShift, ConEmu_SysID, SETWND_CALLPLUGIN_SENDTABS);
+//						
+//					gnReqCommand = -1;
+//					gpReqCommandData = NULL;
+//					PostMacro(szMacro);
+//					// Done
+//				} else {
+//	    			ProcessCommand(gnReqCommand, FALSE/*bReqMainThread*/, gpReqCommandData);
+//    			}
+//    		}
+//		} else if (pArg->SynchroType == SynchroArg::eInput) {
+//			INPUT_RECORD *pRec = (INPUT_RECORD*)(pArg->Param1);
+//			UINT nCount = (UINT)pArg->Param2;
+//
+//			if (nCount>0) {
+//				DWORD cbWritten = 0;
+//				_ASSERTE(ghConIn);
+//				WARNING("Убрать, заменить ghConIn на GetStdHandle()"); // Иначе в Win7 будет буфер разрушаться
+//				BOOL fSuccess = WriteConsoleInput(ghConIn, pRec, nCount, &cbWritten);
+//				if (!fSuccess || cbWritten != nCount) {
+//					_ASSERTE(fSuccess && cbWritten==nCount);
+//				}
+//			}
+//		}
+//
+//		if (pArg->hEvent)
+//			SetEvent(pArg->hEvent);
+//		//pArg->Processed = TRUE;
+//		//pArg->Executed = TRUE;
+//		free(pArg);
+//	}
+//	return 0;
+//}
 
 /* COMMON - end */
 
@@ -365,6 +420,7 @@ BOOL WINAPI DllMain( HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserve
 		case DLL_PROCESS_ATTACH:
 			{
 				ghPluginModule = (HMODULE)hModule;
+				gnSelfPID = GetCurrentProcessId();
 				
 				_ASSERTE(FAR_X_VER<=FAR_Y_VER);
 				#ifdef SHOW_STARTED_MSGBOX
@@ -518,117 +574,162 @@ BOOL LoadFarVersion()
 	return lbRc;
 }
 
-BOOL IsKeyChanged(BOOL abAllowReload)
-{
-	BOOL lbKeyChanged = FALSE;
-	if (ghRegMonitorEvt) {
-		if (WaitForSingleObject(ghRegMonitorEvt, 0) == WAIT_OBJECT_0) {
-			lbKeyChanged = CheckPlugKey();
-			if (lbKeyChanged) gbPlugKeyChanged = TRUE;
-		}
-	}
+//BOOL IsKeyChanged(BOOL abAllowReload)
+//{
+//	BOOL lbKeyChanged = FALSE;
+//	if (ghRegMonitorEvt) {
+//		if (WaitForSingleObject(ghRegMonitorEvt, 0) == WAIT_OBJECT_0) {
+//			lbKeyChanged = CheckPlugKey();
+//			if (lbKeyChanged) gbPlugKeyChanged = TRUE;
+//		}
+//	}
+//
+//	if (abAllowReload && gbPlugKeyChanged) {
+//		// Вообще-то его бы вызывать в главной нити...
+//		CheckMacro(TRUE);
+//		gbPlugKeyChanged = FALSE;
+//	}
+//	return lbKeyChanged;
+//}
 
-	if (abAllowReload && gbPlugKeyChanged) {
-		// Вообще-то его бы вызывать в главной нити...
-		CheckMacro(TRUE);
-		gbPlugKeyChanged = FALSE;
-	}
-	return lbKeyChanged;
-}
 
+//BOOL ActivatePluginA(DWORD nCmd, LPVOID pCommandData)
+//{
+//	BOOL lbRc = FALSE;
+//	gnReqCommand = nCmd; gnPluginOpenFrom = -1;
+//	gpReqCommandData = pCommandData;
+//	ResetEvent(ghReqCommandEvent);
+//
+//	// Проверить, не изменилась ли горячая клавиша плагина, и если да - пересоздать макросы
+//	IsKeyChanged(TRUE);
+//
+//	INPUT_RECORD evt[10];
+//	DWORD dwStartWait, dwCur, dwTimeout, dwInputs = 0, dwInputsFirst = 0, dwWritten = 0;
+//	//BOOL  lbInputs = FALSE;
+//	HANDLE hInput = GetStdHandle(STD_INPUT_HANDLE);
+//
+//
+//	// Нужен вызов плагина в основной нити
+//	//WARNING("Переделать на WriteConsoleInput");
+//	gbCmdCallObsolete = FALSE;
+//	//SendMessage(FarHwnd, WM_KEYDOWN, VK_F14, 0);
+//	//SendMessage(FarHwnd, WM_KEYUP, VK_F14, (LPARAM)(3<<30));
+//	evt[0].EventType = evt[1].EventType = KEY_EVENT;
+//	evt[0].Event.KeyEvent.bKeyDown = TRUE; evt[1].Event.KeyEvent.bKeyDown = FALSE;
+//	evt[0].Event.KeyEvent.uChar.UnicodeChar = evt[1].Event.KeyEvent.uChar.UnicodeChar = 0;
+//	evt[0].Event.KeyEvent.wVirtualKeyCode   = evt[1].Event.KeyEvent.wVirtualKeyCode = VK_F14;
+//	evt[0].Event.KeyEvent.wVirtualScanCode  = evt[1].Event.KeyEvent.wVirtualScanCode = 0;
+//	evt[0].Event.KeyEvent.dwControlKeyState = evt[1].Event.KeyEvent.dwControlKeyState = 0;
+//	evt[0].Event.KeyEvent.wRepeatCount = evt[1].Event.KeyEvent.wRepeatCount = 1;
+//	if (!WriteConsoleInput(hInput, evt, 2, &dwWritten)) {
+//		DWORD dwErr = GetLastError();
+//		_ASSERTE(FALSE);
+//		SendMessage(FarHwnd, WM_KEYDOWN, VK_F14, 0);
+//		SendMessage(FarHwnd, WM_KEYUP, VK_F14, (LPARAM)(3<<30));
+//	}
+//
+//	BOOL lbInput = PeekConsoleInput(hInput, evt, 10, &dwInputsFirst);
+//
+//	
+//	DWORD dwWait;
+//	HANDLE hEvents[2];
+//	hEvents[0] = ghReqCommandEvent;
+//	hEvents[1] = ghServerTerminateEvent;
+//
+//	dwTimeout = CONEMUFARTIMEOUT;
+//	dwStartWait = GetTickCount();
+//	//DuplicateHandle(GetCurrentProcess(), ghReqCommandEvent, GetCurrentProcess(), hEvents, 0, 0, DUPLICATE_SAME_ACCESS);
+//	do {
+//		dwWait = WaitForMultipleObjects ( 2, hEvents, FALSE, 200 );
+//		if (dwWait == WAIT_TIMEOUT) {
+//			lbInput = PeekConsoleInput(hInput, evt, 10, &dwInputs);
+//			if (lbInput && dwInputs == 0) {
+//				//Раз из буфера ввода убралось "Отпускание F14" - значит ловить уже нечего, выходим
+//				gbCmdCallObsolete = TRUE; // иначе может всплыть меню, когда не надо 
+//				break;
+//			}
+//
+//			dwCur = GetTickCount();
+//			if ((dwCur - dwStartWait) > dwTimeout)
+//				break;
+//		}
+//	} while (dwWait == WAIT_TIMEOUT);
+//	if (dwWait)
+//		ResetEvent(ghReqCommandEvent); // Сразу сбросим, вдруг не дождались?
+//	else
+//		lbRc = TRUE;
+//
+//	gpReqCommandData = NULL;
+//	gnReqCommand = -1; gnPluginOpenFrom = -1;
+//
+//	return lbRc;
+//}
+//
+//BOOL ActivatePluginW(DWORD nCmd, LPVOID pCommandData, DWORD nTimeout = CONEMUFARTIMEOUT)
+//{
+//	BOOL lbRc = FALSE;
+//	gnReqCommand = -1; gnPluginOpenFrom = -1; gpReqCommandData = NULL;
+//	ResetEvent(ghReqCommandEvent);
+//
+//	// Нужен вызов плагина в остновной нити
+//	gbCmdCallObsolete = FALSE;
+//
+//	SynchroArg *Param = (SynchroArg*)calloc(sizeof(SynchroArg),1);
+//	Param->SynchroType = SynchroArg::eCommand;
+//	Param->Param1 = nCmd;
+//	Param->Param2 = (LPARAM)pCommandData;
+//	Param->hEvent = ghReqCommandEvent;
+//	Param->Obsolete = FALSE;
+//
+//	lbRc = CallSynchro995(Param, nTimeout);
+//	
+//	if (!lbRc)
+//		ResetEvent(ghReqCommandEvent); // Сразу сбросим, вдруг не дождались?
+//
+//	gpReqCommandData = NULL;
+//	gnReqCommand = -1; gnPluginOpenFrom = -1;
+//
+//	return lbRc;
+//}
 
-BOOL ActivatePluginA(DWORD nCmd, LPVOID pCommandData)
+BOOL ActivatePlugin(DWORD nCmd, LPVOID pCommandData, DWORD nTimeout = CONEMUFARTIMEOUT)
 {
 	BOOL lbRc = FALSE;
-	gnReqCommand = nCmd; gnPluginOpenFrom = -1;
-	gpReqCommandData = pCommandData;
 	ResetEvent(ghReqCommandEvent);
 
-	// Проверить, не изменилась ли горячая клавиша плагина, и если да - пересоздать макросы
-	IsKeyChanged(TRUE);
-
-	INPUT_RECORD evt[10];
-	DWORD dwStartWait, dwCur, dwTimeout, dwInputs = 0, dwInputsFirst = 0, dwWritten = 0;
-	//BOOL  lbInputs = FALSE;
-	HANDLE hInput = GetStdHandle(STD_INPUT_HANDLE);
-
-
-	// Нужен вызов плагина в основной нити
-	//WARNING("Переделать на WriteConsoleInput");
-	gbCmdCallObsolete = FALSE;
-	//SendMessage(FarHwnd, WM_KEYDOWN, VK_F14, 0);
-	//SendMessage(FarHwnd, WM_KEYUP, VK_F14, (LPARAM)(3<<30));
-	evt[0].EventType = evt[1].EventType = KEY_EVENT;
-	evt[0].Event.KeyEvent.bKeyDown = TRUE; evt[1].Event.KeyEvent.bKeyDown = FALSE;
-	evt[0].Event.KeyEvent.uChar.UnicodeChar = evt[1].Event.KeyEvent.uChar.UnicodeChar = 0;
-	evt[0].Event.KeyEvent.wVirtualKeyCode   = evt[1].Event.KeyEvent.wVirtualKeyCode = VK_F14;
-	evt[0].Event.KeyEvent.wVirtualScanCode  = evt[1].Event.KeyEvent.wVirtualScanCode = 0;
-	evt[0].Event.KeyEvent.dwControlKeyState = evt[1].Event.KeyEvent.dwControlKeyState = 0;
-	evt[0].Event.KeyEvent.wRepeatCount = evt[1].Event.KeyEvent.wRepeatCount = 1;
-	if (!WriteConsoleInput(hInput, evt, 2, &dwWritten)) {
-		DWORD dwErr = GetLastError();
-		_ASSERTE(FALSE);
-		SendMessage(FarHwnd, WM_KEYDOWN, VK_F14, 0);
-		SendMessage(FarHwnd, WM_KEYUP, VK_F14, (LPARAM)(3<<30));
-	}
-
-	BOOL lbInput = PeekConsoleInput(hInput, evt, 10, &dwInputsFirst);
-
+	//gbCmdCallObsolete = FALSE;
 	
-	DWORD dwWait;
-	HANDLE hEvents[2];
-	hEvents[0] = ghReqCommandEvent;
-	hEvents[1] = ghServerTerminateEvent;
-
-	dwTimeout = CONEMUFARTIMEOUT;
-	dwStartWait = GetTickCount();
-	//DuplicateHandle(GetCurrentProcess(), ghReqCommandEvent, GetCurrentProcess(), hEvents, 0, 0, DUPLICATE_SAME_ACCESS);
-	do {
-		dwWait = WaitForMultipleObjects ( 2, hEvents, FALSE, 200 );
-		if (dwWait == WAIT_TIMEOUT) {
-			lbInput = PeekConsoleInput(hInput, evt, 10, &dwInputs);
-			if (lbInput && dwInputs == 0) {
-				//Раз из буфера ввода убралось "Отпускание F14" - значит ловить уже нечего, выходим
-				gbCmdCallObsolete = TRUE; // иначе может всплыть меню, когда не надо 
-				break;
-			}
-
-			dwCur = GetTickCount();
-			if ((dwCur - dwStartWait) > dwTimeout)
-				break;
-		}
-	} while (dwWait == WAIT_TIMEOUT);
-	if (dwWait)
-		ResetEvent(ghReqCommandEvent); // Сразу сбросим, вдруг не дождались?
-	else
-		lbRc = TRUE;
-
-	gpReqCommandData = NULL;
-	gnReqCommand = -1; gnPluginOpenFrom = -1;
-
-	return lbRc;
-}
-
-BOOL ActivatePluginW(DWORD nCmd, LPVOID pCommandData, DWORD nTimeout = CONEMUFARTIMEOUT)
-{
-	BOOL lbRc = FALSE;
-	gnReqCommand = -1; gnPluginOpenFrom = -1; gpReqCommandData = NULL;
-	ResetEvent(ghReqCommandEvent);
-
+	gnReqCommand = nCmd; gpReqCommandData = pCommandData;
+	gnPluginOpenFrom = -1;
 	// Нужен вызов плагина в остновной нити
-	gbCmdCallObsolete = FALSE;
+	gbReqCommandWaiting = TRUE;
 
-	SynchroArg *Param = (SynchroArg*)calloc(sizeof(SynchroArg),1);
-	Param->SynchroType = SynchroArg::eCommand;
-	Param->Param1 = nCmd;
-	Param->Param2 = (LPARAM)pCommandData;
-	Param->hEvent = ghReqCommandEvent;
-	Param->Obsolete = FALSE;
+	HANDLE hEvents[2] = {ghServerTerminateEvent, ghReqCommandEvent};
+	int nCount = 2;
 
-	lbRc = CallSynchro995(Param, nTimeout);
+	DWORD nWait = 100;
+	nWait = WaitForMultipleObjects(nCount, hEvents, FALSE, nTimeout);
+	if (nWait != WAIT_OBJECT_0 && nWait != (WAIT_OBJECT_0+1)) {
+		_ASSERTE(nWait==WAIT_OBJECT_0);
+		if (nWait == (WAIT_OBJECT_0+1)) {
+			if (!gbReqCommandWaiting) {
+				// Значит плагин в основной нити все-таки активировался, подождем еще?
+				OutputDebugString(L"!!! Plugin execute timeout !!!\n");
+				nWait = WaitForMultipleObjects(nCount, hEvents, FALSE, nTimeout);
+			}
+		
+			//// Таймаут, эту команду плагин должен пропустить, когда фар таки соберется ее выполнить
+			//Param->Obsolete = TRUE;
+		}
+	}
+
+	lbRc = (nWait == 0);
 	
-	if (!lbRc)
-		ResetEvent(ghReqCommandEvent); // Сразу сбросим, вдруг не дождались?
+	if (!lbRc) {
+		// Сразу сбросим, вдруг не дождались?
+		gbReqCommandWaiting = FALSE;
+		ResetEvent(ghReqCommandEvent);
+	}
 
 	gpReqCommandData = NULL;
 	gnReqCommand = -1; gnPluginOpenFrom = -1;
@@ -655,10 +756,10 @@ CESERVER_REQ* ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandDat
 		_ASSERTE(ghPluginSemaphore!=NULL);
 		_ASSERTE(ghServerTerminateEvent!=NULL);
 
-		// Активация плагина в анси версии медленная, и для Redraw смысла не имеет
-		if (gFarVersion.dwVerMajor < 2 && nCmd == CMD_REDRAWFAR) {
-			return NULL; // лучше его просто пропустить
-		}
+		//// Активация плагина в анси версии медленная, и для Redraw смысла не имеет
+		//if (gFarVersion.dwVerMajor < 2 && nCmd == CMD_REDRAWFAR) {
+		//	return NULL; // лучше его просто пропустить
+		//}
 
 		//// Некоторые команды можно выполнить сразу
 		//if (nCmd == CMD_SETSIZE) {
@@ -680,24 +781,20 @@ CESERVER_REQ* ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandDat
 		//	}
 		//}
 
+		
 		// Засемафорить, чтобы несколько команд одновременно не пошли...
-		HANDLE hEvents[2] = {ghServerTerminateEvent, ghPluginSemaphore};
-		DWORD dwWait = WaitForMultipleObjects(2, hEvents, FALSE, INFINITE);
-		if (dwWait == WAIT_OBJECT_0) {
-			// Плагин завершается
-			return NULL;
-		}
-
-		if (gFarVersion.dwVerMajor == 2 /*&& gFarVersion.dwBuild >= 1007*/)
-		//	&& nCmd != CMD_SETWINDOW)
 		{
-			// Пока ProcessSynchroEventW не научится определять текущую макрообласть - переключение окон по старому
-			ActivatePluginW(nCmd, pCommandData);
-		} else {
-			ActivatePluginA(nCmd, pCommandData);
+			HANDLE hEvents[2] = {ghServerTerminateEvent, ghPluginSemaphore};
+			DWORD dwWait = WaitForMultipleObjects(2, hEvents, FALSE, INFINITE);
+			if (dwWait == WAIT_OBJECT_0) {
+				// Плагин завершается
+				return NULL;
+			}
+			ActivatePlugin(nCmd, pCommandData);
+			ReleaseSemaphore(ghPluginSemaphore, 1, NULL);
 		}
-
-		ReleaseSemaphore(ghPluginSemaphore, 1, NULL);
+		// конец семафора
+		
 		
 		if (nCmd == CMD_LEFTCLKSYNC) {
 			DWORD nTestEvents = 0, dwTicks = GetTickCount();
@@ -1287,147 +1384,151 @@ DWORD WINAPI MonitorThreadProcW(LPVOID lpParameter)
 			}
 		}
 
-
+		
+		if (gpConsoleInfo) {
+			if (gpConsoleInfo->nFarPID == 0)
+				gbNeedReloadFarInfo = TRUE;
+		}
 	}
 
 
 	return 0;
 }
 
-BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount)
-{
-	_ASSERTE(nCount>0);
-	BOOL fSuccess = FALSE;
+//BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount)
+//{
+//	_ASSERTE(nCount>0);
+//	BOOL fSuccess = FALSE;
+//
+//	WARNING("Убрать, заменить ghConIn на GetStdHandle()"); // Иначе в Win7 будет буфер разрушаться
+//	if (!ghConIn) {
+//		ghConIn  = CreateFile(L"CONIN$", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_READ,
+//			0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+//		if (ghConIn == INVALID_HANDLE_VALUE) {
+//			#ifdef _DEBUG
+//			DWORD dwErr = GetLastError();
+//			_ASSERTE(ghConIn!=INVALID_HANDLE_VALUE);
+//			#endif
+//			ghConIn = NULL;
+//			return FALSE;
+//		}
+//	}
+//	if (!ghInputSynchroExecuted)
+//		ghInputSynchroExecuted = CreateEvent(NULL, FALSE, FALSE, NULL);
+//
+//	if (gFarVersion.dwVerMajor>1 && (gFarVersion.dwVerMinor>0 || gFarVersion.dwBuild>=1006))
+//	{
+//		static SynchroArg arg = {SynchroArg::eInput};
+//		arg.hEvent = ghInputSynchroExecuted;
+//		arg.Param1 = (LPARAM)pr;
+//		arg.Param2 = nCount;
+//
+//		if (gFarVersion.dwBuild>=FAR_Y_VER)
+//			fSuccess = FUNC_Y(CallSynchro)(&arg,DEFAULT_SYNCHRO_TIMEOUT);
+//		else
+//			fSuccess = FUNC_X(CallSynchro)(&arg,DEFAULT_SYNCHRO_TIMEOUT);
+//	} 
+//	
+//	if (!fSuccess)
+//	{
+//		DWORD nCurInputCount = 0, cbWritten = 0;
+//		INPUT_RECORD irDummy[2] = {{0},{0}};
+//
+//		// 27.06.2009 Maks - If input queue is not empty - wait for a while, to avoid conflicts with FAR reading queue
+//		WARNING("Убрать, заменить ghConIn на GetStdHandle()"); // Иначе в Win7 будет буфер разрушаться
+//		if (PeekConsoleInput(ghConIn, irDummy, 1, &(nCurInputCount = 0)) && nCurInputCount > 0) {
+//			DWORD dwStartTick = GetTickCount();
+//			WARNING("Do NOT wait, but place event in Cyclic queue");
+//			do {
+//				Sleep(5);
+//				if (!PeekConsoleInput(ghConIn, irDummy, 1, &(nCurInputCount = 0)))
+//					nCurInputCount = 0;
+//			} while ((nCurInputCount > 0) && ((GetTickCount() - dwStartTick) < MAX_INPUT_QUEUE_EMPTY_WAIT));
+//		}
+//
+//		fSuccess = WriteConsoleInput(ghConIn, pr, nCount, &cbWritten);
+//		_ASSERTE(fSuccess && cbWritten==nCount);
+//	}
+//
+//	return fSuccess;
+//} 
 
-	WARNING("Убрать, заменить ghConIn на GetStdHandle()"); // Иначе в Win7 будет буфер разрушаться
-	if (!ghConIn) {
-		ghConIn  = CreateFile(L"CONIN$", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_READ,
-			0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
-		if (ghConIn == INVALID_HANDLE_VALUE) {
-			#ifdef _DEBUG
-			DWORD dwErr = GetLastError();
-			_ASSERTE(ghConIn!=INVALID_HANDLE_VALUE);
-			#endif
-			ghConIn = NULL;
-			return FALSE;
-		}
-	}
-	if (!ghInputSynchroExecuted)
-		ghInputSynchroExecuted = CreateEvent(NULL, FALSE, FALSE, NULL);
-
-	if (gFarVersion.dwVerMajor>1 && (gFarVersion.dwVerMinor>0 || gFarVersion.dwBuild>=1006))
-	{
-		static SynchroArg arg = {SynchroArg::eInput};
-		arg.hEvent = ghInputSynchroExecuted;
-		arg.Param1 = (LPARAM)pr;
-		arg.Param2 = nCount;
-
-		if (gFarVersion.dwBuild>=FAR_Y_VER)
-			fSuccess = FUNC_Y(CallSynchro)(&arg,DEFAULT_SYNCHRO_TIMEOUT);
-		else
-			fSuccess = FUNC_X(CallSynchro)(&arg,DEFAULT_SYNCHRO_TIMEOUT);
-	} 
-	
-	if (!fSuccess)
-	{
-		DWORD nCurInputCount = 0, cbWritten = 0;
-		INPUT_RECORD irDummy[2] = {{0},{0}};
-
-		// 27.06.2009 Maks - If input queue is not empty - wait for a while, to avoid conflicts with FAR reading queue
-		WARNING("Убрать, заменить ghConIn на GetStdHandle()"); // Иначе в Win7 будет буфер разрушаться
-		if (PeekConsoleInput(ghConIn, irDummy, 1, &(nCurInputCount = 0)) && nCurInputCount > 0) {
-			DWORD dwStartTick = GetTickCount();
-			WARNING("Do NOT wait, but place event in Cyclic queue");
-			do {
-				Sleep(5);
-				if (!PeekConsoleInput(ghConIn, irDummy, 1, &(nCurInputCount = 0)))
-					nCurInputCount = 0;
-			} while ((nCurInputCount > 0) && ((GetTickCount() - dwStartTick) < MAX_INPUT_QUEUE_EMPTY_WAIT));
-		}
-
-		fSuccess = WriteConsoleInput(ghConIn, pr, nCount, &cbWritten);
-		_ASSERTE(fSuccess && cbWritten==nCount);
-	}
-
-	return fSuccess;
-} 
-
-DWORD WINAPI InputThreadProcW(LPVOID lpParameter)
-{
-	MSG msg;
-	static INPUT_RECORD recs[10] = {{0}}; // переменная должна быть глобальной? SynchoApi...
-
-	while (GetMessage(&msg,0,0,0)) {
-		if (msg.message == WM_QUIT) return 0;
-		if (ghServerTerminateEvent) {
-			if (WaitForSingleObject(ghServerTerminateEvent, 0) == WAIT_OBJECT_0) return 0;
-		}
-		if (msg.message == 0) continue;
-
-		if (msg.message == INPUT_THREAD_ALIVE_MSG) {
-			//pRCon->mn_FlushOut = msg.wParam;
-			TODO("INPUT_THREAD_ALIVE_MSG");
-			continue;
-
-		} else {
-
-			INPUT_RECORD *pRec = recs;
-			int nCount = 0, nMaxCount = countof(recs);
-			memset(recs, 0, sizeof(recs));
-
-			do {
-				if (UnpackInputRecord(&msg, pRec)) {
-					TODO("Сделать обработку пачки сообщений, вдруг они накопились в очереди?");
-
-					if (pRec->EventType == KEY_EVENT && pRec->Event.KeyEvent.bKeyDown &&
-						(pRec->Event.KeyEvent.wVirtualKeyCode == 'C' || pRec->Event.KeyEvent.wVirtualKeyCode == VK_CANCEL)
-						)
-					{
-						#define ALL_MODIFIERS (LEFT_ALT_PRESSED|RIGHT_ALT_PRESSED|LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED|SHIFT_PRESSED)
-						#define CTRL_MODIFIERS (LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED)
-
-						BOOL lbRc = FALSE;
-						DWORD dwEvent = (pRec->Event.KeyEvent.wVirtualKeyCode == 'C') ? CTRL_C_EVENT : CTRL_BREAK_EVENT;
-						//&& (srv.dwConsoleMode & ENABLE_PROCESSED_INPUT)
-
-						//The SetConsoleMode function can disable the ENABLE_PROCESSED_INPUT mode for a console's input buffer, 
-						//so CTRL+C is reported as keyboard input rather than as a signal. 
-						// CTRL+BREAK is always treated as a signal
-						if ( // Удерживается ТОЛЬКО Ctrl
-							(pRec->Event.KeyEvent.dwControlKeyState & CTRL_MODIFIERS) &&
-							((pRec->Event.KeyEvent.dwControlKeyState & ALL_MODIFIERS) 
-							== (pRec->Event.KeyEvent.dwControlKeyState & CTRL_MODIFIERS))
-							)
-						{
-							// Вроде работает, Главное не запускать процесс с флагом CREATE_NEW_PROCESS_GROUP
-							// иначе у микрософтовской консоли (WinXP SP3) сносит крышу, и она реагирует
-							// на Ctrl-Break, но напрочь игнорирует Ctrl-C
-							lbRc = GenerateConsoleCtrlEvent(dwEvent, 0);
-
-							// Это событие (Ctrl+C) в буфер помещается(!) иначе до фара не дойдет собственно клавиша C с нажатым Ctrl
-						}
-					}
-					nCount++; pRec++;
-				}
-				// Если в буфере есть еще сообщения, а recs еще не полностью заполнен
-				if (nCount < nMaxCount)
-				{
-					if (!PeekMessage(&msg, 0,0,0, PM_REMOVE))
-						break;
-					if (msg.message == 0) continue;
-					if (msg.message == WM_QUIT) return 0;
-					if (ghServerTerminateEvent) {
-						if (WaitForSingleObject(ghServerTerminateEvent, 0) == WAIT_OBJECT_0) return 0;
-					}
-				}
-			} while (nCount < nMaxCount);
-			if (nCount > 0)
-				SendConsoleEvent(recs, nCount);
-		}
-	}
-
-	return 0;
-}
+//DWORD WINAPI InputThreadProcW(LPVOID lpParameter)
+//{
+//	MSG msg;
+//	static INPUT_RECORD recs[10] = {{0}}; // переменная должна быть глобальной? SynchoApi...
+//
+//	while (GetMessage(&msg,0,0,0)) {
+//		if (msg.message == WM_QUIT) return 0;
+//		if (ghServerTerminateEvent) {
+//			if (WaitForSingleObject(ghServerTerminateEvent, 0) == WAIT_OBJECT_0) return 0;
+//		}
+//		if (msg.message == 0) continue;
+//
+//		if (msg.message == INPUT_THREAD_ALIVE_MSG) {
+//			//pRCon->mn_FlushOut = msg.wParam;
+//			TODO("INPUT_THREAD_ALIVE_MSG");
+//			continue;
+//
+//		} else {
+//
+//			INPUT_RECORD *pRec = recs;
+//			int nCount = 0, nMaxCount = countof(recs);
+//			memset(recs, 0, sizeof(recs));
+//
+//			do {
+//				if (UnpackInputRecord(&msg, pRec)) {
+//					TODO("Сделать обработку пачки сообщений, вдруг они накопились в очереди?");
+//
+//					if (pRec->EventType == KEY_EVENT && pRec->Event.KeyEvent.bKeyDown &&
+//						(pRec->Event.KeyEvent.wVirtualKeyCode == 'C' || pRec->Event.KeyEvent.wVirtualKeyCode == VK_CANCEL)
+//						)
+//					{
+//						#define ALL_MODIFIERS (LEFT_ALT_PRESSED|RIGHT_ALT_PRESSED|LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED|SHIFT_PRESSED)
+//						#define CTRL_MODIFIERS (LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED)
+//
+//						BOOL lbRc = FALSE;
+//						DWORD dwEvent = (pRec->Event.KeyEvent.wVirtualKeyCode == 'C') ? CTRL_C_EVENT : CTRL_BREAK_EVENT;
+//						//&& (srv.dwConsoleMode & ENABLE_PROCESSED_INPUT)
+//
+//						//The SetConsoleMode function can disable the ENABLE_PROCESSED_INPUT mode for a console's input buffer, 
+//						//so CTRL+C is reported as keyboard input rather than as a signal. 
+//						// CTRL+BREAK is always treated as a signal
+//						if ( // Удерживается ТОЛЬКО Ctrl
+//							(pRec->Event.KeyEvent.dwControlKeyState & CTRL_MODIFIERS) &&
+//							((pRec->Event.KeyEvent.dwControlKeyState & ALL_MODIFIERS) 
+//							== (pRec->Event.KeyEvent.dwControlKeyState & CTRL_MODIFIERS))
+//							)
+//						{
+//							// Вроде работает, Главное не запускать процесс с флагом CREATE_NEW_PROCESS_GROUP
+//							// иначе у микрософтовской консоли (WinXP SP3) сносит крышу, и она реагирует
+//							// на Ctrl-Break, но напрочь игнорирует Ctrl-C
+//							lbRc = GenerateConsoleCtrlEvent(dwEvent, 0);
+//
+//							// Это событие (Ctrl+C) в буфер помещается(!) иначе до фара не дойдет собственно клавиша C с нажатым Ctrl
+//						}
+//					}
+//					nCount++; pRec++;
+//				}
+//				// Если в буфере есть еще сообщения, а recs еще не полностью заполнен
+//				if (nCount < nMaxCount)
+//				{
+//					if (!PeekMessage(&msg, 0,0,0, PM_REMOVE))
+//						break;
+//					if (msg.message == 0) continue;
+//					if (msg.message == WM_QUIT) return 0;
+//					if (ghServerTerminateEvent) {
+//						if (WaitForSingleObject(ghServerTerminateEvent, 0) == WAIT_OBJECT_0) return 0;
+//					}
+//				}
+//			} while (nCount < nMaxCount);
+//			if (nCount > 0)
+//				SendConsoleEvent(recs, nCount);
+//		}
+//	}
+//
+//	return 0;
+//}
 
 void WINAPI _export SetStartupInfoW(void *aInfo)
 {
@@ -1443,6 +1544,7 @@ void WINAPI _export SetStartupInfoW(void *aInfo)
 	// в FAR2 устарело - Synchro
 	//CheckMacro(TRUE);
 
+	// здесь же и ReloadFarInfo() позовется
 	CheckResources();
 }
 
@@ -1567,7 +1669,7 @@ void InitHWND(HWND ahFarHwnd)
 
 	ghMonitorThread = CreateThread(NULL, 0, MonitorThreadProcW, 0, 0, &gnMonitorThreadId);
 
-	ghInputThread = CreateThread(NULL, 0, InputThreadProcW, 0, 0, &gnInputThreadId);
+	//ghInputThread = CreateThread(NULL, 0, InputThreadProcW, 0, 0, &gnInputThreadId);
 
 
 	// Если мы не под эмулятором - больше ничего делать не нужно
@@ -1591,202 +1693,221 @@ void InitHWND(HWND ahFarHwnd)
 	}
 }
 
-void NotifyChangeKey()
-{
-	if (ghRegMonitorKey) { RegCloseKey(ghRegMonitorKey); ghRegMonitorKey = NULL; }
-	if (ghRegMonitorEvt) ResetEvent(ghRegMonitorEvt);
-	
-	WCHAR szKeyName[MAX_PATH*2];
-	lstrcpyW(szKeyName, gszRootKey);
-	lstrcatW(szKeyName, L"\\PluginHotkeys");
-	// Ключа может и не быть, если ни для одного плагина не было зарегистрировано горячей клавиши
-	if (0 == RegOpenKeyEx(HKEY_CURRENT_USER, szKeyName, 0, KEY_NOTIFY, &ghRegMonitorKey)) {
-		if (!ghRegMonitorEvt) ghRegMonitorEvt = CreateEvent(NULL,FALSE,FALSE,NULL);
-		RegNotifyChangeKeyValue(ghRegMonitorKey, TRUE, REG_NOTIFY_CHANGE_LAST_SET, ghRegMonitorEvt, TRUE);
-		return;
-	}
-	// Если их таки нет - пробуем подцепиться к корневому ключу
-	if (0 == RegOpenKeyEx(HKEY_CURRENT_USER, gszRootKey, 0, KEY_NOTIFY, &ghRegMonitorKey)) {
-		if (!ghRegMonitorEvt) ghRegMonitorEvt = CreateEvent(NULL,FALSE,FALSE,NULL);
-		RegNotifyChangeKeyValue(ghRegMonitorKey, TRUE, REG_NOTIFY_CHANGE_LAST_SET, ghRegMonitorEvt, TRUE);
-		return;
-	}
-}
+//void NotifyChangeKey()
+//{
+//	if (ghRegMonitorKey) { RegCloseKey(ghRegMonitorKey); ghRegMonitorKey = NULL; }
+//	if (ghRegMonitorEvt) ResetEvent(ghRegMonitorEvt);
+//	
+//	WCHAR szKeyName[MAX_PATH*2];
+//	lstrcpyW(szKeyName, gszRootKey);
+//	lstrcatW(szKeyName, L"\\PluginHotkeys");
+//	// Ключа может и не быть, если ни для одного плагина не было зарегистрировано горячей клавиши
+//	if (0 == RegOpenKeyEx(HKEY_CURRENT_USER, szKeyName, 0, KEY_NOTIFY, &ghRegMonitorKey)) {
+//		if (!ghRegMonitorEvt) ghRegMonitorEvt = CreateEvent(NULL,FALSE,FALSE,NULL);
+//		RegNotifyChangeKeyValue(ghRegMonitorKey, TRUE, REG_NOTIFY_CHANGE_LAST_SET, ghRegMonitorEvt, TRUE);
+//		return;
+//	}
+//	// Если их таки нет - пробуем подцепиться к корневому ключу
+//	if (0 == RegOpenKeyEx(HKEY_CURRENT_USER, gszRootKey, 0, KEY_NOTIFY, &ghRegMonitorKey)) {
+//		if (!ghRegMonitorEvt) ghRegMonitorEvt = CreateEvent(NULL,FALSE,FALSE,NULL);
+//		RegNotifyChangeKeyValue(ghRegMonitorKey, TRUE, REG_NOTIFY_CHANGE_LAST_SET, ghRegMonitorEvt, TRUE);
+//		return;
+//	}
+//}
 
 //abCompare=TRUE вызывается после загрузки плагина, если юзер изменил горячую клавишу...
-BOOL CheckPlugKey()
+//BOOL CheckPlugKey()
+//{
+//	WCHAR cCurKey = gcPlugKey;
+//	gcPlugKey = 0;
+//	BOOL lbChanged = FALSE;
+//	HKEY hkey=NULL;
+//	WCHAR szMacroKey[2][MAX_PATH], szCheckKey[32];
+//	
+//	//Прочитать назначенные плагинам клавиши, и если для ConEmu*.dll указана клавиша активации - запомнить ее
+//	wsprintfW(szMacroKey[0], L"%s\\PluginHotkeys", gszRootKey/*, szCheckKey*/);
+//	if (0==RegOpenKeyExW(HKEY_CURRENT_USER, szMacroKey[0], 0, KEY_READ, &hkey))
+//	{
+//		DWORD dwIndex = 0, dwSize; FILETIME ft;
+//		while (0==RegEnumKeyEx(hkey, dwIndex++, szMacroKey[1], &(dwSize=MAX_PATH), NULL, NULL, NULL, &ft)) {
+//			WCHAR* pszSlash = szMacroKey[1]+lstrlenW(szMacroKey[1])-1;
+//			while (pszSlash>szMacroKey[1] && *pszSlash!=L'/') pszSlash--;
+//			#if !defined(__GNUC__)
+//			#pragma warning(disable : 6400)
+//			#endif
+//			if (lstrcmpiW(pszSlash, L"/conemu.dll")==0 || lstrcmpiW(pszSlash, L"/conemu.x64.dll")==0) {
+//				WCHAR lsFullPath[MAX_PATH*2];
+//				lstrcpy(lsFullPath, szMacroKey[0]);
+//				lstrcat(lsFullPath, L"\\");
+//				lstrcat(lsFullPath, szMacroKey[1]);
+//
+//				RegCloseKey(hkey); hkey=NULL;
+//
+//				if (0==RegOpenKeyExW(HKEY_CURRENT_USER, lsFullPath, 0, KEY_READ, &hkey)) {
+//					dwSize = sizeof(szCheckKey);
+//					if (0==RegQueryValueExW(hkey, L"Hotkey", NULL, NULL, (LPBYTE)szCheckKey, &dwSize)) {
+//						gcPlugKey = szCheckKey[0];
+//					}
+//				}
+//				//
+//				//
+//				break;
+//			}
+//		}
+//
+//		// Закончили
+//		if (hkey) {RegCloseKey(hkey); hkey=NULL;}
+//	}
+//	
+//	lbChanged = (gcPlugKey != cCurKey);
+//	
+//	return lbChanged;
+//}
+
+//void CheckMacro(BOOL abAllowAPI)
+//{
+//	// и не под эмулятором нужно проверять макросы, иначе потом активация не сработает...
+//	//// Если мы не под эмулятором - больше ничего делать не нужно
+//	//if (!ConEmuHwnd) return;
+//
+//
+//	// Проверка наличия макроса
+//	BOOL lbMacroAdded = FALSE, lbNeedMacro = FALSE;
+//	HKEY hkey=NULL;
+//	#define MODCOUNT 4
+//	int n;
+//	char szValue[1024];
+//	WCHAR szMacroKey[MODCOUNT][MAX_PATH], szCheckKey[32];
+//	DWORD dwSize = 0;
+//	//bool lbMacroDontCheck = false;
+//
+//	//Прочитать назначенные плагинам клавиши, и если для ConEmu*.dll указана клавиша активации - запомнить ее
+//	CheckPlugKey();
+//
+//
+//	for (n=0; n<MODCOUNT; n++) {
+//		switch(n){
+//			case 0: lstrcpyW(szCheckKey, L"F14"); break;
+//			case 1: lstrcpyW(szCheckKey, L"CtrlF14"); break;
+//			case 2: lstrcpyW(szCheckKey, L"AltF14"); break;
+//			case 3: lstrcpyW(szCheckKey, L"ShiftF14"); break;
+//		}
+//		wsprintfW(szMacroKey[n], L"%s\\KeyMacros\\Common\\%s", gszRootKey, szCheckKey);
+//	}
+//	if (gFarVersion.dwVerMajor==1) {
+//		lstrcpyW(szCheckKey, L"F11  "); //TODO: для ANSI может другой код по умолчанию?
+//		szCheckKey[4] = (wchar_t)(gcPlugKey ? gcPlugKey : ((gFarVersion.dwVerMajor==1) ? 0x42C/*0xDC - аналог для OEM*/ : 0x2584));
+//	} else {
+//		// Пока можно так. (пока GUID не появились)
+//		wsprintfW(szCheckKey, L"callplugin(0x%08X,0)", ConEmu_SysID);
+//	}
+//
+//	//if (!lbMacroDontCheck)
+//	for (n=0; n<MODCOUNT && !lbNeedMacro; n++)
+//	{
+//		if (0==RegOpenKeyExW(HKEY_CURRENT_USER, szMacroKey[n], 0, KEY_READ, &hkey))
+//		{
+//			/*if (gFarVersion.dwVerMajor==1) {
+//				if (0!=RegQueryValueExA(hkey, "Sequence", 0, 0, (LPBYTE)szValue, &(dwSize=1022))) {
+//					lbNeedMacro = TRUE; // Значение отсутсвует
+//				} else {
+//					lbNeedMacro = lstrcmpA(szValue, (char*)szCheckKey)!=0;
+//				}
+//			} else {*/
+//				if (0!=RegQueryValueExW(hkey, L"Sequence", 0, 0, (LPBYTE)szValue, &(dwSize=1022))) {
+//					lbNeedMacro = TRUE; // Значение отсутсвует
+//				} else {
+//					//TODO: проверить, как себя ведет VC & GCC на 2х байтовых символах?
+//					lbNeedMacro = lstrcmpW((WCHAR*)szValue, szCheckKey)!=0;
+//				}
+//			//}
+//			//	szValue[dwSize]=0;
+//			//	#pragma message("ERROR: нужна проверка. В Ansi и Unicode это разные строки!")
+//			//	//if (strcmpW(szValue, "F11 \xCC")==0)
+//			//		lbNeedMacro = TRUE; // Значение некорректное
+//			//}
+//			RegCloseKey(hkey); hkey=NULL;
+//		} else {
+//			lbNeedMacro = TRUE;
+//		}
+//	}
+//
+//	if (lbNeedMacro) {
+//		//int nBtn = ShowMessage(0, 3);
+//		//if (nBtn == 1) { // Don't disturb
+//		//	DWORD disp=0;
+//		//	lbMacroDontCheck = true;
+//		//	if (0==RegCreateKeyExA(HKEY_CURRENT_USER, "Software\\ConEmu", 0, 0, 
+//		//		0, KEY_ALL_ACCESS, 0, &hkey, &disp))
+//		//	{
+//		//		RegSetValueExA(hkey, szCheckKey, 0, REG_BINARY, (LPBYTE)&lbMacroDontCheck, (dwSize=sizeof(lbMacroDontCheck)));
+//		//		RegCloseKey(hkey); hkey=NULL;
+//		//	}
+//		//} else if (nBtn == 0) 
+//		for (n=0; n<MODCOUNT; n++)
+//		{
+//			DWORD disp=0;
+//			lbMacroAdded = TRUE;
+//			if (0==RegCreateKeyExW(HKEY_CURRENT_USER, szMacroKey[n], 0, 0, 
+//				0, KEY_ALL_ACCESS, 0, &hkey, &disp))
+//			{
+//				lstrcpyA(szValue, "ConEmu support");
+//				RegSetValueExA(hkey, "", 0, REG_SZ, (LPBYTE)szValue, (dwSize=(DWORD)lstrlenA(szValue)+1));
+//
+//				//lstrcpyA(szValue, 
+//				//	"$If (Shell || Info || QView || Tree || Viewer || Editor) F12 $Else waitkey(100) $End");
+//				//RegSetValueExA(hkey, "Sequence", 0, REG_SZ, (LPBYTE)szValue, (dwSize=lstrlenA(szValue)+1));
+//				
+//				/*if (gFarVersion.dwVerMajor==1) {
+//					RegSetValueExA(hkey, "Sequence", 0, REG_SZ, (LPBYTE)szCheckKey, (dwSize=lstrlenA((char*)szCheckKey)+1));
+//				} else {*/
+//					RegSetValueExW(hkey, L"Sequence", 0, REG_SZ, (LPBYTE)szCheckKey, (dwSize=2*((DWORD)lstrlenW((WCHAR*)szCheckKey)+1)));
+//				//}
+//
+//				lstrcpyA(szValue, "For ConEmu - plugin activation from listening thread");
+//				RegSetValueExA(hkey, "Description", 0, REG_SZ, (LPBYTE)szValue, (dwSize=(DWORD)lstrlenA(szValue)+1));
+//
+//				RegSetValueExA(hkey, "DisableOutput", 0, REG_DWORD, (LPBYTE)&(disp=1), (dwSize=4));
+//
+//				RegCloseKey(hkey); hkey=NULL;
+//			}
+//		}
+//	}
+//
+//
+//	// Перечитать макросы в FAR?
+//	if (lbMacroAdded && abAllowAPI) {
+//		if (gFarVersion.dwVerMajor==1)
+//			ReloadMacroA();
+//		else if (gFarVersion.dwBuild>=FAR_Y_VER)
+//			FUNC_Y(ReloadMacro)();
+//		else
+//			FUNC_X(ReloadMacro)();
+//	}
+//
+//	// First call
+//	if (abAllowAPI) {
+//		NotifyChangeKey();
+//	}
+//}
+
+void ReloadFarInfo()
 {
-	WCHAR cCurKey = gcPlugKey;
-	gcPlugKey = 0;
-	BOOL lbChanged = FALSE;
-	HKEY hkey=NULL;
-	WCHAR szMacroKey[2][MAX_PATH], szCheckKey[32];
-	
-	//Прочитать назначенные плагинам клавиши, и если для ConEmu*.dll указана клавиша активации - запомнить ее
-	wsprintfW(szMacroKey[0], L"%s\\PluginHotkeys", gszRootKey/*, szCheckKey*/);
-	if (0==RegOpenKeyExW(HKEY_CURRENT_USER, szMacroKey[0], 0, KEY_READ, &hkey))
-	{
-		DWORD dwIndex = 0, dwSize; FILETIME ft;
-		while (0==RegEnumKeyEx(hkey, dwIndex++, szMacroKey[1], &(dwSize=MAX_PATH), NULL, NULL, NULL, &ft)) {
-			WCHAR* pszSlash = szMacroKey[1]+lstrlenW(szMacroKey[1])-1;
-			while (pszSlash>szMacroKey[1] && *pszSlash!=L'/') pszSlash--;
-			#if !defined(__GNUC__)
-			#pragma warning(disable : 6400)
-			#endif
-			if (lstrcmpiW(pszSlash, L"/conemu.dll")==0 || lstrcmpiW(pszSlash, L"/conemu.x64.dll")==0) {
-				WCHAR lsFullPath[MAX_PATH*2];
-				lstrcpy(lsFullPath, szMacroKey[0]);
-				lstrcat(lsFullPath, L"\\");
-				lstrcat(lsFullPath, szMacroKey[1]);
-
-				RegCloseKey(hkey); hkey=NULL;
-
-				if (0==RegOpenKeyExW(HKEY_CURRENT_USER, lsFullPath, 0, KEY_READ, &hkey)) {
-					dwSize = sizeof(szCheckKey);
-					if (0==RegQueryValueExW(hkey, L"Hotkey", NULL, NULL, (LPBYTE)szCheckKey, &dwSize)) {
-						gcPlugKey = szCheckKey[0];
-					}
-				}
-				//
-				//
-				break;
-			}
-		}
-
-		// Закончили
-		if (hkey) {RegCloseKey(hkey); hkey=NULL;}
+	if (!gpConsoleInfo) {
+		_ASSERTE(gpConsoleInfo!=NULL);
+		return;
 	}
 	
-	lbChanged = (gcPlugKey != cCurKey);
+	gpConsoleInfo->FarVersion = gFarVersion;
 	
-	return lbChanged;
-}
-
-void CheckMacro(BOOL abAllowAPI)
-{
-	// и не под эмулятором нужно проверять макросы, иначе потом активация не сработает...
-	//// Если мы не под эмулятором - больше ничего делать не нужно
-	//if (!ConEmuHwnd) return;
-
-
-	// Проверка наличия макроса
-	BOOL lbMacroAdded = FALSE, lbNeedMacro = FALSE;
-	HKEY hkey=NULL;
-	#define MODCOUNT 4
-	int n;
-	char szValue[1024];
-	WCHAR szMacroKey[MODCOUNT][MAX_PATH], szCheckKey[32];
-	DWORD dwSize = 0;
-	//bool lbMacroDontCheck = false;
-
-	//Прочитать назначенные плагинам клавиши, и если для ConEmu*.dll указана клавиша активации - запомнить ее
-	CheckPlugKey();
-
-
-	for (n=0; n<MODCOUNT; n++) {
-		switch(n){
-			case 0: lstrcpyW(szCheckKey, L"F14"); break;
-			case 1: lstrcpyW(szCheckKey, L"CtrlF14"); break;
-			case 2: lstrcpyW(szCheckKey, L"AltF14"); break;
-			case 3: lstrcpyW(szCheckKey, L"ShiftF14"); break;
-		}
-		wsprintfW(szMacroKey[n], L"%s\\KeyMacros\\Common\\%s", gszRootKey, szCheckKey);
-	}
-	if (gFarVersion.dwVerMajor==1) {
-		lstrcpyW(szCheckKey, L"F11  "); //TODO: для ANSI может другой код по умолчанию?
-		szCheckKey[4] = (wchar_t)(gcPlugKey ? gcPlugKey : ((gFarVersion.dwVerMajor==1) ? 0x42C/*0xDC - аналог для OEM*/ : 0x2584));
-	} else {
-		// Пока можно так. (пока GUID не появились)
-		wsprintfW(szCheckKey, L"callplugin(0x%08X,0)", ConEmu_SysID);
-	}
-
-	//if (!lbMacroDontCheck)
-	for (n=0; n<MODCOUNT && !lbNeedMacro; n++)
-	{
-		if (0==RegOpenKeyExW(HKEY_CURRENT_USER, szMacroKey[n], 0, KEY_READ, &hkey))
-		{
-			/*if (gFarVersion.dwVerMajor==1) {
-				if (0!=RegQueryValueExA(hkey, "Sequence", 0, 0, (LPBYTE)szValue, &(dwSize=1022))) {
-					lbNeedMacro = TRUE; // Значение отсутсвует
-				} else {
-					lbNeedMacro = lstrcmpA(szValue, (char*)szCheckKey)!=0;
-				}
-			} else {*/
-				if (0!=RegQueryValueExW(hkey, L"Sequence", 0, 0, (LPBYTE)szValue, &(dwSize=1022))) {
-					lbNeedMacro = TRUE; // Значение отсутсвует
-				} else {
-					//TODO: проверить, как себя ведет VC & GCC на 2х байтовых символах?
-					lbNeedMacro = lstrcmpW((WCHAR*)szValue, szCheckKey)!=0;
-				}
-			//}
-			//	szValue[dwSize]=0;
-			//	#pragma message("ERROR: нужна проверка. В Ansi и Unicode это разные строки!")
-			//	//if (strcmpW(szValue, "F11 \xCC")==0)
-			//		lbNeedMacro = TRUE; // Значение некорректное
-			//}
-			RegCloseKey(hkey); hkey=NULL;
-		} else {
-			lbNeedMacro = TRUE;
-		}
-	}
-
-	if (lbNeedMacro) {
-		//int nBtn = ShowMessage(0, 3);
-		//if (nBtn == 1) { // Don't disturb
-		//	DWORD disp=0;
-		//	lbMacroDontCheck = true;
-		//	if (0==RegCreateKeyExA(HKEY_CURRENT_USER, "Software\\ConEmu", 0, 0, 
-		//		0, KEY_ALL_ACCESS, 0, &hkey, &disp))
-		//	{
-		//		RegSetValueExA(hkey, szCheckKey, 0, REG_BINARY, (LPBYTE)&lbMacroDontCheck, (dwSize=sizeof(lbMacroDontCheck)));
-		//		RegCloseKey(hkey); hkey=NULL;
-		//	}
-		//} else if (nBtn == 0) 
-		for (n=0; n<MODCOUNT; n++)
-		{
-			DWORD disp=0;
-			lbMacroAdded = TRUE;
-			if (0==RegCreateKeyExW(HKEY_CURRENT_USER, szMacroKey[n], 0, 0, 
-				0, KEY_ALL_ACCESS, 0, &hkey, &disp))
-			{
-				lstrcpyA(szValue, "ConEmu support");
-				RegSetValueExA(hkey, "", 0, REG_SZ, (LPBYTE)szValue, (dwSize=(DWORD)lstrlenA(szValue)+1));
-
-				//lstrcpyA(szValue, 
-				//	"$If (Shell || Info || QView || Tree || Viewer || Editor) F12 $Else waitkey(100) $End");
-				//RegSetValueExA(hkey, "Sequence", 0, REG_SZ, (LPBYTE)szValue, (dwSize=lstrlenA(szValue)+1));
-				
-				/*if (gFarVersion.dwVerMajor==1) {
-					RegSetValueExA(hkey, "Sequence", 0, REG_SZ, (LPBYTE)szCheckKey, (dwSize=lstrlenA((char*)szCheckKey)+1));
-				} else {*/
-					RegSetValueExW(hkey, L"Sequence", 0, REG_SZ, (LPBYTE)szCheckKey, (dwSize=2*((DWORD)lstrlenW((WCHAR*)szCheckKey)+1)));
-				//}
-
-				lstrcpyA(szValue, "For ConEmu - plugin activation from listening thread");
-				RegSetValueExA(hkey, "Description", 0, REG_SZ, (LPBYTE)szValue, (dwSize=(DWORD)lstrlenA(szValue)+1));
-
-				RegSetValueExA(hkey, "DisableOutput", 0, REG_DWORD, (LPBYTE)&(disp=1), (dwSize=4));
-
-				RegCloseKey(hkey); hkey=NULL;
-			}
-		}
-	}
-
-
-	// Перечитать макросы в FAR?
-	if (lbMacroAdded && abAllowAPI) {
-		if (gFarVersion.dwVerMajor==1)
-			ReloadMacroA();
-		else if (gFarVersion.dwBuild>=FAR_Y_VER)
-			FUNC_Y(ReloadMacro)();
-		else
-			FUNC_X(ReloadMacro)();
-	}
-
-	// First call
-	if (abAllowAPI) {
-		NotifyChangeKey();
-	}
+	if (gFarVersion.dwVerMajor==1)
+		ReloadFarInfoA();
+	else if (gFarVersion.dwBuild>=FAR_Y_VER)
+		FUNC_Y(ReloadFarInfo)();
+	else
+		FUNC_X(ReloadFarInfo)();
+		
+	gpConsoleInfo->nFarPID = gnSelfPID;
 }
 
 void UpdateConEmuTabsW(int event, bool losingFocus, bool editorSave, void* Param/*=NULL*/)
@@ -2064,9 +2185,9 @@ void StopThread(void)
 	if (ghServerTerminateEvent) {
 		SetEvent(ghServerTerminateEvent);
 	}
-	if (gnInputThreadId) {
-		PostThreadMessage(gnInputThreadId, WM_QUIT, 0, 0);
-	}
+	//if (gnInputThreadId) {
+	//	PostThreadMessage(gnInputThreadId, WM_QUIT, 0, 0);
+	//}
 
 	if (ghServerThread) {
 		HANDLE hPipe = INVALID_HANDLE_VALUE;
@@ -2104,15 +2225,15 @@ void StopThread(void)
 		SafeCloseHandle(ghMonitorThread);
 	}
 
-	if (ghInputThread) { // подождем чуть-чуть, или принудительно прибъем нить ожидания
-		if (WaitForSingleObject(ghInputThread,1000)) {
-			#if !defined(__GNUC__)
-			#pragma warning (disable : 6258)
-			#endif
-			TerminateThread(ghInputThread, 100);
-		}
-		SafeCloseHandle(ghInputThread);
-	}
+	//if (ghInputThread) { // подождем чуть-чуть, или принудительно прибъем нить ожидания
+	//	if (WaitForSingleObject(ghInputThread,1000)) {
+	//		#if !defined(__GNUC__)
+	//		#pragma warning (disable : 6258)
+	//		#endif
+	//		TerminateThread(ghInputThread, 100);
+	//	}
+	//	SafeCloseHandle(ghInputThread);
+	//}
 
     if (gpTabs) {
 	    Free(gpTabs);
@@ -2168,6 +2289,8 @@ void CheckResources()
 			return;
 		dwLastTickCount = dwCurTick;
 	}
+	
+	ReloadFarInfo();
 
 	wchar_t szLang[64];
 	GetEnvironmentVariable(L"FARLANG", szLang, 63);
@@ -2192,14 +2315,14 @@ void InitResources()
 	if (!ConEmuHwnd || !FarHwnd) return;
 	// В ConEmu нужно передать следущие ресурсы
 	//
-	int nSize = sizeof(CESERVER_REQ) + 2*sizeof(DWORD) 
+	int nSize = sizeof(CESERVER_REQ) + sizeof(DWORD) 
 		+ 3*(MAX_PATH+1)*2; // + 3 строковых ресурса
 	CESERVER_REQ *pIn = (CESERVER_REQ*)Alloc(nSize,1);;
 	if (pIn) {
 		ExecutePrepareCmd(pIn, CECMD_RESOURCES, nSize);
 		pIn->dwData[0] = GetCurrentProcessId();
-		pIn->dwData[1] = gnInputThreadId;
-		wchar_t* pszRes = (wchar_t*)&(pIn->dwData[2]);
+		//pIn->dwData[1] = gnInputThreadId;
+		wchar_t* pszRes = (wchar_t*)&(pIn->dwData[1]);
 		if (gFarVersion.dwVerMajor==1) {
 			GetMsgA(10, pszRes); pszRes += lstrlenW(pszRes)+1;
 			GetMsgA(11, pszRes); pszRes += lstrlenW(pszRes)+1;

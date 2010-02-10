@@ -86,13 +86,13 @@ HANDLE WINAPI _export OpenPlugin(int OpenFrom,INT_PTR Item)
 		SHOWDBGINFO(L"*** Calling ProcessCommand\n");
 		ProcessCommand(gnReqCommand, FALSE/*bReqMainThread*/, gpReqCommandData);
 	} else {
-		if (!gbCmdCallObsolete) {
+		//if (!gbCmdCallObsolete) {
 			SHOWDBGINFO(L"*** Calling ShowPluginMenu\n");
 			ShowPluginMenu();
-		} else {
-			SHOWDBGINFO(L"!!! Plugin call is obsolete\n");
-			gbCmdCallObsolete = FALSE;
-		}
+		//} else {
+		//	SHOWDBGINFO(L"!!! Plugin call is obsolete\n");
+		//	gbCmdCallObsolete = FALSE;
+		//}
 	}
 
 	#ifdef _DEBUG
@@ -361,23 +361,25 @@ void WINAPI _export SetStartupInfo(const struct PluginStartupInfo *aInfo)
 	while (pszSlash>gszRootKey && *pszSlash!=L'\\') pszSlash--;
 	*pszSlash = 0;
 
-	CheckMacro(TRUE);
+	// ”старело. активаци€ через [Read/Peek]ConsoleInput
+	//CheckMacro(TRUE);
 
 	CheckResources();
 }
 
-extern WCHAR gcPlugKey; // ƒл€ ANSI far он инициализируетс€ как (char)
+//extern WCHAR gcPlugKey; // ƒл€ ANSI far он инициализируетс€ как (char)
 
 void WINAPI _export GetPluginInfo(struct PluginInfo *pi)
 {
     static char *szMenu[1], szMenu1[255];
 	szMenu[0]=szMenu1;
 
-	// ѕроверить, не изменилась ли гор€ча€ клавиша плагина, и если да - пересоздать макросы
-	IsKeyChanged(TRUE);
+	// ”старело. активаци€ через [Read/Peek]ConsoleInput
+	//// ѕроверить, не изменилась ли гор€ча€ клавиша плагина, и если да - пересоздать макросы
+	//IsKeyChanged(TRUE);
 
-	if (gcPlugKey) szMenu1[0]=0; else lstrcpyA(szMenu1, "[&\xDC] "); // а тут действительно OEM
-	lstrcpynA(szMenu1+lstrlenA(szMenu1), InfoA->GetMsg(InfoA->ModuleNumber,2), 240);
+	//if (gcPlugKey) szMenu1[0]=0; else lstrcpyA(szMenu1, "[&\xDC] "); // а тут действительно OEM
+	lstrcpynA(szMenu1/*+lstrlenA(szMenu1)*/, InfoA->GetMsg(InfoA->ModuleNumber,2), 240);
 
 	pi->StructSize = sizeof(struct PluginInfo);
 	pi->Flags = PF_EDITOR | PF_VIEWER | PF_DIALOG | PF_PRELOAD;
@@ -644,15 +646,15 @@ int ShowMessageA(int aiMsg, int aiButtons)
 		(const char * const *)InfoA->GetMsg(InfoA->ModuleNumber,aiMsg), 0, aiButtons);
 }
 
-void ReloadMacroA()
-{
-	if (!InfoA || !InfoA->AdvControl)
-		return;
-
-	ActlKeyMacro command;
-	command.Command=MCMD_LOADALL;
-	InfoA->AdvControl(InfoA->ModuleNumber,ACTL_KEYMACRO,&command);
-}
+//void ReloadMacroA()
+//{
+//	if (!InfoA || !InfoA->AdvControl)
+//		return;
+//
+//	ActlKeyMacro command;
+//	command.Command=MCMD_LOADALL;
+//	InfoA->AdvControl(InfoA->ModuleNumber,ACTL_KEYMACRO,&command);
+//}
 
 void SetWindowA(int nTab)
 {
@@ -816,4 +818,89 @@ bool ProcessCommandLineA(char* pszCommand)
 	}
 
 	return false;
+}
+
+
+static void FarPanel2CePanel(PanelInfo* pFar, CEFAR_SHORT_PANEL_INFO* pCE)
+{
+	pCE->PanelType = pFar->PanelType;
+	pCE->Plugin = pFar->Plugin;
+	pCE->PanelRect = pFar->PanelRect;
+	pCE->ItemsNumber = pFar->ItemsNumber;
+	pCE->SelectedItemsNumber = pFar->SelectedItemsNumber;
+	pCE->CurrentItem = pFar->CurrentItem;
+	pCE->TopPanelItem = pFar->TopPanelItem;
+	pCE->Visible = pFar->Visible;
+	pCE->Focus = pFar->Focus;
+	pCE->ViewMode = pFar->ViewMode;
+	pCE->ShortNames = pFar->ShortNames;
+	pCE->SortMode = pFar->SortMode;
+	pCE->Flags = pFar->Flags;
+}
+
+void ReloadFarInfoA()
+{
+	if (!InfoA || !FSFA) return;
+	
+	if (!gpConsoleInfo) {
+		_ASSERTE(gpConsoleInfo!=NULL);
+		return;
+	}
+
+	// «аполнить gpConsoleInfo->
+	//BYTE nFarColors[0x100]; // ћассив цветов фара
+	//DWORD nFarInterfaceSettings;
+	//DWORD nFarPanelSettings;
+	//DWORD nFarConfirmationSettings;
+	//BOOL  bFarPanelAllowed, bFarLeftPanel, bFarRightPanel;   // FCTL_CHECKPANELSEXIST, FCTL_GETPANELSHORTINFO,...
+	//CEFAR_SHORT_PANEL_INFO FarLeftPanel, FarRightPanel;
+	
+	INT_PTR nColorSize = InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETARRAYCOLOR, NULL);
+	if (nColorSize <= sizeof(gpConsoleInfo->nFarColors)) {
+		nColorSize = InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETARRAYCOLOR, gpConsoleInfo->nFarColors);
+	} else {
+		_ASSERTE(nColorSize <= sizeof(gpConsoleInfo->nFarColors));
+		BYTE* ptr = (BYTE*)calloc(nColorSize,1);
+		if (!ptr) {
+			memset(gpConsoleInfo->nFarColors, 7, sizeof(gpConsoleInfo->nFarColors));
+		} else {
+			nColorSize = InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETARRAYCOLOR, ptr);
+			memmove(gpConsoleInfo->nFarColors, ptr, sizeof(gpConsoleInfo->nFarColors));
+			free(ptr);
+		}
+	}
+	
+	gpConsoleInfo->nFarInterfaceSettings =
+		InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETINTERFACESETTINGS, 0);
+	gpConsoleInfo->nFarPanelSettings =
+		InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETPANELSETTINGS, 0);
+	gpConsoleInfo->nFarConfirmationSettings =
+		InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETCONFIRMATIONS, 0);
+	
+	if (FALSE == (gpConsoleInfo->bFarPanelAllowed = InfoA->Control(INVALID_HANDLE_VALUE, FCTL_CHECKPANELSEXIST, 0))) {
+		gpConsoleInfo->bFarLeftPanel = FALSE;
+		gpConsoleInfo->bFarRightPanel = FALSE;
+	} else {
+		PanelInfo piA = {0}, piP = {0};
+		BOOL lbActive  = InfoA->Control(INVALID_HANDLE_VALUE, FCTL_GETPANELSHORTINFO, &piA);
+		BOOL lbPassive = InfoA->Control(INVALID_HANDLE_VALUE, FCTL_GETANOTHERPANELSHORTINFO, &piP);
+		if (!lbActive && !lbPassive)
+		{
+			gpConsoleInfo->bFarLeftPanel = FALSE;
+			gpConsoleInfo->bFarRightPanel = FALSE;
+		} else {
+			PanelInfo *ppiL = NULL;
+			PanelInfo *ppiR = NULL;
+			if (lbActive) {
+				if (piA.Flags & PFLAGS_PANELLEFT) ppiL = &piA; else ppiR = &piA;
+			}
+			if (lbPassive) {
+				if (piP.Flags & PFLAGS_PANELLEFT) ppiL = &piP; else ppiR = &piP;
+			}
+			gpConsoleInfo->bFarLeftPanel = ppiL!=NULL;
+			gpConsoleInfo->bFarRightPanel = ppiR!=NULL;
+			if (ppiL) FarPanel2CePanel(ppiL, &(gpConsoleInfo->FarLeftPanel));
+			if (ppiR) FarPanel2CePanel(ppiR, &(gpConsoleInfo->FarRightPanel));
+		}
+	}
 }

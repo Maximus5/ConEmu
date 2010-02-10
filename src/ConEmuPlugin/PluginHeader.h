@@ -64,23 +64,25 @@ extern FarVersion gFarVersion;
 extern int lastModifiedStateW;
 //extern HANDLE hEventCmd[MAXCMDCOUNT];
 extern HANDLE hThread;
-extern WCHAR gcPlugKey;
+//extern WCHAR gcPlugKey;
 WARNING("Убрать, заменить ghConIn на GetStdHandle()"); // Иначе в Win7 будет буфер разрушаться
 extern HANDLE ghConIn;
 extern BOOL gbNeedPostTabSend;
 extern HANDLE ghServerTerminateEvent;
+extern CESERVER_REQ_CONINFO_HDR *gpConsoleInfo;
+extern DWORD gnSelfPID;
 
-typedef struct tag_SynchroArg {
-	enum {
-		eCommand,
-		eInput
-	} SynchroType;
-	HANDLE hEvent;
-	LPARAM Result;
-	LPARAM Param1, Param2;
-	BOOL Obsolete;
-	//BOOL Processed;
-} SynchroArg;
+//typedef struct tag_SynchroArg {
+//	enum {
+//		eCommand,
+//		eInput
+//	} SynchroType;
+//	HANDLE hEvent;
+//	LPARAM Result;
+//	LPARAM Param1, Param2;
+//	BOOL Obsolete;
+//	//BOOL Processed;
+//} SynchroArg;
 
 BOOL CreateTabs(int windowCount);
 
@@ -126,15 +128,18 @@ BOOL LoadFarVersion();
 BOOL OutDataAlloc(DWORD anSize); // необязательно
 BOOL OutDataWrite(LPVOID apData, DWORD anSize);
 
-void CheckMacro(BOOL abAllowAPI);
-BOOL IsKeyChanged(BOOL abAllowReload);
+//void CheckMacro(BOOL abAllowAPI);
+//BOOL IsKeyChanged(BOOL abAllowReload);
 int ShowMessage(int aiMsg, int aiButtons);
 int ShowMessageA(int aiMsg, int aiButtons);
 int FUNC_X(ShowMessage)(int aiMsg, int aiButtons);
 int FUNC_Y(ShowMessage)(int aiMsg, int aiButtons);
-void ReloadMacroA();
-void FUNC_X(ReloadMacro)();
-void FUNC_Y(ReloadMacro)();
+//void ReloadMacroA();
+//void FUNC_X(ReloadMacro)();
+//void FUNC_Y(ReloadMacro)();
+void ReloadFarInfoA();
+void FUNC_X(ReloadFarInfo)();
+void FUNC_Y(ReloadFarInfo)();
 void PostMacro(wchar_t* asMacro);
 void PostMacroA(char* asMacro);
 void FUNC_X(PostMacro)(wchar_t* asMacro);
@@ -146,8 +151,8 @@ LPCWSTR FUNC_X(GetMsg)(int aiMsg);
 
 extern DWORD gnReqCommand;
 extern int gnPluginOpenFrom;
-extern HANDLE ghInputSynchroExecuted;
-extern BOOL gbCmdCallObsolete;
+//extern HANDLE ghInputSynchroExecuted;
+//extern BOOL gbCmdCallObsolete;
 extern LPVOID gpReqCommandData;
 CESERVER_REQ* ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData);
 BOOL CheckPlugKey();
@@ -178,16 +183,16 @@ BOOL FUNC_X(EditOutput)(LPCWSTR asFileName, BOOL abView);
 BOOL Attach2Gui();
 BOOL StartDebugger();
 
-#define DEFAULT_SYNCHRO_TIMEOUT 10000
-BOOL FUNC_X(CallSynchro)(SynchroArg *Param, DWORD nTimeout /*= 10000*/);
-BOOL FUNC_Y(CallSynchro)(SynchroArg *Param, DWORD nTimeout /*= 10000*/);
+//#define DEFAULT_SYNCHRO_TIMEOUT 10000
+//BOOL FUNC_X(CallSynchro)(SynchroArg *Param, DWORD nTimeout /*= 10000*/);
+//BOOL FUNC_Y(CallSynchro)(SynchroArg *Param, DWORD nTimeout /*= 10000*/);
 
 BOOL IsMacroActive();
 BOOL IsMacroActiveA();
 BOOL FUNC_X(IsMacroActive)();
 BOOL FUNC_Y(IsMacroActive)();
 
-BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount);
+//BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount);
 
 void RedrawAll();
 void RedrawAllA();
