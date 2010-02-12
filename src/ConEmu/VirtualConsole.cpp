@@ -2543,3 +2543,9 @@ BOOL CVirtualConsole::FindChanges(int &j, int &end, const wchar_t* ConCharLine, 
 
 	return TRUE;
 }
+
+HRGN CVirtualConsole::GetExclusionRgn(bool abTestOnly/*=false*/)
+{
+	TODO("Скрытие 'прозрачных' участков консоли");
+	return NULL;
+}

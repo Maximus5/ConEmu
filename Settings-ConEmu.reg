@@ -125,6 +125,9 @@ REGEDIT4
 ;"HideCaption"=hex:00
 ;; Set to hex:01 to hide caption in all modes (normal/maximized/fullscreen)
 ;"HideCaptionAlways"=hex:00
+;; While caption and frame are hidden, ConEmu may keep small part
+;; of frame (in pixels) around console part. Default is 1 pixel.
+;"HideCaptionAlwaysFrame"=hex:01
 
 ;; Auto minimize to the Tray
 ;"Min2Tray"=hex:01
@@ -217,10 +220,6 @@ REGEDIT4
 "FarHourglass"=hex:01
 ;; Delay for FarHourglass, default = 500 ms
 ;"FarHourglassDelay"=dword:000001F4
-
-;; Прокручивать заголовок в кнопке на панели задач (пока не работает)
-;"ScrollTitle"=hex:01
-;"ScrollTitleLen"=hex:16,00,00,00
 
 ;; Used for consoles, started under Administrator
 ;"AdminTitleSuffix"=" (Admin)"

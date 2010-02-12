@@ -4018,6 +4018,7 @@ void CRealConsole::ShowConsole(int nMode) // -1 Toggle, 0 - Hide, 1 - Show
         //if (setParent) SetParent(hConWnd, 0);
         RECT rcCon, rcWnd; GetWindowRect(hConWnd, &rcCon); GetWindowRect(ghWnd, &rcWnd);
         //if (!IsDebuggerPresent())
+		TODO("Скорректировать позицию так, чтобы не вылезло за экран");
         if (SetWindowPos(hConWnd, HWND_TOPMOST, 
             rcWnd.right-rcCon.right+rcCon.left, rcWnd.bottom-rcCon.bottom+rcCon.top,
             0,0, SWP_NOSIZE|SWP_SHOWWINDOW))

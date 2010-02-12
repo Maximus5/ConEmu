@@ -179,28 +179,30 @@ typedef struct tag_RConStartArgs {
 
 void DisplayLastError(LPCTSTR asLabel, DWORD dwError = 0);
 
-COORD __forceinline MakeCoord(int W,int H)
-{
-	COORD rc; rc.X=W; rc.Y=H;
-	return rc;
-}
+COORD /*__forceinline*/ MakeCoord(int W,int H);
+//{
+//	COORD rc; rc.X=W; rc.Y=H;
+//	return rc;
+//}
 
-RECT __forceinline MakeRect(int W,int H)
-{
-	RECT rc; rc.left=0; rc.top=0; rc.right=W; rc.bottom=H;
-	return rc;
-}
+POINT /*__forceinline*/ MakePoint(int W,int H);
 
-RECT __forceinline MakeRect(int X1, int Y1,int X2,int Y2)
-{
-	RECT rc; rc.left=X1; rc.top=Y1; rc.right=X2; rc.bottom=Y2;
-	return rc;
-}
+RECT /*__forceinline*/ MakeRect(int W,int H);
+//{
+//	RECT rc; rc.left=0; rc.top=0; rc.right=W; rc.bottom=H;
+//	return rc;
+//}
 
-BOOL __forceinline CoordInRect(COORD& c, RECT& r)
-{
-	return (c.X >= r.left && c.X <= r.right) && (c.Y >= r.top && c.Y <= r.bottom);
-}
+RECT /*__forceinline*/ MakeRect(int X1, int Y1,int X2,int Y2);
+//{
+//	RECT rc; rc.left=X1; rc.top=Y1; rc.right=X2; rc.bottom=Y2;
+//	return rc;
+//}
+
+BOOL /*__forceinline*/ CoordInRect(const COORD& c, const RECT& r);
+//{
+//	return (c.X >= r.left && c.X <= r.right) && (c.Y >= r.top && c.Y <= r.bottom);
+//}
 
 //#pragma warning(disable: 4311) // 'type cast' : pointer truncation from 'HBRUSH' to 'BOOL'
 

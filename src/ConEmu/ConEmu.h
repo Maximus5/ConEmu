@@ -42,6 +42,7 @@ typedef interface ITaskbarList2 ITaskbarList2;
 #endif 	/* __ITaskbarList2_FWD_DEFINED__ */
 
 #define WM_TRAYNOTIFY WM_USER+1
+#define ID_ALWAYSONTOP 0xABC5
 #define ID_DEBUGGUI 0xABC6
 #define ID_HELP 0xABC7
 #define ID_CON_TOGGLE_VISIBLE 0xABC8
@@ -182,6 +183,8 @@ protected:
 	CVirtualConsole *mp_VActive, *mp_VCon1, *mp_VCon2;
 	bool mb_SkipSyncSize, mb_PassSysCommand, mb_CreatingActive;
 	BOOL mb_WaitCursor, mb_InTrackSysMenu;
+	BOOL mb_LastRgnWasNull;
+	BOOL mb_CaptionWasRestored; // заголовок восстановлен на время ресайза
 	//wchar_t *mpsz_RecreateCmd;
 	ITaskbarList3 *mp_TaskBar3;
 	ITaskbarList2 *mp_TaskBar2;
@@ -189,6 +192,7 @@ protected:
 	RECT mrc_Ideal;
 	BOOL mn_InResize;
 	BOOL mb_MaximizedHideCaption; // в режиме HideCaption
+	BOOL mb_InRestore; // во время восстановления из Maximized
 	BOOL mb_MouseCaptured;
 	BYTE m_KeybStates[256];
 	wchar_t ms_ConEmuAliveEvent[MAX_PATH+64];
@@ -250,9 +254,9 @@ public:
 	static void AddMargins(RECT& rc, RECT& rcAddShift, BOOL abExpand=FALSE);
 	void AskChangeBufferHeight();
 	LPARAM AttachRequested(HWND ahConWnd, DWORD anConemuC_PID);
-	void AutoSizeFont(RECT rFrom, enum ConEmuRect tFrom);
+	void AutoSizeFont(const RECT &rFrom, enum ConEmuRect tFrom);
 	static RECT CalcMargins(enum ConEmuMargins mg);
-	static RECT CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFrom, RECT* prDC=NULL, enum ConEmuMargins tTabAction=CEM_TAB);
+	static RECT CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmuRect tFrom, RECT* prDC=NULL, enum ConEmuMargins tTabAction=CEM_TAB);
 	enum DragPanelBorder CheckPanelDrag(COORD crCon);
 	bool ConActivate(int nCon);
 	bool ConActivateNext(BOOL abNext);
@@ -260,11 +264,15 @@ public:
 	//void CheckGuiBarsCreated();
 	CVirtualConsole* CreateCon(RConStartArgs *args);
 	BOOL CreateMainWindow();
+	HRGN CreateWindowRgn(bool abTestOnly=false);
+	HRGN CreateWindowRgn(bool abTestOnly,bool abRoundTitle,int anX, int anY, int anWndWidth, int anWndHeight);
 	void Destroy();
 	void DebugStep(LPCTSTR asMsg);
 	void ForceShowTabs(BOOL abShow);
 	DWORD_PTR GetActiveKeyboardLayout();
 	RECT GetIdealRect() { return mrc_Ideal; };
+	static DWORD GetWindowStyle();
+	static DWORD GetWindowStyleEx();
 	LRESULT GuiShellExecuteEx(SHELLEXECUTEINFO* lpShellExecute, BOOL abAllowAsync);
 	BOOL Init();
 	void Invalidate(CVirtualConsole* apVCon);
@@ -280,6 +288,7 @@ public:
 	bool isLBDown();
 	bool isMainThread();
 	bool isMeForeground();
+	bool isMouseOverFrame();
 	bool isNtvdm();
 	bool isPictureView();
 	bool isSizing();
@@ -319,14 +328,17 @@ public:
 	void UpdateIdealRect(BOOL abAllowUseConSize=FALSE);
 	void UpdateTitle(LPCTSTR asNewTitle);
 	void UpdateProgress(BOOL abUpdateTitle);
+	void UpdateWindowRgn(int anX=-1, int anY=-1, int anWndWidth=-1, int anWndHeight=-1);
 	static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 	LRESULT WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 public:
 	void OnAltF9(BOOL abPosted=FALSE);
+	void OnAlwaysOnTop();
 	void OnBufferHeight(); //BOOL abBufferHeight);
 	LRESULT OnClose(HWND hWnd);
 	void OnConsoleResize(BOOL abPosted=FALSE);
 	LRESULT OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate);
+	void OnDesktopMode();
 	LRESULT OnDestroy(HWND hWnd);
 	LRESULT OnFlashWindow(DWORD nFlags, DWORD nCount, HWND hCon);
 	LRESULT OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
@@ -349,7 +361,6 @@ public:
 	LRESULT OnSizing(WPARAM wParam, LPARAM lParam);
 	void OnSizePanels(COORD cr);
 	LRESULT OnShellHook(WPARAM wParam, LPARAM lParam);
-	void OnShowOnTaskBar();
 	LRESULT OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam);
 	LRESULT OnTimer(WPARAM wParam, LPARAM lParam);
 	void OnTransparent();

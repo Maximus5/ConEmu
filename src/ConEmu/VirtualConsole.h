@@ -122,6 +122,7 @@ public:
 	COORD ClientToConsole(LONG x, LONG y);
 	void OnConsoleSizeChanged();
 	static void ClearPartBrushes();
+	HRGN GetExclusionRgn(bool abTestOnly=false);
 
 protected:
 	//inline void GetCharAttr(WORD atr, BYTE& foreColorNum, BYTE& backColorNum, HFONT* pFont);

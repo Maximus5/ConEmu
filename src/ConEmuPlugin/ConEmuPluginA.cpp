@@ -871,11 +871,11 @@ void ReloadFarInfoA()
 	}
 	
 	gpConsoleInfo->nFarInterfaceSettings =
-		InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETINTERFACESETTINGS, 0);
+		(DWORD)InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETINTERFACESETTINGS, 0);
 	gpConsoleInfo->nFarPanelSettings =
-		InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETPANELSETTINGS, 0);
+		(DWORD)InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETPANELSETTINGS, 0);
 	gpConsoleInfo->nFarConfirmationSettings =
-		InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETCONFIRMATIONS, 0);
+		(DWORD)InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETCONFIRMATIONS, 0);
 	
 	if (FALSE == (gpConsoleInfo->bFarPanelAllowed = InfoA->Control(INVALID_HANDLE_VALUE, FCTL_CHECKPANELSEXIST, 0))) {
 		gpConsoleInfo->bFarLeftPanel = FALSE;

@@ -111,8 +111,10 @@ public:
     DWORD FontSizeX;  // ширина основного шрифта
     DWORD FontSizeX2; // ширина для FixFarBorders (ширина создаваемого шрифта для отрисовки рамок, не путать со знакоместом)
     DWORD FontSizeX3; // ширина знакоместа при моноширном режиме (не путать с FontSizeX2)
-    bool isFullScreen, isHideCaption, isHideCaptionAlways, isHideCaptionAlwaysLoad;
-    bool isDontMinimize, isShowOnTaskBar;
+	TODO("Удалить isHideCaptionAlwaysLoad, если Rgn позволит");
+    bool isFullScreen, isHideCaption, isHideCaptionAlways/*, isHideCaptionAlwaysLoad*/;
+	BYTE nHideCaptionAlwaysFrame;
+    bool isAlwaysOnTop, isDesktopMode;
     char isFixFarBorders;
 	bool isMouseSkipActivation, isMouseSkipMoving;
 	bool isFarHourglass; DWORD nFarHourglassDelay;
@@ -178,8 +180,8 @@ public:
 
     char isAllowDetach;
     bool isCreateAppWindow; 
-    bool isScrollTitle;
-    DWORD ScrollTitleLen;
+    /*bool isScrollTitle;
+    DWORD ScrollTitleLen;*/
     wchar_t szAdminTitleSuffix[64]; //" (Admin)"
     bool bAdminShield;
     
@@ -240,6 +242,7 @@ public:
 	BOOL CheckConIme();
 	SettingsBase* CreateSettings();
 	bool AutoRecreateFont(int nFontW, int nFontH);
+	bool CheckTheming();
 protected:
     LRESULT OnInitDialog();
 	LRESULT OnInitDialog_Main();
@@ -297,4 +300,6 @@ private:
 	BOOL mb_StopRegisterFonts;
 	//
 	BOOL GetColorRef(HWND hDlg, WORD TB, COLORREF* pCR);
+	//
+	bool mb_ThemingEnabled;
 };

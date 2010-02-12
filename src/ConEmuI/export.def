@@ -1,4 +1,0 @@
-EXPORTS
-;	GetOriginalAddress
-	InitHooks
-	SetAllHooks

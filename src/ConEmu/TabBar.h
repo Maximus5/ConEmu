@@ -77,7 +77,7 @@ private:
 	int GetItemCount();
 	void DeleteItem(int I);
 	void AddTab2VCon(VConTabs& vct);
-	void CheckTheming();
+	//void CheckTheming();
 
 protected:
 	static LRESULT CALLBACK TabProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -108,7 +108,7 @@ protected:
 	int GetIndexByTab(VConTabs tab);
 	int mn_InUpdate;
 
-	BOOL mb_ThemingEnabled;
+	//BOOL mb_ThemingEnabled;
 	
 	// Tab stack
 	std::vector<VConTabs> m_TabStack;

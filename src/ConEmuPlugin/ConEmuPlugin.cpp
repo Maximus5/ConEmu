@@ -1582,6 +1582,7 @@ int OpenMapHeader()
 		if (ghFileMapping) {
 			gpConsoleInfo = (CESERVER_REQ_CONINFO_HDR*)MapViewOfFile(ghFileMapping, FILE_MAP_ALL_ACCESS,0,0,0);
 			if (gpConsoleInfo) {
+				ReloadFarInfo();
 				iRc = 0;
 			} else {
 				#ifdef _DEBUG
@@ -2290,7 +2291,8 @@ void CheckResources()
 		dwLastTickCount = dwCurTick;
 	}
 	
-	ReloadFarInfo();
+	if (gpConsoleInfo)
+		ReloadFarInfo();
 
 	wchar_t szLang[64];
 	GetEnvironmentVariable(L"FARLANG", szLang, 63);

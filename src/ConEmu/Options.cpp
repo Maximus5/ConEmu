@@ -263,6 +263,9 @@ void CSettings::InitSettings()
     #endif
     nFontNormalColor = 1; nFontBoldColor = 12; nFontItalicColor = 13;
 
+	//CheckTheming(); -- сейчас - нельз€. нужно дождатьс€, пока главное окно будет создано
+	mb_ThemingEnabled = (gOSVer.dwMajorVersion >= 6 || (gOSVer.dwMajorVersion == 5 && gOSVer.dwMinorVersion >= 1));
+
 //------------------------------------------------------------------------
 ///| Default settings |///////////////////////////////////////////////////
 //------------------------------------------------------------------------
@@ -287,8 +290,9 @@ void CSettings::InitSettings()
     //WindowMode=rNormal; -- устанавливаетс€ в конструкторе CConEmuMain
     isFullScreen = false;
     isHideCaption = isHideCaptionAlways = false;
-    isShowOnTaskBar = true;
-    isDontMinimize = false;
+	nHideCaptionAlwaysFrame = 1;
+    isDesktopMode = false;
+    isAlwaysOnTop = false;
     wndX = 0; wndY = 0; wndCascade = true;
     isConVisible = false;
     nSlideShowElapse = 2500;
@@ -317,8 +321,8 @@ void CSettings::InitSettings()
 
     isAllowDetach = 0;
     isCreateAppWindow = false;
-    isScrollTitle = true;
-    ScrollTitleLen = 22;
+    /*isScrollTitle = true;
+    ScrollTitleLen = 22;*/
     lstrcpy(szAdminTitleSuffix, L" (Admin)");
     bAdminShield = true;
     
@@ -427,7 +431,9 @@ void CSettings::LoadSettings()
         reg->Load(L"WindowMode", gConEmu.WindowMode);
         reg->Load(L"HideCaption", isHideCaption);
 		// грузим именно в isHideCaptionAlwaysLoad, т.к. есть какие-то проблемы с инициализацией без заголовка
-		reg->Load(L"HideCaptionAlways", isHideCaptionAlwaysLoad);
+		reg->Load(L"HideCaptionAlways", isHideCaptionAlways/*Load*/);
+		reg->Load(L"HideCaptionAlwaysFrame", nHideCaptionAlwaysFrame);
+			if (nHideCaptionAlwaysFrame > 10) nHideCaptionAlwaysFrame = 10;
         reg->Load(L"ConWnd X", wndX); /*if (wndX<-10) wndX = 0;*/
         reg->Load(L"ConWnd Y", wndY); /*if (wndY<-10) wndY = 0;*/
 		// Ё“ќ не вли€ет на szDefCmd. “олько пр€мое указание флажка "/BufferHeight N" 
@@ -564,8 +570,8 @@ void CSettings::LoadSettings()
         reg->Load(L"TabEditorModified", szTabEditorModified, sizeofarray(szTabEditorModified));
         reg->Load(L"TabViewer", szTabViewer, sizeofarray(szTabViewer));
         reg->Load(L"TabLenMax", nTabLenMax);
-        reg->Load(L"ScrollTitle", isScrollTitle);
-        reg->Load(L"ScrollTitleLen", ScrollTitleLen);
+        /*reg->Load(L"ScrollTitle", isScrollTitle);
+        reg->Load(L"ScrollTitleLen", ScrollTitleLen);*/
         reg->Load(L"AdminTitleSuffix", szAdminTitleSuffix, sizeofarray(szAdminTitleSuffix)); szAdminTitleSuffix[sizeofarray(szAdminTitleSuffix)-1] = 0;
         reg->Load(L"AdminShowShield", bAdminShield);
         reg->Load(L"TryToCenter", isTryToCenter);
@@ -589,8 +595,8 @@ void CSettings::LoadSettings()
         //reg->Load(L"LangChangeWsPlugin", isLangChangeWsPlugin);
 		reg->Load(L"MonitorConsoleLang", isMonitorConsoleLang);
 		
-		reg->Load(L"ShowOnTaskBar", isShowOnTaskBar);
-		reg->Load(L"DontMinimize", isDontMinimize);
+		reg->Load(L"DesktopMode", isDesktopMode);
+		reg->Load(L"AlwaysOnTop", isAlwaysOnTop);
         
         reg->CloseKey();
     }
@@ -837,6 +843,7 @@ BOOL CSettings::SaveSettings()
             reg->Save(L"WindowMode", saveMode);
             reg->Save(L"HideCaption", isHideCaption);
 			reg->Save(L"HideCaptionAlways", isHideCaptionAlways);
+			reg->Save(L"HideCaptionAlwaysFrame", nHideCaptionAlwaysFrame);
             
 			reg->Save(L"ConsoleFontName", ConsoleFont.lfFaceName);
 			reg->Save(L"ConsoleCharWidth", ConsoleFont.lfWidth);
@@ -917,8 +924,8 @@ BOOL CSettings::SaveSettings()
             reg->Save(L"ConWnd Y", wndY);
             reg->Save(L"Cascaded", wndCascade);
 
-            reg->Save(L"ScrollTitle", isScrollTitle);
-            reg->Save(L"ScrollTitleLen", ScrollTitleLen);
+            /*reg->Save(L"ScrollTitle", isScrollTitle);
+            reg->Save(L"ScrollTitleLen", ScrollTitleLen);*/
             
             //reg->Save(L"Visualizer", isVisualizer);
             //reg->Save(L"VizNormal", nVizNormal);
@@ -936,8 +943,8 @@ BOOL CSettings::SaveSettings()
             reg->Save(L"SkipFocusEvents", isSkipFocusEvents);
     		reg->Save(L"MonitorConsoleLang", isMonitorConsoleLang);
     		
-			reg->Save(L"ShowOnTaskBar", isShowOnTaskBar);
-			reg->Save(L"DontMinimize", isDontMinimize);
+			reg->Save(L"DesktopMode", isDesktopMode);
+			reg->Save(L"AlwaysOnTop", isAlwaysOnTop);
     		
             
             reg->CloseKey();
@@ -1091,6 +1098,13 @@ LRESULT CSettings::OnInitDialog()
 	_ASSERTE(!hMain && !hColors && !hInfo);
 	hMain = NULL; hExt = NULL; hColors = NULL; hInfo = NULL;
 	gbLastColorsOk = FALSE;
+
+	HMENU hSysMenu = GetSystemMenu(ghOpWnd, FALSE);
+	InsertMenu(hSysMenu, 0, MF_BYPOSITION, MF_SEPARATOR, 0);
+	InsertMenu(hSysMenu, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED 
+		| ((GetWindowLong(ghOpWnd,GWL_EXSTYLE)&WS_EX_TOPMOST) ? MF_CHECKED : 0),
+		ID_ALWAYSONTOP, _T("Al&ways on top..."));
+
 
 	RegisterTabs();
 
@@ -1490,8 +1504,8 @@ LRESULT CSettings::OnInitDialog_Ext()
 	CheckDlgButton(hExt, cbDragPanel, isDragPanel);
 	CheckDlgButton(hExt, cbTryToCenter, isTryToCenter);
 
-	if (isShowOnTaskBar) CheckDlgButton(hExt, cbShowOnTaskbar, BST_CHECKED);
-	if (isDontMinimize)  CheckDlgButton(hExt, cbDontMinimize, BST_CHECKED);
+	if (isDesktopMode) CheckDlgButton(hExt, cbDesktopMode, BST_CHECKED);
+	if (isAlwaysOnTop)  CheckDlgButton(hExt, cbAlwaysOnTop, BST_CHECKED);
 
 	if (isConVisible)
 		CheckDlgButton(hExt, cbVisible, BST_CHECKED);
@@ -1942,13 +1956,14 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
 		SetForegroundWindow(ghOpWnd);
 		break;
 		
-	case cbShowOnTaskbar:
-		isShowOnTaskBar = IsChecked(hExt, cbShowOnTaskbar);
-		gConEmu.OnShowOnTaskBar();
+	case cbDesktopMode:
+		isDesktopMode = IsChecked(hExt, cbDesktopMode);
+		gConEmu.OnDesktopMode();
 		break;
 		
-	case cbDontMinimize:
-		isDontMinimize = IsChecked(hExt, cbDontMinimize);
+	case cbAlwaysOnTop:
+		isAlwaysOnTop = IsChecked(hExt, cbAlwaysOnTop);
+		gConEmu.OnAlwaysOnTop();
 		break;
 
     default:
@@ -2462,11 +2477,23 @@ INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPara
         ghOpWnd = hWnd2;
         #ifdef _DEBUG
         //if (IsDebuggerPresent())
-        SetWindowPos(ghOpWnd, HWND_NOTOPMOST, 0,0,0,0, SWP_NOSIZE|SWP_NOMOVE);
+        if (!gSet.isAlwaysOnTop)
+        	SetWindowPos(ghOpWnd, HWND_NOTOPMOST, 0,0,0,0, SWP_NOSIZE|SWP_NOMOVE);
         #endif
         SetClassLongPtr(hWnd2, GCLP_HICON, (LONG)hClassIcon);
         gSet.OnInitDialog();
         break;
+
+	case WM_SYSCOMMAND:
+		if (LOWORD(wParam) == ID_ALWAYSONTOP) {
+			BOOL lbOnTopNow = GetWindowLong(ghOpWnd, GWL_EXSTYLE) & WS_EX_TOPMOST;
+			SetWindowPos(ghOpWnd, lbOnTopNow ? HWND_NOTOPMOST : HWND_TOPMOST,0,0,0,0,SWP_NOMOVE|SWP_NOSIZE);
+			CheckMenuItem(GetSystemMenu(ghOpWnd, FALSE), ID_ALWAYSONTOP, MF_BYCOMMAND |
+				(lbOnTopNow ? MF_UNCHECKED : MF_CHECKED));
+			SetWindowLongPtr(hWnd2, DWLP_MSGRESULT, 0);
+			return 1;
+		}
+		break;
 
     case WM_GETICON:
         if (wParam==ICON_BIG) {
@@ -4043,4 +4070,37 @@ SettingsBase* CSettings::CreateSettings()
 #else
 	return new SettingsRegistry();
 #endif
+}
+
+
+typedef long (WINAPI* ThemeFunction_t)();
+
+bool CSettings::CheckTheming()
+{
+	static bool bChecked = false;
+	if (bChecked)
+		return mb_ThemingEnabled;
+
+	bChecked = true;
+	mb_ThemingEnabled = false;
+
+	if (gOSVer.dwMajorVersion >= 6 || (gOSVer.dwMajorVersion == 5 && gOSVer.dwMinorVersion >= 1)) {
+		ThemeFunction_t fIsAppThemed = NULL;
+		ThemeFunction_t fIsThemeActive = NULL;
+		HMODULE hUxTheme = GetModuleHandle ( L"UxTheme.dll" );
+		if (hUxTheme)
+		{
+			fIsAppThemed = (ThemeFunction_t)GetProcAddress(hUxTheme, "IsAppThemed");
+			fIsThemeActive = (ThemeFunction_t)GetProcAddress(hUxTheme, "IsThemeActive");
+			if (fIsAppThemed && fIsThemeActive)
+			{
+				long llThemed = fIsAppThemed();
+				long llActive = fIsThemeActive();
+				if (llThemed && llActive)
+					mb_ThemingEnabled = true;
+			}
+		}
+	}
+
+	return mb_ThemingEnabled;
 }

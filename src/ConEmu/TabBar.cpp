@@ -73,7 +73,7 @@ typedef BOOL (WINAPI* FAppThemed)();
 
 #define POST_UPDATE_TIMEOUT 2000
 
-typedef long (WINAPI* ThemeFunction_t)();
+//typedef long (WINAPI* ThemeFunction_t)();
 
 TabBarClass::TabBarClass()
 {
@@ -98,34 +98,34 @@ TabBarClass::TabBarClass()
 	mn_CurSelTab = 0;
 	mn_ThemeHeightDiff = 0;
 	mn_InUpdate = 0;
-	mb_ThemingEnabled = FALSE;
+	//mb_ThemingEnabled = FALSE;
 	mh_TabTip = NULL;
 }
 
-void TabBarClass::CheckTheming()
-{
-	static bool bChecked = false;
-	if (bChecked) return;
-	bChecked = true;
-
-	if (gOSVer.dwMajorVersion >= 6 || (gOSVer.dwMajorVersion == 5 && gOSVer.dwMinorVersion >= 1)) {
-		ThemeFunction_t fIsAppThemed = NULL;
-		ThemeFunction_t fIsThemeActive = NULL;
-		HMODULE hUxTheme = GetModuleHandle ( L"UxTheme.dll" );
-		if (hUxTheme)
-		{
-			fIsAppThemed = (ThemeFunction_t)GetProcAddress(hUxTheme, "IsAppThemed");
-			fIsThemeActive = (ThemeFunction_t)GetProcAddress(hUxTheme, "IsThemeActive");
-			if (fIsAppThemed && fIsThemeActive)
-			{
-				long llThemed = fIsAppThemed();
-				long llActive = fIsThemeActive();
-				if (llThemed && llActive)
-					mb_ThemingEnabled = TRUE;
-			}
-		}
-	}
-}
+//void TabBarClass::CheckTheming()
+//{
+//	static bool bChecked = false;
+//	if (bChecked) return;
+//	bChecked = true;
+//
+//	if (gOSVer.dwMajorVersion >= 6 || (gOSVer.dwMajorVersion == 5 && gOSVer.dwMinorVersion >= 1)) {
+//		ThemeFunction_t fIsAppThemed = NULL;
+//		ThemeFunction_t fIsThemeActive = NULL;
+//		HMODULE hUxTheme = GetModuleHandle ( L"UxTheme.dll" );
+//		if (hUxTheme)
+//		{
+//			fIsAppThemed = (ThemeFunction_t)GetProcAddress(hUxTheme, "IsAppThemed");
+//			fIsThemeActive = (ThemeFunction_t)GetProcAddress(hUxTheme, "IsThemeActive");
+//			if (fIsAppThemed && fIsThemeActive)
+//			{
+//				long llThemed = fIsAppThemed();
+//				long llActive = fIsThemeActive();
+//				if (llThemed && llActive)
+//					mb_ThemingEnabled = TRUE;
+//			}
+//		}
+//	}
+//}
 
 //void TabBarClass::Enable(BOOL abEnabled)
 //{
@@ -394,7 +394,9 @@ CVirtualConsole* TabBarClass::FarSendChangeTab(int tabIndex)
 
 LRESULT TabBarClass::TabHitTest()
 {
-	if (gSet.isHideCaptionAlways && gSet.isTabs) {
+	if ((gSet.isHideCaptionAlways || gSet.isFullScreen || (gConEmu.isZoomed() && gSet.isHideCaption))
+		&& gSet.isTabs)
+	{
 		if (gConEmu.mp_TabBar->IsShown()) {
 			TCHITTESTINFO tch = {{0,0}};
 			HWND hTabBar = gConEmu.mp_TabBar->mh_Tabbar;
@@ -440,7 +442,9 @@ LRESULT CALLBACK TabBarClass::ReBarProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPA
 	case WM_MOUSEMOVE:
 	case WM_LBUTTONDOWN: case WM_LBUTTONUP: case WM_LBUTTONDBLCLK:
 	/*case WM_RBUTTONDOWN:*/ case WM_RBUTTONUP: //case WM_RBUTTONDBLCLK:
-		if (gSet.isHideCaptionAlways && gSet.isTabs) {
+		if ((gSet.isHideCaptionAlways || gSet.isFullScreen || (gConEmu.isZoomed() && gSet.isHideCaption))
+			&& gSet.isTabs)
+		{
 			if (TabHitTest()==HTCAPTION) {
 				POINT ptScr; GetCursorPos(&ptScr);
 				lParam = MAKELONG(ptScr.x,ptScr.y);
@@ -472,7 +476,8 @@ LRESULT CALLBACK TabBarClass::TabProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARA
         {
         	if (gConEmu.mp_TabBar->mh_Rebar) {
 	        	LPWINDOWPOS pos = (LPWINDOWPOS)lParam;
-				if (gConEmu.mp_TabBar->mb_ThemingEnabled) {
+				//if (gConEmu.mp_TabBar->mb_ThemingEnabled) {
+				if (gSet.CheckTheming()) {
 		            pos->y = 2; // иначе в Win7 он смещается в {0x0} и снизу видна некрасивая полоса
 					pos->cy = gConEmu.mp_TabBar->_tabHeight -3; // на всякий случай
 				} else {
@@ -1111,10 +1116,17 @@ void TabBarClass::OnCaptionHidden()
 	if (!this) return;
 	if (mh_Toolbar)
 	{
-		SendMessage(mh_Toolbar, TB_HIDEBUTTON, TID_MINIMIZE_SEP, !gSet.isHideCaptionAlways);
-		SendMessage(mh_Toolbar, TB_HIDEBUTTON, TID_MINIMIZE, !gSet.isHideCaptionAlways);
-		SendMessage(mh_Toolbar, TB_HIDEBUTTON, TID_MAXIMIZE, !gSet.isHideCaptionAlways);
-		SendMessage(mh_Toolbar, TB_HIDEBUTTON, TID_APPCLOSE, !gSet.isHideCaptionAlways);
+		BOOL lbHide = !(gSet.isHideCaptionAlways 
+			|| gSet.isFullScreen 
+			|| (gConEmu.isZoomed() && gSet.isHideCaption));
+		SendMessage(mh_Toolbar, TB_HIDEBUTTON, TID_MINIMIZE_SEP, lbHide);
+		SendMessage(mh_Toolbar, TB_HIDEBUTTON, TID_MINIMIZE, lbHide);
+		SendMessage(mh_Toolbar, TB_HIDEBUTTON, TID_MAXIMIZE, lbHide);
+		SendMessage(mh_Toolbar, TB_HIDEBUTTON, TID_APPCLOSE, lbHide);
+		
+		SendMessage(mh_Toolbar, TB_AUTOSIZE, 0, 0);
+		
+		UpdateToolbarPos();
 	}
 }
 
@@ -1124,8 +1136,10 @@ void TabBarClass::OnWindowStateChanged()
 	if (mh_Toolbar)
 	{
 		TBBUTTONINFO tbi = {sizeof(TBBUTTONINFO), TBIF_IMAGE};
-		tbi.iImage = gConEmu.isZoomed() ? BID_MAXIMIZE_IDX : BID_RESTORE_IDX;
+		tbi.iImage = (gSet.isFullScreen || gConEmu.isZoomed()) ? BID_MAXIMIZE_IDX : BID_RESTORE_IDX;
 		SendMessage(mh_Toolbar, TB_SETBUTTONINFO, TID_MAXIMIZE, (LPARAM)&tbi);
+
+		OnCaptionHidden();
 	}
 }
 
@@ -1167,69 +1181,70 @@ void TabBarClass::OnBufferHeight(BOOL abBufferHeight)
 
 HWND TabBarClass::CreateToolbar()
 {
-	CheckTheming();
+	gSet.CheckTheming();
 
-    if (!mh_Rebar || !gSet.isMulti)
-        return NULL; // нет табов - нет и тулбара
-    if (mh_Toolbar)
-        return mh_Toolbar; // Уже создали
+	if (!mh_Rebar || !gSet.isMulti)
+	    return NULL; // нет табов - нет и тулбара
+	if (mh_Toolbar)
+	    return mh_Toolbar; // Уже создали
 
 
-    mh_Toolbar = CreateWindowEx(0, TOOLBARCLASSNAME, NULL, 
-        WS_CHILD|WS_VISIBLE|TBSTYLE_FLAT|CCS_NOPARENTALIGN|CCS_NORESIZE|CCS_NODIVIDER|TBSTYLE_TOOLTIPS|TBSTYLE_TRANSPARENT, 0, 0, 0, 0, mh_Rebar, 
-        NULL, NULL, NULL); 
-        
-   _defaultToolProc = (WNDPROC)SetWindowLongPtr(mh_Toolbar, GWLP_WNDPROC, (LONG_PTR)ToolProc);
+	mh_Toolbar = CreateWindowEx(0, TOOLBARCLASSNAME, NULL, 
+	    WS_CHILD|WS_VISIBLE|TBSTYLE_FLAT|CCS_NOPARENTALIGN|CCS_NORESIZE|CCS_NODIVIDER|TBSTYLE_TOOLTIPS|TBSTYLE_TRANSPARENT, 0, 0, 0, 0, mh_Rebar, 
+	    NULL, NULL, NULL); 
+	    
+	_defaultToolProc = (WNDPROC)SetWindowLongPtr(mh_Toolbar, GWLP_WNDPROC, (LONG_PTR)ToolProc);
 
- 
-   SendMessage(mh_Toolbar, TB_BUTTONSTRUCTSIZE, (WPARAM) sizeof(TBBUTTON), 0); 
-   SendMessage(mh_Toolbar, TB_SETBITMAPSIZE, 0, MAKELONG(14,14)); 
-   TBADDBITMAP bmp = {g_hInstance,IDB_MAIN_TOOLBAR};
-   int nFirst = SendMessage(mh_Toolbar, TB_ADDBITMAP, TID_BUFFERHEIGHT, (LPARAM)&bmp);
 
-   //buttons
-   TBBUTTON btn = {0, 1, TBSTATE_ENABLED, TBSTYLE_CHECKGROUP};
-   TBBUTTON sep = {0, 100, TBSTATE_ENABLED, TBSTYLE_SEP};
-   int nActiveCon = gConEmu.ActiveConNum()+1;
-   // Console numbers
-   for (int i = 1; i <= 12; i++) {
+	SendMessage(mh_Toolbar, TB_BUTTONSTRUCTSIZE, (WPARAM) sizeof(TBBUTTON), 0); 
+	SendMessage(mh_Toolbar, TB_SETBITMAPSIZE, 0, MAKELONG(14,14)); 
+	TBADDBITMAP bmp = {g_hInstance,IDB_MAIN_TOOLBAR};
+	int nFirst = SendMessage(mh_Toolbar, TB_ADDBITMAP, TID_BUFFERHEIGHT, (LPARAM)&bmp);
+
+	//buttons
+	TBBUTTON btn = {0, 1, TBSTATE_ENABLED, TBSTYLE_CHECKGROUP};
+	TBBUTTON sep = {0, 100, TBSTATE_ENABLED, TBSTYLE_SEP};
+	int nActiveCon = gConEmu.ActiveConNum()+1;
+	// Console numbers
+	for (int i = 1; i <= 12; i++) {
 	   btn.iBitmap = nFirst + i-1;
 	   btn.idCommand = i;
 	   btn.fsState = TBSTATE_ENABLED
 		   | ((gConEmu.GetTitle(i-1) == NULL) ? TBSTATE_HIDDEN : 0)
 		   | ((i == nActiveCon) ? TBSTATE_CHECKED : 0);
 	   SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&btn);
-   }
-   SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&sep); sep.idCommand++;
+	}
+	SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&sep); sep.idCommand++;
 
-   // New console
-   btn.fsStyle = BTNS_BUTTON; btn.idCommand = TID_CREATE_CON; btn.fsState = TBSTATE_ENABLED;
-   btn.iBitmap = nFirst + BID_NEWCON_IDX;
-   SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&btn);
+	// New console
+	btn.fsStyle = BTNS_BUTTON; btn.idCommand = TID_CREATE_CON; btn.fsState = TBSTATE_ENABLED;
+	btn.iBitmap = nFirst + BID_NEWCON_IDX;
+	SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&btn);
 
-   SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&sep); sep.idCommand++;
+	SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&sep); sep.idCommand++;
 
-   // Buffer height mode
-   btn.iBitmap = nFirst + BID_BUFHEIGHT_IDX; btn.idCommand = TID_BUFFERHEIGHT; btn.fsState = TBSTATE_ENABLED;
-   SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&btn);
+	// Buffer height mode
+	btn.iBitmap = nFirst + BID_BUFHEIGHT_IDX; btn.idCommand = TID_BUFFERHEIGHT; btn.fsState = TBSTATE_ENABLED;
+	SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&btn);
 
-   sep.fsState |= TBSTATE_HIDDEN; sep.idCommand = TID_MINIMIZE_SEP;
-   SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&sep);
+	sep.fsState |= TBSTATE_HIDDEN; sep.idCommand = TID_MINIMIZE_SEP;
+	SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&sep);
 
-   // Min,Max,Close
-   btn.iBitmap = nFirst + BID_MINIMIZE_IDX; btn.idCommand = TID_MINIMIZE; btn.fsState = TBSTATE_ENABLED|TBSTATE_HIDDEN;
-   SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&btn);
-   btn.iBitmap = nFirst + (gConEmu.isZoomed() ? BID_MAXIMIZE_IDX : BID_RESTORE_IDX); btn.idCommand = TID_MAXIMIZE;
-   SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&btn);
-   btn.iBitmap = nFirst + BID_APPCLOSE_IDX; btn.idCommand = TID_APPCLOSE;
-   SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&btn);
+	// Min,Max,Close
+	btn.iBitmap = nFirst + BID_MINIMIZE_IDX; btn.idCommand = TID_MINIMIZE; btn.fsState = TBSTATE_ENABLED|TBSTATE_HIDDEN;
+	SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&btn);
+	btn.iBitmap = nFirst + (gConEmu.isZoomed() ? BID_MAXIMIZE_IDX : BID_RESTORE_IDX); btn.idCommand = TID_MAXIMIZE;
+	SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&btn);
+	btn.iBitmap = nFirst + BID_APPCLOSE_IDX; btn.idCommand = TID_APPCLOSE;
+	SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&btn);
 
-   SendMessage(mh_Toolbar, TB_AUTOSIZE, 0, 0);
-   SIZE sz; 
-   SendMessage(mh_Toolbar, TB_GETMAXSIZE, 0, (LPARAM)&sz);
+	SendMessage(mh_Toolbar, TB_AUTOSIZE, 0, 0);
+	#ifdef _DEBUG
+	SIZE sz; 
+	SendMessage(mh_Toolbar, TB_GETMAXSIZE, 0, (LPARAM)&sz);
+	#endif
 
-
-   return mh_Toolbar;
+	return mh_Toolbar;
 }
 
 HWND TabBarClass::GetTabbar()
@@ -1246,7 +1261,7 @@ int TabBarClass::GetTabbarHeight()
 
 HWND TabBarClass::CreateTabbar()
 {
-	CheckTheming();
+	gSet.CheckTheming();
 
     if (!mh_Rebar)
         return NULL; // нет табов - нет и тулбара
@@ -1327,7 +1342,7 @@ void TabBarClass::CreateRebar()
 {
     RECT rcWnd; GetClientRect(ghWnd, &rcWnd);
 
-	CheckTheming();
+	gSet.CheckTheming();
 
     if (NULL == (mh_Rebar = CreateWindowEx(WS_EX_TOOLWINDOW, REBARCLASSNAME, NULL,
                 WS_VISIBLE |WS_CHILD|WS_VISIBLE|WS_CLIPSIBLINGS|WS_CLIPCHILDREN|
