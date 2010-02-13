@@ -34,6 +34,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define TRUE_COLORER_OLD_SUPPORT
 
+#define SHOWDEBUGSTR
+#define MCHKHEAP
+#define DEBUGSTRMENU(s) DEBUGSTR(s)
+
+
 //#include <stdio.h>
 #include <windows.h>
 //#include <windowsx.h>
@@ -288,7 +293,8 @@ BOOL OnConsolePeekReadInput(BOOL abPeek)
 		ReloadFarInfo();
 	}
 	
-	if (!gbReqCommandWaiting || gnReqCommand == (DWORD)-1) return TRUE; // активаци€ в данный момент не требуетс€
+	if (!gbReqCommandWaiting || gnReqCommand == (DWORD)-1)
+		return TRUE; // активаци€ в данный момент не требуетс€
 	
 	gbReqCommandWaiting = FALSE; // чтобы ожидающа€ нить случайно не удалила параметры, когда мы работаем
 
@@ -707,6 +713,8 @@ BOOL ActivatePlugin(DWORD nCmd, LPVOID pCommandData, DWORD nTimeout = CONEMUFART
 	HANDLE hEvents[2] = {ghServerTerminateEvent, ghReqCommandEvent};
 	int nCount = 2;
 
+	DEBUGSTRMENU(L"*** Waiting for plugin activation\n");
+
 	DWORD nWait = 100;
 	nWait = WaitForMultipleObjects(nCount, hEvents, FALSE, nTimeout);
 	if (nWait != WAIT_OBJECT_0 && nWait != (WAIT_OBJECT_0+1)) {
@@ -721,6 +729,8 @@ BOOL ActivatePlugin(DWORD nCmd, LPVOID pCommandData, DWORD nTimeout = CONEMUFART
 			//// “аймаут, эту команду плагин должен пропустить, когда фар таки соберетс€ ее выполнить
 			//Param->Obsolete = TRUE;
 		}
+	} else {
+		DEBUGSTRMENU(L"*** DONE\n");
 	}
 
 	lbRc = (nWait == 0);
@@ -798,12 +808,16 @@ CESERVER_REQ* ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandDat
 		
 		if (nCmd == CMD_LEFTCLKSYNC) {
 			DWORD nTestEvents = 0, dwTicks = GetTickCount();
-			WARNING("”брать, заменить ghConIn на GetStdHandle()"); // »наче в Win7 будет буфер разрушатьс€
-			GetNumberOfConsoleInputEvents(ghConIn, &nTestEvents);
+			DEBUGSTRMENU(L"*** waiting for queue empty\n");
+			HANDLE h = GetStdHandle(STD_INPUT_HANDLE);
+			GetNumberOfConsoleInputEvents(h, &nTestEvents);
 			while (nTestEvents > 0 && (dwTicks - GetTickCount()) < 300) {
 				Sleep(10);
-				GetNumberOfConsoleInputEvents(ghConIn, &nTestEvents);
+				GetNumberOfConsoleInputEvents(h, &nTestEvents);
 			}
+			#ifdef _DEBUG
+			DEBUGSTRMENU((nTestEvents > 0) ? L"*** QUEUE IS NOT EMPTY\n" : L"*** QUEUE IS EMPTY\n");
+			#endif
 		}
 
 		//gpReqCommandData = NULL;
@@ -897,12 +911,9 @@ CESERVER_REQ* ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandDat
 			i++;
 			
 			DWORD cbWritten = 0;
-			WARNING("”брать, заменить ghConIn на GetStdHandle()"); // »наче в Win7 будет буфер разрушатьс€
-			if (!ghConIn)
-				ghConIn  = CreateFile(L"CONIN$", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_READ,
-					0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
-			_ASSERTE(ghConIn);
-			BOOL fSuccess = WriteConsoleInput(ghConIn, clk, 2, &cbWritten);
+			HANDLE h = GetStdHandle(STD_INPUT_HANDLE);
+			_ASSERTE(h!=INVALID_HANDLE_VALUE && h!=NULL);
+			BOOL fSuccess = WriteConsoleInput(h, clk, 2, &cbWritten);
 			if (!fSuccess || cbWritten != 2) {
 				_ASSERTE(fSuccess && cbWritten==2);
 			}
@@ -930,13 +941,15 @@ CESERVER_REQ* ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandDat
 			}
 
 			// »наче в некторых случа€х (Win7 & FAR2x64) не отрисовываетс€ сменившийс€ курсор
+			// ¬ FAR 1.7x это приводит к зачернению экрана??? –ешаетс€ посылкой
+			// "пустого" событи€ движени€ мышки в консоль сразу после ACTL_KEYMACRO
 			RedrawAll();
 			
 			//PostMacro((wchar_t*)L"@F11 %N=Menu.Select(\"EMenu\",0); $if (%N==0) %N=Menu.Select(\"EMenu\",2); $end $if(%N>0) Enter $while (Menu) Enter $end $else $MMode 1 MsgBox(\"ConEmu\",\"EMenu not found in F11\",0x00010001) $end");
 			const wchar_t* pszMacro = L"@$If (!CmdLine.Empty) %Flg_Cmd=1; %CmdCurPos=CmdLine.ItemCount-CmdLine.CurPos+1; %CmdVal=CmdLine.Value; Esc $Else %Flg_Cmd=0; $End $Text \"rclk_gui:\" Enter $If (%Flg_Cmd==1) $Text %CmdVal %Flg_Cmd=0; %Num=%CmdCurPos; $While (%Num!=0) %Num=%Num-1; CtrlS $End $End";
 			if (*pszUserMacro)
 				pszMacro = pszUserMacro;
-				
+
 			PostMacro((wchar_t*)pszMacro);
 			
 			//// „тобы GUI не дожидалс€ окончани€ всплыти€ EMenu
@@ -2467,6 +2480,48 @@ void PostMacro(wchar_t* asMacro)
 	} else {
 		FUNC_X(PostMacro)(asMacro);
 	}
+
+	//FAR BUGBUG: ћакрос не запускаетс€ на исполнение, пока мышкой не дернем :(
+	//  Ёто чаще всего про€вл€етс€ при вызове меню по RClick
+	//  ≈сли курсор на другой панели, то RClick сразу по пассивной
+	//  не вызывает отрисовку :(
+	//if (!mcr.Param.PlainText.Flags) {
+	INPUT_RECORD ir[2] = {{MOUSE_EVENT},{MOUSE_EVENT}};
+	if (isPressed(VK_CAPITAL))
+		ir[0].Event.MouseEvent.dwControlKeyState |= CAPSLOCK_ON;
+	if (isPressed(VK_NUMLOCK))
+		ir[0].Event.MouseEvent.dwControlKeyState |= NUMLOCK_ON;
+	if (isPressed(VK_SCROLL))
+		ir[0].Event.MouseEvent.dwControlKeyState |= SCROLLLOCK_ON;
+	ir[0].Event.MouseEvent.dwEventFlags = MOUSE_MOVED;
+	ir[1].Event.MouseEvent.dwControlKeyState = ir[0].Event.MouseEvent.dwControlKeyState;
+	ir[1].Event.MouseEvent.dwEventFlags = MOUSE_MOVED;
+	ir[1].Event.MouseEvent.dwMousePosition.X = 1;
+	ir[1].Event.MouseEvent.dwMousePosition.Y = 1;
+
+	//2010-01-29 попробуем STD_OUTPUT
+	//if (!ghConIn) {
+	//	ghConIn  = CreateFile(L"CONIN$", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_READ,
+	//		0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+	//	if (ghConIn == INVALID_HANDLE_VALUE) {
+	//		#ifdef _DEBUG
+	//		DWORD dwErr = GetLastError();
+	//		_ASSERTE(ghConIn!=INVALID_HANDLE_VALUE);
+	//		#endif
+	//		ghConIn = NULL;
+	//		return;
+	//	}
+	//}
+	HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE);
+	DWORD cbWritten = 0;
+#ifdef _DEBUG
+	BOOL fSuccess = 
+#endif
+	WriteConsoleInput(hIn/*ghConIn*/, ir, 1, &cbWritten);
+	_ASSERTE(fSuccess && cbWritten==1);
+	//}
+	//InfoW995->AdvControl(InfoW995->ModuleNumber,ACTL_REDRAWALL,NULL);
+
 }
 
 DWORD WINAPI ServerThread(LPVOID lpvParam) 
@@ -2794,10 +2849,14 @@ DWORD WINAPI ServerThreadCommand(LPVOID ahPipe)
 		DragArg.crMouse = *crMouse;
 
 		// ¬ыделить файл под курсором
+		DEBUGSTRMENU(L"\n*** ServerThreadCommand->ProcessCommand(CMD_LEFTCLKSYNC) begin\n");
 		ProcessCommand(CMD_LEFTCLKSYNC, TRUE/*bReqMainThread*/, &DragArg/*pIn->Data*/);
+		DEBUGSTRMENU(L"\n*** ServerThreadCommand->ProcessCommand(CMD_LEFTCLKSYNC) done\n");
 		
 		// ј теперь, собственно вызовем меню
+		DEBUGSTRMENU(L"\n*** ServerThreadCommand->ProcessCommand(CMD_EMENU) begin\n");
 		ProcessCommand(pIn->hdr.nCmd, TRUE/*bReqMainThread*/, pIn->Data);
+		DEBUGSTRMENU(L"\n*** ServerThreadCommand->ProcessCommand(CMD_EMENU) done\n");
 
 
 	} else {

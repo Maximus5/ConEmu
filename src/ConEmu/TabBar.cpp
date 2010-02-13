@@ -456,7 +456,7 @@ LRESULT CALLBACK TabBarClass::ReBarProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPA
 					//gConEmu.SetWindowMode((gConEmu.isZoomed()||(gSet.isFullScreen&&gConEmu.isWndNotFSMaximized)) ? rNormal : rMaximized);
 					gConEmu.OnAltF9(TRUE);
 				} else if (uMsg == WM_RBUTTONUP) {
-					gConEmu.ShowSysmenu(ghWnd, ptScr.x, -32000);
+					gConEmu.ShowSysmenu(ghWnd, ptScr.x, ptScr.y/*-32000*/);
 				} else if (!gSet.isFullScreen && !gConEmu.isZoomed()) {
 					lRc = gConEmu.WndProc(ghWnd, uMsg-(WM_MOUSEMOVE-WM_NCMOUSEMOVE), HTCAPTION, lParam);
 				}
@@ -1066,7 +1066,7 @@ void TabBarClass::OnCommand(WPARAM wParam, LPARAM lParam)
 		// Чтобы клик случайно не провалился в консоль
 		gConEmu.mouse.state |= MOUSE_SIZING_DBLCKL;
 		// Аналог AltF9
-		gConEmu.SetWindowMode((gConEmu.isZoomed()||(gSet.isFullScreen&&gConEmu.isWndNotFSMaximized)) ? rNormal : rMaximized);
+		gConEmu.OnAltF9(TRUE);
     } else
     if (wParam == TID_APPCLOSE) {
     	PostMessage(ghWnd, WM_SYSCOMMAND, SC_CLOSE, 0);

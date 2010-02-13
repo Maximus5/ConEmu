@@ -184,6 +184,7 @@ void CSettings::InitSettings()
     isMulti = true; icMultiNew = 'W'; icMultiNext = 'Q'; icMultiRecreate = 192/*VK_тильда*/; icMultiBuffer = 'A'; 
     isMultiNewConfirm = true; nMultiHotkeyModifier = 0;
     isFARuseASCIIsort = false; isFixAltOnAltTab = false;
+    isFadeInactive = true; nFadeInactiveMask = 0xD0D0D0;
     // Logging
     isAdvLogging = 0;
 	//wcscpy(szDumpPackets, L"c:\\temp\\ConEmuVCon-%i-%i.dat");
@@ -290,7 +291,7 @@ void CSettings::InitSettings()
     //WindowMode=rNormal; -- устанавливается в конструкторе CConEmuMain
     isFullScreen = false;
     isHideCaption = isHideCaptionAlways = false;
-	nHideCaptionAlwaysFrame = 1;
+	nHideCaptionAlwaysFrame = 1; nHideCaptionAlwaysDelay = 2000;
     isDesktopMode = false;
     isAlwaysOnTop = false;
     wndX = 0; wndY = 0; wndCascade = true;
@@ -384,6 +385,10 @@ void CSettings::LoadSettings()
         reg->Load(L"ExtendColorIdx", nExtendColor);
             if (nExtendColor<0 || nExtendColor>15) nExtendColor=14;
 		reg->Load(L"TrueColorerSupport", isTrueColorer);
+		
+        reg->Load(L"FadeInactive", isFadeInactive);
+        reg->Load(L"FadeInactiveMask", nFadeInactiveMask);
+        	if (!nFadeInactiveMask || nFadeInactiveMask > 0xFFFFFF) nFadeInactiveMask = 0xC0C0C0;
             
         reg->Load(L"ExtendFonts", isExtendFonts);
         reg->Load(L"ExtendFontNormalIdx", nFontNormalColor);
@@ -434,6 +439,8 @@ void CSettings::LoadSettings()
 		reg->Load(L"HideCaptionAlways", isHideCaptionAlways/*Load*/);
 		reg->Load(L"HideCaptionAlwaysFrame", nHideCaptionAlwaysFrame);
 			if (nHideCaptionAlwaysFrame > 10) nHideCaptionAlwaysFrame = 10;
+		reg->Load(L"HideCaptionAlwaysDelay", nHideCaptionAlwaysDelay);
+			if (nHideCaptionAlwaysDelay > 30000) nHideCaptionAlwaysDelay = 30000;
         reg->Load(L"ConWnd X", wndX); /*if (wndX<-10) wndX = 0;*/
         reg->Load(L"ConWnd Y", wndY); /*if (wndY<-10) wndY = 0;*/
 		// ЭТО не влияет на szDefCmd. Только прямое указание флажка "/BufferHeight N" 
@@ -609,6 +616,22 @@ void CSettings::LoadSettings()
 	}
 
 	if (wndCascade) {
+		// Сдвиг при каскаде
+		int nShift = (GetSystemMetrics(SM_CYSIZEFRAME)+GetSystemMetrics(SM_CYCAPTION))*1.5;
+		// Координаты и размер виртуальной рабочей области
+		RECT rcScreen = MakeRect(800,600);
+		int nMonitors = GetSystemMetrics(SM_CMONITORS);
+		if (nMonitors > 1) {
+			// Размер виртуального экрана по всем мониторам
+			rcScreen.left = GetSystemMetrics(SM_XVIRTUALSCREEN); // may be <0
+			rcScreen.top  = GetSystemMetrics(SM_YVIRTUALSCREEN);
+			rcScreen.right = rcScreen.left + GetSystemMetrics(SM_CXVIRTUALSCREEN);
+			rcScreen.bottom = rcScreen.top + GetSystemMetrics(SM_CYVIRTUALSCREEN);
+			TODO("Хорошо бы исключить из рассмотрения Taskbar...");
+		} else {
+			SystemParametersInfo(SPI_GETWORKAREA, 0, &rcScreen, 0);
+		}
+
 		HWND hPrev = FindWindow(VirtualConsoleClassMain, NULL);
 		while (hPrev) {
 			/*if (Is Iconic(hPrev) || Is Zoomed(hPrev)) {
@@ -619,22 +642,22 @@ void CSettings::LoadSettings()
 			if (!GetWindowPlacement(hPrev, &wpl)) {
 				break;
 			}
+
+			// Screen coordinates!
+			RECT rcWnd; GetWindowRect(hPrev, &rcWnd);
+
 			if (wpl.showCmd == SW_HIDE || !IsWindowVisible(hPrev)
 				|| wpl.showCmd == SW_SHOWMINIMIZED || wpl.showCmd == SW_SHOWMAXIMIZED
 				/* Max в режиме скрытия заголовка */
-				|| (wpl.rcNormalPosition.left<0 || wpl.rcNormalPosition.top<0) )
+				|| (wpl.rcNormalPosition.left<rcScreen.left || wpl.rcNormalPosition.top<rcScreen.top) )
 			{
 				hPrev = FindWindowEx(NULL, hPrev, VirtualConsoleClassMain, NULL);
 				continue;
 			}
 
-			// Screen coordinates!
-			RECT rcWnd; GetWindowRect(hPrev, &rcWnd);
-			// Сдвиг при каскаде
-			int nShift = (GetSystemMetrics(SM_CYSIZEFRAME)+GetSystemMetrics(SM_CYCAPTION))*1.5;
 			wndX = rcWnd.left + nShift;
 			wndY = rcWnd.top + nShift;
-			break;
+			break; // нашли, сдвинулись, выходим
 		}
 	}
 
@@ -781,6 +804,9 @@ BOOL CSettings::SaveSettings()
             reg->Save(L"ExtendColors", isExtendColors);
             reg->Save(L"ExtendColorIdx", nExtendColor);
 			reg->Save(L"TrueColorerSupport", isTrueColorer);
+			
+	        reg->Save(L"FadeInactive", isFadeInactive);
+	        reg->Save(L"FadeInactiveMask", nFadeInactiveMask);
 
             /* таки сохраним, чтобы настройки переносить можно было */
 	        reg->Save(L"ExtendFonts", isExtendFonts);
@@ -844,6 +870,7 @@ BOOL CSettings::SaveSettings()
             reg->Save(L"HideCaption", isHideCaption);
 			reg->Save(L"HideCaptionAlways", isHideCaptionAlways);
 			reg->Save(L"HideCaptionAlwaysFrame", nHideCaptionAlwaysFrame);
+			reg->Save(L"HideCaptionAlwaysDelay", nHideCaptionAlwaysDelay);
             
 			reg->Save(L"ConsoleFontName", ConsoleFont.lfFaceName);
 			reg->Save(L"ConsoleCharWidth", ConsoleFont.lfWidth);

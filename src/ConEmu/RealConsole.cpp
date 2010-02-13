@@ -36,7 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/farcolor.hpp"
 
 #define DEBUGSTRDRAW(s) //DEBUGSTR(s)
-#define DEBUGSTRINPUT(s) //DEBUGSTR(s)
+#define DEBUGSTRINPUT(s) DEBUGSTR(s)
 #define DEBUGSTRSIZE(s) //DEBUGSTR(s)
 #define DEBUGSTRPROC(s) //DEBUGSTR(s)
 #define DEBUGSTRCMD(s) //DEBUGSTR(s)
@@ -2194,10 +2194,7 @@ void CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
                 if (isPressed(VK_SHIFT))
                     return;
 
-                if (!gSet.isFullScreen)
-                    gConEmu.SetWindowMode(rFullScreen);
-                else
-                    gConEmu.SetWindowMode(gConEmu.isWndNotFSMaximized ? rMaximized : rNormal);
+				gConEmu.OnAltEnter();
 
                 isSkipNextAltUp = true;
             }
@@ -2796,6 +2793,7 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 			// ComSpec stopped
             if (nStarted == 3) {
 				BOOL lbNeedResizeWnd = FALSE;
+				BOOL lbNeedResizeGui = FALSE;
 				COORD crNewSize = {TextWidth(),TextHeight()};
 				int nNewWidth=0, nNewHeight=0; BOOL bBufferHeight = FALSE;
 				if ((mn_ProgramStatus & CES_NTVDM) == 0
@@ -2805,6 +2803,7 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 					// В некоторых случаях (comspec без консоли?) GetConsoleScreenBufferInfo обламывается
 					if (pIn->StartStop.sbi.dwSize.X && pIn->StartStop.sbi.dwSize.Y) {
 						if (GetConWindowSize(pIn->StartStop.sbi, nNewWidth, nNewHeight, &bBufferHeight)) {
+							lbNeedResizeGui = (crNewSize.X != nNewWidth || crNewSize.Y != nNewHeight);
 							if (bBufferHeight || crNewSize.X != nNewWidth || crNewSize.Y != nNewHeight) {
 								//gConEmu.SyncWindowToConsole(); - его использовать нельзя. во первых это не главная нить, во вторых - размер pVCon может быть еще не изменен
 								lbNeedResizeWnd = TRUE;
@@ -2857,10 +2856,13 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 #endif
 				// может nChange2TextWidth, nChange2TextHeight нужно использовать?
 				
-				if (lbNeedResizeWnd) {
+				if (lbNeedResizeGui) {
 					RECT rcCon = MakeRect(nNewWidth, nNewHeight);
 					RECT rcNew = gConEmu.CalcRect(CER_MAIN, rcCon, CER_CONSOLE);
 					RECT rcWnd; GetWindowRect(ghWnd, &rcWnd);
+					if (gSet.isDesktopMode) {
+						MapWindowPoints(NULL, gConEmu.mh_ShellWindow, (LPPOINT)&rcWnd, 2);
+					}
 					MOVEWINDOW ( ghWnd, rcWnd.left, rcWnd.top, rcNew.right, rcNew.bottom, 1);
 				}
 				mb_BuferModeChangeLocked = FALSE;
@@ -4803,6 +4805,8 @@ void CRealConsole::PrepareTransparent(wchar_t* pChar, CharAttr* pAttr, int nWidt
 	if (!mp_ConsoleInfo->bFarPanelAllowed)
 		return;
 	//if (nCurFarPID && pRCon->mn_LastFarReadIdx != pRCon->mp_ConsoleInfo->nFarReadIdx) {
+	if (isPressed(VK_CONTROL) && isPressed(VK_SHIFT) && isPressed(VK_MENU))
+		return;
 	
 	COLORREF crColorKey = gSet.ColorKey;
 	// реальный цвет, заданный в фаре

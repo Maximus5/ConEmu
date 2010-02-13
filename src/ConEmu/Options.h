@@ -114,6 +114,7 @@ public:
 	TODO("Удалить isHideCaptionAlwaysLoad, если Rgn позволит");
     bool isFullScreen, isHideCaption, isHideCaptionAlways/*, isHideCaptionAlwaysLoad*/;
 	BYTE nHideCaptionAlwaysFrame;
+	DWORD nHideCaptionAlwaysDelay;
     bool isAlwaysOnTop, isDesktopMode;
     char isFixFarBorders;
 	bool isMouseSkipActivation, isMouseSkipMoving;
@@ -151,6 +152,8 @@ public:
     //bool
     bool isDebugSteps;
     bool isEnhanceGraphics; // Progressbars and scrollbars (pseudographics)
+    bool isFadeInactive;
+    DWORD nFadeInactiveMask;
     char isTabs; bool isTabSelf, isTabRecent, isTabLazy;
     wchar_t sTabFontFace[LF_FACESIZE]; DWORD nTabFontCharSet; int nTabFontHeight;
 	wchar_t *sTabCloseMacro;

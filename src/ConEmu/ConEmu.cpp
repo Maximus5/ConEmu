@@ -29,6 +29,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define SHOWDEBUGSTR
 
+#define CHILD_DESK_MODE
+
 #include "Header.h"
 #include <Tlhelp32.h>
 #include <Shlobj.h>
@@ -72,6 +74,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define EXT_GNUC_LOG
 #endif
 
+
+#define TIMER_MAIN_ID 0
+#define TIMER_CONREDRAW_ID 1
+#define TIMER_CAPTION_ID 3
+
+
 CConEmuMain::CConEmuMain()
 {
 	mp_TabBar = NULL;
@@ -88,6 +96,7 @@ CConEmuMain::CConEmuMain()
     hPictureView = NULL;  mrc_WndPosOnPicView = MakeRect(0,0);
     bPicViewSlideShow = false; 
     dwLastSlideShowTick = 0;
+	mh_ShellWindow = NULL;
     cursor.x=0; cursor.y=0; Rcursor=cursor;
     m_LastConSize = MakeCoord(0,0);
     mp_DragDrop = NULL;
@@ -111,7 +120,7 @@ CConEmuMain::CConEmuMain()
 	mb_HotKeyRegistered = FALSE;
 	mb_WaitCursor = FALSE;
 	mb_InTrackSysMenu = FALSE;
-	mb_LastRgnWasNull = FALSE;
+	mb_LastRgnWasNull = TRUE;
 	mb_CaptionWasRestored = FALSE;
 	mh_CursorWait = LoadCursor(NULL, IDC_WAIT);
 	mh_CursorArrow = LoadCursor(NULL, IDC_ARROW);
@@ -241,6 +250,120 @@ BOOL CConEmuMain::Init()
     return TRUE;
 }
 
+RECT CConEmuMain::GetDefaultRect()
+{
+	int nWidth, nHeight;
+	RECT rcWnd;
+	MBoxAssert(gSet.FontWidth() && gSet.FontHeight());
+
+	COORD conSize; conSize.X=gSet.wndWidth; conSize.Y=gSet.wndHeight;
+	//int nShiftX = GetSystemMetrics(SM_CXSIZEFRAME)*2;
+	//int nShiftY = GetSystemMetrics(SM_CYSIZEFRAME)*2 + (gSet.isHideCaptionAlways ? 0 : GetSystemMetrics(SM_CYCAPTION));
+	RECT rcFrameMargin = CalcMargins(CEM_FRAME);
+	int nShiftX = rcFrameMargin.left + rcFrameMargin.right;
+	int nShiftY = rcFrameMargin.top + rcFrameMargin.bottom;
+
+	// Если табы показываются всегда - сразу добавим их размер, чтобы размер консоли был заказанным
+	nWidth  = conSize.X * gSet.FontWidth() + nShiftX 
+		+ ((gSet.isTabs == 1) ? (gSet.rcTabMargins.left+gSet.rcTabMargins.right) : 0);
+	nHeight = conSize.Y * gSet.FontHeight() + nShiftY 
+		+ ((gSet.isTabs == 1) ? (gSet.rcTabMargins.top+gSet.rcTabMargins.bottom) : 0);
+
+	rcWnd = MakeRect(gSet.wndX, gSet.wndY, gSet.wndX+nWidth, gSet.wndY+nHeight);
+
+	if (gSet.wndCascade) {
+		RECT rcScreen = MakeRect(800,600);
+		int nMonitors = GetSystemMetrics(SM_CMONITORS);
+		if (nMonitors > 1) {
+			// Размер виртуального экрана по всем мониторам
+			rcScreen.left = GetSystemMetrics(SM_XVIRTUALSCREEN); // may be <0
+			rcScreen.top  = GetSystemMetrics(SM_YVIRTUALSCREEN);
+			rcScreen.right = rcScreen.left + GetSystemMetrics(SM_CXVIRTUALSCREEN);
+			rcScreen.bottom = rcScreen.top + GetSystemMetrics(SM_CYVIRTUALSCREEN);
+			TODO("Хорошо бы исключить из рассмотрения Taskbar...");
+		} else {
+			SystemParametersInfo(SPI_GETWORKAREA, 0, &rcScreen, 0);
+		}
+
+		//RECT rcDefault = gConEmu.GetDefaultRect();
+		int nX = GetSystemMetrics(SM_CXSIZEFRAME), nY = GetSystemMetrics(SM_CYSIZEFRAME);
+		int nWidth = rcWnd.right - rcWnd.left;
+		int nHeight = rcWnd.bottom - rcWnd.top;
+		// Теперь, если новый размер выходит за пределы экрана - сдвинуть в левый верхний угол
+		BOOL lbX = ((rcWnd.left+nWidth)>(rcScreen.right+nX));
+		BOOL lbY = ((rcWnd.top+nHeight)>(rcScreen.bottom+nY));
+
+		if (lbX && lbY) {
+			rcWnd = MakeRect(rcScreen.left,rcScreen.top,rcScreen.left+nWidth,rcScreen.top+nHeight);
+		} else if (lbX) {
+			rcWnd.left = rcScreen.right - nWidth; rcWnd.right = rcScreen.right;
+		} else if (lbY) {
+			rcWnd.top = rcScreen.bottom - nHeight; rcWnd.bottom = rcScreen.bottom;
+		}
+
+		if (rcWnd.left<(rcScreen.left-nX)) {
+			rcWnd.left=rcScreen.left-nX; rcWnd.right=rcWnd.left+nWidth;
+		}
+		if (rcWnd.top<(rcScreen.top-nX)) {
+			rcWnd.top=rcScreen.top-nX; rcWnd.bottom=rcWnd.top+nHeight;
+		}
+		if ((rcWnd.left+nWidth)>(rcScreen.right+nX)) {
+			rcWnd.left = max((rcScreen.left-nX),(rcScreen.right-nWidth));
+			nWidth = min(nWidth, (rcScreen.right-rcWnd.left+2*nX));
+			rcWnd.right = rcWnd.left + nWidth;
+		}
+		if ((rcWnd.top+nHeight)>(rcScreen.bottom+nY)) {
+			rcWnd.top = max((rcScreen.top-nY),(rcScreen.bottom-nHeight));
+			nHeight = min(nHeight, (rcScreen.bottom-rcWnd.top+2*nY));
+			rcWnd.bottom = rcWnd.top + nHeight;
+		}
+
+		// Скорректировать X/Y при каскаде
+		gSet.wndX = rcWnd.left;
+		gSet.wndY = rcWnd.top;
+	}
+
+	return rcWnd;
+}
+
+RECT CConEmuMain::GetVirtualScreenRect(BOOL abFullScreen)
+{
+	RECT rcScreen = MakeRect(800,600);
+	int nMonitors = GetSystemMetrics(SM_CMONITORS);
+	if (nMonitors > 1) {
+		// Размер виртуального экрана по всем мониторам
+		rcScreen.left = GetSystemMetrics(SM_XVIRTUALSCREEN); // may be <0
+		rcScreen.top  = GetSystemMetrics(SM_YVIRTUALSCREEN);
+		rcScreen.right = rcScreen.left + GetSystemMetrics(SM_CXVIRTUALSCREEN);
+		rcScreen.bottom = rcScreen.top + GetSystemMetrics(SM_CYVIRTUALSCREEN);
+		// Хорошо бы исключить из рассмотрения Taskbar и прочие панели
+		if (!abFullScreen) {
+			RECT rcPrimaryWork;
+			if (SystemParametersInfo(SPI_GETWORKAREA, 0, &rcPrimaryWork, 0)) {
+				if (rcPrimaryWork.left>0 && rcPrimaryWork.left<rcScreen.right)
+					rcScreen.left = rcPrimaryWork.left;
+				if (rcPrimaryWork.top>0 && rcPrimaryWork.top<rcScreen.bottom)
+					rcScreen.top = rcPrimaryWork.top;
+				if (rcPrimaryWork.right<rcScreen.right && rcPrimaryWork.right>rcScreen.left)
+					rcScreen.right = rcPrimaryWork.right;
+				if (rcPrimaryWork.bottom<rcScreen.bottom && rcPrimaryWork.bottom>rcScreen.top)
+					rcScreen.bottom = rcPrimaryWork.bottom;
+			}
+		}
+	} else {
+		if (abFullScreen) {
+			rcScreen = MakeRect(GetSystemMetrics(SM_CXSCREEN),GetSystemMetrics(SM_CYSCREEN));
+		} else {
+			SystemParametersInfo(SPI_GETWORKAREA, 0, &rcScreen, 0);
+		}
+	}
+	if (rcScreen.right<=rcScreen.left || rcScreen.bottom<=rcScreen.top) {
+		_ASSERTE(rcScreen.right>rcScreen.left && rcScreen.bottom>rcScreen.top);
+		rcScreen = MakeRect(800,600);
+	}
+	return rcScreen;
+}
+
 // Эта функция расчитывает необходимые стили по текущим настройкам, а не возвращает GWL_STYLE
 DWORD CConEmuMain::GetWindowStyle()
 {
@@ -250,6 +373,11 @@ DWORD CConEmuMain::GetWindowStyle()
 	//	style |= WS_POPUPWINDOW | WS_CAPTION | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX;
 	//else
 	style |= WS_OVERLAPPEDWINDOW;
+
+#ifndef CHILD_DESK_MODE
+	if (gSet.isDesktopMode)
+		style |= WS_POPUP;
+#endif
 
 	//if (ghWnd) {
 	//	if (gSet.isHideCaptionAlways)
@@ -271,6 +399,11 @@ DWORD CConEmuMain::GetWindowStyleEx()
 
 	if (gSet.isAlwaysOnTop)
 		styleEx |= WS_EX_TOPMOST;
+
+#ifndef CHILD_DESK_MODE
+	if (gSet.isDesktopMode)
+		styleEx |= WS_EX_TOOLWINDOW;
+#endif
 
 	return styleEx;
 }
@@ -315,20 +448,24 @@ BOOL CConEmuMain::CreateMainWindow()
 	{
 		MBoxAssert(gSet.FontWidth() && gSet.FontHeight());
 
-		COORD conSize; conSize.X=gSet.wndWidth; conSize.Y=gSet.wndHeight;
-		//int nShiftX = GetSystemMetrics(SM_CXSIZEFRAME)*2;
-		//int nShiftY = GetSystemMetrics(SM_CYSIZEFRAME)*2 + (gSet.isHideCaptionAlways ? 0 : GetSystemMetrics(SM_CYCAPTION));
-		RECT rcFrameMargin = CalcMargins(CEM_FRAME);
-		int nShiftX = rcFrameMargin.left + rcFrameMargin.right;
-		int nShiftY = rcFrameMargin.top + rcFrameMargin.bottom;
+		//COORD conSize; conSize.X=gSet.wndWidth; conSize.Y=gSet.wndHeight;
+		////int nShiftX = GetSystemMetrics(SM_CXSIZEFRAME)*2;
+		////int nShiftY = GetSystemMetrics(SM_CYSIZEFRAME)*2 + (gSet.isHideCaptionAlways ? 0 : GetSystemMetrics(SM_CYCAPTION));
+		//RECT rcFrameMargin = CalcMargins(CEM_FRAME);
+		//int nShiftX = rcFrameMargin.left + rcFrameMargin.right;
+		//int nShiftY = rcFrameMargin.top + rcFrameMargin.bottom;
 
-		// Если табы показываются всегда - сразу добавим их размер, чтобы размер консоли был заказанным
-		nWidth  = conSize.X * gSet.FontWidth() + nShiftX 
-			+ ((gSet.isTabs == 1) ? (gSet.rcTabMargins.left+gSet.rcTabMargins.right) : 0);
-		nHeight = conSize.Y * gSet.FontHeight() + nShiftY 
-			+ ((gSet.isTabs == 1) ? (gSet.rcTabMargins.top+gSet.rcTabMargins.bottom) : 0);
+		//// Если табы показываются всегда - сразу добавим их размер, чтобы размер консоли был заказанным
+		//nWidth  = conSize.X * gSet.FontWidth() + nShiftX 
+		//	+ ((gSet.isTabs == 1) ? (gSet.rcTabMargins.left+gSet.rcTabMargins.right) : 0);
+		//nHeight = conSize.Y * gSet.FontHeight() + nShiftY 
+		//	+ ((gSet.isTabs == 1) ? (gSet.rcTabMargins.top+gSet.rcTabMargins.bottom) : 0);
 
-		mrc_Ideal = MakeRect(gSet.wndX, gSet.wndY, gSet.wndX+nWidth, gSet.wndY+nHeight);
+		//mrc_Ideal = MakeRect(gSet.wndX, gSet.wndY, gSet.wndX+nWidth, gSet.wndY+nHeight);
+
+		mrc_Ideal = GetDefaultRect();
+		nWidth = mrc_Ideal.right - mrc_Ideal.left;
+		nHeight = mrc_Ideal.bottom - mrc_Ideal.top;
 	}
 
 	//if (gConEmu.WindowMode == rMaximized) style |= WS_MAXIMIZE;
@@ -366,6 +503,8 @@ HRGN CConEmuMain::CreateWindowRgn(bool abTestOnly/*=false*/)
 		}
 	}
 
+	WARNING("Установка любого НЕ NULL региона сбивает темы при отрисовке кнопок в заголовке");
+
 	if ((gSet.isFullScreen || (isZoomed() && (gSet.isHideCaption || gSet.isHideCaptionAlways))) 
 		&& !mb_InRestore) 
 	{
@@ -378,13 +517,17 @@ HRGN CConEmuMain::CreateWindowRgn(bool abTestOnly/*=false*/)
 		hRgn = CreateWindowRgn(abTestOnly, false, rcFrame.left, rcFrame.top, rcScreen.right-rcScreen.left, rcScreen.bottom-rcScreen.top);
 
 	} else if (isZoomed() && !mb_InRestore) {
-		// с FullScreen не совпадает. Нужно с учетом заголовка
-		// сюда мы попадаем только когда заголовок НЕ скрывается
-		RECT rcScreen = CalcRect(CER_FULLSCREEN, MakeRect(0,0), CER_FULLSCREEN);
-		int nCX = GetSystemMetrics(SM_CXSIZEFRAME);
-		int nCY = GetSystemMetrics(SM_CYSIZEFRAME);
+		if (!hExclusion) {
+			// Если прозрачных участков в консоли нет - ничего не делаем
+		} else {
+			// с FullScreen не совпадает. Нужно с учетом заголовка
+			// сюда мы попадаем только когда заголовок НЕ скрывается
+			RECT rcScreen = CalcRect(CER_FULLSCREEN, MakeRect(0,0), CER_FULLSCREEN);
+			int nCX = GetSystemMetrics(SM_CXSIZEFRAME);
+			int nCY = GetSystemMetrics(SM_CYSIZEFRAME);
 
-		hRgn = CreateWindowRgn(abTestOnly, false, nCX, nCY, rcScreen.right-rcScreen.left, rcScreen.bottom-rcScreen.top);
+			hRgn = CreateWindowRgn(abTestOnly, false, nCX, nCY, rcScreen.right-rcScreen.left, rcScreen.bottom-rcScreen.top);
+		}
 
 	} else {
 		// Normal
@@ -395,7 +538,7 @@ HRGN CConEmuMain::CreateWindowRgn(bool abTestOnly/*=false*/)
 				RECT rcFrame = CalcMargins(CEM_FRAME);
 
 				_ASSERTE(!rcClient.left && !rcClient.top);
-				hRgn = CreateWindowRgn(abTestOnly, gSet.CheckTheming(),
+				hRgn = CreateWindowRgn(abTestOnly, gSet.CheckTheming() && mp_TabBar->IsShown(),
 					rcFrame.left-gSet.nHideCaptionAlwaysFrame,
 					rcFrame.top-gSet.nHideCaptionAlwaysFrame,
 					rcClient.right+2*gSet.nHideCaptionAlwaysFrame,
@@ -436,8 +579,8 @@ HRGN CConEmuMain::CreateWindowRgn(bool abTestOnly/*=false*/,bool abRoundTitle/*=
 		ptPoly[nPoint++] = MakePoint(anX+5, anY);
 		ptPoly[nPoint++] = MakePoint(anX+anWndWidth-5, anY);
 		ptPoly[nPoint++] = MakePoint(anX+anWndWidth-3, anY+1);
-		ptPoly[nPoint++] = MakePoint(anX+anWndWidth-1, anY+3);
-		ptPoly[nPoint++] = MakePoint(anX+anWndWidth, anY+5);
+		ptPoly[nPoint++] = MakePoint(anX+anWndWidth-1, anY+4);
+		ptPoly[nPoint++] = MakePoint(anX+anWndWidth, anY+6);
 		ptPoly[nPoint++] = MakePoint(anX+anWndWidth, anY+anWndHeight);
 
 		hRgn = CreatePolygonRgn(ptPoly, nPoint, WINDING);
@@ -891,7 +1034,7 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
         } break;
         case CER_FULLSCREEN:
         case CER_MAXIMIZED:
-        case CER_CORRECTED:
+        //case CER_CORRECTED:
         {
             HMONITOR hMonitor = NULL;
 
@@ -900,8 +1043,8 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
             else
                 hMonitor = MonitorFromRect ( &rFrom, MONITOR_DEFAULTTOPRIMARY );
 
-            if (tWhat != CER_CORRECTED)
-                tFrom = tWhat;
+            //if (tWhat != CER_CORRECTED)
+            //    tFrom = tWhat;
 
             MONITORINFO mi; mi.cbSize = sizeof(mi);
             if (GetMonitorInfo(hMonitor, &mi)) {
@@ -948,47 +1091,49 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
                 }
             }
 
-            if (tWhat == CER_CORRECTED)
-            {
-                RECT rcMon = rc;
-                rc = rFrom;
-                int nX = GetSystemMetrics(SM_CXSIZEFRAME), nY = GetSystemMetrics(SM_CYSIZEFRAME);
-                int nWidth = rc.right-rc.left;
-                int nHeight = rc.bottom-rc.top;
-                static bool bFirstCall = true;
-                if (bFirstCall) {
-                    if (gSet.wndCascade) {
-                        BOOL lbX = ((rc.left+nWidth)>(rcMon.right+nX));
-                        BOOL lbY = ((rc.top+nHeight)>(rcMon.bottom+nY));
-                        {
-                            if (lbX && lbY) {
-                                rc = MakeRect(rcMon.left,rcMon.top,rcMon.left+nWidth,rcMon.top+nHeight);
-                            } else if (lbX) {
-                                rc.left = rcMon.right - nWidth; rc.right = rcMon.right;
-                            } else if (lbY) {
-                                rc.top = rcMon.bottom - nHeight; rc.bottom = rcMon.bottom;
-                            }
-                        }
-                    }
-                    bFirstCall = false;
-                }
-                if (rc.left<(rcMon.left-nX)) {
-					rc.left=rcMon.left-nX; rc.right=rc.left+nWidth;
-				}
-                if (rc.top<(rcMon.top-nX)) {
-					rc.top=rcMon.top-nX; rc.bottom=rc.top+nHeight;
-				}
-                if ((rc.left+nWidth)>(rcMon.right+nX)) {
-                    rc.left = max((rcMon.left-nX),(rcMon.right-nWidth));
-                    nWidth = min(nWidth, (rcMon.right-rc.left+2*nX));
-                    rc.right = rc.left + nWidth;
-                }
-                if ((rc.top+nHeight)>(rcMon.bottom+nY)) {
-                    rc.top = max((rcMon.top-nY),(rcMon.bottom-nHeight));
-                    nHeight = min(nHeight, (rcMon.bottom-rc.top+2*nY));
-                    rc.bottom = rc.top + nHeight;
-                }
-            }
+			//if (tWhat == CER_CORRECTED)
+			//{
+			//    RECT rcMon = rc;
+			//    rc = rFrom;
+			//    int nX = GetSystemMetrics(SM_CXSIZEFRAME), nY = GetSystemMetrics(SM_CYSIZEFRAME);
+			//    int nWidth = rc.right-rc.left;
+			//    int nHeight = rc.bottom-rc.top;
+			//    static bool bFirstCall = true;
+			//    if (bFirstCall) {
+			//        if (gSet.wndCascade && !gSet.isDesktopMode) {
+			//            BOOL lbX = ((rc.left+nWidth)>(rcMon.right+nX));
+			//            BOOL lbY = ((rc.top+nHeight)>(rcMon.bottom+nY));
+			//            {
+			//                if (lbX && lbY) {
+			//                    rc = MakeRect(rcMon.left,rcMon.top,rcMon.left+nWidth,rcMon.top+nHeight);
+			//                } else if (lbX) {
+			//                    rc.left = rcMon.right - nWidth; rc.right = rcMon.right;
+			//                } else if (lbY) {
+			//                    rc.top = rcMon.bottom - nHeight; rc.bottom = rcMon.bottom;
+			//                }
+			//            }
+			//        }
+			//        bFirstCall = false;
+			//    }
+			//	//2010-02-14 На многомониторных конфигурациях эти проверки нарушают
+			//	//           требуемое положение (когда окно на обоих мониторах).
+			//	//if (rc.left<(rcMon.left-nX)) {
+			//	//	rc.left=rcMon.left-nX; rc.right=rc.left+nWidth;
+			//	//}
+			//	//if (rc.top<(rcMon.top-nX)) {
+			//	//	rc.top=rcMon.top-nX; rc.bottom=rc.top+nHeight;
+			//	//}
+			//	//if ((rc.left+nWidth)>(rcMon.right+nX)) {
+			//	//    rc.left = max((rcMon.left-nX),(rcMon.right-nWidth));
+			//	//    nWidth = min(nWidth, (rcMon.right-rc.left+2*nX));
+			//	//    rc.right = rc.left + nWidth;
+			//	//}
+			//	//if ((rc.top+nHeight)>(rcMon.bottom+nY)) {
+			//	//    rc.top = max((rcMon.top-nY),(rcMon.bottom-nHeight));
+			//	//    nHeight = min(nHeight, (rcMon.bottom-rc.top+2*nY));
+			//	//    rc.bottom = rc.top + nHeight;
+			//	//}
+			//}
 
             return rc;
         } break;
@@ -1330,6 +1475,9 @@ bool CConEmuMain::SetWindowMode(uint inMode)
         PostMessage(ghWnd, mn_MsgSetWindowMode, inMode, 0);
         return false;
     }
+    
+    if (inMode == rFullScreen && gSet.isDesktopMode)
+    	inMode = gSet.isFullScreen ? rNormal : rMaximized; // FullScreen на Desktop-е невозможен
 
 	#ifdef _DEBUG
 	DWORD_PTR dwStyle = GetWindowLongPtr(ghWnd, GWL_STYLE);
@@ -1356,7 +1504,8 @@ bool CConEmuMain::SetWindowMode(uint inMode)
 
 	if (bWasSetFullscreen && inMode != rFullScreen) {
 		if (mp_TaskBar2) {
-			mp_TaskBar2->MarkFullscreenWindow(ghWnd, FALSE);
+			if (!gSet.isDesktopMode)
+				mp_TaskBar2->MarkFullscreenWindow(ghWnd, FALSE);
 			bWasSetFullscreen = false;
 		}
 	}
@@ -1417,8 +1566,9 @@ bool CConEmuMain::SetWindowMode(uint inMode)
             rcNew.left+=gSet.wndX; rcNew.top+=gSet.wndY;
             rcNew.right+=gSet.wndX; rcNew.bottom+=gSet.wndY;
 
-            // Параметры именно такие, результат - просто подгонка rcNew под рабочую область текущего монитора
-            rcNew = CalcRect(CER_CORRECTED, rcNew, CER_MAXIMIZED);
+			// 2010-02-14 Проверку делаем ТОЛЬКО при загрузке настроек и включенном каскаде
+            //// Параметры именно такие, результат - просто подгонка rcNew под рабочую область текущего монитора
+            //rcNew = CalcRect(CER_CORRECTED, rcNew, CER_MAXIMIZED);
 
             #ifdef _DEBUG
             WINDOWPLACEMENT wpl; memset(&wpl,0,sizeof(wpl)); wpl.length = sizeof(wpl);
@@ -1566,7 +1716,8 @@ bool CConEmuMain::SetWindowMode(uint inMode)
 					}
 
 					if (mp_TaskBar2) {
-						mp_TaskBar2->MarkFullscreenWindow(ghWnd, FALSE);
+						if (!gSet.isDesktopMode)
+							mp_TaskBar2->MarkFullscreenWindow(ghWnd, FALSE);
 						bWasSetFullscreen = true;
 					}
 
@@ -1651,7 +1802,8 @@ bool CConEmuMain::SetWindowMode(uint inMode)
             }
 
 			if (mp_TaskBar2) {
-				mp_TaskBar2->MarkFullscreenWindow(ghWnd, TRUE);
+				if (!gSet.isDesktopMode)
+					mp_TaskBar2->MarkFullscreenWindow(ghWnd, TRUE);
 				bWasSetFullscreen = true;
 			}
 
@@ -1663,7 +1815,9 @@ bool CConEmuMain::SetWindowMode(uint inMode)
 			}
 
 			RECT rcFrame = CalcMargins(CEM_FRAME);
-			UpdateWindowRgn(rcFrame.left, rcFrame.top, ptFullScreenSize.x, ptFullScreenSize.y);
+			// ptFullScreenSize содержит "скорректированный" размер (он больше монитора)
+			UpdateWindowRgn(rcFrame.left, rcFrame.top, 
+				mi.rcMonitor.right-mi.rcMonitor.left, mi.rcMonitor.bottom-mi.rcMonitor.top);
 
             /* */ SetWindowPos(ghWnd, NULL,
                 -rcShift.left+mi.rcMonitor.left,-rcShift.top+mi.rcMonitor.top,
@@ -1704,7 +1858,8 @@ wrap:
 	// полноэкранности у панели задач. Вернем его...
 	if (mp_TaskBar2) {
 		if (bWasSetFullscreen != gSet.isFullScreen) {
-			mp_TaskBar2->MarkFullscreenWindow(ghWnd, gSet.isFullScreen);
+			if (!gSet.isDesktopMode)
+				mp_TaskBar2->MarkFullscreenWindow(ghWnd, gSet.isFullScreen);
 			bWasSetFullscreen = gSet.isFullScreen;
 		}
 	}
@@ -3325,6 +3480,9 @@ void CConEmuMain::UpdateWindowRgn(int anX/*=-1*/, int anY/*=-1*/, int anWndWidth
 {
 	HRGN hRgn = NULL;
 
+	if (gSet.isHideCaptionAlways)
+		KillTimer(ghWnd, TIMER_CAPTION_ID);
+	
 	if (anWndWidth != -1 && anWndHeight != -1)
 		hRgn = CreateWindowRgn(false, false, anX, anY, anWndWidth, anWndHeight);
 	else
@@ -3867,8 +4025,12 @@ bool CConEmuMain::isMouseOverFrame()
 	bool bCurForceShow = false;
 	POINT ptMouse; GetCursorPos(&ptMouse);
 	RECT rcWnd; GetWindowRect(ghWnd, &rcWnd);
+	// чтобы область активации рамки была чуть побольше
+	rcWnd.left--; rcWnd.right++; rcWnd.bottom++;
 	if (PtInRect(&rcWnd, ptMouse)) {
 		RECT rcClient; GetClientRect(ghWnd, &rcClient);
+		// чтобы область активации рамки была чуть побольше
+		rcClient.left++; rcClient.right--; rcClient.bottom--;
 		MapWindowPoints(ghWnd, NULL, (LPPOINT)&rcClient, 2);
 		if (!PtInRect(&rcClient, ptMouse))
 			bCurForceShow = true;
@@ -4204,7 +4366,7 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
 			OnHideCaption();
 		}
 		
-		if (!gSet.isDesktopMode)
+		if (gSet.isDesktopMode)
 			OnDesktopMode();
 
         PostMessage(ghWnd, mn_MsgPostCreate, 0, 0);
@@ -4417,12 +4579,12 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
 
         //SetParent(ghWnd, GetParent(GetShellWindow()));
 
-        UINT n = SetTimer(ghWnd, 0, 500/*gSet.nMainTimerElapse*/, NULL);
+        UINT n = SetTimer(ghWnd, TIMER_MAIN_ID, 500/*gSet.nMainTimerElapse*/, NULL);
         #ifdef _DEBUG
         DWORD dw = GetLastError();
         #endif
         n = 0;
-        n = SetTimer(ghWnd, 1, CON_REDRAW_TIMOUT*2, NULL);
+        n = SetTimer(ghWnd, TIMER_CONREDRAW_ID, CON_REDRAW_TIMOUT*2, NULL);
     }
 }
 
@@ -4507,7 +4669,9 @@ LRESULT CConEmuMain::OnDestroy(HWND hWnd)
     
     UnRegisterHotKeys();
 
-    KillTimer(ghWnd, 0);
+    KillTimer(ghWnd, TIMER_MAIN_ID);
+    KillTimer(ghWnd, TIMER_CONREDRAW_ID);
+    KillTimer(ghWnd, TIMER_CAPTION_ID);
 
     PostQuitMessage(0);
 
@@ -4563,6 +4727,16 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
         UnRegisterHotKeys();
     }
     
+    if (gSet.isFadeInactive && mp_VActive) {
+    	bool bForeground = lbSetFocus || isMeForeground();
+		bool bLastFade = (mp_VActive!=NULL) ? mp_VActive->mb_LastFadeFlag : false;
+		bool bNewFade = (gSet.isFadeInactive && !bForeground && !isPictureView());
+		if (bLastFade != bNewFade) {
+			if (mp_VActive) mp_VActive->mb_LastFadeFlag = bNewFade;
+			m_Child.Invalidate();
+		}
+	}
+    
     if (gSet.isSkipFocusEvents)
         return 0;
         
@@ -4598,6 +4772,15 @@ LRESULT CConEmuMain::OnGetMinMaxInfo(LPMINMAXINFO pInfo)
     //POINT p = cwShift;
     //RECT shiftRect = ConsoleOffsetRect();
     //RECT shiftRect = ConsoleOffsetRect();
+	#ifdef _DEBUG
+	wchar_t szMinMax[255];
+	wsprintf(szMinMax, L"OnGetMinMaxInfo[before] MaxSize={%i,%i}, MaxPos={%i,%i}, MinTrack={%i,%i}, MaxTrack={%i,%i}\n",
+		pInfo->ptMaxSize.x, pInfo->ptMaxSize.y,
+		pInfo->ptMaxPosition.x, pInfo->ptMaxPosition.y,
+		pInfo->ptMinTrackSize.x, pInfo->ptMinTrackSize.y,
+		pInfo->ptMaxTrackSize.x, pInfo->ptMaxTrackSize.y);
+	DEBUGSTRSIZE(szMinMax);
+	#endif
 
     // Минимально допустимые размеры консоли
     //COORD srctWindow; srctWindow.X=28; srctWindow.Y=9;
@@ -4613,14 +4796,29 @@ LRESULT CConEmuMain::OnGetMinMaxInfo(LPMINMAXINFO pInfo)
     //  + p.y + shiftRect.top + shiftRect.bottom;
 
     if (gSet.isFullScreen) {
-        pInfo->ptMaxTrackSize = ptFullScreenSize;
-        pInfo->ptMaxSize = ptFullScreenSize;
+		if (pInfo->ptMaxTrackSize.x < ptFullScreenSize.x)
+			pInfo->ptMaxTrackSize.x = ptFullScreenSize.x;
+		if (pInfo->ptMaxTrackSize.y < ptFullScreenSize.y)
+			pInfo->ptMaxTrackSize.y = ptFullScreenSize.y;
+		if (pInfo->ptMaxSize.x < ptFullScreenSize.x)
+			pInfo->ptMaxSize.x = ptFullScreenSize.x;
+		if (pInfo->ptMaxSize.y < ptFullScreenSize.y)
+			pInfo->ptMaxSize.y = ptFullScreenSize.y;
     }
     
     if (gSet.isHideCaption && !gSet.isHideCaptionAlways) {
     	pInfo->ptMaxPosition.y -= GetSystemMetrics(SM_CYCAPTION);
     	//pInfo->ptMaxSize.y += GetSystemMetrics(SM_CYCAPTION);
     }
+
+	#ifdef _DEBUG
+	wsprintf(szMinMax, L"OnGetMinMaxInfo[after]  MaxSize={%i,%i}, MaxPos={%i,%i}, MinTrack={%i,%i}, MaxTrack={%i,%i}\n",
+		pInfo->ptMaxSize.x, pInfo->ptMaxSize.y,
+		pInfo->ptMaxPosition.x, pInfo->ptMaxPosition.y,
+		pInfo->ptMinTrackSize.x, pInfo->ptMinTrackSize.y,
+		pInfo->ptMaxTrackSize.x, pInfo->ptMaxTrackSize.y);
+	DEBUGSTRSIZE(szMinMax);
+	#endif
 
     return result;
 }
@@ -4655,6 +4853,16 @@ void CConEmuMain::OnHideCaption()
 	//}
 }
 
+void CConEmuMain::OnAltEnter()
+{
+	if (!gSet.isFullScreen)
+		gConEmu.SetWindowMode(rFullScreen);
+	else if (gSet.isDesktopMode && (gSet.isFullScreen || gConEmu.isZoomed()))
+		gConEmu.SetWindowMode(rNormal);
+	else
+		gConEmu.SetWindowMode(gConEmu.isWndNotFSMaximized ? rMaximized : rNormal);
+}
+
 void CConEmuMain::OnAltF9(BOOL abPosted/*=FALSE*/)
 {
 	if (!abPosted) {
@@ -4662,7 +4870,7 @@ void CConEmuMain::OnAltF9(BOOL abPosted/*=FALSE*/)
 		return;
 	}
 
-	gConEmu.SetWindowMode((gConEmu.isZoomed()||(gSet.isFullScreen&&gConEmu.isWndNotFSMaximized)) ? rNormal : rMaximized);
+	gConEmu.SetWindowMode((gConEmu.isZoomed()||(gSet.isFullScreen/*&&gConEmu.isWndNotFSMaximized*/)) ? rNormal : rMaximized);
 }
 
 LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
@@ -4712,10 +4920,7 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
                     bPicViewSlideShow = !bPicViewSlideShow;
                     if (bPicViewSlideShow) {
                         if (gSet.nSlideShowElapse<=500) gSet.nSlideShowElapse=500;
-                        //SetTimer(hWnd, 3, gSet.nSlideShowElapse, NULL);
                         dwLastSlideShowTick = GetTickCount() - gSet.nSlideShowElapse;
-                    //} else {
-                    //  KillTimer(hWnd, 3);
                     }
                 }
                 return 0;
@@ -5654,7 +5859,6 @@ LRESULT CConEmuMain::OnMouse_RBtnDown(HWND hWnd, UINT messg, WPARAM wParam, LPAR
 			wsprintfA(szLog, "MOUSE_R_LOCKED was set: Rcursor={%i-%i}", (int)Rcursor.x, (int)Rcursor.y);
 			mp_VActive->RCon()->LogString(szLog);
 
-			//SetTimer(hWnd, 1, 300, 0); -- Maximus5, откажемся от таймера
 			mouse.RClkTick = TimeGetTime(); //GetTickCount();
 			return 0;
 		}
@@ -6074,22 +6278,107 @@ void CConEmuMain::OnDesktopMode()
 {
 	if (!this) return;
 	
-	//DWORD dwStyleEx = GetWindowLong(ghWnd, GWL_EXSTYLE);
+#ifndef CHILD_DESK_MODE
+	DWORD dwStyleEx = GetWindowLong(ghWnd, GWL_EXSTYLE);
+	DWORD dwNewStyleEx = dwStyleEx;
+	DWORD dwStyle = GetWindowLong(ghWnd, GWL_STYLE);
+	DWORD dwNewStyle = dwStyle;
 
+	if (gSet.isDesktopMode) {
+		dwNewStyleEx |= WS_EX_TOOLWINDOW;
+		dwNewStyle |= WS_POPUP;
+	} else {
+		dwNewStyleEx &= ~WS_EX_TOOLWINDOW;
+		dwNewStyle &= ~WS_POPUP;
+	}
+
+	if (dwNewStyleEx != dwStyleEx || dwNewStyle != dwStyle) {
+		SetWindowLong(ghWnd, GWL_STYLE, dwStyle);
+		SetWindowLong(ghWnd, GWL_EXSTYLE, dwStyleEx);
+		SyncWindowToConsole();
+		UpdateWindowRgn();
+	}
+#endif
+
+#ifdef CHILD_DESK_MODE
 	HWND hDesktop = GetDesktopWindow();
-	HWND hProgman = FindWindowEx(hDesktop, NULL, L"Progman", L"Program Manager");
+	
+	//HWND hProgman = FindWindowEx(hDesktop, NULL, L"Progman", L"Program Manager");
+	//HWND hParent = NULL;gSet.isDesktopMode ?  : GetDesktopWindow();
 	
 	if (gSet.isDesktopMode) {
-		SetParent(ghWnd, hProgman);
-		SetWindowPos(ghWnd, HWND_TOPMOST, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
+		// Shell windows is FindWindowEx(hDesktop, NULL, L"Progman", L"Program Manager");
+		HWND hShellWnd = GetShellWindow();
+		DWORD dwShellPID = 0;
+		if (hShellWnd)
+			GetWindowThreadProcessId(hShellWnd, &dwShellPID);
+		// But in Win7 it is not a real desktop holder :(
+		if (gOSVer.dwMajorVersion >= 6) { // Vista too?
+			HWND hShell = FindWindowEx(hDesktop, NULL, L"WorkerW", NULL);
+			while (hShell) {
+				// У него должны быть дочерние окна
+				if (FindWindowEx(hShell, NULL, NULL, NULL)) {
+					// Теоретически, эти окна должны принадлежать одному процессу (Explorer.exe)
+					if (dwShellPID) {
+						DWORD dwTestPID;
+						GetWindowThreadProcessId(hShell, &dwTestPID);
+						if (dwTestPID != dwShellPID) {
+							hShell = FindWindowEx(hDesktop, hShell, L"WorkerW", NULL);
+							continue;
+						}
+					}
+					
+					break;
+				}
 
-	} else {
+				hShell = FindWindowEx(hDesktop, hShell, L"WorkerW", NULL);
+			}
+			if (hShell)
+				hShellWnd = hShell;
+		}
+
+		if (gSet.isFullScreen) // этот режим с Desktop несовместим
+			SetWindowMode(rMaximized);
+
+		if (!hShellWnd) {
+			gSet.isDesktopMode = false;
+			if (ghOpWnd && gSet.hExt)
+				CheckDlgButton(gSet.hExt, cbDesktopMode, BST_UNCHECKED);
+		} else {
+			mh_ShellWindow = hShellWnd;
+			RECT rcWnd; GetWindowRect(ghWnd, &rcWnd);
+			MapWindowPoints(NULL, mh_ShellWindow, (LPPOINT)&rcWnd, 2);
+			//ShowWindow(ghWnd, SW_HIDE);
+			//SetWindowPos(ghWnd, NULL, rcWnd.left,rcWnd.top,0,0, SWP_NOSIZE|SWP_NOZORDER);
+			SetParent(ghWnd, mh_ShellWindow);
+			SetWindowPos(ghWnd, NULL, rcWnd.left,rcWnd.top,0,0, SWP_NOSIZE|SWP_NOZORDER);
+			SetWindowPos(ghWnd, HWND_TOPMOST, 0,0,0,0, SWP_NOSIZE|SWP_NOMOVE);
+			//ShowWindow(ghWnd, SW_SHOW);
+			#ifdef _DEBUG
+			RECT rcNow; GetWindowRect(ghWnd, &rcNow);
+			#endif
+		}
+	}
+
+	if (!gSet.isDesktopMode) {
+
 		//dwStyle |= WS_POPUP;
+		RECT rcWnd; GetWindowRect(ghWnd, &rcWnd);
+		RECT rcVirtual = GetVirtualScreenRect(TRUE);
+		
+		SetWindowPos(ghWnd, NULL, max(rcWnd.left,rcVirtual.left),max(rcWnd.top,rcVirtual.top),0,0, SWP_NOSIZE|SWP_NOZORDER);
+
 		SetParent(ghWnd, hDesktop);
+
+		SetWindowPos(ghWnd, NULL, max(rcWnd.left,rcVirtual.left),max(rcWnd.top,rcVirtual.top),0,0, SWP_NOSIZE|SWP_NOZORDER);
+		
 		OnAlwaysOnTop();
+		if (ghOpWnd && !gSet.isAlwaysOnTop)
+			SetForegroundWindow(ghOpWnd);
 	}
 	
 	//SetWindowLong(ghWnd, GWL_STYLE, dwStyle);
+#endif
 }
 
 LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
@@ -6347,7 +6636,7 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 
     switch (wParam)
     {
-    case 0: // Период: 500 мс
+    case TIMER_MAIN_ID: // Период: 500 мс
 	    {
 	        //Maximus5. Hack - если какая-то зараза задизеблила окно
 	        if (!gbDontEnable) {
@@ -6355,6 +6644,8 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 	            if (dwStyle & WS_DISABLED)
 	                EnableWindow(ghWnd, TRUE);
 	        }
+	        
+	        bool bForeground = isMeForeground();
 
 	        CheckProcesses();
 
@@ -6431,7 +6722,7 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 	        }
 
 			// режим полного скрытия заголовка
-			if (gSet.isHideCaptionAlways && isMeForeground()) {
+			if (gSet.isHideCaptionAlways && bForeground) {
 				// в Normal режиме при помещении мышки над местом, где должен быть
 				// заголовок или рамка - показать их
 				if (!isIconic() && !isZoomed() && !gSet.isFullScreen) {
@@ -6440,8 +6731,22 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 					BOOL bCurForceShow = isMouseOverFrame();
 					if (bCurForceShow != mb_CaptionWasRestored) {
 						mb_CaptionWasRestored = bCurForceShow;
-						UpdateWindowRgn();
+						if (gSet.nHideCaptionAlwaysDelay && bCurForceShow) {
+							KillTimer(ghWnd, TIMER_CAPTION_ID);
+							SetTimer(ghWnd, TIMER_CAPTION_ID, gSet.nHideCaptionAlwaysDelay, NULL);
+						} else {
+							UpdateWindowRgn();
+						}
 					}
+				}
+			}
+
+			if (mp_VActive) {
+				bool bLastFade = mp_VActive->mb_LastFadeFlag;
+				bool bNewFade = (gSet.isFadeInactive && !bForeground && !lbIsPicView);
+				if (bLastFade != bNewFade) {
+					mp_VActive->mb_LastFadeFlag = bNewFade;
+					m_Child.Invalidate();
 				}
 			}
 
@@ -6450,13 +6755,19 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 
 	    } break; // case 0:
 
-	case 1: // Период: CON_REDRAW_TIMOUT*2
+	case TIMER_CONREDRAW_ID: // Период: CON_REDRAW_TIMOUT*2
 		{
 	        if (!isIconic())
 	        {
 	        	m_Child.CheckPostRedraw();
 	        }
 		} break; // case 1:
+		
+	case TIMER_CAPTION_ID:
+		{
+			KillTimer(ghWnd, TIMER_CAPTION_ID);
+			UpdateWindowRgn();
+		} break;
     }
 
     mb_InTimer = FALSE;
@@ -7076,8 +7387,10 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
         break;
 
     case WM_NCLBUTTONDOWN:
-        // При ресайзе WM_NCRBUTTONUP к сожалению не приходит
+        // При ресайзе WM_NCLBUTTONUP к сожалению не приходит
         gConEmu.mouse.state |= MOUSE_SIZING_BEGIN;
+		if (gSet.isHideCaptionAlways)
+			UpdateWindowRgn();
         result = DefWindowProc(hWnd, messg, wParam, lParam);
         break;
 
@@ -7087,7 +7400,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
         break;
 
     case WM_NCRBUTTONUP:
-		if (wParam != HTCAPTION) {
+		if (wParam == HTCLOSE) {
 			Icon.HideWindowToTray();
 		}
         break;

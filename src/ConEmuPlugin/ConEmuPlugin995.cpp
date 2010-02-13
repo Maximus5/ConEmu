@@ -514,6 +514,7 @@ void SetWindow995(int nTab)
 		InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_COMMIT, 0);
 }
 
+// Warning, напрямую НЕ вызывать. Пользоваться "общей" PostMacro
 void PostMacro995(wchar_t* asMacro)
 {
 	if (!InfoW995 || !InfoW995->AdvControl)
@@ -529,46 +530,49 @@ void PostMacro995(wchar_t* asMacro)
 	mcr.Param.PlainText.SequenceText = asMacro;
 	InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_KEYMACRO, (void*)&mcr);
 
-	//FAR BUGBUG: Изменения не появляются, пока мышкой не дернем :(
+	//FAR BUGBUG: Макрос не запускается на исполнение, пока мышкой не дернем :(
 	//  Это чаще всего проявляется при вызове меню по RClick
 	//  Если курсор на другой панели, то RClick сразу по пассивной
 	//  не вызывает отрисовку :(
-	if (!mcr.Param.PlainText.Flags) {
-		INPUT_RECORD ir[2] = {{MOUSE_EVENT},{MOUSE_EVENT}};
-		if (isPressed(VK_CAPITAL))
-			ir[0].Event.MouseEvent.dwControlKeyState |= CAPSLOCK_ON;
-		if (isPressed(VK_NUMLOCK))
-			ir[0].Event.MouseEvent.dwControlKeyState |= NUMLOCK_ON;
-		if (isPressed(VK_SCROLL))
-			ir[0].Event.MouseEvent.dwControlKeyState |= SCROLLLOCK_ON;
-		ir[0].Event.MouseEvent.dwEventFlags = MOUSE_MOVED;
-		ir[1].Event.MouseEvent.dwControlKeyState = ir[0].Event.MouseEvent.dwControlKeyState;
-		ir[1].Event.MouseEvent.dwEventFlags = MOUSE_MOVED;
-		ir[1].Event.MouseEvent.dwMousePosition.X = 1;
-		ir[1].Event.MouseEvent.dwMousePosition.Y = 1;
+	
+	// Перенесено в "общую" PostMacro
 
-		//2010-01-29 попробуем STD_OUTPUT
-		//if (!ghConIn) {
-		//	ghConIn  = CreateFile(L"CONIN$", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_READ,
-		//		0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
-		//	if (ghConIn == INVALID_HANDLE_VALUE) {
-		//		#ifdef _DEBUG
-		//		DWORD dwErr = GetLastError();
-		//		_ASSERTE(ghConIn!=INVALID_HANDLE_VALUE);
-		//		#endif
-		//		ghConIn = NULL;
-		//		return;
-		//	}
-		//}
-		HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE);
-		DWORD cbWritten = 0;
-		#ifdef _DEBUG
-		BOOL fSuccess = 
-		#endif
-		WriteConsoleInput(hIn/*ghConIn*/, ir, 1, &cbWritten);
-		_ASSERTE(fSuccess && cbWritten==1);
-	}
-	//InfoW995->AdvControl(InfoW995->ModuleNumber,ACTL_REDRAWALL,NULL);
+	////if (!mcr.Param.PlainText.Flags) {
+	//INPUT_RECORD ir[2] = {{MOUSE_EVENT},{MOUSE_EVENT}};
+	//if (isPressed(VK_CAPITAL))
+	//	ir[0].Event.MouseEvent.dwControlKeyState |= CAPSLOCK_ON;
+	//if (isPressed(VK_NUMLOCK))
+	//	ir[0].Event.MouseEvent.dwControlKeyState |= NUMLOCK_ON;
+	//if (isPressed(VK_SCROLL))
+	//	ir[0].Event.MouseEvent.dwControlKeyState |= SCROLLLOCK_ON;
+	//ir[0].Event.MouseEvent.dwEventFlags = MOUSE_MOVED;
+	//ir[1].Event.MouseEvent.dwControlKeyState = ir[0].Event.MouseEvent.dwControlKeyState;
+	//ir[1].Event.MouseEvent.dwEventFlags = MOUSE_MOVED;
+	//ir[1].Event.MouseEvent.dwMousePosition.X = 1;
+	//ir[1].Event.MouseEvent.dwMousePosition.Y = 1;
+	//
+	////2010-01-29 попробуем STD_OUTPUT
+	////if (!ghConIn) {
+	////	ghConIn  = CreateFile(L"CONIN$", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_READ,
+	////		0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+	////	if (ghConIn == INVALID_HANDLE_VALUE) {
+	////		#ifdef _DEBUG
+	////		DWORD dwErr = GetLastError();
+	////		_ASSERTE(ghConIn!=INVALID_HANDLE_VALUE);
+	////		#endif
+	////		ghConIn = NULL;
+	////		return;
+	////	}
+	////}
+	//HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE);
+	//DWORD cbWritten = 0;
+	//#ifdef _DEBUG
+	//BOOL fSuccess = 
+	//#endif
+	//WriteConsoleInput(hIn/*ghConIn*/, ir, 1, &cbWritten);
+	//_ASSERTE(fSuccess && cbWritten==1);
+	////}
+	////InfoW995->AdvControl(InfoW995->ModuleNumber,ACTL_REDRAWALL,NULL);
 }
 
 int ShowPluginMenu995()

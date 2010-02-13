@@ -93,7 +93,7 @@ enum ConEmuRect {
 	CER_CONSOLE,    // !!! _ размер в символах _ !!!
 	CER_FULLSCREEN, // полный размер в pix текущего монитора (содержащего ghWnd)
 	CER_MAXIMIZED,  // размер максимизированного окна на текущем мониторе (содержащего ghWnd)
-	CER_CORRECTED   // скорректированное положение (чтобы окно было видно на текущем мониторе)
+//	CER_CORRECTED   // скорректированное положение (чтобы окно было видно на текущем мониторе)
 };
 
 enum DragPanelBorder {
@@ -152,6 +152,7 @@ public:
 	bool isPiewUpdate;
 	bool gbPostUpdateWindowSize;
 	HWND hPictureView; bool bPicViewSlideShow; DWORD dwLastSlideShowTick; RECT mrc_WndPosOnPicView;
+	HWND mh_ShellWindow; // Окно Progman для Desktop режима
 	//bool gb_ConsoleSelectMode;
 	//bool setParent, setParent2;
 	//BOOL mb_InClose;
@@ -270,7 +271,9 @@ public:
 	void DebugStep(LPCTSTR asMsg);
 	void ForceShowTabs(BOOL abShow);
 	DWORD_PTR GetActiveKeyboardLayout();
+	RECT GetDefaultRect();
 	RECT GetIdealRect() { return mrc_Ideal; };
+	RECT GetVirtualScreenRect(BOOL abFullScreen);
 	static DWORD GetWindowStyle();
 	static DWORD GetWindowStyleEx();
 	LRESULT GuiShellExecuteEx(SHELLEXECUTEINFO* lpShellExecute, BOOL abAllowAsync);
@@ -332,6 +335,7 @@ public:
 	static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 	LRESULT WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 public:
+	void OnAltEnter();
 	void OnAltF9(BOOL abPosted=FALSE);
 	void OnAlwaysOnTop();
 	void OnBufferHeight(); //BOOL abBufferHeight);

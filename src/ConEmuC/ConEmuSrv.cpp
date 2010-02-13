@@ -30,6 +30,43 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmuC.h"
 #include "..\common\ConsoleAnnotation.h"
 
+// Установить мелкий шрифт, иначе может быть невозможно увеличение размера GUI окна
+void ServerInitFont()
+{
+	// Размер шрифта и Lucida. Обязательно для серверного режима.
+	if (srv.szConsoleFont[0]) {
+		// Требуется проверить наличие такого шрифта!
+		LOGFONT fnt = {0};
+		lstrcpynW(fnt.lfFaceName, srv.szConsoleFont, LF_FACESIZE);
+		srv.szConsoleFont[0] = 0; // сразу сбросим. Если шрифт есть - имя будет скопировано в FontEnumProc
+		HDC hdc = GetDC(NULL);
+		EnumFontFamiliesEx(hdc, &fnt, (FONTENUMPROCW) FontEnumProc, (LPARAM)&fnt, 0);
+		DeleteDC(hdc);
+	}
+	if (srv.szConsoleFont[0] == 0) {
+		lstrcpyW(srv.szConsoleFont, L"Lucida Console");
+		srv.nConFontWidth = 4; srv.nConFontHeight = 6;
+	}
+	if (srv.nConFontHeight<6) srv.nConFontHeight = 6;
+	if (srv.nConFontWidth==0 && srv.nConFontHeight==0) {
+		srv.nConFontWidth = 4; srv.nConFontHeight = 6;
+	} else if (srv.nConFontWidth==0) {
+		srv.nConFontWidth = srv.nConFontHeight * 2 / 3;
+	} else if (srv.nConFontHeight==0) {
+		srv.nConFontHeight = srv.nConFontWidth * 3 / 2;
+	}
+	if (srv.nConFontHeight<6 || srv.nConFontWidth <4) {
+		srv.nConFontWidth = 4; srv.nConFontHeight = 6;
+	}
+
+	//if (!srv.bDebuggerActive || gbAttachMode) {
+
+	if (ghLogSize) LogSize(NULL, ":SetConsoleFontSizeTo.before");
+	SetConsoleFontSizeTo(ghConWnd, srv.nConFontHeight, srv.nConFontWidth, srv.szConsoleFont);
+	if (ghLogSize) LogSize(NULL, ":SetConsoleFontSizeTo.after");
+
+	//}
+}
 
 // Создать необходимые события и нити
 int ServerInit()
@@ -47,6 +84,10 @@ int ServerInit()
 		srv.bReopenHandleAllowed = FALSE;
 	else
 		srv.bReopenHandleAllowed = TRUE;
+
+
+	// Шрифт в консоли нужно менять в самом начале, иначе могут быть проблемы с установкой размера консоли
+	ServerInitFont();
 
 
 	//2009-08-27 Перенес снизу
@@ -75,7 +116,6 @@ int ServerInit()
 
 	// Создать мэппинг для Colorer
 	CreateColorerHeader(); // ошибку не обрабатываем - не критическая
-
     
     //if (hKernel) {
     //    pfnGetConsoleKeyboardLayoutName = (FGetConsoleKeyboardLayoutName)GetProcAddress (hKernel, "GetConsoleKeyboardLayoutNameW");
@@ -340,37 +380,38 @@ int ServerInit()
     
 
 
-    // Размер шрифта и Lucida. Обязательно для серверного режима.
-    if (srv.szConsoleFont[0]) {
-        // Требуется проверить наличие такого шрифта!
-        LOGFONT fnt = {0};
-        lstrcpynW(fnt.lfFaceName, srv.szConsoleFont, LF_FACESIZE);
-        srv.szConsoleFont[0] = 0; // сразу сбросим. Если шрифт есть - имя будет скопировано в FontEnumProc
-        HDC hdc = GetDC(NULL);
-        EnumFontFamiliesEx(hdc, &fnt, (FONTENUMPROCW) FontEnumProc, (LPARAM)&fnt, 0);
-        DeleteDC(hdc);
-    }
-    if (srv.szConsoleFont[0] == 0) {
-        lstrcpyW(srv.szConsoleFont, L"Lucida Console");
-        srv.nConFontWidth = 4; srv.nConFontHeight = 6;
-    }
-    if (srv.nConFontHeight<6) srv.nConFontHeight = 6;
-    if (srv.nConFontWidth==0 && srv.nConFontHeight==0) {
-        srv.nConFontWidth = 4; srv.nConFontHeight = 6;
-    } else if (srv.nConFontWidth==0) {
-        srv.nConFontWidth = srv.nConFontHeight * 2 / 3;
-    } else if (srv.nConFontHeight==0) {
-        srv.nConFontHeight = srv.nConFontWidth * 3 / 2;
-    }
-    if (srv.nConFontHeight<6 || srv.nConFontWidth <4) {
-        srv.nConFontWidth = 4; srv.nConFontHeight = 6;
-    }
+    //// Размер шрифта и Lucida. Обязательно для серверного режима.
+    //if (srv.szConsoleFont[0]) {
+    //    // Требуется проверить наличие такого шрифта!
+    //    LOGFONT fnt = {0};
+    //    lstrcpynW(fnt.lfFaceName, srv.szConsoleFont, LF_FACESIZE);
+    //    srv.szConsoleFont[0] = 0; // сразу сбросим. Если шрифт есть - имя будет скопировано в FontEnumProc
+    //    HDC hdc = GetDC(NULL);
+    //    EnumFontFamiliesEx(hdc, &fnt, (FONTENUMPROCW) FontEnumProc, (LPARAM)&fnt, 0);
+    //    DeleteDC(hdc);
+    //}
+    //if (srv.szConsoleFont[0] == 0) {
+    //    lstrcpyW(srv.szConsoleFont, L"Lucida Console");
+    //    srv.nConFontWidth = 4; srv.nConFontHeight = 6;
+    //}
+    //if (srv.nConFontHeight<6) srv.nConFontHeight = 6;
+    //if (srv.nConFontWidth==0 && srv.nConFontHeight==0) {
+    //    srv.nConFontWidth = 4; srv.nConFontHeight = 6;
+    //} else if (srv.nConFontWidth==0) {
+    //    srv.nConFontWidth = srv.nConFontHeight * 2 / 3;
+    //} else if (srv.nConFontHeight==0) {
+    //    srv.nConFontHeight = srv.nConFontWidth * 3 / 2;
+    //}
+    //if (srv.nConFontHeight<6 || srv.nConFontWidth <4) {
+    //    srv.nConFontWidth = 4; srv.nConFontHeight = 6;
+    //}
     //if (srv.szConsoleFontFile[0])
     //  AddFontResourceEx(srv.szConsoleFontFile, FR_PRIVATE, NULL);
     if (!srv.bDebuggerActive || gbAttachMode) {
-	    if (ghLogSize) LogSize(NULL, ":SetConsoleFontSizeTo.before");
+		// Уже, сверху
+	    /*if (ghLogSize) LogSize(NULL, ":SetConsoleFontSizeTo.before");
 	    SetConsoleFontSizeTo(ghConWnd, srv.nConFontHeight, srv.nConFontWidth, srv.szConsoleFont);
-	    if (ghLogSize) LogSize(NULL, ":SetConsoleFontSizeTo.after");
+	    if (ghLogSize) LogSize(NULL, ":SetConsoleFontSizeTo.after");*/
     } else {
     	SetWindowPos(ghConWnd, HWND_TOPMOST, 0,0,0,0, SWP_NOSIZE|SWP_NOMOVE);
     }

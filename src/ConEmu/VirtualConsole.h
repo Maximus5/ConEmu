@@ -55,6 +55,7 @@ private:
 		bool isVisible;
 		bool isVisiblePrev;
 		bool isVisiblePrevFromInfo;
+		bool isPrevBackground;
 		short x;
 		short y;
 		COLORREF foreColor;
@@ -89,6 +90,8 @@ public:
 	//BYTE  m_ForegroundColors[0x100], m_BackgroundColors[0x100];
 	//HFONT mh_FontByIndex[0x100]; // содержит ссылки (не копии) на шрифты normal/bold/italic
 	HFONT mh_FontByIndex[MAX_FONT_STYLES]; // ссылки на Normal/Bold/Italic/Bold&Italic/...Underline
+	
+	bool  mb_LastFadeFlag;
 
 	//CONSOLE_SELECTION_INFO SelectionInfo;
 
@@ -110,7 +113,7 @@ public:
 	void BlitPictureTo(int inX, int inY, int inWidth, int inHeight);
 	bool CheckSelection(const CONSOLE_SELECTION_INFO& select, SHORT row, SHORT col);
 	//bool GetCharAttr(TCHAR ch, WORD atr, TCHAR& rch, BYTE& foreColorNum, BYTE& backColorNum, FONT* pFont);
-	void Paint(HDC hDc, RECT rcClient);
+	void Paint(HDC hPaintDc, RECT rcClient);
 	void UpdateInfo();
 	//void GetConsoleCursorInfo(CONSOLE_CURSOR_INFO *ci) { mp_RCon->GetConsoleCursorInfo(ci); };
 	//DWORD GetConsoleCP() { return mp_RCon->GetConsoleCP(); };

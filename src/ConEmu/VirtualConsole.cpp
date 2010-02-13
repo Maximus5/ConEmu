@@ -122,6 +122,7 @@ CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
     ZeroStruct(winSize); ZeroStruct(coord);
     TextLen = 0;
 	mb_RequiredForceUpdate = true;
+	mb_LastFadeFlag = false;
 
 	_ASSERTE(sizeof(mh_FontByIndex) == sizeof(gSet.mh_Font));
 	memmove(mh_FontByIndex, gSet.mh_Font, sizeof(mh_FontByIndex));
@@ -1886,6 +1887,16 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
         
     RECT rect;
     
+    bool bForeground = gConEmu.isMeForeground();
+    
+	if (!bForeground) {
+		dwSize = 100;
+        rect.left = pix.X; /*Cursor.x * nFontWidth;*/
+        rect.right = pix.X + nFontWidth; /*(Cursor.x+1) * nFontWidth;*/ //TODO: а ведь позици€ следующего символа известна!
+        rect.bottom = (pos.Y+1) * nFontHeight;
+        rect.top = (pos.Y * nFontHeight) /*+ 1*/;
+		
+	} else
     if (!gSet.isCursorV)
     {
         if (!gSet.isMonospace) {
@@ -1963,8 +1974,20 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
 		HBRUSH hBr = CreateSolidBrush(0xC0C0C0);
 		HBRUSH hOld = (HBRUSH)SelectObject ( hPaintDC, hBr );
 
-		BitBlt(hPaintDC, rect.left, rect.top, rect.right-rect.left, rect.bottom-rect.top, hDC, 0,0,
-			PATINVERT);
+		if (bForeground) {
+			BitBlt(hPaintDC, rect.left, rect.top, rect.right-rect.left, rect.bottom-rect.top, hDC, 0,0,
+				PATINVERT);
+		} else {
+			//  огда CE не в фокусе - можно просто пр€моугольник рисовать
+			BitBlt(hPaintDC, rect.left, rect.top, 1, rect.bottom-rect.top, hDC, 0,0,
+				PATINVERT);
+			BitBlt(hPaintDC, rect.left, rect.top, rect.right-rect.left, 1, hDC, 0,0,
+				PATINVERT);
+			BitBlt(hPaintDC, rect.right-1, rect.top, 1, rect.bottom-rect.top, hDC, 0,0,
+				PATINVERT);
+			BitBlt(hPaintDC, rect.left, rect.bottom-1, rect.right-rect.left, 1, hDC, 0,0,
+				PATINVERT);
+		}
 
 		SelectObject ( hPaintDC, hOld );
 		DeleteObject ( hBr );
@@ -1997,17 +2020,20 @@ void CVirtualConsole::UpdateCursor(bool& lRes)
     Cursor.isVisiblePrevFromInfo = cinf.bVisible;
 
     BOOL lbUpdateTick = FALSE;
-    bool bConActive = gConEmu.isActive(this) // а тут именно Active, т.к. курсор должен мигать в активной консоли
-        #ifndef _DEBUG
-        && gConEmu.isMeForeground()
-        #endif
-        ;
+    bool bForeground = gConEmu.isMeForeground();
+    bool bConActive = gConEmu.isActive(this); // а тут именно Active, т.к. курсор должен мигать в активной консоли
+    //if (bConActive) {
+    //	bForeground = gConEmu.isMeForeground();
+    //}
 
     // ≈сли курсор (в консоли) видим, и находитс€ в видимой области (при прокрутке)
     if (cinf.bVisible && isCursorValid)
     {
-		if (!gSet.isCursorBlink) {
+		if (!gSet.isCursorBlink || !bForeground) {
             Cursor.isVisible = true; // ¬идим всегда (даже в неактивной консоли), не мигает
+            if (Cursor.isPrevBackground == bForeground) {
+            	lRes = true;
+            }
 		} else {
             // —мена позиции курсора - его нужно обновить, если окно активно
             if ((Cursor.x != csbi.dwCursorPosition.X) || (Cursor.y != csbi.dwCursorPosition.Y)) 
@@ -2019,7 +2045,13 @@ void CVirtualConsole::UpdateCursor(bool& lRes)
             // Ќастало врем€ мигани€
             if ((GetTickCount() - Cursor.nLastBlink) > Cursor.nBlinkTime)
             {
-                Cursor.isVisible = bConActive && !Cursor.isVisible;
+            	if (Cursor.isPrevBackground && bForeground) {
+            		// после "неактивного" курсора - сразу рисовать активный, только потом - мигать
+            		Cursor.isVisible = true;
+            		lRes = true;
+            	} else {
+                	Cursor.isVisible = bConActive && !Cursor.isVisible;
+            	}
                 lbUpdateTick = TRUE;
             }
 		}
@@ -2033,6 +2065,9 @@ void CVirtualConsole::UpdateCursor(bool& lRes)
         lRes = true;
         lbUpdateTick = TRUE;
     }
+    
+    if (Cursor.isVisible)
+    	Cursor.isPrevBackground = !bForeground;
 
     // —охраним новое положение
     //Cursor.x = csbi.dwCursorPosition.X;
@@ -2073,11 +2108,11 @@ void CVirtualConsole::Free(LPVOID ptr)
 
 // hdc - это DC родительского окна (ghWnd)
 // rcClient - это место, куда нужно "положить" битмап. может быть произвольным!
-void CVirtualConsole::Paint(HDC hDc, RECT rcClient)
+void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
 {
     if (!ghWndDC)
         return;
-	_ASSERTE(hDc);
+	_ASSERTE(hPaintDc);
 	_ASSERTE(rcClient.left!=rcClient.right && rcClient.top!=rcClient.bottom);
 
 //#ifdef _DEBUG
@@ -2110,21 +2145,21 @@ void CVirtualConsole::Paint(HDC hDc, RECT rcClient)
         HBRUSH hBr = CreateSolidBrush(gSet.Colors[nBackColorIdx]);
         //RECT rcClient; GetClientRect(ghWndDC, &rcClient);
         //PAINTSTRUCT ps;
-        //HDC hDc = BeginPaint(ghWndDC, &ps);
+        //HDC hPaintDc = BeginPaint(ghWndDC, &ps);
         #ifndef SKIP_ALL_FILLRECT
-        FillRect(hDc, &rcClient, hBr);
+        FillRect(hPaintDc, &rcClient, hBr);
         #endif
-		HFONT hOldF = (HFONT)SelectObject(hDc, gSet.mh_Font[0]);
+		HFONT hOldF = (HFONT)SelectObject(hPaintDc, gSet.mh_Font[0]);
 		LPCWSTR pszStarting = L"Initializing ConEmu.";
 		if (this) {
 			if (mp_RCon)
 				pszStarting = mp_RCon->GetConStatus();
 		}
 		UINT nFlags = ETO_CLIPPED;
-		SetTextColor(hDc, gSet.Colors[7]);
-		SetBkColor(hDc, gSet.Colors[0]);
-		ExtTextOut(hDc, rcClient.left, rcClient.top, nFlags, &rcClient, pszStarting, wcslen(pszStarting), 0);
-		SelectObject(hDc, hOldF);
+		SetTextColor(hPaintDc, gSet.Colors[7]);
+		SetBkColor(hPaintDc, gSet.Colors[0]);
+		ExtTextOut(hPaintDc, rcClient.left, rcClient.top, nFlags, &rcClient, pszStarting, wcslen(pszStarting), 0);
+		SelectObject(hPaintDc, hOldF);
         DeleteObject(hBr);
         //EndPaint(ghWndDC, &ps);
         return;
@@ -2169,7 +2204,7 @@ void CVirtualConsole::Paint(HDC hDc, RECT rcClient)
         if (!hBr) hBr = CreateSolidBrush(gSet.Colors[mn_BackColorIdx]);
         RECT rcFill = MakeRect(client.left+Width, client.top, client.right, client.bottom);
         #ifndef SKIP_ALL_FILLRECT
-        FillRect(hDc, &rcFill, hBr);
+        FillRect(hPaintDc, &rcFill, hBr);
         #endif
         client.right = client.left+Width;
     }
@@ -2177,7 +2212,7 @@ void CVirtualConsole::Paint(HDC hDc, RECT rcClient)
         if (!hBr) hBr = CreateSolidBrush(gSet.Colors[mn_BackColorIdx]);
         RECT rcFill = MakeRect(client.left, client.top+Height, client.right, client.bottom);
         #ifndef SKIP_ALL_FILLRECT
-        FillRect(hDc, &rcFill, hBr);
+        FillRect(hPaintDc, &rcFill, hBr);
         #endif
         client.bottom = client.top+Height;
     }
@@ -2189,13 +2224,36 @@ void CVirtualConsole::Paint(HDC hDc, RECT rcClient)
         if (S.Lock(&csDC, 200)) // но по таймауту, чтобы не повисли ненароком
             mb_PaintLocked = lbPaintLocked = TRUE;
     }
+    
+    bool bFading = false;
 
     // —обственно, копирование готового bitmap
     if (!gbNoDblBuffer) {
         // ќбычный режим
 		if (gSet.isAdvLogging>=3) mp_RCon->LogString("Blitting to Display");
 
-        BitBlt(hDc, client.left, client.top, client.right-client.left, client.bottom-client.top, hDC, 0, 0, SRCCOPY);
+		if (gSet.isFadeInactive && !gConEmu.isMeForeground()) {
+			// Fade-effect когда CE не в фокусе
+			DWORD dwFadeColor = gSet.nFadeInactiveMask; //0xC0C0C0;
+			// пробовал средний между Colors[7] & Colors[8] - некрасиво
+			
+			bFading = true;
+			
+			HBRUSH hBr = CreateSolidBrush(dwFadeColor);
+			HBRUSH hOld = (HBRUSH)SelectObject ( hPaintDc, hBr );
+			DWORD dwEffect = MERGECOPY;
+
+			BitBlt(hPaintDc, client.left, client.top, client.right-client.left, client.bottom-client.top, hDC, 0, 0,
+				dwEffect);
+
+			SelectObject ( hPaintDc, hOld );
+			DeleteObject ( hBr );
+				
+		} else {
+        	BitBlt(hPaintDc, client.left, client.top, client.right-client.left, client.bottom-client.top, hDC, 0, 0,
+        		SRCCOPY);
+        }
+        
     } else {
         GdiSetBatchLimit(1); // отключить буферизацию вывода дл€ текущей нити
 
@@ -2203,8 +2261,10 @@ void CVirtualConsole::Paint(HDC hDc, RECT rcClient)
         // –исуем сразу на канвасе, без буферизации
 		// Ёто дл€ отладки отрисовки, поэтому недопустимы табы и прочее
 		_ASSERTE(gSet.isTabs == 0);
-        Update(true, &hDc);
+        Update(true, &hPaintDc);
     }
+    
+    mb_LastFadeFlag = bFading;
 
     S.Unlock();
     
@@ -2222,7 +2282,7 @@ void CVirtualConsole::Paint(HDC hDc, RECT rcClient)
         {
 			if (mpsz_ConChar && mpsz_ConChar)
 			{
-				HFONT hOldFont = (HFONT)SelectObject(hDc, gSet.mh_Font[0]);
+				HFONT hOldFont = (HFONT)SelectObject(hPaintDc, gSet.mh_Font[0]);
 
 				MSectionLock SCON; SCON.Lock(&csCON);
 
@@ -2240,11 +2300,11 @@ void CVirtualConsole::Paint(HDC hDc, RECT rcClient)
 					Cursor.bgColor = mpn_ConAttrEx[CurChar].crBackColor;
 				}
 
-				UpdateCursorDraw(hDc, rcClient, csbi.dwCursorPosition, cinf.dwSize);
+				UpdateCursorDraw(hPaintDc, rcClient, csbi.dwCursorPosition, cinf.dwSize);
 
 				Cursor.isVisiblePrev = Cursor.isVisible;
 
-				SelectObject(hDc, hOldFont);
+				SelectObject(hPaintDc, hOldFont);
 
 				SCON.Unlock();
 			}
@@ -2255,9 +2315,9 @@ void CVirtualConsole::Paint(HDC hDc, RECT rcClient)
 		HWND hConWnd = mp_RCon->hConWnd;
 		RECT rcCon; GetWindowRect(hConWnd, &rcCon);
 		MapWindowPoints(NULL, ghWndDC, (LPPOINT)&rcCon, 2);
-		SelectObject(hDc, GetStockObject(WHITE_PEN));
-		SelectObject(hDc, GetStockObject(HOLLOW_BRUSH));
-		Rectangle(hDc, rcCon.left, rcCon.top, rcCon.right, rcCon.bottom);
+		SelectObject(hPaintDc, GetStockObject(WHITE_PEN));
+		SelectObject(hPaintDc, GetStockObject(HOLLOW_BRUSH));
+		Rectangle(hPaintDc, rcCon.left, rcCon.top, rcCon.right, rcCon.bottom);
 	}
 #endif
 

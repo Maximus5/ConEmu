@@ -665,6 +665,7 @@ void SetWindowA(int nTab)
 		InfoA->AdvControl(InfoA->ModuleNumber, ACTL_COMMIT, 0);
 }
 
+// Warning, напрямую НЕ вызывать. Пользоваться "общей" PostMacro
 void PostMacroA(char* asMacro)
 {
 	if (!InfoA || !InfoA->AdvControl) return;

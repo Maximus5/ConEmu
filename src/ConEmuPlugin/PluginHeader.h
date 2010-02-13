@@ -65,8 +65,8 @@ extern int lastModifiedStateW;
 //extern HANDLE hEventCmd[MAXCMDCOUNT];
 extern HANDLE hThread;
 //extern WCHAR gcPlugKey;
-WARNING("Убрать, заменить ghConIn на GetStdHandle()"); // Иначе в Win7 будет буфер разрушаться
-extern HANDLE ghConIn;
+//WARNING("Убрать, заменить ghConIn на GetStdHandle()"); // Иначе в Win7 будет буфер разрушаться
+//extern HANDLE ghConIn;
 extern BOOL gbNeedPostTabSend;
 extern HANDLE ghServerTerminateEvent;
 extern CESERVER_REQ_CONINFO_HDR *gpConsoleInfo;

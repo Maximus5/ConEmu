@@ -45,6 +45,7 @@ static DWORD   nMainThreadId = 0;
 
 extern CESERVER_REQ_CONINFO_HDR *gpConsoleInfo;
 extern HWND ConEmuHwnd; // Содержит хэндл окна отрисовки. Это ДОЧЕРНЕЕ окно.
+extern HWND FarHwnd;
 extern BOOL gbFARuseASCIIsort;
 extern DWORD gdwServerPID;
 
@@ -77,10 +78,14 @@ static BOOL WINAPI OnReadConsoleInputW(HANDLE hConsoleInput, PINPUT_RECORD lpBuf
 static HANDLE WINAPI OnCreateConsoleScreenBuffer(DWORD dwDesiredAccess, DWORD dwShareMode, const SECURITY_ATTRIBUTES *lpSecurityAttributes, DWORD dwFlags, LPVOID lpScreenBufferData);
 static BOOL WINAPI OnAllocConsole(void);
 static BOOL WINAPI OnFreeConsole(void);
+static HWND WINAPI OnGetConsoleWindow(void); // в фаре дофига и больше вызовов этой функции
 
 
 #define MAX_HOOKED_PROCS 50
 static HookItem Hooks[MAX_HOOKED_PROCS] = {
+	/* ***** MOST CALLED ***** */
+//	{(void*)OnGetConsoleWindow,     "GetConsoleWindow",     kernel32}, -- пока смысла нет. инжекты еще не на старте ставятся
+	/* ************************ */
     {(void*)OnLoadLibraryA,			"LoadLibraryA",			kernel32},
 	{(void*)OnLoadLibraryW,			"LoadLibraryW",			kernel32},
     {(void*)OnLoadLibraryExA,		"LoadLibraryExA",		kernel32},
@@ -1339,4 +1344,20 @@ static BOOL WINAPI OnFreeConsole(void)
 	}
 
 	return lbRc;
+}
+
+typedef HWND (WINAPI* OnGetConsoleWindow_t)(void);
+static HWND WINAPI OnGetConsoleWindow(void)
+{
+	ORIGINALFAST(GetConsoleWindow);
+
+	if (ConEmuHwnd && FarHwnd) {
+		return FarHwnd;
+	}
+
+	HWND h;
+
+	h = F(GetConsoleWindow)();
+
+	return h;
 }
