@@ -71,8 +71,8 @@ public:
 	//wchar_t FontFile[MAX_PATH];
 	LOGFONT ConsoleFont;
     COLORREF Colors[0x20];
-	bool isColorKey;
-	COLORREF ColorKey;
+	bool isUserScreenTransparent;
+	//COLORREF ColorKey;
     bool isExtendColors;
     char nExtendColor;
     bool isExtendFonts, isTrueColorer;
@@ -114,7 +114,7 @@ public:
 	TODO("Удалить isHideCaptionAlwaysLoad, если Rgn позволит");
     bool isFullScreen, isHideCaption, isHideCaptionAlways/*, isHideCaptionAlwaysLoad*/;
 	BYTE nHideCaptionAlwaysFrame;
-	DWORD nHideCaptionAlwaysDelay;
+	DWORD nHideCaptionAlwaysDelay, nHideCaptionAlwaysDisappear;
     bool isAlwaysOnTop, isDesktopMode;
     char isFixFarBorders;
 	bool isMouseSkipActivation, isMouseSkipMoving;
@@ -133,6 +133,7 @@ public:
     bool isCursorV;
 	bool isCursorBlink;
     bool isCursorColor;
+	bool isCursorBlockInactive;
     char isRClickSendKey;
     wchar_t *sRClickMacro;
     bool isSentAltEnter;
@@ -219,6 +220,7 @@ public:
     static INT_PTR CALLBACK extOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
     static INT_PTR CALLBACK colorOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
     static INT_PTR CALLBACK infoOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
+	static INT_PTR CALLBACK hideOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
     void LoadSettings();
     void InitSettings();
     BOOL SaveSettings();
@@ -260,6 +262,8 @@ protected:
     LRESULT OnColorComboBox(WPARAM wParam, LPARAM lParam);
     LRESULT OnTab(LPNMHDR phdr);
 private:
+	bool GetColorById(WORD nID, COLORREF* color);
+	bool SetColorById(WORD nID, COLORREF color);
     COLORREF acrCustClr[16]; // array of custom colors
     BOOL mb_IgnoreEditChanged, mb_IgnoreTtfChange, mb_CharSetWasSet;
     i64 mn_Freq;
@@ -268,6 +272,7 @@ private:
     i64 mn_CounterMax[tPerfInterval-gbPerformance];
     DWORD mn_CounterTick[tPerfInterval-gbPerformance];
     HWND hwndTip, hwndBalloon;
+	void ShowFontErrorTip(LPCTSTR asInfo);
 	TOOLINFO tiBalloon;
     void RegisterTipsFor(HWND hChildDlg);
     HFONT CreateFontIndirectMy(LOGFONT *inFont);

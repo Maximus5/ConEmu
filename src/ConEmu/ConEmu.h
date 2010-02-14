@@ -153,6 +153,8 @@ public:
 	bool gbPostUpdateWindowSize;
 	HWND hPictureView; bool bPicViewSlideShow; DWORD dwLastSlideShowTick; RECT mrc_WndPosOnPicView;
 	HWND mh_ShellWindow; // Окно Progman для Desktop режима
+	DWORD mn_ShellWindowPID;
+	BOOL mb_FocusOnDesktop;
 	//bool gb_ConsoleSelectMode;
 	//bool setParent, setParent2;
 	//BOOL mb_InClose;
@@ -186,6 +188,7 @@ protected:
 	BOOL mb_WaitCursor, mb_InTrackSysMenu;
 	BOOL mb_LastRgnWasNull;
 	BOOL mb_CaptionWasRestored; // заголовок восстановлен на время ресайза
+	BOOL mb_ForceShowFrame;     // восстановить заголовок по таймауту
 	//wchar_t *mpsz_RecreateCmd;
 	ITaskbarList3 *mp_TaskBar3;
 	ITaskbarList2 *mp_TaskBar2;
@@ -258,6 +261,7 @@ public:
 	void AutoSizeFont(const RECT &rFrom, enum ConEmuRect tFrom);
 	static RECT CalcMargins(enum ConEmuMargins mg);
 	static RECT CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmuRect tFrom, RECT* prDC=NULL, enum ConEmuMargins tTabAction=CEM_TAB);
+	void CheckFocus();
 	enum DragPanelBorder CheckPanelDrag(COORD crCon);
 	bool ConActivate(int nCon);
 	bool ConActivateNext(BOOL abNext);
@@ -291,7 +295,7 @@ public:
 	bool isLBDown();
 	bool isMainThread();
 	bool isMeForeground();
-	bool isMouseOverFrame();
+	bool isMouseOverFrame(bool abReal=false);
 	bool isNtvdm();
 	bool isPictureView();
 	bool isSizing();

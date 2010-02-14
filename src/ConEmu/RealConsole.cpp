@@ -36,7 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/farcolor.hpp"
 
 #define DEBUGSTRDRAW(s) //DEBUGSTR(s)
-#define DEBUGSTRINPUT(s) DEBUGSTR(s)
+#define DEBUGSTRINPUT(s) //DEBUGSTR(s)
 #define DEBUGSTRSIZE(s) //DEBUGSTR(s)
 #define DEBUGSTRPROC(s) //DEBUGSTR(s)
 #define DEBUGSTRCMD(s) //DEBUGSTR(s)
@@ -4805,10 +4805,10 @@ void CRealConsole::PrepareTransparent(wchar_t* pChar, CharAttr* pAttr, int nWidt
 	if (!mp_ConsoleInfo->bFarPanelAllowed)
 		return;
 	//if (nCurFarPID && pRCon->mn_LastFarReadIdx != pRCon->mp_ConsoleInfo->nFarReadIdx) {
-	if (isPressed(VK_CONTROL) && isPressed(VK_SHIFT) && isPressed(VK_MENU))
-		return;
+	//if (isPressed(VK_CONTROL) && isPressed(VK_SHIFT) && isPressed(VK_MENU))
+	//	return;
 	
-	COLORREF crColorKey = gSet.ColorKey;
+	//COLORREF crColorKey = gSet.ColorKey;
 	// реальный цвет, заданный в фаре
 	int nUserBackIdx = (mp_ConsoleInfo->nFarColors[COL_COMMANDLINEUSERSCREEN] & 0xF0) >> 4;
 	COLORREF crUserBack = gSet.Colors[nUserBackIdx];
@@ -4924,7 +4924,7 @@ void CRealConsole::PrepareTransparent(wchar_t* pChar, CharAttr* pAttr, int nWidt
 	}
 
 	// 0x0 должен быть непрозрачным
-	pAttr[0].bDialog = TRUE;
+	//pAttr[0].bDialog = TRUE;
 
 	pszDst = pChar;
 	pnDst = pAttr;
@@ -4957,8 +4957,8 @@ void CRealConsole::PrepareTransparent(wchar_t* pChar, CharAttr* pAttr, int nWidt
 					if (pnDst[nX].crBackColor == crUserBack) {
 						// помечаем прозрачным
 						pnDst[nX].bTransparent = TRUE;
-						pnDst[nX].crBackColor = crColorKey;
-						pszDst[nX] = L' ';
+						//pnDst[nX].crBackColor = crColorKey;
+						//pszDst[nX] = L' ';
 					}
 				}
 				nX++; nShift++;
@@ -4967,11 +4967,23 @@ void CRealConsole::PrepareTransparent(wchar_t* pChar, CharAttr* pAttr, int nWidt
 		pszDst += nWidth;
 		pnDst += nWidth;
 	}
+
+	// Некрасиво...
+	//// 0x0 должен быть непрозрачным
+	//pAttr[0].bTransparent = FALSE;
+}
+
+BOOL CRealConsole::IsConsoleDataChanged()
+{
+	if (!this) return FALSE;
+	return con.bConsoleDataChanged;
 }
 
 // nWidth и nHeight это размеры, которые хочет получить VCon (оно могло еще не среагировать на изменения?
-void CRealConsole::GetData(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight)
+void CRealConsole::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight)
 {
+	if (!this) return;
+
     //DWORD cbDstBufSize = nWidth * nHeight * 2;
     DWORD cwDstBufSize = nWidth * nHeight;
 
@@ -4988,12 +5000,12 @@ void CRealConsole::GetData(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHei
     BYTE nFontNormalColor = gSet.nFontNormalColor;
     BYTE nFontBoldColor = gSet.nFontBoldColor;
     BYTE nFontItalicColor = gSet.nFontItalicColor;
-    BOOL bUseColorKey = gSet.isColorKey  // Должен быть включен в настройке
-    		&& isFar(TRUE/*abPluginRequired*/) // в фаре загружен плагин (чтобы с цветами не проколоться)
-    		&& (mp_tabs && mn_tabsCount>0 && mp_tabs->Current) // Текущее окно - панели
-    		&& !(mb_LeftPanel && mb_RightPanel) // и хотя бы одна панель погашена
-			&& (!con.m_ci.bVisible || con.m_ci.dwSize<30) // и сейчас НЕ включен режим граббера
-			;
+	//BOOL bUseColorKey = gSet.isColorKey  // Должен быть включен в настройке
+	//	&& isFar(TRUE/*abPluginRequired*/) // в фаре загружен плагин (чтобы с цветами не проколоться)
+	//	&& (mp_tabs && mn_tabsCount>0 && mp_tabs->Current) // Текущее окно - панели
+	//	&& !(mb_LeftPanel && mb_RightPanel) // и хотя бы одна панель погашена
+	//	&& (!con.m_ci.bVisible || con.m_ci.dwSize<30) // и сейчас НЕ включен режим граббера
+	//	;
     CharAttr lca, lcaTable[0x100]; // crForeColor, crBackColor, nFontIndex, nForeIdx, nBackIdx, crOrigForeColor, crOrigBackColor
         
     //COLORREF lcrForegroundColors[0x100], lcrBackgroundColors[0x100];
@@ -5147,8 +5159,8 @@ void CRealConsole::GetData(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHei
         }
 
 		// Подготовить данные для Transparent
-		if (bUseColorKey)
-			PrepareTransparent(pChar, pAttr, nWidth, nHeight);
+		//if (bUseColorKey)
+		PrepareTransparent(pChar, pAttr, nWidth, nHeight);
     }
     // Если требуется показать "статус" - принудительно перебиваем первую видимую строку возвращаемого буфера
 	if (ms_ConStatus[0]) {
@@ -7561,8 +7573,10 @@ void CRealConsole::ApplyConsoleInfo()
 
 	SetEvent(mh_ApplyFinished);
 
-	if (lbChanged)
-		mb_DataChanged = TRUE;
+	if (lbChanged) {
+		mb_DataChanged = TRUE; // Переменная используется внутри класса
+		con.bConsoleDataChanged = TRUE; // А эта - при вызовах из CVirtualConsole
+	}
 }
 
 BOOL CRealConsole::LoadDataFromMap(DWORD CharCount)

@@ -19,6 +19,8 @@
 #define IDD_DIALOG2                     152
 #define IDD_DIALOG3                     153
 #define IDD_DIALOG4                     154
+#define IDD_DIALOG5                     200
+#define IDD_DIALOG6                     201
 #define c0                              1000
 #define c1                              1001
 #define c2                              1002
@@ -213,7 +215,7 @@
 #define cbTryToCenter                   1570
 #define cbDesktopMode                   1571
 #define cbAlwaysOnTop                   1572
-#define cbTransparentColorKey           1573
+#define cbUserScreenTransparent         1573
 #define cbTransparent                   1574
 #define tBgImageColors                  1575
 #define cbExtendFonts                   1576
@@ -221,14 +223,29 @@
 #define cbTrueColorer                   1578
 #define cbDropUnlocked                  1579
 #define cbDropUseBCopy                  1580
+#define cbFadeInactive                  1581
+#define cbHostWin                       1582
+#define cbHostShift                     1583
+#define cbHostAlt                       1584
+#define cbHostCtrl                      1585
+#define cbBlockInactiveCursor           1586
+#define bHideCaptionSettings            1588
+#define tHideCaptionAlwaysFrame         1589
+#define bFarHourglass                   1589
+#define tHideCaptionAlwaysDelay         1590
+#define bRClick                         1590
+#define tHideCaptionAlwaysDissapear     1591
+#define bMultiConHotkeys                1592
+#define cbMultiConKeybHooks             1593
+#define bTabTemplates                   1594
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        200
+#define _APS_NEXT_RESOURCE_VALUE        202
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1581
+#define _APS_NEXT_CONTROL_VALUE         1595
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

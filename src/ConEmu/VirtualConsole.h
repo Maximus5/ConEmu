@@ -77,6 +77,9 @@ private:
 	#ifdef _DEBUG
 	BOOL    mb_DebugDumpDC;
 	#endif
+	BOOL    mb_ConDataChanged;
+	HRGN    mh_TransparentRgn;
+	bool InitDC(bool abNoDc, bool abNoWndResize);
 public:
 	bool isEditor, isViewer, isFilePanel;
 	BYTE attrBackLast;
@@ -99,7 +102,6 @@ public:
 	~CVirtualConsole();
 	static CVirtualConsole* CreateVCon(RConStartArgs *args);
 
-	bool InitDC(bool abNoDc, bool abNoWndResize);
 	void DumpConsole();
 	BOOL Dump(LPCWSTR asFile);
 	bool Update(bool isForce = false, HDC *ahDc=NULL);
@@ -123,6 +125,7 @@ public:
 	RECT GetRect();
 	void OnFontChanged();
 	COORD ClientToConsole(LONG x, LONG y);
+	POINT ConsoleToClient(LONG x, LONG y);
 	void OnConsoleSizeChanged();
 	static void ClearPartBrushes();
 	HRGN GetExclusionRgn(bool abTestOnly=false);
@@ -160,6 +163,7 @@ protected:
 	void UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, UINT dwSize);
 	bool UpdatePrepare(bool isForce, HDC *ahDc, MSectionLock *pSDC);
 	void UpdateText(bool isForce); //, bool updateText, bool updateCursor);
+	HRGN GetTransparentRgn();
 	WORD CharWidth(TCHAR ch);
 	void CharABC(TCHAR ch, ABC *abc);
 	bool CheckChangedTextAttr();

@@ -139,6 +139,9 @@ CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
 	nFontCharSet = gSet.FontCharSet();
 	nLastNormalBack = 255;
 
+	mb_ConDataChanged = FALSE;
+	mh_TransparentRgn = NULL;
+
 #ifdef _DEBUG
     mn_BackColorIdx = 2;
 #else
@@ -266,6 +269,11 @@ CVirtualConsole::~CVirtualConsole()
     
     //DeleteCriticalSection(&csDC);
     //DeleteCriticalSection(&csCON);
+
+	if (mh_TransparentRgn) {
+		DeleteObject(mh_TransparentRgn);
+		mh_TransparentRgn = NULL;
+	}
 
     if (mp_RCon) {
         delete mp_RCon;
@@ -988,6 +996,71 @@ bool CVirtualConsole::Update(bool isForce, HDC *ahDc)
     return lRes;
 }
 
+HRGN CVirtualConsole::GetTransparentRgn()
+{
+	if (mb_ConDataChanged) {
+		mb_ConDataChanged = FALSE;
+		if (mh_TransparentRgn) { DeleteObject(mh_TransparentRgn); mh_TransparentRgn = NULL; }
+
+		// (пере)Создать регион
+		if (mpsz_ConChar && mpn_ConAttrEx && TextWidth && TextHeight) {
+			MSectionLock SCON; SCON.Lock(&csCON);
+
+			CharAttr* pnAttr = mpn_ConAttrEx;
+
+			int nFontHeight = gSet.FontHeight();
+			POINT *lpAllPoints = (POINT*)calloc(TextWidth*TextHeight*4,sizeof(POINT));
+			INT   *lpAllCounts = (INT*)calloc(TextWidth*TextHeight,sizeof(INT));
+			int    nRectCount = 0;
+
+			if (lpAllPoints && lpAllCounts)
+			{
+				POINT *lpPoints = lpAllPoints;
+				INT   *lpCounts = lpAllCounts;
+
+				for (uint nY = 0; nY < TextHeight; nY++) {
+					uint nX = 0;
+					int nYPix1 = nY * nFontHeight;
+
+					while (nX < TextWidth) {
+						// Найти первый прозрачный cell
+						while (nX < TextWidth && !pnAttr[nX].bTransparent)
+							nX++;
+						if (nX >= TextWidth)
+							break;
+						// Найти конец прозрачного блока
+						uint nTranStart = nX;
+						while (++nX < TextWidth && pnAttr[nX].bTransparent)
+							;
+						// Сформировать соответствующий Rect
+						int nXPix = 0;
+						nRectCount++;
+						*(lpCounts++) = 4;
+						lpPoints[0] = ConsoleToClient(nTranStart, nY);
+						lpPoints[1] = ConsoleToClient(nX, nY);
+							// x - 1?
+							//if (lpPoints[1].x > lpPoints[0].x) lpPoints[1].x--;
+						lpPoints[2] = lpPoints[1]; lpPoints[2].y += nFontHeight;
+						lpPoints[3] = lpPoints[0]; lpPoints[3].y = lpPoints[2].y;
+						lpPoints += 4;
+
+						nX++;
+					}
+					pnAttr += TextWidth;
+				}
+
+				if (nRectCount)
+					mh_TransparentRgn = CreatePolyPolygonRgn(lpAllPoints, lpAllCounts, nRectCount, WINDING);
+
+				free(lpAllCounts);
+				free(lpAllPoints);				
+			}
+		}
+	}
+
+	return mh_TransparentRgn;
+}
+
 bool CVirtualConsole::UpdatePrepare(bool isForce, HDC *ahDc, MSectionLock *pSDC)
 {
     MSectionLock SCON; SCON.Lock(&csCON);
@@ -1055,6 +1128,9 @@ bool CVirtualConsole::UpdatePrepare(bool isForce, HDC *ahDc, MSectionLock *pSDC)
             pSDC->Lock(&csDC, TRUE, 200); // но по таймауту, чтобы не повисли ненароком
         if (!InitDC(ahDc!=NULL && !isForce/*abNoDc*/, false/*abNoWndResize*/))
             return false;
+
+		isForce = true; // После сброса буферов и DC - необходим полный refresh...
+
 		#ifdef _DEBUG
 		if (TextWidth == 80 && !mp_RCon->isNtvdm()) {
 			TextWidth = TextWidth;
@@ -1080,7 +1156,11 @@ bool CVirtualConsole::UpdatePrepare(bool isForce, HDC *ahDc, MSectionLock *pSDC)
     coord.X = csbi.srWindow.Left; coord.Y = csbi.srWindow.Top;
 
     // скопировать данные из состояния консоли В mpn_ConAttrEx/mpsz_ConChar
-    mp_RCon->GetData(mpsz_ConChar, mpn_ConAttrEx, TextWidth, TextHeight); //TextLen*2);
+	BOOL bConDataChanged = isForce || mp_RCon->IsConsoleDataChanged();
+	if (bConDataChanged) {
+		mb_ConDataChanged = TRUE; // В FALSE - НЕ сбрасывать
+		mp_RCon->GetConsoleData(mpsz_ConChar, mpn_ConAttrEx, TextWidth, TextHeight); //TextLen*2);
+	}
 
     HEAPVAL
  
@@ -1889,7 +1969,7 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
     
     bool bForeground = gConEmu.isMeForeground();
     
-	if (!bForeground) {
+	if (!bForeground && gSet.isCursorBlockInactive) {
 		dwSize = 100;
         rect.left = pix.X; /*Cursor.x * nFontWidth;*/
         rect.right = pix.X + nFontWidth; /*(Cursor.x+1) * nFontWidth;*/ //TODO: а ведь позиция следующего символа известна!
@@ -1974,7 +2054,7 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
 		HBRUSH hBr = CreateSolidBrush(0xC0C0C0);
 		HBRUSH hOld = (HBRUSH)SelectObject ( hPaintDC, hBr );
 
-		if (bForeground) {
+		if (bForeground || !gSet.isCursorBlockInactive) {
 			BitBlt(hPaintDC, rect.left, rect.top, rect.right-rect.left, rect.bottom-rect.top, hDC, 0,0,
 				PATINVERT);
 		} else {
@@ -2253,6 +2333,9 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
         	BitBlt(hPaintDc, client.left, client.top, client.right-client.left, client.bottom-client.top, hDC, 0, 0,
         		SRCCOPY);
         }
+
+		if (gSet.isUserScreenTransparent)
+			gConEmu.UpdateWindowRgn();
         
     } else {
         GdiSetBatchLimit(1); // отключить буферизацию вывода для текущей нити
@@ -2412,19 +2495,48 @@ void CVirtualConsole::OnConsoleSizeChanged()
 	mb_InPaintCall = lbLast;
 }
 
+POINT CVirtualConsole::ConsoleToClient(LONG x, LONG y)
+{
+	POINT pt = {0,0};
+
+	if (!this) {
+		pt.y = y*gSet.FontHeight();
+		pt.x = x*gSet.FontWidth();
+		return pt;
+	}
+
+	pt.y = y*nFontHeight;
+	if (x>0) {
+		if (ConCharX && y >= 0 && y < (int)TextHeight && x < (int)TextWidth) {
+			pt.x = ConCharX[y*TextWidth + x-1];
+		} else {
+			pt.x = x*nFontWidth;
+		}
+	}
+
+	return pt;
+}
+
 // Функция живет здесь, а не в gSet, т.к. здесь мы может более точно опеределить знакоместо
 COORD CVirtualConsole::ClientToConsole(LONG x, LONG y)
 {
-    TODO("X координаты нам известны, так что можно бы более корректно позицию определять...");
+	COORD cr = {0,0};
+
+	if (!this) {
+		cr.Y = y/gSet.FontHeight();
+		cr.X = x/gSet.FontWidth();
+		return cr;
+	}
+
     _ASSERTE(nFontWidth!=0 && nFontHeight!=0);
-    COORD cr = {0,0};
+    
     // Сначала приблизительный пересчет по размерам шрифта
     if (nFontHeight)
         cr.Y = y/nFontHeight;
     if (nFontWidth)
         cr.X = x/nFontWidth;
     // А теперь, если возможно, уточним X координату
-    if (this && x > 0) {
+    if (x > 0) {
 		x++; // иначе сбивается на один пиксел влево
     	if (ConCharX && cr.Y >= 0 && cr.Y < (int)TextHeight) {
     		DWORD* ConCharXLine = ConCharX + cr.Y * TextWidth;
@@ -2606,6 +2718,12 @@ BOOL CVirtualConsole::FindChanges(int &j, int &end, const wchar_t* ConCharLine, 
 
 HRGN CVirtualConsole::GetExclusionRgn(bool abTestOnly/*=false*/)
 {
-	TODO("Скрытие 'прозрачных' участков консоли");
-	return NULL;
+	if (!gSet.isUserScreenTransparent)
+		return NULL;
+
+	// Возвращает mh_TransparentRgn
+	HRGN hRgn = GetTransparentRgn();
+	if (abTestOnly && hRgn)
+		return (HRGN)1;
+	return hRgn;
 }

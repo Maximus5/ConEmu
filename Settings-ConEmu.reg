@@ -128,8 +128,10 @@ REGEDIT4
 ;; While caption and frame are hidden, ConEmu may keep small part
 ;; of frame (in pixels) around console part. Default is 1 pixel.
 ;"HideCaptionAlwaysFrame"=hex:01
-;; Delay in milliseconds, for Caption and Frame appearing
+;; Delay in milliseconds, for Caption and Frame appearance
 ;"HideCaptionAlwaysDelay"=dword:000007d0
+;; Delay in milliseconds, for Caption and Frame disappearance
+;"HideCaptionAlwaysDisappear"=dword:000007d0
 
 
 ;; Auto minimize to the Tray
@@ -276,7 +278,7 @@ REGEDIT4
 "FadeInactive"=hex:01
 ;; Fading parameter (RGB value). Subject to fade are colors, which
 ;; are brighter than this parameter.
-"FadeInactiveMask"=dword:00e0e0e0
+"FadeInactiveMask"=dword:00d0d0d0
 
 
 ;; Enable Colorer TrueMod support

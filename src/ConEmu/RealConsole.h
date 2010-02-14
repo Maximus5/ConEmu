@@ -239,7 +239,8 @@ public:
     BOOL isDetached();
     BOOL AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID);
     BOOL RecreateProcess(RConStartArgs *args);
-    void GetData(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight);
+    void GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight);
+	BOOL IsConsoleDataChanged();
 	void PrepareTransparent(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight);
 	void DetectDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int nFromX, int nFromY, int *pnMostRight=NULL, int *pnMostBottom=NULL);
 	void MarkDialog(CharAttr* pAttr, int nWidth, int nHeight, int nX1, int nY1, int nX2, int nY2, BOOL bMarkBorder = FALSE);
@@ -352,6 +353,7 @@ private:
         COORD crRBtnDrag;
 		BOOL bInSetSize; HANDLE hInSetSize;
 		int DefaultBufferHeight;
+		BOOL bConsoleDataChanged;
     } con;
     // 
     MSection csPRC; //DWORD ncsTPRC;
