@@ -148,6 +148,8 @@ public:
 		
 		// ѕропустить клик мышкой (окно было неактивно)
 		UINT nSkipEvents[2]; UINT nReplaceDblClk;
+		// не пропускать следующий клик в консоль!
+		BOOL bForceSkipActivation;
 	} mouse;
 	bool isPiewUpdate;
 	bool gbPostUpdateWindowSize;
@@ -261,7 +263,7 @@ public:
 	void AutoSizeFont(const RECT &rFrom, enum ConEmuRect tFrom);
 	static RECT CalcMargins(enum ConEmuMargins mg);
 	static RECT CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmuRect tFrom, RECT* prDC=NULL, enum ConEmuMargins tTabAction=CEM_TAB);
-	void CheckFocus();
+	void CheckFocus(LPCWSTR asFrom);
 	enum DragPanelBorder CheckPanelDrag(COORD crCon);
 	bool ConActivate(int nCon);
 	bool ConActivateNext(BOOL abNext);

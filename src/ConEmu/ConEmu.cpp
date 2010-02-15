@@ -48,7 +48,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRPANEL(s) //DEBUGSTR(s)
 #define DEBUGSTRPANEL2(s) //DEBUGSTR(s)
 #define DEBUGSTRFOCUS(s) //DEBUGSTR(s)
-#define DEBUGSTRFOREGROUND(s) DEBUGSTR(s)
+#define DEBUGSTRFOREGROUND(s) //DEBUGSTR(s)
 
 #define PROCESS_WAIT_START_TIME 1000
 
@@ -509,7 +509,7 @@ HRGN CConEmuMain::CreateWindowRgn(bool abTestOnly/*=false*/)
 
 	WARNING("Установка любого НЕ NULL региона сбивает темы при отрисовке кнопок в заголовке");
 
-	if ((gSet.isFullScreen || (isZoomed() && (gSet.isHideCaption || gSet.isHideCaptionAlways))) 
+	if ((gSet.isFullScreen || (isZoomed() && (gSet.isHideCaption || gSet.isHideCaptionAlways()))) 
 		&& !mb_InRestore) 
 	{
 		if (abTestOnly)
@@ -535,7 +535,7 @@ HRGN CConEmuMain::CreateWindowRgn(bool abTestOnly/*=false*/)
 
 	} else {
 		// Normal
-		if (gSet.isHideCaptionAlways) {
+		if (gSet.isHideCaptionAlways()) {
 			if (!isMouseOverFrame()) {
 				// Рамка невидима (мышка не над рамкой или заголовком)
 				RECT rcClient; GetClientRect(ghWnd, &rcClient);
@@ -1044,6 +1044,20 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 				#ifdef _DEBUG
                 _ASSERT(rc.bottom>=5);
 				#endif
+				
+				// Возможно, что в RealConsole выставлен большой шрифт, который помешает установке этого размера
+				if (gConEmu.mp_VActive) {
+					CRealConsole* pRCon = gConEmu.mp_VActive->RCon();
+					if (pRCon) {
+						COORD crMaxConSize = {0,0};
+						if (pRCon->GetMaxConSize(&crMaxConSize)) {
+							if (rc.right > crMaxConSize.X)
+								rc.right = crMaxConSize.X;
+							if (rc.bottom > crMaxConSize.Y)
+								rc.bottom = crMaxConSize.Y;
+						}
+					}
+				}
                 
                 return rc;
             }
@@ -1076,7 +1090,10 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 						// Скорректируем размер окна до видимого на мониторе (рамка при максимизации уезжает за пределы экрана)
 						rc.left -= rcFrame.left;
 						rc.right += rcFrame.right;
-						rc.top -= rcFrame.top;
+						if (gSet.isHideCaption || gSet.isHideCaptionAlways())
+							rc.top -= rcFrame.top;
+						else
+							rc.top -= rcFrame.bottom; // top включает и заголовок, а это нам не нужно
 						rc.bottom += rcFrame.bottom;
 
 						//if (gSet.isHideCaption && gConEmu.mb_MaximizedHideCaption && !gSet.isHideCaptionAlways)
@@ -1099,7 +1116,7 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
                     break;
                 case CER_MAXIMIZED:
                     rc = MakeRect(GetSystemMetrics(SM_CXMAXIMIZED),GetSystemMetrics(SM_CYMAXIMIZED));
-                    if (gSet.isHideCaption && gConEmu.mb_MaximizedHideCaption && !gSet.isHideCaptionAlways)
+                    if (gSet.isHideCaption && gConEmu.mb_MaximizedHideCaption && !gSet.isHideCaptionAlways())
                     	rc.top -= GetSystemMetrics(SM_CYCAPTION);
                     break;
                 default:
@@ -1638,7 +1655,7 @@ bool CConEmuMain::SetWindowMode(uint inMode)
                     gSet.UpdateSize(mp_VActive->TextWidth, mp_VActive->TextHeight);
             }
 
-			if (!gSet.isHideCaption && !gSet.isHideCaptionAlways)
+			if (!gSet.isHideCaption && !gSet.isHideCaptionAlways())
 			{
 				RECT rcMax = CalcRect(CER_MAXIMIZED, MakeRect(0,0), CER_MAXIMIZED);
 				AutoSizeFont(rcMax, CER_MAIN);
@@ -3236,7 +3253,7 @@ void CConEmuMain::ShowSysmenu(HWND Wnd, int x, int y)
 		GetClientRect(ghWnd, &cRect);
 		WINDOWINFO wInfo;   GetWindowInfo(ghWnd, &wInfo);
 		int nTabShift =
-			((gSet.isHideCaptionAlways || gSet.isFullScreen) && gConEmu.mp_TabBar->IsShown()) 
+			((gSet.isHideCaptionAlways() || gSet.isFullScreen) && gConEmu.mp_TabBar->IsShown()) 
 				? gConEmu.mp_TabBar->GetTabbarHeight() : 0;
 
 		if (x == -32000)
@@ -3501,7 +3518,9 @@ void CConEmuMain::UpdateWindowRgn(int anX/*=-1*/, int anY/*=-1*/, int anWndWidth
 	//	KillTimer(ghWnd, TIMER_CAPTION_DISAPPEAR_ID);
 	//}
 	
-	if (anWndWidth != -1 && anWndHeight != -1)
+	if (mb_ForceShowFrame)
+		hRgn = NULL; // Иначе при ресайзе получаются некрасивые (без XP Theme) кнопки в заголовке
+	else if (anWndWidth != -1 && anWndHeight != -1)
 		hRgn = CreateWindowRgn(false, false, anX, anY, anWndWidth, anWndHeight);
 	else
 		hRgn = CreateWindowRgn();
@@ -4378,8 +4397,7 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
         GetWindowPlacement(ghWnd, &wpl);
         #endif
 
-		if (gSet.isHideCaptionAlways/*Load*/) {
-			//gSet.isHideCaptionAlways = gSet.isHideCaptionAlwaysLoad;
+		if (gSet.isHideCaptionAlways()) {
 			OnHideCaption();
 		}
 
@@ -4737,12 +4755,14 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	#ifdef _DEBUG
 		WCHAR szDbg[128];
 	#endif
+	LPCWSTR pszMsgName = L"Unknown";
 	if (messg == WM_SETFOCUS) {
         lbSetFocus = TRUE;
 		#ifdef _DEBUG
 		wsprintf(szDbg, L"WM_SETFOCUS(From=0x%08X)\n", (DWORD)wParam);
 		DEBUGSTRFOCUS(szDbg);
 		#endif
+		pszMsgName = L"WM_SETFOCUS";
 	} else if (messg == WM_ACTIVATE) {
         lbSetFocus = (LOWORD(wParam)==WA_ACTIVE) || (LOWORD(wParam)==WA_CLICKACTIVE);
 		#ifdef _DEBUG
@@ -4752,6 +4772,7 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			wsprintf(szDbg, L"WM_ACTIVATE.WA_INACTIVE(To=0x%08X)\n", (DWORD)lParam);
 		DEBUGSTRFOCUS(szDbg);
 		#endif
+		pszMsgName = L"WM_ACTIVATE";
 	} else if (messg == WM_ACTIVATEAPP) {
         lbSetFocus = (wParam!=0);
 		#ifdef _DEBUG
@@ -4761,14 +4782,16 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			wsprintf(szDbg, L"WM_ACTIVATEAPP.Deactivate(ToTID=%i)\n", (DWORD)lParam);
 		DEBUGSTRFOCUS(szDbg);
 		#endif
+		pszMsgName = L"WM_ACTIVATEAPP";
 	} else if (messg == WM_KILLFOCUS) {
 		#ifdef _DEBUG
 		wsprintf(szDbg, L"WM_KILLFOCUS(To=0x%08X)\n", (DWORD)wParam);
 		DEBUGSTRFOCUS(szDbg);
 		#endif
+		pszMsgName = L"WM_KILLFOCUS";
 	}
 
-	CheckFocus();
+	CheckFocus(pszMsgName);
 
     if (!lbSetFocus) {
         gConEmu.mp_TabBar->SwitchRollback();
@@ -4855,7 +4878,7 @@ LRESULT CConEmuMain::OnGetMinMaxInfo(LPMINMAXINFO pInfo)
 			pInfo->ptMaxSize.y = ptFullScreenSize.y;
     }
     
-    if (gSet.isHideCaption && !gSet.isHideCaptionAlways) {
+    if (gSet.isHideCaption && !gSet.isHideCaptionAlways()) {
     	pInfo->ptMaxPosition.y -= GetSystemMetrics(SM_CYCAPTION);
     	//pInfo->ptMaxSize.y += GetSystemMetrics(SM_CYCAPTION);
     }
@@ -5055,7 +5078,7 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
     static bool sb_SkipMulticonChar = false;
     static DWORD sn_SkipMulticonVk[2] = {0,0};
     bool lbLWin = false, lbRWin = false;
-    TODO("gSet.nMultiHotkeyModifier - байты содержат VK_CONTROL, VK_MENU, VK_SHIFT");
+    TODO("gSet.nMultiHotkeyModifier - байты содержат VK_[L|R]CONTROL, VK_[L|R]MENU, VK_[L|R]SHIFT, VK_APPS, VK_LWIN");
     TODO("gSet.icMultiBuffer - хоткей для включения-отключения режима буфера - AskChangeBufferHeight()");
     if (gSet.isMulti && wParam && ((lbLWin = isPressed(VK_LWIN)) || (lbRWin = isPressed(VK_RWIN)) || sb_SkipMulticonChar)) {
         if (messg == WM_KEYDOWN && (lbLWin || lbRWin) && (wParam != VK_LWIN && wParam != VK_RWIN)) {
@@ -6086,7 +6109,7 @@ void CConEmuMain::SetWaitCursor(BOOL abWait)
 		SetCursor(mh_CursorArrow);
 }
 
-void CConEmuMain::CheckFocus()
+void CConEmuMain::CheckFocus(LPCWSTR asFrom)
 {
 	HWND hCurForeground = GetForegroundWindow();
 	static HWND hPrevForeground;
@@ -6094,10 +6117,10 @@ void CConEmuMain::CheckFocus()
 		return;
 	hPrevForeground = hCurForeground;
 
+	DWORD dwPID = 0, dwTID = 0;
 	#ifdef _DEBUG
-	DWORD dwPID, dwTID;
 	wchar_t szDbg[255], szClass[128];
-	if (hCurForeground) GetClassName(hCurForeground, szClass, 127); else lstrcpy(szClass, L"<NULL>");
+	if (!hCurForeground || !GetClassName(hCurForeground, szClass, 127)) lstrcpy(szClass, L"<NULL>");
 	#endif
 
 	BOOL lbConEmuActive = (hCurForeground == ghWnd || (ghOpWnd && hCurForeground == ghOpWnd));
@@ -6106,19 +6129,17 @@ void CConEmuMain::CheckFocus()
 	if (!lbConEmuActive) {
 		if (!hCurForeground) {
 			#ifdef _DEBUG
-			wsprintf(szDbg, L"Foreground changed. NewFore=0x00000000, LBtn=%i\n", lbLDown);
+			wsprintf(szDbg, L"Foreground changed (%s). NewFore=0x00000000, LBtn=%i\n", asFrom, lbLDown);
 			#endif
 		} else {
-			#ifdef _DEBUG
 			dwTID = GetWindowThreadProcessId(hCurForeground, &dwPID);
-			#endif
 
 			// Получить информацию об активном треде
 			GUITHREADINFO gti = {sizeof(GUITHREADINFO)};
 			GetGUIThreadInfo(0/*dwTID*/, &gti);
 
 			#ifdef _DEBUG
-			wsprintf(szDbg, L"Foreground changed. NewFore=0x%08X, Active=0x%08X, Focus=0x%08X, Class=%s, LBtn=%i\n", (DWORD)hCurForeground, (DWORD)gti.hwndActive, (DWORD)gti.hwndFocus, szClass, lbLDown);
+			wsprintf(szDbg, L"Foreground changed (%s). NewFore=0x%08X, Active=0x%08X, Focus=0x%08X, Class=%s, LBtn=%i\n", asFrom, (DWORD)hCurForeground, (DWORD)gti.hwndActive, (DWORD)gti.hwndFocus, szClass, lbLDown);
 			#endif
 
 			// mh_ShellWindow чисто для информации. Хоть родитель ConEmu и меняется на mh_ShellWindow
@@ -6136,7 +6157,7 @@ void CConEmuMain::CheckFocus()
 						lbDesktopActive = true;
 					} else {
 						wchar_t szClass[128];
-						GetClassName(hCurForeground, szClass, 127);
+						if (!GetClassName(hCurForeground, szClass, 127)) szClass[0] = 0;
 						if (!wcscmp(szClass, L"WorkerW") || !wcscmp(szClass, L"Progman"))
 							lbDesktopActive = true;
 
@@ -6160,7 +6181,20 @@ void CConEmuMain::CheckFocus()
 						mb_FocusOnDesktop = FALSE; // запомним, что ConEmu активировать не нужно
 					} else if (mb_FocusOnDesktop) {
 						// Чтобы пользователю не приходилось вручную активировать ConEmu после WinD / WinM
-						SetForegroundWindow(ghWnd);
+						//SetForegroundWindow(ghWnd); // это скорее всего не сработает, т.к. фокус сейчас у другого процесса!
+						// так что "активируем" мышкой
+						mouse.bForceSkipActivation = TRUE; // не пропускать этот клик в консоль!
+						COORD crOpaque = mp_VActive->FindOpaqueCell();
+						POINT pt = mp_VActive->ConsoleToClient(crOpaque.X,crOpaque.Y);
+						MapWindowPoints(ghWndDC, NULL, &pt, 1);
+						// Запомнить, где курсор сейчас. Вернуть надо будет
+						POINT ptCur; GetCursorPos(&ptCur);
+						SetCursorPos(pt.x,pt.y); // хотя, может двигать мышку и не надо?
+						// "кликаем"
+						mouse_event ( MOUSEEVENTF_ABSOLUTE+MOUSEEVENTF_LEFTDOWN, pt.x,pt.y, 0,0);
+						mouse_event ( MOUSEEVENTF_ABSOLUTE+MOUSEEVENTF_LEFTUP, pt.x,pt.y, 0,0);
+						// Вернуть курсор
+						SetCursorPos(ptCur.x,ptCur.y);
 					}
 				}
 			}
@@ -6168,7 +6202,7 @@ void CConEmuMain::CheckFocus()
 
 	} else {
 		#ifdef _DEBUG
-		wsprintf(szDbg, L"Foreground changed. NewFore=0x%08X, ConEmu has focus, LBtn=%i\n", (DWORD)hCurForeground, lbLDown);
+		wsprintf(szDbg, L"Foreground changed (%s). NewFore=0x%08X, ConEmu has focus, LBtn=%i\n", asFrom, (DWORD)hCurForeground, lbLDown);
 		#endif
 
 		mb_FocusOnDesktop = TRUE;
@@ -6399,6 +6433,30 @@ HSHELL_APPCOMMAND The APPCOMMAND which has been unhandled by the application or 
             }
         }
         break;
+#ifdef _DEBUG
+    case HSHELL_ACTIVATESHELLWINDOW:
+    	{	// Не вызывается
+    		#ifdef _DEBUG
+    		wchar_t szDbg[128]; wsprintf(szDbg, L"HSHELL_ACTIVATESHELLWINDOW(lParam=0x%08X)\n", (DWORD)lParam);
+    		DEBUGSTRFOREGROUND(szDbg);
+    		#endif
+    	}
+    	break;
+#endif
+	case HSHELL_WINDOWACTIVATED:
+		{	// Приходит позже чем WM_ACTIVATE(WA_INACTIVE), но пригодится, если CE был НЕ в фокусе
+
+			#ifdef _DEBUG
+			// Когда активируется Desktop - lParam == 0
+			wchar_t szDbg[128], szClass[64]; if (!lParam || !GetClassName((HWND)lParam, szClass, 63)) wcscpy(szClass, L"<NULL>");
+			BOOL lbLBtn = isPressed(VK_LBUTTON);
+			wsprintf(szDbg, L"HSHELL_WINDOWACTIVATED(lParam=0x%08X, %s, %i)\n", (DWORD)lParam, szClass, lbLBtn);
+			DEBUGSTRFOREGROUND(szDbg);
+			#endif
+
+			CheckFocus(L"HSHELL_WINDOWACTIVATED");
+		}
+		break;
     }
     return 0;
 }
@@ -6541,7 +6599,7 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
             SetFocus ( ghOpWnd );
             break; // А то открывались несколько окон диалогов :)
         }
-        //DialogBox((HINSTANCE)GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_DIALOG1), 0, CSettings::wndOpProc);
+        //DialogBox((HINSTANCE)GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_SPG_MAIN), 0, CSettings::wndOpProc);
         CSettings::Dialog();
         return 0;
         //break;
@@ -6865,7 +6923,7 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 	        }
 
 			// режим полного скрытия заголовка
-			if (gSet.isHideCaptionAlways) {
+			if (gSet.isHideCaptionAlways()) {
 				if (!bForeground) {
 					if (mb_ForceShowFrame) {
 						mb_ForceShowFrame = FALSE;
@@ -6909,7 +6967,7 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 			if (mh_ConEmuAliveEvent && !mb_ConEmuAliveOwned)
 				isFirstInstance(); // Заодно и проверит...
 
-			CheckFocus();
+			CheckFocus(L"TIMER_MAIN_ID");
 
 	    } break; // case 0:
 
@@ -7499,7 +7557,11 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
     	//return MA_ACTIVATEANDEAT; -- ест все подряд, а LBUTTONUP пропускает :(
 		gConEmu.mouse.nSkipEvents[0] = 0;
 		gConEmu.mouse.nSkipEvents[1] = 0;
-		if (gSet.isMouseSkipActivation && LOWORD(lParam) == HTCLIENT && GetForegroundWindow() != ghWnd) {
+		if (gConEmu.mouse.bForceSkipActivation // принудительная активация окна, лежащего на Desktop
+			|| (gSet.isMouseSkipActivation && LOWORD(lParam) == HTCLIENT && GetForegroundWindow() != ghWnd))
+		{
+			gConEmu.mouse.bForceSkipActivation = FALSE; // Однократно
+
 			POINT ptMouse = {0}; GetCursorPos(&ptMouse);
 			RECT  rcDC = {0}; GetWindowRect(ghWndDC, &rcDC);
 			if (PtInRect(&rcDC, ptMouse)) {
@@ -7549,7 +7611,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
     case WM_NCLBUTTONDOWN:
         // При ресайзе WM_NCLBUTTONUP к сожалению не приходит
         gConEmu.mouse.state |= MOUSE_SIZING_BEGIN;
-		if (gSet.isHideCaptionAlways)
+		if (gSet.isHideCaptionAlways())
 			UpdateWindowRgn();
         result = DefWindowProc(hWnd, messg, wParam, lParam);
         break;
@@ -7617,7 +7679,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			}
 			if (result == -1)*/
 			result = DefWindowProc(hWnd, messg, wParam, lParam);
-			if (gSet.isHideCaptionAlways && !gConEmu.mp_TabBar->IsShown() && result == HTTOP)
+			if (gSet.isHideCaptionAlways() && !gConEmu.mp_TabBar->IsShown() && result == HTTOP)
 				result = HTCAPTION;
 		} break;
         

@@ -279,6 +279,7 @@ public:
     void ChangeBufferHeightMode(BOOL abBufferHeight); // Вызывается из TabBar->ConEmu
 	void RemoveFromCursor();
 	bool isAlive();
+	bool GetMaxConSize(COORD* pcrMaxConSize);
 
 public:
     // Вызываются из CVirtualConsole

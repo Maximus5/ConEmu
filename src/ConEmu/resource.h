@@ -5,7 +5,6 @@
 #define IDI_ICON1                       1
 #define IDI_ICON2                       2
 #define IDI_ICON3                       3
-#define bSaveSettings                   4
 #define IDB_MAIN_TOOLBAR                101
 #define IDB_SHIELD                      102
 #define IDC_COPY                        120
@@ -14,13 +13,15 @@
 #define IDD_RESTART                     123
 #define IDC_SPLITV                      124
 #define IDC_SPLITH                      125
-#define IDD_DIALOGM                     150
-#define IDD_DIALOG1                     151
-#define IDD_DIALOG2                     152
-#define IDD_DIALOG3                     153
-#define IDD_DIALOG4                     154
-#define IDD_DIALOG5                     200
-#define IDD_DIALOG6                     201
+#define IDD_SETTINGS                    150
+#define IDD_SPG_MAIN                    151
+#define IDD_SPG_COLORS                  152
+#define IDD_SPG_INFO                    153
+#define IDD_SPG_FEATURE                 154
+#define IDD_MORE_HIDE                   200
+#define IDD_MORE_MULTIBAR               201
+#define IDD_DIALOG1                     202
+#define IDD_MORE_HOTKEYS                202
 #define c0                              1000
 #define c1                              1001
 #define c2                              1002
@@ -154,15 +155,10 @@
 #define tsTopPID                        1510
 #define tFontFace                       1511
 #define tFontSizeY                      1512
-#define tConSizeChr                     1512
 #define tFontCharset                    1513
-#define tConSizePix                     1513
 #define tFontFace2                      1514
-#define tDCSize                         1514
 #define cbExtendColors                  1515
-#define tPanelLeft                      1515
 #define tCmdLine                        1516
-#define tPanelRight                     1516
 #define tRealFontMain                   1517
 #define tRealFontBorders                1518
 #define cbApplyPos                      1520
@@ -175,9 +171,7 @@
 #define IDC_RESTART_MSG                 1529
 #define IDC_WARNING                     1530
 #define cbTabSelf                       1531
-#define IDC_CHOOSE_DIR                  1531
 #define cbTabLazy                       1532
-#define IDC_STARTUP_DIR                 1532
 #define cbTabRecent                     1533
 #define cbLongOutput                    1534
 #define tLongOutputHeight               1535
@@ -185,10 +179,8 @@
 #define cbMonitorConsoleLang            1537
 #define cbSkipFocusEvents               1538
 #define hkNewConsole                    1539
-#define cbsProgress                     1540
 #define hkSwitchConsole                 1540
 #define cbsProgressError                1541
-#define hkCloseConsole                  1541
 #define cbSkipActivation                1542
 #define cbSkipMove                      1543
 #define gbStandardColors                1544
@@ -224,28 +216,47 @@
 #define cbDropUnlocked                  1579
 #define cbDropUseBCopy                  1580
 #define cbFadeInactive                  1581
-#define cbHostWin                       1582
-#define cbHostShift                     1583
-#define cbHostAlt                       1584
-#define cbHostCtrl                      1585
 #define cbBlockInactiveCursor           1586
 #define bHideCaptionSettings            1588
 #define tHideCaptionAlwaysFrame         1589
-#define bFarHourglass                   1589
 #define tHideCaptionAlwaysDelay         1590
-#define bRClick                         1590
 #define tHideCaptionAlwaysDissapear     1591
 #define bMultiConHotkeys                1592
 #define cbMultiConKeybHooks             1593
+#define cbToolbar                       1593
 #define bTabTemplates                   1594
+#define bResetSettings                  1595
+#define bReloadSettings                 1596
+#define tConSizeChr                     1597
+#define tConSizePix                     1598
+#define tDCSize                         1599
+#define tPanelLeft                      1600
+#define tPanelRight                     1601
+#define IDC_CHOOSE_DIR                  1602
+#define IDC_STARTUP_DIR                 1603
+#define cbsProgress                     1604
+#define hkCloseConsole                  1605
+#define bFarHourglass                   1606
+#define bRClick                         1607
+#define bRealConsoleSettings            1608
+#define bDropSettings                   1609
+#define bSaveSettings                   1610
+#define cbHostWin                       1611
+#define cbHostApps                      1612
+#define cbHostLCtrl                     1613
+#define cbHostRCtrl                     1614
+#define cbHostLAlt                      1615
+#define cbHostRAlt                      1616
+#define cbHostLShift                    1617
+#define cbHostRShift                    1618
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        202
+#define _APS_NEXT_RESOURCE_VALUE        203
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1595
+#define _APS_NEXT_CONTROL_VALUE         1619
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

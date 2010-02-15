@@ -770,6 +770,9 @@ CESERVER_REQ* ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandDat
 		//if (gFarVersion.dwVerMajor < 2 && nCmd == CMD_REDRAWFAR) {
 		//	return NULL; // лучше его просто пропустить
 		//}
+		
+		if (nCmd == CMD_FARPOST)
+			return NULL; // Это просто проверка, что фар отработал цикл
 
 		//// Некоторые команды можно выполнить сразу
 		//if (nCmd == CMD_SETSIZE) {
@@ -818,6 +821,19 @@ CESERVER_REQ* ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandDat
 			#ifdef _DEBUG
 			DEBUGSTRMENU((nTestEvents > 0) ? L"*** QUEUE IS NOT EMPTY\n" : L"*** QUEUE IS EMPTY\n");
 			#endif
+		}
+		
+		// Собственно Redraw фар выполнит не тогда, когда его функцию позвали,
+		// а когда к нему управление вернется
+		if (nCmd == CMD_REDRAWFAR) {
+			HANDLE hEvents[2] = {ghServerTerminateEvent, ghPluginSemaphore};
+			DWORD dwWait = WaitForMultipleObjects(2, hEvents, FALSE, INFINITE);
+			if (dwWait == WAIT_OBJECT_0) {
+				// Плагин завершается
+				return NULL;
+			}
+			ActivatePlugin(CMD_FARPOST, NULL);
+			ReleaseSemaphore(ghPluginSemaphore, 1, NULL);
 		}
 
 		//gpReqCommandData = NULL;

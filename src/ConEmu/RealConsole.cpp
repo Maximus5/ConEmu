@@ -449,7 +449,12 @@ BOOL CRealConsole::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuff
 		LogString(szInfo);
 	}
 
-	DEBUGSTRSIZE(L"SetConsoleSize.CallNamedPipe\n");
+	#ifdef _DEBUG
+	wchar_t szDbgCmd[128]; wsprintf(szDbgCmd, L"SetConsoleSize.CallNamedPipe(cx=%i, cy=%i, buf=%i, cmd=%i)\n",
+		sizeX, sizeY, sizeBuffer, anCmdID);
+	DEBUGSTRSIZE(szDbgCmd);
+	#endif
+
     fSuccess = CallNamedPipe(ms_ConEmuC_Pipe, pIn, pIn->hdr.nSize, pOut, pOut->hdr.nSize, &dwRead, 500);
 
     if (!fSuccess || dwRead<(DWORD)nOutSize) {
@@ -2142,6 +2147,7 @@ void CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 			// В результате, может выполниться макрос, повешенный на Alt.
 			if (GetForegroundWindow()!=ghWnd && GetFarPID()) {
 				if (/*isPressed(VK_MENU) &&*/ !isPressed(VK_CONTROL) && !isPressed(VK_SHIFT)) {
+					TODO("Вынести в отдельную функцию типа SendKeyPress(VK_TAB,0x22,'\x09')");
 					INPUT_RECORD r = {KEY_EVENT};
 					
 					WARNING("По хорошему, нужно не TAB посылать, а то если открыт QuickSearch - он закроется а фар перескочит на другую панель");
@@ -2208,10 +2214,26 @@ void CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
         }
         else if (messg == WM_KEYUP && wParam == VK_MENU && isSkipNextAltUp) isSkipNextAltUp = false;
         else if (messg == WM_SYSKEYDOWN && wParam == VK_F9 && lParam & (1<<29)/*Бред. это 29-й бит, а не число 29*/ && !isPressed(VK_SHIFT))
+        {
 			// AltF9
+			// Чтобы у консоли не сносило крышу (FAR может выполнить макрос на Alt)
+			
+			TODO("Вынести в отдельную функцию типа SendKeyPress(VK_CONTROL,0x22)");
+			
+			INPUT_RECORD r = {KEY_EVENT};
+			r.Event.KeyEvent.bKeyDown = TRUE;
+            r.Event.KeyEvent.wVirtualKeyCode = VK_CONTROL;
+			r.Event.KeyEvent.wVirtualScanCode = MapVirtualKey(VK_CONTROL, 0/*MAPVK_VK_TO_VSC*/);
+			r.Event.KeyEvent.dwControlKeyState = 0x2A;
+			PostConsoleEvent(&r);
+			r.Event.KeyEvent.bKeyDown = FALSE;
+			r.Event.KeyEvent.dwControlKeyState = 0x22;
+			PostConsoleEvent(&r);
+			
             //gConEmu.SetWindowMode((gConEmu.isZoomed()||(gSet.isFullScreen&&gConEmu.isWndNotFSMaximized)) ? rNormal : rMaximized);
             gConEmu.OnAltF9(TRUE);
-        else {
+            
+        } else {
             INPUT_RECORD r = {KEY_EVENT};
 
             WORD nCaps = 1 & (WORD)GetKeyState(VK_CAPITAL);
@@ -4510,6 +4532,13 @@ BOOL CRealConsole::RecreateProcessStart()
 
 void CRealConsole::DetectDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int nFromX, int nFromY, int *pnMostRight, int *pnMostBottom)
 {
+	if (nFromX >= nWidth || nFromY >= nHeight)
+	{
+		_ASSERTE(nFromX<nWidth);
+		_ASSERTE(nFromY<nHeight);
+		return;
+	}
+
 	wchar_t wc, wcMostRight, wcMostBottom, wcMostRightBottom, wcMostTop;
 	int nMostRight, nMostBottom, nMostRightBottom, nMostTop, nShift, n;
 	DWORD nBackColor;
@@ -4672,8 +4701,9 @@ void CRealConsole::DetectDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int
 		// Попытаемся найти рамку?
 		int nFrameX = -1, nFrameY = -1;
 		int nFindFrom = nShift+nFromX;
+		int nMaxAdd = min(5,(nWidth - nFromX - 1));
 		// в этой же строке
-		for (n = 0; n <= 5; n++) {
+		for (n = 1; n <= nMaxAdd; n++) {
 			wc = pChar[nFindFrom+n];
 			if (wc == ucBoxSinglDownRight || wc == ucBoxDblDownRight) {
 				nFrameX = nFromX+n; nFrameY = nFromY; break;
@@ -4682,7 +4712,7 @@ void CRealConsole::DetectDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int
 		if (nFrameY == -1) {
 			// строкой ниже
 			nFindFrom = nShift+nWidth+nFromX;
-			for (n = 0; n <= 5; n++) {
+			for (n = 0; n <= nMaxAdd; n++) {
 				wc = pChar[nFindFrom+n];
 				if (wc == ucBoxSinglDownRight || wc == ucBoxDblDownRight) {
 					nFrameX = nFromX+n; nFrameY = nFromY+1; break;
@@ -7497,6 +7527,11 @@ void CRealConsole::ApplyConsoleInfo()
 					SetBufferHeightMode(nNewHeight < con.m_sbi.dwSize.Y);
 				//  TODO("Включить прокрутку? или оно само?");
 				if (nNewWidth != con.nTextWidth || nNewHeight != con.nTextHeight) {
+					#ifdef _DEBUG
+					wchar_t szDbgSize[128]; wsprintf(szDbgSize, L"ApplyConsoleInfo.SizeWasChanged(cx=%i, cy=%i)\n", nNewWidth, nNewHeight);
+					DEBUGSTRSIZE(szDbgSize);
+					#endif
+
 					bBufRecreated = TRUE; // Смена размера, буфер пересоздается
 					//sc.Lock(&csCON, TRUE);
 					//WARNING("может не заблокировалось?");
@@ -7707,4 +7742,15 @@ bool CRealConsole::isCharBorderHorizontal(WCHAR inChar)
         return true;
     else
         return false;
+}
+
+bool CRealConsole::GetMaxConSize(COORD* pcrMaxConSize)
+{
+	bool bOk = false;
+	if (mp_ConsoleInfo) {
+		if (pcrMaxConSize)
+			*pcrMaxConSize = mp_ConsoleInfo->crMaxConSize;
+		bOk = true;
+	}
+	return bOk;
 }

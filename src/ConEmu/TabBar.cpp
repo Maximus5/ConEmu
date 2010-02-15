@@ -394,7 +394,7 @@ CVirtualConsole* TabBarClass::FarSendChangeTab(int tabIndex)
 
 LRESULT TabBarClass::TabHitTest()
 {
-	if ((gSet.isHideCaptionAlways || gSet.isFullScreen || (gConEmu.isZoomed() && gSet.isHideCaption))
+	if ((gSet.isHideCaptionAlways() || gSet.isFullScreen || (gConEmu.isZoomed() && gSet.isHideCaption))
 		&& gSet.isTabs)
 	{
 		if (gConEmu.mp_TabBar->IsShown()) {
@@ -431,7 +431,7 @@ LRESULT CALLBACK TabBarClass::ReBarProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPA
 			return 0;
 		}
 	case WM_SETCURSOR:
-		if (gSet.isHideCaptionAlways && gSet.isTabs && !gSet.isFullScreen && !gConEmu.isZoomed()) {
+		if (gSet.isHideCaptionAlways() && gSet.isTabs && !gSet.isFullScreen && !gConEmu.isZoomed()) {
 			if (TabHitTest()==HTCAPTION) {
 				SetCursor(gConEmu.mh_CursorMove);
 				return TRUE;
@@ -442,7 +442,7 @@ LRESULT CALLBACK TabBarClass::ReBarProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPA
 	case WM_MOUSEMOVE:
 	case WM_LBUTTONDOWN: case WM_LBUTTONUP: case WM_LBUTTONDBLCLK:
 	/*case WM_RBUTTONDOWN:*/ case WM_RBUTTONUP: //case WM_RBUTTONDBLCLK:
-		if ((gSet.isHideCaptionAlways || gSet.isFullScreen || (gConEmu.isZoomed() && gSet.isHideCaption))
+		if ((gSet.isHideCaptionAlways() || gSet.isFullScreen || (gConEmu.isZoomed() && gSet.isHideCaption))
 			&& gSet.isTabs)
 		{
 			if (TabHitTest()==HTCAPTION) {
@@ -512,7 +512,7 @@ LRESULT CALLBACK TabBarClass::ToolProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPAR
         {
         	LPWINDOWPOS pos = (LPWINDOWPOS)lParam;
             pos->y = (gConEmu.mp_TabBar->mn_ThemeHeightDiff == 0) ? 2 : 1;
-            if (gSet.isHideCaptionAlways && gSet.nToolbarAddSpace > 0) {
+            if (gSet.isHideCaptionAlways() && gSet.nToolbarAddSpace > 0) {
             	SIZE sz;
             	if (CallWindowProc(_defaultToolProc, hwnd, TB_GETIDEALSIZE, 0, (LPARAM)&sz)) {
             		pos->cx = sz.cx + gSet.nToolbarAddSpace;
@@ -528,7 +528,7 @@ LRESULT CALLBACK TabBarClass::ToolProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPAR
 			SIZE *psz = (SIZE*)lParam;
 			if (!lParam) return 0;
 			if (CallWindowProc(_defaultToolProc, hwnd, uMsg, wParam, lParam)) {
-				psz->cx += (gSet.isHideCaptionAlways ? gSet.nToolbarAddSpace : 0);
+				psz->cx += (gSet.isHideCaptionAlways() ? gSet.nToolbarAddSpace : 0);
 				return 1;
 			}
 		} break;
@@ -865,7 +865,7 @@ void TabBarClass::UpdateWidth()
 		if (mh_Toolbar) {
 			nBarIndex = SendMessage(mh_Rebar, RB_IDTOINDEX, 2, 0);
 			SendMessage(mh_Toolbar, TB_GETMAXSIZE, 0, (LPARAM)&sz);
-			sz.cx += (gSet.isHideCaptionAlways ? gSet.nToolbarAddSpace : 0);
+			sz.cx += (gSet.isHideCaptionAlways() ? gSet.nToolbarAddSpace : 0);
 			lbWideEnough = (sz.cx + 150) <= client.right;
 			if (!lbWideEnough) {
 				if (IsWindowVisible(mh_Toolbar))
@@ -1116,7 +1116,7 @@ void TabBarClass::OnCaptionHidden()
 	if (!this) return;
 	if (mh_Toolbar)
 	{
-		BOOL lbHide = !(gSet.isHideCaptionAlways 
+		BOOL lbHide = !(gSet.isHideCaptionAlways() 
 			|| gSet.isFullScreen 
 			|| (gConEmu.isZoomed() && gSet.isHideCaption));
 		SendMessage(mh_Toolbar, TB_HIDEBUTTON, TID_MINIMIZE_SEP, lbHide);

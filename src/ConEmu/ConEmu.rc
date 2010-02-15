@@ -64,24 +64,47 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 
 /////////////////////////////////////////////////////////////////////////////
 //
-// Cursor
-//
-
-IDC_SPLITV              CURSOR  DISCARDABLE     "vsplit.cur"
-IDC_SPLITH              CURSOR  DISCARDABLE     "hsplit.cur"
-IDC_COPY                CURSOR  DISCARDABLE     "CursorDragCopy.cur"
-IDC_LINK                CURSOR  DISCARDABLE     "CursorDragLink.cur"
-IDC_MOVE                CURSOR  DISCARDABLE     "CursorDragMove.cur"
-
-/////////////////////////////////////////////////////////////////////////////
-//
 // Dialog
 //
 
-IDD_DIALOG1 DIALOGEX 0, 0, 328, 235
+IDD_MORE_HOTKEYS DIALOG DISCARDABLE  0, 0, 178, 82
+STYLE DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Hotkeys settings"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    GROUPBOX        "Hotkeys",IDC_STATIC,4,50,170,28
+    RTEXT           "New:",IDC_STATIC,8,63,19,8
+    CONTROL         "",hkNewConsole,"msctls_hotkey32",WS_BORDER | WS_TABSTOP,
+                    30,61,23,13
+    RTEXT           "Switch:",IDC_STATIC,57,63,25,8
+    CONTROL         "",hkSwitchConsole,"msctls_hotkey32",WS_BORDER | 
+                    WS_TABSTOP,84,61,23,13
+    RTEXT           "Recreate:",IDC_STATIC,108,63,35,8
+    CONTROL         "",hkCloseConsole,"msctls_hotkey32",WS_BORDER | 
+                    WS_TABSTOP,146,61,23,13
+    GROUPBOX        "Host-key",IDC_STATIC,4,4,170,43
+    CONTROL         "Win",cbHostWin,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,
+                    17,28,10
+    CONTROL         "Apps",cbHostApps,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
+                    49,17,32,10
+    CONTROL         "LCtrl",cbHostLCtrl,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,89,17,31,10
+    CONTROL         "RCtrl",cbHostRCtrl,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,129,17,32,10
+    CONTROL         "LAlt",cbHostLAlt,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
+                    10,31,28,10
+    CONTROL         "RAlt",cbHostRAlt,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
+                    49,31,29,10
+    CONTROL         "LShift",cbHostLShift,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,89,31,34,10
+    CONTROL         "RShift",cbHostRShift,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,129,31,35,10
+END
+
+IDD_SPG_MAIN DIALOGEX 0, 0, 328, 235
 STYLE DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
-FONT 8, "MS Shell Dlg", 0, 0, 0x1
+FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        "Anti-aliasing",IDC_STATIC,263,4,60,45,WS_GROUP
     CONTROL         "&None",rNoneAA,"Button",BS_AUTORADIOBUTTON | WS_GROUP,
@@ -169,7 +192,7 @@ BEGIN
     CONTROL         "Auto",cbFontAuto,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
                     10,36,39,9
     LTEXT           "Replace color indexes:",IDC_STATIC,10,180,78,8
-    EDITTEXT        tBgImageColors,91,179,50,12,ES_AUTOHSCROLL
+    EDITTEXT        tBgImageColors,91,179,50,12,ES_AUTOHSCROLL | WS_DISABLED
     GROUPBOX        "Placement",IDC_STATIC,193,173,130,24
     CONTROL         "Extend",cbExtendFonts,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,10,80,38,10
@@ -181,7 +204,7 @@ BEGIN
                     CBS_SORT | WS_VSCROLL | WS_TABSTOP
 END
 
-IDD_DIALOG2 DIALOGEX 0, 0, 328, 235
+IDD_SPG_COLORS DIALOGEX 0, 0, 328, 235
 STYLE DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
@@ -347,7 +370,7 @@ BEGIN
                     BS_AUTOCHECKBOX | WS_TABSTOP,8,217,86,9
 END
 
-IDD_DIALOGM DIALOGEX 0, 0, 341, 276
+IDD_SETTINGS DIALOGEX 0, 0, 341, 276
 STYLE DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 EXSTYLE WS_EX_TOPMOST
 CAPTION "Settings..."
@@ -355,9 +378,11 @@ FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     DEFPUSHBUTTON   "Save settings",bSaveSettings,268,259,70,14
     CONTROL         "Tab1",tabMain,"SysTabControl32",WS_TABSTOP,4,4,334,252
+    PUSHBUTTON      "Reset",bResetSettings,4,259,51,14
+    PUSHBUTTON      "Reload",bReloadSettings,62,259,51,14
 END
 
-IDD_DIALOG3 DIALOGEX 0, 0, 328, 216
+IDD_SPG_INFO DIALOGEX 0, 0, 328, 216
 STYLE DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
@@ -414,7 +439,7 @@ BEGIN
     GROUPBOX        "Font",IDC_STATIC,195,153,128,26
 END
 
-IDD_DIALOG4 DIALOGEX 0, 0, 328, 235
+IDD_SPG_FEATURE DIALOGEX 0, 0, 328, 235
 STYLE DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg"
@@ -443,7 +468,7 @@ BEGIN
                     WS_TABSTOP
     CONTROL         "Copy by default",cbDnDCopy,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,107,58,66,8
-    GROUPBOX        "Multi console",IDC_STATIC,4,76,319,44
+    GROUPBOX        "Multi console && toolbar",IDC_STATIC,4,76,319,44
     CONTROL         "MultiCon",cbMultiCon,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,10,89,43,8
     CONTROL         "Long console output",cbLongOutput,"Button",
@@ -464,15 +489,15 @@ BEGIN
     CONTROL         "Skip mouse in background",cbSkipMove,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,10,163,117,8
     CONTROL         "Monitor console lang",cbMonitorConsoleLang,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,132,140,86,8
+                    BS_AUTOCHECKBOX | WS_TABSTOP,132,152,86,8
     CONTROL         "Skip focus events",cbSkipFocusEvents,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,132,152,81,8
+                    BS_AUTOCHECKBOX | WS_TABSTOP,242,163,76,8
     CONTROL         "Send Alt+Enter to console",cbSendAE,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,10,174,117,8
     CONTROL         "Show real console",cbVisible,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,242,163,76,8
+                    WS_TABSTOP,132,141,76,8
     CONTROL         "Create confirmation",cbNewConfirm,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,63,89,77,8
+                    BS_AUTOCHECKBOX | WS_TABSTOP,136,89,77,8
     CONTROL         "Overlay",cbDragImage,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,189,43,41,8
     CONTROL         "Unlocked drop",cbDropUnlocked,"Button",BS_AUTOCHECKBOX | 
@@ -512,21 +537,15 @@ BEGIN
                     WS_TABSTOP,242,207,76,8
     CONTROL         "Desktop mode",cbDesktopMode,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,242,196,76,8
-    CONTROL         "Win",cbHostWin,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
-                    155,124,27,9
-    CONTROL         "Shift",cbHostShift,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,184,124,27,9
-    CONTROL         "Alt",cbHostAlt,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
-                    213,124,21,9
-    CONTROL         "Ctrl",cbHostCtrl,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
-                    237,124,23,9
     PUSHBUTTON      "...",bHideCaptionSettings,216,206,13,11
-    PUSHBUTTON      "Hotkeys...",bMultiConHotkeys,270,88,48,11
-    CONTROL         "Global keyboard hooks",cbMultiConKeybHooks,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,155,89,89,8
-    PUSHBUTTON      "...",bFarHourglass,114,206,13,11
-    PUSHBUTTON      "...",bRClick,114,139,13,11
-    PUSHBUTTON      "Templates...",bTabTemplates,270,13,48,11
+    PUSHBUTTON      "Hotkeys...",bMultiConHotkeys,77,87,48,13
+    CONTROL         "Toolbar",cbToolbar,"Button",BS_AUTOCHECKBOX | 
+                    WS_DISABLED | WS_TABSTOP,238,90,49,8
+    PUSHBUTTON      "...",bFarHourglass,114,206,13,11,WS_DISABLED
+    PUSHBUTTON      "...",bRClick,114,139,13,11,WS_DISABLED
+    PUSHBUTTON      "More...",bTabTemplates,270,12,48,13,WS_DISABLED
+    PUSHBUTTON      "...",bRealConsoleSettings,216,139,13,11,WS_DISABLED
+    PUSHBUTTON      "...",bDropSettings,165,41,13,11,WS_DISABLED
 END
 
 IDD_RESTART DIALOG DISCARDABLE  0, 0, 310, 98
@@ -553,7 +572,7 @@ BEGIN
                     157,8
 END
 
-IDD_DIALOG5 DIALOG DISCARDABLE  0, 0, 128, 54
+IDD_MORE_HIDE DIALOG DISCARDABLE  0, 0, 128, 54
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Hide caption always"
 FONT 8, "MS Sans Serif"
@@ -566,29 +585,61 @@ BEGIN
     EDITTEXT        tHideCaptionAlwaysDissapear,84,38,40,12,ES_AUTOHSCROLL
 END
 
-IDD_DIALOG6 DIALOG DISCARDABLE  0, 0, 186, 90
+IDD_MORE_MULTIBAR DIALOG DISCARDABLE  0, 0, 186, 90
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "MultiCon hotkeys"
+CAPTION "MultiCon and Toolbar"
 FONT 8, "MS Sans Serif"
 BEGIN
     DEFPUSHBUTTON   "OK",IDOK,129,7,50,14
     PUSHBUTTON      "Cancel",IDCANCEL,129,24,50,14
-    CONTROL         "HotKey1",hkNewConsole,"msctls_hotkey32",WS_BORDER | 
-                    WS_TABSTOP,39,70,17,13
-    CONTROL         "HotKey1",hkSwitchConsole,"msctls_hotkey32",WS_BORDER | 
-                    WS_TABSTOP,58,70,17,13
-    CONTROL         "HotKey1",hkCloseConsole,"msctls_hotkey32",WS_BORDER | 
-                    WS_TABSTOP,78,70,17,13
-    CONTROL         "Win",cbHostWin,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,
-                    49,27,9
-    CONTROL         "Shift",cbHostShift,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,36,49,27,9
-    CONTROL         "Alt",cbHostAlt,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,65,
-                    49,21,9
-    CONTROL         "Ctrl",cbHostCtrl,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
-                    89,49,23,9
 END
 
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO MOVEABLE PURE 
+BEGIN
+    IDD_MORE_HOTKEYS, DIALOG
+    BEGIN
+        LEFTMARGIN, 4
+        RIGHTMARGIN, 174
+        TOPMARGIN, 4
+        BOTTOMMARGIN, 78
+    END
+
+    IDD_MORE_HIDE, DIALOG
+    BEGIN
+        LEFTMARGIN, 4
+        RIGHTMARGIN, 124
+        TOPMARGIN, 4
+        BOTTOMMARGIN, 50
+    END
+
+    IDD_MORE_MULTIBAR, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 179
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 83
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Cursor
+//
+
+IDC_SPLITV              CURSOR  DISCARDABLE     "vsplit.cur"
+IDC_SPLITH              CURSOR  DISCARDABLE     "hsplit.cur"
+IDC_COPY                CURSOR  DISCARDABLE     "CursorDragCopy.cur"
+IDC_LINK                CURSOR  DISCARDABLE     "CursorDragLink.cur"
+IDC_MOVE                CURSOR  DISCARDABLE     "CursorDragMove.cur"
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -608,33 +659,6 @@ IDB_SHIELD              BITMAP  MOVEABLE PURE   "Shield.bmp"
 IDI_ICON1               ICON    DISCARDABLE     "ConEmu.ico"
 IDI_ICON2               ICON    DISCARDABLE     "Far.ico"
 IDI_ICON3               ICON    DISCARDABLE     "Far2.ico"
-
-/////////////////////////////////////////////////////////////////////////////
-//
-// DESIGNINFO
-//
-
-#ifdef APSTUDIO_INVOKED
-GUIDELINES DESIGNINFO DISCARDABLE 
-BEGIN
-    IDD_DIALOG5, DIALOG
-    BEGIN
-        LEFTMARGIN, 4
-        RIGHTMARGIN, 124
-        TOPMARGIN, 4
-        BOTTOMMARGIN, 50
-    END
-
-    IDD_DIALOG6, DIALOG
-    BEGIN
-        LEFTMARGIN, 7
-        RIGHTMARGIN, 179
-        TOPMARGIN, 7
-        BOTTOMMARGIN, 83
-    END
-END
-#endif    // APSTUDIO_INVOKED
-
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -693,7 +717,6 @@ BEGIN
     cbSkipFocusEvents       "Don't send focus events to console to disable\nautoclosing of fast search dialog in panels"
     hkNewConsole            "Hotkey for creating new console"
     hkSwitchConsole         "Hotkey for switching between consoles"
-    hkCloseConsole          "Hotkey for recreating (or closing)\nactive console"
     cbSkipActivation        "Skip mouse button (left/right/middle)\nclick, while activating window"
     cbSkipMove              "Skip mouse move events, while\nConEmu is not foreground window"
     cbVisible               "Show real console on startup"
@@ -701,6 +724,11 @@ BEGIN
     cbDragImage             "Create and display overlay transparent snapshoot of files are dragged"
     cbAutoRegFonts          "Search, register for process, and use first *.ttf file in conemu folder"
     cbDebugSteps            "Show some debug information in ConEmu title\nI.e. plugin communication steps."
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    hkCloseConsole          "Hotkey for recreating (or closing)\nactive console"
 END
 
 STRINGTABLE DISCARDABLE 
@@ -774,6 +802,8 @@ BEGIN
     tHideCaptionAlwaysDelay "Delay in milliseconds, for Caption and Frame appearance"
     tHideCaptionAlwaysDissapear 
                             "Delay in milliseconds, for Caption and Frame disappearance"
+    bResetSettings          "Reset all settings to defaults"
+    bReloadSettings         "Reload all settings from registry/xml"
 END
 
 #endif    // English (U.S.) resources

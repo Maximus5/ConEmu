@@ -129,6 +129,7 @@ public:
 	void OnConsoleSizeChanged();
 	static void ClearPartBrushes();
 	HRGN GetExclusionRgn(bool abTestOnly=false);
+	COORD FindOpaqueCell();
 
 protected:
 	//inline void GetCharAttr(WORD atr, BYTE& foreColorNum, BYTE& backColorNum, HFONT* pFont);

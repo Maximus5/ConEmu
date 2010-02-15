@@ -2587,20 +2587,21 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 				WARNING("Если указан dwFarPID - это что-ли два раза подряд выполнится?");
                 SetConsoleSize(nBufferHeight, crNewSize, rNewRect, ":CECMD_SETSIZESYNC");
 
+                WARNING("!! Не может ли возникнуть конфликт с фаровским фиксом для убирания полос прокрутки?");
 				if (in.hdr.nCmd == CECMD_SETSIZESYNC) {
 					CESERVER_REQ *pPlgIn = NULL, *pPlgOut = NULL;
-					TODO("Пока закомментарим, чтобы GUI реагировало побыстрее");
-					//if (in.SetSize.dwFarPID && !nBufferHeight) {
-					//	// Команду можно выполнить через плагин FARа
-					//	wchar_t szPipeName[128];
-					//	wsprintf(szPipeName, CEPLUGINPIPENAME, L".", in.SetSize.dwFarPID);
-					//	//DWORD nHILO = ((DWORD)crNewSize.X) | (((DWORD)(WORD)crNewSize.Y) << 16);
-					//	//pPlgIn = ExecuteNewCmd(CMD_SETSIZE, sizeof(CESERVER_REQ_HDR)+sizeof(nHILO));
-					//	pPlgIn = ExecuteNewCmd(CMD_REDRAWFAR, sizeof(CESERVER_REQ_HDR));
-					//	//pPlgIn->dwData[0] = nHILO;
-					//	pPlgOut = ExecuteCmd(szPipeName, pPlgIn, 500, ghConWnd);
-					//	if (pPlgOut) ExecuteFreeResult(pPlgOut);
-					//}
+					//TODO("Пока закомментарим, чтобы GUI реагировало побыстрее");
+					if (in.SetSize.dwFarPID && !nBufferHeight) {
+						// Команду можно выполнить через плагин FARа
+						wchar_t szPipeName[128];
+						wsprintf(szPipeName, CEPLUGINPIPENAME, L".", in.SetSize.dwFarPID);
+						//DWORD nHILO = ((DWORD)crNewSize.X) | (((DWORD)(WORD)crNewSize.Y) << 16);
+						//pPlgIn = ExecuteNewCmd(CMD_SETSIZE, sizeof(CESERVER_REQ_HDR)+sizeof(nHILO));
+						pPlgIn = ExecuteNewCmd(CMD_REDRAWFAR, sizeof(CESERVER_REQ_HDR));
+						//pPlgIn->dwData[0] = nHILO;
+						pPlgOut = ExecuteCmd(szPipeName, pPlgIn, 500, ghConWnd);
+						if (pPlgOut) ExecuteFreeResult(pPlgOut);
+					}
 
 					SetEvent(srv.hAllowInputEvent);
 					srv.bInSyncResize = FALSE;

@@ -168,7 +168,8 @@ extern wchar_t gszDbgModLabel[6];
 #define CECMD_SETSIZENOSYNC 28 // Почти CECMD_SETSIZE. Вызывается из плагина.
 #define CECMD_SETDONTCLOSE  29
 
-#define CESERVER_REQ_VER    29
+// Версия интерфейса
+#define CESERVER_REQ_VER    30
 
 #define PIPEBUFSIZE 4096
 
@@ -483,8 +484,9 @@ typedef struct tag_CESERVER_REQ {
 #define CMD_EMENU        9
 #define CMD_LEFTCLKSYNC  10
 #define CMD_REDRAWFAR    11
+#define CMD_FARPOST      12
 // +2
-#define MAXCMDCOUNT      13
+#define MAXCMDCOUNT      14
 #define CMD_EXIT         MAXCMDCOUNT-1
 
 //#define GWL_TABINDEX     0

@@ -2727,3 +2727,12 @@ HRGN CVirtualConsole::GetExclusionRgn(bool abTestOnly/*=false*/)
 		return (HRGN)1;
 	return hRgn;
 }
+
+COORD CVirtualConsole::FindOpaqueCell()
+{
+	COORD cr = {0,0};
+	if (this) {
+		TODO("Поиск первого непрозрачного");
+	}
+	return cr;
+}

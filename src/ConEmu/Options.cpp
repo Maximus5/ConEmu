@@ -55,6 +55,7 @@ const u8 chSetsNums[] = {0, 178, 186, 136, 1, 238, 134, 161, 177, 129, 130, 77, 
 const char *ChSets[] = {"ANSI", "Arabic", "Baltic", "Chinese Big 5", "Default", "East Europe",
 		"GB 2312", "Greek", "Hebrew", "Hangul", "Johab", "Mac", "OEM", "Russian", "Shiftjis",
 		"Symbol", "Thai", "Turkish", "Vietnamese"};
+const WORD HostkeyCtrlIds[] = {cbHostWin, cbHostApps, cbHostLCtrl, cbHostRCtrl, cbHostLAlt, cbHostRAlt, cbHostLShift, cbHostRShift};
 //int upToFontHeight=0;
 HWND ghOpWnd=NULL;
 
@@ -184,7 +185,7 @@ void CSettings::InitSettings()
     psCmd = NULL; psCurCmd = NULL; wcscpy(szDefCmd, L"far");
 	psCmdHistory = NULL; nCmdHistorySize = 0;
     isMulti = true; icMultiNew = 'W'; icMultiNext = 'Q'; icMultiRecreate = 192/*VK_тильда*/; icMultiBuffer = 'A'; 
-    isMultiNewConfirm = true; nMultiHotkeyModifier = 0;
+    isMultiNewConfirm = true; nMultiHotkeyModifier = VK_LWIN; TestHostkeyModifiers();
     isFARuseASCIIsort = false; isFixAltOnAltTab = false;
     isFadeInactive = true; nFadeInactiveMask = 0xD0D0D0;
     // Logging
@@ -293,7 +294,7 @@ void CSettings::InitSettings()
     wndWidth = 80;
     //WindowMode=rNormal; -- устанавливается в конструкторе CConEmuMain
     isFullScreen = false;
-    isHideCaption = isHideCaptionAlways = false;
+    isHideCaption = mb_HideCaptionAlways = false;
 	nHideCaptionAlwaysFrame = 1; nHideCaptionAlwaysDelay = 2000; nHideCaptionAlwaysDisappear = 2000;
     isDesktopMode = false;
     isAlwaysOnTop = false;
@@ -418,7 +419,7 @@ void CSettings::LoadSettings()
         reg->Load(L"CmdLine", &psCmd);
 		reg->Load(L"CmdLineHistory", &psCmdHistory); nCmdHistorySize = 0; HistoryCheck();
         reg->Load(L"Multi", isMulti);
-        	reg->Load(L"Multi.Modifier", nMultiHotkeyModifier);
+        	reg->Load(L"Multi.Modifier", nMultiHotkeyModifier); TestHostkeyModifiers();
 			reg->Load(L"Multi.NewConsole", icMultiNew);
 			reg->Load(L"Multi.Next", icMultiNext);
 			reg->Load(L"Multi.Recreate", icMultiRecreate);
@@ -439,8 +440,8 @@ void CSettings::LoadSettings()
 
         reg->Load(L"WindowMode", gConEmu.WindowMode);
         reg->Load(L"HideCaption", isHideCaption);
-		// грузим именно в isHideCaptionAlwaysLoad, т.к. есть какие-то проблемы с инициализацией без заголовка
-		reg->Load(L"HideCaptionAlways", isHideCaptionAlways/*Load*/);
+		// грузим именно в mb_HideCaptionAlways, т.к. прозрачность сбивает темы в заголовке, поэтому возврат идет через isHideCaptionAlways()
+		reg->Load(L"HideCaptionAlways", mb_HideCaptionAlways);
 		reg->Load(L"HideCaptionAlwaysFrame", nHideCaptionAlwaysFrame);
 			if (nHideCaptionAlwaysFrame > 10) nHideCaptionAlwaysFrame = 10;
 		reg->Load(L"HideCaptionAlwaysDelay", nHideCaptionAlwaysDelay);
@@ -877,7 +878,7 @@ BOOL CSettings::SaveSettings()
 			DWORD saveMode = isFullScreen ? rFullScreen : gConEmu.isZoomed() ? rMaximized : rNormal;
             reg->Save(L"WindowMode", saveMode);
             reg->Save(L"HideCaption", isHideCaption);
-			reg->Save(L"HideCaptionAlways", isHideCaptionAlways);
+			reg->Save(L"HideCaptionAlways", mb_HideCaptionAlways);
 			reg->Save(L"HideCaptionAlwaysFrame", nHideCaptionAlwaysFrame);
 			reg->Save(L"HideCaptionAlwaysDelay", nHideCaptionAlwaysDelay);
 			reg->Save(L"HideCaptionAlwaysDisappear", nHideCaptionAlwaysDisappear);
@@ -1203,14 +1204,14 @@ LRESULT CSettings::OnInitDialog()
         TabCtrl_AdjustRect(_hwndTab, FALSE, &rcClient);
         
         hMain = CreateDialog((HINSTANCE)GetModuleHandle(NULL), 
-            MAKEINTRESOURCE(IDD_DIALOG1), ghOpWnd, mainOpProc);
+            MAKEINTRESOURCE(IDD_SPG_MAIN), ghOpWnd, mainOpProc);
         MoveWindow(hMain, rcClient.left, rcClient.top, rcClient.right-rcClient.left, rcClient.bottom-rcClient.top, 0);
 		/*
         hColors = CreateDialog((HINSTANCE)GetModuleHandle(NULL), 
-            MAKEINTRESOURCE(IDD_DIALOG2), ghOpWnd, colorOpProc);
+            MAKEINTRESOURCE(IDD_SPG_COLORS), ghOpWnd, colorOpProc);
         MoveWindow(hColors, rcClient.left, rcClient.top, rcClient.right-rcClient.left, rcClient.bottom-rcClient.top, 0);
         hInfo = CreateDialog((HINSTANCE)GetModuleHandle(NULL), 
-            MAKEINTRESOURCE(IDD_DIALOG3), ghOpWnd, infoOpProc);
+            MAKEINTRESOURCE(IDD_SPG_INFO), ghOpWnd, infoOpProc);
         MoveWindow(hInfo, rcClient.left, rcClient.top, rcClient.right-rcClient.left, rcClient.bottom-rcClient.top, 0);
 		*/
 
@@ -1451,7 +1452,7 @@ LRESULT CSettings::OnInitDialog_Ext()
 	if (isAutoRegisterFonts) CheckDlgButton(hExt, cbAutoRegFonts, BST_CHECKED);
 	if (isDebugSteps) CheckDlgButton(hExt, cbDebugSteps, BST_CHECKED);
 	if (isHideCaption) CheckDlgButton(hExt, cbHideCaption, BST_CHECKED);
-	if (isHideCaptionAlways) CheckDlgButton(hExt, cbHideCaptionAlways, BST_CHECKED);
+	if (isHideCaptionAlways()) CheckDlgButton(hExt, cbHideCaptionAlways, BST_CHECKED);
 	
 	if (isFARuseASCIIsort) CheckDlgButton(hExt, cbFARuseASCIIsort, BST_CHECKED);
 	if (isFixAltOnAltTab) CheckDlgButton(hExt, cbFixAltOnAltTab, BST_CHECKED);
@@ -1518,12 +1519,6 @@ LRESULT CSettings::OnInitDialog_Ext()
 	SendDlgItemMessage(hExt, tLongOutputHeight, EM_SETLIMITTEXT, 5, 0);
 	SetDlgItemText(hExt, tLongOutputHeight, _ltow(gSet.DefaultBufferHeight, sz, 10));
 	EnableWindow(GetDlgItem(hExt, tLongOutputHeight), AutoBufferHeight);
-	SendDlgItemMessage(hExt, hkNewConsole, HKM_SETRULES, HKCOMB_A|HKCOMB_C|HKCOMB_CA|HKCOMB_S|HKCOMB_SA|HKCOMB_SC|HKCOMB_SCA, 0);
-	SendDlgItemMessage(hExt, hkNewConsole, HKM_SETHOTKEY, icMultiNew, 0);
-	SendDlgItemMessage(hExt, hkSwitchConsole, HKM_SETRULES, HKCOMB_A|HKCOMB_C|HKCOMB_CA|HKCOMB_S|HKCOMB_SA|HKCOMB_SC|HKCOMB_SCA, 0);
-	SendDlgItemMessage(hExt, hkSwitchConsole, HKM_SETHOTKEY, icMultiNext, 0);
-	SendDlgItemMessage(hExt, hkCloseConsole, HKM_SETRULES, HKCOMB_A|HKCOMB_C|HKCOMB_CA|HKCOMB_S|HKCOMB_SA|HKCOMB_SC|HKCOMB_SCA, 0);
-	SendDlgItemMessage(hExt, hkCloseConsole, HKM_SETHOTKEY, icMultiRecreate, 0);
 	// 16bit Height
 	SendDlgItemMessage(hExt, lbNtvdmHeight, CB_ADDSTRING, 0, (LPARAM) L"Auto");
 	SendDlgItemMessage(hExt, lbNtvdmHeight, CB_ADDSTRING, 0, (LPARAM) L"25 lines");
@@ -1758,6 +1753,10 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
         isMulti = IsChecked(hExt, cbMultiCon);
         break;
 
+	case bMultiConHotkeys:
+		DialogBox(g_hInstance, MAKEINTRESOURCE(IDD_MORE_HOTKEYS), ghOpWnd, hotkeysOpProc);
+		break;
+
 	case cbNewConfirm:
 		isMultiNewConfirm = IsChecked(hExt, cbNewConfirm);
 		break;
@@ -1823,12 +1822,16 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
 		break;
 
 	case cbHideCaptionAlways:
-		isHideCaptionAlways = IsChecked(hExt, cbHideCaptionAlways);
+		mb_HideCaptionAlways = IsChecked(hExt, cbHideCaptionAlways);
+		if (isHideCaptionAlways()) {
+			CheckDlgButton(hExt, cbHideCaptionAlways, BST_CHECKED);
+			TODO("показать тултип, что скрытие обязательно при прозрачности");
+		}
 		gConEmu.OnHideCaption();
 		break;
 
 	case bHideCaptionSettings:
-		DialogBox(g_hInstance, MAKEINTRESOURCE(IDD_DIALOG5), ghOpWnd, hideOpProc);
+		DialogBox(g_hInstance, MAKEINTRESOURCE(IDD_MORE_HIDE), ghOpWnd, hideOpProc);
 		break;
 
     case cbFARuseASCIIsort:
@@ -2075,6 +2078,11 @@ LRESULT CSettings::OnColorButtonClicked(WPARAM wParam, LPARAM lParam)
 	case cbUserScreenTransparent:
 		{
 			isUserScreenTransparent = IsChecked(hColors, cbUserScreenTransparent);
+			if (hExt) CheckDlgButton(hExt, cbHideCaptionAlways, isHideCaptionAlways() ? BST_CHECKED : BST_UNCHECKED);
+			if (isUserScreenTransparent) { // при прозрачности - обязательно скрытие заголовка
+				_ASSERTE(isHideCaptionAlways()); // должен включаться автоматически
+				gConEmu.OnHideCaption();
+			}
 			gConEmu.UpdateWindowRgn();
 			//// Чтобы юзеру на экране не мелькал выбранный цвет для ColorKey
 			//// порядок действий выбираем в зависимости от флажка
@@ -2241,15 +2249,6 @@ LRESULT CSettings::OnEditChanged(WPARAM wParam, LPARAM lParam)
 			SetDlgItemText(hExt, TB, _ltow(DefaultBufferHeight, szTemp, 10));
 		}
 	}
-	else if (TB == hkNewConsole || TB == hkSwitchConsole || TB == hkCloseConsole) {
-		UINT nHotKey = 0xFF & SendDlgItemMessage(hExt, TB, HKM_GETHOTKEY, 0, 0);
-		if (TB == hkNewConsole)
-			icMultiNew = nHotKey;
-		else if (TB == hkSwitchConsole)
-			icMultiNext = nHotKey;
-		else if (TB == hkCloseConsole)
-			icMultiRecreate = nHotKey;
-	}
 
     return 0;
 }
@@ -2373,15 +2372,15 @@ LRESULT CSettings::OnTab(LPNMHDR phdr)
                 	phCurrent = &hMain;
                 } else if (nSel==1) {
                 	phCurrent = &hExt;
-                	nDlgRc = IDD_DIALOG4;
+                	nDlgRc = IDD_SPG_FEATURE;
                 	dlgProc = extOpProc;
                 } else if (nSel==2) {
                 	phCurrent = &hColors;
-                	nDlgRc = IDD_DIALOG2;
+                	nDlgRc = IDD_SPG_COLORS;
                 	dlgProc = colorOpProc;
                 } else {
                 	phCurrent = &hInfo;
-                	nDlgRc = IDD_DIALOG3;
+                	nDlgRc = IDD_SPG_INFO;
                 	dlgProc = infoOpProc;
                 }
                 
@@ -2539,9 +2538,9 @@ void CSettings::Dialog()
 	UpdateWindow(ghWndDC);
 
 	//2009-05-03. DialogBox создает МОДАЛЬНЫЙ Диалог
-    //DialogBox((HINSTANCE)GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_DIALOGM), 0, wndOpProc);
+    //DialogBox((HINSTANCE)GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_SETTINGS), 0, wndOpProc);
 	
-    HWND hOpt = CreateDialog(g_hInstance, MAKEINTRESOURCE(IDD_DIALOGM), NULL, wndOpProc);
+    HWND hOpt = CreateDialog(g_hInstance, MAKEINTRESOURCE(IDD_SETTINGS), NULL, wndOpProc);
 	if (!hOpt) {
 		DisplayLastError(L"Can't create settings dialog!");
 	} else {
@@ -2897,6 +2896,369 @@ INT_PTR CSettings::infoOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
         return 0;
     }
     return 0;
+}
+
+void CSettings::CenterDialog(HWND hWnd2)
+{
+	RECT rcParent, rc;
+	GetWindowRect(ghOpWnd, &rcParent);
+	GetWindowRect(hWnd2, &rc);
+	MoveWindow(hWnd2, 
+		(rcParent.left+rcParent.right-rc.right+rc.left)/2,
+		(rcParent.top+rcParent.bottom-rc.bottom+rc.top)/2,
+		rc.right - rc.left, rc.bottom - rc.top, TRUE);
+}
+
+bool CSettings::IsHostkey(BYTE vk)
+{
+	for (int i=0; i < 15 && gSet.mn_HostModOk[i]; i++)
+		if (gSet.mn_HostModOk[i] == vk)
+			return true;
+	return false;
+}
+
+// Если есть vk - заменить на vkNew
+void CSettings::ReplaceHostkey(BYTE vk, BYTE vkNew)
+{
+	for (int i = 0; i < 15; i++) {
+		if (gSet.mn_HostModOk[i] == vk) {
+			gSet.mn_HostModOk[i] = vkNew;
+			return;
+		}
+	}
+}
+
+void CSettings::AddHostkey(BYTE vk)
+{
+	for (int i = 0; i < 15; i++) {
+		if (gSet.mn_HostModOk[i] == vk)
+			break; // уже есть
+		if (!gSet.mn_HostModOk[i]) {
+			gSet.mn_HostModOk[i] = vk; // добавить
+			break;
+		}
+	}
+}
+
+BYTE CSettings::CheckHostkeyModifier(BYTE vk)
+{
+	// Если передан VK_NULL
+	if (!vk)
+		return 0;
+
+	switch (vk) {
+		case VK_LWIN: case VK_RWIN:
+			if (IsHostkey(VK_RWIN))
+				ReplaceHostkey(VK_RWIN, VK_LWIN);
+			vk = VK_LWIN; // Сохраняем только Левый-Win
+			break;
+
+		case VK_APPS:
+			break; // Это - ок
+
+		case VK_LSHIFT:
+			if (IsHostkey(VK_RSHIFT) || IsHostkey(VK_SHIFT)) {
+				vk = VK_SHIFT;
+				ReplaceHostkey(VK_RSHIFT, VK_SHIFT);
+			}
+			break;
+		case VK_RSHIFT:
+			if (IsHostkey(VK_LSHIFT) || IsHostkey(VK_SHIFT)) {
+				vk = VK_SHIFT;
+				ReplaceHostkey(VK_LSHIFT, VK_SHIFT);
+			}
+			break;
+		case VK_SHIFT:
+			if (IsHostkey(VK_LSHIFT))
+				ReplaceHostkey(VK_LSHIFT, VK_SHIFT);
+			else if (IsHostkey(VK_RSHIFT))
+				ReplaceHostkey(VK_RSHIFT, VK_SHIFT);
+			break;
+
+		case VK_LMENU:
+			if (IsHostkey(VK_RMENU) || IsHostkey(VK_MENU)) {
+				vk = VK_MENU;
+				ReplaceHostkey(VK_RMENU, VK_MENU);
+			}
+			break;
+		case VK_RMENU:
+			if (IsHostkey(VK_LMENU) || IsHostkey(VK_MENU)) {
+				vk = VK_MENU;
+				ReplaceHostkey(VK_LMENU, VK_MENU);
+			}
+			break;
+		case VK_MENU:
+			if (IsHostkey(VK_LMENU))
+				ReplaceHostkey(VK_LMENU, VK_MENU);
+			else if (IsHostkey(VK_RMENU))
+				ReplaceHostkey(VK_RMENU, VK_MENU);
+			break;
+
+		case VK_LCONTROL:
+			if (IsHostkey(VK_RCONTROL) || IsHostkey(VK_CONTROL)) {
+				vk = VK_CONTROL;
+				ReplaceHostkey(VK_RCONTROL, VK_CONTROL);
+			}
+			break;
+		case VK_RCONTROL:
+			if (IsHostkey(VK_LCONTROL) || IsHostkey(VK_CONTROL)) {
+				vk = VK_CONTROL;
+				ReplaceHostkey(VK_LCONTROL, VK_CONTROL);
+			}
+			break;
+		case VK_CONTROL:
+			if (IsHostkey(VK_LCONTROL))
+				ReplaceHostkey(VK_LCONTROL, VK_CONTROL);
+			else if (IsHostkey(VK_RCONTROL))
+				ReplaceHostkey(VK_RCONTROL, VK_CONTROL);
+			break;
+	}
+
+	// Добавить в список входящих в Host
+	AddHostkey(vk);
+
+	// Вернуть (возможно измененный) VK
+	return vk;
+}
+
+bool CSettings::TestHostkeyModifiers()
+{
+	memset(mn_HostModOk, 0, sizeof(mn_HostModOk));
+	memset(mn_HostModSkip, 0, sizeof(mn_HostModSkip));
+
+	if (!nMultiHotkeyModifier)
+		nMultiHotkeyModifier = VK_LWIN;
+
+	BYTE vk;
+
+	vk = (nMultiHotkeyModifier & 0xFF);
+	CheckHostkeyModifier(vk);
+
+	vk = (nMultiHotkeyModifier & 0xFF00) >> 8;
+	CheckHostkeyModifier(vk);
+
+	vk = (nMultiHotkeyModifier & 0xFF0000) >> 16;
+	CheckHostkeyModifier(vk);
+
+	vk = (nMultiHotkeyModifier & 0xFF000000) >> 24;
+	CheckHostkeyModifier(vk);
+
+	// Однако, допустимо не более 3-х клавиш (больше смысла не имеет)
+	TrimHostkeys();
+
+	// Сформировать (возможно скорректированную) маску HostKey
+	bool lbChanged = MakeHostkeyModifier();
+
+	return lbChanged;
+}
+
+bool CSettings::MakeHostkeyModifier()
+{
+	bool lbChanged = false;
+
+	// Сформировать (возможно скорректированную) маску HostKey
+	DWORD nNew = 0;
+	if (gSet.mn_HostModOk[0])
+		nNew |= gSet.mn_HostModOk[0];
+	if (gSet.mn_HostModOk[1])
+		nNew |= ((DWORD)(gSet.mn_HostModOk[1])) << 8;
+	if (gSet.mn_HostModOk[2])
+		nNew |= ((DWORD)(gSet.mn_HostModOk[2])) << 16;
+	if (gSet.mn_HostModOk[3])
+		nNew |= ((DWORD)(gSet.mn_HostModOk[3])) << 24;
+
+	TODO("!!! Добавить в mn_HostModSkip те VK, которые отсутствуют в mn_HostModOk");
+
+	if (gSet.nMultiHotkeyModifier != nNew) {
+		gSet.nMultiHotkeyModifier = nNew;
+		lbChanged = true;
+	}
+
+	return lbChanged;
+}
+
+// Оставить в mn_HostModOk только 3 VK
+void CSettings::TrimHostkeys()
+{
+	if (gSet.mn_HostModOk[0] == 0)
+		return;
+
+	int i = 0;
+	while (++i < 15 && gSet.mn_HostModOk[i])
+		;
+
+	if (i >= 3) {
+		memmove(gSet.mn_HostModOk, gSet.mn_HostModOk+i-3, 3);
+	}
+
+	memset(gSet.mn_HostModOk+3, 0, sizeof(gSet.mn_HostModOk)-3);
+}
+
+void CSettings::SetupHotkeyChecks(HWND hWnd2)
+{
+	bool b;
+	CheckDlgButton(hWnd2, cbHostWin, IsHostkey(VK_LWIN));
+	CheckDlgButton(hWnd2, cbHostApps, IsHostkey(VK_APPS));
+	b = IsHostkey(VK_SHIFT);
+	CheckDlgButton(hWnd2, cbHostLShift, b || IsHostkey(VK_LSHIFT));
+	CheckDlgButton(hWnd2, cbHostRShift, b || IsHostkey(VK_RSHIFT));
+	b = IsHostkey(VK_MENU);
+	CheckDlgButton(hWnd2, cbHostLAlt, b || IsHostkey(VK_LMENU));
+	CheckDlgButton(hWnd2, cbHostRAlt, b || IsHostkey(VK_RMENU));
+	b = IsHostkey(VK_CONTROL);
+	CheckDlgButton(hWnd2, cbHostLCtrl, b || IsHostkey(VK_LCONTROL));
+	CheckDlgButton(hWnd2, cbHostRCtrl, b || IsHostkey(VK_RCONTROL));
+}
+
+BYTE CSettings::HostkeyCtrlId2Vk(WORD nID)
+{
+	switch (nID) {
+		case cbHostWin:
+			return VK_LWIN;
+		case cbHostApps:
+			return VK_APPS;
+		case cbHostLShift:
+			return VK_LSHIFT;
+		case cbHostRShift:
+			return VK_RSHIFT;
+		case cbHostLAlt:
+			return VK_LMENU;
+		case cbHostRAlt:
+			return VK_RMENU;
+		case cbHostLCtrl:
+			return VK_LCONTROL;
+		case cbHostRCtrl:
+			return VK_RCONTROL;
+	}
+	return 0;
+}
+
+bool CSettings::isHostkeySingleLR(WORD vk, WORD vkC, WORD vkL, WORD vkR)
+{
+	if (vk == vkC) {
+		bool bLeft  = isPressed(vkL);
+		bool bRight = isPressed(vkR);
+		if (bLeft && !bRight)
+			return (nMultiHotkeyModifier == vkL);
+		if (bRight && !bLeft)
+			return (nMultiHotkeyModifier == vkR);
+		// нажатие обоих шифтов - игнорируем
+		return false;
+	}
+	if (vk == vkL)
+		return (nMultiHotkeyModifier == vkL);
+	if (vk == vkR)
+		return (nMultiHotkeyModifier == vkR);
+	return false;
+}
+
+bool CSettings::isHostkeySingle(WORD vk)
+{
+	if (nMultiHotkeyModifier > 0xFF)
+		return false; // в Host-комбинации больше одной клавиши
+
+	if (vk == VK_LWIN || vk == VK_RWIN)
+		return (nMultiHotkeyModifier == VK_LWIN);
+	if (vk == VK_SHIFT || vk == VK_LSHIFT || vk == VK_RSHIFT)
+		return isHostkeySingleLR(vk, VK_SHIFT, VK_LSHIFT, VK_RSHIFT);
+	if (vk == VK_CONTROL || vk == VK_LCONTROL || vk == VK_RCONTROL)
+		return isHostkeySingleLR(vk, VK_CONTROL, VK_LCONTROL, VK_RCONTROL);
+	if (vk == VK_MENU || vk == VK_LMENU || vk == VK_RMENU)
+		return isHostkeySingleLR(vk, VK_MENU, VK_LMENU, VK_RMENU);
+
+	return false;
+}
+
+bool CSettings::isHostkeyPressed()
+{
+	if (mn_HostModOk[0] == 0) {
+		_ASSERTE(mn_HostModOk[0]!=0);
+		return isPressed(VK_LWIN) || isPressed(VK_RWIN);
+	}
+
+	_ASSERTE(mn_HostModOk[4] == 0);
+	for (int i = 0; i < 4 && mn_HostModOk[i]; i++) {
+		if (!isPressed(mn_HostModOk[i]))
+			return false;
+	}
+
+	for (int j = 0; j < 4 && mn_HostModSkip[j]; i++) {
+		if (isPressed(mn_HostModSkip[j]))
+			return false;
+	}
+
+	return true;
+}
+
+INT_PTR CSettings::hotkeysOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
+{
+	switch (messg)
+	{
+	case WM_INITDIALOG:
+		{
+			gSet.SetupHotkeyChecks(hWnd2);
+
+			SendDlgItemMessage(hWnd2, hkNewConsole, HKM_SETRULES, HKCOMB_A|HKCOMB_C|HKCOMB_CA|HKCOMB_S|HKCOMB_SA|HKCOMB_SC|HKCOMB_SCA, 0);
+			SendDlgItemMessage(hWnd2, hkNewConsole, HKM_SETHOTKEY, gSet.icMultiNew, 0);
+			SendDlgItemMessage(hWnd2, hkSwitchConsole, HKM_SETRULES, HKCOMB_A|HKCOMB_C|HKCOMB_CA|HKCOMB_S|HKCOMB_SA|HKCOMB_SC|HKCOMB_SCA, 0);
+			SendDlgItemMessage(hWnd2, hkSwitchConsole, HKM_SETHOTKEY, gSet.icMultiNext, 0);
+			SendDlgItemMessage(hWnd2, hkCloseConsole, HKM_SETRULES, HKCOMB_A|HKCOMB_C|HKCOMB_CA|HKCOMB_S|HKCOMB_SA|HKCOMB_SC|HKCOMB_SCA, 0);
+			SendDlgItemMessage(hWnd2, hkCloseConsole, HKM_SETHOTKEY, gSet.icMultiRecreate, 0);
+
+			gSet.RegisterTipsFor(hWnd2);
+			gSet.CenterDialog(hWnd2);
+		}
+		break;
+
+	case WM_GETICON:
+		if (wParam!=ICON_BIG) {
+			SetWindowLongPtr(hWnd2, DWLP_MSGRESULT, (LRESULT)hClassIconSm);
+			return 1;
+		}
+		break;
+
+	case WM_COMMAND:
+		if (HIWORD(wParam) == BN_CLICKED)
+		{
+			WORD TB = LOWORD(wParam);
+			if (TB == IDOK || TB == IDCANCEL) {
+				EndDialog(hWnd2, TB);
+				return 1;
+			}
+
+			if (TB >= cbHostWin && TB <= cbHostRShift)
+			{
+				memset(gSet.mn_HostModOk, 0, sizeof(gSet.mn_HostModOk));
+				for (int i = 0; i < sizeofarray(HostkeyCtrlIds); i++) {
+					if (IsChecked(hWnd2, HostkeyCtrlIds[i]))
+						gSet.CheckHostkeyModifier(HostkeyCtrlId2Vk(HostkeyCtrlIds[i]));
+				}
+				gSet.TrimHostkeys();
+				if (IsChecked(hWnd2, TB)) {
+					gSet.CheckHostkeyModifier(HostkeyCtrlId2Vk(TB));
+					gSet.TrimHostkeys();
+				}
+				// Обновить, что осталось
+				gSet.SetupHotkeyChecks(hWnd2);
+				gSet.MakeHostkeyModifier();
+			}
+
+		} else if (HIWORD(wParam) == EN_CHANGE)	{
+			WORD TB = LOWORD(wParam);
+			if (TB == hkNewConsole || TB == hkSwitchConsole || TB == hkCloseConsole) {
+				UINT nHotKey = 0xFF & SendDlgItemMessage(hWnd2, TB, HKM_GETHOTKEY, 0, 0);
+				if (TB == hkNewConsole)
+					gSet.icMultiNew = nHotKey;
+				else if (TB == hkSwitchConsole)
+					gSet.icMultiNext = nHotKey;
+				else if (TB == hkCloseConsole)
+					gSet.icMultiRecreate = nHotKey;
+			}
+		}
+		break;
+
+	}
+	return 0;
 }
 
 INT_PTR CSettings::hideOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
@@ -4308,4 +4670,9 @@ bool CSettings::SetColorById(WORD nID, COLORREF color)
 	else
 		return false;
 	return true;
+}
+
+bool CSettings::isHideCaptionAlways()
+{
+	return mb_HideCaptionAlways || (!mb_HideCaptionAlways && isUserScreenTransparent);
 }

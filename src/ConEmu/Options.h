@@ -111,8 +111,8 @@ public:
     DWORD FontSizeX;  // ширина основного шрифта
     DWORD FontSizeX2; // ширина для FixFarBorders (ширина создаваемого шрифта для отрисовки рамок, не путать со знакоместом)
     DWORD FontSizeX3; // ширина знакоместа при моноширном режиме (не путать с FontSizeX2)
-	TODO("Удалить isHideCaptionAlwaysLoad, если Rgn позволит");
-    bool isFullScreen, isHideCaption, isHideCaptionAlways/*, isHideCaptionAlwaysLoad*/;
+    bool isFullScreen, isHideCaption;
+    bool isHideCaptionAlways();
 	BYTE nHideCaptionAlwaysFrame;
 	DWORD nHideCaptionAlwaysDelay, nHideCaptionAlwaysDisappear;
     bool isAlwaysOnTop, isDesktopMode;
@@ -120,6 +120,7 @@ public:
 	bool isMouseSkipActivation, isMouseSkipMoving;
 	bool isFarHourglass; DWORD nFarHourglassDelay;
 protected:
+	bool mb_HideCaptionAlways;
 	typedef struct tag_CharRanges {
 		bool bUsed;
 		wchar_t cBegin, cEnd;
@@ -168,7 +169,9 @@ public:
     RECT rcTabMargins;
     bool isTabFrame;
     bool isMulti; BYTE icMultiNew, icMultiNext, icMultiRecreate, icMultiBuffer;
-    bool isMultiNewConfirm; DWORD nMultiHotkeyModifier;
+	bool isHostkeySingle(WORD vk);
+	bool isHostkeyPressed();
+    bool isMultiNewConfirm;
     bool isFARuseASCIIsort, isFixAltOnAltTab;
 
     // Заголовки табов
@@ -215,12 +218,14 @@ public:
     HWND hMain, hExt, hColors, hInfo;
 
     bool LoadImageFrom(TCHAR *inPath, bool abShowErrors=false);
+	static void CenterDialog(HWND hWnd2);
     static INT_PTR CALLBACK wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
     static INT_PTR CALLBACK mainOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
     static INT_PTR CALLBACK extOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
     static INT_PTR CALLBACK colorOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
     static INT_PTR CALLBACK infoOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
 	static INT_PTR CALLBACK hideOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
+	static INT_PTR CALLBACK hotkeysOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
     void LoadSettings();
     void InitSettings();
     BOOL SaveSettings();
@@ -286,8 +291,8 @@ private:
 	UINT mn_MsgUpdateCounter;
 	//wchar_t temp[MAX_PATH];
 	UINT mn_MsgRecreateFont;
-	int IsChecked(HWND hParent, WORD nCtrlId);
-	int GetNumber(HWND hParent, WORD nCtrlId);
+	static int IsChecked(HWND hParent, WORD nCtrlId);
+	static int GetNumber(HWND hParent, WORD nCtrlId);
 	int SelectString(HWND hParent, WORD nCtrlId, LPCWSTR asText);
 	int SelectStringExact(HWND hParent, WORD nCtrlId, LPCWSTR asText);
 	BOOL mb_TabHotKeyRegistered;
@@ -310,4 +315,17 @@ private:
 	BOOL GetColorRef(HWND hDlg, WORD TB, COLORREF* pCR);
 	//
 	bool mb_ThemingEnabled;
+	//
+	bool TestHostkeyModifiers();
+	static BYTE CheckHostkeyModifier(BYTE vk);
+	static bool IsHostkey(BYTE vk);
+	static void ReplaceHostkey(BYTE vk, BYTE vkNew);
+	static void AddHostkey(BYTE vk);
+	static void TrimHostkeys();
+	static void SetupHotkeyChecks(HWND hWnd2);
+	static bool MakeHostkeyModifier();
+	static BYTE HostkeyCtrlId2Vk(WORD nID);
+	DWORD nMultiHotkeyModifier;
+	BYTE mn_HostModOk[15], mn_HostModSkip[15];
+	bool isHostkeySingleLR(WORD vk, WORD vkC, WORD vkL, WORD vkR);
 };
