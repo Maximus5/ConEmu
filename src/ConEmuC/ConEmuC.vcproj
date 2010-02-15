@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="windows-1251"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9,00"
+	Version="9.00"
 	Name="ConEmuC"
 	ProjectGUID="{3939C0DF-8E00-440F-AC8A-CB579C56A5CB}"
 	RootNamespace="ConEmuC"
@@ -168,8 +168,8 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="C:\Temp\VCProject\$(ConfigurationName)"
-			IntermediateDirectory="C:\Temp\VCProject\$(ConfigurationName)"
+			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)\$(ProjectName)"
+			IntermediateDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)\$(ProjectName)"
 			ConfigurationType="1"
 			CharacterSet="1"
 			WholeProgramOptimization="1"
@@ -193,7 +193,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;CRTPRINTF"
+				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;CRTPRINTF;HIDE_TODO"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="0"
@@ -245,8 +245,8 @@
 		</Configuration>
 		<Configuration
 			Name="Release|x64"
-			OutputDirectory="C:\Temp\VCProject\ConEmuС\$(ConfigurationName).$(PlatformName)"
-			IntermediateDirectory="C:\Temp\VCProject\ConEmuС\$(ConfigurationName).$(PlatformName)"
+			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)\$(ProjectName)"
+			IntermediateDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)\$(ProjectName)"
 			ConfigurationType="1"
 			CharacterSet="1"
 			WholeProgramOptimization="1"
@@ -271,7 +271,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				PreprocessorDefinitions="WIN64;WIN32;NDEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;HIDE_TODO;CRTPRINTF"
+				PreprocessorDefinitions="WIN64;WIN32;NDEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;HIDE_TODO;CRTPRINTF;HIDE_TODO"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="0"

@@ -2079,10 +2079,11 @@ LRESULT CSettings::OnColorButtonClicked(WPARAM wParam, LPARAM lParam)
 		{
 			isUserScreenTransparent = IsChecked(hColors, cbUserScreenTransparent);
 			if (hExt) CheckDlgButton(hExt, cbHideCaptionAlways, isHideCaptionAlways() ? BST_CHECKED : BST_UNCHECKED);
-			if (isUserScreenTransparent) { // при прозрачности - обязательно скрытие заголовка
-				_ASSERTE(isHideCaptionAlways()); // должен включаться автоматически
-				gConEmu.OnHideCaption();
-			}
+			//if (isUserScreenTransparent) { // при прозрачности - обязательно скрытие заголовка
+			//	_ASSERTE(isHideCaptionAlways()); // должен включаться автоматически
+			//	gConEmu.OnHideCaption();
+			//}
+			gConEmu.OnHideCaption(); // при прозрачности - обязательно скрытие заголовка + кнопки
 			gConEmu.UpdateWindowRgn();
 			//// Чтобы юзеру на экране не мелькал выбранный цвет для ColorKey
 			//// порядок действий выбираем в зависимости от флажка
@@ -2909,10 +2910,10 @@ void CSettings::CenterDialog(HWND hWnd2)
 		rc.right - rc.left, rc.bottom - rc.top, TRUE);
 }
 
-bool CSettings::IsHostkey(BYTE vk)
+bool CSettings::IsHostkey(WORD vk)
 {
-	for (int i=0; i < 15 && gSet.mn_HostModOk[i]; i++)
-		if (gSet.mn_HostModOk[i] == vk)
+	for (int i=0; i < 15 && mn_HostModOk[i]; i++)
+		if (mn_HostModOk[i] == vk)
 			return true;
 	return false;
 }
@@ -2948,7 +2949,7 @@ BYTE CSettings::CheckHostkeyModifier(BYTE vk)
 
 	switch (vk) {
 		case VK_LWIN: case VK_RWIN:
-			if (IsHostkey(VK_RWIN))
+			if (gSet.IsHostkey(VK_RWIN))
 				ReplaceHostkey(VK_RWIN, VK_LWIN);
 			vk = VK_LWIN; // Сохраняем только Левый-Win
 			break;
@@ -2957,59 +2958,59 @@ BYTE CSettings::CheckHostkeyModifier(BYTE vk)
 			break; // Это - ок
 
 		case VK_LSHIFT:
-			if (IsHostkey(VK_RSHIFT) || IsHostkey(VK_SHIFT)) {
+			if (gSet.IsHostkey(VK_RSHIFT) || gSet.IsHostkey(VK_SHIFT)) {
 				vk = VK_SHIFT;
 				ReplaceHostkey(VK_RSHIFT, VK_SHIFT);
 			}
 			break;
 		case VK_RSHIFT:
-			if (IsHostkey(VK_LSHIFT) || IsHostkey(VK_SHIFT)) {
+			if (gSet.IsHostkey(VK_LSHIFT) || gSet.IsHostkey(VK_SHIFT)) {
 				vk = VK_SHIFT;
 				ReplaceHostkey(VK_LSHIFT, VK_SHIFT);
 			}
 			break;
 		case VK_SHIFT:
-			if (IsHostkey(VK_LSHIFT))
+			if (gSet.IsHostkey(VK_LSHIFT))
 				ReplaceHostkey(VK_LSHIFT, VK_SHIFT);
-			else if (IsHostkey(VK_RSHIFT))
+			else if (gSet.IsHostkey(VK_RSHIFT))
 				ReplaceHostkey(VK_RSHIFT, VK_SHIFT);
 			break;
 
 		case VK_LMENU:
-			if (IsHostkey(VK_RMENU) || IsHostkey(VK_MENU)) {
+			if (gSet.IsHostkey(VK_RMENU) || gSet.IsHostkey(VK_MENU)) {
 				vk = VK_MENU;
 				ReplaceHostkey(VK_RMENU, VK_MENU);
 			}
 			break;
 		case VK_RMENU:
-			if (IsHostkey(VK_LMENU) || IsHostkey(VK_MENU)) {
+			if (gSet.IsHostkey(VK_LMENU) || gSet.IsHostkey(VK_MENU)) {
 				vk = VK_MENU;
 				ReplaceHostkey(VK_LMENU, VK_MENU);
 			}
 			break;
 		case VK_MENU:
-			if (IsHostkey(VK_LMENU))
+			if (gSet.IsHostkey(VK_LMENU))
 				ReplaceHostkey(VK_LMENU, VK_MENU);
-			else if (IsHostkey(VK_RMENU))
+			else if (gSet.IsHostkey(VK_RMENU))
 				ReplaceHostkey(VK_RMENU, VK_MENU);
 			break;
 
 		case VK_LCONTROL:
-			if (IsHostkey(VK_RCONTROL) || IsHostkey(VK_CONTROL)) {
+			if (gSet.IsHostkey(VK_RCONTROL) || gSet.IsHostkey(VK_CONTROL)) {
 				vk = VK_CONTROL;
 				ReplaceHostkey(VK_RCONTROL, VK_CONTROL);
 			}
 			break;
 		case VK_RCONTROL:
-			if (IsHostkey(VK_LCONTROL) || IsHostkey(VK_CONTROL)) {
+			if (gSet.IsHostkey(VK_LCONTROL) || gSet.IsHostkey(VK_CONTROL)) {
 				vk = VK_CONTROL;
 				ReplaceHostkey(VK_LCONTROL, VK_CONTROL);
 			}
 			break;
 		case VK_CONTROL:
-			if (IsHostkey(VK_LCONTROL))
+			if (gSet.IsHostkey(VK_LCONTROL))
 				ReplaceHostkey(VK_LCONTROL, VK_CONTROL);
-			else if (IsHostkey(VK_RCONTROL))
+			else if (gSet.IsHostkey(VK_RCONTROL))
 				ReplaceHostkey(VK_RCONTROL, VK_CONTROL);
 			break;
 	}
@@ -3097,17 +3098,17 @@ void CSettings::TrimHostkeys()
 void CSettings::SetupHotkeyChecks(HWND hWnd2)
 {
 	bool b;
-	CheckDlgButton(hWnd2, cbHostWin, IsHostkey(VK_LWIN));
-	CheckDlgButton(hWnd2, cbHostApps, IsHostkey(VK_APPS));
-	b = IsHostkey(VK_SHIFT);
-	CheckDlgButton(hWnd2, cbHostLShift, b || IsHostkey(VK_LSHIFT));
-	CheckDlgButton(hWnd2, cbHostRShift, b || IsHostkey(VK_RSHIFT));
-	b = IsHostkey(VK_MENU);
-	CheckDlgButton(hWnd2, cbHostLAlt, b || IsHostkey(VK_LMENU));
-	CheckDlgButton(hWnd2, cbHostRAlt, b || IsHostkey(VK_RMENU));
-	b = IsHostkey(VK_CONTROL);
-	CheckDlgButton(hWnd2, cbHostLCtrl, b || IsHostkey(VK_LCONTROL));
-	CheckDlgButton(hWnd2, cbHostRCtrl, b || IsHostkey(VK_RCONTROL));
+	CheckDlgButton(hWnd2, cbHostWin, gSet.IsHostkey(VK_LWIN));
+	CheckDlgButton(hWnd2, cbHostApps, gSet.IsHostkey(VK_APPS));
+	b = gSet.IsHostkey(VK_SHIFT);
+	CheckDlgButton(hWnd2, cbHostLShift, b || gSet.IsHostkey(VK_LSHIFT));
+	CheckDlgButton(hWnd2, cbHostRShift, b || gSet.IsHostkey(VK_RSHIFT));
+	b = gSet.IsHostkey(VK_MENU);
+	CheckDlgButton(hWnd2, cbHostLAlt, b || gSet.IsHostkey(VK_LMENU));
+	CheckDlgButton(hWnd2, cbHostRAlt, b || gSet.IsHostkey(VK_RMENU));
+	b = gSet.IsHostkey(VK_CONTROL);
+	CheckDlgButton(hWnd2, cbHostLCtrl, b || gSet.IsHostkey(VK_LCONTROL));
+	CheckDlgButton(hWnd2, cbHostRCtrl, b || gSet.IsHostkey(VK_RCONTROL));
 }
 
 BYTE CSettings::HostkeyCtrlId2Vk(WORD nID)
@@ -3152,13 +3153,15 @@ bool CSettings::isHostkeySingleLR(WORD vk, WORD vkC, WORD vkL, WORD vkR)
 	return false;
 }
 
-bool CSettings::isHostkeySingle(WORD vk)
+bool CSettings::IsHostkeySingle(WORD vk)
 {
 	if (nMultiHotkeyModifier > 0xFF)
 		return false; // в Host-комбинации больше одной клавиши
 
 	if (vk == VK_LWIN || vk == VK_RWIN)
 		return (nMultiHotkeyModifier == VK_LWIN);
+	if (vk == VK_APPS)
+		return (nMultiHotkeyModifier == VK_APPS);
 	if (vk == VK_SHIFT || vk == VK_LSHIFT || vk == VK_RSHIFT)
 		return isHostkeySingleLR(vk, VK_SHIFT, VK_LSHIFT, VK_RSHIFT);
 	if (vk == VK_CONTROL || vk == VK_LCONTROL || vk == VK_RCONTROL)
@@ -3169,10 +3172,38 @@ bool CSettings::isHostkeySingle(WORD vk)
 	return false;
 }
 
-bool CSettings::isHostkeyPressed()
+WORD CSettings::GetPressedHostkey()
+{
+	_ASSERTE(mn_HostModOk[0]!=0);
+	
+	if (mn_HostModOk[0] == VK_LWIN) {
+		if (isPressed(VK_LWIN))
+			return VK_LWIN;
+		if (isPressed(VK_RWIN))
+			return VK_RWIN;
+	}
+	
+	if (!isPressed(mn_HostModOk[0])) {
+		_ASSERT(FALSE);
+		return 0;
+	}
+
+	// Для правых-левых - возвращаем общий, т.к. именно он приходит в WM_KEYUP	
+	if (mn_HostModOk[0] == VK_LSHIFT || mn_HostModOk[0] == VK_RSHIFT)
+		return VK_SHIFT;
+	if (mn_HostModOk[0] == VK_LMENU || mn_HostModOk[0] == VK_RMENU)
+		return VK_MENU;
+	if (mn_HostModOk[0] == VK_LCONTROL || mn_HostModOk[0] == VK_RCONTROL)
+		return VK_CONTROL;
+
+	return mn_HostModOk[0];
+}
+
+bool CSettings::IsHostkeyPressed()
 {
 	if (mn_HostModOk[0] == 0) {
 		_ASSERTE(mn_HostModOk[0]!=0);
+		mn_HostModOk[0] = VK_LWIN;
 		return isPressed(VK_LWIN) || isPressed(VK_RWIN);
 	}
 
@@ -3182,7 +3213,7 @@ bool CSettings::isHostkeyPressed()
 			return false;
 	}
 
-	for (int j = 0; j < 4 && mn_HostModSkip[j]; i++) {
+	for (int j = 0; j < 4 && mn_HostModSkip[j]; j++) {
 		if (isPressed(mn_HostModSkip[j]))
 			return false;
 	}

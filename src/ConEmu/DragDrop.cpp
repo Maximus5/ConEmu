@@ -1940,8 +1940,10 @@ LRESULT CDragDrop::DragBitsWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 		
 	} else if (messg == WM_SETFOCUS) {
 		CDragDrop *pDrag = (CDragDrop*)GetWindowLongPtr(hWnd, GWLP_USERDATA);
-		if (pDrag && pDrag->mb_DragWithinNow)
+		if (pDrag && pDrag->mb_DragWithinNow) {
+			TODO("Если создавать окно сразу - не понадобится с фокусом играться");
 			SetForegroundWindow(ghWnd); // после создания окна фокус уходит из GUI
+		}
 		return 0;
 	}
 	

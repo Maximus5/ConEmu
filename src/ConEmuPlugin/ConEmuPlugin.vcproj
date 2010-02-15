@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="windows-1251"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9,00"
+	Version="9.00"
 	Name="ConEmuPlugin"
 	ProjectGUID="{21152801-8744-4787-83F4-BE4564A367B4}"
 	RootNamespace="ConEmuPlugin"
@@ -184,8 +184,8 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="E:\Temp\VCProject\ConEmuDll\$(ConfigurationName)"
-			IntermediateDirectory="E:\Temp\VCProject\ConEmuDll\$(ConfigurationName)"
+			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)\$(ProjectName)"
+			IntermediateDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)\$(ProjectName)"
 			ConfigurationType="2"
 			CharacterSet="1"
 			WholeProgramOptimization="1"
@@ -210,7 +210,7 @@
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
 				AdditionalIncludeDirectories=""
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_CRT_NON_CONFORMING_SWPRINTFS"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_CRT_NON_CONFORMING_SWPRINTFS;HIDE_TODO"
 				RuntimeLibrary="0"
 				StructMemberAlignment="0"
 				EnableFunctionLevelLinking="true"
@@ -260,13 +260,13 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy $(TargetPath) $(SolutionDir)..\Release.x64\Plugins\ConEmu\"
+				CommandLine="echo copy $(TargetPath) ..\..\Release.x64\plugins\ConEmu\conemu.dll&#x0D;&#x0A;copy $(TargetPath) ..\..\Release.x64\plugins\ConEmu\conemu.dll"
 			/>
 		</Configuration>
 		<Configuration
 			Name="Release|x64"
-			OutputDirectory="C:\Temp\VCProject\ConEmuDll\$(ConfigurationName).$(PlatformName)"
-			IntermediateDirectory="C:\Temp\VCProject\ConEmuDll\$(ConfigurationName).$(PlatformName)"
+			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)\$(ProjectName)"
+			IntermediateDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)\$(ProjectName)"
 			ConfigurationType="2"
 			CharacterSet="1"
 			WholeProgramOptimization="1"
@@ -342,7 +342,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy $(TargetPath) $(SolutionDir)..\Plugins\ConEmu\"
+				CommandLine="echo copy $(TargetPath) ..\..\plugins\ConEmu\conemu.x64.dll&#x0D;&#x0A;copy $(TargetPath) ..\..\plugins\ConEmu\conemu.x64.dll"
 			/>
 		</Configuration>
 		<Configuration

@@ -445,6 +445,7 @@ BOOL WINAPI DllMain( HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserve
 				gnMainThreadId = GetCurrentThreadId();
 				InitHWND(hConWnd);
 				
+				TODO("перенести инициализацию фаровских callback'ов в SetStartupInfo, т.к. будет грузиться как Inject!");
 				if (!StartupHooks(ghPluginModule)) {
 					_ASSERT(FALSE);
 					OutputDebugString(L"!!! Can't install injects!!!\n");
@@ -1306,6 +1307,22 @@ VOID WINAPI OnConsoleWasAttached(HookCallbackArg* pArgs)
 		// не среагировал раньше времени
 		gbWasDetached = FALSE;
 	}
+}
+
+void ReloadOnWrite()
+{
+	if (gpConsoleInfo)
+		ReloadFarInfo();
+}
+VOID WINAPI OnWasWriteConsoleOutputA(HookCallbackArg* pArgs)
+{
+	if (!pArgs->bMainThread || gFarVersion.dwVerMajor!=1) return;
+	ReloadOnWrite();	
+}
+VOID WINAPI OnWasWriteConsoleOutputW(HookCallbackArg* pArgs)
+{
+	if (!pArgs->bMainThread || gFarVersion.dwVerMajor!=2) return;
+	ReloadOnWrite();	
 }
 
 // Эту нить нужно оставить, чтобы была возможность отобразить консоль при падении ConEmu

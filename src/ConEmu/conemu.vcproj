@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="windows-1251"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9,00"
+	Version="9.00"
 	Name="ConEmu"
 	ProjectGUID="{EEE25AC6-D94D-472D-8D4A-3C6C382CFD3D}"
 	RootNamespace="conemu"
@@ -178,8 +178,8 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="E:\Temp\VCProject\ConEmu\$(ConfigurationName)"
-			IntermediateDirectory="E:\Temp\VCProject\ConEmu\$(ConfigurationName)"
+			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)\$(ProjectName)"
+			IntermediateDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)\$(ProjectName)"
 			ConfigurationType="1"
 			CharacterSet="1"
 			WholeProgramOptimization="1"
@@ -205,7 +205,7 @@
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
 				WholeProgramOptimization="false"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;HIDE_TODO"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="0"
@@ -261,8 +261,8 @@
 		</Configuration>
 		<Configuration
 			Name="Release|x64"
-			OutputDirectory="C:\Temp\VCProject\ConEmu\$(ConfigurationName).$(PlatformName)"
-			IntermediateDirectory="C:\Temp\VCProject\ConEmu\$(ConfigurationName).$(PlatformName)"
+			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)\$(ProjectName)"
+			IntermediateDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)\$(ProjectName)"
 			ConfigurationType="1"
 			CharacterSet="1"
 			WholeProgramOptimization="1"
@@ -1147,7 +1147,6 @@
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1155,7 +1154,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|x64"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1163,7 +1161,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1171,7 +1168,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|x64"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1179,7 +1175,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="DebugA|Win32"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1187,7 +1182,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="DebugA|x64"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1195,7 +1189,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="DebugEEE|Win32"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1203,7 +1196,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="DebugEEE|x64"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1211,7 +1203,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug75|Win32"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1219,7 +1210,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug75|x64"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1227,7 +1217,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Instrument|Win32"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1235,7 +1224,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Instrument|x64"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1251,7 +1239,6 @@
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1259,7 +1246,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|x64"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1267,7 +1253,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1275,7 +1260,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|x64"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1283,7 +1267,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="DebugA|Win32"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1291,7 +1274,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="DebugA|x64"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1299,7 +1281,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="DebugEEE|Win32"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1307,7 +1288,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="DebugEEE|x64"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1315,7 +1295,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug75|Win32"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1323,7 +1302,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug75|x64"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1331,7 +1309,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Instrument|Win32"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1339,7 +1316,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Instrument|x64"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1351,7 +1327,6 @@
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1359,7 +1334,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|x64"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1367,7 +1341,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1375,7 +1348,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|x64"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1383,7 +1355,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="DebugA|Win32"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1391,7 +1362,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="DebugA|x64"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1399,7 +1369,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="DebugEEE|Win32"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1407,7 +1376,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="DebugEEE|x64"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1415,7 +1383,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug75|Win32"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1423,7 +1390,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug75|x64"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1431,7 +1397,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Instrument|Win32"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1439,7 +1404,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Instrument|x64"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1451,7 +1415,6 @@
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1459,7 +1422,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|x64"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1467,7 +1429,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1475,7 +1436,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|x64"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1483,7 +1443,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="DebugA|Win32"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1491,7 +1450,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="DebugA|x64"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1499,7 +1457,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="DebugEEE|Win32"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1507,7 +1464,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="DebugEEE|x64"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1515,7 +1471,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug75|Win32"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1523,7 +1478,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug75|x64"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1531,7 +1485,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Instrument|Win32"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1539,7 +1492,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Instrument|x64"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1551,7 +1503,6 @@
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1559,7 +1510,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|x64"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1567,7 +1517,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1575,7 +1524,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|x64"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1583,7 +1531,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="DebugA|Win32"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1591,7 +1538,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="DebugA|x64"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1599,7 +1545,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="DebugEEE|Win32"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1607,7 +1552,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="DebugEEE|x64"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1615,7 +1559,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug75|Win32"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1623,7 +1566,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug75|x64"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1631,7 +1573,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Instrument|Win32"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1639,7 +1580,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Instrument|x64"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1651,7 +1591,6 @@
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1659,7 +1598,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|x64"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1667,7 +1605,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1675,7 +1612,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|x64"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1683,7 +1619,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="DebugA|Win32"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1691,7 +1626,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="DebugA|x64"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1699,7 +1633,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="DebugEEE|Win32"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1707,7 +1640,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="DebugEEE|x64"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1715,7 +1647,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug75|Win32"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1723,7 +1654,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug75|x64"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1731,7 +1661,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Instrument|Win32"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1739,7 +1668,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Instrument|x64"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"

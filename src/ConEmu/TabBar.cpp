@@ -52,9 +52,15 @@ typedef BOOL (WINAPI* FAppThemed)();
 #ifndef TBN_GETINFOTIP
 #define TBN_GETINFOTIP TBN_GETINFOTIPW
 #endif
+
 #ifndef RB_SETWINDOWTHEME
 #define CCM_SETWINDOWTHEME      (CCM_FIRST + 0xb)
 #define RB_SETWINDOWTHEME       CCM_SETWINDOWTHEME
+#endif
+
+WARNING("TB_GETIDEALSIZE - awailable on XP only, use insted TB_GETMAXSIZE");
+#ifndef TB_GETIDEALSIZE
+#define TB_GETIDEALSIZE         (WM_USER + 99)
 #endif
 
 #define TID_CREATE_CON   13

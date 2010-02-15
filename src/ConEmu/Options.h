@@ -169,8 +169,10 @@ public:
     RECT rcTabMargins;
     bool isTabFrame;
     bool isMulti; BYTE icMultiNew, icMultiNext, icMultiRecreate, icMultiBuffer;
-	bool isHostkeySingle(WORD vk);
-	bool isHostkeyPressed();
+    bool IsHostkey(WORD vk);
+	bool IsHostkeySingle(WORD vk);
+	bool IsHostkeyPressed();
+	WORD GetPressedHostkey();
     bool isMultiNewConfirm;
     bool isFARuseASCIIsort, isFixAltOnAltTab;
 
@@ -318,7 +320,6 @@ private:
 	//
 	bool TestHostkeyModifiers();
 	static BYTE CheckHostkeyModifier(BYTE vk);
-	static bool IsHostkey(BYTE vk);
 	static void ReplaceHostkey(BYTE vk, BYTE vkNew);
 	static void AddHostkey(BYTE vk);
 	static void TrimHostkeys();

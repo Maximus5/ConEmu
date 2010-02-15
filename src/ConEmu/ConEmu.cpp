@@ -2998,6 +2998,8 @@ int CConEmuMain::BrowseCallbackProc(HWND hwnd, UINT uMsg, LPARAM lParam, LPARAM 
 
 INT_PTR CConEmuMain::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
 {
+	static bool bSkipApps = FALSE;
+
     switch (messg)
     {
     case WM_INITDIALOG:
@@ -3006,6 +3008,12 @@ INT_PTR CConEmuMain::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARA
             //#ifdef _DEBUG
             //SetWindowPos(ghOpWnd, HWND_NOTOPMOST, 0,0,0,0, SWP_NOSIZE|SWP_NOMOVE);
             //#endif
+
+			// ≈сли на момент открыти€ диалога был нажат Apps - пропустить его "отжатие"
+			if (isPressed(VK_APPS)) {
+				bSkipApps = true;
+				TODO("»гнорировать одно следующее WM_CONTEXTMENU");
+			}
             
             LPCWSTR pszCmd = gConEmu.ActiveCon()->RCon()->GetCmd();
             int nId = SendDlgItemMessage(hDlg, IDC_RESTART_CMD, CB_FINDSTRINGEXACT, -1, (LPARAM)pszCmd);
@@ -4765,6 +4773,39 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		pszMsgName = L"WM_SETFOCUS";
 	} else if (messg == WM_ACTIVATE) {
         lbSetFocus = (LOWORD(wParam)==WA_ACTIVE) || (LOWORD(wParam)==WA_CLICKACTIVE);
+		if (!lbSetFocus && gSet.isDesktopMode && mh_ShellWindow) {
+			if (isPressed(VK_LBUTTON) || isPressed(VK_RBUTTON)) {
+				// ѕри активации _ƒесктопа_ мышкой - запомнить, что ставить фокус в себ€ не нужно
+
+				POINT ptCur; GetCursorPos(&ptCur);
+				HWND hFromPoint = WindowFromPoint(ptCur);
+				
+				//if (hFromPoint == mh_ShellWindow) TODO: если сразу совпало - сразу выходим
+
+				// mh_ShellWindow чисто дл€ информации. ’оть родитель ConEmu и мен€етс€ на mh_ShellWindow
+				// но проводник может перекинуть наше окно в другое (WorkerW или Progman)
+				if (hFromPoint) {
+					bool lbDesktopActive = false;
+					wchar_t szClass[128];
+					// Ќужно учесть, что еще могут быть вс€кие бары, панели, и прочее, лежащие на десктопе
+					while (hFromPoint) {
+						if (GetClassName(hFromPoint, szClass, 127)) {
+							if (!wcscmp(szClass, L"WorkerW") || !wcscmp(szClass, L"Progman")) {
+								DWORD dwPID;
+								GetWindowThreadProcessId(hFromPoint, &dwPID);
+								lbDesktopActive = (dwPID == mn_ShellWindowPID);
+								break;
+							}
+						}
+						// может таки что-то дочернее попалось?
+						hFromPoint = GetParent(hFromPoint);
+					}
+
+					if (lbDesktopActive)
+						mb_FocusOnDesktop = FALSE;
+				}
+			}
+		}
 		#ifdef _DEBUG
 		if (lbSetFocus)
 			wsprintf(szDbg, L"WM_ACTIVATE(From=0x%08X)\n", (DWORD)lParam);
@@ -4982,7 +5023,7 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
   //  #endif
   
     if (messg == WM_KEYDOWN && !mb_HotKeyRegistered)
-    	RegisterHotKeys();
+    	RegisterHotKeys(); // CtrlWinAltSpace
 
     if (messg == WM_KEYDOWN || messg == WM_KEYUP)
     {
@@ -5076,31 +5117,52 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 
     // MultiConsole
     static bool sb_SkipMulticonChar = false;
-    static DWORD sn_SkipMulticonVk[2] = {0,0};
-    bool lbLWin = false, lbRWin = false;
+	static DWORD sn_SkipMulticonVk[2] = {0,0};
+	static bool sb_SkipSingleHostkey = false;
+    static UINT sm_SkipSingleHostkey; static WPARAM sw_SkipSingleHostkey; static LPARAM sl_SkipSingleHostkey;
+    //bool lbLWin = false, lbRWin = false;
     TODO("gSet.nMultiHotkeyModifier - байты содержат VK_[L|R]CONTROL, VK_[L|R]MENU, VK_[L|R]SHIFT, VK_APPS, VK_LWIN");
     TODO("gSet.icMultiBuffer - хоткей дл€ включени€-отключени€ режима буфера - AskChangeBufferHeight()");
-    if (gSet.isMulti && wParam && ((lbLWin = isPressed(VK_LWIN)) || (lbRWin = isPressed(VK_RWIN)) || sb_SkipMulticonChar)) {
-        if (messg == WM_KEYDOWN && (lbLWin || lbRWin) && (wParam != VK_LWIN && wParam != VK_RWIN)) {
+    //if (gSet.isMulti && wParam && ((lbLWin = isPressed(VK_LWIN)) || (lbRWin = isPressed(VK_RWIN)) || sb_SkipMulticonChar)) {
+    if ((sb_SkipMulticonChar && (messg == WM_KEYUP || messg == WM_SYSKEYUP))
+    	|| (gSet.isMulti && wParam
+	        &&
+	    	(wParam==gSet.icMultiNext || wParam==gSet.icMultiNew || wParam==gSet.icMultiRecreate
+	    	|| (wParam>='0' && wParam<='9') // активировать консоль по номеру
+			|| wParam==VK_F11 || wParam==VK_F12) // KeyDown дл€ этого не проходит, но на вс€кий случай
+	        &&
+	    	gSet.IsHostkeyPressed())
+	    )
+    {
+        if (messg == WM_KEYDOWN || messg == WM_SYSKEYDOWN /*&& (lbLWin || lbRWin) && (wParam != VK_LWIN && wParam != VK_RWIN)*/) {
             if (wParam==gSet.icMultiNext || wParam==gSet.icMultiNew || wParam==gSet.icMultiRecreate
             	|| (wParam>='0' && wParam<='9')
-				|| ((lbLWin || lbRWin) && (wParam==VK_F11 || wParam==VK_F12)) // KeyDown дл€ этого не проходит, но на вс€кий случай
+				|| /*((lbLWin || lbRWin) &&*/ wParam==VK_F11 || wParam==VK_F12 // KeyDown дл€ этого не проходит, но на вс€кий случай
                 )
             {
                 // «апомнить, что не нужно пускать в консоль
                 sb_SkipMulticonChar = true;
-                sn_SkipMulticonVk[0] = lbLWin ? VK_LWIN : VK_RWIN;
-                sn_SkipMulticonVk[1] = lParam & 0xFF0000;
-                
+                sn_SkipMulticonVk[0] = gSet.GetPressedHostkey(); // lbLWin ? VK_LWIN : VK_RWIN;
+                sn_SkipMulticonVk[1] = lParam & 0xFF0000; // Specifies the scan code. The value depends on the OEM.
+				// » в консоль не слать модификатор
+				sb_SkipSingleHostkey = false;
+
                 // “еперь собственно обработка
-                if (wParam>='1' && wParam<='9')
+                if (wParam>='1' && wParam<='9') // ##1..9
                     ConActivate(wParam - '1');
                     
-                else if (wParam=='0')
+                else if (wParam=='0') // #10.
                     ConActivate(9);
                     
 				else if (wParam == gSet.icMultiNext /* L'Q' */) { // Win-Q
-                    ConActivateNext(isPressed(VK_SHIFT) ? FALSE : TRUE);
+					bool lbReverse = isPressed(VK_SHIFT);
+					if (lbReverse) {
+						if (gSet.IsHostkey(VK_SHIFT))
+							lbReverse = false;
+						else if (!isPressed(VK_LSHIFT) || !isPressed(VK_RSHIFT))
+							lbReverse = false;
+					}
+                    ConActivateNext(lbReverse ? FALSE : TRUE);
                     
 				} else if (wParam == gSet.icMultiNew /* L'W' */) { // Win-W
                     // —оздать новую консоль
@@ -5115,23 +5177,46 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
         //} else if (messg == WM_CHAR) {
         //    if (sn_SkipMulticonVk[1] == (lParam & 0xFF0000))
         //        return 0; // не пропускать букву в консоль
-        } else if (messg == WM_KEYUP) {
-			if ((lbLWin || lbRWin) && (wParam==VK_F11 || wParam==VK_F12)) {
+        } else if (messg == WM_KEYUP || messg == WM_SYSKEYUP) {
+			if (/*(lbLWin || lbRWin) &&*/ (wParam==VK_F11 || wParam==VK_F12)) {
 				ConActivate(wParam - VK_F11 + 10);
 				return 0;
-			} else if (wParam == VK_LWIN || wParam == VK_RWIN) {
+			//} else if (wParam == VK_LWIN || wParam == VK_RWIN) {
+            } else if (sn_SkipMulticonVk[1] == (lParam & 0xFF0000)) {
+                sn_SkipMulticonVk[1] = 0;
+                sb_SkipMulticonChar = (sn_SkipMulticonVk[0] != 0) || (sn_SkipMulticonVk[1] != 0);
+                return 0;
+			} else { //if (gSet.IsHostkey(wParam)) {
                 if (sn_SkipMulticonVk[0] == wParam) {
                     sn_SkipMulticonVk[0] = 0;
                     sb_SkipMulticonChar = (sn_SkipMulticonVk[0] != 0) || (sn_SkipMulticonVk[1] != 0);
                     return 0;
                 }
-            } else if (sn_SkipMulticonVk[1] == (lParam & 0xFF0000)) {
-                sn_SkipMulticonVk[1] = 0;
-                sb_SkipMulticonChar = (sn_SkipMulticonVk[0] != 0) || (sn_SkipMulticonVk[1] != 0);
-                return 0;
             }
         }
     }
+	if (gSet.IsHostkeySingle(wParam)) {
+		if (messg == WM_KEYDOWN || messg == WM_SYSKEYDOWN) {
+			sb_SkipSingleHostkey = true; sm_SkipSingleHostkey = messg; sw_SkipSingleHostkey = wParam; sl_SkipSingleHostkey = lParam;
+			// ≈сли после нее не будет нажат Hotkey - пошлем в консоль
+			return 0;
+		}
+	}
+	if (sb_SkipSingleHostkey) {
+		sb_SkipSingleHostkey = false;
+		mp_VActive->RCon()->OnKeyboard(hWnd, sm_SkipSingleHostkey, sw_SkipSingleHostkey, sl_SkipSingleHostkey, L"");
+	}
+	// ѕосле хотке€ создани€ консоли - KEYUP мог "уйти" в открытый диалог, 
+	// поэтому чистим "игнорируемые" кнопки при любом следующем нажатии
+	if (sb_SkipMulticonChar && (messg == WM_KEYDOWN || messg == WM_SYSKEYDOWN)) {
+		sn_SkipMulticonVk[0] = sn_SkipMulticonVk[1] = 0;
+		sb_SkipMulticonChar = false;
+	}
+	if (sb_SkipSingleHostkey && (messg == WM_KEYDOWN || messg == WM_SYSKEYDOWN)) {
+		sb_SkipSingleHostkey = false;
+	}
+
+
 
 	if (wParam == VK_ESCAPE) {
 		if (mp_DragDrop->InDragDrop())
@@ -6183,18 +6268,40 @@ void CConEmuMain::CheckFocus(LPCWSTR asFrom)
 						// „тобы пользователю не приходилось вручную активировать ConEmu после WinD / WinM
 						//SetForegroundWindow(ghWnd); // это скорее всего не сработает, т.к. фокус сейчас у другого процесса!
 						// так что "активируем" мышкой
-						mouse.bForceSkipActivation = TRUE; // не пропускать этот клик в консоль!
 						COORD crOpaque = mp_VActive->FindOpaqueCell();
-						POINT pt = mp_VActive->ConsoleToClient(crOpaque.X,crOpaque.Y);
-						MapWindowPoints(ghWndDC, NULL, &pt, 1);
-						// «апомнить, где курсор сейчас. ¬ернуть надо будет
-						POINT ptCur; GetCursorPos(&ptCur);
-						SetCursorPos(pt.x,pt.y); // хот€, может двигать мышку и не надо?
-						// "кликаем"
-						mouse_event ( MOUSEEVENTF_ABSOLUTE+MOUSEEVENTF_LEFTDOWN, pt.x,pt.y, 0,0);
-						mouse_event ( MOUSEEVENTF_ABSOLUTE+MOUSEEVENTF_LEFTUP, pt.x,pt.y, 0,0);
-						// ¬ернуть курсор
-						SetCursorPos(ptCur.x,ptCur.y);
+						if (crOpaque.X<0 || crOpaque.Y<0) {
+							DEBUGSTRFOREGROUND(L"Can't activate ConEmu on desktop. No opaque cell was found in VCon\n");
+						} else {
+							POINT pt = mp_VActive->ConsoleToClient(crOpaque.X,crOpaque.Y);
+							MapWindowPoints(ghWndDC, NULL, &pt, 1);
+							HWND hAtPoint = WindowFromPoint(pt);
+							if (hAtPoint != ghWnd) {
+								#ifdef _DEBUG
+								wchar_t szDbg[255], szClass[64];
+								if (!hAtPoint || !GetClassName(hAtPoint, szClass, 63)) szClass[0] = 0;
+								wsprintf(szDbg, L"Can't activate ConEmu on desktop. Opaque cell={%i,%i} screen={%i,%i}. WindowFromPoint=0x%08X (%s)\n",
+									crOpaque.X, crOpaque.Y, pt.x, pt.y, (DWORD)hAtPoint, szClass);
+								DEBUGSTRFOREGROUND(szDbg);
+								#endif
+							} else {
+								DEBUGSTRFOREGROUND(L"Activating ConEmu on desktop by mouse click\n");
+
+								mouse.bForceSkipActivation = TRUE; // не пропускать этот клик в консоль!
+								// «апомнить, где курсор сейчас. ¬ернуть надо будет
+								POINT ptCur; GetCursorPos(&ptCur);
+								SetCursorPos(pt.x,pt.y); // мышку об€зательно "подвинуть", иначе mouse_event не сработает
+								// "кликаем"
+								mouse_event ( MOUSEEVENTF_ABSOLUTE+MOUSEEVENTF_LEFTDOWN, pt.x,pt.y, 0,0);
+								mouse_event ( MOUSEEVENTF_ABSOLUTE+MOUSEEVENTF_LEFTUP, pt.x,pt.y, 0,0);
+								// ¬ернуть курсор
+								SetCursorPos(ptCur.x,ptCur.y);
+								//
+								//#ifdef _DEBUG -- очередь еще не обработана системой...
+								//HWND hPost = GetForegroundWindow();
+								//DEBUGSTRFOREGROUND((hPost==ghWnd) ? L"ConEmu on desktop activation Succeeded\n" : L"ConEmu on desktop activation FAILED\n");
+								//#endif
+							}
+						}
 					}
 				}
 			}
@@ -7611,8 +7718,11 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
     case WM_NCLBUTTONDOWN:
         // ѕри ресайзе WM_NCLBUTTONUP к сожалению не приходит
         gConEmu.mouse.state |= MOUSE_SIZING_BEGIN;
-		if (gSet.isHideCaptionAlways())
+		if (gSet.isHideCaptionAlways()) {
+			KillTimer(ghWnd, TIMER_CAPTION_DISAPPEAR_ID);
+			gConEmu.OnTimer(TIMER_CAPTION_APPEAR_ID,0);
 			UpdateWindowRgn();
+		}
         result = DefWindowProc(hWnd, messg, wParam, lParam);
         break;
 

@@ -2732,7 +2732,22 @@ COORD CVirtualConsole::FindOpaqueCell()
 {
 	COORD cr = {0,0};
 	if (this) {
-		TODO("Поиск первого непрозрачного");
+		// Поиск первого непрозрачного
+		cr.X = cr.Y = -1;
+		if (mpsz_ConChar && mpn_ConAttrEx && TextWidth && TextHeight) {
+			MSectionLock SCON; SCON.Lock(&csCON);
+			CharAttr* pnAttr = mpn_ConAttrEx;
+
+			for (SHORT y = 0; y < TextHeight; y++) {
+				for (SHORT x = 0; x < TextWidth; x++) {
+					if (!pnAttr[x].bTransparent) {
+						cr.X = x; cr.Y = y;
+						return cr;
+					}
+				}
+				pnAttr += TextWidth;
+			}
+		}
 	}
 	return cr;
 }

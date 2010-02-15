@@ -79,12 +79,17 @@ static HANDLE WINAPI OnCreateConsoleScreenBuffer(DWORD dwDesiredAccess, DWORD dw
 static BOOL WINAPI OnAllocConsole(void);
 static BOOL WINAPI OnFreeConsole(void);
 static HWND WINAPI OnGetConsoleWindow(void); // в фаре дофига и больше вызовов этой функции
+static BOOL WINAPI OnWriteConsoleOutputA(HANDLE hConsoleOutput,const CHAR_INFO *lpBuffer,COORD dwBufferSize,COORD dwBufferCoord,PSMALL_RECT lpWriteRegion);
+static BOOL WINAPI OnWriteConsoleOutputW(HANDLE hConsoleOutput,const CHAR_INFO *lpBuffer,COORD dwBufferSize,COORD dwBufferCoord,PSMALL_RECT lpWriteRegion);
+
 
 
 #define MAX_HOOKED_PROCS 50
 static HookItem Hooks[MAX_HOOKED_PROCS] = {
 	/* ***** MOST CALLED ***** */
 //	{(void*)OnGetConsoleWindow,     "GetConsoleWindow",     kernel32}, -- пока смысла нет. инжекты еще не на старте ставятся
+	{(void*)OnWriteConsoleOutputW,  "WriteConsoleOutputW",  kernel32},
+	{(void*)OnWriteConsoleOutputA,  "WriteConsoleOutputA",  kernel32},
 	/* ************************ */
     {(void*)OnLoadLibraryA,			"LoadLibraryA",			kernel32},
 	{(void*)OnLoadLibraryW,			"LoadLibraryW",			kernel32},
@@ -355,7 +360,7 @@ static bool SetHook( HMODULE Module, BOOL abExecutable )
 
 	TODO("!!! Сохранять ORDINAL процедур !!!");
 
-    bool res = false;
+    bool res = false, bHooked = false;
 	int i;
 	int nCount = Size / sizeof(IMAGE_IMPORT_DESCRIPTOR);
 	//_ASSERTE(Size == (nCount * sizeof(IMAGE_IMPORT_DESCRIPTOR))); -- ровно быть не обязано
@@ -374,8 +379,10 @@ static bool SetHook( HMODULE Module, BOOL abExecutable )
 		{
 			// Yes! Gotta have a non-zero FirstThunk field then.
 			rvaINT = rvaIAT;
-			if ( rvaINT == 0 )   // No FirstThunk field?  Ooops!!!
+			if ( rvaINT == 0 ) {  // No FirstThunk field?  Ooops!!!
+				_ASSERTE(rvaINT!=0);
 				break;
+			}
 		}
 
 		//PIMAGE_IMPORT_BY_NAME pOrdinalName = NULL, pOrdinalNameO = NULL;
@@ -395,6 +402,7 @@ static bool SetHook( HMODULE Module, BOOL abExecutable )
 			const char* pszFuncName = NULL;
 			ULONGLONG ordinalO = -1;
 
+			// Ordinal у нас пока не используется
 			if ( IMAGE_SNAP_BY_ORDINAL(thunkO->u1.Ordinal) ) {
 				ordinalO = IMAGE_ORDINAL(thunkO->u1.Ordinal);
 				pOrdinalNameO = NULL;
@@ -413,7 +421,7 @@ static bool SetHook( HMODULE Module, BOOL abExecutable )
 				}
 			}
 
-			int j = 0;
+			int j;
             for( j = 0; Hooks[j].Name; j++ )
 			{
 				if (Hooks[j].NewAddress == (void*)thunk->u1.Function) {
@@ -421,6 +429,7 @@ static bool SetHook( HMODULE Module, BOOL abExecutable )
 					break;
 				}
 			
+				WARNING("??? сомнение в этом условии");
                 if( !Hooks[j].OldAddress || (void*)thunk->u1.Function != Hooks[j].OldAddress )
                 {
 					if (!pszFuncName || !bExecutable) {
@@ -436,6 +445,7 @@ static bool SetHook( HMODULE Module, BOOL abExecutable )
 				if (Hooks[j].nOrdinal == 0 && ordinalO != -1)
 					Hooks[j].nOrdinal = (DWORD)ordinalO;
 
+				bHooked = true;
 				DWORD old_protect = 0;
 				VirtualProtect( &thunk->u1.Function, sizeof( thunk->u1.Function ),
 					PAGE_READWRITE, &old_protect );
@@ -452,6 +462,17 @@ static bool SetHook( HMODULE Module, BOOL abExecutable )
         }
     }
 
+#ifdef _DEBUG
+	if (bHooked) {
+		wchar_t szDbg[MAX_PATH*3], szModPath[MAX_PATH*2]; szModPath[0] = 0;
+		GetModuleFileName(Module, szModPath, MAX_PATH*2);
+		lstrcpy(szDbg, L"  ## Hooks was set by conemu: ");
+		lstrcat(szDbg, szModPath);
+		lstrcat(szDbg, L"\n");
+		OutputDebugStringW(szDbg);
+	}
+#endif
+
     return res;
 }
 
@@ -463,6 +484,15 @@ bool __stdcall SetAllHooks( HMODULE ahOurDll, const wchar_t** aszExcludedModules
 	if (!hOurModule) hOurModule = ahOurDll;
 	
 	InitHooks ( NULL );
+
+#ifdef _DEBUG
+	char szHookProc[128];
+	for (int i = 0; Hooks[i].NewAddress; i++)
+	{
+		wsprintfA(szHookProc, "## %s -> 0x%08X (exe: 0x%X)\n", Hooks[i].Name, (DWORD)Hooks[i].NewAddress, (DWORD)Hooks[i].ExeOldAddress);
+		OutputDebugStringA(szHookProc);
+	}
+#endif
 	
 	// Запомнить aszExcludedModules
 	if (aszExcludedModules) {
@@ -571,41 +601,113 @@ static bool UnsetHook( HMODULE Module, BOOL abExecutable )
     if( Module == INVALID_HANDLE_VALUE || !Import )
         return false;
 
-    bool res = false;
-    for( int i = 0; Import[i].Name; i++ )
-    {
-        //DebugString( ToTchar( (char*)Module + Import[i].Name ) );
-        //char* mod_name = (char*)Module + Import[i].Name;
-        //-- не используется -- IMAGE_IMPORT_BY_NAME** byname = (IMAGE_IMPORT_BY_NAME**)(Import[i].Characteristics + (DWORD_PTR)Module);
-        {
+    bool res = false, bUnhooked = false;
+	int i;
+	int nCount = Size / sizeof(IMAGE_IMPORT_DESCRIPTOR);
+	//_ASSERTE(Size == (nCount * sizeof(IMAGE_IMPORT_DESCRIPTOR))); -- ровно быть не обязано
+	for( i = 0; i < nCount; i++ )
+	{
+		if (Import[i].Name == 0)
+			break;
+
+		#ifdef _DEBUG
+		char* mod_name = (char*)Module + Import[i].Name;
+		#endif
+
+		DWORD_PTR rvaINT = Import[i].OriginalFirstThunk;
+		DWORD_PTR rvaIAT = Import[i].FirstThunk;
+		if ( rvaINT == 0 )   // No Characteristics field?
+		{
+			// Yes! Gotta have a non-zero FirstThunk field then.
+			rvaINT = rvaIAT;
+			if ( rvaINT == 0 ) {  // No FirstThunk field?  Ooops!!!
+				_ASSERTE(rvaINT!=0);
+				break;
+			}
+		}
+
+		//PIMAGE_IMPORT_BY_NAME pOrdinalName = NULL, pOrdinalNameO = NULL;
+		PIMAGE_IMPORT_BY_NAME pOrdinalNameO = NULL;
+		//IMAGE_IMPORT_BY_NAME** byname = (IMAGE_IMPORT_BY_NAME**)((char*)Module + rvaINT);
+		//IMAGE_THUNK_DATA* thunk = (IMAGE_THUNK_DATA*)((char*)Module + rvaIAT);
+		IMAGE_THUNK_DATA* thunk = (IMAGE_THUNK_DATA*)GetPtrFromRVA( rvaIAT, nt_header, (PBYTE)Module );
+		IMAGE_THUNK_DATA* thunkO = (IMAGE_THUNK_DATA*)GetPtrFromRVA( rvaINT, nt_header, (PBYTE)Module );
+		if (!thunk ||  !thunkO) {
+			_ASSERTE(thunk && thunkO);
+			continue;
+		}
+
+		int f = 0;
+		for(f = 0 ; thunk->u1.Function; thunk++, thunkO++, f++)
+		{
+			const char* pszFuncName = NULL;
+			//ULONGLONG ordinalO = -1;
+
+			//if ( IMAGE_SNAP_BY_ORDINAL(thunkO->u1.Ordinal) ) {
+			//	ordinalO = IMAGE_ORDINAL(thunkO->u1.Ordinal);
+			//	pOrdinalNameO = NULL;
+			//}
+			if (!IMAGE_SNAP_BY_ORDINAL(thunkO->u1.Ordinal)) {
+				pOrdinalNameO = (PIMAGE_IMPORT_BY_NAME)GetPtrFromRVA(thunkO->u1.AddressOfData, nt_header, (PBYTE)Module);
+				BOOL lbValidPtr = !IsBadReadPtr(pOrdinalNameO, sizeof(IMAGE_IMPORT_BY_NAME));
+				_ASSERTE(lbValidPtr);
+				if (lbValidPtr) {
+					lbValidPtr = !IsBadStringPtrA((LPCSTR)pOrdinalNameO->Name, 10);
+					_ASSERTE(lbValidPtr);
+					if (lbValidPtr)
+						pszFuncName = (LPCSTR)pOrdinalNameO->Name;
+				}
+			}
+
+			int j;
+            for( j = 0; Hooks[j].Name; j++ )
             {
-                IMAGE_THUNK_DATA* thunk = (IMAGE_THUNK_DATA*)((char*)Module + Import[i].FirstThunk);
-                for( ; thunk->u1.Function; thunk++/*, byname++*/) // byname не используется
-                {
-                    for( int j = 0; Hooks[j].Name; j++ )
-                    {
-                    	// BugBug: в принципе, эту функцию мог захукать и другой модуль (уже после нас),
-						// но лучше вернуть оригинальную, чем потом свалиться
-                        if( Hooks[j].OldAddress && (void*)thunk->u1.Function == Hooks[j].NewAddress )
-                        {
-                            DWORD old_protect;
-                            VirtualProtect( &thunk->u1.Function, sizeof( thunk->u1.Function ),
-                                            PAGE_READWRITE, &old_protect );
-							// BugBug: ExeOldAddress может отличаться от оригинального, если функция была перехвачена ДО нас
-							//if (abExecutable && Hooks[j].ExeOldAddress)
-							//	thunk->u1.Function = (DWORD_PTR)Hooks[j].ExeOldAddress;
-							//else
-								thunk->u1.Function = (DWORD_PTR)Hooks[j].OldAddress;
-                            VirtualProtect( &thunk->u1.Function, sizeof( DWORD ), old_protect, &old_protect );
-                            //DebugString( ToTchar( Hooks[j].Name ) );
-                            res = true;
-                            break;
-                        }
-                    }
-                }
+				if( !Hooks[j].OldAddress )
+					continue; // Эту функцию не обрабатывали (хотя должны были?)
+
+				// Нужно найти функцию (thunk) в Hooks через NewAddress или имя
+				if ((void*)thunk->u1.Function != Hooks[j].NewAddress )
+				{
+					if (!pszFuncName) {
+						continue;
+					} else {
+						if (strcmp(pszFuncName, Hooks[j].Name))
+							continue;
+					}
+					// OldAddress уже может отличаться от оригинального экспорта библиотеки
+					// Это если функцию захукали уже после нас
+				}
+
+				// Если мы дошли сюда - значит функция найдена (или по адресу или по имени)
+            	// BugBug: в принципе, эту функцию мог захукать и другой модуль (уже после нас),
+				// но лучше вернуть оригинальную, чем потом свалиться
+                DWORD old_protect;
+				bUnhooked = true;
+                VirtualProtect( &thunk->u1.Function, sizeof( thunk->u1.Function ),
+                                PAGE_READWRITE, &old_protect );
+				// BugBug: ExeOldAddress может отличаться от оригинального, если функция была перехвачена ДО нас
+				//if (abExecutable && Hooks[j].ExeOldAddress)
+				//	thunk->u1.Function = (DWORD_PTR)Hooks[j].ExeOldAddress;
+				//else
+					thunk->u1.Function = (DWORD_PTR)Hooks[j].OldAddress;
+                VirtualProtect( &thunk->u1.Function, sizeof( DWORD ), old_protect, &old_protect );
+                //DebugString( ToTchar( Hooks[j].Name ) );
+                res = true;
+                break; // перейти к следующему thunk-у
             }
         }
     }
+
+#ifdef _DEBUG
+	if (bUnhooked) {
+		wchar_t szDbg[MAX_PATH*3], szModPath[MAX_PATH*2]; szModPath[0] = 0;
+		GetModuleFileName(Module, szModPath, MAX_PATH*2);
+		lstrcpy(szDbg, L"  ## Hooks was UNset by conemu: ");
+		lstrcat(szDbg, szModPath);
+		lstrcat(szDbg, L"\n");
+		OutputDebugStringW(szDbg);
+	}
+#endif
 
     return res;
 }
@@ -630,6 +732,10 @@ void __stdcall UnsetAllHooks( )
 
         CloseHandle(snapshot);
     }
+
+#ifdef _DEBUG
+	hExecutable = hExecutable;
+#endif
 }
 
 static void TouchReadPeekConsoleInputs(int Peek = -1)
@@ -1360,4 +1466,38 @@ static HWND WINAPI OnGetConsoleWindow(void)
 	h = F(GetConsoleWindow)();
 
 	return h;
+}
+
+typedef BOOL (WINAPI* OnWriteConsoleOutputA_t)(HANDLE hConsoleOutput,const CHAR_INFO *lpBuffer,COORD dwBufferSize,COORD dwBufferCoord,PSMALL_RECT lpWriteRegion);
+static BOOL WINAPI OnWriteConsoleOutputA(HANDLE hConsoleOutput,const CHAR_INFO *lpBuffer,COORD dwBufferSize,COORD dwBufferCoord,PSMALL_RECT lpWriteRegion)
+{
+	ORIGINAL(WriteConsoleOutputA);
+
+	BOOL lbRc = FALSE;
+
+	lbRc = F(WriteConsoleOutputA)(hConsoleOutput, lpBuffer, dwBufferSize, dwBufferCoord, lpWriteRegion);
+
+	if (ph && ph->PostCallBack) {
+		SETARGS5(&lbRc, hConsoleOutput, lpBuffer, &dwBufferSize, &dwBufferCoord, lpWriteRegion);
+		ph->PostCallBack(&args);
+	}
+
+	return lbRc;
+}
+
+typedef BOOL (WINAPI* OnWriteConsoleOutputW_t)(HANDLE hConsoleOutput,const CHAR_INFO *lpBuffer,COORD dwBufferSize,COORD dwBufferCoord,PSMALL_RECT lpWriteRegion);
+static BOOL WINAPI OnWriteConsoleOutputW(HANDLE hConsoleOutput,const CHAR_INFO *lpBuffer,COORD dwBufferSize,COORD dwBufferCoord,PSMALL_RECT lpWriteRegion)
+{
+	ORIGINAL(WriteConsoleOutputW);
+
+	BOOL lbRc = FALSE;
+
+	lbRc = F(WriteConsoleOutputW)(hConsoleOutput, lpBuffer, dwBufferSize, dwBufferCoord, lpWriteRegion);
+
+	if (ph && ph->PostCallBack) {
+		SETARGS5(&lbRc, hConsoleOutput, lpBuffer, &dwBufferSize, &dwBufferCoord, lpWriteRegion);
+		ph->PostCallBack(&args);
+	}
+
+	return lbRc;
 }

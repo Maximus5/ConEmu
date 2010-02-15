@@ -4870,16 +4870,29 @@ void CRealConsole::PrepareTransparent(wchar_t* pChar, CharAttr* pAttr, int nWidt
 			return;
 	}
 
-	if (mb_LeftPanel)
-		MarkDialog(pAttr, nWidth, nHeight, mr_LeftPanelFull.left, mr_LeftPanelFull.top, mr_LeftPanelFull.right, mr_LeftPanelFull.bottom);
-	if (mb_RightPanel)
-		MarkDialog(pAttr, nWidth, nHeight, mr_RightPanelFull.left, mr_RightPanelFull.top, mr_RightPanelFull.right, mr_RightPanelFull.bottom);
+	// “еперь информаци€ о панел€х хронически обновл€етс€ плагином
+	//if (mb_LeftPanel)
+	//	MarkDialog(pAttr, nWidth, nHeight, mr_LeftPanelFull.left, mr_LeftPanelFull.top, mr_LeftPanelFull.right, mr_LeftPanelFull.bottom);
+	//if (mb_RightPanel)
+	//	MarkDialog(pAttr, nWidth, nHeight, mr_RightPanelFull.left, mr_RightPanelFull.top, mr_RightPanelFull.right, mr_RightPanelFull.bottom);
 
-	//RECT r;
-	//if (mp_ConsoleInfo->bFarLeftPanel && mp_ConsoleInfo->FarLeftPanel.Visible) {
-	//	r = mp_ConsoleInfo->FarLeftPanel.PanelRect;
-	//	MarkDialog(pAttr, nWidth, nHeight, r.left, r.top, r.right, r.bottom);
-	//}
+	// ѕометить непрозрачными панели
+	RECT r;
+	bool lbLeftVisible = false, lbRightVisible = false;
+	if (mp_ConsoleInfo->bFarLeftPanel && mp_ConsoleInfo->FarLeftPanel.Visible) {
+		r = mp_ConsoleInfo->FarLeftPanel.PanelRect;
+		lbLeftVisible = true;
+		MarkDialog(pAttr, nWidth, nHeight, r.left, r.top, r.right, r.bottom);
+	}
+	if (mp_ConsoleInfo->bFarRightPanel && mp_ConsoleInfo->FarRightPanel.Visible) {
+		r = mp_ConsoleInfo->FarRightPanel.PanelRect;
+		lbRightVisible = true;
+		MarkDialog(pAttr, nWidth, nHeight, r.left, r.top, r.right, r.bottom);
+	}
+	if (!lbLeftVisible && !lbRightVisible) {
+		if (isPressed(VK_CONTROL) && isPressed(VK_SHIFT) && isPressed(VK_MENU))
+			return; // ѕо CtrlAltShift - показать UserScreen (не делать его прозрачным)
+	}
 
 	// ћожет быть перва€ строка - меню? посто€нное или текущее
 	if (bAlwaysShowMenuBar // всегда
