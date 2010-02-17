@@ -169,7 +169,7 @@ extern wchar_t gszDbgModLabel[6];
 #define CECMD_SETDONTCLOSE  29
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    30
+#define CESERVER_REQ_VER    31
 
 #define PIPEBUFSIZE 4096
 
@@ -390,12 +390,15 @@ typedef struct tag_CESERVER_REQ_STARTSTOP {
 	CONSOLE_SCREEN_BUFFER_INFO sbi;
 } CESERVER_REQ_STARTSTOP;
 
+// _ASSERTE(sizeof(CESERVER_REQ_STARTSTOPRET) <= sizeof(CESERVER_REQ_STARTSTOP));
 typedef struct tag_CESERVER_REQ_STARTSTOPRET {
 	BOOL  bWasBufferHeight;
 	HWND2 hWnd; // при передаче В GUI - консоль, при возврате в консоль - GUI
 	DWORD dwPID;
 	DWORD nBufferHeight, nWidth, nHeight;
 	DWORD dwSrvPID;
+	BOOL  bNeedLangChange;
+	u64   NewConsoleLang;
 } CESERVER_REQ_STARTSTOPRET;
 
 typedef struct tag_CESERVER_REQ_POSTMSG {
@@ -538,7 +541,7 @@ typedef struct tag_CESERVER_REQ {
 #define MOUSE_EVENT_FIRST MOUSE_EVENT_MOVE
 #define MOUSE_EVENT_LAST MOUSE_EVENT_HWHEELED
 
-#define INPUT_THREAD_ALIVE_MSG (WM_APP+100)
+//#define INPUT_THREAD_ALIVE_MSG (WM_APP+100)
 
 #define MAX_INPUT_QUEUE_EMPTY_WAIT 100
 

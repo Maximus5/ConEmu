@@ -316,6 +316,10 @@ public:
 	void PostCreate(BOOL abRecieved=FALSE);
 	bool PtDiffTest(POINT C, int aX, int aY, UINT D); //(((abs(C.x-LOWORD(lParam)))<D) && ((abs(C.y-HIWORD(lParam)))<D))
 	void Recreate(BOOL abRecreate, BOOL abConfirm);
+	HHOOK mh_RecreateDlgKeyHook;
+	BOOL mb_SkipAppsInRecreate;
+	int RecreateDlg(LPARAM lParam);
+	static LRESULT CALLBACK RecreateDlgKeyHook(int code, WPARAM wParam, LPARAM lParam);
 	static INT_PTR CALLBACK RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam);
 	static int CALLBACK BrowseCallbackProc(HWND hwnd, UINT uMsg, LPARAM lParam, LPARAM lpData);
 	void RePaint();

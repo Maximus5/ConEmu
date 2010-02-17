@@ -402,21 +402,25 @@ static bool SetHook( HMODULE Module, BOOL abExecutable )
 			const char* pszFuncName = NULL;
 			ULONGLONG ordinalO = -1;
 
-			// Ordinal у нас пока не используется
-			if ( IMAGE_SNAP_BY_ORDINAL(thunkO->u1.Ordinal) ) {
-				ordinalO = IMAGE_ORDINAL(thunkO->u1.Ordinal);
-				pOrdinalNameO = NULL;
-			}
-			if (bExecutable) {
-				if (!IMAGE_SNAP_BY_ORDINAL(thunkO->u1.Ordinal)) {
-					pOrdinalNameO = (PIMAGE_IMPORT_BY_NAME)GetPtrFromRVA(thunkO->u1.AddressOfData, nt_header, (PBYTE)Module);
-					BOOL lbValidPtr = !IsBadReadPtr(pOrdinalNameO, sizeof(IMAGE_IMPORT_BY_NAME));
-					_ASSERTE(lbValidPtr);
-					if (lbValidPtr) {
-						lbValidPtr = !IsBadStringPtrA((LPCSTR)pOrdinalNameO->Name, 10);
+			if (thunk->u1.Function!=thunkO->u1.Function)
+			{
+				// Ordinal у нас пока не используется
+				if ( IMAGE_SNAP_BY_ORDINAL(thunkO->u1.Ordinal) ) {
+					ordinalO = IMAGE_ORDINAL(thunkO->u1.Ordinal);
+					pOrdinalNameO = NULL;
+				}
+				TODO("Возможно стоит искать имя функции не только для EXE, но и для всех dll");
+				if (bExecutable) {
+					if (!IMAGE_SNAP_BY_ORDINAL(thunkO->u1.Ordinal)) {
+						pOrdinalNameO = (PIMAGE_IMPORT_BY_NAME)GetPtrFromRVA(thunkO->u1.AddressOfData, nt_header, (PBYTE)Module);
+						BOOL lbValidPtr = !IsBadReadPtr(pOrdinalNameO, sizeof(IMAGE_IMPORT_BY_NAME));
 						_ASSERTE(lbValidPtr);
-						if (lbValidPtr)
-							pszFuncName = (LPCSTR)pOrdinalNameO->Name;
+						if (lbValidPtr) {
+							lbValidPtr = !IsBadStringPtrA((LPCSTR)pOrdinalNameO->Name, 10);
+							_ASSERTE(lbValidPtr);
+							if (lbValidPtr)
+								pszFuncName = (LPCSTR)pOrdinalNameO->Name;
+						}
 					}
 				}
 			}
@@ -647,7 +651,7 @@ static bool UnsetHook( HMODULE Module, BOOL abExecutable )
 			//	ordinalO = IMAGE_ORDINAL(thunkO->u1.Ordinal);
 			//	pOrdinalNameO = NULL;
 			//}
-			if (!IMAGE_SNAP_BY_ORDINAL(thunkO->u1.Ordinal)) {
+			if (thunk->u1.Function!=thunkO->u1.Function && !IMAGE_SNAP_BY_ORDINAL(thunkO->u1.Ordinal)) {
 				pOrdinalNameO = (PIMAGE_IMPORT_BY_NAME)GetPtrFromRVA(thunkO->u1.AddressOfData, nt_header, (PBYTE)Module);
 				BOOL lbValidPtr = !IsBadReadPtr(pOrdinalNameO, sizeof(IMAGE_IMPORT_BY_NAME));
 				_ASSERTE(lbValidPtr);

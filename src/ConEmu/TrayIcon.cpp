@@ -82,8 +82,11 @@ void TrayIcon::LoadIcon(HWND inWnd, int inIconResource)
 
 void TrayIcon::Delete()
 {
-    Shell_NotifyIcon(NIM_DELETE, &IconData);
-    memset(&IconData, 0, sizeof(IconData));
+	// Ќе посылать в Shell сообщени€, если иконки нет
+	if (isWindowInTray) {
+	    Shell_NotifyIcon(NIM_DELETE, &IconData);
+		memset(&IconData, 0, sizeof(IconData));
+	}
 }
 
 LRESULT TrayIcon::OnTryIcon(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)

@@ -30,6 +30,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmuC.h"
 #include "..\common\ConsoleAnnotation.h"
 
+#define MAX_EVENTS_PACK 20
+
+BOOL ProcessInputMessage(MSG &msg, INPUT_RECORD &r);
+BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount);
+
+
 // Установить мелкий шрифт, иначе может быть невозможно увеличение размера GUI окна
 void ServerInitFont()
 {
@@ -808,19 +814,21 @@ HWND Attach2Gui(DWORD nTimeout)
     
     
     DWORD dwStart = GetTickCount(), dwDelta = 0, dwCur = 0;
-    BOOL lbNeedSetFont = TRUE;
+	// В обычном "серверном" режиме шрифт уже установлен, а при аттаче
+	// другого процесса - шрифт все-равно поменять не получится
+    //BOOL lbNeedSetFont = TRUE;
     // Нужно сбросить. Могли уже искать...
     hGui = NULL;
     // Если с первого раза не получится (GUI мог еще не загрузиться) пробуем еще
     while (!hDcWnd && dwDelta <= nTimeout) {
         while ((hGui = FindWindowEx(NULL, hGui, VirtualConsoleClassMain, NULL)) != NULL) {
-        	if (lbNeedSetFont) {
-        		lbNeedSetFont = FALSE;
-        		
-                if (ghLogSize) LogSize(NULL, ":SetConsoleFontSizeTo.before");
-                SetConsoleFontSizeTo(ghConWnd, srv.nConFontHeight, srv.nConFontWidth, srv.szConsoleFont);
-                if (ghLogSize) LogSize(NULL, ":SetConsoleFontSizeTo.after");
-        	}
+			//if (lbNeedSetFont) {
+			//	lbNeedSetFont = FALSE;
+			//	
+			//    if (ghLogSize) LogSize(NULL, ":SetConsoleFontSizeTo.before");
+			//    SetConsoleFontSizeTo(ghConWnd, srv.nConFontHeight, srv.nConFontWidth, srv.szConsoleFont);
+			//    if (ghLogSize) LogSize(NULL, ":SetConsoleFontSizeTo.after");
+			//}
         
 			WARNING("Переделать на команду пайпа!!! AttachRequested");
             hDcWnd = (HWND)SendMessage(hGui, nMsg, (WPARAM)ghConWnd, (LPARAM)gnSelfPID);
@@ -1727,3 +1735,277 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 
 	return 0;
 }
+
+
+
+
+DWORD WINAPI InputThread(LPVOID lpvParam) 
+{
+	MSG msg;
+	//while (GetMessage(&msg,0,0,0))
+	INPUT_RECORD rr[MAX_EVENTS_PACK];
+	
+	while (TRUE) {
+		if (!PeekMessage(&msg,0,0,0,PM_REMOVE)) {
+			Sleep(10);
+			continue;
+		}
+		if (msg.message == WM_QUIT)
+			break;
+
+		if (ghQuitEvent) {
+			if (WaitForSingleObject(ghQuitEvent, 0) == WAIT_OBJECT_0)
+				break;
+		}
+		if (msg.message == 0) continue;
+
+		//if (msg.message == INPUT_THREAD_ALIVE_MSG) {
+		//	//pRCon->mn_FlushOut = msg.wParam;
+		//	TODO("INPUT_THREAD_ALIVE_MSG");
+		//	continue;
+		//
+		//} else {
+
+		// обработка пачки сообщений, вдруг они накопились в очереди?
+		UINT nCount = 0;
+		while (nCount < MAX_EVENTS_PACK)
+		{
+			if (ProcessInputMessage(msg, rr[nCount]))
+				nCount++;
+			if (!PeekMessage(&msg,0,0,0,PM_REMOVE) || msg.message == WM_QUIT)
+				break;
+		}
+		if (nCount && msg.message != WM_QUIT) {
+			SendConsoleEvent(rr, nCount);
+		}
+		//}
+	}
+
+	return 0;
+}
+
+DWORD WINAPI InputPipeThread(LPVOID lpvParam) 
+{ 
+	BOOL fConnected, fSuccess; 
+	//DWORD nCurInputCount = 0;
+	//DWORD srv.dwServerThreadId;
+	HANDLE hPipe = NULL; 
+	DWORD dwErr = 0;
+
+
+	// The main loop creates an instance of the named pipe and 
+	// then waits for a client to connect to it. When the client 
+	// connects, a thread is created to handle communications 
+	// with that client, and the loop is repeated. 
+
+	for (;;) 
+	{
+		MCHKHEAP;
+		hPipe = CreateNamedPipe( 
+			srv.szInputname,          // pipe name 
+			PIPE_ACCESS_INBOUND,      // goes from client to server only
+			PIPE_TYPE_MESSAGE |       // message type pipe 
+			PIPE_READMODE_MESSAGE |   // message-read mode 
+			PIPE_WAIT,                // blocking mode 
+			PIPE_UNLIMITED_INSTANCES, // max. instances  
+			PIPEBUFSIZE,              // output buffer size 
+			PIPEBUFSIZE,              // input buffer size 
+			0,                        // client time-out
+			gpNullSecurity);          // default security attribute 
+
+		if (hPipe == INVALID_HANDLE_VALUE) 
+		{
+			dwErr = GetLastError();
+			_ASSERTE(hPipe != INVALID_HANDLE_VALUE);
+			_printf("CreatePipe failed, ErrCode=0x%08X\n", dwErr);
+			Sleep(50);
+			//return 99;
+			continue;
+		}
+
+		// Wait for the client to connect; if it succeeds, 
+		// the function returns a nonzero value. If the function
+		// returns zero, GetLastError returns ERROR_PIPE_CONNECTED. 
+
+		fConnected = ConnectNamedPipe(hPipe, NULL) ? 
+		TRUE : (GetLastError() == ERROR_PIPE_CONNECTED); 
+
+		MCHKHEAP;
+		if (fConnected) 
+		{ 
+			//TODO:
+			DWORD cbBytesRead; //, cbWritten;
+			MSG imsg; memset(&imsg,0,sizeof(imsg));
+			while ((fSuccess = ReadFile( 
+					hPipe,        // handle to pipe 
+					&imsg,        // buffer to receive data 
+					sizeof(imsg), // size of buffer 
+					&cbBytesRead, // number of bytes read 
+					NULL)) != FALSE)        // not overlapped I/O 
+			{
+				// предусмотреть возможность завершения нити
+				if (imsg.message == 0xFFFF) {
+			    	SafeCloseHandle(hPipe);
+					break;
+				}
+				MCHKHEAP;
+				if (imsg.message) {
+					// Если есть возможность - сразу пошлем его в dwInputThreadId
+					if (srv.dwInputThreadId) {
+						if (!PostThreadMessage(srv.dwInputThreadId, imsg.message, imsg.wParam, imsg.lParam)) {
+							DWORD dwErr = GetLastError();
+							wchar_t szErr[100];
+							wsprintfW(szErr, L"ConEmuC: PostThreadMessage(%i) failed, code=0x%08X", srv.dwInputThreadId, dwErr);
+							SetConsoleTitle(szErr);
+						}
+					} else {
+						_ASSERTE(srv.dwInputThreadId!=0);
+						INPUT_RECORD r;
+						ProcessInputMessage(imsg, r);
+						SendConsoleEvent(&r, 1);
+					}
+					MCHKHEAP;
+				}
+				// next
+				memset(&imsg,0,sizeof(imsg));
+				MCHKHEAP;
+			}
+		} 
+		else 
+			// The client could not connect, so close the pipe. 
+			SafeCloseHandle(hPipe);
+	} 
+	MCHKHEAP;
+	return 1; 
+} 
+
+BOOL ProcessInputMessage(MSG &msg, INPUT_RECORD &r)
+{
+	memset(&r, 0, sizeof(r));
+	BOOL lbOk = FALSE;
+
+	if (!UnpackInputRecord(&msg, &r)) {
+		_ASSERT(FALSE);
+		
+	} else {
+		TODO("Сделать обработку пачки сообщений, вдруг они накопились в очереди?");
+
+		#define ALL_MODIFIERS (LEFT_ALT_PRESSED|RIGHT_ALT_PRESSED|LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED|SHIFT_PRESSED)
+		#define CTRL_MODIFIERS (LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED)
+
+		bool lbProcessEvent = false;
+		bool lbIngoreKey = false;
+		if (r.EventType == KEY_EVENT && r.Event.KeyEvent.bKeyDown &&
+			(r.Event.KeyEvent.wVirtualKeyCode == 'C' || r.Event.KeyEvent.wVirtualKeyCode == VK_CANCEL)
+			&&      ( // Удерживается ТОЛЬКО Ctrl
+					(r.Event.KeyEvent.dwControlKeyState & CTRL_MODIFIERS) &&
+					((r.Event.KeyEvent.dwControlKeyState & ALL_MODIFIERS) 
+					== (r.Event.KeyEvent.dwControlKeyState & CTRL_MODIFIERS))
+					)
+			)
+		{
+			lbProcessEvent = true;
+
+			DWORD dwMode = 0;
+			GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), &dwMode);
+
+			// CTRL+C (and Ctrl+Break?) is processed by the system and is not placed in the input buffer
+			if ((dwMode & ENABLE_PROCESSED_INPUT) == ENABLE_PROCESSED_INPUT)
+				lbIngoreKey = lbProcessEvent = true;
+			else
+				lbProcessEvent = false;
+
+
+			if (lbProcessEvent) {
+
+				BOOL lbRc = FALSE;
+				DWORD dwEvent = (r.Event.KeyEvent.wVirtualKeyCode == 'C') ? CTRL_C_EVENT : CTRL_BREAK_EVENT;
+				//&& (srv.dwConsoleMode & ENABLE_PROCESSED_INPUT)
+
+				//The SetConsoleMode function can disable the ENABLE_PROCESSED_INPUT mode for a console's input buffer, 
+				//so CTRL+C is reported as keyboard input rather than as a signal. 
+				// CTRL+BREAK is always treated as a signal
+				if ( // Удерживается ТОЛЬКО Ctrl
+					(r.Event.KeyEvent.dwControlKeyState & CTRL_MODIFIERS) &&
+					((r.Event.KeyEvent.dwControlKeyState & ALL_MODIFIERS) 
+					== (r.Event.KeyEvent.dwControlKeyState & CTRL_MODIFIERS))
+					)
+				{
+					// Вроде работает, Главное не запускать процесс с флагом CREATE_NEW_PROCESS_GROUP
+					// иначе у микрософтовской консоли (WinXP SP3) сносит крышу, и она реагирует
+					// на Ctrl-Break, но напрочь игнорирует Ctrl-C
+					lbRc = GenerateConsoleCtrlEvent(dwEvent, 0);
+
+					// Это событие (Ctrl+C) в буфер помещается(!) иначе до фара не дойдет собственно клавиша C с нажатым Ctrl
+				}
+			}
+
+			if (lbIngoreKey)
+				return FALSE;
+		}
+
+		#ifdef _DEBUG
+		if (r.EventType == KEY_EVENT && r.Event.KeyEvent.bKeyDown &&
+			r.Event.KeyEvent.wVirtualKeyCode == VK_F11)
+		{
+			DEBUGSTR(L"  ---  F11 recieved\n");
+		}
+		#endif
+		#ifdef _DEBUG
+		if (r.EventType == MOUSE_EVENT) {
+			static DWORD nLastEventTick = 0;
+			if (nLastEventTick && (GetTickCount() - nLastEventTick) > 2000) {
+				OutputDebugString(L".\n");
+			}
+			wchar_t szDbg[60]; 
+			wsprintf(szDbg, L"ConEmuC.MouseEvent(X=%i,Y=%i,Btns=0x%04x,Moved=%i)\n", r.Event.MouseEvent.dwMousePosition.X, r.Event.MouseEvent.dwMousePosition.Y, r.Event.MouseEvent.dwButtonState, (r.Event.MouseEvent.dwEventFlags & MOUSE_MOVED));
+			DEBUGLOGINPUT(szDbg);
+			nLastEventTick = GetTickCount();
+		}
+		#endif
+
+		// Запомнить, когда была последняя активность пользователя
+		if (r.EventType == KEY_EVENT
+			|| (r.EventType == MOUSE_EVENT 
+			&& (r.Event.MouseEvent.dwButtonState || r.Event.MouseEvent.dwEventFlags 
+			|| r.Event.MouseEvent.dwEventFlags == DOUBLE_CLICK)))
+		{
+			srv.dwLastUserTick = GetTickCount();
+		}
+
+		lbOk = TRUE;
+		//SendConsoleEvent(&r, 1);
+	}
+	
+	return lbOk;
+}
+
+BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount)
+{
+	BOOL fSuccess = FALSE;
+
+	// Если сейчас идет ресайз - нежелательно помещение в буфер событий
+	if (srv.bInSyncResize)
+		WaitForSingleObject(srv.hAllowInputEvent, MAX_SYNCSETSIZE_WAIT);
+
+	DWORD nCurInputCount = 0, cbWritten = 0;
+	INPUT_RECORD irDummy[2] = {{0},{0}};
+
+	HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE); // тут был ghConIn
+	
+	// 27.06.2009 Maks - If input queue is not empty - wait for a while, to avoid conflicts with FAR reading queue
+	if (PeekConsoleInput(hIn, irDummy, 1, &(nCurInputCount = 0)) && nCurInputCount > 0) {
+		DWORD dwStartTick = GetTickCount();
+		WARNING("Do NOT wait, but place event in Cyclic queue");
+		do {
+			Sleep(5);
+			if (!PeekConsoleInput(hIn, irDummy, 1, &(nCurInputCount = 0)))
+				nCurInputCount = 0;
+		} while ((nCurInputCount > 0) && ((GetTickCount() - dwStartTick) < MAX_INPUT_QUEUE_EMPTY_WAIT));
+	}
+
+	fSuccess = WriteConsoleInput(hIn, pr, nCount, &cbWritten);
+	_ASSERTE(fSuccess && cbWritten==nCount);
+
+	return fSuccess;
+} 

@@ -469,11 +469,11 @@ BEGIN
     CONTROL         "Copy by default",cbDnDCopy,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,107,58,66,8
     GROUPBOX        "Multi console && toolbar",IDC_STATIC,4,76,319,44
-    CONTROL         "MultiCon",cbMultiCon,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,10,89,43,8
+    CONTROL         "Multi Console",cbMultiCon,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,10,89,61,8
     CONTROL         "Long console output",cbLongOutput,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,10,105,84,8
-    EDITTEXT        tLongOutputHeight,96,103,29,12,ES_AUTOHSCROLL
+                    BS_AUTOCHECKBOX | WS_TABSTOP,83,105,84,8
+    EDITTEXT        tLongOutputHeight,168,103,29,12,ES_AUTOHSCROLL
     CONTROL         "&RightClick 4 context menu",cbRClick,"Button",
                     BS_AUTO3STATE | WS_TABSTOP,10,141,100,8
     CONTROL         "Right selection fix",cbRSelectionFix,"Button",
@@ -491,7 +491,7 @@ BEGIN
     CONTROL         "Show real console",cbVisible,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,132,141,76,8
     CONTROL         "Create confirmation",cbNewConfirm,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,136,89,77,8
+                    BS_AUTOCHECKBOX | WS_TABSTOP,83,89,77,8
     CONTROL         "Overlay",cbDragImage,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,189,43,41,8
     CONTROL         "Unlocked drop",cbDropUnlocked,"Button",BS_AUTOCHECKBOX | 
@@ -504,11 +504,10 @@ BEGIN
                     BS_AUTOCHECKBOX | WS_TABSTOP,132,174,91,8
     CONTROL         "Shell icons",cbDragIcons,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,189,58,49,8
-    RTEXT           "Cmd output:",IDC_STATIC,129,105,43,8
-    COMBOBOX        lbCmdOutputCP,175,103,54,30,CBS_DROPDOWNLIST | 
-                    WS_TABSTOP
-    RTEXT           "16bit height:",IDC_STATIC,233,105,44,8
-    COMBOBOX        lbNtvdmHeight,281,103,37,30,CBS_DROPDOWNLIST | 
+    RTEXT           "Cmd output:",IDC_STATIC,219,88,43,8
+    COMBOBOX        lbCmdOutputCP,264,85,54,30,CBS_DROPDOWNLIST | WS_TABSTOP
+    RTEXT           "16bit height:",IDC_STATIC,218,105,44,8
+    COMBOBOX        lbNtvdmHeight,264,103,54,30,CBS_DROPDOWNLIST | 
                     WS_TABSTOP
     CONTROL         "ASCII sort function in FAR",cbFARuseASCIIsort,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,10,196,117,8
@@ -532,16 +531,18 @@ BEGIN
     CONTROL         "Desktop mode",cbDesktopMode,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,242,196,76,8
     PUSHBUTTON      "...",bHideCaptionSettings,216,207,13,11
-    PUSHBUTTON      "Hotkeys...",bMultiConHotkeys,77,87,48,13
+    PUSHBUTTON      "Hotkeys...",bMultiConHotkeys,9,102,48,13
     CONTROL         "Toolbar",cbToolbar,"Button",BS_AUTOCHECKBOX | 
-                    WS_DISABLED | WS_TABSTOP,238,90,49,8
+                    WS_DISABLED | WS_TABSTOP,167,89,49,8
     PUSHBUTTON      "...",bFarHourglass,114,207,13,11,WS_DISABLED
     PUSHBUTTON      "...",bRClick,114,139,13,11,WS_DISABLED
     PUSHBUTTON      "More...",bTabTemplates,270,12,48,13,WS_DISABLED
     PUSHBUTTON      "...",bRealConsoleSettings,216,139,13,11,WS_DISABLED
     PUSHBUTTON      "...",bDropSettings,165,41,13,11,WS_DISABLED
     CONTROL         "Handle FAR detach",cbHandleFarDetach,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,10,220,101,8
+                    BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,132,219,101,8
+    CONTROL         "Monitor Far panel contents",IDC_CHECK1,"Button",
+                    BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,10,219,100,10
 END
 
 IDD_RESTART DIALOG DISCARDABLE  0, 0, 310, 98

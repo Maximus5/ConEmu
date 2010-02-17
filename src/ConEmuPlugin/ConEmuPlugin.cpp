@@ -89,8 +89,8 @@ HWND ConEmuHwnd = NULL; // Содержит хэндл окна отрисовки. Это ДОЧЕРНЕЕ окно.
 DWORD gdwServerPID = 0;
 BOOL TerminalMode = FALSE;
 HWND FarHwnd = NULL;
-WARNING("Убрать, заменить ghConIn на GetStdHandle()"); // Иначе в Win7 будет буфер разрушаться
-HANDLE ghConIn = NULL;
+//WARNING("Убрать, заменить ghConIn на GetStdHandle()"); // Иначе в Win7 будет буфер разрушаться
+//HANDLE ghConIn = NULL;
 DWORD gnMainThreadId = 0;
 //HANDLE hEventCmd[MAXCMDCOUNT], hEventAlive=NULL, hEventReady=NULL;
 HANDLE ghMonitorThread = NULL; DWORD gnMonitorThreadId = 0;
@@ -1247,6 +1247,9 @@ BOOL WINAPI OnConsoleDetaching(HookCallbackArg* pArgs)
 {
 	gbWasDetached = (ConEmuHwnd!=NULL && IsWindow(ConEmuHwnd));
 
+	if (ghMonitorThread)
+		SuspendThread(ghMonitorThread);
+
 	if (gbWasDetached) {
 		HANDLE hOutput = GetStdHandle(STD_OUTPUT_HANDLE);
 		GetConsoleScreenBufferInfo(hOutput, &gsbiDetached);
@@ -1264,16 +1267,10 @@ BOOL WINAPI OnConsoleDetaching(HookCallbackArg* pArgs)
 
 	CloseColorerHeader(); // Если было
 	CloseMapHeader();
-    ConEmuHwnd = NULL;
-    SetConEmuEnvVar(NULL);
+	ConEmuHwnd = NULL;
+	SetConEmuEnvVar(NULL);
 
-    WARNING("Убрать, заменить ghConIn на GetStdHandle()"); // Иначе в Win7 будет буфер разрушаться
-	if (ghConIn) {
-		CloseHandle(ghConIn);
-		ghConIn = NULL;
-	}
-    
-    // Потом еще и FarHwnd сбросить нужно будет... Ну этим MonitorThreadProcW займется
+	// Потом еще и FarHwnd сбросить нужно будет... Ну этим MonitorThreadProcW займется
 	
 	return TRUE; // продолжить выполнение функции
 }
@@ -1307,6 +1304,10 @@ VOID WINAPI OnConsoleWasAttached(HookCallbackArg* pArgs)
 		// не среагировал раньше времени
 		gbWasDetached = FALSE;
 	}
+
+	if (ghMonitorThread)
+		ResumeThread(ghMonitorThread);
+
 }
 
 void ReloadOnWrite()
@@ -2297,8 +2298,8 @@ void StopThread(void)
 	if (ghRegMonitorKey) { RegCloseKey(ghRegMonitorKey); ghRegMonitorKey = NULL; }
 	SafeCloseHandle(ghRegMonitorEvt);
 	SafeCloseHandle(ghServerTerminateEvent);
-	WARNING("Убрать, заменить ghConIn на GetStdHandle()"); // Иначе в Win7 будет буфер разрушаться
-	SafeCloseHandle(ghConIn);
+	//WARNING("Убрать, заменить ghConIn на GetStdHandle()"); // Иначе в Win7 будет буфер разрушаться
+	//SafeCloseHandle(ghConIn);
 	SafeCloseHandle(ghInputSynchroExecuted);
 	SafeCloseHandle(ghSetWndSendTabsEvent);
 	

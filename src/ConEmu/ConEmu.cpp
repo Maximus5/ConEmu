@@ -116,6 +116,7 @@ CConEmuMain::CConEmuMain()
     //mn_CurrentKeybLayout = (DWORD_PTR)GetKeyboardLayout(0);
     mn_ServerThreadId = 0; mh_ServerThread = NULL; mh_ServerThreadTerminate = NULL;
     //mpsz_RecreateCmd = NULL;
+    mh_RecreateDlgKeyHook = NULL; mb_SkipAppsInRecreate = FALSE;
 	ZeroStruct(mrc_Ideal);
 	mn_InResize = 0;
 	mb_MaximizedHideCaption = FALSE;
@@ -2919,10 +2920,11 @@ void CConEmuMain::Recreate(BOOL abRecreate, BOOL abConfirm)
         }
 
         if (abConfirm) {
-            BOOL b = gbDontEnable;
-            gbDontEnable = TRUE;
-            int nRc = DialogBoxParam(g_hInstance, MAKEINTRESOURCE(IDD_RESTART), ghWnd, RecreateDlgProc, (LPARAM)&args);
-            gbDontEnable = b;
+        	int nRc = RecreateDlg((LPARAM)&args);
+            //BOOL b = gbDontEnable;
+            //gbDontEnable = TRUE;
+            //int nRc = DialogBoxParam(g_hInstance, MAKEINTRESOURCE(IDD_RESTART), ghWnd, Recreate DlgProc, (LPARAM)&args);
+            //gbDontEnable = b;
             if (nRc != IDC_START)
                 return;
 			m_Child.Redraw();
@@ -2936,10 +2938,11 @@ void CConEmuMain::Recreate(BOOL abRecreate, BOOL abConfirm)
         if (nActive >=0) {
 			args.bRunAsAdministrator = mp_VActive->RCon()->isAdministrator();
 
-            BOOL b = gbDontEnable;
-            gbDontEnable = TRUE;
-            int nRc = DialogBoxParam(g_hInstance, MAKEINTRESOURCE(IDD_RESTART), ghWnd, RecreateDlgProc, (LPARAM)&args);
-            gbDontEnable = b;
+			int nRc = RecreateDlg((LPARAM)&args);
+            //BOOL b = gbDontEnable;
+            //gbDontEnable = TRUE;
+            //int nRc = DialogBoxParam(g_hInstance, MAKEINTRESOURCE(IDD_RESTART), ghWnd, Recreate DlgProc, (LPARAM)&args);
+            //gbDontEnable = b;
             if (nRc == IDC_TERMINATE) {
                 mp_VActive->RCon()->CloseConsole();
                 return;
@@ -2954,6 +2957,32 @@ void CConEmuMain::Recreate(BOOL abRecreate, BOOL abConfirm)
     
     SafeFree(args.pszSpecialCmd);
 }
+
+int CConEmuMain::RecreateDlg(LPARAM lParam)
+{
+    BOOL b = gbDontEnable;
+    gbDontEnable = TRUE;
+    
+ 
+	if (isPressed(VK_APPS)) {
+		// Игнорировать одно следующее VK_APPS
+		mb_SkipAppsInRecreate = TRUE;
+		mh_RecreateDlgKeyHook = SetWindowsHookEx(WH_GETMESSAGE, RecreateDlgKeyHook, NULL, GetCurrentThreadId() );
+	}
+    
+    
+    int nRc = DialogBoxParam(g_hInstance, MAKEINTRESOURCE(IDD_RESTART), ghWnd, RecreateDlgProc, lParam);
+    
+    if (mh_RecreateDlgKeyHook) {
+    	UnhookWindowsHookEx(mh_RecreateDlgKeyHook);
+    	mh_RecreateDlgKeyHook = NULL;
+    }
+    
+    gbDontEnable = b;
+    return nRc;
+}
+
+
 
 BOOL CConEmuMain::RunSingleInstance()
 {
@@ -2996,10 +3025,24 @@ int CConEmuMain::BrowseCallbackProc(HWND hwnd, UINT uMsg, LPARAM lParam, LPARAM 
 	return 0;
 }
 
+LRESULT CConEmuMain::RecreateDlgKeyHook(int code, WPARAM wParam, LPARAM lParam)
+{
+	if (code >= 0) {
+		if (gConEmu.mb_SkipAppsInRecreate && lParam) {
+			LPMSG pMsg = (LPMSG)lParam;
+			if (pMsg->message == WM_CONTEXTMENU) {
+				pMsg->message = WM_NULL;
+				gConEmu.mb_SkipAppsInRecreate = FALSE;
+				return FALSE; // Skip one Apps
+			}
+		}
+	}
+
+	return CallNextHookEx(gConEmu.mh_RecreateDlgKeyHook, code, wParam, lParam);
+}
+
 INT_PTR CConEmuMain::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
 {
-	static bool bSkipApps = FALSE;
-
     switch (messg)
     {
     case WM_INITDIALOG:
@@ -3010,10 +3053,6 @@ INT_PTR CConEmuMain::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARA
             //#endif
 
 			// Если на момент открытия диалога был нажат Apps - пропустить его "отжатие"
-			if (isPressed(VK_APPS)) {
-				bSkipApps = true;
-				TODO("Игнорировать одно следующее WM_CONTEXTMENU");
-			}
             
             LPCWSTR pszCmd = gConEmu.ActiveCon()->RCon()->GetCmd();
             int nId = SendDlgItemMessage(hDlg, IDC_RESTART_CMD, CB_FINDSTRINGEXACT, -1, (LPARAM)pszCmd);
@@ -4591,6 +4630,8 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
 
          
 		if (!mp_TaskBar2) {
+			// В PostCreate это выполняется дольше всего. По идее мешать не должно,
+			// т.к. серверная нить уже запущена.
 			hr = CoCreateInstance(CLSID_TaskbarList,NULL,CLSCTX_INPROC_SERVER,IID_ITaskbarList2,(void**)&mp_TaskBar2);
 			if (hr == S_OK && mp_TaskBar2) {
 				hr = mp_TaskBar2->HrInit();
@@ -5195,7 +5236,7 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
             }
         }
     }
-	if (gSet.IsHostkeySingle(wParam)) {
+	if (gSet.IsHostkeySingle(wParam) /*|| (wParam == VK_APPS && gSet.IsHostkey(VK_APPS))*/) {
 		if (messg == WM_KEYDOWN || messg == WM_SYSKEYDOWN) {
 			sb_SkipSingleHostkey = true; sm_SkipSingleHostkey = messg; sw_SkipSingleHostkey = wParam; sl_SkipSingleHostkey = lParam;
 			// Если после нее не будет нажат Hotkey - пошлем в консоль
@@ -5203,8 +5244,11 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 		}
 	}
 	if (sb_SkipSingleHostkey) {
-		sb_SkipSingleHostkey = false;
-		mp_VActive->RCon()->OnKeyboard(hWnd, sm_SkipSingleHostkey, sw_SkipSingleHostkey, sl_SkipSingleHostkey, L"");
+		/*if (wParam != VK_APPS)*/
+		{
+			sb_SkipSingleHostkey = false;
+			mp_VActive->RCon()->OnKeyboard(hWnd, sm_SkipSingleHostkey, sw_SkipSingleHostkey, sl_SkipSingleHostkey, L"");
+		}
 	}
 	// После хоткея создания консоли - KEYUP мог "уйти" в открытый диалог, 
 	// поэтому чистим "игнорируемые" кнопки при любом следующем нажатии

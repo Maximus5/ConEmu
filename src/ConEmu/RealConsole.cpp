@@ -840,34 +840,34 @@ BOOL CRealConsole::AttachPID(DWORD dwPID)
 #endif
 }
 
-BOOL CRealConsole::FlushInputQueue(DWORD nTimeout /*= 500*/)
-{
-	if (!this) return FALSE;
-	
-	if (nTimeout > 1000) nTimeout = 1000;
-	DWORD dwStartTick = GetTickCount();
-	
-	mn_FlushOut = mn_FlushIn;
-	mn_FlushIn++;
-
-	_ASSERTE(mn_ConEmuC_Input_TID!=0);
-
-	TODO("Активной может быть нить ввода плагина фара а не сервера!");
-	
-	//TODO("Преверка зависания нити и ее перезапуск");
-	PostThreadMessage(mn_ConEmuC_Input_TID, INPUT_THREAD_ALIVE_MSG, mn_FlushIn, 0);
-	
-	while (mn_FlushOut != mn_FlushIn) {
-		if (WaitForSingleObject(mh_ConEmuC, 100) == WAIT_OBJECT_0)
-			break; // Процесс сервера завершился
-		
-		DWORD dwCurTick = GetTickCount();
-		DWORD dwDelta = dwCurTick - dwStartTick;
-		if (dwDelta > nTimeout) break;
-	}
-	
-	return (mn_FlushOut == mn_FlushIn);
-}
+//BOOL CRealConsole::FlushInputQueue(DWORD nTimeout /*= 500*/)
+//{
+//	if (!this) return FALSE;
+//	
+//	if (nTimeout > 1000) nTimeout = 1000;
+//	DWORD dwStartTick = GetTickCount();
+//	
+//	mn_FlushOut = mn_FlushIn;
+//	mn_FlushIn++;
+//
+//	_ASSERTE(mn_ConEmuC_Input_TID!=0);
+//
+//	TODO("Активной может быть нить ввода плагина фара а не сервера!");
+//	
+//	//TODO("Преверка зависания нити и ее перезапуск");
+//	PostThreadMessage(mn_ConEmuC_Input_TID, INPUT_THREAD_ALIVE_MSG, mn_FlushIn, 0);
+//	
+//	while (mn_FlushOut != mn_FlushIn) {
+//		if (WaitForSingleObject(mh_ConEmuC, 100) == WAIT_OBJECT_0)
+//			break; // Процесс сервера завершился
+//		
+//		DWORD dwCurTick = GetTickCount();
+//		DWORD dwDelta = dwCurTick - dwStartTick;
+//		if (dwDelta > nTimeout) break;
+//	}
+//	
+//	return (mn_FlushOut == mn_FlushIn);
+//}
 
 void CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec)
 {
@@ -2708,6 +2708,7 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 			pIn->StartStopRet.hWnd = ghWnd;
 			pIn->StartStopRet.dwPID = GetCurrentProcessId();
 			pIn->StartStopRet.dwSrvPID = mn_ConEmuC_PID;
+			pIn->StartStopRet.bNeedLangChange = FALSE;
 
 			if (nStarted == 0) {
 				_ASSERTE(nInputTID);
@@ -2717,15 +2718,20 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 				if (!m_Args.bRunAsAdministrator && bUserIsAdmin)
 					m_Args.bRunAsAdministrator = TRUE;
 
+				// Если один Layout на все консоли
+				if ((gSet.isMonitorConsoleLang & 2) == 2) {
+					// Команду - низя, нити еще не функционируют
+					//	SwitchKeyboardLayout(INPUTLANGCHANGE_SYSCHARSET,gConEmu.GetActiveKeyboardLayout());
+					pIn->StartStopRet.bNeedLangChange = TRUE;
+					pIn->StartStopRet.NewConsoleLang = gConEmu.GetActiveKeyboardLayout();
+				}
+
+
 				// Теперь мы гарантированно знаем дескриптор окна консоли
 				SetHwnd(hWnd);
 
-				// Открыть map с данными, теперь он уже должен быть создан
-				if (!mp_ConsoleInfo)
-					OpenMapHeader();
-					
-				// И атрибуты Colorer
-				OpenColorMapping();
+				// Открыть мэппинги, выставить KeyboardLayout, и т.п.
+				OnServerStarted();
 			}
 
             AllowSetForegroundWindow(nPID);
@@ -4098,6 +4104,20 @@ void CRealConsole::ShowConsole(int nMode) // -1 Toggle, 0 - Hide, 1 - Show
 //	}
 //}
 
+void CRealConsole::OnServerStarted()
+{
+	// Открыть map с данными, теперь он уже должен быть создан
+	if (!mp_ConsoleInfo)
+		OpenMapHeader();
+
+	// И атрибуты Colorer
+	OpenColorMapping();
+
+	// Возвращается через CESERVER_REQ_STARTSTOPRET
+	//if ((gSet.isMonitorConsoleLang & 2) == 2) // Один Layout на все консоли
+	//	SwitchKeyboardLayout(INPUTLANGCHANGE_SYSCHARSET,gConEmu.GetActiveKeyboardLayout());
+}
+
 void CRealConsole::SetHwnd(HWND ahConWnd)
 {
 	// Окно разрушено? Пересоздание консоли?
@@ -4169,8 +4189,9 @@ void CRealConsole::SetHwnd(HWND ahConWnd)
     //else if (isAdministrator())
     //	ShowConsole(0); // В Win7 оно таки появляется видимым - проверка вынесена в ConEmuC
 
-    if ((gSet.isMonitorConsoleLang & 2) == 2) // Один Layout на все консоли
-        SwitchKeyboardLayout(INPUTLANGCHANGE_SYSCHARSET,gConEmu.GetActiveKeyboardLayout());
+	// Перенесено в OnServerStarted
+    //if ((gSet.isMonitorConsoleLang & 2) == 2) // Один Layout на все консоли
+    //    SwitchKeyboardLayout(INPUTLANGCHANGE_SYSCHARSET,gConEmu.GetActiveKeyboardLayout());
 
     if (isActive()) {
         ghConWnd = hConWnd;
@@ -4539,7 +4560,7 @@ void CRealConsole::DetectDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int
 		return;
 	}
 
-	wchar_t wc, wcMostRight, wcMostBottom, wcMostRightBottom, wcMostTop;
+	wchar_t wc, wcMostRight, wcMostBottom, wcMostRightBottom, wcMostTop, wcNotMostBottom1, wcNotMostBottom2;
 	int nMostRight, nMostBottom, nMostRightBottom, nMostTop, nShift, n;
 	DWORD nBackColor;
 	BOOL bMarkBorder = FALSE;
@@ -4637,6 +4658,16 @@ void CRealConsole::DetectDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int
 
 		if (wc == ucBoxSinglVert || wc == ucBoxSinglVertRight) {
 			wcMostRight = ucBoxSinglUpLeft; wcMostBottom = ucBoxSinglUpRight; wcMostRightBottom = ucBoxSinglUpLeft; wcMostTop = ucBoxSinglDownLeft;
+			// наткнулись на вертикальную линию на панели
+			if (wc == ucBoxSinglVert) {
+				wcNotMostBottom1 = ucBoxSinglUpHorz; wcNotMostBottom2 = ucBoxSinglUpDblHorz;
+				nMostBottom = nFromY;
+				while (++nMostBottom < nHeight) {
+					wc = pChar[nFromX+nMostBottom*nWidth];
+					if (wc == wcNotMostBottom1 || wc == wcNotMostBottom2)
+						return;
+				}
+			}
 		} else {
 			wcMostRight = ucBoxDblUpLeft; wcMostBottom = ucBoxDblUpRight; wcMostRightBottom = ucBoxDblUpLeft; wcMostTop = ucBoxDblDownLeft;
 		}
@@ -4845,6 +4876,10 @@ void CRealConsole::PrepareTransparent(wchar_t* pChar, CharAttr* pAttr, int nWidt
 	int nMenuBackIdx = (mp_ConsoleInfo->nFarColors[COL_MENUTITLE] & 0xF0) >> 4;
 	COLORREF crMenuTitleBack = gSet.Colors[nUserBackIdx];
 	
+	// Для детекта наличия PanelTabs
+	int nPanelTextBackIdx = (mp_ConsoleInfo->nFarColors[COL_PANELTEXT] & 0xF0) >> 4;
+	int nPanelTextForeIdx = mp_ConsoleInfo->nFarColors[COL_PANELTEXT] & 0xF;
+	
 	// При bUseColorKey Если панель погашена (или панели) то 
 	// 1. UserScreen под ним заменяется на crColorKey
 	// 2. а текст - на пробелы
@@ -4878,17 +4913,63 @@ void CRealConsole::PrepareTransparent(wchar_t* pChar, CharAttr* pAttr, int nWidt
 
 	// Пометить непрозрачными панели
 	RECT r;
-	bool lbLeftVisible = false, lbRightVisible = false;
-	if (mp_ConsoleInfo->bFarLeftPanel && mp_ConsoleInfo->FarLeftPanel.Visible) {
-		r = mp_ConsoleInfo->FarLeftPanel.PanelRect;
+	bool lbLeftVisible = false, lbRightVisible = false, lbFullPanel = false;
+
+	// Хотя информация о панелях хронически обновляется плагином, но это могут и отключить,
+	// да и отрисовка на экране может несколько задержаться
+
+	if (mb_LeftPanel) {
 		lbLeftVisible = true;
-		MarkDialog(pAttr, nWidth, nHeight, r.left, r.top, r.right, r.bottom);
+		r = mr_LeftPanelFull;
+	} else
+	// Но если часть панели скрыта диалогами - наш детект панели мог не сработать
+	if (mp_ConsoleInfo->bFarLeftPanel && mp_ConsoleInfo->FarLeftPanel.Visible) {
+		lbLeftVisible = true;
+		r = mp_ConsoleInfo->FarLeftPanel.PanelRect;
 	}
-	if (mp_ConsoleInfo->bFarRightPanel && mp_ConsoleInfo->FarRightPanel.Visible) {
-		r = mp_ConsoleInfo->FarRightPanel.PanelRect;
-		lbRightVisible = true;
-		MarkDialog(pAttr, nWidth, nHeight, r.left, r.top, r.right, r.bottom);
+	if (lbLeftVisible) {
+		if (r.right == (nWidth-1))
+			lbFullPanel = true; // значит правой быть не может
+		MarkDialog(pAttr, nWidth, nHeight, r.left, r.top, r.right, r.bottom, TRUE);
+		// Для детекта наличия PanelTabs
+		if (nHeight > (nBottomLines+r.bottom+1)) {
+			int nIdx = nWidth*(r.bottom+1)+r.right-1;
+			if (pChar[nIdx-1] == 9616 && pChar[nIdx] == L'+' && pChar[nIdx+1] == 9616
+				&& pAttr[nIdx].nBackIdx == nPanelTextBackIdx
+				&& pAttr[nIdx].nForeIdx == nPanelTextForeIdx)
+			{
+				MarkDialog(pAttr, nWidth, nHeight, r.left, r.bottom+1, r.right, r.bottom+1);
+			}
+		}
 	}
+
+	if (!lbFullPanel) {
+		if (mb_RightPanel) {
+			lbRightVisible = true;
+			r = mr_RightPanelFull;
+		} else
+		// Но если часть панели скрыта диалогами - наш детект панели мог не сработать
+		if (mp_ConsoleInfo->bFarRightPanel && mp_ConsoleInfo->FarRightPanel.Visible) {
+			lbRightVisible = true;
+			r = mp_ConsoleInfo->FarRightPanel.PanelRect;
+		}
+		if (mp_ConsoleInfo->bFarRightPanel && mp_ConsoleInfo->FarRightPanel.Visible) {
+			r = mp_ConsoleInfo->FarRightPanel.PanelRect;
+			lbRightVisible = true;
+			MarkDialog(pAttr, nWidth, nHeight, r.left, r.top, r.right, r.bottom, TRUE);
+			// Для детекта наличия PanelTabs
+			if (nHeight > (nBottomLines+r.bottom+1)) {
+				int nIdx = nWidth*(r.bottom+1)+r.right-1;
+				if (pChar[nIdx-1] == 9616 && pChar[nIdx] == L'+' && pChar[nIdx+1] == 9616
+					&& pAttr[nIdx].nBackIdx == nPanelTextBackIdx
+					&& pAttr[nIdx].nForeIdx == nPanelTextForeIdx)
+				{
+					MarkDialog(pAttr, nWidth, nHeight, r.left, r.bottom+1, r.right, r.bottom+1);
+				}
+			}
+		}
+	}
+
 	if (!lbLeftVisible && !lbRightVisible) {
 		if (isPressed(VK_CONTROL) && isPressed(VK_SHIFT) && isPressed(VK_MENU))
 			return; // По CtrlAltShift - показать UserScreen (не делать его прозрачным)
@@ -4979,15 +5060,18 @@ void CRealConsole::PrepareTransparent(wchar_t* pChar, CharAttr* pAttr, int nWidt
 			int nX1 = 0;
 			int nX2 = nWidth-1; // по умолчанию - на всю ширину
 
-			if (!mb_LeftPanel && mb_RightPanel) {
-				// Погашена только левая панель
-				nX2 = mr_RightPanelFull.left-1;
-			} else if (mb_LeftPanel && !mb_RightPanel) {
-				// Погашена только правая панель
-				nX1 = mr_LeftPanelFull.right+1;
-			} else {
-				//Внимание! Панели могут быть, но они могут быть перекрыты PlugMenu!
-			}
+			// Все-таки, если панели приподняты - делаем UserScreen прозрачным
+			// Ведь остается возможность посмотреть его по CtrlAltShift
+			
+			//if (!mb_LeftPanel && mb_RightPanel) {
+			//	// Погашена только левая панель
+			//	nX2 = mr_RightPanelFull.left-1;
+			//} else if (mb_LeftPanel && !mb_RightPanel) {
+			//	// Погашена только правая панель
+			//	nX1 = mr_LeftPanelFull.right+1;
+			//} else {
+			//	//Внимание! Панели могут быть, но они могут быть перекрыты PlugMenu!
+			//}
 
 			WARNING("Во время запуска неприятно мелькает - пока не появятся панели - становится прозрачным");
 

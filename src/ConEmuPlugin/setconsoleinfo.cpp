@@ -1,10 +1,7 @@
 //
 //	SETCONSOLEINFO.C
 //
-//	Undocumented method to set console attributes
-//  at runtime including console palette (NT4, 2000, XP).
-//
-//	VOID WINAPI SetConsolePalette(COLORREF palette[16])
+//	Undocumented method to set console attributes at runtime
 //
 //	For Vista use the newly documented SetConsoleScreenBufferEx API
 //
@@ -13,10 +10,8 @@
 
 #include <windows.h>
 #include <stdarg.h>
-//#include "../ConEmu/kl_parts.h"
+#include "..\common\common.hpp"
 
-// only in Win2k+  (use FindWindow for NT4)
-//HWND WINAPI GetConsoleWindow();
 
 // Undocumented console message
 #define WM_SETCONSOLEINFO			(WM_USER+201)
@@ -69,44 +64,32 @@ typedef struct _CONSOLE_INFO
 //
 BOOL SetConsoleInfo(HWND hwndConsole, CONSOLE_INFO *pci)
 {
-	DWORD   dwConsoleOwnerPid, dwCurProcId, dwConsoleThreadId;
-	HANDLE  hProcess=NULL;
-	HANDLE	hSection=NULL, hDupSection=NULL;
+	DWORD   dwConsoleOwnerPid, dwCurProcId, dwConsoleThreadId, dwMapSize;
+	HANDLE	hSection=NULL;
 	PVOID   ptrView = 0;
 	DWORD   dwLastError=0;
 	WCHAR   ErrText[255];
 	
 	//
-	//	Open the process which "owns" the console
+	//	Retrieve the process which "owns" the console
 	//	
 	dwCurProcId = GetCurrentProcessId();
 	dwConsoleThreadId = GetWindowThreadProcessId(hwndConsole, &dwConsoleOwnerPid);
-	hProcess = GetCurrentProcess();
 
-	// Если dwConsoleOwnerPid не совпадает с dwCurProcId - скорее всего мы обломимся
+	// We'll fail, if console was created by other process
+	if (dwConsoleOwnerPid != dwCurProcId) {
+		_ASSERTE(dwConsoleOwnerPid == dwCurProcId);
+		return FALSE;
+	}
 	
-	// Если уж мы к консоли подцепились - считаем ее своей!
-	/*GetWindowThreadProcessId(hwndConsole, &dwConsoleOwnerPid);
-	
-	hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, dwConsoleOwnerPid);
-	dwLastError = GetLastError();
-	//Какого черта OpenProcess не дает себя открыть? GetLastError возвращает 5
-	if (hProcess==NULL) {
-		if (dwConsoleOwnerPid == dwCurProcId) {
-			hProcess = GetCurrentProcess();
-		} else {
-			wsprintf(ErrText, L"Can't open console process. ErrCode=%i", dwLastError);
-			MessageBox(NULL, ErrText, L"ConEmu", MB_OK|MB_ICONSTOP|MB_SETFOREGROUND);
-			return FALSE;
-		}
-	}*/
 
 	//
 	// Create a SECTION object backed by page-file, then map a view of
 	// this section into the owner process so we can write the contents 
 	// of the CONSOLE_INFO buffer into it
 	//
-	hSection = CreateFileMapping(INVALID_HANDLE_VALUE, 0, PAGE_READWRITE, 0, pci->Length, 0);
+	dwMapSize = pci->Length + 1024;
+	hSection = CreateFileMapping(INVALID_HANDLE_VALUE, 0, PAGE_READWRITE, 0, dwMapSize, 0);
 	if (!hSection) {
 		dwLastError = GetLastError();
 		wsprintf(ErrText, L"Can't CreateFileMapping. ErrCode=%i", dwLastError);
@@ -116,7 +99,7 @@ BOOL SetConsoleInfo(HWND hwndConsole, CONSOLE_INFO *pci)
 		//
 		//	Copy our console structure into the section-object
 		//
-		ptrView = MapViewOfFile(hSection, FILE_MAP_WRITE|FILE_MAP_READ, 0, 0, pci->Length);
+		ptrView = MapViewOfFile(hSection, FILE_MAP_WRITE|FILE_MAP_READ, 0, 0, dwMapSize);
 		if (!ptrView) {
 			dwLastError = GetLastError();
 			wsprintf(ErrText, L"Can't MapViewOfFile. ErrCode=%i", dwLastError);
@@ -127,48 +110,18 @@ BOOL SetConsoleInfo(HWND hwndConsole, CONSOLE_INFO *pci)
 
 			UnmapViewOfFile(ptrView);
 
-			//
-			//	Map the memory into owner process
-			//
-			if (!DuplicateHandle(GetCurrentProcess(), hSection, hProcess, &hDupSection, 0, FALSE, DUPLICATE_SAME_ACCESS)
-				|| !hDupSection)
-			{
-				dwLastError = GetLastError();
-				wsprintf(ErrText, L"Can't DuplicateHandle. ErrCode=%i", dwLastError);
-				MessageBox(NULL, ErrText, L"ConEmu", MB_OK|MB_ICONSTOP|MB_SETFOREGROUND);
-
-			} else {
-				//  Send console window the "update" message
-				LRESULT dwConInfoRc = 0;
-				DWORD dwConInfoErr = 0;
-				
-				dwConInfoRc = SendMessage(hwndConsole, WM_SETCONSOLEINFO, (WPARAM)hDupSection, 0);
-				dwConInfoErr = GetLastError();
-			}
+			//  Send console window the "update" message
+			LRESULT dwConInfoRc = 0;
+			DWORD dwConInfoErr = 0;
+			
+			dwConInfoRc = SendMessage(hwndConsole, WM_SETCONSOLEINFO, (WPARAM)hSection, 0);
+			dwConInfoErr = GetLastError();
 		}
 	}
 
-
-
-	//
-	// clean up
-	//
-
-	if (hDupSection) {
-		if (dwConsoleOwnerPid == dwCurProcId) {
-			// Если это наша консоль - зачем с нитями извращаться
-			CloseHandle(hDupSection);
-		} else {
-			HANDLE  hThread=NULL;
-			hThread = CreateRemoteThread(hProcess, 0, 0, (LPTHREAD_START_ROUTINE)CloseHandle, hDupSection, 0, 0);
-			if (hThread) CloseHandle(hThread);
-		}
-	}
-
+	// Clean memory
 	if (hSection)
 		CloseHandle(hSection);
-	if ((dwConsoleOwnerPid!=dwCurProcId) && hProcess)
-		CloseHandle(hProcess);
 
 	return TRUE;
 }
@@ -192,61 +145,6 @@ void GetConsoleSizeInfo(CONSOLE_INFO *pci)
 	pci->WindowPosY		  = csbi.srWindow.Top;
 }
 
-//
-// Set palette of current console
-//
-//	palette should be of the form:
-//
-// COLORREF DefaultColors[16] = 
-// {
-//	0x00000000, 0x00800000, 0x00008000, 0x00808000,
-//	0x00000080, 0x00800080, 0x00008080, 0x00c0c0c0, 
-//	0x00808080,	0x00ff0000, 0x0000ff00, 0x00ffff00,
-//	0x000000ff, 0x00ff00ff,	0x0000ffff, 0x00ffffff
-// };
-//
-#if !defined(__GNUC__)
-VOID WINAPI SetConsolePalette(COLORREF palette[16])
-{
-	CONSOLE_INFO ci = { sizeof(ci) };
-	int i;
-        HWND hwndConsole = GetConsoleWindow();
-
-	// get current size/position settings rather than using defaults..
-	GetConsoleSizeInfo(&ci);
-
-	// set these to zero to keep current settings
-	ci.FontSize.X				= 0;//8;
-	ci.FontSize.Y				= 0;//12;
-	ci.FontFamily				= 0;//0x30;//FF_MODERN|FIXED_PITCH;//0x30;
-	ci.FontWeight				= 0;//0x400;
-	//lstrcpyW(ci.FaceName, L"Terminal");
-	ci.FaceName[0]				= L'\0';
-
-	ci.CursorSize				= 25;
-	ci.FullScreen				= FALSE;
-	ci.QuickEdit				= TRUE;
-	ci.AutoPosition				= 0x10000;
-	ci.InsertMode				= TRUE;
-	ci.ScreenColors				= MAKEWORD(0x7, 0x0);
-	ci.PopupColors				= MAKEWORD(0x5, 0xf);
-	
-	ci.HistoryNoDup				= FALSE;
-	ci.HistoryBufferSize		= 50;
-	ci.NumberOfHistoryBuffers	= 4;
-
-	// colour table
-	for(i = 0; i < 16; i++)
-		ci.ColorTable[i] = palette[i];
-
-	ci.CodePage					= GetConsoleOutputCP();//0;//0x352;
-	ci.Hwnd						= hwndConsole;
-
-	lstrcpyW(ci.ConsoleTitle, L"");
-
-	SetConsoleInfo(hwndConsole, &ci);
-}
-#endif
 
 #if defined(__GNUC__)
 #define __in
@@ -287,7 +185,6 @@ void SetConsoleFontSizeTo(HWND inConWnd, int inSizeY, int inSizeX, wchar_t *asFo
 		//GetCurrentConsoleFontEx(GetStdHandle(STD_OUTPUT_HANDLE), FALSE, &cfi);
 		cfi.dwFontSize.X = inSizeX;
 		cfi.dwFontSize.Y = inSizeY;
-		//TODO: А Люциду кто ставить будет???
 		lstrcpynW(cfi.FaceName, asFontName ? asFontName : L"Lucida Console", LF_FACESIZE);
 		SetCurrentConsoleFontEx(GetStdHandle(STD_OUTPUT_HANDLE), FALSE, &cfi);
 	}
@@ -335,9 +232,6 @@ void SetConsoleFontSizeTo(HWND inConWnd, int inSizeY, int inSizeX, wchar_t *asFo
 
 		*ci.ConsoleTitle = NULL;
 
-		//!!! чего-то не работает... а в
-        // F:\VCProject\FarPlugin\ConEmu\080703\ConEmu\setconsoleinfo.cpp
-		//вроде ок
 		SetConsoleInfo(inConWnd, &ci);
 	}
 }

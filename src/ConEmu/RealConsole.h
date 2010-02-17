@@ -206,7 +206,7 @@ public:
     void PostConsoleEvent(INPUT_RECORD* piRec);
 	void PostConsoleEventPipe(MSG *pMsg);
 	LRESULT PostConsoleMessage(UINT nMsg, WPARAM wParam, LPARAM lParam);
-    BOOL FlushInputQueue(DWORD nTimeout = 500);
+    //BOOL FlushInputQueue(DWORD nTimeout = 500);
     void OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, wchar_t *pszChars);
     void OnMouse(UINT messg, WPARAM wParam, int x, int y);
     void OnFocus(BOOL abFocused);
@@ -429,6 +429,7 @@ private:
 	void CloseMapHeader();
 	void ApplyConsoleInfo();
 	BOOL mb_DataChanged;
+	void OnServerStarted();
     //
     BOOL PrepareOutputFile(BOOL abUnicodeText, wchar_t* pszFilePathName);
     HANDLE PrepareOutputFileCreate(wchar_t* pszFilePathName);
