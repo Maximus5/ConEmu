@@ -43,7 +43,9 @@ public:
     wchar_t Config[MAX_PATH], Type[16];
 	wchar_t szFontError[512];
 
-    int DefaultBufferHeight; bool ForceBufferHeight; bool AutoScroll; bool AutoBufferHeight;
+    int DefaultBufferHeight;
+	bool bForceBufferHeight; int nForceBufferHeight;
+	bool AutoScroll; bool AutoBufferHeight;
 	//bool FarSyncSize;
 	int nCmdOutputCP;
     

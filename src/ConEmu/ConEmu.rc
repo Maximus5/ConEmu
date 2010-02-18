@@ -540,9 +540,11 @@ BEGIN
     PUSHBUTTON      "...",bRealConsoleSettings,216,139,13,11,WS_DISABLED
     PUSHBUTTON      "...",bDropSettings,165,41,13,11,WS_DISABLED
     CONTROL         "Handle FAR detach",cbHandleFarDetach,"Button",
-                    BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,132,219,101,8
+                    BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,132,219,82,8
     CONTROL         "Monitor Far panel contents",IDC_CHECK1,"Button",
-                    BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,10,219,100,10
+                    BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,10,219,100,8
+    CONTROL         "Hook FAR registry",cbHookFarRegistry,"Button",
+                    BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,242,219,76,8
 END
 
 IDD_RESTART DIALOG DISCARDABLE  0, 0, 310, 98
@@ -806,6 +808,7 @@ END
 STRINGTABLE DISCARDABLE 
 BEGIN
     cbHandleFarDetach       "Automatic attach to ConEmu new Far manager console, created on detach (CtrlAltTab)"
+    cbHookFarRegistry       "Enable portable mode for FAR manager. ConEmu plugin must be installed."
 END
 
 #endif    // English (U.S.) resources

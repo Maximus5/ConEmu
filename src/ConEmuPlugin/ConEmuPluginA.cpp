@@ -161,6 +161,24 @@ void ProcessDragFromA()
 		OutDataWrite(&nNull/*ItemsCount*/, sizeof(int));
 		
 		if (PInfo.SelectedItemsNumber<=0) {
+			// Проверка того, что мы стоим на ".."
+			if (PInfo.CurrentItem == 0 && PInfo.ItemsNumber > 0)
+			{
+				if (!nDirNoSlash)
+					PInfo.CurDir[nDirLen-1] = 0;
+				else
+					nDirLen++;
+				WCHAR *szCurDir = new WCHAR[nDirLen];
+				MultiByteToWideChar(CP_OEMCP, 0, PInfo.CurDir, nDirLen, szCurDir, nDirLen);
+
+				int nWholeLen = nDirLen + 1;
+				OutDataWrite(&nWholeLen, sizeof(int));
+				OutDataWrite(&nDirLen, sizeof(int));
+				OutDataWrite(szCurDir, sizeof(WCHAR)*nDirLen);
+
+				delete [] szCurDir; szCurDir=NULL;
+			}
+			// Fin
 			OutDataWrite(&nNull/*ItemsCount*/, sizeof(int));
 		} else {
 			int ItemsCount=PInfo.SelectedItemsNumber, i;

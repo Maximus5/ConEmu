@@ -80,6 +80,21 @@ void ProcessDragFrom995()
 		OutDataWrite(&nNull/*ItemsCount*/, sizeof(int));
 		
 		if (PInfo.SelectedItemsNumber<=0) {
+			//if (nDirLen > 3 && szCurDir[1] == L':' && szCurDir[2] == L'\\')
+			// Проверка того, что мы стоим на ".."
+			if (PInfo.CurrentItem == 0 && PInfo.ItemsNumber > 0)
+			{
+				if (!nDirNoSlash)
+					szCurDir[nDirLen-1] = 0;
+				else
+					nDirLen++;
+
+				int nWholeLen = nDirLen + 1;
+				OutDataWrite(&nWholeLen, sizeof(int));
+				OutDataWrite(&nDirLen, sizeof(int));
+				OutDataWrite(szCurDir, sizeof(WCHAR)*nDirLen);
+			}
+			// Fin
 			OutDataWrite(&nNull/*ItemsCount*/, sizeof(int));
 		} else {
 			PluginPanelItem **pi = (PluginPanelItem**)calloc(PInfo.SelectedItemsNumber, sizeof(PluginPanelItem*));

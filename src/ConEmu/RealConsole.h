@@ -461,4 +461,5 @@ private:
 	bool isCharBorderVertical(WCHAR inChar);
 	bool isCharBorderLeftVertical(WCHAR inChar);
 	bool isCharBorderHorizontal(WCHAR inChar);
+	bool ConsoleRect2ScreenRect(const RECT &rcCon, RECT *prcScr);
 };

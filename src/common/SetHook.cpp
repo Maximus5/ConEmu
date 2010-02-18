@@ -783,7 +783,9 @@ static void TouchReadPeekConsoleInputs(int Peek = -1)
 	chi.Attributes = 15;
 	COORD crBufSize = {1,1};
 	COORD crBufCoord = {0,0};
-	SMALL_RECT rc = {sbi.srWindow.Left+(Peek?0:1),sbi.srWindow.Bottom,sbi.srWindow.Left+(Peek?0:1),sbi.srWindow.Bottom};
+	// Cell[0] лучше не трогать - GUI ориентируетс€ на наличие "1" в этой €чейке при проверке активности фара
+	SHORT nShift = (Peek?1:2);
+	SMALL_RECT rc = {sbi.srWindow.Left+nShift,sbi.srWindow.Bottom,sbi.srWindow.Left+nShift,sbi.srWindow.Bottom};
 	WriteConsoleOutputW(hOut, &chi, crBufSize, crBufCoord, &rc);
 #endif
 }

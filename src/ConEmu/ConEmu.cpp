@@ -2359,6 +2359,12 @@ void CConEmuMain::OnSizePanels(COORD cr)
 		mouse.state &= ~MOUSE_DRAGPANEL_ALL;
 		return; // Ќекорректно, консоли нет
 	}
+	
+	int nConWidth = pRCon->TextWidth();
+	//FAR BUGBUG: ѕри наличии часов в заголовке консоли и нечетной ширине окна
+	// слетает заголовок правой панели, если она уже 11 символов. ѕоставим минимум 12
+	if (cr.X >= (nConWidth-12))
+		cr.X = (nConWidth-13); 
 
 	r.EventType = KEY_EVENT;
 	r.Event.KeyEvent.dwControlKeyState = 0x128; // ѕотом добавить SHIFT_PRESSED, если нужно...
@@ -5569,11 +5575,20 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
         return 0;
     }
     
+    //* ****************************
+    //* ≈сли окно ConEmu не в фокусе - не слать к консоль движение мышки,
+    //* иначе получаетс€ непри€тна€ реакци€ пунктов меню и т.п.
+    //* ****************************
     if (gSet.isMouseSkipMoving && GetForegroundWindow() != ghWnd) {
     	DEBUGLOGFILE("ConEmu is not foreground window, mouse event skipped");
     	return 0;
     }
 
+    //* ****************************
+    //* ѕосле получени€ WM_MOUSEACTIVATE опционально можно не пропускать
+    //* клик в консоль, чтобы при активации ConEmu случайно не задеть
+    //* (закрыть или отменить) вис€щий в FAR диалог
+    //* ****************************
     if ((gConEmu.mouse.nSkipEvents[0] && gConEmu.mouse.nSkipEvents[0] == messg)
         || (gConEmu.mouse.nSkipEvents[1] 
 	        && (gConEmu.mouse.nSkipEvents[1] == messg || messg == WM_MOUSEMOVE)))
@@ -5595,6 +5610,12 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
     	return 0;
     }
     
+    
+    //* ****************************
+    //* ѕосле получени€ WM_MOUSEACTIVATE и включенном gSet.isMouseSkipActivation
+    //* двойной клик переслать в консоль как одинарный, иначе после активации
+    //* мышкой быстрый клик в том же месте будет обработан неправильно
+    //* ****************************
     if (mouse.nReplaceDblClk) {
 		if (!gSet.isMouseSkipActivation) {
 			mouse.nReplaceDblClk = 0;
@@ -5664,7 +5685,22 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 
     } else {
         mouse.lastMMW=-1; mouse.lastMML=-1;
+        
+		if (messg == WM_LBUTTONDBLCLK) {
+			if (!OnMouse_LBtnDblClk(hWnd, messg, wParam, lParam, ptCur, cr))
+				return 0;
 
+		} // !!! Ѕез else, т.к. теоретически функци€ может заменить клик на одинарный
+        
+        if (messg == WM_RBUTTONDBLCLK)
+		{
+			if (!OnMouse_RBtnDblClk(hWnd, messg, wParam, lParam, ptCur, cr))
+				return 0;
+
+        } // !!! Ѕез else, т.к. функци€ может заменить клик на одинарный
+
+        
+        // “еперь обрабатываем что осталось
         if (messg == WM_LBUTTONDOWN)
         {
 			if (!OnMouse_LBtnDown(hWnd, WM_LBUTTONDOWN, wParam, lParam, ptCur, cr))
@@ -5677,11 +5713,6 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 				return 0;
 
         }
-		else if (messg == WM_LBUTTONDBLCLK) {
-			if (!OnMouse_LBtnDblClk(hWnd, WM_LBUTTONDBLCLK, wParam, lParam, ptCur, cr))
-				return 0;
-
-		}
         else if (messg == WM_RBUTTONDOWN)
         {
 			if (!OnMouse_RBtnDown(hWnd, WM_RBUTTONDOWN, wParam, lParam, ptCur, cr))
@@ -5694,12 +5725,6 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 				return 0;
 
         }
-        else if (messg == WM_RBUTTONDBLCLK)
-		{
-			if (!OnMouse_RBtnDblClk(hWnd, WM_RBUTTONDBLCLK, wParam, lParam, ptCur, cr))
-				return 0;
-
-        }
     }
 
 #ifdef MSGLOGGER
@@ -5708,11 +5733,13 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 #endif
 fin:
 
+	// —юда мы попадаем если ни одна из функций (OnMouse_xxx) не запретила пересылку в консоль
+
 	// иначе после (например) RBtnDown в консоль может —–ј«” провалитьс€ MOUSEMOVE
 	mouse.lastMMW=wParam; mouse.lastMML=MAKELPARAM( ptCur.x, ptCur.y );
 
-    // заменим даблклик вторым обычным
-    mp_VActive->RCon()->OnMouse(messg == WM_RBUTTONDBLCLK ? WM_RBUTTONDOWN : messg, wParam, ptCur.x, ptCur.y);
+    // “еперь осталось послать событие в консоль
+    mp_VActive->RCon()->OnMouse(messg, wParam, ptCur.x, ptCur.y);
     return 0;
 }
 
@@ -5994,7 +6021,7 @@ LRESULT CConEmuMain::OnMouse_LBtnUp(HWND hWnd, UINT messg, WPARAM wParam, LPARAM
 
 	return TRUE; // переслать в консоль
 }
-LRESULT CConEmuMain::OnMouse_LBtnDblClk(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, POINT ptCur, COORD cr)
+LRESULT CConEmuMain::OnMouse_LBtnDblClk(HWND hWnd, UINT& messg, WPARAM wParam, LPARAM lParam, POINT ptCur, COORD cr)
 {
 	
 	CRealConsole *pRCon = mp_VActive->RCon();
@@ -6219,12 +6246,18 @@ LRESULT CConEmuMain::OnMouse_RBtnUp(HWND hWnd, UINT messg, WPARAM wParam, LPARAM
 
 	return TRUE; // переслать в консоль
 }
-LRESULT CConEmuMain::OnMouse_RBtnDblClk(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, POINT ptCur, COORD cr)
+LRESULT CConEmuMain::OnMouse_RBtnDblClk(HWND hWnd, UINT& messg, WPARAM wParam, LPARAM lParam, POINT ptCur, COORD cr)
 {
 	if (mouse.bSkipRDblClk) {
 		mouse.bSkipRDblClk = false;
 		return 0; // не обрабатывать, сейчас висит контекстное меню
 	}
+	
+	//if (gSet.isRClickSendKey) {
+	//	// «аменить на одинарный клик, иначе может не подн€тьс€ контекстное меню
+	//	messg = WM_RBUTTONDOWN;
+	//} -- хот€, раньше это всегда и делалось в любом случае...
+	messg = WM_RBUTTONDOWN;
 
 	return TRUE; // переслать в консоль
 }

@@ -175,7 +175,7 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
     ZeroStruct(con); //WARNING! Содержит CriticalSection, поэтому сброс выполнять ПЕРЕД InitializeCriticalSection(&csCON);
 	con.hInSetSize = CreateEvent(0,TRUE,TRUE,0);
     mb_BuferModeChangeLocked = FALSE;
-    con.DefaultBufferHeight = gSet.DefaultBufferHeight;
+	con.DefaultBufferHeight = gSet.bForceBufferHeight ? gSet.nForceBufferHeight : gSet.DefaultBufferHeight;
 
 	ZeroStruct(m_Args);
 
@@ -1299,10 +1299,13 @@ BOOL CRealConsole::PreInit(BOOL abCreateBuffers/*=TRUE*/)
     // Инициализировать переменные m_sbi, m_ci, m_sel
     RECT rcWnd; GetClientRect(ghWnd, &rcWnd);
     // isBufferHeight использовать нельзя, т.к. con.m_sbi еще не инициализирован!
-    if (gSet.ForceBufferHeight && con.DefaultBufferHeight && !con.bBufferHeight) {
+	bool bNeedBufHeight = (gSet.bForceBufferHeight && gSet.nForceBufferHeight>0)
+		|| (!gSet.bForceBufferHeight && con.DefaultBufferHeight);
+    if (bNeedBufHeight && !con.bBufferHeight) {
 		MCHKHEAP;
         SetBufferHeightMode(TRUE);
 		MCHKHEAP;
+		_ASSERTE(con.DefaultBufferHeight>0);
         BufferHeight(con.DefaultBufferHeight);
     }
 
@@ -1324,6 +1327,7 @@ BOOL CRealConsole::PreInit(BOOL abCreateBuffers/*=TRUE*/)
         rcCon = gConEmu.CalcRect(CER_CONSOLE, rcWnd, CER_MAINCLIENT);
     _ASSERTE(rcCon.right!=0 && rcCon.bottom!=0);
     if (con.bBufferHeight) {
+		_ASSERTE(con.DefaultBufferHeight>0);
         con.m_sbi.dwSize = MakeCoord(rcCon.right,con.DefaultBufferHeight);
     } else {
         con.m_sbi.dwSize = MakeCoord(rcCon.right,rcCon.bottom);
@@ -4835,9 +4839,11 @@ void CRealConsole::MarkDialog(CharAttr* pAttr, int nWidth, int nHeight, int nX1,
 	_ASSERTE(nX1>=0 && nX1<nWidth);  _ASSERTE(nX2>=0 && nX2<nWidth);
 	_ASSERTE(nY1>=0 && nY1<nHeight); _ASSERTE(nY2>=0 && nY2<nHeight);
 
+#ifdef _DEBUG
 	if (nY1 > 5 && nX2 >= 100) {
 		nX2 = nX2;
 	}
+#endif
 
 	for (int nY = nY1; nY <= nY2; nY++) {
 		int nShift = nY * nWidth + nX1;
@@ -4862,6 +4868,8 @@ void CRealConsole::PrepareTransparent(wchar_t* pChar, CharAttr* pAttr, int nWidt
 {
 	if (!mp_ConsoleInfo)
 		return;
+
+	// !!! в буферном режиме - никакой прозрачности, но диалоги - детектим, пригодится при отрисовке
 
 	if (!mp_ConsoleInfo->bFarPanelAllowed)
 		return;
@@ -4924,8 +4932,8 @@ void CRealConsole::PrepareTransparent(wchar_t* pChar, CharAttr* pAttr, int nWidt
 	} else
 	// Но если часть панели скрыта диалогами - наш детект панели мог не сработать
 	if (mp_ConsoleInfo->bFarLeftPanel && mp_ConsoleInfo->FarLeftPanel.Visible) {
-		lbLeftVisible = true;
-		r = mp_ConsoleInfo->FarLeftPanel.PanelRect;
+		// В "буферном" режиме размер панелей намного больше экрана
+		lbLeftVisible = ConsoleRect2ScreenRect(mp_ConsoleInfo->FarLeftPanel.PanelRect, &r);
 	}
 	if (lbLeftVisible) {
 		if (r.right == (nWidth-1))
@@ -4950,12 +4958,10 @@ void CRealConsole::PrepareTransparent(wchar_t* pChar, CharAttr* pAttr, int nWidt
 		} else
 		// Но если часть панели скрыта диалогами - наш детект панели мог не сработать
 		if (mp_ConsoleInfo->bFarRightPanel && mp_ConsoleInfo->FarRightPanel.Visible) {
-			lbRightVisible = true;
-			r = mp_ConsoleInfo->FarRightPanel.PanelRect;
+			// В "буферном" режиме размер панелей намного больше экрана
+			lbRightVisible = ConsoleRect2ScreenRect(mp_ConsoleInfo->FarRightPanel.PanelRect, &r);
 		}
-		if (mp_ConsoleInfo->bFarRightPanel && mp_ConsoleInfo->FarRightPanel.Visible) {
-			r = mp_ConsoleInfo->FarRightPanel.PanelRect;
-			lbRightVisible = true;
+		if (lbRightVisible) {
 			MarkDialog(pAttr, nWidth, nHeight, r.left, r.top, r.right, r.bottom, TRUE);
 			// Для детекта наличия PanelTabs
 			if (nHeight > (nBottomLines+r.bottom+1)) {
@@ -5046,6 +5052,10 @@ void CRealConsole::PrepareTransparent(wchar_t* pChar, CharAttr* pAttr, int nWidt
 		pszDst += nWidth;
 		pnDst += nWidth;
 	}
+
+
+	if (con.bBufferHeight)
+		return; // в буферном режиме - никакой прозрачности
 
 	// 0x0 должен быть непрозрачным
 	//pAttr[0].bDialog = TRUE;
@@ -6075,6 +6085,11 @@ void CRealConsole::ChangeBufferHeightMode(BOOL abBufferHeight)
 	_ASSERTE(!mb_BuferModeChangeLocked);
 	BOOL lb = mb_BuferModeChangeLocked; mb_BuferModeChangeLocked = TRUE;
 	con.bBufferHeight = abBufferHeight;
+	// Если при запуске было "conemu.exe /bufferheight 0 ..."
+	if (abBufferHeight && !con.nBufferHeight) {
+		con.nBufferHeight = gSet.DefaultBufferHeight;
+		if (con.nBufferHeight<300) con.nBufferHeight = max(300,con.nTextHeight*2);
+	}
 	SetConsoleSize(TextWidth(), TextHeight(), abBufferHeight ? con.nBufferHeight : 0, CECMD_SETSIZESYNC);
 	mb_BuferModeChangeLocked = lb;
 }
@@ -7850,4 +7865,39 @@ bool CRealConsole::GetMaxConSize(COORD* pcrMaxConSize)
 		bOk = true;
 	}
 	return bOk;
+}
+
+bool CRealConsole::ConsoleRect2ScreenRect(const RECT &rcCon, RECT *prcScr)
+{
+	if (!this) return false;
+	*prcScr = rcCon;
+	if (con.bBufferHeight && con.nTopVisibleLine) {
+		prcScr->top -= con.nTopVisibleLine;
+		prcScr->bottom -= con.nTopVisibleLine;
+	}
+	
+	bool lbRectOK = true;
+
+	if (prcScr->left == 0 && prcScr->right >= con.nTextWidth)
+		prcScr->right = con.nTextWidth - 1;
+	if (prcScr->left) {
+		if (prcScr->left >= con.nTextWidth)
+			return false;
+		if (prcScr->right >= con.nTextWidth)
+			prcScr->right = con.nTextWidth - 1;
+	}
+
+	if (prcScr->bottom < 0) {
+		lbRectOK = false; // полностью уехал за границу вверх
+	} else if (prcScr->top >= con.nTextHeight) {
+		lbRectOK = false; // полностью уехал за границу вниз
+	} else {
+		// Скорректировать по видимому прямоугольнику
+		if (prcScr->top < 0)
+			prcScr->top = 0;
+		if (prcScr->bottom >= con.nTextHeight)
+			prcScr->bottom = con.nTextHeight - 1;
+		lbRectOK = (prcScr->bottom > prcScr->top);
+	}
+	return lbRectOK;
 }

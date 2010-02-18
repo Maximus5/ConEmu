@@ -201,7 +201,7 @@ void CSettings::InitSettings()
     DefaultBufferHeight = 1000; AutoBufferHeight = true;
 	//FarSyncSize = true;
 	nCmdOutputCP = 0;
-	ForceBufferHeight = false; /* устанавливается в true, из ком.строки /BufferHeight */
+	bForceBufferHeight = false; nForceBufferHeight = 1000; /* устанавливается в true, из ком.строки /BufferHeight */
 	AutoScroll = true;
     LogFont.lfHeight = mn_FontHeight = 16;
     LogFont.lfWidth = mn_FontWidth = 0;
@@ -4103,9 +4103,11 @@ int CSettings::SelectStringExact(HWND hParent, WORD nCtrlId, LPCWSTR asText)
 void CSettings::SetArgBufferHeight(int anBufferHeight)
 {
 	_ASSERTE(anBufferHeight>=0);
-	if (anBufferHeight>=0) DefaultBufferHeight = anBufferHeight;
-	ForceBufferHeight = (DefaultBufferHeight != 0);
-	wcscpy(szDefCmd, ForceBufferHeight ? L"far" : L"cmd");
+	//if (anBufferHeight>=0) DefaultBufferHeight = anBufferHeight;
+	//ForceBufferHeight = (DefaultBufferHeight != 0);
+	bForceBufferHeight = true;
+	nForceBufferHeight = anBufferHeight;
+	wcscpy(szDefCmd, (anBufferHeight==0) ? L"far" : L"cmd");
 }
 
 LPCTSTR CSettings::GetDefaultCmd()
