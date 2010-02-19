@@ -920,6 +920,12 @@ void CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec)
         //wsprintf(szDbg, L"ConEmu.Mouse event at: {%ix%i}\n", m_LastMouse.dwMousePosition.X, m_LastMouse.dwMousePosition.Y);
         //DEBUGSTRINPUT(szDbg);
         //#endif
+        
+    } else if (piRec->EventType == KEY_EVENT) {
+    	if (!piRec->Event.KeyEvent.wRepeatCount) {
+    		_ASSERTE(piRec->Event.KeyEvent.wRepeatCount!=0);
+    		piRec->Event.KeyEvent.wRepeatCount = 0;
+		}
     }
     
 

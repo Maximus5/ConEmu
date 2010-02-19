@@ -633,7 +633,8 @@ void ServerDone(int aiRc)
 
 	SafeCloseHandle(srv.hAllowInputEvent);
 
-	SafeCloseHandle(srv.hRootProcess); 
+	SafeCloseHandle(srv.hRootProcess);
+	SafeCloseHandle(srv.hRootThread);
 
 
 	if (srv.csProc) {
@@ -1655,7 +1656,20 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 		
 		// »з другой нити поступил запрос на изменение размера консоли
 		if (srv.nRequestChangeSize) {
+			DWORD dwSusp = 0, dwSuspErr = 0;
+			if (srv.hRootThread) {
+				WARNING("A 64-bit application can suspend a WOW64 thread using the Wow64SuspendThread function");
+				// The handle must have the THREAD_SUSPEND_RESUME access right
+				dwSusp = SuspendThread(srv.hRootThread);
+				if (dwSusp == (DWORD)-1) dwSuspErr = GetLastError();
+			}
+			
 			SetConsoleSize(srv.nReqSizeBufferHeight, srv.crReqSizeNewSize, srv.rReqSizeNewRect, srv.sReqSizeLabel);
+			
+			if (srv.hRootThread) {
+				ResumeThread(srv.hRootThread);
+			}
+			
 			SetEvent(srv.hReqSizeChanged);
 		}
 		
@@ -1982,6 +1996,11 @@ BOOL ProcessInputMessage(MSG &msg, INPUT_RECORD &r)
 
 BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount)
 {
+	if (!nCount || !pr) {
+		_ASSERTE(nCount>0 && pr!=NULL);
+		return FALSE;
+	}
+
 	BOOL fSuccess = FALSE;
 
 	// ≈сли сейчас идет ресайз - нежелательно помещение в буфер событий
@@ -1989,23 +2008,66 @@ BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount)
 		WaitForSingleObject(srv.hAllowInputEvent, MAX_SYNCSETSIZE_WAIT);
 
 	DWORD nCurInputCount = 0, cbWritten = 0;
-	INPUT_RECORD irDummy[2] = {{0},{0}};
+	//INPUT_RECORD irDummy[2] = {{0},{0}};
 
 	HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE); // тут был ghConIn
 	
 	// 27.06.2009 Maks - If input queue is not empty - wait for a while, to avoid conflicts with FAR reading queue
-	if (PeekConsoleInput(hIn, irDummy, 1, &(nCurInputCount = 0)) && nCurInputCount > 0) {
+	// 19.02.2010 Maks - замена на GetNumberOfConsoleInputEvents
+	//if (PeekConsoleInput(hIn, irDummy, 1, &(nCurInputCount = 0)) && nCurInputCount > 0) {
+	if (GetNumberOfConsoleInputEvents(hIn, &(nCurInputCount = 0)) && nCurInputCount > 0) {
 		DWORD dwStartTick = GetTickCount();
 		WARNING("Do NOT wait, but place event in Cyclic queue");
 		do {
 			Sleep(5);
-			if (!PeekConsoleInput(hIn, irDummy, 1, &(nCurInputCount = 0)))
+			//if (!PeekConsoleInput(hIn, irDummy, 1, &(nCurInputCount = 0)))
+			if (!GetNumberOfConsoleInputEvents(hIn, &(nCurInputCount = 0)))
 				nCurInputCount = 0;
 		} while ((nCurInputCount > 0) && ((GetTickCount() - dwStartTick) < MAX_INPUT_QUEUE_EMPTY_WAIT));
 	}
 
+	INPUT_RECORD* prNew = NULL;
+	int nAllCount = 0;
+	for (UINT n = 0; n < nCount; n++) {
+		if (pr[n].EventType != KEY_EVENT) {
+			nAllCount++;
+		} else {
+			if (!pr[n].Event.KeyEvent.wRepeatCount) {
+				_ASSERTE(pr[n].Event.KeyEvent.wRepeatCount!=0);
+				pr[n].Event.KeyEvent.wRepeatCount = 1;
+			}
+			nAllCount += pr[n].Event.KeyEvent.wRepeatCount;
+		}
+	}
+	if (nAllCount > nCount) {
+		prNew = (INPUT_RECORD*)malloc(sizeof(INPUT_RECORD)*nAllCount);
+		if (prNew) {
+			INPUT_RECORD* ppr = prNew;
+			INPUT_RECORD* pprMod = NULL;
+			for (UINT n = 0; n < nCount; n++) {
+				*(ppr++) = pr[n];
+				if (pr[n].EventType == KEY_EVENT) {
+					UINT nCurCount = pr[n].Event.KeyEvent.wRepeatCount;
+					
+					if (nCurCount > 1) {
+						pprMod = (ppr-1);
+						pprMod->Event.KeyEvent.wRepeatCount = 1;
+						for (UINT i = 1; i < nCurCount; i++) {
+							*(ppr++) = *pprMod;
+						}
+					}
+				}
+			}
+			pr = prNew;
+			_ASSERTE(nAllCount == (ppr-prNew));
+			nCount = (ppr-prNew);
+		}
+	}
+
 	fSuccess = WriteConsoleInput(hIn, pr, nCount, &cbWritten);
 	_ASSERTE(fSuccess && cbWritten==nCount);
+	
+	if (prNew) free(prNew);
 
 	return fSuccess;
 } 

@@ -259,7 +259,7 @@ extern BOOL gbRootIsCmdExe;
 #endif
 
 typedef struct tag_SrvInfo {
-	HANDLE hRootProcess;    DWORD dwRootProcess;  DWORD dwRootStartTime; BOOL bDebuggerActive;
+	HANDLE hRootProcess, hRootThread; DWORD dwRootProcess, dwRootThread; DWORD dwRootStartTime; BOOL bDebuggerActive;
 	//
 	HANDLE hServerThread;   DWORD dwServerThreadId;
 	HANDLE hRefreshThread;  DWORD dwRefreshThread;

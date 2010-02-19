@@ -340,7 +340,7 @@ void CSettings::InitSettings()
     nLDragKey = 0; nRDragKey = VK_LCONTROL; 
 	isDragOverlay = 1; isDragShowIcons = true;
 	// изменение размера панелей мышкой
-	isDragPanel = 1;
+	isDragPanel = 2; // по умолчанию сделаем чтобы драгалось макросами (вдруг у юзера на Ctrl-Left/Right/Up/Down макросы вис€т... как бы конфуза не получилось)
 	
 	isDebugSteps = true; 
     MCHKHEAP

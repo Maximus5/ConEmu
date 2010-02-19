@@ -302,7 +302,9 @@ int __cdecl main()
 			ResumeThread(pi.hThread);
 		}
 		if (!lbRc && dwErr == 0x000002E4) {
-			PRINT_COMSPEC(L"Vista: The requested operation requires elevation (ErrCode=0x%08X).\n", dwErr);
+			// ƒопустимо только в режиме comspec - тогда запуститс€ нова€ консоль
+			_ASSERTE(gnRunMode != RM_SERVER);
+			PRINT_COMSPEC(L"Vista+: The requested operation requires elevation (ErrCode=0x%08X).\n", dwErr);
 			// Vista: The requested operation requires elevation.
 			LPCWSTR pszCmd = gpszRunCmd;
 			wchar_t szVerb[10], szExec[MAX_PATH+1];
@@ -374,8 +376,10 @@ int __cdecl main()
     /* ************************ */
     
     if (gnRunMode == RM_SERVER) {
-        srv.hRootProcess  = pi.hProcess; // Required for Win2k
+        srv.hRootProcess  = pi.hProcess; pi.hProcess = NULL; // Required for Win2k
+        srv.hRootThread   = pi.hThread;  pi.hThread  = NULL;
         srv.dwRootProcess = pi.dwProcessId;
+        srv.dwRootThread  = pi.dwThreadId;
 		srv.dwRootStartTime = GetTickCount();
 
 		// —корее всего процесс в консольном списке уже будет
@@ -387,7 +391,7 @@ int __cdecl main()
 		#endif
 
         //if (pi.hProcess) SafeCloseHandle(pi.hProcess); 
-        if (pi.hThread) SafeCloseHandle(pi.hThread);
+        //if (pi.hThread) SafeCloseHandle(pi.hThread);
 
         if (srv.hConEmuGuiAttached) {
             if (WaitForSingleObject(srv.hConEmuGuiAttached, 1000) == WAIT_OBJECT_0) {

@@ -2348,11 +2348,10 @@ LRESULT CConEmuMain::OnSizing(WPARAM wParam, LPARAM lParam)
 
 void CConEmuMain::OnSizePanels(COORD cr)
 {
-	RECT rcPanel;
 	INPUT_RECORD r;
 	int nRepeat = 0;
 	wchar_t szKey[32];
-	bool bShifted = isPressed(VK_SHIFT);
+	bool bShifted = (mouse.state & MOUSE_DRAGPANEL_SHIFT) && isPressed(VK_SHIFT);
 	CRealConsole* pRCon = mp_VActive->RCon();
 
 	if (!pRCon) {
@@ -2361,10 +2360,25 @@ void CConEmuMain::OnSizePanels(COORD cr)
 	}
 	
 	int nConWidth = pRCon->TextWidth();
-	//FAR BUGBUG: При наличии часов в заголовке консоли и нечетной ширине окна
-	// слетает заголовок правой панели, если она уже 11 символов. Поставим минимум 12
-	if (cr.X >= (nConWidth-12))
-		cr.X = (nConWidth-13); 
+
+	// Поскольку реакция на CtrlLeft/Right... появляется с задержкой - то 
+	// получение rcPanel - просто для проверки ее наличия!
+	{
+		RECT rcPanel;
+		if (!pRCon->GetPanelRect((mouse.state & (MOUSE_DRAGPANEL_RIGHT|MOUSE_DRAGPANEL_SPLIT)), &rcPanel, TRUE)) {
+			// Во время изменения размера панелей соответствующий Rect может быть сброшен?
+
+			#ifdef _DEBUG
+			if (mouse.state & MOUSE_DRAGPANEL_SPLIT) {
+				DEBUGSTRPANEL2(L"PanelDrag: Skip of NO right panel\n");
+			} else {
+				DEBUGSTRPANEL2((mouse.state & MOUSE_DRAGPANEL_RIGHT) ? L"PanelDrag: Skip of NO right panel\n" : L"PanelDrag: Skip of NO left panel\n");
+			}
+			#endif
+
+			return;
+		}
+	}
 
 	r.EventType = KEY_EVENT;
 	r.Event.KeyEvent.dwControlKeyState = 0x128; // Потом добавить SHIFT_PRESSED, если нужно...
@@ -2375,42 +2389,37 @@ void CConEmuMain::OnSizePanels(COORD cr)
 
 	if (mouse.state & MOUSE_DRAGPANEL_SPLIT) {
 
-		if (!pRCon->GetPanelRect(TRUE, &rcPanel, TRUE)) {
-			// Во время изменения размера панелей соответствующий Rect может быть сброшен?
-			DEBUGSTRPANEL2(L"PanelDrag: Skip of NO right panel\n");
-			return;
-		}
+		//FAR BUGBUG: При наличии часов в заголовке консоли и нечетной ширине окна
+		// слетает заголовок правой панели, если она уже 11 символов. Поставим минимум 12
+		if (cr.X >= (nConWidth-13))
+			cr.X = max((nConWidth-12),mouse.LClkCon.X); 
+
 		//rcPanel.left = mouse.LClkCon.X; -- делал для макро
 		mouse.LClkCon.Y = cr.Y;
-		if (cr.X < rcPanel.left) {
+		if (cr.X < mouse.LClkCon.X) {
 			r.Event.KeyEvent.wVirtualKeyCode = VK_LEFT;
-			nRepeat = rcPanel.left - cr.X;
-			mouse.LClkCon.X = max(cr.X, (mouse.LClkCon.X-1));
+			nRepeat = mouse.LClkCon.X - cr.X;
+			mouse.LClkCon.X = cr.X; // max(cr.X, (mouse.LClkCon.X-1));
 			wcscpy(szKey, L"CtrlLeft");
-		} else if (cr.X > rcPanel.left) {
+		} else if (cr.X > mouse.LClkCon.X) {
 			r.Event.KeyEvent.wVirtualKeyCode = VK_RIGHT;
-			nRepeat = cr.X - rcPanel.left;
-			mouse.LClkCon.X = min(cr.X, (mouse.LClkCon.X+1));
+			nRepeat = cr.X - mouse.LClkCon.X;
+			mouse.LClkCon.X = cr.X; // min(cr.X, (mouse.LClkCon.X+1));
 			wcscpy(szKey, L"CtrlRight");
 		}
 
 	} else {
-		if (!pRCon->GetPanelRect((mouse.state & MOUSE_DRAGPANEL_RIGHT), &rcPanel, TRUE)) {
-			// Во время изменения размера панелей соответствующий Rect может быть сброшен?
-			DEBUGSTRPANEL2((mouse.state & MOUSE_DRAGPANEL_RIGHT) ? L"PanelDrag: Skip of NO right panel\n" : L"PanelDrag: Skip of NO left panel\n");
-			return;
-		}
 		//rcPanel.bottom = mouse.LClkCon.Y; -- делал для макро
 		mouse.LClkCon.X = cr.X;
-		if (cr.Y < rcPanel.bottom) {
+		if (cr.Y < mouse.LClkCon.Y) {
 			r.Event.KeyEvent.wVirtualKeyCode = VK_UP;
-			nRepeat = rcPanel.bottom - cr.Y;
-			mouse.LClkCon.Y = max(cr.Y, (mouse.LClkCon.Y-1));
+			nRepeat = mouse.LClkCon.Y - cr.Y;
+			mouse.LClkCon.Y = cr.Y; // max(cr.Y, (mouse.LClkCon.Y-1));
 			wcscpy(szKey, bShifted ? L"CtrlShiftUp" : L"CtrlUp");
-		} else if (cr.Y > rcPanel.bottom) {
+		} else if (cr.Y > mouse.LClkCon.Y) {
 			r.Event.KeyEvent.wVirtualKeyCode = VK_DOWN;
-			nRepeat = cr.Y - rcPanel.bottom;
-			mouse.LClkCon.Y = min(cr.Y, (mouse.LClkCon.Y+1));
+			nRepeat = cr.Y - mouse.LClkCon.Y;
+			mouse.LClkCon.Y = cr.Y; // min(cr.Y, (mouse.LClkCon.Y+1));
 			wcscpy(szKey, bShifted ? L"CtrlShiftDown" : L"CtrlDown");
 		}
 
@@ -2422,7 +2431,7 @@ void CConEmuMain::OnSizePanels(COORD cr)
 	}
 
 	if (r.Event.KeyEvent.wVirtualKeyCode) {
-		// Макросом не будем - велика вероятность второго вызова, когда еще не закончилась обработка первого макро
+		// Макрос вызывается после отпускания кнопки мышки
 		if (gSet.isDragPanel == 2) {
 			if (pRCon->isFar(TRUE)) {
 				mouse.LClkCon = cr;
@@ -2440,14 +2449,20 @@ void CConEmuMain::OnSizePanels(COORD cr)
 			DEBUGSTRPANEL(szDbg);
 			#endif
 
+			// Макросом не будем - велика вероятность второго вызова, когда еще не закончилась обработка первого макро
+
 			// Поехали
-			r.Event.KeyEvent.bKeyDown = TRUE;
 			r.Event.KeyEvent.wVirtualScanCode = MapVirtualKey(r.Event.KeyEvent.wVirtualKeyCode, 0/*MAPVK_VK_TO_VSC*/);
-			r.Event.KeyEvent.wRepeatCount = 1; //nRepeat; -- repeat - что-то глючит...
-			pRCon->PostConsoleEvent(&r);
-			r.Event.KeyEvent.bKeyDown = FALSE;
-			r.Event.KeyEvent.wRepeatCount = 1;
-			pRCon->PostConsoleEvent(&r);
+			r.Event.KeyEvent.wRepeatCount = nRepeat; //-- repeat - что-то глючит...
+			//while (nRepeat-- > 0)
+			{
+				r.Event.KeyEvent.bKeyDown = TRUE;
+				pRCon->PostConsoleEvent(&r);
+				r.Event.KeyEvent.bKeyDown = FALSE;
+				r.Event.KeyEvent.wRepeatCount = 1;
+				r.Event.KeyEvent.dwControlKeyState = 0x120; // "Отожмем Ctrl|Shift"
+				pRCon->PostConsoleEvent(&r);
+			}
 		}
 	} else {
 		DEBUGSTRPANEL2(L"PanelDrag: Skip of NO key selected\n");
@@ -5950,6 +5965,15 @@ LRESULT CConEmuMain::OnMouse_LBtnDown(HWND hWnd, UINT messg, WPARAM wParam, LPAR
 			mouse.state |= MOUSE_DRAGPANEL_LEFT;
 		else if (dpb == DPB_RIGHT)
 			mouse.state |= MOUSE_DRAGPANEL_RIGHT;
+		// Если зажат шифт - в FAR2 меняется высота активной панели
+		if (isPressed(VK_SHIFT)) {
+			mouse.state |= MOUSE_DRAGPANEL_SHIFT;
+			if (dpb == DPB_LEFT) {
+				PostMacro(L"@$If (!APanel.Left) Tab $End");
+			} else if (dpb == DPB_RIGHT) {
+				PostMacro(L"@$If (APanel.Left) Tab $End");
+			}
+		}
 		// LBtnDown в консоль не посылаем, но попробуем послать MouseMove?
 		// (иначе начинается драка с PanelTabs - он перехватывает и буферизирует всю клавиатуру)
 		INPUT_RECORD r = {MOUSE_EVENT};
