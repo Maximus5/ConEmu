@@ -1656,6 +1656,7 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 		
 		// Из другой нити поступил запрос на изменение размера консоли
 		if (srv.nRequestChangeSize) {
+#ifndef _DEBUG
 			DWORD dwSusp = 0, dwSuspErr = 0;
 			if (srv.hRootThread) {
 				WARNING("A 64-bit application can suspend a WOW64 thread using the Wow64SuspendThread function");
@@ -1663,12 +1664,15 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 				dwSusp = SuspendThread(srv.hRootThread);
 				if (dwSusp == (DWORD)-1) dwSuspErr = GetLastError();
 			}
+#endif
 			
 			SetConsoleSize(srv.nReqSizeBufferHeight, srv.crReqSizeNewSize, srv.rReqSizeNewRect, srv.sReqSizeLabel);
-			
+	
+#ifndef _DEBUG
 			if (srv.hRootThread) {
 				ResumeThread(srv.hRootThread);
 			}
+#endif
 			
 			SetEvent(srv.hReqSizeChanged);
 		}
@@ -1691,6 +1695,7 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 		nWait = WaitForMultipleObjects ( 2, hEvents, FALSE, dwTimeout );
 		if (nWait == WAIT_OBJECT_0)
 			break; // затребовано завершение нити
+
 		lbEventualChange = (nWait == (WAIT_OBJECT_0+1)) || lbProcessChanged;
 		
 		#ifdef _DEBUG
@@ -2039,7 +2044,7 @@ BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount)
 			nAllCount += pr[n].Event.KeyEvent.wRepeatCount;
 		}
 	}
-	if (nAllCount > nCount) {
+	if (nAllCount > (int)nCount) {
 		prNew = (INPUT_RECORD*)malloc(sizeof(INPUT_RECORD)*nAllCount);
 		if (prNew) {
 			INPUT_RECORD* ppr = prNew;

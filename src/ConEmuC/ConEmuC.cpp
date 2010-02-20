@@ -30,7 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifdef _DEBUG
 //  Раскомментировать, чтобы сразу после запуска процесса (conemuc.exe) показать MessageBox, чтобы прицепиться дебаггером
 //  #define SHOW_STARTED_MSGBOX
-//  #define SHOW_COMSPEC_STARTED_MSGBOX
+  #define SHOW_COMSPEC_STARTED_MSGBOX
 //  #define SHOW_STARTED_ASSERT
 #elif defined(__GNUC__)
 //  Раскомментировать, чтобы сразу после запуска процесса (conemuc.exe) показать MessageBox, чтобы прицепиться дебаггером
@@ -108,6 +108,7 @@ BOOL gbNoCreateProcess = FALSE;
 BOOL gbDebugProcess = FALSE;
 int  gnCmdUnicodeMode = 0;
 BOOL gbRootIsCmdExe = TRUE;
+OSVERSIONINFO gOSVer;
 
 
 SrvInfo srv = {0};
@@ -150,6 +151,9 @@ int __cdecl main()
     //BOOL lb = FALSE;
 
     ghHeap = HeapCreate(HEAP_GENERATE_EXCEPTIONS, 200000, 0);
+	memset(&gOSVer, 0, sizeof(gOSVer));
+	gOSVer.dwOSVersionInfoSize = sizeof(gOSVer);
+	GetVersionEx(&gOSVer);
     
     gpNullSecurity = NullSecurity();
     
@@ -1716,6 +1720,7 @@ BOOL CheckProcessCount(BOOL abForce/*=FALSE*/)
 				UINT nSize = sizeof(DWORD)*(srv.nProcessCount - nCurCount);
 				memset(srv.pnProcesses + nCurCount, 0, nSize);
 			}
+			_ASSERTE(nCurCount>0);
 			srv.nProcessCount = nCurCount;
 		}
 
@@ -2815,21 +2820,34 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
         // Начался ресайз для BufferHeight
         COORD crHeight = {crNewSize.X, BufferHeight};
 
-        //GetWindowRect(ghConWnd, &rcConPos); -- уже сделано выше
+		if (gOSVer.dwMajorVersion == 6 && gOSVer.dwMinorVersion == 1) {
+			SetConsoleBufferSize(ghConWnd, crNewSize.X, crNewSize.Y, BufferHeight);
+			Sleep(10);
+			CONSOLE_SCREEN_BUFFER_INFO csbi2 = {{0,0}};
+			DWORD dwStart = GetTickCount(), dwWait = 200;
+			do {
+				if (GetConsoleScreenBufferInfo(ghConOut, &csbi2)) {
+					if (csbi2.dwSize.X == crNewSize.X && csbi2.dwSize.Y == BufferHeight) {
+						break;
+					}
+				}
+				Sleep(10);
+			} while ((GetTickCount() - dwStart) < dwWait);
 
-		// Если этого не сделать - размер консоли нельзя УМЕНЬШИТЬ
-		//if (crNewSize.X < csbi.dwSize.X || crNewSize.Y < csbi.dwSize.Y)
-		if (crNewSize.X <= (csbi.srWindow.Right-csbi.srWindow.Left) || crNewSize.Y <= (csbi.srWindow.Bottom-csbi.srWindow.Top))
-		{
-			//MoveWindow(ghConWnd, rcConPos.left, rcConPos.top, 1, 1, 1);
-            rNewRect.Left = 0; rNewRect.Top = 0;
-            rNewRect.Right = min((crNewSize.X - 1),(csbi.srWindow.Right-csbi.srWindow.Left));
-            rNewRect.Bottom = min((crNewSize.Y - 1),(csbi.srWindow.Bottom-csbi.srWindow.Top));
-            if (!SetConsoleWindowInfo(ghConOut, TRUE, &rNewRect))
-            	MoveWindow(ghConWnd, rcConPos.left, rcConPos.top, 1, 1, 1);
+		} else {
+			// Если этого не сделать - размер консоли нельзя УМЕНЬШИТЬ
+			if (crNewSize.X <= (csbi.srWindow.Right-csbi.srWindow.Left) || crNewSize.Y <= (csbi.srWindow.Bottom-csbi.srWindow.Top))
+			{
+				//MoveWindow(ghConWnd, rcConPos.left, rcConPos.top, 1, 1, 1);
+				rNewRect.Left = 0; rNewRect.Top = 0;
+				rNewRect.Right = min((crNewSize.X - 1),(csbi.srWindow.Right-csbi.srWindow.Left));
+				rNewRect.Bottom = min((crNewSize.Y - 1),(csbi.srWindow.Bottom-csbi.srWindow.Top));
+				if (!SetConsoleWindowInfo(ghConOut, TRUE, &rNewRect))
+					MoveWindow(ghConWnd, rcConPos.left, rcConPos.top, 1, 1, 1);
+			}
+
+	        lbRc = SetConsoleScreenBufferSize(ghConOut, crHeight); // а не crNewSize - там "оконные" размеры
 		}
-
-        lbRc = SetConsoleScreenBufferSize(ghConOut, crHeight); // а не crNewSize - там "оконные" размеры
         //окошко раздвигаем только по ширине!
         //RECT rcCurConPos = {0};
         //GetWindowRect(ghConWnd, &rcCurConPos); //X-Y новые, но высота - старая

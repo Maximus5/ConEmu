@@ -30,6 +30,66 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <windows.h>
 #include "common.hpp"
 
+
+
+
+// Undocumented console message
+#define WM_SETCONSOLEINFO			(WM_USER+201)
+
+#pragma pack(push, 1)
+
+//
+//	Structure to send console via WM_SETCONSOLEINFO
+//
+typedef struct _CONSOLE_INFO
+{
+	ULONG		Length;
+	COORD		ScreenBufferSize;
+	COORD		WindowSize;
+	ULONG		WindowPosX;
+	ULONG		WindowPosY;
+
+	COORD		FontSize;
+	ULONG		FontFamily;
+	ULONG		FontWeight;
+	WCHAR		FaceName[32];
+
+	ULONG		CursorSize;
+	ULONG		FullScreen;
+	ULONG		QuickEdit;
+	ULONG		AutoPosition;
+	ULONG		InsertMode;
+
+	USHORT		ScreenColors;
+	USHORT		PopupColors;
+	ULONG		HistoryNoDup;
+	ULONG		HistoryBufferSize;
+	ULONG		NumberOfHistoryBuffers;
+
+	COLORREF	ColorTable[16];
+
+	ULONG		CodePage;
+	HWND		Hwnd;
+
+	WCHAR		ConsoleTitle[0x100];
+
+} CONSOLE_INFO;
+
+CONSOLE_INFO* gpConsoleInfoStr = NULL;
+HANDLE ghConsoleSection = NULL;
+const UINT gnConsoleSectionSize = sizeof(CONSOLE_INFO)+1024;
+
+#pragma pack(pop)
+
+
+
+
+
+
+
+
+
+
 BOOL GetShortFileName(LPCWSTR asFullPath, wchar_t* rsShortName/*name only, MAX_PATH required*/)
 {
 	WIN32_FIND_DATAW fnd; memset(&fnd, 0, sizeof(fnd));
@@ -342,6 +402,16 @@ void CommonShutdown()
 		delete gNullDesc;
 		gNullDesc = NULL;
 	}
+
+	// Clean memory
+	if (ghConsoleSection) {
+		CloseHandle(ghConsoleSection);
+		ghConsoleSection = NULL;
+	}
+	if (gpConsoleInfoStr) {
+		free(gpConsoleInfoStr);
+		gpConsoleInfoStr = NULL;
+	}
 }
 
 BOOL IsUserAdmin()
@@ -543,3 +613,245 @@ void MConHandle::Close()
 		}
 	}
 };
+
+
+
+
+
+
+
+
+
+//
+//	SETCONSOLEINFO.C
+//
+//	Undocumented method to set console attributes at runtime
+//
+//	For Vista use the newly documented SetConsoleScreenBufferEx API
+//
+//	www.catch22.net
+//
+
+//
+//	Wrapper around WM_SETCONSOLEINFO. We need to create the
+//  necessary section (file-mapping) object in the context of the
+//  process which owns the console, before posting the message
+//
+BOOL SetConsoleInfo(HWND hwndConsole, CONSOLE_INFO *pci)
+{
+	DWORD   dwConsoleOwnerPid, dwCurProcId, dwConsoleThreadId;
+	PVOID   ptrView = 0;
+	DWORD   dwLastError=0;
+	WCHAR   ErrText[255];
+
+	//
+	//	Retrieve the process which "owns" the console
+	//	
+	dwCurProcId = GetCurrentProcessId();
+	dwConsoleThreadId = GetWindowThreadProcessId(hwndConsole, &dwConsoleOwnerPid);
+
+	// We'll fail, if console was created by other process
+	if (dwConsoleOwnerPid != dwCurProcId) {
+		_ASSERTE(dwConsoleOwnerPid == dwCurProcId);
+		return FALSE;
+	}
+
+
+	//
+	// Create a SECTION object backed by page-file, then map a view of
+	// this section into the owner process so we can write the contents 
+	// of the CONSOLE_INFO buffer into it
+	//
+	if (!ghConsoleSection) {
+		ghConsoleSection = CreateFileMapping(INVALID_HANDLE_VALUE, 0, PAGE_READWRITE, 0, gnConsoleSectionSize, 0);
+
+		if (!ghConsoleSection) {
+			dwLastError = GetLastError();
+			wsprintf(ErrText, L"Can't CreateFileMapping(ghConsoleSection). ErrCode=%i", dwLastError);
+			MessageBox(NULL, ErrText, L"ConEmu", MB_OK|MB_ICONSTOP|MB_SETFOREGROUND);
+			return FALSE;
+		}
+	}
+
+
+	//
+	//	Copy our console structure into the section-object
+	//
+	ptrView = MapViewOfFile(ghConsoleSection, FILE_MAP_WRITE|FILE_MAP_READ, 0, 0, gnConsoleSectionSize);
+	if (!ptrView) {
+		dwLastError = GetLastError();
+		wsprintf(ErrText, L"Can't MapViewOfFile. ErrCode=%i", dwLastError);
+		MessageBox(NULL, ErrText, L"ConEmu", MB_OK|MB_ICONSTOP|MB_SETFOREGROUND);
+
+	} else {
+		_ASSERTE(pci->Length==sizeof(CONSOLE_INFO));
+		memcpy(ptrView, pci, pci->Length);
+
+		UnmapViewOfFile(ptrView);
+
+		//  Send console window the "update" message
+		LRESULT dwConInfoRc = 0;
+		DWORD dwConInfoErr = 0;
+
+		dwConInfoRc = SendMessage(hwndConsole, WM_SETCONSOLEINFO, (WPARAM)ghConsoleSection, 0);
+		dwConInfoErr = GetLastError();
+	}
+
+	return TRUE;
+}
+
+//
+//	Fill the CONSOLE_INFO structure with information
+//  about the current console window
+//
+void GetConsoleSizeInfo(CONSOLE_INFO *pci)
+{
+	CONSOLE_SCREEN_BUFFER_INFO csbi;
+
+	HANDLE hConsoleOut = GetStdHandle(STD_OUTPUT_HANDLE);
+
+	BOOL lbRc = GetConsoleScreenBufferInfo(hConsoleOut, &csbi);
+	
+	if (lbRc) {
+		pci->ScreenBufferSize = csbi.dwSize;
+		pci->WindowSize.X	  = csbi.srWindow.Right - csbi.srWindow.Left + 1;
+		pci->WindowSize.Y	  = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
+		// Было... а это координаты окна (хотя включается флажок "Autoposition"
+		//pci->WindowPosX	      = csbi.srWindow.Left;
+		//pci->WindowPosY		  = csbi.srWindow.Top;
+	} else {
+		_ASSERTE(lbRc);
+		pci->ScreenBufferSize.X = pci->WindowSize.X = 80;
+		pci->ScreenBufferSize.Y = pci->WindowSize.Y = 25;
+	}
+
+	// Поскольку включен флажок "AutoPosition" - то это игнорируется
+	pci->WindowPosX = pci->WindowPosY = 0;
+
+	/*
+	RECT rcWnd = {0}; GetWindowRect(GetConsoleWindow(), &rcWnd);
+	pci->WindowPosX	      = rcWnd.left;
+	pci->WindowPosY		  = rcWnd.top;
+	*/
+}
+
+
+#if defined(__GNUC__)
+#define __in
+#define __out
+#undef ENABLE_AUTO_POSITION
+#endif
+
+//VISTA support:
+#ifndef ENABLE_AUTO_POSITION
+typedef struct _CONSOLE_FONT_INFOEX {
+	ULONG cbSize;
+	DWORD nFont;
+	COORD dwFontSize;
+	UINT FontFamily;
+	UINT FontWeight;
+	WCHAR FaceName[LF_FACESIZE];
+} CONSOLE_FONT_INFOEX, *PCONSOLE_FONT_INFOEX;
+#endif
+
+
+typedef BOOL (WINAPI *PGetCurrentConsoleFontEx)(__in HANDLE hConsoleOutput,__in BOOL bMaximumWindow,__out PCONSOLE_FONT_INFOEX lpConsoleCurrentFontEx);
+typedef BOOL (WINAPI *PSetCurrentConsoleFontEx)(__in HANDLE hConsoleOutput,__in BOOL bMaximumWindow,__out PCONSOLE_FONT_INFOEX lpConsoleCurrentFontEx);
+
+
+void SetConsoleFontSizeTo(HWND inConWnd, int inSizeY, int inSizeX, wchar_t *asFontName)
+{
+
+
+	HMODULE hKernel = GetModuleHandle(L"kernel32.dll");
+	if (!hKernel)
+		return;
+	PGetCurrentConsoleFontEx GetCurrentConsoleFontEx = (PGetCurrentConsoleFontEx)
+		GetProcAddress(hKernel, "GetCurrentConsoleFontEx");
+	PSetCurrentConsoleFontEx SetCurrentConsoleFontEx = (PSetCurrentConsoleFontEx)
+		GetProcAddress(hKernel, "SetCurrentConsoleFontEx");
+
+	if (GetCurrentConsoleFontEx && SetCurrentConsoleFontEx) // We have Vista
+	{
+		CONSOLE_FONT_INFOEX cfi = {sizeof(CONSOLE_FONT_INFOEX)};
+		//GetCurrentConsoleFontEx(GetStdHandle(STD_OUTPUT_HANDLE), FALSE, &cfi);
+		cfi.dwFontSize.X = inSizeX;
+		cfi.dwFontSize.Y = inSizeY;
+		lstrcpynW(cfi.FaceName, asFontName ? asFontName : L"Lucida Console", LF_FACESIZE);
+		SetCurrentConsoleFontEx(GetStdHandle(STD_OUTPUT_HANDLE), FALSE, &cfi);
+	}
+	else // We have other NT
+	{
+		const COLORREF DefaultColors[16] = 
+		{
+			0x00000000, 0x00800000, 0x00008000, 0x00808000,
+			0x00000080, 0x00800080, 0x00008080, 0x00c0c0c0, 
+			0x00808080,	0x00ff0000, 0x0000ff00, 0x00ffff00,
+			0x000000ff, 0x00ff00ff,	0x0000ffff, 0x00ffffff
+		};
+
+		if (!gpConsoleInfoStr) {
+			gpConsoleInfoStr = (CONSOLE_INFO*)calloc(sizeof(CONSOLE_INFO),1);
+			if (!gpConsoleInfoStr) {
+				_ASSERTE(gpConsoleInfoStr!=NULL);
+				return; // memory allocation failed
+			}
+			gpConsoleInfoStr->Length = sizeof(CONSOLE_INFO);
+		}
+		int i;
+
+		// get current size/position settings rather than using defaults..
+		GetConsoleSizeInfo(gpConsoleInfoStr);
+
+		// set these to zero to keep current settings
+		gpConsoleInfoStr->FontSize.X				= inSizeX;
+		gpConsoleInfoStr->FontSize.Y				= inSizeY;
+		gpConsoleInfoStr->FontFamily				= 0;//0x30;//FF_MODERN|FIXED_PITCH;//0x30;
+		gpConsoleInfoStr->FontWeight				= 0;//0x400;
+		lstrcpynW(gpConsoleInfoStr->FaceName, asFontName ? asFontName : L"Lucida Console", 32);
+
+		gpConsoleInfoStr->CursorSize				= 25;
+		gpConsoleInfoStr->FullScreen				= FALSE;
+		gpConsoleInfoStr->QuickEdit					= FALSE;
+		gpConsoleInfoStr->AutoPosition				= 0x10000;
+		gpConsoleInfoStr->InsertMode				= TRUE;
+		gpConsoleInfoStr->ScreenColors				= MAKEWORD(0x7, 0x0);
+		gpConsoleInfoStr->PopupColors				= MAKEWORD(0x5, 0xf);
+
+		gpConsoleInfoStr->HistoryNoDup				= FALSE;
+		gpConsoleInfoStr->HistoryBufferSize			= 50;
+		gpConsoleInfoStr->NumberOfHistoryBuffers	= 4;
+
+		// color table
+		for(i = 0; i < 16; i++)
+			gpConsoleInfoStr->ColorTable[i] = DefaultColors[i];
+
+		gpConsoleInfoStr->CodePage					= GetConsoleOutputCP();//0;//0x352;
+		gpConsoleInfoStr->Hwnd						= inConWnd;
+
+		gpConsoleInfoStr->ConsoleTitle[0] = 0;
+		
+
+		SetConsoleInfo(inConWnd, gpConsoleInfoStr);
+	}
+}
+/*
+-- пробовал в Win7 это не работает
+void SetConsoleBufferSize(HWND inConWnd, int anWidth, int anHeight, int anBufferHeight)
+{
+	if (!gpConsoleInfoStr) {
+		_ASSERTE(gpConsoleInfoStr!=NULL);
+		return; // memory allocation failed
+	}
+
+	TODO("Заполнить и другие текущие значения!");
+	gpConsoleInfoStr->CodePage					= GetConsoleOutputCP();//0;//0x352;
+
+	// Теперь собственно, что хотим поменять
+	gpConsoleInfoStr->ScreenBufferSize.X = gpConsoleInfoStr->WindowSize.X = anWidth;
+	gpConsoleInfoStr->WindowSize.Y = anHeight;
+	gpConsoleInfoStr->ScreenBufferSize.Y = anBufferHeight;
+
+	SetConsoleInfo(inConWnd, gpConsoleInfoStr);
+}
+*/
