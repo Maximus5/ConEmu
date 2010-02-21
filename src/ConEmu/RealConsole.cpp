@@ -4854,8 +4854,16 @@ void CRealConsole::MarkDialog(CharAttr* pAttr, int nWidth, int nHeight, int nX1,
 	for (int nY = nY1; nY <= nY2; nY++) {
 		int nShift = nY * nWidth + nX1;
 
-		if (bMarkBorder)
+#ifdef _DEBUG
+		if (nY1 == 21) {
+			nX2 = nX2;
+		}
+#endif
+
+		if (bMarkBorder) {
 			pAttr[nShift].bDialogVBorder = TRUE;
+			pAttr[nShift+nX2-nX1].bDialogVBorder = TRUE;
+		}
 
 		for (int nX = nX1; nX <= nX2; nX++, nShift++) {
 			if (nY > 0 && nX >= 58) {
@@ -4865,8 +4873,8 @@ void CRealConsole::MarkDialog(CharAttr* pAttr, int nWidth, int nHeight, int nX1,
 			pAttr[nShift].bTransparent = FALSE;
 		}
 
-		if (bMarkBorder)
-			pAttr[nShift].bDialogVBorder = TRUE;
+		//if (bMarkBorder)
+		//	pAttr[nShift].bDialogVBorder = TRUE;
 	}
 }
 
@@ -5041,6 +5049,7 @@ void CRealConsole::PrepareTransparent(wchar_t* pChar, CharAttr* pAttr, int nWidt
 						}
 					}
 
+					//Optimize:
 					if (isCharBorderLeftVertical(pszDst[nX])) {
 						DetectDialog(pChar, pAttr, nWidth, nHeight, nX, nY, &nX);
 						nX++; nShift++;
@@ -5348,6 +5357,8 @@ void CRealConsole::OnActivate(int nNewNum, int nOldNum)
     gConEmu.OnBufferHeight(); //con.bBufferHeight);
 
     gConEmu.UpdateProcessDisplay(TRUE);
+
+	WARNING("Не забыть при смене консоли принудительно обновить UpdateWindowRgn()");
 
     HWND hPic = isPictureView();
     if (hPic && mb_PicViewWasHidden) {
@@ -6092,11 +6103,20 @@ void CRealConsole::ChangeBufferHeightMode(BOOL abBufferHeight)
 	BOOL lb = mb_BuferModeChangeLocked; mb_BuferModeChangeLocked = TRUE;
 	con.bBufferHeight = abBufferHeight;
 	// Если при запуске было "conemu.exe /bufferheight 0 ..."
-	if (abBufferHeight && !con.nBufferHeight) {
+	if (abBufferHeight /*&& !con.nBufferHeight*/) {
+		// Если пользователь меняет высоту буфера в диалоге настроек
 		con.nBufferHeight = gSet.DefaultBufferHeight;
 		if (con.nBufferHeight<300) con.nBufferHeight = max(300,con.nTextHeight*2);
 	}
-	SetConsoleSize(TextWidth(), TextHeight(), abBufferHeight ? con.nBufferHeight : 0, CECMD_SETSIZESYNC);
+	USHORT nNewBufHeightSize = abBufferHeight ? con.nBufferHeight : 0;
+	if (abBufferHeight && gOSVer.dwMajorVersion == 6 && gOSVer.dwMinorVersion == 1) {
+		// Win7 BUGBUG: Issue 192
+		// http://code.google.com/p/conemu-maximus5/issues/detail?id=192
+		const SHORT nMaxBuf = 600;
+		if (nNewBufHeightSize > nMaxBuf && isFar())
+			nNewBufHeightSize = nMaxBuf;
+	}
+	SetConsoleSize(TextWidth(), TextHeight(), nNewBufHeightSize, CECMD_SETSIZESYNC);
 	mb_BuferModeChangeLocked = lb;
 }
 
@@ -7679,6 +7699,7 @@ void CRealConsole::ApplyConsoleInfo()
 					if (LoadDataFromMap(CharCount))
 						lbChanged = TRUE;
 				}
+				MCHKHEAP;
 			}
 		}
 	    
@@ -7714,11 +7735,13 @@ void CRealConsole::ApplyConsoleInfo()
 			}
 		}
 		//_ASSERTE(lbDataValid);
+		MCHKHEAP;
 		#endif
 
 		if (lbChanged) {
 			// По con.m_sbi проверяет, включена ли прокрутка
 			CheckBufferSize();
+			MCHKHEAP;
 		}
 
 		sc.Unlock();
@@ -7756,6 +7779,7 @@ BOOL CRealConsole::LoadDataFromMap(DWORD CharCount)
 			CharCount = (con.pCmp->crBufSize.X*con.pCmp->crBufSize.Y);
 		}
 		memmove(con.pCmp->Buf, mp_ConsoleData->Buf, CharCount*sizeof(CHAR_INFO));
+		MCHKHEAP;
 	#ifndef __GNUC__
 	}__except(EXCEPTION_EXECUTE_HANDLER){
 		_ASSERT(FALSE);
@@ -7767,6 +7791,7 @@ BOOL CRealConsole::LoadDataFromMap(DWORD CharCount)
 	{
 		con.pCopy->crBufSize = con.pCmp->crBufSize;
 		memmove(con.pCopy->Buf, con.pCmp->Buf, CharCount*sizeof(CHAR_INFO));
+		MCHKHEAP;
 		CHAR_INFO* lpCur = con.pCopy->Buf;
 
 		// Когда вернется возможность выделения - нужно сразу применять данные в атрибуты

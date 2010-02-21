@@ -928,7 +928,7 @@ int CreateMapHeader()
 	memset(srv.pConsoleInfo, 0, nConInfoSize);
 	srv.pConsoleInfo->cbSize = nConInfoSize; // Тут - только размер заголовка!
 	srv.pConsoleInfo->nLogLevel = (ghLogSize!=NULL) ? 1 : 0;
-	
+	srv.pConsoleInfo->nFarReadIdx = -1;
 	srv.pConsoleInfo->nServerPID = GetCurrentProcessId();
 	
 	// Максимальный размер буфера
@@ -1656,7 +1656,6 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 		
 		// Из другой нити поступил запрос на изменение размера консоли
 		if (srv.nRequestChangeSize) {
-#ifndef _DEBUG
 			DWORD dwSusp = 0, dwSuspErr = 0;
 			if (srv.hRootThread) {
 				WARNING("A 64-bit application can suspend a WOW64 thread using the Wow64SuspendThread function");
@@ -1664,15 +1663,12 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 				dwSusp = SuspendThread(srv.hRootThread);
 				if (dwSusp == (DWORD)-1) dwSuspErr = GetLastError();
 			}
-#endif
 			
 			SetConsoleSize(srv.nReqSizeBufferHeight, srv.crReqSizeNewSize, srv.rReqSizeNewRect, srv.sReqSizeLabel);
 	
-#ifndef _DEBUG
 			if (srv.hRootThread) {
 				ResumeThread(srv.hRootThread);
 			}
-#endif
 			
 			SetEvent(srv.hReqSizeChanged);
 		}
@@ -1682,7 +1678,7 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 		// Функция выставит ghExitQueryEvent, если все процессы завершились.
 		lbProcessChanged = CheckProcessCount();
 		
-		
+
 		// Подождать немножко
 		if (srv.nMaxFPS>0) {
 			dwTimeout = 1000 / srv.nMaxFPS;

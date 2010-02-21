@@ -126,6 +126,8 @@ CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
 
 	_ASSERTE(sizeof(mh_FontByIndex) == sizeof(gSet.mh_Font));
 	memmove(mh_FontByIndex, gSet.mh_Font, sizeof(mh_FontByIndex));
+
+	memset(&TransparentInfo, 0, sizeof(TransparentInfo));
 	
   
     //InitializeCriticalSection(&csDC); ncsTDC = 0; 
@@ -996,11 +998,12 @@ bool CVirtualConsole::Update(bool isForce, HDC *ahDc)
     return lRes;
 }
 
-HRGN CVirtualConsole::GetTransparentRgn()
+BOOL CVirtualConsole::CheckTransparentRgn()
 {
+	BOOL lbRgnChanged = FALSE;
+
 	if (mb_ConDataChanged) {
 		mb_ConDataChanged = FALSE;
-		if (mh_TransparentRgn) { DeleteObject(mh_TransparentRgn); mh_TransparentRgn = NULL; }
 
 		// (пере)Создать регион
 		if (mpsz_ConChar && mpn_ConAttrEx && TextWidth && TextHeight) {
@@ -1009,8 +1012,13 @@ HRGN CVirtualConsole::GetTransparentRgn()
 			CharAttr* pnAttr = mpn_ConAttrEx;
 
 			int nFontHeight = gSet.FontHeight();
-			POINT *lpAllPoints = (POINT*)calloc(TextWidth*TextHeight*4,sizeof(POINT));
-			INT   *lpAllCounts = (INT*)calloc(TextWidth*TextHeight,sizeof(INT));
+			int    nMaxRects = TextHeight*5;
+#ifdef _DEBUG
+			nMaxRects = 50;
+#endif
+			POINT *lpAllPoints = (POINT*)calloc(nMaxRects*4,sizeof(POINT));
+			INT   *lpAllCounts = (INT*)calloc(nMaxRects,sizeof(INT));
+			MCHKHEAP;
 			int    nRectCount = 0;
 
 			if (lpAllPoints && lpAllCounts)
@@ -1034,7 +1042,33 @@ HRGN CVirtualConsole::GetTransparentRgn()
 							;
 						// Сформировать соответствующий Rect
 						int nXPix = 0;
+						if (nRectCount>=nMaxRects) {
+							nMaxRects += TextHeight;
+							MCHKHEAP;
+							POINT *lpTmpPoints = (POINT*)calloc(nMaxRects*4,sizeof(POINT));
+							INT   *lpTmpCounts = (INT*)calloc(nMaxRects,sizeof(INT));
+							MCHKHEAP;
+							if (!lpTmpPoints || !lpTmpCounts) {
+								_ASSERTE(lpTmpCounts && lpTmpPoints);
+								free(lpAllCounts);
+								free(lpAllPoints);
+								return FALSE;
+							}
+							memmove(lpTmpPoints, lpAllPoints, nRectCount*4*sizeof(POINT));
+							memmove(lpTmpCounts, lpAllCounts, nRectCount*sizeof(INT));
+							MCHKHEAP;
+							free(lpAllCounts);
+							free(lpAllPoints);
+							lpAllPoints = lpTmpPoints;
+							lpAllCounts = lpTmpCounts;
+							MCHKHEAP;
+						}
 						nRectCount++;
+#ifdef _DEBUG
+						if (nRectCount>=nMaxRects) {
+							nRectCount = nRectCount;
+						}
+#endif
 						*(lpCounts++) = 4;
 						lpPoints[0] = ConsoleToClient(nTranStart, nY);
 						lpPoints[1] = ConsoleToClient(nX, nY);
@@ -1045,20 +1079,46 @@ HRGN CVirtualConsole::GetTransparentRgn()
 						lpPoints += 4;
 
 						nX++;
+						MCHKHEAP;
 					}
 					pnAttr += TextWidth;
 				}
 
-				if (nRectCount)
+				MCHKHEAP;
+				lbRgnChanged = (nRectCount != TransparentInfo.nRectCount);
+				if (!lbRgnChanged && TransparentInfo.nRectCount) {
+					_ASSERTE(TransparentInfo.pAllPoints && TransparentInfo.pAllCounts);
+					lbRgnChanged = memcmp(TransparentInfo.pAllPoints, lpAllPoints, sizeof(POINT)*4*nRectCount)!=0;
+				}
+
+				MCHKHEAP;
+				if (lbRgnChanged) {
+					if (mh_TransparentRgn) { DeleteObject(mh_TransparentRgn); mh_TransparentRgn = NULL; }
 					mh_TransparentRgn = CreatePolyPolygonRgn(lpAllPoints, lpAllCounts, nRectCount, WINDING);
 
-				free(lpAllCounts);
-				free(lpAllPoints);				
+
+					MCHKHEAP;
+					if (TransparentInfo.pAllCounts)
+						free(TransparentInfo.pAllCounts);
+					MCHKHEAP;
+					TransparentInfo.pAllCounts = lpAllCounts; lpAllCounts = NULL;
+					if (TransparentInfo.pAllPoints)
+						free(TransparentInfo.pAllPoints);
+					MCHKHEAP;
+					TransparentInfo.pAllPoints = lpAllPoints; lpAllPoints = NULL;
+					MCHKHEAP;
+					TransparentInfo.nRectCount = nRectCount;
+				}
+
+				MCHKHEAP;
+				if (lpAllCounts) free(lpAllCounts);
+				if (lpAllPoints) free(lpAllPoints);
+				MCHKHEAP;
 			}
 		}
 	}
 
-	return mh_TransparentRgn;
+	return lbRgnChanged;
 }
 
 bool CVirtualConsole::UpdatePrepare(bool isForce, HDC *ahDc, MSectionLock *pSDC)
@@ -2334,8 +2394,10 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
         		SRCCOPY);
         }
 
-		if (gSet.isUserScreenTransparent)
-			gConEmu.UpdateWindowRgn();
+		if (gSet.isUserScreenTransparent) {
+			if (CheckTransparentRgn())
+				gConEmu.UpdateWindowRgn();
+		}
         
     } else {
         GdiSetBatchLimit(1); // отключить буферизацию вывода для текущей нити
@@ -2722,10 +2784,11 @@ HRGN CVirtualConsole::GetExclusionRgn(bool abTestOnly/*=false*/)
 		return NULL;
 
 	// Возвращает mh_TransparentRgn
-	HRGN hRgn = GetTransparentRgn();
-	if (abTestOnly && hRgn)
+	// Сам mh_TransparentRgn формируется в CheckTransparentRgn,
+	// который должен вызываться в CVirtualConsole::Paint
+	if (abTestOnly && mh_TransparentRgn)
 		return (HRGN)1;
-	return hRgn;
+	return mh_TransparentRgn;
 }
 
 COORD CVirtualConsole::FindOpaqueCell()

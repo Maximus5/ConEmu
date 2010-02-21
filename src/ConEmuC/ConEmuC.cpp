@@ -30,7 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifdef _DEBUG
 //  Раскомментировать, чтобы сразу после запуска процесса (conemuc.exe) показать MessageBox, чтобы прицепиться дебаггером
 //  #define SHOW_STARTED_MSGBOX
-  #define SHOW_COMSPEC_STARTED_MSGBOX
+//  #define SHOW_COMSPEC_STARTED_MSGBOX
 //  #define SHOW_STARTED_ASSERT
 #elif defined(__GNUC__)
 //  Раскомментировать, чтобы сразу после запуска процесса (conemuc.exe) показать MessageBox, чтобы прицепиться дебаггером
@@ -1695,6 +1695,17 @@ BOOL CheckProcessCount(BOOL abForce/*=FALSE*/)
 		nCurCount = pfnGetConsoleProcessList(srv.pnProcesses, srv.nMaxProcesses);
 		lbChanged = srv.nProcessCount != nCurCount;
 
+		if (nCurCount == 0) {
+			// Это значит в Win7 свалился conhost.exe
+			#ifdef _DEBUG
+			DWORD dwErr = GetLastError();
+			#endif
+			srv.nProcessCount = 1;
+			SetEvent(ghQuitEvent);
+			SetEvent(ghExitQueryEvent);
+			return TRUE;
+		}
+
 		if (nCurCount > srv.nMaxProcesses) {
 			DWORD nSize = nCurCount + 100;
 			DWORD* pnPID = (DWORD*)Alloc(nSize, sizeof(DWORD));
@@ -2820,7 +2831,7 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
         // Начался ресайз для BufferHeight
         COORD crHeight = {crNewSize.X, BufferHeight};
 
-		if (gOSVer.dwMajorVersion == 6 && gOSVer.dwMinorVersion == 1) {
+		/*if (gOSVer.dwMajorVersion == 6 && gOSVer.dwMinorVersion == 1) {
 			SetConsoleBufferSize(ghConWnd, crNewSize.X, crNewSize.Y, BufferHeight);
 			Sleep(10);
 			CONSOLE_SCREEN_BUFFER_INFO csbi2 = {{0,0}};
@@ -2834,20 +2845,31 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 				Sleep(10);
 			} while ((GetTickCount() - dwStart) < dwWait);
 
-		} else {
-			// Если этого не сделать - размер консоли нельзя УМЕНЬШИТЬ
-			if (crNewSize.X <= (csbi.srWindow.Right-csbi.srWindow.Left) || crNewSize.Y <= (csbi.srWindow.Bottom-csbi.srWindow.Top))
-			{
-				//MoveWindow(ghConWnd, rcConPos.left, rcConPos.top, 1, 1, 1);
-				rNewRect.Left = 0; rNewRect.Top = 0;
-				rNewRect.Right = min((crNewSize.X - 1),(csbi.srWindow.Right-csbi.srWindow.Left));
-				rNewRect.Bottom = min((crNewSize.Y - 1),(csbi.srWindow.Bottom-csbi.srWindow.Top));
-				if (!SetConsoleWindowInfo(ghConOut, TRUE, &rNewRect))
-					MoveWindow(ghConWnd, rcConPos.left, rcConPos.top, 1, 1, 1);
-			}
-
-	        lbRc = SetConsoleScreenBufferSize(ghConOut, crHeight); // а не crNewSize - там "оконные" размеры
+		} else {*/
+		// Если этого не сделать - размер консоли нельзя УМЕНЬШИТЬ
+		if (crNewSize.X <= (csbi.srWindow.Right-csbi.srWindow.Left) || crNewSize.Y <= (csbi.srWindow.Bottom-csbi.srWindow.Top))
+		{
+			//MoveWindow(ghConWnd, rcConPos.left, rcConPos.top, 1, 1, 1);
+			rNewRect.Left = 0; rNewRect.Top = 0;
+			rNewRect.Right = min((crNewSize.X - 1),(csbi.srWindow.Right-csbi.srWindow.Left));
+			rNewRect.Bottom = min((crNewSize.Y - 1),(csbi.srWindow.Bottom-csbi.srWindow.Top));
+			if (!SetConsoleWindowInfo(ghConOut, TRUE, &rNewRect))
+				MoveWindow(ghConWnd, rcConPos.left, rcConPos.top, 1, 1, 1);
 		}
+
+		//MoveWindow(ghConWnd, rcConPos.left, rcConPos.top, 1, 1, 1);
+
+		//WaitForSingleObject(ghConOut, 200);
+		//Sleep(100);
+		/*if (gOSVer.dwMajorVersion == 6 && gOSVer.dwMinorVersion == 1) {
+			const SHORT nMaxBuf = 600;
+			if (crHeight.Y >= nMaxBuf)
+				crHeight.Y = nMaxBuf;
+		}*/
+
+		lbRc = SetConsoleScreenBufferSize(ghConOut, crHeight); // а не crNewSize - там "оконные" размеры
+
+		//}
         //окошко раздвигаем только по ширине!
         //RECT rcCurConPos = {0};
         //GetWindowRect(ghConWnd, &rcCurConPos); //X-Y новые, но высота - старая

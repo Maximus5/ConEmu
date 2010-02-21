@@ -148,7 +148,6 @@ BOOL ReloadFullConsoleInfo(BOOL abForceSend);
 DWORD WINAPI RefreshThread(LPVOID lpvParam); // Нить, перечитывающая содержимое консоли
 //BOOL ReadConsoleData(CESERVER_CHAR* pCheck = NULL); //((LPRECT)1) или реальный LPRECT
 void SetConsoleFontSizeTo(HWND inConWnd, int inSizeY, int inSizeX, wchar_t *asFontName);
-void SetConsoleBufferSize(HWND inConWnd, int anWidth, int anHeight, int anBufferHeight);
 int ServerInit(); // Создать необходимые события и нити
 void ServerDone(int aiRc);
 int ComspecInit();
@@ -263,7 +262,7 @@ typedef struct tag_SrvInfo {
 	HANDLE hRootProcess, hRootThread; DWORD dwRootProcess, dwRootThread; DWORD dwRootStartTime; BOOL bDebuggerActive;
 	//
 	HANDLE hServerThread;   DWORD dwServerThreadId;
-	//HANDLE hRefreshThread;  DWORD dwRefreshThread;
+	HANDLE hRefreshThread;  DWORD dwRefreshThread;
 	HANDLE hWinEventThread; DWORD dwWinEventThread;
 	HANDLE hInputThread;    DWORD dwInputThreadId;
 	HANDLE hInputPipeThread;DWORD dwInputPipeThreadId; // Needed in Vista & administrator

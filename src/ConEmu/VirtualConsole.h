@@ -164,7 +164,7 @@ protected:
 	void UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, UINT dwSize);
 	bool UpdatePrepare(bool isForce, HDC *ahDc, MSectionLock *pSDC);
 	void UpdateText(bool isForce); //, bool updateText, bool updateCursor);
-	HRGN GetTransparentRgn();
+	BOOL CheckTransparentRgn();
 	WORD CharWidth(TCHAR ch);
 	void CharABC(TCHAR ch, ABC *abc);
 	bool CheckChangedTextAttr();
@@ -198,6 +198,11 @@ protected:
 	BYTE nLastNormalBack;
     bool bExtendFonts, bExtendColors;
     BYTE nFontNormalColor, nFontBoldColor, nFontItalicColor, nExtendColor;
+	struct _TransparentInfo {
+		INT    nRectCount;
+		POINT *pAllPoints;
+		INT   *pAllCounts;
+	} TransparentInfo;
 };
 
 #include <pshpack1.h>
