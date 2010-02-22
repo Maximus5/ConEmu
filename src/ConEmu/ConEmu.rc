@@ -362,12 +362,12 @@ BEGIN
                     BS_AUTOCHECKBOX | WS_TABSTOP,217,201,97,9
     CONTROL         "Fade contents when inactive",cbFadeInactive,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,99,217,111,9
-    RTEXT           "Low:",IDC_STATIC,215,217,26,8
+    RTEXT           "Fade mask:",IDC_STATIC,204,217,49,8
+    LTEXT           "",c32,259,215,12,12,SS_NOTIFY | SS_SUNKEN
+    EDITTEXT        tc32,273,215,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,
+                    WS_EX_STATICEDGE
     CONTROL         "Block inactive cursor",cbBlockInactiveCursor,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,8,217,86,9
-    EDITTEXT        tFadeLow,245,216,22,12,ES_AUTOHSCROLL
-    RTEXT           "High:",IDC_STATIC,270,217,22,8
-    EDITTEXT        tFadeHigh,296,216,20,12,ES_AUTOHSCROLL
 END
 
 IDD_SETTINGS DIALOGEX 0, 0, 341, 276
@@ -385,7 +385,7 @@ END
 IDD_SPG_INFO DIALOGEX 0, 0, 328, 224
 STYLE DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
-FONT 8, "MS Shell Dlg", 0, 0, 0x1
+FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        "Performance counters",gbPerformance,4,4,319,30
     RTEXT           "Render:",IDC_STATIC,92,17,27,8
@@ -711,6 +711,7 @@ END
 
 STRINGTABLE DISCARDABLE 
 BEGIN
+    c32                     "When ConEmu looses focus, its contents may be faded. You may specify most bright color (default is «208 208 208»)."
     cbRClick                "Off - all RClicks passed to console\nOn - EMenu called instead of RClick\n3s - Short RClick passed, Long RClick -> EMenu\nWarning! This may conflict with RDrag"
     cbBgImage               "Show background image instead standard\ncolors #0 and #1 (black and blue)\n3d state - don't draw in viewer/editor"
 END
@@ -796,6 +797,11 @@ END
 
 STRINGTABLE DISCARDABLE 
 BEGIN
+    tc32                    "When ConEmu looses focus, its contents may be faded. You may specify most bright color (default is «208 208 208»)."
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
     cbBlockInactiveCursor   "Draw empty rectangle cursor while ConEmu has no focus"
     bHideCaptionSettings    "Choose frame width, appearance and disappearance delays"
     tHideCaptionAlwaysFrame "While caption and frame are hidden, ConEmu may keep small part of frame (in pixels) around console part. Default is 1 pixel."
@@ -810,8 +816,6 @@ STRINGTABLE DISCARDABLE
 BEGIN
     cbHandleFarDetach       "Automatic attach to ConEmu new Far manager console, created on detach (CtrlAltTab)"
     cbHookFarRegistry       "Enable portable mode for FAR manager. ConEmu plugin must be installed."
-    tFadeLow                "When ConEmu looses focus, its contents may be faded. You may specify here 'low shift' (wich makes dark colors lighter)."
-    tFadeHigh               "When ConEmu looses focus, its contents may be faded. You may specify here 'high shift' (wich makes light colors darker)."
 END
 
 #endif    // English (U.S.) resources

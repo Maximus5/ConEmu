@@ -401,7 +401,7 @@ CConEmuBack::~CConEmuBack()
 
 HWND CConEmuBack::Create()
 {
-	mn_LastColor = gSet.GetColors()[mn_ColorIdx];
+	mn_LastColor = gSet.Colors[mn_ColorIdx];
 	mh_BackBrush = CreateSolidBrush(mn_LastColor);
 
 	DWORD dwLastError = 0;
@@ -655,11 +655,10 @@ void CConEmuBack::Resize()
 
 void CConEmuBack::Refresh()
 {
-	COLORREF* pcr = gSet.GetColors(gConEmu.isMeForeground());
-	if (mn_LastColor == pcr[mn_ColorIdx])
+	if (mn_LastColor == gSet.Colors[mn_ColorIdx])
 		return;
 
-	mn_LastColor = pcr[mn_ColorIdx];
+	mn_LastColor = gSet.Colors[mn_ColorIdx];
 	HBRUSH hNewBrush = CreateSolidBrush(mn_LastColor);
 
 	SetClassLongPtr(mh_WndBack, GCLP_HBRBACKGROUND, (LONG)hNewBrush);

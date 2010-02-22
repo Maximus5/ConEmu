@@ -34,23 +34,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define MIN_ALPHA_VALUE 40
 #define MAX_FONT_STYLES 8 //normal/bold|italic|underline
 
-
-#include <pshpack1.h>
-typedef struct tagMYRGB {
-	union {
-		COLORREF color;
-		struct {
-			BYTE    rgbBlue;
-			BYTE    rgbGreen;
-			BYTE    rgbRed;
-			BYTE    rgbReserved;
-		};
-	};
-} MYRGB, MYCOLORREF;
-#include <poppack.h>
-
-
-
 class CSettings
 {
 public:
@@ -89,8 +72,7 @@ public:
 	bool isAutoRegisterFonts;
 	//wchar_t FontFile[MAX_PATH];
 	LOGFONT ConsoleFont;
-	COLORREF* GetColors(BOOL abFade = FALSE);
-	COLORREF GetFadeColor(COLORREF cr);
+    COLORREF Colors[0x20];
 	bool isUserScreenTransparent;
 	//COLORREF ColorKey;
     bool isExtendColors;
@@ -175,7 +157,7 @@ public:
     bool isDebugSteps;
     bool isEnhanceGraphics; // Progressbars and scrollbars (pseudographics)
     bool isFadeInactive;
-    //DWORD nFadeInactiveMask;
+    DWORD nFadeInactiveMask;
     char isTabs; bool isTabSelf, isTabRecent, isTabLazy;
     wchar_t sTabFontFace[LF_FACESIZE]; DWORD nTabFontCharSet; int nTabFontHeight;
 	wchar_t *sTabCloseMacro;
@@ -334,13 +316,7 @@ private:
 	std::vector<RegFont> m_RegFonts;
 	BOOL mb_StopRegisterFonts;
 	//
-	COLORREF Colors[0x20];
-	bool mb_FadeInitialized;
-	BYTE mn_FadeLow, mn_FadeHigh;
-	DWORD mn_FadeMul, mn_FadeDiv;
-	COLORREF ColorsFade[0x20];
 	BOOL GetColorRef(HWND hDlg, WORD TB, COLORREF* pCR);
-	inline BYTE GetFadeColorItem(BYTE c);
 	//
 	bool mb_ThemingEnabled;
 	//

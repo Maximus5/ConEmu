@@ -55,29 +55,32 @@
 #
 
 
-
 !if exists(../make_vc_defs)
 !include ../make_vc_defs
 !endif
 
-#DEF_NAME = export
+DEF_NAME = export
 
 NEEDENTRY = 1
 
-OUTNAME = ConEmuC
+!if defined(AMD64) || "$(CPU)" == "AMD64"
+OUTNAME = ConEmuI.x64
+RCWIN64=/D_WIN64 /DWIN64
+!else
+OUTNAME = ConEmuI.x86
+RCWIN64=
+!endif                   
 
-NAME = ConEmuC
+NAME = ConEmuI
 
 LINK_OBJS = \
-$(OBJDIR)\ConEmuC.obj \
-$(OBJDIR)\ConEmuCmd.obj \
-$(OBJDIR)\ConEmuSrv.obj \
-$(OBJDIR)\execute.obj \
-$(OBJDIR)\setconsoleinfo.obj \
+$(OBJDIR)\Entry.obj \
+$(OBJDIR)\SetHook.obj \
 $(OBJDIR)\Common.obj \
 $(OBJDIR)\ConEmuCheck.obj
 
 USERLIBS = version.lib
+
 
 !if defined(AMD64) || "$(CPU)" == "AMD64"
 !undef AMD64
@@ -95,6 +98,10 @@ CPU=IA64
 RC_NAME=$(NAME)
 !endif
 
+!ifndef DEF_NAME
+DEF_NAME=$(NAME)
+!endif
+
 !ifndef DEBUG
 DIRNAME=final
 !else
@@ -105,15 +112,16 @@ DIRNAME=debug
 DIRSUFF = W
 !endif
 
+
+RELEASEDIRx86=
+RELEASEDIRx64=Release.x64
+
 !ifdef AMD64
 DIRBIT = 64
-RELEASEDIR = Release.x64
-!elseif defined(IA64)
-DIRBIT = IA64
-RELEASEDIR = bin.IA64
+RELEASEDIR = $(RELEASEDIRx64)
 !else
 DIRBIT = 32
-RELEASEDIR = .
+RELEASEDIR = $(RELEASEDIRx86)
 !endif
 WORKDIR = $(DIRNAME).$(DIRBIT)$(DIRSUFF).vc
 !ifdef INSTALL
@@ -122,14 +130,16 @@ OUTDIR=$(INSTALL)
 OUTDIR=$(WORKDIR)
 !endif
 
+
 OBJDIR = $(WORKDIR)\obj$(ADDOBJDIR)
 #COMMON = ..
 COMINC = ..
 CPP_WIDE = /DUNICODE /D_UNICODE
 RC_WIDE = /dUNICODE
-EXT = exe
+EXT = dll
 DLLNAME = $(OUTNAME).$(EXT)
 DLLFULLNAME = $(OUTDIR)$(ADDOUTDIR)\$(DLLNAME)
+DEF = $(DEF_NAME).def
 MAP = $(OUTDIR)$(ADDOUTDIR)\$(OUTNAME).map
 RES = $(OBJDIR)\$(NAME).res
 
@@ -196,7 +206,7 @@ NOENTRY = /noentry
 !ifndef NEEDDEFLIB
 NODEFLIB = /nodefaultlib
 !endif
-LINK_FLAGS=/nologo /SUBSYSTEM:CONSOLE /release /merge:.rdata=.text $(LINK_MACHINE) $(NOWIN98) $(NOENTRY) $(NODEFLIB) $(ENV_LIB_OPT) /map:"$(MAP)" /out:"$(DLLFULLNAME)"
+LINK_FLAGS=/nologo /dll /release /merge:.rdata=.text $(LINK_MACHINE) $(NOWIN98) $(NOENTRY) $(NODEFLIB) $(ENV_LIB_OPT) /def:"$(DEF)" /map:"$(MAP)" /out:"$(DLLFULLNAME)"
 !else
 LINK_DEBUG=-v
 CPP_DEBUG=/Z7
@@ -207,7 +217,7 @@ NOENTRY = -e-
 !ifndef NEEDDEFLIB
 NODEFLIB = -n
 !endif
-LINK_FLAGS=-q $(ULOUT) -Gz -m- -Gh -Gh- $(LINK_MACHINE) $(NOENTRY) $(NODEFLIB) /ZM:"$(MAP)" /ZO:"$(DLLFULLNAME)" $(ENV_LIB_OPT)
+LINK_FLAGS=-q $(ULOUT) -Gz -m- -Gh -Gh- $(LINK_MACHINE) $(NOENTRY) $(NODEFLIB) /ZD:"$(DEF)" /ZM:"$(MAP)" /ZO:"$(DLLFULLNAME)" $(ENV_LIB_OPT)
 !endif
 
 !ifndef DEBUG
@@ -231,12 +241,13 @@ RC=$(_RC_PATH)rc.exe
 !endif
 
 !if !defined(SRC_PATHS_DEFINED) && defined(__MAKE__)
-SRC_PATHS=.;..\common;..\ConEmuPlugin
+SRC_PATHS=.;..\common
 .path.cpp=$(SRC_PATHS)
 .path.c=$(SRC_PATHS)
 .path.hpp=$(SRC_PATHS)
 .path.h=$(SRC_PATHS)
 .path.rc=$(SRC_PATHS)
+.path.def=$(SRC_PATHS)
 !endif
 
 ALL: dirs $(INSTALL) $(DLLFULLNAME) clean
@@ -270,23 +281,16 @@ $(DLLFULLNAME) : $(LINK_OBJS) $(RES) $(LINK_DEP)
 	$(CC) @<<
 	$(CFLAGS) $<
 <<
-{../ConEmuPlugin/}.cpp{$(OBJDIR)}.obj::
-	$(CC) @<<
-	$(CFLAGS) $<
-<<
 !else
 .cpp{$(OBJDIR)}.obj:
 	@$(CC) $(CFLAGS) { $< } 
 
 {../common/}.cpp{$(OBJDIR)}.obj:
 	@$(CC) $(CFLAGS) { $< } 
-
-{../ConEmuPlugin/}.cpp{$(OBJDIR)}.obj:
-	@$(CC) $(CFLAGS) { $< } 
 !endif
 
 $(RES): $(RC_NAME).rc
-	@$(RC) /I"$(COMINC)" $(ENV_INC_OPT) $(RC_WIDE) /fo"$(RES)" $(RC_NAME).rc
+	@$(RC) /I"$(COMINC)" $(ENV_INC_OPT) $(RCWIN64) $(RC_WIDE) /fo"$(RES)" $(RC_NAME).rc
 
 .PHONY: dirs
 dirs:
@@ -299,26 +303,21 @@ dirs:
 
 .PHONY: clean
 clean:
+	@echo copying release files
+	@copy $(DLLFULLNAME) ..\..\$(RELEASEDIRx64)
+	@move $(DLLFULLNAME) ..\..\$(RELEASEDIRx86)
+	@move $(PDBNAME) ..\..\$(RELEASEDIR)
+	@move $(MAP) ..\..\$(RELEASEDIR)
 	@echo final cleaning
-#	copy $(DLLFULLNAME) ..\..\$(RELEASEDIRx64)
-#	move $(DLLFULLNAME) ..\..\$(RELEASEDIRx86)
-#	@del /Q $(OBJDIR)\*.*
-#	@rd $(OBJDIR)
-#	@del $(OUTDIR)$(ADDOUTDIR)\*.exp
-#	@del $(OUTDIR)$(ADDOUTDIR)\*.lib
-#	@del $(OBJDIR)\*.obj
-#	@rd $(OBJDIR)
+	@del /Q $(OBJDIR)\*.*
+	@rd $(OBJDIR)
+	@del /Q $(OUTDIR)$(ADDOUTDIR)\*.*
+	@rd $(OUTDIR)$(ADDOUTDIR)
 
-$(INTDIR)\ConEmuC.obj: ConEmuC.cpp ConEmuC.h ..\common\Common.hpp
+$(OBJDIR)\Entry.obj: Entry.cpp SetHook.h
 
-$(INTDIR)\ConEmuCmd.obj: ConEmuCmd.cpp ConEmuC.h ..\common\Common.hpp
+$(OBJDIR)\SetHook.obj: ..\common\SetHook.cpp ..\common\SetHook.h
 
-$(INTDIR)\ConEmuSrv.obj: ConEmuSrv.cpp ConEmuC.h ..\common\Common.hpp
+$(OBJDIR)\Common.obj: ..\common\Common.cpp
 
-$(INTDIR)\execute.obj: execute.cpp
-
-$(INTDIR)\setconsoleinfo.obj: ..\ConEmuPlugin\setconsoleinfo.cpp
-
-$(INTDIR)\Common.obj: ..\common\Common.cpp ..\common\Common.hpp
-
-$(INTDIR)\ConEmuCheck.obj: ..\common\ConEmuCheck.cpp
+$(OBJDIR)\ConEmuCheck.obj: ..\common\ConEmuCheck.cpp

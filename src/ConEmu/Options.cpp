@@ -65,9 +65,6 @@ HWND ghOpWnd=NULL;
 #define HEAPVAL 
 #endif
 
-#define DEFAULT_FADE_LOW 0
-#define DEFAULT_FADE_HIGH 0xD0
-
 
 typedef struct tagCONEMUDEFCOLORS {
 	const wchar_t* pszTitle;
@@ -102,7 +99,7 @@ const DWORD *dwDefColors = DefColors->dwDefColors;
 DWORD gdwLastColors[0x10] = {0};
 BOOL  gbLastColorsOk = FALSE;
 
-#define MAX_COLOR_EDT_ID c31
+#define MAX_COLOR_EDT_ID c32
 
 
 
@@ -190,8 +187,7 @@ void CSettings::InitSettings()
     isMulti = true; icMultiNew = 'W'; icMultiNext = 'Q'; icMultiRecreate = 192/*VK_тильда*/; icMultiBuffer = 'A'; 
     isMultiNewConfirm = true; nMultiHotkeyModifier = VK_LWIN; TestHostkeyModifiers();
     isFARuseASCIIsort = false; isFixAltOnAltTab = false;
-    isFadeInactive = true; mn_FadeLow = DEFAULT_FADE_LOW; mn_FadeHigh = DEFAULT_FADE_HIGH; mb_FadeInitialized = false;
-	//nFadeInactiveMask = 0xD0D0D0;
+    isFadeInactive = true; nFadeInactiveMask = 0xD0D0D0;
     // Logging
     isAdvLogging = 0;
 	//wcscpy(szDumpPackets, L"c:\\temp\\ConEmuVCon-%i-%i.dat");
@@ -396,9 +392,8 @@ void CSettings::LoadSettings()
 		reg->Load(L"TrueColorerSupport", isTrueColorer);
 		
         reg->Load(L"FadeInactive", isFadeInactive);
-        reg->Load(L"FadeInactiveLow", mn_FadeLow);
-		reg->Load(L"FadeInactiveHigh", mn_FadeHigh);
-			if (mn_FadeHigh <= mn_FadeLow) { mn_FadeLow = DEFAULT_FADE_LOW; mn_FadeHigh = DEFAULT_FADE_HIGH; }
+        reg->Load(L"FadeInactiveMask", nFadeInactiveMask);
+        	if (!nFadeInactiveMask || nFadeInactiveMask > 0xFFFFFF) nFadeInactiveMask = 0xC0C0C0;
             
         reg->Load(L"ExtendFonts", isExtendFonts);
         reg->Load(L"ExtendFontNormalIdx", nFontNormalColor);
@@ -820,8 +815,7 @@ BOOL CSettings::SaveSettings()
 			reg->Save(L"TrueColorerSupport", isTrueColorer);
 			
 	        reg->Save(L"FadeInactive", isFadeInactive);
-			reg->Save(L"FadeInactiveLow", mn_FadeLow);
-			reg->Save(L"FadeInactiveHigh", mn_FadeHigh);
+	        reg->Save(L"FadeInactiveMask", nFadeInactiveMask);
 
             /* таки сохраним, чтобы настройки переносить можно было */
 	        reg->Save(L"ExtendFonts", isExtendFonts);
@@ -1597,9 +1591,6 @@ LRESULT CSettings::OnInitDialog_Color()
 	CheckDlgButton(hColors, cbTrueColorer, isTrueColorer ? BST_CHECKED : BST_UNCHECKED);
 
 	CheckDlgButton(hColors, cbFadeInactive, isFadeInactive ? BST_CHECKED : BST_UNCHECKED);
-	SetDlgItemInt(hColors, tFadeLow, mn_FadeLow, FALSE);
-	SetDlgItemInt(hColors, tFadeHigh, mn_FadeHigh, FALSE);
-
 	CheckDlgButton(hColors, cbBlockInactiveCursor, isCursorBlockInactive ? BST_CHECKED : BST_UNCHECKED);
 
 	// Default colors
@@ -2187,18 +2178,6 @@ LRESULT CSettings::OnColorEditChanged(WPARAM wParam, LPARAM lParam)
 					gConEmu.Update(true);
 				InvalidateRect(GetDlgItem(hColors, TB - (tc0-c0)), 0, 1);
 			}
-		}
-	} else
-
-	if (TB == tFadeLow || TB == tFadeHigh) {
-		BOOL lbOk = FALSE;
-		UINT nVal = GetDlgItemInt(hColors, TB, &lbOk, FALSE);
-		if (lbOk && nVal <= 255) {
-			if (TB == tFadeLow)
-				mn_FadeLow = nVal;
-			else
-				mn_FadeHigh = nVal;
-			mb_FadeInitialized = false;
 		}
 	}
 
@@ -4707,8 +4686,8 @@ bool CSettings::GetColorById(WORD nID, COLORREF* color)
 		*color = Colors[nID - c0];
 	//else if (nID == c32)
 	//	*color = ColorKey;
-	//else if (nID == c32)
-	//	*color = nFadeInactiveMask;
+	else if (nID == c32)
+		*color = nFadeInactiveMask;
 	else
 		return false;
 	return true;
@@ -4716,14 +4695,12 @@ bool CSettings::GetColorById(WORD nID, COLORREF* color)
 
 bool CSettings::SetColorById(WORD nID, COLORREF color)
 {
-	if (nID <= c31) {
+	if (nID <= c31)
 		Colors[nID - c0] = color;
-		mb_FadeInitialized = false;
-	}
 	//else if (nID == c32)
 	//	ColorKey = color;
-	//else if (nID == c32)
-	//	nFadeInactiveMask = color;
+	else if (nID == c32)
+		nFadeInactiveMask = color;
 	else
 		return false;
 	return true;
@@ -4732,53 +4709,4 @@ bool CSettings::SetColorById(WORD nID, COLORREF color)
 bool CSettings::isHideCaptionAlways()
 {
 	return mb_HideCaptionAlways || (!mb_HideCaptionAlways && isUserScreenTransparent);
-}
-
-COLORREF* CSettings::GetColors(BOOL abFade)
-{
-	if (!abFade)
-		return Colors;
-	
-	if (!mb_FadeInitialized) {
-		if (((int)mn_FadeHigh - (int)mn_FadeLow) < 64) {
-			mn_FadeLow = DEFAULT_FADE_LOW; mn_FadeHigh = DEFAULT_FADE_HIGH;
-		}
-		mn_FadeMul = mn_FadeHigh - mn_FadeLow;
-		mb_FadeInitialized = true;
-
-		for (int i=0; i<32; i++) {
-			ColorsFade[i] = GetFadeColor(Colors[i]);
-		}
-	}
-
-	return ColorsFade;
-}
-
-COLORREF CSettings::GetFadeColor(COLORREF cr)
-{
-	MYCOLORREF mcr, mcrFade; mcr.color = cr;
-	if (!mb_FadeInitialized) {
-		GetColors(TRUE);
-	}
-
-	mcrFade.rgbRed = GetFadeColorItem(mcr.rgbRed);
-	mcrFade.rgbGreen = GetFadeColorItem(mcr.rgbGreen);
-	mcrFade.rgbBlue = GetFadeColorItem(mcr.rgbBlue);
-	
-	return mcrFade.color;
-}
-
-BYTE CSettings::GetFadeColorItem(BYTE c)
-{
-	DWORD nRc;
-	switch (c) {
-		case 0: 
-			return mn_FadeLow;
-		case 255:
-			return mn_FadeHigh;
-		default:
-			nRc = ((((DWORD)c) + mn_FadeLow) * mn_FadeHigh) >> 8;
-			_ASSERTE(nRc < 255);
-			return (BYTE)nRc;
-	}
 }

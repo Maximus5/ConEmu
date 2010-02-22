@@ -2061,7 +2061,7 @@ BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount)
 			}
 			pr = prNew;
 			_ASSERTE(nAllCount == (ppr-prNew));
-			nCount = (UINT)(ppr-prNew);
+			nCount = (ppr-prNew);
 		}
 	}
 

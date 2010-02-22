@@ -607,16 +607,11 @@ HRGN CConEmuMain::CreateWindowRgn(bool abTestOnly/*=false*/,bool abRoundTitle/*=
 			//MapWindowPoints(ghWndDC, NULL, &ptShift, 1);
 			//RECT rcWnd = GetWindow
 			RECT rcFrame = CalcMargins(CEM_FRAME);
-			#ifdef _DEBUG
-			// CEM_TAB не учитывает центрирование клиентской части в развернутых режимах
 			RECT rcTab = CalcMargins(CEM_TAB);
-			#endif
-			POINT ptClient = {0,0};
-			MapWindowPoints(ghWndDC, ghWnd, &ptClient, 1);
 
 			HRGN hOffset = CreateRectRgn(0,0,0,0);
 			int n1 = CombineRgn ( hOffset, hExclusion, NULL, RGN_COPY);
-			int n2 = OffsetRgn ( hOffset, rcFrame.left+ptClient.x, rcFrame.top+ptClient.y );
+			int n2 = OffsetRgn ( hOffset, rcFrame.left+rcTab.left, rcFrame.top+rcTab.top );
 
 			hCombine = CreateRectRgn(0,0,1,1);
 			CombineRgn ( hCombine, hRgn, hOffset, RGN_DIFF);
@@ -1943,7 +1938,6 @@ void CConEmuMain::ForceShowTabs(BOOL abShow)
 	// »наче Gaps не отрисуютс€
 	gConEmu.InvalidateAll();
 
-	UpdateWindowRgn();
 
     // ѕри отключенных табах нужно показать "[n/n] " а при выключенных - спр€тать
     UpdateTitle(NULL); // сам перечитает
@@ -3870,7 +3864,7 @@ void CConEmuMain::PaintGaps(HDC hDC)
 	#else
 		mn_ColorIdx = 0;
 	#endif
-	HBRUSH hBrush = CreateSolidBrush(gSet.GetColors(isMeForeground())[mn_ColorIdx]);
+	HBRUSH hBrush = CreateSolidBrush(gSet.Colors[mn_ColorIdx]);
 
 	RECT rcClient; GetClientRect(ghWnd, &rcClient); //  лиентска€ часть главного окна
 	RECT rcMargins = CalcMargins(CEM_TAB);

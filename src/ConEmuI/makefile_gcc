@@ -1,14 +1,10 @@
-NAME = ConEmuC
-SRCS = ConEmuC.cpp \
-       ConEmuCmd.cpp \
-       ConEmuSrv.cpp \
-       execute.cpp \
+NAME = ConEmuI
+SRCS = Entry.cpp \
+       ../common/SetHook.cpp \
        ../common/Common.cpp \
-       ../Common/ConEmuCheck.c \
-       ../ConEmuPlugin/setconsoleinfo.cpp
+       ../common/ConEmuCheck.cpp
 
-USERLIBS = -lkernel32
-#-lversion
+USERLIBS = -lversion
 
 
 
@@ -49,30 +45,34 @@ USERLIBS = -lkernel32
 WIDE = 1
 DIRSURF = W
 RCWIDE = -D UNICODE -D _UNICODE
-CXXWIDE = -D UNICODE -D _UNICODE -D _WIN32_WINNT=0x0500 -D WINVER=0x0500
-CCWIDE = -D UNICODE -D _UNICODE -D _WIN32_WINNT=0x0500 -D WINVER=0x0500
+CXXWIDE = -D UNICODE -D _UNICODE -D
+CCWIDE = -D UNICODE -D _UNICODE -D
+WINVER = _WIN32_WINNT=0x0500 -D WINVER=0x0500
 
-OBJDIR = ../../gcc/conemuc
-REOBJDIR = \.\.\/\.\.\/gcc\/conemuc
-EXEDIR = ../..
+TMPDIR = ../../gcc
+OBJDIR = $(TMPDIR)/injects
+COMDIR = $(TMPDIR)/common
+REOBJDIR = \.\.\/\.\.\/gcc\/injects
+DLLDIR = ../..
 COMMON = ../common
 COMINC = $(COMMON)
-EXT = exe
-EXENAME = $(NAME).$(EXT)
-EXEFULLNAME = $(EXEDIR)/$(EXENAME)
-DEF = ConEmuC.def
+EXT = dll
+BITS = x86
+DLLNAME = $(NAME).$(BITS).$(EXT)
+DLLFULLNAME = $(DLLDIR)/$(DLLNAME)
+DEF = export.gcc.def
 RC_NAME = $(NAME).rc
 RES = $(OBJDIR)/$(NAME).res.o
 
-#NOSTART = -nostartfiles
-#ifdef NEEDENTRY
+NOSTART = -nostartfiles
+ifdef NEEDENTRY
 NOSTART = 
-#endif
+endif
 
-#NODEFLIBS = -nodefaultlibs
-#ifdef NEEDDEFLIB
+NODEFLIBS = -nodefaultlibs
+ifdef NEEDDEFLIB
 NODEFLIBS = 
-#endif
+endif
 
 COMMONLIB = -L $(COMMON) 
 ifdef EXCLUDECRT
@@ -81,30 +81,43 @@ endif
 
 CXX = g++
 CC = gcc
+DLLTOOL = dlltool
 RM = rm -f
 RMDIR = rmdir
 CP = cp -f
-M4 = tools/m4 -P -DFARBIT=$(DIRBIT)
-GAWK = tools/gawk
+M4 = m4 -P
 MV = mv -f
 MKDIR = mkdir -p
-WINDRES = windres -D__FARBIT__=$(DIRBIT)
-DEFINES = -D FAR_ALPHA_VERSION -D UNICODE -D _UNICODE
-CXXFLAGS = -mno-cygwin -pipe -Os $(DEFINES) -funsigned-char -fomit-frame-pointer -fno-exceptions -fno-rtti -Wall -Wno-missing-braces -Wno-unknown-pragmas -Wno-switch $(CXXWIDE)
-CFLAGS = -mno-cygwin -pipe -Os $(DEFINES) -funsigned-char -fomit-frame-pointer -fno-exceptions -Wall -Wno-missing-braces -Wno-unknown-pragmas -Wno-switch $(CCWIDE)
-LNKFLAGS = -mconsole -s -lShlwapi -lgdi32
-RCFLAGS = $(RCWIDE)
+WINDRES = windres
+AR = ar
+RANLIB = ranlib
+CXXFLAGS = -mno-cygwin -I $(COMMON) -I $(COMINC) -Wall -Os -funsigned-char -fomit-frame-pointer -fstrict-aliasing -fno-rtti -fno-exceptions $(CXXWIDE) $(USERCPP) $(WINVER)
+CCFLAGS = -mno-cygwin -I $(COMMON) -I $(COMINC) -Wall -Os -funsigned-char -fomit-frame-pointer -fstrict-aliasing -fno-exceptions $(CCWIDE) $(USERCPP) $(WINVER)
+LNKFLAGS = -mdll -s -lgcc $(USERLIBSFIRST) $(COMMONLIB) -luser32 -lkernel32 -ladvapi32 -lshell32 $(USERLIBS)
+RCFLAGS = -I $(COMINC) $(RCWIDE) $(USERRC)
 
 OBJS = $(patsubst %.cpp,$(OBJDIR)/%.o,$(filter %.cpp,$(SRCS))) $(patsubst %.c,$(OBJDIR)/%.o,$(filter %.c,$(SRCS))) $(RES)
 #ifndef DISABLEAUTODEPS
 #DEPS = $(patsubst %.cpp,$(OBJDIR)/%.d,$(filter %.cpp,$(SRCS)))
 #endif
-MAP = $(patsubst %.$(EXT),%.map,$(EXEFULLNAME))
+MAP = $(patsubst %.$(EXT),%.map,$(DLLFULLNAME))
 
 
+.PHONY: all
+all: build
+#all: iclean build
+#	@$(MAKE) -f makefile_gcc build 
+# clean
 
-all: $(EXEFULLNAME)
+.PHONY: iclean
+iclean:
+	@echo prebuild cleaning
+	@$(RM) $(OBJDIR)/*.* $(COMDIR)/*.*
 
+.PHONY: build
+build: $(DLLFULLNAME)
+
+#all: $(DLLFULLNAME)
 
 #ifndef DISABLEAUTODEPS
 #$(OBJDIR)/%.d: %.cpp
@@ -119,19 +132,20 @@ $(OBJDIR)/%.o: %.cpp
 	@$(MKDIR) -p $(@D)
 	@$(CXX) $(CXXFLAGS) -c -o $@ $<
 
-$(OBJDIR)/%.o: %.c
-	@echo compiling $<
-	@$(MKDIR) -p $(@D)
-	@$(CC) $(CFLAGS) -c -o $@ $<
-
 $(RES): $(RC_NAME)
 	@echo compiling resources $<
 	@$(MKDIR) -p $(@D)
 	@$(WINDRES) $(RCFLAGS) -i $< -o $@
 
-$(EXEFULLNAME): $(OBJS) $(DEF)
+$(DLLFULLNAME): $(OBJS) $(DEF)
 	@echo linking $@
-	@$(CXX) -o $@ $(OBJS) $(LNKFLAGS) -Xlinker -Map -Xlinker $(MAP)
+	@$(MKDIR) -p $(@D)
+	@$(CXX) -mdll -o $(DLLNAME) -Xlinker --base-file -Xlinker $(DLLNAME).base $(OBJS) $(LNKFLAGS)
+	@$(DLLTOOL) --dllname $(DLLNAME) --base-file $(DLLNAME).base --output-exp $(DLLNAME).exp --def $(DEF)
+	@$(CXX) -mdll  -o $(DLLNAME) $(OBJS) $(DLLNAME).exp $(LNKFLAGS) -Xlinker -Map -Xlinker $(MAP)
+	@$(MV) $(DLLNAME) $(DLLDIR)
+	@$(RM) $(DLLNAME).base
+	@$(RM) $(DLLNAME).exp
 #ifdef DOCS
 #	@$(CP) $(DOCS) $(DLLDIR)
 #endif
@@ -144,4 +158,4 @@ $(EXEFULLNAME): $(OBJS) $(DEF)
 clean:
 	@echo final cleaning
 	@$(RM) $(OBJS)
-	@$(RMDIR) $(OBJDIR) ../../gcc/common ../../gcc/conemuc ../../gcc/ConEmuPlugin ../../gcc
+	@$(RMDIR) $(OBJDIR) $(COMDIR) $(TMPDIR)
