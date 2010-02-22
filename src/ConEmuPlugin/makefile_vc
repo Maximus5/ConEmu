@@ -79,9 +79,9 @@ $(OBJDIR)\SetHook.obj \
 $(OBJDIR)\ConEmuPlugin.obj \
 $(OBJDIR)\ConEmuPlugin995.obj \
 $(OBJDIR)\ConEmuPluginA.obj \
-$(OBJDIR)\setconsoleinfo.obj \
 $(OBJDIR)\Common.obj \
 $(OBJDIR)\ConEmuCheck.obj
+
 #$(OBJDIR)\LogBrowser.obj
 
 USERLIBS = version.lib
@@ -309,16 +309,16 @@ dirs:
 
 .PHONY: clean
 clean:
-	@echo copying release files
-	@copy $(DLLFULLNAME) ..\..\$(RELEASEDIRx64)
-	@move $(DLLFULLNAME) ..\..\$(RELEASEDIRx86)
-	@move $(PDBNAME) ..\..\$(RELEASEDIR)
-	@move $(MAP) ..\..\$(RELEASEDIR)
-	@echo final cleaning
-	@del /Q $(OBJDIR)\*.*
-	@rd $(OBJDIR)
-	@del /Q $(OUTDIR)$(ADDOUTDIR)\*.*
-	@rd $(OUTDIR)$(ADDOUTDIR)
+	echo copying release files
+	copy $(DLLFULLNAME) ..\..\$(RELEASEDIRx64)
+	move $(DLLFULLNAME) ..\..\$(RELEASEDIRx86)
+	move $(PDBNAME) ..\..\$(RELEASEDIR)
+	move $(MAP) ..\..\$(RELEASEDIR)
+	echo final cleaning
+	del /Q $(OBJDIR)\*.*
+	rd $(OBJDIR)
+	del /Q $(OUTDIR)$(ADDOUTDIR)\*.*
+	rd $(OUTDIR)$(ADDOUTDIR)
 
 $(OBJDIR)\ConEmuInjects.obj: ConEmuInjects.cpp
 
@@ -327,8 +327,6 @@ $(OBJDIR)\ConEmuPlugin.obj: ConEmuPlugin.cpp
 $(OBJDIR)\ConEmuPlugin995.obj: ConEmuPlugin995.cpp
 
 $(OBJDIR)\ConEmuPluginA.obj: ConEmuPluginA.cpp
-
-$(OBJDIR)\SetConsoleInfo.obj: SetConsoleInfo.cpp
 
 $(OBJDIR)\Common.obj: ..\common\Common.cpp
 

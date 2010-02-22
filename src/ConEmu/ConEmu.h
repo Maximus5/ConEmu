@@ -215,6 +215,7 @@ protected:
 	UINT mn_MsgPostCopy;
 	UINT mn_MsgMyDestroy;
 	UINT mn_MsgUpdateSizes;
+	UINT mn_MsgUpdateCursorInfo;
 	UINT mn_MsgSetWindowMode;
 	UINT mn_MsgUpdateTitle;
 	UINT mn_MsgAttach;
@@ -246,6 +247,7 @@ public:
 	LPCTSTR GetTitle(bool abUseDefault=true);
 	LPCTSTR GetTitle(int nIdx);
 	CVirtualConsole* GetVCon(int nIdx);
+	void UpdateCursorInfo(COORD crCursor);
 	void UpdateProcessDisplay(BOOL abForce);
 	void UpdateSizes();
 

@@ -81,8 +81,9 @@ private:
 	HRGN    mh_TransparentRgn;
 	bool InitDC(bool abNoDc, bool abNoWndResize);
 public:
-	bool isEditor, isViewer, isFilePanel;
+	bool isEditor, isViewer, isFilePanel, isFade, isForeground;
 	BYTE attrBackLast;
+	COLORREF *mp_Colors;
 
 	wchar_t  *mpsz_ConChar, *mpsz_ConCharSave;
 	CharAttr *mpn_ConAttrEx, *mpn_ConAttrExSave;
@@ -204,17 +205,3 @@ protected:
 		INT   *pAllCounts;
 	} TransparentInfo;
 };
-
-#include <pshpack1.h>
-typedef struct tagMYRGB {
-	union {
-		COLORREF color;
-		struct {
-			BYTE    rgbBlue;
-			BYTE    rgbGreen;
-			BYTE    rgbRed;
-			BYTE    rgbReserved;
-		};
-	};
-} MYRGB;
-#include <poppack.h>

@@ -203,6 +203,7 @@ CConEmuMain::CConEmuMain()
     mn_MsgPostCopy = ++nAppMsg;
     mn_MsgMyDestroy = ++nAppMsg;
     mn_MsgUpdateSizes = ++nAppMsg;
+	mn_MsgUpdateCursorInfo = ++nAppMsg;
     mn_MsgSetWindowMode = ++nAppMsg;
     mn_MsgUpdateTitle = ++nAppMsg;
     mn_MsgAttach = RegisterWindowMessage(CONEMUMSG_ATTACH);
@@ -606,11 +607,16 @@ HRGN CConEmuMain::CreateWindowRgn(bool abTestOnly/*=false*/,bool abRoundTitle/*=
 			//MapWindowPoints(ghWndDC, NULL, &ptShift, 1);
 			//RECT rcWnd = GetWindow
 			RECT rcFrame = CalcMargins(CEM_FRAME);
+			#ifdef _DEBUG
+			// CEM_TAB не учитывает центрирование клиентской части в развернутых режимах
 			RECT rcTab = CalcMargins(CEM_TAB);
+			#endif
+			POINT ptClient = {0,0};
+			MapWindowPoints(ghWndDC, ghWnd, &ptClient, 1);
 
 			HRGN hOffset = CreateRectRgn(0,0,0,0);
 			int n1 = CombineRgn ( hOffset, hExclusion, NULL, RGN_COPY);
-			int n2 = OffsetRgn ( hOffset, rcFrame.left+rcTab.left, rcFrame.top+rcTab.top );
+			int n2 = OffsetRgn ( hOffset, rcFrame.left+ptClient.x, rcFrame.top+ptClient.y );
 
 			hCombine = CreateRectRgn(0,0,1,1);
 			CombineRgn ( hCombine, hRgn, hOffset, RGN_DIFF);
@@ -1937,6 +1943,7 @@ void CConEmuMain::ForceShowTabs(BOOL abShow)
 	// »наче Gaps не отрисуютс€
 	gConEmu.InvalidateAll();
 
+	UpdateWindowRgn();
 
     // ѕри отключенных табах нужно показать "[n/n] " а при выключенных - спр€тать
     UpdateTitle(NULL); // сам перечитает
@@ -3447,9 +3454,23 @@ void CConEmuMain::UpdateProcessDisplay(BOOL abForce)
     MCHKHEAP
 }
 
+void CConEmuMain::UpdateCursorInfo(COORD crCursor)
+{
+	if (!ghOpWnd || !gSet.hInfo) return;
+
+	if (!isMainThread()) {
+		DWORD wParam = MAKELONG(crCursor.X, crCursor.Y);
+		PostMessage(ghWnd, mn_MsgUpdateCursorInfo, wParam, 0);
+		return;
+	}
+
+	TCHAR szCursor[32]; wsprintf(szCursor, _T("%ix%i"), (int)crCursor.X, (int)crCursor.Y);
+	SetDlgItemText(gSet.hInfo, tCursorPos, szCursor);
+}
+
 void CConEmuMain::UpdateSizes()
 {
-    if (!ghOpWnd) {
+    if (!ghOpWnd || !gSet.hInfo) {
     	// ћожет курсор-сплиттер нужно убрать или поставить
     	PostMessage(ghWnd, WM_SETCURSOR, -1, -1);
         return;
@@ -3849,7 +3870,7 @@ void CConEmuMain::PaintGaps(HDC hDC)
 	#else
 		mn_ColorIdx = 0;
 	#endif
-	HBRUSH hBrush = CreateSolidBrush(gSet.Colors[mn_ColorIdx]);
+	HBRUSH hBrush = CreateSolidBrush(gSet.GetColors(isMeForeground())[mn_ColorIdx]);
 
 	RECT rcClient; GetClientRect(ghWnd, &rcClient); //  лиентска€ часть главного окна
 	RECT rcMargins = CalcMargins(CEM_TAB);
@@ -7909,6 +7930,10 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
         } else if (messg == gConEmu.mn_MsgUpdateSizes) {
             gConEmu.UpdateSizes();
             return 0;
+		} else if (messg == gConEmu.mn_MsgUpdateCursorInfo) {
+			COORD cr; cr.X = LOWORD(wParam); cr.Y = HIWORD(wParam);
+			gConEmu.UpdateCursorInfo(cr);
+			return 0;
         } else if (messg == gConEmu.mn_MsgSetWindowMode) {
             gConEmu.SetWindowMode(wParam);
             return 0;

@@ -3,7 +3,6 @@ SRCS = ConEmuPlugin.cpp \
        ConEmuPlugin995.cpp \
        ConEmuPluginA.cpp \
        ConEmuInjects.cpp \
-       SetConsoleInfo.cpp \
        ../common/SetHook.cpp \
        ../common/Common.cpp \
        ../common/ConEmuCheck.cpp

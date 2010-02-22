@@ -33,6 +33,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Tlhelp32.h>
 #include "ScreenDump.h"
 
+#ifdef _DEBUG
+	#define DEBUGDRAW_RCONPOS VK_SCROLL // -- при включенном ScrollLock отрисовать прямоугольник, соответствующий положению окна RealConsole
+	#define DEBUGDRAW_DIALOGS VK_CAPITAL // -- при включенном Caps отрисовать прямоугольники, соответствующие найденным диалогам
+#endif
+
 #define DEBUGSTRDRAW(s) //DEBUGSTR(s)
 #define DEBUGSTRCOORD(s) //DEBUGSTR(s)
 
@@ -58,8 +63,6 @@ WARNING("а перед пересылкой символа/клавиши проверять нажат ли на клавиатуре Ctr
 
 WARNING("Часто после разблокирования компьютера размер консоли изменяется (OK), но обновленное содержимое консоли не приходит в GUI - там остется обрезанная верхняя и нижняя строка");
 
-WARNING("! А нафига КУРСОР (мигающий) отрисовывать в VirtualConsole? Не лучше ли виртуальный битмап держать чистым, а курсор рисовать уже в окне, при необходимости");
-
 
 //Курсор, его положение, размер консоли, измененный текст, и пр...
 
@@ -69,9 +72,11 @@ WARNING("! А нафига КУРСОР (мигающий) отрисовывать в VirtualConsole? Не лучше ли
 #define Assert(V) if ((V)==FALSE) { TCHAR szAMsg[MAX_PATH*2]; wsprintf(szAMsg, _T("Assertion (%s) at\n%s:%i"), _T(#V), _T(__FILE__), __LINE__); Box(szAMsg); }
 
 #ifdef _DEBUG
-#undef MCHKHEAP
-#define MCHKHEAP //HeapValidate(mh_Heap, 0, NULL);
+//#undef HEAPVAL
+#define HEAPVAL HeapValidate(mh_Heap, 0, NULL);
 #define CURSOR_ALWAYS_VISIBLE
+#else
+#define HEAPVAL
 #endif
 
 #define ISBGIMGCOLOR(a) (gSet.nBgImageColors & (1 << a))
@@ -128,6 +133,9 @@ CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
 	memmove(mh_FontByIndex, gSet.mh_Font, sizeof(mh_FontByIndex));
 
 	memset(&TransparentInfo, 0, sizeof(TransparentInfo));
+
+	isFade = false; isForeground = true;
+	mp_Colors = gSet.GetColors();
 	
   
     //InitializeCriticalSection(&csDC); ncsTDC = 0; 
@@ -217,7 +225,7 @@ CVirtualConsole::~CVirtualConsole()
     if (mp_RCon)
         mp_RCon->StopThread();
 
-    MCHKHEAP;
+    HEAPVAL;
     if (hDC)
         { DeleteDC(hDC); hDC = NULL; }
     if (hBitmap)
@@ -361,7 +369,7 @@ bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize)
     //if ((int)TextWidth < csbi.dwSize.X)
     //    TextWidth = csbi.dwSize.X;
 
-    //MCHKHEAP
+    //HEAPVAL
     if (lbNeedCreateBuffers) {
         if (nMaxTextWidth < TextWidth)
             nMaxTextWidth = TextWidth;
@@ -378,7 +386,7 @@ bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize)
         TextParts = (struct _TextParts*)Alloc((nMaxTextWidth + 2), sizeof(*TextParts));
         HEAPVAL;
     }
-    //MCHKHEAP
+    //HEAPVAL
     if (!mpsz_ConChar || !mpsz_ConCharSave || !mpn_ConAttrEx || !mpn_ConAttrExSave || !ConCharX || !tmpOem || !TextParts) {
         WARNING("Если тут ошибка - будет просто DC Initialization failed, что не понятно...");
         return false;
@@ -587,7 +595,7 @@ void CVirtualConsole::BlitPictureTo(int inX, int inY, int inWidth, int inHeight)
     if (gSet.bgBmp.X<(inX+inWidth) || gSet.bgBmp.Y<(inY+inHeight))
     {
         if (hBrush0 == NULL) {
-            hBrush0 = CreateSolidBrush(gSet.Colors[0]);
+            hBrush0 = CreateSolidBrush(mp_Colors[0]);
             SelectBrush(hBrush0);
         }
 
@@ -862,7 +870,7 @@ bool CVirtualConsole::Update(bool isForce, HDC *ahDc)
     #endif
 
 
-    MCHKHEAP
+    HEAPVAL
     bool lRes = false;
     
     MSectionLock SCON; SCON.Lock(&csCON);
@@ -878,6 +886,10 @@ bool CVirtualConsole::Update(bool isForce, HDC *ahDc)
     //gSet.Performance(tPerfRead, FALSE);
 
     //if (gbNoDblBuffer) isForce = TRUE; // Debug, dblbuffer
+
+	isForeground = gConEmu.isMeForeground();
+	if (isFade == isForeground)
+		isForce = true;
 
     //------------------------------------------------------------------------
     ///| Read console output and cursor info... |/////////////////////////////
@@ -933,7 +945,7 @@ bool CVirtualConsole::Update(bool isForce, HDC *ahDc)
         UpdateText(isForce);
 
 
-        //MCHKHEAP
+        //HEAPVAL
         //------------------------------------------------------------------------
         ///| Now, store data for further comparison |/////////////////////////////
         //------------------------------------------------------------------------
@@ -941,13 +953,13 @@ bool CVirtualConsole::Update(bool isForce, HDC *ahDc)
         memcpy(mpn_ConAttrExSave, mpn_ConAttrEx, TextLen * sizeof(*mpn_ConAttrEx));
     }
 
-    //MCHKHEAP
+    //HEAPVAL
     //------------------------------------------------------------------------
     ///| Checking cursor |////////////////////////////////////////////////////
     //------------------------------------------------------------------------
     UpdateCursor(lRes);
     
-    MCHKHEAP
+    HEAPVAL
     
     //SDC.Leave();
     SCON.Unlock();
@@ -994,7 +1006,7 @@ bool CVirtualConsole::Update(bool isForce, HDC *ahDc)
     m_PartBrushes.clear();
 	*/
     SelectFont(NULL);
-    MCHKHEAP
+    HEAPVAL
     return lRes;
 }
 
@@ -1014,17 +1026,17 @@ BOOL CVirtualConsole::CheckTransparentRgn()
 			int nFontHeight = gSet.FontHeight();
 			int    nMaxRects = TextHeight*5;
 #ifdef _DEBUG
-			nMaxRects = 50;
+			nMaxRects = 5;
 #endif
-			POINT *lpAllPoints = (POINT*)calloc(nMaxRects*4,sizeof(POINT));
-			INT   *lpAllCounts = (INT*)calloc(nMaxRects,sizeof(INT));
-			MCHKHEAP;
+			POINT *lpAllPoints = (POINT*)Alloc(nMaxRects*4,sizeof(POINT));
+			//INT   *lpAllCounts = (INT*)Alloc(nMaxRects,sizeof(INT));
+			HEAPVAL;
 			int    nRectCount = 0;
 
-			if (lpAllPoints && lpAllCounts)
+			if (lpAllPoints /*&& lpAllCounts*/)
 			{
 				POINT *lpPoints = lpAllPoints;
-				INT   *lpCounts = lpAllCounts;
+				//INT   *lpCounts = lpAllCounts;
 
 				for (uint nY = 0; nY < TextHeight; nY++) {
 					uint nX = 0;
@@ -1044,24 +1056,25 @@ BOOL CVirtualConsole::CheckTransparentRgn()
 						int nXPix = 0;
 						if (nRectCount>=nMaxRects) {
 							nMaxRects += TextHeight;
-							MCHKHEAP;
-							POINT *lpTmpPoints = (POINT*)calloc(nMaxRects*4,sizeof(POINT));
-							INT   *lpTmpCounts = (INT*)calloc(nMaxRects,sizeof(INT));
-							MCHKHEAP;
-							if (!lpTmpPoints || !lpTmpCounts) {
-								_ASSERTE(lpTmpCounts && lpTmpPoints);
-								free(lpAllCounts);
-								free(lpAllPoints);
+							HEAPVAL;
+							POINT *lpTmpPoints = (POINT*)Alloc(nMaxRects*4,sizeof(POINT));
+							//INT   *lpTmpCounts = (INT*)Alloc(nMaxRects,sizeof(INT));
+							HEAPVAL;
+							if (!lpTmpPoints /*|| !lpTmpCounts*/) {
+								_ASSERTE(/*lpTmpCounts &&*/ lpTmpPoints);
+								//Free(lpAllCounts);
+								Free(lpAllPoints);
 								return FALSE;
 							}
 							memmove(lpTmpPoints, lpAllPoints, nRectCount*4*sizeof(POINT));
-							memmove(lpTmpCounts, lpAllCounts, nRectCount*sizeof(INT));
-							MCHKHEAP;
-							free(lpAllCounts);
-							free(lpAllPoints);
+							//memmove(lpTmpCounts, lpAllCounts, nRectCount*sizeof(INT));
+							HEAPVAL;
+							lpPoints = lpTmpPoints + (lpPoints - lpAllPoints);
+							//Free(lpAllCounts);
+							Free(lpAllPoints);
 							lpAllPoints = lpTmpPoints;
-							lpAllCounts = lpTmpCounts;
-							MCHKHEAP;
+							//lpAllCounts = lpTmpCounts;
+							HEAPVAL;
 						}
 						nRectCount++;
 #ifdef _DEBUG
@@ -1069,7 +1082,7 @@ BOOL CVirtualConsole::CheckTransparentRgn()
 							nRectCount = nRectCount;
 						}
 #endif
-						*(lpCounts++) = 4;
+						//*(lpCounts++) = 4;
 						lpPoints[0] = ConsoleToClient(nTranStart, nY);
 						lpPoints[1] = ConsoleToClient(nX, nY);
 							// x - 1?
@@ -1079,41 +1092,50 @@ BOOL CVirtualConsole::CheckTransparentRgn()
 						lpPoints += 4;
 
 						nX++;
-						MCHKHEAP;
+						HEAPVAL;
 					}
 					pnAttr += TextWidth;
 				}
 
-				MCHKHEAP;
+				HEAPVAL;
 				lbRgnChanged = (nRectCount != TransparentInfo.nRectCount);
 				if (!lbRgnChanged && TransparentInfo.nRectCount) {
 					_ASSERTE(TransparentInfo.pAllPoints && TransparentInfo.pAllCounts);
 					lbRgnChanged = memcmp(TransparentInfo.pAllPoints, lpAllPoints, sizeof(POINT)*4*nRectCount)!=0;
 				}
 
-				MCHKHEAP;
+				HEAPVAL;
 				if (lbRgnChanged) {
 					if (mh_TransparentRgn) { DeleteObject(mh_TransparentRgn); mh_TransparentRgn = NULL; }
-					mh_TransparentRgn = CreatePolyPolygonRgn(lpAllPoints, lpAllCounts, nRectCount, WINDING);
+
+					INT   *lpAllCounts = NULL;
+					if (nRectCount > 0) {
+						lpAllCounts = (INT*)Alloc(nRectCount,sizeof(INT));
+						INT   *lpCounts = lpAllCounts;
+						for (int n = 0; n < nRectCount; n++)
+							*(lpCounts++) = 4;
+
+						mh_TransparentRgn = CreatePolyPolygonRgn(lpAllPoints, lpAllCounts, nRectCount, WINDING);
+					}
 
 
-					MCHKHEAP;
+					HEAPVAL;
 					if (TransparentInfo.pAllCounts)
-						free(TransparentInfo.pAllCounts);
-					MCHKHEAP;
+						Free(TransparentInfo.pAllCounts);
+					HEAPVAL;
 					TransparentInfo.pAllCounts = lpAllCounts; lpAllCounts = NULL;
 					if (TransparentInfo.pAllPoints)
-						free(TransparentInfo.pAllPoints);
-					MCHKHEAP;
+						Free(TransparentInfo.pAllPoints);
+					HEAPVAL;
 					TransparentInfo.pAllPoints = lpAllPoints; lpAllPoints = NULL;
-					MCHKHEAP;
+					HEAPVAL;
 					TransparentInfo.nRectCount = nRectCount;
 				}
 
-				MCHKHEAP;
-				if (lpAllCounts) free(lpAllCounts);
-				if (lpAllPoints) free(lpAllPoints);
-				MCHKHEAP;
+				HEAPVAL;
+				//if (lpAllCounts) Free(lpAllCounts);
+				if (lpAllPoints) Free(lpAllPoints);
+				HEAPVAL;
 			}
 		}
 	}
@@ -1129,6 +1151,9 @@ bool CVirtualConsole::UpdatePrepare(bool isForce, HDC *ahDc, MSectionLock *pSDC)
     isEditor = gConEmu.isEditor();
 	isViewer = gConEmu.isViewer();
     isFilePanel = gConEmu.isFilePanel(true);
+
+	isFade = !isForeground;
+	mp_Colors = gSet.GetColors(isFade);
 
 
 	nFontHeight = gSet.FontHeight();
@@ -1230,7 +1255,7 @@ bool CVirtualConsole::UpdatePrepare(bool isForce, HDC *ahDc, MSectionLock *pSDC)
     // get cursor info
     mp_RCon->GetConsoleCursorInfo(/*hConOut(),*/ &cinf);
 
-    MCHKHEAP
+    HEAPVAL
     return true;
 }
 
@@ -1494,7 +1519,7 @@ void CVirtualConsole::UpdateText(bool isForce)
 			TODO("При позиционировании (наверное в DistrubuteSpaces) пытаться ориентироваться по координатам предыдущей строки");
 			// Иначе окантовка диалогов съезжает на пропорциональных шрифтах
 
-            MCHKHEAP
+            HEAPVAL
             // корректировка лидирующих пробелов и рамок
             if (bProportional && (c==ucBoxDblHorz || c==ucBoxSinglHorz))
             {
@@ -1513,7 +1538,7 @@ void CVirtualConsole::UpdateText(bool isForce)
                             nS22 ++;
                     }
                 }
-            } MCHKHEAP
+            } HEAPVAL
             // а вот для пробелов - когда их более одного
             /*else if (c==L' ' && j<end && ConCharLine[j+1]==L' ')
             {
@@ -1523,13 +1548,13 @@ void CVirtualConsole::UpdateText(bool isForce)
             }*/
 
 
-            //SetTextColor(hDC, gSet.Colors[attrFore]);
+            //SetTextColor(hDC, pColors[attrFore]);
             SetTextColor(hDC, attr.crForeColor);
 
             // корректировка положения вертикальной рамки (Coord.X>0)
             if (bProportional && j)
             {
-                MCHKHEAP;
+                HEAPVAL;
                 DWORD nPrevX = ConCharXLine[j-1];
 				// Рамки (их вертикальные части) и полосы прокрутки;
 				// Символом } фар помечает имена файлов вылезшие за пределы колонки...
@@ -1565,7 +1590,7 @@ void CVirtualConsole::UpdateText(bool isForce)
 				//        ConCharXLine[j-1] = j * nFontWidth;
 				//    //row = TextHeight - 1;
 				//}
-				MCHKHEAP;
+				HEAPVAL;
 
                 if (nPrevX < ConCharXLine[j-1]) {
                     // Требуется зарисовать пропущенную область. пробелами что-ли?
@@ -1592,7 +1617,7 @@ void CVirtualConsole::UpdateText(bool isForce)
 						// Если текущий символ - вертикальная рамка, а предыдущий символ - рамка
 						// нужно продлить рамку до текущего символа
 						if (isCharBorderVertical(c) && isCharBorder(PrevC)) {
-							//SetBkColor(hDC, gSet.Colors[attrBack]);
+							//SetBkColor(hDC, pColors[attrBack]);
 							SetBkColor(hDC, attr.crBackColor);
 							wchar_t *pchBorder = (c == ucBoxDblDownLeft || c == ucBoxDblUpLeft 
 								|| c == ucBoxSinglDownDblHorz || c == ucBoxSinglUpDblHorz || c == ucBoxDblVertLeft
@@ -1605,7 +1630,7 @@ void CVirtualConsole::UpdateText(bool isForce)
 							//UINT nFlags = ETO_CLIPPED; // || ETO_OPAQUE;
 							//ExtTextOut(hDC, rect.left, rect.top, nFlags, &rect, Spaces, min(nSpaceCount, nCnt), 0);
 							//if (! (drawImage && ISBGIMGCOLOR(attr.nBackIdx)))
-							//	SetBkColor(hDC, gSet.Colors[attrBack]);
+							//	SetBkColor(hDC, pColors[attrBack]);
 							//else if (drawImage)
 							//	BlitPictureTo(rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top);
 							UINT nFlags = ETO_CLIPPED | ETO_OPAQUE;
@@ -1624,19 +1649,19 @@ void CVirtualConsole::UpdateText(bool isForce)
 
                     } else if (drawImage) {
                         BlitPictureTo(rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top);
-                    } MCHKHEAP
+                    } HEAPVAL
                     if (gbNoDblBuffer) GdiFlush();
                 }
             }
 
             ConCharXLine[j] = (j ? ConCharXLine[j-1] : 0)+CharWidth(c);
-            MCHKHEAP
+            HEAPVAL
 
 
             if (bForceMonospace)
             {
-                MCHKHEAP
-                //SetBkColor(hDC, gSet.Colors[attrBack]);
+                HEAPVAL
+                //SetBkColor(hDC, pColors[attrBack]);
                 SetBkColor(hDC, attr.crBackColor);
 
                 j2 = j + 1;
@@ -1659,7 +1684,7 @@ void CVirtualConsole::UpdateText(bool isForce)
                 UINT nFlags = ETO_CLIPPED | ((drawImage && ISBGIMGCOLOR(attr.nBackIdx)) ? 0 : ETO_OPAQUE);
                 int nShift = 0;
 
-                MCHKHEAP
+                HEAPVAL
                 if (!isSpace && !isUnicodeOrProgress) {
                     ABC abc;
                     //Для НЕ TrueType вызывается wrapper (CharWidth)
@@ -1678,9 +1703,9 @@ void CVirtualConsole::UpdateText(bool isForce)
                     }
                 }
 
-                MCHKHEAP
+                HEAPVAL
                 if (! (drawImage && ISBGIMGCOLOR(attr.nBackIdx))) {
-                    //SetBkColor(hDC, gSet.Colors[attrBack]);
+                    //SetBkColor(hDC, pColors[attrBack]);
                     SetBkColor(hDC, attr.crBackColor);
 					// В режиме ForceMonospace символы пытаемся рисовать по центру (если они уже знакоместа)
 					// чтобы не оставалось мусора от предыдущей отрисовки - нужно залить знакоместо фоном
@@ -1713,7 +1738,7 @@ void CVirtualConsole::UpdateText(bool isForce)
 					}
 				}
                 if (gbNoDblBuffer) GdiFlush();
-                MCHKHEAP
+                HEAPVAL
 
             } // end  - if (gSet.isForceMonospace)
 			else
@@ -1726,7 +1751,7 @@ void CVirtualConsole::UpdateText(bool isForce)
 				//else if (/*gSet.isProportional &&*/ (c==ucSpace || c==ucNoBreakSpace || c==0))
 				if (isSpace)
 				{
-					j2 = j + 1; MCHKHEAP;
+					j2 = j + 1; HEAPVAL;
 					while(j2 < end && ConAttrLine[j2] == attr && isCharSpace(ConCharLine[j2]))
 						j2++;
 					DistributeSpaces(ConCharLine, ConAttrLine, ConCharXLine, j, j2, end);
@@ -1734,7 +1759,7 @@ void CVirtualConsole::UpdateText(bool isForce)
 				}
 				else if (!isUnicodeOrProgress)
 				{
-					j2 = j + 1; MCHKHEAP
+					j2 = j + 1; HEAPVAL
 
 					#ifndef DRAWEACHCHAR
 					// Если этого не делать - в пропорциональных шрифтах буквы будут наезжать одна на другую
@@ -1750,11 +1775,11 @@ void CVirtualConsole::UpdateText(bool isForce)
 					#endif
 
 					SelectFont(hFont);
-					MCHKHEAP
+					HEAPVAL
 				}
 				else //Border and specials
 				{
-					j2 = j + 1; MCHKHEAP
+					j2 = j + 1; HEAPVAL
 
 					if (bEnhanceGraphics && isProgress) {
 						TCHAR ch;
@@ -1815,7 +1840,7 @@ void CVirtualConsole::UpdateText(bool isForce)
 					}
 
 					SelectFont(bFixFarBorders ? hFont2 : hFont);
-					MCHKHEAP
+					HEAPVAL
 				}
 
 
@@ -1835,10 +1860,10 @@ void CVirtualConsole::UpdateText(bool isForce)
                 rect.bottom = rect.top + nFontHeight;
                 //}
 
-                MCHKHEAP
+                HEAPVAL
 				BOOL lbImgDrawn = FALSE;
                 if (! (drawImage && ISBGIMGCOLOR(attr.nBackIdx))) {
-                    //SetBkColor(hDC, gSet.Colors[attrBack]);
+                    //SetBkColor(hDC, pColors[attrBack]);
                     SetBkColor(hDC, attr.crBackColor);
 				} else if (drawImage) {
                     BlitPictureTo(rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top);
@@ -1848,7 +1873,7 @@ void CVirtualConsole::UpdateText(bool isForce)
 				WARNING("ETO_CLIPPED вроде вообще не нарисует символ, если его часть не влезает?");
                 UINT nFlags = ETO_CLIPPED | ((drawImage && ISBGIMGCOLOR(attr.nBackIdx)) ? 0 : ETO_OPAQUE);
 
-                MCHKHEAP
+                HEAPVAL
                 if (gbNoDblBuffer) GdiFlush();
                 if (isProgress && bEnhanceGraphics) {
 					HBRUSH hbr = PartBrush(c, attr.crBackColor, attr.crForeColor);
@@ -1913,7 +1938,7 @@ void CVirtualConsole::UpdateText(bool isForce)
 					}
 				}
                 if (gbNoDblBuffer) GdiFlush();
-                MCHKHEAP
+                HEAPVAL
             }
 
 			DUMPDC(L"F:\\vcon.png");
@@ -1924,7 +1949,7 @@ void CVirtualConsole::UpdateText(bool isForce)
 			//// skip next not changed symbols again
 			//if (skipNotChanged)
 			//{
-			//    MCHKHEAP
+			//    HEAPVAL
 			//	wchar_t ch;
 			//    // skip the same except spaces
 			//    while(j2 < end && (ch = ConCharLine[j2]) == ConCharLine2[j2] && ConAttrLine[j2] == ConAttrLine2[j2]
@@ -2145,7 +2170,7 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
 	BYTE G = (clr & 0xFF00) >> 8;
 	BYTE B = (clr & 0xFF0000) >> 16;
 	lbDark = (R <= 0xC0) && (G <= 0xC0) && (B <= 0xC0);
-	clr = lbDark ? gSet.Colors[15] : gSet.Colors[0];
+	clr = lbDark ? mp_Colors[15] : mp_Colors[0];
 
 	HBRUSH hBr = CreateSolidBrush(clr);
 	FillRect(hPaintDC, &rect, hBr);
@@ -2282,7 +2307,8 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
         #else
             int nBackColorIdx = 0;
         #endif
-        HBRUSH hBr = CreateSolidBrush(gSet.Colors[nBackColorIdx]);
+		COLORREF *pColors = gSet.GetColors();
+        HBRUSH hBr = CreateSolidBrush(pColors[nBackColorIdx]);
         //RECT rcClient; GetClientRect(ghWndDC, &rcClient);
         //PAINTSTRUCT ps;
         //HDC hPaintDc = BeginPaint(ghWndDC, &ps);
@@ -2296,8 +2322,8 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
 				pszStarting = mp_RCon->GetConStatus();
 		}
 		UINT nFlags = ETO_CLIPPED;
-		SetTextColor(hPaintDc, gSet.Colors[7]);
-		SetBkColor(hPaintDc, gSet.Colors[0]);
+		SetTextColor(hPaintDc, pColors[7]);
+		SetBkColor(hPaintDc, pColors[0]);
 		ExtTextOut(hPaintDc, rcClient.left, rcClient.top, nFlags, &rcClient, pszStarting, wcslen(pszStarting), 0);
 		SelectObject(hPaintDc, hOldF);
         DeleteObject(hBr);
@@ -2341,7 +2367,7 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
     // Если окно больше готового DC - залить края (справа/снизу) фоновым цветом
     HBRUSH hBr = NULL;
     if (((ULONG)(client.right-client.left)) > Width) {
-        if (!hBr) hBr = CreateSolidBrush(gSet.Colors[mn_BackColorIdx]);
+        if (!hBr) hBr = CreateSolidBrush(mp_Colors[mn_BackColorIdx]);
         RECT rcFill = MakeRect(client.left+Width, client.top, client.right, client.bottom);
         #ifndef SKIP_ALL_FILLRECT
         FillRect(hPaintDc, &rcFill, hBr);
@@ -2349,7 +2375,7 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
         client.right = client.left+Width;
     }
     if (((ULONG)(client.bottom-client.top)) > Height) {
-        if (!hBr) hBr = CreateSolidBrush(gSet.Colors[mn_BackColorIdx]);
+        if (!hBr) hBr = CreateSolidBrush(mp_Colors[mn_BackColorIdx]);
         RECT rcFill = MakeRect(client.left, client.top+Height, client.right, client.bottom);
         #ifndef SKIP_ALL_FILLRECT
         FillRect(hPaintDc, &rcFill, hBr);
@@ -2372,7 +2398,7 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
         // Обычный режим
 		if (gSet.isAdvLogging>=3) mp_RCon->LogString("Blitting to Display");
 
-		if (gSet.isFadeInactive && !gConEmu.isMeForeground()) {
+		/*if (gSet.isFadeInactive && !gConEmu.isMeForeground()) {
 			// Fade-effect когда CE не в фокусе
 			DWORD dwFadeColor = gSet.nFadeInactiveMask; //0xC0C0C0;
 			// пробовал средний между Colors[7] & Colors[8] - некрасиво
@@ -2389,10 +2415,12 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
 			SelectObject ( hPaintDc, hOld );
 			DeleteObject ( hBr );
 				
-		} else {
-        	BitBlt(hPaintDc, client.left, client.top, client.right-client.left, client.bottom-client.top, hDC, 0, 0,
-        		SRCCOPY);
-        }
+		} else {*/
+
+    	BitBlt(hPaintDc, client.left, client.top, client.right-client.left, client.bottom-client.top, hDC, 0, 0,
+    		SRCCOPY);
+
+        /*}*/
 
 		if (gSet.isUserScreenTransparent) {
 			if (CheckTransparentRgn())
@@ -2439,8 +2467,8 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
 					//GetCharAttr(mpsz_ConChar[CurChar], mpn_ConAttr[CurChar], Cursor.ch[0], Cursor.foreColorNum, Cursor.bgColorNum);
 					Cursor.ch = mpsz_ConChar[CurChar];
 					//GetCharAttr(mpn_ConAttr[CurChar], Cursor.foreColorNum, Cursor.bgColorNum, NULL);
-					//Cursor.foreColor = gSet.Colors[Cursor.foreColorNum];
-					//Cursor.bgColor = gSet.Colors[Cursor.bgColorNum];
+					//Cursor.foreColor = pColors[Cursor.foreColorNum];
+					//Cursor.bgColor = pColors[Cursor.bgColorNum];
 					Cursor.foreColor = mpn_ConAttrEx[CurChar].crForeColor;
 					Cursor.bgColor = mpn_ConAttrEx[CurChar].crBackColor;
 				}
@@ -2456,13 +2484,57 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
         }
 
 #ifdef _DEBUG
-	if (mp_RCon && (GetKeyState(VK_SCROLL) & 1)) {
-		HWND hConWnd = mp_RCon->hConWnd;
-		RECT rcCon; GetWindowRect(hConWnd, &rcCon);
-		MapWindowPoints(NULL, ghWndDC, (LPPOINT)&rcCon, 2);
-		SelectObject(hPaintDc, GetStockObject(WHITE_PEN));
-		SelectObject(hPaintDc, GetStockObject(HOLLOW_BRUSH));
-		Rectangle(hPaintDc, rcCon.left, rcCon.top, rcCon.right, rcCon.bottom);
+	if (mp_RCon) {
+		#ifdef DEBUGDRAW_RCONPOS
+		if (GetKeyState(DEBUGDRAW_RCONPOS) & 1) {
+			// Прямоугольник, соответвующий положения окна RealConsole
+			HWND hConWnd = mp_RCon->hConWnd;
+			RECT rcCon; GetWindowRect(hConWnd, &rcCon);
+			MapWindowPoints(NULL, ghWndDC, (LPPOINT)&rcCon, 2);
+			SelectObject(hPaintDc, GetStockObject(WHITE_PEN));
+			SelectObject(hPaintDc, GetStockObject(HOLLOW_BRUSH));
+			Rectangle(hPaintDc, rcCon.left, rcCon.top, rcCon.right, rcCon.bottom);
+		}
+		#endif
+
+		#ifdef DEBUGDRAW_DIALOGS
+		if (GetKeyState(DEBUGDRAW_DIALOGS) & 1) {
+			// Прямоугольники найденных диалогов
+			SMALL_RECT rcFound[MAX_DETECTED_DIALOGS]; bool bFrame[MAX_DETECTED_DIALOGS];
+			int nFound = mp_RCon->GetDetectedDialogs(MAX_DETECTED_DIALOGS, rcFound, bFrame);
+			HPEN hWhite = (HPEN)GetStockObject(WHITE_PEN);
+			HPEN hOldPen = (HPEN)SelectObject(hPaintDc, hWhite);
+			HBRUSH hOldBr = (HBRUSH)SelectObject(hPaintDc, GetStockObject(HOLLOW_BRUSH));
+			HPEN hRed = CreatePen(PS_SOLID, 1, 255);
+			HPEN hDash = CreatePen(PS_DOT, 1, 0xFFFFFF);
+			HFONT hSmall = CreateFont(-7,0,0,0,400,0,0,0,ANSI_CHARSET,OUT_DEFAULT_PRECIS,CLIP_DEFAULT_PRECIS,NONANTIALIASED_QUALITY,DEFAULT_PITCH,L"Small fonts");
+			HFONT hOldFont = (HFONT)SelectObject(hPaintDc, hSmall);
+			SetTextColor(hPaintDc, 0xFFFFFF);
+			SetBkColor(hPaintDc, 0);
+			for (int i = 0; i < nFound; i++) {
+				if (i == (DEBUGDRAW_DIALOGS-1))
+					SelectObject(hPaintDc, hRed);
+				else if (bFrame[i])
+					SelectObject(hPaintDc, hWhite);
+				else
+					SelectObject(hPaintDc, hDash);
+				//
+				POINT pt[2];
+				pt[0] = ConsoleToClient(rcFound[i].Left, rcFound[i].Top);
+				pt[1] = ConsoleToClient(rcFound[i].Right+1, rcFound[i].Bottom+1);
+				MapWindowPoints(ghWndDC, ghWnd, pt, 2);
+				Rectangle(hPaintDc, pt[0].x+1, pt[0].y+1, pt[1].x-1, pt[1].y-1);
+				wchar_t szCoord[32]; wsprintf(szCoord, L"%ix%i", rcFound[i].Left, rcFound[i].Top);
+				TextOut(hPaintDc, pt[0].x+1, pt[0].y+1, szCoord, wcslen(szCoord));
+			}
+			SelectObject(hPaintDc, hOldBr);
+			SelectObject(hPaintDc, hOldPen);
+			SelectObject(hPaintDc, hOldFont);
+			DeleteObject(hRed);
+			DeleteObject(hDash);
+			DeleteObject(hSmall);
+		}
+		#endif
 	}
 #endif
 
@@ -2677,12 +2749,12 @@ void CVirtualConsole::DistributeSpaces(wchar_t* ConCharLine, CharAttr* ConAttrLi
 
 	if (j2 > (j + 1))
 	{
-		MCHKHEAP
+		HEAPVAL
 		DWORD n1 = (j ? ConCharXLine[j-1] : 0); // j? если j==0 то тут у нас 10 (правая граница 0го символа в строке)
 		DWORD n3 = j2-j; // кол-во символов
 		_ASSERTE(n3>0);
 		DWORD n2 = ConCharXLine[j2-1] - n1; // выделенная на пробелы ширина
-		MCHKHEAP
+		HEAPVAL
 
 		for (int k=j, l=1; k<(j2-1); k++, l++) {
 			#ifdef _DEBUG
@@ -2692,7 +2764,7 @@ void CVirtualConsole::DistributeSpaces(wchar_t* ConCharLine, CharAttr* ConAttrLi
 			#endif
 			ConCharXLine[k] = n1 + (n3 ? klMulDivU32(l, n2, n3) : 0);
 			//n1 + (n3 ? klMulDivU32(k-j, n2, n3) : 0);
-			MCHKHEAP
+			HEAPVAL
 		}
 	}
 }

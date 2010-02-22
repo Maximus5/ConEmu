@@ -142,6 +142,7 @@ typedef struct tag_CharAttr
 			// вспомогательные флаги
 			unsigned int bDialog : 1;
 			unsigned int bDialogVBorder : 1;
+			unsigned int bDialogCorner : 1;
 			unsigned int bSomeFilled : 1;
 			unsigned int bTransparent : 1; // UserScreen
 		};
@@ -241,9 +242,6 @@ public:
     BOOL RecreateProcess(RConStartArgs *args);
     void GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight);
 	BOOL IsConsoleDataChanged();
-	void PrepareTransparent(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight);
-	void DetectDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int nFromX, int nFromY, int *pnMostRight=NULL, int *pnMostBottom=NULL);
-	void MarkDialog(CharAttr* pAttr, int nWidth, int nHeight, int nX1, int nY1, int nX2, int nY2, BOOL bMarkBorder = FALSE);
     void OnActivate(int nNewNum, int nOldNum);
     void OnDeactivate(int nNewNum);
     BOOL CheckBufferSize();
@@ -280,6 +278,7 @@ public:
 	void RemoveFromCursor();
 	bool isAlive();
 	bool GetMaxConSize(COORD* pcrMaxConSize);
+	int GetDetectedDialogs(int anMaxCount, SMALL_RECT* rc, bool* rb);
 
 public:
     // Вызываются из CVirtualConsole
@@ -289,6 +288,7 @@ public:
     void SetForceRead();
     //DWORD WaitEndUpdate(DWORD dwTimeout=1000);
     LPCWSTR GetConStatus();
+	void UpdateCursorInfo();
 
 protected:
     CVirtualConsole* mp_VCon; // соответствующая виртуальная консоль
@@ -462,4 +462,35 @@ private:
 	bool isCharBorderLeftVertical(WCHAR inChar);
 	bool isCharBorderHorizontal(WCHAR inChar);
 	bool ConsoleRect2ScreenRect(const RECT &rcCon, RECT *prcScr);
+	/* ****************************************** */
+	/* Поиск диалогов и пометка "прозрачных" мест */
+	/* ****************************************** */
+	void PrepareTransparent(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight);
+	void DetectDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int nFromX, int nFromY, int *pnMostRight=NULL, int *pnMostBottom=NULL);
+	bool FindDialog_TopLeft(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostRight, int &nMostBottom, BOOL &bMarkBorder);
+	bool FindDialog_TopRight(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostRight, int &nMostBottom, BOOL &bMarkBorder);
+	bool FindDialog_Left(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostRight, int &nMostBottom, BOOL &bMarkBorder);
+	bool FindDialog_Right(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostRight, int &nMostBottom, BOOL &bMarkBorder);
+	bool FindDialog_Any(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostRight, int &nMostBottom, BOOL &bMarkBorder);
+	bool FindDialog_Inner(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY);
+	bool FindFrame_TopLeft(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nFrameX, int &nFrameY);
+	bool FindFrameTop_ByRight(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostTop);
+	bool FindFrameTop_ByLeft(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostTop);
+	bool FindFrameBottom_ByRight(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostBottom);
+	bool FindFrameBottom_ByLeft(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostBottom);
+	bool FindFrameRight_ByTop(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostRight);
+	bool FindFrameRight_ByBottom(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostRight);
+	bool FindFrameLeft_ByTop(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostLeft);
+	bool FindFrameLeft_ByBottom(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostLeft);
+	// Последний шанс
+	void FindByBackground(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, wchar_t wc, int &nFromX, int &nFromY, int &nMostRight, int &nMostBottom, BOOL &bMarkBorder);
+	// Сервисная
+	void ExpandDialogFrame(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int nFrameX, int nFrameY, int &nMostRight, int &nMostBottom);
+	void MarkDialog(CharAttr* pAttr, int nWidth, int nHeight, int nX1, int nY1, int nX2, int nY2, BOOL bMarkBorder = FALSE);
+#define MAX_DETECTED_DIALOGS 20
+	struct {
+		int Count;
+		SMALL_RECT Rects[MAX_DETECTED_DIALOGS];
+		bool bWasFrame[MAX_DETECTED_DIALOGS];
+	} m_DetectedDialogs;
 };

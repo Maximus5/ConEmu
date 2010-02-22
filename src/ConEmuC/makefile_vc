@@ -107,7 +107,6 @@ $(INTDIR)\ConEmuC.obj \
 $(INTDIR)\ConEmuCmd.obj \
 $(INTDIR)\ConEmuSrv.obj \
 $(INTDIR)\execute.obj \
-$(INTDIR)\setconsoleinfo.obj \
 $(INTDIR)\Common.obj \
 $(INTDIR)\ConEmuCheck.obj
 
@@ -260,8 +259,6 @@ $(INTDIR)\ConEmuCmd.obj: ConEmuCmd.cpp ConEmuC.h ..\common\Common.hpp
 $(INTDIR)\ConEmuSrv.obj: ConEmuSrv.cpp ConEmuC.h ..\common\Common.hpp
 
 $(INTDIR)\execute.obj: execute.cpp
-
-$(INTDIR)\setconsoleinfo.obj: ..\ConEmuPlugin\setconsoleinfo.cpp
 
 $(INTDIR)\Common.obj: ..\common\Common.cpp ..\common\Common.hpp
 

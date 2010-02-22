@@ -362,12 +362,12 @@ BEGIN
                     BS_AUTOCHECKBOX | WS_TABSTOP,217,201,97,9
     CONTROL         "Fade contents when inactive",cbFadeInactive,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,99,217,111,9
-    RTEXT           "Fade mask:",IDC_STATIC,204,217,49,8
-    LTEXT           "",c32,259,215,12,12,SS_NOTIFY | SS_SUNKEN
-    EDITTEXT        tc32,273,215,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,
-                    WS_EX_STATICEDGE
+    RTEXT           "Low:",IDC_STATIC,215,217,26,8
     CONTROL         "Block inactive cursor",cbBlockInactiveCursor,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,8,217,86,9
+    EDITTEXT        tFadeLow,245,216,22,12,ES_AUTOHSCROLL
+    RTEXT           "High:",IDC_STATIC,270,217,22,8
+    EDITTEXT        tFadeHigh,296,216,20,12,ES_AUTOHSCROLL
 END
 
 IDD_SETTINGS DIALOGEX 0, 0, 341, 276
@@ -382,7 +382,7 @@ BEGIN
     PUSHBUTTON      "Reload",bReloadSettings,62,259,51,14,WS_DISABLED
 END
 
-IDD_SPG_INFO DIALOGEX 0, 0, 328, 216
+IDD_SPG_INFO DIALOGEX 0, 0, 328, 224
 STYLE DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
@@ -405,44 +405,46 @@ BEGIN
                     WS_TABSTOP
     CHECKBOX        "Viewer",cbsViewer,192,50,36,10,WS_DISABLED | NOT 
                     WS_TABSTOP
-    GROUPBOX        "Processes",IDC_STATIC,4,68,185,111
+    GROUPBOX        "Processes",IDC_STATIC,4,68,185,125
     EDITTEXT        tsTopPID,76,49,44,12,ES_AUTOHSCROLL | ES_READONLY
-    LISTBOX         lbProcesses,9,79,173,94,NOT LBS_NOTIFY | 
+    LISTBOX         lbProcesses,9,79,173,109,NOT LBS_NOTIFY | 
                     LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_HSCROLL | 
                     WS_TABSTOP
     RTEXT           "FPS:",IDC_STATIC,9,17,23,8
     EDITTEXT        tPerfFPS,36,16,43,12,ES_AUTOHSCROLL | ES_READONLY
     EDITTEXT        tPerfInterval,274,16,43,12,ES_AUTOHSCROLL | ES_READONLY
     RTEXT           "Interval:",IDC_STATIC,240,17,31,8
-    GROUPBOX        "Current command line",IDC_STATIC,4,181,319,30
-    EDITTEXT        tCurCmdLine,9,192,307,12,ES_AUTOHSCROLL | ES_READONLY
-    GROUPBOX        "Sizes",IDC_STATIC,195,68,128,111
+    GROUPBOX        "Current command line",IDC_STATIC,4,193,319,29
+    EDITTEXT        tCurCmdLine,9,204,307,12,ES_AUTOHSCROLL | ES_READONLY
+    GROUPBOX        "Sizes",IDC_STATIC,195,68,128,125
     RTEXT           "Console (chars):",IDC_STATIC,200,79,59,8
     EDITTEXT        tConSizeChr,264,77,54,12,ES_AUTOHSCROLL | ES_READONLY
     RTEXT           "(pixels):",IDC_STATIC,229,94,30,8
     EDITTEXT        tConSizePix,264,92,54,12,ES_AUTOHSCROLL | ES_READONLY
     RTEXT           "DC window:",IDC_STATIC,214,110,45,8
     EDITTEXT        tDCSize,264,108,54,12,ES_AUTOHSCROLL | ES_READONLY
-    RTEXT           "Left:",IDC_STATIC,198,126,26,8
-    EDITTEXT        tPanelLeft,228,124,90,12,ES_AUTOHSCROLL | ES_READONLY
-    RTEXT           "Right:",IDC_STATIC,197,142,27,8
-    EDITTEXT        tPanelRight,228,140,90,12,ES_AUTOHSCROLL | ES_READONLY
+    RTEXT           "Left:",IDC_STATIC,198,142,26,8
+    EDITTEXT        tPanelLeft,228,140,90,12,ES_AUTOHSCROLL | ES_READONLY
+    RTEXT           "Right:",IDC_STATIC,197,158,27,8
+    EDITTEXT        tPanelRight,228,156,90,12,ES_AUTOHSCROLL | ES_READONLY
     CONTROL         "%%",cbsProgress,"Button",BS_AUTOCHECKBOX | WS_DISABLED | 
                     WS_TABSTOP,231,50,24,10
     CONTROL         "Error",cbsProgressError,"Button",BS_AUTOCHECKBOX | 
                     WS_DISABLED | WS_TABSTOP,258,50,28,10
-    RTEXT           "Main:",IDC_STATIC,200,163,20,8
-    EDITTEXT        tRealFontMain,223,161,43,12,ES_AUTOHSCROLL | ES_READONLY
-    RTEXT           "Fix:",IDC_STATIC,271,163,13,8
-    EDITTEXT        tRealFontBorders,287,161,31,12,ES_AUTOHSCROLL | 
+    RTEXT           "Main:",IDC_STATIC,200,178,20,8
+    EDITTEXT        tRealFontMain,223,176,43,12,ES_AUTOHSCROLL | ES_READONLY
+    RTEXT           "Fix:",IDC_STATIC,271,178,13,8
+    EDITTEXT        tRealFontBorders,287,176,31,12,ES_AUTOHSCROLL | 
                     ES_READONLY
-    GROUPBOX        "Font",IDC_STATIC,195,153,128,26
+    GROUPBOX        "Font",IDC_STATIC,195,167,128,26
+    EDITTEXT        tCursorPos,264,124,54,12,ES_AUTOHSCROLL | ES_READONLY
+    RTEXT           "Cursor:",IDC_STATIC,214,126,45,8
 END
 
 IDD_SPG_FEATURE DIALOGEX 0, 0, 328, 235
 STYLE DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
-FONT 8, "MS Shell Dlg"
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     GROUPBOX        "Tabs (panels, editors, viewers)",IDC_STATIC,4,2,319,28
     CONTROL         "Enable Tabs",cbTabs,"Button",BS_AUTO3STATE | WS_TABSTOP,
@@ -610,6 +612,11 @@ BEGIN
         BOTTOMMARGIN, 78
     END
 
+    IDD_SPG_INFO, DIALOG
+    BEGIN
+        BOTTOMMARGIN, 216
+    END
+
     IDD_MORE_HIDE, DIALOG
     BEGIN
         LEFTMARGIN, 4
@@ -704,7 +711,6 @@ END
 
 STRINGTABLE DISCARDABLE 
 BEGIN
-    c32                     "When ConEmu looses focus, its contents may be faded. You may specify most bright color (default is «208 208 208»)."
     cbRClick                "Off - all RClicks passed to console\nOn - EMenu called instead of RClick\n3s - Short RClick passed, Long RClick -> EMenu\nWarning! This may conflict with RDrag"
     cbBgImage               "Show background image instead standard\ncolors #0 and #1 (black and blue)\n3d state - don't draw in viewer/editor"
 END
@@ -790,11 +796,6 @@ END
 
 STRINGTABLE DISCARDABLE 
 BEGIN
-    tc32                    "When ConEmu looses focus, its contents may be faded. You may specify most bright color (default is «208 208 208»)."
-END
-
-STRINGTABLE DISCARDABLE 
-BEGIN
     cbBlockInactiveCursor   "Draw empty rectangle cursor while ConEmu has no focus"
     bHideCaptionSettings    "Choose frame width, appearance and disappearance delays"
     tHideCaptionAlwaysFrame "While caption and frame are hidden, ConEmu may keep small part of frame (in pixels) around console part. Default is 1 pixel."
@@ -809,6 +810,8 @@ STRINGTABLE DISCARDABLE
 BEGIN
     cbHandleFarDetach       "Automatic attach to ConEmu new Far manager console, created on detach (CtrlAltTab)"
     cbHookFarRegistry       "Enable portable mode for FAR manager. ConEmu plugin must be installed."
+    tFadeLow                "When ConEmu looses focus, its contents may be faded. You may specify here 'low shift' (wich makes dark colors lighter)."
+    tFadeHigh               "When ConEmu looses focus, its contents may be faded. You may specify here 'high shift' (wich makes light colors darker)."
 END
 
 #endif    // English (U.S.) resources
