@@ -54,7 +54,6 @@
 #define c29                             1029
 #define c30                             1030
 #define c31                             1031
-#define c32                             1032
 #define cbRClick                        1034
 #define tBgImage                        1037
 #define tDarker                         1038
@@ -125,7 +124,6 @@
 #define tc29                            1129
 #define tc30                            1130
 #define tc31                            1131
-#define tc32                            1132
 #define bChooseFont                     1201
 #define rNoneAA                         1202
 #define rStandardAA                     1203
@@ -253,6 +251,8 @@
 #define IDC_CHECK1                      1620
 #define cbHookFarRegistry               1621
 #define tCursorPos                      1622
+#define tFadeLow                        1624
+#define tFadeHigh                       1625
 
 // Next default values for new objects
 // 
@@ -260,7 +260,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        203
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1623
+#define _APS_NEXT_CONTROL_VALUE         1626
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif
