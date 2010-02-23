@@ -4782,3 +4782,8 @@ BYTE CSettings::GetFadeColorItem(BYTE c)
 			return (BYTE)nRc;
 	}
 }
+
+bool CSettings::NeedDialogDetect()
+{
+	return (isUserScreenTransparent || !isMonospace);
+}

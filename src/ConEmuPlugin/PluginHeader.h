@@ -116,7 +116,7 @@ void SetWindowA(int nTab);
 void FUNC_X(SetWindow)(int nTab);
 void FUNC_Y(SetWindow)(int nTab);
 
-void CheckResources();
+void CheckResources(BOOL abFromStartup);
 void InitResources();
 void CloseTabs();
 
@@ -137,9 +137,12 @@ int FUNC_Y(ShowMessage)(int aiMsg, int aiButtons);
 //void ReloadMacroA();
 //void FUNC_X(ReloadMacro)();
 //void FUNC_Y(ReloadMacro)();
-void ReloadFarInfoA();
-void FUNC_X(ReloadFarInfo)();
-void FUNC_Y(ReloadFarInfo)();
+extern CEFAR_INFO *gpFarInfo;
+void ReloadFarInfoA(BOOL abFull = FALSE);
+void FUNC_X(ReloadFarInfo)(BOOL abFull = FALSE);
+#if (FAR_X_VER!=FAR_Y_VER)
+void FUNC_Y(ReloadFarInfo)(BOOL abFull = FALSE);
+#endif
 void PostMacro(wchar_t* asMacro);
 void PostMacroA(char* asMacro);
 void FUNC_X(PostMacro)(wchar_t* asMacro);

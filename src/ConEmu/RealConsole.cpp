@@ -4759,7 +4759,7 @@ bool CRealConsole::FindFrameLeft_ByBottom(wchar_t* pChar, CharAttr* pAttr, int n
 		n = nShift+nMostLeft;
 		//if (pAttr[n].crBackColor != nBackColor)
 		//	break; // конец цвета фона диалога
-		if (pChar[n] == nMostLeft) {
+		if (pChar[n] == wcMostLeft) {
 			nMostLeft--;
 			break; // закрывающая угловая рамка
 		}
@@ -4791,8 +4791,8 @@ bool CRealConsole::FindDialog_TopLeft(wchar_t* pChar, CharAttr* pAttr, int nWidt
 	nMostRightBottom = nFromY;
 	if (FindFrameBottom_ByRight(pChar, pAttr, nWidth, nHeight, nMostRight, nFromY, nMostRightBottom)) {
 		_ASSERTE(nMostRightBottom<nHeight);
-		// Результатом считаем - наименьшую высоту (перекрытие диалогов?)
-		if (nMostRightBottom < nMostBottom)
+		// Результатом считаем - наиБОЛЬШУЮ высоту
+		if (nMostRightBottom > nMostBottom)
 			nMostBottom = nMostRightBottom;
 	}
 
@@ -4838,7 +4838,7 @@ bool CRealConsole::FindDialog_Left(wchar_t* pChar, CharAttr* pAttr, int nWidth, 
 	//nBackColor = pAttr[nFromX+nWidth*nFromY].crBackColor; // но на всякий случай сохраним цвет фона для сравнения
 	wchar_t wcMostRight, wcMostBottom, wcMostRightBottom, wcMostTop, wcNotMostBottom1, wcNotMostBottom2;
 	int nShift = nWidth*nFromY;
-	int nMostTop, nY;
+	int nMostTop, nY, nX;
 
 	wchar_t wc = pChar[nShift+nFromX];
 
@@ -4869,10 +4869,18 @@ bool CRealConsole::FindDialog_Left(wchar_t* pChar, CharAttr* pAttr, int nWidth, 
 	FindFrameBottom_ByLeft(pChar, pAttr, nWidth, nHeight, nFromX, nFromY, nMostBottom);
 	_ASSERTE(nMostBottom<nHeight);
 
-	// Найти правую границу
+	// Найти правую границу по верху
 	nMostRight = nFromX;
-	FindFrameRight_ByTop(pChar, pAttr, nWidth, nHeight, nFromX, nFromY, nMostRight);
-	_ASSERTE(nMostRight<nWidth);
+	if (FindFrameRight_ByTop(pChar, pAttr, nWidth, nHeight, nFromX, nFromY, nX)) {
+		_ASSERTE(nX<nWidth);
+		nMostRight = nX;
+	}
+	// попробовать найти правую границу по низу
+	if (FindFrameRight_ByBottom(pChar, pAttr, nWidth, nHeight, nFromX, nMostBottom, nX)) {
+		_ASSERTE(nX<nWidth);
+		if (nX > nMostRight) nMostRight = nX;
+	}
+	_ASSERTE(nMostRight>=0);
 
 	// Попытаться подняться вверх по правой границе?
 	if (FindFrameTop_ByRight(pChar, pAttr, nWidth, nHeight, nMostRight, nFromY, nMostTop)) {
@@ -4934,11 +4942,20 @@ bool CRealConsole::FindFrameBottom_ByRight(wchar_t* pChar, CharAttr* pAttr, int 
 	// Попытаемся спуститься вдоль правой рамки до угла
 	int nY = nFromY;
 	int nEnd = nHeight - 1;
-	wchar_t c;
+	wchar_t c; //, cd = ucBoxDblVert;
+	//// В случае с правой панелью в правом верхнем углу могут быть часы, а не собственно угол
+	//// "<=1" т.к. надо учесть возможность постоянного меню
+	//c = pChar[nY*nWidth+nFromX];
+	//if (nFromY <= 1 && nFromX == (nWidth-1)) {
+	//	if (isDigit(c)) {
+	//		cd = c;
+	//	}
+	//}
 	while (nY < nEnd)
 	{
 		c = pChar[(nY+1)*nWidth+nFromX];
 		if (c == ucBoxDblUpLeft || c == ucBoxSinglUpLeft // двойной и одинарный угол (правый нижний)
+			//|| c == cd // учесть часы на правой панели
 			|| c == ucBoxDblVertLeft || c == ucBoxDblVertSinglLeft || c == ucBoxSinglVertLeft // пересечение (правая граница)
 			|| c == ucBoxDblVert || c == ucBoxSinglVert
 			|| (c >= ucBox25 && c <= ucBox75) || c == ucUpScroll || c == ucDnScroll) // полоса прокрутки может быть только справа
@@ -4950,7 +4967,7 @@ bool CRealConsole::FindFrameBottom_ByRight(wchar_t* pChar, CharAttr* pAttr, int 
 	}
 	_ASSERTE(nY < nHeight);
 	nMostBottom = nY;
-	return (nMostBottom > nY);
+	return (nMostBottom > nFromY);
 }
 
 bool CRealConsole::FindFrameBottom_ByLeft(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostBottom)
@@ -4974,12 +4991,13 @@ bool CRealConsole::FindFrameBottom_ByLeft(wchar_t* pChar, CharAttr* pAttr, int n
 	}
 	_ASSERTE(nY < nHeight);
 	nMostBottom = nY;
-	return (nMostBottom > nY);
+	return (nMostBottom > nFromY);
 }
 
 // Мы на правой границе рамки. Найти диалог слева
 bool CRealConsole::FindDialog_Right(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostRight, int &nMostBottom, BOOL &bMarkBorder)
 {
+	bMarkBorder = TRUE;
 	int nY = nFromY;
 	int nX = nFromX;
 	nMostRight = nFromX;
@@ -5001,7 +5019,7 @@ bool CRealConsole::FindDialog_Right(wchar_t* pChar, CharAttr* pAttr, int nWidth,
 		nFromX = nX;
 
 	// по низу
-	if (FindFrameLeft_ByBottom(pChar, pAttr, nWidth, nHeight, nFromX, nFromY, nX))
+	if (FindFrameLeft_ByBottom(pChar, pAttr, nWidth, nHeight, nFromX, nMostBottom, nX))
 		if (nX < nFromX) nFromX = nX;
 
 	_ASSERTE(nFromX>=0 && nFromY>=0);
@@ -5103,7 +5121,7 @@ bool CRealConsole::FindDialog_Inner(wchar_t* pChar, CharAttr* pAttr, int nWidth,
 				// Пометить всю линию до верха (содержащую допустимые символы) как часть рамки
 				CharAttr* p = pAttr+(nWidth*nY+nFromX);
 				while (nY-- >= nFromY) {
-					_ASSERTE(p->bDialog);
+					//_ASSERTE(p->bDialog);
 					_ASSERTE(p >= pAttr);
 					p->bDialogVBorder = true;
 					p -= nWidth;
@@ -5113,7 +5131,7 @@ bool CRealConsole::FindDialog_Inner(wchar_t* pChar, CharAttr* pAttr, int nWidth,
 					wc = pChar[nFromX+nY*nWidth];
 					if (wc != ucBoxSinglVert && wc != ucBoxSinglDownHorz && wc != ucBoxSinglDownDblHorz)
 						break;
-					_ASSERTE(p->bDialog);
+					//_ASSERTE(p->bDialog);
 					_ASSERTE(p >= pAttr);
 					p->bDialogVBorder = true;
 					p -= nWidth;
@@ -5159,12 +5177,39 @@ bool CRealConsole::FindFrame_TopLeft(wchar_t* pChar, CharAttr* pAttr, int nWidth
 }
 
 
-void CRealConsole::ExpandDialogFrame(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int nFrameX, int nFrameY, int &nMostRight, int &nMostBottom)
+bool CRealConsole::ExpandDialogFrame(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int nFrameX, int nFrameY, int &nMostRight, int &nMostBottom)
 {
+	bool bExpanded = false;
+	int nStartRight = nMostRight;
+	int nStartBottom = nMostBottom;
 	// Теперь расширить nMostRight & nMostBottom на окантовку
 	int n, nShift = nWidth*nFromY;
 	wchar_t wc = pChar[nShift+nFromX];
 	DWORD nColor = pAttr[nShift+nFromX].crBackColor;
+
+	if (nFromX == nFrameX && nFromY == nFrameY) {
+		//Сначала нужно пройти вверх и влево
+		if (nFromY) { // Пробуем вверх
+			n = (nFromY-1)*nWidth+nFromX;
+			if (pAttr[n].crBackColor == nColor && (pChar[n] == L' ' || pChar[n] == ucNoBreakSpace)) {
+				nFromY--; bExpanded = true;
+			}
+		}
+		if (nFromX) { // Пробуем влево
+			int nMinMargin = nFromX-3; if (nMinMargin<0) nMinMargin = 0;
+			n = nFromY*nWidth+nFromX;
+			while (n > nMinMargin) {
+				n--;
+				if (pAttr[n].crBackColor == nColor && (pChar[n] == L' ' || pChar[n] == ucNoBreakSpace)) {
+					nFromX--;
+				} else {
+					break;
+				}
+			}
+			bExpanded = (nFromX<nFrameX);
+		}
+	}
+
 	if (nMostRight < (nWidth-1)) {
 		int nMaxMargin = 3+(nFrameX - nFromX);
 		if (nMaxMargin > nWidth) nMaxMargin = nWidth;
@@ -5173,26 +5218,32 @@ void CRealConsole::ExpandDialogFrame(wchar_t* pChar, CharAttr* pAttr, int nWidth
 		wc = pChar[nShift+nFromX];
 
 		while (n < nMaxMargin) {
-			if (pChar[nFindFrom] != wc || pAttr[nFindFrom].crBackColor != nColor)
+			if (pAttr[nFindFrom].crBackColor != nColor || (pChar[nFindFrom] != L' ' && pChar[nFindFrom] != ucNoBreakSpace))
 				break;
 			n++; nFindFrom++;
 		}
-		nMostRight += n;
+		if (n) {
+			nMostRight += n;
+			bExpanded = true;
+		}
 	}
 	_ASSERTE(nMostRight<nWidth);
 
 	// nMostBottom
 	if (nFrameY > nFromY && nMostBottom < (nHeight-1)) {
 		n = (nMostBottom+1)*nWidth+nFrameX;
-		if (pChar[n] == wc && pAttr[n].crBackColor == nColor)
-			nMostBottom ++;
+		if (pAttr[n].crBackColor == nColor && (pChar[n] == L' ' || pChar[n] == ucNoBreakSpace)) {
+			nMostBottom ++; bExpanded = true;
+		}
 	}
 	_ASSERTE(nMostBottom<nHeight);
+
+	return bExpanded;
 }
 
 // В идеале - сюда попадать не должны. Это может быть или кусок диалога
 // другая часть которого или скрыта, или вытащена за границы экрана
-void CRealConsole::FindByBackground(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, wchar_t wc, int &nFromX, int &nFromY, int &nMostRight, int &nMostBottom, BOOL &bMarkBorder)
+bool CRealConsole::FindByBackground(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostRight, int &nMostBottom, BOOL &bMarkBorder)
 {
 	// Придется идти просто по цвету фона
 	// Это может быть диалог, рамка которого закрыта другим диалогом, 
@@ -5208,6 +5259,20 @@ void CRealConsole::FindByBackground(wchar_t* pChar, CharAttr* pAttr, int nWidth,
 	}
 	nMostRight--;
 	_ASSERTE(nMostRight<nWidth);
+
+	wchar_t wc = pChar[nFromY*nWidth+nMostRight];
+	if (wc >= ucBoxSinglHorz && wc <= ucBoxDblVertHorz)
+	{
+		DetectDialog(pChar, pAttr, nWidth, nHeight, nMostRight, nFromY);
+		if (pAttr[nShift+nFromX].bDialog)
+			return false; // все уже обработано
+	} else if (nMostRight && ((wc >= ucBox25 && wc <= ucBox75) || wc == ucUpScroll || wc == ucDnScroll)) {
+		int nX = nMostRight;
+		if (FindDialog_Right(pChar, pAttr, nWidth, nHeight, nX, nFromY, nMostRight, nMostBottom, bMarkBorder)) {
+			nFromX = nX;
+			return false;
+		}
+	}
 
 	// Найти нижнюю границу
 	nMostBottom = nFromY;
@@ -5229,9 +5294,11 @@ void CRealConsole::FindByBackground(wchar_t* pChar, CharAttr* pAttr, int nWidth,
 	nMostRightBottom--;
 	_ASSERTE(nMostRightBottom<nHeight);
 
-	// Результатом считаем - наименьшую высоту (перекрытие диалогов?)
-	if (nMostRightBottom < nMostBottom)
+	// Результатом считаем - наибольшую высоту
+	if (nMostRightBottom > nMostBottom)
 		nMostBottom = nMostRightBottom;
+
+	return true;
 }
 
 void CRealConsole::DetectDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int nFromX, int nFromY, int *pnMostRight, int *pnMostBottom)
@@ -5244,7 +5311,7 @@ void CRealConsole::DetectDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int
 	}
 
 #ifdef _DEBUG
-	if (nFromX == 25 && nFromY == 1) {
+	if (nFromX == 79 && nFromY == 1) {
 		nFromX = nFromX;
 	}
 #endif
@@ -5328,8 +5395,8 @@ void CRealConsole::DetectDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int
 		{
 			// Если угол нашли - ищем рамку по рамке :)
 			DetectDialog(pChar, pAttr, nWidth, nHeight, nFrameX, nFrameY, &nMostRight, &nMostBottom);
-			// Теперь расширить nMostRight & nMostBottom на окантовку
-			ExpandDialogFrame(pChar, pAttr, nWidth, nHeight, nFromX, nFromY, nFrameX, nFrameY, nMostRight, nMostBottom);
+			//// Теперь расширить nMostRight & nMostBottom на окантовку
+			//ExpandDialogFrame(pChar, pAttr, nWidth, nHeight, nFromX, nFromY, nFrameX, nFrameY, nMostRight, nMostBottom);
 			//
 			goto done;
 		}
@@ -5339,7 +5406,8 @@ void CRealConsole::DetectDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int
 	// Придется идти просто по цвету фона
 	// Это может быть диалог, рамка которого закрыта другим диалогом, 
 	// или вообще кусок диалога, у которого видна только часть рамки
-	FindByBackground(pChar, pAttr, nWidth, nHeight, wc, nFromX, nFromY, nMostRight, nMostBottom, bMarkBorder);
+	if (!FindByBackground(pChar, pAttr, nWidth, nHeight, nFromX, nFromY, nMostRight, nMostBottom, bMarkBorder))
+		return; // значит уже все пометили, или диалога нет
 
 
 
@@ -5355,14 +5423,14 @@ done:
 	}
 #endif
 	// Забить атрибуты
-	MarkDialog(pAttr, nWidth, nHeight, nFromX, nFromY, nMostRight, nMostBottom, bMarkBorder);
+	MarkDialog(pChar, pAttr, nWidth, nHeight, nFromX, nFromY, nMostRight, nMostBottom, bMarkBorder);
 
 	// Вернуть размеры, если просили
 	if (pnMostRight) *pnMostRight = nMostRight;
 	if (pnMostBottom) *pnMostBottom = nMostBottom;
 }
 
-void CRealConsole::MarkDialog(CharAttr* pAttr, int nWidth, int nHeight, int nX1, int nY1, int nX2, int nY2, BOOL bMarkBorder)
+void CRealConsole::MarkDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int nX1, int nY1, int nX2, int nY2, BOOL bMarkBorder, BOOL bFindExterior /*= TRUE*/)
 {
 	if (nX1<0 || nX1>=nWidth || nX2<nX1 || nX2>=nWidth
 		|| nY1<0 || nY1>=nHeight || nY2<nY1 || nY2>=nHeight)
@@ -5414,6 +5482,15 @@ void CRealConsole::MarkDialog(CharAttr* pAttr, int nWidth, int nHeight, int nX1,
 		//if (bMarkBorder)
 		//	pAttr[nShift].bDialogVBorder = TRUE;
 	}
+
+	// Если помечается диалог по рамке - попытаться определить окантовку
+	if (bFindExterior && bMarkBorder) {
+		int nMostRight = nX2, nMostBottom = nY2;
+		if (ExpandDialogFrame(pChar, pAttr, nWidth, nHeight, nX1, nY1, nX1, nY1, nMostRight, nMostBottom)) {
+			//Optimize: помечать можно только окантовку - сам диалог уже помечен
+			MarkDialog(pChar, pAttr, nWidth, nHeight, nX1, nY1, nMostRight, nMostBottom, TRUE, FALSE);
+		}
+	}
 }
 
 void CRealConsole::PrepareTransparent(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight)
@@ -5425,8 +5502,9 @@ void CRealConsole::PrepareTransparent(wchar_t* pChar, CharAttr* pAttr, int nWidt
 
 	// !!! в буферном режиме - никакой прозрачности, но диалоги - детектим, пригодится при отрисовке
 
-	if (!mp_ConsoleInfo->bFarPanelAllowed)
-		return;
+	// В редакторах-вьюверах тоже нужен детект
+	//if (!mp_ConsoleInfo->FarInfo.bFarPanelAllowed)
+	//	return;
 	//if (nCurFarPID && pRCon->mn_LastFarReadIdx != pRCon->mp_ConsoleInfo->nFarReadIdx) {
 	//if (isPressed(VK_CONTROL) && isPressed(VK_SHIFT) && isPressed(VK_MENU))
 	//	return;
@@ -5434,39 +5512,40 @@ void CRealConsole::PrepareTransparent(wchar_t* pChar, CharAttr* pAttr, int nWidt
 
 	//COLORREF crColorKey = gSet.ColorKey;
 	// реальный цвет, заданный в фаре
-	int nUserBackIdx = (mp_ConsoleInfo->nFarColors[COL_COMMANDLINEUSERSCREEN] & 0xF0) >> 4;
+	int nUserBackIdx = (mp_ConsoleInfo->FarInfo.nFarColors[COL_COMMANDLINEUSERSCREEN] & 0xF0) >> 4;
 	COLORREF crUserBack = mp_VCon->mp_Colors[nUserBackIdx];
-	int nMenuBackIdx = (mp_ConsoleInfo->nFarColors[COL_MENUTITLE] & 0xF0) >> 4;
-	COLORREF crMenuTitleBack = mp_VCon->mp_Colors[nUserBackIdx];
+	int nMenuBackIdx = (mp_ConsoleInfo->FarInfo.nFarColors[COL_MENUTITLE] & 0xF0) >> 4;
+	COLORREF crMenuTitleBack = mp_VCon->mp_Colors[nMenuBackIdx];
 	
 	// Для детекта наличия PanelTabs
-	int nPanelTextBackIdx = (mp_ConsoleInfo->nFarColors[COL_PANELTEXT] & 0xF0) >> 4;
-	int nPanelTextForeIdx = mp_ConsoleInfo->nFarColors[COL_PANELTEXT] & 0xF;
+	int nPanelTextBackIdx = (mp_ConsoleInfo->FarInfo.nFarColors[COL_PANELTEXT] & 0xF0) >> 4;
+	int nPanelTextForeIdx = mp_ConsoleInfo->FarInfo.nFarColors[COL_PANELTEXT] & 0xF;
 	
 	// При bUseColorKey Если панель погашена (или панели) то 
 	// 1. UserScreen под ним заменяется на crColorKey
 	// 2. а текст - на пробелы
 	// Проверять наличие KeyBar по настройкам (Keybar + CmdLine)
-	bool bShowKeyBar = (mp_ConsoleInfo->nFarInterfaceSettings & 8/*FIS_SHOWKEYBAR*/) != 0;
+	bool bShowKeyBar = (mp_ConsoleInfo->FarInfo.nFarInterfaceSettings & 8/*FIS_SHOWKEYBAR*/) != 0;
 	int nBottomLines = bShowKeyBar ? 2 : 1;
 	// Проверять наличие MenuBar по настройкам
 	// Или может быть меню сейчас показано?
 	// 1 - при видимом сейчас или постоянно меню
-	bool bAlwaysShowMenuBar = (mp_ConsoleInfo->nFarInterfaceSettings & 0x10/*FIS_ALWAYSSHOWMENUBAR*/) != 0;
+	bool bAlwaysShowMenuBar = (mp_ConsoleInfo->FarInfo.nFarInterfaceSettings & 0x10/*FIS_ALWAYSSHOWMENUBAR*/) != 0;
 	int nTopLines = bAlwaysShowMenuBar ? 1 : 0;
 
-	// Проверим, что фар загрузился
-	if (bShowKeyBar) {
-		// в левом-нижнем углу должна быть цифра 1
-		if (pChar[nWidth*(nHeight-1)] != L'1')
-			return;
-		// соответствующего цвета
-		BYTE KeyBarNoColor = mp_ConsoleInfo->nFarColors[COL_KEYBARNUM];
-		if (pAttr[nWidth*(nHeight-1)].nBackIdx != ((KeyBarNoColor & 0xF0)>>4))
-			return;
-		if (pAttr[nWidth*(nHeight-1)].nForeIdx != (KeyBarNoColor & 0xF))
-			return;
-	}
+	// Проверка теперь в другом месте (по плагину), да и левый нижний угол могут закрыть диалогом...
+	//// Проверим, что фар загрузился
+	//if (bShowKeyBar) {
+	//	// в левом-нижнем углу должна быть цифра 1
+	//	if (pChar[nWidth*(nHeight-1)] != L'1')
+	//		return;
+	//	// соответствующего цвета
+	//	BYTE KeyBarNoColor = mp_ConsoleInfo->FarInfo.nFarColors[COL_KEYBARNUM];
+	//	if (pAttr[nWidth*(nHeight-1)].nBackIdx != ((KeyBarNoColor & 0xF0)>>4))
+	//		return;
+	//	if (pAttr[nWidth*(nHeight-1)].nForeIdx != (KeyBarNoColor & 0xF))
+	//		return;
+	//}
 
 	// Теперь информация о панелях хронически обновляется плагином
 	//if (mb_LeftPanel)
@@ -5486,14 +5565,14 @@ void CRealConsole::PrepareTransparent(wchar_t* pChar, CharAttr* pAttr, int nWidt
 		r = mr_LeftPanelFull;
 	} else
 	// Но если часть панели скрыта диалогами - наш детект панели мог не сработать
-	if (mp_ConsoleInfo->bFarLeftPanel && mp_ConsoleInfo->FarLeftPanel.Visible) {
+	if (mp_ConsoleInfo->FarInfo.bFarLeftPanel && mp_ConsoleInfo->FarInfo.FarLeftPanel.Visible) {
 		// В "буферном" режиме размер панелей намного больше экрана
-		lbLeftVisible = ConsoleRect2ScreenRect(mp_ConsoleInfo->FarLeftPanel.PanelRect, &r);
+		lbLeftVisible = ConsoleRect2ScreenRect(mp_ConsoleInfo->FarInfo.FarLeftPanel.PanelRect, &r);
 	}
 	if (lbLeftVisible) {
 		if (r.right == (nWidth-1))
 			lbFullPanel = true; // значит правой быть не может
-		MarkDialog(pAttr, nWidth, nHeight, r.left, r.top, r.right, r.bottom, TRUE);
+		MarkDialog(pChar, pAttr, nWidth, nHeight, r.left, r.top, r.right, r.bottom, TRUE);
 		// Для детекта наличия PanelTabs
 		if (nHeight > (nBottomLines+r.bottom+1)) {
 			int nIdx = nWidth*(r.bottom+1)+r.right-1;
@@ -5501,7 +5580,7 @@ void CRealConsole::PrepareTransparent(wchar_t* pChar, CharAttr* pAttr, int nWidt
 				&& pAttr[nIdx].nBackIdx == nPanelTextBackIdx
 				&& pAttr[nIdx].nForeIdx == nPanelTextForeIdx)
 			{
-				MarkDialog(pAttr, nWidth, nHeight, r.left, r.bottom+1, r.right, r.bottom+1);
+				MarkDialog(pChar, pAttr, nWidth, nHeight, r.left, r.bottom+1, r.right, r.bottom+1);
 			}
 		}
 	}
@@ -5512,12 +5591,12 @@ void CRealConsole::PrepareTransparent(wchar_t* pChar, CharAttr* pAttr, int nWidt
 			r = mr_RightPanelFull;
 		} else
 		// Но если часть панели скрыта диалогами - наш детект панели мог не сработать
-		if (mp_ConsoleInfo->bFarRightPanel && mp_ConsoleInfo->FarRightPanel.Visible) {
+		if (mp_ConsoleInfo->FarInfo.bFarRightPanel && mp_ConsoleInfo->FarInfo.FarRightPanel.Visible) {
 			// В "буферном" режиме размер панелей намного больше экрана
-			lbRightVisible = ConsoleRect2ScreenRect(mp_ConsoleInfo->FarRightPanel.PanelRect, &r);
+			lbRightVisible = ConsoleRect2ScreenRect(mp_ConsoleInfo->FarInfo.FarRightPanel.PanelRect, &r);
 		}
 		if (lbRightVisible) {
-			MarkDialog(pAttr, nWidth, nHeight, r.left, r.top, r.right, r.bottom, TRUE);
+			MarkDialog(pChar, pAttr, nWidth, nHeight, r.left, r.top, r.right, r.bottom, TRUE);
 			// Для детекта наличия PanelTabs
 			if (nHeight > (nBottomLines+r.bottom+1)) {
 				int nIdx = nWidth*(r.bottom+1)+r.right-1;
@@ -5525,7 +5604,7 @@ void CRealConsole::PrepareTransparent(wchar_t* pChar, CharAttr* pAttr, int nWidt
 					&& pAttr[nIdx].nBackIdx == nPanelTextBackIdx
 					&& pAttr[nIdx].nForeIdx == nPanelTextForeIdx)
 				{
-					MarkDialog(pAttr, nWidth, nHeight, r.left, r.bottom+1, r.right, r.bottom+1);
+					MarkDialog(pChar, pAttr, nWidth, nHeight, r.left, r.bottom+1, r.right, r.bottom+1);
 				}
 			}
 		}
@@ -5542,7 +5621,7 @@ void CRealConsole::PrepareTransparent(wchar_t* pChar, CharAttr* pAttr, int nWidt
 			&& (pChar[0] == L' ' && pChar[1] == L' ' && pChar[2] == L' ' && pChar[3] == L' ' && pChar[4] != L' '))
 			)
 	{
-		MarkDialog(pAttr, nWidth, nHeight, 0, 0, nWidth-1, 0);
+		MarkDialog(pChar, pAttr, nWidth, nHeight, 0, 0, nWidth-1, 0);
 	}
 
 	WARNING("!!! Установку bTransparent делать во второй проход, когда все диалоги уже определены !!!");
@@ -5875,8 +5954,10 @@ void CRealConsole::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, i
         }
 
 		// Подготовить данные для Transparent
-		//if (bUseColorKey)
-		PrepareTransparent(pChar, pAttr, nWidth, nHeight);
+		// обнаружение диалогов нужно только при включенной прозрачности, 
+		// или при пропорциональном шрифте
+		if (gSet.NeedDialogDetect())
+			PrepareTransparent(pChar, pAttr, nWidth, nHeight);
     }
     // Если требуется показать "статус" - принудительно перебиваем первую видимую строку возвращаемого буфера
 	if (ms_ConStatus[0]) {
@@ -6665,6 +6746,15 @@ DWORD CRealConsole::WaitEndUpdate(DWORD dwTimeout)
 // Вызывается из TabBar->ConEmu
 void CRealConsole::ChangeBufferHeightMode(BOOL abBufferHeight)
 {
+	if (abBufferHeight && gOSVer.dwMajorVersion == 6 && gOSVer.dwMinorVersion == 1) {
+		// Win7 BUGBUG: Issue 192: падение Conhost при turn bufferheight ON
+		// http://code.google.com/p/conemu-maximus5/issues/detail?id=192
+		return;
+		//const SHORT nMaxBuf = 600;
+		//if (nNewBufHeightSize > nMaxBuf && isFar())
+		//	nNewBufHeightSize = nMaxBuf;
+	}
+
 	_ASSERTE(!mb_BuferModeChangeLocked);
 	BOOL lb = mb_BuferModeChangeLocked; mb_BuferModeChangeLocked = TRUE;
 	con.bBufferHeight = abBufferHeight;
@@ -6675,13 +6765,6 @@ void CRealConsole::ChangeBufferHeightMode(BOOL abBufferHeight)
 		if (con.nBufferHeight<300) con.nBufferHeight = max(300,con.nTextHeight*2);
 	}
 	USHORT nNewBufHeightSize = abBufferHeight ? con.nBufferHeight : 0;
-	if (abBufferHeight && gOSVer.dwMajorVersion == 6 && gOSVer.dwMinorVersion == 1) {
-		// Win7 BUGBUG: Issue 192
-		// http://code.google.com/p/conemu-maximus5/issues/detail?id=192
-		const SHORT nMaxBuf = 600;
-		if (nNewBufHeightSize > nMaxBuf && isFar())
-			nNewBufHeightSize = nMaxBuf;
-	}
 	SetConsoleSize(TextWidth(), TextHeight(), nNewBufHeightSize, CECMD_SETSIZESYNC);
 	mb_BuferModeChangeLocked = lb;
 }

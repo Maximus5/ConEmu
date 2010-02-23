@@ -64,6 +64,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define ConEmu_SysID 0x43454D55 // 'CEMU'
 #define SETWND_CALLPLUGIN_SENDTABS 100
 #define SETWND_CALLPLUGIN_BASE (SETWND_CALLPLUGIN_SENDTABS+1)
+#define CHECK_RESOURCES_INTERVAL 5000
+#define CHECK_FARINFO_INTERVAL 2000
 
 #ifdef _DEBUG
 wchar_t gszDbgModLabel[6] = {0};
@@ -152,9 +154,10 @@ BOOL gbStartedUnderConsole2 = FALSE;
 void CheckColorerHeader();
 int CreateColorerHeader();
 void CloseColorerHeader();
-void ReloadFarInfo();
+void ReloadFarInfo(BOOL abFull);
 DWORD gnSelfPID = 0; //GetCurrentProcessId();
-BOOL  gbNeedReloadFarInfo = FALSE;
+//BOOL  gbNeedReloadFarInfo = FALSE;
+CEFAR_INFO *gpFarInfo = NULL;
 
 
 //std::vector<HANDLE> ghCommandThreads;
@@ -286,11 +289,32 @@ HANDLE WINAPI _export OpenPluginW(int OpenFrom,INT_PTR Item)
 	return INVALID_HANDLE_VALUE;
 }
 
+// ¬ызываетс€ только в основной нити
 BOOL OnConsolePeekReadInput(BOOL abPeek)
 {
-	if (gbNeedReloadFarInfo && abPeek == FALSE) {
-		gbNeedReloadFarInfo = FALSE;
-		ReloadFarInfo();
+#ifdef _DEBUG
+	_ASSERTE(GetCurrentThreadId() == gnMainThreadId);
+#endif
+
+	if (/*gbNeedReloadFarInfo &&*/ abPeek == FALSE) {
+		//gbNeedReloadFarInfo = FALSE;
+		bool bNeedReload = false;
+		if (gpConsoleInfo) {
+			DWORD nMapPID = gpConsoleInfo->nFarPID;
+			static DWORD dwLastTickCount = 0;
+			if (nMapPID == 0 || nMapPID != gnSelfPID) {
+				bNeedReload = true;
+				dwLastTickCount = GetTickCount();
+			} else {
+				DWORD dwCurTick = GetTickCount();
+				if ((dwCurTick - dwLastTickCount) >= CHECK_FARINFO_INTERVAL) {
+					bNeedReload = true;
+					dwLastTickCount = dwCurTick;
+				}
+			}
+		}
+		if (bNeedReload)
+			ReloadFarInfo(FALSE);
 	}
 	
 	if (!gbReqCommandWaiting || gnReqCommand == (DWORD)-1)
@@ -1310,21 +1334,22 @@ VOID WINAPI OnConsoleWasAttached(HookCallbackArg* pArgs)
 
 }
 
-void ReloadOnWrite()
-{
-	if (gpConsoleInfo)
-		ReloadFarInfo();
-}
-VOID WINAPI OnWasWriteConsoleOutputA(HookCallbackArg* pArgs)
-{
-	if (!pArgs->bMainThread || gFarVersion.dwVerMajor!=1) return;
-	ReloadOnWrite();	
-}
-VOID WINAPI OnWasWriteConsoleOutputW(HookCallbackArg* pArgs)
-{
-	if (!pArgs->bMainThread || gFarVersion.dwVerMajor!=2) return;
-	ReloadOnWrite();	
-}
+// ќтключил пока. пусть только при Peek... считываетс€
+//void ReloadOnWrite()
+//{
+//	if (gpConsoleInfo)
+//		ReloadFarInfo();
+//}
+//VOID WINAPI OnWasWriteConsoleOutputA(HookCallbackArg* pArgs)
+//{
+//	if (!pArgs->bMainThread || gFarVersion.dwVerMajor!=1) return;
+//	ReloadOnWrite();	
+//}
+//VOID WINAPI OnWasWriteConsoleOutputW(HookCallbackArg* pArgs)
+//{
+//	if (!pArgs->bMainThread || gFarVersion.dwVerMajor!=2) return;
+//	ReloadOnWrite();	
+//}
 
 // Ёту нить нужно оставить, чтобы была возможность отобразить консоль при падении ConEmu
 DWORD WINAPI MonitorThreadProcW(LPVOID lpParameter)
@@ -1432,10 +1457,10 @@ DWORD WINAPI MonitorThreadProcW(LPVOID lpParameter)
 		}
 
 		
-		if (gpConsoleInfo) {
-			if (gpConsoleInfo->nFarPID == 0)
-				gbNeedReloadFarInfo = TRUE;
-		}
+		//if (gpConsoleInfo) {
+		//	if (gpConsoleInfo->nFarPID == 0)
+		//		gbNeedReloadFarInfo = TRUE;
+		//}
 	}
 
 
@@ -1592,7 +1617,7 @@ void WINAPI _export SetStartupInfoW(void *aInfo)
 	//CheckMacro(TRUE);
 
 	// здесь же и ReloadFarInfo() позоветс€
-	CheckResources();
+	CheckResources(TRUE);
 }
 
 //#define CREATEEVENT(fmt,h) 
@@ -1629,7 +1654,7 @@ int OpenMapHeader()
 		if (ghFileMapping) {
 			gpConsoleInfo = (CESERVER_REQ_CONINFO_HDR*)MapViewOfFile(ghFileMapping, FILE_MAP_ALL_ACCESS,0,0,0);
 			if (gpConsoleInfo) {
-				ReloadFarInfo();
+				//ReloadFarInfo(); -- смысла нет. SetStartupInfo еще не вызывалс€
 				iRc = 0;
 			} else {
 				#ifdef _DEBUG
@@ -1939,23 +1964,31 @@ void InitHWND(HWND ahFarHwnd)
 //	}
 //}
 
-void ReloadFarInfo()
+void ReloadFarInfo(BOOL abFull)
 {
-	if (!gpConsoleInfo) {
-		_ASSERTE(gpConsoleInfo!=NULL);
+	if (!gpConsoleInfo || !gpFarInfo) {
+		_ASSERTE(gpConsoleInfo!=NULL && gpFarInfo!=NULL);
 		return;
 	}
 	
-	gpConsoleInfo->FarVersion = gFarVersion;
+	if (abFull) {
+		gpFarInfo->FarVer = gFarVersion;
+		gpFarInfo->nFarPID = gnSelfPID;
+		gpFarInfo->nFarTID = gnMainThreadId;
+	}
 	
 	if (gFarVersion.dwVerMajor==1)
-		ReloadFarInfoA();
+		ReloadFarInfoA(abFull);
 	else if (gFarVersion.dwBuild>=FAR_Y_VER)
 		FUNC_Y(ReloadFarInfo)();
 	else
 		FUNC_X(ReloadFarInfo)();
-		
-	gpConsoleInfo->nFarPID = gnSelfPID;
+	
+
+	if (abFull || memcmp(&(gpConsoleInfo->FarInfo), gpFarInfo, sizeof(CEFAR_INFO))!=0) {
+		gpConsoleInfo->FarInfo = *gpFarInfo;
+		gpConsoleInfo->nFarInfoIdx++;
+	}
 }
 
 void UpdateConEmuTabsW(int event, bool losingFocus, bool editorSave, void* Param/*=NULL*/)
@@ -1964,7 +1997,7 @@ void UpdateConEmuTabsW(int event, bool losingFocus, bool editorSave, void* Param
 		return;
 
 	if (ConEmuHwnd && FarHwnd)
-		CheckResources();
+		CheckResources(FALSE);
 
 	MSectionLock SC; SC.Lock(csTabs);
 
@@ -2292,6 +2325,11 @@ void StopThread(void)
 	    CloseHandle(ghReqCommandEvent); ghReqCommandEvent = NULL;
     }
 
+	if (gpFarInfo) {
+		LPVOID ptr = gpFarInfo; gpFarInfo = NULL;
+		Free(ptr);
+	}
+
 	//DeleteCriticalSection(csTabs); memset(csTabs,0,sizeof(csTabs));
 	DeleteCriticalSection(&csData); memset(&csData,0,sizeof(csData));
 	
@@ -2328,18 +2366,29 @@ void   WINAPI _export ExitFARW(void)
 		FUNC_X(ExitFARW)();
 }
 
-void CheckResources()
+// ¬ызываетс€ при инициализации из SetStartupInfo[W] и при обновлении табов UpdateConEmuTabs[???]
+// “о есть по идее, это происходит только когда фар €вно вызывает плагин (legal api calls)
+void CheckResources(BOOL abFromStartup)
 {
-	if (gsFarLang[0]) {
+#ifdef _DEBUG
+	_ASSERTE(GetCurrentThreadId() == gnMainThreadId);
+#endif
+
+	if (gsFarLang[0] && !abFromStartup) {
 		static DWORD dwLastTickCount = GetTickCount();
 		DWORD dwCurTick = GetTickCount();
-		if ((dwCurTick - dwLastTickCount) < 5000)
+		if ((dwCurTick - dwLastTickCount) < CHECK_RESOURCES_INTERVAL)
 			return;
 		dwLastTickCount = dwCurTick;
 	}
 	
+	if (abFromStartup) {
+		_ASSERTE(gpConsoleInfo!=NULL);
+		if (!gpFarInfo)
+			gpFarInfo = (CEFAR_INFO*)Alloc(sizeof(CEFAR_INFO),1);
+	}
 	if (gpConsoleInfo)
-		ReloadFarInfo();
+		ReloadFarInfo(TRUE);
 
 	wchar_t szLang[64];
 	GetEnvironmentVariable(L"FARLANG", szLang, 63);

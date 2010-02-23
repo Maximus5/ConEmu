@@ -92,6 +92,7 @@ public:
 	COLORREF* GetColors(BOOL abFade = FALSE);
 	COLORREF GetFadeColor(COLORREF cr);
 	bool isUserScreenTransparent;
+	bool NeedDialogDetect();
 	//COLORREF ColorKey;
     bool isExtendColors;
     char nExtendColor;
@@ -160,7 +161,7 @@ public:
     bool isSentAltEnter;
     bool isMinToTray;
     //bool isForceMonospace, isProportional;
-	BYTE isMonospace, isMonospaceSelected;
+	BYTE isMonospace, isMonospaceSelected; // 0 - proportional, 1 - monospace, 2 - forcemonospace
     bool isUpdConHandle;
 	bool isRSelFix;
 	//Drag

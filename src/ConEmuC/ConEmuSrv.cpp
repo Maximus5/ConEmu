@@ -1402,6 +1402,9 @@ BOOL ReloadFullConsoleInfo(BOOL abForceSend)
 		lbChanged = TRUE;
 	//}
 
+	if (!lbChanged && srv.nFarInfoLastIdx != srv.pConsoleInfo->nFarInfoIdx)
+		lbChanged = TRUE;
+
 	if (lbChanged)
 	{
 		// Накрутить счетчик и Tick
@@ -1409,6 +1412,7 @@ BOOL ReloadFullConsoleInfo(BOOL abForceSend)
 			srv.pConsoleInfo->nPacketId++;
 			TODO("Можно заменить на multimedia tick");
 			srv.pConsoleInfo->nSrvUpdateTick = GetTickCount();
+			srv.nFarInfoLastIdx = srv.pConsoleInfo->nFarInfoIdx;
 		}
 	}
 	

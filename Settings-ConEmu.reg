@@ -276,9 +276,10 @@ REGEDIT4
 
 ;; Fading console contents, when ConEmu have no focus
 "FadeInactive"=hex:01
-;; Fading parameter (RGB value). Subject to fade are colors, which
-;; are brighter than this parameter.
-"FadeInactiveMask"=dword:00d0d0d0
+;; Fading parameters. Each source color value (0..255)
+;; will be transformed to (FadeInactiveLow..FadeInactiveHigh)
+"FadeInactiveLow"=hex:00
+"FadeInactiveHigh"=hex:d0
 
 
 ;; Enable Colorer TrueMod support

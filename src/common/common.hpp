@@ -169,7 +169,7 @@ extern wchar_t gszDbgModLabel[6];
 #define CECMD_SETDONTCLOSE  29
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    31
+#define CESERVER_REQ_VER    32
 
 #define PIPEBUFSIZE 4096
 
@@ -309,6 +309,21 @@ typedef struct tag_CEFAR_SHORT_PANEL_INFO {
 	DWORD Flags;
 } CEFAR_SHORT_PANEL_INFO;
 
+typedef struct tag_CEFAR_INFO {
+	FarVersion FarVer;
+	DWORD nFarPID, nFarTID;
+	BYTE nFarColors[0x100]; // Массив цветов фара
+	DWORD nFarInterfaceSettings;
+	DWORD nFarPanelSettings;
+	DWORD nFarConfirmationSettings;
+	BOOL  bFarPanelAllowed; // FCTL_CHECKPANELSEXIST
+	// Информация собственно о панелях присутствовать не обязана
+	BOOL bFarPanelInfoFilled;
+	BOOL bFarLeftPanel, bFarRightPanel;   
+	CEFAR_SHORT_PANEL_INFO FarLeftPanel, FarRightPanel; // FCTL_GETPANELSHORTINFO,...
+} CEFAR_INFO;
+
+
 typedef struct tag_CESERVER_REQ_CONINFO_HDR {
 	DWORD cbSize;
 	DWORD nLogLevel;
@@ -333,13 +348,9 @@ typedef struct tag_CESERVER_REQ_CONINFO_HDR {
 	DWORD dwConsoleMode;
 	DWORD dwSbiSize;
 	CONSOLE_SCREEN_BUFFER_INFO sbi;
-	FarVersion FarVersion;
-	BYTE nFarColors[0x100]; // Массив цветов фара
-	DWORD nFarInterfaceSettings;
-	DWORD nFarPanelSettings;
-	DWORD nFarConfirmationSettings;
-	BOOL  bFarPanelAllowed, bFarLeftPanel, bFarRightPanel;   // FCTL_CHECKPANELSEXIST, FCTL_GETPANELSHORTINFO,...
-	CEFAR_SHORT_PANEL_INFO FarLeftPanel, FarRightPanel;
+	// Информация о текущем FAR
+	DWORD nFarInfoIdx; // выносим из структуры CEFAR_INFO, т.к. ее копия хранится в плагине
+	CEFAR_INFO FarInfo;
 } CESERVER_REQ_CONINFO_HDR;
 
 typedef struct tag_CESERVER_REQ_CONINFO_DATA {

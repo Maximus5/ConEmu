@@ -382,7 +382,7 @@ void WINAPI _export SetStartupInfo(const struct PluginStartupInfo *aInfo)
 	// Устарело. активация через [Read/Peek]ConsoleInput
 	//CheckMacro(TRUE);
 
-	CheckResources();
+	CheckResources(TRUE);
 }
 
 //extern WCHAR gcPlugKey; // Для ANSI far он инициализируется как (char)
@@ -548,7 +548,7 @@ void UpdateConEmuTabsA(int event, bool losingFocus, bool editorSave, void *Param
 	if (!InfoA) return;
 
 	if (ConEmuHwnd && FarHwnd)
-		CheckResources();
+		CheckResources(FALSE);
 
 	MSectionLock SC; SC.Lock(csTabs);
 
@@ -857,16 +857,16 @@ static void FarPanel2CePanel(PanelInfo* pFar, CEFAR_SHORT_PANEL_INFO* pCE)
 	pCE->Flags = pFar->Flags;
 }
 
-void ReloadFarInfoA()
+void ReloadFarInfoA(BOOL abFull)
 {
 	if (!InfoA || !FSFA) return;
 	
-	if (!gpConsoleInfo) {
-		_ASSERTE(gpConsoleInfo!=NULL);
+	if (!gpFarInfo) {
+		_ASSERTE(gpFarInfo!=NULL);
 		return;
 	}
 
-	// Заполнить gpConsoleInfo->
+	// Заполнить gpFarInfo->
 	//BYTE nFarColors[0x100]; // Массив цветов фара
 	//DWORD nFarInterfaceSettings;
 	//DWORD nFarPanelSettings;
@@ -875,51 +875,57 @@ void ReloadFarInfoA()
 	//CEFAR_SHORT_PANEL_INFO FarLeftPanel, FarRightPanel;
 	
 	INT_PTR nColorSize = InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETARRAYCOLOR, NULL);
-	if (nColorSize <= sizeof(gpConsoleInfo->nFarColors)) {
-		nColorSize = InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETARRAYCOLOR, gpConsoleInfo->nFarColors);
+	if (nColorSize <= sizeof(gpFarInfo->nFarColors)) {
+		nColorSize = InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETARRAYCOLOR, gpFarInfo->nFarColors);
 	} else {
-		_ASSERTE(nColorSize <= sizeof(gpConsoleInfo->nFarColors));
+		_ASSERTE(nColorSize <= sizeof(gpFarInfo->nFarColors));
 		BYTE* ptr = (BYTE*)calloc(nColorSize,1);
 		if (!ptr) {
-			memset(gpConsoleInfo->nFarColors, 7, sizeof(gpConsoleInfo->nFarColors));
+			memset(gpFarInfo->nFarColors, 7, sizeof(gpFarInfo->nFarColors));
 		} else {
 			nColorSize = InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETARRAYCOLOR, ptr);
-			memmove(gpConsoleInfo->nFarColors, ptr, sizeof(gpConsoleInfo->nFarColors));
+			memmove(gpFarInfo->nFarColors, ptr, sizeof(gpFarInfo->nFarColors));
 			free(ptr);
 		}
 	}
 	
-	gpConsoleInfo->nFarInterfaceSettings =
+	gpFarInfo->nFarInterfaceSettings =
 		(DWORD)InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETINTERFACESETTINGS, 0);
-	gpConsoleInfo->nFarPanelSettings =
+	gpFarInfo->nFarPanelSettings =
 		(DWORD)InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETPANELSETTINGS, 0);
-	gpConsoleInfo->nFarConfirmationSettings =
+	gpFarInfo->nFarConfirmationSettings =
 		(DWORD)InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETCONFIRMATIONS, 0);
-	
-	if (FALSE == (gpConsoleInfo->bFarPanelAllowed = InfoA->Control(INVALID_HANDLE_VALUE, FCTL_CHECKPANELSEXIST, 0))) {
-		gpConsoleInfo->bFarLeftPanel = FALSE;
-		gpConsoleInfo->bFarRightPanel = FALSE;
-	} else {
-		PanelInfo piA = {0}, piP = {0};
-		BOOL lbActive  = InfoA->Control(INVALID_HANDLE_VALUE, FCTL_GETPANELSHORTINFO, &piA);
-		BOOL lbPassive = InfoA->Control(INVALID_HANDLE_VALUE, FCTL_GETANOTHERPANELSHORTINFO, &piP);
-		if (!lbActive && !lbPassive)
-		{
-			gpConsoleInfo->bFarLeftPanel = FALSE;
-			gpConsoleInfo->bFarRightPanel = FALSE;
-		} else {
-			PanelInfo *ppiL = NULL;
-			PanelInfo *ppiR = NULL;
-			if (lbActive) {
-				if (piA.Flags & PFLAGS_PANELLEFT) ppiL = &piA; else ppiR = &piA;
-			}
-			if (lbPassive) {
-				if (piP.Flags & PFLAGS_PANELLEFT) ppiL = &piP; else ppiR = &piP;
-			}
-			gpConsoleInfo->bFarLeftPanel = ppiL!=NULL;
-			gpConsoleInfo->bFarRightPanel = ppiR!=NULL;
-			if (ppiL) FarPanel2CePanel(ppiL, &(gpConsoleInfo->FarLeftPanel));
-			if (ppiR) FarPanel2CePanel(ppiR, &(gpConsoleInfo->FarRightPanel));
-		}
-	}
+
+	gpFarInfo->bFarPanelAllowed = InfoA->Control(INVALID_HANDLE_VALUE, FCTL_CHECKPANELSEXIST, 0);
+	gpFarInfo->bFarPanelInfoFilled = FALSE;
+	gpFarInfo->bFarLeftPanel = FALSE;
+	gpFarInfo->bFarRightPanel = FALSE;
+
+	// -- пока, во избежание глюков в FAR при неожиданных запросах информации о панелях
+	//if (FALSE == (gpFarInfo->bFarPanelAllowed)) {
+	//	gpConsoleInfo->bFarLeftPanel = FALSE;
+	//	gpConsoleInfo->bFarRightPanel = FALSE;
+	//} else {
+	//	PanelInfo piA = {0}, piP = {0};
+	//	BOOL lbActive  = InfoA->Control(INVALID_HANDLE_VALUE, FCTL_GETPANELSHORTINFO, &piA);
+	//	BOOL lbPassive = InfoA->Control(INVALID_HANDLE_VALUE, FCTL_GETANOTHERPANELSHORTINFO, &piP);
+	//	if (!lbActive && !lbPassive)
+	//	{
+	//		gpConsoleInfo->bFarLeftPanel = FALSE;
+	//		gpConsoleInfo->bFarRightPanel = FALSE;
+	//	} else {
+	//		PanelInfo *ppiL = NULL;
+	//		PanelInfo *ppiR = NULL;
+	//		if (lbActive) {
+	//			if (piA.Flags & PFLAGS_PANELLEFT) ppiL = &piA; else ppiR = &piA;
+	//		}
+	//		if (lbPassive) {
+	//			if (piP.Flags & PFLAGS_PANELLEFT) ppiL = &piP; else ppiR = &piP;
+	//		}
+	//		gpConsoleInfo->bFarLeftPanel = ppiL!=NULL;
+	//		gpConsoleInfo->bFarRightPanel = ppiR!=NULL;
+	//		if (ppiL) FarPanel2CePanel(ppiL, &(gpConsoleInfo->FarLeftPanel));
+	//		if (ppiR) FarPanel2CePanel(ppiR, &(gpConsoleInfo->FarRightPanel));
+	//	}
+	//}
 }

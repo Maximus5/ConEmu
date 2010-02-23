@@ -1561,11 +1561,13 @@ void CVirtualConsole::UpdateText(bool isForce)
 				// Если сверху или снизу на той же позиции рамки (или тот же '}')
 				// корректируем позицию
 				bool bBord = isCharBorderVertical(c);
-                if (bBord || isCharScroll(c) || (isFilePanel && c==L'}')) {
+				TODO("Пока не будет учтено, что поверх рамок может быть другой диалог!");
+				bool bFrame = false; // mpn_ConAttrEx[row*TextWidth+j].bDialogVBorder;
+                if (bFrame || bBord || isCharScroll(c) || (isFilePanel && c==L'}')) {
                     //2009-04-21 было (j-1) * nFontWidth;
                     //ConCharXLine[j-1] = j * nFontWidth;
 					bool bMayBeFrame = true;
-					if (!bBord)
+					if (!bBord && !bFrame)
 					{
 						int R;
 						wchar_t prevC;
@@ -1764,7 +1766,9 @@ void CVirtualConsole::UpdateText(bool isForce)
 					#ifndef DRAWEACHCHAR
 					// Если этого не делать - в пропорциональных шрифтах буквы будут наезжать одна на другую
 					TCHAR ch;
+					int nLastNonSpace = -1;
 					WARNING("*** сомнение в следующей строчке: (!gSet.isProportional || !isFilePanel || (ch != L'}' && ch!=L' '))");
+					TODO("при поиске по строке - обновлять nLastNonSpace");
 					while(j2 < end && ConAttrLine[j2] == attr && 
 						!isCharBorder(ch = ConCharLine[j2]) 
 						&& (!bProportional || !isFilePanel || (ch != L'}' && ch!=L' '))) // корректировка имен в колонках
@@ -1773,6 +1777,7 @@ void CVirtualConsole::UpdateText(bool isForce)
 						j2++;
 					}
 					#endif
+					TODO("От хвоста - отбросить пробелы (если если есть nLastNonSpace)");
 
 					SelectFont(hFont);
 					HEAPVAL
@@ -2391,7 +2396,7 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
             mb_PaintLocked = lbPaintLocked = TRUE;
     }
     
-    bool bFading = false;
+    //bool bFading = false;
 
     // Собственно, копирование готового bitmap
     if (!gbNoDblBuffer) {
@@ -2437,7 +2442,7 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
         Update(true, &hPaintDc);
     }
     
-    mb_LastFadeFlag = bFading;
+    //mb_LastFadeFlag = bFading;
 
     S.Unlock();
     
@@ -2502,8 +2507,8 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
 			// Прямоугольники найденных диалогов
 			SMALL_RECT rcFound[MAX_DETECTED_DIALOGS]; bool bFrame[MAX_DETECTED_DIALOGS];
 			int nFound = mp_RCon->GetDetectedDialogs(MAX_DETECTED_DIALOGS, rcFound, bFrame);
-			HPEN hWhite = (HPEN)GetStockObject(WHITE_PEN);
-			HPEN hOldPen = (HPEN)SelectObject(hPaintDc, hWhite);
+			HPEN hFrame = CreatePen(PS_SOLID, 1, RGB(255,0,255));
+			HPEN hOldPen = (HPEN)SelectObject(hPaintDc, hFrame);
 			HBRUSH hOldBr = (HBRUSH)SelectObject(hPaintDc, GetStockObject(HOLLOW_BRUSH));
 			HPEN hRed = CreatePen(PS_SOLID, 1, 255);
 			HPEN hDash = CreatePen(PS_DOT, 1, 0xFFFFFF);
@@ -2512,18 +2517,22 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
 			SetTextColor(hPaintDc, 0xFFFFFF);
 			SetBkColor(hPaintDc, 0);
 			for (int i = 0; i < nFound; i++) {
+				int n = 1;
 				if (i == (DEBUGDRAW_DIALOGS-1))
 					SelectObject(hPaintDc, hRed);
 				else if (bFrame[i])
-					SelectObject(hPaintDc, hWhite);
-				else
+					SelectObject(hPaintDc, hFrame);
+				else {
 					SelectObject(hPaintDc, hDash);
+					n = 0;
+				}
 				//
 				POINT pt[2];
 				pt[0] = ConsoleToClient(rcFound[i].Left, rcFound[i].Top);
 				pt[1] = ConsoleToClient(rcFound[i].Right+1, rcFound[i].Bottom+1);
 				MapWindowPoints(ghWndDC, ghWnd, pt, 2);
-				Rectangle(hPaintDc, pt[0].x+1, pt[0].y+1, pt[1].x-1, pt[1].y-1);
+				
+				Rectangle(hPaintDc, pt[0].x+n, pt[0].y+n, pt[1].x-n, pt[1].y-n);
 				wchar_t szCoord[32]; wsprintf(szCoord, L"%ix%i", rcFound[i].Left, rcFound[i].Top);
 				TextOut(hPaintDc, pt[0].x+1, pt[0].y+1, szCoord, wcslen(szCoord));
 			}
@@ -2532,6 +2541,7 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
 			SelectObject(hPaintDc, hOldFont);
 			DeleteObject(hRed);
 			DeleteObject(hDash);
+			DeleteObject(hFrame);
 			DeleteObject(hSmall);
 		}
 		#endif
@@ -2853,6 +2863,9 @@ BOOL CVirtualConsole::FindChanges(int &j, int &end, const wchar_t* ConCharLine, 
 HRGN CVirtualConsole::GetExclusionRgn(bool abTestOnly/*=false*/)
 {
 	if (!gSet.isUserScreenTransparent)
+		return NULL;
+
+	if (mp_RCon->GetFarPID(TRUE) == 0)
 		return NULL;
 
 	// Возвращает mh_TransparentRgn

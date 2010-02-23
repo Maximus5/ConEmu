@@ -119,6 +119,9 @@ protected:
 	IXMLDOMDocument* mp_File;
 	IXMLDOMNode* mp_Key;
 	bool mb_Modified;
+	int mi_Level;
+	//wchar_t ms_LevelPrefix[64];
+	//BSTR mbs_LevelPrefix, mbs_LevelSuffix;
 public:
 	virtual bool OpenKey(const wchar_t *regPath, uint access);
 	virtual void CloseKey();
@@ -138,6 +141,10 @@ protected:
 	bool SetAttr(IXMLDOMNode* apNode, IXMLDOMNamedNodeMap* apAttrs, const wchar_t* asName, const wchar_t* asValue);
 	BSTR GetAttr(IXMLDOMNode* apNode, const wchar_t* asName);
 	BSTR GetAttr(IXMLDOMNode* apNode, IXMLDOMNamedNodeMap* apAttrs, const wchar_t* asName);
+
+	void AppendIndent(IXMLDOMNode* apFrom, int nLevel);
+	void AppendNewLine(IXMLDOMNode* apFrom);
+	void AppendText(IXMLDOMNode* apFrom, BSTR asText);
 	
 public:
 	SettingsXML();

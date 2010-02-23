@@ -291,6 +291,7 @@ typedef struct tag_SrvInfo {
 	CESERVER_REQ_CONINFO_DATA *pConsoleData; // Mapping
 	CESERVER_REQ_CONINFO_DATA *pConsoleDataCopy; // Local (Alloc)
 	DWORD nConsoleDataSize;
+	DWORD nFarInfoLastIdx;
 	// TrueColorer buffer
 	HANDLE hColorerMapping;
 	//

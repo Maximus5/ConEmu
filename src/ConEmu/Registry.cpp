@@ -152,6 +152,7 @@ SettingsXML::SettingsXML()
 	mp_File = NULL; mp_Key = NULL;
 	lstrcpy(Type, L"[xml]");
 	mb_Modified = false;
+	mi_Level = 0;
 }
 SettingsXML::~SettingsXML()
 {
@@ -226,6 +227,7 @@ bool SettingsXML::OpenKey(const wchar_t *regPath, uint access)
 			goto wrap;
 		}
 		
+		mi_Level = 0;
 		while (*regPath) {
 			// Получить следующий токен
 			psz = wcschr(regPath, L'\\');
@@ -236,6 +238,7 @@ bool SettingsXML::OpenKey(const wchar_t *regPath, uint access)
 			pChild = FindItem(pKey, L"key", szName, bAllowCreate);
 			pKey->Release();
 			pKey = pChild; pChild = NULL;
+			mi_Level++;
 			
 			if (!pKey) {
 				if (bAllowCreate) {
@@ -274,6 +277,42 @@ wrap:
 		MBoxA(szErr);
 	}
 	return lbRc;
+}
+
+void SettingsXML::CloseKey()
+{
+	HRESULT hr = S_OK;
+	HANDLE hFile = NULL;
+	bool bCanSave = false;
+
+	mi_Level = 0;
+
+	if (mb_Modified && mp_File) {
+		hFile = CreateFile ( gConEmu.ms_ConEmuXml, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE,
+			NULL, OPEN_EXISTING, 0, 0 );
+		// XML-файл отсутсвует, или ошибка доступа
+		if (hFile == INVALID_HANDLE_VALUE) {
+			DWORD dwErrCode = GetLastError();
+			wchar_t szErr[MAX_PATH*2];
+			wsprintf(szErr, L"Can't open file for writing!\n%s\nErrCode=0x%08X",
+				gConEmu.ms_ConEmuXml, dwErrCode);
+			MBoxA(szErr);
+		} else {
+			CloseHandle(hFile); hFile = NULL;
+			bCanSave = true;
+		}
+
+		if (bCanSave) {
+			VARIANT vt; vt.vt = VT_BSTR; vt.bstrVal = ::SysAllocString(gConEmu.ms_ConEmuXml);
+
+			hr = mp_File->save(vt);
+
+			VariantClear(&vt);
+		}
+	}
+	if (mp_Key) { mp_Key->Release(); mp_Key = NULL; }
+	if (mp_File) { mp_File->Release(); mp_File = NULL; }
+	mb_Modified = false;
 }
 
 BSTR SettingsXML::GetAttr(IXMLDOMNode* apNode, const wchar_t* asName)
@@ -369,6 +408,46 @@ bool SettingsXML::SetAttr(IXMLDOMNode* apNode, IXMLDOMNamedNodeMap* apAttrs, con
 	return lbRc;
 }
 
+// Indenting XML keys using DOM
+void SettingsXML::AppendIndent(IXMLDOMNode* apFrom, int nLevel)
+{
+	if (nLevel<=0) return;
+
+	int nMax = min(32,nLevel);
+	wchar_t szIndent[34];
+	for (int i=0; i<nMax; i++) szIndent[i] = L'\t';
+	szIndent[nMax] = 0;
+	BSTR bsText = ::SysAllocString(szIndent);
+	AppendText(apFrom, bsText);
+	SysFreeString(bsText);
+}
+
+void SettingsXML::AppendNewLine(IXMLDOMNode* apFrom)
+{
+	BSTR bsText = SysAllocString(L"\r\n");
+	AppendText(apFrom, bsText);
+	SysFreeString(bsText);
+}
+
+void SettingsXML::AppendText(IXMLDOMNode* apFrom, BSTR asText)
+{
+	if (!asText || !*asText)
+		return;
+	VARIANT vtType;
+	IXMLDOMNode* pChild = NULL;
+	IXMLDOMNode *pIXMLDOMNode = NULL;
+	vtType.vt = VT_I4; vtType.lVal = NODE_TEXT;
+	HRESULT hr = mp_File->createNode(vtType, L"", L"", &pChild);
+	if (SUCCEEDED(hr) && pChild) {
+		hr = pChild->put_text(asText);
+		hr = apFrom->appendChild(pChild, &pIXMLDOMNode);
+		pChild->Release(); pChild = NULL;
+		if (SUCCEEDED(hr) && pIXMLDOMNode) {
+			pIXMLDOMNode->Release(); pIXMLDOMNode = NULL;
+		}
+	}
+}
+
 IXMLDOMNode* SettingsXML::FindItem(IXMLDOMNode* apFrom, const wchar_t* asType, const wchar_t* asName, bool abAllowCreate)
 {
 	HRESULT hr = S_OK;
@@ -379,6 +458,7 @@ IXMLDOMNode* SettingsXML::FindItem(IXMLDOMNode* apFrom, const wchar_t* asType, c
 	IXMLDOMNode *pIXMLDOMNode = NULL;
 	IXMLDOMNode *pName = NULL;
 	BSTR bsText = NULL;
+
 
 	// Получить все дочерние элементы нужного типа
 	bsText = ::SysAllocString(asType);
@@ -409,13 +489,21 @@ IXMLDOMNode* SettingsXML::FindItem(IXMLDOMNode* apFrom, const wchar_t* asType, c
 	
 	
 	if (!pChild && abAllowCreate) {
+		VARIANT vtType; vtType.vt = VT_I4;
+		vtType.lVal = NODE_ELEMENT;
 		bsText = ::SysAllocString(asType);
-		VARIANT vtType; vtType.vt = VT_I4; vtType.lVal = NODE_ELEMENT;
 		hr = mp_File->createNode(vtType, bsText, L"", &pChild);
 		::SysFreeString(bsText); bsText = NULL;
 
 		if (SUCCEEDED(hr) && pChild) {
 			if (SetAttr(pChild, L"name", asName)) {
+				if (asType[0] == L'k') {
+					AppendNewLine(pChild);
+					AppendIndent(pChild, mi_Level+1);
+				}
+
+				AppendIndent(apFrom, 1);
+
 				hr = apFrom->appendChild(pChild, &pIXMLDOMNode);
 				pChild->Release(); pChild = NULL;
 				if (FAILED(hr)) {
@@ -424,6 +512,9 @@ IXMLDOMNode* SettingsXML::FindItem(IXMLDOMNode* apFrom, const wchar_t* asType, c
 					pChild = pIXMLDOMNode;
 					pIXMLDOMNode = NULL;
 				}
+
+				AppendNewLine(apFrom);
+				AppendIndent(apFrom, mi_Level-1);
 			} else {
 				pChild->Release(); pChild = NULL;
 			}
@@ -431,40 +522,6 @@ IXMLDOMNode* SettingsXML::FindItem(IXMLDOMNode* apFrom, const wchar_t* asType, c
 	}
 	
 	return pChild;
-}
-
-void SettingsXML::CloseKey()
-{
-	HRESULT hr = S_OK;
-	HANDLE hFile = NULL;
-	bool bCanSave = false;
-
-	if (mb_Modified && mp_File) {
-		hFile = CreateFile ( gConEmu.ms_ConEmuXml, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE,
-			NULL, OPEN_EXISTING, 0, 0 );
-		// XML-файл отсутсвует, или ошибка доступа
-		if (hFile == INVALID_HANDLE_VALUE) {
-			DWORD dwErrCode = GetLastError();
-			wchar_t szErr[MAX_PATH*2];
-			wsprintf(szErr, L"Can't open file for writing!\n%s\nErrCode=0x%08X",
-				gConEmu.ms_ConEmuXml, dwErrCode);
-			MBoxA(szErr);
-		} else {
-			CloseHandle(hFile); hFile = NULL;
-			bCanSave = true;
-		}
-
-		if (bCanSave) {
-			VARIANT vt; vt.vt = VT_BSTR; vt.bstrVal = ::SysAllocString(gConEmu.ms_ConEmuXml);
-		
-			hr = mp_File->save(vt);
-
-			VariantClear(&vt);
-		}
-	}
-	if (mp_Key) { mp_Key->Release(); mp_Key = NULL; }
-	if (mp_File) { mp_File->Release(); mp_File = NULL; }
-	mb_Modified = false;
 }
 
 // После вызова ЭТОЙ функции - про старое значение в *value строго забываем

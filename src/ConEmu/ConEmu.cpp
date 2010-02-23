@@ -723,7 +723,8 @@ void CConEmuMain::AddMargins(RECT& rc, RECT& rcAddShift, BOOL abExpand/*=FALSE*/
 
 void CConEmuMain::AskChangeBufferHeight()
 {
-	// Issue 192: ConEmu.exe 2010.2.17 падение Conemu/Conhost при turn bufferheight ON
+	// Win7 BUGBUG: Issue 192: падение Conhost при turn bufferheight ON
+	// http://code.google.com/p/conemu-maximus5/issues/detail?id=192
 	if (gOSVer.dwMajorVersion == 6 && gOSVer.dwMinorVersion == 1)
 		return;
 
