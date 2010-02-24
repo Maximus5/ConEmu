@@ -88,6 +88,7 @@ HWND    ghConEmuWnd = NULL; // Root! window
 HANDLE  ghExitQueryEvent = NULL;
 HANDLE  ghQuitEvent = NULL;
 BOOL    gbAlwaysConfirmExit = FALSE, gbInShutdown = FALSE, gbAutoDisableConfirmExit = FALSE;
+BOOL    gbConfirmExitOnTerminate = FALSE; // корневой процесс проработал менее CHECK_ROOTOK_TIMEOUT
 int     gbRootWasFoundInCon = 0;
 BOOL    gbAttachMode = FALSE;
 BOOL    gbForceHideConWnd = FALSE;
@@ -498,8 +499,12 @@ wrap:
 			pszMsg = L"\n\nPress Enter to exit...";
 			lbDontShowConsole = gnRunMode != RM_SERVER;
 		} else {
-			if (gbRootWasFoundInCon == 1)
-				pszMsg = L"\n\nPress Enter to close console...";
+			if (gbRootWasFoundInCon == 1) {
+				if (gbConfirmExitOnTerminate) // корневой процесс проработал менее CHECK_ROOTOK_TIMEOUT
+					pszMsg = L"\n\nConEmuC: Root process was alive less than 10 sec.\nPress Enter to close console...";
+				else
+					pszMsg = L"\n\nPress Enter to close console...";
+			}
 		}
 		if (!pszMsg) // »наче - сообщение по умолчанию
 			pszMsg = L"\n\nPress Enter to close console, or wait...";
@@ -1809,6 +1814,7 @@ BOOL CheckProcessCount(BOOL abForce/*=FALSE*/)
 			if (WaitForSingleObject(srv.hRootProcess, 0) == WAIT_OBJECT_0) {
 				//  орневой процесс завершен, возможно, была кака€-то проблема?
 				gbAutoDisableConfirmExit = FALSE; gbAlwaysConfirmExit = TRUE;
+				gbConfirmExitOnTerminate = TRUE; // корневой процесс проработал менее CHECK_ROOTOK_TIMEOUT
 			} else {
 				//  орневой процесс все еще работает, считаем что все ок и подтверждени€ закрыти€ консоли не потребуетс€
 				gbAutoDisableConfirmExit = FALSE; gbAlwaysConfirmExit = FALSE;
@@ -2760,9 +2766,11 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
     CONSOLE_SCREEN_BUFFER_INFO csbi = {{0,0}};
     if (MyGetConsoleScreenBufferInfo(ghConOut, &csbi)) {
         lbNeedChange = (csbi.dwSize.X != crNewSize.X) || (csbi.dwSize.Y != crNewSize.Y);
+#ifdef _DEBUG
 		if (!lbNeedChange) {
 			BufferHeight = BufferHeight;
 		}
+#endif
     }
 
 	COORD crMax = GetLargestConsoleWindowSize(ghConOut);

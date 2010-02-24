@@ -73,7 +73,7 @@ WARNING("Часто после разблокирования компьютера размер консоли изменяется (OK), 
 
 #ifdef _DEBUG
 //#undef HEAPVAL
-#define HEAPVAL HeapValidate(mh_Heap, 0, NULL);
+#define HEAPVAL //HeapValidate(mh_Heap, 0, NULL);
 #define CURSOR_ALWAYS_VISIBLE
 #else
 #define HEAPVAL
@@ -290,12 +290,6 @@ CVirtualConsole::~CVirtualConsole()
         mp_RCon = NULL;
     }
 }
-
-#ifdef _DEBUG
-#define HEAPVAL HeapValidate(mh_Heap, 0, NULL);
-#else
-#define HEAPVAL 
-#endif
 
 
 // InitDC вызывается только при критических изменениях (размеры, шрифт, и т.п.) когда нужно пересоздать DC и Bitmap

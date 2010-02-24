@@ -791,10 +791,10 @@ CESERVER_REQ* ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandDat
 		_ASSERTE(ghPluginSemaphore!=NULL);
 		_ASSERTE(ghServerTerminateEvent!=NULL);
 
-		//// Активация плагина в анси версии медленная, и для Redraw смысла не имеет
-		//if (gFarVersion.dwVerMajor < 2 && nCmd == CMD_REDRAWFAR) {
-		//	return NULL; // лучше его просто пропустить
-		//}
+		// Issue 198: Redraw вызывает отрисовку фаром (1.7x) UserScreen-a (причем без кейбара)
+		if (gFarVersion.dwVerMajor < 2 && nCmd == CMD_REDRAWFAR) {
+			return NULL; // лучше его просто пропустить
+		}
 		
 		if (nCmd == CMD_FARPOST)
 			return NULL; // Это просто проверка, что фар отработал цикл
@@ -1035,7 +1035,7 @@ CESERVER_REQ* ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandDat
 			break;
 		}
 		case (CMD_REDRAWFAR):
-			RedrawAll();
+			if (gFarVersion.dwVerMajor==2) RedrawAll();
 			break;
 		//case (CMD_SETSIZE):
 		//{

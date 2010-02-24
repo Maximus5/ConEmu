@@ -127,6 +127,7 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
 	mcr_LastMouseEventPos = MakeCoord(-1,-1);
 
 	m_DetectedDialogs.Count = 0;
+	mn_DetectCallCount = 0;
 
     wcscpy(Title, L"ConEmu");
     wcscpy(TitleFull, Title);
@@ -352,31 +353,18 @@ BOOL CRealConsole::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuff
     BOOL fSuccess = FALSE;
     DWORD dwRead = 0;
     int nInSize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_SETSIZE);
-    CESERVER_REQ *pIn = (CESERVER_REQ*)calloc(nInSize,1);
-    _ASSERTE(pIn);
-	if (!pIn) {
-		if (gSet.isAdvLogging) LogString("Memory allocation error in SetConsoleSize ");
-		return FALSE;
-	}
-    pIn->hdr.nSize = nInSize;
-    int nOutSize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_RETSIZE);
-    CESERVER_REQ *pOut = (CESERVER_REQ*)calloc(nOutSize,1);
-    _ASSERTE(pOut);
-	if (!pOut) { free(pIn); return FALSE; }
-    pOut->hdr.nSize = nOutSize;
+	int nOutSize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_RETSIZE);
+    CESERVER_REQ lIn = {{nInSize}};
+	CESERVER_REQ lOut = {{nOutSize}};
     SMALL_RECT rect = {0};
 
     _ASSERTE(anCmdID==CECMD_SETSIZESYNC || anCmdID==CECMD_CMDSTARTED || anCmdID==CECMD_CMDFINISHED);
-	ExecutePrepareCmd(pIn, anCmdID, pIn->hdr.nSize);
+	ExecutePrepareCmd(&lIn, anCmdID, lIn.hdr.nSize);
 
 
 
     // Для режима BufferHeight нужно передать еще и видимый прямоугольник (нужна только верхняя координата?)
     if (con.bBufferHeight) {
-        // global flag of the first call which is:
-        // *) after getting all the settings
-        // *) before running the command
-        //static bool s_isFirstCall = true;
 
         // case: buffer mode: change buffer
         CONSOLE_SCREEN_BUFFER_INFO sbi = con.m_sbi;
@@ -385,22 +373,6 @@ BOOL CRealConsole::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuff
 		sizeBuffer = BufferHeight(sizeBuffer); // Если нужно - скорректировать
 		_ASSERTE(sizeBuffer > 0);
 		sbi.dwSize.Y = sizeBuffer;
-   //     if (s_isFirstCall)
-   //     {
-   //         // first call: buffer height = from settings
-   //         s_isFirstCall = false;
-   //         sbi.dwSize.Y = max(gSet.Default BufferHeight, sizeBuffer);
-   //     }
-   //     else
-   //     {
-			//if (sbi.dwSize.Y == sbi.srWindow.Bottom - sbi.srWindow.Top + 1) {
-   //             // no y-scroll: buffer height = new window height
-   //             sbi.dwSize.Y = sizeBuffer;
-			//} else {
-   //             // y-scroll: buffer height = old buffer height
-   //             sbi.dwSize.Y = max(sbi.dwSize.Y, sizeY);
-			//}
-   //     }
 
         rect.Top = sbi.srWindow.Top;
         rect.Left = sbi.srWindow.Left;
@@ -428,18 +400,34 @@ BOOL CRealConsole::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuff
     _ASSERTE(sizeY>0 && sizeY<200);
 
     // Устанавливаем параметры для передачи в ConEmuC
-    //*((USHORT*)pIn->Data) = con.bBufferHeight ? gSet.Default BufferHeight : 0;
-    //memmove(pIn->Data + sizeof(USHORT), &size, sizeof(COORD));
-    //SHORT nSendTopLine = (gSet.AutoScroll || !con.bBufferHeight) ? -1 : con.nTopVisibleLine;
-    //memmove(pIn->Data + sizeof(USHORT)+sizeof(COORD), &nSendTopLine, sizeof(SHORT));
-    //// Видимый прямоугольник
-    //memmove(pIn->Data + sizeof(USHORT) + sizeof(COORD) + sizeof(SHORT), &rect, sizeof(rect));
-    pIn->SetSize.nBufferHeight = sizeBuffer; //con.bBufferHeight ? gSet.Default BufferHeight : 0;
-    pIn->SetSize.size.X = sizeX;
-	pIn->SetSize.size.Y = sizeY;
-    pIn->SetSize.nSendTopLine = (gSet.AutoScroll || !con.bBufferHeight) ? -1 : con.nTopVisibleLine;
-    pIn->SetSize.rcWindow = rect;
-	pIn->SetSize.dwFarPID = con.bBufferHeight ? 0 : GetFarPID();
+    lIn.SetSize.nBufferHeight = sizeBuffer; //con.bBufferHeight ? gSet.Default BufferHeight : 0;
+    lIn.SetSize.size.X = sizeX;
+	lIn.SetSize.size.Y = sizeY;
+    lIn.SetSize.nSendTopLine = (gSet.AutoScroll || !con.bBufferHeight) ? -1 : con.nTopVisibleLine;
+    lIn.SetSize.rcWindow = rect;
+	lIn.SetSize.dwFarPID = con.bBufferHeight ? 0 : GetFarPID();
+
+	// Если размер менять не нужно - то и CallNamedPipe не делать
+	if (mp_ConsoleInfo) {
+		// Если заблокирована верхняя видимая строка - выполнять строго
+		if (lIn.SetSize.nSendTopLine == -1) {
+			// иначе - проверяем текущее соответствие
+			CONSOLE_SCREEN_BUFFER_INFO sbi = mp_ConsoleInfo->sbi;
+			bool lbSizeMatch = true;
+			if (con.bBufferHeight) {
+				if (sbi.dwSize.X != sizeX || sbi.dwSize.Y != sizeBuffer)
+					lbSizeMatch = false;
+				else if (sbi.srWindow.Top != rect.Top || sbi.srWindow.Bottom != rect.Bottom)
+					lbSizeMatch = false;
+			} else {
+				if (sbi.dwSize.X != sizeX || sbi.dwSize.Y != sizeY)
+					lbSizeMatch = false;
+			}
+			// fin
+			if (lbSizeMatch)
+				return TRUE; // менять ничего не нужно
+		}
+	}
 
 	if (gSet.isAdvLogging) {
 		char szInfo[128];
@@ -447,7 +435,7 @@ BOOL CRealConsole::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuff
 			(anCmdID==CECMD_SETSIZESYNC) ? "CECMD_SETSIZESYNC" :
 			(anCmdID==CECMD_CMDSTARTED) ? "CECMD_CMDSTARTED" :
 			(anCmdID==CECMD_CMDFINISHED) ? "CECMD_CMDFINISHED" :
-			"UnknownSizeCommand", sizeX, sizeY, sizeBuffer, pIn->SetSize.nSendTopLine);
+			"UnknownSizeCommand", sizeX, sizeY, sizeBuffer, lIn.SetSize.nSendTopLine);
 		LogString(szInfo);
 	}
 
@@ -457,7 +445,7 @@ BOOL CRealConsole::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuff
 	DEBUGSTRSIZE(szDbgCmd);
 	#endif
 
-    fSuccess = CallNamedPipe(ms_ConEmuC_Pipe, pIn, pIn->hdr.nSize, pOut, pOut->hdr.nSize, &dwRead, 500);
+    fSuccess = CallNamedPipe(ms_ConEmuC_Pipe, &lIn, lIn.hdr.nSize, &lOut, lOut.hdr.nSize, &dwRead, 500);
 
     if (!fSuccess || dwRead<(DWORD)nOutSize) {
 		if (gSet.isAdvLogging) {
@@ -474,15 +462,15 @@ BOOL CRealConsole::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuff
 			&& (mn_MonitorThreadID != GetCurrentThreadId());
 
 		DEBUGSTRSIZE(L"SetConsoleSize.fSuccess == TRUE\n");
-        if (pOut->hdr.nCmd != pIn->hdr.nCmd) {
-			_ASSERTE(pOut->hdr.nCmd == pIn->hdr.nCmd);
+        if (lOut.hdr.nCmd != lIn.hdr.nCmd) {
+			_ASSERTE(lOut.hdr.nCmd == lIn.hdr.nCmd);
 			if (gSet.isAdvLogging) {
-				char szInfo[128]; wsprintfA(szInfo, "SetConsoleSizeSrv FAILED!!! OutCmd(%i)!=InCmd(%i)", pOut->hdr.nCmd, pIn->hdr.nCmd);
+				char szInfo[128]; wsprintfA(szInfo, "SetConsoleSizeSrv FAILED!!! OutCmd(%i)!=InCmd(%i)", lOut.hdr.nCmd, lIn.hdr.nCmd);
 				LogString(szInfo);
 			}
 		} else {
-            //con.nPacketIdx = pOut->SetSizeRet.nNextPacketId;
-			//mn_LastProcessedPkt = pOut->SetSizeRet.nNextPacketId;
+            //con.nPacketIdx = lOut.SetSizeRet.nNextPacketId;
+			//mn_LastProcessedPkt = lOut.SetSizeRet.nNextPacketId;
             CONSOLE_SCREEN_BUFFER_INFO sbi = {{0,0}};
 			int nBufHeight;
 			_ASSERTE(mp_ConsoleInfo);
@@ -531,9 +519,8 @@ BOOL CRealConsole::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuff
 				sbi = con.m_sbi;
 				nBufHeight = con.nBufferHeight;
 			} else {
-				WARNING("pOut не освобождается?");
-		        sbi = pOut->SetSizeRet.SetSizeRet;
-				nBufHeight = pIn->SetSize.nBufferHeight;
+		        sbi = lOut.SetSizeRet.SetSizeRet;
+				nBufHeight = lIn.SetSize.nBufferHeight;
 				if (gSet.isAdvLogging)
 					LogString("SetConsoleSizeSrv.Not waiting for ApplyFinished");
 			}
@@ -554,7 +541,7 @@ BOOL CRealConsole::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuff
 						char szInfo[128]; wsprintfA(szInfo, "SetConsoleSizeSrv FAILED! Ask={%ix%i}, Cur={%ix%i}, Ret={%ix%i}",
 							sizeX, sizeY,
 							sbi.dwSize.X, sbi.dwSize.Y,
-							pOut->SetSizeRet.SetSizeRet.dwSize.X, pOut->SetSizeRet.SetSizeRet.dwSize.Y
+							lOut.SetSizeRet.SetSizeRet.dwSize.X, lOut.SetSizeRet.SetSizeRet.dwSize.Y
 							);
 						LogString(szInfo);
 					}
@@ -577,7 +564,7 @@ BOOL CRealConsole::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuff
 						char szInfo[128]; wsprintfA(szInfo, "SetConsoleSizeSrv FAILED! Ask={%ix%i}, Cur={%ix%i}, Ret={%ix%i}",
 							sizeX, sizeY,
 							sbi.dwSize.X, sbi.dwSize.Y,
-							pOut->SetSizeRet.SetSizeRet.dwSize.X, pOut->SetSizeRet.SetSizeRet.dwSize.Y
+							lOut.SetSizeRet.SetSizeRet.dwSize.X, lOut.SetSizeRet.SetSizeRet.dwSize.Y
 							);
 						LogString(szInfo);
 					}
@@ -606,10 +593,6 @@ BOOL CRealConsole::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuff
             }
         }
     }
-
-    WARNING("Тут бы использовать ExecuteFree");
-	if (pOut) { free(pOut); pOut = NULL; }
-	if (pIn) { free(pIn); pIn = NULL; }
 
 	return lbRc;
 }
@@ -5188,6 +5171,9 @@ bool CRealConsole::ExpandDialogFrame(wchar_t* pChar, CharAttr* pAttr, int nWidth
 	DWORD nColor = pAttr[nShift+nFromX].crBackColor;
 
 	if (nFromX == nFrameX && nFromY == nFrameY) {
+		if (wc != ucBoxDblDownRight && wc != ucBoxSinglDownRight)
+			return false;
+
 		//Сначала нужно пройти вверх и влево
 		if (nFromY) { // Пробуем вверх
 			n = (nFromY-1)*nWidth+nFromX;
@@ -5208,6 +5194,9 @@ bool CRealConsole::ExpandDialogFrame(wchar_t* pChar, CharAttr* pAttr, int nWidth
 			}
 			bExpanded = (nFromX<nFrameX);
 		}
+	} else {
+		if (wc != ucSpace && wc != ucNoBreakSpace)
+			return false;
 	}
 
 	if (nMostRight < (nWidth-1)) {
@@ -5263,9 +5252,19 @@ bool CRealConsole::FindByBackground(wchar_t* pChar, CharAttr* pAttr, int nWidth,
 	wchar_t wc = pChar[nFromY*nWidth+nMostRight];
 	if (wc >= ucBoxSinglHorz && wc <= ucBoxDblVertHorz)
 	{
-		DetectDialog(pChar, pAttr, nWidth, nHeight, nMostRight, nFromY);
-		if (pAttr[nShift+nFromX].bDialog)
-			return false; // все уже обработано
+		switch (wc)
+		{
+		case ucBoxSinglDownRight: case ucBoxDblDownRight:
+		case ucBoxSinglUpRight: case ucBoxDblUpRight:
+		case ucBoxSinglDownLeft: case ucBoxDblDownLeft:
+		case ucBoxSinglUpLeft: case ucBoxDblUpLeft:
+		case ucBoxDblVert: case ucBoxSinglVert:
+			{
+				DetectDialog(pChar, pAttr, nWidth, nHeight, nMostRight, nFromY);
+				if (pAttr[nShift+nFromX].bDialog)
+					return false; // все уже обработано
+			}
+		}
 	} else if (nMostRight && ((wc >= ucBox25 && wc <= ucBox75) || wc == ucUpScroll || wc == ucDnScroll)) {
 		int nX = nMostRight;
 		if (FindDialog_Right(pChar, pAttr, nWidth, nHeight, nX, nFromY, nMostRight, nMostBottom, bMarkBorder)) {
@@ -5316,6 +5315,18 @@ void CRealConsole::DetectDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int
 	}
 #endif
 
+	// защита от переполнения стека (быть не должно)
+	if (mn_DetectCallCount >= 3) {
+		_ASSERTE(mn_DetectCallCount<3);
+		return;
+	}
+	
+	
+	/* *********************************************** */
+	/* После этой строки 'return' использовать нельзя! */
+	/* *********************************************** */
+	mn_DetectCallCount++;
+
 	wchar_t wc; //, wcMostRight, wcMostBottom, wcMostRightBottom, wcMostTop, wcNotMostBottom1, wcNotMostBottom2;
 	int nMostRight, nMostBottom; //, nMostRightBottom, nMostTop, nShift, n;
 	//DWORD nBackColor;
@@ -5343,7 +5354,7 @@ void CRealConsole::DetectDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int
 			{
 				// Диалог без окантовки. Все просто - идем по рамке
 				if (!FindDialog_TopLeft(pChar, pAttr, nWidth, nHeight, nFromX, nFromY, nMostRight, nMostBottom, bMarkBorder))
-					return;
+					goto fin;
 				goto done;
 			}
 			// Нижний левый угол?
@@ -5351,7 +5362,7 @@ void CRealConsole::DetectDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int
 			{
 				// Сначала нужно будет подняться по рамке вверх
 				if (!FindDialog_TopLeft(pChar, pAttr, nWidth, nHeight, nFromX, nFromY, nMostRight, nMostBottom, bMarkBorder))
-					return;
+					goto fin;
 				goto done;
 			}
 
@@ -5360,7 +5371,7 @@ void CRealConsole::DetectDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int
 			{
 				// Диалог без окантовки. Все просто - идем по рамке
 				if (!FindDialog_TopRight(pChar, pAttr, nWidth, nHeight, nFromX, nFromY, nMostRight, nMostBottom, bMarkBorder))
-					return;
+					goto fin;
 				goto done;
 			}
 			// Нижний правый угол?
@@ -5368,7 +5379,7 @@ void CRealConsole::DetectDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int
 			{
 				// Сначала нужно будет подняться по рамке вверх
 				if (!FindDialog_Right(pChar, pAttr, nWidth, nHeight, nFromX, nFromY, nMostRight, nMostBottom, bMarkBorder))
-					return;
+					goto fin;
 				goto done;
 			}
 
@@ -5377,7 +5388,7 @@ void CRealConsole::DetectDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int
 				// наткнулись на вертикальную линию на панели
 				if (wc == ucBoxSinglVert) {
 					if (FindDialog_Inner(pChar, pAttr, nWidth, nHeight, nFromX, nFromY))
-						return;
+						goto fin;
 				}
 
 				// Диалог может быть как слева, так и справа от вертикальной линии
@@ -5407,7 +5418,7 @@ void CRealConsole::DetectDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int
 	// Это может быть диалог, рамка которого закрыта другим диалогом, 
 	// или вообще кусок диалога, у которого видна только часть рамки
 	if (!FindByBackground(pChar, pAttr, nWidth, nHeight, nFromX, nFromY, nMostRight, nMostBottom, bMarkBorder))
-		return; // значит уже все пометили, или диалога нет
+		goto fin; // значит уже все пометили, или диалога нет
 
 
 
@@ -5419,7 +5430,7 @@ done:
 		//_ASSERT(FALSE);
 		// Это происходит, если обновление внутренних буферов произошло ДО
 		// завершения обработки диалогов (быстрый драг панелей, диалогов, и т.п.)
-		return;
+		goto fin;
 	}
 #endif
 	// Забить атрибуты
@@ -5428,6 +5439,10 @@ done:
 	// Вернуть размеры, если просили
 	if (pnMostRight) *pnMostRight = nMostRight;
 	if (pnMostBottom) *pnMostBottom = nMostBottom;
+fin:
+	mn_DetectCallCount--;
+	_ASSERTE(mn_DetectCallCount>=0);
+	return;
 }
 
 void CRealConsole::MarkDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int nX1, int nY1, int nX2, int nY2, BOOL bMarkBorder, BOOL bFindExterior /*= TRUE*/)
@@ -5451,7 +5466,7 @@ void CRealConsole::MarkDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int n
 	}
 
 #ifdef _DEBUG
-	if (nX1 == 25 && nY1 == 1) {
+	if (nX1 == 57 && nY1 == 0) {
 		nX2 = nX2;
 	}
 #endif
@@ -5509,6 +5524,8 @@ void CRealConsole::PrepareTransparent(wchar_t* pChar, CharAttr* pAttr, int nWidt
 	//if (isPressed(VK_CONTROL) && isPressed(VK_SHIFT) && isPressed(VK_MENU))
 	//	return;
 
+	WARNING("Если информация в FarInfo не заполнена - брать умолчания!");
+	WARNING("Учитывать возможность наличия номеров окон, символа записи 'R', и по хорошему, ч/б режима");
 
 	//COLORREF crColorKey = gSet.ColorKey;
 	// реальный цвет, заданный в фаре

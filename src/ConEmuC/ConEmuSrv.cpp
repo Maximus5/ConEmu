@@ -1660,19 +1660,20 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 		
 		// Из другой нити поступил запрос на изменение размера консоли
 		if (srv.nRequestChangeSize) {
-			DWORD dwSusp = 0, dwSuspErr = 0;
-			if (srv.hRootThread) {
-				WARNING("A 64-bit application can suspend a WOW64 thread using the Wow64SuspendThread function");
-				// The handle must have the THREAD_SUSPEND_RESUME access right
-				dwSusp = SuspendThread(srv.hRootThread);
-				if (dwSusp == (DWORD)-1) dwSuspErr = GetLastError();
-			}
+			// AVP гундит... да вроде и не нужно
+			//DWORD dwSusp = 0, dwSuspErr = 0;
+			//if (srv.hRootThread) {
+			//	WARNING("A 64-bit application can suspend a WOW64 thread using the Wow64SuspendThread function");
+			//	// The handle must have the THREAD_SUSPEND_RESUME access right
+			//	dwSusp = SuspendThread(srv.hRootThread);
+			//	if (dwSusp == (DWORD)-1) dwSuspErr = GetLastError();
+			//}
 			
 			SetConsoleSize(srv.nReqSizeBufferHeight, srv.crReqSizeNewSize, srv.rReqSizeNewRect, srv.sReqSizeLabel);
 	
-			if (srv.hRootThread) {
-				ResumeThread(srv.hRootThread);
-			}
+			//if (srv.hRootThread) {
+			//	ResumeThread(srv.hRootThread);
+			//}
 			
 			SetEvent(srv.hReqSizeChanged);
 		}

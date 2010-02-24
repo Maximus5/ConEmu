@@ -60,7 +60,7 @@ const WORD HostkeyCtrlIds[] = {cbHostWin, cbHostApps, cbHostLCtrl, cbHostRCtrl, 
 HWND ghOpWnd=NULL;
 
 #ifdef _DEBUG
-#define HEAPVAL HeapValidate(GetProcessHeap(), 0, NULL);
+#define HEAPVAL //HeapValidate(GetProcessHeap(), 0, NULL);
 #else
 #define HEAPVAL 
 #endif
@@ -4736,7 +4736,7 @@ bool CSettings::isHideCaptionAlways()
 
 COLORREF* CSettings::GetColors(BOOL abFade)
 {
-	if (!abFade)
+	if (!abFade || !isFadeInactive)
 		return Colors;
 	
 	if (!mb_FadeInitialized) {
@@ -4756,6 +4756,9 @@ COLORREF* CSettings::GetColors(BOOL abFade)
 
 COLORREF CSettings::GetFadeColor(COLORREF cr)
 {
+	if (!isFadeInactive)
+		return cr;
+	
 	MYCOLORREF mcr, mcrFade; mcr.color = cr;
 	if (!mb_FadeInitialized) {
 		GetColors(TRUE);
