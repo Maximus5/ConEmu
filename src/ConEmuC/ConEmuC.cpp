@@ -547,6 +547,8 @@ wrap:
         SetConsoleTitleW(gpszPrevConTitle);
         Free(gpszPrevConTitle);
     }
+
+	LogSize(NULL, "Shutdown");
     
     //ghConIn.Close();
 	ghConOut.Close();
@@ -1310,9 +1312,12 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 
 void EmergencyShow()
 {
-	SetWindowPos(ghConWnd, HWND_TOP, 50,50,0,0, SWP_NOSIZE);
-	ShowWindowAsync(ghConWnd, SW_SHOWNORMAL);
-	EnableWindow(ghConWnd, true);
+	if (!IsWindowVisible(ghConWnd)) {
+		SetWindowPos(ghConWnd, HWND_TOP, 50,50,0,0, SWP_NOSIZE);
+		ShowWindowAsync(ghConWnd, SW_SHOWNORMAL);
+	}
+	if (!IsWindowEnabled(ghConWnd))
+		EnableWindow(ghConWnd, true);
 }
 
 void ExitWaitForKey(WORD vkKey, LPCWSTR asConfirm, BOOL abNewLine, BOOL abDontShowConsole)
@@ -1584,6 +1589,46 @@ void CreateLogSizeFile(int nLevel)
     LogSize(NULL, "Startup");
 }
 
+void LogString(LPCSTR asText)
+{
+	if (!ghLogSize) return;
+
+	char szInfo[255]; szInfo[0] = 0;
+	LPCSTR pszThread = "<unknown thread>";
+
+	DWORD dwId = GetCurrentThreadId();
+	if (dwId == gdwMainThreadId)
+		pszThread = "MainThread";
+	else
+	if (dwId == srv.dwServerThreadId)
+		pszThread = "ServerThread";
+	else
+	if (dwId == srv.dwRefreshThread)
+		pszThread = "RefreshThread";
+	else
+	if (dwId == srv.dwWinEventThread)
+		pszThread = "WinEventThread";
+	else
+	if (dwId == srv.dwInputThreadId)
+		pszThread = "InputThread";
+	else
+	if (dwId == srv.dwInputPipeThreadId)
+		pszThread = "InputPipeThread";
+
+
+	SYSTEMTIME st; GetLocalTime(&st);
+	wsprintfA(szInfo, "%i:%02i:%02i ",
+		st.wHour, st.wMinute, st.wSecond);
+	int nCur = lstrlenA(szInfo);
+	lstrcpynA(szInfo+nCur, asText ? asText : "", 255-nCur-3);
+	lstrcatA(szInfo, "\r\n");
+
+
+	DWORD dwLen = 0;
+	WriteFile(ghLogSize, szInfo, (DWORD)strlen(szInfo), &dwLen, 0);
+	FlushFileBuffers(ghLogSize);
+}
+
 void LogSize(COORD* pcrSize, LPCSTR pszLabel)
 {
     if (!ghLogSize) return;
@@ -1592,7 +1637,7 @@ void LogSize(COORD* pcrSize, LPCSTR pszLabel)
     // В дебажный лог помещаем реальный значения
     GetConsoleScreenBufferInfo(ghConOut ? ghConOut : GetStdHandle(STD_OUTPUT_HANDLE), &lsbi);
     
-    char szInfo[192] = {0};
+    char szInfo[192]; szInfo[0] = 0;
     LPCSTR pszThread = "<unknown thread>";
     
     DWORD dwId = GetCurrentThreadId();
@@ -1627,12 +1672,12 @@ void LogSize(COORD* pcrSize, LPCSTR pszLabel)
     }
     
     if (pcrSize) {
-        wsprintfA(szInfo, "%i:%02i:%02i CurSize={%ix%i}%s ChangeTo={%ix%i} %s %s\r\n",
-            st.wHour, st.wMinute, st.wSecond,
+        wsprintfA(szInfo, "%i:%02i:%02i.%03i CurSize={%ix%i}%s ChangeTo={%ix%i} %s %s\r\n",
+            st.wHour, st.wMinute, st.wSecond, st.wMilliseconds,
             lsbi.dwSize.X, lsbi.dwSize.Y, szMapSize, pcrSize->X, pcrSize->Y, pszThread, (pszLabel ? pszLabel : ""));
     } else {
-        wsprintfA(szInfo, "%i:%02i:%02i CurSize={%ix%i}%s %s %s\r\n",
-            st.wHour, st.wMinute, st.wSecond,
+        wsprintfA(szInfo, "%i:%02i:%02i.%03i CurSize={%ix%i}%s %s %s\r\n",
+            st.wHour, st.wMinute, st.wSecond, st.wMilliseconds,
             lsbi.dwSize.X, lsbi.dwSize.Y, szMapSize, pszThread, (pszLabel ? pszLabel : ""));
     }
     
@@ -2713,37 +2758,41 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 	DWORD dwCurThId = GetCurrentThreadId();
 	DWORD dwWait = 0;
 
-	if (gnRunMode == RM_SERVER && srv.dwRefreshThread && dwCurThId != srv.dwRefreshThread) {
+	if (gnRunMode == RM_SERVER) {
+		// Запомним то, что последний раз установил сервер. пригодится
 		srv.nReqSizeBufferHeight = BufferHeight;
 		srv.crReqSizeNewSize = crNewSize;
 		srv.rReqSizeNewRect = rNewRect;
 		srv.sReqSizeLabel = asLabel;
-		ResetEvent(srv.hReqSizeChanged);
-		srv.nRequestChangeSize++;
-		
-		//dwWait = WaitForSingleObject(srv.hReqSizeChanged, REQSIZE_TIMEOUT);
-		// Ожидание, пока сработает RefreshThread
-		HANDLE hEvents[2] = {ghQuitEvent, srv.hReqSizeChanged};
-		DWORD nSizeTimeout = REQSIZE_TIMEOUT;
-		#ifdef _DEBUG
-		if (IsDebuggerPresent())
-			nSizeTimeout = INFINITE;
-		#endif
-		dwWait = WaitForMultipleObjects ( 2, hEvents, FALSE, nSizeTimeout );
-		if (srv.nRequestChangeSize > 0) {
-			srv.nRequestChangeSize --;
-		} else {
-			_ASSERTE(srv.nRequestChangeSize>0);
-		}
-		if (dwWait == WAIT_OBJECT_0) {
-			// ghQuitEvent !!
+
+		if (srv.dwRefreshThread && dwCurThId != srv.dwRefreshThread) {
+			ResetEvent(srv.hReqSizeChanged);
+			srv.nRequestChangeSize++;
+			
+			//dwWait = WaitForSingleObject(srv.hReqSizeChanged, REQSIZE_TIMEOUT);
+			// Ожидание, пока сработает RefreshThread
+			HANDLE hEvents[2] = {ghQuitEvent, srv.hReqSizeChanged};
+			DWORD nSizeTimeout = REQSIZE_TIMEOUT;
+			#ifdef _DEBUG
+			if (IsDebuggerPresent())
+				nSizeTimeout = INFINITE;
+			#endif
+			dwWait = WaitForMultipleObjects ( 2, hEvents, FALSE, nSizeTimeout );
+			if (srv.nRequestChangeSize > 0) {
+				srv.nRequestChangeSize --;
+			} else {
+				_ASSERTE(srv.nRequestChangeSize>0);
+			}
+			if (dwWait == WAIT_OBJECT_0) {
+				// ghQuitEvent !!
+				return FALSE;
+			}
+			if (dwWait == (WAIT_OBJECT_0+1)) {
+				return TRUE;
+			}
+			// ?? Может быть стоит самим попробовать?
 			return FALSE;
 		}
-		if (dwWait == (WAIT_OBJECT_0+1)) {
-			return TRUE;
-		}
-		// ?? Может быть стоит самим попробовать?
-		return FALSE;
 	}
 
     //CSection cs(NULL,NULL);

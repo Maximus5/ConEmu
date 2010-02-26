@@ -1443,7 +1443,18 @@ void CConEmuMain::SyncWindowToConsole()
 
     #ifdef _DEBUG
     _ASSERT(GetCurrentThreadId() == mn_MainThreadId);
+
+	if (mp_VActive->TextWidth == 80) {
+		int nDbg = mp_VActive->TextWidth;
+	}
+
     #endif
+
+	CRealConsole* pRCon = mp_VActive->RCon();
+	if (pRCon && (mp_VActive->TextWidth != pRCon->TextWidth() || mp_VActive->TextHeight != pRCon->TextHeight())) {
+		_ASSERT(FALSE);
+		mp_VActive->Update();
+	}
 
     RECT rcDC = mp_VActive->GetRect();
         /*MakeRect(mp_VActive->Width, mp_VActive->Height);
@@ -1461,7 +1472,7 @@ void CConEmuMain::SyncWindowToConsole()
 
 	if (gSet.isAdvLogging) {
 		char szInfo[128]; wsprintfA(szInfo, "SyncWindowToConsole(Cols=%i, Rows=%i)", mp_VActive->TextWidth, mp_VActive->TextHeight);
-		mp_VActive->RCon()->LogString(szInfo);
+		mp_VActive->RCon()->LogString(szInfo, TRUE);
 	}
 
     gSet.UpdateSize(mp_VActive->TextWidth, mp_VActive->TextHeight);
@@ -2049,7 +2060,7 @@ void CConEmuMain::OnConsoleResize(BOOL abPosted/*=FALSE*/)
 	static bool lbPosted = false;
 	if (!abPosted) {
 		if (gSet.isAdvLogging)
-			mp_VActive->RCon()->LogString("OnConsoleResize(abPosted==false)");
+			mp_VActive->RCon()->LogString("OnConsoleResize(abPosted==false)", TRUE);
 	
 		if (!lbPosted) {
 			lbPosted = true; // чтобы post не накапливались
@@ -2079,7 +2090,7 @@ void CConEmuMain::OnConsoleResize(BOOL abPosted/*=FALSE*/)
 	if (gSet.isAdvLogging) {
 		char szInfo[160]; wsprintfA(szInfo, "OnConsoleResize: mouse.state=0x%08X, SizingToDo=%i, IsSizing=%i, LBtnPressed=%i, gbPostUpdateWindowSize=%i", 
 			mouse.state, (int)lbSizingToDo, (int)lbIsSizing, (int)lbLBtnPressed, (int)gbPostUpdateWindowSize);
-		mp_VActive->RCon()->LogString(szInfo);
+		mp_VActive->RCon()->LogString(szInfo, TRUE);
 	}
     
 
@@ -3671,6 +3682,10 @@ VOID CConEmuMain::WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hw
         //A new console process has started. 
         //The idObject parameter contains the process identifier of the newly created process. 
         //If the application is a 16-bit application, the idChild parameter is CONSOLE_APPLICATION_16BIT and idObject is the process identifier of the NTVDM session associated with the console.
+		if ((idChild == CONSOLE_APPLICATION_16BIT) && gSet.isAdvLogging) {
+			char szInfo[64]; wsprintfA(szInfo, "NTVDM started, PID=%i\n", idObject);
+			gConEmu.mp_VActive->RCon()->LogString(szInfo, TRUE);
+		}
 
         #ifdef _DEBUG
         WCHAR szDbg[128]; wsprintfW(szDbg, L"EVENT_CONSOLE_START_APPLICATION(HWND=0x%08X, PID=%i%s)\n", hwnd, idObject, (idChild == CONSOLE_APPLICATION_16BIT) ? L" 16bit" : L"");
@@ -3681,6 +3696,10 @@ VOID CConEmuMain::WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hw
     case EVENT_CONSOLE_END_APPLICATION:
         //A console process has exited. 
         //The idObject parameter contains the process identifier of the terminated process.
+		if ((idChild == CONSOLE_APPLICATION_16BIT) && gSet.isAdvLogging) {
+			char szInfo[64]; wsprintfA(szInfo, "NTVDM stopped, PID=%i\n", idObject);
+			gConEmu.mp_VActive->RCon()->LogString(szInfo, TRUE);
+		}
 
         #ifdef _DEBUG
         wsprintfW(szDbg, L"EVENT_CONSOLE_END_APPLICATION(HWND=0x%08X, PID=%i%s)\n", hwnd, idObject, 

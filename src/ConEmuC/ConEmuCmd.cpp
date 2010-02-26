@@ -169,6 +169,7 @@ int ComspecInit()
 void ComspecDone(int aiRc)
 {
     //WARNING("Послать в GUI CONEMUCMDSTOPPED");
+	LogSize(NULL, "ComspecDone");
 
 	// Это необходимо делать, т.к. при смене буфера (SetConsoleActiveScreenBuffer) приложением,
 	// дескриптор нужно закрыть, иначе conhost может не вернуть предыдущий буфер

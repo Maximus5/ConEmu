@@ -32,6 +32,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define MAX_EVENTS_PACK 20
 
+#ifdef _DEBUG
+	#define ASSERT_UNWANTED_SIZE
+#else
+	#undef ASSERT_UNWANTED_SIZE
+#endif
+
 BOOL ProcessInputMessage(MSG &msg, INPUT_RECORD &r);
 BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount);
 
@@ -1240,6 +1246,17 @@ static BOOL ReadConsoleInfo()
 		}
 
 		if (memcmp(&srv.sbi, &lsbi, sizeof(srv.sbi))) {
+			#ifdef ASSERT_UNWANTED_SIZE
+			if (srv.crReqSizeNewSize.X != lsbi.dwSize.X) {
+				LogSize(NULL, ":ReadConsoleInfo(AssertWidth)");
+				wchar_t szTitle[64], szInfo[128];
+				wsprintf(szTitle, L"ConEmuC, PID=%i", GetCurrentProcessId());
+				wsprintf(szInfo, L"Size set by server: {%ix%i}\nCurrent size: {%ix%i}",
+					srv.crReqSizeNewSize.X, srv.crReqSizeNewSize.Y, lsbi.dwSize.X, lsbi.dwSize.Y);
+				MessageBox(NULL, szInfo, szTitle, MB_OK|MB_SETFOREGROUND|MB_SYSTEMMODAL);
+			}
+			#endif
+
 			if (ghLogSize) LogSize(NULL, ":ReadConsoleInfo");
 		
 			srv.sbi = lsbi;
@@ -1539,6 +1556,11 @@ void WINAPI WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LO
 			#ifndef WIN64
 			_ASSERTE(CONSOLE_APPLICATION_16BIT==1);
 			if (idChild == CONSOLE_APPLICATION_16BIT) {
+				if (ghLogSize) {
+					char szInfo[64]; wsprintfA(szInfo, "NTVDM started, PID=%i", idObject);
+					LogSize(NULL, szInfo);
+				}
+
 				srv.bNtvdmActive = TRUE;
 				srv.nNtvdmPID = idObject;
 				SetPriorityClass(GetCurrentProcess(), HIGH_PRIORITY_CLASS);
@@ -1575,6 +1597,11 @@ void WINAPI WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LO
 			#ifndef WIN64
 			_ASSERTE(CONSOLE_APPLICATION_16BIT==1);
 			if (idChild == CONSOLE_APPLICATION_16BIT) {
+				if (ghLogSize) {
+					char szInfo[64]; wsprintfA(szInfo, "NTVDM stopped, PID=%i", idObject);
+					LogSize(NULL, szInfo);
+				}
+
 				//DWORD ntvdmPID = idObject;
 				//dwActiveFlags &= ~CES_NTVDM;
 				srv.bNtvdmActive = FALSE;

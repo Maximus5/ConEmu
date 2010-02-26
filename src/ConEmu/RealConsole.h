@@ -132,9 +132,9 @@ typedef struct tag_CharAttr
 	union {
 		// Собственно цвета/шрифты
 		struct {
-			unsigned int crBackColor : 32; // Старший байт зарезервируем, вдруг для прозрачности понадобится
 			unsigned int crForeColor : 24; // чтобы в ui64 поместился и nFontIndex
 			unsigned int nFontIndex : 8; // 0 - normal, 1 - bold, 2 - italic
+			unsigned int crBackColor : 32; // Старший байт зарезервируем, вдруг для прозрачности понадобится
 			unsigned int nForeIdx : 8;
 			unsigned int nBackIdx : 8; // может понадобиться для ExtendColors
 			unsigned int crOrigForeColor : 32;
@@ -148,6 +148,8 @@ typedef struct tag_CharAttr
 		};
 		// А это для сравнения (поиск изменений)
 		unsigned __int64 All;
+		// для сравнения, когда фон не важен
+		unsigned int ForeFont;
 	};
 	//
 	//DWORD dwAttrubutes; // может когда понадобятся дополнительные флаги...

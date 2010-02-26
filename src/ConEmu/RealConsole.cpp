@@ -436,7 +436,7 @@ BOOL CRealConsole::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuff
 			(anCmdID==CECMD_CMDSTARTED) ? "CECMD_CMDSTARTED" :
 			(anCmdID==CECMD_CMDFINISHED) ? "CECMD_CMDFINISHED" :
 			"UnknownSizeCommand", sizeX, sizeY, sizeBuffer, lIn.SetSize.nSendTopLine);
-		LogString(szInfo);
+		LogString(szInfo, TRUE);
 	}
 
 	#ifdef _DEBUG
@@ -531,7 +531,7 @@ BOOL CRealConsole::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuff
 
 				if (gSet.isAdvLogging) {
 					char szInfo[128]; wsprintfA(szInfo, "Current size: Cols=%i, Buf=%i", sbi.dwSize.X, sbi.dwSize.Y);
-					LogString(szInfo);
+					LogString(szInfo, TRUE);
 				}
 
 				if (sbi.dwSize.X == sizeX && sbi.dwSize.Y == nBufHeight) {
@@ -554,7 +554,7 @@ BOOL CRealConsole::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuff
 
 				if (gSet.isAdvLogging) {
 					char szInfo[128]; wsprintfA(szInfo, "Current size: Cols=%i, Rows=%i", sbi.dwSize.X, sbi.dwSize.Y);
-					LogString(szInfo);
+					LogString(szInfo, TRUE);
 				}
 
 				if (sbi.dwSize.X == sizeX && sbi.dwSize.Y == sizeY) {
@@ -705,6 +705,11 @@ void CRealConsole::SyncConsole2Window()
 			LogString(szInfo);
 		}
 
+#ifdef _DEBUG
+		if (newCon.right == 80) {
+			newCon.right = newCon.right;
+		}
+#endif
 		SetConsoleSize(newCon.right, newCon.bottom, 0/*Auto*/);
 
 		if (isActive() && gConEmu.isMainThread()) {
@@ -2409,7 +2414,8 @@ void CRealConsole::OnWinEvent(DWORD event, HWND hwnd, LONG idObject, LONG idChil
                 //gConEmu.gbPostUpdateWindowSize = true;
 				DEBUGSTRPROC(L"16 bit application TERMINATED\n");
                 mn_ProgramStatus &= ~CES_NTVDM;
-				SyncConsole2Window(); // ѕосле выхода из 16bit режима хорошо бы отресайзить консоль по размеру GUI
+				//2010-02-26 убрал. может прийти с задержкой и только создать проблемы
+				//SyncConsole2Window(); // ѕосле выхода из 16bit режима хорошо бы отресайзить консоль по размеру GUI
                 TODO("¬ообще-то хорошо бы проверить, что 16бит не осталось в других консол€х");
                 SetPriorityClass(GetCurrentProcess(), NORMAL_PRIORITY_CLASS);
             }
@@ -5184,7 +5190,7 @@ bool CRealConsole::ExpandDialogFrame(wchar_t* pChar, CharAttr* pAttr, int nWidth
 		if (nFromX) { // ѕробуем влево
 			int nMinMargin = nFromX-3; if (nMinMargin<0) nMinMargin = 0;
 			n = nFromY*nWidth+nFromX;
-			while (n > nMinMargin) {
+			while (nFromX > nMinMargin) {
 				n--;
 				if (pAttr[n].crBackColor == nColor && (pChar[n] == L' ' || pChar[n] == ucNoBreakSpace)) {
 					nFromX--;
@@ -5194,6 +5200,7 @@ bool CRealConsole::ExpandDialogFrame(wchar_t* pChar, CharAttr* pAttr, int nWidth
 			}
 			bExpanded = (nFromX<nFrameX);
 		}
+		_ASSERTE(nFromX>=0 && nFromY>=0);
 	} else {
 		if (wc != ucSpace && wc != ucNoBreakSpace)
 			return false;
@@ -5501,9 +5508,11 @@ void CRealConsole::MarkDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int n
 	// ≈сли помечаетс€ диалог по рамке - попытатьс€ определить окантовку
 	if (bFindExterior && bMarkBorder) {
 		int nMostRight = nX2, nMostBottom = nY2;
-		if (ExpandDialogFrame(pChar, pAttr, nWidth, nHeight, nX1, nY1, nX1, nY1, nMostRight, nMostBottom)) {
+		int nNewX1 = nX1, nNewY1 = nY1;
+		if (ExpandDialogFrame(pChar, pAttr, nWidth, nHeight, nNewX1, nNewY1, nX1, nY1, nMostRight, nMostBottom)) {
+			_ASSERTE(nNewX1>=0 && nNewY1>=0);
 			//Optimize: помечать можно только окантовку - сам диалог уже помечен
-			MarkDialog(pChar, pAttr, nWidth, nHeight, nX1, nY1, nMostRight, nMostBottom, TRUE, FALSE);
+			MarkDialog(pChar, pAttr, nWidth, nHeight, nNewX1, nNewY1, nMostRight, nMostBottom, TRUE, FALSE);
 		}
 	}
 }
@@ -5628,6 +5637,7 @@ void CRealConsole::PrepareTransparent(wchar_t* pChar, CharAttr* pAttr, int nWidt
 	}
 
 	if (!lbLeftVisible && !lbRightVisible) {
+		TODO("’от€ вообще-то детект диалогов делать все-таки нужно");
 		if (isPressed(VK_CONTROL) && isPressed(VK_SHIFT) && isPressed(VK_MENU))
 			return; // ѕо CtrlAltShift - показать UserScreen (не делать его прозрачным)
 	}
@@ -5643,6 +5653,9 @@ void CRealConsole::PrepareTransparent(wchar_t* pChar, CharAttr* pAttr, int nWidt
 
 	WARNING("!!! ”становку bTransparent делать во второй проход, когда все диалоги уже определены !!!");
 
+	if (mn_DetectCallCount != 0) {
+		_ASSERT(mn_DetectCallCount == 0);
+	}
 
 	wchar_t* pszDst = pChar;
 	CharAttr* pnDst = pAttr;
@@ -5724,6 +5737,10 @@ void CRealConsole::PrepareTransparent(wchar_t* pChar, CharAttr* pAttr, int nWidt
 		}
 		pszDst += nWidth;
 		pnDst += nWidth;
+	}
+
+	if (mn_DetectCallCount != 0) {
+		_ASSERT(mn_DetectCallCount == 0);
 	}
 
 

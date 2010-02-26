@@ -34,8 +34,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ScreenDump.h"
 
 #ifdef _DEBUG
-	#define DEBUGDRAW_RCONPOS VK_SCROLL // -- при включенном ScrollLock отрисовать прямоугольник, соответствующий положению окна RealConsole
+	//#define DEBUGDRAW_RCONPOS VK_SCROLL // -- при включенном ScrollLock отрисовать прямоугольник, соответствующий положению окна RealConsole
 	#define DEBUGDRAW_DIALOGS VK_CAPITAL // -- при включенном Caps отрисовать прямоугольники, соответствующие найденным диалогам
+	#define DEBUGDRAW_VERTICALS VK_SCROLL // -- при включенном ScrollLock отрисовать прямоугольники, соответсвующие граням диалогов (которые строго выравниваются по ячейкам)
 #endif
 
 #define DEBUGSTRDRAW(s) //DEBUGSTR(s)
@@ -120,6 +121,7 @@ CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
 
 	gConEmu.OnVConCreated(this);
 
+	WARNING("скорректировать размер кучи");
     SIZE_T nMinHeapSize = (1000 + (200 * 90 * 2) * 6 + MAX_PATH*2)*2 + 210*sizeof(*TextParts);
     mh_Heap = HeapCreate(HEAP_GENERATE_EXCEPTIONS, nMinHeapSize, 0);
    
@@ -163,11 +165,7 @@ CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
     TextWidth = TextHeight = Width = Height = nMaxTextWidth = nMaxTextHeight = 0;
     hDC = NULL; hBitmap = NULL;
     hSelectedFont = NULL; hOldFont = NULL;
-    mpsz_ConChar = mpsz_ConCharSave = NULL;
-    mpn_ConAttrEx = mpn_ConAttrExSave = NULL;
-    ConCharX = NULL; 
-    tmpOem = NULL; 
-    TextParts = NULL;
+    PointersInit();
     mb_IsForceUpdate = false;
     hBrush0 = NULL; hSelectedBrush = NULL; hOldBrush = NULL;
     isEditor = false;
@@ -230,22 +228,8 @@ CVirtualConsole::~CVirtualConsole()
         { DeleteDC(hDC); hDC = NULL; }
     if (hBitmap)
         { DeleteObject(hBitmap); hBitmap = NULL; }
-    if (mpsz_ConChar)
-        { Free(mpsz_ConChar); mpsz_ConChar = NULL; }
-    if (mpsz_ConCharSave)
-        { Free(mpsz_ConCharSave); mpsz_ConCharSave = NULL; }
-    if (mpn_ConAttrEx)
-        { Free(mpn_ConAttrEx); mpn_ConAttrEx = NULL; }
-    if (mpn_ConAttrExSave)
-        { Free(mpn_ConAttrExSave); mpn_ConAttrExSave = NULL; }
-    if (ConCharX)
-        { Free(ConCharX); ConCharX = NULL; }
-    if (tmpOem)
-        { Free(tmpOem); tmpOem = NULL; }
-    if (TextParts)
-        { Free(TextParts); TextParts = NULL; }
-    //if (Spaces) 
-    //    { Free(Spaces); Spaces = NULL; nSpaceCount = 0; }
+        
+    PointersFree();
 
     // Куча больше не нужна
     if (mh_Heap) {
@@ -291,118 +275,188 @@ CVirtualConsole::~CVirtualConsole()
     }
 }
 
+void CVirtualConsole::PointersInit()
+{
+	mb_PointersAllocated = false;
+    mpsz_ConChar = mpsz_ConCharSave = NULL;
+    mpn_ConAttrEx = mpn_ConAttrExSave = NULL;
+    ConCharX = ConCharDX = NULL; 
+    tmpOem = NULL; 
+    TextParts = NULL;
+    BgParts = NULL;
+    PolyText = NULL;
+	pbLineChanged = pbBackIsPic = NULL;
+	pnBackRGB = NULL;
+}
+
+void CVirtualConsole::PointersFree()
+{
+	#ifdef SafeFree
+	#undef SafeFree
+	#endif
+	#define SafeFree(f) if (f) { Free(f); f = NULL; }
+	HEAPVAL;
+	
+    SafeFree(mpsz_ConChar);
+    SafeFree(mpsz_ConCharSave);
+    SafeFree(mpn_ConAttrEx);
+    SafeFree(mpn_ConAttrExSave);
+    SafeFree(ConCharX);
+    SafeFree(ConCharDX);
+    SafeFree(tmpOem);
+    SafeFree(TextParts);
+    SafeFree(BgParts);
+    SafeFree(PolyText);
+	SafeFree(pbLineChanged);
+	SafeFree(pbBackIsPic);
+	SafeFree(pnBackRGB);
+	
+    HEAPVAL;
+    mb_PointersAllocated = false;
+}
+
+bool CVirtualConsole::PointersAlloc()
+{
+	mb_PointersAllocated = false;
+	
+    #ifdef _DEBUG
+    HeapValidate(mh_Heap, 0, NULL);
+    #endif
+    
+    uint nWidthHeight = (nMaxTextWidth * nMaxTextHeight);
+    
+    #ifdef AllocArray
+    #undef AllocArray
+    #endif
+    #define AllocArray(p,t,c) p = (t*)Alloc(c,sizeof(t)); if (!p) return false;
+	
+    AllocArray(mpsz_ConChar, TCHAR, nWidthHeight);
+    
+    AllocArray(mpsz_ConCharSave, TCHAR, nWidthHeight);
+    
+    AllocArray(mpn_ConAttrEx, CharAttr, nWidthHeight);
+    
+    AllocArray(mpn_ConAttrExSave, CharAttr, nWidthHeight);
+    
+    AllocArray(ConCharX, DWORD, nWidthHeight);
+    
+    AllocArray(ConCharDX, DWORD, nMaxTextWidth);
+    
+    AllocArray(tmpOem, char, nMaxTextWidth);
+    
+    AllocArray(TextParts, TEXTPARTS, (nMaxTextWidth + 1));
+    
+    AllocArray(BgParts, BGPARTS, nMaxTextWidth);
+    
+    AllocArray(PolyText, POLYTEXT, nMaxTextWidth);
+    
+	AllocArray(pbLineChanged, bool, nMaxTextHeight);
+	AllocArray(pbBackIsPic, bool, nMaxTextHeight);
+	AllocArray(pnBackRGB, COLORREF, nMaxTextHeight);
+    
+    HEAPVAL;
+    return (mb_PointersAllocated = true);
+}
+
+void CVirtualConsole::PointersZero()
+{
+	uint nWidthHeight = (nMaxTextWidth * nMaxTextHeight);
+	
+    HEAPVAL;
+    ZeroMemory(mpsz_ConChar, nWidthHeight*sizeof(*mpsz_ConChar));
+    ZeroMemory(mpsz_ConCharSave, nWidthHeight*sizeof(*mpsz_ConChar));
+    HEAPVAL;
+    ZeroMemory(mpn_ConAttrEx, nWidthHeight*sizeof(*mpn_ConAttrEx));
+    ZeroMemory(mpn_ConAttrExSave, nWidthHeight*sizeof(*mpn_ConAttrExSave));
+    HEAPVAL;
+    ZeroMemory(ConCharX, nWidthHeight*sizeof(*ConCharX));
+    ZeroMemory(ConCharDX, nMaxTextWidth*sizeof(*ConCharDX));
+    HEAPVAL;
+    ZeroMemory(tmpOem, nMaxTextWidth*sizeof(*tmpOem));
+    HEAPVAL;
+    ZeroMemory(TextParts, (nMaxTextWidth + 1)*sizeof(*TextParts));
+    ZeroMemory(BgParts, nMaxTextWidth*sizeof(*BgParts));
+    ZeroMemory(PolyText, nMaxTextWidth*sizeof(*PolyText));
+    HEAPVAL;
+	ZeroMemory(pbLineChanged, nMaxTextHeight*sizeof(*pbLineChanged));
+	ZeroMemory(pbBackIsPic, nMaxTextHeight*sizeof(*pbBackIsPic));
+	ZeroMemory(pnBackRGB, nMaxTextHeight*sizeof(*pnBackRGB));
+    HEAPVAL;
+}
+
 
 // InitDC вызывается только при критических изменениях (размеры, шрифт, и т.п.) когда нужно пересоздать DC и Bitmap
 bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize)
 {
     MSectionLock SCON; SCON.Lock(&csCON);
     BOOL lbNeedCreateBuffers = FALSE;
-
-#ifdef _DEBUG
-    if (mp_RCon->IsConsoleThread()) {
-        //_ASSERTE(!mp_RCon->IsConsoleThread());
-    }
-#endif
-
-    // Буфер пересоздаем только если требуется его увеличение
-    if (!mpsz_ConChar || !mpsz_ConCharSave || !mpn_ConAttrEx || !mpn_ConAttrExSave || !ConCharX || !tmpOem || !TextParts ||
-        (nMaxTextWidth * nMaxTextHeight) < (mp_RCon->TextWidth() * mp_RCon->TextHeight()) ||
-        (nMaxTextWidth < mp_RCon->TextWidth()) // а это нужно для TextParts & tmpOem
-        )
-        lbNeedCreateBuffers = TRUE;
-
-    if (!mp_RCon->TextWidth() || !mp_RCon->TextHeight()) {
+    
+    uint rTextWidth = mp_RCon->TextWidth();
+    uint rTextHeight = mp_RCon->TextHeight();
+    if (!rTextWidth || !rTextHeight) {
         WARNING("Если тут ошибка - будет просто DC Initialization failed, что не понятно...");
         Assert(mp_RCon->TextWidth() && mp_RCon->TextHeight());
         return false;
     }
 
 
-    if (lbNeedCreateBuffers) {
-		DEBUGSTRDRAW(L"Relocking SCON exclusively\n");
-        SCON.RelockExclusive();
-		DEBUGSTRDRAW(L"Relocking SCON exclusively (done)\n");
-
-        HEAPVAL
-        if (mpsz_ConChar)
-            { Free(mpsz_ConChar); mpsz_ConChar = NULL; }
-        if (mpsz_ConCharSave)
-            { Free(mpsz_ConCharSave); mpsz_ConCharSave = NULL; }
-        if (mpn_ConAttrEx)
-            { Free(mpn_ConAttrEx); mpn_ConAttrEx = NULL; }
-        if (mpn_ConAttrExSave)
-            { Free(mpn_ConAttrExSave); mpn_ConAttrExSave = NULL; }
-        if (ConCharX)
-            { Free(ConCharX); ConCharX = NULL; }
-        if (tmpOem)
-            { Free(tmpOem); tmpOem = NULL; }
-        if (TextParts)
-            { Free(TextParts); TextParts = NULL; }
-    }
-
-    #ifdef _DEBUG
-    HeapValidate(mh_Heap, 0, NULL);
-    #endif
-
-    //CONSOLE_SCREEN_BUFFER_INFO csbi;
-    //if (!GetConsoleScreenBufferInfo())         return false;
-
-    mb_IsForceUpdate = true;
-    //TextWidth = csbi.srWindow.Right - csbi.srWindow.Left + 1;
-    //TextHeight = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
-    TextWidth = mp_RCon->TextWidth();
-    TextHeight = mp_RCon->TextHeight();
-
 #ifdef _DEBUG
+    if (mp_RCon->IsConsoleThread()) {
+        //_ASSERTE(!mp_RCon->IsConsoleThread());
+    }
     if (TextHeight == 24)
         TextHeight = 24;
     _ASSERT(TextHeight >= 5);
 #endif
 
 
-    //if ((int)TextWidth < csbi.dwSize.X)
-    //    TextWidth = csbi.dwSize.X;
 
-    //HEAPVAL
+    // Буфер пересоздаем только если требуется его увеличение
+    if (!mb_PointersAllocated ||
+        (nMaxTextWidth * nMaxTextHeight) < (rTextWidth * rTextHeight) ||
+        (nMaxTextWidth < rTextWidth) // а это нужно для TextParts & tmpOem
+        )
+        lbNeedCreateBuffers = TRUE;
+
+
+    if (lbNeedCreateBuffers && mb_PointersAllocated) {
+		DEBUGSTRDRAW(L"Relocking SCON exclusively\n");
+        SCON.RelockExclusive();
+		DEBUGSTRDRAW(L"Relocking SCON exclusively (done)\n");
+
+        PointersFree();
+    }
+
+
+    // InitDC вызывается только при первой инициализации или смене размера
+    mb_IsForceUpdate = true; // поэтому выставляем флажок Force
+    
+    TextWidth = rTextWidth;
+    TextHeight = rTextHeight;
+
+
+
     if (lbNeedCreateBuffers) {
+    	// Если увеличиваем размер - то с запасом, чтобы "два раза не ходить"...
         if (nMaxTextWidth < TextWidth)
-            nMaxTextWidth = TextWidth;
+            nMaxTextWidth = TextWidth+80;
         if (nMaxTextHeight < TextHeight)
-            nMaxTextHeight = TextHeight;
+            nMaxTextHeight = TextHeight+30;
 
-        HEAPVAL;
-        mpsz_ConChar = (TCHAR*)Alloc((nMaxTextWidth * nMaxTextHeight), sizeof(*mpsz_ConChar));
-        mpsz_ConCharSave = (TCHAR*)Alloc((nMaxTextWidth * nMaxTextHeight), sizeof(*mpsz_ConCharSave));
-        mpn_ConAttrEx = (CharAttr*)Alloc((nMaxTextWidth * nMaxTextHeight), sizeof(*mpn_ConAttrEx));
-        mpn_ConAttrExSave = (CharAttr*)Alloc((nMaxTextWidth * nMaxTextHeight), sizeof(*mpn_ConAttrExSave));
-        ConCharX = (DWORD*)Alloc((nMaxTextWidth * nMaxTextHeight), sizeof(*ConCharX));
-        tmpOem = (char*)Alloc((nMaxTextWidth + 5), sizeof(*tmpOem));
-        TextParts = (struct _TextParts*)Alloc((nMaxTextWidth + 2), sizeof(*TextParts));
-        HEAPVAL;
-    }
-    //HEAPVAL
-    if (!mpsz_ConChar || !mpsz_ConCharSave || !mpn_ConAttrEx || !mpn_ConAttrExSave || !ConCharX || !tmpOem || !TextParts) {
-        WARNING("Если тут ошибка - будет просто DC Initialization failed, что не понятно...");
-        return false;
-    }
-
-    if (!lbNeedCreateBuffers) {
-        HEAPVAL
-        ZeroMemory(mpsz_ConChar, (TextWidth * TextHeight)*sizeof(*mpsz_ConChar));
-        ZeroMemory(mpsz_ConCharSave, (TextWidth * TextHeight)*sizeof(*mpsz_ConChar));
-        HEAPVAL
-        ZeroMemory(mpn_ConAttrEx, (TextWidth * TextHeight)*sizeof(*mpn_ConAttrEx));
-        ZeroMemory(mpn_ConAttrExSave, (TextWidth * TextHeight)*sizeof(*mpn_ConAttrExSave));
-        HEAPVAL
-        ZeroMemory(ConCharX, (TextWidth * TextHeight)*sizeof(*ConCharX));
-        HEAPVAL
-        ZeroMemory(tmpOem, (TextWidth + 5)*sizeof(*tmpOem));
-        HEAPVAL
-        ZeroMemory(TextParts, (TextWidth + 2)*sizeof(*TextParts));
-        HEAPVAL
+		DEBUGSTRDRAW(L"Relocking SCON exclusively\n");
+        SCON.RelockExclusive();
+		DEBUGSTRDRAW(L"Relocking SCON exclusively (done)\n");
+		
+        if (!PointersAlloc()) {
+	        WARNING("Если тут ошибка - будет просто DC Initialization failed, что не понятно...");
+	        return false;
+        }
+    } else {
+    	PointersZero();
     }
 
     SCON.Unlock();
+    
 
     HEAPVAL
 
@@ -1202,7 +1256,7 @@ bool CVirtualConsole::UpdatePrepare(bool isForce, HDC *ahDc, MSectionLock *pSDC)
     }
 
     // Первая инициализация, или смена размера
-    if (isForce || !mpsz_ConChar || TextWidth != (uint)winSize.X || TextHeight != (uint)winSize.Y) {
+    if (isForce || !mb_PointersAllocated || TextWidth != (uint)winSize.X || TextHeight != (uint)winSize.Y) {
         if (pSDC && !pSDC->isLocked()) // Если секция еще не заблокирована (отпускает - вызывающая функция)
             pSDC->Lock(&csDC, TRUE, 200); // но по таймауту, чтобы не повисли ненароком
         if (!InitDC(ahDc!=NULL && !isForce/*abNoDc*/, false/*abNoWndResize*/))
@@ -1253,27 +1307,27 @@ bool CVirtualConsole::UpdatePrepare(bool isForce, HDC *ahDc, MSectionLock *pSDC)
     return true;
 }
 
-enum CVirtualConsole::_PartType CVirtualConsole::GetCharType(TCHAR ch)
-{
-    enum _PartType cType = pNull;
-
-    if (ch == L' ')
-        cType = pSpace;
-    //else if (ch == L'_')
-    //  cType = pUnderscore;
-    else if (isCharBorder(ch)) {
-        if (isCharBorderVertical(ch))
-            cType = pVBorder;
-        else
-            cType = pBorder;
-    }
-    else if (isFilePanel && ch == L'}')
-        cType = pRBracket;
-    else
-        cType = pText;
-
-    return cType;
-}
+//enum CVirtualConsole::_PartType CVirtualConsole::GetCharType(TCHAR ch)
+//{
+//    enum _PartType cType = pNull;
+//
+//    if (ch == L' ')
+//        cType = pSpace;
+//    //else if (ch == L'_')
+//    //  cType = pUnderscore;
+//    else if (isCharBorder(ch)) {
+//        if (isCharBorderVertical(ch))
+//            cType = pVBorder;
+//        else
+//            cType = pBorder;
+//    }
+//    else if (isFilePanel && ch == L'}')
+//        cType = pRBracket;
+//    else
+//        cType = pText;
+//
+//    return cType;
+//}
 
 
 
@@ -1376,6 +1430,187 @@ enum CVirtualConsole::_PartType CVirtualConsole::GetCharType(TCHAR ch)
 //    pEnd->partType = pNull;
 //}
 
+void CVirtualConsole::Update_CheckAndFill(bool isForce)
+{
+    // pointers
+    wchar_t* ConCharLine = mpsz_ConChar;
+    CharAttr* ConAttrLine = mpn_ConAttrEx;
+    // previous
+    const CharAttr* ConAttrLine2 = mpn_ConAttrExSave;
+    const wchar_t* ConCharLine2 = mpsz_ConCharSave;
+    
+    // counters
+    int pos = 0;
+    int row = 0;
+    int nMaxPos = Height - nFontHeight;
+    
+    // locals
+    bool bRowChanged;
+
+    // rows
+    //BUGBUG: хорошо бы отрисовывать последнюю строку, даже если она чуть не влазит
+    for (; pos <= nMaxPos; 
+        ConCharLine += TextWidth, ConAttrLine += TextWidth,
+        ConCharLine2 += TextWidth, ConAttrLine2 += TextWidth,
+        pbLineChanged++, pbBackIsPic++, pnBackRGB++,
+        pos += nFontHeight, row++)
+    {
+    	if (row >= (int)TextHeight) {
+    		_ASSERTE(row<(int)TextHeight);
+    		return;
+    	}
+    	
+		bRowChanged = isForce
+						|| (wmemcmp(ConCharLine, ConCharLine2, TextWidth) != 0)
+						|| (memcmp(ConAttrLine, ConAttrLine2, TextWidth*sizeof(*ConAttrLine)) != 0);
+    
+
+        //// skip not changed symbols except the old cursor or selection
+        //int j = 0, end = TextWidth;
+		//// В режиме пропорциональных шрифтов или isForce==true - отрисовываем линию ЦЕЛИКОМ
+		//// Для пропорциональных это обусловлено тем, что при перерисовке измененная часть
+		//// может оказаться КОРОЧЕ предыдущего значения, в результате появятся артефакты
+        //if (skipNotChanged)
+        //{
+        //    // Skip not changed head and tail symbols
+		//	if (!FindChanges(j, end, ConCharLine, ConAttrLine, ConCharLine2, ConAttrLine2))
+		//		continue;
+        //} // if (skipNotChanged)
+        
+        *pbLineChanged = bRowChanged;
+        
+        if (bRowChanged) {
+        	
+        	if (drawImage && ISBGIMGCOLOR(ConAttrLine->nBackIdx)) {
+        		*pbBackIsPic = true;
+        		BlitPictureTo(0, pos, Width, nFontHeight);
+        	} else {
+        		*pbBackIsPic = false;
+        		COLORREF cr = ConAttrLine->crBackColor;
+        		*pnBackRGB = cr;
+        		// Именно пробельный, чтобы не заморачиваться с хвостовыми пробелами отрезков
+				HBRUSH hbr = PartBrush(L' ', cr, 0);
+				RECT rect = MakeRect(0, pos, Width, pos + nFontHeight);
+				FillRect(hDC, &rect, hbr);
+        	}
+        }
+    }
+}
+
+// Разбор строки на составляющие (возвращает true, если есть ячейки с НЕ основным фоном)
+// Функция также производит распределение (заполнение координат и DX)
+bool CVirtualConsole::Update_ParseTextParts(uint row, const wchar_t* ConCharLine, const CharAttr* ConAttrLine)
+{
+	bool bHasAlternateBg = false;
+	int j = 0, j0 = 0;
+	TEXTPARTS *pTP = TextParts;
+	
+	bool bEnhanceGraphics = gSet.isEnhanceGraphics;
+	//bool bProportional = gSet.isMonospace == 0;
+	//bool bForceMonospace = gSet.isMonospace == 2;
+	
+    wchar_t c = 0;
+    bool isUnicode = false, isProgress = false, isSpace = false, isUnicodeOrProgress = false;
+    uint nPrevForeFont = 0, nForeFont;
+	
+    // Сначала - разбор фона
+    BGPARTS *pBG = BgParts;
+    uint nColorIdx;
+    uint nPrevColorIdx = ConAttrLine[0].nBackIdx;
+    j = j0 = 0;
+    while (j < (int)TextWidth) {
+	    while (++j < (int)TextWidth) {
+	    	if (nPrevColorIdx != ConAttrLine[j].nBackIdx) {
+	    		nColorIdx = ConAttrLine[j].nBackIdx;
+	    		break;
+    		}
+    	}
+    	
+	    pBG->i = j0;
+	    pBG->n = j - j0;
+	    if (!(pBG->bBackIsPic = (drawImage && ISBGIMGCOLOR(nPrevColorIdx))))
+	    	pBG->nBackRGB = ConAttrLine[j0].crBackColor;
+	    pBG++;
+	    
+	    nPrevColorIdx = nColorIdx;
+	    j0 = j;
+    }
+    
+    // *** Теперь - Foreground (text) ***
+	// чтобы лишний раз не проверять - ветвимся
+	j = 0;
+	nPrevForeFont = ConAttrLine[0].ForeFont;
+	while (j < (int)TextWidth) {
+		j0 = j;
+		const CharAttr* attr = ConAttrLine+j;
+		nForeFont = attr->ForeFont;
+		c = ConCharLine[j];
+		isUnicode = isCharBorder(c);
+        bool isProgress = false, isSpace = false, isUnicodeOrProgress = false;
+        if (isUnicode || bEnhanceGraphics)
+            isProgress = isCharProgress(c); // ucBox25 / ucBox50 / ucBox75 / ucBox100
+		isUnicodeOrProgress = isUnicode || isProgress;
+        if (!isUnicodeOrProgress)
+            isSpace = isCharSpace(c);
+        
+        TODO("Учет 'вертикалей'");
+        if (isProgress) {
+            while (++j < (int)TextWidth) {
+            	if (ConCharLine[j] != c || attr->All != ConAttrLine[j].All)
+            		break; // до первой смены символа или цвета фона-текста
+            }
+        } else if (isSpace) {
+            while (++j < (int)TextWidth) {
+            	if (!isCharSpace(ConCharLine[j]))
+            		break; // до первого непробельного символа
+            }
+		} else if (isUnicode) {
+			COLORREF crFore = attr->crForeColor;
+            while (++j < (int)TextWidth) {
+            	if (!isCharBorder(ConCharLine[j]) || crFore != ConAttrLine[j].crForeColor)
+            		break; // до первого нерамочного символа или смены цвета текста
+            }
+        } else {
+        	//PRAGMA_ERROR("доделать ветку");
+			while (++j < (int)TextWidth) {
+	            attr = ConAttrLine+j;
+	            
+	            nForeFont = attr->ForeFont;
+	            c = ConCharLine[j];
+	            
+	            // Если смена цвета фона или шрифта
+	            if (nForeFont != nPrevForeFont)
+	            	break;
+	            
+	            isUnicode = isCharBorder(c);
+	            bool isProgress = false, isSpace = false, isUnicodeOrProgress = false;
+
+	            if (isUnicode || bEnhanceGraphics) {
+	                isProgress = isCharProgress(c); // ucBox25 / ucBox50 / ucBox75 / ucBox100
+                }
+				isUnicodeOrProgress = isUnicode || isProgress;
+	            if (!isUnicodeOrProgress)
+	                isSpace = isCharSpace(c);
+			
+			}
+		}
+		
+		TODO("создать блок j0..j");
+	}
+	
+	return bHasAlternateBg;
+}
+
+// Заливка ячеек с НЕ основным фоном, отрисовка прогрессов и рамок
+void CVirtualConsole::Update_FillAlternate(uint row, uint nY)
+{
+}
+
+// Вывод собственно текста (при необходимости Clipped)
+void CVirtualConsole::Update_DrawText(uint row, uint nY)
+{
+}
+
 void CVirtualConsole::UpdateText(bool isForce)
 {
     //if (!updateText) {
@@ -1447,6 +1682,7 @@ void CVirtualConsole::UpdateText(bool isForce)
 	//mh_FontByIndex[0] = gSet.mh_Font; mh_FontByIndex[1] = gSet.mh_FontB; mh_FontByIndex[2] = gSet.mh_FontI; mh_FontByIndex[3] = gSet.mh_FontBI;
 	HFONT hFont = gSet.mh_Font[0];
 	HFONT hFont2 = gSet.mh_Font2;
+	//BUGBUG: хорошо бы отрисовывать последнюю строку, даже если она чуть не влазит
     for (; pos <= nMaxPos; 
         ConCharLine += TextWidth, ConAttrLine += TextWidth, ConCharXLine += TextWidth,
         pos += nFontHeight, row++)
@@ -1915,12 +2151,18 @@ void CVirtualConsole::UpdateText(bool isForce)
 
 					if (nFontCharSet == OEM_CHARSET && !isUnicode)
 					{
-						WideCharToMultiByte(CP_OEMCP, 0, pszDraw, nDrawLen, tmpOem, TextWidth+4, 0, 0);
+						if (nDrawLen > (int)TextWidth) {
+							_ASSERTE(nDrawLen <= (int)TextWidth);
+							nDrawLen = TextWidth;
+						}
+						WideCharToMultiByte(CP_OEMCP, 0, pszDraw, nDrawLen, tmpOem, TextWidth, 0, 0);
 						if (!bProportional)
-							for (int idx = 0, n = (j2-j); n; idx++, n--)
+							for (int idx = 0; idx < nDrawLen; idx++) {
+								WARNING("BUGBUG: что именно нужно передавать для получения ширины OEM символа?");
 								nDX[idx] = CharWidth(tmpOem[idx]);
+							}
 						ExtTextOutA(hDC, rect.left, rect.top, nFlags,
-							&rect, tmpOem, j2 - j, bProportional ? 0 : nDX);
+							&rect, tmpOem, nDrawLen, bProportional ? 0 : nDX);
 					}
 					else
 					{
@@ -1931,6 +2173,7 @@ void CVirtualConsole::UpdateText(bool isForce)
 							if (!bProportional)
 								for (int idx = 0, n = nDrawLen; n; idx++, n--)
 									nDX[idx] = CharWidth(pszDraw[idx]);
+							// nDX это сдвиги до начала следующего символа, с начала предыдущего
 							ExtTextOut(hDC, rect.left, rect.top, nFlags, &rect,
 								pszDraw, nDrawLen, bProportional ? 0 : nDX);
 						}

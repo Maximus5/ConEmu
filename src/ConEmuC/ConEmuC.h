@@ -155,6 +155,7 @@ void ComspecDone(int aiRc);
 BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, LPCSTR asLabel = NULL);
 void CreateLogSizeFile(int nLevel);
 void LogSize(COORD* pcrSize, LPCSTR pszLabel);
+void LogString(LPCSTR asText);
 BOOL WINAPI HandlerRoutine(DWORD dwCtrlType);
 int GetProcessCount(DWORD *rpdwPID, UINT nMaxCount);
 SHORT CorrectTopVisible(int nY);

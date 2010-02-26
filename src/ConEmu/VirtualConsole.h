@@ -79,15 +79,82 @@ private:
 	#endif
 	BOOL    mb_ConDataChanged;
 	HRGN    mh_TransparentRgn;
+	//
 	bool InitDC(bool abNoDc, bool abNoWndResize);
+private:
+	enum _PartType{
+		pNull=0,     // конец строки/последний, неотображаемый элемент
+		pSpace,      // при разборе строки будем смотреть, если нашли pText,pSpace,pText то pSpace,pText добавить в первый pText
+		pBorder,     // символы, которые нужно рисовать шрифтом hFont2
+		pFills,      // Progressbars & Scrollbars
+		pText,       // Если шрифт НЕ OEM  (вывод через TextOutW)
+		pOemText,    // Если шрифт OEM-ный (вывод нужно делать через TextOutA)
+		pDummy  // дополнительные "пробелы", которые нужно отрисовать после конца строки
+		//pUnderscore, // '_' прочерк. их тоже будем чикать в угоду тексту
+	};
+	enum _PartType GetCharType(TCHAR ch);
+	typedef struct _TextParts {
+		enum _PartType partType;
+		int  nFontIdx;   // Индекс используемого шрифта
+		COLORREF crFore; // Цвет текста
+		COLORREF crBack; // !!! Используется только для отрисовки блочных симполов (прогрессов и пр.)
+		uint i;     // индекс в текущей строке (0-based)
+		uint n;     // количество символов в блоке
+		int  x;     // координата начала строки (may be >0)
+		uint width; // ширини символов блока в пикселях
+		
+		DWORD *pDX; // сдвиги для отрисовки (как-бы ширины знакомест). Это указатель на часть ConCharDX
+	} TEXTPARTS;
+	typedef struct _BgParts {
+		// индекс ячейки
+		uint i; // i строго больше 0 (0 - основной фон и он уже залит)
+		// и количество ячеек
+		uint n;
+		// Картинка или фон?
+		BOOL bBackIsPic;
+		COLORREF nBackRGB;
+	} BGPARTS;
+
+	// Working pointers
+	bool mb_PointersAllocated;
+	wchar_t  *mpsz_ConChar, *mpsz_ConCharSave;   // nMaxTextWidth * nMaxTextHeight
+	// CharAttr определен в RealConsole.h
+	CharAttr *mpn_ConAttrEx, *mpn_ConAttrExSave; // nMaxTextWidth * nMaxTextHeight
+	DWORD *ConCharX;      // nMaxTextWidth * nMaxTextHeight
+	DWORD *ConCharDX;     // nMaxTextWidth
+	char  *tmpOem;        // nMaxTextWidth
+	TEXTPARTS *TextParts; // nMaxTextWidth + 1
+	BGPARTS *BgParts;     // nMaxTextWidth
+	POLYTEXT  *PolyText;  // nMaxTextWidth
+	bool *pbLineChanged;  // nMaxTextHeight
+	bool *pbBackIsPic;    // nMaxTextHeight :: заполняется если *pbLineChanged
+	COLORREF* pnBackRGB;  // nMaxTextHeight :: заполняется если *pbLineChanged и НЕ *pbBackIsPic
+	
+	// функции выделения памяти
+	void PointersInit();
+	void PointersFree();
+	bool PointersAlloc();
+	void PointersZero();
+	
+	// *** Анализ строк ***
+	// Заливка измененных строк основным фоном и заполнение pbLineChanged, pbBackIsPic, pnBackRGB
+	void Update_CheckAndFill(bool isForce);
+	// Разбор строки на составляющие (возвращает true, если есть ячейки с НЕ основным фоном)
+	// Функция также производит распределение (заполнение координат и DX)
+	bool Update_ParseTextParts(uint row, const wchar_t* ConCharLine, const CharAttr* ConAttrLine);
+	// Заливка ячеек с НЕ основным фоном, отрисовка прогрессов и рамок
+	void Update_FillAlternate(uint row, uint nY);
+	// Вывод собственно текста (при необходимости Clipped)
+	void Update_DrawText(uint row, uint nY);
+
+	// распределение ширин
+	void DistributeSpaces(wchar_t* ConCharLine, CharAttr* ConAttrLine, DWORD* ConCharXLine, const int j, const int j2, const int end);
+	
 public:
 	bool isEditor, isViewer, isFilePanel, isFade, isForeground;
 	BYTE attrBackLast;
 	COLORREF *mp_Colors;
 
-	wchar_t  *mpsz_ConChar, *mpsz_ConCharSave;
-	CharAttr *mpn_ConAttrEx, *mpn_ConAttrExSave;
-	DWORD *ConCharX;
 	//TCHAR *Spaces; WORD nSpaceCount;
 	static wchar_t ms_Spaces[MAX_SPACES], ms_HorzDbl[MAX_SPACES], ms_HorzSingl[MAX_SPACES];
 	// Для ускорения получения индексов цвета
@@ -135,33 +202,12 @@ public:
 protected:
 	//inline void GetCharAttr(WORD atr, BYTE& foreColorNum, BYTE& backColorNum, HFONT* pFont);
 	wchar_t* mpsz_LogScreen; DWORD mn_LogScreenIdx;
-	enum _PartType{
-		pNull,  // конец строки/последний, неотображаемый элемент
-		pSpace, // при разборе строки будем смотреть, если нашли pText,pSpace,pText то pSpace,pText добавить в первый pText
-		pUnderscore, // '_' прочерк. их тоже будем чикать в угоду тексту
-		pBorder,
-		pVBorder, // символы вертикальных рамок, которые нельзя сдвигать
-		pRBracket, // символом '}' фар помечает файлы, вылезшие из колонки
-		pText,
-		pDummy  // дополнительные "пробелы", которые нужно отрисовать после конца строки
-	};
-	enum _PartType GetCharType(TCHAR ch);
-	struct _TextParts {
-		enum _PartType partType;
-		BYTE attrFore, attrBack; // однотипными должны быть не только символы, но и совпадать атрибуты!
-		WORD i1,i2;  // индексы в текущей строке, 0-based
-		WORD iwidth; // количество символов в блоке
-		DWORD width; // ширина текста в символах. для pSpace & pBorder может обрезаться в пользу pText/pVBorder
-
-		int x1; // координата в пикселях (скорректированные)
-	} *TextParts;
 	CONSOLE_SCREEN_BUFFER_INFO csbi; DWORD mdw_LastError;
 	CONSOLE_CURSOR_INFO	cinf;
 	COORD winSize, coord;
 	//CONSOLE_SELECTION_INFO select1, select2;
 	uint TextLen;
 	bool isCursorValid, drawImage, textChanged, attrChanged;
-	char *tmpOem;
 	void UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, UINT dwSize);
 	bool UpdatePrepare(bool isForce, HDC *ahDc, MSectionLock *pSDC);
 	void UpdateText(bool isForce); //, bool updateText, bool updateCursor);
@@ -192,7 +238,6 @@ protected:
 	static HBRUSH PartBrush(wchar_t ch, COLORREF nBackCol, COLORREF nForeCol);
 	BOOL mb_InPaintCall;
 	//
-	void DistributeSpaces(wchar_t* ConCharLine, CharAttr* ConAttrLine, DWORD* ConCharXLine, const int j, const int j2, const int end);
 	BOOL FindChanges(int &j, int &end, const wchar_t* ConCharLine, const CharAttr* ConAttrLine, const wchar_t* ConCharLine2, const CharAttr* ConAttrLine2);
 	LONG nFontHeight, nFontWidth;
 	BYTE nFontCharSet;
