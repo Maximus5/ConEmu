@@ -206,7 +206,7 @@ CConEmuMain::CConEmuMain()
 	mn_MsgUpdateCursorInfo = ++nAppMsg;
     mn_MsgSetWindowMode = ++nAppMsg;
     mn_MsgUpdateTitle = ++nAppMsg;
-    mn_MsgAttach = RegisterWindowMessage(CONEMUMSG_ATTACH);
+    //mn_MsgAttach = RegisterWindowMessage(CONEMUMSG_ATTACH);
 	mn_MsgSrvStarted = RegisterWindowMessage(CONEMUMSG_SRVSTARTED);
     mn_MsgVConTerminated = ++nAppMsg;
     mn_MsgUpdateScrollInfo = ++nAppMsg;
@@ -2548,28 +2548,41 @@ int CConEmuMain::ActiveConNum()
     return nActive;
 }
 
-LPARAM CConEmuMain::AttachRequested(HWND ahConWnd, DWORD anConemuC_PID)
+BOOL CConEmuMain::AttachRequested(HWND ahConWnd, CESERVER_REQ_STARTSTOP pStartStop, CESERVER_REQ_STARTSTOPRET* pRet)
 {
     int i;
     CVirtualConsole* pCon = NULL;
+
+	_ASSERTE(pStartStop.dwPID!=0);
+
     // Может быть какой-то VCon ждет аттача?
     for (i = 0; !pCon && i<MAX_CONSOLE_COUNT; i++) {
-        if (mp_VCon[i] && mp_VCon[i]->RCon()->isDetached())
-            pCon = mp_VCon[i];
+		if (mp_VCon[i]) {
+			CRealConsole* pRCon = mp_VCon[i]->RCon();
+			if (pRCon) {
+				if (pRCon->isDetached())
+					pCon = mp_VCon[i];
+				if (pRCon->GetServerPID() == pStartStop.dwPID) {
+					//_ASSERTE(pRCon->GetServerPID() != pStartStop.dwPID);
+					pCon = mp_VCon[i];
+					break;
+				}
+			}
+		}
     }
     // Если не нашли - определим, можно ли добавить новую консоль?
     if (!pCon) {
 		RConStartArgs args; args.bDetached = TRUE;
         if ((pCon = CreateCon(&args)) == NULL)
-            return 0;
+            return FALSE;
     }
 
     // Пытаемся подцепить консоль
-    if (!pCon->RCon()->AttachConemuC(ahConWnd, anConemuC_PID))
-        return 0;
+    if (!pCon->RCon()->AttachConemuC(ahConWnd, pStartStop.dwPID, pStartStop.sbi, pRet))
+        return FALSE;
 
     // OK
-    return (LPARAM)ghWndDC;
+    return TRUE;
 }
 
 // Вернуть общее количество процессов по всем консолям
@@ -7565,7 +7578,13 @@ void CConEmuMain::ServerThreadCommand(HANDLE hPipe)
         _ASSERTE(nDataSize>=1);
         DWORD nTabCmd = pIn->Data[0];
         TabCommand(nTabCmd);
-    }
+
+	} else if (pIn->hdr.nCmd == CECMD_ATTACH2GUI) {
+		// Получен запрос на Attach из сервера
+		if (AttachRequested(pIn->StartStop.hWnd, pIn->StartStop, &(pIn->StartStopRet))) {
+			fSuccess = WriteFile(hPipe, pIn, pIn->hdr.nSize, &cbWritten, NULL);
+		}
+	}
 
     // Освободить память
     if (pIn && (LPVOID)pIn != (LPVOID)&in) {
@@ -7965,8 +7984,8 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
             //gConEmu.UpdateTitle(TitleCmp);
             gConEmu.UpdateTitle(mp_VActive->RCon()->GetTitle());
             return 0;
-        } else if (messg == gConEmu.mn_MsgAttach) {
-            return gConEmu.AttachRequested ( (HWND)wParam, (DWORD)lParam );
+        //} else if (messg == gConEmu.mn_MsgAttach) {
+        //    return gConEmu.AttachRequested ( (HWND)wParam, (DWORD)lParam );
 		} else if (messg == gConEmu.mn_MsgSrvStarted) {
 			gConEmu.WinEventProc(NULL, EVENT_CONSOLE_START_APPLICATION, (HWND)wParam, lParam, 0, 0, 0);
 			return 0;

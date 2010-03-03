@@ -99,7 +99,8 @@ int ServerInit()
 
 
 	// Шрифт в консоли нужно менять в самом начале, иначе могут быть проблемы с установкой размера консоли
-	ServerInitFont();
+	if (!gbAttachMode && !srv.bDebuggerActive)
+		ServerInitFont();
 
 
 	//2009-08-27 Перенес снизу
@@ -430,7 +431,23 @@ int ServerInit()
     if (gbParmBufferSize && gcrBufferSize.X && gcrBufferSize.Y) {
         SMALL_RECT rc = {0};
         SetConsoleSize(gnBufferHeight, gcrBufferSize, rc, ":ServerInit.SetFromArg"); // может обломаться? если шрифт еще большой
-    }
+	} else {
+		HANDLE hOut = (HANDLE)ghConOut;
+		CONSOLE_SCREEN_BUFFER_INFO lsbi = {{0,0}}; // интересует реальное положение дел
+		if (GetConsoleScreenBufferInfo(hOut, &lsbi)) {
+			srv.crReqSizeNewSize = lsbi.dwSize;
+			gcrBufferSize.X = lsbi.dwSize.X;
+			if (lsbi.dwSize.Y > lsbi.dwMaximumWindowSize.Y) {
+				// Буферный режим
+				gcrBufferSize.Y = (lsbi.srWindow.Bottom - lsbi.srWindow.Top + 1);
+				gnBufferHeight = lsbi.dwSize.Y;
+			} else {
+				// Режим без прокрутки!
+				gcrBufferSize.Y = lsbi.dwSize.Y;
+				gnBufferHeight = 0;
+			}
+		}
+	}
 
     if (IsIconic(ghConWnd)) { // окошко нужно развернуть!
         WINDOWPLACEMENT wplCon = {sizeof(wplCon)};
@@ -744,7 +761,7 @@ void CmdOutputRestore()
 HWND Attach2Gui(DWORD nTimeout)
 {
     HWND hGui = NULL, hDcWnd = NULL;
-    UINT nMsg = RegisterWindowMessage(CONEMUMSG_ATTACH);
+    //UINT nMsg = RegisterWindowMessage(CONEMUMSG_ATTACH);
     BOOL bNeedStartGui = FALSE;
     DWORD dwErr = 0;
     
@@ -821,6 +838,23 @@ HWND Attach2Gui(DWORD nTimeout)
     
     
     DWORD dwStart = GetTickCount(), dwDelta = 0, dwCur = 0;
+	CESERVER_REQ In = {{0}};
+	_ASSERTE(sizeof(CESERVER_REQ_STARTSTOP) >= sizeof(CESERVER_REQ_STARTSTOPRET));
+	ExecutePrepareCmd(&In, CECMD_ATTACH2GUI, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_STARTSTOP));
+	In.StartStop.nStarted = 0;
+	In.StartStop.hWnd = ghConWnd;
+	In.StartStop.dwPID = gnSelfPID;
+	In.StartStop.dwInputTID = srv.dwInputPipeThreadId;
+	In.StartStop.nSubSystem = gnImageSubsystem;
+	In.StartStop.bRootIsCmdExe = gbRootIsCmdExe;
+	In.StartStop.bUserIsAdmin = IsUserAdmin();
+	HANDLE hOut = (HANDLE)ghConOut;
+	if (!GetConsoleScreenBufferInfo(hOut, &In.StartStop.sbi)) {
+		_ASSERTE(FALSE);
+	} else {
+		srv.crReqSizeNewSize = In.StartStop.sbi.dwSize;
+	}
+
 	// В обычном "серверном" режиме шрифт уже установлен, а при аттаче
 	// другого процесса - шрифт все-равно поменять не получится
     //BOOL lbNeedSetFont = TRUE;
@@ -838,18 +872,32 @@ HWND Attach2Gui(DWORD nTimeout)
 			//}
         
 			WARNING("Переделать на команду пайпа!!! AttachRequested");
-            hDcWnd = (HWND)SendMessage(hGui, nMsg, (WPARAM)ghConWnd, (LPARAM)gnSelfPID);
-            if (hDcWnd != NULL) {
-                ghConEmuWnd = hGui;
+            //hDcWnd = (HWND)SendMessage(hGui, nMsg, (WPARAM)ghConWnd, (LPARAM)gnSelfPID);
+            //if (hDcWnd != NULL) {
+			wchar_t szPipe[64];
+			wsprintf(szPipe, CEGUIPIPENAME, L".", (DWORD)hGui);
+			CESERVER_REQ *pOut = ExecuteCmd(szPipe, &In, GUIATTACH_TIMEOUT, ghConWnd);
+			if (pOut) {
+                //ghConEmuWnd = hGui;
+				ghConEmuWnd = pOut->StartStopRet.hWnd;
+				hDcWnd = pOut->StartStopRet.hWndDC;
+
+				DisableAutoDisableConfirmExit();
 
 				// В принципе, консоль может действительно запуститься видимой. В этом случае ее скрывать не нужно
 				// Но скорее всего, консоль запущенная под Админом в Win7 будет отображена ошибочно
 				if (gbForceHideConWnd)
 					ShowWindow(ghConWnd, SW_HIDE);
+
+				COORD crNewSize = {pOut->StartStopRet.nWidth, pOut->StartStopRet.nHeight};
+				SMALL_RECT rcWnd = {In.StartStop.sbi.srWindow.Top};
+				SetConsoleSize(pOut->StartStopRet.nBufferHeight, crNewSize, rcWnd, "Attach2Gui:Ret");
                 
                 // Установить переменную среды с дескриптором окна
                 SetConEmuEnvVar(ghConEmuWnd);
 				CheckConEmuHwnd();
+
+				ExecuteFreeResult(pOut);
                 
                 break;
             }

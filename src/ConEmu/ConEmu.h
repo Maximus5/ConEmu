@@ -218,7 +218,7 @@ protected:
 	UINT mn_MsgUpdateCursorInfo;
 	UINT mn_MsgSetWindowMode;
 	UINT mn_MsgUpdateTitle;
-	UINT mn_MsgAttach;
+	//UINT mn_MsgAttach;
 	UINT mn_MsgSrvStarted;
 	UINT mn_MsgVConTerminated;
 	UINT mn_MsgUpdateScrollInfo;
@@ -261,7 +261,7 @@ public:
 	int ActiveConNum(); // 0-based
 	static void AddMargins(RECT& rc, RECT& rcAddShift, BOOL abExpand=FALSE);
 	void AskChangeBufferHeight();
-	LPARAM AttachRequested(HWND ahConWnd, DWORD anConemuC_PID);
+	BOOL AttachRequested(HWND ahConWnd, CESERVER_REQ_STARTSTOP pStartStop, CESERVER_REQ_STARTSTOPRET* pRet);
 	void AutoSizeFont(const RECT &rFrom, enum ConEmuRect tFrom);
 	static RECT CalcMargins(enum ConEmuMargins mg);
 	static RECT CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmuRect tFrom, RECT* prDC=NULL, enum ConEmuMargins tTabAction=CEM_TAB);

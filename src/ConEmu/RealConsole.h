@@ -240,7 +240,7 @@ public:
     BOOL isFar(BOOL abPluginRequired=FALSE);
     void ShowConsole(int nMode); // -1 Toggle, 0 - Hide, 1 - Show
     BOOL isDetached();
-    BOOL AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID);
+    BOOL AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, CONSOLE_SCREEN_BUFFER_INFO sbi, CESERVER_REQ_STARTSTOPRET* pRet);
     BOOL RecreateProcess(RConStartArgs *args);
     void GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight);
 	BOOL IsConsoleDataChanged();

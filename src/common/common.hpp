@@ -169,7 +169,7 @@ extern wchar_t gszDbgModLabel[6];
 #define CECMD_SETDONTCLOSE  29
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    32
+#define CESERVER_REQ_VER    33
 
 #define PIPEBUFSIZE 4096
 
@@ -404,7 +404,8 @@ typedef struct tag_CESERVER_REQ_STARTSTOP {
 // _ASSERTE(sizeof(CESERVER_REQ_STARTSTOPRET) <= sizeof(CESERVER_REQ_STARTSTOP));
 typedef struct tag_CESERVER_REQ_STARTSTOPRET {
 	BOOL  bWasBufferHeight;
-	HWND2 hWnd; // при передаче В GUI - консоль, при возврате в консоль - GUI
+	HWND2 hWnd; // при возврате в консоль - GUI (главное окно)
+	HWND2 hWndDC;
 	DWORD dwPID;
 	DWORD nBufferHeight, nWidth, nHeight;
 	DWORD dwSrvPID;
@@ -467,7 +468,7 @@ typedef struct tag_CESERVER_REQ {
 #include <poppack.h>
 
 
-#define CONEMUMSG_ATTACH L"ConEmuMain::Attach"            // wParam == hConWnd, lParam == ConEmuC_PID
+//#define CONEMUMSG_ATTACH L"ConEmuMain::Attach"            // wParam == hConWnd, lParam == ConEmuC_PID
 #define CONEMUMSG_SRVSTARTED L"ConEmuMain::SrvStarted"    // wParam == hConWnd, lParam == ConEmuC_PID
 //#define CONEMUMSG_SETFOREGROUND L"ConEmuMain::SetForeground"            // wParam == hConWnd, lParam == ConEmuC_PID
 #define CONEMUMSG_FLASHWINDOW L"ConEmuMain::FlashWindow"

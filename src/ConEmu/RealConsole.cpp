@@ -719,10 +719,14 @@ void CRealConsole::SyncConsole2Window()
 	}
 }
 
-BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID)
+// Вызывается при аттаче (после детача), или после RunAs?
+// sbi передавать не ссылкой, а копией, ибо та же память
+BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, CONSOLE_SCREEN_BUFFER_INFO sbi, CESERVER_REQ_STARTSTOPRET* pRet)
 {
     DWORD dwErr = 0;
     HANDLE hProcess = NULL;
+
+	_ASSERTE(pRet!=NULL);
 
     // Процесс запущен через ShellExecuteEx под другим пользователем (Administrator)
     if (mp_sei && mp_sei->hProcess) {
@@ -736,6 +740,8 @@ BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID)
         DisplayLastError(L"Can't open ConEmuC process! Attach is impossible!", dwErr = GetLastError());
         return FALSE;
     }
+
+	con.m_sbi = sbi;
 
     //// Событие "изменения" консоли //2009-05-14 Теперь события обрабатываются в GUI, но прийти из консоли может изменение размера курсора
     //wsprintfW(ms_ConEmuC_Pipe, CE_CURSORUPDATE, mn_ConEmuC_PID);
@@ -762,11 +768,35 @@ BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID)
 	// Открыть map с данными, он уже должен быть создан
 	OpenMapHeader();
 
+
     //SetConsoleSize(MakeCoord(TextWidth,TextHeight));
     RECT rcWnd; GetClientRect(ghWnd, &rcWnd);
 	gConEmu.AutoSizeFont(rcWnd, CER_MAINCLIENT);
+
+	//2010-03-03 переделано для аттача через пайп
+	int nCurWidth = 0, nCurHeight = 0;
+	BOOL bCurBufHeight = FALSE;
+	GetConWindowSize(sbi, nCurWidth, nCurHeight, &bCurBufHeight);
+	if (con.bBufferHeight != bCurBufHeight) {
+		_ASSERTE(mb_BuferModeChangeLocked==FALSE);
+		SetBufferHeightMode(bCurBufHeight, FALSE);
+	}
     RECT rcCon = gConEmu.CalcRect(CER_CONSOLE, rcWnd, CER_MAINCLIENT);
-    SetConsoleSize(rcCon.right,rcCon.bottom);
+	// Командой - низя, т.к. сервер сейчас только что запустился и ждет GUI
+    //SetConsoleSize(rcCon.right,rcCon.bottom);
+	pRet->bWasBufferHeight = bCurBufHeight;
+	pRet->hWnd = ghWnd;
+	pRet->hWndDC = ghWndDC;
+	pRet->dwPID = GetCurrentProcessId();
+	pRet->nBufferHeight = bCurBufHeight ? sbi.dwSize.Y : 0;
+	pRet->nWidth = rcCon.right;
+	pRet->nHeight = rcCon.bottom;
+	pRet->dwSrvPID = anConemuC_PID;
+	pRet->bNeedLangChange = rcCon.bottom;
+	pRet->bNeedLangChange = TRUE;
+	TODO("Проверить на x64, не будет ли проблем с 0xFFFFFFFFFFFFFFFFFFFFF");
+	pRet->NewConsoleLang = gConEmu.GetActiveKeyboardLayout();
+	
 
     // Передернуть нить MonitorThread
     SetEvent(mh_MonitorThreadEvent);
@@ -2708,6 +2738,7 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
             // Сразу заполним результат
             pIn->StartStopRet.bWasBufferHeight = isBufferHeight(); // чтобы comspec знал, что буфер нужно будет отключить
 			pIn->StartStopRet.hWnd = ghWnd;
+			pIn->StartStopRet.hWndDC = ghWndDC;
 			pIn->StartStopRet.dwPID = GetCurrentProcessId();
 			pIn->StartStopRet.dwSrvPID = mn_ConEmuC_PID;
 			pIn->StartStopRet.bNeedLangChange = FALSE;
@@ -2725,6 +2756,7 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 					// Команду - низя, нити еще не функционируют
 					//	SwitchKeyboardLayout(INPUTLANGCHANGE_SYSCHARSET,gConEmu.GetActiveKeyboardLayout());
 					pIn->StartStopRet.bNeedLangChange = TRUE;
+					TODO("Проверить на x64, не будет ли проблем с 0xFFFFFFFFFFFFFFFFFFFFF");
 					pIn->StartStopRet.NewConsoleLang = gConEmu.GetActiveKeyboardLayout();
 				}
 

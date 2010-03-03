@@ -283,7 +283,8 @@ int __cdecl main()
     // CREATE_NEW_PROCESS_GROUP - низ€, перестает работать Ctrl-C
 	// ѕеред CreateProcessW нужно ставить 0, иначе из-за антивирусов может наступить
 	// timeout ожидани€ окончани€ процесса еще ƒќ выхода из CreateProcessW
-	srv.nProcessStartTick = 0;
+	if (!gbAttachMode)
+		srv.nProcessStartTick = 0;
 	if (gbNoCreateProcess) {
 		lbRc = TRUE; // ѕроцесс уже запущен, просто цепл€емс€ к ConEmu (GUI)
 		pi.hProcess = srv.hRootProcess;
@@ -370,7 +371,8 @@ int __cdecl main()
         if (lpMsgBuf) LocalFree(lpMsgBuf);
         iRc = CERR_CREATEPROCESS; goto wrap;
     }
-	srv.nProcessStartTick = GetTickCount();
+	if (!gbAttachMode)
+		srv.nProcessStartTick = GetTickCount();
     //delete psNewCmd; psNewCmd = NULL;
     AllowSetForegroundWindow(pi.dwProcessId);
 
@@ -1525,6 +1527,7 @@ void SendStarted()
 				// —мена раскладки клавиатуры
 				if (pOut->StartStopRet.bNeedLangChange) {
 					WPARAM wParam = INPUTLANGCHANGE_SYSCHARSET;
+					TODO("ѕроверить на x64, не будет ли проблем с 0xFFFFFFFFFFFFFFFFFFFFF");
 					LPARAM lParam = (LPARAM)(DWORD_PTR)pOut->StartStopRet.NewConsoleLang;
 					SendMessage(ghConWnd, WM_INPUTLANGCHANGEREQUEST, wParam, lParam);
 				}
@@ -2476,18 +2479,20 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 				int nOutSize = sizeof(CESERVER_REQ_HDR) + sizeof(DWORD);
 				*out = ExecuteNewCmd(CECMD_ATTACH2GUI,nOutSize);
 				if (*out != NULL) {
+					// „тобы не отображалась "Press any key to close console"
+					DisableAutoDisableConfirmExit();
+					//
 					(*out)->dwData[0] = (DWORD)hDc;
 					lbRc = TRUE;
 				}
 			}
-        } break;
-        
+        }  break;
+
         case CECMD_FARLOADED:
         {
         	if (gbAutoDisableConfirmExit && srv.dwRootProcess == in.dwData[0]) {
 				// FAR нормально запустилс€, считаем что все ок и подтверждени€ закрыти€ консоли не потребуетс€
-				gbAutoDisableConfirmExit = FALSE; gbAlwaysConfirmExit = FALSE;
-				srv.nProcessStartTick = GetTickCount() - 2*CHECK_ROOTSTART_TIMEOUT;
+				DisableAutoDisableConfirmExit();
         	}
         } break;
         
@@ -3105,6 +3110,12 @@ void _wprintf(LPCWSTR asBuffer)
 	}
 }
 #endif
+
+void DisableAutoDisableConfirmExit()
+{
+	gbAutoDisableConfirmExit = FALSE; gbAlwaysConfirmExit = FALSE;
+	srv.nProcessStartTick = GetTickCount() - 2*CHECK_ROOTSTART_TIMEOUT;
+}
 
 //BOOL IsUserAdmin()
 //{

@@ -80,6 +80,7 @@ extern wchar_t gszDbgModLabel[6];
 #define REQSIZE_TIMEOUT 5000
 #define GUIREADY_TIMEOUT 10000
 #define UPDATECONHANDLE_TIMEOUT 1000
+#define GUIATTACH_TIMEOUT 10000
 
 #define IMAGE_SUBSYSTEM_DOS_EXECUTABLE  255
 
@@ -212,6 +213,8 @@ void CloseMapHeader();
 void EmergencyShow();
 
 int CreateColorerHeader();
+
+void DisableAutoDisableConfirmExit();
 
 /* Console Handles */
 //extern MConHandle ghConIn;
