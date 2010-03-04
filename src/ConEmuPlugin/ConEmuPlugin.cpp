@@ -1037,6 +1037,9 @@ CESERVER_REQ* ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandDat
 		case (CMD_REDRAWFAR):
 			if (gFarVersion.dwVerMajor==2) RedrawAll();
 			break;
+		case (CMD_CHKRESOURCES):
+			CheckResources(TRUE);
+			break;
 		//case (CMD_SETSIZE):
 		//{
 		//	_ASSERTE(pCommandData!=NULL);
@@ -1361,7 +1364,7 @@ DWORD WINAPI MonitorThreadProcW(LPVOID lpParameter)
 	BOOL lbStartedNoConEmu = (ConEmuHwnd == NULL) && !gbStartedUnderConsole2;
 	//BOOL lbTryOpenMapHeader = FALSE;
 	//_ASSERTE(ConEmuHwnd!=NULL); -- ConEmu может подцепиться позднее!
-
+	
 	while (true)
 	{
 		DWORD dwWait = 0;
@@ -1453,6 +1456,11 @@ DWORD WINAPI MonitorThreadProcW(LPVOID lpParameter)
 			if (OpenMapHeader() == 0) {
 				// OK, переподцепились
 				gbTryOpenMapHeader = FALSE;
+			}
+			if (gpConsoleInfo) {
+				// 04.03.2010 Maks - Если мэппинг открыли - принудительно передернуть ресурсы и информацию
+				//CheckResources(TRUE); -- должен выполняться в основной нити, поэтому - через Activate
+				ActivatePlugin(CMD_CHKRESOURCES, NULL);
 			}
 		}
 
@@ -1617,7 +1625,8 @@ void WINAPI _export SetStartupInfoW(void *aInfo)
 	//CheckMacro(TRUE);
 
 	// здесь же и ReloadFarInfo() позовется
-	CheckResources(TRUE);
+	if (gpConsoleInfo) //2010-03-04 Имеет смысл только при запуске из-под ConEmu
+		CheckResources(TRUE);
 }
 
 //#define CREATEEVENT(fmt,h) 
@@ -3114,6 +3123,8 @@ BOOL Attach2Gui()
 		// "Server was already started. PID=%i. Exiting...\n", dwServerPID
 		gdwServerPID = dwServerPID;
 		gbTryOpenMapHeader = (gpConsoleInfo==NULL);
+		if (gpConsoleInfo) // 04.03.2010 Maks - Если мэппинг уже открыт - принудительно передернуть ресурсы и информацию
+			CheckResources(TRUE);
 		return TRUE;
 	}
 	gdwServerPID = 0;

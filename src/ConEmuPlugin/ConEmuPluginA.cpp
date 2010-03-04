@@ -382,7 +382,8 @@ void WINAPI _export SetStartupInfo(const struct PluginStartupInfo *aInfo)
 	// Устарело. активация через [Read/Peek]ConsoleInput
 	//CheckMacro(TRUE);
 
-	CheckResources(TRUE);
+	if (gpConsoleInfo) //2010-03-04 Имеет смысл только при запуске из-под ConEmu
+		CheckResources(TRUE);
 }
 
 //extern WCHAR gcPlugKey; // Для ANSI far он инициализируется как (char)

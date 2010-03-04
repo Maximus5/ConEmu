@@ -207,7 +207,7 @@ END
 IDD_SPG_COLORS DIALOGEX 0, 0, 328, 235
 STYLE DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
-FONT 8, "MS Shell Dlg", 0, 0, 0x1
+FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        "Standard colors (""red green blue"")",gbStandardColors,
                     4,4,319,67
@@ -353,21 +353,20 @@ BEGIN
     CONTROL         "",slTransparent,"msctls_trackbar32",TBS_BOTH | 
                     TBS_NOTICKS | WS_TABSTOP,70,187,210,12
     RTEXT           "Opaque",IDC_STATIC,284,187,31,8
-    CONTROL         "Transparent «User screen» while panel(s) is turned off",
-                    cbUserScreenTransparent,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,8,202,197,9
+    CONTROL         "«User screen» transparency",cbUserScreenTransparent,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,202,110,9
     CONTROL         "Transparent",cbTransparent,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,8,188,54,9
     CONTROL         "Colorer TrueMod support",cbTrueColorer,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,217,201,97,9
     CONTROL         "Fade contents when inactive",cbFadeInactive,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,99,217,111,9
-    RTEXT           "Low:",IDC_STATIC,215,217,26,8
+                    BS_AUTOCHECKBOX | WS_TABSTOP,8,217,111,9
+    RTEXT           "Low:",IDC_STATIC,118,217,19,8
     CONTROL         "Block inactive cursor",cbBlockInactiveCursor,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,8,217,86,9
-    EDITTEXT        tFadeLow,245,216,22,12,ES_AUTOHSCROLL
-    RTEXT           "High:",IDC_STATIC,270,217,22,8
-    EDITTEXT        tFadeHigh,296,216,20,12,ES_AUTOHSCROLL
+                    BS_AUTOCHECKBOX | WS_TABSTOP,123,202,86,9
+    EDITTEXT        tFadeLow,141,216,22,12,ES_AUTOHSCROLL
+    RTEXT           "High:",IDC_STATIC,166,217,22,8
+    EDITTEXT        tFadeHigh,192,216,20,12,ES_AUTOHSCROLL
 END
 
 IDD_SETTINGS DIALOGEX 0, 0, 341, 276
@@ -595,6 +594,17 @@ BEGIN
     PUSHBUTTON      "Cancel",IDCANCEL,129,24,50,14
 END
 
+IDD_MORE_FADE DIALOG DISCARDABLE  0, 0, 153, 55
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Fade-effect"
+FONT 8, "MS Sans Serif"
+BEGIN
+    RTEXT           "Low:",IDC_STATIC,15,22,19,8
+    EDITTEXT        tFadeLow,39,20,22,12,ES_AUTOHSCROLL
+    RTEXT           "High:",IDC_STATIC,63,22,22,8
+    EDITTEXT        tFadeHigh,89,20,20,12,ES_AUTOHSCROLL
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -631,6 +641,14 @@ BEGIN
         RIGHTMARGIN, 179
         TOPMARGIN, 7
         BOTTOMMARGIN, 83
+    END
+
+    IDD_MORE_FADE, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 146
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 48
     END
 END
 #endif    // APSTUDIO_INVOKED
@@ -784,7 +802,7 @@ BEGIN
     cbTryToCenter           "Draw console content in center of ConEmu window"
     cbDesktopMode           "Act as a part of Windows Desktop"
     cbAlwaysOnTop           "Places the ConEmu window above all non-topmost windows. The window maintains its topmost position even when it is deactivated"
-    cbUserScreenTransparent "Transparent «User screen» while panel(s) is turned off"
+    cbUserScreenTransparent "Turn on «User screen» transparency, when panel(s) is lifted up or hided. You may temporary reveal «User screen» by depressing Ctrl-Alt-Shift."
     tBgImageColors          "Choose background color indexes, which will be replaced with background image (default is «#0 #1»)"
     cbExtendFonts           "ConEmu is able to use normal, bold and italic fonts side by side. This feature is useful with Colorer FAR plugin."
     lbExtendFontBoldIdx     "Choose background color index for which «Bold» font properties whill be inverted (default is Red #12)"

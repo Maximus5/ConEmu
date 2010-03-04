@@ -169,7 +169,7 @@ extern wchar_t gszDbgModLabel[6];
 #define CECMD_SETDONTCLOSE  29
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    33
+#define CESERVER_REQ_VER    34
 
 #define PIPEBUFSIZE 4096
 
@@ -500,8 +500,9 @@ typedef struct tag_CESERVER_REQ {
 #define CMD_LEFTCLKSYNC  10
 #define CMD_REDRAWFAR    11
 #define CMD_FARPOST      12
+#define CMD_CHKRESOURCES 13
 // +2
-#define MAXCMDCOUNT      14
+#define MAXCMDCOUNT      15
 #define CMD_EXIT         MAXCMDCOUNT-1
 
 //#define GWL_TABINDEX     0

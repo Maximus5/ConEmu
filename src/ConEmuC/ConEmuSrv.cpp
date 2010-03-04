@@ -87,6 +87,7 @@ int ServerInit()
     DWORD dwErr = 0;
     wchar_t szComSpec[MAX_PATH+1], szSelf[MAX_PATH+3];
     wchar_t* pszSelf = szSelf+1;
+	HWND hDcWnd = NULL;
     //HMODULE hKernel = GetModuleHandleW (L"kernel32.dll");
     
 	srv.osv.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
@@ -481,6 +482,28 @@ int ServerInit()
         iRc = CERR_REFRESHEVENT; goto wrap;
     }
 
+
+
+
+	if (gbAttachMode) {
+		// Нить Refresh НЕ должна быть запущена, иначе в мэппинг могут попасть данные из консоли
+		// ДО того, как отработает ресайз (тот размер, который указал установить GUI при аттаче)
+		_ASSERTE(srv.dwRefreshThread==0);
+		HWND hDcWnd = Attach2Gui(5000);
+
+		// 090719 попробуем в сервере это делать всегда. Нужно передать в GUI - TID нити ввода
+		//// Если это НЕ новая консоль (-new_console) и не /ATTACH уже существующей консоли
+		//if (!gbNoCreateProcess)
+		//	SendStarted();
+
+		if (!hDcWnd) {
+			_printf("Available ConEmu GUI window not found!\n");
+			iRc = CERR_ATTACHFAILED; goto wrap;
+		}
+	}
+
+
+
     
     // Запустить нить наблюдения за консолью
     srv.hRefreshThread = CreateThread( 
@@ -518,19 +541,6 @@ int ServerInit()
         iRc = CERR_CREATESERVERTHREAD; goto wrap;
     }
 
-    if (gbAttachMode) {
-        HWND hDcWnd = Attach2Gui(5000);
-        
-		// 090719 попробуем в сервере это делать всегда. Нужно передать в GUI - TID нити ввода
-        //// Если это НЕ новая консоль (-new_console) и не /ATTACH уже существующей консоли
-        //if (!gbNoCreateProcess)
-        //	SendStarted();
-
-        if (!hDcWnd) {
-            _printf("Available ConEmu GUI window not found!\n");
-            iRc = CERR_ATTACHFAILED; goto wrap;
-        }
-    }
 
 	SendStarted();
 
@@ -760,10 +770,21 @@ void CmdOutputRestore()
 
 HWND Attach2Gui(DWORD nTimeout)
 {
+	// Нить Refresh НЕ должна быть запущена, иначе в мэппинг могут попасть данные из консоли
+	// ДО того, как отработает ресайз (тот размер, который указал установить GUI при аттаче)
+	_ASSERTE(srv.dwRefreshThread==0);
+
     HWND hGui = NULL, hDcWnd = NULL;
     //UINT nMsg = RegisterWindowMessage(CONEMUMSG_ATTACH);
     BOOL bNeedStartGui = FALSE;
     DWORD dwErr = 0;
+
+	if (!srv.pConsoleInfo) {
+		_ASSERTE(srv.pConsoleInfo!=NULL);
+	} else {
+		// Чтобы GUI не пытался считать информацию из консоли до завершения аттача (до изменения размеров)
+		srv.pConsoleInfo->nPacketId = 0;
+	}
     
     hGui = FindWindowEx(NULL, hGui, VirtualConsoleClassMain, NULL);
     if (!hGui)

@@ -1,5 +1,7 @@
+Maximus5 - 2010.03.04
 [%] Issue 198: Redraw in FAR1.
 [%] Issue 199: Не отключался Fade-effect.
+[%] Issue 201, Issue 202: Ошибочно включался режим прокрутки после аттача консоли к ConEmu.
 [%] При включенном 'Transparent «User screen»' или отключенном 'Monospace' в некоторых случаях падали с переполнением стека.
 [*] Minor resize optimization.
 

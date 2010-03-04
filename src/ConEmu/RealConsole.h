@@ -357,6 +357,10 @@ private:
 		BOOL bInSetSize; HANDLE hInSetSize;
 		int DefaultBufferHeight;
 		BOOL bConsoleDataChanged;
+
+		#ifdef _DEBUG
+		BOOL bDebugLocked;
+		#endif
     } con;
     // 
     MSection csPRC; //DWORD ncsTPRC;

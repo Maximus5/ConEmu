@@ -741,6 +741,29 @@ BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, CONSOLE_SCR
         return FALSE;
     }
 
+	//2010-03-03 переделано для аттача через пайп
+	int nCurWidth = 0, nCurHeight = 0;
+	BOOL bCurBufHeight = FALSE;
+	GetConWindowSize(sbi, nCurWidth, nCurHeight, &bCurBufHeight);
+	if (con.bBufferHeight != bCurBufHeight) {
+		_ASSERTE(mb_BuferModeChangeLocked==FALSE);
+		SetBufferHeightMode(bCurBufHeight, FALSE);
+	}
+	RECT rcWnd; GetClientRect(ghWnd, &rcWnd);
+	gConEmu.AutoSizeFont(rcWnd, CER_MAINCLIENT);
+	RECT rcCon = gConEmu.CalcRect(CER_CONSOLE, rcWnd, CER_MAINCLIENT);
+
+	// Скорректировать sbi на новый, который БУДЕТ установлен после отработки сервером аттача
+	sbi.dwSize.X = rcCon.right;
+	sbi.srWindow.Left = 0; sbi.srWindow.Right = rcCon.right-1;
+	if (bCurBufHeight) {
+		// sbi.dwSize.Y не трогаем
+		sbi.srWindow.Bottom = sbi.srWindow.Top + rcCon.bottom - 1;
+	} else {
+		sbi.dwSize.Y = rcCon.bottom;
+		sbi.srWindow.Top = 0; sbi.srWindow.Bottom = rcCon.bottom - 1;
+	}	
+
 	con.m_sbi = sbi;
 
     //// Событие "изменения" консоли //2009-05-14 Теперь события обрабатываются в GUI, но прийти из консоли может изменение размера курсора
@@ -770,18 +793,6 @@ BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, CONSOLE_SCR
 
 
     //SetConsoleSize(MakeCoord(TextWidth,TextHeight));
-    RECT rcWnd; GetClientRect(ghWnd, &rcWnd);
-	gConEmu.AutoSizeFont(rcWnd, CER_MAINCLIENT);
-
-	//2010-03-03 переделано для аттача через пайп
-	int nCurWidth = 0, nCurHeight = 0;
-	BOOL bCurBufHeight = FALSE;
-	GetConWindowSize(sbi, nCurWidth, nCurHeight, &bCurBufHeight);
-	if (con.bBufferHeight != bCurBufHeight) {
-		_ASSERTE(mb_BuferModeChangeLocked==FALSE);
-		SetBufferHeightMode(bCurBufHeight, FALSE);
-	}
-    RECT rcCon = gConEmu.CalcRect(CER_CONSOLE, rcWnd, CER_MAINCLIENT);
 	// Командой - низя, т.к. сервер сейчас только что запустился и ждет GUI
     //SetConsoleSize(rcCon.right,rcCon.bottom);
 	pRet->bWasBufferHeight = bCurBufHeight;
@@ -1158,8 +1169,9 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 
 
 				// Загрузить изменения из консоли
-            	if (pRCon->mp_ConsoleInfo->hConWnd && pRCon->mp_ConsoleInfo->nCurDataMapIdx &&
-					pRCon->mn_LastConsolePacketIdx != pRCon->mp_ConsoleInfo->nPacketId)
+            	if (pRCon->mp_ConsoleInfo->hConWnd && pRCon->mp_ConsoleInfo->nCurDataMapIdx
+					&& pRCon->mp_ConsoleInfo->nPacketId
+					&& pRCon->mn_LastConsolePacketIdx != pRCon->mp_ConsoleInfo->nPacketId)
 				{
             		pRCon->ApplyConsoleInfo();
             	}
@@ -1211,6 +1223,10 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 
 
 			bool lbIsActive = pRCon->isActive();
+			#ifdef _DEBUG
+			if (pRCon->con.bDebugLocked)
+				lbIsActive = false;
+			#endif
 
 			if (lbIsActive) {
 				//2009-01-21 сомнительно, что здесь действительно нужно подресайзивать дочерние окна
@@ -5835,6 +5851,11 @@ void CRealConsole::PrepareTransparent(wchar_t* pChar, CharAttr* pAttr, int nWidt
 BOOL CRealConsole::IsConsoleDataChanged()
 {
 	if (!this) return FALSE;
+#ifdef _DEBUG
+	if (con.bDebugLocked)
+		return FALSE;
+#endif
+
 	return con.bConsoleDataChanged;
 }
 
@@ -5849,6 +5870,10 @@ void CRealConsole::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, i
     _ASSERT(nWidth != 0 && nHeight != 0);
     if (nWidth == 0 || nHeight == 0)
         return;
+#ifdef _DEBUG
+	if (con.bDebugLocked)
+		return;
+#endif
 
 	con.bConsoleDataChanged = FALSE;
         
@@ -6472,6 +6497,11 @@ int CRealConsole::GetTabCount()
 
 void CRealConsole::CheckPanelTitle()
 {
+#ifdef _DEBUG
+	if (con.bDebugLocked)
+		return;
+#endif
+
     if (mp_tabs && mn_tabsCount) {
         if ((mn_ActiveTab >= 0 && mn_ActiveTab < mn_tabsCount) || mn_tabsCount == 1) {
             WCHAR szPanelTitle[CONEMUTABMAX];
@@ -7239,6 +7269,11 @@ bool CRealConsole::isVisible()
 
 void CRealConsole::CheckFarStates()
 {
+#ifdef _DEBUG
+	if (con.bDebugLocked)
+		return;
+#endif
+
 	DWORD nLastState = mn_FarStatus;
 	DWORD nNewState = (mn_FarStatus & (~CES_FARFLAGS));
 
@@ -7468,6 +7503,12 @@ short CRealConsole::CheckProgressInTitle()
 void CRealConsole::OnTitleChanged()
 {
     if (!this) return;
+
+#ifdef _DEBUG
+	if (con.bDebugLocked)
+		return;
+#endif
+
 
     wcscpy(Title, TitleCmp);
 
@@ -7791,6 +7832,11 @@ void CRealConsole::FindPanels()
 	TODO("Положение панелей можно бы узнавать из плагина");
 	
 	WARNING("!!! Нужно еще сохранять флажок 'Меню сейчас показано'");
+
+#ifdef _DEBUG
+	if (con.bDebugLocked)
+		return;
+#endif
 
     RECT rLeftPanel = MakeRect(-1,-1);
 	RECT rLeftPanelFull = rLeftPanel;
@@ -8315,6 +8361,11 @@ void CRealConsole::ApplyConsoleInfo()
 {
     BOOL bBufRecreated = FALSE;
 	BOOL lbChanged = FALSE;
+
+#ifdef _DEBUG
+	if (con.bDebugLocked)
+		return;
+#endif
 
 	ResetEvent(mh_ApplyFinished);
     

@@ -22,6 +22,7 @@
 #define IDD_MORE_MULTIBAR               201
 #define IDD_DIALOG1                     202
 #define IDD_MORE_HOTKEYS                202
+#define IDD_MORE_FADE                   203
 #define c0                              1000
 #define c1                              1001
 #define c2                              1002
@@ -258,7 +259,7 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        203
+#define _APS_NEXT_RESOURCE_VALUE        204
 #define _APS_NEXT_COMMAND_VALUE         40001
 #define _APS_NEXT_CONTROL_VALUE         1626
 #define _APS_NEXT_SYMED_VALUE           101
