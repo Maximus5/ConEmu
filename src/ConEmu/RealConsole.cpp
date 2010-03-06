@@ -2593,6 +2593,9 @@ DWORD CRealConsole::ServerThread(LPVOID lpvParam)
 	            pRCon->ServerThreadCommand ( hPipe ); // При необходимости - записывает в пайп результат сама
 			} else {
 				_ASSERT(FALSE);
+				// Проблема. VirtualConsole закрыта, а нить еще не завершилась! хотя должна была...
+				SafeCloseHandle(hPipe);
+				return 1;
 			}
         }
 
@@ -5569,7 +5572,7 @@ void CRealConsole::PrepareTransparent(wchar_t* pChar, CharAttr* pAttr, int nWidt
 {
 	m_DetectedDialogs.Count = 0;
 
-	if (!mp_ConsoleInfo)
+	if (!mp_ConsoleInfo || !gSet.NeedDialogDetect())
 		return;
 
 	// !!! в буферном режиме - никакой прозрачности, но диалоги - детектим, пригодится при отрисовке
@@ -6047,8 +6050,8 @@ void CRealConsole::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, i
 		// Подготовить данные для Transparent
 		// обнаружение диалогов нужно только при включенной прозрачности, 
 		// или при пропорциональном шрифте
-		if (gSet.NeedDialogDetect())
-			PrepareTransparent(pChar, pAttr, nWidth, nHeight);
+		// Даже если НЕ (gSet.NeedDialogDetect()) - нужно сбросить количество прямоугольников.
+		PrepareTransparent(pChar, pAttr, nWidth, nHeight);
     }
     // Если требуется показать "статус" - принудительно перебиваем первую видимую строку возвращаемого буфера
 	if (ms_ConStatus[0]) {

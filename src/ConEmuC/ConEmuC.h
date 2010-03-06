@@ -214,7 +214,7 @@ void EmergencyShow();
 
 int CreateColorerHeader();
 
-void DisableAutoDisableConfirmExit();
+void DisableAutoConfirmExit();
 
 /* Console Handles */
 //extern MConHandle ghConIn;
@@ -228,6 +228,7 @@ extern HWND    ghConWnd;
 extern HWND    ghConEmuWnd; // Root! window
 extern HANDLE  ghExitQueryEvent; // выставляется когда в консоли не остается процессов
 extern HANDLE  ghQuitEvent;      // когда мы в процессе закрытия (юзер уже нажал кнопку "Press to close console")
+extern int     gnConfirmExitParm;
 extern BOOL    gbAlwaysConfirmExit, gbInShutdown, gbAutoDisableConfirmExit;
 extern int     gbRootWasFoundInCon;
 extern BOOL    gbAttachMode;

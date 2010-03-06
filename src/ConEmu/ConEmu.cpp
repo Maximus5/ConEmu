@@ -4627,6 +4627,8 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
 								gSet.SetArgBufferHeight ( lBufHeight );
 								if (pszEnd) pszLine = pszEnd;
 							}
+
+							TODO("Когда появился ключ /mouse - добавить сюда обработку");
 							
         					if (CSTR_EQUAL == CompareString(LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE|SORT_STRINGSORT,
         							pszLine, 5, L"/cmd ", 5))
@@ -4677,6 +4679,7 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
 							return;
 	            	}
 	            	
+					if (!pszNewLine) break;
 	            	pszLine = pszNewLine+1;
 	            	if (!*pszLine) break;
 	            	if (*pszLine == L'\n') pszLine++;
@@ -6344,6 +6347,67 @@ LRESULT CConEmuMain::OnMouse_RBtnDblClk(HWND hWnd, UINT& messg, WPARAM wParam, L
 	return TRUE; // переслать в консоль
 }
 
+BOOL CConEmuMain::OnMouse_NCBtnDblClk(HWND hWnd, UINT& messg, WPARAM wParam, LPARAM lParam)
+{
+	// По DblClick на рамке - развернуть окно по горизонтали (вертикали) на весь монитор
+	if (wParam == HTLEFT || wParam == HTRIGHT || wParam == HTTOP || wParam == HTBOTTOM) {
+		if (isZoomed() || gSet.isFullScreen) {
+			// Так быть не должно - рамка не должна быть видна в этих режимах
+			_ASSERTE(!isZoomed() && !gSet.isFullScreen);
+			return FALSE;
+		}
+
+		RECT rcWnd, rcNewWnd;
+		GetWindowRect(ghWnd, &rcWnd);
+		rcNewWnd = rcWnd;
+		MONITORINFO mon = {sizeof(MONITORINFO)};
+		if (wParam == HTLEFT || wParam == HTRIGHT) {
+			// найти новую левую границу
+			POINT pt = {rcWnd.left,((rcWnd.top+rcWnd.bottom)>>2)};
+			HMONITOR hMonLeft = MonitorFromPoint(pt, MONITOR_DEFAULTTONEAREST);
+			if (!GetMonitorInfo(hMonLeft, &mon))
+				return FALSE;
+			rcNewWnd.left = mon.rcWork.left;
+			// найти новую правую границу
+			pt.x = rcWnd.right;
+			HMONITOR hMonRight = MonitorFromPoint(pt, MONITOR_DEFAULTTONEAREST);
+			if (hMonRight != hMonLeft)
+				if (!GetMonitorInfo(hMonRight, &mon))
+					return FALSE;
+			rcNewWnd.right = mon.rcWork.right;
+			// Скорректировать границы на ширину рамки
+			RECT rcFrame = CalcMargins(CEM_FRAME);
+			rcNewWnd.left -= rcFrame.left;
+			rcNewWnd.right += rcFrame.right;
+		} else
+		if (wParam == HTTOP || wParam == HTBOTTOM) {
+			// найти новую верхнюю границу
+			POINT pt = {((rcWnd.left+rcWnd.right)>>2),rcWnd.top};
+			HMONITOR hMonTop = MonitorFromPoint(pt, MONITOR_DEFAULTTONEAREST);
+			if (!GetMonitorInfo(hMonTop, &mon))
+				return FALSE;
+			rcNewWnd.top = mon.rcWork.top;
+			// найти новую нижнюю границу
+			pt.y = rcWnd.bottom;
+			HMONITOR hMonBottom = MonitorFromPoint(pt, MONITOR_DEFAULTTONEAREST);
+			if (hMonBottom != hMonTop)
+				if (!GetMonitorInfo(hMonBottom, &mon))
+					return FALSE;
+			rcNewWnd.bottom = mon.rcWork.bottom;
+			// Скорректировать границы на ширину рамки
+			RECT rcFrame = CalcMargins(CEM_FRAME);
+			rcNewWnd.top -= rcFrame.bottom; // т.к. в top учтена высота заголовка
+			rcNewWnd.bottom += rcFrame.bottom;
+		}
+		// Двигаем окошко
+		if (rcNewWnd.left != rcWnd.left || rcNewWnd.right != rcWnd.right || rcNewWnd.top != rcWnd.top || rcNewWnd.bottom != rcWnd.bottom)
+			MOVEWINDOW ( ghWnd, rcNewWnd.left, rcNewWnd.top, rcNewWnd.right-rcNewWnd.left, rcNewWnd.bottom-rcNewWnd.top, 1);
+		return TRUE;
+	}
+	
+	return FALSE;
+}
+
 void CConEmuMain::SetWaitCursor(BOOL abWait)
 {
 	mb_WaitCursor = abWait;
@@ -7892,8 +7956,11 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
         break;
 
     case WM_NCLBUTTONDBLCLK:
-        gConEmu.mouse.state |= MOUSE_SIZING_DBLCKL;
-        result = DefWindowProc(hWnd, messg, wParam, lParam);
+        gConEmu.mouse.state |= MOUSE_SIZING_DBLCKL; // чтобы в консоль не провалился LBtnUp если окошко развернется
+        if (gConEmu.OnMouse_NCBtnDblClk(hWnd, messg, wParam, lParam))
+        	result = 0;
+        else
+        	result = DefWindowProc(hWnd, messg, wParam, lParam);
         break;
 
     case WM_NCRBUTTONUP:

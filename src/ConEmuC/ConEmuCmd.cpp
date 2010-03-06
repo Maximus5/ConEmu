@@ -63,88 +63,91 @@ extern "C" {
 
 int ComspecInit()
 {
-    TODO("Определить код родительского процесса, и если это FAR - запомнить его (для подключения к пайпу плагина)");
-    TODO("Размер получить из GUI, если оно есть, иначе - по умолчанию");
-    TODO("GUI может скорректировать размер с учетом полосы прокрутки");
-    
-    WARNING("CreateFile(CONOUT$) по идее возвращает текущий ScreenBuffer. Можно его самим возвращать в ComspecDone");
-    // Правда нужно проверить, что там происходит с ghConOut.Close(),... 
+	TODO("Определить код родительского процесса, и если это FAR - запомнить его (для подключения к пайпу плагина)");
+	TODO("Размер получить из GUI, если оно есть, иначе - по умолчанию");
+	TODO("GUI может скорректировать размер с учетом полосы прокрутки");
+	
+	WARNING("CreateFile(CONOUT$) по идее возвращает текущий ScreenBuffer. Можно его самим возвращать в ComspecDone");
+	// Правда нужно проверить, что там происходит с ghConOut.Close(),... 
 
-    // Размер должен менять сам GUI, через серверный ConEmuC!
-    #ifdef SHOW_STARTED_MSGBOX
-    MessageBox(GetConsoleWindow(), L"ConEmuC (comspec mode) is about to START", L"ConEmuC.ComSpec", 0);
-    #endif
+	// Размер должен менять сам GUI, через серверный ConEmuC!
+	#ifdef SHOW_STARTED_MSGBOX
+	MessageBox(GetConsoleWindow(), L"ConEmuC (comspec mode) is about to START", L"ConEmuC.ComSpec", 0);
+	#endif
 
 
-    //int nNewBufferHeight = 0;
-    //COORD crNewSize = {0,0};
-    //SMALL_RECT rNewWindow = cmd.sbi.srWindow;
-    BOOL lbSbiRc = FALSE;
-    
+	//int nNewBufferHeight = 0;
+	//COORD crNewSize = {0,0};
+	//SMALL_RECT rNewWindow = cmd.sbi.srWindow;
+	BOOL lbSbiRc = FALSE;
+	
 	gbRootWasFoundInCon = 2; // не добавлять к "Press Enter to close console" - "or wait"
 
-    // Это наверное и не нужно, просто для информации...
-    lbSbiRc = MyGetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &cmd.sbi);
-    
-    
-    // Сюда мы попадаем если был ключик -new_console
-    // А этом случае нужно завершить ЭТОТ экземпляр и запустить в ConEmu новую вкладку
-    if (cmd.bNewConsole) {
-        PROCESS_INFORMATION pi; memset(&pi, 0, sizeof(pi));
-        STARTUPINFOW si; memset(&si, 0, sizeof(si)); si.cb = sizeof(si);
-        si.dwFlags = STARTF_USESHOWWINDOW|STARTF_USECOUNTCHARS;
-        si.dwXCountChars = cmd.sbi.dwSize.X;
-        si.dwYCountChars = cmd.sbi.dwSize.Y;
-        si.wShowWindow = SW_HIDE;
-        
-        PRINT_COMSPEC(L"Creating new console for:\n%s\n", gpszRunCmd);
-    
-        // CREATE_NEW_PROCESS_GROUP - низя, перестает работать Ctrl-C
-        BOOL lbRc = CreateProcessW(NULL, gpszRunCmd, NULL,NULL, TRUE, 
-                NORMAL_PRIORITY_CLASS|CREATE_NEW_CONSOLE, 
-                NULL, NULL, &si, &pi);
-        DWORD dwErr = GetLastError();
-        if (!lbRc)
-        {
-            _printf ("Can't create process, ErrCode=0x%08X! Command to be executed:\n", dwErr, gpszRunCmd);
-            return CERR_CREATEPROCESS;
-        }
-        //delete psNewCmd; psNewCmd = NULL;
-        AllowSetForegroundWindow(pi.dwProcessId);
-        PRINT_COMSPEC(L"New console created. PID=%i. Exiting...\n", pi.dwProcessId);
-        SafeCloseHandle(pi.hProcess); SafeCloseHandle(pi.hThread);
-        gbAlwaysConfirmExit = FALSE;
-		srv.nProcessStartTick = GetTickCount() - 2*CHECK_ROOTSTART_TIMEOUT;
-        return CERR_RUNNEWCONSOLE;
-    }
-    
-    
-    // Если определена ComSpecC - значит ConEmuC переопределил стандартный ComSpec
-    // Вернем его
-    wchar_t szComSpec[MAX_PATH+1], *pszComSpecName;
-    if (GetEnvironmentVariable(L"ComSpecC", szComSpec, MAX_PATH) && szComSpec[0] != 0)
-    {
-        // Только если это (случайно) не conemuc.exe
-        wchar_t* pwszCopy = (wchar_t*)PointToName(szComSpec); //wcsrchr(szComSpec, L'\\'); 
-        //if (!pwszCopy) pwszCopy = szComSpec;
-        #pragma warning( push )
-        #pragma warning(disable : 6400)
-        if (lstrcmpiW(pwszCopy, L"ConEmuC")==0 || lstrcmpiW(pwszCopy, L"ConEmuC.exe")==0)
-            szComSpec[0] = 0;
-        #pragma warning( pop )
-        if (szComSpec[0]) {
-	        SetEnvironmentVariable(L"ComSpec", szComSpec);
-	        SetEnvironmentVariable(L"ComSpecC", NULL);
-        }
-        pszComSpecName = (wchar_t*)PointToName(szComSpec);
-    } else {
-    	pszComSpecName = L"cmd.exe";
-    }
-    lstrcpyn(cmd.szComSpecName, pszComSpecName, countof(cmd.szComSpecName));
+	// в режиме ComSpec - запрещено!
+	gbAlwaysConfirmExit = FALSE; gbAutoDisableConfirmExit = FALSE;
+
+	// Это наверное и не нужно, просто для информации...
+	lbSbiRc = MyGetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &cmd.sbi);
+	
+	
+	// Сюда мы попадаем если был ключик -new_console
+	// А этом случае нужно завершить ЭТОТ экземпляр и запустить в ConEmu новую вкладку
+	if (cmd.bNewConsole) {
+		PROCESS_INFORMATION pi; memset(&pi, 0, sizeof(pi));
+		STARTUPINFOW si; memset(&si, 0, sizeof(si)); si.cb = sizeof(si);
+		si.dwFlags = STARTF_USESHOWWINDOW|STARTF_USECOUNTCHARS;
+		si.dwXCountChars = cmd.sbi.dwSize.X;
+		si.dwYCountChars = cmd.sbi.dwSize.Y;
+		si.wShowWindow = SW_HIDE;
+		
+		PRINT_COMSPEC(L"Creating new console for:\n%s\n", gpszRunCmd);
+	
+		// CREATE_NEW_PROCESS_GROUP - низя, перестает работать Ctrl-C
+		BOOL lbRc = CreateProcessW(NULL, gpszRunCmd, NULL,NULL, TRUE, 
+				NORMAL_PRIORITY_CLASS|CREATE_NEW_CONSOLE, 
+				NULL, NULL, &si, &pi);
+		DWORD dwErr = GetLastError();
+		if (!lbRc)
+		{
+			_printf ("Can't create process, ErrCode=0x%08X! Command to be executed:\n", dwErr, gpszRunCmd);
+			return CERR_CREATEPROCESS;
+		}
+		//delete psNewCmd; psNewCmd = NULL;
+		AllowSetForegroundWindow(pi.dwProcessId);
+		PRINT_COMSPEC(L"New console created. PID=%i. Exiting...\n", pi.dwProcessId);
+		SafeCloseHandle(pi.hProcess); SafeCloseHandle(pi.hThread);
+		DisableAutoConfirmExit();
+		//srv.nProcessStartTick = GetTickCount() - 2*CHECK_ROOTSTART_TIMEOUT; // менять nProcessStartTick не нужно. проверка только по флажкам
+		return CERR_RUNNEWCONSOLE;
+	}
+	
+	
+	// Если определена ComSpecC - значит ConEmuC переопределил стандартный ComSpec
+	// Вернем его
+	wchar_t szComSpec[MAX_PATH+1], *pszComSpecName;
+	if (GetEnvironmentVariable(L"ComSpecC", szComSpec, MAX_PATH) && szComSpec[0] != 0)
+	{
+		// Только если это (случайно) не conemuc.exe
+		wchar_t* pwszCopy = (wchar_t*)PointToName(szComSpec); //wcsrchr(szComSpec, L'\\'); 
+		//if (!pwszCopy) pwszCopy = szComSpec;
+		#pragma warning( push )
+		#pragma warning(disable : 6400)
+		if (lstrcmpiW(pwszCopy, L"ConEmuC")==0 || lstrcmpiW(pwszCopy, L"ConEmuC.exe")==0)
+			szComSpec[0] = 0;
+		#pragma warning( pop )
+		if (szComSpec[0]) {
+			SetEnvironmentVariable(L"ComSpec", szComSpec);
+			SetEnvironmentVariable(L"ComSpecC", NULL);
+		}
+		pszComSpecName = (wchar_t*)PointToName(szComSpec);
+	} else {
+		pszComSpecName = L"cmd.exe";
+	}
+	lstrcpyn(cmd.szComSpecName, pszComSpecName, countof(cmd.szComSpecName));
 
 
-    if (pszComSpecName) {
-    	wchar_t szSelf[MAX_PATH+1];
+	if (pszComSpecName) {
+		wchar_t szSelf[MAX_PATH+1];
 		if (GetModuleFileName(NULL, szSelf, MAX_PATH)) {
 			lstrcpyn(cmd.szSelfName, (wchar_t*)PointToName(szSelf), countof(cmd.szSelfName));
 
@@ -156,28 +159,28 @@ int ComspecInit()
 				}
 			}
 		}
-    }
-    
-    SendStarted();
-    
-    //ghConOut.Close();
-    
-    return 0;
+	}
+	
+	SendStarted();
+	
+	//ghConOut.Close();
+	
+	return 0;
 }
 
 
 void ComspecDone(int aiRc)
 {
-    //WARNING("Послать в GUI CONEMUCMDSTOPPED");
+	//WARNING("Послать в GUI CONEMUCMDSTOPPED");
 	LogSize(NULL, "ComspecDone");
 
 	// Это необходимо делать, т.к. при смене буфера (SetConsoleActiveScreenBuffer) приложением,
 	// дескриптор нужно закрыть, иначе conhost может не вернуть предыдущий буфер
 	//ghConOut.Close();
 
-    // Поддержка алиасов
-    if (cmd.szComSpecName[0] && cmd.szSelfName[0]) {
-    	// Скопировать алиасы из cmd.exe в conemuc.exe
+	// Поддержка алиасов
+	if (cmd.szComSpecName[0] && cmd.szSelfName[0]) {
+		// Скопировать алиасы из cmd.exe в conemuc.exe
 		wchar_t *pszPostAliases = NULL;
 		DWORD nPostAliasSize;
 		BOOL lbChanged = (cmd.pszPreAliases == NULL);
@@ -222,46 +225,46 @@ void ComspecDone(int aiRc)
 			}
 		}
 		if (pszPostAliases) { free(pszPostAliases); pszPostAliases = NULL; }
-    }
-    
+	}
+	
 
-    //TODO("Уведомить плагин через пайп (если родитель - FAR) что процесс завершен. Плагин должен считать и запомнить содержимое консоли и только потом вернуть управление в ConEmuC!");
+	//TODO("Уведомить плагин через пайп (если родитель - FAR) что процесс завершен. Плагин должен считать и запомнить содержимое консоли и только потом вернуть управление в ConEmuC!");
 
 	DWORD dwErr1 = 0, dwErr2 = 0;
 	HANDLE hOut1 = NULL, hOut2 = NULL;
-    BOOL lbRc1 = FALSE, lbRc2 = FALSE;
-    CONSOLE_SCREEN_BUFFER_INFO sbi1 = {{0,0}}, sbi2 = {{0,0}};
+	BOOL lbRc1 = FALSE, lbRc2 = FALSE;
+	CONSOLE_SCREEN_BUFFER_INFO sbi1 = {{0,0}}, sbi2 = {{0,0}};
 	#ifdef _DEBUG
 	HWND hWndCon = GetConsoleWindow();
 	#endif
-    // Тут нужна реальная, а не скорректированная информация!
+	// Тут нужна реальная, а не скорректированная информация!
 	if (!cmd.bNonGuiMode) {
 		// Если GUI не сможет через сервер вернуть высоту буфера - это нужно сделать нам!
-        lbRc1 = GetConsoleScreenBufferInfo(hOut1 = GetStdHandle(STD_OUTPUT_HANDLE), &sbi1);
+		lbRc1 = GetConsoleScreenBufferInfo(hOut1 = GetStdHandle(STD_OUTPUT_HANDLE), &sbi1);
 		if (!lbRc1)
 			dwErr1 = GetLastError();
 	}
 
 
-    //PRAGMA_ERROR("Размер должен возвращать сам GUI, через серверный ConEmuC!");
-    #ifdef SHOW_STARTED_MSGBOX
-    MessageBox(GetConsoleWindow(), L"ConEmuC (comspec mode) is about to TERMINATE", L"ConEmuC.ComSpec", 0);
-    #endif
-    
-    if (!cmd.bNonGuiMode)
-    {
-        //// Вернуть размер буфера (высота И ширина)
-        //if (cmd.sbi.dwSize.X && cmd.sbi.dwSize.Y) {
-        //    SMALL_RECT rc = {0};
-        //    SetConsoleSize(0, cmd.sbi.dwSize, rc, "ComspecDone");
-        //}
-        
-        //ghConOut.Close();
+	//PRAGMA_ERROR("Размер должен возвращать сам GUI, через серверный ConEmuC!");
+	#ifdef SHOW_STARTED_MSGBOX
+	MessageBox(GetConsoleWindow(), L"ConEmuC (comspec mode) is about to TERMINATE", L"ConEmuC.ComSpec", 0);
+	#endif
+	
+	if (!cmd.bNonGuiMode)
+	{
+		//// Вернуть размер буфера (высота И ширина)
+		//if (cmd.sbi.dwSize.X && cmd.sbi.dwSize.Y) {
+		//	SMALL_RECT rc = {0};
+		//	SetConsoleSize(0, cmd.sbi.dwSize, rc, "ComspecDone");
+		//}
+		
+		//ghConOut.Close();
 
-        CESERVER_REQ *pIn = NULL, *pOut = NULL;
-        int nSize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_STARTSTOP);
-        pIn = ExecuteNewCmd(CECMD_CMDSTARTSTOP,nSize);
-        if (pIn) {
+		CESERVER_REQ *pIn = NULL, *pOut = NULL;
+		int nSize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_STARTSTOP);
+		pIn = ExecuteNewCmd(CECMD_CMDSTARTSTOP,nSize);
+		if (pIn) {
 			pIn->StartStop.nStarted = 3; // Cmd режим завершен
 			pIn->StartStop.hWnd = ghConWnd;
 			pIn->StartStop.dwPID = gnSelfPID;
@@ -272,50 +275,50 @@ void ComspecDone(int aiRc)
 			if (!lbRc2)
 				dwErr2 = GetLastError();
 
-            PRINT_COMSPEC(L"Finalizing comspec mode (ExecuteGuiCmd started)\n",0);
-            pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
-            PRINT_COMSPEC(L"Finalizing comspec mode (ExecuteGuiCmd finished)\n",0);
-            if (pOut) {
+			PRINT_COMSPEC(L"Finalizing comspec mode (ExecuteGuiCmd started)\n",0);
+			pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
+			PRINT_COMSPEC(L"Finalizing comspec mode (ExecuteGuiCmd finished)\n",0);
+			if (pOut) {
 				if (!pOut->StartStopRet.bWasBufferHeight) {
 					//cmd.sbi.dwSize = pIn->StartStop.sbi.dwSize;
 					lbRc1 = FALSE; // Консольное приложение самостоятельно сбросило буферный режим. Не дергаться...
 				} else {
 					lbRc1 = TRUE;
 				}
-                ExecuteFreeResult(pOut); pOut = NULL;
-            }
+				ExecuteFreeResult(pOut); pOut = NULL;
+			}
 			ExecuteFreeResult(pIn); pIn = NULL; // не освобождалось
-        }
+		}
 
-        lbRc2 = GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &sbi2);
+		lbRc2 = GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &sbi2);
 		#ifdef _DEBUG
 		if (sbi2.dwSize.Y > 200) {
 			wchar_t szTitle[128]; wsprintfW(szTitle, L"ConEmuC (PID=%i)", GetCurrentProcessId());
 			MessageBox(NULL, L"BufferHeight was not turned OFF", szTitle, MB_SETFOREGROUND|MB_SYSTEMMODAL);
 		}
 		#endif
-        if (lbRc1 && lbRc2 && sbi2.dwSize.Y == sbi1.dwSize.Y) {
-            // GUI не смог вернуть высоту буфера... 
-            // Это плохо, т.к. фар высоту буфера не меняет и будет сильно глючить на N сотнях строк...
+		if (lbRc1 && lbRc2 && sbi2.dwSize.Y == sbi1.dwSize.Y) {
+			// GUI не смог вернуть высоту буфера... 
+			// Это плохо, т.к. фар высоту буфера не меняет и будет сильно глючить на N сотнях строк...
 			int nNeedHeight = cmd.sbi.dwSize.Y;
 			if (nNeedHeight < 10) {
 				nNeedHeight = (sbi2.srWindow.Bottom-sbi2.srWindow.Top+1);
 			}
-            if (sbi2.dwSize.Y != nNeedHeight) {
-            	PRINT_COMSPEC(L"Error: BufferHeight was not changed from %i\n", sbi2.dwSize.Y);
-                SMALL_RECT rc = {0};
-                sbi2.dwSize.Y = nNeedHeight;
-                if (ghLogSize) LogSize(&sbi2.dwSize, ":ComspecDone.RetSize.before");
-                SetConsoleSize(0, sbi2.dwSize, rc, "ComspecDone.Force");
-                if (ghLogSize) LogSize(NULL, ":ComspecDone.RetSize.after");
-            }
-        }
-    }
+			if (sbi2.dwSize.Y != nNeedHeight) {
+				PRINT_COMSPEC(L"Error: BufferHeight was not changed from %i\n", sbi2.dwSize.Y);
+				SMALL_RECT rc = {0};
+				sbi2.dwSize.Y = nNeedHeight;
+				if (ghLogSize) LogSize(&sbi2.dwSize, ":ComspecDone.RetSize.before");
+				SetConsoleSize(0, sbi2.dwSize, rc, "ComspecDone.Force");
+				if (ghLogSize) LogSize(NULL, ":ComspecDone.RetSize.after");
+			}
+		}
+	}
 
-    if (cmd.pszPreAliases) { free(cmd.pszPreAliases); cmd.pszPreAliases = NULL; }
-    
-    //SafeCloseHandle(ghCtrlCEvent);
-    //SafeCloseHandle(ghCtrlBreakEvent);
+	if (cmd.pszPreAliases) { free(cmd.pszPreAliases); cmd.pszPreAliases = NULL; }
+	
+	//SafeCloseHandle(ghCtrlCEvent);
+	//SafeCloseHandle(ghCtrlBreakEvent);
 }
 
 bool GetAliases(wchar_t* asExeName, wchar_t** rsAliases, LPDWORD rnAliasesSize)
