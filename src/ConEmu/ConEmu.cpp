@@ -49,6 +49,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRPANEL2(s) //DEBUGSTR(s)
 #define DEBUGSTRFOCUS(s) //DEBUGSTR(s)
 #define DEBUGSTRFOREGROUND(s) //DEBUGSTR(s)
+#define DEBUGSTRLLKB(s) DEBUGSTR(s)
 
 #define PROCESS_WAIT_START_TIME 1000
 
@@ -123,6 +124,8 @@ CConEmuMain::CConEmuMain()
 	mb_InRestore = FALSE;
 	mb_MouseCaptured = FALSE;
 	mb_HotKeyRegistered = FALSE;
+	mh_LLKeyHookDll = NULL;
+	mh_LLKeyHook = NULL;
 	mb_WaitCursor = FALSE;
 	mb_InTrackSysMenu = FALSE;
 	mb_LastRgnWasNull = TRUE;
@@ -221,6 +224,7 @@ CConEmuMain::CConEmuMain()
 	//mn_MsgSetForeground = RegisterWindowMessage(CONEMUMSG_SETFOREGROUND);
 	mn_MsgFlashWindow = RegisterWindowMessage(CONEMUMSG_FLASHWINDOW);
 	mn_MsgPostAltF9 = ++nAppMsg;
+	mn_MsgLLKeyHook = RegisterWindowMessage(CONEMUMSG_LLKEYHOOK);
 }
 
 BOOL CConEmuMain::Init()
@@ -681,6 +685,8 @@ CConEmuMain::~CConEmuMain()
 		delete mp_TabBar;
 		mp_TabBar = NULL;
 	}
+
+	_ASSERTE(mh_LLKeyHookDll==NULL);
 
     CommonShutdown();
 }
@@ -2909,16 +2915,71 @@ bool CConEmuMain::PtDiffTest(POINT C, int aX, int aY, UINT D)
 
 void CConEmuMain::RegisterHotKeys()
 {
+	DWORD dwErr = 0;
 	if (!mb_HotKeyRegistered) {
 		if (RegisterHotKey(ghWnd, 0x201, MOD_CONTROL|MOD_WIN|MOD_ALT, VK_SPACE))
 			mb_HotKeyRegistered = TRUE;
+		//if (gOSVer.dwMajorVersion >= 6) {
+			if (!mh_LLKeyHookDll) {
+				wchar_t szConEmuHkDll[MAX_PATH+5];
+				lstrcpy(szConEmuHkDll, ms_ConEmuExe);
+				wchar_t* pszSlash = wcsrchr(szConEmuHkDll, L'\\'); if (pszSlash) pszSlash++; else pszSlash = szConEmuHkDll;
+				lstrcpy(pszSlash, L"ConEmuHk.dll");
+				mh_LLKeyHookDll = LoadLibrary(szConEmuHkDll);
+			}
+			if (!mh_LLKeyHook && mh_LLKeyHookDll) {
+				HOOKPROC pfnLLHK = (HOOKPROC)GetProcAddress(mh_LLKeyHookDll, "LLKeybHook");
+				HHOOK *pKeyHook = (HHOOK*)GetProcAddress(mh_LLKeyHookDll, "KeyHook");
+
+				if (pfnLLHK) {
+					mh_LLKeyHook = SetWindowsHookEx(WH_KEYBOARD_LL, pfnLLHK, mh_LLKeyHookDll, 0);
+					if (!mh_LLKeyHook) {
+						dwErr = GetLastError();
+						_ASSERTE(mh_LLKeyHook!=NULL);
+					} else {
+						if (pKeyHook) *pKeyHook = mh_LLKeyHook;
+					}
+				}
+			}
+		//}
 	}
 }
 
-void CConEmuMain::UnRegisterHotKeys()
+BOOL CConEmuMain::LowLevelKeyHook(UINT nMsg, UINT nVkKeyCode)
+{
+	if (!gSet.IsHostkeyPressed())
+		return FALSE;
+
+	// Теперь собственно обработка
+	if (nVkKeyCode >= '0' && nVkKeyCode <= '9') {
+		if (nMsg == WM_KEYDOWN) {
+			if (nVkKeyCode>='1' && nVkKeyCode<='9') // ##1..9
+				ConActivate(nVkKeyCode - '1');
+
+			else if (nVkKeyCode=='0') // #10.
+				ConActivate(9);
+		}
+
+		return TRUE;
+	}
+
+	return FALSE;
+}
+
+void CConEmuMain::UnRegisterHotKeys(BOOL abFinal/*=FALSE*/)
 {
 	if (mb_HotKeyRegistered) {
 		UnregisterHotKey(ghWnd, 0x201);
+	}
+	if (mh_LLKeyHook) {
+		UnhookWindowsHookEx(mh_LLKeyHook);
+		mh_LLKeyHook = NULL;
+	}
+	if (abFinal) {
+		if (mh_LLKeyHookDll) {
+			FreeLibrary(mh_LLKeyHookDll);
+			mh_LLKeyHookDll = NULL;
+		}
 	}
 	mb_HotKeyRegistered = FALSE;
 }
@@ -4835,7 +4896,7 @@ LRESULT CConEmuMain::OnDestroy(HWND hWnd)
 		mp_TaskBar2 = NULL;
 	}
     
-    UnRegisterHotKeys();
+    UnRegisterHotKeys(TRUE);
 
     KillTimer(ghWnd, TIMER_MAIN_ID);
     KillTimer(ghWnd, TIMER_CONREDRAW_ID);
@@ -8109,6 +8170,11 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			return OnFlashWindow((wParam & 0xFF000000) >> 24, wParam & 0xFFFFFF, (HWND)lParam);
 		} else if (messg == gConEmu.mn_MsgPostAltF9) {
 			OnAltF9(TRUE);
+			return 0;
+		} else if (messg == gConEmu.mn_MsgLLKeyHook) {
+			if (gSet.IsHostkeySingle(VK_LWIN)) {
+				return gConEmu.LowLevelKeyHook((UINT)wParam, (UINT)lParam);				
+			}
 			return 0;
 		}
         //else if (messg == gConEmu.mn_MsgCmdStarted || messg == gConEmu.mn_MsgCmdStopped) {

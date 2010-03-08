@@ -87,7 +87,7 @@ int ServerInit()
 	DWORD dwErr = 0;
 	wchar_t szComSpec[MAX_PATH+1], szSelf[MAX_PATH+3];
 	wchar_t* pszSelf = szSelf+1;
-	HWND hDcWnd = NULL;
+	//HWND hDcWnd = NULL;
 	//HMODULE hKernel = GetModuleHandleW (L"kernel32.dll");
 	
 	srv.osv.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);

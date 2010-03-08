@@ -474,6 +474,7 @@ typedef struct tag_CESERVER_REQ {
 #define CONEMUMSG_FLASHWINDOW L"ConEmuMain::FlashWindow"
 //#define CONEMUCMDSTARTED L"ConEmuMain::CmdStarted"    // wParam == hConWnd, lParam == ConEmuC_PID (as ComSpec)
 //#define CONEMUCMDSTOPPED L"ConEmuMain::CmdTerminated" // wParam == hConWnd, lParam == ConEmuC_PID (as ComSpec)
+#define CONEMUMSG_LLKEYHOOK L"ConEmuMain::LLKeyHook"    // wParam == hConWnd, lParam == ConEmuC_PID
 
 //#define CONEMUMAPPING    L"ConEmuPluginData%u"
 //#define CONEMUDRAGFROM   L"ConEmuDragFrom%u"

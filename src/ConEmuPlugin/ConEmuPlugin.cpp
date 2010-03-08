@@ -3113,7 +3113,7 @@ BOOL FindServerCmd(DWORD nServerCmd, DWORD &dwServerPID)
 	return lbRc;
 }
 
-void SetConsoleFontSizeTo(HWND inConWnd, int inSizeY, int inSizeX, wchar_t *asFontName);
+void SetConsoleFontSizeTo(HWND inConWnd, int inSizeY, int inSizeX, const wchar_t *asFontName);
 
 BOOL Attach2Gui()
 {

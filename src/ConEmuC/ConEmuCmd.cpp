@@ -124,7 +124,8 @@ int ComspecInit()
 	
 	// Если определена ComSpecC - значит ConEmuC переопределил стандартный ComSpec
 	// Вернем его
-	wchar_t szComSpec[MAX_PATH+1], *pszComSpecName;
+	wchar_t szComSpec[MAX_PATH+1];
+	const wchar_t* pszComSpecName;
 	if (GetEnvironmentVariable(L"ComSpecC", szComSpec, MAX_PATH) && szComSpec[0] != 0)
 	{
 		// Только если это (случайно) не conemuc.exe

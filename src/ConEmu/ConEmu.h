@@ -205,9 +205,12 @@ protected:
 	HANDLE mh_ConEmuAliveEvent; BOOL mb_ConEmuAliveOwned, mb_AliveInitialized;
 	//
 	BOOL mb_HotKeyRegistered;
+	HHOOK mh_LLKeyHook;
+	HMODULE mh_LLKeyHookDll;
 	void RegisterHotKeys();
-	void UnRegisterHotKeys();
+	void UnRegisterHotKeys(BOOL abFinal=FALSE);
 	void CtrlWinAltSpace();
+	BOOL LowLevelKeyHook(UINT nMsg, UINT nVkKeyCode);
 	//DWORD_PTR mn_CurrentKeybLayout;
 	// Registered messages
 	DWORD mn_MainThreadId;
@@ -233,6 +236,7 @@ protected:
 	UINT mn_MsgPostAltF9;
 	//UINT mn_MsgSetForeground;
 	UINT mn_MsgFlashWindow;
+	UINT mn_MsgLLKeyHook;
 	
 	//
 	static DWORD CALLBACK ServerThread(LPVOID lpvParam);

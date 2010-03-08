@@ -3282,7 +3282,7 @@ INT_PTR CSettings::hotkeysOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM l
 			if (TB >= cbHostWin && TB <= cbHostRShift)
 			{
 				memset(gSet.mn_HostModOk, 0, sizeof(gSet.mn_HostModOk));
-				for (int i = 0; i < sizeofarray(HostkeyCtrlIds); i++) {
+				for (UINT i = 0; i < sizeofarray(HostkeyCtrlIds); i++) {
 					if (IsChecked(hWnd2, HostkeyCtrlIds[i]))
 						gSet.CheckHostkeyModifier(HostkeyCtrlId2Vk(HostkeyCtrlIds[i]));
 				}
@@ -3525,7 +3525,8 @@ void CSettings::RegisterTipsFor(HWND hChildDlg)
 		tiBalloon.uFlags = TTF_IDISHWND | TTF_TRACK | TTF_ABSOLUTE;
 		tiBalloon.hwnd = hMain;
 		tiBalloon.hinst = g_hInstance;
-		tiBalloon.lpszText = L"*";
+		static wchar_t szAsterisk[] = L"*"; // eliminate GCC warning
+		tiBalloon.lpszText = szAsterisk;
 		tiBalloon.uId = (UINT_PTR)hMain;
 		GetClientRect (ghOpWnd, &tiBalloon.rect);
 		// Associate the ToolTip with the tool window.

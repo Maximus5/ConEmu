@@ -4322,7 +4322,8 @@ void CRealConsole::LogString(LPCSTR asText, BOOL abShowTime /*= FALSE*/)
 			SYSTEMTIME st; GetLocalTime(&st);
 			char szTime[32];
 			wsprintfA(szTime, "%i:%02i:%02i.%03i ", st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
-			WriteFile(mh_LogInput, szTime, dwLen=strlen(szTime), &dwLen, 0);
+			dwLen = strlen(szTime);
+			WriteFile(mh_LogInput, szTime, dwLen, &dwLen, 0);
 		}
 
 		if ((dwLen = strlen(asText))>0)
@@ -4614,7 +4615,7 @@ BOOL CRealConsole::RecreateProcessStart()
 // Найти правую границу
 bool CRealConsole::FindFrameRight_ByTop(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostRight)
 {
-	wchar_t wcMostRight;
+	wchar_t wcMostRight = 0;
 	int n;
 	int nShift = nWidth*nFromY;
 

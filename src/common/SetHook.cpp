@@ -446,7 +446,7 @@ static bool SetHook( HMODULE Module, BOOL abExecutable )
 					// Это происходит например с PeekConsoleIntputW при наличии плагина Anamorphosis
 					Hooks[j].ExeOldAddress = (void*)thunk->u1.Function;
 				}
-				if (Hooks[j].nOrdinal == 0 && ordinalO != -1)
+				if (Hooks[j].nOrdinal == 0 && ordinalO != (ULONGLONG)-1)
 					Hooks[j].nOrdinal = (DWORD)ordinalO;
 
 				bHooked = true;

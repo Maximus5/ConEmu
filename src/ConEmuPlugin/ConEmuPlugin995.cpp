@@ -791,7 +791,7 @@ void ReloadFarInfo995(BOOL abFull)
 	//CEFAR_SHORT_PANEL_INFO FarLeftPanel, FarRightPanel;
 	
 	INT_PTR nColorSize = InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETARRAYCOLOR, NULL);
-	if (nColorSize <= sizeof(gpFarInfo->nFarColors)) {
+	if (nColorSize <= (INT_PTR)sizeof(gpFarInfo->nFarColors)) {
 		nColorSize = InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETARRAYCOLOR, gpFarInfo->nFarColors);
 	} else {
 		_ASSERTE(nColorSize <= sizeof(gpFarInfo->nFarColors));

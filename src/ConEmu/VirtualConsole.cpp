@@ -1515,7 +1515,7 @@ bool CVirtualConsole::Update_ParseTextParts(uint row, const wchar_t* ConCharLine
 	
     // Сначала - разбор фона
     BGPARTS *pBG = BgParts;
-    uint nColorIdx;
+    uint nColorIdx = 0;
     uint nPrevColorIdx = ConAttrLine[0].nBackIdx;
     j = j0 = 0;
     while (j < (int)TextWidth) {
@@ -3136,4 +3136,9 @@ COORD CVirtualConsole::FindOpaqueCell()
 		}
 	}
 	return cr;
+}
+
+// Показать контекстное меню для ТЕКУЩЕЙ закладки консоли
+void CVirtualConsole::ShowPopupMenu(POINT ptCur)
+{
 }

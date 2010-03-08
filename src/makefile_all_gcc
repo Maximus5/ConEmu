@@ -1,5 +1,6 @@
 ALLDIRS = ConEmu \
           ConEmuC \
+          ConEmuHk \
           ConEmuPlugin
 # ConEmuD
 
@@ -16,10 +17,10 @@ $(ALLDIRS): $(FICTIVE)
 .PHONY: preclean
 preclean:
 	@echo prebuild cleaning
-	@rm -f ../ConEmu.exe ../ConEmuC.exe ../plugins/ConEmu/ConEmu.dll ../gcc/common/*.* ../gcc/conemu/*.* ../gcc/conemuc/*.*  ../gcc/ConEmuPlugin/*.* ../gcc/Plugin/*.* ../gcc/*.*
+	@rm -f ../ConEmu.exe ../ConEmuC.exe ../ConEmuHk.dll ../plugins/ConEmu/ConEmu.dll ../gcc/common/*.* ../gcc/conemu/*.* ../gcc/conemuc/*.* ../gcc/conemuhk/*.* ../gcc/ConEmuPlugin/*.* ../gcc/Plugin/*.* ../gcc/*.*
 
 .PHONY: clean
 clean:
 	@echo final cleaning
-	@rm -f ../gcc/common/*.* ../gcc/conemu/*.* ../gcc/conemuc/*.*  ../gcc/ConEmuPlugin/*.* ../gcc/Plugin/*.* ../gcc/*.*
-	@rmdir ../gcc/common ../gcc/conemu ../gcc/conemuc ../gcc/ConEmuPlugin ../gcc/Plugin ../gcc
+	@rm -f ../gcc/common/*.* ../gcc/conemu/*.* ../gcc/conemuc/*.* ../gcc/conemuhk/*.* ../gcc/plugin/*.* ../gcc/*.*
+	@rmdir ../gcc/common ../gcc/conemu ../gcc/conemuc ../gcc/conemuhk ../gcc/plugin ../gcc

@@ -1544,6 +1544,9 @@ void SendStarted()
 				SetConsoleSize(gnBufferHeight, gcrBufferSize, rcNil, "::SendStarted");
 				// Смена раскладки клавиатуры
 				if (pOut->StartStopRet.bNeedLangChange) {
+					#ifndef INPUTLANGCHANGE_SYSCHARSET
+					#define INPUTLANGCHANGE_SYSCHARSET 0x0001
+					#endif
 					WPARAM wParam = INPUTLANGCHANGE_SYSCHARSET;
 					TODO("Проверить на x64, не будет ли проблем с 0xFFFFFFFFFFFFFFFFFFFFF");
 					LPARAM lParam = (LPARAM)(DWORD_PTR)pOut->StartStopRet.NewConsoleLang;
