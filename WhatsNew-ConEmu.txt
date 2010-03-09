@@ -1,3 +1,8 @@
+2010.03.09
+[%] Issue 206: Win-Number вызывал Start menu, если Win отпускался перед Number.
+[*] Documentation was started as Wiki (http://code.google.com/p/conemu-maximus5/w/list). Comments and additions are accepted.
+
+
 Maximus5 - 2010.03.08
 [+] Обработка Win-Number в Windows7. При отсутствии ConEmuHk.dll эти комбинации обрабатываются ОС.
 
