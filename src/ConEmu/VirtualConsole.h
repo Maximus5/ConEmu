@@ -43,6 +43,7 @@ private:
 	CRealConsole *mp_RCon;
 public:
 	CRealConsole *RCon() { if (this) return mp_RCon; return NULL; };
+	HWND GetView();
 public:
     WARNING("Сделать protected!");
 	uint TextWidth, TextHeight; // размер в символах

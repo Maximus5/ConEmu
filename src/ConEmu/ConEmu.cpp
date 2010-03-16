@@ -710,7 +710,7 @@ CConEmuMain::~CConEmuMain()
 void CConEmuMain::AddMargins(RECT& rc, RECT& rcAddShift, BOOL abExpand/*=FALSE*/)
 {
     if (!abExpand)
-    {
+    {	// подвинуть все грани на rcAddShift (left сдвигается на left, и т.п.)
         if (rcAddShift.left)
             rc.left += rcAddShift.left;
         if (rcAddShift.top)
@@ -720,6 +720,7 @@ void CConEmuMain::AddMargins(RECT& rc, RECT& rcAddShift, BOOL abExpand/*=FALSE*/
         if (rcAddShift.bottom)
             rc.bottom -= rcAddShift.bottom;
     } else {
+    	// поправить только правую и нижнюю грань
         if (rcAddShift.right || rcAddShift.left)
             rc.right += rcAddShift.right + rcAddShift.left;
         if (rcAddShift.bottom || rcAddShift.top)
@@ -771,23 +772,23 @@ void CConEmuMain::AskChangeBufferHeight()
 
 /*!!!static!!*/
 // Функция расчитывает 
-RECT CConEmuMain::CalcMargins(enum ConEmuMargins mg)
+RECT CConEmuMain::CalcMargins(enum ConEmuMargins mg, CVirtualConsole* apVCon)
 {
-    RECT rc;
+    RECT rc = {0,0,0,0};
     
-    switch (mg)
+    // Разница между размером всего окна и клиентской области окна (рамка + заголовок)
+    if (((DWORD)mg) & ((DWORD)CEM_FRAME))
     {
-        case CEM_FRAME: // Разница между размером всего окна и клиентской области окна (рамка + заголовок)
-        {
-			DWORD dwStyle = GetWindowStyle();
-			DWORD dwStyleEx = GetWindowStyleEx();
-			static DWORD dwLastStyle, dwLastStyleEx;
-			static RECT rcLastRect;
-			if (dwLastStyle == dwStyle && dwLastStyleEx == dwStyleEx) {
-				rc = rcLastRect; // чтобы не дергать лишние расчеты
-				break;
-			}
-
+    	// т.к. это первая обработка - можно ставить rc простым приравниванием
+    	_ASSERTE(rc.left==0 && rc.top==0 && rc.right==0 && rc.bottom==0);
+    	
+		DWORD dwStyle = GetWindowStyle();
+		DWORD dwStyleEx = GetWindowStyleEx();
+		static DWORD dwLastStyle, dwLastStyleEx;
+		static RECT rcLastRect;
+		if (dwLastStyle == dwStyle && dwLastStyleEx == dwStyleEx) {
+			rc = rcLastRect; // чтобы не дергать лишние расчеты
+		} else {
 			RECT rcTest = MakeRect(100,100);
 			if (AdjustWindowRectEx(&rcTest, dwStyle, FALSE, dwStyleEx)) {
 				rc.left = -rcTest.left;
@@ -805,57 +806,64 @@ RECT CConEmuMain::CalcMargins(enum ConEmuMargins mg)
 				rc.top = rc.bottom + GetSystemMetrics(SM_CYCAPTION);
 				//	+ (gSet.isHideCaptionAlways ? 0 : GetSystemMetrics(SM_CYCAPTION));
 			}
-            //RECT cRect, wRect;
-            //if (!ghWnd || isIconic()) {
-			//rc.left = rc.right = GetSystemMetrics(SM_CXSIZEFRAME);
-			//rc.bottom = GetSystemMetrics(SM_CYSIZEFRAME);
-			//rc.top = rc.bottom + (gSet.isHideCaptionAlways ? 0 : GetSystemMetrics(SM_CYCAPTION));
-            /*} else {
-                GetClientRect(ghWnd, &cRect); // The left and top members are zero. The right and bottom members contain the width and height of the window.
-                MapWindowPoints(ghWnd, NULL, (LPPOINT)&cRect, 2);
-                GetWindowRect(ghWnd, &wRect); // screen coordinates of the upper-left and lower-right corners of the window
-                rc.top = cRect.top - wRect.top;          // >0
-                rc.left = cRect.left - wRect.left;       // >0
-                rc.bottom = wRect.bottom - cRect.bottom; // >0
-                rc.right = wRect.right - cRect.right;    // >0
-            }*/
-        }   break;
-        // Далее все отступы считаются в клиентской части (дочерние окна)!
-        case CEM_TAB:   // Отступы от краев таба (если он видим) до окна фона (с прокруткой)
-		case CEM_TABACTIVATE:
-		case CEM_TABDEACTIVATE:
-        {
-            if (ghWnd) {
-				bool lbTabActive = (mg == CEM_TAB) ? gConEmu.mp_TabBar->IsActive() : (mg == CEM_TABACTIVATE);
-                // Главное окно уже создано, наличие таба определено
-                if (lbTabActive) { //TODO: + IsAllowed()?
-                    rc = gConEmu.mp_TabBar->GetMargins();
+		}
+    }
+    
+    // Далее все отступы считаются в клиентской части (дочерние окна)!
+    
+    // Отступы от краев таба (если он видим) до окна фона (с прокруткой)
+    if (((DWORD)mg) & ((DWORD)CEM_TAB))
+    {
+        if (ghWnd) {
+			bool lbTabActive = (mg == CEM_TAB) ? gConEmu.mp_TabBar->IsActive() 
+				: ((((DWORD)mg) & ((DWORD)CEM_TABACTIVATE)) == ((DWORD)CEM_TABACTIVATE));
+				
+            // Главное окно уже создано, наличие таба определено
+            if (lbTabActive) { //TODO: + IsAllowed()?
+                RECT rcTab = gConEmu.mp_TabBar->GetMargins();
+                AddMargins(rc, rcTab, FALSE);
+            }// else { -- раз таба нет - значит дополнительные отступы не нужны
+            //    rc = MakeRect(0,0); // раз таба нет - значит дополнительные отступы не нужны
+            //}
+        } else {
+            // Иначе нужно смотреть по настройкам
+            if (gSet.isTabs == 1) {
+                RECT rcTab = gSet.rcTabMargins; // умолчательные отступы таба
+                if (!gSet.isTabFrame) {
+                    // От таба остается только заголовок (закладки)
+                    //rc.left=0; rc.right=0; rc.bottom=0;
+                    rc.top += rcTab.top;
                 } else {
-                    rc = MakeRect(0,0); // раз таба нет - значит дополнительные отступы не нужны
+                	AddMargins(rc, rcTab, FALSE);
                 }
-            } else {
-                // Иначе нужно смотреть по настройкам
-                if (gSet.isTabs == 1) {
-                    rc = gSet.rcTabMargins; // умолчательные отступы таба
-                    if (!gSet.isTabFrame) {
-                        // От таба остается только заголовок (закладки)
-                        rc.left=0; rc.right=0; rc.bottom=0;
-                    }
-                } else {
-                    rc = MakeRect(0,0); // раз таба нет - значит дополнительные отступы не нужны
-                }
-            }
-        }   break;
-        //case CEM_BACK:  // Отступы от краев окна фона (с прокруткой) до окна с отрисовкой (DC)
-        //{
-        //    if (gConEmu.mp_VActive && gConEmu.mp_VActive->RCon()->isBufferHeight()) { //TODO: а показывается ли сейчас прокрутка?
-        //        rc = MakeRect(0,0,GetSystemMetrics(SM_CXVSCROLL),0);
-        //    } else {
-        //        rc = MakeRect(0,0); // раз прокрутки нет - значит дополнительные отступы не нужны
-        //    }
-        //}   break;
-    default:
-        _ASSERTE(mg==CEM_FRAME || mg==CEM_TAB);
+            }// else { -- раз таба нет - значит дополнительные отступы не нужны
+            //    rc = MakeRect(0,0); // раз таба нет - значит дополнительные отступы не нужны
+            //}
+        }
+    }
+    //    //case CEM_BACK:  // Отступы от краев окна фона (с прокруткой) до окна с отрисовкой (DC)
+    //    //{
+    //    //    if (gConEmu.mp_VActive && gConEmu.mp_VActive->RCon()->isBufferHeight()) { //TODO: а показывается ли сейчас прокрутка?
+    //    //        rc = MakeRect(0,0,GetSystemMetrics(SM_CXVSCROLL),0);
+    //    //    } else {
+    //    //        rc = MakeRect(0,0); // раз прокрутки нет - значит дополнительные отступы не нужны
+    //    //    }
+    //    //}   break;
+    //default:
+    //    _ASSERTE(mg==CEM_FRAME || mg==CEM_TAB);
+    //}
+    
+    if (((DWORD)mg) & ((DWORD)CEM_CLIENT))
+    {
+    	TODO("Переделать на ручной расчет, необходимо для DoubleView. Должен зависеть от apVCon");
+    	RECT rcDC; GetWindowRect(ghWndDC, &rcDC);
+    	RECT rcWnd; GetWindowRect(ghWnd, &rcWnd);
+    	RECT rcFrameTab = CalcMargins(CEM_FRAMETAB);
+    	// ставим результат
+    	rc.left += (rcDC.left - rcWnd.left - rcFrameTab.left);
+    	rc.top += (rcDC.top - rcWnd.top - rcFrameTab.top);
+    	rc.right -= (rcDC.right - rcWnd.right - rcFrameTab.right);
+    	rc.bottom -= (rcDC.bottom - rcWnd.bottom - rcFrameTab.bottom);
     }
     
     return rc;
@@ -1214,6 +1222,24 @@ RECT CConEmuMain::MapRect(RECT rFrom, BOOL bFrame2Client)
         rFrom.bottom += (rcShift.bottom+rcShift.top);
     }
     return rFrom;
+}
+
+bool CConEmuMain::ScreenToVCon(LPPOINT pt, CVirtualConsole** ppVCon)
+{
+	_ASSERTE(this!=NULL);
+	
+	CVirtualConsole* lpVCon = GetVConFromPoint(*pt);
+	if (!lpVCon)
+		return false;
+	
+	HWND hView = lpVCon->GetView();
+	
+	ScreenToClient(hView, pt);
+	
+	if (ppVCon)
+		*ppVCon = lpVCon;
+	
+	return true;
 }
 
 //// returns difference between window size and client area size of inWnd in outShift->x, outShift->y
@@ -4126,6 +4152,16 @@ CVirtualConsole* CConEmuMain::GetVCon(int nIdx)
     if (nIdx<0 || nIdx>=MAX_CONSOLE_COUNT)
         return NULL;
     return mp_VCon[nIdx];
+}
+
+CVirtualConsole* CConEmuMain::GetVConFromPoint(POINT ptScreen)
+{
+	TODO("Доработать для DoubleView");
+	HWND hView = ghWndDC;
+	RECT rcView; GetWindowRect(hView, &rcView);
+	if (!PtInRect(&rcWnd, ptScreen))
+		return NULL;
+	return ActiveCon();
 }
 
 bool CConEmuMain::isActive(CVirtualConsole* apVCon)

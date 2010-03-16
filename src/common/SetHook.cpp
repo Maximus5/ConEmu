@@ -1094,6 +1094,8 @@ static BOOL WINAPI OnShellExecuteExW(LPSHELLEXECUTEINFOW lpExecInfo)
 	
 	BOOL lbRc;
 	
+	//BUGBUG: FAR периодически валится на этой функции
+	//должно быть: lpExecInfo->cbSize==0x03C; lpExecInfo->fMask==0x00800540;
 	lbRc = F(ShellExecuteExW)(lpExecInfo);
 	
 	return lbRc;

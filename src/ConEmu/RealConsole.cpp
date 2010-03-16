@@ -1068,7 +1068,10 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
     TODO("Нить не завершается при F10 в фаре - процессы пока не инициализированы...")
     while (TRUE)
     {
-        gSet.Performance(tPerfInterval, TRUE); // именно обратный отсчет. Мы смотрим на промежуток МЕЖДУ таймерами
+        bActive = pRCon->isActive();
+        
+        if (bActive)
+        	gSet.Performance(tPerfInterval, TRUE); // считается по своему
 
         if (hEvents[IDEVENT_CONCLOSED] == NULL && pRCon->mh_ConEmuC /*&& pRCon->mh_CursorChanged*/
 			&& WaitForSingleObject(hEvents[IDEVENV_MONITORTHREADEVENT],0) == WAIT_OBJECT_0)
@@ -1080,7 +1083,6 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
         }
 
         
-        bActive = pRCon->isActive();
         bIconic = gConEmu.isIconic();
 
         // в минимизированном/неактивном режиме - сократить расходы
@@ -1287,7 +1289,8 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
             pRCon->Box(_T("Exception triggered in CRealConsole::MonitorThread"));
         }
 
-        gSet.Performance(tPerfInterval, FALSE);
+        //if (bActive)
+        //	gSet.Performance(tPerfInterval, FALSE);
     }
    
     // Завершение серверных нитей этой консоли

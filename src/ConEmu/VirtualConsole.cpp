@@ -275,6 +275,13 @@ CVirtualConsole::~CVirtualConsole()
     }
 }
 
+HWND CVirtualConsole::GetView()
+{
+	TODO("Доработать для DoubleView");
+	HWND hView = ghWndDC;
+	return hView;
+}
+
 void CVirtualConsole::PointersInit()
 {
 	mb_PointersAllocated = false;
@@ -949,7 +956,7 @@ bool CVirtualConsole::Update(bool isForce, HDC *ahDc)
     
     //gSet.Performance(tPerfRead, TRUE);
 
-    //gSet.Performance(tPerfRender, FALSE);
+    gSet.Performance(tPerfRender, FALSE);
 
     //------------------------------------------------------------------------
     ///| Drawing text (if there were changes in console) |////////////////////
@@ -979,18 +986,22 @@ bool CVirtualConsole::Update(bool isForce, HDC *ahDc)
     }
 
     
-    gSet.Performance(tPerfRender, FALSE);
+    //gSet.Performance(tPerfRender, FALSE);
 
     if (updateText /*|| updateCursor*/)
     {
         lRes = true;
 
         DEBUGSTRDRAW(L" +++ updateText detected in VCon\n");
+        
+        //gSet.Performance(tPerfRender, FALSE);
 
         //------------------------------------------------------------------------
         ///| Drawing modified text |//////////////////////////////////////////////
         //------------------------------------------------------------------------
         UpdateText(isForce);
+        
+        //gSet.Performance(tPerfRender, TRUE);
 
 
         //HEAPVAL
@@ -1292,7 +1303,12 @@ bool CVirtualConsole::UpdatePrepare(bool isForce, HDC *ahDc, MSectionLock *pSDC)
 	BOOL bConDataChanged = isForce || mp_RCon->IsConsoleDataChanged();
 	if (bConDataChanged) {
 		mb_ConDataChanged = TRUE; // В FALSE - НЕ сбрасывать
+		
+		gSet.Performance(tPerfData, FALSE);
+		
 		mp_RCon->GetConsoleData(mpsz_ConChar, mpn_ConAttrEx, TextWidth, TextHeight); //TextLen*2);
+		
+		gSet.Performance(tPerfData, TRUE);
 	}
 
     HEAPVAL
@@ -2573,7 +2589,8 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
         return;
     }
     
-    gSet.Performance(tPerfFPS, TRUE); // считается по своему
+    if (gConEmu.isActive(this))
+    	gSet.Performance(tPerfFPS, TRUE); // считается по своему
 
 	mb_InPaintCall = TRUE;
 	Update(mb_RequiredForceUpdate);

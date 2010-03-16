@@ -207,7 +207,7 @@ END
 IDD_SPG_COLORS DIALOGEX 0, 0, 328, 235
 STYLE DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
-FONT 8, "MS Shell Dlg"
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     GROUPBOX        "Standard colors (""red green blue"")",gbStandardColors,
                     4,4,319,67
@@ -384,13 +384,13 @@ END
 IDD_SPG_INFO DIALOGEX 0, 0, 328, 224
 STYLE DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
-FONT 8, "MS Shell Dlg", 0, 0, 0x1
+FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        "Performance counters",gbPerformance,4,4,319,30
-    RTEXT           "Render:",IDC_STATIC,92,17,27,8
-    EDITTEXT        tPerfRender,121,16,43,12,ES_AUTOHSCROLL | ES_READONLY
-    EDITTEXT        tPerfBlt,190,16,43,12,ES_AUTOHSCROLL | ES_READONLY
-    RTEXT           "Blt:",IDC_STATIC,176,17,12,8
+    RTEXT           "Render:",IDC_STATIC,133,17,27,8
+    EDITTEXT        tPerfRender,162,16,36,12,ES_AUTOHSCROLL | ES_READONLY
+    EDITTEXT        tPerfBlt,218,16,36,12,ES_AUTOHSCROLL | ES_READONLY
+    RTEXT           "Blt:",IDC_STATIC,204,17,12,8
     GROUPBOX        "Console states",IDC_CONSOLE_STATES,4,39,319,27
     CHECKBOX        "Telnet",cbsTelnetActive,11,50,35,10,WS_DISABLED | NOT 
                     WS_TABSTOP
@@ -409,10 +409,10 @@ BEGIN
     LISTBOX         lbProcesses,9,79,173,109,NOT LBS_NOTIFY | 
                     LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_HSCROLL | 
                     WS_TABSTOP
-    RTEXT           "FPS:",IDC_STATIC,9,17,23,8
-    EDITTEXT        tPerfFPS,36,16,43,12,ES_AUTOHSCROLL | ES_READONLY
-    EDITTEXT        tPerfInterval,274,16,43,12,ES_AUTOHSCROLL | ES_READONLY
-    RTEXT           "Interval:",IDC_STATIC,240,17,31,8
+    RTEXT           "FPS:",IDC_STATIC,9,17,18,8
+    EDITTEXT        tPerfFPS,29,16,36,12,ES_AUTOHSCROLL | ES_READONLY
+    EDITTEXT        tPerfInterval,282,16,36,12,ES_AUTOHSCROLL | ES_READONLY
+    RTEXT           "RPS:",IDC_STATIC,258,17,22,8
     GROUPBOX        "Current command line",IDC_STATIC,4,193,319,29
     EDITTEXT        tCurCmdLine,9,204,307,12,ES_AUTOHSCROLL | ES_READONLY
     GROUPBOX        "Sizes",IDC_STATIC,195,68,128,125
@@ -438,6 +438,8 @@ BEGIN
     GROUPBOX        "Font",IDC_STATIC,195,167,128,26
     EDITTEXT        tCursorPos,264,124,54,12,ES_AUTOHSCROLL | ES_READONLY
     RTEXT           "Cursor:",IDC_STATIC,214,126,45,8
+    EDITTEXT        tPerfData,93,16,36,12,ES_AUTOHSCROLL | ES_READONLY
+    RTEXT           "Data:",IDC_STATIC,69,17,22,8
 END
 
 IDD_SPG_FEATURE DIALOGEX 0, 0, 328, 235
@@ -830,6 +832,15 @@ BEGIN
     cbHookFarRegistry       "Enable portable mode for FAR manager. ConEmu plugin must be installed."
     tFadeLow                "When ConEmu looses focus, its contents may be faded. You may specify here 'low shift' (wich makes dark colors lighter)."
     tFadeHigh               "When ConEmu looses focus, its contents may be faded. You may specify here 'high shift' (wich makes light colors darker)."
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    tPerfFPS                "Frames per second"
+    tPerfData               "Average duration of transferring data\nfrom CRealConsole to CVirtualConsole"
+    tPerfRender             "Average duration of rendering text to memory DC"
+    tPerfBlt                "Average duration of blit operation\nfrom memory DC to screen DC"
+    tPerfInterval           "Average counts of reads real console data per second"
 END
 
 #endif    // English (U.S.) resources

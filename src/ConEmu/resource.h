@@ -140,9 +140,10 @@
 #define rFullScreen                     1313
 #define gbPerformance                   1400
 #define tPerfFPS                        1401
-#define tPerfRender                     1402
-#define tPerfBlt                        1403
-#define tPerfInterval                   1404
+#define tPerfData                       1402
+#define tPerfRender                     1403
+#define tPerfBlt                        1404
+#define tPerfInterval                   1405
 #define lbLDragKey                      1501
 #define cbDropEnabled                   1502
 #define lbRDragKey                      1503
@@ -261,7 +262,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        204
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1626
+#define _APS_NEXT_CONTROL_VALUE         1627
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

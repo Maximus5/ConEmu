@@ -72,15 +72,17 @@ class TabBarClass;
 
 WARNING("ѕроверить, чтобы DC нормально центрировалось после удалени€ CEM_BACK");
 enum ConEmuMargins {
-	CEM_FRAME = 0, // –азница между размером всего окна и клиентской области окна (рамка + заголовок)
+	CEM_FRAME = 0x0001, // –азница между размером всего окна и клиентской области окна (рамка + заголовок)
 	// ƒалее все отступы считаютс€ в клиентской части (дочерние окна)!
-	CEM_TAB,       // ќтступы от краев таба (если он видим) до окна фона (с прокруткой)
-	CEM_TABACTIVATE,
-	CEM_TABDEACTIVATE,
-	//2009-06-07 Ёто был только SM_CXVSCROLL, который сейчас всплывает и не занимает место!
-	//CEM_BACK,      // ќтступы от краев окна фона (с прокруткой) до окна с отрисовкой (DC)
-	CEM_BACKFORCESCROLL,
-	CEM_BACKFORCENOSCROLL
+	CEM_TAB = 0x0002, // ¬ысота таба (пока только .top)
+	CEM_TABACTIVATE = 0x1002,   // ѕринудительно считать, что таб есть (при включении таба)
+	CEM_TABDEACTIVATE = 0x2002, // ѕринудительно считать, что таба нет (при отключении таба)
+	// ќтступ в клиентской части, за вычетом таба
+	CEM_CLIENT = 0x0004,
+	// ƒл€ удобства вызова - сформируем "пакетные" аргументы
+	CEM_FRAMETAB = 0x0003,
+	CEM_FRAMETABCLIENT = 0x0007,
+	CEM_TABCLIENT = 0x0006,
 };
 
 enum ConEmuRect {
@@ -251,6 +253,7 @@ public:
 	LPCTSTR GetTitle(bool abUseDefault=true);
 	LPCTSTR GetTitle(int nIdx);
 	CVirtualConsole* GetVCon(int nIdx);
+	CVirtualConsole* GetVConFromPoint(POINT ptScreen);
 	void UpdateCursorInfo(COORD crCursor);
 	void UpdateProcessDisplay(BOOL abForce);
 	void UpdateSizes();
@@ -267,7 +270,7 @@ public:
 	void AskChangeBufferHeight();
 	BOOL AttachRequested(HWND ahConWnd, CESERVER_REQ_STARTSTOP pStartStop, CESERVER_REQ_STARTSTOPRET* pRet);
 	void AutoSizeFont(const RECT &rFrom, enum ConEmuRect tFrom);
-	static RECT CalcMargins(enum ConEmuMargins mg);
+	static RECT CalcMargins(enum ConEmuMargins mg, CVirtualConsole* apVCon=NULL);
 	static RECT CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmuRect tFrom, RECT* prDC=NULL, enum ConEmuMargins tTabAction=CEM_TAB);
 	void CheckFocus(LPCWSTR asFrom);
 	enum DragPanelBorder CheckPanelDrag(COORD crCon);
@@ -331,6 +334,7 @@ public:
 	void RePaint();
 	void ReSize(BOOL abCorrect2Ideal = FALSE);
 	BOOL RunSingleInstance();
+	bool ScreenToVCon(LPPOINT pt, CVirtualConsole** ppVCon);
 	void SetConsoleWindowSize(const COORD& size, bool updateInfo);
 	void SetWaitCursor(BOOL abWait);
 	bool SetWindowMode(uint inMode);

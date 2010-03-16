@@ -127,6 +127,7 @@ CSettings::CSettings()
     memset(mn_Counter, 0, sizeof(*mn_Counter)*(tPerfInterval-gbPerformance));
     memset(mn_CounterMax, 0, sizeof(*mn_CounterMax)*(tPerfInterval-gbPerformance));
     memset(mn_FPS, 0, sizeof(mn_FPS)); mn_FPS_CUR_FRAME = 0;
+    memset(mn_RFPS, 0, sizeof(mn_RFPS)); mn_RFPS_CUR_FRAME = 0;
     memset(mn_CounterTick, 0, sizeof(*mn_CounterTick)*(tPerfInterval-gbPerformance));
     hBgBitmap = NULL; bgBmp = MakeCoord(0,0); hBgDc = NULL;
     ZeroStruct(mh_Font);
@@ -2898,18 +2899,24 @@ INT_PTR CSettings::infoOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
             wchar_t sTemp[64];
 			if (gSet.mn_Freq!=0) {
 				double v = 0;
-				if (wParam != 0) {
-					v = (gSet.mn_CounterMax[wParam]/(double)gSet.mn_Freq)*1000;
-				} else {
+				if (wParam == (tPerfFPS-tPerfFPS) || wParam == (tPerfInterval-tPerfFPS)) {
+					i64 *pFPS = NULL;
+					UINT nCount = 0;
+					if (wParam == (tPerfFPS-tPerfFPS)) {
+						pFPS = gSet.mn_FPS; nCount = countof(gSet.mn_FPS);
+					} else {
+						pFPS = gSet.mn_RFPS; nCount = countof(gSet.mn_RFPS);
+					}
 				    i64 tmin = 0, tmax = 0;
-				    tmin = gSet.mn_FPS[0];
-				    for (UINT i = 0; i < countof(gSet.mn_FPS); i++) {
-					    if (gSet.mn_FPS[i] < tmin) tmin = gSet.mn_FPS[i];
-					    if (gSet.mn_FPS[i] > tmax) tmax = gSet.mn_FPS[i];
+				    tmin = pFPS[0];
+				    for (UINT i = 0; i < nCount; i++) {
+					    if (pFPS[i] < tmin) tmin = pFPS[i];
+					    if (pFPS[i] > tmax) tmax = pFPS[i];
 				    }
-				    if (tmax > tmin) {
+				    if (tmax > tmin)
 					    v = ((double)20) / (tmax - tmin) * gSet.mn_Freq;
-				    }
+				} else {
+					v = (gSet.mn_CounterMax[wParam]/(double)gSet.mn_Freq)*1000;
 				}
 				swprintf(sTemp, L"%.1f", v);
 				SetDlgItemText(gSet.hInfo, wParam+tPerfFPS, sTemp);
@@ -3468,20 +3475,23 @@ void CSettings::Performance(UINT nID, BOOL bEnd)
         return;
 
     if (nID == tPerfFPS) {
-	    i64 tick2 = 0; //, tmin = 0, tmax = 0;
+	    i64 tick2 = 0;
 	    QueryPerformanceCounter((LARGE_INTEGER *)&tick2);
 	    mn_FPS[mn_FPS_CUR_FRAME] = tick2;
 	    mn_FPS_CUR_FRAME++;
 		if (mn_FPS_CUR_FRAME >= (int)countof(mn_FPS)) mn_FPS_CUR_FRAME = 0;
-	    //tmin = mn_FPS[0];
-	    //for (int i = 0; i < countof(mn_FPS); i++) {
-		//    if (mn_FPS[i] < tmin) tmin = mn_FPS[i];
-		//    if (mn_FPS[i] > tmax) tmax = mn_FPS[i];
-	    //}
-	    //if (tmax > tmin)
-        if (ghOpWnd) {
+        if (ghOpWnd)
 			PostMessage(gSet.hInfo, mn_MsgUpdateCounter, nID-tPerfFPS, 0);
-        }
+	    return;
+	}
+    if (nID == tPerfInterval) {
+	    i64 tick2 = 0;
+	    QueryPerformanceCounter((LARGE_INTEGER *)&tick2);
+	    mn_RFPS[mn_RFPS_CUR_FRAME] = tick2;
+	    mn_RFPS_CUR_FRAME++;
+		if (mn_RFPS_CUR_FRAME >= (int)countof(mn_RFPS)) mn_RFPS_CUR_FRAME = 0;
+        if (ghOpWnd)
+			PostMessage(gSet.hInfo, mn_MsgUpdateCounter, nID-tPerfFPS, 0);
 	    return;
 	}
 

@@ -920,8 +920,13 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop (IDataObject * pDataObject,DWORD grfKe
 	}
 
 	// Определить, на какую панель бросаем
-	ScreenToClient(ghWndDC, (LPPOINT)&pt);
-	COORD cr = gConEmu.ActiveCon()->ClientToConsole(pt.x, pt.y);
+	//ScreenToClient(gh WndDC, (LPPOINT)&pt);
+	//COORD cr = gConEmu.Active Con()->ClientToConsole(pt.x, pt.y);
+	CVirtualConsole *pVCon = NULL;
+	if (!gConEmu.ScreenToVCon((LPPOINT)&pt, &pVCon)) {
+		return S_OK;
+	}
+	COORD cr = pVCon->ClientToConsole(pt.x, pt.y);
 	pt.x = cr.X; pt.y = cr.Y;
 	//pt.x/=gSet.Log Font.lfWidth;
 	//pt.y/=gSet.Log Font.lfHeight;
@@ -1155,17 +1160,21 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragOver(DWORD grfKeyState,POINTL pt,DWORD 
 
 		POINT ptCur; ptCur.x = pt.x; ptCur.y = pt.y;
 		#ifdef _DEBUG
-		GetCursorPos(&ptCur);
+		POINT ptCurDbg; GetCursorPos(&ptCurDbg);
+		_ASSERTE(ptCurDbg.x == ptCur.x && ptCurDbg.y == ptCur.y);
 		#endif
-		RECT rcDC; GetWindowRect(ghWndDC, &rcDC);
+		
+		//RECT rcDC; GetWindowRect(gh WndDC, &rcDC);
 		//HWND hWndFrom = WindowFromPoint(ptCur);
-		if (/*(hWndFrom != ghWnd && hWndFrom != mh_Overlapped)
-			||*/ !PtInRect(&rcDC, ptCur))
+		//if (/*(hWndFrom != ghWnd && hWndFrom != mh_Overlapped)
+		//	||*/ !PtInRect(&rcDC, ptCur))
+		CVirtualConsole* pVCon = NULL;
+		if (!gConEmu.ScreenToVCon(&pt, &pVCon))
 		{
 			*pdwEffect = DROPEFFECT_NONE;
 		} else {
-			ScreenToClient(ghWndDC, (LPPOINT)&pt);
-			COORD cr = gConEmu.ActiveCon()->ClientToConsole(pt.x, pt.y);
+			//ScreenToClient(gh WndDC, (LPPOINT)&pt);
+			COORD cr = pVCon->ClientToConsole(pt.x, pt.y);
 			pt.x = cr.X; pt.y = cr.Y;
 			//pt.x/=gSet.Log Font.lfWidth;
 			//pt.y/=gSet.Log Font.lfHeight;
