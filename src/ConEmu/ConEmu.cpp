@@ -4159,7 +4159,7 @@ CVirtualConsole* CConEmuMain::GetVConFromPoint(POINT ptScreen)
 	TODO("Доработать для DoubleView");
 	HWND hView = ghWndDC;
 	RECT rcView; GetWindowRect(hView, &rcView);
-	if (!PtInRect(&rcWnd, ptScreen))
+	if (!PtInRect(&rcView, ptScreen))
 		return NULL;
 	return ActiveCon();
 }
@@ -4186,7 +4186,15 @@ bool CConEmuMain::isConSelectMode()
 
 bool CConEmuMain::isDragging()
 {
-    return (mouse.state & (DRAG_L_STARTED | DRAG_R_STARTED)) != 0;
+    if ((mouse.state & (DRAG_L_STARTED | DRAG_R_STARTED)) == 0)
+		return false;
+
+	if (isConSelectMode()) {
+		mouse.state &= ~(DRAG_L_STARTED | DRAG_L_ALLOWED | DRAG_R_STARTED | DRAG_R_ALLOWED | MOUSE_DRAGPANEL_ALL);
+		return false;
+	}
+
+	return true;
 }
 
 bool CConEmuMain::isFilePanel(bool abPluginAllowed/*=false*/)
@@ -5947,6 +5955,10 @@ LRESULT CConEmuMain::OnMouse_Move(HWND hWnd, UINT messg, WPARAM wParam, LPARAM l
 			DEBUGSTRPANEL2(L"PanelDrag: Skip of isDragging\n");
 			return 0;
 		}
+	} else if ((mouse.state & (DRAG_L_ALLOWED | DRAG_R_ALLOWED)) != 0) {
+		if (isConSelectMode()) {
+			mouse.state &= ~(DRAG_L_STARTED | DRAG_L_ALLOWED | DRAG_R_STARTED | DRAG_R_ALLOWED | MOUSE_DRAGPANEL_ALL);
+		}
 	}
 
 	if (mouse.state & MOUSE_DRAGPANEL_ALL) {
@@ -6505,6 +6517,16 @@ BOOL CConEmuMain::OnMouse_NCBtnDblClk(HWND hWnd, UINT& messg, WPARAM wParam, LPA
 	return FALSE;
 }
 
+void CConEmuMain::SetDragCursor(HCURSOR hCur)
+{
+	mh_DragCursor = hCur;
+	if (mh_DragCursor) {
+		SetCursor(mh_DragCursor);
+	} else {
+		OnSetCursor();
+	}
+}
+
 void CConEmuMain::SetWaitCursor(BOOL abWait)
 {
 	mb_WaitCursor = abWait;
@@ -6709,6 +6731,9 @@ LRESULT CConEmuMain::OnSetCursor(WPARAM wParam, LPARAM lParam)
 	
 
 	if (LOWORD(lParam) == HTCLIENT && mp_VActive) {
+		if (mh_DragCursor && isDragging()) {
+			hCur = mh_DragCursor;
+		} else
 		if (mouse.state & MOUSE_DRAGPANEL_ALL) {
 			if (mouse.state & MOUSE_DRAGPANEL_SPLIT)
 				hCur = mh_SplitH;

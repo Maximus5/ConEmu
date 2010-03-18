@@ -360,10 +360,140 @@ BOOL WINAPI OnConsolePeekInput(HookCallbackArg* pArgs)
 	return TRUE; // продолжить
 }
 
+#ifdef _DEBUG
+BOOL DebugGetKeyboardState(LPBYTE pKeyStates)
+{
+	short v = 0;
+	BYTE b = 0;
+	int nKeys[] = {VK_SHIFT,VK_LSHIFT,VK_RSHIFT,
+		         VK_MENU,VK_LMENU,VK_RMENU,
+				 VK_CONTROL,VK_LCONTROL,VK_RCONTROL,
+				 VK_LWIN,VK_RWIN,
+				 VK_CAPITAL,VK_NUMLOCK,VK_SCROLL};
+	int nKeyCount = sizeof(nKeys)/sizeof(nKeys[0]);
+	for (int i=0; i<nKeyCount; i++) {
+		v = GetAsyncKeyState(nKeys[i]);
+		b = v & 1;
+		if ((v & 0x8000) == 0x8000)
+			b |= 0x80;
+		pKeyStates[nKeys[i]] = b;
+	}
+	return TRUE;
+}
+
+typedef BOOL (__stdcall *FGetConsoleKeyboardLayoutName)(wchar_t*);
+FGetConsoleKeyboardLayoutName pfnGetConsoleKeyboardLayoutName = NULL;
+
+DWORD DebugCheckKeyboardLayout()
+{
+	DWORD dwLayout = 0x04090409;
+
+	if (!pfnGetConsoleKeyboardLayoutName)
+		pfnGetConsoleKeyboardLayoutName = (FGetConsoleKeyboardLayoutName)GetProcAddress (GetModuleHandleW (L"kernel32.dll"), "GetConsoleKeyboardLayoutNameW");
+
+    if (pfnGetConsoleKeyboardLayoutName) {
+        wchar_t szCurKeybLayout[KL_NAMELENGTH+1];
+        if (pfnGetConsoleKeyboardLayoutName(szCurKeybLayout)) {
+            wchar_t *pszEnd = szCurKeybLayout+8;
+            dwLayout = wcstol(szCurKeybLayout, &pszEnd, 16);
+        }
+    }
+	return dwLayout;
+}
+
+void DebugInputPrint(INPUT_RECORD r)
+{
+	wchar_t szDbg[512]; szDbg[0] = 0;
+	
+	switch (r.EventType)
+	{
+	case FOCUS_EVENT:
+		wsprintf(szDbg, L"--FOCUS_EVENT(%i)\n", (int)r.Event.FocusEvent.bSetFocus);
+		break;
+	case MENU_EVENT:
+		wsprintf(szDbg, L"--MENU_EVENT\n");
+		break;
+	case MOUSE_EVENT: //wprintf(L"--MOUSE_EVENT\n");
+		{
+			SYSTEMTIME st; GetLocalTime(&st);
+			wsprintf(szDbg, L"%i:%02i:%02i {%ix%i} BtnState:0x%08X, CtrlState:0x%08X, Flags:0x%08X\n",
+				st.wHour, st.wMinute, st.wSecond,
+				r.Event.MouseEvent.dwMousePosition.X, r.Event.MouseEvent.dwMousePosition.Y,
+				r.Event.MouseEvent.dwButtonState, r.Event.MouseEvent.dwControlKeyState,
+				r.Event.MouseEvent.dwEventFlags);
+		}
+		break;
+	case WINDOW_BUFFER_SIZE_EVENT:
+		wsprintf(szDbg, L"--WINDOW_BUFFER_SIZE_EVENT\n");
+		break;
+	case KEY_EVENT:
+		{
+			wchar_t szLocks[32]; szLocks[0] = 0;
+			if (r.Event.KeyEvent.wVirtualKeyCode == VK_UP || r.Event.KeyEvent.wVirtualKeyCode == VK_DOWN) {
+				if (1 & GetKeyState(VK_NUMLOCK))
+					lstrcat(szLocks, L" <Num>");
+				if (1 & GetKeyState(VK_CAPITAL))
+					lstrcat(szLocks, L" <Cap>");
+				if (1 & GetKeyState(VK_SCROLL))
+					lstrcat(szLocks, L" <Scr>");
+			}
+			SYSTEMTIME st; GetLocalTime(&st);
+			wsprintf(szDbg, L"%i:%02i:%02i '%c' %s count=%i, VK=%i, SC=%i, CH=\\x%X, State=0x%08x %s%s\n",
+				st.wHour, st.wMinute, st.wSecond,
+				(r.Event.KeyEvent.uChar.UnicodeChar > 0x100) ? L'?' :
+				(r.Event.KeyEvent.uChar.UnicodeChar 
+				 ? r.Event.KeyEvent.uChar.UnicodeChar : L' '),
+				r.Event.KeyEvent.bKeyDown ? L"Down," : L"Up,  ",
+				r.Event.KeyEvent.wRepeatCount,
+				r.Event.KeyEvent.wVirtualKeyCode,
+				r.Event.KeyEvent.wVirtualScanCode,
+				r.Event.KeyEvent.uChar.UnicodeChar,
+				r.Event.KeyEvent.dwControlKeyState,
+				(r.Event.KeyEvent.dwControlKeyState & ENHANCED_KEY) ?
+				L"<Enhanced>" : L"",
+				szLocks);
+			if (r.Event.KeyEvent.uChar.UnicodeChar) {
+				BYTE KeyStates[256] = {0};
+				wchar_t szBuff[10];
+				HKL hkl = (HKL)DebugCheckKeyboardLayout();
+				BOOL lbkRc = DebugGetKeyboardState(KeyStates);
+				int nuRc = ToUnicodeEx(r.Event.KeyEvent.wVirtualKeyCode,
+					r.Event.KeyEvent.wVirtualScanCode,
+					KeyStates, szBuff, 10, 0, hkl);
+				if (nuRc>0) szBuff[nuRc] = 0; else szBuff[0] = 0;
+				wchar_t szTemp[256] = {0};
+				for (int i=0; i<nuRc; i++)
+					wsprintf(szTemp+wcslen(szTemp), L"\\x%04X", (WORD)szBuff[i]);
+				wsprintf(szDbg+lstrlen(szDbg), L"         -- GKS=%i; TUE=%i; <%s>\n", lbkRc, nuRc, szTemp);
+			}
+		} break;
+	default:
+		{
+			wsprintf(szDbg, L"Unknown event type (%i)\n", r.EventType);
+		}
+	}
+	
+	OutputDebugString(szDbg);
+}
+#endif
+
 BOOL WINAPI OnConsoleReadInput(HookCallbackArg* pArgs)
 {
 	if (!pArgs->bMainThread) return TRUE; // обработку делаем только в основной нити
 	OnConsolePeekReadInput(FALSE/*abPeek*/);
+
+	// ≈сли под дебагом включен ScrollLock - вывести информацию о считанных событи€х
+	#ifdef _DEBUG
+	if (GetKeyState(VK_SCROLL) & 1) {
+		PINPUT_RECORD p = (PINPUT_RECORD)(pArgs->lArguments[1]);
+		LPDWORD pCount = (LPDWORD)(pArgs->lArguments[3]);
+		_ASSERTE(*pCount <= pArgs->lArguments[2]);
+		UINT nCount = *pCount;
+		for (UINT i = 0; i < nCount; i++)
+			DebugInputPrint(p[i]);
+	}
+	#endif
+	
 	return TRUE; // продолжить
 }
 

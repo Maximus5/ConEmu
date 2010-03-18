@@ -427,8 +427,9 @@ BOOL CreateAppWindow()
 
 
 
-void DisplayLastError(LPCTSTR asLabel, DWORD dwError /* =0 */)
+int DisplayLastError(LPCTSTR asLabel, DWORD dwError /* =0 */, DWORD dwMsgFlags /* =0 */)
 {
+	int nBtn = 0;
 	DWORD dw = dwError ? dwError : GetLastError();
 	wchar_t* lpMsgBuf = NULL;
 	MCHKHEAP
@@ -437,11 +438,13 @@ void DisplayLastError(LPCTSTR asLabel, DWORD dwError /* =0 */)
 	wchar_t *out = new wchar_t[nLen];
 	wsprintf(out, _T("%s\nLastError=0x%08X\n%s"), asLabel, dw, lpMsgBuf);
 	if (gbMessagingStarted) SetForegroundWindow(ghWnd);
-	MessageBox(gbMessagingStarted ? ghWnd : NULL, out, gConEmu.GetTitle(), MB_SYSTEMMODAL | MB_ICONERROR);
+	if (!dwMsgFlags) dwMsgFlags = MB_SYSTEMMODAL | MB_ICONERROR;
+	nBtn = MessageBox(gbMessagingStarted ? ghWnd : NULL, out, gConEmu.GetTitle(), dwMsgFlags);
 	MCHKHEAP
 		LocalFree(lpMsgBuf);
 	delete [] out;
 	MCHKHEAP
+	return nBtn;
 }
 
 

@@ -165,7 +165,8 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
 
     mn_ProgramStatus = 0; mn_FarStatus = 0;
     isShowConsole = false;
-    mb_ConsoleSelectMode = false;
+    //mb_ConsoleSelectMode = false;
+    mn_SelectModeSkipVk = 0;
     mn_ProcessCount = 0; 
 	mn_FarPID = 0; //mn_FarInputTID = 0;
 	mn_InRecreate = 0; mb_ProcessRestarted = FALSE;
@@ -1237,10 +1238,11 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 
 				bool lbNeedRedraw = false;
 				if ((nWait == (WAIT_OBJECT_0+1)) || lbForceUpdate) {
+					bool bForce = lbForceUpdate;
 					lbForceUpdate = false;
 					gConEmu.m_Child.Validate(); // сбросить флажок
 					if (pRCon->m_UseLogs>2) pRCon->LogString("mp_VCon->Update from CRealConsole::MonitorThread");
-					if (pRCon->mp_VCon->Update(lbForceUpdate))
+					if (pRCon->mp_VCon->Update(bForce))
 						lbNeedRedraw = true;
 				} else if (gSet.isCursorBlink) {
 					// Возможно, настало время мигнуть курсором?
@@ -1260,6 +1262,7 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 				if (lbNeedRedraw) {
 					//#ifndef _DEBUG
 					//WARNING("******************");
+					TODO("После этого двойная отрисовка не вызывается?");
 					gConEmu.m_Child.Redraw();
 					//#endif
 					pRCon->mn_LastInvalidateTick = GetTickCount();
@@ -1697,7 +1700,7 @@ BOOL CRealConsole::StartProcess()
 }
 
 
-
+// x,y - экранные координаты
 void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y)
 {
     #ifndef WM_MOUSEHWHEEL
@@ -1710,8 +1713,15 @@ void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y)
     //BOOL lbStdMode = FALSE;
     //if (!con.bBufferHeight)
     //    lbStdMode = TRUE;
+    if (isSelectionAllowed()) {
+    	if (messg == WM_LBUTTONDOWN) {
+	    	// Начало обработки выделения
+	    	OnMouseSelection(messg, wParam, x, y);
+	    	return;
+    	}
+    }
+    
     if (con.bBufferHeight) {
-        TODO("Ручная обработка выделения, на консоль полагаться не следует...");
         if (messg == WM_MOUSEWHEEL) {
             SHORT nDir = (SHORT)HIWORD(wParam);
             BOOL lbCtrl = isPressed(VK_CONTROL);
@@ -1723,7 +1733,15 @@ void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y)
                 //OnScroll(SB_PAGEDOWN);
             }
         }
-        return;
+        
+        if (!isConSelectMode())
+        	return;
+    }
+    
+    if (isConSelectMode()) {
+    	// Ручная обработка выделения, на консоль полагаться не следует...
+    	OnMouseSelection(messg, wParam, x, y);
+    	return;
     }
 
 
@@ -1851,6 +1869,163 @@ void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y)
 
     // Посылаем событие в консоль через ConEmuC
     PostConsoleEvent ( &r );
+}
+
+// x,y - экранные координаты
+void CRealConsole::OnMouseSelection(UINT messg, WPARAM wParam, int x, int y)
+{
+	if (TextWidth()<=1 || TextHeight()<=1) {
+		_ASSERTE(TextWidth()>1 && TextHeight()>1);
+		return;
+	}
+
+	// Получить известные координаты символов
+	COORD cr = mp_VCon->ClientToConsole(x,y);
+	if (cr.X<0) cr.X = 0; else if (cr.X >= (int)TextWidth()) cr.X = TextWidth()-1;
+	if (cr.Y<0) cr.Y = 0; else if (cr.Y >= (int)TextHeight()) cr.X = TextHeight()-1;
+
+	if (messg == WM_LBUTTONDOWN) {
+		TODO("При VK_SHIFT - менять тип выделения");
+		if (isPressed(VK_SHIFT) || isPressed(VK_SHIFT) || isPressed(VK_SHIFT))
+			return; // при нажатых модификаторах - не начинать выделение!
+
+		con.m_sel.dwFlags = CONSOLE_SELECTION_IN_PROGRESS|CONSOLE_MOUSE_SELECTION;
+		
+		con.m_sel.dwSelectionAnchor = cr;
+		con.m_sel.srSelection.Left = con.m_sel.srSelection.Right = cr.X;
+		con.m_sel.srSelection.Top = con.m_sel.srSelection.Bottom = cr.Y;
+		
+		UpdateSelection();
+
+	} else if ((con.m_sel.dwFlags & CONSOLE_MOUSE_SELECTION) && (messg == WM_MOUSEMOVE || messg == WM_LBUTTONUP)) {
+		_ASSERTE(con.m_sel.dwFlags!=0);
+		_ASSERTE(cr.X>=0 && cr.X<(int)TextWidth());
+		_ASSERTE(cr.Y>=0 && cr.Y<(int)TextHeight());
+		
+		//con.m_sel.dwSelectionAnchor = cr;
+		if (cr.X < con.m_sel.dwSelectionAnchor.X) {
+			con.m_sel.srSelection.Left = cr.X;
+			con.m_sel.srSelection.Right = con.m_sel.dwSelectionAnchor.X;
+		} else {
+			con.m_sel.srSelection.Left = con.m_sel.dwSelectionAnchor.X;
+			con.m_sel.srSelection.Right = cr.X;
+		}
+
+		if (cr.Y < con.m_sel.dwSelectionAnchor.Y) {
+			con.m_sel.srSelection.Top = cr.Y;
+			con.m_sel.srSelection.Bottom = con.m_sel.dwSelectionAnchor.Y;
+		} else {
+			con.m_sel.srSelection.Top = con.m_sel.dwSelectionAnchor.Y;
+			con.m_sel.srSelection.Bottom = cr.Y;
+		}
+
+		if (messg == WM_LBUTTONUP) {
+			con.m_sel.dwFlags &= ~CONSOLE_MOUSE_SELECTION;
+		}
+		
+		UpdateSelection();
+		
+	}
+}
+
+bool CRealConsole::DoSelectionCopy()
+{
+	if (!con.m_sel.dwFlags) {
+		MBoxAssert(con.m_sel.dwFlags != 0);
+		return false;
+	}
+	if (!con.pConChar) {
+		MBoxAssert(con.pConChar != NULL);
+		return false;
+	}
+
+	DWORD dwErr = 0;
+	BOOL  lbRc = FALSE;
+	bool  Result = false;
+
+	int nSelWidth = con.m_sel.srSelection.Right - con.m_sel.srSelection.Left;
+	int nSelHeight = con.m_sel.srSelection.Bottom - con.m_sel.srSelection.Top;
+	if (nSelWidth<0 || nSelHeight<0) {
+		MBoxAssert(nSelWidth>=0 && nSelHeight>=0);
+		return false;
+	}
+	nSelWidth++; nSelHeight++;
+	int nCharCount = (nSelWidth+2/* "\r\n" */) * nSelHeight;
+
+	HGLOBAL hUnicode = NULL;
+
+	hUnicode = GlobalAlloc(GMEM_MOVEABLE|GMEM_ZEROINIT, (nCharCount+1)*sizeof(wchar_t));
+	if (hUnicode == NULL) {
+		MBoxAssert(hUnicode != NULL);
+		return false;
+	}
+	wchar_t *pch = (wchar_t*)GlobalLock(hUnicode);
+	if (!pch) {
+		MBoxAssert(pch != NULL);
+		GlobalFree(hUnicode);
+	}
+
+	// Заполнить данными
+	if ((con.m_sel.srSelection.Left + nSelWidth) > con.nTextWidth) {
+		_ASSERTE((con.m_sel.srSelection.Left + nSelWidth) <= con.nTextWidth);
+		nSelWidth = con.nTextWidth - con.m_sel.srSelection.Left;
+	}
+	if ((con.m_sel.srSelection.Top + nSelHeight) > con.nTextHeight) {
+		_ASSERTE((con.m_sel.srSelection.Top + nSelHeight) <= con.nTextHeight);
+		nSelHeight = con.nTextHeight - con.m_sel.srSelection.Top;
+	}
+	nSelHeight--;
+	for (int Y = 0; Y <= nSelHeight; Y++) {
+		wchar_t* pszCon = con.pConChar + con.nTextWidth*(Y+con.m_sel.srSelection.Top) + con.m_sel.srSelection.Left;
+		int nMaxX = nSelWidth - 1;
+		//WARNING("Только если выделение 'консольное' а не 'текстовое'");
+		//while (nMaxX > 0 && (pszCon[nMaxX] == ucSpace || pszCon[nMaxX] == ucNoBreakSpace))
+		//	nMaxX--; // отрезать хвостовые пробелы - зачем их в буфер копировать?
+		for (int X = 0; X <= nMaxX; X++)
+			*(pch++) = *(pszCon++);
+		// Добавить перевод строки
+		if (Y < nSelHeight) {
+			*(pch++) = L'\r'; *(pch++) = L'\n';
+		}
+	}
+
+	// Ready
+	GlobalUnlock(hUnicode);
+
+
+	// Открыть буфер обмена
+	while (!(lbRc = OpenClipboard(ghWnd))) {
+		dwErr = GetLastError();
+		if (IDRETRY != DisplayLastError(L"OpenClipboard failed!", dwErr, MB_RETRYCANCEL|MB_ICONSTOP))
+			return false;
+	}
+
+	lbRc = EmptyClipboard();
+
+	// Установить данные
+	Result = SetClipboardData(CF_UNICODETEXT, hUnicode);
+	while (!Result) {
+		dwErr = GetLastError();
+		if (IDRETRY != DisplayLastError(L"SetClipboardData(CF_UNICODETEXT, ...) failed!", dwErr, MB_RETRYCANCEL|MB_ICONSTOP)) {
+			GlobalFree(hUnicode); hUnicode = NULL;
+			break;
+		}
+
+		Result = SetClipboardData(CF_UNICODETEXT, hUnicode);
+	}
+
+	lbRc = CloseClipboard();
+
+	return Result;
+}
+
+// обновить на экране
+void CRealConsole::UpdateSelection()
+{
+    TODO("Это корректно? Нужно обновить VCon");
+	con.bConsoleDataChanged = TRUE; // А эта - при вызовах из CVirtualConsole
+	mp_VCon->Update(true);
+	gConEmu.m_Child.Redraw();
 }
 
 void CRealConsole::PostConsoleEventPipe(MSG *pMsg)
@@ -2102,7 +2277,7 @@ BOOL CRealConsole::isBufferHeight()
 BOOL CRealConsole::isConSelectMode()
 {
     if (!this) return false;
-    return mb_ConsoleSelectMode;
+    return (con.m_sel.dwFlags != 0);
 }
 
 BOOL CRealConsole::isDetached()
@@ -2180,9 +2355,24 @@ void CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
     }
 #endif
 
-    if (mb_ConsoleSelectMode && messg == WM_KEYDOWN && ((wParam == VK_ESCAPE) || (wParam == VK_RETURN)))
+	TODO("Обработка Left/Right/Up/Down при выделении");
+    if (con.m_sel.dwFlags && messg == WM_KEYDOWN && ((wParam == VK_ESCAPE) || (wParam == VK_RETURN)))
     {
-        mb_ConsoleSelectMode = false; //TODO: может как-то по другому определять?
+    	if (wParam == VK_RETURN) {
+    		DoSelectionCopy();
+    	}
+    	mn_SelectModeSkipVk = wParam;
+    	con.m_sel.dwFlags = 0;
+        //mb_ConsoleSelectMode = false;
+		UpdateSelection(); // обновить на экране
+		return;
+    }
+    if (messg == WM_KEYUP && wParam == mn_SelectModeSkipVk) {
+    	mn_SelectModeSkipVk = 0; // игнорируем отпускание, поскольку нажатие было на копирование/отмену
+    	return;
+    }
+    if (messg == WM_KEYDOWN && mn_SelectModeSkipVk) {
+    	mn_SelectModeSkipVk = 0; // при нажатии любой другой клавиши - сбросить флажок (во избежание)
     }
     
 
@@ -2216,9 +2406,9 @@ void CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 			}
 		}
     
-        if (messg == WM_SYSKEYDOWN) 
-            if (wParam == VK_INSERT && lParam & (1<<29)/*Бред. это 29-й бит, а не число 29*/)
-                mb_ConsoleSelectMode = true;
+        //if (messg == WM_SYSKEYDOWN) 
+        //    if (wParam == VK_INSERT && lParam & (1<<29)/*Бред. это 29-й бит, а не число 29*/)
+        //        mb_ConsoleSelectMode = true;
 
         static bool isSkipNextAltUp = false;
         if (messg == WM_SYSKEYDOWN && wParam == VK_RETURN && lParam & (1<<29)/*Бред. это 29-й бит, а не число 29*/)
@@ -6056,6 +6246,23 @@ void CRealConsole::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, i
 		// или при пропорциональном шрифте
 		// Даже если НЕ (gSet.NeedDialogDetect()) - нужно сбросить количество прямоугольников.
 		PrepareTransparent(pChar, pAttr, nWidth, nHeight);
+		
+		if (con.m_sel.dwFlags) {
+			SMALL_RECT rc = con.m_sel.srSelection;
+			if (rc.Left<0) rc.Left = 0; else if (rc.Left>=nWidth) rc.Left = nWidth-1;
+			if (rc.Top<0) rc.Top = 0; else if (rc.Top>=nHeight) rc.Top = nHeight-1;
+			if (rc.Right<0) rc.Right = 0; else if (rc.Right>=nWidth) rc.Right = nWidth-1;
+			if (rc.Bottom<0) rc.Bottom = 0; else if (rc.Bottom>=nHeight) rc.Bottom = nHeight-1;
+			// для прямоугольника выделения сбрасываем прозрачность и ставим стандартный цвет выделения (lcaSel)
+			CharAttr lcaSel = lcaTable[0x70]; // Black on LtGray
+	        for (nY = rc.Top; nY <= rc.Bottom; nY++) {
+	            pnDst = pAttr + nWidth*nY;
+	            
+	            for (nX = rc.Left; nX <= rc.Right; nX++) {
+	            	pnDst[nX] = lcaSel;
+	            }
+	        }
+		}
     }
     // Если требуется показать "статус" - принудительно перебиваем первую видимую строку возвращаемого буфера
 	if (ms_ConStatus[0]) {
@@ -8063,10 +8270,17 @@ BOOL CRealConsole::GetPanelRect(BOOL abRight, RECT* prc, BOOL abFull /*= FALSE*/
 	return TRUE;
 }
 
-bool CRealConsole::IsSelectionAllowed()
+bool CRealConsole::isSelectionAllowed()
 {
-	TODO("Пока выделение не работает");
-	// Должно ориентироваться на флаги консоли, допустимо ли выделение мышкой (Quick Edit checkbox)
+	TODO("Должно ориентироваться на флаги консоли, допустимо ли выделение мышкой (Quick Edit checkbox)");
+	if (!con.pConChar || !con.pConAttr)
+		return false; // Если данных консоли еще нет
+		
+	if (isBufferHeight())
+		return true;
+	if ((con.m_dwConsoleMode & ENABLE_QUICK_EDIT_MODE) == ENABLE_QUICK_EDIT_MODE)
+		return true;
+
 	return false;
 }
 
@@ -8074,15 +8288,14 @@ bool CRealConsole::GetConsoleSelectionInfo(CONSOLE_SELECTION_INFO *sel)
 {
 	if (!this)
 		return false;
-	if (!IsSelectionAllowed())
+	if (!isSelectionAllowed())
 		return false;
 
 	if (sel) {
 		*sel = con.m_sel;
 	}
-	TODO("Пока выделение не работает");
-	return false;
-	// return (con.m_sel.dwFlags & CONSOLE_SELECTION_NOT_EMPTY) == CONSOLE_SELECTION_NOT_EMPTY;
+	return (con.m_sel.dwFlags != 0);
+	//return (con.m_sel.dwFlags & CONSOLE_SELECTION_NOT_EMPTY) == CONSOLE_SELECTION_NOT_EMPTY;
 }
 
 void CRealConsole::GetConsoleCursorInfo(CONSOLE_CURSOR_INFO *ci)
@@ -8101,6 +8314,20 @@ void CRealConsole::GetConsoleScreenBufferInfo(CONSOLE_SCREEN_BUFFER_INFO* sbi)
 {
 	if (!this) return;
 	*sbi = con.m_sbi;
+	
+	if (con.m_sel.dwFlags) {
+		// В режиме выделения - положение курсора ставим сами
+		if (con.m_sel.dwSelectionAnchor.X == con.m_sel.srSelection.Left)
+			sbi->dwCursorPosition.X = con.m_sel.srSelection.Right;
+		else
+			sbi->dwCursorPosition.X = con.m_sel.srSelection.Left;
+
+		if (con.m_sel.dwSelectionAnchor.Y == con.m_sel.srSelection.Top)
+			sbi->dwCursorPosition.Y = con.m_sel.srSelection.Bottom;
+		else
+			sbi->dwCursorPosition.Y = con.m_sel.srSelection.Top;
+
+	}	
 }
 
 // В дальнейшем надо бы возвращать значение для активного приложения
@@ -8570,8 +8797,9 @@ BOOL CRealConsole::LoadDataFromMap(DWORD CharCount)
 		MCHKHEAP;
 		CHAR_INFO* lpCur = con.pCopy->Buf;
 
-		// Когда вернется возможность выделения - нужно сразу применять данные в атрибуты
-		_ASSERTE(!bSelectionPresent);
+		//// Когда вернется возможность выделения - нужно сразу применять данные в атрибуты
+		//_ASSERTE(!bSelectionPresent); -- не нужно. Все сделает GetConsoleData
+
 		wchar_t ch;
 		// Расфуговка буфера CHAR_INFO на текст и атрибуты
 		for (DWORD n = 0; n < CharCount; n++, lpCur++) {

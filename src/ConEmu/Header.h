@@ -178,7 +178,7 @@ typedef struct tag_RConStartArgs {
 //}
 //#endif
 
-void DisplayLastError(LPCTSTR asLabel, DWORD dwError = 0);
+int DisplayLastError(LPCTSTR asLabel, DWORD dwError = 0, DWORD dwMsgFlags = 0);
 
 COORD /*__forceinline*/ MakeCoord(int W,int H);
 //{

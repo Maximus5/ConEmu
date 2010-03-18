@@ -221,8 +221,6 @@ public:
 	BOOL isWindowVisible();
     LPCTSTR GetTitle();
     void GetConsoleScreenBufferInfo(CONSOLE_SCREEN_BUFFER_INFO* sbi);
-    bool GetConsoleSelectionInfo(CONSOLE_SELECTION_INFO *sel);
-	bool IsSelectionAllowed();
     void GetConsoleCursorInfo(CONSOLE_CURSOR_INFO *ci);
     DWORD GetConsoleCP() { return con.m_dwConsoleCP; };
     DWORD GetConsoleOutputCP() { return con.m_dwConsoleOutputCP; };
@@ -236,7 +234,10 @@ public:
     DWORD GetServerPID();
     LRESULT OnScroll(int nDirection);
 	LRESULT OnSetScrollPos(WPARAM wParam);
+    bool GetConsoleSelectionInfo(CONSOLE_SELECTION_INFO *sel);
     BOOL isConSelectMode();
+	bool isSelectionAllowed();
+	bool DoSelectionCopy();
     BOOL isFar(BOOL abPluginRequired=FALSE);
     void ShowConsole(int nMode); // -1 Toggle, 0 - Hide, 1 - Show
     BOOL isDetached();
@@ -383,7 +384,10 @@ private:
     DWORD mn_ProgramStatus, mn_FarStatus;
 	BOOL mb_IgnoreCmdStop; // ѕри запуске 16bit приложени€ не возвращать размер консоли! Ёто сделает OnWinEvent
     BOOL isShowConsole;
-    BOOL mb_ConsoleSelectMode;
+    //BOOL mb_ConsoleSelectMode;
+    WORD mn_SelectModeSkipVk; // пропустить "отпускание" клавиши Esc/Enter при выделении текста
+    void OnMouseSelection(UINT messg, WPARAM wParam, int x, int y);
+    void UpdateSelection(); // обновить на экране
     static DWORD WINAPI ServerThread(LPVOID lpvParam);
     HANDLE mh_ServerThreads[MAX_SERVER_THREADS], mh_ActiveServerThread;
     DWORD  mn_ServerThreadsId[MAX_SERVER_THREADS];

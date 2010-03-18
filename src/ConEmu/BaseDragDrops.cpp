@@ -231,12 +231,16 @@ HRESULT __stdcall CDropSource::GiveFeedback(DWORD dwEffect)
 			hCur = mh_CurLink;
 
 		}
+	} else {
+		hCur = LoadCursor(NULL, IDC_NO);
 	}
+	
+	gConEmu.SetDragCursor(hCur);
 
-	if (hCur) {
-		SetCursor(hCur);
-		hr = S_OK;
-	}
+	//if (hCur) {
+	//SetCursor(hCur);
+	hr = S_OK;
+	//}
 
 	if (mp_Callback)
 		mp_Callback->DragFeedBack(dwEffect);

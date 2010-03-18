@@ -84,6 +84,7 @@ void ServerInitFont()
 int ServerInit()
 {
 	int iRc = 0;
+	BOOL bConRc = FALSE;
 	DWORD dwErr = 0;
 	wchar_t szComSpec[MAX_PATH+1], szSelf[MAX_PATH+3];
 	wchar_t* pszSelf = szSelf+1;
@@ -106,6 +107,14 @@ int ServerInit()
 	if (!gbAttachMode && !srv.bDebuggerActive)
 		ServerInitFont();
 
+	// ¬ключить по умолчанию выделение мышью
+	if (!gbAttachMode && !(gbParmBufferSize && gnBufferHeight == 0)) {
+		HANDLE h = GetStdHandle(STD_INPUT_HANDLE);
+		DWORD dwFlags = 0;
+		bConRc = GetConsoleMode(h, &dwFlags);
+		dwFlags |= ENABLE_QUICK_EDIT_MODE;
+		bConRc = SetConsoleMode(h, dwFlags);
+	}
 
 	//2009-08-27 ѕеренес снизу
 	if (!srv.hConEmuGuiAttached) {

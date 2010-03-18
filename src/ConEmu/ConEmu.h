@@ -176,6 +176,7 @@ public:
 	BOOL mb_IsUacAdmin;
 	HCURSOR mh_CursorWait, mh_CursorArrow, mh_CursorAppStarting, mh_CursorMove;
 	HCURSOR mh_SplitV, mh_SplitH;
+	HCURSOR mh_DragCursor;
 protected:
 	CDragDrop *mp_DragDrop;
 	//CProgressBars *ProgressBars;
@@ -336,6 +337,7 @@ public:
 	BOOL RunSingleInstance();
 	bool ScreenToVCon(LPPOINT pt, CVirtualConsole** ppVCon);
 	void SetConsoleWindowSize(const COORD& size, bool updateInfo);
+	void SetDragCursor(HCURSOR hCur);
 	void SetWaitCursor(BOOL abWait);
 	bool SetWindowMode(uint inMode);
 	void ShowOldCmdVersion(DWORD nCmd, DWORD nVersion, int bFromServer);
