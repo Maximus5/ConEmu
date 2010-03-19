@@ -912,6 +912,9 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop (IDataObject * pDataObject,DWORD grfKe
 	mb_DragWithinNow = FALSE;
 	DestroyDragImageBits();
 	DestroyDragImageWindow();
+	
+	gConEmu.SetDragCursor(NULL);
+	//PostMessage(ghWnd, WM_SETCURSOR, -1, -1);
 
 	DWORD dwAllowed = *pdwEffect;
 	*pdwEffect = DROPEFFECT_COPY|DROPEFFECT_MOVE;
@@ -1975,6 +1978,7 @@ void CDragDrop::DragFeedBack(DWORD dwEffect)
 	if (dwEffect == (DWORD)-1) {
 		mb_DragWithinNow = FALSE;
 		DestroyDragImageWindow();
+		gConEmu.SetDragCursor(NULL);
 	} else if (dwEffect == DROPEFFECT_NONE) {
 		MoveDragWindow(FALSE);
 	} else {

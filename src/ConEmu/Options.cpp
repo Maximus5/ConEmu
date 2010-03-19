@@ -190,6 +190,7 @@ void CSettings::InitSettings()
 	psCmdHistory = NULL; nCmdHistorySize = 0;
     isMulti = true; icMultiNew = 'W'; icMultiNext = 'Q'; icMultiRecreate = 192/*VK_тильда*/; icMultiBuffer = 'A'; 
     isMultiNewConfirm = true; nMultiHotkeyModifier = VK_LWIN; TestHostkeyModifiers();
+    m_isKeyboardHooks = 0;
     isFARuseASCIIsort = false; isFixAltOnAltTab = false;
     isFadeInactive = true; mn_FadeLow = DEFAULT_FADE_LOW; mn_FadeHigh = DEFAULT_FADE_HIGH; mb_FadeInitialized = false;
 	//nFadeInactiveMask = 0xD0D0D0;
@@ -381,7 +382,7 @@ void CSettings::LoadSettings()
 //------------------------------------------------------------------------
     SettingsBase* reg = CreateSettings();
     lstrcpy(Type, reg->Type);
-    if (reg->OpenKey(Config, KEY_READ)) // NightRoman
+    if (reg->OpenKey(Config, KEY_READ))
     {
         TCHAR ColorName[] = L"ColorTable00";
         for (uint i = 0x20; i--;)
@@ -431,6 +432,7 @@ void CSettings::LoadSettings()
 			reg->Load(L"Multi.Recreate", icMultiRecreate);
 			reg->Load(L"Multi.NewConfirm", isMultiNewConfirm);
 			reg->Load(L"Multi.Buffer", icMultiBuffer);
+		reg->Load(L"KeyboardHooks", m_isKeyboardHooks); if (m_isKeyboardHooks>2) m_isKeyboardHooks = 0;
 
 		reg->Load(L"FontAutoSize", isFontAutoSize);
         reg->Load(L"FontSize", inSize);
@@ -623,7 +625,13 @@ void CSettings::LoadSettings()
         reg->CloseKey();
     }
     delete reg;
+    
+    
+    // Проверить необходимость установки хуков
+    isKeyboardHooks();
 
+    
+    // Стили окна
 	if (!gConEmu.WindowMode) {
 		// Иначе окно вообще не отображается
 		_ASSERTE(gConEmu.WindowMode!=0);
@@ -858,6 +866,7 @@ BOOL CSettings::SaveSettings()
 				reg->Save(L"Multi.Recreate", icMultiRecreate);
 				reg->Save(L"Multi.NewConfirm", isMultiNewConfirm);
 				reg->Save(L"Multi.Buffer", icMultiBuffer);
+			reg->Save(L"KeyboardHooks", m_isKeyboardHooks);
 
             reg->Save(L"FontName", LogFont.lfFaceName);
             reg->Save(L"FontName2", LogFont2.lfFaceName);
@@ -2937,6 +2946,43 @@ void CSettings::CenterDialog(HWND hWnd2)
 		(rcParent.left+rcParent.right-rc.right+rc.left)/2,
 		(rcParent.top+rcParent.bottom-rc.bottom+rc.top)/2,
 		rc.right - rc.left, rc.bottom - rc.top, TRUE);
+}
+
+bool CSettings::isKeyboardHooks()
+{
+	#ifndef _DEBUG
+	// Для WinXP это не было нужно
+	if (gOSVer.dwMajorVersion < 6) {
+		return false;
+	}
+	#endif
+	
+	if (m_isKeyboardHooks == 0) {
+		// Вопрос пользователю еще не задавали (это на старте, окно еще и не создано)
+		int nBtn = MessageBox(NULL, 
+						L"Do You want to use Win-Number combination for \n"
+						L"switching between consoles (Multi Console feature)? \n\n"
+						L"If You choose 'Yes' - ConEmu will install keyboard hook. \n"
+						L"So, You must allow that in antiviral software (such as AVP). \n\n"
+						L"You can change behaviour later via 'KeyboardHooks' \n"
+						L"value in ConEmu settings (registry or xml)."
+						, L"ConEmu", MB_YESNO|MB_ICONQUESTION);
+		
+		m_isKeyboardHooks = (nBtn == IDYES) ? 1 : 2;
+		
+		SettingsBase* reg = CreateSettings();
+		if (!reg) {
+			_ASSERTE(reg!=NULL);
+		} else {
+		    if (reg->OpenKey(Config, KEY_WRITE)) {
+			    reg->Save(L"KeyboardHooks", m_isKeyboardHooks);
+				reg->CloseKey();
+		    }
+		    delete reg;
+	    }
+	}
+
+	return (m_isKeyboardHooks == 1);
 }
 
 bool CSettings::IsHostkey(WORD vk)

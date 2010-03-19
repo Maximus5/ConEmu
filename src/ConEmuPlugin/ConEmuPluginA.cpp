@@ -875,6 +875,19 @@ void ReloadFarInfoA(BOOL abFull)
 	//BOOL  bFarPanelAllowed, bFarLeftPanel, bFarRightPanel;   // FCTL_CHECKPANELSEXIST, FCTL_GETPANELSHORTINFO,...
 	//CEFAR_SHORT_PANEL_INFO FarLeftPanel, FarRightPanel;
 	
+	DWORD ldwConsoleMode = 0;	GetConsoleMode(/*ghConIn*/GetStdHandle(STD_INPUT_HANDLE), &ldwConsoleMode);
+	#ifdef _DEBUG
+	static DWORD ldwDbgMode = 0;
+	if (IsDebuggerPresent()) {
+		if (ldwDbgMode != ldwConsoleMode) {
+			wchar_t szDbg[128]; wsprintfW(szDbg, L"Far.ConEmuA: ConsoleMode(STD_INPUT_HANDLE)=0x%08X\n", ldwConsoleMode);
+			OutputDebugStringW(szDbg);
+			ldwDbgMode = ldwConsoleMode;
+		}
+	}
+	#endif
+	gpFarInfo->nFarConsoleMode = ldwConsoleMode;
+
 	INT_PTR nColorSize = InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETARRAYCOLOR, NULL);
 	if (nColorSize <= (INT_PTR)sizeof(gpFarInfo->nFarColors)) {
 		nColorSize = InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETARRAYCOLOR, gpFarInfo->nFarColors);

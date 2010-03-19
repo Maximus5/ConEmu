@@ -51,6 +51,7 @@ HRESULT STDMETHODCALLTYPE CBaseDropTarget::DragOver(DWORD grfKeyState,POINTL pt,
 
 HRESULT STDMETHODCALLTYPE CBaseDropTarget::Drop (IDataObject * pDataObject,DWORD grfKeyState,POINTL pt,DWORD * pdwEffect)
 {
+	//gConEmu.SetDragCursor(NULL);
 	return 0;
 }
 

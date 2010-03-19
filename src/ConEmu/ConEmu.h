@@ -42,6 +42,9 @@ typedef interface ITaskbarList2 ITaskbarList2;
 #endif 	/* __ITaskbarList2_FWD_DEFINED__ */
 
 #define WM_TRAYNOTIFY WM_USER+1
+#define ID_CON_COPY 0xABC2
+#define ID_CON_MARKTEXT 0xABC3
+#define ID_CON_MARKBLOCK 0xABC4
 #define ID_ALWAYSONTOP 0xABC5
 #define ID_DEBUGGUI 0xABC6
 #define ID_HELP 0xABC7
@@ -370,6 +373,7 @@ public:
 	LRESULT OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnGetMinMaxInfo(LPMINMAXINFO pInfo);
 	void OnHideCaption();
+	LRESULT OnInitMenuPopup(HWND hWnd, HMENU hMenu, LPARAM lParam);
 	LRESULT OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnLangChange(UINT messg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnLangChangeConsole(CVirtualConsole *apVCon, DWORD dwLayoutName);

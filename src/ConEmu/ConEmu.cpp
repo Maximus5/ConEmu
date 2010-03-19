@@ -2944,8 +2944,12 @@ void CConEmuMain::RegisterHotKeys()
 	DWORD dwErr = 0;
 	if (!mb_HotKeyRegistered) {
 		if (RegisterHotKey(ghWnd, 0x201, MOD_CONTROL|MOD_WIN|MOD_ALT, VK_SPACE))
+		{
 			mb_HotKeyRegistered = TRUE;
-		//if (gOSVer.dwMajorVersion >= 6) {
+		}	
+			
+		if (gSet.isKeyboardHooks())
+		{
 			if (!mh_LLKeyHookDll) {
 				wchar_t szConEmuHkDll[MAX_PATH+5];
 				lstrcpy(szConEmuHkDll, ms_ConEmuExe);
@@ -2967,7 +2971,7 @@ void CConEmuMain::RegisterHotKeys()
 					}
 				}
 			}
-		//}
+		}
 	}
 }
 
@@ -3434,6 +3438,18 @@ void CConEmuMain::ShowOldCmdVersion(DWORD nCmd, DWORD nVersion, int bFromServer)
     mb_InShowOldCmdVersion = FALSE; // теперь можно показать еще одно...
 }
 
+LRESULT CConEmuMain::OnInitMenuPopup(HWND hWnd, HMENU hMenu, LPARAM lParam)
+{
+	DefWindowProc(hWnd, WM_INITMENUPOPUP, (WPARAM)hMenu, lParam);
+	
+	if (HIWORD(lParam)) {
+		BOOL bSelectionExist = ActiveCon()->RCon()->isSelectionPresent();
+    	EnableMenuItem(hMenu, ID_CON_COPY, MF_BYCOMMAND | (bSelectionExist?MF_ENABLED:MF_GRAYED));
+	}
+	
+	return 0;
+}
+
 void CConEmuMain::ShowSysmenu(HWND Wnd, int x, int y)
 {
 	if (!Wnd)
@@ -3470,6 +3486,11 @@ void CConEmuMain::ShowSysmenu(HWND Wnd, int x, int y)
 
     SendMessage(Wnd, WM_INITMENU, (WPARAM)systemMenu, 0);
     SendMessage(Wnd, WM_INITMENUPOPUP, (WPARAM)systemMenu, MAKELPARAM(0, true));
+
+    // Переехало в OnMenuPopup
+	//BOOL bSelectionExist = ActiveCon()->RCon()->isSelectionPresent();
+    //EnableMenuItem(systemMenu, ID_CON_COPY, MF_BYCOMMAND | (bSelectionExist?MF_ENABLED:MF_GRAYED));
+    
     SetActiveWindow(Wnd);
 
 	mb_InTrackSysMenu = TRUE;
@@ -4595,6 +4616,8 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
     AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_DEBUGGUI, _T("&Debug log..."));
     InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_POPUP | MF_ENABLED, (UINT_PTR)hDebug, _T("&Debug"));
     InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_CON_PASTE, _T("Paste"));
+    InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_CON_COPY, _T("Copy"));
+    InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_CON_MARKBLOCK, _T("Mark block"));
     InsertMenu(hwndMain, 0, MF_BYPOSITION, MF_SEPARATOR, 0);
     InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED | (gSet.isAlwaysOnTop ? MF_CHECKED : 0),
         ID_ALWAYSONTOP, _T("Al&ways on top..."));
@@ -7058,7 +7081,13 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
     case ID_CON_PASTE:
         mp_VActive->RCon()->Paste();
         return 0;
-        //break;
+    case ID_CON_COPY:
+        mp_VActive->RCon()->DoSelectionCopy();
+        return 0;
+    case ID_CON_MARKBLOCK:
+    case ID_CON_MARKTEXT:
+    	mp_VActive->RCon()->StartSelection(LOWORD(wParam) == ID_CON_MARKTEXT);
+        return 0;
     case ID_AUTOSCROLL:
         gSet.AutoScroll = !gSet.AutoScroll;
         CheckMenuItem(GetSystemMenu(ghWnd, FALSE), ID_AUTOSCROLL, MF_BYCOMMAND |
@@ -7836,6 +7865,11 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			gConEmu.mp_TabBar->OnCommand(wParam, lParam);
         result = 0;
         break;
+    }
+    
+    case WM_INITMENUPOPUP:
+    {
+    	return gConEmu.OnInitMenuPopup(hWnd, (HMENU)wParam, lParam);
     }
     
     case WM_ERASEBKGND:

@@ -169,7 +169,7 @@ extern wchar_t gszDbgModLabel[6];
 #define CECMD_SETDONTCLOSE  29
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    34
+#define CESERVER_REQ_VER    35
 
 #define PIPEBUFSIZE 4096
 
@@ -321,6 +321,7 @@ typedef struct tag_CEFAR_INFO {
 	BOOL bFarPanelInfoFilled;
 	BOOL bFarLeftPanel, bFarRightPanel;   
 	CEFAR_SHORT_PANEL_INFO FarLeftPanel, FarRightPanel; // FCTL_GETPANELSHORTINFO,...
+	DWORD nFarConsoleMode;
 } CEFAR_INFO;
 
 

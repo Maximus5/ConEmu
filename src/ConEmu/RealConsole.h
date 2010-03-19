@@ -221,6 +221,7 @@ public:
 	BOOL isWindowVisible();
     LPCTSTR GetTitle();
     void GetConsoleScreenBufferInfo(CONSOLE_SCREEN_BUFFER_INFO* sbi);
+    void GetConsoleCursorPos(COORD *pcr);
     void GetConsoleCursorInfo(CONSOLE_CURSOR_INFO *ci);
     DWORD GetConsoleCP() { return con.m_dwConsoleCP; };
     DWORD GetConsoleOutputCP() { return con.m_dwConsoleOutputCP; };
@@ -237,6 +238,9 @@ public:
     bool GetConsoleSelectionInfo(CONSOLE_SELECTION_INFO *sel);
     BOOL isConSelectMode();
 	bool isSelectionAllowed();
+	bool isSelectionPresent();
+	void StartSelection(BOOL abTextMode, SHORT anX=-1, SHORT anY=-1, BOOL abByMouse=FALSE);
+	void ExpandSelection(SHORT anX=-1, SHORT anY=-1);
 	bool DoSelectionCopy();
     BOOL isFar(BOOL abPluginRequired=FALSE);
     void ShowConsole(int nMode); // -1 Toggle, 0 - Hide, 1 - Show
@@ -384,7 +388,7 @@ private:
     DWORD mn_ProgramStatus, mn_FarStatus;
 	BOOL mb_IgnoreCmdStop; // ѕри запуске 16bit приложени€ не возвращать размер консоли! Ёто сделает OnWinEvent
     BOOL isShowConsole;
-    //BOOL mb_ConsoleSelectMode;
+    BOOL mb_FarGrabberActive; // бывший mb_ConsoleSelectMode
     WORD mn_SelectModeSkipVk; // пропустить "отпускание" клавиши Esc/Enter при выделении текста
     void OnMouseSelection(UINT messg, WPARAM wParam, int x, int y);
     void UpdateSelection(); // обновить на экране

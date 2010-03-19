@@ -1738,7 +1738,8 @@ void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y)
         	return;
     }
     
-    if (isConSelectMode()) {
+    //if (isConSelectMode()) -- это неправильно. она реагирует и на фаровский граббер (чтобы D&D не взлетал)
+    if (con.m_sel.dwFlags != 0) {
     	// Ручная обработка выделения, на консоль полагаться не следует...
     	OnMouseSelection(messg, wParam, x, y);
     	return;
@@ -1882,50 +1883,121 @@ void CRealConsole::OnMouseSelection(UINT messg, WPARAM wParam, int x, int y)
 	// Получить известные координаты символов
 	COORD cr = mp_VCon->ClientToConsole(x,y);
 	if (cr.X<0) cr.X = 0; else if (cr.X >= (int)TextWidth()) cr.X = TextWidth()-1;
-	if (cr.Y<0) cr.Y = 0; else if (cr.Y >= (int)TextHeight()) cr.X = TextHeight()-1;
+	if (cr.Y<0) cr.Y = 0; else if (cr.Y >= (int)TextHeight()) cr.Y = TextHeight()-1;
 
 	if (messg == WM_LBUTTONDOWN) {
 		TODO("При VK_SHIFT - менять тип выделения");
-		if (isPressed(VK_SHIFT) || isPressed(VK_SHIFT) || isPressed(VK_SHIFT))
+		if (isPressed(VK_SHIFT) || isPressed(VK_CONTROL) || isPressed(VK_MENU))
 			return; // при нажатых модификаторах - не начинать выделение!
 
-		con.m_sel.dwFlags = CONSOLE_SELECTION_IN_PROGRESS|CONSOLE_MOUSE_SELECTION;
+		TODO("Тип выделения");
+		//SetCapture(ghWnd);
+		StartSelection(FALSE, cr.X, cr.Y, TRUE);
 		
-		con.m_sel.dwSelectionAnchor = cr;
-		con.m_sel.srSelection.Left = con.m_sel.srSelection.Right = cr.X;
-		con.m_sel.srSelection.Top = con.m_sel.srSelection.Bottom = cr.Y;
-		
-		UpdateSelection();
+		//con.m_sel.dwFlags = CONSOLE_SELECTION_IN_PROGRESS|CONSOLE_MOUSE_SELECTION;
+		//
+		//con.m_sel.dwSelectionAnchor = cr;
+		//con.m_sel.srSelection.Left = con.m_sel.srSelection.Right = cr.X;
+		//con.m_sel.srSelection.Top = con.m_sel.srSelection.Bottom = cr.Y;
+		//
+		//UpdateSelection();
 
 	} else if ((con.m_sel.dwFlags & CONSOLE_MOUSE_SELECTION) && (messg == WM_MOUSEMOVE || messg == WM_LBUTTONUP)) {
 		_ASSERTE(con.m_sel.dwFlags!=0);
-		_ASSERTE(cr.X>=0 && cr.X<(int)TextWidth());
-		_ASSERTE(cr.Y>=0 && cr.Y<(int)TextHeight());
+		if (cr.X<0 || cr.X>=(int)TextWidth() || cr.Y<0 && cr.Y>=(int)TextHeight()) {
+			_ASSERTE(cr.X>=0 && cr.X<(int)TextWidth());
+			_ASSERTE(cr.Y>=0 && cr.Y<(int)TextHeight());
+			return; // Ошибка в координатах
+		}
 		
-		//con.m_sel.dwSelectionAnchor = cr;
-		if (cr.X < con.m_sel.dwSelectionAnchor.X) {
-			con.m_sel.srSelection.Left = cr.X;
-			con.m_sel.srSelection.Right = con.m_sel.dwSelectionAnchor.X;
-		} else {
-			con.m_sel.srSelection.Left = con.m_sel.dwSelectionAnchor.X;
-			con.m_sel.srSelection.Right = cr.X;
-		}
-
-		if (cr.Y < con.m_sel.dwSelectionAnchor.Y) {
-			con.m_sel.srSelection.Top = cr.Y;
-			con.m_sel.srSelection.Bottom = con.m_sel.dwSelectionAnchor.Y;
-		} else {
-			con.m_sel.srSelection.Top = con.m_sel.dwSelectionAnchor.Y;
-			con.m_sel.srSelection.Bottom = cr.Y;
-		}
-
+		////con.m_sel.dwSelectionAnchor = cr;
+		//if (cr.X < con.m_sel.dwSelectionAnchor.X) {
+		//	con.m_sel.srSelection.Left = cr.X;
+		//	con.m_sel.srSelection.Right = con.m_sel.dwSelectionAnchor.X;
+		//} else {
+		//	con.m_sel.srSelection.Left = con.m_sel.dwSelectionAnchor.X;
+		//	con.m_sel.srSelection.Right = cr.X;
+		//}
+		//
+		//if (cr.Y < con.m_sel.dwSelectionAnchor.Y) {
+		//	con.m_sel.srSelection.Top = cr.Y;
+		//	con.m_sel.srSelection.Bottom = con.m_sel.dwSelectionAnchor.Y;
+		//} else {
+		//	con.m_sel.srSelection.Top = con.m_sel.dwSelectionAnchor.Y;
+		//	con.m_sel.srSelection.Bottom = cr.Y;
+		//}
+		//
+		//UpdateSelection();
+		
+		ExpandSelection(cr.X, cr.Y);
+		
 		if (messg == WM_LBUTTONUP) {
 			con.m_sel.dwFlags &= ~CONSOLE_MOUSE_SELECTION;
+			//ReleaseCapture();
 		}
 		
-		UpdateSelection();
+		
+	} else if (con.m_sel.dwFlags && (messg == WM_RBUTTONUP)) {
+		DoSelectionCopy();
 		
 	}
+}
+
+void CRealConsole::StartSelection(BOOL abTextMode, SHORT anX/*=-1*/, SHORT anY/*=-1*/, BOOL abByMouse/*=FALSE*/)
+{
+	if (anX == -1 && anY == -1) {
+		anX = con.m_sbi.dwCursorPosition.X;
+		anY = con.m_sbi.dwCursorPosition.Y;
+	}
+	
+	
+	COORD cr = {anX,anY};
+	if (cr.X<0 || cr.X>=(int)TextWidth() || cr.Y<0 && cr.Y>=(int)TextHeight()) {
+		_ASSERTE(cr.X>=0 && cr.X<(int)TextWidth());
+		_ASSERTE(cr.Y>=0 && cr.Y<(int)TextHeight());
+		return; // Ошибка в координатах
+	}
+
+
+	con.m_sel.dwFlags = CONSOLE_SELECTION_IN_PROGRESS|(abByMouse ? CONSOLE_MOUSE_SELECTION : 0);
+	
+	con.m_sel.dwSelectionAnchor = cr;
+	con.m_sel.srSelection.Left = con.m_sel.srSelection.Right = cr.X;
+	con.m_sel.srSelection.Top = con.m_sel.srSelection.Bottom = cr.Y;
+	
+	UpdateSelection();
+}
+
+void CRealConsole::ExpandSelection(SHORT anX/*=-1*/, SHORT anY/*=-1*/)
+{
+	_ASSERTE(con.m_sel.dwFlags!=0);
+	
+	COORD cr = {anX,anY};
+	
+	if (cr.X<0 || cr.X>=(int)TextWidth() || cr.Y<0 && cr.Y>=(int)TextHeight()) {
+		_ASSERTE(cr.X>=0 && cr.X<(int)TextWidth());
+		_ASSERTE(cr.Y>=0 && cr.Y<(int)TextHeight());
+		return; // Ошибка в координатах
+	}
+	
+	//con.m_sel.dwSelectionAnchor = cr;
+	if (cr.X < con.m_sel.dwSelectionAnchor.X) {
+		con.m_sel.srSelection.Left = cr.X;
+		con.m_sel.srSelection.Right = con.m_sel.dwSelectionAnchor.X;
+	} else {
+		con.m_sel.srSelection.Left = con.m_sel.dwSelectionAnchor.X;
+		con.m_sel.srSelection.Right = cr.X;
+	}
+
+	if (cr.Y < con.m_sel.dwSelectionAnchor.Y) {
+		con.m_sel.srSelection.Top = cr.Y;
+		con.m_sel.srSelection.Bottom = con.m_sel.dwSelectionAnchor.Y;
+	} else {
+		con.m_sel.srSelection.Top = con.m_sel.dwSelectionAnchor.Y;
+		con.m_sel.srSelection.Bottom = cr.Y;
+	}
+	
+	UpdateSelection();
 }
 
 bool CRealConsole::DoSelectionCopy()
@@ -1950,7 +2022,7 @@ bool CRealConsole::DoSelectionCopy()
 		return false;
 	}
 	nSelWidth++; nSelHeight++;
-	int nCharCount = (nSelWidth+2/* "\r\n" */) * nSelHeight;
+	int nCharCount = (nSelWidth+2/* "\r\n" */) * nSelHeight - 2; // после последней строки "\r\n" не ставится
 
 	HGLOBAL hUnicode = NULL;
 
@@ -2016,6 +2088,13 @@ bool CRealConsole::DoSelectionCopy()
 
 	lbRc = CloseClipboard();
 
+
+	// Fin, Сбрасываем	
+	if (Result) {
+		con.m_sel.dwFlags = 0;
+		UpdateSelection(); // обновить на экране
+	}
+	
 	return Result;
 }
 
@@ -2277,7 +2356,15 @@ BOOL CRealConsole::isBufferHeight()
 BOOL CRealConsole::isConSelectMode()
 {
     if (!this) return false;
-    return (con.m_sel.dwFlags != 0);
+    
+    if (con.m_sel.dwFlags != 0)
+    	return true;
+    	
+    // В Фаре может быть активен граббер (AltIns)
+	if (con.m_ci.dwSize >= 50) // Попробуем его определять по высоте курсора.
+		return true;
+    
+    return false;
 }
 
 BOOL CRealConsole::isDetached()
@@ -2356,15 +2443,37 @@ void CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 #endif
 
 	TODO("Обработка Left/Right/Up/Down при выделении");
-    if (con.m_sel.dwFlags && messg == WM_KEYDOWN && ((wParam == VK_ESCAPE) || (wParam == VK_RETURN)))
+    if (con.m_sel.dwFlags && messg == WM_KEYDOWN 
+    	&& ((wParam == VK_ESCAPE) || (wParam == VK_RETURN)
+    		 || (wParam == VK_LEFT) || (wParam == VK_RIGHT) || (wParam == VK_UP) || (wParam == VK_DOWN))
+    	)
     {
-    	if (wParam == VK_RETURN) {
-    		DoSelectionCopy();
-    	}
-    	mn_SelectModeSkipVk = wParam;
-    	con.m_sel.dwFlags = 0;
-        //mb_ConsoleSelectMode = false;
-		UpdateSelection(); // обновить на экране
+    	if ((wParam == VK_ESCAPE) || (wParam == VK_RETURN))
+    	{
+	    	if (wParam == VK_RETURN) {
+	    		DoSelectionCopy();
+	    	}
+	    	mn_SelectModeSkipVk = wParam;
+	    	con.m_sel.dwFlags = 0;
+	        //mb_ConsoleSelectMode = false;
+			UpdateSelection(); // обновить на экране
+		} else {
+			COORD cr; GetConsoleCursorPos(&cr);
+			// Поправить
+			cr.Y -= con.nTopVisibleLine;
+			if (wParam == VK_LEFT)  { if (cr.X>0) cr.X--; } else
+			if (wParam == VK_RIGHT) { if (cr.X<(con.nTextWidth-1)) cr.X++; } else
+			if (wParam == VK_UP)    { if (cr.Y>0) cr.Y--; } else
+			if (wParam == VK_DOWN)  { if (cr.Y<(con.nTextHeight-1)) cr.Y++; }
+			
+			// Теперь - двигаем
+			BOOL bShift = isPressed(VK_SHIFT);
+			if (!bShift) {
+				StartSelection(FALSE/*abTextMode*/, cr.X,cr.Y);
+			} else {
+				ExpandSelection(cr.X,cr.Y);
+			}
+		}
 		return;
     }
     if (messg == WM_KEYUP && wParam == mn_SelectModeSkipVk) {
@@ -2373,6 +2482,9 @@ void CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
     }
     if (messg == WM_KEYDOWN && mn_SelectModeSkipVk) {
     	mn_SelectModeSkipVk = 0; // при нажатии любой другой клавиши - сбросить флажок (во избежание)
+    }
+    if (con.m_sel.dwFlags) {
+    	return; // В режиме выделения - в консоль ВООБЩЕ клавиатуру не посылать!
     }
     
 
@@ -6336,6 +6448,11 @@ void CRealConsole::OnDeactivate(int nNewNum)
         ShowWindow(hPic, SW_HIDE);
     }
 
+    if (con.m_sel.dwFlags & CONSOLE_MOUSE_SELECTION) {
+		con.m_sel.dwFlags &= ~CONSOLE_MOUSE_SELECTION;
+		//ReleaseCapture();
+	}
+    
     //if (mh_MonitorThread) SetThreadPriority(mh_MonitorThread, THREAD_PRIORITY_NORMAL);
 }
 
@@ -8272,16 +8389,32 @@ BOOL CRealConsole::GetPanelRect(BOOL abRight, RECT* prc, BOOL abFull /*= FALSE*/
 
 bool CRealConsole::isSelectionAllowed()
 {
-	TODO("Должно ориентироваться на флаги консоли, допустимо ли выделение мышкой (Quick Edit checkbox)");
+	if (!this)
+		return false;
+
 	if (!con.pConChar || !con.pConAttr)
 		return false; // Если данных консоли еще нет
 		
+	if (con.m_sel.dwFlags != 0)
+		return true; // Если выделение было запущено через меню
 	if (isBufferHeight())
 		return true;
 	if ((con.m_dwConsoleMode & ENABLE_QUICK_EDIT_MODE) == ENABLE_QUICK_EDIT_MODE)
 		return true;
+	if (mp_ConsoleInfo && isFar(TRUE)) {
+		if ((mp_ConsoleInfo->FarInfo.nFarInterfaceSettings & 4/*FIS_MOUSE*/) == 0)
+			return true;
+	}
 
 	return false;
+}
+
+bool CRealConsole::isSelectionPresent()
+{
+	if (!this)
+		return false;
+
+	return (con.m_sel.dwFlags != 0);
 }
 
 bool CRealConsole::GetConsoleSelectionInfo(CONSOLE_SELECTION_INFO *sel)
@@ -8304,7 +8437,7 @@ void CRealConsole::GetConsoleCursorInfo(CONSOLE_CURSOR_INFO *ci)
 	*ci = con.m_ci;
 	// Если сейчас выделяется текст мышкой (ConEmu internal)
 	// то курсор нужно переключить в половину знакоместа!
-	if (GetConsoleSelectionInfo(NULL)) {
+	if (isSelectionPresent()) {
 		if (ci->dwSize < 50)
 			ci->dwSize = 50;
 	}
@@ -8317,17 +8450,37 @@ void CRealConsole::GetConsoleScreenBufferInfo(CONSOLE_SCREEN_BUFFER_INFO* sbi)
 	
 	if (con.m_sel.dwFlags) {
 		// В режиме выделения - положение курсора ставим сами
+		GetConsoleCursorPos(&(sbi->dwCursorPosition));
+		
+		//if (con.m_sel.dwSelectionAnchor.X == con.m_sel.srSelection.Left)
+		//	sbi->dwCursorPosition.X = con.m_sel.srSelection.Right;
+		//else
+		//	sbi->dwCursorPosition.X = con.m_sel.srSelection.Left;
+		//
+		//if (con.m_sel.dwSelectionAnchor.Y == con.m_sel.srSelection.Top)
+		//	sbi->dwCursorPosition.Y = con.m_sel.srSelection.Bottom;
+		//else
+		//	sbi->dwCursorPosition.Y = con.m_sel.srSelection.Top;
+	}	
+}
+
+void CRealConsole::GetConsoleCursorPos(COORD *pcr)
+{
+	if (con.m_sel.dwFlags) {
+		// В режиме выделения - положение курсора ставим сами
 		if (con.m_sel.dwSelectionAnchor.X == con.m_sel.srSelection.Left)
-			sbi->dwCursorPosition.X = con.m_sel.srSelection.Right;
+			pcr->X = con.m_sel.srSelection.Right;
 		else
-			sbi->dwCursorPosition.X = con.m_sel.srSelection.Left;
+			pcr->X = con.m_sel.srSelection.Left;
 
 		if (con.m_sel.dwSelectionAnchor.Y == con.m_sel.srSelection.Top)
-			sbi->dwCursorPosition.Y = con.m_sel.srSelection.Bottom;
+			pcr->Y = con.m_sel.srSelection.Bottom + con.nTopVisibleLine;
 		else
-			sbi->dwCursorPosition.Y = con.m_sel.srSelection.Top;
+			pcr->Y = con.m_sel.srSelection.Top + con.nTopVisibleLine;
 
-	}	
+	} else {
+		*pcr = con.m_sbi.dwCursorPosition;
+	}
 }
 
 // В дальнейшем надо бы возвращать значение для активного приложения

@@ -104,15 +104,15 @@ int ServerInit()
 	}
 
 	// Ўрифт в консоли нужно мен€ть в самом начале, иначе могут быть проблемы с установкой размера консоли
-	if (!gbAttachMode && !srv.bDebuggerActive)
+	if (!gbNoCreateProcess && !srv.bDebuggerActive)
 		ServerInitFont();
 
 	// ¬ключить по умолчанию выделение мышью
-	if (!gbAttachMode && !(gbParmBufferSize && gnBufferHeight == 0)) {
+	if (!gbNoCreateProcess /*&& !(gbParmBufferSize && gnBufferHeight == 0)*/) {
 		HANDLE h = GetStdHandle(STD_INPUT_HANDLE);
 		DWORD dwFlags = 0;
 		bConRc = GetConsoleMode(h, &dwFlags);
-		dwFlags |= ENABLE_QUICK_EDIT_MODE;
+		dwFlags |= (ENABLE_QUICK_EDIT_MODE|ENABLE_EXTENDED_FLAGS|ENABLE_INSERT_MODE);
 		bConRc = SetConsoleMode(h, dwFlags);
 	}
 
@@ -1307,7 +1307,11 @@ static BOOL ReadConsoleInfo()
 		srv.dwConsoleOutputCP = ldwConsoleOutputCP; lbChanged = TRUE;
 	}
 
-	ldwConsoleMode = 0;	GetConsoleMode(/*ghConIn*/GetStdHandle(STD_INPUT_HANDLE), &ldwConsoleMode);
+	ldwConsoleMode = 0;	
+	#ifdef _DEBUG
+	BOOL lbConModRc =
+	#endif
+	GetConsoleMode(/*ghConIn*/GetStdHandle(STD_INPUT_HANDLE), &ldwConsoleMode);
 	if (srv.dwConsoleMode!=ldwConsoleMode) {
 		srv.dwConsoleMode = ldwConsoleMode; lbChanged = TRUE;
 	}

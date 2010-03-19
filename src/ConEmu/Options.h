@@ -149,7 +149,9 @@ protected:
 	wchar_t mszCharRanges[120];
 	CharRanges icFixFarBorderRanges[10];
 	bool *mpc_FixFarBorderValues;
+	BYTE m_isKeyboardHooks;
 public:
+	bool isKeyboardHooks();
 	bool isCharBorder(wchar_t inChar);
     BYTE isPartBrush75, isPartBrush50, isPartBrush25;
     bool isCursorV;
