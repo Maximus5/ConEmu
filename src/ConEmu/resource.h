@@ -23,6 +23,8 @@
 #define IDD_DIALOG1                     202
 #define IDD_MORE_HOTKEYS                202
 #define IDD_MORE_FADE                   203
+#define IDD_MORE_SELECTION              204
+#define IDR_TABMENU                     205
 #define c0                              1000
 #define c1                              1001
 #define c2                              1002
@@ -250,19 +252,39 @@
 #define cbHostLShift                    1617
 #define cbHostRShift                    1618
 #define cbHandleFarDetach               1619
-#define IDC_CHECK1                      1620
+#define cbConsoleTextSelection          1620
 #define cbHookFarRegistry               1621
 #define tCursorPos                      1622
 #define tFadeLow                        1624
 #define tFadeHigh                       1625
+#define bConsoleTextSelection           1627
+#define bCTSSettings                    1627
+#define rbCTSAlways                     1628
+#define rbCTSBufferOnly                 1629
+#define cbCTSTextSelection              1630
+#define lbCTSMBtnAction                 1631
+#define lbCTSRBtnAction                 1632
+#define lbCTSBlockSelection             1633
+#define lbCTSTextSelection              1634
+#define cbCTSBlockSelection             1635
+#define lbCTSForeIdx                    1636
+#define lbCTSBackIdx                    1637
+#define IDM_CLOSE                       40001
+#define IDM_RESTART                     40002
+#define IDM_RESTARTAS                   40003
+#define IDM_TERMINATE                   40004
+#define IDM_NEW                         40005
+#define IDM_ADMIN_DUPLICATE             40006
+#define IDM_SAVE                        40007
+#define IDM_SAVEALL                     40008
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        204
-#define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1627
+#define _APS_NEXT_RESOURCE_VALUE        206
+#define _APS_NEXT_COMMAND_VALUE         40009
+#define _APS_NEXT_CONTROL_VALUE         1638
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

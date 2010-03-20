@@ -72,6 +72,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define FAR_ALIVE_TIMEOUT gSet.nFarHourglassDelay //1000
 
+#define CONSOLE_BLOCK_SELECTION 0x0100 // selecting text (standard mode)
+#define CONSOLE_TEXT_SELECTION 0x0200 // selecting text (stream mode)
+
 /*#pragma pack(push, 1)
 
 
@@ -207,6 +210,8 @@ private:
     DWORD mn_FlushIn, mn_FlushOut;
 public:
     void PostConsoleEvent(INPUT_RECORD* piRec);
+	void PostKeyPress(WORD vkKey, DWORD dwControlState, wchar_t wch, int ScanCode = -1);
+	void PostKeyUp(WORD vkKey, DWORD dwControlState, wchar_t wch, int ScanCode = -1);
 	void PostConsoleEventPipe(MSG *pMsg);
 	LRESULT PostConsoleMessage(UINT nMsg, WPARAM wParam, LPARAM lParam);
     //BOOL FlushInputQueue(DWORD nTimeout = 500);
@@ -390,7 +395,7 @@ private:
     BOOL isShowConsole;
     BOOL mb_FarGrabberActive; // бывший mb_ConsoleSelectMode
     WORD mn_SelectModeSkipVk; // пропустить "отпускание" клавиши Esc/Enter при выделении текста
-    void OnMouseSelection(UINT messg, WPARAM wParam, int x, int y);
+    bool OnMouseSelection(UINT messg, WPARAM wParam, int x, int y);
     void UpdateSelection(); // обновить на экране
     static DWORD WINAPI ServerThread(LPVOID lpvParam);
     HANDLE mh_ServerThreads[MAX_SERVER_THREADS], mh_ActiveServerThread;

@@ -4617,6 +4617,7 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
     InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_POPUP | MF_ENABLED, (UINT_PTR)hDebug, _T("&Debug"));
     InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_CON_PASTE, _T("Paste"));
     InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_CON_COPY, _T("Copy"));
+	InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_CON_MARKTEXT, _T("Mark text"));
     InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_CON_MARKBLOCK, _T("Mark block"));
     InsertMenu(hwndMain, 0, MF_BYPOSITION, MF_SEPARATOR, 0);
     InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED | (gSet.isAlwaysOnTop ? MF_CHECKED : 0),
@@ -5728,18 +5729,11 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
     if (gSet.FontWidth()==0 || gSet.FontHeight()==0)
         return 0;
 
-#ifdef MSGLOGGER
-    if (messg != WM_MOUSEMOVE) {
-        TODO("SetConsoleMode");
-        /*DWORD mode = 0;
-        BOOL lb = GetConsoleMode(mp_VActive->hConIn(), &mode);
-        if (!(mode & ENABLE_MOUSE_INPUT)) {
-            mode |= ENABLE_MOUSE_INPUT;
-            DEBUGSTR(L"!!! Enabling mouse input in console\n");
-            lb = SetConsoleMode(mp_VActive->hConIn(), mode);
-        }*/
-    }
+#ifdef _DEBUG
+	wchar_t szDbg[60]; wsprintf(szDbg, L"GUI::MouseEvent at screen {%ix%i}\n", ptCur.x,ptCur.y);
+	DEBUGSTRMOUSE(szDbg);
 #endif
+
 
     if ((messg==WM_LBUTTONUP || messg==WM_MOUSEMOVE) && (gConEmu.mouse.state & MOUSE_SIZING_DBLCKL)) {
         if (messg==WM_LBUTTONUP)
@@ -5751,6 +5745,15 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
         if (m_Back.TrackMouse())
             return 0;
     }
+
+	if (mp_VActive->RCon()->isSelectionPresent()
+		&& ((wParam & MK_LBUTTON) || messg == WM_LBUTTONUP))
+	{
+		ptCur.x -= dcRect.left; ptCur.y -= dcRect.top;
+		mp_VActive->RCon()->OnMouse(messg, wParam, ptCur.x, ptCur.y);
+		return 0;
+	}
+
 
     // Иначе в консоль проваливаются щелчки по незанятому полю таба...
     //if (messg==WM_LBUTTONDOWN || messg==WM_RBUTTONDOWN || messg==WM_MBUTTONDOWN || 
@@ -5775,7 +5778,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
     short conY = cr.Y; //winY/gSet.Log Font.lfHeight;
 
     if (conY<0 || conY<0) {
-        DEBUGLOGFILE("Mouse outside of upper-left");
+		DEBUGLOGFILE("Mouse outside of upper-left");
         return 0;
     }
     
@@ -6693,11 +6696,19 @@ enum DragPanelBorder CConEmuMain::CheckPanelDrag(COORD crCon)
 		return DPB_NONE;
 	if (!pRCon->isFar() || !pRCon->isFilePanel(true))
 		return DPB_NONE;
+
+	// Если активен наш или ФАРовский граббер
+	if (pRCon->isConSelectMode())
+		return DPB_NONE;
+	// Если удерживается модификатор запуска драга
+	if ((gSet.isCTSSelectBlock && gSet.isCTSVkBlock && gSet.isModifierPressed(gSet.isCTSVkBlock))
+		|| (gSet.isCTSSelectText && gSet.isCTSVkText && gSet.isModifierPressed(gSet.isCTSVkText)))
+		return DPB_NONE;
 		
-	CONSOLE_CURSOR_INFO ci;
-	mp_VActive->RCon()->GetConsoleCursorInfo(&ci);
-    if (!ci.bVisible || ci.dwSize>40) // Курсор должен быть видим, и не в режиме граба
-    	return DPB_NONE;
+	//CONSOLE_CURSOR_INFO ci;
+	//mp_VActive->RCon()->GetConsoleCursorInfo(&ci);
+	//   if (!ci.bVisible || ci.dwSize>40) // Курсор должен быть видим, и не в режиме граба
+	//   	return DPB_NONE;
 
 	// Теперь - можно проверить	
 	enum DragPanelBorder dpb = DPB_NONE;

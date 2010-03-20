@@ -384,7 +384,7 @@ END
 IDD_SPG_INFO DIALOGEX 0, 0, 328, 224
 STYLE DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
-FONT 8, "MS Shell Dlg"
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     GROUPBOX        "Performance counters",gbPerformance,4,4,319,30
     RTEXT           "Render:",IDC_STATIC,133,17,27,8
@@ -513,41 +513,42 @@ BEGIN
     COMBOBOX        lbNtvdmHeight,264,103,54,30,CBS_DROPDOWNLIST | 
                     WS_TABSTOP
     CONTROL         "ASCII sort function in FAR",cbFARuseASCIIsort,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,10,196,117,8
+                    BS_AUTOCHECKBOX | WS_TABSTOP,10,208,117,8
     CONTROL         "Fix Alt on AltTab",cbFixAltOnAltTab,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,242,152,76,8
     CONTROL         "Hourglass if not responding",cbFarHourglass,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,10,208,101,8
+                    BS_AUTOCHECKBOX | WS_TABSTOP,10,196,101,8
     CONTROL         "Hide caption when maximized",cbHideCaption,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,10,185,117,8
     CONTROL         "Write debug log-files",cbLogs,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,132,185,91,8
     GROUPBOX        "Miscellaneous options",IDC_STATIC,4,129,319,104
     CONTROL         "Resize panels by mouse",cbDragPanel,"Button",
-                    BS_AUTO3STATE | WS_TABSTOP,132,196,93,8
+                    BS_AUTO3STATE | WS_TABSTOP,132,208,93,8
     CONTROL         "Hide caption always",cbHideCaptionAlways,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,132,208,81,8
+                    BS_AUTOCHECKBOX | WS_TABSTOP,132,196,81,8
     CONTROL         "Center console",cbTryToCenter,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,242,185,76,8
     CONTROL         "Always on top",cbAlwaysOnTop,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,242,208,76,8
     CONTROL         "Desktop mode",cbDesktopMode,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,242,196,76,8
-    PUSHBUTTON      "...",bHideCaptionSettings,216,207,13,11
+    PUSHBUTTON      "...",bHideCaptionSettings,216,195,13,11
     PUSHBUTTON      "Hotkeys...",bMultiConHotkeys,9,102,48,13
     CONTROL         "Toolbar",cbToolbar,"Button",BS_AUTOCHECKBOX | 
                     WS_DISABLED | WS_TABSTOP,167,89,49,8
-    PUSHBUTTON      "...",bFarHourglass,114,207,13,11,WS_DISABLED
+    PUSHBUTTON      "...",bFarHourglass,114,195,13,11,WS_DISABLED
     PUSHBUTTON      "...",bRClick,114,139,13,11,WS_DISABLED
     PUSHBUTTON      "More...",bTabTemplates,270,12,48,13,WS_DISABLED
     PUSHBUTTON      "...",bRealConsoleSettings,216,139,13,11,WS_DISABLED
     PUSHBUTTON      "...",bDropSettings,165,41,13,11,WS_DISABLED
     CONTROL         "Handle FAR detach",cbHandleFarDetach,"Button",
                     BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,132,219,82,8
-    CONTROL         "Monitor Far panel contents",IDC_CHECK1,"Button",
-                    BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,10,219,100,8
+    CONTROL         "Select text with mouse",cbConsoleTextSelection,"Button",
+                    BS_AUTO3STATE | WS_TABSTOP,10,219,101,8
     CONTROL         "Hook FAR registry",cbHookFarRegistry,"Button",
                     BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,242,219,76,8
+    PUSHBUTTON      "...",bCTSSettings,114,217,13,11
 END
 
 IDD_RESTART DIALOG DISCARDABLE  0, 0, 310, 98
@@ -607,6 +608,38 @@ BEGIN
     EDITTEXT        tFadeHigh,89,20,20,12,ES_AUTOHSCROLL
 END
 
+IDD_MORE_SELECTION DIALOG DISCARDABLE  0, 0, 147, 106
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Console text selection"
+FONT 8, "MS Sans Serif"
+BEGIN
+    CONTROL         "Always",rbCTSAlways,"Button",BS_AUTORADIOBUTTON,43,4,47,
+                    10
+    CONTROL         "Buffer only",rbCTSBufferOnly,"Button",
+                    BS_AUTORADIOBUTTON,93,4,49,10
+    LTEXT           "Enabled:",IDC_STATIC,4,5,34,8
+    LTEXT           "Right mouse button:",IDC_STATIC,4,58,78,8
+    LTEXT           "Middle mouse button:",IDC_STATIC,4,74,80,8
+    COMBOBOX        lbCTSMBtnAction,87,72,56,30,CBS_DROPDOWNLIST | 
+                    WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        lbCTSRBtnAction,87,56,56,30,CBS_DROPDOWNLIST | 
+                    WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        lbCTSBlockSelection,87,20,56,30,CBS_DROPDOWNLIST | 
+                    WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Block selection",cbCTSBlockSelection,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,4,21,68,8
+    CONTROL         "Text selection",cbCTSTextSelection,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,4,37,68,8
+    COMBOBOX        lbCTSTextSelection,87,36,56,30,CBS_DROPDOWNLIST | 
+                    WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Fore. Index:",IDC_STATIC,4,92,38,8
+    COMBOBOX        lbCTSForeIdx,46,90,24,30,CBS_DROPDOWNLIST | CBS_SORT | 
+                    WS_VSCROLL | WS_TABSTOP
+    RTEXT           "Back. Index:",IDC_STATIC,74,92,43,8
+    COMBOBOX        lbCTSBackIdx,119,90,24,30,CBS_DROPDOWNLIST | CBS_SORT | 
+                    WS_VSCROLL | WS_TABSTOP
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -652,6 +685,14 @@ BEGIN
         TOPMARGIN, 7
         BOTTOMMARGIN, 48
     END
+
+    IDD_MORE_SELECTION, DIALOG
+    BEGIN
+        LEFTMARGIN, 4
+        RIGHTMARGIN, 143
+        TOPMARGIN, 4
+        BOTTOMMARGIN, 102
+    END
 END
 #endif    // APSTUDIO_INVOKED
 
@@ -685,6 +726,31 @@ IDB_SHIELD              BITMAP  MOVEABLE PURE   "Shield.bmp"
 IDI_ICON1               ICON    DISCARDABLE     "ConEmu.ico"
 IDI_ICON2               ICON    DISCARDABLE     "Far.ico"
 IDI_ICON3               ICON    DISCARDABLE     "Far2.ico"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Menu
+//
+
+IDR_TABMENU MENU DISCARDABLE 
+BEGIN
+    POPUP "Tab menu"
+    BEGIN
+        MENUITEM "&Close",                      IDM_CLOSE
+        MENUITEM SEPARATOR
+        MENUITEM "&Restart",                    IDM_RESTART
+        MENUITEM "Restart as...",               IDM_RESTARTAS
+        MENUITEM "&Terminate",                  IDM_TERMINATE
+        MENUITEM SEPARATOR
+        MENUITEM "New console...",              IDM_NEW
+        MENUITEM SEPARATOR
+        MENUITEM "New copy as Admin",           IDM_ADMIN_DUPLICATE
+        MENUITEM SEPARATOR
+        MENUITEM "&Save",                       IDM_SAVE
+        MENUITEM "Save &all",                   IDM_SAVEALL
+    END
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //

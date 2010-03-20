@@ -112,7 +112,32 @@ namespace Settings {
     const WCHAR* szKeys[] = {L"<None>", L"Left Ctrl", L"Right Ctrl", L"Left Alt", L"Right Alt", L"Left Shift", L"Right Shift"};
     const DWORD  nKeys[] =  {0,         VK_LCONTROL,  VK_RCONTROL,   VK_LMENU,    VK_RMENU,     VK_LSHIFT,     VK_RSHIFT};
     const BYTE   FSizes[] = {0, 8, 10, 12, 14, 16, 18, 19, 20, 24, 26, 28, 30, 32, 34, 36, 40, 46, 50, 52, 72};
+	const WCHAR* szClipAct[] = {L"<None>", L"Copy", L"Paste"};
+	const DWORD  nClipAct[] =  {0,         1,       2};
+	const WCHAR* szColorIdx[] = {L" 0", L" 1", L" 2", L" 3", L" 4", L" 5", L" 6", L" 7", L" 8", L" 9", L"10", L"11", L"12", L"13", L"14", L"15", L"None"};
+	const DWORD  nColorIdx[] = {    0,     1,     2,     3,     4,     5,     6,     7,     8,     9,    10,    11,    12,    13,    14,    15,    16};
+	const WCHAR* szColorIdxSh[] = {L"# 0", L"# 1", L"# 2", L"# 3", L"# 4", L"# 5", L"# 6", L"# 7", L"# 8", L"# 9", L"#10", L"#11", L"#12", L"#13", L"#14", L"#15"};
+	const DWORD  nColorIdxSh[] = {    0,     1,     2,     3,     4,     5,     6,     7,     8,     9,    10,    11,    12,    13,    14,    15};
 };
+
+#define FillListBox(hDlg,nDlgID,Items,Values,Value) \
+	_ASSERTE(sizeofarray(Items) == sizeofarray(Values)); \
+	FillListBoxItems(GetDlgItem(hDlg,nDlgID), sizeofarray(Items), Items, Values, Value)
+#define FillListBoxByte(hDlg,nDlgID,Items,Values,Value) \
+	_ASSERTE(sizeofarray(Items) == sizeofarray(Values)); { \
+	DWORD dwVal = Value; \
+	FillListBoxItems(GetDlgItem(hDlg,nDlgID), sizeofarray(Items), Items, Values, dwVal); \
+	Value = dwVal; }
+
+#define GetListBox(hDlg,nDlgID,Items,Values,Value) \
+	_ASSERTE(sizeofarray(Items) == sizeofarray(Values)); \
+	GetListBoxItem(GetDlgItem(hDlg,nDlgID), sizeofarray(Items), Items, Values, Value)
+#define GetListBoxByte(hDlg,nDlgID,Items,Values,Value) \
+	_ASSERTE(sizeofarray(Items) == sizeofarray(Values)); { \
+	DWORD dwVal = Value; \
+	GetListBoxItem(GetDlgItem(hDlg,nDlgID), sizeofarray(Items), Items, Values, dwVal); \
+	Value = dwVal; }
+
 
 CSettings::CSettings()
 {
@@ -322,6 +347,13 @@ void CSettings::InitSettings()
 	isCursorColor = false;
 	isCursorBlockInactive = true;
     
+	isConsoleTextSelection = 2; // BufferOnly
+	isCTSSelectBlock = true; isCTSVkBlock = 0; // по умолчанию - блок выделяется без модификаторов
+	isCTSSelectText = true; isCTSVkText = VK_LMENU; // а текст - при нажатом LAlt
+	isCTSRBtnAction = 1; // Copy
+	isCTSMBtnAction = 0; // Paste
+	isCTSColorIndex = 0xE0;
+
     isTabs = 1; isTabSelf = true; isTabRecent = true; isTabLazy = true;
     lstrcpyW(sTabFontFace, L"Tahoma"); nTabFontCharSet = ANSI_CHARSET; nTabFontHeight = 16;
 	sTabCloseMacro = NULL;
@@ -477,6 +509,15 @@ void CSettings::LoadSettings()
         reg->Load(L"CursorColor", isCursorColor);
 		reg->Load(L"CursorBlink", isCursorBlink);
 		reg->Load(L"CursorBlockInactive", isCursorBlockInactive);
+
+		reg->Load(L"ConsoleTextSelection", isConsoleTextSelection); if (isConsoleTextSelection>2) isConsoleTextSelection = 2;
+			reg->Load(L"CTS.SelectBlock", isCTSSelectBlock);
+			reg->Load(L"CTS.VkBlock", isCTSVkBlock);
+			reg->Load(L"CTS.SelectText", isCTSSelectText);
+			reg->Load(L"CTS.VkText", isCTSVkText);
+			reg->Load(L"CTS.RBtnAction", isCTSRBtnAction); if (isCTSRBtnAction>2) isCTSRBtnAction = 0;
+			reg->Load(L"CTS.MBtnAction", isCTSMBtnAction); if (isCTSMBtnAction>2) isCTSMBtnAction = 0;
+			reg->Load(L"CTS.ColorIndex", isCTSColorIndex); if ((isCTSColorIndex & 0xF) == ((isCTSColorIndex & 0xF0)>>4)) isCTSColorIndex = 0xE0;
 
 		if (!reg->Load(L"FixFarBorders", isFixFarBorders))
 			reg->Load(L"Experimental", isFixFarBorders);
@@ -911,6 +952,15 @@ BOOL CSettings::SaveSettings()
             reg->Save(L"CursorColor", isCursorColor);
 			reg->Save(L"CursorBlink", isCursorBlink);
 			reg->Save(L"CursorBlockInactive", isCursorBlockInactive);
+
+			reg->Save(L"ConsoleTextSelection", isConsoleTextSelection);
+				reg->Save(L"CTS.SelectBlock", isCTSSelectBlock);
+				reg->Save(L"CTS.VkBlock", isCTSVkBlock);
+				reg->Save(L"CTS.SelectText", isCTSSelectText);
+				reg->Save(L"CTS.VkText", isCTSVkText);
+				reg->Save(L"CTS.RBtnAction", isCTSRBtnAction);
+				reg->Save(L"CTS.MBtnAction", isCTSMBtnAction);
+				reg->Save(L"CTS.ColorIndex", isCTSColorIndex);
 
             reg->Save(L"FixFarBorders", isFixFarBorders);
             reg->Save(L"FixFarBordersRanges", mszCharRanges);
@@ -1482,21 +1532,24 @@ LRESULT CSettings::OnInitDialog_Ext()
 	}
 	if (isDropEnabled) CheckDlgButton(hExt, cbDropEnabled, (isDropEnabled==1) ? BST_CHECKED : BST_INDETERMINATE);
 	if (isDefCopy) CheckDlgButton(hExt, cbDnDCopy, BST_CHECKED);
-	// просто группировка
-	{
-		uint nKeyCount = sizeofarray(Settings::szKeys);
-		u8 numL = 0, numR = 0;
-		for (uint i=0; i<nKeyCount; i++) {
-			SendDlgItemMessage(hExt, lbLDragKey, CB_ADDSTRING, 0, (LPARAM) Settings::szKeys[i]);
-			SendDlgItemMessage(hExt, lbRDragKey, CB_ADDSTRING, 0, (LPARAM) Settings::szKeys[i]);
-			if (Settings::nKeys[i] == nLDragKey) numL = i;
-			if (Settings::nKeys[i] == nRDragKey) numR = i;
-		}
-		if (!numL) nLDragKey = 0; // если код клавиши неизвестен?
-		if (!numR) nRDragKey = 0; // если код клавиши неизвестен?
-		SendDlgItemMessage(hExt, lbLDragKey, CB_SETCURSEL, numL, 0);
-		SendDlgItemMessage(hExt, lbRDragKey, CB_SETCURSEL, numR, 0);
-	}
+	// Списки
+	FillListBox(hExt, lbLDragKey, Settings::szKeys, Settings::nKeys, nLDragKey);
+	FillListBox(hExt, lbRDragKey, Settings::szKeys, Settings::nKeys, nRDragKey);
+	//// просто группировка
+	//{
+	//	uint nKeyCount = sizeofarray(Settings::szKeys);
+	//	u8 numL = 0, numR = 0;
+	//	for (uint i=0; i<nKeyCount; i++) {
+	//		SendDlgItemMessage(hExt, lbLDragKey, CB_ADDSTRING, 0, (LPARAM) Settings::szKeys[i]);
+	//		SendDlgItemMessage(hExt, lbRDragKey, CB_ADDSTRING, 0, (LPARAM) Settings::szKeys[i]);
+	//		if (Settings::nKeys[i] == nLDragKey) numL = i;
+	//		if (Settings::nKeys[i] == nRDragKey) numR = i;
+	//	}
+	//	if (!numL) nLDragKey = 0; // если код клавиши неизвестен?
+	//	if (!numR) nRDragKey = 0; // если код клавиши неизвестен?
+	//	SendDlgItemMessage(hExt, lbLDragKey, CB_SETCURSEL, numL, 0);
+	//	SendDlgItemMessage(hExt, lbRDragKey, CB_SETCURSEL, numR, 0);
+	//}
 	// Overlay
 	if (isDragOverlay) CheckDlgButton(hExt, cbDragImage, (isDragOverlay==1) ? BST_CHECKED : BST_INDETERMINATE);
 	if (isDragShowIcons) CheckDlgButton(hExt, cbDragIcons, BST_CHECKED);
@@ -1524,6 +1577,8 @@ LRESULT CSettings::OnInitDialog_Ext()
 	
 	if (isSkipFocusEvents)
 		CheckDlgButton(hExt, cbSkipFocusEvents, BST_CHECKED);
+
+	CheckDlgButton(hExt, cbConsoleTextSelection, isConsoleTextSelection);
 
 	if (isMulti)
 		CheckDlgButton(hExt, cbMultiCon, BST_CHECKED);
@@ -1852,6 +1907,14 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
 
 	case bHideCaptionSettings:
 		DialogBox(g_hInstance, MAKEINTRESOURCE(IDD_MORE_HIDE), ghOpWnd, hideOpProc);
+		break;
+
+	case cbConsoleTextSelection:
+		isConsoleTextSelection = IsChecked(hExt, cbConsoleTextSelection);
+		break;
+
+	case bCTSSettings:
+		DialogBox(g_hInstance, MAKEINTRESOURCE(IDD_MORE_SELECTION), ghOpWnd, selectionOpProc);
 		break;
 
     case cbFARuseASCIIsort:
@@ -2348,22 +2411,27 @@ LRESULT CSettings::OnComboBox(WPARAM wParam, LPARAM lParam)
 		else
 			mn_LastChangingFontCtrlId = wId;
     } else 
-    if (wId == lbLDragKey || wId == lbRDragKey) {
-        int num = SendDlgItemMessage(hExt, wId, CB_GETCURSEL, 0, 0);
-        int nKeyCount = sizeofarray(Settings::szKeys);
-        if (num>=0 && num<nKeyCount) {
-            if (wId == lbLDragKey)
-                nLDragKey = Settings::nKeys[num];
-            else
-                nRDragKey = Settings::nKeys[num];
-        } else {
-            if (wId == lbLDragKey)
-                nLDragKey = 0;
-            else
-                nRDragKey = 0;
-            if (num) // Invalid index?
-                SendDlgItemMessage(hExt, wId, CB_SETCURSEL, num=0, 0);
-        }
+	if (wId == lbLDragKey) {
+		GetListBox(hExt,wId,Settings::szKeys,Settings::nKeys,nLDragKey);
+	} else
+	if (wId == lbLDragKey) {
+		GetListBox(hExt,wId,Settings::szKeys,Settings::nKeys,nRDragKey);
+    //} else if (wId == lbLDragKey || wId == lbRDragKey) {
+    //    int num = SendDlgItemMessage(hExt, wId, CB_GETCURSEL, 0, 0);
+    //    int nKeyCount = sizeofarray(Settings::szKeys);
+    //    if (num>=0 && num<nKeyCount) {
+    //        if (wId == lbLDragKey)
+    //            nLDragKey = Settings::nKeys[num];
+    //        else
+    //            nRDragKey = Settings::nKeys[num];
+    //    } else {
+    //        if (wId == lbLDragKey)
+    //            nLDragKey = 0;
+    //        else
+    //            nRDragKey = 0;
+    //        if (num) // Invalid index?
+    //            SendDlgItemMessage(hExt, wId, CB_SETCURSEL, num=0, 0);
+    //    }
 	} else if (wId == lbNtvdmHeight) {
 		int num = SendDlgItemMessage(hExt, wId, CB_GETCURSEL, 0, 0);
 		ntvdmHeight = (num == 1) ? 25 : ((num == 2) ? 28 : ((num == 3) ? 43 : ((num == 4) ? 50 : 0)));
@@ -2937,16 +3005,16 @@ INT_PTR CSettings::infoOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
     return 0;
 }
 
-void CSettings::CenterDialog(HWND hWnd2)
-{
-	RECT rcParent, rc;
-	GetWindowRect(ghOpWnd, &rcParent);
-	GetWindowRect(hWnd2, &rc);
-	MoveWindow(hWnd2, 
-		(rcParent.left+rcParent.right-rc.right+rc.left)/2,
-		(rcParent.top+rcParent.bottom-rc.bottom+rc.top)/2,
-		rc.right - rc.left, rc.bottom - rc.top, TRUE);
-}
+//void CSettings::CenterDialog(HWND hWnd2)
+//{
+//	RECT rcParent, rc;
+//	GetWindowRect(ghOpWnd, &rcParent);
+//	GetWindowRect(hWnd2, &rc);
+//	MoveWindow(hWnd2, 
+//		(rcParent.left+rcParent.right-rc.right+rc.left)/2,
+//		(rcParent.top+rcParent.bottom-rc.bottom+rc.top)/2,
+//		rc.right - rc.left, rc.bottom - rc.top, TRUE);
+//}
 
 bool CSettings::isKeyboardHooks()
 {
@@ -3312,7 +3380,7 @@ INT_PTR CSettings::hotkeysOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM l
 			SendDlgItemMessage(hWnd2, hkCloseConsole, HKM_SETHOTKEY, gSet.icMultiRecreate, 0);
 
 			gSet.RegisterTipsFor(hWnd2);
-			gSet.CenterDialog(hWnd2);
+			CenterMoreDlg(hWnd2);
 		}
 		break;
 
@@ -3378,15 +3446,7 @@ INT_PTR CSettings::hideOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 			SetDlgItemInt (hWnd2, tHideCaptionAlwaysDissapear, gSet.nHideCaptionAlwaysDisappear, FALSE);
 
 			gSet.RegisterTipsFor(hWnd2);
-
-			RECT rcParent, rc;
-			GetWindowRect(ghOpWnd, &rcParent);
-			GetWindowRect(hWnd2, &rc);
-			MoveWindow(hWnd2, 
-				(rcParent.left+rcParent.right-rc.right+rc.left)/2,
-				(rcParent.top+rcParent.bottom-rc.bottom+rc.top)/2,
-				rc.right - rc.left, rc.bottom - rc.top, TRUE);
-
+			CenterMoreDlg(hWnd2);
 		}
 		break;
 
@@ -3426,6 +3486,106 @@ INT_PTR CSettings::hideOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 					break;
 				}
 			}			
+		}
+		break;
+	}
+	return 0;
+}
+
+INT_PTR CSettings::selectionOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
+{
+	switch (messg)
+	{
+	case WM_INITDIALOG:
+		{
+			//SetDlgItemInt (hWnd2, tHideCaptionAlwaysFrame, gSet.nHideCaptionAlwaysFrame, FALSE);
+			//SetDlgItemInt (hWnd2, tHideCaptionAlwaysDelay, gSet.nHideCaptionAlwaysDelay, FALSE);
+			//SetDlgItemInt (hWnd2, tHideCaptionAlwaysDissapear, gSet.nHideCaptionAlwaysDisappear, FALSE);
+			if (!gSet.isConsoleTextSelection) gSet.isConsoleTextSelection = 2;
+			CheckDlgButton(hWnd2, (gSet.isConsoleTextSelection==1)?rbCTSAlways:rbCTSBufferOnly, BST_CHECKED);
+			CheckDlgButton(hWnd2, cbCTSBlockSelection, gSet.isCTSSelectBlock);
+			FillListBoxByte(hWnd2, lbCTSBlockSelection, Settings::szKeys, Settings::nKeys, gSet.isCTSVkBlock);
+			CheckDlgButton(hWnd2, cbCTSTextSelection, gSet.isCTSSelectText);
+			FillListBoxByte(hWnd2, lbCTSTextSelection, Settings::szKeys, Settings::nKeys, gSet.isCTSVkText);
+			FillListBoxByte(hWnd2, lbCTSRBtnAction, Settings::szClipAct, Settings::nClipAct, gSet.isCTSRBtnAction);
+			FillListBoxByte(hWnd2, lbCTSMBtnAction, Settings::szClipAct, Settings::nClipAct, gSet.isCTSMBtnAction);
+			
+			DWORD idxBack = (gSet.isCTSColorIndex & 0xF0) >> 4;
+			DWORD idxFore = (gSet.isCTSColorIndex & 0xF);
+			FillListBoxItems(GetDlgItem(hWnd2, lbCTSForeIdx), sizeofarray(Settings::szColorIdx)-1,
+				Settings::szColorIdx, Settings::nColorIdx, idxFore);
+			FillListBoxItems(GetDlgItem(hWnd2, lbCTSBackIdx), sizeofarray(Settings::szColorIdx)-1,
+				Settings::szColorIdx, Settings::nColorIdx, idxBack);
+
+			gSet.RegisterTipsFor(hWnd2);
+			CenterMoreDlg(hWnd2);
+		}
+		break;
+
+	case WM_GETICON:
+		if (wParam!=ICON_BIG) {
+			SetWindowLongPtr(hWnd2, DWLP_MSGRESULT, (LRESULT)hClassIconSm);
+			return 1;
+		}
+		return 0;
+
+	case WM_COMMAND:
+		if (HIWORD(wParam) == BN_CLICKED)
+		{
+			WORD CB = LOWORD(wParam);
+			switch (CB) {
+			case IDOK: case IDCANCEL:
+				EndDialog(hWnd2, CB);
+				break;
+			case rbCTSAlways: case rbCTSBufferOnly:
+				gSet.isConsoleTextSelection = (CB==rbCTSAlways) ? 1 : 2;
+				CheckDlgButton(gSet.hExt, cbConsoleTextSelection, gSet.isConsoleTextSelection);
+				break;
+			case cbCTSBlockSelection:
+				gSet.isCTSSelectBlock = IsChecked(hWnd2,CB);
+				break;
+			case cbCTSTextSelection:
+				gSet.isCTSSelectText = IsChecked(hWnd2,CB);
+				break;
+			}
+		} else
+		if (HIWORD(wParam) == CBN_SELCHANGE)
+		{
+			WORD CB = LOWORD(wParam);
+			switch (CB) {
+			case lbCTSBlockSelection:
+				{
+					GetListBoxByte(hWnd2, lbCTSBlockSelection, Settings::szKeys, Settings::nKeys, gSet.isCTSVkBlock);
+				} break;
+			case lbCTSTextSelection:
+				{
+					GetListBoxByte(hWnd2, lbCTSTextSelection, Settings::szKeys, Settings::nKeys, gSet.isCTSVkText);
+				} break;
+			case lbCTSRBtnAction:
+				{
+					GetListBoxByte(hWnd2, lbCTSRBtnAction, Settings::szClipAct, Settings::nClipAct, gSet.isCTSRBtnAction);
+				} break;
+			case lbCTSMBtnAction:
+				{
+					GetListBoxByte(hWnd2, lbCTSMBtnAction, Settings::szClipAct, Settings::nClipAct, gSet.isCTSMBtnAction);
+				} break;
+			case lbCTSForeIdx:
+				{
+					DWORD nFore = 0;
+					GetListBoxItem(GetDlgItem(hWnd2, lbCTSForeIdx), sizeofarray(Settings::szColorIdx)-1,
+						Settings::szColorIdx, Settings::nColorIdx, nFore);
+					gSet.isCTSColorIndex = (gSet.isCTSColorIndex & 0xF0) | (nFore & 0xF);
+					gConEmu.Update(true);
+				} break;
+			case lbCTSBackIdx:
+				{
+					DWORD nBack = 0;
+					GetListBoxItem(GetDlgItem(hWnd2, lbCTSBackIdx), sizeofarray(Settings::szColorIdx)-1,
+						Settings::szColorIdx, Settings::nColorIdx, nBack);
+					gSet.isCTSColorIndex = (gSet.isCTSColorIndex & 0xF) | ((nBack & 0xF) << 4);
+					gConEmu.Update(true);
+				} break;
+			}
 		}
 		break;
 	}
@@ -4846,4 +5006,67 @@ BYTE CSettings::GetFadeColorItem(BYTE c)
 bool CSettings::NeedDialogDetect()
 {
 	return (isUserScreenTransparent || !isMonospace);
+}
+
+void CSettings::FillListBoxItems(HWND hList, uint nItems, const WCHAR** pszItems, const DWORD* pnValues, DWORD& nValue)
+{
+	_ASSERTE(hList!=NULL);
+	uint num = 0;
+	for (uint i=0; i<nItems; i++) {
+		SendMessage(hList, CB_ADDSTRING, 0, (LPARAM) pszItems[i]);
+		if (pnValues[i] == nValue) num = i;
+	}
+	if (!num) nValue = 0; // если код неизвестен?
+	SendMessage(hList, CB_SETCURSEL, num, 0);
+}
+
+void CSettings::GetListBoxItem(HWND hList, uint nItems, const WCHAR** pszItems, const DWORD* pnValues, DWORD& nValue)
+{
+	_ASSERTE(hList!=NULL);
+	int num = SendMessage(hList, CB_GETCURSEL, 0, 0);
+	//int nKeyCount = sizeofarray(Settings::szKeys);
+	if (num>=0 && num<(int)nItems) {
+		nValue = pnValues[num];
+	} else {
+		nValue = 0;
+		if (num) // Invalid index?
+			SendMessage(hList, CB_SETCURSEL, num=0, 0);
+	}
+}
+
+void CSettings::CenterMoreDlg(HWND hWnd2)
+{
+	RECT rcParent, rc;
+	GetWindowRect(ghOpWnd, &rcParent);
+	GetWindowRect(hWnd2, &rc);
+	MoveWindow(hWnd2, 
+		(rcParent.left+rcParent.right-rc.right+rc.left)/2,
+		(rcParent.top+rcParent.bottom-rc.bottom+rc.top)/2,
+		rc.right - rc.left, rc.bottom - rc.top, TRUE);
+}
+
+bool CSettings::isModifierPressed(DWORD vk)
+{
+	// если НЕ 0 - должен быть нажат
+	if (vk) {
+		if (!isPressed(vk))
+			return false;
+	}
+
+	// но другие модификаторы нажаты быть не должны!
+	if (vk != VK_SHIFT && vk != VK_LSHIFT && vk != VK_RSHIFT) {
+		if (isPressed(VK_SHIFT))
+			return false;
+	}
+	if (vk != VK_MENU && vk != VK_LMENU && vk != VK_RMENU) {
+		if (isPressed(VK_MENU))
+			return false;
+	}
+	if (vk != VK_CONTROL && vk != VK_LCONTROL && vk != VK_RCONTROL) {
+		if (isPressed(VK_CONTROL))
+			return false;
+	}
+
+	// Можно
+	return true;
 }

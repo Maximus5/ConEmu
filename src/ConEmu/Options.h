@@ -140,6 +140,13 @@ public:
     char isFixFarBorders;
 	bool isMouseSkipActivation, isMouseSkipMoving;
 	bool isFarHourglass; DWORD nFarHourglassDelay;
+	// Text selection
+	BYTE isConsoleTextSelection;
+	bool isCTSSelectBlock, isCTSSelectText;
+	BYTE isCTSVkBlock, isCTSVkText; // модификатор запуска выделения мышкой
+	BYTE isCTSRBtnAction, isCTSMBtnAction; // 0-off, 1-copy, 2-paste
+	BYTE isCTSColorIndex;
+	bool isModifierPressed(DWORD vk);
 protected:
 	bool mb_HideCaptionAlways;
 	typedef struct tag_CharRanges {
@@ -243,7 +250,7 @@ public:
     HWND hMain, hExt, hColors, hInfo;
 
     bool LoadImageFrom(TCHAR *inPath, bool abShowErrors=false);
-	static void CenterDialog(HWND hWnd2);
+	//static void CenterDialog(HWND hWnd2);
     static INT_PTR CALLBACK wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
     static INT_PTR CALLBACK mainOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
     static INT_PTR CALLBACK extOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
@@ -251,6 +258,7 @@ public:
     static INT_PTR CALLBACK infoOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
 	static INT_PTR CALLBACK hideOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
 	static INT_PTR CALLBACK hotkeysOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
+	static INT_PTR CALLBACK selectionOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
     void LoadSettings();
     void InitSettings();
     BOOL SaveSettings();
@@ -359,4 +367,7 @@ private:
 	DWORD nMultiHotkeyModifier;
 	BYTE mn_HostModOk[15], mn_HostModSkip[15];
 	bool isHostkeySingleLR(WORD vk, WORD vkC, WORD vkL, WORD vkR);
+	static void FillListBoxItems(HWND hList, uint nItems, const WCHAR** pszItems, const DWORD* pnValues, DWORD& nValue);
+	static void GetListBoxItem(HWND hList, uint nItems, const WCHAR** pszItems, const DWORD* pnValues, DWORD& nValue);
+	static void CenterMoreDlg(HWND hWnd2);
 };
