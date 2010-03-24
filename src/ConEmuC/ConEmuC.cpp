@@ -1459,7 +1459,7 @@ void SendStarted()
 		pIn->StartStop.nStarted = (gnRunMode == RM_COMSPEC) ? 2 : 0; // Cmd/Srv режим начат
 		pIn->StartStop.hWnd = ghConWnd;
 		pIn->StartStop.dwPID = gnSelfPID;
-		pIn->StartStop.dwInputTID = (gnRunMode == RM_SERVER) ? srv.dwInputThreadId : 0;
+		//pIn->StartStop.dwInputTID = (gnRunMode == RM_SERVER) ? srv.dwInputThreadId : 0;
 		if (gnRunMode == RM_SERVER)
 			pIn->StartStop.bUserIsAdmin = IsUserAdmin();
 
@@ -1633,9 +1633,9 @@ void LogString(LPCSTR asText)
 	if (dwId == srv.dwWinEventThread)
 		pszThread = "WinEventThread";
 	else
-	if (dwId == srv.dwInputThreadId)
-		pszThread = "InputThread";
-	else
+	//if (dwId == srv.dwInputThreadId)
+	//	pszThread = "InputThread";
+	//else
 	if (dwId == srv.dwInputPipeThreadId)
 		pszThread = "InputPipeThread";
 
@@ -1677,9 +1677,9 @@ void LogSize(COORD* pcrSize, LPCSTR pszLabel)
 	if (dwId == srv.dwWinEventThread)
 			pszThread = "WinEventThread";
 			else
-	if (dwId == srv.dwInputThreadId)
-			pszThread = "InputThread";
-			else
+	//if (dwId == srv.dwInputThreadId)
+	//		pszThread = "InputThread";
+	//		else
 	if (dwId == srv.dwInputPipeThreadId)
 			pszThread = "InputPipeThread";
 			

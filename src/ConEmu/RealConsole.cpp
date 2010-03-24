@@ -37,6 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define DEBUGSTRDRAW(s) //DEBUGSTR(s)
 #define DEBUGSTRINPUT(s) //DEBUGSTR(s)
+#define DEBUGSTRINPUTPIPE(s) DEBUGSTR(s)
 #define DEBUGSTRSIZE(s) //DEBUGSTR(s)
 #define DEBUGSTRPROC(s) //DEBUGSTR(s)
 #define DEBUGSTRCMD(s) //DEBUGSTR(s)
@@ -142,7 +143,7 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
     
     mp_sei = NULL;
     
-    mn_ConEmuC_PID = 0; mn_ConEmuC_Input_TID = 0;
+    mn_ConEmuC_PID = 0; //mn_ConEmuC_Input_TID = 0;
 	mh_ConEmuC = NULL; mh_ConEmuCInput = NULL; mb_UseOnlyPipeInput = FALSE;
     
     mb_NeedStartProcess = FALSE; mb_IgnoreCmdStop = FALSE;
@@ -248,7 +249,7 @@ CRealConsole::~CRealConsole()
         { Free(m_Args.pszStartupDir); m_Args.pszStartupDir = NULL; }
 
 
-    SafeCloseHandle(mh_ConEmuC); mn_ConEmuC_PID = 0; mn_ConEmuC_Input_TID = 0;
+    SafeCloseHandle(mh_ConEmuC); mn_ConEmuC_PID = 0; //mn_ConEmuC_Input_TID = 0;
     SafeCloseHandle(mh_ConEmuCInput);
     
     SafeCloseHandle(mh_ServerSemaphore);
@@ -951,23 +952,23 @@ void CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec)
 	if (mn_ConEmuC_PID == 0)
 		return; // Сервер еще не стартовал. События будут пропущены...
 
-	DWORD dwTID = 0;
+	//DWORD dwTID = 0;
 	//#ifdef ALLOWUSEFARSYNCHRO
 	//	if (isFar() && mn_FarInputTID) {
 	//		dwTID = mn_FarInputTID;
 	//	} else {
 	//#endif
-	if (mn_ConEmuC_Input_TID == 0) // значит еще TID ввода не получили
-		return;
-	dwTID = mn_ConEmuC_Input_TID;
+	//if (mn_ConEmuC_Input_TID == 0) // значит еще TID ввода не получили
+	//	return;
+	//dwTID = mn_ConEmuC_Input_TID;
 	//#ifdef ALLOWUSEFARSYNCHRO
 	//	}
 	//#endif
-	if (dwTID == 0) {
-		//_ASSERTE(dwTID!=0);
-		gConEmu.DebugStep(L"ConEmu: Input thread id is NULL");
-		return;
-	}
+	//if (dwTID == 0) {
+	//	//_ASSERTE(dwTID!=0);
+	//	gConEmu.DebugStep(L"ConEmu: Input thread id is NULL");
+	//	return;
+	//}
 	
     if (piRec->EventType == MOUSE_EVENT) {
         if (piRec->Event.MouseEvent.dwEventFlags == MOUSE_MOVED) {
@@ -1012,24 +1013,24 @@ void CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec)
 			LogInput(piRec);
 
     	_ASSERTE(msg.message!=0);
-		if (mb_UseOnlyPipeInput) {
-			PostConsoleEventPipe(&msg);
-		} else
-    	// ERROR_INVALID_THREAD_ID == 1444 (0x5A4)
-    	// On Vista PostThreadMessage failed with code 5, if target process created 'As administrator'
-	    if (!PostThreadMessage(dwTID, msg.message, msg.wParam, msg.lParam)) {
-	    	DWORD dwErr = GetLastError();
-			if (dwErr == ERROR_ACCESS_DENIED/*5*/) {
-				mb_UseOnlyPipeInput = TRUE;
-				PostConsoleEventPipe(&msg);
-			} else if (dwErr == ERROR_INVALID_THREAD_ID/*1444*/) {
-				// In shutdown?
-			} else {
-	    		wchar_t szErr[100];
-	    		wsprintfW(szErr, L"ConEmu: PostThreadMessage(%i) failed, code=0x%08X", dwTID, dwErr);
-	    		gConEmu.DebugStep(szErr);
-			}
-	    }
+		//if (mb_UseOnlyPipeInput) {
+		PostConsoleEventPipe(&msg);
+		//} else
+		//// ERROR_INVALID_THREAD_ID == 1444 (0x5A4)
+		//// On Vista PostThreadMessage failed with code 5, if target process created 'As administrator'
+		//if (!PostThreadMessage(dwTID, msg.message, msg.wParam, msg.lParam)) {
+		//	DWORD dwErr = GetLastError();
+		//	if (dwErr == ERROR_ACCESS_DENIED/*5*/) {
+		//		mb_UseOnlyPipeInput = TRUE;
+		//		PostConsoleEventPipe(&msg);
+		//	} else if (dwErr == ERROR_INVALID_THREAD_ID/*1444*/) {
+		//		// In shutdown?
+		//	} else {
+		//		wchar_t szErr[100];
+		//		wsprintfW(szErr, L"ConEmu: PostThreadMessage(%i) failed, code=0x%08X", dwTID, dwErr);
+		//		gConEmu.DebugStep(szErr);
+		//	}
+		//}
     } else {
     	gConEmu.DebugStep(L"ConEmu: PackInputRecord failed!");
     }
@@ -2347,6 +2348,17 @@ void CRealConsole::PostConsoleEventPipe(MSG *pMsg)
         //DisplayLastError(L"ConEmuC was terminated");
         return;
     }
+
+#ifdef _DEBUG
+	switch (pMsg->message) {
+		case WM_KEYDOWN: case WM_SYSKEYDOWN:
+			DEBUGSTRINPUTPIPE(L"ConEmu: Sending key down\n"); break;
+		case WM_KEYUP: case WM_SYSKEYUP:
+			DEBUGSTRINPUTPIPE(L"ConEmu: Sending key up\n"); break;
+		default:
+			DEBUGSTRINPUTPIPE(L"ConEmu: Sending input\n");
+	}
+#endif
     
     DWORD dwSize = sizeof(MSG), dwWritten;
     fSuccess = WriteFile ( mh_ConEmuCInput, pMsg, dwSize, &dwWritten, NULL);
@@ -2467,7 +2479,7 @@ void CRealConsole::StopThread(BOOL abRecreating)
     if (abRecreating) {
         hConWnd = NULL;
         mn_ConEmuC_PID = 0;
-		mn_ConEmuC_Input_TID = 0;
+		//mn_ConEmuC_Input_TID = 0;
         SafeCloseHandle(mh_ConEmuC);
         SafeCloseHandle(mh_ConEmuCInput);
         // Имя пайпа для управления ConEmuC
@@ -2676,7 +2688,8 @@ void CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
         //        mb_ConsoleSelectMode = true;
 
         static bool isSkipNextAltUp = false;
-        if (messg == WM_SYSKEYDOWN && wParam == VK_RETURN && lParam & (1<<29)/*Бред. это 29-й бит, а не число 29*/)
+        if (messg == WM_SYSKEYDOWN && wParam == VK_RETURN && lParam & (1<<29)/*Бред. это 29-й бит, а не число 29*/
+			&& !isPressed(VK_SHIFT))
         {
             if (gSet.isSentAltEnter)
             {
@@ -2701,8 +2714,8 @@ void CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
             }
             else
             {
-                if (isPressed(VK_SHIFT))
-                    return;
+                //if (isPressed(VK_SHIFT))
+                //    return;
 
 				gConEmu.OnAltEnter();
 
@@ -2710,14 +2723,16 @@ void CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
             }
         }
 		//AltSpace - показать системное меню
-        else if ((messg == WM_SYSKEYDOWN || messg == WM_SYSKEYUP) && wParam == VK_SPACE && lParam & (1<<29) && !isPressed(VK_SHIFT))
+        else if ((messg == WM_SYSKEYDOWN || messg == WM_SYSKEYUP) && wParam == VK_SPACE && lParam & (1<<29) && 
+			!isPressed(VK_SHIFT))
         {   // Нада, или системное меню будет недоступно
 			if (messg == WM_SYSKEYUP) { // Только по UP, чтобы не "булькало"
 				gConEmu.ShowSysmenu();
 			}
         }
         else if (messg == WM_KEYUP && wParam == VK_MENU && isSkipNextAltUp) isSkipNextAltUp = false;
-        else if (messg == WM_SYSKEYDOWN && wParam == VK_F9 && lParam & (1<<29)/*Бред. это 29-й бит, а не число 29*/ && !isPressed(VK_SHIFT))
+        else if (messg == WM_SYSKEYDOWN && wParam == VK_F9 && lParam & (1<<29)/*Бред. это 29-й бит, а не число 29*/
+			&& !isPressed(VK_SHIFT))
         {
 			// AltF9
 			// Чтобы у консоли не сносило крышу (FAR может выполнить макрос на Alt)
@@ -3206,7 +3221,7 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 		DWORD nSubSystem = pIn->StartStop.nSubSystem;
 		BOOL bRunViaCmdExe = pIn->StartStop.bRootIsCmdExe;
 		BOOL bUserIsAdmin = pIn->StartStop.bUserIsAdmin;
-		DWORD nInputTID = pIn->StartStop.dwInputTID;
+		//DWORD nInputTID = pIn->StartStop.dwInputTID;
 
 		_ASSERTE(sizeof(CESERVER_REQ_STARTSTOPRET) <= sizeof(CESERVER_REQ_STARTSTOP));
 		pIn->hdr.nSize = sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_STARTSTOPRET);
@@ -3221,9 +3236,9 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 			pIn->StartStopRet.bNeedLangChange = FALSE;
 
 			if (nStarted == 0) {
-				_ASSERTE(nInputTID);
-				_ASSERTE(mn_ConEmuC_Input_TID==0 || mn_ConEmuC_Input_TID==nInputTID);
-				mn_ConEmuC_Input_TID = nInputTID;
+				//_ASSERTE(nInputTID);
+				//_ASSERTE(mn_ConEmuC_Input_TID==0 || mn_ConEmuC_Input_TID==nInputTID);
+				//mn_ConEmuC_Input_TID = nInputTID;
 				//
 				if (!m_Args.bRunAsAdministrator && bUserIsAdmin)
 					m_Args.bRunAsAdministrator = TRUE;
@@ -6590,6 +6605,9 @@ void CRealConsole::OnActivate(int nNewNum, int nOldNum)
     SetWindowLongPtr(ghWnd, GWLP_USERDATA, (LONG_PTR)hConWnd);
     ghConWnd = hConWnd;
 
+	if (mp_ConsoleInfo)
+		mp_ConsoleInfo->bConsoleActive = TRUE;
+
     //if (mh_MonitorThread) SetThreadPriority(mh_MonitorThread, THREAD_PRIORITY_ABOVE_NORMAL);
 
     if ((gSet.isMonitorConsoleLang & 2) == 2) // Один Layout на все консоли
@@ -6642,7 +6660,18 @@ void CRealConsole::OnDeactivate(int nNewNum)
 		//ReleaseCapture();
 	}
     
+	if (mp_ConsoleInfo)
+		mp_ConsoleInfo->bConsoleActive = FALSE;
+
     //if (mh_MonitorThread) SetThreadPriority(mh_MonitorThread, THREAD_PRIORITY_NORMAL);
+}
+
+void CRealConsole::OnGuiFocused(BOOL abFocus)
+{
+	if (!this) return;
+
+	if (mp_ConsoleInfo)
+		mp_ConsoleInfo->bConsoleActive = abFocus;
 }
 
 // По переданному CONSOLE_SCREEN_BUFFER_INFO определяет, включена ли прокрутка

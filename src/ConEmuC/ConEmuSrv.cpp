@@ -26,9 +26,13 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#define SHOWDEBUGSTR
 
 #include "ConEmuC.h"
 #include "..\common\ConsoleAnnotation.h"
+
+#define DEBUGSTRINPUTPIPE(s) DEBUGSTR(s)
+#define DEBUGSTRCHANGES(s) DEBUGSTR(s)
 
 #define MAX_EVENTS_PACK 20
 
@@ -168,21 +172,21 @@ int ServerInit()
 	_ASSERTE(srv.bDebuggerActive || srv.nProcessCount<=2); 
 
 
-	// Запустить нить обработки событий (клавиатура, мышь, и пр.)
-	srv.hInputThread = CreateThread( 
-		NULL,              // no security attribute 
-		0,                 // default stack size 
-		InputThread,       // thread proc
-		NULL,              // thread parameter 
-		0,                 // not suspended 
-		&srv.dwInputThreadId);      // returns thread ID 
+	//// Запустить нить обработки событий (клавиатура, мышь, и пр.)
+	//srv.hInputThread = CreateThread( 
+	//	NULL,              // no security attribute 
+	//	0,                 // default stack size 
+	//	InputThread,       // thread proc
+	//	NULL,              // thread parameter 
+	//	0,                 // not suspended 
+	//	&srv.dwInputThreadId);      // returns thread ID 
 
-	if (srv.hInputThread == NULL) 
-	{
-		dwErr = GetLastError();
-		_printf("CreateThread(InputThread) failed, ErrCode=0x%08X\n", dwErr); 
-		iRc = CERR_CREATEINPUTTHREAD; goto wrap;
-	}
+	//if (srv.hInputThread == NULL) 
+	//{
+	//	dwErr = GetLastError();
+	//	_printf("CreateThread(InputThread) failed, ErrCode=0x%08X\n", dwErr); 
+	//	iRc = CERR_CREATEINPUTTHREAD; goto wrap;
+	//}
 	//SetThreadPriority(srv.hInputThread, THREAD_PRIORITY_ABOVE_NORMAL);
 	// Запустить нить обработки событий (клавиатура, мышь, и пр.)
 	srv.hInputPipeThread = CreateThread( 
@@ -581,8 +585,8 @@ void ServerDone(int aiRc)
 	// Пошлем события сразу во все нити, а потом будем ждать
 	if (srv.dwWinEventThread && srv.hWinEventThread)
 		PostThreadMessage(srv.dwWinEventThread, WM_QUIT, 0, 0);
-	if (srv.dwInputThreadId && srv.hInputThread)
-		PostThreadMessage(srv.dwInputThreadId, WM_QUIT, 0, 0);
+	//if (srv.dwInputThreadId && srv.hInputThread)
+	//	PostThreadMessage(srv.dwInputThreadId, WM_QUIT, 0, 0);
 	// Передернуть пайп серверной нити
 	HANDLE hPipe = CreateFile(srv.szPipename,GENERIC_WRITE,0,NULL,OPEN_EXISTING,0,NULL);
 	if (hPipe == INVALID_HANDLE_VALUE) {
@@ -610,17 +614,17 @@ void ServerDone(int aiRc)
 		SafeCloseHandle(srv.hWinEventThread);
 		srv.dwWinEventThread = 0;
 	}
-	if (srv.hInputThread) {
-		// Подождем немножко, пока нить сама завершится
-		if (WaitForSingleObject(srv.hInputThread, 500) != WAIT_OBJECT_0) {
-			#pragma warning( push )
-			#pragma warning( disable : 6258 )
-			TerminateThread ( srv.hInputThread, 100 ); // раз корректно не хочет...
-			#pragma warning( pop )
-		}
-		SafeCloseHandle(srv.hInputThread);
-		srv.dwInputThreadId = 0;
-	}
+	//if (srv.hInputThread) {
+	//	// Подождем немножко, пока нить сама завершится
+	//	if (WaitForSingleObject(srv.hInputThread, 500) != WAIT_OBJECT_0) {
+	//		#pragma warning( push )
+	//		#pragma warning( disable : 6258 )
+	//		TerminateThread ( srv.hInputThread, 100 ); // раз корректно не хочет...
+	//		#pragma warning( pop )
+	//	}
+	//	SafeCloseHandle(srv.hInputThread);
+	//	srv.dwInputThreadId = 0;
+	//}
 	if (srv.hInputPipeThread) {
 		// Подождем немножко, пока нить сама завершится
 		if (WaitForSingleObject(srv.hInputPipeThread, 500) != WAIT_OBJECT_0) {
@@ -879,7 +883,7 @@ HWND Attach2Gui(DWORD nTimeout)
 	In.StartStop.nStarted = 0;
 	In.StartStop.hWnd = ghConWnd;
 	In.StartStop.dwPID = gnSelfPID;
-	In.StartStop.dwInputTID = srv.dwInputPipeThreadId;
+	//In.StartStop.dwInputTID = srv.dwInputPipeThreadId;
 	In.StartStop.nSubSystem = gnImageSubsystem;
 	In.StartStop.bRootIsCmdExe = gbRootIsCmdExe;
 	In.StartStop.bUserIsAdmin = IsUserAdmin();
@@ -1016,6 +1020,8 @@ int CreateMapHeader()
 	// но на всякий случай обнулим (только заголовок, на данные - забить)
 	memset(srv.pConsoleInfo, 0, nConInfoSize);
 	srv.pConsoleInfo->cbSize = nConInfoSize; // Тут - только размер заголовка!
+	srv.pConsoleInfo->cbExtraSize = 0; TODO("потом поставить размер данных для CESERVER_REQ_CONINFO_DATA[]");
+	srv.pConsoleInfo->bConsoleActive = TRUE; // Если FALSE - можно снизить частоту опроса
 	srv.pConsoleInfo->nLogLevel = (ghLogSize!=NULL) ? 1 : 0;
 	srv.pConsoleInfo->nFarReadIdx = -1;
 	srv.pConsoleInfo->nServerPID = GetCurrentProcessId();
@@ -1362,7 +1368,8 @@ static BOOL ReadConsoleInfo()
 	// Лучше всегда делать, чтобы данные были гарантированно актуальные
 	srv.pConsoleInfo->hConWnd = ghConWnd;
 	srv.pConsoleInfo->nServerPID = GetCurrentProcessId();
-	srv.pConsoleInfo->nInputTID = srv.dwInputThreadId;
+	//srv.pConsoleInfo->nInputTID = srv.dwInputThreadId;
+	srv.pConsoleInfo->nReserved0 = 0;
 	srv.pConsoleInfo->dwCiSize = sizeof(srv.ci);
 	srv.pConsoleInfo->ci = srv.ci;
 	srv.pConsoleInfo->dwConsoleCP = srv.dwConsoleCP;
@@ -1736,12 +1743,12 @@ void WINAPI WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LO
 
 DWORD WINAPI RefreshThread(LPVOID lpvParam)
 {
-	DWORD nWait = 0;
+	DWORD nWait = 0, dwConWait = 0;
 	HANDLE hEvents[2] = {ghQuitEvent, srv.hRefreshEvent};
 	DWORD nDelta = 0;
-	DWORD nLastUpdateTick = GetTickCount();
-	DWORD nLastConHandleTick = nLastUpdateTick;
-	BOOL  lbEventualChange = FALSE, lbForceSend = FALSE, lbChanged = FALSE, lbProcessChanged = FALSE;
+	DWORD nLastUpdateTick = 0; //GetTickCount();
+	DWORD nLastConHandleTick = GetTickCount();
+	BOOL  /*lbEventualChange = FALSE,*/ lbForceSend = FALSE, lbChanged = FALSE; //, lbProcessChanged = FALSE;
 	DWORD dwTimeout = 10; // периодичность чтения информации об окне (размеров, курсора,...)
 
 
@@ -1753,7 +1760,7 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 
 		// Alwas update con handle, мягкий вариант
 		if ((GetTickCount() - nLastConHandleTick) > UPDATECONHANDLE_TIMEOUT) {
-			WARNING("!!! MS - дебилы. В Win7 закрытие дескриптора в ДРУГОМ процессе - закрывает консольный буфер ПОЛНОСТЬЮ!!!");
+			WARNING("!!! В Win7 закрытие дескриптора в ДРУГОМ процессе - закрывает консольный буфер ПОЛНОСТЬЮ!!!");
 			// В итоге, буфер вывода telnet'а схлопывается!
 			if (srv.bReopenHandleAllowed) {
 				ghConOut.Close();
@@ -1793,9 +1800,13 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 		}
 		
 		
+		
 		// Проверить количество процессов в консоли.
 		// Функция выставит ghExitQueryEvent, если все процессы завершились.
-		lbProcessChanged = CheckProcessCount();
+		//lbProcessChanged = CheckProcessCount();
+		// Функция срабатывает только через интервал CHECK_PROCESSES_TIMEOUT (внутри защита от частых вызовов)
+		// #define CHECK_PROCESSES_TIMEOUT 500
+		CheckProcessCount();
 		
 
 		// Подождать немножко
@@ -1807,11 +1818,41 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 			dwTimeout = 100;
 		}
 		// !!! Здесь таймаут должен быть минимальным, ну разве что консоль неактивна
-		nWait = WaitForMultipleObjects ( 2, hEvents, FALSE, dwTimeout );
-		if (nWait == WAIT_OBJECT_0)
+			//		HANDLE hOut = (HANDLE)ghConOut;
+			//		if (hOut == INVALID_HANDLE_VALUE) hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+			//		TODO("Проверить, а собственно реагирует на изменения в консоли?");
+			//		-- на изменения (запись) в консоли не реагирует
+			//		dwConWait = WaitForSingleObject ( hOut, dwTimeout );
+			//#ifdef _DEBUG
+			//		if (dwConWait == WAIT_OBJECT_0) {
+			//			DEBUGSTRCHANGES(L"STD_OUTPUT_HANDLE was set\n");
+			//		}
+			//#endif
+			//		
+		nWait = WaitForMultipleObjects ( 2, hEvents, FALSE, dwTimeout/*dwTimeout*/ );
+		if (nWait == WAIT_OBJECT_0) {
 			break; // затребовано завершение нити
+		}// else if (nWait == WAIT_TIMEOUT && dwConWait == WAIT_OBJECT_0) {
+		//	nWait = (WAIT_OBJECT_0+1);
+		//}
 
-		lbEventualChange = (nWait == (WAIT_OBJECT_0+1)) || lbProcessChanged;
+		//lbEventualChange = (nWait == (WAIT_OBJECT_0+1))/* || lbProcessChanged*/;
+		//lbForceSend = (nWait == (WAIT_OBJECT_0+1));
+
+		// Чтобы не грузить процессор неактивными консолями
+		//if (!lbForceSend) {
+		if (!srv.pConsoleInfo->bConsoleActive) {
+			DWORD nCurTick = GetTickCount();
+			nDelta = nCurTick - nLastUpdateTick;
+			// #define MAX_FORCEREFRESH_INTERVAL 1000
+			if (nDelta > MAX_FORCEREFRESH_INTERVAL) {
+				lbForceSend = TRUE;
+			} else {
+				// Чтобы не грузить процессор
+				continue;
+			}
+		}
+
 		
 		#ifdef _DEBUG
 		if (nWait == (WAIT_OBJECT_0+1)) {
@@ -1836,6 +1877,8 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 		//}
 		
 
+		
+		
 
 		// Если можем - проверим текущую раскладку в консоли
 		if (pfnGetConsoleKeyboardLayoutName)
@@ -1843,20 +1886,13 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 
 
 
-		if (!lbForceSend) {
-			DWORD nCurTick = GetTickCount();
-			nDelta = nCurTick - nLastUpdateTick;
-			if (nDelta > MAX_FORCEREFRESH_INTERVAL) {
-				lbForceSend = TRUE;
-			}
-		}
 			
 
 
 		/* ****************** */
 		/* Перечитать консоль */
 		/* ****************** */
-		lbChanged = ReloadFullConsoleInfo(lbForceSend);
+		lbChanged = ReloadFullConsoleInfo(FALSE/*lbForceSend*/);
 
 		
 		// При изменениях - запомнить последний tick
@@ -1872,60 +1908,60 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 
 
 
-// srv.hInputThread && srv.dwInputThreadId
-DWORD WINAPI InputThread(LPVOID lpvParam) 
-{
-	MSG msg;
-	//while (GetMessage(&msg,0,0,0))
-	INPUT_RECORD rr[MAX_EVENTS_PACK];
-	
-	while (TRUE) {
-		if (!PeekMessage(&msg,0,0,0,PM_REMOVE)) {
-			Sleep(10);
-			continue;
-		}
-		if (msg.message == WM_QUIT)
-			break;
-
-		if (ghQuitEvent) {
-			if (WaitForSingleObject(ghQuitEvent, 0) == WAIT_OBJECT_0)
-				break;
-		}
-		if (msg.message == WM_NULL) {
-			_ASSERTE(msg.message != WM_NULL);
-			continue;
-		}
-
-		//if (msg.message == INPUT_THREAD_ALIVE_MSG) {
-		//	//pRCon->mn_FlushOut = msg.wParam;
-		//	TODO("INPUT_THREAD_ALIVE_MSG");
-		//	continue;
-		//
-		//} else {
-
-		// обработка пачки сообщений, вдруг они накопились в очереди?
-		UINT nCount = 0;
-		while (nCount < MAX_EVENTS_PACK)
-		{
-			if (msg.message == WM_NULL) {
-				_ASSERTE(msg.message != WM_NULL);
-			} else {
-				if (ProcessInputMessage(msg, rr[nCount]))
-					nCount++;
-			}
-			if (!PeekMessage(&msg,0,0,0,PM_REMOVE))
-				break;
-			if (msg.message == WM_QUIT)
-				break;
-		}
-		if (nCount && msg.message != WM_QUIT) {
-			SendConsoleEvent(rr, nCount);
-		}
-		//}
-	}
-
-	return 0;
-}
+//// srv.hInputThread && srv.dwInputThreadId
+//DWORD WINAPI InputThread(LPVOID lpvParam) 
+//{
+//	MSG msg;
+//	//while (GetMessage(&msg,0,0,0))
+//	INPUT_RECORD rr[MAX_EVENTS_PACK];
+//	
+//	while (TRUE) {
+//		if (!PeekMessage(&msg,0,0,0,PM_REMOVE)) {
+//			Sleep(10);
+//			continue;
+//		}
+//		if (msg.message == WM_QUIT)
+//			break;
+//
+//		if (ghQuitEvent) {
+//			if (WaitForSingleObject(ghQuitEvent, 0) == WAIT_OBJECT_0)
+//				break;
+//		}
+//		if (msg.message == WM_NULL) {
+//			_ASSERTE(msg.message != WM_NULL);
+//			continue;
+//		}
+//
+//		//if (msg.message == INPUT_THREAD_ALIVE_MSG) {
+//		//	//pRCon->mn_FlushOut = msg.wParam;
+//		//	TODO("INPUT_THREAD_ALIVE_MSG");
+//		//	continue;
+//		//
+//		//} else {
+//
+//		// обработка пачки сообщений, вдруг они накопились в очереди?
+//		UINT nCount = 0;
+//		while (nCount < MAX_EVENTS_PACK)
+//		{
+//			if (msg.message == WM_NULL) {
+//				_ASSERTE(msg.message != WM_NULL);
+//			} else {
+//				if (ProcessInputMessage(msg, rr[nCount]))
+//					nCount++;
+//			}
+//			if (!PeekMessage(&msg,0,0,0,PM_REMOVE))
+//				break;
+//			if (msg.message == WM_QUIT)
+//				break;
+//		}
+//		if (nCount && msg.message != WM_QUIT) {
+//			SendConsoleEvent(rr, nCount);
+//		}
+//		//}
+//	}
+//
+//	return 0;
+//}
 
 DWORD WINAPI InputPipeThread(LPVOID lpvParam) 
 { 
@@ -1994,20 +2030,36 @@ DWORD WINAPI InputPipeThread(LPVOID lpvParam)
 				MCHKHEAP;
 				if (imsg.message) {
 					// Если есть возможность - сразу пошлем его в dwInputThreadId
-					if (srv.dwInputThreadId) {
-						_ASSERTE(imsg.message!=0);
-						if (!PostThreadMessage(srv.dwInputThreadId, imsg.message, imsg.wParam, imsg.lParam)) {
-							DWORD dwErr = GetLastError();
-							wchar_t szErr[100];
-							wsprintfW(szErr, L"ConEmuC: PostThreadMessage(%i) failed, code=0x%08X", srv.dwInputThreadId, dwErr);
-							SetConsoleTitle(szErr);
-						}
-					} else {
-						_ASSERTE(srv.dwInputThreadId!=0);
+					//if (srv.dwInputThreadId) {
+					//	_ASSERTE(imsg.message!=0);
+					//	if (!PostThreadMessage(srv.dwInputThreadId, imsg.message, imsg.wParam, imsg.lParam)) {
+					//		DWORD dwErr = GetLastError();
+					//		wchar_t szErr[100];
+					//		wsprintfW(szErr, L"ConEmuC: PostThreadMessage(%i) failed, code=0x%08X", srv.dwInputThreadId, dwErr);
+					//		SetConsoleTitle(szErr);
+					//	}
+					//} else {
+					//	_ASSERTE(srv.dwInputThreadId!=0);
+
+#ifdef _DEBUG
+					switch (imsg.message) {
+					case WM_KEYDOWN: case WM_SYSKEYDOWN:
+						DEBUGSTRINPUTPIPE(L"ConEmuC: Recieved key down\n"); break;
+					case WM_KEYUP: case WM_SYSKEYUP:
+						DEBUGSTRINPUTPIPE(L"ConEmuC: Recieved key up\n"); break;
+					default:
+						DEBUGSTRINPUTPIPE(L"ConEmuC: Recieved input\n");
+					}
+#endif
+
+						WARNING("Обработка пачки сообщений");
+						// Видимо нужно в пайп писать сначала количество сообщений в пачке,
+						// и только потом собственно сообщения. Чтобы не заблокировать нить на чтении
+
 						INPUT_RECORD r;
 						ProcessInputMessage(imsg, r);
 						SendConsoleEvent(&r, 1);
-					}
+					//}
 					MCHKHEAP;
 				}
 				// next

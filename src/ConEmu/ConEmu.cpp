@@ -5091,6 +5091,8 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
         
         UnRegisterHotKeys();
     }
+
+	ActiveCon()->RCon()->OnGuiFocused(lbSetFocus);
     
     if (gSet.isFadeInactive && mp_VActive) {
     	bool bForeground = lbSetFocus || isMeForeground();
@@ -6192,8 +6194,12 @@ LRESULT CConEmuMain::OnMouse_LBtnDown(HWND hWnd, UINT messg, WPARAM wParam, LPAR
 		if ((ci.bVisible && ci.dwSize>0) // курсор должен быть видим, иначе это чье-то меню
 			&& gSet.isDragEnabled & DRAG_L_ALLOWED)
 		{
-			if (!gSet.nLDragKey || isPressed(gSet.nLDragKey))
+			//if (!gSet.nLDragKey || isPressed(gSet.nLDragKey))
+			// функция проверит нажат ли nLDragKey (допускает nLDragKey==0), а другие - не нажаты
+			// то есть нажат SHIFT(==nLDragKey), а CTRL & ALT - НЕ нажаты
+			if (gSet.isModifierPressed(gSet.nLDragKey)) {
 				mouse.state = DRAG_L_ALLOWED;
+			}
 		}
 
 		// иначе после LBtnDown в консоль может СРАЗУ провалиться MOUSEMOVE
@@ -6291,7 +6297,10 @@ LRESULT CConEmuMain::OnMouse_RBtnDown(HWND hWnd, UINT messg, WPARAM wParam, LPAR
 		mp_VActive->RCon()->CoordInPanel(mouse.RClkCon))
 	{
 		if (gSet.isDragEnabled & DRAG_R_ALLOWED) {
-			if (!gSet.nRDragKey || isPressed(gSet.nRDragKey)) {
+			//if (!gSet.nRDragKey || isPressed(gSet.nRDragKey)) {
+			// функция проверит нажат ли nRDragKey (допускает nRDragKey==0), а другие - не нажаты
+			// то есть нажат SHIFT(==nRDragKey), а CTRL & ALT - НЕ нажаты
+			if (gSet.isModifierPressed(gSet.nRDragKey)) {
 				mouse.state = DRAG_R_ALLOWED;
 				return 0;
 			}

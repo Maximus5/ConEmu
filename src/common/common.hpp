@@ -132,6 +132,7 @@ extern wchar_t gszDbgModLabel[6];
 //
 //#define MAXCONMAPCELLS      (600*400)
 #define CECONMAPNAME        L"ConEmuFileMapping.%08X"
+#define CECONMAPNAME_A      "ConEmuFileMapping.%08X"
 //#define CECONMAPNAMESIZE    (sizeof(CESERVER_REQ_CONINFO)+(MAXCONMAPCELLS*sizeof(CHAR_INFO)))
 //#define CEGUIATTACHED       L"ConEmuGuiAttached.%u"
 #define CEGUIRCONSTARTED    L"ConEmuGuiRConStarted.%u"
@@ -169,7 +170,7 @@ extern wchar_t gszDbgModLabel[6];
 #define CECMD_SETDONTCLOSE  29
 
 // ¬ерси€ интерфейса
-#define CESERVER_REQ_VER    35
+#define CESERVER_REQ_VER    36
 
 #define PIPEBUFSIZE 4096
 
@@ -329,9 +330,13 @@ typedef struct tag_CESERVER_REQ_CONINFO_HDR {
 	DWORD cbSize;
 	DWORD nLogLevel;
 	COORD crMaxConSize;
-	HWND2 hConWnd;
-	DWORD nServerPID;
-	DWORD nGuiPID;
+	HWND2 hConWnd;    // !! положение hConWnd и nGuiPID не мен€ть !!
+	DWORD nServerPID; //
+	DWORD nGuiPID;    // !! на них ориентируетс€ PicViewWrapper   !!
+	//
+	DWORD cbExtraSize; // –азмер данных, идущих за структурой (после cbSize), TODO на CESERVER_REQ_CONINFO_DATA[]
+	DWORD bConsoleActive;
+	//
 	DWORD nFarPID; // PID последнего фара, обновившего информацию о себе в этой структуре
 	DWORD nCurDataMapIdx; // суффикс дл€ текущего MAP файла с данными
 	DWORD nCurDataMaxSize; // ћаксимальный размер буфера nCurDataMapIdx
@@ -340,7 +345,7 @@ typedef struct tag_CESERVER_REQ_CONINFO_HDR {
 	DWORD nFarUpdateTick; // GetTickCount(), когда консоль была обновлена в последний раз из фара
 	DWORD nFarReadIdx;    // index, +1, когда фар в последний раз позвал (Read|Peek)ConsoleInput или GetConsoleInputCount
 	DWORD nSrvUpdateTick; // GetTickCount(), когда консоль была считана в последний раз в сервере
-	DWORD nInputTID;
+	DWORD nReserved0; //DWORD nInputTID;
 	DWORD nProcesses[20];
     DWORD dwCiSize;
 	CONSOLE_CURSOR_INFO ci;
@@ -394,12 +399,14 @@ typedef struct tag_CESERVER_REQ_NEWCMD {
 typedef struct tag_CESERVER_REQ_STARTSTOP {
 	DWORD nStarted; // 0 - ServerStart, 1 - ServerStop, 2 - ComspecStart, 3 - ComspecStop
 	HWND2 hWnd; // при передаче ¬ GUI - консоль, при возврате в консоль - GUI
-	DWORD dwPID, dwInputTID;
+	DWORD dwPID; //, dwInputTID;
 	DWORD nSubSystem; // 255 дл€ DOS программ, 0x100 - аттач из FAR плагина
 	BOOL  bRootIsCmdExe;
 	BOOL  bUserIsAdmin;
 	// ј это приходит из консоли, вдруго консольна€ программа успела помен€ть размер буфера
 	CONSOLE_SCREEN_BUFFER_INFO sbi;
+	// Reserved
+	DWORD nReserved0, nReserved1;
 } CESERVER_REQ_STARTSTOP;
 
 // _ASSERTE(sizeof(CESERVER_REQ_STARTSTOPRET) <= sizeof(CESERVER_REQ_STARTSTOP));

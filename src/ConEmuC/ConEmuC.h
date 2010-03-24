@@ -32,12 +32,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifdef _DEBUG
 	// Раскомментировать для вывода в консоль информации режима Comspec
 	#define PRINT_COMSPEC(f,a) //wprintf(f,a)
-	#define DEBUGSTR(s) OutputDebugString(s)
+	//#define DEBUGSTR(s) OutputDebugString(s)
 #elif defined(__GNUC__)
 	//  Раскомментировать, чтобы сразу после запуска процесса (conemuc.exe) показать MessageBox, чтобы прицепиться дебаггером
 	//  #define SHOW_STARTED_MSGBOX
 	#define PRINT_COMSPEC(f,a) //wprintf(f,a)
-	#define DEBUGSTR(s)
+	//#define DEBUGSTR(s)
 	#define CRTPRINTF
 #else
 	#define PRINT_COMSPEC(f,a)
@@ -49,6 +49,18 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGLOGSIZE(s) DEBUGSTR(s)
 #define DEBUGLOGLANG(s) //DEBUGSTR(s) //; Sleep(2000)
 
+#ifdef _DEBUG
+//CRITICAL_ SECTION gcsHeap;
+//#define MCHKHEAP { Enter CriticalSection(&gcsHeap); int MDEBUG_CHK=_CrtCheckMemory(); _ASSERTE(MDEBUG_CHK); LeaveCriticalSection(&gcsHeap); }
+#define MCHKHEAP HeapValidate(ghHeap, 0, NULL);
+//#define MCHKHEAP { int MDEBUG_CHK=_CrtCheckMemory(); _ASSERTE(MDEBUG_CHK); }
+//#define HEAP_LOGGING
+#else
+#define MCHKHEAP
+#endif
+
+
+
 
 #define CSECTION_NON_RAISE
 
@@ -59,6 +71,31 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 #include <Shlwapi.h>
 #include <Tlhelp32.h>
+
+
+/*  Global  */
+extern DWORD   gnSelfPID;
+//HANDLE  ghConIn = NULL, ghConOut = NULL;
+extern HWND    ghConWnd;
+extern HWND    ghConEmuWnd; // Root! window
+extern HANDLE  ghExitQueryEvent; // выставляется когда в консоли не остается процессов
+extern HANDLE  ghQuitEvent;      // когда мы в процессе закрытия (юзер уже нажал кнопку "Press to close console")
+extern int     gnConfirmExitParm;
+extern BOOL    gbAlwaysConfirmExit, gbInShutdown, gbAutoDisableConfirmExit;
+extern int     gbRootWasFoundInCon;
+extern BOOL    gbAttachMode;
+extern BOOL    gbForceHideConWnd;
+extern DWORD   gdwMainThreadId;
+//int       gnBufferHeight = 0;
+extern wchar_t* gpszRunCmd;
+extern DWORD   gnImageSubsystem;
+//HANDLE  ghCtrlCEvent = NULL, ghCtrlBreakEvent = NULL;
+extern HANDLE ghHeap; //HeapCreate(HEAP_GENERATE_EXCEPTIONS, nMinHeapSize, 0);
+#ifdef _DEBUG
+extern size_t gnHeapUsed, gnHeapMax;
+extern HANDLE ghFarInExecuteEvent;
+#endif
+
 //#include <vector>
 #include "..\common\common.hpp"
 #include "..\common\ConEmuCheck.h"
@@ -84,15 +121,6 @@ extern wchar_t gszDbgModLabel[6];
 
 #define IMAGE_SUBSYSTEM_DOS_EXECUTABLE  255
 
-#ifdef _DEBUG
-//CRITICAL_ SECTION gcsHeap;
-//#define MCHKHEAP { Enter CriticalSection(&gcsHeap); int MDEBUG_CHK=_CrtCheckMemory(); _ASSERTE(MDEBUG_CHK); LeaveCriticalSection(&gcsHeap); }
-#define MCHKHEAP HeapValidate(ghHeap, 0, NULL);
-//#define MCHKHEAP { int MDEBUG_CHK=_CrtCheckMemory(); _ASSERTE(MDEBUG_CHK); }
-//#define HEAP_LOGGING
-#else
-#define MCHKHEAP
-#endif
 
 //#ifndef _DEBUG
 // Релизный режим
@@ -135,7 +163,7 @@ extern wchar_t gszDbgModLabel[6];
 
 DWORD WINAPI InstanceThread(LPVOID);
 DWORD WINAPI ServerThread(LPVOID lpvParam);
-DWORD WINAPI InputThread(LPVOID lpvParam);
+//DWORD WINAPI InputThread(LPVOID lpvParam);
 DWORD WINAPI InputPipeThread(LPVOID lpvParam);
 BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out); 
 DWORD WINAPI WinEventThread(LPVOID lpvParam);
@@ -221,28 +249,6 @@ void DisableAutoConfirmExit();
 extern MConHandle ghConOut;
 
 
-/*  Global  */
-extern DWORD   gnSelfPID;
-//HANDLE  ghConIn = NULL, ghConOut = NULL;
-extern HWND    ghConWnd;
-extern HWND    ghConEmuWnd; // Root! window
-extern HANDLE  ghExitQueryEvent; // выставляется когда в консоли не остается процессов
-extern HANDLE  ghQuitEvent;      // когда мы в процессе закрытия (юзер уже нажал кнопку "Press to close console")
-extern int     gnConfirmExitParm;
-extern BOOL    gbAlwaysConfirmExit, gbInShutdown, gbAutoDisableConfirmExit;
-extern int     gbRootWasFoundInCon;
-extern BOOL    gbAttachMode;
-extern BOOL    gbForceHideConWnd;
-extern DWORD   gdwMainThreadId;
-//int       gnBufferHeight = 0;
-extern wchar_t* gpszRunCmd;
-extern DWORD   gnImageSubsystem;
-//HANDLE  ghCtrlCEvent = NULL, ghCtrlBreakEvent = NULL;
-extern HANDLE ghHeap; //HeapCreate(HEAP_GENERATE_EXCEPTIONS, nMinHeapSize, 0);
-#ifdef _DEBUG
-extern size_t gnHeapUsed, gnHeapMax;
-extern HANDLE ghFarInExecuteEvent;
-#endif
 
 typedef enum tag_RunMode {
 	RM_UNDEFINED = 0,
@@ -269,7 +275,7 @@ typedef struct tag_SrvInfo {
 	HANDLE hServerThread;   DWORD dwServerThreadId;
 	HANDLE hRefreshThread;  DWORD dwRefreshThread;
 	HANDLE hWinEventThread; DWORD dwWinEventThread;
-	HANDLE hInputThread;    DWORD dwInputThreadId;
+	//HANDLE hInputThread;    DWORD dwInputThreadId;
 	HANDLE hInputPipeThread;DWORD dwInputPipeThreadId; // Needed in Vista & administrator
 	//
 	OSVERSIONINFO osv;

@@ -256,6 +256,7 @@ public:
 	BOOL IsConsoleDataChanged();
     void OnActivate(int nNewNum, int nOldNum);
     void OnDeactivate(int nNewNum);
+	void OnGuiFocused(BOOL abFocus);
     BOOL CheckBufferSize();
     //LRESULT OnConEmuCmd(BOOL abStarted, DWORD anConEmuC_PID);
     BOOL BufferHeightTurnedOn(CONSOLE_SCREEN_BUFFER_INFO* psbi);
@@ -304,7 +305,7 @@ public:
 
 protected:
     CVirtualConsole* mp_VCon; // соответствующая виртуальная консоль
-    DWORD mn_ConEmuC_PID, mn_ConEmuC_Input_TID; HANDLE mh_ConEmuC, mh_ConEmuCInput;
+    DWORD mn_ConEmuC_PID/*, mn_ConEmuC_Input_TID*/; HANDLE mh_ConEmuC, mh_ConEmuCInput;
 	BOOL mb_UseOnlyPipeInput;
     TCHAR ms_ConEmuC_Pipe[MAX_PATH], ms_ConEmuCInput_Pipe[MAX_PATH], ms_VConServer_Pipe[MAX_PATH];
     // Текущий заголовок консоли и его значение для сравнения (для определения изменений)
