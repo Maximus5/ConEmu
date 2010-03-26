@@ -189,6 +189,7 @@ public:
     char isTabs; bool isTabSelf, isTabRecent, isTabLazy;
     wchar_t sTabFontFace[LF_FACESIZE]; DWORD nTabFontCharSet; int nTabFontHeight;
 	wchar_t *sTabCloseMacro;
+	wchar_t *sSaveAllMacro;
 	int nToolbarAddSpace;
     DWORD wndWidth, wndHeight, ntvdmHeight; // в символах
     int wndX, wndY; // в пиксел€х
@@ -203,7 +204,7 @@ public:
 	bool IsHostkeySingle(WORD vk);
 	bool IsHostkeyPressed();
 	WORD GetPressedHostkey();
-    bool isMultiNewConfirm;
+    bool isMultiNewConfirm, isUseWinNumber;
     bool isFARuseASCIIsort, isFixAltOnAltTab;
 
     // «аголовки табов
@@ -222,7 +223,7 @@ public:
     /*bool isScrollTitle;
     DWORD ScrollTitleLen;*/
     wchar_t szAdminTitleSuffix[64]; //" (Admin)"
-    bool bAdminShield;
+    bool bAdminShield, bHideInactiveConsoleTabs;
     
     DWORD nMainTimerElapse; // периодичность, с которой из консоли считываетс€ текст
     //bool isAdvLangChange; // в ¬исте без ConIme в самой консоли не мен€етс€ €зык, пока не послать WM_SETFOCUS. Ќо при этом исчезает диалог быстрого поиска
@@ -257,7 +258,7 @@ public:
     static INT_PTR CALLBACK colorOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
     static INT_PTR CALLBACK infoOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
 	static INT_PTR CALLBACK hideOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
-	static INT_PTR CALLBACK hotkeysOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
+	static INT_PTR CALLBACK multiOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
 	static INT_PTR CALLBACK selectionOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
     void LoadSettings();
     void InitSettings();

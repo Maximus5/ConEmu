@@ -214,6 +214,7 @@ public:
 	void PostKeyUp(WORD vkKey, DWORD dwControlState, wchar_t wch, int ScanCode = -1);
 	void PostConsoleEventPipe(MSG *pMsg);
 	LRESULT PostConsoleMessage(UINT nMsg, WPARAM wParam, LPARAM lParam);
+	void PostMacro(LPCWSTR asMacro);
     //BOOL FlushInputQueue(DWORD nTimeout = 500);
     void OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, wchar_t *pszChars);
     void OnMouse(UINT messg, WPARAM wParam, int x, int y);
@@ -264,6 +265,7 @@ public:
     void SetTabs(ConEmuTab* tabs, int tabsCount);
     BOOL GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab);
     int GetTabCount();
+    int GetModifiedEditors();
     BOOL ActivateFarWindow(int anWndIndex);
     DWORD CanActivateFarWindow(int anWndIndex);
     void SwitchKeyboardLayout(WPARAM wParam,DWORD_PTR dwNewKeybLayout);
@@ -273,6 +275,7 @@ public:
 	bool isActive();
 	bool isFilePanel(bool abPluginAllowed=false);
 	bool isEditor();
+	bool isEditorModified();
 	bool isViewer();
 	bool isVisible();
 	bool isNtvdm();
@@ -302,6 +305,8 @@ public:
     //DWORD WaitEndUpdate(DWORD dwTimeout=1000);
     LPCWSTR GetConStatus();
 	void UpdateCursorInfo();
+	void Detach();
+	void AdminDuplicate();
 
 protected:
     CVirtualConsole* mp_VCon; // соответствующая виртуальная консоль

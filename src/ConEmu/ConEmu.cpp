@@ -2911,18 +2911,20 @@ void CConEmuMain::PostMacro(LPCWSTR asMacro)
     if (!asMacro || !*asMacro)
         return;
 
-	#ifdef _DEBUG
-	DEBUGSTRMACRO(asMacro); OutputDebugStringW(L"\n");
-	#endif
+    mp_VActive->RCon()->PostMacro(asMacro);
 
-    CConEmuPipe pipe(GetFarPID(), CONEMUREADYTIMEOUT);
-    if (pipe.Init(_T("CConEmuMain::PostMacro"), TRUE))
-    {
-        //DWORD cbWritten=0;
-        DebugStep(_T("Macro: Waiting for result (10 sec)"));
-        pipe.Execute(CMD_POSTMACRO, asMacro, (wcslen(asMacro)+1)*2);
-        DebugStep(NULL);
-    }
+	//#ifdef _DEBUG
+	//DEBUGSTRMACRO(asMacro); OutputDebugStringW(L"\n");
+	//#endif
+	//
+    //CConEmuPipe pipe(GetFarPID(), CONEMUREADYTIMEOUT);
+    //if (pipe.Init(_T("CConEmuMain::PostMacro"), TRUE))
+    //{
+    //    //DWORD cbWritten=0;
+    //    DebugStep(_T("Macro: Waiting for result (10 sec)"));
+    //    pipe.Execute(CMD_POSTMACRO, asMacro, (wcslen(asMacro)+1)*2);
+    //    DebugStep(NULL);
+    //}
 }
 
 bool CConEmuMain::PtDiffTest(POINT C, int aX, int aY, UINT D)
@@ -2977,7 +2979,7 @@ void CConEmuMain::RegisterHotKeys()
 
 BOOL CConEmuMain::LowLevelKeyHook(UINT nMsg, UINT nVkKeyCode)
 {
-	if (!gSet.IsHostkeyPressed())
+	if (!gSet.isUseWinNumber || !gSet.IsHostkeyPressed())
 		return FALSE;
 
 	// Теперь собственно обработка
@@ -3036,13 +3038,17 @@ void CConEmuMain::CtrlWinAltSpace()
     mp_VActive->RCon()->ShowConsole(-1); // Toggle visibility
 }
 
-void CConEmuMain::Recreate(BOOL abRecreate, BOOL abConfirm)
+// abRecreate: TRUE - пересоздать текущую, FALSE - создать новую
+// abConfirm:  TRUE - показать диалог подтверждения
+// abRunAs:    TRUE - под админом
+void CConEmuMain::Recreate(BOOL abRecreate, BOOL abConfirm, BOOL abRunAs)
 {
     FLASHWINFO fl = {sizeof(FLASHWINFO)}; fl.dwFlags = FLASHW_STOP; fl.hwnd = ghWnd;
     FlashWindowEx(&fl); // При многократных созданиях мигать начинает...
 
 	RConStartArgs args;
 	args.bRecreate = abRecreate;
+	args.bRunAsAdministrator = abRunAs;
 
 	if (!abConfirm && isPressed(VK_SHIFT))
 		abConfirm = TRUE;
@@ -3084,19 +3090,21 @@ void CConEmuMain::Recreate(BOOL abRecreate, BOOL abConfirm)
         // Restart or close console
         int nActive = ActiveConNum();
         if (nActive >=0) {
-			args.bRunAsAdministrator = mp_VActive->RCon()->isAdministrator();
+			args.bRunAsAdministrator = abRunAs || mp_VActive->RCon()->isAdministrator();
 
-			int nRc = RecreateDlg((LPARAM)&args);
-            //BOOL b = gbDontEnable;
-            //gbDontEnable = TRUE;
-            //int nRc = DialogBoxParam(g_hInstance, MAKEINTRESOURCE(IDD_RESTART), ghWnd, Recreate DlgProc, (LPARAM)&args);
-            //gbDontEnable = b;
-            if (nRc == IDC_TERMINATE) {
-                mp_VActive->RCon()->CloseConsole();
-                return;
+			if (abConfirm) {
+				int nRc = RecreateDlg((LPARAM)&args);
+	            //BOOL b = gbDontEnable;
+	            //gbDontEnable = TRUE;
+	            //int nRc = DialogBoxParam(g_hInstance, MAKEINTRESOURCE(IDD_RESTART), ghWnd, Recreate DlgProc, (LPARAM)&args);
+	            //gbDontEnable = b;
+	            if (nRc == IDC_TERMINATE) {
+	                mp_VActive->RCon()->CloseConsole();
+	                return;
+	            }
+	            if (nRc != IDC_START)
+	                return;
             }
-            if (nRc != IDC_START)
-                return;
 			m_Child.Redraw();
             // Собственно, Recreate
             mp_VActive->RCon()->RecreateProcess(&args);
@@ -4540,6 +4548,37 @@ LRESULT CConEmuMain::OnClose(HWND hWnd)
     return 0;
 }
 
+BOOL CConEmuMain::OnCloseQuery()
+{
+	int nEditors = 0, nProgress = 0, i;
+	for (i=(MAX_CONSOLE_COUNT-1); i>=0; i--) {
+		CRealConsole* pRCon = NULL;
+		ConEmuTab tab = {0};
+		if (mp_VCon[i] && (pRCon = mp_VCon[i]->RCon())!=NULL) {
+			// Прогрессы (копирование, удаление, и т.п.)
+			if (pRCon->GetProgress(NULL) != -1)
+				nProgress ++;
+			
+			// Несохраненные редакторы
+			int n = pRCon->GetModifiedEditors();
+			if (n)
+				nEditors += n;
+		}
+	}
+	if (nProgress || nEditors) {
+		wchar_t szText[255], *pszText;
+		lstrcpy(szText, L"Close confirmation.\r\n\r\n"); pszText = szText+lstrlen(szText);
+		if (nProgress) { wsprintf(pszText, L"Incomplete operations: %i\r\n", nProgress); pszText += lstrlen(pszText); }
+		if (nEditors) { wsprintf(pszText, L"Unsaved editor windows: %i\r\n", nEditors); pszText += lstrlen(pszText); }
+		lstrcpy(pszText, L"\r\nProceed with shutdown?");
+		int nBtn = MessageBoxW(ghWnd, szText, L"ConEmu", MB_OKCANCEL|MB_ICONEXCLAMATION);
+		if (nBtn != IDOK)
+			return FALSE; // не закрывать
+	}
+	
+	return TRUE; // можно
+}
+
 //// Вызывается из ConEmuC, когда он запускается в режиме ComSpec
 //LRESULT CConEmuMain::OnConEmuCmd(BOOL abStarted, HWND ahConWnd, DWORD anConEmuC_PID)
 //{
@@ -5382,16 +5421,16 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
     	|| (gSet.isMulti && wParam
 	        &&
 	    	(wParam==gSet.icMultiNext || wParam==gSet.icMultiNew || wParam==gSet.icMultiRecreate
-	    	|| (wParam>='0' && wParam<='9') // активировать консоль по номеру
-			|| wParam==VK_F11 || wParam==VK_F12) // KeyDown для этого не проходит, но на всякий случай
+	    	|| (gSet.isUseWinNumber && wParam>='0' && wParam<='9') // активировать консоль по номеру
+			|| (gSet.isUseWinNumber && (wParam==VK_F11 || wParam==VK_F12))) // KeyDown для этого не проходит, но на всякий случай
 	        &&
 	    	gSet.IsHostkeyPressed())
 	    )
     {
         if (messg == WM_KEYDOWN || messg == WM_SYSKEYDOWN /*&& (lbLWin || lbRWin) && (wParam != VK_LWIN && wParam != VK_RWIN)*/) {
             if (wParam==gSet.icMultiNext || wParam==gSet.icMultiNew || wParam==gSet.icMultiRecreate
-            	|| (wParam>='0' && wParam<='9')
-				|| /*((lbLWin || lbRWin) &&*/ wParam==VK_F11 || wParam==VK_F12 // KeyDown для этого не проходит, но на всякий случай
+            	|| (gSet.isUseWinNumber && wParam>='0' && wParam<='9')
+				|| (gSet.isUseWinNumber && (wParam==VK_F11 || wParam==VK_F12)) // KeyDown для этого не проходит, но на всякий случай
                 )
             {
                 // Запомнить, что не нужно пускать в консоль
@@ -5413,8 +5452,8 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 					if (lbReverse) {
 						if (gSet.IsHostkey(VK_SHIFT))
 							lbReverse = false;
-						else if (!isPressed(VK_LSHIFT) || !isPressed(VK_RSHIFT))
-							lbReverse = false;
+						//else if (!isPressed(VK_LSHIFT) || !isPressed(VK_RSHIFT)) -- не помню что хотел сказать, но это сбрасывало lbReverse
+						//	lbReverse = false;
 					}
                     ConActivateNext(lbReverse ? FALSE : TRUE);
                     
@@ -7222,33 +7261,35 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
         //SENDMESSAGE(ghConWnd ? ghConWnd : ghWnd, WM_CLOSE, 0, 0); // ?? фар не ловит сообщение, ExitFAR не вызываются
         {
             int nConCount = 0, nDetachedCount = 0;
-			int nEditors = 0, nProgress = 0, i;
-			for (i=(MAX_CONSOLE_COUNT-1); i>=0; i--) {
-				CRealConsole* pRCon = NULL;
-				ConEmuTab tab = {0};
-				if (mp_VCon[i] && (pRCon = mp_VCon[i]->RCon())!=NULL) {
-					if (pRCon->GetProgress(NULL) != -1)
-						nProgress ++;
-					for (int j = 0; TRUE; j++) {
-						if (!pRCon->GetTab(j, &tab))
-							break;
-						if (tab.Modified)
-							nEditors ++;
-					}
-				}
-			}
-			if (nProgress || nEditors) {
-				wchar_t szText[255], *pszText;
-				lstrcpy(szText, L"Close confirmation.\r\n\r\n"); pszText = szText+lstrlen(szText);
-				if (nProgress) { wsprintf(pszText, L"Incomplete operations: %i\r\n", nProgress); pszText += lstrlen(pszText); }
-				if (nEditors) { wsprintf(pszText, L"Unsaved editor windows: %i\r\n", nEditors); pszText += lstrlen(pszText); }
-				lstrcpy(pszText, L"\r\nProceed with shutdown?");
-				int nBtn = MessageBoxW(ghWnd, szText, L"ConEmu", MB_OKCANCEL|MB_ICONEXCLAMATION);
-				if (nBtn != IDOK)
-					return 0; // не закрывать
-			}
+			//int nEditors = 0, nProgress = 0, i;
+			//for (i=(MAX_CONSOLE_COUNT-1); i>=0; i--) {
+			//	CRealConsole* pRCon = NULL;
+			//	ConEmuTab tab = {0};
+			//	if (mp_VCon[i] && (pRCon = mp_VCon[i]->RCon())!=NULL) {
+			//		// Прогрессы (копирование, удаление, и т.п.)
+			//		if (pRCon->GetProgress(NULL) != -1)
+			//			nProgress ++;
+			//		
+			//		// Несохраненные редакторы
+			//		int n = pRCon->GetModifiedEditors();
+			//		if (n)
+			//			nEditors += n;
+			//	}
+			//}
+			//if (nProgress || nEditors) {
+			//	wchar_t szText[255], *pszText;
+			//	lstrcpy(szText, L"Close confirmation.\r\n\r\n"); pszText = szText+lstrlen(szText);
+			//	if (nProgress) { wsprintf(pszText, L"Incomplete operations: %i\r\n", nProgress); pszText += lstrlen(pszText); }
+			//	if (nEditors) { wsprintf(pszText, L"Unsaved editor windows: %i\r\n", nEditors); pszText += lstrlen(pszText); }
+			//	lstrcpy(pszText, L"\r\nProceed with shutdown?");
+			//	int nBtn = MessageBoxW(ghWnd, szText, L"ConEmu", MB_OKCANCEL|MB_ICONEXCLAMATION);
+			//	if (nBtn != IDOK)
+			//		return 0; // не закрывать
+			//}
+			if (!gConEmu.OnCloseQuery())
+				return 0; // не закрывать
 
-            for (i=(MAX_CONSOLE_COUNT-1); i>=0; i--) {
+            for (int i=(MAX_CONSOLE_COUNT-1); i>=0; i--) {
                 if (mp_VCon[i] && mp_VCon[i]->RCon()) {
                     if (mp_VCon[i]->RCon()->isDetached()) {
                         nDetachedCount ++;

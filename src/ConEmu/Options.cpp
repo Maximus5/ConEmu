@@ -193,6 +193,7 @@ CSettings::~CSettings()
 	if (psCmdHistory) {free(psCmdHistory); psCmdHistory = NULL;}
     if (psCurCmd) {free(psCurCmd); psCurCmd = NULL;}
 	if (sTabCloseMacro) {free(sTabCloseMacro); sTabCloseMacro = NULL;}
+	if (sSaveAllMacro) {free(sSaveAllMacro); sSaveAllMacro = NULL;}
 	if (sRClickMacro) {free(sRClickMacro); sRClickMacro = NULL;}
     if (mh_Uxtheme!=NULL) { FreeLibrary(mh_Uxtheme); mh_Uxtheme = NULL; }
 }
@@ -214,7 +215,7 @@ void CSettings::InitSettings()
     psCmd = NULL; psCurCmd = NULL; wcscpy(szDefCmd, L"far");
 	psCmdHistory = NULL; nCmdHistorySize = 0;
     isMulti = true; icMultiNew = 'W'; icMultiNext = 'Q'; icMultiRecreate = 192/*VK_тильда*/; icMultiBuffer = 'A'; 
-    isMultiNewConfirm = true; nMultiHotkeyModifier = VK_LWIN; TestHostkeyModifiers();
+    isMultiNewConfirm = true; isUseWinNumber = true; nMultiHotkeyModifier = VK_LWIN; TestHostkeyModifiers();
     m_isKeyboardHooks = 0;
     isFARuseASCIIsort = false; isFixAltOnAltTab = false;
     isFadeInactive = true; mn_FadeLow = DEFAULT_FADE_LOW; mn_FadeHigh = DEFAULT_FADE_HIGH; mb_FadeInitialized = false;
@@ -356,7 +357,7 @@ void CSettings::InitSettings()
 
     isTabs = 1; isTabSelf = true; isTabRecent = true; isTabLazy = true;
     lstrcpyW(sTabFontFace, L"Tahoma"); nTabFontCharSet = ANSI_CHARSET; nTabFontHeight = 16;
-	sTabCloseMacro = NULL;
+	sTabCloseMacro = sSaveAllMacro = NULL;
 	nToolbarAddSpace = 0;
     
     //isVisualizer = false;
@@ -369,6 +370,7 @@ void CSettings::InitSettings()
     ScrollTitleLen = 22;*/
     lstrcpy(szAdminTitleSuffix, L" (Admin)");
     bAdminShield = true;
+	bHideInactiveConsoleTabs = false;
     
 	isRSelFix = true; isMouseSkipActivation = true; isMouseSkipMoving = true;
 
@@ -464,6 +466,7 @@ void CSettings::LoadSettings()
 			reg->Load(L"Multi.Recreate", icMultiRecreate);
 			reg->Load(L"Multi.NewConfirm", isMultiNewConfirm);
 			reg->Load(L"Multi.Buffer", icMultiBuffer);
+			reg->Load(L"Multi.UseNumbers", isUseWinNumber);
 		reg->Load(L"KeyboardHooks", m_isKeyboardHooks); if (m_isKeyboardHooks>2) m_isKeyboardHooks = 0;
 
 		reg->Load(L"FontAutoSize", isFontAutoSize);
@@ -617,6 +620,9 @@ void CSettings::LoadSettings()
 			reg->Load(L"TabFontFace", sTabFontFace, sizeofarray(sTabFontFace));
 			reg->Load(L"TabFontCharSet", nTabFontCharSet);
 			reg->Load(L"TabFontHeight", nTabFontHeight);
+			if (!reg->Load(L"SaveAllEditors", &sSaveAllMacro)) {
+				sSaveAllMacro = wcsdup(L"@F2 $If (!Editor) $Exit $End %i0=-1; F12 %cur = CurPos; Home Down %s = Menu.Select(\" * \",3,2); $While (%s > 0) $If (%s == %i0) MsgBox(\"FAR SaveAll\",\"Asterisk in menuitem for already processed window\",0x10001) $Exit $End Enter $If (Editor) F2 $If (!Editor) $Exit $End $Else $If (!Viewer) $Exit $End $End %i0 = %s; F12 %s = Menu.Select(\" * \",3,2); $End $If (Menu && Title==\"Screens\") Home $Rep (%cur-1) Down $End Enter $End $Exit");
+			}
         reg->Load(L"TabFrame", isTabFrame);
         reg->Load(L"TabMargins", rcTabMargins);
 		reg->Load(L"ToolbarAddSpace", nToolbarAddSpace);
@@ -634,11 +640,12 @@ void CSettings::LoadSettings()
         reg->Load(L"TabEditor", szTabEditor, sizeofarray(szTabEditor));
         reg->Load(L"TabEditorModified", szTabEditorModified, sizeofarray(szTabEditorModified));
         reg->Load(L"TabViewer", szTabViewer, sizeofarray(szTabViewer));
-        reg->Load(L"TabLenMax", nTabLenMax);
+        reg->Load(L"TabLenMax", nTabLenMax); if (nTabLenMax < 10 || nTabLenMax >= CONEMUTABMAX) nTabLenMax = 20;
         /*reg->Load(L"ScrollTitle", isScrollTitle);
         reg->Load(L"ScrollTitleLen", ScrollTitleLen);*/
         reg->Load(L"AdminTitleSuffix", szAdminTitleSuffix, sizeofarray(szAdminTitleSuffix)); szAdminTitleSuffix[sizeofarray(szAdminTitleSuffix)-1] = 0;
         reg->Load(L"AdminShowShield", bAdminShield);
+		reg->Load(L"HideInactiveConsoleTabs", bHideInactiveConsoleTabs);
         reg->Load(L"TryToCenter", isTryToCenter);
         //reg->Load(L"CreateAppWindow", isCreateAppWindow);
         //reg->Load(L"AllowDetach", isAllowDetach);
@@ -907,6 +914,7 @@ BOOL CSettings::SaveSettings()
 				reg->Save(L"Multi.Recreate", icMultiRecreate);
 				reg->Save(L"Multi.NewConfirm", isMultiNewConfirm);
 				reg->Save(L"Multi.Buffer", icMultiBuffer);
+				reg->Save(L"Multi.UseNumbers", isUseWinNumber);
 			reg->Save(L"KeyboardHooks", m_isKeyboardHooks);
 
             reg->Save(L"FontName", LogFont.lfFaceName);
@@ -1001,6 +1009,7 @@ BOOL CSettings::SaveSettings()
 		        reg->Save(L"TabFontFace", sTabFontFace);
 				reg->Save(L"TabFontCharSet", nTabFontCharSet);
 				reg->Save(L"TabFontHeight", nTabFontHeight);
+				reg->Save(L"SaveAllEditors", &sSaveAllMacro);
 			reg->Save(L"TabFrame", isTabFrame);
 			reg->Save(L"TabMargins", rcTabMargins);
 			reg->Save(L"ToolbarAddSpace", nToolbarAddSpace);
@@ -1011,6 +1020,7 @@ BOOL CSettings::SaveSettings()
 	        reg->Save(L"TabLenMax", nTabLenMax);
 	        reg->Save(L"AdminTitleSuffix", szAdminTitleSuffix);
 	        reg->Save(L"AdminShowShield", bAdminShield);
+			reg->Save(L"HideInactiveConsoleTabs", bHideInactiveConsoleTabs);
 	        reg->Save(L"TryToCenter", isTryToCenter);
 
 			reg->Save(L"IconID", nIconID);
@@ -1829,7 +1839,7 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
         break;
 
 	case bMultiConHotkeys:
-		DialogBox(g_hInstance, MAKEINTRESOURCE(IDD_MORE_HOTKEYS), ghOpWnd, hotkeysOpProc);
+		DialogBox(g_hInstance, MAKEINTRESOURCE(IDD_MORE_MULTICON), ghOpWnd, multiOpProc);
 		break;
 
 	case cbNewConfirm:
@@ -3364,7 +3374,7 @@ bool CSettings::IsHostkeyPressed()
 	return true;
 }
 
-INT_PTR CSettings::hotkeysOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
+INT_PTR CSettings::multiOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
 {
 	switch (messg)
 	{
@@ -3378,6 +3388,21 @@ INT_PTR CSettings::hotkeysOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM l
 			SendDlgItemMessage(hWnd2, hkSwitchConsole, HKM_SETHOTKEY, gSet.icMultiNext, 0);
 			SendDlgItemMessage(hWnd2, hkCloseConsole, HKM_SETRULES, HKCOMB_A|HKCOMB_C|HKCOMB_CA|HKCOMB_S|HKCOMB_SA|HKCOMB_SC|HKCOMB_SCA, 0);
 			SendDlgItemMessage(hWnd2, hkCloseConsole, HKM_SETHOTKEY, gSet.icMultiRecreate, 0);
+			
+			if (gSet.isUseWinNumber) CheckDlgButton(hWnd2, cbUseWinNumber, BST_CHECKED);
+			
+			SetDlgItemText(hWnd2, tTabConsole, gSet.szTabConsole);
+			SetDlgItemText(hWnd2, tTabViewer, gSet.szTabViewer);
+			SetDlgItemText(hWnd2, tTabEditor, gSet.szTabEditor);
+			SetDlgItemText(hWnd2, tTabEditorMod, gSet.szTabEditorModified);
+			
+			SetDlgItemInt(hWnd2, tTabLenMax, gSet.nTabLenMax, FALSE);
+			
+			if (gSet.bAdminShield) CheckDlgButton(hWnd2, cbAdminShield, BST_CHECKED);
+			SetDlgItemText(hWnd2, tAdminSuffix, gSet.szAdminTitleSuffix);
+			EnableWindow(GetDlgItem(hWnd2, tAdminSuffix), !gSet.bAdminShield);
+
+			if (gSet.bHideInactiveConsoleTabs) CheckDlgButton(hWnd2, cbHideInactiveConTabs, BST_CHECKED);
 
 			gSet.RegisterTipsFor(hWnd2);
 			CenterMoreDlg(hWnd2);
@@ -3415,6 +3440,18 @@ INT_PTR CSettings::hotkeysOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM l
 				// Обновить, что осталось
 				gSet.SetupHotkeyChecks(hWnd2);
 				gSet.MakeHostkeyModifier();
+			} else
+			if (TB == cbAdminShield) {
+				gSet.bAdminShield = IsChecked(hWnd2, cbAdminShield);
+				EnableWindow(GetDlgItem(hWnd2, tAdminSuffix), !gSet.bAdminShield);
+				gConEmu.mp_TabBar->Update(TRUE);
+			} else
+			if (TB == cbHideInactiveConTabs) {
+				gSet.bHideInactiveConsoleTabs = IsChecked(hWnd2, cbHideInactiveConTabs);
+				gConEmu.mp_TabBar->Update(TRUE);
+			} else
+			if (TB == cbUseWinNumber) {
+				gSet.isUseWinNumber = IsChecked(hWnd2, cbUseWinNumber);
 			}
 
 		} else if (HIWORD(wParam) == EN_CHANGE)	{
@@ -3427,6 +3464,35 @@ INT_PTR CSettings::hotkeysOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM l
 					gSet.icMultiNext = nHotKey;
 				else if (TB == hkCloseConsole)
 					gSet.icMultiRecreate = nHotKey;
+			} else
+			if (TB == tTabConsole || TB == tTabViewer || TB == tTabEditor || TB == tTabEditorMod) {
+				wchar_t temp[MAX_PATH]; temp[0] = 0;
+				if (GetDlgItemText(hWnd2, TB, temp, MAX_PATH) && temp[0]) {
+					temp[31] = 0; // страховка
+					if (wcsstr(temp, L"%s")) {
+						if (TB == tTabConsole)
+							lstrcpy(gSet.szTabConsole, temp);
+						else if (TB == tTabViewer)
+							lstrcpy(gSet.szTabViewer, temp);
+						else if (TB == tTabEditor)
+							lstrcpy(gSet.szTabEditor, temp);
+						else if (tTabEditorMod)
+							lstrcpy(gSet.szTabEditorModified, temp);
+						gConEmu.mp_TabBar->Update(TRUE);
+					}
+				}				
+			} else
+			if (TB == tTabLenMax) {
+				BOOL lbOk = FALSE;
+				DWORD n = GetDlgItemInt(hWnd2, tTabLenMax, &lbOk, FALSE);
+				if (n > 10 && n < CONEMUTABMAX) {
+					gSet.nTabLenMax = n;
+					gConEmu.mp_TabBar->Update(TRUE);
+				}
+			} else
+			if (TB == tAdminSuffix) {
+				GetDlgItemText(hWnd2, tAdminSuffix, gSet.szAdminTitleSuffix, sizeofarray(gSet.szAdminTitleSuffix));
+				gConEmu.mp_TabBar->Update(TRUE);
 			}
 		}
 		break;

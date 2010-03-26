@@ -67,38 +67,58 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 // Dialog
 //
 
-IDD_MORE_HOTKEYS DIALOG DISCARDABLE  0, 0, 178, 82
+IDD_MORE_MULTICON DIALOG DISCARDABLE  0, 0, 178, 202
 STYLE DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Hotkeys settings"
+CAPTION "Multiconsole settings"
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        "Hotkeys",IDC_STATIC,4,50,170,28
-    RTEXT           "New:",IDC_STATIC,8,63,19,8
+    GROUPBOX        "Hotkeys",IDC_STATIC,4,47,170,44
+    RTEXT           "New:",IDC_STATIC,8,60,19,8
     CONTROL         "",hkNewConsole,"msctls_hotkey32",WS_BORDER | WS_TABSTOP,
-                    30,61,23,13
-    RTEXT           "Switch:",IDC_STATIC,57,63,25,8
+                    30,58,23,13
+    RTEXT           "Switch:",IDC_STATIC,57,60,25,8
     CONTROL         "",hkSwitchConsole,"msctls_hotkey32",WS_BORDER | 
-                    WS_TABSTOP,84,61,23,13
-    RTEXT           "Recreate:",IDC_STATIC,108,63,35,8
+                    WS_TABSTOP,84,58,23,13
+    RTEXT           "Recreate:",IDC_STATIC,108,60,35,8
     CONTROL         "",hkCloseConsole,"msctls_hotkey32",WS_BORDER | 
-                    WS_TABSTOP,146,61,23,13
-    GROUPBOX        "Host-key",IDC_STATIC,4,4,170,43
+                    WS_TABSTOP,146,58,23,13
+    GROUPBOX        "Host-key",IDC_STATIC,4,2,170,43
     CONTROL         "Win",cbHostWin,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,
-                    17,28,10
+                    15,28,10
     CONTROL         "Apps",cbHostApps,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
-                    49,17,32,10
+                    49,15,32,10
     CONTROL         "LCtrl",cbHostLCtrl,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,89,17,31,10
+                    WS_TABSTOP,89,15,31,10
     CONTROL         "RCtrl",cbHostRCtrl,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,129,17,32,10
+                    WS_TABSTOP,129,15,32,10
     CONTROL         "LAlt",cbHostLAlt,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
-                    10,31,28,10
+                    10,29,28,10
     CONTROL         "RAlt",cbHostRAlt,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
-                    49,31,29,10
+                    49,29,29,10
     CONTROL         "LShift",cbHostLShift,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,89,31,34,10
+                    WS_TABSTOP,89,29,34,10
     CONTROL         "RShift",cbHostRShift,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,129,31,35,10
+                    WS_TABSTOP,129,29,35,10
+    GROUPBOX        "Tab templates",IDC_STATIC,4,93,170,74
+    RTEXT           "Console:",IDC_STATIC,9,104,30,8
+    EDITTEXT        tTabConsole,43,103,40,12,ES_AUTOHSCROLL
+    RTEXT           "Viewer:",IDC_STATIC,87,104,34,8
+    RTEXT           "Editor:",IDC_STATIC,9,120,30,8
+    RTEXT           "Modified:",IDC_STATIC,85,120,36,8
+    EDITTEXT        tTabEditor,43,118,40,12,ES_AUTOHSCROLL
+    EDITTEXT        tTabViewer,129,103,40,12,ES_AUTOHSCROLL
+    EDITTEXT        tTabEditorMod,129,118,40,12,ES_AUTOHSCROLL
+    GROUPBOX        "Tab settings",IDC_STATIC,4,169,170,28
+    CONTROL         "Hide inactive console tabs",cbHideInactiveConTabs,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,181,109,10
+    RTEXT           "Maximum tab width (in chars):",IDC_STATIC,25,136,96,8
+    EDITTEXT        tTabLenMax,129,134,40,12,ES_AUTOHSCROLL
+    CONTROL         "Admin shield, or suffix",cbAdminShield,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,10,151,83,10
+    EDITTEXT        tAdminSuffix,100,150,69,12,ES_AUTOHSCROLL | WS_DISABLED
+    CONTROL         "Use «Host-key»+Number to switch consoles",
+                    cbUseWinNumber,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,
+                    75,159,10
 END
 
 IDD_SPG_MAIN DIALOGEX 0, 0, 328, 235
@@ -534,7 +554,7 @@ BEGIN
     CONTROL         "Desktop mode",cbDesktopMode,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,242,196,76,8
     PUSHBUTTON      "...",bHideCaptionSettings,216,195,13,11
-    PUSHBUTTON      "Hotkeys...",bMultiConHotkeys,9,102,48,13
+    PUSHBUTTON      "More...",bMultiConHotkeys,9,102,48,13
     CONTROL         "Toolbar",cbToolbar,"Button",BS_AUTOCHECKBOX | 
                     WS_DISABLED | WS_TABSTOP,167,89,49,8
     PUSHBUTTON      "...",bFarHourglass,114,195,13,11,WS_DISABLED
@@ -649,12 +669,12 @@ END
 #ifdef APSTUDIO_INVOKED
 GUIDELINES DESIGNINFO MOVEABLE PURE 
 BEGIN
-    IDD_MORE_HOTKEYS, DIALOG
+    IDD_MORE_MULTICON, DIALOG
     BEGIN
         LEFTMARGIN, 4
         RIGHTMARGIN, 174
         TOPMARGIN, 4
-        BOTTOMMARGIN, 78
+        BOTTOMMARGIN, 198
     END
 
     IDD_SPG_INFO, DIALOG
@@ -737,14 +757,15 @@ BEGIN
     POPUP "Tab menu"
     BEGIN
         MENUITEM "&Close",                      IDM_CLOSE
+        MENUITEM "Detach",                      IDM_DETACH
+        MENUITEM "&Terminate",                  IDM_TERMINATE
         MENUITEM SEPARATOR
         MENUITEM "&Restart",                    IDM_RESTART
         MENUITEM "Restart as...",               IDM_RESTARTAS
-        MENUITEM "&Terminate",                  IDM_TERMINATE
         MENUITEM SEPARATOR
         MENUITEM "New console...",              IDM_NEW
         MENUITEM SEPARATOR
-        MENUITEM "New copy as Admin",           IDM_ADMIN_DUPLICATE
+        MENUITEM "New elevated copy...",        IDM_ADMIN_DUPLICATE
         MENUITEM SEPARATOR
         MENUITEM "&Save",                       IDM_SAVE
         MENUITEM "Save &all",                   IDM_SAVEALL

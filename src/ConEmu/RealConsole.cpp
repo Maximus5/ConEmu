@@ -47,6 +47,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRLOG(s) //OutputDebugStringA(s)
 #define DEBUGSTRALIVE(s) //DEBUGSTR(s)
 #define DEBUGSTRTABS(s) //DEBUGSTR(s)
+#define DEBUGSTRMACRO(s) //DEBUGSTR(s)
 
 // »ногда не отрисовываетс€ диалог поиска полностью - только бежит текуща€ сканируема€ директори€.
 // »ногда диалог отрисовалс€, но часть до текста "..." отсутствует
@@ -7044,6 +7045,21 @@ int CRealConsole::GetTabCount()
     return max(mn_tabsCount,1);
 }
 
+int CRealConsole::GetModifiedEditors()
+{
+	int nEditors = 0;
+	ConEmuTab tab;
+
+	for (int j = 0; TRUE; j++) {
+		if (!GetTab(j, &tab))
+			break;
+		if (tab.Modified)
+			nEditors ++;
+	}
+
+	return nEditors;
+}
+
 void CRealConsole::CheckPanelTitle()
 {
 #ifdef _DEBUG
@@ -8150,6 +8166,25 @@ bool CRealConsole::isEditor()
 {
     if (!this) return false;
     return GetFarStatus() & CES_EDITOR;
+}
+
+bool CRealConsole::isEditorModified()
+{
+	if (!this) return false;
+	if (!isEditor()) return false;
+	
+	if (mp_tabs && mn_tabsCount) {
+		for (int j = 0; j < mn_tabsCount; j++) {
+			if (mp_tabs[j].Current) {
+				if (mp_tabs[j].Type == /*Editor*/3) {
+					return (mp_tabs[j].Modified != 0);
+				}
+				return false;
+			}
+		}
+	}
+
+	return false;
 }
 
 bool CRealConsole::isViewer()
@@ -9333,4 +9368,43 @@ bool CRealConsole::ConsoleRect2ScreenRect(const RECT &rcCon, RECT *prcScr)
 		lbRectOK = (prcScr->bottom > prcScr->top);
 	}
 	return lbRectOK;
+}
+
+void CRealConsole::PostMacro(LPCWSTR asMacro)
+{
+    if (!this || !asMacro || !*asMacro)
+        return;
+        
+	DWORD nPID = GetFarPID(TRUE/*abPluginRequired*/);
+	if (!nPID)
+		return;
+
+	#ifdef _DEBUG
+	DEBUGSTRMACRO(asMacro); OutputDebugStringW(L"\n");
+	#endif
+	
+    CConEmuPipe pipe(nPID, CONEMUREADYTIMEOUT);
+    if (pipe.Init(_T("CRealConsole::PostMacro"), TRUE))
+    {
+        //DWORD cbWritten=0;
+        gConEmu.DebugStep(_T("Macro: Waiting for result (10 sec)"));
+        pipe.Execute(CMD_POSTMACRO, asMacro, (wcslen(asMacro)+1)*2);
+        gConEmu.DebugStep(NULL);
+    }
+}
+
+void CRealConsole::Detach()
+{
+	if (!this) return;
+	ShowConsole(1);
+	// „тобы случайно не закрыть RealConsole?
+	m_Args.bDetached = TRUE;
+}
+
+// «апустить Elevated копию фара с теми же папками на панел€х
+void CRealConsole::AdminDuplicate()
+{
+	if (!this) return;
+
+	TODO("«апустить Elevated фар с параметрами - текущими пут€ми");
 }

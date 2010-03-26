@@ -102,6 +102,7 @@ char CVirtualConsole::mc_Uni2Oem[0x10000];
 wchar_t CVirtualConsole::ms_Spaces[MAX_SPACES];
 wchar_t CVirtualConsole::ms_HorzDbl[MAX_SPACES];
 wchar_t CVirtualConsole::ms_HorzSingl[MAX_SPACES];
+HMENU CVirtualConsole::mh_PopupMenu = NULL;
 
 CVirtualConsole* CVirtualConsole::CreateVCon(RConStartArgs *args)
 {
@@ -273,6 +274,10 @@ CVirtualConsole::~CVirtualConsole()
         delete mp_RCon;
         mp_RCon = NULL;
     }
+    
+    //if (mh_PopupMenu) { -- static на все экземпляры
+    //	DestroyMenu(mh_PopupMenu); mh_PopupMenu = NULL;
+    //}
 }
 
 HWND CVirtualConsole::GetView()
@@ -3156,6 +3161,70 @@ COORD CVirtualConsole::FindOpaqueCell()
 }
 
 // Показать контекстное меню для ТЕКУЩЕЙ закладки консоли
+// ptCur - экранные координаты
 void CVirtualConsole::ShowPopupMenu(POINT ptCur)
 {
+	if (!mh_PopupMenu)
+		mh_PopupMenu = LoadMenu(g_hInstance, MAKEINTRESOURCE(IDR_TABMENU));
+
+	HMENU hPopup = mh_PopupMenu ? GetSubMenu(mh_PopupMenu, 0) : NULL;
+	if (!hPopup) {
+		MBoxAssert(hPopup!=NULL);
+		return;
+	}
+	
+	ptCur.x++; ptCur.y++; // чтобы меню можно было сразу закрыть левым кликом.
+	
+	bool lbIsFar = mp_RCon->isFar(TRUE/* abPluginRequired */);
+	bool lbIsPanels = lbIsFar && mp_RCon->isFilePanel(false/* abPluginAllowed */);
+	bool lbIsEditorModified = lbIsFar && mp_RCon->isEditorModified();
+	bool lbHaveModified = lbIsFar && mp_RCon->GetModifiedEditors();
+	if (lbHaveModified) {
+		if (!gSet.sSaveAllMacro || !*gSet.sSaveAllMacro)
+			lbHaveModified = false;
+	}
+	
+	EnableMenuItem(hPopup, IDM_CLOSE, MF_BYCOMMAND | (lbIsFar ? MF_ENABLED : MF_GRAYED));
+	EnableMenuItem(hPopup, IDM_ADMIN_DUPLICATE, MF_BYCOMMAND | (lbIsPanels ? MF_ENABLED : MF_GRAYED));
+	EnableMenuItem(hPopup, IDM_SAVE, MF_BYCOMMAND | (lbIsEditorModified ? MF_ENABLED : MF_GRAYED));
+	EnableMenuItem(hPopup, IDM_SAVEALL, MF_BYCOMMAND | (lbHaveModified ? MF_ENABLED : MF_GRAYED));
+
+	int nCmd = TrackPopupMenu(hPopup, 
+            TPM_LEFTALIGN | TPM_RIGHTBUTTON | TPM_NONOTIFY | TPM_RETURNCMD, 
+            ptCur.x, ptCur.y, 0, ghWnd, NULL);
+	if (!nCmd)
+		return; // отмена
+	
+	switch (nCmd) {
+	case IDM_CLOSE:
+		mp_RCon->PostMacro(gSet.sTabCloseMacro ? gSet.sTabCloseMacro : L"F10");
+		break;
+	case IDM_DETACH:
+		mp_RCon->Detach();
+		gConEmu.OnVConTerminated(this);
+		break;
+	case IDM_TERMINATE:
+		mp_RCon->CloseConsole();
+		break;
+	case IDM_RESTART:
+	case IDM_RESTARTAS:
+		if (gConEmu.isActive(this)) {
+			gConEmu.Recreate(TRUE, FALSE, (nCmd==IDM_RESTARTAS));
+		} else {
+			MBoxAssert(gConEmu.isActive(this));
+		}
+		break;
+	case IDM_NEW:
+		gConEmu.Recreate(FALSE, gSet.isMultiNewConfirm);
+		break;
+	case IDM_ADMIN_DUPLICATE:
+		mp_RCon->AdminDuplicate();
+		break;
+	case IDM_SAVE:
+		mp_RCon->PostMacro(L"F2");
+		break;
+	case IDM_SAVEALL:
+		mp_RCon->PostMacro(gSet.sSaveAllMacro);
+		break;
+	}
 }

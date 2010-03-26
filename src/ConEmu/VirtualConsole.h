@@ -251,4 +251,5 @@ protected:
 		POINT *pAllPoints;
 		INT   *pAllCounts;
 	} TransparentInfo;
+	static HMENU mh_PopupMenu;
 };

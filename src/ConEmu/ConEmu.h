@@ -328,7 +328,7 @@ public:
 	void PostMacro(LPCWSTR asMacro);
 	void PostCreate(BOOL abRecieved=FALSE);
 	bool PtDiffTest(POINT C, int aX, int aY, UINT D); //(((abs(C.x-LOWORD(lParam)))<D) && ((abs(C.y-HIWORD(lParam)))<D))
-	void Recreate(BOOL abRecreate, BOOL abConfirm);
+	void Recreate(BOOL abRecreate, BOOL abConfirm, BOOL abRunAs = FALSE);
 	HHOOK mh_RecreateDlgKeyHook;
 	BOOL mb_SkipAppsInRecreate;
 	int RecreateDlg(LPARAM lParam);
@@ -365,6 +365,7 @@ public:
 	void OnAlwaysOnTop();
 	void OnBufferHeight(); //BOOL abBufferHeight);
 	LRESULT OnClose(HWND hWnd);
+	BOOL OnCloseQuery();
 	void OnConsoleResize(BOOL abPosted=FALSE);
 	LRESULT OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate);
 	void OnDesktopMode();

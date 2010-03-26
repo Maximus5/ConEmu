@@ -944,16 +944,17 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop (IDataObject * pDataObject,DWORD grfKe
 	{
 		wchar_t *mcr = (wchar_t*)calloc(128, sizeof(wchar_t));
 		//2010-02-18 Ќе было префикса '@'
+		//2010-03-26 префикс '@' ставить нельз€, ибо тогда процесса копировани€ видно не будет при отсутствии подтверждени€
 
 		// ≈сли т€нули ".." то перед копированием на другую панель сначала необходимо выйти на верхний уровень
-		lstrcpyW(mcr, L"@$If (APanel.SelCount==0 && APanel.Current==\"..\") CtrlPgUp $End ");
+		lstrcpyW(mcr, L"$If (APanel.SelCount==0 && APanel.Current==\"..\") CtrlPgUp $End ");
 
 		// “еперь собственно клавиша запуска
 		lstrcatW(mcr, (*pdwEffect == DROPEFFECT_MOVE) ? L"F6" : L"F5");
 
 		// » если просили копировать сразу без подтверждени€
 		if (gSet.isDropEnabled==2)
-			lstrcatW(mcr, L" Enter $MMode 1");
+			lstrcatW(mcr, L" Enter "); //$MMode 1");
 
 		gConEmu.PostCopy(mcr);
 
@@ -1174,7 +1175,11 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragOver(DWORD grfKeyState,POINTL pt,DWORD 
 			//pt.y/=gSet.Log Font.lfHeight;
 
 			BOOL lbActive = FALSE, lbPassive = FALSE;
-			if (((lbActive = PtInRect(&(m_pfpi->ActiveRect), *(LPPOINT)&pt)) && m_pfpi->pszActivePath[0] && !mb_selfdrag) ||
+			BOOL lbAllowToActive = // ћожно ли бросать на активную панель
+					(!mb_selfdrag) // если тащат снаружи
+					|| (grfKeyState & MK_ALT) // или нажат Alt
+					|| (grfKeyState == MK_RBUTTON); // или тащат правой кнопкой без модификаторов
+			if (((lbActive = PtInRect(&(m_pfpi->ActiveRect), *(LPPOINT)&pt)) && m_pfpi->pszActivePath[0] && lbAllowToActive) ||
 				((lbPassive = PtInRect(&(m_pfpi->PassiveRect), *(LPPOINT)&pt)) && (m_pfpi->pszPassivePath[0] || mb_selfdrag)))
 			{
 

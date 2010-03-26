@@ -538,6 +538,27 @@ LRESULT CALLBACK TabBarClass::ToolProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPAR
 				return 1;
 			}
 		} break;
+	case WM_RBUTTONUP:
+		{
+			POINT pt = {LOWORD(lParam),HIWORD(lParam)};
+			int nIdx = SendMessage(hwnd, TB_HITTEST, 0, (LPARAM)&pt);
+			// If the return value is zero or a positive value, it is 
+			// the zero-based index of the nonseparator item in which the point lies.
+			if (nIdx >= 0 && nIdx < MAX_CONSOLE_COUNT) {
+				// ѕока кнопки не настраиваютс€ - это будет строго номер консоли
+				CVirtualConsole* pVCon = gConEmu.GetVCon(nIdx);
+				if (!gConEmu.isActive(pVCon)) {
+					if (!gConEmu.ConActivate(nIdx)) {
+						if (!gConEmu.isActive(pVCon)) {
+							return 0;
+						}
+					}
+				}
+				ClientToScreen(hwnd, &pt);
+				pVCon->ShowPopupMenu(pt);
+			}
+			return 0;
+		}
     }
     return CallWindowProc(_defaultToolProc, hwnd, uMsg, wParam, lParam);
 }
@@ -636,12 +657,17 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
 	}
 	#endif
 
+	TODO("ќбработка gSet.bHideInactiveConsoleTabs");
+
 	MCHKHEAP
 	if (!gConEmu.mp_TabBar->IsActive() && gSet.isTabs) {
 		int nTabs = 0;
 		for (V = 0; V < MAX_CONSOLE_COUNT && nTabs < 2; V++) {
 			_ASSERTE(m_Tab2VCon.size()==0);
 			if (!(pVCon = gConEmu.GetVCon(V))) continue;
+			if (gSet.bHideInactiveConsoleTabs) {
+				if (!gConEmu.isActive(pVCon)) continue;
+			}
 			_ASSERTE(m_Tab2VCon.size()==0);
 			nTabs += pVCon->RCon()->GetTabCount();
 			_ASSERTE(m_Tab2VCon.size()==0);
@@ -656,6 +682,9 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
 		for (V = 0; V < MAX_CONSOLE_COUNT && nTabs < 2; V++) {
 			_ASSERTE(m_Tab2VCon.size()==0);
 			if (!(pVCon = gConEmu.GetVCon(V))) continue;
+			if (gSet.bHideInactiveConsoleTabs) {
+				if (!gConEmu.isActive(pVCon)) continue;
+			}
 			_ASSERTE(m_Tab2VCon.size()==0);
 			nTabs += pVCon->RCon()->GetTabCount();
 			_ASSERTE(m_Tab2VCon.size()==0);
@@ -678,9 +707,13 @@ void TabBarClass::Update(BOOL abPosted/*=FALSE*/)
 
     for (V = 0; V < MAX_CONSOLE_COUNT; V++) {
         if (!(pVCon = gConEmu.GetVCon(V))) continue;
+		BOOL lbActive = gConEmu.isActive(pVCon);
+
+		if (gSet.bHideInactiveConsoleTabs) {
+			if (!lbActive) continue;
+		}
+
 		CRealConsole *pRCon = pVCon->RCon();
-        
-        BOOL lbActive = gConEmu.isActive(pVCon);
         
         for (I = 0; TRUE; I++) {
 			#ifdef _DEBUG
@@ -1097,14 +1130,21 @@ void TabBarClass::OnMouse(int message, int x, int y)
         if (iPage != -1)
         {
             CVirtualConsole* pVCon = NULL;
+            // дл€ меню нужны экранные координаты, получим их сразу, чтобы менюшка вплывала на клике
+            // а то вдруг мышка уедет, во врем€ активации таба...
+            POINT ptCur = {0,0}; GetCursorPos(&ptCur);
 
 			pVCon = FarSendChangeTab(iPage);
 
 			if (pVCon) {
-				if (pVCon->RCon()->GetFarPID()) {
-					gConEmu.PostMacro(gSet.sTabCloseMacro ? gSet.sTabCloseMacro : L"F10");
+				if (message == WM_RBUTTONUP) {
+					pVCon->ShowPopupMenu(ptCur);
 				} else {
-					gConEmu.Recreate ( TRUE, TRUE );
+					if (pVCon->RCon()->GetFarPID()) {
+						pVCon->RCon()->PostMacro(gSet.sTabCloseMacro ? gSet.sTabCloseMacro : L"F10");
+					} else {
+						gConEmu.Recreate ( TRUE, TRUE );
+					}
 				}
 			}
         }

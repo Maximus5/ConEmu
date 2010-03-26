@@ -21,7 +21,7 @@
 #define IDD_MORE_HIDE                   200
 #define IDD_MORE_MULTIBAR               201
 #define IDD_DIALOG1                     202
-#define IDD_MORE_HOTKEYS                202
+#define IDD_MORE_MULTICON               202
 #define IDD_MORE_FADE                   203
 #define IDD_MORE_SELECTION              204
 #define IDR_TABMENU                     205
@@ -269,6 +269,15 @@
 #define cbCTSBlockSelection             1635
 #define lbCTSForeIdx                    1636
 #define lbCTSBackIdx                    1637
+#define tTabConsole                     1638
+#define tTabEditor                      1639
+#define tTabViewer                      1640
+#define tTabEditorMod                   1641
+#define cbHideInactiveConTabs           1642
+#define tTabLenMax                      1643
+#define cbAdminShield                   1646
+#define tAdminSuffix                    1647
+#define cbUseWinNumber                  1648
 #define IDM_CLOSE                       40001
 #define IDM_RESTART                     40002
 #define IDM_RESTARTAS                   40003
@@ -277,14 +286,15 @@
 #define IDM_ADMIN_DUPLICATE             40006
 #define IDM_SAVE                        40007
 #define IDM_SAVEALL                     40008
+#define IDM_DETACH                      40009
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        206
-#define _APS_NEXT_COMMAND_VALUE         40009
-#define _APS_NEXT_CONTROL_VALUE         1638
+#define _APS_NEXT_COMMAND_VALUE         40010
+#define _APS_NEXT_CONTROL_VALUE         1649
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif
