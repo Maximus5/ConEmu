@@ -1,5 +1,5 @@
 //{{NO_DEPENDENCIES}}
-// Microsoft Developer Studio generated include file.
+// Microsoft Visual C++ generated include file.
 // Used by ConEmu.rc
 //
 #define IDI_ICON1                       1
@@ -19,12 +19,11 @@
 #define IDD_SPG_INFO                    153
 #define IDD_SPG_FEATURE                 154
 #define IDD_MORE_HIDE                   200
-#define IDD_MORE_MULTIBAR               201
 #define IDD_DIALOG1                     202
-#define IDD_MORE_MULTICON               202
 #define IDD_MORE_FADE                   203
 #define IDD_MORE_SELECTION              204
 #define IDR_TABMENU                     205
+#define IDD_SPG_TABS                    206
 #define c0                              1000
 #define c1                              1001
 #define c2                              1002
@@ -275,9 +274,12 @@
 #define tTabEditorMod                   1641
 #define cbHideInactiveConTabs           1642
 #define tTabLenMax                      1643
+#define cbHideInactiveConTabs2          1644
 #define cbAdminShield                   1646
 #define tAdminSuffix                    1647
 #define cbUseWinNumber                  1648
+#define IDC_CHECK1                      1649
+#define cbInstallKeybHooks              1649
 #define IDM_CLOSE                       40001
 #define IDM_RESTART                     40002
 #define IDM_RESTARTAS                   40003
@@ -292,9 +294,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        206
+#define _APS_NEXT_RESOURCE_VALUE        207
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         1649
+#define _APS_NEXT_CONTROL_VALUE         1650
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

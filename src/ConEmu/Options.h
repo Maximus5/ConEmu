@@ -248,17 +248,18 @@ public:
     WORD    CharWidth[0x10000]; //, Font2Width[0x10000];
 	ABC     CharABC[0x10000];
 
-    HWND hMain, hExt, hColors, hInfo;
+    HWND hMain, hExt, hTabs, hColors, hInfo;
 
     bool LoadImageFrom(TCHAR *inPath, bool abShowErrors=false);
 	//static void CenterDialog(HWND hWnd2);
     static INT_PTR CALLBACK wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
     static INT_PTR CALLBACK mainOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
     static INT_PTR CALLBACK extOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
+	static INT_PTR CALLBACK tabsOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
     static INT_PTR CALLBACK colorOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
     static INT_PTR CALLBACK infoOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
 	static INT_PTR CALLBACK hideOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
-	static INT_PTR CALLBACK multiOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
+	//static INT_PTR CALLBACK multiOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
 	static INT_PTR CALLBACK selectionOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
     void LoadSettings();
     void InitSettings();
@@ -291,6 +292,7 @@ protected:
     LRESULT OnInitDialog();
 	LRESULT OnInitDialog_Main();
 	LRESULT OnInitDialog_Ext();
+	LRESULT OnInitDialog_Tabs();
 	LRESULT OnInitDialog_Color();
 	LRESULT OnInitDialog_Info();
     LRESULT OnButtonClicked(WPARAM wParam, LPARAM lParam);

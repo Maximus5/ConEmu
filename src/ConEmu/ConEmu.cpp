@@ -2943,13 +2943,30 @@ bool CConEmuMain::PtDiffTest(POINT C, int aX, int aY, UINT D)
 
 void CConEmuMain::RegisterHotKeys()
 {
-	DWORD dwErr = 0;
 	if (!mb_HotKeyRegistered) {
 		if (RegisterHotKey(ghWnd, 0x201, MOD_CONTROL|MOD_WIN|MOD_ALT, VK_SPACE))
 		{
 			mb_HotKeyRegistered = TRUE;
-		}	
-			
+		}
+	}
+
+	if (!mh_LLKeyHook) {
+		RegisterHoooks();
+	}
+}
+
+void CConEmuMain::RegisterHoooks()
+{
+//	#ifndef _DEBUG
+	// ƒл€ WinXP это не было нужно
+	if (gOSVer.dwMajorVersion < 6) {
+		return;
+	}
+//	#endif
+
+	DWORD dwErr = 0;
+
+	if (!mh_LLKeyHook) {
 		if (gSet.isKeyboardHooks())
 		{
 			if (!mh_LLKeyHookDll) {
@@ -3002,7 +3019,14 @@ void CConEmuMain::UnRegisterHotKeys(BOOL abFinal/*=FALSE*/)
 {
 	if (mb_HotKeyRegistered) {
 		UnregisterHotKey(ghWnd, 0x201);
+		mb_HotKeyRegistered = FALSE;
 	}
+
+	UnRegisterHoooks(abFinal);
+}
+
+void CConEmuMain::UnRegisterHoooks(BOOL abFinal/*=FALSE*/)
+{
 	if (mh_LLKeyHook) {
 		UnhookWindowsHookEx(mh_LLKeyHook);
 		mh_LLKeyHook = NULL;
@@ -3013,7 +3037,6 @@ void CConEmuMain::UnRegisterHotKeys(BOOL abFinal/*=FALSE*/)
 			mh_LLKeyHookDll = NULL;
 		}
 	}
-	mb_HotKeyRegistered = FALSE;
 }
 
 void CConEmuMain::CtrlWinAltSpace()

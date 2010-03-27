@@ -215,6 +215,10 @@ protected:
 	HMODULE mh_LLKeyHookDll;
 	void RegisterHotKeys();
 	void UnRegisterHotKeys(BOOL abFinal=FALSE);
+public:
+	void RegisterHoooks();
+	void UnRegisterHoooks(BOOL abFinal=FALSE);
+protected:
 	void CtrlWinAltSpace();
 	BOOL LowLevelKeyHook(UINT nMsg, UINT nVkKeyCode);
 	//DWORD_PTR mn_CurrentKeybLayout;

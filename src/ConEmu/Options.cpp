@@ -147,7 +147,7 @@ CSettings::CSettings()
     mb_IgnoreTtfChange = TRUE;
 	mb_CharSetWasSet = FALSE;
 	mb_TabHotKeyRegistered = FALSE;
-    hMain = NULL; hExt = NULL; hColors = NULL; hInfo = NULL; hwndTip = NULL; hwndBalloon = NULL;
+	hMain = NULL; hExt = NULL; hTabs = NULL; hColors = NULL; hInfo = NULL; hwndTip = NULL; hwndBalloon = NULL;
     QueryPerformanceFrequency((LARGE_INTEGER *)&mn_Freq);
     memset(mn_Counter, 0, sizeof(*mn_Counter)*(tPerfInterval-gbPerformance));
     memset(mn_CounterMax, 0, sizeof(*mn_CounterMax)*(tPerfInterval-gbPerformance));
@@ -1211,7 +1211,7 @@ DWORD CSettings::EnumFontsThread(LPVOID apArg)
 LRESULT CSettings::OnInitDialog()
 {
 	_ASSERTE(!hMain && !hColors && !hInfo);
-	hMain = NULL; hExt = NULL; hColors = NULL; hInfo = NULL;
+	hMain = NULL; hExt = NULL; hTabs = NULL; hColors = NULL; hInfo = NULL;
 	gbLastColorsOk = FALSE;
 
 	HMENU hSysMenu = GetSystemMenu(ghOpWnd, FALSE);
@@ -1266,10 +1266,12 @@ LRESULT CSettings::OnInitDialog()
         TabCtrl_InsertItem(_hwndTab, 0, &tie);
         tie.pszText = wcscpy(szTitle, L"Features");
         TabCtrl_InsertItem(_hwndTab, 1, &tie);
+		tie.pszText = wcscpy(szTitle, L"Tabs");
+		TabCtrl_InsertItem(_hwndTab, 2, &tie);
         tie.pszText = wcscpy(szTitle, L"Colors");
-        TabCtrl_InsertItem(_hwndTab, 2, &tie);
-        tie.pszText = wcscpy(szTitle, L"Info");
         TabCtrl_InsertItem(_hwndTab, 3, &tie);
+        tie.pszText = wcscpy(szTitle, L"Info");
+        TabCtrl_InsertItem(_hwndTab, 4, &tie);
         
         HFONT hFont = CreateFont(nTabFontHeight/*TAB_FONT_HEIGTH*/, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, nTabFontCharSet /*ANSI_CHARSET*/, OUT_DEFAULT_PRECIS, 
             CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_SWISS, /* L"Tahoma" */ sTabFontFace);
@@ -1443,10 +1445,7 @@ LRESULT CSettings::OnInitDialog_Main()
 	}
 	if (isCursorColor) CheckDlgButton(hMain, cbCursorColor, BST_CHECKED);
 	if (isCursorBlink) CheckDlgButton(hMain, cbCursorBlink, BST_CHECKED);
-
-
-	if (isEnhanceGraphics) CheckDlgButton(hMain, cbEnhanceGraphics, BST_CHECKED);
-	
+	CheckDlgButton(hMain, cbBlockInactiveCursor, isCursorBlockInactive ? BST_CHECKED : BST_UNCHECKED);
 	if (isCursorV)
 		CheckDlgButton(hMain, rCursorV, BST_CHECKED);
 	else
@@ -1529,6 +1528,7 @@ LRESULT CSettings::OnInitDialog_Ext()
 	if (isDebugSteps) CheckDlgButton(hExt, cbDebugSteps, BST_CHECKED);
 	if (isHideCaption) CheckDlgButton(hExt, cbHideCaption, BST_CHECKED);
 	if (isHideCaptionAlways()) CheckDlgButton(hExt, cbHideCaptionAlways, BST_CHECKED);
+	if (isEnhanceGraphics) CheckDlgButton(hExt, cbEnhanceGraphics, BST_CHECKED);
 	
 	if (isFARuseASCIIsort) CheckDlgButton(hExt, cbFARuseASCIIsort, BST_CHECKED);
 	if (isFixAltOnAltTab) CheckDlgButton(hExt, cbFixAltOnAltTab, BST_CHECKED);
@@ -1565,15 +1565,6 @@ LRESULT CSettings::OnInitDialog_Ext()
 	if (isDragShowIcons) CheckDlgButton(hExt, cbDragIcons, BST_CHECKED);
 
 
-	if (isTabs)
-		CheckDlgButton(hExt, cbTabs, (isTabs==1) ? BST_CHECKED : BST_INDETERMINATE);
-	if (isTabSelf)
-		CheckDlgButton(hExt, cbTabSelf, BST_CHECKED);
-	if (isTabRecent)
-		CheckDlgButton(hExt, cbTabRecent, BST_CHECKED);
-	if (isTabLazy)
-		CheckDlgButton(hExt, cbTabLazy, BST_CHECKED);
-	
 	if (isRSelFix)
 		CheckDlgButton(hExt, cbRSelectionFix, BST_CHECKED);
 
@@ -1629,6 +1620,79 @@ LRESULT CSettings::OnInitDialog_Ext()
 	return 0;
 }
 
+LRESULT CSettings::OnInitDialog_Tabs()
+{
+	if (gSet.EnableThemeDialogTextureF)
+		gSet.EnableThemeDialogTextureF(hTabs, 6/*ETDT_ENABLETAB*/);
+
+	if (isTabs)
+		CheckDlgButton(hTabs, cbTabs, (isTabs==1) ? BST_CHECKED : BST_INDETERMINATE);
+	if (isTabSelf)
+		CheckDlgButton(hTabs, cbTabSelf, BST_CHECKED);
+	if (isTabRecent)
+		CheckDlgButton(hTabs, cbTabRecent, BST_CHECKED);
+	if (isTabLazy)
+		CheckDlgButton(hTabs, cbTabLazy, BST_CHECKED);
+	if (gSet.bHideInactiveConsoleTabs)
+		CheckDlgButton(hTabs, cbHideInactiveConTabs, BST_CHECKED);
+
+	if (isMulti)
+		CheckDlgButton(hTabs, cbMultiCon, BST_CHECKED);
+	if (isMultiNewConfirm)
+		CheckDlgButton(hTabs, cbNewConfirm, BST_CHECKED);
+	if (AutoBufferHeight)
+		CheckDlgButton(hTabs, cbLongOutput, BST_CHECKED);
+	wchar_t sz[16];
+	SendDlgItemMessage(hTabs, tLongOutputHeight, EM_SETLIMITTEXT, 5, 0);
+	SetDlgItemText(hTabs, tLongOutputHeight, _ltow(gSet.DefaultBufferHeight, sz, 10));
+	EnableWindow(GetDlgItem(hTabs, tLongOutputHeight), AutoBufferHeight);
+	// 16bit Height
+	SendDlgItemMessage(hTabs, lbNtvdmHeight, CB_ADDSTRING, 0, (LPARAM) L"Auto");
+	SendDlgItemMessage(hTabs, lbNtvdmHeight, CB_ADDSTRING, 0, (LPARAM) L"25 lines");
+	SendDlgItemMessage(hTabs, lbNtvdmHeight, CB_ADDSTRING, 0, (LPARAM) L"28 lines");
+	SendDlgItemMessage(hTabs, lbNtvdmHeight, CB_ADDSTRING, 0, (LPARAM) L"43 lines");
+	SendDlgItemMessage(hTabs, lbNtvdmHeight, CB_ADDSTRING, 0, (LPARAM) L"50 lines");
+	SendDlgItemMessage(hTabs, lbNtvdmHeight, CB_SETCURSEL, !ntvdmHeight ? 0 :
+		((ntvdmHeight == 25) ? 1 : ((ntvdmHeight == 28) ? 2 : ((ntvdmHeight == 43) ? 3 : 4))), 0);
+	// Cmd.exe output cp
+	SendDlgItemMessage(hTabs, lbCmdOutputCP, CB_ADDSTRING, 0, (LPARAM) L"Undefined");
+	SendDlgItemMessage(hTabs, lbCmdOutputCP, CB_ADDSTRING, 0, (LPARAM) L"Automatic");
+	SendDlgItemMessage(hTabs, lbCmdOutputCP, CB_ADDSTRING, 0, (LPARAM) L"Unicode");
+	SendDlgItemMessage(hTabs, lbCmdOutputCP, CB_ADDSTRING, 0, (LPARAM) L"OEM");
+	SendDlgItemMessage(hTabs, lbCmdOutputCP, CB_SETCURSEL, nCmdOutputCP, 0);
+	//
+	SetupHotkeyChecks(hTabs);
+
+	SendDlgItemMessage(hTabs, hkNewConsole, HKM_SETRULES, HKCOMB_A|HKCOMB_C|HKCOMB_CA|HKCOMB_S|HKCOMB_SA|HKCOMB_SC|HKCOMB_SCA, 0);
+	SendDlgItemMessage(hTabs, hkNewConsole, HKM_SETHOTKEY, gSet.icMultiNew, 0);
+	SendDlgItemMessage(hTabs, hkSwitchConsole, HKM_SETRULES, HKCOMB_A|HKCOMB_C|HKCOMB_CA|HKCOMB_S|HKCOMB_SA|HKCOMB_SC|HKCOMB_SCA, 0);
+	SendDlgItemMessage(hTabs, hkSwitchConsole, HKM_SETHOTKEY, gSet.icMultiNext, 0);
+	SendDlgItemMessage(hTabs, hkCloseConsole, HKM_SETRULES, HKCOMB_A|HKCOMB_C|HKCOMB_CA|HKCOMB_S|HKCOMB_SA|HKCOMB_SC|HKCOMB_SCA, 0);
+	SendDlgItemMessage(hTabs, hkCloseConsole, HKM_SETHOTKEY, gSet.icMultiRecreate, 0);
+
+	if (gSet.isUseWinNumber)
+		CheckDlgButton(hTabs, cbUseWinNumber, BST_CHECKED);
+	CheckDlgButton(hTabs, cbInstallKeybHooks, 
+		(m_isKeyboardHooks == 1) ? BST_CHECKED : 
+		((m_isKeyboardHooks == 0) ? BST_INDETERMINATE : BST_UNCHECKED));
+
+	SetDlgItemText(hTabs, tTabConsole, gSet.szTabConsole);
+	SetDlgItemText(hTabs, tTabViewer, gSet.szTabViewer);
+	SetDlgItemText(hTabs, tTabEditor, gSet.szTabEditor);
+	SetDlgItemText(hTabs, tTabEditorMod, gSet.szTabEditorModified);
+
+	SetDlgItemInt(hTabs, tTabLenMax, gSet.nTabLenMax, FALSE);
+
+	if (gSet.bAdminShield)
+		CheckDlgButton(hTabs, cbAdminShield, BST_CHECKED);
+	SetDlgItemText(hTabs, tAdminSuffix, gSet.szAdminTitleSuffix);
+	EnableWindow(GetDlgItem(hTabs, tAdminSuffix), !gSet.bAdminShield);
+
+	RegisterTipsFor(hTabs);
+
+	return 0;
+}
+
 LRESULT CSettings::OnInitDialog_Color()
 {
 	if (gSet.EnableThemeDialogTextureF)
@@ -1674,8 +1738,6 @@ LRESULT CSettings::OnInitDialog_Color()
 	CheckDlgButton(hColors, cbFadeInactive, isFadeInactive ? BST_CHECKED : BST_UNCHECKED);
 	SetDlgItemInt(hColors, tFadeLow, mn_FadeLow, FALSE);
 	SetDlgItemInt(hColors, tFadeHigh, mn_FadeHigh, FALSE);
-
-	CheckDlgButton(hColors, cbBlockInactiveCursor, isCursorBlockInactive ? BST_CHECKED : BST_UNCHECKED);
 
 	// Default colors
 	memmove(gdwLastColors, Colors, sizeof(gdwLastColors));
@@ -1835,21 +1897,21 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
 		break;
         
     case cbMultiCon:
-        isMulti = IsChecked(hExt, cbMultiCon);
+        isMulti = IsChecked(hTabs, cbMultiCon);
         break;
 
-	case bMultiConHotkeys:
-		DialogBox(g_hInstance, MAKEINTRESOURCE(IDD_MORE_MULTICON), ghOpWnd, multiOpProc);
-		break;
+	//case bMultiConHotkeys:
+	//	DialogBox(g_hInstance, MAKEINTRESOURCE(IDD_MORE_MULTICON), ghOpWnd, multiOpProc);
+	//	break;
 
 	case cbNewConfirm:
-		isMultiNewConfirm = IsChecked(hExt, cbNewConfirm);
+		isMultiNewConfirm = IsChecked(hTabs, cbNewConfirm);
 		break;
 
 	case cbLongOutput:
-		AutoBufferHeight = IsChecked(hExt, cbLongOutput);
+		AutoBufferHeight = IsChecked(hTabs, cbLongOutput);
 		gConEmu.UpdateFarSettings();
-		EnableWindow(GetDlgItem(hExt, tLongOutputHeight), AutoBufferHeight);
+		EnableWindow(GetDlgItem(hTabs, tLongOutputHeight), AutoBufferHeight);
 		break;
 
     case cbBold:
@@ -1981,12 +2043,12 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
 		break;
     
     case cbEnhanceGraphics: // Progressbars and scrollbars
-        isEnhanceGraphics = IsChecked(hMain, cbEnhanceGraphics);
+        isEnhanceGraphics = IsChecked(hExt, cbEnhanceGraphics);
         gConEmu.Update(true);
         break;
     
     case cbTabs:
-        switch(IsChecked(hExt, cbTabs)) {
+        switch(IsChecked(hTabs, cbTabs)) {
             case BST_UNCHECKED:
                 isTabs = 0; break;
             case BST_CHECKED:
@@ -1994,16 +2056,17 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
             case BST_INDETERMINATE:
                 isTabs = 2; break;
         }
-        //isTabs = !isTabs;
+		TODO("’орошо бы сразу видимость табов мен€ть");
+		//gConEmu.mp_TabBar->Update(TRUE); -- это как-то неправильно работает.
         break;
     case cbTabSelf:
-    	isTabSelf = IsChecked(hExt, cbTabSelf);
+    	isTabSelf = IsChecked(hTabs, cbTabSelf);
     	break;
 	case cbTabRecent:
-		isTabRecent = IsChecked(hExt, cbTabRecent);
+		isTabRecent = IsChecked(hTabs, cbTabRecent);
 		break;
 	case cbTabLazy:
-		isTabLazy = IsChecked(hExt, cbTabLazy);
+		isTabLazy = IsChecked(hTabs, cbTabLazy);
 		break;
 
 	case cbRSelectionFix:
@@ -2117,8 +2180,46 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
 		gConEmu.OnAlwaysOnTop();
 		break;
 
+	case cbAdminShield:
+		gSet.bAdminShield = IsChecked(hTabs, cbAdminShield);
+		EnableWindow(GetDlgItem(hTabs, tAdminSuffix), !gSet.bAdminShield);
+		gConEmu.mp_TabBar->Update(TRUE);
+		break;
+
+	case cbHideInactiveConTabs:
+		gSet.bHideInactiveConsoleTabs = IsChecked(hTabs, cbHideInactiveConTabs);
+		gConEmu.mp_TabBar->Update(TRUE);
+		break;
+
+	case cbUseWinNumber:
+		gSet.isUseWinNumber = IsChecked(hTabs, cbUseWinNumber);
+		break;
+
+	case cbInstallKeybHooks:
+		switch (IsChecked(hTabs,cbInstallKeybHooks)) {
+			case BST_CHECKED: gSet.m_isKeyboardHooks = 1; gConEmu.RegisterHoooks(); break;
+			case BST_UNCHECKED: gSet.m_isKeyboardHooks = 2; gConEmu.UnRegisterHoooks(); break;
+			case BST_INDETERMINATE: gSet.m_isKeyboardHooks = 0; break;
+		}
+		break;
+
     default:
-        break;
+		if (CB >= cbHostWin && CB <= cbHostRShift)
+		{
+			memset(gSet.mn_HostModOk, 0, sizeof(gSet.mn_HostModOk));
+			for (UINT i = 0; i < sizeofarray(HostkeyCtrlIds); i++) {
+				if (IsChecked(hTabs, HostkeyCtrlIds[i]))
+					gSet.CheckHostkeyModifier(HostkeyCtrlId2Vk(HostkeyCtrlIds[i]));
+			}
+			gSet.TrimHostkeys();
+			if (IsChecked(hTabs, CB)) {
+				gSet.CheckHostkeyModifier(HostkeyCtrlId2Vk(CB));
+				gSet.TrimHostkeys();
+			}
+			// ќбновить, что осталось
+			gSet.SetupHotkeyChecks(hTabs);
+			gSet.MakeHostkeyModifier();
+		}
 
     }
     return 0;
@@ -2150,7 +2251,7 @@ LRESULT CSettings::OnColorButtonClicked(WPARAM wParam, LPARAM lParam)
 		break;
 
 	case cbBlockInactiveCursor:
-		isCursorBlockInactive = IsChecked(hColors, cbBlockInactiveCursor);
+		isCursorBlockInactive = IsChecked(hMain, cbBlockInactiveCursor);
 		gConEmu.m_Child.Invalidate();
 		break;
 
@@ -2341,20 +2442,64 @@ LRESULT CSettings::OnEditChanged(WPARAM wParam, LPARAM lParam)
             gConEmu.Update(true);
         }
     }
-	else if (TB == tLongOutputHeight) {
+	else if (TB == tLongOutputHeight)
+	{
 		BOOL lbOk = FALSE;
 		wchar_t szTemp[16];
-		UINT nNewVal = GetDlgItemInt(hExt, tLongOutputHeight, &lbOk, FALSE);
+		UINT nNewVal = GetDlgItemInt(hTabs, tLongOutputHeight, &lbOk, FALSE);
 		if (lbOk)
 		{
 			if (nNewVal >= 300 && nNewVal <= 9999)
 				DefaultBufferHeight = nNewVal;
 			else if (nNewVal > 9999)
-				SetDlgItemText(hExt, TB, _ltow(DefaultBufferHeight, szTemp, 10));
+				SetDlgItemText(hTabs, TB, _ltow(DefaultBufferHeight, szTemp, 10));
 		} else {
-			SetDlgItemText(hExt, TB, _ltow(DefaultBufferHeight, szTemp, 10));
+			SetDlgItemText(hTabs, TB, _ltow(DefaultBufferHeight, szTemp, 10));
 		}
 	}
+	else if (TB == hkNewConsole || TB == hkSwitchConsole || TB == hkCloseConsole)
+	{
+		UINT nHotKey = 0xFF & SendDlgItemMessage(hTabs, TB, HKM_GETHOTKEY, 0, 0);
+		if (TB == hkNewConsole)
+			gSet.icMultiNew = nHotKey;
+		else if (TB == hkSwitchConsole)
+			gSet.icMultiNext = nHotKey;
+		else if (TB == hkCloseConsole)
+			gSet.icMultiRecreate = nHotKey;
+	}
+	else if (TB == tTabConsole || TB == tTabViewer || TB == tTabEditor || TB == tTabEditorMod)
+	{
+		wchar_t temp[MAX_PATH]; temp[0] = 0;
+		if (GetDlgItemText(hTabs, TB, temp, MAX_PATH) && temp[0]) {
+			temp[31] = 0; // страховка
+			if (wcsstr(temp, L"%s")) {
+				if (TB == tTabConsole)
+					lstrcpy(gSet.szTabConsole, temp);
+				else if (TB == tTabViewer)
+					lstrcpy(gSet.szTabViewer, temp);
+				else if (TB == tTabEditor)
+					lstrcpy(gSet.szTabEditor, temp);
+				else if (tTabEditorMod)
+					lstrcpy(gSet.szTabEditorModified, temp);
+				gConEmu.mp_TabBar->Update(TRUE);
+			}
+		}				
+	}
+	else if (TB == tTabLenMax)
+	{
+		BOOL lbOk = FALSE;
+		DWORD n = GetDlgItemInt(hTabs, tTabLenMax, &lbOk, FALSE);
+		if (n > 10 && n < CONEMUTABMAX) {
+			gSet.nTabLenMax = n;
+			gConEmu.mp_TabBar->Update(TRUE);
+		}
+	}
+	else if (TB == tAdminSuffix)
+	{
+		GetDlgItemText(hTabs, tAdminSuffix, gSet.szAdminTitleSuffix, sizeofarray(gSet.szAdminTitleSuffix));
+		gConEmu.mp_TabBar->Update(TRUE);
+	}
+
 
     return 0;
 }
@@ -2443,10 +2588,10 @@ LRESULT CSettings::OnComboBox(WPARAM wParam, LPARAM lParam)
     //            SendDlgItemMessage(hExt, wId, CB_SETCURSEL, num=0, 0);
     //    }
 	} else if (wId == lbNtvdmHeight) {
-		int num = SendDlgItemMessage(hExt, wId, CB_GETCURSEL, 0, 0);
+		int num = SendDlgItemMessage(hTabs, wId, CB_GETCURSEL, 0, 0);
 		ntvdmHeight = (num == 1) ? 25 : ((num == 2) ? 28 : ((num == 3) ? 43 : ((num == 4) ? 50 : 0)));
 	} else if (wId == lbCmdOutputCP) {
-		nCmdOutputCP = SendDlgItemMessage(hExt, wId, CB_GETCURSEL, 0, 0);
+		nCmdOutputCP = SendDlgItemMessage(hTabs, wId, CB_GETCURSEL, 0, 0);
 		if (nCmdOutputCP == -1) nCmdOutputCP = 0;
 		gConEmu.UpdateFarSettings();
 	} else if (wId == lbExtendFontNormalIdx || wId == lbExtendFontBoldIdx || wId == lbExtendFontItalicIdx) {
@@ -2486,9 +2631,13 @@ LRESULT CSettings::OnTab(LPNMHDR phdr)
                 	nDlgRc = IDD_SPG_FEATURE;
                 	dlgProc = extOpProc;
                 } else if (nSel==2) {
-                	phCurrent = &hColors;
-                	nDlgRc = IDD_SPG_COLORS;
-                	dlgProc = colorOpProc;
+                	phCurrent = &hTabs;
+                	nDlgRc = IDD_SPG_TABS;
+                	dlgProc = tabsOpProc;
+				} else if (nSel==3) {
+					phCurrent = &hColors;
+					nDlgRc = IDD_SPG_COLORS;
+					dlgProc = colorOpProc;
                 } else {
                 	phCurrent = &hInfo;
                 	nDlgRc = IDD_SPG_INFO;
@@ -2512,6 +2661,7 @@ LRESULT CSettings::OnTab(LPNMHDR phdr)
                     ShowWindow(*phCurrent, SW_SHOW);
                     if (*phCurrent != hMain)   ShowWindow(hMain, SW_HIDE);
                     if (*phCurrent != hExt)    ShowWindow(hExt,  SW_HIDE);
+					if (*phCurrent != hTabs)   ShowWindow(hTabs,  SW_HIDE);
                     if (*phCurrent != hColors) ShowWindow(hColors, SW_HIDE);
                     if (*phCurrent != hInfo)   ShowWindow(hInfo, SW_HIDE);
                     SetFocus(*phCurrent);
@@ -2761,7 +2911,7 @@ INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPara
         if (gSet.hwndTip) {DestroyWindow(gSet.hwndTip); gSet.hwndTip = NULL;}
 		if (gSet.hwndBalloon) {DestroyWindow(gSet.hwndBalloon); gSet.hwndBalloon = NULL;}
         //EndDialog(hWnd2, TRUE);
-        ghOpWnd = NULL; gSet.hMain = NULL; gSet.hExt = NULL; gSet.hColors = NULL; gSet.hInfo = NULL;
+        ghOpWnd = NULL; gSet.hMain = NULL; gSet.hExt = NULL; gSet.hTabs = NULL; gSet.hColors = NULL; gSet.hInfo = NULL;
         gbLastColorsOk = FALSE;
         break;
 	case WM_HOTKEY:
@@ -2879,22 +3029,6 @@ INT_PTR CSettings::extOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPara
 		gSet.hExt = hWnd2;
         gSet.OnInitDialog_Ext();
         break;
-
-    //case WM_CTLCOLORSTATIC:
-    //    for (uint i = 1 000; i < 1 016; i++)
-    //        if (GetDlgItem(hWnd2, i) == (HWND)lParam)
-    //        {
-    //            static HBRUSH KillBrush;
-    //            DeleteObject(KillBrush);
-    //            KillBrush = CreateSolidBrush(gSet.Colors[i-1 000]);
-    //            return (BOOL)KillBrush;
-    //        }
-    //        break;
-    //case WM_KEYDOWN:
-    //    if (wParam == VK_ESCAPE)
-    //        SendMessage(hWnd2, WM_CLOSE, 0, 0);
-    //    break;
-
     case WM_COMMAND:
         if (HIWORD(wParam) == BN_CLICKED)
         {
@@ -2913,6 +3047,35 @@ INT_PTR CSettings::extOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPara
         return 0;
     }
     return 0;
+}
+
+INT_PTR CSettings::tabsOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
+{
+	switch (messg)
+	{
+	case WM_INITDIALOG:
+		_ASSERTE(gSet.hTabs==NULL || gSet.hTabs==hWnd2);
+		gSet.hTabs = hWnd2;
+		gSet.OnInitDialog_Tabs();
+		break;
+	case WM_COMMAND:
+		if (HIWORD(wParam) == BN_CLICKED)
+		{
+			gSet.OnButtonClicked(wParam, lParam);
+		}
+		else if (HIWORD(wParam) == EN_CHANGE)
+		{
+			gSet.OnEditChanged(wParam, lParam);
+		}
+		else if (HIWORD(wParam) == CBN_EDITCHANGE || HIWORD(wParam) == CBN_SELCHANGE)
+		{
+			gSet.OnComboBox(wParam, lParam);
+		}
+		break;
+	default:
+		return 0;
+	}
+	return 0;
 }
 
 INT_PTR CSettings::colorOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
@@ -3028,12 +3191,12 @@ INT_PTR CSettings::infoOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 
 bool CSettings::isKeyboardHooks()
 {
-	#ifndef _DEBUG
+//	#ifndef _DEBUG
 	// ƒл€ WinXP это не было нужно
 	if (gOSVer.dwMajorVersion < 6) {
 		return false;
 	}
-	#endif
+//	#endif
 	
 	if (m_isKeyboardHooks == 0) {
 		// ¬опрос пользователю еще не задавали (это на старте, окно еще и не создано)
@@ -3374,132 +3537,132 @@ bool CSettings::IsHostkeyPressed()
 	return true;
 }
 
-INT_PTR CSettings::multiOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
-{
-	switch (messg)
-	{
-	case WM_INITDIALOG:
-		{
-			gSet.SetupHotkeyChecks(hWnd2);
-
-			SendDlgItemMessage(hWnd2, hkNewConsole, HKM_SETRULES, HKCOMB_A|HKCOMB_C|HKCOMB_CA|HKCOMB_S|HKCOMB_SA|HKCOMB_SC|HKCOMB_SCA, 0);
-			SendDlgItemMessage(hWnd2, hkNewConsole, HKM_SETHOTKEY, gSet.icMultiNew, 0);
-			SendDlgItemMessage(hWnd2, hkSwitchConsole, HKM_SETRULES, HKCOMB_A|HKCOMB_C|HKCOMB_CA|HKCOMB_S|HKCOMB_SA|HKCOMB_SC|HKCOMB_SCA, 0);
-			SendDlgItemMessage(hWnd2, hkSwitchConsole, HKM_SETHOTKEY, gSet.icMultiNext, 0);
-			SendDlgItemMessage(hWnd2, hkCloseConsole, HKM_SETRULES, HKCOMB_A|HKCOMB_C|HKCOMB_CA|HKCOMB_S|HKCOMB_SA|HKCOMB_SC|HKCOMB_SCA, 0);
-			SendDlgItemMessage(hWnd2, hkCloseConsole, HKM_SETHOTKEY, gSet.icMultiRecreate, 0);
-			
-			if (gSet.isUseWinNumber) CheckDlgButton(hWnd2, cbUseWinNumber, BST_CHECKED);
-			
-			SetDlgItemText(hWnd2, tTabConsole, gSet.szTabConsole);
-			SetDlgItemText(hWnd2, tTabViewer, gSet.szTabViewer);
-			SetDlgItemText(hWnd2, tTabEditor, gSet.szTabEditor);
-			SetDlgItemText(hWnd2, tTabEditorMod, gSet.szTabEditorModified);
-			
-			SetDlgItemInt(hWnd2, tTabLenMax, gSet.nTabLenMax, FALSE);
-			
-			if (gSet.bAdminShield) CheckDlgButton(hWnd2, cbAdminShield, BST_CHECKED);
-			SetDlgItemText(hWnd2, tAdminSuffix, gSet.szAdminTitleSuffix);
-			EnableWindow(GetDlgItem(hWnd2, tAdminSuffix), !gSet.bAdminShield);
-
-			if (gSet.bHideInactiveConsoleTabs) CheckDlgButton(hWnd2, cbHideInactiveConTabs, BST_CHECKED);
-
-			gSet.RegisterTipsFor(hWnd2);
-			CenterMoreDlg(hWnd2);
-		}
-		break;
-
-	case WM_GETICON:
-		if (wParam!=ICON_BIG) {
-			SetWindowLongPtr(hWnd2, DWLP_MSGRESULT, (LRESULT)hClassIconSm);
-			return 1;
-		}
-		break;
-
-	case WM_COMMAND:
-		if (HIWORD(wParam) == BN_CLICKED)
-		{
-			WORD TB = LOWORD(wParam);
-			if (TB == IDOK || TB == IDCANCEL) {
-				EndDialog(hWnd2, TB);
-				return 1;
-			}
-
-			if (TB >= cbHostWin && TB <= cbHostRShift)
-			{
-				memset(gSet.mn_HostModOk, 0, sizeof(gSet.mn_HostModOk));
-				for (UINT i = 0; i < sizeofarray(HostkeyCtrlIds); i++) {
-					if (IsChecked(hWnd2, HostkeyCtrlIds[i]))
-						gSet.CheckHostkeyModifier(HostkeyCtrlId2Vk(HostkeyCtrlIds[i]));
-				}
-				gSet.TrimHostkeys();
-				if (IsChecked(hWnd2, TB)) {
-					gSet.CheckHostkeyModifier(HostkeyCtrlId2Vk(TB));
-					gSet.TrimHostkeys();
-				}
-				// ќбновить, что осталось
-				gSet.SetupHotkeyChecks(hWnd2);
-				gSet.MakeHostkeyModifier();
-			} else
-			if (TB == cbAdminShield) {
-				gSet.bAdminShield = IsChecked(hWnd2, cbAdminShield);
-				EnableWindow(GetDlgItem(hWnd2, tAdminSuffix), !gSet.bAdminShield);
-				gConEmu.mp_TabBar->Update(TRUE);
-			} else
-			if (TB == cbHideInactiveConTabs) {
-				gSet.bHideInactiveConsoleTabs = IsChecked(hWnd2, cbHideInactiveConTabs);
-				gConEmu.mp_TabBar->Update(TRUE);
-			} else
-			if (TB == cbUseWinNumber) {
-				gSet.isUseWinNumber = IsChecked(hWnd2, cbUseWinNumber);
-			}
-
-		} else if (HIWORD(wParam) == EN_CHANGE)	{
-			WORD TB = LOWORD(wParam);
-			if (TB == hkNewConsole || TB == hkSwitchConsole || TB == hkCloseConsole) {
-				UINT nHotKey = 0xFF & SendDlgItemMessage(hWnd2, TB, HKM_GETHOTKEY, 0, 0);
-				if (TB == hkNewConsole)
-					gSet.icMultiNew = nHotKey;
-				else if (TB == hkSwitchConsole)
-					gSet.icMultiNext = nHotKey;
-				else if (TB == hkCloseConsole)
-					gSet.icMultiRecreate = nHotKey;
-			} else
-			if (TB == tTabConsole || TB == tTabViewer || TB == tTabEditor || TB == tTabEditorMod) {
-				wchar_t temp[MAX_PATH]; temp[0] = 0;
-				if (GetDlgItemText(hWnd2, TB, temp, MAX_PATH) && temp[0]) {
-					temp[31] = 0; // страховка
-					if (wcsstr(temp, L"%s")) {
-						if (TB == tTabConsole)
-							lstrcpy(gSet.szTabConsole, temp);
-						else if (TB == tTabViewer)
-							lstrcpy(gSet.szTabViewer, temp);
-						else if (TB == tTabEditor)
-							lstrcpy(gSet.szTabEditor, temp);
-						else if (tTabEditorMod)
-							lstrcpy(gSet.szTabEditorModified, temp);
-						gConEmu.mp_TabBar->Update(TRUE);
-					}
-				}				
-			} else
-			if (TB == tTabLenMax) {
-				BOOL lbOk = FALSE;
-				DWORD n = GetDlgItemInt(hWnd2, tTabLenMax, &lbOk, FALSE);
-				if (n > 10 && n < CONEMUTABMAX) {
-					gSet.nTabLenMax = n;
-					gConEmu.mp_TabBar->Update(TRUE);
-				}
-			} else
-			if (TB == tAdminSuffix) {
-				GetDlgItemText(hWnd2, tAdminSuffix, gSet.szAdminTitleSuffix, sizeofarray(gSet.szAdminTitleSuffix));
-				gConEmu.mp_TabBar->Update(TRUE);
-			}
-		}
-		break;
-
-	}
-	return 0;
-}
+//INT_PTR CSettings::multiOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
+//{
+//	switch (messg)
+//	{
+//	case WM_INITDIALOG:
+//		{
+//			gSet.SetupHotkeyChecks(hWnd2);
+//
+//			SendDlgItemMessage(hWnd2, hkNewConsole, HKM_SETRULES, HKCOMB_A|HKCOMB_C|HKCOMB_CA|HKCOMB_S|HKCOMB_SA|HKCOMB_SC|HKCOMB_SCA, 0);
+//			SendDlgItemMessage(hWnd2, hkNewConsole, HKM_SETHOTKEY, gSet.icMultiNew, 0);
+//			SendDlgItemMessage(hWnd2, hkSwitchConsole, HKM_SETRULES, HKCOMB_A|HKCOMB_C|HKCOMB_CA|HKCOMB_S|HKCOMB_SA|HKCOMB_SC|HKCOMB_SCA, 0);
+//			SendDlgItemMessage(hWnd2, hkSwitchConsole, HKM_SETHOTKEY, gSet.icMultiNext, 0);
+//			SendDlgItemMessage(hWnd2, hkCloseConsole, HKM_SETRULES, HKCOMB_A|HKCOMB_C|HKCOMB_CA|HKCOMB_S|HKCOMB_SA|HKCOMB_SC|HKCOMB_SCA, 0);
+//			SendDlgItemMessage(hWnd2, hkCloseConsole, HKM_SETHOTKEY, gSet.icMultiRecreate, 0);
+//			
+//			if (gSet.isUseWinNumber) CheckDlgButton(hWnd2, cbUseWinNumber, BST_CHECKED);
+//			
+//			SetDlgItemText(hWnd2, tTabConsole, gSet.szTabConsole);
+//			SetDlgItemText(hWnd2, tTabViewer, gSet.szTabViewer);
+//			SetDlgItemText(hWnd2, tTabEditor, gSet.szTabEditor);
+//			SetDlgItemText(hWnd2, tTabEditorMod, gSet.szTabEditorModified);
+//			
+//			SetDlgItemInt(hWnd2, tTabLenMax, gSet.nTabLenMax, FALSE);
+//			
+//			if (gSet.bAdminShield) CheckDlgButton(hWnd2, cbAdminShield, BST_CHECKED);
+//			SetDlgItemText(hWnd2, tAdminSuffix, gSet.szAdminTitleSuffix);
+//			EnableWindow(GetDlgItem(hWnd2, tAdminSuffix), !gSet.bAdminShield);
+//
+//			if (gSet.bHideInactiveConsoleTabs) CheckDlgButton(hWnd2, cbHideInactiveConTabs, BST_CHECKED);
+//
+//			gSet.RegisterTipsFor(hWnd2);
+//			CenterMoreDlg(hWnd2);
+//		}
+//		break;
+//
+//	case WM_GETICON:
+//		if (wParam!=ICON_BIG) {
+//			SetWindowLongPtr(hWnd2, DWLP_MSGRESULT, (LRESULT)hClassIconSm);
+//			return 1;
+//		}
+//		break;
+//
+//	case WM_COMMAND:
+//		if (HIWORD(wParam) == BN_CLICKED)
+//		{
+//			WORD TB = LOWORD(wParam);
+//			if (TB == IDOK || TB == IDCANCEL) {
+//				EndDialog(hWnd2, TB);
+//				return 1;
+//			}
+//
+//			if (TB >= cbHostWin && TB <= cbHostRShift)
+//			{
+//				memset(gSet.mn_HostModOk, 0, sizeof(gSet.mn_HostModOk));
+//				for (UINT i = 0; i < sizeofarray(HostkeyCtrlIds); i++) {
+//					if (IsChecked(hWnd2, HostkeyCtrlIds[i]))
+//						gSet.CheckHostkeyModifier(HostkeyCtrlId2Vk(HostkeyCtrlIds[i]));
+//				}
+//				gSet.TrimHostkeys();
+//				if (IsChecked(hWnd2, TB)) {
+//					gSet.CheckHostkeyModifier(HostkeyCtrlId2Vk(TB));
+//					gSet.TrimHostkeys();
+//				}
+//				// ќбновить, что осталось
+//				gSet.SetupHotkeyChecks(hWnd2);
+//				gSet.MakeHostkeyModifier();
+//			} else
+//			if (TB == cbAdminShield) {
+//				gSet.bAdminShield = IsChecked(hWnd2, cbAdminShield);
+//				EnableWindow(GetDlgItem(hWnd2, tAdminSuffix), !gSet.bAdminShield);
+//				gConEmu.mp_TabBar->Update(TRUE);
+//			} else
+//			if (TB == cbHideInactiveConTabs) {
+//				gSet.bHideInactiveConsoleTabs = IsChecked(hWnd2, cbHideInactiveConTabs);
+//				gConEmu.mp_TabBar->Update(TRUE);
+//			} else
+//			if (TB == cbUseWinNumber) {
+//				gSet.isUseWinNumber = IsChecked(hWnd2, cbUseWinNumber);
+//			}
+//
+//		} else if (HIWORD(wParam) == EN_CHANGE)	{
+//			WORD TB = LOWORD(wParam);
+//			if (TB == hkNewConsole || TB == hkSwitchConsole || TB == hkCloseConsole) {
+//				UINT nHotKey = 0xFF & SendDlgItemMessage(hWnd2, TB, HKM_GETHOTKEY, 0, 0);
+//				if (TB == hkNewConsole)
+//					gSet.icMultiNew = nHotKey;
+//				else if (TB == hkSwitchConsole)
+//					gSet.icMultiNext = nHotKey;
+//				else if (TB == hkCloseConsole)
+//					gSet.icMultiRecreate = nHotKey;
+//			} else
+//			if (TB == tTabConsole || TB == tTabViewer || TB == tTabEditor || TB == tTabEditorMod) {
+//				wchar_t temp[MAX_PATH]; temp[0] = 0;
+//				if (GetDlgItemText(hWnd2, TB, temp, MAX_PATH) && temp[0]) {
+//					temp[31] = 0; // страховка
+//					if (wcsstr(temp, L"%s")) {
+//						if (TB == tTabConsole)
+//							lstrcpy(gSet.szTabConsole, temp);
+//						else if (TB == tTabViewer)
+//							lstrcpy(gSet.szTabViewer, temp);
+//						else if (TB == tTabEditor)
+//							lstrcpy(gSet.szTabEditor, temp);
+//						else if (tTabEditorMod)
+//							lstrcpy(gSet.szTabEditorModified, temp);
+//						gConEmu.mp_TabBar->Update(TRUE);
+//					}
+//				}				
+//			} else
+//			if (TB == tTabLenMax) {
+//				BOOL lbOk = FALSE;
+//				DWORD n = GetDlgItemInt(hWnd2, tTabLenMax, &lbOk, FALSE);
+//				if (n > 10 && n < CONEMUTABMAX) {
+//					gSet.nTabLenMax = n;
+//					gConEmu.mp_TabBar->Update(TRUE);
+//				}
+//			} else
+//			if (TB == tAdminSuffix) {
+//				GetDlgItemText(hWnd2, tAdminSuffix, gSet.szAdminTitleSuffix, sizeofarray(gSet.szAdminTitleSuffix));
+//				gConEmu.mp_TabBar->Update(TRUE);
+//			}
+//		}
+//		break;
+//
+//	}
+//	return 0;
+//}
 
 INT_PTR CSettings::hideOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
 {
