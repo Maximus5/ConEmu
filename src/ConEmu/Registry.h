@@ -123,6 +123,7 @@ protected:
 	//wchar_t ms_LevelPrefix[64];
 	//BSTR mbs_LevelPrefix, mbs_LevelSuffix;
 public:
+	bool IsXmlAllowed();
 	virtual bool OpenKey(const wchar_t *regPath, uint access);
 	virtual void CloseKey();
 

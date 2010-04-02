@@ -37,7 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define DEBUGSTRDRAW(s) //DEBUGSTR(s)
 #define DEBUGSTRINPUT(s) //DEBUGSTR(s)
-#define DEBUGSTRINPUTPIPE(s) DEBUGSTR(s)
+#define DEBUGSTRINPUTPIPE(s) //DEBUGSTR(s)
 #define DEBUGSTRSIZE(s) //DEBUGSTR(s)
 #define DEBUGSTRPROC(s) //DEBUGSTR(s)
 #define DEBUGSTRCMD(s) //DEBUGSTR(s)
@@ -102,6 +102,7 @@ const wchar_t gszAnalogues[32] = {
 	9658, 9668, 8597, 8252,  182,  167, 9632, 8616, 8593, 8595, 8594, 8592, 8735, 8596, 9650, 9660
 };
 
+static bool gbInTransparentAssert = false;
 
 CRealConsole::CRealConsole(CVirtualConsole* apVCon)
 {
@@ -3672,6 +3673,26 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 		}
 		PostMessage(ghWnd, nFlash, wParam, (LPARAM)pIn->Flash.hWnd.u);
 
+	} else if (pIn->hdr.nCmd == CECMD_REGPANELVIEW) {
+		CESERVER_REQ Out;
+		ExecutePrepareCmd(&Out, pIn->hdr.nCmd, sizeof(CESERVER_REQ_HDR)+sizeof(pIn->PVI));
+		Out.PVI = pIn->PVI;
+
+		if (Out.PVI.cbSize != sizeof(Out.PVI)) {
+			Out.PVI.cbSize = 0; // ошибка версии?
+		} else
+		if (!mp_VCon->RegisterPanelView(&(Out.PVI))) {
+			Out.PVI.cbSize = 0; // ошибка
+		}
+		
+        // Отправляем ответ
+        fSuccess = WriteFile( 
+            hPipe,        // handle to pipe 
+            &Out,         // buffer to write from 
+            Out.hdr.nSize,  // number of bytes to write 
+            &cbWritten,   // number of bytes written 
+            NULL);        // not overlapped I/O 
+	
 	}
 
     // Освободить память
@@ -5850,7 +5871,9 @@ void CRealConsole::DetectDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int
 
 	// защита от переполнения стека (быть не должно)
 	if (mn_DetectCallCount >= 3) {
+		gbInTransparentAssert = true;
 		_ASSERTE(mn_DetectCallCount<3);
+		gbInTransparentAssert = false;
 		return;
 	}
 	
@@ -6045,6 +6068,9 @@ void CRealConsole::MarkDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int n
 
 void CRealConsole::PrepareTransparent(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight)
 {
+	if (gbInTransparentAssert)
+		return;
+
 	m_DetectedDialogs.Count = 0;
 
 	if (!mp_ConsoleInfo || !gSet.NeedDialogDetect())
@@ -6180,7 +6206,9 @@ void CRealConsole::PrepareTransparent(wchar_t* pChar, CharAttr* pAttr, int nWidt
 	WARNING("!!! Установку bTransparent делать во второй проход, когда все диалоги уже определены !!!");
 
 	if (mn_DetectCallCount != 0) {
+		gbInTransparentAssert = true;
 		_ASSERT(mn_DetectCallCount == 0);
+		gbInTransparentAssert = false;
 	}
 
 	wchar_t* pszDst = pChar;

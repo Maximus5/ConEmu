@@ -19,3 +19,4 @@ EXPORTS
 	GetFarHWND=GetFarHWND@0
 	GetFarHWND2=GetFarHWND2@4
 	IsConsoleActive=IsConsoleActive@0
+	RegisterPanelView=RegisterPanelView@4

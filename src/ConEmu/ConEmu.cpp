@@ -1554,7 +1554,7 @@ void CConEmuMain::AutoSizeFont(const RECT &rFrom, enum ConEmuRect tFrom)
 	}
 }
 
-bool CConEmuMain::SetWindowMode(uint inMode)
+bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce)
 {
 	if (inMode != rNormal && inMode != rMaximized && inMode != rFullScreen)
 		inMode = rNormal; // ошибка загрузки настроек?
@@ -1755,7 +1755,7 @@ bool CConEmuMain::SetWindowMode(uint inMode)
 			} // if (!gSet.isHideCaption)
 			else
 			{ // (gSet.isHideCaption)
-				if (!isZoomed() || (gSet.isFullScreen || isIconic()))
+				if (!isZoomed() || (gSet.isFullScreen || isIconic()) || abForce)
 				{
 					// Обновить коордианты в gSet, если требуется
 					if (!gSet.isFullScreen && !isZoomed() && !isIconic())
@@ -1796,7 +1796,12 @@ bool CConEmuMain::SetWindowMode(uint inMode)
 					if (isIconic() || ::IsZoomed(ghWnd)) {
 						// Если окно свернуто или "реально" максимизировано - показать нормальным
 						mb_IgnoreSizeChange = TRUE;
-						ShowWindow(ghWnd, SW_SHOWNORMAL);
+						DWORD dwStyle = GetWindowLong(ghWnd, GWL_STYLE);
+						if ((dwStyle & (WS_MINIMIZE|WS_MAXIMIZE)) != 0) {
+							dwStyle &= ~(WS_MINIMIZE|WS_MAXIMIZE);
+							SetWindowLong(ghWnd, GWL_STYLE, dwStyle);
+						}
+						//ShowWindow(ghWnd, SW_SHOWNORMAL);
 						// Сбросить
 						_ASSERTE(mb_MaximizedHideCaption);
 						mb_IgnoreSizeChange = FALSE;
@@ -5255,6 +5260,10 @@ LRESULT CConEmuMain::OnGetMinMaxInfo(LPMINMAXINFO pInfo)
 void CConEmuMain::OnHideCaption()
 {
 	mp_TabBar->OnCaptionHidden();
+
+	if (isZoomed()) {
+		SetWindowMode(rMaximized, TRUE);
+	}
 
 	UpdateWindowRgn();
 

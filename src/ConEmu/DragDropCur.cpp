@@ -50,7 +50,7 @@ CDragDrop::CDragDrop()
 	m_pfpi = NULL;
 	mp_DataObject = NULL;
 	mb_selfdrag = NULL;
-	m_DesktopID.mkid.cb = 0;
+	mp_DesktopID = NULL;
 	mh_Overlapped = NULL; mh_BitsDC = NULL; mh_BitsBMP = mh_BitsBMP_Old = NULL;
 	mp_Bits = NULL;
 	mn_AllFiles = 0; mn_CurWritten = 0; mn_CurFile = 0;
@@ -67,33 +67,33 @@ BOOL CDragDrop::Init()
 	BOOL lbRc = FALSE;
 	HRESULT hr = S_OK;
 	
-	//wchar_t szDesktopPath[MAX_PATH+1];
-	//hr = SHGetFolderPath ( ghWnd, CSIDL_DESKTOP, NULL, SHGFP_TYPE_CURRENT, szDesktopPath );
-	//if (hr == S_OK) {
-	//	DWORD dwAttrs = GetFileAttributes(szDesktopPath);
-	//	if (dwAttrs == (DWORD)-1) {
-	//		// Папка отсутсвует
-	//		
-	//	} else if ((dwAttrs & FILE_ATTRIBUTE_DIRECTORY) == FILE_ATTRIBUTE_DIRECTORY) {
-	//		// mp_DesktopID
-	//		// [out] The address of a pointer to an item identifier list structure that specifies 
-	//		// the folder's location relative to the root of the namespace (the desktop). The 
-	//		// ppidl parameter is set to NULL on failure. The calling application is responsible for 
-	//		// freeing this resource by calling ILFree.
-	//		hr = SHGetFolderLocation ( ghWnd, CSIDL_DESKTOP, NULL, 0, &mp_DesktopID );
-	//		if (hr != S_OK) {
-	//			DisplayLastError(L"Can't get desktop folder", hr);
-	//		}
-	//
-	//	}
-	//}
-	//if (mp_DesktopID == NULL) {
-	//	wchar_t szError[MAX_PATH*2];
-	//	wcscpy(szError, L"Desktop folder not found:\n");
-	//	wcscat(szError, szDesktopPath);
-	//	wcscat(szError, L"\nSome Drag-n-Drop features will be disabled!");
-	//	DisplayLastError(szError);
-	//}
+	wchar_t szDesktopPath[MAX_PATH+1];
+	hr = SHGetFolderPath ( ghWnd, CSIDL_DESKTOP, NULL, SHGFP_TYPE_CURRENT, szDesktopPath );
+	if (hr == S_OK) {
+		DWORD dwAttrs = GetFileAttributes(szDesktopPath);
+		if (dwAttrs == (DWORD)-1) {
+			// Папка отсутсвует
+			
+		} else if ((dwAttrs & FILE_ATTRIBUTE_DIRECTORY) == FILE_ATTRIBUTE_DIRECTORY) {
+			// mp_DesktopID
+			// [out] The address of a pointer to an item identifier list structure that specifies 
+			// the folder's location relative to the root of the namespace (the desktop). The 
+			// ppidl parameter is set to NULL on failure. The calling application is responsible for 
+			// freeing this resource by calling ILFree.
+			hr = SHGetFolderLocation ( ghWnd, CSIDL_DESKTOP, NULL, 0, &mp_DesktopID );
+			if (hr != S_OK) {
+				DisplayLastError(L"Can't get desktop folder", hr);
+			}
+
+		}
+	}
+	if (mp_DesktopID == NULL) {
+		wchar_t szError[MAX_PATH*2];
+		wcscpy(szError, L"Desktop folder not found:\n");
+		wcscat(szError, szDesktopPath);
+		wcscat(szError, L"\nSome Drag-n-Drop features will be disabled!");
+		DisplayLastError(szError);
+	}
 
 	hr = RegisterDragDrop(ghWnd, this);
 	if (hr != S_OK) {
@@ -157,7 +157,7 @@ CDragDrop::~CDragDrop()
 	SafeCloseHandle(mh_DragThread); mn_DragThreadId = 0;
 
 	if (m_pfpi) free(m_pfpi); m_pfpi=NULL;
-	//if (mp_DesktopID) { CoTaskMemFree(mp_DesktopID); mp_DesktopID = NULL; }
+	if (mp_DesktopID) { CoTaskMemFree(mp_DesktopID); mp_DesktopID = NULL; }
 	
 	DeleteCriticalSection(&m_CrThreads);
 }
@@ -269,7 +269,7 @@ void CDragDrop::Drag(BOOL abClickNeed, COORD crMouseDC)
 						MCHKHEAP
 
 						HGLOBAL file_nameW = NULL, file_PIDLs = NULL;
-						if (nFilesCount==1 /*&& mp_DesktopID*/)
+						if (nFilesCount==1 && mp_DesktopID)
 						{
 							HRESULT hr = S_OK;
 							try {
@@ -303,13 +303,13 @@ void CDragDrop::Drag(BOOL abClickNeed, COORD crMouseDC)
 										hr = pDesktop->ParseDisplayName(ghWnd, NULL, szDraggedPath, &nEaten, &pItem, &(tmp=0));
 										pDesktop->Release(); pDesktop = NULL;
 
-										if (hr == S_OK && pItem /*&& mp_DesktopID*/)
+										if (hr == S_OK && pItem && mp_DesktopID)
 										{
-											SHITEMID *pCur = NULL; //(SHITEMID*)&m_DesktopID; //mp_DesktopID;
-											//while (pCur->cb) {
-											//	pCur = (SHITEMID*)(((LPBYTE)pCur) + pCur->cb);
-											//}
-											nParentSize = 2; //((LPBYTE)pCur) - ((LPBYTE)mp_DesktopID)+2;
+											SHITEMID *pCur = (SHITEMID*)mp_DesktopID;
+											while (pCur->cb) {
+												pCur = (SHITEMID*)(((LPBYTE)pCur) + pCur->cb);
+											}
+											nParentSize = ((LPBYTE)pCur) - ((LPBYTE)mp_DesktopID)+2;
 
 											pCur = (SHITEMID*)pItem;
 											while (pCur->cb) {
@@ -327,7 +327,7 @@ void CDragDrop::Drag(BOOL abClickNeed, COORD crMouseDC)
 												pida->cidl = 1;
 												pida->aoffset[0] = 3*sizeof(UINT);
 												pida->aoffset[1] = pida->aoffset[0]+nParentSize;
-												memmove((((LPBYTE)pida)+(pida)->aoffset[0]), &m_DesktopID, nParentSize);
+												memmove((((LPBYTE)pida)+(pida)->aoffset[0]), mp_DesktopID, nParentSize);
 												memmove((((LPBYTE)pida)+(pida)->aoffset[1]), pItem, nItemSize);
 											}
 

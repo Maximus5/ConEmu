@@ -140,6 +140,11 @@ CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
 	isFade = false; isForeground = true;
 	mp_Colors = gSet.GetColors();
 	
+
+	memset(&m_LeftPanelView, 0, sizeof(m_LeftPanelView));
+	memset(&m_RightPanelView, 0, sizeof(m_RightPanelView));
+	mn_LastDialogsCount = 0;
+	memset(mrc_LastDialogs, 0, sizeof(mrc_LastDialogs));
   
     //InitializeCriticalSection(&csDC); ncsTDC = 0; 
 	mb_PaintRequested = FALSE; mb_PaintLocked = FALSE;
@@ -1016,6 +1021,13 @@ bool CVirtualConsole::Update(bool isForce, HDC *ahDc)
         memcpy(mpsz_ConCharSave, mpsz_ConChar, TextLen * sizeof(*mpsz_ConChar));
         memcpy(mpn_ConAttrExSave, mpn_ConAttrEx, TextLen * sizeof(*mpn_ConAttrEx));
     }
+
+	if (CheckDialogsChanged()) {
+		if (m_LeftPanelView.bRegister && m_LeftPanelView.hWnd)
+			UpdatePanelRgn(TRUE);
+		if (m_RightPanelView.bRegister && m_RightPanelView.hWnd)
+			UpdatePanelRgn(FALSE);
+	}
 
     //HEAPVAL
     //------------------------------------------------------------------------
@@ -3173,7 +3185,8 @@ void CVirtualConsole::ShowPopupMenu(POINT ptCur)
 		return;
 	}
 	
-	ptCur.x++; ptCur.y++; // чтобы меню можно было сразу закрыть левым кликом.
+	// Некузяво. Может вслыть тултип под меню
+	//ptCur.x++; ptCur.y++; // чтобы меню можно было сразу закрыть левым кликом.
 	
 	bool lbIsFar = mp_RCon->isFar(TRUE/* abPluginRequired */);
 	bool lbIsPanels = lbIsFar && mp_RCon->isFilePanel(false/* abPluginAllowed */);
@@ -3227,4 +3240,182 @@ void CVirtualConsole::ShowPopupMenu(POINT ptCur)
 		mp_RCon->PostMacro(gSet.sSaveAllMacro);
 		break;
 	}
+}
+
+BOOL CVirtualConsole::RegisterPanelView(PanelViewInit* ppvi)
+{
+	_ASSERTE(ppvi && ppvi->cbSize == sizeof(PanelViewInit));
+	BOOL lbRc = FALSE;
+	
+	PanelViewInit* pp = (ppvi->bLeftPanel) ? &m_LeftPanelView : &m_RightPanelView;
+	*pp = *ppvi;
+	// Вернуть текущую палитру GUI
+	for (int i=0; i<16; i++) // через FOR чтобы с BitMask не наколоться
+		ppvi->crPalette[i] = (mp_Colors[i]) & 0xFFFFFF;
+	
+	if (ppvi->bRegister) {
+		for (int i=0; i<20; i++) // на всякий случай - сначала все сбросим
+			SetWindowLong(pp->hWnd, i*4, 0);
+
+		SetParent((HWND)ppvi->hWnd, ghWnd);
+		UpdatePanelRgn(ppvi->bLeftPanel);
+		lbRc = UpdatePanelView(ppvi->bLeftPanel);
+	} else {
+		lbRc = TRUE;
+	}
+	
+	return lbRc;
+}
+
+HRGN CVirtualConsole::CreateConsoleRgn(int x1, int y1, int x2, int y2)
+{
+	POINT pt[2];
+	pt[0] = ConsoleToClient(x1, y1);
+	pt[1] = ConsoleToClient(x2+1, y2+1);
+	HRGN hRgn = CreateRectRgn(pt[0].x, pt[0].y, pt[1].x, pt[1].y);
+	return hRgn;
+}
+
+BOOL CVirtualConsole::CheckDialogsChanged()
+{
+	BOOL lbChanged = FALSE;
+	SMALL_RECT rcDlg[32];
+
+	_ASSERTE(sizeof(mrc_LastDialogs) == sizeof(rcDlg));
+
+	int nDlgCount = mp_RCon->GetDetectedDialogs(sizeofarray(rcDlg), rcDlg, NULL);
+	if (mn_LastDialogsCount != nDlgCount) {
+		lbChanged = TRUE;
+	} else if (memcmp(rcDlg, mrc_LastDialogs, nDlgCount*sizeof(rcDlg[0]))!=0) {
+		lbChanged = TRUE;
+	}
+	if (lbChanged) {
+		memset(mrc_LastDialogs, 0, sizeof(mrc_LastDialogs));
+		memmove(mrc_LastDialogs, rcDlg, nDlgCount*sizeof(rcDlg[0]));
+		mn_LastDialogsCount = nDlgCount;
+	}
+
+	return lbChanged;
+}
+
+// Возвращает TRUE, если регион установлен, иначе - сброшен
+BOOL CVirtualConsole::UpdatePanelRgn(BOOL abLeftPanel)
+{
+	PanelViewInit* pp = abLeftPanel ? &m_LeftPanelView : &m_RightPanelView;
+	if (!pp->hWnd || !IsWindow(pp->hWnd)) {
+		if (pp->hWnd)
+			pp->hWnd = NULL;
+		return TRUE;
+	}
+
+	BOOL lbPartHidden = FALSE;
+	SMALL_RECT rcDlg[32]; bool rbDlgFrame[32];
+
+	_ASSERTE(sizeof(mrc_LastDialogs) == sizeof(rcDlg));
+
+	int nDlgCount = mp_RCon->GetDetectedDialogs(sizeofarray(rcDlg), rcDlg, rbDlgFrame);
+	if (!nDlgCount) {
+		lbPartHidden = TRUE;
+		if (IsWindowVisible(pp->hWnd)) ShowWindow(pp->hWnd, SW_HIDE);
+	} else {
+		BOOL lbPanelVisible = FALSE;
+		HRGN hRgn = NULL, hSubRgn = NULL, hCombine = NULL;
+		
+		for (int i = 0; i < nDlgCount; i++) {
+			// Пропустить прямоугольник соответсвующий самой панели
+			if (rcDlg[i].Left == pp->PanelRect.left &&
+				rcDlg[i].Bottom == pp->PanelRect.bottom &&
+				rcDlg[i].Right == pp->PanelRect.right)
+			{
+				// Учесть, что первая строка этого прямоугольника может быть скрыта строкой меню
+				if (rcDlg[i].Top == pp->PanelRect.top
+					|| (pp->PanelRect.top == 0 && rcDlg[i].Top == 1))
+				{
+					lbPanelVisible = TRUE;
+					continue;
+				}
+			}
+			if (!IntersectSmallRect(pp->WorkRect, rcDlg[i]))
+				continue;
+			// Все остальные прямоугольники вычитать из hRgn
+			if (!hRgn)
+				hRgn = CreateConsoleRgn(pp->WorkRect.left, pp->WorkRect.top, pp->WorkRect.right, pp->WorkRect.bottom);
+			hSubRgn = CreateConsoleRgn(rcDlg[i].Left, rcDlg[i].Top, rcDlg[i].Right, rcDlg[i].Bottom);
+			if (!hCombine)
+				hCombine = CreateRectRgn(0,0,1,1);
+			int nCRC = CombineRgn(hCombine, hRgn, hSubRgn, RGN_DIFF);
+			if (nCRC) {
+				// Замена переменных
+				HRGN hTmp = hRgn; hRgn = hCombine; hCombine = hTmp;
+				// А этот больше не нужен
+				DeleteObject(hSubRgn); hSubRgn = NULL;
+			}
+
+			// Проверка, может регион уже пуст?
+			if (nCRC == NULLREGION) {
+				lbPanelVisible = FALSE; break;
+			}
+			//else if (nCRC == ERROR) {
+			//	// Ошибка
+			//	_ASSERTE(nCRC != ERROR);
+			//	if (hRgn) { DeleteObject(hRgn); hRgn = NULL; }
+			//	break;
+			//}
+		}
+
+		if (lbPanelVisible) {
+			lbPartHidden = (hRgn != NULL);
+			if (hRgn) {
+				POINT pt = ConsoleToClient(pp->WorkRect.left, pp->WorkRect.top);
+				OffsetRgn(hRgn, -pt.x, -pt.y);
+			}
+			SetWindowRgn(pp->hWnd, hRgn, TRUE); hRgn = NULL;
+			if (!IsWindowVisible(pp->hWnd))
+				ShowWindow(pp->hWnd, SW_SHOWNA);
+		} else {
+			if (hRgn) { DeleteObject(hRgn); hRgn = NULL; }
+			lbPartHidden = TRUE;
+			if (IsWindowVisible(pp->hWnd))
+				ShowWindow(pp->hWnd, SW_HIDE);
+			SetWindowRgn(pp->hWnd, NULL, TRUE);
+		}
+	}
+
+	return lbPartHidden;
+}
+
+// Отсюда - Redraw не звать, только Invalidate!
+BOOL CVirtualConsole::UpdatePanelView(BOOL abLeftPanel)
+{
+	PanelViewInit* pp = abLeftPanel ? &m_LeftPanelView : &m_RightPanelView;
+
+	// Чтобы плагин знал, что поменялась палитра (это или Fade, или реальная перенастройка цветов).
+	for (int i=0; i<16; i++)
+		SetWindowLong(pp->hWnd, i*4, mp_Colors[i]);
+
+	// Подготовить размеры
+	POINT pt[2];
+	// Строку с именами колонок оставлять смысла нет
+	int nTopShift = 1; // + ((pp->nFarPanelSettings & 0x20/*FPS_SHOWCOLUMNTITLES*/) ? 1 : 0);
+	int nBottomShift = ((pp->nFarPanelSettings & 0x40/*FPS_SHOWSTATUSLINE*/) ? 2 : 0);
+	pp->WorkRect = MakeRect(
+		pp->PanelRect.left+1, pp->PanelRect.top+nTopShift,
+		pp->PanelRect.right, pp->PanelRect.bottom-nBottomShift);
+	pt[0] = ConsoleToClient(pp->WorkRect.left, pp->WorkRect.top);
+	pt[1] = ConsoleToClient(pp->WorkRect.right, pp->WorkRect.bottom);
+	
+	TODO("Потребуется коррекция для DoubleView");
+	MapWindowPoints(ghWndDC, ghWnd, pt, 2);
+	
+	//MoveWindow(ahView, pt[0].x,pt[0].y, pt[1].x-pt[0].x,pt[1].y-pt[0].y, FALSE);
+	DWORD dwErr = 0;
+	BOOL lbRc = SetWindowPos(pp->hWnd, HWND_TOP, 
+		pt[0].x,pt[0].y, pt[1].x-pt[0].x,pt[1].y-pt[0].y, 
+		0);
+	if (!lbRc)
+		dwErr = GetLastError();
+	// И отрисовать
+	InvalidateRect(pp->hWnd, NULL, FALSE);
+	
+	return TRUE;
 }

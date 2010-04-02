@@ -72,6 +72,11 @@ extern HANDLE ghServerTerminateEvent;
 extern CESERVER_REQ_CONINFO_HDR *gpConsoleInfo;
 extern DWORD gnSelfPID;
 
+typedef struct tag_PanelViewRegInfo {
+	PanelViewEventCallback pfnReadCall;
+} PanelViewRegInfo;
+extern PanelViewRegInfo gPanelRegLeft, gPanelRegRight;
+
 //typedef struct tag_SynchroArg {
 //	enum {
 //		eCommand,

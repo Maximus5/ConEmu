@@ -87,6 +87,7 @@ HWND    ghConWnd = NULL;
 HWND    ghConEmuWnd = NULL; // Root! window
 HANDLE  ghExitQueryEvent = NULL;
 HANDLE  ghQuitEvent = NULL;
+bool    gbQuit = false;
 BOOL	gbInShutdown = FALSE;
 int     gnConfirmExitParm = 0; // 1 - CONFIRM, 2 - NOCONFIRM
 BOOL    gbAlwaysConfirmExit = FALSE;

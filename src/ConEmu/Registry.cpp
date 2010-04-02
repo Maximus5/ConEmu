@@ -159,6 +159,25 @@ SettingsXML::~SettingsXML()
 	CloseKey();
 }
 
+bool SettingsXML::IsXmlAllowed()
+{
+	HRESULT hr;
+	IXMLDOMDocument* pFile = NULL;
+	
+	hr = CoInitialize(NULL); 
+	hr = CoCreateInstance(CLSID_DOMDocument30, NULL, CLSCTX_INPROC_SERVER, 
+	       IID_IXMLDOMDocument, (void**)&pFile);
+	if (FAILED(hr) || !pFile) {
+		wchar_t szErr[255];
+		wsprintf(szErr, L"XML setting file will be not used.\n\nCan't create IID_IXMLDOMDocument!\nErrCode=0x%08X", (DWORD)hr);
+		MBoxA(szErr);
+		return false;
+	}
+	
+	pFile->Release();
+	return true;
+}
+
 bool SettingsXML::OpenKey(const wchar_t *regPath, uint access)
 {
 	bool lbRc = false;

@@ -44,6 +44,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 BOOL ProcessInputMessage(MSG &msg, INPUT_RECORD &r);
 BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount);
+BOOL ReadInputQueue(INPUT_RECORD *prs, DWORD *pCount);
+BOOL WriteInputQueue(const INPUT_RECORD *pr);
+BOOL IsInputQueueEmpty();
+BOOL WaitConsoleReady(); // Консольный буфер готов принять события ввода
+DWORD WINAPI InputThread(LPVOID lpvParam);
 
 
 // Установить мелкий шрифт, иначе может быть невозможно увеличение размера GUI окна
@@ -157,6 +162,7 @@ int ServerInit()
 	// Инициализация имен пайпов
 	wsprintfW(srv.szPipename, CESERVERPIPENAME, L".", gnSelfPID);
 	wsprintfW(srv.szInputname, CESERVERINPUTNAME, L".", gnSelfPID);
+	wsprintfW(srv.szQueryname, CESERVERQUERYNAME, L".", gnSelfPID);
 
 	srv.nMaxProcesses = START_MAX_PROCESSES; srv.nProcessCount = 0;
 	srv.pnProcesses = (DWORD*)Alloc(START_MAX_PROCESSES, sizeof(DWORD));
@@ -172,22 +178,29 @@ int ServerInit()
 	_ASSERTE(srv.bDebuggerActive || srv.nProcessCount<=2); 
 
 
-	//// Запустить нить обработки событий (клавиатура, мышь, и пр.)
-	//srv.hInputThread = CreateThread( 
-	//	NULL,              // no security attribute 
-	//	0,                 // default stack size 
-	//	InputThread,       // thread proc
-	//	NULL,              // thread parameter 
-	//	0,                 // not suspended 
-	//	&srv.dwInputThreadId);      // returns thread ID 
-
-	//if (srv.hInputThread == NULL) 
-	//{
-	//	dwErr = GetLastError();
-	//	_printf("CreateThread(InputThread) failed, ErrCode=0x%08X\n", dwErr); 
-	//	iRc = CERR_CREATEINPUTTHREAD; goto wrap;
-	//}
-	//SetThreadPriority(srv.hInputThread, THREAD_PRIORITY_ABOVE_NORMAL);
+	// Запустить нить обработки событий (клавиатура, мышь, и пр.)
+	srv.hInputEvent = CreateEvent(NULL,FALSE,FALSE,NULL);
+	if (srv.hInputEvent) srv.hInputThread = CreateThread( 
+		NULL,              // no security attribute 
+		0,                 // default stack size 
+		InputThread,       // thread proc
+		NULL,              // thread parameter 
+		0,                 // not suspended 
+		&srv.dwInputThread);      // returns thread ID 
+	if (srv.hInputEvent == NULL || srv.hInputThread == NULL) 
+	{
+		dwErr = GetLastError();
+		_printf("CreateThread(InputThread) failed, ErrCode=0x%08X\n", dwErr); 
+		iRc = CERR_CREATEINPUTTHREAD; goto wrap;
+	}
+	SetThreadPriority(srv.hInputThread, THREAD_PRIORITY_ABOVE_NORMAL);
+	
+	srv.nMaxInputQueue = 255;
+	srv.pInputQueue = (INPUT_RECORD*)Alloc(srv.nMaxInputQueue, sizeof(INPUT_RECORD));
+	srv.pInputQueueEnd = srv.pInputQueue+srv.nMaxInputQueue;
+	srv.pInputQueueWrite = srv.pInputQueue;
+	srv.pInputQueueRead = srv.pInputQueueEnd;
+	
 	// Запустить нить обработки событий (клавиатура, мышь, и пр.)
 	srv.hInputPipeThread = CreateThread( 
 		NULL,              // no security attribute 
@@ -203,6 +216,7 @@ int ServerInit()
 		_printf("CreateThread(InputPipeThread) failed, ErrCode=0x%08X\n", dwErr);
 		iRc = CERR_CREATEINPUTTHREAD; goto wrap;
 	}
+	SetThreadPriority(srv.hInputPipeThread, THREAD_PRIORITY_ABOVE_NORMAL);
 
 	//InitializeCriticalSection(&srv.csChangeSize);
 	//InitializeCriticalSection(&srv.csConBuf);
@@ -572,6 +586,7 @@ wrap:
 // Завершить все нити и закрыть дескрипторы
 void ServerDone(int aiRc)
 {
+	gbQuit = true;
 	// На всякий случай - выставим событие
 	if (ghExitQueryEvent) SetEvent(ghExitQueryEvent);
 	if (ghQuitEvent) SetEvent(ghQuitEvent);
@@ -593,13 +608,21 @@ void ServerDone(int aiRc)
 		DEBUGSTR(L"All pipe instances closed?\n");
 	}
 	// Передернуть нить ввода
-	HANDLE hInputPipe = CreateFile(srv.szInputname,GENERIC_WRITE,0,NULL,OPEN_EXISTING,0,NULL);
-	if (hInputPipe == INVALID_HANDLE_VALUE) {
-		DEBUGSTR(L"Input pipe was not created?\n");
-	} else {
-		MSG msg = {NULL}; msg.message = 0xFFFF; DWORD dwOut = 0;
-		WriteFile(hInputPipe, &msg, sizeof(msg), &dwOut, 0);
+	if (srv.hInputPipe && srv.hInputPipe != INVALID_HANDLE_VALUE) {
+		//DWORD dwSize = 0;
+		//BOOL lbRc = WriteFile(srv.hInputPipe, &dwSize, sizeof(dwSize), &dwSize, NULL);
+		/*BOOL lbRc = DisconnectNamedPipe(srv.hInputPipe);
+		CloseHandle(srv.hInputPipe);
+		srv.hInputPipe = NULL;*/
+		TODO("Нифига не работает, похоже нужно на Overlapped переходить");
 	}
+	//HANDLE hInputPipe = CreateFile(srv.szInputname,GENERIC_WRITE,0,NULL,OPEN_EXISTING,0,NULL);
+	//if (hInputPipe == INVALID_HANDLE_VALUE) {
+	//	DEBUGSTR(L"Input pipe was not created?\n");
+	//} else {
+	//	MSG msg = {NULL}; msg.message = 0xFFFF; DWORD dwOut = 0;
+	//	WriteFile(hInputPipe, &msg, sizeof(msg), &dwOut, 0);
+	//}
 
 
 	// Закрываем дескрипторы и выходим
@@ -614,20 +637,20 @@ void ServerDone(int aiRc)
 		SafeCloseHandle(srv.hWinEventThread);
 		srv.dwWinEventThread = 0;
 	}
-	//if (srv.hInputThread) {
-	//	// Подождем немножко, пока нить сама завершится
-	//	if (WaitForSingleObject(srv.hInputThread, 500) != WAIT_OBJECT_0) {
-	//		#pragma warning( push )
-	//		#pragma warning( disable : 6258 )
-	//		TerminateThread ( srv.hInputThread, 100 ); // раз корректно не хочет...
-	//		#pragma warning( pop )
-	//	}
-	//	SafeCloseHandle(srv.hInputThread);
-	//	srv.dwInputThreadId = 0;
-	//}
+	if (srv.hInputThread) {
+		// Подождем немножко, пока нить сама завершится
+		if (WaitForSingleObject(srv.hInputThread, 500) != WAIT_OBJECT_0) {
+			#pragma warning( push )
+			#pragma warning( disable : 6258 )
+			TerminateThread ( srv.hInputThread, 100 ); // раз корректно не хочет...
+			#pragma warning( pop )
+		}
+		SafeCloseHandle(srv.hInputThread);
+		srv.dwInputThread = 0;
+	}
 	if (srv.hInputPipeThread) {
 		// Подождем немножко, пока нить сама завершится
-		if (WaitForSingleObject(srv.hInputPipeThread, 500) != WAIT_OBJECT_0) {
+		if (WaitForSingleObject(srv.hInputPipeThread, 50) != WAIT_OBJECT_0) {
 			#pragma warning( push )
 			#pragma warning( disable : 6258 )
 			TerminateThread ( srv.hInputPipeThread, 100 ); // раз корректно не хочет...
@@ -636,7 +659,8 @@ void ServerDone(int aiRc)
 		SafeCloseHandle(srv.hInputPipeThread);
 		srv.dwInputPipeThreadId = 0;
 	}
-	SafeCloseHandle(hInputPipe);
+	SafeCloseHandle(srv.hInputPipe);
+	SafeCloseHandle(srv.hInputEvent);
 
 	if (srv.hServerThread) {
 		// Подождем немножко, пока нить сама завершится
@@ -698,6 +722,9 @@ void ServerDone(int aiRc)
 	}
 	if (srv.pnProcessesCopy) {
 		Free(srv.pnProcessesCopy); srv.pnProcessesCopy = NULL;
+	}
+	if (srv.pInputQueue) {
+		Free(srv.pInputQueue); srv.pInputQueue = NULL;
 	}
 
 	CloseMapHeader();
@@ -1751,7 +1778,6 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 	BOOL  /*lbEventualChange = FALSE,*/ lbForceSend = FALSE, lbChanged = FALSE; //, lbProcessChanged = FALSE;
 	DWORD dwTimeout = 10; // периодичность чтения информации об окне (размеров, курсора,...)
 
-
 	while (TRUE)
 	{
 		nWait = WAIT_TIMEOUT;
@@ -1807,6 +1833,8 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 		// Функция срабатывает только через интервал CHECK_PROCESSES_TIMEOUT (внутри защита от частых вызовов)
 		// #define CHECK_PROCESSES_TIMEOUT 500
 		CheckProcessCount();
+		
+		
 		
 
 		// Подождать немножко
@@ -1963,12 +1991,98 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 //	return 0;
 //}
 
+BOOL WriteInputQueue(const INPUT_RECORD *pr)
+{
+	INPUT_RECORD* pNext = srv.pInputQueueWrite;
+	// Проверяем, есть ли свободное место в буфере
+	if (srv.pInputQueueRead != srv.pInputQueueEnd) {
+		if (srv.pInputQueueRead < srv.pInputQueueEnd
+			&& ((srv.pInputQueueWrite+1) == srv.pInputQueueRead))
+		{
+			return FALSE;
+		}
+	}
+	// OK
+	*pNext = *pr;
+	srv.pInputQueueWrite++;
+	if (srv.pInputQueueWrite >= srv.pInputQueueEnd)
+		srv.pInputQueueWrite = srv.pInputQueue;
+	SetEvent(srv.hInputEvent);
+
+	// Подвинуть указатель чтения, если до этого буфер был пуст
+	if (srv.pInputQueueRead == srv.pInputQueueEnd)
+		srv.pInputQueueRead = pNext;
+	return TRUE;
+}
+
+BOOL IsInputQueueEmpty()
+{
+	if (srv.pInputQueueRead != srv.pInputQueueEnd
+		&& srv.pInputQueueRead != srv.pInputQueueWrite)
+		return FALSE;
+	return TRUE;
+}
+
+BOOL ReadInputQueue(INPUT_RECORD *prs, DWORD *pCount)
+{
+	DWORD nCount = 0;
+	
+	if (!IsInputQueueEmpty())
+	{
+		DWORD n = *pCount;
+		INPUT_RECORD *pSrc = srv.pInputQueueRead;
+		INPUT_RECORD *pEnd = (srv.pInputQueueRead < srv.pInputQueueWrite) ? srv.pInputQueueWrite : srv.pInputQueueEnd;
+		INPUT_RECORD *pDst = prs;
+		while (n && pSrc < pEnd) {
+			*pDst = *pSrc; nCount++;
+			n--; pSrc++; pDst++;
+		}
+		if (pSrc == srv.pInputQueueEnd)
+			pSrc = srv.pInputQueue;
+		TODO("Доделать чтение начала буфера, если считали его конец");
+		//
+		srv.pInputQueueRead = pSrc;
+	}
+	
+	*pCount = nCount;
+	return (nCount>0);
+}
+
+DWORD WINAPI InputThread(LPVOID lpvParam)
+{
+	HANDLE hEvents[2] = {ghQuitEvent, srv.hInputEvent};
+	DWORD dwWait = 0;
+	INPUT_RECORD ir[100];
+	
+	while ((dwWait = WaitForMultipleObjects ( 2, hEvents, FALSE, INPUT_QUEUE_TIMEOUT )) != WAIT_OBJECT_0)
+	{
+		if (IsInputQueueEmpty())
+			continue;
+		
+		// Если не готов - все равно запишем
+		WaitConsoleReady();
+
+		// Читаем и пишем
+		DWORD nInputCount = sizeof(ir)/sizeof(ir[0]);
+		if (ReadInputQueue(ir, &nInputCount)) {
+			_ASSERTE(nInputCount>0);
+			SendConsoleEvent(ir, nInputCount);
+		}
+
+		// Если во время записи в консоль в буфере еще что-то появилось - передернем
+		if (!IsInputQueueEmpty())
+			SetEvent(srv.hInputEvent);
+	}
+	
+	return 1;
+}
+
 DWORD WINAPI InputPipeThread(LPVOID lpvParam) 
 { 
 	BOOL fConnected, fSuccess; 
 	//DWORD nCurInputCount = 0;
 	//DWORD srv.dwServerThreadId;
-	HANDLE hPipe = NULL; 
+	//HANDLE hPipe = NULL; 
 	DWORD dwErr = 0;
 
 
@@ -1977,10 +2091,10 @@ DWORD WINAPI InputPipeThread(LPVOID lpvParam)
 	// connects, a thread is created to handle communications 
 	// with that client, and the loop is repeated. 
 
-	for (;;) 
+	while (!gbQuit)
 	{
 		MCHKHEAP;
-		hPipe = CreateNamedPipe( 
+		srv.hInputPipe = CreateNamedPipe( 
 			srv.szInputname,          // pipe name 
 			PIPE_ACCESS_INBOUND,      // goes from client to server only
 			PIPE_TYPE_MESSAGE |       // message type pipe 
@@ -1992,10 +2106,10 @@ DWORD WINAPI InputPipeThread(LPVOID lpvParam)
 			0,                        // client time-out
 			gpNullSecurity);          // default security attribute 
 
-		if (hPipe == INVALID_HANDLE_VALUE) 
+		if (srv.hInputPipe == INVALID_HANDLE_VALUE) 
 		{
 			dwErr = GetLastError();
-			_ASSERTE(hPipe != INVALID_HANDLE_VALUE);
+			_ASSERTE(srv.hInputPipe != INVALID_HANDLE_VALUE);
 			_printf("CreatePipe failed, ErrCode=0x%08X\n", dwErr);
 			Sleep(50);
 			//return 99;
@@ -2006,7 +2120,7 @@ DWORD WINAPI InputPipeThread(LPVOID lpvParam)
 		// the function returns a nonzero value. If the function
 		// returns zero, GetLastError returns ERROR_PIPE_CONNECTED. 
 
-		fConnected = ConnectNamedPipe(hPipe, NULL) ? 
+		fConnected = ConnectNamedPipe(srv.hInputPipe, NULL) ? 
 		TRUE : (GetLastError() == ERROR_PIPE_CONNECTED); 
 
 		MCHKHEAP;
@@ -2015,61 +2129,46 @@ DWORD WINAPI InputPipeThread(LPVOID lpvParam)
 			//TODO:
 			DWORD cbBytesRead; //, cbWritten;
 			MSG imsg; memset(&imsg,0,sizeof(imsg));
-			while ((fSuccess = ReadFile( 
-					hPipe,        // handle to pipe 
+			while (!gbQuit && (fSuccess = ReadFile( 
+					srv.hInputPipe,        // handle to pipe 
 					&imsg,        // buffer to receive data 
 					sizeof(imsg), // size of buffer 
 					&cbBytesRead, // number of bytes read 
 					NULL)) != FALSE)        // not overlapped I/O 
 			{
 				// предусмотреть возможность завершения нити
-				if (imsg.message == 0xFFFF) {
-					SafeCloseHandle(hPipe);
+				if (gbQuit)
 					break;
-				}
+
 				MCHKHEAP;
 				if (imsg.message) {
-					// Если есть возможность - сразу пошлем его в dwInputThreadId
-					//if (srv.dwInputThreadId) {
-					//	_ASSERTE(imsg.message!=0);
-					//	if (!PostThreadMessage(srv.dwInputThreadId, imsg.message, imsg.wParam, imsg.lParam)) {
-					//		DWORD dwErr = GetLastError();
-					//		wchar_t szErr[100];
-					//		wsprintfW(szErr, L"ConEmuC: PostThreadMessage(%i) failed, code=0x%08X", srv.dwInputThreadId, dwErr);
-					//		SetConsoleTitle(szErr);
-					//	}
-					//} else {
-					//	_ASSERTE(srv.dwInputThreadId!=0);
+					#ifdef _DEBUG
+						switch (imsg.message) {
+							case WM_KEYDOWN: case WM_SYSKEYDOWN: DEBUGSTRINPUTPIPE(L"ConEmuC: Recieved key down\n"); break;
+							case WM_KEYUP: case WM_SYSKEYUP: DEBUGSTRINPUTPIPE(L"ConEmuC: Recieved key up\n"); break;
+							default: DEBUGSTRINPUTPIPE(L"ConEmuC: Recieved input\n");
+						}
+					#endif
 
-#ifdef _DEBUG
-					switch (imsg.message) {
-					case WM_KEYDOWN: case WM_SYSKEYDOWN:
-						DEBUGSTRINPUTPIPE(L"ConEmuC: Recieved key down\n"); break;
-					case WM_KEYUP: case WM_SYSKEYUP:
-						DEBUGSTRINPUTPIPE(L"ConEmuC: Recieved key up\n"); break;
-					default:
-						DEBUGSTRINPUTPIPE(L"ConEmuC: Recieved input\n");
+					INPUT_RECORD r;
+					ProcessInputMessage(imsg, r);
+					//SendConsoleEvent(&r, 1);
+					if (!WriteInputQueue(&r)) {
+						WARNING("Если буфер переполнен - ждать? Хотя если будем ждать здесь - может повиснуть GUI на записи в pipe...");
 					}
-#endif
 
-						WARNING("Обработка пачки сообщений");
-						// Видимо нужно в пайп писать сначала количество сообщений в пачке,
-						// и только потом собственно сообщения. Чтобы не заблокировать нить на чтении
-
-						INPUT_RECORD r;
-						ProcessInputMessage(imsg, r);
-						SendConsoleEvent(&r, 1);
-					//}
 					MCHKHEAP;
 				}
 				// next
 				memset(&imsg,0,sizeof(imsg));
 				MCHKHEAP;
 			}
+			SafeCloseHandle(srv.hInputPipe);
+
 		} 
 		else 
 			// The client could not connect, so close the pipe. 
-			SafeCloseHandle(hPipe);
+			SafeCloseHandle(srv.hInputPipe);
 	} 
 	MCHKHEAP;
 	return 1; 
@@ -2176,15 +2275,9 @@ BOOL ProcessInputMessage(MSG &msg, INPUT_RECORD &r)
 	return lbOk;
 }
 
-BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount)
+// Консольный буфер готов принять события ввода
+BOOL WaitConsoleReady()
 {
-	if (!nCount || !pr) {
-		_ASSERTE(nCount>0 && pr!=NULL);
-		return FALSE;
-	}
-
-	BOOL fSuccess = FALSE;
-
 	// Если сейчас идет ресайз - нежелательно помещение в буфер событий
 	if (srv.bInSyncResize)
 		WaitForSingleObject(srv.hAllowInputEvent, MAX_SYNCSETSIZE_WAIT);
@@ -2207,6 +2300,42 @@ BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount)
 				nCurInputCount = 0;
 		} while ((nCurInputCount > 0) && ((GetTickCount() - dwStartTick) < MAX_INPUT_QUEUE_EMPTY_WAIT));
 	}
+	
+	return (nCurInputCount == 0);
+}
+
+BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount)
+{
+	if (!nCount || !pr) {
+		_ASSERTE(nCount>0 && pr!=NULL);
+		return FALSE;
+	}
+
+	BOOL fSuccess = FALSE;
+
+	//// Если сейчас идет ресайз - нежелательно помещение в буфер событий
+	//if (srv.bInSyncResize)
+	//	WaitForSingleObject(srv.hAllowInputEvent, MAX_SYNCSETSIZE_WAIT);
+
+	//DWORD nCurInputCount = 0, cbWritten = 0;
+	//INPUT_RECORD irDummy[2] = {{0},{0}};
+
+	HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE); // тут был ghConIn
+
+	// 02.04.2010 Maks - перенесено в WaitConsoleReady
+	//// 27.06.2009 Maks - If input queue is not empty - wait for a while, to avoid conflicts with FAR reading queue
+	//// 19.02.2010 Maks - замена на GetNumberOfConsoleInputEvents
+	////if (PeekConsoleInput(hIn, irDummy, 1, &(nCurInputCount = 0)) && nCurInputCount > 0) {
+	//if (GetNumberOfConsoleInputEvents(hIn, &(nCurInputCount = 0)) && nCurInputCount > 0) {
+	//	DWORD dwStartTick = GetTickCount();
+	//	WARNING("Do NOT wait, but place event in Cyclic queue");
+	//	do {
+	//		Sleep(5);
+	//		//if (!PeekConsoleInput(hIn, irDummy, 1, &(nCurInputCount = 0)))
+	//		if (!GetNumberOfConsoleInputEvents(hIn, &(nCurInputCount = 0)))
+	//			nCurInputCount = 0;
+	//	} while ((nCurInputCount > 0) && ((GetTickCount() - dwStartTick) < MAX_INPUT_QUEUE_EMPTY_WAIT));
+	//}
 
 	INPUT_RECORD* prNew = NULL;
 	int nAllCount = 0;
@@ -2246,10 +2375,91 @@ BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount)
 		}
 	}
 
+	DWORD cbWritten = 0;
 	fSuccess = WriteConsoleInput(hIn, pr, nCount, &cbWritten);
 	_ASSERTE(fSuccess && cbWritten==nCount);
 	
 	if (prNew) free(prNew);
 
 	return fSuccess;
+} 
+
+DWORD WINAPI QueryPipeThread(LPVOID lpvParam) 
+{ 
+	BOOL fConnected, fSuccess; 
+	//DWORD nCurInputCount = 0;
+	//DWORD srv.dwServerThreadId;
+	//HANDLE srv.hQueryPipe = NULL; 
+	DWORD dwErr = 0;
+
+
+	// The main loop creates an instance of the named pipe and 
+	// then waits for a client to connect to it. When the client 
+	// connects, a thread is created to handle communications 
+	// with that client, and the loop is repeated. 
+
+	for (;;) 
+	{
+		MCHKHEAP;
+		srv.hQueryPipe = CreateNamedPipe( 
+			srv.szQueryname,          // pipe name 
+			PIPE_ACCESS_INBOUND,      // goes from client to server only
+			PIPE_TYPE_MESSAGE |       // message type pipe 
+			PIPE_READMODE_MESSAGE |   // message-read mode 
+			PIPE_WAIT,                // blocking mode 
+			PIPE_UNLIMITED_INSTANCES, // max. instances  
+			PIPEBUFSIZE,              // output buffer size 
+			PIPEBUFSIZE,              // input buffer size 
+			0,                        // client time-out
+			gpNullSecurity);          // default security attribute 
+
+		if (srv.hQueryPipe == INVALID_HANDLE_VALUE) 
+		{
+			dwErr = GetLastError();
+			_ASSERTE(srv.hQueryPipe != INVALID_HANDLE_VALUE);
+			srv.hQueryPipe = NULL;
+			_printf("CreatePipe failed, ErrCode=0x%08X\n", dwErr);
+			Sleep(50);
+			//return 99;
+			continue;
+		}
+
+		// Wait for the client to connect; if it succeeds, 
+		// the function returns a nonzero value. If the function
+		// returns zero, GetLastError returns ERROR_PIPE_CONNECTED. 
+
+		fConnected = ConnectNamedPipe(srv.hQueryPipe, NULL) ? 
+			TRUE : (GetLastError() == ERROR_PIPE_CONNECTED); 
+
+		MCHKHEAP;
+		if (fConnected) 
+		{ 
+			//TODO:
+			DWORD cbBytesRead; //, cbWritten;
+			//MSG imsg; memset(&imsg,0,sizeof(imsg));
+			CESERVER_REQ iReq;
+
+			while ((fSuccess = ReadFile( 
+					srv.hQueryPipe,        // handle to pipe 
+					&iReq,        // buffer to receive data 
+					sizeof(iReq), // size of buffer 
+					&cbBytesRead, // number of bytes read 
+					NULL)) != FALSE)        // not overlapped I/O 
+			{
+				// предусмотреть возможность завершения нити
+				if (iReq.hdr.nCmd == 0xFFFF) {
+					SafeCloseHandle(srv.hQueryPipe);
+					break;
+				}
+				MCHKHEAP;
+				//TODO:
+
+			}
+		} 
+		else 
+			// The client could not connect, so close the pipe. 
+			SafeCloseHandle(srv.hQueryPipe);
+	} 
+	MCHKHEAP;
+	return 1; 
 } 

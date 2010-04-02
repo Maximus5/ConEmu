@@ -359,6 +359,14 @@ BOOL /*__forceinline*/ CoordInRect(const COORD& c, const RECT& r)
 	return (c.X >= r.left && c.X <= r.right) && (c.Y >= r.top && c.Y <= r.bottom);
 }
 
+BOOL IntersectSmallRect(RECT& rc1, SMALL_RECT& rc2)
+{
+	RECT frc2 = {rc2.Left, rc2.Top, rc2.Right, rc2.Bottom};
+	RECT tmp;
+	BOOL lb = IntersectRect(&tmp, &rc1, &frc2);
+	return lb;
+}
+
 
 
 

@@ -127,6 +127,8 @@ extern wchar_t gszDbgModLabel[6];
 
 #define CESERVERPIPENAME    L"\\\\%s\\pipe\\ConEmuSrv%u"      // ConEmuC_PID
 #define CESERVERINPUTNAME   L"\\\\%s\\pipe\\ConEmuSrvInput%u" // ConEmuC_PID
+#define CESERVERQUERYNAME   L"\\\\%s\\pipe\\ConEmuSrvQuery%u" // ConEmuC_PID
+#define CESERVERWRITENAME   L"\\\\%s\\pipe\\ConEmuSrvWrite%u" // ConEmuC_PID
 #define CEGUIPIPENAME       L"\\\\%s\\pipe\\ConEmuGui%u"      // GetConsoleWindow() // необходимо, чтобы плагин мог общатьс€ с GUI
 #define CEPLUGINPIPENAME    L"\\\\%s\\pipe\\ConEmuPlugin%u"   // Far_PID
 //
@@ -168,9 +170,10 @@ extern wchar_t gszDbgModLabel[6];
 #define CECMD_GETALIASES    27
 #define CECMD_SETSIZENOSYNC 28 // ѕочти CECMD_SETSIZE. ¬ызываетс€ из плагина.
 #define CECMD_SETDONTCLOSE  29
+#define CECMD_REGPANELVIEW  30
 
 // ¬ерси€ интерфейса
-#define CESERVER_REQ_VER    36
+#define CESERVER_REQ_VER    37
 
 #define PIPEBUFSIZE 4096
 
@@ -181,7 +184,7 @@ extern wchar_t gszDbgModLabel[6];
 
 #define u64 unsigned __int64
 typedef struct tag_HWND2 {
-	u64 u;
+	DWORD u;
 	operator HWND() {
 		return (HWND)u;
 	};
@@ -189,10 +192,28 @@ typedef struct tag_HWND2 {
 		return (DWORD)u;
 	};
 	struct tag_HWND2& operator=(HWND h) {
-		u = (u64)h;
+		u = (DWORD)h;
 		return *this;
 	};
 } HWND2;
+
+typedef BOOL (WINAPI* PanelViewEventCallback)(PINPUT_RECORD lpBuffer, LPDWORD lpNumberOfEventsRead);
+typedef struct tag_PanelViewInit {
+	DWORD cbSize;
+	BOOL  bRegister;
+	HWND2 hWnd;
+	BOOL  bLeftPanel;
+	DWORD nFarInterfaceSettings;
+	DWORD nFarPanelSettings;
+	//  оординаты всей панели (левой, правой, или fullscreen)
+	RECT  PanelRect;
+	// Ёто координаты пр€моугольника, в котором реально располагаетс€ View
+	//  оординаты определ€ютс€ в GUI. ≈диницы - консольные.
+	RECT  WorkRect;
+	// Callbacks, используютс€ только в плагинах
+	PanelViewEventCallback pfnReadCall;
+    /* out */ COLORREF crPalette[16];
+} PanelViewInit;
 
 TODO("Restrict CONEMUTABMAX to 128 chars. Only filename, and may be ellipsed...");
 #define CONEMUTABMAX 0x400
@@ -330,11 +351,11 @@ typedef struct tag_CESERVER_REQ_CONINFO_HDR {
 	DWORD cbSize;
 	DWORD nLogLevel;
 	COORD crMaxConSize;
-	HWND2 hConWnd;    // !! положение hConWnd и nGuiPID не мен€ть !!
-	DWORD nServerPID; //
-	DWORD nGuiPID;    // !! на них ориентируетс€ PicViewWrapper   !!
-	//
 	DWORD cbExtraSize; // –азмер данных, идущих за структурой (после cbSize), TODO на CESERVER_REQ_CONINFO_DATA[]
+	HWND2 hConWnd;     // !! положение hConWnd и nGuiPID не мен€ть !!
+	DWORD nServerPID;  //
+	DWORD nGuiPID;     // !! на них ориентируетс€ PicViewWrapper   !!
+	//
 	DWORD bConsoleActive;
 	//
 	DWORD nFarPID; // PID последнего фара, обновившего информацию о себе в этой структуре
@@ -468,6 +489,7 @@ typedef struct tag_CESERVER_REQ {
 		CESERVER_REQ_FLASHWINFO Flash;
 		FAR_REQ_SETENVVAR SetEnvVar;
 		CESERVER_REQ_SETCONCP SetConCP;
+		PanelViewInit PVI;
 	};
 } CESERVER_REQ;
 

@@ -20,3 +20,4 @@ EXPORTS
 	GetFarHWND           @99
 	GetFarHWND2          @97
 	IsConsoleActive      @96
+	RegisterPanelView    @95

@@ -5104,9 +5104,16 @@ SettingsBase* CSettings::CreateSettings()
     		lbXml = TRUE;
 	}
 
-	if (lbXml)
+	if (lbXml) {
 		pReg = new SettingsXML();
-	else
+		if (!((SettingsXML*)pReg)->IsXmlAllowed()) {
+			// ≈сли MSXml.DomDocument не зарегистрирован
+			gConEmu.ms_ConEmuXml[0] = 0;
+			lbXml = FALSE;
+		}
+	}
+		
+	if (!lbXml)
 		pReg = new SettingsRegistry();
 	return pReg;
 #else
@@ -5205,7 +5212,7 @@ COLORREF CSettings::GetFadeColor(COLORREF cr)
 	if (!isFadeInactive)
 		return cr;
 	
-	MYCOLORREF mcr, mcrFade; mcr.color = cr;
+	MYCOLORREF mcr, mcrFade = {0}; mcr.color = cr;
 	if (!mb_FadeInitialized) {
 		GetColors(TRUE);
 	}
@@ -5234,7 +5241,9 @@ BYTE CSettings::GetFadeColorItem(BYTE c)
 
 bool CSettings::NeedDialogDetect()
 {
-	return (isUserScreenTransparent || !isMonospace);
+	// 100331 теперь оно нужно и дл€ PanelView
+	return true;
+	//return (isUserScreenTransparent || !isMonospace);
 }
 
 void CSettings::FillListBoxItems(HWND hList, uint nItems, const WCHAR** pszItems, const DWORD* pnValues, DWORD& nValue)

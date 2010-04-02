@@ -65,7 +65,7 @@ public:
 protected:
 	BOOL mb_DragDropRegistered;
 	void RetrieveDragToInfo(IDataObject * pDataObject);
-	ITEMIDLIST m_DesktopID;
+	LPITEMIDLIST mp_DesktopID;
 	DWORD mn_AllFiles, mn_CurFile; __int64 mn_CurWritten;
 	HANDLE FileStart(LPCWSTR pszFullName);
 	wchar_t* FileCreateName(BOOL abActive, BOOL abWide, LPVOID asFileName);

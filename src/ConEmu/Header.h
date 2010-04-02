@@ -205,6 +205,8 @@ BOOL /*__forceinline*/ CoordInRect(const COORD& c, const RECT& r);
 //	return (c.X >= r.left && c.X <= r.right) && (c.Y >= r.top && c.Y <= r.bottom);
 //}
 
+BOOL IntersectSmallRect(RECT& rc1, SMALL_RECT& rc2);
+
 //#pragma warning(disable: 4311) // 'type cast' : pointer truncation from 'HBRUSH' to 'BOOL'
 
 

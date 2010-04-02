@@ -346,7 +346,7 @@ public:
 	void SetConsoleWindowSize(const COORD& size, bool updateInfo);
 	void SetDragCursor(HCURSOR hCur);
 	void SetWaitCursor(BOOL abWait);
-	bool SetWindowMode(uint inMode);
+	bool SetWindowMode(uint inMode, BOOL abForce = FALSE);
 	void ShowOldCmdVersion(DWORD nCmd, DWORD nVersion, int bFromServer);
 	void ShowSysmenu(HWND Wnd=NULL, int x=-32000, int y=-32000);
 	void StartDebugLogConsole();

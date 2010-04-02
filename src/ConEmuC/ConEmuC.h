@@ -80,6 +80,7 @@ extern HWND    ghConWnd;
 extern HWND    ghConEmuWnd; // Root! window
 extern HANDLE  ghExitQueryEvent; // выставляется когда в консоли не остается процессов
 extern HANDLE  ghQuitEvent;      // когда мы в процессе закрытия (юзер уже нажал кнопку "Press to close console")
+extern bool    gbQuit;           // когда мы в процессе закрытия (юзер уже нажал кнопку "Press to close console")
 extern int     gnConfirmExitParm;
 extern BOOL    gbAlwaysConfirmExit, gbInShutdown, gbAutoDisableConfirmExit;
 extern int     gbRootWasFoundInCon;
@@ -118,6 +119,7 @@ extern wchar_t gszDbgModLabel[6];
 #define GUIREADY_TIMEOUT 10000
 #define UPDATECONHANDLE_TIMEOUT 1000
 #define GUIATTACH_TIMEOUT 10000
+#define INPUT_QUEUE_TIMEOUT 100
 
 #define IMAGE_SUBSYSTEM_DOS_EXECUTABLE  255
 
@@ -295,14 +297,23 @@ typedef struct tag_SrvInfo {
 #endif
 	BOOL bTelnetActive;
 	//
-	wchar_t szPipename[MAX_PATH], szInputname[MAX_PATH], szGuiPipeName[MAX_PATH];
+	wchar_t szPipename[MAX_PATH], szInputname[MAX_PATH], szGuiPipeName[MAX_PATH], szQueryname[MAX_PATH];
+	HANDLE hInputPipe, hQueryPipe;
 	//
 	HANDLE hFileMapping, hFileMappingData;
-	CESERVER_REQ_CONINFO_HDR *pConsoleInfo;
+	CESERVER_REQ_CONINFO_HDR *pConsoleInfo;  // Mapping
 	CESERVER_REQ_CONINFO_DATA *pConsoleData; // Mapping
+	CESERVER_REQ_CONINFO_HDR *pConsoleInfoCopy;  // Local (Alloc)
 	CESERVER_REQ_CONINFO_DATA *pConsoleDataCopy; // Local (Alloc)
 	DWORD nConsoleDataSize;
 	DWORD nFarInfoLastIdx;
+	// Input
+	HANDLE hInputThread, hInputEvent; DWORD dwInputThread;
+	int nInputQueue, nMaxInputQueue;
+	INPUT_RECORD* pInputQueue;
+	INPUT_RECORD* pInputQueueEnd;
+	INPUT_RECORD* pInputQueueRead;
+	INPUT_RECORD* pInputQueueWrite;
 	// TrueColorer buffer
 	HANDLE hColorerMapping;
 	//

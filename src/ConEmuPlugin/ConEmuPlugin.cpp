@@ -82,6 +82,7 @@ extern "C"{
   int  WINAPI ProcessSynchroEventW(int Event,void *Param);
   BOOL WINAPI IsTerminalMode();
   BOOL WINAPI IsConsoleActive();
+  int  WINAPI RegisterPanelView(PanelViewInit *ppvi)
 };
 #endif
 
@@ -158,6 +159,8 @@ void ReloadFarInfo(BOOL abFull);
 DWORD gnSelfPID = 0; //GetCurrentProcessId();
 //BOOL  gbNeedReloadFarInfo = FALSE;
 CEFAR_INFO *gpFarInfo = NULL;
+PanelViewRegInfo gPanelRegLeft = {NULL};
+PanelViewRegInfo gPanelRegRight = {NULL};
 
 
 //std::vector<HANDLE> ghCommandThreads;
@@ -482,6 +485,19 @@ BOOL WINAPI OnConsoleReadInput(HookCallbackArg* pArgs)
 	if (!pArgs->bMainThread) return TRUE; // обработку делаем только в основной нити
 	OnConsolePeekReadInput(FALSE/*abPeek*/);
 
+	//// ≈сли зарегистрирован callback дл€ графической панели (проверка основной нити сделана выше)
+	//if (gPanelRegLeft.pfnPreCall || gPanelRegRight.pfnPreCall) {
+	//	PINPUT_RECORD p = (PINPUT_RECORD)(pArgs->lArguments[1]);
+	//	LPDWORD pCount = (LPDWORD)(pArgs->lArguments[3]);
+	//	if (gPanelRegLeft.pfnPreCall)
+	//		gPanelRegLeft.pfnPreCall(p,pCount);
+	//	if (gPanelRegRight.pfnPreCall && gPanelRegRight.pfnPreCall != gPanelRegLeft.pfnPreCall)
+	//		gPanelRegRight.pfnPreCall(p,pCount);
+	//	if ((*pCount) == 0) {
+	//		*((BOOL*)pArgs->lpResult) = FALSE;
+	//	}
+	//}
+
 	// ≈сли под дебагом включен ScrollLock - вывести информацию о считанных событи€х
 	#ifdef _DEBUG
 	if (GetKeyState(VK_SCROLL) & 1) {
@@ -495,6 +511,24 @@ BOOL WINAPI OnConsoleReadInput(HookCallbackArg* pArgs)
 	#endif
 	
 	return TRUE; // продолжить
+}
+
+VOID WINAPI OnConsoleReadInputPost(HookCallbackArg* pArgs)
+{
+	if (!pArgs->bMainThread) return; // обработку делаем только в основной нити
+
+	// ≈сли зарегистрирован callback дл€ графической панели
+	if (gPanelRegLeft.pfnReadCall || gPanelRegRight.pfnReadCall) {
+		PINPUT_RECORD p = (PINPUT_RECORD)(pArgs->lArguments[1]);
+		LPDWORD pCount = (LPDWORD)(pArgs->lArguments[3]);
+		if (gPanelRegLeft.pfnReadCall)
+			gPanelRegLeft.pfnReadCall(p,pCount);
+		if (gPanelRegRight.pfnReadCall && gPanelRegRight.pfnReadCall != gPanelRegLeft.pfnReadCall)
+			gPanelRegRight.pfnReadCall(p,pCount);
+		if ((*pCount) == 0) {
+			*((BOOL*)pArgs->lpResult) = FALSE;
+		}
+	}
 }
 
 //int WINAPI _export ProcessSynchroEventW(int Event,void *Param)
@@ -733,6 +767,45 @@ BOOL LoadFarVersion()
 	}
 
 	return lbRc;
+}
+
+int WINAPI RegisterPanelView(PanelViewInit *ppvi)
+{
+	if (!ppvi) {
+		_ASSERTE(ppvi->cbSize == sizeof(PanelViewInit));
+		return -2;
+	}
+	if (ppvi->cbSize != sizeof(PanelViewInit)) {
+		_ASSERTE(ppvi->cbSize == sizeof(PanelViewInit));
+		return -2;
+	}
+	
+	PanelViewRegInfo *pp = (ppvi->bLeftPanel) ? &gPanelRegLeft : &gPanelRegRight;
+	
+	if (ppvi->bRegister) {
+		pp->pfnReadCall = ppvi->pfnReadCall;
+	} else {
+		pp->pfnReadCall = NULL;
+	}
+	
+	CESERVER_REQ In;
+	int nSize = sizeof(CESERVER_REQ_HDR) + sizeof(In.PVI);
+	ExecutePrepareCmd(&In, CECMD_REGPANELVIEW, nSize);
+	In.PVI = *ppvi;
+	CESERVER_REQ* pOut = ExecuteGuiCmd(FarHwnd, &In, FarHwnd);
+	if (!pOut) {
+		pp->pfnReadCall = NULL;
+		return -3;
+	}
+	*ppvi = pOut->PVI;
+	ExecuteFreeResult(pOut);
+
+	if (ppvi->cbSize == 0) {
+		pp->pfnReadCall = NULL;
+		return -1;
+	}
+
+	return 0;
 }
 
 //BOOL IsKeyChanged(BOOL abAllowReload)
