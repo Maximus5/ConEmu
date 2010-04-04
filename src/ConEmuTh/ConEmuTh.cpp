@@ -81,8 +81,9 @@ typedef HWND (WINAPI *GetFarHWND2_t)(BOOL abConEmuOnly);
 RegisterPanelView_t gfRegisterPanelView = NULL;
 GetFarHWND2_t gfGetFarHWND2 = NULL;
 CeFullPanelInfo pviLeft = {0}, pviRight = {0};
+int ShowLastError();
 
-ThumbnailSettings gThSet = {96,96, 4,20, 1,1};
+ThumbnailSettings gThSet; // = {96,96,1, 4,20, 1,1, 14, L"Tahoma"};
 
 
 
@@ -119,6 +120,7 @@ HANDLE WINAPI _export OpenPluginW(int OpenFrom,INT_PTR Item)
 	if (!gbInfoW_OK || !CheckConEmu(TRUE))
 		return INVALID_HANDLE_VALUE;
 		
+	gThSet.Load();
 	CeFullPanelInfo* pi = LoadPanelInfo();
 	HWND hView = (pi->bLeftPanel) ? ghLeftView : ghRightView;
 	
@@ -136,7 +138,8 @@ HANDLE WINAPI _export OpenPluginW(int OpenFrom,INT_PTR Item)
 		// Нужно создать View
 		hView = CreateView(pi);
 		if (hView == NULL) {
-			TODO("Показать ошибку?");
+			// Показать ошибку
+			ShowLastError();
 		} else {
 			// Зарегистрироваться
 			pvi.bRegister = TRUE;
@@ -146,7 +149,9 @@ HANDLE WINAPI _export OpenPluginW(int OpenFrom,INT_PTR Item)
 				// Закрыть окно (по WM_DESTROY окно само должно послать WM_QUIT если оно единственное)
 				_ASSERTE(nRegRC == 0);
 				PostMessage(hView, WM_DESTROY, 0, 0);
-				TODO("Показать ошибку");
+				gnCreateViewError = CEGuiDontAcceptPanel;
+				gnWin32Error = nRegRC;
+				ShowLastError();
 			} else {
 				lbRc = ShowWindow(hView, SW_SHOWNORMAL);
 				if (!lbRc)
@@ -276,19 +281,19 @@ BOOL CheckConEmu(BOOL abForceCheck)
 			#endif
 		);
 	if (!hConEmu) {
-		ShowMessage(1, 0);
+		ShowMessage(CEPluginNotFound, 0);
 		return FALSE;
 	}
 	gfRegisterPanelView = (RegisterPanelView_t)GetProcAddress(hConEmu, "RegisterPanelView");
 	gfGetFarHWND2 = (GetFarHWND2_t)GetProcAddress(hConEmu, "GetFarHWND2");
 	if (!gfRegisterPanelView || !gfGetFarHWND2) {
-		ShowMessage(2, 0);
+		ShowMessage(CEOldPluginVersion, 0);
 		return FALSE;
 	}
 	HWND hWnd = gfGetFarHWND2(TRUE);
 	if (hWnd) ghConEmuRoot = GetParent(hWnd); else ghConEmuRoot = NULL;
 	if (!hWnd) {
-		ShowMessage(3, 0);
+		ShowMessage(CEFarNonGuiMode, 0);
 		return FALSE;
 	}
 	return TRUE;
@@ -374,6 +379,10 @@ void StopThread(void)
 		dwWait = WaitForSingleObject(ghDisplayThread, 500);
 	if (dwWait)
 		TerminateThread(ghDisplayThread, 100);
+	if (ghDisplayThread) {
+		CloseHandle(ghDisplayThread); ghDisplayThread = NULL;
+	}
+	gnDisplayThreadId = 0;
 }
 
 void   WINAPI _export ExitFARW(void)
@@ -607,6 +616,9 @@ BOOL WINAPI OnReadConsole(PINPUT_RECORD lpBuffer, LPDWORD lpNumberOfEventsRead)
 	if (!pi) {
 		return TRUE; // панель создана, но она не активна
 	}
+	if (!pi->hView || !IsWindowVisible(pi->hView)) {
+		return TRUE; // панель полностью скрыта диалогом или погашена фаровская панель
+	}
 	
 	DWORD n = 0;
 	while (n < (*lpNumberOfEventsRead))
@@ -645,6 +657,7 @@ BOOL WINAPI OnReadConsole(PINPUT_RECORD lpBuffer, LPDWORD lpNumberOfEventsRead)
 					}
 					if (szMacro[0]) {
 						PostMacro(szMacro);
+						gbCancelAll = TRUE;
 						InvalidateRect(pi->hView, NULL, FALSE);
 					}
 				}
@@ -666,4 +679,20 @@ BOOL WINAPI OnReadConsole(PINPUT_RECORD lpBuffer, LPDWORD lpNumberOfEventsRead)
 		n++;
 	}
 	return TRUE;
+}
+
+int ShowLastError()
+{
+	if (gnCreateViewError) {
+		wchar_t szErrMsg[512];
+		const wchar_t* pszTempl = GetMsgW(gnCreateViewError);
+		if (pszTempl && *pszTempl) {
+			wsprintfW(szErrMsg, pszTempl, gnWin32Error);
+			if (gFarVersion.dwBuild>=FAR_Y_VER)
+				return FUNC_Y(ShowMessage)(szErrMsg, 0);
+			else
+				return FUNC_X(ShowMessage)(szErrMsg, 0);
+		}
+	}
+	return 0;
 }

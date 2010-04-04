@@ -69,12 +69,20 @@ void ExitFARW995(void)
 	}
 }
 
+int ShowMessage995(LPCWSTR asMsg, int aiButtons)
+{
+	if (!InfoW995 || !InfoW995->Message)
+		return -1;
+	return InfoW995->Message(InfoW995->ModuleNumber, FMSG_ALLINONE, NULL, 
+		(const wchar_t * const *)asMsg, 0, aiButtons);
+}
+
 int ShowMessage995(int aiMsg, int aiButtons)
 {
 	if (!InfoW995 || !InfoW995->Message || !InfoW995->GetMsg)
 		return -1;
-	return InfoW995->Message(InfoW995->ModuleNumber, FMSG_ALLINONE, NULL, 
-		(const wchar_t * const *)InfoW995->GetMsg(InfoW995->ModuleNumber,aiMsg), 0, aiButtons);
+	return ShowMessage995(
+		(LPCWSTR)InfoW995->GetMsg(InfoW995->ModuleNumber,aiMsg), aiButtons);
 }
 
 LPCWSTR GetMsg995(int aiMsg)
@@ -230,6 +238,7 @@ CeFullPanelInfo* LoadPanelInfo995()
 		pcefpi->ppItems[i] = (CePluginPanelItem*)malloc(nSize);
 		pcefpi->ppItems[i]->Flags = ppi->Flags;
 		pcefpi->ppItems[i]->FindData.dwFileAttributes = ppi->FindData.dwFileAttributes;
+		pcefpi->ppItems[i]->FindData.ftLastWriteTime = ppi->FindData.ftLastWriteTime;
 		pcefpi->ppItems[i]->FindData.nFileSize = ppi->FindData.nFileSize;
 		wchar_t* psz = (wchar_t*)(pcefpi->ppItems[i]+1);
 		lstrcpy(psz, ppi->FindData.lpwszFileName);

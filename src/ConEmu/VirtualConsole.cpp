@@ -3415,7 +3415,7 @@ BOOL CVirtualConsole::UpdatePanelView(BOOL abLeftPanel)
 	if (!lbRc)
 		dwErr = GetLastError();
 	// » отрисовать
-	InvalidateRect(pp->hWnd, NULL, FALSE);
+	//InvalidateRect(pp->hWnd, NULL, FALSE); -- не нужно, так получаетс€ двойной WM_PAINT
 	
 	return TRUE;
 }

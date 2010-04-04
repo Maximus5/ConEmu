@@ -30,7 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include "../common/common.hpp"
-
+#include "ConEmuTh_Lang.h"
 
 #define SafeCloseHandle(h) { if ((h)!=NULL) { HANDLE hh = (h); (h) = NULL; if (hh!=INVALID_HANDLE_VALUE) CloseHandle(hh); } }
 #ifdef _DEBUG
@@ -47,12 +47,14 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define ISALPHA(c) ((((c) >= (BYTE)'c') && ((c) <= (BYTE)'z')) || (((c) >= (BYTE)'C') && ((c) <= (BYTE)'Z')))
 #define isPressed(inp) ((GetKeyState(inp) & 0x8000) == 0x8000)
+#define sizeofarray(array) (sizeof(array)/sizeof(*array))
 
 // X - меньшая, Y - большая
 #define FAR_X_VER 995
 #define FAR_Y_VER 995
 #define FUNC_X(fn) fn##995
 #define FUNC_Y(fn) fn##995
+
 
 //typedef struct tag_FarVersion {
 //	union {
@@ -70,7 +72,7 @@ struct CEFAR_FIND_DATA
 	DWORD    dwFileAttributes;
 	//FILETIME ftCreationTime;
 	//FILETIME ftLastAccessTime;
-	//FILETIME ftLastWriteTime;
+	FILETIME ftLastWriteTime;
 	union {
 		struct {
 			DWORD nFileSizeHigh;
@@ -87,7 +89,8 @@ struct CEFAR_FIND_DATA
 struct CePluginPanelItem
 {
 	struct CEFAR_FIND_DATA FindData;
-	DWORD         Flags;
+	const wchar_t*  pszFullName; // Для упрощения отрисовки - ссылка на временный буфер
+	DWORD           Flags;
 	//DWORD         NumberOfLinks;
 	//wchar_t      *Description;
 	//wchar_t      *Owner;
@@ -108,6 +111,46 @@ enum CEPANELINFOFLAGS {
 	CEPFLAGS_NUMERICSORT        = 0x00000040,
 	CEPFLAGS_PANELLEFT          = 0x00000080,
 };
+
+class CThumbnails
+{
+public:
+	int nWidth, nHeight; // 96x96
+	int nXIcon, nYIcon, nXIconSpace, nYIconSpace;
+	HBRUSH hWhiteBrush;
+	// Теперь - собственно поле кеша
+	#define FIELD_MAX_COUNT 10
+	#define ITEMS_IN_FIELD 10 // количество в "строке"
+	int nFieldX, nFieldY; // реальное количество в "строке"/"столбце" (не больше ITEMS_IN_FIELD)
+	HDC hField[FIELD_MAX_COUNT]; HBITMAP hFieldBmp[FIELD_MAX_COUNT], hOldBmp[FIELD_MAX_COUNT];
+	struct tag_CacheInfo {
+		DWORD nAccessTick;
+		union {
+			struct {
+				DWORD nFileSizeHigh;
+				DWORD nFileSizeLow;
+			};
+			unsigned __int64 nFileSize;
+		};
+		FILETIME ftLastWriteTime;
+		DWORD dwFileAttributes;
+		wchar_t *lpwszFileName;
+		BOOL bPreviewLoaded;
+		//int N,X,Y;
+	} CacheInfo[FIELD_MAX_COUNT*ITEMS_IN_FIELD*ITEMS_IN_FIELD];
+	void UpdateCell(HDC hdc, struct tag_CacheInfo* pInfo, int x, int y, BOOL abLoadPreview);
+	HBITMAP LoadThumbnail(struct tag_CacheInfo* pItem);
+
+public:
+	CThumbnails();
+	~CThumbnails();
+public:
+	void Reset();
+	void Init(HBRUSH ahWhiteBrush);
+	BOOL FindInCache(CePluginPanelItem* pItem, int* pnIndex);
+	BOOL PaintItem(HDC hdc, int x, int y, CePluginPanelItem* pItem, BOOL abLoadPreview);
+};
+
 
 struct CeFullPanelInfo
 {
@@ -150,10 +193,27 @@ struct CeFullPanelInfo
 struct ThumbnailSettings
 {
 	int nWidth, nHeight; // 96x96
+	int nThumbFrame; // 1 (серая рамка вокруг превьюшки
 	int nHSpacing, nVSpacing; // 5, 25 - промежуток между двумя рамками
 	int nHPadding, nVPadding; // 1, 1 - зарезевированный отступ
+	int nFontHeight; // 14
+	wchar_t sFontName[32]; // Tahoma
+	BOOL bLoadPreviews, bLoadFolders;
+
+
+	void Load() {
+		nWidth = nHeight = 96;
+		nThumbFrame = 1;
+		nHSpacing = 5; nVSpacing = 25;
+		nHPadding = 1; nVPadding = 1;
+		nFontHeight = 14;
+		lstrcpy(sFontName, L"Tahoma");
+		bLoadPreviews = TRUE;
+		bLoadFolders = TRUE;
+	};
 };
 extern ThumbnailSettings gThSet;
+extern BOOL gbCancelAll;
 
 
 
@@ -206,6 +266,9 @@ int ShowMessage(int aiMsg, int aiButtons);
 int ShowMessageA(int aiMsg, int aiButtons);
 int FUNC_X(ShowMessage)(int aiMsg, int aiButtons);
 int FUNC_Y(ShowMessage)(int aiMsg, int aiButtons);
+int ShowMessageA(LPCSTR asMsg, int aiButtons);
+int FUNC_X(ShowMessage)(LPCWSTR asMsg, int aiButtons);
+int FUNC_Y(ShowMessage)(LPCWSTR asMsg, int aiButtons);
 void PostMacro(wchar_t* asMacro);
 void PostMacroA(char* asMacro);
 void FUNC_X(PostMacro)(wchar_t* asMacro);
@@ -227,6 +290,8 @@ CeFullPanelInfo* LoadPanelInfoA();
 CeFullPanelInfo* FUNC_X(LoadPanelInfo)();
 CeFullPanelInfo* FUNC_Y(LoadPanelInfo)();
 
+extern int gnCreateViewError;
+extern DWORD gnWin32Error;
 HWND CreateView(CeFullPanelInfo* pi);
 
 // ConEmu.dll

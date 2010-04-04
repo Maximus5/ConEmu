@@ -124,12 +124,20 @@ void   WINAPI _export ExitFAR(void)
 	}
 }
 
-int ShowMessageA(int aiMsg, int aiButtons)
+int ShowMessageA(LPCSTR asMsg, int aiButtons)
 {
 	if (!InfoA || !InfoA->Message)
 		return -1;
 	return InfoA->Message(InfoA->ModuleNumber, FMSG_ALLINONE, NULL, 
-		(const char * const *)InfoA->GetMsg(InfoA->ModuleNumber,aiMsg), 0, aiButtons);
+		(const char * const *)asMsg, 0, aiButtons);
+}
+
+int ShowMessageA(int aiMsg, int aiButtons)
+{
+	if (!InfoA || !InfoA->Message || !InfoA->GetMsg)
+		return -1;
+	return ShowMessageA(
+		(LPCSTR)InfoA->GetMsg(InfoA->ModuleNumber,aiMsg), aiButtons);
 }
 
 // Warning, напрямую НЕ вызывать. Пользоваться "общей" PostMacro

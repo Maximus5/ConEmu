@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="windows-1251"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9.00"
+	Version="9,00"
 	Name="ConEmuTh"
 	ProjectGUID="{60287D73-F658-4414-8C9B-30E1F3E78D05}"
 	RootNamespace="ConEmuTh"
@@ -98,6 +98,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+				CommandLine="copy &quot;$(ProjectDir)..\..\plugins\ConEmu\Thumbs\ConEmuTh_*.lng&quot; &quot;$(TargetDir)&quot;"
 			/>
 		</Configuration>
 		<Configuration
@@ -260,7 +261,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="echo copy $(TargetPath) ..\..\Release.x64\plugins\ConEmu\Thumbs\ConEmuTh.dll&#x0D;&#x0A;copy $(TargetPath) ..\..\Release.x64\plugins\ConEmu\Thumbs\ConEmuTh.dll&#x0D;&#x0A;"
+				CommandLine=""
 			/>
 		</Configuration>
 		<Configuration
@@ -342,7 +343,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="echo copy $(TargetPath) ..\..\plugins\ConEmu\Thumbs\ConEmuTh.x64.dll&#x0D;&#x0A;copy $(TargetPath) ..\..\plugins\ConEmu\Thumbs\ConEmuTh.x64.dll&#x0D;&#x0A;"
+				CommandLine=""
 			/>
 		</Configuration>
 		<Configuration
@@ -421,6 +422,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+				CommandLine="copy &quot;$(ProjectDir)..\..\plugins\ConEmu\Thumbs\ConEmuTh_*.lng&quot; &quot;$(TargetDir)&quot;"
 			/>
 		</Configuration>
 		<Configuration
@@ -578,6 +580,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+				CommandLine="copy &quot;$(ProjectDir)..\..\plugins\ConEmu\Thumbs\ConEmuTh_*.lng&quot; &quot;$(TargetDir)&quot;"
 			/>
 		</Configuration>
 		<Configuration
@@ -735,6 +738,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+				CommandLine="copy &quot;$(ProjectDir)..\..\plugins\ConEmu\Thumbs\ConEmuTh_*.lng&quot; &quot;$(TargetDir)&quot;"
 			/>
 		</Configuration>
 		<Configuration
@@ -894,7 +898,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy $(TargetPath) $(SolutionDir)..\Release.x64\Plugins\ConEmu\"
+				CommandLine="copy &quot;$(ProjectDir)..\..\plugins\ConEmu\Thumbs\ConEmuTh_*.lng&quot; &quot;$(TargetDir)&quot;"
 			/>
 		</Configuration>
 		<Configuration
@@ -1065,6 +1069,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\ConEmuTh_Lang.h"
+				>
+			</File>
+			<File
 				RelativePath=".\PluginHeader.h"
 				>
 			</File>
@@ -1087,6 +1095,64 @@
 				>
 			</File>
 		</Filter>
+		<File
+			RelativePath=".\Lang.templ"
+			>
+			<FileConfiguration
+				Name="Debug|Win32"
+				>
+				<Tool
+					Name="VCCustomBuildTool"
+					CommandLine="F:\VCProject\FarPlugin\ConEmu\Maximus5\src\ConEmuTh\lang.cmd"
+					Outputs="ConEmuTh_Lang.h"
+				/>
+			</FileConfiguration>
+			<FileConfiguration
+				Name="Release|Win32"
+				>
+				<Tool
+					Name="VCCustomBuildTool"
+					CommandLine="F:\VCProject\FarPlugin\ConEmu\Maximus5\src\ConEmuTh\lang.cmd"
+					Outputs="ConEmuTh_Lang.h"
+				/>
+			</FileConfiguration>
+			<FileConfiguration
+				Name="DebugA|Win32"
+				>
+				<Tool
+					Name="VCCustomBuildTool"
+					CommandLine="F:\VCProject\FarPlugin\ConEmu\Maximus5\src\ConEmuTh\lang.cmd"
+					Outputs="ConEmuTh_Lang.h"
+				/>
+			</FileConfiguration>
+			<FileConfiguration
+				Name="DebugEEE|Win32"
+				>
+				<Tool
+					Name="VCCustomBuildTool"
+					CommandLine="F:\VCProject\FarPlugin\ConEmu\Maximus5\src\ConEmuTh\lang.cmd"
+					Outputs="ConEmuTh_Lang.h"
+				/>
+			</FileConfiguration>
+			<FileConfiguration
+				Name="Debug75|Win32"
+				>
+				<Tool
+					Name="VCCustomBuildTool"
+					CommandLine="F:\VCProject\FarPlugin\ConEmu\Maximus5\src\ConEmuTh\lang.cmd"
+					Outputs="ConEmuTh_Lang.h"
+				/>
+			</FileConfiguration>
+			<FileConfiguration
+				Name="Instrument|Win32"
+				>
+				<Tool
+					Name="VCCustomBuildTool"
+					CommandLine="F:\VCProject\FarPlugin\ConEmu\Maximus5\src\ConEmuTh\lang.cmd"
+					Outputs="ConEmuTh_Lang.h"
+				/>
+			</FileConfiguration>
+		</File>
 	</Files>
 	<Globals>
 		<Global

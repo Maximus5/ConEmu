@@ -1,0 +1,89 @@
+﻿#hpp file name
+ConEmuTh_Lang.h
+#number of languages
+2
+#id:0 language file name, language name, language description
+..\..\plugins\ConEmu\Thumbs\ConEmuTh_ru.lng Russian "Russian (Русский)"
+#id:1 language file name, language name, language description
+..\..\plugins\ConEmu\Thumbs\ConEmuTh_en.lng English "English"
+
+#head of the hpp file
+hhead:
+hhead:#pragma once
+hhead:
+
+#tail of the hpp file
+#htail:
+#htail:
+#and so on as much as needed
+
+#--------------------------------------------------------------------
+#now come the lng feeds
+#--------------------------------------------------------------------
+#first comes the text name from the enum which can be preceded with
+#comments that will go to the hpp file
+#h://This comment will appear before MYes
+#he://This comment will appear after MYes
+#MYes
+#now come the lng lines for all the languages in the order defined
+#above, they can be preceded with comments as shown below
+#l://This comment will appear in all the lng files before the lng line
+#le://This comment will appear in all the lng files after the lng line
+#ls://This comment will appear only in Russian lng file before the lng line
+#lse://This comment will appear only in Russian lng file after the lng line
+#"Да"
+#ls://This comment will appear only in English lng file before the lng line
+#lse://This comment will appear only in English lng file after the lng line
+#"Yes"
+#ls://This comment will appear only in Czech lng file before the lng line
+#lse://This comment will appear only in Czech lng file after the lng line
+#upd:"Ano"
+#
+#lng lines marked with "upd:" will cause a warning to be printed to the
+#screen reminding that this line should be updated/translated
+
+CEPluginName=0
+l:// Plugin title
+"ConEmu Thumbnails"
+"ConEmu Thumbnails"
+
+CEPluginNotFound
+"ConEmu Thumbnails\nПлагин ConEmu не найден,\nThumbnails недоступны."
+"ConEmu Thumbnails\nConEmu plugin not found,\nThumbnails will not be available."
+
+CEOldPluginVersion
+"ConEmu Thumbnails\nОбнаружена старая версия плагина ConEmu,\nThumbnails недоступны."
+"ConEmu Thumbnails\nOld version of ConEmu plugin,\nThumbnails will not be available."
+
+CEFarNonGuiMode
+"ConEmu Thumbnails\nThumbnails недоступны в 'чистом' Far.\nFar Manager был запущен без ConEmu?"
+"ConEmu Thumbnails\nThumbnails are not available in plain Far.\nFar Manager was not started under ConEmu?"
+
+CECreateThreadFailed
+"ConEmu Thumbnails\nОшибка создания потока DisplayThread\nErrCode=0x%08X"
+"ConEmu Thumbnails\nCreateThread(DisplayThread) failed\nErrCode=0x%08X"
+
+CEThreadActivationFailed
+"ConEmu Thumbnails\nИстекло время ожидания активации DisplayThread"
+"ConEmu Thumbnails\nThread activation timeout (DisplayThread)"
+
+CEPostThreadMessageFailed
+"ConEmu Thumbnails\nОшибка посылки сообщения в DisplayThread\nErrCode=0x%08X"
+"ConEmu Thumbnails\nPostThreadmessage(DisplayThread) failed\nErrCode=0x%08X"
+
+CEDisplayThreadTerminated
+"ConEmu Thumbnails\nПоток DisplayThread был завершен\nCode=0x%08X"
+"ConEmu Thumbnails\nDisplayThread was terminated\nCode=0x%08X"
+
+CERegisterClassFailed
+"ConEmu Thumbnails\nНе удалось зарегистрировать класс\nErrCode=0x%08X"
+"ConEmu Thumbnails\nRegisterClass failed\nCode=0x%08X"
+
+CECreateWindowFailed
+"ConEmu Thumbnails\nНе удалось создать окно панели\nErrCode=0x%08X"
+"ConEmu Thumbnails\nCreateWindow failed\nCode=0x%08X"
+
+CEGuiDontAcceptPanel
+"ConEmu Thumbnails\nНе удалось зарегистрировать вид в ConEmu\nErrCode=%i"
+"ConEmu Thumbnails\nView registration in ConEmu failed\nErrCode=%i"
+
