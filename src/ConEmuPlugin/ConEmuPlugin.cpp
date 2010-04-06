@@ -356,13 +356,6 @@ BOOL OnConsolePeekReadInput(BOOL abPeek)
 	return TRUE; // продолжить
 }
 
-BOOL WINAPI OnConsolePeekInput(HookCallbackArg* pArgs)
-{
-	if (!pArgs->bMainThread) return TRUE; // обработку делаем только в основной нити
-	OnConsolePeekReadInput(TRUE/*abPeek*/);
-	return TRUE; // продолжить
-}
-
 #ifdef _DEBUG
 BOOL DebugGetKeyboardState(LPBYTE pKeyStates)
 {
@@ -480,23 +473,79 @@ void DebugInputPrint(INPUT_RECORD r)
 }
 #endif
 
+
+
+BOOL OnPanelViewCallbacks(HookCallbackArg* pArgs, PanelViewInputCallback pfnLeft, PanelViewInputCallback pfnRight)
+{
+	if (!pArgs->bMainThread || !(pfnLeft || pfnRight)) {
+		_ASSERTE(pArgs->bMainThread && (pfnLeft || pfnRight));
+		return TRUE; // перехват делаем только в основной нити
+	}
+
+	BOOL lbNewResult = FALSE, lbContinue = TRUE;
+	HANDLE hInput = (HANDLE)(pArgs->lArguments[0]);
+	PINPUT_RECORD p = (PINPUT_RECORD)(pArgs->lArguments[1]);
+	DWORD nBufSize = (DWORD)(pArgs->lArguments[2]);
+	LPDWORD pCount = (LPDWORD)(pArgs->lArguments[3]);
+	
+	if (lbContinue && pfnLeft) {
+		_ASSERTE(gPanelRegLeft.bRegister);
+		lbContinue = pfnLeft(hInput,p,nBufSize,pCount,&lbNewResult);
+		if (!lbContinue)
+			*((BOOL*)pArgs->lpResult) = lbNewResult;
+	}
+	// Если есть только правая панель, или на правой панели задана другая функция
+	if (lbContinue && pfnRight && pfnRight != pfnLeft) {
+		_ASSERTE(gPanelRegRight.bRegister);
+		lbContinue = pfnRight(hInput,p,nBufSize,pCount,&lbNewResult);
+		if (!lbContinue)
+			*((BOOL*)pArgs->lpResult) = lbNewResult;
+	}
+	
+	return lbContinue;
+}
+
+
+
+// Если функция возвращает FALSE - реальный ReadConsoleInput вызван не будет,
+// и в вызывающую функцию (ФАРа?) вернется то, что проставлено в pArgs->lpResult & pArgs->lArguments[...]
+BOOL WINAPI OnConsolePeekInput(HookCallbackArg* pArgs)
+{
+	if (!pArgs->bMainThread) return TRUE; // обработку делаем только в основной нити
+	OnConsolePeekReadInput(TRUE/*abPeek*/);
+
+	// Если зарегистрирован callback для графической панели
+	if (gPanelRegLeft.pfnPeekPreCall || gPanelRegRight.pfnPeekPreCall) {
+		if (!OnPanelViewCallbacks(pArgs, gPanelRegLeft.pfnPeekPreCall, gPanelRegRight.pfnPeekPreCall))
+			return FALSE;
+	}
+	
+	return TRUE; // продолжить
+}
+
+VOID WINAPI OnConsolePeekInputPost(HookCallbackArg* pArgs)
+{
+	if (!pArgs->bMainThread) return; // обработку делаем только в основной нити
+
+	// Если зарегистрирован callback для графической панели
+	if (gPanelRegLeft.pfnPeekPostCall || gPanelRegRight.pfnPeekPostCall) {
+		if (!OnPanelViewCallbacks(pArgs, gPanelRegLeft.pfnPeekPostCall, gPanelRegRight.pfnPeekPostCall))
+			return;
+	}
+}
+
+// Если функция возвращает FALSE - реальный ReadConsoleInput вызван не будет,
+// и в вызывающую функцию (ФАРа?) вернется то, что проставлено в pArgs->lpResult & pArgs->lArguments[...]
 BOOL WINAPI OnConsoleReadInput(HookCallbackArg* pArgs)
 {
 	if (!pArgs->bMainThread) return TRUE; // обработку делаем только в основной нити
 	OnConsolePeekReadInput(FALSE/*abPeek*/);
 
-	//// Если зарегистрирован callback для графической панели (проверка основной нити сделана выше)
-	//if (gPanelRegLeft.pfnPreCall || gPanelRegRight.pfnPreCall) {
-	//	PINPUT_RECORD p = (PINPUT_RECORD)(pArgs->lArguments[1]);
-	//	LPDWORD pCount = (LPDWORD)(pArgs->lArguments[3]);
-	//	if (gPanelRegLeft.pfnPreCall)
-	//		gPanelRegLeft.pfnPreCall(p,pCount);
-	//	if (gPanelRegRight.pfnPreCall && gPanelRegRight.pfnPreCall != gPanelRegLeft.pfnPreCall)
-	//		gPanelRegRight.pfnPreCall(p,pCount);
-	//	if ((*pCount) == 0) {
-	//		*((BOOL*)pArgs->lpResult) = FALSE;
-	//	}
-	//}
+	// Если зарегистрирован callback для графической панели
+	if (gPanelRegLeft.pfnReadPreCall || gPanelRegRight.pfnReadPreCall) {
+		if (!OnPanelViewCallbacks(pArgs, gPanelRegLeft.pfnReadPreCall, gPanelRegRight.pfnReadPreCall))
+			return FALSE;
+	}
 
 	// Если под дебагом включен ScrollLock - вывести информацию о считанных событиях
 	#ifdef _DEBUG
@@ -518,18 +567,37 @@ VOID WINAPI OnConsoleReadInputPost(HookCallbackArg* pArgs)
 	if (!pArgs->bMainThread) return; // обработку делаем только в основной нити
 
 	// Если зарегистрирован callback для графической панели
-	if (gPanelRegLeft.pfnReadCall || gPanelRegRight.pfnReadCall) {
-		PINPUT_RECORD p = (PINPUT_RECORD)(pArgs->lArguments[1]);
-		LPDWORD pCount = (LPDWORD)(pArgs->lArguments[3]);
-		if (gPanelRegLeft.pfnReadCall)
-			gPanelRegLeft.pfnReadCall(p,pCount);
-		if (gPanelRegRight.pfnReadCall && gPanelRegRight.pfnReadCall != gPanelRegLeft.pfnReadCall)
-			gPanelRegRight.pfnReadCall(p,pCount);
-		if ((*pCount) == 0) {
-			*((BOOL*)pArgs->lpResult) = FALSE;
+	if (gPanelRegLeft.pfnReadPostCall || gPanelRegRight.pfnReadPostCall) {
+		if (!OnPanelViewCallbacks(pArgs, gPanelRegLeft.pfnReadPostCall, gPanelRegRight.pfnReadPostCall))
+			return;
+	}
+}
+
+
+VOID WINAPI OnWriteConsoleOutputPost(HookCallbackArg* pArgs)
+{
+	if (!pArgs->bMainThread) return; // обработку делаем только в основной нити
+
+	// Если зарегистрирован callback для графической панели
+	if (gPanelRegLeft.pfnWriteCall || gPanelRegRight.pfnWriteCall) {
+		HANDLE hOutput = (HANDLE)(pArgs->lArguments[0]);
+		const CHAR_INFO *lpBuffer = (const CHAR_INFO *)(pArgs->lArguments[1]);
+		COORD dwBufferSize = *(COORD*)(pArgs->lArguments[2]);
+		COORD dwBufferCoord = *(COORD*)(pArgs->lArguments[3]);
+		PSMALL_RECT lpWriteRegion = (PSMALL_RECT)(pArgs->lArguments[4]);
+		
+		if (gPanelRegLeft.pfnWriteCall) {
+			_ASSERTE(gPanelRegLeft.bRegister);
+			gPanelRegLeft.pfnWriteCall(hOutput,lpBuffer,dwBufferSize,dwBufferCoord,lpWriteRegion);
+		}
+		// Если есть только правая панель, или на правой панели задана другая функция
+		if (gPanelRegRight.pfnWriteCall && gPanelRegRight.pfnWriteCall != gPanelRegLeft.pfnWriteCall) {
+			_ASSERTE(gPanelRegRight.bRegister);
+			gPanelRegRight.pfnWriteCall(hOutput,lpBuffer,dwBufferSize,dwBufferCoord,lpWriteRegion);
 		}
 	}
 }
+
 
 //int WINAPI _export ProcessSynchroEventW(int Event,void *Param)
 //{
@@ -783,10 +851,16 @@ int WINAPI RegisterPanelView(PanelViewInit *ppvi)
 	PanelViewRegInfo *pp = (ppvi->bLeftPanel) ? &gPanelRegLeft : &gPanelRegRight;
 	
 	if (ppvi->bRegister) {
-		pp->pfnReadCall = ppvi->pfnReadCall;
+		pp->pfnPeekPreCall = ppvi->pfnPeekPreCall;
+		pp->pfnPeekPostCall = ppvi->pfnPeekPostCall;
+		pp->pfnReadPreCall = ppvi->pfnReadPreCall;
+		pp->pfnReadPostCall = ppvi->pfnReadPostCall;
+		pp->pfnWriteCall = ppvi->pfnWriteCall;
 	} else {
-		pp->pfnReadCall = NULL;
+		pp->pfnPeekPreCall = pp->pfnPeekPostCall = pp->pfnReadPreCall = pp->pfnReadPostCall = NULL;
+		pp->pfnWriteCall = NULL;
 	}
+	pp->bRegister = ppvi->bRegister;
 	
 	CESERVER_REQ In;
 	int nSize = sizeof(CESERVER_REQ_HDR) + sizeof(In.PVI);

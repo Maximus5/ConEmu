@@ -245,9 +245,6 @@ void CThumbnails::UpdateCell(HDC hdc, struct tag_CacheInfo* pInfo, int x, int y,
 	lbPreviewWasLoaded = pInfo->bPreviewLoaded;
 	if (abLoadPreview) pInfo->bPreviewLoaded = TRUE;
 
-	// Очистить
-	FillRect(hdc, &rc, hWhiteBrush);
-
 	if (pszName[0] == L'.' && pszName[1] == L'.' && pszName[2] == 0) {
 		if (!ghUpIcon)
 			ghUpIcon = LoadIcon(ghPluginModule, MAKEINTRESOURCE(IDI_UP));
@@ -288,6 +285,9 @@ void CThumbnails::UpdateCell(HDC hdc, struct tag_CacheInfo* pInfo, int x, int y,
 
 DoDraw:
 
+	// Очистить
+	FillRect(hdc, &rc, hWhiteBrush);
+
 	if (hBmp) {
 		HDC hCompDC = CreateCompatibleDC(hdc);
 		HBITMAP hOldBmp = (HBITMAP)SelectObject(hCompDC, hBmp);
@@ -310,6 +310,12 @@ DoDraw:
 }
 HBITMAP CThumbnails::LoadThumbnail(struct tag_CacheInfo* pItem)
 {
+	if (gpDesktopFolder == NULL) {
+		HRESULT hr = SHGetDesktopFolder(&gpDesktopFolder);
+		if (FAILED(hr)) {
+			SafeRelease(gpDesktopFolder);
+		}
+	}
 	if (!gpDesktopFolder)
 		return NULL;
 
@@ -415,6 +421,7 @@ HBITMAP CThumbnails::LoadThumbnail(struct tag_CacheInfo* pItem)
 
 
 			dwFlags = IEIFLAG_SCREEN|IEIFLAG_ASYNC; //|IEIFLAG_QUALITY; // IEIFLAG_ASPECT
+			wsPathBuffer[0] = 0;
 			hr = pEI->GetLocation(wsPathBuffer, 512, &dwPrior, &size, nBitDepth, &dwFlags);
 
 			// Ошибка 0x8000000a (E_PENDING) теоретически может возвращаться, если pEI запустил извлечение превьюшки
@@ -699,6 +706,10 @@ DWORD WINAPI DisplayThread(LPVOID lpvParam)
 	delete gpThumbnails;
 	gpThumbnails = NULL;
 
+	// Освободить память
+	pviLeft.Free();
+	pviRight.Free();
+	
 	CoUninitialize();
 	
 	return 0;
@@ -844,14 +855,6 @@ void Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc, CeFullPanelInfo* pi)
 	HFONT hOldFont = (HFONT)SelectObject(hCompDC,hFont);
 
 
-	if (gpDesktopFolder == NULL) {
-		HRESULT hr = SHGetDesktopFolder(&gpDesktopFolder);
-		if (FAILED(hr)) {
-			SafeRelease(gpDesktopFolder);
-		}
-	} else {
-		_ASSERTE(gpDesktopFolder == NULL);
-	}
 
 
 	for (int nStep = 0; !gbCancelAll && nStep <= 1; nStep++)
@@ -862,6 +865,12 @@ void Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc, CeFullPanelInfo* pi)
 		for (int Y = 0; !gbCancelAll && Y < nYCount && nItem < nItemCount; Y++) {
 			int nXCoord = 0;
 			for (int X = 0; !gbCancelAll && X < nXCount && nItem < nItemCount; X++, nItem++, ppItems) {
+				// Обновить информацию об элементе (имя, веделенность, и т.п.)
+				if (nStep == 0) {
+					LoadPanelItemInfo(pi, nItem);
+				}
+			
+				// поехали
 				const wchar_t* pszName = ppItems[nItem]->FindData.lpwszFileName;
 				if (wcschr(pszName, L'\\')) {
 					// Это уже может быть полный путь (TempPanel?)

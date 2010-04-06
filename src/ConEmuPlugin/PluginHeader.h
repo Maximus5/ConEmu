@@ -73,7 +73,8 @@ extern CESERVER_REQ_CONINFO_HDR *gpConsoleInfo;
 extern DWORD gnSelfPID;
 
 typedef struct tag_PanelViewRegInfo {
-	PanelViewEventCallback pfnReadCall;
+	PanelViewInputCallback pfnPeekPreCall, pfnPeekPostCall, pfnReadPreCall, pfnReadPostCall;
+	PanelViewOutputCallback pfnWriteCall;
 } PanelViewRegInfo;
 extern PanelViewRegInfo gPanelRegLeft, gPanelRegRight;
 

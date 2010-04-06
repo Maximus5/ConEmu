@@ -367,6 +367,29 @@ BOOL IntersectSmallRect(RECT& rc1, SMALL_RECT& rc2)
 	return lb;
 }
 
+wchar_t* GetDlgItemText(HWND hDlg, WORD nID)
+{
+	HWND hEdit;
+	if (nID)
+		hEdit = GetDlgItem(hDlg, nID);
+	else
+		hEdit = hDlg;
+		
+	if (!hEdit)
+		return NULL;
+	//
+	wchar_t* psz = NULL;
+	int nLen = GetWindowTextLength(hEdit);
+    if (nLen > 0) {
+        psz = (wchar_t*)calloc(nLen+1,2);
+        if (psz) {
+        	psz[0] = 0;
+            GetWindowText(hEdit, psz, nLen+1);
+        }
+    }
+    return psz;
+}
+
 
 
 

@@ -221,8 +221,19 @@ BOOL IsMacroActiveA()
 	return TRUE;
 }
 
+void LoadPanelItemInfoA(CeFullPanelInfo* pi, int nItem)
+{
+	TODO("CeFullPanelInfo* LoadPanelInfoA()");
+}
+
 CeFullPanelInfo* LoadPanelInfoA()
 {
 	TODO("CeFullPanelInfo* LoadPanelInfoA()");
 	return NULL;
+}
+
+BOOL IsLeftPanelActiveA()
+{
+	TODO("IsLeftPanelActiveA");
+	return FALSE;
 }

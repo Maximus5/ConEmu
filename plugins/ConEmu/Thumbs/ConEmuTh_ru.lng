@@ -1,0 +1,14 @@
+﻿.Language=Russian,Russian (Русский)
+
+// Plugin title
+"ConEmu Thumbnails"
+"ConEmu Thumbnails\nПлагин ConEmu не найден,\nThumbnails недоступны."
+"ConEmu Thumbnails\nОбнаружена старая версия плагина ConEmu,\nThumbnails недоступны."
+"ConEmu Thumbnails\nThumbnails недоступны в 'чистом' Far.\nFar Manager был запущен без ConEmu?"
+"ConEmu Thumbnails\nОшибка создания потока DisplayThread\nErrCode=0x%08X"
+"ConEmu Thumbnails\nИстекло время ожидания активации DisplayThread"
+"ConEmu Thumbnails\nОшибка посылки сообщения в DisplayThread\nErrCode=0x%08X"
+"ConEmu Thumbnails\nПоток DisplayThread был завершен\nCode=0x%08X"
+"ConEmu Thumbnails\nНе удалось зарегистрировать класс\nErrCode=0x%08X"
+"ConEmu Thumbnails\nНе удалось создать окно панели\nErrCode=0x%08X"
+"ConEmu Thumbnails\nНе удалось зарегистрировать вид в ConEmu\nErrCode=%i"

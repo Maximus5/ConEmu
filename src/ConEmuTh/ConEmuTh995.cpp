@@ -150,14 +150,70 @@ BOOL IsMacroActive995()
 	return TRUE;
 }
 
-CeFullPanelInfo* LoadPanelInfo995()
+
+void LoadPanelItemInfo995(CeFullPanelInfo* pi, int nItem)
+{
+	HANDLE hPanel = pcefpi->hPanel;
+	INT_PTR nSize = InfoW995->Control(hPanel, FCTL_GETPANELITEM, nItem, NULL);
+	//PluginPanelItem *ppi = (PluginPanelItem*)malloc(nMaxSize);
+	//if (!ppi)
+	//	return;
+	
+	if ((pcefpi->pFarTmpBuf == NULL) || (pcefpi->nFarTmpBuf < nSize)) {
+		if (pcefpi->pFarTmpBuf) free(pcefpi->pFarTmpBuf);
+		pcefpi->nFarTmpBuf = nSize+MAX_PATH; // + про запас немножко
+		pcefpi->pFarTmpBuf = malloc(pcefpi->nFarTmpBuf);
+	}
+	PluginPanelItem *ppi = (PluginPanelItem*)pcefpi->pFarTmpBuf;
+	if (ppi) {
+		nSize = InfoW995->Control(hPanel, FCTL_GETPANELITEM, nItem, (LONG_PTR)ppi);
+	} else {
+		return;
+	}
+	
+	if (!nSize) { // ошибка?
+		ppi->FindData.lpwszFileName = L"???";
+		ppi->Flags = 0;
+		ppi->FindData.dwFileAttributes = 0;
+		ppi->FindData.ftLastWriteTime.dwLowDateTime = ppi->FindData.ftLastWriteTime.dwHighDateTime = 0;
+		ppi->FindData.nFileSize = 0;
+	}
+
+	// Необходимый размер буфера для хранения элемента
+	nSize = sizeof(CePluginPanelItem)+(wcslen(ppi->FindData.lpwszFileName)+1)*2;
+	
+	// Уже может быть выделено достаточно памяти под этот элемент
+	if ((pcefpi->ppItems[nItem] == NULL) || (pcefpi->ppItems[nItem]->cbSize < nSize)) {
+		if (pcefpi->ppItems[nItem]) free(pcefpi->ppItems[nItem]);
+		nSize += 32;
+		pcefpi->ppItems[nItem] = (CePluginPanelItem*)malloc(nSize);
+		pcefpi->ppItems[nItem]->cbSize = nSize;
+	}
+	
+	// Копируем
+	pcefpi->ppItems[nItem]->Flags = ppi->Flags;
+	pcefpi->ppItems[nItem]->FindData.dwFileAttributes = ppi->FindData.dwFileAttributes;
+	pcefpi->ppItems[nItem]->FindData.ftLastWriteTime = ppi->FindData.ftLastWriteTime;
+	pcefpi->ppItems[nItem]->FindData.nFileSize = ppi->FindData.nFileSize;
+	wchar_t* psz = (wchar_t*)(pcefpi->ppItems[nItem]+1);
+	lstrcpy(psz, ppi->FindData.lpwszFileName);
+	pcefpi->ppItems[nItem]->FindData.lpwszFileName = psz;
+	pcefpi->ppItems[nItem]->FindData.lpwszFileNamePart = wcsrchr(psz, L'\\');
+	if (pcefpi->ppItems[nItem]->FindData.lpwszFileNamePart == NULL)
+		pcefpi->ppItems[nItem]->FindData.lpwszFileNamePart = psz;
+	pcefpi->ppItems[nItem]->FindData.lpwszFileExt = wcsrchr(pcefpi->ppItems[nItem]->FindData.lpwszFileNamePart, L'.');
+	
+	// ppi не освобождаем - это ссылка на pcefpi->pFarTmpBuf
+}
+
+CeFullPanelInfo* LoadPanelInfo995(BOOL abActive)
 {
 	if (!InfoW995) return NULL;
 
 
 	CeFullPanelInfo* pcefpi = NULL;
 	PanelInfo pi = {0};
-	HANDLE hPanel = PANEL_ACTIVE;
+	HANDLE hPanel = abActive ? PANEL_ACTIVE : PANEL_PASSIVE;
 	int nRc = InfoW995->Control(hPanel, FCTL_GETPANELINFO, 0, (LONG_PTR)&pi);
 	if (!nRc) {
 		TODO("Показать информацию об ошибке");
@@ -172,8 +228,13 @@ CeFullPanelInfo* LoadPanelInfo995()
 		pcefpi = &pviLeft;
 	else
 		pcefpi = &pviRight;
-	// На всякий случай - позовем
-	pcefpi->FreeInfo();
+	pcefpi->hPanel = hPanel;
+	
+
+	// Если элементов на панели стало больше, чем выделено в (pviLeft/pviRight)
+	if (pcefpi->ItemsNumber < pi.ItemsNumber) {
+		pcefpi->FreeInfo();
+	}
 
 	// Копируем что нужно
 	pcefpi->bLeftPanel = (pi.Flags & PFLAGS_PANELLEFT) == PFLAGS_PANELLEFT;
@@ -186,69 +247,89 @@ CeFullPanelInfo* LoadPanelInfo995()
 	pcefpi->Focus = pi.Focus;
 	pcefpi->Flags = pi.Flags; // CEPANELINFOFLAGS
 
+
 	// Настройки интерфейса
 	pcefpi->nFarInterfaceSettings =
 		(DWORD)InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETINTERFACESETTINGS, 0);
 	pcefpi->nFarPanelSettings =
 		(DWORD)InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETPANELSETTINGS, 0);
-		
-	// Цвета фара
-	INT_PTR nColorSize = InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETARRAYCOLOR, NULL);
-	if (nColorSize <= (INT_PTR)sizeof(pcefpi->nFarColors)) {
-		nColorSize = InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETARRAYCOLOR, pcefpi->nFarColors);
-	} else {
-		_ASSERTE(nColorSize <= sizeof(pcefpi->nFarColors));
-		BYTE* ptr = (BYTE*)calloc(nColorSize,1);
-		if (!ptr) {
-			memset(pcefpi->nFarColors, 7, sizeof(pcefpi->nFarColors));
-		} else {
-			nColorSize = InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETARRAYCOLOR, ptr);
-			memmove(pcefpi->nFarColors, ptr, sizeof(pcefpi->nFarColors));
-			free(ptr);
-		}
-	}
 
+	
+	// Цвета фара
+	int nColorSize = (int)InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETARRAYCOLOR, NULL);
+	if ((pcefpi->nFarColors == NULL) || (nColorSize > pcefpi->nMaxFarColors)) {
+		if (pcefpi->nFarColors) free(pcefpi->nFarColors);
+		pcefpi->nFarColors = (BYTE*)calloc(nColorSize,1);
+		pcefpi->nMaxFarColors = nColorSize;
+	}
+	nColorSize = (int)InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETARRAYCOLOR, pcefpi->nFarColors);
+
+	
 	// Текущая папка панели
-	INT_PTR nSize = InfoW995->Control(hPanel, FCTL_GETPANELDIR, 0, 0);
+	int nSize = (int)InfoW995->Control(hPanel, FCTL_GETPANELDIR, 0, 0);
 	if (nSize) {
-		pcefpi->pszPanelDir = (wchar_t*)calloc(nSize,2);
+		if ((pcefpi->nMaxPanelDir == NULL) || (nSize > pcefpi->nMaxPanelDir)) {
+			pcefpi->nMaxPanelDir = nSize + MAX_PATH; // + выделим немножко заранее
+			pcefpi->pszPanelDir = (wchar_t*)calloc(pcefpi->nMaxPanelDir,2);
+		}
 		nSize = InfoW995->Control(hPanel, FCTL_GETPANELDIR, nSize, (LONG_PTR)pcefpi->pszPanelDir);
 		if (!nSize) {
 			free(pcefpi->pszPanelDir); pcefpi->pszPanelDir = NULL;
+			pcefpi->nMaxPanelDir = 0;
 		}
+	} else {
+		if (pcefpi->pszPanelDir) { free(pcefpi->pszPanelDir); pcefpi->pszPanelDir = NULL; }
 	}
+	
 
-	// Теперь - сформируем информацию об элементах панели
-	pcefpi->ppItems = (CePluginPanelItem**)calloc(pcefpi->ItemsNumber, sizeof(LPVOID));
-	TODO("Оптимизировать - в большинстве случаев наверное не нужно загружать все элементы сразу");
-	INT_PTR nMaxSize = sizeof(PluginPanelItem)+6*MAX_PATH;
-	nSize = 0;
-	PluginPanelItem *ppi = (PluginPanelItem*)malloc(nMaxSize);
-	for (int i=0; i<pi.ItemsNumber; i++) {
-		nSize = InfoW995->Control(hPanel, FCTL_GETPANELITEM, i, NULL);
-		if (nSize > nMaxSize) {
-			nMaxSize = nSize+MAX_PATH*2;
-			free(ppi);
-			ppi = (PluginPanelItem*)malloc(nMaxSize);
-		}
-		nSize = InfoW995->Control(hPanel, FCTL_GETPANELITEM, i, (LONG_PTR)ppi);
-		if (!nSize) continue; // ошибка?
-		// Копируем
-		nSize = sizeof(CePluginPanelItem)+(wcslen(ppi->FindData.lpwszFileName)+1)*2;
-		pcefpi->ppItems[i] = (CePluginPanelItem*)malloc(nSize);
-		pcefpi->ppItems[i]->Flags = ppi->Flags;
-		pcefpi->ppItems[i]->FindData.dwFileAttributes = ppi->FindData.dwFileAttributes;
-		pcefpi->ppItems[i]->FindData.ftLastWriteTime = ppi->FindData.ftLastWriteTime;
-		pcefpi->ppItems[i]->FindData.nFileSize = ppi->FindData.nFileSize;
-		wchar_t* psz = (wchar_t*)(pcefpi->ppItems[i]+1);
-		lstrcpy(psz, ppi->FindData.lpwszFileName);
-		pcefpi->ppItems[i]->FindData.lpwszFileName = psz;
-		pcefpi->ppItems[i]->FindData.lpwszFileNamePart = wcsrchr(psz, L'\\');
-		if (pcefpi->ppItems[i]->FindData.lpwszFileNamePart == NULL)
-			pcefpi->ppItems[i]->FindData.lpwszFileNamePart = psz;
-		pcefpi->ppItems[i]->FindData.lpwszFileExt = wcsrchr(pcefpi->ppItems[i]->FindData.lpwszFileNamePart, L'.');
+	// Готовим буфер для информации об элементах
+	if ((pcefpi->ppItems == NULL) || (pcefpi->nMaxItemsNumber < nMaxItemsNumber->ItemsNumber)) {
+		if (pcefpi->ppItems) free(pcefpi->ppItems);
+		pcefpi->nMaxItemsNumber = nMaxItemsNumber->ItemsNumber+32; // + немножно про запас
+		pcefpi->ppItems = (CePluginPanelItem**)calloc(pcefpi->nMaxItemsNumber, sizeof(LPVOID));
 	}
-	free(ppi);
+	// и буфер для загрузки элемента из FAR
+	nSize = sizeof(PluginPanelItem)+6*MAX_PATH;
+	if ((pcefpi->pFarTmpBuf == NULL) || (pcefpi->nFarTmpBuf < nSize)) {
+		if (pcefpi->pFarTmpBuf) free(pcefpi->pFarTmpBuf);
+		pcefpi->nFarTmpBuf = nSize;
+		pcefpi->pFarTmpBuf = malloc(pcefpi->nFarTmpBuf);
+	}
+	
+	//TODO("Оптимизировать - в большинстве случаев наверное не нужно загружать все элементы сразу");
+	//INT_PTR nMaxSize = sizeof(PluginPanelItem)+6*MAX_PATH;
+	//nSize = 0;
+	//PluginPanelItem *ppi = (PluginPanelItem*)malloc(nMaxSize);
+	//for (int i=0; i<pi.ItemsNumber; i++) {
+	//	nSize = InfoW995->Control(hPanel, FCTL_GETPANELITEM, i, NULL);
+	//	if (nSize > nMaxSize) {
+	//		nMaxSize = nSize+MAX_PATH*2;
+	//		free(ppi);
+	//		ppi = (PluginPanelItem*)malloc(nMaxSize);
+	//	}
+	//	nSize = InfoW995->Control(hPanel, FCTL_GETPANELITEM, i, (LONG_PTR)ppi);
+	//	if (!nSize) continue; // ошибка?
+	//	// Копируем
+	//	nSize = sizeof(CePluginPanelItem)+(wcslen(ppi->FindData.lpwszFileName)+1)*2;
+	//	pcefpi->ppItems[i] = (CePluginPanelItem*)malloc(nSize);
+	//	pcefpi->ppItems[i]->Flags = ppi->Flags;
+	//	pcefpi->ppItems[i]->FindData.dwFileAttributes = ppi->FindData.dwFileAttributes;
+	//	pcefpi->ppItems[i]->FindData.ftLastWriteTime = ppi->FindData.ftLastWriteTime;
+	//	pcefpi->ppItems[i]->FindData.nFileSize = ppi->FindData.nFileSize;
+	//	wchar_t* psz = (wchar_t*)(pcefpi->ppItems[i]+1);
+	//	lstrcpy(psz, ppi->FindData.lpwszFileName);
+	//	pcefpi->ppItems[i]->FindData.lpwszFileName = psz;
+	//	pcefpi->ppItems[i]->FindData.lpwszFileNamePart = wcsrchr(psz, L'\\');
+	//	if (pcefpi->ppItems[i]->FindData.lpwszFileNamePart == NULL)
+	//		pcefpi->ppItems[i]->FindData.lpwszFileNamePart = psz;
+	//	pcefpi->ppItems[i]->FindData.lpwszFileExt = wcsrchr(pcefpi->ppItems[i]->FindData.lpwszFileNamePart, L'.');
+	//}
+	//free(ppi);
 	
 	return pcefpi;
+}
+
+BOOL IsLeftPanelActive995()
+{
+	PRAGMA_ERROR("TODO: IsLeftPanelActive995");
 }

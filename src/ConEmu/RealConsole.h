@@ -282,6 +282,7 @@ public:
 	//bool isPackets();
 	LPCWSTR GetCmd();
 	LPCWSTR GetDir();
+	BOOL GetUserPwd(const wchar_t** ppszUser, const wchar_t** ppszPwd, BOOL* pbRestricted);
 	short GetProgress(BOOL* rpbError);
 	void UpdateFarSettings(DWORD anFarPID=0);
 	int CoordInPanel(COORD cr);

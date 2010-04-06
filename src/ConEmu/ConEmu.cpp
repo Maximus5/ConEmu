@@ -3227,6 +3227,7 @@ LRESULT CConEmuMain::RecreateDlgKeyHook(int code, WPARAM wParam, LPARAM lParam)
 
 INT_PTR CConEmuMain::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
 {
+	#define UM_USER_CONTROLS (WM_USER+121)
     switch (messg)
     {
     case WM_INITDIALOG:
@@ -3262,6 +3263,18 @@ INT_PTR CConEmuMain::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARA
             //EnableWindow(GetDlgItem(hDlg, IDC_CHOOSE_DIR), FALSE);
             //#endif
             
+            const wchar_t *pszUser, *pszPwd; BOOL bResticted;
+            if (gConEmu.ActiveCon()->RCon()->GetUserPwd(&pszUser, &pszPwd, &bResticted)) {
+            	CheckDlgButton(hDlg, cbRunAsUser, BST_CHECKED);
+            	if (bResticted) {
+	            	CheckDlgButton(hDlg, cbRunAsRestricted, BST_CHECKED);
+            	} else {
+            		SetDlgItemText(hDlg, tRunAsUser, pszUser);
+            		SetDlgItemText(hDlg, tRunAsPassword, pszPwd);
+            	}
+            }
+            RecreateDlgProc(hDlg, UM_USER_CONTROLS, 0, 0);
+            
 
 			RConStartArgs* pArgs = (RConStartArgs*)lParam;
 			_ASSERTE(pArgs);
@@ -3270,18 +3283,20 @@ INT_PTR CConEmuMain::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARA
 	
 			if (gConEmu.m_osv.dwMajorVersion < 6) {
 				// В XP и ниже это просто RunAs - с возможностью ввода имени пользователя и пароля
-				SetDlgItemTextA(hDlg, cbRunAs, "&Run as..."); //GCC hack. иначе не собирается
-				// И уменьшить длину
-                RECT rcBox; GetWindowRect(GetDlgItem(hDlg, cbRunAs), &rcBox);
-                SetWindowPos(GetDlgItem(hDlg, cbRunAs), NULL, 0, 0, (rcBox.right-rcBox.left)/2, rcBox.bottom-rcBox.top,
-                	SWP_NOMOVE|SWP_NOZORDER);
-			}
-			if (gConEmu.mb_IsUacAdmin || (pArgs && pArgs->bRunAsAdministrator)) {
-				CheckDlgButton(hDlg, cbRunAs, BST_CHECKED);
-				if (gConEmu.mb_IsUacAdmin) { // Только в Vista+ если GUI уже запущен под админом
-					EnableWindow(GetDlgItem(hDlg, cbRunAs), FALSE);
-				} else {
-					RecreateDlgProc(hDlg, WM_COMMAND, cbRunAs, 0);
+				ShowWindow(GetDlgItem(hDlg, cbRunAsAdmin), SW_HIDE);
+				//SetDlgItemTextA(hDlg, cbRunAs, "&Run as..."); //GCC hack. иначе не собирается
+				//// И уменьшить длину
+                //RECT rcBox; GetWindowRect(GetDlgItem(hDlg, cbRunAsAdmin), &rcBox);
+                //SetWindowPos(GetDlgItem(hDlg, cbRunAsAdmin), NULL, 0, 0, (rcBox.right-rcBox.left)/2, rcBox.bottom-rcBox.top,
+                //	SWP_NOMOVE|SWP_NOZORDER);
+			} else {
+				if (gConEmu.mb_IsUacAdmin || (pArgs && pArgs->bRunAsAdministrator)) {
+					CheckDlgButton(hDlg, cbRunAsAdmin, BST_CHECKED);
+					if (gConEmu.mb_IsUacAdmin) { // Только в Vista+ если GUI уже запущен под админом
+						EnableWindow(GetDlgItem(hDlg, cbRunAsAdmin), FALSE);
+					} else {
+						RecreateDlgProc(hDlg, WM_COMMAND, cbRunAsAdmin, 0);
+					}
 				}
 			}
 
@@ -3306,11 +3321,11 @@ INT_PTR CConEmuMain::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARA
                 
                 // Выровнять флажок по кнопке
 				RECT rcBtn; GetWindowRect(GetDlgItem(hDlg, IDC_START), &rcBtn);
-                RECT rcBox; GetWindowRect(GetDlgItem(hDlg, cbRunAs), &rcBox);
+                RECT rcBox; GetWindowRect(GetDlgItem(hDlg, cbRunAsAdmin), &rcBox);
                 pt.x = pt.x - (rcBox.right - rcBox.left) - 5;
                 //MapWindowPoints(NULL, hDlg, (LPPOINT)&rcBox, 1);
                 pt.y += ((rcBtn.bottom-rcBtn.top) - (rcBox.bottom-rcBox.top))/2;
-                SetWindowPos(GetDlgItem(hDlg, cbRunAs), NULL, pt.x, pt.y, 0,0, SWP_NOSIZE|SWP_NOZORDER);
+                SetWindowPos(GetDlgItem(hDlg, cbRunAsAdmin), NULL, pt.x, pt.y, 0,0, SWP_NOSIZE|SWP_NOZORDER);
                 
                 SetFocus(GetDlgItem(hDlg, IDC_RESTART_CMD));
             }
@@ -3346,6 +3361,21 @@ INT_PTR CConEmuMain::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARA
             return 1;
         }
         return 0;
+        
+    case UM_USER_CONTROLS:
+    	{
+            if (SendDlgItemMessage(hDlg, cbRunAsUser, BM_GETCHECK, 0, 0)) {
+            	EnableWindow(GetDlgItem(hDlg, cbRunAsRestricted), TRUE);
+            	BOOL lbText = SendDlgItemMessage(hDlg, cbRunAsRestricted, BM_GETCHECK, 0, 0) == 0;
+            	EnableWindow(GetDlgItem(hDlg, tRunAsUser), lbText);
+            	EnableWindow(GetDlgItem(hDlg, tRunAsPassword), lbText);
+            } else {
+            	EnableWindow(GetDlgItem(hDlg, cbRunAsRestricted), FALSE);
+            	EnableWindow(GetDlgItem(hDlg, tRunAsUser), FALSE);
+            	EnableWindow(GetDlgItem(hDlg, tRunAsPassword), FALSE);
+            }
+    	}
+    	return 0;
 
     case WM_COMMAND:
         if (HIWORD(wParam) == BN_CLICKED)
@@ -3398,13 +3428,20 @@ INT_PTR CConEmuMain::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARA
                 	return 1;
                 }
                 
-                case cbRunAs:
+                case cbRunAsAdmin:
                 {
                 	// BCM_SETSHIELD = 5644
                 	if (gOSVer.dwMajorVersion >= 6) {
-                		BOOL bRunAs = SendDlgItemMessage(hDlg, cbRunAs, BM_GETCHECK, 0, 0);
+                		BOOL bRunAs = SendDlgItemMessage(hDlg, cbRunAsAdmin, BM_GETCHECK, 0, 0);
                 		SendDlgItemMessage(hDlg, IDC_START, 5644/*BCM_SETSHIELD*/, 0, bRunAs);
                 	}
+                	return 1;
+                }
+                
+                case cbRunAsUser:
+                case cbRunAsRestricted:
+                {
+                	RecreateDlgProc(hDlg, UM_USER_CONTROLS, 0, 0);
                 	return 1;
                 }
                     
@@ -3412,27 +3449,52 @@ INT_PTR CConEmuMain::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARA
                 {
 					RConStartArgs* pArgs = (RConStartArgs*)GetWindowLongPtr(hDlg, DWLP_USER);
 					_ASSERTE(pArgs);
+					
 					// Command
-                    HWND hEdit = GetDlgItem(hDlg, IDC_RESTART_CMD);
-                    int nLen = GetWindowTextLength(hEdit);
-                    if (nLen > 0) {
-						_ASSERTE(pArgs->pszSpecialCmd==NULL);
-                        pArgs->pszSpecialCmd = (wchar_t*)calloc(nLen+1,2);
-						if (pArgs->pszSpecialCmd) {
-                            GetWindowText(hEdit, pArgs->pszSpecialCmd, nLen+1);
-							gSet.HistoryAdd(pArgs->pszSpecialCmd);
-						}
-                    }
+					_ASSERTE(pArgs->pszSpecialCmd==NULL);
+					pArgs->pszSpecialCmd = GetDlgItemText(hDlg, IDC_RESTART_CMD);
+					if (pArgs->pszSpecialCmd)
+						gSet.HistoryAdd(pArgs->pszSpecialCmd);
+                    //HWND hEdit = GetDlgItem(hDlg, IDC_RESTART_CMD);
+                    //int nLen = GetWindowTextLength(hEdit);
+                    //if (nLen > 0) {
+					//	_ASSERTE(pArgs->pszSpecialCmd==NULL);
+                    //    pArgs->pszSpecialCmd = (wchar_t*)calloc(nLen+1,2);
+					//	if (pArgs->pszSpecialCmd) {
+                    //        GetWindowText(hEdit, pArgs->pszSpecialCmd, nLen+1);
+					//		gSet.HistoryAdd(pArgs->pszSpecialCmd);
+					//	}
+                    //}
+                    
 					// StartupDir
-					hEdit = GetDlgItem(hDlg, IDC_STARTUP_DIR);
-					nLen = GetWindowTextLength(hEdit);
-                    if (nLen > 0) {
-						_ASSERTE(pArgs->pszStartupDir==NULL);
-                        pArgs->pszStartupDir = (wchar_t*)calloc(nLen+1,2);
-                        if (pArgs->pszStartupDir)
-                            GetWindowText(hEdit, pArgs->pszStartupDir, nLen+1);
-                    }
-					pArgs->bRunAsAdministrator = SendDlgItemMessage(hDlg, cbRunAs, BM_GETCHECK, 0, 0);
+					_ASSERTE(pArgs->pszStartupDir==NULL);
+					pArgs->pszStartupDir = GetDlgItemText(hDlg, IDC_STARTUP_DIR);
+					//hEdit = GetDlgItem(hDlg, IDC_STARTUP_DIR);
+					//nLen = GetWindowTextLength(hEdit);
+                    //if (nLen > 0) {
+                    //    pArgs->pszStartupDir = (wchar_t*)calloc(nLen+1,2);
+                    //    if (pArgs->pszStartupDir)
+                    //        GetWindowText(hEdit, pArgs->pszStartupDir, nLen+1);
+                    //}
+                    
+                    // Vista+ (As Admin...)
+					pArgs->bRunAsAdministrator = SendDlgItemMessage(hDlg, cbRunAsAdmin, BM_GETCHECK, 0, 0);
+					
+					SafeFree(pArgs->pszUserName);
+					SafeFree(pArgs->pszUserPassword);
+					if (SendDlgItemMessage(hDlg, cbRunAsUser, BM_GETCHECK, 0, 0)) {
+						pArgs->bRunAsRestricted = SendDlgItemMessage(hDlg, cbRunAsRestricted, BM_GETCHECK, 0, 0)
+						if (!pArgs->bRunAsRestricted) {
+							pArgs->pszUserName = GetDlgItemText(hDlg, tRunAsUser);
+							pArgs->pszUserPassword = GetDlgItemText(hDlg, tRunAsPassword);
+						}
+						// Попытаться проверить правильность введенного пароля и возможность запуска
+						if (!pArgs->CheckUserToken())
+							return 1;
+					} else {
+						pArgs->bRunAsRestricted = FALSE;
+					}
+					
                     EndDialog(hDlg, IDC_START);
                     return 1;
                 }
@@ -4680,17 +4742,17 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
     AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_CON_TOGGLE_VISIBLE, _T("&Real console"));
     AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_CONPROP, _T("&Properties..."));
     AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_DUMPCONSOLE, _T("&Dump..."));
-    AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_DEBUGGUI, _T("&Debug log..."));
+    AppendMenu(hDebug, MF_STRING | MF_ENABLED, ID_DEBUGGUI, _T("Debug &log"));
     InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_POPUP | MF_ENABLED, (UINT_PTR)hDebug, _T("&Debug"));
-    InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_CON_PASTE, _T("Paste"));
-    InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_CON_COPY, _T("Copy"));
-	InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_CON_MARKTEXT, _T("Mark text"));
-    InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_CON_MARKBLOCK, _T("Mark block"));
+    InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_CON_PASTE, _T("&Paste"));
+    InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_CON_COPY, _T("Cop&y"));
+	InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_CON_MARKTEXT, _T("Mar&k text"));
+    InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_CON_MARKBLOCK, _T("Mark &block"));
     InsertMenu(hwndMain, 0, MF_BYPOSITION, MF_SEPARATOR, 0);
     InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED | (gSet.isAlwaysOnTop ? MF_CHECKED : 0),
-        ID_ALWAYSONTOP, _T("Al&ways on top..."));
+        ID_ALWAYSONTOP, _T("Al&ways on top"));
     InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED | (gSet.AutoScroll ? MF_CHECKED : 0),
-        ID_AUTOSCROLL, _T("Auto scro&ll..."));
+        ID_AUTOSCROLL, _T("Auto scro&ll"));
     InsertMenu(hwndMain, 0, MF_BYPOSITION | MF_STRING | MF_ENABLED, ID_SETTINGS, _T("S&ettings..."));
 
 	#ifdef _DEBUG
@@ -5353,7 +5415,7 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
     if (messg == WM_KEYDOWN || messg == WM_KEYUP)
     {
         if (wParam == VK_PAUSE && !isPressed(VK_CONTROL)) {
-            if (isPictureView()) {
+            if (isPictureView() && !IsWindowUnicode(hPictureView)) {
                 if (messg == WM_KEYUP) {
                     bPicViewSlideShow = !bPicViewSlideShow;
                     if (bPicViewSlideShow) {
@@ -7449,10 +7511,10 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 	                    bPicViewSlideShow = false;
 	                    SendMessage(ghConWnd, WM_KEYDOWN, VK_NEXT, 0x01510001);
 	                    SendMessage(ghConWnd, WM_KEYUP, VK_NEXT, 0xc1510001);
-
+	        
 	                    // Окно могло измениться?
 	                    isPictureView();
-
+	        
 	                    dwLastSlideShowTick = GetTickCount();
 	                    bPicViewSlideShow = true;
 	                } else {

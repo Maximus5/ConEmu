@@ -85,6 +85,10 @@ int ShowLastError();
 
 ThumbnailSettings gThSet; // = {96,96,1, 4,20, 1,1, 14, L"Tahoma"};
 
+int gnUngetCount = 0;
+INPUT_RECORD girUnget[100];
+BOOL GetBufferInput(BOOL abRemove, PINPUT_RECORD lpBuffer, DWORD nBufSize, LPDWORD lpNumberOfEventsRead);
+BOOL UngetBufferInput(PINPUT_RECORD lpOneInput);
 
 
 // minimal(?) FAR version 2.0 alpha build FAR_X_VER
@@ -129,7 +133,11 @@ HANDLE WINAPI _export OpenPluginW(int OpenFrom,INT_PTR Item)
 	pvi.nFarInterfaceSettings = pi->nFarInterfaceSettings;
 	pvi.nFarPanelSettings = pi->nFarPanelSettings;
 	pvi.PanelRect = pi->PanelRect;
-	pvi.pfnReadCall = OnReadConsole;
+	//pvi.pfnReadCall = OnReadConsole;
+	pvi.pfnPeekPreCall = OnPrePeekConsole;
+	pvi.pfnPeekPostCall = OnPostPeekConsole;
+	pvi.pfnReadPreCall = OnPreReadConsole;
+	pvi.pfnReadPostCall = OnPostReadConsole;
 	
 	BOOL lbRc = FALSE;
 	DWORD dwErr = 0;
@@ -383,6 +391,9 @@ void StopThread(void)
 		CloseHandle(ghDisplayThread); ghDisplayThread = NULL;
 	}
 	gnDisplayThreadId = 0;
+	// ќсвободить пам€ть
+	pviLeft.Free();
+	pviRight.Free();
 }
 
 void   WINAPI _export ExitFARW(void)
@@ -586,16 +597,28 @@ BOOL IsMacroActive()
 	return lbActive;
 }
 
-CeFullPanelInfo* LoadPanelInfo()
+void LoadPanelItemInfo(CeFullPanelInfo* pi, int nItem)
+{
+	if (gFarVersion.dwVerMajor==1)
+		ppi = LoadPanelItemInfoA(pi, nItem);
+	else if (gFarVersion.dwBuild>=FAR_Y_VER)
+		ppi = FUNC_Y(LoadPanelItemInfo)(pi, nItem);
+	else
+		ppi = FUNC_X(LoadPanelItemInfo)(pi, nItem);
+}
+
+
+// ¬озвращает (дл€ удобства) ссылку на одну из глобальных переменных (pviLeft/pviRight)
+CeFullPanelInfo* LoadPanelInfo(BOOL abActive)
 {
 	CeFullPanelInfo* ppi = NULL;
 
 	if (gFarVersion.dwVerMajor==1)
-		ppi = LoadPanelInfoA();
+		ppi = LoadPanelInfoA(abActive);
 	else if (gFarVersion.dwBuild>=FAR_Y_VER)
-		ppi = FUNC_Y(LoadPanelInfo)();
+		ppi = FUNC_Y(LoadPanelInfo)(abActive);
 	else
-		ppi = FUNC_X(LoadPanelInfo)();
+		ppi = FUNC_X(LoadPanelInfo)(abActive);
 
 	if (ppi)
 		ppi->cbSize = sizeof(*ppi);
@@ -603,8 +626,103 @@ CeFullPanelInfo* LoadPanelInfo()
 	return ppi;
 }
 
+
+BOOL IsLeftPanelActive()
+{
+	BOOL lbLeftActive = FALSE;
+	if (gFarVersion.dwVerMajor==1)
+		lbLeftActive = IsLeftPanelActive(abActive);
+	else if (gFarVersion.dwBuild>=FAR_Y_VER)
+		lbLeftActive = FUNC_Y(IsLeftPanelActive)(abActive);
+	else
+		lbLeftActive = FUNC_X(IsLeftPanelActive)(abActive);
+	return lbLeftActive;
+}
+
+
+BOOL GetBufferInput(BOOL abRemove, PINPUT_RECORD lpBuffer, DWORD nBufSize, LPDWORD lpNumberOfEventsRead)
+{
+}
+
+BOOL UngetBufferInput(PINPUT_RECORD lpOneInput)
+{
+}
+
+
+BOOL WINAPI OnPrePeekConsole(HANDLE hInput, PINPUT_RECORD lpBuffer, DWORD nBufSize, LPDWORD lpNumberOfEventsRead, BOOL* pbResult)
+{
+	// если в girUnget что-то есть вернуть из него и FALSE (тогда OnPostPeekConsole не будет вызван)");
+	if (gnUngetCount) {
+		if (GetBufferInput(FALSE/*abRemove*/, lpBuffer, nBufSize, lpNumberOfEventsRead))
+			return FALSE; // PeekConsoleInput & OnPostPeekConsole не будет вызван
+	}
+
+	return TRUE; // продолжить без изменений
+}
+
+BOOL WINAPI OnPostPeekConsole(HANDLE hInput, PINPUT_RECORD lpBuffer, DWORD nBufSize, LPDWORD lpNumberOfEventsRead, BOOL* pbResult)
+{
+	PRAGMA_ERROR("TODO: заменить обработку стрелок, но girUnget не трогать");
+	return TRUE; // продолжить без изменений
+}
+
+BOOL WINAPI OnPreReadConsole(HANDLE hInput, PINPUT_RECORD lpBuffer, DWORD nBufSize, LPDWORD lpNumberOfEventsRead, BOOL* pbResult)
+{
+	// если в girUnget что-то есть вернуть из него и FALSE (тогда OnPostPeekConsole не будет вызван)");
+	if (gnUngetCount) {
+		if (GetBufferInput(TRUE/*abRemove*/, lpBuffer, nBufSize, lpNumberOfEventsRead))
+			return FALSE; // ReadConsoleInput & OnPostReadConsole не будет вызван
+	}
+
+	return TRUE; // продолжить без изменений
+}
+
+BOOL WINAPI OnPostReadConsole(HANDLE hInput, PINPUT_RECORD lpBuffer, DWORD nBufSize, LPDWORD lpNumberOfEventsRead, BOOL* pbResult)
+{
+	PRAGMA_ERROR("TODO: заменить обработку стрелок, если надо - поместить серию нажатий в girUnget");
+	return TRUE; // продолжить без изменений
+}
+
+
+
+
+//lpBuffer 
+//The data to be written to the console screen buffer. This pointer is treated as the origin of a 
+//two-dimensional array of CHAR_INFO structures whose size is specified by the dwBufferSize parameter. 
+//The total size of the array must be less than 64K.
+//
+//dwBufferSize 
+//The size of the buffer pointed to by the lpBuffer parameter, in character cells. 
+//The X member of the COORD structure is the number of columns; the Y member is the number of rows.
+//
+//dwBufferCoord 
+//The coordinates of the upper-left cell in the buffer pointed to by the lpBuffer parameter. 
+//The X member of the COORD structure is the column, and the Y member is the row.
+//
+//lpWriteRegion 
+//A pointer to a SMALL_RECT structure. On input, the structure members specify the upper-left and lower-right 
+//coordinates of the console screen buffer rectangle to write to. 
+//On output, the structure members specify the actual rectangle that was used.
+VOID WINAPI OnPostWriteConsoleOutput(HANDLE hOutput,const CHAR_INFO *lpBuffer,COORD dwBufferSize,COORD dwBufferCoord,PSMALL_RECT lpWriteRegion)
+{
+	PRAGMA_ERROR("TODO: ѕроверить список окон FAR и если активное Ќ≈ панели - сразу выйти (и спр€тать разрегистрировать)");
+	
+	PRAGMA_ERROR("TODO: ѕроверить и сравнить, если изменилс€ регион панели - обновить PanelView");
+	//!. —начала проверить на какой панели находитс€ фокус!
+	//   Ёто требуетс€ дл€ того, чтобы Ќ≈активна€ панель не перехватывала стрелки
+	//ƒалее
+	//1. ѕанель видима -> считать информацию о пр€моугольнике, элементах панели, и выполнить отрисовку
+	//   информацию о пр€моугольнике (если он изменилс€) передать в GUI
+	//   ≈сли окошко панели невидимо - выполнить повторную регистрацию в GUI - оно само сделает ShowWindow
+	//2. ѕанель невидима -> спр€тать окошко панели и разрегистрироватьс€ в GUI
+	
+	return TRUE; // продолжить без изменений
+}
+
+
 BOOL WINAPI OnReadConsole(PINPUT_RECORD lpBuffer, LPDWORD lpNumberOfEventsRead)
 {
+	PRAGMA_ERROR("Ёту - убить");
 	// ѕерехват управлени€ курсором
 	if (pviLeft.hView == NULL && pviRight.hView == NULL)
 		return TRUE;

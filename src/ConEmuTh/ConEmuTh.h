@@ -88,6 +88,7 @@ struct CEFAR_FIND_DATA
 
 struct CePluginPanelItem
 {
+	DWORD			cbSize;
 	struct CEFAR_FIND_DATA FindData;
 	const wchar_t*  pszFullName; // ƒл€ упрощени€ отрисовки - ссылка на временный буфер
 	DWORD           Flags;
@@ -111,6 +112,68 @@ enum CEPANELINFOFLAGS {
 	CEPFLAGS_NUMERICSORT        = 0x00000040,
 	CEPFLAGS_PANELLEFT          = 0x00000080,
 };
+
+struct CeFullPanelInfo
+{
+	DWORD cbSize;
+	HWND  hView;
+	HANDLE hPanel;
+	//
+	int nXCount; // тут четко, кусок иконки не допускаетс€
+	int nYCountFull; // тут четко, кусок иконки не допускаетс€
+	int nYCount; // а тут допускаетс€ отображение верхней части иконки
+	//
+	DWORD nFarInterfaceSettings;
+	DWORD nFarPanelSettings;
+	BOOL  bLeftPanel, bPlugin;
+	RECT  PanelRect;
+	int ItemsNumber;
+	int CurrentItem;
+	int TopPanelItem; // он может Ќ≈ совпадать с фаровским, чтобы CurrentItem был таки видим
+	BOOL Visible;
+	BOOL Focus;
+	DWORD Flags; // CEPANELINFOFLAGS
+	// ************************
+	int nMaxFarColors;
+	BYTE *nFarColors; // ћассив цветов фара
+	// ************************
+	int nMaxPanelDir;
+	wchar_t* pszPanelDir;
+	// ************************
+	int nMaxItemsNumber;
+	CePluginPanelItem** ppItems;
+	// ************************
+	int nFarTmpBuf;    // ¬ременный буфер дл€ получени€
+	LPVOID pFarTmpBuf; // информации об элементе панели
+	
+
+	void FreeInfo() {
+		if (ppItems) {
+			for (int i=0; i<ItemsNumber; i++)
+				if (ppItems[i]) free(ppItems[i]);
+			free(ppItems);
+			ppItems = NULL;
+		}
+		nMaxItemsNumber = 0;
+		if (pszPanelDir) {
+			free(pszPanelDir);
+			pszPanelDir = NULL;
+		}
+		nMaxPanelDir = 0;
+		if (nFarColors) {
+			free(nFarColors);
+			nFarColors = NULL;
+		}
+		nMaxFarColors = 0;
+		if (pFarTmpBuf) {
+			free(pFarTmpBuf);
+			pFarTmpBuf = NULL;
+		}
+		nFarTmpBuf = 0;
+	}
+};
+
+
 
 class CThumbnails
 {
@@ -149,44 +212,6 @@ public:
 	void Init(HBRUSH ahWhiteBrush);
 	BOOL FindInCache(CePluginPanelItem* pItem, int* pnIndex);
 	BOOL PaintItem(HDC hdc, int x, int y, CePluginPanelItem* pItem, BOOL abLoadPreview);
-};
-
-
-struct CeFullPanelInfo
-{
-	DWORD cbSize;
-	HWND  hView;
-	//
-	int nXCount; // тут четко, кусок иконки не допускаетс€
-	int nYCountFull; // тут четко, кусок иконки не допускаетс€
-	int nYCount; // а тут допускаетс€ отображение верхней части иконки
-	//
-	DWORD nFarInterfaceSettings;
-	DWORD nFarPanelSettings;
-	BOOL  bLeftPanel, bPlugin;
-	RECT  PanelRect;
-	int ItemsNumber;
-	int CurrentItem;
-	int TopPanelItem; // он может Ќ≈ совпадать с фаровским, чтобы CurrentItem был таки видим
-	BOOL Visible;
-	BOOL Focus;
-	DWORD Flags; // CEPANELINFOFLAGS
-	BYTE nFarColors[0x100]; // ћассив цветов фара
-	wchar_t* pszPanelDir;
-	CePluginPanelItem** ppItems;
-
-	void FreeInfo() {
-		if (ppItems) {
-			for (int i=0; i<ItemsNumber; i++)
-				if (ppItems[i]) free(ppItems[i]);
-			free(ppItems);
-			ppItems = NULL;
-		}
-		if (pszPanelDir) {
-			free(pszPanelDir);
-			pszPanelDir = NULL;
-		}
-	}
 };
 
 
@@ -285,10 +310,18 @@ BOOL IsMacroActive();
 BOOL IsMacroActiveA();
 BOOL FUNC_X(IsMacroActive)();
 BOOL FUNC_Y(IsMacroActive)();
-CeFullPanelInfo* LoadPanelInfo();
-CeFullPanelInfo* LoadPanelInfoA();
-CeFullPanelInfo* FUNC_X(LoadPanelInfo)();
-CeFullPanelInfo* FUNC_Y(LoadPanelInfo)();
+CeFullPanelInfo* LoadPanelInfo(BOOL abActive);
+CeFullPanelInfo* LoadPanelInfoA(BOOL abActive);
+CeFullPanelInfo* FUNC_X(LoadPanelInfo)(BOOL abActive);
+CeFullPanelInfo* FUNC_Y(LoadPanelInfo)(BOOL abActive);
+BOOL IsLeftPanelActive();
+BOOL IsLeftPanelActiveA();
+BOOL FUNC_X(IsLeftPanelActive)();
+BOOL FUNC_Y(IsLeftPanelActive)();
+void LoadPanelItemInfo(CeFullPanelInfo* pi, int nItem);
+void LoadPanelInfoA(CeFullPanelInfo* pi, int nItem);
+void FUNC_X(LoadPanelInfo)(CeFullPanelInfo* pi, int nItem);
+void FUNC_Y(LoadPanelInfo)(CeFullPanelInfo* pi, int nItem);
 
 extern int gnCreateViewError;
 extern DWORD gnWin32Error;
@@ -298,4 +331,9 @@ HWND CreateView(CeFullPanelInfo* pi);
 BOOL CheckConEmu(BOOL abForceCheck=FALSE);
 int RegisterPanelView(PanelViewInit *ppvi);
 HWND GetConEmuHWND();
-BOOL WINAPI OnReadConsole(PINPUT_RECORD lpBuffer, LPDWORD lpNumberOfEventsRead);
+//BOOL WINAPI OnReadConsole(PINPUT_RECORD lpBuffer, LPDWORD lpNumberOfEventsRead);
+BOOL WINAPI OnPrePeekConsole(HANDLE hInput, PINPUT_RECORD lpBuffer, DWORD nBufSize, LPDWORD lpNumberOfEventsRead, BOOL* pbResult);
+BOOL WINAPI OnPostPeekConsole(HANDLE hInput, PINPUT_RECORD lpBuffer, DWORD nBufSize, LPDWORD lpNumberOfEventsRead, BOOL* pbResult);
+BOOL WINAPI OnPreReadConsole(HANDLE hInput, PINPUT_RECORD lpBuffer, DWORD nBufSize, LPDWORD lpNumberOfEventsRead, BOOL* pbResult);
+BOOL WINAPI OnPostReadConsole(HANDLE hInput, PINPUT_RECORD lpBuffer, DWORD nBufSize, LPDWORD lpNumberOfEventsRead, BOOL* pbResult);
+VOID WINAPI OnPostWriteConsoleOutput(HANDLE hOutput,const CHAR_INFO *lpBuffer,COORD dwBufferSize,COORD dwBufferCoord,PSMALL_RECT lpWriteRegion);

@@ -1308,7 +1308,7 @@ static BOOL WINAPI OnPeekConsoleInputA(HANDLE hConsoleInput, PINPUT_RECORD lpBuf
 	if (ph && ph->PreCallBack) {
 		SETARGS4(&lbRc,hConsoleInput,lpBuffer,nLength,lpNumberOfEventsRead);
 		if (!ph->PreCallBack(&args))
-			return FALSE;
+			return lbRc;
 	}
 
 	lbRc = F(PeekConsoleInputA)(hConsoleInput, lpBuffer, nLength, lpNumberOfEventsRead);
@@ -1334,7 +1334,7 @@ static BOOL WINAPI OnPeekConsoleInputW(HANDLE hConsoleInput, PINPUT_RECORD lpBuf
 	if (ph && ph->PreCallBack) {
 		SETARGS4(&lbRc,hConsoleInput,lpBuffer,nLength,lpNumberOfEventsRead);
 		if (!ph->PreCallBack(&args))
-			return FALSE;
+			return lbRc;
 	}
 
 	lbRc = F(PeekConsoleInputW)(hConsoleInput, lpBuffer, nLength, lpNumberOfEventsRead);
@@ -1360,7 +1360,7 @@ static BOOL WINAPI OnReadConsoleInputA(HANDLE hConsoleInput, PINPUT_RECORD lpBuf
 	if (ph && ph->PreCallBack) {
 		SETARGS4(&lbRc,hConsoleInput,lpBuffer,nLength,lpNumberOfEventsRead);
 		if (!ph->PreCallBack(&args))
-			return FALSE;
+			return lbRc;
 	}
 
 	lbRc = F(ReadConsoleInputA)(hConsoleInput, lpBuffer, nLength, lpNumberOfEventsRead);
@@ -1386,7 +1386,7 @@ static BOOL WINAPI OnReadConsoleInputW(HANDLE hConsoleInput, PINPUT_RECORD lpBuf
 	if (ph && ph->PreCallBack) {
 		SETARGS4(&lbRc,hConsoleInput,lpBuffer,nLength,lpNumberOfEventsRead);
 		if (!ph->PreCallBack(&args))
-			return FALSE;
+			return lbRc;
 	}
 
 	lbRc = F(ReadConsoleInputW)(hConsoleInput, lpBuffer, nLength, lpNumberOfEventsRead);
@@ -1423,7 +1423,7 @@ static BOOL WINAPI OnAllocConsole(void)
 	if (ph && ph->PreCallBack) {
 		SETARGS(&lbRc);
 		if (!ph->PreCallBack(&args))
-			return FALSE;
+			return lbRc;
 	}
 
 	lbRc = F(AllocConsole)();
@@ -1447,7 +1447,7 @@ static BOOL WINAPI OnFreeConsole(void)
 	if (ph && ph->PreCallBack) {
 		SETARGS(&lbRc);
 		if (!ph->PreCallBack(&args))
-			return FALSE;
+			return lbRc;
 	}
 
 	lbRc = F(FreeConsole)();

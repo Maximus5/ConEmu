@@ -145,16 +145,24 @@ typedef struct tag_RConStartArgs {
 	BOOL     bDetached;
 	wchar_t* pszSpecialCmd;
 	wchar_t* pszStartupDir;
-	BOOL     bRunAsAdministrator;
+	BOOL     bRunAsAdministrator, bRunAsRestricted;
+	wchar_t* pszUserName;
+	wchar_t* pszUserPassword;
 	BOOL     bRecreate; // !!! Информационно !!!
 
 	tag_RConStartArgs() {
 		bDetached = FALSE; bRunAsAdministrator = FALSE; bRecreate = FALSE;
-		pszSpecialCmd = NULL; pszStartupDir = NULL;
+		pszSpecialCmd = pszStartupDir = pszUserName = pszUserPassword = NULL;
 	};
 	~tag_RConStartArgs() {
 		SafeFree(pszSpecialCmd); // именно SafeFree
 		SafeFree(pszStartupDir); // именно SafeFree
+		SafeFree(pszUserName); // именно SafeFree
+		SafeFree(pszUserPassword); // именно SafeFree
+	};
+	
+	BOOL CheckUserToken() {
+		return TRUE;
 	};
 } RConStartArgs;
 
@@ -206,6 +214,8 @@ BOOL /*__forceinline*/ CoordInRect(const COORD& c, const RECT& r);
 //}
 
 BOOL IntersectSmallRect(RECT& rc1, SMALL_RECT& rc2);
+
+wchar_t* GetDlgItemText(HWND hDlg, WORD nID);
 
 //#pragma warning(disable: 4311) // 'type cast' : pointer truncation from 'HBRUSH' to 'BOOL'
 

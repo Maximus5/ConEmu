@@ -291,8 +291,8 @@ REGEDIT4
 ;; Time interval between console read in ms (10..1000)
 ;"MainTimerElapse"=dword:0000000A
 
-;; PictureView support
-;; Interval between slides for PictureView plugin (default is 2.5s).
+;; PictureView1 support
+;; Interval between slides for PictureView1 plugin (default is 2.5s).
 ;; Slideshow mode may be activated by 'Pause/Break' key.
 ;"SlideShowElapse"=dword:00001000
 

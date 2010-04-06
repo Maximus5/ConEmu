@@ -627,7 +627,7 @@ void CSettings::LoadSettings()
         reg->Load(L"TabMargins", rcTabMargins);
 		reg->Load(L"ToolbarAddSpace", nToolbarAddSpace);
 			if (nToolbarAddSpace<0 || nToolbarAddSpace>100) nToolbarAddSpace = 0;
-        reg->Load(L"SlideShowElapse", nSlideShowElapse); // obsolete
+        reg->Load(L"SlideShowElapse", nSlideShowElapse); // only PicView1
         reg->Load(L"IconID", nIconID);
         reg->Load(L"TabConsole", szTabConsole, sizeofarray(szTabConsole));
             //WCHAR* pszVert = wcschr(szTabPanels, L'|');

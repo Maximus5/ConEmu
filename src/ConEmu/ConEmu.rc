@@ -172,7 +172,7 @@ END
 IDD_SPG_COLORS DIALOGEX 0, 0, 328, 235
 STYLE DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
-FONT 8, "MS Shell Dlg", 0, 0, 0x1
+FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        "Standard colors (""red green blue"")",gbStandardColors,
                     4,4,319,67
@@ -319,7 +319,7 @@ BEGIN
                     TBS_NOTICKS | WS_TABSTOP,70,187,210,12
     RTEXT           "Opaque",IDC_STATIC,284,187,31,8
     CONTROL         "«User screen» transparency",cbUserScreenTransparent,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,202,110,9
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,202,108,9
     CONTROL         "Transparent",cbTransparent,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,8,188,54,9
     CONTROL         "Colorer TrueMod support",cbTrueColorer,"Button",
@@ -492,28 +492,38 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,170,134,8
 END
 
-IDD_RESTART DIALOG DISCARDABLE  0, 0, 310, 98
+IDD_RESTART DIALOG DISCARDABLE  0, 0, 310, 135
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "ConEmu"
 FONT 8, "MS Sans Serif"
 BEGIN
-    DEFPUSHBUTTON   "Re&start",IDC_START,147,79,50,14
-    PUSHBUTTON      "&Terminate",IDC_TERMINATE,201,79,50,14
-    PUSHBUTTON      "Cancel",IDCANCEL,254,79,50,14
+    DEFPUSHBUTTON   "Re&start",IDC_START,147,116,50,14
+    PUSHBUTTON      "&Terminate",IDC_TERMINATE,201,116,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,254,116,50,14
     LTEXT           "Startup &directory for new process:",IDC_STATIC,10,36,
                     106,8
     COMBOBOX        IDC_STARTUP_DIR,10,46,269,50,CBS_DROPDOWN | 
                     CBS_AUTOHSCROLL | CBS_SORT | WS_VSCROLL | WS_TABSTOP
     PUSHBUTTON      "...",IDC_CHOOSE_DIR,284,46,14,13
-    CONTROL         "&Run as administrator",cbRunAs,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,61,81,82,8
-    ICON            "ConEmu.ico",IDC_RESTART_ICON,6,73,20,20
+    CONTROL         "&Run as administrator",cbRunAsAdmin,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,61,118,82,8
+    ICON            "ConEmu.ico",IDC_RESTART_ICON,6,110,20,20
     GROUPBOX        "About to restart console",IDC_RESTART_MSG,4,5,300,63
     PUSHBUTTON      "...",IDC_CHOOSE,284,19,14,13
     COMBOBOX        IDC_RESTART_CMD,10,19,269,50,CBS_DROPDOWN | 
                     CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
     CTEXT           "Warning, unsaved work may be lost!",IDC_WARNING,57,63,
                     157,8
+    CONTROL         "Run as &user",cbRunAsUser,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,10,75,56,10
+    GROUPBOX        "",IDC_STATIC,4,75,300,31
+    CONTROL         "Restricte&d current user",cbRunAsRestricted,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,211,88,87,10
+    LTEXT           "User:",IDC_STATIC,10,89,18,8
+    COMBOBOX        tRunAsUser,33,87,74,30,CBS_DROPDOWN | CBS_SORT | 
+                    WS_VSCROLL | WS_TABSTOP
+    RTEXT           "Password:",IDC_STATIC,107,89,39,8
+    EDITTEXT        tRunAsPassword,151,87,52,13,ES_PASSWORD | ES_AUTOHSCROLL
 END
 
 IDD_MORE_HIDE DIALOG DISCARDABLE  0, 0, 128, 54

@@ -197,7 +197,8 @@ typedef struct tag_HWND2 {
 	};
 } HWND2;
 
-typedef BOOL (WINAPI* PanelViewEventCallback)(PINPUT_RECORD lpBuffer, LPDWORD lpNumberOfEventsRead);
+typedef BOOL (WINAPI* PanelViewInputCallback)(HANDLE hInput, PINPUT_RECORD lpBuffer, DWORD nBufSize, LPDWORD lpNumberOfEventsRead, BOOL* pbResult);
+typedef VOID (WINAPI* PanelViewOutputCallback)(HANDLE hOutput,const CHAR_INFO *lpBuffer,COORD dwBufferSize,COORD dwBufferCoord,PSMALL_RECT lpWriteRegion);
 typedef struct tag_PanelViewInit {
 	DWORD cbSize;
 	BOOL  bRegister;
@@ -211,7 +212,8 @@ typedef struct tag_PanelViewInit {
 	// Координаты определяются в GUI. Единицы - консольные.
 	RECT  WorkRect;
 	// Callbacks, используются только в плагинах
-	PanelViewEventCallback pfnReadCall;
+	PanelViewEventCallback pfnPeekPreCall, pfnPeekPostCall, pfnReadPreCall, pfnReadPostCall;
+	PanelViewOutputCallback pfnWriteCall;
     /* out */ COLORREF crPalette[16];
 } PanelViewInit;
 

@@ -1,0 +1,14 @@
+﻿.Language=English,English
+
+// Plugin title
+"ConEmu Thumbnails"
+"ConEmu Thumbnails\nConEmu plugin not found,\nThumbnails will not be available."
+"ConEmu Thumbnails\nOld version of ConEmu plugin,\nThumbnails will not be available."
+"ConEmu Thumbnails\nThumbnails are not available in plain Far.\nFar Manager was not started under ConEmu?"
+"ConEmu Thumbnails\nCreateThread(DisplayThread) failed\nErrCode=0x%08X"
+"ConEmu Thumbnails\nThread activation timeout (DisplayThread)"
+"ConEmu Thumbnails\nPostThreadmessage(DisplayThread) failed\nErrCode=0x%08X"
+"ConEmu Thumbnails\nDisplayThread was terminated\nCode=0x%08X"
+"ConEmu Thumbnails\nRegisterClass failed\nCode=0x%08X"
+"ConEmu Thumbnails\nCreateWindow failed\nCode=0x%08X"
+"ConEmu Thumbnails\nView registration in ConEmu failed\nErrCode=%i"

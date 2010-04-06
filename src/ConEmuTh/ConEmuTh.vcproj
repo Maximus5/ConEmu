@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="windows-1251"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9,00"
+	Version="9.00"
 	Name="ConEmuTh"
 	ProjectGUID="{60287D73-F658-4414-8C9B-30E1F3E78D05}"
 	RootNamespace="ConEmuTh"
@@ -21,8 +21,8 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory="C:\Temp\VCProject\ConEmuDll\$(ConfigurationName)"
-			IntermediateDirectory="C:\Temp\VCProject\ConEmuDll\$(ConfigurationName)"
+			OutputDirectory="C:\Temp\VCProject\ConEmuTh\$(ConfigurationName)"
+			IntermediateDirectory="C:\Temp\VCProject\ConEmuTh\$(ConfigurationName)"
 			ConfigurationType="2"
 			CharacterSet="1"
 			>
@@ -348,8 +348,8 @@
 		</Configuration>
 		<Configuration
 			Name="DebugA|Win32"
-			OutputDirectory="c:\Temp\VCProject\ConEmuDll\$(ConfigurationName)"
-			IntermediateDirectory="c:\Temp\VCProject\ConEmuDll\$(ConfigurationName)"
+			OutputDirectory="c:\Temp\VCProject\ConEmuTh\$(ConfigurationName)"
+			IntermediateDirectory="c:\Temp\VCProject\ConEmuTh\$(ConfigurationName)"
 			ConfigurationType="2"
 			CharacterSet="1"
 			>
@@ -506,8 +506,8 @@
 		</Configuration>
 		<Configuration
 			Name="DebugEEE|Win32"
-			OutputDirectory="C:\Temp\VCProject\ConEmuP\$(ConfigurationName)"
-			IntermediateDirectory="C:\Temp\VCProject\ConEmuP\$(ConfigurationName)"
+			OutputDirectory="C:\Temp\VCProject\ConEmuTh\$(ConfigurationName)"
+			IntermediateDirectory="C:\Temp\VCProject\ConEmuTh\$(ConfigurationName)"
 			ConfigurationType="2"
 			CharacterSet="1"
 			>
@@ -664,8 +664,8 @@
 		</Configuration>
 		<Configuration
 			Name="Debug75|Win32"
-			OutputDirectory="C:\Temp\VCProject\ConEmuDll\$(ConfigurationName)"
-			IntermediateDirectory="C:\Temp\VCProject\ConEmuDll\$(ConfigurationName)"
+			OutputDirectory="C:\Temp\VCProject\ConEmuTh\$(ConfigurationName)"
+			IntermediateDirectory="C:\Temp\VCProject\ConEmuTh\$(ConfigurationName)"
 			ConfigurationType="2"
 			CharacterSet="1"
 			>
@@ -1103,7 +1103,7 @@
 				>
 				<Tool
 					Name="VCCustomBuildTool"
-					CommandLine="F:\VCProject\FarPlugin\ConEmu\Maximus5\src\ConEmuTh\lang.cmd"
+					CommandLine="F:\VCProject\FarPlugin\ConEmu\Maximus5\src\ConEmuTh\lang.cmd&#x0D;&#x0A;"
 					Outputs="ConEmuTh_Lang.h"
 				/>
 			</FileConfiguration>
@@ -1112,7 +1112,7 @@
 				>
 				<Tool
 					Name="VCCustomBuildTool"
-					CommandLine="F:\VCProject\FarPlugin\ConEmu\Maximus5\src\ConEmuTh\lang.cmd"
+					CommandLine="F:\VCProject\FarPlugin\ConEmu\Maximus5\src\ConEmuTh\lang.cmd&#x0D;&#x0A;"
 					Outputs="ConEmuTh_Lang.h"
 				/>
 			</FileConfiguration>
@@ -1121,7 +1121,7 @@
 				>
 				<Tool
 					Name="VCCustomBuildTool"
-					CommandLine="F:\VCProject\FarPlugin\ConEmu\Maximus5\src\ConEmuTh\lang.cmd"
+					CommandLine="F:\VCProject\FarPlugin\ConEmu\Maximus5\src\ConEmuTh\lang.cmd&#x0D;&#x0A;"
 					Outputs="ConEmuTh_Lang.h"
 				/>
 			</FileConfiguration>
@@ -1130,7 +1130,7 @@
 				>
 				<Tool
 					Name="VCCustomBuildTool"
-					CommandLine="F:\VCProject\FarPlugin\ConEmu\Maximus5\src\ConEmuTh\lang.cmd"
+					CommandLine="F:\VCProject\FarPlugin\ConEmu\Maximus5\src\ConEmuTh\lang.cmd&#x0D;&#x0A;"
 					Outputs="ConEmuTh_Lang.h"
 				/>
 			</FileConfiguration>
@@ -1139,7 +1139,7 @@
 				>
 				<Tool
 					Name="VCCustomBuildTool"
-					CommandLine="F:\VCProject\FarPlugin\ConEmu\Maximus5\src\ConEmuTh\lang.cmd"
+					CommandLine="F:\VCProject\FarPlugin\ConEmu\Maximus5\src\ConEmuTh\lang.cmd&#x0D;&#x0A;"
 					Outputs="ConEmuTh_Lang.h"
 				/>
 			</FileConfiguration>
@@ -1148,7 +1148,7 @@
 				>
 				<Tool
 					Name="VCCustomBuildTool"
-					CommandLine="F:\VCProject\FarPlugin\ConEmu\Maximus5\src\ConEmuTh\lang.cmd"
+					CommandLine="F:\VCProject\FarPlugin\ConEmu\Maximus5\src\ConEmuTh\lang.cmd&#x0D;&#x0A;"
 					Outputs="ConEmuTh_Lang.h"
 				/>
 			</FileConfiguration>

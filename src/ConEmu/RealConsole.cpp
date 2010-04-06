@@ -8257,6 +8257,22 @@ LPCWSTR CRealConsole::GetDir()
         return gConEmu.ms_ConEmuCurDir;
 }
 
+BOOL CRealConsole::GetUserPwd(const wchar_t** ppszUser, const wchar_t** ppszPwd, BOOL* pbRestricted)
+{
+	if (m_Args.bRunAsRestricted) {
+		*pbRestricted = TRUE;
+		*ppszUser = *ppszPwd = NULL;
+		return TRUE;
+	}
+	if (m_Args.pszUserName && m_Args.pszUserPassword) {
+		*ppszUser = m_Args.pszUserName;
+		*ppszPwd = m_Args.pszUserPassword;
+		*pbRestricted = FALSE;
+		return TRUE;
+	}
+	return FALSE;
+}
+
 short CRealConsole::GetProgress(BOOL *rpbError)
 {
     if (!this) return -1;

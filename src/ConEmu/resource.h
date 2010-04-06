@@ -1,5 +1,5 @@
 //{{NO_DEPENDENCIES}}
-// Microsoft Visual C++ generated include file.
+// Microsoft Developer Studio generated include file.
 // Used by ConEmu.rc
 //
 #define IDI_ICON1                       1
@@ -187,7 +187,7 @@
 #define gbStandardColors                1544
 #define cbVisible                       1545
 #define cbNewConfirm                    1546
-#define cbRunAs                         1547
+#define cbRunAsAdmin                    1547
 #define cbDragImage                     1548
 #define cbAutoRegFonts                  1550
 #define cbDebugSteps                    1551
@@ -278,8 +278,11 @@
 #define cbAdminShield                   1646
 #define tAdminSuffix                    1647
 #define cbUseWinNumber                  1648
-#define IDC_CHECK1                      1649
 #define cbInstallKeybHooks              1649
+#define cbRunAsUser                     1649
+#define cbRunAsRestricted               1650
+#define tRunAsUser                      1652
+#define tRunAsPassword                  1653
 #define IDM_CLOSE                       40001
 #define IDM_RESTART                     40002
 #define IDM_RESTARTAS                   40003
@@ -296,7 +299,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        207
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         1650
+#define _APS_NEXT_CONTROL_VALUE         1654
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif
