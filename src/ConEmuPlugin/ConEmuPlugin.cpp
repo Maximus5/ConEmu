@@ -868,14 +868,18 @@ int WINAPI RegisterPanelView(PanelViewInit *ppvi)
 	In.PVI = *ppvi;
 	CESERVER_REQ* pOut = ExecuteGuiCmd(FarHwnd, &In, FarHwnd);
 	if (!pOut) {
-		pp->pfnReadCall = NULL;
+		pp->pfnPeekPreCall = pp->pfnPeekPostCall = pp->pfnReadPreCall = pp->pfnReadPostCall = NULL;
+		pp->pfnWriteCall = NULL;
+		pp->bRegister = FALSE;
 		return -3;
 	}
 	*ppvi = pOut->PVI;
 	ExecuteFreeResult(pOut);
 
 	if (ppvi->cbSize == 0) {
-		pp->pfnReadCall = NULL;
+		pp->pfnPeekPreCall = pp->pfnPeekPostCall = pp->pfnReadPreCall = pp->pfnReadPostCall = NULL;
+		pp->pfnWriteCall = NULL;
+		pp->bRegister = FALSE;
 		return -1;
 	}
 
@@ -1148,6 +1152,18 @@ CESERVER_REQ* ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandDat
 		CheckMacro(TRUE);
 		gbPlugKeyChanged = FALSE;
 	}*/
+	
+	
+	// Ќекоторые команды "асинхронные", блокировки не нужны
+	if (nCmd == CMD_QUITFAR)
+	{
+		// —тавим сразу, чтобы GUI не повис в ожидании.
+		if (ghReqCommandEvent)
+			SetEvent(ghReqCommandEvent);
+		// т.к. фар может запросить подтверждени€...
+		ExecuteQuitFar();
+		return NULL;
+	}
 
 	EnterCriticalSection(&csData);
 
@@ -3538,6 +3554,16 @@ DWORD GetEditorModifiedState()
 		return FUNC_Y(GetEditorModifiedState)();
 	else
 		return FUNC_X(GetEditorModifiedState)();
+}
+
+void ExecuteQuitFar()
+{
+	if (gFarVersion.dwVerMajor==1 || gFarVersion.dwBuild < 1348)
+		ExecuteQuitFarA();
+	else if (gFarVersion.dwBuild>=FAR_Y_VER)
+		FUNC_Y(ExecuteQuitFar)();
+	else
+		FUNC_X(ExecuteQuitFar)();
 }
 
 

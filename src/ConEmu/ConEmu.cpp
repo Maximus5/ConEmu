@@ -3264,8 +3264,9 @@ INT_PTR CConEmuMain::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARA
             //#endif
             
             const wchar_t *pszUser, *pszPwd; BOOL bResticted;
+            int nChecked = rbCurrentUser;
             if (gConEmu.ActiveCon()->RCon()->GetUserPwd(&pszUser, &pszPwd, &bResticted)) {
-            	CheckDlgButton(hDlg, cbRunAsUser, BST_CHECKED);
+            	nChecked = rbAnotherUser;
             	if (bResticted) {
 	            	CheckDlgButton(hDlg, cbRunAsRestricted, BST_CHECKED);
             	} else {
@@ -3273,6 +3274,7 @@ INT_PTR CConEmuMain::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARA
             		SetDlgItemText(hDlg, tRunAsPassword, pszPwd);
             	}
             }
+            CheckRadioButton(hDlg, rbCurrentUser, rbAnotherUser, nChecked);
             RecreateDlgProc(hDlg, UM_USER_CONTROLS, 0, 0);
             
 
@@ -3364,15 +3366,15 @@ INT_PTR CConEmuMain::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARA
         
     case UM_USER_CONTROLS:
     	{
-            if (SendDlgItemMessage(hDlg, cbRunAsUser, BM_GETCHECK, 0, 0)) {
+            if (SendDlgItemMessage(hDlg, rbCurrentUser, BM_GETCHECK, 0, 0)) {
             	EnableWindow(GetDlgItem(hDlg, cbRunAsRestricted), TRUE);
-            	BOOL lbText = SendDlgItemMessage(hDlg, cbRunAsRestricted, BM_GETCHECK, 0, 0) == 0;
-            	EnableWindow(GetDlgItem(hDlg, tRunAsUser), lbText);
-            	EnableWindow(GetDlgItem(hDlg, tRunAsPassword), lbText);
-            } else {
-            	EnableWindow(GetDlgItem(hDlg, cbRunAsRestricted), FALSE);
+            	//BOOL lbText = SendDlgItemMessage(hDlg, cbRunAsRestricted, BM_GETCHECK, 0, 0) == 0;
             	EnableWindow(GetDlgItem(hDlg, tRunAsUser), FALSE);
             	EnableWindow(GetDlgItem(hDlg, tRunAsPassword), FALSE);
+            } else {
+            	EnableWindow(GetDlgItem(hDlg, cbRunAsRestricted), FALSE);
+            	EnableWindow(GetDlgItem(hDlg, tRunAsUser), TRUE);
+            	EnableWindow(GetDlgItem(hDlg, tRunAsPassword), TRUE);
             }
     	}
     	return 0;
@@ -3434,11 +3436,17 @@ INT_PTR CConEmuMain::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARA
                 	if (gOSVer.dwMajorVersion >= 6) {
                 		BOOL bRunAs = SendDlgItemMessage(hDlg, cbRunAsAdmin, BM_GETCHECK, 0, 0);
                 		SendDlgItemMessage(hDlg, IDC_START, 5644/*BCM_SETSHIELD*/, 0, bRunAs);
+                		if (bRunAs) {
+				            CheckRadioButton(hDlg, rbCurrentUser, rbAnotherUser, rbCurrentUser);
+				            CheckDlgButton(hDlg, cbRunAsRestricted, BST_UNCHECKED);
+				            RecreateDlgProc(hDlg, UM_USER_CONTROLS, 0, 0);
+                		}
                 	}
                 	return 1;
                 }
                 
-                case cbRunAsUser:
+                case rbCurrentUser:
+                case rbAnotherUser:
                 case cbRunAsRestricted:
                 {
                 	RecreateDlgProc(hDlg, UM_USER_CONTROLS, 0, 0);
@@ -3482,17 +3490,17 @@ INT_PTR CConEmuMain::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARA
 					
 					SafeFree(pArgs->pszUserName);
 					SafeFree(pArgs->pszUserPassword);
-					if (SendDlgItemMessage(hDlg, cbRunAsUser, BM_GETCHECK, 0, 0)) {
-						pArgs->bRunAsRestricted = SendDlgItemMessage(hDlg, cbRunAsRestricted, BM_GETCHECK, 0, 0)
-						if (!pArgs->bRunAsRestricted) {
-							pArgs->pszUserName = GetDlgItemText(hDlg, tRunAsUser);
-							pArgs->pszUserPassword = GetDlgItemText(hDlg, tRunAsPassword);
-						}
-						// ѕопытатьс€ проверить правильность введенного парол€ и возможность запуска
-						if (!pArgs->CheckUserToken())
-							return 1;
-					} else {
+					if (SendDlgItemMessage(hDlg, rbAnotherUser, BM_GETCHECK, 0, 0)) {
 						pArgs->bRunAsRestricted = FALSE;
+						pArgs->pszUserName = GetDlgItemText(hDlg, tRunAsUser);
+						if (pArgs->pszUserName) {
+							pArgs->pszUserPassword = GetDlgItemText(hDlg, tRunAsPassword);
+							// ѕопытатьс€ проверить правильность введенного парол€ и возможность запуска
+							if (!pArgs->CheckUserToken())
+								return 1;
+						}
+					} else {
+						pArgs->bRunAsRestricted = SendDlgItemMessage(hDlg, cbRunAsRestricted, BM_GETCHECK, 0, 0);
 					}
 					
                     EndDialog(hDlg, IDC_START);

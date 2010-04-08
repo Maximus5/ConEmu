@@ -95,6 +95,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #endif
 
+#define isPressed(inp) ((GetKeyState(inp) & 0x8000) == 0x8000)
 #define countof(a) (sizeof((a))/(sizeof(*(a))))
 #define ZeroStruct(s) memset(&(s), 0, sizeof(s))
 
@@ -139,6 +140,29 @@ extern wchar_t gszDbgModLabel[6];
 //#define CEGUIATTACHED       L"ConEmuGuiAttached.%u"
 #define CEGUIRCONSTARTED    L"ConEmuGuiRConStarted.%u"
 #define CEGUI_ALIVE_EVENT   L"ConEmuGuiStarted"
+
+//#define CONEMUMSG_ATTACH L"ConEmuMain::Attach"            // wParam == hConWnd, lParam == ConEmuC_PID
+#define CONEMUMSG_SRVSTARTED L"ConEmuMain::SrvStarted"    // wParam == hConWnd, lParam == ConEmuC_PID
+//#define CONEMUMSG_SETFOREGROUND L"ConEmuMain::SetForeground"            // wParam == hConWnd, lParam == ConEmuC_PID
+#define CONEMUMSG_FLASHWINDOW L"ConEmuMain::FlashWindow"
+//#define CONEMUCMDSTARTED L"ConEmuMain::CmdStarted"    // wParam == hConWnd, lParam == ConEmuC_PID (as ComSpec)
+//#define CONEMUCMDSTOPPED L"ConEmuMain::CmdTerminated" // wParam == hConWnd, lParam == ConEmuC_PID (as ComSpec)
+#define CONEMUMSG_LLKEYHOOK L"ConEmuMain::LLKeyHook"    // wParam == hConWnd, lParam == ConEmuC_PID
+
+//#define CONEMUMAPPING    L"ConEmuPluginData%u"
+//#define CONEMUDRAGFROM   L"ConEmuDragFrom%u"
+//#define CONEMUDRAGTO     L"ConEmuDragTo%u"
+//#define CONEMUREQTABS    L"ConEmuReqTabs%u"
+//#define CONEMUSETWINDOW  L"ConEmuSetWindow%u"
+//#define CONEMUPOSTMACRO  L"ConEmuPostMacro%u"
+//#define CONEMUDEFFONT    L"ConEmuDefFont%u"
+//#define CONEMULANGCHANGE L"ConEmuLangChange%u"
+//#define CONEMUEXIT       L"ConEmuExit%u"
+//#define CONEMUALIVE      L"ConEmuAlive%u"
+//#define CONEMUREADY      L"ConEmuReady%u"
+#define CONEMUTABCHANGED L"ConEmuTabsChanged"
+
+
 //#define CESIGNAL_C          L"ConEmuC_C_Signal.%u"
 //#define CESIGNAL_BREAK      L"ConEmuC_Break_Signal.%u"
 //#define CECMD_GETSHORTINFO  1
@@ -178,6 +202,27 @@ extern wchar_t gszDbgModLabel[6];
 #define PIPEBUFSIZE 4096
 
 
+// Команды FAR плагина
+#define CMD_DRAGFROM     0
+#define CMD_DRAGTO       1
+#define CMD_REQTABS      2
+#define CMD_SETWINDOW    3
+#define CMD_POSTMACRO    4 // Если первый символ макроса '@' и после него НЕ пробел - макрос выполняется в DisabledOutput
+//#define CMD_DEFFONT    5
+#define CMD_LANGCHANGE   6
+#define CMD_SETENVVAR    7 // Установить переменные окружения (FAR plugin)
+//#define CMD_SETSIZE    8
+#define CMD_EMENU        9
+#define CMD_LEFTCLKSYNC  10
+#define CMD_REDRAWFAR    11
+#define CMD_FARPOST      12
+#define CMD_CHKRESOURCES 13
+#define CMD_QUITFAR      14 // Дернуть завершение консоли (фара?)
+// +2
+#define MAXCMDCOUNT      16
+#define CMD_EXIT         MAXCMDCOUNT-1
+
+
 
 //#pragma pack(push, 1)
 #include <pshpack1.h>
@@ -212,7 +257,7 @@ typedef struct tag_PanelViewInit {
 	// Координаты определяются в GUI. Единицы - консольные.
 	RECT  WorkRect;
 	// Callbacks, используются только в плагинах
-	PanelViewEventCallback pfnPeekPreCall, pfnPeekPostCall, pfnReadPreCall, pfnReadPostCall;
+	PanelViewInputCallback pfnPeekPreCall, pfnPeekPostCall, pfnReadPreCall, pfnReadPostCall;
 	PanelViewOutputCallback pfnWriteCall;
     /* out */ COLORREF crPalette[16];
 } PanelViewInit;
@@ -500,43 +545,6 @@ typedef struct tag_CESERVER_REQ {
 #include <poppack.h>
 
 
-//#define CONEMUMSG_ATTACH L"ConEmuMain::Attach"            // wParam == hConWnd, lParam == ConEmuC_PID
-#define CONEMUMSG_SRVSTARTED L"ConEmuMain::SrvStarted"    // wParam == hConWnd, lParam == ConEmuC_PID
-//#define CONEMUMSG_SETFOREGROUND L"ConEmuMain::SetForeground"            // wParam == hConWnd, lParam == ConEmuC_PID
-#define CONEMUMSG_FLASHWINDOW L"ConEmuMain::FlashWindow"
-//#define CONEMUCMDSTARTED L"ConEmuMain::CmdStarted"    // wParam == hConWnd, lParam == ConEmuC_PID (as ComSpec)
-//#define CONEMUCMDSTOPPED L"ConEmuMain::CmdTerminated" // wParam == hConWnd, lParam == ConEmuC_PID (as ComSpec)
-#define CONEMUMSG_LLKEYHOOK L"ConEmuMain::LLKeyHook"    // wParam == hConWnd, lParam == ConEmuC_PID
-
-//#define CONEMUMAPPING    L"ConEmuPluginData%u"
-//#define CONEMUDRAGFROM   L"ConEmuDragFrom%u"
-//#define CONEMUDRAGTO     L"ConEmuDragTo%u"
-//#define CONEMUREQTABS    L"ConEmuReqTabs%u"
-//#define CONEMUSETWINDOW  L"ConEmuSetWindow%u"
-//#define CONEMUPOSTMACRO  L"ConEmuPostMacro%u"
-//#define CONEMUDEFFONT    L"ConEmuDefFont%u"
-//#define CONEMULANGCHANGE L"ConEmuLangChange%u"
-//#define CONEMUEXIT       L"ConEmuExit%u"
-//#define CONEMUALIVE      L"ConEmuAlive%u"
-//#define CONEMUREADY      L"ConEmuReady%u"
-#define CONEMUTABCHANGED L"ConEmuTabsChanged"
-#define CMD_DRAGFROM     0
-#define CMD_DRAGTO       1
-#define CMD_REQTABS      2
-#define CMD_SETWINDOW    3
-#define CMD_POSTMACRO    4 // Если первый символ макроса '@' и после него НЕ пробел - макрос выполняется в DisabledOutput
-//#define CMD_DEFFONT    5
-#define CMD_LANGCHANGE   6
-#define CMD_SETENVVAR    7 // Установить переменные окружения (FAR plugin)
-//#define CMD_SETSIZE    8
-#define CMD_EMENU        9
-#define CMD_LEFTCLKSYNC  10
-#define CMD_REDRAWFAR    11
-#define CMD_FARPOST      12
-#define CMD_CHKRESOURCES 13
-// +2
-#define MAXCMDCOUNT      15
-#define CMD_EXIT         MAXCMDCOUNT-1
 
 //#define GWL_TABINDEX     0
 //#define GWL_LANGCHANGE   4

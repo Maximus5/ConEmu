@@ -89,6 +89,7 @@ int gnUngetCount = 0;
 INPUT_RECORD girUnget[100];
 BOOL GetBufferInput(BOOL abRemove, PINPUT_RECORD lpBuffer, DWORD nBufSize, LPDWORD lpNumberOfEventsRead);
 BOOL UngetBufferInput(PINPUT_RECORD lpOneInput);
+BOOL ProcessConsoleInput(BOOL abUseUngetBuffer, PINPUT_RECORD lpBuffer, DWORD nBufSize, LPDWORD lpNumberOfEventsRead);
 
 
 // minimal(?) FAR version 2.0 alpha build FAR_X_VER
@@ -642,10 +643,12 @@ BOOL IsLeftPanelActive()
 
 BOOL GetBufferInput(BOOL abRemove, PINPUT_RECORD lpBuffer, DWORD nBufSize, LPDWORD lpNumberOfEventsRead)
 {
+	PRAGMA_ERROR("GetBufferInput");
 }
 
 BOOL UngetBufferInput(PINPUT_RECORD lpOneInput)
 {
+	PRAGMA_ERROR("UngetBufferInput");
 }
 
 
@@ -662,7 +665,16 @@ BOOL WINAPI OnPrePeekConsole(HANDLE hInput, PINPUT_RECORD lpBuffer, DWORD nBufSi
 
 BOOL WINAPI OnPostPeekConsole(HANDLE hInput, PINPUT_RECORD lpBuffer, DWORD nBufSize, LPDWORD lpNumberOfEventsRead, BOOL* pbResult)
 {
-	PRAGMA_ERROR("TODO: заменить обработку стрелок, но girUnget не трогать");
+	// заменить обработку стрелок, но girUnget не трогать
+	if (*lpNumberOfEventsRead) {
+		if (!ProcessConsoleInput(FALSE/*abUseUngetBuffer*/, lpBuffer, nBufSize, lpNumberOfEventsRead)) {
+			if (*lpNumberOfEventsRead == 0) {
+				*pbResult = FALSE;
+			}
+			return FALSE; // вернутьс€ в вызывающую функцию
+		}
+	}
+	
 	return TRUE; // продолжить без изменений
 }
 
@@ -679,7 +691,16 @@ BOOL WINAPI OnPreReadConsole(HANDLE hInput, PINPUT_RECORD lpBuffer, DWORD nBufSi
 
 BOOL WINAPI OnPostReadConsole(HANDLE hInput, PINPUT_RECORD lpBuffer, DWORD nBufSize, LPDWORD lpNumberOfEventsRead, BOOL* pbResult)
 {
-	PRAGMA_ERROR("TODO: заменить обработку стрелок, если надо - поместить серию нажатий в girUnget");
+	// заменить обработку стрелок, если надо - поместить серию нажатий в girUnget
+	if (*lpNumberOfEventsRead) {
+		if (!ProcessConsoleInput(TRUE/*abUseUngetBuffer*/, lpBuffer, nBufSize, lpNumberOfEventsRead)) {
+			if (*lpNumberOfEventsRead == 0) {
+				*pbResult = FALSE;
+			}
+			return FALSE; // вернутьс€ в вызывающую функцию
+		}
+	}
+	
 	return TRUE; // продолжить без изменений
 }
 
@@ -720,9 +741,54 @@ VOID WINAPI OnPostWriteConsoleOutput(HANDLE hOutput,const CHAR_INFO *lpBuffer,CO
 }
 
 
-BOOL WINAPI OnReadConsole(PINPUT_RECORD lpBuffer, LPDWORD lpNumberOfEventsRead)
+// ¬ернуть TRUE, если был Unget
+BOOL ProcessKeyPress(CeFullPanelInfo* pi, BOOL abUseUngetBuffer, PINPUT_RECORD lpBuffer)
 {
-	PRAGMA_ERROR("Ёту - убить");
+	_ASSERTE(lpBuffer->EventType == KEY_EVENT);
+	
+	// ѕерехватываемые клавиши
+	WORD vk = lpBuffer->Event.KeyEvent.wVirtualKeyCode;
+	BOOL lbWasUnget = FALSE;
+	
+	if (vk == VK_UP || vk == VK_DOWN || vk == VK_LEFT || vk == VK_RIGHT)
+	{
+		if (!lpBuffer->Event.KeyEvent.bKeyDown) {
+			switch (vk) {
+				case VK_LEFT:  lpBuffer->Event.KeyEvent.wVirtualKeyCode = VK_UP;   break;
+				case VK_RIGHT: lpBuffer->Event.KeyEvent.wVirtualKeyCode = VK_DOWN; break;
+			}
+		
+		} else {
+			// ѕереработать
+			int n = 0;
+			switch (vk) {
+				case VK_UP: {
+					n = min(pi->CurrentItem,pi->nXCount);
+				} break;
+				case VK_DOWN: {
+					n = min((pi->ItemsNumber-pi->CurrentItem-1),pi->nXCount);
+				} break;
+				case VK_LEFT: {
+					lpBuffer->Event.KeyEvent.wVirtualKeyCode = VK_UP;
+				} break;
+				case VK_RIGHT: {
+					lpBuffer->Event.KeyEvent.wVirtualKeyCode = VK_DOWN;
+				} break;
+			}
+			
+			lbWasUnget = (n > 1);
+			while ((n--) > 1) {
+				UngetBufferInput(lpBuffer);
+			}
+		}
+	}
+	return (!lbReplace);
+}
+
+// ¬ыполнить замену клавиш и поместить в буфер (Unget) непоместившиес€ в lpBuffer клавиши
+// ¬ернуть FALSE, если замены были произведены
+BOOL ProcessConsoleInput(BOOL abUseUngetBuffer, PINPUT_RECORD lpBuffer, DWORD nBufSize, LPDWORD lpNumberOfEventsRead)
+{
 	// ѕерехват управлени€ курсором
 	if (pviLeft.hView == NULL && pviRight.hView == NULL)
 		return TRUE;
@@ -737,6 +803,10 @@ BOOL WINAPI OnReadConsole(PINPUT_RECORD lpBuffer, LPDWORD lpNumberOfEventsRead)
 	if (!pi->hView || !IsWindowVisible(pi->hView)) {
 		return TRUE; // панель полностью скрыта диалогом или погашена фаровска€ панель
 	}
+	
+	PRAGMA_ERROR("ѕровер€ть один из DWORD-ов окна на предмет наличи€ диалогов");
+	PRAGMA_ERROR("—тавить его должен GUI");
+	PRAGMA_ERROR("≈сли есть хот€ бы один диалог - значит перехватывать нельз€");
 	
 	DWORD n = 0;
 	while (n < (*lpNumberOfEventsRead))

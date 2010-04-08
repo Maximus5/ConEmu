@@ -1027,6 +1027,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\common\RgnDetect.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\ScreenDump.cpp"
 				>
 			</File>
@@ -1110,6 +1114,10 @@
 			</File>
 			<File
 				RelativePath=".\resource.h"
+				>
+			</File>
+			<File
+				RelativePath="..\common\RgnDetect.h"
 				>
 			</File>
 			<File

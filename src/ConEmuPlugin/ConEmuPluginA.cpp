@@ -943,3 +943,8 @@ void ReloadFarInfoA(BOOL abFull)
 	//	}
 	//}
 }
+
+void ExecuteQuitFarA()
+{
+	PostMessage(FarHwnd, WM_CLOSE, 0, 0);
+}

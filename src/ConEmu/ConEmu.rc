@@ -172,7 +172,7 @@ END
 IDD_SPG_COLORS DIALOGEX 0, 0, 328, 235
 STYLE DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
-FONT 8, "MS Shell Dlg"
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     GROUPBOX        "Standard colors (""red green blue"")",gbStandardColors,
                     4,4,319,67
@@ -408,7 +408,7 @@ END
 IDD_SPG_FEATURE DIALOGEX 0, 0, 328, 235
 STYLE DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
-FONT 8, "MS Shell Dlg", 0, 0, 0x1
+FONT 8, "MS Shell Dlg"
 BEGIN
     CONTROL         "Auto minimize to tray",cbMinToTray,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,132,144,81,8
@@ -470,11 +470,11 @@ BEGIN
     CONTROL         "Hide caption always",cbHideCaptionAlways,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,10,194,100,8
     CONTROL         "Center console",cbTryToCenter,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,154,182,76,8
+                    WS_TABSTOP,148,182,70,8
     CONTROL         "Always on top",cbAlwaysOnTop,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,154,194,76,8
+                    WS_TABSTOP,148,194,70,8
     CONTROL         "Desktop mode",cbDesktopMode,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,154,170,76,8
+                    WS_TABSTOP,148,170,70,8
     PUSHBUTTON      "...",bHideCaptionSettings,114,193,13,11
     PUSHBUTTON      "...",bFarHourglass,113,68,13,11,WS_DISABLED
     PUSHBUTTON      "...",bRClick,113,55,13,11,WS_DISABLED
@@ -490,40 +490,47 @@ BEGIN
     GROUPBOX        "Appearence",IDC_STATIC,4,160,319,47
     CONTROL         "Enhance progressbars and scrollbars",cbEnhanceGraphics,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,170,134,8
+    CONTROL         "Safe FAR close",cbSafeFarClose,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,241,69,76,8
+    CONTROL         "Ignore telnet cursor size",cbIgnoreTelnetCursorSize,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,222,170,95,8
 END
 
-IDD_RESTART DIALOG DISCARDABLE  0, 0, 310, 135
+IDD_RESTART DIALOG DISCARDABLE  0, 0, 310, 167
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "ConEmu"
 FONT 8, "MS Sans Serif"
 BEGIN
-    DEFPUSHBUTTON   "Re&start",IDC_START,147,116,50,14
-    PUSHBUTTON      "&Terminate",IDC_TERMINATE,201,116,50,14
-    PUSHBUTTON      "Cancel",IDCANCEL,254,116,50,14
+    DEFPUSHBUTTON   "Re&start",IDC_START,147,147,50,14
+    PUSHBUTTON      "&Terminate",IDC_TERMINATE,201,147,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,254,147,50,14
     LTEXT           "Startup &directory for new process:",IDC_STATIC,10,36,
                     106,8
     COMBOBOX        IDC_STARTUP_DIR,10,46,269,50,CBS_DROPDOWN | 
                     CBS_AUTOHSCROLL | CBS_SORT | WS_VSCROLL | WS_TABSTOP
     PUSHBUTTON      "...",IDC_CHOOSE_DIR,284,46,14,13
     CONTROL         "&Run as administrator",cbRunAsAdmin,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,61,118,82,8
-    ICON            "ConEmu.ico",IDC_RESTART_ICON,6,110,20,20
-    GROUPBOX        "About to restart console",IDC_RESTART_MSG,4,5,300,63
+                    BS_AUTOCHECKBOX | WS_TABSTOP,61,149,82,8
+    ICON            "ConEmu.ico",IDC_RESTART_ICON,6,141,20,20
+    GROUPBOX        "About to restart console",IDC_RESTART_MSG,4,5,300,129
     PUSHBUTTON      "...",IDC_CHOOSE,284,19,14,13
     COMBOBOX        IDC_RESTART_CMD,10,19,269,50,CBS_DROPDOWN | 
                     CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
-    CTEXT           "Warning, unsaved work may be lost!",IDC_WARNING,57,63,
+    CTEXT           "Warning, unsaved work may be lost!",IDC_WARNING,57,129,
                     157,8
-    CONTROL         "Run as &user",cbRunAsUser,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,10,75,56,10
-    GROUPBOX        "",IDC_STATIC,4,75,300,31
     CONTROL         "Restricte&d current user",cbRunAsRestricted,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,211,88,87,10
-    LTEXT           "User:",IDC_STATIC,10,89,18,8
-    COMBOBOX        tRunAsUser,33,87,74,30,CBS_DROPDOWN | CBS_SORT | 
+                    BS_AUTOCHECKBOX | WS_TABSTOP,23,83,140,10
+    LTEXT           "User &name:",IDC_STATIC,23,114,40,8
+    COMBOBOX        tRunAsUser,67,112,93,30,CBS_DROPDOWN | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
-    RTEXT           "Password:",IDC_STATIC,107,89,39,8
-    EDITTEXT        tRunAsPassword,151,87,52,13,ES_PASSWORD | ES_AUTOHSCROLL
+    RTEXT           "&Password:",IDC_STATIC,161,114,39,8
+    EDITTEXT        tRunAsPassword,205,112,91,13,ES_PASSWORD | 
+                    ES_AUTOHSCROLL
+    GROUPBOX        "",IDC_STATIC,4,61,300,73
+    CONTROL         "Run as current &user <UserName>",rbCurrentUser,"Button",
+                    BS_AUTORADIOBUTTON,11,70,199,8
+    CONTROL         "&Another user",rbAnotherUser,"Button",
+                    BS_AUTORADIOBUTTON,11,100,60,8
 END
 
 IDD_MORE_HIDE DIALOG DISCARDABLE  0, 0, 128, 54
@@ -911,6 +918,12 @@ BEGIN
     tPerfRender             "Average duration of rendering text to memory DC"
     tPerfBlt                "Average duration of blit operation\nfrom memory DC to screen DC"
     tPerfInterval           "Average counts of reads real console data per second"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    cbSafeFarClose          "Try to close Far Manager softly, instead of closing console window"
+    cbIgnoreTelnetCursorSize "Always show normal cursor in telnet"
 END
 
 #endif    // English (U.S.) resources

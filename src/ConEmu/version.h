@@ -1,9 +1,9 @@
 
 #define MVV_1 2010
 #define MVV_2 4
-#define MVV_3 4
-#define MVV_4 1
-#define MVV_4a "a"
+#define MVV_3 8
+#define MVV_4 0
+#define MVV_4a ""
 
 
 #define STRING2(x) #x

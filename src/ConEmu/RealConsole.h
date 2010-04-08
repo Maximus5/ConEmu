@@ -30,6 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "kl_parts.h"
 #include "../Common/common.hpp"
 #include "../Common/ConsoleAnnotation.h"
+#include "../Common/RgnDetect.h"
 
 #define CES_CMDACTIVE 0x01
 #define CES_TELNETACTIVE 0x02
@@ -128,53 +129,54 @@ struct ConProcess {
     wchar_t Name[64]; // чтобы полная инфа об ошибке влезала
 };
 
-#include <pshpack1.h>
-typedef struct tag_CharAttr
-{
-	TODO("OPTIMIZE: Заменить бы битовые поля на один DWORD, в котором хранить некий общий ИД стиля, заполняемый при формировании буфера");
-	union {
-		// Собственно цвета/шрифты
-		struct {
-			unsigned int crForeColor : 24; // чтобы в ui64 поместился и nFontIndex
-			unsigned int nFontIndex : 8; // 0 - normal, 1 - bold, 2 - italic
-			unsigned int crBackColor : 32; // Старший байт зарезервируем, вдруг для прозрачности понадобится
-			unsigned int nForeIdx : 8;
-			unsigned int nBackIdx : 8; // может понадобиться для ExtendColors
-			unsigned int crOrigForeColor : 32;
-			unsigned int crOrigBackColor : 32; // Реальные цвета в консоли, crForeColor и crBackColor могут быть изменены колорером
-			// вспомогательные флаги
-			unsigned int bDialog : 1;
-			unsigned int bDialogVBorder : 1;
-			unsigned int bDialogCorner : 1;
-			unsigned int bSomeFilled : 1;
-			unsigned int bTransparent : 1; // UserScreen
-		};
-		// А это для сравнения (поиск изменений)
-		unsigned __int64 All;
-		// для сравнения, когда фон не важен
-		unsigned int ForeFont;
-	};
-	//
-	//DWORD dwAttrubutes; // может когда понадобятся дополнительные флаги...
-	//
-    ///**
-    // * Used exclusively by ConsoleView to append annotations to each character
-    // */
-    //AnnotationInfo annotationInfo;
-} CharAttr;
-#include <poppack.h>
-
-inline bool operator==(const CharAttr& s1, const CharAttr& s2)
-{
-    return s1.All == s2.All;
-}
-
+//#include <pshpack1.h>
+//typedef struct tag_CharAttr
+//{
+//	TODO("OPTIMIZE: Заменить бы битовые поля на один DWORD, в котором хранить некий общий ИД стиля, заполняемый при формировании буфера");
+//	union {
+//		// Собственно цвета/шрифты
+//		struct {
+//			unsigned int crForeColor : 24; // чтобы в ui64 поместился и nFontIndex
+//			unsigned int nFontIndex : 8; // 0 - normal, 1 - bold, 2 - italic
+//			unsigned int crBackColor : 32; // Старший байт зарезервируем, вдруг для прозрачности понадобится
+//			unsigned int nForeIdx : 8;
+//			unsigned int nBackIdx : 8; // может понадобиться для ExtendColors
+//			unsigned int crOrigForeColor : 32;
+//			unsigned int crOrigBackColor : 32; // Реальные цвета в консоли, crForeColor и crBackColor могут быть изменены колорером
+//			// вспомогательные флаги
+//			unsigned int bDialog : 1;
+//			unsigned int bDialogVBorder : 1;
+//			unsigned int bDialogCorner : 1;
+//			unsigned int bSomeFilled : 1;
+//			unsigned int bTransparent : 1; // UserScreen
+//		};
+//		// А это для сравнения (поиск изменений)
+//		unsigned __int64 All;
+//		// для сравнения, когда фон не важен
+//		unsigned int ForeFont;
+//	};
+//	//
+//	//DWORD dwAttrubutes; // может когда понадобятся дополнительные флаги...
+//	//
+//    ///**
+//    // * Used exclusively by ConsoleView to append annotations to each character
+//    // */
+//    //AnnotationInfo annotationInfo;
+//} CharAttr;
+//#include <poppack.h>
+//
+//inline bool operator==(const CharAttr& s1, const CharAttr& s2)
+//{
+//    return s1.All == s2.All;
+//}
+//
 
 
 #define MAX_SERVER_THREADS 3
 //#define MAX_THREAD_PACKETS 100
 
 class CVirtualConsole;
+class CRgnDetect;
 
 class CRealConsole
 {
@@ -213,6 +215,7 @@ public:
 	void PostKeyPress(WORD vkKey, DWORD dwControlState, wchar_t wch, int ScanCode = -1);
 	void PostKeyUp(WORD vkKey, DWORD dwControlState, wchar_t wch, int ScanCode = -1);
 	void PostConsoleEventPipe(MSG *pMsg);
+	BOOL OpenConsoleEventPipe();
 	LRESULT PostConsoleMessage(UINT nMsg, WPARAM wParam, LPARAM lParam);
 	void PostMacro(LPCWSTR asMacro);
     //BOOL FlushInputQueue(DWORD nTimeout = 500);
@@ -491,33 +494,34 @@ private:
 	/* ****************************************** */
 	/* Поиск диалогов и пометка "прозрачных" мест */
 	/* ****************************************** */
-	int mn_DetectCallCount;
+	CRgnDetect* mp_Rgn;
+	//int mn_DetectCallCount;
 	void PrepareTransparent(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight);
-	void DetectDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int nFromX, int nFromY, int *pnMostRight=NULL, int *pnMostBottom=NULL);
-	bool FindDialog_TopLeft(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostRight, int &nMostBottom, BOOL &bMarkBorder);
-	bool FindDialog_TopRight(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostRight, int &nMostBottom, BOOL &bMarkBorder);
-	bool FindDialog_Left(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostRight, int &nMostBottom, BOOL &bMarkBorder);
-	bool FindDialog_Right(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostRight, int &nMostBottom, BOOL &bMarkBorder);
-	bool FindDialog_Any(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostRight, int &nMostBottom, BOOL &bMarkBorder);
-	bool FindDialog_Inner(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY);
-	bool FindFrame_TopLeft(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nFrameX, int &nFrameY);
-	bool FindFrameTop_ByRight(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostTop);
-	bool FindFrameTop_ByLeft(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostTop);
-	bool FindFrameBottom_ByRight(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostBottom);
-	bool FindFrameBottom_ByLeft(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostBottom);
-	bool FindFrameRight_ByTop(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostRight);
-	bool FindFrameRight_ByBottom(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostRight);
-	bool FindFrameLeft_ByTop(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostLeft);
-	bool FindFrameLeft_ByBottom(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostLeft);
-	// Последний шанс
-	bool FindByBackground(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostRight, int &nMostBottom, BOOL &bMarkBorder);
-	// Сервисная
-	bool ExpandDialogFrame(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int nFrameX, int nFrameY, int &nMostRight, int &nMostBottom);
-	void MarkDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int nX1, int nY1, int nX2, int nY2, BOOL bMarkBorder = FALSE, BOOL bFindExterior = TRUE);
-#define MAX_DETECTED_DIALOGS 20
-	struct {
-		int Count;
-		SMALL_RECT Rects[MAX_DETECTED_DIALOGS];
-		bool bWasFrame[MAX_DETECTED_DIALOGS];
-	} m_DetectedDialogs;
+	//void DetectDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int nFromX, int nFromY, int *pnMostRight=NULL, int *pnMostBottom=NULL);
+	//bool FindDialog_TopLeft(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostRight, int &nMostBottom, BOOL &bMarkBorder);
+	//bool FindDialog_TopRight(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostRight, int &nMostBottom, BOOL &bMarkBorder);
+	//bool FindDialog_Left(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostRight, int &nMostBottom, BOOL &bMarkBorder);
+	//bool FindDialog_Right(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostRight, int &nMostBottom, BOOL &bMarkBorder);
+	//bool FindDialog_Any(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostRight, int &nMostBottom, BOOL &bMarkBorder);
+	//bool FindDialog_Inner(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY);
+	//bool FindFrame_TopLeft(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nFrameX, int &nFrameY);
+	//bool FindFrameTop_ByRight(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostTop);
+	//bool FindFrameTop_ByLeft(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostTop);
+	//bool FindFrameBottom_ByRight(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostBottom);
+	//bool FindFrameBottom_ByLeft(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostBottom);
+	//bool FindFrameRight_ByTop(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostRight);
+	//bool FindFrameRight_ByBottom(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostRight);
+	//bool FindFrameLeft_ByTop(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostLeft);
+	//bool FindFrameLeft_ByBottom(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostLeft);
+	//// Последний шанс
+	//bool FindByBackground(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostRight, int &nMostBottom, BOOL &bMarkBorder);
+	//// Сервисная
+	//bool ExpandDialogFrame(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int nFrameX, int nFrameY, int &nMostRight, int &nMostBottom);
+	//void MarkDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int nX1, int nY1, int nX2, int nY2, BOOL bMarkBorder = FALSE, BOOL bFindExterior = TRUE);
+	//#define MAX_DETECTED_DIALOGS 20
+	//	struct {
+	//		int Count;
+	//		SMALL_RECT Rects[MAX_DETECTED_DIALOGS];
+	//		bool bWasFrame[MAX_DETECTED_DIALOGS];
+	//	} m_DetectedDialogs;
 };

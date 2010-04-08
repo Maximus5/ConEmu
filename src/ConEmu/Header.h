@@ -103,7 +103,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //	return h && (h == ghWnd || h == ghOpWnd || h == ghConWnd);
 //}
 //#endif
-#define isPressed(inp) ((GetKeyState(inp) & 0x8000) == 0x8000)
+//#define isPressed(inp) ((GetKeyState(inp) & 0x8000) == 0x8000)
 #define isDriveLetter(c) ((c>=L'A' && c<=L'Z') || (c>=L'a' && c<=L'z'))
 #define isDigit(c) (c>=L'0' && c<=L'9')
 
@@ -269,4 +269,4 @@ L"Mors: loading font from file."
 #include "tabbar.h"
 #include "TrayIcon.h"
 #include "ConEmuPipe.h"
-#include "UnicodeChars.h"
+#include "../common/UnicodeChars.h"

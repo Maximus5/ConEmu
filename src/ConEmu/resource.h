@@ -279,10 +279,13 @@
 #define tAdminSuffix                    1647
 #define cbUseWinNumber                  1648
 #define cbInstallKeybHooks              1649
-#define cbRunAsUser                     1649
 #define cbRunAsRestricted               1650
 #define tRunAsUser                      1652
 #define tRunAsPassword                  1653
+#define cbSafeFarClose                  1654
+#define cbIgnoreTelnetCursorSize        1655
+#define rbCurrentUser                   1656
+#define rbAnotherUser                   1657
 #define IDM_CLOSE                       40001
 #define IDM_RESTART                     40002
 #define IDM_RESTARTAS                   40003
@@ -299,7 +302,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        207
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         1654
+#define _APS_NEXT_CONTROL_VALUE         1659
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

@@ -858,3 +858,13 @@ void ReloadFarInfo995(BOOL abFull)
 	//	}
 	//}
 }
+
+void ExecuteQuitFar995()
+{
+	if (!InfoW995 || !InfoW995->AdvControl) {
+		PostMessage(FarHwnd, WM_CLOSE, 0, 0);
+		return;
+	}
+	
+	InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_QUIT, NULL);
+}

@@ -73,6 +73,7 @@ extern CESERVER_REQ_CONINFO_HDR *gpConsoleInfo;
 extern DWORD gnSelfPID;
 
 typedef struct tag_PanelViewRegInfo {
+	BOOL bRegister;
 	PanelViewInputCallback pfnPeekPreCall, pfnPeekPostCall, pfnReadPreCall, pfnReadPostCall;
 	PanelViewOutputCallback pfnWriteCall;
 } PanelViewRegInfo;
@@ -224,6 +225,11 @@ void ShutdownHooks();
 bool FUNC_Y(ProcessCommandLine)(wchar_t* pszCommand);
 bool FUNC_X(ProcessCommandLine)(wchar_t* pszCommand);
 bool ProcessCommandLineA(char* pszCommand);
+
+void ExecuteQuitFar();
+void ExecuteQuitFarA();
+void FUNC_Y(ExecuteQuitFar)();
+void FUNC_X(ExecuteQuitFar)();
 
 #ifdef _DEBUG
 	#define SHOWDBGINFO(x) OutputDebugStringW(x)
