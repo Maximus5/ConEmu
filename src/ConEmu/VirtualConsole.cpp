@@ -2776,9 +2776,11 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
 		#ifdef DEBUGDRAW_DIALOGS
 		if (GetKeyState(DEBUGDRAW_DIALOGS) & 1) {
 			// Прямоугольники найденных диалогов
-			SMALL_RECT rcFound[MAX_DETECTED_DIALOGS]; bool bFrame[MAX_DETECTED_DIALOGS];
-			int nFound = mp_RCon->GetDetectedDialogs(MAX_DETECTED_DIALOGS, rcFound, bFrame);
+			SMALL_RECT rcFound[MAX_DETECTED_DIALOGS]; DWORD nDlgFlags[MAX_DETECTED_DIALOGS];
+			int nFound = mp_RCon->GetDetectedDialogs(MAX_DETECTED_DIALOGS, rcFound, nDlgFlags);
 			HPEN hFrame = CreatePen(PS_SOLID, 1, RGB(255,0,255));
+			HPEN hPanel = CreatePen(PS_SOLID, 2, RGB(255,255,0));
+			HPEN hActiveMenu = (HPEN)GetStockObject(WHITE_PEN);
 			HPEN hOldPen = (HPEN)SelectObject(hPaintDc, hFrame);
 			HBRUSH hOldBr = (HBRUSH)SelectObject(hPaintDc, GetStockObject(HOLLOW_BRUSH));
 			HPEN hRed = CreatePen(PS_SOLID, 1, 255);
@@ -2789,9 +2791,14 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
 			SetBkColor(hPaintDc, 0);
 			for (int i = 0; i < nFound; i++) {
 				int n = 1;
+				DWORD nFlags = nDlgFlags[i];
 				if (i == (DEBUGDRAW_DIALOGS-1))
 					SelectObject(hPaintDc, hRed);
-				else if (bFrame[i])
+				else if ((nFlags & FR_ACTIVEMENUBAR) == FR_ACTIVEMENUBAR)
+					SelectObject(hPaintDc, hActiveMenu);
+				else if ((nFlags & (FR_LEFTPANEL|FR_RIGHTPANEL|FR_FULLPANEL)))
+					SelectObject(hPaintDc, hPanel);
+				else if ((nFlags & FR_HASBORDER))
 					SelectObject(hPaintDc, hFrame);
 				else {
 					SelectObject(hPaintDc, hDash);
@@ -2811,6 +2818,7 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
 			SelectObject(hPaintDc, hOldPen);
 			SelectObject(hPaintDc, hOldFont);
 			DeleteObject(hRed);
+			DeleteObject(hPanel);
 			DeleteObject(hDash);
 			DeleteObject(hFrame);
 			DeleteObject(hSmall);
@@ -3309,11 +3317,11 @@ BOOL CVirtualConsole::UpdatePanelRgn(BOOL abLeftPanel)
 	}
 
 	BOOL lbPartHidden = FALSE;
-	SMALL_RECT rcDlg[32]; bool rbDlgFrame[32];
+	SMALL_RECT rcDlg[32]; DWORD rnDlgFlags[32];
 
 	_ASSERTE(sizeof(mrc_LastDialogs) == sizeof(rcDlg));
 
-	int nDlgCount = mp_RCon->GetDetectedDialogs(sizeofarray(rcDlg), rcDlg, rbDlgFrame);
+	int nDlgCount = mp_RCon->GetDetectedDialogs(sizeofarray(rcDlg), rcDlg, rnDlgFlags);
 	if (!nDlgCount) {
 		lbPartHidden = TRUE;
 		if (IsWindowVisible(pp->hWnd)) ShowWindow(pp->hWnd, SW_HIDE);

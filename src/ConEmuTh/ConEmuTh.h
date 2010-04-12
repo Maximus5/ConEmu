@@ -268,6 +268,10 @@ extern FarVersion gFarVersion;
 extern CeFullPanelInfo pviLeft, pviRight;
 extern HANDLE ghDisplayThread; extern DWORD gnDisplayThreadId;
 extern HWND ghLeftView, ghRightView;
+extern bool gbWaitForKeySequenceEnd;
+extern DWORD gnWaitForKeySeqTick;
+//class CRgnDetect;
+//extern CRgnDetect *gpRgnDetect;
 
 //typedef struct tag_SynchroArg {
 //	enum {
@@ -314,18 +318,28 @@ CeFullPanelInfo* LoadPanelInfo(BOOL abActive);
 CeFullPanelInfo* LoadPanelInfoA(BOOL abActive);
 CeFullPanelInfo* FUNC_X(LoadPanelInfo)(BOOL abActive);
 CeFullPanelInfo* FUNC_Y(LoadPanelInfo)(BOOL abActive);
+void ReloadPanelsInfo();
+void ReloadPanelsInfoA();
+void FUNC_X(ReloadPanelsInfo)();
+void FUNC_Y(ReloadPanelsInfo)();
 BOOL IsLeftPanelActive();
 BOOL IsLeftPanelActiveA();
 BOOL FUNC_X(IsLeftPanelActive)();
 BOOL FUNC_Y(IsLeftPanelActive)();
 void LoadPanelItemInfo(CeFullPanelInfo* pi, int nItem);
-void LoadPanelInfoA(CeFullPanelInfo* pi, int nItem);
-void FUNC_X(LoadPanelInfo)(CeFullPanelInfo* pi, int nItem);
-void FUNC_Y(LoadPanelInfo)(CeFullPanelInfo* pi, int nItem);
+void LoadPanelItemInfoA(CeFullPanelInfo* pi, int nItem);
+void FUNC_X(LoadPanelItemInfo)(CeFullPanelInfo* pi, int nItem);
+void FUNC_Y(LoadPanelItemInfo)(CeFullPanelInfo* pi, int nItem);
+bool CheckWindows();
+bool CheckWindowsA();
+bool FUNC_X(CheckWindows)();
+bool FUNC_Y(CheckWindows)();
 
 extern int gnCreateViewError;
 extern DWORD gnWin32Error;
 HWND CreateView(CeFullPanelInfo* pi);
+void UpdateEnvVar(BOOL abForceRedraw);
+CeFullPanelInfo* IsThumbnailsActive(BOOL abFocusRequired);
 
 // ConEmu.dll
 BOOL CheckConEmu(BOOL abForceCheck=FALSE);

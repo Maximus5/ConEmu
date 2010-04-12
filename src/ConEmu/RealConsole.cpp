@@ -9509,10 +9509,10 @@ bool CRealConsole::GetMaxConSize(COORD* pcrMaxConSize)
 	return bOk;
 }
 
-int CRealConsole::GetDetectedDialogs(int anMaxCount, SMALL_RECT* rc, bool* rb)
+int CRealConsole::GetDetectedDialogs(int anMaxCount, SMALL_RECT* rc, DWORD* rf)
 {
 	if (!this) return 0;
- 	return mp_Rgn->GetDetectedDialogs(anMaxCount, rc, rb);
+ 	return mp_Rgn->GetDetectedDialogs(anMaxCount, rc, rf);
 
 	//int nCount = min(anMaxCount,m_DetectedDialogs.Count);
 	//if (nCount>0) {

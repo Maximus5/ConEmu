@@ -44,7 +44,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#include <windowsx.h>
 //#include <string.h>
 //#include <tchar.h>
-#include "..\common\pluginW1007.hpp" // Отличается от 995 наличием SynchoApi
+#include "../common/common.hpp"
+#include "../common/pluginW1007.hpp" // Отличается от 995 наличием SynchoApi
+#include "../common/RgnDetect.h"
 #include "ConEmuTh.h"
 
 #define Free free
@@ -82,14 +84,25 @@ RegisterPanelView_t gfRegisterPanelView = NULL;
 GetFarHWND2_t gfGetFarHWND2 = NULL;
 CeFullPanelInfo pviLeft = {0}, pviRight = {0};
 int ShowLastError();
+CRgnDetect *gpRgnDetect = NULL;
+CEFAR_INFO gFarInfo;
+bool gbLastCheckWindow = false;
 
 ThumbnailSettings gThSet; // = {96,96,1, 4,20, 1,1, 14, L"Tahoma"};
 
+bool gbWaitForKeySequenceEnd = false;
+DWORD gnWaitForKeySeqTick = 0;
 int gnUngetCount = 0;
 INPUT_RECORD girUnget[100];
+WORD wScanCodeUp=0, wScanCodeDown=0, wScanCodeLeft=0, wScanCodeRight=0; //p->Event.KeyEvent.wVirtualScanCode = MapVirtualKey(vk, 0/*MAPVK_VK_TO_VSC*/);
 BOOL GetBufferInput(BOOL abRemove, PINPUT_RECORD lpBuffer, DWORD nBufSize, LPDWORD lpNumberOfEventsRead);
 BOOL UngetBufferInput(PINPUT_RECORD lpOneInput);
 BOOL ProcessConsoleInput(BOOL abUseUngetBuffer, PINPUT_RECORD lpBuffer, DWORD nBufSize, LPDWORD lpNumberOfEventsRead);
+
+#define EVENT_TYPE_REDRAW 250
+#define TH_ENVVAR_NAME L"FarThumbnails"
+#define TH_ENVVAR_ACTIVE L"Active"
+#define TH_ENVVAR_SCROLL L"Scrolling"
 
 
 // minimal(?) FAR version 2.0 alpha build FAR_X_VER
@@ -126,7 +139,8 @@ HANDLE WINAPI _export OpenPluginW(int OpenFrom,INT_PTR Item)
 		return INVALID_HANDLE_VALUE;
 		
 	gThSet.Load();
-	CeFullPanelInfo* pi = LoadPanelInfo();
+	// При открытии плагина - загрузить информацию об АКТИВНОЙ панели, поскольку внешний вид меняем для активной
+	CeFullPanelInfo* pi = LoadPanelInfo(TRUE);
 	HWND hView = (pi->bLeftPanel) ? ghLeftView : ghRightView;
 	
 	PanelViewInit pvi = {sizeof(PanelViewInit)};
@@ -139,6 +153,7 @@ HANDLE WINAPI _export OpenPluginW(int OpenFrom,INT_PTR Item)
 	pvi.pfnPeekPostCall = OnPostPeekConsole;
 	pvi.pfnReadPreCall = OnPreReadConsole;
 	pvi.pfnReadPostCall = OnPostReadConsole;
+	pvi.pfnWriteCall = OnPostWriteConsoleOutput;
 	
 	BOOL lbRc = FALSE;
 	DWORD dwErr = 0;
@@ -166,6 +181,8 @@ HANDLE WINAPI _export OpenPluginW(int OpenFrom,INT_PTR Item)
 				if (!lbRc)
 					dwErr = GetLastError();
 				_ASSERTE(lbRc || IsWindowVisible(hView));
+
+				UpdateEnvVar(FALSE);
 			}
 		}
 	} else {
@@ -393,8 +410,12 @@ void StopThread(void)
 	}
 	gnDisplayThreadId = 0;
 	// Освободить память
-	pviLeft.Free();
-	pviRight.Free();
+	pviLeft.FreeInfo();
+	pviRight.FreeInfo();
+	if (gpRgnDetect) {
+		delete gpRgnDetect;
+		gpRgnDetect = NULL;
+	}
 }
 
 void   WINAPI _export ExitFARW(void)
@@ -601,17 +622,23 @@ BOOL IsMacroActive()
 void LoadPanelItemInfo(CeFullPanelInfo* pi, int nItem)
 {
 	if (gFarVersion.dwVerMajor==1)
-		ppi = LoadPanelItemInfoA(pi, nItem);
+		LoadPanelItemInfoA(pi, nItem);
 	else if (gFarVersion.dwBuild>=FAR_Y_VER)
-		ppi = FUNC_Y(LoadPanelItemInfo)(pi, nItem);
+		FUNC_Y(LoadPanelItemInfo)(pi, nItem);
 	else
-		ppi = FUNC_X(LoadPanelItemInfo)(pi, nItem);
+		FUNC_X(LoadPanelItemInfo)(pi, nItem);
 }
 
 
 // Возвращает (для удобства) ссылку на одну из глобальных переменных (pviLeft/pviRight)
 CeFullPanelInfo* LoadPanelInfo(BOOL abActive)
 {
+	TODO("Добавить вызов ACTL_GETWINDOW что-ли?");
+	
+	if (!gpRgnDetect) {
+		gpRgnDetect = new CRgnDetect();
+	}
+
 	CeFullPanelInfo* ppi = NULL;
 
 	if (gFarVersion.dwVerMajor==1)
@@ -627,33 +654,128 @@ CeFullPanelInfo* LoadPanelInfo(BOOL abActive)
 	return ppi;
 }
 
+void ReloadPanelsInfo()
+{
+	TODO("Добавить вызов ACTL_GETWINDOW что-ли?");
+
+	// Хотя уже и должен быть создан	
+	if (!gpRgnDetect) {
+		gpRgnDetect = new CRgnDetect();
+	}
+
+	if (gFarVersion.dwVerMajor==1)
+		ReloadPanelsInfoA();
+	else if (gFarVersion.dwBuild>=FAR_Y_VER)
+		FUNC_Y(ReloadPanelsInfo)();
+	else
+		FUNC_X(ReloadPanelsInfo)();
+}
+
 
 BOOL IsLeftPanelActive()
 {
 	BOOL lbLeftActive = FALSE;
 	if (gFarVersion.dwVerMajor==1)
-		lbLeftActive = IsLeftPanelActive(abActive);
+		lbLeftActive = IsLeftPanelActiveA();
 	else if (gFarVersion.dwBuild>=FAR_Y_VER)
-		lbLeftActive = FUNC_Y(IsLeftPanelActive)(abActive);
+		lbLeftActive = FUNC_Y(IsLeftPanelActive)();
 	else
-		lbLeftActive = FUNC_X(IsLeftPanelActive)(abActive);
+		lbLeftActive = FUNC_X(IsLeftPanelActive)();
 	return lbLeftActive;
 }
 
 
 BOOL GetBufferInput(BOOL abRemove, PINPUT_RECORD lpBuffer, DWORD nBufSize, LPDWORD lpNumberOfEventsRead)
 {
-	PRAGMA_ERROR("GetBufferInput");
+	if (gnUngetCount<0) {
+		_ASSERTE(gnUngetCount>=0);
+		gnUngetCount = 0;
+		*lpNumberOfEventsRead = 0;
+		return FALSE;
+	}
+
+	BOOL lbRedraw = FALSE;
+
+	// Если натыкаемся на событие EVENT_TYPE_REDRAW - сбрасывать переменную EnvVar
+	// SetEnvironmentVariable(TH_ENVVAR_NAME, TH_ENVVAR_ACTIVE);
+	if (girUnget[0].EventType == EVENT_TYPE_REDRAW)
+	{
+		lbRedraw = TRUE;
+		gnUngetCount --;
+		_ASSERTE(gnUngetCount >= 0);
+		if (gnUngetCount > 0) {
+			// Подвинуть в буфере то что осталось к началу
+			memmove(girUnget, girUnget+1, sizeof(girUnget[0])*gnUngetCount);
+		}
+		girUnget[gnUngetCount].EventType = 0;
+	}
+
+	int nMax = sizeofarray(girUnget);
+	if (gnUngetCount>=nMax) {
+		_ASSERTE(gnUngetCount==nMax);
+		if (gnUngetCount>nMax) gnUngetCount = nMax;
+	}
+
+	nMax = min(gnUngetCount,(int)nBufSize);
+
+	int i = 0, j = 0;
+	while (i < nMax && j < gnUngetCount) {
+		if (girUnget[j].EventType == EVENT_TYPE_REDRAW) {
+			j++; lbRedraw = TRUE; continue;
+		}
+
+		lpBuffer[i++] = girUnget[j++];
+	}
+	nMax = i;
+
+	if (abRemove) {
+		gnUngetCount -= j;
+		_ASSERTE(gnUngetCount >= 0);
+		if (gnUngetCount > 0) {
+			// Подвинуть в буфере то что осталось к началу
+			memmove(girUnget, girUnget+nMax, sizeof(girUnget[0])*gnUngetCount);
+			girUnget[gnUngetCount].EventType = 0;
+		}
+	}
+
+	if (lbRedraw) {
+		gbWaitForKeySequenceEnd = (gnUngetCount > 0);
+		if (IsThumbnailsActive(FALSE))
+			UpdateEnvVar(TRUE);
+	}
+
+	*lpNumberOfEventsRead = nMax;
+
+	return TRUE;
 }
 
 BOOL UngetBufferInput(PINPUT_RECORD lpOneInput)
 {
-	PRAGMA_ERROR("UngetBufferInput");
+	if (gnUngetCount<0) {
+		_ASSERTE(gnUngetCount>=0);
+		gnUngetCount = 0;
+	}
+	int nMax = sizeofarray(girUnget);
+	if (gnUngetCount>=nMax) {
+		_ASSERTE(gnUngetCount==nMax);
+		if (gnUngetCount>nMax) gnUngetCount = nMax;
+		return FALSE;
+	}
+
+	girUnget[gnUngetCount] = *lpOneInput;
+	gnUngetCount ++;	
+
+	return TRUE;
 }
 
 
 BOOL WINAPI OnPrePeekConsole(HANDLE hInput, PINPUT_RECORD lpBuffer, DWORD nBufSize, LPDWORD lpNumberOfEventsRead, BOOL* pbResult)
 {
+	if (!lpBuffer || !lpNumberOfEventsRead) {
+		*pbResult = FALSE;
+		return FALSE; // ошибка в параметрах
+	}
+
 	// если в girUnget что-то есть вернуть из него и FALSE (тогда OnPostPeekConsole не будет вызван)");
 	if (gnUngetCount) {
 		if (GetBufferInput(FALSE/*abRemove*/, lpBuffer, nBufSize, lpNumberOfEventsRead))
@@ -665,6 +787,11 @@ BOOL WINAPI OnPrePeekConsole(HANDLE hInput, PINPUT_RECORD lpBuffer, DWORD nBufSi
 
 BOOL WINAPI OnPostPeekConsole(HANDLE hInput, PINPUT_RECORD lpBuffer, DWORD nBufSize, LPDWORD lpNumberOfEventsRead, BOOL* pbResult)
 {
+	if (!lpBuffer || !lpNumberOfEventsRead) {
+		*pbResult = FALSE;
+		return FALSE; // ошибка в параметрах
+	}
+
 	// заменить обработку стрелок, но girUnget не трогать
 	if (*lpNumberOfEventsRead) {
 		if (!ProcessConsoleInput(FALSE/*abUseUngetBuffer*/, lpBuffer, nBufSize, lpNumberOfEventsRead)) {
@@ -680,6 +807,11 @@ BOOL WINAPI OnPostPeekConsole(HANDLE hInput, PINPUT_RECORD lpBuffer, DWORD nBufS
 
 BOOL WINAPI OnPreReadConsole(HANDLE hInput, PINPUT_RECORD lpBuffer, DWORD nBufSize, LPDWORD lpNumberOfEventsRead, BOOL* pbResult)
 {
+	if (!lpBuffer || !lpNumberOfEventsRead) {
+		*pbResult = FALSE;
+		return FALSE; // ошибка в параметрах
+	}
+
 	// если в girUnget что-то есть вернуть из него и FALSE (тогда OnPostPeekConsole не будет вызван)");
 	if (gnUngetCount) {
 		if (GetBufferInput(TRUE/*abRemove*/, lpBuffer, nBufSize, lpNumberOfEventsRead))
@@ -691,6 +823,11 @@ BOOL WINAPI OnPreReadConsole(HANDLE hInput, PINPUT_RECORD lpBuffer, DWORD nBufSi
 
 BOOL WINAPI OnPostReadConsole(HANDLE hInput, PINPUT_RECORD lpBuffer, DWORD nBufSize, LPDWORD lpNumberOfEventsRead, BOOL* pbResult)
 {
+	if (!lpBuffer || !lpNumberOfEventsRead) {
+		*pbResult = FALSE;
+		return FALSE; // ошибка в параметрах
+	}
+
 	// заменить обработку стрелок, если надо - поместить серию нажатий в girUnget
 	if (*lpNumberOfEventsRead) {
 		if (!ProcessConsoleInput(TRUE/*abUseUngetBuffer*/, lpBuffer, nBufSize, lpNumberOfEventsRead)) {
@@ -726,9 +863,55 @@ BOOL WINAPI OnPostReadConsole(HANDLE hInput, PINPUT_RECORD lpBuffer, DWORD nBufS
 //On output, the structure members specify the actual rectangle that was used.
 VOID WINAPI OnPostWriteConsoleOutput(HANDLE hOutput,const CHAR_INFO *lpBuffer,COORD dwBufferSize,COORD dwBufferCoord,PSMALL_RECT lpWriteRegion)
 {
-	PRAGMA_ERROR("TODO: Проверить список окон FAR и если активное НЕ панели - сразу выйти (и спрятать разрегистрировать)");
+	if (gpRgnDetect && lpBuffer && lpWriteRegion) {
+		gpRgnDetect->OnWriteConsoleOutput(lpBuffer, dwBufferSize, dwBufferCoord, lpWriteRegion);
+	}
 	
-	PRAGMA_ERROR("TODO: Проверить и сравнить, если изменился регион панели - обновить PanelView");
+	ReloadPanelsInfo();
+	
+	if (!CheckWindows()) {
+		// Спрятать/разрегистрировать?
+	} else {
+		if (pviLeft.hView || pviRight.hView) {
+			CeFullPanelInfo* p = pviLeft.hView ? &pviLeft : &pviRight;
+
+			gFarInfo.FarVer = gFarVersion;
+			gFarInfo.nFarPID = GetCurrentProcessId();
+			gFarInfo.nFarTID = GetCurrentThreadId();
+			int n = min(p->nMaxFarColors, sizeofarray(gFarInfo.nFarColors));
+			if (n && p->nFarColors) memmove(gFarInfo.nFarColors, p->nFarColors, n);
+			gFarInfo.nFarInterfaceSettings = p->nFarInterfaceSettings;
+			gFarInfo.nFarPanelSettings = p->nFarPanelSettings;
+			gFarInfo.nFarConfirmationSettings = 0;
+			gFarInfo.bFarPanelAllowed = TRUE;
+			gFarInfo.bFarPanelInfoFilled = TRUE;
+
+			gFarInfo.bFarLeftPanel = (pviLeft.Visible!=0);
+			gFarInfo.FarLeftPanel.PanelRect = pviLeft.PanelRect;
+
+			gFarInfo.bFarRightPanel = (pviRight.Visible!=0);
+			gFarInfo.FarRightPanel.PanelRect = pviRight.PanelRect;
+
+			HWND hWnd = p->hView;
+			COLORREF crColors[16];
+			for (int i=0; i<16; i++)
+				crColors[i] = GetWindowLong(hWnd, 4*i);
+
+			gpRgnDetect->PrepareTransparent(&gFarInfo, crColors);
+		}
+		
+		if (!gbWaitForKeySequenceEnd)
+		{
+			if (pviLeft.hView)
+				InvalidateRect(pviLeft.hView, NULL, FALSE);
+			if (pviRight.hView)
+				InvalidateRect(pviRight.hView, NULL, FALSE);
+		}
+	}
+
+	//WARNING("Проверить список окон FAR и если активное НЕ панели - сразу выйти (и спрятать разрегистрировать)");
+	//WARNING("Проверить и сравнить, если изменился регион панели - обновить PanelView");
+
 	//!. Сначала проверить на какой панели находится фокус!
 	//   Это требуется для того, чтобы НЕактивная панель не перехватывала стрелки
 	//Далее
@@ -736,136 +919,164 @@ VOID WINAPI OnPostWriteConsoleOutput(HANDLE hOutput,const CHAR_INFO *lpBuffer,CO
 	//   информацию о прямоугольнике (если он изменился) передать в GUI
 	//   Если окошко панели невидимо - выполнить повторную регистрацию в GUI - оно само сделает ShowWindow
 	//2. Панель невидима -> спрятать окошко панели и разрегистрироваться в GUI
-	
-	return TRUE; // продолжить без изменений
 }
 
 
-// Вернуть TRUE, если был Unget
-BOOL ProcessKeyPress(CeFullPanelInfo* pi, BOOL abUseUngetBuffer, PINPUT_RECORD lpBuffer)
-{
-	_ASSERTE(lpBuffer->EventType == KEY_EVENT);
-	
-	// Перехватываемые клавиши
-	WORD vk = lpBuffer->Event.KeyEvent.wVirtualKeyCode;
-	BOOL lbWasUnget = FALSE;
-	
-	if (vk == VK_UP || vk == VK_DOWN || vk == VK_LEFT || vk == VK_RIGHT)
-	{
-		if (!lpBuffer->Event.KeyEvent.bKeyDown) {
-			switch (vk) {
-				case VK_LEFT:  lpBuffer->Event.KeyEvent.wVirtualKeyCode = VK_UP;   break;
-				case VK_RIGHT: lpBuffer->Event.KeyEvent.wVirtualKeyCode = VK_DOWN; break;
-			}
-		
-		} else {
-			// Переработать
-			int n = 0;
-			switch (vk) {
-				case VK_UP: {
-					n = min(pi->CurrentItem,pi->nXCount);
-				} break;
-				case VK_DOWN: {
-					n = min((pi->ItemsNumber-pi->CurrentItem-1),pi->nXCount);
-				} break;
-				case VK_LEFT: {
-					lpBuffer->Event.KeyEvent.wVirtualKeyCode = VK_UP;
-				} break;
-				case VK_RIGHT: {
-					lpBuffer->Event.KeyEvent.wVirtualKeyCode = VK_DOWN;
-				} break;
-			}
-			
-			lbWasUnget = (n > 1);
-			while ((n--) > 1) {
-				UngetBufferInput(lpBuffer);
-			}
-		}
-	}
-	return (!lbReplace);
-}
+//// Вернуть TRUE, если был Unget
+//BOOL ProcessKeyPress(CeFullPanelInfo* pi, BOOL abUseUngetBuffer, PINPUT_RECORD lpBuffer)
+//{
+//	_ASSERTE(lpBuffer->EventType == KEY_EVENT);
+//	
+//	// Перехватываемые клавиши
+//	WORD vk = lpBuffer->Event.KeyEvent.wVirtualKeyCode;
+//	BOOL lbWasUnget = FALSE;
+//	
+//	if (vk == VK_UP || vk == VK_DOWN || vk == VK_LEFT || vk == VK_RIGHT)
+//	{
+//		if (!lpBuffer->Event.KeyEvent.bKeyDown) {
+//			switch (vk) {
+//				case VK_LEFT:  lpBuffer->Event.KeyEvent.wVirtualKeyCode = VK_UP;   break;
+//				case VK_RIGHT: lpBuffer->Event.KeyEvent.wVirtualKeyCode = VK_DOWN; break;
+//			}
+//		
+//		} else {
+//			// Переработать
+//			int n = 0;
+//			switch (vk) {
+//				case VK_UP: {
+//					n = min(pi->CurrentItem,pi->nXCount);
+//				} break;
+//				case VK_DOWN: {
+//					n = min((pi->ItemsNumber-pi->CurrentItem-1),pi->nXCount);
+//				} break;
+//				case VK_LEFT: {
+//					lpBuffer->Event.KeyEvent.wVirtualKeyCode = VK_UP;
+//				} break;
+//				case VK_RIGHT: {
+//					lpBuffer->Event.KeyEvent.wVirtualKeyCode = VK_DOWN;
+//				} break;
+//			}
+//			
+//			lbWasUnget = (n > 1);
+//			while ((n--) > 1) {
+//				UngetBufferInput(lpBuffer);
+//			}
+//		}
+//	}
+//	return lbWasUnget;
+//}
 
 // Выполнить замену клавиш и поместить в буфер (Unget) непоместившиеся в lpBuffer клавиши
 // Вернуть FALSE, если замены были произведены
 BOOL ProcessConsoleInput(BOOL abUseUngetBuffer, PINPUT_RECORD lpBuffer, DWORD nBufSize, LPDWORD lpNumberOfEventsRead)
 {
 	// Перехват управления курсором
-	if (pviLeft.hView == NULL && pviRight.hView == NULL)
-		return TRUE;
-	CeFullPanelInfo* pi = NULL;
-	if (pviLeft.hView && pviLeft.Focus && pviLeft.Visible)
-		pi = &pviLeft;
-	else if (pviRight.hView && pviRight.Focus && pviRight.Visible)
-		pi = &pviRight;
+	CeFullPanelInfo* pi = IsThumbnailsActive(TRUE/*abFocusRequired*/);
 	if (!pi) {
-		return TRUE; // панель создана, но она не активна
+		return TRUE; // панель создана, но она не активна или скрыта диалогом или погашена фаровская панель
 	}
-	if (!pi->hView || !IsWindowVisible(pi->hView)) {
-		return TRUE; // панель полностью скрыта диалогом или погашена фаровская панель
+
+
+	if (!wScanCodeUp) {
+		wScanCodeUp = MapVirtualKey(VK_UP, 0/*MAPVK_VK_TO_VSC*/);
+		wScanCodeDown = MapVirtualKey(VK_DOWN, 0/*MAPVK_VK_TO_VSC*/);
+		wScanCodeLeft = MapVirtualKey(VK_LEFT, 0/*MAPVK_VK_TO_VSC*/);
+		wScanCodeRight = MapVirtualKey(VK_RIGHT, 0/*MAPVK_VK_TO_VSC*/);
 	}
 	
-	PRAGMA_ERROR("Проверять один из DWORD-ов окна на предмет наличия диалогов");
-	PRAGMA_ERROR("Ставить его должен GUI");
-	PRAGMA_ERROR("Если есть хотя бы один диалог - значит перехватывать нельзя");
-	
-	DWORD n = 0;
-	while (n < (*lpNumberOfEventsRead))
+	WARNING("Проверять один из DWORD-ов окна на предмет наличия диалогов");
+	WARNING("Ставить его должен GUI");
+	WARNING("Если есть хотя бы один диалог - значит перехватывать нельзя");
+
+	// Пойдем в два прохода. В первом - обработка замен, и помещение в буфер Unget.
+	PINPUT_RECORD p = lpBuffer;
+	PINPUT_RECORD pEnd = lpBuffer+*lpNumberOfEventsRead;
+	PINPUT_RECORD pFirstReplace = NULL;
+	while (p != pEnd)
 	{
-		if (lpBuffer[n].EventType == KEY_EVENT) {
+		if (p->EventType == KEY_EVENT)
+		{
 			// Перехватываемые клавиши
-			WORD vk = lpBuffer[n].Event.KeyEvent.wVirtualKeyCode;
+			WORD vk = p->Event.KeyEvent.wVirtualKeyCode;
 			if (vk == VK_UP || vk == VK_DOWN || vk == VK_LEFT || vk == VK_RIGHT)
 			{
-				if (lpBuffer[n].Event.KeyEvent.bKeyDown) {
-					// Переработать
-					wchar_t szMacro[128]; szMacro[0] = 0; int n;
-					switch (vk) {
-						case VK_UP: {
-							n = min(pi->CurrentItem,pi->nXCount);
-							wsprintf(szMacro, L"$If (!Shell) Up $Else $Rep (%i) Up $End $End", n);
-							pi->CurrentItem = max(0,(pi->CurrentItem-pi->nXCount));
-						} break;
-						case VK_DOWN: {
-							n = min((pi->ItemsNumber-pi->CurrentItem-1),pi->nXCount);
-							wsprintf(szMacro, L"$If (!Shell) Down $Else $Rep (%i) Down $End $End", n);
-							pi->CurrentItem = min((pi->CurrentItem+pi->nXCount),(pi->ItemsNumber-1));
-						} break;
-						case VK_LEFT: {
-							if (pi->CurrentItem > 0) {
-								lstrcpy(szMacro, L"$If (!Shell) Left $Else Up $End");
-								pi->CurrentItem--;
-							}
-						} break;
-						case VK_RIGHT: {
-							if (pi->CurrentItem < (pi->ItemsNumber-1)) {
-								lstrcpy(szMacro, L"$If (!Shell) Right $Else Down $End");
-								pi->CurrentItem++;
-							}
-						} break;
-					}
-					if (szMacro[0]) {
-						PostMacro(szMacro);
-						gbCancelAll = TRUE;
-						InvalidateRect(pi->hView, NULL, FALSE);
+				// Переработать
+				int n = 1;
+				switch (vk) {
+					case VK_UP: {
+						n = min(pi->CurrentItem,pi->nXCount);
+								} break;
+					case VK_DOWN: {
+						n = min((pi->ItemsNumber-pi->CurrentItem-1),pi->nXCount);
+								  } break;
+					case VK_LEFT: {
+						p->Event.KeyEvent.wVirtualKeyCode = VK_UP;
+						p->Event.KeyEvent.wVirtualScanCode = wScanCodeUp;
+								  } break;
+					case VK_RIGHT: {
+						p->Event.KeyEvent.wVirtualKeyCode = VK_DOWN;
+						p->Event.KeyEvent.wVirtualScanCode = wScanCodeDown;
+								   } break;
+				}
+
+				// Если это нажатие - то дополнительные нужно поместить в Unget буфер
+				if (p->Event.KeyEvent.bKeyDown) {
+					if (abUseUngetBuffer && n > 1) {
+						pFirstReplace = p+1;
+						for (int i = 2; i <= n; i++)
+							UngetBufferInput(p);
 					}
 				}
-				// Убрать из буфера
-				if ((n+1) < (*lpNumberOfEventsRead)) {
-					memmove(lpBuffer, lpBuffer+1, ((*lpNumberOfEventsRead)-n-1)*sizeof(INPUT_RECORD));
-					lpBuffer++;
-				} else {
-					lpBuffer->EventType = 0x100;
-				}
-				if ((*lpNumberOfEventsRead) == 0) {
-					_ASSERTE((*lpNumberOfEventsRead)>0);
-					return TRUE;
-				}
-				(*lpNumberOfEventsRead)--;
-				continue;
+
+				//end: if (vk == VK_UP || vk == VK_DOWN || vk == VK_LEFT || vk == VK_RIGHT)
+				p++; continue;
 			}
+
+			//end: if (p->EventType == KEY_EVENT)
+		} else
+		
+		// При смене размера окна - нужно передернуть детектор
+		if (p->EventType == WINDOW_BUFFER_SIZE_EVENT) {
+			if (gpRgnDetect)
+				gpRgnDetect->OnWindowSizeChanged();
 		}
-		n++;
+
+		// Если были помещены события в буфер Unget - требуется поместить в буфер и все что идут за ним,
+		// т.к. между ними будет "виртуальная" вставка событий
+		if (pFirstReplace && abUseUngetBuffer) {
+			UngetBufferInput(p);
+		}
+		p++; continue;
 	}
+	// Скорректировать количество "считанных" событий
+	if (pFirstReplace && abUseUngetBuffer)
+	{
+		DWORD nReady = pFirstReplace - lpBuffer;
+		if (nReady != *lpNumberOfEventsRead) {
+			_ASSERTE(nReady <= nBufSize);
+			_ASSERTE(nReady < *lpNumberOfEventsRead);
+			*lpNumberOfEventsRead = nReady;
+		}
+	}
+
+	// Если в буфере есть "отложенные" события - возможно потребуется установка переменной окружения
+	if (pFirstReplace && abUseUngetBuffer && gnUngetCount) {
+		_ASSERTE(gnUngetCount>0);
+		INPUT_RECORD r = {EVENT_TYPE_REDRAW};
+		UngetBufferInput(&r);
+		//SetEnvironmentVariable(TH_ENVVAR_NAME, TH_ENVVAR_SCROLL);
+		gbWaitForKeySequenceEnd = true;
+		UpdateEnvVar(FALSE);
+	}
+
+	// Второй проход - если буфер достаточно большой - добавить в него события из Unget буфера
+	if (gnUngetCount && nBufSize > *lpNumberOfEventsRead)
+	{
+		DWORD nAdd = 0;
+		if (GetBufferInput(abUseUngetBuffer/*abRemove*/, pFirstReplace, nBufSize-(*lpNumberOfEventsRead), &nAdd))
+			*lpNumberOfEventsRead += nAdd;
+	}
+
 	return TRUE;
 }
 
@@ -883,4 +1094,74 @@ int ShowLastError()
 		}
 	}
 	return 0;
+}
+
+void UpdateEnvVar(BOOL abForceRedraw)
+{
+	if (gbWaitForKeySequenceEnd) {
+		SetEnvironmentVariable(TH_ENVVAR_NAME, TH_ENVVAR_SCROLL);
+	} else if (IsThumbnailsActive(FALSE/*abFocusRequired*/)) {
+		SetEnvironmentVariable(TH_ENVVAR_NAME, TH_ENVVAR_ACTIVE);
+		abForceRedraw = TRUE;
+	} else {
+		SetEnvironmentVariable(TH_ENVVAR_NAME, NULL);
+	}
+
+	if (abForceRedraw) {
+		if (pviLeft.hView && IsWindowVisible(pviLeft.hView))
+			InvalidateRect(pviLeft.hView, NULL, FALSE);
+		if (pviRight.hView && IsWindowVisible(pviRight.hView))
+			InvalidateRect(pviRight.hView, NULL, FALSE);
+	}
+}
+
+CeFullPanelInfo* IsThumbnailsActive(BOOL abFocusRequired)
+{
+	if (pviLeft.hView == NULL && pviRight.hView == NULL)
+		return NULL;
+
+	if (!gbLastCheckWindow)
+		return NULL;
+
+	CeFullPanelInfo* pi = NULL;
+	
+	if (gpRgnDetect) {
+		DWORD dwFlags = gpRgnDetect->GetFlags();
+		if ((dwFlags & FR_ACTIVEMENUBAR) == FR_ACTIVEMENUBAR)
+			return NULL; // активно меню
+		if ((dwFlags & FR_FREEDLG_MASK) != 0)
+			return NULL; // есть какой-то диалог
+	}
+
+	if (abFocusRequired) {
+		if (pviLeft.hView && pviLeft.Focus && pviLeft.Visible)
+			pi = &pviLeft;
+		else if (pviRight.hView && pviRight.Focus && pviRight.Visible)
+			pi = &pviRight;
+		// Видим?
+		if (pi) {
+			if (!pi->hView || !IsWindowVisible(pi->hView)) {
+				return NULL; // панель полностью скрыта диалогом или погашена фаровская панель
+			}
+		}
+	} else {
+		if (pviLeft.hView && IsWindowVisible(pviLeft.hView))
+			pi = &pviLeft;
+		else if (pviRight.hView && IsWindowVisible(pviRight.hView))
+			pi = &pviRight;
+	}
+	
+
+	return pi;
+}
+
+bool CheckWindows()
+{
+	if (gFarVersion.dwVerMajor==1)
+		gbLastCheckWindow = CheckWindowsA();
+	else if (gFarVersion.dwBuild>=FAR_Y_VER)
+		gbLastCheckWindow = FUNC_Y(CheckWindows)();
+	else
+		gbLastCheckWindow = FUNC_X(CheckWindows)();
+	return gbLastCheckWindow;
 }

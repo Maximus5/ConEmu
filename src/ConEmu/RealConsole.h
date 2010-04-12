@@ -298,7 +298,7 @@ public:
 	void RemoveFromCursor();
 	bool isAlive();
 	bool GetMaxConSize(COORD* pcrMaxConSize);
-	int GetDetectedDialogs(int anMaxCount, SMALL_RECT* rc, bool* rb);
+	int GetDetectedDialogs(int anMaxCount, SMALL_RECT* rc, DWORD* rf);
 
 public:
     // Вызываются из CVirtualConsole

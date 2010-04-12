@@ -226,14 +226,58 @@ void LoadPanelItemInfoA(CeFullPanelInfo* pi, int nItem)
 	TODO("CeFullPanelInfo* LoadPanelInfoA()");
 }
 
-CeFullPanelInfo* LoadPanelInfoA()
+CeFullPanelInfo* LoadPanelInfoA(BOOL abActive)
 {
 	TODO("CeFullPanelInfo* LoadPanelInfoA()");
 	return NULL;
+}
+
+void ReloadPanelsInfoA()
+{
+	TODO("void ReloadPanelsInfoA()");
 }
 
 BOOL IsLeftPanelActiveA()
 {
 	TODO("IsLeftPanelActiveA");
 	return FALSE;
+}
+
+bool CheckWindowsA()
+{
+	if (!InfoA || !InfoA->AdvControl) return false;
+	
+	bool lbPanelsActive = false;
+	int nCount = (int)InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETWINDOWCOUNT, NULL);
+	WindowInfo wi = {0};
+	char szTypeName[64];
+	char szName[MAX_PATH*2];
+	char szInfo[MAX_PATH*4];
+
+	OutputDebugStringW(L"\n\n");
+	// Pos: Номер окна, о котором нужно узнать информацию. Нумерация идет с 0. Pos = -1 вернет информацию о текущем окне. 
+	for (int i=-1; i <= nCount; i++) {
+		memset(&wi, 0, sizeof(wi));
+		wi.Pos = i;
+		wi.TypeName[0] = 0;
+		wi.Name[0] = 0;
+		int iRc = InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETWINDOWINFO, (LPVOID)&wi);
+		if (iRc) {
+			wsprintfA(szInfo, "%s%i: {%s-%s} %s\n",
+				wi.Current ? "*" : "",
+				i,
+				(wi.Type==WTYPE_PANELS) ? "WTYPE_PANELS" :
+				(wi.Type==WTYPE_VIEWER) ? "WTYPE_VIEWER" :
+				(wi.Type==WTYPE_EDITOR) ? "WTYPE_EDITOR" :
+				(wi.Type==WTYPE_DIALOG) ? "WTYPE_DIALOG" :
+				(wi.Type==WTYPE_VMENU)  ? "WTYPE_VMENU"  :
+				(wi.Type==WTYPE_HELP)   ? "WTYPE_HELP"   : "Unknown",
+				szTypeName, szName);
+		} else {
+			wsprintfA(szInfo, "%i: <window absent>\n", i);
+		}
+		OutputDebugStringA(szInfo);
+	}
+	
+	return lbPanelsActive;
 }

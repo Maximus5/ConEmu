@@ -5,30 +5,87 @@
 #include "UnicodeChars.h"
 #include "farcolor.hpp"
 
+
+static bool gbInTransparentAssert = false;
+
+#ifdef _DEBUG
+	#undef _ASSERTE
+	#define _ASSERTE(expr) gbInTransparentAssert=true; _ASSERT_EXPR((expr), _CRT_WIDE(#expr)); gbInTransparentAssert=false;
+	#undef _ASSERT
+	#define _ASSERT(expr) gbInTransparentAssert=true; _ASSERT_EXPR((expr), _CRT_WIDE(#expr)); gbInTransparentAssert=false;
+#endif
+
+
 CRgnDetect::CRgnDetect()
 {
 	mb_SelfBuffers = FALSE;
 	mn_DetectCallCount = 0;
 	memset(&m_DetectedDialogs, 0, sizeof(m_DetectedDialogs));
 	mp_FarInfo = NULL;
+	// Флаги
+	mn_AllFlags = 0; mn_NextDlgId = 0; mb_NeedPanelDetect = TRUE;
+	memset(&mrc_LeftPanel,0,sizeof(mrc_LeftPanel));
+	memset(&mrc_RightPanel,0,sizeof(mrc_RightPanel));
+	//
+	mpsz_Chars = NULL;
+	mp_Attrs = NULL;
+	mn_CurWidth = mn_CurHeight = mn_MaxCells = 0;
+	mb_SBI_Loaded = false;
+	mb_TableCreated = false;
 }
 
 CRgnDetect::~CRgnDetect()
 {
+	if (mpsz_Chars) {
+		free(mpsz_Chars); mpsz_Chars = NULL;
+	}
+	if (mp_Attrs) {
+		free(mp_Attrs); mp_Attrs = NULL;
+	}
 }
 
-int CRgnDetect::GetDetectedDialogs(int anMaxCount, SMALL_RECT* rc, bool* rb)
+int CRgnDetect::GetDetectedDialogs(int anMaxCount, SMALL_RECT* rc, DWORD* rf)
 {
 	if (!this) return 0;
 	int nCount = min(anMaxCount,m_DetectedDialogs.Count);
 	if (nCount>0) {
 		if (rc)
 			memmove(rc, m_DetectedDialogs.Rects, nCount*sizeof(SMALL_RECT));
-		if (rb)
-			memmove(rb, m_DetectedDialogs.bWasFrame, nCount*sizeof(bool));
+		if (rf)
+			memmove(rf, m_DetectedDialogs.DlgFlags, nCount*sizeof(DWORD));
 	}
 	return nCount;
 }
+
+DWORD CRgnDetect::GetDialog(DWORD nDlgID, SMALL_RECT* rc)
+{
+	if (!nDlgID) {
+		_ASSERTE(nDlgID!=0);
+		return 0;
+	}
+
+	DWORD nMask = nDlgID;
+	if ((nDlgID & FR_FREEDLG_MASK) != 0) {
+		nMask |= FR_FREEDLG_MASK;
+	}
+
+	for (int i = 0; i < m_DetectedDialogs.Count; i++) {
+		if ((m_DetectedDialogs.DlgFlags[i] & nDlgID) == nDlgID) {
+			if (rc) *rc = m_DetectedDialogs.Rects[i];
+			_ASSERTE(m_DetectedDialogs.DlgFlags[i] != 0);
+			return m_DetectedDialogs.DlgFlags[i];
+		}
+	}
+
+	// Такого нету
+	return 0;
+}
+
+DWORD CRgnDetect::GetFlags()
+{
+	return mn_AllFlags;
+}
+
 
 
 
@@ -39,7 +96,6 @@ int CRgnDetect::GetDetectedDialogs(int anMaxCount, SMALL_RECT* rc, bool* rb)
 /* Поиск диалогов и пометка "прозрачных" мест */
 /* ****************************************** */
 
-static bool gbInTransparentAssert = false;
 
 // Найти правую границу
 bool CRgnDetect::FindFrameRight_ByTop(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostRight)
@@ -653,7 +709,7 @@ bool CRgnDetect::ExpandDialogFrame(wchar_t* pChar, CharAttr* pAttr, int nWidth, 
 	int nStartRight = nMostRight;
 	int nStartBottom = nMostBottom;
 	// Теперь расширить nMostRight & nMostBottom на окантовку
-	int n, nShift = nWidth*nFromY;
+	int n, n2, nShift = nWidth*nFromY;
 	wchar_t wc = pChar[nShift+nFromX];
 	DWORD nColor = pAttr[nShift+nFromX].crBackColor;
 
@@ -664,16 +720,22 @@ bool CRgnDetect::ExpandDialogFrame(wchar_t* pChar, CharAttr* pAttr, int nWidth, 
 		//Сначала нужно пройти вверх и влево
 		if (nFromY) { // Пробуем вверх
 			n = (nFromY-1)*nWidth+nFromX;
-			if (pAttr[n].crBackColor == nColor && (pChar[n] == L' ' || pChar[n] == ucNoBreakSpace)) {
+			n2 = (nFromY-1)*nWidth+nMostRight;			
+			if ((pAttr[n].crBackColor == nColor && (pChar[n] == L' ' || pChar[n] == ucNoBreakSpace))
+				&& (pAttr[n2].crBackColor == nColor && (pChar[n2] == L' ' || pChar[n2] == ucNoBreakSpace)))
+			{
 				nFromY--; bExpanded = true;
 			}
 		}
 		if (nFromX) { // Пробуем влево
 			int nMinMargin = nFromX-3; if (nMinMargin<0) nMinMargin = 0;
 			n = nFromY*nWidth+nFromX;
+			n2 = nMostBottom*nWidth+nFromX;
 			while (nFromX > nMinMargin) {
-				n--;
-				if (pAttr[n].crBackColor == nColor && (pChar[n] == L' ' || pChar[n] == ucNoBreakSpace)) {
+				n--; n2--;
+				if ((pAttr[n].crBackColor == nColor && (pChar[n] == L' ' || pChar[n] == ucNoBreakSpace))
+					&& (pAttr[n2].crBackColor == nColor && (pChar[n2] == L' ' || pChar[n2] == ucNoBreakSpace)))
+				{
 					nFromX--;
 				} else {
 					break;
@@ -689,7 +751,7 @@ bool CRgnDetect::ExpandDialogFrame(wchar_t* pChar, CharAttr* pAttr, int nWidth, 
 
 	if (nMostRight < (nWidth-1)) {
 		int nMaxMargin = 3+(nFrameX - nFromX);
-		if (nMaxMargin > nWidth) nMaxMargin = nWidth;
+		if ((nMaxMargin+nMostRight) >= nWidth) nMaxMargin = nWidth - nMostRight - 1;
 		int nFindFrom = nShift+nWidth+nMostRight+1;
 		n = 0;
 		wc = pChar[nShift+nFromX];
@@ -805,9 +867,7 @@ void CRgnDetect::DetectDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int n
 
 	// защита от переполнения стека (быть не должно)
 	if (mn_DetectCallCount >= 3) {
-		gbInTransparentAssert = true;
 		_ASSERTE(mn_DetectCallCount<3);
-		gbInTransparentAssert = false;
 		return;
 	}
 	
@@ -950,14 +1010,111 @@ void CRgnDetect::MarkDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHe
 		return;
 	}
 
-	TODO("Занести координаты в новый массив прямоугольников, обнаруженных в консоли");
+	int nDlgIdx = -1;
+	DWORD DlgFlags = bMarkBorder ? FR_HASBORDER : 0;
+	int nWidth_1 = nWidth - 1;
+	int nHeight_1 = nHeight - 1;
+
+	if (!nX1 && !nY1 && !nY2 && nX2 == nWidth_1) {
+		if ((mp_FarInfo->nFarInterfaceSettings & 0x10/*FIS_ALWAYSSHOWMENUBAR*/) == 0) {
+			DlgFlags |= FR_ACTIVEMENUBAR;
+		} else {
+			DlgFlags |= FR_MENUBAR;
+
+			// Попытаться подхватить флаг FR_ACTIVEMENUBAR даже когда меню всегда видно
+			BYTE btMenuInactiveFore = (mp_FarInfo->nFarColors[COL_HMENUTEXT] & 0xF);
+			BYTE btMenuInactiveBack = (mp_FarInfo->nFarColors[COL_HMENUTEXT] & 0xF0) >> 4;
+			int nShift = nY1 * nWidth + nX1;
+			for (int nX = nX1; nX <= nX2; nX++, nShift++) {
+				if (pAttr[nShift].nForeIdx != btMenuInactiveFore
+					|| pAttr[nShift].nBackIdx != btMenuInactiveBack)
+				{
+					DlgFlags |= FR_ACTIVEMENUBAR;
+					break;
+				}
+			}			
+		}
+
+	}
+	else 
+	if (bMarkBorder && bFindExterior && mb_NeedPanelDetect) // должно быть так при пометке панелей
+		//&& !(mn_AllFlags & FR_FULLPANEL) // если еще не нашли полноэкранную панель
+		//&& ((mn_AllFlags & (FR_LEFTPANEL|FR_RIGHTPANEL)) != (FR_LEFTPANEL|FR_RIGHTPANEL)) // и не нашли или правую или левую панель
+		//)
+	{
+		if ((!nY1 || ((mn_AllFlags & FR_MENUBAR) && (nY1 == 1))) // условие для верхней границы панелей
+			&& (nY2 >= (nY1 + 3))) // и минимальная высота панелей
+		{
+			SMALL_RECT r; DWORD nPossible = 0;
+			if (!nX1) {
+				if (nX2 == nWidth_1) {
+					nPossible |= FR_FULLPANEL;
+					r.Left = nX1; r.Top = nY1; r.Right = nX2; r.Bottom = nY2;
+				} else if (nX2 < (nWidth-9)) {
+					nPossible |= FR_LEFTPANEL;
+					r.Left = nX1; r.Top = nY1; r.Right = nX2; r.Bottom = nY2;
+				}
+			} else if (nX1 >= 10 && nX2 == nWidth_1) {
+				nPossible |= FR_RIGHTPANEL;
+				r.Left = nX1; r.Top = nY1; r.Right = nX2; r.Bottom = nY2;
+			}
+			
+			if (nPossible) {
+				// Нужно чтобы хотя бы в одном углу этого прямоугольника были цвета рамки панелей!
+				// Иначе - считаем что вся панель перекрыта диалогами и не видима
+				BYTE btPanelFore = (mp_FarInfo->nFarColors[COL_PANELBOX] & 0xF);
+				BYTE btPanelBack = (mp_FarInfo->nFarColors[COL_PANELBOX] & 0xF0) >> 4;
+				
+				int nShift = 0;
+				for (int i = 0; i < 4; i++) {
+					switch (i) {
+						case 0: nShift = nY1 * nWidth + nX1; break;
+						case 1: nShift = nY2 * nWidth + nX1; break;
+						case 2: nShift = nY1 * nWidth + nX2; break;
+						case 3: nShift = nY2 * nWidth + nX2; break;
+					}
+					// Если цвет угла совпал с рамкой панели - то считаем, что это она
+					if (pAttr[nShift].nForeIdx == btPanelFore || pAttr[nShift].nBackIdx == btPanelBack)
+					{
+						if ((nPossible & FR_RIGHTPANEL))
+							mrc_RightPanel = r;
+						else
+							mrc_LeftPanel = r;
+						DlgFlags |= nPossible;
+						// Может все панели уже нашли?
+						if ((nPossible & FR_FULLPANEL))
+							mb_NeedPanelDetect = FALSE;
+						else if ((mn_AllFlags & (FR_LEFTPANEL|FR_RIGHTPANEL)) == (FR_LEFTPANEL|FR_RIGHTPANEL))
+							mb_NeedPanelDetect = FALSE;
+						break;
+					}
+				}
+			}
+		}
+	}
+
+	if (!(DlgFlags & FR_COMMONDLG_MASK)) {
+		mn_NextDlgId++;
+		DlgFlags |= mn_NextDlgId<<8;
+		// "Красненький" диалог?
+		BYTE btWarnBack = (mp_FarInfo->nFarColors[COL_WARNDIALOGBOX] & 0xF0) >> 4;
+		if (pAttr[nY1 * nWidth + nX1].nBackIdx == btWarnBack) {
+			BYTE btNormBack = (mp_FarInfo->nFarColors[COL_DIALOGBOX] & 0xF0) >> 4;
+			if (btNormBack != btWarnBack)
+				DlgFlags |= FR_ERRORCOLOR;
+		}
+	}
+
+
+	// Занести координаты в новый массив прямоугольников, обнаруженных в консоли
 	if (m_DetectedDialogs.Count < MAX_DETECTED_DIALOGS) {
-		int i = m_DetectedDialogs.Count++;
-		m_DetectedDialogs.Rects[i].Left = nX1;
-		m_DetectedDialogs.Rects[i].Top = nY1;
-		m_DetectedDialogs.Rects[i].Right = nX2;
-		m_DetectedDialogs.Rects[i].Bottom = nY2;
-		m_DetectedDialogs.bWasFrame[i] = bMarkBorder;
+		nDlgIdx = m_DetectedDialogs.Count++;
+		m_DetectedDialogs.Rects[nDlgIdx].Left = nX1;
+		m_DetectedDialogs.Rects[nDlgIdx].Top = nY1;
+		m_DetectedDialogs.Rects[nDlgIdx].Right = nX2;
+		m_DetectedDialogs.Rects[nDlgIdx].Bottom = nY2;
+		//m_DetectedDialogs.bWasFrame[nDlgIdx] = bMarkBorder;
+		m_DetectedDialogs.DlgFlags[nDlgIdx] = DlgFlags;
 	}
 
 #ifdef _DEBUG
@@ -997,24 +1154,215 @@ void CRgnDetect::MarkDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHe
 	if (bFindExterior && bMarkBorder) {
 		int nMostRight = nX2, nMostBottom = nY2;
 		int nNewX1 = nX1, nNewY1 = nY1;
+		_ASSERTE(nMostRight<nWidth);
+		_ASSERTE(nMostBottom<nHeight);
 		if (ExpandDialogFrame(pChar, pAttr, nWidth, nHeight, nNewX1, nNewY1, nX1, nY1, nMostRight, nMostBottom)) {
 			_ASSERTE(nNewX1>=0 && nNewY1>=0);
+
+			DlgFlags |= FR_HASEXTENSION;
+			if (nDlgIdx >= 0)
+				m_DetectedDialogs.DlgFlags[nDlgIdx] = DlgFlags;
+
 			//Optimize: помечать можно только окантовку - сам диалог уже помечен
-			MarkDialog(pChar, pAttr, nWidth, nHeight, nNewX1, nNewY1, nMostRight, nMostBottom, TRUE, FALSE);
+			MarkDialog(pChar, pAttr, nWidth, nHeight, nNewX1, nNewY1, nMostRight, nMostBottom, true, false);
 		}
+	}
+
+	mn_AllFlags |= DlgFlags;
+}
+
+void CRgnDetect::OnWindowSizeChanged()
+{
+	mb_SBI_Loaded = false; // данные должны быть перечитаны
+}
+
+//lpBuffer 
+//The data to be written to the console screen buffer. This pointer is treated as the origin of a 
+//two-dimensional array of CHAR_INFO structures whose size is specified by the dwBufferSize parameter. 
+//The total size of the array must be less than 64K.
+//
+//dwBufferSize 
+//The size of the buffer pointed to by the lpBuffer parameter, in character cells. 
+//The X member of the COORD structure is the number of columns; the Y member is the number of rows.
+//
+//dwBufferCoord 
+//The coordinates of the upper-left cell in the buffer pointed to by the lpBuffer parameter. 
+//The X member of the COORD structure is the column, and the Y member is the row.
+//
+//lpWriteRegion 
+//A pointer to a SMALL_RECT structure. On input, the structure members specify the upper-left and lower-right 
+//coordinates of the console screen buffer rectangle to write to. 
+//On output, the structure members specify the actual rectangle that was used.
+void CRgnDetect::OnWriteConsoleOutput(const CHAR_INFO *lpBuffer,COORD dwBufferSize,COORD dwBufferCoord,PSMALL_RECT lpWriteRegion)
+{
+	if (!mpsz_Chars || !mp_Attrs)
+		return; // буфер еще не был выделен
+	if ((dwBufferCoord.X >= dwBufferSize.X) || (dwBufferCoord.Y >= dwBufferSize.Y))
+	{
+		_ASSERTE(dwBufferCoord.X < dwBufferSize.X);
+		_ASSERTE(dwBufferCoord.Y < dwBufferSize.Y);
+		return; // Ошибка в параметрах
+	}
+		
+
+    if (!mb_TableCreated) {
+    	mb_TableCreated = true;
+        // формирование умолчательных цветов, по атрибутам консоли
+	    int  nColorIndex = 0;
+	    CharAttr lca;
+	        
+	    for (int nBack = 0; nBack <= 0xF; nBack++) {
+	    	for (int nFore = 0; nFore <= 0xF; nFore++, nColorIndex++) {
+				memset(&lca, 0, sizeof(lca));
+	    		lca.nForeIdx = nFore;
+	    		lca.nBackIdx = nBack;
+		    	lca.crForeColor = lca.crOrigForeColor = mp_Colors[lca.nForeIdx];
+		    	lca.crBackColor = lca.crOrigBackColor = mp_Colors[lca.nBackIdx];
+		    	mca_Table[nColorIndex] = lca;
+			}
+		}
+    }
+
+	// Расфуговка буфера CHAR_INFO на текст и атрибуты
+	int nX1 = max(0,lpWriteRegion->Left);
+	int nX2 = min(lpWriteRegion->Right,(mn_CurWidth-1));
+	int nY1 = max(0,lpWriteRegion->Top);
+	int nY2 = min(lpWriteRegion->Bottom,(mn_CurHeight-1));
+	if ((dwBufferSize.X - dwBufferCoord.X - 1) < (nX2 - nX1))
+		nX2 = nX1 + (dwBufferSize.X - dwBufferCoord.X - 1);
+	if ((dwBufferSize.Y - dwBufferCoord.Y - 1) < (nY2 - nY1))
+		nY2 = nY1 + (dwBufferSize.Y - dwBufferCoord.Y - 1);
+	
+	const CHAR_INFO *pSrcLine = lpBuffer + dwBufferCoord.Y * dwBufferSize.X;
+	
+	for (int Y = nY1; Y <= nY2; Y++) {
+		const CHAR_INFO *pCharInfo = pSrcLine + dwBufferCoord.X;
+		wchar_t  *pChar = mpsz_Chars + Y * mn_CurWidth;
+		CharAttr *pAttr = mp_Attrs + Y * mn_CurWidth;
+	
+		for (int X = nX1; X <= nX2; X++, pCharInfo++) {
+			TODO("OPTIMIZE: *(lpAttr++) = lpCur->Attributes;");
+			*(pAttr++) = mca_Table[pCharInfo->Attributes & 0xFF];
+
+			TODO("OPTIMIZE: ch = lpCur->Char.UnicodeChar;");
+			*(pChar++) = pCharInfo->Char.UnicodeChar;
+		}
+		
+		pSrcLine += dwBufferSize.X;
 	}
 }
 
+// Эта функция вызывается из плагинов (ConEmuTh)
+void CRgnDetect::PrepareTransparent(const CEFAR_INFO *apFarInfo, const COLORREF *apColors)
+{
+	if (gbInTransparentAssert)
+		return;
+
+	mp_FarInfo = apFarInfo;
+	mp_Colors = apColors;
+
+	// Сброс флагов и прямоугольников панелей
+	mn_AllFlags = 0; mn_NextDlgId = 0; mb_NeedPanelDetect = TRUE;
+	memset(&mrc_LeftPanel,0,sizeof(mrc_LeftPanel));
+	memset(&mrc_RightPanel,0,sizeof(mrc_RightPanel));
+
+	if (!mb_SBI_Loaded) {
+		HANDLE hStd = GetStdHandle(STD_OUTPUT_HANDLE);
+		mb_SBI_Loaded = GetConsoleScreenBufferInfo(hStd, &m_sbi)!=0;
+		
+		if (!mb_SBI_Loaded)
+			return;
+			
+		// Нужно скорректировать srWindow, т.к. ФАР в любом случае забивает на видимый регион и рисует на весь буфер.
+		if (m_sbi.srWindow.Left)
+			m_sbi.srWindow.Left = 0;
+		if ((m_sbi.srWindow.Right+1) != m_sbi.dwSize.X)
+			m_sbi.srWindow.Right = m_sbi.dwSize.X - 1;
+		if (m_sbi.srWindow.Top)
+			m_sbi.srWindow.Top = 0;
+		if ((m_sbi.srWindow.Bottom+1) != m_sbi.dwSize.Y)
+			m_sbi.srWindow.Bottom = m_sbi.dwSize.Y - 1;
+
+		// Выделить память, при необходимости увеличить
+		if (!mpsz_Chars || !mp_Attrs || (m_sbi.dwSize.X * m_sbi.dwSize.Y) > mn_MaxCells) {
+			if (mpsz_Chars) free(mpsz_Chars);
+			mn_MaxCells = (m_sbi.dwSize.X * m_sbi.dwSize.Y);
+			mn_CurWidth = m_sbi.dwSize.X;
+			mn_CurHeight = m_sbi.dwSize.Y;
+			mpsz_Chars = (wchar_t*)calloc(mn_MaxCells, sizeof(wchar_t));
+			mp_Attrs = (CharAttr*)calloc(mn_MaxCells, sizeof(CharAttr));
+		}
+		if (!mpsz_Chars || !mp_Attrs) {
+			_ASSERTE(mpsz_Chars && mp_Attrs);
+			return;
+		}
+		if (!mn_MaxCells) {
+			_ASSERTE(mn_MaxCells>0);
+			return;
+		}
+		CHAR_INFO *pCharInfo = (CHAR_INFO*)calloc(mn_MaxCells, sizeof(CHAR_INFO));
+		if (!pCharInfo) {
+			_ASSERTE(pCharInfo);
+			return;
+		}
+		BOOL bReadOk = FALSE;
+		COORD bufSize, bufCoord;
+		SMALL_RECT rgn;
+		// Если весь буфер больше 30К - и пытаться не будем
+		if ((mn_MaxCells*sizeof(CHAR_INFO)) < 30000) {
+			bufSize.X = m_sbi.dwSize.X; bufSize.Y = m_sbi.dwSize.Y;
+			bufCoord.X = 0; bufCoord.Y = 0;
+			rgn = m_sbi.srWindow;
+			if (ReadConsoleOutput(hStd, pCharInfo, bufSize, bufCoord, &rgn))
+				bReadOk = TRUE;
+		}
+
+		if (!bReadOk)
+		{
+			// Придется читать построчно
+			bufSize.X = m_sbi.dwSize.X; bufSize.Y = 1;
+			bufCoord.X = 0; bufCoord.Y = 0;
+			rgn = m_sbi.srWindow;
+			CHAR_INFO* pLine = pCharInfo;
+			for(int y = 0; y < (int)m_sbi.dwSize.Y; y++, rgn.Top++, pLine+=m_sbi.dwSize.X)
+			{
+				rgn.Bottom = rgn.Top;
+				ReadConsoleOutput(hStd, pLine, bufSize, bufCoord, &rgn);
+			}
+		}
+		
+		// Теперь нужно перекинуть данные в mpsz_Chars & mp_Attrs
+		//GetConsoleData(pCharInfo, apColors, mpsz_Chars, mp_Attrs, m_sbi.dwSize.X, m_sbi.dwSize.Y);
+		COORD crNul = {0,0};
+		OnWriteConsoleOutput(pCharInfo, m_sbi.dwSize, crNul, &m_sbi.srWindow);
+		
+		// Буфер CHAR_INFO больше не нужен
+		free(pCharInfo);
+	}
+	
+	
+	PrepareTransparent(apFarInfo, apColors, &m_sbi, mpsz_Chars, mp_Attrs, mn_CurWidth, mn_CurHeight);
+}
+
+// Эта функция вызывается из GUI
 void CRgnDetect::PrepareTransparent(const CEFAR_INFO *apFarInfo, const COLORREF *apColors, const CONSOLE_SCREEN_BUFFER_INFO *apSbi,
 									wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight)
 {
 	mp_FarInfo = apFarInfo;
 	mp_Colors = apColors;
-	m_sbi = *apSbi;
+	if (apSbi != &m_sbi)
+		m_sbi = *apSbi;
 	mb_BufferHeight = m_sbi.dwSize.Y > (m_sbi.srWindow.Bottom - m_sbi.srWindow.Top + 10);
 
 	if (gbInTransparentAssert)
 		return;
+
+	// Сброс флагов и прямоугольников панелей
+	mn_AllFlags = 0; mn_NextDlgId = 0; mb_NeedPanelDetect = TRUE;
+	memset(&mrc_LeftPanel,0,sizeof(mrc_LeftPanel));
+	memset(&mrc_RightPanel,0,sizeof(mrc_RightPanel));
+
+
 
 	m_DetectedDialogs.Count = 0;
 
@@ -1037,7 +1385,7 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO *apFarInfo, const COLORREF 
 	// реальный цвет, заданный в фаре
 	int nUserBackIdx = (mp_FarInfo->nFarColors[COL_COMMANDLINEUSERSCREEN] & 0xF0) >> 4;
 	COLORREF crUserBack = mp_Colors[nUserBackIdx];
-	int nMenuBackIdx = (mp_FarInfo->nFarColors[COL_MENUTITLE] & 0xF0) >> 4;
+	int nMenuBackIdx = (mp_FarInfo->nFarColors[COL_HMENUTEXT] & 0xF0) >> 4;
 	COLORREF crMenuTitleBack = mp_Colors[nMenuBackIdx];
 	
 	// Для детекта наличия PanelTabs
@@ -1097,7 +1445,8 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO *apFarInfo, const COLORREF 
 	if (lbLeftVisible) {
 		if (r.right == (nWidth-1))
 			lbFullPanel = true; // значит правой быть не может
-		MarkDialog(pChar, pAttr, nWidth, nHeight, r.left, r.top, r.right, r.bottom, TRUE);
+		MarkDialog(pChar, pAttr, nWidth, nHeight, r.left, r.top, r.right, r.bottom, true);
+		
 		// Для детекта наличия PanelTabs
 		if (nHeight > (nBottomLines+r.bottom+1)) {
 			int nIdx = nWidth*(r.bottom+1)+r.right-1;
@@ -1122,7 +1471,8 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO *apFarInfo, const COLORREF 
 			lbRightVisible = ConsoleRect2ScreenRect(mp_FarInfo->FarRightPanel.PanelRect, &r);
 		}
 		if (lbRightVisible) {
-			MarkDialog(pChar, pAttr, nWidth, nHeight, r.left, r.top, r.right, r.bottom, TRUE);
+			MarkDialog(pChar, pAttr, nWidth, nHeight, r.left, r.top, r.right, r.bottom, true);
+			
 			// Для детекта наличия PanelTabs
 			if (nHeight > (nBottomLines+r.bottom+1)) {
 				int nIdx = nWidth*(r.bottom+1)+r.right-1;
@@ -1135,6 +1485,9 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO *apFarInfo, const COLORREF 
 			}
 		}
 	}
+	
+	mb_NeedPanelDetect = TRUE;
+	
 
 	// Может быть первая строка - меню? постоянное или текущее
 	if (bAlwaysShowMenuBar // всегда
@@ -1145,12 +1498,10 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO *apFarInfo, const COLORREF 
 		MarkDialog(pChar, pAttr, nWidth, nHeight, 0, 0, nWidth-1, 0);
 	}
 
-	WARNING("!!! Установку bTransparent делать во второй проход, когда все диалоги уже определены !!!");
+
 
 	if (mn_DetectCallCount != 0) {
-		gbInTransparentAssert = true;
 		_ASSERT(mn_DetectCallCount == 0);
-		gbInTransparentAssert = false;
 	}
 
 	wchar_t* pszDst = pChar;
@@ -1164,7 +1515,7 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO *apFarInfo, const COLORREF 
 			int nX2 = nWidth-1; // по умолчанию - на всю ширину
 
 			//if (!mb_LeftPanel && mb_RightPanel) {
-			if (!mp_FarInfo->bFarLeftPanel && !mp_FarInfo->bFarRightPanel) {
+			if (!mp_FarInfo->bFarLeftPanel && mp_FarInfo->bFarRightPanel) {
 				// Погашена только левая панель
 				nX2 = /*mr_RightPanelFull*/ mp_FarInfo->FarRightPanel.PanelRect.left-1;
 			//} else if (mb_LeftPanel && !mb_RightPanel) {
@@ -1346,3 +1697,41 @@ bool CRgnDetect::ConsoleRect2ScreenRect(const RECT &rcCon, RECT *prcScr)
 	}
 	return lbRectOK;
 }
+
+//void CRgnDetect::GetConsoleData(const CHAR_INFO *pCharInfo, const COLORREF *apColors, wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight)
+//{
+//    DWORD cwDstBufSize = nWidth * nHeight;
+//
+//    _ASSERT(nWidth != 0 && nHeight != 0);
+//    if (nWidth == 0 || nHeight == 0)
+//        return;
+//
+//
+//    if (!mb_TableCreated) {
+//    	mb_TableCreated = true;
+//        // формирование умолчательных цветов, по атрибутам консоли
+//	    int  nColorIndex = 0;
+//	    CharAttr lca;
+//	        
+//	    for (int nBack = 0; nBack <= 0xF; nBack++) {
+//	    	for (int nFore = 0; nFore <= 0xF; nFore++, nColorIndex++) {
+//				memset(&lca, 0, sizeof(lca));
+//	    		lca.nForeIdx = nFore;
+//	    		lca.nBackIdx = nBack;
+//		    	lca.crForeColor = lca.crOrigForeColor = mp_Colors[lca.nForeIdx];
+//		    	lca.crBackColor = lca.crOrigBackColor = mp_Colors[lca.nBackIdx];
+//		    	mca_Table[nColorIndex] = lca;
+//			}
+//		}
+//    }
+//
+//
+//	// Расфуговка буфера CHAR_INFO на текст и атрибуты
+//	for (DWORD n = 0; n < CharCount; n++, pCharInfo++) {
+//		TODO("OPTIMIZE: *(lpAttr++) = lpCur->Attributes;");
+//		*(pAttr++) = mca_Table[pCharInfo->Attributes & 0xFF];
+//
+//		TODO("OPTIMIZE: ch = lpCur->Char.UnicodeChar;");
+//		*(pChar++) = pCharInfo->Char.UnicodeChar;
+//	}
+//}

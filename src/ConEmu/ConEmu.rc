@@ -408,7 +408,7 @@ END
 IDD_SPG_FEATURE DIALOGEX 0, 0, 328, 235
 STYLE DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
-FONT 8, "MS Shell Dlg"
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     CONTROL         "Auto minimize to tray",cbMinToTray,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,132,144,81,8
@@ -592,7 +592,7 @@ END
 IDD_SPG_TABS DIALOGEX 0, 0, 328, 235
 STYLE DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
-FONT 8, "MS Shell Dlg", 0, 0, 0x1
+FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        "Tabs (panels, editors, viewers)",IDC_STATIC,4,2,319,29
     CONTROL         "Enable Tabs",cbTabs,"Button",BS_AUTO3STATE | WS_TABSTOP,
@@ -603,40 +603,54 @@ BEGIN
                     WS_TABSTOP,137,15,66,8
     CONTROL         "Recent mode",cbTabRecent,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,206,15,59,8
+    CONTROL         "Active only",cbHideInactiveConTabs,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,267,15,51,10
+    GROUPBOX        "Tab templates",IDC_STATIC,4,34,319,45
+    RTEXT           "Console:",IDC_STATIC,8,46,30,8
+    EDITTEXT        tTabConsole,42,44,40,12,ES_AUTOHSCROLL
+    RTEXT           "Viewer:",IDC_STATIC,85,46,29,8
+    EDITTEXT        tTabViewer,119,44,40,12,ES_AUTOHSCROLL
+    RTEXT           "Editor:",IDC_STATIC,166,46,22,8
+    EDITTEXT        tTabEditor,192,44,40,12,ES_AUTOHSCROLL
+    RTEXT           "Modified:",IDC_STATIC,237,46,36,8
+    EDITTEXT        tTabEditorMod,278,44,40,12,ES_AUTOHSCROLL
+    RTEXT           "Maximum tab width (in chars):",IDC_STATIC,7,63,107,8
+    EDITTEXT        tTabLenMax,119,61,40,12,ES_AUTOHSCROLL
+    CONTROL         "Admin shield, or suffix",cbAdminShield,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,168,62,83,10
+    EDITTEXT        tAdminSuffix,254,61,64,12,ES_AUTOHSCROLL | WS_DISABLED
     GROUPBOX        "Multi console",IDC_STATIC,4,82,319,44
     CONTROL         "Multi Console",cbMultiCon,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,10,95,61,8
-    CONTROL         "Long console output",cbLongOutput,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,78,111,84,8
-    EDITTEXT        tLongOutputHeight,163,109,29,12,ES_AUTOHSCROLL
     CONTROL         "Create confirmation",cbNewConfirm,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,78,95,77,8
     RTEXT           "Cmd output codepage:",IDC_STATIC,174,94,88,8
     COMBOBOX        lbCmdOutputCP,264,91,54,30,CBS_DROPDOWNLIST | WS_TABSTOP
+    PUSHBUTTON      "More...",bMultiConHotkeys,9,107,48,13,WS_DISABLED
+    CONTROL         "Long console output",cbLongOutput,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,78,111,84,8
+    EDITTEXT        tLongOutputHeight,163,109,29,12,ES_AUTOHSCROLL
     RTEXT           "16bit height:",IDC_STATIC,218,111,44,8
     COMBOBOX        lbNtvdmHeight,264,109,54,30,CBS_DROPDOWNLIST | 
                     WS_TABSTOP
-    PUSHBUTTON      "More...",bMultiConHotkeys,9,107,48,13,WS_DISABLED
-    CONTROL         "Active only",cbHideInactiveConTabs,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,267,15,51,10
+    GROUPBOX        "Hotkeys",IDC_STATIC,4,131,319,54
     GROUPBOX        "Host-key",IDC_STATIC,8,139,145,42
     CONTROL         "Win",cbHostWin,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,
                     152,28,10
-    CONTROL         "Apps",cbHostApps,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
-                    14,166,32,10
-    CONTROL         "LCtrl",cbHostLCtrl,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,80,152,31,10
-    CONTROL         "RCtrl",cbHostRCtrl,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,80,166,32,10
     CONTROL         "LAlt",cbHostLAlt,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
                     48,152,28,10
-    CONTROL         "RAlt",cbHostRAlt,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
-                    48,166,29,10
+    CONTROL         "LCtrl",cbHostLCtrl,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,80,152,31,10
     CONTROL         "LShift",cbHostLShift,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,116,152,34,10
+    CONTROL         "Apps",cbHostApps,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
+                    14,166,32,10
+    CONTROL         "RAlt",cbHostRAlt,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
+                    48,166,29,10
+    CONTROL         "RCtrl",cbHostRCtrl,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,80,166,32,10
     CONTROL         "RShift",cbHostRShift,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,116,166,35,10
-    GROUPBOX        "Hotkeys",IDC_STATIC,4,131,319,54
     RTEXT           "New:",IDC_STATIC,157,144,19,8
     CONTROL         "",hkNewConsole,"msctls_hotkey32",WS_BORDER | WS_TABSTOP,
                     179,142,23,13
@@ -649,20 +663,6 @@ BEGIN
     CONTROL         "Use «Host-key»+Number to switch consoles",
                     cbUseWinNumber,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,159,
                     158,159,10
-    GROUPBOX        "Tab templates",IDC_STATIC,4,34,319,45
-    RTEXT           "Console:",IDC_STATIC,8,46,30,8
-    EDITTEXT        tTabConsole,42,44,40,12,ES_AUTOHSCROLL
-    RTEXT           "Viewer:",IDC_STATIC,85,46,29,8
-    RTEXT           "Editor:",IDC_STATIC,166,46,22,8
-    RTEXT           "Modified:",IDC_STATIC,237,46,36,8
-    EDITTEXT        tTabEditor,192,44,40,12,ES_AUTOHSCROLL
-    EDITTEXT        tTabViewer,119,44,40,12,ES_AUTOHSCROLL
-    EDITTEXT        tTabEditorMod,278,44,40,12,ES_AUTOHSCROLL
-    RTEXT           "Maximum tab width (in chars):",IDC_STATIC,7,63,107,8
-    EDITTEXT        tTabLenMax,119,61,40,12,ES_AUTOHSCROLL
-    CONTROL         "Admin shield, or suffix",cbAdminShield,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,168,62,83,10
-    EDITTEXT        tAdminSuffix,254,61,64,12,ES_AUTOHSCROLL | WS_DISABLED
     CONTROL         "Install keyboard hooks (Vista && Win7)",
                     cbInstallKeybHooks,"Button",BS_AUTO3STATE | WS_TABSTOP,
                     159,170,160,10

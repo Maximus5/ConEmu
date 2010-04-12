@@ -707,8 +707,10 @@ DWORD WINAPI DisplayThread(LPVOID lpvParam)
 	gpThumbnails = NULL;
 
 	// Освободить память
-	pviLeft.Free();
-	pviRight.Free();
+	pviLeft.FreeInfo();
+	pviRight.FreeInfo();
+
+	UpdateEnvVar(FALSE);
 	
 	CoUninitialize();
 	
@@ -762,6 +764,9 @@ BOOL PaintItem(HDC hdc, int x, int y, CePluginPanelItem* pItem, BOOL abCurrentIt
 		((abCurrentItem/*nItem==nCurrentItem*/) ? 2 : 0));
 	crBack = nBackColor[nIdx];
 	crFore = nForeColor[nIdx];
+	if ((pItem->FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+		&& ((pItem->Flags & (0x40000000/*PPIF_SELECTED*/)) == 0))
+		crFore = 0xFFFFFF;
 
 	FillRect(hdc, &rcClip, hBack[nIdx]);
 
@@ -816,7 +821,7 @@ void Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc, CeFullPanelInfo* pi)
 	int nTopItem = pi->TopPanelItem;
 	int nItemCount = pi->ItemsNumber;
 	int nCurrentItem = pi->CurrentItem;
-	CePluginPanelItem** ppItems = pi->ppItems;
+	//CePluginPanelItem** ppItems = pi->ppItems;
 
 	if ((nTopItem + nXCount*nYCountFull) < nCurrentItem) {
 		TODO("Выравнивание на границу nXCount");
@@ -864,24 +869,29 @@ void Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc, CeFullPanelInfo* pi)
 
 		for (int Y = 0; !gbCancelAll && Y < nYCount && nItem < nItemCount; Y++) {
 			int nXCoord = 0;
-			for (int X = 0; !gbCancelAll && X < nXCount && nItem < nItemCount; X++, nItem++, ppItems) {
+			for (int X = 0; !gbCancelAll && X < nXCount && nItem < nItemCount; X++, nItem++) {
 				// Обновить информацию об элементе (имя, веделенность, и т.п.)
-				if (nStep == 0) {
+				if (nStep == 0 || pi->ppItems[nItem] == NULL) {
 					LoadPanelItemInfo(pi, nItem);
+				}
+
+				CePluginPanelItem* pItem = pi->ppItems[nItem];
+				if (!pItem) {
+					continue; // Ошибка?
 				}
 			
 				// поехали
-				const wchar_t* pszName = ppItems[nItem]->FindData.lpwszFileName;
+				const wchar_t* pszName = pItem->FindData.lpwszFileName;
 				if (wcschr(pszName, L'\\')) {
 					// Это уже может быть полный путь (TempPanel?)
-					ppItems[nItem]->pszFullName = pszName;
+					pItem->pszFullName = pszName;
 				} else {
 					// Полный путь нужно сформировать
 					lstrcpyn(pszNamePtr, pszName, MAX_PATH+1);
-					ppItems[nItem]->pszFullName = pszFull;
+					pItem->pszFullName = pszFull;
 				}
 
-				if (PaintItem(hCompDC, 0, 0, ppItems[nItem], (nItem==nCurrentItem), 
+				if (PaintItem(hCompDC, 0, 0, pItem, (nItem==nCurrentItem), 
 					nBackColor, nForeColor, hBack,
 					nXIcon, nYIcon, nXIconSpace, nYIconSpace, 
 					(nStep == 1), hWhiteBrush))
