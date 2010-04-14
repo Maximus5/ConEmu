@@ -868,6 +868,18 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 			gbNoCreateProcess = TRUE;
 		} else
 
+		if (wcsncmp(szArg, L"/GID=", 5)==0) {
+			gnRunMode = RM_SERVER;
+			wchar_t* pszEnd = NULL;
+			srv.dwGuiPID = wcstol(szArg+5, &pszEnd, 10);
+			if (srv.dwGuiPID == 0) {
+				_printf ("Invalid GUI PID specified:\n");
+				_wprintf (GetCommandLineW());
+				_printf ("\n");
+				return CERR_CARGUMENT;
+			}
+		} else
+		
 		if (wcsncmp(szArg, L"/PID=", 5)==0) {
 			gnRunMode = RM_SERVER;
 			gbNoCreateProcess = TRUE;
@@ -1432,9 +1444,10 @@ void SendStarted()
 
 		WCHAR sHeaderMapName[64];
 		wsprintf(sHeaderMapName, CECONMAPNAME, (DWORD)hConWnd);
-		HANDLE hFileMapping = OpenFileMapping(FILE_MAP_READ|FILE_MAP_WRITE, FALSE, sHeaderMapName);
+		HANDLE hFileMapping = OpenFileMapping(FILE_MAP_READ/*|FILE_MAP_WRITE*/, FALSE, sHeaderMapName);
 		if (hFileMapping) {
-			CESERVER_REQ_CONINFO_HDR* pConsoleInfo = (CESERVER_REQ_CONINFO_HDR*)MapViewOfFile(hFileMapping, FILE_MAP_READ|FILE_MAP_WRITE,0,0,0);
+			const CESERVER_REQ_CONINFO_HDR* pConsoleInfo 
+				= (CESERVER_REQ_CONINFO_HDR*)MapViewOfFile(hFileMapping, FILE_MAP_READ/*|FILE_MAP_WRITE*/,0,0,0);
 			if (pConsoleInfo) {
 				nServerPID = pConsoleInfo->nServerPID;
 				nGuiPID = pConsoleInfo->nGuiPID;
@@ -1966,77 +1979,6 @@ int CALLBACK FontEnumProc(ENUMLOGFONTEX *lpelfe, NEWTEXTMETRICEX *lpntme, DWORD 
 		return 0;
 	}
 	return TRUE; // ищем следующий фонт
-}
-
-HWND FindConEmuByPID()
-{
-	HWND hConEmuWnd = NULL;
-	DWORD dwGuiThreadId = 0, dwGuiProcessId = 0;
-
-	// GUI может еще "висеть" в ожидании или в отладчике, так что пробуем и через Snapshoot
-	DWORD dwGuiPID = 0;
-	HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS,0);
-	if (hSnap != INVALID_HANDLE_VALUE) {
-		PROCESSENTRY32 prc = {sizeof(PROCESSENTRY32)};
-		if (Process32First(hSnap, &prc)) {
-			do {
-				if (prc.th32ProcessID == gnSelfPID) {
-					dwGuiPID = prc.th32ParentProcessID;
-					break;
-				}
-			} while (Process32Next(hSnap, &prc));
-		}
-		CloseHandle(hSnap);
-	}
-	if (dwGuiPID) {
-		HWND hGui = NULL;
-		while ((hGui = FindWindowEx(NULL, hGui, VirtualConsoleClassMain, NULL)) != NULL) {
-			dwGuiThreadId = GetWindowThreadProcessId(hGui, &dwGuiProcessId);
-			if (dwGuiProcessId == dwGuiPID) {
-				hConEmuWnd = hGui;
-				
-				break;
-			}
-		}
-	}
-
-	return hConEmuWnd;
-}
-
-void CheckConEmuHwnd()
-{
-	//HWND hWndFore = GetForegroundWindow();
-	//HWND hWndFocus = GetFocus();
-	DWORD dwGuiThreadId = 0, dwGuiProcessId = 0;
-
-	if (ghConEmuWnd == NULL) {
-		SendStarted(); // Он и окно проверит, и параметры перешлет и размер консоли скорректирует
-	}
-	// GUI может еще "висеть" в ожидании или в отладчике, так что пробуем и через Snapshoot
-	if (ghConEmuWnd == NULL) {
-		ghConEmuWnd = FindConEmuByPID();
-	}
-	if (ghConEmuWnd == NULL) { // Если уж ничего не помогло...
-		ghConEmuWnd = GetConEmuHWND(TRUE/*abRoot*/);
-	}
-	if (ghConEmuWnd) {
-		// Установить переменную среды с дескриптором окна
-		SetConEmuEnvVar(ghConEmuWnd);
-
-		dwGuiThreadId = GetWindowThreadProcessId(ghConEmuWnd, &dwGuiProcessId);
-
-		AllowSetForegroundWindow(dwGuiProcessId);
-
-		//if (hWndFore == ghConWnd || hWndFocus == ghConWnd)
-		//if (hWndFore != ghConEmuWnd)
-
-		if (GetForegroundWindow() == ghConWnd)
-			SetForegroundWindow(ghConEmuWnd); // 2009-09-14 почему-то было было ghConWnd ?
-
-	} else {
-		// да и фиг сним. нас могли просто так, без gui запустить
-		//_ASSERTE(ghConEmuWnd!=NULL);
-	}
 }
 
 void ProcessDebugEvent()

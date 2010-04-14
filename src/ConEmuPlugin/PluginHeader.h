@@ -69,7 +69,7 @@ extern HANDLE hThread;
 //extern HANDLE ghConIn;
 extern BOOL gbNeedPostTabSend;
 extern HANDLE ghServerTerminateEvent;
-extern CESERVER_REQ_CONINFO_HDR *gpConsoleInfo;
+extern const CESERVER_REQ_CONINFO_HDR *gpConsoleInfo;
 extern DWORD gnSelfPID;
 
 typedef struct tag_PanelViewRegInfo {
@@ -145,10 +145,10 @@ int FUNC_Y(ShowMessage)(int aiMsg, int aiButtons);
 //void FUNC_X(ReloadMacro)();
 //void FUNC_Y(ReloadMacro)();
 extern CEFAR_INFO *gpFarInfo;
-void ReloadFarInfoA(BOOL abFull = FALSE);
-void FUNC_X(ReloadFarInfo)(BOOL abFull = FALSE);
+BOOL ReloadFarInfoA(BOOL abFull = FALSE);
+BOOL FUNC_X(ReloadFarInfo)(BOOL abFull = FALSE);
 #if (FAR_X_VER!=FAR_Y_VER)
-void FUNC_Y(ReloadFarInfo)(BOOL abFull = FALSE);
+BOOL FUNC_Y(ReloadFarInfo)(BOOL abFull = FALSE);
 #endif
 void PostMacro(wchar_t* asMacro);
 void PostMacroA(char* asMacro);

@@ -773,13 +773,13 @@ static void FarPanel2CePanel(PanelInfo* pFar, CEFAR_SHORT_PANEL_INFO* pCE)
 	pCE->Flags = pFar->Flags;
 }
 
-void ReloadFarInfo995(BOOL abFull)
+BOOL ReloadFarInfo995(BOOL abFull)
 {
-	if (!InfoW995 || !FSFW995) return;
+	if (!InfoW995 || !FSFW995) return FALSE;
 	
 	if (!gpFarInfo) {
 		_ASSERTE(gpFarInfo!=NULL);
-		return;
+		return FALSE;
 	}
 
 	// Заполнить gpFarInfo->
@@ -857,6 +857,8 @@ void ReloadFarInfo995(BOOL abFull)
 	//		if (ppiR) FarPanel2CePanel(ppiR, &(gpConsoleInfo->FarRightPanel));
 	//	}
 	//}
+
+	return TRUE;
 }
 
 void ExecuteQuitFar995()

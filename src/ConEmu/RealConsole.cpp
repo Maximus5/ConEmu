@@ -486,7 +486,7 @@ BOOL CRealConsole::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuff
             CONSOLE_SCREEN_BUFFER_INFO sbi = {{0,0}};
 			int nBufHeight;
 			_ASSERTE(mp_ConsoleInfo);
-			if (bNeedApplyConsole && mp_ConsoleInfo->nCurDataMapIdx && mp_ConsoleInfo->hConWnd) {
+			if (bNeedApplyConsole && mp_ConsoleInfo->nCurDataMapIdx && (HWND)mp_ConsoleInfo->hConWnd) {
 				// Если Apply еще не прошел - ждем
 				DWORD nWait = -1;
 				if (con.m_sbi.dwSize.X != sizeX || con.m_sbi.dwSize.Y != (sizeBuffer ? sizeBuffer : sizeY))
@@ -1206,6 +1206,7 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 					nLastFarPID = nCurFarPID;
 				}
 				bool bAlive = false;
+				PRAGMA_ERROR("Переделать на мэппинг для mp_FarInfo");
 				if (nCurFarPID && pRCon->mn_LastFarReadIdx != pRCon->mp_ConsoleInfo->nFarReadIdx) {
 					pRCon->mn_LastFarReadIdx = pRCon->mp_ConsoleInfo->nFarReadIdx;
 					pRCon->mn_LastFarReadTick = GetTickCount();
@@ -1227,7 +1228,7 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 
 
 				// Загрузить изменения из консоли
-            	if (pRCon->mp_ConsoleInfo->hConWnd && pRCon->mp_ConsoleInfo->nCurDataMapIdx
+            	if ((HWND)pRCon->mp_ConsoleInfo->hConWnd && pRCon->mp_ConsoleInfo->nCurDataMapIdx
 					&& pRCon->mp_ConsoleInfo->nPacketId
 					&& pRCon->mn_LastConsolePacketIdx != pRCon->mp_ConsoleInfo->nPacketId)
 				{
@@ -1535,7 +1536,7 @@ BOOL CRealConsole::StartProcess()
 
         int nLen = _tcslen(lpszCmd);
         TCHAR *pszSlash=NULL;
-        nLen += _tcslen(gConEmu.ms_ConEmuCExe) + 260 + MAX_PATH;
+        nLen += _tcslen(gConEmu.ms_ConEmuCExe) + 280 + MAX_PATH;
 		MCHKHEAP;
         psCurCmd = (wchar_t*)malloc(nLen*sizeof(wchar_t));
         _ASSERTE(psCurCmd);
@@ -1554,8 +1555,8 @@ BOOL CRealConsole::StartProcess()
         int nWndHeight = con.m_sbi.dwSize.Y;
         GetConWindowSize(con.m_sbi, nWndWidth, nWndHeight);
         wsprintf(psCurCmd+wcslen(psCurCmd), 
-        	L"/BW=%i /BH=%i /BZ=%i \"/FN=%s\" /FW=%i /FH=%i", 
-            nWndWidth, nWndHeight, con.DefaultBufferHeight,
+        	L"/GID=%i /BW=%i /BH=%i /BZ=%i \"/FN=%s\" /FW=%i /FH=%i", 
+            GetCurrentProcessId(), nWndWidth, nWndHeight, con.DefaultBufferHeight,
             //(con.bBufferHeight ? gSet.Default BufferHeight : 0), // пусть с буфером сервер разбирается
             gSet.ConsoleFont.lfFaceName, gSet.ConsoleFont.lfWidth, gSet.ConsoleFont.lfHeight);
         /*if (gSet.FontFile[0]) { --  РЕГИСТРАЦИЯ ШРИФТА НА КОНСОЛЬ НЕ РАБОТАЕТ!
@@ -1643,12 +1644,6 @@ BOOL CRealConsole::StartProcess()
 				mp_sei->nShow = SW_SHOWMINIMIZED;
 				SetConStatus(L"Starting root process as user...");
 				lbRc = gConEmu.GuiShellExecuteEx(mp_sei, TRUE);
-				//lbRc = 32 < (int)::ShellExecute(0, // owner window
-				//	L"runas",
-				//	L"C:\\Windows\\Notepad.exe",
-				//	0, // params
-				//	0, // directory
-				//	SW_SHOWNORMAL);
 				// ошибку покажем дальше
 				dwLastError = GetLastError();
 			}
@@ -1814,6 +1809,13 @@ void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y)
     	return;
     }
 
+    
+    // Если консоль в режиме с прокруткой - не посылать мышь в консоль
+    // Иначе получаются казусы. Если во время выполнения команды (например "dir c: /s")
+    // успеть дернуть мышкой - то при возврате в ФАР сразу пойдет фаровский драг
+    if (isBufferHeight())
+    	return;
+    	
 
 	// Получить известные координаты символов
 	COORD crMouse = mp_VCon->ClientToConsole(x,y);
@@ -6177,6 +6179,7 @@ void CRealConsole::PrepareTransparent(wchar_t* pChar, CharAttr* pAttr, int nWidt
 	if (!mp_ConsoleInfo)
 		return;
 
+	PRAGMA_ERROR("Переделать на мэппинг для mp_FarInfo");
 	CEFAR_INFO FI = mp_ConsoleInfo->FarInfo;
 
 	if (mb_LeftPanel) {
@@ -6762,8 +6765,10 @@ void CRealConsole::OnActivate(int nNewNum, int nOldNum)
     SetWindowLongPtr(ghWnd, GWLP_USERDATA, (LONG_PTR)hConWnd);
     ghConWnd = hConWnd;
 
-	if (mp_ConsoleInfo)
+	if (mp_ConsoleInfo) {
+		PRAGMA_ERROR("Смену флажка нужно делать через команду сервера");
 		mp_ConsoleInfo->bConsoleActive = TRUE;
+	}
 
     //if (mh_MonitorThread) SetThreadPriority(mh_MonitorThread, THREAD_PRIORITY_ABOVE_NORMAL);
 
@@ -6784,8 +6789,8 @@ void CRealConsole::OnActivate(int nNewNum, int nOldNum)
 
     gConEmu.UpdateProcessDisplay(TRUE);
 
-	WARNING("Не забыть при смене консоли принудительно обновить UpdateWindowRgn()");
 
+    
     HWND hPic = isPictureView();
     if (hPic && mb_PicViewWasHidden) {
         if (!IsWindowVisible(hPic))
@@ -6817,8 +6822,10 @@ void CRealConsole::OnDeactivate(int nNewNum)
 		//ReleaseCapture();
 	}
     
-	if (mp_ConsoleInfo)
+	if (mp_ConsoleInfo) {
+		PRAGMA_ERROR("Смену флажка нужно делать через команду сервера");
 		mp_ConsoleInfo->bConsoleActive = FALSE;
+	}
 
     //if (mh_MonitorThread) SetThreadPriority(mh_MonitorThread, THREAD_PRIORITY_NORMAL);
 }
@@ -6827,8 +6834,10 @@ void CRealConsole::OnGuiFocused(BOOL abFocus)
 {
 	if (!this) return;
 
-	if (mp_ConsoleInfo)
+	if (mp_ConsoleInfo) {
+		PRAGMA_ERROR("Смену флажка нужно делать через команду сервера");
 		mp_ConsoleInfo->bConsoleActive = abFocus;
+	}
 }
 
 // По переданному CONSOLE_SCREEN_BUFFER_INFO определяет, включена ли прокрутка
@@ -9063,14 +9072,14 @@ BOOL CRealConsole::OpenMapHeader()
 	CloseMapData();
 	
 	wsprintf(ms_HeaderMapName, CECONMAPNAME, (DWORD)hConWnd);
-	mh_FileMapping = OpenFileMapping(FILE_MAP_READ|FILE_MAP_WRITE, FALSE, ms_HeaderMapName);
+	mh_FileMapping = OpenFileMapping(FILE_MAP_READ/*|FILE_MAP_WRITE*/, FALSE, ms_HeaderMapName);
 	if (!mh_FileMapping) {
 		DWORD dwErr = GetLastError();
 		wsprintf (szErr, L"ConEmu: Can't open console data file mapping. ErrCode=0x%08X. %s", dwErr, ms_HeaderMapName);
 		goto wrap;
 	}
 	
-	mp_ConsoleInfo = (CESERVER_REQ_CONINFO_HDR*)MapViewOfFile(mh_FileMapping, FILE_MAP_READ|FILE_MAP_WRITE,0,0,0);
+	mp_ConsoleInfo = (CESERVER_REQ_CONINFO_HDR*)MapViewOfFile(mh_FileMapping, FILE_MAP_READ/*|FILE_MAP_WRITE*/,0,0,0);
 	if (!mp_ConsoleInfo) {
 		DWORD dwErr = GetLastError();
 		wchar_t szErr[512];
@@ -9078,7 +9087,11 @@ BOOL CRealConsole::OpenMapHeader()
 		goto wrap;
 	}
 	
-	mp_ConsoleInfo->nGuiPID = GetCurrentProcessId();
+	if (mp_ConsoleInfo->nGuiPID != GetCurrentProcessId()) {
+		_ASSERTE(mp_ConsoleInfo->nGuiPID == GetCurrentProcessId());
+		WARNING("Наверное нужно будет передать в сервер код GUI процесса? В каком случае так может получиться?");
+		PRAGMA_ERROR("Передать через команду сервера новый GUI PID. Если пайп не готов сразу выйти");
+	}
 	
 	if (mp_ConsoleInfo->hConWnd && mp_ConsoleInfo->nCurDataMapIdx) {
 		// Только если MonitorThread еще не был запущен
@@ -9218,6 +9231,7 @@ void CRealConsole::ApplyConsoleInfo()
 		DWORD nPID = GetCurrentProcessId();
 		if (nPID != mp_ConsoleInfo->nGuiPID) {
     		_ASSERTE(mp_ConsoleInfo->nGuiPID == nPID);
+    		PRAGMA_ERROR("Передать через команду сервера новый GUI PID. Если пайп не готов сразу выйти");
     		mp_ConsoleInfo->nGuiPID = nPID;
 		}
 	    

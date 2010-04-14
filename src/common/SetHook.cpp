@@ -43,7 +43,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 static HMODULE hOurModule = NULL; // Хэндл нашей dll'ки (здесь хуки не ставятся)
 static DWORD   nMainThreadId = 0;
 
-extern CESERVER_REQ_CONINFO_HDR *gpConsoleInfo;
+extern CEFAR_INFO *gpFarInfo; //gpConsoleInfo;
 extern HWND ConEmuHwnd; // Содержит хэндл окна отрисовки. Это ДОЧЕРНЕЕ окно.
 extern HWND FarHwnd;
 extern BOOL gbFARuseASCIIsort;
@@ -744,14 +744,14 @@ void __stdcall UnsetAllHooks( )
 
 static void TouchReadPeekConsoleInputs(int Peek = -1)
 {
-	if (!gpConsoleInfo) {
-		_ASSERTE(gpConsoleInfo);
+	if (!gpFarInfo) {
+		_ASSERTE(gpFarInfo);
 		return;
 	}
 	if (GetCurrentThreadId() != nMainThreadId)
 		return;
 		
-	gpConsoleInfo->nFarReadIdx++;
+	gpFarInfo->nFarReadIdx++;
 
 #ifdef _DEBUG
 	if (Peek == -1)
@@ -1288,7 +1288,7 @@ static BOOL WINAPI OnGetNumberOfConsoleInputEvents(HANDLE hConsoleInput, LPDWORD
 {
 	ORIGINAL(GetNumberOfConsoleInputEvents);
 
-	if (gpConsoleInfo && bMainThread)	
+	if (gpFarInfo && bMainThread)	
 		TouchReadPeekConsoleInputs();
 		
 	BOOL lbRc = F(GetNumberOfConsoleInputEvents)(hConsoleInput, lpcNumberOfEvents);
@@ -1300,7 +1300,7 @@ static BOOL WINAPI OnPeekConsoleInputA(HANDLE hConsoleInput, PINPUT_RECORD lpBuf
 {
 	ORIGINAL(PeekConsoleInputA);
 	
-	if (gpConsoleInfo && bMainThread)
+	if (gpFarInfo && bMainThread)
 		TouchReadPeekConsoleInputs(1);
 		
 	BOOL lbRc = FALSE;
@@ -1326,7 +1326,7 @@ static BOOL WINAPI OnPeekConsoleInputW(HANDLE hConsoleInput, PINPUT_RECORD lpBuf
 {
 	ORIGINAL(PeekConsoleInputW);
 	
-	if (gpConsoleInfo && bMainThread)
+	if (gpFarInfo && bMainThread)
 		TouchReadPeekConsoleInputs(1);
 		
 	BOOL lbRc = FALSE;
@@ -1352,7 +1352,7 @@ static BOOL WINAPI OnReadConsoleInputA(HANDLE hConsoleInput, PINPUT_RECORD lpBuf
 {
 	ORIGINAL(ReadConsoleInputA);
 	
-	if (gpConsoleInfo&& bMainThread)
+	if (gpFarInfo && bMainThread)
 		TouchReadPeekConsoleInputs(0);
 		
 	BOOL lbRc = FALSE;
@@ -1378,7 +1378,7 @@ static BOOL WINAPI OnReadConsoleInputW(HANDLE hConsoleInput, PINPUT_RECORD lpBuf
 {
 	ORIGINAL(ReadConsoleInputW);
 	
-	if (gpConsoleInfo && bMainThread)
+	if (gpFarInfo && bMainThread)
 		TouchReadPeekConsoleInputs(0);
 		
 	BOOL lbRc = FALSE;

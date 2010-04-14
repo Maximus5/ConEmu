@@ -223,16 +223,32 @@ int ServerInit()
 	//InitializeCriticalSection(&srv.csChar);
 
 	if (!gbAttachMode) {
+		DWORD dwRead = 0, dwErr = 0; BOOL lbCallRc = FALSE;
 		HWND hConEmuWnd = FindConEmuByPID();
 		if (hConEmuWnd) {
-			UINT nMsgSrvStarted = RegisterWindowMessage(CONEMUMSG_SRVSTARTED);
-			DWORD_PTR nRc = 0;
-			SendMessageTimeout(hConEmuWnd, nMsgSrvStarted, (WPARAM)ghConWnd, gnSelfPID, 
-				SMTO_BLOCK, 500, &nRc);
+			//UINT nMsgSrvStarted = RegisterWindowMessage(CONEMUMSG_SRVSTARTED);
+			//DWORD_PTR nRc = 0;
+			//SendMessageTimeout(hConEmuWnd, nMsgSrvStarted, (WPARAM)ghConWnd, gnSelfPID, 
+			//	SMTO_BLOCK, 500, &nRc);
+			
+			_ASSERTE(ghConWnd!=NULL);
+				
+		    wchar_t szServerPipe[MAX_PATH];
+		    wsprintf(szServerPipe, CEGUIPIPENAME, L".", (DWORD)hConEmuWnd);
+		    CESERVER_REQ In, Out;
+		    ExecutePrepareCmd(&In, CECMD_CMDSTARTSTOP, sizeof(CESERVER_REQ_HDR)+sizeof(DWORD));
+		    In.dwData[0] = (DWORD)ghConWnd;
+		    
+		    lbCallRc = CallNamedPipe(szServerPipe, &In, In.hdr.nSize, &Out, sizeof(Out), &dwRead, 1000);
+		    if (!lbCallRc) {
+		    	dwErr = GetLastError();
+		    	_ASSERTE(lbCallRc);
+	    	}
 		}
 		if (srv.hConEmuGuiAttached) {
 			WaitForSingleObject(srv.hConEmuGuiAttached, 500);
 		}
+		
 		CheckConEmuHwnd();
 	}
 
@@ -813,6 +829,81 @@ void CmdOutputRestore()
 }
 
 
+HWND FindConEmuByPID()
+{
+	HWND hConEmuWnd = NULL;
+	DWORD dwGuiThreadId = 0, dwGuiProcessId = 0;
+
+	// В большинстве случаев PID GUI передан через параметры
+	if (srv.dwGuiPID == 0) {
+		// GUI может еще "висеть" в ожидании или в отладчике, так что пробуем и через Snapshoot
+		
+		HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS,0);
+		if (hSnap != INVALID_HANDLE_VALUE) {
+			PROCESSENTRY32 prc = {sizeof(PROCESSENTRY32)};
+			if (Process32First(hSnap, &prc)) {
+				do {
+					if (prc.th32ProcessID == gnSelfPID) {
+						srv.dwGuiPID = prc.th32ParentProcessID;
+						break;
+					}
+				} while (Process32Next(hSnap, &prc));
+			}
+			CloseHandle(hSnap);
+		}
+	}
+	
+	if (srv.dwGuiPID) {
+		HWND hGui = NULL;
+		while ((hGui = FindWindowEx(NULL, hGui, VirtualConsoleClassMain, NULL)) != NULL) {
+			dwGuiThreadId = GetWindowThreadProcessId(hGui, &dwGuiProcessId);
+			if (dwGuiProcessId == srv.dwGuiPID) {
+				hConEmuWnd = hGui;
+				
+				break;
+			}
+		}
+	}
+
+	return hConEmuWnd;
+}
+
+void CheckConEmuHwnd()
+{
+	//HWND hWndFore = GetForegroundWindow();
+	//HWND hWndFocus = GetFocus();
+	DWORD dwGuiThreadId = 0, dwGuiProcessId = 0;
+
+	if (ghConEmuWnd == NULL) {
+		SendStarted(); // Он и окно проверит, и параметры перешлет и размер консоли скорректирует
+	}
+	// GUI может еще "висеть" в ожидании или в отладчике, так что пробуем и через Snapshoot
+	if (ghConEmuWnd == NULL) {
+		ghConEmuWnd = FindConEmuByPID();
+	}
+	if (ghConEmuWnd == NULL) { // Если уж ничего не помогло...
+		ghConEmuWnd = GetConEmuHWND(TRUE/*abRoot*/);
+	}
+	if (ghConEmuWnd) {
+		// Установить переменную среды с дескриптором окна
+		SetConEmuEnvVar(ghConEmuWnd);
+
+		dwGuiThreadId = GetWindowThreadProcessId(ghConEmuWnd, &dwGuiProcessId);
+
+		AllowSetForegroundWindow(dwGuiProcessId);
+
+		//if (hWndFore == ghConWnd || hWndFocus == ghConWnd)
+		//if (hWndFore != ghConEmuWnd)
+
+		if (GetForegroundWindow() == ghConWnd)
+			SetForegroundWindow(ghConEmuWnd); // 2009-09-14 почему-то было было ghConWnd ?
+
+	} else {
+		// да и фиг сним. нас могли просто так, без gui запустить
+		//_ASSERTE(ghConEmuWnd!=NULL);
+	}
+}
+
 HWND Attach2Gui(DWORD nTimeout)
 {
 	// Нить Refresh НЕ должна быть запущена, иначе в мэппинг могут попасть данные из консоли
@@ -1050,8 +1141,9 @@ int CreateMapHeader()
 	srv.pConsoleInfo->cbExtraSize = 0; TODO("потом поставить размер данных для CESERVER_REQ_CONINFO_DATA[]");
 	srv.pConsoleInfo->bConsoleActive = TRUE; // Если FALSE - можно снизить частоту опроса
 	srv.pConsoleInfo->nLogLevel = (ghLogSize!=NULL) ? 1 : 0;
-	srv.pConsoleInfo->nFarReadIdx = -1;
+//	srv.pConsoleInfo->nFarReadIdx = -1;
 	srv.pConsoleInfo->nServerPID = GetCurrentProcessId();
+	srv.pConsoleInfo->nGuiPID = srv.dwGuiPID;
 	
 	// Максимальный размер буфера
 	srv.pConsoleInfo->crMaxConSize = crMax;
@@ -1540,8 +1632,8 @@ BOOL ReloadFullConsoleInfo(BOOL abForceSend)
 		lbChanged = TRUE;
 	//}
 
-	if (!lbChanged && srv.nFarInfoLastIdx != srv.pConsoleInfo->nFarInfoIdx)
-		lbChanged = TRUE;
+	//if (!lbChanged && srv.nFarInfoLastIdx != srv.pConsoleInfo->nFarInfoIdx)
+	//	lbChanged = TRUE;
 
 	if (lbChanged)
 	{
@@ -1550,7 +1642,7 @@ BOOL ReloadFullConsoleInfo(BOOL abForceSend)
 			srv.pConsoleInfo->nPacketId++;
 			TODO("Можно заменить на multimedia tick");
 			srv.pConsoleInfo->nSrvUpdateTick = GetTickCount();
-			srv.nFarInfoLastIdx = srv.pConsoleInfo->nFarInfoIdx;
+//			srv.nFarInfoLastIdx = srv.pConsoleInfo->nFarInfoIdx;
 		}
 	}
 	

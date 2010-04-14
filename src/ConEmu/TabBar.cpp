@@ -1137,12 +1137,15 @@ void TabBarClass::OnMouse(int message, int x, int y)
 			pVCon = FarSendChangeTab(iPage);
 
 			if (pVCon) {
-				if (message == WM_RBUTTONUP) {
+				BOOL lbCtrlPressed = isPressed(VK_CONTROL);
+				if (message == WM_RBUTTONUP && !lbCtrlPressed) {
 					pVCon->ShowPopupMenu(ptCur);
 				} else {
 					if (pVCon->RCon()->GetFarPID()) {
 						pVCon->RCon()->PostMacro(gSet.sTabCloseMacro ? gSet.sTabCloseMacro : L"F10");
 					} else {
+						// Если запущен CMD, PowerShell, и т.п. - показать ДИАЛОГ пересоздания консоли
+						// Там есть кнопки Terminate & Recreate
 						gConEmu.Recreate ( TRUE, TRUE );
 					}
 				}

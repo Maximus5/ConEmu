@@ -217,24 +217,56 @@ public:
 
 struct ThumbnailSettings
 {
+	TODO("nWidth & nHeight - deprecated");
+	// Наверное заменить на WholeWidth() & WholeHeight()
 	int nWidth, nHeight; // 96x96
+
+	int nThumbSize; // 94
+	int nIconSize; // 32
+	DWORD crBackground; // 0xFFFFFF (RGB) или 0xFF000000 (Index)
+
 	int nThumbFrame; // 1 (серая рамка вокруг превьюшки
+	DWORD crThumbFrame; // 0xFFFFFF (RGB) или 0xFF000000 (Index)
+	int nSelectFrame; // 1 (рамка вокруг текущего элемента)
+	DWORD crSelectFrame; // 0xFFFFFF (RGB) или 0xFF000000 (Index)
 	int nHSpacing, nVSpacing; // 5, 25 - промежуток между двумя рамками
+
+	TODO("Вроде не нужно - оставить только nSelectFrame? Или пусть будет?");
 	int nHPadding, nVPadding; // 1, 1 - зарезевированный отступ
+
 	int nFontHeight; // 14
 	wchar_t sFontName[32]; // Tahoma
 	BOOL bLoadPreviews, bLoadFolders;
+	int nLoadTimeout; // 15 sec
+
+	int nMaxZoom;
+	BOOL bUsePicView2;
+
+	wchar_t sCacheFolder[MAX_PATH];
 
 
 	void Load() {
+		TODO("nWidth & nHeight - deprecated");
 		nWidth = nHeight = 96;
+
+		nThumbSize = 96; // пусть реально будет 96. Чтобы можно было 500% на 16х16 поставить
+		nIconSize = 32;
+
 		nThumbFrame = 1;
+		nSelectFrame = 1;
+
 		nHSpacing = 5; nVSpacing = 25;
 		nHPadding = 1; nVPadding = 1;
+
 		nFontHeight = 14;
 		lstrcpy(sFontName, L"Tahoma");
+
 		bLoadPreviews = TRUE;
 		bLoadFolders = TRUE;
+		nLoadTimeout = 15;
+		nMaxZoom = 500; // но не больше размера превьюшки :)
+		bUsePicView2 = TRUE;
+        sCacheFolder[0] = 0;
 	};
 };
 extern ThumbnailSettings gThSet;

@@ -210,7 +210,7 @@ CConEmuMain::CConEmuMain()
     mn_MsgSetWindowMode = ++nAppMsg;
     mn_MsgUpdateTitle = ++nAppMsg;
     //mn_MsgAttach = RegisterWindowMessage(CONEMUMSG_ATTACH);
-	mn_MsgSrvStarted = RegisterWindowMessage(CONEMUMSG_SRVSTARTED);
+	mn_MsgSrvStarted = ++nAppMsg; //RegisterWindowMessage(CONEMUMSG_SRVSTARTED);
     mn_MsgVConTerminated = ++nAppMsg;
     mn_MsgUpdateScrollInfo = ++nAppMsg;
     mn_MsgUpdateTabs = RegisterWindowMessage(CONEMUMSG_UPDATETABS);
@@ -7925,7 +7925,9 @@ void CConEmuMain::ServerThreadCommand(HANDLE hPipe)
     UINT nDataSize = pIn->hdr.nSize - sizeof(CESERVER_REQ_HDR);
     #endif
     // Все данные из пайпа получены, обрабатываем команду и возвращаем (если нужно) результат
+    
     if (pIn->hdr.nCmd == CECMD_NEWCMD) {
+    	// Приходит из другой копии ConEmu.exe, когда она запущена с ключом /single
         DEBUGSTR(L"GUI recieved CECMD_NEWCMD\n");
     
         pIn->Data[0] = FALSE;
@@ -7962,6 +7964,26 @@ void CConEmuMain::ServerThreadCommand(HANDLE hPipe)
 		if (AttachRequested(pIn->StartStop.hWnd, pIn->StartStop, &(pIn->StartStopRet))) {
 			fSuccess = WriteFile(hPipe, pIn, pIn->hdr.nSize, &cbWritten, NULL);
 		}
+		
+	} else if (pIn->hdr.nCmd == CECMD_CMDSTARTSTOP) {
+		// Запущен процесс сервера
+		_ASSERTE(pIn->StartStop.nStarted == 0);
+		LRESULT l;
+		DWORD_PTR dwRc = 0;
+		
+		l = SendMessageTimeout(ghWnd, gConEmu.mn_MsgSrvStarted, /*HWND*/pIn->dwData[0], pIn->hdr.nSrcPID,
+			SMTO_BLOCK, 500, &dwRc);
+		
+		pIn->dwData[0] = (l == 0) ? 0 : 1;
+		pIn->hdr.nSize = sizeof(CESERVER_REQ_HDR) + sizeof(DWORD);
+        // Отправляем
+        fSuccess = WriteFile( 
+            hPipe,        // handle to pipe 
+            pIn,         // buffer to write from 
+            pIn->hdr.nSize,  // number of bytes to write 
+            &cbWritten,   // number of bytes written 
+            NULL);        // not overlapped I/O 
+		
 	}
 
     // Освободить память

@@ -439,8 +439,8 @@ private:
     //CESERVER_REQ* PopPacket();
 	HANDLE mh_FileMapping, mh_FileMappingData;
 	wchar_t ms_HeaderMapName[64], ms_DataMapName[64];
-	CESERVER_REQ_CONINFO_HDR *mp_ConsoleInfo;
-	CESERVER_REQ_CONINFO_DATA *mp_ConsoleData; // Mapping
+	const CESERVER_REQ_CONINFO_HDR *mp_ConsoleInfo;
+	const CESERVER_REQ_CONINFO_DATA *mp_ConsoleData; // Mapping
 	// Colorer Mapping
 	HANDLE mh_ColorMapping;
 	AnnotationHeader *mp_ColorHdr;

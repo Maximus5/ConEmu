@@ -1,5 +1,5 @@
 //{{NO_DEPENDENCIES}}
-// Microsoft Developer Studio generated include file.
+// Microsoft Visual C++ generated include file.
 // Used by ConEmu.rc
 //
 #define IDI_ICON1                       1
@@ -24,6 +24,7 @@
 #define IDD_MORE_SELECTION              204
 #define IDR_TABMENU                     205
 #define IDD_SPG_TABS                    206
+#define IDD_SPG_THUMBS                  208
 #define c0                              1000
 #define c1                              1001
 #define c2                              1002
@@ -286,6 +287,43 @@
 #define cbIgnoreTelnetCursorSize        1655
 #define rbCurrentUser                   1656
 #define rbAnotherUser                   1657
+#define tThumbsFontName                 1659
+#define tThumbsFontSize                 1660
+#define cbSleepInBackground             1661
+#define tThumbMaxZoom                   1662
+#define cbThumbLoadFolders              1663
+#define tThumbLoadFiles                 1664
+#define tThumbFullSize                  1665
+#define tThumbIconSize                  1666
+#define cbThumbPreviewBox               1667
+#define cbThumbSelectionBox             1668
+#define tThumbLabelHeight               1669
+#define rbThumbBackColorIdx             1670
+#define rbThumbBackColorRGB             1671
+#define lbThumbBackColorIdx             1672
+#define rbThumbPreviewBoxColorIdx       1673
+#define lbThumbBackColorIdx2            1674
+#define rbPreviewBoxColorRGB            1675
+#define rbThumbPreviewBoxColorIdx2      1676
+#define rbPreviewBoxColorRGB2           1677
+#define lbThumbBackColorIdx3            1678
+#define IDC_EDIT1                       1679
+#define cbThumbUsePicView2              1680
+#define c32                             1681
+#define tc32                            1682
+#define c33                             1683
+#define tc33                            1684
+#define c34                             1685
+#define tc34                            1686
+#define rbThumbCachePluginFolder        1687
+#define rbThumbCacheUserFolder          1688
+#define rbThumbCacheDisabled            1689
+#define rbThumbCacheSpecifiedFolder     1690
+#define cbThumbCacheFolder              1691
+#define tThumbCacheFolder               1692
+#define tThumbLabelWidth                1693
+#define tThumbLabelWidth2               1694
+#define tThumbLabelWidth3               1695
 #define IDM_CLOSE                       40001
 #define IDM_RESTART                     40002
 #define IDM_RESTARTAS                   40003
@@ -300,9 +338,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        207
+#define _APS_NEXT_RESOURCE_VALUE        209
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         1659
+#define _APS_NEXT_CONTROL_VALUE         1693
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

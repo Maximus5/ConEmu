@@ -136,13 +136,15 @@ extern wchar_t gszDbgModLabel[6];
 //#define MAXCONMAPCELLS      (600*400)
 #define CECONMAPNAME        L"ConEmuFileMapping.%08X"
 #define CECONMAPNAME_A      "ConEmuFileMapping.%08X"
+#define CEFARMAPNAME        L"ConEmuFarMapping.%08X"
 //#define CECONMAPNAMESIZE    (sizeof(CESERVER_REQ_CONINFO)+(MAXCONMAPCELLS*sizeof(CHAR_INFO)))
 //#define CEGUIATTACHED       L"ConEmuGuiAttached.%u"
 #define CEGUIRCONSTARTED    L"ConEmuGuiRConStarted.%u"
 #define CEGUI_ALIVE_EVENT   L"ConEmuGuiStarted"
 
 //#define CONEMUMSG_ATTACH L"ConEmuMain::Attach"            // wParam == hConWnd, lParam == ConEmuC_PID
-#define CONEMUMSG_SRVSTARTED L"ConEmuMain::SrvStarted"    // wParam == hConWnd, lParam == ConEmuC_PID
+WARNING("CONEMUMSG_SRVSTARTED нужно переделать в команду пайпа для GUI");
+//#define CONEMUMSG_SRVSTARTED L"ConEmuMain::SrvStarted"    // wParam == hConWnd, lParam == ConEmuC_PID
 //#define CONEMUMSG_SETFOREGROUND L"ConEmuMain::SetForeground"            // wParam == hConWnd, lParam == ConEmuC_PID
 #define CONEMUMSG_FLASHWINDOW L"ConEmuMain::FlashWindow"
 //#define CONEMUCMDSTARTED L"ConEmuMain::CmdStarted"    // wParam == hConWnd, lParam == ConEmuC_PID (as ComSpec)
@@ -177,7 +179,7 @@ extern wchar_t gszDbgModLabel[6];
 #define CECMD_GETOUTPUTFILE 10 // Записать вывод последней консольной программы во временный файл и вернуть его имя
 #define CECMD_GETOUTPUT     11
 #define CECMD_LANGCHANGE    12
-#define CECMD_NEWCMD        13 // Запустить в этом экземпляре новую консоль с переданной командой
+#define CECMD_NEWCMD        13 // Запустить в этом экземпляре новую консоль с переданной командой (используется при SingleInstance)
 #define CECMD_TABSCMD       14 // 0: спрятать/показать табы, 1: перейти на следующую, 2: перейти на предыдущую, 3: commit switch
 #define CECMD_RESOURCES     15 // Посылается плагином при инициализации (установка ресурсов)
 #define CECMD_GETNEWCONPARM 16 // Доп.аргументы для создания новой консоли (шрифт, размер,...)
@@ -197,7 +199,7 @@ extern wchar_t gszDbgModLabel[6];
 #define CECMD_REGPANELVIEW  30
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    37
+#define CESERVER_REQ_VER    38
 
 #define PIPEBUFSIZE 4096
 
@@ -230,10 +232,10 @@ extern wchar_t gszDbgModLabel[6];
 #define u64 unsigned __int64
 typedef struct tag_HWND2 {
 	DWORD u;
-	operator HWND() {
+	operator HWND() const {
 		return (HWND)u;
 	};
-	operator DWORD() {
+	operator DWORD() const {
 		return (DWORD)u;
 	};
 	struct tag_HWND2& operator=(HWND h) {
@@ -379,6 +381,8 @@ typedef struct tag_CEFAR_SHORT_PANEL_INFO {
 } CEFAR_SHORT_PANEL_INFO;
 
 typedef struct tag_CEFAR_INFO {
+	DWORD cbSize;
+	DWORD nFarInfoIdx;
 	FarVersion FarVer;
 	DWORD nFarPID, nFarTID;
 	BYTE nFarColors[0x100]; // Массив цветов фара
@@ -391,6 +395,7 @@ typedef struct tag_CEFAR_INFO {
 	BOOL bFarLeftPanel, bFarRightPanel;   
 	CEFAR_SHORT_PANEL_INFO FarLeftPanel, FarRightPanel; // FCTL_GETPANELSHORTINFO,...
 	DWORD nFarConsoleMode;
+	DWORD nFarReadIdx;    // index, +1, когда фар в последний раз позвал (Read|Peek)ConsoleInput или GetConsoleInputCount
 } CEFAR_INFO;
 
 
@@ -411,7 +416,7 @@ typedef struct tag_CESERVER_REQ_CONINFO_HDR {
 	DWORD nPacketId;
 	DWORD nFarUpdateTick0;// GetTickCount(), устанавливается в начале обновления консоли из фара (вдруг что свалится...)
 	DWORD nFarUpdateTick; // GetTickCount(), когда консоль была обновлена в последний раз из фара
-	DWORD nFarReadIdx;    // index, +1, когда фар в последний раз позвал (Read|Peek)ConsoleInput или GetConsoleInputCount
+	//DWORD nFarReadIdx;    // index, +1, когда фар в последний раз позвал (Read|Peek)ConsoleInput или GetConsoleInputCount
 	DWORD nSrvUpdateTick; // GetTickCount(), когда консоль была считана в последний раз в сервере
 	DWORD nReserved0; //DWORD nInputTID;
 	DWORD nProcesses[20];
@@ -422,9 +427,9 @@ typedef struct tag_CESERVER_REQ_CONINFO_HDR {
 	DWORD dwConsoleMode;
 	DWORD dwSbiSize;
 	CONSOLE_SCREEN_BUFFER_INFO sbi;
-	// Информация о текущем FAR
-	DWORD nFarInfoIdx; // выносим из структуры CEFAR_INFO, т.к. ее копия хранится в плагине
-	CEFAR_INFO FarInfo;
+	//// Информация о текущем FAR
+	//DWORD nFarInfoIdx; // выносим из структуры CEFAR_INFO, т.к. ее копия хранится в плагине
+	//CEFAR_INFO FarInfo;
 } CESERVER_REQ_CONINFO_HDR;
 
 typedef struct tag_CESERVER_REQ_CONINFO_DATA {

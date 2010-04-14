@@ -273,6 +273,7 @@ extern BOOL gbRootIsCmdExe;
 
 typedef struct tag_SrvInfo {
 	HANDLE hRootProcess, hRootThread; DWORD dwRootProcess, dwRootThread; DWORD dwRootStartTime; BOOL bDebuggerActive;
+	DWORD  dwGuiPID; // GUI PID (ИД процесса графической части ConEmu)
 	//
 	HANDLE hServerThread;   DWORD dwServerThreadId;
 	HANDLE hRefreshThread;  DWORD dwRefreshThread;
@@ -306,7 +307,7 @@ typedef struct tag_SrvInfo {
 	CESERVER_REQ_CONINFO_HDR *pConsoleInfoCopy;  // Local (Alloc)
 	CESERVER_REQ_CONINFO_DATA *pConsoleDataCopy; // Local (Alloc)
 	DWORD nConsoleDataSize;
-	DWORD nFarInfoLastIdx;
+//	DWORD nFarInfoLastIdx;
 	// Input
 	HANDLE hInputThread, hInputEvent; DWORD dwInputThread;
 	int nInputQueue, nMaxInputQueue;

@@ -149,16 +149,17 @@ BOOL gbHasColorMapping = FALSE; // Чтобы знать, что буфер True-Colorer создан
 HANDLE ghColorMappingOld = NULL;
 BOOL gbHasColorMappingOld = FALSE;
 #endif
-CESERVER_REQ_CONINFO_HDR *gpConsoleInfo = NULL;
+const CESERVER_REQ_CONINFO_HDR *gpConsoleInfo = NULL;
 //AnnotationInfo *gpColorerInfo = NULL;
 BOOL gbStartedUnderConsole2 = FALSE;
 void CheckColorerHeader();
 int CreateColorerHeader();
 void CloseColorerHeader();
-void ReloadFarInfo(BOOL abFull);
+BOOL ReloadFarInfo(BOOL abFull);
 DWORD gnSelfPID = 0; //GetCurrentProcessId();
 //BOOL  gbNeedReloadFarInfo = FALSE;
-CEFAR_INFO *gpFarInfo = NULL;
+HANDLE ghFarInfoMapping = NULL;
+CEFAR_INFO *gpFarInfo = NULL, *gpFarInfoMapping = NULL;
 PanelViewRegInfo gPanelRegLeft = {NULL};
 PanelViewRegInfo gPanelRegRight = {NULL};
 
@@ -1952,9 +1953,9 @@ int OpenMapHeader()
 	
 	if (FarHwnd) {
 		wsprintf(szMapName, CECONMAPNAME, (DWORD)FarHwnd);
-		ghFileMapping = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, szMapName);
+		ghFileMapping = OpenFileMapping(FILE_MAP_READ, FALSE, szMapName);
 		if (ghFileMapping) {
-			gpConsoleInfo = (CESERVER_REQ_CONINFO_HDR*)MapViewOfFile(ghFileMapping, FILE_MAP_ALL_ACCESS,0,0,0);
+			gpConsoleInfo = (const CESERVER_REQ_CONINFO_HDR*)MapViewOfFile(ghFileMapping, FILE_MAP_READ,0,0,0);
 			if (gpConsoleInfo) {
 				//ReloadFarInfo(); -- смысла нет. SetStartupInfo еще не вызывался
 				iRc = 0;
@@ -2266,31 +2267,70 @@ void InitHWND(HWND ahFarHwnd)
 //	}
 //}
 
-void ReloadFarInfo(BOOL abFull)
+BOOL ReloadFarInfo(BOOL abFull)
 {
-	if (!gpConsoleInfo || !gpFarInfo) {
-		_ASSERTE(gpConsoleInfo!=NULL && gpFarInfo!=NULL);
-		return;
+	if (!gpFarInfoMapping) {
+		DWORD dwErr = 0;
+
+		// Создать мэппинг для gpFarInfoMapping
+		wchar_t szMapName[MAX_PATH];
+		wsprintfW(szMapName, CEFARMAPNAME, gnSelfPID);
+
+		DWORD nMapSize = sizeof(CEFAR_INFO);
+
+		ghFarInfoMapping = CreateFileMapping(INVALID_HANDLE_VALUE, 
+			gpNullSecurity, PAGE_READWRITE, 0, nMapSize, szMapName);
+
+		if (!ghFarInfoMapping) {
+			dwErr = GetLastError();
+			//TODO("Показать ошибку создания MAP для ghFarInfoMapping");
+			_ASSERTE(ghFarInfoMapping!=NULL);
+		} else {
+			gpFarInfoMapping = (CEFAR_INFO*)MapViewOfFile(ghFarInfoMapping, FILE_MAP_ALL_ACCESS,0,0,0);
+			if (!gpFarInfoMapping) {
+				dwErr = GetLastError();
+				CloseHandle(ghFarInfoMapping); ghFarInfoMapping = NULL;
+				//TODO("Показать ошибку создания MAP для ghFarInfoMapping");
+				_ASSERTE(gpFarInfoMapping!=NULL);
+			} else {
+				gpFarInfoMapping->cbSize = 0;
+			}
+		}
 	}
 	
-	if (abFull) {
+	if (!gpFarInfo) {
+		gpFarInfo = (CEFAR_INFO*)Alloc(sizeof(CEFAR_INFO),1);
+
+		if (!gpFarInfo) {
+			_ASSERTE(gpFarInfo!=NULL);
+			return FALSE;
+		}
+
+		gpFarInfo->cbSize = sizeof(CEFAR_INFO);
+		gpFarInfo->nFarInfoIdx = 0;
 		gpFarInfo->FarVer = gFarVersion;
 		gpFarInfo->nFarPID = gnSelfPID;
 		gpFarInfo->nFarTID = gnMainThreadId;
 	}
+
+	BOOL lbChanged = FALSE, lbSucceded = FALSE;
 	
 	if (gFarVersion.dwVerMajor==1)
-		ReloadFarInfoA(abFull);
+		lbSucceded = ReloadFarInfoA(abFull);
 	else if (gFarVersion.dwBuild>=FAR_Y_VER)
-		FUNC_Y(ReloadFarInfo)();
+		lbSucceded = FUNC_Y(ReloadFarInfo)();
 	else
-		FUNC_X(ReloadFarInfo)();
+		lbSucceded = FUNC_X(ReloadFarInfo)();
 	
-
-	if (abFull || memcmp(&(gpConsoleInfo->FarInfo), gpFarInfo, sizeof(CEFAR_INFO))!=0) {
-		gpConsoleInfo->FarInfo = *gpFarInfo;
-		gpConsoleInfo->nFarInfoIdx++;
+	if (lbSucceded) {
+		if (abFull || memcmp(gpFarInfoMapping, gpFarInfo, sizeof(CEFAR_INFO))!=0) {
+			lbChanged = TRUE;
+			gpFarInfo->nFarInfoIdx++;
+			*gpFarInfoMapping = *gpFarInfo;
+		}
 	}
+
+	return lbChanged;
 }
 
 void UpdateConEmuTabsW(int event, bool losingFocus, bool editorSave, void* Param/*=NULL*/)
@@ -2557,7 +2597,7 @@ int WINAPI _export ProcessViewerEventW(int Event, void *Param)
 
 void StopThread(void)
 {
-	LPVOID lpPtrConInfo = gpConsoleInfo; gpConsoleInfo = NULL;
+	LPCVOID lpPtrConInfo = gpConsoleInfo; gpConsoleInfo = NULL;
 	//LPVOID lpPtrColorInfo = gpColorerInfo; gpColorerInfo = NULL;
 
 	CloseTabs();
@@ -2631,6 +2671,11 @@ void StopThread(void)
 		LPVOID ptr = gpFarInfo; gpFarInfo = NULL;
 		Free(ptr);
 	}
+	if (gpFarInfoMapping) {
+		UnmapViewOfFile(gpFarInfoMapping);
+		CloseHandle(ghFarInfoMapping);
+		ghFarInfoMapping = NULL;
+	}
 
 	//DeleteCriticalSection(csTabs); memset(csTabs,0,sizeof(csTabs));
 	DeleteCriticalSection(&csData); memset(&csData,0,sizeof(csData));
@@ -2684,13 +2729,14 @@ void CheckResources(BOOL abFromStartup)
 		dwLastTickCount = dwCurTick;
 	}
 	
-	if (abFromStartup) {
-		_ASSERTE(gpConsoleInfo!=NULL);
-		if (!gpFarInfo)
-			gpFarInfo = (CEFAR_INFO*)Alloc(sizeof(CEFAR_INFO),1);
-	}
-	if (gpConsoleInfo)
-		ReloadFarInfo(TRUE);
+	//if (abFromStartup) {
+	//	_ASSERTE(gpConsoleInfo!=NULL);
+	//	if (!gpFarInfo)
+	//		gpFarInfo = (CEFAR_INFO*)Alloc(sizeof(CEFAR_INFO),1);
+	//}
+	//if (gpConsoleInfo)
+	// Теперь он отвязан от gpConsoleInfo
+	ReloadFarInfo(TRUE);
 
 	wchar_t szLang[64];
 	GetEnvironmentVariable(L"FARLANG", szLang, 63);
