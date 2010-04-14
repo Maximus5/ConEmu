@@ -2598,6 +2598,12 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 			gbAutoDisableConfirmExit = FALSE;
 			gbAlwaysConfirmExit = TRUE;
 		} break;
+
+		case CECMD_ONACTIVATION:
+		{
+			if (srv.pConsoleInfo)
+				srv.pConsoleInfo->bConsoleActive = in.dwData[0];
+		} break;
 	}
 	
 	if (gbInRecreateRoot) gbInRecreateRoot = FALSE;

@@ -7967,11 +7967,12 @@ void CConEmuMain::ServerThreadCommand(HANDLE hPipe)
 		
 	} else if (pIn->hdr.nCmd == CECMD_CMDSTARTSTOP) {
 		// Запущен процесс сервера
-		_ASSERTE(pIn->StartStop.nStarted == 0);
+		HWND hConWnd = (HWND)pIn->dwData[0];
+		_ASSERTE(hConWnd && IsWindow(hConWnd));
 		LRESULT l;
 		DWORD_PTR dwRc = 0;
 		
-		l = SendMessageTimeout(ghWnd, gConEmu.mn_MsgSrvStarted, /*HWND*/pIn->dwData[0], pIn->hdr.nSrcPID,
+		l = SendMessageTimeout(ghWnd, gConEmu.mn_MsgSrvStarted, (WPARAM)hConWnd, pIn->hdr.nSrcPID,
 			SMTO_BLOCK, 500, &dwRc);
 		
 		pIn->dwData[0] = (l == 0) ? 0 : 1;

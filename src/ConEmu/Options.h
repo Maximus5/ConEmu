@@ -230,6 +230,7 @@ public:
     bool isSkipFocusEvents;
     //bool isLangChangeWsPlugin;
 	char isMonitorConsoleLang;
+	bool isSleepInBackground;
     
     DWORD nAffinity;
 
@@ -248,7 +249,7 @@ public:
     WORD    CharWidth[0x10000]; //, Font2Width[0x10000];
 	ABC     CharABC[0x10000];
 
-    HWND hMain, hExt, hTabs, hColors, hInfo;
+    HWND hMain, hExt, hTabs, hColors, hThumbs, hInfo;
 
     bool LoadImageFrom(TCHAR *inPath, bool abShowErrors=false);
 	//static void CenterDialog(HWND hWnd2);
@@ -257,6 +258,7 @@ public:
     static INT_PTR CALLBACK extOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
 	static INT_PTR CALLBACK tabsOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
     static INT_PTR CALLBACK colorOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
+	static INT_PTR CALLBACK thumbsOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
     static INT_PTR CALLBACK infoOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
 	static INT_PTR CALLBACK hideOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
 	//static INT_PTR CALLBACK multiOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
@@ -294,6 +296,7 @@ protected:
 	LRESULT OnInitDialog_Ext();
 	LRESULT OnInitDialog_Tabs();
 	LRESULT OnInitDialog_Color();
+	LRESULT OnInitDialog_Thumbs();
 	LRESULT OnInitDialog_Info();
     LRESULT OnButtonClicked(WPARAM wParam, LPARAM lParam);
     LRESULT OnColorButtonClicked(WPARAM wParam, LPARAM lParam);
@@ -373,4 +376,5 @@ private:
 	static void FillListBoxItems(HWND hList, uint nItems, const WCHAR** pszItems, const DWORD* pnValues, DWORD& nValue);
 	static void GetListBoxItem(HWND hList, uint nItems, const WCHAR** pszItems, const DWORD* pnValues, DWORD& nValue);
 	static void CenterMoreDlg(HWND hWnd2);
+	static bool IsAlmostMonospace(int tmMaxCharWidth, int tmAveCharWidth, int tmHeight);
 };

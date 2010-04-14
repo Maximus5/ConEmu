@@ -57,10 +57,9 @@
 #define c29                             1029
 #define c30                             1030
 #define c31                             1031
-#define cbRClick                        1034
-#define tBgImage                        1037
-#define tDarker                         1038
-#define cbBgImage                       1039
+#define c32                             1032
+#define c33                             1033
+#define c34                             1034
 #define cbBold                          1041
 #define tFontSizeX                      1042
 #define cbItalic                        1043
@@ -127,6 +126,9 @@
 #define tc29                            1129
 #define tc30                            1130
 #define tc31                            1131
+#define tc32                            1682
+#define tc33                            1684
+#define tc34                            1686
 #define bChooseFont                     1201
 #define rNoneAA                         1202
 #define rStandardAA                     1203
@@ -309,12 +311,6 @@
 #define lbThumbBackColorIdx3            1678
 #define IDC_EDIT1                       1679
 #define cbThumbUsePicView2              1680
-#define c32                             1681
-#define tc32                            1682
-#define c33                             1683
-#define tc33                            1684
-#define c34                             1685
-#define tc34                            1686
 #define rbThumbCachePluginFolder        1687
 #define rbThumbCacheUserFolder          1688
 #define rbThumbCacheDisabled            1689
@@ -324,6 +320,10 @@
 #define tThumbLabelWidth                1693
 #define tThumbLabelWidth2               1694
 #define tThumbLabelWidth3               1695
+#define cbRClick                        1696
+#define tBgImage                        1697
+#define tDarker                         1698
+#define cbBgImage                       1699
 #define IDM_CLOSE                       40001
 #define IDM_RESTART                     40002
 #define IDM_RESTARTAS                   40003
@@ -340,7 +340,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        209
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         1693
+#define _APS_NEXT_CONTROL_VALUE         1700
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

@@ -197,6 +197,7 @@ WARNING("CONEMUMSG_SRVSTARTED нужно переделать в команду пайпа для GUI");
 #define CECMD_SETSIZENOSYNC 28 // Почти CECMD_SETSIZE. Вызывается из плагина.
 #define CECMD_SETDONTCLOSE  29
 #define CECMD_REGPANELVIEW  30
+#define CECMD_ONACTIVATION  31 // Для установки флажка ConsoleInfo->bConsoleActive
 
 // Версия интерфейса
 #define CESERVER_REQ_VER    38

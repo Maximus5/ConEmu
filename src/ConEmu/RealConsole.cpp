@@ -204,9 +204,10 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
     mn_LastVKeyPressed = 0;
     mh_LogInput = NULL; mpsz_LogInputFile = NULL; //mpsz_LogPackets = NULL; mn_LogPackets = 0;
 
-	mh_FileMapping = mh_FileMappingData = NULL;
+	mh_FileMapping = mh_FileMappingData = mh_FarFileMapping = NULL;
     mp_ConsoleInfo = NULL;
     mp_ConsoleData = NULL;
+	mp_FarInfo = NULL;
     mn_LastConsoleDataIdx = mn_LastConsolePacketIdx = mn_LastFarReadIdx = -1;
 	ms_HeaderMapName[0] = ms_DataMapName[0] = 0;
 
@@ -277,7 +278,7 @@ CRealConsole::~CRealConsole()
     }
 
 	//CloseMapping();
-	CloseMapHeader(); // CloseMapData() зовет сам CloseMapHeader
+	CloseMapHeader(); // CloseMapData() & CloseFarMapData() зовет сам CloseMapHeader
 	CloseColorMapping(); // Colorer data
 	
 	if (mp_Rgn) {
@@ -1204,15 +1205,23 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 				if (!nCurFarPID || nLastFarPID != nCurFarPID) {
 					pRCon->mn_LastFarReadIdx = -1;
 					nLastFarPID = nCurFarPID;
+					// Переоткрывать мэппинг при смене PID фара
+					// (из одного фара запустили другой, который закрыли и вернулись в первый)
+					pRCon->OpenFarMapData();
 				}
+
 				bool bAlive = false;
-				PRAGMA_ERROR("Переделать на мэппинг для mp_FarInfo");
-				if (nCurFarPID && pRCon->mn_LastFarReadIdx != pRCon->mp_ConsoleInfo->nFarReadIdx) {
-					pRCon->mn_LastFarReadIdx = pRCon->mp_ConsoleInfo->nFarReadIdx;
-					pRCon->mn_LastFarReadTick = GetTickCount();
-					DEBUGSTRALIVE(L"*** FAR ReadTick updated\n");
-					bAlive = true;
-				} else {
+				//PRAGMA_ERROR("Переделать на мэппинг для mp_FarInfo");
+				//if (nCurFarPID && pRCon->mn_LastFarReadIdx != pRCon->mp_ConsoleInfo->nFarReadIdx) {
+				if (nCurFarPID && pRCon->mp_FarInfo) {
+					if (pRCon->mn_LastFarReadIdx != pRCon->mp_FarInfo->nFarReadIdx) {
+						pRCon->mn_LastFarReadIdx = pRCon->mp_FarInfo->nFarReadIdx;
+						pRCon->mn_LastFarReadTick = GetTickCount();
+						DEBUGSTRALIVE(L"*** FAR ReadTick updated\n");
+						bAlive = true;
+					}
+				}
+				if (!bAlive) {
 					bAlive = pRCon->isAlive();
 				}
 				if (pRCon->isActive()) {
@@ -3565,6 +3574,7 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 			if (pIn->hdr.nSrcPID == mn_FarPID) {
 				mn_ProgramStatus &= ~CES_FARACTIVE;
 				mn_FarPID_PluginDetected = mn_FarPID = 0;
+				CloseFarMapData();
 				if (isActive()) gConEmu.UpdateProcessDisplay(FALSE); // обновить PID в окне настройки
 			}
             SetTabs(NULL, 1);
@@ -3735,8 +3745,11 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
         _ASSERTE(nDataSize>=6);
         mb_PluginDetected = TRUE; // Запомним, что в фаре есть плагин (хотя фар может быть закрыт)
         mn_FarPID_PluginDetected = pIn->dwData[0];
+		OpenFarMapData();
+
         if (isActive()) gConEmu.UpdateProcessDisplay(FALSE); // обновить PID в окне настройки
         //mn_Far_PluginInputThreadId      = pIn->dwData[1];
+		
         
         CheckColorMapping(mn_FarPID_PluginDetected);
         
@@ -6179,8 +6192,9 @@ void CRealConsole::PrepareTransparent(wchar_t* pChar, CharAttr* pAttr, int nWidt
 	if (!mp_ConsoleInfo)
 		return;
 
-	PRAGMA_ERROR("Переделать на мэппинг для mp_FarInfo");
-	CEFAR_INFO FI = mp_ConsoleInfo->FarInfo;
+	CEFAR_INFO FI = {0};
+	if (mp_FarInfo)
+		FI = *mp_FarInfo;
 
 	if (mb_LeftPanel) {
 		FI.bFarLeftPanel = true;
@@ -6765,10 +6779,12 @@ void CRealConsole::OnActivate(int nNewNum, int nOldNum)
     SetWindowLongPtr(ghWnd, GWLP_USERDATA, (LONG_PTR)hConWnd);
     ghConWnd = hConWnd;
 
-	if (mp_ConsoleInfo) {
-		PRAGMA_ERROR("Смену флажка нужно делать через команду сервера");
-		mp_ConsoleInfo->bConsoleActive = TRUE;
-	}
+	// Чтобы все в одном месте было
+	OnGuiFocused(TRUE);
+	//if (mp_ConsoleInfo) {
+	//	PRAGMA_ERROR("Смену флажка нужно делать через команду сервера");
+	//	mp_ConsoleInfo->bConsoleActive = TRUE;
+	//}
 
     //if (mh_MonitorThread) SetThreadPriority(mh_MonitorThread, THREAD_PRIORITY_ABOVE_NORMAL);
 
@@ -6821,11 +6837,13 @@ void CRealConsole::OnDeactivate(int nNewNum)
 		con.m_sel.dwFlags &= ~CONSOLE_MOUSE_SELECTION;
 		//ReleaseCapture();
 	}
-    
-	if (mp_ConsoleInfo) {
-		PRAGMA_ERROR("Смену флажка нужно делать через команду сервера");
-		mp_ConsoleInfo->bConsoleActive = FALSE;
-	}
+
+	// Чтобы все в одном месте было
+	OnGuiFocused(FALSE);
+	//if (mp_ConsoleInfo) {
+	//	PRAGMA_ERROR("Смену флажка нужно делать через команду сервера");
+	//	mp_ConsoleInfo->bConsoleActive = FALSE;
+	//}
 
     //if (mh_MonitorThread) SetThreadPriority(mh_MonitorThread, THREAD_PRIORITY_NORMAL);
 }
@@ -6834,9 +6852,24 @@ void CRealConsole::OnGuiFocused(BOOL abFocus)
 {
 	if (!this) return;
 
-	if (mp_ConsoleInfo) {
-		PRAGMA_ERROR("Смену флажка нужно делать через команду сервера");
-		mp_ConsoleInfo->bConsoleActive = abFocus;
+	BOOL fSuccess = FALSE;
+
+	if (mp_ConsoleInfo && ms_ConEmuC_Pipe[0]) {
+		BOOL lbNeedChange = FALSE;
+		if (mp_ConsoleInfo->bConsoleActive && !abFocus && gSet.isSleepInBackground)
+			lbNeedChange = TRUE;
+		else if (abFocus && !mp_ConsoleInfo->bConsoleActive)
+			lbNeedChange = TRUE;
+
+		if (lbNeedChange) {
+			int nInSize = sizeof(CESERVER_REQ_HDR)+sizeof(DWORD);
+			DWORD dwRead = 0;
+			CESERVER_REQ lIn = {{nInSize}};
+			
+			ExecutePrepareCmd(&lIn, CECMD_ONACTIVATION, lIn.hdr.nSize);
+
+			fSuccess = CallNamedPipe(ms_ConEmuC_Pipe, &lIn, lIn.hdr.nSize, &lIn, lIn.hdr.nSize, &dwRead, 500);
+		}
 	}
 }
 
@@ -9054,6 +9087,52 @@ wrap:
 	//return lbResult;
 }
 
+BOOL CRealConsole::OpenFarMapData()
+{
+	BOOL lbResult = FALSE;
+	wchar_t szMapName[128], szErr[512]; szErr[0] = 0;
+	//int nConInfoSize = sizeof(CESERVER_REQ_CONINFO_HDR);
+
+	CloseFarMapData();
+
+	_ASSERTE(mh_FarFileMapping == NULL);
+
+	DWORD nFarPID = GetFarPID(TRUE);
+	if (!nFarPID)
+		return FALSE;
+
+	wsprintf(szMapName, CEFARMAPNAME, nFarPID);
+	mh_FarFileMapping = OpenFileMapping(FILE_MAP_READ/*|FILE_MAP_WRITE*/, FALSE, szMapName);
+	if (!mh_FarFileMapping) {
+		DWORD dwErr = GetLastError();
+		wsprintf (szErr, L"ConEmu: Can't open FAR data file mapping. ErrCode=0x%08X. %s", dwErr, szMapName);
+		goto wrap;
+	}
+
+	mp_FarInfo = (CEFAR_INFO*)MapViewOfFile(mh_FarFileMapping, FILE_MAP_READ/*|FILE_MAP_WRITE*/,0,0,0);
+	if (!mp_FarInfo) {
+		DWORD dwErr = GetLastError();
+		wchar_t szErr[512];
+		wsprintf (szErr, L"ConEmu: Can't map FAR info. ErrCode=0x%08X. %s", dwErr, szMapName);
+		goto wrap;
+	}
+
+	if (mp_FarInfo->nFarPID != nFarPID) {
+		_ASSERTE(mp_FarInfo->nFarPID != nFarPID);
+		CloseFarMapData();
+		wsprintf (szErr, L"ConEmu: Invalid FAR info format. %s", szMapName);
+		goto wrap;
+	}
+
+	lbResult = TRUE;
+wrap:
+	if (!lbResult && szErr[0]) {
+		gConEmu.DebugStep(szErr);
+		MBoxA(szErr);
+	}
+	return lbResult;
+}
+
 BOOL CRealConsole::OpenMapHeader()
 {
 	BOOL lbResult = FALSE;
@@ -9090,7 +9169,7 @@ BOOL CRealConsole::OpenMapHeader()
 	if (mp_ConsoleInfo->nGuiPID != GetCurrentProcessId()) {
 		_ASSERTE(mp_ConsoleInfo->nGuiPID == GetCurrentProcessId());
 		WARNING("Наверное нужно будет передать в сервер код GUI процесса? В каком случае так может получиться?");
-		PRAGMA_ERROR("Передать через команду сервера новый GUI PID. Если пайп не готов сразу выйти");
+		//PRAGMA_ERROR("Передать через команду сервера новый GUI PID. Если пайп не готов сразу выйти");
 	}
 	
 	if (mp_ConsoleInfo->hConWnd && mp_ConsoleInfo->nCurDataMapIdx) {
@@ -9120,6 +9199,18 @@ void CRealConsole::CloseMapData()
 		mh_FileMappingData = NULL;
 	}
 	mn_LastConsoleDataIdx = mn_LastConsolePacketIdx = mn_LastFarReadIdx = -1;
+}
+
+void CRealConsole::CloseFarMapData()
+{
+	if (mp_FarInfo) {
+		UnmapViewOfFile(mp_FarInfo);
+		mp_FarInfo = NULL;
+	}
+	if (mh_FarFileMapping) {
+		CloseHandle(mh_FarFileMapping);
+		mh_FarFileMapping = NULL;
+	}
 }
 
 BOOL CRealConsole::ReopenMapData()
@@ -9180,6 +9271,8 @@ wrap:
 
 void CRealConsole::CloseMapHeader()
 {
+	CloseFarMapData();
+
 	CloseMapData();
 	
 	if (mp_ConsoleInfo) {
@@ -9231,8 +9324,8 @@ void CRealConsole::ApplyConsoleInfo()
 		DWORD nPID = GetCurrentProcessId();
 		if (nPID != mp_ConsoleInfo->nGuiPID) {
     		_ASSERTE(mp_ConsoleInfo->nGuiPID == nPID);
-    		PRAGMA_ERROR("Передать через команду сервера новый GUI PID. Если пайп не готов сразу выйти");
-    		mp_ConsoleInfo->nGuiPID = nPID;
+    		//PRAGMA_ERROR("Передать через команду сервера новый GUI PID. Если пайп не готов сразу выйти");
+    		//mp_ConsoleInfo->nGuiPID = nPID;
 		}
 	    
 		#ifdef _DEBUG

@@ -102,7 +102,7 @@ const DWORD *dwDefColors = DefColors->dwDefColors;
 DWORD gdwLastColors[0x10] = {0};
 BOOL  gbLastColorsOk = FALSE;
 
-#define MAX_COLOR_EDT_ID c31
+#define MAX_COLOR_EDT_ID c34
 
 
 
@@ -147,7 +147,7 @@ CSettings::CSettings()
     mb_IgnoreTtfChange = TRUE;
 	mb_CharSetWasSet = FALSE;
 	mb_TabHotKeyRegistered = FALSE;
-	hMain = NULL; hExt = NULL; hTabs = NULL; hColors = NULL; hInfo = NULL; hwndTip = NULL; hwndBalloon = NULL;
+	hMain = NULL; hExt = NULL; hTabs = NULL; hColors = NULL; hThumbs = NULL; hInfo = NULL; hwndTip = NULL; hwndBalloon = NULL;
     QueryPerformanceFrequency((LARGE_INTEGER *)&mn_Freq);
     memset(mn_Counter, 0, sizeof(*mn_Counter)*(tPerfInterval-gbPerformance));
     memset(mn_CounterMax, 0, sizeof(*mn_CounterMax)*(tPerfInterval-gbPerformance));
@@ -330,6 +330,7 @@ void CSettings::InitSettings()
 	nHideCaptionAlwaysFrame = 1; nHideCaptionAlwaysDelay = 2000; nHideCaptionAlwaysDisappear = 2000;
     isDesktopMode = false;
     isAlwaysOnTop = false;
+	isSleepInBackground = true;
     wndX = 0; wndY = 0; wndCascade = true;
     isConVisible = false;
     nSlideShowElapse = 2500;
@@ -669,6 +670,8 @@ void CSettings::LoadSettings()
 		
 		reg->Load(L"DesktopMode", isDesktopMode);
 		reg->Load(L"AlwaysOnTop", isAlwaysOnTop);
+
+		reg->Load(L"SleepInBackground", isSleepInBackground);
         
         reg->CloseKey();
     }
@@ -1060,6 +1063,8 @@ BOOL CSettings::SaveSettings()
     		
 			reg->Save(L"DesktopMode", isDesktopMode);
 			reg->Save(L"AlwaysOnTop", isAlwaysOnTop);
+
+			reg->Save(L"SleepInBackground", isSleepInBackground);
     		
             
             reg->CloseKey();
@@ -1122,9 +1127,14 @@ int CSettings::EnumFamCallBack(LPLOGFONT lplf, LPNEWTEXTMETRIC lpntm, DWORD Font
         aiFontCount[1]++;
 	}
 
+	DWORD bAlmostMonospace = IsAlmostMonospace(lpntm->tmMaxCharWidth, lpntm->tmAveCharWidth, lpntm->tmHeight) ? 1 : 0;
+
 	if (SendDlgItemMessage(gSet.hMain, tFontFace, CB_FINDSTRINGEXACT, -1, (LPARAM) lplf->lfFaceName)==-1) {
-		SendDlgItemMessage(gSet.hMain, tFontFace, CB_ADDSTRING, 0, (LPARAM) lplf->lfFaceName);
-		SendDlgItemMessage(gSet.hMain, tFontFace2, CB_ADDSTRING, 0, (LPARAM) lplf->lfFaceName);
+		int nIdx;
+		nIdx = SendDlgItemMessage(gSet.hMain, tFontFace, CB_ADDSTRING, 0, (LPARAM) lplf->lfFaceName);
+		SendDlgItemMessage(gSet.hMain, tFontFace, CB_SETITEMDATA, nIdx, bAlmostMonospace);
+		nIdx = SendDlgItemMessage(gSet.hMain, tFontFace2, CB_ADDSTRING, 0, (LPARAM) lplf->lfFaceName);
+		SendDlgItemMessage(gSet.hMain, tFontFace2, CB_SETITEMDATA, nIdx, bAlmostMonospace);
 	}
 
     MCHKHEAP
@@ -1172,9 +1182,11 @@ DWORD CSettings::EnumFontsThread(LPVOID apArg)
 	wchar_t szName[MAX_PATH];
 
 	EnumFontFamilies(hdc, (LPCTSTR) NULL, (FONTENUMPROC) EnumFamCallBack, (LPARAM) aFontCount);
+
 	LOGFONT term = {0}; term.lfCharSet = OEM_CHARSET; lstrcpy(term.lfFaceName, L"Terminal"); 
 	szRasterSizes[0].cx = szRasterSizes[0].cy = 0;
 	EnumFontFamiliesEx(hdc, &term, (FONTENUMPROCW) EnumFontCallBackEx, 0/*LPARAM*/, 0);
+
 	UINT nMaxCount = sizeofarray(szRasterSizes);
 	for (UINT i = 0; i<(nMaxCount-1) && szRasterSizes[i].cy; i++) {
 		UINT k = i;
@@ -1191,6 +1203,7 @@ DWORD CSettings::EnumFontsThread(LPVOID apArg)
 			szRasterSizes[i] = sz;
 		}
 	}
+
 	DeleteDC(hdc);
 
 	for (UINT sz=0; sz<sizeofarray(szRasterSizes) && szRasterSizes[sz].cy; sz++) {
@@ -1210,8 +1223,8 @@ DWORD CSettings::EnumFontsThread(LPVOID apArg)
 
 LRESULT CSettings::OnInitDialog()
 {
-	_ASSERTE(!hMain && !hColors && !hInfo);
-	hMain = NULL; hExt = NULL; hTabs = NULL; hColors = NULL; hInfo = NULL;
+	_ASSERTE(!hMain && !hColors && !hThumbs && !hExt && !hInfo);
+	hMain = NULL; hExt = NULL; hTabs = NULL; hThumbs = NULL; hColors = NULL; hInfo = NULL;
 	gbLastColorsOk = FALSE;
 
 	HMENU hSysMenu = GetSystemMenu(ghOpWnd, FALSE);
@@ -1270,8 +1283,10 @@ LRESULT CSettings::OnInitDialog()
 		TabCtrl_InsertItem(_hwndTab, 2, &tie);
         tie.pszText = wcscpy(szTitle, L"Colors");
         TabCtrl_InsertItem(_hwndTab, 3, &tie);
+		tie.pszText = wcscpy(szTitle, L"Thumbs");
+		TabCtrl_InsertItem(_hwndTab, 4, &tie);
         tie.pszText = wcscpy(szTitle, L"Info");
-        TabCtrl_InsertItem(_hwndTab, 4, &tie);
+        TabCtrl_InsertItem(_hwndTab, 5, &tie);
         
         HFONT hFont = CreateFont(nTabFontHeight/*TAB_FONT_HEIGTH*/, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, nTabFontCharSet /*ANSI_CHARSET*/, OUT_DEFAULT_PRECIS, 
             CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_SWISS, /* L"Tahoma" */ sTabFontFace);
@@ -1612,6 +1627,8 @@ LRESULT CSettings::OnInitDialog_Ext()
 	if (isDesktopMode) CheckDlgButton(hExt, cbDesktopMode, BST_CHECKED);
 	if (isAlwaysOnTop)  CheckDlgButton(hExt, cbAlwaysOnTop, BST_CHECKED);
 
+	if (isSleepInBackground) CheckDlgButton(hExt, cbSleepInBackground, BST_CHECKED);
+
 	if (isConVisible)
 		CheckDlgButton(hExt, cbVisible, BST_CHECKED);
 
@@ -1762,6 +1779,77 @@ LRESULT CSettings::OnInitDialog_Color()
 	SendDlgItemMessage(hColors, slTransparent, TBM_SETPOS  , (WPARAM) true, (LPARAM) nTransparent);
 	CheckDlgButton(hColors, cbTransparent, (nTransparent!=255) ? BST_CHECKED : BST_UNCHECKED);
 	CheckDlgButton(hColors, cbUserScreenTransparent, isUserScreenTransparent ? BST_CHECKED : BST_UNCHECKED);
+
+	RegisterTipsFor(hColors);
+
+	return 0;
+}
+
+LRESULT CSettings::OnInitDialog_Thumbs()
+{
+	if (gSet.EnableThemeDialogTextureF)
+		gSet.EnableThemeDialogTextureF(hThumbs, 6/*ETDT_ENABLETAB*/);
+
+	//wchar_t temp[MAX_PATH];
+
+	//for (uint i = 0; i <= (MAX_COLOR_EDT_ID-c0); i++)
+	//{
+	//	SendDlgItemMessage(hColors, tc0 + i, EM_SETLIMITTEXT, 11, 0);
+	//	COLORREF cr = 0;
+	//	GetColorById(i+c0, &cr);
+	//	//if (i <= 31)
+	//	//	cr = Colors[i];
+	//	//else if (i == 32)
+	//	//	cr = ColorKey;
+	//	//else if (i == 33)
+	//	//	cr = nFadeInactiveMask;
+	//	wsprintf(temp, L"%i %i %i", getR(cr), getG(cr), getB(cr));
+	//	SetDlgItemText(hColors, tc0 + i, temp);
+	//}
+
+	//for (uint i=0; i < 16; i++)
+	//{
+	//	wsprintf(temp, (i<10) ? L"# %i" : L"#%i", i);
+	//	SendDlgItemMessage(hColors, lbExtendIdx, CB_ADDSTRING, 0, (LPARAM) temp);
+	//	//SendDlgItemMessage(hColors, lbVisFore, CB_ADDSTRING, 0, (LPARAM) temp);
+	//	//SendDlgItemMessage(hColors, lbVisNormal, CB_ADDSTRING, 0, (LPARAM) temp);
+	//	//SendDlgItemMessage(hColors, lbVisTab, CB_ADDSTRING, 0, (LPARAM) temp);
+	//	//SendDlgItemMessage(hColors, lbVisEOL, CB_ADDSTRING, 0, (LPARAM) temp);
+	//	//SendDlgItemMessage(hColors, lbVisEOF, CB_ADDSTRING, 0, (LPARAM) temp);
+	//}
+	//SendDlgItemMessage(hColors, lbExtendIdx, CB_SETCURSEL, nExtendColor, 0);
+	//CheckDlgButton(hColors, cbExtendColors, isExtendColors ? BST_CHECKED : BST_UNCHECKED);
+	//OnColorButtonClicked(cbExtendColors, 0);
+
+	//CheckDlgButton(hColors, cbTrueColorer, isTrueColorer ? BST_CHECKED : BST_UNCHECKED);
+
+	//CheckDlgButton(hColors, cbFadeInactive, isFadeInactive ? BST_CHECKED : BST_UNCHECKED);
+	//SetDlgItemInt(hColors, tFadeLow, mn_FadeLow, FALSE);
+	//SetDlgItemInt(hColors, tFadeHigh, mn_FadeHigh, FALSE);
+
+	//// Default colors
+	//memmove(gdwLastColors, Colors, sizeof(gdwLastColors));
+	//SendDlgItemMessage(hColors, lbDefaultColors, CB_ADDSTRING, 0, (LPARAM) L"<Current color scheme>");
+	////SendDlgItemMessage(hColors, lbDefaultColors, CB_ADDSTRING, 0, (LPARAM) L"Default color sheme (Windows standard)");
+	////SendDlgItemMessage(hColors, lbDefaultColors, CB_ADDSTRING, 0, (LPARAM) L"Gamma 1 (for use with dark monitors)");
+	//for (uint i=0; i<sizeofarray(DefColors); i++)
+	//	SendDlgItemMessage(hColors, lbDefaultColors, CB_ADDSTRING, 0, (LPARAM) DefColors[i].pszTitle);
+	//SendDlgItemMessage(hColors, lbDefaultColors, CB_SETCURSEL, 0, 0);
+	//gbLastColorsOk = TRUE;
+
+	////// Visualizer
+	////CheckDlgButton(hColors, cbVisualizer, isVisualizer ? BST_CHECKED : BST_UNCHECKED);
+	////SendDlgItemMessage(hColors, lbVisFore, CB_SETCURSEL, nVizFore, 0);
+	////SendDlgItemMessage(hColors, lbVisNormal, CB_SETCURSEL, nVizNormal, 0);
+	////SendDlgItemMessage(hColors, lbVisTab, CB_SETCURSEL, nVizTab, 0);
+	////SendDlgItemMessage(hColors, lbVisEOL, CB_SETCURSEL, nVizEOL, 0);
+	////SendDlgItemMessage(hColors, lbVisEOF, CB_SETCURSEL, nVizEOF, 0);
+	////OnColorButtonClicked(cbVisualizer, 0);
+
+	//SendDlgItemMessage(hColors, slTransparent, TBM_SETRANGE, (WPARAM) true, (LPARAM) MAKELONG(MIN_ALPHA_VALUE, 255));
+	//SendDlgItemMessage(hColors, slTransparent, TBM_SETPOS  , (WPARAM) true, (LPARAM) nTransparent);
+	//CheckDlgButton(hColors, cbTransparent, (nTransparent!=255) ? BST_CHECKED : BST_UNCHECKED);
+	//CheckDlgButton(hColors, cbUserScreenTransparent, isUserScreenTransparent ? BST_CHECKED : BST_UNCHECKED);
 
 	RegisterTipsFor(hColors);
 
@@ -2178,6 +2266,11 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
 	case cbAlwaysOnTop:
 		isAlwaysOnTop = IsChecked(hExt, cbAlwaysOnTop);
 		gConEmu.OnAlwaysOnTop();
+		break;
+
+	case cbSleepInBackground:
+		isSleepInBackground = IsChecked(hExt, cbSleepInBackground);
+		gConEmu.ActiveCon()->RCon()->OnGuiFocused(TRUE);
 		break;
 
 	case cbAdminShield:
@@ -2638,6 +2731,10 @@ LRESULT CSettings::OnTab(LPNMHDR phdr)
 					phCurrent = &hColors;
 					nDlgRc = IDD_SPG_COLORS;
 					dlgProc = colorOpProc;
+				} else if (nSel==4) {
+					phCurrent = &hThumbs;
+					nDlgRc = IDD_SPG_THUMBS;
+					dlgProc = thumbsOpProc;
                 } else {
                 	phCurrent = &hInfo;
                 	nDlgRc = IDD_SPG_INFO;
@@ -2663,6 +2760,7 @@ LRESULT CSettings::OnTab(LPNMHDR phdr)
                     if (*phCurrent != hExt)    ShowWindow(hExt,  SW_HIDE);
 					if (*phCurrent != hTabs)   ShowWindow(hTabs,  SW_HIDE);
                     if (*phCurrent != hColors) ShowWindow(hColors, SW_HIDE);
+					if (*phCurrent != hThumbs) ShowWindow(hThumbs, SW_HIDE);
                     if (*phCurrent != hInfo)   ShowWindow(hInfo, SW_HIDE);
                     SetFocus(*phCurrent);
                 }
@@ -2911,7 +3009,7 @@ INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPara
         if (gSet.hwndTip) {DestroyWindow(gSet.hwndTip); gSet.hwndTip = NULL;}
 		if (gSet.hwndBalloon) {DestroyWindow(gSet.hwndBalloon); gSet.hwndBalloon = NULL;}
         //EndDialog(hWnd2, TRUE);
-        ghOpWnd = NULL; gSet.hMain = NULL; gSet.hExt = NULL; gSet.hTabs = NULL; gSet.hColors = NULL; gSet.hInfo = NULL;
+        ghOpWnd = NULL; gSet.hMain = gSet.hExt = gSet.hTabs = gSet.hColors = gSet.hThumbs = gSet.hInfo = NULL;
         gbLastColorsOk = FALSE;
         break;
 	case WM_HOTKEY:
@@ -3132,6 +3230,49 @@ INT_PTR CSettings::colorOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPa
         return 0;
     }
     return 0;
+}
+
+INT_PTR CSettings::thumbsOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
+{
+	switch (messg)
+	{
+	case WM_INITDIALOG:
+		_ASSERTE(gSet.hThumbs==NULL || gSet.hThumbs==hWnd2);
+		gSet.hThumbs = hWnd2;
+		gSet.OnInitDialog_Thumbs();
+		break;
+
+	case WM_CTLCOLORSTATIC:
+		for (uint i = c32; i <= MAX_COLOR_EDT_ID; i++)
+			if (GetDlgItem(hWnd2, i) == (HWND)lParam)
+			{
+				static HBRUSH KillBrush;
+				DeleteObject(KillBrush);
+				COLORREF cr = 0;
+				gSet.GetColorById(i, &cr);
+				KillBrush = CreateSolidBrush(cr);
+				return (BOOL)KillBrush;
+			}
+			break;
+
+	case WM_COMMAND:
+		if (HIWORD(wParam) == BN_CLICKED)
+		{
+			gSet.OnColorButtonClicked(wParam, lParam);
+		}
+		else if (HIWORD(wParam) == EN_CHANGE)
+		{
+			gSet.OnColorEditChanged(wParam, lParam);
+		}
+		else if (HIWORD(wParam) == CBN_EDITCHANGE || HIWORD(wParam) == CBN_SELCHANGE)
+		{
+			gSet.OnColorComboBox(wParam, lParam);
+		}
+		break;
+	default:
+		return 0;
+	}
+	return 0;
 }
 
 INT_PTR CSettings::infoOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
@@ -4206,6 +4347,37 @@ bool CSettings::AutoRecreateFont(int nFontW, int nFontH)
 	return false;
 }
 
+bool CSettings::IsAlmostMonospace(int tmMaxCharWidth, int tmAveCharWidth, int tmHeight)
+{
+	// у Arial'а например MaxWidth слишком большой (в два и более раз больше ВЫСОТЫ шрифта)
+	bool bAlmostMonospace = false;
+	if (tmMaxCharWidth && tmAveCharWidth && tmHeight)
+	{
+		int nRelativeDelta = (tmMaxCharWidth - tmAveCharWidth) * 100 / tmHeight;
+		// Если расхождение менее 15% высоты - считаем шрифт моноширным
+		if (nRelativeDelta < 15)
+			bAlmostMonospace = true;			
+
+		//if (abs(tm->tmMaxCharWidth - tm->tmAveCharWidth)<=2)
+		//{ -- это была попытка прикинуть среднюю ширину по английским буквам
+		//  -- не нужно, т.к. затевалось из-за проблем с ClearType на больших размерах
+		//  -- шрифтов, а это лечится аргументом pDX в TextOut
+		//	int nTestLen = lstrlen(TEST_FONT_WIDTH_STRING_EN);
+		//	SIZE szTest = {0,0};
+		//	if (GetTextExtentPoint32(hDC, TEST_FONT_WIDTH_STRING_EN, nTestLen, &szTest)) {
+		//		int nAveWidth = (szTest.cx + nTestLen - 1) / nTestLen;
+		//		if (nAveWidth > tm->tmAveCharWidth || nAveWidth > tm->tmMaxCharWidth)
+		//			tm->tmMaxCharWidth = tm->tmAveCharWidth = nAveWidth;
+		//	}
+		//}
+	} else {
+		_ASSERTE(tmMaxCharWidth);
+		_ASSERTE(tmAveCharWidth);
+		_ASSERTE(tmHeight);
+	}
+	return bAlmostMonospace;
+}
+
 HFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 {
     ResetFontWidth();
@@ -4295,31 +4467,31 @@ HFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 		}
 
 		// у Arial'а например MaxWidth слишком большой (в два и более раз больше ВЫСОТЫ шрифта)
-		bool bAlmostMonospace = false;
-		if (tm->tmMaxCharWidth && tm->tmAveCharWidth && tm->tmHeight)
-		{
-			int nRelativeDelta = (tm->tmMaxCharWidth - tm->tmAveCharWidth) * 100 / tm->tmHeight;
-			// Если расхождение менее 15% высоты - считаем шрифт моноширным
-			if (nRelativeDelta < 15)
-				bAlmostMonospace = true;			
+		bool bAlmostMonospace = IsAlmostMonospace(tm->tmMaxCharWidth, tm->tmAveCharWidth, tm->tmHeight);
+		//if (tm->tmMaxCharWidth && tm->tmAveCharWidth && tm->tmHeight)
+		//{
+		//	int nRelativeDelta = (tm->tmMaxCharWidth - tm->tmAveCharWidth) * 100 / tm->tmHeight;
+		//	// Если расхождение менее 15% высоты - считаем шрифт моноширным
+		//	if (nRelativeDelta < 15)
+		//		bAlmostMonospace = true;			
 
-			//if (abs(tm->tmMaxCharWidth - tm->tmAveCharWidth)<=2)
-			//{ -- это была попытка прикинуть среднюю ширину по английским буквам
-			//  -- не нужно, т.к. затевалось из-за проблем с ClearType на больших размерах
-			//  -- шрифтов, а это лечится аргументом pDX в TextOut
-			//	int nTestLen = lstrlen(TEST_FONT_WIDTH_STRING_EN);
-			//	SIZE szTest = {0,0};
-			//	if (GetTextExtentPoint32(hDC, TEST_FONT_WIDTH_STRING_EN, nTestLen, &szTest)) {
-			//		int nAveWidth = (szTest.cx + nTestLen - 1) / nTestLen;
-			//		if (nAveWidth > tm->tmAveCharWidth || nAveWidth > tm->tmMaxCharWidth)
-			//			tm->tmMaxCharWidth = tm->tmAveCharWidth = nAveWidth;
-			//	}
-			//}
-		} else {
-			_ASSERTE(tm->tmMaxCharWidth);
-			_ASSERTE(tm->tmAveCharWidth);
-			_ASSERTE(tm->tmHeight);
-		}
+		//	//if (abs(tm->tmMaxCharWidth - tm->tmAveCharWidth)<=2)
+		//	//{ -- это была попытка прикинуть среднюю ширину по английским буквам
+		//	//  -- не нужно, т.к. затевалось из-за проблем с ClearType на больших размерах
+		//	//  -- шрифтов, а это лечится аргументом pDX в TextOut
+		//	//	int nTestLen = lstrlen(TEST_FONT_WIDTH_STRING_EN);
+		//	//	SIZE szTest = {0,0};
+		//	//	if (GetTextExtentPoint32(hDC, TEST_FONT_WIDTH_STRING_EN, nTestLen, &szTest)) {
+		//	//		int nAveWidth = (szTest.cx + nTestLen - 1) / nTestLen;
+		//	//		if (nAveWidth > tm->tmAveCharWidth || nAveWidth > tm->tmMaxCharWidth)
+		//	//			tm->tmMaxCharWidth = tm->tmAveCharWidth = nAveWidth;
+		//	//	}
+		//	//}
+		//} else {
+		//	_ASSERTE(tm->tmMaxCharWidth);
+		//	_ASSERTE(tm->tmAveCharWidth);
+		//	_ASSERTE(tm->tmHeight);
+		//}
 
 		//if (isForceMonospace) {
         //Maximus - у Arial'а например MaxWidth слишком большой
