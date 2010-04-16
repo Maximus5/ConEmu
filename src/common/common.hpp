@@ -137,10 +137,12 @@ extern wchar_t gszDbgModLabel[6];
 #define CECONMAPNAME        L"ConEmuFileMapping.%08X"
 #define CECONMAPNAME_A      "ConEmuFileMapping.%08X"
 #define CEFARMAPNAME        L"ConEmuFarMapping.%08X"
+#define CEFARALIVEEVENT     L"ConEmuFarAliveEvent.%u"
 //#define CECONMAPNAMESIZE    (sizeof(CESERVER_REQ_CONINFO)+(MAXCONMAPCELLS*sizeof(CHAR_INFO)))
 //#define CEGUIATTACHED       L"ConEmuGuiAttached.%u"
 #define CEGUIRCONSTARTED    L"ConEmuGuiRConStarted.%u"
 #define CEGUI_ALIVE_EVENT   L"ConEmuGuiStarted"
+
 
 //#define CONEMUMSG_ATTACH L"ConEmuMain::Attach"            // wParam == hConWnd, lParam == ConEmuC_PID
 WARNING("CONEMUMSG_SRVSTARTED нужно переделать в команду пайпа для GUI");
@@ -200,7 +202,7 @@ WARNING("CONEMUMSG_SRVSTARTED нужно переделать в команду пайпа для GUI");
 #define CECMD_ONACTIVATION  31 // Для установки флажка ConsoleInfo->bConsoleActive
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    38
+#define CESERVER_REQ_VER    39
 
 #define PIPEBUFSIZE 4096
 
@@ -396,7 +398,7 @@ typedef struct tag_CEFAR_INFO {
 	BOOL bFarLeftPanel, bFarRightPanel;   
 	CEFAR_SHORT_PANEL_INFO FarLeftPanel, FarRightPanel; // FCTL_GETPANELSHORTINFO,...
 	DWORD nFarConsoleMode;
-	DWORD nFarReadIdx;    // index, +1, когда фар в последний раз позвал (Read|Peek)ConsoleInput или GetConsoleInputCount
+	//DWORD nFarReadIdx;    // index, +1, когда фар в последний раз позвал (Read|Peek)ConsoleInput или GetConsoleInputCount
 } CEFAR_INFO;
 
 
@@ -410,13 +412,15 @@ typedef struct tag_CESERVER_REQ_CONINFO_HDR {
 	DWORD nGuiPID;     // !! на них ориентируется PicViewWrapper   !!
 	//
 	DWORD bConsoleActive;
+	DWORD nProtocolVersion; // == CESERVER_REQ_VER
 	//
 	DWORD nFarPID; // PID последнего фара, обновившего информацию о себе в этой структуре
 	DWORD nCurDataMapIdx; // суффикс для текущего MAP файла с данными
 	DWORD nCurDataMaxSize; // Максимальный размер буфера nCurDataMapIdx
 	DWORD nPacketId;
-	DWORD nFarUpdateTick0;// GetTickCount(), устанавливается в начале обновления консоли из фара (вдруг что свалится...)
-	DWORD nFarUpdateTick; // GetTickCount(), когда консоль была обновлена в последний раз из фара
+	//DWORD nFarReadTick; // GetTickCount(), когда фар в последний раз считывал события из консоли
+	//DWORD nFarUpdateTick0;// GetTickCount(), устанавливается в начале обновления консоли из фара (вдруг что свалится...)
+	//DWORD nFarUpdateTick; // GetTickCount(), когда консоль была обновлена в последний раз из фара
 	//DWORD nFarReadIdx;    // index, +1, когда фар в последний раз позвал (Read|Peek)ConsoleInput или GetConsoleInputCount
 	DWORD nSrvUpdateTick; // GetTickCount(), когда консоль была считана в последний раз в сервере
 	DWORD nReserved0; //DWORD nInputTID;
@@ -437,6 +441,11 @@ typedef struct tag_CESERVER_REQ_CONINFO_DATA {
 	COORD      crBufSize;
 	CHAR_INFO  Buf[1];
 } CESERVER_REQ_CONINFO_DATA;
+
+typedef struct tag_CESERVER_REQ_CONINFO_FULL {
+	CESERVER_REQ_CONINFO_HDR  info;
+	CESERVER_REQ_CONINFO_DATA data;
+} CESERVER_REQ_CONINFO_FULL;
 
 //typedef struct tag_CESERVER_REQ_CONINFO {
 //	CESERVER_REQ_CONINFO_HDR inf;

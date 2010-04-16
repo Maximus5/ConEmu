@@ -145,6 +145,7 @@ int FUNC_Y(ShowMessage)(int aiMsg, int aiButtons);
 //void FUNC_X(ReloadMacro)();
 //void FUNC_Y(ReloadMacro)();
 extern CEFAR_INFO *gpFarInfo;
+extern HANDLE ghFarAliveEvent;
 BOOL ReloadFarInfoA(BOOL abFull = FALSE);
 BOOL FUNC_X(ReloadFarInfo)(BOOL abFull = FALSE);
 #if (FAR_X_VER!=FAR_Y_VER)

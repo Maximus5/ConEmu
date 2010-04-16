@@ -1208,7 +1208,8 @@ DWORD CSettings::EnumFontsThread(LPVOID apArg)
 
 	for (UINT sz=0; sz<sizeofarray(szRasterSizes) && szRasterSizes[sz].cy; sz++) {
 		wsprintf(szName, L"[%s %ix%i]", RASTER_FONTS_NAME, szRasterSizes[sz].cx, szRasterSizes[sz].cy);
-		SendDlgItemMessage(gSet.hMain, tFontFace, CB_INSERTSTRING, sz, (LPARAM)szName);
+		int nIdx = SendDlgItemMessage(gSet.hMain, tFontFace, CB_INSERTSTRING, sz, (LPARAM)szName);
+		SendDlgItemMessage(gSet.hMain, tFontFace, CB_SETITEMDATA, nIdx, 1);
 	}
 
 	GetDlgItemText(gSet.hMain, tFontFace, szName, MAX_PATH);
@@ -3051,6 +3052,52 @@ INT_PTR CSettings::mainOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 		gSet.hMain = hWnd2;
         gSet.OnInitDialog_Main();
         break;
+
+	case WM_MEASUREITEM:
+		{
+			DWORD wID = wParam;
+			if (wID == tFontFace || wID == tFontFace2) {
+				MEASUREITEMSTRUCT *pItem = (MEASUREITEMSTRUCT*)lParam;
+				pItem->itemHeight = 16; //pItem->itemHeight;
+			}
+			return TRUE;
+		}
+
+	case WM_DRAWITEM:
+		{
+			DWORD wID = wParam;
+			if (wID == tFontFace || wID == tFontFace2) {
+				DRAWITEMSTRUCT *pItem = (DRAWITEMSTRUCT*)lParam;
+				wchar_t szText[128]; szText[0] = 0;
+				SendDlgItemMessage(hWnd2, wID, CB_GETLBTEXT, pItem->itemID, (LPARAM)szText);
+				DWORD bAlmostMonospace = (DWORD)SendDlgItemMessage(hWnd2, wID, CB_GETITEMDATA, pItem->itemID, 0);
+
+				COLORREF crText, crBack;
+				if (!(pItem->itemState & ODS_SELECTED)) {
+					crText = GetSysColor(COLOR_WINDOWTEXT);
+					crBack = GetSysColor(COLOR_WINDOW);
+				} else {
+					crText = GetSysColor(COLOR_HIGHLIGHTTEXT);
+					crBack = GetSysColor(COLOR_HIGHLIGHT);
+				}
+				SetTextColor(pItem->hDC, crText);
+				SetBkColor(pItem->hDC, crBack);
+				RECT rc = pItem->rcItem;
+				HBRUSH hBr = CreateSolidBrush(crBack);
+				FillRect(pItem->hDC, &rc, hBr);
+				DeleteObject(hBr);
+				rc.left++;
+				
+				HFONT hFont = CreateFont(8, 0,0,0,(bAlmostMonospace==1)?FW_BOLD:FW_NORMAL,0,0,0,
+					ANSI_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH,
+					L"MS Sans Serif");
+				HFONT hOldF = (HFONT)SelectObject(pItem->hDC, hFont);
+				DrawText(pItem->hDC, szText, wcslen(szText), &rc, DT_LEFT|DT_VCENTER|DT_NOPREFIX);
+				SelectObject(pItem->hDC, hOldF);
+				DeleteObject(hFont);
+			}
+			return TRUE;
+		}
 
     //case WM_CTLCOLORSTATIC:
     //    for (uint i = 1 000; i < 1 016; i++)

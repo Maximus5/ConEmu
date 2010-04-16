@@ -160,6 +160,7 @@ DWORD gnSelfPID = 0; //GetCurrentProcessId();
 //BOOL  gbNeedReloadFarInfo = FALSE;
 HANDLE ghFarInfoMapping = NULL;
 CEFAR_INFO *gpFarInfo = NULL, *gpFarInfoMapping = NULL;
+HANDLE ghFarAliveEvent = NULL;
 PanelViewRegInfo gPanelRegLeft = {NULL};
 PanelViewRegInfo gPanelRegRight = {NULL};
 
@@ -293,12 +294,67 @@ HANDLE WINAPI _export OpenPluginW(int OpenFrom,INT_PTR Item)
 	return INVALID_HANDLE_VALUE;
 }
 
+void TouchReadPeekConsoleInputs(int Peek = -1)
+{
+#ifdef _DEBUG
+	_ASSERTE(GetCurrentThreadId() == gnMainThreadId);
+#endif
+	if (!gpFarInfo || !gpFarInfoMapping || !gpConsoleInfo) {
+		_ASSERTE(gpFarInfo);
+		return;
+	}
+
+	SetEvent(ghFarAliveEvent);
+	//gpFarInfo->nFarReadIdx++;
+	//gpFarInfoMapping->nFarReadIdx = gpFarInfo->nFarReadIdx;
+
+#ifdef _DEBUG
+	if (Peek == -1)
+		return;
+	if ((GetKeyState(VK_SCROLL)&1) == 0)
+		return;
+	static DWORD nLastTick;
+	DWORD nCurTick = GetTickCount();
+	DWORD nDelta = nCurTick - nLastTick;
+	static CONSOLE_SCREEN_BUFFER_INFO sbi;
+	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+	if (nDelta > 1000) {
+		GetConsoleScreenBufferInfo(hOut, &sbi);
+		nCurTick = nCurTick;
+	}
+	static wchar_t Chars[] = L"-\\|/-\\|/";
+	int nNextChar = 0;
+	if (Peek) {
+		static int nPeekChar = 0;
+		nNextChar = nPeekChar++;
+		if (nPeekChar >= 8) nPeekChar = 0;
+	} else {
+		static int nReadChar = 0;
+		nNextChar = nReadChar++;
+		if (nReadChar >= 8) nReadChar = 0;
+	}
+	CHAR_INFO chi;
+	chi.Char.UnicodeChar = Chars[nNextChar];
+	chi.Attributes = 15;
+	COORD crBufSize = {1,1};
+	COORD crBufCoord = {0,0};
+	// Cell[0] лучше не трогать - GUI ориентируется на наличие "1" в этой ячейке при проверке активности фара
+	SHORT nShift = (Peek?1:2);
+	SMALL_RECT rc = {sbi.srWindow.Left+nShift,sbi.srWindow.Bottom,sbi.srWindow.Left+nShift,sbi.srWindow.Bottom};
+	WriteConsoleOutputW(hOut, &chi, crBufSize, crBufCoord, &rc);
+#endif
+}
+
+
 // Вызывается только в основной нити
 BOOL OnConsolePeekReadInput(BOOL abPeek)
 {
 #ifdef _DEBUG
 	_ASSERTE(GetCurrentThreadId() == gnMainThreadId);
 #endif
+
+	if (gpConsoleInfo && gpFarInfo && gpFarInfoMapping)
+		TouchReadPeekConsoleInputs(abPeek ? 1 : 0);
 
 	if (/*gbNeedReloadFarInfo &&*/ abPeek == FALSE) {
 		//gbNeedReloadFarInfo = FALSE;
@@ -507,13 +563,23 @@ BOOL OnPanelViewCallbacks(HookCallbackArg* pArgs, PanelViewInputCallback pfnLeft
 }
 
 
+// Для определения "живости" фара
+VOID WINAPI OnGetNumberOfConsoleInputEventsPost(HookCallbackArg* pArgs)
+{
+	if (pArgs->bMainThread && gpConsoleInfo && gpFarInfo && gpFarInfoMapping) {
+		TouchReadPeekConsoleInputs(-1);
+	}
+}
 
 // Если функция возвращает FALSE - реальный ReadConsoleInput вызван не будет,
 // и в вызывающую функцию (ФАРа?) вернется то, что проставлено в pArgs->lpResult & pArgs->lArguments[...]
 BOOL WINAPI OnConsolePeekInput(HookCallbackArg* pArgs)
 {
 	if (!pArgs->bMainThread) return TRUE; // обработку делаем только в основной нити
-	OnConsolePeekReadInput(TRUE/*abPeek*/);
+	
+	if (pArgs->lArguments[2] == 1) {
+		OnConsolePeekReadInput(TRUE/*abPeek*/);
+	}
 
 	// Если зарегистрирован callback для графической панели
 	if (gPanelRegLeft.pfnPeekPreCall || gPanelRegRight.pfnPeekPreCall) {
@@ -540,7 +606,10 @@ VOID WINAPI OnConsolePeekInputPost(HookCallbackArg* pArgs)
 BOOL WINAPI OnConsoleReadInput(HookCallbackArg* pArgs)
 {
 	if (!pArgs->bMainThread) return TRUE; // обработку делаем только в основной нити
-	OnConsolePeekReadInput(FALSE/*abPeek*/);
+	
+	if (pArgs->lArguments[2] == 1) {
+		OnConsolePeekReadInput(FALSE/*abPeek*/);
+	}
 
 	// Если зарегистрирован callback для графической панели
 	if (gPanelRegLeft.pfnReadPreCall || gPanelRegRight.pfnReadPreCall) {
@@ -2297,6 +2366,12 @@ BOOL ReloadFarInfo(BOOL abFull)
 			}
 		}
 	}
+
+	if (!ghFarAliveEvent) {
+		wchar_t szEventName[64];
+		wsprintfW(szEventName, CEFARALIVEEVENT, gnSelfPID);
+		ghFarAliveEvent = CreateEvent(gpNullSecurity, FALSE, FALSE, szEventName);				
+	}
 	
 	if (!gpFarInfo) {
 		gpFarInfo = (CEFAR_INFO*)Alloc(sizeof(CEFAR_INFO),1);
@@ -2675,6 +2750,10 @@ void StopThread(void)
 		UnmapViewOfFile(gpFarInfoMapping);
 		CloseHandle(ghFarInfoMapping);
 		ghFarInfoMapping = NULL;
+	}
+	if (ghFarAliveEvent) {
+		CloseHandle(ghFarAliveEvent);
+		ghFarAliveEvent = NULL;
 	}
 
 	//DeleteCriticalSection(csTabs); memset(csTabs,0,sizeof(csTabs));

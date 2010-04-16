@@ -204,11 +204,12 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
     mn_LastVKeyPressed = 0;
     mh_LogInput = NULL; mpsz_LogInputFile = NULL; //mpsz_LogPackets = NULL; mn_LogPackets = 0;
 
-	mh_FileMapping = mh_FileMappingData = mh_FarFileMapping = NULL;
+	mh_FileMapping = mh_FileMappingData = mh_FarFileMapping = mh_FarAliveEvent = NULL;
     mp_ConsoleInfo = NULL;
     mp_ConsoleData = NULL;
 	mp_FarInfo = NULL;
-    mn_LastConsoleDataIdx = mn_LastConsolePacketIdx = mn_LastFarReadIdx = -1;
+    mn_LastConsoleDataIdx = mn_LastConsolePacketIdx = /*mn_LastFarReadIdx =*/ -1;
+	mn_LastFarReadTick = 0;
 	ms_HeaderMapName[0] = ms_DataMapName[0] = 0;
 
 	mh_ColorMapping = NULL;
@@ -1203,7 +1204,8 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 				// Alive?
 				DWORD nCurFarPID = pRCon->GetFarPID();
 				if (!nCurFarPID || nLastFarPID != nCurFarPID) {
-					pRCon->mn_LastFarReadIdx = -1;
+					//pRCon->mn_LastFarReadIdx = -1;
+					pRCon->mn_LastFarReadTick = 0;
 					nLastFarPID = nCurFarPID;
 					// Переоткрывать мэппинг при смене PID фара
 					// (из одного фара запустили другой, который закрыли и вернулись в первый)
@@ -1213,13 +1215,22 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 				bool bAlive = false;
 				//PRAGMA_ERROR("Переделать на мэппинг для mp_FarInfo");
 				//if (nCurFarPID && pRCon->mn_LastFarReadIdx != pRCon->mp_ConsoleInfo->nFarReadIdx) {
-				if (nCurFarPID && pRCon->mp_FarInfo) {
-					if (pRCon->mn_LastFarReadIdx != pRCon->mp_FarInfo->nFarReadIdx) {
-						pRCon->mn_LastFarReadIdx = pRCon->mp_FarInfo->nFarReadIdx;
-						pRCon->mn_LastFarReadTick = GetTickCount();
-						DEBUGSTRALIVE(L"*** FAR ReadTick updated\n");
-						bAlive = true;
+				if (nCurFarPID && pRCon->mp_FarInfo && pRCon->mh_FarAliveEvent) {
+					DWORD nCurTick = GetTickCount();
+					if ((nCurTick - pRCon->mn_LastFarReadTick) > FAR_ALIVE_TIMEOUT) {
+						if (WaitForSingleObject(pRCon->mh_FarAliveEvent, 0) == WAIT_OBJECT_0) {
+							pRCon->mn_LastFarReadTick = nCurTick ? nCurTick : 1;
+							bAlive = true; // живой
+						}
+					} else {
+						bAlive = true; // еще не успело протухнуть
 					}
+					//if (pRCon->mn_LastFarReadIdx != pRCon->mp_FarInfo->nFarReadIdx) {
+					//	pRCon->mn_LastFarReadIdx = pRCon->mp_FarInfo->nFarReadIdx;
+					//	pRCon->mn_LastFarReadTick = GetTickCount();
+					//	DEBUGSTRALIVE(L"*** FAR ReadTick updated\n");
+					//	bAlive = true;
+					//}
 				}
 				if (!bAlive) {
 					bAlive = pRCon->isAlive();
@@ -6865,6 +6876,7 @@ void CRealConsole::OnGuiFocused(BOOL abFocus)
 			int nInSize = sizeof(CESERVER_REQ_HDR)+sizeof(DWORD);
 			DWORD dwRead = 0;
 			CESERVER_REQ lIn = {{nInSize}};
+			lIn.dwData[0] = abFocus ? 1 : 0;
 			
 			ExecutePrepareCmd(&lIn, CECMD_ONACTIVATION, lIn.hdr.nSize);
 
@@ -9096,7 +9108,9 @@ BOOL CRealConsole::OpenFarMapData()
 	CloseFarMapData();
 
 	_ASSERTE(mh_FarFileMapping == NULL);
+	_ASSERTE(mh_FarAliveEvent == NULL);
 
+	DWORD dwErr = 0;
 	DWORD nFarPID = GetFarPID(TRUE);
 	if (!nFarPID)
 		return FALSE;
@@ -9104,7 +9118,7 @@ BOOL CRealConsole::OpenFarMapData()
 	wsprintf(szMapName, CEFARMAPNAME, nFarPID);
 	mh_FarFileMapping = OpenFileMapping(FILE_MAP_READ/*|FILE_MAP_WRITE*/, FALSE, szMapName);
 	if (!mh_FarFileMapping) {
-		DWORD dwErr = GetLastError();
+		dwErr = GetLastError();
 		wsprintf (szErr, L"ConEmu: Can't open FAR data file mapping. ErrCode=0x%08X. %s", dwErr, szMapName);
 		goto wrap;
 	}
@@ -9122,6 +9136,15 @@ BOOL CRealConsole::OpenFarMapData()
 		CloseFarMapData();
 		wsprintf (szErr, L"ConEmu: Invalid FAR info format. %s", szMapName);
 		goto wrap;
+	}
+
+	wsprintf(szMapName, CEFARALIVEEVENT, nFarPID);
+	mh_FarAliveEvent = OpenEvent(EVENT_MODIFY_STATE|SYNCHRONIZE, FALSE, szMapName);
+	if (!mh_FarAliveEvent) {
+		dwErr = GetLastError();
+		if (mp_FarInfo) {
+			_ASSERTE(mh_FarAliveEvent!=NULL);
+		}
 	}
 
 	lbResult = TRUE;
@@ -9198,7 +9221,8 @@ void CRealConsole::CloseMapData()
 		CloseHandle(mh_FileMappingData);
 		mh_FileMappingData = NULL;
 	}
-	mn_LastConsoleDataIdx = mn_LastConsolePacketIdx = mn_LastFarReadIdx = -1;
+	mn_LastConsoleDataIdx = mn_LastConsolePacketIdx = /*mn_LastFarReadIdx =*/ -1;
+	mn_LastFarReadTick = 0;
 }
 
 void CRealConsole::CloseFarMapData()
@@ -9210,6 +9234,10 @@ void CRealConsole::CloseFarMapData()
 	if (mh_FarFileMapping) {
 		CloseHandle(mh_FarFileMapping);
 		mh_FarFileMapping = NULL;
+	}
+	if (mh_FarAliveEvent) {
+		CloseHandle(mh_FarAliveEvent);
+		mh_FarAliveEvent = NULL;
 	}
 }
 
@@ -9529,7 +9557,7 @@ bool CRealConsole::isAlive()
 {
 	if (!this) return false;
 
-	if (GetFarPID()!=0 && mn_LastFarReadIdx != (DWORD)-1) {
+	if (GetFarPID()!=0 && mn_LastFarReadTick /*mn_LastFarReadIdx != (DWORD)-1*/) {
 		bool lbAlive = false;
 		if (mp_ConsoleInfo) {
 			DWORD nLastReadTick = mn_LastFarReadTick;

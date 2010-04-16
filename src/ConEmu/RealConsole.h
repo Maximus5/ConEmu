@@ -437,7 +437,7 @@ private:
     //CESERVER_REQ* m_PacketQueue[(MAX_SERVER_THREADS+1)*MAX_THREAD_PACKETS];
     //void PushPacket(CESERVER_REQ* pPkt);
     //CESERVER_REQ* PopPacket();
-	HANDLE mh_FileMapping, mh_FileMappingData, mh_FarFileMapping;
+	HANDLE mh_FileMapping, mh_FileMappingData, mh_FarFileMapping, mh_FarAliveEvent;
 	wchar_t ms_HeaderMapName[64], ms_DataMapName[64];
 	const CESERVER_REQ_CONINFO_HDR *mp_ConsoleInfo;
 	const CESERVER_REQ_CONINFO_DATA *mp_ConsoleData; // Mapping
@@ -451,7 +451,7 @@ private:
 	void CheckColorMapping(DWORD dwPID); // Проверить валидность буфера - todo
 	void CloseColorMapping();
 	//
-	DWORD mn_LastConsoleDataIdx, mn_LastConsolePacketIdx, mn_LastFarReadIdx;
+	DWORD mn_LastConsoleDataIdx, mn_LastConsolePacketIdx; //, mn_LastFarReadIdx;
 	DWORD mn_LastFarReadTick;
 	BOOL OpenFarMapData();
 	void CloseFarMapData();

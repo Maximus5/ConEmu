@@ -111,6 +111,7 @@ extern VOID WINAPI OnConsoleReadInputPost(HookCallbackArg* pArgs);
 extern VOID WINAPI OnWriteConsoleOutputPost(HookCallbackArg* pArgs);
 //extern VOID WINAPI OnWasWriteConsoleOutputA(HookCallbackArg* pArgs);
 //extern VOID WINAPI OnWasWriteConsoleOutputW(HookCallbackArg* pArgs);
+extern VOID WINAPI OnGetNumberOfConsoleInputEventsPost(HookCallbackArg* pArgs);
 
 
 
@@ -130,6 +131,8 @@ BOOL StartupHooks(HMODULE ahOurDll)
 
 	SetHookCallbacks( "WriteConsoleOutputA", kernel32, NULL, OnWriteConsoleOutputPost );
 	SetHookCallbacks( "WriteConsoleOutputW", kernel32, NULL, OnWriteConsoleOutputPost );
+	
+	SetHookCallbacks( "GetNumberOfConsoleInputEvents", kernel32, NULL, OnGetNumberOfConsoleInputEventsPost );
 	
 	return SetAllHooks(ahOurDll);
 

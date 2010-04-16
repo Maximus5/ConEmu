@@ -43,7 +43,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 static HMODULE hOurModule = NULL; // Хэндл нашей dll'ки (здесь хуки не ставятся)
 static DWORD   nMainThreadId = 0;
 
-extern CEFAR_INFO *gpFarInfo; //gpConsoleInfo;
+extern CEFAR_INFO *gpFarInfo, *gpFarInfoMapping; //gpConsoleInfo;
+extern HANDLE ghFarAliveEvent;
 extern HWND ConEmuHwnd; // Содержит хэндл окна отрисовки. Это ДОЧЕРНЕЕ окно.
 extern HWND FarHwnd;
 extern BOOL gbFARuseASCIIsort;
@@ -742,53 +743,54 @@ void __stdcall UnsetAllHooks( )
 #endif
 }
 
-static void TouchReadPeekConsoleInputs(int Peek = -1)
-{
-	if (!gpFarInfo) {
-		_ASSERTE(gpFarInfo);
-		return;
-	}
-	if (GetCurrentThreadId() != nMainThreadId)
-		return;
-		
-	gpFarInfo->nFarReadIdx++;
-
-#ifdef _DEBUG
-	if (Peek == -1)
-		return;
-	if ((GetKeyState(VK_SCROLL)&1) == 0)
-		return;
-	static DWORD nLastTick;
-	DWORD nCurTick = GetTickCount();
-	DWORD nDelta = nCurTick - nLastTick;
-	static CONSOLE_SCREEN_BUFFER_INFO sbi;
-	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
-	if (nDelta > 1000) {
-		GetConsoleScreenBufferInfo(hOut, &sbi);
-		nCurTick = nCurTick;
-	}
-	static wchar_t Chars[] = L"-\\|/-\\|/";
-	int nNextChar = 0;
-	if (Peek) {
-		static int nPeekChar = 0;
-		nNextChar = nPeekChar++;
-		if (nPeekChar >= 8) nPeekChar = 0;
-	} else {
-		static int nReadChar = 0;
-		nNextChar = nReadChar++;
-		if (nReadChar >= 8) nReadChar = 0;
-	}
-	CHAR_INFO chi;
-	chi.Char.UnicodeChar = Chars[nNextChar];
-	chi.Attributes = 15;
-	COORD crBufSize = {1,1};
-	COORD crBufCoord = {0,0};
-	// Cell[0] лучше не трогать - GUI ориентируется на наличие "1" в этой ячейке при проверке активности фара
-	SHORT nShift = (Peek?1:2);
-	SMALL_RECT rc = {sbi.srWindow.Left+nShift,sbi.srWindow.Bottom,sbi.srWindow.Left+nShift,sbi.srWindow.Bottom};
-	WriteConsoleOutputW(hOut, &chi, crBufSize, crBufCoord, &rc);
-#endif
-}
+//static void TouchReadPeekConsoleInputs(int Peek = -1)
+//{
+//	if (!gpFarInfo) {
+//		_ASSERTE(gpFarInfo);
+//		return;
+//	}
+//	if (GetCurrentThreadId() != nMainThreadId)
+//		return;
+//
+//	gpFarInfo->nFarReadIdx++;
+//	gpFarInfoMapping->nFarReadIdx = gpFarInfo->nFarReadIdx;
+//
+//#ifdef _DEBUG
+//	if (Peek == -1)
+//		return;
+//	if ((GetKeyState(VK_SCROLL)&1) == 0)
+//		return;
+//	static DWORD nLastTick;
+//	DWORD nCurTick = GetTickCount();
+//	DWORD nDelta = nCurTick - nLastTick;
+//	static CONSOLE_SCREEN_BUFFER_INFO sbi;
+//	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+//	if (nDelta > 1000) {
+//		GetConsoleScreenBufferInfo(hOut, &sbi);
+//		nCurTick = nCurTick;
+//	}
+//	static wchar_t Chars[] = L"-\\|/-\\|/";
+//	int nNextChar = 0;
+//	if (Peek) {
+//		static int nPeekChar = 0;
+//		nNextChar = nPeekChar++;
+//		if (nPeekChar >= 8) nPeekChar = 0;
+//	} else {
+//		static int nReadChar = 0;
+//		nNextChar = nReadChar++;
+//		if (nReadChar >= 8) nReadChar = 0;
+//	}
+//	CHAR_INFO chi;
+//	chi.Char.UnicodeChar = Chars[nNextChar];
+//	chi.Attributes = 15;
+//	COORD crBufSize = {1,1};
+//	COORD crBufCoord = {0,0};
+//	// Cell[0] лучше не трогать - GUI ориентируется на наличие "1" в этой ячейке при проверке активности фара
+//	SHORT nShift = (Peek?1:2);
+//	SMALL_RECT rc = {sbi.srWindow.Left+nShift,sbi.srWindow.Bottom,sbi.srWindow.Left+nShift,sbi.srWindow.Bottom};
+//	WriteConsoleOutputW(hOut, &chi, crBufSize, crBufCoord, &rc);
+//#endif
+//}
 
 static void GuiSetForeground(HWND hWnd)
 {
@@ -1287,11 +1289,24 @@ typedef BOOL (WINAPI* OnGetNumberOfConsoleInputEvents_t)(HANDLE hConsoleInput, L
 static BOOL WINAPI OnGetNumberOfConsoleInputEvents(HANDLE hConsoleInput, LPDWORD lpcNumberOfEvents)
 {
 	ORIGINAL(GetNumberOfConsoleInputEvents);
+	BOOL lbRc = FALSE;
 
-	if (gpFarInfo && bMainThread)	
-		TouchReadPeekConsoleInputs();
+	//if (gpFarInfo && bMainThread)	
+	//	TouchReadPeekConsoleInputs();
 		
-	BOOL lbRc = F(GetNumberOfConsoleInputEvents)(hConsoleInput, lpcNumberOfEvents);
+	if (ph && ph->PreCallBack) {
+		SETARGS2(&lbRc,hConsoleInput,lpcNumberOfEvents);
+		if (!ph->PreCallBack(&args))
+			return lbRc;
+	}
+	
+	lbRc = F(GetNumberOfConsoleInputEvents)(hConsoleInput, lpcNumberOfEvents);
+	
+	if (ph && ph->PostCallBack) {
+		SETARGS2(&lbRc,hConsoleInput,lpcNumberOfEvents);
+		ph->PostCallBack(&args);
+	}
+	
 	return lbRc;
 }
 
@@ -1300,8 +1315,8 @@ static BOOL WINAPI OnPeekConsoleInputA(HANDLE hConsoleInput, PINPUT_RECORD lpBuf
 {
 	ORIGINAL(PeekConsoleInputA);
 	
-	if (gpFarInfo && bMainThread)
-		TouchReadPeekConsoleInputs(1);
+	//if (gpFarInfo && bMainThread)
+	//	TouchReadPeekConsoleInputs(1);
 		
 	BOOL lbRc = FALSE;
 
@@ -1326,8 +1341,8 @@ static BOOL WINAPI OnPeekConsoleInputW(HANDLE hConsoleInput, PINPUT_RECORD lpBuf
 {
 	ORIGINAL(PeekConsoleInputW);
 	
-	if (gpFarInfo && bMainThread)
-		TouchReadPeekConsoleInputs(1);
+	//if (gpFarInfo && bMainThread)
+	//	TouchReadPeekConsoleInputs(1);
 		
 	BOOL lbRc = FALSE;
 
@@ -1352,8 +1367,8 @@ static BOOL WINAPI OnReadConsoleInputA(HANDLE hConsoleInput, PINPUT_RECORD lpBuf
 {
 	ORIGINAL(ReadConsoleInputA);
 	
-	if (gpFarInfo && bMainThread)
-		TouchReadPeekConsoleInputs(0);
+	//if (gpFarInfo && bMainThread)
+	//	TouchReadPeekConsoleInputs(0);
 		
 	BOOL lbRc = FALSE;
 
@@ -1378,9 +1393,9 @@ static BOOL WINAPI OnReadConsoleInputW(HANDLE hConsoleInput, PINPUT_RECORD lpBuf
 {
 	ORIGINAL(ReadConsoleInputW);
 	
-	if (gpFarInfo && bMainThread)
-		TouchReadPeekConsoleInputs(0);
-		
+	//if (gpFarInfo && bMainThread)
+	//	TouchReadPeekConsoleInputs(0);
+
 	BOOL lbRc = FALSE;
 
 	if (ph && ph->PreCallBack) {

@@ -1144,6 +1144,7 @@ int CreateMapHeader()
 //	srv.pConsoleInfo->nFarReadIdx = -1;
 	srv.pConsoleInfo->nServerPID = GetCurrentProcessId();
 	srv.pConsoleInfo->nGuiPID = srv.dwGuiPID;
+	srv.pConsoleInfo->nProtocolVersion = CESERVER_REQ_VER;
 	
 	// Максимальный размер буфера
 	srv.pConsoleInfo->crMaxConSize = crMax;
@@ -1768,6 +1769,9 @@ void WINAPI WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LO
 
 			#ifndef WIN64
 			_ASSERTE(CONSOLE_APPLICATION_16BIT==1);
+			// Не во всех случаях приходит: (idChild == CONSOLE_APPLICATION_16BIT)
+			// Похоже что не приходит тогда, когда 16бит (или DOS) приложение сразу 
+			// закрывается после выдачи на экран ошибки например.
 			if (idChild == CONSOLE_APPLICATION_16BIT) {
 				if (ghLogSize) {
 					char szInfo[64]; wsprintfA(szInfo, "NTVDM started, PID=%i", idObject);
