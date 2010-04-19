@@ -1055,6 +1055,10 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath=".\ImgCache.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\common\RgnDetect.cpp"
 				>
 			</File>
@@ -1077,11 +1081,27 @@
 				>
 			</File>
 			<File
+				RelativePath=".\ImgCache.h"
+				>
+			</File>
+			<File
+				RelativePath="..\common\pluginA.hpp"
+				>
+			</File>
+			<File
+				RelativePath="..\common\pluginW1007.hpp"
+				>
+			</File>
+			<File
 				RelativePath=".\resource.h"
 				>
 			</File>
 			<File
 				RelativePath="..\common\RgnDetect.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Modules\ThumbSDK.h"
 				>
 			</File>
 		</Filter>
@@ -1111,7 +1131,16 @@
 				>
 				<Tool
 					Name="VCCustomBuildTool"
-					CommandLine="F:\VCProject\FarPlugin\ConEmu\Maximus5\src\ConEmuTh\lang.cmd&#x0D;&#x0A;"
+					CommandLine="$(InputDir)lang.cmd &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
+					Outputs="ConEmuTh_Lang.h"
+				/>
+			</FileConfiguration>
+			<FileConfiguration
+				Name="Debug|x64"
+				>
+				<Tool
+					Name="VCCustomBuildTool"
+					CommandLine="$(InputDir)lang.cmd &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
 					Outputs="ConEmuTh_Lang.h"
 				/>
 			</FileConfiguration>
@@ -1120,7 +1149,16 @@
 				>
 				<Tool
 					Name="VCCustomBuildTool"
-					CommandLine="F:\VCProject\FarPlugin\ConEmu\Maximus5\src\ConEmuTh\lang.cmd&#x0D;&#x0A;"
+					CommandLine="$(InputDir)lang.cmd&#x0D;&#x0A;"
+					Outputs="ConEmuTh_Lang.h"
+				/>
+			</FileConfiguration>
+			<FileConfiguration
+				Name="Release|x64"
+				>
+				<Tool
+					Name="VCCustomBuildTool"
+					CommandLine="$(InputDir)lang.cmd&#x0D;&#x0A;"
 					Outputs="ConEmuTh_Lang.h"
 				/>
 			</FileConfiguration>
@@ -1129,7 +1167,16 @@
 				>
 				<Tool
 					Name="VCCustomBuildTool"
-					CommandLine="F:\VCProject\FarPlugin\ConEmu\Maximus5\src\ConEmuTh\lang.cmd&#x0D;&#x0A;"
+					CommandLine="$(InputDir)lang.cmd &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
+					Outputs="ConEmuTh_Lang.h"
+				/>
+			</FileConfiguration>
+			<FileConfiguration
+				Name="DebugA|x64"
+				>
+				<Tool
+					Name="VCCustomBuildTool"
+					CommandLine="$(InputDir)lang.cmd &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
 					Outputs="ConEmuTh_Lang.h"
 				/>
 			</FileConfiguration>
@@ -1138,7 +1185,16 @@
 				>
 				<Tool
 					Name="VCCustomBuildTool"
-					CommandLine="F:\VCProject\FarPlugin\ConEmu\Maximus5\src\ConEmuTh\lang.cmd&#x0D;&#x0A;"
+					CommandLine="$(InputDir)lang.cmd &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
+					Outputs="ConEmuTh_Lang.h"
+				/>
+			</FileConfiguration>
+			<FileConfiguration
+				Name="DebugEEE|x64"
+				>
+				<Tool
+					Name="VCCustomBuildTool"
+					CommandLine="$(InputDir)lang.cmd &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
 					Outputs="ConEmuTh_Lang.h"
 				/>
 			</FileConfiguration>
@@ -1147,7 +1203,16 @@
 				>
 				<Tool
 					Name="VCCustomBuildTool"
-					CommandLine="F:\VCProject\FarPlugin\ConEmu\Maximus5\src\ConEmuTh\lang.cmd&#x0D;&#x0A;"
+					CommandLine="$(InputDir)lang.cmd &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
+					Outputs="ConEmuTh_Lang.h"
+				/>
+			</FileConfiguration>
+			<FileConfiguration
+				Name="Debug75|x64"
+				>
+				<Tool
+					Name="VCCustomBuildTool"
+					CommandLine="$(InputDir)lang.cmd &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
 					Outputs="ConEmuTh_Lang.h"
 				/>
 			</FileConfiguration>
@@ -1156,7 +1221,16 @@
 				>
 				<Tool
 					Name="VCCustomBuildTool"
-					CommandLine="F:\VCProject\FarPlugin\ConEmu\Maximus5\src\ConEmuTh\lang.cmd&#x0D;&#x0A;"
+					CommandLine="$(InputDir)lang.cmd &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
+					Outputs="ConEmuTh_Lang.h"
+				/>
+			</FileConfiguration>
+			<FileConfiguration
+				Name="Instrument|x64"
+				>
+				<Tool
+					Name="VCCustomBuildTool"
+					CommandLine="$(InputDir)lang.cmd &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
 					Outputs="ConEmuTh_Lang.h"
 				/>
 			</FileConfiguration>

@@ -248,7 +248,7 @@ typedef struct tag_HWND2 {
 } HWND2;
 
 typedef BOOL (WINAPI* PanelViewInputCallback)(HANDLE hInput, PINPUT_RECORD lpBuffer, DWORD nBufSize, LPDWORD lpNumberOfEventsRead, BOOL* pbResult);
-typedef VOID (WINAPI* PanelViewOutputCallback)(HANDLE hOutput,const CHAR_INFO *lpBuffer,COORD dwBufferSize,COORD dwBufferCoord,PSMALL_RECT lpWriteRegion);
+typedef BOOL (WINAPI* PanelViewOutputCallback)(HANDLE hOutput,const CHAR_INFO *lpBuffer,COORD dwBufferSize,COORD dwBufferCoord,PSMALL_RECT lpWriteRegion);
 typedef struct tag_PanelViewInit {
 	DWORD cbSize;
 	BOOL  bRegister;
@@ -387,6 +387,7 @@ typedef struct tag_CEFAR_INFO {
 	DWORD cbSize;
 	DWORD nFarInfoIdx;
 	FarVersion FarVer;
+	DWORD nProtocolVersion; // == CESERVER_REQ_VER
 	DWORD nFarPID, nFarTID;
 	BYTE nFarColors[0x100]; // ћассив цветов фара
 	DWORD nFarInterfaceSettings;
@@ -399,6 +400,12 @@ typedef struct tag_CEFAR_INFO {
 	CEFAR_SHORT_PANEL_INFO FarLeftPanel, FarRightPanel; // FCTL_GETPANELSHORTINFO,...
 	DWORD nFarConsoleMode;
 	//DWORD nFarReadIdx;    // index, +1, когда фар в последний раз позвал (Read|Peek)ConsoleInput или GetConsoleInputCount
+	// ƒалее идут строковые ресурсы, на которые в некоторых случа€х ориентируетс€ GUI
+	wchar_t sLngEdit[64]; // "edit"
+	wchar_t sLngView[64]; // "view"
+	wchar_t sLngTemp[64]; // "{Temporary panel"
+	wchar_t sLngName[64]; // "Name"
+	wchar_t sReserved[MAX_PATH]; // „тобы случайно GetMsg из допустимого диапазона не вышел
 } CEFAR_INFO;
 
 

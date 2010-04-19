@@ -398,7 +398,7 @@ void WINAPI _export GetPluginInfo(struct PluginInfo *pi)
 	//IsKeyChanged(TRUE);
 
 	//if (gcPlugKey) szMenu1[0]=0; else lstrcpyA(szMenu1, "[&\xDC] "); // а тут действительно OEM
-	lstrcpynA(szMenu1/*+lstrlenA(szMenu1)*/, InfoA->GetMsg(InfoA->ModuleNumber,2), 240);
+	lstrcpynA(szMenu1/*+lstrlenA(szMenu1)*/, InfoA->GetMsg(InfoA->ModuleNumber,CEPluginName), 240);
 
 	pi->StructSize = sizeof(struct PluginInfo);
 	pi->Flags = PF_EDITOR | PF_VIEWER | PF_DIALOG | PF_PRELOAD;
@@ -718,20 +718,20 @@ int ShowPluginMenuA()
 		{MIF_SEPARATOR},
 		{MIF_USETEXTPTR|(IsDebuggerPresent()||IsTerminalMode() ? MIF_DISABLE : 0)}
 	};
-	items[0].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,3);
-	items[1].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,4);
-	items[3].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,6);
-	items[4].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,7);
-	items[5].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,8);
-	items[6].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,9);
-	items[8].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,13);
-	items[10].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,14);
+	items[0].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,CEMenuEditOutput);
+	items[1].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,CEMenuViewOutput);
+	items[3].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,CEMenuShowHideTabs);
+	items[4].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,CEMenuNextTab);
+	items[5].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,CEMenuPrevTab);
+	items[6].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,CEMenuCommitTab);
+	items[8].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,CEMenuAttach);
+	items[10].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,CEMenuDebug);
 
 	int nCount = sizeof(items)/sizeof(items[0]);
 
 	int nRc = InfoA->Menu(InfoA->ModuleNumber, -1,-1, 0, 
 		FMENU_USEEXT|FMENU_AUTOHIGHLIGHT|FMENU_CHANGECONSOLETITLE|FMENU_WRAPMODE,
-		InfoA->GetMsg(InfoA->ModuleNumber,2),
+		InfoA->GetMsg(InfoA->ModuleNumber,CEPluginName),
 		NULL, NULL, NULL, NULL, (FarMenuItem*)items, nCount);
 
 	return nRc;
@@ -749,7 +749,7 @@ BOOL EditOutputA(LPCWSTR asFileName, BOOL abView)
 	BOOL lbRc = FALSE;
 	if (!abView) {
 		int iRc =
-		InfoA->Editor(szAnsi, InfoA->GetMsg(InfoA->ModuleNumber,5), 0,0,-1,-1, 
+		InfoA->Editor(szAnsi, InfoA->GetMsg(InfoA->ModuleNumber,CEConsoleOutput), 0,0,-1,-1, 
 			EF_NONMODAL|EF_IMMEDIATERETURN|EF_DELETEONLYFILEONCLOSE|EF_ENABLE_F6|EF_DISABLEHISTORY,
 			0, 1);
 		lbRc = (iRc != EEC_OPEN_ERROR);
@@ -757,7 +757,7 @@ BOOL EditOutputA(LPCWSTR asFileName, BOOL abView)
 		#ifdef _DEBUG
 		int iRc =
 		#endif
-			InfoA->Viewer(szAnsi, InfoA->GetMsg(InfoA->ModuleNumber,5), 0,0,-1,-1, 
+			InfoA->Viewer(szAnsi, InfoA->GetMsg(InfoA->ModuleNumber,CEConsoleOutput), 0,0,-1,-1, 
 			VF_NONMODAL|VF_IMMEDIATERETURN|VF_DELETEONLYFILEONCLOSE|VF_ENABLE_F6|VF_DISABLEHISTORY);
 		lbRc = TRUE;
 	}

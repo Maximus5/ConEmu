@@ -108,7 +108,7 @@ extern BOOL WINAPI OnConsolePeekInput(HookCallbackArg* pArgs);
 extern VOID WINAPI OnConsolePeekInputPost(HookCallbackArg* pArgs);
 extern BOOL WINAPI OnConsoleReadInput(HookCallbackArg* pArgs);
 extern VOID WINAPI OnConsoleReadInputPost(HookCallbackArg* pArgs);
-extern VOID WINAPI OnWriteConsoleOutputPost(HookCallbackArg* pArgs);
+extern BOOL WINAPI OnWriteConsoleOutput(HookCallbackArg* pArgs);
 //extern VOID WINAPI OnWasWriteConsoleOutputA(HookCallbackArg* pArgs);
 //extern VOID WINAPI OnWasWriteConsoleOutputW(HookCallbackArg* pArgs);
 extern VOID WINAPI OnGetNumberOfConsoleInputEventsPost(HookCallbackArg* pArgs);
@@ -129,8 +129,8 @@ BOOL StartupHooks(HMODULE ahOurDll)
 	SetHookCallbacks( "ReadConsoleInputA", kernel32, OnConsoleReadInput, OnConsoleReadInputPost );
 	SetHookCallbacks( "ReadConsoleInputW", kernel32, OnConsoleReadInput, OnConsoleReadInputPost );
 
-	SetHookCallbacks( "WriteConsoleOutputA", kernel32, NULL, OnWriteConsoleOutputPost );
-	SetHookCallbacks( "WriteConsoleOutputW", kernel32, NULL, OnWriteConsoleOutputPost );
+	SetHookCallbacks( "WriteConsoleOutputA", kernel32, OnWriteConsoleOutput, NULL );
+	SetHookCallbacks( "WriteConsoleOutputW", kernel32, OnWriteConsoleOutput, NULL );
 	
 	SetHookCallbacks( "GetNumberOfConsoleInputEvents", kernel32, NULL, OnGetNumberOfConsoleInputEventsPost );
 	

@@ -311,6 +311,8 @@ public:
 	void UpdateCursorInfo();
 	void Detach();
 	void AdminDuplicate();
+	const CEFAR_INFO *GetFarInfo();
+	LPCWSTR GetLngNameTime();
 
 protected:
     CVirtualConsole* mp_VCon; // соответствующая виртуальная консоль
@@ -470,6 +472,7 @@ private:
 	//
 	wchar_t ms_Editor[32], ms_EditorRus[32], ms_Viewer[32], ms_ViewerRus[32];
 	wchar_t ms_TempPanel[32], ms_TempPanelRus[32];
+	wchar_t ms_NameTitle[32];
 	//
 	BOOL mb_PluginDetected; DWORD mn_FarPID_PluginDetected; //, mn_Far_PluginInputThreadId;
 	void CheckFarStates();

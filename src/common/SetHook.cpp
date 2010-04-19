@@ -1498,6 +1498,11 @@ static BOOL WINAPI OnWriteConsoleOutputA(HANDLE hConsoleOutput,const CHAR_INFO *
 
 	BOOL lbRc = FALSE;
 
+	if (ph && ph->PreCallBack) {
+		SETARGS5(&lbRc, hConsoleOutput, lpBuffer, &dwBufferSize, &dwBufferCoord, lpWriteRegion);
+		ph->PreCallBack(&args);
+	}
+
 	lbRc = F(WriteConsoleOutputA)(hConsoleOutput, lpBuffer, dwBufferSize, dwBufferCoord, lpWriteRegion);
 
 	if (ph && ph->PostCallBack) {
@@ -1514,6 +1519,11 @@ static BOOL WINAPI OnWriteConsoleOutputW(HANDLE hConsoleOutput,const CHAR_INFO *
 	ORIGINAL(WriteConsoleOutputW);
 
 	BOOL lbRc = FALSE;
+
+	if (ph && ph->PreCallBack) {
+		SETARGS5(&lbRc, hConsoleOutput, lpBuffer, &dwBufferSize, &dwBufferCoord, lpWriteRegion);
+		ph->PreCallBack(&args);
+	}
 
 	lbRc = F(WriteConsoleOutputW)(hConsoleOutput, lpBuffer, dwBufferSize, dwBufferCoord, lpWriteRegion);
 

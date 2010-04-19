@@ -206,9 +206,9 @@ void LoadPanelItemInfo995(CeFullPanelInfo* pi, int nItem)
 	// ppi не освобождаем - это ссылка на pi->pFarTmpBuf
 }
 
-CeFullPanelInfo* LoadPanelInfo995(BOOL abActive)
+BOOL LoadPanelInfo995(BOOL abActive)
 {
-	if (!InfoW995) return NULL;
+	if (!InfoW995) return FALSE;
 
 
 	CeFullPanelInfo* pcefpi = NULL;
@@ -217,7 +217,7 @@ CeFullPanelInfo* LoadPanelInfo995(BOOL abActive)
 	int nRc = InfoW995->Control(hPanel, FCTL_GETPANELINFO, 0, (LONG_PTR)&pi);
 	if (!nRc) {
 		TODO("Показать информацию об ошибке");
-		return NULL;
+		return FALSE;
 	}
 	// Даже если невидима - обновить информацию!
 	//// Проверим, что панель видима. Иначе - сразу выходим.
@@ -225,11 +225,13 @@ CeFullPanelInfo* LoadPanelInfo995(BOOL abActive)
 	//	TODO("Показать информацию об ошибке");
 	//	return NULL;
 	//}
+
 	
 	if (pi.Flags & PFLAGS_PANELLEFT)
 		pcefpi = &pviLeft;
 	else
 		pcefpi = &pviRight;
+	pcefpi->cbSize = sizeof(*pcefpi);
 	pcefpi->hPanel = hPanel;
 	
 
@@ -248,6 +250,7 @@ CeFullPanelInfo* LoadPanelInfo995(BOOL abActive)
 	pcefpi->Visible = pi.Visible;
 	pcefpi->Focus = pi.Focus;
 	pcefpi->Flags = pi.Flags; // CEPANELINFOFLAGS
+	pcefpi->IsFilePanel = (pi.PanelType == PTYPE_FILEPANEL);
 
 
 	// Настройки интерфейса
@@ -298,7 +301,7 @@ CeFullPanelInfo* LoadPanelInfo995(BOOL abActive)
 		pcefpi->pFarTmpBuf = malloc(pcefpi->nFarTmpBuf);
 	}
 	
-	return pcefpi;
+	return TRUE;
 }
 
 void ReloadPanelsInfo995()
@@ -316,48 +319,49 @@ BOOL IsLeftPanelActive995()
 	return TRUE;
 }
 
-bool CheckWindows995()
-{
-	if (!InfoW995 || !InfoW995->AdvControl) return false;
-	
-	bool lbPanelsActive = false;
-	int nCount = (int)InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETWINDOWCOUNT, NULL);
-	WindowInfo wi = {0};
-	
-	wi.Pos = -1;
-	INT_PTR iRc = InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETWINDOWINFO, (LPVOID)&wi);
-	if (wi.Type == WTYPE_PANELS) {
-		lbPanelsActive = (wi.Current != 0);
-	}
-	
-	//wchar_t szTypeName[64];
-	//wchar_t szName[MAX_PATH*2];
-	//wchar_t szInfo[MAX_PATH*4];
-	//
-	//OutputDebugStringW(L"\n\n");
-	//// Pos: Номер окна, о котором нужно узнать информацию. Нумерация идет с 0. Pos = -1 вернет информацию о текущем окне. 
-	//for (int i=-1; i <= nCount; i++) {
-	//	memset(&wi, 0, sizeof(wi));
-	//	wi.Pos = i;
-	//	wi.TypeName = szTypeName; wi.TypeNameSize = sizeofarray(szTypeName); szTypeName[0] = 0;
-	//	wi.Name = szName; wi.NameSize = sizeofarray(szName); szName[0] = 0;
-	//	INT_PTR iRc = InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETWINDOWINFO, (LPVOID)&wi);
-	//	if (iRc) {
-	//		wsprintfW(szInfo, L"%s%i: {%s-%s} %s\n",
-	//			wi.Current ? L"*" : L"",
-	//			i,
-	//			(wi.Type==WTYPE_PANELS) ? L"WTYPE_PANELS" :
-	//			(wi.Type==WTYPE_VIEWER) ? L"WTYPE_VIEWER" :
-	//			(wi.Type==WTYPE_EDITOR) ? L"WTYPE_EDITOR" :
-	//			(wi.Type==WTYPE_DIALOG) ? L"WTYPE_DIALOG" :
-	//			(wi.Type==WTYPE_VMENU)  ? L"WTYPE_VMENU"  :
-	//			(wi.Type==WTYPE_HELP)   ? L"WTYPE_HELP"   : L"Unknown",
-	//			szTypeName, szName);
-	//	} else {
-	//		wsprintfW(szInfo, L"%i: <window absent>\n", i);
-	//	}
-	//	OutputDebugStringW(szInfo);
-	//}
-	
-	return lbPanelsActive;
-}
+// Возникали проблемы с синхронизацией в FAR2 -> FindFile
+//bool CheckWindows995()
+//{
+//	if (!InfoW995 || !InfoW995->AdvControl) return false;
+//	
+//	bool lbPanelsActive = false;
+//	int nCount = (int)InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETWINDOWCOUNT, NULL);
+//	WindowInfo wi = {0};
+//	
+//	wi.Pos = -1;
+//	INT_PTR iRc = InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETWINDOWINFO, (LPVOID)&wi);
+//	if (wi.Type == WTYPE_PANELS) {
+//		lbPanelsActive = (wi.Current != 0);
+//	}
+//	
+//	//wchar_t szTypeName[64];
+//	//wchar_t szName[MAX_PATH*2];
+//	//wchar_t szInfo[MAX_PATH*4];
+//	//
+//	//OutputDebugStringW(L"\n\n");
+//	//// Pos: Номер окна, о котором нужно узнать информацию. Нумерация идет с 0. Pos = -1 вернет информацию о текущем окне. 
+//	//for (int i=-1; i <= nCount; i++) {
+//	//	memset(&wi, 0, sizeof(wi));
+//	//	wi.Pos = i;
+//	//	wi.TypeName = szTypeName; wi.TypeNameSize = sizeofarray(szTypeName); szTypeName[0] = 0;
+//	//	wi.Name = szName; wi.NameSize = sizeofarray(szName); szName[0] = 0;
+//	//	INT_PTR iRc = InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETWINDOWINFO, (LPVOID)&wi);
+//	//	if (iRc) {
+//	//		wsprintfW(szInfo, L"%s%i: {%s-%s} %s\n",
+//	//			wi.Current ? L"*" : L"",
+//	//			i,
+//	//			(wi.Type==WTYPE_PANELS) ? L"WTYPE_PANELS" :
+//	//			(wi.Type==WTYPE_VIEWER) ? L"WTYPE_VIEWER" :
+//	//			(wi.Type==WTYPE_EDITOR) ? L"WTYPE_EDITOR" :
+//	//			(wi.Type==WTYPE_DIALOG) ? L"WTYPE_DIALOG" :
+//	//			(wi.Type==WTYPE_VMENU)  ? L"WTYPE_VMENU"  :
+//	//			(wi.Type==WTYPE_HELP)   ? L"WTYPE_HELP"   : L"Unknown",
+//	//			szTypeName, szName);
+//	//	} else {
+//	//		wsprintfW(szInfo, L"%i: <window absent>\n", i);
+//	//	}
+//	//	OutputDebugStringW(szInfo);
+//	//}
+//	
+//	return lbPanelsActive;
+//}

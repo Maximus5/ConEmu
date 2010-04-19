@@ -522,32 +522,32 @@ BEGIN
     CONTROL         "Load previews for files",tThumbLoadFiles,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,30,88,10
     CONTROL         "Load previews in subfolders",cbThumbLoadFolders,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,102,30,105,10
     RTEXT           "Loading timeout (sec.):",IDC_STATIC,212,31,77,8
-    EDITTEXT        IDC_EDIT1,293,28,24,12,ES_AUTOHSCROLL
-    GROUPBOX        "",IDC_STATIC,8,44,100,56
-    CONTROL         "Box around preview",cbThumbPreviewBox,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,53,80,10
-    CONTROL         "Color index",rbThumbPreviewBoxColorIdx,"Button",BS_AUTORADIOBUTTON,14,68,52,10
-    CONTROL         "RGB",rbPreviewBoxColorRGB,"Button",BS_AUTORADIOBUTTON,14,85,27,10
-    COMBOBOX        lbThumbBackColorIdx2,70,66,32,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "",c32,44,83,12,12,SS_NOTIFY | SS_SUNKEN
-    EDITTEXT        tc32,57,83,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,WS_EX_STATICEDGE
-    GROUPBOX        "",IDC_STATIC,111,44,102,56
-    CONTROL         "Box around current item",cbThumbSelectionBox,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,116,53,92,10
-    CONTROL         "Color index",rbThumbPreviewBoxColorIdx2,"Button",BS_AUTORADIOBUTTON,116,68,52,10
-    CONTROL         "RGB",rbPreviewBoxColorRGB2,"Button",BS_AUTORADIOBUTTON,116,85,28,10
-    COMBOBOX        lbThumbBackColorIdx3,175,66,32,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "",c33,147,83,12,12,SS_NOTIFY | SS_SUNKEN
-    EDITTEXT        tc33,161,83,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,WS_EX_STATICEDGE
-    GROUPBOX        "",IDC_STATIC,217,44,101,56
-    LTEXT           "Preview background",IDC_STATIC,224,53,87,8
-    CONTROL         "Color index",rbThumbBackColorIdx,"Button",BS_AUTORADIOBUTTON,223,68,52,10
-    CONTROL         "RGB",rbThumbBackColorRGB,"Button",BS_AUTORADIOBUTTON,223,85,27,10
-    COMBOBOX        lbThumbBackColorIdx,282,66,32,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "",c34,254,83,12,12,SS_NOTIFY | SS_SUNKEN
-    EDITTEXT        tc34,267,83,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,WS_EX_STATICEDGE
-    LTEXT           "Maximum zoom:",IDC_STATIC,9,109,52,8
-    COMBOBOX        tThumbMaxZoom,66,107,48,30,CBS_DROPDOWN | CBS_SORT | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "Use PicView2 for previews",cbThumbUsePicView2,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,131,108,99,10
-    LTEXT           "<Free>/100%/200%/300%/400%/500%",IDC_STATIC,9,127,136,8
+    EDITTEXT        tThumbLoadingTimeout,293,28,24,12,ES_AUTOHSCROLL
+    GROUPBOX        "",IDC_STATIC,8,57,100,56
+    CONTROL         "Box around preview",cbThumbPreviewBox,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,66,80,10
+    CONTROL         "Color index",rbThumbPreviewBoxColorIdx,"Button",BS_AUTORADIOBUTTON,14,81,52,10
+    CONTROL         "RGB",rbPreviewBoxColorRGB,"Button",BS_AUTORADIOBUTTON,14,98,27,10
+    COMBOBOX        lbThumbBackColorIdx2,70,79,32,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "",c32,44,96,12,12,SS_NOTIFY | SS_SUNKEN
+    EDITTEXT        tc32,57,96,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,WS_EX_STATICEDGE
+    GROUPBOX        "",IDC_STATIC,111,57,102,56
+    CONTROL         "Box around current item",cbThumbSelectionBox,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,116,66,92,10
+    CONTROL         "Color index",rbThumbPreviewBoxColorIdx2,"Button",BS_AUTORADIOBUTTON,116,81,52,10
+    CONTROL         "RGB",rbPreviewBoxColorRGB2,"Button",BS_AUTORADIOBUTTON,116,98,28,10
+    COMBOBOX        lbThumbBackColorIdx3,175,79,32,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "",c33,147,96,12,12,SS_NOTIFY | SS_SUNKEN
+    EDITTEXT        tc33,161,96,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,WS_EX_STATICEDGE
+    GROUPBOX        "",IDC_STATIC,217,57,101,56
+    LTEXT           "Preview background",IDC_STATIC,224,66,87,8
+    CONTROL         "Color index",rbThumbBackColorIdx,"Button",BS_AUTORADIOBUTTON,223,81,52,10
+    CONTROL         "RGB",rbThumbBackColorRGB,"Button",BS_AUTORADIOBUTTON,223,98,27,10
+    COMBOBOX        lbThumbBackColorIdx,282,79,32,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "",c34,254,96,12,12,SS_NOTIFY | SS_SUNKEN
+    EDITTEXT        tc34,267,96,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,WS_EX_STATICEDGE
+    LTEXT           "Maximum zoom:",IDC_STATIC,9,119,52,8
+    COMBOBOX        tThumbMaxZoom,66,117,48,30,CBS_DROPDOWN | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Use PicView2 for previews",cbThumbUsePicView2,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,131,118,99,10
+    LTEXT           "<Free>/100%/200%/300%/400%/500%",IDC_STATIC,9,132,136,8
     GROUPBOX        "Store preview cache",IDC_STATIC,8,162,310,46
     CONTROL         "No cache",rbThumbCacheDisabled,"Button",BS_AUTORADIOBUTTON,14,175,45,10
     CONTROL         "plugin folder",rbThumbCachePluginFolder,"Button",BS_AUTORADIOBUTTON,68,175,57,10
@@ -555,14 +555,16 @@ BEGIN
     CONTROL         "specified folder",rbThumbCacheSpecifiedFolder,"Button",BS_AUTORADIOBUTTON,193,175,65,10
     PUSHBUTTON      "Choose...",cbThumbCacheFolder,262,173,50,14
     EDITTEXT        tThumbCacheFolder,14,190,298,12,ES_AUTOHSCROLL | ES_READONLY
-    LTEXT           "Thumbnail label height:",IDC_STATIC,9,143,74,8
-    EDITTEXT        tThumbLabelHeight,88,140,24,12,ES_AUTOHSCROLL
-    RTEXT           "Icon label width:",IDC_STATIC,117,143,54,8
-    EDITTEXT        tThumbLabelWidth,175,140,24,12,ES_AUTOHSCROLL
-    RTEXT           "X spacing:",IDC_STATIC,253,130,34,8
-    EDITTEXT        tThumbLabelWidth2,291,128,24,12,ES_AUTOHSCROLL
-    RTEXT           "Y spacing:",IDC_STATIC,256,144,34,8
-    EDITTEXT        tThumbLabelWidth3,293,143,24,12,ES_AUTOHSCROLL
+    LTEXT           "Thumbnail label height:",IDC_STATIC,9,148,74,8
+    EDITTEXT        tThumbLabelHeight,88,145,24,12,ES_AUTOHSCROLL
+    RTEXT           "Icon label width:",IDC_STATIC,117,148,54,8
+    EDITTEXT        tThumbLabelWidth,175,145,24,12,ES_AUTOHSCROLL
+    RTEXT           "X spacing:",IDC_STATIC,253,135,34,8
+    EDITTEXT        tThumbLabelWidth2,291,133,24,12,ES_AUTOHSCROLL
+    RTEXT           "Y spacing:",IDC_STATIC,256,149,34,8
+    EDITTEXT        tThumbLabelWidth3,293,148,24,12,ES_AUTOHSCROLL
+    EDITTEXT        tThumbSupportedExtensions,89,44,228,12,ES_AUTOHSCROLL
+    LTEXT           "Supported extensions:",IDC_STATIC,9,46,78,8
 END
 
 

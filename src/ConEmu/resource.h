@@ -126,9 +126,6 @@
 #define tc29                            1129
 #define tc30                            1130
 #define tc31                            1131
-#define tc32                            1682
-#define tc33                            1684
-#define tc34                            1686
 #define bChooseFont                     1201
 #define rNoneAA                         1202
 #define rStandardAA                     1203
@@ -310,7 +307,11 @@
 #define rbPreviewBoxColorRGB2           1677
 #define lbThumbBackColorIdx3            1678
 #define IDC_EDIT1                       1679
+#define tThumbLoadingTimeout            1679
 #define cbThumbUsePicView2              1680
+#define tc32                            1682
+#define tc33                            1684
+#define tc34                            1686
 #define rbThumbCachePluginFolder        1687
 #define rbThumbCacheUserFolder          1688
 #define rbThumbCacheDisabled            1689
@@ -324,6 +325,8 @@
 #define tBgImage                        1697
 #define tDarker                         1698
 #define cbBgImage                       1699
+#define IDC_EDIT2                       1700
+#define tThumbSupportedExtensions       1700
 #define IDM_CLOSE                       40001
 #define IDM_RESTART                     40002
 #define IDM_RESTARTAS                   40003
@@ -340,7 +343,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        209
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         1700
+#define _APS_NEXT_CONTROL_VALUE         1701
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

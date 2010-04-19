@@ -227,6 +227,7 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
     MultiByteToWideChar(CP_ACP, 0, "просмотр ", -1, ms_ViewerRus, 32);
     lstrcpy(ms_TempPanel, L"{Temporary panel");
     MultiByteToWideChar(CP_ACP, 0, "{Временная панель", -1, ms_TempPanelRus, 32);
+	lstrcpy(ms_NameTitle, L"Name");
 
     SetTabs(NULL,1); // Для начала - показывать вкладку Console, а там ФАР разберется
 
@@ -3770,25 +3771,36 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
         if (*pszRes) {
             //EnableComSpec(mn_FarPID_PluginDetected, TRUE);
             //UpdateFarSettings(mn_FarPID_PluginDetected);
+			wchar_t* pszItems[] = {ms_EditorRus,ms_ViewerRus,ms_TempPanelRus,ms_NameTitle};
 
-            pszNext = pszRes + lstrlen(pszRes)+1;
-            if (lstrlen(pszRes)>=30) pszRes[30] = 0;
-            lstrcpy(ms_EditorRus, pszRes); lstrcat(ms_EditorRus, L" ");
-            pszRes = pszNext;
+			for (int i = 0; i < sizeofarray(pszItems); i++) {
+				pszNext = pszRes + lstrlen(pszRes)+1;
+				if (lstrlen(pszRes)>=30) pszRes[30] = 0;
+				lstrcpy(pszItems[i], pszRes);
+				if (i < 2) lstrcat(pszItems[i], L" ");
+				pszRes = pszNext;
+				if (*pszRes == 0)
+					break;
+			}
 
-            if (*pszRes) {
-                pszNext = pszRes + lstrlen(pszRes)+1;
-                if (lstrlen(pszRes)>=30) pszRes[30] = 0;
-                lstrcpy(ms_ViewerRus, pszRes); lstrcat(ms_ViewerRus, L" ");
-                pszRes = pszNext;
+            //pszNext = pszRes + lstrlen(pszRes)+1;
+            //if (lstrlen(pszRes)>=30) pszRes[30] = 0;
+            //lstrcpy(ms_EditorRus, pszRes); lstrcat(ms_EditorRus, L" ");
+            //pszRes = pszNext;
 
-                if (*pszRes) {
-                    pszNext = pszRes + lstrlen(pszRes)+1;
-                    if (lstrlen(pszRes)>=31) pszRes[31] = 0;
-                    lstrcpy(ms_TempPanelRus, pszRes);
-                    pszRes = pszNext;
-                }
-            }
+            //if (*pszRes) {
+            //    pszNext = pszRes + lstrlen(pszRes)+1;
+            //    if (lstrlen(pszRes)>=30) pszRes[30] = 0;
+            //    lstrcpy(ms_ViewerRus, pszRes); lstrcat(ms_ViewerRus, L" ");
+            //    pszRes = pszNext;
+
+            //    if (*pszRes) {
+            //        pszNext = pszRes + lstrlen(pszRes)+1;
+            //        if (lstrlen(pszRes)>=31) pszRes[31] = 0;
+            //        lstrcpy(ms_TempPanelRus, pszRes);
+            //        pszRes = pszNext;
+            //    }
+            //}
         }
 	} else if (pIn->hdr.nCmd == CECMD_SETFOREGROUND) {
 		AllowSetForegroundWindow(pIn->hdr.nSrcPID);
@@ -9137,6 +9149,7 @@ BOOL CRealConsole::OpenFarMapData()
 		wsprintf (szErr, L"ConEmu: Invalid FAR info format. %s", szMapName);
 		goto wrap;
 	}
+	_ASSERTE(mp_FarInfo->nProtocolVersion == CESERVER_REQ_VER);
 
 	wsprintf(szMapName, CEFARALIVEEVENT, nFarPID);
 	mh_FarAliveEvent = OpenEvent(EVENT_MODIFY_STATE|SYNCHRONIZE, FALSE, szMapName);
@@ -9733,4 +9746,16 @@ void CRealConsole::AdminDuplicate()
 	if (!this) return;
 
 	TODO("Запустить Elevated фар с параметрами - текущими путями");
+}
+
+const CEFAR_INFO* CRealConsole::GetFarInfo()
+{
+	if (!this) return NULL;
+	return mp_FarInfo;
+}
+
+LPCWSTR CRealConsole::GetLngNameTime()
+{
+	if (!this) return NULL;
+	return ms_NameTitle;
 }

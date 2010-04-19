@@ -1193,8 +1193,15 @@ void CRgnDetect::OnWindowSizeChanged()
 //A pointer to a SMALL_RECT structure. On input, the structure members specify the upper-left and lower-right 
 //coordinates of the console screen buffer rectangle to write to. 
 //On output, the structure members specify the actual rectangle that was used.
-void CRgnDetect::OnWriteConsoleOutput(const CHAR_INFO *lpBuffer,COORD dwBufferSize,COORD dwBufferCoord,PSMALL_RECT lpWriteRegion)
+void CRgnDetect::OnWriteConsoleOutput(const CHAR_INFO *lpBuffer,COORD dwBufferSize,COORD dwBufferCoord,PSMALL_RECT lpWriteRegion, const COLORREF *apColors)
 {
+	mp_Colors = apColors;
+
+	if (!mb_SBI_Loaded) {
+		if (!InitializeSBI(apColors))
+			return;
+	}
+
 	if (!mpsz_Chars || !mp_Attrs)
 		return; // буфер еще не был выделен
 	if ((dwBufferCoord.X >= dwBufferSize.X) || (dwBufferCoord.Y >= dwBufferSize.Y))
@@ -1203,25 +1210,13 @@ void CRgnDetect::OnWriteConsoleOutput(const CHAR_INFO *lpBuffer,COORD dwBufferSi
 		_ASSERTE(dwBufferCoord.Y < dwBufferSize.Y);
 		return; // Ошибка в параметрах
 	}
-		
+	
 
-    if (!mb_TableCreated) {
-    	mb_TableCreated = true;
-        // формирование умолчательных цветов, по атрибутам консоли
-	    int  nColorIndex = 0;
-	    CharAttr lca;
-	        
-	    for (int nBack = 0; nBack <= 0xF; nBack++) {
-	    	for (int nFore = 0; nFore <= 0xF; nFore++, nColorIndex++) {
-				memset(&lca, 0, sizeof(lca));
-	    		lca.nForeIdx = nFore;
-	    		lca.nBackIdx = nBack;
-		    	lca.crForeColor = lca.crOrigForeColor = mp_Colors[lca.nForeIdx];
-		    	lca.crBackColor = lca.crOrigBackColor = mp_Colors[lca.nBackIdx];
-		    	mca_Table[nColorIndex] = lca;
-			}
-		}
-    }
+	_ASSERTE(mb_TableCreated);
+
+	// На некорректных координатах - сразу выйдем
+	if (lpWriteRegion->Left >= mn_CurWidth || lpWriteRegion->Top >= mn_CurHeight)
+		return;
 
 	// Расфуговка буфера CHAR_INFO на текст и атрибуты
 	int nX1 = max(0,lpWriteRegion->Left);
@@ -1237,8 +1232,8 @@ void CRgnDetect::OnWriteConsoleOutput(const CHAR_INFO *lpBuffer,COORD dwBufferSi
 	
 	for (int Y = nY1; Y <= nY2; Y++) {
 		const CHAR_INFO *pCharInfo = pSrcLine + dwBufferCoord.X;
-		wchar_t  *pChar = mpsz_Chars + Y * mn_CurWidth;
-		CharAttr *pAttr = mp_Attrs + Y * mn_CurWidth;
+		wchar_t  *pChar = mpsz_Chars + Y * mn_CurWidth + lpWriteRegion->Left;
+		CharAttr *pAttr = mp_Attrs + Y * mn_CurWidth + lpWriteRegion->Left;
 	
 		for (int X = nX1; X <= nX2; X++, pCharInfo++) {
 			TODO("OPTIMIZE: *(lpAttr++) = lpCur->Attributes;");
@@ -1250,6 +1245,108 @@ void CRgnDetect::OnWriteConsoleOutput(const CHAR_INFO *lpBuffer,COORD dwBufferSi
 		
 		pSrcLine += dwBufferSize.X;
 	}
+}
+
+BOOL CRgnDetect::InitializeSBI(const COLORREF *apColors)
+{
+	//if (mb_SBI_Loaded) - всегда. Если вызвали - значит нужно все перечитать
+	//	return TRUE;
+
+	mn_AllFlags = 0;
+	mp_Colors = apColors;
+	//if (!mb_TableCreated) - тоже всегда. цвета могли измениться
+	{
+		mb_TableCreated = true;
+		// формирование умолчательных цветов, по атрибутам консоли
+		int  nColorIndex = 0;
+		CharAttr lca;
+
+		for (int nBack = 0; nBack <= 0xF; nBack++) {
+			for (int nFore = 0; nFore <= 0xF; nFore++, nColorIndex++) {
+				memset(&lca, 0, sizeof(lca));
+				lca.nForeIdx = nFore;
+				lca.nBackIdx = nBack;
+				lca.crForeColor = lca.crOrigForeColor = mp_Colors[lca.nForeIdx];
+				lca.crBackColor = lca.crOrigBackColor = mp_Colors[lca.nBackIdx];
+				mca_Table[nColorIndex] = lca;
+			}
+		}
+	}
+
+	HANDLE hStd = GetStdHandle(STD_OUTPUT_HANDLE);
+	mb_SBI_Loaded = GetConsoleScreenBufferInfo(hStd, &m_sbi)!=0;
+
+	if (!mb_SBI_Loaded)
+		return FALSE;
+
+	// Нужно скорректировать srWindow, т.к. ФАР в любом случае забивает на видимый регион и рисует на весь буфер.
+	if (m_sbi.srWindow.Left)
+		m_sbi.srWindow.Left = 0;
+	if ((m_sbi.srWindow.Right+1) != m_sbi.dwSize.X)
+		m_sbi.srWindow.Right = m_sbi.dwSize.X - 1;
+	if (m_sbi.srWindow.Top)
+		m_sbi.srWindow.Top = 0;
+	if ((m_sbi.srWindow.Bottom+1) != m_sbi.dwSize.Y)
+		m_sbi.srWindow.Bottom = m_sbi.dwSize.Y - 1;
+
+	// Выделить память, при необходимости увеличить
+	if (!mpsz_Chars || !mp_Attrs || (m_sbi.dwSize.X * m_sbi.dwSize.Y) > mn_MaxCells) {
+		if (mpsz_Chars) free(mpsz_Chars);
+		mn_MaxCells = (m_sbi.dwSize.X * m_sbi.dwSize.Y);
+		mn_CurWidth = m_sbi.dwSize.X;
+		mn_CurHeight = m_sbi.dwSize.Y;
+		mpsz_Chars = (wchar_t*)calloc(mn_MaxCells, sizeof(wchar_t));
+		mp_Attrs = (CharAttr*)calloc(mn_MaxCells, sizeof(CharAttr));
+	}
+	if (!mpsz_Chars || !mp_Attrs) {
+		_ASSERTE(mpsz_Chars && mp_Attrs);
+		return FALSE;
+	}
+	if (!mn_MaxCells) {
+		_ASSERTE(mn_MaxCells>0);
+		return FALSE;
+	}
+	CHAR_INFO *pCharInfo = (CHAR_INFO*)calloc(mn_MaxCells, sizeof(CHAR_INFO));
+	if (!pCharInfo) {
+		_ASSERTE(pCharInfo);
+		return FALSE;
+	}
+	BOOL bReadOk = FALSE;
+	COORD bufSize, bufCoord;
+	SMALL_RECT rgn;
+	// Если весь буфер больше 30К - и пытаться не будем
+	if ((mn_MaxCells*sizeof(CHAR_INFO)) < 30000) {
+		bufSize.X = m_sbi.dwSize.X; bufSize.Y = m_sbi.dwSize.Y;
+		bufCoord.X = 0; bufCoord.Y = 0;
+		rgn = m_sbi.srWindow;
+		if (ReadConsoleOutput(hStd, pCharInfo, bufSize, bufCoord, &rgn))
+			bReadOk = TRUE;
+	}
+
+	if (!bReadOk)
+	{
+		// Придется читать построчно
+		bufSize.X = m_sbi.dwSize.X; bufSize.Y = 1;
+		bufCoord.X = 0; bufCoord.Y = 0;
+		rgn = m_sbi.srWindow;
+		CHAR_INFO* pLine = pCharInfo;
+		for(int y = 0; y < (int)m_sbi.dwSize.Y; y++, rgn.Top++, pLine+=m_sbi.dwSize.X)
+		{
+			rgn.Bottom = rgn.Top;
+			ReadConsoleOutput(hStd, pLine, bufSize, bufCoord, &rgn);
+		}
+	}
+
+	// Теперь нужно перекинуть данные в mpsz_Chars & mp_Attrs
+	//GetConsoleData(pCharInfo, apColors, mpsz_Chars, mp_Attrs, m_sbi.dwSize.X, m_sbi.dwSize.Y);
+	COORD crNul = {0,0};
+	OnWriteConsoleOutput(pCharInfo, m_sbi.dwSize, crNul, &m_sbi.srWindow, mp_Colors);
+
+	// Буфер CHAR_INFO больше не нужен
+	free(pCharInfo);
+
+
+	return TRUE;
 }
 
 // Эта функция вызывается из плагинов (ConEmuTh)
@@ -1267,77 +1364,80 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO *apFarInfo, const COLORREF 
 	memset(&mrc_RightPanel,0,sizeof(mrc_RightPanel));
 
 	if (!mb_SBI_Loaded) {
-		HANDLE hStd = GetStdHandle(STD_OUTPUT_HANDLE);
-		mb_SBI_Loaded = GetConsoleScreenBufferInfo(hStd, &m_sbi)!=0;
-		
-		if (!mb_SBI_Loaded)
+		if (!InitializeSBI(apColors))
 			return;
-			
-		// Нужно скорректировать srWindow, т.к. ФАР в любом случае забивает на видимый регион и рисует на весь буфер.
-		if (m_sbi.srWindow.Left)
-			m_sbi.srWindow.Left = 0;
-		if ((m_sbi.srWindow.Right+1) != m_sbi.dwSize.X)
-			m_sbi.srWindow.Right = m_sbi.dwSize.X - 1;
-		if (m_sbi.srWindow.Top)
-			m_sbi.srWindow.Top = 0;
-		if ((m_sbi.srWindow.Bottom+1) != m_sbi.dwSize.Y)
-			m_sbi.srWindow.Bottom = m_sbi.dwSize.Y - 1;
 
-		// Выделить память, при необходимости увеличить
-		if (!mpsz_Chars || !mp_Attrs || (m_sbi.dwSize.X * m_sbi.dwSize.Y) > mn_MaxCells) {
-			if (mpsz_Chars) free(mpsz_Chars);
-			mn_MaxCells = (m_sbi.dwSize.X * m_sbi.dwSize.Y);
-			mn_CurWidth = m_sbi.dwSize.X;
-			mn_CurHeight = m_sbi.dwSize.Y;
-			mpsz_Chars = (wchar_t*)calloc(mn_MaxCells, sizeof(wchar_t));
-			mp_Attrs = (CharAttr*)calloc(mn_MaxCells, sizeof(CharAttr));
-		}
-		if (!mpsz_Chars || !mp_Attrs) {
-			_ASSERTE(mpsz_Chars && mp_Attrs);
-			return;
-		}
-		if (!mn_MaxCells) {
-			_ASSERTE(mn_MaxCells>0);
-			return;
-		}
-		CHAR_INFO *pCharInfo = (CHAR_INFO*)calloc(mn_MaxCells, sizeof(CHAR_INFO));
-		if (!pCharInfo) {
-			_ASSERTE(pCharInfo);
-			return;
-		}
-		BOOL bReadOk = FALSE;
-		COORD bufSize, bufCoord;
-		SMALL_RECT rgn;
-		// Если весь буфер больше 30К - и пытаться не будем
-		if ((mn_MaxCells*sizeof(CHAR_INFO)) < 30000) {
-			bufSize.X = m_sbi.dwSize.X; bufSize.Y = m_sbi.dwSize.Y;
-			bufCoord.X = 0; bufCoord.Y = 0;
-			rgn = m_sbi.srWindow;
-			if (ReadConsoleOutput(hStd, pCharInfo, bufSize, bufCoord, &rgn))
-				bReadOk = TRUE;
-		}
+		//HANDLE hStd = GetStdHandle(STD_OUTPUT_HANDLE);
+		//mb_SBI_Loaded = GetConsoleScreenBufferInfo(hStd, &m_sbi)!=0;
+		//
+		//if (!mb_SBI_Loaded)
+		//	return;
+		//	
+		//// Нужно скорректировать srWindow, т.к. ФАР в любом случае забивает на видимый регион и рисует на весь буфер.
+		//if (m_sbi.srWindow.Left)
+		//	m_sbi.srWindow.Left = 0;
+		//if ((m_sbi.srWindow.Right+1) != m_sbi.dwSize.X)
+		//	m_sbi.srWindow.Right = m_sbi.dwSize.X - 1;
+		//if (m_sbi.srWindow.Top)
+		//	m_sbi.srWindow.Top = 0;
+		//if ((m_sbi.srWindow.Bottom+1) != m_sbi.dwSize.Y)
+		//	m_sbi.srWindow.Bottom = m_sbi.dwSize.Y - 1;
 
-		if (!bReadOk)
-		{
-			// Придется читать построчно
-			bufSize.X = m_sbi.dwSize.X; bufSize.Y = 1;
-			bufCoord.X = 0; bufCoord.Y = 0;
-			rgn = m_sbi.srWindow;
-			CHAR_INFO* pLine = pCharInfo;
-			for(int y = 0; y < (int)m_sbi.dwSize.Y; y++, rgn.Top++, pLine+=m_sbi.dwSize.X)
-			{
-				rgn.Bottom = rgn.Top;
-				ReadConsoleOutput(hStd, pLine, bufSize, bufCoord, &rgn);
-			}
-		}
-		
-		// Теперь нужно перекинуть данные в mpsz_Chars & mp_Attrs
-		//GetConsoleData(pCharInfo, apColors, mpsz_Chars, mp_Attrs, m_sbi.dwSize.X, m_sbi.dwSize.Y);
-		COORD crNul = {0,0};
-		OnWriteConsoleOutput(pCharInfo, m_sbi.dwSize, crNul, &m_sbi.srWindow);
-		
-		// Буфер CHAR_INFO больше не нужен
-		free(pCharInfo);
+		//// Выделить память, при необходимости увеличить
+		//if (!mpsz_Chars || !mp_Attrs || (m_sbi.dwSize.X * m_sbi.dwSize.Y) > mn_MaxCells) {
+		//	if (mpsz_Chars) free(mpsz_Chars);
+		//	mn_MaxCells = (m_sbi.dwSize.X * m_sbi.dwSize.Y);
+		//	mn_CurWidth = m_sbi.dwSize.X;
+		//	mn_CurHeight = m_sbi.dwSize.Y;
+		//	mpsz_Chars = (wchar_t*)calloc(mn_MaxCells, sizeof(wchar_t));
+		//	mp_Attrs = (CharAttr*)calloc(mn_MaxCells, sizeof(CharAttr));
+		//}
+		//if (!mpsz_Chars || !mp_Attrs) {
+		//	_ASSERTE(mpsz_Chars && mp_Attrs);
+		//	return;
+		//}
+		//if (!mn_MaxCells) {
+		//	_ASSERTE(mn_MaxCells>0);
+		//	return;
+		//}
+		//CHAR_INFO *pCharInfo = (CHAR_INFO*)calloc(mn_MaxCells, sizeof(CHAR_INFO));
+		//if (!pCharInfo) {
+		//	_ASSERTE(pCharInfo);
+		//	return;
+		//}
+		//BOOL bReadOk = FALSE;
+		//COORD bufSize, bufCoord;
+		//SMALL_RECT rgn;
+		//// Если весь буфер больше 30К - и пытаться не будем
+		//if ((mn_MaxCells*sizeof(CHAR_INFO)) < 30000) {
+		//	bufSize.X = m_sbi.dwSize.X; bufSize.Y = m_sbi.dwSize.Y;
+		//	bufCoord.X = 0; bufCoord.Y = 0;
+		//	rgn = m_sbi.srWindow;
+		//	if (ReadConsoleOutput(hStd, pCharInfo, bufSize, bufCoord, &rgn))
+		//		bReadOk = TRUE;
+		//}
+
+		//if (!bReadOk)
+		//{
+		//	// Придется читать построчно
+		//	bufSize.X = m_sbi.dwSize.X; bufSize.Y = 1;
+		//	bufCoord.X = 0; bufCoord.Y = 0;
+		//	rgn = m_sbi.srWindow;
+		//	CHAR_INFO* pLine = pCharInfo;
+		//	for(int y = 0; y < (int)m_sbi.dwSize.Y; y++, rgn.Top++, pLine+=m_sbi.dwSize.X)
+		//	{
+		//		rgn.Bottom = rgn.Top;
+		//		ReadConsoleOutput(hStd, pLine, bufSize, bufCoord, &rgn);
+		//	}
+		//}
+		//
+		//// Теперь нужно перекинуть данные в mpsz_Chars & mp_Attrs
+		////GetConsoleData(pCharInfo, apColors, mpsz_Chars, mp_Attrs, m_sbi.dwSize.X, m_sbi.dwSize.Y);
+		//COORD crNul = {0,0};
+		//OnWriteConsoleOutput(pCharInfo, m_sbi.dwSize, crNul, &m_sbi.srWindow, apColors);
+		//
+		//// Буфер CHAR_INFO больше не нужен
+		//free(pCharInfo);
 	}
 	
 	
@@ -1350,6 +1450,7 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO *apFarInfo, const COLORREF 
 {
 	mp_FarInfo = apFarInfo;
 	mp_Colors = apColors;
+	_ASSERTE(mp_Colors && (mp_Colors[1] || mp_Colors[2]));
 	if (apSbi != &m_sbi)
 		m_sbi = *apSbi;
 	mb_BufferHeight = m_sbi.dwSize.Y > (m_sbi.srWindow.Bottom - m_sbi.srWindow.Top + 10);

@@ -80,7 +80,8 @@ public:
 	// Methods for plugins
 	void PrepareTransparent(const CEFAR_INFO *apFarInfo, const COLORREF *apColors);
 	void OnWindowSizeChanged();
-	void OnWriteConsoleOutput(const CHAR_INFO *lpBuffer,COORD dwBufferSize,COORD dwBufferCoord,PSMALL_RECT lpWriteRegion);
+	void OnWriteConsoleOutput(const CHAR_INFO *lpBuffer,COORD dwBufferSize,COORD dwBufferCoord,PSMALL_RECT lpWriteRegion, const COLORREF *apColors);
+	BOOL InitializeSBI(const COLORREF *apColors);
 	
 	
 protected:

@@ -523,23 +523,23 @@ int ShowPluginMenu789()
 		return -1;
 
 	FarMenuItemEx items[] = {
-		{ConEmuHwnd ? MIF_SELECTED : MIF_DISABLE,  InfoW789->GetMsg(InfoW789->ModuleNumber,3)},
-		{ConEmuHwnd ? 0 : MIF_DISABLE,             InfoW789->GetMsg(InfoW789->ModuleNumber,4)},
+		{ConEmuHwnd ? MIF_SELECTED : MIF_DISABLE,  InfoW789->GetMsg(InfoW789->ModuleNumber,CEMenuEditOutput)},
+		{ConEmuHwnd ? 0 : MIF_DISABLE,             InfoW789->GetMsg(InfoW789->ModuleNumber,CEMenuViewOutput)},
 		{MIF_SEPARATOR},
-		{ConEmuHwnd ? 0 : MIF_DISABLE,             InfoW789->GetMsg(InfoW789->ModuleNumber,6)},
-		{ConEmuHwnd ? 0 : MIF_DISABLE,             InfoW789->GetMsg(InfoW789->ModuleNumber,7)},
-		{ConEmuHwnd ? 0 : MIF_DISABLE,             InfoW789->GetMsg(InfoW789->ModuleNumber,8)},
-		{ConEmuHwnd ? 0 : MIF_DISABLE,             InfoW789->GetMsg(InfoW789->ModuleNumber,9)},
+		{ConEmuHwnd ? 0 : MIF_DISABLE,             InfoW789->GetMsg(InfoW789->ModuleNumber,CEMenuShowHideTabs)},
+		{ConEmuHwnd ? 0 : MIF_DISABLE,             InfoW789->GetMsg(InfoW789->ModuleNumber,CEMenuNextTab)},
+		{ConEmuHwnd ? 0 : MIF_DISABLE,             InfoW789->GetMsg(InfoW789->ModuleNumber,CEMenuPrevTab)},
+		{ConEmuHwnd ? 0 : MIF_DISABLE,             InfoW789->GetMsg(InfoW789->ModuleNumber,CEMenuCommitTab)},
 		{MIF_SEPARATOR},
-		{ConEmuHwnd||IsTerminalMode() ? MIF_DISABLE : MIF_SELECTED,  InfoW789->GetMsg(InfoW789->ModuleNumber,13)},
+		{ConEmuHwnd||IsTerminalMode() ? MIF_DISABLE : MIF_SELECTED,  InfoW789->GetMsg(InfoW789->ModuleNumber,CEMenuAttach)},
 		{MIF_SEPARATOR},
-		{IsDebuggerPresent()||IsTerminalMode() ? MIF_DISABLE : 0,    InfoW789->GetMsg(InfoW789->ModuleNumber,14)}
+		{IsDebuggerPresent()||IsTerminalMode() ? MIF_DISABLE : 0,    InfoW789->GetMsg(InfoW789->ModuleNumber,CEMenuDebug)}
 	};
 	int nCount = sizeof(items)/sizeof(items[0]);
 
 	int nRc = InfoW789->Menu(InfoW789->ModuleNumber, -1,-1, 0, 
 		FMENU_USEEXT|FMENU_AUTOHIGHLIGHT|FMENU_CHANGECONSOLETITLE|FMENU_WRAPMODE,
-		InfoW789->GetMsg(InfoW789->ModuleNumber,2),
+		InfoW789->GetMsg(InfoW789->ModuleNumber,CEPluginName),
 		NULL, NULL, NULL, NULL, (FarMenuItem*)items, nCount);
 
 	return nRc;
@@ -553,7 +553,7 @@ BOOL EditOutput789(LPCWSTR asFileName, BOOL abView)
 	BOOL lbRc = FALSE;
 	if (!abView) {
 		int iRc =
-			InfoW789->Editor(asFileName, InfoW789->GetMsg(InfoW789->ModuleNumber,5), 0,0,-1,-1, 
+			InfoW789->Editor(asFileName, InfoW789->GetMsg(InfoW789->ModuleNumber,CEConsoleOutput), 0,0,-1,-1, 
 			EF_NONMODAL|EF_IMMEDIATERETURN|EF_DELETEONLYFILEONCLOSE|EF_ENABLE_F6|EF_DISABLEHISTORY,
 			0, 1, 1200);
 		lbRc = (iRc != EEC_OPEN_ERROR);
@@ -561,7 +561,7 @@ BOOL EditOutput789(LPCWSTR asFileName, BOOL abView)
 		#ifdef _DEBUG
 		int iRc =
 		#endif
-			InfoW789->Viewer(asFileName, InfoW789->GetMsg(InfoW789->ModuleNumber,5), 0,0,-1,-1, 
+			InfoW789->Viewer(asFileName, InfoW789->GetMsg(InfoW789->ModuleNumber,CEConsoleOutput), 0,0,-1,-1, 
 			VF_NONMODAL|VF_IMMEDIATERETURN|VF_DELETEONLYFILEONCLOSE|VF_ENABLE_F6|VF_DISABLEHISTORY,
 			1200);
 		lbRc = TRUE;

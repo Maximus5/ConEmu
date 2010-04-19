@@ -7964,7 +7964,7 @@ void CConEmuMain::ServerThreadCommand(HANDLE hPipe)
 		if (AttachRequested(pIn->StartStop.hWnd, pIn->StartStop, &(pIn->StartStopRet))) {
 			fSuccess = WriteFile(hPipe, pIn, pIn->hdr.nSize, &cbWritten, NULL);
 		}
-		
+
 	} else if (pIn->hdr.nCmd == CECMD_CMDSTARTSTOP) {
 		// Запущен процесс сервера
 		HWND hConWnd = (HWND)pIn->dwData[0];

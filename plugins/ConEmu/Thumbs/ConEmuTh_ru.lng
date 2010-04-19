@@ -1,14 +1,14 @@
-я╗┐.Language=Russian,Russian (╨а╤Г╤Б╤Б╨║╨╕╨╣)
+.Language=Russian,Russian (Русский)
 
 // Plugin title
 "ConEmu Thumbnails"
-"ConEmu Thumbnails\n╨Я╨╗╨░╨│╨╕╨╜ ConEmu ╨╜╨╡ ╨╜╨░╨╣╨┤╨╡╨╜,\nThumbnails ╨╜╨╡╨┤╨╛╤Б╤В╤Г╨┐╨╜╤Л."
-"ConEmu Thumbnails\n╨Ю╨▒╨╜╨░╤А╤Г╨╢╨╡╨╜╨░ ╤Б╤В╨░╤А╨░╤П ╨▓╨╡╤А╤Б╨╕╤П ╨┐╨╗╨░╨│╨╕╨╜╨░ ConEmu,\nThumbnails ╨╜╨╡╨┤╨╛╤Б╤В╤Г╨┐╨╜╤Л."
-"ConEmu Thumbnails\nThumbnails ╨╜╨╡╨┤╨╛╤Б╤В╤Г╨┐╨╜╤Л ╨▓ '╤З╨╕╤Б╤В╨╛╨╝' Far.\nFar Manager ╨▒╤Л╨╗ ╨╖╨░╨┐╤Г╤Й╨╡╨╜ ╨▒╨╡╨╖ ConEmu?"
-"ConEmu Thumbnails\n╨Ю╤И╨╕╨▒╨║╨░ ╤Б╨╛╨╖╨┤╨░╨╜╨╕╤П ╨┐╨╛╤В╨╛╨║╨░ DisplayThread\nErrCode=0x%08X"
-"ConEmu Thumbnails\n╨Ш╤Б╤В╨╡╨║╨╗╨╛ ╨▓╤А╨╡╨╝╤П ╨╛╨╢╨╕╨┤╨░╨╜╨╕╤П ╨░╨║╤В╨╕╨▓╨░╤Ж╨╕╨╕ DisplayThread"
-"ConEmu Thumbnails\n╨Ю╤И╨╕╨▒╨║╨░ ╨┐╨╛╤Б╤Л╨╗╨║╨╕ ╤Б╨╛╨╛╨▒╤Й╨╡╨╜╨╕╤П ╨▓ DisplayThread\nErrCode=0x%08X"
-"ConEmu Thumbnails\n╨Я╨╛╤В╨╛╨║ DisplayThread ╨▒╤Л╨╗ ╨╖╨░╨▓╨╡╤А╤И╨╡╨╜\nCode=0x%08X"
-"ConEmu Thumbnails\n╨Э╨╡ ╤Г╨┤╨░╨╗╨╛╤Б╤М ╨╖╨░╤А╨╡╨│╨╕╤Б╤В╤А╨╕╤А╨╛╨▓╨░╤В╤М ╨║╨╗╨░╤Б╤Б\nErrCode=0x%08X"
-"ConEmu Thumbnails\n╨Э╨╡ ╤Г╨┤╨░╨╗╨╛╤Б╤М ╤Б╨╛╨╖╨┤╨░╤В╤М ╨╛╨║╨╜╨╛ ╨┐╨░╨╜╨╡╨╗╨╕\nErrCode=0x%08X"
-"ConEmu Thumbnails\n╨Э╨╡ ╤Г╨┤╨░╨╗╨╛╤Б╤М ╨╖╨░╤А╨╡╨│╨╕╤Б╤В╤А╨╕╤А╨╛╨▓╨░╤В╤М ╨▓╨╕╨┤ ╨▓ ConEmu\nErrCode=%i"
+"ConEmu Thumbnails\nПлагин ConEmu не найден,\nThumbnails недоступны."
+"ConEmu Thumbnails\nОбнаружена старая версия плагина ConEmu,\nThumbnails недоступны."
+"ConEmu Thumbnails\nThumbnails недоступны в 'чистом' Far.\nFar Manager был запущен без ConEmu?"
+"ConEmu Thumbnails\nОшибка создания потока DisplayThread\nErrCode=0x%08X"
+"ConEmu Thumbnails\nИстекло время ожидания активации DisplayThread"
+"ConEmu Thumbnails\nОшибка посылки сообщения в DisplayThread\nErrCode=0x%08X"
+"ConEmu Thumbnails\nПоток DisplayThread был завершен\nCode=0x%08X"
+"ConEmu Thumbnails\nНе удалось зарегистрировать класс\nErrCode=0x%08X"
+"ConEmu Thumbnails\nНе удалось создать окно панели\nErrCode=0x%08X"
+"ConEmu Thumbnails\nНе удалось зарегистрировать вид в ConEmu\nErrCode=%i"

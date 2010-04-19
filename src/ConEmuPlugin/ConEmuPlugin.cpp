@@ -99,7 +99,7 @@ DWORD gnMainThreadId = 0;
 HANDLE ghMonitorThread = NULL; DWORD gnMonitorThreadId = 0;
 //HANDLE ghInputThread = NULL; DWORD gnInputThreadId = 0;
 HANDLE ghSetWndSendTabsEvent = NULL;
-FarVersion gFarVersion;
+FarVersion gFarVersion = {0};
 WCHAR gszDir1[CONEMUTABMAX], gszDir2[CONEMUTABMAX];
 WCHAR gszRootKey[MAX_PATH*2];
 int maxTabCount = 0, lastWindowCount = 0, gnCurTabCount = 0;
@@ -644,9 +644,10 @@ VOID WINAPI OnConsoleReadInputPost(HookCallbackArg* pArgs)
 }
 
 
-VOID WINAPI OnWriteConsoleOutputPost(HookCallbackArg* pArgs)
+BOOL WINAPI OnWriteConsoleOutput(HookCallbackArg* pArgs)
 {
-	if (!pArgs->bMainThread) return; // обработку делаем только в основной нити
+	if (!pArgs->bMainThread)
+		return TRUE; // обработку делаем только в основной нити
 
 	// Если зарегистрирован callback для графической панели
 	if (gPanelRegLeft.pfnWriteCall || gPanelRegRight.pfnWriteCall) {
@@ -666,6 +667,8 @@ VOID WINAPI OnWriteConsoleOutputPost(HookCallbackArg* pArgs)
 			gPanelRegRight.pfnWriteCall(hOutput,lpBuffer,dwBufferSize,dwBufferCoord,lpWriteRegion);
 		}
 	}
+
+	return TRUE;
 }
 
 
@@ -876,7 +879,7 @@ void WINAPI _export GetFarVersion ( FarVersion* pfv )
 BOOL LoadFarVersion()
 {
     BOOL lbRc=FALSE;
-    WCHAR FarPath[MAX_PATH+1];
+    WCHAR FarPath[MAX_PATH+1], ErrText[512]; ErrText[0] = 0; DWORD dwErr = 0;
     if (GetModuleFileName(0,FarPath,MAX_PATH)) {
 		DWORD dwRsrvd = 0;
 		DWORD dwSize = GetFileVersionInfoSize(FarPath, &dwRsrvd);
@@ -891,11 +894,26 @@ BOOL LoadFarVersion()
 						gFarVersion.dwVer = lvs->dwFileVersionMS;
 						gFarVersion.dwBuild = lvs->dwFileVersionLS;
 						lbRc = TRUE;
+					} else {
+						dwErr = GetLastError(); lstrcpyW(ErrText, L"LoadFarVersion.VerQueryValue(\"\\\") failed!\n");
 					}
+				} else {
+					dwErr = GetLastError(); lstrcpyW(ErrText, L"LoadFarVersion.GetFileVersionInfo() failed!\n");
 				}
 				Free(pVerData);
+			} else {
+				wsprintfW(ErrText, L"LoadFarVersion failed! Can't allocate %n bytes!\n", dwSize);
 			}
+		} else {
+			dwErr = GetLastError(); lstrcpyW(ErrText, L"LoadFarVersion.GetFileVersionInfoSize() failed!\n");
 		}
+		if (ErrText[0]) lstrcatW(ErrText, FarPath);
+	} else {
+		dwErr = GetLastError(); lstrcpyW(ErrText, L"LoadFarVersion.GetModuleFileName() failed!");
+	}
+	if (ErrText[0]) {
+		if (dwErr) wsprintfW(ErrText+lstrlenW(ErrText), L"\nErrCode=0x%08X", dwErr);
+		MessageBox(0, ErrText, L"ConEmu plugin", MB_OK|MB_ICONSTOP|MB_SETFOREGROUND);
 	}
 
 	if (!lbRc) {
@@ -2051,7 +2069,7 @@ void InitHWND(HWND ahFarHwnd)
 	gsFarLang[0] = 0;
 	//InitializeCriticalSection(csTabs);
 	InitializeCriticalSection(&csData);
-	LoadFarVersion(); // пригодится уже здесь!
+	if (!gFarVersion.dwVerMajor) LoadFarVersion(); // пригодится уже здесь!
 
 	// начальная инициализация. в SetStartupInfo поправим
 	wsprintfW(gszRootKey, L"Software\\%s", (gFarVersion.dwVerMajor==2) ? L"FAR2" : L"FAR");
@@ -2386,6 +2404,7 @@ BOOL ReloadFarInfo(BOOL abFull)
 		gpFarInfo->FarVer = gFarVersion;
 		gpFarInfo->nFarPID = gnSelfPID;
 		gpFarInfo->nFarTID = gnMainThreadId;
+		gpFarInfo->nProtocolVersion = CESERVER_REQ_VER;
 	}
 
 	BOOL lbChanged = FALSE, lbSucceded = FALSE;
@@ -2841,22 +2860,29 @@ void InitResources()
 	// В ConEmu нужно передать следущие ресурсы
 	//
 	int nSize = sizeof(CESERVER_REQ) + sizeof(DWORD) 
-		+ 3*(MAX_PATH+1)*2; // + 3 строковых ресурса
+		+ 4*(MAX_PATH+1)*2; // + 4 строковых ресурса
 	CESERVER_REQ *pIn = (CESERVER_REQ*)Alloc(nSize,1);;
 	if (pIn) {
 		ExecutePrepareCmd(pIn, CECMD_RESOURCES, nSize);
 		pIn->dwData[0] = GetCurrentProcessId();
 		//pIn->dwData[1] = gnInputThreadId;
 		wchar_t* pszRes = (wchar_t*)&(pIn->dwData[1]);
+		int nTempSize = sizeof(gpFarInfo->sLngEdit)/sizeof(gpFarInfo->sLngEdit[0]);
 		if (gFarVersion.dwVerMajor==1) {
-			GetMsgA(10, pszRes); pszRes += lstrlenW(pszRes)+1;
-			GetMsgA(11, pszRes); pszRes += lstrlenW(pszRes)+1;
-			GetMsgA(12, pszRes); pszRes += lstrlenW(pszRes)+1;
+			GetMsgA(CELngEdit, gpFarInfo->sLngEdit); gpFarInfo->sLngEdit[nTempSize-1] = 0;
+			GetMsgA(CELngView, gpFarInfo->sLngView); gpFarInfo->sLngView[nTempSize-1] = 0;
+			GetMsgA(CELngTemp, gpFarInfo->sLngTemp); gpFarInfo->sLngTemp[nTempSize-1] = 0;
+			GetMsgA(CELngName, gpFarInfo->sLngName); gpFarInfo->sLngName[nTempSize-1] = 0;
 		} else {
-			lstrcpyW(pszRes, GetMsgW(10)); pszRes += lstrlenW(pszRes)+1;
-			lstrcpyW(pszRes, GetMsgW(11)); pszRes += lstrlenW(pszRes)+1;
-			lstrcpyW(pszRes, GetMsgW(12)); pszRes += lstrlenW(pszRes)+1;
+			lstrcpynW(gpFarInfo->sLngEdit, GetMsgW(CELngEdit), nTempSize);
+			lstrcpynW(gpFarInfo->sLngView, GetMsgW(CELngView), nTempSize);
+			lstrcpynW(gpFarInfo->sLngTemp, GetMsgW(CELngTemp), nTempSize);
+			lstrcpynW(gpFarInfo->sLngName, GetMsgW(CELngName), nTempSize);
 		}
+		lstrcpyW(pszRes, gpFarInfo->sLngEdit); pszRes += lstrlenW(pszRes)+1;
+		lstrcpyW(pszRes, gpFarInfo->sLngView); pszRes += lstrlenW(pszRes)+1;
+		lstrcpyW(pszRes, gpFarInfo->sLngTemp); pszRes += lstrlenW(pszRes)+1;
+		lstrcpyW(pszRes, gpFarInfo->sLngName); pszRes += lstrlenW(pszRes)+1;
 		// Поправить nSize (он должен быть меньше)
 		_ASSERTE(pIn->hdr.nSize >= (DWORD)(((LPBYTE)pszRes) - ((LPBYTE)pIn)));
 		pIn->hdr.nSize = (DWORD)(((LPBYTE)pszRes) - ((LPBYTE)pIn));
@@ -3394,7 +3420,12 @@ void ShowPluginMenu(int nID /*= -1*/)
 {
 	int nItem = -1;
 	if (!FarHwnd) {
-		SHOWDBGINFO(L"*** ShowPluginMenu failed, FarHwnd is NULL\n");
+		ShowMessage(CEInvalidConHwnd,1); // "ConEmu plugin\nGetConsoleWindow()==FarHwnd is NULL\nOK"
+		return;
+	}
+
+	if (IsTerminalMode()) {
+		ShowMessage(CEUnavailableInTerminal,1); // "ConEmu plugin\nConEmu is not available in terminal mode\nCheck TERM environment variable\nOK"
 		return;
 	}
 
@@ -3576,7 +3607,7 @@ BOOL Attach2Gui()
 			NULL, &si, &pi))
 	{
 		// Хорошо бы ошибку показать?
-		ShowMessage(18,1); // "ConEmu plugin\nCan't start console server process (ConEmuC.exe)\nOK"
+		ShowMessage(CECantStartServer,1); // "ConEmu plugin\nCan't start console server process (ConEmuC.exe)\nOK"
 	} else {
 		gdwServerPID = pi.dwProcessId;
 		lbRc = TRUE;
@@ -3590,11 +3621,11 @@ BOOL Attach2Gui()
 BOOL StartDebugger()
 {
 	if (IsDebuggerPresent()) {
-		ShowMessage(15,1); // "ConEmu plugin\nDebugger is already attached to current process\nOK"
+		ShowMessage(CEAlreadyDebuggerPresent,1); // "ConEmu plugin\nDebugger is already attached to current process\nOK"
 		return FALSE; // Уже
 	}
 	if (IsTerminalMode()) {
-		ShowMessage(16,1); // "ConEmu plugin\nDebugger is not available in terminal mode\nOK"
+		ShowMessage(CECantDebugInTerminal,1); // "ConEmu plugin\nDebugger is not available in terminal mode\nOK"
 		return FALSE; // Уже
 	}
 		
@@ -3634,7 +3665,7 @@ BOOL StartDebugger()
 		#ifdef _DEBUG
 		DWORD dwErr = GetLastError();
 		#endif
-		ShowMessage(17,1); // "ConEmu plugin\nНе удалось запустить процесс отладчика\nOK"
+		ShowMessage(CECantStartDebugger,1); // "ConEmu plugin\nНе удалось запустить процесс отладчика\nOK"
 	} else {
 		lbRc = TRUE;
 	}

@@ -1856,9 +1856,13 @@ BOOL CheckProcessCount(BOOL abForce/*=FALSE*/)
 										lbFarExists = TRUE;
 										//if (srv.nProcessCount <= 2) // нужно проверить и ntvdm
 										//	break; // возможно, в консоли еще есть и telnet?
-									} else if (!srv.nNtvdmPID && lstrcmpiW(prc.szExeFile, L"ntvdm.exe")==0) {
+									}
+									#ifndef WIN64
+									else if (!srv.nNtvdmPID && lstrcmpiW(prc.szExeFile, L"ntvdm.exe")==0)
+									{
 										srv.nNtvdmPID = prc.th32ProcessID;
 									}
+									#endif
 									// Во время работы Telnet тоже нужно ловить все события!
 									//2009-12-28 убрал. все должно быть само...
 									//if (lstrcmpiW(prc.szExeFile, L"telnet.exe")==0) {

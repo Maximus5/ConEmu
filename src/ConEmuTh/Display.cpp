@@ -33,20 +33,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #include <windows.h>
-#include <ShlObj.h>
 #include "ConEmuTh.h"
 #include "../common/farcolor.hpp"
 #include "resource.h"
+#include "ImgCache.h"
 
-template <typename T>
-inline void SafeRelease(T *&p)
-{
-	if (NULL != p)
-	{
-		p->Release();
-		p = NULL;
-	}
-}
 
 static ATOM hClass = NULL;
 LRESULT CALLBACK DisplayWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -54,423 +45,18 @@ DWORD WINAPI DisplayThread(LPVOID lpvParam);
 void Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc, CeFullPanelInfo* pi);
 const wchar_t gsDisplayClassName[] = L"ConEmuPanelView";
 HANDLE ghCreateEvent = NULL;
-HICON ghUpIcon = NULL;
+extern HICON ghUpIcon;
 int gnCreateViewError = 0;
 DWORD gnWin32Error = 0;
-ITEMIDLIST DesktopID = {{0}};
-IShellFolder *gpDesktopFolder = NULL;
+//ITEMIDLIST DesktopID = {{0}};
+//IShellFolder *gpDesktopFolder = NULL;
 BOOL gbCancelAll = FALSE;
-CThumbnails *gpThumbnails = NULL;
+//CThumbnails *gpImgCache = NULL;
+extern CImgCache  *gpImgCache;
+extern COLORREF gcrColors[16];
 
 #define MSG_CREATE_VIEW (WM_USER+101)
 #define CREATE_WND_TIMEOUT 5000
-
-CThumbnails::CThumbnails()
-{
-	nWidth = nHeight = 0;
-	nXIcon = nYIcon = nXIconSpace = nYIconSpace = 0;
-	hWhiteBrush = NULL;
-	nFieldX = nFieldY = 0;
-	memset(hField,0,sizeof(hField));
-	memset(hFieldBmp,0,sizeof(hFieldBmp));
-	memset(hOldBmp,0,sizeof(hOldBmp));
-	memset(CacheInfo,0,sizeof(CacheInfo));
-};
-CThumbnails::~CThumbnails()
-{
-	Reset();
-};
-void CThumbnails::Reset()
-{
-	int i;
-	for (i=0; i<FIELD_MAX_COUNT; i++) {
-		if (hField[i]) {
-			if (hOldBmp[i]) { SelectObject(hField[i], hOldBmp[i]); hOldBmp[i] = NULL; }
-			if (hFieldBmp[i]) { DeleteObject(hFieldBmp[i]); hFieldBmp[i] = NULL; }
-			DeleteDC(hField[i]); hField[i] = NULL;
-		}
-	}
-	for (i=0; i<sizeofarray(CacheInfo); i++) {
-		if (CacheInfo[i].lpwszFileName) {
-			free(CacheInfo[i].lpwszFileName);
-			CacheInfo[i].lpwszFileName = NULL;
-		}
-	}
-};
-void CThumbnails::Init(HBRUSH ahWhiteBrush)
-{
-	// Инициализация (или сброс если изменились размеры превьюшек)
-	hWhiteBrush = ahWhiteBrush; 
-	_ASSERTE(gThSet.nWidth>=16 && gThSet.nWidth<=256 && gThSet.nHeight>=16 && gThSet.nHeight<=256);
-	int nW = (gThSet.nWidth-gThSet.nThumbFrame*2);
-	int nH = (gThSet.nHeight-gThSet.nThumbFrame*2);
-	if (nWidth != nW || nHeight != nH) {
-		Reset();
-		nWidth = nW; nHeight = nH;
-		// Размеры полей
-		nFieldX = min(ITEMS_IN_FIELD,((int)(2048/nWidth)));
-		nFieldY = min(ITEMS_IN_FIELD,((int)(2048/nHeight)));
-	}
-	// Как центрируется иконка
-	nXIcon = GetSystemMetrics(SM_CXICON);
-	nYIcon = GetSystemMetrics(SM_CYICON);
-	nXIconSpace = (nWidth - nXIcon) >> 1;
-	nYIconSpace = (nHeight - nYIcon) >> 1;
-};
-BOOL CThumbnails::FindInCache(CePluginPanelItem* pItem, int* pnIndex)
-{
-	_ASSERTE(pItem && pnIndex);
-	BOOL lbReady = FALSE, lbFound = FALSE;
-	DWORD nCurTick = GetTickCount();
-	DWORD nMaxDelta = 0, nDelta;
-	int nFree = -1, nOldest = -1, i;
-	const wchar_t *pszName = pItem->pszFullName;
-	if ((pItem->FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-		&& pItem->FindData.lpwszFileNamePart[0] == L'.'
-		&& pItem->FindData.lpwszFileNamePart[1] == L'.'
-		&& pItem->FindData.lpwszFileNamePart[2] == 0)
-		pszName = pItem->FindData.lpwszFileNamePart;
-
-	for (i=0; i<sizeofarray(CacheInfo); i++) {
-		if (!CacheInfo[i].lpwszFileName) {
-			if (nFree == -1) nFree = i;
-			continue;
-		}
-
-		if (lstrcmpi(CacheInfo[i].lpwszFileName, pszName) == 0) {
-			// Наш.
-			*pnIndex = i; lbFound = TRUE;
-			if (CacheInfo[i].nFileSize == pItem->FindData.nFileSize
-				&& CacheInfo[i].ftLastWriteTime.dwHighDateTime == pItem->FindData.ftLastWriteTime.dwHighDateTime
-				&& CacheInfo[i].ftLastWriteTime.dwLowDateTime == pItem->FindData.ftLastWriteTime.dwLowDateTime)
-			{
-				lbReady = TRUE;
-				CacheInfo[i].dwFileAttributes = pItem->FindData.dwFileAttributes;
-			} // иначе потребуется обновление превьюшки (файл изменился)
-			break;
-		}
-
-		nDelta = nCurTick - CacheInfo[i].nAccessTick;
-		if (nDelta > nMaxDelta) {
-			nOldest = i; nMaxDelta = nDelta;
-		}
-	}
-	if (!lbFound) {
-		if (nFree != -1) {
-			*pnIndex = nFree;
-		} else {
-			_ASSERTE(nOldest!=-1);
-			if (nOldest == -1) nOldest = 0;
-			if (CacheInfo[nOldest].lpwszFileName) { free(CacheInfo[nOldest].lpwszFileName); CacheInfo[nOldest].lpwszFileName = NULL; }
-			*pnIndex = nOldest;
-		}
-	}
-	i = *pnIndex;
-	if (CacheInfo[i].lpwszFileName == NULL) {
-		CacheInfo[i].lpwszFileName = _wcsdup(pszName);
-		lbReady = FALSE;
-	}
-	if (!lbReady) {
-		CacheInfo[i].bPreviewLoaded = FALSE;
-		CacheInfo[i].nAccessTick = GetTickCount();
-		CacheInfo[i].dwFileAttributes = pItem->FindData.dwFileAttributes;
-		CacheInfo[i].nFileSize = pItem->FindData.nFileSize;
-		CacheInfo[i].ftLastWriteTime = pItem->FindData.ftLastWriteTime;
-	}
-	return lbReady;
-};
-BOOL CThumbnails::PaintItem(HDC hdc, int x, int y, CePluginPanelItem* pItem, BOOL abLoadPreview)
-{
-	int nIndex = -1;
-	BOOL lbWasDraw = FALSE;
-	BOOL lbWasPreview = FALSE;
-	BOOL lbReady = FindInCache(pItem, &nIndex);
-	if ((nFieldX*nFieldY) == 0) {
-		_ASSERTE((nFieldX*nFieldY)!=0);
-		return FALSE;
-	}
-	int iField = nIndex / (nFieldX*nFieldY);
-	int ii = nIndex - (iField*nFieldX*nFieldY);
-	int iRow = ii / nFieldX;
-	int iCol = ii - iRow*nFieldX;
-
-	if (iField<0 || iField>=FIELD_MAX_COUNT) {
-		_ASSERTE(iField>=0 && iField<FIELD_MAX_COUNT);
-		return FALSE;
-	}
-	if (hField[iField] == NULL) {
-		DWORD dwErr = 0;
-		HDC hScreen = GetDC(NULL);
-		hField[iField] = CreateCompatibleDC(hScreen);
-		hFieldBmp[iField] = CreateCompatibleBitmap(hScreen, nWidth*nFieldX, nHeight*nFieldY);
-		dwErr = GetLastError();
-		ReleaseDC(NULL, hScreen);
-		if (hFieldBmp[iField] == NULL) {
-			wchar_t szErr[255];
-			wsprintf(szErr, L"Can't create compatible bitmap (%ix%i)\nErrCode=0x%08X", nWidth*nFieldX, nHeight*nFieldY, dwErr);
-			MessageBox(NULL, szErr, L"ConEmu Thumbnails", MB_OK|MB_SYSTEMMODAL|MB_ICONERROR);
-		}
-		hOldBmp[iField] = (HBITMAP)SelectObject(hField[iField], hFieldBmp[iField]);
-	}
-
-	RECT rc = {iCol*nWidth, iRow*nHeight, (iCol+1)*nWidth, (iRow+1)*nHeight};
-
-	// Если в прошлый раз загрузили только ShellIcon и сейчас просят Preview
-	if (lbReady && abLoadPreview && CacheInfo[nIndex].bPreviewLoaded == FALSE)
-		lbReady = FALSE;
-
-	// Если нужно загрузить иконку или превьюшку (или обновить их)
-	if (!lbReady) {
-		UpdateCell(hField[iField], CacheInfo+nIndex, rc.left, rc.top, abLoadPreview);
-	}
-
-	// А теперь - собственно отрисовка куда просили
-	BitBlt(hdc, x,y,x+nWidth-2,y+nHeight-2, hField[iField], rc.left,rc.top, SRCCOPY);
-
-	return lbWasDraw;
-}
-void CThumbnails::UpdateCell(HDC hdc, struct tag_CacheInfo* pInfo, int x, int y, BOOL abLoadPreview)
-{
-	HICON hIcon = NULL;
-	HBITMAP hBmp = NULL;
-	BOOL lbPreviewWasLoaded = FALSE;
-	const wchar_t* pszName = pInfo->lpwszFileName;
-	int nDrawRC = -1;
-	SHFILEINFO sfi = {NULL};
-	UINT cbSize = sizeof(sfi);
-	DWORD_PTR shRc = 0;
-	RECT rc = {x,y,x+nWidth,y+nHeight};
-
-	// Если хотят превьюшку - сразу поставим флажок, что пытались
-	lbPreviewWasLoaded = pInfo->bPreviewLoaded;
-	if (abLoadPreview) pInfo->bPreviewLoaded = TRUE;
-
-	if (pszName[0] == L'.' && pszName[1] == L'.' && pszName[2] == 0) {
-		if (!ghUpIcon)
-			ghUpIcon = LoadIcon(ghPluginModule, MAKEINTRESOURCE(IDI_UP));
-		if (ghUpIcon) {
-			hIcon = ghUpIcon;
-		}
-		goto DoDraw;
-	}
-
-	// Попробовать извлечь превьюшку
-	if (abLoadPreview) {
-		if (pInfo->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-			if (!gThSet.bLoadFolders)
-				return;
-		} else {
-			if (!gThSet.bLoadPreviews)
-				return;
-		}
-
-		__try {
-			hBmp = LoadThumbnail(pInfo);
-		}__except(EXCEPTION_EXECUTE_HANDLER){
-			hBmp = NULL;
-		}
-
-		if (!hBmp)
-			return;
-	}
-
-	// Если не получилось - то ассоциированную иконку
-	if (!hBmp)
-	{
-		shRc = SHGetFileInfo ( pInfo->lpwszFileName, pInfo->dwFileAttributes, &sfi, cbSize, 
-			SHGFI_ICON|SHGFI_LARGEICON|SHGFI_USEFILEATTRIBUTES);
-		if (shRc && sfi.hIcon)
-			hIcon = sfi.hIcon;
-	}
-
-DoDraw:
-
-	// Очистить
-	FillRect(hdc, &rc, hWhiteBrush);
-
-	if (hBmp) {
-		HDC hCompDC = CreateCompatibleDC(hdc);
-		HBITMAP hOldBmp = (HBITMAP)SelectObject(hCompDC, hBmp);
-		BitBlt(hdc, x, y, nWidth, nHeight, hCompDC, 0,0, SRCCOPY);
-		SelectObject(hCompDC, hOldBmp);
-		DeleteDC(hCompDC);
-		DeleteObject(hBmp);
-
-	} else if (hIcon) {
-		nDrawRC = DrawIconEx(hdc,
-			x+nXIconSpace, y+nYIconSpace,
-			hIcon, nXIcon, nYIcon, 0, NULL, DI_NORMAL);
-	} else {
-		// Нарисовать стандартную иконку?
-	}
-	if (sfi.hIcon) {
-		DestroyIcon(sfi.hIcon);
-		sfi.hIcon = NULL;
-	}
-}
-HBITMAP CThumbnails::LoadThumbnail(struct tag_CacheInfo* pItem)
-{
-	if (gpDesktopFolder == NULL) {
-		HRESULT hr = SHGetDesktopFolder(&gpDesktopFolder);
-		if (FAILED(hr)) {
-			SafeRelease(gpDesktopFolder);
-		}
-	}
-	if (!gpDesktopFolder)
-		return NULL;
-
-	const wchar_t* pFileName = pItem->lpwszFileName;
-
-	// Пока UNC не обрабатываем
-	if (pFileName[0] == L'\\' && pFileName[1] == L'\\' && (pFileName[2] == L'.' || pFileName[2] == L'?') && pFileName[3] == L'\\') {
-		pFileName += 4;
-		if (pFileName[0] == L'U' && pFileName[1] == L'N' && pFileName[2] == L'C' && pFileName[3] == L'\\') {
-			return NULL;
-		}
-	}
-
-	int nLen = lstrlen(pFileName);
-	if (nLen > 2*MAX_PATH)
-		return NULL; // Шелл такой путь не обработает
-
-	wchar_t *pszSourceFile = /*_wcsdup(pFileName)*/ (wchar_t*)calloc((nLen+1),2), *pszSlash = NULL;
-	if (!pszSourceFile) {
-		_ASSERTE(pszSourceFile!=NULL);
-		return NULL;
-	}
-	lstrcpy(pszSourceFile, pFileName);
-	pszSlash = wcsrchr(pszSourceFile, '\\');
-	if (!pszSlash || ((pszSlash - pszSourceFile) < 2)) {
-		free(pszSourceFile);
-		return NULL;
-	}
-
-
-	IShellFolder *pFile=NULL;
-	IExtractImage *pEI=NULL;
-	LPITEMIDLIST pIdl = NULL;
-	wchar_t wchPrev = L'\\';
-	ULONG nEaten = 0;
-	DWORD dwAttr = 0;
-	HRESULT hr = S_OK;
-	HBITMAP hbmp = NULL;
-	BOOL lbRc = FALSE;
-	wchar_t wsPathBuffer[MAX_PATH*2+32]; //, *pszThumbs = NULL;
-	SIZE size;
-	DWORD dwPrior = 0, dwFlags = 0;
-	DWORD nBitDepth = 32;
-	//HBITMAP hBmp = NULL, hOldBmp = NULL;
-
-	//// Подготовить путь к шелловскому кешу превьюшек
-	//lstrcpy(wsPathBuffer, pFileName);
-	//if (abFolder) {
-	//	pszThumbs = wsPathBuffer+wcslen(wsPathBuffer)-1;
-	//	if (*pszThumbs != L'\\') {
-	//		pszThumbs++;
-	//		pszThumbs[0] = L'\\';
-	//		pszThumbs[1] = 0;
-	//	}
-	//	pszThumbs++;
-	//} else {
-	//	pszThumbs = wcsrchr(wsPathBuffer, L'\\');
-	//	if (pszThumbs) pszThumbs++;
-	//}
-	//if (pszThumbs) {
-	//	lstrcpy(pszThumbs, L"Thumbs.db");
-	//} else {
-	//	wsPathBuffer[0] = 0;
-	//}
-
-
-	__try
-	{
-		if (SUCCEEDED(hr)) {
-			if (*(pszSlash-1) == L':') pszSlash++; // для корня диска нужно слэш оставить
-			wchPrev = *pszSlash; *pszSlash = 0;
-
-			hr = gpDesktopFolder->ParseDisplayName(NULL, NULL, pszSourceFile, &nEaten, &pIdl, &dwAttr);
-
-			*pszSlash = wchPrev;
-		}
-
-		if (SUCCEEDED(hr)) {
-			hr = gpDesktopFolder->BindToObject(pIdl, NULL, IID_IShellFolder, (void**)&pFile);
-			if (pIdl) { CoTaskMemFree(pIdl); pIdl = NULL; }
-		}
-
-		if (SUCCEEDED(hr)) {
-			if (wchPrev=='\\') pszSlash ++;
-			hr = pFile->ParseDisplayName(NULL, NULL, pszSlash, &nEaten, &pIdl, &dwAttr);
-		}	    
-
-		if (SUCCEEDED(hr)) {
-			hr = pFile->GetUIObjectOf(NULL, 1, (LPCITEMIDLIST*)&pIdl, IID_IExtractImage, NULL, (void**)&pEI);
-			// Если возвращает "Файл не найден" - значит файл не содержит превьюшки!
-			if (pIdl) { CoTaskMemFree(pIdl); pIdl = NULL; }
-		}
-
-		if (SUCCEEDED(hr)) {
-			// Пытаемся дернуть картинку сразу. Большое разрешение все-равно получить
-			// не удастся, а иногда Shell дает IID_IExtractImage, но отказывается отдать Bitmap.
-
-
-
-			wsPathBuffer[0] = 0;
-			size.cx = nWidth;
-			size.cy = nHeight;
-
-
-			dwFlags = IEIFLAG_SCREEN|IEIFLAG_ASYNC; //|IEIFLAG_QUALITY; // IEIFLAG_ASPECT
-			wsPathBuffer[0] = 0;
-			hr = pEI->GetLocation(wsPathBuffer, 512, &dwPrior, &size, nBitDepth, &dwFlags);
-
-			// Ошибка 0x8000000a (E_PENDING) теоретически может возвращаться, если pEI запустил извлечение превьюшки
-			// в Background thread. И теоретически, он должен поддерживать интерфейс IID_IRunnableTask для его 
-			// остановки и проверки статуса.
-			// Эту ошибку могут возвращать Adobe, SolidEdge (jt), может еще кто...
-
-			// На путь (wsPathBuffer) ориентироваться нельзя (в SE его нет). Вообще непонятно зачем он нужен...
-			if (hr==E_PENDING) {
-				IRunnableTask* pRun = NULL;
-				ULONG lRunState = 0;
-				hr = pEI->QueryInterface(IID_IRunnableTask, (void**)&pRun);
-				// А вот не экспортит SE этот интерфейс
-				if (SUCCEEDED(hr) && pRun) {
-					hr = pRun->Run();
-					Sleep(10);
-					while (!gbCancelAll) {
-						lRunState = pRun->IsRunning();
-						if (lRunState == IRTIR_TASK_FINISHED || lRunState == IRTIR_TASK_NOT_RUNNING)
-							break;
-						Sleep(10);
-					}
-					if (gbCancelAll)
-						pRun->Kill(0);
-
-					pRun->Release();
-					pRun = NULL;
-				}
-				hr = S_OK;
-			}
-		}
-
-		if (SUCCEEDED(hr)) {
-			hr = pEI->Extract(&hbmp);
-		}
-
-	}
-	__except(EXCEPTION_EXECUTE_HANDLER)
-	{
-		hbmp = NULL;
-	}
-
-	SafeRelease(pFile);
-	if (pIdl) { CoTaskMemFree(pIdl); pIdl = NULL; }
-	if (pszSourceFile) { free(pszSourceFile); pszSourceFile = NULL; }
-	SafeRelease(pEI);
-
-	return hbmp;
-}
 
 
 HWND CreateView(CeFullPanelInfo* pi)
@@ -608,11 +194,11 @@ LRESULT CALLBACK DisplayWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 			_ASSERTE(pi && pi->cbSize==sizeof(CeFullPanelInfo));
 			_ASSERTE(pi == (&pviLeft) || pi == (&pviRight));
 			
-			BYTE nPanelColorIdx = pi->nFarColors[COL_PANELTEXT];
-			COLORREF nBackColor = GetWindowLong(hwnd, 4*((nPanelColorIdx & 0xF0)>>4));
-			#ifdef _DEBUG
-			COLORREF nForeColor = GetWindowLong(hwnd, 4*(nPanelColorIdx & 0xF));
-			#endif
+			//BYTE nPanelColorIdx = pi->nFarColors[COL_PANELTEXT];
+			//COLORREF nBackColor = GetWindowLong(hwnd, 4*((nPanelColorIdx & 0xF0)>>4));
+			//#ifdef _DEBUG
+			//COLORREF nForeColor = GetWindowLong(hwnd, 4*(nPanelColorIdx & 0xF));
+			//#endif
 			
 			PAINTSTRUCT ps = {NULL};
 			HDC hdc = BeginPaint(hwnd, &ps);
@@ -663,8 +249,7 @@ DWORD WINAPI DisplayThread(LPVOID lpvParam)
 
 	CoInitialize(NULL);
 
-	gpThumbnails = new CThumbnails();
-	_ASSERTE(gpThumbnails);
+	_ASSERTE(gpImgCache);
 
 
 
@@ -703,8 +288,8 @@ DWORD WINAPI DisplayThread(LPVOID lpvParam)
 	//CloseHandle(ghDisplayThread); ghDisplayThread = NULL;
 	gnDisplayThreadId = 0;
 
-	delete gpThumbnails;
-	gpThumbnails = NULL;
+	delete gpImgCache;
+	gpImgCache = NULL;
 
 	// Освободить память
 	pviLeft.FreeInfo();
@@ -748,7 +333,7 @@ BOOL PaintItem(HDC hdc, int x, int y, CePluginPanelItem* pItem, BOOL abCurrentIt
 		_ASSERTE(gThSet.nThumbFrame==0 || gThSet.nThumbFrame==1);
 	}
 
-	gpThumbnails->PaintItem(hdc, x+gThSet.nThumbFrame+gThSet.nHPadding, y+gThSet.nThumbFrame+gThSet.nVPadding,
+	gpImgCache->PaintItem(hdc, x+gThSet.nThumbFrame+gThSet.nHPadding, y+gThSet.nThumbFrame+gThSet.nVPadding,
 		pItem, abAllowPreview);
 
 	RECT rcClip = {
@@ -782,9 +367,8 @@ void Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc, CeFullPanelInfo* pi)
 {
 	gbCancelAll = FALSE;
 
-	HDC hdc = ps.hdc;
-	COLORREF crGray = GetWindowLong(hwnd, 4*8);
-	COLORREF crWhite = GetWindowLong(hwnd, 4*15);
+	for (int i=0; i<16; i++)
+		gcrColors[i] = GetWindowLong(hwnd, 4*i);
 
 	BYTE nIndexes[4] = {
 		pi->nFarColors[COL_PANELTEXT],
@@ -796,10 +380,15 @@ void Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc, CeFullPanelInfo* pi)
 	HBRUSH hBack[4];
 	int i;
 	for (i = 0; i < 4; i++) {
-		nBackColor[i] = GetWindowLong(hwnd, 4*((nIndexes[i] & 0xF0)>>4));
-		nForeColor[i] = GetWindowLong(hwnd, 4*(nIndexes[i] & 0xF));
+		nBackColor[i] = gcrColors[((nIndexes[i] & 0xF0)>>4)];
+		nForeColor[i] = gcrColors[(nIndexes[i] & 0xF)];
 		hBack[i] = CreateSolidBrush(nBackColor[i]);
 	}
+	COLORREF crGray = gcrColors[8];
+	COLORREF crWhite = nBackColor[0]; //gcrColors[15];
+		
+	HDC hdc = ps.hdc;
+
 	
 	
 	HPEN hPen = CreatePen(PS_SOLID, 1, crGray);
@@ -808,14 +397,17 @@ void Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc, CeFullPanelInfo* pi)
 		NONANTIALIASED_QUALITY,DEFAULT_PITCH,gThSet.sFontName);
 
 	// Передернуть класс на предмет смены/инициализации настроек
-	gpThumbnails->Init(hWhiteBrush);
+	gpImgCache->Init(hWhiteBrush);
 
 	
 	int nWholeW = gThSet.nWidth  + gThSet.nHSpacing + gThSet.nHPadding*2;
 	int nWholeH = gThSet.nHeight + gThSet.nVSpacing + gThSet.nVPadding*2;
 	int nXCount = (rc.right+gThSet.nHSpacing) / nWholeW; // тут четко, кусок иконки не допускается
+	if (nXCount < 1) nXCount = 1;
 	int nYCountFull = (rc.bottom+gThSet.nVSpacing) / nWholeH; // тут четко, кусок иконки не допускается
+	if (nYCountFull < 1) nYCountFull = 1;
 	int nYCount = (rc.bottom+gThSet.nHeight+gThSet.nVSpacing) / nWholeH; // а тут допускается отображение верхней части иконки
+	if (nYCount < 1) nYCount = 1;
 	pi->nXCount = nXCount; pi->nYCountFull = nYCountFull; pi->nYCount = nYCount;
 	
 	int nTopItem = pi->TopPanelItem;
@@ -823,10 +415,17 @@ void Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc, CeFullPanelInfo* pi)
 	int nCurrentItem = pi->CurrentItem;
 	//CePluginPanelItem** ppItems = pi->ppItems;
 
-	if ((nTopItem + nXCount*nYCountFull) < nCurrentItem) {
+	if ((nTopItem + nXCount*nYCountFull) <= nCurrentItem) {
 		TODO("Выравнивание на границу nXCount");
 		nTopItem = nCurrentItem - (nXCount*(nYCountFull-1));
 	}
+	int nMod = nTopItem % nXCount;
+	if (nMod) {
+		nTopItem = max(0,nTopItem-nMod);
+		//if (nTopItem > nCurrentItem)
+		//	nTopItem = max(nCurrentItem,(nTopItem-nXCount));
+	}
+	pi->OurTopPanelItem = nTopItem;
 
 	
 	int nMaxLen = (pi->pszPanelDir ? lstrlen(pi->pszPanelDir) : 0) + MAX_PATH+3;
@@ -860,6 +459,8 @@ void Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc, CeFullPanelInfo* pi)
 	HFONT hOldFont = (HFONT)SelectObject(hCompDC,hFont);
 
 
+	if (!pi->Focus)
+		nCurrentItem = -1;
 
 
 	for (int nStep = 0; !gbCancelAll && nStep <= 1; nStep++)
@@ -917,7 +518,7 @@ void Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc, CeFullPanelInfo* pi)
 
 	free(pszFull);
 
-	SafeRelease(gpDesktopFolder);
+	//SafeRelease(gpDesktopFolder);
 
 	SelectObject(hCompDC, hOldPen);     DeleteObject(hPen);
 	SelectObject(hCompDC, hOldBr);      DeleteObject(hWhiteBrush);
@@ -929,6 +530,6 @@ void Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc, CeFullPanelInfo* pi)
 	for (i = 0; i < 4; i++) DeleteObject(hBack[i]);
 
 //#ifdef _DEBUG
-//	BitBlt(hdc, 0,0,rc.right,rc.bottom, gpThumbnails->hField[0], 0,0, SRCCOPY);
+//	BitBlt(hdc, 0,0,rc.right,rc.bottom, gpImgCache->hField[0], 0,0, SRCCOPY);
 //#endif
 }

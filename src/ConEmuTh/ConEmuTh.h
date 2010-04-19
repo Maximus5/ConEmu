@@ -129,7 +129,9 @@ struct CeFullPanelInfo
 	RECT  PanelRect;
 	int ItemsNumber;
 	int CurrentItem;
-	int TopPanelItem; // он может НЕ совпадать с фаровским, чтобы CurrentItem был таки видим
+	int TopPanelItem;
+	int OurTopPanelItem; // он может НЕ совпадать с фаровским, чтобы CurrentItem был таки видим
+	BOOL IsFilePanel;
 	BOOL Visible;
 	BOOL Focus;
 	DWORD Flags; // CEPANELINFOFLAGS
@@ -175,53 +177,15 @@ struct CeFullPanelInfo
 
 
 
-class CThumbnails
-{
-public:
-	int nWidth, nHeight; // 96x96
-	int nXIcon, nYIcon, nXIconSpace, nYIconSpace;
-	HBRUSH hWhiteBrush;
-	// Теперь - собственно поле кеша
-	#define FIELD_MAX_COUNT 10
-	#define ITEMS_IN_FIELD 10 // количество в "строке"
-	int nFieldX, nFieldY; // реальное количество в "строке"/"столбце" (не больше ITEMS_IN_FIELD)
-	HDC hField[FIELD_MAX_COUNT]; HBITMAP hFieldBmp[FIELD_MAX_COUNT], hOldBmp[FIELD_MAX_COUNT];
-	struct tag_CacheInfo {
-		DWORD nAccessTick;
-		union {
-			struct {
-				DWORD nFileSizeHigh;
-				DWORD nFileSizeLow;
-			};
-			unsigned __int64 nFileSize;
-		};
-		FILETIME ftLastWriteTime;
-		DWORD dwFileAttributes;
-		wchar_t *lpwszFileName;
-		BOOL bPreviewLoaded;
-		//int N,X,Y;
-	} CacheInfo[FIELD_MAX_COUNT*ITEMS_IN_FIELD*ITEMS_IN_FIELD];
-	void UpdateCell(HDC hdc, struct tag_CacheInfo* pInfo, int x, int y, BOOL abLoadPreview);
-	HBITMAP LoadThumbnail(struct tag_CacheInfo* pItem);
-
-public:
-	CThumbnails();
-	~CThumbnails();
-public:
-	void Reset();
-	void Init(HBRUSH ahWhiteBrush);
-	BOOL FindInCache(CePluginPanelItem* pItem, int* pnIndex);
-	BOOL PaintItem(HDC hdc, int x, int y, CePluginPanelItem* pItem, BOOL abLoadPreview);
-};
 
 
 struct ThumbnailSettings
 {
 	TODO("nWidth & nHeight - deprecated");
 	// Наверное заменить на WholeWidth() & WholeHeight()
-	int nWidth, nHeight; // 96x96
+	int nWidth, nHeight; // 98x98
 
-	int nThumbSize; // 94
+	int nThumbSize; // 96
 	int nIconSize; // 32
 	DWORD crBackground; // 0xFFFFFF (RGB) или 0xFF000000 (Index)
 
@@ -247,7 +211,7 @@ struct ThumbnailSettings
 
 	void Load() {
 		TODO("nWidth & nHeight - deprecated");
-		nWidth = nHeight = 96;
+		nWidth = nHeight = 98;
 
 		nThumbSize = 96; // пусть реально будет 96. Чтобы можно было 500% на 16х16 поставить
 		nIconSize = 32;
@@ -346,10 +310,11 @@ BOOL IsMacroActive();
 BOOL IsMacroActiveA();
 BOOL FUNC_X(IsMacroActive)();
 BOOL FUNC_Y(IsMacroActive)();
-CeFullPanelInfo* LoadPanelInfo(BOOL abActive);
-CeFullPanelInfo* LoadPanelInfoA(BOOL abActive);
-CeFullPanelInfo* FUNC_X(LoadPanelInfo)(BOOL abActive);
-CeFullPanelInfo* FUNC_Y(LoadPanelInfo)(BOOL abActive);
+//CeFullPanelInfo* LoadPanelInfo(BOOL abActive);
+CeFullPanelInfo* GetActivePanel();
+BOOL LoadPanelInfoA(BOOL abActive);
+BOOL FUNC_X(LoadPanelInfo)(BOOL abActive);
+BOOL FUNC_Y(LoadPanelInfo)(BOOL abActive);
 void ReloadPanelsInfo();
 void ReloadPanelsInfoA();
 void FUNC_X(ReloadPanelsInfo)();
@@ -363,9 +328,9 @@ void LoadPanelItemInfoA(CeFullPanelInfo* pi, int nItem);
 void FUNC_X(LoadPanelItemInfo)(CeFullPanelInfo* pi, int nItem);
 void FUNC_Y(LoadPanelItemInfo)(CeFullPanelInfo* pi, int nItem);
 bool CheckWindows();
-bool CheckWindowsA();
-bool FUNC_X(CheckWindows)();
-bool FUNC_Y(CheckWindows)();
+//bool CheckWindowsA();
+//bool FUNC_X(CheckWindows)();
+//bool FUNC_Y(CheckWindows)();
 
 extern int gnCreateViewError;
 extern DWORD gnWin32Error;
@@ -375,11 +340,12 @@ CeFullPanelInfo* IsThumbnailsActive(BOOL abFocusRequired);
 
 // ConEmu.dll
 BOOL CheckConEmu(BOOL abForceCheck=FALSE);
-int RegisterPanelView(PanelViewInit *ppvi);
+int RegisterPanelView(BOOL abLeft);
+int UnregisterPanelView(BOOL abLeft);
 HWND GetConEmuHWND();
 //BOOL WINAPI OnReadConsole(PINPUT_RECORD lpBuffer, LPDWORD lpNumberOfEventsRead);
 BOOL WINAPI OnPrePeekConsole(HANDLE hInput, PINPUT_RECORD lpBuffer, DWORD nBufSize, LPDWORD lpNumberOfEventsRead, BOOL* pbResult);
 BOOL WINAPI OnPostPeekConsole(HANDLE hInput, PINPUT_RECORD lpBuffer, DWORD nBufSize, LPDWORD lpNumberOfEventsRead, BOOL* pbResult);
 BOOL WINAPI OnPreReadConsole(HANDLE hInput, PINPUT_RECORD lpBuffer, DWORD nBufSize, LPDWORD lpNumberOfEventsRead, BOOL* pbResult);
 BOOL WINAPI OnPostReadConsole(HANDLE hInput, PINPUT_RECORD lpBuffer, DWORD nBufSize, LPDWORD lpNumberOfEventsRead, BOOL* pbResult);
-VOID WINAPI OnPostWriteConsoleOutput(HANDLE hOutput,const CHAR_INFO *lpBuffer,COORD dwBufferSize,COORD dwBufferCoord,PSMALL_RECT lpWriteRegion);
+BOOL WINAPI OnPreWriteConsoleOutput(HANDLE hOutput,const CHAR_INFO *lpBuffer,COORD dwBufferSize,COORD dwBufferCoord,PSMALL_RECT lpWriteRegion);
