@@ -16,9 +16,9 @@ protected:
 	wchar_t ms_CachePath[MAX_PATH];
 	wchar_t ms_LastStoragePath[32768];
 	int nPreviewSize; // 96x96
-	int nXIcon, nYIcon, nXIconSpace, nYIconSpace;
+	//int nXIcon, nYIcon, nXIconSpace, nYIconSpace;
 	COLORREF crBackground;
-	HBRUSH hWhiteBrush;
+	HBRUSH hbrBack;
 	// “еперь - собственно поле кеша
 	#define FIELD_MAX_COUNT 1000
 	//#define ITEMS_IN_FIELD 10 // количество в "строке"
@@ -50,6 +50,7 @@ protected:
 	} CacheInfo[FIELD_MAX_COUNT];
 	HDC mh_CompDC;
 	HBITMAP mh_OldBmp, mh_DibSection;
+	COORD mcr_DibSize;
 	LPBYTE  mp_DibBytes; DWORD mn_DibBytes;
 	BOOL CheckDibCreated();
 	void UpdateCell(struct tag_CacheInfo* pInfo, BOOL abLoadPreview);
@@ -77,7 +78,7 @@ public:
 	~CImgCache(void);
 	void SetCacheLocation(LPCWSTR asCachePath);
 	void Reset();
-	void Init(HBRUSH ahWhiteBrush);
+	void Init(COLORREF acrBack);
 	BOOL PaintItem(HDC hdc, int x, int y, CePluginPanelItem* pItem, BOOL abLoadPreview);
 
 protected:

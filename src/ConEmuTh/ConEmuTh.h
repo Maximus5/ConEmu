@@ -186,7 +186,7 @@ struct ThumbnailSettings
 	int nWidth, nHeight; // 98x98
 
 	int nThumbSize; // 96
-	int nIconSize; // 32
+	int nIconSize; // 48
 	DWORD crBackground; // 0xFFFFFF (RGB) или 0xFF000000 (Index)
 
 	int nThumbFrame; // 1 (серая рамка вокруг превьюшки

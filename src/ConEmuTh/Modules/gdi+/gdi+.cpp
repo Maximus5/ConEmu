@@ -624,7 +624,7 @@ struct GDIPlusImage
 
 				BITMAPINFOHEADER bmi = {sizeof(BITMAPINFOHEADER)};
 				bmi.biWidth = nCanvasWidthS;
-				bmi.biHeight = nCanvasHeight;
+				bmi.biHeight = -nCanvasHeight; // To-Down DIB
 				bmi.biPlanes = 1;
 				bmi.biBitCount = 32;
 				bmi.biCompression = BI_RGB;
@@ -642,9 +642,11 @@ struct GDIPlusImage
 				Gdiplus::GpGraphics *pGr = NULL;
 				Gdiplus::Status stat = gdi->GdipCreateFromHDC(hCompDc1, &pGr);
 				if (!stat) {
+					int x = (nCanvasWidth-nShowWidth)>>1;
+					int y = (nCanvasHeight-nShowHeight)>>1;
 					stat = gdi->GdipDrawImageRectRectI(
 						pGr, img,
-						nCanvasWidth-nShowWidth, nCanvasHeight-nShowHeight, nShowWidth, nShowHeight,
+						x, y, nShowWidth, nShowHeight,
 						0,0,lWidth,lHeight,
 						Gdiplus::UnitPixel, NULL, //NULL, NULL);
 						(Gdiplus::DrawImageAbort)DrawImageAbortCallback, gdi);
@@ -661,6 +663,7 @@ struct GDIPlusImage
 					DWORD nMemSize = pDecodeInfo->cbStride * nCanvasHeight;
 					pDecodeInfo->Pixels = (LPDWORD)LocalAlloc(LMEM_FIXED, nMemSize);
 					memmove(pDecodeInfo->Pixels, pBits, nMemSize);
+					result = true;
 				}
 
 				if (hCompDc1 && hOld1)

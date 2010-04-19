@@ -305,8 +305,8 @@ DWORD WINAPI DisplayThread(LPVOID lpvParam)
 
 BOOL PaintItem(HDC hdc, int x, int y, CePluginPanelItem* pItem, BOOL abCurrentItem, 
 			   COLORREF *nBackColor, COLORREF *nForeColor, HBRUSH *hBack,
-			   int nXIcon, int nYIcon, int nXIconSpace, int nYIconSpace,
-			   BOOL abAllowPreview, HBRUSH hWhiteBrush)
+			   //int nXIcon, int nYIcon, int nXIconSpace, int nYIconSpace,
+			   BOOL abAllowPreview, HBRUSH hBackBrush)
 {
 	const wchar_t* pszName = pItem->FindData.lpwszFileNamePart;
 	int nLen = lstrlen(pszName);
@@ -328,7 +328,7 @@ BOOL PaintItem(HDC hdc, int x, int y, CePluginPanelItem* pItem, BOOL abCurrentIt
 	} else if (gThSet.nThumbFrame == 0) {
 		RECT rcTmp = {x+gThSet.nHPadding, y+gThSet.nVPadding,
 			x+gThSet.nHPadding+gThSet.nWidth, y+gThSet.nVPadding+gThSet.nHeight};
-		FillRect(hdc, &rcTmp, hWhiteBrush);
+		FillRect(hdc, &rcTmp, hBackBrush);
 	} else {
 		_ASSERTE(gThSet.nThumbFrame==0 || gThSet.nThumbFrame==1);
 	}
@@ -385,19 +385,19 @@ void Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc, CeFullPanelInfo* pi)
 		hBack[i] = CreateSolidBrush(nBackColor[i]);
 	}
 	COLORREF crGray = gcrColors[8];
-	COLORREF crWhite = nBackColor[0]; //gcrColors[15];
+	COLORREF crBack = nBackColor[0]; //gcrColors[15];
 		
 	HDC hdc = ps.hdc;
 
 	
 	
 	HPEN hPen = CreatePen(PS_SOLID, 1, crGray);
-	HBRUSH hWhiteBrush = CreateSolidBrush(crWhite);
+	HBRUSH hBackBrush = CreateSolidBrush(crBack);
 	HFONT hFont = CreateFont(gThSet.nFontHeight,0,0,0,400,0,0,0,ANSI_CHARSET,OUT_DEFAULT_PRECIS,CLIP_DEFAULT_PRECIS,
 		NONANTIALIASED_QUALITY,DEFAULT_PITCH,gThSet.sFontName);
 
 	// Передернуть класс на предмет смены/инициализации настроек
-	gpImgCache->Init(hWhiteBrush);
+	gpImgCache->Init(crBack);
 
 	
 	int nWholeW = gThSet.nWidth  + gThSet.nHSpacing + gThSet.nHPadding*2;
@@ -442,10 +442,10 @@ void Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc, CeFullPanelInfo* pi)
 		pszNamePtr = pszFull;
 	}
 	
-	int nXIcon = GetSystemMetrics(SM_CXICON);
-	int nYIcon = GetSystemMetrics(SM_CYICON);
-	int nXIconSpace = (gThSet.nWidth - nXIcon) >> 1;
-	int nYIconSpace = (gThSet.nHeight - nYIcon) >> 1;
+	//int nXIcon = GetSystemMetrics(SM_CXICON);
+	//int nYIcon = GetSystemMetrics(SM_CYICON);
+	//int nXIconSpace = (gThSet.nWidth - nXIcon) >> 1;
+	//int nYIconSpace = (gThSet.nHeight - nYIcon) >> 1;
 
 	HDC hCompDC = CreateCompatibleDC(hdc);
 	HBITMAP hCompBmp = CreateCompatibleBitmap(hdc, nWholeW, nWholeH);
@@ -455,7 +455,7 @@ void Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc, CeFullPanelInfo* pi)
 		FillRect(hCompDC, &rcComp, hBack[0]);
 	}
 	HPEN hOldPen = (HPEN)SelectObject(hCompDC, hPen);
-	HBRUSH hOldBr = (HBRUSH)SelectObject(hCompDC, hWhiteBrush);
+	HBRUSH hOldBr = (HBRUSH)SelectObject(hCompDC, hBackBrush);
 	HFONT hOldFont = (HFONT)SelectObject(hCompDC,hFont);
 
 
@@ -494,8 +494,8 @@ void Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc, CeFullPanelInfo* pi)
 
 				if (PaintItem(hCompDC, 0, 0, pItem, (nItem==nCurrentItem), 
 					nBackColor, nForeColor, hBack,
-					nXIcon, nYIcon, nXIconSpace, nYIconSpace, 
-					(nStep == 1), hWhiteBrush))
+					//nXIcon, nYIcon, nXIconSpace, nYIconSpace, 
+					(nStep == 1), hBackBrush))
 				{
 					BitBlt(hdc, nXCoord, nYCoord, nWholeW, nWholeH, hCompDC, 0,0, SRCCOPY);
 				}
@@ -521,7 +521,7 @@ void Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc, CeFullPanelInfo* pi)
 	//SafeRelease(gpDesktopFolder);
 
 	SelectObject(hCompDC, hOldPen);     DeleteObject(hPen);
-	SelectObject(hCompDC, hOldBr);      DeleteObject(hWhiteBrush);
+	SelectObject(hCompDC, hOldBr);      DeleteObject(hBackBrush);
 	SelectObject(hCompDC, hOldFont);    DeleteObject(hFont);
 	SelectObject(hCompDC, hOldCompBmp); DeleteObject(hCompBmp);
 	DeleteDC(hCompDC);

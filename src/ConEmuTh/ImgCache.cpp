@@ -35,8 +35,8 @@ CImgCache::CImgCache(HMODULE hSelf)
 	mb_Quit = FALSE;
 	ms_CachePath[0] = ms_LastStoragePath[0] = 0;
 	//nWidth = nHeight = 0;
-	nPreviewSize = nXIcon = nYIcon = nXIconSpace = nYIconSpace = 0;
-	hWhiteBrush = NULL;
+	nPreviewSize = 0; //nXIcon = nYIcon = nXIconSpace = nYIconSpace = 0;
+	hbrBack = NULL;
 	//nFieldX = nFieldY = 0;
 	//memset(hField,0,sizeof(hField));
 	//memset(hFieldBmp,0,sizeof(hFieldBmp));
@@ -57,6 +57,9 @@ CImgCache::CImgCache(HMODULE hSelf)
 	// Prepare root storage file pathname
 	SetCacheLocation(NULL); // По умолчанию - в %TEMP%
 
+	// Загрузить "модули"
+	LoadModules();
+
 	// Initialize interfaces
 	mp_RootStorage = mp_CurrentStorage = NULL;
 
@@ -70,6 +73,10 @@ CImgCache::~CImgCache(void)
 
 	Reset();
 	FreeModules();
+
+	if (hbrBack) {
+		DeleteObject(hbrBack); hbrBack = NULL;
+	}
 
 	if (mp_CurrentStorage) {
 		hr = mp_CurrentStorage->Commit(STGC_DEFAULT);
@@ -200,20 +207,24 @@ BOOL CImgCache::CheckDibCreated()
 		return TRUE;
 	}
 	
-	_ASSERTE(mh_CompDC==NULL);
-	if (!mh_CompDC) {
+	if (mh_CompDC != NULL) {
+		_ASSERTE(mh_CompDC==NULL);
+	} else {
 		mh_CompDC = CreateCompatibleDC(NULL);
 	}
 	
 	BITMAPINFOHEADER bmi = {sizeof(BITMAPINFOHEADER)};
-	bmi.biWidth = bmi.biHeight = nPreviewSize;
+	bmi.biWidth = nPreviewSize;
+	bmi.biHeight = -nPreviewSize; // Top-Down DIB
 	bmi.biPlanes = 1;
 	bmi.biBitCount = 32;
 	bmi.biCompression = BI_RGB;
 
+	mcr_DibSize.X = mcr_DibSize.Y = nPreviewSize;
+
 	_ASSERTE(mp_DibBytes==NULL);
 	mp_DibBytes = NULL; mn_DibBytes = 0;
-	HBITMAP mh_DibSection = CreateDIBSection(mh_CompDC, (BITMAPINFO*)&bmi, DIB_RGB_COLORS, (void**)&mp_DibBytes, NULL, 0);
+	mh_DibSection = CreateDIBSection(mh_CompDC, (BITMAPINFO*)&bmi, DIB_RGB_COLORS, (void**)&mp_DibBytes, NULL, 0);
 	if (!mh_DibSection) {
 		_ASSERTE(mh_DibSection);
 		mp_DibBytes = NULL;
@@ -253,28 +264,37 @@ void CImgCache::Reset()
 		}
 	}
 	//
-	if (mh_CompDC && mh_OldBmp)
-		SelectObject(mh_CompDC, mh_OldBmp); mh_OldBmp = NULL;
-	DeleteObject(mh_DibSection); mp_DibBytes = NULL; mh_DibSection = NULL;
-	DeleteDC(mh_CompDC); mh_CompDC = NULL;
+	if (mh_CompDC || mh_OldBmp) {
+		if (mh_CompDC) SelectObject(mh_CompDC, mh_OldBmp);
+		mh_OldBmp = NULL;
+	}
+	if (mh_DibSection) {
+		DeleteObject(mh_DibSection); mh_DibSection = NULL;
+	}
+	mp_DibBytes = NULL;
+	if (mh_CompDC) {
+		DeleteDC(mh_CompDC); mh_CompDC = NULL;
+	}
 };
-void CImgCache::Init(HBRUSH ahWhiteBrush)
+void CImgCache::Init(COLORREF acrBack)
 {
 	// Инициализация (или сброс если изменились размеры превьюшек)
-	hWhiteBrush = ahWhiteBrush; 
+	//hWhiteBrush = ahWhiteBrush; 
 	_ASSERTE(gThSet.nThumbSize>=16);
 
-	if (nPreviewSize != gThSet.nThumbSize || crBackground != gThSet.crBackground) {
+	// Не будем при смене фона дергаться, а то на Fade проблемы...
+	if (nPreviewSize != gThSet.nThumbSize /*|| crBackground != gThSet.crBackground*/) {
 		Reset();
 		nPreviewSize = gThSet.nThumbSize;
-		crBackground = gThSet.crBackground;
+		crBackground = acrBack; //gThSet.crBackground; -- gThSet.crBackground пока не инициализируется
+		hbrBack = CreateSolidBrush(acrBack);
 	}
 
-	// Как центрируется иконка
-	nXIcon = GetSystemMetrics(SM_CXICON);
-	nYIcon = GetSystemMetrics(SM_CYICON);
-	nXIconSpace = (nPreviewSize - nXIcon) >> 1;
-	nYIconSpace = (nPreviewSize - nYIcon) >> 1;
+	//// Как центрируется иконка
+	//nXIcon = GetSystemMetrics(SM_CXICON);
+	//nYIcon = GetSystemMetrics(SM_CYICON);
+	//nXIconSpace = (nPreviewSize - nXIcon) >> 1;
+	//nYIconSpace = (nPreviewSize - nYIcon) >> 1;
 };
 BOOL CImgCache::FindInCache(CePluginPanelItem* pItem, int* pnIndex)
 {
@@ -388,7 +408,7 @@ BOOL CImgCache::PaintItem(HDC hdc, int x, int y, CePluginPanelItem* pItem, BOOL 
 	
 	// Скинуть биты в MemDC
 	CopyBits(CacheInfo[nIndex].crSize, (LPBYTE)(CacheInfo[nIndex].Pixels), CacheInfo[nIndex].cbStride,
-		CacheInfo[nIndex].crSize, mp_DibBytes);
+		mcr_DibSize, mp_DibBytes);
 	//int nMaxY = min(nPreviewSize,CacheInfo[nIndex].crSize.Y);
 	//LPBYTE lpSrc = (LPBYTE)(CacheInfo[nIndex].Pixels);
 	//_ASSERTE(lpSrc);
@@ -409,14 +429,16 @@ BOOL CImgCache::PaintItem(HDC hdc, int x, int y, CePluginPanelItem* pItem, BOOL 
 	if (nPreviewSize > CacheInfo[nIndex].crSize.X || nPreviewSize > CacheInfo[nIndex].crSize.Y) {
 		// Очистить
 		RECT rc = {x,y,x+nPreviewSize,y+nPreviewSize};
-		FillRect(hdc, &rc, hWhiteBrush);
+		FillRect(hdc, &rc, hbrBack);
 		// Со сдвигом
-		lbWasDraw = BitBlt(hdc, x+nXIconSpace,y+nXIconSpace,
-			x+CacheInfo[nIndex].crSize.X,y+CacheInfo[nIndex].crSize.Y, mh_CompDC,
-			CacheInfo[nIndex].crSize.X,CacheInfo[nIndex].crSize.X, SRCCOPY);
+		int nXSpace = (nPreviewSize - CacheInfo[nIndex].crSize.X) >> 1;
+		int nYSpace = (nPreviewSize - CacheInfo[nIndex].crSize.Y) >> 1;
+		lbWasDraw = BitBlt(hdc, x+nXSpace,y+nYSpace,
+			CacheInfo[nIndex].crSize.X,CacheInfo[nIndex].crSize.Y, mh_CompDC,
+			0,0, SRCCOPY);
 	} else {
-		lbWasDraw = BitBlt(hdc, x,y,x+nPreviewSize,y+nPreviewSize, mh_CompDC,
-			CacheInfo[nIndex].crSize.X,CacheInfo[nIndex].crSize.X, SRCCOPY);
+		lbWasDraw = BitBlt(hdc, x,y,nPreviewSize,nPreviewSize, mh_CompDC,
+			0,0, SRCCOPY);
 	}
 	//
 	//	if (hBmp) {
@@ -559,7 +581,7 @@ BOOL CImgCache::LoadShellIcon(struct tag_CacheInfo* pItem)
 	SHFILEINFO sfi = {NULL};
 	UINT cbSize = sizeof(sfi);
 	DWORD_PTR shRc = 0;
-	RECT rc = {0,0,nXIcon,nYIcon};
+	RECT rc = {0,0,32,32}; // если иконку удастся загрузить - будет перебито
 
 	if (!CheckDibCreated())
 		return FALSE;
@@ -581,27 +603,50 @@ BOOL CImgCache::LoadShellIcon(struct tag_CacheInfo* pItem)
 	} else {
 		// ассоциированная иконка
 		shRc = SHGetFileInfo ( pItem->lpwszFileName, pItem->dwFileAttributes, &sfi, cbSize, 
-			SHGFI_ICON|SHGFI_LARGEICON|SHGFI_USEFILEATTRIBUTES);
-		if (shRc && sfi.hIcon)
+			SHGFI_ICON|SHGFI_SHELLICONSIZE|SHGFI_LARGEICON|SHGFI_USEFILEATTRIBUTES);
+		if (shRc && sfi.hIcon) {
 			hIcon = sfi.hIcon;
+		}
 	}
 
+	if (hIcon) {
+		ICONINFO ii = {0};
+		if (GetIconInfo(hIcon, &ii)) {
+			BITMAP bi;
+			if (ii.hbmColor) {
+				if (GetObject(ii.hbmColor, sizeof(bi), &bi)) {
+					rc.right = bi.bmWidth;
+					rc.bottom = bi.bmHeight ? bi.bmHeight : -bi.bmHeight;
+				}
+			} else if (ii.hbmMask) {
+				if (GetObject(ii.hbmMask, sizeof(bi), &bi)) {
+					rc.right = bi.bmWidth;
+					rc.bottom = bi.bmHeight ? bi.bmHeight : -bi.bmHeight;
+				}
+			}
+			if (ii.hbmColor) DeleteObject(ii.hbmColor);
+			if (ii.hbmMask) DeleteObject(ii.hbmMask);
+			if (rc.right > nPreviewSize) rc.right = nPreviewSize;
+			if (rc.bottom > nPreviewSize) rc.bottom = nPreviewSize;
+		}
+	}
 
 	// Очистить
-	FillRect(mh_CompDC, &rc, hWhiteBrush);
+	FillRect(mh_CompDC, &rc, hbrBack);
 
 	if (hIcon) {
-		nDrawRC = DrawIconEx(mh_CompDC, 0, 0, hIcon, nXIcon, nYIcon, 0, NULL, DI_NORMAL);
+		nDrawRC = DrawIconEx(mh_CompDC, 0, 0, hIcon, rc.right, rc.left, 0, NULL, DI_NORMAL);
 		if (sfi.hIcon) {
 			DestroyIcon(sfi.hIcon);
 		}
 	} else {
 		// Нарисовать стандартную иконку?
 	}
+	// Commit changes to MemDC (но это может затронуть и ScreenDC?)
+	GdiFlush();
 
-
-	pItem->crSize.X = nXIcon; pItem->crSize.Y = nYIcon;
-	pItem->cbStride = nXIcon*4;
+	pItem->crSize.X = (SHORT)rc.right; pItem->crSize.Y = (SHORT)rc.bottom;
+	pItem->cbStride = ((SHORT)rc.right)*4;
 	pItem->nBits = 32;
 	pItem->ColorModel = CET_CM_BGR;
 	pItem->Pixels = (LPDWORD)LocalAlloc(LMEM_FIXED, pItem->cbStride * pItem->crSize.Y);
@@ -610,7 +655,9 @@ BOOL CImgCache::LoadShellIcon(struct tag_CacheInfo* pItem)
 		return FALSE;
 	}
 
-	CopyBits(pItem->crSize, mp_DibBytes, nPreviewSize*4, pItem->crSize, (LPBYTE)pItem->Pixels);
+	_ASSERTE(nPreviewSize == mcr_DibSize.X);
+	COORD crSize = {nPreviewSize,pItem->crSize.Y};
+	CopyBits(crSize, mp_DibBytes, nPreviewSize*4, pItem->crSize, (LPBYTE)pItem->Pixels);
 
 	return TRUE;
 }
