@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="windows-1251"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9.00"
+	Version="9,00"
 	Name="ConEmuTh"
 	ProjectGUID="{60287D73-F658-4414-8C9B-30E1F3E78D05}"
 	RootNamespace="ConEmuTh"
@@ -20,9 +20,9 @@
 	</ToolFiles>
 	<Configurations>
 		<Configuration
-			Name="Debug|Win32"
-			OutputDirectory="C:\Temp\VCProject\ConEmuTh\$(ConfigurationName)"
-			IntermediateDirectory="C:\Temp\VCProject\ConEmuTh\$(ConfigurationName)"
+			Name="Debug_E|Win32"
+			OutputDirectory="C:\Temp\CE\$(ProjectName).$(PlatformName).$(ConfigurationName)"
+			IntermediateDirectory="C:\Temp\CE\$(ProjectName).$(PlatformName).$(ConfigurationName)"
 			ConfigurationType="2"
 			CharacterSet="1"
 			>
@@ -102,9 +102,9 @@
 			/>
 		</Configuration>
 		<Configuration
-			Name="Debug|x64"
-			OutputDirectory="C:\Temp\VCProject\ConEmuDll\$(ConfigurationName).$(PlatformName)"
-			IntermediateDirectory="C:\Temp\VCProject\ConEmuDll\$(ConfigurationName).$(PlatformName)"
+			Name="Debug_E|x64"
+			OutputDirectory="C:\Temp\CE\$(ProjectName).$(PlatformName).$(ConfigurationName)"
+			IntermediateDirectory="C:\Temp\CE\$(ProjectName).$(PlatformName).$(ConfigurationName)"
 			ConfigurationType="2"
 			CharacterSet="1"
 			>
@@ -230,15 +230,17 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="version.lib"
+				AdditionalDependencies="version.lib libcmt.lib"
 				OutputFile="..\..\plugins\ConEmu\Thumbs\ConEmuTh.dll"
 				LinkIncremental="1"
+				IgnoreAllDefaultLibraries="true"
 				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"
 				GenerateMapFile="true"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
+				EntryPointSymbol=""
 				TargetMachine="1"
 			/>
 			<Tool
@@ -347,9 +349,9 @@
 			/>
 		</Configuration>
 		<Configuration
-			Name="DebugA|Win32"
-			OutputDirectory="c:\Temp\VCProject\ConEmuTh\$(ConfigurationName)"
-			IntermediateDirectory="c:\Temp\VCProject\ConEmuTh\$(ConfigurationName)"
+			Name="Debug_C|Win32"
+			OutputDirectory="C:\Temp\CE\$(ProjectName).$(PlatformName).$(ConfigurationName)"
+			IntermediateDirectory="C:\Temp\CE\$(ProjectName).$(PlatformName).$(ConfigurationName)"
 			ConfigurationType="2"
 			CharacterSet="1"
 			>
@@ -426,9 +428,9 @@
 			/>
 		</Configuration>
 		<Configuration
-			Name="DebugA|x64"
-			OutputDirectory="C:\Temp\VCProject\$(ProjectName)\$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="C:\Temp\VCProject\$(ProjectName)\$(PlatformName)\$(ConfigurationName)"
+			Name="Debug_C|x64"
+			OutputDirectory="C:\Temp\CE\$(ProjectName).$(PlatformName).$(ConfigurationName)"
+			IntermediateDirectory="C:\Temp\CE\$(ProjectName).$(PlatformName).$(ConfigurationName)"
 			ConfigurationType="2"
 			CharacterSet="1"
 			>
@@ -474,322 +476,6 @@
 				Name="VCLinkerTool"
 				AdditionalDependencies="version.lib"
 				OutputFile="\\MAXW7\FAR\FAR2.x64\plugins\conEmu\Thumbs\ConEmuTh.x64.dll"
-				LinkIncremental="2"
-				ModuleDefinitionFile="export.def"
-				GenerateDebugInformation="true"
-				GenerateMapFile="true"
-				MapExports="true"
-				SubSystem="2"
-				TargetMachine="17"
-			/>
-			<Tool
-				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCManifestTool"
-			/>
-			<Tool
-				Name="VCXDCMakeTool"
-			/>
-			<Tool
-				Name="VCBscMakeTool"
-			/>
-			<Tool
-				Name="VCFxCopTool"
-			/>
-			<Tool
-				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCPostBuildEventTool"
-			/>
-		</Configuration>
-		<Configuration
-			Name="DebugEEE|Win32"
-			OutputDirectory="C:\Temp\VCProject\ConEmuTh\$(ConfigurationName)"
-			IntermediateDirectory="C:\Temp\VCProject\ConEmuTh\$(ConfigurationName)"
-			ConfigurationType="2"
-			CharacterSet="1"
-			>
-			<Tool
-				Name="VCPreBuildEventTool"
-			/>
-			<Tool
-				Name="VCCustomBuildTool"
-			/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"
-			/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"
-			/>
-			<Tool
-				Name="VCMIDLTool"
-			/>
-			<Tool
-				Name="VCCLCompilerTool"
-				Optimization="0"
-				AdditionalIncludeDirectories=""
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_CRT_NON_CONFORMING_SWPRINTFS"
-				MinimalRebuild="true"
-				BasicRuntimeChecks="3"
-				RuntimeLibrary="1"
-				StructMemberAlignment="0"
-				UsePrecompiledHeader="0"
-				WarningLevel="3"
-				DebugInformationFormat="4"
-			/>
-			<Tool
-				Name="VCManagedResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCPreLinkEventTool"
-			/>
-			<Tool
-				Name="VCLinkerTool"
-				AdditionalDependencies="version.lib"
-				OutputFile="\\MAXPC\Utils\FAR180\plugins\conEmu\Thumbs\ConEmuTh.dll"
-				LinkIncremental="2"
-				ModuleDefinitionFile="export.def"
-				GenerateDebugInformation="true"
-				GenerateMapFile="true"
-				MapExports="true"
-				SubSystem="2"
-				TargetMachine="1"
-			/>
-			<Tool
-				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCManifestTool"
-			/>
-			<Tool
-				Name="VCXDCMakeTool"
-			/>
-			<Tool
-				Name="VCBscMakeTool"
-			/>
-			<Tool
-				Name="VCFxCopTool"
-			/>
-			<Tool
-				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(ProjectDir)..\..\plugins\ConEmu\Thumbs\ConEmuTh_*.lng&quot; &quot;$(TargetDir)&quot;"
-			/>
-		</Configuration>
-		<Configuration
-			Name="DebugEEE|x64"
-			OutputDirectory="E:\Temp\VCProject\ConEmu\$(ConfigurationName).$(PlatformName)"
-			IntermediateDirectory="E:\Temp\VCProject\ConEmu\$(ConfigurationName).$(PlatformName)"
-			ConfigurationType="2"
-			CharacterSet="1"
-			>
-			<Tool
-				Name="VCPreBuildEventTool"
-			/>
-			<Tool
-				Name="VCCustomBuildTool"
-			/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"
-			/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"
-			/>
-			<Tool
-				Name="VCMIDLTool"
-				TargetEnvironment="3"
-			/>
-			<Tool
-				Name="VCCLCompilerTool"
-				Optimization="0"
-				AdditionalIncludeDirectories=""
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_CRT_NON_CONFORMING_SWPRINTFS"
-				MinimalRebuild="true"
-				BasicRuntimeChecks="3"
-				RuntimeLibrary="1"
-				StructMemberAlignment="0"
-				UsePrecompiledHeader="0"
-				WarningLevel="3"
-				DebugInformationFormat="3"
-			/>
-			<Tool
-				Name="VCManagedResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCPreLinkEventTool"
-			/>
-			<Tool
-				Name="VCLinkerTool"
-				AdditionalDependencies="version.lib"
-				OutputFile="C:\Utils\Far.Test\plugins\conEmu\Thumbs\ConEmuTh.x64.dll"
-				LinkIncremental="2"
-				ModuleDefinitionFile="export.def"
-				GenerateDebugInformation="true"
-				GenerateMapFile="true"
-				MapExports="true"
-				SubSystem="2"
-				TargetMachine="17"
-			/>
-			<Tool
-				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCManifestTool"
-			/>
-			<Tool
-				Name="VCXDCMakeTool"
-			/>
-			<Tool
-				Name="VCBscMakeTool"
-			/>
-			<Tool
-				Name="VCFxCopTool"
-			/>
-			<Tool
-				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCPostBuildEventTool"
-			/>
-		</Configuration>
-		<Configuration
-			Name="Debug75|Win32"
-			OutputDirectory="C:\Temp\VCProject\ConEmuTh\$(ConfigurationName)"
-			IntermediateDirectory="C:\Temp\VCProject\ConEmuTh\$(ConfigurationName)"
-			ConfigurationType="2"
-			CharacterSet="1"
-			>
-			<Tool
-				Name="VCPreBuildEventTool"
-			/>
-			<Tool
-				Name="VCCustomBuildTool"
-			/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"
-			/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"
-			/>
-			<Tool
-				Name="VCMIDLTool"
-			/>
-			<Tool
-				Name="VCCLCompilerTool"
-				Optimization="0"
-				AdditionalIncludeDirectories=""
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;HIDE_TODO;_CRT_NON_CONFORMING_SWPRINTFS"
-				MinimalRebuild="true"
-				BasicRuntimeChecks="3"
-				RuntimeLibrary="1"
-				StructMemberAlignment="0"
-				UsePrecompiledHeader="0"
-				WarningLevel="3"
-				DebugInformationFormat="4"
-			/>
-			<Tool
-				Name="VCManagedResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCPreLinkEventTool"
-			/>
-			<Tool
-				Name="VCLinkerTool"
-				AdditionalDependencies="version.lib"
-				OutputFile="C:\Program Files\FAR17\Plugins\ConEmu\Thumbs\ConEmuTh.dll"
-				LinkIncremental="2"
-				ModuleDefinitionFile="export.def"
-				GenerateDebugInformation="true"
-				GenerateMapFile="true"
-				MapExports="true"
-				SubSystem="2"
-				TargetMachine="1"
-			/>
-			<Tool
-				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCManifestTool"
-			/>
-			<Tool
-				Name="VCXDCMakeTool"
-			/>
-			<Tool
-				Name="VCBscMakeTool"
-			/>
-			<Tool
-				Name="VCFxCopTool"
-			/>
-			<Tool
-				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(ProjectDir)..\..\plugins\ConEmu\Thumbs\ConEmuTh_*.lng&quot; &quot;$(TargetDir)&quot;"
-			/>
-		</Configuration>
-		<Configuration
-			Name="Debug75|x64"
-			OutputDirectory="E:\Temp\VCProject\ConEmuDll\$(ConfigurationName).$(PlatformName)"
-			IntermediateDirectory="E:\Temp\VCProject\ConEmuDll\$(ConfigurationName).$(PlatformName)"
-			ConfigurationType="2"
-			CharacterSet="1"
-			>
-			<Tool
-				Name="VCPreBuildEventTool"
-			/>
-			<Tool
-				Name="VCCustomBuildTool"
-			/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"
-			/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"
-			/>
-			<Tool
-				Name="VCMIDLTool"
-				TargetEnvironment="3"
-			/>
-			<Tool
-				Name="VCCLCompilerTool"
-				Optimization="0"
-				AdditionalIncludeDirectories=""
-				PreprocessorDefinitions="WIN64;WIN32;_DEBUG;_WINDOWS;HIDE_TODO;_CRT_NON_CONFORMING_SWPRINTFS"
-				MinimalRebuild="true"
-				BasicRuntimeChecks="3"
-				RuntimeLibrary="1"
-				StructMemberAlignment="0"
-				UsePrecompiledHeader="0"
-				WarningLevel="3"
-				DebugInformationFormat="3"
-			/>
-			<Tool
-				Name="VCManagedResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCPreLinkEventTool"
-			/>
-			<Tool
-				Name="VCLinkerTool"
-				AdditionalDependencies="version.lib"
-				OutputFile="F:\VCProject\FarPlugin\#FAR175\plugins\conEmu\Thumbs\ConEmuTh.x64.dll"
 				LinkIncremental="2"
 				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"
@@ -1012,42 +698,14 @@
 				RelativePath=".\export.def"
 				>
 				<FileConfiguration
-					Name="DebugA|Win32"
+					Name="Debug_C|Win32"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="DebugA|x64"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="DebugEEE|Win32"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="DebugEEE|x64"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug75|Win32"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug75|x64"
+					Name="Debug_C|x64"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1127,7 +785,7 @@
 			RelativePath=".\Lang.templ"
 			>
 			<FileConfiguration
-				Name="Debug|Win32"
+				Name="Debug_E|Win32"
 				>
 				<Tool
 					Name="VCCustomBuildTool"
@@ -1136,7 +794,7 @@
 				/>
 			</FileConfiguration>
 			<FileConfiguration
-				Name="Debug|x64"
+				Name="Debug_E|x64"
 				>
 				<Tool
 					Name="VCCustomBuildTool"
@@ -1163,7 +821,7 @@
 				/>
 			</FileConfiguration>
 			<FileConfiguration
-				Name="DebugA|Win32"
+				Name="Debug_C|Win32"
 				>
 				<Tool
 					Name="VCCustomBuildTool"
@@ -1172,43 +830,7 @@
 				/>
 			</FileConfiguration>
 			<FileConfiguration
-				Name="DebugA|x64"
-				>
-				<Tool
-					Name="VCCustomBuildTool"
-					CommandLine="$(InputDir)lang.cmd &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
-					Outputs="ConEmuTh_Lang.h"
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="DebugEEE|Win32"
-				>
-				<Tool
-					Name="VCCustomBuildTool"
-					CommandLine="$(InputDir)lang.cmd &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
-					Outputs="ConEmuTh_Lang.h"
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="DebugEEE|x64"
-				>
-				<Tool
-					Name="VCCustomBuildTool"
-					CommandLine="$(InputDir)lang.cmd &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
-					Outputs="ConEmuTh_Lang.h"
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="Debug75|Win32"
-				>
-				<Tool
-					Name="VCCustomBuildTool"
-					CommandLine="$(InputDir)lang.cmd &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
-					Outputs="ConEmuTh_Lang.h"
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="Debug75|x64"
+				Name="Debug_C|x64"
 				>
 				<Tool
 					Name="VCCustomBuildTool"

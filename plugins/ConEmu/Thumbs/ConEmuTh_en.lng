@@ -12,3 +12,5 @@
 "ConEmu Thumbnails\nRegisterClass failed\nCode=0x%08X"
 "ConEmu Thumbnails\nCreateWindow failed\nCode=0x%08X"
 "ConEmu Thumbnails\nView registration in ConEmu failed\nErrCode=%i"
+"ConEmu Thumbnails\nInternal error. Unknown panel mode was requested."
+"ConEmu Thumbnails\nInternal error. Invalid settings was recieved."

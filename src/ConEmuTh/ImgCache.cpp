@@ -116,30 +116,55 @@ void CImgCache::LoadModules()
 			continue;
 
 		lstrcpy(mpsz_ModuleSlash, fnd.cFileName);
-		HMODULE hLib = LoadLibrary(ms_ModulePath);
+		HMODULE hLib = NULL;
+		
+		__try {
+			hLib = LoadLibrary(ms_ModulePath);
+		}__except(EXCEPTION_EXECUTE_HANDLER) {
+			hLib = NULL;
+		}
+		
 		if (hLib) {
 			CET_Init_t Init = (CET_Init_t)GetProcAddress(hLib, "CET_Init");
 			CET_Done_t Done = (CET_Done_t)GetProcAddress(hLib, "CET_Done");
-			CET_Load_t Load = (CET_Load_t)GetProcAddress(hLib, "CET_Load");
+			CET_Load_t LoadInfo = (CET_Load_t)GetProcAddress(hLib, "CET_Load");
+			CET_Free_t FreeInfo = (CET_Free_t)GetProcAddress(hLib, "CET_Free");
+			CET_Cancel_t Cancel = (CET_Cancel_t)GetProcAddress(hLib, "CET_Cancel");
 
-			if (!Init || !Done || !Load) {
-				FreeLibrary(hLib);
+			if (!Init || !Done || !LoadInfo || !FreeInfo) {
+				__try {
+					FreeLibrary(hLib);
+				}__except(EXCEPTION_EXECUTE_HANDLER) {
+				}
 				continue;
 			}
 
 			struct CET_Init InitArg = {sizeof(struct CET_Init)};
 			InitArg.hModule = hLib;
+			
+			BOOL lbInitRc;
+			
+			__try {
+				lbInitRc = Init(&InitArg);
+			}__except(EXCEPTION_EXECUTE_HANDLER) {
+				lbInitRc = FALSE;
+			}
 
-			if (!Init(&InitArg)) {
-				FreeLibrary(hLib);
+			if (!lbInitRc) {
+				__try {
+					FreeLibrary(hLib);
+				}__except(EXCEPTION_EXECUTE_HANDLER) {
+				}
 				continue;
 			}
 			
 			Modules[mn_ModuleCount].hModule = hLib;
 			Modules[mn_ModuleCount].Init = Init;
 			Modules[mn_ModuleCount].Done = Done;
-			Modules[mn_ModuleCount].Load = Load;
-			Modules[mn_ModuleCount].lParam = InitArg.lParam;
+			Modules[mn_ModuleCount].LoadInfo = LoadInfo;
+			Modules[mn_ModuleCount].FreeInfo = FreeInfo;
+			Modules[mn_ModuleCount].Cancel = Cancel;
+			Modules[mn_ModuleCount].pContext = InitArg.pContext;
 
 			mn_ModuleCount++;
 		}
@@ -154,9 +179,15 @@ void CImgCache::FreeModules()
 		if (Modules[i].hModule) {
 			struct CET_Init InitArg = {sizeof(struct CET_Init)};
 			InitArg.hModule = Modules[i].hModule;
-			InitArg.lParam = Modules[i].lParam;
-			Modules[i].Done(&InitArg);
-			FreeLibrary(Modules[i].hModule);
+			InitArg.pContext = Modules[i].pContext;
+			__try {
+				Modules[i].Done(&InitArg);
+			}__except(EXCEPTION_EXECUTE_HANDLER) {
+			}
+			__try {
+				FreeLibrary(Modules[i].hModule);
+			}__except(EXCEPTION_EXECUTE_HANDLER) {
+			}
 			Modules[i].hModule = NULL;
 		}
 	}
@@ -255,12 +286,19 @@ void CImgCache::Reset()
 			CacheInfo[i].lpwszFileName = NULL;
 		}
 		if (CacheInfo[i].Pixels) {
-			LocalFree(CacheInfo[i].Pixels);
+			free(CacheInfo[i].Pixels);
 			CacheInfo[i].Pixels = NULL;
+			CacheInfo[i].cbPixelsSize = 0;
+		}
+		if (CacheInfo[i].pszComments) {
+			free(CacheInfo[i].pszComments);
+			CacheInfo[i].pszComments = NULL;
+			CacheInfo[i].wcCommentsSize = 0;
 		}
 		if (CacheInfo[i].pszInfo) {
-			LocalFree(CacheInfo[i].pszInfo);
+			free(CacheInfo[i].pszInfo);
 			CacheInfo[i].pszInfo = NULL;
+			CacheInfo[i].wcInfoSize = 0;
 		}
 	}
 	//
@@ -280,12 +318,16 @@ void CImgCache::Init(COLORREF acrBack)
 {
 	// Инициализация (или сброс если изменились размеры превьюшек)
 	//hWhiteBrush = ahWhiteBrush; 
-	_ASSERTE(gThSet.nThumbSize>=16);
+	_ASSERTE(gThSet.Thumbs.nImgSize>=16 && gThSet.Tiles.nImgSize>=16);
+
+	WARNING("Не предусмотрен размер gThSet.Tiles.nImgSize?");
+
+	int nMaxSize = max(gThSet.Thumbs.nImgSize,gThSet.Tiles.nImgSize);
 
 	// Не будем при смене фона дергаться, а то на Fade проблемы...
-	if (nPreviewSize != gThSet.nThumbSize /*|| crBackground != gThSet.crBackground*/) {
+	if (nPreviewSize != nMaxSize /*|| crBackground != gThSet.crBackground*/) {
 		Reset();
-		nPreviewSize = gThSet.nThumbSize;
+		nPreviewSize = nMaxSize;
 		crBackground = acrBack; //gThSet.crBackground; -- gThSet.crBackground пока не инициализируется
 		hbrBack = CreateSolidBrush(acrBack);
 	}
@@ -358,7 +400,7 @@ BOOL CImgCache::FindInCache(CePluginPanelItem* pItem, int* pnIndex)
 	}
 	return lbReady;
 };
-BOOL CImgCache::PaintItem(HDC hdc, int x, int y, CePluginPanelItem* pItem, BOOL abLoadPreview)
+BOOL CImgCache::PaintItem(HDC hdc, int x, int y, int nImgSize, CePluginPanelItem* pItem, BOOL abLoadPreview)
 {
 	int nIndex = -1;
 	if (!CheckDibCreated())
@@ -426,18 +468,58 @@ BOOL CImgCache::PaintItem(HDC hdc, int x, int y, CePluginPanelItem* pItem, BOOL 
 
 	// А теперь - собственно отрисовка куда просили
 
-	if (nPreviewSize > CacheInfo[nIndex].crSize.X || nPreviewSize > CacheInfo[nIndex].crSize.Y) {
+	if (nImgSize < CacheInfo[nIndex].crSize.X || nImgSize < CacheInfo[nIndex].crSize.Y)
+	{
 		// Очистить
-		RECT rc = {x,y,x+nPreviewSize,y+nPreviewSize};
+		RECT rc = {x,y,x+nImgSize,y+nImgSize};
+		FillRect(hdc, &rc, hbrBack);
+
+			int lWidth = CacheInfo[nIndex].crSize.X;
+			int lHeight = CacheInfo[nIndex].crSize.Y;	
+			int nCanvasWidth  = nImgSize;
+			int nCanvasHeight = nImgSize;
+			int nShowWidth, nShowHeight;
+			__int64 aSrc = (100 * (__int64) lWidth / lHeight);
+			__int64 aCvs = (100 * (__int64) nCanvasWidth / nCanvasHeight);
+			if (aSrc > aCvs)
+			{
+				_ASSERTE(lWidth >= (int)nCanvasWidth);
+				nShowWidth = nCanvasWidth;
+				nShowHeight = (int)(((__int64)lHeight) * nCanvasWidth / lWidth);
+			} else {
+				_ASSERTE(lHeight >= (int)nCanvasHeight);
+				nShowWidth = (int)(((__int64)lWidth) * nCanvasHeight / lHeight);
+				nShowHeight = nCanvasHeight;
+			}
+		
+		// Со сдвигом
+		int nXSpace = (nImgSize - nShowWidth) >> 1;
+		int nYSpace = (nImgSize - nShowHeight) >> 1;
+		
+		WARNING("В MSDN какие-то предупреждения про MultiMonitor... возможно стоит StretchDIBits");
+		SetStretchBltMode(hdc, COLORONCOLOR);
+		lbWasDraw = StretchBlt(
+			hdc, 
+			x+nXSpace,y+nYSpace,nShowWidth,nShowHeight,
+			mh_CompDC,
+			0,0,CacheInfo[nIndex].crSize.X,CacheInfo[nIndex].crSize.Y,
+			SRCCOPY);
+	}
+	else if (nImgSize > CacheInfo[nIndex].crSize.X || nImgSize > CacheInfo[nIndex].crSize.Y)
+	{
+		// Очистить
+		RECT rc = {x,y,x+nImgSize,y+nImgSize};
 		FillRect(hdc, &rc, hbrBack);
 		// Со сдвигом
-		int nXSpace = (nPreviewSize - CacheInfo[nIndex].crSize.X) >> 1;
-		int nYSpace = (nPreviewSize - CacheInfo[nIndex].crSize.Y) >> 1;
+		int nXSpace = (nImgSize - CacheInfo[nIndex].crSize.X) >> 1;
+		int nYSpace = (nImgSize - CacheInfo[nIndex].crSize.Y) >> 1;
 		lbWasDraw = BitBlt(hdc, x+nXSpace,y+nYSpace,
 			CacheInfo[nIndex].crSize.X,CacheInfo[nIndex].crSize.Y, mh_CompDC,
 			0,0, SRCCOPY);
-	} else {
-		lbWasDraw = BitBlt(hdc, x,y,nPreviewSize,nPreviewSize, mh_CompDC,
+	}
+	else
+	{
+		lbWasDraw = BitBlt(hdc, x,y,nImgSize,nImgSize, mh_CompDC,
 			0,0, SRCCOPY);
 	}
 	//
@@ -586,11 +668,11 @@ BOOL CImgCache::LoadShellIcon(struct tag_CacheInfo* pItem)
 	if (!CheckDibCreated())
 		return FALSE;
 
-	if (pItem->Pixels) {
-		LocalFree(pItem->Pixels); pItem->Pixels = NULL;
+	if (pItem->Pixels && pItem->cbPixelsSize) {
+		memset(pItem->Pixels, 0, pItem->cbPixelsSize);
 	}
-	if (pItem->pszInfo) {
-		LocalFree(pItem->pszInfo); pItem->pszInfo = NULL;
+	if (pItem->pszComments) {
+		pItem->pszComments[0] = 0;
 	}
 
 
@@ -649,7 +731,8 @@ BOOL CImgCache::LoadShellIcon(struct tag_CacheInfo* pItem)
 	pItem->cbStride = ((SHORT)rc.right)*4;
 	pItem->nBits = 32;
 	pItem->ColorModel = CET_CM_BGR;
-	pItem->Pixels = (LPDWORD)LocalAlloc(LMEM_FIXED, pItem->cbStride * pItem->crSize.Y);
+	pItem->cbPixelsSize = pItem->cbStride * pItem->crSize.Y;
+	pItem->Pixels = (LPDWORD)malloc(pItem->cbPixelsSize);
 	if (!pItem->Pixels) {
 		_ASSERTE(pItem->Pixels);
 		return FALSE;
@@ -666,7 +749,7 @@ BOOL CImgCache::LoadThumbnail(struct tag_CacheInfo* pItem)
 	if (!CheckDibCreated())
 		return FALSE;
 
-	struct CET_LoadPreview PV = {sizeof(struct CET_LoadPreview)};
+	struct CET_LoadInfo PV = {sizeof(struct CET_LoadInfo)};
 
 	PV.sFileName = pItem->lpwszFileName;
 	PV.ftModified = PV.ftModified;
@@ -674,26 +757,78 @@ BOOL CImgCache::LoadThumbnail(struct tag_CacheInfo* pItem)
 	PV.crLoadSize.X = PV.crLoadSize.Y = nPreviewSize;
 	PV.bTilesMode = FALSE; // TRUE, when pszInfo acquired.
 	PV.crBackground = crBackground; // Must be used to fill background.
+	_ASSERTE(gThSet.nMaxZoom>0 && gThSet.nMaxZoom < 1000);
+	PV.nMaxZoom = gThSet.nMaxZoom;
+	BOOL lbLoadRc;
 
 	for (int i = 0; i < MAX_MODULES; i++) {
 		if (Modules[i].hModule == NULL)
 			continue;
 
-		PV.lParam = Modules[i].lParam;
-		if (!Modules[i].Load(&PV))
+		PV.pContext = Modules[i].pContext;
+		__try {
+			lbLoadRc = Modules[i].LoadInfo(&PV);
+		}__except(EXCEPTION_EXECUTE_HANDLER) {
+			lbLoadRc = FALSE;
+		}
+		if (!lbLoadRc)
 			continue;
+			
+		if (!PV.Pixels || !PV.cbPixelsSize) {
+			__try {
+				Modules[i].FreeInfo(&PV);
+			}__except(EXCEPTION_EXECUTE_HANDLER) {
+			}
+			continue;
+		}
 
-		if (pItem->Pixels)
-			LocalFree(pItem->Pixels);
-		pItem->Pixels = PV.Pixels;
-		if (pItem->pszInfo)
-			LocalFree(pItem->pszInfo);
-		pItem->pszInfo = PV.pszInfo;
+		if (pItem->Pixels && pItem->cbPixelsSize < PV.cbPixelsSize) {
+			free(pItem->Pixels); pItem->Pixels = NULL;
+		}
+		if (!pItem->Pixels) {
+			pItem->Pixels = (LPDWORD)malloc(PV.cbPixelsSize);
+			if (!pItem->Pixels) {
+				_ASSERTE(pItem->Pixels);
+				__try {
+					Modules[i].FreeInfo(&PV);
+				}__except(EXCEPTION_EXECUTE_HANDLER) {
+				}
+				continue;
+			}
+			pItem->cbPixelsSize = PV.cbPixelsSize;
+		}
+		memmove(pItem->Pixels, PV.Pixels, PV.cbPixelsSize);
+		
+		if (PV.pszComments) {
+			DWORD nLen = (DWORD)max(255,wcslen(PV.pszComments));
+			if (pItem->pszComments && pItem->wcCommentsSize <= nLen) {
+				free(pItem->pszComments); pItem->pszComments = 0;
+			}
+			if (!pItem->pszComments) {
+				pItem->wcCommentsSize = nLen+1;
+				pItem->pszComments = (wchar_t*)malloc(pItem->wcCommentsSize*2);
+			}
+			if (pItem->pszComments) {
+				lstrcpyn(pItem->pszComments, PV.pszComments, nLen);
+			}
+		} else if (pItem->pszComments) {
+			free(pItem->pszComments); pItem->pszComments = NULL; pItem->wcCommentsSize = 0;
+		}
+		
+		//if (pItem->pszInfo)
+		//	LocalFree(pItem->pszInfo);
+		//pItem->pszInfo = PV.pszInfo;
 
 		pItem->crSize = PV.crSize; // Предпочтительно, должен совпадать с crLoadSize
 		pItem->cbStride = PV.cbStride; // Bytes per line
 		pItem->nBits = PV.nBits; // 32 bit required!
 		pItem->ColorModel = PV.ColorModel; // One of CET_CM_xxx
+		
+		__try {
+			Modules[i].FreeInfo(&PV);
+		}__except(EXCEPTION_EXECUTE_HANDLER) {
+		}
+		
 		return TRUE;
 	}
 
@@ -859,118 +994,4 @@ BOOL CImgCache::LoadThumbnail(struct tag_CacheInfo* pItem)
 	//SafeRelease(pEI);
 
 	//return hbmp;
-}
-
-BOOL CImgCache::GetBits(HBITMAP hBmp)
-{
-	//if (SUCCEEDED(ghLastWin32Error) && hBmp) {
-	//	BITMAPCOREHEADER *bch = (BITMAPCOREHEADER*)GlobalLock((HGLOBAL)hBmp);
-	//	if (bch) GlobalUnlock((HGLOBAL)hBmp);
-
-
-	//	HDC hScreenDC = GetDC(NULL);
-	//	_ASSERTE(hScreenDC);
-	//	_ASSERTE(pDecodeInfo->pImage == NULL);
-	//	pDecodeInfo->pImage = NULL;
-
-	//	HDC hCompDc2 = CreateCompatibleDC(hScreenDC);
-	//	HBITMAP hOld2 = (HBITMAP)SelectObject(hCompDc2, hBmp);
-
-	//	BOOL lbCanGetBits = FALSE, lbHasAlpha = FALSE, lbHasNoAlpha = FALSE;
-	//	BITMAPINFO* pbi = (BITMAPINFO*)CALLOC(sizeof(BITMAPINFO)+255*sizeof(RGBQUAD));
-	//	pbi->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-	//	int iDibRc = GetDIBits(hCompDc2, hBmp, 0, 0, NULL, pbi, DIB_RGB_COLORS);
-	//	if (iDibRc && pbi->bmiHeader.biWidth && pbi->bmiHeader.biHeight) {
-	//		size.cx = pbi->bmiHeader.biWidth;
-	//		size.cy = pbi->bmiHeader.biHeight;
-	//		lbCanGetBits = (pbi->bmiHeader.biBitCount == 32);
-	//		_ASSERTE(nBitDepth==32);
-	//	}
-
-	//	pDecodeInfo->lWidth = pDecodeInfo->lSrcWidth = size.cx;
-	//	pDecodeInfo->lHeight = pDecodeInfo->lSrcHeight = size.cy;
-	//	pDecodeInfo->nBPP = nBitDepth;
-
-	//	// ПОКА с выравниванием не заморачиваемся, т.к. размер фиксирован 400x400
-	//	pDecodeInfo->lImagePitch = pDecodeInfo->lWidth * 4;
-	//	pDecodeInfo->pImage = (LPBYTE)CALLOC(pDecodeInfo->lImagePitch * pDecodeInfo->lHeight);
-	//	if (!pDecodeInfo->pImage) {
-	//		pDecodeInfo->nErrNumber = PSE_NOT_ENOUGH_MEMORY;
-
-	//	} else {
-
-	//		if (lbCanGetBits) {
-	//			// Чтобы вернуть прозрачность - сначала пробуем напролом получить биты
-	//			iDibRc = GetDIBits(hCompDc2, hBmp, 0, size.cy, pDecodeInfo->pImage, pbi, DIB_RGB_COLORS);
-	//			lbRc = iDibRc!=0;
-	//			if (!lbRc) {
-	//				pDecodeInfo->nErrNumber = PSE_GETDIBITS_FAILED;
-	//			} else if (gbAutoDetectAlphaChannel) {
-	//				//PRAGMA_ERROR("нужно просматривать все полученные биты на предмет наличия в них альфа канала и ставить PVD_IDF_ALPHA");
-	//				LPBYTE pSrc = pDecodeInfo->pImage;
-	//				DWORD lAbsSrcPitch = pDecodeInfo->lImagePitch, A;
-	//				for (DWORD y = size.cy; y-- && !(lbHasAlpha && lbHasNoAlpha); pSrc += lAbsSrcPitch) {
-	//					for (int x = 0; x<size.cx; x++) {
-	//						A = (((DWORD*)pSrc)[x]) & 0xFF000000;
-	//						if (A) lbHasAlpha = TRUE; else lbHasNoAlpha = TRUE;
-	//					}
-	//				}
-	//			}
-	//		} else {
-	//			HDC hCompDc1 = CreateCompatibleDC(hScreenDC);
-
-	//			BITMAPINFOHEADER bmi = {sizeof(BITMAPINFOHEADER)};
-	//			bmi.biWidth = size.cx;
-	//			bmi.biHeight = size.cy;
-	//			bmi.biPlanes = 1;
-	//			bmi.biBitCount = 32;
-	//			bmi.biCompression = BI_RGB;
-
-	//			LPBYTE pBits = NULL;
-	//			HBITMAP hDIB = CreateDIBSection(hScreenDC, (BITMAPINFO*)&bmi, DIB_RGB_COLORS, (void**)&pBits, NULL, 0);
-	//			_ASSERTE(hDIB);
-
-	//			HBITMAP hOld1 = (HBITMAP)SelectObject(hCompDc1, hDIB);
-
-	//			//if (pDecodeInfo->cbSize >= sizeof(pvdInfoDecode2)) {
-	//			//	HBRUSH hBackBr = CreateSolidBrush(pDecodeInfo->nBackgroundColor);
-	//			//	RECT rc = {0,0,size.cx,size.cy};
-	//			//	FillRect(hCompDc1, &rc, hBackBr);
-	//			//	DeleteObject(hBackBr);
-	//			//}
-
-	//			// Не прокатывает. PNG и GIF "прозрачными" не рендерятся. Получается белый фон. Ну и ладно
-	//			//BLENDFUNCTION bf = {AC_SRC_OVER,0,255,AC_SRC_ALPHA};
-	//			//lbRc = AlphaBlend(hCompDc1, 0,0,size.cx,size.cy, hCompDc2, 0,0, size.cx,size.cy, bf);
-	//			//if (!lbRc)
-	//			lbRc = BitBlt(hCompDc1, 0,0,size.cx,size.cy, hCompDc2, 0,0, SRCCOPY);
-
-	//			if (!lbRc) {
-	//				pDecodeInfo->nErrNumber = PSE_BITBLT_FAILED;
-	//			} else {
-	//				memmove(pDecodeInfo->pImage, pBits, pDecodeInfo->lImagePitch * pDecodeInfo->lHeight);
-	//			}
-
-	//			if (hCompDc1 && hOld1)
-	//				SelectObject(hCompDc1, hOld1);
-	//			SAFEDELETEOBJECT(hDIB);
-	//			SAFEDELETEDC(hCompDc1);
-	//		}
-
-	//		if (lbRc) {
-	//			// В DIB строки идут снизу вверх
-	//			pDecodeInfo->lImagePitch = - pDecodeInfo->lImagePitch;
-
-	//			pDecodeInfo->ColorModel = (lbHasAlpha && lbHasNoAlpha) ? PVD_CM_BGRA : PVD_CM_BGR;
-	//			pDecodeInfo->Flags = (lbHasAlpha && lbHasNoAlpha) ? PVD_IDF_ALPHA : 0;
-	//		}
-	//	}
-
-	//	if (hCompDc2 && hOld2)
-	//		SelectObject(hCompDc2, hOld2);
-	//	SAFEDELETEDC(hCompDc2);
-	//	SAFEDELETEOBJECT(hBmp);
-	//	SAFERELEASEDC(NULL, hScreenDC);
-	//}
-	return FALSE;
 }

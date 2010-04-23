@@ -661,7 +661,7 @@ int ShowMessageA(int aiMsg, int aiButtons)
 {
 	if (!InfoA || !InfoA->Message)
 		return -1;
-	return InfoA->Message(InfoA->ModuleNumber, FMSG_ALLINONE, NULL, 
+	return InfoA->Message(InfoA->ModuleNumber, FMSG_ALLINONE|FMSG_MB_OK|FMSG_WARNING, NULL, 
 		(const char * const *)InfoA->GetMsg(InfoA->ModuleNumber,aiMsg), 0, aiButtons);
 }
 

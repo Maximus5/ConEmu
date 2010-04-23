@@ -804,7 +804,7 @@ BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, CONSOLE_SCR
     MCHKHEAP
 
 	// Открыть map с данными, он уже должен быть создан
-	OpenMapHeader();
+	OpenMapHeader(TRUE);
 
 
     //SetConsoleSize(MakeCoord(TextWidth,TextHeight));
@@ -9169,7 +9169,7 @@ wrap:
 	return lbResult;
 }
 
-BOOL CRealConsole::OpenMapHeader()
+BOOL CRealConsole::OpenMapHeader(BOOL abFromAttach)
 {
 	BOOL lbResult = FALSE;
 	wchar_t szErr[512]; szErr[0] = 0;
@@ -9201,11 +9201,13 @@ BOOL CRealConsole::OpenMapHeader()
 		wsprintf (szErr, L"ConEmu: Can't map console info. ErrCode=0x%08X. %s", dwErr, ms_HeaderMapName);
 		goto wrap;
 	}
-	
-	if (mp_ConsoleInfo->nGuiPID != GetCurrentProcessId()) {
-		_ASSERTE(mp_ConsoleInfo->nGuiPID == GetCurrentProcessId());
-		WARNING("Наверное нужно будет передать в сервер код GUI процесса? В каком случае так может получиться?");
-		//PRAGMA_ERROR("Передать через команду сервера новый GUI PID. Если пайп не готов сразу выйти");
+
+	if (!abFromAttach) {	
+		if (mp_ConsoleInfo->nGuiPID != GetCurrentProcessId()) {
+			_ASSERTE(mp_ConsoleInfo->nGuiPID == GetCurrentProcessId());
+			WARNING("Наверное нужно будет передать в сервер код GUI процесса? В каком случае так может получиться?");
+			//PRAGMA_ERROR("Передать через команду сервера новый GUI PID. Если пайп не готов сразу выйти");
+		}
 	}
 	
 	if (mp_ConsoleInfo->hConWnd && mp_ConsoleInfo->nCurDataMapIdx) {

@@ -239,6 +239,9 @@ public:
 	//wchar_t szDumpPackets[MAX_PATH];
 	// Debugging
 	bool isConVisible;
+	
+	// Thumbnails and Tiles
+	PanelViewSettings ThSet;
     
     // Working variables...
     HBITMAP hBgBitmap;
@@ -297,6 +300,7 @@ protected:
 	LRESULT OnInitDialog_Tabs();
 	LRESULT OnInitDialog_Color();
 	LRESULT OnInitDialog_Thumbs();
+	LRESULT OnInitDialog_ThumbsFonts();
 	LRESULT OnInitDialog_Info();
     LRESULT OnButtonClicked(WPARAM wParam, LPARAM lParam);
     LRESULT OnColorButtonClicked(WPARAM wParam, LPARAM lParam);
@@ -305,6 +309,8 @@ protected:
     LRESULT OnComboBox(WPARAM wParam, LPARAM lParam);
     LRESULT OnColorComboBox(WPARAM wParam, LPARAM lParam);
     LRESULT OnTab(LPNMHDR phdr);
+    INT_PTR OnMeasureFontItem(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
+    INT_PTR OnDrawFontItem(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
 private:
 	bool GetColorById(WORD nID, COLORREF* color);
 	bool SetColorById(WORD nID, COLORREF color);
@@ -331,6 +337,7 @@ private:
 	UINT mn_MsgUpdateCounter;
 	//wchar_t temp[MAX_PATH];
 	UINT mn_MsgRecreateFont;
+	UINT mn_MsgLoadFontFromMain;
 	static int IsChecked(HWND hParent, WORD nCtrlId);
 	static int GetNumber(HWND hParent, WORD nCtrlId);
 	int SelectString(HWND hParent, WORD nCtrlId, LPCWSTR asText);

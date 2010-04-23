@@ -152,6 +152,7 @@ WARNING("CONEMUMSG_SRVSTARTED нужно переделать в команду пайпа для GUI");
 //#define CONEMUCMDSTARTED L"ConEmuMain::CmdStarted"    // wParam == hConWnd, lParam == ConEmuC_PID (as ComSpec)
 //#define CONEMUCMDSTOPPED L"ConEmuMain::CmdTerminated" // wParam == hConWnd, lParam == ConEmuC_PID (as ComSpec)
 #define CONEMUMSG_LLKEYHOOK L"ConEmuMain::LLKeyHook"    // wParam == hConWnd, lParam == ConEmuC_PID
+#define CONEMUMSG_FADETHUMBNAILS L"ConEmuTh::Fade"
 
 //#define CONEMUMAPPING    L"ConEmuPluginData%u"
 //#define CONEMUDRAGFROM   L"ConEmuDragFrom%u"
@@ -247,6 +248,74 @@ typedef struct tag_HWND2 {
 	};
 } HWND2;
 
+
+typedef struct tag_ThumbColor {
+	union {
+		struct {
+			unsigned int   ColorRGB : 24;
+			unsigned int   ColorIdx : 5; // 5 bits, to support value '16' - automatic use of panel color
+			unsigned int   UseIndex : 1; // TRUE - Use ColorRef, FALSE - ColorIdx
+		};
+		DWORD RawColor;
+	};
+} ThumbColor;
+
+typedef struct tag_ThumbSizes {
+	// сторона превьюшки или иконки
+	int nImgSize; // Thumbs: 96, Tiles: 48
+	// Сдвиг превьюшки/иконки вправо&вниз относительно полного поля файла
+	int nSpaceX1, nSpaceY1; // Thumbs: 1x1, Tiles: 4x4
+	// Размер "остатка" вправо&вниз после превьюшки/иконки. Здесь рисуется текст.
+	int nSpaceX2, nSpaceY2; // Thumbs: 5x25, Tiles: 172x4
+	// Расстояние между превьюшкой/иконкой и текстом
+	int nSpaceLabel; // Thumbs: 0, Tiles: 4
+} ThumbSizes;
+
+
+typedef enum {
+	pvm_None = 0,
+	pvm_Thumbnails = 1,
+	pvm_Tiles = 2,
+	// следующий режим (если он будет) делать 4! (это bitmask)
+} PanelViewMode;
+
+typedef struct tag_PanelViewSettings {
+	DWORD cbSize; // Struct size, на всякий случай
+
+	/* Цвета и рамки */
+	ThumbColor crBackground; // Фон превьюшки: RGB или Index
+	
+	int nThumbFrame; // 1 (серая рамка вокруг превьюшки
+	ThumbColor crThumbFrame; // RGB или Index
+	
+	int nSelectFrame; // 1 (рамка вокруг текущего элемента)
+	ThumbColor crSelectFrame; // RGB или Index
+
+	/* Теперь разнообразные размеры */
+	ThumbSizes Thumbs;
+	ThumbSizes Tiles;
+
+	// Шрифт отрисовки для превьюшек
+	wchar_t sThumbFontName[32]; // Tahoma
+	int nThumbFontHeight; // 14
+	// И для списка (Tiles)
+	wchar_t sTileFontName[32]; // Tahoma
+	int nTileFontHeight; // 14
+	
+	// Прочие параметры загрузки
+	BYTE  bLoadPreviews; // bitmask of PanelViewMode {1=Thumbs, 2=Tiles}
+	bool  bLoadFolders;  // true - load infolder previews (only for Thumbs)
+	DWORD nLoadTimeout;  // 15 sec
+
+	DWORD nMaxZoom; // 500%
+	bool  bUsePicView2; // true
+
+	// Пока не используется
+	DWORD nCacheFolderType; // юзер/программа/temp/и т.п.
+	wchar_t sCacheFolder[MAX_PATH];
+} PanelViewSettings;
+
+
 typedef BOOL (WINAPI* PanelViewInputCallback)(HANDLE hInput, PINPUT_RECORD lpBuffer, DWORD nBufSize, LPDWORD lpNumberOfEventsRead, BOOL* pbResult);
 typedef BOOL (WINAPI* PanelViewOutputCallback)(HANDLE hOutput,const CHAR_INFO *lpBuffer,COORD dwBufferSize,COORD dwBufferCoord,PSMALL_RECT lpWriteRegion);
 typedef struct tag_PanelViewInit {
@@ -254,6 +323,7 @@ typedef struct tag_PanelViewInit {
 	BOOL  bRegister;
 	HWND2 hWnd;
 	BOOL  bLeftPanel;
+	BOOL  bPanelFullCover; // если TRUE - View закроет панель целиком (с рамкой), а не только рабочую область
 	DWORD nFarInterfaceSettings;
 	DWORD nFarPanelSettings;
 	// Координаты всей панели (левой, правой, или fullscreen)
@@ -264,8 +334,13 @@ typedef struct tag_PanelViewInit {
 	// Callbacks, используются только в плагинах
 	PanelViewInputCallback pfnPeekPreCall, pfnPeekPostCall, pfnReadPreCall, pfnReadPostCall;
 	PanelViewOutputCallback pfnWriteCall;
-    /* out */ COLORREF crPalette[16];
+	/* out */
+	PanelViewSettings ThSet;
+	COLORREF crPalette[16], crFadePalette[16];
+	BOOL bFadeColors;
 } PanelViewInit;
+
+
 
 TODO("Restrict CONEMUTABMAX to 128 chars. Only filename, and may be ellipsed...");
 #define CONEMUTABMAX 0x400
@@ -504,7 +579,7 @@ typedef struct tag_CESERVER_REQ_STARTSTOPRET {
 	BOOL  bWasBufferHeight;
 	HWND2 hWnd; // при возврате в консоль - GUI (главное окно)
 	HWND2 hWndDC;
-	DWORD dwPID;
+	DWORD dwPID; // при возврате в консоль - PID ConEmu.exe
 	DWORD nBufferHeight, nWidth, nHeight;
 	DWORD dwSrvPID;
 	BOOL  bNeedLangChange;

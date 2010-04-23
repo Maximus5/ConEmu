@@ -1035,7 +1035,7 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 			// тогда обрабатываем
 			cmd.bNewConsole = TRUE;
 			//
-			size_t nNewLen = wcslen(pwszStartCmdLine) + 135;
+			size_t nNewLen = wcslen(pwszStartCmdLine) + 200;
 			//
 			BOOL lbIsNeedCmd = IsNeedCmd(asCmdLine, &lbNeedCutStartEndQuot);
 			
@@ -1083,6 +1083,9 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 				wcscat(pszNewCmd, L" ");
 				wcscat(pszNewCmd, pszAddNewConArgs);
 			}
+			
+			TODO("-new_console вызываетс€ в режиме ComSpec. ’орошо бы сейчас открыть мэппинг консоли на чтение, получить GuiPID и добавить в аргументы");
+
 			// –азмеры должны быть такими-же
 			//2009-08-13 было закомментарено (в режиме ComSpec аргументы /BW /BH /BZ отсутствуют, т.к. запуск идет из FAR)
 			//			 иногда получалось, что требуемый размер (он запрашиваетс€ из GUI) 

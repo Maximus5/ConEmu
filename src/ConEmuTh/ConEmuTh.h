@@ -56,6 +56,14 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define FUNC_Y(fn) fn##995
 
 
+
+#define EVENT_TYPE_REDRAW 250
+#define TH_ENVVAR_NAME L"FarThumbnails"
+#define TH_ENVVAR_ACTIVE L"Active"
+#define TH_ENVVAR_SCROLL L"Scrolling"
+
+
+
 //typedef struct tag_FarVersion {
 //	union {
 //		DWORD dwVer;
@@ -113,11 +121,15 @@ enum CEPANELINFOFLAGS {
 	CEPFLAGS_PANELLEFT          = 0x00000080,
 };
 
-struct CeFullPanelInfo
+typedef struct tag_CeFullPanelInfo
 {
 	DWORD cbSize;
 	HWND  hView;
 	HANDLE hPanel;
+	PanelViewMode PVM;
+	ThumbSizes Spaces;
+	wchar_t sFontName[32]; // Tahoma
+	int nFontHeight; // 14
 	//
 	int nXCount; // тут четко, кусок иконки не допускается
 	int nYCountFull; // тут четко, кусок иконки не допускается
@@ -149,7 +161,22 @@ struct CeFullPanelInfo
 	LPVOID pFarTmpBuf; // информации об элементе панели
 	
 
-	void FreeInfo() {
+	int RegisterPanelView();
+	int UnregisterPanelView();
+	HWND CreateView();
+	void FreeInfo();
+	
+	// Эта "дисплейная" функция вызывается из основной нити, там можно дергать FAR Api
+	void DisplayReloadPanel();
+	
+	static LRESULT CALLBACK DisplayWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+	static DWORD WINAPI DisplayThread(LPVOID lpvParam);
+	void Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc);
+	BOOL PaintItem(HDC hdc, int x, int y, CePluginPanelItem* pItem, BOOL abCurrentItem, 
+			   COLORREF *nBackColor, COLORREF *nForeColor, HBRUSH *hBack,
+			   BOOL abAllowPreview, HBRUSH hBackBrush);
+			   
+	/*{
 		if (ppItems) {
 			for (int i=0; i<ItemsNumber; i++)
 				if (ppItems[i]) free(ppItems[i]);
@@ -172,68 +199,68 @@ struct CeFullPanelInfo
 			pFarTmpBuf = NULL;
 		}
 		nFarTmpBuf = 0;
-	}
-};
+	}*/
+} CeFullPanelInfo;
 
 
 
 
 
-struct ThumbnailSettings
-{
-	TODO("nWidth & nHeight - deprecated");
-	// Наверное заменить на WholeWidth() & WholeHeight()
-	int nWidth, nHeight; // 98x98
-
-	int nThumbSize; // 96
-	int nIconSize; // 48
-	DWORD crBackground; // 0xFFFFFF (RGB) или 0xFF000000 (Index)
-
-	int nThumbFrame; // 1 (серая рамка вокруг превьюшки
-	DWORD crThumbFrame; // 0xFFFFFF (RGB) или 0xFF000000 (Index)
-	int nSelectFrame; // 1 (рамка вокруг текущего элемента)
-	DWORD crSelectFrame; // 0xFFFFFF (RGB) или 0xFF000000 (Index)
-	int nHSpacing, nVSpacing; // 5, 25 - промежуток между двумя рамками
-
-	TODO("Вроде не нужно - оставить только nSelectFrame? Или пусть будет?");
-	int nHPadding, nVPadding; // 1, 1 - зарезевированный отступ
-
-	int nFontHeight; // 14
-	wchar_t sFontName[32]; // Tahoma
-	BOOL bLoadPreviews, bLoadFolders;
-	int nLoadTimeout; // 15 sec
-
-	int nMaxZoom;
-	BOOL bUsePicView2;
-
-	wchar_t sCacheFolder[MAX_PATH];
-
-
-	void Load() {
-		TODO("nWidth & nHeight - deprecated");
-		nWidth = nHeight = 98;
-
-		nThumbSize = 96; // пусть реально будет 96. Чтобы можно было 500% на 16х16 поставить
-		nIconSize = 32;
-
-		nThumbFrame = 1;
-		nSelectFrame = 1;
-
-		nHSpacing = 5; nVSpacing = 25;
-		nHPadding = 1; nVPadding = 1;
-
-		nFontHeight = 14;
-		lstrcpy(sFontName, L"Tahoma");
-
-		bLoadPreviews = TRUE;
-		bLoadFolders = TRUE;
-		nLoadTimeout = 15;
-		nMaxZoom = 500; // но не больше размера превьюшки :)
-		bUsePicView2 = TRUE;
-        sCacheFolder[0] = 0;
-	};
-};
-extern ThumbnailSettings gThSet;
+//struct ThumbnailSettings
+//{
+//	TODO("nWidth & nHeight - deprecated");
+//	// Наверное заменить на WholeWidth() & WholeHeight()
+//	int nWidth, nHeight; // 98x98
+//
+//	int nThumbSize; // 96
+//	int nIconSize; // 48
+//	DWORD crBackground; // 0xFFFFFF (RGB) или 0xFF000000 (Index)
+//
+//	int nThumbFrame; // 1 (серая рамка вокруг превьюшки
+//	DWORD crThumbFrame; // 0xFFFFFF (RGB) или 0xFF000000 (Index)
+//	int nSelectFrame; // 1 (рамка вокруг текущего элемента)
+//	DWORD crSelectFrame; // 0xFFFFFF (RGB) или 0xFF000000 (Index)
+//	int nHSpacing, nVSpacing; // 5, 25 - промежуток между двумя рамками
+//
+//	TODO("Вроде не нужно - оставить только nSelectFrame? Или пусть будет?");
+//	int nHPadding, nVPadding; // 1, 1 - зарезевированный отступ
+//
+//	int nFontHeight; // 14
+//	wchar_t sFontName[32]; // Tahoma
+//	BOOL bLoadPreviews, bLoadFolders;
+//	int nLoadTimeout; // 15 sec
+//
+//	int nMaxZoom;
+//	BOOL bUsePicView2;
+//
+//	wchar_t sCacheFolder[MAX_PATH];
+//
+//
+//	void Load() {
+//		TODO("nWidth & nHeight - deprecated");
+//		nWidth = nHeight = 98;
+//
+//		nThumbSize = 96; // пусть реально будет 96. Чтобы можно было 500% на 16х16 поставить
+//		nIconSize = 32;
+//
+//		nThumbFrame = 1;
+//		nSelectFrame = 1;
+//
+//		nHSpacing = 5; nVSpacing = 25;
+//		nHPadding = 1; nVPadding = 1;
+//
+//		nFontHeight = 14;
+//		lstrcpy(sFontName, L"Tahoma");
+//
+//		bLoadPreviews = TRUE;
+//		bLoadFolders = TRUE;
+//		nLoadTimeout = 15;
+//		nMaxZoom = 500; // но не больше размера превьюшки :)
+//		bUsePicView2 = TRUE;
+//        sCacheFolder[0] = 0;
+//	};
+//};
+extern PanelViewSettings gThSet;
 extern BOOL gbCancelAll;
 
 
@@ -332,16 +359,21 @@ bool CheckWindows();
 //bool FUNC_X(CheckWindows)();
 //bool FUNC_Y(CheckWindows)();
 
+// Эта "дисплейная" функция вызывается из основной нити, там можно дергать FAR Api
+//void DisplayReloadPanel(CeFullPanelInfo* pi);
+
 extern int gnCreateViewError;
 extern DWORD gnWin32Error;
-HWND CreateView(CeFullPanelInfo* pi);
+//HWND CreateView(CeFullPanelInfo* pi);
 void UpdateEnvVar(BOOL abForceRedraw);
 CeFullPanelInfo* IsThumbnailsActive(BOOL abFocusRequired);
 
 // ConEmu.dll
+typedef int (WINAPI *RegisterPanelView_t)(PanelViewInit *ppvi);
+typedef HWND (WINAPI *GetFarHWND2_t)(BOOL abConEmuOnly);
+extern RegisterPanelView_t gfRegisterPanelView;
+extern GetFarHWND2_t gfGetFarHWND2;
 BOOL CheckConEmu(BOOL abForceCheck=FALSE);
-int RegisterPanelView(BOOL abLeft);
-int UnregisterPanelView(BOOL abLeft);
 HWND GetConEmuHWND();
 //BOOL WINAPI OnReadConsole(PINPUT_RECORD lpBuffer, LPDWORD lpNumberOfEventsRead);
 BOOL WINAPI OnPrePeekConsole(HANDLE hInput, PINPUT_RECORD lpBuffer, DWORD nBufSize, LPDWORD lpNumberOfEventsRead, BOOL* pbResult);

@@ -457,7 +457,7 @@ private:
 	DWORD mn_LastFarReadTick;
 	BOOL OpenFarMapData();
 	void CloseFarMapData();
-	BOOL OpenMapHeader();	
+	BOOL OpenMapHeader(BOOL abFromAttach=FALSE);
 	void CloseMapData();	
 	BOOL ReopenMapData();
 	void CloseMapHeader();

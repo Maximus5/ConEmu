@@ -35,14 +35,15 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <windows.h>
 #include "ConEmuTh.h"
 #include "../common/farcolor.hpp"
+#include "../common/RgnDetect.h"
 #include "resource.h"
 #include "ImgCache.h"
 
 
 static ATOM hClass = NULL;
-LRESULT CALLBACK DisplayWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-DWORD WINAPI DisplayThread(LPVOID lpvParam);
-void Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc, CeFullPanelInfo* pi);
+//LRESULT CALLBACK DisplayWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+//DWORD WINAPI DisplayThread(LPVOID lpvParam);
+//void Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc, CeFullPanelInfo* pi);
 const wchar_t gsDisplayClassName[] = L"ConEmuPanelView";
 HANDLE ghCreateEvent = NULL;
 extern HICON ghUpIcon;
@@ -53,18 +54,26 @@ DWORD gnWin32Error = 0;
 BOOL gbCancelAll = FALSE;
 //CThumbnails *gpImgCache = NULL;
 extern CImgCache  *gpImgCache;
-extern COLORREF gcrColors[16];
+extern COLORREF gcrActiveColors[16], gcrFadeColors[16], *gcrCurColors;
+extern bool gbFadeColors;
+UINT gnConEmuFadeMsg = 0;
+extern CRgnDetect *gpRgnDetect;
+extern CEFAR_INFO gFarInfo;
+extern DWORD gnRgnDetectFlags;
+
+void ResetUngetBuffer();
+int ShowLastError();
 
 #define MSG_CREATE_VIEW (WM_USER+101)
 #define CREATE_WND_TIMEOUT 5000
 
 
-HWND CreateView(CeFullPanelInfo* pi)
+HWND CeFullPanelInfo::CreateView()
 {
 	gnCreateViewError = 0;
 	gnWin32Error = 0;
 
-	HWND hView = (pi->bLeftPanel) ? ghLeftView : ghRightView;
+	HWND hView = (this->bLeftPanel) ? ghLeftView : ghRightView;
 	if (hView) {
 		_ASSERTE(hView==NULL);
 		if (IsWindow(hView)) {
@@ -72,8 +81,8 @@ HWND CreateView(CeFullPanelInfo* pi)
 		}
 		hView = NULL;
 	}
-	pi->hView = NULL;
-	pi->cbSize = sizeof(*pi);
+	this->hView = NULL;
+	this->cbSize = sizeof(*this);
 	
 	if (!gnDisplayThreadId || !ghDisplayThread) {
 		if (ghDisplayThread) {
@@ -110,7 +119,7 @@ HWND CreateView(CeFullPanelInfo* pi)
 	
 	if (GetCurrentThreadId() != gnDisplayThreadId) {
 		ghCreateEvent = CreateEvent(NULL,FALSE,FALSE,NULL);
-		BOOL lbRc = PostThreadMessage(gnDisplayThreadId, MSG_CREATE_VIEW, (WPARAM)ghCreateEvent, (LPARAM)pi);
+		BOOL lbRc = PostThreadMessage(gnDisplayThreadId, MSG_CREATE_VIEW, (WPARAM)ghCreateEvent, (LPARAM)this);
 		if (!lbRc) {
 			gnWin32Error = GetLastError();
 			gnCreateViewError = CEPostThreadMessageFailed;
@@ -129,7 +138,7 @@ HWND CreateView(CeFullPanelInfo* pi)
 				gnCreateViewError = CEDisplayThreadTerminated;
 				GetExitCodeThread(ghDisplayThread, &gnWin32Error);
 			} else if (dwWait == (WAIT_OBJECT_0+1)) {
-				hView = pi->hView;
+				hView = this->hView;
 			}
 		}
 		return hView;
@@ -154,18 +163,18 @@ HWND CreateView(CeFullPanelInfo* pi)
 		}
 	}
 	
-	pi->cbSize = sizeof(*pi);
+	this->cbSize = sizeof(*this);
 	
 	wchar_t szTitle[128];
-	wsprintf(szTitle, L"ConEmu.%sPanelView.%i", (pi->bLeftPanel) ? L"Left" : L"Right", gnSelfPID);
+	wsprintf(szTitle, L"ConEmu.%sPanelView.%i", (this->bLeftPanel) ? L"Left" : L"Right", gnSelfPID);
 	hView = CreateWindow(gsDisplayClassName, szTitle, WS_CHILD|WS_CLIPSIBLINGS, 0,0,0,0, 
-		ghConEmuRoot, NULL, (HINSTANCE)ghPluginModule, (LPVOID)pi);
-	pi->hView = hView;
+		ghConEmuRoot, NULL, (HINSTANCE)ghPluginModule, (LPVOID)this);
+	this->hView = hView;
 	if (!hView) {
 		gnWin32Error = GetLastError();
 		gnCreateViewError = CECreateWindowFailed;
 	} else {
-		if (pi->bLeftPanel)
+		if (this->bLeftPanel)
 			ghLeftView = hView;
 		else
 			ghRightView = hView;
@@ -174,7 +183,7 @@ HWND CreateView(CeFullPanelInfo* pi)
 	return hView;
 }
 
-LRESULT CALLBACK DisplayWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK CeFullPanelInfo::DisplayWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	switch (uMsg) {
 	case WM_CREATE:
@@ -185,6 +194,7 @@ LRESULT CALLBACK DisplayWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 			_ASSERTE(pi == (&pviLeft) || pi == (&pviRight));
 			
 			SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)pi);
+			SetWindowLong(hwnd, 16*4, 1); // Fade == false
 			
 			return 0; //continue creation
 		}
@@ -204,7 +214,7 @@ LRESULT CALLBACK DisplayWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 			HDC hdc = BeginPaint(hwnd, &ps);
 			if (hdc) {
 				RECT rc; GetClientRect(hwnd, &rc);
-				Paint(hwnd, ps, rc, pi);
+				pi->Paint(hwnd, ps, rc);
 				EndPaint(hwnd, &ps);
 			}
 			
@@ -216,7 +226,7 @@ LRESULT CALLBACK DisplayWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 			_ASSERTE(pi && pi->cbSize==sizeof(CeFullPanelInfo));
 			_ASSERTE(pi == (&pviLeft) || pi == (&pviRight));
 			BYTE nPanelColorIdx = pi->nFarColors[COL_PANELTEXT];
-			COLORREF nBackColor = GetWindowLong(hwnd, 4*((nPanelColorIdx & 0xF0)>>4));
+			COLORREF nBackColor = gcrCurColors[((nPanelColorIdx & 0xF0)>>4)]; //GetWindowLong(hwnd, 4*((nPanelColorIdx & 0xF0)>>4));
 			RECT rc; GetClientRect(hwnd, &rc);
 			HBRUSH hbr = CreateSolidBrush(nBackColor);
 			_ASSERTE(wParam!=0);
@@ -237,12 +247,21 @@ LRESULT CALLBACK DisplayWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 				PostThreadMessage(gnDisplayThreadId, WM_QUIT, 0, 0);
 			return 0;
 		}
+	default:
+		if (uMsg == gnConEmuFadeMsg) {
+			SetWindowLong(hwnd, 16*4, (DWORD)lParam);
+			if (gbFadeColors != (lParam == 2)) {
+				gbFadeColors = (lParam == 2);
+				gcrCurColors = gbFadeColors ? gcrFadeColors : gcrActiveColors;
+				//InvalidateRect(hwnd, NULL, FALSE); -- не требуется
+			}
+		}
 	}
 
 	return DefWindowProc(hwnd, uMsg, wParam, lParam);
 }
 
-DWORD WINAPI DisplayThread(LPVOID lpvParam)
+DWORD WINAPI CeFullPanelInfo::DisplayThread(LPVOID lpvParam)
 {
 	MSG msg;
 	HANDLE hReady = (HANDLE)lpvParam;
@@ -251,6 +270,7 @@ DWORD WINAPI DisplayThread(LPVOID lpvParam)
 
 	_ASSERTE(gpImgCache);
 
+	gnConEmuFadeMsg = RegisterWindowMessage(CONEMUMSG_FADETHUMBNAILS);
 
 
 	// Выставляем событие, что нить готова
@@ -268,7 +288,7 @@ DWORD WINAPI DisplayThread(LPVOID lpvParam)
 			if (hEvent != ghCreateEvent) {
 				_ASSERTE(hEvent == ghCreateEvent);
 			} else {
-				HWND hView = CreateView(pi);
+				HWND hView = pi->CreateView();
 				_ASSERTE(pi->hView == hView);
 				pi->hView = hView;
 				SetEvent(hEvent);
@@ -303,7 +323,7 @@ DWORD WINAPI DisplayThread(LPVOID lpvParam)
 }
 
 
-BOOL PaintItem(HDC hdc, int x, int y, CePluginPanelItem* pItem, BOOL abCurrentItem, 
+BOOL CeFullPanelInfo::PaintItem(HDC hdc, int x, int y, CePluginPanelItem* pItem, BOOL abCurrentItem, 
 			   COLORREF *nBackColor, COLORREF *nForeColor, HBRUSH *hBack,
 			   //int nXIcon, int nYIcon, int nXIconSpace, int nYIconSpace,
 			   BOOL abAllowPreview, HBRUSH hBackBrush)
@@ -323,26 +343,43 @@ BOOL PaintItem(HDC hdc, int x, int y, CePluginPanelItem* pItem, BOOL abCurrentIt
 
 	if (gThSet.nThumbFrame == 1) {
 		Rectangle(hdc,
+			x+Spaces.nSpaceX1, y+Spaces.nSpaceY1,
+			x+Spaces.nSpaceX1+(Spaces.nImgSize+2*gThSet.nThumbFrame), y+Spaces.nSpaceY1+(Spaces.nImgSize+2*gThSet.nThumbFrame));
+		/*
+		Rectangle(hdc,
 			x+gThSet.nHPadding, y+gThSet.nVPadding,
 			x+gThSet.nHPadding+gThSet.nWidth, y+gThSet.nVPadding+gThSet.nHeight);
+		*/
 	} else if (gThSet.nThumbFrame == 0) {
+		RECT rcTmp = {x+Spaces.nSpaceX1, y+Spaces.nSpaceY1,
+			x+Spaces.nSpaceX1+(Spaces.nImgSize+2*gThSet.nThumbFrame), y+Spaces.nSpaceY1+(Spaces.nImgSize+2*gThSet.nThumbFrame)};
+		/*
 		RECT rcTmp = {x+gThSet.nHPadding, y+gThSet.nVPadding,
 			x+gThSet.nHPadding+gThSet.nWidth, y+gThSet.nVPadding+gThSet.nHeight};
+		*/
 		FillRect(hdc, &rcTmp, hBackBrush);
 	} else {
 		_ASSERTE(gThSet.nThumbFrame==0 || gThSet.nThumbFrame==1);
+		return FALSE;
 	}
 
-	gpImgCache->PaintItem(hdc, x+gThSet.nThumbFrame+gThSet.nHPadding, y+gThSet.nThumbFrame+gThSet.nVPadding,
-		pItem, abAllowPreview);
+	gpImgCache->PaintItem(hdc, x+gThSet.nThumbFrame+Spaces.nSpaceX1, y+gThSet.nThumbFrame+Spaces.nSpaceY1,
+		Spaces.nImgSize, pItem, abAllowPreview);
 
-	RECT rcClip = {
-		x+gThSet.nHPadding, 
-		y+gThSet.nVPadding+gThSet.nHeight,
-		x+gThSet.nHPadding+gThSet.nWidth,
-		y+gThSet.nVPadding+gThSet.nHeight+gThSet.nFontHeight+2
-	};
+	RECT rcClip = {0};
 	COLORREF crBack = 0, crFore = 0;
+	
+	if (PVM == pvm_Thumbnails) {
+		rcClip.left   = x+Spaces.nSpaceX1;
+		rcClip.top    = y+Spaces.nSpaceY1+(Spaces.nImgSize+2*gThSet.nThumbFrame)+Spaces.nSpaceLabel;
+		rcClip.right  = x+Spaces.nSpaceX1+(Spaces.nImgSize+2*gThSet.nThumbFrame);
+		rcClip.bottom = y+Spaces.nSpaceY1+(Spaces.nImgSize+2*gThSet.nThumbFrame)+nFontHeight+2;
+	} else if (PVM == pvm_Tiles) {
+		rcClip.left   = x+Spaces.nSpaceX1+(Spaces.nImgSize+2*gThSet.nThumbFrame)+Spaces.nSpaceLabel;
+		rcClip.top    = y+Spaces.nSpaceY1;
+		rcClip.right  = x+Spaces.nSpaceX1+(Spaces.nImgSize+2*gThSet.nThumbFrame)+Spaces.nSpaceX2;
+		rcClip.bottom = y+Spaces.nSpaceY1+(Spaces.nImgSize+2*gThSet.nThumbFrame);
+	}
 
 	int nIdx = ((pItem->Flags & (0x40000000/*PPIF_SELECTED*/)) ? 
 		((abCurrentItem/*nItem==nCurrentItem*/) ? 3 : 1) :
@@ -358,33 +395,33 @@ BOOL PaintItem(HDC hdc, int x, int y, CePluginPanelItem* pItem, BOOL abCurrentIt
 	SetTextColor(hdc, crFore);
 	SetBkColor(hdc, crBack);
 	//ExtTextOut(hdc, rcClip.left,rcClip.top, ETO_CLIPPED, &rcClip, pszName, nLen, NULL);
-	DrawText(hdc, pszName, nLen, &rcClip, DT_END_ELLIPSIS|DT_NOPREFIX|DT_SINGLELINE);
+	DrawText(hdc, pszName, nLen, &rcClip, DT_END_ELLIPSIS|DT_NOPREFIX|DT_SINGLELINE|DT_VCENTER);
 
 	return TRUE;
 }
 
-void Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc, CeFullPanelInfo* pi)
+void CeFullPanelInfo::Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc)
 {
 	gbCancelAll = FALSE;
 
-	for (int i=0; i<16; i++)
-		gcrColors[i] = GetWindowLong(hwnd, 4*i);
+	//for (int i=0; i<16; i++)
+	//	gcrColors[i] = GetWindowLong(hwnd, 4*i);
 
 	BYTE nIndexes[4] = {
-		pi->nFarColors[COL_PANELTEXT],
-		pi->nFarColors[COL_PANELSELECTEDTEXT],
-		pi->nFarColors[COL_PANELCURSOR],
-		pi->nFarColors[COL_PANELSELECTEDCURSOR]
+		this->nFarColors[COL_PANELTEXT],
+		this->nFarColors[COL_PANELSELECTEDTEXT],
+		this->nFarColors[COL_PANELCURSOR],
+		this->nFarColors[COL_PANELSELECTEDCURSOR]
 	};
 	COLORREF nBackColor[4], nForeColor[4];
 	HBRUSH hBack[4];
 	int i;
 	for (i = 0; i < 4; i++) {
-		nBackColor[i] = gcrColors[((nIndexes[i] & 0xF0)>>4)];
-		nForeColor[i] = gcrColors[(nIndexes[i] & 0xF)];
+		nBackColor[i] = gcrCurColors[((nIndexes[i] & 0xF0)>>4)];
+		nForeColor[i] = gcrCurColors[(nIndexes[i] & 0xF)];
 		hBack[i] = CreateSolidBrush(nBackColor[i]);
 	}
-	COLORREF crGray = gcrColors[8];
+	COLORREF crGray = gcrCurColors[8];
 	COLORREF crBack = nBackColor[0]; //gcrColors[15];
 		
 	HDC hdc = ps.hdc;
@@ -393,27 +430,27 @@ void Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc, CeFullPanelInfo* pi)
 	
 	HPEN hPen = CreatePen(PS_SOLID, 1, crGray);
 	HBRUSH hBackBrush = CreateSolidBrush(crBack);
-	HFONT hFont = CreateFont(gThSet.nFontHeight,0,0,0,400,0,0,0,ANSI_CHARSET,OUT_DEFAULT_PRECIS,CLIP_DEFAULT_PRECIS,
-		NONANTIALIASED_QUALITY,DEFAULT_PITCH,gThSet.sFontName);
+	HFONT hFont = CreateFont(nFontHeight,0,0,0,400,0,0,0,ANSI_CHARSET,OUT_DEFAULT_PRECIS,CLIP_DEFAULT_PRECIS,
+		NONANTIALIASED_QUALITY,DEFAULT_PITCH,sFontName);
 
 	// Передернуть класс на предмет смены/инициализации настроек
 	gpImgCache->Init(crBack);
 
 	
-	int nWholeW = gThSet.nWidth  + gThSet.nHSpacing + gThSet.nHPadding*2;
-	int nWholeH = gThSet.nHeight + gThSet.nVSpacing + gThSet.nVPadding*2;
-	int nXCount = (rc.right+gThSet.nHSpacing) / nWholeW; // тут четко, кусок иконки не допускается
+	int nWholeW = (Spaces.nImgSize+2*gThSet.nThumbFrame)  + Spaces.nSpaceX2 + Spaces.nSpaceX1*2;
+	int nWholeH = (Spaces.nImgSize+2*gThSet.nThumbFrame) + Spaces.nSpaceY2 + Spaces.nSpaceY1*2;
+	int nXCount = (rc.right+Spaces.nSpaceX2) / nWholeW; // тут четко, кусок иконки не допускается
 	if (nXCount < 1) nXCount = 1;
-	int nYCountFull = (rc.bottom+gThSet.nVSpacing) / nWholeH; // тут четко, кусок иконки не допускается
+	int nYCountFull = (rc.bottom+Spaces.nSpaceY2) / nWholeH; // тут четко, кусок иконки не допускается
 	if (nYCountFull < 1) nYCountFull = 1;
-	int nYCount = (rc.bottom+gThSet.nHeight+gThSet.nVSpacing) / nWholeH; // а тут допускается отображение верхней части иконки
+	int nYCount = (rc.bottom+(Spaces.nImgSize+2*gThSet.nThumbFrame)+Spaces.nSpaceY2) / nWholeH; // а тут допускается отображение верхней части иконки
 	if (nYCount < 1) nYCount = 1;
-	pi->nXCount = nXCount; pi->nYCountFull = nYCountFull; pi->nYCount = nYCount;
+	this->nXCount = nXCount; this->nYCountFull = nYCountFull; this->nYCount = nYCount;
 	
-	int nTopItem = pi->TopPanelItem;
-	int nItemCount = pi->ItemsNumber;
-	int nCurrentItem = pi->CurrentItem;
-	//CePluginPanelItem** ppItems = pi->ppItems;
+	int nTopItem = this->TopPanelItem;
+	int nItemCount = this->ItemsNumber;
+	int nCurrentItem = this->CurrentItem;
+	//CePluginPanelItem** ppItems = this->ppItems;
 
 	if ((nTopItem + nXCount*nYCountFull) <= nCurrentItem) {
 		TODO("Выравнивание на границу nXCount");
@@ -425,14 +462,14 @@ void Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc, CeFullPanelInfo* pi)
 		//if (nTopItem > nCurrentItem)
 		//	nTopItem = max(nCurrentItem,(nTopItem-nXCount));
 	}
-	pi->OurTopPanelItem = nTopItem;
+	this->OurTopPanelItem = nTopItem;
 
 	
-	int nMaxLen = (pi->pszPanelDir ? lstrlen(pi->pszPanelDir) : 0) + MAX_PATH+3;
+	int nMaxLen = (this->pszPanelDir ? lstrlen(this->pszPanelDir) : 0) + MAX_PATH+3;
 	wchar_t* pszFull = (wchar_t*)malloc(nMaxLen*2);
 	wchar_t* pszNamePtr = NULL;
-	if (pi->pszPanelDir && *pi->pszPanelDir) {
-		lstrcpy(pszFull, pi->pszPanelDir);
+	if (this->pszPanelDir && *this->pszPanelDir) {
+		lstrcpy(pszFull, this->pszPanelDir);
 		pszNamePtr = pszFull+lstrlen(pszFull);
 		if (*(pszNamePtr-1) != L'\\') {
 			*(pszNamePtr++) = L'\\';
@@ -444,8 +481,8 @@ void Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc, CeFullPanelInfo* pi)
 	
 	//int nXIcon = GetSystemMetrics(SM_CXICON);
 	//int nYIcon = GetSystemMetrics(SM_CYICON);
-	//int nXIconSpace = (gThSet.nWidth - nXIcon) >> 1;
-	//int nYIconSpace = (gThSet.nHeight - nYIcon) >> 1;
+	//int nXIconSpace = ((Spaces.nImgSize+2*gThSet.nThumbFrame) - nXIcon) >> 1;
+	//int nYIconSpace = ((Spaces.nImgSize+2*gThSet.nThumbFrame) - nYIcon) >> 1;
 
 	HDC hCompDC = CreateCompatibleDC(hdc);
 	HBITMAP hCompBmp = CreateCompatibleBitmap(hdc, nWholeW, nWholeH);
@@ -459,7 +496,7 @@ void Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc, CeFullPanelInfo* pi)
 	HFONT hOldFont = (HFONT)SelectObject(hCompDC,hFont);
 
 
-	if (!pi->Focus)
+	if (!this->Focus)
 		nCurrentItem = -1;
 
 
@@ -471,12 +508,13 @@ void Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc, CeFullPanelInfo* pi)
 		for (int Y = 0; !gbCancelAll && Y < nYCount && nItem < nItemCount; Y++) {
 			int nXCoord = 0;
 			for (int X = 0; !gbCancelAll && X < nXCount && nItem < nItemCount; X++, nItem++) {
-				// Обновить информацию об элементе (имя, веделенность, и т.п.)
-				if (nStep == 0 || pi->ppItems[nItem] == NULL) {
-					LoadPanelItemInfo(pi, nItem);
-				}
+				// Здесь - нельзя. Это не главная нить.
+				//// Обновить информацию об элементе (имя, веделенность, и т.п.)
+				//if (nStep == 0 || this->ppItems[nItem] == NULL) {
+				//	LoadPanelItemInfo(this, nItem);
+				//}
 
-				CePluginPanelItem* pItem = pi->ppItems[nItem];
+				CePluginPanelItem* pItem = this->ppItems[nItem];
 				if (!pItem) {
 					continue; // Ошибка?
 				}
@@ -532,4 +570,169 @@ void Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc, CeFullPanelInfo* pi)
 //#ifdef _DEBUG
 //	BitBlt(hdc, 0,0,rc.right,rc.bottom, gpImgCache->hField[0], 0,0, SRCCOPY);
 //#endif
+}
+
+
+// Эта "дисплейная" функция вызывается из основной нити, там можно дергать FAR Api
+void CeFullPanelInfo::DisplayReloadPanel()
+{
+	TODO("Определить повторно какие элементы видимы, и перечитать только их");
+
+	for (int nItem = 0; nItem < this->ItemsNumber; nItem++)
+	{
+		// Обновить информацию об элементе (имя, веделенность, и т.п.)
+		LoadPanelItemInfo(this, nItem);
+	}
+}
+
+
+
+
+// Эта "дисплейная" функция вызывается из основной нити, там можно дергать FAR Api
+int CeFullPanelInfo::RegisterPanelView()
+{
+	// Страховка от того, что conemu.dll могли выгрузить (unload:...)
+	if (!CheckConEmu() || !gfRegisterPanelView)
+		return -1;
+
+	//CeFullPanelInfo* pi = abLeft ? &pviLeft : &pviRight;
+
+	PanelViewInit pvi = {sizeof(PanelViewInit)};
+	pvi.bLeftPanel = this->bLeftPanel;
+	pvi.bPanelFullCover = FALSE; // только рабочая область
+	pvi.nFarInterfaceSettings = this->nFarInterfaceSettings;
+	pvi.nFarPanelSettings = this->nFarPanelSettings;
+	pvi.PanelRect = this->PanelRect;
+	pvi.pfnPeekPreCall = OnPrePeekConsole;
+	pvi.pfnPeekPostCall = OnPostPeekConsole;
+	pvi.pfnReadPreCall = OnPreReadConsole;
+	pvi.pfnReadPostCall = OnPostReadConsole;
+	pvi.pfnWriteCall = OnPreWriteConsoleOutput;
+
+	// Зарегистрироваться (или обновить положение)
+	pvi.bRegister = TRUE;
+	pvi.hWnd = this->hView;
+
+	BOOL lbRc = FALSE;
+	DWORD dwErr = 0;
+	int nRc = gfRegisterPanelView(&pvi);
+	
+	gnCreateViewError = 0;
+
+	// Если пока все ОК
+	if (nRc == 0) {
+		// Настройки отображения
+		memset(&gThSet, 0, sizeof(gThSet));
+		if (!pvi.ThSet.cbSize || !pvi.ThSet.Thumbs.nImgSize || !pvi.ThSet.Tiles.nImgSize) {
+			gnCreateViewError = CEInvalidSettingValues;
+			nRc = -1000;
+		} else {
+			_ASSERTE(pvi.ThSet.cbSize == sizeof(gThSet));
+			memmove(&gThSet, &pvi.ThSet, min(pvi.ThSet.cbSize,sizeof(gThSet)));
+			// Цвета "консоли"
+			for (int i=0; i<16; i++) {
+				gcrActiveColors[i] = pvi.crPalette[i];
+				gcrFadeColors[i] = pvi.crFadePalette[i];
+			}
+			// Мы активны? По идее должны, при активации плагина-то
+			gbFadeColors = (pvi.bFadeColors!=FALSE);
+			gcrCurColors = gbFadeColors ? gcrFadeColors : gcrActiveColors;
+			SetWindowLong(this->hView, 16*4, gbFadeColors ? 2 : 1);
+			// Подготовить детектор диалогов
+			_ASSERTE(gpRgnDetect!=NULL);
+			if (gpRgnDetect->InitializeSBI(gcrCurColors)) {
+				gpRgnDetect->PrepareTransparent(&gFarInfo, gcrCurColors);
+			}
+			
+			// Сразу скопировать параметры соответствующего режима к себе
+			if (PVM == pvm_Thumbnails) {
+				Spaces = gThSet.Thumbs;
+				lstrcpy(sFontName, gThSet.sThumbFontName);
+				nFontHeight = gThSet.nThumbFontHeight;
+			} else if (PVM == pvm_Tiles) {
+				Spaces = gThSet.Tiles;
+				lstrcpy(sFontName, gThSet.sTileFontName);
+				nFontHeight = gThSet.nTileFontHeight;
+			} else {
+				_ASSERTE(PVM==pvm_Thumbnails || PVM==pvm_Tiles);
+				gnCreateViewError = CEUnknownPanelMode;
+				nRc = -1000;
+			}
+		}
+	}
+
+	// Если можно продолжать - продолжаем
+	if (nRc == 0) {
+		gnRgnDetectFlags = gpRgnDetect->GetFlags();
+		//gbLastCheckWindow = true;
+
+		if (!IsWindowVisible(this->hView)) {
+			lbRc = ShowWindow(this->hView, SW_SHOWNORMAL);
+			if (!lbRc)
+				dwErr = GetLastError();
+		}
+		_ASSERTE(lbRc || IsWindowVisible(this->hView));
+		InvalidateRect(this->hView, NULL, FALSE);
+		RedrawWindow(this->hView, NULL, NULL, RDW_INTERNALPAINT|RDW_UPDATENOW);
+
+		UpdateEnvVar(FALSE);
+	}
+
+	
+	// Если GUI отказался от панели (или уже здесь произошла ошибка) - нужно ее закрыть
+	if (nRc != 0) {
+		// Закрыть окно (по WM_CLOSE окно само должно послать WM_QUIT если оно единственное)
+		_ASSERTE(nRc == 0);
+
+		// Если эта панель единственная - сразу сбрасываем переменные
+		if (!pviLeft.hView || !pviRight.hView) {
+			ResetUngetBuffer();
+			SetEnvironmentVariable(TH_ENVVAR_NAME, NULL);
+		}
+
+		PostMessage(this->hView, WM_CLOSE, 0, 0);
+		if (gnCreateViewError == 0) // если ошибку еще не установили - жалуемся на GUI
+			gnCreateViewError = CEGuiDontAcceptPanel;
+		gnWin32Error = nRc;
+
+		if (GetCurrentThreadId() == gnMainThreadId) {
+			ShowLastError();
+		}
+	}	
+
+	return nRc;
+}
+
+
+// Эта "дисплейная" функция вызывается из основной нити, там можно дергать FAR Api
+int CeFullPanelInfo::UnregisterPanelView()
+{
+	// Страховка от того, что conemu.dll могли выгрузить (unload:...)
+	if (!CheckConEmu() || !gfRegisterPanelView)
+		return -1;
+
+	// Если эта панель единственная - сразу сбрасываем переменные
+	if (!pviLeft.hView || !pviRight.hView) {
+		ResetUngetBuffer();
+		SetEnvironmentVariable(TH_ENVVAR_NAME, NULL);
+	}
+
+	//CeFullPanelInfo* pi = abLeft ? &pviLeft : &pviRight;
+
+	PanelViewInit pvi = {sizeof(PanelViewInit)};
+	pvi.bLeftPanel = this->bLeftPanel;
+	pvi.nFarInterfaceSettings = this->nFarInterfaceSettings;
+	pvi.nFarPanelSettings = this->nFarPanelSettings;
+	pvi.PanelRect = this->PanelRect;
+
+	// Отрегистрироваться
+	pvi.bRegister = FALSE;
+	pvi.hWnd = this->hView;
+
+	int nRc = gfRegisterPanelView(&pvi);
+
+	// Закрыть окно (по WM_CLOSE окно само должно послать WM_QUIT если оно единственное)
+	PostMessage(this->hView, WM_CLOSE, 0, 0);
+
+	return nRc;
 }

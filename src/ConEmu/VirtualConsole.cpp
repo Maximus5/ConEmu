@@ -144,6 +144,7 @@ CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
 
 	memset(&m_LeftPanelView, 0, sizeof(m_LeftPanelView));
 	memset(&m_RightPanelView, 0, sizeof(m_RightPanelView));
+	mn_ConEmuFadeMsg = 0;
 	// Эти переменные устанавливаются в TRUE, если при следующем Redraw нужно обновить размер панелей
 	mb_LeftPanelRedraw = mb_RightPanelRedraw = FALSE;
 	mn_LastDialogsCount = 0;
@@ -3296,8 +3297,15 @@ BOOL CVirtualConsole::RegisterPanelView(PanelViewInit* ppvi)
 	BOOL lbPrevRegistered = pp->bRegister;
 	*pp = *ppvi;
 	// Вернуть текущую палитру GUI
-	for (int i=0; i<16; i++) // через FOR чтобы с BitMask не наколоться
-		ppvi->crPalette[i] = (mp_Colors[i]) & 0xFFFFFF;
+	COLORREF *pcrNormal = gSet.GetColors(FALSE);
+	COLORREF *pcrFade = gSet.GetColors(TRUE);
+	for (int i=0; i<16; i++) {
+		// через FOR чтобы с BitMask не наколоться
+		ppvi->crPalette[i] = (pcrNormal[i]) & 0xFFFFFF;
+		ppvi->crFadePalette[i] = (pcrFade[i]) & 0xFFFFFF;
+	}
+	ppvi->bFadeColors = isFade;
+	memmove(&(ppvi->ThSet), &(gSet.ThSet), sizeof(gSet.ThSet));
 	
 	if (ppvi->bRegister) {
 		// При повторной регистрации - не дергаться
@@ -3467,9 +3475,13 @@ BOOL CVirtualConsole::UpdatePanelView(BOOL abLeftPanel)
 	PanelViewInit* pp = abLeftPanel ? &m_LeftPanelView : &m_RightPanelView;
 
 	// Чтобы плагин знал, что поменялась палитра (это или Fade, или реальная перенастройка цветов).
-	for (int i=0; i<16; i++)
-		SetWindowLong(pp->hWnd, i*4, mp_Colors[i]);
-	SetWindowLong(pp->hWnd, 16*4, isFade ? 2 : 1);
+	//for (int i=0; i<16; i++)
+	//	SetWindowLong(pp->hWnd, i*4, mp_Colors[i]);
+	if (!mn_ConEmuFadeMsg)
+		mn_ConEmuFadeMsg = RegisterWindowMessage(CONEMUMSG_FADETHUMBNAILS);
+	DWORD nNewFadeValue = isFade ? 2 : 1;
+	if (GetWindowLong(pp->hWnd, 16*4) != nNewFadeValue)
+		PostMessage(pp->hWnd, mn_ConEmuFadeMsg, 100, nNewFadeValue);
 
 	// Подготовить размеры
 	POINT pt[2];
@@ -3562,7 +3574,8 @@ void CVirtualConsole::PolishPanelViews()
 			int nLineLen = rc.right - nX1;
 			//wmemset(pszLine+nX1, L' ', nLineLen);
 			if (nNameLen > nLineLen) nNameLen = nLineLen;
-			int nX3 = (nLineLen - nNameLen) >> 1;
+			int nX3 = nX1 + ((nLineLen - nNameLen) >> 1);
+			_ASSERTE(nX3<=rc.right);
 			//wmemcpy(pszLine+nX3, mp_RCon->ms_NameTitle, nNameLen);
 			//TODO("Возможно нужно будет и атрибуты (цвет) обновить");
 			for (x = nX1; x < nX3; x++)

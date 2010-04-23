@@ -471,7 +471,7 @@ int ShowMessage789(int aiMsg, int aiButtons)
 {
 	if (!InfoW789 || !InfoW789->Message || !InfoW789->GetMsg)
 		return -1;
-	return InfoW789->Message(InfoW789->ModuleNumber, FMSG_ALLINONE, NULL, 
+	return InfoW789->Message(InfoW789->ModuleNumber, FMSG_ALLINONE|FMSG_MB_OK|FMSG_WARNING, NULL, 
 		(const wchar_t * const *)InfoW789->GetMsg(InfoW789->ModuleNumber,aiMsg), 0, aiButtons);
 }
 

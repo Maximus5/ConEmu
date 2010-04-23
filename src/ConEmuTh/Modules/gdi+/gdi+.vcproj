@@ -20,9 +20,9 @@
 	</ToolFiles>
 	<Configurations>
 		<Configuration
-			Name="Debug|Win32"
-			OutputDirectory="C:\Temp\VCProject\PicView\$(ProjectName)\$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="C:\Temp\VCProject\PicView\$(ProjectName)\$(PlatformName)\$(ConfigurationName)"
+			Name="Debug_C|Win32"
+			OutputDirectory="C:\Temp\CE\$(ProjectName).$(PlatformName).$(ConfigurationName)"
+			IntermediateDirectory="C:\Temp\CE\$(ProjectName).$(PlatformName).$(ConfigurationName)"
 			ConfigurationType="2"
 			CharacterSet="1"
 			>
@@ -94,9 +94,9 @@
 			/>
 		</Configuration>
 		<Configuration
-			Name="Debug|x64"
-			OutputDirectory="C:\Temp\VCProject\PicView\$(ProjectName)\$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="C:\Temp\VCProject\PicView\$(ProjectName)\$(PlatformName)\$(ConfigurationName)"
+			Name="Debug_C|x64"
+			OutputDirectory="C:\Temp\CE\$(ProjectName).$(PlatformName).$(ConfigurationName)"
+			IntermediateDirectory="C:\Temp\CE\$(ProjectName).$(PlatformName).$(ConfigurationName)"
 			ConfigurationType="2"
 			CharacterSet="1"
 			>
@@ -170,8 +170,8 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="C:\Temp\VCProject\PicView\$(ProjectName)\$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="C:\Temp\VCProject\PicView\$(ProjectName)\$(PlatformName)\$(ConfigurationName)"
+			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)\$(ProjectName)"
+			IntermediateDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)\$(ProjectName)"
 			ConfigurationType="2"
 			CharacterSet="1"
 			WholeProgramOptimization="0"
@@ -255,8 +255,8 @@
 		</Configuration>
 		<Configuration
 			Name="Release|x64"
-			OutputDirectory="C:\Temp\VCProject\PicView\$(ProjectName)\$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="C:\Temp\VCProject\PicView\$(ProjectName)\$(PlatformName)\$(ConfigurationName)"
+			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)\$(ProjectName)"
+			IntermediateDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)\$(ProjectName)"
 			ConfigurationType="2"
 			CharacterSet="1"
 			WholeProgramOptimization="1"
@@ -334,8 +334,8 @@
 		</Configuration>
 		<Configuration
 			Name="Debug_E|Win32"
-			OutputDirectory="C:\Temp\VCProject\$(ProjectName)\$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="C:\Temp\VCProject\$(ProjectName)\$(PlatformName)\$(ConfigurationName)"
+			OutputDirectory="C:\Temp\CE\$(ProjectName).$(PlatformName).$(ConfigurationName)"
+			IntermediateDirectory="C:\Temp\CE\$(ProjectName).$(PlatformName).$(ConfigurationName)"
 			ConfigurationType="2"
 			CharacterSet="1"
 			>
@@ -408,8 +408,8 @@
 		</Configuration>
 		<Configuration
 			Name="Debug_E|x64"
-			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			OutputDirectory="C:\Temp\CE\$(ProjectName).$(PlatformName).$(ConfigurationName)"
+			IntermediateDirectory="C:\Temp\CE\$(ProjectName).$(PlatformName).$(ConfigurationName)"
 			ConfigurationType="2"
 			CharacterSet="1"
 			>

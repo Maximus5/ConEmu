@@ -1,0 +1,65 @@
+ALL: dirs $(INSTALL) $(DLLFULLNAME) clean
+
+$(DLLFULLNAME) : $(LINK_OBJS) $(RES) $(LINK_DEP)
+!ifndef __MAKE__
+	@$(LNK) @<<
+	$(LINK_FLAGS) $(LINK_DEBUG) $(LIBS) $(LINK_OBJS) $(RES)
+<<
+!else
+	@$(LNK) $(LINK_FLAGS) $(LINK_DEBUG) $(LIBS) $(LINK_OBJS) $(RES)
+!endif
+!ifdef DOCS
+!ifndef WIDE
+!ifndef __MAKE__
+	@for %%i in ($(DOCS)) do @copy /Y %%i $(OUTDIR) > nul 2> nul
+!else
+	@for %i in ($(DOCS)) do @copy /Y %i $(OUTDIR) > nul 2> nul
+!endif
+!else
+	@$(COMMON)\convert.exe $(DOCS) $(OUTDIR)
+!endif
+!endif
+
+!ifndef __MAKE__
+.cpp{$(OBJDIR)}.obj::
+	@$(CC) @<<
+	$(CFLAGS) $<
+<<
+{../}.cpp{$(OBJDIR)}.obj::
+	$(CC) @<<
+	$(CFLAGS) $<
+<<
+!else
+.cpp{$(OBJDIR)}.obj:
+	@$(CC) $(CFLAGS) { $< } 
+
+{../}.cpp{$(OBJDIR)}.obj:
+	@$(CC) $(CFLAGS) { $< } 
+!endif
+
+$(OBJDIR)\PVD1Helper.obj: ..\PVD1Helper.cpp ..\PictureViewPlugin.h
+
+$(OBJDIR)\PVD2Helper.obj: ..\PVD2Helper.cpp ..\PVD2Helper.h ..\PictureViewPlugin.h
+
+$(OBJDIR)\PVD_CRT.obj: ..\PVD_CRT.cpp
+
+$(RES): $(RC_NAME).rc
+	@$(RC) /I"$(COMINC)" $(ENV_INC_OPT) $(RC_WIDE) /fo"$(RES)" $(RC_NAME).rc
+
+.PHONY: dirs
+dirs:
+!ifdef INSTALL
+	@if not exist "$(WORKDIR)\$(NULL)" mkdir "$(WORKDIR)"
+!endif
+	@if not exist "$(OBJDIR)\$(NULL)" mkdir "$(OBJDIR)"
+	@if not exist "$(OUTDIR)\$(NULL)" mkdir "$(OUTDIR)"
+
+.PHONY: clean
+clean:
+	@echo final cleaning
+	@move $(DLLFULLNAME) ..\$(RELEASEDIR)
+	@move $(PDBNAME) ..\$(RELEASEDIR)\$(DLLNAME).pdb
+	@del /Q $(OBJDIR)\*.*
+	@del /Q $(OUTDIR)\*.*
+	@rd $(OBJDIR)
+	@rd $(OUTDIR)

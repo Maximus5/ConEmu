@@ -13,4 +13,6 @@ enum {
 	CERegisterClassFailed,
 	CECreateWindowFailed,
 	CEGuiDontAcceptPanel,
+	CEUnknownPanelMode,
+	CEInvalidSettingValues,
 	};

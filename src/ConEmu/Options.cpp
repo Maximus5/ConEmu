@@ -111,13 +111,17 @@ BOOL  gbLastColorsOk = FALSE;
 namespace Settings {
     const WCHAR* szKeys[] = {L"<None>", L"Left Ctrl", L"Right Ctrl", L"Left Alt", L"Right Alt", L"Left Shift", L"Right Shift"};
     const DWORD  nKeys[] =  {0,         VK_LCONTROL,  VK_RCONTROL,   VK_LMENU,    VK_RMENU,     VK_LSHIFT,     VK_RSHIFT};
-    const BYTE   FSizes[] = {0, 8, 10, 12, 14, 16, 18, 19, 20, 24, 26, 28, 30, 32, 34, 36, 40, 46, 50, 52, 72};
+    const BYTE   FSizes[] = {0, 8, 9, 10, 11, 12, 14, 16, 18, 19, 20, 24, 26, 28, 30, 32, 34, 36, 40, 46, 50, 52, 72};
+    const BYTE   FSizesSmall[] = {5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 18, 19, 20, 24, 26, 28, 30, 32};
 	const WCHAR* szClipAct[] = {L"<None>", L"Copy", L"Paste"};
 	const DWORD  nClipAct[] =  {0,         1,       2};
 	const WCHAR* szColorIdx[] = {L" 0", L" 1", L" 2", L" 3", L" 4", L" 5", L" 6", L" 7", L" 8", L" 9", L"10", L"11", L"12", L"13", L"14", L"15", L"None"};
 	const DWORD  nColorIdx[] = {    0,     1,     2,     3,     4,     5,     6,     7,     8,     9,    10,    11,    12,    13,    14,    15,    16};
 	const WCHAR* szColorIdxSh[] = {L"# 0", L"# 1", L"# 2", L"# 3", L"# 4", L"# 5", L"# 6", L"# 7", L"# 8", L"# 9", L"#10", L"#11", L"#12", L"#13", L"#14", L"#15"};
-	const DWORD  nColorIdxSh[] = {    0,     1,     2,     3,     4,     5,     6,     7,     8,     9,    10,    11,    12,    13,    14,    15};
+	const DWORD  nColorIdxSh[] =  {    0,      1,      2,      3,      4,      5,      6,      7,      8,      9,     10,     11,     12,     13,     14,     15};
+	const WCHAR* szColorIdxTh[] = {L"# 0", L"# 1", L"# 2", L"# 3", L"# 4", L"# 5", L"# 6", L"# 7", L"# 8", L"# 9", L"#10", L"#11", L"#12", L"#13", L"#14", L"#15", L"Auto"};
+	const DWORD  nColorIdxTh[] =  {    0,      1,      2,      3,      4,      5,      6,      7,      8,      9,     10,     11,     12,     13,     14,     15,    16};
+	const DWORD  nThumbMaxZoom[] = {100,200,300,400,500};
 };
 
 #define FillListBox(hDlg,nDlgID,Items,Values,Value) \
@@ -137,6 +141,9 @@ namespace Settings {
 	DWORD dwVal = Value; \
 	GetListBoxItem(GetDlgItem(hDlg,nDlgID), sizeofarray(Items), Items, Values, dwVal); \
 	Value = dwVal; }
+
+#define SetThumbColor(s,rgb,idx,us) { (s).ColorRGB = rgb; (s).ColorIdx = idx; (s).UseIndex = us; }
+#define SetThumbSize(s,sz,x1,y1,x2,y2,sl) { (s).nImgSize = sz; (s).nSpaceX1 = x1; (s).nSpaceY1 = y1; (s).nSpaceX2 = x2; (s).nSpaceY2 = y2; (s).nSpaceLabel = sl; }
 
 
 CSettings::CSettings()
@@ -180,6 +187,8 @@ CSettings::CSettings()
 
 	mn_MsgUpdateCounter = RegisterWindowMessage(L"ConEmuSettings::Counter");
 	mn_MsgRecreateFont = RegisterWindowMessage(L"CSettings::RecreateFont");
+	mn_MsgLoadFontFromMain = RegisterWindowMessage(L"CSettings::LoadFontNames");
+	mh_EnumThread = NULL;
 }
 
 CSettings::~CSettings()
@@ -385,6 +394,39 @@ void CSettings::InitSettings()
 	
 	isDebugSteps = true; 
     MCHKHEAP
+    
+    // Thumbnails
+    memset(&ThSet, 0, sizeof(ThSet));
+	ThSet.cbSize = sizeof(ThSet);
+    // фон превьюшки: RGB или Index
+    SetThumbColor(ThSet.crBackground, RGB(255,255,255), 16, FALSE);
+    // серая рамка вокруг превьюшки
+    ThSet.nThumbFrame = 1;
+    SetThumbColor(ThSet.crThumbFrame, RGB(128,128,128), 8, TRUE);
+    // рамка вокруг текущего элемента
+    ThSet.nSelectFrame = 1;
+    SetThumbColor(ThSet.crSelectFrame, RGB(192,192,192), 7, FALSE);
+    /* теперь разнообразные размеры */
+    // отступы для preview
+    SetThumbSize(ThSet.Thumbs,96,1,1,5,25,0);
+    // отступы для tiles
+    SetThumbSize(ThSet.Tiles,48,4,4,172,4,4);
+	// Шрифт отрисовки для превьюшек
+	lstrcpy(ThSet.sThumbFontName, L"Tahoma");
+	ThSet.nThumbFontHeight = 14;
+	// И для списка (Tiles)
+	lstrcpy(ThSet.sTileFontName, L"Tahoma");
+	ThSet.nTileFontHeight = 14;
+	// Прочие параметры загрузки
+	ThSet.bLoadPreviews = 3;   // bitmask of {1=Thumbs, 2=Tiles}
+	ThSet.bLoadFolders = true; // true - load infolder previews (only for Thumbs)
+	ThSet.nLoadTimeout = 15;   // 15 sec
+	ThSet.nMaxZoom = 500; // %%
+	ThSet.bUsePicView2 = TRUE;
+
+	//// Пока не используется
+	//DWORD nCacheFolderType; // юзер/программа/temp/и т.п.
+	//wchar_t sCacheFolder[MAX_PATH];
 }
 
 void CSettings::LoadSettings()
@@ -1181,8 +1223,10 @@ DWORD CSettings::EnumFontsThread(LPVOID apArg)
 	int aFontCount[] = { 0, 0, 0 };
 	wchar_t szName[MAX_PATH];
 
+	// Сначала загрузить имена шрифтов, установленных в систему (или зарегистрированных нами)
 	EnumFontFamilies(hdc, (LPCTSTR) NULL, (FONTENUMPROC) EnumFamCallBack, (LPARAM) aFontCount);
 
+	// Теперь - загрузить размеры установленных терминальных шрифтов (aka Raster fonts)
 	LOGFONT term = {0}; term.lfCharSet = OEM_CHARSET; lstrcpy(term.lfFaceName, L"Terminal"); 
 	szRasterSizes[0].cx = szRasterSizes[0].cy = 0;
 	EnumFontFamiliesEx(hdc, &term, (FONTENUMPROCW) EnumFontCallBackEx, 0/*LPARAM*/, 0);
@@ -1217,7 +1261,15 @@ DWORD CSettings::EnumFontsThread(LPVOID apArg)
 	GetDlgItemText(gSet.hMain, tFontFace2, szName, MAX_PATH);
 	gSet.SelectString(gSet.hMain, tFontFace2, szName);
 
-	SafeCloseHandle(gSet.mh_EnumThread)
+	SafeCloseHandle(gSet.mh_EnumThread);
+	_ASSERTE(gSet.mh_EnumThread == NULL);
+	
+	
+	// Если шустрый юзер успел переключиться на вкладку "Thumbs" до оконачания
+	// загрузки шрифтов - послать в диалог сообщение "Считать список из hMain"
+	if (ghOpWnd && gSet.hThumbs) {
+		PostMessage(gSet.hThumbs, gSet.mn_MsgLoadFontFromMain, 0, 0);
+	}
 
 	return 0;
 }
@@ -1737,17 +1789,21 @@ LRESULT CSettings::OnInitDialog_Color()
 		SetDlgItemText(hColors, tc0 + i, temp);
 	}
 
-	for (uint i=0; i < 16; i++)
-	{
-		wsprintf(temp, (i<10) ? L"# %i" : L"#%i", i);
-		SendDlgItemMessage(hColors, lbExtendIdx, CB_ADDSTRING, 0, (LPARAM) temp);
-		//SendDlgItemMessage(hColors, lbVisFore, CB_ADDSTRING, 0, (LPARAM) temp);
-		//SendDlgItemMessage(hColors, lbVisNormal, CB_ADDSTRING, 0, (LPARAM) temp);
-		//SendDlgItemMessage(hColors, lbVisTab, CB_ADDSTRING, 0, (LPARAM) temp);
-		//SendDlgItemMessage(hColors, lbVisEOL, CB_ADDSTRING, 0, (LPARAM) temp);
-		//SendDlgItemMessage(hColors, lbVisEOF, CB_ADDSTRING, 0, (LPARAM) temp);
-	}
-	SendDlgItemMessage(hColors, lbExtendIdx, CB_SETCURSEL, nExtendColor, 0);
+	DWORD nVal = nExtendColor;
+	FillListBoxItems(GetDlgItem(hColors, lbExtendIdx), sizeofarray(Settings::szColorIdxSh),
+		Settings::szColorIdxSh, Settings::nColorIdxSh, nVal);
+	nExtendColor = nVal;
+	//for (uint i=0; i < 16; i++)
+	//{
+	//	wsprintf(temp, (i<10) ? L"# %i" : L"#%i", i);
+	//	SendDlgItemMessage(hColors, lbExtendIdx, CB_ADDSTRING, 0, (LPARAM) temp);
+	//	//SendDlgItemMessage(hColors, lbVisFore, CB_ADDSTRING, 0, (LPARAM) temp);
+	//	//SendDlgItemMessage(hColors, lbVisNormal, CB_ADDSTRING, 0, (LPARAM) temp);
+	//	//SendDlgItemMessage(hColors, lbVisTab, CB_ADDSTRING, 0, (LPARAM) temp);
+	//	//SendDlgItemMessage(hColors, lbVisEOL, CB_ADDSTRING, 0, (LPARAM) temp);
+	//	//SendDlgItemMessage(hColors, lbVisEOF, CB_ADDSTRING, 0, (LPARAM) temp);
+	//}
+	//SendDlgItemMessage(hColors, lbExtendIdx, CB_SETCURSEL, nExtendColor, 0);
 	CheckDlgButton(hColors, cbExtendColors, isExtendColors ? BST_CHECKED : BST_UNCHECKED);
 	OnColorButtonClicked(cbExtendColors, 0);
 
@@ -1790,8 +1846,27 @@ LRESULT CSettings::OnInitDialog_Thumbs()
 {
 	if (gSet.EnableThemeDialogTextureF)
 		gSet.EnableThemeDialogTextureF(hThumbs, 6/*ETDT_ENABLETAB*/);
+		
+	if (gSet.mh_EnumThread == NULL) // Если шрифты уже считаны
+		OnInitDialog_ThumbsFonts(); // можно скопировать список с вкладки hMain
 
-	//wchar_t temp[MAX_PATH];
+	wchar_t temp[MAX_PATH];
+
+	for (uint i=0; i < sizeofarray(Settings::FSizesSmall); i++) {
+		wsprintf(temp, L"%i", Settings::FSizesSmall[i]);
+		SendDlgItemMessage(hThumbs, tThumbsFontSize, CB_ADDSTRING, 0, (LPARAM) temp);
+	}
+	
+	for (uint i=0; i < sizeofarray(Settings::nThumbMaxZoom); i++) {
+		wsprintf(temp, L"%i", Settings::nThumbMaxZoom[i]);
+		SendDlgItemMessage(hThumbs, tThumbMaxZoom, CB_ADDSTRING, 0, (LPARAM) temp);
+	}
+
+
+	DWORD nVal = 16;
+	FillListBoxItems(GetDlgItem(hThumbs, lbExtendIdx), sizeofarray(Settings::szColorIdxTh),
+		Settings::szColorIdxTh, Settings::nColorIdxTh, nVal);
+	
 
 	//for (uint i = 0; i <= (MAX_COLOR_EDT_ID-c0); i++)
 	//{
@@ -1855,6 +1930,26 @@ LRESULT CSettings::OnInitDialog_Thumbs()
 	RegisterTipsFor(hColors);
 
 	return 0;
+}
+
+LRESULT CSettings::OnInitDialog_ThumbsFonts()
+{
+	DWORD bAlmostMonospace;
+	int nIdx, nCount, i;
+	wchar_t szFontName[128]; // не должно быть более 32
+	
+	nCount = SendDlgItemMessage(gSet.hMain, tFontFace, CB_GETCOUNT, 0, 0);
+	
+	for (i = 0; i < nCount; i++) {
+		if (SendDlgItemMessage(gSet.hMain, tFontFace, CB_GETLBTEXT, i, (LPARAM) szFontName) > 0) {
+			bAlmostMonospace = (DWORD)SendDlgItemMessage(gSet.hMain, tFontFace, CB_GETITEMDATA, i, 0);
+			
+			nIdx = SendDlgItemMessage(gSet.hThumbs, tThumbsFontName, CB_ADDSTRING, 0, (LPARAM) szFontName);
+			SendDlgItemMessage(gSet.hThumbs, tThumbsFontName, CB_SETITEMDATA, nIdx, bAlmostMonospace);
+		}
+	}
+	
+	return TRUE;
 }
 
 LRESULT CSettings::OnInitDialog_Info()
@@ -3043,6 +3138,52 @@ INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPara
     return 0;
 }
 
+INT_PTR CSettings::OnMeasureFontItem(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
+{
+	DWORD wID = wParam;
+	if (wID == tFontFace || wID == tFontFace2 || wID == tThumbsFontName) {
+		MEASUREITEMSTRUCT *pItem = (MEASUREITEMSTRUCT*)lParam;
+		pItem->itemHeight = 15; //pItem->itemHeight;
+	}
+	return TRUE;
+}
+
+INT_PTR CSettings::OnDrawFontItem(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
+{
+	DWORD wID = wParam;
+	if (wID == tFontFace || wID == tFontFace2 || wID == tThumbsFontName) {
+		DRAWITEMSTRUCT *pItem = (DRAWITEMSTRUCT*)lParam;
+		wchar_t szText[128]; szText[0] = 0;
+		SendDlgItemMessage(hWnd2, wID, CB_GETLBTEXT, pItem->itemID, (LPARAM)szText);
+		DWORD bAlmostMonospace = (DWORD)SendDlgItemMessage(hWnd2, wID, CB_GETITEMDATA, pItem->itemID, 0);
+
+		COLORREF crText, crBack;
+		if (!(pItem->itemState & ODS_SELECTED)) {
+			crText = GetSysColor(COLOR_WINDOWTEXT);
+			crBack = GetSysColor(COLOR_WINDOW);
+		} else {
+			crText = GetSysColor(COLOR_HIGHLIGHTTEXT);
+			crBack = GetSysColor(COLOR_HIGHLIGHT);
+		}
+		SetTextColor(pItem->hDC, crText);
+		SetBkColor(pItem->hDC, crBack);
+		RECT rc = pItem->rcItem;
+		HBRUSH hBr = CreateSolidBrush(crBack);
+		FillRect(pItem->hDC, &rc, hBr);
+		DeleteObject(hBr);
+		rc.left++;
+		
+		HFONT hFont = CreateFont(8, 0,0,0,(bAlmostMonospace==1)?FW_BOLD:FW_NORMAL,0,0,0,
+			ANSI_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH,
+			L"MS Sans Serif");
+		HFONT hOldF = (HFONT)SelectObject(pItem->hDC, hFont);
+		DrawText(pItem->hDC, szText, wcslen(szText), &rc, DT_LEFT|DT_VCENTER|DT_NOPREFIX);
+		SelectObject(pItem->hDC, hOldF);
+		DeleteObject(hFont);
+	}
+	return TRUE;
+}
+
 INT_PTR CSettings::mainOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
 {
     switch (messg)
@@ -3054,50 +3195,10 @@ INT_PTR CSettings::mainOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
         break;
 
 	case WM_MEASUREITEM:
-		{
-			DWORD wID = wParam;
-			if (wID == tFontFace || wID == tFontFace2) {
-				MEASUREITEMSTRUCT *pItem = (MEASUREITEMSTRUCT*)lParam;
-				pItem->itemHeight = 16; //pItem->itemHeight;
-			}
-			return TRUE;
-		}
+		return gSet.OnMeasureFontItem(hWnd2, messg, wParam, lParam);
 
 	case WM_DRAWITEM:
-		{
-			DWORD wID = wParam;
-			if (wID == tFontFace || wID == tFontFace2) {
-				DRAWITEMSTRUCT *pItem = (DRAWITEMSTRUCT*)lParam;
-				wchar_t szText[128]; szText[0] = 0;
-				SendDlgItemMessage(hWnd2, wID, CB_GETLBTEXT, pItem->itemID, (LPARAM)szText);
-				DWORD bAlmostMonospace = (DWORD)SendDlgItemMessage(hWnd2, wID, CB_GETITEMDATA, pItem->itemID, 0);
-
-				COLORREF crText, crBack;
-				if (!(pItem->itemState & ODS_SELECTED)) {
-					crText = GetSysColor(COLOR_WINDOWTEXT);
-					crBack = GetSysColor(COLOR_WINDOW);
-				} else {
-					crText = GetSysColor(COLOR_HIGHLIGHTTEXT);
-					crBack = GetSysColor(COLOR_HIGHLIGHT);
-				}
-				SetTextColor(pItem->hDC, crText);
-				SetBkColor(pItem->hDC, crBack);
-				RECT rc = pItem->rcItem;
-				HBRUSH hBr = CreateSolidBrush(crBack);
-				FillRect(pItem->hDC, &rc, hBr);
-				DeleteObject(hBr);
-				rc.left++;
-				
-				HFONT hFont = CreateFont(8, 0,0,0,(bAlmostMonospace==1)?FW_BOLD:FW_NORMAL,0,0,0,
-					ANSI_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH,
-					L"MS Sans Serif");
-				HFONT hOldF = (HFONT)SelectObject(pItem->hDC, hFont);
-				DrawText(pItem->hDC, szText, wcslen(szText), &rc, DT_LEFT|DT_VCENTER|DT_NOPREFIX);
-				SelectObject(pItem->hDC, hOldF);
-				DeleteObject(hFont);
-			}
-			return TRUE;
-		}
+		return gSet.OnDrawFontItem(hWnd2, messg, wParam, lParam);
 
     //case WM_CTLCOLORSTATIC:
     //    for (uint i = 1 000; i < 1 016; i++)
@@ -3289,6 +3390,12 @@ INT_PTR CSettings::thumbsOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lP
 		gSet.OnInitDialog_Thumbs();
 		break;
 
+	case WM_MEASUREITEM:
+		return gSet.OnMeasureFontItem(hWnd2, messg, wParam, lParam);
+
+	case WM_DRAWITEM:
+		return gSet.OnDrawFontItem(hWnd2, messg, wParam, lParam);
+
 	case WM_CTLCOLORSTATIC:
 		for (uint i = c32; i <= MAX_COLOR_EDT_ID; i++)
 			if (GetDlgItem(hWnd2, i) == (HWND)lParam)
@@ -3316,7 +3423,11 @@ INT_PTR CSettings::thumbsOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lP
 			gSet.OnColorComboBox(wParam, lParam);
 		}
 		break;
+
 	default:
+		if (messg == gSet.mn_MsgLoadFontFromMain) {
+			gSet.OnInitDialog_ThumbsFonts();
+		}
 		return 0;
 	}
 	return 0;

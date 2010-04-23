@@ -499,7 +499,7 @@ int ShowMessage995(int aiMsg, int aiButtons)
 {
 	if (!InfoW995 || !InfoW995->Message || !InfoW995->GetMsg)
 		return -1;
-	return InfoW995->Message(InfoW995->ModuleNumber, FMSG_ALLINONE, NULL, 
+	return InfoW995->Message(InfoW995->ModuleNumber, FMSG_ALLINONE|FMSG_MB_OK|FMSG_WARNING, NULL, 
 		(const wchar_t * const *)InfoW995->GetMsg(InfoW995->ModuleNumber,aiMsg), 0, aiButtons);
 }
 

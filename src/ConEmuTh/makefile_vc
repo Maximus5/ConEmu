@@ -59,6 +59,8 @@
 !include ../make_vc_defs
 !endif
 
+SUBMODULES = gdi+
+
 DEF_NAME = export
 
 NEEDENTRY = 1
@@ -77,11 +79,11 @@ LINK_OBJS = \
 $(OBJDIR)\ConEmuTh.obj \
 $(OBJDIR)\ConEmuTh995.obj \
 $(OBJDIR)\ConEmuThA.obj \
-$(OBJDIR)\Display.obj
+$(OBJDIR)\Display.obj \
+$(OBJDIR)\ImgCache.obj \
+$(OBJDIR)\RgnDetect.obj
 
 #$(OBJDIR)\LogBrowser.obj
-
-USERLIBS = version.lib gdi32.lib
 
 
 !if defined(AMD64) || "$(CPU)" == "AMD64"
@@ -152,29 +154,28 @@ NOWIN98=/OPT:NOWIN98
 
 PDBNAME="$(OUTDIR)$(ADDOUTDIR)\$(OUTNAME).pdb"
 !ifndef DEBUG
-CPP_OPT=/DNDEBUG /O1i /Zi /Fd$(PDBNAME) /DHIDE_TODO /DCRTSTARTUP
+CPP_OPT=/DNDEBUG /O1i /Zi /Fd$(PDBNAME) /DHIDE_TODO 
+#/DCRTSTARTUP
 !else
-CPP_OPT=/DDEBUG /Od /Fd$(PDBNAME) /DCRTSTARTUP
+CPP_OPT=/DDEBUG /Od /Fd$(PDBNAME) 
+#/DCRTSTARTUP
 !endif
 
 !ifdef AMD64
-COMMONLIB = ../common/libCRT64.lib
-CPP_PROJ_NO=/nologo /c /W3 /Gy /GF /Zp8 /J $(COMPAT64) /GS- /Gr /GR- /EHs-c- /LD /I"$(COMINC)" $(ENV_INC_OPT) $(CPP_WIDE) /D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS /D_CRT_NON_CONFORMING_SWPRINTFS /D_WIN32_WINNT=0x0500 $(USERCPP)
+CPP_PROJ_NO=/nologo /c /MT /W3 /Gy /GF /Zp8 /J $(COMPAT64) /GS- /Gr /GR- /EHs-c- /LD /I"$(COMINC)" $(ENV_INC_OPT) $(CPP_WIDE) /D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS /D_CRT_NON_CONFORMING_SWPRINTFS /D_WIN32_WINNT=0x0500 $(USERCPP)
 ULOUT=-Tpd+
 LINK_MACHINE = /MACHINE:X64
 !elseif defined(IA64)
-COMMONLIB = ../common/libCRTIA64.lib
-CPP_PROJ_NO=/nologo /c /W3 /Gy /GF /Zp8 /J $(COMPAT64) /GS- /Gr /GR- /EHs-c- /LD /I"$(COMINC)" $(ENV_INC_OPT) $(CPP_WIDE) /D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS /D_CRT_NON_CONFORMING_SWPRINTFS /D_WIN32_WINNT=0x0500 $(USERCPP)
+CPP_PROJ_NO=/nologo /c /MT /W3 /Gy /GF /Zp8 /J $(COMPAT64) /GS- /Gr /GR- /EHs-c- /LD /I"$(COMINC)" $(ENV_INC_OPT) $(CPP_WIDE) /D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS /D_CRT_NON_CONFORMING_SWPRINTFS /D_WIN32_WINNT=0x0500 $(USERCPP)
 ULOUT=-Tpd+
 LINK_MACHINE = /MACHINE:X64
 !else
-COMMONLIB = ../common/libCRT.lib
 #../pvdCRT.lib
 !ifdef CPP_UNALIGN
 CPP_ALIGN=/Zp1
 !endif
 # /I"$(COMMON)"
-CPP_PROJ_NO=/nologo /c /W3 /Gy /GF $(CPP_ALIGN) /J /Gr /GS- /GR- /EHs-c- /LD /I"$(COMINC)" $(ENV_INC_OPT) $(CPP_WIDE) /D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS /D_CRT_NON_CONFORMING_SWPRINTFS /D_WIN32_WINNT=0x0500 $(USERCPP)
+CPP_PROJ_NO=/nologo /c /MT /W3 /Gy /GF $(CPP_ALIGN) /J /Gr /GS- /GR- /EHs-c- /LD /I"$(COMINC)" $(ENV_INC_OPT) $(CPP_WIDE) /D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS /D_CRT_NON_CONFORMING_SWPRINTFS /D_WIN32_WINNT=0x0500 /D_WINDLL $(USERCPP)
 ULOUT=-Tpd -Re
 LINK_MACHINE = /MACHINE:X86
 !endif
@@ -183,7 +184,9 @@ CPP_PROJ=$(CPP_PROJ_NO) /Fo"$(OBJDIR)\\"
 #!ifdef EXCLUDECRT
 #!undef COMMONLIB
 #!endif
-LIBS = $(COMMONLIB) chkstk.obj kernel32.lib user32.lib gdi32.lib advapi32.lib shell32.lib ole32.lib uuid.lib mpr.lib version.lib oleaut32.lib wbemuuid.lib $(USERLIBS)
+#LIBS = kernel32.lib user32.lib gdi32.lib version.lib shell32.lib Ole32.lib libcmt.lib
+
+LIBS = version.lib libcmt.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib
 
 !ifdef _BIN_PATH_
 !ifndef _CL_PATH_
@@ -198,29 +201,13 @@ _LINK_PATH_=$(_BIN_PATH_)
 !endif
 
 
-!ifndef ULINK
 LNK=$(_LINK_PATH_)link.exe
-LINK_DEBUG=/debug /pdb:$(PDBNAME)
+#LINK_DEBUG=/debug /pdb:$(PDBNAME)
 CPP_DEBUG=/Zi
-!ifndef NEEDENTRY
-NOENTRY = /noentry
-!endif
-!ifndef NEEDDEFLIB
-NODEFLIB = /nodefaultlib
-!endif
-LINK_FLAGS=/nologo /dll /release /merge:.rdata=.text $(LINK_MACHINE) $(NOWIN98) $(NOENTRY) $(NODEFLIB) $(ENV_LIB_OPT) /def:"$(DEF)" /map:"$(MAP)" /out:"$(DLLFULLNAME)"
-!else
-LINK_DEBUG=-v
-CPP_DEBUG=/Z7
-LNK=$(_ULINK_PATH_)ulink.exe +-
-!ifndef NEEDENTRY
-NOENTRY = -e-
-!endif
-!ifndef NEEDDEFLIB
-NODEFLIB = -n
-!endif
-LINK_FLAGS=-q $(ULOUT) -Gz -m- -Gh -Gh- $(LINK_MACHINE) $(NOENTRY) $(NODEFLIB) /ZD:"$(DEF)" /ZM:"$(MAP)" /ZO:"$(DLLFULLNAME)" $(ENV_LIB_OPT)
-!endif
+LINK_FLAGS=/nologo /SUBSYSTEM:WINDOWS /DYNAMICBASE /dll /release $(LINK_MACHINE) $(NOWIN98) $(ENV_LIB_OPT) /def:"$(DEF)" /map:"$(MAP)" /out:"$(DLLFULLNAME)"
+#LINK_FLAGS=/DEBUG /DEF:"export.def" /DLL /DYNAMICBASE /INCREMENTAL:NO /LTCG /MACHINE:X86 /MAP /NODEFAULTLIB /SUBSYSTEM:WINDOWS /OUT:"$(DLLFULLNAME)"
+
+
 
 !ifndef DEBUG
 !undef LINK_DEBUG
@@ -252,7 +239,7 @@ SRC_PATHS=.;..\common
 .path.def=$(SRC_PATHS)
 !endif
 
-ALL: dirs $(INSTALL) $(DLLFULLNAME) clean
+ALL: dirs $(INSTALL) $(DLLFULLNAME) clean $(SUBMODULES)
 
 $(DLLFULLNAME) : $(LINK_OBJS) $(RES) $(LINK_DEP)
 !ifndef __MAKE__
@@ -324,3 +311,18 @@ $(OBJDIR)\ConEmuTh995.obj: ConEmuTh995.cpp
 $(OBJDIR)\ConEmuThA.obj: ConEmuThA.cpp
 
 $(OBJDIR)\Display.obj: Display.cpp
+
+$(OBJDIR)\ImgCache.obj: ImgCache.cpp
+
+$(OBJDIR)\RgnDetect.obj: ..\common\RgnDetect.cpp
+
+
+
+FICTIVE=_fictive_
+$(FICTIVE):
+
+$(SUBMODULES): $(FICTIVE)
+	@echo ===========$@.$(BUILD_SUFFUX)
+	@cd Modules\$@
+	@$(MAKE) -s -f makefile_vc $(_MDEFS)
+	@cd ..\..

@@ -6912,7 +6912,7 @@ LRESULT CConEmuMain::OnSetCursor(WPARAM wParam, LPARAM lParam)
 
 	DEBUGSTRSETCURSOR(L"WM_SETCURSOR");
 
-	
+	BOOL lbMeFore = TRUE;
 
 	if (LOWORD(lParam) == HTCLIENT && mp_VActive) {
 		if (mh_DragCursor && isDragging()) {
@@ -6924,31 +6924,23 @@ LRESULT CConEmuMain::OnSetCursor(WPARAM wParam, LPARAM lParam)
 			else
 				hCur = mh_SplitV;
 		} else {
-			CRealConsole *pRCon = mp_VActive->RCon();
-			if (pRCon && pRCon->isFar(FALSE)) { // Плагин не нужен, ФАР сам...
-				MapWindowPoints(NULL, ghWndDC, &ptCur, 1);
-				COORD crCon = mp_VActive->ClientToConsole(ptCur.x,ptCur.y);
-				enum DragPanelBorder dpb = CheckPanelDrag(crCon);
-				if (dpb == DPB_SPLIT)
-					hCur = mh_SplitH;
-				else if (dpb != DPB_NONE)
-					hCur = mh_SplitV;
-				//RECT rcPanel;
-				//if (pRCon->GetPanelRect(TRUE, &rcPanel, TRUE)) {
-				//	if (crCon.X == rcPanel.left && (rcPanel.top <= crCon.Y && crCon.Y <= rcPanel.bottom))
-				//		hCur = mh_SplitH;
-				//	else if (crCon.Y == rcPanel.bottom && (rcPanel.left <= crCon.X && crCon.X <= rcPanel.right))
-				//		hCur = mh_SplitV;
-				//}
-				//if (!hCur && pRCon->GetPanelRect(FALSE, &rcPanel, TRUE)) {
-				//	if (crCon.Y == rcPanel.bottom && (rcPanel.left <= crCon.X && crCon.X <= rcPanel.right))
-				//		hCur = mh_SplitV;
-				//}
+			lbMeFore = isMeForeground();
+			if (lbMeFore) {
+				CRealConsole *pRCon = mp_VActive->RCon();
+				if (pRCon && pRCon->isFar(FALSE)) { // Плагин не нужен, ФАР сам...
+					MapWindowPoints(NULL, ghWndDC, &ptCur, 1);
+					COORD crCon = mp_VActive->ClientToConsole(ptCur.x,ptCur.y);
+					enum DragPanelBorder dpb = CheckPanelDrag(crCon);
+					if (dpb == DPB_SPLIT)
+						hCur = mh_SplitH;
+					else if (dpb != DPB_NONE)
+						hCur = mh_SplitV;
+				}
 			}
 		}
 	}
 
-	if (!hCur) {
+	if (!hCur && lbMeFore) {
 		if (mb_WaitCursor) {
 			hCur = mh_CursorWait;
 			DEBUGSTRSETCURSOR(L" ---> CursorWait\n");

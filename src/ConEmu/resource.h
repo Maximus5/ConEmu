@@ -1,5 +1,5 @@
 //{{NO_DEPENDENCIES}}
-// Microsoft Visual C++ generated include file.
+// Microsoft Developer Studio generated include file.
 // Used by ConEmu.rc
 //
 #define IDI_ICON1                       1
@@ -302,10 +302,15 @@
 #define lbThumbBackColorIdx             1672
 #define rbThumbPreviewBoxColorIdx       1673
 #define lbThumbBackColorIdx2            1674
+#define lbThumbPreviewBoxColorIdx       1674
 #define rbPreviewBoxColorRGB            1675
+#define rbThumbPreviewBoxColorRGB       1675
 #define rbThumbPreviewBoxColorIdx2      1676
+#define rbThumbSelectionBoxColorIdx     1676
 #define rbPreviewBoxColorRGB2           1677
+#define rbThumbSelectionBoxColorRGB     1677
 #define lbThumbBackColorIdx3            1678
+#define lbThumbSelectionBoxColorIdx     1678
 #define IDC_EDIT1                       1679
 #define tThumbLoadingTimeout            1679
 #define cbThumbUsePicView2              1680
@@ -327,6 +332,8 @@
 #define cbBgImage                       1699
 #define IDC_EDIT2                       1700
 #define tThumbSupportedExtensions       1700
+#define cbTilesPreviewBox               1701
+#define cbTilesSelectionBox             1702
 #define IDM_CLOSE                       40001
 #define IDM_RESTART                     40002
 #define IDM_RESTARTAS                   40003
@@ -343,7 +350,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        209
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         1701
+#define _APS_NEXT_CONTROL_VALUE         1703
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

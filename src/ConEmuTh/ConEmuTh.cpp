@@ -79,8 +79,6 @@ HWND ghLeftView = NULL, ghRightView = NULL;
 WCHAR gszRootKey[MAX_PATH*2];
 FarVersion gFarVersion;
 //HMODULE ghConEmuDll = NULL;
-typedef int (WINAPI *RegisterPanelView_t)(PanelViewInit *ppvi);
-typedef HWND (WINAPI *GetFarHWND2_t)(BOOL abConEmuOnly);
 RegisterPanelView_t gfRegisterPanelView = NULL;
 GetFarHWND2_t gfGetFarHWND2 = NULL;
 CeFullPanelInfo pviLeft = {0}, pviRight = {0};
@@ -88,12 +86,13 @@ int ShowLastError();
 CRgnDetect *gpRgnDetect = NULL;
 CImgCache  *gpImgCache = NULL;
 CEFAR_INFO gFarInfo = {0};
-COLORREF gcrColors[16];
+COLORREF gcrActiveColors[16], gcrFadeColors[16], *gcrCurColors = gcrActiveColors;
+bool gbFadeColors = false;
 //bool gbLastCheckWindow = false;
 DWORD gnRgnDetectFlags = 0;
 void CheckVarsInitialized();
 
-ThumbnailSettings gThSet; // = {96,96,1, 4,20, 1,1, 14, L"Tahoma"};
+PanelViewSettings gThSet = {0}; // параметры получаются из GUI при регистрации
 
 bool gbWaitForKeySequenceEnd = false;
 DWORD gnWaitForKeySeqTick = 0;
@@ -108,10 +107,6 @@ BOOL UngetBufferInput(WORD nCount, PINPUT_RECORD lpOneInput);
 void ResetUngetBuffer();
 BOOL ProcessConsoleInput(BOOL abUseUngetBuffer, PINPUT_RECORD lpBuffer, DWORD nBufSize, LPDWORD lpNumberOfEventsRead);
 
-#define EVENT_TYPE_REDRAW 250
-#define TH_ENVVAR_NAME L"FarThumbnails"
-#define TH_ENVVAR_ACTIVE L"Active"
-#define TH_ENVVAR_SCROLL L"Scrolling"
 
 
 // minimal(?) FAR version 2.0 alpha build FAR_X_VER
@@ -147,7 +142,7 @@ HANDLE WINAPI _export OpenPluginW(int OpenFrom,INT_PTR Item)
 	if (!gbInfoW_OK || !CheckConEmu(TRUE))
 		return INVALID_HANDLE_VALUE;
 		
-	gThSet.Load();
+	//gThSet.Load();
 	// При открытии плагина - загрузить информацию об обеих панелях. Нужно для определения регионов!
 	ReloadPanelsInfo();
 
@@ -158,24 +153,41 @@ HANDLE WINAPI _export OpenPluginW(int OpenFrom,INT_PTR Item)
 	}
 	pi->OurTopPanelItem = pi->TopPanelItem;
 	HWND hView = (pi->bLeftPanel) ? ghLeftView : ghRightView;
-	
+
+	PanelViewMode PVM = pvm_None;
+	if ((OpenFrom & OPEN_FROMMACRO) == OPEN_FROMMACRO) {
+		if (Item == pvm_Thumbnails || Item == pvm_Tiles)
+			PVM = (PanelViewMode)Item;
+	}
+
+	if (PVM == pvm_None) {
+		TODO("Показать меню с выбором режима, а пока - Thumbs");
+		PVM = pvm_Thumbnails;
+	}
+
 	
 	BOOL lbRc = FALSE;
 	DWORD dwErr = 0;
 
-	if (hView == NULL) {
-		// Нужно создать View
-		hView = CreateView(pi);
+	// Если View не создан, или смена режима
+	if ((hView == NULL) || (PVM != pi->PVM)) {
+		pi->PVM = PVM;
+		if (hView == NULL) {
+			// Нужно создать View
+			hView = pi->CreateView();
+		}
 		if (hView == NULL) {
 			// Показать ошибку
 			ShowLastError();
 		} else {
 			// Зарегистрироваться
-			RegisterPanelView(pi->bLeftPanel);
+			_ASSERTE(pi->PVM==PVM);
+			pi->RegisterPanelView();
+			_ASSERTE(pi->PVM==PVM);
 		}
 	} else {
 		// Отрегистрироваться
-		UnregisterPanelView(pi->bLeftPanel);
+		pi->UnregisterPanelView();
 	}
 
 	return INVALID_HANDLE_VALUE;
@@ -309,108 +321,6 @@ BOOL CheckConEmu(BOOL abForceCheck)
 	return TRUE;
 }
 
-int RegisterPanelView(BOOL abLeft)
-{
-	// Страховка от того, что conemu.dll могли выгрузить (unload:...)
-	if (!CheckConEmu() || !gfRegisterPanelView)
-		return -1;
-
-	CeFullPanelInfo* pi = abLeft ? &pviLeft : &pviRight;
-
-	PanelViewInit pvi = {sizeof(PanelViewInit)};
-	pvi.bLeftPanel = pi->bLeftPanel;
-	pvi.nFarInterfaceSettings = pi->nFarInterfaceSettings;
-	pvi.nFarPanelSettings = pi->nFarPanelSettings;
-	pvi.PanelRect = pi->PanelRect;
-	pvi.pfnPeekPreCall = OnPrePeekConsole;
-	pvi.pfnPeekPostCall = OnPostPeekConsole;
-	pvi.pfnReadPreCall = OnPreReadConsole;
-	pvi.pfnReadPostCall = OnPostReadConsole;
-	pvi.pfnWriteCall = OnPreWriteConsoleOutput;
-
-	// Зарегистрироваться (или обновить положение)
-	pvi.bRegister = TRUE;
-	pvi.hWnd = pi->hView;
-
-	BOOL lbRc = FALSE;
-	DWORD dwErr = 0;
-	int nRc = gfRegisterPanelView(&pvi);
-
-	// Если GUI отказался от панели - нужно ее закрыть
-	if (nRc != 0) {
-		// Закрыть окно (по WM_CLOSE окно само должно послать WM_QUIT если оно единственное)
-		_ASSERTE(nRc == 0);
-
-		// Если эта панель единственная - сразу сбрасываем переменные
-		if (!pviLeft.hView || !pviRight.hView) {
-			ResetUngetBuffer();
-			SetEnvironmentVariable(TH_ENVVAR_NAME, NULL);
-		}
-
-		PostMessage(pi->hView, WM_CLOSE, 0, 0);
-		gnCreateViewError = CEGuiDontAcceptPanel;
-		gnWin32Error = nRc;
-
-		if (GetCurrentThreadId() == gnMainThreadId) {
-			ShowLastError();
-		}
-	} else {
-		for (int i=0; i<16; i++)
-			gcrColors[i] = GetWindowLong(pi->hView, 4*i);
-		_ASSERTE(gpRgnDetect!=NULL);
-		if (gpRgnDetect->InitializeSBI(gcrColors)) {
-			gpRgnDetect->PrepareTransparent(&gFarInfo, gcrColors);
-		}
-
-		gnRgnDetectFlags = gpRgnDetect->GetFlags();
-		//gbLastCheckWindow = true;
-
-		if (!IsWindowVisible(pi->hView)) {
-			lbRc = ShowWindow(pi->hView, SW_SHOWNORMAL);
-			if (!lbRc)
-				dwErr = GetLastError();
-		}
-		_ASSERTE(lbRc || IsWindowVisible(pi->hView));
-		InvalidateRect(pi->hView, NULL, FALSE);
-		RedrawWindow(pi->hView, NULL, NULL, RDW_INTERNALPAINT|RDW_UPDATENOW);
-
-		UpdateEnvVar(FALSE);
-	}
-
-	return nRc;
-}
-
-int UnregisterPanelView(BOOL abLeft)
-{
-	// Страховка от того, что conemu.dll могли выгрузить (unload:...)
-	if (!CheckConEmu() || !gfRegisterPanelView)
-		return -1;
-
-	// Если эта панель единственная - сразу сбрасываем переменные
-	if (!pviLeft.hView || !pviRight.hView) {
-		ResetUngetBuffer();
-		SetEnvironmentVariable(TH_ENVVAR_NAME, NULL);
-	}
-
-	CeFullPanelInfo* pi = abLeft ? &pviLeft : &pviRight;
-
-	PanelViewInit pvi = {sizeof(PanelViewInit)};
-	pvi.bLeftPanel = pi->bLeftPanel;
-	pvi.nFarInterfaceSettings = pi->nFarInterfaceSettings;
-	pvi.nFarPanelSettings = pi->nFarPanelSettings;
-	pvi.PanelRect = pi->PanelRect;
-
-	// Отрегистрироваться
-	pvi.bRegister = FALSE;
-	pvi.hWnd = pi->hView;
-
-	int nRc = gfRegisterPanelView(&pvi);
-
-	// Закрыть окно (по WM_CLOSE окно само должно послать WM_QUIT если оно единственное)
-	PostMessage(pi->hView, WM_CLOSE, 0, 0);
-
-	return nRc;
-}
 
 HWND GetConEmuHWND()
 {
@@ -785,13 +695,13 @@ void ReloadPanelsInfo()
 	if (pviLeft.hView) {
 		if (bLeftVisible && pviLeft.Visible) {
 			if (memcmp(&rcLeft, &pviLeft.PanelRect, sizeof(RECT)))
-				RegisterPanelView(TRUE);
+				pviLeft.RegisterPanelView();
 		}
 	}
 	if (pviRight.hView) {
 		if (bRightVisible && pviRight.Visible) {
 			if (memcmp(&rcRight, &pviRight.PanelRect, sizeof(RECT)))
-				RegisterPanelView(FALSE);
+				pviRight.RegisterPanelView();
 		}
 	}
 }
@@ -1055,12 +965,12 @@ BOOL WINAPI OnPreWriteConsoleOutput(HANDLE hOutput,const CHAR_INFO *lpBuffer,COO
 {
 	WARNING("После повторного отображения view - хорошо бы сначала полностью считать gpRgnDetect из консоли");
 	if (gpRgnDetect && lpBuffer && lpWriteRegion) {
-		gpRgnDetect->OnWriteConsoleOutput(lpBuffer, dwBufferSize, dwBufferCoord, lpWriteRegion, gcrColors);
+		gpRgnDetect->OnWriteConsoleOutput(lpBuffer, dwBufferSize, dwBufferCoord, lpWriteRegion, gcrCurColors);
 
 		// Сбросим, чтобы RgnDetect попытался сам найти панели и диалоги.
 		// Это нужно чтобы избежать возможных блокировок фара
 		//gFarInfo.bFarPanelInfoFilled = gFarInfo.bFarLeftPanel = gFarInfo.bFarRightPanel = FALSE;
-		gpRgnDetect->PrepareTransparent(&gFarInfo, gcrColors);
+		gpRgnDetect->PrepareTransparent(&gFarInfo, gcrCurColors);
 	}
 
 	WARNING("Если панели скрыты (активен редактор/вьювер) - не пытаться считывать панели");
@@ -1089,10 +999,14 @@ BOOL WINAPI OnPreWriteConsoleOutput(HANDLE hOutput,const CHAR_INFO *lpBuffer,COO
 			if (pviLeft.hView || pviRight.hView) {
 				ReloadPanelsInfo();
 			}
-			if (pviLeft.hView)
+			if (pviLeft.hView) {
+				pviLeft.DisplayReloadPanel();
 				InvalidateRect(pviLeft.hView, NULL, FALSE);
-			if (pviRight.hView)
+			}
+			if (pviRight.hView) {
+				pviRight.DisplayReloadPanel();
 				InvalidateRect(pviRight.hView, NULL, FALSE);
+			}
 		}
 	}
 
@@ -1434,4 +1348,30 @@ void CheckVarsInitialized()
 		gFarInfo.nFarTID = GetCurrentThreadId();
 		gFarInfo.bFarPanelAllowed = TRUE;
 	}
+}
+
+void CeFullPanelInfo::FreeInfo()
+{
+	if (ppItems) {
+		for (int i=0; i<ItemsNumber; i++)
+			if (ppItems[i]) free(ppItems[i]);
+		free(ppItems);
+		ppItems = NULL;
+	}
+	nMaxItemsNumber = 0;
+	if (pszPanelDir) {
+		free(pszPanelDir);
+		pszPanelDir = NULL;
+	}
+	nMaxPanelDir = 0;
+	if (nFarColors) {
+		free(nFarColors);
+		nFarColors = NULL;
+	}
+	nMaxFarColors = 0;
+	if (pFarTmpBuf) {
+		free(pFarTmpBuf);
+		pFarTmpBuf = NULL;
+	}
+	nFarTmpBuf = 0;
 }

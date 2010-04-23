@@ -12,3 +12,5 @@
 "ConEmu Thumbnails\nНе удалось зарегистрировать класс\nErrCode=0x%08X"
 "ConEmu Thumbnails\nНе удалось создать окно панели\nErrCode=0x%08X"
 "ConEmu Thumbnails\nНе удалось зарегистрировать вид в ConEmu\nErrCode=%i"
+"ConEmu Thumbnails\nВнутренняя ошибка. Запрошен неизвестный режим панели."
+"ConEmu Thumbnails\nВнутренняя ошибка. Получена некорректная структура настроек."

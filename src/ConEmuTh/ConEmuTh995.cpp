@@ -73,7 +73,7 @@ int ShowMessage995(LPCWSTR asMsg, int aiButtons)
 {
 	if (!InfoW995 || !InfoW995->Message)
 		return -1;
-	return InfoW995->Message(InfoW995->ModuleNumber, FMSG_ALLINONE, NULL, 
+	return InfoW995->Message(InfoW995->ModuleNumber, FMSG_ALLINONE|FMSG_MB_OK|FMSG_WARNING, NULL, 
 		(const wchar_t * const *)asMsg, 0, aiButtons);
 }
 

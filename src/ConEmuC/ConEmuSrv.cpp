@@ -1034,10 +1034,15 @@ HWND Attach2Gui(DWORD nTimeout)
 			wchar_t szPipe[64];
 			wsprintf(szPipe, CEGUIPIPENAME, L".", (DWORD)hGui);
 			CESERVER_REQ *pOut = ExecuteCmd(szPipe, &In, GUIATTACH_TIMEOUT, ghConWnd);
-			if (pOut) {
+			if (!pOut) {
+				_ASSERTE(pOut!=NULL);
+			} else {
 				//ghConEmuWnd = hGui;
 				ghConEmuWnd = pOut->StartStopRet.hWnd;
 				hDcWnd = pOut->StartStopRet.hWndDC;
+				_ASSERTE(srv.pConsoleInfo != NULL); // мэппинг уже должен быть создан,
+				_ASSERTE(srv.pConsoleInfoCopy == NULL); // а локальная копия вроде еще нет
+				srv.pConsoleInfo->nGuiPID = pOut->StartStopRet.dwPID;
 
 				//DisableAutoConfirmExit();
 

@@ -128,7 +128,7 @@ int ShowMessageA(LPCSTR asMsg, int aiButtons)
 {
 	if (!InfoA || !InfoA->Message)
 		return -1;
-	return InfoA->Message(InfoA->ModuleNumber, FMSG_ALLINONE, NULL, 
+	return InfoA->Message(InfoA->ModuleNumber, FMSG_ALLINONE|FMSG_MB_OK|FMSG_WARNING, NULL, 
 		(const char * const *)asMsg, 0, aiButtons);
 }
 
@@ -223,7 +223,8 @@ BOOL IsMacroActiveA()
 
 void LoadPanelItemInfoA(CeFullPanelInfo* pi, int nItem)
 {
-	TODO("CeFullPanelInfo* LoadPanelInfoA()");
+	// Вся информация считывается целиком по панели!
+	return;
 }
 
 BOOL LoadPanelInfoA(BOOL abActive)

@@ -161,6 +161,7 @@ private:
 	HRGN CreateConsoleRgn(int x1, int y1, int x2, int y2, BOOL abTestOnly);
 	BOOL CheckDialogsChanged();
 	BOOL mb_DialogsChanged;
+	UINT mn_ConEmuFadeMsg;
 	
 public:
 	bool isEditor, isViewer, isFilePanel, isFade, isForeground;
