@@ -1,0 +1,17 @@
+REGEDIT4
+
+[HKEY_CURRENT_USER\Software\Far\KeyBarLabels\English\Shell]
+"CtrlShiftF1"="Thumb"
+"CtrlShiftF2"="Tiles"
+
+[HKEY_CURRENT_USER\Software\Far\KeyBarLabels\Russian\Shell]
+"CtrlShiftF1"="Эскиз"
+"CtrlShiftF2"="Плитка"
+
+[HKEY_CURRENT_USER\Software\Far2\KeyBarLabels\English\Shell]
+"CtrlShiftF1"="Thumb"
+"CtrlShiftF2"="Tiles"
+
+[HKEY_CURRENT_USER\Software\Far2\KeyBarLabels\Russian\Shell]
+"CtrlShiftF1"="Эскиз"
+"CtrlShiftF2"="Плитка"
