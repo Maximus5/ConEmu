@@ -29,6 +29,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <windows.h>
 #include "..\common\pluginA.hpp"
 #include "ConEmuTh.h"
+#include "ImgCache.h"
 
 //#define SHOW_DEBUG_EVENTS
 
@@ -89,6 +90,15 @@ void WINAPI _export SetStartupInfo(const struct PluginStartupInfo *aInfo)
 	if (*pszSlash == L'\\') *(pszSlash--) = 0;
 	while (pszSlash>gszRootKey && *pszSlash!=L'\\') pszSlash--;
 	*pszSlash = 0;
+
+	wchar_t szTemp[MAX_PATH];	
+	lstrcpynW(gsFolder, GetMsgA(CEDirFolder, szTemp), sizeofarray(gsFolder));
+	lstrcpynW(gsSymLink, GetMsgA(CEDirSymLink, szTemp), sizeofarray(gsSymLink));
+	lstrcpynW(gsJunction, GetMsgA(CEDirJunction, szTemp), sizeofarray(gsJunction));
+	
+	if (!gpImgCache) {
+		gpImgCache = new CImgCache(ghPluginModule);
+	}
 }
 
 void WINAPI _export GetPluginInfo(struct PluginInfo *pi)
@@ -96,7 +106,7 @@ void WINAPI _export GetPluginInfo(struct PluginInfo *pi)
     static char *szMenu[1], szMenu1[255];
 	szMenu[0]=szMenu1;
 
-	lstrcpynA(szMenu1, InfoA->GetMsg(InfoA->ModuleNumber,0), 240);
+	lstrcpynA(szMenu1, InfoA->GetMsg(InfoA->ModuleNumber,CEPluginName), 240);
 
 	pi->StructSize = sizeof(struct PluginInfo);
 	pi->Flags = 0; // PF_PRELOAD; //TODO: Поставить Preload, если нужно будет восстанавливать при старте
@@ -112,7 +122,7 @@ void WINAPI _export GetPluginInfo(struct PluginInfo *pi)
 
 void   WINAPI _export ExitFAR(void)
 {
-	StopThread();
+	ExitPlugin();
 
 	if (InfoA) {
 		free(InfoA);
@@ -195,10 +205,10 @@ int ShowPluginMenuA()
 	//return nRc;
 }
 
-void GetMsgA(int aiMsg, wchar_t* rsMsg/*MAX_PATH*/)
+const wchar_t* GetMsgA(int aiMsg, wchar_t* rsMsg/*MAX_PATH*/)
 {
 	if (!rsMsg || !InfoA)
-		return;
+		return L"";
 	LPCSTR pszMsg = InfoA->GetMsg(InfoA->ModuleNumber,aiMsg);
 	if (pszMsg && *pszMsg) {
 		int nLen = (int)lstrlenA(pszMsg);
@@ -208,6 +218,7 @@ void GetMsgA(int aiMsg, wchar_t* rsMsg/*MAX_PATH*/)
 	} else {
 		rsMsg[0] = 0;
 	}
+	return rsMsg;
 }
 
 BOOL IsMacroActiveA()

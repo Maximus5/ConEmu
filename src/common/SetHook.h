@@ -37,11 +37,13 @@ typedef struct HookCallbackArg
 	DWORD_PTR lArguments[10];
 } HookCallbackArg;
 
-// PreCallback may returns (FALSE) to skip original function calling,
+// PreCallBack may returns (FALSE) to skip original function calling,
 //		in that case, caller got pArgs->lResult
 typedef BOOL (WINAPI* HookItemPreCallback_t)(HookCallbackArg* pArgs);
 // PostCallBack can modify pArgs->lResult only
 typedef VOID (WINAPI* HookItemPostCallback_t)(HookCallbackArg* pArgs);
+// ExceptCallBack can modify pArgs->lResult only
+typedef VOID (WINAPI* HookItemExceptCallback_t)(HookCallbackArg* pArgs);
 
 typedef struct HookItem
 {
@@ -67,8 +69,9 @@ typedef struct HookItem
 	void*   ExeOldAddress; // function address from executable module (may be replaced by other libraries)
 	
 	// 'll be called before and after 'real' function
-	HookItemPreCallback_t	PreCallBack;
-	HookItemPostCallback_t	PostCallBack;
+	HookItemPreCallback_t	 PreCallBack;
+	HookItemPostCallback_t	 PostCallBack;
+	HookItemExceptCallback_t ExceptCallBack;
 } HookItem;
 
 
@@ -77,7 +80,8 @@ extern "C"{
 #endif
 
 bool __stdcall SetHookCallbacks( const char* ProcName, const wchar_t* DllName,
-								 HookItemPreCallback_t PreCallBack, HookItemPostCallback_t PostCallBack );
+								 HookItemPreCallback_t PreCallBack, HookItemPostCallback_t PostCallBack,
+								 HookItemExceptCallback_t ExceptCallBack = NULL );
 
 //void* __stdcall GetOriginalAddress( void* OurFunction, void* DefaultFunction, BOOL abAllowModified );
 

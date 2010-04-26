@@ -1,7 +1,15 @@
 .Language=English,English
 
 // Plugin title
-"ConEmu Thumbnails"
+"ConEmu Panel Views"
+// Panel modes
+"Thumbnails mode"
+// Panel modes
+"Tiles mode"
+"Folder"
+"Sym."
+"Junc."
+// Error messages
 "ConEmu Thumbnails\nConEmu plugin not found,\nThumbnails will not be available."
 "ConEmu Thumbnails\nOld version of ConEmu plugin,\nThumbnails will not be available."
 "ConEmu Thumbnails\nThumbnails are not available in plain Far.\nFar Manager was not started under ConEmu?"

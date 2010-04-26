@@ -242,6 +242,7 @@ public:
 	
 	// Thumbnails and Tiles
 	PanelViewSettings ThSet;
+	MFileMapping<PanelViewSettings> m_ThSetMap;
     
     // Working variables...
     HBITMAP hBgBitmap;
@@ -252,7 +253,7 @@ public:
     WORD    CharWidth[0x10000]; //, Font2Width[0x10000];
 	ABC     CharABC[0x10000];
 
-    HWND hMain, hExt, hTabs, hColors, hThumbs, hInfo;
+    HWND hMain, hExt, hTabs, hColors, hViews, hInfo;
 
     bool LoadImageFrom(TCHAR *inPath, bool abShowErrors=false);
 	//static void CenterDialog(HWND hWnd2);
@@ -261,7 +262,7 @@ public:
     static INT_PTR CALLBACK extOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
 	static INT_PTR CALLBACK tabsOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
     static INT_PTR CALLBACK colorOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
-	static INT_PTR CALLBACK thumbsOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
+	static INT_PTR CALLBACK viewsOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
     static INT_PTR CALLBACK infoOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
 	static INT_PTR CALLBACK hideOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
 	//static INT_PTR CALLBACK multiOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
@@ -299,8 +300,8 @@ protected:
 	LRESULT OnInitDialog_Ext();
 	LRESULT OnInitDialog_Tabs();
 	LRESULT OnInitDialog_Color();
-	LRESULT OnInitDialog_Thumbs();
-	LRESULT OnInitDialog_ThumbsFonts();
+	LRESULT OnInitDialog_Views();
+	LRESULT OnInitDialog_ViewsFonts();
 	LRESULT OnInitDialog_Info();
     LRESULT OnButtonClicked(WPARAM wParam, LPARAM lParam);
     LRESULT OnColorButtonClicked(WPARAM wParam, LPARAM lParam);
@@ -314,6 +315,10 @@ protected:
 private:
 	bool GetColorById(WORD nID, COLORREF* color);
 	bool SetColorById(WORD nID, COLORREF color);
+	void ColorSetEdit(HWND hWnd2, WORD c);
+	bool ColorEditDialog(HWND hWnd2, WORD c);
+	HBRUSH mh_CtlColorBrush;
+	INT_PTR ColorCtlStatic(HWND hWnd2, WORD c, HWND hItem);
     COLORREF acrCustClr[16]; // array of custom colors
     BOOL mb_IgnoreEditChanged, mb_IgnoreTtfChange, mb_CharSetWasSet;
     i64 mn_Freq;

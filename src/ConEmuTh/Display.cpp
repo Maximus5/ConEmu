@@ -52,11 +52,9 @@ DWORD gnWin32Error = 0;
 //ITEMIDLIST DesktopID = {{0}};
 //IShellFolder *gpDesktopFolder = NULL;
 BOOL gbCancelAll = FALSE;
-//CThumbnails *gpImgCache = NULL;
-extern CImgCache  *gpImgCache;
 extern COLORREF gcrActiveColors[16], gcrFadeColors[16], *gcrCurColors;
 extern bool gbFadeColors;
-UINT gnConEmuFadeMsg = 0;
+UINT gnConEmuFadeMsg = 0, gnConEmuSettingsMsg = 0;
 extern CRgnDetect *gpRgnDetect;
 extern CEFAR_INFO gFarInfo;
 extern DWORD gnRgnDetectFlags;
@@ -247,6 +245,12 @@ LRESULT CALLBACK CeFullPanelInfo::DisplayWndProc(HWND hwnd, UINT uMsg, WPARAM wP
 				PostThreadMessage(gnDisplayThreadId, WM_QUIT, 0, 0);
 			return 0;
 		}
+	case WM_DESTROY:
+		{
+			if (!ghLeftView && !ghRightView)
+				PostThreadMessage(gnDisplayThreadId, WM_QUIT, 0, 0);
+			return 0;
+		}
 	default:
 		if (uMsg == gnConEmuFadeMsg) {
 			SetWindowLong(hwnd, 16*4, (DWORD)lParam);
@@ -254,6 +258,31 @@ LRESULT CALLBACK CeFullPanelInfo::DisplayWndProc(HWND hwnd, UINT uMsg, WPARAM wP
 				gbFadeColors = (lParam == 2);
 				gcrCurColors = gbFadeColors ? gcrFadeColors : gcrActiveColors;
 				//InvalidateRect(hwnd, NULL, FALSE); -- не требуетс€
+			}
+		} else if (uMsg == gnConEmuSettingsMsg) {
+			WARNING("gnConEmuSettingsMsg");
+			MFileMapping<PanelViewSettings> ThSetMap;
+			_ASSERTE(ghConEmuRoot!=NULL);
+
+			DWORD nGuiPID;
+			#ifdef _DEBUG
+			GetWindowThreadProcessId(ghConEmuRoot, &nGuiPID);
+			_ASSERTE(nGuiPID == wParam);
+			#endif
+			nGuiPID = wParam;
+
+			ThSetMap.InitName(CECONVIEWSETNAME, nGuiPID);
+			if (!ThSetMap.Open()) {
+				MessageBox(NULL, ThSetMap.GetErrorText(), L"ConEmuTh", MB_ICONSTOP|MB_SETFOREGROUND|MB_SYSTEMMODAL);
+			} else {
+				ThSetMap.Get(&gThSet);
+				ThSetMap.CloseMap();
+				gpImgCache->Reset();
+				// и обновить
+				if (pviLeft.hView)
+					pviLeft.OnSettingsChanged(TRUE);
+				if (pviRight.hView)
+					pviRight.OnSettingsChanged(TRUE);
 			}
 		}
 	}
@@ -270,7 +299,8 @@ DWORD WINAPI CeFullPanelInfo::DisplayThread(LPVOID lpvParam)
 
 	_ASSERTE(gpImgCache);
 
-	gnConEmuFadeMsg = RegisterWindowMessage(CONEMUMSG_FADETHUMBNAILS);
+	gnConEmuFadeMsg = RegisterWindowMessage(CONEMUMSG_PNLVIEWFADE);
+	gnConEmuSettingsMsg = RegisterWindowMessage(CONEMUMSG_PNLVIEWSETTINGS);
 
 
 	// ¬ыставл€ем событие, что нить готова
@@ -308,8 +338,10 @@ DWORD WINAPI CeFullPanelInfo::DisplayThread(LPVOID lpvParam)
 	//CloseHandle(ghDisplayThread); ghDisplayThread = NULL;
 	gnDisplayThreadId = 0;
 
-	delete gpImgCache;
-	gpImgCache = NULL;
+	// 26.04.2010 Maks - delete нельз€! не будем выгружать gdiplus.dll до выхода из фара. валитс€...
+	//delete gpImgCache;
+	//gpImgCache = NULL;
+	gpImgCache->Reset(); // только Reset.
 
 	// ќсвободить пам€ть
 	pviLeft.FreeInfo();
@@ -328,8 +360,8 @@ BOOL CeFullPanelInfo::PaintItem(HDC hdc, int x, int y, CePluginPanelItem* pItem,
 			   //int nXIcon, int nYIcon, int nXIconSpace, int nYIconSpace,
 			   BOOL abAllowPreview, HBRUSH hBackBrush)
 {
-	const wchar_t* pszName = pItem->FindData.lpwszFileNamePart;
-	int nLen = lstrlen(pszName);
+	//const wchar_t* pszName = pItem->FindData.lpwszFileNamePart;
+	//int nLen = lstrlen(pszName);
 	//int nDrawRC = -1;
 	//SHFILEINFO sfi = {NULL};
 	//UINT cbSize = sizeof(sfi);
@@ -340,45 +372,54 @@ BOOL CeFullPanelInfo::PaintItem(HDC hdc, int x, int y, CePluginPanelItem* pItem,
 	if (gbCancelAll)
 		return FALSE;
 
+	RECT rcFull = {x, y, x+nWholeW, y+nWholeH};
+	FillRect(hdc, &rcFull, hBack[0]);
 
-	if (gThSet.nThumbFrame == 1) {
+	if (gThSet.nPreviewFrame == 1) {
 		Rectangle(hdc,
 			x+Spaces.nSpaceX1, y+Spaces.nSpaceY1,
-			x+Spaces.nSpaceX1+(Spaces.nImgSize+2*gThSet.nThumbFrame), y+Spaces.nSpaceY1+(Spaces.nImgSize+2*gThSet.nThumbFrame));
+			x+Spaces.nSpaceX1+(Spaces.nImgSize+2*gThSet.nPreviewFrame), y+Spaces.nSpaceY1+(Spaces.nImgSize+2*gThSet.nPreviewFrame));
 		/*
 		Rectangle(hdc,
 			x+gThSet.nHPadding, y+gThSet.nVPadding,
 			x+gThSet.nHPadding+gThSet.nWidth, y+gThSet.nVPadding+gThSet.nHeight);
 		*/
-	} else if (gThSet.nThumbFrame == 0) {
+	} else if (gThSet.nPreviewFrame == 0) {
 		RECT rcTmp = {x+Spaces.nSpaceX1, y+Spaces.nSpaceY1,
-			x+Spaces.nSpaceX1+(Spaces.nImgSize+2*gThSet.nThumbFrame), y+Spaces.nSpaceY1+(Spaces.nImgSize+2*gThSet.nThumbFrame)};
+			x+Spaces.nSpaceX1+(Spaces.nImgSize+2*gThSet.nPreviewFrame), y+Spaces.nSpaceY1+(Spaces.nImgSize+2*gThSet.nPreviewFrame)};
 		/*
 		RECT rcTmp = {x+gThSet.nHPadding, y+gThSet.nVPadding,
 			x+gThSet.nHPadding+gThSet.nWidth, y+gThSet.nVPadding+gThSet.nHeight};
 		*/
 		FillRect(hdc, &rcTmp, hBackBrush);
 	} else {
-		_ASSERTE(gThSet.nThumbFrame==0 || gThSet.nThumbFrame==1);
+		_ASSERTE(gThSet.nPreviewFrame==0 || gThSet.nPreviewFrame==1);
 		return FALSE;
 	}
 
-	gpImgCache->PaintItem(hdc, x+gThSet.nThumbFrame+Spaces.nSpaceX1, y+gThSet.nThumbFrame+Spaces.nSpaceY1,
-		Spaces.nImgSize, pItem, abAllowPreview);
+	const wchar_t* pszComments = NULL;
+	gpImgCache->PaintItem(hdc, x+gThSet.nPreviewFrame+Spaces.nSpaceX1, y+gThSet.nPreviewFrame+Spaces.nSpaceY1,
+		Spaces.nImgSize, pItem, abAllowPreview, &pszComments);
 
-	RECT rcClip = {0};
+	RECT rcClip = {0}, rcMaxText;
 	COLORREF crBack = 0, crFore = 0;
 	
 	if (PVM == pvm_Thumbnails) {
 		rcClip.left   = x+Spaces.nSpaceX1;
-		rcClip.top    = y+Spaces.nSpaceY1+(Spaces.nImgSize+2*gThSet.nThumbFrame)+Spaces.nSpaceLabel;
-		rcClip.right  = x+Spaces.nSpaceX1+(Spaces.nImgSize+2*gThSet.nThumbFrame);
-		rcClip.bottom = y+Spaces.nSpaceY1+(Spaces.nImgSize+2*gThSet.nThumbFrame)+nFontHeight+2;
+		rcClip.top    = y+Spaces.nSpaceY1+(Spaces.nImgSize+2*gThSet.nPreviewFrame)+Spaces.nLabelSpacing;
+		rcClip.right  = x+Spaces.nSpaceX1+(Spaces.nImgSize+2*gThSet.nPreviewFrame);
+		rcClip.bottom = y+Spaces.nSpaceY1+(Spaces.nImgSize+2*gThSet.nPreviewFrame)+nFontHeight+2;
+		//
+		rcMaxText = rcClip;
 	} else if (PVM == pvm_Tiles) {
-		rcClip.left   = x+Spaces.nSpaceX1+(Spaces.nImgSize+2*gThSet.nThumbFrame)+Spaces.nSpaceLabel;
+		rcClip.left   = x+Spaces.nSpaceX1+(Spaces.nImgSize+2*gThSet.nPreviewFrame)+Spaces.nLabelSpacing;
 		rcClip.top    = y+Spaces.nSpaceY1;
-		rcClip.right  = x+Spaces.nSpaceX1+(Spaces.nImgSize+2*gThSet.nThumbFrame)+Spaces.nSpaceX2;
-		rcClip.bottom = y+Spaces.nSpaceY1+(Spaces.nImgSize+2*gThSet.nThumbFrame);
+		rcClip.right  = x+Spaces.nSpaceX1+(Spaces.nImgSize+2*gThSet.nPreviewFrame)+Spaces.nSpaceX2;
+		rcClip.bottom = y+Spaces.nSpaceY1+(Spaces.nImgSize+2*gThSet.nPreviewFrame);
+		//
+		rcMaxText = rcClip;
+		rcMaxText.top = y;
+		rcMaxText.bottom = y+2*Spaces.nSpaceY1+(Spaces.nImgSize+2*gThSet.nPreviewFrame);
 	}
 
 	int nIdx = ((pItem->Flags & (0x40000000/*PPIF_SELECTED*/)) ? 
@@ -395,14 +436,150 @@ BOOL CeFullPanelInfo::PaintItem(HDC hdc, int x, int y, CePluginPanelItem* pItem,
 	SetTextColor(hdc, crFore);
 	SetBkColor(hdc, crBack);
 	//ExtTextOut(hdc, rcClip.left,rcClip.top, ETO_CLIPPED, &rcClip, pszName, nLen, NULL);
-	DrawText(hdc, pszName, nLen, &rcClip, DT_END_ELLIPSIS|DT_NOPREFIX|DT_SINGLELINE|DT_VCENTER);
+	if (Spaces.nLabelPadding && Spaces.nLabelPadding < ((rcClip.right-rcClip.left)/3)) {
+		rcClip.left += Spaces.nLabelPadding; rcClip.right -= Spaces.nLabelPadding;
+	}
+	//DrawText(hdc, pszName, nLen, &rcClip, DT_END_ELLIPSIS|DT_NOPREFIX|DT_SINGLELINE|DT_VCENTER);
+	DrawItemText(hdc, &rcClip, &rcMaxText, pItem, pszComments, hBack[nIdx]);
 
 	return TRUE;
+}
+
+int CeFullPanelInfo::DrawItemText(HDC hdc, LPRECT prcText, LPRECT prcMaxText, CePluginPanelItem* pItem, LPCWSTR pszComments, HBRUSH hBr)
+{
+	int iRc = 0;
+	const wchar_t* pszName = pItem->FindData.lpwszFileNamePart;
+	int nLen = lstrlen(pszName);
+	RECT rcClip = *prcText;
+	
+	if (PVM == pvm_Thumbnails) {
+		const wchar_t* pszExt = NULL;
+		
+		// только дл€ файлов, дл€ папок "расширение" не ровн€ем, ибо это не расширение.
+		if ((pItem->FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0) {
+			pszExt = wcsrchr(pszName, L'.');
+			if (pszExt == pszName) pszExt = NULL; // если точка одна, и им€ начинаетс€ с нее
+		}
+		
+		if (pszExt) {
+			RECT rcExt = rcClip;
+			RECT rcName = rcClip;
+			int nExtLen = lstrlen(pszExt);
+			int nNameLen = pszExt - pszName;
+			
+			iRc = DrawText(hdc, pszExt, nExtLen, &rcExt, DT_CALCRECT|DT_NOPREFIX|DT_SINGLELINE|DT_TOP|DT_LEFT);
+			iRc = DrawText(hdc, pszName, nNameLen, &rcName, DT_CALCRECT|DT_NOPREFIX|DT_SINGLELINE|DT_TOP|DT_LEFT);
+			
+			// –исуем расширение отдельно только если длина расширени€ в пикселах меньше половины от выделенного prcText
+			if (iRc && (rcExt.right-rcExt.left) <= ((rcClip.right-rcClip.left)-(rcName.right-rcName.left))) {
+				rcExt.left = rcClip.right-(rcExt.right-rcExt.left);
+				rcExt.right = rcClip.right; rcExt.top = rcClip.top; rcExt.bottom = rcClip.bottom;
+				iRc = DrawText(hdc, pszExt, nExtLen, &rcExt, DT_NOPREFIX|DT_SINGLELINE|DT_VCENTER);
+				nLen = nNameLen;
+				rcClip.right = rcExt.left;
+			}
+		}
+		iRc = DrawText(hdc, pszName, nLen, &rcClip, DT_END_ELLIPSIS|DT_NOPREFIX|DT_SINGLELINE|DT_VCENTER);
+	} else {
+		TODO("ќбработка pItem->pszInfo");
+		wchar_t szFullInfo[MAX_PATH*4]; wchar_t* psz = szFullInfo;
+		// формируем
+		lstrcpyn(psz, pszName, MAX_PATH); psz += lstrlen(psz);
+		
+		if (!(pszName[0] == L'.' && (pszName[1] == 0 || (pszName[1] == L'.' && pszName[2] == 0)))) {
+			*(psz++) = L'\n'; *psz = 0;
+
+			if ((pItem->FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0) {
+				if ((pItem->NumberOfLinks > 1) || (pItem->FindData.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT)) {
+					*(psz++) = L'<'; *psz = 0;
+					lstrcpy(psz, gsSymLink);
+					//gsJunction, gsSymLink, gsFolder, gsHardLink
+					//else if (pItem->FindData.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT)
+					//	lstrcpy(psz, gsSymLink);
+					//else
+					//	lstrcpy(psz, gsFolder);
+					psz += lstrlen(psz);
+					*(psz++) = L'>'; *(psz++) = L' '; *psz = 0;
+				}
+			}
+
+			SYSTEMTIME st; FileTimeToSystemTime(&pItem->FindData.ftLastWriteTime, &st);
+			wsprintf(psz, L"%02i.%02i.%02i %i:%02i", st.wDay, st.wMonth, st.wYear % 100, st.wHour, st.wMinute);
+			psz += lstrlen(psz);
+
+			if (pItem->FindData.nFileSize
+				|| ((pItem->FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0))
+			{
+				*(psz++) = L' '; *(psz++) = L' '; *psz = 0;
+				__int64 nSize = pItem->FindData.nFileSize;
+				wchar_t cType = L'B';
+				int n = 0;
+				const wchar_t cTypeList[] = L"BKMGTP";
+				int nMax = sizeofarray(cTypeList);
+				while (nSize > 9999) {
+					nSize = nSize >> 10; n++;
+				}
+				if (n < nMax) cType = cTypeList[n]; else cType = L'?';
+				if (nSize > 999) {
+					int nAll = (int)nSize;
+					int nL = nAll % 1000;
+					int nH = nAll / 1000;
+					wsprintfW(psz, L"%i,%i %c", nH, nL, cType);
+				} else {
+					wsprintfW(psz, L"%i %c", (int)nSize, cType);
+				}
+
+				psz += lstrlen(psz);
+			}
+			*psz = 0; // \0 ended
+		}
+		
+		if (pszComments && *pszComments) {
+			*(psz++) = L'\n'; *psz = 0;
+			lstrcpyn(psz, pszComments, MAX_PATH); psz += lstrlen(psz);
+		}
+		
+		if (pItem->pszDescription && *pItem->pszDescription) {
+			*(psz++) = L'\n'; *psz = 0;
+			lstrcpyn(psz, pItem->pszDescription, MAX_PATH); psz += lstrlen(psz);
+		}
+
+		*psz = 0; // \0 ended
+		nLen = lstrlen(szFullInfo);
+		DWORD nFlags = DT_WORD_ELLIPSIS|DT_NOPREFIX|DT_TOP|DT_LEFT;
+		RECT rcText = rcClip; rcText.bottom = nFontHeight;
+		// если все строки не помещаютс€ - нужно прижать к верхнему краю
+		iRc = DrawText(hdc, szFullInfo, nLen, &rcText, DT_CALCRECT|nFlags);
+		int nCellHeight = (rcClip.bottom-rcClip.top);
+		int nTextHeight = (rcText.bottom-rcText.top);
+		if (nTextHeight < nCellHeight) {
+			rcClip.top = rcClip.top + ((nCellHeight - nTextHeight) >> 1);
+		} else if (nTextHeight > nCellHeight) {
+			RECT rcFull = *prcMaxText;
+			int nFullHeight = rcFull.bottom-rcFull.top;
+			if (nFullHeight > nCellHeight) {
+				if (nTextHeight < nFullHeight) {
+					rcClip.top = rcFull.top = rcFull.top + ((nFullHeight - nTextHeight) >> 1);
+					rcClip.bottom = rcFull.bottom = rcFull.top + nTextHeight;
+				} else {
+					rcClip.top = rcFull.top;
+					rcClip.bottom = rcFull.bottom;
+				}
+				FillRect(hdc, &rcFull, hBr);
+			}
+		}
+		// теперь - рисуем
+		iRc = DrawText(hdc, szFullInfo, nLen, &rcClip, nFlags);
+	}
+	
+	return iRc;
 }
 
 void CeFullPanelInfo::Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc)
 {
 	gbCancelAll = FALSE;
+
+	HDC hdc = ps.hdc;
 
 	//for (int i=0; i<16; i++)
 	//	gcrColors[i] = GetWindowLong(hwnd, 4*i);
@@ -423,10 +600,21 @@ void CeFullPanelInfo::Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc)
 	}
 	COLORREF crGray = gcrCurColors[8];
 	COLORREF crBack = nBackColor[0]; //gcrColors[15];
-		
-	HDC hdc = ps.hdc;
 
-	
+	if (gThSet.crBackground.UseIndex) {
+		if (gThSet.crBackground.ColorIdx <= 15)
+			crBack = gcrCurColors[gThSet.crBackground.ColorIdx];
+	} else {
+		crBack = gThSet.crBackground.ColorRGB;
+	}
+
+	if (gThSet.crPreviewFrame.UseIndex) {
+		if (gThSet.crPreviewFrame.ColorIdx <= 15)
+			crGray = gcrCurColors[gThSet.crPreviewFrame.ColorIdx];
+	} else {
+		crGray = gThSet.crPreviewFrame.ColorRGB;
+	}
+		
 	
 	HPEN hPen = CreatePen(PS_SOLID, 1, crGray);
 	HBRUSH hBackBrush = CreateSolidBrush(crBack);
@@ -437,13 +625,18 @@ void CeFullPanelInfo::Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc)
 	gpImgCache->Init(crBack);
 
 	
-	int nWholeW = (Spaces.nImgSize+2*gThSet.nThumbFrame)  + Spaces.nSpaceX2 + Spaces.nSpaceX1*2;
-	int nWholeH = (Spaces.nImgSize+2*gThSet.nThumbFrame) + Spaces.nSpaceY2 + Spaces.nSpaceY1*2;
-	int nXCount = (rc.right+Spaces.nSpaceX2) / nWholeW; // тут четко, кусок иконки не допускаетс€
+	nWholeW = (Spaces.nImgSize+2*gThSet.nPreviewFrame)  + Spaces.nSpaceX2 + Spaces.nSpaceX1*2;
+	nWholeH = (Spaces.nImgSize+2*gThSet.nPreviewFrame) + Spaces.nSpaceY2 + Spaces.nSpaceY1*2;
+
+
+	nXCount = (rc.right+Spaces.nSpaceX2) / nWholeW; // тут четко, кусок иконки не допускаетс€
 	if (nXCount < 1) nXCount = 1;
-	int nYCountFull = (rc.bottom+Spaces.nSpaceY2) / nWholeH; // тут четко, кусок иконки не допускаетс€
+	nYCountFull = (rc.bottom+Spaces.nSpaceY2) / nWholeH; // тут четко, кусок иконки не допускаетс€
 	if (nYCountFull < 1) nYCountFull = 1;
-	int nYCount = (rc.bottom+(Spaces.nImgSize+2*gThSet.nThumbFrame)+Spaces.nSpaceY2) / nWholeH; // а тут допускаетс€ отображение верхней части иконки
+	if (PVM == pvm_Thumbnails)
+		nYCount = (rc.bottom+(Spaces.nImgSize+2*gThSet.nPreviewFrame)+Spaces.nSpaceY2) / nWholeH; // а тут допускаетс€ отображение верхней части иконки
+	else
+		nYCount = nYCountFull; // ¬о всех остальных режимах - часть по низу не допускаетс€.
 	if (nYCount < 1) nYCount = 1;
 	this->nXCount = nXCount; this->nYCountFull = nYCountFull; this->nYCount = nYCount;
 	
@@ -456,11 +649,14 @@ void CeFullPanelInfo::Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc)
 		TODO("¬ыравнивание на границу nXCount");
 		nTopItem = nCurrentItem - (nXCount*(nYCountFull-1));
 	}
-	int nMod = nTopItem % nXCount;
-	if (nMod) {
-		nTopItem = max(0,nTopItem-nMod);
-		//if (nTopItem > nCurrentItem)
-		//	nTopItem = max(nCurrentItem,(nTopItem-nXCount));
+	if (PVM == pvm_Thumbnails)
+	{
+		int nMod = nTopItem % nXCount;
+		if (nMod) {
+			nTopItem = max(0,nTopItem-nMod);
+			//if (nTopItem > nCurrentItem)
+			//	nTopItem = max(nCurrentItem,(nTopItem-nXCount));
+		}
 	}
 	this->OurTopPanelItem = nTopItem;
 
@@ -481,8 +677,8 @@ void CeFullPanelInfo::Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc)
 	
 	//int nXIcon = GetSystemMetrics(SM_CXICON);
 	//int nYIcon = GetSystemMetrics(SM_CYICON);
-	//int nXIconSpace = ((Spaces.nImgSize+2*gThSet.nThumbFrame) - nXIcon) >> 1;
-	//int nYIconSpace = ((Spaces.nImgSize+2*gThSet.nThumbFrame) - nYIcon) >> 1;
+	//int nXIconSpace = ((Spaces.nImgSize+2*gThSet.nPreviewFrame) - nXIcon) >> 1;
+	//int nYIconSpace = ((Spaces.nImgSize+2*gThSet.nPreviewFrame) - nYIcon) >> 1;
 
 	HDC hCompDC = CreateCompatibleDC(hdc);
 	HBITMAP hCompBmp = CreateCompatibleBitmap(hdc, nWholeW, nWholeH);
@@ -502,55 +698,99 @@ void CeFullPanelInfo::Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc)
 
 	for (int nStep = 0; !gbCancelAll && nStep <= 1; nStep++)
 	{
+		if (nStep) {
+			if ((gThSet.bLoadPreviews & PVM) == 0)
+				continue; // дл€ этого режима превьюшки не просили
+		}
+		
 		int nItem = nTopItem;
-		int nYCoord = 0;
+		int nYCoord = 0, nXCoord = 0;
+		int X = -1, Y = -1;
+		int iCount = (PVM == pvm_Thumbnails) ? nYCount : nXCount;
+		int jCount = (PVM == pvm_Thumbnails) ? nXCount : nYCount;
 
-		for (int Y = 0; !gbCancelAll && Y < nYCount && nItem < nItemCount; Y++) {
-			int nXCoord = 0;
-			for (int X = 0; !gbCancelAll && X < nXCount && nItem < nItemCount; X++, nItem++) {
-				// «десь - нельз€. Ёто не главна€ нить.
-				//// ќбновить информацию об элементе (им€, веделенность, и т.п.)
-				//if (nStep == 0 || this->ppItems[nItem] == NULL) {
-				//	LoadPanelItemInfo(this, nItem);
-				//}
+
+		//for (int Y = 0; !gbCancelAll && Y < nYCount && nItem < nItemCount; Y++) {
+		for (int i = 0; !gbCancelAll && i < iCount && nItem < nItemCount; i++) {
+			if (PVM == pvm_Thumbnails) {
+				nXCoord = 0; Y++; X = -1;
+			} else {
+				nYCoord = 0; X++; Y = -1;
+			}
+				
+			//for (int X = 0; !gbCancelAll && X < nXCount && nItem < nItemCount; X++, nItem++) {
+			for (int j = 0; !gbCancelAll && j < jCount && nItem < nItemCount; j++, nItem++) {
+				if (PVM == pvm_Thumbnails) {
+					X++;
+				} else {
+					Y++;
+				}
 
 				CePluginPanelItem* pItem = this->ppItems[nItem];
 				if (!pItem) {
+					_ASSERTE(this->ppItems[nItem]!=NULL);
 					continue; // ќшибка?
 				}
-			
-				// поехали
-				const wchar_t* pszName = pItem->FindData.lpwszFileName;
-				if (wcschr(pszName, L'\\')) {
-					// Ёто уже может быть полный путь (TempPanel?)
-					pItem->pszFullName = pszName;
-				} else {
-					// ѕолный путь нужно сформировать
-					lstrcpyn(pszNamePtr, pszName, MAX_PATH+1);
-					pItem->pszFullName = pszFull;
+				if (!nStep || !pItem->bPreviewLoaded) {
+					// поехали
+					const wchar_t* pszName = pItem->FindData.lpwszFileName;
+					if (wcschr(pszName, L'\\')) {
+						// Ёто уже может быть полный путь (TempPanel?)
+						pItem->pszFullName = pszName;
+					} else {
+						// ѕолный путь нужно сформировать
+						lstrcpyn(pszNamePtr, pszName, MAX_PATH+1);
+						pItem->pszFullName = pszFull;
+					}
+
+					if (PaintItem(hCompDC, 0, 0, pItem, (nItem==nCurrentItem), 
+						nBackColor, nForeColor, hBack,
+						//nXIcon, nYIcon, nXIconSpace, nYIconSpace, 
+						(nStep == 1), hBackBrush))
+					{
+						BitBlt(hdc, nXCoord, nYCoord, nWholeW, nWholeH, hCompDC, 0,0, SRCCOPY);
+						#ifdef _DEBUG
+						GdiFlush();
+						#endif
+					}
 				}
 
-				if (PaintItem(hCompDC, 0, 0, pItem, (nItem==nCurrentItem), 
-					nBackColor, nForeColor, hBack,
-					//nXIcon, nYIcon, nXIconSpace, nYIconSpace, 
-					(nStep == 1), hBackBrush))
-				{
-					BitBlt(hdc, nXCoord, nYCoord, nWholeW, nWholeH, hCompDC, 0,0, SRCCOPY);
+				if (PVM == pvm_Thumbnails) {
+					nXCoord += nWholeW;
+				} else {
+					nYCoord += nWholeH;
+				}
+			}
+
+
+			if (PVM == pvm_Thumbnails) {
+				if (!nStep && nXCoord < rc.right) {
+					RECT rcComp = {nXCoord,nYCoord,rc.right,nYCoord+nWholeH};
+					FillRect(hdc, &rcComp, hBack[0]);
+				}
+
+				nYCoord += nWholeH;
+			} else {
+				if (!nStep && nYCoord < rc.bottom) {
+					RECT rcComp = {nXCoord,nYCoord,rc.right,rc.bottom};
+					FillRect(hdc, &rcComp, hBack[0]);
 				}
 
 				nXCoord += nWholeW;
 			}
+		}
 
-			if (!nStep && nXCoord < rc.right) {
-				RECT rcComp = {nXCoord,nYCoord,rc.right,nYCoord+nWholeH};
+
+		if (PVM == pvm_Thumbnails) {
+			if (!nStep && nYCoord < rc.bottom) {
+				RECT rcComp = {0,nYCoord,rc.right,rc.bottom};
 				FillRect(hdc, &rcComp, hBack[0]);
 			}
-
-			nYCoord += nWholeH;
-		}
-		if (!nStep && nYCoord < rc.bottom) {
-			RECT rcComp = {0,nYCoord,rc.right,rc.bottom};
-			FillRect(hdc, &rcComp, hBack[0]);
+		} else {
+			if (!nStep && nXCoord < rc.right) {
+				RECT rcComp = {nXCoord,0,rc.right,rc.bottom};
+				FillRect(hdc, &rcComp, hBack[0]);
+			}
 		}
 	}
 
@@ -645,19 +885,21 @@ int CeFullPanelInfo::RegisterPanelView()
 			}
 			
 			// —разу скопировать параметры соответствующего режима к себе
-			if (PVM == pvm_Thumbnails) {
-				Spaces = gThSet.Thumbs;
-				lstrcpy(sFontName, gThSet.sThumbFontName);
-				nFontHeight = gThSet.nThumbFontHeight;
-			} else if (PVM == pvm_Tiles) {
-				Spaces = gThSet.Tiles;
-				lstrcpy(sFontName, gThSet.sTileFontName);
-				nFontHeight = gThSet.nTileFontHeight;
-			} else {
-				_ASSERTE(PVM==pvm_Thumbnails || PVM==pvm_Tiles);
-				gnCreateViewError = CEUnknownPanelMode;
+			if (!OnSettingsChanged(FALSE))
 				nRc = -1000;
-			}
+			//if (PVM == pvm_Thumbnails) {
+			//	Spaces = gThSet.Thumbs;
+			//	lstrcpy(sFontName, gThSet.Thumbs.sFontName);
+			//	nFontHeight = gThSet.Thumbs.nFontHeight;
+			//} else if (PVM == pvm_Tiles) {
+			//	Spaces = gThSet.Tiles;
+			//	lstrcpy(sFontName, gThSet.Tiles.sFontName);
+			//	nFontHeight = gThSet.Tiles.nFontHeight;
+			//} else {
+			//	_ASSERTE(PVM==pvm_Thumbnails || PVM==pvm_Tiles);
+			//	gnCreateViewError = CEUnknownPanelMode;
+			//	nRc = -1000;
+			//}
 		}
 	}
 
@@ -735,4 +977,27 @@ int CeFullPanelInfo::UnregisterPanelView()
 	PostMessage(this->hView, WM_CLOSE, 0, 0);
 
 	return nRc;
+}
+
+BOOL CeFullPanelInfo::OnSettingsChanged(BOOL bInvalidate)
+{
+	BOOL lbRc = TRUE;
+	// —разу скопировать параметры соответствующего режима к себе
+	if (PVM == pvm_Thumbnails) {
+		Spaces = gThSet.Thumbs;
+		lstrcpy(sFontName, gThSet.Thumbs.sFontName);
+		nFontHeight = gThSet.Thumbs.nFontHeight;
+	} else if (PVM == pvm_Tiles) {
+		Spaces = gThSet.Tiles;
+		lstrcpy(sFontName, gThSet.Tiles.sFontName);
+		nFontHeight = gThSet.Tiles.nFontHeight;
+	} else {
+		_ASSERTE(PVM==pvm_Thumbnails || PVM==pvm_Tiles);
+		gnCreateViewError = CEUnknownPanelMode;
+		//nRc = -1000;
+		lbRc = FALSE;
+	}
+	if (bInvalidate && IsWindowVisible(hView))
+		InvalidateRect(hView, NULL, FALSE);
+	return lbRc;
 }

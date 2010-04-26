@@ -3,6 +3,11 @@
 
 enum {
 	CEPluginName=0,
+	CEMenuThumbnails,
+	CEMenuTiles,
+	CEDirFolder,
+	CEDirSymLink,
+	CEDirJunction,
 	CEPluginNotFound,
 	CEOldPluginVersion,
 	CEFarNonGuiMode,

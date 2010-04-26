@@ -520,8 +520,6 @@ BEGIN
     PUSHBUTTON      "...",IDC_CHOOSE,284,19,14,13
     COMBOBOX        IDC_RESTART_CMD,10,19,269,50,CBS_DROPDOWN | 
                     CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
-    CTEXT           "Warning, unsaved work may be lost!",IDC_WARNING,57,129,
-                    157,8
     CONTROL         "Restricte&d current user",cbRunAsRestricted,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,23,83,140,10
     LTEXT           "User &name:",IDC_STATIC,23,114,40,8
@@ -535,6 +533,8 @@ BEGIN
                     BS_AUTORADIOBUTTON,11,70,199,8
     CONTROL         "&Another user",rbAnotherUser,"Button",
                     BS_AUTORADIOBUTTON,11,100,60,8
+    CTEXT           "Warning, unsaved work may be lost!",IDC_WARNING,57,129,
+                    157,8
 END
 
 IDD_MORE_HIDE DIALOG DISCARDABLE  0, 0, 128, 54
@@ -672,96 +672,124 @@ BEGIN
                     159,170,160,10
 END
 
-IDD_SPG_THUMBS DIALOGEX 0, 0, 328, 235
+IDD_SPG_VIEWS DIALOGEX 0, 0, 328, 319
 STYLE DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        "FAR Thumbnails",IDC_STATIC,4,1,319,214
-    LTEXT           "Font:",IDC_STATIC,8,15,20,8
-    COMBOBOX        tThumbsFontName,32,12,89,76,CBS_DROPDOWN | 
-                    CBS_OWNERDRAWFIXED | CBS_SORT | CBS_HASSTRINGS | 
-                    WS_VSCROLL | WS_TABSTOP
-    CTEXT           "x",IDC_STATIC,125,14,8,8
-    COMBOBOX        tThumbsFontSize,135,12,24,66,CBS_DROPDOWN | WS_VSCROLL | 
+    GROUPBOX        "FAR Panel Views",IDC_STATIC,4,1,319,198
+    GROUPBOX        "Thumbnails mode",IDC_STATIC,9,12,308,49
+    RTEXT           "Label font:",IDC_STATIC,12,27,40,8
+    COMBOBOX        tThumbsFontName,57,25,116,76,CBS_DROPDOWN | 
+                    CBS_OWNERDRAWFIXED | CBS_HASSTRINGS | WS_VSCROLL | 
                     WS_TABSTOP
-    RTEXT           "Thumbnail size:",IDC_STATIC,174,14,50,8
-    EDITTEXT        tThumbFullSize,228,12,24,12,ES_AUTOHSCROLL
-    RTEXT           "Icon size:",IDC_STATIC,254,14,35,8
-    EDITTEXT        tThumbIconSize,293,12,24,12,ES_AUTOHSCROLL
-    CONTROL         "Load previews for files",tThumbLoadFiles,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,8,30,88,10
+    CTEXT           "x",IDC_STATIC,176,27,8,8
+    COMBOBOX        tThumbsFontSize,186,25,25,66,CBS_DROPDOWN | WS_VSCROLL | 
+                    WS_TABSTOP
+    RTEXT           "Image size:",IDC_STATIC,12,44,40,8
+    EDITTEXT        tThumbsImgSize,57,42,24,12,ES_AUTOHSCROLL
+    RTEXT           "Spacing:",IDC_STATIC,91,44,29,8
+    EDITTEXT        tThumbsSpacing,123,42,24,12,ES_AUTOHSCROLL
+    RTEXT           "Padding:",IDC_STATIC,154,44,29,8
+    EDITTEXT        tThumbsPadding,186,42,24,12,ES_AUTOHSCROLL
+    RTEXT           "X1:",IDC_STATIC,224,27,14,8
+    EDITTEXT        tThumbsX1,241,25,24,12,ES_AUTOHSCROLL
+    RTEXT           "Y1:",IDC_STATIC,269,27,14,8
+    EDITTEXT        tThumbsY1,286,25,24,12,ES_AUTOHSCROLL
+    RTEXT           "X2:",IDC_STATIC,224,44,14,8
+    EDITTEXT        tThumbsX2,241,42,24,12,ES_AUTOHSCROLL
+    RTEXT           "Y2:",IDC_STATIC,269,44,14,8
+    EDITTEXT        tThumbsY2,286,42,24,12,ES_AUTOHSCROLL
+    GROUPBOX        "Tiles mode",IDC_STATIC,9,65,308,49
+    RTEXT           "Label font:",IDC_STATIC,11,80,40,8
+    COMBOBOX        tTilesFontName,57,78,116,76,CBS_DROPDOWN | 
+                    CBS_OWNERDRAWFIXED | CBS_HASSTRINGS | WS_VSCROLL | 
+                    WS_TABSTOP
+    CTEXT           "x",IDC_STATIC,175,80,8,8
+    COMBOBOX        tTilesFontSize,185,78,25,66,CBS_DROPDOWN | WS_VSCROLL | 
+                    WS_TABSTOP
+    RTEXT           "Image size:",IDC_STATIC,11,96,40,8
+    EDITTEXT        tTilesImgSize,57,94,24,12,ES_AUTOHSCROLL
+    RTEXT           "Spacing:",IDC_STATIC,91,96,29,8
+    EDITTEXT        tTilesSpacing,123,94,24,12,ES_AUTOHSCROLL
+    RTEXT           "Padding:",IDC_STATIC,153,96,29,8
+    EDITTEXT        tTilesPadding,185,94,24,12,ES_AUTOHSCROLL
+    RTEXT           "X1:",IDC_STATIC,224,80,14,8
+    EDITTEXT        tTilesX1,241,78,24,12,ES_AUTOHSCROLL
+    RTEXT           "Y1:",IDC_STATIC,269,80,14,8
+    EDITTEXT        tTilesY1,285,78,24,12,ES_AUTOHSCROLL
+    RTEXT           "X2:",IDC_STATIC,224,96,14,8
+    EDITTEXT        tTilesX2,241,94,24,12,ES_AUTOHSCROLL
+    RTEXT           "Y2:",IDC_STATIC,269,96,14,8
+    EDITTEXT        tTilesY2,285,94,24,12,ES_AUTOHSCROLL
+    CONTROL         "Load previews for files",cbThumbLoadFiles,"Button",
+                    BS_AUTO3STATE | WS_TABSTOP,9,120,88,10
     CONTROL         "Load previews in subfolders",cbThumbLoadFolders,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,102,30,105,10
-    RTEXT           "Loading timeout (sec.):",IDC_STATIC,212,31,77,8
-    EDITTEXT        tThumbLoadingTimeout,293,28,24,12,ES_AUTOHSCROLL
-    GROUPBOX        "Box around preview",IDC_STATIC,8,57,100,56
-    CONTROL         "Thumbnails",cbThumbPreviewBox,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,14,67,51,10
-    CONTROL         "Tiles",cbTilesPreviewBox,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,70,67,31,10
-    CONTROL         "Color index",rbThumbPreviewBoxColorIdx,"Button",
-                    BS_AUTORADIOBUTTON,14,81,52,10
-    CONTROL         "RGB",rbThumbPreviewBoxColorRGB,"Button",
-                    BS_AUTORADIOBUTTON,14,98,27,10
-    COMBOBOX        lbThumbPreviewBoxColorIdx,70,79,32,30,CBS_DROPDOWNLIST | 
-                    CBS_SORT | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "",c32,44,96,12,12,SS_NOTIFY | SS_SUNKEN
-    EDITTEXT        tc32,57,96,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,
-                    WS_EX_STATICEDGE
-    GROUPBOX        "Box around current item",IDC_STATIC,111,57,102,56
-    CONTROL         "Thumbnails",cbThumbSelectionBox,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,116,67,57,10
-    CONTROL         "Tiles",cbTilesSelectionBox,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,175,67,31,10
-    CONTROL         "Color index",rbThumbSelectionBoxColorIdx,"Button",
-                    BS_AUTORADIOBUTTON,116,81,52,10
-    CONTROL         "RGB",rbThumbSelectionBoxColorRGB,"Button",
-                    BS_AUTORADIOBUTTON,116,98,28,10
-    COMBOBOX        lbThumbSelectionBoxColorIdx,175,79,32,30,
-                    CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "",c33,147,96,12,12,SS_NOTIFY | SS_SUNKEN
-    EDITTEXT        tc33,161,96,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,
-                    WS_EX_STATICEDGE
-    GROUPBOX        "",IDC_STATIC,217,57,101,56
-    LTEXT           "Preview background",IDC_STATIC,224,67,87,8
-    CONTROL         "Color index",rbThumbBackColorIdx,"Button",
-                    BS_AUTORADIOBUTTON,223,81,52,10
-    CONTROL         "RGB",rbThumbBackColorRGB,"Button",BS_AUTORADIOBUTTON,
-                    223,98,27,10
-    COMBOBOX        lbThumbBackColorIdx,282,79,32,30,CBS_DROPDOWNLIST | 
-                    CBS_SORT | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "",c34,254,96,12,12,SS_NOTIFY | SS_SUNKEN
-    EDITTEXT        tc34,267,96,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,
-                    WS_EX_STATICEDGE
-    LTEXT           "Maximum zoom:",IDC_STATIC,9,119,52,8
-    COMBOBOX        tThumbMaxZoom,66,117,48,30,CBS_DROPDOWN | CBS_SORT | 
+                    BS_AUTOCHECKBOX | WS_TABSTOP,102,120,107,10
+    RTEXT           "Loading timeout (sec.):",IDC_STATIC,212,120,77,8
+    EDITTEXT        tThumbLoadingTimeout,292,118,24,12,ES_AUTOHSCROLL
+    LTEXT           "Max. zoom:",IDC_STATIC,9,135,40,8
+    COMBOBOX        tThumbMaxZoom,52,133,44,30,CBS_DROPDOWNLIST | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
     CONTROL         "Use PicView2 for previews",cbThumbUsePicView2,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,131,118,99,10
-    LTEXT           "<Free>/100%/200%/300%/400%/500%",IDC_STATIC,9,132,136,8
-    GROUPBOX        "Store preview cache",IDC_STATIC,8,162,310,46
+                    BS_AUTOCHECKBOX | WS_TABSTOP,102,134,107,10
+    GROUPBOX        "Preview background",IDC_STATIC,9,148,101,45
+    CONTROL         "Color index",rbThumbBackColorIdx,"Button",
+                    BS_AUTORADIOBUTTON,15,161,52,10
+    CONTROL         "RGB",rbThumbBackColorRGB,"Button",BS_AUTORADIOBUTTON,15,
+                    178,27,10
+    COMBOBOX        lbThumbBackColorIdx,74,159,32,30,CBS_DROPDOWNLIST | 
+                    CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "",c32,93,176,12,12,SS_NOTIFY | SS_SUNKEN
+    EDITTEXT        tc32,45,176,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,
+                    WS_EX_STATICEDGE
+    GROUPBOX        "",IDC_STATIC,113,148,100,45
+    CONTROL         "Color index",rbThumbPreviewBoxColorIdx,"Button",
+                    BS_AUTORADIOBUTTON,119,161,52,10
+    CONTROL         "RGB",rbThumbPreviewBoxColorRGB,"Button",
+                    BS_AUTORADIOBUTTON,119,178,27,10
+    COMBOBOX        lbThumbPreviewBoxColorIdx,175,159,32,30,CBS_DROPDOWNLIST | 
+                    CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "",c33,196,176,12,12,SS_NOTIFY | SS_SUNKEN
+    EDITTEXT        tc33,148,176,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,
+                    WS_EX_STATICEDGE
+    GROUPBOX        "",IDC_STATIC,216,148,102,45
+    CONTROL         "Color index",rbThumbSelectionBoxColorIdx,"Button",
+                    BS_AUTORADIOBUTTON,221,161,52,10
+    CONTROL         "RGB",rbThumbSelectionBoxColorRGB,"Button",
+                    BS_AUTORADIOBUTTON,221,178,28,10
+    COMBOBOX        lbThumbSelectionBoxColorIdx,280,159,32,30,
+                    CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "",c34,300,176,12,12,SS_NOTIFY | SS_SUNKEN
+    EDITTEXT        tc34,252,176,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,
+                    WS_EX_STATICEDGE
+    GROUPBOX        "Store preview cache",IDC_STATIC,8,246,310,46,NOT 
+                    WS_VISIBLE | WS_DISABLED
     CONTROL         "No cache",rbThumbCacheDisabled,"Button",
-                    BS_AUTORADIOBUTTON,14,175,45,10
+                    BS_AUTORADIOBUTTON | NOT WS_VISIBLE | WS_DISABLED,14,259,
+                    45,10
     CONTROL         "plugin folder",rbThumbCachePluginFolder,"Button",
-                    BS_AUTORADIOBUTTON,68,175,57,10
+                    BS_AUTORADIOBUTTON | NOT WS_VISIBLE | WS_DISABLED,68,259,
+                    57,10
     CONTROL         "user folder",rbThumbCacheUserFolder,"Button",
-                    BS_AUTORADIOBUTTON,132,175,53,10
+                    BS_AUTORADIOBUTTON | NOT WS_VISIBLE | WS_DISABLED,132,
+                    259,53,10
     CONTROL         "specified folder",rbThumbCacheSpecifiedFolder,"Button",
-                    BS_AUTORADIOBUTTON,193,175,65,10
-    PUSHBUTTON      "Choose...",cbThumbCacheFolder,262,173,50,14
-    EDITTEXT        tThumbCacheFolder,14,190,298,12,ES_AUTOHSCROLL | 
-                    ES_READONLY
-    LTEXT           "Thumbnail label height:",IDC_STATIC,9,148,74,8
-    EDITTEXT        tThumbLabelHeight,88,145,24,12,ES_AUTOHSCROLL
-    RTEXT           "Icon label width:",IDC_STATIC,117,148,54,8
-    EDITTEXT        tThumbLabelWidth,175,145,24,12,ES_AUTOHSCROLL
-    RTEXT           "X spacing:",IDC_STATIC,253,135,34,8
-    EDITTEXT        tThumbLabelWidth2,291,133,24,12,ES_AUTOHSCROLL
-    RTEXT           "Y spacing:",IDC_STATIC,256,149,34,8
-    EDITTEXT        tThumbLabelWidth3,293,148,24,12,ES_AUTOHSCROLL
-    EDITTEXT        tThumbSupportedExtensions,89,44,228,12,ES_AUTOHSCROLL
-    LTEXT           "Supported extensions:",IDC_STATIC,9,46,78,8
+                    BS_AUTORADIOBUTTON | NOT WS_VISIBLE | WS_DISABLED,193,
+                    259,65,10
+    PUSHBUTTON      "Choose...",cbThumbCacheFolder,262,257,50,14,NOT 
+                    WS_VISIBLE | WS_DISABLED
+    EDITTEXT        tThumbCacheFolder,14,274,298,12,ES_AUTOHSCROLL | 
+                    ES_READONLY | NOT WS_VISIBLE | WS_DISABLED
+    EDITTEXT        tThumbSupportedExtensions,88,234,228,12,ES_AUTOHSCROLL | 
+                    NOT WS_VISIBLE | WS_DISABLED
+    LTEXT           "Supported extensions:",IDC_STATIC,8,236,78,8,NOT 
+                    WS_VISIBLE | WS_DISABLED
+    CONTROL         "Preview frame",cbThumbPreviewBox,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,118,147,62,10
+    CONTROL         "Current item frame",cbThumbSelectionBox,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,221,147,77,10
+    PUSHBUTTON      "Apply",bApplyViewSettings,3,202,50,14
 END
 
 
@@ -800,6 +828,11 @@ BEGIN
         RIGHTMARGIN, 143
         TOPMARGIN, 4
         BOTTOMMARGIN, 102
+    END
+
+    IDD_SPG_VIEWS, DIALOG
+    BEGIN
+        BOTTOMMARGIN, 236
     END
 END
 #endif    // APSTUDIO_INVOKED

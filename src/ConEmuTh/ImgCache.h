@@ -36,6 +36,7 @@ protected:
 		FILETIME ftLastWriteTime;
 		DWORD dwFileAttributes;
 		wchar_t *lpwszFileName;
+		BOOL bVirtualItem;
 		BOOL bPreviewLoaded;
 		//int N,X,Y;
 		COORD crSize; // Предпочтительно, должен совпадать с crLoadSize
@@ -84,7 +85,7 @@ public:
 	void SetCacheLocation(LPCWSTR asCachePath);
 	void Reset();
 	void Init(COLORREF acrBack);
-	BOOL PaintItem(HDC hdc, int x, int y, int nImgSize, CePluginPanelItem* pItem, BOOL abLoadPreview);
+	BOOL PaintItem(HDC hdc, int x, int y, int nImgSize, CePluginPanelItem* pItem, BOOL abLoadPreview, LPCWSTR* ppszComments);
 
 protected:
 	BOOL mb_Quit;
@@ -92,3 +93,5 @@ protected:
 	IStorage *mp_RootStorage, *mp_CurrentStorage;
 	BOOL LoadPreview();
 };
+
+extern CImgCache *gpImgCache;

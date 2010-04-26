@@ -137,6 +137,7 @@ extern wchar_t gszDbgModLabel[6];
 #define CECONMAPNAME        L"ConEmuFileMapping.%08X"
 #define CECONMAPNAME_A      "ConEmuFileMapping.%08X"
 #define CEFARMAPNAME        L"ConEmuFarMapping.%08X"
+#define CECONVIEWSETNAME    L"ConEmuViewSetMapping.%u"
 #define CEFARALIVEEVENT     L"ConEmuFarAliveEvent.%u"
 //#define CECONMAPNAMESIZE    (sizeof(CESERVER_REQ_CONINFO)+(MAXCONMAPCELLS*sizeof(CHAR_INFO)))
 //#define CEGUIATTACHED       L"ConEmuGuiAttached.%u"
@@ -152,7 +153,8 @@ WARNING("CONEMUMSG_SRVSTARTED нужно переделать в команду пайпа для GUI");
 //#define CONEMUCMDSTARTED L"ConEmuMain::CmdStarted"    // wParam == hConWnd, lParam == ConEmuC_PID (as ComSpec)
 //#define CONEMUCMDSTOPPED L"ConEmuMain::CmdTerminated" // wParam == hConWnd, lParam == ConEmuC_PID (as ComSpec)
 #define CONEMUMSG_LLKEYHOOK L"ConEmuMain::LLKeyHook"    // wParam == hConWnd, lParam == ConEmuC_PID
-#define CONEMUMSG_FADETHUMBNAILS L"ConEmuTh::Fade"
+#define CONEMUMSG_PNLVIEWFADE L"ConEmuTh::Fade"
+#define CONEMUMSG_PNLVIEWSETTINGS L"ConEmuTh::Settings"
 
 //#define CONEMUMAPPING    L"ConEmuPluginData%u"
 //#define CONEMUDRAGFROM   L"ConEmuDragFrom%u"
@@ -268,7 +270,12 @@ typedef struct tag_ThumbSizes {
 	// Размер "остатка" вправо&вниз после превьюшки/иконки. Здесь рисуется текст.
 	int nSpaceX2, nSpaceY2; // Thumbs: 5x25, Tiles: 172x4
 	// Расстояние между превьюшкой/иконкой и текстом
-	int nSpaceLabel; // Thumbs: 0, Tiles: 4
+	int nLabelSpacing; // Thumbs: 0, Tiles: 4
+	// Отступ текста от краев прямоугольника метки
+	int nLabelPadding; // Thumbs: 0, Tiles: 1
+	// Шрифт
+	wchar_t sFontName[36]; // Tahoma
+	int nFontHeight; // 14
 } ThumbSizes;
 
 
@@ -285,8 +292,8 @@ typedef struct tag_PanelViewSettings {
 	/* Цвета и рамки */
 	ThumbColor crBackground; // Фон превьюшки: RGB или Index
 	
-	int nThumbFrame; // 1 (серая рамка вокруг превьюшки
-	ThumbColor crThumbFrame; // RGB или Index
+	int nPreviewFrame; // 1 (серая рамка вокруг превьюшки
+	ThumbColor crPreviewFrame; // RGB или Index
 	
 	int nSelectFrame; // 1 (рамка вокруг текущего элемента)
 	ThumbColor crSelectFrame; // RGB или Index
@@ -294,13 +301,6 @@ typedef struct tag_PanelViewSettings {
 	/* Теперь разнообразные размеры */
 	ThumbSizes Thumbs;
 	ThumbSizes Tiles;
-
-	// Шрифт отрисовки для превьюшек
-	wchar_t sThumbFontName[32]; // Tahoma
-	int nThumbFontHeight; // 14
-	// И для списка (Tiles)
-	wchar_t sTileFontName[32]; // Tahoma
-	int nTileFontHeight; // 14
 	
 	// Прочие параметры загрузки
 	BYTE  bLoadPreviews; // bitmask of PanelViewMode {1=Thumbs, 2=Tiles}
@@ -310,9 +310,9 @@ typedef struct tag_PanelViewSettings {
 	DWORD nMaxZoom; // 500%
 	bool  bUsePicView2; // true
 
-	// Пока не используется
-	DWORD nCacheFolderType; // юзер/программа/temp/и т.п.
-	wchar_t sCacheFolder[MAX_PATH];
+	//// Пока не используется
+	//DWORD nCacheFolderType; // юзер/программа/temp/и т.п.
+	//wchar_t sCacheFolder[MAX_PATH];
 } PanelViewSettings;
 
 
@@ -1022,97 +1022,119 @@ public:
 };
 
 
-//class CSection
+template <class T>
+class MFileMapping
+{
+protected:
+	HANDLE mh_Mapping;
+	BOOL mb_WriteAllowed;
+	int mn_Size;
+	T* mp_Data; //WARNING!!! Доступ может быть только на чтение!
+	wchar_t ms_MapName[MAX_PATH];
+	DWORD mn_LastError;
+	wchar_t ms_Error[MAX_PATH*2];
+public:
+	operator T*() {
+		return mp_Data;
+	};
+	bool IsValid() {
+		return (mp_Data!=NULL);
+	};
+	LPCWSTR GetErrorText() {
+		return ms_Error;
+	};
+	bool Set(const T* pSrc, int nSize=-1) {
+		if (!IsValid() || !nSize) return false;
+		if (nSize<0) nSize = sizeof(T);
+		memmove(mp_Data, pSrc, nSize);
+		return true;
+	}
+	bool Get(T* pDst, int nSize=-1) {
+		if (!IsValid() || !nSize) return false;
+		if (nSize<0) nSize = sizeof(T);
+		memmove(pDst, mp_Data, nSize);
+		return true;
+	}
+public:
+	void InitName(const wchar_t *aszTemplate,DWORD Parm1=0,DWORD Parm2=0) {
+		wsprintfW(ms_MapName, aszTemplate, Parm1, Parm2);
+	};
+	void ClosePtr() {
+		if (mp_Data) {
+			UnmapViewOfFile(mp_Data);
+			mp_Data = NULL;
+		}
+	};
+	void CloseMap() {
+		if (mp_Data) ClosePtr();
+		if (mh_Mapping) {
+			CloseHandle(mh_Mapping);
+			mh_Mapping = NULL;
+		}
+		mh_Mapping = NULL; mb_WriteAllowed = FALSE; mp_Data = NULL; 
+		mn_Size = -1; mn_LastError = 0;
+	};
+protected:
+	T* InternalOpenCreate(BOOL abCreate,BOOL abReadWrite,int nSize) {
+		if (mh_Mapping) CloseMap();
+		mn_LastError = 0; ms_Error[0] = 0;
+		_ASSERTE(mh_Mapping==NULL && mp_Data==NULL);
+		_ASSERTE(nSize==-1 || nSize>=sizeof(T));
+
+		if (ms_MapName[0] == 0) {
+			_ASSERTE(ms_MapName[0]!=0);
+			lstrcpyW (ms_Error, L"Internal error. Mapping file name was not specified.");
+			return NULL;
+		} else {
+			mn_Size = (nSize<=0) ? sizeof(T) : nSize;
+			mb_WriteAllowed = abCreate || abReadWrite;
+			if (abCreate) {
+				mh_Mapping = CreateFileMapping(INVALID_HANDLE_VALUE, 
+					NullSecurity(), PAGE_READWRITE, 0, mn_Size, ms_MapName);
+			} else {
+				mh_Mapping = OpenFileMapping(FILE_MAP_READ, FALSE, ms_MapName);
+			}
+			if (!mh_Mapping) {
+				mn_LastError = GetLastError();
+				wsprintfW (ms_Error, L"Can't %s console data file mapping. ErrCode=0x%08X\n%s", 
+						abCreate ? L"create" : L"open", mn_LastError, ms_MapName);
+			} else {
+				DWORD nFlags = mb_WriteAllowed ? FILE_MAP_ALL_ACCESS : FILE_MAP_READ;
+				mp_Data = (T*)MapViewOfFile(mh_Mapping, nFlags,0,0,0);
+				if (!mp_Data) {
+					mn_LastError = GetLastError();
+					wsprintfW (ms_Error, L"Can't map console info (%s). ErrCode=0x%08X\n%s", 
+							mb_WriteAllowed ? L"ReadWrite" : L"Read" ,mn_LastError, ms_MapName);
+				}
+			}
+		}
+		return mp_Data;
+	};
+public:
+	T* Create(int nSize=-1) {
+		_ASSERTE(nSize==-1 || nSize>=sizeof(T));
+		return InternalOpenCreate(TRUE/*abCreate*/,TRUE/*abReadWrite*/,nSize);
+	};
+	T* Open(BOOL abReadWrite=FALSE/*FALSE - только Read*/,int nSize=-1) {
+		_ASSERTE(nSize==-1 || nSize>=sizeof(T));
+		return InternalOpenCreate(FALSE/*abCreate*/,abReadWrite,nSize);
+	};
+public:
+	MFileMapping() {
+		mh_Mapping = NULL; mb_WriteAllowed = FALSE; mp_Data = NULL; 
+		mn_Size = -1; ms_MapName[0] = ms_Error[0] = 0; mn_LastError = 0;
+	};
+	~MFileMapping() {
+		if (mh_Mapping) CloseMap();
+	};
+};
+
+//class MPipe
 //{
-//protected:
-//	CRITICAL_SECTION* mp_cs;
-//	DWORD* mp_TID;
-//public:
-//	void Leave()
-//	{
-//		if (mp_cs) {
-//			*mp_TID = 0;
-//			mp_TID = NULL;
-//			//OutputDebugString(_T("LeaveCriticalSection\n"));
-//			LeaveCriticalSection(mp_cs);
-//			#ifdef _DEBUG
-//			#ifndef CSECTION_NON_RAISE
-//			_ASSERTE(mp_cs->LockCount==-1);
-//			#endif
-//			#endif
-//			mp_cs = NULL;
-//		}
-//	}
-//	bool Enter(CRITICAL_SECTION* pcs, DWORD* pTID, DWORD nTimeout=(DWORD)-1)
-//	{
-//		#ifdef _DEBUG
-//		if (*((DWORD_PTR*)pcs) == NULL) {
-//			_ASSERTE(*((DWORD_PTR*)pcs) != NULL);
-//		}
-//		#endif
-//		Leave(); // если было
-//
-//		mp_TID = pTID;
-//		DWORD dwTID = GetCurrentThreadId();
-//		if (dwTID == *pTID)
-//			return true; // в этой нити уже заблокировано
-//
-//		mp_cs = pcs;
-//		if (mp_cs) {
-//			//OutputDebugString(_T("TryEnterCriticalSection\n"));
-//			
-//			// НАДА. Т.к. может быть задан nTimeout (для DC)
-//			DWORD dwTryLockSectionStart = GetTickCount(), dwCurrentTick;
-//			
-//			if (!TryEnterCriticalSection(mp_cs)) {
-//				Sleep(50);
-//				while (!TryEnterCriticalSection(mp_cs)) {
-//					Sleep(50);
-//					DEBUGSTR(L"TryEnterCriticalSection failed!!!\n");
-//					
-//					dwCurrentTick = GetTickCount();
-//					if ((nTimeout != (DWORD)-1) && ((dwCurrentTick - dwTryLockSectionStart) > nTimeout)) {
-//						mp_TID = NULL; mp_cs = NULL;
-//						DEBUGSTR(L"TryEnterCriticalSection Timeout!!!\n");
-//						return false;
-//					}
-//					
-//					#ifdef _DEBUG
-//					if ((dwCurrentTick - dwTryLockSectionStart) > 3000) {
-//						#ifndef CSECTION_NON_RAISE
-//						_ASSERTE((dwCurrentTick - dwTryLockSectionStart) <= 3000);
-//						#endif
-//						dwTryLockSectionStart = GetTickCount();
-//					}
-//					#endif
-//				}
-//			}
-//			//EnterCriticalSection(mp_cs);
-//			*mp_TID = dwTID;
-//		}
-//		return true;
-//	}
-//	bool isLocked()
-//	{
-//		if (mp_cs)
-//			return true;
-//		// мог быть заблокирован из другой нити в этой же функции
-//		if (mp_TID) {
-//			DWORD dwTID = GetCurrentThreadId();
-//			if (*mp_TID == dwTID)
-//				return true;
-//		}
-//		return false;
-//	}
-//	CSection (CRITICAL_SECTION* pcs, DWORD* pTID) : mp_cs(NULL), mp_TID(NULL)
-//	{
-//		if (pcs) Enter(pcs, pTID);
-//	}
-//	~CSection()
-//	{
-//		Leave();
-//	}
 //};
+
+
+
 #endif // __cplusplus
 
 

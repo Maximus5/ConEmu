@@ -157,8 +157,8 @@ typedef struct tag_RConStartArgs {
 	~tag_RConStartArgs() {
 		SafeFree(pszSpecialCmd); // именно SafeFree
 		SafeFree(pszStartupDir); // именно SafeFree
-		SafeFree(pszUserName); // именно SafeFree
-		SafeFree(pszUserPassword); // именно SafeFree
+		SafeFree(pszUserName);
+		SafeFree(pszUserPassword);
 	};
 	
 	BOOL CheckUserToken() {

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="windows-1251"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9,00"
+	Version="9.00"
 	Name="ConEmuTh"
 	ProjectGUID="{60287D73-F658-4414-8C9B-30E1F3E78D05}"
 	RootNamespace="ConEmuTh"
@@ -679,6 +679,10 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
+				RelativePath="..\common\Common.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\ConEmuTh.cpp"
 				>
 			</File>
@@ -786,6 +790,7 @@
 			>
 			<FileConfiguration
 				Name="Debug_E|Win32"
+				ExcludedFromBuild="true"
 				>
 				<Tool
 					Name="VCCustomBuildTool"

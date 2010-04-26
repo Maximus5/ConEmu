@@ -228,7 +228,7 @@ void WINAPI _export GetPluginInfoW(struct PluginInfo *pi)
 	//IsKeyChanged(TRUE); -- в FAR2 устарело, используем Synchro
 	//if (gcPlugKey) szMenu1[0]=0; else lstrcpyW(szMenu1, L"[&\x2584] ");
 	//lstrcpynW(szMenu1+lstrlenW(szMenu1), GetMsgW(2), 240);
-	lstrcpynW(szMenu1, GetMsgW(2), 240);
+	lstrcpynW(szMenu1, GetMsgW(CEPluginName), 240);
 
 
 	pi->StructSize = sizeof(struct PluginInfo);
@@ -560,6 +560,16 @@ BOOL OnPanelViewCallbacks(HookCallbackArg* pArgs, PanelViewInputCallback pfnLeft
 	}
 	
 	return lbContinue;
+}
+
+
+VOID WINAPI OnShellExecuteExW_Except(HookCallbackArg* pArgs)
+{
+	if (pArgs->bMainThread) {
+		ShowMessage(CEShellExecuteException,1);
+	}
+	*((LPBOOL*)pArgs->lpResult) = FALSE;
+	SetLastError(E_UNEXPECTED);
 }
 
 

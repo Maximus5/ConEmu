@@ -162,6 +162,7 @@ private:
 	BOOL CheckDialogsChanged();
 	BOOL mb_DialogsChanged;
 	UINT mn_ConEmuFadeMsg;
+	UINT mn_ConEmuSettingsMsg;
 	
 public:
 	bool isEditor, isViewer, isFilePanel, isFade, isForeground;
@@ -213,6 +214,8 @@ public:
 	COORD FindOpaqueCell();
 	void ShowPopupMenu(POINT ptCur);
 	BOOL RegisterPanelView(PanelViewInit* ppvi);
+	void OnPanelViewSettingsChanged();
+	BOOL IsPanelViews();
 
 protected:
 	//inline void GetCharAttr(WORD atr, BYTE& foreColorNum, BYTE& backColorNum, HFONT* pFont);

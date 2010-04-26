@@ -854,7 +854,7 @@ void SettingsXML::Save(const wchar_t *regName, LPCBYTE value, DWORD nType, DWORD
 		if (bsType && (bsType[0] == L'u' || bsType[0] == L'U')) {
 			wsprintf(szValue, L"%u", *(LPDWORD)value);
 		} else if (bsType && (bsType[0] == L'l' || bsType[0] == L'L')) {
-				wsprintf(szValue, L"%i", *(int*)value);
+			wsprintf(szValue, L"%i", *(int*)value);
 		} else {
 			wsprintf(szValue, L"%08x", *(LPDWORD)value);
 			if (bsType) ::SysFreeString(bsType);
@@ -864,23 +864,35 @@ void SettingsXML::Save(const wchar_t *regName, LPCBYTE value, DWORD nType, DWORD
 		bsValue = ::SysAllocString(szValue);
 	} break;
 	case REG_BINARY: {
-		DWORD nLen = nSize*2 + (nSize-1); // по 2 символа на байт + ',' между ними
-		bsValue = ::SysAllocStringLen(NULL, nLen);
-		wchar_t* psz = (wchar_t*)bsValue;
-		LPCBYTE  ptr = value;
-		while (nSize) {
-			wsprintf(psz, L"%02x", (DWORD)*ptr);
-			ptr++; nSize--; psz+=2;
-			if (nSize)
-				*(psz++) = L',';
-		}
-		if (bsType && lstrcmp(bsType, L"hex")) {
-			// ƒопустим только "hex"
-			::SysFreeString(bsType); bsType = NULL;
-		}
-		if (!bsType) {
-			// нужно добавить/установить тип
-			bsType = ::SysAllocString(L"hex"); bNeedSetType = true;
+		if (nSize == 1 && bsType && (bsType[0] == L'u' || bsType[0] == L'U')) {
+			wchar_t szValue[4];
+			BYTE bt = *value;
+			wsprintf(szValue, L"%u", (DWORD)bt);
+			bsValue = ::SysAllocString(szValue);
+		} else if (nSize == 1 && bsType && (bsType[0] == L'l' || bsType[0] == L'L')) {
+			wchar_t szValue[4];
+			char bt = *value;
+			wsprintf(szValue, L"%i", (int)bt);
+			bsValue = ::SysAllocString(szValue);
+		} else {
+			DWORD nLen = nSize*2 + (nSize-1); // по 2 символа на байт + ',' между ними
+			bsValue = ::SysAllocStringLen(NULL, nLen);
+			wchar_t* psz = (wchar_t*)bsValue;
+			LPCBYTE  ptr = value;
+			while (nSize) {
+				wsprintf(psz, L"%02x", (DWORD)*ptr);
+				ptr++; nSize--; psz+=2;
+				if (nSize)
+					*(psz++) = L',';
+			}
+			if (bsType && lstrcmp(bsType, L"hex")) {
+				// ƒопустим только "hex"
+				::SysFreeString(bsType); bsType = NULL;
+			}
+			if (!bsType) {
+				// нужно добавить/установить тип
+				bsType = ::SysAllocString(L"hex"); bNeedSetType = true;
+			}
 		}
 	} break;
 	case REG_SZ: {

@@ -1421,6 +1421,7 @@ static BOOL ReadConsoleInfo()
 	MCHKHEAP;
 
 	if (!GetConsoleCursorInfo(hOut, &lci)) { srv.dwCiRc = GetLastError(); if (!srv.dwCiRc) srv.dwCiRc = -1; } else {
+		if (srv.bTelnetActive) lci.dwSize = 15; // telnet "глючит" при нажатии Ins - меняет курсор даже когда нажат Ctrl например
 		srv.dwCiRc = 0;
 		if (memcmp(&srv.ci, &lci, sizeof(srv.ci))) {
 			srv.ci = lci;

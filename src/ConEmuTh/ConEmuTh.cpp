@@ -91,6 +91,10 @@ bool gbFadeColors = false;
 //bool gbLastCheckWindow = false;
 DWORD gnRgnDetectFlags = 0;
 void CheckVarsInitialized();
+SECURITY_ATTRIBUTES* gpNullSecurity = NULL;
+// *** lng resources begin ***
+wchar_t gsFolder[64], gsHardLink[64], gsSymLink[64], gsJunction[64];
+// *** lng resources end ***
 
 PanelViewSettings gThSet = {0}; // параметры получаются из GUI при регистрации
 
@@ -120,7 +124,7 @@ void WINAPI _export GetPluginInfoW(struct PluginInfo *pi)
 {
     static WCHAR *szMenu[1], szMenu1[255];
     szMenu[0]=szMenu1;
-	lstrcpynW(szMenu1, GetMsgW(0), 240);
+	lstrcpynW(szMenu1, GetMsgW(CEPluginName), 240);
 
 
 	pi->StructSize = sizeof(struct PluginInfo);
@@ -141,6 +145,8 @@ HANDLE WINAPI _export OpenPluginW(int OpenFrom,INT_PTR Item)
 {
 	if (!gbInfoW_OK || !CheckConEmu(TRUE))
 		return INVALID_HANDLE_VALUE;
+
+	gpNullSecurity = NullSecurity();
 		
 	//gThSet.Load();
 	// При открытии плагина - загрузить информацию об обеих панелях. Нужно для определения регионов!
@@ -161,8 +167,16 @@ HANDLE WINAPI _export OpenPluginW(int OpenFrom,INT_PTR Item)
 	}
 
 	if (PVM == pvm_None) {
-		TODO("Показать меню с выбором режима, а пока - Thumbs");
-		PVM = pvm_Thumbnails;
+		switch (ShowPluginMenu()) {
+			case 0:
+				PVM = pvm_Thumbnails;
+				break;
+			case 1:
+				PVM = pvm_Tiles;
+				break;
+			default:
+				return INVALID_HANDLE_VALUE;
+		}
 	}
 
 	
@@ -172,6 +186,7 @@ HANDLE WINAPI _export OpenPluginW(int OpenFrom,INT_PTR Item)
 	// Если View не создан, или смена режима
 	if ((hView == NULL) || (PVM != pi->PVM)) {
 		pi->PVM = PVM;
+		pi->DisplayReloadPanel();
 		if (hView == NULL) {
 			// Нужно создать View
 			hView = pi->CreateView();
@@ -357,6 +372,15 @@ void WINAPI _export SetStartupInfoW(void *aInfo)
 	else
 		FUNC_X(SetStartupInfoW)(aInfo);
 
+	lstrcpynW(gsFolder, GetMsgW(CEDirFolder), sizeofarray(gsFolder));
+	//lstrcpynW(gsHardLink, GetMsgW(CEDirHardLink), sizeofarray(gsHardLink));
+	lstrcpynW(gsSymLink, GetMsgW(CEDirSymLink), sizeofarray(gsSymLink));
+	lstrcpynW(gsJunction, GetMsgW(CEDirJunction), sizeofarray(gsJunction));
+
+	if (!gpImgCache) {
+		gpImgCache = new CImgCache(ghPluginModule);
+	}
+
 	gbInfoW_OK = TRUE;
 }
 
@@ -380,7 +404,7 @@ void WINAPI _export SetStartupInfoW(void *aInfo)
 
 
 
-void StopThread(void)
+void ExitPlugin(void)
 {
 	if (ghLeftView)
 		PostMessage(ghLeftView, WM_CLOSE,0,0);
@@ -410,7 +434,7 @@ void StopThread(void)
 
 void   WINAPI _export ExitFARW(void)
 {
-	StopThread();
+	ExitPlugin();
 
 	if (gFarVersion.dwBuild>=FAR_Y_VER)
 		FUNC_Y(ExitFARW)();
@@ -509,9 +533,9 @@ void PostMacro(wchar_t* asMacro)
 
 
 
-void ShowPluginMenu(int nID /*= -1*/)
+int ShowPluginMenu()
 {
-	//int nItem = -1;
+	int nItem = -1;
 	//if (!FarHwnd) {
 	//	SHOWDBGINFO(L"*** ShowPluginMenu failed, FarHwnd is NULL\n");
 	//	return;
@@ -523,16 +547,19 @@ void ShowPluginMenu(int nID /*= -1*/)
 	//	if (nItem >= 7) nItem++; //Separator
 	//	if (nItem >= 9) nItem++; //Separator
 	//	SHOWDBGINFO(L"*** ShowPluginMenu used default item\n");
-	//} else if (gFarVersion.dwVerMajor==1) {
-	//	SHOWDBGINFO(L"*** calling ShowPluginMenuA\n");
-	//	nItem = ShowPluginMenuA();
-	//} else if (gFarVersion.dwBuild>=FAR_Y_VER) {
-	//	SHOWDBGINFO(L"*** calling ShowPluginMenuWY\n");
-	//	nItem = FUNC_Y(ShowPluginMenu)();
-	//} else {
-	//	SHOWDBGINFO(L"*** calling ShowPluginMenuWX\n");
-	//	nItem = FUNC_X(ShowPluginMenu)();
-	//}
+	//} else 
+	if (gFarVersion.dwVerMajor==1) {
+		SHOWDBGINFO(L"*** calling ShowPluginMenuA\n");
+		nItem = ShowPluginMenuA();
+	} else if (gFarVersion.dwBuild>=FAR_Y_VER) {
+		SHOWDBGINFO(L"*** calling ShowPluginMenuWY\n");
+		nItem = FUNC_Y(ShowPluginMenu)();
+	} else {
+		SHOWDBGINFO(L"*** calling ShowPluginMenuWX\n");
+		nItem = FUNC_X(ShowPluginMenu)();
+	}
+
+	return nItem;
 
 	//if (nItem < 0) {
 	//	SHOWDBGINFO(L"*** ShowPluginMenu cancelled, nItem < 0\n");
@@ -971,6 +998,7 @@ BOOL WINAPI OnPreWriteConsoleOutput(HANDLE hOutput,const CHAR_INFO *lpBuffer,COO
 		// Это нужно чтобы избежать возможных блокировок фара
 		//gFarInfo.bFarPanelInfoFilled = gFarInfo.bFarLeftPanel = gFarInfo.bFarRightPanel = FALSE;
 		gpRgnDetect->PrepareTransparent(&gFarInfo, gcrCurColors);
+		gnRgnDetectFlags = gpRgnDetect->GetFlags();
 	}
 
 	WARNING("Если панели скрыты (активен редактор/вьювер) - не пытаться считывать панели");
@@ -1095,6 +1123,8 @@ BOOL ProcessConsoleInput(BOOL abUseUngetBuffer, PINPUT_RECORD lpBuffer, DWORD nB
 	WARNING("Ставить его должен GUI");
 	WARNING("Если есть хотя бы один диалог - значит перехватывать нельзя");
 
+	PanelViewMode PVM = pi->PVM;
+
 	// Пойдем в два прохода. В первом - обработка замен, и помещение в буфер Unget.
 	PINPUT_RECORD p = lpBuffer;
 	PINPUT_RECORD pEnd = lpBuffer+*lpNumberOfEventsRead;
@@ -1113,30 +1143,42 @@ BOOL ProcessConsoleInput(BOOL abUseUngetBuffer, PINPUT_RECORD lpBuffer, DWORD nB
 					// Переработать
 					int n = 1;
 					switch (vk) {
-						case VK_UP: {
-							n = min(pi->CurrentItem,pi->nXCount);
-									} break;
-						case VK_DOWN: {
-							n = min((pi->ItemsNumber-pi->CurrentItem-1),pi->nXCount);
-									  } break;
-						case VK_LEFT: {
+						case VK_UP:
+						{
+							if (PVM == pvm_Thumbnails)
+								n = min(pi->CurrentItem,pi->nXCount);
+						} break;
+						case VK_DOWN:
+						{
+							if (PVM == pvm_Thumbnails)
+								n = min((pi->ItemsNumber-pi->CurrentItem-1),pi->nXCount);
+						} break;
+						case VK_LEFT:
+						{
 							p->Event.KeyEvent.wVirtualKeyCode = VK_UP;
 							p->Event.KeyEvent.wVirtualScanCode = wScanCodeUp;
-									  } break;
-						case VK_RIGHT: {
+							if (PVM != pvm_Thumbnails)
+								n = min(pi->CurrentItem,pi->nYCount);
+						} break;
+						case VK_RIGHT:
+						{
 							p->Event.KeyEvent.wVirtualKeyCode = VK_DOWN;
 							p->Event.KeyEvent.wVirtualScanCode = wScanCodeDown;
-									   } break;
-						case VK_PRIOR: {
+							if (PVM != pvm_Thumbnails)
+								n = min((pi->ItemsNumber-pi->CurrentItem-1),pi->nYCount);
+						} break;
+						case VK_PRIOR:
+						{
 							p->Event.KeyEvent.wVirtualKeyCode = VK_UP;
 							p->Event.KeyEvent.wVirtualScanCode = wScanCodeUp;
 							n = min(pi->CurrentItem,pi->nXCount*pi->nYCountFull);
-									   } break;
-						case VK_NEXT: {
+						} break;
+						case VK_NEXT:
+						{
 							p->Event.KeyEvent.wVirtualKeyCode = VK_DOWN;
 							p->Event.KeyEvent.wVirtualScanCode = wScanCodeUp;
 							n = min((pi->ItemsNumber-pi->CurrentItem-1),pi->nXCount*pi->nYCountFull);
-									  } break;
+						} break;
 					}
 
 					// Если это нажатие - то дополнительные нужно поместить в Unget буфер
@@ -1335,9 +1377,12 @@ void CheckVarsInitialized()
 	if (!gpRgnDetect) {
 		gpRgnDetect = new CRgnDetect();
 	}
-	if (!gpImgCache) {
-		gpImgCache = new CImgCache(ghPluginModule);
-	}
+
+	// Должно инититься в SetStartupInfo	
+	_ASSERTE(gpImgCache!=NULL);
+	//if (!gpImgCache) {
+	//	gpImgCache = new CImgCache(ghPluginModule);
+	//}
 
 	CeFullPanelInfo* p = pviLeft.hView ? &pviLeft : &pviRight;
 

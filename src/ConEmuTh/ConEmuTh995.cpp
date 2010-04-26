@@ -114,29 +114,31 @@ int ShowPluginMenu995()
 	if (!InfoW995)
 		return -1;
 
-	return 0;
+	FarMenuItemEx items[] = {
+		{ghConEmuRoot ? 0 : MIF_DISABLE,  InfoW995->GetMsg(InfoW995->ModuleNumber,CEMenuThumbnails)},
+		{ghConEmuRoot ? 0 : MIF_DISABLE,  InfoW995->GetMsg(InfoW995->ModuleNumber,CEMenuTiles)},
+	};
+	int nCount = sizeof(items)/sizeof(items[0]);
 
-	//FarMenuItemEx items[] = {
-	//	{ConEmuHwnd ? MIF_SELECTED : MIF_DISABLE,  InfoW995->GetMsg(InfoW995->ModuleNumber,3)},
-	//	{ConEmuHwnd ? 0 : MIF_DISABLE,             InfoW995->GetMsg(InfoW995->ModuleNumber,4)},
-	//	{MIF_SEPARATOR},
-	//	{ConEmuHwnd ? 0 : MIF_DISABLE,             InfoW995->GetMsg(InfoW995->ModuleNumber,6)},
-	//	{ConEmuHwnd ? 0 : MIF_DISABLE,             InfoW995->GetMsg(InfoW995->ModuleNumber,7)},
-	//	{ConEmuHwnd ? 0 : MIF_DISABLE,             InfoW995->GetMsg(InfoW995->ModuleNumber,8)},
-	//	{ConEmuHwnd ? 0 : MIF_DISABLE,             InfoW995->GetMsg(InfoW995->ModuleNumber,9)},
-	//	{MIF_SEPARATOR},
-	//	{ConEmuHwnd||IsTerminalMode() ? MIF_DISABLE : MIF_SELECTED,  InfoW995->GetMsg(InfoW995->ModuleNumber,13)},
-	//	{MIF_SEPARATOR},
-	//	{IsDebuggerPresent()||IsTerminalMode() ? MIF_DISABLE : 0,    InfoW995->GetMsg(InfoW995->ModuleNumber,14)}
-	//};
-	//int nCount = sizeof(items)/sizeof(items[0]);
+	CeFullPanelInfo* pi = IsThumbnailsActive(TRUE);
+	if (!pi) {
+		items[0].Flags |= MIF_SELECTED;
+	} else {
+		if (pi->PVM == pvm_Thumbnails) {
+			items[0].Flags |= MIF_SELECTED|MIF_CHECKED;
+		} else if (pi->PVM == pvm_Tiles) {
+			items[1].Flags |= MIF_SELECTED|MIF_CHECKED;
+		} else {
+			items[0].Flags |= MIF_SELECTED;
+		}
+	}
 
-	//int nRc = InfoW995->Menu(InfoW995->ModuleNumber, -1,-1, 0, 
-	//	FMENU_USEEXT|FMENU_AUTOHIGHLIGHT|FMENU_CHANGECONSOLETITLE|FMENU_WRAPMODE,
-	//	InfoW995->GetMsg(InfoW995->ModuleNumber,2),
-	//	NULL, NULL, NULL, NULL, (FarMenuItem*)items, nCount);
+	int nRc = InfoW995->Menu(InfoW995->ModuleNumber, -1,-1, 0, 
+		FMENU_USEEXT|FMENU_AUTOHIGHLIGHT|FMENU_CHANGECONSOLETITLE|FMENU_WRAPMODE,
+		InfoW995->GetMsg(InfoW995->ModuleNumber,2),
+		NULL, NULL, NULL, NULL, (FarMenuItem*)items, nCount);
 
-	//return nRc;
+	return nRc;
 }
 
 BOOL IsMacroActive995()
@@ -172,15 +174,19 @@ void LoadPanelItemInfo995(CeFullPanelInfo* pi, int nItem)
 	}
 	
 	if (!nSize) { // ошибка?
+		// FAR не смог заполнить ppi данными, поэтому накидаем туда нулей, чтобы мусор не рисовать
 		ppi->FindData.lpwszFileName = L"???";
 		ppi->Flags = 0;
+		ppi->NumberOfLinks = 0;
 		ppi->FindData.dwFileAttributes = 0;
 		ppi->FindData.ftLastWriteTime.dwLowDateTime = ppi->FindData.ftLastWriteTime.dwHighDateTime = 0;
 		ppi->FindData.nFileSize = 0;
 	}
 
 	// Необходимый размер буфера для хранения элемента
-	nSize = sizeof(CePluginPanelItem)+(wcslen(ppi->FindData.lpwszFileName)+1)*2;
+	nSize = sizeof(CePluginPanelItem)
+		+(wcslen(ppi->FindData.lpwszFileName)+1)*2
+		+((ppi->Description ? wcslen(ppi->Description) : 0)+1)*2;
 	
 	// Уже может быть выделено достаточно памяти под этот элемент
 	if ((pi->ppItems[nItem] == NULL) || (pi->ppItems[nItem]->cbSize < (DWORD_PTR)nSize)) {
@@ -191,7 +197,13 @@ void LoadPanelItemInfo995(CeFullPanelInfo* pi, int nItem)
 	}
 	
 	// Копируем
+	if (pi->bPlugin && (pi->Flags & CEPFLAGS_REALNAMES) == 0) {
+		pi->ppItems[nItem]->bVirtualItem = TRUE;
+	} else {
+		pi->ppItems[nItem]->bVirtualItem = FALSE;
+	}
 	pi->ppItems[nItem]->Flags = ppi->Flags;
+	pi->ppItems[nItem]->NumberOfLinks = ppi->NumberOfLinks;
 	pi->ppItems[nItem]->FindData.dwFileAttributes = ppi->FindData.dwFileAttributes;
 	pi->ppItems[nItem]->FindData.ftLastWriteTime = ppi->FindData.ftLastWriteTime;
 	pi->ppItems[nItem]->FindData.nFileSize = ppi->FindData.nFileSize;
@@ -202,7 +214,14 @@ void LoadPanelItemInfo995(CeFullPanelInfo* pi, int nItem)
 	if (pi->ppItems[nItem]->FindData.lpwszFileNamePart == NULL)
 		pi->ppItems[nItem]->FindData.lpwszFileNamePart = psz;
 	pi->ppItems[nItem]->FindData.lpwszFileExt = wcsrchr(pi->ppItems[nItem]->FindData.lpwszFileNamePart, L'.');
-	
+	// Description
+	psz += wcslen(psz)+1;
+	if (ppi->Description)
+		lstrcpy(psz, ppi->Description);
+	else
+		psz[0] = 0;
+	pi->ppItems[nItem]->pszDescription = psz;
+
 	// ppi не освобождаем - это ссылка на pi->pFarTmpBuf
 }
 

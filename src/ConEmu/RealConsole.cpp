@@ -250,11 +250,11 @@ CRealConsole::~CRealConsole()
 	if (con.hInSetSize)
 		{ CloseHandle(con.hInSetSize); con.hInSetSize = NULL; }
 
-	// Требутся, т.к. сам объект делает SafeFree, а не Free
-    if (m_Args.pszSpecialCmd)
-        { Free(m_Args.pszSpecialCmd); m_Args.pszSpecialCmd = NULL; }
-    if (m_Args.pszStartupDir)
-        { Free(m_Args.pszStartupDir); m_Args.pszStartupDir = NULL; }
+	//// Требутся, т.к. сам объект делает SafeFree, а не Free
+    //if (m_Args.pszSpecialCmd)
+    //    { Free(m_Args.pszSpecialCmd); m_Args.pszSpecialCmd = NULL; }
+    //if (m_Args.pszStartupDir)
+    //    { Free(m_Args.pszStartupDir); m_Args.pszStartupDir = NULL; }
 
 
     SafeCloseHandle(mh_ConEmuC); mn_ConEmuC_PID = 0; //mn_ConEmuC_Input_TID = 0;
@@ -295,28 +295,28 @@ BOOL CRealConsole::PreCreate(RConStartArgs *args)
     mb_NeedStartProcess = FALSE;
 
     if (args->pszSpecialCmd /*&& !m_Args.pszSpecialCmd*/) {
-		if (m_Args.pszSpecialCmd) {
-			Free(m_Args.pszSpecialCmd); m_Args.pszSpecialCmd = NULL;
-		}
+		SafeFree(m_Args.pszSpecialCmd);
         _ASSERTE(args->bDetached == FALSE);
-        int nLen = lstrlenW(args->pszSpecialCmd);
-        m_Args.pszSpecialCmd = (wchar_t*)Alloc(nLen+1,2);
+        m_Args.pszSpecialCmd = _wcsdup(args->pszSpecialCmd);
         if (!m_Args.pszSpecialCmd)
             return FALSE;
-        lstrcpyW(m_Args.pszSpecialCmd, args->pszSpecialCmd);
     }
     if (args->pszStartupDir) {
-		if (m_Args.pszStartupDir) {
-			Free(m_Args.pszStartupDir); m_Args.pszStartupDir = NULL;
-		}
-        int nLen = lstrlenW(args->pszStartupDir);
-        m_Args.pszStartupDir = (wchar_t*)Alloc(nLen+1,2);
+		SafeFree(m_Args.pszStartupDir);
+        m_Args.pszStartupDir = _wcsdup(args->pszStartupDir);
         if (!m_Args.pszStartupDir)
             return FALSE;
-        lstrcpyW(m_Args.pszStartupDir, args->pszStartupDir);
     }
 
+    m_Args.bRunAsRestricted = args->bRunAsRestricted;
 	m_Args.bRunAsAdministrator = args->bRunAsAdministrator;
+	SafeFree(m_Args.pszUserName); SafeFree(m_Args.pszUserPassword);
+	if (args->pszUserName) {
+		m_Args.pszUserName = _wcsdup(args->pszUserName);
+		m_Args.pszUserPassword = _wcsdup(args->pszUserPassword ? args->pszUserPassword : L"");
+		if (!m_Args.pszUserName || !m_Args.pszUserPassword)
+			return FALSE;
+	}
 
     if (args->bDetached) {
         // Пока ничего не делаем - просто создается серверная нить
@@ -1601,13 +1601,41 @@ BOOL CRealConsole::StartProcess()
 			LockSetForegroundWindow ( LSFW_LOCK );
 
 			SetConStatus(L"Starting root process...");
-			lbRc = CreateProcess(NULL, psCurCmd, NULL, NULL, FALSE, 
-				NORMAL_PRIORITY_CLASS|
-				CREATE_DEFAULT_ERROR_MODE|CREATE_NEW_CONSOLE
-				//|CREATE_NEW_PROCESS_GROUP - низя! перестает срабатывать Ctrl-C
-				, NULL, m_Args.pszStartupDir, &si, &pi);
-			if (!lbRc)
-				dwLastError = GetLastError();
+			if (m_Args.pszUserName != NULL) {
+				lbRc = CreateProcessWithLogonW(m_Args.pszUserName, NULL, m_Args.pszUserPassword,
+					LOGON_WITH_PROFILE, NULL, psCurCmd,
+					NORMAL_PRIORITY_CLASS|CREATE_DEFAULT_ERROR_MODE|CREATE_NEW_CONSOLE
+					, NULL, NULL, &si, &pi);
+			} else if (m_Args.bRunAsRestricted) {
+				HANDLE hToken = NULL, hTokenRest = NULL;
+				lbRc = FALSE;	
+				if (OpenProcessToken(GetCurrentProcess(), 
+						TOKEN_ASSIGN_PRIMARY|TOKEN_DUPLICATE|TOKEN_QUERY|TOKEN_ADJUST_DEFAULT, &hToken))
+				{
+					if (CreateRestrictedToken(hToken, DISABLE_MAX_PRIVILEGE, 0, NULL, 0, NULL, 0, NULL, &hTokenRest))
+					{
+						if (CreateProcessAsUserW(hTokenRest, NULL, psCurCmd, NULL, NULL, false,
+								NORMAL_PRIORITY_CLASS|CREATE_DEFAULT_ERROR_MODE|CREATE_NEW_CONSOLE
+								, NULL, NULL, &si, &pi))
+						{
+							lbRc = TRUE;
+						}
+						CloseHandle(hTokenRest); hTokenRest = NULL;
+					} else {
+						dwLastError = GetLastError();
+					}
+					CloseHandle(hToken); hToken = NULL;
+				} else {
+					dwLastError = GetLastError();
+				}
+			} else {
+				lbRc = CreateProcess(NULL, psCurCmd, NULL, NULL, FALSE, 
+					NORMAL_PRIORITY_CLASS|CREATE_DEFAULT_ERROR_MODE|CREATE_NEW_CONSOLE
+					//|CREATE_NEW_PROCESS_GROUP - низя! перестает срабатывать Ctrl-C
+					, NULL, m_Args.pszStartupDir, &si, &pi);
+				if (!lbRc)
+					dwLastError = GetLastError();
+			}
 			DEBUGSTRPROC(_T("CreateProcess finished\n"));
 
 			LockSetForegroundWindow ( LSFW_UNLOCK );
@@ -1619,9 +1647,7 @@ BOOL CRealConsole::StartProcess()
 				lbRc = FALSE;
 				dwLastError = -1;
 			} else {
-				// Почему-то валится.
-                // Попробовать GlobalAlloc на строки (может ему чего не нравится...) сделать копии
-                // Если не прокатит: CreateProcessAsUser with an unrestricted administrator token
+                // Можно попробовать: CreateProcessAsUser with an unrestricted administrator token
                 // http://weblogs.asp.net/kennykerr/archive/2006/09/29/Windows-Vista-for-Developers-_1320_-Part-4-_1320_-User-Account-Control.aspx
                 
                 if (mp_sei) {
@@ -4945,7 +4971,7 @@ void CRealConsole::CreateLogFiles()
         return;
     }
 
-    mpsz_LogInputFile = wcsdup(szFile);
+    mpsz_LogInputFile = _wcsdup(szFile);
     // OK, лог создали
 }
 

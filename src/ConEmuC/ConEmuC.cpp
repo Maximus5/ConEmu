@@ -1866,6 +1866,11 @@ BOOL CheckProcessCount(BOOL abForce/*=FALSE*/)
 										srv.nNtvdmPID = prc.th32ProcessID;
 									}
 									#endif
+									// 23.04.2010 Maks - telnet нужно определять, т.к. у него проблемы с Ins и курсором
+									else if (lstrcmpiW(prc.szExeFile, L"telnet.exe")==0)
+									{
+										lbTelnetExist = TRUE;
+									}
 									// Во время работы Telnet тоже нужно ловить все события!
 									//2009-12-28 убрал. все должно быть само...
 									//if (lstrcmpiW(prc.szExeFile, L"telnet.exe")==0) {
@@ -1876,7 +1881,10 @@ BOOL CheckProcessCount(BOOL abForce/*=FALSE*/)
 									//}
 								}
 							}
-						} while (!(lbFarExists && lbTelnetExist) && Process32Next(hSnap, &prc));
+
+							if (lbFarExists && lbTelnetExist && srv.nNtvdmPID)
+								break; // чтобы условие выхода внятнее было
+						} while (Process32Next(hSnap, &prc));
 					}
 					CloseHandle(hSnap);
 				}

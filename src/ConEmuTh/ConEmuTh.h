@@ -98,9 +98,12 @@ struct CePluginPanelItem
 {
 	DWORD			cbSize;
 	struct CEFAR_FIND_DATA FindData;
+	BOOL            bVirtualItem;
+	BOOL            bPreviewLoaded;
 	const wchar_t*  pszFullName; // Для упрощения отрисовки - ссылка на временный буфер
+	const wchar_t*  pszDescription; // ссылка на данные в этом CePluginPanelItem
 	DWORD           Flags;
-	//DWORD         NumberOfLinks;
+	DWORD           NumberOfLinks;
 	//wchar_t      *Description;
 	//wchar_t      *Owner;
 	//wchar_t     **CustomColumnData;
@@ -131,6 +134,7 @@ typedef struct tag_CeFullPanelInfo
 	wchar_t sFontName[32]; // Tahoma
 	int nFontHeight; // 14
 	//
+	int nWholeW, nWholeH; // инициализируется при первом Paint
 	int nXCount; // тут четко, кусок иконки не допускается
 	int nYCountFull; // тут четко, кусок иконки не допускается
 	int nYCount; // а тут допускается отображение верхней части иконки
@@ -175,6 +179,8 @@ typedef struct tag_CeFullPanelInfo
 	BOOL PaintItem(HDC hdc, int x, int y, CePluginPanelItem* pItem, BOOL abCurrentItem, 
 			   COLORREF *nBackColor, COLORREF *nForeColor, HBRUSH *hBack,
 			   BOOL abAllowPreview, HBRUSH hBackBrush);
+	int DrawItemText(HDC hdc, LPRECT prcText, LPRECT prcMaxText, CePluginPanelItem* pItem, LPCWSTR pszComments, HBRUSH hBr);
+	BOOL OnSettingsChanged(BOOL bInvalidate);
 			   
 	/*{
 		if (ppItems) {
@@ -296,6 +302,11 @@ extern DWORD gnWaitForKeySeqTick;
 //class CRgnDetect;
 //extern CRgnDetect *gpRgnDetect;
 
+// *** lng resources begin ***
+extern wchar_t gsFolder[64], /*gsHardLink[64],*/ gsSymLink[64], gsJunction[64];
+// *** lng resources end ***
+
+
 //typedef struct tag_SynchroArg {
 //	enum {
 //		eCommand,
@@ -309,7 +320,7 @@ extern DWORD gnWaitForKeySeqTick;
 //} SynchroArg;
 
 BOOL LoadFarVersion();
-void StopThread(void);
+void ExitPlugin(void);
 void FUNC_X(ExitFARW)(void);
 void FUNC_Y(ExitFARW)(void);
 void FUNC_X(SetStartupInfoW)(void *aInfo);
@@ -326,10 +337,10 @@ void PostMacroA(char* asMacro);
 void FUNC_X(PostMacro)(wchar_t* asMacro);
 void FUNC_Y(PostMacro)(wchar_t* asMacro);
 LPCWSTR GetMsgW(int aiMsg);
-void GetMsgA(int aiMsg, wchar_t* rsMsg/*MAX_PATH*/);
+const wchar_t* GetMsgA(int aiMsg, wchar_t* rsMsg/*MAX_PATH*/);
 LPCWSTR FUNC_Y(GetMsg)(int aiMsg);
 LPCWSTR FUNC_X(GetMsg)(int aiMsg);
-void ShowPluginMenu(int nID = -1);
+int ShowPluginMenu();
 int ShowPluginMenuA();
 int FUNC_Y(ShowPluginMenu)();
 int FUNC_X(ShowPluginMenu)();

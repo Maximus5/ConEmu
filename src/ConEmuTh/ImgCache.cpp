@@ -313,6 +313,7 @@ void CImgCache::Reset()
 	if (mh_CompDC) {
 		DeleteDC(mh_CompDC); mh_CompDC = NULL;
 	}
+	nPreviewSize = 0;
 };
 void CImgCache::Init(COLORREF acrBack)
 {
@@ -397,10 +398,11 @@ BOOL CImgCache::FindInCache(CePluginPanelItem* pItem, int* pnIndex)
 		CacheInfo[i].dwFileAttributes = pItem->FindData.dwFileAttributes;
 		CacheInfo[i].nFileSize = pItem->FindData.nFileSize;
 		CacheInfo[i].ftLastWriteTime = pItem->FindData.ftLastWriteTime;
+		CacheInfo[i].bVirtualItem = pItem->bVirtualItem;
 	}
 	return lbReady;
 };
-BOOL CImgCache::PaintItem(HDC hdc, int x, int y, int nImgSize, CePluginPanelItem* pItem, BOOL abLoadPreview)
+BOOL CImgCache::PaintItem(HDC hdc, int x, int y, int nImgSize, CePluginPanelItem* pItem, BOOL abLoadPreview, LPCWSTR* ppszComments)
 {
 	int nIndex = -1;
 	if (!CheckDibCreated())
@@ -447,6 +449,10 @@ BOOL CImgCache::PaintItem(HDC hdc, int x, int y, int nImgSize, CePluginPanelItem
 	if (!lbReady) {
 		UpdateCell(CacheInfo+nIndex, abLoadPreview);
 	}
+	pItem->bPreviewLoaded = CacheInfo[nIndex].bPreviewLoaded;
+	
+	if (ppszComments)
+		*ppszComments = CacheInfo[nIndex].pszComments;
 	
 	// Скинуть биты в MemDC
 	CopyBits(CacheInfo[nIndex].crSize, (LPBYTE)(CacheInfo[nIndex].Pixels), CacheInfo[nIndex].cbStride,
@@ -749,90 +755,130 @@ BOOL CImgCache::LoadThumbnail(struct tag_CacheInfo* pItem)
 	if (!CheckDibCreated())
 		return FALSE;
 
+	BOOL lbThumbRc = FALSE;
 	struct CET_LoadInfo PV = {sizeof(struct CET_LoadInfo)};
 
 	PV.sFileName = pItem->lpwszFileName;
-	PV.ftModified = PV.ftModified;
-	PV.nFileSize = PV.nFileSize;
+	PV.bVirtualItem = pItem->bVirtualItem;
+	PV.ftModified = pItem->ftLastWriteTime;
+	PV.nFileSize = pItem->nFileSize;
 	PV.crLoadSize.X = PV.crLoadSize.Y = nPreviewSize;
 	PV.bTilesMode = FALSE; // TRUE, when pszInfo acquired.
 	PV.crBackground = crBackground; // Must be used to fill background.
 	_ASSERTE(gThSet.nMaxZoom>0 && gThSet.nMaxZoom < 1000);
 	PV.nMaxZoom = gThSet.nMaxZoom;
 	BOOL lbLoadRc;
-
-	for (int i = 0; i < MAX_MODULES; i++) {
-		if (Modules[i].hModule == NULL)
-			continue;
-
-		PV.pContext = Modules[i].pContext;
-		__try {
-			lbLoadRc = Modules[i].LoadInfo(&PV);
-		}__except(EXCEPTION_EXECUTE_HANDLER) {
-			lbLoadRc = FALSE;
+	
+	HANDLE hFile = INVALID_HANDLE_VALUE, hMapping = NULL;
+	LPVOID pFileMap = NULL;
+	if (!PV.bVirtualItem) {
+		hFile = CreateFileW(PV.sFileName, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
+		if (hFile != INVALID_HANDLE_VALUE) {
+			hMapping = CreateFileMapping(hFile, NULL, PAGE_READONLY, 0, 0, NULL);
+			if (hMapping) {
+				pFileMap = MapViewOfFile(hMapping, FILE_MAP_READ, 0,0,0);
+				PV.pFileData = (const BYTE*)pFileMap;
+			}
 		}
-		if (!lbLoadRc)
-			continue;
+	}
+
+	if (PV.pFileData)
+	{
+		for (int i = 0; i < MAX_MODULES; i++) {
+			if (Modules[i].hModule == NULL)
+				continue;
+
+			PV.pContext = Modules[i].pContext;
+			BOOL lbException = FALSE;
+			__try {
+				lbLoadRc = Modules[i].LoadInfo(&PV);
+			}__except(EXCEPTION_EXECUTE_HANDLER) {
+				lbLoadRc = FALSE; lbException = TRUE;
+			}
+			if (lbException) {
+				if (PV.pFileContext) {
+					__try {
+						Modules[i].FreeInfo(&PV);
+					}__except(EXCEPTION_EXECUTE_HANDLER) {
+					}
+				}
+				continue;
+			}
+
+			TODO("Потом может быть не только Pixels, например только информация о версии dll");	
+			if (!lbLoadRc || !PV.Pixels || !PV.cbPixelsSize) {
+				if (PV.pFileContext) {
+					__try {
+						Modules[i].FreeInfo(&PV);
+					}__except(EXCEPTION_EXECUTE_HANDLER) {
+					}
+				}
+				continue;
+			}
+
+			if (pItem->Pixels && pItem->cbPixelsSize < PV.cbPixelsSize) {
+				free(pItem->Pixels); pItem->Pixels = NULL;
+			}
+			if (!pItem->Pixels) {
+				pItem->Pixels = (LPDWORD)malloc(PV.cbPixelsSize);
+				if (!pItem->Pixels) {
+					_ASSERTE(pItem->Pixels);
+					__try {
+						Modules[i].FreeInfo(&PV);
+					}__except(EXCEPTION_EXECUTE_HANDLER) {
+					}
+					continue;
+				}
+				pItem->cbPixelsSize = PV.cbPixelsSize;
+			}
+			memmove(pItem->Pixels, PV.Pixels, PV.cbPixelsSize);
 			
-		if (!PV.Pixels || !PV.cbPixelsSize) {
+			if (PV.pszComments) {
+				DWORD nLen = (DWORD)max(255,wcslen(PV.pszComments));
+				if (pItem->pszComments && pItem->wcCommentsSize <= nLen) {
+					free(pItem->pszComments); pItem->pszComments = 0;
+				}
+				if (!pItem->pszComments) {
+					pItem->wcCommentsSize = nLen+1;
+					pItem->pszComments = (wchar_t*)malloc(pItem->wcCommentsSize*2);
+				}
+				if (pItem->pszComments) {
+					lstrcpyn(pItem->pszComments, PV.pszComments, nLen);
+				}
+			} else if (pItem->pszComments) {
+				free(pItem->pszComments); pItem->pszComments = NULL; pItem->wcCommentsSize = 0;
+			}
+			
+			//if (pItem->pszInfo)
+			//	LocalFree(pItem->pszInfo);
+			//pItem->pszInfo = PV.pszInfo;
+
+			pItem->crSize = PV.crSize; // Предпочтительно, должен совпадать с crLoadSize
+			pItem->cbStride = PV.cbStride; // Bytes per line
+			pItem->nBits = PV.nBits; // 32 bit required!
+			pItem->ColorModel = PV.ColorModel; // One of CET_CM_xxx
+			
 			__try {
 				Modules[i].FreeInfo(&PV);
 			}__except(EXCEPTION_EXECUTE_HANDLER) {
 			}
-			continue;
+			
+			lbThumbRc = TRUE;
+			break;
 		}
-
-		if (pItem->Pixels && pItem->cbPixelsSize < PV.cbPixelsSize) {
-			free(pItem->Pixels); pItem->Pixels = NULL;
+	}
+	
+	if (hFile != INVALID_HANDLE_VALUE) {
+		if (hMapping) {
+			CloseHandle(hMapping);
 		}
-		if (!pItem->Pixels) {
-			pItem->Pixels = (LPDWORD)malloc(PV.cbPixelsSize);
-			if (!pItem->Pixels) {
-				_ASSERTE(pItem->Pixels);
-				__try {
-					Modules[i].FreeInfo(&PV);
-				}__except(EXCEPTION_EXECUTE_HANDLER) {
-				}
-				continue;
-			}
-			pItem->cbPixelsSize = PV.cbPixelsSize;
+		if (pFileMap) {
+			UnmapViewOfFile(pFileMap);
 		}
-		memmove(pItem->Pixels, PV.Pixels, PV.cbPixelsSize);
-		
-		if (PV.pszComments) {
-			DWORD nLen = (DWORD)max(255,wcslen(PV.pszComments));
-			if (pItem->pszComments && pItem->wcCommentsSize <= nLen) {
-				free(pItem->pszComments); pItem->pszComments = 0;
-			}
-			if (!pItem->pszComments) {
-				pItem->wcCommentsSize = nLen+1;
-				pItem->pszComments = (wchar_t*)malloc(pItem->wcCommentsSize*2);
-			}
-			if (pItem->pszComments) {
-				lstrcpyn(pItem->pszComments, PV.pszComments, nLen);
-			}
-		} else if (pItem->pszComments) {
-			free(pItem->pszComments); pItem->pszComments = NULL; pItem->wcCommentsSize = 0;
-		}
-		
-		//if (pItem->pszInfo)
-		//	LocalFree(pItem->pszInfo);
-		//pItem->pszInfo = PV.pszInfo;
-
-		pItem->crSize = PV.crSize; // Предпочтительно, должен совпадать с crLoadSize
-		pItem->cbStride = PV.cbStride; // Bytes per line
-		pItem->nBits = PV.nBits; // 32 bit required!
-		pItem->ColorModel = PV.ColorModel; // One of CET_CM_xxx
-		
-		__try {
-			Modules[i].FreeInfo(&PV);
-		}__except(EXCEPTION_EXECUTE_HANDLER) {
-		}
-		
-		return TRUE;
+		CloseHandle(hFile);
 	}
 
-	return FALSE;
+	return lbThumbRc;
 
 	//if (gpDesktopFolder == NULL) {
 	//	HRESULT hr = SHGetDesktopFolder(&gpDesktopFolder);

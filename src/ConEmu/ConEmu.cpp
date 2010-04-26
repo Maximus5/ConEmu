@@ -34,6 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Header.h"
 #include <Tlhelp32.h>
 #include <Shlobj.h>
+#include <lm.h>
 #include "../common/ConEmuCheck.h"
 
 #define DEBUGSTRSYS(s) //DEBUGSTR(s)
@@ -3140,6 +3141,9 @@ void CConEmuMain::Recreate(BOOL abRecreate, BOOL abConfirm, BOOL abRunAs)
     }
     
     SafeFree(args.pszSpecialCmd);
+	SafeFree(args.pszStartupDir);
+	SafeFree(args.pszUserName);
+	SafeFree(args.pszUserPassword);
 }
 
 int CConEmuMain::RecreateDlg(LPARAM lParam)
@@ -3265,15 +3269,21 @@ INT_PTR CConEmuMain::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARA
             
             const wchar_t *pszUser, *pszPwd; BOOL bResticted;
             int nChecked = rbCurrentUser;
+			wchar_t szCurUser[MAX_PATH]; DWORD nUserNameLen = sizeofarray(szCurUser);
+			if (!GetUserName(szCurUser, &nUserNameLen)) szCurUser[0] = 0;
+			wchar_t szRbCaption[MAX_PATH+32];
+			lstrcpy(szRbCaption, L"Run as current &user: "); lstrcat(szRbCaption, szCurUser);
+			SetDlgItemText(hDlg, rbCurrentUser, szRbCaption);
             if (gConEmu.ActiveCon()->RCon()->GetUserPwd(&pszUser, &pszPwd, &bResticted)) {
             	nChecked = rbAnotherUser;
             	if (bResticted) {
 	            	CheckDlgButton(hDlg, cbRunAsRestricted, BST_CHECKED);
             	} else {
-            		SetDlgItemText(hDlg, tRunAsUser, pszUser);
+					lstrcpyn(szCurUser, pszUser, MAX_PATH);
             		SetDlgItemText(hDlg, tRunAsPassword, pszPwd);
             	}
             }
+			SetDlgItemText(hDlg, tRunAsUser, szCurUser);
             CheckRadioButton(hDlg, rbCurrentUser, rbAnotherUser, nChecked);
             RecreateDlgProc(hDlg, UM_USER_CONTROLS, 0, 0);
             
@@ -3283,24 +3293,26 @@ INT_PTR CConEmuMain::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARA
 			SetWindowLongPtr(hDlg, DWLP_USER, (LONG_PTR)lParam);
 
 	
-			if (gConEmu.m_osv.dwMajorVersion < 6) {
+			if (gConEmu.m_osv.dwMajorVersion < 6)
+			{
 				// В XP и ниже это просто RunAs - с возможностью ввода имени пользователя и пароля
-				ShowWindow(GetDlgItem(hDlg, cbRunAsAdmin), SW_HIDE);
-				//SetDlgItemTextA(hDlg, cbRunAs, "&Run as..."); //GCC hack. иначе не собирается
-				//// И уменьшить длину
-                //RECT rcBox; GetWindowRect(GetDlgItem(hDlg, cbRunAsAdmin), &rcBox);
-                //SetWindowPos(GetDlgItem(hDlg, cbRunAsAdmin), NULL, 0, 0, (rcBox.right-rcBox.left)/2, rcBox.bottom-rcBox.top,
-                //	SWP_NOMOVE|SWP_NOZORDER);
-			} else {
-				if (gConEmu.mb_IsUacAdmin || (pArgs && pArgs->bRunAsAdministrator)) {
-					CheckDlgButton(hDlg, cbRunAsAdmin, BST_CHECKED);
-					if (gConEmu.mb_IsUacAdmin) { // Только в Vista+ если GUI уже запущен под админом
-						EnableWindow(GetDlgItem(hDlg, cbRunAsAdmin), FALSE);
-					} else {
-						RecreateDlgProc(hDlg, WM_COMMAND, cbRunAsAdmin, 0);
-					}
+				//ShowWindow(GetDlgItem(hDlg, cbRunAsAdmin), SW_HIDE);
+				SetDlgItemTextA(hDlg, cbRunAsAdmin, "&Run as..."); //GCC hack. иначе не собирается
+				// И уменьшить длину
+                RECT rcBox; GetWindowRect(GetDlgItem(hDlg, cbRunAsAdmin), &rcBox);
+                SetWindowPos(GetDlgItem(hDlg, cbRunAsAdmin), NULL, 0, 0, (rcBox.right-rcBox.left)/2, rcBox.bottom-rcBox.top,
+                	SWP_NOMOVE|SWP_NOZORDER);
+			}
+			else if (gConEmu.mb_IsUacAdmin || (pArgs && pArgs->bRunAsAdministrator))
+			{
+				CheckDlgButton(hDlg, cbRunAsAdmin, BST_CHECKED);
+				if (gConEmu.mb_IsUacAdmin) { // Только в Vista+ если GUI уже запущен под админом
+					EnableWindow(GetDlgItem(hDlg, cbRunAsAdmin), FALSE);
+				} else if (gConEmu.m_osv.dwMajorVersion < 6) {
+					RecreateDlgProc(hDlg, WM_COMMAND, cbRunAsAdmin, 0);
 				}
 			}
+			//}
 
 
             SetClassLongPtr(hDlg, GCLP_HICON, (LONG)hClassIcon);
@@ -3372,6 +3384,28 @@ INT_PTR CConEmuMain::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARA
             	EnableWindow(GetDlgItem(hDlg, tRunAsUser), FALSE);
             	EnableWindow(GetDlgItem(hDlg, tRunAsPassword), FALSE);
             } else {
+				if (SendDlgItemMessage(hDlg, tRunAsUser, CB_GETCOUNT, 0, 0) == 0)
+				{
+					DWORD dwLevel = 3, dwEntriesRead = 0, dwTotalEntries = 0, dwResumeHandle = 0;
+					NET_API_STATUS nStatus;
+
+					USER_INFO_3 *info = NULL;
+					nStatus = ::NetUserEnum(NULL, dwLevel, FILTER_NORMAL_ACCOUNT, (PBYTE*) & info, 
+						MAX_PREFERRED_LENGTH, &dwEntriesRead, &dwTotalEntries, &dwResumeHandle);
+					if (nStatus == NERR_Success) {
+						for (DWORD i = 0; i < dwEntriesRead; ++i) {
+							if ((info[i].usri3_flags & UF_ACCOUNTDISABLE) == 0)
+								SendDlgItemMessage(hDlg, tRunAsUser, CB_ADDSTRING, 0, (LPARAM)info[i].usri3_name);
+						}
+						::NetApiBufferFree(info);
+					} else {
+						// Добавить хотя бы текущего
+						wchar_t szCurUser[MAX_PATH];
+						if (GetWindowText(GetDlgItem(hDlg, tRunAsUser), szCurUser, sizeofarray(szCurUser)))
+							SendDlgItemMessage(hDlg, tRunAsUser, CB_ADDSTRING, 0, (LPARAM)szCurUser);
+					}
+				}
+
             	EnableWindow(GetDlgItem(hDlg, cbRunAsRestricted), FALSE);
             	EnableWindow(GetDlgItem(hDlg, tRunAsUser), TRUE);
             	EnableWindow(GetDlgItem(hDlg, tRunAsPassword), TRUE);
@@ -3433,15 +3467,15 @@ INT_PTR CConEmuMain::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARA
                 case cbRunAsAdmin:
                 {
                 	// BCM_SETSHIELD = 5644
+               		BOOL bRunAs = SendDlgItemMessage(hDlg, cbRunAsAdmin, BM_GETCHECK, 0, 0);
                 	if (gOSVer.dwMajorVersion >= 6) {
-                		BOOL bRunAs = SendDlgItemMessage(hDlg, cbRunAsAdmin, BM_GETCHECK, 0, 0);
                 		SendDlgItemMessage(hDlg, IDC_START, 5644/*BCM_SETSHIELD*/, 0, bRunAs);
-                		if (bRunAs) {
-				            CheckRadioButton(hDlg, rbCurrentUser, rbAnotherUser, rbCurrentUser);
-				            CheckDlgButton(hDlg, cbRunAsRestricted, BST_UNCHECKED);
-				            RecreateDlgProc(hDlg, UM_USER_CONTROLS, 0, 0);
-                		}
-                	}
+            		}
+            		if (bRunAs) {
+			            CheckRadioButton(hDlg, rbCurrentUser, rbAnotherUser, rbCurrentUser);
+			            CheckDlgButton(hDlg, cbRunAsRestricted, BST_UNCHECKED);
+			            RecreateDlgProc(hDlg, UM_USER_CONTROLS, 0, 0);
+            		}
                 	return 1;
                 }
                 
@@ -3463,27 +3497,10 @@ INT_PTR CConEmuMain::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARA
 					pArgs->pszSpecialCmd = GetDlgItemText(hDlg, IDC_RESTART_CMD);
 					if (pArgs->pszSpecialCmd)
 						gSet.HistoryAdd(pArgs->pszSpecialCmd);
-                    //HWND hEdit = GetDlgItem(hDlg, IDC_RESTART_CMD);
-                    //int nLen = GetWindowTextLength(hEdit);
-                    //if (nLen > 0) {
-					//	_ASSERTE(pArgs->pszSpecialCmd==NULL);
-                    //    pArgs->pszSpecialCmd = (wchar_t*)calloc(nLen+1,2);
-					//	if (pArgs->pszSpecialCmd) {
-                    //        GetWindowText(hEdit, pArgs->pszSpecialCmd, nLen+1);
-					//		gSet.HistoryAdd(pArgs->pszSpecialCmd);
-					//	}
-                    //}
                     
 					// StartupDir
 					_ASSERTE(pArgs->pszStartupDir==NULL);
 					pArgs->pszStartupDir = GetDlgItemText(hDlg, IDC_STARTUP_DIR);
-					//hEdit = GetDlgItem(hDlg, IDC_STARTUP_DIR);
-					//nLen = GetWindowTextLength(hEdit);
-                    //if (nLen > 0) {
-                    //    pArgs->pszStartupDir = (wchar_t*)calloc(nLen+1,2);
-                    //    if (pArgs->pszStartupDir)
-                    //        GetWindowText(hEdit, pArgs->pszStartupDir, nLen+1);
-                    //}
                     
                     // Vista+ (As Admin...)
 					pArgs->bRunAsAdministrator = SendDlgItemMessage(hDlg, cbRunAsAdmin, BM_GETCHECK, 0, 0);
@@ -4909,7 +4926,9 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
 							RConStartArgs args;
 							args.pszSpecialCmd = _wcsdup(pszLine);
 							args.bRunAsAdministrator = lbRunAdmin;
+
 							pCon = CreateCon(&args);
+
 				            if (!pCon) {
 				                DisplayLastError(L"Can't create new virtual console!");
 				                if (!lbOneCreated) {
@@ -5359,6 +5378,18 @@ void CConEmuMain::OnHideCaption()
 
 	//	GetWindowRect(ghWnd, &mrc_Ideal);
 	//}
+}
+
+void CConEmuMain::OnPanelViewSettingsChanged()
+{
+	// Применить в мэппинг
+	gSet.m_ThSetMap.Set(&gSet.ThSet);
+	// и отослать заинтересованным
+	for (int i=0; i<MAX_CONSOLE_COUNT; i++) {
+		if (mp_VCon[i]) {
+			mp_VCon[i]->OnPanelViewSettingsChanged();
+		}
+	}
 }
 
 void CConEmuMain::OnAltEnter()

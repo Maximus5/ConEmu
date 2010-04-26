@@ -21,3 +21,4 @@
 "ConEmu plugin\nНе удалось запустить процесс отладчика\nOK"
 "ConEmu plugin\nНе удалось запустить процесс сервера консоли (ConEmuC.exe)\nOK"
 "ConEmu plugin\nGetConsoleWindow()==FarHwnd is NULL\nOK"
+"ConEmu plugin\nПриозошло исключение в функции ShellExecuteEx.\nРекомендуется перезапустить FAR.\nOK"

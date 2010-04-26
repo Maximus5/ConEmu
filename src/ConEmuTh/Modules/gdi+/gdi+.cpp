@@ -33,6 +33,7 @@ HMODULE ghModule;
 #define PGE_BITBLT_FAILED        0x8000100C
 #define PGE_INVALID_VERSION      0x8000100D
 #define PGE_INVALID_IMGSIZE      0x8000100E
+#define PGE_UNSUPPORTEDFORMAT    0x8000100F
 
 
 DWORD gnLastWin32Error = 0;
@@ -63,8 +64,15 @@ DWORD gnLastWin32Error = 0;
 #endif
 #define PRAGMA_ERROR(s) __pragma(message (FILE_LINE "error: " s))
 
+enum tag_GdiStrMagics {
+	eGdiStr_Decoder = 0x1002,
+	eGdiStr_Image = 0x1003,
+	eGdiStr_Bits = 0x1004,
+};
+
 struct GDIPlusDecoder
 {
+	DWORD   nMagic;
 	HMODULE hGDIPlus;
 	ULONG_PTR gdiplusToken; bool bTokenInitialized;
 	HRESULT nErrNumber, nLastError;
@@ -139,6 +147,7 @@ struct GDIPlusDecoder
 	GdipSetImagePalette_t GdipSetImagePalette;
 	
 	GDIPlusDecoder() {
+		nMagic = eGdiStr_Decoder;
 		hGDIPlus = NULL; gdiplusToken = NULL; bTokenInitialized = false;
 		nErrNumber = 0; nLastError = 0; //bUseICM = false; bCoInitialized = FALSE; bCMYK2RGB = false;
 		//pszPluginKey = NULL; 
@@ -265,9 +274,14 @@ struct GDIPlusImage;
 
 struct GDIPlusData
 {
+	DWORD nMagic;
 	HDC hCompDc1;
 	HBITMAP hDIB, hOld1;
 	wchar_t szInfo[255];
+	
+	GDIPlusData() {
+		nMagic = eGdiStr_Bits;
+	};
 	
 	void Close() {
 		if (hCompDc1 && hOld1)
@@ -280,6 +294,8 @@ struct GDIPlusData
 
 struct GDIPlusImage
 {
+	DWORD nMagic;
+	
 #ifdef _DEBUG
 	wchar_t szFileName[MAX_PATH];
 #endif
@@ -290,6 +306,10 @@ struct GDIPlusImage
 	UINT lWidth, lHeight, pf, nBPP, nPages, /*lFrameTime,*/ nActivePage, nTransparent, nImgFlags;
 	bool Animation;
 	wchar_t FormatName[0x80];
+	
+	GDIPlusImage() {
+		nMagic = eGdiStr_Image;
+	};
 
 
 	Gdiplus::GpBitmap* OpenBitmapFromFile(const wchar_t *pFileName)
@@ -412,6 +432,8 @@ struct GDIPlusImage
 		}
 		else
 		{
+			pData->nMagic = eGdiStr_Bits;
+		
 			int nCanvasWidth  = pDecodeInfo->crLoadSize.X;
 			int nCanvasWidthS = nCanvasWidth; //((nCanvasWidth+7) >> 3) << 3; // try to align x8 pixels
 			int nCanvasHeight = pDecodeInfo->crLoadSize.Y;
@@ -490,7 +512,10 @@ struct GDIPlusImage
 				
 				wsprintf(pData->szInfo, L"%i x %i x %ibpp", lWidth, lHeight, nBPP);
 				if (nPages > 1) wsprintf(pData->szInfo+lstrlen(pData->szInfo), L" [%i]", nPages);
-				if (FormatName) lstrcat(pData->szInfo, FormatName);
+				if (FormatName) {
+					lstrcat(pData->szInfo, L" ");
+					lstrcat(pData->szInfo, FormatName);
+				}
 				
 				pDecodeInfo->pFileContext = (LPVOID)pData;
 				pDecodeInfo->crSize.X = nCanvasWidth; pDecodeInfo->crSize.Y = nCanvasHeight;
@@ -531,6 +556,7 @@ BOOL WINAPI CET_Init(struct CET_Init* pInit)
 		pInit->nErrNumber = PGE_NOT_ENOUGH_MEMORY;
 		return FALSE;
 	}
+	pDecoder->nMagic = eGdiStr_Decoder;
 	if (!pDecoder->Init(pInit)) {
 		pInit->nErrNumber = pDecoder->nErrNumber;
 		pDecoder->Close();
@@ -547,8 +573,11 @@ VOID WINAPI CET_Done(struct CET_Init* pInit)
 	if (pInit) {
 		GDIPlusDecoder *pDecoder = (GDIPlusDecoder*)pInit->pContext;
 		if (pDecoder) {
-			pDecoder->Close();
-			FREE(pDecoder);
+			_ASSERTE(pDecoder->nMagic == eGdiStr_Decoder);
+			if (pDecoder->nMagic == eGdiStr_Decoder) {
+				pDecoder->Close();
+				FREE(pDecoder);
+			}
 		}
 	}
 }
@@ -570,6 +599,63 @@ BOOL WINAPI CET_Load(struct CET_LoadInfo* pLoadPreview)
 		SETERROR(PGE_INVALID_CONTEXT);
 		return FALSE;
 	}
+	
+	TODO("LoadFromStream пока убран");
+	if (pLoadPreview->bVirtualItem || !pLoadPreview->pFileData) {
+		SETERROR(PGE_FILE_NOT_FOUND);
+		return FALSE;
+	}
+	
+	if (pLoadPreview->nFileSize < 16 || pLoadPreview->nFileSize > 209715200/*200 MB*/) {
+		SETERROR(PGE_UNSUPPORTEDFORMAT);
+		return FALSE;
+	}
+	
+	BOOL lbKnown = FALSE;
+	
+	if (pLoadPreview->pFileData) {
+		const BYTE  *pb  = (const BYTE*)pLoadPreview->pFileData;
+		const WORD  *pw  = (const WORD*)pLoadPreview->pFileData;
+		const DWORD *pdw = (const DWORD*)pLoadPreview->pFileData;
+		
+		TODO("ICO - убрать. пусть специализированный занимаетс€")
+		
+		if (*pdw==0x474E5089 /* ЙPNG */)
+			lbKnown = TRUE;
+		else if (*pw==0x4D42 /* BM */)
+			lbKnown = TRUE;
+		else if (pb[0]==0xFF && pb[1]==0xD8 && pb[2]==0xFF) // JPEG?
+			lbKnown = TRUE;
+		else if (pw[0]==0x4949) // TIFF?
+			lbKnown = TRUE;
+		else if (pw[0]==0 && (pw[1]==1/*ICON*/ || pw[1]==2/*CURSOR*/) && (pw[2]>0 && pw[2]<=64/*IMG COUNT*/)) // .ico, .cur
+			lbKnown = TRUE;
+		else if (*pdw == 0x38464947 /*GIF8*/)
+			lbKnown = TRUE;
+		else
+		{
+			const wchar_t* pszFile = NULL;
+			wchar_t szExt[6]; szExt[0] = 0;
+			pszFile = wcsrchr(pLoadPreview->sFileName, L'\\');
+			if (pszFile) {
+				pszFile = wcsrchr(pszFile, L'.');
+				if (pszFile) {
+					int nLen = lstrlenW(pszFile);
+					if (nLen && nLen<5) {
+						lstrcpyW(szExt, pszFile+1);
+						CharLowerBuffW(szExt, nLen-1);
+					}
+				}
+			}
+		
+			if ((szExt[0]==L'w' || szExt[0]==L'e') && szExt[1]==L'm' && szExt[2]==L'f')
+				lbKnown = TRUE;
+		}
+	}
+	if (!lbKnown) {
+		SETERROR(PGE_UNSUPPORTEDFORMAT);
+		return FALSE;
+	}
 
 	
 	GDIPlusImage *pImage = (GDIPlusImage*)CALLOC(sizeof(GDIPlusImage));
@@ -577,6 +663,8 @@ BOOL WINAPI CET_Load(struct CET_LoadInfo* pLoadPreview)
 		SETERROR(PGE_NOT_ENOUGH_MEMORY);
 		return FALSE;
 	}
+	pImage->nMagic = eGdiStr_Image;
+	pLoadPreview->pFileContext = (void*)pImage;
 
 	
 	pImage->gdi = (GDIPlusDecoder*)pLoadPreview->pContext;
@@ -597,6 +685,9 @@ BOOL WINAPI CET_Load(struct CET_LoadInfo* pLoadPreview)
 		}
 	}
 	
+	if (pLoadPreview->pFileContext == (void*)pImage)
+		pLoadPreview->pFileContext = NULL;
+	
 	pImage->Close();
 	return TRUE;
 }
@@ -608,14 +699,34 @@ VOID WINAPI CET_Free(struct CET_LoadInfo* pLoadPreview)
 		SETERROR(PGE_INVALID_VERSION);
 		return;
 	}
-	
-	GDIPlusData *pData = (GDIPlusData*)pLoadPreview->pFileContext;
-	pData->Close();
+	if (!pLoadPreview->pFileContext) {
+		SETERROR(PGE_INVALID_CONTEXT);
+		return;
+	}
+
+	switch (*(LPDWORD)pLoadPreview->pFileContext) {
+		case eGdiStr_Image: {
+			// —юда мы попадем если был exception в CET_Load
+			GDIPlusImage *pImg = (GDIPlusImage*)pLoadPreview->pFileContext;
+			pImg->Close();
+		} break;
+		case eGdiStr_Bits: {
+			GDIPlusData *pData = (GDIPlusData*)pLoadPreview->pFileContext;
+			pData->Close();
+		} break;
+		
+		#ifdef _DEBUG
+		default:
+			_ASSERTE(*(LPDWORD)pLoadPreview->pFileContext == eGdiStr_Bits);
+		#endif
+	}
 }
 
 VOID WINAPI CET_Cancel(LPVOID pContext)
 {
 	if (!pContext) return;
 	GDIPlusDecoder *pDecoder = (GDIPlusDecoder*)pContext;
-	pDecoder->bCancelled = TRUE;
+	if (pDecoder->nMagic == eGdiStr_Decoder) {
+		pDecoder->bCancelled = TRUE;
+	}
 }

@@ -22,4 +22,5 @@ enum {
 	CECantStartDebugger,
 	CECantStartServer,
 	CEInvalidConHwnd,
+	CEShellExecuteException,
 	};

@@ -144,7 +144,7 @@ CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
 
 	memset(&m_LeftPanelView, 0, sizeof(m_LeftPanelView));
 	memset(&m_RightPanelView, 0, sizeof(m_RightPanelView));
-	mn_ConEmuFadeMsg = 0;
+	mn_ConEmuFadeMsg = mn_ConEmuSettingsMsg = 0;
 	// Эти переменные устанавливаются в TRUE, если при следующем Redraw нужно обновить размер панелей
 	mb_LeftPanelRedraw = mb_RightPanelRedraw = FALSE;
 	mn_LastDialogsCount = 0;
@@ -957,7 +957,7 @@ bool CVirtualConsole::Update(bool isForce, HDC *ahDc)
     //if (gbNoDblBuffer) isForce = TRUE; // Debug, dblbuffer
 
 	isForeground = gConEmu.isMeForeground();
-	if (isFade == isForeground)
+	if (isFade == isForeground && gSet.isFadeInactive)
 		isForce = true;
 
     //------------------------------------------------------------------------
@@ -1241,7 +1241,7 @@ bool CVirtualConsole::UpdatePrepare(bool isForce, HDC *ahDc, MSectionLock *pSDC)
 	isViewer = gConEmu.isViewer();
     isFilePanel = gConEmu.isFilePanel(true);
 
-	isFade = !isForeground;
+	isFade = !isForeground && gSet.isFadeInactive;
 	mp_Colors = gSet.GetColors(isFade);
 
 
@@ -3288,6 +3288,34 @@ void CVirtualConsole::ShowPopupMenu(POINT ptCur)
 	}
 }
 
+void CVirtualConsole::OnPanelViewSettingsChanged()
+{
+	if (!this) return;
+
+	if (!mn_ConEmuSettingsMsg)
+		mn_ConEmuSettingsMsg = RegisterWindowMessage(CONEMUMSG_PNLVIEWSETTINGS);
+
+	DWORD nPID = GetCurrentProcessId();
+	if (m_LeftPanelView.hWnd && IsWindow(m_LeftPanelView.hWnd)) {
+		PostMessage(m_LeftPanelView.hWnd, mn_ConEmuSettingsMsg, nPID, 0);
+	}
+	if (m_RightPanelView.hWnd && IsWindow(m_RightPanelView.hWnd)) {
+		PostMessage(m_RightPanelView.hWnd, mn_ConEmuSettingsMsg, nPID, 0);
+	}
+}
+
+BOOL CVirtualConsole::IsPanelViews()
+{
+	if (!this) return FALSE;
+
+	if (m_LeftPanelView.hWnd && IsWindow(m_LeftPanelView.hWnd))
+		return TRUE;
+	if (m_RightPanelView.hWnd && IsWindow(m_RightPanelView.hWnd))
+		return TRUE;
+
+	return FALSE;
+}
+
 BOOL CVirtualConsole::RegisterPanelView(PanelViewInit* ppvi)
 {
 	_ASSERTE(ppvi && ppvi->cbSize == sizeof(PanelViewInit));
@@ -3478,7 +3506,7 @@ BOOL CVirtualConsole::UpdatePanelView(BOOL abLeftPanel)
 	//for (int i=0; i<16; i++)
 	//	SetWindowLong(pp->hWnd, i*4, mp_Colors[i]);
 	if (!mn_ConEmuFadeMsg)
-		mn_ConEmuFadeMsg = RegisterWindowMessage(CONEMUMSG_FADETHUMBNAILS);
+		mn_ConEmuFadeMsg = RegisterWindowMessage(CONEMUMSG_PNLVIEWFADE);
 	DWORD nNewFadeValue = isFade ? 2 : 1;
 	if (GetWindowLong(pp->hWnd, 16*4) != nNewFadeValue)
 		PostMessage(pp->hWnd, mn_ConEmuFadeMsg, 100, nNewFadeValue);

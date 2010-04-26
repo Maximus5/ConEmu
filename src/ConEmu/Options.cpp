@@ -90,19 +90,10 @@ const CONEMUDEFCOLORS DefColors[] = {
     
 };
 const DWORD *dwDefColors = DefColors->dwDefColors;
-//const DWORD dwDefColors[0x10] = {
-//	0x00000000, 0x00800000, 0x00008000, 0x00808000, 0x00000080, 0x00800080, 0x00008080, 0x00c0c0c0, 
-//	0x00808080, 0x00ff0000, 0x0000ff00, 0x00ffff00, 0x000000ff, 0x00ff00ff, 0x0000ffff, 0x00ffffff};
-//const DWORD dwDefColors1[0x10] = {
-//	0x00000000, 0x00960000, 0x0000aa00, 0x00aaaa00, 0x000000aa, 0x00800080, 0x0000aaaa, 0x00c0c0c0, 
-//	0x00808080, 0x00ff0000, 0x0000ff00, 0x00ffff00, 0x000000ff, 0x00ff00ff, 0x0000ffff, 0x00ffffff};
-//const DWORD dwDefColors1[0x10] = {
-//    0x00000000, 0x00644100, 0x00008000, 0x00808000, 0x00000080, 0x00800080, 0x00008080, 0x00c0c0c0,
-//    0x00808080, 0x00ff0000, 0x0076c587, 0x00ffff00, 0x00004bff, 0x00d78ce6, 0x0000ffff, 0x00ffffff};
 DWORD gdwLastColors[0x10] = {0};
 BOOL  gbLastColorsOk = FALSE;
 
-#define MAX_COLOR_EDT_ID c34
+#define MAX_COLOR_EDT_ID c31
 
 
 
@@ -121,6 +112,7 @@ namespace Settings {
 	const DWORD  nColorIdxSh[] =  {    0,      1,      2,      3,      4,      5,      6,      7,      8,      9,     10,     11,     12,     13,     14,     15};
 	const WCHAR* szColorIdxTh[] = {L"# 0", L"# 1", L"# 2", L"# 3", L"# 4", L"# 5", L"# 6", L"# 7", L"# 8", L"# 9", L"#10", L"#11", L"#12", L"#13", L"#14", L"#15", L"Auto"};
 	const DWORD  nColorIdxTh[] =  {    0,      1,      2,      3,      4,      5,      6,      7,      8,      9,     10,     11,     12,     13,     14,     15,    16};
+	const WCHAR* szThumbMaxZoom[] = {L"100%",L"200%",L"300%",L"400%",L"500%"};
 	const DWORD  nThumbMaxZoom[] = {100,200,300,400,500};
 };
 
@@ -142,8 +134,30 @@ namespace Settings {
 	GetListBoxItem(GetDlgItem(hDlg,nDlgID), sizeofarray(Items), Items, Values, dwVal); \
 	Value = dwVal; }
 
-#define SetThumbColor(s,rgb,idx,us) { (s).ColorRGB = rgb; (s).ColorIdx = idx; (s).UseIndex = us; }
-#define SetThumbSize(s,sz,x1,y1,x2,y2,sl) { (s).nImgSize = sz; (s).nSpaceX1 = x1; (s).nSpaceY1 = y1; (s).nSpaceX2 = x2; (s).nSpaceY2 = y2; (s).nSpaceLabel = sl; }
+#define SetThumbColor(s,rgb,idx,us) { (s).RawColor = 0; (s).ColorRGB = rgb; (s).ColorIdx = idx; (s).UseIndex = us; }
+#define SetThumbSize(s,sz,x1,y1,x2,y2,ls,lp,fn,fs) { \
+	(s).nImgSize = sz; (s).nSpaceX1 = x1; (s).nSpaceY1 = y1; (s).nSpaceX2 = x2; (s).nSpaceY2 = y2; \
+	(s).nLabelSpacing = ls; (s).nLabelPadding = lp; lstrcpy((s).sFontName,fn); (s).nFontHeight=fs; }
+#define ThumbLoadSet(s,n) { \
+	reg->Load(L"PanView." s L".ImgSize", n.nImgSize); \
+	reg->Load(L"PanView." s L".SpaceX1", n.nSpaceX1); \
+	reg->Load(L"PanView." s L".SpaceY1", n.nSpaceY1); \
+	reg->Load(L"PanView." s L".SpaceX2", n.nSpaceX2); \
+	reg->Load(L"PanView." s L".SpaceY2", n.nSpaceY2); \
+	reg->Load(L"PanView." s L".LabelSpacing", n.nLabelSpacing); \
+	reg->Load(L"PanView." s L".LabelPadding", n.nLabelPadding); \
+	reg->Load(L"PanView." s L".FontName", n.sFontName, sizeofarray(n.sFontName)); \
+	reg->Load(L"PanView." s L".FontHeight", n.nFontHeight); }
+#define ThumbSaveSet(s,n) { \
+	reg->Save(L"PanView." s L".ImgSize", n.nImgSize); \
+	reg->Save(L"PanView." s L".SpaceX1", n.nSpaceX1); \
+	reg->Save(L"PanView." s L".SpaceY1", n.nSpaceY1); \
+	reg->Save(L"PanView." s L".SpaceX2", n.nSpaceX2); \
+	reg->Save(L"PanView." s L".SpaceY2", n.nSpaceY2); \
+	reg->Save(L"PanView." s L".LabelSpacing", n.nLabelSpacing); \
+	reg->Save(L"PanView." s L".LabelPadding", n.nLabelPadding); \
+	reg->Save(L"PanView." s L".FontName", n.sFontName); \
+	reg->Save(L"PanView." s L".FontHeight", n.nFontHeight); }
 
 
 CSettings::CSettings()
@@ -154,7 +168,7 @@ CSettings::CSettings()
     mb_IgnoreTtfChange = TRUE;
 	mb_CharSetWasSet = FALSE;
 	mb_TabHotKeyRegistered = FALSE;
-	hMain = NULL; hExt = NULL; hTabs = NULL; hColors = NULL; hThumbs = NULL; hInfo = NULL; hwndTip = NULL; hwndBalloon = NULL;
+	hMain = NULL; hExt = NULL; hTabs = NULL; hColors = NULL; hViews = NULL; hInfo = NULL; hwndTip = NULL; hwndBalloon = NULL;
     QueryPerformanceFrequency((LARGE_INTEGER *)&mn_Freq);
     memset(mn_Counter, 0, sizeof(*mn_Counter)*(tPerfInterval-gbPerformance));
     memset(mn_CounterMax, 0, sizeof(*mn_CounterMax)*(tPerfInterval-gbPerformance));
@@ -189,6 +203,7 @@ CSettings::CSettings()
 	mn_MsgRecreateFont = RegisterWindowMessage(L"CSettings::RecreateFont");
 	mn_MsgLoadFontFromMain = RegisterWindowMessage(L"CSettings::LoadFontNames");
 	mh_EnumThread = NULL;
+	mh_CtlColorBrush = NULL;
 }
 
 CSettings::~CSettings()
@@ -205,6 +220,7 @@ CSettings::~CSettings()
 	if (sSaveAllMacro) {free(sSaveAllMacro); sSaveAllMacro = NULL;}
 	if (sRClickMacro) {free(sRClickMacro); sRClickMacro = NULL;}
     if (mh_Uxtheme!=NULL) { FreeLibrary(mh_Uxtheme); mh_Uxtheme = NULL; }
+	if (mh_CtlColorBrush) { DeleteObject(mh_CtlColorBrush); mh_CtlColorBrush = NULL; }
 }
 
 void CSettings::InitSettings()
@@ -401,22 +417,16 @@ void CSettings::InitSettings()
     // фон превьюшки: RGB или Index
     SetThumbColor(ThSet.crBackground, RGB(255,255,255), 16, FALSE);
     // серая рамка вокруг превьюшки
-    ThSet.nThumbFrame = 1;
-    SetThumbColor(ThSet.crThumbFrame, RGB(128,128,128), 8, TRUE);
+    ThSet.nPreviewFrame = 1;
+    SetThumbColor(ThSet.crPreviewFrame, RGB(128,128,128), 8, TRUE);
     // рамка вокруг текущего элемента
     ThSet.nSelectFrame = 1;
     SetThumbColor(ThSet.crSelectFrame, RGB(192,192,192), 7, FALSE);
     /* теперь разнообразные размеры */
     // отступы для preview
-    SetThumbSize(ThSet.Thumbs,96,1,1,5,25,0);
+    SetThumbSize(ThSet.Thumbs,96,1,1,5,25,0,0,L"Tahoma",14);
     // отступы для tiles
-    SetThumbSize(ThSet.Tiles,48,4,4,172,4,4);
-	// Шрифт отрисовки для превьюшек
-	lstrcpy(ThSet.sThumbFontName, L"Tahoma");
-	ThSet.nThumbFontHeight = 14;
-	// И для списка (Tiles)
-	lstrcpy(ThSet.sTileFontName, L"Tahoma");
-	ThSet.nTileFontHeight = 14;
+    SetThumbSize(ThSet.Tiles,48,4,4,172,4,4,1,L"Tahoma",14);
 	// Прочие параметры загрузки
 	ThSet.bLoadPreviews = 3;   // bitmask of {1=Thumbs, 2=Tiles}
 	ThSet.bLoadFolders = true; // true - load infolder previews (only for Thumbs)
@@ -427,6 +437,12 @@ void CSettings::InitSettings()
 	//// Пока не используется
 	//DWORD nCacheFolderType; // юзер/программа/temp/и т.п.
 	//wchar_t sCacheFolder[MAX_PATH];
+	m_ThSetMap.InitName(CECONVIEWSETNAME, GetCurrentProcessId());
+	if (!m_ThSetMap.Create()) {
+		MBoxA(m_ThSetMap.GetErrorText());
+	} else {
+		m_ThSetMap.Set(&ThSet);
+	}
 }
 
 void CSettings::LoadSettings()
@@ -521,7 +537,7 @@ void CSettings::LoadSettings()
         reg->Load(L"Anti-aliasing", Quality);
 
 		reg->Load(L"ConsoleFontName", ConsoleFont.lfFaceName, sizeofarray(ConsoleFont.lfFaceName));
-		reg->Load(L"ConsoleCharWidth", ConsoleFont.lfWidth);
+		reg->Load(L"ConsoleFontWidth", ConsoleFont.lfWidth);
 		reg->Load(L"ConsoleFontHeight", ConsoleFont.lfHeight);
 
         reg->Load(L"WindowMode", gConEmu.WindowMode);
@@ -693,15 +709,6 @@ void CSettings::LoadSettings()
         //reg->Load(L"CreateAppWindow", isCreateAppWindow);
         //reg->Load(L"AllowDetach", isAllowDetach);
         
-        //reg->Load(L"Visualizer", isVisualizer);
-        //reg->Load(L"VizNormal", nVizNormal);
-        //reg->Load(L"VizFore", nVizFore);
-        //reg->Load(L"VizTab", nVizTab);
-        //reg->Load(L"VizEol", nVizEOL);
-        //reg->Load(L"VizEof", nVizEOF);
-        //reg->Load(L"VizTabCh", cVizTab);
-        //reg->Load(L"VizEolCh", cVizEOL);
-        //reg->Load(L"VizEofCh", cVizEOF);
         
         reg->Load(L"MainTimerElapse", nMainTimerElapse); if (nMainTimerElapse>1000) nMainTimerElapse = 1000;
         reg->Load(L"AffinityMask", nAffinity);
@@ -714,6 +721,22 @@ void CSettings::LoadSettings()
 		reg->Load(L"AlwaysOnTop", isAlwaysOnTop);
 
 		reg->Load(L"SleepInBackground", isSleepInBackground);
+
+		/* *********** Thumbnails and Tiles ************* */
+		reg->Load(L"PanView.BackColor", ThSet.crBackground.RawColor);
+		reg->Load(L"PanView.PFrame", ThSet.nPreviewFrame);
+		reg->Load(L"PanView.PFrameColor", ThSet.crPreviewFrame.RawColor);
+		reg->Load(L"PanView.SFrame", ThSet.nSelectFrame);
+		reg->Load(L"PanView.SFrameColor", ThSet.crSelectFrame.RawColor);
+	    /* теперь разнообразные размеры */
+	    ThumbLoadSet(L"Thumbs", ThSet.Thumbs);
+	    ThumbLoadSet(L"Tiles", ThSet.Tiles);
+		// Прочие параметры загрузки
+		reg->Load(L"PanView.LoadPreviews", ThSet.bLoadPreviews);
+		reg->Load(L"PanView.LoadFolders", ThSet.bLoadFolders);
+		reg->Load(L"PanView.LoadTimeout", ThSet.nLoadTimeout);
+		reg->Load(L"PanView.MaxZoom", ThSet.nMaxZoom);
+		reg->Load(L"PanView.UsePicView2", ThSet.bUsePicView2);
         
         reg->CloseKey();
     }
@@ -1054,7 +1077,7 @@ BOOL CSettings::SaveSettings()
 		        reg->Save(L"TabFontFace", sTabFontFace);
 				reg->Save(L"TabFontCharSet", nTabFontCharSet);
 				reg->Save(L"TabFontHeight", nTabFontHeight);
-				reg->Save(L"SaveAllEditors", &sSaveAllMacro);
+				reg->Save(L"SaveAllEditors", sSaveAllMacro);
 			reg->Save(L"TabFrame", isTabFrame);
 			reg->Save(L"TabMargins", rcTabMargins);
 			reg->Save(L"ToolbarAddSpace", nToolbarAddSpace);
@@ -1087,15 +1110,6 @@ BOOL CSettings::SaveSettings()
             /*reg->Save(L"ScrollTitle", isScrollTitle);
             reg->Save(L"ScrollTitleLen", ScrollTitleLen);*/
             
-            //reg->Save(L"Visualizer", isVisualizer);
-            //reg->Save(L"VizNormal", nVizNormal);
-            //reg->Save(L"VizFore", nVizFore);
-            //reg->Save(L"VizTab", nVizTab);
-            //reg->Save(L"VizEol", nVizEOL);
-            //reg->Save(L"VizEof", nVizEOF);
-            //reg->Save(L"VizTabCh", cVizTab);
-            //reg->Save(L"VizEolCh", cVizEOL);
-            //reg->Save(L"VizEofCh", cVizEOF);
             
 			reg->Save(L"MainTimerElapse", nMainTimerElapse);
 			reg->Save(L"AffinityMask", nAffinity);
@@ -1109,6 +1123,23 @@ BOOL CSettings::SaveSettings()
 			reg->Save(L"SleepInBackground", isSleepInBackground);
     		
             
+			/* *********** Thumbnails and Tiles ************* */
+			reg->Save(L"PanView.BackColor", ThSet.crBackground.RawColor);
+			reg->Save(L"PanView.PFrame", ThSet.nPreviewFrame);
+			reg->Save(L"PanView.PFrameColor", ThSet.crPreviewFrame.RawColor);
+			reg->Save(L"PanView.SFrame", ThSet.nSelectFrame);
+			reg->Save(L"PanView.SFrameColor", ThSet.crSelectFrame.RawColor);
+			/* теперь разнообразные размеры */
+			ThumbSaveSet(L"Thumbs", ThSet.Thumbs);
+			ThumbSaveSet(L"Tiles", ThSet.Tiles);
+			// Прочие параметры загрузки
+			reg->Save(L"PanView.LoadPreviews", ThSet.bLoadPreviews);
+			reg->Save(L"PanView.LoadFolders", ThSet.bLoadFolders);
+			reg->Save(L"PanView.LoadTimeout", ThSet.nLoadTimeout);
+			reg->Save(L"PanView.MaxZoom", ThSet.nMaxZoom);
+			reg->Save(L"PanView.UsePicView2", ThSet.bUsePicView2);
+
+
             reg->CloseKey();
             delete reg;
             
@@ -1265,10 +1296,10 @@ DWORD CSettings::EnumFontsThread(LPVOID apArg)
 	_ASSERTE(gSet.mh_EnumThread == NULL);
 	
 	
-	// Если шустрый юзер успел переключиться на вкладку "Thumbs" до оконачания
+	// Если шустрый юзер успел переключиться на вкладку "Views" до оконачания
 	// загрузки шрифтов - послать в диалог сообщение "Считать список из hMain"
-	if (ghOpWnd && gSet.hThumbs) {
-		PostMessage(gSet.hThumbs, gSet.mn_MsgLoadFontFromMain, 0, 0);
+	if (ghOpWnd && gSet.hViews) {
+		PostMessage(gSet.hViews, gSet.mn_MsgLoadFontFromMain, 0, 0);
 	}
 
 	return 0;
@@ -1276,8 +1307,8 @@ DWORD CSettings::EnumFontsThread(LPVOID apArg)
 
 LRESULT CSettings::OnInitDialog()
 {
-	_ASSERTE(!hMain && !hColors && !hThumbs && !hExt && !hInfo);
-	hMain = NULL; hExt = NULL; hTabs = NULL; hThumbs = NULL; hColors = NULL; hInfo = NULL;
+	_ASSERTE(!hMain && !hColors && !hViews && !hExt && !hInfo);
+	hMain = NULL; hExt = NULL; hTabs = NULL; hViews = NULL; hColors = NULL; hInfo = NULL;
 	gbLastColorsOk = FALSE;
 
 	HMENU hSysMenu = GetSystemMenu(ghOpWnd, FALSE);
@@ -1336,7 +1367,7 @@ LRESULT CSettings::OnInitDialog()
 		TabCtrl_InsertItem(_hwndTab, 2, &tie);
         tie.pszText = wcscpy(szTitle, L"Colors");
         TabCtrl_InsertItem(_hwndTab, 3, &tie);
-		tie.pszText = wcscpy(szTitle, L"Thumbs");
+		tie.pszText = wcscpy(szTitle, L"Views");
 		TabCtrl_InsertItem(_hwndTab, 4, &tie);
         tie.pszText = wcscpy(szTitle, L"Info");
         TabCtrl_InsertItem(_hwndTab, 5, &tie);
@@ -1352,16 +1383,7 @@ LRESULT CSettings::OnInitDialog()
         hMain = CreateDialog((HINSTANCE)GetModuleHandle(NULL), 
             MAKEINTRESOURCE(IDD_SPG_MAIN), ghOpWnd, mainOpProc);
         MoveWindow(hMain, rcClient.left, rcClient.top, rcClient.right-rcClient.left, rcClient.bottom-rcClient.top, 0);
-		/*
-        hColors = CreateDialog((HINSTANCE)GetModuleHandle(NULL), 
-            MAKEINTRESOURCE(IDD_SPG_COLORS), ghOpWnd, colorOpProc);
-        MoveWindow(hColors, rcClient.left, rcClient.top, rcClient.right-rcClient.left, rcClient.bottom-rcClient.top, 0);
-        hInfo = CreateDialog((HINSTANCE)GetModuleHandle(NULL), 
-            MAKEINTRESOURCE(IDD_SPG_INFO), ghOpWnd, infoOpProc);
-        MoveWindow(hInfo, rcClient.left, rcClient.top, rcClient.right-rcClient.left, rcClient.bottom-rcClient.top, 0);
-		*/
 
-		//OnInitDialog_Main();
 
         ShowWindow(hMain, SW_SHOW);
     }
@@ -1519,10 +1541,6 @@ LRESULT CSettings::OnInitDialog_Main()
 	else
 		CheckDlgButton(hMain, rCursorH, BST_CHECKED);
 		
-	//if (isForceMonospace)
-	//	CheckDlgButton(hMain, cbForceMonospace, BST_CHECKED);
-	//if (!isProportional)
-	//	CheckDlgButton(hMain, cbNonProportional, BST_CHECKED);
 	if (isMonospace) // 3d state - force center symbols in cells
 		CheckDlgButton(hMain, cbMonospace, isMonospace==2 ? BST_INDETERMINATE : BST_CHECKED);
 		
@@ -1613,21 +1631,6 @@ LRESULT CSettings::OnInitDialog_Ext()
 	// Списки
 	FillListBox(hExt, lbLDragKey, Settings::szKeys, Settings::nKeys, nLDragKey);
 	FillListBox(hExt, lbRDragKey, Settings::szKeys, Settings::nKeys, nRDragKey);
-	//// просто группировка
-	//{
-	//	uint nKeyCount = sizeofarray(Settings::szKeys);
-	//	u8 numL = 0, numR = 0;
-	//	for (uint i=0; i<nKeyCount; i++) {
-	//		SendDlgItemMessage(hExt, lbLDragKey, CB_ADDSTRING, 0, (LPARAM) Settings::szKeys[i]);
-	//		SendDlgItemMessage(hExt, lbRDragKey, CB_ADDSTRING, 0, (LPARAM) Settings::szKeys[i]);
-	//		if (Settings::nKeys[i] == nLDragKey) numL = i;
-	//		if (Settings::nKeys[i] == nRDragKey) numR = i;
-	//	}
-	//	if (!numL) nLDragKey = 0; // если код клавиши неизвестен?
-	//	if (!numR) nRDragKey = 0; // если код клавиши неизвестен?
-	//	SendDlgItemMessage(hExt, lbLDragKey, CB_SETCURSEL, numL, 0);
-	//	SendDlgItemMessage(hExt, lbRDragKey, CB_SETCURSEL, numR, 0);
-	//}
 	// Overlay
 	if (isDragOverlay) CheckDlgButton(hExt, cbDragImage, (isDragOverlay==1) ? BST_CHECKED : BST_INDETERMINATE);
 	if (isDragShowIcons) CheckDlgButton(hExt, cbDragIcons, BST_CHECKED);
@@ -1772,38 +1775,15 @@ LRESULT CSettings::OnInitDialog_Color()
 	#define getG(inColorref) (byte)(inColorref >> 8)
 	#define getB(inColorref) (byte)(inColorref >> 16)
 
-	wchar_t temp[MAX_PATH];
+	//wchar_t temp[MAX_PATH];
 
-	for (uint i = 0; i <= (MAX_COLOR_EDT_ID-c0); i++)
-	{
-		SendDlgItemMessage(hColors, tc0 + i, EM_SETLIMITTEXT, 11, 0);
-        COLORREF cr = 0;
-		GetColorById(i+c0, &cr);
-        //if (i <= 31)
-        //	cr = Colors[i];
-        //else if (i == 32)
-        //	cr = ColorKey;
-        //else if (i == 33)
-        //	cr = nFadeInactiveMask;
-		wsprintf(temp, L"%i %i %i", getR(cr), getG(cr), getB(cr));
-		SetDlgItemText(hColors, tc0 + i, temp);
-	}
+	for (uint c = c0; c <= MAX_COLOR_EDT_ID; c++)
+		ColorSetEdit(hColors, c);
 
 	DWORD nVal = nExtendColor;
 	FillListBoxItems(GetDlgItem(hColors, lbExtendIdx), sizeofarray(Settings::szColorIdxSh),
 		Settings::szColorIdxSh, Settings::nColorIdxSh, nVal);
 	nExtendColor = nVal;
-	//for (uint i=0; i < 16; i++)
-	//{
-	//	wsprintf(temp, (i<10) ? L"# %i" : L"#%i", i);
-	//	SendDlgItemMessage(hColors, lbExtendIdx, CB_ADDSTRING, 0, (LPARAM) temp);
-	//	//SendDlgItemMessage(hColors, lbVisFore, CB_ADDSTRING, 0, (LPARAM) temp);
-	//	//SendDlgItemMessage(hColors, lbVisNormal, CB_ADDSTRING, 0, (LPARAM) temp);
-	//	//SendDlgItemMessage(hColors, lbVisTab, CB_ADDSTRING, 0, (LPARAM) temp);
-	//	//SendDlgItemMessage(hColors, lbVisEOL, CB_ADDSTRING, 0, (LPARAM) temp);
-	//	//SendDlgItemMessage(hColors, lbVisEOF, CB_ADDSTRING, 0, (LPARAM) temp);
-	//}
-	//SendDlgItemMessage(hColors, lbExtendIdx, CB_SETCURSEL, nExtendColor, 0);
 	CheckDlgButton(hColors, cbExtendColors, isExtendColors ? BST_CHECKED : BST_UNCHECKED);
 	OnColorButtonClicked(cbExtendColors, 0);
 
@@ -1823,14 +1803,6 @@ LRESULT CSettings::OnInitDialog_Color()
 	SendDlgItemMessage(hColors, lbDefaultColors, CB_SETCURSEL, 0, 0);
 	gbLastColorsOk = TRUE;
 
-	//// Visualizer
-	//CheckDlgButton(hColors, cbVisualizer, isVisualizer ? BST_CHECKED : BST_UNCHECKED);
-	//SendDlgItemMessage(hColors, lbVisFore, CB_SETCURSEL, nVizFore, 0);
-	//SendDlgItemMessage(hColors, lbVisNormal, CB_SETCURSEL, nVizNormal, 0);
-	//SendDlgItemMessage(hColors, lbVisTab, CB_SETCURSEL, nVizTab, 0);
-	//SendDlgItemMessage(hColors, lbVisEOL, CB_SETCURSEL, nVizEOL, 0);
-	//SendDlgItemMessage(hColors, lbVisEOF, CB_SETCURSEL, nVizEOF, 0);
-	//OnColorButtonClicked(cbVisualizer, 0);
 
 	SendDlgItemMessage(hColors, slTransparent, TBM_SETRANGE, (WPARAM) true, (LPARAM) MAKELONG(MIN_ALPHA_VALUE, 255));
 	SendDlgItemMessage(hColors, slTransparent, TBM_SETPOS  , (WPARAM) true, (LPARAM) nTransparent);
@@ -1842,97 +1814,90 @@ LRESULT CSettings::OnInitDialog_Color()
 	return 0;
 }
 
-LRESULT CSettings::OnInitDialog_Thumbs()
+LRESULT CSettings::OnInitDialog_Views()
 {
 	if (gSet.EnableThemeDialogTextureF)
-		gSet.EnableThemeDialogTextureF(hThumbs, 6/*ETDT_ENABLETAB*/);
-		
-	if (gSet.mh_EnumThread == NULL) // Если шрифты уже считаны
-		OnInitDialog_ThumbsFonts(); // можно скопировать список с вкладки hMain
+		gSet.EnableThemeDialogTextureF(hViews, 6/*ETDT_ENABLETAB*/);
 
+	// пока выключим
+	EnableWindow(GetDlgItem(hViews, bApplyViewSettings), gConEmu.ActiveCon()->IsPanelViews());
+
+	SetDlgItemText(hViews, tThumbsFontName, ThSet.Thumbs.sFontName);
+	SetDlgItemText(hViews, tTilesFontName, ThSet.Tiles.sFontName);
+
+	if (gSet.mh_EnumThread == NULL) // Если шрифты уже считаны
+		OnInitDialog_ViewsFonts(); // можно скопировать список с вкладки hMain
+
+	DWORD nVal;
 	wchar_t temp[MAX_PATH];
 
 	for (uint i=0; i < sizeofarray(Settings::FSizesSmall); i++) {
 		wsprintf(temp, L"%i", Settings::FSizesSmall[i]);
-		SendDlgItemMessage(hThumbs, tThumbsFontSize, CB_ADDSTRING, 0, (LPARAM) temp);
+		SendDlgItemMessage(hViews, tThumbsFontSize, CB_ADDSTRING, 0, (LPARAM) temp);
+		SendDlgItemMessage(hViews, tTilesFontSize, CB_ADDSTRING, 0, (LPARAM) temp);
 	}
-	
-	for (uint i=0; i < sizeofarray(Settings::nThumbMaxZoom); i++) {
-		wsprintf(temp, L"%i", Settings::nThumbMaxZoom[i]);
-		SendDlgItemMessage(hThumbs, tThumbMaxZoom, CB_ADDSTRING, 0, (LPARAM) temp);
-	}
+	wsprintf(temp, L"%i", ThSet.Thumbs.nFontHeight);
+	SelectStringExact(hViews, tThumbsFontSize, temp);
+	wsprintf(temp, L"%i", ThSet.Tiles.nFontHeight);
+	SelectStringExact(hViews, tTilesFontSize, temp);
 
+	SetDlgItemInt(hViews, tThumbsImgSize, ThSet.Thumbs.nImgSize, FALSE);
+	SetDlgItemInt(hViews, tThumbsX1, ThSet.Thumbs.nSpaceX1, FALSE);
+	SetDlgItemInt(hViews, tThumbsY1, ThSet.Thumbs.nSpaceY1, FALSE);
+	SetDlgItemInt(hViews, tThumbsX2, ThSet.Thumbs.nSpaceX2, FALSE);
+	SetDlgItemInt(hViews, tThumbsY2, ThSet.Thumbs.nSpaceY2, FALSE);
+	SetDlgItemInt(hViews, tThumbsSpacing, ThSet.Thumbs.nLabelSpacing, FALSE);
+	SetDlgItemInt(hViews, tThumbsPadding, ThSet.Thumbs.nLabelPadding, FALSE);
 
-	DWORD nVal = 16;
-	FillListBoxItems(GetDlgItem(hThumbs, lbExtendIdx), sizeofarray(Settings::szColorIdxTh),
+	SetDlgItemInt(hViews, tTilesImgSize, ThSet.Tiles.nImgSize, FALSE);
+	SetDlgItemInt(hViews, tTilesX1, ThSet.Tiles.nSpaceX1, FALSE);
+	SetDlgItemInt(hViews, tTilesY1, ThSet.Tiles.nSpaceY1, FALSE);
+	SetDlgItemInt(hViews, tTilesX2, ThSet.Tiles.nSpaceX2, FALSE);
+	SetDlgItemInt(hViews, tTilesY2, ThSet.Tiles.nSpaceY2, FALSE);
+	SetDlgItemInt(hViews, tTilesSpacing, ThSet.Tiles.nLabelSpacing, FALSE);
+	SetDlgItemInt(hViews, tTilesPadding, ThSet.Tiles.nLabelPadding, FALSE);
+
+	FillListBoxItems(GetDlgItem(hViews, tThumbMaxZoom), sizeofarray(Settings::szThumbMaxZoom),
+		Settings::szThumbMaxZoom, Settings::nThumbMaxZoom, ThSet.nMaxZoom);
+
+	// Colors
+	for (uint c = c32; c <= c34; c++)
+		ColorSetEdit(hViews, c);
+
+	nVal = ThSet.crBackground.ColorIdx;
+	FillListBoxItems(GetDlgItem(hViews, lbThumbBackColorIdx), sizeofarray(Settings::szColorIdxTh),
 		Settings::szColorIdxTh, Settings::nColorIdxTh, nVal);
-	
+	CheckRadioButton(hViews, rbThumbBackColorIdx, rbThumbBackColorRGB, 
+		ThSet.crBackground.UseIndex ? rbThumbBackColorIdx : rbThumbBackColorRGB);
 
-	//for (uint i = 0; i <= (MAX_COLOR_EDT_ID-c0); i++)
-	//{
-	//	SendDlgItemMessage(hColors, tc0 + i, EM_SETLIMITTEXT, 11, 0);
-	//	COLORREF cr = 0;
-	//	GetColorById(i+c0, &cr);
-	//	//if (i <= 31)
-	//	//	cr = Colors[i];
-	//	//else if (i == 32)
-	//	//	cr = ColorKey;
-	//	//else if (i == 33)
-	//	//	cr = nFadeInactiveMask;
-	//	wsprintf(temp, L"%i %i %i", getR(cr), getG(cr), getB(cr));
-	//	SetDlgItemText(hColors, tc0 + i, temp);
-	//}
+	CheckDlgButton(hViews, cbThumbPreviewBox, ThSet.nPreviewFrame ? 1 : 0);
+	nVal = ThSet.crPreviewFrame.ColorIdx;
+	FillListBoxItems(GetDlgItem(hViews, lbThumbPreviewBoxColorIdx), sizeofarray(Settings::szColorIdxTh),
+		Settings::szColorIdxTh, Settings::nColorIdxTh, nVal);
+	CheckRadioButton(hViews, rbThumbPreviewBoxColorIdx, rbThumbPreviewBoxColorRGB, 
+		ThSet.crPreviewFrame.UseIndex ? rbThumbPreviewBoxColorIdx : rbThumbPreviewBoxColorRGB);
 
-	//for (uint i=0; i < 16; i++)
-	//{
-	//	wsprintf(temp, (i<10) ? L"# %i" : L"#%i", i);
-	//	SendDlgItemMessage(hColors, lbExtendIdx, CB_ADDSTRING, 0, (LPARAM) temp);
-	//	//SendDlgItemMessage(hColors, lbVisFore, CB_ADDSTRING, 0, (LPARAM) temp);
-	//	//SendDlgItemMessage(hColors, lbVisNormal, CB_ADDSTRING, 0, (LPARAM) temp);
-	//	//SendDlgItemMessage(hColors, lbVisTab, CB_ADDSTRING, 0, (LPARAM) temp);
-	//	//SendDlgItemMessage(hColors, lbVisEOL, CB_ADDSTRING, 0, (LPARAM) temp);
-	//	//SendDlgItemMessage(hColors, lbVisEOF, CB_ADDSTRING, 0, (LPARAM) temp);
-	//}
-	//SendDlgItemMessage(hColors, lbExtendIdx, CB_SETCURSEL, nExtendColor, 0);
-	//CheckDlgButton(hColors, cbExtendColors, isExtendColors ? BST_CHECKED : BST_UNCHECKED);
-	//OnColorButtonClicked(cbExtendColors, 0);
+	CheckDlgButton(hViews, cbThumbSelectionBox, ThSet.nSelectFrame ? 1 : 0);
+	nVal = ThSet.crSelectFrame.ColorIdx;
+	FillListBoxItems(GetDlgItem(hViews, lbThumbSelectionBoxColorIdx), sizeofarray(Settings::szColorIdxTh),
+		Settings::szColorIdxTh, Settings::nColorIdxTh, nVal);
+	CheckRadioButton(hViews, rbThumbSelectionBoxColorIdx, rbThumbSelectionBoxColorRGB, 
+		ThSet.crSelectFrame.UseIndex ? rbThumbSelectionBoxColorIdx : rbThumbSelectionBoxColorRGB);
 
-	//CheckDlgButton(hColors, cbTrueColorer, isTrueColorer ? BST_CHECKED : BST_UNCHECKED);
-
-	//CheckDlgButton(hColors, cbFadeInactive, isFadeInactive ? BST_CHECKED : BST_UNCHECKED);
-	//SetDlgItemInt(hColors, tFadeLow, mn_FadeLow, FALSE);
-	//SetDlgItemInt(hColors, tFadeHigh, mn_FadeHigh, FALSE);
-
-	//// Default colors
-	//memmove(gdwLastColors, Colors, sizeof(gdwLastColors));
-	//SendDlgItemMessage(hColors, lbDefaultColors, CB_ADDSTRING, 0, (LPARAM) L"<Current color scheme>");
-	////SendDlgItemMessage(hColors, lbDefaultColors, CB_ADDSTRING, 0, (LPARAM) L"Default color sheme (Windows standard)");
-	////SendDlgItemMessage(hColors, lbDefaultColors, CB_ADDSTRING, 0, (LPARAM) L"Gamma 1 (for use with dark monitors)");
-	//for (uint i=0; i<sizeofarray(DefColors); i++)
-	//	SendDlgItemMessage(hColors, lbDefaultColors, CB_ADDSTRING, 0, (LPARAM) DefColors[i].pszTitle);
-	//SendDlgItemMessage(hColors, lbDefaultColors, CB_SETCURSEL, 0, 0);
-	//gbLastColorsOk = TRUE;
-
-	////// Visualizer
-	////CheckDlgButton(hColors, cbVisualizer, isVisualizer ? BST_CHECKED : BST_UNCHECKED);
-	////SendDlgItemMessage(hColors, lbVisFore, CB_SETCURSEL, nVizFore, 0);
-	////SendDlgItemMessage(hColors, lbVisNormal, CB_SETCURSEL, nVizNormal, 0);
-	////SendDlgItemMessage(hColors, lbVisTab, CB_SETCURSEL, nVizTab, 0);
-	////SendDlgItemMessage(hColors, lbVisEOL, CB_SETCURSEL, nVizEOL, 0);
-	////SendDlgItemMessage(hColors, lbVisEOF, CB_SETCURSEL, nVizEOF, 0);
-	////OnColorButtonClicked(cbVisualizer, 0);
-
-	//SendDlgItemMessage(hColors, slTransparent, TBM_SETRANGE, (WPARAM) true, (LPARAM) MAKELONG(MIN_ALPHA_VALUE, 255));
-	//SendDlgItemMessage(hColors, slTransparent, TBM_SETPOS  , (WPARAM) true, (LPARAM) nTransparent);
-	//CheckDlgButton(hColors, cbTransparent, (nTransparent!=255) ? BST_CHECKED : BST_UNCHECKED);
-	//CheckDlgButton(hColors, cbUserScreenTransparent, isUserScreenTransparent ? BST_CHECKED : BST_UNCHECKED);
+	if ((ThSet.bLoadPreviews & 3) == 3)
+		CheckDlgButton(hViews, cbThumbLoadFiles, BST_CHECKED);
+	else if ((ThSet.bLoadPreviews & 3) == 1)
+		CheckDlgButton(hViews, cbThumbLoadFiles, BST_INDETERMINATE);
+	CheckDlgButton(hViews, cbThumbLoadFolders, ThSet.bLoadFolders);
+	SetDlgItemInt(hViews, tThumbLoadingTimeout, ThSet.nLoadTimeout, FALSE);
+	CheckDlgButton(hViews, cbThumbUsePicView2, ThSet.bUsePicView2);
 
 	RegisterTipsFor(hColors);
 
 	return 0;
 }
 
-LRESULT CSettings::OnInitDialog_ThumbsFonts()
+LRESULT CSettings::OnInitDialog_ViewsFonts()
 {
 	DWORD bAlmostMonospace;
 	int nIdx, nCount, i;
@@ -1944,11 +1909,18 @@ LRESULT CSettings::OnInitDialog_ThumbsFonts()
 		if (SendDlgItemMessage(gSet.hMain, tFontFace, CB_GETLBTEXT, i, (LPARAM) szFontName) > 0) {
 			bAlmostMonospace = (DWORD)SendDlgItemMessage(gSet.hMain, tFontFace, CB_GETITEMDATA, i, 0);
 			
-			nIdx = SendDlgItemMessage(gSet.hThumbs, tThumbsFontName, CB_ADDSTRING, 0, (LPARAM) szFontName);
-			SendDlgItemMessage(gSet.hThumbs, tThumbsFontName, CB_SETITEMDATA, nIdx, bAlmostMonospace);
+			nIdx = SendDlgItemMessage(gSet.hViews, tThumbsFontName, CB_ADDSTRING, 0, (LPARAM) szFontName);
+			SendDlgItemMessage(gSet.hViews, tThumbsFontName, CB_SETITEMDATA, nIdx, bAlmostMonospace);
+			nIdx = SendDlgItemMessage(gSet.hViews, tTilesFontName, CB_ADDSTRING, 0, (LPARAM) szFontName);
+			SendDlgItemMessage(gSet.hViews, tTilesFontName, CB_SETITEMDATA, nIdx, bAlmostMonospace);
 		}
 	}
-	
+
+	GetDlgItemText(gSet.hViews, tThumbsFontName, szFontName, 128);
+	gSet.SelectString(gSet.hViews, tThumbsFontName, szFontName);
+	GetDlgItemText(gSet.hViews, tTilesFontName, szFontName, 128);
+	gSet.SelectString(gSet.hViews, tTilesFontName, szFontName);
+
 	return TRUE;
 }
 
@@ -1986,6 +1958,7 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
         if (isTabs==1) gConEmu.ForceShowTabs(TRUE); else
         if (isTabs==0) gConEmu.ForceShowTabs(FALSE); else
 			gConEmu.mp_TabBar->Update();
+		gConEmu.OnPanelViewSettingsChanged();
         SendMessage(ghOpWnd, WM_CLOSE, 0, 0);
         break;
 
@@ -2083,10 +2056,6 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
     case cbMultiCon:
         isMulti = IsChecked(hTabs, cbMultiCon);
         break;
-
-	//case bMultiConHotkeys:
-	//	DialogBox(g_hInstance, MAKEINTRESOURCE(IDD_MORE_MULTICON), ghOpWnd, multiOpProc);
-	//	break;
 
 	case cbNewConfirm:
 		isMultiNewConfirm = IsChecked(hTabs, cbNewConfirm);
@@ -2289,21 +2258,6 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
 			gConEmu.Update(true);
 		} break;
 
-	//case cbNonProportional:
-	//    isProportional = !isProportional;
-	//    mb_IgnoreEditChanged = TRUE;
-	//	ResetFontWidth();
-	//    gConEmu.Update(true);
-	//    mb_IgnoreEditChanged = FALSE;
-	//    break;
-	//
-	//case cbForceMonospace:
-	//    isForceMonospace = !isForceMonospace;
-	//	ResetFontWidth();
-	//	RecreateFont(tFontSizeX3);
-	//    gConEmu.Update(true);
-	//    break;
-
     case cbAutoConHandle:
         isUpdConHandle = !isUpdConHandle;
 
@@ -2462,49 +2416,14 @@ LRESULT CSettings::OnColorButtonClicked(WPARAM wParam, LPARAM lParam)
 		{
 			isUserScreenTransparent = IsChecked(hColors, cbUserScreenTransparent);
 			if (hExt) CheckDlgButton(hExt, cbHideCaptionAlways, isHideCaptionAlways() ? BST_CHECKED : BST_UNCHECKED);
-			//if (isUserScreenTransparent) { // при прозрачности - обязательно скрытие заголовка
-			//	_ASSERTE(isHideCaptionAlways()); // должен включаться автоматически
-			//	gConEmu.OnHideCaption();
-			//}
 			gConEmu.OnHideCaption(); // при прозрачности - обязательно скрытие заголовка + кнопки
 			gConEmu.UpdateWindowRgn();
-			//// Чтобы юзеру на экране не мелькал выбранный цвет для ColorKey
-			//// порядок действий выбираем в зависимости от флажка
-			//if (isColorKey) {
-			//	gConEmu.OnTransparent();
-			//	gConEmu.Update(true);
-			//} else {
-			//	gConEmu.Update(true);
-			//	gConEmu.OnTransparent();
-			//}
 		} break;
-    //case cbVisualizer:
-    //    isVisualizer = IsChecked(hColors, cbVisualizer) == BST_CHECKED ? true : false;
-    //    EnableWindow(GetDlgItem(hColors, lbVisNormal), isVisualizer);
-    //    EnableWindow(GetDlgItem(hColors, lbVisFore), isVisualizer);
-    //    EnableWindow(GetDlgItem(hColors, lbVisTab), isVisualizer);
-    //    EnableWindow(GetDlgItem(hColors, lbVisEOL), isVisualizer);
-    //    EnableWindow(GetDlgItem(hColors, lbVisEOF), isVisualizer);
-    //    if (lParam) {
-    //        gConEmu.Update(true);
-    //    }
-    //    break;
 
     default:
         if (CB >= c0 && CB <= MAX_COLOR_EDT_ID)
         {
-            COLORREF color = 0;
-			GetColorById(CB, &color);
-            	
-			wchar_t temp[MAX_PATH];
-			if( ShowColorDialog(ghOpWnd, &color) )
-            {
-				SetColorById(CB, color);
-                	
-                wsprintf(temp, L"%i %i %i", getR(color), getG(color), getB(color));
-                SetDlgItemText(hColors, CB + (tc0-c0), temp);
-                InvalidateRect(GetDlgItem(hColors, CB), 0, 1);
-
+			if (ColorEditDialog(hColors, CB)) {
                 gConEmu.m_Back.Refresh();
 
                 gConEmu.Update(true);
@@ -2575,24 +2494,6 @@ LRESULT CSettings::OnColorEditChanged(WPARAM wParam, LPARAM lParam)
 		}
 	}
 
-	//if (TB >= tc0 && TB <= tc31)
-	//{
-	//	if (GetColorRef(hColors, TB, &(Colors[TB - tc0]))) {
-	//		gConEmu.Update(true);
-	//		InvalidateRect(GetDlgItem(hColors, TB - (tc0-c0)), 0, 1);
-	//	}
-	//} else if (TB == tc32) {
-	//	if (GetColorRef(hColors, TB, &ColorKey)) {
-	//		gConEmu.Update(true);
-	//		gConEmu.OnTransparent();
-	//		InvalidateRect(GetDlgItem(hColors, TB - (tc0-c0)), 0, 1);
-	//	}
-	//} else if (TB == tc33) {
-	//	if (GetColorRef(hColors, TB, (COLORREF*)&nFadeInactiveMask)) {
-	//		gConEmu.m_Child.Invalidate();
-	//		InvalidateRect(GetDlgItem(hColors, TB - (tc0-c0)), 0, 1);
-	//	}
-	//}
     return 0;
 }
 
@@ -2698,19 +2599,7 @@ LRESULT CSettings::OnColorComboBox(WPARAM wParam, LPARAM lParam)
     WORD wId = LOWORD(wParam);
     if (wId == lbExtendIdx) {
         nExtendColor = SendDlgItemMessage(hColors, wId, CB_GETCURSEL, 0, 0);
-    //} else if (wId==lbVisFore) {
-    //    nVizFore = SendDlgItemMessage(hColors, wId, CB_GETCURSEL, 0, 0);
-    //} else if (wId==lbVisNormal) {
-    //    nVizNormal = SendDlgItemMessage(hColors, wId, CB_GETCURSEL, 0, 0);
-    //} else if (wId==lbVisTab) {
-    //    nVizTab = SendDlgItemMessage(hColors, wId, CB_GETCURSEL, 0, 0);
-    //} else if (wId==lbVisEOL) {
-    //    nVizEOL = SendDlgItemMessage(hColors, wId, CB_GETCURSEL, 0, 0);
-    //} else if (wId==lbVisEOF) {
-    //    nVizEOF = SendDlgItemMessage(hColors, wId, CB_GETCURSEL, 0, 0);
 	} else if (wId==lbDefaultColors) {
-		//int nIdx = SendDlgItemMessage(hColors, wId, CB_GETCURSEL, 0, 0);
-		//EnableWindow(GetDlgItem(hColors, cbDefaultColors), nIdx>0 || (gbLastColorsOk && !nIdx));
 		if (gbLastColorsOk) // только если инициализация палитр завершилась
 		{
 			const DWORD* pdwDefData = NULL;
@@ -2760,22 +2649,6 @@ LRESULT CSettings::OnComboBox(WPARAM wParam, LPARAM lParam)
 	} else
 	if (wId == lbLDragKey) {
 		GetListBox(hExt,wId,Settings::szKeys,Settings::nKeys,nRDragKey);
-    //} else if (wId == lbLDragKey || wId == lbRDragKey) {
-    //    int num = SendDlgItemMessage(hExt, wId, CB_GETCURSEL, 0, 0);
-    //    int nKeyCount = sizeofarray(Settings::szKeys);
-    //    if (num>=0 && num<nKeyCount) {
-    //        if (wId == lbLDragKey)
-    //            nLDragKey = Settings::nKeys[num];
-    //        else
-    //            nRDragKey = Settings::nKeys[num];
-    //    } else {
-    //        if (wId == lbLDragKey)
-    //            nLDragKey = 0;
-    //        else
-    //            nRDragKey = 0;
-    //        if (num) // Invalid index?
-    //            SendDlgItemMessage(hExt, wId, CB_SETCURSEL, num=0, 0);
-    //    }
 	} else if (wId == lbNtvdmHeight) {
 		int num = SendDlgItemMessage(hTabs, wId, CB_GETCURSEL, 0, 0);
 		ntvdmHeight = (num == 1) ? 25 : ((num == 2) ? 28 : ((num == 3) ? 43 : ((num == 4) ? 50 : 0)));
@@ -2828,9 +2701,9 @@ LRESULT CSettings::OnTab(LPNMHDR phdr)
 					nDlgRc = IDD_SPG_COLORS;
 					dlgProc = colorOpProc;
 				} else if (nSel==4) {
-					phCurrent = &hThumbs;
-					nDlgRc = IDD_SPG_THUMBS;
-					dlgProc = thumbsOpProc;
+					phCurrent = &hViews;
+					nDlgRc = IDD_SPG_VIEWS;
+					dlgProc = viewsOpProc;
                 } else {
                 	phCurrent = &hInfo;
                 	nDlgRc = IDD_SPG_INFO;
@@ -2856,7 +2729,7 @@ LRESULT CSettings::OnTab(LPNMHDR phdr)
                     if (*phCurrent != hExt)    ShowWindow(hExt,  SW_HIDE);
 					if (*phCurrent != hTabs)   ShowWindow(hTabs,  SW_HIDE);
                     if (*phCurrent != hColors) ShowWindow(hColors, SW_HIDE);
-					if (*phCurrent != hThumbs) ShowWindow(hThumbs, SW_HIDE);
+					if (*phCurrent != hViews) ShowWindow(hViews, SW_HIDE);
                     if (*phCurrent != hInfo)   ShowWindow(hInfo, SW_HIDE);
                     SetFocus(*phCurrent);
                 }
@@ -2993,8 +2866,6 @@ void CSettings::Dialog()
 	UpdateWindow(ghWndDC);
 
 	//2009-05-03. DialogBox создает МОДАЛЬНЫЙ Диалог
-    //DialogBox((HINSTANCE)GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_SETTINGS), 0, wndOpProc);
-	
     HWND hOpt = CreateDialog(g_hInstance, MAKEINTRESOURCE(IDD_SETTINGS), NULL, wndOpProc);
 	if (!hOpt) {
 		DisplayLastError(L"Can't create settings dialog!");
@@ -3040,42 +2911,6 @@ INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPara
         }
         return 0;
 
-    //case WM_CTLCOLORSTATIC:
-    //    for (uint i = c0; i <= c32; i++)
-    //        if (GetDlgItem(hWnd2, i) == (HWND)lParam)
-    //        {
-    //            static HBRUSH KillBrush;
-    //            DeleteObject(KillBrush);
-    //            COLORREF cr = 0;
-	//            if (CB <= c31)
-	//            	cr = Colors[i - c0];
-	//            else if (CB == c32)
-	//            	cr = ColorKey;
-    //            KillBrush = CreateSolidBrush(cr);
-    //            return (BOOL)KillBrush;
-    //        }
-    //        break;
-    //case WM_KEYDOWN:
-    //    if (wParam == VK_ESCAPE)
-    //        SendMessage(hWnd2, WM_CLOSE, 0, 0);
-    //    break;
-
-   // case WM_HSCROLL:
-   //     {
-			//WORD wID = LOWORD(wParam);
-   //         int newV = SendDlgItemMessage(hWnd2, wID, TBM_GETPOS, 0, 0);
-   //         if (newV != gSet.bgImageDarker)
-   //         {
-   //             gSet.bgImageDarker = newV;
-   //             TCHAR tmp[10];
-   //             wsprintf(tmp, L"%i", gSet.bgImageDarker);
-   //             SetDlgItemText(hWnd2, tDarker, tmp);
-   //             gSet.LoadImageFrom(gSet.sBgImage);
-   //             gConEmu.Update(true);
-   //         }
-   //     }
-   //     break;
-
     case WM_COMMAND:
         if (HIWORD(wParam) == BN_CLICKED)
         {
@@ -3104,8 +2939,9 @@ INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPara
 		gSet.UnregisterTabs();
         if (gSet.hwndTip) {DestroyWindow(gSet.hwndTip); gSet.hwndTip = NULL;}
 		if (gSet.hwndBalloon) {DestroyWindow(gSet.hwndBalloon); gSet.hwndBalloon = NULL;}
+		if (gSet.mh_CtlColorBrush) { DeleteObject(gSet.mh_CtlColorBrush); gSet.mh_CtlColorBrush = NULL; }
         //EndDialog(hWnd2, TRUE);
-        ghOpWnd = NULL; gSet.hMain = gSet.hExt = gSet.hTabs = gSet.hColors = gSet.hThumbs = gSet.hInfo = NULL;
+        ghOpWnd = NULL; gSet.hMain = gSet.hExt = gSet.hTabs = gSet.hColors = gSet.hViews = gSet.hInfo = NULL;
         gbLastColorsOk = FALSE;
         break;
 	case WM_HOTKEY:
@@ -3141,7 +2977,7 @@ INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPara
 INT_PTR CSettings::OnMeasureFontItem(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
 {
 	DWORD wID = wParam;
-	if (wID == tFontFace || wID == tFontFace2 || wID == tThumbsFontName) {
+	if (wID == tFontFace || wID == tFontFace2 || wID == tThumbsFontName || wID == tTilesFontName) {
 		MEASUREITEMSTRUCT *pItem = (MEASUREITEMSTRUCT*)lParam;
 		pItem->itemHeight = 15; //pItem->itemHeight;
 	}
@@ -3151,7 +2987,7 @@ INT_PTR CSettings::OnMeasureFontItem(HWND hWnd2, UINT messg, WPARAM wParam, LPAR
 INT_PTR CSettings::OnDrawFontItem(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
 {
 	DWORD wID = wParam;
-	if (wID == tFontFace || wID == tFontFace2 || wID == tThumbsFontName) {
+	if (wID == tFontFace || wID == tFontFace2 || wID == tThumbsFontName || wID == tTilesFontName) {
 		DRAWITEMSTRUCT *pItem = (DRAWITEMSTRUCT*)lParam;
 		wchar_t szText[128]; szText[0] = 0;
 		SendDlgItemMessage(hWnd2, wID, CB_GETLBTEXT, pItem->itemID, (LPARAM)szText);
@@ -3199,21 +3035,6 @@ INT_PTR CSettings::mainOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 
 	case WM_DRAWITEM:
 		return gSet.OnDrawFontItem(hWnd2, messg, wParam, lParam);
-
-    //case WM_CTLCOLORSTATIC:
-    //    for (uint i = 1 000; i < 1 016; i++)
-    //        if (GetDlgItem(hWnd2, i) == (HWND)lParam)
-    //        {
-    //            static HBRUSH KillBrush;
-    //            DeleteObject(KillBrush);
-    //            KillBrush = CreateSolidBrush(gSet.Colors[i-1 000]);
-    //            return (BOOL)KillBrush;
-    //        }
-    //        break;
-    //case WM_KEYDOWN:
-    //    if (wParam == VK_ESCAPE)
-    //        SendMessage(hWnd2, WM_CLOSE, 0, 0);
-    //    break;
 
     case WM_HSCROLL:
         {
@@ -3335,17 +3156,12 @@ INT_PTR CSettings::colorOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPa
         break;
 
     case WM_CTLCOLORSTATIC:
-        for (uint i = c0; i <= MAX_COLOR_EDT_ID; i++)
-            if (GetDlgItem(hWnd2, i) == (HWND)lParam)
-            {
-                static HBRUSH KillBrush;
-                DeleteObject(KillBrush);
-                COLORREF cr = 0;
-				gSet.GetColorById(i, &cr);
-                KillBrush = CreateSolidBrush(cr);
-                return (BOOL)KillBrush;
-            }
-            break;
+		{
+			WORD wID = GetDlgCtrlID((HWND)lParam);
+			if (wID >= c0 && wID <= MAX_COLOR_EDT_ID)
+				return gSet.ColorCtlStatic(hWnd2, wID, (HWND)lParam);
+			return 0;
+		}
 
     case WM_COMMAND:
         if (HIWORD(wParam) == BN_CLICKED)
@@ -3380,14 +3196,14 @@ INT_PTR CSettings::colorOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPa
     return 0;
 }
 
-INT_PTR CSettings::thumbsOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
+INT_PTR CSettings::viewsOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
 {
 	switch (messg)
 	{
 	case WM_INITDIALOG:
-		_ASSERTE(gSet.hThumbs==NULL || gSet.hThumbs==hWnd2);
-		gSet.hThumbs = hWnd2;
-		gSet.OnInitDialog_Thumbs();
+		_ASSERTE(gSet.hViews==NULL || gSet.hViews==hWnd2);
+		gSet.hViews = hWnd2;
+		gSet.OnInitDialog_Views();
 		break;
 
 	case WM_MEASUREITEM:
@@ -3397,36 +3213,188 @@ INT_PTR CSettings::thumbsOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lP
 		return gSet.OnDrawFontItem(hWnd2, messg, wParam, lParam);
 
 	case WM_CTLCOLORSTATIC:
-		for (uint i = c32; i <= MAX_COLOR_EDT_ID; i++)
-			if (GetDlgItem(hWnd2, i) == (HWND)lParam)
-			{
-				static HBRUSH KillBrush;
-				DeleteObject(KillBrush);
-				COLORREF cr = 0;
-				gSet.GetColorById(i, &cr);
-				KillBrush = CreateSolidBrush(cr);
-				return (BOOL)KillBrush;
-			}
-			break;
+		{
+			WORD wID = GetDlgCtrlID((HWND)lParam);
+			if (wID >= c32 && wID <= c34)
+				return gSet.ColorCtlStatic(hWnd2, wID, (HWND)lParam);
+			return 0;
+		}
 
 	case WM_COMMAND:
-		if (HIWORD(wParam) == BN_CLICKED)
-		{
-			gSet.OnColorButtonClicked(wParam, lParam);
-		}
-		else if (HIWORD(wParam) == EN_CHANGE)
-		{
-			gSet.OnColorEditChanged(wParam, lParam);
-		}
-		else if (HIWORD(wParam) == CBN_EDITCHANGE || HIWORD(wParam) == CBN_SELCHANGE)
-		{
-			gSet.OnColorComboBox(wParam, lParam);
+		{	
+			WORD wId = LOWORD(wParam);
+
+			if (HIWORD(wParam) == BN_CLICKED)
+			{
+				switch(wId)
+				{
+				case bApplyViewSettings:
+					gConEmu.OnPanelViewSettingsChanged();
+					break;
+				case cbThumbLoadFiles:
+					switch (IsChecked(hWnd2,wId)) {
+						case BST_CHECKED:       gSet.ThSet.bLoadPreviews = 3;
+						case BST_INDETERMINATE: gSet.ThSet.bLoadPreviews = 1;
+						default: gSet.ThSet.bLoadPreviews = 0;
+					}
+					break;
+				case cbThumbLoadFolders:
+					gSet.ThSet.bLoadFolders = IsChecked(hWnd2, wId);
+					break;
+				case cbThumbUsePicView2:
+					gSet.ThSet.bUsePicView2 = IsChecked(hWnd2, wId);
+					break;
+				case cbThumbPreviewBox:
+					gSet.ThSet.nPreviewFrame = IsChecked(hWnd2, wId);
+					break;
+				case cbThumbSelectionBox:
+					gSet.ThSet.nSelectFrame = IsChecked(hWnd2, wId);
+					break;
+				case rbThumbBackColorIdx: case rbThumbBackColorRGB:
+					gSet.ThSet.crBackground.UseIndex = IsChecked(hWnd2, rbThumbBackColorIdx);
+					InvalidateRect(GetDlgItem(hWnd2, c32), 0, 1);
+					break;
+				case rbThumbPreviewBoxColorIdx: case rbThumbPreviewBoxColorRGB:
+					gSet.ThSet.crPreviewFrame.UseIndex = IsChecked(hWnd2, rbThumbPreviewBoxColorIdx);
+					InvalidateRect(GetDlgItem(hWnd2, c33), 0, 1);
+					break;
+				case rbThumbSelectionBoxColorIdx: case rbThumbSelectionBoxColorRGB:
+					gSet.ThSet.crSelectFrame.UseIndex = IsChecked(hWnd2, rbThumbSelectionBoxColorIdx);
+					InvalidateRect(GetDlgItem(hWnd2, c34), 0, 1);
+					break;
+				default:
+					if (wId >= c32 && wId <= c34)
+					{
+						if (gSet.ColorEditDialog(hWnd2, wId)) {
+							if (wId == c32) {
+								gSet.ThSet.crBackground.UseIndex = 0;
+								CheckRadioButton(hWnd2, rbThumbBackColorIdx, rbThumbBackColorRGB, rbThumbBackColorRGB);
+							} else if (wId == c33) {
+								gSet.ThSet.crPreviewFrame.UseIndex = 0;
+								CheckRadioButton(hWnd2, rbThumbPreviewBoxColorIdx, rbThumbPreviewBoxColorRGB, rbThumbPreviewBoxColorRGB);
+							} else if (wId == c34) {
+								gSet.ThSet.crSelectFrame.UseIndex = 0;
+								CheckRadioButton(hWnd2, rbThumbSelectionBoxColorIdx, rbThumbSelectionBoxColorRGB, rbThumbSelectionBoxColorRGB);
+							}							
+							InvalidateRect(GetDlgItem(hWnd2, wId), 0, 1);
+							// done
+						}
+					}
+				}
+			}
+			else if (HIWORD(wParam) == EN_CHANGE)
+			{
+				BOOL bValOk = FALSE;
+				UINT nVal = GetDlgItemInt(hWnd2, wId, &bValOk, FALSE);
+				if (bValOk) {
+					switch (wId) {
+					case tThumbLoadingTimeout:
+						gSet.ThSet.nLoadTimeout = nVal; break;
+					//
+					case tThumbsImgSize:
+						gSet.ThSet.Thumbs.nImgSize = nVal; break;
+					//
+					case tThumbsX1:
+						gSet.ThSet.Thumbs.nSpaceX1 = nVal; break;
+					case tThumbsY1:
+						gSet.ThSet.Thumbs.nSpaceY1 = nVal; break;
+					case tThumbsX2:
+						gSet.ThSet.Thumbs.nSpaceX2 = nVal; break;
+					case tThumbsY2:
+						gSet.ThSet.Thumbs.nSpaceY2 = nVal; break;
+					//
+					case tThumbsSpacing:
+						gSet.ThSet.Thumbs.nLabelSpacing = nVal; break;
+					case tThumbsPadding:
+						gSet.ThSet.Thumbs.nLabelPadding = nVal; break;
+					// ****************
+					case tTilesImgSize:
+						gSet.ThSet.Tiles.nImgSize = nVal; break;
+					//
+					case tTilesX1:
+						gSet.ThSet.Tiles.nSpaceX1 = nVal; break;
+					case tTilesY1:
+						gSet.ThSet.Tiles.nSpaceY1 = nVal; break;
+					case tTilesX2:
+						gSet.ThSet.Tiles.nSpaceX2 = nVal; break;
+					case tTilesY2:
+						gSet.ThSet.Tiles.nSpaceY2 = nVal; break;
+					//
+					case tTilesSpacing:
+						gSet.ThSet.Tiles.nLabelSpacing = nVal; break;
+					case tTilesPadding:
+						gSet.ThSet.Tiles.nLabelPadding = nVal; break;
+					}
+				}
+
+				if (wId >= tc32 && wId <= tc34) {
+					COLORREF color = 0;
+					if (gSet.GetColorById(wId - (tc0-c0), &color))
+					{
+						if (gSet.GetColorRef(hWnd2, wId, &color)) {
+							if (gSet.SetColorById(wId - (tc0-c0), color)) {
+								InvalidateRect(GetDlgItem(hWnd2, wId - (tc0-c0)), 0, 1);
+								// done
+							}
+						}
+					}
+				}
+			}
+			else if (HIWORD(wParam) == CBN_EDITCHANGE)
+			{
+				switch (wId) {
+				case tThumbsFontName:
+					GetDlgItemText(hWnd2, wId, gSet.ThSet.Thumbs.sFontName, 32); break;
+				case tThumbsFontSize:
+					gSet.ThSet.Thumbs.nFontHeight = GetNumber(hWnd2, wId); break;
+				case tTilesFontName:
+					GetDlgItemText(hWnd2, wId, gSet.ThSet.Tiles.sFontName, 32); break;
+				case tTilesFontSize:
+					gSet.ThSet.Tiles.nFontHeight = GetNumber(hWnd2, wId); break;
+				}
+
+			}
+			else if (HIWORD(wParam) == CBN_SELCHANGE)
+			{
+				int nSel = SendDlgItemMessage(hWnd2, wId, CB_GETCURSEL, 0, 0);
+				switch (wId) {
+				case lbThumbBackColorIdx:
+					gSet.ThSet.crBackground.ColorIdx = nSel;
+					InvalidateRect(GetDlgItem(hWnd2, c32), 0, 1);
+					break;
+				case lbThumbPreviewBoxColorIdx:
+					gSet.ThSet.crPreviewFrame.ColorIdx = nSel;
+					InvalidateRect(GetDlgItem(hWnd2, c33), 0, 1);
+					break;
+				case lbThumbSelectionBoxColorIdx:
+					gSet.ThSet.crSelectFrame.ColorIdx = nSel;
+					InvalidateRect(GetDlgItem(hWnd2, c34), 0, 1);
+					break;
+				case tThumbsFontName:
+					SendDlgItemMessage(hWnd2, wId, CB_GETLBTEXT, nSel, (LPARAM)gSet.ThSet.Thumbs.sFontName);
+					break;
+				case tThumbsFontSize:
+					if (nSel>=0 && nSel<sizeofarray(Settings::FSizesSmall))
+						gSet.ThSet.Thumbs.nFontHeight = Settings::FSizesSmall[nSel];
+					break;
+				case tTilesFontName:
+					SendDlgItemMessage(hWnd2, wId, CB_GETLBTEXT, nSel, (LPARAM)gSet.ThSet.Tiles.sFontName);
+					break;
+				case tTilesFontSize:
+					if (nSel>=0 && nSel<sizeofarray(Settings::FSizesSmall))
+						gSet.ThSet.Tiles.nFontHeight = Settings::FSizesSmall[nSel];
+					break;
+				case tThumbMaxZoom:
+					gSet.ThSet.nMaxZoom = max(100,((nSel+1)*100));
+				}
+
+			}
 		}
 		break;
 
 	default:
 		if (messg == gSet.mn_MsgLoadFontFromMain) {
-			gSet.OnInitDialog_ThumbsFonts();
+			gSet.OnInitDialog_ViewsFonts();
 		}
 		return 0;
 	}
@@ -5484,14 +5452,85 @@ bool CSettings::CheckTheming()
 	return mb_ThemingEnabled;
 }
 
+void CSettings::ColorSetEdit(HWND hWnd2, WORD c)
+{
+	WORD tc = (tc0-c0) + c;
+	SendDlgItemMessage(hWnd2, tc, EM_SETLIMITTEXT, 11, 0);
+	COLORREF cr = 0;
+	GetColorById(c, &cr);
+	wchar_t temp[16];
+	wsprintf(temp, L"%i %i %i", getR(cr), getG(cr), getB(cr));
+	SetDlgItemText(hWnd2, tc, temp);
+}
+
+bool CSettings::ColorEditDialog(HWND hWnd2, WORD c)
+{
+	bool bChanged = false;
+	COLORREF color = 0;
+	GetColorById(c, &color);
+
+	wchar_t temp[16];
+	COLORREF colornew = color;
+	if( ShowColorDialog(ghOpWnd, &colornew) && colornew != color)
+	{
+		SetColorById(c, colornew);
+
+		wsprintf(temp, L"%i %i %i", getR(colornew), getG(colornew), getB(colornew));
+		SetDlgItemText(hWnd2, c + (tc0-c0), temp);
+		InvalidateRect(GetDlgItem(hWnd2, c), 0, 1);
+
+		bChanged = true;
+	}
+
+	return bChanged;
+}
+
+INT_PTR CSettings::ColorCtlStatic(HWND hWnd2, WORD c, HWND hItem)
+{
+	if (GetDlgItem(hWnd2, c) == hItem)
+	{
+		if (mh_CtlColorBrush) DeleteObject(mh_CtlColorBrush);
+		COLORREF cr = 0;
+		if (c >= c32 && c <= c34) {
+			ThumbColor *ptc = NULL;
+			if (c == c32) ptc = &ThSet.crBackground;
+			else if (c == c33) ptc = &ThSet.crPreviewFrame;
+			else ptc = &ThSet.crSelectFrame;
+			//
+			if (ptc->UseIndex) {
+				if (ptc->ColorIdx >= 0 && ptc->ColorIdx <= 15) {
+					cr = Colors[ptc->ColorIdx];
+				} else {
+					const CEFAR_INFO *pfi = gConEmu.ActiveCon()->RCon()->GetFarInfo();
+					if (pfi && pfi->cbSize>=sizeof(CEFAR_INFO)) {
+						//COL_PANELTEXT == 10
+						cr = Colors[(pfi->nFarColors[10] & 0xF0)>>4];
+					} else {
+						cr = Colors[1];
+					}
+				}
+			} else {
+				cr = ptc->ColorRGB;
+			}
+		} else {
+			gSet.GetColorById(c, &cr);
+		}
+		mh_CtlColorBrush = CreateSolidBrush(cr);
+		return (INT_PTR)mh_CtlColorBrush;
+	}
+	return 0;
+}
+
 bool CSettings::GetColorById(WORD nID, COLORREF* color)
 {
 	if (nID <= c31)
 		*color = Colors[nID - c0];
-	//else if (nID == c32)
-	//	*color = ColorKey;
-	//else if (nID == c32)
-	//	*color = nFadeInactiveMask;
+	else if (nID == c32)
+		*color = ThSet.crBackground.ColorRGB;
+	else if (nID == c33)
+		*color = ThSet.crPreviewFrame.ColorRGB;
+	else if (nID == c34)
+		*color = ThSet.crSelectFrame.ColorRGB;
 	else
 		return false;
 	return true;
@@ -5503,10 +5542,12 @@ bool CSettings::SetColorById(WORD nID, COLORREF color)
 		Colors[nID - c0] = color;
 		mb_FadeInitialized = false;
 	}
-	//else if (nID == c32)
-	//	ColorKey = color;
-	//else if (nID == c32)
-	//	nFadeInactiveMask = color;
+	else if (nID == c32)
+		ThSet.crBackground.ColorRGB = color;
+	else if (nID == c33)
+		ThSet.crPreviewFrame.ColorRGB = color;
+	else if (nID == c34)
+		ThSet.crSelectFrame.ColorRGB = color;
 	else
 		return false;
 	return true;

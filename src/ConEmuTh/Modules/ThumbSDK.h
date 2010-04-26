@@ -29,6 +29,8 @@ struct CET_LoadInfo {
 	LPCWSTR sFileName; // Full file path name
 	FILETIME ftModified; // Date of last file modification
 	__int64 nFileSize; // Size of the file on disk
+	BOOL bVirtualItem; // TRUE - when NO physical file
+	const BYTE* pFileData; // may be NULL
 	COORD crLoadSize; // Required preview dimensions (in pixels)
 	int nMaxZoom; // In percents, i.e. 500%
 	BOOL bTilesMode; // TRUE, when pszInfo acquired.

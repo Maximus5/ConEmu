@@ -403,4 +403,5 @@ public:
 	void OnVConCreated(CVirtualConsole* apVCon);
 	LRESULT OnVConTerminated(CVirtualConsole* apVCon, BOOL abPosted = FALSE);
 	LRESULT OnUpdateScrollInfo(BOOL abPosted = FALSE);
+	void OnPanelViewSettingsChanged();
 };

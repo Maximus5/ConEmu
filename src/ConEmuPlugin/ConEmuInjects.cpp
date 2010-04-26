@@ -52,7 +52,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 static TCHAR kernel32[] = _T("kernel32.dll");
 //static TCHAR user32[]   = _T("user32.dll");
-//static TCHAR shell32[]  = _T("shell32.dll");
+static TCHAR shell32[]  = _T("shell32.dll");
 
 //static BOOL bHooksWin2k3R2Only = FALSE;
 //static HookItem HooksWin2k3R2Only[] = {
@@ -112,6 +112,7 @@ extern BOOL WINAPI OnWriteConsoleOutput(HookCallbackArg* pArgs);
 //extern VOID WINAPI OnWasWriteConsoleOutputA(HookCallbackArg* pArgs);
 //extern VOID WINAPI OnWasWriteConsoleOutputW(HookCallbackArg* pArgs);
 extern VOID WINAPI OnGetNumberOfConsoleInputEventsPost(HookCallbackArg* pArgs);
+extern VOID WINAPI OnShellExecuteExW_Except(HookCallbackArg* pArgs);
 
 
 
@@ -133,6 +134,8 @@ BOOL StartupHooks(HMODULE ahOurDll)
 	SetHookCallbacks( "WriteConsoleOutputW", kernel32, OnWriteConsoleOutput, NULL );
 	
 	SetHookCallbacks( "GetNumberOfConsoleInputEvents", kernel32, NULL, OnGetNumberOfConsoleInputEventsPost );
+
+	SetHookCallbacks( "ShellExecuteExW", shell32, NULL, NULL, OnShellExecuteExW_Except );
 	
 	return SetAllHooks(ahOurDll);
 

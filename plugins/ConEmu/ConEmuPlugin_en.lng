@@ -21,3 +21,4 @@
 "ConEmu plugin\nCan't create debugger process\nOK"
 "ConEmu plugin\nCan't start console server process (ConEmuC.exe)\nOK"
 "ConEmu plugin\nGetConsoleWindow()==FarHwnd is NULL\nOK"
+"ConEmu plugin\nShellExecuteEx raised exception.\nFAR restart is recommended.\nOK"

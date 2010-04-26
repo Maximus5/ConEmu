@@ -277,7 +277,8 @@ bool __stdcall InitHooks( HookItem* apHooks )
 }
 
 bool __stdcall SetHookCallbacks( const char* ProcName, const wchar_t* DllName,
-								 HookItemPreCallback_t PreCallBack, HookItemPostCallback_t PostCallBack )
+								 HookItemPreCallback_t PreCallBack, HookItemPostCallback_t PostCallBack,
+								 HookItemExceptCallback_t ExceptCallBack )
 {
 	_ASSERTE(ProcName!=NULL && DllName!=NULL);
 	_ASSERTE(ProcName[0]!=0 && DllName[0]!=0);
@@ -288,6 +289,7 @@ bool __stdcall SetHookCallbacks( const char* ProcName, const wchar_t* DllName,
 		if (!lstrcmpA(Hooks[i].Name, ProcName) && !lstrcmpW(Hooks[i].DllName,DllName)) {
 			Hooks[i].PreCallBack = PreCallBack;
 			Hooks[i].PostCallBack = PostCallBack;
+			Hooks[i].ExceptCallBack = ExceptCallBack;
 			bFound = true;
 			break;
 		}
@@ -1085,21 +1087,38 @@ static BOOL WINAPI OnShellExecuteExA(LPSHELLEXECUTEINFOA lpExecInfo)
 	return lbRc;
 }
 typedef BOOL (WINAPI* OnShellExecuteExW_t)(LPSHELLEXECUTEINFOW lpExecInfo);
+static BOOL OnShellExecuteExW_SEH(OnShellExecuteExW_t f, LPSHELLEXECUTEINFOW lpExecInfo, BOOL* pbRc)
+{
+	BOOL lbOk = FALSE;
+	__try {
+		*pbRc = f(lpExecInfo);
+		lbOk = TRUE;
+	} __except(EXCEPTION_EXECUTE_HANDLER) {
+	}
+	return lbOk;
+}
 static BOOL WINAPI OnShellExecuteExW(LPSHELLEXECUTEINFOW lpExecInfo)
 {
-	ORIGINALFAST(ShellExecuteExW);
-	
+	ORIGINAL(ShellExecuteExW);
+
 	if (ConEmuHwnd) {
 		if (!lpExecInfo->hwnd || lpExecInfo->hwnd == GetConsoleWindow())
 			lpExecInfo->hwnd = GetParent(ConEmuHwnd);
 	}
-	
+
 	BOOL lbRc;
-	
+
 	//BUGBUG: FAR периодически валится на этой функции
 	//должно быть: lpExecInfo->cbSize==0x03C; lpExecInfo->fMask==0x00800540;
-	lbRc = F(ShellExecuteExW)(lpExecInfo);
-	
+	if (ph && ph->ExceptCallBack) {
+		if (!OnShellExecuteExW_SEH(F(ShellExecuteExW), lpExecInfo, &lbRc)) {
+			SETARGS1(&lbRc,lpExecInfo);
+			ph->ExceptCallBack(&args);
+		}
+	} else {
+		lbRc = F(ShellExecuteExW)(lpExecInfo);
+	}
+
 	return lbRc;
 }
 
