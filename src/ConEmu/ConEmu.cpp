@@ -3143,7 +3143,7 @@ void CConEmuMain::Recreate(BOOL abRecreate, BOOL abConfirm, BOOL abRunAs)
     SafeFree(args.pszSpecialCmd);
 	SafeFree(args.pszStartupDir);
 	SafeFree(args.pszUserName);
-	SafeFree(args.pszUserPassword);
+	//SafeFree(args.pszUserPassword);
 }
 
 int CConEmuMain::RecreateDlg(LPARAM lParam)
@@ -3267,20 +3267,20 @@ INT_PTR CConEmuMain::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARA
             //EnableWindow(GetDlgItem(hDlg, IDC_CHOOSE_DIR), FALSE);
             //#endif
             
-            const wchar_t *pszUser, *pszPwd; BOOL bResticted;
+            const wchar_t *pszUser/*, *pszPwd*/; BOOL bResticted;
             int nChecked = rbCurrentUser;
 			wchar_t szCurUser[MAX_PATH]; DWORD nUserNameLen = sizeofarray(szCurUser);
 			if (!GetUserName(szCurUser, &nUserNameLen)) szCurUser[0] = 0;
 			wchar_t szRbCaption[MAX_PATH+32];
 			lstrcpy(szRbCaption, L"Run as current &user: "); lstrcat(szRbCaption, szCurUser);
 			SetDlgItemText(hDlg, rbCurrentUser, szRbCaption);
-            if (gConEmu.ActiveCon()->RCon()->GetUserPwd(&pszUser, &pszPwd, &bResticted)) {
+            if (gConEmu.ActiveCon()->RCon()->GetUserPwd(&pszUser, /*&pszPwd,*/ &bResticted)) {
             	nChecked = rbAnotherUser;
             	if (bResticted) {
 	            	CheckDlgButton(hDlg, cbRunAsRestricted, BST_CHECKED);
             	} else {
 					lstrcpyn(szCurUser, pszUser, MAX_PATH);
-            		SetDlgItemText(hDlg, tRunAsPassword, pszPwd);
+            		SetDlgItemText(hDlg, tRunAsPassword, L"");
             	}
             }
 			SetDlgItemText(hDlg, tRunAsUser, szCurUser);
@@ -3394,6 +3394,7 @@ INT_PTR CConEmuMain::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARA
 						MAX_PREFERRED_LENGTH, &dwEntriesRead, &dwTotalEntries, &dwResumeHandle);
 					if (nStatus == NERR_Success) {
 						for (DWORD i = 0; i < dwEntriesRead; ++i) {
+							// usri3_logon_server	"\\*"	wchar_t *
 							if ((info[i].usri3_flags & UF_ACCOUNTDISABLE) == 0)
 								SendDlgItemMessage(hDlg, tRunAsUser, CB_ADDSTRING, 0, (LPARAM)info[i].usri3_name);
 						}
@@ -3410,6 +3411,8 @@ INT_PTR CConEmuMain::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARA
             	EnableWindow(GetDlgItem(hDlg, tRunAsUser), TRUE);
             	EnableWindow(GetDlgItem(hDlg, tRunAsPassword), TRUE);
             }
+			if (wParam == rbAnotherUser)
+				SetFocus(GetDlgItem(hDlg, tRunAsUser));
     	}
     	return 0;
 
@@ -3483,7 +3486,7 @@ INT_PTR CConEmuMain::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARA
                 case rbAnotherUser:
                 case cbRunAsRestricted:
                 {
-                	RecreateDlgProc(hDlg, UM_USER_CONTROLS, 0, 0);
+                	RecreateDlgProc(hDlg, UM_USER_CONTROLS, LOWORD(wParam), 0);
                 	return 1;
                 }
                     
@@ -3492,6 +3495,21 @@ INT_PTR CConEmuMain::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARA
 					RConStartArgs* pArgs = (RConStartArgs*)GetWindowLongPtr(hDlg, DWLP_USER);
 					_ASSERTE(pArgs);
 					
+					SafeFree(pArgs->pszUserName);
+					//SafeFree(pArgs->pszUserPassword);
+					if (SendDlgItemMessage(hDlg, rbAnotherUser, BM_GETCHECK, 0, 0)) {
+						pArgs->bRunAsRestricted = FALSE;
+						pArgs->pszUserName = GetDlgItemText(hDlg, tRunAsUser);
+						if (pArgs->pszUserName) {
+							//pArgs->pszUserPassword = GetDlgItemText(hDlg, tRunAsPassword);
+							// Попытаться проверить правильность введенного пароля и возможность запуска
+							if (!pArgs->CheckUserToken(GetDlgItem(hDlg, tRunAsPassword)))
+								return 1;
+						}
+					} else {
+						pArgs->bRunAsRestricted = SendDlgItemMessage(hDlg, cbRunAsRestricted, BM_GETCHECK, 0, 0);
+					}
+
 					// Command
 					_ASSERTE(pArgs->pszSpecialCmd==NULL);
 					pArgs->pszSpecialCmd = GetDlgItemText(hDlg, IDC_RESTART_CMD);
@@ -3504,21 +3522,6 @@ INT_PTR CConEmuMain::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARA
                     
                     // Vista+ (As Admin...)
 					pArgs->bRunAsAdministrator = SendDlgItemMessage(hDlg, cbRunAsAdmin, BM_GETCHECK, 0, 0);
-					
-					SafeFree(pArgs->pszUserName);
-					SafeFree(pArgs->pszUserPassword);
-					if (SendDlgItemMessage(hDlg, rbAnotherUser, BM_GETCHECK, 0, 0)) {
-						pArgs->bRunAsRestricted = FALSE;
-						pArgs->pszUserName = GetDlgItemText(hDlg, tRunAsUser);
-						if (pArgs->pszUserName) {
-							pArgs->pszUserPassword = GetDlgItemText(hDlg, tRunAsPassword);
-							// Попытаться проверить правильность введенного пароля и возможность запуска
-							if (!pArgs->CheckUserToken())
-								return 1;
-						}
-					} else {
-						pArgs->bRunAsRestricted = SendDlgItemMessage(hDlg, cbRunAsRestricted, BM_GETCHECK, 0, 0);
-					}
 					
                     EndDialog(hDlg, IDC_START);
                     return 1;
@@ -5136,6 +5139,22 @@ LRESULT CConEmuMain::OnFlashWindow(DWORD nFlags, DWORD nCount, HWND hCon)
 {
     if (!hCon) return 0;
     
+	bool lbFlashSimple = false;
+	// Достало. Настройка полного отключения флэшинга
+    if (gSet.isDisableFarFlashing && mp_VActive->RCon()->GetFarPID(FALSE)) {
+    	if (gSet.isDisableFarFlashing == 1)
+    		return 0;
+    	else
+    		lbFlashSimple = true;
+	} else
+    if (gSet.isDisableAllFlashing) {
+    	if (gSet.isDisableAllFlashing == 1)
+    		return 0;
+    	else
+    		lbFlashSimple = true;
+	}
+
+        
     BOOL lbRc = FALSE;
     for (int i = 0; i<MAX_CONSOLE_COUNT; i++) {
         if (!mp_VCon[i]) continue;
@@ -5148,11 +5167,16 @@ LRESULT CConEmuMain::OnFlashWindow(DWORD nFlags, DWORD nCount, HWND hCon)
                     fl.dwFlags = FLASHW_STOP; fl.hwnd = ghWnd;
                     FlashWindowEx(&fl); // Чтобы мигание не накапливалось
                     
-            		fl.uCount = 4; fl.dwFlags = FLASHW_ALL; fl.hwnd = ghWnd;
+            		fl.uCount = 3; fl.dwFlags = lbFlashSimple ? FLASHW_ALL : FLASHW_TRAY; fl.hwnd = ghWnd;
             		FlashWindowEx(&fl);
             	}
             } else {
-            	fl.dwFlags = FLASHW_ALL|FLASHW_TIMERNOFG; fl.hwnd = ghWnd;
+            	if (lbFlashSimple) {
+            		fl.uCount = 3; fl.dwFlags = FLASHW_TRAY;
+            	} else {
+            		fl.dwFlags = FLASHW_ALL|FLASHW_TIMERNOFG;
+        		}
+        		fl.hwnd = ghWnd;
             	FlashWindowEx(&fl); // Помигать в GUI
             }
             
@@ -5380,14 +5404,26 @@ void CConEmuMain::OnHideCaption()
 	//}
 }
 
-void CConEmuMain::OnPanelViewSettingsChanged()
+void CConEmuMain::OnPanelViewSettingsChanged(BOOL abSendChanges/*=TRUE*/)
 {
+	// Заполнить цвета gSet.ThSet.crPalette[16], gSet.ThSet.crFadePalette[16]
+	COLORREF *pcrNormal = gSet.GetColors(FALSE);
+	COLORREF *pcrFade = gSet.GetColors(TRUE);
+	for (int i=0; i<16; i++) {
+		// через FOR чтобы с BitMask не наколоться
+		gSet.ThSet.crPalette[i] = (pcrNormal[i]) & 0xFFFFFF;
+		gSet.ThSet.crFadePalette[i] = (pcrFade[i]) & 0xFFFFFF;
+	}
+
 	// Применить в мэппинг
-	gSet.m_ThSetMap.Set(&gSet.ThSet);
-	// и отослать заинтересованным
-	for (int i=0; i<MAX_CONSOLE_COUNT; i++) {
-		if (mp_VCon[i]) {
-			mp_VCon[i]->OnPanelViewSettingsChanged();
+	gSet.m_ThSetMap.SetFrom(&gSet.ThSet);
+
+	if (abSendChanges) {
+		// и отослать заинтересованным
+		for (int i=0; i<MAX_CONSOLE_COUNT; i++) {
+			if (mp_VCon[i]) {
+				mp_VCon[i]->OnPanelViewSettingsChanged();
+			}
 		}
 	}
 }

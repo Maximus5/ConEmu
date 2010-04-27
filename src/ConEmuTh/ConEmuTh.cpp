@@ -68,6 +68,7 @@ extern "C"{
 };
 #endif
 
+PanelViewSettings gThSet = {0}; // параметры получаются из мэппинга при открытии плага или при перерегистрации
 
 HWND ghConEmuRoot = NULL;
 HMODULE ghPluginModule = NULL; // ConEmuTh.dll - сам плагин
@@ -86,7 +87,7 @@ int ShowLastError();
 CRgnDetect *gpRgnDetect = NULL;
 CImgCache  *gpImgCache = NULL;
 CEFAR_INFO gFarInfo = {0};
-COLORREF gcrActiveColors[16], gcrFadeColors[16], *gcrCurColors = gcrActiveColors;
+COLORREF /*gcrActiveColors[16], gcrFadeColors[16],*/ *gcrCurColors = gThSet.crPalette;
 bool gbFadeColors = false;
 //bool gbLastCheckWindow = false;
 DWORD gnRgnDetectFlags = 0;
@@ -95,8 +96,6 @@ SECURITY_ATTRIBUTES* gpNullSecurity = NULL;
 // *** lng resources begin ***
 wchar_t gsFolder[64], gsHardLink[64], gsSymLink[64], gsJunction[64];
 // *** lng resources end ***
-
-PanelViewSettings gThSet = {0}; // параметры получаются из GUI при регистрации
 
 bool gbWaitForKeySequenceEnd = false;
 DWORD gnWaitForKeySeqTick = 0;
@@ -143,10 +142,9 @@ void WINAPI _export GetPluginInfoW(struct PluginInfo *pi)
 BOOL gbInfoW_OK = FALSE;
 HANDLE WINAPI _export OpenPluginW(int OpenFrom,INT_PTR Item)
 {
-	if (!gbInfoW_OK || !CheckConEmu(TRUE))
+	if (!gbInfoW_OK || !CheckConEmu(/*TRUE*/))
 		return INVALID_HANDLE_VALUE;
 
-	gpNullSecurity = NullSecurity();
 		
 	//gThSet.Load();
 	// При открытии плагина - загрузить информацию об обеих панелях. Нужно для определения регионов!
@@ -218,6 +216,8 @@ BOOL WINAPI DllMain( HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserve
 				ghPluginModule = (HMODULE)hModule;
 				gnSelfPID = GetCurrentProcessId();
 				gnMainThreadId = GetCurrentThreadId();
+
+				gpNullSecurity = NullSecurity();
 				
 				_ASSERTE(FAR_X_VER<=FAR_Y_VER);
 				#ifdef SHOW_STARTED_MSGBOX
@@ -233,14 +233,7 @@ BOOL WINAPI DllMain( HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserve
 			}
 			break;
 		case DLL_PROCESS_DETACH:
-			//if (ghConEmuDll) {
-			//	//
-			//	TODO("Завершить нити и отрегистрироваться");
-			//	//
-			//	gfRegisterPanelView = NULL;
-			//	GetFarHWND2 = NULL;
-			//	FreeLibrary(ghConEmuDll); ghConEmuDll = NULL;
-			//}
+			CommonShutdown();
 			break;
 	}
 	return TRUE;
@@ -296,19 +289,22 @@ BOOL LoadFarVersion()
 }
 
 #define CONEMUCHECKDELTA 2000
-static DWORD nLastCheckConEmu = 0;
-BOOL CheckConEmu(BOOL abForceCheck)
+//static DWORD nLastCheckConEmu = 0;
+BOOL CheckConEmu(/*BOOL abForceCheck*/)
 {
-	// Страховка от того, что conemu.dll могли выгрузить (unload:...)
-	if (!abForceCheck) {
-		if ((GetTickCount() - nLastCheckConEmu) > CONEMUCHECKDELTA) {
-			if (!ghConEmuRoot)
-				return FALSE;
-			return TRUE;
-		}
-	}
+	// Функция проверяет доступность плагина conemu.dll и GUI
+	// делать это нужно при каждом вызове, т.к. плагин могли и выгрузить...
 
-	nLastCheckConEmu = GetTickCount();
+	//// Страховка от того, что conemu.dll могли выгрузить (unload:...)
+	//if (!abForceCheck) {
+	//	if ((GetTickCount() - nLastCheckConEmu) > CONEMUCHECKDELTA) {
+	//		if (!ghConEmuRoot)
+	//			return FALSE;
+	//		return TRUE;
+	//	}
+	//}
+
+	//nLastCheckConEmu = GetTickCount();
 	HMODULE hConEmu = GetModuleHandle
 		(
 			#ifdef WIN64
@@ -318,9 +314,12 @@ BOOL CheckConEmu(BOOL abForceCheck)
 			#endif
 		);
 	if (!hConEmu) {
+		gfRegisterPanelView = NULL;
+		gfGetFarHWND2 = NULL;
 		ShowMessage(CEPluginNotFound, 0);
 		return FALSE;
 	}
+
 	gfRegisterPanelView = (RegisterPanelView_t)GetProcAddress(hConEmu, "RegisterPanelView");
 	gfGetFarHWND2 = (GetFarHWND2_t)GetProcAddress(hConEmu, "GetFarHWND2");
 	if (!gfRegisterPanelView || !gfGetFarHWND2) {
@@ -328,8 +327,25 @@ BOOL CheckConEmu(BOOL abForceCheck)
 		return FALSE;
 	}
 	HWND hWnd = gfGetFarHWND2(TRUE);
-	if (hWnd) ghConEmuRoot = GetParent(hWnd); else ghConEmuRoot = NULL;
-	if (!hWnd) {
+	HWND hRoot = hWnd ? GetParent(hWnd) : NULL;
+	if (hRoot != ghConEmuRoot) {
+		ghConEmuRoot = hRoot;
+		if (hRoot) {
+			MFileMapping<PanelViewSettings> ThSetMap;
+			DWORD nGuiPID;
+			GetWindowThreadProcessId(ghConEmuRoot, &nGuiPID);
+			_ASSERTE(nGuiPID!=0);
+			ThSetMap.InitName(CECONVIEWSETNAME, nGuiPID);
+			if (!ThSetMap.Open()) {
+				MessageBox(NULL, ThSetMap.GetErrorText(), L"ConEmuTh", MB_ICONSTOP|MB_SETFOREGROUND|MB_SYSTEMMODAL);
+			} else {
+				ThSetMap.GetTo(&gThSet);
+				ThSetMap.CloseMap();
+			}
+		}
+	}
+
+	if (!hRoot) {
 		ShowMessage(CEFarNonGuiMode, 0);
 		return FALSE;
 	}
@@ -337,19 +353,19 @@ BOOL CheckConEmu(BOOL abForceCheck)
 }
 
 
-HWND GetConEmuHWND()
-{
-	// Страховка от того, что conemu.dll могли выгрузить (unload:...)
-	if (!CheckConEmu() || !gfGetFarHWND2)
-		return NULL;
-
-	HWND hRoot = NULL;
-	HWND hConEmu = gfGetFarHWND2(TRUE);
-	if (hConEmu)
-		hRoot = GetParent(hConEmu);
-	
-	return hRoot;
-}
+//HWND GetConEmuHWND()
+//{
+//	// Страховка от того, что conemu.dll могли выгрузить (unload:...)
+//	if (!CheckConEmu() || !gfGetFarHWND2)
+//		return NULL;
+//
+//	HWND hRoot = NULL;
+//	HWND hConEmu = gfGetFarHWND2(TRUE);
+//	if (hConEmu)
+//		hRoot = GetParent(hConEmu);
+//	
+//	return hRoot;
+//}
 
 
 
@@ -407,12 +423,15 @@ void WINAPI _export SetStartupInfoW(void *aInfo)
 void ExitPlugin(void)
 {
 	if (ghLeftView)
-		PostMessage(ghLeftView, WM_CLOSE,0,0);
+		pviLeft.UnregisterPanelView();
+		//PostMessage(ghLeftView, WM_CLOSE,0,0);
 	if (ghRightView)
-		PostMessage(ghRightView, WM_CLOSE,0,0);
+		pviRight.UnregisterPanelView();
+		//PostMessage(ghRightView, WM_CLOSE,0,0);
+
 	DWORD dwWait = 0;
 	if (ghDisplayThread)
-		dwWait = WaitForSingleObject(ghDisplayThread, 500);
+		dwWait = WaitForSingleObject(ghDisplayThread, 1000);
 	if (dwWait)
 		TerminateThread(ghDisplayThread, 100);
 	if (ghDisplayThread) {
@@ -1212,7 +1231,7 @@ BOOL ProcessConsoleInput(BOOL abUseUngetBuffer, PINPUT_RECORD lpBuffer, DWORD nB
 	// Скорректировать количество "считанных" событий
 	if (pFirstReplace && abUseUngetBuffer)
 	{
-		DWORD nReady = pFirstReplace - lpBuffer;
+		DWORD nReady = (int)(pFirstReplace - lpBuffer);
 		if (nReady != *lpNumberOfEventsRead) {
 			_ASSERTE(nReady <= nBufSize);
 			_ASSERTE(nReady < *lpNumberOfEventsRead);

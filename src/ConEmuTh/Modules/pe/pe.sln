@@ -1,0 +1,35 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pe", "pe.vcproj", "{D179531C-0F06-473A-A301-7FE8976046EC}"
+EndProject
+Global
+	GlobalSection(DPCodeReviewSolutionGUID) = preSolution
+		DPCodeReviewSolutionGUID = {00000000-0000-0000-0000-000000000000}
+	EndGlobalSection
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug_E|Win32 = Debug_E|Win32
+		Debug_E|x64 = Debug_E|x64
+		Debug|Win32 = Debug|Win32
+		Debug|x64 = Debug|x64
+		Release|Win32 = Release|Win32
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D179531C-0F06-473A-A301-7FE8976046EC}.Debug_E|Win32.ActiveCfg = Debug_E|Win32
+		{D179531C-0F06-473A-A301-7FE8976046EC}.Debug_E|Win32.Build.0 = Debug_E|Win32
+		{D179531C-0F06-473A-A301-7FE8976046EC}.Debug_E|x64.ActiveCfg = Debug_E|x64
+		{D179531C-0F06-473A-A301-7FE8976046EC}.Debug_E|x64.Build.0 = Debug_E|x64
+		{D179531C-0F06-473A-A301-7FE8976046EC}.Debug|Win32.ActiveCfg = Debug|Win32
+		{D179531C-0F06-473A-A301-7FE8976046EC}.Debug|Win32.Build.0 = Debug|Win32
+		{D179531C-0F06-473A-A301-7FE8976046EC}.Debug|x64.ActiveCfg = Debug|x64
+		{D179531C-0F06-473A-A301-7FE8976046EC}.Debug|x64.Build.0 = Debug|x64
+		{D179531C-0F06-473A-A301-7FE8976046EC}.Release|Win32.ActiveCfg = Release|Win32
+		{D179531C-0F06-473A-A301-7FE8976046EC}.Release|Win32.Build.0 = Release|Win32
+		{D179531C-0F06-473A-A301-7FE8976046EC}.Release|x64.ActiveCfg = Release|x64
+		{D179531C-0F06-473A-A301-7FE8976046EC}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

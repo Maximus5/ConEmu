@@ -52,7 +52,7 @@ DWORD gnWin32Error = 0;
 //ITEMIDLIST DesktopID = {{0}};
 //IShellFolder *gpDesktopFolder = NULL;
 BOOL gbCancelAll = FALSE;
-extern COLORREF gcrActiveColors[16], gcrFadeColors[16], *gcrCurColors;
+extern COLORREF /*gcrActiveColors[16], gcrFadeColors[16],*/ *gcrCurColors;
 extern bool gbFadeColors;
 UINT gnConEmuFadeMsg = 0, gnConEmuSettingsMsg = 0;
 extern CRgnDetect *gpRgnDetect;
@@ -256,7 +256,8 @@ LRESULT CALLBACK CeFullPanelInfo::DisplayWndProc(HWND hwnd, UINT uMsg, WPARAM wP
 			SetWindowLong(hwnd, 16*4, (DWORD)lParam);
 			if (gbFadeColors != (lParam == 2)) {
 				gbFadeColors = (lParam == 2);
-				gcrCurColors = gbFadeColors ? gcrFadeColors : gcrActiveColors;
+				//gcrCurColors = gbFadeColors ? gcrFadeColors : gcrActiveColors;
+				gcrCurColors = gbFadeColors ? gThSet.crFadePalette : gThSet.crPalette;
 				//InvalidateRect(hwnd, NULL, FALSE); -- не требуется
 			}
 		} else if (uMsg == gnConEmuSettingsMsg) {
@@ -269,14 +270,15 @@ LRESULT CALLBACK CeFullPanelInfo::DisplayWndProc(HWND hwnd, UINT uMsg, WPARAM wP
 			GetWindowThreadProcessId(ghConEmuRoot, &nGuiPID);
 			_ASSERTE(nGuiPID == wParam);
 			#endif
-			nGuiPID = wParam;
+			nGuiPID = (DWORD)wParam;
 
 			ThSetMap.InitName(CECONVIEWSETNAME, nGuiPID);
 			if (!ThSetMap.Open()) {
 				MessageBox(NULL, ThSetMap.GetErrorText(), L"ConEmuTh", MB_ICONSTOP|MB_SETFOREGROUND|MB_SYSTEMMODAL);
 			} else {
-				ThSetMap.Get(&gThSet);
+				ThSetMap.GetTo(&gThSet);
 				ThSetMap.CloseMap();
+
 				gpImgCache->Reset();
 				// и обновить
 				if (pviLeft.hView)
@@ -465,7 +467,7 @@ int CeFullPanelInfo::DrawItemText(HDC hdc, LPRECT prcText, LPRECT prcMaxText, Ce
 			RECT rcExt = rcClip;
 			RECT rcName = rcClip;
 			int nExtLen = lstrlen(pszExt);
-			int nNameLen = pszExt - pszName;
+			int nNameLen = (int)(pszExt - pszName);
 			
 			iRc = DrawText(hdc, pszExt, nExtLen, &rcExt, DT_CALCRECT|DT_NOPREFIX|DT_SINGLELINE|DT_TOP|DT_LEFT);
 			iRc = DrawText(hdc, pszName, nNameLen, &rcName, DT_CALCRECT|DT_NOPREFIX|DT_SINGLELINE|DT_TOP|DT_LEFT);
@@ -629,25 +631,31 @@ void CeFullPanelInfo::Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc)
 	nWholeH = (Spaces.nImgSize+2*gThSet.nPreviewFrame) + Spaces.nSpaceY2 + Spaces.nSpaceY1*2;
 
 
-	nXCount = (rc.right+Spaces.nSpaceX2) / nWholeW; // тут четко, кусок иконки не допускается
-	if (nXCount < 1) nXCount = 1;
-	nYCountFull = (rc.bottom+Spaces.nSpaceY2) / nWholeH; // тут четко, кусок иконки не допускается
-	if (nYCountFull < 1) nYCountFull = 1;
-	if (PVM == pvm_Thumbnails)
+	
+	nXCountFull = (rc.right/*+Spaces.nSpaceX2*/) / nWholeW; // тут четко, кусок иконки не допускается
+	nYCountFull = (rc.bottom/*+Spaces.nSpaceY2*/) / nWholeH; // тут четко, кусок иконки не допускается
+	if (PVM == pvm_Thumbnails) {
+		nXCount = nXCountFull; // часть справа не допускается.
 		nYCount = (rc.bottom+(Spaces.nImgSize+2*gThSet.nPreviewFrame)+Spaces.nSpaceY2) / nWholeH; // а тут допускается отображение верхней части иконки
-	else
+	} else {
+		nXCount = (rc.right+Spaces.nSpaceX2) / nWholeW; // а тут допускается отображение левой части иконки
 		nYCount = nYCountFull; // Во всех остальных режимах - часть по низу не допускается.
+	}
+	if (nXCount < 1) nXCount = 1;
+	if (nXCountFull < 1) nXCountFull = 1;
 	if (nYCount < 1) nYCount = 1;
-	this->nXCount = nXCount; this->nYCountFull = nYCountFull; this->nYCount = nYCount;
+	if (nYCountFull < 1) nYCountFull = 1;
+
+	//this->nXCount = nXCount; this->nYCountFull = nYCountFull; this->nYCount = nYCount;
 	
 	int nTopItem = this->TopPanelItem;
 	int nItemCount = this->ItemsNumber;
 	int nCurrentItem = this->CurrentItem;
 	//CePluginPanelItem** ppItems = this->ppItems;
 
-	if ((nTopItem + nXCount*nYCountFull) <= nCurrentItem) {
+	if ((nTopItem + nXCountFull*(nYCountFull)) <= nCurrentItem) {
 		TODO("Выравнивание на границу nXCount");
-		nTopItem = nCurrentItem - (nXCount*(nYCountFull-1));
+		nTopItem = nCurrentItem - (nXCountFull*(nYCountFull)) + 1;
 	}
 	if (PVM == pvm_Thumbnails)
 	{
@@ -702,6 +710,8 @@ void CeFullPanelInfo::Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc)
 			if ((gThSet.bLoadPreviews & PVM) == 0)
 				continue; // для этого режима превьюшки не просили
 		}
+
+		_ASSERTE(nTopItem>=0 && nTopItem<nItemCount && nItemCount>=0);
 		
 		int nItem = nTopItem;
 		int nYCoord = 0, nXCoord = 0;
@@ -816,6 +826,9 @@ void CeFullPanelInfo::Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc)
 // Эта "дисплейная" функция вызывается из основной нити, там можно дергать FAR Api
 void CeFullPanelInfo::DisplayReloadPanel()
 {
+	_ASSERTE(GetCurrentThreadId()==gnMainThreadId);
+	
+	
 	TODO("Определить повторно какие элементы видимы, и перечитать только их");
 
 	for (int nItem = 0; nItem < this->ItemsNumber; nItem++)
@@ -861,22 +874,25 @@ int CeFullPanelInfo::RegisterPanelView()
 
 	// Если пока все ОК
 	if (nRc == 0) {
-		// Настройки отображения
-		memset(&gThSet, 0, sizeof(gThSet));
-		if (!pvi.ThSet.cbSize || !pvi.ThSet.Thumbs.nImgSize || !pvi.ThSet.Tiles.nImgSize) {
-			gnCreateViewError = CEInvalidSettingValues;
-			nRc = -1000;
-		} else {
-			_ASSERTE(pvi.ThSet.cbSize == sizeof(gThSet));
-			memmove(&gThSet, &pvi.ThSet, min(pvi.ThSet.cbSize,sizeof(gThSet)));
-			// Цвета "консоли"
-			for (int i=0; i<16; i++) {
-				gcrActiveColors[i] = pvi.crPalette[i];
-				gcrFadeColors[i] = pvi.crFadePalette[i];
-			}
+		// Настройки отображения уже должны быть загружены!
+		_ASSERTE(gThSet.crPalette[0]!=0 || gThSet.crPalette[1]!=0);
+
+		//memset(&gThSet, 0, sizeof(gThSet));
+		//if (!pvi.ThSet.cbSize || !pvi.ThSet.Thumbs.nImgSize || !pvi.ThSet.Tiles.nImgSize) {
+		//	gnCreateViewError = CEInvalidSettingValues;
+		//	nRc = -1000;
+		//} else {
+			//_ASSERTE(pvi.ThSet.cbSize == sizeof(gThSet));
+			//memmove(&gThSet, &pvi.ThSet, min(pvi.ThSet.cbSize,sizeof(gThSet)));
+			//// Цвета "консоли"
+			//for (int i=0; i<16; i++) {
+			//	gcrActiveColors[i] = pvi.crPalette[i];
+			//	gcrFadeColors[i] = pvi.crFadePalette[i];
+			//}
 			// Мы активны? По идее должны, при активации плагина-то
 			gbFadeColors = (pvi.bFadeColors!=FALSE);
-			gcrCurColors = gbFadeColors ? gcrFadeColors : gcrActiveColors;
+			//gcrCurColors = gbFadeColors ? gcrFadeColors : gcrActiveColors;
+			gcrCurColors = gbFadeColors ? gThSet.crFadePalette : gThSet.crPalette;
 			SetWindowLong(this->hView, 16*4, gbFadeColors ? 2 : 1);
 			// Подготовить детектор диалогов
 			_ASSERTE(gpRgnDetect!=NULL);
@@ -900,7 +916,7 @@ int CeFullPanelInfo::RegisterPanelView()
 			//	gnCreateViewError = CEUnknownPanelMode;
 			//	nRc = -1000;
 			//}
-		}
+		//}
 	}
 
 	// Если можно продолжать - продолжаем
@@ -950,8 +966,14 @@ int CeFullPanelInfo::RegisterPanelView()
 int CeFullPanelInfo::UnregisterPanelView()
 {
 	// Страховка от того, что conemu.dll могли выгрузить (unload:...)
-	if (!CheckConEmu() || !gfRegisterPanelView)
+	if (!CheckConEmu() || !gfRegisterPanelView) {
+
+		// Закрыть окно (по WM_CLOSE окно само должно послать WM_QUIT если оно единственное)
+		if (this->hView)
+			PostMessage(this->hView, WM_CLOSE, 0, 0);
+
 		return -1;
+	}
 
 	// Если эта панель единственная - сразу сбрасываем переменные
 	if (!pviLeft.hView || !pviRight.hView) {

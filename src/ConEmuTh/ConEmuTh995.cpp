@@ -163,7 +163,7 @@ void LoadPanelItemInfo995(CeFullPanelInfo* pi, int nItem)
 	
 	if ((pi->pFarTmpBuf == NULL) || (pi->nFarTmpBuf < nSize)) {
 		if (pi->pFarTmpBuf) free(pi->pFarTmpBuf);
-		pi->nFarTmpBuf = nSize+MAX_PATH; // + про запас немножко
+		pi->nFarTmpBuf = (int)(nSize+MAX_PATH); // + про запас немножко
 		pi->pFarTmpBuf = malloc(pi->nFarTmpBuf);
 	}
 	PluginPanelItem *ppi = (PluginPanelItem*)pi->pFarTmpBuf;
@@ -193,7 +193,7 @@ void LoadPanelItemInfo995(CeFullPanelInfo* pi, int nItem)
 		if (pi->ppItems[nItem]) free(pi->ppItems[nItem]);
 		nSize += 32;
 		pi->ppItems[nItem] = (CePluginPanelItem*)malloc(nSize);
-		pi->ppItems[nItem]->cbSize = nSize;
+		pi->ppItems[nItem]->cbSize = (int)nSize;
 	}
 	
 	// Копируем
@@ -202,6 +202,7 @@ void LoadPanelItemInfo995(CeFullPanelInfo* pi, int nItem)
 	} else {
 		pi->ppItems[nItem]->bVirtualItem = FALSE;
 	}
+	pi->ppItems[nItem]->UserData = ppi->UserData;
 	pi->ppItems[nItem]->Flags = ppi->Flags;
 	pi->ppItems[nItem]->NumberOfLinks = ppi->NumberOfLinks;
 	pi->ppItems[nItem]->FindData.dwFileAttributes = ppi->FindData.dwFileAttributes;
@@ -269,6 +270,7 @@ BOOL LoadPanelInfo995(BOOL abActive)
 	pcefpi->Visible = pi.Visible;
 	pcefpi->Focus = pi.Focus;
 	pcefpi->Flags = pi.Flags; // CEPANELINFOFLAGS
+	pcefpi->PanelMode = pi.ViewMode;
 	pcefpi->IsFilePanel = (pi.PanelType == PTYPE_FILEPANEL);
 
 

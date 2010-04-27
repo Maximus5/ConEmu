@@ -112,8 +112,8 @@ namespace Settings {
 	const DWORD  nColorIdxSh[] =  {    0,      1,      2,      3,      4,      5,      6,      7,      8,      9,     10,     11,     12,     13,     14,     15};
 	const WCHAR* szColorIdxTh[] = {L"# 0", L"# 1", L"# 2", L"# 3", L"# 4", L"# 5", L"# 6", L"# 7", L"# 8", L"# 9", L"#10", L"#11", L"#12", L"#13", L"#14", L"#15", L"Auto"};
 	const DWORD  nColorIdxTh[] =  {    0,      1,      2,      3,      4,      5,      6,      7,      8,      9,     10,     11,     12,     13,     14,     15,    16};
-	const WCHAR* szThumbMaxZoom[] = {L"100%",L"200%",L"300%",L"400%",L"500%"};
-	const DWORD  nThumbMaxZoom[] = {100,200,300,400,500};
+	const WCHAR* szThumbMaxZoom[] = {L"100%",L"200%",L"300%",L"400%",L"500%",L"600%"};
+	const DWORD  nThumbMaxZoom[] = {100,200,300,400,500,600};
 };
 
 #define FillListBox(hDlg,nDlgID,Items,Values,Value) \
@@ -401,6 +401,7 @@ void CSettings::InitSettings()
 	isRSelFix = true; isMouseSkipActivation = true; isMouseSkipMoving = true;
 
 	isFarHourglass = true; nFarHourglassDelay = 500;
+	isDisableFarFlashing = false; isDisableAllFlashing = false;
 
     isDragEnabled = DRAG_L_ALLOWED; isDropEnabled = (BYTE)1; isDefCopy = true;
     nLDragKey = 0; nRDragKey = VK_LCONTROL; 
@@ -431,7 +432,7 @@ void CSettings::InitSettings()
 	ThSet.bLoadPreviews = 3;   // bitmask of {1=Thumbs, 2=Tiles}
 	ThSet.bLoadFolders = true; // true - load infolder previews (only for Thumbs)
 	ThSet.nLoadTimeout = 15;   // 15 sec
-	ThSet.nMaxZoom = 500; // %%
+	ThSet.nMaxZoom = 600; // %%
 	ThSet.bUsePicView2 = TRUE;
 
 	//// Пока не используется
@@ -441,7 +442,9 @@ void CSettings::InitSettings()
 	if (!m_ThSetMap.Create()) {
 		MBoxA(m_ThSetMap.GetErrorText());
 	} else {
-		m_ThSetMap.Set(&ThSet);
+		// Применить в Mapping (там заодно и палитра копируется)
+		//m_ThSetMap.Set(&ThSet);
+		gConEmu.OnPanelViewSettingsChanged();
 	}
 }
 
@@ -721,12 +724,15 @@ void CSettings::LoadSettings()
 		reg->Load(L"AlwaysOnTop", isAlwaysOnTop);
 
 		reg->Load(L"SleepInBackground", isSleepInBackground);
+		
+		reg->Load(L"DisableFarFlashing", isDisableFarFlashing); if (isDisableFarFlashing>2) isDisableFarFlashing = 2;
+		reg->Load(L"DisableAllFlashing", isDisableAllFlashing); if (isDisableAllFlashing>2) isDisableAllFlashing = 2;
 
 		/* *********** Thumbnails and Tiles ************* */
 		reg->Load(L"PanView.BackColor", ThSet.crBackground.RawColor);
-		reg->Load(L"PanView.PFrame", ThSet.nPreviewFrame);
+		reg->Load(L"PanView.PFrame", ThSet.nPreviewFrame); if (ThSet.nPreviewFrame!=0 && ThSet.nPreviewFrame!=1) ThSet.nPreviewFrame = 1;
 		reg->Load(L"PanView.PFrameColor", ThSet.crPreviewFrame.RawColor);
-		reg->Load(L"PanView.SFrame", ThSet.nSelectFrame);
+		reg->Load(L"PanView.SFrame", ThSet.nSelectFrame); if (ThSet.nSelectFrame!=0 && ThSet.nSelectFrame!=1) ThSet.nSelectFrame = 1;
 		reg->Load(L"PanView.SFrameColor", ThSet.crSelectFrame.RawColor);
 	    /* теперь разнообразные размеры */
 	    ThumbLoadSet(L"Thumbs", ThSet.Thumbs);
@@ -741,7 +747,10 @@ void CSettings::LoadSettings()
         reg->CloseKey();
     }
     delete reg;
-    
+
+	// Применить в Mapping (там заодно и палитра копируется)
+	gConEmu.OnPanelViewSettingsChanged(FALSE);
+
     
     // Проверить необходимость установки хуков
     isKeyboardHooks();
@@ -1122,6 +1131,8 @@ BOOL CSettings::SaveSettings()
 
 			reg->Save(L"SleepInBackground", isSleepInBackground);
     		
+			reg->Save(L"DisableFarFlashing", isDisableFarFlashing);
+			reg->Save(L"DisableAllFlashing", isDisableAllFlashing);
             
 			/* *********** Thumbnails and Tiles ************* */
 			reg->Save(L"PanView.BackColor", ThSet.crBackground.RawColor);
@@ -1684,6 +1695,9 @@ LRESULT CSettings::OnInitDialog_Ext()
 	if (isAlwaysOnTop)  CheckDlgButton(hExt, cbAlwaysOnTop, BST_CHECKED);
 
 	if (isSleepInBackground) CheckDlgButton(hExt, cbSleepInBackground, BST_CHECKED);
+	
+	if (isDisableFarFlashing) CheckDlgButton(hExt, cbDisableFarFlashing, isDisableFarFlashing);
+	if (isDisableAllFlashing) CheckDlgButton(hExt, cbDisableAllFlashing, isDisableAllFlashing);
 
 	if (isConVisible)
 		CheckDlgButton(hExt, cbVisible, BST_CHECKED);
@@ -2323,6 +2337,13 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
 		gConEmu.ActiveCon()->RCon()->OnGuiFocused(TRUE);
 		break;
 
+	case cbDisableFarFlashing:
+		isDisableFarFlashing = IsChecked(hExt, cbDisableFarFlashing);
+		break;
+	case cbDisableAllFlashing:
+		isDisableAllFlashing = IsChecked(hExt, cbDisableAllFlashing);
+		break;
+		
 	case cbAdminShield:
 		gSet.bAdminShield = IsChecked(hTabs, cbAdminShield);
 		EnableWindow(GetDlgItem(hTabs, tAdminSuffix), !gSet.bAdminShield);

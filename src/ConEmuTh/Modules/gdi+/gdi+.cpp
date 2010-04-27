@@ -6,7 +6,7 @@
 
 //#include "../PVD2Helper.h"
 //#include "../BltHelper.h"
-//#include "../MStream.h"
+#include "MStream.h"
 
 typedef __int32 i32;
 typedef __int64 i64;
@@ -29,7 +29,7 @@ HMODULE ghModule;
 #define PGE_UNKNOWN_COLORSPACE   0x80001008
 #define PGE_UNSUPPORTED_PITCH    0x80001009
 #define PGE_INVALID_PAGEDATA     0x8000100A
-#define PGE_OLD_PICVIEW          0x8000100B
+#define PGE_OLD_PLUGIN          0x8000100B
 #define PGE_BITBLT_FAILED        0x8000100C
 #define PGE_INVALID_VERSION      0x8000100D
 #define PGE_INVALID_IMGSIZE      0x8000100E
@@ -38,13 +38,6 @@ HMODULE ghModule;
 
 DWORD gnLastWin32Error = 0;
 
-#ifdef _DEBUG
-#define DebugString(x) OutputDebugString(x)
-#define PaintDebugString(x) //OutputDebugString(x)
-#else
-#define DebugString(x)
-#define PaintDebugString(x)
-#endif
 
 
 
@@ -85,7 +78,7 @@ struct GDIPlusDecoder
 	typedef Gdiplus::Status (WINAPI *GdiplusStartup_t)(OUT ULONG_PTR *token, const Gdiplus::GdiplusStartupInput *input, OUT Gdiplus::GdiplusStartupOutput *output);
 	typedef VOID (WINAPI *GdiplusShutdown_t)(ULONG_PTR token);
 	typedef Gdiplus::GpStatus (WINGDIPAPI *GdipCreateBitmapFromFile_t)(GDIPCONST WCHAR* filename, Gdiplus::GpBitmap **bitmap);
-	//typedef Gdiplus::GpStatus (WINGDIPAPI *GdipCreateBitmapFromStream_t)(IStream* stream, Gdiplus::GpBitmap **bitmap);
+	typedef Gdiplus::GpStatus (WINGDIPAPI *GdipCreateBitmapFromStream_t)(IStream* stream, Gdiplus::GpBitmap **bitmap);
 	//typedef Gdiplus::GpStatus (WINGDIPAPI *GdipCreateBitmapFromFileICM_t)(GDIPCONST WCHAR* filename, Gdiplus::GpBitmap **bitmap);
 	//typedef Gdiplus::GpStatus (WINGDIPAPI *GdipCreateBitmapFromStreamICM_t)(IStream* stream, Gdiplus::GpBitmap **bitmap);
 	typedef Gdiplus::GpStatus (WINGDIPAPI *GdipGetImageWidth_t)(Gdiplus::GpImage *image, UINT *width);
@@ -118,7 +111,7 @@ struct GDIPlusDecoder
 	GdiplusStartup_t GdiplusStartup;
 	GdiplusShutdown_t GdiplusShutdown;
 	GdipCreateBitmapFromFile_t GdipCreateBitmapFromFile;
-	//GdipCreateBitmapFromStream_t GdipCreateBitmapFromStream;
+	GdipCreateBitmapFromStream_t GdipCreateBitmapFromStream;
 	//GdipCreateBitmapFromFileICM_t GdipCreateBitmapFromFileICM;
 	//GdipCreateBitmapFromStreamICM_t GdipCreateBitmapFromStreamICM;
 	GdipGetImageWidth_t GdipGetImageWidth;
@@ -185,7 +178,7 @@ struct GDIPlusDecoder
 			DllGetFunction(hGDIPlus, GdiplusShutdown);
 			DllGetFunction(hGDIPlus, GdipCreateBitmapFromFile);
 			//DllGetFunction(hGDIPlus, GdipCreateBitmapFromFileICM);
-			//DllGetFunction(hGDIPlus, GdipCreateBitmapFromStream);
+			DllGetFunction(hGDIPlus, GdipCreateBitmapFromStream);
 			//DllGetFunction(hGDIPlus, GdipCreateBitmapFromStreamICM);
 			DllGetFunction(hGDIPlus, GdipGetImageWidth);
 			DllGetFunction(hGDIPlus, GdipGetImageHeight);
@@ -211,8 +204,6 @@ struct GDIPlusDecoder
 			DllGetFunction(hGDIPlus, GdipCloneBitmapAreaI);
 			DllGetFunction(hGDIPlus, GdipSetImagePalette);
 
-			//if (!GdipCreateBitmapFromFileICM && !GdipCreateBitmapFromStreamICM)
-			//	bUseICM = false;
 
 			if (GdiplusStartup && GdiplusShutdown && GdipCreateBitmapFromFile && GdipGetImageWidth && GdipGetImageHeight && GdipGetImagePixelFormat && GdipBitmapLockBits && GdipBitmapUnlockBits && GdipDisposeImage && GdipImageGetFrameCount && GdipImageSelectActiveFrame 
 				&& GdipGetPropertyItemSize && GdipGetPropertyItem && GdipGetImageFlags
@@ -301,6 +292,7 @@ struct GDIPlusImage
 #endif
 	GDIPlusDecoder *gdi;
 	Gdiplus::GpBitmap *img;
+	MStream* strm;
 	HRESULT nErrNumber, nLastError;
 	//
 	UINT lWidth, lHeight, pf, nBPP, nPages, /*lFrameTime,*/ nActivePage, nTransparent, nImgFlags;
@@ -312,6 +304,30 @@ struct GDIPlusImage
 	};
 
 
+	Gdiplus::GpBitmap* OpenBitmapFromStream(const u8 *pBuffer, i64 lFileSize)
+	{
+		Gdiplus::Status lRc = Gdiplus::Ok;
+		Gdiplus::GpBitmap *img = NULL;
+
+		// IStream используется в процессе декодирования, поэтому его нужно держать созданным	
+		strm = new MStream();
+		if (strm) {
+			nLastError = strm->Write(pBuffer, (ULONG)lFileSize, NULL);
+				
+			if (nLastError == S_OK) {
+				LARGE_INTEGER ll; ll.QuadPart = 0;
+				strm->Seek(ll, STREAM_SEEK_SET, NULL);
+		
+				lRc = gdi->GdipCreateBitmapFromStream(strm, &img);
+			}
+		}
+		
+		if (!img) {
+			nLastError = GetLastError();
+			nErrNumber = PGE_ERROR_BASE + (DWORD)lRc;
+		}
+		return img;
+	}
 	Gdiplus::GpBitmap* OpenBitmapFromFile(const wchar_t *pFileName)
 	{
 		Gdiplus::Status lRc = Gdiplus::Ok;
@@ -327,7 +343,7 @@ struct GDIPlusImage
 		return img;
 	}
 
-	bool Open(const wchar_t *pFileName)
+	bool Open(const wchar_t *pFileName, const u8 *pBuffer, i64 lFileSize)
 	{
 		_ASSERTE(img == NULL);
 		_ASSERTE(gdi != NULL);
@@ -336,7 +352,11 @@ struct GDIPlusImage
 		Gdiplus::Status lRc;
 
 		nActivePage = -1; nTransparent = -1; nImgFlags = 0;
-		img = OpenBitmapFromFile(pFileName);
+		
+		if (pFileName)
+			img = OpenBitmapFromFile(pFileName);
+		else
+			img = OpenBitmapFromStream(pBuffer, lFileSize);
 
 		if (!img) {
 			//nErrNumber = gdi->nErrNumber; -- ошибка УЖЕ в nErrNumber
@@ -406,6 +426,10 @@ struct GDIPlusImage
 			lRc = gdi->GdipDisposeImage(img);
 			img = NULL;
 		}
+		if (strm) {
+			delete strm;
+			strm = NULL;
+		}
 
 		FREE(this);
 	};
@@ -435,47 +459,32 @@ struct GDIPlusImage
 			pData->nMagic = eGdiStr_Bits;
 		
 			int nCanvasWidth  = pDecodeInfo->crLoadSize.X;
-			int nCanvasWidthS = nCanvasWidth; //((nCanvasWidth+7) >> 3) << 3; // try to align x8 pixels
 			int nCanvasHeight = pDecodeInfo->crLoadSize.Y;
-			int nShowWidth, nShowHeight;
-			//double fAspectX = (double)nCanvasWidth / (double)lWidth;
-			//double fAspectY = (double)nCanvasHeight / (double)lHeight;
+			int nShowWidth = lWidth, nShowHeight = lHeight;
 			i64 aSrc = (100 * (i64) lWidth / lHeight);
 			i64 aCvs = (100 * (i64) nCanvasWidth / nCanvasHeight);
-			//if (fAspectX < fAspectY)
 			if (aSrc > aCvs)
 			{
-				//if (fAspectX > pDecodeInfo->nMaxZoom && pDecodeInfo->nMaxZoom > 0)
-				//	fAspectX = (double)pDecodeInfo->nMaxZoom;
 				if (lWidth >= (UINT)nCanvasWidth) {
 					nShowWidth = nCanvasWidth;
 					nShowHeight = (int)(((i64)lHeight) * nCanvasWidth / lWidth);
-				} else {
-					aCvs = 100 * ((i64)nCanvasWidth) / lWidth;
-					if (aCvs > pDecodeInfo->nMaxZoom && pDecodeInfo->nMaxZoom > 0) aCvs = pDecodeInfo->nMaxZoom;
-					nShowWidth = (int)(lWidth * aCvs / 100);
-					nShowHeight = (int)(lHeight * aCvs / 100);
 				}
 			} else {
-				//if (fAspectY > pDecodeInfo->nMaxZoom && pDecodeInfo->nMaxZoom > 0)
-				//	fAspectY = (double)pDecodeInfo->nMaxZoom;
 				if (lHeight >= (UINT)nCanvasHeight) {
 					nShowWidth = (int)(((i64)lWidth) * nCanvasHeight / lHeight);
 					nShowHeight = nCanvasHeight;
-				} else {
-					aCvs = 100 * ((i64)nCanvasHeight) / lHeight;
-					if (aCvs > pDecodeInfo->nMaxZoom && pDecodeInfo->nMaxZoom > 0) aCvs = pDecodeInfo->nMaxZoom;
-					nShowWidth = (int)(lWidth * aCvs / 100);
-					nShowHeight = (int)(lHeight * aCvs / 100);
 				}
 			}
+			nCanvasWidth  = nShowWidth;
+			nCanvasHeight = nShowHeight;
 
+			int nCanvasWidthS = nCanvasWidth; //((nCanvasWidth+7) >> 3) << 3; // try to align x8 pixels
 			
 			pData->hCompDc1 = CreateCompatibleDC(NULL);
 
 			BITMAPINFOHEADER bmi = {sizeof(BITMAPINFOHEADER)};
 			bmi.biWidth = nCanvasWidthS;
-			bmi.biHeight = -nCanvasHeight; // To-Down DIB
+			bmi.biHeight = -nCanvasHeight; // Top-Down DIB
 			bmi.biPlanes = 1;
 			bmi.biBitCount = 32;
 			bmi.biCompression = BI_RGB;
@@ -545,7 +554,7 @@ BOOL WINAPI CET_Init(struct CET_Init* pInit)
 {
 	_ASSERTE(pInit->cbSize >= sizeof(struct CET_Init));
 	if (pInit->cbSize < sizeof(struct CET_Init)) {
-		pInit->nErrNumber = PGE_OLD_PICVIEW;
+		pInit->nErrNumber = PGE_OLD_PLUGIN;
 		return FALSE;
 	}
 
@@ -600,8 +609,7 @@ BOOL WINAPI CET_Load(struct CET_LoadInfo* pLoadPreview)
 		return FALSE;
 	}
 	
-	TODO("LoadFromStream пока убран");
-	if (pLoadPreview->bVirtualItem || !pLoadPreview->pFileData) {
+	if (pLoadPreview->bVirtualItem && (!pLoadPreview->pFileData || !pLoadPreview->nFileSize)) {
 		SETERROR(PGE_FILE_NOT_FOUND);
 		return FALSE;
 	}
@@ -671,7 +679,10 @@ BOOL WINAPI CET_Load(struct CET_LoadInfo* pLoadPreview)
 	pImage->gdi->bCancelled = FALSE;
 	
 
-	if (!pImage->Open(pLoadPreview->sFileName)) {
+	if (!pImage->Open(
+				pLoadPreview->bVirtualItem ? NULL : pLoadPreview->sFileName,
+				pLoadPreview->pFileData, pLoadPreview->nFileSize))
+	{
 		SETERROR(pImage->nErrNumber);
 		pImage->Close();
 		return FALSE;

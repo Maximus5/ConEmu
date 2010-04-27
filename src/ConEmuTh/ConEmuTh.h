@@ -99,7 +99,8 @@ struct CePluginPanelItem
 	DWORD			cbSize;
 	struct CEFAR_FIND_DATA FindData;
 	BOOL            bVirtualItem;
-	BOOL            bPreviewLoaded;
+	DWORD_PTR       UserData;
+	BOOL            bPreviewLoaded; // пытались ли уже загружать превьюшку
 	const wchar_t*  pszFullName; // Для упрощения отрисовки - ссылка на временный буфер
 	const wchar_t*  pszDescription; // ссылка на данные в этом CePluginPanelItem
 	DWORD           Flags;
@@ -135,7 +136,8 @@ typedef struct tag_CeFullPanelInfo
 	int nFontHeight; // 14
 	//
 	int nWholeW, nWholeH; // инициализируется при первом Paint
-	int nXCount; // тут четко, кусок иконки не допускается
+	int nXCountFull; // тут четко, кусок иконки не допускается
+	int nXCount; // а тут допускается отображение левой части иконки
 	int nYCountFull; // тут четко, кусок иконки не допускается
 	int nYCount; // а тут допускается отображение верхней части иконки
 	//
@@ -148,6 +150,7 @@ typedef struct tag_CeFullPanelInfo
 	int TopPanelItem;
 	int OurTopPanelItem; // он может НЕ совпадать с фаровским, чтобы CurrentItem был таки видим
 	BOOL IsFilePanel;
+	int PanelMode; // 0..9 - текущий режим панели.
 	BOOL Visible;
 	BOOL Focus;
 	DWORD Flags; // CEPANELINFOFLAGS
@@ -384,11 +387,23 @@ typedef int (WINAPI *RegisterPanelView_t)(PanelViewInit *ppvi);
 typedef HWND (WINAPI *GetFarHWND2_t)(BOOL abConEmuOnly);
 extern RegisterPanelView_t gfRegisterPanelView;
 extern GetFarHWND2_t gfGetFarHWND2;
-BOOL CheckConEmu(BOOL abForceCheck=FALSE);
-HWND GetConEmuHWND();
+BOOL CheckConEmu(/*BOOL abForceCheck=FALSE*/);
+//HWND GetConEmuHWND();
 //BOOL WINAPI OnReadConsole(PINPUT_RECORD lpBuffer, LPDWORD lpNumberOfEventsRead);
 BOOL WINAPI OnPrePeekConsole(HANDLE hInput, PINPUT_RECORD lpBuffer, DWORD nBufSize, LPDWORD lpNumberOfEventsRead, BOOL* pbResult);
 BOOL WINAPI OnPostPeekConsole(HANDLE hInput, PINPUT_RECORD lpBuffer, DWORD nBufSize, LPDWORD lpNumberOfEventsRead, BOOL* pbResult);
 BOOL WINAPI OnPreReadConsole(HANDLE hInput, PINPUT_RECORD lpBuffer, DWORD nBufSize, LPDWORD lpNumberOfEventsRead, BOOL* pbResult);
 BOOL WINAPI OnPostReadConsole(HANDLE hInput, PINPUT_RECORD lpBuffer, DWORD nBufSize, LPDWORD lpNumberOfEventsRead, BOOL* pbResult);
 BOOL WINAPI OnPreWriteConsoleOutput(HANDLE hOutput,const CHAR_INFO *lpBuffer,COORD dwBufferSize,COORD dwBufferCoord,PSMALL_RECT lpWriteRegion);
+
+
+/* Other plugin integrations */
+#define IMPEX_MAGIC 0x78456D49 // 'ImEx'
+struct ImpExPanelItem
+{
+	DWORD nMagic;			// IMPEX_MAGIC
+	DWORD cbSizeOfStruct;	// 1196 в этой версии
+	DWORD nBinarySize;		// размер
+	LPBYTE pBinaryData;		// и собственно бинарные данные
+	// Остальные поля не интересуют
+};

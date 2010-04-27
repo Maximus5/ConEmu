@@ -310,11 +310,15 @@ BOOL CRealConsole::PreCreate(RConStartArgs *args)
 
     m_Args.bRunAsRestricted = args->bRunAsRestricted;
 	m_Args.bRunAsAdministrator = args->bRunAsAdministrator;
-	SafeFree(m_Args.pszUserName); SafeFree(m_Args.pszUserPassword);
+	SafeFree(m_Args.pszUserName); //SafeFree(m_Args.pszUserPassword);
+	//if (m_Args.hLogonToken) { CloseHandle(m_Args.hLogonToken); m_Args.hLogonToken = NULL; }
 	if (args->pszUserName) {
 		m_Args.pszUserName = _wcsdup(args->pszUserName);
-		m_Args.pszUserPassword = _wcsdup(args->pszUserPassword ? args->pszUserPassword : L"");
-		if (!m_Args.pszUserName || !m_Args.pszUserPassword)
+		lstrcpy(m_Args.szUserPassword, args->szUserPassword);
+		SecureZeroMemory(args->szUserPassword, sizeof(args->szUserPassword));
+		//m_Args.pszUserPassword = _wcsdup(args->pszUserPassword ? args->pszUserPassword : L"");
+		//m_Args.hLogonToken = args->hLogonToken; args->hLogonToken = NULL;
+		if (!m_Args.pszUserName || !*m_Args.szUserPassword)
 			return FALSE;
 	}
 
@@ -1602,21 +1606,48 @@ BOOL CRealConsole::StartProcess()
 
 			SetConStatus(L"Starting root process...");
 			if (m_Args.pszUserName != NULL) {
-				lbRc = CreateProcessWithLogonW(m_Args.pszUserName, NULL, m_Args.pszUserPassword,
+				if (CreateProcessWithLogonW(m_Args.pszUserName, NULL, m_Args.szUserPassword,
 					LOGON_WITH_PROFILE, NULL, psCurCmd,
 					NORMAL_PRIORITY_CLASS|CREATE_DEFAULT_ERROR_MODE|CREATE_NEW_CONSOLE
-					, NULL, NULL, &si, &pi);
+					, NULL, m_Args.pszStartupDir, &si, &pi))
+				//if (CreateProcessAsUser(m_Args.hLogonToken, NULL, psCurCmd, NULL, NULL, FALSE,
+				//	NORMAL_PRIORITY_CLASS|CREATE_DEFAULT_ERROR_MODE|CREATE_NEW_CONSOLE
+				//	, NULL, m_Args.pszStartupDir, &si, &pi))
+				{
+					lbRc = TRUE;
+				} else {
+					dwLastError = GetLastError();
+				}
+				SecureZeroMemory(m_Args.szUserPassword, sizeof(m_Args.szUserPassword));
+
 			} else if (m_Args.bRunAsRestricted) {
 				HANDLE hToken = NULL, hTokenRest = NULL;
-				lbRc = FALSE;	
+				lbRc = FALSE;
 				if (OpenProcessToken(GetCurrentProcess(), 
-						TOKEN_ASSIGN_PRIMARY|TOKEN_DUPLICATE|TOKEN_QUERY|TOKEN_ADJUST_DEFAULT, &hToken))
+						//TOKEN_ASSIGN_PRIMARY|TOKEN_DUPLICATE|TOKEN_QUERY|TOKEN_ADJUST_DEFAULT,
+						TOKEN_DUPLICATE | TOKEN_ASSIGN_PRIMARY | TOKEN_QUERY,
+						&hToken))
 				{
-					if (CreateRestrictedToken(hToken, DISABLE_MAX_PRIVILEGE, 0, NULL, 0, NULL, 0, NULL, &hTokenRest))
+					enum WellKnownAuthorities {
+						NullAuthority = 0, WorldAuthority, LocalAuthority, CreatorAuthority, 
+						NonUniqueAuthority, NtAuthority, MandatoryLabelAuthority = 16
+					};
+					SID *pAdmSid = (SID*)calloc(sizeof(SID)+sizeof(DWORD)*2,1);
+						pAdmSid->Revision = SID_REVISION;
+						pAdmSid->SubAuthorityCount = 2;
+						pAdmSid->IdentifierAuthority.Value[5] = NtAuthority;
+						pAdmSid->SubAuthority[0] = SECURITY_BUILTIN_DOMAIN_RID;
+						pAdmSid->SubAuthority[1] = DOMAIN_ALIAS_RID_ADMINS;
+					SID_AND_ATTRIBUTES sidsToDisable[] = {
+						{pAdmSid}
+					};
+					if (CreateRestrictedToken(hToken, DISABLE_MAX_PRIVILEGE, 
+							sizeofarray(sidsToDisable), sidsToDisable, 
+							0, NULL, 0, NULL, &hTokenRest))
 					{
-						if (CreateProcessAsUserW(hTokenRest, NULL, psCurCmd, NULL, NULL, false,
+						if (CreateProcessAsUserW(hTokenRest, NULL, psCurCmd, NULL, NULL, FALSE,
 								NORMAL_PRIORITY_CLASS|CREATE_DEFAULT_ERROR_MODE|CREATE_NEW_CONSOLE
-								, NULL, NULL, &si, &pi))
+								, NULL, m_Args.pszStartupDir, &si, &pi))
 						{
 							lbRc = TRUE;
 						}
@@ -1624,6 +1655,7 @@ BOOL CRealConsole::StartProcess()
 					} else {
 						dwLastError = GetLastError();
 					}
+					free(pAdmSid);
 					CloseHandle(hToken); hToken = NULL;
 				} else {
 					dwLastError = GetLastError();
@@ -1637,6 +1669,8 @@ BOOL CRealConsole::StartProcess()
 					dwLastError = GetLastError();
 			}
 			DEBUGSTRPROC(_T("CreateProcess finished\n"));
+
+			//if (m_Args.hLogonToken) { CloseHandle(m_Args.hLogonToken); m_Args.hLogonToken = NULL; }
 
 			LockSetForegroundWindow ( LSFW_UNLOCK );
 
@@ -8494,16 +8528,16 @@ LPCWSTR CRealConsole::GetDir()
         return gConEmu.ms_ConEmuCurDir;
 }
 
-BOOL CRealConsole::GetUserPwd(const wchar_t** ppszUser, const wchar_t** ppszPwd, BOOL* pbRestricted)
+BOOL CRealConsole::GetUserPwd(const wchar_t** ppszUser, /*const wchar_t** ppszPwd,*/ BOOL* pbRestricted)
 {
 	if (m_Args.bRunAsRestricted) {
 		*pbRestricted = TRUE;
-		*ppszUser = *ppszPwd = NULL;
+		*ppszUser = /**ppszPwd =*/ NULL;
 		return TRUE;
 	}
-	if (m_Args.pszUserName && m_Args.pszUserPassword) {
+	if (m_Args.pszUserName /*&& m_Args.pszUserPassword*/) {
 		*ppszUser = m_Args.pszUserName;
-		*ppszPwd = m_Args.pszUserPassword;
+		//*ppszPwd = m_Args.pszUserPassword;
 		*pbRestricted = FALSE;
 		return TRUE;
 	}

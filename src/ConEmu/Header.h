@@ -141,30 +141,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#endif
 
 
-typedef struct tag_RConStartArgs {
-	BOOL     bDetached;
-	wchar_t* pszSpecialCmd;
-	wchar_t* pszStartupDir;
-	BOOL     bRunAsAdministrator, bRunAsRestricted;
-	wchar_t* pszUserName;
-	wchar_t* pszUserPassword;
-	BOOL     bRecreate; // !!! Информационно !!!
-
-	tag_RConStartArgs() {
-		bDetached = FALSE; bRunAsAdministrator = FALSE; bRecreate = FALSE;
-		pszSpecialCmd = pszStartupDir = pszUserName = pszUserPassword = NULL;
-	};
-	~tag_RConStartArgs() {
-		SafeFree(pszSpecialCmd); // именно SafeFree
-		SafeFree(pszStartupDir); // именно SafeFree
-		SafeFree(pszUserName);
-		SafeFree(pszUserPassword);
-	};
-	
-	BOOL CheckUserToken() {
-		return TRUE;
-	};
-} RConStartArgs;
 
 
 //------------------------------------------------------------------------
@@ -218,6 +194,62 @@ BOOL IntersectSmallRect(RECT& rc1, SMALL_RECT& rc2);
 wchar_t* GetDlgItemText(HWND hDlg, WORD nID);
 
 //#pragma warning(disable: 4311) // 'type cast' : pointer truncation from 'HBRUSH' to 'BOOL'
+
+
+
+
+typedef struct tag_RConStartArgs {
+	BOOL     bDetached;
+	wchar_t* pszSpecialCmd;
+	wchar_t* pszStartupDir;
+	BOOL     bRunAsAdministrator, bRunAsRestricted;
+	wchar_t* pszUserName, szUserPassword[MAX_PATH];
+	//wchar_t* pszUserPassword;
+	BOOL     bRecreate; // !!! Информационно !!!
+	//HANDLE   hLogonToken;
+
+	tag_RConStartArgs() {
+		bDetached = bRunAsAdministrator = bRunAsRestricted = bRecreate = FALSE;
+		pszSpecialCmd = pszStartupDir = pszUserName = /*pszUserPassword =*/ NULL;
+		szUserPassword[0] = 0;
+		//hLogonToken = NULL;
+	};
+	~tag_RConStartArgs() {
+		SafeFree(pszSpecialCmd); // именно SafeFree
+		SafeFree(pszStartupDir); // именно SafeFree
+		SafeFree(pszUserName);
+		//SafeFree(pszUserPassword);
+		if (szUserPassword[0]) SecureZeroMemory(szUserPassword, sizeof(szUserPassword));
+		//if (hLogonToken) { CloseHandle(hLogonToken); hLogonToken = NULL; }
+	};
+
+	BOOL CheckUserToken(HWND hPwd) {
+		//if (hLogonToken) { CloseHandle(hLogonToken); hLogonToken = NULL; }
+		if (!pszUserName || !*pszUserName)
+			return FALSE;
+
+		//wchar_t szPwd[MAX_PATH]; szPwd[0] = 0;
+		szUserPassword[0] = 0;
+		if (!GetWindowText(hPwd, szUserPassword, MAX_PATH-1))
+			return FALSE;
+
+		HANDLE hLogonToken = NULL;
+
+		BOOL lbRc = LogonUser(pszUserName, NULL, szUserPassword, LOGON32_LOGON_INTERACTIVE, 
+			LOGON32_PROVIDER_DEFAULT, &hLogonToken);
+		//if (szUserPassword[0]) SecureZeroMemory(szUserPassword, sizeof(szUserPassword));
+
+		if (!lbRc || !hLogonToken) {
+			MessageBox(GetParent(hPwd), L"Invalid user name or password specified!", L"ConEmu", MB_OK|MB_ICONSTOP);
+			return FALSE;
+		}
+
+		CloseHandle(hLogonToken);
+
+		//hLogonToken may be used for CreateProcessAsUser 
+		return TRUE;
+	};
+} RConStartArgs;
 
 
 

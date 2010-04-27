@@ -37,7 +37,9 @@ protected:
 		DWORD dwFileAttributes;
 		wchar_t *lpwszFileName;
 		BOOL bVirtualItem;
-		BOOL bPreviewLoaded;
+		DWORD_PTR UserData;
+		BOOL bPreviewLoaded; // пытались ли уже загружать превьюшку
+		BOOL bPreviewExists; // и получилось ли ее загрузить реально, или в кеше только ShellIcon?
 		//int N,X,Y;
 		COORD crSize; // Предпочтительно, должен совпадать с crLoadSize
 		DWORD cbStride; // Bytes per line

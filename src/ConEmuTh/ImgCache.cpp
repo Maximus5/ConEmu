@@ -301,6 +301,7 @@ void CImgCache::Reset()
 			CacheInfo[i].wcInfoSize = 0;
 		}
 	}
+	memset(CacheInfo, 0, sizeof(CacheInfo));
 	//
 	if (mh_CompDC || mh_OldBmp) {
 		if (mh_CompDC) SelectObject(mh_CompDC, mh_OldBmp);
@@ -399,6 +400,7 @@ BOOL CImgCache::FindInCache(CePluginPanelItem* pItem, int* pnIndex)
 		CacheInfo[i].nFileSize = pItem->FindData.nFileSize;
 		CacheInfo[i].ftLastWriteTime = pItem->FindData.ftLastWriteTime;
 		CacheInfo[i].bVirtualItem = pItem->bVirtualItem;
+		CacheInfo[i].UserData = pItem->UserData;
 	}
 	return lbReady;
 };
@@ -480,23 +482,24 @@ BOOL CImgCache::PaintItem(HDC hdc, int x, int y, int nImgSize, CePluginPanelItem
 		RECT rc = {x,y,x+nImgSize,y+nImgSize};
 		FillRect(hdc, &rc, hbrBack);
 
-			int lWidth = CacheInfo[nIndex].crSize.X;
-			int lHeight = CacheInfo[nIndex].crSize.Y;	
-			int nCanvasWidth  = nImgSize;
-			int nCanvasHeight = nImgSize;
-			int nShowWidth, nShowHeight;
-			__int64 aSrc = (100 * (__int64) lWidth / lHeight);
-			__int64 aCvs = (100 * (__int64) nCanvasWidth / nCanvasHeight);
-			if (aSrc > aCvs)
-			{
-				_ASSERTE(lWidth >= (int)nCanvasWidth);
-				nShowWidth = nCanvasWidth;
-				nShowHeight = (int)(((__int64)lHeight) * nCanvasWidth / lWidth);
-			} else {
-				_ASSERTE(lHeight >= (int)nCanvasHeight);
-				nShowWidth = (int)(((__int64)lWidth) * nCanvasHeight / lHeight);
-				nShowHeight = nCanvasHeight;
-			}
+		// Посчитать
+		int lWidth = CacheInfo[nIndex].crSize.X;
+		int lHeight = CacheInfo[nIndex].crSize.Y;	
+		int nCanvasWidth  = nImgSize;
+		int nCanvasHeight = nImgSize;
+		int nShowWidth, nShowHeight;
+		__int64 aSrc = (100 * (__int64) lWidth / lHeight);
+		__int64 aCvs = (100 * (__int64) nCanvasWidth / nCanvasHeight);
+		if (aSrc > aCvs)
+		{
+			_ASSERTE(lWidth >= (int)nCanvasWidth);
+			nShowWidth = nCanvasWidth;
+			nShowHeight = (int)(((__int64)lHeight) * nCanvasWidth / lWidth);
+		} else {
+			_ASSERTE(lHeight >= (int)nCanvasHeight);
+			nShowWidth = (int)(((__int64)lWidth) * nCanvasHeight / lHeight);
+			nShowHeight = nCanvasHeight;
+		}
 		
 		// Со сдвигом
 		int nXSpace = (nImgSize - nShowWidth) >> 1;
@@ -510,6 +513,38 @@ BOOL CImgCache::PaintItem(HDC hdc, int x, int y, int nImgSize, CePluginPanelItem
 			mh_CompDC,
 			0,0,CacheInfo[nIndex].crSize.X,CacheInfo[nIndex].crSize.Y,
 			SRCCOPY);
+	}
+	else if (CacheInfo[nIndex].bPreviewExists && gThSet.nMaxZoom>100 
+		&& (nImgSize >= 2*CacheInfo[nIndex].crSize.X && nImgSize >= 2*CacheInfo[nIndex].crSize.Y))
+	{
+		// Очистить
+		RECT rc = {x,y,x+nImgSize,y+nImgSize};
+		FillRect(hdc, &rc, hbrBack);
+
+		// Максимальное увеличение, пока картинка вписывается в область
+		int nZ = 2;
+		for (UINT i = 300; i <= gThSet.nMaxZoom; i+=100) {
+			if (nImgSize >= (nZ+1)*CacheInfo[nIndex].crSize.X && nImgSize >= (nZ+1)*CacheInfo[nIndex].crSize.Y)
+				nZ++;
+			else
+				break;
+		}
+		int nShowWidth  = nZ*CacheInfo[nIndex].crSize.X;
+		int nShowHeight = nZ*CacheInfo[nIndex].crSize.Y;
+
+		// Со сдвигом
+		int nXSpace = (nImgSize - nShowWidth) >> 1;
+		int nYSpace = (nImgSize - nShowHeight) >> 1;
+
+		WARNING("В MSDN какие-то предупреждения про MultiMonitor... возможно стоит StretchDIBits");
+		SetStretchBltMode(hdc, COLORONCOLOR);
+		lbWasDraw = StretchBlt(
+			hdc, 
+			x+nXSpace,y+nYSpace,nShowWidth,nShowHeight,
+			mh_CompDC,
+			0,0,CacheInfo[nIndex].crSize.X,CacheInfo[nIndex].crSize.Y,
+			SRCCOPY);
+
 	}
 	else if (nImgSize > CacheInfo[nIndex].crSize.X || nImgSize > CacheInfo[nIndex].crSize.Y)
 	{
@@ -766,7 +801,7 @@ BOOL CImgCache::LoadThumbnail(struct tag_CacheInfo* pItem)
 	PV.bTilesMode = FALSE; // TRUE, when pszInfo acquired.
 	PV.crBackground = crBackground; // Must be used to fill background.
 	_ASSERTE(gThSet.nMaxZoom>0 && gThSet.nMaxZoom < 1000);
-	PV.nMaxZoom = gThSet.nMaxZoom;
+	//PV.nMaxZoom = gThSet.nMaxZoom;
 	BOOL lbLoadRc;
 	
 	HANDLE hFile = INVALID_HANDLE_VALUE, hMapping = NULL;
@@ -778,6 +813,21 @@ BOOL CImgCache::LoadThumbnail(struct tag_CacheInfo* pItem)
 			if (hMapping) {
 				pFileMap = MapViewOfFile(hMapping, FILE_MAP_READ, 0,0,0);
 				PV.pFileData = (const BYTE*)pFileMap;
+			}
+		}
+	} else if (pItem->UserData) {
+		// Из некоторых плагином данные можно извлечь...
+		if (!IsBadReadPtr((void*)pItem->UserData, sizeof(ImpExPanelItem))) {
+			ImpExPanelItem *pImpEx = (ImpExPanelItem*)pItem->UserData;
+			if (pImpEx->nMagic == IMPEX_MAGIC && pImpEx->cbSizeOfStruct >= 1024
+				&& pImpEx->nBinarySize > 16 && pImpEx->nBinarySize <= 32*1024*1024
+				&& pImpEx->pBinaryData)
+			{
+				if (!IsBadReadPtr(pImpEx->pBinaryData, pImpEx->nBinarySize))
+				{
+					PV.nFileSize = pImpEx->nBinarySize;
+					PV.pFileData = (const BYTE*)pImpEx->pBinaryData;
+				}
 			}
 		}
 	}
@@ -832,6 +882,7 @@ BOOL CImgCache::LoadThumbnail(struct tag_CacheInfo* pItem)
 				pItem->cbPixelsSize = PV.cbPixelsSize;
 			}
 			memmove(pItem->Pixels, PV.Pixels, PV.cbPixelsSize);
+			pItem->bPreviewExists = (PV.Pixels!=NULL);
 			
 			if (PV.pszComments) {
 				DWORD nLen = (DWORD)max(255,wcslen(PV.pszComments));

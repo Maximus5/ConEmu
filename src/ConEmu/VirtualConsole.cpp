@@ -3325,15 +3325,16 @@ BOOL CVirtualConsole::RegisterPanelView(PanelViewInit* ppvi)
 	BOOL lbPrevRegistered = pp->bRegister;
 	*pp = *ppvi;
 	// ¬ернуть текущую палитру GUI
-	COLORREF *pcrNormal = gSet.GetColors(FALSE);
-	COLORREF *pcrFade = gSet.GetColors(TRUE);
-	for (int i=0; i<16; i++) {
-		// через FOR чтобы с BitMask не наколотьс€
-		ppvi->crPalette[i] = (pcrNormal[i]) & 0xFFFFFF;
-		ppvi->crFadePalette[i] = (pcrFade[i]) & 0xFFFFFF;
-	}
+	gConEmu.OnPanelViewSettingsChanged(FALSE/*abSendChanges*/);
+	//COLORREF *pcrNormal = gSet.GetColors(FALSE);
+	//COLORREF *pcrFade = gSet.GetColors(TRUE);
+	//for (int i=0; i<16; i++) {
+	//	// через FOR чтобы с BitMask не наколотьс€
+	//	ppvi->crPalette[i] = (pcrNormal[i]) & 0xFFFFFF;
+	//	ppvi->crFadePalette[i] = (pcrFade[i]) & 0xFFFFFF;
+	//}
 	ppvi->bFadeColors = isFade;
-	memmove(&(ppvi->ThSet), &(gSet.ThSet), sizeof(gSet.ThSet));
+	//memmove(&(ppvi->ThSet), &(gSet.ThSet), sizeof(gSet.ThSet));
 	
 	if (ppvi->bRegister) {
 		// ѕри повторной регистрации - не дергатьс€

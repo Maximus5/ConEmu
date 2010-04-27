@@ -410,10 +410,8 @@ END
 IDD_SPG_FEATURE DIALOGEX 0, 0, 328, 235
 STYLE DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
-FONT 8, "MS Shell Dlg", 0, 0, 0x1
+FONT 8, "MS Shell Dlg"
 BEGIN
-    CONTROL         "Auto minimize to tray",cbMinToTray,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,132,144,81,8
     GROUPBOX        "Shell style Drag and Drop (Far Manager only)",
                     IDC_STATIC,4,1,319,42
     CONTROL         "LDrag",cbDragL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,9,
@@ -422,82 +420,88 @@ BEGIN
                     WS_TABSTOP
     CONTROL         "Drop && Confirmation",cbDropEnabled,"Button",
                     BS_AUTO3STATE | WS_TABSTOP,107,12,82,8
+    CONTROL         "Overlay",cbDragImage,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,193,12,41,8
+    CONTROL         "Unlocked drop",cbDropUnlocked,"Button",BS_AUTOCHECKBOX | 
+                    WS_DISABLED | WS_TABSTOP,250,12,67,8
     CONTROL         "RDrag",cbDragR,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,9,
                     27,36,8
     COMBOBOX        lbRDragKey,47,25,56,30,CBS_DROPDOWNLIST | WS_VSCROLL | 
                     WS_TABSTOP
     CONTROL         "Copy by default",cbDnDCopy,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,107,27,66,8
+    CONTROL         "Shell icons",cbDragIcons,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,193,27,49,8
+    CONTROL         "Use BCopy",cbDropUseBCopy,"Button",BS_AUTOCHECKBOX | 
+                    WS_DISABLED | WS_TABSTOP,250,27,67,8
+    GROUPBOX        "Far Manager options",IDC_STATIC,4,45,319,49
     CONTROL         "&RightClick 4 context menu",cbRClick,"Button",
                     BS_AUTO3STATE | WS_TABSTOP,9,57,100,8
+    PUSHBUTTON      "...",bRClick,113,55,13,11,WS_DISABLED
+    CONTROL         "Hourglass if not responding",cbFarHourglass,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,9,69,101,8
+    PUSHBUTTON      "...",bFarHourglass,113,68,13,11,WS_DISABLED
+    CONTROL         "Handle FAR detach",cbHandleFarDetach,"Button",
+                    BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,9,81,82,8
+    CONTROL         "Resize panels by mouse",cbDragPanel,"Button",
+                    BS_AUTO3STATE | WS_TABSTOP,131,57,93,8
+    CONTROL         "ASCII sort function in FAR",cbFARuseASCIIsort,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,131,69,109,8
+    CONTROL         "Hook FAR registry",cbHookFarRegistry,"Button",
+                    BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,131,81,109,8
     CONTROL         "Right selection fix",cbRSelectionFix,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,241,57,76,8
+    CONTROL         "Safe FAR close",cbSafeFarClose,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,241,69,76,8
+    CONTROL         "Disable FAR flashing",cbDisableFarFlashing,"Button",
+                    BS_AUTO3STATE | WS_TABSTOP,241,81,76,8
+    GROUPBOX        "Miscellaneous options",IDC_STATIC,4,98,319,60
     CONTROL         "Skip mouse click on activation",cbSkipActivation,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,10,110,117,8
     CONTROL         "Skip mouse in background",cbSkipMove,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,10,121,117,8
-    CONTROL         "Monitor console lang",cbMonitorConsoleLang,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,132,132,86,8
-    CONTROL         "Skip focus events",cbSkipFocusEvents,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,132,110,76,8
     CONTROL         "Send Alt+Enter to console",cbSendAE,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,10,132,117,8
-    CONTROL         "Show real console",cbVisible,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,227,121,74,8
-    CONTROL         "Overlay",cbDragImage,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,193,12,41,8
-    CONTROL         "Unlocked drop",cbDropUnlocked,"Button",BS_AUTOCHECKBOX | 
-                    WS_DISABLED | WS_TABSTOP,250,12,67,8
-    CONTROL         "Use BCopy",cbDropUseBCopy,"Button",BS_AUTOCHECKBOX | 
-                    WS_DISABLED | WS_TABSTOP,250,27,67,8
+    CONTROL         "Select text with mouse",cbConsoleTextSelection,"Button",
+                    BS_AUTO3STATE | WS_TABSTOP,10,144,101,8
+    PUSHBUTTON      "...",bCTSSettings,114,143,13,11
+    CONTROL         "Skip focus events",cbSkipFocusEvents,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,132,110,76,8
     CONTROL         "Auto register fonts",cbAutoRegFonts,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,132,121,89,8
-    CONTROL         "Debug steps in caption",cbDebugSteps,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,227,132,91,8
-    CONTROL         "Shell icons",cbDragIcons,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,193,27,49,8
-    CONTROL         "ASCII sort function in FAR",cbFARuseASCIIsort,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,131,69,109,8
+    CONTROL         "Monitor console lang",cbMonitorConsoleLang,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,132,132,86,8
+    CONTROL         "Auto minimize to tray",cbMinToTray,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,132,144,81,8
     CONTROL         "Fix Alt on AltTab",cbFixAltOnAltTab,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,227,110,76,8
-    CONTROL         "Hourglass if not responding",cbFarHourglass,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,9,69,101,8
-    CONTROL         "Hide caption when maximized",cbHideCaption,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,10,182,117,8
+    CONTROL         "Show real console",cbVisible,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,227,121,74,8
+    PUSHBUTTON      "...",bRealConsoleSettings,306,120,13,11,WS_DISABLED
+    CONTROL         "Debug steps in caption",cbDebugSteps,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,227,132,91,8
     CONTROL         "Write debug log-files",cbLogs,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,227,144,91,8
-    GROUPBOX        "Miscellaneous options",IDC_STATIC,4,98,319,60
-    CONTROL         "Resize panels by mouse",cbDragPanel,"Button",
-                    BS_AUTO3STATE | WS_TABSTOP,131,57,93,8
+    GROUPBOX        "Appearence",IDC_STATIC,4,160,319,47
+    CONTROL         "Enhance progressbars and scrollbars",cbEnhanceGraphics,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,170,134,8
+    CONTROL         "Hide caption when maximized",cbHideCaption,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,10,182,117,8
     CONTROL         "Hide caption always",cbHideCaptionAlways,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,10,194,100,8
+    PUSHBUTTON      "...",bHideCaptionSettings,114,193,13,11
+    CONTROL         "Desktop mode",cbDesktopMode,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,148,170,70,8
     CONTROL         "Center console",cbTryToCenter,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,148,182,70,8
     CONTROL         "Always on top",cbAlwaysOnTop,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,148,194,70,8
-    CONTROL         "Desktop mode",cbDesktopMode,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,148,170,70,8
-    PUSHBUTTON      "...",bHideCaptionSettings,114,193,13,11
-    PUSHBUTTON      "...",bFarHourglass,113,68,13,11,WS_DISABLED
-    PUSHBUTTON      "...",bRClick,113,55,13,11,WS_DISABLED
-    PUSHBUTTON      "...",bRealConsoleSettings,306,120,13,11,WS_DISABLED
-    CONTROL         "Handle FAR detach",cbHandleFarDetach,"Button",
-                    BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,9,81,82,8
-    CONTROL         "Select text with mouse",cbConsoleTextSelection,"Button",
-                    BS_AUTO3STATE | WS_TABSTOP,10,144,101,8
-    CONTROL         "Hook FAR registry",cbHookFarRegistry,"Button",
-                    BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,131,81,109,8
-    PUSHBUTTON      "...",bCTSSettings,114,143,13,11
-    GROUPBOX        "Far Manager options",IDC_STATIC,4,45,319,49
-    GROUPBOX        "Appearence",IDC_STATIC,4,160,319,47
-    CONTROL         "Enhance progressbars and scrollbars",cbEnhanceGraphics,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,170,134,8
-    CONTROL         "Safe FAR close",cbSafeFarClose,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,241,69,76,8
     CONTROL         "Ignore telnet cursor size",cbIgnoreTelnetCursorSize,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,222,170,95,8
     CONTROL         "Sleep in background",cbSleepInBackground,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,222,182,95,8
+    CONTROL         "Disable all flashing",cbDisableAllFlashing,"Button",
+                    BS_AUTO3STATE | WS_TABSTOP,222,194,95,8
 END
 
 IDD_RESTART DIALOG DISCARDABLE  0, 0, 310, 167
@@ -508,31 +512,31 @@ BEGIN
     DEFPUSHBUTTON   "Re&start",IDC_START,147,147,50,14
     PUSHBUTTON      "&Terminate",IDC_TERMINATE,201,147,50,14
     PUSHBUTTON      "Cancel",IDCANCEL,254,147,50,14
+    GROUPBOX        "About to restart console",IDC_RESTART_MSG,4,5,300,129
+    COMBOBOX        IDC_RESTART_CMD,10,19,269,50,CBS_DROPDOWN | 
+                    CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
     LTEXT           "Startup &directory for new process:",IDC_STATIC,10,36,
                     106,8
     COMBOBOX        IDC_STARTUP_DIR,10,46,269,50,CBS_DROPDOWN | 
                     CBS_AUTOHSCROLL | CBS_SORT | WS_VSCROLL | WS_TABSTOP
-    PUSHBUTTON      "...",IDC_CHOOSE_DIR,284,46,14,13
-    CONTROL         "&Run as administrator",cbRunAsAdmin,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,61,149,82,8
-    ICON            "ConEmu.ico",IDC_RESTART_ICON,6,141,20,20
-    GROUPBOX        "About to restart console",IDC_RESTART_MSG,4,5,300,129
     PUSHBUTTON      "...",IDC_CHOOSE,284,19,14,13
-    COMBOBOX        IDC_RESTART_CMD,10,19,269,50,CBS_DROPDOWN | 
-                    CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "...",IDC_CHOOSE_DIR,284,46,14,13
+    GROUPBOX        "",IDC_STATIC,4,61,300,73
+    CONTROL         "Run as current &user <UserName>",rbCurrentUser,"Button",
+                    BS_AUTORADIOBUTTON,11,70,199,8
     CONTROL         "Restricte&d current user",cbRunAsRestricted,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,23,83,140,10
+    CONTROL         "&Another user",rbAnotherUser,"Button",
+                    BS_AUTORADIOBUTTON,11,100,60,8
     LTEXT           "User &name:",IDC_STATIC,23,114,40,8
     COMBOBOX        tRunAsUser,67,112,93,30,CBS_DROPDOWN | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
     RTEXT           "&Password:",IDC_STATIC,161,114,39,8
     EDITTEXT        tRunAsPassword,205,112,91,13,ES_PASSWORD | 
                     ES_AUTOHSCROLL
-    GROUPBOX        "",IDC_STATIC,4,61,300,73
-    CONTROL         "Run as current &user <UserName>",rbCurrentUser,"Button",
-                    BS_AUTORADIOBUTTON,11,70,199,8
-    CONTROL         "&Another user",rbAnotherUser,"Button",
-                    BS_AUTORADIOBUTTON,11,100,60,8
+    ICON            "ConEmu.ico",IDC_RESTART_ICON,6,141,20,20
+    CONTROL         "&Run as administrator",cbRunAsAdmin,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,61,149,82,8
     CTEXT           "Warning, unsaved work may be lost!",IDC_WARNING,57,129,
                     157,8
 END
@@ -675,7 +679,7 @@ END
 IDD_SPG_VIEWS DIALOGEX 0, 0, 328, 319
 STYLE DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
-FONT 8, "MS Shell Dlg"
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     GROUPBOX        "FAR Panel Views",IDC_STATIC,4,1,319,198
     GROUPBOX        "Thumbnails mode",IDC_STATIC,9,12,308,49

@@ -307,8 +307,13 @@ typedef struct tag_PanelViewSettings {
 	bool  bLoadFolders;  // true - load infolder previews (only for Thumbs)
 	DWORD nLoadTimeout;  // 15 sec
 
-	DWORD nMaxZoom; // 500%
+	DWORD nMaxZoom; // 600%
 	bool  bUsePicView2; // true
+
+
+	// Цвета теперь живут здесь!	
+	COLORREF crPalette[16], crFadePalette[16];
+	
 
 	//// Пока не используется
 	//DWORD nCacheFolderType; // юзер/программа/temp/и т.п.
@@ -335,8 +340,7 @@ typedef struct tag_PanelViewInit {
 	PanelViewInputCallback pfnPeekPreCall, pfnPeekPostCall, pfnReadPreCall, pfnReadPostCall;
 	PanelViewOutputCallback pfnWriteCall;
 	/* out */
-	PanelViewSettings ThSet;
-	COLORREF crPalette[16], crFadePalette[16];
+	//PanelViewSettings ThSet;
 	BOOL bFadeColors;
 } PanelViewInit;
 
@@ -1043,13 +1047,13 @@ public:
 	LPCWSTR GetErrorText() {
 		return ms_Error;
 	};
-	bool Set(const T* pSrc, int nSize=-1) {
+	bool SetFrom(const T* pSrc, int nSize=-1) {
 		if (!IsValid() || !nSize) return false;
 		if (nSize<0) nSize = sizeof(T);
 		memmove(mp_Data, pSrc, nSize);
 		return true;
 	}
-	bool Get(T* pDst, int nSize=-1) {
+	bool GetTo(T* pDst, int nSize=-1) {
 		if (!IsValid() || !nSize) return false;
 		if (nSize<0) nSize = sizeof(T);
 		memmove(pDst, mp_Data, nSize);

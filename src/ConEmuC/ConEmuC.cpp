@@ -1882,7 +1882,11 @@ BOOL CheckProcessCount(BOOL abForce/*=FALSE*/)
 								}
 							}
 
-							if (lbFarExists && lbTelnetExist && srv.nNtvdmPID)
+							if (lbFarExists && lbTelnetExist
+								#ifndef WIN64
+								&& srv.nNtvdmPID
+								#endif
+								)
 								break; // чтобы условие выхода внятнее было
 						} while (Process32Next(hSnap, &prc));
 					}

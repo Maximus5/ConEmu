@@ -475,7 +475,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="version.lib"
-				OutputFile="\\MAXW7\FAR\FAR2.x64\plugins\conEmu\Thumbs\ConEmuTh.x64.dll"
+				OutputFile="\\WIN7X64\FAR\FAR2x64\Plugins\ConEmu\Thumbs\ConEmuTh.x64.dll"
 				LinkIncremental="2"
 				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"
@@ -836,6 +836,7 @@
 			</FileConfiguration>
 			<FileConfiguration
 				Name="Debug_C|x64"
+				ExcludedFromBuild="true"
 				>
 				<Tool
 					Name="VCCustomBuildTool"

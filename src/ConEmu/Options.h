@@ -137,9 +137,10 @@ public:
 	BYTE nHideCaptionAlwaysFrame;
 	DWORD nHideCaptionAlwaysDelay, nHideCaptionAlwaysDisappear;
     bool isAlwaysOnTop, isDesktopMode;
-    char isFixFarBorders;
+    BYTE isFixFarBorders;
 	bool isMouseSkipActivation, isMouseSkipMoving;
 	bool isFarHourglass; DWORD nFarHourglassDelay;
+	BYTE isDisableFarFlashing, isDisableAllFlashing;
 	// Text selection
 	BYTE isConsoleTextSelection;
 	bool isCTSSelectBlock, isCTSSelectText;

@@ -32,7 +32,7 @@ struct CET_LoadInfo {
 	BOOL bVirtualItem; // TRUE - when NO physical file
 	const BYTE* pFileData; // may be NULL
 	COORD crLoadSize; // Required preview dimensions (in pixels)
-	int nMaxZoom; // In percents, i.e. 500%
+	//int nMaxZoom; // In percents, i.e. 500%
 	BOOL bTilesMode; // TRUE, when pszInfo acquired.
 	COLORREF crBackground; // Must be used to fill background.
 	LPARAM iArgument; // May be used internally
