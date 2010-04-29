@@ -3341,11 +3341,21 @@ BOOL CVirtualConsole::RegisterPanelView(PanelViewInit* ppvi)
 		if (!lbPrevRegistered) {
 			//for (int i=0; i<20; i++) // на вс€кий случай - сначала все сбросим
 			//	SetWindowLong(pp->hWnd, i*4, 0);
-			SetParent((HWND)ppvi->hWnd, ghWnd);
-			UpdatePanelRgn(ppvi->bLeftPanel, FALSE, TRUE);
-			lbRc = UpdatePanelView(ppvi->bLeftPanel);
-			// Ќа панел€х нужно "затереть" лишние части рамок
-			Update(true);
+			HWND hViewParent = GetParent(ppvi->hWnd);
+			if (hViewParent != ghWnd)
+			{
+				MBoxAssert(hViewParent==ghWnd);
+				// -- смысла пытатьс€ мен€ть родител€ - нет, в Win7 это и не получитс€
+				// -- если консольный процесс запущен "Run as administrator"
+				//DWORD dwSetParentErr = 0;
+				//HWND hRc = SetParent((HWND)ppvi->hWnd, ghWnd);
+				//dwSetParentErr = GetLastError();
+			} else {
+				UpdatePanelRgn(ppvi->bLeftPanel, FALSE, TRUE);
+				lbRc = UpdatePanelView(ppvi->bLeftPanel);
+				// Ќа панел€х нужно "затереть" лишние части рамок
+				Update(true);
+			}
 		} else {
 			lbRc = TRUE;
 			if (ppvi->bLeftPanel)
@@ -3418,7 +3428,7 @@ BOOL CVirtualConsole::UpdatePanelRgn(BOOL abLeftPanel, BOOL abTestOnly, BOOL abO
 		lbPartHidden = TRUE;
 		if (!abTestOnly) {
 			if (IsWindowVisible(pp->hWnd))
-				ShowWindow(pp->hWnd, SW_HIDE);
+				mp_RCon->ShowOtherWindow(pp->hWnd, SW_HIDE);
 		}
 	} else {
 		HRGN hRgn = NULL, hSubRgn = NULL, hCombine = NULL;
@@ -3479,7 +3489,7 @@ BOOL CVirtualConsole::UpdatePanelRgn(BOOL abLeftPanel, BOOL abTestOnly, BOOL abO
 			SetWindowRgn(pp->hWnd, hRgn, TRUE); hRgn = NULL;
 			if (!abOnRegister) {
 				if (!IsWindowVisible(pp->hWnd))
-					ShowWindow(pp->hWnd, SW_SHOWNA);
+					mp_RCon->ShowOtherWindow(pp->hWnd, SW_SHOWNA);
 			}
 		}
 		else
@@ -3487,7 +3497,7 @@ BOOL CVirtualConsole::UpdatePanelRgn(BOOL abLeftPanel, BOOL abTestOnly, BOOL abO
 			if (hRgn) { DeleteObject(hRgn); hRgn = NULL; }
 			lbPartHidden = TRUE;
 			if (IsWindowVisible(pp->hWnd))
-				ShowWindow(pp->hWnd, SW_HIDE);
+				mp_RCon->ShowOtherWindow(pp->hWnd, SW_HIDE);
 			SetWindowRgn(pp->hWnd, NULL, TRUE);
 		}
 
@@ -3530,11 +3540,13 @@ BOOL CVirtualConsole::UpdatePanelView(BOOL abLeftPanel)
 	
 	//MoveWindow(ahView, pt[0].x,pt[0].y, pt[1].x-pt[0].x,pt[1].y-pt[0].y, FALSE);
 	DWORD dwErr = 0;
-	BOOL lbRc = SetWindowPos(pp->hWnd, HWND_TOP, 
+	BOOL lbRc = mp_RCon->SetOtherWindowPos(pp->hWnd, HWND_TOP, 
 		pt[0].x,pt[0].y, pt[1].x-pt[0].x,pt[1].y-pt[0].y, 
 		SWP_ASYNCWINDOWPOS|SWP_DEFERERASE|SWP_NOREDRAW);
-	if (!lbRc)
+	if (!lbRc) {
 		dwErr = GetLastError();
+		DisplayLastError(L"Can't update position of PanelView window!", dwErr);
+	}
 	// » отрисовать
 	//InvalidateRect(pp->hWnd, NULL, FALSE); -- не нужно, так получаетс€ двойной WM_PAINT
 	
@@ -3615,7 +3627,11 @@ void CVirtualConsole::PolishPanelViews()
 			for (x = nX3; x < nX4; x++, pszNameTitle++)
 				if ((pAttrs[x].nForeIdx == nNFore && pAttrs[x].nBackIdx == nNBack)
 					|| (pszLine[x] == ucBoxSinglVert && pAttrs[x].nForeIdx == nFore && pAttrs[x].nBackIdx == nBack)
-					) pszLine[x] = *pszNameTitle;
+					)
+				{ 
+					pszLine[x] = *pszNameTitle;
+					TODO("—корректировать цвет фона. Ѕуква может попасть на вертикальную линию, и останетс€ синей");
+				}
 			for (x = nX4; x < rc.right; x++)
 				if ((pszLine[x] != L' ' && pAttrs[x].nForeIdx == nNFore && pAttrs[x].nBackIdx == nNBack)
 					|| (pszLine[x] == ucBoxSinglVert && pAttrs[x].nForeIdx == nFore && pAttrs[x].nBackIdx == nBack)

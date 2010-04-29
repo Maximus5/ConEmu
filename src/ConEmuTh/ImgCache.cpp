@@ -118,9 +118,9 @@ void CImgCache::LoadModules()
 		lstrcpy(mpsz_ModuleSlash, fnd.cFileName);
 		HMODULE hLib = NULL;
 		
-		__try {
+		SAFETRY {
 			hLib = LoadLibrary(ms_ModulePath);
-		}__except(EXCEPTION_EXECUTE_HANDLER) {
+		} SAFECATCH  {
 			hLib = NULL;
 		}
 		
@@ -132,9 +132,9 @@ void CImgCache::LoadModules()
 			CET_Cancel_t Cancel = (CET_Cancel_t)GetProcAddress(hLib, "CET_Cancel");
 
 			if (!Init || !Done || !LoadInfo || !FreeInfo) {
-				__try {
+				 SAFETRY  {
 					FreeLibrary(hLib);
-				}__except(EXCEPTION_EXECUTE_HANDLER) {
+				} SAFECATCH  {
 				}
 				continue;
 			}
@@ -144,16 +144,16 @@ void CImgCache::LoadModules()
 			
 			BOOL lbInitRc;
 			
-			__try {
+			 SAFETRY  {
 				lbInitRc = Init(&InitArg);
-			}__except(EXCEPTION_EXECUTE_HANDLER) {
+			} SAFECATCH  {
 				lbInitRc = FALSE;
 			}
 
 			if (!lbInitRc) {
-				__try {
+				 SAFETRY  {
 					FreeLibrary(hLib);
-				}__except(EXCEPTION_EXECUTE_HANDLER) {
+				} SAFECATCH  {
 				}
 				continue;
 			}
@@ -180,13 +180,13 @@ void CImgCache::FreeModules()
 			struct CET_Init InitArg = {sizeof(struct CET_Init)};
 			InitArg.hModule = Modules[i].hModule;
 			InitArg.pContext = Modules[i].pContext;
-			__try {
+			 SAFETRY  {
 				Modules[i].Done(&InitArg);
-			}__except(EXCEPTION_EXECUTE_HANDLER) {
+			} SAFECATCH  {
 			}
-			__try {
+			 SAFETRY  {
 				FreeLibrary(Modules[i].hModule);
-			}__except(EXCEPTION_EXECUTE_HANDLER) {
+			} SAFECATCH  {
 			}
 			Modules[i].hModule = NULL;
 		}
@@ -404,7 +404,7 @@ BOOL CImgCache::FindInCache(CePluginPanelItem* pItem, int* pnIndex)
 	}
 	return lbReady;
 };
-BOOL CImgCache::PaintItem(HDC hdc, int x, int y, int nImgSize, CePluginPanelItem* pItem, BOOL abLoadPreview, LPCWSTR* ppszComments)
+BOOL CImgCache::PaintItem(HDC hdc, int x, int y, int nImgSize, CePluginPanelItem* pItem, BOOL abLoadPreview, LPCWSTR* ppszComments, BOOL* pbIgnoreFileDescription)
 {
 	int nIndex = -1;
 	if (!CheckDibCreated())
@@ -455,6 +455,8 @@ BOOL CImgCache::PaintItem(HDC hdc, int x, int y, int nImgSize, CePluginPanelItem
 	
 	if (ppszComments)
 		*ppszComments = CacheInfo[nIndex].pszComments;
+	if (pbIgnoreFileDescription)
+		*pbIgnoreFileDescription = CacheInfo[nIndex].bIgnoreFileDescription;
 	
 	// Скинуть биты в MemDC
 	CopyBits(CacheInfo[nIndex].crSize, (LPBYTE)(CacheInfo[nIndex].Pixels), CacheInfo[nIndex].cbStride,
@@ -488,16 +490,16 @@ BOOL CImgCache::PaintItem(HDC hdc, int x, int y, int nImgSize, CePluginPanelItem
 		int nCanvasWidth  = nImgSize;
 		int nCanvasHeight = nImgSize;
 		int nShowWidth, nShowHeight;
-		__int64 aSrc = (100 * (__int64) lWidth / lHeight);
-		__int64 aCvs = (100 * (__int64) nCanvasWidth / nCanvasHeight);
+		__int64 aSrc = (100 * (__int64) lWidth) / lHeight;
+		__int64 aCvs = (100 * (__int64) nCanvasWidth) / nCanvasHeight;
 		if (aSrc > aCvs)
 		{
 			_ASSERTE(lWidth >= (int)nCanvasWidth);
 			nShowWidth = nCanvasWidth;
-			nShowHeight = (int)(((__int64)lHeight) * nCanvasWidth / lWidth);
+			nShowHeight = (int)((((__int64)lHeight) * nCanvasWidth) / lWidth);
 		} else {
 			_ASSERTE(lHeight >= (int)nCanvasHeight);
-			nShowWidth = (int)(((__int64)lWidth) * nCanvasHeight / lHeight);
+			nShowWidth = (int)((((__int64)lWidth) * nCanvasHeight) / lHeight);
 			nShowHeight = nCanvasHeight;
 		}
 		
@@ -650,9 +652,9 @@ void CImgCache::UpdateCell(struct tag_CacheInfo* pInfo, BOOL abLoadPreview)
 //				return;
 //		}
 //
-//		__try {
+//		 SAFETRY  {
 //			hBmp = LoadThumbnail(pInfo);
-//		}__except(EXCEPTION_EXECUTE_HANDLER){
+//		} SAFECATCH {
 //			hBmp = NULL;
 //		}
 //
@@ -804,6 +806,7 @@ BOOL CImgCache::LoadThumbnail(struct tag_CacheInfo* pItem)
 	//PV.nMaxZoom = gThSet.nMaxZoom;
 	BOOL lbLoadRc;
 	
+	BOOL lbIgnoreFileDescription = FALSE;
 	HANDLE hFile = INVALID_HANDLE_VALUE, hMapping = NULL;
 	LPVOID pFileMap = NULL;
 	if (!PV.bVirtualItem) {
@@ -827,6 +830,8 @@ BOOL CImgCache::LoadThumbnail(struct tag_CacheInfo* pItem)
 				{
 					PV.nFileSize = pImpEx->nBinarySize;
 					PV.pFileData = (const BYTE*)pImpEx->pBinaryData;
+					// ImpEx показывает в описании размер изображения, получается некрасивое дублирование
+					lbIgnoreFileDescription = TRUE;
 				}
 			}
 		}
@@ -840,16 +845,16 @@ BOOL CImgCache::LoadThumbnail(struct tag_CacheInfo* pItem)
 
 			PV.pContext = Modules[i].pContext;
 			BOOL lbException = FALSE;
-			__try {
+			 SAFETRY  {
 				lbLoadRc = Modules[i].LoadInfo(&PV);
-			}__except(EXCEPTION_EXECUTE_HANDLER) {
+			} SAFECATCH  {
 				lbLoadRc = FALSE; lbException = TRUE;
 			}
 			if (lbException) {
 				if (PV.pFileContext) {
-					__try {
+					 SAFETRY  {
 						Modules[i].FreeInfo(&PV);
-					}__except(EXCEPTION_EXECUTE_HANDLER) {
+					} SAFECATCH  {
 					}
 				}
 				continue;
@@ -858,9 +863,9 @@ BOOL CImgCache::LoadThumbnail(struct tag_CacheInfo* pItem)
 			TODO("Потом может быть не только Pixels, например только информация о версии dll");	
 			if (!lbLoadRc || !PV.Pixels || !PV.cbPixelsSize) {
 				if (PV.pFileContext) {
-					__try {
+					 SAFETRY  {
 						Modules[i].FreeInfo(&PV);
-					}__except(EXCEPTION_EXECUTE_HANDLER) {
+					} SAFECATCH  {
 					}
 				}
 				continue;
@@ -873,9 +878,9 @@ BOOL CImgCache::LoadThumbnail(struct tag_CacheInfo* pItem)
 				pItem->Pixels = (LPDWORD)malloc(PV.cbPixelsSize);
 				if (!pItem->Pixels) {
 					_ASSERTE(pItem->Pixels);
-					__try {
+					 SAFETRY  {
 						Modules[i].FreeInfo(&PV);
-					}__except(EXCEPTION_EXECUTE_HANDLER) {
+					} SAFECATCH  {
 					}
 					continue;
 				}
@@ -900,6 +905,8 @@ BOOL CImgCache::LoadThumbnail(struct tag_CacheInfo* pItem)
 				free(pItem->pszComments); pItem->pszComments = NULL; pItem->wcCommentsSize = 0;
 			}
 			
+			pItem->bIgnoreFileDescription = lbIgnoreFileDescription && (pItem->pszComments != NULL);
+						
 			//if (pItem->pszInfo)
 			//	LocalFree(pItem->pszInfo);
 			//pItem->pszInfo = PV.pszInfo;
@@ -909,9 +916,9 @@ BOOL CImgCache::LoadThumbnail(struct tag_CacheInfo* pItem)
 			pItem->nBits = PV.nBits; // 32 bit required!
 			pItem->ColorModel = PV.ColorModel; // One of CET_CM_xxx
 			
-			__try {
+			 SAFETRY  {
 				Modules[i].FreeInfo(&PV);
-			}__except(EXCEPTION_EXECUTE_HANDLER) {
+			} SAFECATCH  {
 			}
 			
 			lbThumbRc = TRUE;
@@ -1003,7 +1010,7 @@ BOOL CImgCache::LoadThumbnail(struct tag_CacheInfo* pItem)
 	////}
 
 
-	//__try
+	// SAFETRY 
 	//{
 	//	if (SUCCEEDED(hr)) {
 	//		if (*(pszSlash-1) == L':') pszSlash++; // для корня диска нужно слэш оставить
@@ -1080,7 +1087,7 @@ BOOL CImgCache::LoadThumbnail(struct tag_CacheInfo* pItem)
 	//	}
 
 	//}
-	//__except(EXCEPTION_EXECUTE_HANDLER)
+	// SAFECATCH 
 	//{
 	//	hbmp = NULL;
 	//}

@@ -748,9 +748,21 @@ BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, CONSOLE_SCR
 	_ASSERTE(pRet!=NULL);
 
     // Процесс запущен через ShellExecuteEx под другим пользователем (Administrator)
-    if (mp_sei && mp_sei->hProcess) {
-    	hProcess = mp_sei->hProcess;
-    	mp_sei->hProcess = NULL; // более не требуется. хэндл закроется в другом месте
+	if (mp_sei) {
+		// в некоторых случаях (10% на x64) hProcess не успевает заполниться (еще не отработала функция?)
+		if (!mp_sei->hProcess) {
+			DWORD dwStart = GetTickCount();
+			DWORD dwDelay = 2000;
+			do {
+				Sleep(100);
+			} while ((GetTickCount() - dwStart) < dwDelay);
+			_ASSERTE(mp_sei->hProcess!=NULL);
+		}
+		// поехали
+		if (mp_sei->hProcess) {
+	    	hProcess = mp_sei->hProcess;
+			mp_sei->hProcess = NULL; // более не требуется. хэндл закроется в другом месте
+		}
     }
     // Иначе - отркрываем как обычно
     if (!hProcess)
@@ -1198,9 +1210,7 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 
         DWORD dwT1 = GetTickCount();
 
-        #ifndef __GNUC__
-        __try
-        #endif
+        SAFETRY
         {
             //ResetEvent(pRCon->mh_EndUpdateEvent);
             
@@ -1350,12 +1360,9 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 				}
 			}
 
-        }
-        #ifndef __GNUC__
-        __except(EXCEPTION_EXECUTE_HANDLER){
+        } SAFECATCH {
             bException = TRUE;
         }
-        #endif
 
 
 		// Чтобы не было слишком быстрой отрисовки (тогда процессор загружается на 100%)
@@ -1681,9 +1688,6 @@ BOOL CRealConsole::StartProcess()
 				lbRc = FALSE;
 				dwLastError = -1;
 			} else {
-                // Можно попробовать: CreateProcessAsUser with an unrestricted administrator token
-                // http://weblogs.asp.net/kennykerr/archive/2006/09/29/Windows-Vista-for-Developers-_1320_-Part-4-_1320_-User-Account-Control.aspx
-                
                 if (mp_sei) {
                 	SafeCloseHandle(mp_sei->hProcess);
                 	GlobalFree(mp_sei); mp_sei = NULL;
@@ -2558,12 +2562,14 @@ void CRealConsole::PostConsoleEventPipe(MSG *pMsg)
     }
 }
 
-LRESULT CRealConsole::PostConsoleMessage(UINT nMsg, WPARAM wParam, LPARAM lParam)
+LRESULT CRealConsole::PostConsoleMessage(HWND hWnd, UINT nMsg, WPARAM wParam, LPARAM lParam)
 {
 	LRESULT lRc = 0;
-	bool bNeedCmd = isAdministrator();
+	bool bNeedCmd = isAdministrator() || (m_Args.pszUserName != NULL);
+
 	if (nMsg == WM_INPUTLANGCHANGE || nMsg == WM_INPUTLANGCHANGEREQUEST)
 		bNeedCmd = true;
+
 	#ifdef _DEBUG
 	if (nMsg == WM_INPUTLANGCHANGE || nMsg == WM_INPUTLANGCHANGEREQUEST) {
 		wchar_t szDbg[255];
@@ -2574,13 +2580,15 @@ LRESULT CRealConsole::PostConsoleMessage(UINT nMsg, WPARAM wParam, LPARAM lParam
 		DEBUGSTRLANG(szDbg);
 	}
 	#endif
+
 	if (!bNeedCmd) {
-		POSTMESSAGE(hConWnd, nMsg, wParam, lParam, FALSE);
+		POSTMESSAGE(hWnd/*hConWnd*/, nMsg, wParam, lParam, FALSE);
 	} else {
 		CESERVER_REQ in;
 		ExecutePrepareCmd(&in, CECMD_POSTCONMSG, sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_POSTMSG));
 		// Собственно, аргументы
 		in.Msg.bPost = TRUE;
+		in.Msg.hWnd = hWnd;
 		in.Msg.nMsg = nMsg;
 		in.Msg.wParam = wParam;
 		in.Msg.lParam = lParam;
@@ -2755,7 +2763,7 @@ LRESULT CRealConsole::OnScroll(int nDirection)
 	if (!this) return 0;
     // SB_LINEDOWN / SB_LINEUP / SB_PAGEDOWN / SB_PAGEUP
     WARNING("Переделать в команду пайпа");
-	PostConsoleMessage(WM_VSCROLL, nDirection, NULL);
+	PostConsoleMessage(hConWnd, WM_VSCROLL, nDirection, NULL);
     return 0;
 }
 
@@ -2764,7 +2772,7 @@ LRESULT CRealConsole::OnSetScrollPos(WPARAM wParam)
 	if (!this) return 0;
 	// SB_LINEDOWN / SB_LINEUP / SB_PAGEDOWN / SB_PAGEUP
 	WARNING("Переделать в команду пайпа");
-	PostConsoleMessage(WM_VSCROLL, wParam, NULL);
+	PostConsoleMessage(hConWnd, WM_VSCROLL, wParam, NULL);
 	return 0;
 }
 
@@ -4800,14 +4808,14 @@ void CRealConsole::ShowConsole(int nMode) // -1 Toggle, 0 - Hide, 1 - Show
         RECT rcCon, rcWnd; GetWindowRect(hConWnd, &rcCon); GetWindowRect(ghWnd, &rcWnd);
         //if (!IsDebuggerPresent())
 		TODO("Скорректировать позицию так, чтобы не вылезло за экран");
-        if (SetWindowPos(hConWnd, HWND_TOPMOST, 
+        if (SetOtherWindowPos(hConWnd, HWND_TOPMOST, 
             rcWnd.right-rcCon.right+rcCon.left, rcWnd.bottom-rcCon.bottom+rcCon.top,
             0,0, SWP_NOSIZE|SWP_SHOWWINDOW))
 		{
 			EnableWindow(hConWnd, true);
 			SetFocus(ghWnd);
 		} else {
-			if (isAdministrator()) {
+			if (isAdministrator() || (m_Args.pszUserName != NULL)) {
 				// Если оно запущено в Win7 as admin
 		        CESERVER_REQ *pIn = ExecuteNewCmd(CECMD_SHOWCONSOLE, sizeof(CESERVER_REQ_HDR) + sizeof(DWORD));
 				if (pIn) {
@@ -4825,7 +4833,7 @@ void CRealConsole::ShowConsole(int nMode) // -1 Toggle, 0 - Hide, 1 - Show
         isShowConsole = false;
         //if (!gSet.isConVisible)
 		if (!ShowWindow(hConWnd, SW_HIDE)) {
-			if (isAdministrator()) {
+			if (isAdministrator() || (m_Args.pszUserName != NULL)) {
 				// Если оно запущено в Win7 as admin
 		        CESERVER_REQ *pIn = ExecuteNewCmd(CECMD_SHOWCONSOLE, sizeof(CESERVER_REQ_HDR) + sizeof(DWORD));
 				if (pIn) {
@@ -6851,6 +6859,89 @@ void CRealConsole::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, i
     csData.Unlock();
 }
 
+//#define PICVIEWMSG_SHOWWINDOW (WM_APP + 6)
+//#define PICVIEWMSG_SHOWWINDOW_KEY 0x0101
+//#define PICVIEWMSG_SHOWWINDOW_ASC 0x56731469
+
+BOOL CRealConsole::ShowOtherWindow(HWND hWnd, int swShow)
+{
+	BOOL lbRc = ShowWindow(hWnd, swShow);
+	if (!lbRc) {
+		DWORD dwErr = GetLastError();
+		if (dwErr == 5 /*E_access*/) {
+			//PostConsoleMessage(hWnd, WM_SHOWWINDOW, SW_SHOWNA, 0);
+			CESERVER_REQ in;
+			ExecutePrepareCmd(&in, CECMD_POSTCONMSG, sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_POSTMSG));
+			// Собственно, аргументы
+			in.Msg.bPost = TRUE;
+			in.Msg.hWnd = hWnd;
+			in.Msg.nMsg = WM_SHOWWINDOW;
+			in.Msg.wParam = SW_SHOWNA;
+			in.Msg.lParam = 0;
+
+			CESERVER_REQ *pOut = ExecuteSrvCmd(GetServerPID(), &in, ghWnd);
+			if (pOut) ExecuteFreeResult(pOut);
+			lbRc = TRUE;
+		} else {
+			wchar_t szClass[64], szMessage[255];
+			if (!GetClassName(hWnd, szClass, 63)) wsprintf(szClass, L"0x%08X", (DWORD)hWnd); else szClass[63] = 0;
+			wsprintf(szMessage, L"Can't %s %s window!", 
+				(swShow == SW_HIDE) ? L"hide" : L"show",
+				szClass);
+			DisplayLastError(szMessage, dwErr);
+		}
+	}
+	return lbRc;
+}
+
+BOOL CRealConsole::SetOtherWindowPos(HWND hWnd, HWND hWndInsertAfter, int X, int Y, int cx, int cy, UINT uFlags)
+{
+	BOOL lbRc = SetWindowPos(hWnd, hWndInsertAfter, X, Y, cx, cy, uFlags);
+	if (!lbRc) {
+		DWORD dwErr = GetLastError();
+		if (dwErr == 5 /*E_access*/) {
+			CESERVER_REQ in;
+			ExecutePrepareCmd(&in, CECMD_SETWINDOWPOS, sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_SETWINDOWPOS));
+			// Собственно, аргументы
+			in.SetWndPos.hWnd = hWnd;
+			in.SetWndPos.hWndInsertAfter = hWndInsertAfter;
+			in.SetWndPos.X = X;
+			in.SetWndPos.Y = Y;
+			in.SetWndPos.cx = cx;
+			in.SetWndPos.cy = cy;
+			in.SetWndPos.uFlags = uFlags;
+
+			CESERVER_REQ *pOut = ExecuteSrvCmd(GetServerPID(), &in, ghWnd);
+			if (pOut) ExecuteFreeResult(pOut);
+			lbRc = TRUE;
+		} else {
+			wchar_t szClass[64], szMessage[128];
+			if (!GetClassName(hWnd, szClass, 63)) wsprintf(szClass, L"0x%08X", (DWORD)hWnd); else szClass[63] = 0;
+			wsprintf(szMessage, L"SetWindowPos(%s) failed!", szClass);
+			DisplayLastError(szMessage, dwErr);
+		}
+	}
+	return lbRc;
+}
+
+void CRealConsole::ShowHideViews(BOOL abShow)
+{
+	// т.к. ShowWindow обломается, если окно создано от имени другого пользователя (или Run as admin)
+	// то скрытие и отображение окна делаем другим способом
+	HWND hPic = isPictureView();
+	if (hPic) {
+		if (abShow) {
+			if (mb_PicViewWasHidden && !IsWindowVisible(hPic))
+				ShowOtherWindow(hPic, SW_SHOWNA);
+			mb_PicViewWasHidden = FALSE;
+
+		} else {
+			mb_PicViewWasHidden = TRUE;
+			ShowOtherWindow(hPic, SW_HIDE);
+		}
+	}
+}
+
 void CRealConsole::OnActivate(int nNewNum, int nOldNum)
 {
     if (!this)
@@ -6889,13 +6980,16 @@ void CRealConsole::OnActivate(int nNewNum, int nOldNum)
     gConEmu.UpdateProcessDisplay(TRUE);
 
 
-    
-    HWND hPic = isPictureView();
-    if (hPic && mb_PicViewWasHidden) {
-        if (!IsWindowVisible(hPic))
-            ShowWindow(hPic, SW_SHOWNA);
-    }
-    mb_PicViewWasHidden = FALSE;
+	ShowHideViews(TRUE);
+	//HWND hPic = isPictureView();
+	//if (hPic && mb_PicViewWasHidden) {
+	//	if (!IsWindowVisible(hPic)) {
+	//		if (!ShowWindow(hPic, SW_SHOWNA)) {
+	//			DisplayLastError(L"Can't show PictireView window!");
+	//		}
+	//	}
+	//}
+	//mb_PicViewWasHidden = FALSE;
 
 	if (ghOpWnd && isActive())
 		gSet.UpdateConsoleMode(con.m_dwConsoleMode);
@@ -6910,11 +7004,14 @@ void CRealConsole::OnDeactivate(int nNewNum)
 {
     if (!this) return;
 
-    HWND hPic = isPictureView();
-    if (hPic && IsWindowVisible(hPic)) {
-        mb_PicViewWasHidden = TRUE;
-        ShowWindow(hPic, SW_HIDE);
-    }
+	ShowHideViews(FALSE);
+	//HWND hPic = isPictureView();
+	//if (hPic && IsWindowVisible(hPic)) {
+	//    mb_PicViewWasHidden = TRUE;
+	//	if (!ShowWindow(hPic, SW_HIDE)) {
+	//		DisplayLastError(L"Can't hide PictuteView window!");
+	//	}
+	//}
 
     if (con.m_sel.dwFlags & CONSOLE_MOUSE_SELECTION) {
 		con.m_sel.dwFlags &= ~CONSOLE_MOUSE_SELECTION;
@@ -7968,7 +8065,7 @@ void CRealConsole::SwitchKeyboardLayout(WPARAM wParam,DWORD_PTR dwNewKeyboardLay
 
     // В FAR при XLat делается так:
     //PostConsoleMessageW(hFarWnd,WM_INPUTLANGCHANGEREQUEST, INPUTLANGCHANGE_FORWARD, 0);
-    PostConsoleMessage(WM_INPUTLANGCHANGEREQUEST, wParam, (LPARAM)dwNewKeyboardLayout);
+    PostConsoleMessage(hConWnd, WM_INPUTLANGCHANGEREQUEST, wParam, (LPARAM)dwNewKeyboardLayout);
 }
 
 void CRealConsole::Paste()
@@ -7978,7 +8075,7 @@ void CRealConsole::Paste()
     
 #ifndef RCON_INTERNAL_PASTE
     // Можно так
-    PostConsoleMessage(WM_COMMAND, SC_PASTE_SECRET, 0);
+    PostConsoleMessage(hConWnd, WM_COMMAND, SC_PASTE_SECRET, 0);
 #endif
 
 #ifdef RCON_INTERNAL_PASTE
@@ -8061,7 +8158,7 @@ void CRealConsole::CloseConsole()
 		//    	return;
 		//}
 		
-        PostConsoleMessage(WM_CLOSE, 0, 0);
+        PostConsoleMessage(hConWnd, WM_CLOSE, 0, 0);
         
 	} else {
 		m_Args.bDetached = FALSE;
@@ -9065,6 +9162,7 @@ void CRealConsole::GetConsoleCursorPos(COORD *pcr)
 bool CRealConsole::isAdministrator()
 {
 	if (!this) return false;
+	// 
 	return m_Args.bRunAsAdministrator;
 }
 
@@ -9583,9 +9681,7 @@ BOOL CRealConsole::LoadDataFromMap(DWORD CharCount)
 		bSelectionPresent = bSelectionPresent;
 	#endif
 
-	#ifndef __GNUC__
-	__try {
-	#endif
+	SAFETRY {
 		// Теоретически, может возникнуть исключение при чтении? когда размер резко увеличивается (maximize)
 		con.pCmp->crBufSize = mp_ConsoleData->crBufSize;
 		if ((int)CharCount > (con.pCmp->crBufSize.X*con.pCmp->crBufSize.Y)) {
@@ -9594,11 +9690,9 @@ BOOL CRealConsole::LoadDataFromMap(DWORD CharCount)
 		}
 		memmove(con.pCmp->Buf, mp_ConsoleData->Buf, CharCount*sizeof(CHAR_INFO));
 		MCHKHEAP;
-	#ifndef __GNUC__
-	}__except(EXCEPTION_EXECUTE_HANDLER){
+	} SAFECATCH {
 		_ASSERT(FALSE);
 	}
-	#endif
 
 	lbScreenChanged = memcmp(con.pCopy->Buf, con.pCmp->Buf, CharCount*sizeof(CHAR_INFO));
 	if (lbScreenChanged)

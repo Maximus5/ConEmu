@@ -2507,6 +2507,8 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 
 		case CECMD_POSTCONMSG:
 		{
+			HWND hSendWnd = (HWND)in.Msg.hWnd;
+
 			#ifdef _DEBUG
 			WPARAM wParam = (WPARAM)in.Msg.wParam;
 			LPARAM lParam = (LPARAM)in.Msg.lParam;
@@ -2514,18 +2516,39 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 			if (in.Msg.nMsg == WM_INPUTLANGCHANGE || in.Msg.nMsg == WM_INPUTLANGCHANGEREQUEST) {
 				unsigned __int64 l = lParam;
 				wchar_t szDbg[255];
-				wsprintf(szDbg, L"ConEmuC: %s(%s, CP:%i, HKL:0x%08I64X)\n",
-					in.Msg.bPost ? L"PostMessage" : L"SendMessage",
-					(in.Msg.nMsg == WM_INPUTLANGCHANGE) ? L"WM_INPUTLANGCHANGE" : L"WM_INPUTLANGCHANGEREQUEST",
+				wsprintf(szDbg, L"ConEmuC: %s(0x%08X, %s, CP:%i, HKL:0x%08I64X)\n",
+					in.Msg.bPost ? L"PostMessage" : L"SendMessage", (DWORD)hSendWnd,
+					(in.Msg.nMsg == WM_INPUTLANGCHANGE) ? L"WM_INPUTLANGCHANGE" :
+					(in.Msg.nMsg == WM_INPUTLANGCHANGEREQUEST) ? L"WM_INPUTLANGCHANGEREQUEST" :
+					(in.Msg.nMsg == WM_SHOWWINDOW) ? L"WM_SHOWWINDOW" :
+					L"<Other message>",					
 					(DWORD)wParam, l);
 				DEBUGLOGLANG(szDbg);
 			}
 			#endif
 
+			if (in.Msg.nMsg == WM_SHOWWINDOW) {
+				DWORD lRc = 0;
+				if (in.Msg.bPost)
+					lRc = ShowWindowAsync(hSendWnd, (int)(in.Msg.wParam & 0xFFFF));
+				else
+					lRc = ShowWindow(hSendWnd, (int)(in.Msg.wParam & 0xFFFF));
+				// Возвращаем результат
+				DWORD dwErr = GetLastError();
+				int nOutSize = sizeof(CESERVER_REQ_HDR) + 2*sizeof(DWORD);
+				*out = ExecuteNewCmd(CECMD_POSTCONMSG,nOutSize);
+				if (*out != NULL) {
+					(*out)->dwData[0] = lRc;
+					(*out)->dwData[1] = dwErr;
+					lbRc = TRUE;
+				}
+			} else
+			if (in.Msg.nMsg == WM_SIZE) {
+			} else
 			if (in.Msg.bPost) {
-				PostMessage(ghConWnd, in.Msg.nMsg, (WPARAM)in.Msg.wParam, (LPARAM)in.Msg.lParam);
+				PostMessage(hSendWnd, in.Msg.nMsg, (WPARAM)in.Msg.wParam, (LPARAM)in.Msg.lParam);
 			} else {
-				LRESULT lRc = SendMessage(ghConWnd, in.Msg.nMsg, (WPARAM)in.Msg.wParam, (LPARAM)in.Msg.lParam);
+				LRESULT lRc = SendMessage(hSendWnd, in.Msg.nMsg, (WPARAM)in.Msg.wParam, (LPARAM)in.Msg.lParam);
 				// Возвращаем результат
 				int nOutSize = sizeof(CESERVER_REQ_HDR) + sizeof(u64);
 				*out = ExecuteNewCmd(CECMD_POSTCONMSG,nOutSize);
@@ -2534,6 +2557,7 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 					lbRc = TRUE;
 				}
 			}
+
 		} break;
 
 		case CECMD_SETCONSOLECP:
@@ -2624,6 +2648,13 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 		{
 			if (srv.pConsoleInfo)
 				srv.pConsoleInfo->bConsoleActive = in.dwData[0];
+		} break;
+
+		case CECMD_SETWINDOWPOS:
+		{
+			SetWindowPos(in.SetWndPos.hWnd, in.SetWndPos.hWndInsertAfter,
+				in.SetWndPos.X, in.SetWndPos.Y, in.SetWndPos.cx, in.SetWndPos.cy,
+				in.SetWndPos.uFlags);
 		} break;
 	}
 	

@@ -80,17 +80,17 @@ DIRNAME=debug
 DIRSUFF = W
 !endif
 
+RELEASEDIR32 = ..\..\..\..\plugins\ConEmu\Thumbs
+RELEASEDIR64 = ..\..\..\..\Release.x64\plugins\ConEmu\Thumbs
+
 !ifdef AMD64
 DIRBIT = 64
-RELEASEDIR = bin
 EXT = t64
 !elseif defined(IA64)
 DIRBIT = IA64
-RELEASEDIR = bin
 EXT = t64
 !else
 DIRBIT = 32
-RELEASEDIR = bin
 EXT = t32
 !endif
 WORKDIR = $(DIRNAME).$(DIRBIT)$(DIRSUFF).vc

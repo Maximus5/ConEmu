@@ -167,6 +167,9 @@ HWND CeFullPanelInfo::CreateView()
 	wsprintf(szTitle, L"ConEmu.%sPanelView.%i", (this->bLeftPanel) ? L"Left" : L"Right", gnSelfPID);
 	hView = CreateWindow(gsDisplayClassName, szTitle, WS_CHILD|WS_CLIPSIBLINGS, 0,0,0,0, 
 		ghConEmuRoot, NULL, (HINSTANCE)ghPluginModule, (LPVOID)this);
+#ifdef _DEBUG
+	HWND hParent = GetParent(hView);
+#endif
 	this->hView = hView;
 	if (!hView) {
 		gnWin32Error = GetLastError();
@@ -356,11 +359,13 @@ DWORD WINAPI CeFullPanelInfo::DisplayThread(LPVOID lpvParam)
 	return 0;
 }
 
-
-BOOL CeFullPanelInfo::PaintItem(HDC hdc, int x, int y, CePluginPanelItem* pItem, BOOL abCurrentItem, 
-			   COLORREF *nBackColor, COLORREF *nForeColor, HBRUSH *hBack,
-			   //int nXIcon, int nYIcon, int nXIconSpace, int nYIconSpace,
-			   BOOL abAllowPreview, HBRUSH hBackBrush)
+// abCurrentItem  - может быть TRUE только в активной панели
+// abSelectedItem - реально выделенный элемент
+BOOL CeFullPanelInfo::PaintItem(
+				HDC hdc, int x, int y, CePluginPanelItem* pItem,
+				BOOL abCurrentItem, BOOL abSelectedItem,
+				COLORREF *nBackColor, COLORREF *nForeColor, HBRUSH *hBack,
+				BOOL abAllowPreview, HBRUSH hBackBrush)
 {
 	//const wchar_t* pszName = pItem->FindData.lpwszFileNamePart;
 	//int nLen = lstrlen(pszName);
@@ -400,8 +405,9 @@ BOOL CeFullPanelInfo::PaintItem(HDC hdc, int x, int y, CePluginPanelItem* pItem,
 	}
 
 	const wchar_t* pszComments = NULL;
+	BOOL bIgnoreFileDescription = FALSE;
 	gpImgCache->PaintItem(hdc, x+gThSet.nPreviewFrame+Spaces.nSpaceX1, y+gThSet.nPreviewFrame+Spaces.nSpaceY1,
-		Spaces.nImgSize, pItem, abAllowPreview, &pszComments);
+		Spaces.nImgSize, pItem, abAllowPreview, &pszComments, &bIgnoreFileDescription);
 
 	RECT rcClip = {0}, rcMaxText;
 	COLORREF crBack = 0, crFore = 0;
@@ -442,12 +448,57 @@ BOOL CeFullPanelInfo::PaintItem(HDC hdc, int x, int y, CePluginPanelItem* pItem,
 		rcClip.left += Spaces.nLabelPadding; rcClip.right -= Spaces.nLabelPadding;
 	}
 	//DrawText(hdc, pszName, nLen, &rcClip, DT_END_ELLIPSIS|DT_NOPREFIX|DT_SINGLELINE|DT_VCENTER);
-	DrawItemText(hdc, &rcClip, &rcMaxText, pItem, pszComments, hBack[nIdx]);
+	DrawItemText(hdc, &rcClip, &rcMaxText, pItem, pszComments, hBack[nIdx], bIgnoreFileDescription);
+	
+	
+	if (abSelectedItem && gThSet.nSelectFrame == 1) {
+		int nX = x, nY = y;
+		int nW = 0, nH = 0;
+		
+		if (Spaces.nSpaceX1 > 1) nX += (Spaces.nSpaceX1-1);
+		if (Spaces.nSpaceY1 > 1) nY += (Spaces.nSpaceY1-1);
+		
+		if (PVM == pvm_Thumbnails) {
+			nW = rcClip.right - nX; // + 1;
+			nH = rcClip.bottom - nY; // + 1;
+		} else {
+			nY = max(y,(rcClip.top-1));
+			nW = rcClip.right - nX + 1;
+			nH = rcClip.bottom - nY;
+		}
+		
+		if (nW && nH)
+		{
+			COLORREF crPen = 0;
+			if (gThSet.crSelectFrame.UseIndex) {
+				if (gThSet.crSelectFrame.ColorIdx <= 15)
+					crPen = gcrCurColors[gThSet.crSelectFrame.ColorIdx];
+				else
+					crPen = gcrCurColors[7];
+			} else {
+				crPen = gThSet.crSelectFrame.ColorRGB;
+			}
+			
+			HPEN hPen = CreatePen(PS_DOT, 1, crPen);
+			HPEN hOldPen = (HPEN)SelectObject(hdc, hPen);
+			
+			SetBkColor(hdc, nBackColor[0]);
+
+			MoveToEx(hdc, nX, nY, NULL);
+			LineTo(hdc, nX+nW, nY);
+			LineTo(hdc, nX+nW, nY+nH);
+			LineTo(hdc, nX, nY+nH);
+			LineTo(hdc, nX, nY);
+			
+			SelectObject(hdc, hOldPen);
+			DeleteObject(hPen);
+		}
+	}
 
 	return TRUE;
 }
 
-int CeFullPanelInfo::DrawItemText(HDC hdc, LPRECT prcText, LPRECT prcMaxText, CePluginPanelItem* pItem, LPCWSTR pszComments, HBRUSH hBr)
+int CeFullPanelInfo::DrawItemText(HDC hdc, LPRECT prcText, LPRECT prcMaxText, CePluginPanelItem* pItem, LPCWSTR pszComments, HBRUSH hBr, BOOL bIgnoreFileDescription)
 {
 	int iRc = 0;
 	const wchar_t* pszName = pItem->FindData.lpwszFileNamePart;
@@ -463,25 +514,46 @@ int CeFullPanelInfo::DrawItemText(HDC hdc, LPRECT prcText, LPRECT prcMaxText, Ce
 			if (pszExt == pszName) pszExt = NULL; // если точка одна, и имя начинается с нее
 		}
 		
+		BOOL  lbCorrected = FALSE;
+		DWORD nDrawFlags = DT_END_ELLIPSIS|DT_NOPREFIX|DT_SINGLELINE|DT_VCENTER;
+		
 		if (pszExt) {
 			RECT rcExt = rcClip;
 			RECT rcName = rcClip;
 			int nExtLen = lstrlen(pszExt);
 			int nNameLen = (int)(pszExt - pszName);
 			
-			iRc = DrawText(hdc, pszExt, nExtLen, &rcExt, DT_CALCRECT|DT_NOPREFIX|DT_SINGLELINE|DT_TOP|DT_LEFT);
-			iRc = DrawText(hdc, pszName, nNameLen, &rcName, DT_CALCRECT|DT_NOPREFIX|DT_SINGLELINE|DT_TOP|DT_LEFT);
+			int iRc1 = DrawText(hdc, pszExt, nExtLen, &rcExt, DT_CALCRECT|DT_NOPREFIX|DT_SINGLELINE|DT_TOP|DT_LEFT);
+			int iRc2 = DrawText(hdc, pszName, nNameLen, &rcName, DT_CALCRECT|DT_NOPREFIX|DT_SINGLELINE|DT_TOP|DT_LEFT);
 			
 			// Рисуем расширение отдельно только если длина расширения в пикселах меньше половины от выделенного prcText
-			if (iRc && (rcExt.right-rcExt.left) <= ((rcClip.right-rcClip.left)-(rcName.right-rcName.left))) {
-				rcExt.left = rcClip.right-(rcExt.right-rcExt.left);
-				rcExt.right = rcClip.right; rcExt.top = rcClip.top; rcExt.bottom = rcClip.bottom;
-				iRc = DrawText(hdc, pszExt, nExtLen, &rcExt, DT_NOPREFIX|DT_SINGLELINE|DT_VCENTER);
-				nLen = nNameLen;
-				rcClip.right = rcExt.left;
+			if (iRc1 && iRc2) {
+				if ((gThSet.nPreviewFrame == 0)
+					&& ((rcExt.right-rcExt.left)+(rcName.right-rcName.left)) <= (rcClip.right-rcClip.left))
+				{
+					lbCorrected = FALSE; // ниже - выронять по центру
+				} else
+				if ((rcExt.right-rcExt.left) <= ((rcClip.right-rcClip.left)/2 /*-(rcName.right-rcName.left)*/)) {
+					rcExt.left = rcClip.right-(rcExt.right-rcExt.left);
+					rcExt.right = rcClip.right; rcExt.top = rcClip.top; rcExt.bottom = rcClip.bottom;
+					iRc = DrawText(hdc, pszExt, nExtLen, &rcExt, DT_NOPREFIX|DT_SINGLELINE|DT_VCENTER);
+					nLen = nNameLen;
+					rcClip.right = rcExt.left;
+					lbCorrected = TRUE; //  чтобы ниже по центру не выровнялось
+				}
 			}
+		} else if (gThSet.nPreviewFrame == 0) {
+			RECT rcName = rcClip;
+			int iRc1 = DrawText(hdc, pszName, nLen, &rcName, DT_CALCRECT|DT_NOPREFIX|DT_SINGLELINE|DT_TOP|DT_LEFT);
+			if (iRc1 && ((rcName.right-rcName.left) >= (rcClip.right-rcClip.left)))
+				lbCorrected = TRUE; //  чтобы ниже по центру не выровнялось
 		}
-		iRc = DrawText(hdc, pszName, nLen, &rcClip, DT_END_ELLIPSIS|DT_NOPREFIX|DT_SINGLELINE|DT_VCENTER);
+		
+		if (!lbCorrected && gThSet.nPreviewFrame == 0) {
+			nDrawFlags |= DT_CENTER; // для красоты, при отсутствии рамки, ровняем по центру.
+		}
+		iRc = DrawText(hdc, pszName, nLen, &rcClip, nDrawFlags);
+		
 	} else {
 		TODO("Обработка pItem->pszInfo");
 		wchar_t szFullInfo[MAX_PATH*4]; wchar_t* psz = szFullInfo;
@@ -541,7 +613,7 @@ int CeFullPanelInfo::DrawItemText(HDC hdc, LPRECT prcText, LPRECT prcMaxText, Ce
 			lstrcpyn(psz, pszComments, MAX_PATH); psz += lstrlen(psz);
 		}
 		
-		if (pItem->pszDescription && *pItem->pszDescription) {
+		if (!bIgnoreFileDescription && pItem->pszDescription && *pItem->pszDescription) {
 			*(psz++) = L'\n'; *psz = 0;
 			lstrcpyn(psz, pItem->pszDescription, MAX_PATH); psz += lstrlen(psz);
 		}
@@ -572,6 +644,9 @@ int CeFullPanelInfo::DrawItemText(HDC hdc, LPRECT prcText, LPRECT prcMaxText, Ce
 		}
 		// теперь - рисуем
 		iRc = DrawText(hdc, szFullInfo, nLen, &rcClip, nFlags);
+		// Вернуть расширенный прямоугольник
+		if (rcClip.top < prcText->top) prcText->top = rcClip.top;
+		if (rcClip.bottom > prcText->bottom) prcText->bottom = rcClip.bottom;
 	}
 	
 	return iRc;
@@ -656,14 +731,44 @@ void CeFullPanelInfo::Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc)
 	if ((nTopItem + nXCountFull*(nYCountFull)) <= nCurrentItem) {
 		TODO("Выравнивание на границу nXCount");
 		nTopItem = nCurrentItem - (nXCountFull*(nYCountFull)) + 1;
-	}
-	if (PVM == pvm_Thumbnails)
-	{
-		int nMod = nTopItem % nXCount;
-		if (nMod) {
-			nTopItem = max(0,nTopItem-nMod);
+		//
+		if (PVM == pvm_Thumbnails)
+		{
+			int n = (nTopItem + (nXCount-1)) / nXCount;
+			int nNewTop = n * nXCount;
+			nTopItem = min(nNewTop, (nItemCount-1));
+			//int nMod = nTopItem % nXCount;
+			//if (nMod) {
+			//	nTopItem = max(0,nTopItem-nMod);
+			//	//if (nTopItem > nCurrentItem)
+			//	//	nTopItem = max(nCurrentItem,(nTopItem-nXCount));
+			//}
+		} else {
+			int n = (nTopItem + (nYCountFull-1)) / nYCountFull;
+			int nNewTop = n * nYCountFull;
+			nTopItem = min(nNewTop, (nItemCount-1));
 			//if (nTopItem > nCurrentItem)
-			//	nTopItem = max(nCurrentItem,(nTopItem-nXCount));
+			//	nTopItem = max(0,min((nTopItem-nYCountFull),nCurrentItem
+		}
+	} else {
+		//
+		if (PVM == pvm_Thumbnails)
+		{
+			int nMod = nTopItem % nXCount;
+			if (nMod) {
+				nTopItem = max(0,nTopItem-nMod);
+			}
+			while ((nTopItem + nXCountFull*(nYCountFull)) <= nCurrentItem) {
+				nTopItem += nXCountFull;
+			}
+		} else {
+			int nMod = nTopItem % nYCountFull;
+			if (nMod) {
+				nTopItem = max(0,nTopItem-nMod);
+			}
+			while ((nTopItem + nXCountFull*(nYCountFull)) <= nCurrentItem) {
+				nTopItem += nYCountFull;
+			}
 		}
 	}
 	this->OurTopPanelItem = nTopItem;
@@ -700,8 +805,8 @@ void CeFullPanelInfo::Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc)
 	HFONT hOldFont = (HFONT)SelectObject(hCompDC,hFont);
 
 
-	if (!this->Focus)
-		nCurrentItem = -1;
+	//if (!this->Focus)
+	//	nCurrentItem = -1;
 
 
 	for (int nStep = 0; !gbCancelAll && nStep <= 1; nStep++)
@@ -753,10 +858,9 @@ void CeFullPanelInfo::Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc)
 						pItem->pszFullName = pszFull;
 					}
 
-					if (PaintItem(hCompDC, 0, 0, pItem, (nItem==nCurrentItem), 
-						nBackColor, nForeColor, hBack,
-						//nXIcon, nYIcon, nXIconSpace, nYIconSpace, 
-						(nStep == 1), hBackBrush))
+					if (PaintItem(hCompDC, 0, 0, pItem, 
+						(Focus && nItem==nCurrentItem), (nItem==nCurrentItem),
+						nBackColor, nForeColor, hBack, (nStep == 1), hBackBrush))
 					{
 						BitBlt(hdc, nXCoord, nYCoord, nWholeW, nWholeH, hCompDC, 0,0, SRCCOPY);
 						#ifdef _DEBUG

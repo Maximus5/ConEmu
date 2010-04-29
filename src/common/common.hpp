@@ -95,6 +95,34 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #endif
 
+#ifdef _WIN64
+	#ifndef WIN64
+		WARNING("WIN64 was not defined");
+		#define WIN64
+	#endif
+#endif
+
+#ifdef _DEBUG
+	#define USE_SEH
+#endif
+
+#ifdef USE_SEH
+	#if defined(_MSC_VER)
+		#pragma message ("Compiling USING exception handler")
+	#endif
+	
+	#define SAFETRY   __try
+	#define SAFECATCH __except(EXCEPTION_EXECUTE_HANDLER)
+#else
+	#if defined(_MSC_VER)
+		#pragma message ("Compiling NOT using exception handler")
+	#endif
+
+	#define SAFETRY   if (true)
+	#define SAFECATCH else
+#endif	
+
+
 #define isPressed(inp) ((GetKeyState(inp) & 0x8000) == 0x8000)
 #define countof(a) (sizeof((a))/(sizeof(*(a))))
 #define ZeroStruct(s) memset(&(s), 0, sizeof(s))
@@ -203,9 +231,10 @@ WARNING("CONEMUMSG_SRVSTARTED нужно переделать в команду пайпа для GUI");
 #define CECMD_SETDONTCLOSE  29
 #define CECMD_REGPANELVIEW  30
 #define CECMD_ONACTIVATION  31 // Для установки флажка ConsoleInfo->bConsoleActive
+#define CECMD_SETWINDOWPOS  32 // CESERVER_REQ_SETWINDOWPOS
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    39
+#define CESERVER_REQ_VER    40
 
 #define PIPEBUFSIZE 4096
 
@@ -592,6 +621,7 @@ typedef struct tag_CESERVER_REQ_STARTSTOPRET {
 
 typedef struct tag_CESERVER_REQ_POSTMSG {
 	BOOL    bPost;
+	HWND2   hWnd;
 	UINT    nMsg;
 	// Заложимся на унификацию x86 & x64
 	u64     wParam, lParam;
@@ -617,6 +647,16 @@ typedef struct tag_CESERVER_REQ_SETCONCP {
 	DWORD   nCP;          // [IN], [Out]=LastError
 } CESERVER_REQ_SETCONCP;
 
+typedef struct tag_CESERVER_REQ_SETWINDOWPOS {
+	HWND2 hWnd;
+	HWND2 hWndInsertAfter;
+	int X;
+	int Y;
+	int cx;
+	int cy;
+	UINT uFlags;
+} CESERVER_REQ_SETWINDOWPOS;
+
 typedef struct tag_CESERVER_REQ {
     CESERVER_REQ_HDR hdr;
 	union {
@@ -637,6 +677,7 @@ typedef struct tag_CESERVER_REQ {
 		CESERVER_REQ_FLASHWINFO Flash;
 		FAR_REQ_SETENVVAR SetEnvVar;
 		CESERVER_REQ_SETCONCP SetConCP;
+		CESERVER_REQ_SETWINDOWPOS SetWndPos;
 		PanelViewInit PVI;
 	};
 } CESERVER_REQ;

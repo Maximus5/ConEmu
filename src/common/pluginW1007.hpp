@@ -43,6 +43,10 @@ other possible license with no implications from the above license on them.
 #define FARMANAGERVERSION_MINOR 0
 #define FARMANAGERVERSION_BUILD 1007
 
+#if defined(_MSC_VER)
+#pragma message ("Using plugin.hpp for FAR Manager 2.0 build 1007")
+#endif
+
 #ifndef RC_INVOKED
 
 #define MAKEFARVERSION(major,minor,build) ( ((major)<<8) | (minor) | ((build)<<16))

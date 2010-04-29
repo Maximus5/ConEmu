@@ -2,7 +2,6 @@ ALLDIRS = ConEmu \
           ConEmuC \
           ConEmuHk \
           ConEmuPlugin
-# ConEmuD
 
 
 all: preclean $(ALLDIRS) clean

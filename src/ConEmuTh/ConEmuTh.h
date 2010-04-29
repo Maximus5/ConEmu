@@ -179,10 +179,10 @@ typedef struct tag_CeFullPanelInfo
 	static LRESULT CALLBACK DisplayWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 	static DWORD WINAPI DisplayThread(LPVOID lpvParam);
 	void Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc);
-	BOOL PaintItem(HDC hdc, int x, int y, CePluginPanelItem* pItem, BOOL abCurrentItem, 
+	BOOL PaintItem(HDC hdc, int x, int y, CePluginPanelItem* pItem, BOOL abCurrentItem, BOOL abSelectedItem,
 			   COLORREF *nBackColor, COLORREF *nForeColor, HBRUSH *hBack,
 			   BOOL abAllowPreview, HBRUSH hBackBrush);
-	int DrawItemText(HDC hdc, LPRECT prcText, LPRECT prcMaxText, CePluginPanelItem* pItem, LPCWSTR pszComments, HBRUSH hBr);
+	int DrawItemText(HDC hdc, LPRECT prcText, LPRECT prcMaxText, CePluginPanelItem* pItem, LPCWSTR pszComments, HBRUSH hBr, BOOL bIgnoreFileDescription);
 	BOOL OnSettingsChanged(BOOL bInvalidate);
 			   
 	/*{

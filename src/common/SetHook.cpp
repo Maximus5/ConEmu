@@ -1090,10 +1090,11 @@ typedef BOOL (WINAPI* OnShellExecuteExW_t)(LPSHELLEXECUTEINFOW lpExecInfo);
 static BOOL OnShellExecuteExW_SEH(OnShellExecuteExW_t f, LPSHELLEXECUTEINFOW lpExecInfo, BOOL* pbRc)
 {
 	BOOL lbOk = FALSE;
-	__try {
+	SAFETRY {
 		*pbRc = f(lpExecInfo);
 		lbOk = TRUE;
-	} __except(EXCEPTION_EXECUTE_HANDLER) {
+	} SAFECATCH {
+		lbOk = FALSE;
 	}
 	return lbOk;
 }

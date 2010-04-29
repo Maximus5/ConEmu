@@ -7359,13 +7359,25 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
     case ID_ABOUT:
         {
             WCHAR szTitle[255];
+			const wchar_t *pszBits =
+			#ifdef WIN64
+				L"x64"
+			#else
+				L"x86"
+			#endif
+				;
+
             #ifdef _DEBUG
-            wsprintf(szTitle, L"About ConEmu (%s [DEBUG])", szConEmuVersion);
+            wsprintf(szTitle, L"About ConEmu (%s [DEBUG] %s)", szConEmuVersion, pszBits);
             #else
-            wsprintf(szTitle, L"About ConEmu (%s)", szConEmuVersion);
+            wsprintf(szTitle, L"About ConEmu (%s %s)", szConEmuVersion, pszBits);
             #endif
+
             BOOL b = gbDontEnable; gbDontEnable = TRUE;
-            MessageBoxW(ghWnd, pHelp, szTitle, MB_ICONQUESTION);
+            MSGBOXPARAMS mb = {sizeof(MSGBOXPARAMS), ghWnd, g_hInstance, pHelp, szTitle, 
+            	MB_USERICON, MAKEINTRESOURCE(IMAGE_ICON), NULL, NULL, LANG_NEUTRAL};
+            MessageBoxIndirectW(&mb);
+            //MessageBoxW(ghWnd, pHelp, szTitle, MB_ICONQUESTION);
             gbDontEnable = b;
         }
         return 0;

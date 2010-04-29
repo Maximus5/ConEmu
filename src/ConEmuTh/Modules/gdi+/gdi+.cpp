@@ -228,8 +228,10 @@ struct GDIPlusDecoder
 			if (!result)
 				FreeLibrary(hGDIPlus);
 		}
-		if (result)
+		if (result) {
 			pInit->pContext = this;
+			pInit->nModuleID = MODULE_GDIP;
+		}
 		return result;
 	};
 
@@ -266,6 +268,7 @@ struct GDIPlusImage;
 struct GDIPlusData
 {
 	DWORD nMagic;
+	struct GDIPlusImage *pImg;
 	HDC hCompDc1;
 	HBITMAP hDIB, hOld1;
 	wchar_t szInfo[255];
@@ -287,9 +290,7 @@ struct GDIPlusImage
 {
 	DWORD nMagic;
 	
-#ifdef _DEBUG
-	wchar_t szFileName[MAX_PATH];
-#endif
+	wchar_t szTempFile[MAX_PATH+1];
 	GDIPlusDecoder *gdi;
 	Gdiplus::GpBitmap *img;
 	MStream* strm;
@@ -301,6 +302,7 @@ struct GDIPlusImage
 	
 	GDIPlusImage() {
 		nMagic = eGdiStr_Image;
+		szTempFile[0] = 0;
 	};
 
 
@@ -343,7 +345,7 @@ struct GDIPlusImage
 		return img;
 	}
 
-	bool Open(const wchar_t *pFileName, const u8 *pBuffer, i64 lFileSize)
+	bool Open(bool bVirtual, const wchar_t *pFileName, const u8 *pBuffer, i64 lFileSize)
 	{
 		_ASSERTE(img == NULL);
 		_ASSERTE(gdi != NULL);
@@ -353,9 +355,33 @@ struct GDIPlusImage
 
 		nActivePage = -1; nTransparent = -1; nImgFlags = 0;
 		
-		if (pFileName)
+		if (bVirtual && pBuffer && lFileSize) {
+			DWORD n;
+			wchar_t szTempDir[MAX_PATH];
+			n = GetTempPath(MAX_PATH-16, szTempDir);
+			if (n && n < (MAX_PATH-16)) {
+				n = GetTempFileName(szTempDir, L"CET", 0, szTempFile);
+				if (n) {
+					HANDLE hFile = CreateFile(szTempFile, GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_TEMPORARY, NULL);
+					if (hFile == INVALID_HANDLE_VALUE) {
+						szTempFile[0] = 0; // не создали, значит и удалять будет нечего
+					} else {
+						DWORD nSize = (DWORD)lFileSize; DWORD nWritten = 0;
+						if (WriteFile(hFile, pBuffer, nSize, &nWritten, NULL) && nWritten == nSize) {
+							bVirtual = false; pFileName = szTempFile;
+						}
+						CloseHandle(hFile);
+						if (bVirtual) {
+							DeleteFile(szTempFile); szTempFile[0] = 0;
+						}
+					}
+				}
+			}
+		}
+
+		if (!bVirtual)
 			img = OpenBitmapFromFile(pFileName);
-		else
+		else // лучше бы его вообще не использовать, GDI+ как-то не очень с потоками работает...
 			img = OpenBitmapFromStream(pBuffer, lFileSize);
 
 		if (!img) {
@@ -430,6 +456,9 @@ struct GDIPlusImage
 			delete strm;
 			strm = NULL;
 		}
+		if (szTempFile[0]) {
+			DeleteFile(szTempFile);
+		}
 
 		FREE(this);
 	};
@@ -457,7 +486,16 @@ struct GDIPlusImage
 		else
 		{
 			pData->nMagic = eGdiStr_Bits;
+			pData->pImg = this;
+			pDecodeInfo->pFileContext = pData;
 		
+			wsprintf(pData->szInfo, L"%i x %i x %ibpp", lWidth, lHeight, nBPP);
+			if (nPages > 1) wsprintf(pData->szInfo+lstrlen(pData->szInfo), L" [%i]", nPages);
+			if (FormatName) {
+				lstrcat(pData->szInfo, L" ");
+				lstrcat(pData->szInfo, FormatName);
+			}
+
 			int nCanvasWidth  = pDecodeInfo->crLoadSize.X;
 			int nCanvasHeight = pDecodeInfo->crLoadSize.Y;
 			int nShowWidth = lWidth, nShowHeight = lHeight;
@@ -467,12 +505,24 @@ struct GDIPlusImage
 			{
 				if (lWidth >= (UINT)nCanvasWidth) {
 					nShowWidth = nCanvasWidth;
-					nShowHeight = (int)(((i64)lHeight) * nCanvasWidth / lWidth);
+					nShowHeight = (int)((((i64)lHeight) * nCanvasWidth) / lWidth);
+					if (!nShowHeight || nShowHeight < (nShowWidth/8)) {
+						nShowHeight = min(min(8,(UINT)nCanvasHeight),lHeight);
+						UINT lNewWidth = (UINT)((((i64)nCanvasWidth) * lHeight) / nShowHeight);
+						if (lNewWidth < lWidth)
+							lWidth = lNewWidth;
+					}
 				}
 			} else {
 				if (lHeight >= (UINT)nCanvasHeight) {
-					nShowWidth = (int)(((i64)lWidth) * nCanvasHeight / lHeight);
+					nShowWidth = (int)((((i64)lWidth) * nCanvasHeight) / lHeight);
 					nShowHeight = nCanvasHeight;
+					if (!nShowWidth || nShowWidth < (nShowHeight/8)) {
+						nShowWidth = min(min(8,(UINT)nCanvasWidth),lWidth);
+						UINT lNewHeight = (UINT)((((i64)nCanvasHeight) * lWidth) / nShowWidth);
+						if (lNewHeight < lHeight)
+							lHeight = lNewHeight;
+					}
 				}
 			}
 			nCanvasWidth  = nShowWidth;
@@ -491,52 +541,50 @@ struct GDIPlusImage
 
 			LPBYTE pBits = NULL;
 			pData->hDIB = CreateDIBSection(pData->hCompDc1, (BITMAPINFO*)&bmi, DIB_RGB_COLORS, (void**)&pBits, NULL, 0);
-			_ASSERTE(pData->hDIB);
-
-			pData->hOld1 = (HBITMAP)SelectObject(pData->hCompDc1, pData->hDIB);
-			
-			RECT rcFull = {0,0,nCanvasWidthS, nCanvasHeight};
-			HBRUSH hBr = CreateSolidBrush(pDecodeInfo->crBackground);
-			FillRect(pData->hCompDc1, &rcFull, hBr);
-			DeleteObject(hBr);
-
-			Gdiplus::GpGraphics *pGr = NULL;
-			Gdiplus::Status stat = gdi->GdipCreateFromHDC(pData->hCompDc1, &pGr);
-			if (!stat) {
-				int x = (nCanvasWidth-nShowWidth)>>1;
-				int y = (nCanvasHeight-nShowHeight)>>1;
-				stat = gdi->GdipDrawImageRectRectI(
-					pGr, img,
-					x, y, nShowWidth, nShowHeight,
-					0,0,lWidth,lHeight,
-					Gdiplus::UnitPixel, NULL, //NULL, NULL);
-					(Gdiplus::DrawImageAbort)DrawImageAbortCallback, gdi);
-				gdi->GdipDeleteGraphics(pGr);
-			}
-	
-			if (stat) {
-				pDecodeInfo->nErrNumber = PGE_BITBLT_FAILED;
+			if (!pData->hDIB) {
+				_ASSERTE(pData->hDIB);
 			} else {
-				result = true;
+				pData->hOld1 = (HBITMAP)SelectObject(pData->hCompDc1, pData->hDIB);
 				
-				wsprintf(pData->szInfo, L"%i x %i x %ibpp", lWidth, lHeight, nBPP);
-				if (nPages > 1) wsprintf(pData->szInfo+lstrlen(pData->szInfo), L" [%i]", nPages);
-				if (FormatName) {
-					lstrcat(pData->szInfo, L" ");
-					lstrcat(pData->szInfo, FormatName);
+				RECT rcFull = {0,0,nCanvasWidthS, nCanvasHeight};
+				HBRUSH hBr = CreateSolidBrush(pDecodeInfo->crBackground);
+				FillRect(pData->hCompDc1, &rcFull, hBr);
+				DeleteObject(hBr);
+
+				Gdiplus::GpGraphics *pGr = NULL;
+				Gdiplus::Status stat = gdi->GdipCreateFromHDC(pData->hCompDc1, &pGr);
+				if (!stat) {
+					int x = (nCanvasWidth-nShowWidth)>>1;
+					int y = (nCanvasHeight-nShowHeight)>>1;
+					stat = gdi->GdipDrawImageRectRectI(
+						pGr, img,
+						x, y, nShowWidth, nShowHeight,
+						0,0,lWidth,lHeight,
+						Gdiplus::UnitPixel, NULL, //NULL, NULL);
+						(Gdiplus::DrawImageAbort)DrawImageAbortCallback, gdi);
+					gdi->GdipDeleteGraphics(pGr);
 				}
-				
-				pDecodeInfo->pFileContext = (LPVOID)pData;
-				pDecodeInfo->crSize.X = nCanvasWidth; pDecodeInfo->crSize.Y = nCanvasHeight;
-				pDecodeInfo->cbStride = nCanvasWidthS * 4;
-				pDecodeInfo->nBits = 32;
-				pDecodeInfo->ColorModel = CET_CM_BGR;
-				pDecodeInfo->pszComments = pData->szInfo;
-				pDecodeInfo->cbPixelsSize = pDecodeInfo->cbStride * nCanvasHeight;
-				pDecodeInfo->Pixels = (const DWORD*)pBits;
+		
+				if (stat) {
+					pDecodeInfo->nErrNumber = PGE_BITBLT_FAILED;
+				} else {
+					result = true;
+					
+					pDecodeInfo->pFileContext = (LPVOID)pData;
+					pDecodeInfo->crSize.X = nCanvasWidth; pDecodeInfo->crSize.Y = nCanvasHeight;
+					pDecodeInfo->cbStride = nCanvasWidthS * 4;
+					pDecodeInfo->nBits = 32;
+					pDecodeInfo->ColorModel = CET_CM_BGR;
+					pDecodeInfo->pszComments = pData->szInfo;
+					pDecodeInfo->cbPixelsSize = pDecodeInfo->cbStride * nCanvasHeight;
+					pDecodeInfo->Pixels = (const DWORD*)pBits;
+				}
 			}
+
+			pData->pImg = NULL;
 
 			if (!result) {
+				pDecodeInfo->pFileContext = this;
 				pData->Close();
 			}
 		}
@@ -680,7 +728,7 @@ BOOL WINAPI CET_Load(struct CET_LoadInfo* pLoadPreview)
 	
 
 	if (!pImage->Open(
-				pLoadPreview->bVirtualItem ? NULL : pLoadPreview->sFileName,
+				(pLoadPreview->bVirtualItem!=FALSE), pLoadPreview->sFileName,
 				pLoadPreview->pFileData, pLoadPreview->nFileSize))
 	{
 		SETERROR(pImage->nErrNumber);
@@ -723,6 +771,10 @@ VOID WINAPI CET_Free(struct CET_LoadInfo* pLoadPreview)
 		} break;
 		case eGdiStr_Bits: {
 			GDIPlusData *pData = (GDIPlusData*)pLoadPreview->pFileContext;
+			if (pData->pImg) {
+				pData->pImg->Close();
+				pData->pImg = NULL;
+			}
 			pData->Close();
 		} break;
 		

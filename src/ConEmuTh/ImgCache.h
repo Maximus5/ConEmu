@@ -40,6 +40,7 @@ protected:
 		DWORD_PTR UserData;
 		BOOL bPreviewLoaded; // пытались ли уже загружать превьюшку
 		BOOL bPreviewExists; // и получилось ли ее загрузить реально, или в кеше только ShellIcon?
+		BOOL bIgnoreFileDescription; // ImpEx показывает в описании размер изображения, получается некрасивое дублирование
 		//int N,X,Y;
 		COORD crSize; // Предпочтительно, должен совпадать с crLoadSize
 		DWORD cbStride; // Bytes per line
@@ -87,7 +88,7 @@ public:
 	void SetCacheLocation(LPCWSTR asCachePath);
 	void Reset();
 	void Init(COLORREF acrBack);
-	BOOL PaintItem(HDC hdc, int x, int y, int nImgSize, CePluginPanelItem* pItem, BOOL abLoadPreview, LPCWSTR* ppszComments);
+	BOOL PaintItem(HDC hdc, int x, int y, int nImgSize, CePluginPanelItem* pItem, BOOL abLoadPreview, LPCWSTR* ppszComments, BOOL* pbIgnoreFileDescription);
 
 protected:
 	BOOL mb_Quit;

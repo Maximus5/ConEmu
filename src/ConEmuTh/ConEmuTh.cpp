@@ -1165,38 +1165,38 @@ BOOL ProcessConsoleInput(BOOL abUseUngetBuffer, PINPUT_RECORD lpBuffer, DWORD nB
 						case VK_UP:
 						{
 							if (PVM == pvm_Thumbnails)
-								n = min(pi->CurrentItem,pi->nXCount);
+								n = min(pi->CurrentItem,pi->nXCountFull);
 						} break;
 						case VK_DOWN:
 						{
 							if (PVM == pvm_Thumbnails)
-								n = min((pi->ItemsNumber-pi->CurrentItem-1),pi->nXCount);
+								n = min((pi->ItemsNumber-pi->CurrentItem-1),pi->nXCountFull);
 						} break;
 						case VK_LEFT:
 						{
 							p->Event.KeyEvent.wVirtualKeyCode = VK_UP;
 							p->Event.KeyEvent.wVirtualScanCode = wScanCodeUp;
 							if (PVM != pvm_Thumbnails)
-								n = min(pi->CurrentItem,pi->nYCount);
+								n = min(pi->CurrentItem,pi->nYCountFull);
 						} break;
 						case VK_RIGHT:
 						{
 							p->Event.KeyEvent.wVirtualKeyCode = VK_DOWN;
 							p->Event.KeyEvent.wVirtualScanCode = wScanCodeDown;
 							if (PVM != pvm_Thumbnails)
-								n = min((pi->ItemsNumber-pi->CurrentItem-1),pi->nYCount);
+								n = min((pi->ItemsNumber-pi->CurrentItem-1),pi->nYCountFull);
 						} break;
 						case VK_PRIOR:
 						{
 							p->Event.KeyEvent.wVirtualKeyCode = VK_UP;
 							p->Event.KeyEvent.wVirtualScanCode = wScanCodeUp;
-							n = min(pi->CurrentItem,pi->nXCount*pi->nYCountFull);
+							n = min(pi->CurrentItem,pi->nXCountFull*pi->nYCountFull);
 						} break;
 						case VK_NEXT:
 						{
 							p->Event.KeyEvent.wVirtualKeyCode = VK_DOWN;
 							p->Event.KeyEvent.wVirtualScanCode = wScanCodeUp;
-							n = min((pi->ItemsNumber-pi->CurrentItem-1),pi->nXCount*pi->nYCountFull);
+							n = min((pi->ItemsNumber-pi->CurrentItem-1),pi->nXCountFull*pi->nYCountFull);
 						} break;
 					}
 

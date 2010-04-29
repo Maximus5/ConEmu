@@ -216,7 +216,9 @@ public:
 	void PostKeyUp(WORD vkKey, DWORD dwControlState, wchar_t wch, int ScanCode = -1);
 	void PostConsoleEventPipe(MSG *pMsg);
 	BOOL OpenConsoleEventPipe();
-	LRESULT PostConsoleMessage(UINT nMsg, WPARAM wParam, LPARAM lParam);
+	LRESULT PostConsoleMessage(HWND hWnd, UINT nMsg, WPARAM wParam, LPARAM lParam);
+	BOOL ShowOtherWindow(HWND hWnd, int swShow);
+	BOOL SetOtherWindowPos(HWND hWnd, HWND hWndInsertAfter, int X, int Y, int cx, int cy, UINT uFlags);
 	void PostMacro(LPCWSTR asMacro);
     //BOOL FlushInputQueue(DWORD nTimeout = 500);
     void OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, wchar_t *pszChars);
@@ -260,6 +262,7 @@ public:
 	BOOL IsConsoleDataChanged();
     void OnActivate(int nNewNum, int nOldNum);
     void OnDeactivate(int nNewNum);
+	void ShowHideViews(BOOL abShow);
 	void OnGuiFocused(BOOL abFocus);
     BOOL CheckBufferSize();
     //LRESULT OnConEmuCmd(BOOL abStarted, DWORD anConEmuC_PID);

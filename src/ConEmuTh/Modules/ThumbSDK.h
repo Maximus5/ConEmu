@@ -12,11 +12,22 @@
 #define CET_CM_PNG  4
 #define CET_CM_BMP  5
 
+enum {
+	MODULE_GDIP = 0x6764692B, // gdi+
+	MODULE_PNG  = 0x00706E67, // png
+	MODULE_ICO  = 0x0069366F, // ico
+	MODULE_PE   = 0x00700065, // pe
+	MODULE_PIC2 = 0x70696332, // pic2
+	//
+	MODULE_CUSTOM = 0x75736572 // ALL OTHER MODULES (Non standard)
+};
+
 struct CET_Init {
 	// [In]
 	DWORD cbSize; // size of this structure
 	HMODULE hModule; // Module handle of initializing module
 	// [Out]
+	DWORD nModuleID; // gdi+ / png / ico / pe / pic2
 	DWORD nErrNumber;
 	DWORD nFlags; // Combination of CET_CAN_xxx flags
 	LPVOID pContext; // Module may use this value

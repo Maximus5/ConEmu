@@ -209,7 +209,7 @@ bool SettingsXML::OpenKey(const wchar_t *regPath, uint access)
 		CloseHandle(hFile); hFile = NULL;
 	}
 	
-	__try {
+	SAFETRY {
 		hr = CoInitialize(NULL); 
 		hr = CoCreateInstance(CLSID_DOMDocument30, NULL, CLSCTX_INPROC_SERVER, 
 		       IID_IXMLDOMDocument, (void**)&mp_File);
@@ -281,7 +281,7 @@ bool SettingsXML::OpenKey(const wchar_t *regPath, uint access)
 		
 		lbRc = true;
 	
-	}__except(EXCEPTION_EXECUTE_HANDLER){
+	} SAFECATCH {
 		lstrcpy(szErr, L"Exception in SettingsXML::OpenKey");
 		lbRc = false;
 	}
