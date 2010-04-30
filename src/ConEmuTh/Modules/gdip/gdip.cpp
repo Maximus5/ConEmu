@@ -29,7 +29,7 @@ HMODULE ghModule;
 #define PGE_UNKNOWN_COLORSPACE   0x80001008
 #define PGE_UNSUPPORTED_PITCH    0x80001009
 #define PGE_INVALID_PAGEDATA     0x8000100A
-#define PGE_OLD_PLUGIN          0x8000100B
+#define PGE_OLD_PLUGIN           0x8000100B
 #define PGE_BITBLT_FAILED        0x8000100C
 #define PGE_INVALID_VERSION      0x8000100D
 #define PGE_INVALID_IMGSIZE      0x8000100E
@@ -75,69 +75,71 @@ struct GDIPlusDecoder
 	//BOOL bAsDisplay;
 	BOOL bCancelled;
 
-	typedef Gdiplus::Status (WINAPI *GdiplusStartup_t)(OUT ULONG_PTR *token, const Gdiplus::GdiplusStartupInput *input, OUT Gdiplus::GdiplusStartupOutput *output);
-	typedef VOID (WINAPI *GdiplusShutdown_t)(ULONG_PTR token);
-	typedef Gdiplus::GpStatus (WINGDIPAPI *GdipCreateBitmapFromFile_t)(GDIPCONST WCHAR* filename, Gdiplus::GpBitmap **bitmap);
-	typedef Gdiplus::GpStatus (WINGDIPAPI *GdipCreateBitmapFromStream_t)(IStream* stream, Gdiplus::GpBitmap **bitmap);
+	
+	/* ++ */ typedef Gdiplus::Status (WINAPI *GdiplusStartup_t)(OUT ULONG_PTR *token, const Gdiplus::GdiplusStartupInput *input, OUT Gdiplus::GdiplusStartupOutput *output);
+	/* ++ */ typedef VOID (WINAPI *GdiplusShutdown_t)(ULONG_PTR token);
+	/* ++ */ typedef Gdiplus::GpStatus (WINGDIPAPI *GdipCreateBitmapFromFile_t)(GDIPCONST WCHAR* filename, Gdiplus::GpBitmap **bitmap);
+	/* ++ */ typedef Gdiplus::GpStatus (WINGDIPAPI *GdipGetImageThumbnail_t)(Gdiplus::GpImage *image, UINT thumbWidth, UINT thumbHeight, Gdiplus::GpImage **thumbImage, Gdiplus::GetThumbnailImageAbort callback, VOID * callbackData);
+	//typedef Gdiplus::GpStatus (WINGDIPAPI *GdipCreateBitmapFromStream_t)(IStream* stream, Gdiplus::GpBitmap **bitmap);
 	//typedef Gdiplus::GpStatus (WINGDIPAPI *GdipCreateBitmapFromFileICM_t)(GDIPCONST WCHAR* filename, Gdiplus::GpBitmap **bitmap);
 	//typedef Gdiplus::GpStatus (WINGDIPAPI *GdipCreateBitmapFromStreamICM_t)(IStream* stream, Gdiplus::GpBitmap **bitmap);
-	typedef Gdiplus::GpStatus (WINGDIPAPI *GdipGetImageWidth_t)(Gdiplus::GpImage *image, UINT *width);
-	typedef Gdiplus::GpStatus (WINGDIPAPI *GdipGetImageHeight_t)(Gdiplus::GpImage *image, UINT *height);
-	typedef Gdiplus::GpStatus (WINGDIPAPI *GdipGetImagePixelFormat_t)(Gdiplus::GpImage *image, Gdiplus::PixelFormat *format);
-	typedef Gdiplus::GpStatus (WINGDIPAPI *GdipBitmapLockBits_t)(Gdiplus::GpBitmap* bitmap, GDIPCONST Gdiplus::GpRect* rect, UINT flags, Gdiplus::PixelFormat format, Gdiplus::BitmapData* lockedBitmapData);
-	typedef Gdiplus::GpStatus (WINGDIPAPI *GdipBitmapUnlockBits_t)(Gdiplus::GpBitmap* bitmap, Gdiplus::BitmapData* lockedBitmapData);
-	typedef Gdiplus::GpStatus (WINGDIPAPI *GdipDisposeImage_t)(Gdiplus::GpImage *image);
-	typedef Gdiplus::GpStatus (WINGDIPAPI *GdipImageGetFrameCount_t)(Gdiplus::GpImage *image, GDIPCONST GUID* dimensionID, UINT* count);
-	typedef Gdiplus::GpStatus (WINGDIPAPI *GdipImageSelectActiveFrame_t)(Gdiplus::GpImage *image, GDIPCONST GUID* dimensionID, UINT frameIndex);
-	typedef Gdiplus::GpStatus (WINGDIPAPI *GdipGetPropertyItemSize_t)(Gdiplus::GpImage *image, PROPID propId, UINT* size);
-	typedef Gdiplus::GpStatus (WINGDIPAPI *GdipGetPropertyItem_t)(Gdiplus::GpImage *image, PROPID propId, UINT propSize, Gdiplus::PropertyItem* buffer);
-	typedef Gdiplus::GpStatus (WINGDIPAPI *GdipGetImageRawFormat_t)(Gdiplus::GpImage *image, OUT GUID* format);
-	typedef Gdiplus::GpStatus (WINGDIPAPI *GdipGetImageFlags_t)(Gdiplus::GpImage *image, UINT *flags);
-	typedef Gdiplus::GpStatus (WINGDIPAPI *GdipGetImagePalette_t)(Gdiplus::GpImage *image, Gdiplus::ColorPalette *palette, INT size);
-	typedef Gdiplus::GpStatus (WINGDIPAPI *GdipGetImagePaletteSize_t)(Gdiplus::GpImage *image, INT *size);
+	/* ++ */ typedef Gdiplus::GpStatus (WINGDIPAPI *GdipGetImageWidth_t)(Gdiplus::GpImage *image, UINT *width);
+	/* ++ */ typedef Gdiplus::GpStatus (WINGDIPAPI *GdipGetImageHeight_t)(Gdiplus::GpImage *image, UINT *height);
+	/* ++ */ typedef Gdiplus::GpStatus (WINGDIPAPI *GdipGetImagePixelFormat_t)(Gdiplus::GpImage *image, Gdiplus::PixelFormat *format);
+	//typedef Gdiplus::GpStatus (WINGDIPAPI *GdipBitmapLockBits_t)(Gdiplus::GpBitmap* bitmap, GDIPCONST Gdiplus::GpRect* rect, UINT flags, Gdiplus::PixelFormat format, Gdiplus::BitmapData* lockedBitmapData);
+	//typedef Gdiplus::GpStatus (WINGDIPAPI *GdipBitmapUnlockBits_t)(Gdiplus::GpBitmap* bitmap, Gdiplus::BitmapData* lockedBitmapData);
+	/* ++ */ typedef Gdiplus::GpStatus (WINGDIPAPI *GdipDisposeImage_t)(Gdiplus::GpImage *image);
+	/* ++ */ typedef Gdiplus::GpStatus (WINGDIPAPI *GdipImageGetFrameCount_t)(Gdiplus::GpImage *image, GDIPCONST GUID* dimensionID, UINT* count);
+	/* ++ */ typedef Gdiplus::GpStatus (WINGDIPAPI *GdipImageSelectActiveFrame_t)(Gdiplus::GpImage *image, GDIPCONST GUID* dimensionID, UINT frameIndex);
+	//typedef Gdiplus::GpStatus (WINGDIPAPI *GdipGetPropertyItemSize_t)(Gdiplus::GpImage *image, PROPID propId, UINT* size);
+	//typedef Gdiplus::GpStatus (WINGDIPAPI *GdipGetPropertyItem_t)(Gdiplus::GpImage *image, PROPID propId, UINT propSize, Gdiplus::PropertyItem* buffer);
+	/* ++ */ typedef Gdiplus::GpStatus (WINGDIPAPI *GdipGetImageRawFormat_t)(Gdiplus::GpImage *image, OUT GUID* format);
+	//typedef Gdiplus::GpStatus (WINGDIPAPI *GdipGetImageFlags_t)(Gdiplus::GpImage *image, UINT *flags);
+	//typedef Gdiplus::GpStatus (WINGDIPAPI *GdipGetImagePalette_t)(Gdiplus::GpImage *image, Gdiplus::ColorPalette *palette, INT size);
+	//typedef Gdiplus::GpStatus (WINGDIPAPI *GdipGetImagePaletteSize_t)(Gdiplus::GpImage *image, INT *size);
 	typedef Gdiplus::GpStatus (WINGDIPAPI *GdipCreateFromHDC_t)(HDC hdc, Gdiplus::GpGraphics **graphics);
 	typedef Gdiplus::GpStatus (WINGDIPAPI *GdipDeleteGraphics_t)(Gdiplus::GpGraphics *graphics);
 	typedef Gdiplus::GpStatus (WINGDIPAPI *GdipDrawImageRectRectI_t)(Gdiplus::GpGraphics *graphics, Gdiplus::GpImage *image, INT dstx, INT dsty, INT dstwidth, INT dstheight, INT srcx, INT srcy, INT srcwidth, INT srcheight, Gdiplus::GpUnit srcUnit, const Gdiplus::GpImageAttributes* imageAttributes, Gdiplus::DrawImageAbort callback, VOID * callbackData);
-	typedef Gdiplus::GpStatus (WINGDIPAPI *GdipCreateBitmapFromScan0_t)(INT width, INT height, INT stride, Gdiplus::PixelFormat format, BYTE* scan0, Gdiplus::GpBitmap** bitmap);
-	typedef Gdiplus::GpStatus (WINGDIPAPI *GdipFillRectangleI_t)(Gdiplus::GpGraphics *graphics, Gdiplus::GpBrush *brush, INT x, INT y, INT width, INT height);
-	typedef Gdiplus::GpStatus (WINGDIPAPI *GdipCreateSolidFill_t)(Gdiplus::ARGB color, Gdiplus::GpSolidFill **brush);
-	typedef Gdiplus::GpStatus (WINGDIPAPI *GdipDeleteBrush_t)(Gdiplus::GpBrush *brush);
+	//typedef Gdiplus::GpStatus (WINGDIPAPI *GdipCreateBitmapFromScan0_t)(INT width, INT height, INT stride, Gdiplus::PixelFormat format, BYTE* scan0, Gdiplus::GpBitmap** bitmap);
+	//typedef Gdiplus::GpStatus (WINGDIPAPI *GdipFillRectangleI_t)(Gdiplus::GpGraphics *graphics, Gdiplus::GpBrush *brush, INT x, INT y, INT width, INT height);
+	//typedef Gdiplus::GpStatus (WINGDIPAPI *GdipCreateSolidFill_t)(Gdiplus::ARGB color, Gdiplus::GpSolidFill **brush);
+	//typedef Gdiplus::GpStatus (WINGDIPAPI *GdipDeleteBrush_t)(Gdiplus::GpBrush *brush);
 	//typedef Gdiplus::GpStatus (WINGDIPAPI *GdipCloneImage_t)(Gdiplus::GpImage *image, Gdiplus::GpImage **cloneImage);
-	typedef Gdiplus::GpStatus (WINGDIPAPI *GdipCloneBitmapAreaI_t)(INT x, INT y, INT width, INT height, Gdiplus::PixelFormat format, Gdiplus::GpBitmap *srcBitmap, Gdiplus::GpBitmap **dstBitmap);
-	typedef Gdiplus::GpStatus (WINGDIPAPI *GdipSetImagePalette_t)(Gdiplus::GpImage *image, GDIPCONST Gdiplus::ColorPalette *palette);
+	//typedef Gdiplus::GpStatus (WINGDIPAPI *GdipCloneBitmapAreaI_t)(INT x, INT y, INT width, INT height, Gdiplus::PixelFormat format, Gdiplus::GpBitmap *srcBitmap, Gdiplus::GpBitmap **dstBitmap);
+	//typedef Gdiplus::GpStatus (WINGDIPAPI *GdipSetImagePalette_t)(Gdiplus::GpImage *image, GDIPCONST Gdiplus::ColorPalette *palette);
 
 
 
 	GdiplusStartup_t GdiplusStartup;
 	GdiplusShutdown_t GdiplusShutdown;
 	GdipCreateBitmapFromFile_t GdipCreateBitmapFromFile;
-	GdipCreateBitmapFromStream_t GdipCreateBitmapFromStream;
+	//GdipCreateBitmapFromStream_t GdipCreateBitmapFromStream;
 	//GdipCreateBitmapFromFileICM_t GdipCreateBitmapFromFileICM;
 	//GdipCreateBitmapFromStreamICM_t GdipCreateBitmapFromStreamICM;
 	GdipGetImageWidth_t GdipGetImageWidth;
 	GdipGetImageHeight_t GdipGetImageHeight;
 	GdipGetImagePixelFormat_t GdipGetImagePixelFormat;
-	GdipBitmapLockBits_t GdipBitmapLockBits;
-	GdipBitmapUnlockBits_t GdipBitmapUnlockBits;
+	//GdipBitmapLockBits_t GdipBitmapLockBits;
+	//GdipBitmapUnlockBits_t GdipBitmapUnlockBits;
 	GdipDisposeImage_t GdipDisposeImage;
 	GdipImageGetFrameCount_t GdipImageGetFrameCount;
 	GdipImageSelectActiveFrame_t GdipImageSelectActiveFrame;
-	GdipGetPropertyItemSize_t GdipGetPropertyItemSize;
-	GdipGetPropertyItem_t GdipGetPropertyItem;
+	//GdipGetPropertyItemSize_t GdipGetPropertyItemSize;
+	//GdipGetPropertyItem_t GdipGetPropertyItem;
 	GdipGetImageRawFormat_t GdipGetImageRawFormat;
-	GdipGetImageFlags_t GdipGetImageFlags;
-	GdipGetImagePalette_t GdipGetImagePalette;
-	GdipGetImagePaletteSize_t GdipGetImagePaletteSize;
+	//GdipGetImageFlags_t GdipGetImageFlags;
+	//GdipGetImagePalette_t GdipGetImagePalette;
+	//GdipGetImagePaletteSize_t GdipGetImagePaletteSize;
 	GdipCreateFromHDC_t GdipCreateFromHDC;
 	GdipDeleteGraphics_t GdipDeleteGraphics;
 	GdipDrawImageRectRectI_t GdipDrawImageRectRectI;
-	GdipCreateBitmapFromScan0_t GdipCreateBitmapFromScan0;
-	GdipFillRectangleI_t GdipFillRectangleI;
-	GdipCreateSolidFill_t GdipCreateSolidFill;
-	GdipDeleteBrush_t GdipDeleteBrush;
+	//GdipCreateBitmapFromScan0_t GdipCreateBitmapFromScan0;
+	//GdipFillRectangleI_t GdipFillRectangleI;
+	//GdipCreateSolidFill_t GdipCreateSolidFill;
+	//GdipDeleteBrush_t GdipDeleteBrush;
 	//GdipCloneImage_t GdipCloneImage;
-	GdipCloneBitmapAreaI_t GdipCloneBitmapAreaI;
-	GdipSetImagePalette_t GdipSetImagePalette;
+	//GdipCloneBitmapAreaI_t GdipCloneBitmapAreaI;
+	//GdipSetImagePalette_t GdipSetImagePalette;
 	
 	GDIPlusDecoder() {
 		nMagic = eGdiStr_Decoder;
@@ -178,39 +180,43 @@ struct GDIPlusDecoder
 			DllGetFunction(hGDIPlus, GdiplusShutdown);
 			DllGetFunction(hGDIPlus, GdipCreateBitmapFromFile);
 			//DllGetFunction(hGDIPlus, GdipCreateBitmapFromFileICM);
-			DllGetFunction(hGDIPlus, GdipCreateBitmapFromStream);
+			//DllGetFunction(hGDIPlus, GdipCreateBitmapFromStream);
 			//DllGetFunction(hGDIPlus, GdipCreateBitmapFromStreamICM);
 			DllGetFunction(hGDIPlus, GdipGetImageWidth);
 			DllGetFunction(hGDIPlus, GdipGetImageHeight);
 			DllGetFunction(hGDIPlus, GdipGetImagePixelFormat);
-			DllGetFunction(hGDIPlus, GdipBitmapLockBits);
-			DllGetFunction(hGDIPlus, GdipBitmapUnlockBits);
+			//DllGetFunction(hGDIPlus, GdipBitmapLockBits);
+			//DllGetFunction(hGDIPlus, GdipBitmapUnlockBits);
 			DllGetFunction(hGDIPlus, GdipDisposeImage);
 			DllGetFunction(hGDIPlus, GdipImageGetFrameCount);
 			DllGetFunction(hGDIPlus, GdipImageSelectActiveFrame);
-			DllGetFunction(hGDIPlus, GdipGetPropertyItemSize);
-			DllGetFunction(hGDIPlus, GdipGetPropertyItem);
+			//DllGetFunction(hGDIPlus, GdipGetPropertyItemSize);
+			//DllGetFunction(hGDIPlus, GdipGetPropertyItem);
 			DllGetFunction(hGDIPlus, GdipGetImageRawFormat);
-			DllGetFunction(hGDIPlus, GdipGetImageFlags);
-			DllGetFunction(hGDIPlus, GdipGetImagePalette);
-			DllGetFunction(hGDIPlus, GdipGetImagePaletteSize);
+			//DllGetFunction(hGDIPlus, GdipGetImageFlags);
+			//DllGetFunction(hGDIPlus, GdipGetImagePalette);
+			//DllGetFunction(hGDIPlus, GdipGetImagePaletteSize);
 			DllGetFunction(hGDIPlus, GdipCreateFromHDC);
 			DllGetFunction(hGDIPlus, GdipDeleteGraphics);
 			DllGetFunction(hGDIPlus, GdipDrawImageRectRectI);
-			DllGetFunction(hGDIPlus, GdipCreateBitmapFromScan0);
-			DllGetFunction(hGDIPlus, GdipFillRectangleI);
-			DllGetFunction(hGDIPlus, GdipCreateSolidFill);
-			DllGetFunction(hGDIPlus, GdipDeleteBrush);
-			DllGetFunction(hGDIPlus, GdipCloneBitmapAreaI);
-			DllGetFunction(hGDIPlus, GdipSetImagePalette);
+			//DllGetFunction(hGDIPlus, GdipCreateBitmapFromScan0);
+			//DllGetFunction(hGDIPlus, GdipFillRectangleI);
+			//DllGetFunction(hGDIPlus, GdipCreateSolidFill);
+			//DllGetFunction(hGDIPlus, GdipDeleteBrush);
+			//DllGetFunction(hGDIPlus, GdipCloneBitmapAreaI);
+			//DllGetFunction(hGDIPlus, GdipSetImagePalette);
 
 
-			if (GdiplusStartup && GdiplusShutdown && GdipCreateBitmapFromFile && GdipGetImageWidth && GdipGetImageHeight && GdipGetImagePixelFormat && GdipBitmapLockBits && GdipBitmapUnlockBits && GdipDisposeImage && GdipImageGetFrameCount && GdipImageSelectActiveFrame 
-				&& GdipGetPropertyItemSize && GdipGetPropertyItem && GdipGetImageFlags
-				&& GdipGetImagePalette && GdipGetImagePaletteSize && GdipCloneBitmapAreaI
+			if (GdiplusStartup && GdiplusShutdown && GdipCreateBitmapFromFile && GdipGetImageWidth 
+				&& GdipGetImageHeight && GdipGetImagePixelFormat 
+				//&& GdipBitmapLockBits && GdipBitmapUnlockBits 
+				&& GdipDisposeImage && GdipImageGetFrameCount && GdipImageSelectActiveFrame 
+				//&& GdipGetPropertyItemSize && GdipGetPropertyItem && GdipGetImageFlags
+				//&& GdipGetImagePalette && GdipGetImagePaletteSize && GdipCloneBitmapAreaI
 				&& GdipCreateFromHDC && GdipDeleteGraphics && GdipDrawImageRectRectI
-				&& GdipCreateBitmapFromScan0 && GdipFillRectangleI && GdipCreateSolidFill && GdipDeleteBrush
-				&& GdipSetImagePalette)
+				//&& GdipCreateBitmapFromScan0 && GdipFillRectangleI && GdipCreateSolidFill && GdipDeleteBrush
+				//&& GdipSetImagePalette
+				)
 			{
 				Gdiplus::GdiplusStartupInput gdiplusStartupInput;
 				Gdiplus::Status lRc = GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
@@ -292,11 +298,11 @@ struct GDIPlusImage
 	
 	wchar_t szTempFile[MAX_PATH+1];
 	GDIPlusDecoder *gdi;
-	Gdiplus::GpBitmap *img;
+	Gdiplus::GpImage *img;
 	MStream* strm;
 	HRESULT nErrNumber, nLastError;
 	//
-	UINT lWidth, lHeight, pf, nBPP, nPages, /*lFrameTime,*/ nActivePage, nTransparent, nImgFlags;
+	UINT lWidth, lHeight, pf, nBPP, nPages, /*lFrameTime,*/ nActivePage, nTransparent; //, nImgFlags;
 	bool Animation;
 	wchar_t FormatName[0x80];
 	
@@ -306,31 +312,31 @@ struct GDIPlusImage
 	};
 
 
-	Gdiplus::GpBitmap* OpenBitmapFromStream(const u8 *pBuffer, i64 lFileSize)
-	{
-		Gdiplus::Status lRc = Gdiplus::Ok;
-		Gdiplus::GpBitmap *img = NULL;
+	//Gdiplus::GpBitmap* OpenBitmapFromStream(const u8 *pBuffer, i64 lFileSize)
+	//{
+	//	Gdiplus::Status lRc = Gdiplus::Ok;
+	//	Gdiplus::GpBitmap *img = NULL;
 
-		// IStream используется в процессе декодирования, поэтому его нужно держать созданным	
-		strm = new MStream();
-		if (strm) {
-			nLastError = strm->Write(pBuffer, (ULONG)lFileSize, NULL);
-				
-			if (nLastError == S_OK) {
-				LARGE_INTEGER ll; ll.QuadPart = 0;
-				strm->Seek(ll, STREAM_SEEK_SET, NULL);
-		
-				lRc = gdi->GdipCreateBitmapFromStream(strm, &img);
-			}
-		}
-		
-		if (!img) {
-			nLastError = GetLastError();
-			nErrNumber = PGE_ERROR_BASE + (DWORD)lRc;
-		}
-		return img;
-	}
-	Gdiplus::GpBitmap* OpenBitmapFromFile(const wchar_t *pFileName)
+	//	// IStream используется в процессе декодирования, поэтому его нужно держать созданным	
+	//	strm = new MStream();
+	//	if (strm) {
+	//		nLastError = strm->Write(pBuffer, (ULONG)lFileSize, NULL);
+	//			
+	//		if (nLastError == S_OK) {
+	//			LARGE_INTEGER ll; ll.QuadPart = 0;
+	//			strm->Seek(ll, STREAM_SEEK_SET, NULL);
+	//	
+	//			lRc = gdi->GdipCreateBitmapFromStream(strm, &img);
+	//		}
+	//	}
+	//	
+	//	if (!img) {
+	//		nLastError = GetLastError();
+	//		nErrNumber = PGE_ERROR_BASE + (DWORD)lRc;
+	//	}
+	//	return img;
+	//}
+	Gdiplus::GpImage* OpenBitmapFromFile(const wchar_t *pFileName)
 	{
 		Gdiplus::Status lRc = Gdiplus::Ok;
 		Gdiplus::GpBitmap *img = NULL;
@@ -353,7 +359,7 @@ struct GDIPlusImage
 		bool result = false;
 		Gdiplus::Status lRc;
 
-		nActivePage = -1; nTransparent = -1; nImgFlags = 0;
+		nActivePage = -1; nTransparent = -1; //nImgFlags = 0;
 		
 		if (bVirtual && pBuffer && lFileSize) {
 			DWORD n;
@@ -379,10 +385,15 @@ struct GDIPlusImage
 			}
 		}
 
-		if (!bVirtual)
-			img = OpenBitmapFromFile(pFileName);
-		else // лучше бы его вообще не использовать, GDI+ как-то не очень с потоками работает...
-			img = OpenBitmapFromStream(pBuffer, lFileSize);
+		if (bVirtual) {
+			nErrNumber = PGE_FILE_NOT_FOUND;
+			return false;
+		}
+
+		//if (!bVirtual)
+		img = OpenBitmapFromFile(pFileName);
+		//else // лучше бы его вообще не использовать, GDI+ как-то не очень с потоками работает...
+		//	img = OpenBitmapFromStream(pBuffer, lFileSize);
 
 		if (!img) {
 			//nErrNumber = gdi->nErrNumber; -- ошибка УЖЕ в nErrNumber
@@ -393,7 +404,7 @@ struct GDIPlusImage
 			lRc = gdi->GdipGetImagePixelFormat(img, (Gdiplus::PixelFormat*)&pf);
 			nBPP = pf >> 8 & 0xFF;
 
-			lRc = gdi->GdipGetImageFlags(img, &nImgFlags);
+			//lRc = gdi->GdipGetImageFlags(img, &nImgFlags);
 			
 
 			Animation = false; nPages = 1;

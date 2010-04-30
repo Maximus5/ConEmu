@@ -155,10 +155,11 @@ private:
 	PanelViewInit m_LeftPanelView, m_RightPanelView;
 	BOOL mb_LeftPanelRedraw, mb_RightPanelRedraw;
 	SMALL_RECT mrc_LastDialogs[32]; int mn_LastDialogsCount;
-	BOOL UpdatePanelView(BOOL abLeftPanel);
+	BOOL UpdatePanelView(BOOL abLeftPanel, BOOL abOnRegister=FALSE);
+	CRgnRects m_RgnTest, m_RgnLeftPanel, m_RgnRightPanel;
 	BOOL UpdatePanelRgn(BOOL abLeftPanel, BOOL abTestOnly=FALSE, BOOL abOnRegister=FALSE);
 	void PolishPanelViews();
-	HRGN CreateConsoleRgn(int x1, int y1, int x2, int y2, BOOL abTestOnly);
+	//HRGN CreateConsoleRgn(int x1, int y1, int x2, int y2, BOOL abTestOnly);
 	BOOL CheckDialogsChanged();
 	BOOL mb_DialogsChanged;
 	UINT mn_ConEmuFadeMsg;

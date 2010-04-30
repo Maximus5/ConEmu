@@ -7,7 +7,7 @@ OUTNAME = gdi+
 
 USERCPP=/D_NO_EXEPTION_=1
 
-LINK_OBJS = $(OBJDIR)\gdi+.obj
+LINK_OBJS = $(OBJDIR)\gdip.obj
 
 USERLIBS = 
 
@@ -15,4 +15,4 @@ USERLIBS =
 
 !include ..\makefile_vc_target_inc
 
-$(OBJDIR)\gdi+.obj: gdi+.cpp ..\ThumbSDK.h MStream.h
+$(OBJDIR)\gdip.obj: gdip.cpp ..\ThumbSDK.h MStream.h

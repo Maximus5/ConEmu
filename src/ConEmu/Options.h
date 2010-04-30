@@ -72,6 +72,7 @@ public:
 	BYTE FontCharSet();
 	BOOL FontItalic();
 	BOOL FontClearType();
+	BYTE FontQuality();
 private:
     LOGFONT LogFont, LogFont2;
 	LONG mn_AutoFontWidth, mn_AutoFontHeight; // размеры шрифтов, которые были запрошены при авторесайзе шрифта

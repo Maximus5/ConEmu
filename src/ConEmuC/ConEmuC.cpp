@@ -2656,6 +2656,11 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 				in.SetWndPos.X, in.SetWndPos.Y, in.SetWndPos.cx, in.SetWndPos.cy,
 				in.SetWndPos.uFlags);
 		} break;
+		
+		case CECMD_SETWINDOWRGN:
+		{
+			MySetWindowRgn(&in.SetWndRgn);
+		} break;
 	}
 	
 	if (gbInRecreateRoot) gbInRecreateRoot = FALSE;

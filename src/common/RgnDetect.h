@@ -73,10 +73,10 @@ public:
 	
 public:
 	// Public methods
-	int GetDetectedDialogs(int anMaxCount, SMALL_RECT* rc, DWORD* rf);
-	DWORD GetDialog(DWORD nDlgID, SMALL_RECT* rc);
+	int GetDetectedDialogs(int anMaxCount, SMALL_RECT* rc, DWORD* rf) const;
+	DWORD GetDialog(DWORD nDlgID, SMALL_RECT* rc) const;
 	void PrepareTransparent(const CEFAR_INFO *apFarInfo, const COLORREF *apColors, const CONSOLE_SCREEN_BUFFER_INFO *apSbi, wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight);
-	DWORD GetFlags();
+	DWORD GetFlags() const;
 	// Methods for plugins
 	void PrepareTransparent(const CEFAR_INFO *apFarInfo, const COLORREF *apColors);
 	void OnWindowSizeChanged();
@@ -140,3 +140,37 @@ protected:
 	bool mb_TableCreated;
 	//void GetConsoleData(const CHAR_INFO *pCharInfo, const COLORREF *apColors, wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight);
 };
+
+//#include <pshpack1.h>
+class CRgnRects
+{
+public:
+	int nRectCount;
+	#define MAX_RGN_RECTS MAX_DETECTED_DIALOGS // 20.
+	RECT rcRect[MAX_RGN_RECTS]; // rcRect[0] - основной, rcRect[1...] - то что вычитается из rcRect[0]
+/*	Current region state:
+	#define ERROR               0
+	#define NULLREGION          1
+	#define SIMPLEREGION        2
+	#define COMPLEXREGION       3
+	#define RGN_ERROR ERROR
+*/	int nRgnState;
+	
+	CRgnRects();
+	~CRgnRects();
+
+	// Сброс всего в NULLREGION
+	void Reset();
+	// Сбросить все прямоугольники и установить rcRect[0]
+	void Init(LPRECT prcInit);
+	// Combines the parts of rcRect[..] that are not part of prcAddDiff.
+	int Diff(LPRECT prcAddDiff);
+	int DiffSmall(SMALL_RECT *prcAddDiff);
+	// Скопировать ИЗ pRgn, вернуть true - если были отличия
+	bool LoadFrom(CRgnRects* pRgn);
+	
+/*	Service variables for nRgnState tesgins */
+	int nFieldMaxCells, nFieldWidth, nFieldHeight;
+	bool* pFieldCells;
+};
+//#include <poppack.h>

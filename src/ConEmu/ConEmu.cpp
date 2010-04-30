@@ -5415,10 +5415,12 @@ void CConEmuMain::OnPanelViewSettingsChanged(BOOL abSendChanges/*=TRUE*/)
 		gSet.ThSet.crFadePalette[i] = (pcrFade[i]) & 0xFFFFFF;
 	}
 
-	// Применить в мэппинг
-	gSet.m_ThSetMap.SetFrom(&gSet.ThSet);
+	gSet.ThSet.nFontQuality = gSet.FontQuality();
 
-	if (abSendChanges) {
+	// Применить в мэппинг
+	bool lbChanged = gSet.m_ThSetMap.SetFrom(&gSet.ThSet);
+
+	if (abSendChanges && lbChanged) {
 		// и отослать заинтересованным
 		for (int i=0; i<MAX_CONSOLE_COUNT; i++) {
 			if (mp_VCon[i]) {

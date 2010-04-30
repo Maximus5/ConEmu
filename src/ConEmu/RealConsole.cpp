@@ -6287,6 +6287,12 @@ void CRealConsole::PrepareTransparent(wchar_t* pChar, CharAttr* pAttr, int nWidt
 	if (mp_FarInfo)
 		FI = *mp_FarInfo;
 
+	#ifdef _DEBUG
+	if (mb_LeftPanel && !mb_RightPanel && mr_LeftPanelFull.right > 120) {
+		mb_LeftPanel = mb_LeftPanel;
+	}
+	#endif
+
 	if (mb_LeftPanel) {
 		FI.bFarLeftPanel = true;
 		FI.FarLeftPanel.PanelRect = mr_LeftPanelFull;
@@ -6301,6 +6307,13 @@ void CRealConsole::PrepareTransparent(wchar_t* pChar, CharAttr* pAttr, int nWidt
 	}
 
 	mp_Rgn->PrepareTransparent(&FI, mp_VCon->mp_Colors, &con.m_sbi, pChar, pAttr, nWidth, nHeight);
+
+	#ifdef _DEBUG
+	int nCount = mp_Rgn->GetDetectedDialogs(0,NULL,NULL);
+	if (nCount == 1) {
+		nCount = 1;
+	}
+	#endif
 }
 //void CRealConsole::PrepareTransparent(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight)
 //{
@@ -6865,9 +6878,19 @@ void CRealConsole::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, i
 
 BOOL CRealConsole::ShowOtherWindow(HWND hWnd, int swShow)
 {
+	if ((IsWindowVisible(hWnd) == FALSE) == (swShow == SW_HIDE))
+		return TRUE; // уже все сделано
+
 	BOOL lbRc = ShowWindow(hWnd, swShow);
 	if (!lbRc) {
 		DWORD dwErr = GetLastError();
+		if (dwErr == 0) {
+			if ((IsWindowVisible(hWnd) == FALSE) == (swShow == SW_HIDE))
+				lbRc = TRUE;
+			else
+				dwErr = 5; // попробовать через сервер
+		}
+
 		if (dwErr == 5 /*E_access*/) {
 			//PostConsoleMessage(hWnd, WM_SHOWWINDOW, SW_SHOWNA, 0);
 			CESERVER_REQ in;
@@ -6882,7 +6905,7 @@ BOOL CRealConsole::ShowOtherWindow(HWND hWnd, int swShow)
 			CESERVER_REQ *pOut = ExecuteSrvCmd(GetServerPID(), &in, ghWnd);
 			if (pOut) ExecuteFreeResult(pOut);
 			lbRc = TRUE;
-		} else {
+		} else if (!lbRc) {
 			wchar_t szClass[64], szMessage[255];
 			if (!GetClassName(hWnd, szClass, 63)) wsprintf(szClass, L"0x%08X", (DWORD)hWnd); else szClass[63] = 0;
 			wsprintf(szMessage, L"Can't %s %s window!", 
@@ -6921,6 +6944,30 @@ BOOL CRealConsole::SetOtherWindowPos(HWND hWnd, HWND hWndInsertAfter, int X, int
 			DisplayLastError(szMessage, dwErr);
 		}
 	}
+	return lbRc;
+}
+
+BOOL CRealConsole::SetOtherWindowRgn(HWND hWnd, int nRects, LPRECT prcRects, BOOL bRedraw)
+{
+	BOOL lbRc = FALSE;
+	CESERVER_REQ in;
+	ExecutePrepareCmd(&in, CECMD_SETWINDOWRGN, sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_SETWINDOWRGN));
+	// Собственно, аргументы
+	in.SetWndRgn.hWnd = hWnd;
+	if (nRects <= 0 || !prcRects) {
+		_ASSERTE(nRects==0 || nRects==-1); // -1 means reset rgn and hide window
+		in.SetWndRgn.nRectCount = nRects;
+		in.SetWndRgn.bRedraw = bRedraw;		
+	} else {
+		in.SetWndRgn.nRectCount = nRects;
+		in.SetWndRgn.bRedraw = bRedraw;
+		memmove(in.SetWndRgn.rcRects, prcRects, nRects*sizeof(RECT));
+	}
+
+	CESERVER_REQ *pOut = ExecuteSrvCmd(GetServerPID(), &in, ghWnd);
+	if (pOut) ExecuteFreeResult(pOut);
+	lbRc = TRUE;
+	
 	return lbRc;
 }
 
@@ -8845,6 +8892,14 @@ void CRealConsole::FindPanels()
 	short nLastProgress = mn_ConsoleProgress;
 	short nNewProgress;
 
+	/*
+	Имеем облом. При ресайзе панелей CtrlLeft/CtrlRight иногда сервер считывает
+	содержимое консоли ДО окончания вывода в нее новой информации. В итоге верхняя
+	часть считанного не соответствует нижней, что влечет ошибку
+	определения панелей в CRealConsole::FindPanels - ошибочно считает, что
+	Левая панель - полноэкранная :(
+	*/
+
 	WARNING("Добавить проверки по всем граням панелей, чтобы на них не было некорректных символов");
 	// То есть на грани панели не было других диалогов (вертикальных/угловых бордюров поверх горизонтальной части панели)
 
@@ -8895,7 +8950,7 @@ void CRealConsole::FindPanels()
 					uint nBottom = con.nTextHeight - 1;
 					while (nBottom > 4) {
 						if (con.pConChar[con.nTextWidth*nBottom] == ucBoxDblUpRight 
-							&& con.pConChar[con.nTextWidth*nBottom+i] == ucBoxDblUpLeft)
+							/*&& con.pConChar[con.nTextWidth*nBottom+i] == ucBoxDblUpLeft*/)
 						{
 							rLeftPanel.left = 1;
 							rLeftPanel.top = nY + 2;
@@ -8920,9 +8975,9 @@ void CRealConsole::FindPanels()
 			if (bLeftPanel) {
 				// Положение известно, нужно только проверить наличие
 				if (con.pConChar[nIdx+rLeftPanel.right+2] == ucBoxDblDownRight
-					&& con.pConChar[nIdx+rLeftPanel.right+2+con.nTextWidth] == ucBoxDblVert
-					&& con.pConChar[nIdx+con.nTextWidth*2] == ucBoxDblVert
-					&& con.pConChar[(rLeftPanel.bottom+3)*con.nTextWidth+rLeftPanel.right+2] == ucBoxDblUpRight
+					/*&& con.pConChar[nIdx+rLeftPanel.right+2+con.nTextWidth] == ucBoxDblVert*/
+					/*&& con.pConChar[nIdx+con.nTextWidth*2] == ucBoxDblVert*/
+					/*&& con.pConChar[(rLeftPanel.bottom+3)*con.nTextWidth+rLeftPanel.right+2] == ucBoxDblUpRight*/
 					&& con.pConChar[(rLeftPanel.bottom+4)*con.nTextWidth-1] == ucBoxDblUpLeft
 					)
 				{
@@ -8951,8 +9006,8 @@ void CRealConsole::FindPanels()
 						{
 							uint nBottom = con.nTextHeight - 1;
 							while (nBottom > 4) {
-								if (con.pConChar[con.nTextWidth*nBottom+i] == ucBoxDblUpRight 
-									&& con.pConChar[con.nTextWidth*(nBottom+1)-1] == ucBoxDblUpLeft)
+								if (/*con.pConChar[con.nTextWidth*nBottom+i] == ucBoxDblUpRight 
+									&&*/ con.pConChar[con.nTextWidth*(nBottom+1)-1] == ucBoxDblUpLeft)
 								{
 									rRightPanel.left = i+1;
 									rRightPanel.top = nY + 2;
@@ -8973,6 +9028,12 @@ void CRealConsole::FindPanels()
 			}
 		}
     }
+
+#ifdef _DEBUG
+	if (bLeftPanel && !bRightPanel && rLeftPanelFull.right > 120) {
+		bLeftPanel = bLeftPanel;
+	}
+#endif
 
     if (isActive())
 		lbNeedUpdateSizes = (memcmp(&mr_LeftPanel,&rLeftPanel,sizeof(mr_LeftPanel)) || memcmp(&mr_RightPanel,&rRightPanel,sizeof(mr_RightPanel)));
@@ -9826,6 +9887,11 @@ int CRealConsole::GetDetectedDialogs(int anMaxCount, SMALL_RECT* rc, DWORD* rf)
 	//		memmove(rb, m_DetectedDialogs.bWasFrame, nCount*sizeof(bool));
 	//}
 	//return nCount;
+}
+
+const CRgnDetect* CRealConsole::GetDetector()
+{
+	return mp_Rgn;
 }
 
 // Преобразовать абсолютные координаты консоли в координаты нашего буфера

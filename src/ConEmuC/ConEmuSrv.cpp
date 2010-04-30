@@ -2565,3 +2565,56 @@ DWORD WINAPI QueryPipeThread(LPVOID lpvParam)
 	MCHKHEAP;
 	return 1; 
 } 
+
+int MySetWindowRgn(CESERVER_REQ_SETWINDOWRGN* pRgn)
+{
+	if (!pRgn) {
+		_ASSERTE(pRgn!=NULL);
+		return 0; // Invalid argument!
+	}
+	
+	if (pRgn->nRectCount == 0) {
+		return SetWindowRgn((HWND)pRgn->hWnd, NULL, pRgn->bRedraw);
+	} else if (pRgn->nRectCount == -1) {
+		ShowWindow((HWND)pRgn->hWnd, SW_HIDE);
+		return SetWindowRgn((HWND)pRgn->hWnd, NULL, FALSE);
+	}
+
+	// Нужно считать...
+	HRGN hRgn = NULL, hSubRgn = NULL, hCombine = NULL;
+	BOOL lbPanelVisible = TRUE;
+	
+	hRgn = CreateRectRgn(pRgn->rcRects->left, pRgn->rcRects->top, pRgn->rcRects->right, pRgn->rcRects->bottom);
+	
+	for (int i = 1; i < pRgn->nRectCount; i++) {
+		RECT rcTest;
+		if (!IntersectRect(&rcTest, pRgn->rcRects, pRgn->rcRects+i))
+			continue;
+
+		// Все остальные прямоугольники вычитать из hRgn
+		hSubRgn = CreateRectRgn(rcTest.left, rcTest.top, rcTest.right, rcTest.bottom);
+		if (!hCombine)
+			hCombine = CreateRectRgn(0,0,1,1);
+		int nCRC = CombineRgn(hCombine, hRgn, hSubRgn, RGN_DIFF);
+		if (nCRC) {
+			// Замена переменных
+			HRGN hTmp = hRgn; hRgn = hCombine; hCombine = hTmp;
+			// А этот больше не нужен
+			DeleteObject(hSubRgn); hSubRgn = NULL;
+		}
+
+		// Проверка, может регион уже пуст?
+		if (nCRC == NULLREGION) {
+			lbPanelVisible = FALSE; break;
+		}
+	}
+
+	int iRc = 0;
+	
+	SetWindowRgn((HWND)pRgn->hWnd, hRgn, TRUE); hRgn = NULL;
+
+	// чистка
+	if (hCombine) { DeleteObject(hCombine); hCombine = NULL; }
+
+	return iRc;
+}

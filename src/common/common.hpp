@@ -231,10 +231,11 @@ WARNING("CONEMUMSG_SRVSTARTED нужно переделать в команду пайпа для GUI");
 #define CECMD_SETDONTCLOSE  29
 #define CECMD_REGPANELVIEW  30
 #define CECMD_ONACTIVATION  31 // Для установки флажка ConsoleInfo->bConsoleActive
-#define CECMD_SETWINDOWPOS  32 // CESERVER_REQ_SETWINDOWPOS
+#define CECMD_SETWINDOWPOS  32 // CESERVER_REQ_SETWINDOWPOS.
+#define CECMD_SETWINDOWRGN  33 // CESERVER_REQ_SETWINDOWRGN.
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    40
+#define CESERVER_REQ_VER    41
 
 #define PIPEBUFSIZE 4096
 
@@ -326,6 +327,9 @@ typedef struct tag_PanelViewSettings {
 	
 	int nSelectFrame; // 1 (рамка вокруг текущего элемента)
 	ThumbColor crSelectFrame; // RGB или Index
+
+	/* антиалиасинг */
+	DWORD nFontQuality;
 
 	/* Теперь разнообразные размеры */
 	ThumbSizes Thumbs;
@@ -657,6 +661,13 @@ typedef struct tag_CESERVER_REQ_SETWINDOWPOS {
 	UINT uFlags;
 } CESERVER_REQ_SETWINDOWPOS;
 
+typedef struct tag_CESERVER_REQ_SETWINDOWRGN {
+	HWND2 hWnd;
+	int   nRectCount;  // если 0 - сбросить WindowRgn, иначе - обсчитать.
+	BOOL  bRedraw;
+	RECT  rcRects[20]; // [0] - основной окна, [
+} CESERVER_REQ_SETWINDOWRGN;
+
 typedef struct tag_CESERVER_REQ {
     CESERVER_REQ_HDR hdr;
 	union {
@@ -678,6 +689,7 @@ typedef struct tag_CESERVER_REQ {
 		FAR_REQ_SETENVVAR SetEnvVar;
 		CESERVER_REQ_SETCONCP SetConCP;
 		CESERVER_REQ_SETWINDOWPOS SetWndPos;
+		CESERVER_REQ_SETWINDOWRGN SetWndRgn;
 		PanelViewInit PVI;
 	};
 } CESERVER_REQ;
@@ -1091,8 +1103,9 @@ public:
 	bool SetFrom(const T* pSrc, int nSize=-1) {
 		if (!IsValid() || !nSize) return false;
 		if (nSize<0) nSize = sizeof(T);
+		bool lbChanged = (memcmp(mp_Data, pSrc, nSize)!=0);
 		memmove(mp_Data, pSrc, nSize);
-		return true;
+		return lbChanged;
 	}
 	bool GetTo(T* pDst, int nSize=-1) {
 		if (!IsValid() || !nSize) return false;

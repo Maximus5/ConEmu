@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 10.00
 # Visual Studio 2008
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gdi+", "gdi+.vcproj", "{C6CC0455-8680-4011-928C-D479F8F4C9FA}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gdi+", "gdip.vcproj", "{C6CC0455-8680-4011-928C-D479F8F4C9FA}"
 EndProject
 Global
 	GlobalSection(DPCodeReviewSolutionGUID) = preSolution

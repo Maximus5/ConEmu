@@ -1,6 +1,6 @@
 Q. Что делать, если нашли ошибку?
 A. Сначала проверить, повторяется ли ошибка БЕЗ ConEmu, в 'чистом' FAR?
-   Если да - проверить последнюю версию ConEmu. Качать здесь:
+   Если нет - проверить последнюю версию ConEmu. Качать здесь:
    http://code.google.com/p/conemu-maximus5/downloads/list
    Если все еще повторяется - создавайте Issue с подробным описанием ошибки:
    http://code.google.com/p/conemu-maximus5/issues/list

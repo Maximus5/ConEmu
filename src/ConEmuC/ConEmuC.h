@@ -246,6 +246,8 @@ int CreateColorerHeader();
 
 void DisableAutoConfirmExit();
 
+int MySetWindowRgn(CESERVER_REQ_SETWINDOWRGN* pRgn);
+
 /* Console Handles */
 //extern MConHandle ghConIn;
 extern MConHandle ghConOut;

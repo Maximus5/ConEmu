@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 10.00
 # Visual Studio 2008
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ConEmuTh", "ConEmuTh.vcproj", "{60287D73-F658-4414-8C9B-30E1F3E78D05}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gdi+", "Modules\gdi+\gdi+.vcproj", "{C6CC0455-8680-4011-928C-D479F8F4C9FA}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gdi+", "Modules\gdip\gdip.vcproj", "{C6CC0455-8680-4011-928C-D479F8F4C9FA}"
 EndProject
 Global
 	GlobalSection(DPCodeReviewSolutionGUID) = preSolution

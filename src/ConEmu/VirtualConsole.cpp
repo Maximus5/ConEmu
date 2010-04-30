@@ -1032,14 +1032,15 @@ bool CVirtualConsole::Update(bool isForce, HDC *ahDc)
         memcpy(mpn_ConAttrExSave, mpn_ConAttrEx, TextLen * sizeof(*mpn_ConAttrEx));
     }
 
-	// Если зарегистрированы панели (ConEmuTh) - обновить видимые регионы
-	// Делать это нужно после UpdateText, потому что иначе ConCharX может быть обнулен
-	if (m_LeftPanelView.bRegister || m_RightPanelView.bRegister) {
-		if (mb_DialogsChanged) {
-			UpdatePanelRgn(TRUE);
-			UpdatePanelRgn(FALSE);
-		}
-	}
+	//-- перенесено в Paint
+	//// Если зарегистрированы панели (ConEmuTh) - обновить видимые регионы
+	//// Делать это нужно после UpdateText, потому что иначе ConCharX может быть обнулен
+	//if (m_LeftPanelView.bRegister || m_RightPanelView.bRegister) {
+	//	if (mb_DialogsChanged) {
+	//		UpdatePanelRgn(TRUE);
+	//		UpdatePanelRgn(FALSE);
+	//	}
+	//}
 
 
     //HEAPVAL
@@ -2698,12 +2699,16 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
 		if (lbLeftExists) {
 			InvalidateRect(m_LeftPanelView.hWnd, NULL, FALSE);
 		}
+	} else if (mb_DialogsChanged) {
+		UpdatePanelRgn(TRUE, FALSE, FALSE);
 	}
 	if (mb_RightPanelRedraw) {
 		UpdatePanelView(FALSE); mb_RightPanelRedraw = FALSE;
 		if (lbRightExists) {
 			InvalidateRect(m_RightPanelView.hWnd, NULL, FALSE);
 		}
+	} else if (mb_DialogsChanged) {
+		UpdatePanelRgn(FALSE, FALSE, FALSE);
 	}
 
     // Собственно, копирование готового bitmap
@@ -2876,6 +2881,8 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
   //  }
     
     //gSet.Performance(tPerfFPS, FALSE); // Обратный
+
+	mb_DialogsChanged = FALSE; // сбросим, флажок больше не нужен
 }
 
 void CVirtualConsole::UpdateInfo()
@@ -3335,7 +3342,9 @@ BOOL CVirtualConsole::RegisterPanelView(PanelViewInit* ppvi)
 	//}
 	ppvi->bFadeColors = isFade;
 	//memmove(&(ppvi->ThSet), &(gSet.ThSet), sizeof(gSet.ThSet));
-	
+
+	DWORD dwSetParentErr = 0;
+
 	if (ppvi->bRegister) {
 		// При повторной регистрации - не дергаться
 		if (!lbPrevRegistered) {
@@ -3345,14 +3354,15 @@ BOOL CVirtualConsole::RegisterPanelView(PanelViewInit* ppvi)
 			if (hViewParent != ghWnd)
 			{
 				MBoxAssert(hViewParent==ghWnd);
-				// -- смысла пытаться менять родителя - нет, в Win7 это и не получится
+				// -- смысла пытаться менять родителя - немного, в Win7 это и не получится
 				// -- если консольный процесс запущен "Run as administrator"
+				// --- но все-таки попробуем?
 				//DWORD dwSetParentErr = 0;
-				//HWND hRc = SetParent((HWND)ppvi->hWnd, ghWnd);
-				//dwSetParentErr = GetLastError();
+				HWND hRc = SetParent((HWND)ppvi->hWnd, ghWnd);
+				dwSetParentErr = GetLastError();
 			} else {
-				UpdatePanelRgn(ppvi->bLeftPanel, FALSE, TRUE);
-				lbRc = UpdatePanelView(ppvi->bLeftPanel);
+				//UpdatePanelRgn(ppvi->bLeftPanel, FALSE, TRUE);
+				lbRc = UpdatePanelView(ppvi->bLeftPanel, TRUE);
 				// На панелях нужно "затереть" лишние части рамок
 				Update(true);
 			}
@@ -3370,20 +3380,20 @@ BOOL CVirtualConsole::RegisterPanelView(PanelViewInit* ppvi)
 	return lbRc;
 }
 
-HRGN CVirtualConsole::CreateConsoleRgn(int x1, int y1, int x2, int y2, BOOL abTestOnly)
-{
-	POINT pt[2];
-	if (abTestOnly) {
-		// Интересует принципиальное пересечение прямоугольников, так что координаты не важны
-		pt[0].x = x1 << 3; pt[0].y = y1 << 3;
-		pt[1].x = x2 << 3; pt[1].y = y2 << 3;
-	} else {
-		pt[0] = ConsoleToClient(x1, y1);
-		pt[1] = ConsoleToClient(x2+1, y2+1);
-	}
-	HRGN hRgn = CreateRectRgn(pt[0].x, pt[0].y, pt[1].x, pt[1].y);
-	return hRgn;
-}
+//HRGN CVirtualConsole::CreateConsoleRgn(int x1, int y1, int x2, int y2, BOOL abTestOnly)
+//{
+//	POINT pt[2];
+//	if (abTestOnly) {
+//		// Интересует принципиальное пересечение прямоугольников, так что координаты не важны
+//		pt[0].x = x1 << 3; pt[0].y = y1 << 3;
+//		pt[1].x = x2 << 3; pt[1].y = y2 << 3;
+//	} else {
+//		pt[0] = ConsoleToClient(x1, y1);
+//		pt[1] = ConsoleToClient(x2+1, y2+1);
+//	}
+//	HRGN hRgn = CreateRectRgn(pt[0].x, pt[0].y, pt[1].x, pt[1].y);
+//	return hRgn;
+//}
 
 BOOL CVirtualConsole::CheckDialogsChanged()
 {
@@ -3416,6 +3426,8 @@ BOOL CVirtualConsole::UpdatePanelRgn(BOOL abLeftPanel, BOOL abTestOnly, BOOL abO
 			pp->hWnd = NULL;
 		return FALSE;
 	}
+	
+	CRgnRects* pRgn = abLeftPanel ? &m_RgnLeftPanel : &m_RgnRightPanel;
 
 	BOOL lbPartHidden = FALSE;
 	BOOL lbPanelVisible = FALSE;
@@ -3423,7 +3435,10 @@ BOOL CVirtualConsole::UpdatePanelRgn(BOOL abLeftPanel, BOOL abTestOnly, BOOL abO
 
 	_ASSERTE(sizeof(mrc_LastDialogs) == sizeof(rcDlg));
 
-	int nDlgCount = mp_RCon->GetDetectedDialogs(sizeofarray(rcDlg), rcDlg, rnDlgFlags);
+	const CRgnDetect* pDetect = mp_RCon->GetDetector();
+	int nDlgCount = pDetect->GetDetectedDialogs(sizeofarray(rcDlg), rcDlg, rnDlgFlags);
+	DWORD nDlgFlags = pDetect->GetFlags();
+
 	if (!nDlgCount) {
 		lbPartHidden = TRUE;
 		if (!abTestOnly) {
@@ -3431,85 +3446,146 @@ BOOL CVirtualConsole::UpdatePanelRgn(BOOL abLeftPanel, BOOL abTestOnly, BOOL abO
 				mp_RCon->ShowOtherWindow(pp->hWnd, SW_HIDE);
 		}
 	} else {
-		HRGN hRgn = NULL, hSubRgn = NULL, hCombine = NULL;
-		
-		for (int i = 0; i < nDlgCount; i++) {
-			// Пропустить прямоугольник соответсвующий самой панели
-			if (rcDlg[i].Left == pp->PanelRect.left &&
-				rcDlg[i].Bottom == pp->PanelRect.bottom &&
-				rcDlg[i].Right == pp->PanelRect.right)
-			{
-				// Учесть, что первая строка этого прямоугольника может быть скрыта строкой меню
-				if (rcDlg[i].Top == pp->PanelRect.top
-					|| (pp->PanelRect.top == 0 && rcDlg[i].Top == 1))
+		//HRGN hRgn = NULL, hSubRgn = NULL, hCombine = NULL;
+		m_RgnTest.Reset();
+
+		SMALL_RECT rcPanel; DWORD nGetRc;
+		if ((nDlgFlags & FR_FULLPANEL) == FR_FULLPANEL)
+			nGetRc = pDetect->GetDialog(FR_FULLPANEL, &rcPanel);
+		else if (pp->PanelRect.left == 0)
+			nGetRc = pDetect->GetDialog(FR_LEFTPANEL, &rcPanel);
+		else
+			nGetRc = pDetect->GetDialog(FR_RIGHTPANEL, &rcPanel);
+
+		if (!nGetRc) {
+			lbPanelVisible = FALSE;
+		} else {
+			lbPanelVisible = TRUE;
+			TODO("Тут хорошо бы обновить WorkRect? или он правильный всегда будет за счет вызовов RegisterPanel из плагина?");
+			m_RgnTest.Init(&(pp->WorkRect));
+
+			for (int i = 0; i < nDlgCount; i++) {
+				// Пропустить прямоугольник соответсвующий самой панели
+				if (rcDlg[i].Left == rcPanel.Left &&
+					rcDlg[i].Bottom == rcPanel.Bottom &&
+					rcDlg[i].Right == rcPanel.Right)
 				{
-					lbPanelVisible = TRUE;
+					//// Учесть, что первая строка этого прямоугольника может быть скрыта строкой меню
+					//if (rcDlg[i].Top == pp->PanelRect.top
+					//	|| (pp->PanelRect.top == 0 && rcDlg[i].Top == 1))
+					//{
+					//	lbPanelVisible = TRUE;
+					//	m_RgnTest.Init(&(pp->WorkRect));
+					//	continue;
+					//}
 					continue;
 				}
-			}
-			if (!IntersectSmallRect(pp->WorkRect, rcDlg[i]))
-				continue;
-			// Все остальные прямоугольники вычитать из hRgn
-			if (!hRgn)
-				hRgn = CreateConsoleRgn(pp->WorkRect.left, pp->WorkRect.top, pp->WorkRect.right, pp->WorkRect.bottom, abTestOnly);
-			hSubRgn = CreateConsoleRgn(rcDlg[i].Left, rcDlg[i].Top, rcDlg[i].Right, rcDlg[i].Bottom, abTestOnly);
-			if (!hCombine)
-				hCombine = CreateRectRgn(0,0,1,1);
-			int nCRC = CombineRgn(hCombine, hRgn, hSubRgn, RGN_DIFF);
-			if (nCRC) {
-				// Замена переменных
-				HRGN hTmp = hRgn; hRgn = hCombine; hCombine = hTmp;
-				// А этот больше не нужен
-				DeleteObject(hSubRgn); hSubRgn = NULL;
-			}
+				//if (!lbPanelVisible)
+				//	continue; // пока до панели не дошли
+				if (!IntersectSmallRect(pp->WorkRect, rcDlg[i]))
+					continue;
 
-			// Проверка, может регион уже пуст?
-			if (nCRC == NULLREGION) {
-				lbPanelVisible = FALSE; break;
+				// Все остальные прямоугольники вычитать из hRgn
+				int nCRC = m_RgnTest.DiffSmall(rcDlg+i);
+				//if (!hRgn)
+				//	hRgn = CreateConsoleRgn(pp->WorkRect.left, pp->WorkRect.top, pp->WorkRect.right, pp->WorkRect.bottom, abTestOnly);
+				//hSubRgn = CreateConsoleRgn(rcDlg[i].Left, rcDlg[i].Top, rcDlg[i].Right, rcDlg[i].Bottom, abTestOnly);
+				//if (!hCombine)
+				//	hCombine = CreateRectRgn(0,0,1,1);
+				//int nCRC = CombineRgn(hCombine, hRgn, hSubRgn, RGN_DIFF);
+				//if (nCRC) {
+				//	// Замена переменных
+				//	HRGN hTmp = hRgn; hRgn = hCombine; hCombine = hTmp;
+				//	// А этот больше не нужен
+				//	DeleteObject(hSubRgn); hSubRgn = NULL;
+				//}
+
+				// Проверка, может регион уже пуст?
+				if (nCRC == NULLREGION) {
+					lbPanelVisible = FALSE; break;
+				}
+				//else if (nCRC == ERROR) {
+				//	// Ошибка
+				//	_ASSERTE(nCRC != ERROR);
+				//	if (hRgn) { DeleteObject(hRgn); hRgn = NULL; }
+				//	break;
+				//}
 			}
-			//else if (nCRC == ERROR) {
-			//	// Ошибка
-			//	_ASSERTE(nCRC != ERROR);
-			//	if (hRgn) { DeleteObject(hRgn); hRgn = NULL; }
-			//	break;
-			//}
 		}
 
 		if (abTestOnly) {
-			if (hRgn) { DeleteObject(hRgn); hRgn = NULL; }
-		}
-		else
-		if (lbPanelVisible)
-		{
-			lbPartHidden = (hRgn != NULL);
-			if (hRgn) {
-				POINT pt = ConsoleToClient(pp->WorkRect.left, pp->WorkRect.top);
-				OffsetRgn(hRgn, -pt.x, -pt.y);
-			}
-			SetWindowRgn(pp->hWnd, hRgn, TRUE); hRgn = NULL;
-			if (!abOnRegister) {
-				if (!IsWindowVisible(pp->hWnd))
-					mp_RCon->ShowOtherWindow(pp->hWnd, SW_SHOWNA);
-			}
+			//if (hRgn) { DeleteObject(hRgn); hRgn = NULL; }
 		}
 		else
 		{
-			if (hRgn) { DeleteObject(hRgn); hRgn = NULL; }
-			lbPartHidden = TRUE;
-			if (IsWindowVisible(pp->hWnd))
-				mp_RCon->ShowOtherWindow(pp->hWnd, SW_HIDE);
-			SetWindowRgn(pp->hWnd, NULL, TRUE);
+			bool lbChanged = pRgn->LoadFrom(&m_RgnTest);
+			
+			if (lbPanelVisible)
+			{
+				//lbPartHidden = (hRgn != NULL);
+				lbPartHidden = (pRgn->nRgnState == COMPLEXREGION);
+				//if (hRgn) {
+				//	POINT pt = ConsoleToClient(pp->WorkRect.left, pp->WorkRect.top);
+				//	OffsetRgn(hRgn, -pt.x, -pt.y);
+				//}
+				//SetWindowRgn(pp->hWnd, hRgn, TRUE); hRgn = NULL;
+				//if (!abOnRegister) {
+				//	if (!IsWindowVisible(pp->hWnd))
+				//		mp_RCon->ShowOtherWindow(pp->hWnd, SW_SHOWNA);
+				//}
+				_ASSERTE(pRgn->nRectCount > 0);
+				if (pRgn->nRgnState == SIMPLEREGION) {
+					if (!abOnRegister) {
+						mp_RCon->SetOtherWindowRgn(pp->hWnd, 0, NULL, TRUE);
+					}
+				} else
+				if (lbChanged) {
+					POINT ptShift = ConsoleToClient(pp->WorkRect.left, pp->WorkRect.top);
+					POINT pt[2];
+					RECT  rc[MAX_DETECTED_DIALOGS];
+					_ASSERTE(pRgn->nRectCount<MAX_DETECTED_DIALOGS);
+					
+					for (int i = 0; i < pRgn->nRectCount; i++) {
+						pt[0] = ConsoleToClient(pRgn->rcRect[i].left, pRgn->rcRect[i].top);
+						pt[1] = ConsoleToClient(pRgn->rcRect[i].right+1, pRgn->rcRect[i].bottom+1);
+						
+						rc[i].left  = pt[0].x - ptShift.x;
+						rc[i].top   = pt[0].y - ptShift.y;
+						rc[i].right = pt[1].x - ptShift.x;
+						rc[i].bottom= pt[1].y - ptShift.y;
+					}
+					
+					mp_RCon->SetOtherWindowRgn(pp->hWnd, pRgn->nRectCount, rc, TRUE);
+				}
+				
+				if (!abOnRegister) {
+					if (!IsWindowVisible(pp->hWnd))
+						mp_RCon->ShowOtherWindow(pp->hWnd, SW_SHOWNA);
+				}
+				
+			}
+			else
+			{
+				//if (hRgn) { DeleteObject(hRgn); hRgn = NULL; }
+				lbPartHidden = TRUE;
+				if (IsWindowVisible(pp->hWnd)) {
+					// Сбросит регион и скроет(!) окно
+					mp_RCon->SetOtherWindowRgn(pp->hWnd, -1, NULL, FALSE);
+				}
+					//mp_RCon->ShowOtherWindow(pp->hWnd, SW_HIDE);
+				//SetWindowRgn(pp->hWnd, NULL, TRUE);
+			}
 		}
 
-		// чистка
-		if (hCombine) { DeleteObject(hCombine); hCombine = NULL; }
+		//// чистка
+		//if (hCombine) { DeleteObject(hCombine); hCombine = NULL; }
 	}
 
 	return lbPanelVisible;
 }
 
 // Отсюда - Redraw не звать, только Invalidate!
-BOOL CVirtualConsole::UpdatePanelView(BOOL abLeftPanel)
+BOOL CVirtualConsole::UpdatePanelView(BOOL abLeftPanel, BOOL abOnRegister/*=FALSE*/)
 {
 	PanelViewInit* pp = abLeftPanel ? &m_LeftPanelView : &m_RightPanelView;
 
@@ -3519,6 +3595,7 @@ BOOL CVirtualConsole::UpdatePanelView(BOOL abLeftPanel)
 	if (!mn_ConEmuFadeMsg)
 		mn_ConEmuFadeMsg = RegisterWindowMessage(CONEMUMSG_PNLVIEWFADE);
 	DWORD nNewFadeValue = isFade ? 2 : 1;
+	WARNING("Нифига не будет работать на Win7 RunAsAdmin");
 	if (GetWindowLong(pp->hWnd, 16*4) != nNewFadeValue)
 		PostMessage(pp->hWnd, mn_ConEmuFadeMsg, 100, nNewFadeValue);
 
@@ -3529,6 +3606,11 @@ BOOL CVirtualConsole::UpdatePanelView(BOOL abLeftPanel)
 	pp->WorkRect = MakeRect(
 		pp->PanelRect.left+1, pp->PanelRect.top+nTopShift,
 		pp->PanelRect.right, pp->PanelRect.bottom-nBottomShift);
+
+
+	//if (mb_DialogsChanged)
+	UpdatePanelRgn(abLeftPanel, FALSE, abOnRegister);
+
 	// лучше не зависеть от ConCharX - он может оказаться не инициализированным!
 	pt[0] = MakePoint(pp->WorkRect.left*gSet.FontWidth(), pp->WorkRect.top*gSet.FontHeight());
 	pt[1] = MakePoint(pp->WorkRect.right*gSet.FontWidth(), pp->WorkRect.bottom*gSet.FontHeight());
@@ -3568,6 +3650,7 @@ void CVirtualConsole::PolishPanelViews()
 			continue; // Панель не зарегистрирована
 
 		if (mb_DialogsChanged) {
+			// Проверить, реально регион окна не меняется
 			if (!UpdatePanelRgn(i==0, TRUE))
 				continue; // Панель стала невидимой
 		}

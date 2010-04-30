@@ -59,7 +59,7 @@
 !include ../make_vc_defs
 !endif
 
-SUBMODULES = gdi+
+SUBMODULES = gdip
 
 DEF_NAME = export
 

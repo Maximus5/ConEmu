@@ -444,7 +444,7 @@ void CSettings::InitSettings()
 	} else {
 		// Применить в Mapping (там заодно и палитра копируется)
 		//m_ThSetMap.Set(&ThSet);
-		gConEmu.OnPanelViewSettingsChanged();
+		gConEmu.OnPanelViewSettingsChanged(FALSE);
 	}
 }
 
@@ -4941,6 +4941,11 @@ BOOL CSettings::FontItalic()
 BOOL CSettings::FontClearType()
 {
 	return (LogFont.lfQuality!=NONANTIALIASED_QUALITY);
+}
+
+BYTE CSettings::FontQuality()
+{
+	return LogFont.lfQuality;
 }
 
 LONG CSettings::BorderFontWidth()

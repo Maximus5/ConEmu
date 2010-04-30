@@ -696,7 +696,7 @@ void CeFullPanelInfo::Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc)
 	HPEN hPen = CreatePen(PS_SOLID, 1, crGray);
 	HBRUSH hBackBrush = CreateSolidBrush(crBack);
 	HFONT hFont = CreateFont(nFontHeight,0,0,0,400,0,0,0,ANSI_CHARSET,OUT_DEFAULT_PRECIS,CLIP_DEFAULT_PRECIS,
-		NONANTIALIASED_QUALITY,DEFAULT_PITCH,sFontName);
+		gThSet.nFontQuality,DEFAULT_PITCH,sFontName);
 
 	// Передернуть класс на предмет смены/инициализации настроек
 	gpImgCache->Init(crBack);

@@ -44,11 +44,13 @@ CRgnDetect::~CRgnDetect()
 	}
 }
 
-int CRgnDetect::GetDetectedDialogs(int anMaxCount, SMALL_RECT* rc, DWORD* rf)
+int CRgnDetect::GetDetectedDialogs(int anMaxCount, SMALL_RECT* rc, DWORD* rf) const
 {
 	if (!this) return 0;
-	int nCount = min(anMaxCount,m_DetectedDialogs.Count);
-	if (nCount>0) {
+	int nCount = m_DetectedDialogs.Count;
+	if (nCount > 0 && anMaxCount > 0 && (rc || rf)) {
+		if (nCount > anMaxCount)
+			nCount = anMaxCount;
 		if (rc)
 			memmove(rc, m_DetectedDialogs.Rects, nCount*sizeof(SMALL_RECT));
 		if (rf)
@@ -57,7 +59,7 @@ int CRgnDetect::GetDetectedDialogs(int anMaxCount, SMALL_RECT* rc, DWORD* rf)
 	return nCount;
 }
 
-DWORD CRgnDetect::GetDialog(DWORD nDlgID, SMALL_RECT* rc)
+DWORD CRgnDetect::GetDialog(DWORD nDlgID, SMALL_RECT* rc) const
 {
 	if (!nDlgID) {
 		_ASSERTE(nDlgID!=0);
@@ -81,7 +83,7 @@ DWORD CRgnDetect::GetDialog(DWORD nDlgID, SMALL_RECT* rc)
 	return 0;
 }
 
-DWORD CRgnDetect::GetFlags()
+DWORD CRgnDetect::GetFlags() const
 {
 	return mn_AllFlags;
 }
@@ -1836,3 +1838,169 @@ bool CRgnDetect::ConsoleRect2ScreenRect(const RECT &rcCon, RECT *prcScr)
 //		*(pChar++) = pCharInfo->Char.UnicodeChar;
 //	}
 //}
+
+
+
+
+CRgnRects::CRgnRects()
+{
+	nRectCount = 0;
+	nRgnState = NULLREGION;
+	nFieldMaxCells = nFieldWidth = nFieldHeight = 0;
+	pFieldCells = NULL;
+}
+
+CRgnRects::~CRgnRects()
+{
+	if (pFieldCells) free(pFieldCells);
+}
+
+// Сброс всего в NULLREGION
+void CRgnRects::Reset()
+{
+	nRectCount = 0;
+	nRgnState = NULLREGION;
+}
+
+// Сбросить все прямоугольники и установить rcRect[0]
+void CRgnRects::Init(LPRECT prcInit)
+{
+	// Установим начальный прямоугольник
+	nRectCount = 1;
+	rcRect[0] = *prcInit;
+	nRgnState = SIMPLEREGION;
+	
+	// готовим поле для проверки
+	nFieldWidth = prcInit->right - prcInit->left + 1;
+	nFieldHeight = prcInit->bottom - prcInit->top + 1;
+	if (nFieldWidth<1 || nFieldHeight<1) {
+		nRgnState = NULLREGION;
+		return;
+	}
+	
+	if (!nFieldMaxCells || !pFieldCells || nFieldMaxCells < (nFieldWidth*nFieldHeight)) {
+		if (pFieldCells) free(pFieldCells);
+		nFieldMaxCells = nFieldWidth*nFieldHeight;
+		_ASSERTE(sizeof(*pFieldCells)==1);
+		pFieldCells = (bool*)calloc(nFieldMaxCells,1);
+		if (!pFieldCells) {
+			_ASSERTE(pFieldCells!=NULL);
+			nRgnState = RGN_ERROR;
+			return;
+		}
+	} else {
+		memset(pFieldCells, 0, nFieldMaxCells);
+	}
+}
+
+// Combines the parts of rcRect[..] that are not part of prcAddDiff.
+int CRgnRects::Diff(LPRECT prcAddDiff)
+{
+	if (!pFieldCells || nRectCount>=MAX_RGN_RECTS || nRgnState <= NULLREGION)
+		return nRgnState; // регион уже пустой, ничего делать не нужно
+
+	if (prcAddDiff->left > prcAddDiff->right || prcAddDiff->top > prcAddDiff->bottom) {
+		_ASSERTE(prcAddDiff->left <= prcAddDiff->right && prcAddDiff->top <= prcAddDiff->bottom);
+		return nRgnState; // не валидный prcAddDiff
+	}
+	
+	// поехали
+	
+	int X1 = rcRect[0].left, X2 = rcRect[0].right;
+	if (prcAddDiff->left > X2 || prcAddDiff->right < X1)
+		return nRgnState; // prcAddDiff не пересекается с rcRect[0]
+	int iX1 = max(prcAddDiff->left,X1);
+	int iX2 = min(prcAddDiff->right,X2);
+	if (iX2 < iX1) {
+		_ASSERTE(iX2 >= iX1);
+		return nRgnState; // пустая область?
+	}
+		
+	int Y1 = rcRect[0].top,  Y2 = rcRect[0].bottom;
+	if (prcAddDiff->top > Y2 || prcAddDiff->bottom < Y1)
+		return nRgnState; // prcAddDiff не пересекается с rcRect[0]
+	int iY1 = max(prcAddDiff->top,Y1);
+	int iY2 = min(prcAddDiff->bottom,Y2);
+
+	// Ладно, добавим этот прямоугольник в список вычитаемых	
+	rcRect[nRectCount++] = *prcAddDiff;
+
+	int Y, iy = iY1 - rcRect[0].top;
+	int nSubWidth = iX2 - iX1 + 1;
+	_ASSERTE(iy>=0);
+	for (Y = iY1; Y <= iY2; Y++, iy++) {
+		int ix = iX1 - X1;
+		_ASSERTE(ix>=0);
+		
+		int ii = (iy*nFieldWidth) + ix;
+		
+		memset(pFieldCells+ii, 1, nSubWidth);
+		
+		//for (int X = iX1; X <= iX2; X++, ii++) {
+		//	if (!pFieldCells[ii]) {
+		//		pFieldCells[ii] = true;
+		//	}
+		//}
+	}
+
+	// Теперь проверить, а осталось ли еще что-то?
+	Y2 = nFieldWidth * nFieldHeight;
+	void* ptrCellLeft = memchr(pFieldCells, 0, Y2);
+	//bool lbAreCellLeft = (ptrCellLeft != NULL);
+	//for (Y = 0; Y < Y2; Y++) {
+	//	if (!pFieldCells[ii]) {
+	//		lbAreCellLeft = true;
+	//		break;
+	//	}
+	//}
+	
+	if (ptrCellLeft != NULL) {
+		nRgnState = COMPLEXREGION;
+	} else {
+		nRgnState = NULLREGION;
+	}
+	
+	return nRgnState;
+}
+
+int CRgnRects::DiffSmall(SMALL_RECT *prcAddDiff)
+{
+	if (!prcAddDiff)
+		return Diff(NULL);
+	RECT rc = {prcAddDiff->Left,prcAddDiff->Top,prcAddDiff->Right,prcAddDiff->Bottom};
+	return Diff(&rc);
+}
+
+// Скопировать ИЗ pRgn, вернуть true - если были отличия
+bool CRgnRects::LoadFrom(CRgnRects* pRgn)
+{
+	bool lbChanges = false;
+	
+	if (!pRgn) {
+		// Если до этого был НЕ пустой регион
+		lbChanges = (nRgnState >= SIMPLEREGION);
+		// сброс
+		Reset();
+		
+	} else {
+		if (nRectCount != pRgn->nRectCount || nRgnState != pRgn->nRgnState) {
+			lbChanges = true;
+		} else if (pRgn->nRectCount) {
+			if (memcmp(rcRect, pRgn->rcRect, pRgn->nRectCount * sizeof(RECT)) != 0)
+				lbChanges = true;
+		}
+	
+		nRectCount = pRgn->nRectCount;
+		nRgnState = pRgn->nRgnState;
+		if (nRectCount > 0) {
+			memmove(rcRect, pRgn->rcRect, nRectCount * sizeof(RECT));
+		}
+	}
+	
+	// Нас интересуют только прямоугольники
+	if (pFieldCells) {
+		free(pFieldCells); pFieldCells = NULL;
+	}
+	
+	return lbChanges;
+}

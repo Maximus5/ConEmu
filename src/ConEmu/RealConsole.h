@@ -219,6 +219,7 @@ public:
 	LRESULT PostConsoleMessage(HWND hWnd, UINT nMsg, WPARAM wParam, LPARAM lParam);
 	BOOL ShowOtherWindow(HWND hWnd, int swShow);
 	BOOL SetOtherWindowPos(HWND hWnd, HWND hWndInsertAfter, int X, int Y, int cx, int cy, UINT uFlags);
+	BOOL SetOtherWindowRgn(HWND hWnd, int nRects, LPRECT prcRects, BOOL bRedraw);
 	void PostMacro(LPCWSTR asMacro);
     //BOOL FlushInputQueue(DWORD nTimeout = 500);
     void OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, wchar_t *pszChars);
@@ -302,6 +303,7 @@ public:
 	bool isAlive();
 	bool GetMaxConSize(COORD* pcrMaxConSize);
 	int GetDetectedDialogs(int anMaxCount, SMALL_RECT* rc, DWORD* rf);
+	const CRgnDetect* GetDetector();
 
 public:
     // Вызываются из CVirtualConsole
