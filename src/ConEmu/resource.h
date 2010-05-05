@@ -1,5 +1,5 @@
 //{{NO_DEPENDENCIES}}
-// Microsoft Developer Studio generated include file.
+// Microsoft Visual C++ generated include file.
 // Used by ConEmu.rc
 //
 #define IDI_ICON1                       1
@@ -345,6 +345,8 @@
 #define bApplyViewSettings              1717
 #define cbDisableFarFlashing            1718
 #define cbDisableAllFlashing            1719
+#define IDC_CHECK1                      1720
+#define cbThumbRestoreOnStartup         1720
 #define IDM_CLOSE                       40001
 #define IDM_RESTART                     40002
 #define IDM_RESTARTAS                   40003
@@ -361,7 +363,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        209
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         1720
+#define _APS_NEXT_CONTROL_VALUE         1721
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

@@ -63,6 +63,17 @@ enum tag_GdiStrMagics {
 	eGdiStr_Bits = 0x1004,
 };
 
+const wchar_t* csBMP  = L"BMP";
+const wchar_t* csEMF  = L"EMF";
+const wchar_t* csWMF  = L"WMF";
+const wchar_t* csJPEG = L"JPEG";
+const wchar_t* csPNG  = L"PNG";
+const wchar_t* csGIF  = L"GIF";
+const wchar_t* csTIFF = L"TIFF";
+const wchar_t* csEXIF = L"EXIF";
+const wchar_t* csICO  = L"ICO";
+const wchar_t* Format[] = {csBMP, csEMF, csWMF, csJPEG, csPNG, csGIF, csTIFF, csEXIF, L"", L"", csICO};
+
 struct GDIPlusDecoder
 {
 	DWORD   nMagic;
@@ -113,6 +124,7 @@ struct GDIPlusDecoder
 	GdiplusStartup_t GdiplusStartup;
 	GdiplusShutdown_t GdiplusShutdown;
 	GdipCreateBitmapFromFile_t GdipCreateBitmapFromFile;
+	GdipGetImageThumbnail_t GdipGetImageThumbnail;
 	//GdipCreateBitmapFromStream_t GdipCreateBitmapFromStream;
 	//GdipCreateBitmapFromFileICM_t GdipCreateBitmapFromFileICM;
 	//GdipCreateBitmapFromStreamICM_t GdipCreateBitmapFromStreamICM;
@@ -179,6 +191,7 @@ struct GDIPlusDecoder
 			DllGetFunction(hGDIPlus, GdiplusStartup);
 			DllGetFunction(hGDIPlus, GdiplusShutdown);
 			DllGetFunction(hGDIPlus, GdipCreateBitmapFromFile);
+			DllGetFunction(hGDIPlus, GdipGetImageThumbnail);
 			//DllGetFunction(hGDIPlus, GdipCreateBitmapFromFileICM);
 			//DllGetFunction(hGDIPlus, GdipCreateBitmapFromStream);
 			//DllGetFunction(hGDIPlus, GdipCreateBitmapFromStreamICM);
@@ -207,8 +220,8 @@ struct GDIPlusDecoder
 			//DllGetFunction(hGDIPlus, GdipSetImagePalette);
 
 
-			if (GdiplusStartup && GdiplusShutdown && GdipCreateBitmapFromFile && GdipGetImageWidth 
-				&& GdipGetImageHeight && GdipGetImagePixelFormat 
+			if (GdiplusStartup && GdiplusShutdown && GdipCreateBitmapFromFile && GdipGetImageThumbnail
+				&& GdipGetImageWidth && GdipGetImageHeight && GdipGetImagePixelFormat && GdipGetImageRawFormat
 				//&& GdipBitmapLockBits && GdipBitmapUnlockBits 
 				&& GdipDisposeImage && GdipImageGetFrameCount && GdipImageSelectActiveFrame 
 				//&& GdipGetPropertyItemSize && GdipGetPropertyItem && GdipGetImageFlags
@@ -304,7 +317,7 @@ struct GDIPlusImage
 	//
 	UINT lWidth, lHeight, pf, nBPP, nPages, /*lFrameTime,*/ nActivePage, nTransparent; //, nImgFlags;
 	bool Animation;
-	wchar_t FormatName[0x80];
+	const wchar_t *FormatName;
 	
 	GDIPlusImage() {
 		nMagic = eGdiStr_Image;
@@ -336,22 +349,24 @@ struct GDIPlusImage
 	//	}
 	//	return img;
 	//}
-	Gdiplus::GpImage* OpenBitmapFromFile(const wchar_t *pFileName)
+	Gdiplus::GpImage* OpenBitmapFromFile(const wchar_t *pFileName, COORD crLoadSize)
 	{
 		Gdiplus::Status lRc = Gdiplus::Ok;
-		Gdiplus::GpBitmap *img = NULL;
+		Gdiplus::GpBitmap *bmp = NULL;
+		
+		_ASSERTE(img==NULL);
+		
+		lRc = gdi->GdipCreateBitmapFromFile(pFileName, &bmp);
 
-		lRc = gdi->GdipCreateBitmapFromFile(pFileName, &img);
-
-		if (!img) {
+		if (!bmp) {
 			nLastError = GetLastError();
 			nErrNumber = PGE_ERROR_BASE + (DWORD)lRc;
 		}
 		
-		return img;
+		return bmp;
 	}
 
-	bool Open(bool bVirtual, const wchar_t *pFileName, const u8 *pBuffer, i64 lFileSize)
+	bool Open(bool bVirtual, const wchar_t *pFileName, const u8 *pBuffer, i64 lFileSize, COORD crLoadSize)
 	{
 		_ASSERTE(img == NULL);
 		_ASSERTE(gdi != NULL);
@@ -391,7 +406,7 @@ struct GDIPlusImage
 		}
 
 		//if (!bVirtual)
-		img = OpenBitmapFromFile(pFileName);
+		img = OpenBitmapFromFile(pFileName, crLoadSize);
 		//else // лучше бы его вообще не использовать, GDI+ как-то не очень с потоками работает...
 		//	img = OpenBitmapFromStream(pBuffer, lFileSize);
 
@@ -404,6 +419,7 @@ struct GDIPlusImage
 			lRc = gdi->GdipGetImagePixelFormat(img, (Gdiplus::PixelFormat*)&pf);
 			nBPP = pf >> 8 & 0xFF;
 
+
 			//lRc = gdi->GdipGetImageFlags(img, &nImgFlags);
 			
 
@@ -414,17 +430,16 @@ struct GDIPlusImage
 				if ((lRc = gdi->GdipImageGetFrameCount(img, &FrameDimensionPage, &nPages)))
 					nPages = 1;
 
-			FormatName[0] = 0;
+			FormatName = NULL;
 			if (gdi->GdipGetImageRawFormat)
 			{
-				const wchar_t Format[][5] = {L"BMP", L"EMF", L"WMF", L"JPEG", L"PNG", L"GIF", L"TIFF", L"EXIF", L"", L"", L"ICO"};
 				GUID gformat;
 				if (!(lRc = gdi->GdipGetImageRawFormat(img, &gformat))) {
 					// DEFINE_GUID(ImageFormatUndefined, 0xb96b3ca9,0x0728,0x11d3,0x9d,0x7b,0x00,0x00,0xf8,0x1e,0xf3,0x2e);
 					// DEFINE_GUID(ImageFormatMemoryBMP, 0xb96b3caa,0x0728,0x11d3,0x9d,0x7b,0x00,0x00,0xf8,0x1e,0xf3,0x2e);
 
 					if (gformat.Data1 >= 0xB96B3CAB && gformat.Data1 <= 0xB96B3CB5) {
-						lstrcpy(FormatName, Format[gformat.Data1 - 0xB96B3CAB]);
+						FormatName = Format[gformat.Data1 - 0xB96B3CAB];
 					}
 				}
 			}
@@ -507,8 +522,13 @@ struct GDIPlusImage
 				lstrcat(pData->szInfo, FormatName);
 			}
 
+
 			int nCanvasWidth  = pDecodeInfo->crLoadSize.X;
 			int nCanvasHeight = pDecodeInfo->crLoadSize.Y;
+
+			BOOL lbAllowThumb = (FormatName == csTIFF || FormatName == csJPEG)
+				&& (lWidth > (UINT)nCanvasWidth*5) && (lHeight > (UINT)nCanvasHeight*5);
+
 			int nShowWidth = lWidth, nShowHeight = lHeight;
 			i64 aSrc = (100 * (i64) lWidth / lHeight);
 			i64 aCvs = (100 * (i64) nCanvasWidth / nCanvasHeight);
@@ -520,8 +540,10 @@ struct GDIPlusImage
 					if (!nShowHeight || nShowHeight < (nShowWidth/8)) {
 						nShowHeight = min(min(8,(UINT)nCanvasHeight),lHeight);
 						UINT lNewWidth = (UINT)((((i64)nCanvasWidth) * lHeight) / nShowHeight);
-						if (lNewWidth < lWidth)
+						if (lNewWidth < lWidth) {
 							lWidth = lNewWidth;
+							lbAllowThumb = FALSE;
+						}
 					}
 				}
 			} else {
@@ -531,13 +553,28 @@ struct GDIPlusImage
 					if (!nShowWidth || nShowWidth < (nShowHeight/8)) {
 						nShowWidth = min(min(8,(UINT)nCanvasWidth),lWidth);
 						UINT lNewHeight = (UINT)((((i64)nCanvasHeight) * lWidth) / nShowWidth);
-						if (lNewHeight < lHeight)
+						if (lNewHeight < lHeight) {
 							lHeight = lNewHeight;
+							lbAllowThumb = FALSE;
+						}
 					}
 				}
 			}
 			nCanvasWidth  = nShowWidth;
 			nCanvasHeight = nShowHeight;
+
+			if (lbAllowThumb) {
+				Gdiplus::GpImage *thmb = NULL;
+				// Сразу пытаемся извлечь в режиме превьюшки (полная картинка нам не нужна)
+				Gdiplus::Status lRc = gdi->GdipGetImageThumbnail(img, nShowWidth, nShowHeight, &thmb,
+					(Gdiplus::GetThumbnailImageAbort)DrawImageAbortCallback, gdi);
+				if (thmb) {
+					lRc = gdi->GdipDisposeImage(img);
+					img = thmb;
+					lRc = gdi->GdipGetImageWidth(img, &lWidth);
+					lRc = gdi->GdipGetImageHeight(img, &lHeight);
+				}
+			}
 
 			int nCanvasWidthS = nCanvasWidth; //((nCanvasWidth+7) >> 3) << 3; // try to align x8 pixels
 			
@@ -565,12 +602,17 @@ struct GDIPlusImage
 				Gdiplus::GpGraphics *pGr = NULL;
 				Gdiplus::Status stat = gdi->GdipCreateFromHDC(pData->hCompDc1, &pGr);
 				if (!stat) {
-					int x = (nCanvasWidth-nShowWidth)>>1;
-					int y = (nCanvasHeight-nShowHeight)>>1;
+					#ifdef _DEBUG
+					if (nCanvasWidth!=nShowWidth || nCanvasHeight!=nShowHeight) {
+						_ASSERTE(nCanvasWidth==nShowWidth && nCanvasHeight==nShowHeight);
+					}
+					#endif
+					//int x = (nCanvasWidth-nShowWidth)>>1;
+					//int y = (nCanvasHeight-nShowHeight)>>1;
 					stat = gdi->GdipDrawImageRectRectI(
 						pGr, img,
-						x, y, nShowWidth, nShowHeight,
-						0,0,lWidth,lHeight,
+						0, 0, nShowWidth, nShowHeight,
+						0, 0, lWidth, lHeight,
 						Gdiplus::UnitPixel, NULL, //NULL, NULL);
 						(Gdiplus::DrawImageAbort)DrawImageAbortCallback, gdi);
 					gdi->GdipDeleteGraphics(pGr);
@@ -740,10 +782,11 @@ BOOL WINAPI CET_Load(struct CET_LoadInfo* pLoadPreview)
 
 	if (!pImage->Open(
 				(pLoadPreview->bVirtualItem!=FALSE), pLoadPreview->sFileName,
-				pLoadPreview->pFileData, pLoadPreview->nFileSize))
+				pLoadPreview->pFileData, pLoadPreview->nFileSize, pLoadPreview->crLoadSize))
 	{
 		SETERROR(pImage->nErrNumber);
 		pImage->Close();
+		pLoadPreview->pFileContext = NULL;
 		return FALSE;
 	}
 	
@@ -751,6 +794,7 @@ BOOL WINAPI CET_Load(struct CET_LoadInfo* pLoadPreview)
 		if (!pImage->GetPageBits(pLoadPreview)) {
 			SETERROR(pImage->nErrNumber);
 			pImage->Close();
+			pLoadPreview->pFileContext = NULL;
 			return FALSE;
 		}
 	}

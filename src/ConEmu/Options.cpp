@@ -433,7 +433,8 @@ void CSettings::InitSettings()
 	ThSet.bLoadFolders = true; // true - load infolder previews (only for Thumbs)
 	ThSet.nLoadTimeout = 15;   // 15 sec
 	ThSet.nMaxZoom = 600; // %%
-	ThSet.bUsePicView2 = TRUE;
+	ThSet.bUsePicView2 = true;
+	ThSet.bRestoreOnStartup = false;
 
 	//// Пока не используется
 	//DWORD nCacheFolderType; // юзер/программа/temp/и т.п.
@@ -743,6 +744,7 @@ void CSettings::LoadSettings()
 		reg->Load(L"PanView.LoadTimeout", ThSet.nLoadTimeout);
 		reg->Load(L"PanView.MaxZoom", ThSet.nMaxZoom);
 		reg->Load(L"PanView.UsePicView2", ThSet.bUsePicView2);
+		reg->Load(L"PanView.RestoreOnStartup", ThSet.bRestoreOnStartup);
         
         reg->CloseKey();
     }
@@ -1149,6 +1151,7 @@ BOOL CSettings::SaveSettings()
 			reg->Save(L"PanView.LoadTimeout", ThSet.nLoadTimeout);
 			reg->Save(L"PanView.MaxZoom", ThSet.nMaxZoom);
 			reg->Save(L"PanView.UsePicView2", ThSet.bUsePicView2);
+			reg->Save(L"PanView.RestoreOnStartup", ThSet.bRestoreOnStartup);
 
 
             reg->CloseKey();
@@ -1905,6 +1908,7 @@ LRESULT CSettings::OnInitDialog_Views()
 	CheckDlgButton(hViews, cbThumbLoadFolders, ThSet.bLoadFolders);
 	SetDlgItemInt(hViews, tThumbLoadingTimeout, ThSet.nLoadTimeout, FALSE);
 	CheckDlgButton(hViews, cbThumbUsePicView2, ThSet.bUsePicView2);
+	CheckDlgButton(hViews, cbThumbRestoreOnStartup, ThSet.bRestoreOnStartup);
 
 	RegisterTipsFor(hColors);
 
@@ -2288,6 +2292,11 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
         gConEmu.Update(true);
         break;
 
+	case cbBlockInactiveCursor:
+		isCursorBlockInactive = IsChecked(hMain, cbBlockInactiveCursor);
+		gConEmu.m_Child.Invalidate();
+		break;
+
     case bBgImage:
         {
 			wchar_t temp[MAX_PATH];
@@ -2411,11 +2420,6 @@ LRESULT CSettings::OnColorButtonClicked(WPARAM wParam, LPARAM lParam)
 
 	case cbFadeInactive:
 		isFadeInactive = IsChecked(hColors, cbFadeInactive);
-		gConEmu.m_Child.Invalidate();
-		break;
-
-	case cbBlockInactiveCursor:
-		isCursorBlockInactive = IsChecked(hMain, cbBlockInactiveCursor);
 		gConEmu.m_Child.Invalidate();
 		break;
 
@@ -2758,125 +2762,6 @@ LRESULT CSettings::OnTab(LPNMHDR phdr)
             break;
     }
     return 0;
-}
-
-bool CSettings::LoadImageFrom(TCHAR *inPath, bool abShowErrors)
-{
-    if (!inPath || _tcslen(inPath)>=MAX_PATH) {
-        if (abShowErrors)
-            MBoxA(L"Invalid 'inPath' in CSettings::LoadImageFrom");
-        return false;
-    }
-
-    TCHAR exPath[MAX_PATH + 2];
-    if (!ExpandEnvironmentStrings(inPath, exPath, MAX_PATH)) {
-        if (abShowErrors) {
-            TCHAR szError[MAX_PATH*2];
-            DWORD dwErr = GetLastError();
-            swprintf(szError, L"Can't expand environment strings:\r\n%s\r\nError code=0x%08X\r\nImage loading failed",
-                inPath, dwErr);
-            MBoxA(szError);
-        }
-        return false;
-    }
-
-    bool lRes = false;
-    klFile file;
-    if (file.Open(exPath))
-    {
-        char File[101];
-        file.Read(File, 100);
-        char *pBuf = File;
-        if (pBuf[0] == 'B' && pBuf[1] == 'M' && *(u32*)(pBuf + 0x0A) >= 0x36 && *(u32*)(pBuf + 0x0A) <= 0x436 && *(u32*)(pBuf + 0x0E) == 0x28 && !pBuf[0x1D] && !*(u32*)(pBuf + 0x1E))
-            //if (*(u16*)pBuf == 'MB' && *(u32*)(pBuf + 0x0A) >= 0x36)
-        {
-            const HDC hScreenDC = GetDC(0);
-            HDC hNewBgDc = CreateCompatibleDC(hScreenDC);
-            HBITMAP hNewBgBitmap;
-            if (hNewBgDc)
-            {
-                if((hNewBgBitmap = (HBITMAP)LoadImage(NULL, exPath, IMAGE_BITMAP,0,0,LR_LOADFROMFILE)) != NULL)
-                {
-                    if (hBgBitmap) { DeleteObject(hBgBitmap); hBgBitmap=NULL; }
-                    if (hBgDc) { DeleteDC(hBgDc); hBgDc=NULL; }
-
-                    hBgDc = hNewBgDc;
-                    hBgBitmap = hNewBgBitmap;
-
-                    if(SelectObject(hBgDc, hBgBitmap))
-                    {
-                        isBackgroundImageValid = true;
-                        bgBmp.X = *(u32*)(pBuf + 0x12);
-                        bgBmp.Y = *(i32*)(pBuf + 0x16);
-                        // Равняем на границу 4-х пикселов (WinXP SP2)
-                        int nCxFixed = ((bgBmp.X+3)>>2)<<2;
-                        if (klstricmp(sBgImage, inPath))
-                        {
-                            lRes = true;
-                            _tcscpy(sBgImage, inPath);
-                        }
-
-                        struct bColor
-                        {
-                            u8 b;
-                            u8 g;
-                            u8 r;
-                        };
-
-                        MCHKHEAP
-                            //GetDIBits памяти не хватает 
-                        bColor *bArray = new bColor[(nCxFixed+10) * bgBmp.Y];
-                        MCHKHEAP
-
-                        BITMAPINFO bInfo; memset(&bInfo, 0, sizeof(bInfo));
-                        bInfo.bmiHeader.biSize = sizeof(BITMAPINFO);
-                        bInfo.bmiHeader.biWidth = nCxFixed/*bgBmp.X*/;
-                        bInfo.bmiHeader.biHeight = bgBmp.Y;
-                        bInfo.bmiHeader.biPlanes = 1;
-                        bInfo.bmiHeader.biBitCount = 24;
-                        bInfo.bmiHeader.biCompression = BI_RGB;
-
-                        MCHKHEAP
-                        if (!GetDIBits(hBgDc, hBgBitmap, 0, bgBmp.Y, bArray, &bInfo, DIB_RGB_COLORS))
-                            //MBoxA(L"!"); //Maximus5 - Да, это очень информативно
-                            MBoxA(L"!GetDIBits");
-
-
-                        MCHKHEAP
-                        for (int y=0; y<bgBmp.Y; y++)
-                        {
-                            int i = y*nCxFixed;
-                            for (int x=0; x<bgBmp.X; x++, i++)
-                            //for (int i = 0; i < bgBmp.X * bgBmp.Y; i++)
-                            {
-                                bArray[i].r = klMulDivU32(bArray[i].r, bgImageDarker, 255);
-                                bArray[i].g = klMulDivU32(bArray[i].g, bgImageDarker, 255);
-                                bArray[i].b = klMulDivU32(bArray[i].b, bgImageDarker, 255);
-                            }
-                        }
-
-                        MCHKHEAP
-                        if (!SetDIBits(hBgDc, hBgBitmap, 0, bgBmp.Y, bArray, &bInfo, DIB_RGB_COLORS))
-                            MBoxA(L"!SetDIBits");
-
-                        MCHKHEAP
-                        delete[] bArray;
-                        MCHKHEAP
-                    }
-                }
-                else
-                    DeleteDC(hNewBgDc);
-            }
-
-            ReleaseDC(0, hScreenDC);
-        } else {
-            if (abShowErrors)
-                MBoxA(L"Only BMP files supported as background!");
-        }
-        file.Close();
-    }
-
-    return lRes;
 }
 
 void CSettings::Dialog()
@@ -3264,6 +3149,9 @@ INT_PTR CSettings::viewsOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPa
 					break;
 				case cbThumbUsePicView2:
 					gSet.ThSet.bUsePicView2 = IsChecked(hWnd2, wId);
+					break;
+				case cbThumbRestoreOnStartup:
+					gSet.ThSet.bRestoreOnStartup = IsChecked(hWnd2, wId);
 					break;
 				case cbThumbPreviewBox:
 					gSet.ThSet.nPreviewFrame = IsChecked(hWnd2, wId);
@@ -4420,6 +4308,9 @@ void CSettings::RecreateFont(WORD wFromID)
 		//	SendMessage(hwndTip, TTM_ACTIVATE, TRUE, 0);
 		//}
 	}
+	
+	if (wFromID == rNoneAA || wFromID == rStandardAA || wFromID == rCTAA)
+		gConEmu.OnPanelViewSettingsChanged(TRUE);
 
 	mb_IgnoreTtfChange = TRUE;
 }
@@ -4759,7 +4650,7 @@ HFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 		
 		DeleteDC(hDC);
     }
-
+    
     return hFont;
 }
 
@@ -5704,4 +5595,143 @@ bool CSettings::isModifierPressed(DWORD vk)
 
 	// Можно
 	return true;
+}
+
+// Должна вернуть true, если файл изменился
+bool CSettings::PrepareBackground(HDC* phBgDc, COORD* pbgBmp)
+{
+/*
+    HBITMAP  hBgBitmap;
+    COORD    bgBmp;
+    HDC      hBgDc;
+    FILETIME ftBgModified;
+    WCHAR sBgImage[MAX_PATH];
+    char isShowBgImage;
+	bool isBackgroundImageValid;
+	u8 bgImageDarker;
+	DWORD nBgImageColors;
+*/
+	*phBgDc = hBgDc;
+	*pbgBmp = bgBmp;
+	return false;
+}
+
+TODO("LoadImage может загрузить и jpg, а ручное преобразование лучше заменить на AlphaBlend");
+bool CSettings::LoadImageFrom(TCHAR *inPath, bool abShowErrors)
+{
+    if (!inPath || _tcslen(inPath)>=MAX_PATH) {
+        if (abShowErrors)
+            MBoxA(L"Invalid 'inPath' in CSettings::LoadImageFrom");
+        return false;
+    }
+
+    TCHAR exPath[MAX_PATH + 2];
+    if (!ExpandEnvironmentStrings(inPath, exPath, MAX_PATH)) {
+        if (abShowErrors) {
+            TCHAR szError[MAX_PATH*2];
+            DWORD dwErr = GetLastError();
+            swprintf(szError, L"Can't expand environment strings:\r\n%s\r\nError code=0x%08X\r\nImage loading failed",
+                inPath, dwErr);
+            MBoxA(szError);
+        }
+        return false;
+    }
+
+    bool lRes = false;
+    klFile file;
+    if (file.Open(exPath))
+    {
+        char File[101];
+        file.Read(File, 100);
+        char *pBuf = File;
+        if (pBuf[0] == 'B' && pBuf[1] == 'M' && *(u32*)(pBuf + 0x0A) >= 0x36 && *(u32*)(pBuf + 0x0A) <= 0x436 && *(u32*)(pBuf + 0x0E) == 0x28 && !pBuf[0x1D] && !*(u32*)(pBuf + 0x1E))
+            //if (*(u16*)pBuf == 'MB' && *(u32*)(pBuf + 0x0A) >= 0x36)
+        {
+            const HDC hScreenDC = GetDC(0);
+            HDC hNewBgDc = CreateCompatibleDC(hScreenDC);
+            HBITMAP hNewBgBitmap;
+            if (hNewBgDc)
+            {
+                if((hNewBgBitmap = (HBITMAP)LoadImage(NULL, exPath, IMAGE_BITMAP,0,0,LR_LOADFROMFILE)) != NULL)
+                {
+                    if (hBgBitmap) { DeleteObject(hBgBitmap); hBgBitmap=NULL; }
+                    if (hBgDc) { DeleteDC(hBgDc); hBgDc=NULL; }
+
+                    hBgDc = hNewBgDc;
+                    hBgBitmap = hNewBgBitmap;
+
+                    if(SelectObject(hBgDc, hBgBitmap))
+                    {
+                        isBackgroundImageValid = true;
+                        bgBmp.X = *(u32*)(pBuf + 0x12);
+                        bgBmp.Y = *(i32*)(pBuf + 0x16);
+                        // Ровняем на границу 4-х пикселов (WinXP SP2)
+                        int nCxFixed = ((bgBmp.X+3)>>2)<<2;
+                        if (klstricmp(sBgImage, inPath))
+                        {
+                            lRes = true;
+                            _tcscpy(sBgImage, inPath);
+                        }
+
+                        struct bColor
+                        {
+                            u8 b;
+                            u8 g;
+                            u8 r;
+                        };
+
+                        MCHKHEAP
+                            //GetDIBits памяти не хватает 
+                        bColor *bArray = new bColor[(nCxFixed+10) * bgBmp.Y];
+                        MCHKHEAP
+
+                        BITMAPINFO bInfo; memset(&bInfo, 0, sizeof(bInfo));
+                        bInfo.bmiHeader.biSize = sizeof(BITMAPINFO);
+                        bInfo.bmiHeader.biWidth = nCxFixed/*bgBmp.X*/;
+                        bInfo.bmiHeader.biHeight = bgBmp.Y;
+                        bInfo.bmiHeader.biPlanes = 1;
+                        bInfo.bmiHeader.biBitCount = 24;
+                        bInfo.bmiHeader.biCompression = BI_RGB;
+
+                        MCHKHEAP
+                        if (!GetDIBits(hBgDc, hBgBitmap, 0, bgBmp.Y, bArray, &bInfo, DIB_RGB_COLORS))
+                            //MBoxA(L"!"); //Maximus5 - Да, это очень информативно
+                            MBoxA(L"!GetDIBits");
+
+
+                        MCHKHEAP
+                        for (int y=0; y<bgBmp.Y; y++)
+                        {
+                            int i = y*nCxFixed;
+                            for (int x=0; x<bgBmp.X; x++, i++)
+                            //for (int i = 0; i < bgBmp.X * bgBmp.Y; i++)
+                            {
+                                bArray[i].r = klMulDivU32(bArray[i].r, bgImageDarker, 255);
+                                bArray[i].g = klMulDivU32(bArray[i].g, bgImageDarker, 255);
+                                bArray[i].b = klMulDivU32(bArray[i].b, bgImageDarker, 255);
+                            }
+                        }
+
+                        MCHKHEAP
+                        if (!SetDIBits(hBgDc, hBgBitmap, 0, bgBmp.Y, bArray, &bInfo, DIB_RGB_COLORS))
+                            MBoxA(L"!SetDIBits");
+
+                        MCHKHEAP
+                        delete[] bArray;
+                        MCHKHEAP
+                    }
+                }
+                else
+                    DeleteDC(hNewBgDc);
+            }
+
+            ReleaseDC(0, hScreenDC);
+        } else {
+            if (abShowErrors)
+                MBoxA(L"Only BMP files supported as background!");
+        }
+        file.Close();
+    }
+
+    return lRes;
 }

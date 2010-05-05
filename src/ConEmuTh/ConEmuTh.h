@@ -163,6 +163,7 @@ typedef struct tag_CeFullPanelInfo
 	// ************************
 	int nMaxItemsNumber;
 	CePluginPanelItem** ppItems;
+	MSection* pSection;
 	// ************************
 	int nFarTmpBuf;    // Временный буфер для получения
 	LPVOID pFarTmpBuf; // информации об элементе панели
@@ -171,7 +172,8 @@ typedef struct tag_CeFullPanelInfo
 	int RegisterPanelView();
 	int UnregisterPanelView();
 	HWND CreateView();
-	void FreeInfo();
+	BOOL ReallocItems(int anCount);
+	void FinalRelease();
 	
 	// Эта "дисплейная" функция вызывается из основной нити, там можно дергать FAR Api
 	void DisplayReloadPanel();
@@ -280,7 +282,7 @@ extern DWORD gnSelfPID, gnMainThreadId;
 //extern int lastModifiedStateW;
 //extern bool gbHandleOneRedraw; //, gbHandleOneRedrawCh;
 //extern WCHAR gszDir1[CONEMUTABMAX], gszDir2[CONEMUTABMAX], 
-extern WCHAR gszRootKey[MAX_PATH*2];
+extern wchar_t* gszRootKey;
 //extern int maxTabCount, lastWindowCount;
 //extern CESERVER_REQ* tabs; //(ConEmuTab*) calloc(maxTabCount, sizeof(ConEmuTab));
 //extern CESERVER_REQ* gpCmdRet;
@@ -323,6 +325,7 @@ extern wchar_t gsFolder[64], /*gsHardLink[64],*/ gsSymLink[64], gsJunction[64];
 //} SynchroArg;
 
 BOOL LoadFarVersion();
+void StartPlugin(void);
 void ExitPlugin(void);
 void FUNC_X(ExitFARW)(void);
 void FUNC_Y(ExitFARW)(void);

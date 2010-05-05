@@ -39,6 +39,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "resource.h"
 #include "ImgCache.h"
 
+#ifdef _DEBUG
+	#undef _ASSERTE
+	static bool gbIgnoreAsserts = false;
+	#define _ASSERTE(expr) if (!(expr) && !gbIgnoreAsserts) { gbIgnoreAsserts = true; _ASSERT_EXPR((expr), _CRT_WIDE(#expr)); gbIgnoreAsserts = false; }
+#endif
+
 
 static ATOM hClass = NULL;
 //LRESULT CALLBACK DisplayWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -349,8 +355,8 @@ DWORD WINAPI CeFullPanelInfo::DisplayThread(LPVOID lpvParam)
 	gpImgCache->Reset(); // только Reset.
 
 	// Освободить память
-	pviLeft.FreeInfo();
-	pviRight.FreeInfo();
+	pviLeft.FinalRelease();
+	pviRight.FinalRelease();
 
 	UpdateEnvVar(FALSE);
 	
@@ -808,102 +814,107 @@ void CeFullPanelInfo::Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc)
 	//if (!this->Focus)
 	//	nCurrentItem = -1;
 
-
-	for (int nStep = 0; !gbCancelAll && nStep <= 1; nStep++)
+	MSectionLock CS;
+	if (CS.Lock(pSection, FALSE, 1000))
 	{
-		if (nStep) {
-			if ((gThSet.bLoadPreviews & PVM) == 0)
-				continue; // для этого режима превьюшки не просили
-		}
-
-		_ASSERTE(nTopItem>=0 && nTopItem<nItemCount && nItemCount>=0);
-		
-		int nItem = nTopItem;
-		int nYCoord = 0, nXCoord = 0;
-		int X = -1, Y = -1;
-		int iCount = (PVM == pvm_Thumbnails) ? nYCount : nXCount;
-		int jCount = (PVM == pvm_Thumbnails) ? nXCount : nYCount;
-
-
-		//for (int Y = 0; !gbCancelAll && Y < nYCount && nItem < nItemCount; Y++) {
-		for (int i = 0; !gbCancelAll && i < iCount && nItem < nItemCount; i++) {
-			if (PVM == pvm_Thumbnails) {
-				nXCoord = 0; Y++; X = -1;
-			} else {
-				nYCoord = 0; X++; Y = -1;
+		for (int nStep = 0; !gbCancelAll && nStep <= 1; nStep++)
+		{
+			if (nStep) {
+				if ((gThSet.bLoadPreviews & PVM) == 0)
+					continue; // для этого режима превьюшки не просили
 			}
-				
-			//for (int X = 0; !gbCancelAll && X < nXCount && nItem < nItemCount; X++, nItem++) {
-			for (int j = 0; !gbCancelAll && j < jCount && nItem < nItemCount; j++, nItem++) {
-				if (PVM == pvm_Thumbnails) {
-					X++;
-				} else {
-					Y++;
-				}
 
-				CePluginPanelItem* pItem = this->ppItems[nItem];
-				if (!pItem) {
-					_ASSERTE(this->ppItems[nItem]!=NULL);
-					continue; // Ошибка?
+			_ASSERTE(nTopItem>=0 && nTopItem<nItemCount && nItemCount>=0);
+			
+			int nItem = nTopItem;
+			int nYCoord = 0, nXCoord = 0;
+			int X = -1, Y = -1;
+			int iCount = (PVM == pvm_Thumbnails) ? nYCount : nXCount;
+			int jCount = (PVM == pvm_Thumbnails) ? nXCount : nYCount;
+
+
+			//for (int Y = 0; !gbCancelAll && Y < nYCount && nItem < nItemCount; Y++) {
+			for (int i = 0; !gbCancelAll && i < iCount && nItem < nItemCount; i++) {
+				if (PVM == pvm_Thumbnails) {
+					nXCoord = 0; Y++; X = -1;
+				} else {
+					nYCoord = 0; X++; Y = -1;
 				}
-				if (!nStep || !pItem->bPreviewLoaded) {
-					// поехали
-					const wchar_t* pszName = pItem->FindData.lpwszFileName;
-					if (wcschr(pszName, L'\\')) {
-						// Это уже может быть полный путь (TempPanel?)
-						pItem->pszFullName = pszName;
+					
+				//for (int X = 0; !gbCancelAll && X < nXCount && nItem < nItemCount; X++, nItem++) {
+				for (int j = 0; !gbCancelAll && j < jCount && nItem < nItemCount; j++, nItem++) {
+					if (PVM == pvm_Thumbnails) {
+						X++;
 					} else {
-						// Полный путь нужно сформировать
-						lstrcpyn(pszNamePtr, pszName, MAX_PATH+1);
-						pItem->pszFullName = pszFull;
+						Y++;
 					}
 
-					if (PaintItem(hCompDC, 0, 0, pItem, 
-						(Focus && nItem==nCurrentItem), (nItem==nCurrentItem),
-						nBackColor, nForeColor, hBack, (nStep == 1), hBackBrush))
-					{
-						BitBlt(hdc, nXCoord, nYCoord, nWholeW, nWholeH, hCompDC, 0,0, SRCCOPY);
-						#ifdef _DEBUG
-						GdiFlush();
-						#endif
+					_ASSERTE(this->ppItems!=NULL);
+
+					CePluginPanelItem* pItem = this->ppItems[nItem];
+					if (!pItem) {
+						_ASSERTE(this->ppItems[nItem]!=NULL);
+						continue; // Ошибка?
+					}
+					if (!nStep || !pItem->bPreviewLoaded) {
+						// поехали
+						const wchar_t* pszName = pItem->FindData.lpwszFileName;
+						if (wcschr(pszName, L'\\')) {
+							// Это уже может быть полный путь (TempPanel?)
+							pItem->pszFullName = pszName;
+						} else {
+							// Полный путь нужно сформировать
+							lstrcpyn(pszNamePtr, pszName, MAX_PATH+1);
+							pItem->pszFullName = pszFull;
+						}
+
+						if (PaintItem(hCompDC, 0, 0, pItem, 
+							(Focus && nItem==nCurrentItem), (nItem==nCurrentItem),
+							nBackColor, nForeColor, hBack, (nStep == 1), hBackBrush))
+						{
+							BitBlt(hdc, nXCoord, nYCoord, nWholeW, nWholeH, hCompDC, 0,0, SRCCOPY);
+							#ifdef _DEBUG
+							GdiFlush();
+							#endif
+						}
+					}
+
+					if (PVM == pvm_Thumbnails) {
+						nXCoord += nWholeW;
+					} else {
+						nYCoord += nWholeH;
 					}
 				}
 
+
 				if (PVM == pvm_Thumbnails) {
-					nXCoord += nWholeW;
-				} else {
+					if (!nStep && nXCoord < rc.right) {
+						RECT rcComp = {nXCoord,nYCoord,rc.right,nYCoord+nWholeH};
+						FillRect(hdc, &rcComp, hBack[0]);
+					}
+
 					nYCoord += nWholeH;
+				} else {
+					if (!nStep && nYCoord < rc.bottom) {
+						RECT rcComp = {nXCoord,nYCoord,rc.right,rc.bottom};
+						FillRect(hdc, &rcComp, hBack[0]);
+					}
+
+					nXCoord += nWholeW;
 				}
 			}
 
 
 			if (PVM == pvm_Thumbnails) {
-				if (!nStep && nXCoord < rc.right) {
-					RECT rcComp = {nXCoord,nYCoord,rc.right,nYCoord+nWholeH};
-					FillRect(hdc, &rcComp, hBack[0]);
-				}
-
-				nYCoord += nWholeH;
-			} else {
 				if (!nStep && nYCoord < rc.bottom) {
-					RECT rcComp = {nXCoord,nYCoord,rc.right,rc.bottom};
+					RECT rcComp = {0,nYCoord,rc.right,rc.bottom};
 					FillRect(hdc, &rcComp, hBack[0]);
 				}
-
-				nXCoord += nWholeW;
-			}
-		}
-
-
-		if (PVM == pvm_Thumbnails) {
-			if (!nStep && nYCoord < rc.bottom) {
-				RECT rcComp = {0,nYCoord,rc.right,rc.bottom};
-				FillRect(hdc, &rcComp, hBack[0]);
-			}
-		} else {
-			if (!nStep && nXCoord < rc.right) {
-				RECT rcComp = {nXCoord,0,rc.right,rc.bottom};
-				FillRect(hdc, &rcComp, hBack[0]);
+			} else {
+				if (!nStep && nXCoord < rc.right) {
+					RECT rcComp = {nXCoord,0,rc.right,rc.bottom};
+					FillRect(hdc, &rcComp, hBack[0]);
+				}
 			}
 		}
 	}

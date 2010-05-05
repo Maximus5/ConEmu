@@ -47,6 +47,7 @@ inline bool operator==(const CharAttr& s1, const CharAttr& s2)
 #define FR_FLAGS_MASK     0xFF0000
 #define FR_COMMONDLG_MASK 0x0000FF
 #define FR_FREEDLG_MASK   0x00FF00
+#define FR_ALLDLG_MASK    (FR_COMMONDLG_MASK|FR_FREEDLG_MASK)
 // Предопределенные ИД "регионов"
 #define FR_LEFTPANEL      0x000001 // Левая панель
 #define FR_RIGHTPANEL     0x000002 // Правая панель
@@ -54,6 +55,7 @@ inline bool operator==(const CharAttr& s1, const CharAttr& s2)
 #define FR_MENUBAR        0x000008 // Строка меню (верхнее)
 #define FR_ACTIVEMENUBAR  0x000018 // Если MenuBar виден не всегда, или он активирован (т.е. панели недоступны)
 #define FR_PANELTABS      0x000020 // Строка под панелями (плагин PanelTabs)
+#define FR_QSEARCH        0x000040 // QSearch в панелях
 // ИД для свободных диалогов/меню/и пр.
 #define FR_FIRSTDLGID     0x000100
 #define FR_LASTDLGID      0x00FF00
@@ -73,7 +75,7 @@ public:
 	
 public:
 	// Public methods
-	int GetDetectedDialogs(int anMaxCount, SMALL_RECT* rc, DWORD* rf) const;
+	int GetDetectedDialogs(int anMaxCount, SMALL_RECT* rc, DWORD* rf, DWORD anMask=-1) const;
 	DWORD GetDialog(DWORD nDlgID, SMALL_RECT* rc) const;
 	void PrepareTransparent(const CEFAR_INFO *apFarInfo, const COLORREF *apColors, const CONSOLE_SCREEN_BUFFER_INFO *apSbi, wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight);
 	DWORD GetFlags() const;
@@ -134,6 +136,7 @@ protected:
 	// Используется для собственноручного формирования буферов
 	wchar_t   *mpsz_Chars;
 	CharAttr  *mp_Attrs;
+	CharAttr  *mp_AttrsWork;
 	int mn_CurWidth, mn_CurHeight, mn_MaxCells;
 	bool mb_SBI_Loaded;
 	CharAttr mca_Table[0x100];
@@ -147,7 +150,8 @@ class CRgnRects
 public:
 	int nRectCount;
 	#define MAX_RGN_RECTS MAX_DETECTED_DIALOGS // 20.
-	RECT rcRect[MAX_RGN_RECTS]; // rcRect[0] - основной, rcRect[1...] - то что вычитается из rcRect[0]
+	RECT  rcRect[MAX_RGN_RECTS]; // rcRect[0] - основной, rcRect[1...] - то что вычитается из rcRect[0]
+	DWORD nRectOper[MAX_RGN_RECTS]; // RGN_AND or RGN_DIFF
 /*	Current region state:
 	#define ERROR               0
 	#define NULLREGION          1
@@ -164,8 +168,8 @@ public:
 	// Сбросить все прямоугольники и установить rcRect[0]
 	void Init(LPRECT prcInit);
 	// Combines the parts of rcRect[..] that are not part of prcAddDiff.
-	int Diff(LPRECT prcAddDiff);
-	int DiffSmall(SMALL_RECT *prcAddDiff);
+	int Diff(LPRECT prcAddDiff); // RGN_AND or RGN_DIFF
+	int DiffSmall(SMALL_RECT *prcAddDiff); // RGN_AND or RGN_DIFF
 	// Скопировать ИЗ pRgn, вернуть true - если были отличия
 	bool LoadFrom(CRgnRects* pRgn);
 	

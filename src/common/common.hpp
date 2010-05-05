@@ -342,6 +342,7 @@ typedef struct tag_PanelViewSettings {
 
 	DWORD nMaxZoom; // 600%
 	bool  bUsePicView2; // true
+	bool  bRestoreOnStartup;
 
 
 	// ÷вета теперь живут здесь!	

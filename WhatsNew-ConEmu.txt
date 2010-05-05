@@ -1,3 +1,4 @@
+[%] 'Block inactive cursor'.
 [*] Доработки PanelViews.
 
 

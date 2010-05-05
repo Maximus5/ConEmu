@@ -173,7 +173,7 @@ CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
     Cursor.nBlinkTime = GetCaretBlinkTime();
 
     TextWidth = TextHeight = Width = Height = nMaxTextWidth = nMaxTextHeight = 0;
-    hDC = NULL; hBitmap = NULL;
+    hDC = NULL; hBitmap = NULL; hBgDc = NULL; bgBmp.X = bgBmp.Y = 0;
     hSelectedFont = NULL; hOldFont = NULL;
     PointersInit();
     mb_IsForceUpdate = false;
@@ -656,26 +656,27 @@ bool CVirtualConsole::isCharScroll(WCHAR inChar)
 void CVirtualConsole::BlitPictureTo(int inX, int inY, int inWidth, int inHeight)
 {
 	#ifdef _DEBUG
-	BOOL lbDump = FALSE;
-	if (lbDump) DumpImage(gSet.hBgDc, gSet.bgBmp.X, gSet.bgBmp.Y, L"F:\\bgtemp.png");
+		BOOL lbDump = FALSE;
+		if (lbDump) DumpImage(hBgDc, bgBmp.X, bgBmp.Y, L"F:\\bgtemp.png");
 	#endif
-    if (gSet.bgBmp.X>inX && gSet.bgBmp.Y>inY)
-        BitBlt(hDC, inX, inY, inWidth, inHeight, gSet.hBgDc, inX, inY, SRCCOPY);
-    if (gSet.bgBmp.X<(inX+inWidth) || gSet.bgBmp.Y<(inY+inHeight))
+	
+    if (bgBmp.X>inX && bgBmp.Y>inY)
+        BitBlt(hDC, inX, inY, inWidth, inHeight, hBgDc, inX, inY, SRCCOPY);
+    if (bgBmp.X<(inX+inWidth) || bgBmp.Y<(inY+inHeight))
     {
         if (hBrush0 == NULL) {
             hBrush0 = CreateSolidBrush(mp_Colors[0]);
             SelectBrush(hBrush0);
         }
 
-        RECT rect = {max(inX,gSet.bgBmp.X), inY, inX+inWidth, inY+inHeight};
+        RECT rect = {max(inX,bgBmp.X), inY, inX+inWidth, inY+inHeight};
         #ifndef SKIP_ALL_FILLRECT
         if (!IsRectEmpty(&rect))
             FillRect(hDC, &rect, hBrush0);
         #endif
 
-        if (gSet.bgBmp.X>inX) {
-            rect.left = inX; rect.top = max(inY,gSet.bgBmp.Y); rect.right = gSet.bgBmp.X;
+        if (bgBmp.X>inX) {
+            rect.left = inX; rect.top = max(inY,bgBmp.Y); rect.right = bgBmp.X;
             #ifndef SKIP_ALL_FILLRECT
             if (!IsRectEmpty(&rect))
                 FillRect(hDC, &rect, hBrush0);
@@ -897,10 +898,12 @@ bool CVirtualConsole::CheckChangedTextAttr()
     return textChanged || attrChanged;
 }
 
-bool CVirtualConsole::Update(bool isForce, HDC *ahDc)
+bool CVirtualConsole::Update(bool abForce, HDC *ahDc)
 {
     if (!this || !mp_RCon || !mp_RCon->ConWnd())
         return false;
+        
+    isForce = abForce;
 
 	if (!gConEmu.isMainThread()) {
 		if (isForce)
@@ -963,7 +966,7 @@ bool CVirtualConsole::Update(bool isForce, HDC *ahDc)
     //------------------------------------------------------------------------
     ///| Read console output and cursor info... |/////////////////////////////
     //------------------------------------------------------------------------
-    if (!UpdatePrepare(isForce, ahDc, &SDC)) {
+    if (!UpdatePrepare(ahDc, &SDC)) {
         gConEmu.DebugStep(_T("DC initialization failed!"));
         return false;
     }
@@ -1019,7 +1022,7 @@ bool CVirtualConsole::Update(bool isForce, HDC *ahDc)
         //------------------------------------------------------------------------
         ///| Drawing modified text |//////////////////////////////////////////////
         //------------------------------------------------------------------------
-        UpdateText(isForce);
+        UpdateText();
         
         //gSet.Performance(tPerfRender, TRUE);
 
@@ -1233,7 +1236,7 @@ BOOL CVirtualConsole::CheckTransparentRgn()
 	return lbRgnChanged;
 }
 
-bool CVirtualConsole::UpdatePrepare(bool isForce, HDC *ahDc, MSectionLock *pSDC)
+bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC)
 {
     MSectionLock SCON; SCON.Lock(&csCON);
     
@@ -1313,7 +1316,7 @@ bool CVirtualConsole::UpdatePrepare(bool isForce, HDC *ahDc, MSectionLock *pSDC)
 		#endif
         gConEmu.OnConsoleResize();
     }
-
+    
     // Требуется полная перерисовка!
     if (mb_IsForceUpdate)
     {
@@ -1329,6 +1332,15 @@ bool CVirtualConsole::UpdatePrepare(bool isForce, HDC *ahDc, MSectionLock *pSDC)
 		&& gSet.isBackgroundImageValid;
     TextLen = TextWidth * TextHeight;
     coord.X = csbi.srWindow.Left; coord.Y = csbi.srWindow.Top;
+    
+    if (drawImage) {
+    	// Она заодно проверит, не изменился ли файл?
+    	if (gSet.PrepareBackground(&hBgDc, &bgBmp)) {
+    		isForce = true;
+    	} else {
+    		drawImage = (hBgDc!=NULL);
+		}
+    }
 
     // скопировать данные из состояния консоли В mpn_ConAttrEx/mpsz_ConChar
 	BOOL bConDataChanged = isForce || mp_RCon->IsConsoleDataChanged();
@@ -1477,7 +1489,7 @@ bool CVirtualConsole::UpdatePrepare(bool isForce, HDC *ahDc, MSectionLock *pSDC)
 //    pEnd->partType = pNull;
 //}
 
-void CVirtualConsole::Update_CheckAndFill(bool isForce)
+void CVirtualConsole::Update_CheckAndFill()
 {
     // pointers
     wchar_t* ConCharLine = mpsz_ConChar;
@@ -1658,7 +1670,7 @@ void CVirtualConsole::Update_DrawText(uint row, uint nY)
 {
 }
 
-void CVirtualConsole::UpdateText(bool isForce)
+void CVirtualConsole::UpdateText()
 {
     //if (!updateText) {
     //    _ASSERTE(updateText);
@@ -2822,6 +2834,7 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
 			int nFound = mp_RCon->GetDetectedDialogs(MAX_DETECTED_DIALOGS, rcFound, nDlgFlags);
 			HPEN hFrame = CreatePen(PS_SOLID, 1, RGB(255,0,255));
 			HPEN hPanel = CreatePen(PS_SOLID, 2, RGB(255,255,0));
+			HPEN hQSearch = CreatePen(PS_SOLID, 1, RGB(255,255,0));
 			HPEN hActiveMenu = (HPEN)GetStockObject(WHITE_PEN);
 			HPEN hOldPen = (HPEN)SelectObject(hPaintDc, hFrame);
 			HBRUSH hOldBr = (HBRUSH)SelectObject(hPaintDc, GetStockObject(HOLLOW_BRUSH));
@@ -2838,6 +2851,8 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
 					SelectObject(hPaintDc, hRed);
 				else if ((nFlags & FR_ACTIVEMENUBAR) == FR_ACTIVEMENUBAR)
 					SelectObject(hPaintDc, hActiveMenu);
+				else if ((nFlags & FR_QSEARCH) == FR_QSEARCH)
+					SelectObject(hPaintDc, hQSearch);
 				else if ((nFlags & (FR_LEFTPANEL|FR_RIGHTPANEL|FR_FULLPANEL)))
 					SelectObject(hPaintDc, hPanel);
 				else if ((nFlags & FR_HASBORDER))
@@ -2861,6 +2876,7 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
 			SelectObject(hPaintDc, hOldFont);
 			DeleteObject(hRed);
 			DeleteObject(hPanel);
+			DeleteObject(hQSearch);
 			DeleteObject(hDash);
 			DeleteObject(hFrame);
 			DeleteObject(hSmall);

@@ -70,6 +70,7 @@ private:
 	//
 	bool    mb_IsForceUpdate; // Это устанавливается в InitDC, чтобы случайно isForce не потерялся
 	bool    mb_RequiredForceUpdate; // Сменился шрифт, например...
+	bool    isForce; // а это - сейчас (устанавливается по аргументу в Update)
 private:
 	HDC     hDC;
 	HBITMAP hBitmap;
@@ -139,7 +140,7 @@ private:
 	
 	// *** Анализ строк ***
 	// Заливка измененных строк основным фоном и заполнение pbLineChanged, pbBackIsPic, pnBackRGB
-	void Update_CheckAndFill(bool isForce);
+	void Update_CheckAndFill();
 	// Разбор строки на составляющие (возвращает true, если есть ячейки с НЕ основным фоном)
 	// Функция также производит распределение (заполнение координат и DX)
 	bool Update_ParseTextParts(uint row, const wchar_t* ConCharLine, const CharAttr* ConAttrLine);
@@ -187,7 +188,7 @@ public:
 
 	void DumpConsole();
 	BOOL Dump(LPCWSTR asFile);
-	bool Update(bool isForce = false, HDC *ahDc=NULL);
+	bool Update(bool abForce = false, HDC *ahDc=NULL);
 	void UpdateCursor(bool& lRes);
 	void SelectFont(HFONT hNew);
 	void SelectBrush(HBRUSH hNew);
@@ -227,9 +228,10 @@ protected:
 	//CONSOLE_SELECTION_INFO select1, select2;
 	uint TextLen;
 	bool isCursorValid, drawImage, textChanged, attrChanged;
+    COORD bgBmp; HDC hBgDc;
 	void UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, UINT dwSize);
-	bool UpdatePrepare(bool isForce, HDC *ahDc, MSectionLock *pSDC);
-	void UpdateText(bool isForce); //, bool updateText, bool updateCursor);
+	bool UpdatePrepare(HDC *ahDc, MSectionLock *pSDC);
+	void UpdateText(); //, bool updateText, bool updateCursor);
 	BOOL CheckTransparentRgn();
 	WORD CharWidth(TCHAR ch);
 	void CharABC(TCHAR ch, ABC *abc);

@@ -106,6 +106,7 @@ public:
 	bool isBackgroundImageValid;
 	u8 bgImageDarker;
 	DWORD nBgImageColors;
+	bool PrepareBackground(HDC* phBgDc, COORD* pbgBmp);
 
     /* Transparency */
     u8 nTransparent;
@@ -247,9 +248,12 @@ public:
 	MFileMapping<PanelViewSettings> m_ThSetMap;
     
     // Working variables...
-    HBITMAP hBgBitmap;
-    COORD   bgBmp;
-    HDC     hBgDc;
+private:
+    HBITMAP  hBgBitmap;
+    COORD    bgBmp;
+    HDC      hBgDc;
+    FILETIME ftBgModified;
+public:
     HFONT   mh_Font[MAX_FONT_STYLES], mh_Font2;
     TODO("По хорошему, CharWidth & CharABC нужно разделять по шрифтам - у Bold ширина может быть больше");
     WORD    CharWidth[0x10000]; //, Font2Width[0x10000];

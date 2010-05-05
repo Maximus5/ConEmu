@@ -8945,7 +8945,8 @@ void CRealConsole::FindPanels()
 			for (int i=2; !bLeftPanel && i<con.nTextWidth; i++) {
 				if (con.pConChar[nIdx+i] == ucBoxDblDownLeft
 					&& (con.pConChar[nIdx+i-1] == ucBoxDblHorz || con.pConChar[nIdx+i-1] == ucBoxSinglDownDblHorz)
-					&& con.pConChar[nIdx+i+con.nTextWidth] == ucBoxDblVert)
+					// ÌÎÆÅÒ áûòü çàêðûòî AltHistory
+					/*&& con.pConChar[nIdx+i+con.nTextWidth] == ucBoxDblVert*/)
 				{
 					uint nBottom = con.nTextHeight - 1;
 					while (nBottom > 4) {

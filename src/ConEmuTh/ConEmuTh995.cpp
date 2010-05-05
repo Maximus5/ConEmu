@@ -50,11 +50,13 @@ void SetStartupInfoW995(void *aInfo)
 	*::FSFW995 = *((struct PluginStartupInfo*)aInfo)->FSF;
 	::InfoW995->FSF = ::FSFW995;
 
-	lstrcpynW(gszRootKey, InfoW995->RootKey, MAX_PATH);
+	int nLen = lstrlenW(InfoW995->RootKey)+16;
+	if (gszRootKey) free(gszRootKey);
+	gszRootKey = (wchar_t*)calloc(nLen,2);
+	lstrcpyW(gszRootKey, InfoW995->RootKey);
 	WCHAR* pszSlash = gszRootKey+lstrlenW(gszRootKey)-1;
-	if (*pszSlash == L'\\') *(pszSlash--) = 0;
-	while (pszSlash>gszRootKey && *pszSlash!=L'\\') pszSlash--;
-	*pszSlash = 0;
+	if (*pszSlash != L'\\') *(++pszSlash) = L'\\';
+	lstrcpyW(pszSlash, L"ConEmuTh\\");
 }
 
 void ExitFARW995(void)
@@ -257,7 +259,8 @@ BOOL LoadPanelInfo995(BOOL abActive)
 
 	// Если элементов на панели стало больше, чем выделено в (pviLeft/pviRight)
 	if (pcefpi->ItemsNumber < pi.ItemsNumber) {
-		pcefpi->FreeInfo();
+		if (!pcefpi->ReallocItems(pi.ItemsNumber))
+			return FALSE;
 	}
 
 	// Копируем что нужно

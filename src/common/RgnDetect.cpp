@@ -28,7 +28,7 @@ CRgnDetect::CRgnDetect()
 	memset(&mrc_RightPanel,0,sizeof(mrc_RightPanel));
 	//
 	mpsz_Chars = NULL;
-	mp_Attrs = NULL;
+	mp_Attrs = mp_AttrsWork = NULL;
 	mn_CurWidth = mn_CurHeight = mn_MaxCells = 0;
 	mb_SBI_Loaded = false;
 	mb_TableCreated = false;
@@ -42,19 +42,38 @@ CRgnDetect::~CRgnDetect()
 	if (mp_Attrs) {
 		free(mp_Attrs); mp_Attrs = NULL;
 	}
+	if (mp_AttrsWork) {
+		free(mp_AttrsWork); mp_AttrsWork = NULL;
+	}
 }
 
-int CRgnDetect::GetDetectedDialogs(int anMaxCount, SMALL_RECT* rc, DWORD* rf) const
+int CRgnDetect::GetDetectedDialogs(int anMaxCount, SMALL_RECT* rc, DWORD* rf, DWORD anMask/*=-1*/) const
 {
 	if (!this) return 0;
 	int nCount = m_DetectedDialogs.Count;
 	if (nCount > 0 && anMaxCount > 0 && (rc || rf)) {
-		if (nCount > anMaxCount)
-			nCount = anMaxCount;
-		if (rc)
-			memmove(rc, m_DetectedDialogs.Rects, nCount*sizeof(SMALL_RECT));
-		if (rf)
-			memmove(rf, m_DetectedDialogs.DlgFlags, nCount*sizeof(DWORD));
+		_ASSERTE(sizeof(*rc) == sizeof(m_DetectedDialogs.Rects[0]));
+		_ASSERTE(sizeof(*rf) == sizeof(m_DetectedDialogs.DlgFlags[0]));
+	
+		if (anMask == (DWORD)-1) {
+			if (nCount > anMaxCount)
+				nCount = anMaxCount;
+			if (rc)
+				memmove(rc, m_DetectedDialogs.Rects, nCount*sizeof(*rc));
+			if (rf)
+				memmove(rf, m_DetectedDialogs.DlgFlags, nCount*sizeof(*rf));
+		} else {
+			nCount = 0;
+			for (int i = 0; i < m_DetectedDialogs.Count; i++) {
+				if ((m_DetectedDialogs.DlgFlags[i] & anMask) != 0) {
+					if (rc)
+						rc[nCount] = m_DetectedDialogs.Rects[i];
+					if (rf)
+						rf[nCount] = m_DetectedDialogs.DlgFlags[i];
+					nCount++;
+				}
+			}
+		}
 	}
 	return nCount;
 }
@@ -72,7 +91,7 @@ DWORD CRgnDetect::GetDialog(DWORD nDlgID, SMALL_RECT* rc) const
 	}
 
 	for (int i = 0; i < m_DetectedDialogs.Count; i++) {
-		if ((m_DetectedDialogs.DlgFlags[i] & nDlgID) == nDlgID) {
+		if ((m_DetectedDialogs.DlgFlags[i] & FR_ALLDLG_MASK) == nDlgID) {
 			if (rc) *rc = m_DetectedDialogs.Rects[i];
 			_ASSERTE(m_DetectedDialogs.DlgFlags[i] != 0);
 			return m_DetectedDialogs.DlgFlags[i];
@@ -1079,9 +1098,9 @@ void CRgnDetect::MarkDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHe
 					if (pAttr[nShift].nForeIdx == btPanelFore || pAttr[nShift].nBackIdx == btPanelBack)
 					{
 						if ((nPossible & FR_RIGHTPANEL))
-							mrc_RightPanel = r;
+							mrc_RightPanel = r; // только правая
 						else
-							mrc_LeftPanel = r;
+							mrc_LeftPanel = r;  // левая или полноэкранная
 						DlgFlags |= nPossible;
 						// Может все панели уже нашли?
 						if ((nPossible & FR_FULLPANEL))
@@ -1091,6 +1110,27 @@ void CRgnDetect::MarkDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHe
 						break;
 					}
 				}
+			}
+		}
+	}
+	// Может быть это QSearch?
+	if (!(DlgFlags & FR_COMMONDLG_MASK) && bMarkBorder && bFindExterior) {
+		// QSearch начинается строго на нижней рамке панели, за исключением того случая,
+		// когда KeyBar отключен и панель занимает (nHeight-1) строку
+		SMALL_RECT *prc = NULL;
+		if ((mn_AllFlags & FR_FULLPANEL)) {
+			prc = &mrc_LeftPanel;
+		} else if ((mn_AllFlags & FR_LEFTPANEL) && nX2 < mrc_LeftPanel.Right) {
+			prc = &mrc_LeftPanel;
+		} else if ((mn_AllFlags & FR_RIGHTPANEL) && nX1 > mrc_RightPanel.Left) {
+			prc = &mrc_RightPanel;
+		}
+		// проверяем
+		if (prc) {
+			if ((nY1+2) == nY2 && prc->Left < nX1 && prc->Right > nX2
+				&& (nY1 == prc->Bottom || (nY1 == (prc->Bottom-1) && prc->Bottom == nHeight_1)))
+			{
+				DlgFlags = FR_QSEARCH;
 			}
 		}
 	}
@@ -1204,7 +1244,7 @@ void CRgnDetect::OnWriteConsoleOutput(const CHAR_INFO *lpBuffer,COORD dwBufferSi
 			return;
 	}
 
-	if (!mpsz_Chars || !mp_Attrs)
+	if (!mpsz_Chars || !mp_Attrs || !mp_AttrsWork)
 		return; // буфер еще не был выделен
 	if ((dwBufferCoord.X >= dwBufferSize.X) || (dwBufferCoord.Y >= dwBufferSize.Y))
 	{
@@ -1292,16 +1332,17 @@ BOOL CRgnDetect::InitializeSBI(const COLORREF *apColors)
 		m_sbi.srWindow.Bottom = m_sbi.dwSize.Y - 1;
 
 	// Выделить память, при необходимости увеличить
-	if (!mpsz_Chars || !mp_Attrs || (m_sbi.dwSize.X * m_sbi.dwSize.Y) > mn_MaxCells) {
+	if (!mpsz_Chars || !mp_Attrs || !mp_AttrsWork || (m_sbi.dwSize.X * m_sbi.dwSize.Y) > mn_MaxCells) {
 		if (mpsz_Chars) free(mpsz_Chars);
 		mn_MaxCells = (m_sbi.dwSize.X * m_sbi.dwSize.Y);
 		mn_CurWidth = m_sbi.dwSize.X;
 		mn_CurHeight = m_sbi.dwSize.Y;
 		mpsz_Chars = (wchar_t*)calloc(mn_MaxCells, sizeof(wchar_t));
 		mp_Attrs = (CharAttr*)calloc(mn_MaxCells, sizeof(CharAttr));
+		mp_AttrsWork = (CharAttr*)calloc(mn_MaxCells, sizeof(CharAttr));
 	}
-	if (!mpsz_Chars || !mp_Attrs) {
-		_ASSERTE(mpsz_Chars && mp_Attrs);
+	if (!mpsz_Chars || !mp_Attrs || !mp_AttrsWork) {
+		_ASSERTE(mpsz_Chars && mp_Attrs && mp_AttrsWork);
 		return FALSE;
 	}
 	if (!mn_MaxCells) {
@@ -1340,7 +1381,6 @@ BOOL CRgnDetect::InitializeSBI(const COLORREF *apColors)
 	}
 
 	// Теперь нужно перекинуть данные в mpsz_Chars & mp_Attrs
-	//GetConsoleData(pCharInfo, apColors, mpsz_Chars, mp_Attrs, m_sbi.dwSize.X, m_sbi.dwSize.Y);
 	COORD crNul = {0,0};
 	OnWriteConsoleOutput(pCharInfo, m_sbi.dwSize, crNul, &m_sbi.srWindow, mp_Colors);
 
@@ -1368,88 +1408,18 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO *apFarInfo, const COLORREF 
 	if (!mb_SBI_Loaded) {
 		if (!InitializeSBI(apColors))
 			return;
-
-		//HANDLE hStd = GetStdHandle(STD_OUTPUT_HANDLE);
-		//mb_SBI_Loaded = GetConsoleScreenBufferInfo(hStd, &m_sbi)!=0;
-		//
-		//if (!mb_SBI_Loaded)
-		//	return;
-		//	
-		//// Нужно скорректировать srWindow, т.к. ФАР в любом случае забивает на видимый регион и рисует на весь буфер.
-		//if (m_sbi.srWindow.Left)
-		//	m_sbi.srWindow.Left = 0;
-		//if ((m_sbi.srWindow.Right+1) != m_sbi.dwSize.X)
-		//	m_sbi.srWindow.Right = m_sbi.dwSize.X - 1;
-		//if (m_sbi.srWindow.Top)
-		//	m_sbi.srWindow.Top = 0;
-		//if ((m_sbi.srWindow.Bottom+1) != m_sbi.dwSize.Y)
-		//	m_sbi.srWindow.Bottom = m_sbi.dwSize.Y - 1;
-
-		//// Выделить память, при необходимости увеличить
-		//if (!mpsz_Chars || !mp_Attrs || (m_sbi.dwSize.X * m_sbi.dwSize.Y) > mn_MaxCells) {
-		//	if (mpsz_Chars) free(mpsz_Chars);
-		//	mn_MaxCells = (m_sbi.dwSize.X * m_sbi.dwSize.Y);
-		//	mn_CurWidth = m_sbi.dwSize.X;
-		//	mn_CurHeight = m_sbi.dwSize.Y;
-		//	mpsz_Chars = (wchar_t*)calloc(mn_MaxCells, sizeof(wchar_t));
-		//	mp_Attrs = (CharAttr*)calloc(mn_MaxCells, sizeof(CharAttr));
-		//}
-		//if (!mpsz_Chars || !mp_Attrs) {
-		//	_ASSERTE(mpsz_Chars && mp_Attrs);
-		//	return;
-		//}
-		//if (!mn_MaxCells) {
-		//	_ASSERTE(mn_MaxCells>0);
-		//	return;
-		//}
-		//CHAR_INFO *pCharInfo = (CHAR_INFO*)calloc(mn_MaxCells, sizeof(CHAR_INFO));
-		//if (!pCharInfo) {
-		//	_ASSERTE(pCharInfo);
-		//	return;
-		//}
-		//BOOL bReadOk = FALSE;
-		//COORD bufSize, bufCoord;
-		//SMALL_RECT rgn;
-		//// Если весь буфер больше 30К - и пытаться не будем
-		//if ((mn_MaxCells*sizeof(CHAR_INFO)) < 30000) {
-		//	bufSize.X = m_sbi.dwSize.X; bufSize.Y = m_sbi.dwSize.Y;
-		//	bufCoord.X = 0; bufCoord.Y = 0;
-		//	rgn = m_sbi.srWindow;
-		//	if (ReadConsoleOutput(hStd, pCharInfo, bufSize, bufCoord, &rgn))
-		//		bReadOk = TRUE;
-		//}
-
-		//if (!bReadOk)
-		//{
-		//	// Придется читать построчно
-		//	bufSize.X = m_sbi.dwSize.X; bufSize.Y = 1;
-		//	bufCoord.X = 0; bufCoord.Y = 0;
-		//	rgn = m_sbi.srWindow;
-		//	CHAR_INFO* pLine = pCharInfo;
-		//	for(int y = 0; y < (int)m_sbi.dwSize.Y; y++, rgn.Top++, pLine+=m_sbi.dwSize.X)
-		//	{
-		//		rgn.Bottom = rgn.Top;
-		//		ReadConsoleOutput(hStd, pLine, bufSize, bufCoord, &rgn);
-		//	}
-		//}
-		//
-		//// Теперь нужно перекинуть данные в mpsz_Chars & mp_Attrs
-		////GetConsoleData(pCharInfo, apColors, mpsz_Chars, mp_Attrs, m_sbi.dwSize.X, m_sbi.dwSize.Y);
-		//COORD crNul = {0,0};
-		//OnWriteConsoleOutput(pCharInfo, m_sbi.dwSize, crNul, &m_sbi.srWindow, apColors);
-		//
-		//// Буфер CHAR_INFO больше не нужен
-		//free(pCharInfo);
 	}
-	
-	
-	PrepareTransparent(apFarInfo, apColors, &m_sbi, mpsz_Chars, mp_Attrs, mn_CurWidth, mn_CurHeight);
+
+	memmove(mp_AttrsWork, mp_Attrs, mn_CurWidth*mn_CurHeight*sizeof(*mp_AttrsWork));
+
+	PrepareTransparent(apFarInfo, apColors, &m_sbi, mpsz_Chars, mp_AttrsWork, mn_CurWidth, mn_CurHeight);
 }
 
 // Эта функция вызывается из GUI
 void CRgnDetect::PrepareTransparent(const CEFAR_INFO *apFarInfo, const COLORREF *apColors, const CONSOLE_SCREEN_BUFFER_INFO *apSbi,
 									wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight)
 {
+	_ASSERTE(pAttr!=mp_Attrs);
 	mp_FarInfo = apFarInfo;
 	mp_Colors = apColors;
 	_ASSERTE(mp_Colors && (mp_Colors[1] || mp_Colors[2]));
@@ -1665,6 +1635,14 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO *apFarInfo, const COLORREF 
 						continue;
 					}
 				}*/
+#ifdef _DEBUG
+				if (nX == 18 && nY == 6 && pszDst[nX] == ucBoxDblDownRight) {
+					nX = nX;
+				}
+#endif
+
+				//PRAGMA_ERROR("тут ошибается: поля bDialog и bDialogCorner не зачищаются, поэтому возникают проблемы в ConEmuTh");
+
 				if (!pnDst[nX].bDialog) {
 					if (pnDst[nX].crBackColor != crUserBack) {
 						DetectDialog(pChar, pAttr, nWidth, nHeight, nX, nY);

@@ -84,21 +84,21 @@ void WINAPI _export SetStartupInfo(const struct PluginStartupInfo *aInfo)
 	*::InfoA = *aInfo;
 	*::FSFA = *aInfo->FSF;
 	::InfoA->FSF = ::FSFA;
-	
-	MultiByteToWideChar(CP_ACP,0,InfoA->RootKey,lstrlenA(InfoA->RootKey)+1,gszRootKey,MAX_PATH);
+
+	int nLen = lstrlenA(InfoA->RootKey)+16;
+	if (gszRootKey) free(gszRootKey);
+	gszRootKey = (wchar_t*)calloc(nLen,2);
+	MultiByteToWideChar(CP_ACP,0,InfoA->RootKey,-1,gszRootKey,nLen);
 	WCHAR* pszSlash = gszRootKey+lstrlenW(gszRootKey)-1;
-	if (*pszSlash == L'\\') *(pszSlash--) = 0;
-	while (pszSlash>gszRootKey && *pszSlash!=L'\\') pszSlash--;
-	*pszSlash = 0;
+	if (*pszSlash != L'\\') *(++pszSlash) = L'\\';
+	lstrcpyW(pszSlash, L"ConEmuTh\\");
 
 	wchar_t szTemp[MAX_PATH];	
 	lstrcpynW(gsFolder, GetMsgA(CEDirFolder, szTemp), sizeofarray(gsFolder));
 	lstrcpynW(gsSymLink, GetMsgA(CEDirSymLink, szTemp), sizeofarray(gsSymLink));
 	lstrcpynW(gsJunction, GetMsgA(CEDirJunction, szTemp), sizeofarray(gsJunction));
 	
-	if (!gpImgCache) {
-		gpImgCache = new CImgCache(ghPluginModule);
-	}
+	StartPlugin();
 }
 
 void WINAPI _export GetPluginInfo(struct PluginInfo *pi)

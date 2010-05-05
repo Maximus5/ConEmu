@@ -728,7 +728,7 @@ BOOL CImgCache::LoadShellIcon(struct tag_CacheInfo* pItem)
 	} else {
 		// ассоциированная иконка
 		shRc = SHGetFileInfo ( pItem->lpwszFileName, pItem->dwFileAttributes, &sfi, cbSize, 
-			SHGFI_ICON|SHGFI_SHELLICONSIZE|SHGFI_LARGEICON|SHGFI_USEFILEATTRIBUTES);
+			SHGFI_ICON|SHGFI_SHELLICONSIZE|SHGFI_LARGEICON|SHGFI_USEFILEATTRIBUTES|SHGFI_ADDOVERLAYS);
 		if (shRc && sfi.hIcon) {
 			hIcon = sfi.hIcon;
 		}

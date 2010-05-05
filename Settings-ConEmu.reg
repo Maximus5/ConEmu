@@ -380,6 +380,7 @@ REGEDIT4
 ;"PanView.Tiles.SpaceY1"=dword:00000004
 ;"PanView.Tiles.SpaceY2"=dword:00000004
 ;"PanView.UsePicView2"=hex:01
+;"PanView.RestoreOnStartup"=hex:01
 
 
 ;; Autorun does not works in the current version of ConEmu.

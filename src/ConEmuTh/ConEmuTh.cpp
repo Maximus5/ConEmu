@@ -77,7 +77,7 @@ DWORD gnSelfPID = 0;
 DWORD gnMainThreadId = 0;
 HANDLE ghDisplayThread = NULL; DWORD gnDisplayThreadId = 0;
 HWND ghLeftView = NULL, ghRightView = NULL;
-WCHAR gszRootKey[MAX_PATH*2];
+wchar_t* gszRootKey = NULL;
 FarVersion gFarVersion;
 //HMODULE ghConEmuDll = NULL;
 RegisterPanelView_t gfRegisterPanelView = NULL;
@@ -127,7 +127,7 @@ void WINAPI _export GetPluginInfoW(struct PluginInfo *pi)
 
 
 	pi->StructSize = sizeof(struct PluginInfo);
-	pi->Flags = 0; // PF_PRELOAD; //TODO: Поставить Preload, если нужно будет восстанавливать при старте
+	pi->Flags = PF_PRELOAD;
 	pi->DiskMenuStrings = NULL;
 	pi->DiskMenuNumbers = 0;
 	pi->PluginMenuStrings = szMenu;
@@ -145,7 +145,10 @@ HANDLE WINAPI _export OpenPluginW(int OpenFrom,INT_PTR Item)
 	if (!gbInfoW_OK || !CheckConEmu(/*TRUE*/))
 		return INVALID_HANDLE_VALUE;
 
-		
+	if (ghDisplayThread && gnDisplayThreadId == 0) {
+		CloseHandle(ghDisplayThread); ghDisplayThread = NULL;
+	}
+
 	//gThSet.Load();
 	// При открытии плагина - загрузить информацию об обеих панелях. Нужно для определения регионов!
 	ReloadPanelsInfo();
@@ -180,6 +183,7 @@ HANDLE WINAPI _export OpenPluginW(int OpenFrom,INT_PTR Item)
 	
 	BOOL lbRc = FALSE;
 	DWORD dwErr = 0;
+	DWORD dwMode = pvm_None; //PanelViewMode
 
 	// Если View не создан, или смена режима
 	if ((hView == NULL) || (PVM != pi->PVM)) {
@@ -198,9 +202,19 @@ HANDLE WINAPI _export OpenPluginW(int OpenFrom,INT_PTR Item)
 			pi->RegisterPanelView();
 			_ASSERTE(pi->PVM==PVM);
 		}
+		if (pi->hView)
+			dwMode = pi->PVM;
 	} else {
 		// Отрегистрироваться
 		pi->UnregisterPanelView();
+		dwMode = pvm_None;
+	}
+
+	HKEY hk = NULL;
+	if (!RegCreateKeyExW(HKEY_CURRENT_USER, gszRootKey, 0, NULL, 0, KEY_WRITE, NULL, &hk, NULL)) {
+		RegSetValueEx(hk, pi->bLeftPanel ? L"LeftPanelView" : L"RightPanelView", 0,
+			REG_DWORD, (LPBYTE)&dwMode, sizeof(dwMode));
+		RegCloseKey(hk);
 	}
 
 	return INVALID_HANDLE_VALUE;
@@ -388,16 +402,16 @@ void WINAPI _export SetStartupInfoW(void *aInfo)
 	else
 		FUNC_X(SetStartupInfoW)(aInfo);
 
+	_ASSERTE(gszRootKey!=NULL && *gszRootKey!=0);
+
 	lstrcpynW(gsFolder, GetMsgW(CEDirFolder), sizeofarray(gsFolder));
 	//lstrcpynW(gsHardLink, GetMsgW(CEDirHardLink), sizeofarray(gsHardLink));
 	lstrcpynW(gsSymLink, GetMsgW(CEDirSymLink), sizeofarray(gsSymLink));
 	lstrcpynW(gsJunction, GetMsgW(CEDirJunction), sizeofarray(gsJunction));
 
-	if (!gpImgCache) {
-		gpImgCache = new CImgCache(ghPluginModule);
-	}
-
 	gbInfoW_OK = TRUE;
+
+	StartPlugin();
 }
 
 
@@ -418,7 +432,54 @@ void WINAPI _export SetStartupInfoW(void *aInfo)
 
 
 
+void StartPlugin(void)
+{
+	if (!gpImgCache) {
+		gpImgCache = new CImgCache(ghPluginModule);
+	}
 
+	HKEY hk = NULL;
+	if (!RegOpenKeyExW(HKEY_CURRENT_USER, gszRootKey, 0, KEY_READ, &hk)) {
+		DWORD dwModes[2], dwSize = 4;
+		if (RegQueryValueEx(hk, L"LeftPanelView", NULL, NULL, (LPBYTE)dwModes, &(dwSize=4)))
+			dwModes[0] = 0;
+		if (RegQueryValueEx(hk, L"RightPanelView", NULL, NULL, (LPBYTE)(dwModes+1), &(dwSize=4)))
+			dwModes[1] = 0;
+		RegCloseKey(hk);
+
+
+		if (ghDisplayThread && gnDisplayThreadId == 0) {
+			CloseHandle(ghDisplayThread); ghDisplayThread = NULL;
+		}
+
+		if (dwModes[0] || dwModes[1]) {
+			if (CheckConEmu(/*TRUE*/) && gThSet.bRestoreOnStartup)
+			{
+				// При открытии плагина - загрузить информацию об обеих панелях. Нужно для определения регионов!
+				ReloadPanelsInfo();
+
+				CeFullPanelInfo* pi[2] = {&pviLeft, &pviRight};
+				for (int i = 0; i < 2; i++)
+				{
+					if (!pi[i]->hView && dwModes[i]) {
+						pi[i]->PVM = (PanelViewMode)dwModes[i];
+						pi[i]->DisplayReloadPanel();
+						if (pi[i]->hView == NULL) {
+							// Нужно создать View
+							pi[i]->hView = pi[i]->CreateView();
+						}
+						if (pi[i]->hView == NULL) {
+							// Показать ошибку
+							ShowLastError();
+						} else {
+							pi[i]->RegisterPanelView();
+						}
+					}
+				}
+			}
+		}
+	}
+}
 
 void ExitPlugin(void)
 {
@@ -439,8 +500,6 @@ void ExitPlugin(void)
 	}
 	gnDisplayThreadId = 0;
 	// Освободить память
-	pviLeft.FreeInfo();
-	pviRight.FreeInfo();
 	if (gpRgnDetect) {
 		delete gpRgnDetect;
 		gpRgnDetect = NULL;
@@ -448,6 +507,14 @@ void ExitPlugin(void)
 	if (gpImgCache) {
 		delete gpImgCache;
 		gpImgCache = NULL;
+	}
+	// Сброс переменных, окон, и т.п.
+	pviLeft.FinalRelease();
+	pviRight.FinalRelease();
+
+
+	if (gszRootKey) {
+		free(gszRootKey); gszRootKey = NULL;
 	}
 }
 
@@ -1011,6 +1078,14 @@ BOOL WINAPI OnPreWriteConsoleOutput(HANDLE hOutput,const CHAR_INFO *lpBuffer,COO
 {
 	WARNING("После повторного отображения view - хорошо бы сначала полностью считать gpRgnDetect из консоли");
 	if (gpRgnDetect && lpBuffer && lpWriteRegion) {
+#ifdef _DEBUG
+		if (IsDebuggerPresent()) {
+			wchar_t szDbg[80]; wsprintf(szDbg, L"ConEmuTh.OnPreWriteConsoleOutput( {%ix%i} - {%ix%i} )\n", 
+				lpWriteRegion->Left, lpWriteRegion->Top, lpWriteRegion->Right, lpWriteRegion->Bottom);
+			OutputDebugStringW(szDbg);
+		}
+#endif
+
 		gpRgnDetect->OnWriteConsoleOutput(lpBuffer, dwBufferSize, dwBufferCoord, lpWriteRegion, gcrCurColors);
 
 		// Сбросим, чтобы RgnDetect попытался сам найти панели и диалоги.
@@ -1403,7 +1478,7 @@ void CheckVarsInitialized()
 	//	gpImgCache = new CImgCache(ghPluginModule);
 	//}
 
-	CeFullPanelInfo* p = pviLeft.hView ? &pviLeft : &pviRight;
+	//CeFullPanelInfo* p = pviLeft.hView ? &pviLeft : &pviRight;
 
 	if (gFarInfo.cbSize == 0) {
 		gFarInfo.cbSize = sizeof(gFarInfo);
@@ -1412,9 +1487,16 @@ void CheckVarsInitialized()
 		gFarInfo.nFarTID = GetCurrentThreadId();
 		gFarInfo.bFarPanelAllowed = TRUE;
 	}
+
+	if (!pviLeft.pSection) {
+		pviLeft.pSection = new MSection();
+	}
+	if (!pviRight.pSection) {
+		pviRight.pSection = new MSection();
+	}
 }
 
-void CeFullPanelInfo::FreeInfo()
+void CeFullPanelInfo::FinalRelease()
 {
 	if (ppItems) {
 		for (int i=0; i<ItemsNumber; i++)
@@ -1438,4 +1520,43 @@ void CeFullPanelInfo::FreeInfo()
 		pFarTmpBuf = NULL;
 	}
 	nFarTmpBuf = 0;
+
+	if (hView) {
+		BOOL bValid = IsWindow(hView);
+		_ASSERTE(bValid==FALSE);
+		hView = NULL;
+	}
+
+	if (pSection) {
+		delete pSection; pSection = NULL;
+	}
+}
+
+BOOL CeFullPanelInfo::ReallocItems(int anCount)
+{
+	CePluginPanelItem** ppNew = NULL;
+
+	if ((ppItems == NULL) || (nMaxItemsNumber < anCount)) {
+		MSectionLock CS;
+		if (!CS.Lock(pSection, TRUE, 5000))
+			return FALSE;
+
+		int nNewMax = anCount+255; // + немножно про запас
+		ppNew = (CePluginPanelItem**)calloc(nNewMax, sizeof(LPVOID));
+		if (!ppNew) {
+			_ASSERTE(ppNew!=NULL);
+			return FALSE;
+		}
+
+		if (ppItems) {
+			if (nMaxItemsNumber) {
+				memmove(ppNew, ppItems, nMaxItemsNumber*sizeof(LPVOID));
+			}
+			free(ppItems);
+		}
+		nMaxItemsNumber = nNewMax;
+		ppItems = ppNew;
+	}
+
+	return TRUE;
 }
