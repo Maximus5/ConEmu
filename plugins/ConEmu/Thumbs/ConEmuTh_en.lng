@@ -6,6 +6,10 @@
 "Thumbnails mode"
 // Panel modes
 "Tiles mode"
+// Column titles
+"Thumbnails"
+"Tiles"
+// Some strings for Tiles mode
 "Folder"
 "Sym."
 "Junc."

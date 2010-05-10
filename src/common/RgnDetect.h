@@ -10,7 +10,7 @@ typedef struct tag_CharAttr
 		// Собственно цвета/шрифты
 		struct {
 			unsigned int crForeColor : 24; // чтобы в ui64 поместился и nFontIndex
-			unsigned int nFontIndex : 8; // 0 - normal, 1 - bold, 2 - italic
+			unsigned int nFontIndex : 8; // 0=normal, or combination {1=bold,2=italic,4=underline}, or 8=UCharMap
 			unsigned int crBackColor : 32; // Старший байт зарезервируем, вдруг для прозрачности понадобится
 			unsigned int nForeIdx : 8;
 			unsigned int nBackIdx : 8; // может понадобиться для ExtendColors
@@ -64,6 +64,8 @@ inline bool operator==(const CharAttr& s1, const CharAttr& s2)
 #define FR_MACRORECORDING 0x020000 // Красная "R" или "MACRO" в левом верхнем углу
 #define FR_HASBORDER      0x040000 // Этот прямоугольник (регион) имеет рамку
 #define FR_HASEXTENSION   0x080000 // Вокруг прямоугольника диалога есть еще окантовка
+#define FR_UCHARMAP       0x100000 // Содержимое диалога "Unicode CharMap"
+#define FR_UCHARMAPGLYPH  0x200000 // Блок символов в "Unicode CharMap"
 
 
 class CRgnDetect
@@ -108,7 +110,7 @@ protected:
 	bool FindByBackground(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostRight, int &nMostBottom, bool &bMarkBorder);
 	// Сервисная
 	bool ExpandDialogFrame(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int nFrameX, int nFrameY, int &nMostRight, int &nMostBottom);
-	void MarkDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int nX1, int nY1, int nX2, int nY2, bool bMarkBorder = false, bool bFindExterior = true);
+	int  MarkDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int nX1, int nY1, int nX2, int nY2, bool bMarkBorder = false, bool bFindExterior = true);
 	bool ConsoleRect2ScreenRect(const RECT &rcCon, RECT *prcScr);
 	
 

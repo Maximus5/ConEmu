@@ -6647,7 +6647,7 @@ void CRealConsole::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, i
 	//	&& !(mb_LeftPanel && mb_RightPanel) // и хотя бы одна панель погашена
 	//	&& (!con.m_ci.bVisible || con.m_ci.dwSize<30) // и сейчас НЕ включен режим граббера
 	//	;
-    CharAttr lca, lcaTable[0x100]; // crForeColor, crBackColor, nFontIndex, nForeIdx, nBackIdx, crOrigForeColor, crOrigBackColor
+    CharAttr lca, lcaTableExt[0x100], lcaTableOrg[0x100], *lcaTable; // crForeColor, crBackColor, nFontIndex, nForeIdx, nBackIdx, crOrigForeColor, crOrigBackColor
         
     //COLORREF lcrForegroundColors[0x100], lcrBackgroundColors[0x100];
     //BYTE lnForegroundColors[0x100], lnBackgroundColors[0x100], lnFontByIndex[0x100];
@@ -6657,23 +6657,27 @@ void CRealConsole::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, i
 			memset(&lca, 0, sizeof(lca));
     		lca.nForeIdx = nFore;
     		lca.nBackIdx = nBack;
-    		//lca.nFontIndex = 0;
+	    	lca.crForeColor = lca.crOrigForeColor = mp_VCon->mp_Colors[lca.nForeIdx];
+	    	lca.crBackColor = lca.crOrigBackColor = mp_VCon->mp_Colors[lca.nBackIdx];
+	    	lcaTableOrg[nColorIndex] = lca;
+	    	
 			if (bExtendFonts) {
 				if (nBack == nFontBoldColor) { // nFontBoldColor may be -1, тогда мы сюда не попадаем
 					if (nFontNormalColor != 0xFF)
 						lca.nBackIdx = nFontNormalColor;
 					lca.nFontIndex = 1; //  Bold
+					lca.crBackColor = lca.crOrigBackColor = mp_VCon->mp_Colors[lca.nBackIdx];
 				} else if (nBack == nFontItalicColor) { // nFontItalicColor may be -1, тогда мы сюда не попадаем
 					if (nFontNormalColor != 0xFF)
 						lca.nBackIdx = nFontNormalColor;
 					lca.nFontIndex = 2; // Italic
+					lca.crBackColor = lca.crOrigBackColor = mp_VCon->mp_Colors[lca.nBackIdx];
 				}
 			}
-	    	lca.crForeColor = lca.crOrigForeColor = mp_VCon->mp_Colors[lca.nForeIdx];
-	    	lca.crBackColor = lca.crOrigBackColor = mp_VCon->mp_Colors[lca.nBackIdx];
-	    	lcaTable[nColorIndex] = lca;
+	    	lcaTableExt[nColorIndex] = lca;
 		}
     }
+    lcaTable = lcaTableOrg;
     
     
     MSectionLock csData; csData.Lock(&csCON);
@@ -6731,6 +6735,8 @@ void CRealConsole::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, i
 
         // Собственно данные
         for (nY = 0; nY < nYMax; nY++) {
+        	if (nY == 1) lcaTable = lcaTableExt;
+        
         	// Текст
             memmove(pszDst, pszSrc, cbLineSize);
             if (nCharsLeft > 0)
@@ -6744,7 +6750,7 @@ void CRealConsole::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, i
 	            lca = lcaTable[atr];
 
 				TODO("OPTIMIZE: вынести проверку bExtendColors за циклы");
-			    if (bExtendColors) {
+			    if (bExtendColors && nY) {
 			        if (lca.nBackIdx == nExtendColor) {
 			            lca.nBackIdx = attrBackLast; // фон нужно заменить на обычный цвет из соседней ячейки
 			            lca.nForeIdx += 0x10;
@@ -6769,7 +6775,7 @@ void CRealConsole::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, i
 				    		lca.nFontIndex = 0;
 				    		lca.crBackColor = pcolSrc->bk_color;
 			    		}
-			    		// nFontIndex: 0 - normal, 1 - bold, 2 - italic, 3 - bold&italic,..., 7 - underline
+			    		// nFontIndex: 0 - normal, 1 - bold, 2 - italic, 3 - bold&italic,..., 4 - underline, ...
 			    		if (pcolSrc->style)
 			    			lca.nFontIndex = pcolSrc->style & 7;
 		    		}
@@ -7553,7 +7559,7 @@ DWORD CRealConsole::CanActivateFarWindow(int anWndIndex)
         {
             MSectionLock cs; cs.Lock(&csCON);
             if (con.pConChar) {
-                if (con.pConChar[0] == L'R') {
+                if (con.pConChar[0] == L'R' || con.pConChar[0] == L'P') {
                     // Запись макроса. Запретим наверное переключаться?
                     lbMenuActive = TRUE;
                 }
@@ -8923,7 +8929,7 @@ void CRealConsole::FindPanels()
 			}
 			if (lbIsMenu)
 				nY ++; // скорее всего, первая строка - меню
-		} else if (con.pConChar[0] == L'R' && con.pConChar[1] == L' ') {
+		} else if ((con.pConChar[0] == L'R' || con.pConChar[0] == L'P') && con.pConChar[1] == L' ') {
 			for (int i=1; i<con.nTextWidth; i++) {
 				if (con.pConChar[i]==ucBoxDblHorz || con.pConChar[i]==ucBoxDblDownRight || con.pConChar[i]==ucBoxDblDownLeft) {
 					lbIsMenu = FALSE; break;
@@ -8936,8 +8942,14 @@ void CRealConsole::FindPanels()
         uint nIdx = nY*con.nTextWidth;
 
 		// Левая панель
-		BOOL bFirstCharOk = (nY == 0) && con.pConChar[0] == L'R' && con.pConAttr[0] == 0x4F; // символ записи макроса
-		if (( ((bFirstCharOk || con.pConChar[nIdx] == L'[') && (con.pConChar[nIdx+1]>=L'0' && con.pConChar[nIdx+1]<=L'9')) // открыто несколько редакторов/вьюверов
+		BOOL bFirstCharOk = (nY == 0) 
+			&& (
+				(con.pConChar[0] == L'R' && (con.pConAttr[0] & 0x4F) == 0x4F) // символ записи макроса
+				|| (con.pConChar[0] == L'P' && con.pConAttr[0] == 0x2F) // символ воспроизведения макроса
+			);
+		// из-за глюков индикации FAR2 пока вместо '[' - любой символ
+		//if (( ((bFirstCharOk || con.pConChar[nIdx] == L'[') && (con.pConChar[nIdx+1]>=L'0' && con.pConChar[nIdx+1]<=L'9')) // открыто несколько редакторов/вьюверов
+		if (( ((bFirstCharOk || con.pConChar[nIdx] != ucBoxDblDownRight) && (con.pConChar[nIdx+1]>=L'0' && con.pConChar[nIdx+1]<=L'9')) // открыто несколько редакторов/вьюверов
 			|| ((bFirstCharOk || con.pConChar[nIdx] == ucBoxDblDownRight)
 				&& (con.pConChar[nIdx+1] == ucBoxDblHorz || con.pConChar[nIdx+1] == ucBoxSinglDownDblHorz)) // доп.окон нет, только рамка
 			) && con.pConChar[nIdx+con.nTextWidth] == ucBoxDblVert)

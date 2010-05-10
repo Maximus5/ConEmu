@@ -63,9 +63,10 @@ int CRgnDetect::GetDetectedDialogs(int anMaxCount, SMALL_RECT* rc, DWORD* rf, DW
 			if (rf)
 				memmove(rf, m_DetectedDialogs.DlgFlags, nCount*sizeof(*rf));
 		} else {
-			nCount = 0;
+			nCount = 0; DWORD nF;
 			for (int i = 0; i < m_DetectedDialogs.Count; i++) {
-				if ((m_DetectedDialogs.DlgFlags[i] & anMask) != 0) {
+				nF = m_DetectedDialogs.DlgFlags[i];
+				if ((nF & anMask) == nF) {
 					if (rc)
 						rc[nCount] = m_DetectedDialogs.Rects[i];
 					if (rf)
@@ -85,10 +86,10 @@ DWORD CRgnDetect::GetDialog(DWORD nDlgID, SMALL_RECT* rc) const
 		return 0;
 	}
 
-	DWORD nMask = nDlgID;
-	if ((nDlgID & FR_FREEDLG_MASK) != 0) {
-		nMask |= FR_FREEDLG_MASK;
-	}
+	//DWORD nMask = nDlgID;
+	//if ((nDlgID & FR_FREEDLG_MASK) != 0) {
+	//	nMask |= FR_FREEDLG_MASK;
+	//}
 
 	for (int i = 0; i < m_DetectedDialogs.Count; i++) {
 		if ((m_DetectedDialogs.DlgFlags[i] & FR_ALLDLG_MASK) == nDlgID) {
@@ -1021,14 +1022,14 @@ fin:
 	return;
 }
 
-void CRgnDetect::MarkDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int nX1, int nY1, int nX2, int nY2, bool bMarkBorder, bool bFindExterior /*= TRUE*/)
+int CRgnDetect::MarkDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int nX1, int nY1, int nX2, int nY2, bool bMarkBorder, bool bFindExterior /*= TRUE*/)
 {
 	if (nX1<0 || nX1>=nWidth || nX2<nX1 || nX2>=nWidth
 		|| nY1<0 || nY1>=nHeight || nY2<nY1 || nY2>=nHeight)
 	{
 		_ASSERTE(nX1>=0 && nX1<nWidth);  _ASSERTE(nX2>=0 && nX2<nWidth);
 		_ASSERTE(nY1>=0 && nY1<nHeight); _ASSERTE(nY2>=0 && nY2<nHeight);
-		return;
+		return -1;
 	}
 
 	int nDlgIdx = -1;
@@ -1095,7 +1096,7 @@ void CRgnDetect::MarkDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHe
 						case 3: nShift = nY2 * nWidth + nX2; break;
 					}
 					// Если цвет угла совпал с рамкой панели - то считаем, что это она
-					if (pAttr[nShift].nForeIdx == btPanelFore || pAttr[nShift].nBackIdx == btPanelBack)
+					if (pAttr[nShift].nForeIdx == btPanelFore && pAttr[nShift].nBackIdx == btPanelBack)
 					{
 						if ((nPossible & FR_RIGHTPANEL))
 							mrc_RightPanel = r; // только правая
@@ -1130,7 +1131,24 @@ void CRgnDetect::MarkDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHe
 			if ((nY1+2) == nY2 && prc->Left < nX1 && prc->Right > nX2
 				&& (nY1 == prc->Bottom || (nY1 == (prc->Bottom-1) && prc->Bottom == nHeight_1)))
 			{
-				DlgFlags = FR_QSEARCH;
+				DlgFlags |= FR_QSEARCH;
+			}
+		}
+		
+		if (!(DlgFlags & FR_QSEARCH)) {
+			// Ширина диалога:
+			// г========== Unicode CharMap =======[¦]=¬  .
+			if ((nX1+39) == nX2 && nY2 >= (nY1 + 23)) {
+				wchar_t* pchTitle = pChar + (nY1 * nWidth + nX1 + 12);
+				if (!wmemcmp(pchTitle, L"Unicode CharMap", 15)) {
+					DlgFlags |= FR_UCHARMAP;
+
+					int nSourceIdx = MarkDialog(pChar, pAttr, nWidth, nHeight, nX1+6, nY1+3, nX2-1, nY2-5, false/*bMarkBorder*/, false/*bFindExterior*/);
+					if (nSourceIdx != -1) {
+						m_DetectedDialogs.DlgFlags[nSourceIdx] |= FR_UCHARMAPGLYPH;
+						mn_AllFlags |= FR_UCHARMAPGLYPH;
+					}
+				}
 			}
 		}
 	}
@@ -1211,6 +1229,8 @@ void CRgnDetect::MarkDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHe
 	}
 
 	mn_AllFlags |= DlgFlags;
+
+	return nDlgIdx;
 }
 
 void CRgnDetect::OnWindowSizeChanged()

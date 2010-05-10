@@ -76,6 +76,9 @@ private:
 	HBITMAP hBitmap;
 	HBRUSH  hBrush0, hOldBrush, hSelectedBrush;
 	HFONT   hSelectedFont, hOldFont;
+	HFONT   mh_FontByIndex[MAX_FONT_STYLES+1]; // ссылки на Normal/Bold/Italic/Bold&Italic/...Underline
+	HFONT   mh_UCharMapFont;
+	wchar_t ms_LastUCharMapFont[32];
 	#ifdef _DEBUG
 	BOOL    mb_DebugDumpDC;
 	#endif
@@ -176,7 +179,6 @@ public:
 	// Для ускорения получения индексов цвета
 	//BYTE  m_ForegroundColors[0x100], m_BackgroundColors[0x100];
 	//HFONT mh_FontByIndex[0x100]; // содержит ссылки (не копии) на шрифты normal/bold/italic
-	HFONT mh_FontByIndex[MAX_FONT_STYLES]; // ссылки на Normal/Bold/Italic/Bold&Italic/...Underline
 	
 	bool  mb_LastFadeFlag;
 

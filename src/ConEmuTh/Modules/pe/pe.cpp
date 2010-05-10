@@ -10,6 +10,9 @@ typedef unsigned __int8 u8;
 typedef unsigned __int16 u16;
 typedef DWORD u32;
 
+#define _T(x)      L ## x
+#define _tcscpy lstrcpyW
+
 HMODULE ghModule;
 
 
@@ -29,6 +32,7 @@ HMODULE ghModule;
 #define PGE_INVALID_VERSION      0x8000100D
 #define PGE_INVALID_IMGSIZE      0x8000100E
 #define PGE_UNSUPPORTEDFORMAT    0x8000100F
+#define PGE_OLD_PLUGIN           0x80001010
 
 
 
@@ -60,7 +64,7 @@ struct PEData
 	wchar_t szProduct[128];
 	wchar_t szCompany[128]; // или company, или copyright?
 	
-	GDIPlusData() {
+	PEData() {
 		nMagic = eGdiStr_Data;
 	};
 	
@@ -83,6 +87,10 @@ bool g_bIs64Bit = false;
 
 bool DumpExeFilePE( PIMAGE_DOS_HEADER dosHeader, PIMAGE_NT_HEADERS32 pNTHeader );
 bool DumpExeFileVX( PIMAGE_DOS_HEADER dosHeader, PIMAGE_VXD_HEADER pVXDHeader );
+void DumpResourceDirectory( PIMAGE_RESOURCE_DIRECTORY pResDir,
+						   PBYTE pResourceBase,
+						   DWORD level,
+						   DWORD resourceType, DWORD rootType = 0, DWORD parentType = 0 );
 
 
 // MakePtr is a macro that allows you to easily add to values (including
@@ -102,6 +110,52 @@ bool DumpExeFileVX( PIMAGE_DOS_HEADER dosHeader, PIMAGE_VXD_HEADER pVXDHeader );
 #define IMAGE_SIZEOF_ROM_OPTIONAL_HEADER 56
 #define IMAGE_SIZEOF_NT_OPTIONAL32_HEADER    224
 #define IMAGE_SIZEOF_NT_OPTIONAL64_HEADER    240
+
+
+//================================================================================
+//
+// Given an RVA, look up the section header that encloses it and return a
+// pointer to its IMAGE_SECTION_HEADER
+//
+template <class T> PIMAGE_SECTION_HEADER GetEnclosingSectionHeader(DWORD rva, T* pNTHeader)	// 'T' == PIMAGE_NT_HEADERS 
+{
+	PIMAGE_SECTION_HEADER section = IMAGE_FIRST_SECTION(pNTHeader);
+	unsigned i;
+
+	for ( i=0; i < pNTHeader->FileHeader.NumberOfSections; i++, section++ )
+	{
+		// This 3 line idiocy is because Watcom's linker actually sets the
+		// Misc.VirtualSize field to 0.  (!!! - Retards....!!!)
+		DWORD size = section->Misc.VirtualSize;
+		if ( 0 == size )
+			size = section->SizeOfRawData;
+
+		// Is the RVA within this section?
+		if ( (rva >= section->VirtualAddress) && 
+			(rva < (section->VirtualAddress + size)))
+			return section;
+	}
+
+	return 0;
+}
+
+template <class T> LPVOID GetPtrFromRVA( DWORD rva, T* pNTHeader, PBYTE imageBase ) // 'T' = PIMAGE_NT_HEADERS 
+{
+	_ASSERTE(pNTHeader!=NULL);
+	if (!pNTHeader || !imageBase)
+		return NULL;
+
+	PIMAGE_SECTION_HEADER pSectionHdr;
+	INT delta;
+
+	pSectionHdr = GetEnclosingSectionHeader( rva, pNTHeader );
+	if ( !pSectionHdr )
+		return 0;
+
+	delta = (INT)(pSectionHdr->VirtualAddress-pSectionHdr->PointerToRawData);
+	return (PVOID) ( imageBase + rva - delta );
+}
+
 
 //
 // Like GetPtrFromRVA, but works with addresses that already include the
@@ -133,6 +187,16 @@ template <class T> PIMAGE_SECTION_HEADER GetSectionHeader(PSTR name, T* pNTHeade
     }
     
     return 0;
+}
+
+bool ValidateMemory(LPCVOID ptr, size_t nSize)
+{
+	if (!ptr || (LPBYTE)ptr < (LPBYTE)g_pMappedFileBase)
+		return false;
+	ULONGLONG nPos = ((LPBYTE)ptr - (LPBYTE)g_pMappedFileBase);
+	if ((nPos+nSize) > g_FileSize.QuadPart)
+		return false;
+	return true;
 }
 
 
@@ -171,6 +235,12 @@ char *SzResourceTypes[] = {
 "HTML",
 "MANIFEST"
 };
+
+typedef struct
+{
+	DWORD          flag;
+	const wchar_t* name;
+} DWORD_FLAG_DESCRIPTIONSW;
 
 DWORD_FLAG_DESCRIPTIONSW VersionInfoFlags[] = {
 	{VS_FF_DEBUG, L"VS_FF_DEBUG"},
@@ -288,6 +358,42 @@ struct VarFileInfo {
 //DWORD g_cStrResEntries = 0;
 //DWORD g_cDlgResEntries = 0;
 
+// Get an ASCII string representing a resource type
+void GetResourceTypeName(DWORD type, PSTR buffer, UINT cBytes)
+{
+	if ( type <= (WORD)RT_MANIFEST )
+		strncpy(buffer, SzResourceTypes[type], cBytes);
+	else
+		wsprintfA(buffer, "0x%X", type);
+}
+
+//
+// If a resource entry has a string name (rather than an ID), go find
+// the string and convert it from unicode to ascii.
+//
+void GetResourceNameFromId
+(
+ DWORD id, PBYTE pResourceBase, PSTR buffer, UINT cBytes
+ )
+{
+	PIMAGE_RESOURCE_DIR_STRING_U prdsu;
+
+	// If it's a regular ID, just format it.
+	if ( !(id & IMAGE_RESOURCE_NAME_IS_STRING) )
+	{
+		wsprintfA(buffer, "0x%04X", id);
+		return;
+	}
+
+	id &= 0x7FFFFFFF;
+	prdsu = MakePtr(PIMAGE_RESOURCE_DIR_STRING_U, pResourceBase, id);
+
+	// prdsu->Length is the number of unicode characters
+	WideCharToMultiByte(CP_ACP, 0, prdsu->NameString, prdsu->Length,
+		buffer, cBytes, 0, 0);
+	buffer[ min(cBytes-1,prdsu->Length) ] = 0;  // Null terminate it!!!
+}
+
 
 // Get an ASCII string representing a resource type
 void GetOS2ResourceTypeName(DWORD type, PSTR buffer, UINT cBytes)
@@ -315,7 +421,7 @@ typedef struct tag_OS2RC_TYPEINFO {
 	OS2RC_TNAMEINFO rtNameInfo[1];
 } OS2RC_TYPEINFO, *POS2RC_TYPEINFO;
 
-MPanelItem* CreateResource(DWORD rootType, LPVOID ptrRes, DWORD resSize,
+void /*MPanelItem**/ CreateResource(DWORD rootType, LPVOID ptrRes, DWORD resSize,
 						   LPCSTR asID, LPCSTR langID, DWORD stringIdBase, DWORD anLangId);
 
 
@@ -349,8 +455,8 @@ void DumpNEResourceTable(PIMAGE_DOS_HEADER dosHeader, LPBYTE pResourceTable)
 		// Next resource type
 		pTypeInfo = (OS2RC_TYPEINFO*)(pResName+pTypeInfo->rtResourceCount);
 		if (IsBadReadPtr(pTypeInfo, 2)) {
-			pChild->printf(_T("!!! Can't read memory at offset:  0x%08X\n"),
-				(DWORD)(((LPBYTE)pTypeInfo) - pImageBase));
+			//pChild->printf(_T("!!! Can't read memory at offset:  0x%08X\n"),
+			//	(DWORD)(((LPBYTE)pTypeInfo) - pImageBase));
 			return;
 		}
 	}
@@ -362,10 +468,10 @@ void DumpNEResourceTable(PIMAGE_DOS_HEADER dosHeader, LPBYTE pResourceTable)
 		szTypeName[0] = 0;
 		GetOS2ResourceTypeName(pTypeInfo->rtTypeID, szTypeName, sizeof(szTypeName));
 
-		MPanelItem* pType = pChild->AddFolder(szTypeName);
-		pType->printf("  <%s>:\n", szTypeName);
+		//MPanelItem* pType = pChild->AddFolder(szTypeName);
+		//pType->printf("  <%s>:\n", szTypeName);
 
-		pType->printf(_T("    Resource count:   %i\n"), pTypeInfo->rtResourceCount);
+		//pType->printf(_T("    Resource count:   %i\n"), pTypeInfo->rtResourceCount);
 
 		OS2RC_TNAMEINFO* pResName = pTypeInfo->rtNameInfo;
 		for (USHORT i = pTypeInfo->rtResourceCount; i--; pResName++) {
@@ -375,12 +481,12 @@ void DumpNEResourceTable(PIMAGE_DOS_HEADER dosHeader, LPBYTE pResourceTable)
 			szResName[0] = 0;
 			if (pNames) {
 				if (IsBadReadPtr(pNames, 1)) {
-					pChild->printf(_T("!!! Can't read memory at offset:  0x%08X\n"),
-						(DWORD)(pNames - pImageBase));
+					//pChild->printf(_T("!!! Can't read memory at offset:  0x%08X\n"),
+					//	(DWORD)(pNames - pImageBase));
 					pNames = NULL;
 				} else if (IsBadReadPtr(pNames, 1+(*pNames))) {
-					pChild->printf(_T("!!! Can't read memory at offset:  0x%08X\n"),
-						(DWORD)(pNames - pImageBase));
+					//pChild->printf(_T("!!! Can't read memory at offset:  0x%08X\n"),
+					//	(DWORD)(pNames - pImageBase));
 					pNames = NULL;
 				} else if (*pNames) {
 					memmove(szResName, pNames+1, *pNames);
@@ -391,26 +497,26 @@ void DumpNEResourceTable(PIMAGE_DOS_HEADER dosHeader, LPBYTE pResourceTable)
 				}
 			}
 			if (szResName[0]) {
-				sprintf(szResName+strlen(szResName), ".0x%08X", pResName->rnID);
+				wsprintfA(szResName+strlen(szResName), ".0x%08X", pResName->rnID);
 			} else {
-				sprintf(szResName, "ResID=0x%08X", pResName->rnID);
+				wsprintfA(szResName, "ResID=0x%08X", pResName->rnID);
 			}
 
-			MPanelItem* pRes = NULL;
+			//MPanelItem* pRes = NULL;
 			if (nResLength && nResOffset) {
-				pRes = CreateResource(pType, pTypeInfo->rtTypeID, 
+				/*pRes =*/ CreateResource(/*pType,*/ pTypeInfo->rtTypeID, 
 					pImageBase+nResOffset, nResLength,
 					szResName, NULL, 0, 0);
-			} else {
-				pRes = pType->AddFile(szResName, nResOffset ? nResLength : 0);
+			//} else {
+			//	pRes = pType->AddFile(szResName, nResOffset ? nResLength : 0);
 			}
-			pType->printf("    <%s>\n", szResName);
-			pType->printf("      Resource Name:    %s\n", szResName);
-			pType->printf("      Resource ID:      0x%08X\n", pResName->rnID);
-			pType->printf("      Resource length:  %u bytes\n", nResLength);
-			pType->printf("      Resource offset:  0x%08X\n", nResOffset);
-			pType->printf("      Handle(reserved): 0x%04X\n", (DWORD)pResName->rnHandle);
-			pType->printf("      Usage(reserved):  0x%04X\n", (DWORD)pResName->rnUsage);
+			//pType->printf("    <%s>\n", szResName);
+			//pType->printf("      Resource Name:    %s\n", szResName);
+			//pType->printf("      Resource ID:      0x%08X\n", pResName->rnID);
+			//pType->printf("      Resource length:  %u bytes\n", nResLength);
+			//pType->printf("      Resource offset:  0x%08X\n", nResOffset);
+			//pType->printf("      Handle(reserved): 0x%04X\n", (DWORD)pResName->rnHandle);
+			//pType->printf("      Usage(reserved):  0x%04X\n", (DWORD)pResName->rnUsage);
 			//if (nResLength && nResOffset) {
 			//	pRes->SetData(pImageBase+nResOffset, nResLength);
 			//}
@@ -510,41 +616,6 @@ DWORD GetOffsetToDataFromResEntry( 	PBYTE pResourceBase,
 }
 
 
-// Get an ASCII string representing a resource type
-void GetResourceTypeName(DWORD type, PSTR buffer, UINT cBytes)
-{
-    if ( type <= (WORD)RT_MANIFEST )
-        strncpy(buffer, SzResourceTypes[type], cBytes);
-    else
-        sprintf(buffer, "0x%X", type);
-}
-
-//
-// If a resource entry has a string name (rather than an ID), go find
-// the string and convert it from unicode to ascii.
-//
-void GetResourceNameFromId
-(
-    DWORD id, PBYTE pResourceBase, PSTR buffer, UINT cBytes
-)
-{
-    PIMAGE_RESOURCE_DIR_STRING_U prdsu;
-
-    // If it's a regular ID, just format it.
-    if ( !(id & IMAGE_RESOURCE_NAME_IS_STRING) )
-    {
-        sprintf(buffer, "0x%04X", id);
-        return;
-    }
-    
-    id &= 0x7FFFFFFF;
-    prdsu = MakePtr(PIMAGE_RESOURCE_DIR_STRING_U, pResourceBase, id);
-
-    // prdsu->Length is the number of unicode characters
-    WideCharToMultiByte(CP_ACP, 0, prdsu->NameString, prdsu->Length,
-                        buffer, cBytes, 0, 0);
-    buffer[ min(cBytes-1,prdsu->Length) ] = 0;  // Null terminate it!!!
-}
 
 
 #pragma pack( push )
@@ -625,7 +696,7 @@ void ResourceParseFlags(DWORD dwFlags, wchar_t* pszFlags, DWORD_FLAG_DESCRIPTION
 	*pszFlags = 0;
 }
 
-void ParseVersionInfoFixed(char* fileNameBuffer, MPanelItem *&pChild, LPVOID ptrRes, DWORD &resSize, LPBYTE &ptrBuf, BOOL &bIsCopy, VS_FIXEDFILEINFO* pVer, wchar_t* &psz)
+void ParseVersionInfoFixed(char* fileNameBuffer, /*MPanelItem *&pChild,*/ LPVOID ptrRes, DWORD &resSize, LPBYTE &ptrBuf, BOOL &bIsCopy, VS_FIXEDFILEINFO* pVer, wchar_t* &psz)
 {
 	wchar_t szMask[255], szFlags[255], szOS[255], szFileType[64], szFileSubType[64];
 	ResourceParseFlags(pVer->dwFileFlagsMask, szMask, VersionInfoFlags);
@@ -696,7 +767,7 @@ void ParseVersionInfoFixed(char* fileNameBuffer, MPanelItem *&pChild, LPVOID ptr
 
 #define ALIGN_TOKEN(p) p = (LPWORD)( ((((DWORD_PTR)p) + 3) >> 2) << 2 );
 
-void ParseVersionInfoVariableString(char* fileNameBuffer, MPanelItem *&pChild, LPVOID ptrRes, DWORD &resSize, LPBYTE &ptrBuf, BOOL &bIsCopy, LPWORD pToken, wchar_t* &psz)
+void ParseVersionInfoVariableString(char* fileNameBuffer, /*MPanelItem *&pChild,*/ LPVOID ptrRes, DWORD &resSize, LPBYTE &ptrBuf, BOOL &bIsCopy, LPWORD pToken, wchar_t* &psz)
 {
 	StringFileInfo *pSFI = (StringFileInfo*)pToken;
 	LPWORD pEnd = (LPWORD)(((LPBYTE)ptrRes)+resSize);
@@ -730,7 +801,7 @@ void ParseVersionInfoVariableString(char* fileNameBuffer, MPanelItem *&pChild, L
 				// and the high-order 6 bits specify the sublanguage.
 				wcscat(psz, L"        BLOCK \"");
 				psz += wcslen(psz);
-				wmemmove(psz, pST->szKey, 8);
+				memmove(psz, pST->szKey, 8*2);
 				psz += 8; *psz = 0; wcscat(psz, L"\"\n");
 				wcscat(psz, L"        BEGIN\n");
 				pToken = (LPWORD)(pST->szKey+8);
@@ -787,7 +858,7 @@ void ParseVersionInfoVariableString(char* fileNameBuffer, MPanelItem *&pChild, L
 		}
 	}
 }
-void ParseVersionInfoVariableStringA(char* fileNameBuffer, MPanelItem *&pChild, LPVOID ptrRes, DWORD &resSize, LPBYTE &ptrBuf, BOOL &bIsCopy, char* pToken, wchar_t* &psz)
+void ParseVersionInfoVariableStringA(char* fileNameBuffer, /*MPanelItem *&pChild,*/ LPVOID ptrRes, DWORD &resSize, LPBYTE &ptrBuf, BOOL &bIsCopy, char* pToken, wchar_t* &psz)
 {
 	wchar_t szTemp[MAX_PATH*2+1], *pwsz = NULL;
 	StringFileInfoA *pSFI = (StringFileInfoA*)pToken;
@@ -895,7 +966,7 @@ void ParseVersionInfoVariableStringA(char* fileNameBuffer, MPanelItem *&pChild, 
 	}
 }
 
-void ParseVersionInfoVariableVar(char* fileNameBuffer, MPanelItem *&pChild, LPVOID ptrRes, DWORD &resSize, LPBYTE &ptrBuf, BOOL &bIsCopy, LPWORD pToken, wchar_t* &psz)
+void ParseVersionInfoVariableVar(char* fileNameBuffer, /*MPanelItem *&pChild,*/ LPVOID ptrRes, DWORD &resSize, LPBYTE &ptrBuf, BOOL &bIsCopy, LPWORD pToken, wchar_t* &psz)
 {
 	VarFileInfo *pSFI = (VarFileInfo*)pToken;
 	LPWORD pEnd = (LPWORD)(((LPBYTE)ptrRes)+resSize);
@@ -957,35 +1028,35 @@ void ParseVersionInfoVariableVar(char* fileNameBuffer, MPanelItem *&pChild, LPVO
 	}
 }
 
-void ParseVersionInfoVariable(char* fileNameBuffer, MPanelItem *&pChild, LPVOID ptrRes, DWORD &resSize, LPBYTE &ptrBuf, BOOL &bIsCopy, LPWORD pToken, wchar_t* &psz)
+void ParseVersionInfoVariable(char* fileNameBuffer, /*MPanelItem *&pChild,*/ LPVOID ptrRes, DWORD &resSize, LPBYTE &ptrBuf, BOOL &bIsCopy, LPWORD pToken, wchar_t* &psz)
 {
 	StringFileInfo *pSFI = (StringFileInfo*)pToken;
 
 	if (_wcsicmp(pSFI->szKey, L"StringFileInfo") == 0) {
 		LPWORD pEnd = (LPWORD)(((LPBYTE)ptrRes)+resSize);
 		if (pToken < pEnd && *pToken > sizeof(StringFileInfo)) {
-			ParseVersionInfoVariableString(fileNameBuffer, pChild, ptrRes, resSize, ptrBuf, bIsCopy, pToken, psz);
+			ParseVersionInfoVariableString(fileNameBuffer, /*pChild,*/ ptrRes, resSize, ptrBuf, bIsCopy, pToken, psz);
 		}
 	} else if (_wcsicmp(pSFI->szKey, L"VarFileInfo") == 0) {
 		LPWORD pEnd = (LPWORD)(((LPBYTE)ptrRes)+resSize);
 		if (pToken < pEnd && *pToken > sizeof(VarFileInfo)) {
-			ParseVersionInfoVariableVar(fileNameBuffer, pChild, ptrRes, resSize, ptrBuf, bIsCopy, pToken, psz);
+			ParseVersionInfoVariableVar(fileNameBuffer, /*pChild,*/ ptrRes, resSize, ptrBuf, bIsCopy, pToken, psz);
 		}
 	}
 }
-void ParseVersionInfoVariableA(char* fileNameBuffer, MPanelItem *&pChild, LPVOID ptrRes, DWORD &resSize, LPBYTE &ptrBuf, BOOL &bIsCopy, char* pToken, wchar_t* &psz)
+void ParseVersionInfoVariableA(char* fileNameBuffer, /*MPanelItem *&pChild,*/ LPVOID ptrRes, DWORD &resSize, LPBYTE &ptrBuf, BOOL &bIsCopy, char* pToken, wchar_t* &psz)
 {
 	StringFileInfoA *pSFI = (StringFileInfoA*)pToken;
 
 	if (_stricmp(pSFI->szKey, "StringFileInfo") == 0) {
 		char* pEnd = (char*)(((LPBYTE)ptrRes)+resSize);
 		if (pToken < pEnd && *pToken > sizeof(StringFileInfo)) {
-			ParseVersionInfoVariableStringA(fileNameBuffer, pChild, ptrRes, resSize, ptrBuf, bIsCopy, pToken, psz);
+			ParseVersionInfoVariableStringA(fileNameBuffer, /*pChild,*/ ptrRes, resSize, ptrBuf, bIsCopy, pToken, psz);
 		}
 	}
 }
 
-void ParseVersionInfo(char* fileNameBuffer, MPanelItem *&pChild, LPVOID &ptrRes, DWORD &resSize, LPBYTE &ptrBuf, BOOL &bIsCopy)
+void ParseVersionInfo(char* fileNameBuffer, /*MPanelItem *&pChild,*/ LPVOID &ptrRes, DWORD &resSize, LPBYTE &ptrBuf, BOOL &bIsCopy)
 {
 	WORD nTestSize = ((WORD*)ptrRes)[0];
 	WORD nTestShift = ((WORD*)ptrRes)[1];
@@ -1012,7 +1083,7 @@ void ParseVersionInfo(char* fileNameBuffer, MPanelItem *&pChild, LPVOID &ptrRes,
 				*psz++ = nBOM;
 				
 				// VS_FIXEDFILEINFO
-				ParseVersionInfoFixed(fileNameBuffer, pChild, ptrRes, resSize, ptrBuf, bIsCopy, pVer, psz);
+				ParseVersionInfoFixed(fileNameBuffer, /*pChild,*/ ptrRes, resSize, ptrBuf, bIsCopy, pVer, psz);
 
 				StringFileInfo *pSFI = (StringFileInfo*)(pVer+1);
 				LPWORD pToken = (LPWORD)pSFI;
@@ -1021,7 +1092,7 @@ void ParseVersionInfo(char* fileNameBuffer, MPanelItem *&pChild, LPVOID &ptrRes,
 					pSFI = (StringFileInfo*)pToken;
 					if (pSFI->wLength == 0)
 						break; // Invalid
-					ParseVersionInfoVariable(fileNameBuffer, pChild, ptrRes, resSize, ptrBuf, bIsCopy, pToken, psz);
+					ParseVersionInfoVariable(fileNameBuffer, /*pChild,*/ ptrRes, resSize, ptrBuf, bIsCopy, pToken, psz);
 					//
 					pToken = (LPWORD)(((LPBYTE)pSFI)+pSFI->wLength);
 					while (pToken < pEnd && *pToken == 0)
@@ -1047,7 +1118,7 @@ void ParseVersionInfo(char* fileNameBuffer, MPanelItem *&pChild, LPVOID &ptrRes,
 }
 
 // ANSI for 16bit PE's
-void ParseVersionInfoA(char* fileNameBuffer, MPanelItem *&pChild, LPVOID &ptrRes, DWORD &resSize, LPBYTE &ptrBuf, BOOL &bIsCopy)
+void ParseVersionInfoA(char* fileNameBuffer, /*MPanelItem *&pChild,*/ LPVOID &ptrRes, DWORD &resSize, LPBYTE &ptrBuf, BOOL &bIsCopy)
 {
 	WORD nTestSize = ((WORD*)ptrRes)[0];
 	//WORD nTestShift = ((WORD*)ptrRes)[1]; // ???
@@ -1077,7 +1148,7 @@ void ParseVersionInfoA(char* fileNameBuffer, MPanelItem *&pChild, LPVOID &ptrRes
 				*psz++ = nBOM;
 
 				// VS_FIXEDFILEINFO
-				ParseVersionInfoFixed(fileNameBuffer, pChild, ptrRes, resSize, ptrBuf, bIsCopy, pVer, psz);
+				ParseVersionInfoFixed(fileNameBuffer, /*pChild,*/ ptrRes, resSize, ptrBuf, bIsCopy, pVer, psz);
 
 				StringFileInfoA *pSFI = (StringFileInfoA*)(pVer+1);
 				char* pToken = (char*)pSFI;
@@ -1086,7 +1157,7 @@ void ParseVersionInfoA(char* fileNameBuffer, MPanelItem *&pChild, LPVOID &ptrRes
 					pSFI = (StringFileInfoA*)pToken;
 					if (pSFI->wLength == 0)
 						break; // Invalid
-					ParseVersionInfoVariableA(fileNameBuffer, pChild, ptrRes, resSize, ptrBuf, bIsCopy, pToken, psz);
+					ParseVersionInfoVariableA(fileNameBuffer, /*pChild,*/ ptrRes, resSize, ptrBuf, bIsCopy, pToken, psz);
 					//
 					pToken = (char*)(((LPBYTE)pSFI)+pSFI->wLength);
 					while (pToken < pEnd && *pToken == 0)
@@ -1112,11 +1183,11 @@ void ParseVersionInfoA(char* fileNameBuffer, MPanelItem *&pChild, LPVOID &ptrRes
 	}
 }
 
-MPanelItem* CreateResource(DWORD rootType, LPVOID ptrRes, DWORD resSize,
+void /*MPanelItem* */ CreateResource(DWORD rootType, LPVOID ptrRes, DWORD resSize,
 						   LPCSTR asID, LPCSTR langID, DWORD stringIdBase, DWORD anLangId)
 {
 	char fileNameBuffer[MAX_PATH];
-	MPanelItem *pChild = NULL;
+	//MPanelItem *pChild = NULL;
 	LPBYTE ptrBuf = NULL;
 	BOOL bIsCopy = FALSE;
 	TCHAR szType[32] = {0}, szInfo[64] = {0};
@@ -1134,7 +1205,7 @@ MPanelItem* CreateResource(DWORD rootType, LPVOID ptrRes, DWORD resSize,
 
 	switch (rootType) {
 	case (WORD)RT_GROUP_ICON: case 0x8000+(WORD)RT_GROUP_ICON:
-	case (WORD)RT_GROUP_CURSOR: case 0x8000+(WORD)RT_GROUP_CURSOR:
+	//case (WORD)RT_GROUP_CURSOR: case 0x8000+(WORD)RT_GROUP_CURSOR:
 		{
 			strcat(fileNameBuffer, ".txt");
 			//pChild = pRoot->AddFile(fileNameBuffer, 0);
@@ -1153,20 +1224,20 @@ MPanelItem* CreateResource(DWORD rootType, LPVOID ptrRes, DWORD resSize,
 				int nResCount = pIcon->idCount;
 
 				wsprintf(szInfo, _T("Count: %i"), nResCount);
-				pChild->SetColumns(
-					((rootType & 0x7FFF)==(WORD)RT_GROUP_ICON) ? _T("GROUP_ICON") : _T("GROUP_CURSOR"),
-					szInfo);
+				//pChild->SetColumns(
+				//	((rootType & 0x7FFF)==(WORD)RT_GROUP_ICON) ? _T("GROUP_ICON") : _T("GROUP_CURSOR"),
+				//	szInfo);
 
 				wsprintf(szTextInfo, _T("%s, Count: %u\n%s\n"),
 					((rootType & 0x7FFF)==(WORD)RT_GROUP_ICON) ? _T("GROUP_ICON") : _T("GROUP_CURSOR"),
 					nResCount,
 					((rootType & 0x7FFF)==(WORD)RT_GROUP_ICON) ? _T("====================") : _T("======================"));
-				pChild->AddText(szTextInfo, -1, TRUE); // Не добавлять в DUMP.TXT		
+				//pChild->AddText(szTextInfo, -1, TRUE); // Не добавлять в DUMP.TXT		
 
 				LPGRPICONDIRENTRY pEntry = pIcon->idEntries;
 				while (nSizeLeft >= sizeof(GRPICONDIRENTRY)) {
 					if (!ValidateMemory(pEntry, sizeof(GRPICONDIRENTRY))) {
-						pChild->SetErrorPtr(pEntry, sizeof(GRPICONDIRENTRY));
+						//pChild->SetErrorPtr(pEntry, sizeof(GRPICONDIRENTRY));
 						break;
 					}
 					wsprintf(szTextInfo, 
@@ -1177,13 +1248,13 @@ MPanelItem* CreateResource(DWORD rootType, LPVOID ptrRes, DWORD resSize,
 						(UINT)pEntry->bWidth, (UINT)pEntry->bHeight,
 						(UINT)pEntry->bColorCount, (UINT)pEntry->wPlanes, (UINT)pEntry->wBitCount);
 					//
-					pChild->AddText(szTextInfo, -1, TRUE); // Не добавлять в DUMP.TXT		
+					//pChild->AddText(szTextInfo, -1, TRUE); // Не добавлять в DUMP.TXT		
 					nSizeLeft -= sizeof(GRPICONDIRENTRY);
 					nResCount --;
 					pEntry++;
 				}
 			}
-			return pChild;
+			return; // pChild;
 		} break;
 	case (WORD)RT_ICON: case 0x8000+(WORD)RT_ICON:
 		{
@@ -1232,150 +1303,150 @@ MPanelItem* CreateResource(DWORD rootType, LPVOID ptrRes, DWORD resSize,
 				}
 			}
 		} break;
-	case (WORD)RT_CURSOR: case 0x8000+(WORD)RT_CURSOR:
-		{
-			_tcscpy(szType, _T("CURSOR"));
+	//case (WORD)RT_CURSOR: case 0x8000+(WORD)RT_CURSOR:
+	//	{
+	//		_tcscpy(szType, _T("CURSOR"));
 
-			if (!ValidateMemory(ptrRes, resSize)) {
-				//pRoot->SetErrorPtr(ptrRes, resSize);
-			} else if (resSize>4 && *((DWORD*)ptrRes) == 'GNP%') {
-				strcat(fileNameBuffer, ".png");
-			} else if (resSize > (sizeof(BITMAPINFOHEADER)+4)) {
-				BITMAPINFOHEADER* pBmpTest = (BITMAPINFOHEADER*)(((LPBYTE)ptrRes)+4);
-				if (pBmpTest->biSize == sizeof(BITMAPINFOHEADER)
-					&& pBmpTest->biWidth && pBmpTest->biWidth < 256
-					&& pBmpTest->biHeight == pBmpTest->biWidth * 2)
-				{
-					wsprintf(szInfo, _T("%ix%i (%ibpp)"), 
-						pBmpTest->biWidth, pBmpTest->biWidth,
-						pBmpTest->biBitCount*pBmpTest->biPlanes);
+	//		if (!ValidateMemory(ptrRes, resSize)) {
+	//			//pRoot->SetErrorPtr(ptrRes, resSize);
+	//		} else if (resSize>4 && *((DWORD*)ptrRes) == 'GNP%') {
+	//			strcat(fileNameBuffer, ".png");
+	//		} else if (resSize > (sizeof(BITMAPINFOHEADER)+4)) {
+	//			BITMAPINFOHEADER* pBmpTest = (BITMAPINFOHEADER*)(((LPBYTE)ptrRes)+4);
+	//			if (pBmpTest->biSize == sizeof(BITMAPINFOHEADER)
+	//				&& pBmpTest->biWidth && pBmpTest->biWidth < 256
+	//				&& pBmpTest->biHeight == pBmpTest->biWidth * 2)
+	//			{
+	//				wsprintf(szInfo, _T("%ix%i (%ibpp)"), 
+	//					pBmpTest->biWidth, pBmpTest->biWidth,
+	//					pBmpTest->biBitCount*pBmpTest->biPlanes);
 
-					// Делаем копию буфера, но предваряем его заголовком иконки
-					DWORD nNewSize = resSize + sizeof(ICONDIR) - 4;
-					ptrBuf = (LPBYTE)malloc(nNewSize);
-					if (!ptrBuf) {
-						//pRoot->printf(_T("\n!!! Can't allocate %i bytes !!!\n"), nNewSize);
-					} else {
-						ICONDIR* pIcon = (ICONDIR*)ptrBuf;
-						pIcon->idReserved = 0;
-						pIcon->idType = 2;
-						pIcon->idCount = 1;
-						pIcon->idEntries[0].bWidth = (BYTE)pBmpTest->biWidth;
-						pIcon->idEntries[0].bHeight = (BYTE)pBmpTest->biWidth;
-						pIcon->idEntries[0].bColorCount = 0;
-							//(pBmpTest->biBitCount >= 8) ? 0 : (1 << (pBmpTest->biBitCount));
-						pIcon->idEntries[0].bReserved = 0;
-						pIcon->idEntries[0].wPlanes = ((WORD*)ptrRes)[0];
-						pIcon->idEntries[0].wBitCount = ((WORD*)ptrRes)[1];
-						pIcon->idEntries[0].dwBytesInRes = resSize-4;
-						pIcon->idEntries[0].dwImageOffset = sizeof(ICONDIR);
-						memmove(&(pIcon->idEntries[1]), ((LPBYTE)ptrRes)+4, resSize-4);
+	//				// Делаем копию буфера, но предваряем его заголовком иконки
+	//				DWORD nNewSize = resSize + sizeof(ICONDIR) - 4;
+	//				ptrBuf = (LPBYTE)malloc(nNewSize);
+	//				if (!ptrBuf) {
+	//					//pRoot->printf(_T("\n!!! Can't allocate %i bytes !!!\n"), nNewSize);
+	//				} else {
+	//					ICONDIR* pIcon = (ICONDIR*)ptrBuf;
+	//					pIcon->idReserved = 0;
+	//					pIcon->idType = 2;
+	//					pIcon->idCount = 1;
+	//					pIcon->idEntries[0].bWidth = (BYTE)pBmpTest->biWidth;
+	//					pIcon->idEntries[0].bHeight = (BYTE)pBmpTest->biWidth;
+	//					pIcon->idEntries[0].bColorCount = 0;
+	//						//(pBmpTest->biBitCount >= 8) ? 0 : (1 << (pBmpTest->biBitCount));
+	//					pIcon->idEntries[0].bReserved = 0;
+	//					pIcon->idEntries[0].wPlanes = ((WORD*)ptrRes)[0];
+	//					pIcon->idEntries[0].wBitCount = ((WORD*)ptrRes)[1];
+	//					pIcon->idEntries[0].dwBytesInRes = resSize-4;
+	//					pIcon->idEntries[0].dwImageOffset = sizeof(ICONDIR);
+	//					memmove(&(pIcon->idEntries[1]), ((LPBYTE)ptrRes)+4, resSize-4);
 
-						ptrRes = ptrBuf;
-						resSize = nNewSize;
-						bIsCopy = TRUE;
-						strcat(fileNameBuffer, ".cur");
-					}
-				}
-			}
-		} break;
-	case (WORD)RT_BITMAP: case 0x8000+(WORD)RT_BITMAP:
-		{
-			_tcscpy(szType, _T("BITMAP"));
-			DWORD nNewSize = sizeof(BITMAPFILEHEADER)+resSize;
-			if (!ValidateMemory(ptrRes, max(sizeof(BITMAPINFOHEADER),resSize))) {
-				//pRoot->SetErrorPtr(ptrRes, resSize);
-			} else if (nNewSize<resSize) {
-				//pRoot->AddText(_T("\n!!! Too large resource, can't insert header !!!\n"));
-			} else {
-				LPBITMAPINFOHEADER pInfo = (LPBITMAPINFOHEADER)ptrRes;
-				if (pInfo->biSize < sizeof(BITMAPINFOHEADER)
-					|| pInfo->biPlanes != 1 || pInfo->biBitCount > 32
-					|| (pInfo->biWidth & 0xFF000000) || (pInfo->biHeight & 0xFF000000))
-				{
-					//pRoot->AddText(_T("\n!!! Invalid BITMAPINFOHEADER !!!\n"));
-					_tcscpy(szInfo, _T("Invalid BITMAPINFOHEADER"));
-				} else {
-					ptrBuf = (LPBYTE)malloc(nNewSize);
-					if (!ptrBuf) {
-						//pRoot->printf(_T("\n!!! Can't allocate %i bytes !!!\n"), nNewSize);
-					} else {
-						LPBITMAPFILEHEADER pBmp = (LPBITMAPFILEHEADER)ptrBuf;
+	//					ptrRes = ptrBuf;
+	//					resSize = nNewSize;
+	//					bIsCopy = TRUE;
+	//					strcat(fileNameBuffer, ".cur");
+	//				}
+	//			}
+	//		}
+	//	} break;
+	//case (WORD)RT_BITMAP: case 0x8000+(WORD)RT_BITMAP:
+	//	{
+	//		_tcscpy(szType, _T("BITMAP"));
+	//		DWORD nNewSize = sizeof(BITMAPFILEHEADER)+resSize;
+	//		if (!ValidateMemory(ptrRes, max(sizeof(BITMAPINFOHEADER),resSize))) {
+	//			//pRoot->SetErrorPtr(ptrRes, resSize);
+	//		} else if (nNewSize<resSize) {
+	//			//pRoot->AddText(_T("\n!!! Too large resource, can't insert header !!!\n"));
+	//		} else {
+	//			LPBITMAPINFOHEADER pInfo = (LPBITMAPINFOHEADER)ptrRes;
+	//			if (pInfo->biSize < sizeof(BITMAPINFOHEADER)
+	//				|| pInfo->biPlanes != 1 || pInfo->biBitCount > 32
+	//				|| (pInfo->biWidth & 0xFF000000) || (pInfo->biHeight & 0xFF000000))
+	//			{
+	//				//pRoot->AddText(_T("\n!!! Invalid BITMAPINFOHEADER !!!\n"));
+	//				_tcscpy(szInfo, _T("Invalid BITMAPINFOHEADER"));
+	//			} else {
+	//				ptrBuf = (LPBYTE)malloc(nNewSize);
+	//				if (!ptrBuf) {
+	//					//pRoot->printf(_T("\n!!! Can't allocate %i bytes !!!\n"), nNewSize);
+	//				} else {
+	//					LPBITMAPFILEHEADER pBmp = (LPBITMAPFILEHEADER)ptrBuf;
 
-						wsprintf(szInfo, _T("%ix%i (%ibpp)"), 
-							pInfo->biWidth, pInfo->biWidth,
-							pInfo->biBitCount*pInfo->biPlanes);
+	//					wsprintf(szInfo, _T("%ix%i (%ibpp)"), 
+	//						pInfo->biWidth, pInfo->biWidth,
+	//						pInfo->biBitCount*pInfo->biPlanes);
 
-						pBmp->bfType = 0x4d42; //'BM';
-						pBmp->bfSize = nNewSize;
-						pBmp->bfReserved1 = pBmp->bfReserved2 = 0;
-						//TODO: наверное еще и размер таблицы цветов нужно добавить?
-						pBmp->bfOffBits = sizeof(BITMAPFILEHEADER)+pInfo->biSize;
-						if (pInfo->biBitCount == 0 || pInfo->biCompression == BI_JPEG || pInfo->biCompression == BI_PNG) {
-							// Дополнительные сдвиги на палитру не требуются
-						} else {
-							if (pInfo->biCompression == BI_BITFIELDS) {
-								if (pInfo->biBitCount == 16 || pInfo->biBitCount == 32) {
-									// color table consists of three DWORD color masks that specify the 
-									// red, green, and blue components, respectively, of each pixel
-									pBmp->bfOffBits += 3 * sizeof(DWORD);
-								}
-							} else if (pInfo->biCompression == BI_RGB || pInfo->biCompression == BI_RLE4 || pInfo->biCompression == BI_RLE8) {
-								if (pInfo->biBitCount == 1 || pInfo->biBitCount == 4 || pInfo->biBitCount == 8) {
-									if (pInfo->biClrUsed == 0) {
-										pBmp->bfOffBits += ((DWORD)1 << pInfo->biBitCount) * (DWORD)sizeof(RGBQUAD);
-									} else if (pInfo->biClrUsed <= 256) {
-										// BUGBUG: What is real palette size in such files?
-										pBmp->bfOffBits += pInfo->biClrUsed * (DWORD)sizeof(RGBQUAD);
-									}
-								}
-							}
-						}
-						
-						// Copying contents of bitmap resource
-						memmove(pBmp+1, ptrRes, resSize);
+	//					pBmp->bfType = 0x4d42; //'BM';
+	//					pBmp->bfSize = nNewSize;
+	//					pBmp->bfReserved1 = pBmp->bfReserved2 = 0;
+	//					//TODO: наверное еще и размер таблицы цветов нужно добавить?
+	//					pBmp->bfOffBits = sizeof(BITMAPFILEHEADER)+pInfo->biSize;
+	//					if (pInfo->biBitCount == 0 || pInfo->biCompression == BI_JPEG || pInfo->biCompression == BI_PNG) {
+	//						// Дополнительные сдвиги на палитру не требуются
+	//					} else {
+	//						if (pInfo->biCompression == BI_BITFIELDS) {
+	//							if (pInfo->biBitCount == 16 || pInfo->biBitCount == 32) {
+	//								// color table consists of three DWORD color masks that specify the 
+	//								// red, green, and blue components, respectively, of each pixel
+	//								pBmp->bfOffBits += 3 * sizeof(DWORD);
+	//							}
+	//						} else if (pInfo->biCompression == BI_RGB || pInfo->biCompression == BI_RLE4 || pInfo->biCompression == BI_RLE8) {
+	//							if (pInfo->biBitCount == 1 || pInfo->biBitCount == 4 || pInfo->biBitCount == 8) {
+	//								if (pInfo->biClrUsed == 0) {
+	//									pBmp->bfOffBits += ((DWORD)1 << pInfo->biBitCount) * (DWORD)sizeof(RGBQUAD);
+	//								} else if (pInfo->biClrUsed <= 256) {
+	//									// BUGBUG: What is real palette size in such files?
+	//									pBmp->bfOffBits += pInfo->biClrUsed * (DWORD)sizeof(RGBQUAD);
+	//								}
+	//							}
+	//						}
+	//					}
+	//					
+	//					// Copying contents of bitmap resource
+	//					memmove(pBmp+1, ptrRes, resSize);
 
-						ptrRes = ptrBuf;
-						resSize = nNewSize;
-						bIsCopy = TRUE;
-						strcat(fileNameBuffer, ".bmp");
-					}
-				}
-			}
-		} break;
-	case (WORD)RT_MANIFEST:
-		{
-			strcat(fileNameBuffer, ".xml");
-		} break;
-	case (WORD)RT_STRING:
-		{
-			//MPanelItem* pBin = pRoot->AddFolder(_T("Binary Data"), FALSE);
+	//					ptrRes = ptrBuf;
+	//					resSize = nNewSize;
+	//					bIsCopy = TRUE;
+	//					strcat(fileNameBuffer, ".bmp");
+	//				}
+	//			}
+	//		}
+	//	} break;
+	//case (WORD)RT_MANIFEST:
+	//	{
+	//		strcat(fileNameBuffer, ".xml");
+	//	} break;
+	//case (WORD)RT_STRING:
+	//	{
+	//		//MPanelItem* pBin = pRoot->AddFolder(_T("Binary Data"), FALSE);
 
-			//if (!pRoot->IsColumnTitles())
-			//	pBin->AddText( _T("<String Table>\n==============\n"), -1, TRUE );
+	//		//if (!pRoot->IsColumnTitles())
+	//		//	pBin->AddText( _T("<String Table>\n==============\n"), -1, TRUE );
 
-			_ASSERTE(stringIdBase<=0x1000); // base of StringID
-			//__try {
-				DumpStringTable( pBin, stringIdBase, anLangId, (LPCWSTR)ptrRes, resSize );
-			//}__except(EXCEPTION_EXECUTE_HANDLER){
-			//	pRoot->SetError(SZ_DUMP_EXCEPTION);
-			//}
+	//		_ASSERTE(stringIdBase<=0x1000); // base of StringID
+	//		//__try {
+	//			DumpStringTable( pBin, stringIdBase, anLangId, (LPCWSTR)ptrRes, resSize );
+	//		//}__except(EXCEPTION_EXECUTE_HANDLER){
+	//		//	pRoot->SetError(SZ_DUMP_EXCEPTION);
+	//		//}
 
-			//pBin->AddText( _T("\n"), -1, TRUE );
+	//		//pBin->AddText( _T("\n"), -1, TRUE );
 
-			//pRoot = pBin;
+	//		//pRoot = pBin;
 
-		} break;
+	//	} break;
 	case (WORD)RT_VERSION:
 		{
 			if (resSize > sizeof(VS_FIXEDFILEINFO)) {
-				ParseVersionInfo(fileNameBuffer, pChild, ptrRes, resSize, ptrBuf, bIsCopy);
+				ParseVersionInfo(fileNameBuffer, /*pChild,*/ ptrRes, resSize, ptrBuf, bIsCopy);
 			}
 		} break;
 	case 0x8000+(WORD)RT_VERSION:
 		{
 			if (resSize > sizeof(VS_FIXEDFILEINFO)) {
-				ParseVersionInfoA(fileNameBuffer, pChild, ptrRes, resSize, ptrBuf, bIsCopy);
+				ParseVersionInfoA(fileNameBuffer, /*pChild,*/ ptrRes, resSize, ptrBuf, bIsCopy);
 			}
 		} break;
 	}
@@ -1393,7 +1464,7 @@ MPanelItem* CreateResource(DWORD rootType, LPVOID ptrRes, DWORD resSize,
 
 	if (ptrBuf)
 		free(ptrBuf);
-	return pChild;
+	return; // pChild;
 }
 
 
@@ -1408,7 +1479,6 @@ void DumpResourceEntry(
     PBYTE pResourceBase,
     DWORD level, DWORD rootType, DWORD parentType )
 {
-    UINT i;
     char nameBuffer[128];
     PIMAGE_RESOURCE_DATA_ENTRY pResDataEntry;
     
@@ -1435,7 +1505,7 @@ void DumpResourceEntry(
     }
     else
     {
-		sprintf(nameBuffer, "0x%04X", pResDirEntry->Name);
+		wsprintfA(nameBuffer, "0x%04X", pResDirEntry->Name);
     }
 
 	CreateResource(rootType, ptrRes, pResDataEntry->Size, asID, nameBuffer, parentType, pResDirEntry->Name);
@@ -1507,10 +1577,10 @@ void DumpResourceDirectory( PIMAGE_RESOURCE_DIRECTORY pResDir,
     resDirEntry = (PIMAGE_RESOURCE_DIRECTORY_ENTRY)(pResDir+1);
 	    
     for ( i=0; i < pResDir->NumberOfNamedEntries; i++, resDirEntry++ )
-        DumpResourceEntry(pChild, szType, resDirEntry, pResourceBase, level+1, rootType, resourceType);
+        DumpResourceEntry(szType, resDirEntry, pResourceBase, level+1, rootType, resourceType);
 
     for ( i=0; i < pResDir->NumberOfIdEntries; i++, resDirEntry++ )
-        DumpResourceEntry(pChild, szType, resDirEntry, pResourceBase, level+1, rootType, resourceType);
+        DumpResourceEntry(szType, resDirEntry, pResourceBase, level+1, rootType, resourceType);
 }
 
 
@@ -1535,8 +1605,8 @@ template <class T> void DumpResourceSection( PBYTE pImageBase, T * pNTHeader)	//
 		
     DumpResourceDirectory((PIMAGE_RESOURCE_DIRECTORY)pResDir, pResDir, 0, 0);
 
-	if ( !fShowResources )
-		return;
+	//if ( !fShowResources )
+	//	return;
 }
 
 void DumpResources( PBYTE pImageBase, PIMAGE_NT_HEADERS32 pNTHeader )
@@ -1585,16 +1655,6 @@ bool DumpExeFile( PIMAGE_DOS_HEADER dosHeader )
 	}
 
     return false;
-}
-
-bool ValidateMemory(LPCVOID ptr, size_t nSize)
-{
-	if (!ptr || (LPBYTE)ptr < (LPBYTE)g_pMappedFileBase)
-		return false;
-	ULONGLONG nPos = ((LPBYTE)ptr - (LPBYTE)g_pMappedFileBase);
-	if ((nPos+nSize) > g_FileSize.QuadPart)
-		return false;
-	return true;
 }
 
 bool DumpExeFileVX( PIMAGE_DOS_HEADER dosHeader, PIMAGE_VXD_HEADER pVXDHeader )
@@ -1776,17 +1836,15 @@ bool DumpExeFilePE( PIMAGE_DOS_HEADER dosHeader, PIMAGE_NT_HEADERS32 pNTHeader )
 bool DumpFile(LPBYTE pFileData, __int64 nFileSize)
 {
 	bool lbSucceeded = false;
-    HANDLE hFile;
-    HANDLE hFileMapping;
     PIMAGE_DOS_HEADER dosHeader;
     
 	gpNTHeader32 = NULL;
 	gpNTHeader64 = NULL;
 	g_bIs64Bit = false;
 
-	g_pCVHeader = 0;
-	g_pCOFFHeader = 0;
-	g_pCOFFSymbolTable = 0;
+	//g_pCVHeader = 0;
+	//g_pCOFFHeader = 0;
+	//g_pCOFFSymbolTable = 0;
 
 
 	g_FileSize.QuadPart = nFileSize;
@@ -1817,7 +1875,7 @@ BOOL WINAPI CET_Init(struct CET_Init* pInit)
 
 	ghModule = pInit->hModule;
 
-	pInit->pContext == (LPVOID)1;
+	pInit->pContext = (LPVOID)1;
 	return TRUE;
 }
 
@@ -1838,13 +1896,13 @@ BOOL WINAPI CET_Load(struct CET_LoadInfo* pLoadPreview)
 	}
 	
 	
-	if (!pLoadPreview->pContext != (LPVOID)1) {
+	if (pLoadPreview->pContext != (LPVOID)1) {
 		SETERROR(PGE_INVALID_CONTEXT);
 		return FALSE;
 	}
 	
 
-	if (!pLoadPreview->pFileData || !pLoadPreview->nFileSize < 512) {
+	if (!pLoadPreview->pFileData || pLoadPreview->nFileSize < 512) {
 		SETERROR(PGE_FILE_NOT_FOUND);
 		return FALSE;
 	}
@@ -1857,7 +1915,7 @@ BOOL WINAPI CET_Load(struct CET_LoadInfo* pLoadPreview)
 
 	
 	PEData *pData = (PEData*)CALLOC(sizeof(PEData));
-	if (!pImage) {
+	if (!pData) {
 		SETERROR(PGE_NOT_ENOUGH_MEMORY);
 		return FALSE;
 	}

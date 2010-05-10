@@ -5,6 +5,8 @@ enum {
 	CEPluginName=0,
 	CEMenuThumbnails,
 	CEMenuTiles,
+	CEColTitleThumbnails,
+	CEColTitleTiles,
 	CEDirFolder,
 	CEDirSymLink,
 	CEDirJunction,

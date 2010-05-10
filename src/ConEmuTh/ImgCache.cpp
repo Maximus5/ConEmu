@@ -728,10 +728,11 @@ BOOL CImgCache::LoadShellIcon(struct tag_CacheInfo* pItem)
 	} else {
 		// ассоциированная иконка
 		shRc = SHGetFileInfo ( pItem->lpwszFileName, pItem->dwFileAttributes, &sfi, cbSize, 
-			SHGFI_ICON|SHGFI_SHELLICONSIZE|SHGFI_LARGEICON|SHGFI_USEFILEATTRIBUTES|SHGFI_ADDOVERLAYS);
+			SHGFI_ICON|SHGFI_SHELLICONSIZE|SHGFI_LARGEICON|SHGFI_USEFILEATTRIBUTES|SHGFI_ADDOVERLAYS|SHGFI_ATTRIBUTES);
 		if (shRc && sfi.hIcon) {
 			hIcon = sfi.hIcon;
 		}
+		TODO("Обработать (sfi.dwAttributes & SFGAO_SHARE (0x00020000)) - The specified objects are shared.");
 	}
 
 	if (hIcon) {
@@ -806,7 +807,7 @@ BOOL CImgCache::LoadThumbnail(struct tag_CacheInfo* pItem)
 	//PV.nMaxZoom = gThSet.nMaxZoom;
 	BOOL lbLoadRc;
 	
-	BOOL lbIgnoreFileDescription = FALSE;
+	BOOL lbIgnoreFileDescription = FALSE, lbIgnoreComments = FALSE;
 	HANDLE hFile = INVALID_HANDLE_VALUE, hMapping = NULL;
 	LPVOID pFileMap = NULL;
 	if (!PV.bVirtualItem) {
@@ -831,7 +832,8 @@ BOOL CImgCache::LoadThumbnail(struct tag_CacheInfo* pItem)
 					PV.nFileSize = pImpEx->nBinarySize;
 					PV.pFileData = (const BYTE*)pImpEx->pBinaryData;
 					// ImpEx показывает в описании размер изображения, получается некрасивое дублирование
-					lbIgnoreFileDescription = TRUE;
+					//lbIgnoreFileDescription = TRUE;
+					lbIgnoreComments = TRUE;
 				}
 			}
 		}
@@ -889,7 +891,7 @@ BOOL CImgCache::LoadThumbnail(struct tag_CacheInfo* pItem)
 			memmove(pItem->Pixels, PV.Pixels, PV.cbPixelsSize);
 			pItem->bPreviewExists = (PV.Pixels!=NULL);
 			
-			if (PV.pszComments) {
+			if (PV.pszComments && !lbIgnoreComments) {
 				DWORD nLen = (DWORD)max(255,wcslen(PV.pszComments));
 				if (pItem->pszComments && pItem->wcCommentsSize <= nLen) {
 					free(pItem->pszComments); pItem->pszComments = 0;

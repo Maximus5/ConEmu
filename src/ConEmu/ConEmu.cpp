@@ -1798,6 +1798,9 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce)
 						// ≈сли окно свернуто или "реально" максимизировано - показать нормальным
 						mb_IgnoreSizeChange = TRUE;
 						DWORD dwStyle = GetWindowLong(ghWnd, GWL_STYLE);
+						if ((dwStyle & WS_MINIMIZE)) {
+							ShowWindow(ghWnd, SW_SHOWNORMAL);
+						}
 						if ((dwStyle & (WS_MINIMIZE|WS_MAXIMIZE)) != 0) {
 							dwStyle &= ~(WS_MINIMIZE|WS_MAXIMIZE);
 							SetWindowLong(ghWnd, GWL_STYLE, dwStyle);

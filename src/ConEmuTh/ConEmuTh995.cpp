@@ -56,7 +56,7 @@ void SetStartupInfoW995(void *aInfo)
 	lstrcpyW(gszRootKey, InfoW995->RootKey);
 	WCHAR* pszSlash = gszRootKey+lstrlenW(gszRootKey)-1;
 	if (*pszSlash != L'\\') *(++pszSlash) = L'\\';
-	lstrcpyW(pszSlash, L"ConEmuTh\\");
+	lstrcpyW(pszSlash+1, L"ConEmuTh\\");
 }
 
 void ExitFARW995(void)

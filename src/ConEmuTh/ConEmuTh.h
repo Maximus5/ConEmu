@@ -308,7 +308,7 @@ extern DWORD gnWaitForKeySeqTick;
 //extern CRgnDetect *gpRgnDetect;
 
 // *** lng resources begin ***
-extern wchar_t gsFolder[64], /*gsHardLink[64],*/ gsSymLink[64], gsJunction[64];
+extern wchar_t gsFolder[64], /*gsHardLink[64],*/ gsSymLink[64], gsJunction[64], gsTitleThumbs[64], gsTitleTiles[64];
 // *** lng resources end ***
 
 

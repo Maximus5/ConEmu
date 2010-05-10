@@ -341,6 +341,7 @@ void CSettings::InitSettings()
 	isUserScreenTransparent = false;
 
     isFixFarBorders = 1; isEnhanceGraphics = true; isPartBrush75 = 0xC8; isPartBrush50 = 0x96; isPartBrush25 = 0x5A;
+    isExtendUCharMap = true;
 	memset(icFixFarBorderRanges, 0, sizeof(icFixFarBorderRanges));
 	wcscpy(mszCharRanges, L"2013-25C4");
 	icFixFarBorderRanges[0].bUsed = true; icFixFarBorderRanges[0].cBegin = 0x2013; icFixFarBorderRanges[0].cEnd = 0x25C4;
@@ -425,7 +426,7 @@ void CSettings::InitSettings()
     SetThumbColor(ThSet.crSelectFrame, RGB(192,192,192), 7, FALSE);
     /* теперь разнообразные размеры */
     // отступы для preview
-    SetThumbSize(ThSet.Thumbs,96,1,1,5,25,0,0,L"Tahoma",14);
+    SetThumbSize(ThSet.Thumbs,96,1,1,5,20,2,0,L"Tahoma",14);
     // отступы для tiles
     SetThumbSize(ThSet.Tiles,48,4,4,172,4,4,1,L"Tahoma",14);
 	// Прочие параметры загрузки
@@ -613,6 +614,8 @@ void CSettings::LoadSettings()
 		} else {
 			wcscpy(mszCharRanges, L"2013-25C4"); // default
 		}
+		
+		reg->Load(L"ExtendUCharMap", isExtendUCharMap);
         
         reg->Load(L"PartBrush75", isPartBrush75); if (isPartBrush75<5) isPartBrush75=5; else if (isPartBrush75>250) isPartBrush75=250;
         reg->Load(L"PartBrush50", isPartBrush50); if (isPartBrush50<5) isPartBrush50=5; else if (isPartBrush50>250) isPartBrush50=250;
@@ -750,6 +753,8 @@ void CSettings::LoadSettings()
     }
     delete reg;
 
+	// Передернуть палитру затенения
+	mb_FadeInitialized = false; GetColors(TRUE);
 	// Применить в Mapping (там заодно и палитра копируется)
 	gConEmu.OnPanelViewSettingsChanged(FALSE);
 
@@ -1051,6 +1056,7 @@ BOOL CSettings::SaveSettings()
 
             reg->Save(L"FixFarBorders", isFixFarBorders);
             reg->Save(L"FixFarBordersRanges", mszCharRanges);
+            reg->Save(L"ExtendUCharMap", isExtendUCharMap);
             reg->Save(L"EnhanceGraphics", isEnhanceGraphics);
 	        reg->Save(L"PartBrush75", isPartBrush75);
 	        reg->Save(L"PartBrush50", isPartBrush50);
@@ -1634,6 +1640,8 @@ LRESULT CSettings::OnInitDialog_Ext()
 	if (isFixAltOnAltTab) CheckDlgButton(hExt, cbFixAltOnAltTab, BST_CHECKED);
 
 	if (isFarHourglass) CheckDlgButton(hExt, cbFarHourglass, BST_CHECKED);
+	
+	if (isExtendUCharMap) CheckDlgButton(hExt, cbExtendUCharMap, BST_CHECKED);
 
 	if (isDragEnabled) {
 		//CheckDlgButton(hExt, cbDragEnabled, BST_CHECKED);
@@ -1910,7 +1918,7 @@ LRESULT CSettings::OnInitDialog_Views()
 	CheckDlgButton(hViews, cbThumbUsePicView2, ThSet.bUsePicView2);
 	CheckDlgButton(hViews, cbThumbRestoreOnStartup, ThSet.bRestoreOnStartup);
 
-	RegisterTipsFor(hColors);
+	RegisterTipsFor(hViews);
 
 	return 0;
 }
@@ -2179,6 +2187,11 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
 	case cbFarHourglass:
 		isFarHourglass = IsChecked(hExt, cbFarHourglass);
 		gConEmu.OnSetCursor();
+		break;
+		
+	case cbExtendUCharMap:
+		isExtendUCharMap = IsChecked(hExt, cbExtendUCharMap);
+		gConEmu.Update(true);
 		break;
     	
     case cbFixAltOnAltTab:
@@ -4416,6 +4429,17 @@ bool CSettings::IsAlmostMonospace(int tmMaxCharWidth, int tmAveCharWidth, int tm
 	return bAlmostMonospace;
 }
 
+HFONT CSettings::CreateOtherFont(const wchar_t* asFontName)
+{
+	LOGFONT otherLF = {LogFont.lfHeight};
+	otherLF.lfWeight = FW_NORMAL;
+	otherLF.lfCharSet = DEFAULT_CHARSET;
+	otherLF.lfQuality = LogFont.lfQuality;
+	lstrcpy(otherLF.lfFaceName, asFontName);
+	HFONT hf = CreateFontIndirect(&otherLF);
+	return hf;
+}
+
 HFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 {
     ResetFontWidth();
@@ -5595,6 +5619,14 @@ bool CSettings::isModifierPressed(DWORD vk)
 
 	// Можно
 	return true;
+}
+
+void CSettings::OnPanelViewAppeared(BOOL abAppear)
+{
+	if (hViews && IsWindow(hViews)) {
+		if (abAppear != IsWindowEnabled(GetDlgItem(hViews,bApplyViewSettings)))
+			EnableWindow(GetDlgItem(hViews,bApplyViewSettings), abAppear);
+	}
 }
 
 // Должна вернуть true, если файл изменился

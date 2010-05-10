@@ -334,6 +334,16 @@ typedef struct tag_PanelViewSettings {
 	/* Теперь разнообразные размеры */
 	ThumbSizes Thumbs;
 	ThumbSizes Tiles;
+
+    /* Основной шрифт в GUI */
+    struct {
+    	wchar_t sFontName[32];
+    	DWORD nFontHeight, nFontWidth, nFontCellWidth;
+    	DWORD nFontQuality, nFontCharSet;
+    	BOOL Bold, Italic;
+    	wchar_t sBorderFontName[32];
+        DWORD nBorderFontWidth;
+    } MainFont;
 	
 	// Прочие параметры загрузки
 	BYTE  bLoadPreviews; // bitmask of PanelViewMode {1=Thumbs, 2=Tiles}
@@ -357,16 +367,41 @@ typedef struct tag_PanelViewSettings {
 
 typedef BOOL (WINAPI* PanelViewInputCallback)(HANDLE hInput, PINPUT_RECORD lpBuffer, DWORD nBufSize, LPDWORD lpNumberOfEventsRead, BOOL* pbResult);
 typedef BOOL (WINAPI* PanelViewOutputCallback)(HANDLE hOutput,const CHAR_INFO *lpBuffer,COORD dwBufferSize,COORD dwBufferCoord,PSMALL_RECT lpWriteRegion);
+typedef struct tag_PanelViewText {
+	// Флаг используемости, выравнивание текста, и др.
+	#define PVI_TEXT_NOTUSED 0
+	#define PVI_TEXT_LEFT    1
+	#define PVI_TEXT_CENTER  2
+	#define PVI_TEXT_RIGHT   4
+	#define PVI_TEXT_SKIPSORTMODE 0x100 // только для имени колонки (оставить ФАРовскую буковку сортировки с ^)
+	DWORD nFlags;
+	// используется только младший байт - индексы консольных цветов
+	DWORD bConAttr;
+	// собственно текст
+	wchar_t sText[128];
+} PanelViewText;
 typedef struct tag_PanelViewInit {
 	DWORD cbSize;
-	BOOL  bRegister;
+	BOOL  bRegister, bVisible;
 	HWND2 hWnd;
 	BOOL  bLeftPanel;
-	BOOL  bPanelFullCover; // если TRUE - View закроет панель целиком (с рамкой), а не только рабочую область
+	// Flags
+	#define PVI_COVER_NORMAL         0x000 // как обычно, располагаем прямоугольником, в который ФАР выводит файлы
+	#define PVI_COVER_SCROLL_CLEAR   0x001 // при отрисовке GUI очистит полосу прокрутки (заменит на вертикальную-двойную)
+	#define PVI_COVER_SCROLL_OVER    0x002 // PVI_COVER_NORMAL + правая рамка (где полоса прокрутки). Плагин должен отрисовать прокрутку сам
+	#define PVI_COVER_COLTITLE_OVER  0x004 // PVI_COVER_NORMAL + строка с заголовками колонок (если она есть)
+	#define PVI_COVER_FULL_OVER      0x008 // Вся РАБОЧАЯ область панели (то есть панель - рамка)
+	#define PVI_COVER_FRAME_OVER     0x010 // Вся область панели (включая рамку)
+	#define PVI_COVER_2PANEL_OVER    0x020 // Обе панели (полноэкранная)
+	#define PVI_COVER_CONSOLE_OVER   0x040 // Консоль целиком
+	DWORD nCoverFlags;
+	// FAR settings
 	DWORD nFarInterfaceSettings;
 	DWORD nFarPanelSettings;
 	// Координаты всей панели (левой, правой, или fullscreen)
 	RECT  PanelRect;
+	// Разнообразные текстовые затиралки
+	PanelViewText tPanelTitle, tColumnTitle, tInfoLine[3];
 	// Это координаты прямоугольника, в котором реально располагается View
 	// Координаты определяются в GUI. Единицы - консольные.
 	RECT  WorkRect;

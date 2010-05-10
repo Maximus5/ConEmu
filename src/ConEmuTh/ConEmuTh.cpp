@@ -30,6 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifdef _DEBUG
 //  Раскомментировать, чтобы сразу после загрузки плагина показать MessageBox, чтобы прицепиться дебаггером
 //  #define SHOW_STARTED_MSGBOX
+//  #define SHOW_WRITING_RECTS
 #endif
 
 #define TRUE_COLORER_OLD_SUPPORT
@@ -94,7 +95,7 @@ DWORD gnRgnDetectFlags = 0;
 void CheckVarsInitialized();
 SECURITY_ATTRIBUTES* gpNullSecurity = NULL;
 // *** lng resources begin ***
-wchar_t gsFolder[64], gsHardLink[64], gsSymLink[64], gsJunction[64];
+wchar_t gsFolder[64], gsHardLink[64], gsSymLink[64], gsJunction[64], gsTitleThumbs[64], gsTitleTiles[64];
 // *** lng resources end ***
 
 bool gbWaitForKeySequenceEnd = false;
@@ -109,7 +110,8 @@ BOOL GetBufferInput(BOOL abRemove, PINPUT_RECORD lpBuffer, DWORD nBufSize, LPDWO
 BOOL UngetBufferInput(WORD nCount, PINPUT_RECORD lpOneInput);
 void ResetUngetBuffer();
 BOOL ProcessConsoleInput(BOOL abUseUngetBuffer, PINPUT_RECORD lpBuffer, DWORD nBufSize, LPDWORD lpNumberOfEventsRead);
-
+DWORD gnConsoleChanges = 0; // bitmask: 1-left, 2-right
+void OnMainThreadActived();
 
 
 // minimal(?) FAR version 2.0 alpha build FAR_X_VER
@@ -408,6 +410,9 @@ void WINAPI _export SetStartupInfoW(void *aInfo)
 	//lstrcpynW(gsHardLink, GetMsgW(CEDirHardLink), sizeofarray(gsHardLink));
 	lstrcpynW(gsSymLink, GetMsgW(CEDirSymLink), sizeofarray(gsSymLink));
 	lstrcpynW(gsJunction, GetMsgW(CEDirJunction), sizeofarray(gsJunction));
+	lstrcpynW(gsTitleThumbs, GetMsgW(CEColTitleThumbnails), sizeofarray(gsTitleThumbs));
+	lstrcpynW(gsTitleTiles, GetMsgW(CEColTitleTiles), sizeofarray(gsTitleTiles));
+
 
 	gbInfoW_OK = TRUE;
 
@@ -943,8 +948,11 @@ BOOL GetBufferInput(BOOL abRemove, PINPUT_RECORD lpBuffer, DWORD nBufSize, LPDWO
 
 	if (lbRedraw) {
 		gbWaitForKeySequenceEnd = (gnUngetCount > 0);
-		if (IsThumbnailsActive(FALSE))
+		if (IsThumbnailsActive(FALSE)) {
 			UpdateEnvVar(TRUE);
+			if (!gbWaitForKeySequenceEnd)
+				OnMainThreadActived();
+		}
 	}
 
 	*lpNumberOfEventsRead = (DWORD)(p - lpBuffer);
@@ -977,13 +985,78 @@ BOOL UngetBufferInput(WORD nCount, PINPUT_RECORD lpOneInput)
 
 void ResetUngetBuffer()
 {
+	gnConsoleChanges = 0;
 	gnUngetCount = 0;
 	gbWaitForKeySequenceEnd = false;
 }
 
+// Должен активироваться или через Synchro или через PeekConsoleInput в FAR1
+void OnMainThreadActived()
+{
+	if (!gnConsoleChanges)
+		return;
+	DWORD nCurChanges = gnConsoleChanges; gnConsoleChanges = 0;
+
+	// Сбросим, чтобы RgnDetect попытался сам найти панели и диалоги.
+	// Это нужно чтобы избежать возможных блокировок фара
+	//gFarInfo.bFarPanelInfoFilled = gFarInfo.bFarLeftPanel = gFarInfo.bFarRightPanel = FALSE;
+	gpRgnDetect->PrepareTransparent(&gFarInfo, gcrCurColors);
+	gnRgnDetectFlags = gpRgnDetect->GetFlags();
+
+	WARNING("Если панели скрыты (активен редактор/вьювер) - не пытаться считывать панели");
+
+	if (!CheckWindows()) {
+		// Спрятать/разрегистрировать?
+	} else {
+		//if (pviLeft.hView || pviRight.hView) {
+		//	ReloadPanelsInfo();
+
+		//	/* После реального получения панелей - можно повторно "обнаружить диалоги"? */
+		//	CeFullPanelInfo* p = pviLeft.hView ? &pviLeft : &pviRight;
+		//	gFarInfo.bFarPanelInfoFilled = TRUE;
+		//	gFarInfo.bFarLeftPanel = (pviLeft.Visible!=0);
+		//	gFarInfo.FarLeftPanel.PanelRect = pviLeft.PanelRect;
+		//	gFarInfo.bFarRightPanel = (pviRight.Visible!=0);
+		//	gFarInfo.FarRightPanel.PanelRect = pviRight.PanelRect;
+
+		//	gpRgnDetect->PrepareTransparent(&gFarInfo, gcrColors);
+		//}
+
+		if (!gbWaitForKeySequenceEnd 
+			|| girUnget[0].EventType == EVENT_TYPE_REDRAW)
+		{
+			if (pviLeft.hView || pviRight.hView) {
+				ReloadPanelsInfo();
+			}
+			if (pviLeft.hView) {
+				pviLeft.DisplayReloadPanel();
+				InvalidateRect(pviLeft.hView, NULL, FALSE);
+			}
+			if (pviRight.hView) {
+				pviRight.DisplayReloadPanel();
+				InvalidateRect(pviRight.hView, NULL, FALSE);
+			}
+		}
+	}
+
+	//WARNING("Проверить список окон FAR и если активное НЕ панели - сразу выйти (и спрятать разрегистрировать)");
+	//WARNING("Проверить и сравнить, если изменился регион панели - обновить PanelView");
+
+	//!. Сначала проверить на какой панели находится фокус!
+	//   Это требуется для того, чтобы НЕактивная панель не перехватывала стрелки
+	//Далее
+	//1. Панель видима -> считать информацию о прямоугольнике, элементах панели, и выполнить отрисовку
+	//   информацию о прямоугольнике (если он изменился) передать в GUI
+	//   Если окошко панели невидимо - выполнить повторную регистрацию в GUI - оно само сделает ShowWindow
+	//2. Панель невидима -> спрятать окошко панели и разрегистрироваться в GUI
+}
 
 BOOL WINAPI OnPrePeekConsole(HANDLE hInput, PINPUT_RECORD lpBuffer, DWORD nBufSize, LPDWORD lpNumberOfEventsRead, BOOL* pbResult)
 {
+	if (gnConsoleChanges) {
+		OnMainThreadActived();
+	}
+
 	if (!lpBuffer || !lpNumberOfEventsRead) {
 		*pbResult = FALSE;
 		return FALSE; // ошибка в параметрах
@@ -1078,7 +1151,7 @@ BOOL WINAPI OnPreWriteConsoleOutput(HANDLE hOutput,const CHAR_INFO *lpBuffer,COO
 {
 	WARNING("После повторного отображения view - хорошо бы сначала полностью считать gpRgnDetect из консоли");
 	if (gpRgnDetect && lpBuffer && lpWriteRegion) {
-#ifdef _DEBUG
+#ifdef SHOW_WRITING_RECTS
 		if (IsDebuggerPresent()) {
 			wchar_t szDbg[80]; wsprintf(szDbg, L"ConEmuTh.OnPreWriteConsoleOutput( {%ix%i} - {%ix%i} )\n", 
 				lpWriteRegion->Left, lpWriteRegion->Top, lpWriteRegion->Right, lpWriteRegion->Bottom);
@@ -1088,60 +1161,11 @@ BOOL WINAPI OnPreWriteConsoleOutput(HANDLE hOutput,const CHAR_INFO *lpBuffer,COO
 
 		gpRgnDetect->OnWriteConsoleOutput(lpBuffer, dwBufferSize, dwBufferCoord, lpWriteRegion, gcrCurColors);
 
-		// Сбросим, чтобы RgnDetect попытался сам найти панели и диалоги.
-		// Это нужно чтобы избежать возможных блокировок фара
-		//gFarInfo.bFarPanelInfoFilled = gFarInfo.bFarLeftPanel = gFarInfo.bFarRightPanel = FALSE;
-		gpRgnDetect->PrepareTransparent(&gFarInfo, gcrCurColors);
-		gnRgnDetectFlags = gpRgnDetect->GetFlags();
-	}
-
-	WARNING("Если панели скрыты (активен редактор/вьювер) - не пытаться считывать панели");
-	
-
-	if (!CheckWindows()) {
-		// Спрятать/разрегистрировать?
-	} else {
-		//if (pviLeft.hView || pviRight.hView) {
-		//	ReloadPanelsInfo();
-
-		//	/* После реального получения панелей - можно повторно "обнаружить диалоги"? */
-		//	CeFullPanelInfo* p = pviLeft.hView ? &pviLeft : &pviRight;
-		//	gFarInfo.bFarPanelInfoFilled = TRUE;
-		//	gFarInfo.bFarLeftPanel = (pviLeft.Visible!=0);
-		//	gFarInfo.FarLeftPanel.PanelRect = pviLeft.PanelRect;
-		//	gFarInfo.bFarRightPanel = (pviRight.Visible!=0);
-		//	gFarInfo.FarRightPanel.PanelRect = pviRight.PanelRect;
-
-		//	gpRgnDetect->PrepareTransparent(&gFarInfo, gcrColors);
-		//}
-		
-		if (!gbWaitForKeySequenceEnd 
-			|| girUnget[0].EventType == EVENT_TYPE_REDRAW)
-		{
-			if (pviLeft.hView || pviRight.hView) {
-				ReloadPanelsInfo();
-			}
-			if (pviLeft.hView) {
-				pviLeft.DisplayReloadPanel();
-				InvalidateRect(pviLeft.hView, NULL, FALSE);
-			}
-			if (pviRight.hView) {
-				pviRight.DisplayReloadPanel();
-				InvalidateRect(pviRight.hView, NULL, FALSE);
-			}
+		WARNING("Перед установкой флагов измененности - сначала хорошо бы проверить, а менялась ли сама панель?");
+		if (pviLeft.hView || pviRight.hView) {
+			gnConsoleChanges |= 3; // 1-left, 2-right. Но пока - ставим все, т.к. еще не проверяется что собственно изменилось!
 		}
 	}
-
-	//WARNING("Проверить список окон FAR и если активное НЕ панели - сразу выйти (и спрятать разрегистрировать)");
-	//WARNING("Проверить и сравнить, если изменился регион панели - обновить PanelView");
-
-	//!. Сначала проверить на какой панели находится фокус!
-	//   Это требуется для того, чтобы НЕактивная панель не перехватывала стрелки
-	//Далее
-	//1. Панель видима -> считать информацию о прямоугольнике, элементах панели, и выполнить отрисовку
-	//   информацию о прямоугольнике (если он изменился) передать в GUI
-	//   Если окошко панели невидимо - выполнить повторную регистрацию в GUI - оно само сделает ShowWindow
-	//2. Панель невидима -> спрятать окошко панели и разрегистрироваться в GUI
 
 	return TRUE; // Продолжить без изменений
 }

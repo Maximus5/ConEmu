@@ -1404,20 +1404,32 @@ void ExitWaitForKey(WORD vkKey, LPCWSTR asConfirm, BOOL abNewLine, BOOL abDontSh
 	//    if (lbNeedVisible && !IsWindowVisible(ghConWnd)) {
 	//        ShowWindow(ghConWnd, SW_SHOWNORMAL); // и покажем окошко
 	//    }
-	while (ReadConsoleInput(GetStdHandle(STD_INPUT_HANDLE), &r, 1, &dwCount)) {
+	while (TRUE) {
+		if (!PeekConsoleInput(GetStdHandle(STD_INPUT_HANDLE), &r, 1, &dwCount))
+			dwCount = 0;
+	
 		if (gnRunMode == RM_SERVER) {
 			int nCount = srv.nProcessCount;
 			if (nCount > 1) {
-				// ! Процесс таки запустился, закрываться не будем. Вернуть событие в буфер!
-				WriteConsoleInput(GetStdHandle(STD_INPUT_HANDLE), &r, 1, &dwCount);
+				// Теперь Peek, так что просто выходим
+				//// ! Процесс таки запустился, закрываться не будем. Вернуть событие в буфер!
+				//WriteConsoleInput(GetStdHandle(STD_INPUT_HANDLE), &r, 1, &dwCount);
 				break;
 			}
 		}
-	
-		if (gbInShutdown ||
-				(r.EventType == KEY_EVENT && r.Event.KeyEvent.bKeyDown 
-				 && r.Event.KeyEvent.wVirtualKeyCode == vkKey))
+		
+		
+		if (gbInShutdown) {
 			break;
+		}
+		if (dwCount) {
+			if (ReadConsoleInput(GetStdHandle(STD_INPUT_HANDLE), &r, 1, &dwCount) && dwCount) {
+				if (r.EventType == KEY_EVENT && r.Event.KeyEvent.bKeyDown 
+				 	&& r.Event.KeyEvent.wVirtualKeyCode == vkKey)
+				break;
+			}
+		}
+		Sleep(50);
 	}
 	//MessageBox(0,L"Debug message...............1",L"ConEmuC",0);
 	//int nCh = _getch();

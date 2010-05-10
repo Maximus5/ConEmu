@@ -63,16 +63,20 @@ enum tag_GdiStrMagics {
 	eGdiStr_Bits = 0x1004,
 };
 
-const wchar_t* csBMP  = L"BMP";
-const wchar_t* csEMF  = L"EMF";
-const wchar_t* csWMF  = L"WMF";
-const wchar_t* csJPEG = L"JPEG";
-const wchar_t* csPNG  = L"PNG";
-const wchar_t* csGIF  = L"GIF";
-const wchar_t* csTIFF = L"TIFF";
-const wchar_t* csEXIF = L"EXIF";
-const wchar_t* csICO  = L"ICO";
-const wchar_t* Format[] = {csBMP, csEMF, csWMF, csJPEG, csPNG, csGIF, csTIFF, csEXIF, L"", L"", csICO};
+#define cfTIFF 0xb96b3cb1
+#define cfJPEG 0xb96b3cae
+#define cfPNG  0xb96b3caf
+#define cfEXIF 0xb96b3cb2
+//const wchar_t* csBMP  = L"BMP";
+//const wchar_t* csEMF  = L"EMF";
+//const wchar_t* csWMF  = L"WMF";
+//const wchar_t* csJPEG = L"JPEG";
+//const wchar_t* csPNG  = L"PNG";
+//const wchar_t* csGIF  = L"GIF";
+//const wchar_t* csTIFF = L"TIFF";
+//const wchar_t* csEXIF = L"EXIF";
+//const wchar_t* csICO  = L"ICO";
+//const wchar_t* Format[] = {csBMP, csEMF, csWMF, csJPEG, csPNG, csGIF, csTIFF, csEXIF, L"", L"", csICO};
 
 struct GDIPlusDecoder
 {
@@ -102,8 +106,9 @@ struct GDIPlusDecoder
 	/* ++ */ typedef Gdiplus::GpStatus (WINGDIPAPI *GdipDisposeImage_t)(Gdiplus::GpImage *image);
 	/* ++ */ typedef Gdiplus::GpStatus (WINGDIPAPI *GdipImageGetFrameCount_t)(Gdiplus::GpImage *image, GDIPCONST GUID* dimensionID, UINT* count);
 	/* ++ */ typedef Gdiplus::GpStatus (WINGDIPAPI *GdipImageSelectActiveFrame_t)(Gdiplus::GpImage *image, GDIPCONST GUID* dimensionID, UINT frameIndex);
-	//typedef Gdiplus::GpStatus (WINGDIPAPI *GdipGetPropertyItemSize_t)(Gdiplus::GpImage *image, PROPID propId, UINT* size);
-	//typedef Gdiplus::GpStatus (WINGDIPAPI *GdipGetPropertyItem_t)(Gdiplus::GpImage *image, PROPID propId, UINT propSize, Gdiplus::PropertyItem* buffer);
+	typedef Gdiplus::GpStatus (WINGDIPAPI *GdipGetPropertyItemSize_t)(Gdiplus::GpImage *image, PROPID propId, UINT* size);
+	typedef Gdiplus::GpStatus (WINGDIPAPI *GdipGetPropertyItem_t)(Gdiplus::GpImage *image, PROPID propId, UINT propSize, Gdiplus::PropertyItem* buffer);
+	typedef Gdiplus::GpStatus (WINGDIPAPI *GdipImageRotateFlip_t)(Gdiplus::GpImage *image, Gdiplus::RotateFlipType rfType);
 	/* ++ */ typedef Gdiplus::GpStatus (WINGDIPAPI *GdipGetImageRawFormat_t)(Gdiplus::GpImage *image, OUT GUID* format);
 	//typedef Gdiplus::GpStatus (WINGDIPAPI *GdipGetImageFlags_t)(Gdiplus::GpImage *image, UINT *flags);
 	//typedef Gdiplus::GpStatus (WINGDIPAPI *GdipGetImagePalette_t)(Gdiplus::GpImage *image, Gdiplus::ColorPalette *palette, INT size);
@@ -136,8 +141,9 @@ struct GDIPlusDecoder
 	GdipDisposeImage_t GdipDisposeImage;
 	GdipImageGetFrameCount_t GdipImageGetFrameCount;
 	GdipImageSelectActiveFrame_t GdipImageSelectActiveFrame;
-	//GdipGetPropertyItemSize_t GdipGetPropertyItemSize;
-	//GdipGetPropertyItem_t GdipGetPropertyItem;
+	GdipGetPropertyItemSize_t GdipGetPropertyItemSize;
+	GdipGetPropertyItem_t GdipGetPropertyItem;
+	GdipImageRotateFlip_t GdipImageRotateFlip;
 	GdipGetImageRawFormat_t GdipGetImageRawFormat;
 	//GdipGetImageFlags_t GdipGetImageFlags;
 	//GdipGetImagePalette_t GdipGetImagePalette;
@@ -203,8 +209,9 @@ struct GDIPlusDecoder
 			DllGetFunction(hGDIPlus, GdipDisposeImage);
 			DllGetFunction(hGDIPlus, GdipImageGetFrameCount);
 			DllGetFunction(hGDIPlus, GdipImageSelectActiveFrame);
-			//DllGetFunction(hGDIPlus, GdipGetPropertyItemSize);
-			//DllGetFunction(hGDIPlus, GdipGetPropertyItem);
+			DllGetFunction(hGDIPlus, GdipGetPropertyItemSize);
+			DllGetFunction(hGDIPlus, GdipGetPropertyItem);
+			DllGetFunction(hGDIPlus, GdipImageRotateFlip);
 			DllGetFunction(hGDIPlus, GdipGetImageRawFormat);
 			//DllGetFunction(hGDIPlus, GdipGetImageFlags);
 			//DllGetFunction(hGDIPlus, GdipGetImagePalette);
@@ -224,8 +231,8 @@ struct GDIPlusDecoder
 				&& GdipGetImageWidth && GdipGetImageHeight && GdipGetImagePixelFormat && GdipGetImageRawFormat
 				//&& GdipBitmapLockBits && GdipBitmapUnlockBits 
 				&& GdipDisposeImage && GdipImageGetFrameCount && GdipImageSelectActiveFrame 
-				//&& GdipGetPropertyItemSize && GdipGetPropertyItem && GdipGetImageFlags
-				//&& GdipGetImagePalette && GdipGetImagePaletteSize && GdipCloneBitmapAreaI
+				&& GdipGetPropertyItemSize && GdipGetPropertyItem && GdipImageRotateFlip
+				//&& GdipGetImagePalette && GdipGetImagePaletteSize && GdipCloneBitmapAreaI && GdipGetImageFlags
 				&& GdipCreateFromHDC && GdipDeleteGraphics && GdipDrawImageRectRectI
 				//&& GdipCreateBitmapFromScan0 && GdipFillRectangleI && GdipCreateSolidFill && GdipDeleteBrush
 				//&& GdipSetImagePalette
@@ -317,7 +324,8 @@ struct GDIPlusImage
 	//
 	UINT lWidth, lHeight, pf, nBPP, nPages, /*lFrameTime,*/ nActivePage, nTransparent; //, nImgFlags;
 	bool Animation;
-	const wchar_t *FormatName;
+	wchar_t FormatName[5];
+	DWORD nFormatID;
 	
 	GDIPlusImage() {
 		nMagic = eGdiStr_Image;
@@ -430,16 +438,19 @@ struct GDIPlusImage
 				if ((lRc = gdi->GdipImageGetFrameCount(img, &FrameDimensionPage, &nPages)))
 					nPages = 1;
 
-			FormatName = NULL;
+			FormatName[0] = 0;
 			if (gdi->GdipGetImageRawFormat)
 			{
 				GUID gformat;
 				if (!(lRc = gdi->GdipGetImageRawFormat(img, &gformat))) {
 					// DEFINE_GUID(ImageFormatUndefined, 0xb96b3ca9,0x0728,0x11d3,0x9d,0x7b,0x00,0x00,0xf8,0x1e,0xf3,0x2e);
 					// DEFINE_GUID(ImageFormatMemoryBMP, 0xb96b3caa,0x0728,0x11d3,0x9d,0x7b,0x00,0x00,0xf8,0x1e,0xf3,0x2e);
+					const wchar_t Format[][5] = {L"BMP", L"EMF", L"WMF", L"JPEG", L"PNG", L"GIF", L"TIFF", L"EXIF", L"", L"", L"ICO"};
 
 					if (gformat.Data1 >= 0xB96B3CAB && gformat.Data1 <= 0xB96B3CB5) {
-						FormatName = Format[gformat.Data1 - 0xB96B3CAB];
+						//FormatName = Format[gformat.Data1 - 0xB96B3CAB];
+						nFormatID = gformat.Data1;
+						lstrcpy(FormatName, Format[gformat.Data1 - 0xB96B3CAB]);
 					}
 				}
 			}
@@ -494,6 +505,74 @@ struct GDIPlusImage
 			return pGDI->bCancelled;
 		return FALSE;
 	};
+	bool GetExifTagValueAsInt(PROPID pid, int& nValue)
+	{
+		bool bExists = false;
+		Gdiplus::Status lRc;
+		
+		nValue = 0;
+		
+		UINT lPropSize;
+		if (!(lRc = gdi->GdipGetPropertyItemSize(img, pid, &lPropSize)))
+		{
+			Gdiplus::PropertyItem* p = (Gdiplus::PropertyItem*)CALLOC(lPropSize);
+			if (!(lRc = gdi->GdipGetPropertyItem(img, pid, lPropSize, p)))
+			{
+				switch (p->type) {
+					case PropertyTagTypeByte:
+						nValue = *(BYTE*)p->value; bExists = true;
+						break;
+					case PropertyTagTypeShort:
+						nValue = *(short*)p->value; bExists = true;
+						break;
+					case PropertyTagTypeLong: case PropertyTagTypeSLONG:
+						nValue = *(int*)p->value; bExists = true;
+						break;
+				}
+			}
+			FREE(p);
+		}
+		
+		return bExists;
+	};
+	void CalculateShowSize(int& nCanvasWidth, int& nCanvasHeight, int& nShowWidth, int& nShowHeight, BOOL& lbAllowThumb)
+	{
+		nShowWidth = lWidth;
+		nShowHeight = lHeight;
+		
+		i64 aSrc = (100 * (i64) lWidth / lHeight);
+		i64 aCvs = (100 * (i64) nCanvasWidth / nCanvasHeight);
+		if (aSrc > aCvs)
+		{
+			if (lWidth >= (UINT)nCanvasWidth) {
+				nShowWidth = nCanvasWidth;
+				nShowHeight = (int)((((i64)lHeight) * nCanvasWidth) / lWidth);
+				if (!nShowHeight || nShowHeight < (nShowWidth/8)) {
+					nShowHeight = min(min(8,(UINT)nCanvasHeight),lHeight);
+					UINT lNewWidth = (UINT)((((i64)nCanvasWidth) * lHeight) / nShowHeight);
+					if (lNewWidth < lWidth) {
+						lWidth = lNewWidth;
+						lbAllowThumb = FALSE;
+					}
+				}
+			}
+		} else {
+			if (lHeight >= (UINT)nCanvasHeight) {
+				nShowWidth = (int)((((i64)lWidth) * nCanvasHeight) / lHeight);
+				nShowHeight = nCanvasHeight;
+				if (!nShowWidth || nShowWidth < (nShowHeight/8)) {
+					nShowWidth = min(min(8,(UINT)nCanvasWidth),lWidth);
+					UINT lNewHeight = (UINT)((((i64)nCanvasHeight) * lWidth) / nShowWidth);
+					if (lNewHeight < lHeight) {
+						lHeight = lNewHeight;
+						lbAllowThumb = FALSE;
+					}
+				}
+			}
+		}
+		nCanvasWidth  = nShowWidth;
+		nCanvasHeight = nShowHeight;
+	};
 	bool GetPageBits(CET_LoadInfo *pDecodeInfo)
 	{
 		bool result = false;
@@ -517,7 +596,7 @@ struct GDIPlusImage
 		
 			wsprintf(pData->szInfo, L"%i x %i x %ibpp", lWidth, lHeight, nBPP);
 			if (nPages > 1) wsprintf(pData->szInfo+lstrlen(pData->szInfo), L" [%i]", nPages);
-			if (FormatName) {
+			if (FormatName[0]) {
 				lstrcat(pData->szInfo, L" ");
 				lstrcat(pData->szInfo, FormatName);
 			}
@@ -526,44 +605,18 @@ struct GDIPlusImage
 			int nCanvasWidth  = pDecodeInfo->crLoadSize.X;
 			int nCanvasHeight = pDecodeInfo->crLoadSize.Y;
 
-			BOOL lbAllowThumb = (FormatName == csTIFF || FormatName == csJPEG)
-				&& (lWidth > (UINT)nCanvasWidth*5) && (lHeight > (UINT)nCanvasHeight*5);
+			BOOL lbAllowThumb = (nFormatID == cfTIFF || nFormatID == cfTIFF || nFormatID == cfEXIF || nFormatID == cfJPEG);
+				//&& (lWidth > (UINT)nCanvasWidth*5) && (lHeight > (UINT)nCanvasHeight*5);
+				
+			int nShowWidth, nShowHeight;
+			CalculateShowSize(nCanvasWidth, nCanvasHeight, nShowWidth, nShowHeight, lbAllowThumb);
 
-			int nShowWidth = lWidth, nShowHeight = lHeight;
-			i64 aSrc = (100 * (i64) lWidth / lHeight);
-			i64 aCvs = (100 * (i64) nCanvasWidth / nCanvasHeight);
-			if (aSrc > aCvs)
-			{
-				if (lWidth >= (UINT)nCanvasWidth) {
-					nShowWidth = nCanvasWidth;
-					nShowHeight = (int)((((i64)lHeight) * nCanvasWidth) / lWidth);
-					if (!nShowHeight || nShowHeight < (nShowWidth/8)) {
-						nShowHeight = min(min(8,(UINT)nCanvasHeight),lHeight);
-						UINT lNewWidth = (UINT)((((i64)nCanvasWidth) * lHeight) / nShowHeight);
-						if (lNewWidth < lWidth) {
-							lWidth = lNewWidth;
-							lbAllowThumb = FALSE;
-						}
-					}
-				}
-			} else {
-				if (lHeight >= (UINT)nCanvasHeight) {
-					nShowWidth = (int)((((i64)lWidth) * nCanvasHeight) / lHeight);
-					nShowHeight = nCanvasHeight;
-					if (!nShowWidth || nShowWidth < (nShowHeight/8)) {
-						nShowWidth = min(min(8,(UINT)nCanvasWidth),lWidth);
-						UINT lNewHeight = (UINT)((((i64)nCanvasHeight) * lWidth) / nShowWidth);
-						if (lNewHeight < lHeight) {
-							lHeight = lNewHeight;
-							lbAllowThumb = FALSE;
-						}
-					}
-				}
-			}
-			nCanvasWidth  = nShowWidth;
-			nCanvasHeight = nShowHeight;
+				
+			// Получим из EXIF ориентацию
+			int nOrient;
+			if (!GetExifTagValueAsInt(PropertyTagOrientation, nOrient)) nOrient = 0;
 
-			if (lbAllowThumb) {
+			if (lbAllowThumb && nOrient) {
 				Gdiplus::GpImage *thmb = NULL;
 				// Сразу пытаемся извлечь в режиме превьюшки (полная картинка нам не нужна)
 				Gdiplus::Status lRc = gdi->GdipGetImageThumbnail(img, nShowWidth, nShowHeight, &thmb,
@@ -574,8 +627,33 @@ struct GDIPlusImage
 					lRc = gdi->GdipGetImageWidth(img, &lWidth);
 					lRc = gdi->GdipGetImageHeight(img, &lHeight);
 				}
+				
+				// Теперь - крутим
+				Gdiplus::RotateFlipType rft = Gdiplus::RotateNoneFlipNone;
+				switch (nOrient) {
+			        case 3: rft = Gdiplus::Rotate180FlipNone; break;
+			        case 6: rft = Gdiplus::Rotate90FlipNone; break;
+			        case 8: rft = Gdiplus::Rotate270FlipNone; break;
+			        case 2: rft = Gdiplus::RotateNoneFlipX; break;
+			        case 4: rft = Gdiplus::RotateNoneFlipY; break;
+			        case 5: rft = Gdiplus::Rotate90FlipX; break;
+			        case 7: rft = Gdiplus::Rotate270FlipX; break;
+				}
+				if (rft) {
+					lRc = gdi->GdipImageRotateFlip(img, rft);
+					if (!lRc) {
+						lRc = gdi->GdipGetImageWidth(img, &lWidth);
+						lRc = gdi->GdipGetImageHeight(img, &lHeight);
+						nCanvasWidth  = pDecodeInfo->crLoadSize.X;
+						nCanvasHeight = pDecodeInfo->crLoadSize.Y;
+						CalculateShowSize(nCanvasWidth, nCanvasHeight, nShowWidth, nShowHeight, lbAllowThumb);
+					}
+				}
 			}
+				
 
+			nCanvasWidth  = nShowWidth;
+			nCanvasHeight = nShowHeight;
 			int nCanvasWidthS = nCanvasWidth; //((nCanvasWidth+7) >> 3) << 3; // try to align x8 pixels
 			
 			pData->hCompDc1 = CreateCompatibleDC(NULL);

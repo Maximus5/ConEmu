@@ -341,7 +341,7 @@ BEGIN
     PUSHBUTTON      "...",bRClick,113,55,13,11,WS_DISABLED
     CONTROL         "Hourglass if not responding",cbFarHourglass,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,9,69,101,8
     PUSHBUTTON      "...",bFarHourglass,113,68,13,11,WS_DISABLED
-    CONTROL         "Handle FAR detach",cbHandleFarDetach,"Button",BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,9,81,82,8
+    CONTROL         "Extend Unicode CharMap",cbExtendUCharMap,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,9,81,117,8
     CONTROL         "Resize panels by mouse",cbDragPanel,"Button",BS_AUTO3STATE | WS_TABSTOP,131,57,93,8
     CONTROL         "ASCII sort function in FAR",cbFARuseASCIIsort,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,131,69,109,8
     CONTROL         "Hook FAR registry",cbHookFarRegistry,"Button",BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,131,81,109,8
@@ -520,9 +520,9 @@ BEGIN
     COMBOBOX        tThumbsFontSize,186,25,25,66,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
     RTEXT           "Image size:",IDC_STATIC,12,44,40,8
     EDITTEXT        tThumbsImgSize,57,42,24,12,ES_AUTOHSCROLL
-    RTEXT           "Spacing:",IDC_STATIC,91,44,29,8
+    RTEXT           "Vert.pad:",IDC_STATIC,82,44,40,8
     EDITTEXT        tThumbsSpacing,123,42,24,12,ES_AUTOHSCROLL
-    RTEXT           "Padding:",IDC_STATIC,154,44,29,8
+    RTEXT           "Horz.pad:",IDC_STATIC,151,44,33,8
     EDITTEXT        tThumbsPadding,186,42,24,12,ES_AUTOHSCROLL
     RTEXT           "X1:",IDC_STATIC,224,27,14,8
     EDITTEXT        tThumbsX1,241,25,24,12,ES_AUTOHSCROLL
@@ -539,9 +539,9 @@ BEGIN
     COMBOBOX        tTilesFontSize,185,78,25,66,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
     RTEXT           "Image size:",IDC_STATIC,11,96,40,8
     EDITTEXT        tTilesImgSize,57,94,24,12,ES_AUTOHSCROLL
-    RTEXT           "Spacing:",IDC_STATIC,91,96,29,8
+    RTEXT           "Left pad:",IDC_STATIC,88,96,34,8
     EDITTEXT        tTilesSpacing,123,94,24,12,ES_AUTOHSCROLL
-    RTEXT           "Padding:",IDC_STATIC,153,96,29,8
+    RTEXT           "Right pad:",IDC_STATIC,150,96,34,8
     EDITTEXT        tTilesPadding,185,94,24,12,ES_AUTOHSCROLL
     RTEXT           "X1:",IDC_STATIC,224,80,14,8
     EDITTEXT        tTilesX1,241,78,24,12,ES_AUTOHSCROLL
@@ -587,7 +587,7 @@ BEGIN
     LTEXT           "Supported extensions:",IDC_STATIC,8,236,78,8,NOT WS_VISIBLE | WS_DISABLED
     CONTROL         "Preview frame",cbThumbPreviewBox,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,118,147,62,10
     CONTROL         "Current item frame",cbThumbSelectionBox,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,221,147,77,10
-    PUSHBUTTON      "Apply",bApplyViewSettings,3,202,50,14
+    PUSHBUTTON      "&Apply",bApplyViewSettings,3,202,50,14
     CONTROL         "Restore on FAR startup",cbThumbRestoreOnStartup,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,214,134,101,10
 END
 
@@ -738,6 +738,15 @@ STRINGTABLE
 BEGIN
     cbRClick                "Off - all RClicks passed to console\nOn - EMenu called instead of RClick\n3s - Short RClick passed, Long RClick -> EMenu\nWarning! This may conflict with RDrag"
     cbBgImage               "Show background image instead standard\ncolors #0 and #1 (black and blue)\n3d state - don't draw in viewer/editor"
+    tThumbsX1               "Spacing in pixels from the left side of cell to the left side of preview"
+    tThumbsY1               "Spacing in pixels from the top side of cell to the top side of preview"
+    tThumbsX2               "Spacing in pixels from the right side of preview to the right side of cell"
+    tThumbsY2               "Spacing in pixels from the bottom side of preview to the bottom side of cell (text label is placed here)"
+    tThumbsSpacing          "Vertical spacing in pixels (top and bottom) of text label"
+    tThumbsPadding          "Horizontal spacing in pixels (left and right) of text label"
+    tTilesX1                "Spacing in pixels from the left side of cell to the left side of preview"
+    tTilesY1                "Spacing in pixels from the top side of cell to the top side of preview"
+    tTilesX2                "Spacing in pixels from the right side of preview to the right side of cell (text label is placed here)"
 END
 
 STRINGTABLE 
@@ -852,7 +861,35 @@ STRINGTABLE
 BEGIN
     cbSafeFarClose          "Try to close Far Manager softly, instead of closing console window"
     cbIgnoreTelnetCursorSize "Always show normal cursor in telnet"
+    tThumbsFontName         "Text labels font name in Thumbnails mode"
+    tThumbsFontSize         "Text labels font height in Thumbnails mode"
+    tTilesFontName          "Text labels font name in Tiles mode"
+    tThumbMaxZoom           "Maximal zoom for images smaller than preview"
+    cbThumbLoadFolders      "Generate previews for folders (by first 4 files)"
+END
+
+STRINGTABLE 
+BEGIN
+    cbThumbLoadFiles        "Generate previews for files"
+    tThumbsImgSize          "Size in pixels of preview square in Thumbnails mode\nDefault is 96"
+    tTilesFontSize          "Text labels font height in Tiles mode"
+    tTilesImgSize           "Size in pixels of preview square in Tiles mode\nDefault is 48"
+    tThumbLoadingTimeout    "Maximal duration of preview generation (per file)"
+END
+
+STRINGTABLE 
+BEGIN
+    tTilesY2                "Spacing in pixels from the bottom side of preview to the bottom side of cell"
+    tTilesSpacing           "Spacing in pixels on the left of text label"
+    tTilesPadding           "Spacing in pixels on the right of text label"
+    cbThumbRestoreOnStartup "Restore panel views on FAR startup"
     cbSleepInBackground     "Reduce FPS when ConEmu loose focus"
+    cbExtendUCharMap        "Show glyphs from selected font in «Unicode CharMap» plugin (FAR2 only)"
+END
+
+STRINGTABLE 
+BEGIN
+    cbThumbUsePicView2      "Try to use PicView2 plugin to generate previews (FAR2 only)"
 END
 
 #endif    // English (U.S.) resources

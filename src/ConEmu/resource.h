@@ -1,5 +1,5 @@
 //{{NO_DEPENDENCIES}}
-// Microsoft Visual C++ generated include file.
+// Microsoft Developer Studio generated include file.
 // Used by ConEmu.rc
 //
 #define IDI_ICON1                       1
@@ -291,15 +291,12 @@
 #define rbAnotherUser                   1657
 #define tThumbsFontName                 1659
 #define tThumbsFontSize                 1660
-#define cbSleepInBackground             1661
 #define tTilesFontName                  1661
 #define tThumbMaxZoom                   1662
 #define cbThumbLoadFolders              1663
-#define tThumbLoadFiles                 1664
 #define cbThumbLoadFiles                1664
 #define tThumbFullSize                  1665
 #define tThumbsImgSize                  1665
-#define tThumbIconSize                  1666
 #define tTilesFontSize                  1666
 #define cbThumbPreviewBox               1667
 #define cbThumbSelectionBox             1668
@@ -345,8 +342,9 @@
 #define bApplyViewSettings              1717
 #define cbDisableFarFlashing            1718
 #define cbDisableAllFlashing            1719
-#define IDC_CHECK1                      1720
 #define cbThumbRestoreOnStartup         1720
+#define cbSleepInBackground             1721
+#define cbExtendUCharMap                1722
 #define IDM_CLOSE                       40001
 #define IDM_RESTART                     40002
 #define IDM_RESTARTAS                   40003
@@ -363,7 +361,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        209
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         1721
+#define _APS_NEXT_CONTROL_VALUE         1723
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

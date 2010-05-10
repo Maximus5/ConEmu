@@ -420,13 +420,13 @@ BOOL CeFullPanelInfo::PaintItem(
 	
 	if (PVM == pvm_Thumbnails) {
 		rcClip.left   = x+Spaces.nSpaceX1;
-		rcClip.top    = y+Spaces.nSpaceY1+(Spaces.nImgSize+2*gThSet.nPreviewFrame)+Spaces.nLabelSpacing;
+		rcClip.top    = y+Spaces.nSpaceY1+(Spaces.nImgSize+2*gThSet.nPreviewFrame); //+Spaces.nLabelSpacing;
 		rcClip.right  = x+Spaces.nSpaceX1+(Spaces.nImgSize+2*gThSet.nPreviewFrame);
-		rcClip.bottom = y+Spaces.nSpaceY1+(Spaces.nImgSize+2*gThSet.nPreviewFrame)+nFontHeight+2;
+		rcClip.bottom = y+Spaces.nSpaceY1+(Spaces.nImgSize+2*gThSet.nPreviewFrame)+nFontHeight+2*Spaces.nLabelSpacing;
 		//
 		rcMaxText = rcClip;
 	} else if (PVM == pvm_Tiles) {
-		rcClip.left   = x+Spaces.nSpaceX1+(Spaces.nImgSize+2*gThSet.nPreviewFrame)+Spaces.nLabelSpacing;
+		rcClip.left   = x+Spaces.nSpaceX1+(Spaces.nImgSize+2*gThSet.nPreviewFrame); //+Spaces.nLabelSpacing;
 		rcClip.top    = y+Spaces.nSpaceY1;
 		rcClip.right  = x+Spaces.nSpaceX1+(Spaces.nImgSize+2*gThSet.nPreviewFrame)+Spaces.nSpaceX2;
 		rcClip.bottom = y+Spaces.nSpaceY1+(Spaces.nImgSize+2*gThSet.nPreviewFrame);
@@ -445,13 +445,26 @@ BOOL CeFullPanelInfo::PaintItem(
 		&& ((pItem->Flags & (0x40000000/*PPIF_SELECTED*/)) == 0))
 		crFore = 0xFFFFFF;
 
+	RECT rcFrame = rcClip;
+
+	// Если в режиме Tiles текст будет необходимо сделать выше - DrawItemText сама перезальет прямоугольник
 	FillRect(hdc, &rcClip, hBack[nIdx]);
 
 	SetTextColor(hdc, crFore);
 	SetBkColor(hdc, crBack);
 	//ExtTextOut(hdc, rcClip.left,rcClip.top, ETO_CLIPPED, &rcClip, pszName, nLen, NULL);
-	if (Spaces.nLabelPadding && Spaces.nLabelPadding < ((rcClip.right-rcClip.left)/3)) {
-		rcClip.left += Spaces.nLabelPadding; rcClip.right -= Spaces.nLabelPadding;
+	if (PVM == pvm_Thumbnails) {
+		if (Spaces.nLabelPadding && Spaces.nLabelPadding < ((rcClip.right-rcClip.left)/3)) {
+			rcClip.left += Spaces.nLabelPadding; rcMaxText.left = rcClip.left;
+			rcClip.right -= Spaces.nLabelPadding; rcMaxText.right = rcClip.right;
+		}
+	} else if (PVM == pvm_Tiles) {
+		if (Spaces.nLabelSpacing > 0 && Spaces.nLabelSpacing < ((rcClip.right-rcClip.left)/3)) {
+			rcClip.left += Spaces.nLabelSpacing; rcMaxText.left = rcClip.left;
+		}
+		if (Spaces.nLabelPadding && Spaces.nLabelPadding < ((rcClip.right-rcClip.left)/3)) {
+			rcClip.right -= Spaces.nLabelPadding; rcMaxText.right = rcClip.right;
+		}
 	}
 	//DrawText(hdc, pszName, nLen, &rcClip, DT_END_ELLIPSIS|DT_NOPREFIX|DT_SINGLELINE|DT_VCENTER);
 	DrawItemText(hdc, &rcClip, &rcMaxText, pItem, pszComments, hBack[nIdx], bIgnoreFileDescription);
@@ -460,17 +473,22 @@ BOOL CeFullPanelInfo::PaintItem(
 	if (abSelectedItem && gThSet.nSelectFrame == 1) {
 		int nX = x, nY = y;
 		int nW = 0, nH = 0;
+
+		// Высокий текст мог раздвинуть прямоугольник
+		if (PVM == pvm_Tiles) {
+			rcFrame.top = rcClip.top; rcFrame.bottom = rcClip.bottom;
+		}
 		
 		if (Spaces.nSpaceX1 > 1) nX += (Spaces.nSpaceX1-1);
 		if (Spaces.nSpaceY1 > 1) nY += (Spaces.nSpaceY1-1);
 		
 		if (PVM == pvm_Thumbnails) {
-			nW = rcClip.right - nX; // + 1;
-			nH = rcClip.bottom - nY; // + 1;
+			nW = rcFrame.right - nX; // + 1;
+			nH = rcFrame.bottom - nY; // + 1;
 		} else {
-			nY = max(y,(rcClip.top-1));
-			nW = rcClip.right - nX + 1;
-			nH = rcClip.bottom - nY;
+			nY = max(y,(rcFrame.top-1));
+			nW = rcFrame.right - nX; // + 1;
+			nH = rcFrame.bottom - nY;
 		}
 		
 		if (nW && nH)
@@ -707,7 +725,12 @@ void CeFullPanelInfo::Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc)
 	// Передернуть класс на предмет смены/инициализации настроек
 	gpImgCache->Init(crBack);
 
-	
+
+	if (PVM == pvm_Thumbnails) {
+		if ((2*Spaces.nLabelSpacing+nFontHeight) > Spaces.nSpaceY2) {
+			Spaces.nSpaceY2 = (2*Spaces.nLabelSpacing+nFontHeight);
+		}
+	}
 	nWholeW = (Spaces.nImgSize+2*gThSet.nPreviewFrame)  + Spaces.nSpaceX2 + Spaces.nSpaceX1*2;
 	nWholeH = (Spaces.nImgSize+2*gThSet.nPreviewFrame) + Spaces.nSpaceY2 + Spaces.nSpaceY1*2;
 
@@ -967,7 +990,11 @@ int CeFullPanelInfo::RegisterPanelView()
 
 	PanelViewInit pvi = {sizeof(PanelViewInit)};
 	pvi.bLeftPanel = this->bLeftPanel;
-	pvi.bPanelFullCover = FALSE; // только рабочая область
+	pvi.bVisible = TRUE;
+	pvi.nCoverFlags = PVI_COVER_NORMAL;
+		pvi.tColumnTitle.bConAttr = this->nFarColors[COL_PANELCOLUMNTITLE];
+		pvi.tColumnTitle.nFlags = PVI_TEXT_CENTER|PVI_TEXT_SKIPSORTMODE;
+		lstrcpyW(pvi.tColumnTitle.sText, (PVM==pvm_Thumbnails) ? gsTitleThumbs : gsTitleTiles);
 	pvi.nFarInterfaceSettings = this->nFarInterfaceSettings;
 	pvi.nFarPanelSettings = this->nFarPanelSettings;
 	pvi.PanelRect = this->PanelRect;

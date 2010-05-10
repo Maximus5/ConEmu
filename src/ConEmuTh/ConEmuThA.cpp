@@ -91,12 +91,14 @@ void WINAPI _export SetStartupInfo(const struct PluginStartupInfo *aInfo)
 	MultiByteToWideChar(CP_ACP,0,InfoA->RootKey,-1,gszRootKey,nLen);
 	WCHAR* pszSlash = gszRootKey+lstrlenW(gszRootKey)-1;
 	if (*pszSlash != L'\\') *(++pszSlash) = L'\\';
-	lstrcpyW(pszSlash, L"ConEmuTh\\");
+	lstrcpyW(pszSlash+1, L"ConEmuTh\\");
 
 	wchar_t szTemp[MAX_PATH];	
 	lstrcpynW(gsFolder, GetMsgA(CEDirFolder, szTemp), sizeofarray(gsFolder));
 	lstrcpynW(gsSymLink, GetMsgA(CEDirSymLink, szTemp), sizeofarray(gsSymLink));
 	lstrcpynW(gsJunction, GetMsgA(CEDirJunction, szTemp), sizeofarray(gsJunction));
+	lstrcpynW(gsTitleThumbs, GetMsgA(CEColTitleThumbnails, szTemp), sizeofarray(gsTitleThumbs));
+	lstrcpynW(gsTitleTiles, GetMsgA(CEColTitleTiles, szTemp), sizeofarray(gsTitleTiles));
 	
 	StartPlugin();
 }

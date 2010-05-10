@@ -2,7 +2,7 @@
 !include ../make_vc_defs
 !endif
 
-NAME = gdi+
+NAME = gdip
 OUTNAME = gdi+
 
 USERCPP=/D_NO_EXEPTION_=1

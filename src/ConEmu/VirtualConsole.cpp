@@ -133,8 +133,10 @@ CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
 	mb_RequiredForceUpdate = true;
 	mb_LastFadeFlag = false;
 
-	_ASSERTE(sizeof(mh_FontByIndex) == sizeof(gSet.mh_Font));
-	memmove(mh_FontByIndex, gSet.mh_Font, sizeof(mh_FontByIndex));
+	_ASSERTE(sizeof(mh_FontByIndex) == (sizeof(gSet.mh_Font)+sizeof(mh_FontByIndex[0])));
+	memmove(mh_FontByIndex, gSet.mh_Font, MAX_FONT_STYLES*sizeof(mh_FontByIndex[0]));
+	mh_UCharMapFont = NULL; ms_LastUCharMapFont[0] = 0;
+	mh_FontByIndex[MAX_FONT_STYLES] = NULL; // зарезервировано для 'Unicode CharMap'
 
 	memset(&TransparentInfo, 0, sizeof(TransparentInfo));
 
@@ -277,6 +279,11 @@ CVirtualConsole::~CVirtualConsole()
 	if (mh_TransparentRgn) {
 		DeleteObject(mh_TransparentRgn);
 		mh_TransparentRgn = NULL;
+	}
+	
+	if (mh_UCharMapFont) {
+		DeleteObject(mh_UCharMapFont);
+		mh_UCharMapFont = NULL;
 	}
 
     if (mp_RCon) {
@@ -697,6 +704,10 @@ void CVirtualConsole::SelectFont(HFONT hNew)
     } else
     if (hSelectedFont != hNew)
     {
+#ifdef _DEBUG
+		if (hNew == mh_UCharMapFont)
+			hNew = mh_UCharMapFont;
+#endif
         hSelectedFont = (HFONT)SelectObject(hDC, hNew);
         if (!hOldFont)
             hOldFont = hSelectedFont;
@@ -1350,6 +1361,40 @@ bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC)
 		gSet.Performance(tPerfData, FALSE);
 		
 		mp_RCon->GetConsoleData(mpsz_ConChar, mpn_ConAttrEx, TextWidth, TextHeight); //TextLen*2);
+		
+		if (gSet.isExtendUCharMap)
+		{
+			const CRgnDetect* pRgn = mp_RCon->GetDetector();
+			if (pRgn && (pRgn->GetFlags() & (FR_UCHARMAP|FR_UCHARMAPGLYPH)) == (FR_UCHARMAP|FR_UCHARMAPGLYPH)) {
+				SMALL_RECT rcFull, rcGlyph;
+				if (pRgn->GetDetectedDialogs(1, &rcFull, NULL, FR_UCHARMAP) 
+					&& pRgn->GetDetectedDialogs(1, &rcGlyph, NULL, FR_UCHARMAPGLYPH))
+				{
+					wchar_t szFontName[32], *pszStart, *pszEnd;
+					pszStart = mpsz_ConChar + TextWidth*(rcFull.Top+1) + rcFull.Left + 1;
+					pszEnd = pszStart + 31;
+					while (*pszEnd == L' ' && pszEnd >= pszStart) pszEnd--;
+					if (pszEnd > pszStart) {
+						wmemcpy(szFontName, pszStart, pszEnd-pszStart+1);
+						szFontName[pszEnd-pszStart+1] = 0;
+						if (!mh_UCharMapFont || lstrcmp(ms_LastUCharMapFont, szFontName)) {
+							lstrcpy(ms_LastUCharMapFont, szFontName);
+							if (mh_UCharMapFont) DeleteObject(mh_UCharMapFont);
+							mh_UCharMapFont = gSet.CreateOtherFont(ms_LastUCharMapFont);
+						}
+					}
+					// Шрифт создали, теперь - пометить соответсвующий регион для использования этого шрифта
+					if (mh_UCharMapFont) {
+						for (int Y = rcGlyph.Top; Y <= rcGlyph.Bottom; Y++) {
+							CharAttr *pAtr = mpn_ConAttrEx + (TextWidth*Y + rcGlyph.Left);
+							for (int X = rcGlyph.Left; X <= rcGlyph.Right; X++, pAtr++) {
+								pAtr->nFontIndex = MAX_FONT_STYLES;
+							}
+						}
+					}
+				}
+			}
+		}
 
 		gSet.Performance(tPerfData, TRUE);
 	}
@@ -1701,7 +1746,8 @@ void CVirtualConsole::UpdateText()
 #endif
 
 
-	memmove(mh_FontByIndex, gSet.mh_Font, sizeof(mh_FontByIndex));
+	memmove(mh_FontByIndex, gSet.mh_Font, MAX_FONT_STYLES*sizeof(mh_FontByIndex[0]));
+	mh_FontByIndex[MAX_FONT_STYLES] = mh_UCharMapFont ? mh_UCharMapFont : mh_FontByIndex[0];
     SelectFont(mh_FontByIndex[0]);
 
     // pointers
@@ -2835,6 +2881,7 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
 			HPEN hFrame = CreatePen(PS_SOLID, 1, RGB(255,0,255));
 			HPEN hPanel = CreatePen(PS_SOLID, 2, RGB(255,255,0));
 			HPEN hQSearch = CreatePen(PS_SOLID, 1, RGB(255,255,0));
+			HPEN hUCharMap = CreatePen(PS_SOLID, 1, RGB(255,255,0));
 			HPEN hActiveMenu = (HPEN)GetStockObject(WHITE_PEN);
 			HPEN hOldPen = (HPEN)SelectObject(hPaintDc, hFrame);
 			HBRUSH hOldBr = (HBRUSH)SelectObject(hPaintDc, GetStockObject(HOLLOW_BRUSH));
@@ -2851,8 +2898,10 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
 					SelectObject(hPaintDc, hRed);
 				else if ((nFlags & FR_ACTIVEMENUBAR) == FR_ACTIVEMENUBAR)
 					SelectObject(hPaintDc, hActiveMenu);
-				else if ((nFlags & FR_QSEARCH) == FR_QSEARCH)
+				else if ((nFlags & FR_QSEARCH))
 					SelectObject(hPaintDc, hQSearch);
+				else if ((nFlags & (FR_UCHARMAP|FR_UCHARMAPGLYPH)))
+					SelectObject(hPaintDc, hUCharMap);
 				else if ((nFlags & (FR_LEFTPANEL|FR_RIGHTPANEL|FR_FULLPANEL)))
 					SelectObject(hPaintDc, hPanel);
 				else if ((nFlags & FR_HASBORDER))
@@ -2877,6 +2926,7 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
 			DeleteObject(hRed);
 			DeleteObject(hPanel);
 			DeleteObject(hQSearch);
+			DeleteObject(hUCharMap);
 			DeleteObject(hDash);
 			DeleteObject(hFrame);
 			DeleteObject(hSmall);
@@ -3381,6 +3431,7 @@ BOOL CVirtualConsole::RegisterPanelView(PanelViewInit* ppvi)
 				lbRc = UpdatePanelView(ppvi->bLeftPanel, TRUE);
 				// На панелях нужно "затереть" лишние части рамок
 				Update(true);
+				gSet.OnPanelViewAppeared(TRUE);
 			}
 		} else {
 			lbRc = TRUE;

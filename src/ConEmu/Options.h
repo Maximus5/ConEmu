@@ -73,6 +73,7 @@ public:
 	BOOL FontItalic();
 	BOOL FontClearType();
 	BYTE FontQuality();
+	HFONT CreateOtherFont(const wchar_t* asFontName);
 private:
     LOGFONT LogFont, LogFont2;
 	LONG mn_AutoFontWidth, mn_AutoFontHeight; // размеры шрифтов, которые были запрошены при авторесайзе шрифта
@@ -140,6 +141,7 @@ public:
 	DWORD nHideCaptionAlwaysDelay, nHideCaptionAlwaysDisappear;
     bool isAlwaysOnTop, isDesktopMode;
     BYTE isFixFarBorders;
+    bool isExtendUCharMap;
 	bool isMouseSkipActivation, isMouseSkipMoving;
 	bool isFarHourglass; DWORD nFarHourglassDelay;
 	BYTE isDisableFarFlashing, isDisableAllFlashing;
@@ -300,6 +302,7 @@ public:
 	SettingsBase* CreateSettings();
 	bool AutoRecreateFont(int nFontW, int nFontH);
 	bool CheckTheming();
+	void OnPanelViewAppeared(BOOL abAppear);
 protected:
     LRESULT OnInitDialog();
 	LRESULT OnInitDialog_Main();
