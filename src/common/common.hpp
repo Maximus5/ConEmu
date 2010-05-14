@@ -158,6 +158,7 @@ extern wchar_t gszDbgModLabel[6];
 #define CESERVERINPUTNAME   L"\\\\%s\\pipe\\ConEmuSrvInput%u" // ConEmuC_PID
 #define CESERVERQUERYNAME   L"\\\\%s\\pipe\\ConEmuSrvQuery%u" // ConEmuC_PID
 #define CESERVERWRITENAME   L"\\\\%s\\pipe\\ConEmuSrvWrite%u" // ConEmuC_PID
+#define CESERVERREADNAME    L"\\\\%s\\pipe\\ConEmuSrvRead%u"  // ConEmuC_PID
 #define CEGUIPIPENAME       L"\\\\%s\\pipe\\ConEmuGui%u"      // GetConsoleWindow() // необходимо, чтобы плагин мог общаться с GUI
 #define CEPLUGINPIPENAME    L"\\\\%s\\pipe\\ConEmuPlugin%u"   // Far_PID
 //
@@ -200,7 +201,7 @@ WARNING("CONEMUMSG_SRVSTARTED нужно переделать в команду пайпа для GUI");
 
 //#define CESIGNAL_C          L"ConEmuC_C_Signal.%u"
 //#define CESIGNAL_BREAK      L"ConEmuC_Break_Signal.%u"
-//#define CECMD_GETSHORTINFO  1
+#define CECMD_GETSHORTINFO  1
 #define CECMD_GETCONSOLEINFO   2 // было CECMD_GETFULLINFO
 //#define CECMD_SETSIZE       3
 #define CECMD_CMDSTARTSTOP  4 // 0 - ServerStart, 1 - ServerStop, 2 - ComspecStart, 3 - ComspecStop
@@ -235,7 +236,7 @@ WARNING("CONEMUMSG_SRVSTARTED нужно переделать в команду пайпа для GUI");
 #define CECMD_SETWINDOWRGN  33 // CESERVER_REQ_SETWINDOWRGN.
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    41
+#define CESERVER_REQ_VER    42
 
 #define PIPEBUFSIZE 4096
 
@@ -561,7 +562,7 @@ typedef struct tag_CESERVER_REQ_CONINFO_HDR {
 	DWORD cbSize;
 	DWORD nLogLevel;
 	COORD crMaxConSize;
-	DWORD cbExtraSize; // Размер данных, идущих за структурой (после cbSize), TODO на CESERVER_REQ_CONINFO_DATA[]
+	DWORD dwReserved0;
 	HWND2 hConWnd;     // !! положение hConWnd и nGuiPID не менять !!
 	DWORD nServerPID;  //
 	DWORD nGuiPID;     // !! на них ориентируется PicViewWrapper   !!
@@ -570,8 +571,12 @@ typedef struct tag_CESERVER_REQ_CONINFO_HDR {
 	DWORD nProtocolVersion; // == CESERVER_REQ_VER
 	//
 	DWORD nFarPID; // PID последнего фара, обновившего информацию о себе в этой структуре
-	DWORD nCurDataMapIdx; // суффикс для текущего MAP файла с данными
-	DWORD nCurDataMaxSize; // Максимальный размер буфера nCurDataMapIdx
+} CESERVER_REQ_CONINFO_HDR;
+
+typedef struct tag_CESERVER_REQ_CONINFO_INFO {
+	DWORD cbSize;
+	//DWORD nCurDataMapIdx; // суффикс для текущего MAP файла с данными
+	//DWORD nCurDataMaxSize; // Максимальный размер буфера nCurDataMapIdx
 	DWORD nPacketId;
 	//DWORD nFarReadTick; // GetTickCount(), когда фар в последний раз считывал события из консоли
 	//DWORD nFarUpdateTick0;// GetTickCount(), устанавливается в начале обновления консоли из фара (вдруг что свалится...)
@@ -590,15 +595,19 @@ typedef struct tag_CESERVER_REQ_CONINFO_HDR {
 	//// Информация о текущем FAR
 	//DWORD nFarInfoIdx; // выносим из структуры CEFAR_INFO, т.к. ее копия хранится в плагине
 	//CEFAR_INFO FarInfo;
-} CESERVER_REQ_CONINFO_HDR;
+} CESERVER_REQ_CONINFO_INFO;
 
 typedef struct tag_CESERVER_REQ_CONINFO_DATA {
-	COORD      crBufSize;
+	COORD      crMaxSize;
 	CHAR_INFO  Buf[1];
 } CESERVER_REQ_CONINFO_DATA;
 
 typedef struct tag_CESERVER_REQ_CONINFO_FULL {
-	CESERVER_REQ_CONINFO_HDR  info;
+	DWORD cbMaxSize; // размер реальных данных CESERVER_REQ_CONINFO_FULL, а не всего буфера data
+	DWORD cbActiveSize; // размер реальных данных CESERVER_REQ_CONINFO_FULL, а не всего буфера data
+	BOOL  bChanged;     // флаг того, что данные изменились с последней передачи в GUI
+	CESERVER_REQ_CONINFO_HDR  hdr;
+	CESERVER_REQ_CONINFO_INFO info;
 	CESERVER_REQ_CONINFO_DATA data;
 } CESERVER_REQ_CONINFO_FULL;
 
@@ -1127,6 +1136,9 @@ protected:
 	DWORD mn_LastError;
 	wchar_t ms_Error[MAX_PATH*2];
 public:
+	T* Ptr() {
+		return mp_Data;
+	};
 	operator T*() {
 		return mp_Data;
 	};

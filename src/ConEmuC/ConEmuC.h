@@ -282,6 +282,7 @@ typedef struct tag_SrvInfo {
 	HANDLE hWinEventThread; DWORD dwWinEventThread;
 	//HANDLE hInputThread;    DWORD dwInputThreadId;
 	HANDLE hInputPipeThread;DWORD dwInputPipeThreadId; // Needed in Vista & administrator
+	HANDLE hGetDataPipeThread; DWORD dwGetDataPipeThreadId;
 	//
 	OSVERSIONINFO osv;
 	BOOL bReopenHandleAllowed;
@@ -300,15 +301,17 @@ typedef struct tag_SrvInfo {
 #endif
 	BOOL bTelnetActive;
 	//
-	wchar_t szPipename[MAX_PATH], szInputname[MAX_PATH], szGuiPipeName[MAX_PATH], szQueryname[MAX_PATH];
-	HANDLE hInputPipe, hQueryPipe;
+	wchar_t szPipename[MAX_PATH], szInputname[MAX_PATH], szGuiPipeName[MAX_PATH], szQueryname[MAX_PATH], szGetDataPipe[MAX_PATH];
+	HANDLE hInputPipe, hQueryPipe, hGetDataPipe;;
 	//
-	HANDLE hFileMapping, hFileMappingData;
-	CESERVER_REQ_CONINFO_HDR *pConsoleInfo;  // Mapping
-	CESERVER_REQ_CONINFO_DATA *pConsoleData; // Mapping
-	CESERVER_REQ_CONINFO_HDR *pConsoleInfoCopy;  // Local (Alloc)
+	//HANDLE hFileMapping, hFileMappingData;
+	MFileMapping<CESERVER_REQ_CONINFO_HDR> *pConsoleMap;
+	//CESERVER_REQ_CONINFO_HDR *pConsoleInfo;  // Mapping
+	//CESERVER_REQ_CONINFO_DATA *pConsoleData; // Mapping
+	CESERVER_REQ_CONINFO_FULL *pConsole;
+	//CESERVER_REQ_CONINFO_HDR *pConsoleInfoCopy;  // Local (Alloc)
 	CESERVER_REQ_CONINFO_DATA *pConsoleDataCopy; // Local (Alloc)
-	DWORD nConsoleDataSize;
+	//DWORD nConsoleDataSize;
 //	DWORD nFarInfoLastIdx;
 	// Input
 	HANDLE hInputThread, hInputEvent; DWORD dwInputThread;

@@ -315,7 +315,7 @@ void CSettings::InitSettings()
 	    }
     }
     
-	isTrueColorer = true;
+	isTrueColorer = false;
     isExtendColors = false;
     nExtendColor = 14;
     isExtendFonts = false;

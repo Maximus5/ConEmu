@@ -26,3 +26,4 @@
 "ConEmu Thumbnails\nView registration in ConEmu failed\nErrCode=%i"
 "ConEmu Thumbnails\nInternal error. Unknown panel mode was requested."
 "ConEmu Thumbnails\nInternal error. Invalid settings was recieved."
+"ConEmu plugin\nConEmu is not available in terminal mode\nCheck TERM environment variable\nOK"

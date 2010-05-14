@@ -100,7 +100,7 @@ void WINAPI _export SetStartupInfo(const struct PluginStartupInfo *aInfo)
 	lstrcpynW(gsTitleThumbs, GetMsgA(CEColTitleThumbnails, szTemp), sizeofarray(gsTitleThumbs));
 	lstrcpynW(gsTitleTiles, GetMsgA(CEColTitleTiles, szTemp), sizeofarray(gsTitleTiles));
 	
-	StartPlugin();
+	StartPlugin(FALSE);
 }
 
 void WINAPI _export GetPluginInfo(struct PluginInfo *pi)

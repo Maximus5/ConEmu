@@ -144,7 +144,7 @@ void WINAPI _export GetPluginInfoW(struct PluginInfo *pi)
 BOOL gbInfoW_OK = FALSE;
 HANDLE WINAPI _export OpenPluginW(int OpenFrom,INT_PTR Item)
 {
-	if (!gbInfoW_OK || !CheckConEmu(/*TRUE*/))
+	if (!gbInfoW_OK || !CheckConEmu())
 		return INVALID_HANDLE_VALUE;
 
 	if (ghDisplayThread && gnDisplayThreadId == 0) {
@@ -306,7 +306,7 @@ BOOL LoadFarVersion()
 
 #define CONEMUCHECKDELTA 2000
 //static DWORD nLastCheckConEmu = 0;
-BOOL CheckConEmu(/*BOOL abForceCheck*/)
+BOOL CheckConEmu(BOOL abSilence/*=FALSE*/)
 {
 	// Функция проверяет доступность плагина conemu.dll и GUI
 	// делать это нужно при каждом вызове, т.к. плагин могли и выгрузить...
@@ -320,6 +320,12 @@ BOOL CheckConEmu(/*BOOL abForceCheck*/)
 	//	}
 	//}
 
+	if (TerminalMode) {
+		if (!abSilence)
+			ShowMessage(CEUnavailableInTerminal, 0);
+		return FALSE;
+	}
+
 	//nLastCheckConEmu = GetTickCount();
 	HMODULE hConEmu = GetModuleHandle
 		(
@@ -332,14 +338,16 @@ BOOL CheckConEmu(/*BOOL abForceCheck*/)
 	if (!hConEmu) {
 		gfRegisterPanelView = NULL;
 		gfGetFarHWND2 = NULL;
-		ShowMessage(CEPluginNotFound, 0);
+		if (!abSilence)
+			ShowMessage(CEPluginNotFound, 0);
 		return FALSE;
 	}
 
 	gfRegisterPanelView = (RegisterPanelView_t)GetProcAddress(hConEmu, "RegisterPanelView");
 	gfGetFarHWND2 = (GetFarHWND2_t)GetProcAddress(hConEmu, "GetFarHWND2");
 	if (!gfRegisterPanelView || !gfGetFarHWND2) {
-		ShowMessage(CEOldPluginVersion, 0);
+		if (!abSilence)
+			ShowMessage(CEOldPluginVersion, 0);
 		return FALSE;
 	}
 	HWND hWnd = gfGetFarHWND2(TRUE);
@@ -362,7 +370,8 @@ BOOL CheckConEmu(/*BOOL abForceCheck*/)
 	}
 
 	if (!hRoot) {
-		ShowMessage(CEFarNonGuiMode, 0);
+		if (!abSilence)
+			ShowMessage(CEFarNonGuiMode, 0);
 		return FALSE;
 	}
 	return TRUE;
@@ -416,7 +425,7 @@ void WINAPI _export SetStartupInfoW(void *aInfo)
 
 	gbInfoW_OK = TRUE;
 
-	StartPlugin();
+	StartPlugin(FALSE);
 }
 
 
@@ -437,8 +446,11 @@ void WINAPI _export SetStartupInfoW(void *aInfo)
 
 
 
-void StartPlugin(void)
+void StartPlugin(BOOL abManual)
 {
+	if (!CheckConEmu(!abManual))
+		return;
+
 	if (!gpImgCache) {
 		gpImgCache = new CImgCache(ghPluginModule);
 	}
@@ -458,7 +470,7 @@ void StartPlugin(void)
 		}
 
 		if (dwModes[0] || dwModes[1]) {
-			if (CheckConEmu(/*TRUE*/) && gThSet.bRestoreOnStartup)
+			if (gThSet.bRestoreOnStartup)
 			{
 				// При открытии плагина - загрузить информацию об обеих панелях. Нужно для определения регионов!
 				ReloadPanelsInfo();

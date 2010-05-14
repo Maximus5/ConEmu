@@ -1457,12 +1457,15 @@ void SendStarted()
 	if (gnRunMode == RM_COMSPEC) {
 		DWORD nServerPID = 0, nGuiPID = 0;
 
-		WCHAR sHeaderMapName[64];
-		wsprintf(sHeaderMapName, CECONMAPNAME, (DWORD)hConWnd);
-		HANDLE hFileMapping = OpenFileMapping(FILE_MAP_READ/*|FILE_MAP_WRITE*/, FALSE, sHeaderMapName);
-		if (hFileMapping) {
-			const CESERVER_REQ_CONINFO_HDR* pConsoleInfo 
-				= (CESERVER_REQ_CONINFO_HDR*)MapViewOfFile(hFileMapping, FILE_MAP_READ/*|FILE_MAP_WRITE*/,0,0,0);
+		MFileMapping<CESERVER_REQ_CONINFO_HDR> ConsoleMap;
+		ConsoleMap.InitName(CECONMAPNAME, (DWORD)hConWnd);
+		const CESERVER_REQ_CONINFO_HDR* pConsoleInfo = ConsoleMap.Open();
+		//WCHAR sHeaderMapName[64];
+		//wsprintf(sHeaderMapName, CECONMAPNAME, (DWORD)hConWnd);
+		//HANDLE hFileMapping = OpenFileMapping(FILE_MAP_READ/*|FILE_MAP_WRITE*/, FALSE, sHeaderMapName);
+		//if (hFileMapping) {
+		//	const CESERVER_REQ_CONINFO_HDR* pConsoleInfo 
+		//		= (CESERVER_REQ_CONINFO_HDR*)MapViewOfFile(hFileMapping, FILE_MAP_READ/*|FILE_MAP_WRITE*/,0,0,0);
 			if (pConsoleInfo) {
 				nServerPID = pConsoleInfo->nServerPID;
 				nGuiPID = pConsoleInfo->nGuiPID;
@@ -1470,10 +1473,11 @@ void SendStarted()
 					if (pConsoleInfo->nLogLevel)
 						CreateLogSizeFile(pConsoleInfo->nLogLevel);
 				}
-				UnmapViewOfFile(pConsoleInfo);
+				//UnmapViewOfFile(pConsoleInfo);
+				ConsoleMap.CloseMap();
 			}
-			CloseHandle(hFileMapping);
-		}
+		//	CloseHandle(hFileMapping);
+		//}
 
 		if (nServerPID == 0) {
 			cmd.bNonGuiMode = TRUE; // Ќе посылать ExecuteGuiCmd при выходе. Ёто не наша консоль
@@ -1718,10 +1722,10 @@ void LogSize(COORD* pcrSize, LPCSTR pszLabel)
 			
 	SYSTEMTIME st; GetLocalTime(&st);
 	char szMapSize[32]; szMapSize[0] = 0;
-	if (srv.pConsoleInfo) {
+	if (srv.pConsoleMap->IsValid()) {
 		wsprintfA(szMapSize, " CurMapSize={%ix%ix%i}",
-			srv.pConsoleInfo->sbi.dwSize.X, srv.pConsoleInfo->sbi.dwSize.Y,
-			srv.pConsoleInfo->sbi.srWindow.Bottom-srv.pConsoleInfo->sbi.srWindow.Top+1);
+			srv.pConsoleMap->Ptr()->sbi.dwSize.X, srv.pConsoleMap->Ptr()->sbi.dwSize.Y,
+			srv.pConsoleMap->Ptr()->sbi.srWindow.Bottom-srv.pConsoleMap->Ptr()->sbi.srWindow.Top+1);
 	}
 	
 	if (pcrSize) {
@@ -2357,7 +2361,7 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 				//*out = CreateConsoleInfo(NULL, (in.hdr.nCmd == CECMD_GETFULLINFO));
 				int nOutSize = sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_CONINFO_HDR);
 				*out = ExecuteNewCmd(0,nOutSize);
-				(*out)->ConInfo = *srv.pConsoleInfo;
+				(*out)->ConInfo = srv.pConsole->info;
 			}
 
 			MCHKHEAP;
@@ -2658,8 +2662,10 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 
 		case CECMD_ONACTIVATION:
 		{
-			if (srv.pConsoleInfo)
-				srv.pConsoleInfo->bConsoleActive = in.dwData[0];
+			if (srv.pConsole) {
+				srv.pConsole->info.bConsoleActive = in.dwData[0];
+				srv.pConsoleMap->SetFrom(&(srv.pConsole->info));
+			}
 		} break;
 
 		case CECMD_SETWINDOWPOS:

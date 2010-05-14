@@ -22,4 +22,5 @@ enum {
 	CEGuiDontAcceptPanel,
 	CEUnknownPanelMode,
 	CEInvalidSettingValues,
+	CEUnavailableInTerminal,
 	};

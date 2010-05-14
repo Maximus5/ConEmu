@@ -144,7 +144,7 @@ int ServerInit()
 		SetEvent(ghFarInExecuteEvent);
 #endif
 
-	// Создать MapFile для заголовка (СРАЗУ!!!)
+	// Создать MapFile для заголовка (СРАЗУ!!!) и буфера для чтения и сравнения
 	iRc = CreateMapHeader();
 	if (iRc != 0)
 		goto wrap;
@@ -163,6 +163,7 @@ int ServerInit()
 	wsprintfW(srv.szPipename, CESERVERPIPENAME, L".", gnSelfPID);
 	wsprintfW(srv.szInputname, CESERVERINPUTNAME, L".", gnSelfPID);
 	wsprintfW(srv.szQueryname, CESERVERQUERYNAME, L".", gnSelfPID);
+	wsprintfW(srv.szGetDataPipe, CESERVERREADNAME, L".", gnSelfPID);
 
 	srv.nMaxProcesses = START_MAX_PROCESSES; srv.nProcessCount = 0;
 	srv.pnProcesses = (DWORD*)Alloc(START_MAX_PROCESSES, sizeof(DWORD));
@@ -217,6 +218,16 @@ int ServerInit()
 		iRc = CERR_CREATEINPUTTHREAD; goto wrap;
 	}
 	SetThreadPriority(srv.hInputPipeThread, THREAD_PRIORITY_ABOVE_NORMAL);
+
+	// Запустить нить обработки событий (клавиатура, мышь, и пр.)
+	srv.hGetDataPipeThread = CreateThread( NULL, 0, GetDataThread, NULL, 0, &srv.dwGetDataPipeThreadId);
+	if (srv.hGetDataPipeThread == NULL)
+	{
+		dwErr = GetLastError();
+		_printf("CreateThread(InputPipeThread) failed, ErrCode=0x%08X\n", dwErr);
+		iRc = CERR_CREATEINPUTTHREAD; goto wrap;
+	}
+	SetThreadPriority(srv.hGetDataPipeThread, THREAD_PRIORITY_ABOVE_NORMAL);
 
 	//InitializeCriticalSection(&srv.csChangeSize);
 	//InitializeCriticalSection(&srv.csConBuf);
@@ -678,6 +689,21 @@ void ServerDone(int aiRc)
 	SafeCloseHandle(srv.hInputPipe);
 	SafeCloseHandle(srv.hInputEvent);
 
+	if (srv.hGetDataPipeThread) {
+		// Подождем немножко, пока нить сама завершится
+		TODO("Сама нить не завершится. Нужно либо делать overlapped, либо что-то пихать в нить");
+		//if (WaitForSingleObject(srv.hGetDataPipeThread, 50) != WAIT_OBJECT_0)
+		{
+			#pragma warning( push )
+			#pragma warning( disable : 6258 )
+			TerminateThread ( srv.hGetDataPipeThread, 100 ); // раз корректно не хочет...
+			#pragma warning( pop )
+		}
+		SafeCloseHandle(srv.hGetDataPipeThread);
+		srv.dwGetDataPipeThreadId = 0;
+	}
+
+
 	if (srv.hServerThread) {
 		// Подождем немножко, пока нить сама завершится
 		if (WaitForSingleObject(srv.hServerThread, 500) != WAIT_OBJECT_0) {
@@ -915,11 +941,11 @@ HWND Attach2Gui(DWORD nTimeout)
 	BOOL bNeedStartGui = FALSE;
 	DWORD dwErr = 0;
 
-	if (!srv.pConsoleInfo) {
-		_ASSERTE(srv.pConsoleInfo!=NULL);
+	if (!srv.pConsoleMap) {
+		_ASSERTE(srv.pConsoleMap!=NULL);
 	} else {
 		// Чтобы GUI не пытался считать информацию из консоли до завершения аттача (до изменения размеров)
-		srv.pConsoleInfo->nPacketId = 0;
+		srv.pConsoleMap->Ptr()->nPacketId = 0;
 	}
 	
 	hGui = FindWindowEx(NULL, hGui, VirtualConsoleClassMain, NULL);
@@ -1040,9 +1066,10 @@ HWND Attach2Gui(DWORD nTimeout)
 				//ghConEmuWnd = hGui;
 				ghConEmuWnd = pOut->StartStopRet.hWnd;
 				hDcWnd = pOut->StartStopRet.hWndDC;
-				_ASSERTE(srv.pConsoleInfo != NULL); // мэппинг уже должен быть создан,
-				_ASSERTE(srv.pConsoleInfoCopy == NULL); // а локальная копия вроде еще нет
-				srv.pConsoleInfo->nGuiPID = pOut->StartStopRet.dwPID;
+				_ASSERTE(srv.pConsoleMap != NULL); // мэппинг уже должен быть создан,
+				_ASSERTE(srv.pConsole == NULL); // и локальная копия тоже
+				srv.pConsole->info.nGuiPID = pOut->StartStopRet.dwPID;
+				srv.pConsoleMap->Ptr()->nGuiPID = pOut->StartStopRet.dwPID;
 
 				//DisableAutoConfirmExit();
 
@@ -1106,8 +1133,13 @@ HWND Attach2Gui(DWORD nTimeout)
 int CreateMapHeader()
 {
 	int iRc = 0;
-	wchar_t szMapName[64];
-	int nConInfoSize = sizeof(CESERVER_REQ_CONINFO_HDR);
+	//wchar_t szMapName[64];
+	//int nConInfoSize = sizeof(CESERVER_REQ_CONINFO_HDR);
+
+	_ASSERTE(srv.pConsole == NULL);
+	_ASSERTE(srv.pConsoleMap == NULL);
+	_ASSERTE(srv.pConsoleDataCopy == NULL);
+
 	
 	HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
 	COORD crMax = GetLargestConsoleWindowSize(h);
@@ -1119,40 +1151,54 @@ int CreateMapHeader()
 		if (crMax.X < 80) crMax.X = 80;
 		if (crMax.Y < 25) crMax.Y = 25;
 	}
-	TODO("Добавить к nConDataSize размер необходимый для хранения crMax ячеек");
-	int nConDataSize = 0;
+	//TODO("Добавить к nConDataSize размер необходимый для хранения crMax ячеек");
+	DWORD nMaxCells = (crMax.X * crMax.Y);
+	_ASSERTE(sizeof(CESERVER_REQ_CONINFO_DATA) == (sizeof(COORD)+sizeof(CHAR_INFO)));
+	int nMaxDataSize = nMaxCells * sizeof(CHAR_INFO) + sizeof(COORD);
 	
-	_ASSERTE(srv.hFileMapping == NULL);
-	
-	wsprintf(szMapName, CECONMAPNAME, (DWORD)ghConWnd);
-	srv.hFileMapping = CreateFileMapping(INVALID_HANDLE_VALUE, 
-		gpNullSecurity, PAGE_READWRITE, 0, nConInfoSize+nConDataSize, szMapName);
-	if (!srv.hFileMapping) {
-		DWORD dwErr = GetLastError();
-		_printf ("Can't create console data file mapping. ErrCode=0x%08X\n", dwErr, szMapName);
-		iRc = CERR_CREATEMAPPINGERR; goto wrap;
+	srv.pConsoleDataCopy = (CESERVER_REQ_CONINFO_DATA*)Alloc(nMaxDataSize,1);
+	if (!srv.pConsoleDataCopy) {
+		_printf("ConEmuC: Alloc(%i) failed, pConsoleDataCopy is null", nMaxDataSize);
+		goto wrap;
 	}
-	
-	srv.pConsoleInfo = (CESERVER_REQ_CONINFO_HDR*)MapViewOfFile(srv.hFileMapping, FILE_MAP_ALL_ACCESS,0,0,0);
-	if (!srv.pConsoleInfo) {
-		DWORD dwErr = GetLastError();
-		_printf ("Can't map console info. ErrCode=0x%08X\n", dwErr, szMapName);
-		iRc = CERR_MAPVIEWFILEERR; goto wrap;
+	srv.pConsoleDataCopy->crMaxSize = crMax;
+
+	int nTotalSize = sizeof(CESERVER_REQ_CONINFO_FULL) + (nMaxCells * sizeof(CHAR_INFO));
+	srv.pConsole = (CESERVER_REQ_CONINFO_FULL*)Alloc(nTotalSize,1);
+	if (!srv.pConsole) {
+		_printf("ConEmuC: Alloc(%i) failed, pConsole is null", nTotalSize);
+		goto wrap;
 	}
-	// Вообще-то похоже и не надо - мэппинги создаются zero-initialized
-	// но на всякий случай обнулим (только заголовок, на данные - забить)
-	memset(srv.pConsoleInfo, 0, nConInfoSize);
-	srv.pConsoleInfo->cbSize = nConInfoSize; // Тут - только размер заголовка!
-	srv.pConsoleInfo->cbExtraSize = 0; TODO("потом поставить размер данных для CESERVER_REQ_CONINFO_DATA[]");
-	srv.pConsoleInfo->bConsoleActive = TRUE; // Если FALSE - можно снизить частоту опроса
-	srv.pConsoleInfo->nLogLevel = (ghLogSize!=NULL) ? 1 : 0;
-//	srv.pConsoleInfo->nFarReadIdx = -1;
-	srv.pConsoleInfo->nServerPID = GetCurrentProcessId();
-	srv.pConsoleInfo->nGuiPID = srv.dwGuiPID;
-	srv.pConsoleInfo->nProtocolVersion = CESERVER_REQ_VER;
+
+	srv.pConsole->cbMaxSize = nTotalSize;
+	srv.pConsole->cbActiveSize = ((LPBYTE)&(srv.pConsole->data)) - ((LPBYTE)srv.pConsole);
+	srv.pConsole->bChanged = TRUE; // Initally == changed
+
+	srv.pConsole->info.cbSize = sizeof(srv.pConsole->info); // Тут - только размер заголовка!
+	srv.pConsole->info.bConsoleActive = TRUE; // Если FALSE - можно снизить частоту опроса
+	srv.pConsole->info.nLogLevel = (ghLogSize!=NULL) ? 1 : 0;
+//	srv.pConsole->info.nFarReadIdx = -1;
+	srv.pConsole->info.nServerPID = GetCurrentProcessId();
+	srv.pConsole->info.nGuiPID = srv.dwGuiPID;
+	srv.pConsole->info.nProtocolVersion = CESERVER_REQ_VER;
 	
 	// Максимальный размер буфера
-	srv.pConsoleInfo->crMaxConSize = crMax;
+	srv.pConsole->info.crMaxConSize = crMax;
+
+
+	srv.pConsoleMap = new MFileMapping<CESERVER_REQ_CONINFO_HDR>;
+	if (!srv.pConsoleMap) {
+		_printf("ConEmuC: Alloc(MFileMapping<CESERVER_REQ_CONINFO_HDR>) failed, pConsoleMap is null", 0);
+		goto wrap;
+	}
+	srv.pConsoleMap->InitName(CECONMAPNAME, (DWORD)ghConWnd);
+	if (!srv.pConsoleMap->Open(TRUE)) {
+		_wprintf(srv.pConsoleMap->GetErrorText());
+		delete srv.pConsoleMap; srv.pConsoleMap = NULL;
+		iRc = CERR_CREATEMAPPINGERR; goto wrap;
+	}
+	srv.pConsoleMap->SetFrom(&(srv.pConsole->info));
+
 
 wrap:	
 	return iRc;
@@ -1216,107 +1262,137 @@ int CreateColorerHeader()
 	return iRc;
 }
 
-static void CloseMapData()
+//static void CloseMapData()
+//{
+//	if (srv.pConsoleMap) {
+//		srv.pConsoleMap->CloseMap();
+//		delete srv.pConsoleMap;
+//		srv.pConsoleMap = NULL;
+//	}
+//	//if (srv.pConsoleData) {
+//	//	UnmapViewOfFile(srv.pConsoleData);
+//	//	srv.pConsoleData = NULL;
+//	//}
+//	//if (srv.hFileMappingData) {
+//	//	CloseHandle(srv.hFileMappingData);
+//	//	srv.hFileMappingData = NULL;
+//	//}
+//	if (srv.pConsole) {
+//		Free(srv.pConsole);
+//		srv.pConsole = NULL;
+//	}
+//	if (srv.pConsoleDataCopy) {
+//		Free(srv.pConsoleDataCopy);
+//		srv.pConsoleDataCopy = NULL;
+//	}
+//}
+
+//static BOOL RecreateMapData()
+//{
+//	BOOL lbRc = FALSE;
+//	DWORD dwErr = 0;
+//	DWORD nNewIndex = 0;
+//	DWORD nMaxCells = (srv.sbi.dwMaximumWindowSize.X * srv.sbi.dwMaximumWindowSize.Y);
+//	DWORD nMaxSize = (nMaxCells * 2) * sizeof(CHAR_INFO)+sizeof(CESERVER_REQ_CONINFO_DATA);
+//	wchar_t szErr[255]; szErr[0] = 0;
+//	wchar_t szMapName[64];
+//
+//	// Тут создавать буфер по наибольшему GetLargestConsoleWindowSize & nMaxSize
+//	COORD crMaxSize = GetLargestConsoleWindowSize(GetStdHandle(STD_OUTPUT_HANDLE));
+//	if (crMaxSize.X < srv.sbi.dwMaximumWindowSize.X) crMaxSize.X = srv.sbi.dwMaximumWindowSize.X;
+//	if (crMaxSize.Y < srv.sbi.dwMaximumWindowSize.Y) crMaxSize.Y = srv.sbi.dwMaximumWindowSize.Y;
+//	if (nMaxCells < (DWORD)(crMaxSize.X * crMaxSize.Y)) {
+//		nMaxCells = (crMaxSize.X * crMaxSize.Y);
+//		nMaxSize = (nMaxCells * 2) * sizeof(CHAR_INFO)+sizeof(CESERVER_REQ_CONINFO_DATA);
+//	}
+//	
+//	_ASSERTE(srv.pConsoleInfo);
+//	if (!srv.pConsoleInfo) {
+//		lstrcpyW(szErr, L"ConEmuC: RecreateMapData failed, srv.pConsoleInfo is NULL");
+//		goto wrap;
+//	}
+//	
+//	if (srv.pConsoleData)
+//		CloseMapData();
+//		
+//		
+//	srv.pConsoleDataCopy = (CESERVER_REQ_CONINFO_DATA*)Alloc(nMaxSize,1);
+//	if (!srv.pConsoleDataCopy) {
+//		wsprintf (szErr, L"ConEmuC: Alloc(%i) failed, pConsoleDataCopy is null", nMaxSize);
+//		goto wrap;
+//	}
+//	
+//
+//	nNewIndex = srv.pConsole->info.nCurDataMapIdx;
+//	nNewIndex++;
+//	
+//	wsprintf(szMapName, CECONMAPNAME L".%i", (DWORD)ghConWnd, nNewIndex);
+//
+//	
+//	srv.hFileMappingData = CreateFileMapping(INVALID_HANDLE_VALUE, 
+//		gpNullSecurity, PAGE_READWRITE, 0, nMaxSize, szMapName);
+//	if (!srv.hFileMappingData) {
+//		dwErr = GetLastError();
+//		wsprintf (szErr, L"ConEmuC: CreateFileMapping(%s) failed. ErrCode=0x%08X", szMapName, dwErr);
+//		goto wrap;
+//	}
+//	
+//	srv.pConsoleData = (CESERVER_REQ_CONINFO_DATA*)MapViewOfFile(srv.hFileMappingData, FILE_MAP_ALL_ACCESS,0,0,0);
+//	if (!srv.pConsoleData) {
+//		dwErr = GetLastError();
+//		CloseHandle(srv.hFileMappingData); srv.hFileMappingData = NULL;
+//		wsprintf (szErr, L"ConEmuC: MapViewOfFile(%s) failed. ErrCode=0x%08X", szMapName, dwErr);
+//		goto wrap;
+//	}
+//	memset(srv.pConsoleData, 0, nMaxSize);
+//	srv.pConsoleData->crBufSize.X = crMaxSize.X; // srv.sbi.dwMaximumWindowSize.X;
+//	srv.pConsoleData->crBufSize.Y = crMaxSize.Y; // srv.sbi.dwMaximumWindowSize.Y;
+//	
+//	srv.nConsoleDataSize = nMaxSize;
+//	
+//	// Done
+//	srv.pConsole->info.nCurDataMapIdx = nNewIndex;
+//	srv.pConsole->info.nCurDataMaxSize = nMaxSize;
+//
+//	lbRc = TRUE;
+//wrap:
+//	if (!lbRc && szErr[0])
+//		SetConsoleTitle(szErr);
+//	return lbRc;
+//}
+
+void CloseMapHeader()
 {
-	if (srv.pConsoleData) {
-		UnmapViewOfFile(srv.pConsoleData);
-		srv.pConsoleData = NULL;
+	//CloseMapData();
+	//
+	//if (srv.pConsoleInfo) {
+	//	UnmapViewOfFile(srv.pConsoleInfo);
+	//	srv.pConsoleInfo = NULL;
+	//}
+	//if (srv.hFileMapping) {
+	//	CloseHandle(srv.hFileMapping);
+	//	srv.hFileMapping = NULL;
+	//}
+	if (srv.pConsoleMap) {
+		srv.pConsoleMap->CloseMap();
+		delete srv.pConsoleMap;
+		srv.pConsoleMap = NULL;
 	}
-	if (srv.hFileMappingData) {
-		CloseHandle(srv.hFileMappingData);
-		srv.hFileMappingData = NULL;
+	//if (srv.pConsoleData) {
+	//	UnmapViewOfFile(srv.pConsoleData);
+	//	srv.pConsoleData = NULL;
+	//}
+	//if (srv.hFileMappingData) {
+	//	CloseHandle(srv.hFileMappingData);
+	//	srv.hFileMappingData = NULL;
+	//}
+	if (srv.pConsole) {
+		Free(srv.pConsole);
+		srv.pConsole = NULL;
 	}
 	if (srv.pConsoleDataCopy) {
 		Free(srv.pConsoleDataCopy);
 		srv.pConsoleDataCopy = NULL;
-	}
-}
-
-static BOOL RecreateMapData()
-{
-	BOOL lbRc = FALSE;
-	DWORD dwErr = 0;
-	DWORD nNewIndex = 0;
-	DWORD nMaxCells = (srv.sbi.dwMaximumWindowSize.X * srv.sbi.dwMaximumWindowSize.Y);
-	DWORD nMaxSize = (nMaxCells * 2) * sizeof(CHAR_INFO)+sizeof(CESERVER_REQ_CONINFO_DATA);
-	wchar_t szErr[255]; szErr[0] = 0;
-	wchar_t szMapName[64];
-
-	// Тут создавать буфер по наибольшему GetLargestConsoleWindowSize & nMaxSize
-	COORD crMaxSize = GetLargestConsoleWindowSize(GetStdHandle(STD_OUTPUT_HANDLE));
-	if (crMaxSize.X < srv.sbi.dwMaximumWindowSize.X) crMaxSize.X = srv.sbi.dwMaximumWindowSize.X;
-	if (crMaxSize.Y < srv.sbi.dwMaximumWindowSize.Y) crMaxSize.Y = srv.sbi.dwMaximumWindowSize.Y;
-	if (nMaxCells < (DWORD)(crMaxSize.X * crMaxSize.Y)) {
-		nMaxCells = (crMaxSize.X * crMaxSize.Y);
-		nMaxSize = (nMaxCells * 2) * sizeof(CHAR_INFO)+sizeof(CESERVER_REQ_CONINFO_DATA);
-	}
-	
-	_ASSERTE(srv.pConsoleInfo);
-	if (!srv.pConsoleInfo) {
-		lstrcpyW(szErr, L"ConEmuC: RecreateMapData failed, srv.pConsoleInfo is NULL");
-		goto wrap;
-	}
-	
-	if (srv.pConsoleData)
-		CloseMapData();
-		
-		
-	srv.pConsoleDataCopy = (CESERVER_REQ_CONINFO_DATA*)Alloc(nMaxSize,1);
-	if (!srv.pConsoleDataCopy) {
-		wsprintf (szErr, L"ConEmuC: Alloc(%i) failed, pConsoleDataCopy is null", nMaxSize);
-		goto wrap;
-	}
-	
-
-	nNewIndex = srv.pConsoleInfo->nCurDataMapIdx;
-	nNewIndex++;
-	
-	wsprintf(szMapName, CECONMAPNAME L".%i", (DWORD)ghConWnd, nNewIndex);
-
-	
-	srv.hFileMappingData = CreateFileMapping(INVALID_HANDLE_VALUE, 
-		gpNullSecurity, PAGE_READWRITE, 0, nMaxSize, szMapName);
-	if (!srv.hFileMappingData) {
-		dwErr = GetLastError();
-		wsprintf (szErr, L"ConEmuC: CreateFileMapping(%s) failed. ErrCode=0x%08X", szMapName, dwErr);
-		goto wrap;
-	}
-	
-	srv.pConsoleData = (CESERVER_REQ_CONINFO_DATA*)MapViewOfFile(srv.hFileMappingData, FILE_MAP_ALL_ACCESS,0,0,0);
-	if (!srv.pConsoleData) {
-		dwErr = GetLastError();
-		CloseHandle(srv.hFileMappingData); srv.hFileMappingData = NULL;
-		wsprintf (szErr, L"ConEmuC: MapViewOfFile(%s) failed. ErrCode=0x%08X", szMapName, dwErr);
-		goto wrap;
-	}
-	memset(srv.pConsoleData, 0, nMaxSize);
-	srv.pConsoleData->crBufSize.X = crMaxSize.X; // srv.sbi.dwMaximumWindowSize.X;
-	srv.pConsoleData->crBufSize.Y = crMaxSize.Y; // srv.sbi.dwMaximumWindowSize.Y;
-	
-	srv.nConsoleDataSize = nMaxSize;
-	
-	// Done
-	srv.pConsoleInfo->nCurDataMapIdx = nNewIndex;
-	srv.pConsoleInfo->nCurDataMaxSize = nMaxSize;
-
-	lbRc = TRUE;
-wrap:
-	if (!lbRc && szErr[0])
-		SetConsoleTitle(szErr);
-	return lbRc;
-}
-
-void CloseMapHeader()
-{
-	CloseMapData();
-	
-	if (srv.pConsoleInfo) {
-		UnmapViewOfFile(srv.pConsoleInfo);
-		srv.pConsoleInfo = NULL;
-	}
-	if (srv.hFileMapping) {
-		CloseHandle(srv.hFileMapping);
-		srv.hFileMapping = NULL;
 	}
 }
 
@@ -1407,7 +1483,7 @@ BOOL CorrectVisibleRect(CONSOLE_SCREEN_BUFFER_INFO* pSbi)
 static BOOL ReadConsoleInfo()
 {
 	BOOL lbRc = TRUE;
-	BOOL lbChanged = srv.pConsoleData ? FALSE : TRUE; // Для первого чтения - сразу TRUE
+	BOOL lbChanged = srv.pConsole->bChanged; // Если что-то еще не отослали - сразу TRUE
 	//CONSOLE_SELECTION_INFO lsel = {0}; // GetConsoleSelectionInfo
 	CONSOLE_CURSOR_INFO lci = {0}; // GetConsoleCursorInfo
 	DWORD ldwConsoleCP=0, ldwConsoleOutputCP=0, ldwConsoleMode=0;
@@ -1492,25 +1568,33 @@ static BOOL ReadConsoleInfo()
 	}
 	
 	// Лучше всегда делать, чтобы данные были гарантированно актуальные
-	srv.pConsoleInfo->hConWnd = ghConWnd;
-	srv.pConsoleInfo->nServerPID = GetCurrentProcessId();
-	//srv.pConsoleInfo->nInputTID = srv.dwInputThreadId;
-	srv.pConsoleInfo->nReserved0 = 0;
-	srv.pConsoleInfo->dwCiSize = sizeof(srv.ci);
-	srv.pConsoleInfo->ci = srv.ci;
-	srv.pConsoleInfo->dwConsoleCP = srv.dwConsoleCP;
-	srv.pConsoleInfo->dwConsoleOutputCP = srv.dwConsoleOutputCP;
-	srv.pConsoleInfo->dwConsoleMode = srv.dwConsoleMode;
-	srv.pConsoleInfo->dwSbiSize = sizeof(srv.sbi);
-	srv.pConsoleInfo->sbi = srv.sbi;
+	srv.pConsole->info.hConWnd = ghConWnd;
+	srv.pConsole->info.nServerPID = GetCurrentProcessId();
+	//srv.pConsole->info.nInputTID = srv.dwInputThreadId;
+	srv.pConsole->info.nReserved0 = 0;
+	srv.pConsole->info.dwCiSize = sizeof(srv.ci);
+	srv.pConsole->info.ci = srv.ci;
+	srv.pConsole->info.dwConsoleCP = srv.dwConsoleCP;
+	srv.pConsole->info.dwConsoleOutputCP = srv.dwConsoleOutputCP;
+	srv.pConsole->info.dwConsoleMode = srv.dwConsoleMode;
+	srv.pConsole->info.dwSbiSize = sizeof(srv.sbi);
+	srv.pConsole->info.sbi = srv.sbi;
 
 
-//wrap:
 	// Если есть возможность (WinXP+) - получим реальный список процессов из консоли
 	//CheckProcessCount(); -- уже должно быть вызвано !!!
-	GetProcessCount(srv.pConsoleInfo->nProcesses, countof(srv.pConsoleInfo->nProcesses));
-	_ASSERTE(srv.pConsoleInfo->nProcesses[0]);
-	
+	GetProcessCount(srv.pConsole->info.nProcesses, countof(srv.pConsole->info.nProcesses));
+	_ASSERTE(srv.pConsole->info.nProcesses[0]);
+
+	//if (memcmp(&(srv.pConsole->info), srv.pConsoleMap->Ptr(), srv.pConsole->info.cbSize)) {
+	if (lbChanged) {
+		srv.pConsoleMap->SetFrom(&(srv.pConsole->info));
+		//lbChanged = TRUE;
+	}
+
+	if (lbChanged)
+		srv.pConsole->bChanged = TRUE;
+
 	return lbChanged;
 }
 
@@ -1536,6 +1620,7 @@ static BOOL ReadConsoleData()
 	DWORD TextLen=0;
 	COORD bufSize, bufCoord;
 	SMALL_RECT rgn;
+	DWORD nCurSize, nHdrSize;
 	
 	_ASSERTE(srv.sbi.srWindow.Left == 0);
 	_ASSERTE(srv.sbi.srWindow.Right == (srv.sbi.dwSize.X - 1));
@@ -1543,20 +1628,33 @@ static BOOL ReadConsoleData()
 	TextWidth  = srv.sbi.dwSize.X;
 	TextHeight = (srv.sbi.srWindow.Bottom - srv.sbi.srWindow.Top + 1);
 	TextLen = TextWidth * TextHeight;
+	if (!TextWidth || !TextHeight) {
+		_ASSERTE(TextWidth && TextHeight);
+		goto wrap;
+	}
 	
-	DWORD nCurSize = TextLen * sizeof(CHAR_INFO);
-	DWORD nHdrSize = sizeof(CESERVER_REQ_CONINFO_DATA)-sizeof(CHAR_INFO);
+	nCurSize = TextLen * sizeof(CHAR_INFO);
+	nHdrSize = sizeof(CESERVER_REQ_CONINFO_FULL)-sizeof(CHAR_INFO);
 	
-	if (!srv.pConsoleData || srv.nConsoleDataSize < (nCurSize+nHdrSize))
+	if (!srv.pConsole || srv.pConsole->cbMaxSize < (nCurSize+nHdrSize))
 	{
-		// Если MapFile еще не создавался, или был увеличен размер консоли
-		if (!RecreateMapData())
-		{
-			// Раз не удалось пересоздать MapFile - то и дергаться не нужно...
+		_ASSERTE(srv.pConsole && srv.pConsole->cbMaxSize >= (nCurSize+nHdrSize));
+		TextHeight = (srv.pConsole->data.crMaxSize.X * srv.pConsole->data.crMaxSize.Y) / TextWidth;
+		if (!TextHeight) {
+			_ASSERTE(TextHeight);
 			goto wrap;
 		}
+		TextLen = TextWidth * TextHeight;
+		nCurSize = TextLen * sizeof(CHAR_INFO);
+
+		// Если MapFile еще не создавался, или был увеличен размер консоли
+		//if (!RecreateMapData())
+		//{
+		//	// Раз не удалось пересоздать MapFile - то и дергаться не нужно...
+		//	goto wrap;
+		//}
 		
-		_ASSERTE(srv.nConsoleDataSize >= (nCurSize+nHdrSize));
+		//_ASSERTE(srv.nConsoleDataSize >= (nCurSize+nHdrSize));
 	}
 
 	hOut = (HANDLE)ghConOut;
@@ -1592,14 +1690,16 @@ static BOOL ReadConsoleData()
 	//srv.pConsoleDataCopy->crBufSize.X = TextWidth;
 	//srv.pConsoleDataCopy->crBufSize.Y = TextHeight;
 	
-	if (memcmp(srv.pConsoleData->Buf, srv.pConsoleDataCopy->Buf, nCurSize)) {
-		memmove(srv.pConsoleData->Buf, srv.pConsoleDataCopy->Buf, nCurSize);
+	if (memcmp(srv.pConsole->data.Buf, srv.pConsoleDataCopy->Buf, nCurSize)) {
+		memmove(srv.pConsole->data.Buf, srv.pConsoleDataCopy->Buf, nCurSize);
 		lbChanged = TRUE;
 	}
 	// низя - он уже установлен в максимальное значение
 	//srv.pConsoleData->crBufSize = srv.pConsoleDataCopy->crBufSize;
 	
 wrap:
+	if (lbChanged)
+		srv.pConsole->bChanged = TRUE;
 	return lbChanged;
 }
 
@@ -1627,29 +1727,29 @@ BOOL ReloadFullConsoleInfo(BOOL abForceSend)
 		return lbChanged;
 	}
 
-	DWORD nPacketID = srv.pConsoleInfo->nPacketId;
+	DWORD nPacketID = srv.pConsole->info.nPacketId;
 	
 	if (ReadConsoleInfo())
 		lbChanged = TRUE;
 
 	// Если чтение информации о консоли прошло успешно, и номер пакета никто другой не накрутил...
-	//if (nPacketID == srv.pConsoleInfo->nPacketId)
+	//if (nPacketID == srv.pConsole->info.nPacketId)
 	//{
 	if (ReadConsoleData())
 		lbChanged = TRUE;
 	//}
 
-	//if (!lbChanged && srv.nFarInfoLastIdx != srv.pConsoleInfo->nFarInfoIdx)
+	//if (!lbChanged && srv.nFarInfoLastIdx != srv.pConsole->info.nFarInfoIdx)
 	//	lbChanged = TRUE;
 
 	if (lbChanged)
 	{
 		// Накрутить счетчик и Tick
-		if (nPacketID == srv.pConsoleInfo->nPacketId) {
-			srv.pConsoleInfo->nPacketId++;
+		if (nPacketID == srv.pConsole->info.nPacketId) {
+			srv.pConsole->info.nPacketId++;
 			TODO("Можно заменить на multimedia tick");
-			srv.pConsoleInfo->nSrvUpdateTick = GetTickCount();
-//			srv.nFarInfoLastIdx = srv.pConsoleInfo->nFarInfoIdx;
+			srv.pConsole->info.nSrvUpdateTick = GetTickCount();
+//			srv.nFarInfoLastIdx = srv.pConsole->info.nFarInfoIdx;
 		}
 	}
 	
@@ -1971,7 +2071,7 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 
 		// Чтобы не грузить процессор неактивными консолями
 		//if (!lbForceSend) {
-		if (!srv.pConsoleInfo->bConsoleActive) {
+		if (!srv.pConsole->info.bConsoleActive) {
 			DWORD nCurTick = GetTickCount();
 			nDelta = nCurTick - nLastUpdateTick;
 			// #define MAX_FORCEREFRESH_INTERVAL 1000
@@ -2251,6 +2351,94 @@ DWORD WINAPI InputPipeThread(LPVOID lpvParam)
 							default: DEBUGSTRINPUTPIPE(L"ConEmuC: Recieved input\n");
 						}
 					#endif
+
+					INPUT_RECORD r;
+					ProcessInputMessage(imsg, r);
+					//SendConsoleEvent(&r, 1);
+					if (!WriteInputQueue(&r)) {
+						WARNING("Если буфер переполнен - ждать? Хотя если будем ждать здесь - может повиснуть GUI на записи в pipe...");
+					}
+
+					MCHKHEAP;
+				}
+				// next
+				memset(&imsg,0,sizeof(imsg));
+				MCHKHEAP;
+			}
+			SafeCloseHandle(srv.hInputPipe);
+
+		} 
+		else 
+			// The client could not connect, so close the pipe. 
+			SafeCloseHandle(srv.hInputPipe);
+	} 
+	MCHKHEAP;
+	return 1; 
+} 
+
+DWORD WINAPI GetDataThread(LPVOID lpvParam) 
+{ 
+	BOOL fConnected, fSuccess; 
+	DWORD dwErr = 0;
+
+	while (!gbQuit)
+	{
+		MCHKHEAP;
+		srv.hInputPipe = CreateNamedPipe( 
+			srv.szInputname,          // pipe name 
+			PIPE_ACCESS_INBOUND,      // goes from client to server only
+			PIPE_TYPE_MESSAGE |       // message type pipe 
+			PIPE_READMODE_MESSAGE |   // message-read mode 
+			PIPE_WAIT,                // blocking mode 
+			PIPE_UNLIMITED_INSTANCES, // max. instances  
+			PIPEBUFSIZE,              // output buffer size 
+			PIPEBUFSIZE,              // input buffer size 
+			0,                        // client time-out
+			gpNullSecurity);          // default security attribute 
+
+		if (srv.hInputPipe == INVALID_HANDLE_VALUE) 
+		{
+			dwErr = GetLastError();
+			_ASSERTE(srv.hInputPipe != INVALID_HANDLE_VALUE);
+			_printf("CreatePipe failed, ErrCode=0x%08X\n", dwErr);
+			Sleep(50);
+			//return 99;
+			continue;
+		}
+
+		// Wait for the client to connect; if it succeeds, 
+		// the function returns a nonzero value. If the function
+		// returns zero, GetLastError returns ERROR_PIPE_CONNECTED. 
+
+		fConnected = ConnectNamedPipe(srv.hInputPipe, NULL) ? 
+TRUE : (GetLastError() == ERROR_PIPE_CONNECTED); 
+
+		MCHKHEAP;
+		if (fConnected) 
+		{ 
+			//TODO:
+			DWORD cbBytesRead; //, cbWritten;
+			MSG imsg; memset(&imsg,0,sizeof(imsg));
+			while (!gbQuit && (fSuccess = ReadFile( 
+				srv.hInputPipe,        // handle to pipe 
+				&imsg,        // buffer to receive data 
+				sizeof(imsg), // size of buffer 
+				&cbBytesRead, // number of bytes read 
+				NULL)) != FALSE)        // not overlapped I/O 
+			{
+				// предусмотреть возможность завершения нити
+				if (gbQuit)
+					break;
+
+				MCHKHEAP;
+				if (imsg.message) {
+#ifdef _DEBUG
+					switch (imsg.message) {
+							case WM_KEYDOWN: case WM_SYSKEYDOWN: DEBUGSTRINPUTPIPE(L"ConEmuC: Recieved key down\n"); break;
+							case WM_KEYUP: case WM_SYSKEYUP: DEBUGSTRINPUTPIPE(L"ConEmuC: Recieved key up\n"); break;
+							default: DEBUGSTRINPUTPIPE(L"ConEmuC: Recieved input\n");
+					}
+#endif
 
 					INPUT_RECORD r;
 					ProcessInputMessage(imsg, r);

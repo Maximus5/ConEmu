@@ -325,7 +325,7 @@ extern wchar_t gsFolder[64], /*gsHardLink[64],*/ gsSymLink[64], gsJunction[64], 
 //} SynchroArg;
 
 BOOL LoadFarVersion();
-void StartPlugin(void);
+void StartPlugin(BOOL abManual);
 void ExitPlugin(void);
 void FUNC_X(ExitFARW)(void);
 void FUNC_Y(ExitFARW)(void);
@@ -390,7 +390,7 @@ typedef int (WINAPI *RegisterPanelView_t)(PanelViewInit *ppvi);
 typedef HWND (WINAPI *GetFarHWND2_t)(BOOL abConEmuOnly);
 extern RegisterPanelView_t gfRegisterPanelView;
 extern GetFarHWND2_t gfGetFarHWND2;
-BOOL CheckConEmu(/*BOOL abForceCheck=FALSE*/);
+BOOL CheckConEmu(BOOL abSilence=FALSE);
 //HWND GetConEmuHWND();
 //BOOL WINAPI OnReadConsole(PINPUT_RECORD lpBuffer, LPDWORD lpNumberOfEventsRead);
 BOOL WINAPI OnPrePeekConsole(HANDLE hInput, PINPUT_RECORD lpBuffer, DWORD nBufSize, LPDWORD lpNumberOfEventsRead, BOOL* pbResult);
