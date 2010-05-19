@@ -150,17 +150,25 @@ HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t* pszErr/*[MAX_PATH*2]*
 }
 
 
-void ExecutePrepareCmd(CESERVER_REQ* pIn, DWORD nCmd, DWORD nSize)
+void ExecutePrepareCmd(CESERVER_REQ* pIn, DWORD nCmd, DWORD cbSize)
 {
 	if (!pIn)
 		return;
 
-	pIn->hdr.nCmd = nCmd;
-	pIn->hdr.nSrcThreadId = GetCurrentThreadId();
-	pIn->hdr.nSrcPID = GetCurrentProcessId();
-	pIn->hdr.nSize = nSize;
-	pIn->hdr.nVersion = CESERVER_REQ_VER;
-	pIn->hdr.nCreateTick = GetTickCount();
+	ExecutePrepareCmd(&(pIn->hdr), nCmd, cbSize);
+}
+
+void ExecutePrepareCmd(CESERVER_REQ_HDR* pHdr, DWORD nCmd, DWORD cbSize)
+{
+	if (!pHdr)
+		return;
+
+	pHdr->nCmd = nCmd;
+	pHdr->nSrcThreadId = GetCurrentThreadId();
+	pHdr->nSrcPID = GetCurrentProcessId();
+	pHdr->cbSize = cbSize;
+	pHdr->nVersion = CESERVER_REQ_VER;
+	pHdr->nCreateTick = GetTickCount();
 }
 
 CESERVER_REQ* ExecuteNewCmd(DWORD nCmd, DWORD nSize)
@@ -229,7 +237,7 @@ CESERVER_REQ* ExecuteCmd(const wchar_t* szGuiPipeName, const CESERVER_REQ* pIn, 
 	}
 
 	_ASSERTE(pIn->hdr.nSrcPID && pIn->hdr.nSrcThreadId);
-	_ASSERTE(pIn->hdr.nSize >= sizeof(pIn->hdr));
+	_ASSERTE(pIn->hdr.cbSize >= sizeof(pIn->hdr));
 		
 	hPipe = ExecuteOpenPipe(szGuiPipeName, szErr, NULL/*—юда хорошо бы им€ модул€ подкрутить*/);
 	if (hPipe == NULL || hPipe == INVALID_HANDLE_VALUE) {
@@ -295,7 +303,7 @@ CESERVER_REQ* ExecuteCmd(const wchar_t* szGuiPipeName, const CESERVER_REQ* pIn, 
 	fSuccess = TransactNamedPipe( 
 		hPipe,                  // pipe handle 
 		(LPVOID)pIn,            // message to server
-		pIn->hdr.nSize,         // message length 
+		pIn->hdr.cbSize,         // message length 
 		cbReadBuf,              // buffer to receive reply
 		sizeof(cbReadBuf),      // size of read buffer
 		&cbRead,                // bytes read
@@ -319,7 +327,7 @@ CESERVER_REQ* ExecuteCmd(const wchar_t* szGuiPipeName, const CESERVER_REQ* pIn, 
 
 	pOut = (CESERVER_REQ*)cbReadBuf; // temporary
 	
-	if (pOut->hdr.nSize < cbRead) {
+	if (pOut->hdr.cbSize < cbRead) {
 		CloseHandle(hPipe);
 		OutputDebugString(L"!!! Wrong nSize received from GUI server !!!\n");
 		return NULL;
@@ -331,7 +339,7 @@ CESERVER_REQ* ExecuteCmd(const wchar_t* szGuiPipeName, const CESERVER_REQ* pIn, 
 		return NULL;
 	}
 	
-	int nAllSize = pOut->hdr.nSize;
+	int nAllSize = pOut->hdr.cbSize;
 	pOut = (CESERVER_REQ*)_malloc(nAllSize);
 	_ASSERTE(pOut);
 	if (!pOut) {
@@ -409,7 +417,7 @@ HWND GetConEmuHWND(BOOL abRoot)
 	if (!pOut)
 		return NULL;
 	
-	if (pOut->hdr.nSize != (sizeof(CESERVER_REQ_HDR)+2*sizeof(DWORD)) || pOut->hdr.nCmd != in.hdr.nCmd) {
+	if (pOut->hdr.cbSize != (sizeof(CESERVER_REQ_HDR)+2*sizeof(DWORD)) || pOut->hdr.nCmd != in.hdr.nCmd) {
 		ExecuteFreeResult(pOut);
 		return NULL;
 	}

@@ -31,6 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../Common/common.hpp"
 #include "../Common/ConsoleAnnotation.h"
 #include "../Common/RgnDetect.h"
+#include "../Common/WinObjects.h"
 
 #define CES_CMDACTIVE 0x01
 #define CES_TELNETACTIVE 0x02
@@ -317,13 +318,15 @@ public:
 	void Detach();
 	void AdminDuplicate();
 	const CEFAR_INFO *GetFarInfo();
-	LPCWSTR GetLngNameTime();
+	//LPCWSTR GetLngNameTime();
 
 protected:
     CVirtualConsole* mp_VCon; // соответствующая виртуальная консоль
     DWORD mn_ConEmuC_PID/*, mn_ConEmuC_Input_TID*/; HANDLE mh_ConEmuC, mh_ConEmuCInput;
 	BOOL mb_UseOnlyPipeInput;
     TCHAR ms_ConEmuC_Pipe[MAX_PATH], ms_ConEmuCInput_Pipe[MAX_PATH], ms_VConServer_Pipe[MAX_PATH];
+	//TCHAR ms_ConEmuC_DataReady[64]; HANDLE mh_ConEmuC_DataReady;
+	void InitNames();
     // Текущий заголовок консоли и его значение для сравнения (для определения изменений)
     WCHAR Title[MAX_TITLE_SIZE+1], TitleCmp[MAX_TITLE_SIZE+1];
     // А здесь содержится то, что отображается в ConEmu (может быть добавлено " (Admin)")
@@ -361,7 +364,7 @@ protected:
     //BOOL RetrieveConsoleInfo(/*BOOL bShortOnly,*/ UINT anWaitSize);
 	BOOL WaitConsoleSize(UINT anWaitSize, DWORD nTimeout);
     BOOL InitBuffers(DWORD OneBufferSize);
-	BOOL LoadDataFromMap(DWORD CharCount);
+	BOOL LoadDataFromSrv(DWORD CharCount, CHAR_INFO* pData);
 private:
     // Эти переменные инициализируются в RetrieveConsoleInfo()
 	MSection csCON; //DWORD ncsT;
@@ -373,7 +376,8 @@ private:
         USHORT nTopVisibleLine; // может отличаться от m_sbi.srWindow.Top, если прокрутка заблокирована
         wchar_t *pConChar;
         WORD  *pConAttr;
-		CESERVER_REQ_CONINFO_DATA *pCopy, *pCmp;
+		//CESERVER_REQ_CONINFO_DATA *pCopy, *pCmp;
+		CHAR_INFO *pDataCmp;
         int nTextWidth, nTextHeight, nBufferHeight;
         int nChange2TextWidth, nChange2TextHeight;
         BOOL bBufferHeight; // TRUE, если есть прокрутка
@@ -414,9 +418,9 @@ private:
     WORD mn_SelectModeSkipVk; // пропустить "отпускание" клавиши Esc/Enter при выделении текста
     bool OnMouseSelection(UINT messg, WPARAM wParam, int x, int y);
     void UpdateSelection(); // обновить на экране
-    static DWORD WINAPI ServerThread(LPVOID lpvParam);
-    HANDLE mh_ServerThreads[MAX_SERVER_THREADS], mh_ActiveServerThread;
-    DWORD  mn_ServerThreadsId[MAX_SERVER_THREADS];
+    static DWORD WINAPI RConServerThread(LPVOID lpvParam);
+    HANDLE mh_RConServerThreads[MAX_SERVER_THREADS], mh_ActiveRConServerThread;
+    DWORD  mn_RConServerThreadsId[MAX_SERVER_THREADS];
     HANDLE mh_ServerSemaphore, mh_GuiAttached;
     void SetBufferHeightMode(BOOL abBufferHeight, BOOL abLock=FALSE);
     BOOL mb_BuferModeChangeLocked;
@@ -444,18 +448,26 @@ private:
     //CESERVER_REQ* m_PacketQueue[(MAX_SERVER_THREADS+1)*MAX_THREAD_PACKETS];
     //void PushPacket(CESERVER_REQ* pPkt);
     //CESERVER_REQ* PopPacket();
-	HANDLE mh_FileMapping, mh_FileMappingData, mh_FarFileMapping, mh_FarAliveEvent;
-	wchar_t ms_HeaderMapName[64], ms_DataMapName[64];
-	const CESERVER_REQ_CONINFO_HDR *mp_ConsoleInfo;
-	const CESERVER_REQ_CONINFO_DATA *mp_ConsoleData; // Mapping
-	const CEFAR_INFO *mp_FarInfo;
+	//HANDLE mh_FileMapping, mh_FileMappingData, 
+	//HANDLE mh_FarFileMapping,
+	//HANDLE mh_FarAliveEvent;
+	MEvent m_FarAliveEvent;
+	MPipe<CESERVER_REQ_HDR,CESERVER_REQ_HDR> m_GetDataPipe;
+	MEvent m_ConDataChanged;
+	//wchar_t ms_HeaderMapName[64], ms_DataMapName[64];
+	//const CESERVER_REQ_CONINFO_HDR *mp_ConsoleInfo;
+	//const CESERVER_REQ_CONINFO_DATA *mp_ConsoleData; // Mapping
+	MFileMapping<CESERVER_REQ_CONINFO_HDR> m_ConsoleMap;
+	//const CEFAR_INFO *mp_FarInfo;
+	MFileMapping<const CEFAR_INFO> m_FarInfo;
 	// Colorer Mapping
-	HANDLE mh_ColorMapping;
-	AnnotationHeader *mp_ColorHdr;
-	AnnotationInfo *mp_ColorData;
+	//HANDLE mh_ColorMapping;
+	//AnnotationHeader *mp_ColorHdr;
+	MFileMapping<const AnnotationHeader> m_TrueColorerMap;
+	const AnnotationInfo *mp_TrueColorerData;
 	DWORD mn_LastColorFarID;
 	void OpenColorMapping(); // Открыть мэппинг колорера (по HWND)
-	void CheckColorMapping(DWORD dwPID); // Проверить валидность буфера - todo
+	//void CheckColorMapping(DWORD dwPID); // Проверить валидность буфера - todo
 	void CloseColorMapping();
 	//
 	DWORD mn_LastConsoleDataIdx, mn_LastConsolePacketIdx; //, mn_LastFarReadIdx;
@@ -463,8 +475,8 @@ private:
 	BOOL OpenFarMapData();
 	void CloseFarMapData();
 	BOOL OpenMapHeader(BOOL abFromAttach=FALSE);
-	void CloseMapData();	
-	BOOL ReopenMapData();
+	//void CloseMapData();	
+	//BOOL ReopenMapData();
 	void CloseMapHeader();
 	void ApplyConsoleInfo();
 	BOOL mb_DataChanged;
@@ -477,7 +489,7 @@ private:
 	//
 	wchar_t ms_Editor[32], ms_EditorRus[32], ms_Viewer[32], ms_ViewerRus[32];
 	wchar_t ms_TempPanel[32], ms_TempPanelRus[32];
-	wchar_t ms_NameTitle[32];
+	//wchar_t ms_NameTitle[32];
 	//
 	BOOL mb_PluginDetected; DWORD mn_FarPID_PluginDetected; //, mn_Far_PluginInputThreadId;
 	void CheckFarStates();

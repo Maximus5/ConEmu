@@ -53,8 +53,6 @@ WARNING("Глюк с частичной отрисовкой экрана часто появляется при Alt-F7, Enter. 
 
 //PRAGMA_ERROR("При попытке компиляции F:\\VCProject\\FarPlugin\\PPCReg\\compile.cmd - Enter в консоль не прошел");
 
-WARNING("Может быть хватит ServerThread? А StartProcessThread зарезервировать только для запуска процесса, и сразу из него выйти");
-
 WARNING("В каждой VCon создать буфер BYTE[256] для хранения распознанных клавиш (Ctrl,...,Up,PgDn,Add,и пр.");
 WARNING("Нераспознанные можно помещать в буфер {VKEY,wchar_t=0}, в котором заполнять последний wchar_t по WM_CHAR/WM_SYSCHAR");
 WARNING("При WM_(SYS)CHAR помещать wchar_t в начало, в первый незанятый VKEY");
@@ -1362,13 +1360,14 @@ bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC)
 		
 		mp_RCon->GetConsoleData(mpsz_ConChar, mpn_ConAttrEx, TextWidth, TextHeight); //TextLen*2);
 		
+		SMALL_RECT rcFull, rcGlyph = {0,0,-1,-1};
 		if (gSet.isExtendUCharMap)
 		{
 			const CRgnDetect* pRgn = mp_RCon->GetDetector();
 			if (pRgn && (pRgn->GetFlags() & (FR_UCHARMAP|FR_UCHARMAPGLYPH)) == (FR_UCHARMAP|FR_UCHARMAPGLYPH)) {
-				SMALL_RECT rcFull, rcGlyph;
-				if (pRgn->GetDetectedDialogs(1, &rcFull, NULL, FR_UCHARMAP) 
-					&& pRgn->GetDetectedDialogs(1, &rcGlyph, NULL, FR_UCHARMAPGLYPH))
+				
+				if (pRgn->GetDetectedDialogs(1, &rcFull, NULL, FR_UCHARMAP, FR_UCHARMAP) 
+					&& pRgn->GetDetectedDialogs(1, &rcGlyph, NULL, FR_UCHARMAPGLYPH, FR_UCHARMAPGLYPH))
 				{
 					wchar_t szFontName[32], *pszStart, *pszEnd;
 					pszStart = mpsz_ConChar + TextWidth*(rcFull.Top+1) + rcFull.Left + 1;
@@ -1395,6 +1394,7 @@ bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC)
 				}
 			}
 		}
+		mrc_UCharMap = rcGlyph;
 
 		gSet.Performance(tPerfData, TRUE);
 	}
@@ -1779,7 +1779,7 @@ void CVirtualConsole::UpdateText()
     // rows
     // зачем в isForceMonospace принудительно перерисовывать все?
     // const bool skipNotChanged = !isForce /*&& !gSet.isForceMonospace*/;
-    const bool skipNotChanged = !isForce && !((gSet.FontItalic() || gSet.FontClearType()));
+    const bool skipNotChanged = !isForce; // && !((gSet.FontItalic() || gSet.FontClearType()));
 	bool bEnhanceGraphics = gSet.isEnhanceGraphics;
 	bool bProportional = gSet.isMonospace == 0;
 	bool bForceMonospace = gSet.isMonospace == 2;
@@ -1813,7 +1813,7 @@ void CVirtualConsole::UpdateText()
         if (skipNotChanged)
         {
             // Skip not changed head and tail symbols
-			if (!FindChanges(j, end, ConCharLine, ConAttrLine, ConCharLine2, ConAttrLine2))
+			if (!FindChanges(row, j, end, ConCharLine, ConAttrLine, ConCharLine2, ConAttrLine2))
 				continue;
         } // if (skipNotChanged)
         
@@ -3169,8 +3169,19 @@ void CVirtualConsole::DistributeSpaces(wchar_t* ConCharLine, CharAttr* ConAttrLi
 	}
 }
 
-BOOL CVirtualConsole::FindChanges(int &j, int &end, const wchar_t* ConCharLine, const CharAttr* ConAttrLine, const wchar_t* ConCharLine2, const CharAttr* ConAttrLine2)
+BOOL CVirtualConsole::FindChanges(int row, int &j, int &end, const wchar_t* ConCharLine, const CharAttr* ConAttrLine, const wchar_t* ConCharLine2, const CharAttr* ConAttrLine2)
 {
+	// UCharMap - перерисовать полностью, там может шрифт измениться
+	if (gSet.isExtendUCharMap && mrc_UCharMap.Right > mrc_UCharMap.Left) {
+		if (row >= mrc_UCharMap.Top && row <= mrc_UCharMap.Bottom)
+			return TRUE; // пока строку целиком будем рисовать
+	}
+	
+	// Если изменений в строке вообще нет
+	if (wmemcmp(ConCharLine, ConCharLine2, end) == 0
+		&& memcmp(ConAttrLine, ConAttrLine2, end*sizeof(*ConAttrLine)) == 0)
+		return FALSE;
+
 	// Default: j = 0, end = TextWidth;
 	return TRUE; // пока строку целиком будем рисовать
 
@@ -3179,11 +3190,6 @@ BOOL CVirtualConsole::FindChanges(int &j, int &end, const wchar_t* ConCharLine, 
 	TODO("Возможно при включенном ClearType не нужно будет рисовать строку целиком, если переделаю на Transparent отрисовку текста");
 	if (gSet.FontItalic() || gSet.FontClearType())
 		return TRUE;
-
-	// Если изменений в строке вообще нет
-	if (wmemcmp(ConCharLine, ConCharLine2, end) == 0
-		&& memcmp(ConAttrLine, ConAttrLine2, end*sizeof(*ConAttrLine)) == 0)
-		return FALSE;
 
 	// *) Skip not changed tail symbols. но только если шрифт моноширный
 	if (gSet.isMonospace) {
@@ -3393,7 +3399,7 @@ BOOL CVirtualConsole::RegisterPanelView(PanelViewInit* ppvi)
 {
 	_ASSERTE(ppvi && ppvi->cbSize == sizeof(PanelViewInit));
 	BOOL lbRc = FALSE;
-	
+
 	PanelViewInit* pp = (ppvi->bLeftPanel) ? &m_LeftPanelView : &m_RightPanelView;
 	BOOL lbPrevRegistered = pp->bRegister;
 	*pp = *ppvi;
@@ -3412,6 +3418,8 @@ BOOL CVirtualConsole::RegisterPanelView(PanelViewInit* ppvi)
 	DWORD dwSetParentErr = 0;
 
 	if (ppvi->bRegister) {
+		_ASSERTE(ppvi->bVisible);
+
 		// При повторной регистрации - не дергаться
 		if (!lbPrevRegistered) {
 			//for (int i=0; i<20; i++) // на всякий случай - сначала все сбросим
@@ -3427,11 +3435,7 @@ BOOL CVirtualConsole::RegisterPanelView(PanelViewInit* ppvi)
 				HWND hRc = SetParent((HWND)ppvi->hWnd, ghWnd);
 				dwSetParentErr = GetLastError();
 			} else {
-				//UpdatePanelRgn(ppvi->bLeftPanel, FALSE, TRUE);
-				lbRc = UpdatePanelView(ppvi->bLeftPanel, TRUE);
-				// На панелях нужно "затереть" лишние части рамок
-				Update(true);
-				gSet.OnPanelViewAppeared(TRUE);
+				lbRc = TRUE;
 			}
 		} else {
 			lbRc = TRUE;
@@ -3439,6 +3443,19 @@ BOOL CVirtualConsole::RegisterPanelView(PanelViewInit* ppvi)
 				mb_LeftPanelRedraw = TRUE;
 			else
 				mb_RightPanelRedraw = TRUE;
+		}
+
+		if (lbRc) {
+			// Положение и регионы (по текущему состоянию окна)
+			lbRc = UpdatePanelView(ppvi->bLeftPanel, TRUE);
+			// Обновить флаг видимости
+			ppvi->bVisible = pp->bVisible;
+			ppvi->WorkRect = pp->WorkRect;
+
+			// На панелях нужно "затереть" лишние части рамок
+			Update(true);
+			// Если открыто окно настроек - включить в нем кнопку "Apply"
+			if (ghOpWnd) gSet.OnPanelViewAppeared(TRUE);
 		}
 	} else {
 		lbRc = TRUE;
@@ -3469,7 +3486,7 @@ BOOL CVirtualConsole::CheckDialogsChanged()
 
 	_ASSERTE(sizeof(mrc_LastDialogs) == sizeof(rcDlg));
 
-	int nDlgCount = mp_RCon->GetDetectedDialogs(sizeofarray(rcDlg), rcDlg, NULL);
+	int nDlgCount = mp_RCon->GetDetectedDialogs(countof(rcDlg), rcDlg, NULL);
 	if (mn_LastDialogsCount != nDlgCount) {
 		lbChanged = TRUE;
 	} else if (memcmp(rcDlg, mrc_LastDialogs, nDlgCount*sizeof(rcDlg[0]))!=0) {
@@ -3484,6 +3501,22 @@ BOOL CVirtualConsole::CheckDialogsChanged()
 	return lbChanged;
 }
 
+const PanelViewInit* CVirtualConsole::GetPanelView(BOOL abLeftPanel)
+{
+	if (!this) return NULL;
+
+	PanelViewInit* pp = abLeftPanel ? &m_LeftPanelView : &m_RightPanelView;
+
+	if (!pp->hWnd || !IsWindow(pp->hWnd)) {
+		if (pp->hWnd)
+			pp->hWnd = NULL;
+		pp->bVisible = FALSE;
+		return NULL;
+	}
+
+	return pp;
+}
+
 // Возвращает TRUE, если панель (или хотя бы часть ее ВИДИМА)
 BOOL CVirtualConsole::UpdatePanelRgn(BOOL abLeftPanel, BOOL abTestOnly, BOOL abOnRegister)
 {
@@ -3491,6 +3524,7 @@ BOOL CVirtualConsole::UpdatePanelRgn(BOOL abLeftPanel, BOOL abTestOnly, BOOL abO
 	if (!pp->hWnd || !IsWindow(pp->hWnd)) {
 		if (pp->hWnd)
 			pp->hWnd = NULL;
+		pp->bVisible = FALSE;
 		return FALSE;
 	}
 	
@@ -3503,15 +3537,18 @@ BOOL CVirtualConsole::UpdatePanelRgn(BOOL abLeftPanel, BOOL abTestOnly, BOOL abO
 	_ASSERTE(sizeof(mrc_LastDialogs) == sizeof(rcDlg));
 
 	const CRgnDetect* pDetect = mp_RCon->GetDetector();
-	int nDlgCount = pDetect->GetDetectedDialogs(sizeofarray(rcDlg), rcDlg, rnDlgFlags);
+	int nDlgCount = pDetect->GetDetectedDialogs(countof(rcDlg), rcDlg, rnDlgFlags);
 	DWORD nDlgFlags = pDetect->GetFlags();
 
 	if (!nDlgCount) {
 		lbPartHidden = TRUE;
-		if (!abTestOnly) {
-			if (IsWindowVisible(pp->hWnd))
-				mp_RCon->ShowOtherWindow(pp->hWnd, SW_HIDE);
-		}
+		pp->bVisible = FALSE;
+
+		//if (!abTestOnly && !abOnRegister) {
+		//	if (IsWindowVisible(pp->hWnd))
+		//		mp_RCon->ShowOtherWindow(pp->hWnd, SW_HIDE);
+		//}
+
 	} else {
 		//HRGN hRgn = NULL, hSubRgn = NULL, hCombine = NULL;
 		m_RgnTest.Reset();
@@ -3537,51 +3574,23 @@ BOOL CVirtualConsole::UpdatePanelRgn(BOOL abLeftPanel, BOOL abTestOnly, BOOL abO
 					rcDlg[i].Bottom == rcPanel.Bottom &&
 					rcDlg[i].Right == rcPanel.Right)
 				{
-					//// Учесть, что первая строка этого прямоугольника может быть скрыта строкой меню
-					//if (rcDlg[i].Top == pp->PanelRect.top
-					//	|| (pp->PanelRect.top == 0 && rcDlg[i].Top == 1))
-					//{
-					//	lbPanelVisible = TRUE;
-					//	m_RgnTest.Init(&(pp->WorkRect));
-					//	continue;
-					//}
 					continue;
 				}
-				//if (!lbPanelVisible)
-				//	continue; // пока до панели не дошли
 				if (!IntersectSmallRect(pp->WorkRect, rcDlg[i]))
 					continue;
 
 				// Все остальные прямоугольники вычитать из hRgn
 				int nCRC = m_RgnTest.DiffSmall(rcDlg+i);
-				//if (!hRgn)
-				//	hRgn = CreateConsoleRgn(pp->WorkRect.left, pp->WorkRect.top, pp->WorkRect.right, pp->WorkRect.bottom, abTestOnly);
-				//hSubRgn = CreateConsoleRgn(rcDlg[i].Left, rcDlg[i].Top, rcDlg[i].Right, rcDlg[i].Bottom, abTestOnly);
-				//if (!hCombine)
-				//	hCombine = CreateRectRgn(0,0,1,1);
-				//int nCRC = CombineRgn(hCombine, hRgn, hSubRgn, RGN_DIFF);
-				//if (nCRC) {
-				//	// Замена переменных
-				//	HRGN hTmp = hRgn; hRgn = hCombine; hCombine = hTmp;
-				//	// А этот больше не нужен
-				//	DeleteObject(hSubRgn); hSubRgn = NULL;
-				//}
 
 				// Проверка, может регион уже пуст?
 				if (nCRC == NULLREGION) {
 					lbPanelVisible = FALSE; break;
 				}
-				//else if (nCRC == ERROR) {
-				//	// Ошибка
-				//	_ASSERTE(nCRC != ERROR);
-				//	if (hRgn) { DeleteObject(hRgn); hRgn = NULL; }
-				//	break;
-				//}
 			}
 		}
 
 		if (abTestOnly) {
-			//if (hRgn) { DeleteObject(hRgn); hRgn = NULL; }
+			// Только проверка
 		}
 		else
 		{
@@ -3589,22 +3598,15 @@ BOOL CVirtualConsole::UpdatePanelRgn(BOOL abLeftPanel, BOOL abTestOnly, BOOL abO
 			
 			if (lbPanelVisible)
 			{
-				//lbPartHidden = (hRgn != NULL);
 				lbPartHidden = (pRgn->nRgnState == COMPLEXREGION);
-				//if (hRgn) {
-				//	POINT pt = ConsoleToClient(pp->WorkRect.left, pp->WorkRect.top);
-				//	OffsetRgn(hRgn, -pt.x, -pt.y);
-				//}
-				//SetWindowRgn(pp->hWnd, hRgn, TRUE); hRgn = NULL;
-				//if (!abOnRegister) {
-				//	if (!IsWindowVisible(pp->hWnd))
-				//		mp_RCon->ShowOtherWindow(pp->hWnd, SW_SHOWNA);
-				//}
+				pp->bVisible = TRUE;
+
 				_ASSERTE(pRgn->nRectCount > 0);
 				if (pRgn->nRgnState == SIMPLEREGION) {
-					if (!abOnRegister) {
-						mp_RCon->SetOtherWindowRgn(pp->hWnd, 0, NULL, TRUE);
-					}
+					//NULL регион пусть ставит всегда (окно может быть ReUsed)
+					//if (!abOnRegister) {
+					mp_RCon->SetOtherWindowRgn(pp->hWnd, 0, NULL, TRUE);
+					//}
 				} else
 				if (lbChanged) {
 					POINT ptShift = ConsoleToClient(pp->WorkRect.left, pp->WorkRect.top);
@@ -3625,27 +3627,33 @@ BOOL CVirtualConsole::UpdatePanelRgn(BOOL abLeftPanel, BOOL abTestOnly, BOOL abO
 					mp_RCon->SetOtherWindowRgn(pp->hWnd, pRgn->nRectCount, rc, TRUE);
 				}
 				
-				if (!abOnRegister) {
-					if (!IsWindowVisible(pp->hWnd))
-						mp_RCon->ShowOtherWindow(pp->hWnd, SW_SHOWNA);
-				}
+				//if (!abOnRegister) {
+				//	if (!IsWindowVisible(pp->hWnd))
+				//		mp_RCon->ShowOtherWindow(pp->hWnd, SW_SHOWNA);
+				//}
 				
 			}
 			else
 			{
-				//if (hRgn) { DeleteObject(hRgn); hRgn = NULL; }
 				lbPartHidden = TRUE;
-				if (IsWindowVisible(pp->hWnd)) {
-					// Сбросит регион и скроет(!) окно
-					mp_RCon->SetOtherWindowRgn(pp->hWnd, -1, NULL, FALSE);
-				}
-					//mp_RCon->ShowOtherWindow(pp->hWnd, SW_HIDE);
-				//SetWindowRgn(pp->hWnd, NULL, TRUE);
+				pp->bVisible = FALSE;
+				//if (IsWindowVisible(pp->hWnd)) {
+				//	// Сбросит регион и скроет(!) окно
+				//	mp_RCon->SetOtherWindowRgn(pp->hWnd, -1, NULL, FALSE);
+				//}
 			}
 		}
+	}
 
-		//// чистка
-		//if (hCombine) { DeleteObject(hCombine); hCombine = NULL; }
+	if (!abTestOnly && !abOnRegister) {
+		if (pp->bVisible && !IsWindowVisible(pp->hWnd)) {
+			mp_RCon->ShowOtherWindow(pp->hWnd, SW_SHOWNA);
+		} else if (!pp->bVisible && IsWindowVisible(pp->hWnd)) {
+			// Сбросит регион и скроет(!) окно
+			mp_RCon->SetOtherWindowRgn(pp->hWnd, -1, NULL, FALSE);
+
+			//mp_RCon->ShowOtherWindow(pp->hWnd, SW_HIDE);
+		}
 	}
 
 	return lbPanelVisible;
@@ -3676,7 +3684,8 @@ BOOL CVirtualConsole::UpdatePanelView(BOOL abLeftPanel, BOOL abOnRegister/*=FALS
 
 
 	//if (mb_DialogsChanged)
-	UpdatePanelRgn(abLeftPanel, FALSE, abOnRegister);
+	// Перенес вниз, т.к. при регистрации окошко отображает GUI
+	//UpdatePanelRgn(abLeftPanel, FALSE, abOnRegister);
 
 	// лучше не зависеть от ConCharX - он может оказаться не инициализированным!
 	pt[0] = MakePoint(pp->WorkRect.left*gSet.FontWidth(), pp->WorkRect.top*gSet.FontHeight());
@@ -3698,6 +3707,9 @@ BOOL CVirtualConsole::UpdatePanelView(BOOL abLeftPanel, BOOL abOnRegister/*=FALS
 	}
 	// И отрисовать
 	//InvalidateRect(pp->hWnd, NULL, FALSE); -- не нужно, так получается двойной WM_PAINT
+
+	// Регионы и видимость (видимость при регистрации не меняется)
+	UpdatePanelRgn(abLeftPanel, FALSE, abOnRegister);
 	
 	return TRUE;
 }
@@ -3758,10 +3770,14 @@ void CVirtualConsole::PolishPanelViews()
 		pAttrs = mpn_ConAttrEx+TextWidth;
 		int nNFore = btNamesColor & 0xF;
 		int nNBack = (btNamesColor & 0xF0) >> 4;
-		if ((pp->nFarPanelSettings & 0x20/*FPS_SHOWCOLUMNTITLES*/)) {
-			LPCWSTR pszNameTitle = mp_RCon->GetLngNameTime();
+		if ((pp->nFarPanelSettings & 0x20/*FPS_SHOWCOLUMNTITLES*/) && pp->tColumnTitle.nFlags) {
+			LPCWSTR pszNameTitle = pp->tColumnTitle.sText;
+			CharAttr ca; CharAttrFromConAttr(pp->tColumnTitle.bConAttr, &ca);
 			int nNameLen = lstrlen(pszNameTitle);
-			int nX1 = rc.left + ((pp->nFarPanelSettings & 0x800/*FPS_SHOWSORTMODELETTER*/) ? 2 : 1);
+			int nX1 = rc.left + 1;
+			if ((pp->tColumnTitle.nFlags & PVI_TEXT_SKIPSORTMODE) 
+				&& (pp->nFarPanelSettings & 0x800/*FPS_SHOWSORTMODELETTER*/))
+				nX1 += 2;
 			int nLineLen = rc.right - nX1;
 			//wmemset(pszLine+nX1, L' ', nLineLen);
 			if (nNameLen > nLineLen) nNameLen = nLineLen;
@@ -3780,7 +3796,7 @@ void CVirtualConsole::PolishPanelViews()
 					)
 				{ 
 					pszLine[x] = *pszNameTitle;
-					TODO("Скорректировать цвет фона. Буква может попасть на вертикальную линию, и останется синей");
+					pAttrs[x] = ca;
 				}
 			for (x = nX4; x < rc.right; x++)
 				if ((pszLine[x] != L' ' && pAttrs[x].nForeIdx == nNFore && pAttrs[x].nBackIdx == nNBack)
@@ -3797,4 +3813,13 @@ void CVirtualConsole::PolishPanelViews()
 					pszLine[x] = ucBoxSinglHorz;
 		}
 	}
+}
+
+void CVirtualConsole::CharAttrFromConAttr(WORD conAttr, CharAttr* pAttr)
+{
+	memset(pAttr, 0, sizeof(CharAttr));
+	pAttr->nForeIdx = (conAttr & 0xF);
+	pAttr->nBackIdx = (conAttr & 0xF0) >> 4;
+	pAttr->crForeColor = pAttr->crOrigForeColor = mp_Colors[pAttr->nForeIdx];
+	pAttr->crBackColor = pAttr->crOrigBackColor = mp_Colors[pAttr->nBackIdx];
 }

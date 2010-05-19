@@ -98,8 +98,9 @@ extern HANDLE ghFarInExecuteEvent;
 #endif
 
 //#include <vector>
-#include "..\common\common.hpp"
-#include "..\common\ConEmuCheck.h"
+#include "../common/common.hpp"
+#include "../common/ConEmuCheck.h"
+#include "../Common/WinObjects.h"
 
 #ifdef _DEBUG
 extern wchar_t gszDbgModLabel[6];
@@ -167,6 +168,7 @@ DWORD WINAPI InstanceThread(LPVOID);
 DWORD WINAPI ServerThread(LPVOID lpvParam);
 //DWORD WINAPI InputThread(LPVOID lpvParam);
 DWORD WINAPI InputPipeThread(LPVOID lpvParam);
+DWORD WINAPI GetDataThread(LPVOID lpvParam);
 BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out); 
 DWORD WINAPI WinEventThread(LPVOID lpvParam);
 void WINAPI WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime);
@@ -301,8 +303,9 @@ typedef struct tag_SrvInfo {
 #endif
 	BOOL bTelnetActive;
 	//
-	wchar_t szPipename[MAX_PATH], szInputname[MAX_PATH], szGuiPipeName[MAX_PATH], szQueryname[MAX_PATH], szGetDataPipe[MAX_PATH];
-	HANDLE hInputPipe, hQueryPipe, hGetDataPipe;;
+	wchar_t szPipename[MAX_PATH], szInputname[MAX_PATH], szGuiPipeName[MAX_PATH], szQueryname[MAX_PATH];
+	wchar_t szGetDataPipe[MAX_PATH], szDataReadyEvent[64];
+	HANDLE hInputPipe, hQueryPipe, hGetDataPipe;
 	//
 	//HANDLE hFileMapping, hFileMappingData;
 	MFileMapping<CESERVER_REQ_CONINFO_HDR> *pConsoleMap;
@@ -310,7 +313,7 @@ typedef struct tag_SrvInfo {
 	//CESERVER_REQ_CONINFO_DATA *pConsoleData; // Mapping
 	CESERVER_REQ_CONINFO_FULL *pConsole;
 	//CESERVER_REQ_CONINFO_HDR *pConsoleInfoCopy;  // Local (Alloc)
-	CESERVER_REQ_CONINFO_DATA *pConsoleDataCopy; // Local (Alloc)
+	CHAR_INFO *pConsoleDataCopy; // Local (Alloc)
 	//DWORD nConsoleDataSize;
 //	DWORD nFarInfoLastIdx;
 	// Input
@@ -339,9 +342,9 @@ typedef struct tag_SrvInfo {
 	SHORT nTopVisibleLine; // Прокрутка в GUI может быть заблокирована. Если -1 - без блокировки, используем текущее значение
 	SHORT nVisibleHeight;  // По идее, должен быть равен (gcrBufferSize.Y). Это гарантированное количество строк psChars & pnAttrs
 	DWORD nMainTimerElapse;
-	BOOL  bConsoleActive;
+	//BOOL  bConsoleActive;
 	HANDLE hRefreshEvent; // ServerMode, перечитать консоль, и если есть изменения - отослать в GUI
-	HANDLE hDataSentEvent; // Флаг, что изменения отосланы в GUI
+	HANDLE hDataReadyEvent; // Флаг, что в сервере есть изменения (GUI должен перечитать данные)
 	// Смена размера консоли через RefreshThread
 	int nRequestChangeSize;
 	USHORT nReqSizeBufferHeight;

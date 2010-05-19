@@ -112,6 +112,7 @@ void ResetUngetBuffer();
 BOOL ProcessConsoleInput(BOOL abUseUngetBuffer, PINPUT_RECORD lpBuffer, DWORD nBufSize, LPDWORD lpNumberOfEventsRead);
 DWORD gnConsoleChanges = 0; // bitmask: 1-left, 2-right
 void OnMainThreadActived();
+void ReloadResourcesW();
 
 
 // minimal(?) FAR version 2.0 alpha build FAR_X_VER
@@ -150,6 +151,8 @@ HANDLE WINAPI _export OpenPluginW(int OpenFrom,INT_PTR Item)
 	if (ghDisplayThread && gnDisplayThreadId == 0) {
 		CloseHandle(ghDisplayThread); ghDisplayThread = NULL;
 	}
+
+	ReloadResourcesW();
 
 	//gThSet.Load();
 	// При открытии плагина - загрузить информацию об обеих панелях. Нужно для определения регионов!
@@ -402,7 +405,15 @@ BOOL CheckConEmu(BOOL abSilence/*=FALSE*/)
 
 
 
-
+void ReloadResourcesW()
+{
+	lstrcpynW(gsFolder, GetMsgW(CEDirFolder), countof(gsFolder));
+	//lstrcpynW(gsHardLink, GetMsgW(CEDirHardLink), countof(gsHardLink));
+	lstrcpynW(gsSymLink, GetMsgW(CEDirSymLink), countof(gsSymLink));
+	lstrcpynW(gsJunction, GetMsgW(CEDirJunction), countof(gsJunction));
+	lstrcpynW(gsTitleThumbs, GetMsgW(CEColTitleThumbnails), countof(gsTitleThumbs));
+	lstrcpynW(gsTitleTiles, GetMsgW(CEColTitleTiles), countof(gsTitleTiles));
+}
 
 void WINAPI _export SetStartupInfoW(void *aInfo)
 {
@@ -415,18 +426,13 @@ void WINAPI _export SetStartupInfoW(void *aInfo)
 
 	_ASSERTE(gszRootKey!=NULL && *gszRootKey!=0);
 
-	lstrcpynW(gsFolder, GetMsgW(CEDirFolder), sizeofarray(gsFolder));
-	//lstrcpynW(gsHardLink, GetMsgW(CEDirHardLink), sizeofarray(gsHardLink));
-	lstrcpynW(gsSymLink, GetMsgW(CEDirSymLink), sizeofarray(gsSymLink));
-	lstrcpynW(gsJunction, GetMsgW(CEDirJunction), sizeofarray(gsJunction));
-	lstrcpynW(gsTitleThumbs, GetMsgW(CEColTitleThumbnails), sizeofarray(gsTitleThumbs));
-	lstrcpynW(gsTitleTiles, GetMsgW(CEColTitleTiles), sizeofarray(gsTitleTiles));
-
+	ReloadResourcesW();
 
 	gbInfoW_OK = TRUE;
 
 	StartPlugin(FALSE);
 }
+
 
 
 
@@ -777,7 +783,7 @@ CeFullPanelInfo* GetActivePanel()
 //	if (ppi) {
 //		ppi->cbSize = sizeof(*ppi);
 //
-//		int n = min(ppi->nMaxFarColors, sizeofarray(gFarInfo.nFarColors));
+//		int n = min(ppi->nMaxFarColors, countof(gFarInfo.nFarColors));
 //		if (n && ppi->nFarColors) memmove(gFarInfo.nFarColors, ppi->nFarColors, n);
 //		gFarInfo.nFarInterfaceSettings = ppi->nFarInterfaceSettings;
 //		gFarInfo.nFarPanelSettings = ppi->nFarPanelSettings;
@@ -810,7 +816,7 @@ void ReloadPanelsInfo()
 
 	// Обновить gFarInfo (используется в RgnDetect)
 	CeFullPanelInfo* p = pviLeft.hView ? &pviLeft : &pviRight;
-	int n = min(p->nMaxFarColors, sizeofarray(gFarInfo.nFarColors));
+	int n = min(p->nMaxFarColors, countof(gFarInfo.nFarColors));
 	if (n && p->nFarColors) memmove(gFarInfo.nFarColors, p->nFarColors, n);
 	gFarInfo.nFarInterfaceSettings = p->nFarInterfaceSettings;
 	gFarInfo.nFarPanelSettings = p->nFarPanelSettings;
@@ -930,7 +936,7 @@ BOOL GetBufferInput(BOOL abRemove, PINPUT_RECORD lpBuffer, DWORD nBufSize, LPDWO
 	//	girUnget[gnUngetCount].EventType = 0;
 	//}
 
-	//int nMax = sizeofarray(girUnget);
+	//int nMax = countof(girUnget);
 	//if (gnUngetCount>=nMax) {
 	//	_ASSERTE(gnUngetCount==nMax);
 	//	if (gnUngetCount>nMax) gnUngetCount = nMax;
@@ -979,7 +985,7 @@ BOOL UngetBufferInput(WORD nCount, PINPUT_RECORD lpOneInput)
 		_ASSERTE(gnUngetCount>=0);
 		gnUngetCount = 0;
 	}
-	int nMax = sizeofarray(girUnget);
+	int nMax = countof(girUnget);
 	if (gnUngetCount>=nMax) {
 		_ASSERTE(gnUngetCount==nMax);
 		if (gnUngetCount>nMax) gnUngetCount = nMax;
@@ -1059,7 +1065,7 @@ void OnMainThreadActived()
 	//Далее
 	//1. Панель видима -> считать информацию о прямоугольнике, элементах панели, и выполнить отрисовку
 	//   информацию о прямоугольнике (если он изменился) передать в GUI
-	//   Если окошко панели невидимо - выполнить повторную регистрацию в GUI - оно само сделает ShowWindow
+	//   Если окошко панели невидимо - выполнить повторную регистрацию в GUI - оно само сделает apiShowWindow
 	//2. Панель невидима -> спрятать окошко панели и разрегистрироваться в GUI
 }
 

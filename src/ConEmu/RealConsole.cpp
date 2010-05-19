@@ -55,8 +55,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 //PRAGMA_ERROR("При попытке компиляции F:\\VCProject\\FarPlugin\\PPCReg\\compile.cmd - Enter в консоль не прошел");
 
-WARNING("Может быть хватит ServerThread? А MonitorThread зарезервировать только для запуска процесса, и сразу из него выйти");
-
 WARNING("В каждой VCon создать буфер BYTE[256] для хранения распознанных клавиш (Ctrl,...,Up,PgDn,Add,и пр.");
 WARNING("Нераспознанные можно помещать в буфер {VKEY,wchar_t=0}, в котором заполнять последний wchar_t по WM_CHAR/WM_SYSCHAR");
 WARNING("При WM_(SYS)CHAR помещать wchar_t в начало, в первый незанятый VKEY");
@@ -85,7 +83,7 @@ WARNING("Часто после разблокирования компьютера размер консоли изменяется (OK), 
 #endif
 
 #ifdef _DEBUG
-    #define FORCE_INVALIDATE_TIMEOUT 3000
+    #define FORCE_INVALIDATE_TIMEOUT 999999999
 #else
     #define FORCE_INVALIDATE_TIMEOUT 300
 #endif
@@ -178,9 +176,9 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
 	mn_InRecreate = 0; mb_ProcessRestarted = FALSE;
     mn_LastSetForegroundPID = 0;
     mh_ServerSemaphore = NULL;
-    memset(mh_ServerThreads, 0, sizeof(mh_ServerThreads));
-	mh_ActiveServerThread = NULL;
-    memset(mn_ServerThreadsId, 0, sizeof(mn_ServerThreadsId));
+    memset(mh_RConServerThreads, 0, sizeof(mh_RConServerThreads));
+	mh_ActiveRConServerThread = NULL;
+    memset(mn_RConServerThreadsId, 0, sizeof(mn_RConServerThreadsId));
 
     ZeroStruct(con); //WARNING! Содержит CriticalSection, поэтому сброс выполнять ПЕРЕД InitializeCriticalSection(&csCON);
 	con.hInSetSize = CreateEvent(0,TRUE,TRUE,0);
@@ -204,18 +202,21 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
     mn_LastVKeyPressed = 0;
     mh_LogInput = NULL; mpsz_LogInputFile = NULL; //mpsz_LogPackets = NULL; mn_LogPackets = 0;
 
-	mh_FileMapping = mh_FileMappingData = mh_FarFileMapping = mh_FarAliveEvent = NULL;
-    mp_ConsoleInfo = NULL;
-    mp_ConsoleData = NULL;
-	mp_FarInfo = NULL;
+	//mh_FileMapping = mh_FileMappingData = mh_FarFileMapping =
+	//mh_FarAliveEvent = NULL;
+    //mp_ConsoleInfo = NULL;
+    //mp_ConsoleData = NULL;
+	//mp_FarInfo = NULL;
     mn_LastConsoleDataIdx = mn_LastConsolePacketIdx = /*mn_LastFarReadIdx =*/ -1;
 	mn_LastFarReadTick = 0;
-	ms_HeaderMapName[0] = ms_DataMapName[0] = 0;
+	//ms_HeaderMapName[0] = ms_DataMapName[0] = 0;
 
-	mh_ColorMapping = NULL;
-	mp_ColorHdr = NULL;
-	mp_ColorData = NULL;
+	//mh_ColorMapping = NULL;
+	//mp_ColorHdr = NULL;
+	//mp_ColorData = NULL;
 	mn_LastColorFarID = 0;
+
+	//ms_ConEmuC_DataReady[0] = 0; mh_ConEmuC_DataReady = NULL;
 	
     m_UseLogs = gSet.isAdvLogging;
 
@@ -227,7 +228,7 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
     MultiByteToWideChar(CP_ACP, 0, "просмотр ", -1, ms_ViewerRus, 32);
     lstrcpy(ms_TempPanel, L"{Temporary panel");
     MultiByteToWideChar(CP_ACP, 0, "{Временная панель", -1, ms_TempPanelRus, 32);
-	lstrcpy(ms_NameTitle, L"Name");
+	//lstrcpy(ms_NameTitle, L"Name");
 
     SetTabs(NULL,1); // Для начала - показывать вкладку Console, а там ФАР разберется
 
@@ -259,6 +260,7 @@ CRealConsole::~CRealConsole()
 
     SafeCloseHandle(mh_ConEmuC); mn_ConEmuC_PID = 0; //mn_ConEmuC_Input_TID = 0;
     SafeCloseHandle(mh_ConEmuCInput);
+	m_ConDataChanged.Close();
     
     SafeCloseHandle(mh_ServerSemaphore);
     SafeCloseHandle(mh_GuiAttached);
@@ -378,7 +380,7 @@ BOOL CRealConsole::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuff
     SMALL_RECT rect = {0};
 
     _ASSERTE(anCmdID==CECMD_SETSIZESYNC || anCmdID==CECMD_CMDSTARTED || anCmdID==CECMD_CMDFINISHED);
-	ExecutePrepareCmd(&lIn, anCmdID, lIn.hdr.nSize);
+	ExecutePrepareCmd(&lIn, anCmdID, lIn.hdr.cbSize);
 
 
 
@@ -427,26 +429,27 @@ BOOL CRealConsole::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuff
 	lIn.SetSize.dwFarPID = con.bBufferHeight ? 0 : GetFarPID();
 
 	// Если размер менять не нужно - то и CallNamedPipe не делать
-	if (mp_ConsoleInfo) {
-		// Если заблокирована верхняя видимая строка - выполнять строго
-		if (lIn.SetSize.nSendTopLine == -1) {
-			// иначе - проверяем текущее соответствие
-			CONSOLE_SCREEN_BUFFER_INFO sbi = mp_ConsoleInfo->sbi;
-			bool lbSizeMatch = true;
-			if (con.bBufferHeight) {
-				if (sbi.dwSize.X != sizeX || sbi.dwSize.Y != sizeBuffer)
-					lbSizeMatch = false;
-				else if (sbi.srWindow.Top != rect.Top || sbi.srWindow.Bottom != rect.Bottom)
-					lbSizeMatch = false;
-			} else {
-				if (sbi.dwSize.X != sizeX || sbi.dwSize.Y != sizeY)
-					lbSizeMatch = false;
-			}
-			// fin
-			if (lbSizeMatch)
-				return TRUE; // менять ничего не нужно
+	//if (mp_ConsoleInfo) {
+
+	// Если заблокирована верхняя видимая строка - выполнять строго
+	if (lIn.SetSize.nSendTopLine == -1) {
+		// иначе - проверяем текущее соответствие
+		//CONSOLE_SCREEN_BUFFER_INFO sbi = mp_ConsoleInfo->sbi;
+		bool lbSizeMatch = true;
+		if (con.bBufferHeight) {
+			if (con.m_sbi.dwSize.X != sizeX || con.m_sbi.dwSize.Y != sizeBuffer)
+				lbSizeMatch = false;
+			else if (con.m_sbi.srWindow.Top != rect.Top || con.m_sbi.srWindow.Bottom != rect.Bottom)
+				lbSizeMatch = false;
+		} else {
+			if (con.m_sbi.dwSize.X != sizeX || con.m_sbi.dwSize.Y != sizeY)
+				lbSizeMatch = false;
 		}
+		// fin
+		if (lbSizeMatch)
+			return TRUE; // менять ничего не нужно
 	}
+	//}
 
 	if (gSet.isAdvLogging) {
 		char szInfo[128];
@@ -464,7 +467,7 @@ BOOL CRealConsole::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuff
 	DEBUGSTRSIZE(szDbgCmd);
 	#endif
 
-    fSuccess = CallNamedPipe(ms_ConEmuC_Pipe, &lIn, lIn.hdr.nSize, &lOut, lOut.hdr.nSize, &dwRead, 500);
+    fSuccess = CallNamedPipe(ms_ConEmuC_Pipe, &lIn, lIn.hdr.cbSize, &lOut, lOut.hdr.cbSize, &dwRead, 500);
 
     if (!fSuccess || dwRead<(DWORD)nOutSize) {
 		if (gSet.isAdvLogging) {
@@ -474,9 +477,10 @@ BOOL CRealConsole::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuff
 		}
 		DEBUGSTRSIZE(L"SetConsoleSize.CallNamedPipe FAILED!!!\n");
 	} else {
-		_ASSERTE(mp_ConsoleInfo!=NULL);
+		_ASSERTE(m_ConsoleMap.IsValid());
 
-		bool bNeedApplyConsole = mp_ConsoleInfo 
+		bool bNeedApplyConsole = //mp_ConsoleInfo &&
+			m_ConsoleMap.IsValid()
 			&& (anCmdID == CECMD_SETSIZESYNC) 
 			&& (mn_MonitorThreadID != GetCurrentThreadId());
 
@@ -492,25 +496,25 @@ BOOL CRealConsole::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuff
 			//mn_LastProcessedPkt = lOut.SetSizeRet.nNextPacketId;
             CONSOLE_SCREEN_BUFFER_INFO sbi = {{0,0}};
 			int nBufHeight;
-			_ASSERTE(mp_ConsoleInfo);
-			if (bNeedApplyConsole && mp_ConsoleInfo->nCurDataMapIdx && (HWND)mp_ConsoleInfo->hConWnd) {
+			//_ASSERTE(mp_ConsoleInfo);
+			if (bNeedApplyConsole /*&& mp_ConsoleInfo->nCurDataMapIdx && (HWND)mp_ConsoleInfo->hConWnd*/) {
 				// Если Apply еще не прошел - ждем
 				DWORD nWait = -1;
 				if (con.m_sbi.dwSize.X != sizeX || con.m_sbi.dwSize.Y != (sizeBuffer ? sizeBuffer : sizeY))
 				{
-					// Проходит некоторое (короткое) время, пока обновится FileMapping в нашем процессе
-					_ASSERTE(mp_ConsoleInfo!=NULL);
-					COORD crCurSize = mp_ConsoleInfo->sbi.dwSize;
-					if (crCurSize.X != sizeX || crCurSize.Y != (sizeBuffer ? sizeBuffer : sizeY))
-					{
-						DWORD dwStart = GetTickCount();
-						do {
-							Sleep(1);
-							crCurSize = mp_ConsoleInfo->sbi.dwSize;
-							if (crCurSize.X == sizeX && crCurSize.Y == (sizeBuffer ? sizeBuffer : sizeY))
-								break;
-						} while ((GetTickCount() - dwStart) < SETSYNCSIZEMAPPINGTIMEOUT);
-					}
+					//// Проходит некоторое (короткое) время, пока обновится FileMapping в нашем процессе
+					//_ASSERTE(mp_ConsoleInfo!=NULL);
+					//COORD crCurSize = mp_ConsoleInfo->sbi.dwSize;
+					//if (crCurSize.X != sizeX || crCurSize.Y != (sizeBuffer ? sizeBuffer : sizeY))
+					//{
+					//	DWORD dwStart = GetTickCount();
+					//	do {
+					//		Sleep(1);
+					//		crCurSize = mp_ConsoleInfo->sbi.dwSize;
+					//		if (crCurSize.X == sizeX && crCurSize.Y == (sizeBuffer ? sizeBuffer : sizeY))
+					//			break;
+					//	} while ((GetTickCount() - dwStart) < SETSYNCSIZEMAPPINGTIMEOUT);
+					//}
 
 					ResetEvent(mh_ApplyFinished);
 					mn_LastConsolePacketIdx--;
@@ -519,7 +523,7 @@ BOOL CRealConsole::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuff
 					nWait = WaitForSingleObject(mh_ApplyFinished, SETSYNCSIZEAPPLYTIMEOUT);
 
 					#ifdef _DEBUG
-					COORD crDebugCurSize = mp_ConsoleInfo->sbi.dwSize;
+					COORD crDebugCurSize = con.m_sbi.dwSize;
 					if (crDebugCurSize.X != sizeX) {
 						_ASSERTE(crDebugCurSize.X == sizeX);
 					}
@@ -814,10 +818,12 @@ BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, CONSOLE_SCR
 
     CreateLogFiles();
 
-    // Имя пайпа для управления ConEmuC
-    wsprintfW(ms_ConEmuC_Pipe, CESERVERPIPENAME, L".", mn_ConEmuC_PID);
-    wsprintfW(ms_ConEmuCInput_Pipe, CESERVERINPUTNAME, L".", mn_ConEmuC_PID);
-    MCHKHEAP
+	// Инициализировать имена пайпов, событий, мэппингов и т.п.
+	InitNames();
+    //// Имя пайпа для управления ConEmuC
+    //wsprintfW(ms_ConEmuC_Pipe, CESERVERPIPENAME, L".", mn_ConEmuC_PID);
+    //wsprintfW(ms_ConEmuCInput_Pipe, CESERVERINPUTNAME, L".", mn_ConEmuC_PID);
+    //MCHKHEAP
 
 	// Открыть map с данными, он уже должен быть создан
 	OpenMapHeader(TRUE);
@@ -978,7 +984,7 @@ void CRealConsole::PostKeyUp(WORD vkKey, DWORD dwControlState, wchar_t wch, int 
 void CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec)
 {
 	if (!this) return;
-	if (mn_ConEmuC_PID == 0)
+	if (mn_ConEmuC_PID == 0 || !m_ConsoleMap.IsValid())
 		return; // Сервер еще не стартовал. События будут пропущены...
 
 	//DWORD dwTID = 0;
@@ -1139,6 +1145,8 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 	bool bLastAlive = false, bLastAliveActive = false;
 	bool lbForceUpdate = false;
 
+	WARNING("Переделать ожидание на hDataReadyEvent, который выставляется в сервере?");
+
     
     TODO("Нить не завершается при F10 в фаре - процессы пока не инициализированы...")
     while (TRUE)
@@ -1194,9 +1202,9 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
         if (!pRCon->isShowConsole && !gSet.isConVisible)
         {
             /*if (foreWnd == hConWnd)
-                SetForegroundWindow(ghWnd);*/
+                apiSetForegroundWindow(ghWnd);*/
             if (IsWindowVisible(pRCon->hConWnd))
-                ShowWindow(pRCon->hConWnd, SW_HIDE);
+                apiShowWindow(pRCon->hConWnd, SW_HIDE);
         }
 
         // Размер консоли меняем в том треде, в котором это требуется. Иначе можем заблокироваться при Update (InitDC)
@@ -1215,7 +1223,9 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
             //ResetEvent(pRCon->mh_EndUpdateEvent);
             
 			// Тут и ApplyConsole вызывается
-            if (pRCon->mp_ConsoleInfo) {
+            //if (pRCon->mp_ConsoleInfo)
+            if (pRCon->m_ConsoleMap.IsValid())
+            {
 				// Alive?
 				DWORD nCurFarPID = pRCon->GetFarPID();
 				if (!nCurFarPID || nLastFarPID != nCurFarPID) {
@@ -1230,10 +1240,15 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 				bool bAlive = false;
 				//PRAGMA_ERROR("Переделать на мэппинг для mp_FarInfo");
 				//if (nCurFarPID && pRCon->mn_LastFarReadIdx != pRCon->mp_ConsoleInfo->nFarReadIdx) {
-				if (nCurFarPID && pRCon->mp_FarInfo && pRCon->mh_FarAliveEvent) {
+				if (nCurFarPID && pRCon->m_FarInfo.IsValid() && pRCon->m_FarAliveEvent.Open()) {
 					DWORD nCurTick = GetTickCount();
-					if ((nCurTick - pRCon->mn_LastFarReadTick) > FAR_ALIVE_TIMEOUT) {
-						if (WaitForSingleObject(pRCon->mh_FarAliveEvent, 0) == WAIT_OBJECT_0) {
+					// Чтобы опрос события не шел слишком часто.
+					if (pRCon->mn_LastFarReadTick == 0 ||
+						(nCurTick - pRCon->mn_LastFarReadTick) >= (FAR_ALIVE_TIMEOUT/2))
+					{
+						//if (WaitForSingleObject(pRCon->mh_FarAliveEvent, 0) == WAIT_OBJECT_0)
+						if (pRCon->m_FarAliveEvent.Wait(0) == WAIT_OBJECT_0)
+						{
 							pRCon->mn_LastFarReadTick = nCurTick ? nCurTick : 1;
 							bAlive = true; // живой
 						}
@@ -1247,10 +1262,11 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 					//	bAlive = true;
 					//}
 				}
-				if (!bAlive) {
-					bAlive = pRCon->isAlive();
-				}
+				//if (!bAlive) {
+				//	bAlive = pRCon->isAlive();
+				//}
 				if (pRCon->isActive()) {
+					WARNING("Тут нужно бы сравнивать с переменной, хранящейся в gConEmu, а не в этом instance RCon!");
 					if (bLastAlive != bAlive || !bLastAliveActive) {
 						DEBUGSTRALIVE(bAlive ? L"MonitorThread: Alive changed to TRUE\n" : L"MonitorThread: Alive changed to FALSE\n");
 						PostMessage(ghWnd, WM_SETCURSOR, -1, -1);
@@ -1263,9 +1279,11 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 
 
 				// Загрузить изменения из консоли
-            	if ((HWND)pRCon->mp_ConsoleInfo->hConWnd && pRCon->mp_ConsoleInfo->nCurDataMapIdx
-					&& pRCon->mp_ConsoleInfo->nPacketId
-					&& pRCon->mn_LastConsolePacketIdx != pRCon->mp_ConsoleInfo->nPacketId)
+				//if ((HWND)pRCon->mp_ConsoleInfo->hConWnd && pRCon->mp_ConsoleInfo->nCurDataMapIdx
+				//	&& pRCon->mp_ConsoleInfo->nPacketId
+				//	&& pRCon->mn_LastConsolePacketIdx != pRCon->mp_ConsoleInfo->nPacketId)
+				WARNING("!!! Если ожидание m_ConDataChanged будет перенесно выше - то тут нужно пользовать полученное выше значение !!!");
+				if (!pRCon->m_ConDataChanged.Wait(0,TRUE))
 				{
             		pRCon->ApplyConsoleInfo();
             	}
@@ -1329,7 +1347,8 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 
 				bool lbNeedRedraw = false;
 				if ((nWait == (WAIT_OBJECT_0+1)) || lbForceUpdate) {
-					bool bForce = lbForceUpdate;
+					//2010-05-18 lbForceUpdate вызывал CVirtualConsole::Update(abForce=true), что приводило к тормозам
+					bool bForce = false; //lbForceUpdate;
 					lbForceUpdate = false;
 					gConEmu.m_Child.Validate(); // сбросить флажок
 					if (pRCon->m_UseLogs>2) pRCon->LogString("mp_VCon->Update from CRealConsole::MonitorThread");
@@ -1395,7 +1414,7 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
         // Передернуть пайпы, чтобы нити сервера завершились
         for (int i=0; i<MAX_SERVER_THREADS; i++) {
             DEBUGSTRPROC(L"Touching our server pipe\n");
-            HANDLE hServer = pRCon->mh_ActiveServerThread;
+            HANDLE hServer = pRCon->mh_ActiveRConServerThread;
             hPipe = CreateFile(pRCon->ms_VConServer_Pipe,GENERIC_WRITE,0,NULL,OPEN_EXISTING,0,NULL);
             if (hPipe == INVALID_HANDLE_VALUE) {
                 DEBUGSTRPROC(L"All pipe instances closed?\n");
@@ -1409,14 +1428,14 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
         }
         // Немного подождем, пока ВСЕ нити завершатся
         DEBUGSTRPROC(L"Checking server pipe threads are closed\n");
-        WaitForMultipleObjects(MAX_SERVER_THREADS, pRCon->mh_ServerThreads, TRUE, 500);
+        WaitForMultipleObjects(MAX_SERVER_THREADS, pRCon->mh_RConServerThreads, TRUE, 500);
         for (int i=0; i<MAX_SERVER_THREADS; i++) {
-            if (WaitForSingleObject(pRCon->mh_ServerThreads[i],0) != WAIT_OBJECT_0) {
-                DEBUGSTRPROC(L"### Terminating mh_ServerThreads\n");
-                TerminateThread(pRCon->mh_ServerThreads[i],0);
+            if (WaitForSingleObject(pRCon->mh_RConServerThreads[i],0) != WAIT_OBJECT_0) {
+                DEBUGSTRPROC(L"### Terminating mh_RConServerThreads\n");
+                TerminateThread(pRCon->mh_RConServerThreads[i],0);
             }
-            CloseHandle(pRCon->mh_ServerThreads[i]);
-            pRCon->mh_ServerThreads[i] = NULL;
+            CloseHandle(pRCon->mh_RConServerThreads[i]);
+            pRCon->mh_RConServerThreads[i] = NULL;
         }
     }
     
@@ -1649,7 +1668,7 @@ BOOL CRealConsole::StartProcess()
 						{pAdmSid}
 					};
 					if (CreateRestrictedToken(hToken, DISABLE_MAX_PRIVILEGE, 
-							sizeofarray(sidsToDisable), sidsToDisable, 
+							countof(sidsToDisable), sidsToDisable, 
 							0, NULL, 0, NULL, &hTokenRest))
 					{
 						if (CreateProcessAsUserW(hTokenRest, NULL, psCurCmd, NULL, NULL, FALSE,
@@ -1743,7 +1762,7 @@ BOOL CRealConsole::StartProcess()
 
 				AllowSetForegroundWindow(pi.dwProcessId);
 			}
-            SetForegroundWindow(ghWnd);
+            apiSetForegroundWindow(ghWnd);
 
             DEBUGSTRPROC(_T("CreateProcess OK\n"));
             lbRc = TRUE;
@@ -1825,13 +1844,32 @@ BOOL CRealConsole::StartProcess()
 		//wsprintfW(ms_ConEmuC_Pipe, CE_CURSORUPDATE, mn_ConEmuC_PID);
 		//mh_CursorChanged = CreateEvent ( NULL, FALSE, FALSE, ms_ConEmuC_Pipe );
         
-		// Имя пайпа для управления ConEmuC
-		wsprintfW(ms_ConEmuC_Pipe, CESERVERPIPENAME, L".", mn_ConEmuC_PID);
-		wsprintfW(ms_ConEmuCInput_Pipe, CESERVERINPUTNAME, L".", mn_ConEmuC_PID);
-		MCHKHEAP
+		// Инициализировать имена пайпов, событий, мэппингов и т.п.
+		InitNames();
+		//// Имя пайпа для управления ConEmuC
+		//wsprintfW(ms_ConEmuC_Pipe, CESERVERPIPENAME, L".", mn_ConEmuC_PID);
+		//wsprintfW(ms_ConEmuCInput_Pipe, CESERVERINPUTNAME, L".", mn_ConEmuC_PID);
+		//MCHKHEAP
 	}
 
     return lbRc;
+}
+
+// Инициализировать имена пайпов, событий, мэппингов и т.п.
+// Только имена - реальных хэндлов еще может не быть!
+void CRealConsole::InitNames()
+{
+	// Имя пайпа для управления ConEmuC
+	wsprintfW(ms_ConEmuC_Pipe, CESERVERPIPENAME, L".", mn_ConEmuC_PID);
+	wsprintfW(ms_ConEmuCInput_Pipe, CESERVERINPUTNAME, L".", mn_ConEmuC_PID);
+
+	// Имя событие измененности данных в консоли
+	m_ConDataChanged.InitName(CEDATAREADYEVENT, mn_ConEmuC_PID);
+	//wsprintfW(ms_ConEmuC_DataReady, CEDATAREADYEVENT, mn_ConEmuC_PID);
+
+	MCHKHEAP;
+
+	m_GetDataPipe.InitName(L"ConEmu", CESERVERREADNAME, L".", mn_ConEmuC_PID);
 }
 
 
@@ -2680,6 +2718,8 @@ void CRealConsole::StopThread(BOOL abRecreating)
 		//mn_ConEmuC_Input_TID = 0;
         SafeCloseHandle(mh_ConEmuC);
         SafeCloseHandle(mh_ConEmuCInput);
+		m_ConDataChanged.Close();
+		m_GetDataPipe.Close();
         // Имя пайпа для управления ConEmuC
         ms_ConEmuC_Pipe[0] = 0;
         ms_ConEmuCInput_Pipe[0] = 0;
@@ -3142,7 +3182,7 @@ void CRealConsole::OnWinEvent(DWORD event, HWND hwnd, LONG idObject, LONG idChil
 }
 
 
-DWORD CRealConsole::ServerThread(LPVOID lpvParam) 
+DWORD CRealConsole::RConServerThread(LPVOID lpvParam) 
 { 
     CRealConsole *pRCon = (CRealConsole*)lpvParam;
 	CVirtualConsole *pVCon = pRCon->mp_VCon;
@@ -3187,8 +3227,8 @@ DWORD CRealConsole::ServerThread(LPVOID lpvParam)
 
 			MCHKHEAP
 			for (int i=0; i<MAX_SERVER_THREADS; i++) {
-				if (pRCon->mn_ServerThreadsId[i] == dwTID) {
-					pRCon->mh_ActiveServerThread = pRCon->mh_ServerThreads[i]; break;
+				if (pRCon->mn_RConServerThreadsId[i] == dwTID) {
+					pRCon->mh_ActiveRConServerThread = pRCon->mh_RConServerThreads[i]; break;
 				}
 			}
 
@@ -3322,16 +3362,16 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
         gConEmu.ShowOldCmdVersion(in.hdr.nCmd, in.hdr.nVersion, in.hdr.nSrcPID==GetServerPID() ? 1 : 0);
         return;
     }
-    _ASSERTE(in.hdr.nSize>=sizeof(CESERVER_REQ_HDR) && cbRead>=sizeof(CESERVER_REQ_HDR));
-    if (cbRead < sizeof(CESERVER_REQ_HDR) || /*in.hdr.nSize < cbRead ||*/ in.hdr.nVersion != CESERVER_REQ_VER) {
+    _ASSERTE(in.hdr.cbSize>=sizeof(CESERVER_REQ_HDR) && cbRead>=sizeof(CESERVER_REQ_HDR));
+    if (cbRead < sizeof(CESERVER_REQ_HDR) || /*in.hdr.cbSize < cbRead ||*/ in.hdr.nVersion != CESERVER_REQ_VER) {
         //CloseHandle(hPipe);
         return;
     }
 
-    if (in.hdr.nSize <= cbRead) {
+    if (in.hdr.cbSize <= cbRead) {
         pIn = &in; // выделение памяти не требуется
     } else {
-        int nAllSize = in.hdr.nSize;
+        int nAllSize = in.hdr.cbSize;
         pIn = (CESERVER_REQ*)calloc(nAllSize,1);
         _ASSERTE(pIn!=NULL);
         memmove(pIn, &in, cbRead);
@@ -3372,34 +3412,37 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
     }
 
     
-    UINT nDataSize = pIn->hdr.nSize - sizeof(CESERVER_REQ_HDR);
+    UINT nDataSize = pIn->hdr.cbSize - sizeof(CESERVER_REQ_HDR);
 
     // Все данные из пайпа получены, обрабатываем команду и возвращаем (если нужно) результат
-    //if (pIn->hdr.nCmd == CECMD_GETFULLINFO /*|| pIn->hdr.nCmd == CECMD_GETSHORTINFO*/) {
-    if (pIn->hdr.nCmd == CECMD_GETCONSOLEINFO) {
-    	_ASSERTE(pIn->hdr.nCmd != CECMD_GETCONSOLEINFO);
-		// только если мы НЕ в цикле ресайза. иначе не страшно, устаревшие пакеты пропустит PopPacket
-		//if (!con.bInSetSize && !con.bBufferHeight && pIn->ConInfo.inf.sbi.dwSize.Y > 200) {
-		//	_ASSERTE(con.bBufferHeight || pIn->ConInfo.inf.sbi.dwSize.Y <= 200);
-		//}
-		//#ifdef _DEBUG
-		//wchar_t szDbg[255]; wsprintf(szDbg, L"GUI recieved %s, PktID=%i, Tick=%i\n", 
-		//	(pIn->hdr.nCmd == CECMD_GETFULLINFO) ? L"CECMD_GETFULLINFO" : L"CECMD_GETSHORTINFO",
-		//	pIn->ConInfo.inf.nPacketId, pIn->hdr.nCreateTick);
-        //DEBUGSTRCMD(szDbg);
-		//#endif
-        ////ApplyConsoleInfo(pIn);
-        //if (((LPVOID)&in)==((LPVOID)pIn)) {
-        //    // Это фиксированная память - переменная (in)
-        //    _ASSERTE(in.hdr.nSize>0);
-        //    // Для его обработки нужно создать копию памяти, которую освободит PopPacket
-        //    pIn = (CESERVER_REQ*)calloc(in.hdr.nSize,1);
-        //    memmove(pIn, &in, in.hdr.nSize);
-        //}
-        //PushPacket(pIn);
-        //pIn = NULL;
 
-    } else if (pIn->hdr.nCmd == CECMD_CMDSTARTSTOP) {
+	//  //if (pIn->hdr.nCmd == CECMD_GETFULLINFO /*|| pIn->hdr.nCmd == CECMD_GETSHORTINFO*/) {
+	//  if (pIn->hdr.nCmd == CECMD_GETCONSOLEINFO) {
+	//  	_ASSERTE(pIn->hdr.nCmd != CECMD_GETCONSOLEINFO);
+	//// только если мы НЕ в цикле ресайза. иначе не страшно, устаревшие пакеты пропустит PopPacket
+	////if (!con.bInSetSize && !con.bBufferHeight && pIn->ConInfo.inf.sbi.dwSize.Y > 200) {
+	////	_ASSERTE(con.bBufferHeight || pIn->ConInfo.inf.sbi.dwSize.Y <= 200);
+	////}
+	////#ifdef _DEBUG
+	////wchar_t szDbg[255]; wsprintf(szDbg, L"GUI recieved %s, PktID=%i, Tick=%i\n", 
+	////	(pIn->hdr.nCmd == CECMD_GETFULLINFO) ? L"CECMD_GETFULLINFO" : L"CECMD_GETSHORTINFO",
+	////	pIn->ConInfo.inf.nPacketId, pIn->hdr.nCreateTick);
+	//      //DEBUGSTRCMD(szDbg);
+	////#endif
+	//      ////ApplyConsoleInfo(pIn);
+	//      //if (((LPVOID)&in)==((LPVOID)pIn)) {
+	//      //    // Это фиксированная память - переменная (in)
+	//      //    _ASSERTE(in.hdr.cbSize>0);
+	//      //    // Для его обработки нужно создать копию памяти, которую освободит PopPacket
+	//      //    pIn = (CESERVER_REQ*)calloc(in.hdr.cbSize,1);
+	//      //    memmove(pIn, &in, in.hdr.cbSize);
+	//      //}
+	//      //PushPacket(pIn);
+	//      //pIn = NULL;
+
+	//  } else 
+
+	if (pIn->hdr.nCmd == CECMD_CMDSTARTSTOP) {
         //
 		DWORD nStarted = pIn->StartStop.nStarted;
 
@@ -3422,7 +3465,7 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 		//DWORD nInputTID = pIn->StartStop.dwInputTID;
 
 		_ASSERTE(sizeof(CESERVER_REQ_STARTSTOPRET) <= sizeof(CESERVER_REQ_STARTSTOP));
-		pIn->hdr.nSize = sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_STARTSTOPRET);
+		pIn->hdr.cbSize = sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_STARTSTOPRET);
         
         if (nStarted == 0 || nStarted == 2) {
             // Сразу заполним результат
@@ -3629,7 +3672,7 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
         fSuccess = WriteFile( 
             hPipe,        // handle to pipe 
             pIn,         // buffer to write from 
-            pIn->hdr.nSize,  // number of bytes to write 
+            pIn->hdr.cbSize,  // number of bytes to write 
             &cbWritten,   // number of bytes written 
             NULL);        // not overlapped I/O 
 
@@ -3642,7 +3685,7 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
         fSuccess = WriteFile( 
             hPipe,        // handle to pipe 
             pRet,         // buffer to write from 
-            pRet->hdr.nSize,  // number of bytes to write 
+            pRet->hdr.cbSize,  // number of bytes to write 
             &cbWritten,   // number of bytes written 
             NULL);        // not overlapped I/O 
         ExecuteFreeResult(pRet);
@@ -3674,7 +3717,7 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 						fSuccess = WriteFile( 
 							hPipe,        // handle to pipe 
 							pRet,         // buffer to write from 
-							pRet->hdr.nSize,  // number of bytes to write 
+							pRet->hdr.cbSize,  // number of bytes to write 
 							&cbWritten,   // number of bytes written 
 							NULL);        // not overlapped I/O 
 						ExecuteFreeResult(pRet);
@@ -3716,7 +3759,7 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 						fSuccess = WriteFile( 
 							hPipe,        // handle to pipe 
 							pRet,         // buffer to write from 
-							pRet->hdr.nSize,  // number of bytes to write 
+							pRet->hdr.cbSize,  // number of bytes to write 
 							&cbWritten,   // number of bytes written 
 							NULL);        // not overlapped I/O 
 						ExecuteFreeResult(pRet);
@@ -3757,7 +3800,7 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
         fSuccess = WriteFile( 
             hPipe,        // handle to pipe 
             pRet,         // buffer to write from 
-            pRet->hdr.nSize,  // number of bytes to write 
+            pRet->hdr.cbSize,  // number of bytes to write 
             &cbWritten,   // number of bytes written 
             NULL);        // not overlapped I/O 
         free(pRet);
@@ -3831,7 +3874,7 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
         //mn_Far_PluginInputThreadId      = pIn->dwData[1];
 		
         
-        CheckColorMapping(mn_FarPID_PluginDetected);
+        //CheckColorMapping(mn_FarPID_PluginDetected);
         
         // 23.06.2009 Maks - уберем пока. Должно работать в ApplyConsoleInfo
         //Process Add(mn_FarPID_PluginDetected); // На всякий случай, вдруг он еще не в нашем списке?
@@ -3839,9 +3882,9 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
         if (*pszRes) {
             //EnableComSpec(mn_FarPID_PluginDetected, TRUE);
             //UpdateFarSettings(mn_FarPID_PluginDetected);
-			wchar_t* pszItems[] = {ms_EditorRus,ms_ViewerRus,ms_TempPanelRus,ms_NameTitle};
+			wchar_t* pszItems[] = {ms_EditorRus,ms_ViewerRus,ms_TempPanelRus/*,ms_NameTitle*/};
 
-			for (int i = 0; i < sizeofarray(pszItems); i++) {
+			for (int i = 0; i < countof(pszItems); i++) {
 				pszNext = pszRes + lstrlen(pszRes)+1;
 				if (lstrlen(pszRes)>=30) pszRes[30] = 0;
 				lstrcpy(pszItems[i], pszRes);
@@ -3872,7 +3915,7 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
         }
 	} else if (pIn->hdr.nCmd == CECMD_SETFOREGROUND) {
 		AllowSetForegroundWindow(pIn->hdr.nSrcPID);
-		SetForegroundWindow((HWND)pIn->qwData[0]);
+		apiSetForegroundWindow((HWND)pIn->qwData[0]);
 
 	} else if (pIn->hdr.nCmd == CECMD_FLASHWINDOW) {
 		UINT nFlash = RegisterWindowMessage(CONEMUMSG_FLASHWINDOW);
@@ -3900,7 +3943,7 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
         fSuccess = WriteFile( 
             hPipe,        // handle to pipe 
             &Out,         // buffer to write from 
-            Out.hdr.nSize,  // number of bytes to write 
+            Out.hdr.cbSize,  // number of bytes to write 
             &cbWritten,   // number of bytes written 
             NULL);        // not overlapped I/O 
 	
@@ -4048,7 +4091,7 @@ void CRealConsole::ProcessUpdateFlags(BOOL abProcessChanged)
     if (mn_FarPID != dwPID)
         AllowSetForegroundWindow(dwPID);
     mn_FarPID = dwPID;
-    TODO("Если сменился FAR - переоткрыть данные для Colorer - CheckColorMapping();");
+    //TODO("Если сменился FAR - переоткрыть данные для Colorer - CheckColorMapping();");
 	//mn_FarInputTID = dwInputTID;
 
     if (mn_ProcessCount == 0) {
@@ -4452,202 +4495,6 @@ void CRealConsole::RemoveFromCursor()
 	}
 }
 
-//BOOL CRealConsole::RetrieveConsoleInfo(UINT anWaitSize)
-//{
-//    TODO("!!! WinEvent нужно перенести в ConEmu. Наиболее частую операцию по изменению курсора можно обрабатывать без участия ConEmuC");
-//
-//    TODO("!!! Необходимо сделать флажок, для выбора между CECMD_GETFULLINFO/CECMD_GETSHORTINFO");
-//
-//    //BOOL lbRc = FALSE;
-//    //HANDLE hPipe = NULL; 
-//    CESERVER_REQ_HDR in = {0};
-//	CESERVER_REQ *pOut = NULL;
-//    //BYTE cbReadBuf[512];
-//    BOOL fSuccess;
-//    //DWORD cbRead, dwMode, dwErr;
-//    
-//    PRAGMA_ERROR("Переделать нах. Теперь достаточно просто дернуть ExecuteSrvCmd(CECMD_GETCONSOLEINFO), и все само упадет в FileMap");
-//
-//
-////    // Try to open a named pipe; wait for it, if necessary. 
-////    while (1) 
-////    { 
-////      hPipe = CreateFile( 
-////         ms_ConEmuC_Pipe,// pipe name 
-////         GENERIC_READ |  // read and write access 
-////         GENERIC_WRITE, 
-////         0,              // no sharing 
-////         NULL,           // default security attributes
-////         OPEN_EXISTING,  // opens existing pipe 
-////         0,              // default attributes 
-////         NULL);          // no template file 
-////
-////      // Break if the pipe handle is valid. 
-////      if (hPipe != INVALID_HANDLE_VALUE) 
-////         break; 
-////
-////      // Exit if an error other than ERROR_PIPE_BUSY occurs. 
-////      dwErr = GetLastError();
-////      if (dwErr != ERROR_PIPE_BUSY) 
-////      {
-////        TODO("Подождать, пока появится пайп с таким именем, но только пока жив mh_ConEmuC");
-////        dwErr = WaitForSingleObject(mh_ConEmuC, 100);
-////        if (dwErr == WAIT_OBJECT_0)
-////            return FALSE;
-////        continue;
-////        //DisplayLastError(L"Could not open pipe", dwErr);
-////        //return 0;
-////      }
-////
-////      // All pipe instances are busy, so wait for 1 second.
-////      if (!WaitNamedPipe(ms_ConEmuC_Pipe, 1000) ) 
-////      {
-////        dwErr = WaitForSingleObject(mh_ConEmuC, 100);
-////        if (dwErr == WAIT_OBJECT_0) {
-////            DEBUGSTRPKT(L" - FAILED!\n");
-////            return FALSE;
-////        }
-////        //DisplayLastError(L"WaitNamedPipe failed"); 
-////        //return 0;
-////      }
-////    } 
-////
-////    // The pipe connected; change to message-read mode. 
-////    dwMode = PIPE_READMODE_MESSAGE; 
-////    fSuccess = SetNamedPipeHandleState( 
-////      hPipe,    // pipe handle 
-////      &dwMode,  // new pipe mode 
-////      NULL,     // don't set maximum bytes 
-////      NULL);    // don't set maximum time 
-////    if (!fSuccess) 
-////    {
-////      DEBUGSTRPKT(L" - FAILED!\n");
-////      DisplayLastError(L"SetNamedPipeHandleState failed");
-////      CloseHandle(hPipe);
-////      return 0;
-////    }
-////
-////	ExecutePrepareCmd((CESERVER_REQ*)&in, CECMD_GETFULLINFO, sizeof(CESERVER_REQ_HDR));
-////
-////    // Send a message to the pipe server and read the response. 
-////    fSuccess = TransactNamedPipe( 
-////      hPipe,                  // pipe handle 
-////      &in,                    // message to server
-////      in.nSize,               // message length 
-////      cbReadBuf,              // buffer to receive reply
-////      sizeof(cbReadBuf),      // size of read buffer
-////      &cbRead,                // bytes read
-////      NULL);                  // not overlapped 
-////
-////    if (!fSuccess && (GetLastError() != ERROR_MORE_DATA)) 
-////    {
-////      DEBUGSTRPKT(L" - FAILED!\n");
-////      DisplayLastError(L"TransactNamedPipe failed"); 
-////      CloseHandle(hPipe);
-////      return 0;
-////    }
-////
-////    // Пока не выделяя память, просто указатель на буфер
-////    pOut = (CESERVER_REQ*)cbReadBuf;
-////    if (pOut->hdr.nVersion != CESERVER_REQ_VER) {
-////      gConEmu.ShowOldCmdVersion(pOut->hdr.nCmd, pOut->hdr.nVersion, pOut->hdr.nSrcPID==GetServerPID() ? 1 : 0);
-////      CloseHandle(hPipe);
-////      return 0;
-////    }
-////
-////    int nAllSize = pOut->hdr.nSize;
-////    if (nAllSize == 0) {
-////       DEBUGSTRPKT(L" - FAILED!\n");
-////       DisplayLastError(L"Empty data recieved from server", 0);
-////       CloseHandle(hPipe);
-////       return 0;
-////    }
-////    
-////  	if (nAllSize > (int)sizeof(cbReadBuf))
-////  	{
-////      pOut = (CESERVER_REQ*)calloc(nAllSize,1);
-////      _ASSERTE(pOut!=NULL);
-////      memmove(pOut, cbReadBuf, cbRead);
-////      _ASSERTE(pOut->hdr.nVersion==CESERVER_REQ_VER);
-////
-////      LPBYTE ptrData = ((LPBYTE)pOut)+cbRead;
-////      nAllSize -= cbRead;
-////
-////      while(nAllSize>0)
-////      { 
-////        //_tprintf(TEXT("%s\n"), chReadBuf);
-////
-////        // Break if TransactNamedPipe or ReadFile is successful
-////        if(fSuccess)
-////           break;
-////
-////        // Read from the pipe if there is more data in the message.
-////        fSuccess = ReadFile( 
-////           hPipe,      // pipe handle 
-////           ptrData,    // buffer to receive reply 
-////           nAllSize,   // size of buffer 
-////           &cbRead,    // number of bytes read 
-////           NULL);      // not overlapped 
-////
-////        // Exit if an error other than ERROR_MORE_DATA occurs.
-////        if( !fSuccess && (GetLastError() != ERROR_MORE_DATA)) 
-////           break;
-////        ptrData += cbRead;
-////        nAllSize -= cbRead;
-////      }
-////
-////      TODO("Может возникнуть ASSERT, если консоль была закрыта в процессе чтения");
-////      _ASSERTE(nAllSize==0);
-////  }
-////
-////    CloseHandle(hPipe);
-////
-////	BOOL lbRc = FALSE;
-////
-////    // Warning. В некоторых случаях это может быть просто указатель на буфер, а не выделенная память!
-////	if (pOut) {
-////		// Необходимо запомнить, какой пакет был обработан последним - он содержит актуальную информацию
-////		mn_LastProcessedPkt = pOut->ConInfo.inf.nPacketId;
-////
-////		#ifdef _DEBUG
-////		wchar_t szDbg[128]; wsprintf(szDbg, L"RetrieveConsoleInfo received PktID=%i, ConHeight=%i\n",
-////			pOut->ConInfo.inf.nPacketId, pOut->ConInfo.inf.sbi.dwSize.Y);
-////		DEBUGSTRPKT(szDbg);
-////		#endif
-////		if (GetCurrentThreadId() == mn_MonitorThreadID) {
-////			DEBUGSTRPKT(L"RetrieveConsoleInfo is applying packet\n");
-////			ApplyConsoleInfo ( pOut );
-////			lbRc = TRUE;
-////		} else {
-////			// Передернуть MonitorThread -- не нужно. Это сделает PushPacket
-////			//SetEvent(mh_MonitorThreadEvent);
-////			_ASSERTE((LPVOID)pOut != (LPVOID)cbReadBuf);
-////			if ((LPVOID)pOut != (LPVOID)cbReadBuf) {
-////				BOOL lbSizeOk = (anWaitSize == 0) || (pOut->ConInfo.inf.sbi.dwSize.Y == (int)anWaitSize);
-////				if (lbSizeOk) {
-////					PushPacket(pOut);
-////					pOut = NULL;
-////					lbRc = TRUE;
-////				} else {
-////					DEBUGSTRPKT(L"RetrieveConsoleInfo failed, incorrect console height\n");
-////				}
-////			} else {
-////				DEBUGSTRPKT(L"RetrieveConsoleInfo failed, (LPVOID)pOut == (LPVOID)cbReadBuf\n");
-////			}
-////		}
-////	}
-////
-////    // Освободить память
-////  // Warning. В некоторых случаях это может быть просто указатель на буфер, а не выделенная память!
-////  if (pOut && (LPVOID)pOut != (LPVOID)cbReadBuf) {
-////      free(pOut);
-////  }
-////  pOut = NULL;
-////
-//
-//    return lbRc;
-//}
-
 BOOL CRealConsole::GetConWindowSize(const CONSOLE_SCREEN_BUFFER_INFO& sbi, int& nNewWidth, int& nNewHeight, BOOL* pbBufferHeight/*=NULL*/)
 {
     // Функция возвращает размер ОКНА, то есть буфер может быть больше
@@ -4723,7 +4570,7 @@ BOOL CRealConsole::InitBuffers(DWORD OneBufferSize)
             _ASSERTE((nNewWidth * nNewHeight * sizeof(*con.pConChar)) == OneBufferSize);
 		} else if (con.nTextWidth == nNewWidth && con.nTextHeight == nNewHeight) {
 			// Не будем зря передергивать буферы и прочее
-			if (con.pConChar!=NULL && con.pConAttr!=NULL && con.pCopy!=NULL && con.pCmp) {
+			if (con.pConChar!=NULL && con.pConAttr!=NULL && con.pDataCmp!=NULL) {
 				return TRUE;
 			}
 		}
@@ -4742,35 +4589,35 @@ BOOL CRealConsole::InitBuffers(DWORD OneBufferSize)
             { Free(con.pConChar); con.pConChar = NULL; }
         if (con.pConAttr)
             { Free(con.pConAttr); con.pConAttr = NULL; }
-		if (con.pCopy)
-			{ Free(con.pCopy); con.pCopy = NULL; }
-		if (con.pCmp)
-			{ Free(con.pCmp); con.pCmp = NULL; }
+		if (con.pDataCmp)
+			{ Free(con.pDataCmp); con.pDataCmp = NULL; }
+		//if (con.pCmp)
+		//	{ Free(con.pCmp); con.pCmp = NULL; }
 
         MCHKHEAP;
 
         con.pConChar = (TCHAR*)Alloc((nNewWidth * nNewHeight * 2), sizeof(*con.pConChar));
         con.pConAttr = (WORD*)Alloc((nNewWidth * nNewHeight * 2), sizeof(*con.pConAttr));
-		con.pCopy = (CESERVER_REQ_CONINFO_DATA*)Alloc((nNewWidth * nNewHeight)*sizeof(CHAR_INFO)+sizeof(CESERVER_REQ_CONINFO_DATA),1);
-		con.pCmp = (CESERVER_REQ_CONINFO_DATA*)Alloc((nNewWidth * nNewHeight)*sizeof(CHAR_INFO)+sizeof(CESERVER_REQ_CONINFO_DATA),1);
+		con.pDataCmp = (CHAR_INFO*)Alloc((nNewWidth * nNewHeight)*sizeof(CHAR_INFO),1);
+		//con.pCmp = (CESERVER_REQ_CONINFO_DATA*)Alloc((nNewWidth * nNewHeight)*sizeof(CHAR_INFO)+sizeof(CESERVER_REQ_CONINFO_DATA),1);
 
         sc.Unlock();
 
         _ASSERTE(con.pConChar!=NULL);
         _ASSERTE(con.pConAttr!=NULL);
-		_ASSERTE(con.pCopy!=NULL);
-		_ASSERTE(con.pCmp!=NULL);
+		_ASSERTE(con.pDataCmp!=NULL);
+		//_ASSERTE(con.pCmp!=NULL);
 
         MCHKHEAP
 
-        lbRc = con.pConChar!=NULL && con.pConAttr!=NULL && con.pCopy!=NULL && con.pCmp!=NULL;
+        lbRc = con.pConChar!=NULL && con.pConAttr!=NULL && con.pDataCmp!=NULL;
     } else if (con.nTextWidth!=nNewWidth || con.nTextHeight!=nNewHeight) {
         MCHKHEAP
         MSectionLock sc; sc.Lock(&csCON);
         memset(con.pConChar, 0, (nNewWidth * nNewHeight * 2) * sizeof(*con.pConChar));
         memset(con.pConAttr, 0, (nNewWidth * nNewHeight * 2) * sizeof(*con.pConAttr));
-		memset(con.pCopy->Buf, 0, (nNewWidth * nNewHeight) * sizeof(CHAR_INFO));
-		memset(con.pCmp->Buf, 0, (nNewWidth * nNewHeight) * sizeof(CHAR_INFO));
+		memset(con.pDataCmp, 0, (nNewWidth * nNewHeight) * sizeof(CHAR_INFO));
+		//memset(con.pCmp->Buf, 0, (nNewWidth * nNewHeight) * sizeof(CHAR_INFO));
         sc.Unlock();
         MCHKHEAP
 
@@ -4803,7 +4650,7 @@ void CRealConsole::ShowConsole(int nMode) // -1 Toggle, 0 - Hide, 1 - Show
     if (nMode == 1)
     {
         isShowConsole = true;
-        //ShowWindow(hConWnd, SW_SHOWNORMAL);
+        //apiShowWindow(hConWnd, SW_SHOWNORMAL);
         //if (setParent) SetParent(hConWnd, 0);
         RECT rcCon, rcWnd; GetWindowRect(hConWnd, &rcCon); GetWindowRect(ghWnd, &rcWnd);
         //if (!IsDebuggerPresent())
@@ -4832,7 +4679,7 @@ void CRealConsole::ShowConsole(int nMode) // -1 Toggle, 0 - Hide, 1 - Show
     {
         isShowConsole = false;
         //if (!gSet.isConVisible)
-		if (!ShowWindow(hConWnd, SW_HIDE)) {
+		if (!apiShowWindow(hConWnd, SW_HIDE)) {
 			if (isAdministrator() || (m_Args.pszUserName != NULL)) {
 				// Если оно запущено в Win7 as admin
 		        CESERVER_REQ *pIn = ExecuteNewCmd(CECMD_SHOWCONSOLE, sizeof(CESERVER_REQ_HDR) + sizeof(DWORD));
@@ -4865,9 +4712,14 @@ void CRealConsole::ShowConsole(int nMode) // -1 Toggle, 0 - Hide, 1 - Show
 
 void CRealConsole::OnServerStarted()
 {
-	// Открыть map с данными, теперь он уже должен быть создан
-	if (!mp_ConsoleInfo)
+	//if (!mp_ConsoleInfo)
+	if (!m_ConsoleMap.IsValid()) {
+		// Инициализировать имена пайпов, событий, мэппингов и т.п.
+		InitNames();
+	
+		// Открыть map с данными, теперь он уже должен быть создан
 		OpenMapHeader();
+	}
 
 	// И атрибуты Colorer
 	OpenColorMapping();
@@ -4888,9 +4740,9 @@ void CRealConsole::SetHwnd(HWND ahConWnd)
 	// Мог быть уже вызван (AttachGui/ConsoleEvent/CMD_START)
 	if (hConWnd != NULL) {
 		if (hConWnd != ahConWnd) {
-			if (mp_ConsoleInfo) {
-				_ASSERTE(mp_ConsoleInfo == NULL);
-
+			if (m_ConsoleMap.IsValid()) {
+				_ASSERTE(!m_ConsoleMap.IsValid());
+			
 				//CloseMapHeader(); // вдруг был подцеплен к другому окну? хотя не должен
 				// OpenMapHeader() пока не зовем, т.к. map мог быть еще не создан
 			}
@@ -4928,11 +4780,11 @@ void CRealConsole::SetHwnd(HWND ahConWnd)
 			mh_ServerSemaphore = CreateSemaphore(NULL, 1, 1, NULL);
 
         for (int i=0; i<MAX_SERVER_THREADS; i++) {
-			if (mh_ServerThreads[i])
+			if (mh_RConServerThreads[i])
 				continue;
-            mn_ServerThreadsId[i] = 0;
-            mh_ServerThreads[i] = CreateThread(NULL, 0, ServerThread, (LPVOID)this, 0, &mn_ServerThreadsId[i]);
-            _ASSERTE(mh_ServerThreads[i]!=NULL);
+            mn_RConServerThreadsId[i] = 0;
+            mh_RConServerThreads[i] = CreateThread(NULL, 0, RConServerThread, (LPVOID)this, 0, &mn_RConServerThreadsId[i]);
+            _ASSERTE(mh_RConServerThreads[i]!=NULL);
         }
 
         // чтобы ConEmuC знал, что мы готовы
@@ -5144,7 +4996,7 @@ void CRealConsole::CloseLogFiles()
 //    HANDLE hFile = CreateFile(szPath, GENERIC_WRITE, FILE_SHARE_READ, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
 //    if (hFile != INVALID_HANDLE_VALUE) {
 //        DWORD dwSize = 0;
-//        WriteFile(hFile, pInfo, pInfo->hdr.nSize, &dwSize, 0);
+//        WriteFile(hFile, pInfo, pInfo->hdr.cbSize, &dwSize, 0);
 //        CloseHandle(hFile);
 //    }
 //}
@@ -5203,77 +5055,6 @@ BOOL CRealConsole::RecreateProcess(RConStartArgs *args)
 	SetConStatus(L"Restarting process...");
 
     return true;
-
-    // как-то оно не особо... лучше штатными средствами
-#ifdef xxxxxx
-    bool lbRc = false;
-    BOOL fSuccess = FALSE;
-    DWORD dwRead = 0;
-    CESERVER_REQ In = {0};
-    HANDLE hPipe = NULL;
-    DWORD dwErr = 0;
-
-    In.nSize = sizeof(In);
-    In.nVersion = CESERVER_REQ_VER;
-    In.nCmd = CECMD_RECREATE;
-
-
-    //fSuccess = CallNamedPipe(ms_ConEmuC_Pipe, pIn, pIn->hdr.nSize, pOut, pOut->hdr.nSize, &dwRead, 500);
-
-    // Try to open a named pipe; wait for it, if necessary. 
-    while (1) 
-    { 
-      hPipe = CreateFile( ms_ConEmuC_Pipe, GENERIC_READ|GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
-      // Break if the pipe handle is valid. 
-      if (hPipe != INVALID_HANDLE_VALUE) 
-         break; 
-      // Exit if an error other than ERROR_PIPE_BUSY occurs. 
-      dwErr = GetLastError();
-      if (dwErr != ERROR_PIPE_BUSY) 
-      {
-        TODO("Подождать, пока появится пайп с таким именем, но только пока жив mh_ConEmuC");
-        dwErr = WaitForSingleObject(mh_ConEmuC, 100);
-        if (dwErr = WAIT_OBJECT_0)
-            return FALSE;
-        continue;
-      }
-
-      // All pipe instances are busy, so wait for 1 second.
-      if (!WaitNamedPipe(ms_ConEmuC_Pipe, 300) ) 
-      {
-        dwErr = WaitForSingleObject(mh_ConEmuC, 100);
-        if (dwErr = WAIT_OBJECT_0) {
-            DEBUGSTRPROC(L" - FAILED!\n");
-            return false;
-        }
-      }
-    } 
-
-    // The pipe connected; change to message-read mode. 
-    DWORD dwMode = PIPE_READMODE_MESSAGE; 
-    fSuccess = SetNamedPipeHandleState( 
-      hPipe,    // pipe handle 
-      &dwMode,  // new pipe mode 
-      NULL,     // don't set maximum bytes 
-      NULL);    // don't set maximum time 
-    if (!fSuccess) 
-    {
-      DEBUGSTRPROC(L" - FAILED!\n");
-      DisplayLastError(L"SetNamedPipeHandleState failed");
-      CloseHandle(hPipe);
-      return false;
-    }
-    
-    mn_InRecreate = 1;
-
-    // Send a message to the pipe server and read the response. 
-    DWORD cbWritten=0;
-    lbRc = WriteFile( hPipe, &In, In.nSize, &cbWritten, NULL);
-    
-    SafeCloseHandle ( hPipe );
-
-    return lbRc;
-#endif
 }
 
 // И запустить ее заново
@@ -6280,12 +6061,15 @@ BOOL CRealConsole::RecreateProcessStart()
 
 void CRealConsole::PrepareTransparent(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight)
 {
-	if (!mp_ConsoleInfo)
+	//if (!mp_ConsoleInfo)
+	if (!pChar || !pAttr)
 		return;
 
 	CEFAR_INFO FI = {0};
-	if (mp_FarInfo)
-		FI = *mp_FarInfo;
+	if (m_FarInfo.IsValid()) {
+		//FI = *mp_FarInfo;
+		m_FarInfo.GetTo(&FI);
+	}
 
 	#ifdef _DEBUG
 	if (mb_LeftPanel && !mb_RightPanel && mr_LeftPanelFull.right > 120) {
@@ -6711,12 +6495,12 @@ void CRealConsole::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, i
         wchar_t  *pszDst = pChar, *pszSrc = con.pConChar;
         CharAttr *pnDst = pAttr;
         WORD     *pnSrc = con.pConAttr;
-        AnnotationInfo *pcolSrc = NULL;
-        AnnotationInfo *pcolEnd = NULL;
+        const AnnotationInfo *pcolSrc = NULL;
+        const AnnotationInfo *pcolEnd = NULL;
         BOOL bUseColorData = FALSE;
-        if (gSet.isTrueColorer && mp_ColorHdr && mp_ColorData) {
-        	pcolSrc = mp_ColorData;
-        	pcolEnd = mp_ColorData + mp_ColorHdr->bufferSize;
+        if (gSet.isTrueColorer && m_TrueColorerMap.IsValid() && mp_TrueColorerData) {
+        	pcolSrc = mp_TrueColorerData;
+        	pcolEnd = mp_TrueColorerData + m_TrueColorerMap.Ptr()->bufferSize;
         	bUseColorData = TRUE;
     	}
         DWORD cbDstLineSize = nWidth * 2;
@@ -6887,7 +6671,7 @@ BOOL CRealConsole::ShowOtherWindow(HWND hWnd, int swShow)
 	if ((IsWindowVisible(hWnd) == FALSE) == (swShow == SW_HIDE))
 		return TRUE; // уже все сделано
 
-	BOOL lbRc = ShowWindow(hWnd, swShow);
+	BOOL lbRc = apiShowWindow(hWnd, swShow);
 	if (!lbRc) {
 		DWORD dwErr = GetLastError();
 		if (dwErr == 0) {
@@ -6979,7 +6763,7 @@ BOOL CRealConsole::SetOtherWindowRgn(HWND hWnd, int nRects, LPRECT prcRects, BOO
 
 void CRealConsole::ShowHideViews(BOOL abShow)
 {
-	// т.к. ShowWindow обломается, если окно создано от имени другого пользователя (или Run as admin)
+	// т.к. apiShowWindow обломается, если окно создано от имени другого пользователя (или Run as admin)
 	// то скрытие и отображение окна делаем другим способом
 	HWND hPic = isPictureView();
 	if (hPic) {
@@ -6991,6 +6775,20 @@ void CRealConsole::ShowHideViews(BOOL abShow)
 		} else {
 			mb_PicViewWasHidden = TRUE;
 			ShowOtherWindow(hPic, SW_HIDE);
+		}
+	}
+
+	for (int p = 0; p <= 1; p++) {
+		const PanelViewInit* pv = mp_VCon->GetPanelView(p==0);
+		if (pv) {
+			if (abShow) {
+				if (pv->bVisible && !IsWindowVisible(pv->hWnd))
+					ShowOtherWindow(pv->hWnd, SW_SHOWNA);
+
+			} else {
+				if (IsWindowVisible(pv->hWnd))
+					ShowOtherWindow(pv->hWnd, SW_HIDE);
+			}
 		}
 	}
 }
@@ -7037,7 +6835,7 @@ void CRealConsole::OnActivate(int nNewNum, int nOldNum)
 	//HWND hPic = isPictureView();
 	//if (hPic && mb_PicViewWasHidden) {
 	//	if (!IsWindowVisible(hPic)) {
-	//		if (!ShowWindow(hPic, SW_SHOWNA)) {
+	//		if (!apiShowWindow(hPic, SW_SHOWNA)) {
 	//			DisplayLastError(L"Can't show PictireView window!");
 	//		}
 	//	}
@@ -7061,7 +6859,7 @@ void CRealConsole::OnDeactivate(int nNewNum)
 	//HWND hPic = isPictureView();
 	//if (hPic && IsWindowVisible(hPic)) {
 	//    mb_PicViewWasHidden = TRUE;
-	//	if (!ShowWindow(hPic, SW_HIDE)) {
+	//	if (!apiShowWindow(hPic, SW_HIDE)) {
 	//		DisplayLastError(L"Can't hide PictuteView window!");
 	//	}
 	//}
@@ -7087,12 +6885,14 @@ void CRealConsole::OnGuiFocused(BOOL abFocus)
 
 	BOOL fSuccess = FALSE;
 
-	if (mp_ConsoleInfo && ms_ConEmuC_Pipe[0]) {
+	if (m_ConsoleMap.IsValid() && ms_ConEmuC_Pipe[0]) {
 		BOOL lbNeedChange = FALSE;
-		if (mp_ConsoleInfo->bConsoleActive && !abFocus && gSet.isSleepInBackground)
+		if (m_ConsoleMap.Ptr()->bConsoleActive) {
+			if (!abFocus && gSet.isSleepInBackground)
+				lbNeedChange = TRUE;
+		} else if (abFocus) {
 			lbNeedChange = TRUE;
-		else if (abFocus && !mp_ConsoleInfo->bConsoleActive)
-			lbNeedChange = TRUE;
+		}
 
 		if (lbNeedChange) {
 			int nInSize = sizeof(CESERVER_REQ_HDR)+sizeof(DWORD);
@@ -7100,9 +6900,9 @@ void CRealConsole::OnGuiFocused(BOOL abFocus)
 			CESERVER_REQ lIn = {{nInSize}};
 			lIn.dwData[0] = abFocus ? 1 : 0;
 			
-			ExecutePrepareCmd(&lIn, CECMD_ONACTIVATION, lIn.hdr.nSize);
+			ExecutePrepareCmd(&lIn, CECMD_ONACTIVATION, lIn.hdr.cbSize);
 
-			fSuccess = CallNamedPipe(ms_ConEmuC_Pipe, &lIn, lIn.hdr.nSize, &lIn, lIn.hdr.nSize, &dwRead, 500);
+			fSuccess = CallNamedPipe(ms_ConEmuC_Pipe, &lIn, lIn.hdr.cbSize, &lIn, lIn.hdr.cbSize, &dwRead, 500);
 		}
 	}
 }
@@ -7286,7 +7086,7 @@ void CRealConsole::SetTabs(ConEmuTab* tabs, int tabsCount)
 
     ConEmuTab* lpTmpTabs = NULL;
 
-	const int nMaxTabName = sizeofarray(tabs->Name);
+	const int nMaxTabName = countof(tabs->Name);
     
 	// Табы нужно проверить и подготовить
     int nActiveTab = 0, i;
@@ -7437,7 +7237,7 @@ BOOL CRealConsole::GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab)
 				if (gSet.bAdminShield) {
 					pTab->Type |= 0x100;
 				} else {
-					if (lstrlen(ms_PanelTitle) < (int)(sizeofarray(pTab->Name) + lstrlen(gSet.szAdminTitleSuffix) + 1))
+					if (lstrlen(ms_PanelTitle) < (int)(countof(pTab->Name) + lstrlen(gSet.szAdminTitleSuffix) + 1))
 						lstrcat(pTab->Name, gSet.szAdminTitleSuffix);
 				}
 			}
@@ -7659,183 +7459,6 @@ void CRealConsole::SetForceRead()
     SetEvent(mh_MonitorThreadEvent);
 }
 
-/*
-DWORD CRealConsole::WaitEndUpdate(DWORD dwTimeout)
-{
-    DWORD dwWait = WaitForSingleObject(mh_EndUpdateEvent, dwTimeout);
-    return dwWait;
-}
-*/
-
-//bool CRealConsole::isPackets()
-//{
-//    CESERVER_REQ** iter = m_PacketQueue;
-//    CESERVER_REQ** end = iter + countof(m_PacketQueue);
-//    
-//    while (iter != end) {
-//        if ( *iter != NULL )
-//            return true;
-//        iter ++; // ячейка пуста
-//    }
-//
-//    return false;
-//}
-
-// Банально добавляет пакет в вектор. Сейчас порядок не важен
-//void CRealConsole::PushPacket(CESERVER_REQ* pPkt)
-//{
-////#ifdef _DEBUG
-////    DWORD dwChSize = 0;
-////    CESERVER_CHAR_HDR ch = {0};
-////    memmove(&dwChSize, pPkt->Data+86, dwChSize);
-////    if (dwChSize) {
-////        memmove(&ch, pPkt->Data+90, sizeof(ch));
-////        _ASSERTE(ch.nSize == dwChSize);
-////        _ASSERTE(ch.cr1.X<=ch.cr2.X && ch.cr1.Y<=ch.cr2.Y);
-////    }
-////#endif
-//
-//	#ifdef _DEBUG
-//	wchar_t szDbg[128]; wsprintf(szDbg, L"Pushing packet PktID=%i, ConHeight=%i\n",
-//		pPkt->ConInfo.inf.nPacketId, pPkt->ConInfo.inf.sbi.dwSize.Y);
-//	DEBUGSTRPKT(szDbg);
-//	#endif
-//
-//    int i;
-//    DWORD dwTID = GetCurrentThreadId();
-//    
-//    CESERVER_REQ **pQueue = NULL;
-//    for (i=0; !pQueue && i < MAX_SERVER_THREADS; i++) {
-//        if (mn_ServerThreadsId[i] == dwTID)
-//            pQueue = m_PacketQueue + (i*MAX_THREAD_PACKETS);
-//    }
-//    // Если это не серверная нить - добавляем в зарезервированную область
-//    if (!pQueue) pQueue = m_PacketQueue + (MAX_SERVER_THREADS*MAX_THREAD_PACKETS);
-//    
-//    for (i=0; i < MAX_THREAD_PACKETS; i++, pQueue++)
-//    {
-//        if (*pQueue == NULL) {
-//            *pQueue = pPkt;
-//            pQueue = NULL;
-//            break;
-//        }
-//    }
-//    
-//    // Если не NULL - значит очередь переполнена!
-//    _ASSERTE(pQueue == NULL);
-//
-//    //MSectionLock cs; cs.Lock(&csPKT);
-//    //m_Packets.push_back(pPkt);
-//    //cs.Unlock();
-//    //MCHKHEAP
-//    SetEvent(mh_PacketArrived);
-//}
-
-// А вот здесь нужно извлечь пакет с НАИМЕНЬШИМ ИД
-// Вызывающая функция должна освободить результат (free)
-//CESERVER_REQ* CRealConsole::PopPacket()
-//{
-//	if (!isPackets()) {
-//		DEBUGSTRPKT(L"Popping packet failed, queue is empty\n");
-//        return NULL;
-//	}
-//
-//    MCHKHEAP
-//
-//	DWORD nWait = 0;
-//	if (con.bInSetSize) {
-//		_ASSERTE(con.hInSetSize!=NULL);
-//		nWait = WaitForSingleObject(con.hInSetSize, 1000);
-//		#ifdef _DEBUG
-//		if (nWait != WAIT_OBJECT_0) {
-//			_ASSERTE(nWait == WAIT_OBJECT_0);
-//		}
-//		#endif
-//	}
-//
-//    CESERVER_REQ* pRet = NULL, *pCmp = NULL;
-//
-//    //MSectionLock cs; cs.Lock(&csPKT, TRUE);
-//
-//    //std::vector<CESERVER_REQ*>::iterator iter;
-//    CESERVER_REQ** iter = m_PacketQueue;
-//    CESERVER_REQ** end = iter + countof(m_PacketQueue);
-//    
-//    DWORD dwMinID = 0;
-//
-//	// Во время выполнения этой функции mn_LastProcessedPkt может измениться, 
-//	// поэтому во избежание потери информации запомним копию на начало функции
-//	DWORD nLastProcessedPkt = mn_LastProcessedPkt;
-//    
-//    while (iter != end) {
-//        pCmp = *iter;
-//        if (pCmp == NULL) {
-//            iter ++; // ячейка пуста
-//            continue;
-//        }
-//
-//        if ( pCmp->ConInfo.inf.nPacketId < nLastProcessedPkt ) {
-//            // Убить все пакеты, с МЕНЬШИМ ИД (хотя их и так уже быть не должно)
-//            TODO("Проверить, что произойдет с пакетами регионов/символов...");
-//			#ifdef _DEBUG
-//			wchar_t szDbg[128]; wsprintf(szDbg, L"!!! *** Obsolete packet found (%i < %i) *** !!!\n", 
-//				pCmp->ConInfo.inf.nPacketId, nLastProcessedPkt);
-//            DEBUGSTRPKT(szDbg);
-//			#endif
-//            *iter = NULL;
-//            iter ++;
-//            free(pCmp);
-//            MCHKHEAP
-//            continue;
-//        } 
-//        
-//        if ( dwMinID == 0 || pCmp->ConInfo.inf.nPacketId <= dwMinID ) {
-//            // Ищем минимальный из допустимых
-//            dwMinID = pCmp->ConInfo.inf.nPacketId;
-//            pRet = pCmp;
-//        }
-//        iter ++;
-//    }
-//
-//    if (pRet) {
-//        nLastProcessedPkt = dwMinID;
-//
-//        iter = m_PacketQueue;
-//        while (iter != end) {
-//            pCmp = *iter;
-//            if (pCmp == NULL) {
-//                iter ++;
-//                continue;
-//            }
-//            
-//            if ( pCmp->ConInfo.inf.nPacketId <= nLastProcessedPkt ) {
-//                if (pRet!=pCmp)
-//                    free(pCmp);
-//                MCHKHEAP
-//                *iter = NULL;
-//            }
-//            iter ++;
-//        }
-//
-//		if (mn_LastProcessedPkt < nLastProcessedPkt)
-//			mn_LastProcessedPkt = nLastProcessedPkt;
-//    }
-//
-//	#ifdef _DEBUG
-//	wchar_t szDbg[128]; 
-//	if (pRet)
-//		wsprintf(szDbg, L"Popping packet PktID=%i, ConHeight=%i\n",
-//			pRet->ConInfo.inf.nPacketId, pRet->ConInfo.inf.sbi.dwSize.Y);
-//	else
-//		wcscpy(szDbg, L"Popping packet failed, queue is empty\n");
-//	DEBUGSTRPKT(szDbg);
-//	#endif
-//
-//    //cs.Unlock();
-//    MCHKHEAP
-//    return pRet;
-//}
-
 // Вызывается из TabBar->ConEmu
 void CRealConsole::ChangeBufferHeightMode(BOOL abBufferHeight)
 {
@@ -7895,147 +7518,160 @@ HANDLE CRealConsole::PrepareOutputFileCreate(wchar_t* pszFilePathName)
 BOOL CRealConsole::PrepareOutputFile(BOOL abUnicodeText, wchar_t* pszFilePathName)
 {
     BOOL lbRc = FALSE;
-    HANDLE hPipe = NULL; 
-    CESERVER_REQ_HDR in = {0};
-    CESERVER_REQ *pOut = NULL;
-    BYTE cbReadBuf[512];
-    BOOL fSuccess;
-    DWORD cbRead, dwMode, dwErr;
+	CESERVER_REQ_HDR In = {0};
+	const CESERVER_REQ *pOut = NULL;
+	DWORD cbRead = 0;
+	MPipe<CESERVER_REQ_HDR,CESERVER_REQ> Pipe;
 
-    // Try to open a named pipe; wait for it, if necessary. 
-    while (1) 
-    { 
-        hPipe = CreateFile( 
-            ms_ConEmuC_Pipe,// pipe name 
-            GENERIC_READ |  // read and write access 
-            GENERIC_WRITE, 
-            0,              // no sharing 
-            NULL,           // default security attributes
-            OPEN_EXISTING,  // opens existing pipe 
-            0,              // default attributes 
-            NULL);          // no template file 
+	ExecutePrepareCmd(&In, CECMD_GETOUTPUT, sizeof(CESERVER_REQ_HDR));
 
-        // Break if the pipe handle is valid. 
-        if (hPipe != INVALID_HANDLE_VALUE) 
-            break; 
+	Pipe.InitName(L"ConEmu", L"%s", ms_ConEmuC_Pipe, 0);
+	if (!Pipe.Transact(&In, In.cbSize, &pOut, &cbRead)) {
+		MBoxA(Pipe.GetErrorText());
+		return FALSE;
+	}
 
-        // Exit if an error other than ERROR_PIPE_BUSY occurs. 
-        dwErr = GetLastError();
-        if (dwErr != ERROR_PIPE_BUSY) 
-        {
-            TODO("Подождать, пока появится пайп с таким именем, но только пока жив mh_ConEmuC");
-            dwErr = WaitForSingleObject(mh_ConEmuC, 100);
-            if (dwErr == WAIT_OBJECT_0)
-                return FALSE;
-            continue;
-            //DisplayLastError(L"Could not open pipe", dwErr);
-            //return 0;
-        }
-
-        // All pipe instances are busy, so wait for 1 second.
-        if (!WaitNamedPipe(ms_ConEmuC_Pipe, 1000) ) 
-        {
-            dwErr = WaitForSingleObject(mh_ConEmuC, 100);
-            if (dwErr == WAIT_OBJECT_0) {
-                DEBUGSTRCMD(L" - FAILED!\n");
-                return FALSE;
-            }
-            //DisplayLastError(L"WaitNamedPipe failed"); 
-            //return 0;
-        }
-    } 
-
-    // The pipe connected; change to message-read mode. 
-    dwMode = PIPE_READMODE_MESSAGE; 
-    fSuccess = SetNamedPipeHandleState( 
-        hPipe,    // pipe handle 
-        &dwMode,  // new pipe mode 
-        NULL,     // don't set maximum bytes 
-        NULL);    // don't set maximum time 
-    if (!fSuccess) 
-    {
-        DEBUGSTRCMD(L" - FAILED!\n");
-        DisplayLastError(L"SetNamedPipeHandleState failed");
-        CloseHandle(hPipe);
-        return 0;
-    }
-
-	ExecutePrepareCmd((CESERVER_REQ*)&in, CECMD_GETOUTPUT, sizeof(CESERVER_REQ_HDR));
-
-    // Send a message to the pipe server and read the response. 
-    fSuccess = TransactNamedPipe( 
-        hPipe,                  // pipe handle 
-        &in,                    // message to server
-        in.nSize,               // message length 
-        cbReadBuf,              // buffer to receive reply
-        sizeof(cbReadBuf),      // size of read buffer
-        &cbRead,                // bytes read
-        NULL);                  // not overlapped 
-
-    if (!fSuccess && (GetLastError() != ERROR_MORE_DATA)) 
-    {
-        DEBUGSTRCMD(L" - FAILED!\n");
-        //DisplayLastError(L"TransactNamedPipe failed"); 
-        CloseHandle(hPipe);
-        HANDLE hFile = PrepareOutputFileCreate(pszFilePathName);
-        if (hFile)
-            CloseHandle(hFile);
-        return (hFile!=NULL);
-    }
-
-    // Пока не выделяя память, просто указатель на буфер
-    pOut = (CESERVER_REQ*)cbReadBuf;
-    if (pOut->hdr.nVersion != CESERVER_REQ_VER) {
-        gConEmu.ShowOldCmdVersion(pOut->hdr.nCmd, pOut->hdr.nVersion, pOut->hdr.nSrcPID==GetServerPID() ? 1 : 0);
-        CloseHandle(hPipe);
-        return 0;
-    }
-
-    int nAllSize = pOut->hdr.nSize;
-    if (nAllSize==0) {
-        DEBUGSTRCMD(L" - FAILED!\n");
-        DisplayLastError(L"Empty data recieved from server", 0);
-        CloseHandle(hPipe);
-        return 0;
-    }
-    if (nAllSize > (int)sizeof(cbReadBuf))
-    {
-        pOut = (CESERVER_REQ*)calloc(nAllSize,1);
-        _ASSERTE(pOut!=NULL);
-        memmove(pOut, cbReadBuf, cbRead);
-        _ASSERTE(pOut->hdr.nVersion==CESERVER_REQ_VER);
-
-        LPBYTE ptrData = ((LPBYTE)pOut)+cbRead;
-        nAllSize -= cbRead;
-
-        while(nAllSize>0)
-        { 
-            //_tprintf(TEXT("%s\n"), chReadBuf);
-
-            // Break if TransactNamedPipe or ReadFile is successful
-            if(fSuccess)
-                break;
-
-            // Read from the pipe if there is more data in the message.
-            fSuccess = ReadFile( 
-                hPipe,      // pipe handle 
-                ptrData,    // buffer to receive reply 
-                nAllSize,   // size of buffer 
-                &cbRead,    // number of bytes read 
-                NULL);      // not overlapped 
-
-            // Exit if an error other than ERROR_MORE_DATA occurs.
-            if( !fSuccess && (GetLastError() != ERROR_MORE_DATA)) 
-                break;
-            ptrData += cbRead;
-            nAllSize -= cbRead;
-        }
-
-        TODO("Может возникнуть ASSERT, если консоль была закрыта в процессе чтения");
-        _ASSERTE(nAllSize==0);
-    }
-
-    CloseHandle(hPipe);
+	//HANDLE hPipe = NULL; 
+	//
+	//CESERVER_REQ *pOut = NULL;
+	//BYTE cbReadBuf[512];
+	//BOOL fSuccess;
+	//DWORD cbRead, dwMode, dwErr;
+	//
+	//// Try to open a named pipe; wait for it, if necessary. 
+	//while (1) 
+	//{ 
+	//    hPipe = CreateFile( 
+	//        ms_ConEmuC_Pipe,// pipe name 
+	//        GENERIC_READ |  // read and write access 
+	//        GENERIC_WRITE, 
+	//        0,              // no sharing 
+	//        NULL,           // default security attributes
+	//        OPEN_EXISTING,  // opens existing pipe 
+	//        0,              // default attributes 
+	//        NULL);          // no template file 
+	//
+	//    // Break if the pipe handle is valid. 
+	//    if (hPipe != INVALID_HANDLE_VALUE) 
+	//        break; 
+	//
+	//    // Exit if an error other than ERROR_PIPE_BUSY occurs. 
+	//    dwErr = GetLastError();
+	//    if (dwErr != ERROR_PIPE_BUSY) 
+	//    {
+	//        TODO("Подождать, пока появится пайп с таким именем, но только пока жив mh_ConEmuC");
+	//        dwErr = WaitForSingleObject(mh_ConEmuC, 100);
+	//        if (dwErr == WAIT_OBJECT_0)
+	//            return FALSE;
+	//        continue;
+	//        //DisplayLastError(L"Could not open pipe", dwErr);
+	//        //return 0;
+	//    }
+	//
+	//    // All pipe instances are busy, so wait for 1 second.
+	//    if (!WaitNamedPipe(ms_ConEmuC_Pipe, 1000) ) 
+	//    {
+	//        dwErr = WaitForSingleObject(mh_ConEmuC, 100);
+	//        if (dwErr == WAIT_OBJECT_0) {
+	//            DEBUGSTRCMD(L" - FAILED!\n");
+	//            return FALSE;
+	//        }
+	//        //DisplayLastError(L"WaitNamedPipe failed"); 
+	//        //return 0;
+	//    }
+	//} 
+	//
+	//// The pipe connected; change to message-read mode. 
+	//dwMode = PIPE_READMODE_MESSAGE; 
+	//fSuccess = SetNamedPipeHandleState( 
+	//    hPipe,    // pipe handle 
+	//    &dwMode,  // new pipe mode 
+	//    NULL,     // don't set maximum bytes 
+	//    NULL);    // don't set maximum time 
+	//if (!fSuccess) 
+	//{
+	//    DEBUGSTRCMD(L" - FAILED!\n");
+	//    DisplayLastError(L"SetNamedPipeHandleState failed");
+	//    CloseHandle(hPipe);
+	//    return 0;
+	//}
+	//
+	//ExecutePrepareCmd((CESERVER_REQ*)&in, CECMD_GETOUTPUT, sizeof(CESERVER_REQ_HDR));
+	//
+	//// Send a message to the pipe server and read the response. 
+	//fSuccess = TransactNamedPipe( 
+	//    hPipe,                  // pipe handle 
+	//    &in,                    // message to server
+	//    in.nSize,               // message length 
+	//    cbReadBuf,              // buffer to receive reply
+	//    sizeof(cbReadBuf),      // size of read buffer
+	//    &cbRead,                // bytes read
+	//    NULL);                  // not overlapped 
+	//
+	//if (!fSuccess && (GetLastError() != ERROR_MORE_DATA)) 
+	//{
+	//    DEBUGSTRCMD(L" - FAILED!\n");
+	//    //DisplayLastError(L"TransactNamedPipe failed"); 
+	//    CloseHandle(hPipe);
+	//    HANDLE hFile = PrepareOutputFileCreate(pszFilePathName);
+	//    if (hFile)
+	//        CloseHandle(hFile);
+	//    return (hFile!=NULL);
+	//}
+	//
+	//// Пока не выделяя память, просто указатель на буфер
+	//pOut = (CESERVER_REQ*)cbReadBuf;
+	//if (pOut->hdr.nVersion != CESERVER_REQ_VER) {
+	//    gConEmu.ShowOldCmdVersion(pOut->hdr.nCmd, pOut->hdr.nVersion, pOut->hdr.nSrcPID==GetServerPID() ? 1 : 0);
+	//    CloseHandle(hPipe);
+	//    return 0;
+	//}
+	//
+	//int nAllSize = pOut->hdr.cbSize;
+	//if (nAllSize==0) {
+	//    DEBUGSTRCMD(L" - FAILED!\n");
+	//    DisplayLastError(L"Empty data recieved from server", 0);
+	//    CloseHandle(hPipe);
+	//    return 0;
+	//}
+	//if (nAllSize > (int)sizeof(cbReadBuf))
+	//{
+	//    pOut = (CESERVER_REQ*)calloc(nAllSize,1);
+	//    _ASSERTE(pOut!=NULL);
+	//    memmove(pOut, cbReadBuf, cbRead);
+	//    _ASSERTE(pOut->hdr.nVersion==CESERVER_REQ_VER);
+	//
+	//    LPBYTE ptrData = ((LPBYTE)pOut)+cbRead;
+	//    nAllSize -= cbRead;
+	//
+	//    while(nAllSize>0)
+	//    { 
+	//        //_tprintf(TEXT("%s\n"), chReadBuf);
+	//
+	//        // Break if TransactNamedPipe or ReadFile is successful
+	//        if(fSuccess)
+	//            break;
+	//
+	//        // Read from the pipe if there is more data in the message.
+	//        fSuccess = ReadFile( 
+	//            hPipe,      // pipe handle 
+	//            ptrData,    // buffer to receive reply 
+	//            nAllSize,   // size of buffer 
+	//            &cbRead,    // number of bytes read 
+	//            NULL);      // not overlapped 
+	//
+	//        // Exit if an error other than ERROR_MORE_DATA occurs.
+	//        if( !fSuccess && (GetLastError() != ERROR_MORE_DATA)) 
+	//            break;
+	//        ptrData += cbRead;
+	//        nAllSize -= cbRead;
+	//    }
+	//
+	//    TODO("Может возникнуть ASSERT, если консоль была закрыта в процессе чтения");
+	//    _ASSERTE(nAllSize==0);
+	//}
+	//
+	//CloseHandle(hPipe);
 
     // Теперь pOut содержит данные вывода : CESERVER_CONSAVE
 
@@ -8043,20 +7679,20 @@ BOOL CRealConsole::PrepareOutputFile(BOOL abUnicodeText, wchar_t* pszFilePathNam
     lbRc = (hFile != NULL);
 
     if (pOut->hdr.nVersion == CESERVER_REQ_VER) {
-        CESERVER_CONSAVE* pSave = (CESERVER_CONSAVE*)pOut;
+        const CESERVER_CONSAVE* pSave = (CESERVER_CONSAVE*)pOut;
         UINT nWidth = pSave->hdr.sbi.dwSize.X;
         UINT nHeight = pSave->hdr.sbi.dwSize.Y;
-        wchar_t* pwszCur = pSave->Data;
-        wchar_t* pwszEnd = (wchar_t*)(((LPBYTE)pOut)+pOut->hdr.nSize);
+        const wchar_t* pwszCur = pSave->Data;
+        const wchar_t* pwszEnd = (const wchar_t*)(((LPBYTE)pOut)+pOut->hdr.cbSize);
 
         if (pOut->hdr.nVersion == CESERVER_REQ_VER && nWidth && nHeight && (pwszCur < pwszEnd)) {
             DWORD dwWritten;
             char *pszAnsi = NULL;
-            wchar_t* pwszRn = NULL;
+            const wchar_t* pwszRn = NULL;
             if (!abUnicodeText) {
                 pszAnsi = (char*)calloc(nWidth+1,1);
             } else {
-                WORD dwTag = 0xFEFF;
+                WORD dwTag = 0xFEFF; //BOM
                 WriteFile(hFile, &dwTag, 2, &dwWritten, 0);
             }
 
@@ -8067,7 +7703,8 @@ BOOL CRealConsole::PrepareOutputFile(BOOL abUnicodeText, wchar_t* pszFilePathNam
                 UINT nCurLen = 0;
                 pwszRn = pwszCur + nWidth - 1;
                 while (pwszRn >= pwszCur && *pwszRn == L' ') {
-                    *pwszRn = 0; pwszRn --;
+                    //*pwszRn = 0;
+					pwszRn --;
                 }
                 nCurLen = pwszRn - pwszCur + 1;
                 if (nCurLen > 0 || !lbHeader) { // Первые N строк если они пустые - не показывать
@@ -8098,8 +7735,8 @@ BOOL CRealConsole::PrepareOutputFile(BOOL abUnicodeText, wchar_t* pszFilePathNam
     if (hFile != NULL && hFile != INVALID_HANDLE_VALUE)
         CloseHandle(hFile);
 
-    if (pOut && (LPVOID)pOut != (LPVOID)cbReadBuf)
-        free(pOut);
+    //if (pOut && (LPVOID)pOut != (LPVOID)cbReadBuf)
+    //    free(pOut);
     return lbRc;
 }
 
@@ -8390,7 +8027,7 @@ short CRealConsole::CheckProgressInConsole(const wchar_t* pszCurLine)
 		static int nRusLen = 0;
 		static wchar_t szComplRus[32] = {0};
 		if (!szComplRus[0]) {
-			MultiByteToWideChar(CP_ACP,0,"Завершено:",-1,szComplRus,sizeofarray(szComplRus));
+			MultiByteToWideChar(CP_ACP,0,"Завершено:",-1,szComplRus,countof(szComplRus));
 			nRusLen = lstrlen(szComplRus);
 		}
 		static int nEngLen = lstrlen(L"Completed:");
@@ -8856,7 +8493,7 @@ HWND CRealConsole::isPictureView(BOOL abIgnoreNonModal/*=FALSE*/)
 
 	if (hPictureView && abIgnoreNonModal) {
 		wchar_t szClassName[128];
-		if (GetClassName(hPictureView, szClassName, sizeofarray(szClassName))) {
+		if (GetClassName(hPictureView, szClassName, countof(szClassName))) {
 			if (wcscmp(szClassName, L"FarMultiViewControlClass") == 0) {
 				// Пока оно строго немодальное, но потом может быть по другому
 				DWORD_PTR dwValue = GetWindowLongPtr(hPictureView, 0);
@@ -9274,63 +8911,75 @@ DWORD CRealConsole::GetConsoleStates()
 
 void CRealConsole::CloseColorMapping()
 {
-	if (mp_ColorHdr) {
-		UnmapViewOfFile(mp_ColorHdr);
-		mp_ColorHdr = NULL;
-		mp_ColorData = NULL;
-	}
-	if (mh_ColorMapping) {
-		CloseHandle(mh_ColorMapping);
-		mh_ColorMapping = NULL;
-	}
+	m_TrueColorerMap.CloseMap();
+	//if (mp_ColorHdr) {
+	//	UnmapViewOfFile(mp_ColorHdr);
+	//mp_ColorHdr = NULL;
+	mp_TrueColorerData = NULL;
+	//}
+	//if (mh_ColorMapping) {
+	//	CloseHandle(mh_ColorMapping);
+	//	mh_ColorMapping = NULL;
+	//}
 
 	mb_DataChanged = TRUE;
 	mn_LastColorFarID = 0;
 }
 
-void CRealConsole::CheckColorMapping(DWORD dwPID)
-{
-	if (!dwPID)
-		dwPID = GetFarPID();
-	if ((!dwPID && mp_ColorData) || (dwPID != mn_LastColorFarID)) {
-		//CloseColorMapping();
-		if (!dwPID)
-			return;
-	}
-	
-	if (dwPID == mn_LastColorFarID)
-		return; // Для этого фара - наличие уже проверяли!
-		
-	mn_LastColorFarID = dwPID; // сразу запомним
-	
-}
+//void CRealConsole::CheckColorMapping(DWORD dwPID)
+//{
+//	if (!dwPID)
+//		dwPID = GetFarPID();
+//	if ((!dwPID && m_TrueColorerMap.IsValid()) || (dwPID != mn_LastColorFarID)) {
+//		//CloseColorMapping();
+//		if (!dwPID)
+//			return;
+//	}
+//	
+//	if (dwPID == mn_LastColorFarID)
+//		return; // Для этого фара - наличие уже проверяли!
+//		
+//	mn_LastColorFarID = dwPID; // сразу запомним
+//	
+//}
 
 void CRealConsole::OpenColorMapping()
 {
 	BOOL lbResult = FALSE;
 	wchar_t szErr[512]; szErr[0] = 0;
-	wchar_t szMapName[512]; szErr[0] = 0;
-	
-	_ASSERTE(mh_ColorMapping == NULL);
+	//wchar_t szMapName[512]; szErr[0] = 0;
+	const AnnotationHeader *pHdr = NULL;
 
-	wsprintf(szMapName, AnnotationShareName, sizeof(AnnotationInfo), (DWORD)hConWnd);
-	mh_ColorMapping = OpenFileMapping(FILE_MAP_READ, FALSE, szMapName);
-	if (!mh_ColorMapping) {
-		DWORD dwErr = GetLastError();
-		wsprintf (szErr, L"ConEmu: Can't open colorer file mapping. ErrCode=0x%08X. %s", dwErr, szMapName);
+	_ASSERTE(hConWnd!=NULL);
+
+	m_TrueColorerMap.InitName(AnnotationShareName, (DWORD)sizeof(AnnotationInfo), (DWORD)hConWnd);
+
+	if (!m_TrueColorerMap.Open()) {
+		lstrcpyn(szErr, m_TrueColorerMap.GetErrorText(), countof(szErr));
 		goto wrap;
 	}
 	
-	mp_ColorHdr = (AnnotationHeader*)MapViewOfFile(mh_ColorMapping, FILE_MAP_READ,0,0,0);
-	if (!mp_ColorHdr) {
-		DWORD dwErr = GetLastError();
-		wchar_t szErr[512];
-		wsprintf (szErr, L"ConEmu: Can't map colorer info. ErrCode=0x%08X. %s", dwErr, szMapName);
-		CloseHandle(mh_ColorMapping); mh_ColorMapping = NULL;
-		goto wrap;
-	}
+	//_ASSERTE(mh_ColorMapping == NULL);
+
+	//wsprintf(szMapName, AnnotationShareName, sizeof(AnnotationInfo), (DWORD)hConWnd);
+	//mh_ColorMapping = OpenFileMapping(FILE_MAP_READ, FALSE, szMapName);
+	//if (!mh_ColorMapping) {
+	//	DWORD dwErr = GetLastError();
+	//	wsprintf (szErr, L"ConEmu: Can't open colorer file mapping. ErrCode=0x%08X. %s", dwErr, szMapName);
+	//	goto wrap;
+	//}
+	//
+	//mp_ColorHdr = (AnnotationHeader*)MapViewOfFile(mh_ColorMapping, FILE_MAP_READ,0,0,0);
+	//if (!mp_ColorHdr) {
+	//	DWORD dwErr = GetLastError();
+	//	wchar_t szErr[512];
+	//	wsprintf (szErr, L"ConEmu: Can't map colorer info. ErrCode=0x%08X. %s", dwErr, szMapName);
+	//	CloseHandle(mh_ColorMapping); mh_ColorMapping = NULL;
+	//	goto wrap;
+	//}
 	
-	mp_ColorData = (AnnotationInfo*)(((LPBYTE)mp_ColorHdr)+mp_ColorHdr->struct_size);
+	pHdr = m_TrueColorerMap.Ptr();
+	mp_TrueColorerData = (const AnnotationInfo*)(((LPBYTE)pHdr)+pHdr->struct_size);
 
 	lbResult = TRUE;
 wrap:
@@ -9351,44 +9000,52 @@ BOOL CRealConsole::OpenFarMapData()
 
 	CloseFarMapData();
 
-	_ASSERTE(mh_FarFileMapping == NULL);
-	_ASSERTE(mh_FarAliveEvent == NULL);
+	_ASSERTE(m_FarInfo.IsValid() == FALSE);
+	//_ASSERTE(mh_FarFileMapping == NULL);
+	//_ASSERTE(mh_FarAliveEvent == NULL);
 
 	DWORD dwErr = 0;
 	DWORD nFarPID = GetFarPID(TRUE);
 	if (!nFarPID)
 		return FALSE;
 
-	wsprintf(szMapName, CEFARMAPNAME, nFarPID);
-	mh_FarFileMapping = OpenFileMapping(FILE_MAP_READ/*|FILE_MAP_WRITE*/, FALSE, szMapName);
-	if (!mh_FarFileMapping) {
-		dwErr = GetLastError();
-		wsprintf (szErr, L"ConEmu: Can't open FAR data file mapping. ErrCode=0x%08X. %s", dwErr, szMapName);
+	m_FarInfo.InitName(CEFARMAPNAME, nFarPID);
+	//wsprintf(szMapName, CEFARMAPNAME, nFarPID);
+	//mh_FarFileMapping = OpenFileMapping(FILE_MAP_READ/*|FILE_MAP_WRITE*/, FALSE, szMapName);
+	//if (!mh_FarFileMapping) {
+	//	dwErr = GetLastError();
+	//	wsprintf (szErr, L"ConEmu: Can't open FAR data file mapping. ErrCode=0x%08X. %s", dwErr, szMapName);
+	//	goto wrap;
+	//}
+
+	//mp_FarInfo = (CEFAR_INFO*)MapViewOfFile(mh_FarFileMapping, FILE_MAP_READ/*|FILE_MAP_WRITE*/,0,0,0);
+	//if (!mp_FarInfo)
+	if (!m_FarInfo.Open())
+	{
+		//DWORD dwErr = GetLastError();
+		//wchar_t szErr[512];
+		//wsprintf (szErr, L"ConEmu: Can't map FAR info. ErrCode=0x%08X. %s", dwErr, szMapName);
+		lstrcpynW(szErr, m_FarInfo.GetErrorText(), countof(szErr));
 		goto wrap;
 	}
 
-	mp_FarInfo = (CEFAR_INFO*)MapViewOfFile(mh_FarFileMapping, FILE_MAP_READ/*|FILE_MAP_WRITE*/,0,0,0);
-	if (!mp_FarInfo) {
-		DWORD dwErr = GetLastError();
-		wchar_t szErr[512];
-		wsprintf (szErr, L"ConEmu: Can't map FAR info. ErrCode=0x%08X. %s", dwErr, szMapName);
-		goto wrap;
-	}
-
-	if (mp_FarInfo->nFarPID != nFarPID) {
-		_ASSERTE(mp_FarInfo->nFarPID != nFarPID);
+	if (m_FarInfo.Ptr()->nFarPID != nFarPID) {
+		_ASSERTE(m_FarInfo.Ptr()->nFarPID != nFarPID);
 		CloseFarMapData();
 		wsprintf (szErr, L"ConEmu: Invalid FAR info format. %s", szMapName);
 		goto wrap;
 	}
-	_ASSERTE(mp_FarInfo->nProtocolVersion == CESERVER_REQ_VER);
+	_ASSERTE(m_FarInfo.Ptr()->nProtocolVersion == CESERVER_REQ_VER);
 
-	wsprintf(szMapName, CEFARALIVEEVENT, nFarPID);
-	mh_FarAliveEvent = OpenEvent(EVENT_MODIFY_STATE|SYNCHRONIZE, FALSE, szMapName);
-	if (!mh_FarAliveEvent) {
+	m_FarAliveEvent.InitName(CEFARALIVEEVENT, nFarPID);
+	//wsprintf(szMapName, CEFARALIVEEVENT, nFarPID);
+	//mh_FarAliveEvent = OpenEvent(EVENT_MODIFY_STATE|SYNCHRONIZE, FALSE, szMapName);
+	//if (!mh_FarAliveEvent) {
+	if (!m_FarAliveEvent.Open()) {
 		dwErr = GetLastError();
-		if (mp_FarInfo) {
-			_ASSERTE(mh_FarAliveEvent!=NULL);
+		//if (mp_FarInfo) {
+		if (m_FarInfo.IsValid()) {
+			_ASSERTE(m_FarAliveEvent.GetHandle()!=NULL);
 		}
 	}
 
@@ -9407,42 +9064,50 @@ BOOL CRealConsole::OpenMapHeader(BOOL abFromAttach)
 	wchar_t szErr[512]; szErr[0] = 0;
 	//int nConInfoSize = sizeof(CESERVER_REQ_CONINFO_HDR);
 
-	if (mp_ConsoleInfo) {
-		if (hConWnd == (HWND)mp_ConsoleInfo->hConWnd) {
-			_ASSERTE(mp_ConsoleInfo == NULL);
+	if (m_ConsoleMap.IsValid()) {
+		if (hConWnd == (HWND)(m_ConsoleMap.Ptr()->hConWnd)) {
+			_ASSERTE(m_ConsoleMap.Ptr() == NULL);
 			return TRUE;
 		}
 	}
 	
-	_ASSERTE(mh_FileMapping == NULL);
+	//_ASSERTE(mh_FileMapping == NULL);
 
-	CloseMapData();
-	
-	wsprintf(ms_HeaderMapName, CECONMAPNAME, (DWORD)hConWnd);
-	mh_FileMapping = OpenFileMapping(FILE_MAP_READ/*|FILE_MAP_WRITE*/, FALSE, ms_HeaderMapName);
-	if (!mh_FileMapping) {
-		DWORD dwErr = GetLastError();
-		wsprintf (szErr, L"ConEmu: Can't open console data file mapping. ErrCode=0x%08X. %s", dwErr, ms_HeaderMapName);
+	//CloseMapData();
+
+	m_ConsoleMap.InitName(CECONMAPNAME, (DWORD)hConWnd);
+
+	if (!m_ConsoleMap.Open()) {
+		lstrcpyn(szErr, m_ConsoleMap.GetErrorText(), countof(szErr));
+		//wsprintf (szErr, L"ConEmu: Can't open console data file mapping. ErrCode=0x%08X. %s", dwErr, ms_HeaderMapName);
 		goto wrap;
 	}
 	
-	mp_ConsoleInfo = (CESERVER_REQ_CONINFO_HDR*)MapViewOfFile(mh_FileMapping, FILE_MAP_READ/*|FILE_MAP_WRITE*/,0,0,0);
-	if (!mp_ConsoleInfo) {
-		DWORD dwErr = GetLastError();
-		wchar_t szErr[512];
-		wsprintf (szErr, L"ConEmu: Can't map console info. ErrCode=0x%08X. %s", dwErr, ms_HeaderMapName);
-		goto wrap;
-	}
+	//wsprintf(ms_HeaderMapName, CECONMAPNAME, (DWORD)hConWnd);
+	//mh_FileMapping = OpenFileMapping(FILE_MAP_READ/*|FILE_MAP_WRITE*/, FALSE, ms_HeaderMapName);
+	//if (!mh_FileMapping) {
+	//	DWORD dwErr = GetLastError();
+	//	wsprintf (szErr, L"ConEmu: Can't open console data file mapping. ErrCode=0x%08X. %s", dwErr, ms_HeaderMapName);
+	//	goto wrap;
+	//}
+	//
+	//mp_ConsoleInfo = (CESERVER_REQ_CONINFO_HDR*)MapViewOfFile(mh_FileMapping, FILE_MAP_READ/*|FILE_MAP_WRITE*/,0,0,0);
+	//if (!mp_ConsoleInfo) {
+	//	DWORD dwErr = GetLastError();
+	//	wchar_t szErr[512];
+	//	wsprintf (szErr, L"ConEmu: Can't map console info. ErrCode=0x%08X. %s", dwErr, ms_HeaderMapName);
+	//	goto wrap;
+	//}
 
 	if (!abFromAttach) {	
-		if (mp_ConsoleInfo->nGuiPID != GetCurrentProcessId()) {
-			_ASSERTE(mp_ConsoleInfo->nGuiPID == GetCurrentProcessId());
+		if (m_ConsoleMap.Ptr()->nGuiPID != GetCurrentProcessId()) {
+			_ASSERTE(m_ConsoleMap.Ptr()->nGuiPID == GetCurrentProcessId());
 			WARNING("Наверное нужно будет передать в сервер код GUI процесса? В каком случае так может получиться?");
 			//PRAGMA_ERROR("Передать через команду сервера новый GUI PID. Если пайп не готов сразу выйти");
 		}
 	}
 	
-	if (mp_ConsoleInfo->hConWnd && mp_ConsoleInfo->nCurDataMapIdx) {
+	if (m_ConsoleMap.Ptr()->hConWnd && m_ConsoleMap.Ptr()->bDataReady) {
 		// Только если MonitorThread еще не был запущен
 		if (mn_MonitorThreadID == 0)
 			ApplyConsoleInfo();
@@ -9457,107 +9122,112 @@ wrap:
 	return lbResult;
 }
 
-void CRealConsole::CloseMapData()
-{
-	if (mp_ConsoleData) {
-		UnmapViewOfFile(mp_ConsoleData);
-		mp_ConsoleData = NULL;
-		lstrcpy(ms_ConStatus, L"Console data was not opened!");
-	}
-	if (mh_FileMappingData) {
-		CloseHandle(mh_FileMappingData);
-		mh_FileMappingData = NULL;
-	}
-	mn_LastConsoleDataIdx = mn_LastConsolePacketIdx = /*mn_LastFarReadIdx =*/ -1;
-	mn_LastFarReadTick = 0;
-}
+//void CRealConsole::CloseMapData()
+//{
+//	if (mp_ConsoleData) {
+//		UnmapViewOfFile(mp_ConsoleData);
+//		mp_ConsoleData = NULL;
+//		lstrcpy(ms_ConStatus, L"Console data was not opened!");
+//	}
+//	if (mh_FileMappingData) {
+//		CloseHandle(mh_FileMappingData);
+//		mh_FileMappingData = NULL;
+//	}
+//	mn_LastConsoleDataIdx = mn_LastConsolePacketIdx = /*mn_LastFarReadIdx =*/ -1;
+//	mn_LastFarReadTick = 0;
+//}
 
 void CRealConsole::CloseFarMapData()
 {
-	if (mp_FarInfo) {
-		UnmapViewOfFile(mp_FarInfo);
-		mp_FarInfo = NULL;
-	}
-	if (mh_FarFileMapping) {
-		CloseHandle(mh_FarFileMapping);
-		mh_FarFileMapping = NULL;
-	}
-	if (mh_FarAliveEvent) {
-		CloseHandle(mh_FarAliveEvent);
-		mh_FarAliveEvent = NULL;
-	}
+	m_FarInfo.CloseMap();
+	//if (mp_FarInfo) {
+	//	UnmapViewOfFile(mp_FarInfo);
+	//	mp_FarInfo = NULL;
+	//}
+	//if (mh_FarFileMapping) {
+	//	CloseHandle(mh_FarFileMapping);
+	//	mh_FarFileMapping = NULL;
+	//}
+
+	m_FarAliveEvent.Close();
+	//if (mh_FarAliveEvent) {
+	//	CloseHandle(mh_FarAliveEvent);
+	//	mh_FarAliveEvent = NULL;
+	//}
 }
 
-BOOL CRealConsole::ReopenMapData()
-{
-	BOOL lbRc = FALSE;
-	DWORD dwErr = 0;
-	DWORD nNewIndex = 0;
-	//DWORD nMaxSize = (con.m_sbi.dwMaximumWindowSize.X * con.m_sbi.dwMaximumWindowSize.Y * 2) * sizeof(CHAR_INFO);
-	wchar_t szErr[255]; szErr[0] = 0;
-	
-	_ASSERTE(mp_ConsoleInfo);
-	if (!mp_ConsoleInfo) {
-		lstrcpyW(szErr, L"ConEmu: RecreateMapData failed, mp_ConsoleInfo is NULL");
-		goto wrap;
-	}
-	
-	if (mp_ConsoleData)
-		CloseMapData();
-		
-
-	nNewIndex = mp_ConsoleInfo->nCurDataMapIdx;
-	if (!nNewIndex) {
-		_ASSERTE(nNewIndex);
-		lstrcpyW(szErr, L"ConEmu: mp_ConsoleInfo->nCurDataMapIdx is null");
-		goto wrap;
-	}
-	
-	wsprintf(ms_DataMapName, CECONMAPNAME L".%i", (DWORD)hConWnd, nNewIndex);
-
-	mh_FileMappingData = OpenFileMapping(FILE_MAP_READ, FALSE, ms_DataMapName);
-	if (!mh_FileMappingData) {
-		dwErr = GetLastError();
-		wsprintf (szErr, L"ConEmu: OpenFileMapping(%s) failed. ErrCode=0x%08X", ms_DataMapName, dwErr);
-		goto wrap;
-	}
-	
-	mp_ConsoleData = (CESERVER_REQ_CONINFO_DATA*)MapViewOfFile(mh_FileMappingData, FILE_MAP_READ,0,0,0);
-	if (!mp_ConsoleData) {
-		dwErr = GetLastError();
-		CloseHandle(mh_FileMappingData); mh_FileMappingData = NULL;
-		wsprintf (szErr, L"ConEmu: MapViewOfFile(%s) failed. ErrCode=0x%08X", ms_DataMapName, dwErr);
-		goto wrap;
-	}
-	
-	mn_LastConsoleDataIdx = nNewIndex;
-
-	ms_ConStatus[0] = 0; // сброс
-	
-	// Done
-	lbRc = TRUE;
-wrap:
-	if (!lbRc && szErr[0]) {
-		gConEmu.DebugStep(szErr);
-		MBoxA(szErr);
-	}
-	return lbRc;
-}
+//BOOL CRealConsole::ReopenMapData()
+//{
+//	BOOL lbRc = FALSE;
+//	DWORD dwErr = 0;
+//	DWORD nNewIndex = 0;
+//	//DWORD nMaxSize = (con.m_sbi.dwMaximumWindowSize.X * con.m_sbi.dwMaximumWindowSize.Y * 2) * sizeof(CHAR_INFO);
+//	wchar_t szErr[255]; szErr[0] = 0;
+//	
+//	_ASSERTE(mp_ConsoleInfo);
+//	if (!mp_ConsoleInfo) {
+//		lstrcpyW(szErr, L"ConEmu: RecreateMapData failed, mp_ConsoleInfo is NULL");
+//		goto wrap;
+//	}
+//	
+//	if (mp_ConsoleData)
+//		CloseMapData();
+//		
+//
+//	nNewIndex = mp_ConsoleInfo->nCurDataMapIdx;
+//	if (!nNewIndex) {
+//		_ASSERTE(nNewIndex);
+//		lstrcpyW(szErr, L"ConEmu: mp_ConsoleInfo->nCurDataMapIdx is null");
+//		goto wrap;
+//	}
+//	
+//	wsprintf(ms_DataMapName, CECONMAPNAME L".%i", (DWORD)hConWnd, nNewIndex);
+//
+//	mh_FileMappingData = OpenFileMapping(FILE_MAP_READ, FALSE, ms_DataMapName);
+//	if (!mh_FileMappingData) {
+//		dwErr = GetLastError();
+//		wsprintf (szErr, L"ConEmu: OpenFileMapping(%s) failed. ErrCode=0x%08X", ms_DataMapName, dwErr);
+//		goto wrap;
+//	}
+//	
+//	mp_ConsoleData = (CESERVER_REQ_CONINFO_DATA*)MapViewOfFile(mh_FileMappingData, FILE_MAP_READ,0,0,0);
+//	if (!mp_ConsoleData) {
+//		dwErr = GetLastError();
+//		CloseHandle(mh_FileMappingData); mh_FileMappingData = NULL;
+//		wsprintf (szErr, L"ConEmu: MapViewOfFile(%s) failed. ErrCode=0x%08X", ms_DataMapName, dwErr);
+//		goto wrap;
+//	}
+//	
+//	mn_LastConsoleDataIdx = nNewIndex;
+//
+//	ms_ConStatus[0] = 0; // сброс
+//	
+//	// Done
+//	lbRc = TRUE;
+//wrap:
+//	if (!lbRc && szErr[0]) {
+//		gConEmu.DebugStep(szErr);
+//		MBoxA(szErr);
+//	}
+//	return lbRc;
+//}
 
 void CRealConsole::CloseMapHeader()
 {
 	CloseFarMapData();
 
-	CloseMapData();
-	
-	if (mp_ConsoleInfo) {
-		UnmapViewOfFile(mp_ConsoleInfo);
-		mp_ConsoleInfo = NULL;
-	}
-	if (mh_FileMapping) {
-		CloseHandle(mh_FileMapping);
-		mh_FileMapping = NULL;
-	}
+	//CloseMapData();
+
+	m_GetDataPipe.Close();
+	m_ConsoleMap.CloseMap();
+	//if (mp_ConsoleInfo) {
+	//	UnmapViewOfFile(mp_ConsoleInfo);
+	//	mp_ConsoleInfo = NULL;
+	//}
+	//if (mh_FileMapping) {
+	//	CloseHandle(mh_FileMapping);
+	//	mh_FileMapping = NULL;
+	//}
 
 	con.m_ci.bVisible = TRUE;
 	con.m_ci.dwSize = 15;
@@ -9585,26 +9255,41 @@ void CRealConsole::ApplyConsoleInfo()
 
 	ResetEvent(mh_ApplyFinished);
     
+	const CESERVER_REQ_CONINFO_INFO* pInfo = NULL;
+	CESERVER_REQ_HDR cmd; ExecutePrepareCmd(&cmd, CECMD_CONSOLEDATA, sizeof(cmd));
+	DWORD nOutSize = 0;
     
-	if (!mp_ConsoleInfo) {
-		_ASSERTE(mp_ConsoleInfo!=NULL);
+	if (!m_ConsoleMap.IsValid()) {
+		_ASSERTE(m_ConsoleMap.IsValid());
 	} else
-	if (!mp_ConsoleInfo->hConWnd || !mp_ConsoleInfo->nCurDataMapIdx) {
-		_ASSERTE(mp_ConsoleInfo->hConWnd && mp_ConsoleInfo->nCurDataMapIdx);
-	} else {
-		if (mn_LastConsoleDataIdx != mp_ConsoleInfo->nCurDataMapIdx) {
-    		ReopenMapData();
-		}
+	if (!m_GetDataPipe.Transact(&cmd, sizeof(cmd), (const CESERVER_REQ_HDR**)&pInfo, &nOutSize) || !pInfo) {
+		#ifdef _DEBUG
+		MBoxA(m_GetDataPipe.GetErrorText());
+		#endif
+	} else
+	if (pInfo->cmd.cbSize < sizeof(CESERVER_REQ_CONINFO_INFO)) {
+		_ASSERTE(pInfo->cmd.cbSize >= sizeof(CESERVER_REQ_CONINFO_INFO));
+	} else
+	//if (!mp_ConsoleInfo->hConWnd || !mp_ConsoleInfo->nCurDataMapIdx) {
+	//	_ASSERTE(mp_ConsoleInfo->hConWnd && mp_ConsoleInfo->nCurDataMapIdx);
+	//} else
+	{
+		//if (mn_LastConsoleDataIdx != mp_ConsoleInfo->nCurDataMapIdx) {
+		//	ReopenMapData();
+		//}
 	    
 		DWORD nPID = GetCurrentProcessId();
-		if (nPID != mp_ConsoleInfo->nGuiPID) {
-    		_ASSERTE(mp_ConsoleInfo->nGuiPID == nPID);
+		if (nPID != m_ConsoleMap.Ptr()->nGuiPID) {
+    		_ASSERTE(m_ConsoleMap.Ptr()->nGuiPID == nPID);
     		//PRAGMA_ERROR("Передать через команду сервера новый GUI PID. Если пайп не готов сразу выйти");
     		//mp_ConsoleInfo->nGuiPID = nPID;
 		}
+		
+		
+		
 	    
 		#ifdef _DEBUG
-		HWND hWnd = mp_ConsoleInfo->hConWnd;
+		HWND hWnd = pInfo->hConWnd;
 		_ASSERTE(hWnd!=NULL);
 		_ASSERTE(hWnd==hConWnd);
 		#endif
@@ -9613,39 +9298,39 @@ void CRealConsole::ApplyConsoleInfo()
 		//}
 		// 3
 		// Здесь у нас реальные процессы консоли, надо обновиться
-		ProcessUpdate(mp_ConsoleInfo->nProcesses, countof(mp_ConsoleInfo->nProcesses));
+		ProcessUpdate(pInfo->nProcesses, countof(pInfo->nProcesses));
 
 		// Теперь нужно открыть секцию - начинаем изменение переменных класса
 		MSectionLock sc;
 
 		// 4
-		DWORD dwCiSize = mp_ConsoleInfo->dwCiSize;
+		DWORD dwCiSize = pInfo->dwCiSize;
 		if (dwCiSize != 0) {
 			_ASSERTE(dwCiSize == sizeof(con.m_ci));
-			if (memcmp(&con.m_ci, &mp_ConsoleInfo->ci, sizeof(con.m_ci))!=0)
+			if (memcmp(&con.m_ci, &pInfo->ci, sizeof(con.m_ci))!=0)
 				lbChanged = TRUE;
-			con.m_ci = mp_ConsoleInfo->ci;
+			con.m_ci = pInfo->ci;
 		}
 		// 5, 6, 7
-		con.m_dwConsoleCP = mp_ConsoleInfo->dwConsoleCP;
-		con.m_dwConsoleOutputCP = mp_ConsoleInfo->dwConsoleOutputCP;
-		if (con.m_dwConsoleMode != mp_ConsoleInfo->dwConsoleMode) {
+		con.m_dwConsoleCP = pInfo->dwConsoleCP;
+		con.m_dwConsoleOutputCP = pInfo->dwConsoleOutputCP;
+		if (con.m_dwConsoleMode != pInfo->dwConsoleMode) {
     		if (ghOpWnd && isActive())
-    			gSet.UpdateConsoleMode(mp_ConsoleInfo->dwConsoleMode);
+    			gSet.UpdateConsoleMode(pInfo->dwConsoleMode);
 		}
-		con.m_dwConsoleMode = mp_ConsoleInfo->dwConsoleMode;
+		con.m_dwConsoleMode = pInfo->dwConsoleMode;
 		// 8
-		DWORD dwSbiSize = mp_ConsoleInfo->dwSbiSize;
+		DWORD dwSbiSize = pInfo->dwSbiSize;
 		int nNewWidth = 0, nNewHeight = 0;
 		if (dwSbiSize != 0) {
 			MCHKHEAP
 			_ASSERTE(dwSbiSize == sizeof(con.m_sbi));
-			if (memcmp(&con.m_sbi, &mp_ConsoleInfo->sbi, sizeof(con.m_sbi))!=0) {
+			if (memcmp(&con.m_sbi, &pInfo->sbi, sizeof(con.m_sbi))!=0) {
 				lbChanged = TRUE;
 				if (isActive())
-					gConEmu.UpdateCursorInfo(mp_ConsoleInfo->sbi.dwCursorPosition);
+					gConEmu.UpdateCursorInfo(pInfo->sbi.dwCursorPosition);
 			}
-			con.m_sbi = mp_ConsoleInfo->sbi;
+			con.m_sbi = pInfo->sbi;
 			if (GetConWindowSize(con.m_sbi, nNewWidth, nNewHeight)) {
 				if (con.bBufferHeight != (nNewHeight < con.m_sbi.dwSize.Y))
 					SetBufferHeightMode(nNewHeight < con.m_sbi.dwSize.Y);
@@ -9669,27 +9354,52 @@ void CRealConsole::ApplyConsoleInfo()
 	    
 		//DWORD dwCharChanged = pInfo->ConInfo.RgnInfo.dwRgnInfoSize;
 		//BOOL  lbDataRecv = FALSE;
-		if (mp_ConsoleData && nNewWidth && nNewHeight)
+		if (/*mp_ConsoleData &&*/ nNewWidth && nNewHeight)
 		{
+			_ASSERTE(nNewWidth == pInfo->crWindow.X && nNewHeight == pInfo->crWindow.Y);
 			// 10
-			DWORD MaxBufferSize = mp_ConsoleInfo->nCurDataMaxSize;
-			if (MaxBufferSize != 0) {
-				DWORD CharCount = (nNewWidth * nNewHeight);
+			//DWORD MaxBufferSize = pInfo->nCurDataMaxSize;
+			//if (MaxBufferSize != 0) {
+			
+			//// Не будем гонять зря данные по пайпу, если изменений нет
+			//if (mn_LastConsolePacketIdx != pInfo->nPacketId)
+
+			// Если вместе с заголовком пришли измененные данные
+			if (pInfo->nDataShift && pInfo->nDataCount)
+			{
+				mn_LastConsolePacketIdx = pInfo->nPacketId;
+
+				DWORD CharCount = pInfo->nDataCount;
+				#ifdef _DEBUG
+				if (CharCount != (nNewWidth * nNewHeight)) {
+					_ASSERTE(CharCount == (nNewWidth * nNewHeight));
+				}
+				#endif
         		DWORD OneBufferSize = CharCount * sizeof(wchar_t);
+
+				CHAR_INFO *pData = (CHAR_INFO*) (((LPBYTE)pInfo) + pInfo->nDataShift);
 	        
+				// Проверка размера!
+				DWORD nCalcCount = (pInfo->cmd.cbSize - pInfo->nDataShift) / sizeof(CHAR_INFO);
+				if (nCalcCount != CharCount) {
+					_ASSERTE(nCalcCount == CharCount);
+					if (nCalcCount < CharCount)
+						CharCount = nCalcCount;
+				}
+
 				//MSectionLock sc2; sc2.Lock(&csCON);
 				sc.Lock(&csCON);
 
 				MCHKHEAP;
 				if (InitBuffers(OneBufferSize)) {
-					if (LoadDataFromMap(CharCount))
+					if (LoadDataFromSrv(CharCount, pData))
 						lbChanged = TRUE;
 				}
 				MCHKHEAP;
 			}
 		}
 	    
-		mn_LastConsolePacketIdx = mp_ConsoleInfo->nPacketId;
+		
 
 		TODO("Во время ресайза консоль может подглючивать - отдает не то что нужно...");
 		//_ASSERTE(*con.pConChar!=ucBoxDblVert);
@@ -9741,7 +9451,7 @@ void CRealConsole::ApplyConsoleInfo()
 	}
 }
 
-BOOL CRealConsole::LoadDataFromMap(DWORD CharCount)
+BOOL CRealConsole::LoadDataFromSrv(DWORD CharCount, CHAR_INFO* pData)
 {
 	MCHKHEAP;
 	BOOL lbScreenChanged = FALSE;
@@ -9751,30 +9461,56 @@ BOOL CRealConsole::LoadDataFromMap(DWORD CharCount)
 	CONSOLE_SELECTION_INFO sel;
 	bool bSelectionPresent = GetConsoleSelectionInfo(&sel);
 	#ifdef __GNUC__
-	if (bSelectionPresent)
-		bSelectionPresent = bSelectionPresent;
+	if (bSelectionPresent) bSelectionPresent = bSelectionPresent; // чтобы GCC не ругался
 	#endif
+	
+	//const CESERVER_REQ_CONINFO_DATA* pData = NULL;
+	//CESERVER_REQ_HDR cmd; ExecutePrepareCmd(&cmd, CECMD_CONSOLEDATA, sizeof(cmd));
+	//DWORD nOutSize = 0;
+    
+	//if (!m_GetDataPipe.Transact(&cmd, sizeof(cmd), (const CESERVER_REQ_HDR**)&pData, &nOutSize) || !pData) {
+	//	#ifdef _DEBUG
+	//	MBoxA(m_GetDataPipe.GetErrorText());
+	//	#endif
+	//	return FALSE;
+	//} else
+	//if (pData->cmd.cbSize < sizeof(CESERVER_REQ_CONINFO_DATA)) {
+	//	_ASSERTE(pData->cmd.cbSize >= sizeof(CESERVER_REQ_CONINFO_DATA));
+	//	return FALSE;
+	//}
+	
+	ms_ConStatus[0] = 0;
 
-	SAFETRY {
-		// Теоретически, может возникнуть исключение при чтении? когда размер резко увеличивается (maximize)
-		con.pCmp->crBufSize = mp_ConsoleData->crBufSize;
-		if ((int)CharCount > (con.pCmp->crBufSize.X*con.pCmp->crBufSize.Y)) {
-			_ASSERTE((int)CharCount <= (con.pCmp->crBufSize.X*con.pCmp->crBufSize.Y));
-			CharCount = (con.pCmp->crBufSize.X*con.pCmp->crBufSize.Y);
-		}
-		memmove(con.pCmp->Buf, mp_ConsoleData->Buf, CharCount*sizeof(CHAR_INFO));
-		MCHKHEAP;
-	} SAFECATCH {
-		_ASSERT(FALSE);
-	}
+	//SAFETRY {
+	//	// Теоретически, может возникнуть исключение при чтении? когда размер резко увеличивается (maximize)
+	//	con.pCmp->crBufSize = mp_ConsoleData->crBufSize;
+	//	if ((int)CharCount > (con.pCmp->crBufSize.X*con.pCmp->crBufSize.Y)) {
+	//		_ASSERTE((int)CharCount <= (con.pCmp->crBufSize.X*con.pCmp->crBufSize.Y));
+	//		CharCount = (con.pCmp->crBufSize.X*con.pCmp->crBufSize.Y);
+	//	}
+	//	memmove(con.pCmp->Buf, mp_ConsoleData->Buf, CharCount*sizeof(CHAR_INFO));
+	//	MCHKHEAP;
+	//} SAFECATCH {
+	//	_ASSERT(FALSE);
+	//}
+	
+	// Проверка размера!
+	//DWORD nHdrSize = (((LPBYTE)pData->Buf)) - ((LPBYTE)pData);
+	//DWORD nCalcCount = (pData->cmd.cbSize - nHdrSize) / sizeof(CHAR_INFO);
+	//if (nCalcCount != CharCount) {
+	//	_ASSERTE(nCalcCount == CharCount);
+	//	if (nCalcCount < CharCount)
+	//		CharCount = nCalcCount;		
+	//}
 
-	lbScreenChanged = memcmp(con.pCopy->Buf, con.pCmp->Buf, CharCount*sizeof(CHAR_INFO));
+	lbScreenChanged = memcmp(con.pDataCmp, pData, CharCount*sizeof(CHAR_INFO));
 	if (lbScreenChanged)
 	{
-		con.pCopy->crBufSize = con.pCmp->crBufSize;
-		memmove(con.pCopy->Buf, con.pCmp->Buf, CharCount*sizeof(CHAR_INFO));
+		//con.pCopy->crBufSize = con.pCmp->crBufSize;
+		//memmove(con.pCopy->Buf, con.pCmp->Buf, CharCount*sizeof(CHAR_INFO));
+		memmove(con.pDataCmp, pData, CharCount*sizeof(CHAR_INFO));
 		MCHKHEAP;
-		CHAR_INFO* lpCur = con.pCopy->Buf;
+		CHAR_INFO* lpCur = con.pDataCmp;
 
 		//// Когда вернется возможность выделения - нужно сразу применять данные в атрибуты
 		//_ASSERTE(!bSelectionPresent); -- не нужно. Все сделает GetConsoleData
@@ -9802,7 +9538,7 @@ bool CRealConsole::isAlive()
 
 	if (GetFarPID()!=0 && mn_LastFarReadTick /*mn_LastFarReadIdx != (DWORD)-1*/) {
 		bool lbAlive = false;
-		if (mp_ConsoleInfo) {
+		//if (mp_ConsoleInfo) {
 			DWORD nLastReadTick = mn_LastFarReadTick;
 			if (nLastReadTick) {
 				DWORD nCurTick = GetTickCount();
@@ -9810,7 +9546,7 @@ bool CRealConsole::isAlive()
 				if (nDelta < FAR_ALIVE_TIMEOUT)
 					lbAlive = true;
 			}
-		}
+		//}
 		return lbAlive;
 	}
 
@@ -9824,7 +9560,7 @@ LPCWSTR CRealConsole::GetConStatus()
 
 void CRealConsole::SetConStatus(LPCWSTR asStatus)
 {
-	lstrcpyn(ms_ConStatus, asStatus ? asStatus : L"", sizeofarray(ms_ConStatus));
+	lstrcpyn(ms_ConStatus, asStatus ? asStatus : L"", countof(ms_ConStatus));
 	if (isActive()) {
 		if (mp_VCon->Update(false))
 			gConEmu.m_Child.Redraw();
@@ -9879,9 +9615,11 @@ bool CRealConsole::isCharBorderHorizontal(WCHAR inChar)
 bool CRealConsole::GetMaxConSize(COORD* pcrMaxConSize)
 {
 	bool bOk = false;
-	if (mp_ConsoleInfo) {
+	//if (mp_ConsoleInfo)
+	if (m_ConsoleMap.IsValid())
+	{
 		if (pcrMaxConSize)
-			*pcrMaxConSize = mp_ConsoleInfo->crMaxConSize;
+			*pcrMaxConSize = m_ConsoleMap.Ptr()->crMaxConSize;
 		bOk = true;
 	}
 	return bOk;
@@ -9986,11 +9724,11 @@ void CRealConsole::AdminDuplicate()
 const CEFAR_INFO* CRealConsole::GetFarInfo()
 {
 	if (!this) return NULL;
-	return mp_FarInfo;
+	return m_FarInfo.Ptr();
 }
 
-LPCWSTR CRealConsole::GetLngNameTime()
+/*LPCWSTR CRealConsole::GetLngNameTime()
 {
 	if (!this) return NULL;
 	return ms_NameTitle;
-}
+}*/

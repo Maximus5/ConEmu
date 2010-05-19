@@ -856,11 +856,11 @@ void TabBarClass::UpdatePosition()
     if (_active) {
         if (mh_Rebar) {
             if (!IsWindowVisible(mh_Rebar))
-                ShowWindow(mh_Rebar, SW_SHOW);
+                apiShowWindow(mh_Rebar, SW_SHOW);
             //MoveWindow(mh_Rebar, 0, 0, client.right, _tabHeight, 1);
         } else {
             if (!IsWindowVisible(mh_Tabbar))
-                ShowWindow(mh_Tabbar, SW_SHOW);
+                apiShowWindow(mh_Tabbar, SW_SHOW);
             if (gSet.isTabFrame)
                 MoveWindow(mh_Tabbar, 0, 0, client.right, client.bottom, 1);
             else
@@ -880,10 +880,10 @@ void TabBarClass::UpdatePosition()
 		// _active уже сбросили, поэтому реально спрятать можно и позже
         if (mh_Rebar) {
             if (IsWindowVisible(mh_Rebar))
-                ShowWindow(mh_Rebar, SW_HIDE);
+                apiShowWindow(mh_Rebar, SW_HIDE);
         } else {
             if (IsWindowVisible(mh_Tabbar))
-                ShowWindow(mh_Tabbar, SW_HIDE);
+                apiShowWindow(mh_Tabbar, SW_HIDE);
         }
     }
 }

@@ -34,6 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <tchar.h>
 #endif
 #include "ConEmu_Lang.h"
+#include "../Common/WinObjects.h"
 
 #define SafeCloseHandle(h) { if ((h)!=NULL) { HANDLE hh = (h); (h) = NULL; if (hh!=INVALID_HANDLE_VALUE) CloseHandle(hh); } }
 #ifdef _DEBUG
@@ -179,8 +180,8 @@ BOOL WINAPI IsTerminalMode();
 #endif
 
 
-DWORD WINAPI ServerThread(LPVOID lpvParam);
-DWORD WINAPI ServerThreadCommand(LPVOID ahPipe);
+DWORD WINAPI PlugServerThread(LPVOID lpvParam);
+DWORD WINAPI PlugServerThreadCommand(LPVOID ahPipe);
 
 void ShowPluginMenu(int nID = -1);
 int ShowPluginMenuA();

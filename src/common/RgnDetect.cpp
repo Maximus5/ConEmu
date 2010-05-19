@@ -47,7 +47,7 @@ CRgnDetect::~CRgnDetect()
 	}
 }
 
-int CRgnDetect::GetDetectedDialogs(int anMaxCount, SMALL_RECT* rc, DWORD* rf, DWORD anMask/*=-1*/) const
+int CRgnDetect::GetDetectedDialogs(int anMaxCount, SMALL_RECT* rc, DWORD* rf, DWORD anMask/*=-1*/, DWORD anTest/*=-1*/) const
 {
 	if (!this) return 0;
 	int nCount = m_DetectedDialogs.Count;
@@ -64,9 +64,9 @@ int CRgnDetect::GetDetectedDialogs(int anMaxCount, SMALL_RECT* rc, DWORD* rf, DW
 				memmove(rf, m_DetectedDialogs.DlgFlags, nCount*sizeof(*rf));
 		} else {
 			nCount = 0; DWORD nF;
-			for (int i = 0; i < m_DetectedDialogs.Count; i++) {
+			for (int i = 0; i < m_DetectedDialogs.Count && nCount < anMaxCount; i++) {
 				nF = m_DetectedDialogs.DlgFlags[i];
-				if ((nF & anMask) == nF) {
+				if ((nF & anMask) == anTest) {
 					if (rc)
 						rc[nCount] = m_DetectedDialogs.Rects[i];
 					if (rf)
@@ -1410,6 +1410,18 @@ BOOL CRgnDetect::InitializeSBI(const COLORREF *apColors)
 
 	return TRUE;
 }
+
+BOOL CRgnDetect::GetCharAttr(int x, int y, wchar_t& rc, CharAttr& ra)
+{
+	if (!mpsz_Chars || !mp_Attrs)
+		return FALSE;
+	if (x < 0 || x >= mn_CurWidth || y < 0 || y >= mn_CurHeight)
+		return FALSE;
+	rc = mpsz_Chars[x + y*mn_CurWidth];
+	ra = mp_Attrs[x + y*mn_CurWidth];
+	return TRUE;
+}
+
 
 // Эта функция вызывается из плагинов (ConEmuTh)
 void CRgnDetect::PrepareTransparent(const CEFAR_INFO *apFarInfo, const COLORREF *apColors)

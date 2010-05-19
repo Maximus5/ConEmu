@@ -77,7 +77,7 @@ private:
 	HBRUSH  hBrush0, hOldBrush, hSelectedBrush;
 	HFONT   hSelectedFont, hOldFont;
 	HFONT   mh_FontByIndex[MAX_FONT_STYLES+1]; // ссылки на Normal/Bold/Italic/Bold&Italic/...Underline
-	HFONT   mh_UCharMapFont;
+	HFONT   mh_UCharMapFont; SMALL_RECT mrc_UCharMap;
 	wchar_t ms_LastUCharMapFont[32];
 	#ifdef _DEBUG
 	BOOL    mb_DebugDumpDC;
@@ -168,6 +168,10 @@ private:
 	BOOL mb_DialogsChanged;
 	UINT mn_ConEmuFadeMsg;
 	UINT mn_ConEmuSettingsMsg;
+
+	void CharAttrFromConAttr(WORD conAttr, CharAttr* pAttr);
+public:
+	const PanelViewInit* GetPanelView(BOOL abLeftPanel);
 	
 public:
 	bool isEditor, isViewer, isFilePanel, isFade, isForeground;
@@ -261,7 +265,7 @@ protected:
 	static HBRUSH PartBrush(wchar_t ch, COLORREF nBackCol, COLORREF nForeCol);
 	BOOL mb_InPaintCall;
 	//
-	BOOL FindChanges(int &j, int &end, const wchar_t* ConCharLine, const CharAttr* ConAttrLine, const wchar_t* ConCharLine2, const CharAttr* ConAttrLine2);
+	BOOL FindChanges(int row, int &j, int &end, const wchar_t* ConCharLine, const CharAttr* ConAttrLine, const wchar_t* ConCharLine2, const CharAttr* ConAttrLine2);
 	LONG nFontHeight, nFontWidth;
 	BYTE nFontCharSet;
 	BYTE nLastNormalBack;

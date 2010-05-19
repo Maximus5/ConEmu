@@ -1941,7 +1941,7 @@ void CDragDrop::MoveDragWindow(BOOL abVisible/*=TRUE*/)
 		&bf, ULW_ALPHA /*ULW_OPAQUE*/);
 	//_ASSERTE(bRet);
 	
-	//SetForegroundWindow(ghWnd); // после создания окна фокус уходит из GUI
+	//apiSetForegroundWindow(ghWnd); // после создания окна фокус уходит из GUI
 }
 
 void CDragDrop::DestroyDragImageWindow()
@@ -1963,7 +1963,7 @@ LRESULT CDragDrop::DragBitsWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 		CDragDrop *pDrag = (CDragDrop*)GetWindowLongPtr(hWnd, GWLP_USERDATA);
 		if (pDrag && pDrag->mb_DragWithinNow) {
 			TODO("Если создавать окно сразу - не понадобится с фокусом играться");
-			SetForegroundWindow(ghWnd); // после создания окна фокус уходит из GUI
+			apiSetForegroundWindow(ghWnd); // после создания окна фокус уходит из GUI
 		}
 		return 0;
 	}

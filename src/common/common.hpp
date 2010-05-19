@@ -166,6 +166,7 @@ extern wchar_t gszDbgModLabel[6];
 #define CECONMAPNAME        L"ConEmuFileMapping.%08X"
 #define CECONMAPNAME_A      "ConEmuFileMapping.%08X"
 #define CEFARMAPNAME        L"ConEmuFarMapping.%08X"
+#define CEDATAREADYEVENT    L"ConEmuSrvDataReady.%u"
 #define CECONVIEWSETNAME    L"ConEmuViewSetMapping.%u"
 #define CEFARALIVEEVENT     L"ConEmuFarAliveEvent.%u"
 //#define CECONMAPNAMESIZE    (sizeof(CESERVER_REQ_CONINFO)+(MAXCONMAPCELLS*sizeof(CHAR_INFO)))
@@ -201,8 +202,8 @@ WARNING("CONEMUMSG_SRVSTARTED нужно переделать в команду пайпа для GUI");
 
 //#define CESIGNAL_C          L"ConEmuC_C_Signal.%u"
 //#define CESIGNAL_BREAK      L"ConEmuC_Break_Signal.%u"
-#define CECMD_GETSHORTINFO  1
-#define CECMD_GETCONSOLEINFO   2 // было CECMD_GETFULLINFO
+//#define CECMD_CONSOLEINFO   1
+#define CECMD_CONSOLEDATA   2
 //#define CECMD_SETSIZE       3
 #define CECMD_CMDSTARTSTOP  4 // 0 - ServerStart, 1 - ServerStop, 2 - ComspecStart, 3 - ComspecStop
 #define CECMD_GETGUIHWND    5
@@ -222,7 +223,7 @@ WARNING("CONEMUMSG_SRVSTARTED нужно переделать в команду пайпа для GUI");
 #define CECMD_FARLOADED     19 // Посылается плагином в сервер
 #define CECMD_SHOWCONSOLE   20 // В Win7 релизе нельзя скрывать окно консоли, запущенной в режиме администратора
 #define CECMD_POSTCONMSG    21 // В Win7 релизе нельзя посылать сообщения окну консоли, запущенной в режиме администратора
-#define CECMD_REQUESTCONSOLEINFO 22 // было CECMD_REQUESTFULLINFO
+//#define CECMD_REQUESTCONSOLEINFO 22 // было CECMD_REQUESTFULLINFO
 #define CECMD_SETFOREGROUND 23
 #define CECMD_FLASHWINDOW   24
 #define CECMD_SETCONSOLECP  25
@@ -239,6 +240,7 @@ WARNING("CONEMUMSG_SRVSTARTED нужно переделать в команду пайпа для GUI");
 #define CESERVER_REQ_VER    42
 
 #define PIPEBUFSIZE 4096
+#define DATAPIPEBUFSIZE 40000
 
 
 // Команды FAR плагина
@@ -473,7 +475,7 @@ typedef struct tag_ForwardedFileInfo {
 
 
 typedef struct tag_CESERVER_REQ_HDR {
-	DWORD   nSize;
+	DWORD   cbSize;
 	DWORD   nCmd;
 	DWORD   nVersion;
 	DWORD   nSrcThreadId;
@@ -553,7 +555,7 @@ typedef struct tag_CEFAR_INFO {
 	wchar_t sLngEdit[64]; // "edit"
 	wchar_t sLngView[64]; // "view"
 	wchar_t sLngTemp[64]; // "{Temporary panel"
-	wchar_t sLngName[64]; // "Name"
+	//wchar_t sLngName[64]; // "Name"
 	wchar_t sReserved[MAX_PATH]; // Чтобы случайно GetMsg из допустимого диапазона не вышел
 } CEFAR_INFO;
 
@@ -562,7 +564,7 @@ typedef struct tag_CESERVER_REQ_CONINFO_HDR {
 	DWORD cbSize;
 	DWORD nLogLevel;
 	COORD crMaxConSize;
-	DWORD dwReserved0;
+	DWORD bDataReady;  // TRUE, после того как сервер успешно запустился и готов отдавать данные
 	HWND2 hConWnd;     // !! положение hConWnd и nGuiPID не менять !!
 	DWORD nServerPID;  //
 	DWORD nGuiPID;     // !! на них ориентируется PicViewWrapper   !!
@@ -570,11 +572,14 @@ typedef struct tag_CESERVER_REQ_CONINFO_HDR {
 	DWORD bConsoleActive;
 	DWORD nProtocolVersion; // == CESERVER_REQ_VER
 	//
-	DWORD nFarPID; // PID последнего фара, обновившего информацию о себе в этой структуре
+	DWORD nFarPID; // PID последнего активного фара
 } CESERVER_REQ_CONINFO_HDR;
 
 typedef struct tag_CESERVER_REQ_CONINFO_INFO {
-	DWORD cbSize;
+	CESERVER_REQ_HDR cmd;
+	//DWORD cbSize;
+	HWND2 hConWnd;
+	//DWORD nGuiPID;
 	//DWORD nCurDataMapIdx; // суффикс для текущего MAP файла с данными
 	//DWORD nCurDataMaxSize; // Максимальный размер буфера nCurDataMapIdx
 	DWORD nPacketId;
@@ -592,23 +597,30 @@ typedef struct tag_CESERVER_REQ_CONINFO_INFO {
 	DWORD dwConsoleMode;
 	DWORD dwSbiSize;
 	CONSOLE_SCREEN_BUFFER_INFO sbi;
+	COORD crWindow; // Для удобства - размер ОКНА (не буфера) при последнем ReadConsoleData
+	COORD crMaxSize; // Максимальный размер консоли в символах (для текущего выбранного шрифта)
+	DWORD nDataShift; // Для удобства - сдвиг начала данных (data) От начала info
+	DWORD nDataCount; // Для удобства - количество ячеек (data)
 	//// Информация о текущем FAR
 	//DWORD nFarInfoIdx; // выносим из структуры CEFAR_INFO, т.к. ее копия хранится в плагине
 	//CEFAR_INFO FarInfo;
 } CESERVER_REQ_CONINFO_INFO;
 
-typedef struct tag_CESERVER_REQ_CONINFO_DATA {
-	COORD      crMaxSize;
-	CHAR_INFO  Buf[1];
-} CESERVER_REQ_CONINFO_DATA;
+//typedef struct tag_CESERVER_REQ_CONINFO_DATA {
+//	CESERVER_REQ_HDR cmd;
+//	COORD      crMaxSize;
+//	CHAR_INFO  Buf[1];
+//} CESERVER_REQ_CONINFO_DATA;
 
 typedef struct tag_CESERVER_REQ_CONINFO_FULL {
-	DWORD cbMaxSize; // размер реальных данных CESERVER_REQ_CONINFO_FULL, а не всего буфера data
-	DWORD cbActiveSize; // размер реальных данных CESERVER_REQ_CONINFO_FULL, а не всего буфера data
-	BOOL  bChanged;     // флаг того, что данные изменились с последней передачи в GUI
+	DWORD cbMaxSize;    // размер всего буфера CESERVER_REQ_CONINFO_FULL (скорее всего будет меньше реальных данных)
+	//DWORD cbActiveSize; // размер реальных данных CESERVER_REQ_CONINFO_FULL, а не всего буфера data
+	//BOOL  bChanged;     // флаг того, что данные изменились с последней передачи в GUI
+	BOOL  bDataChanged; // Выставляется в TRUE, при изменениях содержимого консоли (а не только положение курсора...)
 	CESERVER_REQ_CONINFO_HDR  hdr;
 	CESERVER_REQ_CONINFO_INFO info;
-	CESERVER_REQ_CONINFO_DATA data;
+	//CESERVER_REQ_CONINFO_DATA data;
+	CHAR_INFO  data[1];
 } CESERVER_REQ_CONINFO_FULL;
 
 //typedef struct tag_CESERVER_REQ_CONINFO {
@@ -803,441 +815,8 @@ int NextArg(const wchar_t** asCmdLine, wchar_t* rsArg/*[MAX_PATH+1]*/, const wch
 BOOL PackInputRecord(const INPUT_RECORD* piRec, MSG* pMsg);
 BOOL UnpackInputRecord(const MSG* piMsg, INPUT_RECORD* pRec);
 SECURITY_ATTRIBUTES* NullSecurity();
-wchar_t* GetShortFileNameEx(LPCWSTR asLong);
 void CommonShutdown();
-BOOL IsUserAdmin();
 
-//------------------------------------------------------------------------
-///| Section |////////////////////////////////////////////////////////////
-//------------------------------------------------------------------------
-class MSectionLock;
-
-class MSection
-{
-protected:
-	CRITICAL_SECTION m_cs;
-	DWORD mn_TID; // устанавливается только после EnterCriticalSection
-	int mn_Locked;
-	BOOL mb_Exclusive;
-	HANDLE mh_ReleaseEvent;
-	friend class MSectionLock;
-	DWORD mn_LockedTID[10];
-	int   mn_LockedCount[10];
-public:
-	MSection() {
-		mn_TID = 0; mn_Locked = 0; mb_Exclusive = FALSE;
-		ZeroStruct(mn_LockedTID); ZeroStruct(mn_LockedCount);
-		InitializeCriticalSection(&m_cs);
-		mh_ReleaseEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-		_ASSERTE(mh_ReleaseEvent!=NULL);
-		if (mh_ReleaseEvent) ResetEvent(mh_ReleaseEvent);
-	};
-	~MSection() {
-		DeleteCriticalSection(&m_cs);
-		if (mh_ReleaseEvent) {
-			CloseHandle(mh_ReleaseEvent); mh_ReleaseEvent = NULL;
-		}
-	};
-public:
-	void ThreadTerminated(DWORD dwTID) {
-		for (int i=1; i<10; i++) {
-			if (mn_LockedTID[i] == dwTID) {
-				mn_LockedTID[i] = 0;
-				if (mn_LockedCount[i] != 0) {
-					_ASSERTE(mn_LockedCount[i] == 0);
-				}
-				break;
-			}
-		}
-	};
-protected:
-	void AddRef(DWORD dwTID) {
-		mn_Locked ++; // увеличиваем счетчик nonexclusive locks
-		_ASSERTE(mn_Locked>0);
-		ResetEvent(mh_ReleaseEvent); // На всякий случай сбросим Event
-		int j = -1; // будет -2, если ++ на существующий, иначе - +1 на пустой
-		for (int i=1; i<10; i++) {
-			if (mn_LockedTID[i] == dwTID) {
-				mn_LockedCount[i] ++; 
-				j = -2; 
-				break;
-			} else if (j == -1 && mn_LockedTID[i] == 0) {
-				mn_LockedTID[i] = dwTID;
-				mn_LockedCount[i] ++; 
-				j = i;
-				break;
-			}
-		}
-		if (j == -1) { // Этого быть не должно
-			_ASSERTE(j != -1);
-		}
-	};
-	int ReleaseRef(DWORD dwTID) {
-		_ASSERTE(mn_Locked>0);
-		int nInThreadLeft = 0;
-		if (mn_Locked > 0) mn_Locked --;
-		if (mn_Locked == 0)
-			SetEvent(mh_ReleaseEvent); // Больше nonexclusive locks не осталось
-		for (int i=1; i<10; i++) {
-			if (mn_LockedTID[i] == dwTID) {
-				mn_LockedCount[i] --; 
-				if ((nInThreadLeft = mn_LockedCount[i]) == 0)
-					mn_LockedTID[i] = 0; // Иначе при динамически создаваемых нитях - 10 будут в момент использованы
-				break;
-			}
-		}
-		return nInThreadLeft;
-	};
-	void WaitUnlocked(DWORD dwTID, DWORD anTimeout) {
-		DWORD dwStartTick = GetTickCount();
-		int nSelfCount = 0;
-		for (int i=1; i<10; i++) {
-			if (mn_LockedTID[i] == dwTID) {
-				nSelfCount = mn_LockedCount[i];
-				break;
-			}
-		}
-		while (mn_Locked > nSelfCount) {
-			#ifdef _DEBUG
-			DEBUGSTR(L"!!! Waiting for exclusive access\n");
-
-			DWORD nWait = 
-			#endif
-
-			WaitForSingleObject(mh_ReleaseEvent, 10);
-
-			DWORD dwCurTick = GetTickCount();
-			DWORD dwDelta = dwCurTick - dwStartTick;
-
-			if (anTimeout != (DWORD)-1) {
-				if (dwDelta > anTimeout) {
-					#ifndef CSECTION_NON_RAISE
-					_ASSERTE(dwDelta<=anTimeout);
-					#endif
-					break;
-				}
-			}
-			#ifdef _DEBUG
-			else if (dwDelta > 3000) {
-				#ifndef CSECTION_NON_RAISE
-				_ASSERTE(dwDelta <= 3000);
-				#endif
-				break;
-			}
-			#endif
-		}
-	};
-	bool MyEnterCriticalSection(DWORD anTimeout) {
-		//EnterCriticalSection(&m_cs); 
-		// дождаться пока секцию отпустят
-
-		// НАДА. Т.к. может быть задан nTimeout (для DC)
-		DWORD dwTryLockSectionStart = GetTickCount(), dwCurrentTick;
-
-		if (!TryEnterCriticalSection(&m_cs)) {
-			Sleep(10);
-			while (!TryEnterCriticalSection(&m_cs)) {
-				Sleep(10);
-				DEBUGSTR(L"TryEnterCriticalSection failed!!!\n");
-
-				dwCurrentTick = GetTickCount();
-				if (anTimeout != (DWORD)-1) {
-					if (((dwCurrentTick - dwTryLockSectionStart) > anTimeout)) {
-						#ifndef CSECTION_NON_RAISE
-						_ASSERTE((dwCurrentTick - dwTryLockSectionStart) <= anTimeout);
-						#endif
-						return false;
-					}
-				}
-				#ifdef _DEBUG
-				else if ((dwCurrentTick - dwTryLockSectionStart) > 3000) {
-					#ifndef CSECTION_NON_RAISE
-					_ASSERTE((dwCurrentTick - dwTryLockSectionStart) <= 3000);
-					#endif
-					dwTryLockSectionStart = GetTickCount();
-				}
-				#endif
-			}
-		}
-
-		return true;
-	}
-	BOOL Lock(BOOL abExclusive, DWORD anTimeout=-1/*, BOOL abRelockExclusive=FALSE*/) {
-		DWORD dwTID = GetCurrentThreadId();
-		
-		// Может эта нить уже полностью заблокирована?
-		if (mb_Exclusive && dwTID == mn_TID) {
-			return FALSE; // Уже, но Unlock делать не нужно!
-		}
-		
-		if (!abExclusive) {
-			// Быстрая блокировка, не запрещающая чтение другим нитям.
-			// Запрещено только изменение (пересоздание буфера например)
-			AddRef(dwTID);
-			
-			// Если другая нить уже захватила exclusive
-			if (mb_Exclusive) {
-				int nLeft = ReleaseRef(dwTID); // Иначе можем попасть на взаимную блокировку
-				if (nLeft > 0) {
-					_ASSERTE(nLeft == 0);
-				}
-
-				DEBUGSTR(L"!!! Failed non exclusive lock, trying to use CriticalSection\n");
-				bool lbEntered = MyEnterCriticalSection(anTimeout); // дождаться пока секцию отпустят
-				_ASSERTE(!mb_Exclusive); // После LeaveCriticalSection mb_Exclusive УЖЕ должен быть сброшен
-
-				AddRef(dwTID); // Возвращаем блокировку
-
-				// Но поскольку нам нужен только nonexclusive lock
-				if (lbEntered)
-					LeaveCriticalSection(&m_cs);
-			}
-		} else {
-			// Требуется Exclusive Lock
-
-			#ifdef _DEBUG
-			if (mb_Exclusive) {
-				// Этого надо стараться избегать
-				DEBUGSTR(L"!!! Exclusive lock found in other thread\n");
-			}
-			#endif
-			
-			// Если есть ExclusiveLock (в другой нити) - дождется сама EnterCriticalSection
-			#ifdef _DEBUG
-			BOOL lbPrev = mb_Exclusive;
-			DWORD nPrevTID = mn_TID;
-			#endif
-			mb_Exclusive = TRUE; // Сразу, чтобы в nonexclusive не нарваться
-			TODO("Need to check, if MyEnterCriticalSection failed on timeout!\n");
-			MyEnterCriticalSection(anTimeout);
-			_ASSERTE(!(lbPrev && mb_Exclusive)); // После LeaveCriticalSection mb_Exclusive УЖЕ должен быть сброшен
-			mb_Exclusive = TRUE; // Флаг могла сбросить другая нить, выполнившая Leave
-			mn_TID = dwTID; // И запомним, в какой нити это произошло
-			_ASSERTE(mn_LockedTID[0] == 0 && mn_LockedCount[0] == 0);
-			mn_LockedTID[0] = dwTID;
-			mn_LockedCount[0] ++;
-
-			/*if (abRelockExclusive) {
-				ReleaseRef(dwTID); // Если до этого был nonexclusive lock
-			}*/
-
-			// B если есть nonexclusive locks - дождаться их завершения
-			if (mn_Locked) {
-				//WARNING: Тут есть шанс наколоться, если сначала был NonExclusive, а потом в этой же нити - Exclusive
-				// В таких случаях нужно вызывать с параметром abRelockExclusive
-				WaitUnlocked(dwTID, anTimeout);
-			}
-		}
-		
-		return TRUE;
-	};
-	void Unlock(BOOL abExclusive) {
-		DWORD dwTID = GetCurrentThreadId();
-		if (abExclusive) {
-			_ASSERTE(dwTID == dwTID && mb_Exclusive);
-			_ASSERTE(mn_LockedTID[0] == dwTID);
-			mb_Exclusive = FALSE; mn_TID = 0;
-			mn_LockedTID[0] = 0; mn_LockedCount[0] --;
-			LeaveCriticalSection(&m_cs);
-		} else {
-			ReleaseRef(dwTID);
-		}
-	};
-};
-
-class MSectionThread
-{
-protected:
-	MSection* mp_S;
-	DWORD mn_TID;
-public:
-	MSectionThread(MSection* apS) {
-		mp_S = apS; mn_TID = GetCurrentThreadId();
-	};
-	~MSectionThread() {
-		if (mp_S && mn_TID)
-			mp_S->ThreadTerminated(mn_TID);
-	};
-};
-
-class MSectionLock
-{
-protected:
-	MSection* mp_S;
-	BOOL mb_Locked, mb_Exclusive;
-public:
-	BOOL Lock(MSection* apS, BOOL abExclusive=FALSE, DWORD anTimeout=-1) {
-		if (mb_Locked && apS == mp_S && (abExclusive == mb_Exclusive || mb_Exclusive))
-			return FALSE; // уже заблокирован
-		_ASSERTE(!mb_Locked);
-		mb_Exclusive = abExclusive;
-		mp_S = apS;
-		mb_Locked = mp_S->Lock(mb_Exclusive, anTimeout);
-		return mb_Locked;
-	};
-	BOOL RelockExclusive(DWORD anTimeout=-1) {
-		if (mb_Locked && mb_Exclusive) return FALSE; // уже
-		// Чистый ReLock делать нельзя. Виснут другие нити, которые тоже запросили ReLock
-		Unlock();
-		mb_Exclusive = TRUE;
-		mb_Locked = mp_S->Lock(mb_Exclusive, anTimeout);
-		return mb_Locked;
-	};
-	void Unlock() {
-		if (mp_S && mb_Locked) {
-			mp_S->Unlock(mb_Exclusive);
-			mb_Locked = FALSE;
-		}
-	};
-	BOOL isLocked() {
-		return (mp_S!=NULL) && mb_Locked;
-	};
-public:
-	MSectionLock() {
-		mp_S = NULL; mb_Locked = FALSE; mb_Exclusive = FALSE;
-	};
-	~MSectionLock() {
-		if (mb_Locked) Unlock();
-	};
-};
-
-
-/* Console Handles */
-class MConHandle {
-private:
-	wchar_t   ms_Name[10];
-	HANDLE    mh_Handle;
-	MSection  mcs_Handle;
-	BOOL      mb_OpenFailed;
-	DWORD     mn_LastError;
-	DWORD     mn_StdMode;
-
-public:
-	operator const HANDLE();
-
-public:
-	void Close();
-
-public:
-	MConHandle(LPCWSTR asName);
-	~MConHandle();
-};
-
-
-template <class T>
-class MFileMapping
-{
-protected:
-	HANDLE mh_Mapping;
-	BOOL mb_WriteAllowed;
-	int mn_Size;
-	T* mp_Data; //WARNING!!! Доступ может быть только на чтение!
-	wchar_t ms_MapName[MAX_PATH];
-	DWORD mn_LastError;
-	wchar_t ms_Error[MAX_PATH*2];
-public:
-	T* Ptr() {
-		return mp_Data;
-	};
-	operator T*() {
-		return mp_Data;
-	};
-	bool IsValid() {
-		return (mp_Data!=NULL);
-	};
-	LPCWSTR GetErrorText() {
-		return ms_Error;
-	};
-	bool SetFrom(const T* pSrc, int nSize=-1) {
-		if (!IsValid() || !nSize) return false;
-		if (nSize<0) nSize = sizeof(T);
-		bool lbChanged = (memcmp(mp_Data, pSrc, nSize)!=0);
-		memmove(mp_Data, pSrc, nSize);
-		return lbChanged;
-	}
-	bool GetTo(T* pDst, int nSize=-1) {
-		if (!IsValid() || !nSize) return false;
-		if (nSize<0) nSize = sizeof(T);
-		memmove(pDst, mp_Data, nSize);
-		return true;
-	}
-public:
-	void InitName(const wchar_t *aszTemplate,DWORD Parm1=0,DWORD Parm2=0) {
-		wsprintfW(ms_MapName, aszTemplate, Parm1, Parm2);
-	};
-	void ClosePtr() {
-		if (mp_Data) {
-			UnmapViewOfFile(mp_Data);
-			mp_Data = NULL;
-		}
-	};
-	void CloseMap() {
-		if (mp_Data) ClosePtr();
-		if (mh_Mapping) {
-			CloseHandle(mh_Mapping);
-			mh_Mapping = NULL;
-		}
-		mh_Mapping = NULL; mb_WriteAllowed = FALSE; mp_Data = NULL; 
-		mn_Size = -1; mn_LastError = 0;
-	};
-protected:
-	T* InternalOpenCreate(BOOL abCreate,BOOL abReadWrite,int nSize) {
-		if (mh_Mapping) CloseMap();
-		mn_LastError = 0; ms_Error[0] = 0;
-		_ASSERTE(mh_Mapping==NULL && mp_Data==NULL);
-		_ASSERTE(nSize==-1 || nSize>=sizeof(T));
-
-		if (ms_MapName[0] == 0) {
-			_ASSERTE(ms_MapName[0]!=0);
-			lstrcpyW (ms_Error, L"Internal error. Mapping file name was not specified.");
-			return NULL;
-		} else {
-			mn_Size = (nSize<=0) ? sizeof(T) : nSize;
-			mb_WriteAllowed = abCreate || abReadWrite;
-			if (abCreate) {
-				mh_Mapping = CreateFileMapping(INVALID_HANDLE_VALUE, 
-					NullSecurity(), PAGE_READWRITE, 0, mn_Size, ms_MapName);
-			} else {
-				mh_Mapping = OpenFileMapping(FILE_MAP_READ, FALSE, ms_MapName);
-			}
-			if (!mh_Mapping) {
-				mn_LastError = GetLastError();
-				wsprintfW (ms_Error, L"Can't %s console data file mapping. ErrCode=0x%08X\n%s", 
-						abCreate ? L"create" : L"open", mn_LastError, ms_MapName);
-			} else {
-				DWORD nFlags = mb_WriteAllowed ? FILE_MAP_ALL_ACCESS : FILE_MAP_READ;
-				mp_Data = (T*)MapViewOfFile(mh_Mapping, nFlags,0,0,0);
-				if (!mp_Data) {
-					mn_LastError = GetLastError();
-					wsprintfW (ms_Error, L"Can't map console info (%s). ErrCode=0x%08X\n%s", 
-							mb_WriteAllowed ? L"ReadWrite" : L"Read" ,mn_LastError, ms_MapName);
-				}
-			}
-		}
-		return mp_Data;
-	};
-public:
-	T* Create(int nSize=-1) {
-		_ASSERTE(nSize==-1 || nSize>=sizeof(T));
-		return InternalOpenCreate(TRUE/*abCreate*/,TRUE/*abReadWrite*/,nSize);
-	};
-	T* Open(BOOL abReadWrite=FALSE/*FALSE - только Read*/,int nSize=-1) {
-		_ASSERTE(nSize==-1 || nSize>=sizeof(T));
-		return InternalOpenCreate(FALSE/*abCreate*/,abReadWrite,nSize);
-	};
-public:
-	MFileMapping() {
-		mh_Mapping = NULL; mb_WriteAllowed = FALSE; mp_Data = NULL; 
-		mn_Size = -1; ms_MapName[0] = ms_Error[0] = 0; mn_LastError = 0;
-	};
-	~MFileMapping() {
-		if (mh_Mapping) CloseMap();
-	};
-};
-
-//class MPipe
-//{
-//};
 
 
 

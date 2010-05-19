@@ -116,7 +116,7 @@ CConEmuMain::CConEmuMain()
     mb_ProcessCreated = FALSE; mn_StartTick = 0;
     mb_IgnoreSizeChange = false;
     //mn_CurrentKeybLayout = (DWORD_PTR)GetKeyboardLayout(0);
-    mn_ServerThreadId = 0; mh_ServerThread = NULL; mh_ServerThreadTerminate = NULL;
+    mn_GuiServerThreadId = 0; mh_GuiServerThread = NULL; mh_GuiServerThreadTerminate = NULL;
     //mpsz_RecreateCmd = NULL;
     mh_RecreateDlgKeyHook = NULL; mb_SkipAppsInRecreate = FALSE;
 	ZeroStruct(mrc_Ideal);
@@ -1628,14 +1628,14 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce)
 			//mb_InRestore = FALSE;
 
             if (isIconic() || (isZoomed() && !mb_MaximizedHideCaption)) {
-                //ShowWindow(ghWnd, SW_SHOWNORMAL); // WM_SYSCOMMAND использовать не хочется...
+                //apiShowWindow(ghWnd, SW_SHOWNORMAL); // WM_SYSCOMMAND использовать не хочется...
                 mb_IgnoreSizeChange = TRUE;
 				if (IsWindowVisible(ghWnd)) {
 					if (pRCon && gSet.isAdvLogging) pRCon->LogString("WM_SYSCOMMAND(SC_RESTORE)");
                     DefWindowProc(ghWnd, WM_SYSCOMMAND, SC_RESTORE, 0); //2009-04-22 Было SendMessage
 				} else {
 					if (pRCon && gSet.isAdvLogging) pRCon->LogString("ShowWindow(SW_SHOWNORMAL)");
-                    ShowWindow(ghWnd, SW_SHOWNORMAL);
+                    apiShowWindow(ghWnd, SW_SHOWNORMAL);
 				}
                 //RePaint();
                 mb_IgnoreSizeChange = FALSE;
@@ -1679,14 +1679,14 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce)
             gSet.isFullScreen = false;
 
             if (!IsWindowVisible(ghWnd))
-                ShowWindow(ghWnd, SW_SHOWNORMAL);
+                apiShowWindow(ghWnd, SW_SHOWNORMAL);
             #ifdef _DEBUG
             GetWindowPlacement(ghWnd, &wpl);
             #endif
             
             // Если это во время загрузки - то до первого ShowWindow - isIconic возвращает FALSE
             if (isIconic() || isZoomed()) {
-                ShowWindow(ghWnd, SW_SHOWNORMAL); // WM_SYSCOMMAND использовать не хочется...
+                apiShowWindow(ghWnd, SW_SHOWNORMAL); // WM_SYSCOMMAND использовать не хочется...
                 // что-то после AltF9, AltF9 уголки остаются не срезанными...
                 //hRgn = CreateWindowRgn();
 				//SetWindowRgn(ghWnd, hRgn, TRUE);
@@ -1725,7 +1725,7 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce)
 				if (!isZoomed()) {
 					mb_IgnoreSizeChange = TRUE;
 					InvalidateAll();
-					ShowWindow(ghWnd, SW_SHOWMAXIMIZED);
+					apiShowWindow(ghWnd, SW_SHOWMAXIMIZED);
 					/*WINDOWPLACEMENT wpl = {sizeof(WINDOWPLACEMENT)};
 					GetWindowPlacement(ghWnd, &wpl);
 					wpl.flags = 0;
@@ -1745,7 +1745,7 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce)
 
 				if (!IsWindowVisible(ghWnd)) {
 					mb_IgnoreSizeChange = TRUE;
-					ShowWindow(ghWnd, SW_SHOWMAXIMIZED);
+					apiShowWindow(ghWnd, SW_SHOWMAXIMIZED);
 					mb_IgnoreSizeChange = FALSE;
 					if (pRCon && gSet.isAdvLogging) pRCon->LogString("OnSize(-1).3");
 					OnSize(-1); // консоль уже изменила свой размер
@@ -1799,13 +1799,13 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce)
 						mb_IgnoreSizeChange = TRUE;
 						DWORD dwStyle = GetWindowLong(ghWnd, GWL_STYLE);
 						if ((dwStyle & WS_MINIMIZE)) {
-							ShowWindow(ghWnd, SW_SHOWNORMAL);
+							apiShowWindow(ghWnd, SW_SHOWNORMAL);
 						}
 						if ((dwStyle & (WS_MINIMIZE|WS_MAXIMIZE)) != 0) {
 							dwStyle &= ~(WS_MINIMIZE|WS_MAXIMIZE);
 							SetWindowLong(ghWnd, GWL_STYLE, dwStyle);
 						}
-						//ShowWindow(ghWnd, SW_SHOWNORMAL);
+						//apiShowWindow(ghWnd, SW_SHOWNORMAL);
 						// Сбросить
 						_ASSERTE(mb_MaximizedHideCaption);
 						mb_IgnoreSizeChange = FALSE;
@@ -1837,7 +1837,7 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce)
 
 				if (!IsWindowVisible(ghWnd)) {
 					mb_IgnoreSizeChange = TRUE;
-					ShowWindow(ghWnd, SW_SHOWNORMAL);
+					apiShowWindow(ghWnd, SW_SHOWNORMAL);
 					mb_IgnoreSizeChange = FALSE;
 					if (pRCon && gSet.isAdvLogging) pRCon->LogString("OnSize(-1).3");
 					OnSize(-1);  // консоль уже изменила свой размер
@@ -1890,7 +1890,7 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce)
 
             if (isIconic() || isZoomed()) {
                 mb_IgnoreSizeChange = TRUE;
-                ShowWindow(ghWnd, SW_SHOWNORMAL);
+                apiShowWindow(ghWnd, SW_SHOWNORMAL);
 				// Сбросить
 				if (mb_MaximizedHideCaption)
 					mb_MaximizedHideCaption = FALSE;
@@ -1926,7 +1926,7 @@ bool CConEmuMain::SetWindowMode(uint inMode, BOOL abForce)
         }
         if (!IsWindowVisible(ghWnd)) {
             mb_IgnoreSizeChange = TRUE;
-            ShowWindow(ghWnd, SW_SHOWNORMAL);
+            apiShowWindow(ghWnd, SW_SHOWNORMAL);
             mb_IgnoreSizeChange = FALSE;
 			if (pRCon && gSet.isAdvLogging) pRCon->LogString("OnSize(-1).3");
             OnSize(-1);  // консоль уже изменила свой размер
@@ -3272,7 +3272,7 @@ INT_PTR CConEmuMain::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARA
             
             const wchar_t *pszUser/*, *pszPwd*/; BOOL bResticted;
             int nChecked = rbCurrentUser;
-			wchar_t szCurUser[MAX_PATH]; DWORD nUserNameLen = sizeofarray(szCurUser);
+			wchar_t szCurUser[MAX_PATH]; DWORD nUserNameLen = countof(szCurUser);
 			if (!GetUserName(szCurUser, &nUserNameLen)) szCurUser[0] = 0;
 			wchar_t szRbCaption[MAX_PATH+32];
 			lstrcpy(szRbCaption, L"Run as current &user: "); lstrcat(szRbCaption, szCurUser);
@@ -3299,7 +3299,7 @@ INT_PTR CConEmuMain::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARA
 			if (gConEmu.m_osv.dwMajorVersion < 6)
 			{
 				// В XP и ниже это просто RunAs - с возможностью ввода имени пользователя и пароля
-				//ShowWindow(GetDlgItem(hDlg, cbRunAsAdmin), SW_HIDE);
+				//apiShowWindow(GetDlgItem(hDlg, cbRunAsAdmin), SW_HIDE);
 				SetDlgItemTextA(hDlg, cbRunAsAdmin, "&Run as..."); //GCC hack. иначе не собирается
 				// И уменьшить длину
                 RECT rcBox; GetWindowRect(GetDlgItem(hDlg, cbRunAsAdmin), &rcBox);
@@ -3405,7 +3405,7 @@ INT_PTR CConEmuMain::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARA
 					} else {
 						// Добавить хотя бы текущего
 						wchar_t szCurUser[MAX_PATH];
-						if (GetWindowText(GetDlgItem(hDlg, tRunAsUser), szCurUser, sizeofarray(szCurUser)))
+						if (GetWindowText(GetDlgItem(hDlg, tRunAsUser), szCurUser, countof(szCurUser)))
 							SendDlgItemMessage(hDlg, tRunAsUser, CB_ADDSTRING, 0, (LPARAM)szCurUser);
 					}
 				}
@@ -4796,9 +4796,9 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
     //CreateCon();
     
     // Запустить серверную нить
-    mh_ServerThreadTerminate = CreateEvent(NULL, TRUE, FALSE, NULL);
-        if (mh_ServerThreadTerminate) ResetEvent(mh_ServerThreadTerminate);
-    mh_ServerThread = CreateThread(NULL, 0, ServerThread, (LPVOID)this, 0, &mn_ServerThreadId);
+    mh_GuiServerThreadTerminate = CreateEvent(NULL, TRUE, FALSE, NULL);
+        if (mh_GuiServerThreadTerminate) ResetEvent(mh_GuiServerThreadTerminate);
+    mh_GuiServerThread = CreateThread(NULL, 0, GuiServerThread, (LPVOID)this, 0, &mn_GuiServerThreadId);
     
     return 0;
 }
@@ -5032,7 +5032,7 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
 
         //SetConsoleCtrlHandler((PHANDLER_ROUTINE)CConEmuMain::HandlerRoutine, true);
 
-        SetForegroundWindow(ghWnd);
+        apiSetForegroundWindow(ghWnd);
         
         RegisterHotKeys();
 
@@ -5061,8 +5061,8 @@ LRESULT CConEmuMain::OnDestroy(HWND hWnd)
 		mb_MouseCaptured = FALSE;
 	}
 
-    if (mh_ServerThread) {
-        SetEvent(mh_ServerThreadTerminate);
+    if (mh_GuiServerThread) {
+        SetEvent(mh_GuiServerThreadTerminate);
         
         wchar_t szServerPipe[MAX_PATH];
         _ASSERTE(ghWnd!=NULL);
@@ -5076,18 +5076,18 @@ LRESULT CConEmuMain::OnDestroy(HWND hWnd)
             #ifdef _DEBUG
             DWORD dwWait = 
             #endif
-            WaitForSingleObject(mh_ServerThread, 200); // пытаемся дождаться, пока нить завершится
+            WaitForSingleObject(mh_GuiServerThread, 200); // пытаемся дождаться, пока нить завершится
             // Просто закроем пайп - его нужно было передернуть
             CloseHandle(hPipe);
             hPipe = INVALID_HANDLE_VALUE;
         }
         // Если нить еще не завершилась - прибить
-        if (WaitForSingleObject(mh_ServerThread,0) != WAIT_OBJECT_0) {
+        if (WaitForSingleObject(mh_GuiServerThread,0) != WAIT_OBJECT_0) {
             DEBUGSTR(L"### Terminating mh_ServerThread\n");
-            TerminateThread(mh_ServerThread,0);
+            TerminateThread(mh_GuiServerThread,0);
         }
-        SafeCloseHandle(mh_ServerThread);
-        SafeCloseHandle(mh_ServerThreadTerminate);
+        SafeCloseHandle(mh_GuiServerThread);
+        SafeCloseHandle(mh_GuiServerThreadTerminate);
     }
 
     for (int i=0; i<MAX_CONSOLE_COUNT; i++) {
@@ -6856,7 +6856,7 @@ void CConEmuMain::CheckFocus(LPCWSTR asFrom)
 						mb_FocusOnDesktop = FALSE; // запомним, что ConEmu активировать не нужно
 					} else if (mb_FocusOnDesktop) {
 						// Чтобы пользователю не приходилось вручную активировать ConEmu после WinD / WinM
-						//SetForegroundWindow(ghWnd); // это скорее всего не сработает, т.к. фокус сейчас у другого процесса!
+						//apiSetForegroundWindow(ghWnd); // это скорее всего не сработает, т.к. фокус сейчас у другого процесса!
 						// так что "активируем" мышкой
 						COORD crOpaque = mp_VActive->FindOpaqueCell();
 						if (crOpaque.X<0 || crOpaque.Y<0) {
@@ -7117,7 +7117,7 @@ HSHELL_APPCOMMAND The APPCOMMAND which has been unhandled by the application or 
                     		if (!dwFarPID) continue;
                     		
                     		if (dwPID == dwFarPID || dwParentPID == dwFarPID) { // MSDN Topics
-                    			SetForegroundWindow(hWnd);
+                    			apiSetForegroundWindow(hWnd);
                     			break;
                     		}
                     	}
@@ -7168,7 +7168,7 @@ void CConEmuMain::OnAlwaysOnTop()
 	SetWindowPos(ghWnd, (gSet.isAlwaysOnTop || gSet.isDesktopMode) ? HWND_TOPMOST : HWND_NOTOPMOST, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
 	if (ghOpWnd && gSet.isAlwaysOnTop) {
 		SetWindowPos(ghOpWnd, HWND_TOPMOST, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
-		SetForegroundWindow(ghOpWnd);
+		apiSetForegroundWindow(ghOpWnd);
 	}
 }
 
@@ -7249,12 +7249,12 @@ void CConEmuMain::OnDesktopMode()
 			GetWindowThreadProcessId(mh_ShellWindow, &mn_ShellWindowPID);
 			RECT rcWnd; GetWindowRect(ghWnd, &rcWnd);
 			MapWindowPoints(NULL, mh_ShellWindow, (LPPOINT)&rcWnd, 2);
-			//ShowWindow(ghWnd, SW_HIDE);
+			//apiShowWindow(ghWnd, SW_HIDE);
 			//SetWindowPos(ghWnd, NULL, rcWnd.left,rcWnd.top,0,0, SWP_NOSIZE|SWP_NOZORDER);
 			SetParent(ghWnd, mh_ShellWindow);
 			SetWindowPos(ghWnd, NULL, rcWnd.left,rcWnd.top,0,0, SWP_NOSIZE|SWP_NOZORDER);
 			SetWindowPos(ghWnd, HWND_TOPMOST, 0,0,0,0, SWP_NOSIZE|SWP_NOMOVE);
-			//ShowWindow(ghWnd, SW_SHOW);
+			//apiShowWindow(ghWnd, SW_SHOW);
 			#ifdef _DEBUG
 			RECT rcNow; GetWindowRect(ghWnd, &rcNow);
 			#endif
@@ -7275,7 +7275,7 @@ void CConEmuMain::OnDesktopMode()
 		
 		OnAlwaysOnTop();
 		if (ghOpWnd && !gSet.isAlwaysOnTop)
-			SetForegroundWindow(ghOpWnd);
+			apiSetForegroundWindow(ghOpWnd);
 	}
 	
 	//SetWindowLong(ghWnd, GWL_STYLE, dwStyle);
@@ -7294,7 +7294,7 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
     {
     case ID_SETTINGS:
         if (ghOpWnd && IsWindow(ghOpWnd)) {
-            if (!ShowWindow ( ghOpWnd, SW_SHOWNORMAL ))
+            if (!apiShowWindow ( ghOpWnd, SW_SHOWNORMAL ))
                 DisplayLastError(L"Can't show settings window");
             SetFocus ( ghOpWnd );
             break; // А то открывались несколько окон диалогов :)
@@ -7840,7 +7840,7 @@ LRESULT CConEmuMain::OnVConTerminated(CVirtualConsole* apVCon, BOOL abPosted /*=
     return 0;
 }
 
-DWORD CConEmuMain::ServerThread(LPVOID lpvParam)
+DWORD CConEmuMain::GuiServerThread(LPVOID lpvParam)
 { 
     BOOL fConnected = FALSE;
     DWORD dwErr = 0;
@@ -7898,7 +7898,7 @@ DWORD CConEmuMain::ServerThread(LPVOID lpvParam)
 
             fConnected = ConnectNamedPipe(hPipe, NULL) ? TRUE : ((dwErr = GetLastError()) == ERROR_PIPE_CONNECTED); 
 
-            if ((dwErr = WaitForSingleObject ( gConEmu.mh_ServerThreadTerminate, 0 )) == WAIT_OBJECT_0) {
+            if ((dwErr = WaitForSingleObject ( gConEmu.mh_GuiServerThreadTerminate, 0 )) == WAIT_OBJECT_0) {
                 SafeCloseHandle(hPipe);
                 return 0; // GUI закрывается
             }
@@ -7911,20 +7911,20 @@ DWORD CConEmuMain::ServerThread(LPVOID lpvParam)
             // сразу сбросим, чтобы не забыть
             fConnected = FALSE;
 
-            gConEmu.ServerThreadCommand ( hPipe ); // При необходимости - записывает в пайп результат сама
+            gConEmu.GuiServerThreadCommand ( hPipe ); // При необходимости - записывает в пайп результат сама
         }
 
         FlushFileBuffers(hPipe); 
         //DisconnectNamedPipe(hPipe); 
         SafeCloseHandle(hPipe);
     } // Перейти к открытию нового instance пайпа
-    while (WaitForSingleObject ( gConEmu.mh_ServerThreadTerminate, 0 ) != WAIT_OBJECT_0);
+    while (WaitForSingleObject ( gConEmu.mh_GuiServerThreadTerminate, 0 ) != WAIT_OBJECT_0);
 
     return 0; 
 }
 
 // Эта функция пайп не закрывает!
-void CConEmuMain::ServerThreadCommand(HANDLE hPipe)
+void CConEmuMain::GuiServerThreadCommand(HANDLE hPipe)
 {
     CESERVER_REQ in={{0}}, *pIn=NULL;
     DWORD cbRead = 0, cbWritten = 0, dwErr = 0;
@@ -7948,16 +7948,16 @@ void CConEmuMain::ServerThreadCommand(HANDLE hPipe)
         gConEmu.ShowOldCmdVersion(in.hdr.nCmd, in.hdr.nVersion, -1);
         return;
     }
-    _ASSERTE(in.hdr.nSize>=sizeof(CESERVER_REQ_HDR) && cbRead>=sizeof(CESERVER_REQ_HDR));
-    if (cbRead < sizeof(CESERVER_REQ_HDR) || /*in.hdr.nSize < cbRead ||*/ in.hdr.nVersion != CESERVER_REQ_VER) {
+    _ASSERTE(in.hdr.cbSize>=sizeof(CESERVER_REQ_HDR) && cbRead>=sizeof(CESERVER_REQ_HDR));
+    if (cbRead < sizeof(CESERVER_REQ_HDR) || /*in.hdr.cbSize < cbRead ||*/ in.hdr.nVersion != CESERVER_REQ_VER) {
         //CloseHandle(hPipe);
         return;
     }
 
-    if (in.hdr.nSize <= cbRead) {
+    if (in.hdr.cbSize <= cbRead) {
         pIn = &in; // выделение памяти не требуется
     } else {
-        int nAllSize = in.hdr.nSize;
+        int nAllSize = in.hdr.cbSize;
         pIn = (CESERVER_REQ*)calloc(nAllSize,1);
         _ASSERTE(pIn!=NULL);
         memmove(pIn, &in, cbRead);
@@ -7998,7 +7998,7 @@ void CConEmuMain::ServerThreadCommand(HANDLE hPipe)
     }
 
     #ifdef _DEBUG
-    UINT nDataSize = pIn->hdr.nSize - sizeof(CESERVER_REQ_HDR);
+    UINT nDataSize = pIn->hdr.cbSize - sizeof(CESERVER_REQ_HDR);
     #endif
     // Все данные из пайпа получены, обрабатываем команду и возвращаем (если нужно) результат
     
@@ -8007,11 +8007,11 @@ void CConEmuMain::ServerThreadCommand(HANDLE hPipe)
         DEBUGSTR(L"GUI recieved CECMD_NEWCMD\n");
     
         pIn->Data[0] = FALSE;
-        pIn->hdr.nSize = sizeof(CESERVER_REQ_HDR) + 1;
+        pIn->hdr.cbSize = sizeof(CESERVER_REQ_HDR) + 1;
 
         if (isIconic())
             SendMessage(ghWnd, WM_SYSCOMMAND, SC_RESTORE, 0);
-        SetForegroundWindow(ghWnd);
+        apiSetForegroundWindow(ghWnd);
 
 		RConStartArgs args; args.pszSpecialCmd = pIn->NewCmd.szCommand;
         CVirtualConsole* pCon = CreateCon(&args);
@@ -8024,7 +8024,7 @@ void CConEmuMain::ServerThreadCommand(HANDLE hPipe)
         fSuccess = WriteFile( 
             hPipe,        // handle to pipe 
             pIn,         // buffer to write from 
-            pIn->hdr.nSize,  // number of bytes to write 
+            pIn->hdr.cbSize,  // number of bytes to write 
             &cbWritten,   // number of bytes written 
             NULL);        // not overlapped I/O 
 
@@ -8038,7 +8038,7 @@ void CConEmuMain::ServerThreadCommand(HANDLE hPipe)
 	} else if (pIn->hdr.nCmd == CECMD_ATTACH2GUI) {
 		// Получен запрос на Attach из сервера
 		if (AttachRequested(pIn->StartStop.hWnd, pIn->StartStop, &(pIn->StartStopRet))) {
-			fSuccess = WriteFile(hPipe, pIn, pIn->hdr.nSize, &cbWritten, NULL);
+			fSuccess = WriteFile(hPipe, pIn, pIn->hdr.cbSize, &cbWritten, NULL);
 		}
 
 	} else if (pIn->hdr.nCmd == CECMD_CMDSTARTSTOP) {
@@ -8052,12 +8052,12 @@ void CConEmuMain::ServerThreadCommand(HANDLE hPipe)
 			SMTO_BLOCK, 500, &dwRc);
 		
 		pIn->dwData[0] = (l == 0) ? 0 : 1;
-		pIn->hdr.nSize = sizeof(CESERVER_REQ_HDR) + sizeof(DWORD);
+		pIn->hdr.cbSize = sizeof(CESERVER_REQ_HDR) + sizeof(DWORD);
         // Отправляем
         fSuccess = WriteFile( 
             hPipe,        // handle to pipe 
             pIn,         // buffer to write from 
-            pIn->hdr.nSize,  // number of bytes to write 
+            pIn->hdr.cbSize,  // number of bytes to write 
             &cbWritten,   // number of bytes written 
             NULL);        // not overlapped I/O 
 		
@@ -8521,7 +8521,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			gConEmu.OnBufferHeight();
 			return 0;
 		//} else if (messg == gConEmu.mn_MsgSetForeground) {
-		//	SetForegroundWindow((HWND)lParam);
+		//	apiSetForegroundWindow((HWND)lParam);
 		//	return 0;
 		} else if (messg == gConEmu.mn_MsgFlashWindow) {
 			return OnFlashWindow((wParam & 0xFF000000) >> 24, wParam & 0xFFFFFF, (HWND)lParam);

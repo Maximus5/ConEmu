@@ -117,21 +117,21 @@ namespace Settings {
 };
 
 #define FillListBox(hDlg,nDlgID,Items,Values,Value) \
-	_ASSERTE(sizeofarray(Items) == sizeofarray(Values)); \
-	FillListBoxItems(GetDlgItem(hDlg,nDlgID), sizeofarray(Items), Items, Values, Value)
+	_ASSERTE(countof(Items) == countof(Values)); \
+	FillListBoxItems(GetDlgItem(hDlg,nDlgID), countof(Items), Items, Values, Value)
 #define FillListBoxByte(hDlg,nDlgID,Items,Values,Value) \
-	_ASSERTE(sizeofarray(Items) == sizeofarray(Values)); { \
+	_ASSERTE(countof(Items) == countof(Values)); { \
 	DWORD dwVal = Value; \
-	FillListBoxItems(GetDlgItem(hDlg,nDlgID), sizeofarray(Items), Items, Values, dwVal); \
+	FillListBoxItems(GetDlgItem(hDlg,nDlgID), countof(Items), Items, Values, dwVal); \
 	Value = dwVal; }
 
 #define GetListBox(hDlg,nDlgID,Items,Values,Value) \
-	_ASSERTE(sizeofarray(Items) == sizeofarray(Values)); \
-	GetListBoxItem(GetDlgItem(hDlg,nDlgID), sizeofarray(Items), Items, Values, Value)
+	_ASSERTE(countof(Items) == countof(Values)); \
+	GetListBoxItem(GetDlgItem(hDlg,nDlgID), countof(Items), Items, Values, Value)
 #define GetListBoxByte(hDlg,nDlgID,Items,Values,Value) \
-	_ASSERTE(sizeofarray(Items) == sizeofarray(Values)); { \
+	_ASSERTE(countof(Items) == countof(Values)); { \
 	DWORD dwVal = Value; \
-	GetListBoxItem(GetDlgItem(hDlg,nDlgID), sizeofarray(Items), Items, Values, dwVal); \
+	GetListBoxItem(GetDlgItem(hDlg,nDlgID), countof(Items), Items, Values, dwVal); \
 	Value = dwVal; }
 
 #define SetThumbColor(s,rgb,idx,us) { (s).RawColor = 0; (s).ColorRGB = rgb; (s).ColorIdx = idx; (s).UseIndex = us; }
@@ -146,7 +146,7 @@ namespace Settings {
 	reg->Load(L"PanView." s L".SpaceY2", n.nSpaceY2); \
 	reg->Load(L"PanView." s L".LabelSpacing", n.nLabelSpacing); \
 	reg->Load(L"PanView." s L".LabelPadding", n.nLabelPadding); \
-	reg->Load(L"PanView." s L".FontName", n.sFontName, sizeofarray(n.sFontName)); \
+	reg->Load(L"PanView." s L".FontName", n.sFontName, countof(n.sFontName)); \
 	reg->Load(L"PanView." s L".FontHeight", n.nFontHeight); }
 #define ThumbSaveSet(s,n) { \
 	reg->Save(L"PanView." s L".ImgSize", n.nImgSize); \
@@ -514,9 +514,9 @@ void CSettings::LoadSettings()
 		
 		reg->Load(L"AutoRegisterFonts", isAutoRegisterFonts);
 		
-		if (reg->Load(L"FontName", inFont, sizeofarray(inFont)))
+		if (reg->Load(L"FontName", inFont, countof(inFont)))
 			mb_Name1Ok = TRUE;
-        if (reg->Load(L"FontName2", inFont2, sizeofarray(inFont2)))
+        if (reg->Load(L"FontName2", inFont2, countof(inFont2)))
         	mb_Name2Ok = TRUE;
         if (!mb_Name1Ok || !mb_Name2Ok)
         	isAutoRegisterFonts = true;
@@ -541,7 +541,7 @@ void CSettings::LoadSettings()
         reg->Load(L"FontCharSet", mn_LoadFontCharSet); mb_CharSetWasSet = FALSE;
         reg->Load(L"Anti-aliasing", Quality);
 
-		reg->Load(L"ConsoleFontName", ConsoleFont.lfFaceName, sizeofarray(ConsoleFont.lfFaceName));
+		reg->Load(L"ConsoleFontName", ConsoleFont.lfFaceName, countof(ConsoleFont.lfFaceName));
 		reg->Load(L"ConsoleFontWidth", ConsoleFont.lfWidth);
 		reg->Load(L"ConsoleFontHeight", ConsoleFont.lfHeight);
 
@@ -590,7 +590,7 @@ void CSettings::LoadSettings()
 			reg->Load(L"Experimental", isFixFarBorders);
 		mszCharRanges[0] = 0;
 		// max 10 ranges x 10 chars + a little ;)
-		if (reg->Load(L"FixFarBordersRanges", mszCharRanges, sizeofarray(mszCharRanges))) {
+		if (reg->Load(L"FixFarBordersRanges", mszCharRanges, countof(mszCharRanges))) {
 			int n = 0, nMax = countof(icFixFarBorderRanges);
 			wchar_t *pszRange = mszCharRanges, *pszNext = NULL;
 			wchar_t cBegin, cEnd;
@@ -640,7 +640,7 @@ void CSettings::LoadSettings()
 
         reg->Load(L"BackGround Image show", isShowBgImage);
 			if (isShowBgImage!=0 && isShowBgImage!=1 && isShowBgImage!=2) isShowBgImage = 0;
-		reg->Load(L"BackGround Image", sBgImage, sizeofarray(sBgImage));
+		reg->Load(L"BackGround Image", sBgImage, countof(sBgImage));
 		reg->Load(L"bgImageDarker", bgImageDarker);
 		reg->Load(L"bgImageColors", nBgImageColors);
 			if (!nBgImageColors) nBgImageColors = 1|2;
@@ -683,7 +683,7 @@ void CSettings::LoadSettings()
 	        reg->Load(L"TabLazy", isTabLazy);
 	        reg->Load(L"TabRecent", isTabRecent);
 			if (!reg->Load(L"TabCloseMacro", &sTabCloseMacro) || (sTabCloseMacro && !*sTabCloseMacro)) { free(sTabCloseMacro); sTabCloseMacro = NULL; }
-			reg->Load(L"TabFontFace", sTabFontFace, sizeofarray(sTabFontFace));
+			reg->Load(L"TabFontFace", sTabFontFace, countof(sTabFontFace));
 			reg->Load(L"TabFontCharSet", nTabFontCharSet);
 			reg->Load(L"TabFontHeight", nTabFontHeight);
 			if (!reg->Load(L"SaveAllEditors", &sSaveAllMacro)) {
@@ -695,7 +695,7 @@ void CSettings::LoadSettings()
 			if (nToolbarAddSpace<0 || nToolbarAddSpace>100) nToolbarAddSpace = 0;
         reg->Load(L"SlideShowElapse", nSlideShowElapse); // only PicView1
         reg->Load(L"IconID", nIconID);
-        reg->Load(L"TabConsole", szTabConsole, sizeofarray(szTabConsole));
+        reg->Load(L"TabConsole", szTabConsole, countof(szTabConsole));
             //WCHAR* pszVert = wcschr(szTabPanels, L'|');
             //if (!pszVert) {
             //    if (wcslen(szTabPanels)>54) szTabPanels[54] = 0;
@@ -703,13 +703,13 @@ void CSettings::LoadSettings()
             //    wcscpy(pszVert+1, L"Console");
             //}
             //*pszVert = 0; pszTabConsole = pszVert+1;
-        reg->Load(L"TabEditor", szTabEditor, sizeofarray(szTabEditor));
-        reg->Load(L"TabEditorModified", szTabEditorModified, sizeofarray(szTabEditorModified));
-        reg->Load(L"TabViewer", szTabViewer, sizeofarray(szTabViewer));
+        reg->Load(L"TabEditor", szTabEditor, countof(szTabEditor));
+        reg->Load(L"TabEditorModified", szTabEditorModified, countof(szTabEditorModified));
+        reg->Load(L"TabViewer", szTabViewer, countof(szTabViewer));
         reg->Load(L"TabLenMax", nTabLenMax); if (nTabLenMax < 10 || nTabLenMax >= CONEMUTABMAX) nTabLenMax = 20;
         /*reg->Load(L"ScrollTitle", isScrollTitle);
         reg->Load(L"ScrollTitleLen", ScrollTitleLen);*/
-        reg->Load(L"AdminTitleSuffix", szAdminTitleSuffix, sizeofarray(szAdminTitleSuffix)); szAdminTitleSuffix[sizeofarray(szAdminTitleSuffix)-1] = 0;
+        reg->Load(L"AdminTitleSuffix", szAdminTitleSuffix, countof(szAdminTitleSuffix)); szAdminTitleSuffix[countof(szAdminTitleSuffix)-1] = 0;
         reg->Load(L"AdminShowShield", bAdminShield);
 		reg->Load(L"HideInactiveConsoleTabs", bHideInactiveConsoleTabs);
         reg->Load(L"TryToCenter", isTryToCenter);
@@ -824,7 +824,7 @@ void CSettings::LoadSettings()
 		psCmdHistory = (wchar_t*)calloc(2,2);
 	}
 
-	for (UINT n = 0; n < sizeofarray(icFixFarBorderRanges); n++) {
+	for (UINT n = 0; n < countof(icFixFarBorderRanges); n++) {
 		if (!icFixFarBorderRanges[n].bUsed) break;
 		for (WORD x = (WORD)(icFixFarBorderRanges[n].cBegin); x <= (WORD)(icFixFarBorderRanges[n].cEnd); x++)
 			mpc_FixFarBorderValues[x] = true;
@@ -1249,7 +1249,7 @@ int CSettings::EnumFontCallBackEx(ENUMLOGFONTEX *lpelfe, NEWTEXTMETRICEX *lpntme
 		return TRUE; // такие мелкие - не интересуют
 
 	LONG nWidth  = lpelfe->elfLogFont.lfWidth;
-	UINT nMaxCount = sizeofarray(szRasterSizes);
+	UINT nMaxCount = countof(szRasterSizes);
 
 	while (sz<nMaxCount && szRasterSizes[sz].cy) {
 		if (szRasterSizes[sz].cx == nWidth && szRasterSizes[sz].cy == nHeight)
@@ -1282,7 +1282,7 @@ DWORD CSettings::EnumFontsThread(LPVOID apArg)
 	szRasterSizes[0].cx = szRasterSizes[0].cy = 0;
 	EnumFontFamiliesEx(hdc, &term, (FONTENUMPROCW) EnumFontCallBackEx, 0/*LPARAM*/, 0);
 
-	UINT nMaxCount = sizeofarray(szRasterSizes);
+	UINT nMaxCount = countof(szRasterSizes);
 	for (UINT i = 0; i<(nMaxCount-1) && szRasterSizes[i].cy; i++) {
 		UINT k = i;
 		for (UINT j = i+1; j<nMaxCount && szRasterSizes[j].cy; j++) {
@@ -1301,7 +1301,7 @@ DWORD CSettings::EnumFontsThread(LPVOID apArg)
 
 	DeleteDC(hdc);
 
-	for (UINT sz=0; sz<sizeofarray(szRasterSizes) && szRasterSizes[sz].cy; sz++) {
+	for (UINT sz=0; sz<countof(szRasterSizes) && szRasterSizes[sz].cy; sz++) {
 		wsprintf(szName, L"[%s %ix%i]", RASTER_FONTS_NAME, szRasterSizes[sz].cx, szRasterSizes[sz].cy);
 		int nIdx = SendDlgItemMessage(gSet.hMain, tFontFace, CB_INSERTSTRING, sz, (LPARAM)szName);
 		SendDlgItemMessage(gSet.hMain, tFontFace, CB_SETITEMDATA, nIdx, 1);
@@ -1405,7 +1405,7 @@ LRESULT CSettings::OnInitDialog()
         MoveWindow(hMain, rcClient.left, rcClient.top, rcClient.right-rcClient.left, rcClient.bottom-rcClient.top, 0);
 
 
-        ShowWindow(hMain, SW_SHOW);
+        apiShowWindow(hMain, SW_SHOW);
     }
     
     MCHKHEAP
@@ -1450,7 +1450,7 @@ LRESULT CSettings::OnInitDialog_Main()
 	{
 		wchar_t temp[MAX_PATH];
 
-		for (uint i=0; i < sizeofarray(Settings::FSizes); i++)
+		for (uint i=0; i < countof(Settings::FSizes); i++)
 		{
 			wsprintf(temp, L"%i", Settings::FSizes[i]);
 			if (i > 0)
@@ -1806,7 +1806,7 @@ LRESULT CSettings::OnInitDialog_Color()
 		ColorSetEdit(hColors, c);
 
 	DWORD nVal = nExtendColor;
-	FillListBoxItems(GetDlgItem(hColors, lbExtendIdx), sizeofarray(Settings::szColorIdxSh),
+	FillListBoxItems(GetDlgItem(hColors, lbExtendIdx), countof(Settings::szColorIdxSh),
 		Settings::szColorIdxSh, Settings::nColorIdxSh, nVal);
 	nExtendColor = nVal;
 	CheckDlgButton(hColors, cbExtendColors, isExtendColors ? BST_CHECKED : BST_UNCHECKED);
@@ -1823,7 +1823,7 @@ LRESULT CSettings::OnInitDialog_Color()
 	SendDlgItemMessage(hColors, lbDefaultColors, CB_ADDSTRING, 0, (LPARAM) L"<Current color scheme>");
 	//SendDlgItemMessage(hColors, lbDefaultColors, CB_ADDSTRING, 0, (LPARAM) L"Default color sheme (Windows standard)");
 	//SendDlgItemMessage(hColors, lbDefaultColors, CB_ADDSTRING, 0, (LPARAM) L"Gamma 1 (for use with dark monitors)");
-	for (uint i=0; i<sizeofarray(DefColors); i++)
+	for (uint i=0; i<countof(DefColors); i++)
 		SendDlgItemMessage(hColors, lbDefaultColors, CB_ADDSTRING, 0, (LPARAM) DefColors[i].pszTitle);
 	SendDlgItemMessage(hColors, lbDefaultColors, CB_SETCURSEL, 0, 0);
 	gbLastColorsOk = TRUE;
@@ -1856,7 +1856,7 @@ LRESULT CSettings::OnInitDialog_Views()
 	DWORD nVal;
 	wchar_t temp[MAX_PATH];
 
-	for (uint i=0; i < sizeofarray(Settings::FSizesSmall); i++) {
+	for (uint i=0; i < countof(Settings::FSizesSmall); i++) {
 		wsprintf(temp, L"%i", Settings::FSizesSmall[i]);
 		SendDlgItemMessage(hViews, tThumbsFontSize, CB_ADDSTRING, 0, (LPARAM) temp);
 		SendDlgItemMessage(hViews, tTilesFontSize, CB_ADDSTRING, 0, (LPARAM) temp);
@@ -1882,7 +1882,7 @@ LRESULT CSettings::OnInitDialog_Views()
 	SetDlgItemInt(hViews, tTilesSpacing, ThSet.Tiles.nLabelSpacing, FALSE);
 	SetDlgItemInt(hViews, tTilesPadding, ThSet.Tiles.nLabelPadding, FALSE);
 
-	FillListBoxItems(GetDlgItem(hViews, tThumbMaxZoom), sizeofarray(Settings::szThumbMaxZoom),
+	FillListBoxItems(GetDlgItem(hViews, tThumbMaxZoom), countof(Settings::szThumbMaxZoom),
 		Settings::szThumbMaxZoom, Settings::nThumbMaxZoom, ThSet.nMaxZoom);
 
 	// Colors
@@ -1890,21 +1890,21 @@ LRESULT CSettings::OnInitDialog_Views()
 		ColorSetEdit(hViews, c);
 
 	nVal = ThSet.crBackground.ColorIdx;
-	FillListBoxItems(GetDlgItem(hViews, lbThumbBackColorIdx), sizeofarray(Settings::szColorIdxTh),
+	FillListBoxItems(GetDlgItem(hViews, lbThumbBackColorIdx), countof(Settings::szColorIdxTh),
 		Settings::szColorIdxTh, Settings::nColorIdxTh, nVal);
 	CheckRadioButton(hViews, rbThumbBackColorIdx, rbThumbBackColorRGB, 
 		ThSet.crBackground.UseIndex ? rbThumbBackColorIdx : rbThumbBackColorRGB);
 
 	CheckDlgButton(hViews, cbThumbPreviewBox, ThSet.nPreviewFrame ? 1 : 0);
 	nVal = ThSet.crPreviewFrame.ColorIdx;
-	FillListBoxItems(GetDlgItem(hViews, lbThumbPreviewBoxColorIdx), sizeofarray(Settings::szColorIdxTh),
+	FillListBoxItems(GetDlgItem(hViews, lbThumbPreviewBoxColorIdx), countof(Settings::szColorIdxTh),
 		Settings::szColorIdxTh, Settings::nColorIdxTh, nVal);
 	CheckRadioButton(hViews, rbThumbPreviewBoxColorIdx, rbThumbPreviewBoxColorRGB, 
 		ThSet.crPreviewFrame.UseIndex ? rbThumbPreviewBoxColorIdx : rbThumbPreviewBoxColorRGB);
 
 	CheckDlgButton(hViews, cbThumbSelectionBox, ThSet.nSelectFrame ? 1 : 0);
 	nVal = ThSet.crSelectFrame.ColorIdx;
-	FillListBoxItems(GetDlgItem(hViews, lbThumbSelectionBoxColorIdx), sizeofarray(Settings::szColorIdxTh),
+	FillListBoxItems(GetDlgItem(hViews, lbThumbSelectionBoxColorIdx), countof(Settings::szColorIdxTh),
 		Settings::szColorIdxTh, Settings::nColorIdxTh, nVal);
 	CheckRadioButton(hViews, rbThumbSelectionBoxColorIdx, rbThumbSelectionBoxColorRGB, 
 		ThSet.crSelectFrame.UseIndex ? rbThumbSelectionBoxColorIdx : rbThumbSelectionBoxColorRGB);
@@ -2037,7 +2037,7 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
 		// «апомнить "идеальный" размер окна, выбранный пользователем
 		gConEmu.UpdateIdealRect(TRUE);
 	    EnableWindow(GetDlgItem(hMain, cbApplyPos), FALSE);
-	    SetForegroundWindow(ghOpWnd);
+	    apiSetForegroundWindow(ghOpWnd);
 	    break;
         
     case rCascade:
@@ -2341,7 +2341,7 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
 				if (pCon) pCon->RCon()->ShowConsole(FALSE);
 			}
 		}
-		SetForegroundWindow(ghOpWnd);
+		apiSetForegroundWindow(ghOpWnd);
 		break;
 		
 	case cbDesktopMode:
@@ -2393,7 +2393,7 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
 		if (CB >= cbHostWin && CB <= cbHostRShift)
 		{
 			memset(gSet.mn_HostModOk, 0, sizeof(gSet.mn_HostModOk));
-			for (UINT i = 0; i < sizeofarray(HostkeyCtrlIds); i++) {
+			for (UINT i = 0; i < countof(HostkeyCtrlIds); i++) {
 				if (IsChecked(hTabs, HostkeyCtrlIds[i]))
 					gSet.CheckHostkeyModifier(HostkeyCtrlId2Vk(HostkeyCtrlIds[i]));
 			}
@@ -2624,7 +2624,7 @@ LRESULT CSettings::OnEditChanged(WPARAM wParam, LPARAM lParam)
 	}
 	else if (TB == tAdminSuffix)
 	{
-		GetDlgItemText(hTabs, tAdminSuffix, gSet.szAdminTitleSuffix, sizeofarray(gSet.szAdminTitleSuffix));
+		GetDlgItemText(hTabs, tAdminSuffix, gSet.szAdminTitleSuffix, countof(gSet.szAdminTitleSuffix));
 		gConEmu.mp_TabBar->Update(TRUE);
 	}
 
@@ -2645,11 +2645,11 @@ LRESULT CSettings::OnColorComboBox(WPARAM wParam, LPARAM lParam)
 			int nIdx = SendDlgItemMessage(hColors, lbDefaultColors, CB_GETCURSEL, 0, 0);
 			if (nIdx == 0)
 				pdwDefData = gdwLastColors;
-			else if (nIdx >= 1 && nIdx <= (int)sizeofarray(DefColors))
+			else if (nIdx >= 1 && nIdx <= (int)countof(DefColors))
 				pdwDefData = DefColors[nIdx-1].dwDefColors;
 			else
 				return 0; // неизвестный набор
-			uint nCount = sizeofarray(DefColors->dwDefColors);
+			uint nCount = countof(DefColors->dwDefColors);
 			for (uint i = 0; i < nCount; i++)
 			{
 				Colors[i] = pdwDefData[i];
@@ -2762,13 +2762,13 @@ LRESULT CSettings::OnTab(LPNMHDR phdr)
 				}
                 
                 if (*phCurrent != NULL) {
-                    ShowWindow(*phCurrent, SW_SHOW);
-                    if (*phCurrent != hMain)   ShowWindow(hMain, SW_HIDE);
-                    if (*phCurrent != hExt)    ShowWindow(hExt,  SW_HIDE);
-					if (*phCurrent != hTabs)   ShowWindow(hTabs,  SW_HIDE);
-                    if (*phCurrent != hColors) ShowWindow(hColors, SW_HIDE);
-					if (*phCurrent != hViews) ShowWindow(hViews, SW_HIDE);
-                    if (*phCurrent != hInfo)   ShowWindow(hInfo, SW_HIDE);
+                    apiShowWindow(*phCurrent, SW_SHOW);
+                    if (*phCurrent != hMain)   apiShowWindow(hMain, SW_HIDE);
+                    if (*phCurrent != hExt)    apiShowWindow(hExt,  SW_HIDE);
+					if (*phCurrent != hTabs)   apiShowWindow(hTabs,  SW_HIDE);
+                    if (*phCurrent != hColors) apiShowWindow(hColors, SW_HIDE);
+					if (*phCurrent != hViews)  apiShowWindow(hViews, SW_HIDE);
+                    if (*phCurrent != hInfo)   apiShowWindow(hInfo, SW_HIDE);
                     SetFocus(*phCurrent);
                 }
             }
@@ -2789,7 +2789,7 @@ void CSettings::Dialog()
 	if (!hOpt) {
 		DisplayLastError(L"Can't create settings dialog!");
 	} else {
-		ShowWindow ( hOpt, SW_SHOWNORMAL );
+		apiShowWindow ( hOpt, SW_SHOWNORMAL );
 		SetFocus ( hOpt );
 	}
 }
@@ -3296,14 +3296,14 @@ INT_PTR CSettings::viewsOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPa
 					SendDlgItemMessage(hWnd2, wId, CB_GETLBTEXT, nSel, (LPARAM)gSet.ThSet.Thumbs.sFontName);
 					break;
 				case tThumbsFontSize:
-					if (nSel>=0 && nSel<sizeofarray(Settings::FSizesSmall))
+					if (nSel>=0 && nSel<countof(Settings::FSizesSmall))
 						gSet.ThSet.Thumbs.nFontHeight = Settings::FSizesSmall[nSel];
 					break;
 				case tTilesFontName:
 					SendDlgItemMessage(hWnd2, wId, CB_GETLBTEXT, nSel, (LPARAM)gSet.ThSet.Tiles.sFontName);
 					break;
 				case tTilesFontSize:
-					if (nSel>=0 && nSel<sizeofarray(Settings::FSizesSmall))
+					if (nSel>=0 && nSel<countof(Settings::FSizesSmall))
 						gSet.ThSet.Tiles.nFontHeight = Settings::FSizesSmall[nSel];
 					break;
 				case tThumbMaxZoom:
@@ -3780,7 +3780,7 @@ bool CSettings::IsHostkeyPressed()
 //			if (TB >= cbHostWin && TB <= cbHostRShift)
 //			{
 //				memset(gSet.mn_HostModOk, 0, sizeof(gSet.mn_HostModOk));
-//				for (UINT i = 0; i < sizeofarray(HostkeyCtrlIds); i++) {
+//				for (UINT i = 0; i < countof(HostkeyCtrlIds); i++) {
 //					if (IsChecked(hWnd2, HostkeyCtrlIds[i]))
 //						gSet.CheckHostkeyModifier(HostkeyCtrlId2Vk(HostkeyCtrlIds[i]));
 //				}
@@ -3843,7 +3843,7 @@ bool CSettings::IsHostkeyPressed()
 //				}
 //			} else
 //			if (TB == tAdminSuffix) {
-//				GetDlgItemText(hWnd2, tAdminSuffix, gSet.szAdminTitleSuffix, sizeofarray(gSet.szAdminTitleSuffix));
+//				GetDlgItemText(hWnd2, tAdminSuffix, gSet.szAdminTitleSuffix, countof(gSet.szAdminTitleSuffix));
 //				gConEmu.mp_TabBar->Update(TRUE);
 //			}
 //		}
@@ -3930,9 +3930,9 @@ INT_PTR CSettings::selectionOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM
 			
 			DWORD idxBack = (gSet.isCTSColorIndex & 0xF0) >> 4;
 			DWORD idxFore = (gSet.isCTSColorIndex & 0xF);
-			FillListBoxItems(GetDlgItem(hWnd2, lbCTSForeIdx), sizeofarray(Settings::szColorIdx)-1,
+			FillListBoxItems(GetDlgItem(hWnd2, lbCTSForeIdx), countof(Settings::szColorIdx)-1,
 				Settings::szColorIdx, Settings::nColorIdx, idxFore);
-			FillListBoxItems(GetDlgItem(hWnd2, lbCTSBackIdx), sizeofarray(Settings::szColorIdx)-1,
+			FillListBoxItems(GetDlgItem(hWnd2, lbCTSBackIdx), countof(Settings::szColorIdx)-1,
 				Settings::szColorIdx, Settings::nColorIdx, idxBack);
 
 			gSet.RegisterTipsFor(hWnd2);
@@ -3990,7 +3990,7 @@ INT_PTR CSettings::selectionOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM
 			case lbCTSForeIdx:
 				{
 					DWORD nFore = 0;
-					GetListBoxItem(GetDlgItem(hWnd2, lbCTSForeIdx), sizeofarray(Settings::szColorIdx)-1,
+					GetListBoxItem(GetDlgItem(hWnd2, lbCTSForeIdx), countof(Settings::szColorIdx)-1,
 						Settings::szColorIdx, Settings::nColorIdx, nFore);
 					gSet.isCTSColorIndex = (gSet.isCTSColorIndex & 0xF0) | (nFore & 0xF);
 					gConEmu.Update(true);
@@ -3998,7 +3998,7 @@ INT_PTR CSettings::selectionOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM
 			case lbCTSBackIdx:
 				{
 					DWORD nBack = 0;
-					GetListBoxItem(GetDlgItem(hWnd2, lbCTSBackIdx), sizeofarray(Settings::szColorIdx)-1,
+					GetListBoxItem(GetDlgItem(hWnd2, lbCTSBackIdx), countof(Settings::szColorIdx)-1,
 						Settings::szColorIdx, Settings::nColorIdx, nBack);
 					gSet.isCTSColorIndex = (gSet.isCTSColorIndex & 0xF) | ((nBack & 0xF) << 4);
 					gConEmu.Update(true);
@@ -4333,7 +4333,7 @@ void CSettings::ShowFontErrorTip(LPCTSTR asInfo)
 	if (!asInfo)
 		gSet.szFontError[0] = 0;
 	else if (asInfo != gSet.szFontError)
-		lstrcpyn(gSet.szFontError, asInfo, sizeofarray(gSet.szFontError));
+		lstrcpyn(gSet.szFontError, asInfo, countof(gSet.szFontError));
 
 	tiBalloon.lpszText = gSet.szFontError;
 	if (gSet.szFontError[0]) {
@@ -5574,7 +5574,7 @@ void CSettings::GetListBoxItem(HWND hList, uint nItems, const WCHAR** pszItems, 
 {
 	_ASSERTE(hList!=NULL);
 	int num = SendMessage(hList, CB_GETCURSEL, 0, 0);
-	//int nKeyCount = sizeofarray(Settings::szKeys);
+	//int nKeyCount = countof(Settings::szKeys);
 	if (num>=0 && num<(int)nItems) {
 		nValue = pnValues[num];
 	} else {

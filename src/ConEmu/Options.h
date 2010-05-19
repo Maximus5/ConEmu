@@ -29,6 +29,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include "../Common/WinObjects.h"
 #include <commctrl.h>
 
 #define MIN_ALPHA_VALUE 40

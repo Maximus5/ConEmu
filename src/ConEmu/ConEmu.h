@@ -249,9 +249,9 @@ protected:
 	UINT mn_MsgLLKeyHook;
 	
 	//
-	static DWORD CALLBACK ServerThread(LPVOID lpvParam);
-	void ServerThreadCommand(HANDLE hPipe);
-	DWORD mn_ServerThreadId; HANDLE mh_ServerThread, mh_ServerThreadTerminate;
+	static DWORD CALLBACK GuiServerThread(LPVOID lpvParam);
+	void GuiServerThreadCommand(HANDLE hPipe);
+	DWORD mn_GuiServerThreadId; HANDLE mh_GuiServerThread, mh_GuiServerThreadTerminate;
 
 public:
 	DWORD CheckProcesses();

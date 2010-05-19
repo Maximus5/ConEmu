@@ -45,7 +45,7 @@ void TrayIcon::HideWindowToTray()
 	_ASSERTE(IconData.hIcon!=NULL);
     GetWindowText(ghWnd, IconData.szTip, countof(IconData.szTip));
     Shell_NotifyIcon(NIM_ADD, &IconData);
-    ShowWindow(ghWnd, SW_HIDE);
+    apiShowWindow(ghWnd, SW_HIDE);
     isWindowInTray = true;
 }
 
@@ -60,8 +60,8 @@ void TrayIcon::UpdateTitle()
 
 void TrayIcon::RestoreWindowFromTray()
 {
-    ShowWindow(ghWnd, SW_SHOW); 
-    SetForegroundWindow(ghWnd);
+    apiShowWindow(ghWnd, SW_SHOW); 
+    apiSetForegroundWindow(ghWnd);
     Shell_NotifyIcon(NIM_DELETE, &IconData);
     EnableMenuItem(GetSystemMenu(ghWnd, false), ID_TOTRAY, MF_BYCOMMAND | MF_ENABLED);
     isWindowInTray = false;
@@ -100,7 +100,7 @@ LRESULT TrayIcon::OnTryIcon(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
         {
         POINT mPos;
         GetCursorPos(&mPos);
-        SetForegroundWindow(hWnd);
+        apiSetForegroundWindow(hWnd);
         gConEmu.ShowSysmenu(hWnd, mPos.x, mPos.y);
         PostMessage(hWnd, WM_NULL, 0, 0);
         }

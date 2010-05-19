@@ -171,7 +171,7 @@ BOOL CConEmuPipe::Execute(int nCmd, LPCVOID apData, UINT anDataSize)
     fSuccess = TransactNamedPipe( 
       mh_Pipe,                // pipe handle 
       pIn,                    // message to server
-      pIn->hdr.nSize,             // message length 
+      pIn->hdr.cbSize,             // message length 
       cbReadBuf,              // buffer to receive reply
       sizeof(cbReadBuf),      // size of read buffer
       &cbRead,                // bytes read
@@ -201,7 +201,7 @@ BOOL CConEmuPipe::Execute(int nCmd, LPCVOID apData, UINT anDataSize)
 		Close();
 		return FALSE;
 	}
-	nAllSize = pOut->hdr.nSize;
+	nAllSize = pOut->hdr.cbSize;
 	pOut = NULL;
     
     if (nAllSize==0) {
@@ -248,7 +248,7 @@ BOOL CConEmuPipe::Execute(int nCmd, LPCVOID apData, UINT anDataSize)
 	SafeFree(pIn);
 
 	lpCursor = pOut->Data;
-	dwMaxDataSize = pOut->hdr.nSize - sizeof(CESERVER_REQ_HDR);
+	dwMaxDataSize = pOut->hdr.cbSize - sizeof(CESERVER_REQ_HDR);
 
 	return TRUE;
 }

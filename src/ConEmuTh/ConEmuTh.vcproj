@@ -669,6 +669,164 @@
 				CommandLine="copy $(TargetPath) $(SolutionDir)..\Plugins\ConEmu\"
 			/>
 		</Configuration>
+		<Configuration
+			Name="Debug_R|Win32"
+			OutputDirectory="C:\Temp\CE\$(ProjectName).$(PlatformName).$(ConfigurationName)"
+			IntermediateDirectory="C:\Temp\CE\$(ProjectName).$(PlatformName).$(ConfigurationName)"
+			ConfigurationType="2"
+			CharacterSet="1"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				Optimization="0"
+				AdditionalIncludeDirectories=""
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;HIDE_TODO;_CRT_NON_CONFORMING_SWPRINTFS"
+				MinimalRebuild="true"
+				BasicRuntimeChecks="3"
+				RuntimeLibrary="1"
+				StructMemberAlignment="0"
+				UsePrecompiledHeader="0"
+				WarningLevel="3"
+				DebugInformationFormat="4"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLinkerTool"
+				AdditionalDependencies="shlwapi.lib version.lib"
+				OutputFile="\\WIN7X64\FAR\FAR2x86\Plugins\ConEmu\Thumbs\ConEmuTh.dll"
+				LinkIncremental="2"
+				ModuleDefinitionFile="export.def"
+				GenerateDebugInformation="true"
+				GenerateMapFile="true"
+				MapExports="true"
+				SubSystem="2"
+				TargetMachine="1"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCManifestTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+				CommandLine="copy &quot;$(ProjectDir)..\..\plugins\ConEmu\Thumbs\ConEmuTh_*.lng&quot; &quot;$(TargetDir)&quot;"
+			/>
+		</Configuration>
+		<Configuration
+			Name="Debug_R|x64"
+			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
+			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			ConfigurationType="2"
+			CharacterSet="1"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+				TargetEnvironment="3"
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				Optimization="0"
+				AdditionalIncludeDirectories=""
+				PreprocessorDefinitions="WIN64;WIN32;_DEBUG;_WINDOWS;HIDE_TODO;_CRT_NON_CONFORMING_SWPRINTFS"
+				MinimalRebuild="true"
+				BasicRuntimeChecks="3"
+				RuntimeLibrary="1"
+				StructMemberAlignment="0"
+				UsePrecompiledHeader="0"
+				WarningLevel="3"
+				DebugInformationFormat="3"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLinkerTool"
+				AdditionalDependencies="version.lib"
+				OutputFile="\\WIN7X64\FAR\FAR2x64\Plugins\ConEmu\Thumbs\ConEmuTh.x64.dll"
+				LinkIncremental="2"
+				ModuleDefinitionFile="export.def"
+				GenerateDebugInformation="true"
+				GenerateMapFile="true"
+				MapExports="true"
+				SubSystem="2"
+				TargetMachine="17"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCManifestTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+			/>
+		</Configuration>
 	</Configurations>
 	<References>
 	</References>
@@ -715,6 +873,20 @@
 						Name="VCCustomBuildTool"
 					/>
 				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug_R|Win32"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug_R|x64"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath=".\ImgCache.cpp"
@@ -722,6 +894,10 @@
 			</File>
 			<File
 				RelativePath="..\common\RgnDetect.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\common\WinObjects.cpp"
 				>
 			</File>
 		</Filter>
@@ -764,6 +940,10 @@
 			</File>
 			<File
 				RelativePath=".\Modules\ThumbSDK.h"
+				>
+			</File>
+			<File
+				RelativePath="..\common\WinObjects.h"
 				>
 			</File>
 		</Filter>
@@ -855,6 +1035,25 @@
 			</FileConfiguration>
 			<FileConfiguration
 				Name="Instrument|x64"
+				>
+				<Tool
+					Name="VCCustomBuildTool"
+					CommandLine="$(InputDir)lang.cmd &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
+					Outputs="ConEmuTh_Lang.h"
+				/>
+			</FileConfiguration>
+			<FileConfiguration
+				Name="Debug_R|Win32"
+				>
+				<Tool
+					Name="VCCustomBuildTool"
+					CommandLine="$(InputDir)lang.cmd &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
+					Outputs="ConEmuTh_Lang.h"
+				/>
+			</FileConfiguration>
+			<FileConfiguration
+				Name="Debug_R|x64"
+				ExcludedFromBuild="true"
 				>
 				<Tool
 					Name="VCCustomBuildTool"

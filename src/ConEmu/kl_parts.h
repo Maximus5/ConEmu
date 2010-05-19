@@ -40,8 +40,8 @@ template <class T>__forceinline const T& klMax(const T &a, const T &b) {return a
 #define klstrncpy(in1, in2, in3) _tcsncpy((wchar_t *) in1, (wchar_t *) in2, in3)
 #endif
 
-#define sizeofarray(array) (sizeof(array)/sizeof(*array))
-#define klInit()
+//#define sizeofarray(array) (sizeof(array)/sizeof(*array))
+//#define klInit()
 
 
 struct klFile

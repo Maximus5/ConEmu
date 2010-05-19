@@ -54,14 +54,6 @@ struct PluginStartupInfo *InfoA=NULL;
 struct FarStandardFunctions *FSFA=NULL;
 
 
-HANDLE WINAPI _export OpenPlugin(int OpenFrom,INT_PTR Item)
-{
-	if (InfoA == NULL)
-		return INVALID_HANDLE_VALUE;
-
-
-	return INVALID_HANDLE_VALUE;
-}
 
 #if defined(__GNUC__)
 #ifdef __cplusplus
@@ -72,6 +64,16 @@ extern "C"{
 };
 #endif
 #endif
+
+void ReloadResourcesA()
+{
+	wchar_t szTemp[MAX_PATH];	
+	lstrcpynW(gsFolder, GetMsgA(CEDirFolder, szTemp), countof(gsFolder));
+	lstrcpynW(gsSymLink, GetMsgA(CEDirSymLink, szTemp), countof(gsSymLink));
+	lstrcpynW(gsJunction, GetMsgA(CEDirJunction, szTemp), countof(gsJunction));
+	lstrcpynW(gsTitleThumbs, GetMsgA(CEColTitleThumbnails, szTemp), countof(gsTitleThumbs));
+	lstrcpynW(gsTitleTiles, GetMsgA(CEColTitleTiles, szTemp), countof(gsTitleTiles));
+}
 
 void WINAPI _export SetStartupInfo(const struct PluginStartupInfo *aInfo)
 {
@@ -93,12 +95,7 @@ void WINAPI _export SetStartupInfo(const struct PluginStartupInfo *aInfo)
 	if (*pszSlash != L'\\') *(++pszSlash) = L'\\';
 	lstrcpyW(pszSlash+1, L"ConEmuTh\\");
 
-	wchar_t szTemp[MAX_PATH];	
-	lstrcpynW(gsFolder, GetMsgA(CEDirFolder, szTemp), sizeofarray(gsFolder));
-	lstrcpynW(gsSymLink, GetMsgA(CEDirSymLink, szTemp), sizeofarray(gsSymLink));
-	lstrcpynW(gsJunction, GetMsgA(CEDirJunction, szTemp), sizeofarray(gsJunction));
-	lstrcpynW(gsTitleThumbs, GetMsgA(CEColTitleThumbnails, szTemp), sizeofarray(gsTitleThumbs));
-	lstrcpynW(gsTitleTiles, GetMsgA(CEColTitleTiles, szTemp), sizeofarray(gsTitleTiles));
+	ReloadResourcesA();
 	
 	StartPlugin(FALSE);
 }
@@ -120,6 +117,16 @@ void WINAPI _export GetPluginInfo(struct PluginInfo *pi)
 	pi->PluginConfigStringsNumber = 0;
 	pi->CommandPrefix = NULL;
 	pi->Reserved = 0;	
+}
+
+HANDLE WINAPI _export OpenPlugin(int OpenFrom,INT_PTR Item)
+{
+	if (InfoA == NULL)
+		return INVALID_HANDLE_VALUE;
+
+	ReloadResourcesA();
+
+	return INVALID_HANDLE_VALUE;
 }
 
 void   WINAPI _export ExitFAR(void)

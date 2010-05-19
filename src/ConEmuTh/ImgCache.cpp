@@ -48,7 +48,7 @@ CImgCache::CImgCache(HMODULE hSelf)
 	memset(Modules,0,sizeof(Modules));
 	mn_ModuleCount = 0;
 	mpsz_ModuleSlash = ms_ModulePath;
-	if (GetModuleFileName(hSelf, ms_ModulePath, sizeofarray(ms_ModulePath))) {
+	if (GetModuleFileName(hSelf, ms_ModulePath, countof(ms_ModulePath))) {
 		wchar_t* pszSlash = wcsrchr(ms_ModulePath, L'\\');
 		if (pszSlash) mpsz_ModuleSlash = pszSlash+1;
 	}
@@ -280,7 +280,7 @@ void CImgCache::Reset()
 	//		DeleteDC(hField[i]); hField[i] = NULL;
 	//	}
 	//}
-	for (i=0; i<sizeofarray(CacheInfo); i++) {
+	for (i=0; i<countof(CacheInfo); i++) {
 		if (CacheInfo[i].lpwszFileName) {
 			free(CacheInfo[i].lpwszFileName);
 			CacheInfo[i].lpwszFileName = NULL;
@@ -354,7 +354,7 @@ BOOL CImgCache::FindInCache(CePluginPanelItem* pItem, int* pnIndex)
 		&& pItem->FindData.lpwszFileNamePart[2] == 0)
 		pszName = pItem->FindData.lpwszFileNamePart;
 
-	for (i=0; i<sizeofarray(CacheInfo); i++) {
+	for (i=0; i<countof(CacheInfo); i++) {
 		if (!CacheInfo[i].lpwszFileName) {
 			if (nFree == -1) nFree = i;
 			continue;

@@ -126,8 +126,8 @@ WCHAR gszPluginServerPipe[MAX_PATH];
 #define MAX_SERVER_THREADS 3
 //HANDLE ghServerThreads[MAX_SERVER_THREADS] = {NULL,NULL,NULL};
 //HANDLE ghActiveServerThread = NULL;
-HANDLE ghServerThread = NULL;
-DWORD  gnServerThreadId = 0;
+HANDLE ghPlugServerThread = NULL;
+DWORD  gnPlugServerThreadId = 0;
 //DWORD  gnServerThreadsId[MAX_SERVER_THREADS] = {0,0,0};
 HANDLE ghServerTerminateEvent = NULL;
 HANDLE ghPluginSemaphore = NULL;
@@ -1540,7 +1540,7 @@ BOOL FarSetConsoleSize(SHORT nNewWidth, SHORT nNewHeight)
 void EmergencyShow()
 {
 	SetWindowPos(FarHwnd, HWND_TOP, 50,50,0,0, SWP_NOSIZE);
-	ShowWindowAsync(FarHwnd, SW_SHOWNORMAL);
+	apiShowWindowAsync(FarHwnd, SW_SHOWNORMAL);
 	EnableWindow(FarHwnd, true);
 }
 
@@ -1699,7 +1699,7 @@ VOID WINAPI OnConsoleWasAttached(HookCallbackArg* pArgs)
 
 	if (gbWasDetached) {
 		// Сразу спрятать окошко
-		//ShowWindow(FarHwnd, SW_HIDE);
+		//apiShowWindow(FarHwnd, SW_HIDE);
 	}
 
 	// Если ранее были созданы мэппинги для цвета - пересоздать
@@ -2135,9 +2135,9 @@ void InitHWND(HWND ahFarHwnd)
 	_ASSERTE(ghServerTerminateEvent!=NULL);
 	if (ghServerTerminateEvent) ResetEvent(ghServerTerminateEvent);
 	ghPluginSemaphore = CreateSemaphore(NULL, 1, 1, NULL);
-    gnServerThreadId = 0;
-    ghServerThread = CreateThread(NULL, 0, ServerThread, (LPVOID)NULL, 0, &gnServerThreadId);
-    _ASSERTE(ghServerThread!=NULL);
+    gnPlugServerThreadId = 0;
+    ghPlugServerThread = CreateThread(NULL, 0, PlugServerThread, (LPVOID)NULL, 0, &gnPlugServerThreadId);
+    _ASSERTE(ghPlugServerThread!=NULL);
 
 
 	ghMonitorThread = CreateThread(NULL, 0, MonitorThreadProcW, 0, 0, &gnMonitorThreadId);
@@ -2563,11 +2563,11 @@ void SendTabs(int tabCount, BOOL abForceSend/*=FALSE*/)
 	gnCurTabCount = tabCount; // сразу запомним!, А то при ретриве табов количество еще старым будет...
 
 	gpTabs->Tabs.nTabCount = tabCount;
-	gpTabs->hdr.nSize = sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_CONEMUTAB) 
+	gpTabs->hdr.cbSize = sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_CONEMUTAB) 
 		+ sizeof(ConEmuTab) * ((tabCount > 1) ? (tabCount - 1) : 0);
 
 	// Обновляем структуру сразу, чтобы она была готова к отправке в любой момент
-	ExecutePrepareCmd(gpTabs, CECMD_TABSCHANGED, gpTabs->hdr.nSize);
+	ExecutePrepareCmd(gpTabs, CECMD_TABSCHANGED, gpTabs->hdr.cbSize);
 
 	// Это нужно делать только если инициировано ФАРОМ. Если запрос прислал ConEmu - не посылать...
 	if (tabCount && ConEmuHwnd && IsWindow(ConEmuHwnd) && abForceSend)
@@ -2585,7 +2585,7 @@ void SendTabs(int tabCount, BOOL abForceSend/*=FALSE*/)
 		CESERVER_REQ* pOut =
 			ExecuteGuiCmd(FarHwnd, gpTabs, FarHwnd);
 		if (pOut) {
-			if (pOut->hdr.nSize >= (sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_CONEMUTAB_RET))) {
+			if (pOut->hdr.cbSize >= (sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_CONEMUTAB_RET))) {
 				if (gpTabs->Tabs.bMacroActive && pOut->TabsRet.bNeedPostTabSend) {
 					// Отослать после того, как макрос завершится
 					gbNeedPostTabSend = TRUE;
@@ -2716,7 +2716,7 @@ void StopThread(void)
 	//	PostThreadMessage(gnInputThreadId, WM_QUIT, 0, 0);
 	//}
 
-	if (ghServerThread) {
+	if (ghPlugServerThread) {
 		HANDLE hPipe = INVALID_HANDLE_VALUE;
 		DWORD dwWait = 0;
 		// Передернуть пайп, чтобы нить сервера завершилась
@@ -2726,19 +2726,19 @@ void StopThread(void)
 			OutputDebugString(L"Plugin: All pipe instances closed?\n");
 		} else {
 			OutputDebugString(L"Plugin: Waiting server pipe thread\n");
-			dwWait = WaitForSingleObject(ghServerThread, 300); // пытаемся дождаться, пока нить завершится
+			dwWait = WaitForSingleObject(ghPlugServerThread, 300); // пытаемся дождаться, пока нить завершится
 			// Просто закроем пайп - его нужно было передернуть
 			CloseHandle(hPipe);
 			hPipe = INVALID_HANDLE_VALUE;
 		}
-		dwWait = WaitForSingleObject(ghServerThread, 0);
+		dwWait = WaitForSingleObject(ghPlugServerThread, 0);
 		if (dwWait != WAIT_OBJECT_0) {
 			#if !defined(__GNUC__)
 			#pragma warning (disable : 6258)
 			#endif
-			TerminateThread(ghServerThread, 100);
+			TerminateThread(ghPlugServerThread, 100);
 		}
-		SafeCloseHandle(ghServerThread);
+		SafeCloseHandle(ghPlugServerThread);
 	}
 	SafeCloseHandle(ghPluginSemaphore);
 
@@ -2882,20 +2882,20 @@ void InitResources()
 			GetMsgA(CELngEdit, gpFarInfo->sLngEdit); gpFarInfo->sLngEdit[nTempSize-1] = 0;
 			GetMsgA(CELngView, gpFarInfo->sLngView); gpFarInfo->sLngView[nTempSize-1] = 0;
 			GetMsgA(CELngTemp, gpFarInfo->sLngTemp); gpFarInfo->sLngTemp[nTempSize-1] = 0;
-			GetMsgA(CELngName, gpFarInfo->sLngName); gpFarInfo->sLngName[nTempSize-1] = 0;
+			//GetMsgA(CELngName, gpFarInfo->sLngName); gpFarInfo->sLngName[nTempSize-1] = 0;
 		} else {
 			lstrcpynW(gpFarInfo->sLngEdit, GetMsgW(CELngEdit), nTempSize);
 			lstrcpynW(gpFarInfo->sLngView, GetMsgW(CELngView), nTempSize);
 			lstrcpynW(gpFarInfo->sLngTemp, GetMsgW(CELngTemp), nTempSize);
-			lstrcpynW(gpFarInfo->sLngName, GetMsgW(CELngName), nTempSize);
+			//lstrcpynW(gpFarInfo->sLngName, GetMsgW(CELngName), nTempSize);
 		}
 		lstrcpyW(pszRes, gpFarInfo->sLngEdit); pszRes += lstrlenW(pszRes)+1;
 		lstrcpyW(pszRes, gpFarInfo->sLngView); pszRes += lstrlenW(pszRes)+1;
 		lstrcpyW(pszRes, gpFarInfo->sLngTemp); pszRes += lstrlenW(pszRes)+1;
-		lstrcpyW(pszRes, gpFarInfo->sLngName); pszRes += lstrlenW(pszRes)+1;
+		//lstrcpyW(pszRes, gpFarInfo->sLngName); pszRes += lstrlenW(pszRes)+1;
 		// Поправить nSize (он должен быть меньше)
-		_ASSERTE(pIn->hdr.nSize >= (DWORD)(((LPBYTE)pszRes) - ((LPBYTE)pIn)));
-		pIn->hdr.nSize = (DWORD)(((LPBYTE)pszRes) - ((LPBYTE)pIn));
+		_ASSERTE(pIn->hdr.cbSize >= (DWORD)(((LPBYTE)pszRes) - ((LPBYTE)pIn)));
+		pIn->hdr.cbSize = (DWORD)(((LPBYTE)pszRes) - ((LPBYTE)pIn));
 		CESERVER_REQ* pOut = ExecuteGuiCmd(FarHwnd, pIn, FarHwnd);
 		if (pOut) ExecuteFreeResult(pOut);
 		Free(pIn);
@@ -3070,7 +3070,7 @@ void PostMacro(wchar_t* asMacro)
 
 }
 
-DWORD WINAPI ServerThread(LPVOID lpvParam) 
+DWORD WINAPI PlugServerThread(LPVOID lpvParam) 
 { 
     BOOL fConnected = FALSE;
     DWORD dwErr = 0;
@@ -3163,11 +3163,11 @@ DWORD WINAPI ServerThread(LPVOID lpvParam)
             
             //ServerThreadCommand ( hPipe ); // При необходимости - записывает в пайп результат сама
 			DWORD dwThread = 0;
-			HANDLE hThread = CreateThread(NULL, 0, ServerThreadCommand, (LPVOID)hPipe, 0, &dwThread);
+			HANDLE hThread = CreateThread(NULL, 0, PlugServerThreadCommand, (LPVOID)hPipe, 0, &dwThread);
 			_ASSERTE(hThread!=NULL);
 			if (hThread==NULL) {
 				// Раз не удалось запустить нить - можно попробовать так обработать...
-				ServerThreadCommand((LPVOID)hPipe);
+				PlugServerThreadCommand((LPVOID)hPipe);
 			} else {
 				ghCommandThreads->push_back ( hThread );
 			}
@@ -3201,7 +3201,7 @@ wrap:
     return 0; 
 }
 
-DWORD WINAPI ServerThreadCommand(LPVOID ahPipe)
+DWORD WINAPI PlugServerThreadCommand(LPVOID ahPipe)
 {
 	HANDLE hPipe = (HANDLE)ahPipe;
     CESERVER_REQ *pIn=NULL;
@@ -3222,14 +3222,14 @@ DWORD WINAPI ServerThreadCommand(LPVOID ahPipe)
         return 0;
     }
 	pIn = (CESERVER_REQ*)cbBuffer; // Пока cast, если нужно больше - выделим память
-    _ASSERTE(pIn->hdr.nSize>=sizeof(CESERVER_REQ_HDR) && cbRead>=sizeof(CESERVER_REQ_HDR));
+    _ASSERTE(pIn->hdr.cbSize>=sizeof(CESERVER_REQ_HDR) && cbRead>=sizeof(CESERVER_REQ_HDR));
     _ASSERTE(pIn->hdr.nVersion == CESERVER_REQ_VER);
     if (cbRead < sizeof(CESERVER_REQ_HDR) || /*in.nSize < cbRead ||*/ pIn->hdr.nVersion != CESERVER_REQ_VER) {
         CloseHandle(hPipe);
         return 0;
     }
 
-    int nAllSize = pIn->hdr.nSize;
+    int nAllSize = pIn->hdr.cbSize;
     pIn = (CESERVER_REQ*)Alloc(nAllSize,1);
     _ASSERTE(pIn!=NULL);
 	if (!pIn) {
@@ -3274,7 +3274,7 @@ DWORD WINAPI ServerThreadCommand(LPVOID ahPipe)
         return 0; // удалось считать не все данные
     }
 
-	UINT nDataSize = pIn->hdr.nSize - sizeof(CESERVER_REQ_HDR);
+	UINT nDataSize = pIn->hdr.cbSize - sizeof(CESERVER_REQ_HDR);
 
     // Все данные из пайпа получены, обрабатываем команду и возвращаем (если нужно) результат
 	//fSuccess = WriteFile( hPipe, pOut, pOut->nSize, &cbWritten, NULL);
@@ -3315,7 +3315,7 @@ DWORD WINAPI ServerThreadCommand(LPVOID ahPipe)
 		}
 
 		if (gpTabs) { 
-			fSuccess = WriteFile( hPipe, gpTabs, gpTabs->hdr.nSize, &cbWritten, NULL);
+			fSuccess = WriteFile( hPipe, gpTabs, gpTabs->hdr.cbSize, &cbWritten, NULL);
 		}
 
 		SC.Unlock();
@@ -3373,7 +3373,7 @@ DWORD WINAPI ServerThreadCommand(LPVOID ahPipe)
 		CESERVER_REQ* pCmdRet = ProcessCommand(pIn->hdr.nCmd, TRUE/*bReqMainThread*/, pIn->Data);
 
 		if (pCmdRet) {
-			fSuccess = WriteFile( hPipe, pCmdRet, pCmdRet->hdr.nSize, &cbWritten, NULL);
+			fSuccess = WriteFile( hPipe, pCmdRet, pCmdRet->hdr.cbSize, &cbWritten, NULL);
 		}
 		if (gpCmdRet && gpCmdRet == pCmdRet) {
 			Free(gpCmdRet);
@@ -3409,7 +3409,7 @@ DWORD WINAPI ServerThreadCommand(LPVOID ahPipe)
 		CESERVER_REQ* pCmdRet = ProcessCommand(pIn->hdr.nCmd, TRUE/*bReqMainThread*/, pIn->Data);
 
 		if (pCmdRet) {
-			fSuccess = WriteFile( hPipe, pCmdRet, pCmdRet->hdr.nSize, &cbWritten, NULL);
+			fSuccess = WriteFile( hPipe, pCmdRet, pCmdRet->hdr.cbSize, &cbWritten, NULL);
 		}
 		if (gpCmdRet && gpCmdRet == pCmdRet) {
 			Free(gpCmdRet);

@@ -108,7 +108,8 @@ $(INTDIR)\ConEmuCmd.obj \
 $(INTDIR)\ConEmuSrv.obj \
 $(INTDIR)\execute.obj \
 $(INTDIR)\Common.obj \
-$(INTDIR)\ConEmuCheck.obj
+$(INTDIR)\ConEmuCheck.obj \
+$(INTDIR)\WinObjects.obj
 
 
 LINK_LIBS=kernel32.lib user32.lib winspool.lib advapi32.lib shell32.lib mpr.lib ole32.lib secur32.lib gdi32.lib
@@ -264,6 +265,8 @@ $(INTDIR)\execute.obj: execute.cpp
 $(INTDIR)\Common.obj: ..\common\Common.cpp ..\common\Common.hpp
 
 $(INTDIR)\ConEmuCheck.obj: ..\common\ConEmuCheck.cpp
+
+$(INTDIR)\WinObjects.obj: ..\common\WinObjects.cpp
 
 
 .PHONY: CLEAN

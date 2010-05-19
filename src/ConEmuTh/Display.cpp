@@ -368,10 +368,10 @@ DWORD WINAPI CeFullPanelInfo::DisplayThread(LPVOID lpvParam)
 // abCurrentItem  - может быть TRUE только в активной панели
 // abSelectedItem - реально выделенный элемент
 BOOL CeFullPanelInfo::PaintItem(
-				HDC hdc, int x, int y, CePluginPanelItem* pItem,
+				HDC hdc, int nIndex, int x, int y, CePluginPanelItem* pItem,
 				BOOL abCurrentItem, BOOL abSelectedItem,
-				COLORREF *nBackColor, COLORREF *nForeColor, HBRUSH *hBack,
-				BOOL abAllowPreview, HBRUSH hBackBrush)
+				/*COLORREF *nBackColor, COLORREF *nForeColor, HBRUSH *hBack,*/
+				BOOL abAllowPreview, HBRUSH hBackBrush, COLORREF crBackColor)
 {
 	//const wchar_t* pszName = pItem->FindData.lpwszFileNamePart;
 	//int nLen = lstrlen(pszName);
@@ -386,7 +386,7 @@ BOOL CeFullPanelInfo::PaintItem(
 		return FALSE;
 
 	RECT rcFull = {x, y, x+nWholeW, y+nWholeH};
-	FillRect(hdc, &rcFull, hBack[0]);
+	FillRect(hdc, &rcFull, hBackBrush); //hBack[0]);
 
 	if (gThSet.nPreviewFrame == 1) {
 		Rectangle(hdc,
@@ -404,7 +404,8 @@ BOOL CeFullPanelInfo::PaintItem(
 		RECT rcTmp = {x+gThSet.nHPadding, y+gThSet.nVPadding,
 			x+gThSet.nHPadding+gThSet.nWidth, y+gThSet.nVPadding+gThSet.nHeight};
 		*/
-		FillRect(hdc, &rcTmp, hBackBrush);
+		// Уже залито вроде целиком
+		//FillRect(hdc, &rcTmp, hBackBrush);
 	} else {
 		_ASSERTE(gThSet.nPreviewFrame==0 || gThSet.nPreviewFrame==1);
 		return FALSE;
@@ -436,19 +437,20 @@ BOOL CeFullPanelInfo::PaintItem(
 		rcMaxText.bottom = y+2*Spaces.nSpaceY1+(Spaces.nImgSize+2*gThSet.nPreviewFrame);
 	}
 
-	int nIdx = ((pItem->Flags & (0x40000000/*PPIF_SELECTED*/)) ? 
-		((abCurrentItem/*nItem==nCurrentItem*/) ? 3 : 1) :
-		((abCurrentItem/*nItem==nCurrentItem*/) ? 2 : 0));
-	crBack = nBackColor[nIdx];
-	crFore = nForeColor[nIdx];
-	if ((pItem->FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-		&& ((pItem->Flags & (0x40000000/*PPIF_SELECTED*/)) == 0))
-		crFore = 0xFFFFFF;
+	//int nIdx = ((pItem->Flags & (0x40000000/*PPIF_SELECTED*/)) ? 
+	//	((abCurrentItem/*nItem==nCurrentItem*/) ? 3 : 1) :
+	//	((abCurrentItem/*nItem==nCurrentItem*/) ? 2 : 0));
+	//crBack = nBackColor[nIdx];
+	//crFore = nForeColor[nIdx];
+	//if ((pItem->FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+	//	&& ((pItem->Flags & (0x40000000/*PPIF_SELECTED*/)) == 0))
+	//	crFore = 0xFFFFFF;
+	HBRUSH hTextBrush = GetItemColors(nIndex, pItem, abCurrentItem, crFore, crBack);
 
 	RECT rcFrame = rcClip;
 
 	// Если в режиме Tiles текст будет необходимо сделать выше - DrawItemText сама перезальет прямоугольник
-	FillRect(hdc, &rcClip, hBack[nIdx]);
+	FillRect(hdc, &rcClip, hTextBrush); //hBack[nIdx]);
 
 	SetTextColor(hdc, crFore);
 	SetBkColor(hdc, crBack);
@@ -467,7 +469,7 @@ BOOL CeFullPanelInfo::PaintItem(
 		}
 	}
 	//DrawText(hdc, pszName, nLen, &rcClip, DT_END_ELLIPSIS|DT_NOPREFIX|DT_SINGLELINE|DT_VCENTER);
-	DrawItemText(hdc, &rcClip, &rcMaxText, pItem, pszComments, hBack[nIdx], bIgnoreFileDescription);
+	DrawItemText(hdc, &rcClip, &rcMaxText, pItem, pszComments, hTextBrush/*hBack[nIdx]*/, bIgnoreFileDescription);
 	
 	
 	if (abSelectedItem && gThSet.nSelectFrame == 1) {
@@ -506,7 +508,7 @@ BOOL CeFullPanelInfo::PaintItem(
 			HPEN hPen = CreatePen(PS_DOT, 1, crPen);
 			HPEN hOldPen = (HPEN)SelectObject(hdc, hPen);
 			
-			SetBkColor(hdc, nBackColor[0]);
+			SetBkColor(hdc, crBackColor); //nBackColor[0]);
 
 			MoveToEx(hdc, nX, nY, NULL);
 			LineTo(hdc, nX+nW, nY);
@@ -613,7 +615,7 @@ int CeFullPanelInfo::DrawItemText(HDC hdc, LPRECT prcText, LPRECT prcMaxText, Ce
 				wchar_t cType = L'B';
 				int n = 0;
 				const wchar_t cTypeList[] = L"BKMGTP";
-				int nMax = sizeofarray(cTypeList);
+				int nMax = countof(cTypeList);
 				while (nSize > 9999) {
 					nSize = nSize >> 10; n++;
 				}
@@ -676,6 +678,40 @@ int CeFullPanelInfo::DrawItemText(HDC hdc, LPRECT prcText, LPRECT prcMaxText, Ce
 	return iRc;
 }
 
+HBRUSH CeFullPanelInfo::GetItemColors(int nIndex, CePluginPanelItem* pItem, BOOL abCurrentItem, COLORREF &crFore, COLORREF &crBack)
+{
+	int nCol0Index = nIndex - TopPanelItem;
+	if (nCol0Index >= 0 && nCol0Index <= (WorkRect.bottom - WorkRect.top))
+	{
+		wchar_t c; CharAttr a;
+		if (gpRgnDetect->GetCharAttr(WorkRect.left, WorkRect.top+nCol0Index, c, a)) {
+			crBack = gcrCurColors[a.nBackIdx];
+			crFore = gcrCurColors[a.nForeIdx];
+			goto ChkBrush;
+		}
+	}
+
+	// Если не удалось - берем по умолчанию (без расцетки групп)
+	int nIdx = ((pItem->Flags & (0x40000000/*PPIF_SELECTED*/)) ? 
+		((abCurrentItem/*nItem==nCurrentItem*/) ? COL_PANELSELECTEDCURSOR : COL_PANELSELECTEDTEXT) :
+		((abCurrentItem/*nItem==nCurrentItem*/) ? COL_PANELCURSOR : COL_PANELTEXT));
+
+	crBack = gcrCurColors[((nFarColors[nIdx] & 0xF0)>>4)];
+	crFore = gcrCurColors[(nFarColors[nIdx] & 0xF)];
+	if ((pItem->FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+		&& ((pItem->Flags & (0x40000000/*PPIF_SELECTED*/)) == 0))
+		crFore = 0xFFFFFF;
+
+ChkBrush:
+	if (!hLastBackBrush || crBack != crLastBackBrush) {
+		if (hLastBackBrush) DeleteObject(hLastBackBrush);
+		hLastBackBrush = CreateSolidBrush(crBack);
+		crLastBackBrush = crBack;
+	}
+
+	return hLastBackBrush;
+}
+
 void CeFullPanelInfo::Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc)
 {
 	gbCancelAll = FALSE;
@@ -685,22 +721,22 @@ void CeFullPanelInfo::Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc)
 	//for (int i=0; i<16; i++)
 	//	gcrColors[i] = GetWindowLong(hwnd, 4*i);
 
-	BYTE nIndexes[4] = {
-		this->nFarColors[COL_PANELTEXT],
-		this->nFarColors[COL_PANELSELECTEDTEXT],
-		this->nFarColors[COL_PANELCURSOR],
-		this->nFarColors[COL_PANELSELECTEDCURSOR]
-	};
-	COLORREF nBackColor[4], nForeColor[4];
-	HBRUSH hBack[4];
-	int i;
-	for (i = 0; i < 4; i++) {
-		nBackColor[i] = gcrCurColors[((nIndexes[i] & 0xF0)>>4)];
-		nForeColor[i] = gcrCurColors[(nIndexes[i] & 0xF)];
-		hBack[i] = CreateSolidBrush(nBackColor[i]);
-	}
+	//BYTE nIndexes[4] = {
+	//	this->nFarColors[COL_PANELTEXT],
+	//	this->nFarColors[COL_PANELSELECTEDTEXT],
+	//	this->nFarColors[COL_PANELCURSOR],
+	//	this->nFarColors[COL_PANELSELECTEDCURSOR]
+	//};
+	//COLORREF nBackColor[4], nForeColor[4];
+	//HBRUSH hBack[4];
+	//int i;
+	//for (i = 0; i < 4; i++) {
+	//	nBackColor[i] = gcrCurColors[((nIndexes[i] & 0xF0)>>4)];
+	//	nForeColor[i] = gcrCurColors[(nIndexes[i] & 0xF)];
+	//	hBack[i] = CreateSolidBrush(nBackColor[i]);
+	//}
 	COLORREF crGray = gcrCurColors[8];
-	COLORREF crBack = nBackColor[0]; //gcrColors[15];
+	COLORREF crBack = gcrCurColors[((nFarColors[COL_PANELTEXT] & 0xF0)>>4)]; //nBackColor[0]; //gcrColors[15];
 
 	if (gThSet.crBackground.UseIndex) {
 		if (gThSet.crBackground.ColorIdx <= 15)
@@ -827,7 +863,7 @@ void CeFullPanelInfo::Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc)
 	HBITMAP hOldCompBmp = (HBITMAP)SelectObject(hCompDC, hCompBmp);
 	{
 		RECT rcComp = {0,0,nWholeW,nWholeH};
-		FillRect(hCompDC, &rcComp, hBack[0]);
+		FillRect(hCompDC, &rcComp, hBackBrush); //hBack[0]);
 	}
 	HPEN hOldPen = (HPEN)SelectObject(hCompDC, hPen);
 	HBRUSH hOldBr = (HBRUSH)SelectObject(hCompDC, hBackBrush);
@@ -891,9 +927,9 @@ void CeFullPanelInfo::Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc)
 							pItem->pszFullName = pszFull;
 						}
 
-						if (PaintItem(hCompDC, 0, 0, pItem, 
+						if (PaintItem(hCompDC, nItem, 0, 0, pItem, 
 							(Focus && nItem==nCurrentItem), (nItem==nCurrentItem),
-							nBackColor, nForeColor, hBack, (nStep == 1), hBackBrush))
+							/*nBackColor, nForeColor, hBack,*/ (nStep == 1), hBackBrush, crBack))
 						{
 							BitBlt(hdc, nXCoord, nYCoord, nWholeW, nWholeH, hCompDC, 0,0, SRCCOPY);
 							#ifdef _DEBUG
@@ -913,14 +949,14 @@ void CeFullPanelInfo::Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc)
 				if (PVM == pvm_Thumbnails) {
 					if (!nStep && nXCoord < rc.right) {
 						RECT rcComp = {nXCoord,nYCoord,rc.right,nYCoord+nWholeH};
-						FillRect(hdc, &rcComp, hBack[0]);
+						FillRect(hdc, &rcComp, hBackBrush); //hBack[0]);
 					}
 
 					nYCoord += nWholeH;
 				} else {
 					if (!nStep && nYCoord < rc.bottom) {
 						RECT rcComp = {nXCoord,nYCoord,rc.right,rc.bottom};
-						FillRect(hdc, &rcComp, hBack[0]);
+						FillRect(hdc, &rcComp, hBackBrush); //hBack[0]);
 					}
 
 					nXCoord += nWholeW;
@@ -931,12 +967,12 @@ void CeFullPanelInfo::Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc)
 			if (PVM == pvm_Thumbnails) {
 				if (!nStep && nYCoord < rc.bottom) {
 					RECT rcComp = {0,nYCoord,rc.right,rc.bottom};
-					FillRect(hdc, &rcComp, hBack[0]);
+					FillRect(hdc, &rcComp, hBackBrush); //hBack[0]);
 				}
 			} else {
 				if (!nStep && nXCoord < rc.right) {
 					RECT rcComp = {nXCoord,0,rc.right,rc.bottom};
-					FillRect(hdc, &rcComp, hBack[0]);
+					FillRect(hdc, &rcComp, hBackBrush); //hBack[0]);
 				}
 			}
 		}
@@ -950,10 +986,11 @@ void CeFullPanelInfo::Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc)
 	SelectObject(hCompDC, hOldBr);      DeleteObject(hBackBrush);
 	SelectObject(hCompDC, hOldFont);    DeleteObject(hFont);
 	SelectObject(hCompDC, hOldCompBmp); DeleteObject(hCompBmp);
+	if (hLastBackBrush) { DeleteObject(hLastBackBrush); hLastBackBrush = NULL; }
 	DeleteDC(hCompDC);
 
 	
-	for (i = 0; i < 4; i++) DeleteObject(hBack[i]);
+	//for (i = 0; i < 4; i++) DeleteObject(hBack[i]);
 
 //#ifdef _DEBUG
 //	BitBlt(hdc, 0,0,rc.right,rc.bottom, gpImgCache->hField[0], 0,0, SRCCOPY);
@@ -982,6 +1019,8 @@ void CeFullPanelInfo::DisplayReloadPanel()
 // Эта "дисплейная" функция вызывается из основной нити, там можно дергать FAR Api
 int CeFullPanelInfo::RegisterPanelView()
 {
+	_ASSERTE(GetCurrentThreadId() == gnMainThreadId);
+
 	// Страховка от того, что conemu.dll могли выгрузить (unload:...)
 	if (!CheckConEmu() || !gfRegisterPanelView)
 		return -1;
@@ -1031,6 +1070,9 @@ int CeFullPanelInfo::RegisterPanelView()
 			//	gcrActiveColors[i] = pvi.crPalette[i];
 			//	gcrFadeColors[i] = pvi.crFadePalette[i];
 			//}
+
+			this->WorkRect = pvi.WorkRect;
+
 			// Мы активны? По идее должны, при активации плагина-то
 			gbFadeColors = (pvi.bFadeColors!=FALSE);
 			//gcrCurColors = gbFadeColors ? gcrFadeColors : gcrActiveColors;
@@ -1066,16 +1108,18 @@ int CeFullPanelInfo::RegisterPanelView()
 		gnRgnDetectFlags = gpRgnDetect->GetFlags();
 		//gbLastCheckWindow = true;
 
-		if (!IsWindowVisible(this->hView)) {
-			lbRc = ShowWindow(this->hView, SW_SHOWNORMAL);
-			if (!lbRc)
-				dwErr = GetLastError();
-		}
-		_ASSERTE(lbRc || IsWindowVisible(this->hView));
-		InvalidateRect(this->hView, NULL, FALSE);
-		RedrawWindow(this->hView, NULL, NULL, RDW_INTERNALPAINT|RDW_UPDATENOW);
+		UpdateEnvVar(FALSE/*abForceRedraw*/);
 
-		UpdateEnvVar(FALSE);
+		if (pvi.bVisible) {
+			if (!IsWindowVisible(this->hView)) {
+				lbRc = apiShowWindow(this->hView, SW_SHOWNORMAL);
+				if (!lbRc)
+					dwErr = GetLastError();
+			}
+			_ASSERTE(lbRc || IsWindowVisible(this->hView));
+			InvalidateRect(this->hView, NULL, FALSE);
+		}
+		//RedrawWindow(this->hView, NULL, NULL, RDW_INTERNALPAINT|RDW_UPDATENOW);
 	}
 
 	

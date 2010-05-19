@@ -30,6 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include "../common/common.hpp"
+#include "../Common/WinObjects.h"
 #include "ConEmuTh_Lang.h"
 
 #define SafeCloseHandle(h) { if ((h)!=NULL) { HANDLE hh = (h); (h) = NULL; if (hh!=INVALID_HANDLE_VALUE) CloseHandle(hh); } }
@@ -47,7 +48,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define ISALPHA(c) ((((c) >= (BYTE)'c') && ((c) <= (BYTE)'z')) || (((c) >= (BYTE)'C') && ((c) <= (BYTE)'Z')))
 #define isPressed(inp) ((GetKeyState(inp) & 0x8000) == 0x8000)
-#define sizeofarray(array) (sizeof(array)/sizeof(*array))
+//#define countof(array) (sizeof(array)/sizeof(*array))
 
 // X - меньшая, Y - большая
 #define FAR_X_VER 995
@@ -145,6 +146,7 @@ typedef struct tag_CeFullPanelInfo
 	DWORD nFarPanelSettings;
 	BOOL  bLeftPanel, bPlugin;
 	RECT  PanelRect;
+	RECT  WorkRect; // "рабочий" прямоугольник. где собственно файлы лежат
 	int ItemsNumber;
 	int CurrentItem;
 	int TopPanelItem;
@@ -157,6 +159,8 @@ typedef struct tag_CeFullPanelInfo
 	// ************************
 	int nMaxFarColors;
 	BYTE *nFarColors; // Массив цветов фара
+	COLORREF crLastBackBrush;
+	HBRUSH hLastBackBrush;
 	// ************************
 	int nMaxPanelDir;
 	wchar_t* pszPanelDir;
@@ -181,11 +185,12 @@ typedef struct tag_CeFullPanelInfo
 	static LRESULT CALLBACK DisplayWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 	static DWORD WINAPI DisplayThread(LPVOID lpvParam);
 	void Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc);
-	BOOL PaintItem(HDC hdc, int x, int y, CePluginPanelItem* pItem, BOOL abCurrentItem, BOOL abSelectedItem,
-			   COLORREF *nBackColor, COLORREF *nForeColor, HBRUSH *hBack,
-			   BOOL abAllowPreview, HBRUSH hBackBrush);
+	BOOL PaintItem(HDC hdc, int nIndex, int x, int y, CePluginPanelItem* pItem, BOOL abCurrentItem, BOOL abSelectedItem,
+			   /*COLORREF *nBackColor, COLORREF *nForeColor, HBRUSH *hBack,*/
+			   BOOL abAllowPreview, HBRUSH hBackBrush, COLORREF crBackColor);
 	int DrawItemText(HDC hdc, LPRECT prcText, LPRECT prcMaxText, CePluginPanelItem* pItem, LPCWSTR pszComments, HBRUSH hBr, BOOL bIgnoreFileDescription);
 	BOOL OnSettingsChanged(BOOL bInvalidate);
+	HBRUSH GetItemColors(int nIndex, CePluginPanelItem* pItem, BOOL abCurrentItem, COLORREF &crFore, COLORREF &crBack);
 			   
 	/*{
 		if (ppItems) {

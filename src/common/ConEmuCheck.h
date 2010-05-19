@@ -55,7 +55,8 @@ void SetConEmuEnvVar(HWND hConEmuWnd);
 
 HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t* pszErr/*[MAX_PATH*2]*/, const wchar_t* szModule);
 CESERVER_REQ* ExecuteNewCmd(DWORD nCmd, DWORD nSize);
-void ExecutePrepareCmd(CESERVER_REQ* pIn, DWORD nCmd, DWORD nSize);
+void ExecutePrepareCmd(CESERVER_REQ* pIn, DWORD nCmd, DWORD cbSize);
+void ExecutePrepareCmd(CESERVER_REQ_HDR* pHdr, DWORD nCmd, DWORD cbSize);
 CESERVER_REQ* ExecuteGuiCmd(HWND hConWnd, const CESERVER_REQ* pIn, HWND hOwner);
 CESERVER_REQ* ExecuteSrvCmd(DWORD dwSrvPID, const CESERVER_REQ* pIn, HWND hOwner);
 CESERVER_REQ* ExecuteCmd(const wchar_t* szGuiPipeName, const CESERVER_REQ* pIn, DWORD nWaitPipe, HWND hOwner);

@@ -80,7 +80,8 @@ $(OBJDIR)\ConEmuPlugin.obj \
 $(OBJDIR)\ConEmuPlugin995.obj \
 $(OBJDIR)\ConEmuPluginA.obj \
 $(OBJDIR)\Common.obj \
-$(OBJDIR)\ConEmuCheck.obj
+$(OBJDIR)\ConEmuCheck.obj \
+$(OBJDIR)\WinObjects.obj
 
 #$(OBJDIR)\LogBrowser.obj
 
@@ -333,3 +334,5 @@ $(OBJDIR)\Common.obj: ..\common\Common.cpp
 $(OBJDIR)\ConEmuCheck.obj: ..\common\ConEmuCheck.cpp
 
 $(OBJDIR)\SetHook.obj: ..\common\SetHook.cpp
+
+$(OBJDIR)\WinObjects.obj: ..\common\WinObjects.cpp

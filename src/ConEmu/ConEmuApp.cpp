@@ -468,7 +468,7 @@ int DisplayLastError(LPCTSTR asLabel, DWORD dwError /* =0 */, DWORD dwMsgFlags /
 	int nLen = _tcslen(asLabel)+64+(lpMsgBuf ? wcslen(lpMsgBuf) : 0);
 	wchar_t *out = new wchar_t[nLen];
 	wsprintf(out, _T("%s\nLastError=0x%08X\n%s"), asLabel, dw, lpMsgBuf);
-	if (gbMessagingStarted) SetForegroundWindow(ghWnd);
+	if (gbMessagingStarted) apiSetForegroundWindow(ghWnd);
 	if (!dwMsgFlags) dwMsgFlags = MB_SYSTEMMODAL | MB_ICONERROR;
 	nBtn = MessageBox(gbMessagingStarted ? ghWnd : NULL, out, gConEmu.GetTitle(), dwMsgFlags);
 	MCHKHEAP

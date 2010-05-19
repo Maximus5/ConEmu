@@ -44,28 +44,29 @@ inline bool operator==(const CharAttr& s1, const CharAttr& s2)
 }
 
 
-#define FR_FLAGS_MASK     0xFF0000
-#define FR_COMMONDLG_MASK 0x0000FF
-#define FR_FREEDLG_MASK   0x00FF00
+#define FR_FLAGS_MASK     0x00FF0000
+#define FR_COMMONDLG_MASK 0x000000FF
+#define FR_FREEDLG_MASK   0x0000FF00
 #define FR_ALLDLG_MASK    (FR_COMMONDLG_MASK|FR_FREEDLG_MASK)
 // Предопределенные ИД "регионов"
-#define FR_LEFTPANEL      0x000001 // Левая панель
-#define FR_RIGHTPANEL     0x000002 // Правая панель
-#define FR_FULLPANEL      0x000004 // Одна из панелей растянутая на весь экран
-#define FR_MENUBAR        0x000008 // Строка меню (верхнее)
-#define FR_ACTIVEMENUBAR  0x000018 // Если MenuBar виден не всегда, или он активирован (т.е. панели недоступны)
-#define FR_PANELTABS      0x000020 // Строка под панелями (плагин PanelTabs)
-#define FR_QSEARCH        0x000040 // QSearch в панелях
+#define FR_LEFTPANEL      0x00000001 // Левая панель
+#define FR_RIGHTPANEL     0x00000002 // Правая панель
+#define FR_FULLPANEL      0x00000004 // Одна из панелей растянутая на весь экран
+#define FR_MENUBAR        0x00000008 // Строка меню (верхнее)
+#define FR_ACTIVEMENUBAR  0x00000018 // Если MenuBar виден не всегда, или он активирован (т.е. панели недоступны)
+#define FR_PANELTABS      0x00000020 // Строка под панелями (плагин PanelTabs)
+#define FR_QSEARCH        0x00000040 // QSearch в панелях
 // ИД для свободных диалогов/меню/и пр.
-#define FR_FIRSTDLGID     0x000100
-#define FR_LASTDLGID      0x00FF00
+#define FR_FIRSTDLGID     0x00000100
+#define FR_LASTDLGID      0x0000FF00
 // Дополнительные флаги
-#define FR_ERRORCOLOR     0x010000 // "Красненькие" диалоги
-#define FR_MACRORECORDING 0x020000 // Красная "R" или "MACRO" в левом верхнем углу
-#define FR_HASBORDER      0x040000 // Этот прямоугольник (регион) имеет рамку
-#define FR_HASEXTENSION   0x080000 // Вокруг прямоугольника диалога есть еще окантовка
-#define FR_UCHARMAP       0x100000 // Содержимое диалога "Unicode CharMap"
-#define FR_UCHARMAPGLYPH  0x200000 // Блок символов в "Unicode CharMap"
+#define FR_ERRORCOLOR     0x00010000 // "Красненькие" диалоги
+#define FR_MACRORECORDING 0x00020000 // Красная "R" или "MACRO" в левом верхнем углу
+#define FR_HASBORDER      0x00040000 // Этот прямоугольник (регион) имеет рамку
+#define FR_HASEXTENSION   0x00080000 // Вокруг прямоугольника диалога есть еще окантовка
+// Идентификация некоторых дополнительных регионов
+#define FR_UCHARMAP       0x01000000 // Содержимое диалога "Unicode CharMap"
+#define FR_UCHARMAPGLYPH  0x02000000 // Блок символов в "Unicode CharMap"
 
 
 class CRgnDetect
@@ -77,7 +78,7 @@ public:
 	
 public:
 	// Public methods
-	int GetDetectedDialogs(int anMaxCount, SMALL_RECT* rc, DWORD* rf, DWORD anMask=-1) const;
+	int GetDetectedDialogs(int anMaxCount, SMALL_RECT* rc, DWORD* rf, DWORD anMask=-1, DWORD anTest=-1) const;
 	DWORD GetDialog(DWORD nDlgID, SMALL_RECT* rc) const;
 	void PrepareTransparent(const CEFAR_INFO *apFarInfo, const COLORREF *apColors, const CONSOLE_SCREEN_BUFFER_INFO *apSbi, wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight);
 	DWORD GetFlags() const;
@@ -86,6 +87,7 @@ public:
 	void OnWindowSizeChanged();
 	void OnWriteConsoleOutput(const CHAR_INFO *lpBuffer,COORD dwBufferSize,COORD dwBufferCoord,PSMALL_RECT lpWriteRegion, const COLORREF *apColors);
 	BOOL InitializeSBI(const COLORREF *apColors);
+	BOOL GetCharAttr(int x, int y, wchar_t& rc, CharAttr& ra);
 	
 	
 protected:

@@ -41,7 +41,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ConEmuC.h"
 
-WARNING("Обязательно после запуска сделать SetForegroundWindow на GUI окно, если в фокусе консоль");
+WARNING("Обязательно после запуска сделать apiSetForegroundWindow на GUI окно, если в фокусе консоль");
 WARNING("Обязательно получить код и имя родительского процесса");
 
 WARNING("При запуске как ComSpec получаем ошибку: {crNewSize.X>=MIN_CON_WIDTH && crNewSize.Y>=MIN_CON_HEIGHT}");
@@ -1350,7 +1350,7 @@ void EmergencyShow()
 {
 	if (!IsWindowVisible(ghConWnd)) {
 		SetWindowPos(ghConWnd, HWND_TOP, 50,50,0,0, SWP_NOSIZE);
-		ShowWindowAsync(ghConWnd, SW_SHOWNORMAL);
+		apiShowWindowAsync(ghConWnd, SW_SHOWNORMAL);
 	}
 	if (!IsWindowEnabled(ghConWnd))
 		EnableWindow(ghConWnd, true);
@@ -1377,7 +1377,7 @@ void ExitWaitForKey(WORD vkKey, LPCWSTR asConfirm, BOOL abNewLine, BOOL abDontSh
 					// не надо наверное... // поставить "стандартный" 80x25, или то, что было передано к ком.строке
 					//SMALL_RECT rcNil = {0}; SetConsoleSize(0, gcrBufferSize, rcNil, ":Exiting");
 					//SetConsoleFontSizeTo(ghConWnd, 8, 12); // установим шрифт побольше
-					//ShowWindow(ghConWnd, SW_SHOWNORMAL); // и покажем окошко
+					//apiShowWindow(ghConWnd, SW_SHOWNORMAL); // и покажем окошко
 					EmergencyShow();
 				}
 			}
@@ -1402,7 +1402,7 @@ void ExitWaitForKey(WORD vkKey, LPCWSTR asConfirm, BOOL abNewLine, BOOL abDontSh
 	//    else
 	//        Sleep(100);
 	//    if (lbNeedVisible && !IsWindowVisible(ghConWnd)) {
-	//        ShowWindow(ghConWnd, SW_SHOWNORMAL); // и покажем окошко
+	//        apiShowWindow(ghConWnd, SW_SHOWNORMAL); // и покажем окошко
 	//    }
 	while (TRUE) {
 		if (!PeekConsoleInput(GetStdHandle(STD_INPUT_HANDLE), &r, 1, &dwCount))
@@ -1721,21 +1721,21 @@ void LogSize(COORD* pcrSize, LPCSTR pszLabel)
 	
 			
 	SYSTEMTIME st; GetLocalTime(&st);
-	char szMapSize[32]; szMapSize[0] = 0;
-	if (srv.pConsoleMap->IsValid()) {
-		wsprintfA(szMapSize, " CurMapSize={%ix%ix%i}",
-			srv.pConsoleMap->Ptr()->sbi.dwSize.X, srv.pConsoleMap->Ptr()->sbi.dwSize.Y,
-			srv.pConsoleMap->Ptr()->sbi.srWindow.Bottom-srv.pConsoleMap->Ptr()->sbi.srWindow.Top+1);
-	}
+	//char szMapSize[32]; szMapSize[0] = 0;
+	//if (srv.pConsoleMap->IsValid()) {
+	//	wsprintfA(szMapSize, " CurMapSize={%ix%ix%i}",
+	//		srv.pConsoleMap->Ptr()->sbi.dwSize.X, srv.pConsoleMap->Ptr()->sbi.dwSize.Y,
+	//		srv.pConsoleMap->Ptr()->sbi.srWindow.Bottom-srv.pConsoleMap->Ptr()->sbi.srWindow.Top+1);
+	//}
 	
 	if (pcrSize) {
-		wsprintfA(szInfo, "%i:%02i:%02i.%03i CurSize={%ix%i}%s ChangeTo={%ix%i} %s %s\r\n",
+		wsprintfA(szInfo, "%i:%02i:%02i.%03i CurSize={%ix%i} ChangeTo={%ix%i} %s %s\r\n",
 			st.wHour, st.wMinute, st.wSecond, st.wMilliseconds,
-			lsbi.dwSize.X, lsbi.dwSize.Y, szMapSize, pcrSize->X, pcrSize->Y, pszThread, (pszLabel ? pszLabel : ""));
+			lsbi.dwSize.X, lsbi.dwSize.Y, pcrSize->X, pcrSize->Y, pszThread, (pszLabel ? pszLabel : ""));
 	} else {
-		wsprintfA(szInfo, "%i:%02i:%02i.%03i CurSize={%ix%i}%s %s %s\r\n",
+		wsprintfA(szInfo, "%i:%02i:%02i.%03i CurSize={%ix%i} %s %s\r\n",
 			st.wHour, st.wMinute, st.wSecond, st.wMilliseconds,
-			lsbi.dwSize.X, lsbi.dwSize.Y, szMapSize, pszThread, (pszLabel ? pszLabel : ""));
+			lsbi.dwSize.X, lsbi.dwSize.Y, pszThread, (pszLabel ? pszLabel : ""));
 	}
 	
 	//if (hInp) CloseDesktop ( hInp );
@@ -2263,16 +2263,16 @@ DWORD WINAPI InstanceThread(LPVOID lpvParam)
 		NULL);        // not overlapped I/O 
 
 	if ((!fSuccess && ((dwErr = GetLastError()) != ERROR_MORE_DATA)) ||
-			cbBytesRead < sizeof(CESERVER_REQ_HDR) || in.hdr.nSize < sizeof(CESERVER_REQ_HDR))
+			cbBytesRead < sizeof(CESERVER_REQ_HDR) || in.hdr.cbSize < sizeof(CESERVER_REQ_HDR))
 	{
 		goto wrap;
 	}
 
-	if (in.hdr.nSize > cbBytesRead)
+	if (in.hdr.cbSize > cbBytesRead)
 	{
 		DWORD cbNextRead = 0;
 		// Тут именно Alloc, а не ExecuteNewCmd, т.к. данные пришли снаружи, а не заполняются здесь
-		pIn = (CESERVER_REQ*)Alloc(in.hdr.nSize, 1);
+		pIn = (CESERVER_REQ*)Alloc(in.hdr.cbSize, 1);
 		if (!pIn)
 			goto wrap;
 		memmove(pIn, &in, cbBytesRead); // стояло ошибочное присвоение
@@ -2280,7 +2280,7 @@ DWORD WINAPI InstanceThread(LPVOID lpvParam)
 		fSuccess = ReadFile(
 			hPipe,        // handle to pipe 
 			((LPBYTE)pIn)+cbBytesRead,  // buffer to receive data 
-			in.hdr.nSize - cbBytesRead,   // size of buffer 
+			in.hdr.cbSize - cbBytesRead,   // size of buffer 
 			&cbNextRead, // number of bytes read 
 			NULL);        // not overlapped I/O 
 		if (fSuccess)
@@ -2295,7 +2295,7 @@ DWORD WINAPI InstanceThread(LPVOID lpvParam)
 		fSuccess = WriteFile( 
 			hPipe,        // handle to pipe 
 			&Out,         // buffer to write from 
-			Out.nSize,    // number of bytes to write 
+			Out.cbSize,    // number of bytes to write 
 			&cbWritten,   // number of bytes written 
 			NULL);        // not overlapped I/O 
 		
@@ -2305,7 +2305,7 @@ DWORD WINAPI InstanceThread(LPVOID lpvParam)
 		fSuccess = WriteFile( 
 			hPipe,        // handle to pipe 
 			pOut,         // buffer to write from 
-			pOut->hdr.nSize,  // number of bytes to write 
+			pOut->hdr.cbSize,  // number of bytes to write 
 			&cbWritten,   // number of bytes written 
 			NULL);        // not overlapped I/O 
 
@@ -2319,7 +2319,7 @@ DWORD WINAPI InstanceThread(LPVOID lpvParam)
 	}
 
 	MCHKHEAP;
-	//if (!fSuccess || pOut->hdr.nSize != cbWritten) break; 
+	//if (!fSuccess || pOut->hdr.cbSize != cbWritten) break; 
 
 // Flush the pipe to allow the client to read the pipe's contents 
 // before disconnecting. Then disconnect the pipe, and close the 
@@ -2341,33 +2341,33 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 	MCHKHEAP;
 
 	switch (in.hdr.nCmd) {
-		case CECMD_GETCONSOLEINFO:
-		case CECMD_REQUESTCONSOLEINFO:
-		{
-			if (srv.szGuiPipeName[0] == 0) { // Серверный пайп в CVirtualConsole уже должен быть запущен
-				wsprintf(srv.szGuiPipeName, CEGUIPIPENAME, L".", (DWORD)ghConWnd); // был gnSelfPID
-			}
+		//case CECMD_GETCONSOLEINFO:
+		//case CECMD_REQUESTCONSOLEINFO:
+		//{
+		//	if (srv.szGuiPipeName[0] == 0) { // Серверный пайп в CVirtualConsole уже должен быть запущен
+		//		wsprintf(srv.szGuiPipeName, CEGUIPIPENAME, L".", (DWORD)ghConWnd); // был gnSelfPID
+		//	}
 
-			_ASSERT(ghConOut && ghConOut!=INVALID_HANDLE_VALUE);
-			if (ghConOut==NULL || ghConOut==INVALID_HANDLE_VALUE)
-				return FALSE;
+		//	_ASSERT(ghConOut && ghConOut!=INVALID_HANDLE_VALUE);
+		//	if (ghConOut==NULL || ghConOut==INVALID_HANDLE_VALUE)
+		//		return FALSE;
 
-			ReloadFullConsoleInfo(TRUE);
+		//	ReloadFullConsoleInfo(TRUE);
 
-			MCHKHEAP;
+		//	MCHKHEAP;
 
-			// На запрос из GUI (GetAnswerToRequest)
-			if (in.hdr.nCmd == CECMD_GETCONSOLEINFO) {
-				//*out = CreateConsoleInfo(NULL, (in.hdr.nCmd == CECMD_GETFULLINFO));
-				int nOutSize = sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_CONINFO_HDR);
-				*out = ExecuteNewCmd(0,nOutSize);
-				(*out)->ConInfo = srv.pConsole->info;
-			}
+		//	// На запрос из GUI (GetAnswerToRequest)
+		//	if (in.hdr.nCmd == CECMD_GETCONSOLEINFO) {
+		//		//*out = CreateConsoleInfo(NULL, (in.hdr.nCmd == CECMD_GETFULLINFO));
+		//		int nOutSize = sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_CONINFO_HDR);
+		//		*out = ExecuteNewCmd(0,nOutSize);
+		//		(*out)->ConInfo = srv.pConsole->info;
+		//	}
 
-			MCHKHEAP;
+		//	MCHKHEAP;
 
-			lbRc = TRUE;
-		} break;
+		//	lbRc = TRUE;
+		//} break;
 		//case CECMD_SETSIZE:
 		case CECMD_SETSIZESYNC:
 		case CECMD_SETSIZENOSYNC:
@@ -2379,7 +2379,7 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 			*out = ExecuteNewCmd(0,nOutSize);
 			if (*out == NULL) return FALSE;
 			MCHKHEAP;
-			if (in.hdr.nSize >= (sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_SETSIZE))) {
+			if (in.hdr.cbSize >= (sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_SETSIZE))) {
 				USHORT nBufferHeight = 0;
 				COORD  crNewSize = {0,0};
 				SMALL_RECT rNewRect = {0};
@@ -2466,8 +2466,8 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 			PCONSOLE_SCREEN_BUFFER_INFO psc = &((*out)->SetSizeRet.SetSizeRet);
 			MyGetConsoleScreenBufferInfo(ghConOut, psc);
 			
-			DWORD nPacketId = ++srv.nLastPacketID;
-			(*out)->SetSizeRet.nNextPacketId = nPacketId;
+			DWORD lnNextPacketId = ++srv.nLastPacketID;
+			(*out)->SetSizeRet.nNextPacketId = lnNextPacketId;
 			
 			//srv.bForceFullSend = TRUE;
 			SetEvent(srv.hRefreshEvent);
@@ -2518,7 +2518,7 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 		
 		case CECMD_SHOWCONSOLE:
 		{
-			ShowWindow(ghConWnd, in.dwData[0]);
+			apiShowWindow(ghConWnd, in.dwData[0]);
 		} break;
 
 		case CECMD_POSTCONMSG:
@@ -2546,9 +2546,9 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 			if (in.Msg.nMsg == WM_SHOWWINDOW) {
 				DWORD lRc = 0;
 				if (in.Msg.bPost)
-					lRc = ShowWindowAsync(hSendWnd, (int)(in.Msg.wParam & 0xFFFF));
+					lRc = apiShowWindowAsync(hSendWnd, (int)(in.Msg.wParam & 0xFFFF));
 				else
-					lRc = ShowWindow(hSendWnd, (int)(in.Msg.wParam & 0xFFFF));
+					lRc = apiShowWindow(hSendWnd, (int)(in.Msg.wParam & 0xFFFF));
 				// Возвращаем результат
 				DWORD dwErr = GetLastError();
 				int nOutSize = sizeof(CESERVER_REQ_HDR) + 2*sizeof(DWORD);
@@ -2623,7 +2623,7 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 		{
 			//wchar_t* pszAliases; DWORD nAliasesSize;
 			// Запомнить алиасы
-			DWORD nNewSize = in.hdr.nSize - sizeof(in.hdr);
+			DWORD nNewSize = in.hdr.cbSize - sizeof(in.hdr);
 			if (nNewSize > srv.nAliasesSize) {
 				MCHKHEAP;
 				wchar_t* pszNew = (wchar_t*)Alloc(nNewSize, 1);
@@ -2663,8 +2663,8 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 		case CECMD_ONACTIVATION:
 		{
 			if (srv.pConsole) {
-				srv.pConsole->info.bConsoleActive = in.dwData[0];
-				srv.pConsoleMap->SetFrom(&(srv.pConsole->info));
+				srv.pConsole->hdr.bConsoleActive = in.dwData[0];
+				srv.pConsoleMap->SetFrom(&(srv.pConsole->hdr));
 			}
 		} break;
 

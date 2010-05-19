@@ -6,7 +6,6 @@ enum {
 	CELngEdit,
 	CELngView,
 	CELngTemp,
-	CELngName,
 	CEConsoleOutput,
 	CEMenuEditOutput,
 	CEMenuViewOutput,

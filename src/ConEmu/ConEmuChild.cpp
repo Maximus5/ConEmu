@@ -318,7 +318,9 @@ void CConEmuChild::Redraw()
 	RECT rcClient; GetClientRect(ghWndDC, &rcClient);
 	MapWindowPoints(ghWndDC, ghWnd, (LPPOINT)&rcClient, 2);
 	InvalidateRect(ghWnd, &rcClient, FALSE);
-	gConEmu.OnPaint(0,0);
+	// Из-за этого - возникает двойная перерисовка
+	//gConEmu.OnPaint(0,0);
+
 	//#ifdef _DEBUG
 	//BOOL lbRc =
 	//#endif
@@ -702,18 +704,18 @@ BOOL CConEmuBack::TrackMouse()
 		if (PtInRect(&rcScroll, ptCur)) {
 			if (!mb_ScrollVisible) {
 				mb_ScrollVisible = TRUE;
-				ShowWindow(mh_WndScroll, SW_SHOWNOACTIVATE);
+				apiShowWindow(mh_WndScroll, SW_SHOWNOACTIVATE);
 				SetWindowPos(mh_WndScroll, HWND_TOP, 0,0,0,0, SWP_NOSIZE|SWP_NOMOVE|SWP_SHOWWINDOW);
 			}
 			lbRc = TRUE;
 		} else if (mb_ScrollVisible) {
 			mb_ScrollVisible = FALSE;
-			ShowWindow(mh_WndScroll, SW_HIDE);
+			apiShowWindow(mh_WndScroll, SW_HIDE);
 			lbHided = TRUE;
 		}
 	} else if (mb_ScrollVisible && !lbBufferMode) {
 		mb_ScrollVisible = FALSE;
-		ShowWindow(mh_WndScroll, SW_HIDE);
+		apiShowWindow(mh_WndScroll, SW_HIDE);
 		lbHided = TRUE;
 	}
 	

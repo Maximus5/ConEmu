@@ -82,7 +82,8 @@ $(OBJDIR)\ConEmuThA.obj \
 $(OBJDIR)\Display.obj \
 $(OBJDIR)\ImgCache.obj \
 $(OBJDIR)\RgnDetect.obj \
-$(OBJDIR)\Common.obj
+$(OBJDIR)\Common.obj \
+$(OBJDIR)\WinObjects.obj
 
 #$(OBJDIR)\LogBrowser.obj
 
@@ -318,6 +319,8 @@ $(OBJDIR)\ImgCache.obj: ImgCache.cpp
 $(OBJDIR)\RgnDetect.obj: ..\common\RgnDetect.cpp
 
 $(OBJDIR)\common.obj: ..\common\common.cpp
+
+$(OBJDIR)\WinObjects.obj: ..\common\WinObjects.cpp
 
 
 
