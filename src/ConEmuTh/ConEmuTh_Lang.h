@@ -13,6 +13,7 @@ enum {
 	CEPluginNotFound,
 	CEOldPluginVersion,
 	CEFarNonGuiMode,
+	CEInvalidPanelSettings,
 	CECreateThreadFailed,
 	CEThreadActivationFailed,
 	CEPostThreadMessageFailed,

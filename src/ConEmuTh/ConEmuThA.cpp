@@ -258,10 +258,34 @@ void ReloadPanelsInfoA()
 	TODO("void ReloadPanelsInfoA()");
 }
 
-BOOL IsLeftPanelActiveA()
+//BOOL IsLeftPanelActiveA()
+//{
+//	TODO("IsLeftPanelActiveA");
+//	return FALSE;
+//}
+
+BOOL CheckPanelSettingsA(BOOL abSilence)
 {
-	TODO("IsLeftPanelActiveA");
-	return FALSE;
+	if (!InfoA)
+		return FALSE;
+
+	gnFarPanelSettings =
+		(DWORD)InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETPANELSETTINGS, 0);
+	gnFarInterfaceSettings =
+		(DWORD)InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETINTERFACESETTINGS, 0);
+
+	if (!(gnFarPanelSettings & FPS_SHOWCOLUMNTITLES))
+	{
+		// Для корректного определения положения колонок необходим один из флажков в настройке панели:
+		// [x] Показывать заголовки колонок [x] Показывать суммарную информацию
+		if (!abSilence)
+		{
+			InfoA->Message(InfoA->ModuleNumber, FMSG_ALLINONE|FMSG_MB_OK|FMSG_WARNING|FMSG_LEFTALIGN, NULL, 
+				(const char * const *)InfoA->GetMsg(InfoA->ModuleNumber,CEInvalidPanelSettings), 0, 0);
+		}
+		return FALSE;
+	}
+	return TRUE;
 }
 
 // Возникали проблемы с синхронизацией в FAR2 -> FindFile

@@ -5455,7 +5455,7 @@ void CConEmuMain::OnAltF9(BOOL abPosted/*=FALSE*/)
 
 LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 {
-	wchar_t szTranslatedChars[11];
+	wchar_t szTranslatedChars[11] = {0};
 	int nTranslatedChars = 0;
 	if (!GetKeyboardState(m_KeybStates)) {
 		#ifdef _DEBUG
@@ -5473,7 +5473,7 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 		UINT nSC = ((DWORD)lParam & 0xFF0000) >> 16;
 		WARNING("BUGBUG: похоже глючит в x64 на US-Dvorak");
 		nTranslatedChars = ToUnicodeEx(nVK, nSC, m_KeybStates, szTranslatedChars, 10, 0, hkl);
-		if (nTranslatedChars>0) szTranslatedChars[max(10,nTranslatedChars)] = 0; else szTranslatedChars[0] = 0;
+		if (nTranslatedChars>0) szTranslatedChars[min(10,nTranslatedChars)] = 0; else szTranslatedChars[0] = 0;
 	}
     //LRESULT result = 0;
 
@@ -5904,13 +5904,20 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
     //short winY = GET_Y_LPARAM(lParam);
 
 	RECT conRect = {0}, dcRect = {0}; GetWindowRect(ghWndDC, &dcRect);
-	POINT ptCur = {-1, -1}; GetCursorPos(&ptCur);
+	//2010-05-20 все-таки будем ориентироватьс€ на lParam, потому что
+	//  только так ConEmuTh может передать корректные координаты
+	//POINT ptCur = {-1, -1}; GetCursorPos(&ptCur);
+	POINT ptCur = {LOWORD(lParam), HIWORD(lParam)};
+	HWND hChild = ::ChildWindowFromPointEx(ghWnd, ptCur, CWP_SKIPINVISIBLE|CWP_SKIPDISABLED|CWP_SKIPTRANSPARENT);
+	ClientToScreen(ghWnd, &ptCur);
 	//enum DragPanelBorder dpb = DPB_NONE; //CConEmuMain::CheckPanelDrag(COORD crCon)
 
 	//BOOL lbMouseWasCaptured = mb_MouseCaptured;
 	if (!mb_MouseCaptured) {
 		// ≈сли клик
-		if (isPressed(VK_LBUTTON) || isPressed(VK_RBUTTON) || isPressed(VK_MBUTTON)) {
+		if (hChild == NULL &&
+			(isPressed(VK_LBUTTON) || isPressed(VK_RBUTTON) || isPressed(VK_MBUTTON)))
+		{
 			// ¬ клиентской области (области отрисовки)
 			if (PtInRect(&dcRect, ptCur)) {
 				mb_MouseCaptured = TRUE;

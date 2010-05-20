@@ -241,6 +241,57 @@ LRESULT CALLBACK CeFullPanelInfo::DisplayWndProc(HWND hwnd, UINT uMsg, WPARAM wP
 			DeleteObject(hbr);
 			return TRUE;
 		}
+
+	case WM_MOUSEMOVE:
+	case WM_RBUTTONDOWN:
+	case WM_RBUTTONUP:
+	case WM_MBUTTONDOWN:
+	case WM_MBUTTONUP:
+	case WM_LBUTTONDOWN:
+	case WM_LBUTTONUP:
+	case WM_LBUTTONDBLCLK:
+	case WM_MBUTTONDBLCLK:
+	case WM_RBUTTONDBLCLK:
+	case WM_XBUTTONDOWN:
+	case WM_XBUTTONUP:
+	case WM_XBUTTONDBLCLK:
+	case WM_MOUSEWHEEL:
+	case WM_MOUSEHWHEEL:
+		{
+			CeFullPanelInfo* pi = (CeFullPanelInfo*)GetWindowLongPtr(hwnd, GWLP_USERDATA);
+			_ASSERTE(pi && pi->cbSize==sizeof(CeFullPanelInfo));
+			_ASSERTE(pi == (&pviLeft) || pi == (&pviRight));
+
+			int nIndex; COORD crCon;
+			if (pi->GetIndexFromWndCoord(LOWORD(lParam), HIWORD(lParam), nIndex))
+			{
+				if (!pi->GetConCoordFromIndex(nIndex, crCon)) {
+					if (uMsg == WM_LBUTTONDOWN || uMsg == WM_RBUTTONDOWN) {
+						ConEmuThSynchroArg *pCmd = (ConEmuThSynchroArg*)LocalAlloc(LPTR, sizeof(ConEmuThSynchroArg)+128);
+						pCmd->bValid = 1; pCmd->bExpired = 0; pCmd->nCommand = ConEmuThSynchroArg::eExecuteMacro;
+						wsprintfW((wchar_t*)pCmd->Data, L"panel.setposidx(%i,%i)",
+							pi->Focus ? 0 : 1, nIndex+1);
+						ExecuteInMainThread(pCmd);
+					}
+					return 0;
+				}
+
+				RECT rcClient = {0};
+				if (!GetClientRect(pi->hView, &rcClient) || !rcClient.right || !rcClient.bottom)
+					return 0;
+
+				POINT pt;
+				pt.x = (crCon.X - pi->WorkRect.left) * rcClient.right / (pi->WorkRect.right - pi->WorkRect.left + 1);
+				pt.y = (crCon.Y - pi->WorkRect.top) * rcClient.bottom / (pi->WorkRect.bottom - pi->WorkRect.top + 1);
+
+				MapWindowPoints(hwnd, ghConEmuRoot, &pt, 1);
+				pt.x++; pt.y++;
+				PostMessage(ghConEmuRoot, uMsg, wParam, MAKELPARAM(pt.x,pt.y));
+			}
+
+			return 0;
+		}
+
 	case WM_CLOSE:
 		{
 			if (ghLeftView == hwnd)
@@ -678,13 +729,57 @@ int CeFullPanelInfo::DrawItemText(HDC hdc, LPRECT prcText, LPRECT prcMaxText, Ce
 	return iRc;
 }
 
-HBRUSH CeFullPanelInfo::GetItemColors(int nIndex, CePluginPanelItem* pItem, BOOL abCurrentItem, COLORREF &crFore, COLORREF &crBack)
+BOOL CeFullPanelInfo::GetIndexFromWndCoord(int x, int y, int &rnIndex)
 {
+	if (!nWholeW || !nWholeH)
+		return FALSE;
+
+	//RECT rcClient = {0};
+	//if (!GetClientRect(hView, &rcClient) || !rcClient.right || !rcClient.bottom)
+	//	return FALSE;
+
+	int xCell = x / nWholeW;
+	int yCell = y / nWholeH;
+
+	if (PVM == pvm_Thumbnails) {
+		rnIndex = OurTopPanelItem + yCell * nXCountFull + xCell;
+	} else if (PVM == pvm_Tiles) {
+		rnIndex = OurTopPanelItem + xCell * nYCountFull + yCell;
+	} else {
+		_ASSERTE(PVM == pvm_Thumbnails || PVM == pvm_Tiles);
+		return FALSE; // не поддерживается
+	}
+
+	if (rnIndex < 0 || rnIndex >= ItemsNumber)
+		return FALSE;
+
+	return TRUE;
+}
+
+BOOL CeFullPanelInfo::GetConCoordFromIndex(int nIndex, COORD& rCoord)
+{
+	BOOL lbRc = FALSE;
+
 	int nCol0Index = nIndex - TopPanelItem;
 	if (nCol0Index >= 0 && nCol0Index <= (WorkRect.bottom - WorkRect.top))
 	{
+		rCoord.X = (SHORT)WorkRect.left; rCoord.Y = (SHORT)(WorkRect.top+nCol0Index); lbRc = TRUE;
+	}
+	TODO("В панелях может быть более одной колонки N - можно их также обработать!");
+
+	return lbRc;
+}
+
+HBRUSH CeFullPanelInfo::GetItemColors(int nIndex, CePluginPanelItem* pItem, BOOL abCurrentItem, COLORREF &crFore, COLORREF &crBack)
+{
+	COORD crItem;
+	if (GetConCoordFromIndex(nIndex, crItem))
+	//int nCol0Index = nIndex - TopPanelItem;
+	//if (nCol0Index >= 0 && nCol0Index <= (WorkRect.bottom - WorkRect.top))
+	{
 		wchar_t c; CharAttr a;
-		if (gpRgnDetect->GetCharAttr(WorkRect.left, WorkRect.top+nCol0Index, c, a)) {
+		//if (gpRgnDetect->GetCharAttr(WorkRect.left, WorkRect.top+nCol0Index, c, a)) {
+		if (gpRgnDetect->GetCharAttr(crItem.X, crItem.Y, c, a)) {
 			crBack = gcrCurColors[a.nBackIdx];
 			crFore = gcrCurColors[a.nForeIdx];
 			goto ChkBrush;

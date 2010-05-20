@@ -5,6 +5,7 @@ EXPORTS
 	GetMinFarVersionW    @3
 	ExitFARW             @4
 	OpenPluginW          @5
+	ProcessSynchroEventW @6
 ;
 ;	SetStartupInfo       @21
 ;	GetPluginInfo        @22

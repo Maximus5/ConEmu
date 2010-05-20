@@ -118,20 +118,21 @@ CDragDrop::~CDragDrop()
 		RevokeDragDrop(ghWnd);
 	}
 
-	TryEnterCriticalSection(&m_CrThreads);
-	if (!m_OpThread.empty()) {
-		LeaveCriticalSection(&m_CrThreads);
-		
+	EnterCriticalSection(&m_CrThreads);
+	BOOL lbEmpty = m_OpThread.empty();
+	LeaveCriticalSection(&m_CrThreads);
+	if (!lbEmpty) {
 		if (MessageBox(ghWnd, _T("Not all shell operations was finished!\r\nDo You want to terminate them (it's may be harmful)?"), 
 			_T("ConEmu"), MB_YESNO|MB_ICONEXCLAMATION) == IDYES)
 		{
 			// Terminate all thread
-			TryEnterCriticalSection(&m_CrThreads);
+			EnterCriticalSection(&m_CrThreads);
 			std::vector<ThInfo>::iterator iter = m_OpThread.begin();
 			while (iter != m_OpThread.end())
 			{
 				HANDLE hThread = iter->hThread;
 				TerminateThread(hThread, 100);
+				CloseHandle(hThread);
 				iter = m_OpThread.erase ( iter );
 			}
 			LeaveCriticalSection(&m_CrThreads);
@@ -140,7 +141,7 @@ CDragDrop::~CDragDrop()
 			BOOL lbActive = TRUE;
 			while (TRUE) {
 				Sleep(100);
-				TryEnterCriticalSection(&m_CrThreads);
+				EnterCriticalSection(&m_CrThreads);
 				lbActive = !m_OpThread.empty();
 				LeaveCriticalSection(&m_CrThreads);
 			}
@@ -1093,7 +1094,7 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop (IDataObject * pDataObject,DWORD grfKe
 		if (th.hThread == NULL) {
 			DisplayLastError(_T("Can't create shell operation thread!"));
 		} else {
-			TryEnterCriticalSection(&m_CrThreads);
+			EnterCriticalSection(&m_CrThreads);
 			m_OpThread.push_back(th);
 			LeaveCriticalSection(&m_CrThreads);
 		}
@@ -1115,12 +1116,13 @@ DWORD CDragDrop::ShellOpThreadProc(LPVOID lpParameter)
 		//-- не сбрасывать! может быть установлен FOF_MULTIDESTFILES
 		//sfop->fop.fFlags = 0; //FOF_SIMPLEPROGRESS; -- пусть полную инфу показывает
 
+		sfop->fop.fAnyOperationsAborted = FALSE;
 		hr = SHFileOperation(&(sfop->fop));
 	} catch(...) {
 		hr = E_UNEXPECTED;
 	}
-	if (hr != S_OK) {
-		if (hr == 7 || hr == ERROR_CANCELLED)
+	if (hr != S_OK || sfop->fop.fAnyOperationsAborted) {
+		if (hr == 7 || hr == ERROR_CANCELLED || hr == 0)
 			MBoxA(_T("Shell operation was cancelled"))
 		else
 			DisplayLastError(_T("Shell operation failed"), hr);
@@ -1130,18 +1132,23 @@ DWORD CDragDrop::ShellOpThreadProc(LPVOID lpParameter)
 	if (sfop->fop.pFrom) delete sfop->fop.pFrom;
 	delete sfop;
 	
-	TryEnterCriticalSection(&pDragDrop->m_CrThreads);
+	HANDLE hTh = NULL;
+	EnterCriticalSection(&pDragDrop->m_CrThreads);
 	std::vector<ThInfo>::iterator iter = pDragDrop->m_OpThread.begin();
 	while (iter != pDragDrop->m_OpThread.end())
 	{
 		if (dwThreadId == iter->dwThreadId)
 		{
-			CloseHandle(iter->hThread);
+			hTh = iter->hThread;
 			iter = pDragDrop->m_OpThread.erase ( iter );
 			break;
 		}
+		iter++;
 	}
 	LeaveCriticalSection(&pDragDrop->m_CrThreads);
+
+	if (hTh)
+		CloseHandle(hTh);
 
 	return 0;
 }

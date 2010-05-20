@@ -432,7 +432,7 @@ BOOL CRealConsole::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuff
 	//if (mp_ConsoleInfo) {
 
 	// Если заблокирована верхняя видимая строка - выполнять строго
-	if (lIn.SetSize.nSendTopLine == -1) {
+	if (anCmdID != CECMD_CMDFINISHED && lIn.SetSize.nSendTopLine == -1) {
 		// иначе - проверяем текущее соответствие
 		//CONSOLE_SCREEN_BUFFER_INFO sbi = mp_ConsoleInfo->sbi;
 		bool lbSizeMatch = true;
@@ -446,7 +446,7 @@ BOOL CRealConsole::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuff
 				lbSizeMatch = false;
 		}
 		// fin
-		if (lbSizeMatch)
+		if (lbSizeMatch && anCmdID != CECMD_CMDFINISHED)
 			return TRUE; // менять ничего не нужно
 	}
 	//}

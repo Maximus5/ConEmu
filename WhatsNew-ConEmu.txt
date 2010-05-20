@@ -1,3 +1,14 @@
+2010.05.20
+[*] PanelViews. Mouse is working now. Small restriction: when clicked item is not visible on real panel - plugin executes macro "panel.setposidx(...)" instead of left or right click.
+[%] Minor D&D bugfixes.
+[%] Не работал 'Edit/View console output'.
+
+
+2010.05.18
+[%] Strange charachers.
+[*] Доработки PanelViews.
+
+
 2010.05.18
 [%] Поломалась палитра для 'Fade contents…'.
 [%] Drawing performance issues.

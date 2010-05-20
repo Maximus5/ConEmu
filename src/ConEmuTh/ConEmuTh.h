@@ -190,6 +190,8 @@ typedef struct tag_CeFullPanelInfo
 			   BOOL abAllowPreview, HBRUSH hBackBrush, COLORREF crBackColor);
 	int DrawItemText(HDC hdc, LPRECT prcText, LPRECT prcMaxText, CePluginPanelItem* pItem, LPCWSTR pszComments, HBRUSH hBr, BOOL bIgnoreFileDescription);
 	BOOL OnSettingsChanged(BOOL bInvalidate);
+	BOOL GetIndexFromWndCoord(int x, int y, int &rnIndex);
+	BOOL GetConCoordFromIndex(int nIndex, COORD& rCoord);
 	HBRUSH GetItemColors(int nIndex, CePluginPanelItem* pItem, BOOL abCurrentItem, COLORREF &crFore, COLORREF &crBack);
 			   
 	/*{
@@ -309,6 +311,7 @@ extern HANDLE ghDisplayThread; extern DWORD gnDisplayThreadId;
 extern HWND ghLeftView, ghRightView;
 extern bool gbWaitForKeySequenceEnd;
 extern DWORD gnWaitForKeySeqTick;
+extern DWORD gnFarPanelSettings, gnFarInterfaceSettings;
 //class CRgnDetect;
 //extern CRgnDetect *gpRgnDetect;
 
@@ -368,10 +371,10 @@ void ReloadPanelsInfo();
 void ReloadPanelsInfoA();
 void FUNC_X(ReloadPanelsInfo)();
 void FUNC_Y(ReloadPanelsInfo)();
-BOOL IsLeftPanelActive();
-BOOL IsLeftPanelActiveA();
-BOOL FUNC_X(IsLeftPanelActive)();
-BOOL FUNC_Y(IsLeftPanelActive)();
+//BOOL IsLeftPanelActive();
+//BOOL IsLeftPanelActiveA();
+//BOOL FUNC_X(IsLeftPanelActive)();
+//BOOL FUNC_Y(IsLeftPanelActive)();
 void LoadPanelItemInfo(CeFullPanelInfo* pi, int nItem);
 void LoadPanelItemInfoA(CeFullPanelInfo* pi, int nItem);
 void FUNC_X(LoadPanelItemInfo)(CeFullPanelInfo* pi, int nItem);
@@ -389,6 +392,24 @@ extern DWORD gnWin32Error;
 //HWND CreateView(CeFullPanelInfo* pi);
 void UpdateEnvVar(BOOL abForceRedraw);
 CeFullPanelInfo* IsThumbnailsActive(BOOL abFocusRequired);
+BOOL CheckPanelSettings(BOOL abSilence);
+BOOL CheckPanelSettingsA(BOOL abSilence);
+BOOL FUNC_X(CheckPanelSettings)(BOOL abSilence);
+BOOL FUNC_Y(CheckPanelSettings)(BOOL abSilence);
+
+typedef struct {
+	int bValid; // Must be ==1
+	int bExpired; // Must be ==0, if !=0 - просто освободить память
+	enum {
+		eExecuteMacro = 0,
+	} nCommand;
+	WORD Data[1]; // variable array
+} ConEmuThSynchroArg;
+extern ConEmuThSynchroArg* gpLastSynchroArg;
+void ExecuteInMainThread(ConEmuThSynchroArg* pCmd);
+void FUNC_X(ExecuteInMainThread)(ConEmuThSynchroArg* pCmd);
+void FUNC_Y(ExecuteInMainThread)(ConEmuThSynchroArg* pCmd);
+int WINAPI ProcessSynchroEventW(int Event, void *Param);
 
 // ConEmu.dll
 typedef int (WINAPI *RegisterPanelView_t)(PanelViewInit *ppvi);

@@ -3451,6 +3451,8 @@ BOOL CVirtualConsole::RegisterPanelView(PanelViewInit* ppvi)
 			// Обновить флаг видимости
 			ppvi->bVisible = pp->bVisible;
 			ppvi->WorkRect = pp->WorkRect;
+			// pp->WorkRect для удобства расчитывается "на +1".
+			ppvi->WorkRect.bottom--; ppvi->WorkRect.right--;
 
 			// На панелях нужно "затереть" лишние части рамок
 			Update(true);

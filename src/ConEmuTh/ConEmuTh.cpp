@@ -97,6 +97,7 @@ SECURITY_ATTRIBUTES* gpNullSecurity = NULL;
 // *** lng resources begin ***
 wchar_t gsFolder[64], gsHardLink[64], gsSymLink[64], gsJunction[64], gsTitleThumbs[64], gsTitleTiles[64];
 // *** lng resources end ***
+DWORD gnFarPanelSettings = 0, gnFarInterfaceSettings = 0;
 
 bool gbWaitForKeySequenceEnd = false;
 DWORD gnWaitForKeySeqTick = 0;
@@ -113,12 +114,14 @@ BOOL ProcessConsoleInput(BOOL abUseUngetBuffer, PINPUT_RECORD lpBuffer, DWORD nB
 DWORD gnConsoleChanges = 0; // bitmask: 1-left, 2-right
 void OnMainThreadActived();
 void ReloadResourcesW();
+ConEmuThSynchroArg* gpLastSynchroArg = NULL;
 
 
 // minimal(?) FAR version 2.0 alpha build FAR_X_VER
 int WINAPI _export GetMinFarVersionW(void)
 {
-	return MAKEFARVERSION(2,0,FAR_X_VER);
+	// ACTL_SYNCHRO required
+	return MAKEFARVERSION(2,0,max(1007,FAR_X_VER));
 }
 
 /* COMMON - пока структуры не различаются */
@@ -192,6 +195,13 @@ HANDLE WINAPI _export OpenPluginW(int OpenFrom,INT_PTR Item)
 
 	// Если View не создан, или смена режима
 	if ((hView == NULL) || (PVM != pi->PVM)) {
+
+		// Для корректного определения положения колонок необходим один из флажков в настройке панели:
+		// [x] Показывать заголовки колонок [x] Показывать суммарную информацию
+		if (!CheckPanelSettings(FALSE)) {
+			return INVALID_HANDLE_VALUE;
+		}
+
 		pi->PVM = PVM;
 		pi->DisplayReloadPanel();
 		if (hView == NULL) {
@@ -457,6 +467,7 @@ void StartPlugin(BOOL abManual)
 	if (!CheckConEmu(!abManual))
 		return;
 
+	// Это делаем всегда, потому как это общая точка входа в плагин
 	if (!gpImgCache) {
 		gpImgCache = new CImgCache(ghPluginModule);
 	}
@@ -478,6 +489,12 @@ void StartPlugin(BOOL abManual)
 		if (dwModes[0] || dwModes[1]) {
 			if (gThSet.bRestoreOnStartup)
 			{
+				// Для корректного определения положения колонок необходим один из флажков в настройке панели:
+				// [x] Показывать заголовки колонок [x] Показывать суммарную информацию
+				if (!CheckPanelSettings(!abManual)) {
+					return;
+				}
+
 				// При открытии плагина - загрузить информацию об обеих панелях. Нужно для определения регионов!
 				ReloadPanelsInfo();
 
@@ -535,6 +552,9 @@ void ExitPlugin(void)
 	pviLeft.FinalRelease();
 	pviRight.FinalRelease();
 
+	if (gpLastSynchroArg) {
+		LocalFree(gpLastSynchroArg); gpLastSynchroArg = NULL;
+	}
 
 	if (gszRootKey) {
 		free(gszRootKey); gszRootKey = NULL;
@@ -745,6 +765,20 @@ BOOL IsMacroActive()
 	return lbActive;
 }
 
+BOOL CheckPanelSettings(BOOL abSilence)
+{
+	BOOL lbOk = FALSE;
+
+	if (gFarVersion.dwVerMajor==1)
+		lbOk = CheckPanelSettingsA(abSilence);
+	else if (gFarVersion.dwBuild>=FAR_Y_VER)
+		lbOk = FUNC_Y(CheckPanelSettings)(abSilence);
+	else
+		lbOk = FUNC_X(CheckPanelSettings)(abSilence);
+
+	return lbOk;
+}
+
 void LoadPanelItemInfo(CeFullPanelInfo* pi, int nItem)
 {
 	if (gFarVersion.dwVerMajor==1)
@@ -843,17 +877,17 @@ void ReloadPanelsInfo()
 }
 
 
-BOOL IsLeftPanelActive()
-{
-	BOOL lbLeftActive = FALSE;
-	if (gFarVersion.dwVerMajor==1)
-		lbLeftActive = IsLeftPanelActiveA();
-	else if (gFarVersion.dwBuild>=FAR_Y_VER)
-		lbLeftActive = FUNC_Y(IsLeftPanelActive)();
-	else
-		lbLeftActive = FUNC_X(IsLeftPanelActive)();
-	return lbLeftActive;
-}
+//BOOL IsLeftPanelActive()
+//{
+//	BOOL lbLeftActive = FALSE;
+//	if (gFarVersion.dwVerMajor==1)
+//		lbLeftActive = IsLeftPanelActiveA();
+//	else if (gFarVersion.dwBuild>=FAR_Y_VER)
+//		lbLeftActive = FUNC_Y(IsLeftPanelActive)();
+//	else
+//		lbLeftActive = FUNC_X(IsLeftPanelActive)();
+//	return lbLeftActive;
+//}
 
 WORD PopUngetBuffer(BOOL abRemove, PINPUT_RECORD lpDst)
 {
@@ -1084,6 +1118,14 @@ BOOL WINAPI OnPrePeekConsole(HANDLE hInput, PINPUT_RECORD lpBuffer, DWORD nBufSi
 	if (gnUngetCount) {
 		if (GetBufferInput(FALSE/*abRemove*/, lpBuffer, nBufSize, lpNumberOfEventsRead))
 			return FALSE; // PeekConsoleInput & OnPostPeekConsole не будет вызван
+	}
+
+	// Для FAR1 - эмуляция ACTL_SYNCHRO
+	if (gpLastSynchroArg  // ожидает команда
+		&& nBufSize == 1  // только когда размер буфера == 1 - считается что ФАР готов
+		&& gFarVersion.dwVerMajor==1) // FAR1
+	{
+		ProcessSynchroEventW(SE_COMMONSYNCHRO, gpLastSynchroArg);
 	}
 
 	return TRUE; // продолжить без изменений
@@ -1537,6 +1579,51 @@ void CheckVarsInitialized()
 		pviRight.pSection = new MSection();
 	}
 }
+
+void ExecuteInMainThread(ConEmuThSynchroArg* pCmd)
+{
+	if (!pCmd) return;
+
+	if (gpLastSynchroArg && gpLastSynchroArg != pCmd) {
+		LocalFree(gpLastSynchroArg); gpLastSynchroArg = NULL;
+	}
+	gpLastSynchroArg = pCmd;
+	_ASSERTE(gpLastSynchroArg->bValid==1 && gpLastSynchroArg->bExpired==0);
+
+	BOOL lbLeftActive = FALSE;
+	if (gFarVersion.dwVerMajor==1) {
+		; // в 1.75 такой функции нет, придется хаком
+	} else if (gFarVersion.dwBuild>=FAR_Y_VER) {
+		FUNC_Y(ExecuteInMainThread)(pCmd);
+	} else {
+		FUNC_Y(ExecuteInMainThread)(pCmd);
+	}
+}
+
+int WINAPI ProcessSynchroEventW(int Event, void *Param)
+{
+	if (Event != SE_COMMONSYNCHRO) return 0;
+
+	if (Param) {
+		ConEmuThSynchroArg* pCmd = (ConEmuThSynchroArg*)Param;
+		if (gpLastSynchroArg == pCmd) gpLastSynchroArg = NULL;
+
+		if (pCmd->bValid == 1) {
+			if (pCmd->bExpired == 0) {
+				if (pCmd->nCommand == ConEmuThSynchroArg::eExecuteMacro) {
+					PostMacro((wchar_t*)pCmd->Data);
+				}
+			}
+
+			LocalFree(pCmd);
+		}
+	}
+
+	return 0;
+}
+
+
+
 
 void CeFullPanelInfo::FinalRelease()
 {

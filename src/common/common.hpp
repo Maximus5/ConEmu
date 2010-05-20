@@ -770,6 +770,10 @@ typedef struct tag_CESERVER_REQ {
     #define CONEMUFARTIMEOUT   10000 // Сколько ожидать, пока ФАР среагирует на вызов плагина
 #endif
 
+#ifndef WM_MOUSEHWHEEL
+#define WM_MOUSEHWHEEL 0x020E
+#endif
+
 
 
 /*enum PipeCmd

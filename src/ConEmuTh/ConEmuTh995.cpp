@@ -278,9 +278,9 @@ BOOL LoadPanelInfo995(BOOL abActive)
 
 
 	// Настройки интерфейса
-	pcefpi->nFarInterfaceSettings =
+	pcefpi->nFarInterfaceSettings = gnFarInterfaceSettings =
 		(DWORD)InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETINTERFACESETTINGS, 0);
-	pcefpi->nFarPanelSettings =
+	pcefpi->nFarPanelSettings = gnFarPanelSettings =
 		(DWORD)InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETPANELSETTINGS, 0);
 
 	
@@ -337,10 +337,41 @@ void ReloadPanelsInfo995()
 	LoadPanelInfo995(FALSE);
 }
 
-BOOL IsLeftPanelActive995()
+//BOOL IsLeftPanelActive995()
+//{
+//	WARNING("TODO: IsLeftPanelActive995");
+//	return TRUE;
+//}
+
+BOOL CheckPanelSettings995(BOOL abSilence)
 {
-	WARNING("TODO: IsLeftPanelActive995");
+	if (!InfoW995)
+		return FALSE;
+
+	gnFarPanelSettings =
+		(DWORD)InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETPANELSETTINGS, 0);
+	gnFarInterfaceSettings =
+		(DWORD)InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETINTERFACESETTINGS, 0);
+
+	if (!(gnFarPanelSettings & FPS_SHOWCOLUMNTITLES))
+	{
+		// Для корректного определения положения колонок необходим один из флажков в настройке панели:
+		// [x] Показывать заголовки колонок [x] Показывать суммарную информацию
+		if (!abSilence)
+		{
+			InfoW995->Message(InfoW995->ModuleNumber, FMSG_ALLINONE|FMSG_MB_OK|FMSG_WARNING|FMSG_LEFTALIGN, NULL, 
+				(const wchar_t * const *)InfoW995->GetMsg(InfoW995->ModuleNumber,CEInvalidPanelSettings), 0, 0);
+		}
+		return FALSE;
+	}
 	return TRUE;
+}
+
+void ExecuteInMainThread995(ConEmuThSynchroArg* pCmd)
+{
+	if (!InfoW995) return;
+
+	InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_SYNCHRO, pCmd);
 }
 
 // Возникали проблемы с синхронизацией в FAR2 -> FindFile
