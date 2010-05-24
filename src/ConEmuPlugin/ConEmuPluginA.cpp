@@ -121,7 +121,7 @@ VOID CALLBACK ConEmuCheckTimerProc(
   DWORD dwTime       // current system time
 );
 
-void UpdateConEmuTabsA(int event, bool losingFocus, bool editorSave, void *Param=NULL);
+void UpdateConEmuTabsA(int anEvent, bool losingFocus, bool editorSave, void *Param=NULL);
 
 void ProcessDragFromA()
 {
@@ -544,7 +544,7 @@ int WINAPI _export ProcessViewerEvent(int Event, void *Param)
 
 extern MSection *csTabs;
 
-void UpdateConEmuTabsA(int event, bool losingFocus, bool editorSave, void *Param/*=NULL*/)
+void UpdateConEmuTabsA(int anEvent, bool losingFocus, bool editorSave, void *Param/*=NULL*/)
 {
 	if (!InfoA) return;
 
@@ -576,7 +576,7 @@ void UpdateConEmuTabsA(int event, bool losingFocus, bool editorSave, void *Param
 	}
 
 	ViewerInfo vi = {sizeof(ViewerInfo)};
-	if (event == 206) {
+	if (anEvent == 206) {
 		if (Param)
 			vi.ViewerID = *(int*)Param;
 		InfoA->ViewerControl(VCTL_GETINFO, &vi);
@@ -608,7 +608,7 @@ void UpdateConEmuTabsA(int event, bool losingFocus, bool editorSave, void *Param
 	}
 
 	// Viewer в FAR 2 build 9xx не попадает в список окон при событии VE_GOTFOCUS
-	if (!losingFocus && !editorSave && tabCount == 0 && event == 206) {
+	if (!losingFocus && !editorSave && tabCount == 0 && anEvent == 206) {
 		lbActiveFound = TRUE;
 		lbCh |= AddTab(tabCount, losingFocus, editorSave, 
 			WTYPE_VIEWER, pszFileName, NULL, 

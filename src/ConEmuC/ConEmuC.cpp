@@ -1043,6 +1043,7 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 			
 			CESERVER_REQ *pIn = NULL, *pOut = NULL;
 			wchar_t* pszAddNewConArgs = NULL;
+			// 
 			if ((pIn = ExecuteNewCmd(CECMD_GETNEWCONPARM, sizeof(CESERVER_REQ_HDR)+2*sizeof(DWORD))) != NULL) {
 				pIn->dwData[0] = gnSelfPID;
 				pIn->dwData[1] = lbIsNeedCmd;
@@ -1079,26 +1080,38 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 				wcscat(pszNewCmd, L" /ATTACH ");
 			if (!gbAlwaysConfirmExit) // ≈сли ключа еще нет в ком.строке - добавим
 				wcscat(pszNewCmd, L" /CONFIRM ");
+
 			if (pszAddNewConArgs) {
 				wcscat(pszNewCmd, L" ");
 				wcscat(pszNewCmd, pszAddNewConArgs);
-			}
-			
-			TODO("-new_console вызываетс€ в режиме ComSpec. ’орошо бы сейчас открыть мэппинг консоли на чтение, получить GuiPID и добавить в аргументы");
+			} else {
+				
+				// -new_console вызываетс€ в режиме ComSpec. ’орошо бы сейчас открыть мэппинг консоли на чтение, получить GuiPID и добавить в аргументы
+				MFileMapping<CESERVER_REQ_CONINFO_HDR> ConMap;
+				ConMap.InitName(CECONMAPNAME, (DWORD)ghConWnd);
+				const CESERVER_REQ_CONINFO_HDR* pConMap = ConMap.Open();
+				if (pConMap) {
+					if (pConMap->nGuiPID) {
+						wsprintf(pszNewCmd+wcslen(pszNewCmd), L" /GID=%i ", pConMap->nGuiPID);
+					}
+					ConMap.CloseMap();
+				}
 
-			// –азмеры должны быть такими-же
-			//2009-08-13 было закомментарено (в режиме ComSpec аргументы /BW /BH /BZ отсутствуют, т.к. запуск идет из FAR)
-			//			 иногда получалось, что требуемый размер (он запрашиваетс€ из GUI) 
-			//			 не успевал установитьс€ и в некоторых случа€х возникал
-			//			 глюк размера (видимой высоты в GUI) в ReadConsoleData
-			if (MyGetConsoleScreenBufferInfo(ghConOut, &cmd.sbi)) {
-				int nBW = cmd.sbi.dwSize.X;
-				int nBH = cmd.sbi.srWindow.Bottom - cmd.sbi.srWindow.Top + 1;
-				int nBZ = cmd.sbi.dwSize.Y;
-				if (nBZ <= nBH) nBZ = 0;
-				wsprintf(pszNewCmd+wcslen(pszNewCmd), L" /BW=%i /BH=%i /BZ=%i ", nBW, nBH, nBZ);
+				// –азмеры должны быть такими-же
+				//2009-08-13 было закомментарено (в режиме ComSpec аргументы /BW /BH /BZ отсутствуют, т.к. запуск идет из FAR)
+				//			 иногда получалось, что требуемый размер (он запрашиваетс€ из GUI) 
+				//			 не успевал установитьс€ и в некоторых случа€х возникал
+				//			 глюк размера (видимой высоты в GUI) в ReadConsoleData
+				if (MyGetConsoleScreenBufferInfo(ghConOut, &cmd.sbi)) {
+					int nBW = cmd.sbi.dwSize.X;
+					int nBH = cmd.sbi.srWindow.Bottom - cmd.sbi.srWindow.Top + 1;
+					int nBZ = cmd.sbi.dwSize.Y;
+					if (nBZ <= nBH) nBZ = 0;
+					wsprintf(pszNewCmd+wcslen(pszNewCmd), L" /BW=%i /BH=%i /BZ=%i ", nBW, nBH, nBZ);
+				}
+				//wcscat(pszNewCmd, L" </BW=9999 /BH=9999 /BZ=9999> ");
 			}
-			//wcscat(pszNewCmd, L" </BW=9999 /BH=9999 /BZ=9999> ");
+
 			// —формировать новую команду
 			// "cmd" потому что пока не хочетс€ обрезать кавычки и думать, реально ли он нужен
 			// cmd /c ""c:\program files\arc\7z.exe" -?"   // да еще и внутри могут быть двойными...
@@ -1535,7 +1548,7 @@ void SendStarted()
 			// ѕри старте консоли GUI может не успеть создать командные пайпы, т.к.
 			// их имена основаны на дескрипторе консольного окна, а его заранее GUI не знает
 			// ѕоэтому нужно чуть-чуть подождать, пока GUI поймает событие 
-			// (event == EVENT_CONSOLE_START_APPLICATION && idObject == (LONG)mn_ConEmuC_PID)
+			// (anEvent == EVENT_CONSOLE_START_APPLICATION && idObject == (LONG)mn_ConEmuC_PID)
 			DWORD dwStart = GetTickCount(), dwDelta = 0;
 			while (!gbInShutdown && dwDelta < GUIREADY_TIMEOUT) {
 				Sleep(10);

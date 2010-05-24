@@ -32,6 +32,12 @@ CRgnDetect::CRgnDetect()
 	mn_CurWidth = mn_CurHeight = mn_MaxCells = 0;
 	mb_SBI_Loaded = false;
 	mb_TableCreated = false;
+	//
+	nUserBackIdx = nMenuBackIdx = 0;
+	crUserBack = crMenuTitleBack = 0;
+	nPanelTextBackIdx = nPanelTextForeIdx = 0;
+	bShowKeyBar = true; nBottomLines = 2;
+	bAlwaysShowMenuBar = false; nTopLines = 0;
 }
 
 CRgnDetect::~CRgnDetect()
@@ -1022,7 +1028,7 @@ fin:
 	return;
 }
 
-int CRgnDetect::MarkDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int nX1, int nY1, int nX2, int nY2, bool bMarkBorder, bool bFindExterior /*= TRUE*/)
+int CRgnDetect::MarkDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int nX1, int nY1, int nX2, int nY2, bool bMarkBorder, bool bFindExterior /*= TRUE*/, DWORD nFlags /*= -1*/)
 {
 	if (nX1<0 || nX1>=nWidth || nX2<nX1 || nX2>=nWidth
 		|| nY1<0 || nY1>=nHeight || nY2<nY1 || nY2>=nHeight)
@@ -1036,7 +1042,12 @@ int CRgnDetect::MarkDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHei
 	DWORD DlgFlags = bMarkBorder ? FR_HASBORDER : 0;
 	int nWidth_1 = nWidth - 1;
 	int nHeight_1 = nHeight - 1;
+	RECT r = {nX1,nY1,nX2,nY2};
 
+	if (nFlags != -1) {
+		DlgFlags |= nFlags;
+	}
+	else
 	if (!nX1 && !nY1 && !nY2 && nX2 == nWidth_1) {
 		if ((mp_FarInfo->nFarInterfaceSettings & 0x10/*FIS_ALWAYSSHOWMENUBAR*/) == 0) {
 			DlgFlags |= FR_ACTIVEMENUBAR;
@@ -1227,6 +1238,22 @@ int CRgnDetect::MarkDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHei
 			MarkDialog(pChar, pAttr, nWidth, nHeight, nNewX1, nNewY1, nMostRight, nMostBottom, true, false);
 		}
 	}
+
+
+	if ((DlgFlags & (FR_LEFTPANEL|FR_RIGHTPANEL|FR_FULLPANEL)) != 0) {
+		// Для детекта наличия PanelTabs
+		if (nHeight > (nBottomLines+r.bottom+1)) {
+			int nIdx = nWidth*(r.bottom+1)+r.right-1;
+			if (pChar[nIdx-1] == 9616 && pChar[nIdx] == L'+' && pChar[nIdx+1] == 9616
+				&& pAttr[nIdx].nBackIdx == nPanelTextBackIdx
+				&& pAttr[nIdx].nForeIdx == nPanelTextForeIdx)
+			{
+				MarkDialog(pChar, pAttr, nWidth, nHeight, r.left, r.bottom+1, r.right, r.bottom+1,
+					false, false, FR_PANELTABS|(DlgFlags & (FR_LEFTPANEL|FR_RIGHTPANEL|FR_FULLPANEL)));
+			}
+		}
+	}
+
 
 	mn_AllFlags |= DlgFlags;
 
@@ -1488,26 +1515,27 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO *apFarInfo, const COLORREF 
 
 	//COLORREF crColorKey = gSet.ColorKey;
 	// реальный цвет, заданный в фаре
-	int nUserBackIdx = (mp_FarInfo->nFarColors[COL_COMMANDLINEUSERSCREEN] & 0xF0) >> 4;
-	COLORREF crUserBack = mp_Colors[nUserBackIdx];
-	int nMenuBackIdx = (mp_FarInfo->nFarColors[COL_HMENUTEXT] & 0xF0) >> 4;
-	COLORREF crMenuTitleBack = mp_Colors[nMenuBackIdx];
+	nUserBackIdx = (mp_FarInfo->nFarColors[COL_COMMANDLINEUSERSCREEN] & 0xF0) >> 4;
+	crUserBack = mp_Colors[nUserBackIdx];
+	nMenuBackIdx = (mp_FarInfo->nFarColors[COL_HMENUTEXT] & 0xF0) >> 4;
+	crMenuTitleBack = mp_Colors[nMenuBackIdx];
 	
 	// Для детекта наличия PanelTabs
-	int nPanelTextBackIdx = (mp_FarInfo->nFarColors[COL_PANELTEXT] & 0xF0) >> 4;
-	int nPanelTextForeIdx = mp_FarInfo->nFarColors[COL_PANELTEXT] & 0xF;
+	nPanelTextBackIdx = (mp_FarInfo->nFarColors[COL_PANELTEXT] & 0xF0) >> 4;
+	nPanelTextForeIdx = mp_FarInfo->nFarColors[COL_PANELTEXT] & 0xF;
 	
 	// При bUseColorKey Если панель погашена (или панели) то 
 	// 1. UserScreen под ним заменяется на crColorKey
 	// 2. а текст - на пробелы
 	// Проверять наличие KeyBar по настройкам (Keybar + CmdLine)
-	bool bShowKeyBar = (mp_FarInfo->nFarInterfaceSettings & 8/*FIS_SHOWKEYBAR*/) != 0;
-	int nBottomLines = bShowKeyBar ? 2 : 1;
+	bShowKeyBar = (mp_FarInfo->nFarInterfaceSettings & 8/*FIS_SHOWKEYBAR*/) != 0;
+	nBottomLines = bShowKeyBar ? 2 : 1;
 	// Проверять наличие MenuBar по настройкам
 	// Или может быть меню сейчас показано?
 	// 1 - при видимом сейчас или постоянно меню
-	bool bAlwaysShowMenuBar = (mp_FarInfo->nFarInterfaceSettings & 0x10/*FIS_ALWAYSSHOWMENUBAR*/) != 0;
-	int nTopLines = bAlwaysShowMenuBar ? 1 : 0;
+	bAlwaysShowMenuBar = (mp_FarInfo->nFarInterfaceSettings & 0x10/*FIS_ALWAYSSHOWMENUBAR*/) != 0;
+	nTopLines = bAlwaysShowMenuBar ? 1 : 0;
+
 
 	// Проверка теперь в другом месте (по плагину), да и левый нижний угол могут закрыть диалогом...
 	//// Проверим, что фар загрузился
@@ -1552,16 +1580,16 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO *apFarInfo, const COLORREF 
 			lbFullPanel = true; // значит правой быть не может
 		MarkDialog(pChar, pAttr, nWidth, nHeight, r.left, r.top, r.right, r.bottom, true);
 		
-		// Для детекта наличия PanelTabs
-		if (nHeight > (nBottomLines+r.bottom+1)) {
-			int nIdx = nWidth*(r.bottom+1)+r.right-1;
-			if (pChar[nIdx-1] == 9616 && pChar[nIdx] == L'+' && pChar[nIdx+1] == 9616
-				&& pAttr[nIdx].nBackIdx == nPanelTextBackIdx
-				&& pAttr[nIdx].nForeIdx == nPanelTextForeIdx)
-			{
-				MarkDialog(pChar, pAttr, nWidth, nHeight, r.left, r.bottom+1, r.right, r.bottom+1);
-			}
-		}
+		//// Для детекта наличия PanelTabs
+		//if (nHeight > (nBottomLines+r.bottom+1)) {
+		//	int nIdx = nWidth*(r.bottom+1)+r.right-1;
+		//	if (pChar[nIdx-1] == 9616 && pChar[nIdx] == L'+' && pChar[nIdx+1] == 9616
+		//		&& pAttr[nIdx].nBackIdx == nPanelTextBackIdx
+		//		&& pAttr[nIdx].nForeIdx == nPanelTextForeIdx)
+		//	{
+		//		MarkDialog(pChar, pAttr, nWidth, nHeight, r.left, r.bottom+1, r.right, r.bottom+1, false, false, FR_PANELTABS|FR_LEFTPANEL);
+		//	}
+		//}
 	}
 
 	if (!lbFullPanel) {
@@ -1578,16 +1606,16 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO *apFarInfo, const COLORREF 
 		if (lbRightVisible) {
 			MarkDialog(pChar, pAttr, nWidth, nHeight, r.left, r.top, r.right, r.bottom, true);
 			
-			// Для детекта наличия PanelTabs
-			if (nHeight > (nBottomLines+r.bottom+1)) {
-				int nIdx = nWidth*(r.bottom+1)+r.right-1;
-				if (pChar[nIdx-1] == 9616 && pChar[nIdx] == L'+' && pChar[nIdx+1] == 9616
-					&& pAttr[nIdx].nBackIdx == nPanelTextBackIdx
-					&& pAttr[nIdx].nForeIdx == nPanelTextForeIdx)
-				{
-					MarkDialog(pChar, pAttr, nWidth, nHeight, r.left, r.bottom+1, r.right, r.bottom+1);
-				}
-			}
+			//// Для детекта наличия PanelTabs
+			//if (nHeight > (nBottomLines+r.bottom+1)) {
+			//	int nIdx = nWidth*(r.bottom+1)+r.right-1;
+			//	if (pChar[nIdx-1] == 9616 && pChar[nIdx] == L'+' && pChar[nIdx+1] == 9616
+			//		&& pAttr[nIdx].nBackIdx == nPanelTextBackIdx
+			//		&& pAttr[nIdx].nForeIdx == nPanelTextForeIdx)
+			//	{
+			//		MarkDialog(pChar, pAttr, nWidth, nHeight, r.left, r.bottom+1, r.right, r.bottom+1, false, false, FR_PANELTABS|FR_RIGHTPANEL);
+			//	}
+			//}
 		}
 	}
 	

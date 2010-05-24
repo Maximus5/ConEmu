@@ -3699,15 +3699,24 @@ BOOL CVirtualConsole::UpdatePanelView(BOOL abLeftPanel, BOOL abOnRegister/*=FALS
 	MapWindowPoints(ghWndDC, ghWnd, pt, 2);
 	
 	//MoveWindow(ahView, pt[0].x,pt[0].y, pt[1].x-pt[0].x,pt[1].y-pt[0].y, FALSE);
-	DWORD dwErr = 0;
-	BOOL lbRc = mp_RCon->SetOtherWindowPos(pp->hWnd, HWND_TOP, 
-		pt[0].x,pt[0].y, pt[1].x-pt[0].x,pt[1].y-pt[0].y, 
-		SWP_ASYNCWINDOWPOS|SWP_DEFERERASE|SWP_NOREDRAW);
-	if (!lbRc) {
-		dwErr = GetLastError();
-		DisplayLastError(L"Can't update position of PanelView window!", dwErr);
+
+	// Не дергаться, если менять ничего не нужно
+	DWORD dwErr = 0; BOOL lbRc = TRUE;
+	RECT rcCur; GetWindowRect(pp->hWnd, &rcCur);
+	MapWindowPoints(NULL, ghWnd, (LPPOINT)&rcCur, 2);
+	if (rcCur.left != pt[0].x || rcCur.top != pt[0].y
+		|| rcCur.right != pt[1].x || rcCur.bottom != pt[1].y)
+	{
+		lbRc = mp_RCon->SetOtherWindowPos(pp->hWnd, HWND_TOP, 
+			pt[0].x,pt[0].y, pt[1].x-pt[0].x,pt[1].y-pt[0].y, 
+			SWP_ASYNCWINDOWPOS|SWP_DEFERERASE|SWP_NOREDRAW);
+		if (!lbRc) {
+			dwErr = GetLastError();
+			DisplayLastError(L"Can't update position of PanelView window!", dwErr);
+		}
 	}
-	// И отрисовать
+
+	// И отрисовать -- не нужно. окно еще не показано? когда будет показано - тогда и отрисуется
 	//InvalidateRect(pp->hWnd, NULL, FALSE); -- не нужно, так получается двойной WM_PAINT
 
 	// Регионы и видимость (видимость при регистрации не меняется)

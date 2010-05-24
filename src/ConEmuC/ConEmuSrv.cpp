@@ -1067,7 +1067,7 @@ HWND Attach2Gui(DWORD nTimeout)
 				ghConEmuWnd = pOut->StartStopRet.hWnd;
 				hDcWnd = pOut->StartStopRet.hWndDC;
 				_ASSERTE(srv.pConsoleMap != NULL); // мэппинг уже должен быть создан,
-				_ASSERTE(srv.pConsole == NULL); // и локальная копия тоже
+				_ASSERTE(srv.pConsole != NULL); // и локальная копия тоже
 				//srv.pConsole->info.nGuiPID = pOut->StartStopRet.dwPID;
 				srv.pConsoleMap->Ptr()->nGuiPID = pOut->StartStopRet.dwPID;
 
@@ -1760,7 +1760,7 @@ DWORD WINAPI WinEventThread(LPVOID lpvParam)
 
 //Minimum supported client Windows 2000 Professional 
 //Minimum supported server Windows 2000 Server 
-void WINAPI WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime)
+void WINAPI WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD anEvent, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime)
 {
 	if (hwnd != ghConWnd) {
 		// если это не наше окно - выходим
@@ -1773,7 +1773,7 @@ void WINAPI WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LO
 	WCHAR szDbg[128];
 	#endif
 
-	switch(event)
+	switch(anEvent)
 	{
 	case EVENT_CONSOLE_START_APPLICATION:
 		//A new console process has started. 

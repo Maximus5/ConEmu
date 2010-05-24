@@ -110,7 +110,7 @@ ULONG __stdcall CBaseDropTarget::Release(void)
 //
 //	Constructor
 //
-CDropSource::CDropSource(CBaseDropTarget* pCallback)
+CDropSource::CDropSource(CDragDropData* pCallback)
 {
 	m_lRefCount = 1;
 	mh_CurCopy = NULL; mh_CurMove = NULL; mh_CurLink = NULL;
@@ -252,7 +252,7 @@ HRESULT __stdcall CDropSource::GiveFeedback(DWORD dwEffect)
 //
 //	Helper routine to create an IDropSource object
 //	
-HRESULT CreateDropSource(IDropSource **ppDropSource, CBaseDropTarget* pCallback)
+HRESULT CreateDropSource(IDropSource **ppDropSource, CDragDropData* pCallback)
 {
 	if(ppDropSource == 0)
 		return E_INVALIDARG;
@@ -286,6 +286,7 @@ CDataObject::CDataObject(FORMATETC *fmtetc, STGMEDIUM *stgmed, int count)
 
 	for(int i = 0; i < count; i++)
 	{
+		_ASSERTE(fmtetc && stgmed);
 		m_pFormatEtc[i] = fmtetc[i];
 		m_pStgMedium[i] = stgmed[i];
 	}
@@ -296,7 +297,10 @@ CDataObject::CDataObject(FORMATETC *fmtetc, STGMEDIUM *stgmed, int count)
 //
 CDataObject::~CDataObject()
 {
-	WARNING("Освобождать данные в m_pStgMedium.hGlobal, и т.п.?");
+	// Освобождать данные в m_pStgMedium.hGlobal
+	for (int i = 0; i < m_nNumFormats; i++) {
+		ReleaseStgMedium(m_pStgMedium+i);
+	}
 
 	// cleanup
 	if(m_pFormatEtc) delete[] m_pFormatEtc;
@@ -538,7 +542,7 @@ HRESULT __stdcall CDataObject::EnumDAdvise (IEnumSTATDATA **ppEnumAdvise)
 //
 //	Helper function
 //
-HRESULT CreateDataObject (FORMATETC *fmtetc, STGMEDIUM *stgmeds, UINT count, IDataObject **ppDataObject)
+HRESULT CreateDataObject (FORMATETC *fmtetc, STGMEDIUM *stgmeds, UINT count, CDataObject **ppDataObject)
 {
 	if(ppDataObject == 0)
 		return E_INVALIDARG;

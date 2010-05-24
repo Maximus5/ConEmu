@@ -163,6 +163,8 @@ CEFAR_INFO *gpFarInfo = NULL, *gpFarInfoMapping = NULL;
 HANDLE ghFarAliveEvent = NULL;
 PanelViewRegInfo gPanelRegLeft = {NULL};
 PanelViewRegInfo gPanelRegRight = {NULL};
+// Для плагинов PicView & MMView нужно знать, нажат ли CtrlShift при F3
+HANDLE ghConEmuCtrlPressed = NULL, ghConEmuShiftPressed = NULL;
 
 
 //std::vector<HANDLE> ghCommandThreads;
@@ -2102,6 +2104,20 @@ void InitHWND(HWND ahFarHwnd)
 		if (hConsole2)
 			CloseHandle(hConsole2);
 	}
+
+	// CtrlShiftF3 - для MMView & PicView
+	if (!ghConEmuCtrlPressed)
+	{
+		wchar_t szName[64];
+
+		wsprintf(szName, CEKEYEVENT_CTRL, gnSelfPID);
+		ghConEmuCtrlPressed = CreateEvent(NULL, TRUE, FALSE, szName);
+		if (ghConEmuCtrlPressed) ResetEvent(ghConEmuCtrlPressed); else { _ASSERTE(ghConEmuCtrlPressed); }
+
+		wsprintf(szName, CEKEYEVENT_SHIFT, gnSelfPID);
+		ghConEmuShiftPressed = CreateEvent(NULL, TRUE, FALSE, szName);
+		if (ghConEmuShiftPressed) ResetEvent(ghConEmuShiftPressed); else { _ASSERTE(ghConEmuShiftPressed); }
+	}
 	
 	OpenMapHeader();
 	
@@ -2437,7 +2453,7 @@ BOOL ReloadFarInfo(BOOL abFull)
 	return lbChanged;
 }
 
-void UpdateConEmuTabsW(int event, bool losingFocus, bool editorSave, void* Param/*=NULL*/)
+void UpdateConEmuTabsW(int anEvent, bool losingFocus, bool editorSave, void* Param/*=NULL*/)
 {
 	if (!gbInfoW_OK)
 		return;
@@ -2448,9 +2464,9 @@ void UpdateConEmuTabsW(int event, bool losingFocus, bool editorSave, void* Param
 	MSectionLock SC; SC.Lock(csTabs);
 
 	if (gFarVersion.dwBuild>=FAR_Y_VER)
-		FUNC_Y(UpdateConEmuTabsW)(event, losingFocus, editorSave, Param);
+		FUNC_Y(UpdateConEmuTabsW)(anEvent, losingFocus, editorSave, Param);
 	else
-		FUNC_X(UpdateConEmuTabsW)(event, losingFocus, editorSave, Param);
+		FUNC_X(UpdateConEmuTabsW)(anEvent, losingFocus, editorSave, Param);
 
 	SC.Unlock();
 }

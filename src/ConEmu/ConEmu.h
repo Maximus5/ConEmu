@@ -180,8 +180,8 @@ public:
 	HCURSOR mh_CursorWait, mh_CursorArrow, mh_CursorAppStarting, mh_CursorMove;
 	HCURSOR mh_SplitV, mh_SplitH;
 	HCURSOR mh_DragCursor;
-protected:
 	CDragDrop *mp_DragDrop;
+protected:
 	//CProgressBars *ProgressBars;
 	TCHAR Title[MAX_TITLE_SIZE], TitleCmp[MAX_TITLE_SIZE], MultiTitle[MAX_TITLE_SIZE+30];
 	short mn_Progress;
@@ -189,7 +189,7 @@ protected:
 	BOOL mb_InTimer;
 	BOOL mb_ProcessCreated; DWORD mn_StartTick;
 	HWINEVENTHOOK mh_WinHook; //, mh_PopupHook;
-	static VOID CALLBACK WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime);
+	static VOID CALLBACK WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD anEvent, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime);
 	CVirtualConsole *mp_VCon[MAX_CONSOLE_COUNT];
 	CVirtualConsole *mp_VActive, *mp_VCon1, *mp_VCon2;
 	bool mb_SkipSyncSize, mb_PassSysCommand, mb_CreatingActive;
@@ -207,6 +207,10 @@ protected:
 	BOOL mb_InRestore; // во время восстановления из Maximized
 	BOOL mb_MouseCaptured;
 	BYTE m_KeybStates[256];
+	//struct {
+	//	wchar_t szTranslatedChars[16];
+	//} m_TranslatedChars[256];
+	BYTE mn_LastPressedVK;
 	wchar_t ms_ConEmuAliveEvent[MAX_PATH+64];
 	HANDLE mh_ConEmuAliveEvent; BOOL mb_ConEmuAliveOwned, mb_AliveInitialized;
 	//

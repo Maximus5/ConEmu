@@ -112,7 +112,7 @@ protected:
 	bool FindByBackground(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostRight, int &nMostBottom, bool &bMarkBorder);
 	// Сервисная
 	bool ExpandDialogFrame(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int nFrameX, int nFrameY, int &nMostRight, int &nMostBottom);
-	int  MarkDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int nX1, int nY1, int nX2, int nY2, bool bMarkBorder = false, bool bFindExterior = true);
+	int  MarkDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int nX1, int nY1, int nX2, int nY2, bool bMarkBorder = false, bool bFindExterior = true, DWORD nFlags = -1);
 	bool ConsoleRect2ScreenRect(const RECT &rcCon, RECT *prcScr);
 	
 
@@ -146,6 +146,27 @@ protected:
 	CharAttr mca_Table[0x100];
 	bool mb_TableCreated;
 	//void GetConsoleData(const CHAR_INFO *pCharInfo, const COLORREF *apColors, wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight);
+
+protected:
+	// Доп.переменные
+	int nUserBackIdx;
+	COLORREF crUserBack;
+	int nMenuBackIdx;
+	COLORREF crMenuTitleBack;
+	// Для детекта наличия PanelTabs
+	int nPanelTextBackIdx;
+	int nPanelTextForeIdx;
+	// При bUseColorKey Если панель погашена (или панели) то 
+	// 1. UserScreen под ним заменяется на crColorKey
+	// 2. а текст - на пробелы
+	// Проверять наличие KeyBar по настройкам (Keybar + CmdLine)
+	bool bShowKeyBar;
+	int nBottomLines;
+	// Проверять наличие MenuBar по настройкам
+	// Или может быть меню сейчас показано?
+	// 1 - при видимом сейчас или постоянно меню
+	bool bAlwaysShowMenuBar;
+	int nTopLines;
 };
 
 //#include <pshpack1.h>

@@ -390,7 +390,7 @@ int ProcessEditorInputW995(LPCVOID aRec)
 }*/
 
 
-void UpdateConEmuTabsW995(int event, bool losingFocus, bool editorSave, void* Param/*=NULL*/)
+void UpdateConEmuTabsW995(int anEvent, bool losingFocus, bool editorSave, void* Param/*=NULL*/)
 {
 	if (!InfoW995 || !InfoW995->AdvControl)
 		return;
@@ -414,7 +414,7 @@ void UpdateConEmuTabsW995(int event, bool losingFocus, bool editorSave, void* Pa
 	//}
 
 	ViewerInfo vi = {sizeof(ViewerInfo)};
-	if (event == 206) {
+	if (anEvent == 206) {
 		if (Param)
 			vi.ViewerID = *(int*)Param;
 		InfoW995->ViewerControl(VCTL_GETINFO, &vi);
@@ -439,7 +439,7 @@ void UpdateConEmuTabsW995(int event, bool losingFocus, bool editorSave, void* Pa
 	}
 
 	// Viewer в FAR 2 build 9xx не попадает в список окон при событии VE_GOTFOCUS
-	if (!losingFocus && !editorSave && tabCount == 0 && event == 206) {
+	if (!losingFocus && !editorSave && tabCount == 0 && anEvent == 206) {
 		lbActiveFound = TRUE;
 		lbCh |= AddTab(tabCount, losingFocus, editorSave, 
 			WTYPE_VIEWER, vi.FileName, NULL, 
@@ -476,7 +476,7 @@ void UpdateConEmuTabsW995(int event, bool losingFocus, bool editorSave, void* Pa
 	
 
 #ifdef _DEBUG
-	//WCHAR szDbg[128]; wsprintfW(szDbg, L"Event: %i, count %i\n", event, tabCount);
+	//WCHAR szDbg[128]; wsprintfW(szDbg, L"Event: %i, count %i\n", anEvent, tabCount);
 	//OutputDebugStringW(szDbg);
 #endif
 

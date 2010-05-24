@@ -43,6 +43,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRTABS(s) //DEBUGSTR(s)
 #define DEBUGSTRLANG(s) //DEBUGSTR(s)// ; Sleep(2000)
 #define DEBUGSTRMOUSE(s) //DEBUGSTR(s)
+#define DEBUGSTRKEY(s) DEBUGSTR(s)
 #define DEBUGSTRSETCURSOR(s) //DEBUGSTR(s)
 #define DEBUGSTRCONEVENT(s) //DEBUGSTR(s)
 #define DEBUGSTRMACRO(s) //DEBUGSTR(s)
@@ -142,6 +143,13 @@ CConEmuMain::CConEmuMain()
     memset(&mouse, 0, sizeof(mouse));
     mouse.lastMMW=-1;
     mouse.lastMML=-1;
+
+	//memset(m_TranslatedChars, 0, sizeof(m_TranslatedChars));
+	GetKeyboardState(m_KeybStates);
+	//wchar_t szTranslatedChars[16];
+	//HKL hkl = (HKL)GetActiveKeyboardLayout();
+	//int nTranslatedChars = ToUnicodeEx(0, 0, m_KeybStates, szTranslatedChars, 15, 0, hkl);
+	mn_LastPressedVK = 0;
 
     ms_ConEmuExe[0] = 0;
     wchar_t *pszSlash = NULL;
@@ -3895,13 +3903,13 @@ void CConEmuMain::UpdateWindowRgn(int anX/*=-1*/, int anY/*=-1*/, int anWndWidth
 	SetWindowRgn(ghWnd, hRgn, TRUE);
 }
 
-VOID CConEmuMain::WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime)
+VOID CConEmuMain::WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD anEvent, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime)
 {
     _ASSERTE(hwnd!=NULL);
     // Процесс может запуститься и ДО того, как закончится инициализация хэндла окна!
 
 	// Не помогает
-	//if (event == EVENT_SYSTEM_MENUPOPUPSTART) {
+	//if (anEvent == EVENT_SYSTEM_MENUPOPUPSTART) {
 	//	if (gConEmu.isMeForeground())
 	//	{
 	//		//SetForegroundWindow(hwnd);
@@ -3926,7 +3934,7 @@ VOID CConEmuMain::WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hw
 	//}
 
 #ifdef _DEBUG
-    switch(event)
+    switch(anEvent)
     {
     case EVENT_CONSOLE_START_APPLICATION:
         //A new console process has started. 
@@ -4017,33 +4025,53 @@ VOID CConEmuMain::WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hw
 #endif
 
     BOOL lbProcessed = FALSE;
-    for (int i=0; i<MAX_CONSOLE_COUNT; i++) {
-        if (!gConEmu.mp_VCon[i]) continue;
-        if (!gConEmu.mp_VCon[i]->RCon()->ConWnd() || gConEmu.mp_VCon[i]->RCon()->ConWnd() != hwnd) continue;
+	for (int k = 0; k < 2 && !lbProcessed; k++)
+	{
+		for (int i = 0; i < MAX_CONSOLE_COUNT; i++) {
+			if (!gConEmu.mp_VCon[i]) continue;
 
-        gConEmu.mp_VCon[i]->RCon()->OnWinEvent(event, hwnd, idObject, idChild, dwEventThread, dwmsEventTime);
-        lbProcessed = TRUE;
-        break;
-    }
+			if (!k && gConEmu.mp_VCon[i]->RCon()->InCreateRoot())
+				continue;
 
-    // Если событие "Запущен процесс" пришло ДО того, как в VirtualConsole определился
-    // хэндл консольного окна - передать событие в тот VirtualConsole, в котором
-    // mn_ConEmuC_PID == idObject
-    if (!lbProcessed && event == EVENT_CONSOLE_START_APPLICATION && idObject) {
-        // Warning. В принципе, за время выполнения этой процедуры mp_VCon[i]->hConWnd мог уже проинициализироваться
-        for (int i=0; i<MAX_CONSOLE_COUNT; i++) {
-            if (!gConEmu.mp_VCon[i]) continue;
-            if (gConEmu.mp_VCon[i]->RCon()->ConWnd() == hwnd ||
-                gConEmu.mp_VCon[i]->RCon()->GetServerPID() == (DWORD)idObject)
-            {
-                gConEmu.mp_VCon[i]->RCon()->OnWinEvent(event, hwnd, idObject, idChild, dwEventThread, dwmsEventTime);
-                lbProcessed = TRUE;
-                break;
-            }
-        }
-    }
+			LONG nSrvPID = (LONG)gConEmu.mp_VCon[i]->RCon()->GetServerPID();
+			#ifdef _DEBUG
+			if (nSrvPID == 0) {
+				_ASSERTE(nSrvPID != 0);
+			}
+			#endif
+
+			HWND hRConWnd = gConEmu.mp_VCon[i]->RCon()->ConWnd();
+			if (
+				(hRConWnd == hwnd) ||
+				(hRConWnd == NULL && anEvent == EVENT_CONSOLE_START_APPLICATION && idObject == nSrvPID)
+				)
+			{
+				gConEmu.mp_VCon[i]->RCon()->OnWinEvent(anEvent, hwnd, idObject, idChild, dwEventThread, dwmsEventTime);
+				lbProcessed = TRUE;
+				break;
+			}
+		}
+		if (!lbProcessed)
+			Sleep(100);
+	}
+    //// Если событие "Запущен процесс" пришло ДО того, как в VirtualConsole определился
+    //// хэндл консольного окна - передать событие в тот VirtualConsole, в котором
+    //// mn_ConEmuC_PID == idObject
+    //if (!lbProcessed && anEvent == EVENT_CONSOLE_START_APPLICATION && idObject) {
+    //    // Warning. В принципе, за время выполнения этой процедуры mp_VCon[i]->hConWnd мог уже проинициализироваться
+    //    for (int i=0; i<MAX_CONSOLE_COUNT; i++) {
+    //        if (!gConEmu.mp_VCon[i]) continue;
+    //        if (gConEmu.mp_VCon[i]->RCon()->ConWnd() == hwnd ||
+    //            gConEmu.mp_VCon[i]->RCon()->GetServerPID() == (DWORD)idObject)
+    //        {
+    //            gConEmu.mp_VCon[i]->RCon()->OnWinEvent(anEvent, hwnd, idObject, idChild, dwEventThread, dwmsEventTime);
+    //            lbProcessed = TRUE;
+    //            break;
+    //        }
+    //    }
+    //}
         
-    //switch(event)
+    //switch(anEvent)
     //{
     //case EVENT_CONSOLE_START_APPLICATION:
     //    //#pragma message("Win2k: CONSOLE_APPLICATION_16BIT")
@@ -5022,7 +5050,7 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
         	// было ghWndDC. Попробуем на главное окно, было бы удобно 
         	// "бросать" на таб (с автоматической активацией консоли)
             mp_DragDrop = new CDragDrop();
-            if (!mp_DragDrop->Init()) {
+            if (!mp_DragDrop->Register()) {
             	CDragDrop *p = mp_DragDrop; mp_DragDrop = NULL;
             	delete p;
             }
@@ -5455,6 +5483,8 @@ void CConEmuMain::OnAltF9(BOOL abPosted/*=FALSE*/)
 
 LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 {
+#if 0
+	/* Working */
 	wchar_t szTranslatedChars[11] = {0};
 	int nTranslatedChars = 0;
 	if (!GetKeyboardState(m_KeybStates)) {
@@ -5475,19 +5505,82 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 		nTranslatedChars = ToUnicodeEx(nVK, nSC, m_KeybStates, szTranslatedChars, 10, 0, hkl);
 		if (nTranslatedChars>0) szTranslatedChars[min(10,nTranslatedChars)] = 0; else szTranslatedChars[0] = 0;
 	}
-    //LRESULT result = 0;
+#endif
 
-  //  #ifdef _DEBUG
-  //  {
-  //      TCHAR szDbg[128];
-  //      wsprintf(szDbg, _T("(msg=%i) %s - %c (%i)\n"),
-        //  messg,
-  //          ((messg == WM_KEYDOWN) ? _T("Dn") : _T("Up")),
-  //          (TCHAR)wParam, wParam);
-  //      //SetWindowText(ghWnd, szDbg);
-        //OutputDebugString(szDbg);
-  //  }
-  //  #endif
+
+#if 1
+	/* Invalid ? */
+	wchar_t szTranslatedChars[16] = {0};
+	WORD bVK = (WORD)(wParam & 0xFF);
+
+	if (!GetKeyboardState(m_KeybStates)) {
+		#ifdef _DEBUG
+		DWORD dwErr = GetLastError();
+		_ASSERTE(FALSE);
+		#endif
+		static bool sbErrShown = false;
+		if (!sbErrShown) {
+			sbErrShown = true;
+			DisplayLastError(L"GetKeyboardState failed!");
+		}
+	}
+
+	//MSG smsg = {hWnd, messg, wParam, lParam};
+	//TranslateMessage(&smsg);
+
+
+	//if (messg == WM_KEYDOWN || messg == WM_SYSKEYDOWN)
+	{
+		HKL hkl = (HKL)GetActiveKeyboardLayout();
+		UINT nVK = wParam & 0xFFFF;
+		UINT nSC = ((DWORD)lParam & 0xFF0000) >> 16;
+
+		WARNING("BUGBUG: похоже глючит в x64 на US-Dvorak");
+		int nTranslatedChars = ToUnicodeEx(nVK, nSC, m_KeybStates, szTranslatedChars, 15, 0, hkl);
+		if (nTranslatedChars >= 0) {
+			// 2 or more
+			// Two or more characters were written to the buffer specified by pwszBuff.
+			// The most common cause for this is that a dead-key character (accent or diacritic)
+			// stored in the keyboard layout could not be combined with the specified virtual key
+			// to form a single character. However, the buffer may contain more characters than the
+			// return value specifies. When this happens, any extra characters are invalid and should be ignored. 
+			szTranslatedChars[min(15,nTranslatedChars)] = 0;
+		} else if (nTranslatedChars == -1) {
+			// The specified virtual key is a dead-key character (accent or diacritic).
+			// This value is returned regardless of the keyboard layout, even if several
+			// characters have been typed and are stored in the keyboard state. If possible,
+			// even with Unicode keyboard layouts, the function has written a spacing version
+			// of the dead-key character to the buffer specified by pwszBuff. For example, the
+			// function writes the character SPACING ACUTE (0x00B4), 
+			// rather than the character NON_SPACING ACUTE (0x0301).
+			szTranslatedChars[0] = 0;
+		} else {
+			// Invalid
+			szTranslatedChars[0] = 0;
+		}
+
+		mn_LastPressedVK = bVK;
+	}
+#endif
+
+
+
+
+
+
+	#ifdef _DEBUG
+	wchar_t szDebug[255];
+	wsprintf(szDebug, L"%s(VK=0x%02X, Scan=%i)\n",
+		(messg == WM_KEYDOWN) ? L"WM_KEYDOWN" :
+		(messg == WM_KEYUP) ? L"WM_KEYUP" :
+		(messg == WM_SYSKEYDOWN) ? L"WM_SYSKEYDOWN" :
+		(messg == WM_SYSKEYUP) ? L"WM_SYSKEYUP" :
+		L"<Unknown Message> ",
+		bVK, ((DWORD)lParam & 0xFF0000) >> 16);
+	DEBUGSTRKEY(szDebug);
+	#endif
+
+
   
     if (messg == WM_KEYDOWN && !mb_HotKeyRegistered)
     	RegisterHotKeys(); // CtrlWinAltSpace
@@ -5710,7 +5803,7 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 		//}
 		//#endif
 
-        mp_VActive->RCon()->OnKeyboard(hWnd, messg, wParam, lParam, szTranslatedChars);
+		mp_VActive->RCon()->OnKeyboard(hWnd, messg, wParam, lParam, szTranslatedChars);
     }
 
     return 0;
@@ -8052,11 +8145,13 @@ void CConEmuMain::GuiServerThreadCommand(HANDLE hPipe)
 		// Запущен процесс сервера
 		HWND hConWnd = (HWND)pIn->dwData[0];
 		_ASSERTE(hConWnd && IsWindow(hConWnd));
-		LRESULT l;
+		LRESULT l = 0;
 		DWORD_PTR dwRc = 0;
 		
-		l = SendMessageTimeout(ghWnd, gConEmu.mn_MsgSrvStarted, (WPARAM)hConWnd, pIn->hdr.nSrcPID,
-			SMTO_BLOCK, 500, &dwRc);
+		//2010-05-21 Поскольку это критично - лучше ждать до упора, хотя может быть DeadLock?
+		//l = SendMessageTimeout(ghWnd, gConEmu.mn_MsgSrvStarted, (WPARAM)hConWnd, pIn->hdr.nSrcPID,
+		//	SMTO_BLOCK, 5000, &dwRc);
+		dwRc = SendMessage(ghWnd, gConEmu.mn_MsgSrvStarted, (WPARAM)hConWnd, pIn->hdr.nSrcPID);
 		
 		pIn->dwData[0] = (l == 0) ? 0 : 1;
 		pIn->hdr.cbSize = sizeof(CESERVER_REQ_HDR) + sizeof(DWORD);

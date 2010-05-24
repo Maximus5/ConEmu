@@ -171,7 +171,7 @@ DWORD WINAPI InputPipeThread(LPVOID lpvParam);
 DWORD WINAPI GetDataThread(LPVOID lpvParam);
 BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out); 
 DWORD WINAPI WinEventThread(LPVOID lpvParam);
-void WINAPI WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime);
+void WINAPI WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD anEvent, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime);
 void CheckCursorPos();
 //void SendConsoleChanges(CESERVER_REQ* pOut);
 //CESERVER_REQ* CreateConsoleInfo(CESERVER_CHAR* pRgnOnly, BOOL bCharAttrBuff);

@@ -148,6 +148,8 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
     
     mn_ConEmuC_PID = 0; //mn_ConEmuC_Input_TID = 0;
 	mh_ConEmuC = NULL; mh_ConEmuCInput = NULL; mb_UseOnlyPipeInput = FALSE;
+	//mh_CreateRootEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+	mb_InCreateRoot = FALSE;
     
     mb_NeedStartProcess = FALSE; mb_IgnoreCmdStop = FALSE;
 
@@ -1539,6 +1541,8 @@ BOOL CRealConsole::StartProcess()
     	GlobalFree(mp_sei); mp_sei = NULL;
     }
 
+	//ResetEvent(mh_CreateRootEvent);
+	mb_InCreateRoot = TRUE;
 
     STARTUPINFO si;
     PROCESS_INFORMATION pi;
@@ -1641,6 +1645,7 @@ BOOL CRealConsole::StartProcess()
 				//	, NULL, m_Args.pszStartupDir, &si, &pi))
 				{
 					lbRc = TRUE;
+					mn_ConEmuC_PID = pi.dwProcessId;
 				} else {
 					dwLastError = GetLastError();
 				}
@@ -1676,6 +1681,7 @@ BOOL CRealConsole::StartProcess()
 								, NULL, m_Args.pszStartupDir, &si, &pi))
 						{
 							lbRc = TRUE;
+							mn_ConEmuC_PID = pi.dwProcessId;
 						}
 						CloseHandle(hTokenRest); hTokenRest = NULL;
 					} else {
@@ -1691,8 +1697,11 @@ BOOL CRealConsole::StartProcess()
 					NORMAL_PRIORITY_CLASS|CREATE_DEFAULT_ERROR_MODE|CREATE_NEW_CONSOLE
 					//|CREATE_NEW_PROCESS_GROUP - низя! перестает срабатывать Ctrl-C
 					, NULL, m_Args.pszStartupDir, &si, &pi);
-				if (!lbRc)
+				if (!lbRc) {
 					dwLastError = GetLastError();
+				} else {
+					mn_ConEmuC_PID = pi.dwProcessId;
+				}
 			}
 			DEBUGSTRPROC(_T("CreateProcess finished\n"));
 
@@ -1769,6 +1778,7 @@ BOOL CRealConsole::StartProcess()
 
             /*if (!AttachPID(pi.dwProcessId)) {
                 DEBUGSTRPROC(_T("AttachPID failed\n"));
+				SetEvent(mh_CreateRootEvent); mb_InCreateRoot = FALSE;
                 return FALSE;
             }
             DEBUGSTRPROC(_T("AttachPID OK\n"));*/
@@ -1813,6 +1823,8 @@ BOOL CRealConsole::StartProcess()
             if (nBrc!=IDYES) {
                 // ??? Может ведь быть НЕСКОЛЬКО консолей. Нельзя так разрушать основное окно!
                 //gConEmu.Destroy();
+				//SetEvent(mh_CreateRootEvent);
+				mb_InCreateRoot = FALSE;
 				CloseConsole();
                 return FALSE;
             }
@@ -1851,6 +1863,9 @@ BOOL CRealConsole::StartProcess()
 		//wsprintfW(ms_ConEmuCInput_Pipe, CESERVERINPUTNAME, L".", mn_ConEmuC_PID);
 		//MCHKHEAP
 	}
+
+	//SetEvent(mh_CreateRootEvent);
+	mb_InCreateRoot = FALSE;
 
     return lbRc;
 }
@@ -2816,7 +2831,7 @@ LRESULT CRealConsole::OnSetScrollPos(WPARAM wParam)
 	return 0;
 }
 
-void CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, wchar_t *pszChars)
+void CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, const wchar_t *pszChars)
 {
     //LRESULT result = 0;
 	_ASSERTE(pszChars!=NULL);
@@ -3087,9 +3102,19 @@ void CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
             
             PostConsoleEvent(&r);
 
-			// Теоретически, нажатие клавиши может трансформироваться в последовательность нескольких символов...
+			// нажатие клавиши может трансформироваться в последовательность нескольких символов...
+			/*
+			The expected behaviour would be (as it is in a cmd.exe session):
+			- hit "^" -> see nothing
+			- hit "^" again -> see ^^
+			- hit "^" again -> see nothing
+			- hit "^" again -> see ^^
+
+			Alternatively:
+			- hit "^" -> see nothing
+			- hit any other alpha-numeric key, e.g. "k" -> see "^k"
+			*/
 			for (int i = 1; pszChars[i]; i++) {
-				_ASSERT(FALSE); // проверим? бывает такое?
 				r.Event.KeyEvent.uChar.UnicodeChar = pszChars[i];
 				PostConsoleEvent(&r);
 			}
@@ -3116,11 +3141,11 @@ void CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
     return;
 }
 
-void CRealConsole::OnWinEvent(DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime)
+void CRealConsole::OnWinEvent(DWORD anEvent, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime)
 {
     _ASSERTE(hwnd!=NULL);
     
-	if (hConWnd == NULL && event == EVENT_CONSOLE_START_APPLICATION && idObject == (LONG)mn_ConEmuC_PID) {
+	if (hConWnd == NULL && anEvent == EVENT_CONSOLE_START_APPLICATION && idObject == (LONG)mn_ConEmuC_PID) {
 		SetConStatus(L"Waiting for console server...");
         SetHwnd ( hwnd );
 	}
@@ -3133,7 +3158,7 @@ void CRealConsole::OnWinEvent(DWORD event, HWND hwnd, LONG idObject, LONG idChil
     // Не забыть, про обработку флажка Ntvdm
     
     TODO("При отцеплении от консоли NTVDM - можно прибить этот процесс");
-    switch(event)
+    switch(anEvent)
     {
     case EVENT_CONSOLE_START_APPLICATION:
         //A new console process has started. 
@@ -3450,10 +3475,10 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
         #ifdef _DEBUG
 		wchar_t szDbg[128];
 		switch (nStarted) {
-			case 0: wsprintf(szDbg, L"GUI recieved CECMD_CMDSTARTSTOP(ServerStart,%i)\n", pIn->hdr.nCreateTick); break;
-			case 1: wsprintf(szDbg, L"GUI recieved CECMD_CMDSTARTSTOP(ServerStop,%i)\n", pIn->hdr.nCreateTick); break;
-			case 2: wsprintf(szDbg, L"GUI recieved CECMD_CMDSTARTSTOP(ComspecStart,%i)\n", pIn->hdr.nCreateTick); break;
-			case 3: wsprintf(szDbg, L"GUI recieved CECMD_CMDSTARTSTOP(ComspecStop,%i)\n", pIn->hdr.nCreateTick); break;
+			case 0: wsprintf(szDbg, L"GUI received CECMD_CMDSTARTSTOP(ServerStart,%i)\n", pIn->hdr.nCreateTick); break;
+			case 1: wsprintf(szDbg, L"GUI received CECMD_CMDSTARTSTOP(ServerStop,%i)\n", pIn->hdr.nCreateTick); break;
+			case 2: wsprintf(szDbg, L"GUI received CECMD_CMDSTARTSTOP(ComspecStart,%i)\n", pIn->hdr.nCreateTick); break;
+			case 3: wsprintf(szDbg, L"GUI received CECMD_CMDSTARTSTOP(ComspecStop,%i)\n", pIn->hdr.nCreateTick); break;
 		}
 		DEBUGSTRCMD(szDbg);
         #endif
@@ -4025,6 +4050,14 @@ DWORD CRealConsole::GetServerPID()
 {
     if (!this)
         return 0;
+
+	if (mb_InCreateRoot && !mn_ConEmuC_PID) {
+		_ASSERTE(!mb_InCreateRoot);
+		//if (GetCurrentThreadId() != mn_MonitorThreadID) {
+		//	WaitForSingleObject(mh_CreateRootEvent, 30000); -- низя - DeadLock
+		//}
+	}
+
     return mn_ConEmuC_PID;
 }
 
@@ -9279,8 +9312,14 @@ void CRealConsole::ApplyConsoleInfo()
 		//}
 	    
 		DWORD nPID = GetCurrentProcessId();
-		if (nPID != m_ConsoleMap.Ptr()->nGuiPID) {
-    		_ASSERTE(m_ConsoleMap.Ptr()->nGuiPID == nPID);
+		DWORD nMapGuiPID = m_ConsoleMap.Ptr()->nGuiPID;
+		if (nPID != nMapGuiPID) {
+			// Если консоль запускалась как "-new_console" то nMapGuiPID может быть еще 0?
+			// Хотя, это может случиться только если батник запущен из консоли НЕ прицепленной к GUI ConEmu.
+			if (nMapGuiPID != 0)
+			{
+    			_ASSERTE(nMapGuiPID == nPID);
+			}
     		//PRAGMA_ERROR("Передать через команду сервера новый GUI PID. Если пайп не готов сразу выйти");
     		//mp_ConsoleInfo->nGuiPID = nPID;
 		}
@@ -9732,3 +9771,8 @@ const CEFAR_INFO* CRealConsole::GetFarInfo()
 	if (!this) return NULL;
 	return ms_NameTitle;
 }*/
+
+BOOL CRealConsole::InCreateRoot()
+{
+	return (mb_InCreateRoot && !mn_ConEmuC_PID);
+}

@@ -223,7 +223,7 @@ public:
 	BOOL SetOtherWindowRgn(HWND hWnd, int nRects, LPRECT prcRects, BOOL bRedraw);
 	void PostMacro(LPCWSTR asMacro);
     //BOOL FlushInputQueue(DWORD nTimeout = 500);
-    void OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, wchar_t *pszChars);
+    void OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, const wchar_t *pszChars);
     void OnMouse(UINT messg, WPARAM wParam, int x, int y);
     void OnFocus(BOOL abFocused);
     
@@ -240,7 +240,7 @@ public:
     DWORD GetConsoleOutputCP() { return con.m_dwConsoleOutputCP; };
     DWORD GetConsoleMode() { return con.m_dwConsoleMode; };
     void SyncConsole2Window();
-    void OnWinEvent(DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime);
+    void OnWinEvent(DWORD anEvent, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime);
     int  GetProcesses(ConProcess** ppPrc);
     DWORD GetFarPID(BOOL abPluginRequired=FALSE);
     DWORD GetProgramStatus();
@@ -318,11 +318,13 @@ public:
 	void Detach();
 	void AdminDuplicate();
 	const CEFAR_INFO *GetFarInfo();
+	BOOL InCreateRoot();
 	//LPCWSTR GetLngNameTime();
 
 protected:
     CVirtualConsole* mp_VCon; // соответствующая виртуальная консоль
     DWORD mn_ConEmuC_PID/*, mn_ConEmuC_Input_TID*/; HANDLE mh_ConEmuC, mh_ConEmuCInput;
+	/*HANDLE mh_CreateRootEvent;*/ BOOL mb_InCreateRoot;
 	BOOL mb_UseOnlyPipeInput;
     TCHAR ms_ConEmuC_Pipe[MAX_PATH], ms_ConEmuCInput_Pipe[MAX_PATH], ms_VConServer_Pipe[MAX_PATH];
 	//TCHAR ms_ConEmuC_DataReady[64]; HANDLE mh_ConEmuC_DataReady;

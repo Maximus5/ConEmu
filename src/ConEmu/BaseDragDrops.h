@@ -1,6 +1,7 @@
 #pragma once
 #include <windows.h>
 
+class CDragDropData;
 
 class CBaseDropTarget : public IDropTarget
 {
@@ -46,13 +47,13 @@ public:
 	//
     // Constructor / Destructor
 	//
-    CDropSource(CBaseDropTarget* pCallback);
+    CDropSource(CDragDropData* pCallback);
     ~CDropSource();
 	
 private:
 
 	HCURSOR mh_CurCopy, mh_CurMove, mh_CurLink;
-	CBaseDropTarget* mp_Callback;
+	CDragDropData* mp_Callback;
 
     //
 	// private members and functions
@@ -144,7 +145,7 @@ private:
 };
 
 
-HRESULT CreateDropSource(IDropSource **ppDropSource, CBaseDropTarget* pCallback);
-HRESULT CreateDataObject (FORMATETC *fmtetc, STGMEDIUM *stgmeds, UINT count, IDataObject **ppDataObject);
+HRESULT CreateDropSource(IDropSource **ppDropSource, CDragDropData* pCallback);
+HRESULT CreateDataObject (FORMATETC *fmtetc, STGMEDIUM *stgmeds, UINT count, CDataObject **ppDataObject);
 HRESULT CreateEnumFormatEtc(UINT nNumFormats, FORMATETC *pFormatEtc, IEnumFORMATETC **ppEnumFormatEtc);
 HANDLE StringToHandle(char *szText, int nTextLen);

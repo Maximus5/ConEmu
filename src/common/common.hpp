@@ -173,6 +173,8 @@ extern wchar_t gszDbgModLabel[6];
 //#define CEGUIATTACHED       L"ConEmuGuiAttached.%u"
 #define CEGUIRCONSTARTED    L"ConEmuGuiRConStarted.%u"
 #define CEGUI_ALIVE_EVENT   L"ConEmuGuiStarted"
+#define CEKEYEVENT_CTRL     L"ConEmuCtrlPressed.%u"
+#define CEKEYEVENT_SHIFT    L"ConEmuShiftPressed.%u"
 
 
 //#define CONEMUMSG_ATTACH L"ConEmuMain::Attach"            // wParam == hConWnd, lParam == ConEmuC_PID

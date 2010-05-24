@@ -1051,7 +1051,7 @@ void OnMainThreadActived()
 
 	// Сбросим, чтобы RgnDetect попытался сам найти панели и диалоги.
 	// Это нужно чтобы избежать возможных блокировок фара
-	//gFarInfo.bFarPanelInfoFilled = gFarInfo.bFarLeftPanel = gFarInfo.bFarRightPanel = FALSE;
+	gFarInfo.bFarPanelInfoFilled = gFarInfo.bFarLeftPanel = gFarInfo.bFarRightPanel = FALSE;
 	gpRgnDetect->PrepareTransparent(&gFarInfo, gcrCurColors);
 	gnRgnDetectFlags = gpRgnDetect->GetFlags();
 
@@ -1437,6 +1437,7 @@ int ShowLastError()
 
 void UpdateEnvVar(BOOL abForceRedraw)
 {
+	WARNING("сбрасывать скролл нужно ПЕРЕД возвратом последней клавиши ДО REDRAW");
 	if (gbWaitForKeySequenceEnd) {
 		SetEnvironmentVariable(TH_ENVVAR_NAME, TH_ENVVAR_SCROLL);
 	} else if (IsThumbnailsActive(FALSE/*abFocusRequired*/)) {
