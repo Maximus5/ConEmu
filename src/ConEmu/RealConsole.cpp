@@ -1923,7 +1923,8 @@ void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y)
 		return;
 	}
     
-    if (con.bBufferHeight) {
+	BOOL lbFarBufferSupported = isFarBufferSupported();
+    if (con.bBufferHeight && !lbFarBufferSupported) {
         if (messg == WM_MOUSEWHEEL) {
             SHORT nDir = (SHORT)HIWORD(wParam);
             BOOL lbCtrl = isPressed(VK_CONTROL);
@@ -1951,17 +1952,22 @@ void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y)
     // ≈сли консоль в режиме с прокруткой - не посылать мышь в консоль
     // »наче получаютс€ казусы. ≈сли во врем€ выполнени€ команды (например "dir c: /s")
     // успеть дернуть мышкой - то при возврате в ‘ј– сразу пойдет фаровский драг
-    if (isBufferHeight())
+    if (isBufferHeight() && !lbFarBufferSupported)
     	return;
     	
 
 	// ѕолучить известные координаты символов
 	COORD crMouse = mp_VCon->ClientToConsole(x,y);
+	if (isBufferHeight()) {
+		crMouse.X += con.m_sbi.srWindow.Left;
+		crMouse.Y += con.m_sbi.srWindow.Top;
+	}
 
 	if (messg == WM_MOUSEMOVE /*&& mb_MouseButtonDown*/) {
 		// Issue 172: ConEmu10020304: проблема с правым кликом на PanelTabs
 		if (mcr_LastMouseEventPos.X == crMouse.X && mcr_LastMouseEventPos.Y == crMouse.Y)
 			return; // не посылать в консоль MouseMove на том же месте
+		mcr_LastMouseEventPos.X = crMouse.X; mcr_LastMouseEventPos.Y = crMouse.Y;
 	}
 
 	INPUT_RECORD r; memset(&r, 0, sizeof(r));
@@ -3561,11 +3567,19 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 
 					if (gSet.DefaultBufferHeight && !isBufferHeight()) {
 						WARNING("“ут наверное нужно бы заблокировать прием команды смена размера из сервера ConEmuC");
+						#if 0
 						con.m_sbi.dwSize.Y = gSet.DefaultBufferHeight;
 						mb_BuferModeChangeLocked = TRUE;
 						SetBufferHeightMode(TRUE, TRUE); // —разу включаем, иначе команда неправильно сформируетс€
 						SetConsoleSize(con.m_sbi.dwSize.X, TextHeight(), 0, CECMD_CMDSTARTED);
 						mb_BuferModeChangeLocked = FALSE;
+						#else
+						//con.m_sbi.dwSize.Y = gSet.DefaultBufferHeight; -- не будем мен€ть сразу, а то SetConsoleSize просто skip
+						mb_BuferModeChangeLocked = TRUE;
+						SetBufferHeightMode(TRUE, TRUE); // —разу включаем, иначе команда неправильно сформируетс€
+						SetConsoleSize(con.m_sbi.dwSize.X, TextHeight(), gSet.DefaultBufferHeight, CECMD_CMDSTARTED);
+						mb_BuferModeChangeLocked = FALSE;
+						#endif
 					}
 				}
             } else if (nStarted == 0) {
@@ -8796,6 +8810,19 @@ BOOL CRealConsole::GetPanelRect(BOOL abRight, RECT* prc, BOOL abFull /*= FALSE*/
 	return TRUE;
 }
 
+bool CRealConsole::isFarBufferSupported()
+{
+	if (!this)
+		return false;
+
+	if (!m_FarInfo.IsValid() 
+		|| m_FarInfo.Ptr()->nFarPID != GetFarPID()
+		|| !m_FarInfo.Ptr()->bBufferSupport)
+		return false;
+
+	return true;
+}
+
 bool CRealConsole::isSelectionAllowed()
 {
 	if (!this)
@@ -8812,7 +8839,13 @@ bool CRealConsole::isSelectionAllowed()
 	else if (gSet.isConsoleTextSelection == 1)
 		return true; // разрешено всегда
 	else if (isBufferHeight())
-		return true; // иначе - только в режиме с прокруткой
+	{
+		// иначе - только в режиме с прокруткой
+		DWORD nFarPid = 0;
+		// Ќо в FAR2 по€вилс€ новый ключик /w
+		if (!isFarBufferSupported())
+			return true;
+	}
 
 	//if ((con.m_dwConsoleMode & ENABLE_QUICK_EDIT_MODE) == ENABLE_QUICK_EDIT_MODE)
 	//	return true;
@@ -9069,6 +9102,8 @@ BOOL CRealConsole::OpenFarMapData()
 		goto wrap;
 	}
 	_ASSERTE(m_FarInfo.Ptr()->nProtocolVersion == CESERVER_REQ_VER);
+
+
 
 	m_FarAliveEvent.InitName(CEFARALIVEEVENT, nFarPID);
 	//wsprintf(szMapName, CEFARALIVEEVENT, nFarPID);

@@ -1544,24 +1544,26 @@ void SendStarted()
 		PRINT_COMSPEC(L"Starting %s mode (ExecuteGuiCmd started)\n",(RunMode==RM_SERVER) ? L"Server" : L"ComSpec");
 		
 		pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
-		if (!pOut) {
-			// При старте консоли GUI может не успеть создать командные пайпы, т.к.
-			// их имена основаны на дескрипторе консольного окна, а его заранее GUI не знает
-			// Поэтому нужно чуть-чуть подождать, пока GUI поймает событие 
-			// (anEvent == EVENT_CONSOLE_START_APPLICATION && idObject == (LONG)mn_ConEmuC_PID)
-			DWORD dwStart = GetTickCount(), dwDelta = 0;
-			while (!gbInShutdown && dwDelta < GUIREADY_TIMEOUT) {
-				Sleep(10);
-				pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
-				if (pOut) break;
+		// Ждать при ошибке открытия пайпа наверное и не нужно - все что необходимо, сервер
+		// уже передал в ServerInit, а ComSpec - не критично
+		//if (!pOut) {
+		//	// При старте консоли GUI может не успеть создать командные пайпы, т.к.
+		//	// их имена основаны на дескрипторе консольного окна, а его заранее GUI не знает
+		//	// Поэтому нужно чуть-чуть подождать, пока GUI поймает событие 
+		//	// (anEvent == EVENT_CONSOLE_START_APPLICATION && idObject == (LONG)mn_ConEmuC_PID)
+		//	DWORD dwStart = GetTickCount(), dwDelta = 0;
+		//	while (!gbInShutdown && dwDelta < GUIREADY_TIMEOUT) {
+		//		Sleep(10);
+		//		pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
+		//		if (pOut) break;
 
-				dwDelta = GetTickCount() - dwStart;
-			}
-			if (!pOut) {
-				// Возможно под отладчиком, или скорее всего GUI свалился
-				_ASSERTE(pOut != NULL);
-			}
-		}
+		//		dwDelta = GetTickCount() - dwStart;
+		//	}
+		//	if (!pOut) {
+		//		// Возможно под отладчиком, или скорее всего GUI свалился
+		//		_ASSERTE(pOut != NULL);
+		//	}
+		//}
 
 		PRINT_COMSPEC(L"Starting %s mode (ExecuteGuiCmd finished)\n",(RunMode==RM_SERVER) ? L"Server" : L"ComSpec");
 

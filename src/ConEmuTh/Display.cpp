@@ -322,22 +322,23 @@ LRESULT CALLBACK CeFullPanelInfo::DisplayWndProc(HWND hwnd, UINT uMsg, WPARAM wP
 			}
 		} else if (uMsg == gnConEmuSettingsMsg) {
 			WARNING("gnConEmuSettingsMsg");
-			MFileMapping<PanelViewSettings> ThSetMap;
-			_ASSERTE(ghConEmuRoot!=NULL);
+			//MFileMapping<PanelViewSettings> ThSetMap;
+			//_ASSERTE(ghConEmuRoot!=NULL);
 
-			DWORD nGuiPID;
-			#ifdef _DEBUG
-			GetWindowThreadProcessId(ghConEmuRoot, &nGuiPID);
-			_ASSERTE(nGuiPID == wParam);
-			#endif
-			nGuiPID = (DWORD)wParam;
+			//DWORD nGuiPID;
+			//#ifdef _DEBUG
+			//GetWindowThreadProcessId(ghConEmuRoot, &nGuiPID);
+			//_ASSERTE(nGuiPID == wParam);
+			//#endif
+			//nGuiPID = (DWORD)wParam;
 
-			ThSetMap.InitName(CECONVIEWSETNAME, nGuiPID);
-			if (!ThSetMap.Open()) {
-				MessageBox(NULL, ThSetMap.GetErrorText(), L"ConEmuTh", MB_ICONSTOP|MB_SETFOREGROUND|MB_SYSTEMMODAL);
-			} else {
-				ThSetMap.GetTo(&gThSet);
-				ThSetMap.CloseMap();
+			//ThSetMap.InitName(CECONVIEWSETNAME, nGuiPID);
+			//if (!ThSetMap.Open()) {
+			//	MessageBox(NULL, ThSetMap.GetErrorText(), L"ConEmuTh", MB_ICONSTOP|MB_SETFOREGROUND|MB_SYSTEMMODAL);
+			//} else {
+			//	ThSetMap.GetTo(&gThSet);
+			//	ThSetMap.CloseMap();
+			if (LoadThSet((DWORD)wParam)) {
 
 				gpImgCache->Reset();
 				// и обновить
@@ -422,7 +423,7 @@ BOOL CeFullPanelInfo::PaintItem(
 				HDC hdc, int nIndex, int x, int y, CePluginPanelItem* pItem,
 				BOOL abCurrentItem, BOOL abSelectedItem,
 				/*COLORREF *nBackColor, COLORREF *nForeColor, HBRUSH *hBack,*/
-				BOOL abAllowPreview, HBRUSH hBackBrush, COLORREF crBackColor)
+				BOOL abAllowPreview, HBRUSH hBackBrush, HBRUSH hPanelBrush, COLORREF crPanelColor)
 {
 	//const wchar_t* pszName = pItem->FindData.lpwszFileNamePart;
 	//int nLen = lstrlen(pszName);
@@ -437,9 +438,11 @@ BOOL CeFullPanelInfo::PaintItem(
 		return FALSE;
 
 	RECT rcFull = {x, y, x+nWholeW, y+nWholeH};
-	FillRect(hdc, &rcFull, hBackBrush); //hBack[0]);
+	FillRect(hdc, &rcFull, hPanelBrush); //hBack[0]);
 
 	if (gThSet.nPreviewFrame == 1) {
+		// Залить фон ПРЕВЬЮШКИ. Он может отличаться от фона панели
+		HBRUSH hOldBr = (HBRUSH)SelectObject(hdc, hBackBrush);
 		Rectangle(hdc,
 			x+Spaces.nSpaceX1, y+Spaces.nSpaceY1,
 			x+Spaces.nSpaceX1+(Spaces.nImgSize+2*gThSet.nPreviewFrame), y+Spaces.nSpaceY1+(Spaces.nImgSize+2*gThSet.nPreviewFrame));
@@ -448,6 +451,7 @@ BOOL CeFullPanelInfo::PaintItem(
 			x+gThSet.nHPadding, y+gThSet.nVPadding,
 			x+gThSet.nHPadding+gThSet.nWidth, y+gThSet.nVPadding+gThSet.nHeight);
 		*/
+		SelectObject(hdc, hOldBr);
 	} else if (gThSet.nPreviewFrame == 0) {
 		RECT rcTmp = {x+Spaces.nSpaceX1, y+Spaces.nSpaceY1,
 			x+Spaces.nSpaceX1+(Spaces.nImgSize+2*gThSet.nPreviewFrame), y+Spaces.nSpaceY1+(Spaces.nImgSize+2*gThSet.nPreviewFrame)};
@@ -455,8 +459,8 @@ BOOL CeFullPanelInfo::PaintItem(
 		RECT rcTmp = {x+gThSet.nHPadding, y+gThSet.nVPadding,
 			x+gThSet.nHPadding+gThSet.nWidth, y+gThSet.nVPadding+gThSet.nHeight};
 		*/
-		// Уже залито вроде целиком
-		//FillRect(hdc, &rcTmp, hBackBrush);
+		// Залить фон ПРЕВЬЮШКИ. Он может отличаться от фона панели
+		FillRect(hdc, &rcTmp, hBackBrush);
 	} else {
 		_ASSERTE(gThSet.nPreviewFrame==0 || gThSet.nPreviewFrame==1);
 		return FALSE;
@@ -559,7 +563,7 @@ BOOL CeFullPanelInfo::PaintItem(
 			HPEN hPen = CreatePen(PS_DOT, 1, crPen);
 			HPEN hOldPen = (HPEN)SelectObject(hdc, hPen);
 			
-			SetBkColor(hdc, crBackColor); //nBackColor[0]);
+			SetBkColor(hdc, crPanelColor); //nBackColor[0]);
 
 			MoveToEx(hdc, nX, nY, NULL);
 			LineTo(hdc, nX+nW, nY);
@@ -831,7 +835,8 @@ void CeFullPanelInfo::Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc)
 	//	hBack[i] = CreateSolidBrush(nBackColor[i]);
 	//}
 	COLORREF crGray = gcrCurColors[8];
-	COLORREF crBack = gcrCurColors[((nFarColors[COL_PANELTEXT] & 0xF0)>>4)]; //nBackColor[0]; //gcrColors[15];
+	COLORREF crPanel = gcrCurColors[((nFarColors[COL_PANELTEXT] & 0xF0)>>4)]; //nBackColor[0]; //gcrColors[15];
+	COLORREF crBack = crPanel;
 
 	if (gThSet.crBackground.UseIndex) {
 		if (gThSet.crBackground.ColorIdx <= 15)
@@ -849,6 +854,7 @@ void CeFullPanelInfo::Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc)
 		
 	
 	HPEN hPen = CreatePen(PS_SOLID, 1, crGray);
+	HBRUSH hPanelBrush = CreateSolidBrush(crPanel);
 	HBRUSH hBackBrush = CreateSolidBrush(crBack);
 	HFONT hFont = CreateFont(nFontHeight,0,0,0,400,0,0,0,ANSI_CHARSET,OUT_DEFAULT_PRECIS,CLIP_DEFAULT_PRECIS,
 		gThSet.nFontQuality,DEFAULT_PITCH,sFontName);
@@ -958,10 +964,10 @@ void CeFullPanelInfo::Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc)
 	HBITMAP hOldCompBmp = (HBITMAP)SelectObject(hCompDC, hCompBmp);
 	{
 		RECT rcComp = {0,0,nWholeW,nWholeH};
-		FillRect(hCompDC, &rcComp, hBackBrush); //hBack[0]);
+		FillRect(hCompDC, &rcComp, hPanelBrush); //hBack[0]);
 	}
 	HPEN hOldPen = (HPEN)SelectObject(hCompDC, hPen);
-	HBRUSH hOldBr = (HBRUSH)SelectObject(hCompDC, hBackBrush);
+	HBRUSH hOldBr = (HBRUSH)SelectObject(hCompDC, hPanelBrush);
 	HFONT hOldFont = (HFONT)SelectObject(hCompDC,hFont);
 
 
@@ -1024,7 +1030,7 @@ void CeFullPanelInfo::Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc)
 
 						if (PaintItem(hCompDC, nItem, 0, 0, pItem, 
 							(Focus && nItem==nCurrentItem), (nItem==nCurrentItem),
-							/*nBackColor, nForeColor, hBack,*/ (nStep == 1), hBackBrush, crBack))
+							/*nBackColor, nForeColor, hBack,*/ (nStep == 1), hBackBrush, hPanelBrush, crPanel))
 						{
 							BitBlt(hdc, nXCoord, nYCoord, nWholeW, nWholeH, hCompDC, 0,0, SRCCOPY);
 							#ifdef _DEBUG
@@ -1044,14 +1050,14 @@ void CeFullPanelInfo::Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc)
 				if (PVM == pvm_Thumbnails) {
 					if (!nStep && nXCoord < rc.right) {
 						RECT rcComp = {nXCoord,nYCoord,rc.right,nYCoord+nWholeH};
-						FillRect(hdc, &rcComp, hBackBrush); //hBack[0]);
+						FillRect(hdc, &rcComp, hPanelBrush); //hBack[0]);
 					}
 
 					nYCoord += nWholeH;
 				} else {
 					if (!nStep && nYCoord < rc.bottom) {
 						RECT rcComp = {nXCoord,nYCoord,rc.right,rc.bottom};
-						FillRect(hdc, &rcComp, hBackBrush); //hBack[0]);
+						FillRect(hdc, &rcComp, hPanelBrush); //hBack[0]);
 					}
 
 					nXCoord += nWholeW;
@@ -1062,12 +1068,12 @@ void CeFullPanelInfo::Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc)
 			if (PVM == pvm_Thumbnails) {
 				if (!nStep && nYCoord < rc.bottom) {
 					RECT rcComp = {0,nYCoord,rc.right,rc.bottom};
-					FillRect(hdc, &rcComp, hBackBrush); //hBack[0]);
+					FillRect(hdc, &rcComp, hPanelBrush); //hBack[0]);
 				}
 			} else {
 				if (!nStep && nXCoord < rc.right) {
 					RECT rcComp = {nXCoord,0,rc.right,rc.bottom};
-					FillRect(hdc, &rcComp, hBackBrush); //hBack[0]);
+					FillRect(hdc, &rcComp, hPanelBrush); //hBack[0]);
 				}
 			}
 		}
@@ -1078,7 +1084,7 @@ void CeFullPanelInfo::Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc)
 	//SafeRelease(gpDesktopFolder);
 
 	SelectObject(hCompDC, hOldPen);     DeleteObject(hPen);
-	SelectObject(hCompDC, hOldBr);      DeleteObject(hBackBrush);
+	SelectObject(hCompDC, hOldBr);      DeleteObject(hBackBrush); DeleteObject(hPanelBrush);
 	SelectObject(hCompDC, hOldFont);    DeleteObject(hFont);
 	SelectObject(hCompDC, hOldCompBmp); DeleteObject(hCompBmp);
 	if (hLastBackBrush) { DeleteObject(hLastBackBrush); hLastBackBrush = NULL; }
@@ -1150,6 +1156,8 @@ int CeFullPanelInfo::RegisterPanelView()
 
 	// Если пока все ОК
 	if (nRc == 0) {
+		LoadThSet();
+
 		// Настройки отображения уже должны быть загружены!
 		_ASSERTE(gThSet.crPalette[0]!=0 || gThSet.crPalette[1]!=0);
 

@@ -250,6 +250,7 @@ public:
 	LRESULT OnSetScrollPos(WPARAM wParam);
     bool GetConsoleSelectionInfo(CONSOLE_SELECTION_INFO *sel);
     BOOL isConSelectMode();
+	bool isFarBufferSupported();
 	bool isSelectionAllowed();
 	bool isSelectionPresent();
 	void StartSelection(BOOL abTextMode, SHORT anX=-1, SHORT anY=-1, BOOL abByMouse=FALSE);

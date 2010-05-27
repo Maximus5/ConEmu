@@ -1489,6 +1489,18 @@ static BOOL ReadConsoleInfo()
 
 	// Если есть возможность (WinXP+) - получим реальный список процессов из консоли
 	//CheckProcessCount(); -- уже должно быть вызвано !!!
+	//2010-05-26 Изменения в списке процессов не приходили в GUI до любого чиха в консоль.
+	_ASSERTE(srv.pnProcesses!=NULL);
+	if (!srv.nProcessCount /*&& srv.pConsole->info.nProcesses[0]*/) {
+		_ASSERTE(srv.nProcessCount); //CheckProcessCount(); -- уже должно быть вызвано !!!
+		lbChanged = TRUE;
+	} else
+	if (memcmp(srv.pnProcesses, srv.pConsole->info.nProcesses,
+	           sizeof(DWORD)*min(srv.nProcessCount,countof(srv.pConsole->info.nProcesses))))
+	{
+		// Список процессов изменился!
+		lbChanged = TRUE;
+	}
 	GetProcessCount(srv.pConsole->info.nProcesses, countof(srv.pConsole->info.nProcesses));
 	_ASSERTE(srv.pConsole->info.nProcesses[0]);
 

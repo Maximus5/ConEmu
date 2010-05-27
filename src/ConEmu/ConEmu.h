@@ -206,10 +206,11 @@ protected:
 	BOOL mb_MaximizedHideCaption; // в режиме HideCaption
 	BOOL mb_InRestore; // во время восстановления из Maximized
 	BOOL mb_MouseCaptured;
-	BYTE m_KeybStates[256];
-	//struct {
-	//	wchar_t szTranslatedChars[16];
-	//} m_TranslatedChars[256];
+	//BYTE m_KeybStates[256];
+	DWORD_PTR m_ActiveKeybLayout;
+	struct {
+		wchar_t szTranslatedChars[16];
+	} m_TranslatedChars[256];
 	BYTE mn_LastPressedVK;
 	wchar_t ms_ConEmuAliveEvent[MAX_PATH+64];
 	HANDLE mh_ConEmuAliveEvent; BOOL mb_ConEmuAliveOwned, mb_AliveInitialized;

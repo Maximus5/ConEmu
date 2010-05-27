@@ -1,5 +1,9 @@
 REGEDIT4
 
+; Description.
+; Preliminary macro for FAR2.
+; Switch ConEmu Panel Views mode.
+
 [-HKEY_CURRENT_USER\Software\Far2\KeyMacros\Shell\CtrlShiftF1]
 [HKEY_CURRENT_USER\Software\Far2\KeyMacros\Shell\CtrlShiftF1]
 "Sequence"="callplugin(0x43455568,1)"

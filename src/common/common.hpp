@@ -178,7 +178,7 @@ extern wchar_t gszDbgModLabel[6];
 
 
 //#define CONEMUMSG_ATTACH L"ConEmuMain::Attach"            // wParam == hConWnd, lParam == ConEmuC_PID
-WARNING("CONEMUMSG_SRVSTARTED нужно переделать в команду пайпа для GUI");
+//WARNING("CONEMUMSG_SRVSTARTED нужно переделать в команду пайпа для GUI");
 //#define CONEMUMSG_SRVSTARTED L"ConEmuMain::SrvStarted"    // wParam == hConWnd, lParam == ConEmuC_PID
 //#define CONEMUMSG_SETFOREGROUND L"ConEmuMain::SetForeground"            // wParam == hConWnd, lParam == ConEmuC_PID
 #define CONEMUMSG_FLASHWINDOW L"ConEmuMain::FlashWindow"
@@ -239,7 +239,7 @@ WARNING("CONEMUMSG_SRVSTARTED нужно переделать в команду пайпа для GUI");
 #define CECMD_SETWINDOWRGN  33 // CESERVER_REQ_SETWINDOWRGN.
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    42
+#define CESERVER_REQ_VER    43
 
 #define PIPEBUFSIZE 4096
 #define DATAPIPEBUFSIZE 40000
@@ -552,6 +552,7 @@ typedef struct tag_CEFAR_INFO {
 	BOOL bFarLeftPanel, bFarRightPanel;   
 	CEFAR_SHORT_PANEL_INFO FarLeftPanel, FarRightPanel; // FCTL_GETPANELSHORTINFO,...
 	DWORD nFarConsoleMode;
+	BOOL bBufferSupport; // FAR2 с ключом /w ?
 	//DWORD nFarReadIdx;    // index, +1, когда фар в последний раз позвал (Read|Peek)ConsoleInput или GetConsoleInputCount
 	// Далее идут строковые ресурсы, на которые в некоторых случаях ориентируется GUI
 	wchar_t sLngEdit[64]; // "edit"

@@ -1,3 +1,14 @@
+[%] Отвалилась установка BufferHeight на время выполнения из Far (без /w) консольных команд.
+
+
+2010.05.26
+[%] Измененный список процессов консоли не приходил в GUI до любого изменения содержимого консоли.
+[%] Keyboard fixes for dead charachers.
+[*] Доработки PanelViews.
+[*] Drag&Drop. Разрешено создание ярлыков при драге более одного файла. Side effect: теперь можно дропать в FooBar2000 standard interface.
+[+] Поддержка Far2 /w.
+
+
 2010.05.20
 [*] PanelViews. Mouse is working now. Small restriction: when clicked item is not visible on real panel - plugin executes macro "panel.setposidx(...)" instead of left or right click.
 [%] Minor D&D bugfixes.

@@ -109,6 +109,7 @@ $(INTDIR)\ConEmuApp.obj \
 $(INTDIR)\ConEmuChild.obj \
 $(INTDIR)\ConEmuPipe.obj \
 $(INTDIR)\DragDrop.obj \
+$(INTDIR)\DragDropData.obj \
 $(INTDIR)\Options.obj \
 $(INTDIR)\RealConsole.obj \
 $(INTDIR)\Registry.obj \
@@ -265,7 +266,7 @@ MSG=echo generating $@
 #	$(MSG)
 #	$(M4) $@.m4 > $@
 
-$(INTDIR)\BaseDragDrops.obj: BaseDragDrops.cpp
+$(INTDIR)\BaseDragDrops.obj: BaseDragDrops.cpp BaseDragDrops.h DragDrop.h DragDropData.h
 
 $(INTDIR)\ConEmu.obj: ConEmu.cpp
 
@@ -275,7 +276,9 @@ $(INTDIR)\ConEmuChild.obj: ConEmuChild.cpp
 
 $(INTDIR)\ConEmuPipe.obj: ConEmuPipe.cpp
 
-$(INTDIR)\DragDrop.obj: DragDrop.cpp
+$(INTDIR)\DragDrop.obj: DragDrop.cpp BaseDragDrops.h DragDrop.h DragDropData.h
+
+$(INTDIR)\DragDropData.obj: DragDropData.cpp BaseDragDrops.h DragDrop.h DragDropData.h
 
 $(INTDIR)\Options.obj: Options.cpp
 

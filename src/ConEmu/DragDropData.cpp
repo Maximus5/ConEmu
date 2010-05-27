@@ -47,6 +47,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define MSG_STARTDRAG (WM_APP+10)
 
+WARNING("Заменить GlobalFree на ReleaseStgMedium, проверить, что оно реально освобождает hGlobal и кучу не рушит");
+
 TODO("Попробовать перевести DragImage на нормальный интерфейс API");
 // можно оставить Overlapped для отображения статуса драга
 // однако - были какие-то проблемы. Не всплывало окошко при драге во внешние приложения?
@@ -234,73 +236,83 @@ BOOL CDragDropData::AddFmt_FileNameW(wchar_t* pszDraggedPath, UINT nFilesCount, 
 BOOL CDragDropData::AddFmt_SHELLIDLIST(wchar_t* pszDraggedPath, UINT nFilesCount, int cbSize)
 {
 	BOOL lbAdded = FALSE;
-	HGLOBAL file_PIDLs = NULL;
+	CIDA* file_PIDLs = NULL;
+	DWORD nParentSize = 0;
 	HRESULT hr = S_OK;
+	UINT nAdded = 0;
+	IShellFolder *pDesktop = NULL;
 
-	if (nFilesCount !=1 )
+	//if (nFilesCount !=1 )
+	//	goto wrap;
+
+	// Прикидочно определим, сколько понадобится памяти для хранения всех PIDL
+	nParentSize = ILGetSize(&m_DesktopID); _ASSERTE(nParentSize==2);
+	size_t nMaxSize = cbSize + nFilesCount * 64 + 32;
+	// в nCurSize сразу резервируем размер памяти под заголовок (CIDA с переменным aoffset)
+	size_t nCurSize = sizeof(CIDA)+nFilesCount*sizeof(UINT);
+	file_PIDLs = (CIDA*)GlobalAlloc(GPTR, nMaxSize);
+	if (!file_PIDLs) {
+		gConEmu.DebugStep(_T("DnD: Can't allocate CIDA*"));
 		goto wrap;
+	}
+	// First - root folder PIDL (Desktop)
+	file_PIDLs->cidl = 0; // будем инкрементить, когда понадобится
+	file_PIDLs->aoffset[0] = nCurSize;
+	memmove((((LPBYTE)file_PIDLs)+nCurSize), &m_DesktopID, nParentSize);
+	nCurSize += nParentSize;
+
 
 	_try {
+		// Сначала нужно получить Interface для Desktop
+		SFGAOF tmp;
+		LPITEMIDLIST pItem = NULL;
+		DWORD nItemSize = 0;
+		
 
-		//TODO: обработка ошибок hr!
-		const wchar_t* pszSlash = wcsrchr(pszDraggedPath, L'\\');
-		if (pszSlash) {
-			// Сначала нужно получить PIDL для родительской папки
-			SFGAOF tmp;
-			LPITEMIDLIST pItem=NULL;
-			DWORD nParentSize=0, nItemSize=0;
-			IShellFolder *pDesktop=NULL;
+		MCHKHEAP
 
-			MCHKHEAP
+		hr = SHGetDesktopFolder ( &pDesktop );
 
-			//hr = SHGetSpecialFolderLocation ( ghWnd, CSIDL_DESKTOP, &pParent );
-			//hr = SHGetFolderLocation ( ghWnd, CSIDL_DESKTOP, NULL, 0, &pParent );
-			//hr = SHGetFolderLocation ( ghWnd, CSIDL_DESKTOP, NULL, 0, &pItem );
+		for (UINT i = 0; pDesktop && i < nFilesCount; i++)
+		{
+			wchar_t* pszFile = pszDraggedPath;
+			pszDraggedPath += lstrlenW(pszDraggedPath)+1;
+			_ASSERTE(pszFile[0]);
 
-			hr = SHGetDesktopFolder ( &pDesktop );
+			const wchar_t* pszSlash = wcsrchr(pszFile, L'\\');
+			if (!pszSlash)
+				continue;
 
-			if (hr == S_OK && pDesktop)
+			// теперь собственно файл/папка...
+			ULONG nEaten=0;
+
+			hr = pDesktop->ParseDisplayName(ghWnd, NULL, pszFile, &nEaten, &pItem, &(tmp=0));
+
+			if (hr == S_OK && pItem /*&& mp_DesktopID*/)
 			{
-				MCHKHEAP
+				nItemSize = ILGetSize((PCUIDLIST_RELATIVE)pItem);
+				
+				MCHKHEAP;
 
-				// Потом и для собственно файла/папки...
-				ULONG nEaten=0;
-
-				hr = pDesktop->ParseDisplayName(ghWnd, NULL, pszDraggedPath, &nEaten, &pItem, &(tmp=0));
-				pDesktop->Release(); pDesktop = NULL;
-
-				if (hr == S_OK && pItem /*&& mp_DesktopID*/)
-				{
-					SHITEMID *pCur = NULL; //(SHITEMID*)&m_DesktopID; //mp_DesktopID;
-					//while (pCur->cb) {
-					//	pCur = (SHITEMID*)(((LPBYTE)pCur) + pCur->cb);
-					//}
-					nParentSize = 2; //((LPBYTE)pCur) - ((LPBYTE)mp_DesktopID)+2;
-
-					pCur = (SHITEMID*)pItem;
-					while (pCur->cb) {
-						pCur = (SHITEMID*)(((LPBYTE)pCur) + pCur->cb);
-					}
-					nItemSize = ((LPBYTE)pCur) - ((LPBYTE)pItem)+2;
-
-					pCur = NULL;
-
-					MCHKHEAP
-
-					file_PIDLs = GlobalAlloc(GPTR, 3*sizeof(UINT)+nParentSize+nItemSize);
-					if (file_PIDLs) {
-						CIDA* pida = (CIDA*)file_PIDLs;
-						pida->cidl = 1;
-						pida->aoffset[0] = 3*sizeof(UINT);
-						pida->aoffset[1] = pida->aoffset[0]+nParentSize;
-						memmove((((LPBYTE)pida)+(pida)->aoffset[0]), &m_DesktopID, nParentSize);
-						memmove((((LPBYTE)pida)+(pida)->aoffset[1]), pItem, nItemSize);
-					}
-
-					MCHKHEAP
+				if ((nCurSize + nItemSize) > nMaxSize) {
+					nMaxSize += nItemSize;
+					CIDA* pNew = (CIDA*)GlobalAlloc(GPTR, nMaxSize);
+					memmove(pNew, file_PIDLs, nCurSize);
+					GlobalFree(file_PIDLs);
+					file_PIDLs = pNew;
+					MCHKHEAP;
 				}
-				if (pItem)
-					CoTaskMemFree(pItem);
+
+				// Note, root folder not counted in file_PIDLs->cidl
+				file_PIDLs->cidl = (++nAdded);
+				file_PIDLs->aoffset[nAdded] = nCurSize;
+				memmove((((LPBYTE)file_PIDLs)+nCurSize), pItem, nItemSize);
+				nCurSize += nItemSize;
+
+				MCHKHEAP;
+			}
+			if (pItem) {
+				CoTaskMemFree(pItem); pItem = NULL;
 			}
 		}
 	}
@@ -310,11 +322,15 @@ BOOL CDragDropData::AddFmt_SHELLIDLIST(wchar_t* pszDraggedPath, UINT nFilesCount
 	}
 
 	if (hr == -1) {
+		// file_PIDLs освободится после wrap;
 		gConEmu.DebugStep(_T("DnD: Exception in shell"));
 		goto wrap;
 	}
 
-
+	if (file_PIDLs->cidl == 0) {
+		gConEmu.DebugStep(_T("DnD: Failed to create ShellIdList"));
+		goto wrap;
+	}
 
 	// Добавляем
 	FORMATETC       fmtetc[] = {
@@ -327,7 +343,8 @@ BOOL CDragDropData::AddFmt_SHELLIDLIST(wchar_t* pszDraggedPath, UINT nFilesCount
 	lbAdded = TRUE;
 	file_PIDLs = NULL;
 wrap:
-	if (file_PIDLs) GlobalFree(file_PIDLs);
+	if (pDesktop) { pDesktop->Release(); pDesktop = NULL; }
+	if (file_PIDLs) { GlobalFree(file_PIDLs); file_PIDLs = NULL; }
 	return lbAdded;
 }
 
@@ -485,6 +502,49 @@ wrap:
 	return lbSucceeded;
 }
 
+template <class T> LPITEMIDLIST PidlGetNextItem(
+	__in T pidl
+	)
+{
+	if(pidl)
+	{
+		return (LPITEMIDLIST)(LPBYTE)(((LPBYTE)pidl) + pidl->mkid.cb);
+	}
+	else
+		return NULL;
+};
+template <class T> void PidlDump(
+	__in T pidl
+	)
+{
+	LPITEMIDLIST p = (LPITEMIDLIST)(pidl);
+	char szDump[512];
+	int nLevel = 0, nLen;
+	while (p && p->mkid.cb) {
+		wsprintfA(szDump, "%i: ", nLevel+1);
+		int i = lstrlenA(szDump);
+		//for (int j=0; j < nLevel; j++) { szDump[i++] = ' '; szDump[i++] = ' '; }
+		//szDump[i] = 0;
+
+		nLen = min(255,p->mkid.cb);
+		for (int j = 0; j < nLen; j++) {
+			switch (p->mkid.abID[j]) {
+				case 0: szDump[i++] = '.'; break;
+				case '\n': szDump[i++] = '\\'; szDump[i++] = 'n'; break;
+				case '\r': szDump[i++] = '\\'; szDump[i++] = 'r'; break;
+				case '\t': szDump[i++] = '\\'; szDump[i++] = 't'; break;
+				case '\\': szDump[i++] = '\\'; szDump[i++] = '\\'; break;
+				default: szDump[i++] = p->mkid.abID[j];
+			}
+		}
+		szDump[i++] = '\n';
+		szDump[i++] = 0;
+		OutputDebugStringA(szDump);
+
+		p = (LPITEMIDLIST)(LPBYTE)(((LPBYTE)p) + p->mkid.cb);
+		nLevel++;
+	}
+}
 
 void CDragDropData::EnumDragFormats(IDataObject * pDataObject)
 {
@@ -512,6 +572,8 @@ void CDragDropData::EnumDragFormats(IDataObject * pDataObject)
 		hr = pEnum->Next(nCnt, fmt, &nCnt);
 
 		pEnum->Release();
+		
+		CLIPFORMAT cfShlPidl = RegisterClipboardFormat(CFSTR_SHELLIDLIST);
 
 		/*
 		CFSTR_PREFERREDDROPEFFECT ?
@@ -594,6 +656,15 @@ void CDragDropData::EnumDragFormats(IDataObject * pDataObject)
 
 			lstrcat(szName[i], L"\n");
 			OutputDebugStringW(szName[i]);
+			if (fmt[i].cfFormat == cfShlPidl && psz[i]) {
+				CIDA *pcida = (CIDA*)(psz[i]);
+				LPCITEMIDLIST pidlRoot = HIDA_GetPIDLFolder(pcida);
+				PidlDump(pidlRoot);
+				for (UINT i = 0; i < pcida->cidl; i++) {
+					LPCITEMIDLIST pidl = HIDA_GetPIDLItem(pcida, i);
+					PidlDump(pidl);
+				}
+			}
 		}
 		
 		for (i=0; i<nCnt; i++) {
@@ -986,8 +1057,9 @@ BOOL CDragDropData::LoadDragImageBits(IDataObject * pDataObject)
 	}
 	_ASSERTE(pInfo->nWidth>0 && pInfo->nWidth<=400);
 	_ASSERTE(pInfo->nHeight>0 && pInfo->nHeight<=400);
-	if (nInfoSize != (sizeof(DragImageBits)+(pInfo->nWidth * pInfo->nHeight - 1)*4)) {
-		_ASSERT(FALSE); // Неизвестный формат?
+	int nReqSize = (sizeof(DragImageBits)+(pInfo->nWidth * pInfo->nHeight - 1)*4);
+	if (nInfoSize != nReqSize /*|| (nInfoSize - nReqSize) > 32*/ ) {
+		_ASSERT(nInfoSize == nReqSize); // Неизвестный формат?
 		GlobalFree(stgMedium.hGlobal);
 		return FALSE;
 	}

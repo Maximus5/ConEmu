@@ -352,7 +352,7 @@ BOOL CImgCache::FindInCache(CePluginPanelItem* pItem, int* pnIndex)
 		&& pItem->FindData.lpwszFileNamePart[0] == L'.'
 		&& pItem->FindData.lpwszFileNamePart[1] == L'.'
 		&& pItem->FindData.lpwszFileNamePart[2] == 0)
-		pszName = pItem->FindData.lpwszFileNamePart;
+		pszName = L".."; //pItem->FindData.lpwszFileNamePart;
 
 	for (i=0; i<countof(CacheInfo); i++) {
 		if (!CacheInfo[i].lpwszFileName) {
@@ -360,7 +360,11 @@ BOOL CImgCache::FindInCache(CePluginPanelItem* pItem, int* pnIndex)
 			continue;
 		}
 
-		if (lstrcmpi(CacheInfo[i].lpwszFileName, pszName) == 0) {
+		// Некторые плагины по ShiftF7 переключают режим папка-файл (Reg, Torrent,...)
+		if ((pItem->FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+		     == (CacheInfo[i].dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+			&& lstrcmpi(CacheInfo[i].lpwszFileName, pszName) == 0)
+		{
 			// Наш.
 			*pnIndex = i; lbFound = TRUE;
 			if (CacheInfo[i].nFileSize == pItem->FindData.nFileSize

@@ -368,17 +368,18 @@ BOOL CheckConEmu(BOOL abSilence/*=FALSE*/)
 	if (hRoot != ghConEmuRoot) {
 		ghConEmuRoot = hRoot;
 		if (hRoot) {
-			MFileMapping<PanelViewSettings> ThSetMap;
-			DWORD nGuiPID;
-			GetWindowThreadProcessId(ghConEmuRoot, &nGuiPID);
-			_ASSERTE(nGuiPID!=0);
-			ThSetMap.InitName(CECONVIEWSETNAME, nGuiPID);
-			if (!ThSetMap.Open()) {
-				MessageBox(NULL, ThSetMap.GetErrorText(), L"ConEmuTh", MB_ICONSTOP|MB_SETFOREGROUND|MB_SYSTEMMODAL);
-			} else {
-				ThSetMap.GetTo(&gThSet);
-				ThSetMap.CloseMap();
-			}
+			//MFileMapping<PanelViewSettings> ThSetMap;
+			//DWORD nGuiPID;
+			//GetWindowThreadProcessId(ghConEmuRoot, &nGuiPID);
+			//_ASSERTE(nGuiPID!=0);
+			//ThSetMap.InitName(CECONVIEWSETNAME, nGuiPID);
+			//if (!ThSetMap.Open()) {
+			//	MessageBox(NULL, ThSetMap.GetErrorText(), L"ConEmuTh", MB_ICONSTOP|MB_SETFOREGROUND|MB_SYSTEMMODAL);
+			//} else {
+			//	ThSetMap.GetTo(&gThSet);
+			//	ThSetMap.CloseMap();
+			//}
+			LoadThSet();
 		}
 	}
 
@@ -1621,6 +1622,32 @@ int WINAPI ProcessSynchroEventW(int Event, void *Param)
 	}
 
 	return 0;
+}
+
+
+BOOL LoadThSet(DWORD anGuiPid/* =-1 */)
+{
+	BOOL lbRc = FALSE;
+	MFileMapping<PanelViewSettings> ThSetMap;
+	_ASSERTE(ghConEmuRoot!=NULL);
+
+	DWORD nGuiPID;
+	GetWindowThreadProcessId(ghConEmuRoot, &nGuiPID);
+	if (anGuiPid != -1) {
+		_ASSERTE(nGuiPID == anGuiPid);
+		nGuiPID = anGuiPid;
+	}
+
+	ThSetMap.InitName(CECONVIEWSETNAME, nGuiPID);
+	if (!ThSetMap.Open()) {
+		MessageBox(NULL, ThSetMap.GetErrorText(), L"ConEmuTh", MB_ICONSTOP|MB_SETFOREGROUND|MB_SYSTEMMODAL);
+	} else {
+		ThSetMap.GetTo(&gThSet);
+		ThSetMap.CloseMap();
+		lbRc = TRUE;
+	}
+
+	return lbRc;
 }
 
 

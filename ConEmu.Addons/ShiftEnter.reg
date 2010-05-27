@@ -1,5 +1,6 @@
 REGEDIT4
 
+; Description.
 ; Run 'Command line' in new console of ConEmu.
 ; 'Press enter to close console' will be displayed after command completion.
 

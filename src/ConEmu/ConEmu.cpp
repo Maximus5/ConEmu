@@ -144,8 +144,10 @@ CConEmuMain::CConEmuMain()
     mouse.lastMMW=-1;
     mouse.lastMML=-1;
 
-	//memset(m_TranslatedChars, 0, sizeof(m_TranslatedChars));
-	GetKeyboardState(m_KeybStates);
+	memset(m_TranslatedChars, 0, sizeof(m_TranslatedChars));
+	//GetKeyboardState(m_KeybStates);
+	//memset(m_KeybStates, 0, sizeof(m_KeybStates));
+	m_ActiveKeybLayout = GetActiveKeyboardLayout();
 	//wchar_t szTranslatedChars[16];
 	//HKL hkl = (HKL)GetActiveKeyboardLayout();
 	//int nTranslatedChars = ToUnicodeEx(0, 0, m_KeybStates, szTranslatedChars, 15, 0, hkl);
@@ -2786,6 +2788,7 @@ void CConEmuMain::DebugStep(LPCTSTR asMsg)
 
 DWORD_PTR CConEmuMain::GetActiveKeyboardLayout()
 {
+	_ASSERTE(mn_MainThreadId!=0);
     DWORD_PTR dwActive = (DWORD_PTR)GetKeyboardLayout(mn_MainThreadId);
     return dwActive;
 }
@@ -4685,14 +4688,17 @@ void CConEmuMain::OnBufferHeight() //BOOL abBufferHeight)
 TODO("И вообще, похоже это событие не вызывается");
 LRESULT CConEmuMain::OnClose(HWND hWnd)
 {
-    _ASSERT(FALSE);
+	// Если все-таки вызовется - имитировать SC_CLOSE
+	OnSysCommand(hWnd, SC_CLOSE, 0);
+
+    //_ASSERT(FALSE);
     //Icon.Delete(); - перенес в WM_DESTROY
     //mb_InClose = TRUE;
-    if (ghConWnd) {
-        mp_VActive->RCon()->CloseConsole();
-    } else {
-        Destroy();
-    }
+    //if (ghConWnd && IsWindow(ghConWnd)) {
+    //    mp_VActive->RCon()->CloseConsole();
+    //} else {
+    //    Destroy();
+    //}
     //mb_InClose = FALSE;
     return 0;
 }
@@ -5483,8 +5489,63 @@ void CConEmuMain::OnAltF9(BOOL abPosted/*=FALSE*/)
 
 LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 {
+	WORD bVK = (WORD)(wParam & 0xFF);
+
+#ifdef _DEBUG
+	wchar_t szDebug[255];
+	wsprintf(szDebug, L"%s(VK=0x%02X, Scan=%i, lParam=0x%08X)\n",
+		(messg == WM_KEYDOWN) ? L"WM_KEYDOWN" :
+		(messg == WM_KEYUP) ? L"WM_KEYUP" :
+		(messg == WM_SYSKEYDOWN) ? L"WM_SYSKEYDOWN" :
+		(messg == WM_SYSKEYUP) ? L"WM_SYSKEYUP" :
+		L"<Unknown Message> ",
+		bVK, ((DWORD)lParam & 0xFF0000) >> 16, (DWORD)lParam);
+	DEBUGSTRKEY(szDebug);
+#endif
+
+
+#if 1
+	// Works fine, but need to cache last pressed key, cause of need them in WM_KEYUP (send char to console)
+	wchar_t szTranslatedChars[16] = {0};
+	int nTranslatedChars = 0;
+	
+	if (messg == WM_KEYDOWN || messg == WM_SYSKEYDOWN)
+	{
+		
+		_ASSERTE(sizeof(szTranslatedChars) == sizeof(m_TranslatedChars[0].szTranslatedChars));
+		BOOL lbDeadChar = FALSE;
+		MSG msg, msg1;
+		while (nTranslatedChars < 15 // извлечь из буфера все последующие WM_CHAR & WM_SYSCHAR
+			&& PeekMessage(&msg, 0,0,0, PM_NOREMOVE)
+			)
+		{
+			if (!(msg.message == WM_CHAR || msg.message == WM_SYSCHAR || msg.message == WM_DEADCHAR)
+				|| (msg.lParam & 0xFF0000) != (lParam & 0xFF0000) /* совпадение скан-кода */)
+				break;
+
+			if (GetMessage(&msg1, 0,0,0)) { // убрать из буфера
+				_ASSERTE(msg1.message == msg.message && msg1.wParam == msg.wParam && msg1.lParam == msg.lParam);
+				if (msg.message != WM_DEADCHAR)
+					szTranslatedChars[nTranslatedChars ++] = (wchar_t)msg1.wParam;
+				else
+					lbDeadChar = TRUE;
+
+				// Требуется обработать сообщение
+				DispatchMessage(&msg1);
+			}
+		}
+		if (lbDeadChar && nTranslatedChars)
+			lbDeadChar = FALSE;
+		memmove(m_TranslatedChars[bVK].szTranslatedChars, szTranslatedChars, sizeof(szTranslatedChars));
+	} else {
+		szTranslatedChars[0] = m_TranslatedChars[bVK].szTranslatedChars[0];
+		szTranslatedChars[1] = 0;
+		nTranslatedChars = (szTranslatedChars[0] == 0) ? 0 : 1;
+	}
+#endif
+
 #if 0
-	/* Working */
+	/* Works, but has problems with dead chars */
 	wchar_t szTranslatedChars[11] = {0};
 	int nTranslatedChars = 0;
 	if (!GetKeyboardState(m_KeybStates)) {
@@ -5508,10 +5569,9 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 #endif
 
 
-#if 1
+#if 0
 	/* Invalid ? */
 	wchar_t szTranslatedChars[16] = {0};
-	WORD bVK = (WORD)(wParam & 0xFF);
 
 	if (!GetKeyboardState(m_KeybStates)) {
 		#ifdef _DEBUG
@@ -5528,10 +5588,17 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 	//MSG smsg = {hWnd, messg, wParam, lParam};
 	//TranslateMessage(&smsg);
 
+	/*if (bVK == VK_SHIFT || bVK == VK_MENU || bVK == VK_CONTROL || bVK == VK_LWIN || bVK == VK_RWIN) {
+		if (messg == WM_KEYDOWN || messg == WM_SYSKEYDOWN) {
+			if (
+		} else if (messg == WM_KEYUP || messg == WM_SYSKEYUP) {
+		}
+	}*/
 
-	//if (messg == WM_KEYDOWN || messg == WM_SYSKEYDOWN)
+
+	if (messg == WM_KEYDOWN || messg == WM_SYSKEYDOWN)
 	{
-		HKL hkl = (HKL)GetActiveKeyboardLayout();
+		HKL hkl = (HKL)m_ActiveKeybLayout; //GetActiveKeyboardLayout();
 		UINT nVK = wParam & 0xFFFF;
 		UINT nSC = ((DWORD)lParam & 0xFF0000) >> 16;
 
@@ -5568,17 +5635,6 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 
 
 
-	#ifdef _DEBUG
-	wchar_t szDebug[255];
-	wsprintf(szDebug, L"%s(VK=0x%02X, Scan=%i)\n",
-		(messg == WM_KEYDOWN) ? L"WM_KEYDOWN" :
-		(messg == WM_KEYUP) ? L"WM_KEYUP" :
-		(messg == WM_SYSKEYDOWN) ? L"WM_SYSKEYDOWN" :
-		(messg == WM_SYSKEYUP) ? L"WM_SYSKEYUP" :
-		L"<Unknown Message> ",
-		bVK, ((DWORD)lParam & 0xFF0000) >> 16);
-	DEBUGSTRKEY(szDebug);
-	#endif
 
 
   
@@ -5617,7 +5673,8 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
     }
 
     // Прокрутка в "буферном" режиме
-    if (gConEmu.mp_VActive->RCon()->isBufferHeight() && (messg == WM_KEYDOWN || messg == WM_KEYUP) &&
+    if (gConEmu.mp_VActive->RCon()->isBufferHeight() && !gConEmu.mp_VActive->RCon()->isFarBufferSupported()
+		&& (messg == WM_KEYDOWN || messg == WM_KEYUP) &&
         (wParam == VK_DOWN || wParam == VK_UP || wParam == VK_NEXT || wParam == VK_PRIOR) &&
         isPressed(VK_CONTROL)
     ) {
@@ -5880,6 +5937,8 @@ LRESULT CConEmuMain::OnLangChange(UINT messg, WPARAM wParam, LPARAM lParam)
 	if (messg == WM_INPUTLANGCHANGEREQUEST) {
 		mp_VActive->RCon()->SwitchKeyboardLayout(wParam,lParam);
 	}
+
+	m_ActiveKeybLayout = (DWORD_PTR)lParam;
     
   //  if (isFar() && gSet.isLangChangeWsPlugin)
   //  {
@@ -6207,7 +6266,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 
     } else {
         mouse.lastMMW=-1; mouse.lastMML=-1;
-        
+
 		if (messg == WM_LBUTTONDBLCLK) {
 			if (!OnMouse_LBtnDblClk(hWnd, messg, wParam, lParam, ptCur, cr))
 				return 0;
@@ -8385,6 +8444,18 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
         //if (messg == WM_SYSCHAR)
         //    return TRUE;
         break;
+#ifdef _DEBUG
+	case WM_CHAR:
+	case WM_SYSCHAR:
+	case WM_DEADCHAR:
+		{
+			wchar_t szDbg[128]; wsprintf(szDbg, L"%s(%i='%c', Scan=%i, lParam=0x%08X)\n", 
+				(messg == WM_CHAR) ? L"WM_CHAR" : (messg == WM_SYSCHAR) ? L"WM_SYSCHAR" : L"WM_DEADCHAR",
+				wParam, (wchar_t)wParam, ((DWORD)lParam & 0xFF0000) >> 16, (DWORD)lParam);
+			DEBUGSTRKEY(szDbg);
+		}
+		break;
+#endif
 
     case WM_ACTIVATE:
         #ifdef MSGLOGGER

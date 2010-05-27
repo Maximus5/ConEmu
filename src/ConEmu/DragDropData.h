@@ -47,9 +47,16 @@ typedef struct tag_DragImageBits {
 	DWORD nXCursor, nYCursor; // Позиция курсора захвата, относительно драгнутой картинки
 	DWORD nRes1; // HBITMAP hbmpDragImage;
 	DWORD nRes2; // COLORREF crColorKey; всегда 0xffffffff
+#ifdef WIN64
+	DWORD nPad1, nPad2; // выравнивание на границу QWORD
+#endif
 	RGBQUAD pix[1];
 } DragImageBits;
 #include <poppack.h>
+
+
+#define HIDA_GetPIDLFolder(pida) (LPCITEMIDLIST)(((LPBYTE)pida)+(pida)->aoffset[0])
+#define HIDA_GetPIDLItem(pida, i) (LPCITEMIDLIST)(((LPBYTE)pida)+(pida)->aoffset[i+1])
 
 
 class CDragDropData

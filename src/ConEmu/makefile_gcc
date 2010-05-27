@@ -5,6 +5,7 @@ SRCS =  BaseDragDrops.cpp  \
 		ConEmuChild.cpp    \
 		ConEmuPipe.cpp     \
 		DragDrop.cpp       \
+		DragDropData.cpp   \
 		Options.cpp        \
 		RealConsole.cpp    \
 		Registry.cpp       \

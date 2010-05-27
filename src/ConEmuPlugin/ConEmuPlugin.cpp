@@ -2431,6 +2431,7 @@ BOOL ReloadFarInfo(BOOL abFull)
 		gpFarInfo->nFarPID = gnSelfPID;
 		gpFarInfo->nFarTID = gnMainThreadId;
 		gpFarInfo->nProtocolVersion = CESERVER_REQ_VER;
+		gpFarInfo->bBufferSupport = ((gFarVersion.dwVerMajor == 2 && gFarVersion.dwBuild >= 1564) || gFarVersion.dwVerMajor > 2);
 	}
 
 	BOOL lbChanged = FALSE, lbSucceded = FALSE;

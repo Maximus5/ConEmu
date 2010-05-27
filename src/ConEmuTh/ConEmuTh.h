@@ -187,7 +187,7 @@ typedef struct tag_CeFullPanelInfo
 	void Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc);
 	BOOL PaintItem(HDC hdc, int nIndex, int x, int y, CePluginPanelItem* pItem, BOOL abCurrentItem, BOOL abSelectedItem,
 			   /*COLORREF *nBackColor, COLORREF *nForeColor, HBRUSH *hBack,*/
-			   BOOL abAllowPreview, HBRUSH hBackBrush, COLORREF crBackColor);
+			   BOOL abAllowPreview, HBRUSH hBackBrush, HBRUSH hPanelBrush, COLORREF crPanelColor);
 	int DrawItemText(HDC hdc, LPRECT prcText, LPRECT prcMaxText, CePluginPanelItem* pItem, LPCWSTR pszComments, HBRUSH hBr, BOOL bIgnoreFileDescription);
 	BOOL OnSettingsChanged(BOOL bInvalidate);
 	BOOL GetIndexFromWndCoord(int x, int y, int &rnIndex);
@@ -278,6 +278,7 @@ typedef struct tag_CeFullPanelInfo
 //        sCacheFolder[0] = 0;
 //	};
 //};
+BOOL LoadThSet(DWORD anGuiPid=-1);
 extern PanelViewSettings gThSet;
 extern BOOL gbCancelAll;
 
