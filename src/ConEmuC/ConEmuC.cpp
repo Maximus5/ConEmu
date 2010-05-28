@@ -300,17 +300,22 @@ int __cdecl main()
 			ResetEvent(ghFarInExecuteEvent);
 		#endif
 		
+		WARNING("The process handle must have the PROCESS_VM_OPERATION access right!");
 		lbRc = CreateProcessW(NULL, gpszRunCmd, NULL,NULL, TRUE, 
 				NORMAL_PRIORITY_CLASS/*|CREATE_NEW_PROCESS_GROUP*/
 				|((gnRunMode == RM_SERVER) ? CREATE_SUSPENDED : 0), 
 				NULL, NULL, &si, &pi);
 		dwErr = GetLastError();
+		
 		if (lbRc && (gnRunMode == RM_SERVER)) {
-			TODO("Injects");
+			TODO("Не только в сервере, но и в ComSpec, чтобы дочерние КОНСОЛЬНЫЕ процессы могли пользоваться редиректами");
+
+			InjectHooks(pi.hProcess, pi.dwProcessId);
 		
 			// Отпустить процесс
 			ResumeThread(pi.hThread);
 		}
+
 		if (!lbRc && dwErr == 0x000002E4) {
 			// Допустимо только в режиме comspec - тогда запустится новая консоль
 			_ASSERTE(gnRunMode != RM_SERVER);

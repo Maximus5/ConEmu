@@ -1717,3 +1717,77 @@ BOOL CeFullPanelInfo::ReallocItems(int anCount)
 
 	return TRUE;
 }
+
+BOOL CeFullPanelInfo::FarItem2CeItem(int anIndex,
+	const wchar_t*   asName,
+	const wchar_t*   asDesc,
+	DWORD            dwFileAttributes,
+	FILETIME         ftLastWriteTime,
+	unsigned __int64 anFileSize,
+	BOOL             abVirtualItem,
+	DWORD_PTR        apUserData,
+	DWORD            anFlags,
+	DWORD            anNumberOfLinks)
+{
+	// Необходимый размер буфера для хранения элемента
+	size_t nSize = sizeof(CePluginPanelItem)
+		+(wcslen(asName)+1)*2
+		+((asDesc ? wcslen(asDesc) : 0)+1)*2;
+	
+	// Уже может быть выделено достаточно памяти под этот элемент
+	if ((ppItems[anIndex] == NULL) || (ppItems[anIndex]->cbSize < (DWORD_PTR)nSize)) {
+		if (ppItems[anIndex]) free(ppItems[anIndex]);
+		nSize += 32;
+		ppItems[anIndex] = (CePluginPanelItem*)calloc(nSize, 1);
+		if (ppItems[anIndex] == NULL) {
+			_ASSERTE(ppItems[anIndex] != NULL);
+			return FALSE;
+		}
+		ppItems[anIndex]->cbSize = (int)nSize;
+	}
+	
+	// Указатель на буфер для имени файла (он идет сразу за структурой, память выделена)
+	wchar_t* psz = (wchar_t*)(ppItems[anIndex]+1);
+
+	
+	if (ppItems[anIndex]->bIsCurrent != (CurrentItem == anIndex) ||
+		ppItems[anIndex]->bVirtualItem != abVirtualItem ||
+		ppItems[anIndex]->UserData != apUserData ||
+		ppItems[anIndex]->Flags != anFlags ||
+		ppItems[anIndex]->NumberOfLinks != anNumberOfLinks ||
+		ppItems[anIndex]->FindData.dwFileAttributes != dwFileAttributes ||
+		ppItems[anIndex]->FindData.ftLastWriteTime.dwLowDateTime != ftLastWriteTime.dwLowDateTime ||
+		ppItems[anIndex]->FindData.ftLastWriteTime.dwHighDateTime != ftLastWriteTime.dwHighDateTime ||
+		ppItems[anIndex]->FindData.nFileSize != anFileSize ||
+		lstrcmp(psz, asName))
+	{
+		// Лучше сбросить, чтобы мусор не оставался, да и поля в стуктуру могут добавляться, чтобы не забылось...	
+		memset(((LPBYTE)ppItems[anIndex])+sizeof(ppItems[anIndex]->cbSize), 0, ppItems[anIndex]->cbSize-sizeof(ppItems[anIndex]->cbSize));
+	}
+
+	
+	// Копируем
+	ppItems[anIndex]->bIsCurrent = (CurrentItem == anIndex);
+	ppItems[anIndex]->bVirtualItem = abVirtualItem;
+	ppItems[anIndex]->UserData = apUserData;
+	ppItems[anIndex]->Flags = anFlags;
+	ppItems[anIndex]->NumberOfLinks = anNumberOfLinks;
+	ppItems[anIndex]->FindData.dwFileAttributes = dwFileAttributes;
+	ppItems[anIndex]->FindData.ftLastWriteTime = ftLastWriteTime;
+	ppItems[anIndex]->FindData.nFileSize = anFileSize;
+	lstrcpy(psz, asName);
+	ppItems[anIndex]->FindData.lpwszFileName = psz;
+	ppItems[anIndex]->FindData.lpwszFileNamePart = wcsrchr(psz, L'\\');
+	if (ppItems[anIndex]->FindData.lpwszFileNamePart == NULL)
+		ppItems[anIndex]->FindData.lpwszFileNamePart = psz;
+	ppItems[anIndex]->FindData.lpwszFileExt = wcsrchr(ppItems[anIndex]->FindData.lpwszFileNamePart, L'.');
+	// Description
+	psz += wcslen(psz)+1;
+	if (asDesc)
+		lstrcpy(psz, asDesc);
+	else
+		psz[0] = 0;
+	ppItems[anIndex]->pszDescription = psz;
+
+	return TRUE;
+}

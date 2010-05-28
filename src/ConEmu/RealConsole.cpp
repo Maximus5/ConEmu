@@ -1254,6 +1254,12 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 							pRCon->mn_LastFarReadTick = nCurTick ? nCurTick : 1;
 							bAlive = true; // живой
 						}
+						#ifdef _DEBUG
+						else {
+							pRCon->mn_LastFarReadTick = nCurTick - FAR_ALIVE_TIMEOUT - 1;
+							bAlive = false; // занят
+						}
+						#endif
 					} else {
 						bAlive = true; // еще не успело протухнуть
 					}
@@ -1263,12 +1269,20 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 					//	DEBUGSTRALIVE(L"*** FAR ReadTick updated\n");
 					//	bAlive = true;
 					//}
+				} else {
+					bAlive = true; // если нет фаровского плагина, или это не фар
 				}
 				//if (!bAlive) {
 				//	bAlive = pRCon->isAlive();
 				//}
 				if (pRCon->isActive()) {
 					WARNING("Тут нужно бы сравнивать с переменной, хранящейся в gConEmu, а не в этом instance RCon!");
+					#ifdef _DEBUG
+					bool lbIsAliveDbg = pRCon->isAlive();
+					if (lbIsAliveDbg != bAlive) {
+						_ASSERTE(lbIsAliveDbg == bAlive);
+					}
+					#endif
 					if (bLastAlive != bAlive || !bLastAliveActive) {
 						DEBUGSTRALIVE(bAlive ? L"MonitorThread: Alive changed to TRUE\n" : L"MonitorThread: Alive changed to FALSE\n");
 						PostMessage(ghWnd, WM_SETCURSOR, -1, -1);
@@ -1902,6 +1916,11 @@ void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y)
 
     if (!this || !hConWnd)
         return;
+        
+	if (messg != WM_MOUSEMOVE) {
+		mcr_LastMouseEventPos.X = mcr_LastMouseEventPos.Y = -1;
+	}
+        
 
     //BOOL lbStdMode = FALSE;
     //if (!con.bBufferHeight)
@@ -9612,15 +9631,13 @@ bool CRealConsole::isAlive()
 
 	if (GetFarPID()!=0 && mn_LastFarReadTick /*mn_LastFarReadIdx != (DWORD)-1*/) {
 		bool lbAlive = false;
-		//if (mp_ConsoleInfo) {
-			DWORD nLastReadTick = mn_LastFarReadTick;
-			if (nLastReadTick) {
-				DWORD nCurTick = GetTickCount();
-				DWORD nDelta = nCurTick - nLastReadTick;
-				if (nDelta < FAR_ALIVE_TIMEOUT)
-					lbAlive = true;
-			}
-		//}
+		DWORD nLastReadTick = mn_LastFarReadTick;
+		if (nLastReadTick) {
+			DWORD nCurTick = GetTickCount();
+			DWORD nDelta = nCurTick - nLastReadTick;
+			if (nDelta < FAR_ALIVE_TIMEOUT)
+				lbAlive = true;
+		}
 		return lbAlive;
 	}
 

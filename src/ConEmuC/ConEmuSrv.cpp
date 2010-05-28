@@ -2678,3 +2678,74 @@ int MySetWindowRgn(CESERVER_REQ_SETWINDOWRGN* pRgn)
 
 	return iRc;
 }
+
+int InjectHooks(HANDLE hProcess, DWORD nPID)
+{
+	int iRc = 0;
+	DWORD dwErr = 0, dwWait = 0;
+	wchar_t szPluginPath[MAX_PATH*2], *pszSlash;
+	HANDLE hFile = NULL;
+	wchar_t* pszPathInProcess = NULL;
+	SIZE_T size, write = 0;
+	HANDLE hThread = NULL; DWORD nThreadID = 0;
+	LPTHREAD_START_ROUTINE ptrLoadLibrary = NULL;
+
+#ifdef _DEBUG
+	
+
+	if (!GetModuleFileName(NULL, szPluginPath, MAX_PATH)) {
+		dwErr = GetLastError();
+		_printf("GetModuleFileName failed! ErrCode=0x%08X\n", dwErr);
+		goto wrap;
+	}
+	pszSlash = wcsrchr(szPluginPath, L'\\');
+	if (pszSlash) pszSlash++; else pszSlash = szPluginPath;
+	TODO("x64 injects");
+	lstrcpy(pszSlash, L"plugins\\ConEmu\\conemu.dll");
+
+	hFile = CreateFile(szPluginPath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
+	if (hFile == INVALID_HANDLE_VALUE) {
+		dwErr = GetLastError();
+		_printf("\".\\plugins\\ConEmu\\conemu.dll\" not found! ErrCode=0x%08X\n", dwErr);
+		goto wrap;
+	}
+	CloseHandle(hFile); hFile = NULL;
+
+	WARNING("The process handle must have the PROCESS_VM_OPERATION access right!");
+	size = (lstrlen(szPluginPath)+1)*2;
+	pszPathInProcess = (wchar_t*)VirtualAllocEx(hProcess, 0, size, MEM_COMMIT, PAGE_READWRITE);
+	if (!pszPathInProcess) {
+		dwErr = GetLastError();
+		_printf("VirtualAllocEx failed! ErrCode=0x%08X\n", dwErr);
+		goto wrap;
+	}
+	if (!WriteProcessMemory(hProcess, pszPathInProcess, szPluginPath, size, &write ) || size != write) {
+		dwErr = GetLastError();
+		_printf("WriteProcessMemory failed! ErrCode=0x%08X\n", dwErr);
+		goto wrap;
+	}
+
+	TODO("Получить адрес LoadLibraryW в адресном пространстве запущенного процесса!");
+
+	if (ptrLoadLibrary) {
+		hThread = CreateRemoteThread(hProcess, NULL, 0, ptrLoadLibrary, pszPathInProcess, 0, &nThreadID);
+		if (!hThread) {
+			dwErr = GetLastError();
+			_printf("CreateRemoteThread failed! ErrCode=0x%08X\n", dwErr);
+			goto wrap;
+		}
+		// Дождаться, пока отработает
+		dwWait = WaitForSingleObject(hThread, 5000);
+		if (dwWait != WAIT_OBJECT_0) {
+			dwErr = GetLastError();
+			_printf("Inject tread timeout!");
+			goto wrap;
+		}
+	}
+	
+
+#endif
+
+wrap:
+	return iRc;
+}

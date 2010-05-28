@@ -8,7 +8,7 @@
 #define ImgCacheFileName L"ConEmuTh.cache"
 #define ImgCacheListName L"#LFN"
 
-struct CePluginPanelItem;
+typedef struct tag_CePluginPanelItem CePluginPanelItem;
 
 class CImgCache
 {

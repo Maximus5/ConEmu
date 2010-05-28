@@ -284,7 +284,7 @@ LRESULT CALLBACK CeFullPanelInfo::DisplayWndProc(HWND hwnd, UINT uMsg, WPARAM wP
 				pt.x = (crCon.X - pi->WorkRect.left) * rcClient.right / (pi->WorkRect.right - pi->WorkRect.left + 1);
 				pt.y = (crCon.Y - pi->WorkRect.top) * rcClient.bottom / (pi->WorkRect.bottom - pi->WorkRect.top + 1);
 
-				MapWindowPoints(hwnd, ghConEmuRoot, &pt, 1);
+				MapWindowPoints(hwnd, (uMsg==WM_MOUSEWHEEL || uMsg==WM_MOUSEHWHEEL) ? NULL : ghConEmuRoot, &pt, 1);
 				pt.x++; pt.y++;
 				PostMessage(ghConEmuRoot, uMsg, wParam, MAKELPARAM(pt.x,pt.y));
 			}
@@ -784,22 +784,34 @@ HBRUSH CeFullPanelInfo::GetItemColors(int nIndex, CePluginPanelItem* pItem, BOOL
 		wchar_t c; CharAttr a;
 		//if (gpRgnDetect->GetCharAttr(WorkRect.left, WorkRect.top+nCol0Index, c, a)) {
 		if (gpRgnDetect->GetCharAttr(crItem.X, crItem.Y, c, a)) {
-			crBack = gcrCurColors[a.nBackIdx];
-			crFore = gcrCurColors[a.nForeIdx];
+			pItem->crBack = crBack = gcrCurColors[a.nBackIdx];
+			pItem->crFore = crFore = gcrCurColors[a.nForeIdx];
+			pItem->bItemColorLoaded = TRUE;
 			goto ChkBrush;
 		}
 	}
 
-	// Если не удалось - берем по умолчанию (без расцетки групп)
-	int nIdx = ((pItem->Flags & (0x40000000/*PPIF_SELECTED*/)) ? 
-		((abCurrentItem/*nItem==nCurrentItem*/) ? COL_PANELSELECTEDCURSOR : COL_PANELSELECTEDTEXT) :
-		((abCurrentItem/*nItem==nCurrentItem*/) ? COL_PANELCURSOR : COL_PANELTEXT));
+	if (pItem->bItemColorLoaded) {
+		// Цвет этого элемента уже мог быть получен, а элемент просто "уехал" из-за прокрутки.
+		crBack = pItem->crBack;
+		crFore = pItem->crFore;
+	} else {
+		// Если не удалось - берем по умолчанию (без расцетки групп)
+		int nIdx = ((pItem->Flags & (0x40000000/*PPIF_SELECTED*/)) ? 
+			((abCurrentItem/*nItem==nCurrentItem*/) ? COL_PANELSELECTEDCURSOR : COL_PANELSELECTEDTEXT) :
+			((abCurrentItem/*nItem==nCurrentItem*/) ? COL_PANELCURSOR : COL_PANELTEXT));
 
-	crBack = gcrCurColors[((nFarColors[nIdx] & 0xF0)>>4)];
-	crFore = gcrCurColors[(nFarColors[nIdx] & 0xF)];
-	if ((pItem->FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-		&& ((pItem->Flags & (0x40000000/*PPIF_SELECTED*/)) == 0))
-		crFore = 0xFFFFFF;
+		crBack = gcrCurColors[((nFarColors[nIdx] & 0xF0)>>4)];
+		crFore = gcrCurColors[(nFarColors[nIdx] & 0xF)];
+		
+		// Для папок - ставим белый шрифт
+		if (crBack != 0xFFFFFF
+			&& (pItem->FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+			&& ((pItem->Flags & (0x40000000/*PPIF_SELECTED*/)) == 0))
+		{
+			crFore = 0xFFFFFF;
+		}
+	}
 
 ChkBrush:
 	if (!hLastBackBrush || crBack != crLastBackBrush) {

@@ -6055,14 +6055,28 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
     //short winX = GET_X_LPARAM(lParam);
     //short winY = GET_Y_LPARAM(lParam);
 
-	RECT conRect = {0}, dcRect = {0}; GetWindowRect(ghWndDC, &dcRect);
+	TODO("DoubleView. Хорошо бы колесико мышки перенаправлять в консоль под мышиным курором, а не в активную");
+	RECT conRect = {0}, dcRect = {0};
+	GetWindowRect(ghWndDC, &dcRect);
+	//MapWindowPoints(NULL, ghWnd, (LPPOINT)&dcRect, 2);
+
 	//2010-05-20 все-таки будем ориентироваться на lParam, потому что
 	//  только так ConEmuTh может передать корректные координаты
 	//POINT ptCur = {-1, -1}; GetCursorPos(&ptCur);
 	POINT ptCur = {LOWORD(lParam), HIWORD(lParam)};
 	HWND hChild = ::ChildWindowFromPointEx(ghWnd, ptCur, CWP_SKIPINVISIBLE|CWP_SKIPDISABLED|CWP_SKIPTRANSPARENT);
-	ClientToScreen(ghWnd, &ptCur);
+
+	// Для этих сообщений, lParam - relative to the upper-left corner of the screen.
+	if (messg != WM_MOUSEWHEEL && messg != WM_MOUSEHWHEEL)
+		ClientToScreen(ghWnd, &ptCur);
+
 	//enum DragPanelBorder dpb = DPB_NONE; //CConEmuMain::CheckPanelDrag(COORD crCon)
+
+#ifdef _DEBUG
+	if (messg == WM_MOUSEWHEEL) {
+		messg = WM_MOUSEWHEEL;
+	}
+#endif
 
 	//BOOL lbMouseWasCaptured = mb_MouseCaptured;
 	if (!mb_MouseCaptured) {
@@ -6120,6 +6134,8 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
             return 0;
     }
 
+	
+
 	if (mp_VActive->RCon()->isSelectionPresent()
 		&& ((wParam & MK_LBUTTON) || messg == WM_LBUTTONUP))
 	{
@@ -6130,9 +6146,8 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 
 
     // Иначе в консоль проваливаются щелчки по незанятому полю таба...
-    //if (messg==WM_LBUTTONDOWN || messg==WM_RBUTTONDOWN || messg==WM_MBUTTONDOWN || 
-    //    messg==WM_LBUTTONDBLCLK || messg==WM_RBUTTONDBLCLK || messg==WM_MBUTTONDBLCLK)
-    if (messg != WM_MOUSEMOVE) // 04.06.2009 Maks - 
+	// все, что кроме - считаем кликами и они должны попадать в dcRect
+    if (messg != WM_MOUSEMOVE && messg != WM_MOUSEWHEEL && messg != WM_MOUSEHWHEEL)
     {
         if (gConEmu.mouse.state & MOUSE_SIZING_DBLCKL)
             gConEmu.mouse.state &= ~MOUSE_SIZING_DBLCKL;
@@ -6151,7 +6166,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
     short conX = cr.X; //winX/gSet.Log Font.lfWidth;
     short conY = cr.Y; //winY/gSet.Log Font.lfHeight;
 
-    if (conY<0 || conY<0) {
+    if ((messg != WM_MOUSEWHEEL && messg != WM_MOUSEHWHEEL) && (conY<0 || conY<0)) {
 		DEBUGLOGFILE("Mouse outside of upper-left");
         return 0;
     }

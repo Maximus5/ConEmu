@@ -76,7 +76,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //	DWORD dwBuild;
 //} FarVersion;
 
-struct CEFAR_FIND_DATA
+typedef struct tag_CEFAR_FIND_DATA
 {
 	DWORD    dwFileAttributes;
 	//FILETIME ftCreationTime;
@@ -93,12 +93,12 @@ struct CEFAR_FIND_DATA
 	const wchar_t *lpwszFileNamePart;
 	const wchar_t *lpwszFileExt;
 	//const wchar_t *lpwszAlternateFileName;
-};
+} CEFAR_FIND_DATA;
 
-struct CePluginPanelItem
+typedef struct tag_CePluginPanelItem
 {
 	DWORD			cbSize;
-	struct CEFAR_FIND_DATA FindData;
+	CEFAR_FIND_DATA FindData;
 	BOOL            bVirtualItem;
 	DWORD_PTR       UserData;
 	BOOL            bPreviewLoaded; // пытались ли уже загружать превьюшку
@@ -106,6 +106,9 @@ struct CePluginPanelItem
 	const wchar_t*  pszDescription; // ссылка на данные в этом CePluginPanelItem
 	DWORD           Flags;
 	DWORD           NumberOfLinks;
+	BOOL            bIsCurrent; // “ќЋ№ ќ »Ќ‘ќ–ћј÷»ќЌЌќ, ориентироватьс€ на это поле нельз€, оно может быть неактуально
+	BOOL            bItemColorLoaded;
+	COLORREF        crFore, crBack;
 	//wchar_t      *Description;
 	//wchar_t      *Owner;
 	//wchar_t     **CustomColumnData;
@@ -113,7 +116,8 @@ struct CePluginPanelItem
 	//DWORD_PTR     UserData;
 	//DWORD         CRC32;
 	//DWORD_PTR     Reserved[2];
-};
+	
+} CePluginPanelItem;
 
 enum CEPANELINFOFLAGS {
 	CEPFLAGS_SHOWHIDDEN         = 0x00000001,
@@ -154,6 +158,7 @@ typedef struct tag_CeFullPanelInfo
 	BOOL IsFilePanel;
 	int PanelMode; // 0..9 - текущий режим панели.
 	BOOL Visible;
+	BOOL ShortNames;
 	BOOL Focus;
 	DWORD Flags; // CEPANELINFOFLAGS
 	// ************************
@@ -193,6 +198,17 @@ typedef struct tag_CeFullPanelInfo
 	BOOL GetIndexFromWndCoord(int x, int y, int &rnIndex);
 	BOOL GetConCoordFromIndex(int nIndex, COORD& rCoord);
 	HBRUSH GetItemColors(int nIndex, CePluginPanelItem* pItem, BOOL abCurrentItem, COLORREF &crFore, COLORREF &crBack);
+	// Conversions
+	BOOL FarItem2CeItem(int anIndex,
+		const wchar_t*   asName,
+		const wchar_t*   asDesc,
+		DWORD            dwFileAttributes,
+		FILETIME         ftLastWriteTime,
+		unsigned __int64 anFileSize,
+		BOOL             abVirtualItem,
+		DWORD_PTR        apUserData,
+		DWORD            anFlags,
+		DWORD            anNumberOfLinks);
 			   
 	/*{
 		if (ppItems) {
@@ -411,6 +427,7 @@ void ExecuteInMainThread(ConEmuThSynchroArg* pCmd);
 void FUNC_X(ExecuteInMainThread)(ConEmuThSynchroArg* pCmd);
 void FUNC_Y(ExecuteInMainThread)(ConEmuThSynchroArg* pCmd);
 int WINAPI ProcessSynchroEventW(int Event, void *Param);
+
 
 // ConEmu.dll
 typedef int (WINAPI *RegisterPanelView_t)(PanelViewInit *ppvi);

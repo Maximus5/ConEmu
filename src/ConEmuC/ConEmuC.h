@@ -250,6 +250,8 @@ void DisableAutoConfirmExit();
 
 int MySetWindowRgn(CESERVER_REQ_SETWINDOWRGN* pRgn);
 
+int InjectHooks(HANDLE hProcess, DWORD nPID);
+
 /* Console Handles */
 //extern MConHandle ghConIn;
 extern MConHandle ghConOut;

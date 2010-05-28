@@ -184,48 +184,74 @@ void LoadPanelItemInfo995(CeFullPanelInfo* pi, int nItem)
 		ppi->FindData.ftLastWriteTime.dwLowDateTime = ppi->FindData.ftLastWriteTime.dwHighDateTime = 0;
 		ppi->FindData.nFileSize = 0;
 	}
-
-	// Необходимый размер буфера для хранения элемента
-	nSize = sizeof(CePluginPanelItem)
-		+(wcslen(ppi->FindData.lpwszFileName)+1)*2
-		+((ppi->Description ? wcslen(ppi->Description) : 0)+1)*2;
 	
-	// Уже может быть выделено достаточно памяти под этот элемент
-	if ((pi->ppItems[nItem] == NULL) || (pi->ppItems[nItem]->cbSize < (DWORD_PTR)nSize)) {
-		if (pi->ppItems[nItem]) free(pi->ppItems[nItem]);
-		nSize += 32;
-		pi->ppItems[nItem] = (CePluginPanelItem*)malloc(nSize);
-		pi->ppItems[nItem]->cbSize = (int)nSize;
-	}
+	// Скопировать данные в наш буфер (функция сама выделит память)
+	const wchar_t* pszName = ppi->FindData.lpwszFileName;
+	if ((!pszName || !*pszName) && ppi->FindData.lpwszAlternateFileName && *ppi->FindData.lpwszAlternateFileName)
+		pszName = ppi->FindData.lpwszAlternateFileName;
+	else if (pi->ShortNames && ppi->FindData.lpwszAlternateFileName && *ppi->FindData.lpwszAlternateFileName)
+		pszName = ppi->FindData.lpwszAlternateFileName;
 	
-	// Копируем
-	if (pi->bPlugin && (pi->Flags & CEPFLAGS_REALNAMES) == 0) {
-		pi->ppItems[nItem]->bVirtualItem = TRUE;
-	} else {
-		pi->ppItems[nItem]->bVirtualItem = FALSE;
-	}
-	pi->ppItems[nItem]->UserData = ppi->UserData;
-	pi->ppItems[nItem]->Flags = ppi->Flags;
-	pi->ppItems[nItem]->NumberOfLinks = ppi->NumberOfLinks;
-	pi->ppItems[nItem]->FindData.dwFileAttributes = ppi->FindData.dwFileAttributes;
-	pi->ppItems[nItem]->FindData.ftLastWriteTime = ppi->FindData.ftLastWriteTime;
-	pi->ppItems[nItem]->FindData.nFileSize = ppi->FindData.nFileSize;
-	wchar_t* psz = (wchar_t*)(pi->ppItems[nItem]+1);
-	lstrcpy(psz, ppi->FindData.lpwszFileName);
-	pi->ppItems[nItem]->FindData.lpwszFileName = psz;
-	pi->ppItems[nItem]->FindData.lpwszFileNamePart = wcsrchr(psz, L'\\');
-	if (pi->ppItems[nItem]->FindData.lpwszFileNamePart == NULL)
-		pi->ppItems[nItem]->FindData.lpwszFileNamePart = psz;
-	pi->ppItems[nItem]->FindData.lpwszFileExt = wcsrchr(pi->ppItems[nItem]->FindData.lpwszFileNamePart, L'.');
-	// Description
-	psz += wcslen(psz)+1;
-	if (ppi->Description)
-		lstrcpy(psz, ppi->Description);
-	else
-		psz[0] = 0;
-	pi->ppItems[nItem]->pszDescription = psz;
-
+	pi->FarItem2CeItem(nItem,
+		pszName,
+		ppi->Description,
+		ppi->FindData.dwFileAttributes,
+		ppi->FindData.ftLastWriteTime,
+		ppi->FindData.nFileSize,
+		(pi->bPlugin && (pi->Flags & CEPFLAGS_REALNAMES) == 0) /*abVirtualItem*/,
+		ppi->UserData,
+		ppi->Flags,
+		ppi->NumberOfLinks);
+	
 	// ppi не освобождаем - это ссылка на pi->pFarTmpBuf
+
+
+	//// Необходимый размер буфера для хранения элемента
+	//nSize = sizeof(CePluginPanelItem)
+	//	+(wcslen(ppi->FindData.lpwszFileName)+1)*2
+	//	+((ppi->Description ? wcslen(ppi->Description) : 0)+1)*2;
+	//
+	//// Уже может быть выделено достаточно памяти под этот элемент
+	//if ((pi->ppItems[nItem] == NULL) || (pi->ppItems[nItem]->cbSize < (DWORD_PTR)nSize)) {
+	//	if (pi->ppItems[nItem]) free(pi->ppItems[nItem]);
+	//	nSize += 32;
+	//	pi->ppItems[nItem] = (CePluginPanelItem*)calloc(nSize, 1);
+	//	pi->ppItems[nItem]->cbSize = (int)nSize;
+	//}
+	//
+	//// Лучше сбросить, чтобы мусор не оставался, да и поля в стуктуру могут добавляться, чтобы не забылось...	
+	//PRAGMA_ERROR("Если содержимое полей не менялось (атрибуты размеры и пр.), то не обнулять структуру!");
+	//// Иначе сбрасываются цвета элементов...
+	//memset(((LPBYTE)pi->ppItems[nItem])+sizeof(pi->ppItems[nItem]->cbSize), 0, pi->ppItems[nItem]->cbSize-sizeof(pi->ppItems[nItem]->cbSize));
+	//
+	//// Копируем
+	//if (pi->bPlugin && (pi->Flags & CEPFLAGS_REALNAMES) == 0) {
+	//	pi->ppItems[nItem]->bVirtualItem = TRUE;
+	//} else {
+	//	pi->ppItems[nItem]->bVirtualItem = FALSE;
+	//}
+	//pi->ppItems[nItem]->UserData = ppi->UserData;
+	//pi->ppItems[nItem]->Flags = ppi->Flags;
+	//pi->ppItems[nItem]->NumberOfLinks = ppi->NumberOfLinks;
+	//pi->ppItems[nItem]->FindData.dwFileAttributes = ppi->FindData.dwFileAttributes;
+	//pi->ppItems[nItem]->FindData.ftLastWriteTime = ppi->FindData.ftLastWriteTime;
+	//pi->ppItems[nItem]->FindData.nFileSize = ppi->FindData.nFileSize;
+	//wchar_t* psz = (wchar_t*)(pi->ppItems[nItem]+1);
+	//lstrcpy(psz, ppi->FindData.lpwszFileName);
+	//pi->ppItems[nItem]->FindData.lpwszFileName = psz;
+	//pi->ppItems[nItem]->FindData.lpwszFileNamePart = wcsrchr(psz, L'\\');
+	//if (pi->ppItems[nItem]->FindData.lpwszFileNamePart == NULL)
+	//	pi->ppItems[nItem]->FindData.lpwszFileNamePart = psz;
+	//pi->ppItems[nItem]->FindData.lpwszFileExt = wcsrchr(pi->ppItems[nItem]->FindData.lpwszFileNamePart, L'.');
+	//// Description
+	//psz += wcslen(psz)+1;
+	//if (ppi->Description)
+	//	lstrcpy(psz, ppi->Description);
+	//else
+	//	psz[0] = 0;
+	//pi->ppItems[nItem]->pszDescription = psz;
+	//
+	//// ppi не освобождаем - это ссылка на pi->pFarTmpBuf
 }
 
 BOOL LoadPanelInfo995(BOOL abActive)
@@ -271,6 +297,7 @@ BOOL LoadPanelInfo995(BOOL abActive)
 	pcefpi->CurrentItem = pi.CurrentItem;
 	pcefpi->TopPanelItem = pi.TopPanelItem;
 	pcefpi->Visible = pi.Visible;
+	pcefpi->ShortNames = pi.ShortNames;
 	pcefpi->Focus = pi.Focus;
 	pcefpi->Flags = pi.Flags; // CEPANELINFOFLAGS
 	pcefpi->PanelMode = pi.ViewMode;
