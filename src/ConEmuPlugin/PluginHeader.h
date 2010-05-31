@@ -54,7 +54,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 extern int lastModifiedStateW;
-extern bool gbHandleOneRedraw; //, gbHandleOneRedrawCh;
+//extern bool gbHandleOneRedraw; //, gbHandleOneRedrawCh;
 extern WCHAR gszDir1[CONEMUTABMAX], gszDir2[CONEMUTABMAX], gszRootKey[MAX_PATH*2];
 extern int maxTabCount, lastWindowCount;
 extern CESERVER_REQ* tabs; //(ConEmuTab*) calloc(maxTabCount, sizeof(ConEmuTab));
@@ -68,10 +68,12 @@ extern HANDLE hThread;
 //extern WCHAR gcPlugKey;
 //WARNING("Убрать, заменить ghConIn на GetStdHandle()"); // Иначе в Win7 будет буфер разрушаться
 //extern HANDLE ghConIn;
-extern BOOL gbNeedPostTabSend;
+extern BOOL gbNeedPostTabSend, gbNeedPostEditCheck;
 extern HANDLE ghServerTerminateEvent;
 extern const CESERVER_REQ_CONINFO_HDR *gpConsoleInfo;
 extern DWORD gnSelfPID;
+extern BOOL gbIgnoreUpdateTabs;
+extern BOOL gbRequestUpdateTabs;
 
 typedef struct tag_PanelViewRegInfo {
 	BOOL bRegister;
@@ -130,6 +132,7 @@ void CloseTabs();
 
 HWND AtoH(WCHAR *Str, int Len);
 void UpdateConEmuTabsW(int anEvent, bool losingFocus, bool editorSave, void* Param=NULL);
+void UpdateConEmuTabsA(int anEvent, bool losingFocus, bool editorSave, void *Param=NULL);
 
 BOOL LoadFarVersion();
 

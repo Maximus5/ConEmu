@@ -3614,7 +3614,7 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 						&& (con.bBufferHeight
 							|| (con.DefaultBufferHeight && bRunViaCmdExe)))
 					{
-						_ASSERTE(con.DefaultBufferHeight == con.m_sbi.dwSize.Y || con.m_sbi.dwSize.Y == TextHeight());
+						_ASSERTE(m_Args.bDetached || con.DefaultBufferHeight == con.m_sbi.dwSize.Y || con.m_sbi.dwSize.Y == TextHeight());
 						con.bBufferHeight = TRUE;
 						con.nBufferHeight = max(con.m_sbi.dwSize.Y,con.DefaultBufferHeight);
 						con.m_sbi.dwSize.Y = con.nBufferHeight; // Сразу обновить, иначе буфер может сброситься самопроизвольно
@@ -7485,9 +7485,11 @@ BOOL CRealConsole::ActivateFarWindow(int anWndIndex)
     CConEmuPipe pipe(dwPID, 100);
     if (pipe.Init(_T("CRealConsole::ActivateFarWindow")))
     {
-        //DWORD cbWritten = 0;
         if (pipe.Execute(CMD_SETWINDOW, &anWndIndex, 4))
         {
+			WARNING("CMD_SETWINDOW по таймауту возвращает последнее считанное положение окон (gpTabs).");
+			// То есть если переключение окна выполняется дольше 2х сек - возвратится предыдущее состояние
+
             DWORD cbBytesRead=0;
             DWORD tabCount = 0, nInMacro = 0, nTemp = 0, nFromMainThread = 0;
             ConEmuTab* tabs = NULL;

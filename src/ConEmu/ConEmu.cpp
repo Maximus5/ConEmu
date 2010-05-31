@@ -44,6 +44,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRLANG(s) //DEBUGSTR(s)// ; Sleep(2000)
 #define DEBUGSTRMOUSE(s) //DEBUGSTR(s)
 #define DEBUGSTRKEY(s) DEBUGSTR(s)
+#define DEBUGSTRCHAR(s) //DEBUGSTR(s)
 #define DEBUGSTRSETCURSOR(s) //DEBUGSTR(s)
 #define DEBUGSTRCONEVENT(s) //DEBUGSTR(s)
 #define DEBUGSTRMACRO(s) //DEBUGSTR(s)
@@ -51,7 +52,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRPANEL2(s) //DEBUGSTR(s)
 #define DEBUGSTRFOCUS(s) //DEBUGSTR(s)
 #define DEBUGSTRFOREGROUND(s) //DEBUGSTR(s)
-#define DEBUGSTRLLKB(s) DEBUGSTR(s)
+#define DEBUGSTRLLKB(s) //DEBUGSTR(s)
+#ifdef _DEBUG
+	//#define DEBUGSHOWFOCUS(s) DEBUGSTR(s)
+#endif
 
 #define PROCESS_WAIT_START_TIME 1000
 
@@ -4027,14 +4031,20 @@ VOID CConEmuMain::WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD anEvent, HWND 
     }
 #endif
 
-    BOOL lbProcessed = FALSE;
+    BOOL lbProcessed = FALSE, lbWaitingExist = FALSE;
 	for (int k = 0; k < 2 && !lbProcessed; k++)
 	{
 		for (int i = 0; i < MAX_CONSOLE_COUNT; i++) {
 			if (!gConEmu.mp_VCon[i]) continue;
 
-			if (!k && gConEmu.mp_VCon[i]->RCon()->InCreateRoot())
+			// Запускаемые через "-new_console" цепляются через CECMD_ATTACH2GUI, а не через WinEvent
+			if (gConEmu.mp_VCon[i]->RCon()->isDetached())
 				continue;
+
+			if (!k && gConEmu.mp_VCon[i]->RCon()->InCreateRoot()) {
+				lbWaitingExist = TRUE;
+				continue;
+			}
 
 			LONG nSrvPID = (LONG)gConEmu.mp_VCon[i]->RCon()->GetServerPID();
 			#ifdef _DEBUG
@@ -4054,6 +4064,8 @@ VOID CConEmuMain::WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD anEvent, HWND 
 				break;
 			}
 		}
+		if (!lbWaitingExist)
+			break;
 		if (!lbProcessed)
 			Sleep(100);
 	}
@@ -5083,6 +5095,8 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
 
 LRESULT CConEmuMain::OnDestroy(HWND hWnd)
 {
+	gSet.SaveSizePosOnExit();
+
 	if (mb_ConEmuAliveOwned && mh_ConEmuAliveEvent)
 	{
 		ResetEvent(mh_ConEmuAliveEvent); // Дадим другим процессам "завладеть" первенством
@@ -5233,6 +5247,8 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		WCHAR szDbg[128];
 	#endif
 	LPCWSTR pszMsgName = L"Unknown";
+	HWND hNewFocus = NULL;
+
 	if (messg == WM_SETFOCUS) {
         lbSetFocus = TRUE;
 		#ifdef _DEBUG
@@ -5299,9 +5315,36 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		DEBUGSTRFOCUS(szDbg);
 		#endif
 		pszMsgName = L"WM_KILLFOCUS";
+		hNewFocus = (HWND)wParam;
 	}
 
 	CheckFocus(pszMsgName);
+
+	// Если фокус "забрало" какое-либо дочернее окно в ConEmu (VideoRenderer - 'ActiveMovie Window')
+	if (hNewFocus && hNewFocus != ghWnd) {
+		HWND hParent = hNewFocus;
+		while ((hParent = GetParent(hNewFocus)) != NULL) {
+			if (hParent == ghWnd) {
+				DWORD dwStyle = GetWindowLong(hNewFocus, GWL_STYLE);
+				if ((dwStyle & (WS_POPUP|WS_OVERLAPPEDWINDOW|WS_DLGFRAME)) != 0)
+					break; // Это диалог, не трогаем
+
+				SetFocus(ghWnd);
+				hNewFocus = GetFocus();
+				#ifdef _DEBUG
+				if (hNewFocus != ghWnd) {
+					_ASSERTE(hNewFocus == ghWnd);
+				} else {
+					DEBUGSTRFOCUS(L"Focus was returned to ConEmu\n");
+				}
+				#endif
+				lbSetFocus = (hNewFocus == ghWnd);
+				break;
+			}
+			hNewFocus = hParent;
+		}
+	}
+
 
     if (!lbSetFocus) {
         gConEmu.mp_TabBar->SwitchRollback();
@@ -7653,6 +7696,9 @@ LRESULT CConEmuMain::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
                     }
                 }
             }
+
+			gSet.SaveSizePosOnExit();
+
             if (nConCount == 0) {
                 if (nDetachedCount > 0) {
                     if (MessageBox(ghWnd, L"ConEmu is waiting for console attach.\nIt was started in 'Detached' mode.\nDo You want to cancel waiting?",
@@ -7728,6 +7774,29 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
     //if (mb_InTimer) return 0; // чтобы ненароком два раза в одно событие не вошел (хотя не должен)
     mb_InTimer = TRUE;
     //result = gConEmu.OnTimer(wParam, lParam);
+
+#ifdef DEBUGSHOWFOCUS
+	HWND hFocus = GetFocus();
+	HWND hFore = GetForegroundWindow();
+	static HWND shFocus, shFore;
+	static wchar_t szWndInfo[1200];
+	if (hFocus != shFocus) {
+		wsprintf(szWndInfo, L"(Fore=0x%08X) Focus was changed to ", (DWORD)hFore);
+		getWindowInfo(hFocus, szWndInfo+wcslen(szWndInfo));
+		wcscat(szWndInfo, L"\n");
+		DEBUGSHOWFOCUS(szWndInfo);
+		shFocus = hFocus;
+	}
+	if (hFore != shFore) {
+		if (hFore != hFocus) {
+			wcscpy(szWndInfo, L"Foreground window was changed to ");
+			getWindowInfo(hFore, szWndInfo+wcslen(szWndInfo));
+			wcscat(szWndInfo, L"\n");
+			DEBUGSHOWFOCUS(szWndInfo);
+		}
+		shFore = hFore;
+	}
+#endif
 
     switch (wParam)
     {
@@ -8318,12 +8387,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
         break;
     
     case WM_TIMER:
-    //    if (mb_InTimer) break; // чтобы ненароком два раза в одно событие не вошел (хотя не должен)
-    //    gSet.Performance(tPerfInterval, TRUE); // именно обратный отсчет. Мы смотрим на промежуток МЕЖДУ таймерами
-    //    mb_InTimer = TRUE;
-      result = gConEmu.OnTimer(wParam, lParam);
-    //  mb_InTimer = FALSE;
-    //  gSet.Performance(tPerfInterval, FALSE);
+		result = gConEmu.OnTimer(wParam, lParam);
         break;
 
     case WM_SIZING:
@@ -8467,7 +8531,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			wchar_t szDbg[128]; wsprintf(szDbg, L"%s(%i='%c', Scan=%i, lParam=0x%08X)\n", 
 				(messg == WM_CHAR) ? L"WM_CHAR" : (messg == WM_SYSCHAR) ? L"WM_SYSCHAR" : L"WM_DEADCHAR",
 				wParam, (wchar_t)wParam, ((DWORD)lParam & 0xFF0000) >> 16, (DWORD)lParam);
-			DEBUGSTRKEY(szDbg);
+			DEBUGSTRCHAR(szDbg);
 		}
 		break;
 #endif

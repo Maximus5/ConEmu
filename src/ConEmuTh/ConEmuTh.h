@@ -414,6 +414,9 @@ BOOL CheckPanelSettingsA(BOOL abSilence);
 BOOL FUNC_X(CheckPanelSettings)(BOOL abSilence);
 BOOL FUNC_Y(CheckPanelSettings)(BOOL abSilence);
 
+BOOL GetFarRect(SMALL_RECT* prcFarRect);
+void FUNC_Y(GetFarRect)(SMALL_RECT* prcFarRect);
+
 typedef struct {
 	int bValid; // Must be ==1
 	int bExpired; // Must be ==0, if !=0 - просто освободить память

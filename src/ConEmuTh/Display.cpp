@@ -1195,6 +1195,8 @@ int CeFullPanelInfo::RegisterPanelView()
 			SetWindowLong(this->hView, 16*4, gbFadeColors ? 2 : 1);
 			// Подготовить детектор диалогов
 			_ASSERTE(gpRgnDetect!=NULL);
+			SMALL_RECT rcFarRect; GetFarRect(&rcFarRect);
+			gpRgnDetect->SetFarRect(&rcFarRect);
 			if (gpRgnDetect->InitializeSBI(gcrCurColors)) {
 				gpRgnDetect->PrepareTransparent(&gFarInfo, gcrCurColors);
 			}

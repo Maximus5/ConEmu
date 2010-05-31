@@ -31,7 +31,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmuC.h"
 #include "..\common\ConsoleAnnotation.h"
 
-#define DEBUGSTRINPUTPIPE(s) DEBUGSTR(s)
+#define DEBUGSTRINPUTPIPE(s) //DEBUGSTR(s)
+#define DEBUGSTRINPUTWRITE(s) DEBUGSTR(s)
 #define DEBUGSTRCHANGES(s) DEBUGSTR(s)
 
 #define MAX_EVENTS_PACK 20
@@ -1428,6 +1429,9 @@ static BOOL ReadConsoleInfo()
 
 		if (memcmp(&srv.sbi, &lsbi, sizeof(srv.sbi)))
 		{
+			_ASSERTE(lsbi.srWindow.Left == 0);
+			_ASSERTE(lsbi.srWindow.Right == (lsbi.dwSize.X - 1));
+
 			// Консольное приложение могло изменить размер буфера
 			if (!NTVDMACTIVE) // НЕ при запущенном 16битном приложении - там мы все жестко фиксируем, иначе съезжает размер при закрытии 16бит
 			{
@@ -1447,7 +1451,7 @@ static BOOL ReadConsoleInfo()
 
 
 			#ifdef ASSERT_UNWANTED_SIZE
-			if (srv.crReqSizeNewSize.X != lsbi.dwSize.X) {
+			if (srv.crReqSizeNewSize.X != lsbi.dwSize.X && !srv.dwDisplayMode && !IsZoomed(ghConWnd)) {
 				LogSize(NULL, ":ReadConsoleInfo(AssertWidth)");
 				wchar_t szTitle[64], szInfo[128];
 				wsprintf(szTitle, L"ConEmuC, PID=%i", GetCurrentProcessId());
@@ -2145,6 +2149,7 @@ BOOL WriteInputQueue(const INPUT_RECORD *pr)
 	srv.pInputQueueWrite++;
 	if (srv.pInputQueueWrite >= srv.pInputQueueEnd)
 		srv.pInputQueueWrite = srv.pInputQueue;
+	DEBUGSTRINPUTPIPE(L"SetEvent(srv.hInputEvent)\n");
 	SetEvent(srv.hInputEvent);
 
 	// Подвинуть указатель чтения, если до этого буфер был пуст
@@ -2172,8 +2177,25 @@ BOOL ReadInputQueue(INPUT_RECORD *prs, DWORD *pCount)
 		INPUT_RECORD *pEnd = (srv.pInputQueueRead < srv.pInputQueueWrite) ? srv.pInputQueueWrite : srv.pInputQueueEnd;
 		INPUT_RECORD *pDst = prs;
 		while (n && pSrc < pEnd) {
-			*pDst = *pSrc; nCount++;
-			n--; pSrc++; pDst++;
+			*pDst = *pSrc; nCount++; pSrc++;
+			//// Для приведения поведения к стандартному RealConsole&Far
+			//if (pDst->EventType == KEY_EVENT
+			//	// Для нажатия НЕ символьных клавиш
+			//	&& pDst->Event.KeyEvent.bKeyDown && pDst->Event.KeyEvent.uChar.UnicodeChar < 32
+			//	&& pSrc < (pEnd = (srv.pInputQueueRead < srv.pInputQueueWrite) ? srv.pInputQueueWrite : srv.pInputQueueEnd)) // и пока в буфере еще что-то есть
+			//{
+			//	while (pSrc < (pEnd = (srv.pInputQueueRead < srv.pInputQueueWrite) ? srv.pInputQueueWrite : srv.pInputQueueEnd)
+			//		&& pSrc->EventType == KEY_EVENT
+			//		&& pSrc->Event.KeyEvent.bKeyDown
+			//		&& pSrc->Event.KeyEvent.wVirtualKeyCode == pDst->Event.KeyEvent.wVirtualKeyCode
+			//		&& pSrc->Event.KeyEvent.wVirtualScanCode == pDst->Event.KeyEvent.wVirtualScanCode
+			//		&& pSrc->Event.KeyEvent.uChar.UnicodeChar == pDst->Event.KeyEvent.uChar.UnicodeChar
+			//		&& pSrc->Event.KeyEvent.dwControlKeyState == pDst->Event.KeyEvent.dwControlKeyState)
+			//	{
+			//		pDst->Event.KeyEvent.wRepeatCount++; pSrc++;
+			//	}
+			//}
+			n--; pDst++;
 		}
 		if (pSrc == srv.pInputQueueEnd)
 			pSrc = srv.pInputQueue;
@@ -2185,6 +2207,31 @@ BOOL ReadInputQueue(INPUT_RECORD *prs, DWORD *pCount)
 	*pCount = nCount;
 	return (nCount>0);
 }
+
+#ifdef _DEBUG
+BOOL GetNumberOfBufferEvents()
+{
+	DWORD nCount = 0;
+
+	if (!IsInputQueueEmpty())
+	{
+		INPUT_RECORD *pSrc = srv.pInputQueueRead;
+		INPUT_RECORD *pEnd = (srv.pInputQueueRead < srv.pInputQueueWrite) ? srv.pInputQueueWrite : srv.pInputQueueEnd;
+		while (pSrc < pEnd) {
+			nCount++; pSrc++;
+		}
+		if (pSrc == srv.pInputQueueEnd) {
+			pSrc = srv.pInputQueue;
+			pEnd = (srv.pInputQueueRead < srv.pInputQueueWrite) ? srv.pInputQueueWrite : srv.pInputQueueEnd;
+			while (pSrc < pEnd) {
+				nCount++; pSrc++;
+			}
+		}
+	}
+
+	return nCount;
+}
+#endif
 
 DWORD WINAPI InputThread(LPVOID lpvParam)
 {
@@ -2204,6 +2251,7 @@ DWORD WINAPI InputThread(LPVOID lpvParam)
 		DWORD nInputCount = sizeof(ir)/sizeof(ir[0]);
 		if (ReadInputQueue(ir, &nInputCount)) {
 			_ASSERTE(nInputCount>0);
+			//DEBUGSTRINPUTPIPE(L"SendConsoleEvent\n");
 			SendConsoleEvent(ir, nInputCount);
 		}
 
@@ -2533,14 +2581,14 @@ BOOL WaitConsoleReady()
 	// 19.02.2010 Maks - замена на GetNumberOfConsoleInputEvents
 	//if (PeekConsoleInput(hIn, irDummy, 1, &(nCurInputCount = 0)) && nCurInputCount > 0) {
 	if (GetNumberOfConsoleInputEvents(hIn, &(nCurInputCount = 0)) && nCurInputCount > 0) {
-		DWORD dwStartTick = GetTickCount();
-		WARNING("Do NOT wait, but place event in Cyclic queue");
+		DWORD dwStartTick = GetTickCount(), dwDelta, dwTick;
 		do {
 			Sleep(5);
 			//if (!PeekConsoleInput(hIn, irDummy, 1, &(nCurInputCount = 0)))
 			if (!GetNumberOfConsoleInputEvents(hIn, &(nCurInputCount = 0)))
 				nCurInputCount = 0;
-		} while ((nCurInputCount > 0) && ((GetTickCount() - dwStartTick) < MAX_INPUT_QUEUE_EMPTY_WAIT));
+			dwTick = GetTickCount(); dwDelta = dwTick - dwStartTick;
+		} while ((nCurInputCount > 0) && (dwDelta < MAX_INPUT_QUEUE_EMPTY_WAIT));
 	}
 	
 	return (nCurInputCount == 0);
@@ -2618,6 +2666,10 @@ BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount)
 	}
 
 	DWORD cbWritten = 0;
+	#ifdef _DEBUG
+	wchar_t szDbg[255]; wsprintf(szDbg, L"*** WriteConsoleInput(Write=%i, Left=%i)\n", nCount, GetNumberOfBufferEvents());
+	DEBUGSTRINPUTWRITE(szDbg);
+	#endif
 	fSuccess = WriteConsoleInput(hIn, pr, nCount, &cbWritten);
 	_ASSERTE(fSuccess && cbWritten==nCount);
 	

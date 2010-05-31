@@ -32,7 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "PluginHeader.h"
 
 #ifdef _DEBUG
-#define SHOW_DEBUG_EVENTS
+//#define SHOW_DEBUG_EVENTS
 #endif
 
 struct PluginStartupInfo *InfoW995=NULL;
@@ -315,13 +315,26 @@ DWORD GetEditorModifiedState995()
 	return currentModifiedState;
 }
 
-extern int lastModifiedStateW;
+//extern int lastModifiedStateW;
+
 // watch non-modified -> modified editor status change
 int ProcessEditorInputW995(LPCVOID aRec)
 {
 	if (!InfoW995)
 		return 0;
 
+#if 1
+	const INPUT_RECORD *Rec = (const INPUT_RECORD*)aRec;
+	// only key events with virtual codes > 0 are likely to cause status change (?)
+	if (!gbRequestUpdateTabs && (Rec->EventType & 0xFF) == KEY_EVENT 
+		&& (Rec->Event.KeyEvent.wVirtualKeyCode || Rec->Event.KeyEvent.wVirtualScanCode || Rec->Event.KeyEvent.uChar.UnicodeChar)
+		&& Rec->Event.KeyEvent.bKeyDown)
+	{
+		//if (!gbRequestUpdateTabs)
+		gbNeedPostEditCheck = TRUE;
+	}
+
+#else
 	const INPUT_RECORD *Rec = (const INPUT_RECORD*)aRec;
 	// only key events with virtual codes > 0 are likely to cause status change (?)
 	if ((Rec->EventType & 0xFF) == KEY_EVENT 
@@ -333,18 +346,25 @@ int ProcessEditorInputW995(LPCVOID aRec)
 			OutputDebugStringA(szDbg);
 		#endif
 
-		DWORD currentModifiedState = GetEditorModifiedState995();
-
-		if (lastModifiedStateW != (int)currentModifiedState)
-		{
-			// !!! Именно UpdateConEmuTabsW, без версии !!!
-			UpdateConEmuTabsW(0, false, false);
-			lastModifiedStateW = currentModifiedState;
-		} else {
+		if (!gbRequestUpdateTabs)
 			gbHandleOneRedraw = true;
-			//gbHandleOneRedrawCh = true;
-		}
+		//{
+		//	DWORD currentModifiedState = GetEditorModifiedState995();
+		//
+		//	if (lastModifiedStateW != (int)currentModifiedState)
+		//	{
+		//		gbRequestUpdateTabs = TRUE;
+		//		
+		//		//	// !!! Именно UpdateConEmuTabsW, без версии !!!
+		//		//	UpdateConEmuTabsW(0, false, false);
+		//		//	lastModifiedStateW = currentModifiedState;
+		//		//} else {
+		//		//	gbHandleOneRedraw = true;
+		//		//	//gbHandleOneRedrawCh = true;
+		//	}
+		//}
 	}
+#endif
 	return 0;
 }
 
@@ -392,7 +412,7 @@ int ProcessEditorInputW995(LPCVOID aRec)
 
 void UpdateConEmuTabsW995(int anEvent, bool losingFocus, bool editorSave, void* Param/*=NULL*/)
 {
-	if (!InfoW995 || !InfoW995->AdvControl)
+	if (!InfoW995 || !InfoW995->AdvControl || gbIgnoreUpdateTabs)
 		return;
 
     BOOL lbCh = FALSE;

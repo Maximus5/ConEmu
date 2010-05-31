@@ -345,6 +345,7 @@
 #define cbThumbRestoreOnStartup         1720
 #define cbSleepInBackground             1721
 #define cbExtendUCharMap                1722
+#define cbAutoSaveSizePos               1723
 #define IDM_CLOSE                       40001
 #define IDM_RESTART                     40002
 #define IDM_RESTARTAS                   40003
@@ -361,7 +362,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        209
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         1723
+#define _APS_NEXT_CONTROL_VALUE         1724
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

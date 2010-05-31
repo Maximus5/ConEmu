@@ -26,6 +26,7 @@ CRgnDetect::CRgnDetect()
 	mn_AllFlags = 0; mn_NextDlgId = 0; mb_NeedPanelDetect = TRUE;
 	memset(&mrc_LeftPanel,0,sizeof(mrc_LeftPanel));
 	memset(&mrc_RightPanel,0,sizeof(mrc_RightPanel));
+	memset(&mrc_FarRect, 0, sizeof(mrc_FarRect)); // по умолчанию - не используется
 	//
 	mpsz_Chars = NULL;
 	mp_Attrs = mp_AttrsWork = NULL;
@@ -1303,15 +1304,28 @@ void CRgnDetect::OnWriteConsoleOutput(const CHAR_INFO *lpBuffer,COORD dwBufferSi
 
 	_ASSERTE(mb_TableCreated);
 
+	SMALL_RECT rcRegion;
+	rcRegion.Left = lpWriteRegion->Left - m_sbi.srWindow.Left;
+	rcRegion.Right = lpWriteRegion->Right - m_sbi.srWindow.Left;
+	rcRegion.Top = lpWriteRegion->Top - m_sbi.srWindow.Top;
+	rcRegion.Bottom = lpWriteRegion->Bottom - m_sbi.srWindow.Top;
+
 	// На некорректных координатах - сразу выйдем
-	if (lpWriteRegion->Left >= mn_CurWidth || lpWriteRegion->Top >= mn_CurHeight)
+	if (rcRegion.Left >= mn_CurWidth || rcRegion.Top >= mn_CurHeight
+		|| rcRegion.Left > rcRegion.Right || rcRegion.Top > rcRegion.Bottom
+		|| rcRegion.Left < 0 || rcRegion.Top < 0)
+	{
+		_ASSERTE(rcRegion.Left < mn_CurWidth && rcRegion.Top < mn_CurHeight);
+		_ASSERTE(rcRegion.Left <= rcRegion.Right && rcRegion.Top <= rcRegion.Bottom);
+		_ASSERTE(rcRegion.Left >= 0 && rcRegion.Top >= 0);
 		return;
+	}
 
 	// Расфуговка буфера CHAR_INFO на текст и атрибуты
-	int nX1 = max(0,lpWriteRegion->Left);
-	int nX2 = min(lpWriteRegion->Right,(mn_CurWidth-1));
-	int nY1 = max(0,lpWriteRegion->Top);
-	int nY2 = min(lpWriteRegion->Bottom,(mn_CurHeight-1));
+	int nX1 = max(0,rcRegion.Left);
+	int nX2 = min(rcRegion.Right,(mn_CurWidth-1));
+	int nY1 = max(0,rcRegion.Top);
+	int nY2 = min(rcRegion.Bottom,(mn_CurHeight-1));
 	if ((dwBufferSize.X - dwBufferCoord.X - 1) < (nX2 - nX1))
 		nX2 = nX1 + (dwBufferSize.X - dwBufferCoord.X - 1);
 	if ((dwBufferSize.Y - dwBufferCoord.Y - 1) < (nY2 - nY1))
@@ -1321,8 +1335,8 @@ void CRgnDetect::OnWriteConsoleOutput(const CHAR_INFO *lpBuffer,COORD dwBufferSi
 	
 	for (int Y = nY1; Y <= nY2; Y++) {
 		const CHAR_INFO *pCharInfo = pSrcLine + dwBufferCoord.X;
-		wchar_t  *pChar = mpsz_Chars + Y * mn_CurWidth + lpWriteRegion->Left;
-		CharAttr *pAttr = mp_Attrs + Y * mn_CurWidth + lpWriteRegion->Left;
+		wchar_t  *pChar = mpsz_Chars + Y * mn_CurWidth + rcRegion.Left;
+		CharAttr *pAttr = mp_Attrs + Y * mn_CurWidth + rcRegion.Left;
 	
 		for (int X = nX1; X <= nX2; X++, pCharInfo++) {
 			TODO("OPTIMIZE: *(lpAttr++) = lpCur->Attributes;");
@@ -1333,6 +1347,15 @@ void CRgnDetect::OnWriteConsoleOutput(const CHAR_INFO *lpBuffer,COORD dwBufferSi
 		}
 		
 		pSrcLine += dwBufferSize.X;
+	}
+}
+
+void CRgnDetect::SetFarRect(SMALL_RECT *prcFarRect)
+{
+	if (prcFarRect) {
+		mrc_FarRect = *prcFarRect;
+	} else {
+		memset(&mrc_FarRect, 0, sizeof(mrc_FarRect));
 	}
 }
 
@@ -1368,22 +1391,30 @@ BOOL CRgnDetect::InitializeSBI(const COLORREF *apColors)
 	if (!mb_SBI_Loaded)
 		return FALSE;
 
-	// Нужно скорректировать srWindow, т.к. ФАР в любом случае забивает на видимый регион и рисует на весь буфер.
-	if (m_sbi.srWindow.Left)
-		m_sbi.srWindow.Left = 0;
-	if ((m_sbi.srWindow.Right+1) != m_sbi.dwSize.X)
-		m_sbi.srWindow.Right = m_sbi.dwSize.X - 1;
-	if (m_sbi.srWindow.Top)
-		m_sbi.srWindow.Top = 0;
-	if ((m_sbi.srWindow.Bottom+1) != m_sbi.dwSize.Y)
-		m_sbi.srWindow.Bottom = m_sbi.dwSize.Y - 1;
+	if (mrc_FarRect.Right && mrc_FarRect.Bottom) {
+		// FAR2 /w - рисует в видимой части буфера
+		TODO("Возможно, нужно в srWindow копировать mrc_FarRect?");
+	} else {
+		// Нужно скорректировать srWindow, т.к. ФАР в любом случае забивает на видимый регион и рисует на весь буфер.
+		if (m_sbi.srWindow.Left)
+			m_sbi.srWindow.Left = 0;
+		if ((m_sbi.srWindow.Right+1) != m_sbi.dwSize.X)
+			m_sbi.srWindow.Right = m_sbi.dwSize.X - 1;
+		if (m_sbi.srWindow.Top)
+			m_sbi.srWindow.Top = 0;
+		if ((m_sbi.srWindow.Bottom+1) != m_sbi.dwSize.Y)
+			m_sbi.srWindow.Bottom = m_sbi.dwSize.Y - 1;
+	}
+
+	int nTextWidth = TextWidth();
+	int nTextHeight = TextHeight();
 
 	// Выделить память, при необходимости увеличить
-	if (!mpsz_Chars || !mp_Attrs || !mp_AttrsWork || (m_sbi.dwSize.X * m_sbi.dwSize.Y) > mn_MaxCells) {
+	if (!mpsz_Chars || !mp_Attrs || !mp_AttrsWork || (nTextWidth * nTextHeight) > mn_MaxCells) {
 		if (mpsz_Chars) free(mpsz_Chars);
-		mn_MaxCells = (m_sbi.dwSize.X * m_sbi.dwSize.Y);
-		mn_CurWidth = m_sbi.dwSize.X;
-		mn_CurHeight = m_sbi.dwSize.Y;
+		mn_MaxCells = (nTextWidth * nTextHeight);
+		mn_CurWidth = nTextWidth;
+		mn_CurHeight = nTextHeight;
 		mpsz_Chars = (wchar_t*)calloc(mn_MaxCells, sizeof(wchar_t));
 		mp_Attrs = (CharAttr*)calloc(mn_MaxCells, sizeof(CharAttr));
 		mp_AttrsWork = (CharAttr*)calloc(mn_MaxCells, sizeof(CharAttr));
@@ -1406,7 +1437,7 @@ BOOL CRgnDetect::InitializeSBI(const COLORREF *apColors)
 	SMALL_RECT rgn;
 	// Если весь буфер больше 30К - и пытаться не будем
 	if ((mn_MaxCells*sizeof(CHAR_INFO)) < 30000) {
-		bufSize.X = m_sbi.dwSize.X; bufSize.Y = m_sbi.dwSize.Y;
+		bufSize.X = nTextWidth; bufSize.Y = nTextHeight;
 		bufCoord.X = 0; bufCoord.Y = 0;
 		rgn = m_sbi.srWindow;
 		if (ReadConsoleOutput(hStd, pCharInfo, bufSize, bufCoord, &rgn))
@@ -1416,11 +1447,11 @@ BOOL CRgnDetect::InitializeSBI(const COLORREF *apColors)
 	if (!bReadOk)
 	{
 		// Придется читать построчно
-		bufSize.X = m_sbi.dwSize.X; bufSize.Y = 1;
+		bufSize.X = nTextWidth; bufSize.Y = 1;
 		bufCoord.X = 0; bufCoord.Y = 0;
 		rgn = m_sbi.srWindow;
 		CHAR_INFO* pLine = pCharInfo;
-		for(int y = 0; y < (int)m_sbi.dwSize.Y; y++, rgn.Top++, pLine+=m_sbi.dwSize.X)
+		for(int y = 0; y <= (int)m_sbi.srWindow.Bottom; y++, rgn.Top++, pLine+=nTextWidth)
 		{
 			rgn.Bottom = rgn.Top;
 			ReadConsoleOutput(hStd, pLine, bufSize, bufCoord, &rgn);
@@ -1429,13 +1460,38 @@ BOOL CRgnDetect::InitializeSBI(const COLORREF *apColors)
 
 	// Теперь нужно перекинуть данные в mpsz_Chars & mp_Attrs
 	COORD crNul = {0,0};
-	OnWriteConsoleOutput(pCharInfo, m_sbi.dwSize, crNul, &m_sbi.srWindow, mp_Colors);
+	COORD crSize = {nTextWidth,nTextHeight};
+	OnWriteConsoleOutput(pCharInfo, crSize, crNul, &m_sbi.srWindow, mp_Colors);
 
 	// Буфер CHAR_INFO больше не нужен
 	free(pCharInfo);
 
 
 	return TRUE;
+}
+
+int CRgnDetect::TextWidth()
+{
+	int nWidth = 0;
+	if (mrc_FarRect.Right && mrc_FarRect.Bottom) {
+		// FAR2 /w - рисует в видимой части буфера
+		nWidth = m_sbi.srWindow.Right - m_sbi.srWindow.Left + 1;
+	} else {
+		nWidth = m_sbi.dwSize.X;
+	}
+	return nWidth;
+}
+
+int CRgnDetect::TextHeight()
+{
+	int nHeight = 0;
+	if (mrc_FarRect.Right && mrc_FarRect.Bottom) {
+		// FAR2 /w - рисует в видимой части буфера
+		nHeight = m_sbi.srWindow.Bottom - m_sbi.srWindow.Top + 1;
+	} else {
+		nHeight = m_sbi.dwSize.Y;
+	}
+	return nHeight;
 }
 
 BOOL CRgnDetect::GetCharAttr(int x, int y, wchar_t& rc, CharAttr& ra)
@@ -1484,7 +1540,7 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO *apFarInfo, const COLORREF 
 	_ASSERTE(mp_Colors && (mp_Colors[1] || mp_Colors[2]));
 	if (apSbi != &m_sbi)
 		m_sbi = *apSbi;
-	mb_BufferHeight = m_sbi.dwSize.Y > (m_sbi.srWindow.Bottom - m_sbi.srWindow.Top + 10);
+	mb_BufferHeight = !mrc_FarRect.Bottom && (m_sbi.dwSize.Y > (m_sbi.srWindow.Bottom - m_sbi.srWindow.Top + 10));
 
 	if (gbInTransparentAssert)
 		return;
@@ -1804,9 +1860,9 @@ bool CRgnDetect::ConsoleRect2ScreenRect(const RECT &rcCon, RECT *prcScr)
 	*prcScr = rcCon;
 
 	int nTopVisibleLine = m_sbi.srWindow.Top;
-	//bool bBufferHeight = m_sbi.dwSize.Y > (m_sbi.srWindow.Bottom - m_sbi.srWindow.Top + 10);
-	int nTextWidth = m_sbi.dwSize.X;
-	int nTextHeight = mb_BufferHeight ? (m_sbi.srWindow.Bottom - m_sbi.srWindow.Top + 1) : m_sbi.dwSize.Y;
+	_ASSERTE(m_sbi.srWindow.Left==0); // при работе в ConEmu - пока всегда прижато к левому краю
+	int nTextWidth = (m_sbi.srWindow.Right - m_sbi.srWindow.Left + 1);
+	int nTextHeight = (m_sbi.srWindow.Bottom - m_sbi.srWindow.Top + 1);
 
 	if (mb_BufferHeight && nTopVisibleLine) {
 		prcScr->top -= nTopVisibleLine;

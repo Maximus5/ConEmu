@@ -32,6 +32,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define FCTL_GETPANELDIR FCTL_GETCURRENTDIRECTORY
 
+#define _ACTL_GETFARRECT 32
+
 #ifdef _DEBUG
 #define SHOW_DEBUG_EVENTS
 #endif
@@ -399,6 +401,16 @@ void ExecuteInMainThread995(ConEmuThSynchroArg* pCmd)
 	if (!InfoW995) return;
 
 	InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_SYNCHRO, pCmd);
+}
+
+void GetFarRect995(SMALL_RECT* prcFarRect)
+{
+	if (!InfoW995) return;
+
+	if (!InfoW995->AdvControl(InfoW995->ModuleNumber, _ACTL_GETFARRECT, prcFarRect))
+	{
+		prcFarRect->Left = prcFarRect->Right = prcFarRect->Top = prcFarRect->Bottom = 0;
+	}
 }
 
 // Возникали проблемы с синхронизацией в FAR2 -> FindFile

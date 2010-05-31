@@ -2762,6 +2762,11 @@ BOOL MyGetConsoleScreenBufferInfo(HANDLE ahConOut, PCONSOLE_SCREEN_BUFFER_INFO a
 	CONSOLE_SCREEN_BUFFER_INFO csbi = {sizeof(CONSOLE_SCREEN_BUFFER_INFO)};
 
 	lbRc = GetConsoleScreenBufferInfo(ahConOut, &csbi);
+	if (GetConsoleDisplayMode(&srv.dwDisplayMode) && srv.dwDisplayMode) {
+		_ASSERTE(!csbi.srWindow.Left && !csbi.srWindow.Top);
+		csbi.dwSize.X = csbi.srWindow.Right+1;
+		csbi.dwSize.Y = csbi.srWindow.Bottom+1;
+	}
 	// 
 	_ASSERTE((csbi.srWindow.Bottom-csbi.srWindow.Top)<200);
 	if (lbRc && gnRunMode == RM_SERVER) // ComSpec îêíî ìåíÿòü ÍÅ ÄÎËÆÅÍ!

@@ -28,6 +28,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #define SHOWDEBUGSTR
+#ifdef _DEBUG
+#define SHOWDEBUGSTEPS
+#endif
 
 #include "Header.h"
 #include <Tlhelp32.h>
@@ -1357,8 +1360,18 @@ bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC)
 		mb_ConDataChanged = TRUE; // В FALSE - НЕ сбрасывать
 		
 		gSet.Performance(tPerfData, FALSE);
-		
-		mp_RCon->GetConsoleData(mpsz_ConChar, mpn_ConAttrEx, TextWidth, TextHeight); //TextLen*2);
+
+		{
+			#ifdef SHOWDEBUGSTEPS
+			gConEmu.DebugStep(L"mp_RCon->GetConsoleData");
+			#endif
+
+			mp_RCon->GetConsoleData(mpsz_ConChar, mpn_ConAttrEx, TextWidth, TextHeight); //TextLen*2);
+
+			#ifdef SHOWDEBUGSTEPS
+			gConEmu.DebugStep(NULL);
+			#endif
+		}
 		
 		SMALL_RECT rcFull, rcGlyph = {0,0,-1,-1};
 		if (gSet.isExtendUCharMap)

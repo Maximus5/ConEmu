@@ -124,6 +124,8 @@ extern wchar_t gszDbgModLabel[6];
 
 #define IMAGE_SUBSYSTEM_DOS_EXECUTABLE  255
 
+#define MAX_INPUT_QUEUE_EMPTY_WAIT 1000
+
 
 //#ifndef _DEBUG
 // –елизный режим
@@ -340,6 +342,7 @@ typedef struct tag_SrvInfo {
 	DWORD dwCiRc; CONSOLE_CURSOR_INFO ci; // GetConsoleCursorInfo
 	DWORD dwConsoleCP, dwConsoleOutputCP, dwConsoleMode;
 	DWORD dwSbiRc; CONSOLE_SCREEN_BUFFER_INFO sbi; // MyGetConsoleScreenBufferInfo
+	DWORD dwDisplayMode;
 	//USHORT nUsedHeight; // ¬ысота, используема€ в GUI - вместо него используем gcrBufferSize.Y
 	SHORT nTopVisibleLine; // ѕрокрутка в GUI может быть заблокирована. ≈сли -1 - без блокировки, используем текущее значение
 	SHORT nVisibleHeight;  // ѕо идее, должен быть равен (gcrBufferSize.Y). Ёто гарантированное количество строк psChars & pnAttrs

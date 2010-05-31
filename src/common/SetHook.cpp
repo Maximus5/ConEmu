@@ -1316,6 +1316,7 @@ static BOOL WINAPI OnGetNumberOfConsoleInputEvents(HANDLE hConsoleInput, LPDWORD
 		
 	if (ph && ph->PreCallBack) {
 		SETARGS2(&lbRc,hConsoleInput,lpcNumberOfEvents);
+		// Если функция возвращает FALSE - реальное чтение не будет вызвано
 		if (!ph->PreCallBack(&args))
 			return lbRc;
 	}
@@ -1342,6 +1343,7 @@ static BOOL WINAPI OnPeekConsoleInputA(HANDLE hConsoleInput, PINPUT_RECORD lpBuf
 
 	if (ph && ph->PreCallBack) {
 		SETARGS4(&lbRc,hConsoleInput,lpBuffer,nLength,lpNumberOfEventsRead);
+		// Если функция возвращает FALSE - реальное чтение не будет вызвано
 		if (!ph->PreCallBack(&args))
 			return lbRc;
 	}
@@ -1368,6 +1370,7 @@ static BOOL WINAPI OnPeekConsoleInputW(HANDLE hConsoleInput, PINPUT_RECORD lpBuf
 
 	if (ph && ph->PreCallBack) {
 		SETARGS4(&lbRc,hConsoleInput,lpBuffer,nLength,lpNumberOfEventsRead);
+		// Если функция возвращает FALSE - реальное чтение не будет вызвано
 		if (!ph->PreCallBack(&args))
 			return lbRc;
 	}
@@ -1394,6 +1397,7 @@ static BOOL WINAPI OnReadConsoleInputA(HANDLE hConsoleInput, PINPUT_RECORD lpBuf
 
 	if (ph && ph->PreCallBack) {
 		SETARGS4(&lbRc,hConsoleInput,lpBuffer,nLength,lpNumberOfEventsRead);
+		// Если функция возвращает FALSE - реальное чтение не будет вызвано
 		if (!ph->PreCallBack(&args))
 			return lbRc;
 	}
@@ -1420,6 +1424,7 @@ static BOOL WINAPI OnReadConsoleInputW(HANDLE hConsoleInput, PINPUT_RECORD lpBuf
 
 	if (ph && ph->PreCallBack) {
 		SETARGS4(&lbRc,hConsoleInput,lpBuffer,nLength,lpNumberOfEventsRead);
+		// Если функция возвращает FALSE - реальное чтение не будет вызвано
 		if (!ph->PreCallBack(&args))
 			return lbRc;
 	}

@@ -37,6 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SHOWDEBUGSTR
 #define MCHKHEAP
 #define DEBUGSTRMENU(s) DEBUGSTR(s)
+#define DEBUGSTRINPUT(s) DEBUGSTR(s)
 
 
 //#include <stdio.h>
@@ -104,6 +105,8 @@ WCHAR gszDir1[CONEMUTABMAX], gszDir2[CONEMUTABMAX];
 WCHAR gszRootKey[MAX_PATH*2];
 int maxTabCount = 0, lastWindowCount = 0, gnCurTabCount = 0;
 CESERVER_REQ* gpTabs = NULL; //(ConEmuTab*) Alloc(maxTabCount, sizeof(ConEmuTab));
+BOOL gbIgnoreUpdateTabs = FALSE; // выставляется на время CMD_SETWINDOW
+BOOL gbRequestUpdateTabs = FALSE; // выставляется при получении события FOCUS/KILLFOCUS
 LPBYTE gpData = NULL, gpCursor = NULL;
 CESERVER_REQ* gpCmdRet = NULL;
 DWORD  gnDataSize=0;
@@ -134,6 +137,8 @@ HANDLE ghPluginSemaphore = NULL;
 wchar_t gsFarLang[64] = {0};
 BOOL FindServerCmd(DWORD nServerCmd, DWORD &dwServerPID);
 BOOL gbNeedPostTabSend = FALSE;
+BOOL gbNeedPostEditCheck = FALSE; // проверить, может в активном редакторе изменился статус
+int lastModifiedStateW = -1;
 DWORD gnNeedPostTabSendTick = 0;
 #define NEEDPOSTTABSENDDELTA 100
 wchar_t gsMonitorEnvVar[0x1000];
@@ -354,6 +359,28 @@ BOOL OnConsolePeekReadInput(BOOL abPeek)
 #ifdef _DEBUG
 	_ASSERTE(GetCurrentThreadId() == gnMainThreadId);
 #endif
+
+	if (gbNeedPostEditCheck) {
+		DWORD currentModifiedState = GetEditorModifiedState();
+		if (lastModifiedStateW != (int)currentModifiedState)
+		{
+			lastModifiedStateW = (int)currentModifiedState;
+			gbRequestUpdateTabs = TRUE;
+		}
+	}
+	if (!gbRequestUpdateTabs && gbNeedPostTabSend) {
+		if (!IsMacroActive()) {
+			gbRequestUpdateTabs = TRUE; gbNeedPostTabSend = FALSE;
+		}
+	}
+	if (gbRequestUpdateTabs && !IsMacroActive()) {
+		gbRequestUpdateTabs = gbNeedPostTabSend = FALSE;
+		if (gFarVersion.dwVerMajor==1)
+			UpdateConEmuTabsA(0,false,false);
+		else
+			UpdateConEmuTabsW(0,false,false);
+	}
+
 
 	if (gpConsoleInfo && gpFarInfo && gpFarInfoMapping)
 		TouchReadPeekConsoleInputs(abPeek ? 1 : 0);
@@ -595,6 +622,7 @@ BOOL WINAPI OnConsolePeekInput(HookCallbackArg* pArgs)
 
 	// Если зарегистрирован callback для графической панели
 	if (gPanelRegLeft.pfnPeekPreCall || gPanelRegRight.pfnPeekPreCall) {
+		// Если функция возвращает FALSE - реальное чтение не будет вызвано
 		if (!OnPanelViewCallbacks(pArgs, gPanelRegLeft.pfnPeekPreCall, gPanelRegRight.pfnPeekPreCall))
 			return FALSE;
 	}
@@ -608,6 +636,7 @@ VOID WINAPI OnConsolePeekInputPost(HookCallbackArg* pArgs)
 
 	// Если зарегистрирован callback для графической панели
 	if (gPanelRegLeft.pfnPeekPostCall || gPanelRegRight.pfnPeekPostCall) {
+		// Если функция возвращает FALSE - реальное чтение не будет вызвано
 		if (!OnPanelViewCallbacks(pArgs, gPanelRegLeft.pfnPeekPostCall, gPanelRegRight.pfnPeekPostCall))
 			return;
 	}
@@ -625,10 +654,63 @@ BOOL WINAPI OnConsoleReadInput(HookCallbackArg* pArgs)
 
 	// Если зарегистрирован callback для графической панели
 	if (gPanelRegLeft.pfnReadPreCall || gPanelRegRight.pfnReadPreCall) {
+		// Если функция возвращает FALSE - реальное чтение не будет вызвано
 		if (!OnPanelViewCallbacks(pArgs, gPanelRegLeft.pfnReadPreCall, gPanelRegRight.pfnReadPreCall))
+		{
+			// это вызвается перед реальным чтением - информация может быть разве что от "PanelViews"
+			// Если под дебагом включен ScrollLock - вывести информацию о считанных событиях
+			#ifdef _DEBUG
+			if (GetKeyState(VK_SCROLL) & 1) {
+				PINPUT_RECORD p = (PINPUT_RECORD)(pArgs->lArguments[1]);
+				LPDWORD pCount = (LPDWORD)(pArgs->lArguments[3]);
+				_ASSERTE(*pCount <= pArgs->lArguments[2]);
+				UINT nCount = *pCount;
+				for (UINT i = 0; i < nCount; i++)
+					DebugInputPrint(p[i]);
+			}
+			#endif
 			return FALSE;
+		}
 	}
+	
+	return TRUE; // продолжить
+}
 
+VOID WINAPI OnConsoleReadInputPost(HookCallbackArg* pArgs)
+{
+	if (!pArgs->bMainThread) return; // обработку делаем только в основной нити
+
+#ifdef _DEBUG
+	wchar_t szDbg[255]; 
+	PINPUT_RECORD p = (PINPUT_RECORD)(pArgs->lArguments[1]);
+	LPDWORD pCount = (LPDWORD)(pArgs->lArguments[3]);
+	DWORD nLeft = 0; GetNumberOfConsoleInputEvents(GetStdHandle(STD_INPUT_HANDLE), &nLeft);
+	wsprintfW(szDbg, L"*** OnConsoleReadInputPost(Events=%i, KeyCount=%i, LeftInConBuffer=%i)\n", 
+		*pCount, (p->EventType==KEY_EVENT) ? p->Event.KeyEvent.wRepeatCount : 0, nLeft);
+	//if (*pCount) {
+	//	wsprintfW(szDbg+lstrlen(szDbg), L", type=%i", p->EventType);
+	//	if (p->EventType == MOUSE_EVENT) {
+	//		wsprintfW(L", {%ix%i} BtnState:0x%08X, CtrlState:0x%08X, Flags:0x%08X",
+	//			p->Event.MouseEvent.dwMousePosition.X, p->Event.MouseEvent.dwMousePosition.Y,
+	//			p->Event.MouseEvent.dwButtonState, p->Event.MouseEvent.dwControlKeyState,
+	//			p->Event.MouseEvent.dwEventFlags);
+	//	} else if (p->EventType == KEY_EVENT) {
+	//		wsprintfW(L", '%c' %s count=%i, VK=%i, SC=%i, CH=\\x%X, State=0x%08x %s",
+	//			(p->Event.KeyEvent.uChar.UnicodeChar > 0x100) ? L'?' :
+	//			(p->Event.KeyEvent.uChar.UnicodeChar 
+	//			? p->Event.KeyEvent.uChar.UnicodeChar : L' '),
+	//			p->Event.KeyEvent.bKeyDown ? L"Down," : L"Up,  ",
+	//			p->Event.KeyEvent.wRepeatCount,
+	//			p->Event.KeyEvent.wVirtualKeyCode,
+	//			p->Event.KeyEvent.wVirtualScanCode,
+	//			p->Event.KeyEvent.uChar.UnicodeChar,
+	//			p->Event.KeyEvent.dwControlKeyState,
+	//			(p->Event.KeyEvent.dwControlKeyState & ENHANCED_KEY) ?
+	//			L"<Enhanced>" : L"");
+	//	}
+	//}
+	//lstrcatW(szDbg, L")\n");
+	DEBUGSTRINPUT(szDbg);
 	// Если под дебагом включен ScrollLock - вывести информацию о считанных событиях
 	#ifdef _DEBUG
 	if (GetKeyState(VK_SCROLL) & 1) {
@@ -640,16 +722,11 @@ BOOL WINAPI OnConsoleReadInput(HookCallbackArg* pArgs)
 			DebugInputPrint(p[i]);
 	}
 	#endif
-	
-	return TRUE; // продолжить
-}
-
-VOID WINAPI OnConsoleReadInputPost(HookCallbackArg* pArgs)
-{
-	if (!pArgs->bMainThread) return; // обработку делаем только в основной нити
+#endif
 
 	// Если зарегистрирован callback для графической панели
 	if (gPanelRegLeft.pfnReadPostCall || gPanelRegRight.pfnReadPostCall) {
+		// Если функция возвращает FALSE - реальное чтение не будет вызвано
 		if (!OnPanelViewCallbacks(pArgs, gPanelRegLeft.pfnReadPostCall, gPanelRegRight.pfnReadPostCall))
 			return;
 	}
@@ -1308,6 +1385,8 @@ CESERVER_REQ* ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandDat
 				if (pCommandData!=NULL)
 					nTab = *((DWORD*)pCommandData);
 
+				gbIgnoreUpdateTabs = TRUE;
+
 				if (gFarVersion.dwVerMajor==1) {
 					SetWindowA(nTab);
 				} else {
@@ -1316,6 +1395,9 @@ CESERVER_REQ* ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandDat
 					else
 						FUNC_X(SetWindow)(nTab);
 				}
+
+				gbIgnoreUpdateTabs = FALSE;
+				UpdateConEmuTabsW(0, false, false);
 			}
 			//SendTabs(gnCurTabCount, FALSE); // Обновить размер передаваемых данных
 			pCmdRet = gpTabs;
@@ -2456,8 +2538,11 @@ BOOL ReloadFarInfo(BOOL abFull)
 
 void UpdateConEmuTabsW(int anEvent, bool losingFocus, bool editorSave, void* Param/*=NULL*/)
 {
-	if (!gbInfoW_OK)
+	if (!gbInfoW_OK || gbIgnoreUpdateTabs)
 		return;
+
+	if (gbRequestUpdateTabs)
+		gbRequestUpdateTabs = FALSE;
 
 	if (ConEmuHwnd && FarHwnd)
 		CheckResources(FALSE);
@@ -2516,9 +2601,9 @@ BOOL AddTab(int &tabCount, bool losingFocus, bool editorSave,
 	DEBUGSTR(L"--AddTab\n");
 
 	if (Type == WTYPE_PANELS) {
-	    lbCh = (gpTabs->Tabs.tabs[0].Current != (losingFocus ? 1 : 0)) ||
+	    lbCh = (gpTabs->Tabs.tabs[0].Current != (Current/*losingFocus*/ ? 1 : 0)) ||
 	           (gpTabs->Tabs.tabs[0].Type != WTYPE_PANELS);
-		gpTabs->Tabs.tabs[0].Current = losingFocus ? 1 : 0;
+		gpTabs->Tabs.tabs[0].Current = Current/*losingFocus*/ ? 1 : 0;
 		//lstrcpyn(gpTabs->Tabs.tabs[0].Name, FUNC_Y(GetMsgW)(0), CONEMUTABMAX-1);
 		gpTabs->Tabs.tabs[0].Name[0] = 0;
 		gpTabs->Tabs.tabs[0].Pos = 0;
@@ -2538,14 +2623,14 @@ BOOL AddTab(int &tabCount, bool losingFocus, bool editorSave,
 		if (editorSave && lstrcmpi(FileName, Name) == 0)
 			Modified = 0;
 	
-	    lbCh = (gpTabs->Tabs.tabs[tabCount].Current != (losingFocus ? 0 : Current)) ||
+	    lbCh = (gpTabs->Tabs.tabs[tabCount].Current != (Current/*losingFocus*/ ? 1 : 0)/*(losingFocus ? 0 : Current)*/) ||
 	           (gpTabs->Tabs.tabs[tabCount].Type != Type) ||
 	           (gpTabs->Tabs.tabs[tabCount].Modified != Modified) ||
 	           (lstrcmp(gpTabs->Tabs.tabs[tabCount].Name, Name) != 0);
 	
 		// when receiving losing focus event receiver is still reported as current
 		gpTabs->Tabs.tabs[tabCount].Type = Type;
-		gpTabs->Tabs.tabs[tabCount].Current = losingFocus ? 0 : Current;
+		gpTabs->Tabs.tabs[tabCount].Current = (Current/*losingFocus*/ ? 1 : 0)/*losingFocus ? 0 : Current*/;
 		gpTabs->Tabs.tabs[tabCount].Modified = Modified;
 
 		if (gpTabs->Tabs.tabs[tabCount].Current != 0)
@@ -2623,8 +2708,8 @@ void SendTabs(int tabCount, BOOL abForceSend/*=FALSE*/)
 
 // watch non-modified -> modified editor status change
 
-int lastModifiedStateW = -1;
-bool gbHandleOneRedraw = false; //, gbHandleOneRedrawCh = false;
+//int lastModifiedStateW = -1;
+//bool gbHandleOneRedraw = false; //, gbHandleOneRedrawCh = false;
 
 int WINAPI _export ProcessEditorInputW(void* Rec)
 {
@@ -2638,6 +2723,15 @@ int WINAPI _export ProcessEditorInputW(void* Rec)
 
 int WINAPI _export ProcessEditorEventW(int Event, void *Param)
 {
+#if 1
+	if (!gbRequestUpdateTabs) {
+		if (Event == EE_READ || Event == EE_CLOSE || Event == EE_GOTFOCUS || Event == EE_KILLFOCUS || Event == EE_SAVE) {
+			gbRequestUpdateTabs = TRUE;
+		//} else if (Event == EE_REDRAW && gbHandleOneRedraw) {
+		//	gbHandleOneRedraw = false; gbRequestUpdateTabs = TRUE;
+		}
+	}
+#else
 	// Даже если мы не под эмулятором - просто запомним текущее состояние
 	//if (!ConEmuHwnd) return 0; // Если мы не под эмулятором - ничего
 	/*if (gFarVersion.dwBuild>=FAR_Y_VER)
@@ -2684,11 +2778,18 @@ int WINAPI _export ProcessEditorEventW(int Event, void *Param)
 	//2009-06-03 EE_KILLFOCUS при закрытии редактора не приходит. Только EE_CLOSE
 	bool loosingFocus = (Event == EE_KILLFOCUS) || (Event == EE_CLOSE);
 	UpdateConEmuTabsW(Event+100, loosingFocus, Event == EE_SAVE);
+#endif
+
 	return 0;
 }
 
 int WINAPI _export ProcessViewerEventW(int Event, void *Param)
 {
+#if 1
+	if (!gbRequestUpdateTabs &&
+		(Event == VE_CLOSE || Event == VE_GOTFOCUS || Event == VE_KILLFOCUS))
+	gbRequestUpdateTabs = TRUE;
+#else
 	// Даже если мы не под эмулятором - просто запомним текущее состояние
 	//if (!ConEmuHwnd) return 0; // Если мы не под эмулятором - ничего
 	/*if (gFarVersion.dwBuild>=FAR_Y_VER)
@@ -2713,6 +2814,7 @@ int WINAPI _export ProcessViewerEventW(int Event, void *Param)
 	//2009-06-03 VE_KILLFOCUS при закрытии редактора не приходит. Только VE_CLOSE
 	bool loosingFocus = (Event == VE_KILLFOCUS || Event == VE_CLOSE);
 	UpdateConEmuTabsW(Event+200, loosingFocus, false, Param);
+#endif
 	return 0;
 }
 
@@ -3326,8 +3428,14 @@ DWORD WINAPI PlugServerThreadCommand(LPVOID ahPipe)
 
 			ProcessCommand(pIn->hdr.nCmd, TRUE/*bReqMainThread*/, pIn->Data);
 
-			if (gFarVersion.dwVerMajor == 2) {
-				WaitForSingleObject(ghSetWndSendTabsEvent, 2000);
+			if (gFarVersion.dwVerMajor == 2)
+			{
+				WARNING("Почему для FAR1 не ждем?");
+				DWORD nTimeout = 2000;
+				#ifdef _DEBUG
+				if (IsDebuggerPresent()) nTimeout = INFINITE;
+				#endif
+				WaitForSingleObject(ghSetWndSendTabsEvent, nTimeout);
 			}
 		}
 

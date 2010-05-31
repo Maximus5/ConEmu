@@ -199,7 +199,7 @@ public:
 	int nToolbarAddSpace;
     DWORD wndWidth, wndHeight, ntvdmHeight; // в символах
     int wndX, wndY; // в пикселях
-    bool wndCascade;
+    bool wndCascade, isAutoSaveSizePos;
     DWORD nSlideShowElapse;
     DWORD nIconID;
     bool isTryToCenter;
@@ -279,6 +279,7 @@ public:
     void LoadSettings();
     void InitSettings();
     BOOL SaveSettings();
+	void SaveSizePosOnExit();
     bool ShowColorDialog(HWND HWndOwner, COLORREF *inColor);
     static int CALLBACK EnumFamCallBack(LPLOGFONT lplf, LPNEWTEXTMETRIC lpntm, DWORD FontType, LPVOID aFontCount);
     static int CALLBACK EnumFontCallBackEx(ENUMLOGFONTEX *lpelfe, NEWTEXTMETRICEX *lpntme, DWORD FontType, LPARAM lParam);

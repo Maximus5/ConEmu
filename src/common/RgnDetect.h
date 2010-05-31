@@ -87,7 +87,11 @@ public:
 	void OnWindowSizeChanged();
 	void OnWriteConsoleOutput(const CHAR_INFO *lpBuffer,COORD dwBufferSize,COORD dwBufferCoord,PSMALL_RECT lpWriteRegion, const COLORREF *apColors);
 	BOOL InitializeSBI(const COLORREF *apColors);
+	void SetFarRect(SMALL_RECT *prcFarRect);
 	BOOL GetCharAttr(int x, int y, wchar_t& rc, CharAttr& ra);
+	// Sizes
+	int TextWidth();
+	int TextHeight();
 	
 	
 protected:
@@ -141,6 +145,7 @@ protected:
 	wchar_t   *mpsz_Chars;
 	CharAttr  *mp_Attrs;
 	CharAttr  *mp_AttrsWork;
+	SMALL_RECT mrc_FarRect;
 	int mn_CurWidth, mn_CurHeight, mn_MaxCells;
 	bool mb_SBI_Loaded;
 	CharAttr mca_Table[0x100];

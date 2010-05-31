@@ -815,7 +815,7 @@ typedef struct tag_CESERVER_REQ {
 
 //#define INPUT_THREAD_ALIVE_MSG (WM_APP+100)
 
-#define MAX_INPUT_QUEUE_EMPTY_WAIT 100
+//#define MAX_INPUT_QUEUE_EMPTY_WAIT 1000
 
 
 int NextArg(const wchar_t** asCmdLine, wchar_t* rsArg/*[MAX_PATH+1]*/, const wchar_t** rsArgStart=NULL);

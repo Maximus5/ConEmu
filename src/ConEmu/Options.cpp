@@ -357,7 +357,7 @@ void CSettings::InitSettings()
     isDesktopMode = false;
     isAlwaysOnTop = false;
 	isSleepInBackground = true;
-    wndX = 0; wndY = 0; wndCascade = true;
+    wndX = 0; wndY = 0; wndCascade = true; isAutoSaveSizePos = false;
     isConVisible = false;
     nSlideShowElapse = 2500;
     nIconID = IDI_ICON1;
@@ -557,10 +557,11 @@ void CSettings::LoadSettings()
 			if (nHideCaptionAlwaysDisappear > 30000) nHideCaptionAlwaysDisappear = 30000;
         reg->Load(L"ConWnd X", wndX); /*if (wndX<-10) wndX = 0;*/
         reg->Load(L"ConWnd Y", wndY); /*if (wndY<-10) wndY = 0;*/
+		reg->Load(L"AutoSaveSizePos", isAutoSaveSizePos);
 		// ЭТО не влияет на szDefCmd. Только прямое указание флажка "/BufferHeight N" 
 		// может сменить (умолчательную) команду запуска на "cmd" или "far"
         reg->Load(L"Cascaded", wndCascade);
-
+		
 		reg->Load(L"ConWnd Width", wndWidth); if (!wndWidth) wndWidth = 80; else if (wndWidth>1000) wndWidth = 1000;
         reg->Load(L"ConWnd Height", wndHeight); if (!wndHeight) wndHeight = 25; else if (wndHeight>500) wndHeight = 500;
         //TODO: Эти два параметра не сохраняются
@@ -941,6 +942,26 @@ void CSettings::UpdateMargins(RECT arcMargins)
     delete reg;
 }
 
+void CSettings::SaveSizePosOnExit()
+{
+	if (!this || !isAutoSaveSizePos)
+		return;
+
+	SettingsBase* reg = CreateSettings();
+	if (reg->OpenKey(Config, KEY_WRITE))
+	{
+		reg->Save(L"ConWnd Width", wndWidth);
+		reg->Save(L"ConWnd Height", wndHeight);
+		reg->Save(L"16bit Height", ntvdmHeight);
+		reg->Save(L"ConWnd X", wndX);
+		reg->Save(L"ConWnd Y", wndY);
+		reg->Save(L"Cascaded", wndCascade);
+		reg->Save(L"AutoSaveSizePos", isAutoSaveSizePos);
+		reg->CloseKey();
+	}
+	delete reg;
+}
+
 BOOL CSettings::SaveSettings()
 {
     SettingsBase* reg = CreateSettings();
@@ -1123,6 +1144,7 @@ BOOL CSettings::SaveSettings()
             reg->Save(L"ConWnd X", wndX);
             reg->Save(L"ConWnd Y", wndY);
             reg->Save(L"Cascaded", wndCascade);
+			reg->Save(L"AutoSaveSizePos", isAutoSaveSizePos);
 
             /*reg->Save(L"ScrollTitle", isScrollTitle);
             reg->Save(L"ScrollTitleLen", ScrollTitleLen);*/
@@ -1614,6 +1636,7 @@ LRESULT CSettings::OnInitDialog_Main()
 	}
 	UpdatePos(wndX, wndY);
 	CheckDlgButton(hMain, wndCascade ? rCascade : rFixed, BST_CHECKED);
+	if (isAutoSaveSizePos) CheckDlgButton(hMain, cbAutoSaveSizePos, BST_CHECKED);
 
 	mn_LastChangingFontCtrlId = 0;
 
@@ -2044,6 +2067,10 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
     case rFixed:
 	    wndCascade = CB == rCascade;
 	    break;
+
+	case cbAutoSaveSizePos:
+		isAutoSaveSizePos = IsChecked(hMain, cbAutoSaveSizePos);
+		break;
 
 	case cbFontAuto:
 		isFontAutoSize = IsChecked(hMain, cbFontAuto);

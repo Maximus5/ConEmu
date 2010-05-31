@@ -121,7 +121,7 @@ VOID CALLBACK ConEmuCheckTimerProc(
   DWORD dwTime       // current system time
 );
 
-void UpdateConEmuTabsA(int anEvent, bool losingFocus, bool editorSave, void *Param=NULL);
+//void UpdateConEmuTabsA(int anEvent, bool losingFocus, bool editorSave, void *Param=NULL);
 
 void ProcessDragFromA()
 {
@@ -438,7 +438,7 @@ int WINAPI _export ProcessEditorInput(const INPUT_RECORD *Rec)
 
 
 
-	if ((Rec->EventType & 0xFF) == KEY_EVENT 
+	if (!gbRequestUpdateTabs && (Rec->EventType & 0xFF) == KEY_EVENT 
 		&& (Rec->Event.KeyEvent.wVirtualKeyCode || Rec->Event.KeyEvent.wVirtualScanCode || Rec->Event.KeyEvent.uChar.AsciiChar)
 		&& Rec->Event.KeyEvent.bKeyDown)
 	{
@@ -448,22 +448,38 @@ int WINAPI _export ProcessEditorInput(const INPUT_RECORD *Rec)
 		#endif
 
 
-		DWORD currentModifiedState = GetEditorModifiedStateA();
+		gbNeedPostEditCheck = TRUE;
 
-		if (lastModifiedStateW != (int)currentModifiedState)
-		{
-			UpdateConEmuTabsA(0, false, false);
-			lastModifiedStateW = currentModifiedState;
-		} else {
-			gbHandleOneRedraw = true;
-			//gbHandleOneRedrawCh = true;
-		}
+		//	gbHandleOneRedraw = true;
+		//{
+		//	DWORD currentModifiedState = GetEditorModifiedStateA();
+		//
+		//	if (lastModifiedStateW != (int)currentModifiedState)
+		//	{
+		//		gbRequestUpdateTabs = TRUE;
+		//		
+		//		//	UpdateConEmuTabsA(0, false, false);
+		//		//	lastModifiedStateW = currentModifiedState;
+		//		//} else {
+		//		//	gbHandleOneRedraw = true;
+		//		//	//gbHandleOneRedrawCh = true;
+		//	}
+		//}
 	}
 	return 0;
 }
 
 int WINAPI _export ProcessEditorEvent(int Event, void *Param)
 {
+#if 1
+	if (!gbRequestUpdateTabs) {
+		if (Event == EE_READ || Event == EE_CLOSE || Event == EE_GOTFOCUS || Event == EE_KILLFOCUS || Event == EE_SAVE) {
+			gbRequestUpdateTabs = TRUE;
+		//} else if (Event == EE_REDRAW && gbHandleOneRedraw) {
+		//	gbHandleOneRedraw = false; gbRequestUpdateTabs = TRUE;
+		}
+	}
+#else
 	if (/*!ConEmuHwnd ||*/ !InfoA) // иногда событие от QuickView приходит ДО инициализации плагина
 		return 0; // Даже если мы не под эмулятором - просто запомним текущее состояние
 		
@@ -501,11 +517,17 @@ int WINAPI _export ProcessEditorEvent(int Event, void *Param)
 	//2009-06-03 EE_KILLFOCUS при закрытии редактора не приходит. Только EE_CLOSE
 	bool loosingFocus = (Event == EE_KILLFOCUS) || (Event == EE_CLOSE);
 	UpdateConEmuTabsA(Event+100, loosingFocus, Event == EE_SAVE);
+#endif
 	return 0;
 }
 
 int WINAPI _export ProcessViewerEvent(int Event, void *Param)
 {
+#if 1
+	if (!gbRequestUpdateTabs &&
+		(Event == VE_CLOSE || Event == VE_GOTFOCUS || Event == VE_KILLFOCUS))
+		gbRequestUpdateTabs = TRUE;
+#else
 	if (/*!ConEmuHwnd ||*/ !InfoA) // иногда событие от QuickView приходит ДО инициализации плагина
 		return 0; // Даже если мы не под эмулятором - просто запомним текущее состояние
 
@@ -538,15 +560,16 @@ int WINAPI _export ProcessViewerEvent(int Event, void *Param)
 	//		UpdateConEmuTabsA(Event+200, Event == VE_KILLFOCUS, false, Param);
 	//	}
 	//}
-
-	//return 0;
+#endif
+	return 0;
 }
 
 extern MSection *csTabs;
 
 void UpdateConEmuTabsA(int anEvent, bool losingFocus, bool editorSave, void *Param/*=NULL*/)
 {
-	if (!InfoA) return;
+	if (!InfoA || gbIgnoreUpdateTabs)
+		return;
 
 	if (ConEmuHwnd && FarHwnd)
 		CheckResources(FALSE);

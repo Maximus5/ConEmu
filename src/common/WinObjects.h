@@ -38,6 +38,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 BOOL apiSetForegroundWindow(HWND ahWnd);
 BOOL apiShowWindow(HWND ahWnd, int anCmdShow);
 BOOL apiShowWindowAsync(HWND ahWnd, int anCmdShow);
+#ifdef _DEBUG
+void getWindowInfo(HWND ahWnd, wchar_t* rsInfo/*[1024]*/);
+#endif
 
 // Some WinAPI related functions
 wchar_t* GetShortFileNameEx(LPCWSTR asLong);

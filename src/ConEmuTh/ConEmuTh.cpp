@@ -942,7 +942,7 @@ BOOL GetBufferInput(BOOL abRemove, PINPUT_RECORD lpBuffer, DWORD nBufSize, LPDWO
 		return FALSE;
 	}
 
-	BOOL lbRedraw = FALSE;
+	BOOL lbRedraw = FALSE, lbSetEnvVar = FALSE;
 	WORD wType = 0;
 	PINPUT_RECORD p = lpBuffer;
 
@@ -952,6 +952,9 @@ BOOL GetBufferInput(BOOL abRemove, PINPUT_RECORD lpBuffer, DWORD nBufSize, LPDWO
 		if (wType == EVENT_TYPE_REDRAW) {
 			lbRedraw = TRUE;
 		} else {
+			if (abRemove && gnUngetCount && girUnget[0].EventType == EVENT_TYPE_REDRAW) {
+				lbSetEnvVar = TRUE;
+			}
 			nBufSize--; p++;
 			if (!abRemove) break; // В режиме Peek - возвращаем не более одного нажатияs
 		}
@@ -999,11 +1002,12 @@ BOOL GetBufferInput(BOOL abRemove, PINPUT_RECORD lpBuffer, DWORD nBufSize, LPDWO
 	//	}
 	//}
 
-	if (lbRedraw) {
-		gbWaitForKeySequenceEnd = (gnUngetCount > 0);
+	if (lbRedraw || lbSetEnvVar) {
+		gbWaitForKeySequenceEnd = (gnUngetCount > 0) && !lbSetEnvVar;
+		UpdateEnvVar(TRUE);
+
 		if (IsThumbnailsActive(FALSE)) {
-			UpdateEnvVar(TRUE);
-			if (!gbWaitForKeySequenceEnd)
+			if (lbRedraw && !gbWaitForKeySequenceEnd)
 				OnMainThreadActived();
 		}
 	}
@@ -1219,6 +1223,9 @@ BOOL WINAPI OnPreWriteConsoleOutput(HANDLE hOutput,const CHAR_INFO *lpBuffer,COO
 			OutputDebugStringW(szDbg);
 		}
 #endif
+
+		SMALL_RECT rcFarRect; GetFarRect(&rcFarRect);
+		gpRgnDetect->SetFarRect(&rcFarRect);
 
 		gpRgnDetect->OnWriteConsoleOutput(lpBuffer, dwBufferSize, dwBufferCoord, lpWriteRegion, gcrCurColors);
 
@@ -1648,6 +1655,22 @@ BOOL LoadThSet(DWORD anGuiPid/* =-1 */)
 	}
 
 	return lbRc;
+}
+
+//sx, sy - смещение правого верхнего угла панелей от правого верхнего угла консоли
+//cx, cy - если не 0 - то определяет ширину и высоту панелей
+BOOL GetFarRect(SMALL_RECT* prcFarRect)
+{
+	BOOL lbFarBuffer = FALSE;
+	prcFarRect->Left = prcFarRect->Right = prcFarRect->Top = prcFarRect->Bottom = 0;
+	if (gFarVersion.dwVerMajor>2
+		|| (gFarVersion.dwVerMajor==2 && gFarVersion.dwBuild>=1573/*FAR_Y_VER*/))
+	{
+		//_ASSERTE(1573<=FAR_Y_VER);
+		FUNC_Y(GetFarRect)(prcFarRect);
+		lbFarBuffer = (prcFarRect->Bottom && prcFarRect->Right);
+	}
+	return lbFarBuffer;
 }
 
 
