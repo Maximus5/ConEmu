@@ -65,6 +65,7 @@ extern CRgnDetect *gpRgnDetect;
 extern CEFAR_INFO gFarInfo;
 extern DWORD gnRgnDetectFlags;
 
+
 void ResetUngetBuffer();
 int ShowLastError();
 
@@ -774,46 +775,83 @@ BOOL CeFullPanelInfo::GetConCoordFromIndex(int nIndex, COORD& rCoord)
 	return lbRc;
 }
 
-HBRUSH CeFullPanelInfo::GetItemColors(int nIndex, CePluginPanelItem* pItem, BOOL abCurrentItem, COLORREF &crFore, COLORREF &crBack)
+void CeFullPanelInfo::LoadItemColors(int nIndex, CePluginPanelItem* pItem, BOOL abCurrentItem)
 {
 	COORD crItem;
 	if (GetConCoordFromIndex(nIndex, crItem))
-	//int nCol0Index = nIndex - TopPanelItem;
-	//if (nCol0Index >= 0 && nCol0Index <= (WorkRect.bottom - WorkRect.top))
 	{
 		wchar_t c; CharAttr a;
 		//if (gpRgnDetect->GetCharAttr(WorkRect.left, WorkRect.top+nCol0Index, c, a)) {
 		if (gpRgnDetect->GetCharAttr(crItem.X, crItem.Y, c, a)) {
-			pItem->crBack = crBack = gcrCurColors[a.nBackIdx];
-			pItem->crFore = crFore = gcrCurColors[a.nForeIdx];
+			pItem->crBack = gcrCurColors[a.nBackIdx];
+			pItem->crFore = gcrCurColors[a.nForeIdx];
 			pItem->bItemColorLoaded = TRUE;
-			goto ChkBrush;
+			return;
 		}
 	}
 
-	if (pItem->bItemColorLoaded) {
-		// Цвет этого элемента уже мог быть получен, а элемент просто "уехал" из-за прокрутки.
-		crBack = pItem->crBack;
-		crFore = pItem->crFore;
-	} else {
+	// Цвет этого элемента уже мог быть получен, а элемент просто "уехал" из-за прокрутки.
+	if (!pItem->bItemColorLoaded) {
 		// Если не удалось - берем по умолчанию (без расцетки групп)
 		int nIdx = ((pItem->Flags & (0x40000000/*PPIF_SELECTED*/)) ? 
 			((abCurrentItem/*nItem==nCurrentItem*/) ? COL_PANELSELECTEDCURSOR : COL_PANELSELECTEDTEXT) :
 			((abCurrentItem/*nItem==nCurrentItem*/) ? COL_PANELCURSOR : COL_PANELTEXT));
 
-		crBack = gcrCurColors[((nFarColors[nIdx] & 0xF0)>>4)];
-		crFore = gcrCurColors[(nFarColors[nIdx] & 0xF)];
+		pItem->crBack = gcrCurColors[((nFarColors[nIdx] & 0xF0)>>4)];
+		pItem->crFore = gcrCurColors[(nFarColors[nIdx] & 0xF)];
 		
-		// Для папок - ставим белый шрифт
-		if (crBack != 0xFFFFFF
-			&& (pItem->FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-			&& ((pItem->Flags & (0x40000000/*PPIF_SELECTED*/)) == 0))
-		{
-			crFore = 0xFFFFFF;
-		}
+		//// Для папок - ставим белый шрифт
+		//if (pItem->crBack != 0xFFFFFF
+		//	&& (pItem->FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+		//	&& ((pItem->Flags & (0x40000000/*PPIF_SELECTED*/)) == 0))
+		//{
+		//	pItem->crFore = 0xFFFFFF;
+		//}
 	}
+}
 
-ChkBrush:
+HBRUSH CeFullPanelInfo::GetItemColors(int nIndex, CePluginPanelItem* pItem, BOOL abCurrentItem, COLORREF &crFore, COLORREF &crBack)
+{
+	//COORD crItem;
+	//if (GetConCoordFromIndex(nIndex, crItem))
+	////int nCol0Index = nIndex - TopPanelItem;
+	////if (nCol0Index >= 0 && nCol0Index <= (WorkRect.bottom - WorkRect.top))
+	//{
+	//	wchar_t c; CharAttr a;
+	//	//if (gpRgnDetect->GetCharAttr(WorkRect.left, WorkRect.top+nCol0Index, c, a)) {
+	//	if (gpRgnDetect->GetCharAttr(crItem.X, crItem.Y, c, a)) {
+	//		pItem->crBack = crBack = gcrCurColors[a.nBackIdx];
+	//		pItem->crFore = crFore = gcrCurColors[a.nForeIdx];
+	//		pItem->bItemColorLoaded = TRUE;
+	//		goto ChkBrush;
+	//	}
+	//}
+	//
+	//if (pItem->bItemColorLoaded) {
+	//	// Цвет этого элемента уже мог быть получен, а элемент просто "уехал" из-за прокрутки.
+	
+	crBack = pItem->crBack;
+	crFore = pItem->crFore;
+	
+	//} else {
+	//	// Если не удалось - берем по умолчанию (без расцетки групп)
+	//	int nIdx = ((pItem->Flags & (0x40000000/*PPIF_SELECTED*/)) ? 
+	//		((abCurrentItem/*nItem==nCurrentItem*/) ? COL_PANELSELECTEDCURSOR : COL_PANELSELECTEDTEXT) :
+	//		((abCurrentItem/*nItem==nCurrentItem*/) ? COL_PANELCURSOR : COL_PANELTEXT));
+	//
+	//	crBack = gcrCurColors[((nFarColors[nIdx] & 0xF0)>>4)];
+	//	crFore = gcrCurColors[(nFarColors[nIdx] & 0xF)];
+	//	
+	//	// Для папок - ставим белый шрифт
+	//	if (crBack != 0xFFFFFF
+	//		&& (pItem->FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+	//		&& ((pItem->Flags & (0x40000000/*PPIF_SELECTED*/)) == 0))
+	//	{
+	//		crFore = 0xFFFFFF;
+	//	}
+	//}
+
+//ChkBrush:
 	if (!hLastBackBrush || crBack != crLastBackBrush) {
 		if (hLastBackBrush) DeleteObject(hLastBackBrush);
 		hLastBackBrush = CreateSolidBrush(crBack);
@@ -989,9 +1027,14 @@ void CeFullPanelInfo::Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc)
 	MSectionLock CS;
 	if (CS.Lock(pSection, FALSE, 1000))
 	{
-		for (int nStep = 0; !gbCancelAll && nStep <= 1; nStep++)
+		// Пока - рисуем в три шага
+		// 0. Подготовка элементов (получить цвет текста элемента из консоли)
+		// 1. отрисовка просто иконок (что вернет SHGetFileInfo), на этом шаге
+		//    формируется очередь запроса превьюшек.
+		// 2. отрисовка превьюшек (для тех элементов, у которых их удалось получить)
+		for (int nStep = 0; !gbCancelAll && nStep <= 2; nStep++)
 		{
-			if (nStep) {
+			if (nStep == 2) {
 				if ((gThSet.bLoadPreviews & PVM) == 0)
 					continue; // для этого режима превьюшки не просили
 			}
@@ -1028,7 +1071,13 @@ void CeFullPanelInfo::Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc)
 						_ASSERTE(this->ppItems[nItem]!=NULL);
 						continue; // Ошибка?
 					}
-					if (!nStep || !pItem->bPreviewLoaded) {
+					if (nStep == 0)
+					{
+						// Только извлечение цвета из консоли
+						LoadItemColors(nItem, pItem, (Focus && nItem==nCurrentItem));
+					}
+					else if (nStep == 1 || !pItem->bPreviewLoaded)
+					{
 						// поехали
 						const wchar_t* pszName = pItem->FindData.lpwszFileName;
 						if (wcschr(pszName, L'\\')) {
@@ -1042,7 +1091,7 @@ void CeFullPanelInfo::Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc)
 
 						if (PaintItem(hCompDC, nItem, 0, 0, pItem, 
 							(Focus && nItem==nCurrentItem), (nItem==nCurrentItem),
-							/*nBackColor, nForeColor, hBack,*/ (nStep == 1), hBackBrush, hPanelBrush, crPanel))
+							/*nBackColor, nForeColor, hBack,*/ (nStep == 2), hBackBrush, hPanelBrush, crPanel))
 						{
 							BitBlt(hdc, nXCoord, nYCoord, nWholeW, nWholeH, hCompDC, 0,0, SRCCOPY);
 							#ifdef _DEBUG
@@ -1059,33 +1108,91 @@ void CeFullPanelInfo::Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc)
 				}
 
 
-				if (PVM == pvm_Thumbnails) {
-					if (!nStep && nXCoord < rc.right) {
-						RECT rcComp = {nXCoord,nYCoord,rc.right,nYCoord+nWholeH};
-						FillRect(hdc, &rcComp, hPanelBrush); //hBack[0]);
-					}
+				// на шаге 0 - только получение цвета
+				if (nStep)
+				{
+					if (PVM == pvm_Thumbnails) {
+						// На шаге 1 - залить незанятые части цветом фона
+						if (nStep == 1 && nXCoord < rc.right) {
+							RECT rcComp = {nXCoord,nYCoord,rc.right,nYCoord+nWholeH};
+							FillRect(hdc, &rcComp, hPanelBrush); //hBack[0]);
+						}
 
-					nYCoord += nWholeH;
-				} else {
-					if (!nStep && nYCoord < rc.bottom) {
-						RECT rcComp = {nXCoord,nYCoord,rc.right,rc.bottom};
-						FillRect(hdc, &rcComp, hPanelBrush); //hBack[0]);
-					}
+						nYCoord += nWholeH;
+					} else {
+						// На шаге 1 - залить незанятые части цветом фона
+						if (nStep == 1 && nYCoord < rc.bottom) {
+							RECT rcComp = {nXCoord,nYCoord,rc.right,rc.bottom};
+							FillRect(hdc, &rcComp, hPanelBrush); //hBack[0]);
+						}
 
-					nXCoord += nWholeW;
+						nXCoord += nWholeW;
+					}
 				}
 			}
 
 
-			if (PVM == pvm_Thumbnails) {
-				if (!nStep && nYCoord < rc.bottom) {
-					RECT rcComp = {0,nYCoord,rc.right,rc.bottom};
-					FillRect(hdc, &rcComp, hPanelBrush); //hBack[0]);
+
+			// на шаге 0 - только получение цвета
+			if (nStep == 0)
+			{
+				// Некоторые элементы могут быть невидимы в консоли, но видимы в PanelView.
+				// Попробовать получить их из аналогичных, по атрибутам
+				_ASSERTE(nItem <= nItemCount);
+				for (int i = nTopItem; i < nItem; i++) {
+					CePluginPanelItem* pItem = this->ppItems[i];
+					if (!pItem) {
+						_ASSERTE(this->ppItems[i]!=NULL);
+						continue; // Ошибка?
+					}
+					if (pItem->bItemColorLoaded)
+						continue; // С этим элементом все ок, он видим в консоли
+
+					bool bFound = false;
+					DWORD nMasks[] = {
+						0xFFFFFFFF,
+						FILE_ATTRIBUTE_NORMAL|FILE_ATTRIBUTE_DIRECTORY|FILE_ATTRIBUTE_HIDDEN|FILE_ATTRIBUTE_SYSTEM,
+						FILE_ATTRIBUTE_NORMAL|FILE_ATTRIBUTE_DIRECTORY|FILE_ATTRIBUTE_HIDDEN,
+						FILE_ATTRIBUTE_NORMAL|FILE_ATTRIBUTE_DIRECTORY,
+					};
+					for (int m = 0; !bFound && m < ARRAYSIZE(nMasks); m++)
+					{
+						DWORD nMask = nMasks[m];
+						for (int j = nTopItem; !bFound && j < nItem; j++) {
+							CePluginPanelItem* pCmp = this->ppItems[j];
+							if (!pCmp) {
+								_ASSERTE(this->ppItems[i]!=NULL);
+								continue; // Ошибка?
+							}
+							if (!pCmp->bItemColorLoaded)
+								continue;
+								
+							if (pCmp->Flags == pItem->Flags
+								&& (nMask&pCmp->FindData.dwFileAttributes) == (nMask&pItem->FindData.dwFileAttributes)
+								&& (!Focus || ((i==nCurrentItem) == (j==nCurrentItem)))
+								)
+							{
+								pItem->crBack = pCmp->crBack;
+								pItem->crFore = pCmp->crFore;
+								bFound = true; // нашли подходящий
+								break;
+							}
+						}
+					}
 				}
-			} else {
-				if (!nStep && nXCoord < rc.right) {
-					RECT rcComp = {nXCoord,0,rc.right,rc.bottom};
-					FillRect(hdc, &rcComp, hPanelBrush); //hBack[0]);
+			}
+			else if (nStep == 1) // На шаге 1 - залить незанятые части цветом фона
+			{
+				if (PVM == pvm_Thumbnails) {
+					if (nYCoord < rc.bottom) {
+						RECT rcComp = {0,nYCoord,rc.right,rc.bottom};
+						FillRect(hdc, &rcComp, hPanelBrush); //hBack[0]);
+					}
+				} else {
+					if (nXCoord < rc.right) {
+						RECT rcComp = {nXCoord,0,rc.right,rc.bottom};
+						FillRect(hdc, &rcComp, hPanelBrush); //hBack[0]);
+					}
 				}
 			}
 		}

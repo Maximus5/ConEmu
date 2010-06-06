@@ -33,7 +33,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Header.h"
 #include <commctrl.h>
-#include "../common/ConEmuCheck.h"
+//#include "../common/ConEmuCheck.h"
+#include "Options.h"
+#include "ConEmu.h"
+#include "ConEmuChild.h"
+#include "VirtualConsole.h"
+#include "RealConsole.h"
+#include "TabBar.h"
 
 
 #define DEBUGSTRFONT(s) DEBUGSTR(s)
@@ -356,7 +362,7 @@ void CSettings::InitSettings()
 	nHideCaptionAlwaysFrame = 1; nHideCaptionAlwaysDelay = 2000; nHideCaptionAlwaysDisappear = 2000;
     isDesktopMode = false;
     isAlwaysOnTop = false;
-	isSleepInBackground = true;
+	isSleepInBackground = false; // по умолчанию - не включать "засыпание в фоне".
     wndX = 0; wndY = 0; wndCascade = true; isAutoSaveSizePos = false;
     isConVisible = false;
     nSlideShowElapse = 2500;
@@ -2334,7 +2340,7 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
 
 	case cbBlockInactiveCursor:
 		isCursorBlockInactive = IsChecked(hMain, cbBlockInactiveCursor);
-		gConEmu.m_Child.Invalidate();
+		gConEmu.m_Child->Invalidate();
 		break;
 
     case bBgImage:
@@ -2460,7 +2466,7 @@ LRESULT CSettings::OnColorButtonClicked(WPARAM wParam, LPARAM lParam)
 
 	case cbFadeInactive:
 		isFadeInactive = IsChecked(hColors, cbFadeInactive);
-		gConEmu.m_Child.Invalidate();
+		gConEmu.m_Child->Invalidate();
 		break;
 
 	case cbTransparent:
@@ -2489,7 +2495,7 @@ LRESULT CSettings::OnColorButtonClicked(WPARAM wParam, LPARAM lParam)
         if (CB >= c0 && CB <= MAX_COLOR_EDT_ID)
         {
 			if (ColorEditDialog(hColors, CB)) {
-                gConEmu.m_Back.Refresh();
+                gConEmu.m_Back->Refresh();
 
                 gConEmu.Update(true);
             }

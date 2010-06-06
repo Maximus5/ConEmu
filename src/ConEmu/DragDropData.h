@@ -27,9 +27,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #pragma once
-#include "..\common\common.hpp"
+//#include "..\common\common.hpp"
 #include "BaseDragDrops.h"
-#include "virtualconsole.h"
+//#include "virtualconsole.h"
 
 
 //#define UNLOCKED_DRAG
@@ -57,6 +57,8 @@ typedef struct tag_DragImageBits {
 
 #define HIDA_GetPIDLFolder(pida) (LPCITEMIDLIST)(((LPBYTE)pida)+(pida)->aoffset[0])
 #define HIDA_GetPIDLItem(pida, i) (LPCITEMIDLIST)(((LPBYTE)pida)+(pida)->aoffset[i+1])
+
+typedef struct tag_ForwardedPanelInfo ForwardedPanelInfo;
 
 
 class CDragDropData

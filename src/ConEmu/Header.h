@@ -76,6 +76,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define MOUSE_DRAGPANEL_ALL (MOUSE_DRAGPANEL_SPLIT|MOUSE_DRAGPANEL_LEFT|MOUSE_DRAGPANEL_RIGHT|MOUSE_DRAGPANEL_SHIFT)
 
+#define MAX_TITLE_SIZE 0x400
 
 #define CON_RECREATE_TIMEOUT 30000
 #define CON_REDRAW_TIMOUT 5
@@ -93,6 +94,19 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #if !defined(CONSOLE_APPLICATION_16BIT)
 #define CONSOLE_APPLICATION_16BIT       0x0001
 #endif
+
+// Undocumented console message
+#define WM_SETCONSOLEINFO           (WM_USER+201)
+// and others
+#define SC_RESTORE_SECRET 0x0000f122
+#define SC_MAXIMIZE_SECRET 0x0000f032
+#define SC_PROPERTIES_SECRET 0x0000fff7
+#define SC_MARK_SECRET 0x0000fff2
+#define SC_COPY_ENTER_SECRET 0x0000fff0
+#define SC_PASTE_SECRET 0x0000fff1
+#define SC_SELECTALL_SECRET 0x0000fff5
+#define SC_SCROLL_SECRET 0x0000fff3
+#define SC_FIND_SECRET 0x0000fff4
 
 
 #define MBox(rt) {BOOL b = gbDontEnable; gbDontEnable = TRUE; (int)MessageBox(gbMessagingStarted ? ghWnd : NULL, rt, Title, /*MB_SYSTEMMODAL |*/ MB_ICONINFORMATION); gbDontEnable = b; }
@@ -290,15 +304,16 @@ L"alex_itd: Drag'n'Drop, RightClick, AltEnter and GUI bars\n" \
 L"Mors: loading font from file."
 
 
-#include "VirtualConsole.h"
-#include "options.h"
-#include "DragDrop.h"
-//#include "progressbars.h"
-#include "TrayIcon.h"
-#include "ConEmuChild.h"
-#include "ConEmu.h"
-#include "ConEmuApp.h"
-#include "tabbar.h"
-#include "TrayIcon.h"
-#include "ConEmuPipe.h"
+//#include "VirtualConsole.h"
+//#include "options.h"
+//#include "DragDrop.h"
+//#include "TrayIcon.h"
+//#include "ConEmuChild.h"
+//#include "ConEmu.h"
+//#include "ConEmuApp.h"
+//#include "tabbar.h"
+//#include "TrayIcon.h"
+//#include "ConEmuPipe.h"
 #include "../common/UnicodeChars.h"
+#include "../common/defines.h"
+#include "../common/WinObjects.h"

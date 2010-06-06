@@ -29,6 +29,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <windows.h>
 #include "header.h"
 #include "registry.h"
+#include "ConEmu.h"
 
 #ifdef _DEBUG
 #define HEAPVAL //HeapValidate(GetProcessHeap(), 0, NULL);

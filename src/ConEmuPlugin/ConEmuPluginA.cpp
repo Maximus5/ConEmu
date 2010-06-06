@@ -479,6 +479,11 @@ int WINAPI _export ProcessEditorEvent(int Event, void *Param)
 		//	gbHandleOneRedraw = false; gbRequestUpdateTabs = TRUE;
 		}
 	}
+
+	if (gpTabs && Event == EE_CLOSE && gpTabs->Tabs.nTabCount
+		&& gpTabs->Tabs.tabs[0].Type != WTYPE_PANELS)
+		gbClosingModalViewerEditor = TRUE;
+
 #else
 	if (/*!ConEmuHwnd ||*/ !InfoA) // иногда событие от QuickView приходит ДО инициализации плагина
 		return 0; // Даже если мы не под эмулятором - просто запомним текущее состояние
@@ -527,6 +532,11 @@ int WINAPI _export ProcessViewerEvent(int Event, void *Param)
 	if (!gbRequestUpdateTabs &&
 		(Event == VE_CLOSE || Event == VE_GOTFOCUS || Event == VE_KILLFOCUS))
 		gbRequestUpdateTabs = TRUE;
+
+	if (gpTabs && Event == VE_CLOSE && gpTabs->Tabs.nTabCount
+		&& gpTabs->Tabs.tabs[0].Type != WTYPE_PANELS)
+		gbClosingModalViewerEditor = TRUE;
+
 #else
 	if (/*!ConEmuHwnd ||*/ !InfoA) // иногда событие от QuickView приходит ДО инициализации плагина
 		return 0; // Даже если мы не под эмулятором - просто запомним текущее состояние
@@ -586,27 +596,27 @@ void UpdateConEmuTabsA(int anEvent, bool losingFocus, bool editorSave, void *Par
 	if (!CreateTabs ( windowCount ))
 		return;
 
-	EditorInfo ei = {0}; BOOL bEditorRetrieved = FALSE;
-	WCHAR* pszFileName = NULL;
-	if (editorSave)
-	{
-		InfoA->EditorControl(ECTL_GETINFO, &ei);
-		bEditorRetrieved = TRUE;
-		//pszFileName = (WCHAR*)calloc(CONEMUTABMAX, sizeof(WCHAR));
-		pszFileName = gszDir2; pszFileName[0] = 0;
-		if (ei.FileName)
-			MultiByteToWideChar(CP_OEMCP, 0, ei.FileName, lstrlenA(ei.FileName)+1, pszFileName, CONEMUTABMAX);
-	}
+	//EditorInfo ei = {0}; BOOL bEditorRetrieved = FALSE;
+	//WCHAR* pszFileName = NULL;
+	//if (editorSave)
+	//{
+	//	InfoA->EditorControl(ECTL_GETINFO, &ei);
+	//	bEditorRetrieved = TRUE;
+	//	//pszFileName = (WCHAR*)calloc(CONEMUTABMAX, sizeof(WCHAR));
+	//	pszFileName = gszDir2; pszFileName[0] = 0;
+	//	if (ei.FileName)
+	//		MultiByteToWideChar(CP_OEMCP, 0, ei.FileName, lstrlenA(ei.FileName)+1, pszFileName, CONEMUTABMAX);
+	//}
 
-	ViewerInfo vi = {sizeof(ViewerInfo)};
-	if (anEvent == 206) {
-		if (Param)
-			vi.ViewerID = *(int*)Param;
-		InfoA->ViewerControl(VCTL_GETINFO, &vi);
-		pszFileName = gszDir2; pszFileName[0] = 0;
-		if (vi.FileName)
-			MultiByteToWideChar(CP_OEMCP, 0, vi.FileName, lstrlenA(vi.FileName)+1, pszFileName, CONEMUTABMAX);
-	}
+	//ViewerInfo vi = {sizeof(ViewerInfo)};
+	//if (anEvent == 206) {
+	//	if (Param)
+	//		vi.ViewerID = *(int*)Param;
+	//	InfoA->ViewerControl(VCTL_GETINFO, &vi);
+	//	pszFileName = gszDir2; pszFileName[0] = 0;
+	//	if (vi.FileName)
+	//		MultiByteToWideChar(CP_OEMCP, 0, vi.FileName, lstrlenA(vi.FileName)+1, pszFileName, CONEMUTABMAX);
+	//}
 
 	int tabCount = 0;
 	BOOL lbActiveFound = FALSE;
@@ -623,20 +633,20 @@ void UpdateConEmuTabsA(int anEvent, bool losingFocus, bool editorSave, void *Par
 			if (WInfo.Current) lbActiveFound = TRUE;
 			MultiByteToWideChar(CP_OEMCP, 0, WInfo.Name, lstrlenA(WInfo.Name)+1, pszName, CONEMUTABMAX);
 			lbCh |= AddTab(tabCount, losingFocus, editorSave, 
-				WInfo.Type, pszName, editorSave ? pszFileName : NULL, 
+				WInfo.Type, pszName, /*editorSave ? pszFileName :*/ NULL, 
 				WInfo.Current, WInfo.Modified);
 			//if (WInfo.Type == WTYPE_EDITOR && WInfo.Current) //2009-08-17
 			//	lastModifiedStateW = WInfo.Modified;
 		}
 	}
 
-	// Viewer в FAR 2 build 9xx не попадает в список окон при событии VE_GOTFOCUS
-	if (!losingFocus && !editorSave && tabCount == 0 && anEvent == 206) {
-		lbActiveFound = TRUE;
-		lbCh |= AddTab(tabCount, losingFocus, editorSave, 
-			WTYPE_VIEWER, pszFileName, NULL, 
-			1, 0);
-	}
+	//// Viewer в FAR 2 build 9xx не попадает в список окон при событии VE_GOTFOCUS
+	//if (!losingFocus && !editorSave && tabCount == 0 && anEvent == 206) {
+	//	lbActiveFound = TRUE;
+	//	lbCh |= AddTab(tabCount, losingFocus, editorSave, 
+	//		WTYPE_VIEWER, pszFileName, NULL, 
+	//		1, 0);
+	//}
 	
 	//// 2009-08-17
 	//if (gbHandleOneRedraw && gbHandleOneRedrawCh && lbCh) {
@@ -646,19 +656,29 @@ void UpdateConEmuTabsA(int anEvent, bool losingFocus, bool editorSave, void *Par
 
 	// Скорее всего это модальный редактор (или вьювер?)
 	if (!lbActiveFound && !losingFocus) {
-		if (!bEditorRetrieved) { // Если информацию о редакторе еще не получили
-			InfoA->EditorControl(ECTL_GETINFO, &ei);
-			bEditorRetrieved = TRUE;
-			pszFileName = gszDir2; pszFileName[0] = 0;
-			if (ei.FileName)
-				MultiByteToWideChar(CP_OEMCP, 0, ei.FileName, lstrlenA(ei.FileName)+1, pszFileName, CONEMUTABMAX);
-		}
-		if (ei.CurState) {
-			tabCount = 0;
+		WInfo.Pos = -1;
+		// теоретически, это может привести к блокировке некоторых диалогов ФАР?
+		InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETWINDOWINFO, (void*)&WInfo);
+		if (WInfo.Type == WTYPE_EDITOR || WInfo.Type == WTYPE_VIEWER) {
+			MultiByteToWideChar(CP_OEMCP, 0, WInfo.Name, lstrlenA(WInfo.Name)+1, pszName, CONEMUTABMAX);
 			lbCh |= AddTab(tabCount, losingFocus, editorSave, 
-				WTYPE_EDITOR, pszFileName, NULL, 
-				1, (ei.CurState & (ECSTATE_MODIFIED|ECSTATE_SAVED)) == ECSTATE_MODIFIED);
+				WInfo.Type, pszName, /*editorSave ? pszFileName :*/ NULL, 
+				WInfo.Current, WInfo.Modified);
 		}
+
+		//if (!bEditorRetrieved) { // Если информацию о редакторе еще не получили
+		//	InfoA->EditorControl(ECTL_GETINFO, &ei);
+		//	bEditorRetrieved = TRUE;
+		//	pszFileName = gszDir2; pszFileName[0] = 0;
+		//	if (ei.FileName)
+		//		MultiByteToWideChar(CP_OEMCP, 0, ei.FileName, lstrlenA(ei.FileName)+1, pszFileName, CONEMUTABMAX);
+		//}
+		//if (ei.CurState) {
+		//	tabCount = 0;
+		//	lbCh |= AddTab(tabCount, losingFocus, editorSave, 
+		//		WTYPE_EDITOR, pszFileName, NULL, 
+		//		1, (ei.CurState & (ECSTATE_MODIFIED|ECSTATE_SAVED)) == ECSTATE_MODIFIED);
+		//}
 	}
 
 	SendTabs(tabCount, lbCh && (gnReqCommand==(DWORD)-1));

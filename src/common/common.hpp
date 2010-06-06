@@ -30,15 +30,17 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef _COMMON_HEADER_HPP_
 #define _COMMON_HEADER_HPP_
 
-#include <windows.h>
-#include <wchar.h>
-#if !defined(__GNUC__)
-#include <crtdbg.h>
-#else
-#define _ASSERTE(f)
-#endif
+#include "defines.h"
 
-#include "usetodo.hpp"
+//#include <windows.h>
+//#include <wchar.h>
+//#if !defined(__GNUC__)
+//#include <crtdbg.h>
+//#else
+//#define _ASSERTE(f)
+//#endif
+//
+//#include "usetodo.hpp"
 
 //#define CONEMUPIPE      L"\\\\.\\pipe\\ConEmuPipe%u"
 //#define CONEMUEVENTIN   L"ConEmuInEvent%u"
@@ -52,9 +54,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // with line number
 #if !defined(_MSC_VER)
 
-    #define TODO(s)
-    #define WARNING(s)
-    #define PRAGMA_ERROR(s)
+    //#define TODO(s)
+    //#define WARNING(s)
+    //#define PRAGMA_ERROR(s)
 
     //#define CONSOLE_APPLICATION_16BIT 1
     
@@ -64,90 +66,90 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         SMALL_RECT srSelection;
     } CONSOLE_SELECTION_INFO, *PCONSOLE_SELECTION_INFO;
 
-    #ifndef max
-    #define max(a,b)            (((a) > (b)) ? (a) : (b))
-    #endif
+    //#ifndef max
+    //#define max(a,b)            (((a) > (b)) ? (a) : (b))
+    //#endif
 
-    #ifndef min
-    #define min(a,b)            (((a) < (b)) ? (a) : (b))
-    #endif
+    //#ifndef min
+    //#define min(a,b)            (((a) < (b)) ? (a) : (b))
+    //#endif
 
-    #define _ASSERT(f)
-    #define _ASSERTE(f)
+    //#define _ASSERT(f)
+    //#define _ASSERTE(f)
     
 #else
 
-    #define STRING2(x) #x
-    #define STRING(x) STRING2(x)
-    #define FILE_LINE __FILE__ "(" STRING(__LINE__) "): "
-    #ifdef HIDE_TODO
-    #define TODO(s) 
-    #define WARNING(s) 
-    #else
-    #define TODO(s) __pragma(message (FILE_LINE "TODO: " s))
-    #define WARNING(s) __pragma(message (FILE_LINE "warning: " s))
-    #endif
-    #define PRAGMA_ERROR(s) __pragma(message (FILE_LINE "error: " s))
+    //#define STRING2(x) #x
+    //#define STRING(x) STRING2(x)
+    //#define FILE_LINE __FILE__ "(" STRING(__LINE__) "): "
+    //#ifdef HIDE_TODO
+    //#define TODO(s) 
+    //#define WARNING(s) 
+    //#else
+    //#define TODO(s) __pragma(message (FILE_LINE "TODO: " s))
+    //#define WARNING(s) __pragma(message (FILE_LINE "warning: " s))
+    //#endif
+    //#define PRAGMA_ERROR(s) __pragma(message (FILE_LINE "error: " s))
 
-    #ifdef _DEBUG
-    #include <crtdbg.h>
-    #endif
+    //#ifdef _DEBUG
+    //#include <crtdbg.h>
+    //#endif
 
 #endif
 
-#ifdef _WIN64
-	#ifndef WIN64
-		WARNING("WIN64 was not defined");
-		#define WIN64
-	#endif
-#endif
+//#ifdef _WIN64
+//	#ifndef WIN64
+//		WARNING("WIN64 was not defined");
+//		#define WIN64
+//	#endif
+//#endif
+//
+//#ifdef _DEBUG
+//	#define USE_SEH
+//#endif
+//
+//#ifdef USE_SEH
+//	#if defined(_MSC_VER)
+//		#pragma message ("Compiling USING exception handler")
+//	#endif
+//	
+//	#define SAFETRY   __try
+//	#define SAFECATCH __except(EXCEPTION_EXECUTE_HANDLER)
+//#else
+//	#if defined(_MSC_VER)
+//		#pragma message ("Compiling NOT using exception handler")
+//	#endif
+//
+//	#define SAFETRY   if (true)
+//	#define SAFECATCH else
+//#endif	
 
-#ifdef _DEBUG
-	#define USE_SEH
-#endif
 
-#ifdef USE_SEH
-	#if defined(_MSC_VER)
-		#pragma message ("Compiling USING exception handler")
-	#endif
-	
-	#define SAFETRY   __try
-	#define SAFECATCH __except(EXCEPTION_EXECUTE_HANDLER)
-#else
-	#if defined(_MSC_VER)
-		#pragma message ("Compiling NOT using exception handler")
-	#endif
-
-	#define SAFETRY   if (true)
-	#define SAFECATCH else
-#endif	
-
-
-#define isPressed(inp) ((GetKeyState(inp) & 0x8000) == 0x8000)
-#define countof(a) (sizeof((a))/(sizeof(*(a))))
-#define ZeroStruct(s) memset(&(s), 0, sizeof(s))
-
-#ifdef _DEBUG
-extern wchar_t gszDbgModLabel[6];
-#define CHEKCDBGMODLABEL if (gszDbgModLabel[0]==0) { \
-	wchar_t szFile[MAX_PATH]; GetModuleFileName(NULL, szFile, MAX_PATH); \
-	wchar_t* pszName = wcsrchr(szFile, L'\\'); \
-	if (_wcsicmp(pszName, L"\\conemu.exe")==0) lstrcpyW(gszDbgModLabel, L"gui"); \
-	else if (_wcsicmp(pszName, L"\\conemuc.exe")==0) lstrcpyW(gszDbgModLabel, L"srv"); \
-	else lstrcpyW(gszDbgModLabel, L"dll"); \
-}
-#ifdef SHOWDEBUGSTR
-	#define DEBUGSTR(s) { MCHKHEAP; CHEKCDBGMODLABEL; SYSTEMTIME st; GetLocalTime(&st); wchar_t szDEBUGSTRTime[40]; wsprintf(szDEBUGSTRTime, L"%i:%02i:%02i.%03i(%s.%i) ", st.wHour, st.wMinute, st.wSecond, st.wMilliseconds, gszDbgModLabel, GetCurrentThreadId()); OutputDebugString(szDEBUGSTRTime); OutputDebugString(s); }
-#else
-	#ifndef DEBUGSTR
-		#define DEBUGSTR(s)
-	#endif
-#endif
-#else
-	#ifndef DEBUGSTR
-		#define DEBUGSTR(s)
-	#endif
-#endif
+//#define isPressed(inp) ((GetKeyState(inp) & 0x8000) == 0x8000)
+//#define countof(a) (sizeof((a))/(sizeof(*(a))))
+//#define ZeroStruct(s) memset(&(s), 0, sizeof(s))
+//
+//#ifdef _DEBUG
+//extern wchar_t gszDbgModLabel[6];
+//#define CHEKCDBGMODLABEL if (gszDbgModLabel[0]==0) { \
+//	wchar_t szFile[MAX_PATH]; GetModuleFileName(NULL, szFile, MAX_PATH); \
+//	wchar_t* pszName = wcsrchr(szFile, L'\\'); \
+//	if (_wcsicmp(pszName, L"\\conemu.exe")==0) lstrcpyW(gszDbgModLabel, L"gui"); \
+//	else if (_wcsicmp(pszName, L"\\conemuc.exe")==0) lstrcpyW(gszDbgModLabel, L"srv"); \
+//	else lstrcpyW(gszDbgModLabel, L"dll"); \
+//}
+//#ifdef SHOWDEBUGSTR
+//	#define DEBUGSTR(s) { MCHKHEAP; CHEKCDBGMODLABEL; SYSTEMTIME st; GetLocalTime(&st); wchar_t szDEBUGSTRTime[40]; wsprintf(szDEBUGSTRTime, L"%i:%02i:%02i.%03i(%s.%i) ", st.wHour, st.wMinute, st.wSecond, st.wMilliseconds, gszDbgModLabel, GetCurrentThreadId()); OutputDebugString(szDEBUGSTRTime); OutputDebugString(s); }
+//#else
+//	#ifndef DEBUGSTR
+//		#define DEBUGSTR(s)
+//	#endif
+//#endif
+//#else
+//	#ifndef DEBUGSTR
+//		#define DEBUGSTR(s)
+//	#endif
+//#endif
 
 
 #define CES_NTVDM 0x10
@@ -163,9 +165,13 @@ extern wchar_t gszDbgModLabel[6];
 #define CEPLUGINPIPENAME    L"\\\\%s\\pipe\\ConEmuPlugin%u"   // Far_PID
 //
 //#define MAXCONMAPCELLS      (600*400)
+#define CEGUIINFOMAPNAME    L"ConEmuGuiInfoMapping.%u"
 #define CECONMAPNAME        L"ConEmuFileMapping.%08X"
 #define CECONMAPNAME_A      "ConEmuFileMapping.%08X"
 #define CEFARMAPNAME        L"ConEmuFarMapping.%08X"
+#ifdef _DEBUG
+#define CEPANELDLGMAPNAME   L"ConEmuPanelViewDlgsMapping.%u"
+#endif
 #define CEDATAREADYEVENT    L"ConEmuSrvDataReady.%u"
 #define CECONVIEWSETNAME    L"ConEmuViewSetMapping.%u"
 #define CEFARALIVEEVENT     L"ConEmuFarAliveEvent.%u"
@@ -223,7 +229,7 @@ extern wchar_t gszDbgModLabel[6];
 #define CECMD_SETSIZESYNC   17 // —инхронно, ждет (но недолго), пока FAR обработает изменение размера (то есть отрисуетс€)
 #define CECMD_ATTACH2GUI    18 // ¬ыполнить подключение видимой (отключенной) консоли к GUI. Ѕез аргументов
 #define CECMD_FARLOADED     19 // ѕосылаетс€ плагином в сервер
-#define CECMD_SHOWCONSOLE   20 // ¬ Win7 релизе нельз€ скрывать окно консоли, запущенной в режиме администратора
+//#define CECMD_SHOWCONSOLE   20 // ¬ Win7 релизе нельз€ скрывать окно консоли, запущенной в режиме администратора -- заменено на CECMD_POSTCONMSG & CECMD_SETWINDOWPOS
 #define CECMD_POSTCONMSG    21 // ¬ Win7 релизе нельз€ посылать сообщени€ окну консоли, запущенной в режиме администратора
 //#define CECMD_REQUESTCONSOLEINFO 22 // было CECMD_REQUESTFULLINFO
 #define CECMD_SETFOREGROUND 23
@@ -261,8 +267,9 @@ extern wchar_t gszDbgModLabel[6];
 #define CMD_FARPOST      12
 #define CMD_CHKRESOURCES 13
 #define CMD_QUITFAR      14 // ƒернуть завершение консоли (фара?)
+#define CMD_CLOSEQSEARCH 15
 // +2
-#define MAXCMDCOUNT      16
+#define MAXCMDCOUNT      17
 #define CMD_EXIT         MAXCMDCOUNT-1
 
 
@@ -418,6 +425,13 @@ typedef struct tag_PanelViewInit {
 	BOOL bFadeColors;
 } PanelViewInit;
 
+
+typedef struct tag_ConEmuInfo {
+	DWORD    cbSize;
+	HWND2    hGuiWnd; // основное (корневое) окно ConEmu
+	wchar_t  sConEmuDir[MAX_PATH+1];
+	wchar_t  sConEmuArgs[MAX_PATH*2];
+} ConEmuInfo;
 
 
 TODO("Restrict CONEMUTABMAX to 128 chars. Only filename, and may be ellipsed...");

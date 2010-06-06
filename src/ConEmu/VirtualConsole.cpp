@@ -36,6 +36,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Tlhelp32.h>
 #include "ScreenDump.h"
 #include "../common/farcolor.hpp"
+#include "VirtualConsole.h"
+#include "RealConsole.h"
+#include "ConEmu.h"
+#include "Options.h"
+
 
 #ifdef _DEBUG
 	//#define DEBUGDRAW_RCONPOS VK_SCROLL // -- при включенном ScrollLock отрисовать прямоугольник, соответствующий положению окна RealConsole
@@ -971,7 +976,7 @@ bool CVirtualConsole::Update(bool abForce, HDC *ahDc)
 
     //if (gbNoDblBuffer) isForce = TRUE; // Debug, dblbuffer
 
-	isForeground = gConEmu.isMeForeground();
+	isForeground = gConEmu.isMeForeground(false);
 	if (isFade == isForeground && gSet.isFadeInactive)
 		isForce = true;
 
@@ -1089,7 +1094,7 @@ bool CVirtualConsole::Update(bool abForce, HDC *ahDc)
 			//09.06.13 а если так? быстрее изменения на экране не появятся?
 			//UpdateWindow(ghWndDC); // оно посылает сообщение в окно, и ждет окончания отрисовки
 			#ifdef _DEBUG
-			//_ASSERTE(!gConEmu.m_Child.mb_Invalidated);
+			//_ASSERTE(!gConEmu.m_Child->mb_Invalidated);
 			#endif
 			mb_PaintRequested = FALSE;
 		}
@@ -2477,10 +2482,10 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
     
     
 	//if (!gSet.isCursorBlink) {
-	//	gConEmu.m_Child.SetCaret ( 1, rect.left, rect.top, rect.right-rect.left, rect.bottom-rect.top );
+	//	gConEmu.m_Child->SetCaret ( 1, rect.left, rect.top, rect.right-rect.left, rect.bottom-rect.top );
 	//	return;
 	//} else {
-	//	gConEmu.m_Child.SetCaret ( -1 ); // Если был создан системный курсор - он разрушится
+	//	gConEmu.m_Child->SetCaret ( -1 ); // Если был создан системный курсор - он разрушится
 	//}
 
 	rect.left += rcClient.left;

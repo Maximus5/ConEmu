@@ -2536,10 +2536,13 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 			}
 		} break;
 		
-		case CECMD_SHOWCONSOLE:
-		{
-			apiShowWindow(ghConWnd, in.dwData[0]);
-		} break;
+		//case CECMD_SHOWCONSOLE:
+		//{
+		//	apiShowWindow(ghConWnd, in.dwData[0]);
+		//	if (in.dwData[0] != SW_HIDE) {
+		//		SetWindowPos(ghConWnd, HWND_TOPMOST, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
+		//	}
+		//} break;
 
 		case CECMD_POSTCONMSG:
 		{

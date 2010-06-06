@@ -23,7 +23,7 @@ CRgnDetect::CRgnDetect()
 	memset(&m_DetectedDialogs, 0, sizeof(m_DetectedDialogs));
 	mp_FarInfo = NULL;
 	// Флаги
-	mn_AllFlags = 0; mn_NextDlgId = 0; mb_NeedPanelDetect = TRUE;
+	mn_NextDlgId = 0; mb_NeedPanelDetect = TRUE;
 	memset(&mrc_LeftPanel,0,sizeof(mrc_LeftPanel));
 	memset(&mrc_RightPanel,0,sizeof(mrc_RightPanel));
 	memset(&mrc_FarRect, 0, sizeof(mrc_FarRect)); // по умолчанию - не используется
@@ -53,6 +53,13 @@ CRgnDetect::~CRgnDetect()
 		free(mp_AttrsWork); mp_AttrsWork = NULL;
 	}
 }
+
+#ifdef _DEBUG
+const DetectedDialogs* CRgnDetect::GetDetectedDialogsPtr()
+{
+	return &m_DetectedDialogs;
+}
+#endif
 
 int CRgnDetect::GetDetectedDialogs(int anMaxCount, SMALL_RECT* rc, DWORD* rf, DWORD anMask/*=-1*/, DWORD anTest/*=-1*/) const
 {
@@ -112,7 +119,7 @@ DWORD CRgnDetect::GetDialog(DWORD nDlgID, SMALL_RECT* rc) const
 
 DWORD CRgnDetect::GetFlags() const
 {
-	return mn_AllFlags;
+	return m_DetectedDialogs.AllFlags;
 }
 
 
@@ -1072,11 +1079,11 @@ int CRgnDetect::MarkDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHei
 	}
 	else 
 	if (bMarkBorder && bFindExterior && mb_NeedPanelDetect) // должно быть так при пометке панелей
-		//&& !(mn_AllFlags & FR_FULLPANEL) // если еще не нашли полноэкранную панель
-		//&& ((mn_AllFlags & (FR_LEFTPANEL|FR_RIGHTPANEL)) != (FR_LEFTPANEL|FR_RIGHTPANEL)) // и не нашли или правую или левую панель
+		//&& !(m_DetectedDialogs.AllFlags & FR_FULLPANEL) // если еще не нашли полноэкранную панель
+		//&& ((m_DetectedDialogs.AllFlags & (FR_LEFTPANEL|FR_RIGHTPANEL)) != (FR_LEFTPANEL|FR_RIGHTPANEL)) // и не нашли или правую или левую панель
 		//)
 	{
-		if ((!nY1 || ((mn_AllFlags & FR_MENUBAR) && (nY1 == 1))) // условие для верхней границы панелей
+		if ((!nY1 || ((m_DetectedDialogs.AllFlags & FR_MENUBAR) && (nY1 == 1))) // условие для верхней границы панелей
 			&& (nY2 >= (nY1 + 3))) // и минимальная высота панелей
 		{
 			SMALL_RECT r; DWORD nPossible = 0;
@@ -1118,7 +1125,7 @@ int CRgnDetect::MarkDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHei
 						// Может все панели уже нашли?
 						if ((nPossible & FR_FULLPANEL))
 							mb_NeedPanelDetect = FALSE;
-						else if ((mn_AllFlags & (FR_LEFTPANEL|FR_RIGHTPANEL)) == (FR_LEFTPANEL|FR_RIGHTPANEL))
+						else if ((m_DetectedDialogs.AllFlags & (FR_LEFTPANEL|FR_RIGHTPANEL)) == (FR_LEFTPANEL|FR_RIGHTPANEL))
 							mb_NeedPanelDetect = FALSE;
 						break;
 					}
@@ -1131,11 +1138,11 @@ int CRgnDetect::MarkDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHei
 		// QSearch начинается строго на нижней рамке панели, за исключением того случая,
 		// когда KeyBar отключен и панель занимает (nHeight-1) строку
 		SMALL_RECT *prc = NULL;
-		if ((mn_AllFlags & FR_FULLPANEL)) {
+		if ((m_DetectedDialogs.AllFlags & FR_FULLPANEL)) {
 			prc = &mrc_LeftPanel;
-		} else if ((mn_AllFlags & FR_LEFTPANEL) && nX2 < mrc_LeftPanel.Right) {
+		} else if ((m_DetectedDialogs.AllFlags & FR_LEFTPANEL) && nX2 < mrc_LeftPanel.Right) {
 			prc = &mrc_LeftPanel;
-		} else if ((mn_AllFlags & FR_RIGHTPANEL) && nX1 > mrc_RightPanel.Left) {
+		} else if ((m_DetectedDialogs.AllFlags & FR_RIGHTPANEL) && nX1 > mrc_RightPanel.Left) {
 			prc = &mrc_RightPanel;
 		}
 		// проверяем
@@ -1158,7 +1165,7 @@ int CRgnDetect::MarkDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHei
 					int nSourceIdx = MarkDialog(pChar, pAttr, nWidth, nHeight, nX1+6, nY1+3, nX2-1, nY2-5, false/*bMarkBorder*/, false/*bFindExterior*/);
 					if (nSourceIdx != -1) {
 						m_DetectedDialogs.DlgFlags[nSourceIdx] |= FR_UCHARMAPGLYPH;
-						mn_AllFlags |= FR_UCHARMAPGLYPH;
+						m_DetectedDialogs.AllFlags |= FR_UCHARMAPGLYPH;
 					}
 				}
 			}
@@ -1256,7 +1263,7 @@ int CRgnDetect::MarkDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHei
 	}
 
 
-	mn_AllFlags |= DlgFlags;
+	m_DetectedDialogs.AllFlags |= DlgFlags;
 
 	return nDlgIdx;
 }
@@ -1364,7 +1371,7 @@ BOOL CRgnDetect::InitializeSBI(const COLORREF *apColors)
 	//if (mb_SBI_Loaded) - всегда. Если вызвали - значит нужно все перечитать
 	//	return TRUE;
 
-	mn_AllFlags = 0;
+	m_DetectedDialogs.AllFlags = 0;
 	mp_Colors = apColors;
 	//if (!mb_TableCreated) - тоже всегда. цвета могли измениться
 	{
@@ -1516,7 +1523,7 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO *apFarInfo, const COLORREF 
 	mp_Colors = apColors;
 
 	// Сброс флагов и прямоугольников панелей
-	mn_AllFlags = 0; mn_NextDlgId = 0; mb_NeedPanelDetect = TRUE;
+	m_DetectedDialogs.AllFlags = 0; mn_NextDlgId = 0; mb_NeedPanelDetect = TRUE;
 	memset(&mrc_LeftPanel,0,sizeof(mrc_LeftPanel));
 	memset(&mrc_RightPanel,0,sizeof(mrc_RightPanel));
 
@@ -1546,7 +1553,7 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO *apFarInfo, const COLORREF 
 		return;
 
 	// Сброс флагов и прямоугольников панелей
-	mn_AllFlags = 0; mn_NextDlgId = 0; mb_NeedPanelDetect = TRUE;
+	m_DetectedDialogs.AllFlags = 0; mn_NextDlgId = 0; mb_NeedPanelDetect = TRUE;
 	memset(&mrc_LeftPanel,0,sizeof(mrc_LeftPanel));
 	memset(&mrc_RightPanel,0,sizeof(mrc_RightPanel));
 

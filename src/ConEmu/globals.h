@@ -34,16 +34,24 @@ extern const TCHAR *const szClassNameApp;
 extern const TCHAR *const szClassNameBack;
 extern const TCHAR *const szClassNameScroll;
 
-//class CVirtualConsole;
+class CSettings;
+class TrayIcon;
+class TabBarClass;
+class CVirtualConsole;
+class CRealConsole;
+class CConEmuMain;
+class CConEmuChild;
+class CConEmuBack;
+class CDragDrop;
+
+
 //extern CVirtualConsole *pVCon;
 extern HINSTANCE g_hInstance;
-class CConEmuMain;
 extern CConEmuMain gConEmu;
 //extern TCHAR Title[0x400];
 //extern bool isLBDown, /*isInDrag,*/ isDragProcessed;
 extern HWND ghWnd, ghConWnd, ghWndDC, ghOpWnd, ghWndApp;
 extern BOOL gbMessagingStarted, gbDontEnable;
-class TabBarClass;
 //extern TabBarClass TabBar;
 extern OSVERSIONINFO gOSVer;
 //extern SECURITY_ATTRIBUTES* gpNullSecurity;
@@ -56,9 +64,7 @@ extern BOOL gbDebugLogStarted;
 //extern TCHAR szIconPath[MAX_PATH];
 extern HICON hClassIcon, hClassIconSm;
 
-class CSettings;
 extern CSettings gSet;
-class TrayIcon;
 extern TrayIcon Icon;
 //extern TCHAR temp[MAX_PATH];
 

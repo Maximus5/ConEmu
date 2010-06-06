@@ -27,10 +27,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #pragma once
-#include "..\common\common.hpp"
+//#include "..\common\common.hpp"
 #include "BaseDragDrops.h"
 #include "DragDropData.h"
-#include "virtualconsole.h"
+//#include "virtualconsole.h"
 
 
 class CDragDrop :

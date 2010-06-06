@@ -118,9 +118,12 @@ public:
 	wchar_t ms_ConEmuChm[MAX_PATH+1];
 	wchar_t ms_ConEmuCExe[MAX_PATH+1];
 	wchar_t ms_ConEmuCurDir[MAX_PATH+1];
+	wchar_t ms_ConEmuArgs[MAX_PATH*2];
+private:
+	MFileMapping<ConEmuInfo> m_GuiInfoMapping;
 public:
-	CConEmuChild m_Child;
-	CConEmuBack  m_Back;
+	CConEmuChild *m_Child;
+	CConEmuBack  *m_Back;
 	TabBarClass *mp_TabBar;
 	//POINT cwShift; // difference between window size and client area size for main ConEmu window
 	POINT ptFullScreenSize; // size for GetMinMaxInfo in Fullscreen mode
@@ -318,7 +321,7 @@ public:
 	bool isIconic();
 	bool isLBDown();
 	bool isMainThread();
-	bool isMeForeground();
+	bool isMeForeground(bool abRealAlso=false);
 	bool isMouseOverFrame(bool abReal=false);
 	bool isNtvdm();
 	bool isPictureView();

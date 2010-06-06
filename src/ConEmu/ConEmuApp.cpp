@@ -30,6 +30,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Header.h"
 #include <commctrl.h>
 #include "../common/ConEmuCheck.h"
+#include "Options.h"
+#include "ConEmu.h"
+#include "ConEmuApp.h"
 
 #define DEBUGSTRMOVE(s) //DEBUGSTR(s)
 
@@ -839,6 +842,7 @@ BOOL PrepareCommandLine(TCHAR*& cmdLine, TCHAR*& cmdNew, uint& params)
 		// Эта переменная нужна для того, чтобы conemu можно было перезапустить
 		// из cmd файла с теми же аргументами (selfupdate)
 		SetEnvironmentVariableW(L"ConEmuArgs", cmdLine);
+		lstrcpyn(gConEmu.ms_ConEmuArgs, cmdLine, ARRAYSIZE(gConEmu.ms_ConEmuArgs));
 		
 		// Теперь проверяем наличие слеша
 		if (*pszStart != L'/') {

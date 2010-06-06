@@ -27,11 +27,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #pragma once
-#include "kl_parts.h"
-#include "../Common/common.hpp"
+//#include "kl_parts.h"
+//#include "../Common/common.hpp"
 #include "../Common/ConsoleAnnotation.h"
 #include "../Common/RgnDetect.h"
-#include "../Common/WinObjects.h"
+//#include "../Common/WinObjects.h"
 
 #define CES_CMDACTIVE 0x01
 #define CES_TELNETACTIVE 0x02
@@ -57,20 +57,20 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define CES_OPER_ERROR   0x040000
 //... and so on
 
-// Undocumented console message
-#define WM_SETCONSOLEINFO           (WM_USER+201)
-// and others
-#define SC_RESTORE_SECRET 0x0000f122
-#define SC_MAXIMIZE_SECRET 0x0000f032
-#define SC_PROPERTIES_SECRET 0x0000fff7
-#define SC_MARK_SECRET 0x0000fff2
-#define SC_COPY_ENTER_SECRET 0x0000fff0
-#define SC_PASTE_SECRET 0x0000fff1
-#define SC_SELECTALL_SECRET 0x0000fff5
-#define SC_SCROLL_SECRET 0x0000fff3
-#define SC_FIND_SECRET 0x0000fff4
+//// Undocumented console message
+//#define WM_SETCONSOLEINFO           (WM_USER+201)
+//// and others
+//#define SC_RESTORE_SECRET 0x0000f122
+//#define SC_MAXIMIZE_SECRET 0x0000f032
+//#define SC_PROPERTIES_SECRET 0x0000fff7
+//#define SC_MARK_SECRET 0x0000fff2
+//#define SC_COPY_ENTER_SECRET 0x0000fff0
+//#define SC_PASTE_SECRET 0x0000fff1
+//#define SC_SELECTALL_SECRET 0x0000fff5
+//#define SC_SCROLL_SECRET 0x0000fff3
+//#define SC_FIND_SECRET 0x0000fff4
 
-#define MAX_TITLE_SIZE 0x400
+//#define MAX_TITLE_SIZE 0x400
 
 #define FAR_ALIVE_TIMEOUT gSet.nFarHourglassDelay //1000
 
@@ -520,7 +520,7 @@ private:
 	/* ****************************************** */
 	/* ѕоиск диалогов и пометка "прозрачных" мест */
 	/* ****************************************** */
-	CRgnDetect* mp_Rgn;
+	CRgnDetect* mp_Rgn; DWORD mn_LastRgnFlags;
 	//int mn_DetectCallCount;
 	void PrepareTransparent(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight);
 	//void DetectDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int nFromX, int nFromY, int *pnMostRight=NULL, int *pnMostBottom=NULL);

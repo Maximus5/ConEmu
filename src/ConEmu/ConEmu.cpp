@@ -35,7 +35,17 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Tlhelp32.h>
 #include <Shlobj.h>
 #include <lm.h>
-#include "../common/ConEmuCheck.h"
+//#include "../common/ConEmuCheck.h"
+#include "VirtualConsole.h"
+#include "options.h"
+#include "DragDrop.h"
+#include "TrayIcon.h"
+#include "ConEmuChild.h"
+#include "ConEmu.h"
+#include "ConEmuApp.h"
+#include "tabbar.h"
+#include "TrayIcon.h"
+#include "ConEmuPipe.h"
 
 #define DEBUGSTRSYS(s) //DEBUGSTR(s)
 #define DEBUGSTRSIZE(s) //DEBUGSTR(s)
@@ -157,6 +167,7 @@ CConEmuMain::CConEmuMain()
 	//int nTranslatedChars = ToUnicodeEx(0, 0, m_KeybStates, szTranslatedChars, 15, 0, hkl);
 	mn_LastPressedVK = 0;
 
+	ms_ConEmuArgs[0] = 0;
     ms_ConEmuExe[0] = 0;
     wchar_t *pszSlash = NULL;
     if (!GetModuleFileName(NULL, ms_ConEmuExe, MAX_PATH) || !(pszSlash = wcsrchr(ms_ConEmuExe, L'\\'))) {
@@ -246,6 +257,8 @@ BOOL CConEmuMain::Init()
 {
 	_ASSERTE(mp_TabBar == NULL);
 	mp_TabBar = new TabBarClass();
+	m_Child = new CConEmuChild();
+	m_Back = new CConEmuBack();
 
     //#pragma message("Win2k: EVENT_CONSOLE_START_APPLICATION, EVENT_CONSOLE_END_APPLICATION")
     //Нас интересуют только START и END. Все остальные события приходят от ConEmuC через серверный пайп
@@ -511,6 +524,25 @@ BOOL CConEmuMain::CreateMainWindow()
 	OnTransparent();
 	//if (gConEmu.WindowMode == rFullScreen || gConEmu.WindowMode == rMaximized)
 	//	gConEmu.SetWindowMode(gConEmu.WindowMode);
+
+	ConEmuInfo ceInfo = {sizeof(ConEmuInfo)};
+	ceInfo.hGuiWnd = ghWnd;
+	wchar_t *pszSlash = wcsrchr(ms_ConEmuExe, L'\\');
+	*pszSlash = 0;
+	lstrcpy(ceInfo.sConEmuDir, ms_ConEmuExe); // SetEnvironmentVariable(L"ConEmuDir", ceInfo.sConEmuDir);
+	*pszSlash = L'\\';
+	// sConEmuArgs уже заполнен в PrepareCommandLine
+	m_GuiInfoMapping.InitName(CEGUIINFOMAPNAME, GetCurrentProcessId());
+	if (m_GuiInfoMapping.Create()) {
+		m_GuiInfoMapping.SetFrom(&ceInfo);
+	}
+#ifdef _DEBUG
+	else {
+		_ASSERT(FALSE);
+	}
+#endif
+	
+
 	return TRUE;
 }
 
@@ -699,6 +731,14 @@ CConEmuMain::~CConEmuMain()
 	if (mp_TabBar) {
 		delete mp_TabBar;
 		mp_TabBar = NULL;
+	}
+	if (m_Child) {
+		delete m_Child;
+		m_Child = NULL;
+	}
+	if (m_Back) {
+		delete m_Back;
+		m_Back = NULL;
 	}
 
 	_ASSERTE(mh_LLKeyHookDll==NULL);
@@ -2073,10 +2113,10 @@ void CConEmuMain::ReSize(BOOL abCorrect2Ideal /*= FALSE*/)
 			// главного окна - OnSize вызовается автоматически
 			_ASSERTE(isMainThread());
 
-			m_Child.SetRedraw(FALSE);
+			m_Child->SetRedraw(FALSE);
 			mp_VActive->RCon()->SetConsoleSize(rcConsole.right, rcConsole.bottom, 0, CECMD_SETSIZESYNC);
-			m_Child.SetRedraw(TRUE);
-			m_Child.Redraw();
+			m_Child->SetRedraw(TRUE);
+			m_Child->Redraw();
 
 			//#ifdef _DEBUG
 			//DebugStep(L"...Sleeping");
@@ -2090,10 +2130,10 @@ void CConEmuMain::ReSize(BOOL abCorrect2Ideal /*= FALSE*/)
 			AutoSizeFont(client, CER_MAINCLIENT);
 			RECT rcConsole = CalcRect(CER_CONSOLE, client, CER_MAINCLIENT);
 
-			m_Child.SetRedraw(FALSE);
+			m_Child->SetRedraw(FALSE);
 			mp_VActive->RCon()->SetConsoleSize(rcConsole.right, rcConsole.bottom, 0, CECMD_SETSIZESYNC);
-			m_Child.SetRedraw(TRUE);
-			m_Child.Redraw();
+			m_Child->SetRedraw(TRUE);
+			m_Child->Redraw();
 		}
 	}
 
@@ -2262,7 +2302,7 @@ LRESULT CConEmuMain::OnSize(WPARAM wParam, WORD newClientWidth, WORD newClientHe
 
     // Background - должен занять все клиентское место под тулбаром
     // Там же ресайзится ScrollBar
-    m_Back.Resize();
+    m_Back->Resize();
     
     #ifdef _DEBUG
     BOOL lbIsPicView = 
@@ -2309,7 +2349,7 @@ LRESULT CConEmuMain::OnSize(WPARAM wParam, WORD newClientWidth, WORD newClientHe
 	if (lbPosChanged) {
 	    // Двигаем/ресайзим окошко DC
 		MoveWindow(ghWndDC, rcNewCon.left, rcNewCon.top, rcNewCon.right - rcNewCon.left, rcNewCon.bottom - rcNewCon.top, 1);
-		m_Child.Invalidate();
+		m_Child->Invalidate();
 	}
 
 	if (mn_InResize>0)
@@ -2726,7 +2766,7 @@ bool CConEmuMain::ConActivate(int nCon)
         
         if (!lbSizeOK)
             SyncWindowToConsole();
-        m_Child.Invalidate();
+        m_Child->Invalidate();
     }
     return false;
 }
@@ -3074,8 +3114,8 @@ void CConEmuMain::CtrlWinAltSpace()
     if ((dwLastSpaceTick-GetTickCount())<1000) {
         //if (hWnd == ghWndDC) MBoxA(_T("Space bounce recieved from DC")) else
         //if (hWnd == ghWnd) MBoxA(_T("Space bounce recieved from MainWindow")) else
-        //if (hWnd == gConEmu.m_Back.mh_WndBack) MBoxA(_T("Space bounce recieved from BackWindow")) else
-        //if (hWnd == gConEmu.m_Back.mh_WndScroll) MBoxA(_T("Space bounce recieved from ScrollBar")) else
+        //if (hWnd == gConEmu.m_Back->mh_WndBack) MBoxA(_T("Space bounce recieved from BackWindow")) else
+        //if (hWnd == gConEmu.m_Back->mh_WndScroll) MBoxA(_T("Space bounce recieved from ScrollBar")) else
         MBoxA(_T("Space bounce recieved from unknown window"));
         return;
     }
@@ -3128,7 +3168,7 @@ void CConEmuMain::Recreate(BOOL abRecreate, BOOL abConfirm, BOOL abRunAs)
             //gbDontEnable = b;
             if (nRc != IDC_START)
                 return;
-			m_Child.Redraw();
+			m_Child->Redraw();
         }
         //Собственно, запуск
         CreateCon(&args);
@@ -3152,7 +3192,7 @@ void CConEmuMain::Recreate(BOOL abRecreate, BOOL abConfirm, BOOL abRunAs)
 	            if (nRc != IDC_START)
 	                return;
             }
-			m_Child.Redraw();
+			m_Child->Redraw();
             // Собственно, Recreate
             mp_VActive->RCon()->RecreateProcess(&args);
         }
@@ -4135,14 +4175,14 @@ void CConEmuMain::Invalidate(CVirtualConsole* apVCon)
 {
 	if (!this || !apVCon) return;
 	TODO("После добавления второго viewport'а потребуется доработка");
-	m_Child.Invalidate();
+	m_Child->Invalidate();
 }
 
 void CConEmuMain::InvalidateAll()
 {
     InvalidateRect(ghWnd, NULL, TRUE);
-    m_Child.Invalidate();
-    m_Back.Invalidate();
+    m_Child->Invalidate();
+    m_Back->Invalidate();
     gConEmu.mp_TabBar->Invalidate();
 }
 
@@ -4280,7 +4320,7 @@ void CConEmuMain::PaintCon(HDC hPaintDC)
 void CConEmuMain::RePaint()
 {
     gConEmu.mp_TabBar->RePaint();
-    m_Back.RePaint();
+    m_Back->RePaint();
 	HDC hDc = GetDC(ghWnd);
     //mp_VActive->Paint(hDc); // если mp_VActive==NULL - будет просто выполнена заливка фоном.
 	PaintCon(hDc);
@@ -4450,7 +4490,7 @@ bool CConEmuMain::isMainThread()
     return dwTID == mn_MainThreadId;
 }
 
-bool CConEmuMain::isMeForeground()
+bool CConEmuMain::isMeForeground(bool abRealAlso)
 {
     if (!this) return false;
     
@@ -4459,7 +4499,7 @@ bool CConEmuMain::isMeForeground()
     HWND h = GetForegroundWindow();
     if (h != hLastFore) {
         isMe = (h != NULL) && (h == ghWnd || h == ghOpWnd);
-        if (h && !isMe) {
+        if (h && !isMe && abRealAlso) {
             for (int i=0; i<MAX_CONSOLE_COUNT; i++) {
                 if (mp_VCon[i]) {
                     if (h == mp_VCon[i]->RCon()->ConWnd()) {
@@ -4693,7 +4733,7 @@ void CConEmuMain::OnBufferHeight() //BOOL abBufferHeight)
 	}
 
 	BOOL lbBufferHeight = mp_VActive->RCon()->isBufferHeight();
-    gConEmu.m_Back.TrackMouse(); // спрятать или показать прокрутку, если над ней мышка
+    gConEmu.m_Back->TrackMouse(); // спрятать или показать прокрутку, если над ней мышка
     gConEmu.mp_TabBar->OnBufferHeight(lbBufferHeight);
 }
 
@@ -4792,9 +4832,9 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
     // Чтобы можно было найти хэндл окна по хэндлу консоли
     SetWindowLongPtr(hWnd, GWLP_USERDATA, (LONG_PTR)ghConWnd); // 31.03.2009 Maximus - только нихрена оно еще не создано!
 
-    m_Back.Create();
+    m_Back->Create();
 
-    if (!m_Child.Create())
+    if (!m_Child->Create())
         return -1;
 
     mn_StartTick = GetTickCount();
@@ -5360,7 +5400,7 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		bool bNewFade = (gSet.isFadeInactive && !bForeground && !isPictureView());
 		if (bLastFade != bNewFade) {
 			if (mp_VActive) mp_VActive->mb_LastFadeFlag = bNewFade;
-			m_Child.Invalidate();
+			m_Child->Invalidate();
 		}
 	}
     
@@ -6173,7 +6213,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
     }
 
     if (messg == WM_MOUSEMOVE) {
-        if (m_Back.TrackMouse())
+        if (m_Back->TrackMouse())
             return 0;
     }
 
@@ -7923,7 +7963,7 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 				bool bNewFade = (gSet.isFadeInactive && !bForeground && !lbIsPicView);
 				if (bLastFade != bNewFade) {
 					mp_VActive->mb_LastFadeFlag = bNewFade;
-					m_Child.Invalidate();
+					m_Child->Invalidate();
 				}
 			}
 
@@ -7938,7 +7978,7 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 		{
 	        if (!isIconic())
 	        {
-	        	m_Child.CheckPostRedraw();
+	        	m_Child->CheckPostRedraw();
 	        }
 		} break; // case 1:
 		
@@ -8330,7 +8370,7 @@ LRESULT CConEmuMain::MainWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lP
 	if (hWnd == ghWnd)
 		result = gConEmu.WndProc(hWnd, messg, wParam, lParam);
 	else if (hWnd == ghWndDC)
-		result = gConEmu.m_Child.ChildWndProc(hWnd, messg, wParam, lParam);
+		result = gConEmu.m_Child->ChildWndProc(hWnd, messg, wParam, lParam);
 	else if (messg)
 		result = DefWindowProc(hWnd, messg, wParam, lParam);
 

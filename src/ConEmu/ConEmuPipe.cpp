@@ -28,6 +28,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "header.h"
 #include "../common/ConEmuCheck.h"
+#include "ConEmuPipe.h"
+#include "ConEmu.h"
 
 WARNING("!!! Обязательно нужно сделать возможность отваливаться по таймауту!");
 

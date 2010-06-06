@@ -107,6 +107,7 @@ int maxTabCount = 0, lastWindowCount = 0, gnCurTabCount = 0;
 CESERVER_REQ* gpTabs = NULL; //(ConEmuTab*) Alloc(maxTabCount, sizeof(ConEmuTab));
 BOOL gbIgnoreUpdateTabs = FALSE; // выставляется на время CMD_SETWINDOW
 BOOL gbRequestUpdateTabs = FALSE; // выставляется при получении события FOCUS/KILLFOCUS
+BOOL gbClosingModalViewerEditor = FALSE; // выставляется при закрытии модального редактора/вьювера
 LPBYTE gpData = NULL, gpCursor = NULL;
 CESERVER_REQ* gpCmdRet = NULL;
 DWORD  gnDataSize=0;
@@ -170,6 +171,8 @@ PanelViewRegInfo gPanelRegLeft = {NULL};
 PanelViewRegInfo gPanelRegRight = {NULL};
 // Для плагинов PicView & MMView нужно знать, нажат ли CtrlShift при F3
 HANDLE ghConEmuCtrlPressed = NULL, ghConEmuShiftPressed = NULL;
+BOOL gbWaitConsoleInputEmpty = FALSE, gbWaitConsoleWrite = FALSE; //, gbWaitConsoleInputPeek = FALSE;
+HANDLE ghConsoleInputEmpty = NULL, ghConsoleWrite = NULL; //, ghConsoleInputWasPeek = NULL;
 
 
 //std::vector<HANDLE> ghCommandThreads;
@@ -379,6 +382,10 @@ BOOL OnConsolePeekReadInput(BOOL abPeek)
 			UpdateConEmuTabsA(0,false,false);
 		else
 			UpdateConEmuTabsW(0,false,false);
+		if (gbClosingModalViewerEditor) {
+			gbClosingModalViewerEditor = FALSE;
+			gbRequestUpdateTabs = TRUE;
+		}
 	}
 
 
@@ -406,6 +413,20 @@ BOOL OnConsolePeekReadInput(BOOL abPeek)
 			ReloadFarInfo(FALSE);
 	}
 	
+	// В некоторых случаях нужно дождаться, пока очередь опустеет
+	if (gbWaitConsoleInputEmpty) {
+		DWORD nTestEvents = 0;
+		HANDLE h = GetStdHandle(STD_INPUT_HANDLE);
+		if (GetNumberOfConsoleInputEvents(h, &nTestEvents)) {
+			if (nTestEvents == 0) {
+				gbWaitConsoleInputEmpty = FALSE;
+				SetEvent(ghConsoleInputEmpty);
+			}
+		}
+	}
+
+
+	//
 	if (!gbReqCommandWaiting || gnReqCommand == (DWORD)-1)
 		return TRUE; // активация в данный момент не требуется
 	
@@ -425,7 +446,7 @@ BOOL OnConsolePeekReadInput(BOOL abPeek)
 		DWORD nTabShift = SETWND_CALLPLUGIN_BASE + *((DWORD*)gpReqCommandData);
 		
 		// Если панели-редактор-вьювер - сменить окно. Иначе - отослать в GUI табы
-		wsprintf(szMacro, L"$if (Shell||Viewer||Editor) callplugin(0x%08X,%i) $else callplugin(0x%08X,%i) $end",
+		wsprintf(szMacro, L"$if (Search) Esc $end $if (Shell||Viewer||Editor) callplugin(0x%08X,%i) $else callplugin(0x%08X,%i) $end",
 			ConEmu_SysID, nTabShift, ConEmu_SysID, SETWND_CALLPLUGIN_SENDTABS);
 			
 		gnReqCommand = -1;
@@ -755,6 +776,11 @@ BOOL WINAPI OnWriteConsoleOutput(HookCallbackArg* pArgs)
 			_ASSERTE(gPanelRegRight.bRegister);
 			gPanelRegRight.pfnWriteCall(hOutput,lpBuffer,dwBufferSize,dwBufferCoord,lpWriteRegion);
 		}
+	}
+
+	if (gbWaitConsoleWrite) {
+		gbWaitConsoleWrite = FALSE;
+		SetEvent(ghConsoleWrite);
 	}
 
 	return TRUE;
@@ -1277,6 +1303,11 @@ CESERVER_REQ* ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandDat
 		//	}
 		//}
 
+		if (/*nCmd == CMD_LEFTCLKSYNC ||*/ nCmd == CMD_CLOSEQSEARCH)
+		{
+			ResetEvent(ghConsoleWrite);
+			gbWaitConsoleWrite = TRUE;
+		}
 		
 		// Засемафорить, чтобы несколько команд одновременно не пошли...
 		{
@@ -1292,18 +1323,33 @@ CESERVER_REQ* ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandDat
 		// конец семафора
 		
 		
-		if (nCmd == CMD_LEFTCLKSYNC) {
-			DWORD nTestEvents = 0, dwTicks = GetTickCount();
-			DEBUGSTRMENU(L"*** waiting for queue empty\n");
-			HANDLE h = GetStdHandle(STD_INPUT_HANDLE);
-			GetNumberOfConsoleInputEvents(h, &nTestEvents);
-			while (nTestEvents > 0 && (dwTicks - GetTickCount()) < 300) {
-				Sleep(10);
-				GetNumberOfConsoleInputEvents(h, &nTestEvents);
+		if (nCmd == CMD_LEFTCLKSYNC || nCmd == CMD_CLOSEQSEARCH)
+		{
+			ResetEvent(ghConsoleInputEmpty);
+			gbWaitConsoleInputEmpty = TRUE;
+			DWORD nWait = WaitForSingleObject(ghConsoleInputEmpty, 2000);
+			if (nWait == WAIT_OBJECT_0) {
+				if (nCmd == CMD_CLOSEQSEARCH) {
+					// И подождать, пока Фар обработает это событие (то есть до следующего чтения [Peek])
+					nWait = WaitForSingleObject(ghConsoleWrite, 1000);
+				}
+			} else {
+				#ifdef _DEBUG
+				DEBUGSTRMENU((nWait != 0) ? L"*** QUEUE IS NOT EMPTY\n" : L"*** QUEUE IS EMPTY\n");
+				#endif
+				gbWaitConsoleInputEmpty = FALSE;
 			}
-			#ifdef _DEBUG
-			DEBUGSTRMENU((nTestEvents > 0) ? L"*** QUEUE IS NOT EMPTY\n" : L"*** QUEUE IS EMPTY\n");
-			#endif
+			//DWORD nTestEvents = 0, dwTicks = GetTickCount();
+			//DEBUGSTRMENU(L"*** waiting for queue empty\n");
+			//HANDLE h = GetStdHandle(STD_INPUT_HANDLE);
+			//GetNumberOfConsoleInputEvents(h, &nTestEvents);
+			//while (nTestEvents > 0 /*&& (dwTicks - GetTickCount()) < 300*/) {
+			//	Sleep(10);
+			//	GetNumberOfConsoleInputEvents(h, &nTestEvents);
+			//	DWORD nCurTick = GetTickCount();
+			//	if ((nCurTick - dwTicks) > 300)
+			//		break;
+			//}
 		}
 		
 		// Собственно Redraw фар выполнит не тогда, когда его функцию позвали,
@@ -1408,6 +1454,11 @@ CESERVER_REQ* ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandDat
 			_ASSERTE(pCommandData!=NULL);
 			if (pCommandData!=NULL)
 				PostMacro((wchar_t*)pCommandData);
+			break;
+		}
+		case (CMD_CLOSEQSEARCH):
+		{
+			PostMacro(L"$if (Search) Esc $end");
 			break;
 		}
 		case (CMD_LEFTCLKSYNC):
@@ -2236,6 +2287,10 @@ void InitHWND(HWND ahFarHwnd)
     gnPlugServerThreadId = 0;
     ghPlugServerThread = CreateThread(NULL, 0, PlugServerThread, (LPVOID)NULL, 0, &gnPlugServerThreadId);
     _ASSERTE(ghPlugServerThread!=NULL);
+	ghConsoleWrite = CreateEvent(NULL,FALSE,FALSE,NULL);
+	_ASSERTE(ghConsoleWrite!=NULL);
+	ghConsoleInputEmpty = CreateEvent(NULL,FALSE,FALSE,NULL);
+	_ASSERTE(ghConsoleInputEmpty!=NULL);
 
 
 	ghMonitorThread = CreateThread(NULL, 0, MonitorThreadProcW, 0, 0, &gnMonitorThreadId);
@@ -2731,6 +2786,11 @@ int WINAPI _export ProcessEditorEventW(int Event, void *Param)
 		//	gbHandleOneRedraw = false; gbRequestUpdateTabs = TRUE;
 		}
 	}
+
+	if (gpTabs && Event == EE_CLOSE && gpTabs->Tabs.nTabCount
+		&& gpTabs->Tabs.tabs[0].Type != WTYPE_PANELS)
+		gbClosingModalViewerEditor = TRUE;
+
 #else
 	// Даже если мы не под эмулятором - просто запомним текущее состояние
 	//if (!ConEmuHwnd) return 0; // Если мы не под эмулятором - ничего
@@ -2788,7 +2848,12 @@ int WINAPI _export ProcessViewerEventW(int Event, void *Param)
 #if 1
 	if (!gbRequestUpdateTabs &&
 		(Event == VE_CLOSE || Event == VE_GOTFOCUS || Event == VE_KILLFOCUS))
-	gbRequestUpdateTabs = TRUE;
+		gbRequestUpdateTabs = TRUE;
+
+	if (gpTabs && Event == VE_CLOSE && gpTabs->Tabs.nTabCount
+		&& gpTabs->Tabs.tabs[0].Type != WTYPE_PANELS)
+		gbClosingModalViewerEditor = TRUE;
+
 #else
 	// Даже если мы не под эмулятором - просто запомним текущее состояние
 	//if (!ConEmuHwnd) return 0; // Если мы не под эмулятором - ничего
@@ -2914,6 +2979,8 @@ void StopThread(void)
 	//SafeCloseHandle(ghConIn);
 	SafeCloseHandle(ghInputSynchroExecuted);
 	SafeCloseHandle(ghSetWndSendTabsEvent);
+	SafeCloseHandle(ghConsoleInputEmpty);
+	SafeCloseHandle(ghConsoleWrite);
 	
 	if (lpPtrConInfo) {
 		UnmapViewOfFile(lpPtrConInfo);
@@ -3177,6 +3244,9 @@ void PostMacro(wchar_t* asMacro)
 	//		return;
 	//	}
 	//}
+
+	TODO("Необязательно выполнять реальную запись в консольный буфер. Можно обойтись подстановкой в наших функциях перехвата чтения буфера.");
+
 	HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE);
 	DWORD cbWritten = 0;
 #ifdef _DEBUG
@@ -3426,7 +3496,14 @@ DWORD WINAPI PlugServerThreadCommand(LPVOID ahPipe)
 		if (pIn->hdr.nCmd == CMD_SETWINDOW) {
 			ResetEvent(ghSetWndSendTabsEvent);
 
-			ProcessCommand(pIn->hdr.nCmd, TRUE/*bReqMainThread*/, pIn->Data);
+			// Для FAR2 - сброс QSearch выполняется в том же макро, в котором актирируется окно
+			if (gFarVersion.dwVerMajor == 1 && pIn->dwData[1]) {
+				// А вот для FAR1 - нужно шаманить
+				ProcessCommand(CMD_CLOSEQSEARCH, TRUE/*bReqMainThread*/, pIn->dwData/*хоть и не нужно?*/);
+			}
+
+			// Пересылается 2 DWORD
+			ProcessCommand(pIn->hdr.nCmd, TRUE/*bReqMainThread*/, pIn->dwData);
 
 			if (gFarVersion.dwVerMajor == 2)
 			{

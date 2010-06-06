@@ -1,10 +1,12 @@
 
 //#include "StdAfx.h"
 #include <shlobj.h>
-#include ".\basedragdrops.h"
+#include <tchar.h>
 #include "resource.h"
 #include "header.h"
-#include <tchar.h>
+#include "basedragdrops.h"
+#include "DragDrop.h"
+#include "ConEmu.h"
 
 extern HINSTANCE g_hInstance;
 
@@ -184,7 +186,7 @@ HRESULT __stdcall CDropSource::QueryContinueDrag(BOOL fEscapePressed, DWORD grfK
 			mp_Callback->DragFeedBack((DWORD)-1);
 		return DRAGDROP_S_CANCEL;	
 	}
-		
+
 	DWORD nDragKey = ((gConEmu.mouse.state & DRAG_L_STARTED) == DRAG_L_STARTED) ? MK_LBUTTON : MK_RBUTTON;
 	DWORD nOtherKey = ((nDragKey & MK_LBUTTON) == MK_LBUTTON) ? (MK_RBUTTON|MK_MBUTTON) : (MK_LBUTTON|MK_MBUTTON);
 

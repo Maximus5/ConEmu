@@ -35,6 +35,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/ConEmuCheck.h"
 #include "../common/farcolor.hpp"
 #include "../common/RgnDetect.h"
+#include "RealConsole.h"
+#include "VirtualConsole.h"
+#include "TabBar.h"
+#include "ConEmu.h"
+#include "ConEmuApp.h"
+#include "ConEmuChild.h"
+#include "ConEmuPipe.h"
 
 #define DEBUGSTRDRAW(s) //DEBUGSTR(s)
 #define DEBUGSTRINPUT(s) //DEBUGSTR(s)
@@ -109,10 +116,11 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
 
 	SetConStatus(L"Initializing ConEmu..");
 
-	PostMessage(ghWnd, WM_SETCURSOR, 0, 0);
+	PostMessage(ghWnd, WM_SETCURSOR, -1, -1);
 
     mp_VCon = apVCon;
     mp_Rgn = new CRgnDetect();
+	mn_LastRgnFlags = -1;
     
     memset(Title,0,sizeof(Title)); memset(TitleCmp,0,sizeof(TitleCmp));
     mn_tabsCount = 0; ms_PanelTitle[0] = 0; mn_ActiveTab = 0;
@@ -1366,7 +1374,7 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 					//2010-05-18 lbForceUpdate вызывал CVirtualConsole::Update(abForce=true), что приводило к тормозам
 					bool bForce = false; //lbForceUpdate;
 					lbForceUpdate = false;
-					gConEmu.m_Child.Validate(); // сбросить флажок
+					gConEmu.m_Child->Validate(); // сбросить флажок
 					if (pRCon->m_UseLogs>2) pRCon->LogString("mp_VCon->Update from CRealConsole::MonitorThread");
 					if (pRCon->mp_VCon->Update(bForce))
 						lbNeedRedraw = true;
@@ -1389,7 +1397,7 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 					//#ifndef _DEBUG
 					//WARNING("******************");
 					TODO("После этого двойная отрисовка не вызывается?");
-					gConEmu.m_Child.Redraw();
+					gConEmu.m_Child->Redraw();
 					//#endif
 					pRCon->mn_LastInvalidateTick = GetTickCount();
 				}
@@ -2431,7 +2439,7 @@ void CRealConsole::UpdateSelection()
     TODO("Это корректно? Нужно обновить VCon");
 	con.bConsoleDataChanged = TRUE; // А эта - при вызовах из CVirtualConsole
 	mp_VCon->Update(true);
-	gConEmu.m_Child.Redraw();
+	gConEmu.m_Child->Redraw();
 }
 
 BOOL CRealConsole::OpenConsoleEventPipe()
@@ -3803,7 +3811,7 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 						_ASSERTE(con.nChange2TextHeight <= 200);
 					}
 
-					gConEmu.m_Child.SetRedraw(FALSE);
+					gConEmu.m_Child->SetRedraw(FALSE);
 					gConEmu.mp_TabBar->SetRedraw(FALSE);
 					fSuccess = FALSE;
 
@@ -3826,14 +3834,14 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 					if (fSuccess) { // Дождаться, пока из сервера придут изменения консоли
 						WaitConsoleSize(rcConsole.bottom, 500);
 					}
-					gConEmu.m_Child.SetRedraw(TRUE);
+					gConEmu.m_Child->SetRedraw(TRUE);
 				}
 			}
 			if (lbCanUpdate) {
-				gConEmu.m_Child.Invalidate();
+				gConEmu.m_Child->Invalidate();
 				SetTabs(pIn->Tabs.tabs, pIn->Tabs.nTabCount);
 				gConEmu.mp_TabBar->SetRedraw(TRUE);
-				gConEmu.m_Child.Redraw();
+				gConEmu.m_Child->Redraw();
 			}
         }
 
@@ -4725,41 +4733,59 @@ void CRealConsole::ShowConsole(int nMode) // -1 Toggle, 0 - Hide, 1 - Show
             rcWnd.right-rcCon.right+rcCon.left, rcWnd.bottom-rcCon.bottom+rcCon.top,
             0,0, SWP_NOSIZE|SWP_SHOWWINDOW))
 		{
-			EnableWindow(hConWnd, true);
-			SetFocus(ghWnd);
-		} else {
-			if (isAdministrator() || (m_Args.pszUserName != NULL)) {
-				// Если оно запущено в Win7 as admin
-		        CESERVER_REQ *pIn = ExecuteNewCmd(CECMD_SHOWCONSOLE, sizeof(CESERVER_REQ_HDR) + sizeof(DWORD));
-				if (pIn) {
-					pIn->dwData[0] = SW_SHOWNORMAL;
-					CESERVER_REQ *pOut = ExecuteSrvCmd(GetServerPID(), pIn, ghWnd);
-					if (pOut) ExecuteFreeResult(pOut);
-					ExecuteFreeResult(pIn);
+			if (!IsWindowEnabled(hConWnd))
+				EnableWindow(hConWnd, true); // Для админской консоли - не сработает.
+			DWORD dwExStyle = GetWindowLong(hConWnd, GWL_EXSTYLE);
+			#if 0
+			DWORD dw1, dwErr;
+			if ((dwExStyle & WS_EX_TOPMOST) == 0) {
+				dw1 = SetWindowLong(hConWnd, GWL_EXSTYLE, dwExStyle|WS_EX_TOPMOST);
+				dwErr = GetLastError();
+				dwExStyle = GetWindowLong(hConWnd, GWL_EXSTYLE);
+				if ((dwExStyle & WS_EX_TOPMOST) == 0) {
+					SetOtherWindowPos(hConWnd, HWND_TOPMOST, 
+						0,0,0,0, SWP_NOSIZE|SWP_NOMOVE);
 				}
 			}
+			#endif
+			// Issue 246. Возвращать фокус в ConEmu можно только если удалось установить
+			// "OnTop" для RealConsole, иначе - RealConsole "всплывет" на заднем плане
+			if ((dwExStyle & WS_EX_TOPMOST))
+				SetFocus(ghWnd);
+		//} else { //2010-06-05 Не требуется. SetOtherWindowPos выполнит команду в сервере при необходимости
+		//	if (isAdministrator() || (m_Args.pszUserName != NULL)) {
+		//		// Если оно запущено в Win7 as admin
+		//        CESERVER_REQ *pIn = ExecuteNewCmd(CECMD_SHOWCONSOLE, sizeof(CESERVER_REQ_HDR) + sizeof(DWORD));
+		//		if (pIn) {
+		//			pIn->dwData[0] = SW_SHOWNORMAL;
+		//			CESERVER_REQ *pOut = ExecuteSrvCmd(GetServerPID(), pIn, ghWnd);
+		//			if (pOut) ExecuteFreeResult(pOut);
+		//			ExecuteFreeResult(pIn);
+		//		}
+		//	}
 		}
         //if (setParent) SetParent(hConWnd, 0);
     }
     else
     {
         isShowConsole = false;
-        //if (!gSet.isConVisible)
-		if (!apiShowWindow(hConWnd, SW_HIDE)) {
-			if (isAdministrator() || (m_Args.pszUserName != NULL)) {
-				// Если оно запущено в Win7 as admin
-		        CESERVER_REQ *pIn = ExecuteNewCmd(CECMD_SHOWCONSOLE, sizeof(CESERVER_REQ_HDR) + sizeof(DWORD));
-				if (pIn) {
-					pIn->dwData[0] = SW_HIDE;
-					CESERVER_REQ *pOut = ExecuteSrvCmd(GetServerPID(), pIn, ghWnd);
-					if (pOut) ExecuteFreeResult(pOut);
-					ExecuteFreeResult(pIn);
-				}
-			}
-		}
-        //if (setParent) SetParent(hConWnd, setParent2 ? ghWnd : ghWndDC);
-        //if (!gSet.isConVisible)
-        //EnableWindow(hConWnd, false); -- наверное не нужно
+		ShowOtherWindow(hConWnd, SW_HIDE);
+		////if (!gSet.isConVisible)
+		//if (!apiShowWindow(hConWnd, SW_HIDE)) {
+		//	if (isAdministrator() || (m_Args.pszUserName != NULL)) {
+		//		// Если оно запущено в Win7 as admin
+		//        CESERVER_REQ *pIn = ExecuteNewCmd(CECMD_SHOWCONSOLE, sizeof(CESERVER_REQ_HDR) + sizeof(DWORD));
+		//		if (pIn) {
+		//			pIn->dwData[0] = SW_HIDE;
+		//			CESERVER_REQ *pOut = ExecuteSrvCmd(GetServerPID(), pIn, ghWnd);
+		//			if (pOut) ExecuteFreeResult(pOut);
+		//			ExecuteFreeResult(pIn);
+		//		}
+		//	}
+		//}
+		////if (setParent) SetParent(hConWnd, setParent2 ? ghWnd : ghWndDC);
+		////if (!gSet.isConVisible)
+		////EnableWindow(hConWnd, false); -- наверное не нужно
         SetFocus(ghWnd);
     }
 }
@@ -6660,6 +6686,12 @@ void CRealConsole::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, i
 		// или при пропорциональном шрифте
 		// Даже если НЕ (gSet.NeedDialogDetect()) - нужно сбросить количество прямоугольников.
 		PrepareTransparent(pChar, pAttr, nWidth, nHeight);
+
+		if (mn_LastRgnFlags != mp_Rgn->GetFlags()) {
+			if (this->isActive())
+				PostMessage(ghWnd, WM_SETCURSOR, -1, -1);
+			mn_LastRgnFlags = mp_Rgn->GetFlags();
+		}
 		
 		if (con.m_sel.dwFlags) {
 			BOOL lbStreamMode = (con.m_sel.dwFlags & CONSOLE_TEXT_SELECTION) == CONSOLE_TEXT_SELECTION;
@@ -7043,7 +7075,7 @@ void CRealConsole::UpdateScrollInfo()
 	//}
 
     TODO("Нужно при необходимости 'всплыть' полосу прокрутки");
-    nCurPos = SetScrollInfo(gConEmu.m_Back.mh_WndScroll, SB_VERT, &si, true);
+    nCurPos = SetScrollInfo(gConEmu.m_Back->mh_WndScroll, SB_VERT, &si, true);
 }
 
 // По con.m_sbi проверяет, включена ли прокрутка
@@ -7404,18 +7436,21 @@ DWORD CRealConsole::CanActivateFarWindow(int anWndIndex)
 
     if (!GetWindowText(hConWnd, TitleCmp, countof(TitleCmp)-2))
         TitleCmp[0] = 0;
-    // Копирование в FAR: "{33%}..."
-    //2009-06-02: PPCBrowser показывает копирование так: "(33% 00:02:20)..."
-    if ((TitleCmp[0] == L'{' || TitleCmp[0] == L'(')
-        && isDigit(TitleCmp[1]) &&
-        ((TitleCmp[2] == L'%' /*&& TitleCmp[3] == L'}'*/) ||
-         (isDigit(TitleCmp[2]) && TitleCmp[3] == L'%' /*&& TitleCmp[4] == L'}'*/) ||
-         (isDigit(TitleCmp[2]) && isDigit(TitleCmp[3]) && TitleCmp[4] == L'%' /*&& TitleCmp[5] == L'}'*/))
-       )
-    {
-        // Идет копирование
-        return 0;
-    }
+	// Прогресс уже определился в другом месте
+	if (GetProgress(NULL)>=0)
+		return 0; // Идет копирование или какая-то другая операция
+    //// Копирование в FAR: "{33%}..."
+    ////2009-06-02: PPCBrowser показывает копирование так: "(33% 00:02:20)..."
+    //if ((TitleCmp[0] == L'{' || TitleCmp[0] == L'(')
+    //    && isDigit(TitleCmp[1]) &&
+    //    ((TitleCmp[2] == L'%' /*&& TitleCmp[3] == L'}'*/) ||
+    //     (isDigit(TitleCmp[2]) && TitleCmp[3] == L'%' /*&& TitleCmp[4] == L'}'*/) ||
+    //     (isDigit(TitleCmp[2]) && isDigit(TitleCmp[3]) && TitleCmp[4] == L'%' /*&& TitleCmp[5] == L'}'*/))
+    //   )
+    //{
+    //    // Идет копирование
+    //    return 0;
+    //}
     if (!con.pConChar || !con.nTextWidth || con.nTextHeight<2)
         return 0; // консоль не инициализирована, ловить нечего
     BOOL lbMenuActive = FALSE;
@@ -7474,10 +7509,11 @@ BOOL CRealConsole::ActivateFarWindow(int anWndIndex)
     
 
     DWORD dwPID = CanActivateFarWindow(anWndIndex);
-    if (!dwPID)
+	if (!dwPID) {
         return FALSE;
-    else if (dwPID == (DWORD)-1)
+	} else if (dwPID == (DWORD)-1) {
         return TRUE; // Нужное окно уже выделено, лучше не дергаться...
+	}
 
 
     BOOL lbRc = FALSE;
@@ -7485,7 +7521,12 @@ BOOL CRealConsole::ActivateFarWindow(int anWndIndex)
     CConEmuPipe pipe(dwPID, 100);
     if (pipe.Init(_T("CRealConsole::ActivateFarWindow")))
     {
-        if (pipe.Execute(CMD_SETWINDOW, &anWndIndex, 4))
+		DWORD nData[2] = {anWndIndex,0};
+		// Если в панелях висит QSearch - его нужно предварительно "снять"
+		if (!mn_ActiveTab && (mp_Rgn->GetFlags() & FR_QSEARCH))
+			nData[1] = TRUE;
+
+        if (pipe.Execute(CMD_SETWINDOW, nData, 8))
         {
 			WARNING("CMD_SETWINDOW по таймауту возвращает последнее считанное положение окон (gpTabs).");
 			// То есть если переключение окна выполняется дольше 2х сек - возвратится предыдущее состояние
@@ -8295,6 +8336,11 @@ bool CRealConsole::isFilePanel(bool abPluginAllowed/*=false*/)
     if (isEditor() || isViewer())
          return false;
     //}
+
+	// Если висят какие-либо диалоги - считаем что это НЕ панель
+	DWORD dwFlags = mp_Rgn->GetFlags();
+	if ((dwFlags & FR_FREEDLG_MASK) != 0)
+		return false;
 
     // нужно для DragDrop
     if (_tcsncmp(Title, ms_TempPanel, _tcslen(ms_TempPanel)) == 0 || _tcsncmp(Title, ms_TempPanelRus, _tcslen(ms_TempPanelRus)) == 0)
@@ -9656,7 +9702,7 @@ void CRealConsole::SetConStatus(LPCWSTR asStatus)
 	lstrcpyn(ms_ConStatus, asStatus ? asStatus : L"", countof(ms_ConStatus));
 	if (isActive()) {
 		if (mp_VCon->Update(false))
-			gConEmu.m_Child.Redraw();
+			gConEmu.m_Child->Redraw();
 	}
 }
 

@@ -606,6 +606,24 @@ int ServerInit()
 
 	CheckConEmuHwnd();
 
+	// Обновить переменные окружения
+	{
+		DWORD dwGuiThreadId, dwGuiProcessId;
+		MFileMapping<ConEmuInfo> GuiInfoMapping;
+		dwGuiThreadId = GetWindowThreadProcessId(ghConEmuWnd, &dwGuiProcessId);
+		if (!dwGuiThreadId) {
+			_ASSERTE(dwGuiProcessId);
+		} else {
+			GuiInfoMapping.InitName(CEGUIINFOMAPNAME, dwGuiProcessId);
+			const ConEmuInfo* pInfo = GuiInfoMapping.Open();
+			if (pInfo && pInfo->cbSize == sizeof(ConEmuInfo)) {
+				SetEnvironmentVariableW(L"ConEmuDir", pInfo->sConEmuDir);
+				SetEnvironmentVariableW(L"ConEmuArgs", pInfo->sConEmuArgs);
+				wchar_t szHWND[16]; wsprintf(szHWND, L"0x%08X", pInfo->hGuiWnd.u);
+				SetEnvironmentVariableW(L"ConEmuHWND", szHWND);
+			}
+		}
+	}
 
 wrap:
 	return iRc;

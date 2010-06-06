@@ -32,8 +32,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <shlobj.h>
 #include "Header.h"
 #include "DragDropData.h"
+#include "DragDrop.h"
 #include "ScreenDump.h"
-#include "../common/ConEmuCheck.h"
+#include "ConEmu.h"
+#include "ConEmuPipe.h"
+#include "VirtualConsole.h"
+//#include "../common/ConEmuCheck.h"
 
 #define MAX_OVERLAY_WIDTH    300
 #define MAX_OVERLAY_HEIGHT   300

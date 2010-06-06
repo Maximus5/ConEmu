@@ -28,6 +28,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #include "Header.h"
+#include "../common/common.hpp"
+#include "../common/WinObjects.h"
+#include "ConEmu.h"
+#include "ConEmuChild.h"
+#include "Options.h"
+#include "TabBar.h"
+#include "VirtualConsole.h"
 
 #if defined(__GNUC__)
 #define EXT_GNUC_LOG
@@ -65,7 +72,7 @@ HWND CConEmuChild::Create()
 		MBoxA(_T("Can't create DC window!"));
 		return NULL; //
 	}
-	//SetClassLong(ghWndDC, GCL_HBRBACKGROUND, (LONG)gConEmu.m_Back.mh_BackBrush);
+	//SetClassLong(ghWndDC, GCL_HBRBACKGROUND, (LONG)gConEmu.m_Back->mh_BackBrush);
 	SetWindowPos(ghWndDC, HWND_TOP, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
 	//gConEmu.dcWindowLast = rc; //TODO!!!
 	
@@ -90,11 +97,11 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 		break;
 		
     case WM_PAINT:
-		result = gConEmu.m_Child.OnPaint();
+		result = gConEmu.m_Child->OnPaint();
 		break;
 
     case WM_SIZE:
-		result = gConEmu.m_Child.OnSize(wParam, lParam);
+		result = gConEmu.m_Child->OnSize(wParam, lParam);
         break;
 
     case WM_CREATE:
@@ -168,7 +175,7 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 
     default:
 		// Сообщение приходит из ConEmuPlugin
-		if (messg == gConEmu.m_Child.mn_MsgTabChanged) {
+		if (messg == gConEmu.m_Child->mn_MsgTabChanged) {
 			if (gSet.isTabs) {
 				//изменились табы, их нужно перечитать
 				#ifdef MSGLOGGER
@@ -182,8 +189,8 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 				_ASSERT(FALSE);
 				gConEmu.mp_TabBar->Retrieve();
 			}
-		} else if (messg == gConEmu.m_Child.mn_MsgPostFullPaint) {
-			gConEmu.m_Child.Redraw();		
+		} else if (messg == gConEmu.m_Child->mn_MsgPostFullPaint) {
+			gConEmu.m_Child->Redraw();		
 		} else if (messg) {
 			result = DefWindowProc(hWnd, messg, wParam, lParam);
 		}
@@ -506,18 +513,18 @@ LRESULT CALLBACK CConEmuBack::BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, 
 
 	switch (messg) {
 		case WM_CREATE:
-			gConEmu.m_Back.mh_WndBack = hWnd;
+			gConEmu.m_Back->mh_WndBack = hWnd;
 			break;
 		case WM_DESTROY:
-			//if (gConEmu.m_Back.mh_ThemeData && gConEmu.m_Back.mfn_CloseThemeData) {
-			//	gConEmu.m_Back.mfn_CloseThemeData ( gConEmu.m_Back.mh_ThemeData );
-			//	gConEmu.m_Back.mh_ThemeData = NULL;
+			//if (gConEmu.m_Back->mh_ThemeData && gConEmu.m_Back->mfn_CloseThemeData) {
+			//	gConEmu.m_Back->mfn_CloseThemeData ( gConEmu.m_Back->mh_ThemeData );
+			//	gConEmu.m_Back->mh_ThemeData = NULL;
 			//}
-			//if (gConEmu.m_Back.mh_UxTheme) {
-			//	FreeLibrary(gConEmu.m_Back.mh_UxTheme);
-			//	gConEmu.m_Back.mh_UxTheme = NULL;
+			//if (gConEmu.m_Back->mh_UxTheme) {
+			//	FreeLibrary(gConEmu.m_Back->mh_UxTheme);
+			//	gConEmu.m_Back->mh_UxTheme = NULL;
 			//}
-			DeleteObject(gConEmu.m_Back.mh_BackBrush);
+			DeleteObject(gConEmu.m_Back->mh_BackBrush);
 			break;
 		case WM_SETFOCUS:
 			SetFocus(ghWnd); // Фокус должен быть в главном окне!
@@ -533,7 +540,7 @@ LRESULT CALLBACK CConEmuBack::BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, 
 				HDC hDc = BeginPaint(hWnd, &ps);
 				#ifndef SKIP_ALL_FILLRECT
 				if (!IsRectEmpty(&ps.rcPaint))
-					FillRect(hDc, &ps.rcPaint, gConEmu.m_Back.mh_BackBrush);
+					FillRect(hDc, &ps.rcPaint, gConEmu.m_Back->mh_BackBrush);
 				#endif
 				EndPaint(hWnd, &ps);
 			}
@@ -574,7 +581,7 @@ LRESULT CALLBACK CConEmuBack::ScrollWndProc(HWND hWnd, UINT messg, WPARAM wParam
 
 	switch (messg) {
 		case WM_CREATE:
-			gConEmu.m_Back.mh_WndScroll = hWnd;
+			gConEmu.m_Back->mh_WndScroll = hWnd;
 			break;
 		case WM_VSCROLL:
 			//POSTMESSAGE(ghConWnd, messg, wParam, lParam, FALSE);

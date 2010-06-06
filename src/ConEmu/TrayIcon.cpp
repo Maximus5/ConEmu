@@ -27,6 +27,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "header.h"
+#include "TrayIcon.h"
+#include "ConEmu.h"
 
 TrayIcon Icon;
 

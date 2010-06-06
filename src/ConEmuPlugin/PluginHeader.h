@@ -74,6 +74,8 @@ extern const CESERVER_REQ_CONINFO_HDR *gpConsoleInfo;
 extern DWORD gnSelfPID;
 extern BOOL gbIgnoreUpdateTabs;
 extern BOOL gbRequestUpdateTabs;
+extern BOOL gbClosingModalViewerEditor;
+extern CESERVER_REQ* gpTabs;
 
 typedef struct tag_PanelViewRegInfo {
 	BOOL bRegister;

@@ -51,7 +51,8 @@ private:
 	} VConTabs;
 
 private:
-	HWND mh_Tabbar, mh_Toolbar, mh_Rebar, mh_TabTip;
+	HWND mh_Tabbar, mh_Toolbar, mh_Rebar, mh_TabTip, mh_Balloon;
+	TOOLINFO tiBalloon; wchar_t ms_TabErrText[512];
 	HIMAGELIST mh_TabIcons; int mn_AdminIcon;
 	bool _active;
 	int _tabHeight;
@@ -77,6 +78,7 @@ private:
 	int GetItemCount();
 	void DeleteItem(int I);
 	void AddTab2VCon(VConTabs& vct);
+	void ShowTabError(LPCTSTR asInfo, int tabIndex = 0);
 	//void CheckTheming();
 
 protected:

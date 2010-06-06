@@ -69,6 +69,15 @@ inline bool operator==(const CharAttr& s1, const CharAttr& s2)
 #define FR_UCHARMAPGLYPH  0x02000000 // Блок символов в "Unicode CharMap"
 
 
+typedef struct tag_DetectedDialog {
+	int   Count;
+	DWORD AllFlags;
+	SMALL_RECT Rects[MAX_DETECTED_DIALOGS];
+	//bool bWasFrame[MAX_DETECTED_DIALOGS];
+	DWORD DlgFlags[MAX_DETECTED_DIALOGS];
+} DetectedDialogs;
+
+
 class CRgnDetect
 {
 public:
@@ -92,7 +101,10 @@ public:
 	// Sizes
 	int TextWidth();
 	int TextHeight();
-	
+
+	#ifdef _DEBUG
+	const DetectedDialogs *GetDetectedDialogsPtr();
+	#endif	
 	
 protected:
 	// Private methods
@@ -128,17 +140,18 @@ protected:
 	CONSOLE_SCREEN_BUFFER_INFO m_sbi;
 	bool   mb_BufferHeight;
 
-	DWORD   mn_AllFlags, mn_NextDlgId;
+	DWORD   /*mn_AllFlags,*/ mn_NextDlgId;
 	BOOL    mb_NeedPanelDetect;
 	SMALL_RECT mrc_LeftPanel, mrc_RightPanel;
 
 	int     mn_DetectCallCount;
-	struct {
-		int Count;
-		SMALL_RECT Rects[MAX_DETECTED_DIALOGS];
-		//bool bWasFrame[MAX_DETECTED_DIALOGS];
-		DWORD DlgFlags[MAX_DETECTED_DIALOGS];
-	} m_DetectedDialogs;
+	//struct {
+	//	int Count;
+	//	SMALL_RECT Rects[MAX_DETECTED_DIALOGS];
+	//	//bool bWasFrame[MAX_DETECTED_DIALOGS];
+	//	DWORD DlgFlags[MAX_DETECTED_DIALOGS];
+	//} 
+	DetectedDialogs m_DetectedDialogs;
 	
 protected:
 	// Используется для собственноручного формирования буферов

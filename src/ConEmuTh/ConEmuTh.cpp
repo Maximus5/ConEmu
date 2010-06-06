@@ -116,6 +116,10 @@ void OnMainThreadActived();
 void ReloadResourcesW();
 ConEmuThSynchroArg* gpLastSynchroArg = NULL;
 
+#ifdef _DEBUG
+MFileMapping<DetectedDialogs> *gpDbgDlg = NULL;
+#endif
+
 
 // minimal(?) FAR version 2.0 alpha build FAR_X_VER
 int WINAPI _export GetMinFarVersionW(void)
@@ -560,6 +564,12 @@ void ExitPlugin(void)
 	if (gszRootKey) {
 		free(gszRootKey); gszRootKey = NULL;
 	}
+
+#ifdef _DEBUG
+	if (gpDbgDlg) {
+		delete gpDbgDlg; gpDbgDlg = NULL;
+	}
+#endif
 }
 
 void   WINAPI _export ExitFARW(void)
@@ -1059,6 +1069,15 @@ void OnMainThreadActived()
 	gFarInfo.bFarPanelInfoFilled = gFarInfo.bFarLeftPanel = gFarInfo.bFarRightPanel = FALSE;
 	gpRgnDetect->PrepareTransparent(&gFarInfo, gcrCurColors);
 	gnRgnDetectFlags = gpRgnDetect->GetFlags();
+
+#ifdef _DEBUG
+	if (!gpDbgDlg) {
+		gpDbgDlg = new MFileMapping<DetectedDialogs>();
+		gpDbgDlg->InitName(CEPANELDLGMAPNAME, GetCurrentProcessId());
+		gpDbgDlg->Create();
+	}
+	gpDbgDlg->SetFrom(gpRgnDetect->GetDetectedDialogsPtr());	
+#endif
 
 	WARNING("Если панели скрыты (активен редактор/вьювер) - не пытаться считывать панели");
 

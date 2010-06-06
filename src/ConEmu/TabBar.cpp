@@ -34,6 +34,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <windows.h>
 #include <commctrl.h>
 #include "header.h"
+#include "TabBar.h"
+#include "Options.h"
+#include "ConEmu.h"
+#include "VirtualConsole.h"
 
 WARNING("!!! Запустили far, открыли edit, перешли в панель, открыли второй edit, ESC, ни одна вкладка не активна");
 // Более того, если есть еще одна консоль - активной станет первая вкладка следующей НЕАКТИВНОЙ консоли
@@ -79,6 +83,9 @@ WARNING("TB_GETIDEALSIZE - awailable on XP only, use insted TB_GETMAXSIZE");
 
 #define POST_UPDATE_TIMEOUT 2000
 
+#define FAILED_TABBAR_TIMERID 101
+#define FAILED_TABBAR_TIMEOUT 3000
+
 //typedef long (WINAPI* ThemeFunction_t)();
 
 TabBarClass::TabBarClass()
@@ -105,7 +112,7 @@ TabBarClass::TabBarClass()
 	mn_ThemeHeightDiff = 0;
 	mn_InUpdate = 0;
 	//mb_ThemingEnabled = FALSE;
-	mh_TabTip = NULL;
+	mh_TabTip = mh_Balloon = NULL; ms_TabErrText[0] = 0; memset(&tiBalloon,0,sizeof(tiBalloon));
 }
 
 //void TabBarClass::CheckTheming()
@@ -368,6 +375,8 @@ CVirtualConsole* TabBarClass::FarSendChangeTab(int tabIndex)
     DWORD wndIndex = 0;
     BOOL  bNeedActivate = FALSE, bChangeOk = FALSE;
 
+	ShowTabError(NULL);
+
     if (!GetVConFromTab(tabIndex, &pVCon, &wndIndex)) {
         if (mb_InKeySwitching) Update(); // показать реальное положение дел
         return NULL;
@@ -378,9 +387,14 @@ CVirtualConsole* TabBarClass::FarSendChangeTab(int tabIndex)
         
 
     bChangeOk = pVCon->RCon()->ActivateFarWindow(wndIndex);
+	if (!bChangeOk) {
+		// Всплыть тултип с руганью - не смогли активировать
+		ShowTabError(L"This tab can't be activated now!", tabIndex);
+	}
     
     // Чтобы лишнее не мелькало - активируем консоль 
     // ТОЛЬКО после смены таба (успешной или неудачной - неважно)
+	TODO("Не срабатывает. Новые данные из консоли получаются с задержкой и мелькает старое содержимое активируемой консоли");
     if (bNeedActivate) {
         if (!gConEmu.Activate(pVCon)) {
             if (mb_InKeySwitching) Update(); // показать реальное положение дел
@@ -505,6 +519,12 @@ LRESULT CALLBACK TabBarClass::TabProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARA
             SetFocus(ghWnd);
             return 0;
         }
+	case WM_TIMER:
+		if (wParam == FAILED_TABBAR_TIMERID) {
+			KillTimer(hwnd, wParam);
+			SendMessage(gConEmu.mp_TabBar->mh_Balloon, TTM_TRACKACTIVATE, FALSE, (LPARAM)&gConEmu.mp_TabBar->tiBalloon);
+			SendMessage(gConEmu.mp_TabBar->mh_TabTip, TTM_ACTIVATE, TRUE, 0);
+		};
     }
     return CallWindowProc(_defaultTabProc, hwnd, uMsg, wParam, lParam);
 }
@@ -1341,46 +1361,69 @@ HWND TabBarClass::CreateTabbar()
             WS_VISIBLE|WS_CHILD, 0,0,340,22, ghWnd, 0, 0, 0);
     if (!mh_TabbarP) return NULL;*/
 
-        RECT rcClient;
-        GetClientRect(ghWnd, &rcClient); 
-        DWORD nPlacement = TCS_SINGLELINE|WS_VISIBLE/*|TCS_BUTTONS*//*|TCS_TOOLTIPS*/;
-        mh_Tabbar = CreateWindow(WC_TABCONTROL, NULL, nPlacement | WS_CHILD | WS_CLIPSIBLINGS | TCS_FOCUSNEVER, 0, 0, 
-            rcClient.right, 0, mh_Rebar, NULL, g_hInstance, NULL);
-        if (mh_Tabbar == NULL)
-        { 
-            return NULL; 
-        }
+    RECT rcClient;
+    GetClientRect(ghWnd, &rcClient); 
+    DWORD nPlacement = TCS_SINGLELINE|WS_VISIBLE/*|TCS_BUTTONS*//*|TCS_TOOLTIPS*/;
+    mh_Tabbar = CreateWindow(WC_TABCONTROL, NULL, nPlacement | WS_CHILD | WS_CLIPSIBLINGS | TCS_FOCUSNEVER, 0, 0, 
+        rcClient.right, 0, mh_Rebar, NULL, g_hInstance, NULL);
+    if (mh_Tabbar == NULL)
+    { 
+        return NULL; 
+    }
 
-        #if !defined(__GNUC__)
-        #pragma warning (disable : 4312)
-        #endif
-        // Надо
-        _defaultTabProc = (WNDPROC)SetWindowLongPtr(mh_Tabbar, GWLP_WNDPROC, (LONG_PTR)TabProc);
-        
-        SendMessage(mh_Tabbar, TCM_SETIMAGELIST, 0, (LPARAM)mh_TabIcons);
+    #if !defined(__GNUC__)
+    #pragma warning (disable : 4312)
+    #endif
+    // Надо
+    _defaultTabProc = (WNDPROC)SetWindowLongPtr(mh_Tabbar, GWLP_WNDPROC, (LONG_PTR)TabProc);
+    
+    SendMessage(mh_Tabbar, TCM_SETIMAGELIST, 0, (LPARAM)mh_TabIcons);
 
-        if (!mh_TabTip || !IsWindow(mh_TabTip)) {
-            mh_TabTip = CreateWindowEx(WS_EX_TOPMOST, TOOLTIPS_CLASS, NULL,
-                                  WS_POPUP | TTS_ALWAYSTIP /*| TTS_BALLOON*/ | TTS_NOPREFIX,
-                                  CW_USEDEFAULT, CW_USEDEFAULT,
-                                  CW_USEDEFAULT, CW_USEDEFAULT,
-                                  mh_Tabbar, NULL, 
-                                  g_hInstance, NULL);
-            SetWindowPos(mh_TabTip, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE);
-            TabCtrl_SetToolTips ( mh_Tabbar, mh_TabTip );
-        }
-        HFONT hFont = CreateFont(gSet.nTabFontHeight, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, gSet.nTabFontCharSet, OUT_DEFAULT_PRECIS, 
-            CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_SWISS, gSet.sTabFontFace);
-        SendMessage(mh_Tabbar, WM_SETFONT, WPARAM (hFont), TRUE);
-        
+    if (!mh_TabTip || !IsWindow(mh_TabTip)) {
+        mh_TabTip = CreateWindowEx(WS_EX_TOPMOST, TOOLTIPS_CLASS, NULL,
+                              WS_POPUP | TTS_ALWAYSTIP /*| TTS_BALLOON*/ | TTS_NOPREFIX,
+                              CW_USEDEFAULT, CW_USEDEFAULT,
+                              CW_USEDEFAULT, CW_USEDEFAULT,
+                              mh_Tabbar, NULL, 
+                              g_hInstance, NULL);
+        SetWindowPos(mh_TabTip, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE);
+        TabCtrl_SetToolTips ( mh_Tabbar, mh_TabTip );
+    }
+    HFONT hFont = CreateFont(gSet.nTabFontHeight, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, gSet.nTabFontCharSet, OUT_DEFAULT_PRECIS, 
+        CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_SWISS, gSet.sTabFontFace);
+    SendMessage(mh_Tabbar, WM_SETFONT, WPARAM (hFont), TRUE);
+    
+	if (!mh_Balloon || !IsWindow(mh_Balloon)) {
+		mh_Balloon = CreateWindowEx(WS_EX_TOPMOST, TOOLTIPS_CLASS, NULL,
+			WS_POPUP | TTS_ALWAYSTIP | TTS_BALLOON | TTS_NOPREFIX,
+			CW_USEDEFAULT, CW_USEDEFAULT,
+			CW_USEDEFAULT, CW_USEDEFAULT,
+			mh_Tabbar, NULL, 
+			g_hInstance, NULL);
+		SetWindowPos(mh_Balloon, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE);
+		// Set up tool information.
+		// In this case, the "tool" is the entire parent window.
+		tiBalloon.cbSize = 44; // был sizeof(TOOLINFO);
+		tiBalloon.uFlags = TTF_IDISHWND | TTF_TRACK | TTF_ABSOLUTE;
+		tiBalloon.hwnd = mh_Tabbar;
+		tiBalloon.hinst = g_hInstance;
+		static wchar_t szAsterisk[] = L"*"; // eliminate GCC warning
+		tiBalloon.lpszText = szAsterisk;
+		tiBalloon.uId = (UINT_PTR)TTF_IDISHWND;
+		GetClientRect (mh_Tabbar, &tiBalloon.rect);
+		// Associate the ToolTip with the tool window.
+		SendMessage(mh_Balloon, TTM_ADDTOOL, 0, (LPARAM) (LPTOOLINFO) &tiBalloon);
+		// Allow multiline
+		SendMessage(mh_Balloon, TTM_SETMAXTIPWIDTH, 0, (LPARAM)300);
+	}
 
-        // Добавляет закладку, или меняет (при необходимости) заголовок существующей
-        //AddTab(gConEmu.isFar() ? gSet.szTabPanels : gSet.pszTabConsole, 0);
-        AddTab(gConEmu.GetTitle(), 0, false);
+    // Добавляет закладку, или меняет (при необходимости) заголовок существующей
+    //AddTab(gConEmu.isFar() ? gSet.szTabPanels : gSet.pszTabConsole, 0);
+    AddTab(gConEmu.GetTitle(), 0, false);
 
-		GetClientRect(ghWnd, &rcClient); 
-		TabCtrl_AdjustRect(mh_Tabbar, FALSE, &rcClient);
-		_tabHeight = rcClient.top - mn_ThemeHeightDiff;
+	GetClientRect(ghWnd, &rcClient); 
+	TabCtrl_AdjustRect(mh_Tabbar, FALSE, &rcClient);
+	_tabHeight = rcClient.top - mn_ThemeHeightDiff;
 
 
 
@@ -1740,9 +1783,8 @@ void TabBarClass::SwitchCommit()
     
     int nCurSel = GetCurSel();
     
-    FarSendChangeTab(nCurSel);
-    
-    mb_InKeySwitching = FALSE;
+	mb_InKeySwitching = FALSE;
+    CVirtualConsole* pVCon = FarSendChangeTab(nCurSel);
 }
 
 void TabBarClass::SwitchRollback()
@@ -1855,4 +1897,29 @@ BOOL TabBarClass::OnKeyboard(UINT messg, WPARAM wParam, LPARAM lParam)
 void TabBarClass::SetRedraw(BOOL abEnableRedraw)
 {
 	mb_DisableRedraw = !abEnableRedraw;
+}
+
+void TabBarClass::ShowTabError(LPCTSTR asInfo, int tabIndex)
+{
+	if (!asInfo)
+		ms_TabErrText[0] = 0;
+	else if (asInfo != ms_TabErrText)
+		lstrcpyn(ms_TabErrText, asInfo, ARRAYSIZE(ms_TabErrText));
+
+	tiBalloon.lpszText = ms_TabErrText;
+	if (ms_TabErrText[0]) {
+		SendMessage(mh_TabTip, TTM_ACTIVATE, FALSE, 0);
+		SendMessage(mh_Balloon, TTM_UPDATETIPTEXT, 0, (LPARAM)&tiBalloon);
+		//RECT rcControl; GetWindowRect(GetDlgItem(hMain, tFontFace), &rcControl);
+		RECT rcTab = {0}; TabCtrl_GetItemRect(mh_Tabbar, tabIndex, &rcTab);
+		MapWindowPoints(mh_Tabbar, NULL, (LPPOINT)&rcTab, 2);
+		//int ptx = 0; //rcControl.right - 10;
+		//int pty = 0; //(rcControl.top + rcControl.bottom) / 2;
+		SendMessage(mh_Balloon, TTM_TRACKPOSITION, 0, MAKELONG(rcTab.left,rcTab.bottom));
+		SendMessage(mh_Balloon, TTM_TRACKACTIVATE, TRUE, (LPARAM)&tiBalloon);
+		SetTimer(mh_Tabbar, FAILED_TABBAR_TIMERID, FAILED_TABBAR_TIMEOUT, 0);
+	} else {
+		SendMessage(mh_Balloon, TTM_TRACKACTIVATE, FALSE, (LPARAM)&tiBalloon);
+		SendMessage(mh_TabTip, TTM_ACTIVATE, TRUE, 0);
+	}
 }
