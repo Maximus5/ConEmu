@@ -312,11 +312,13 @@ clean:
 	@move $(DLLFULLNAME) ..\..$(RELEASEDIR)\$(NAME).dll
 	@move $(PDBNAME) ..\..$(RELEASEDIR)\$(NAME).pdb
 	@move $(MAP) ..\..$(RELEASEDIR)\$(NAME).map
-	@echo final cleaning
-	@del /Q $(OBJDIR)\*.*
-	@rd $(OBJDIR)
-	@del /Q $(OUTDIR)$(ADDOUTDIR)\*.*
-	@rd $(OUTDIR)$(ADDOUTDIR)
+
+#	@echo final cleaning
+#	@del /Q $(OBJDIR)\*.*
+#	@rd $(OBJDIR)
+#	@del /Q $(OUTDIR)$(ADDOUTDIR)\*.*
+#	@rd $(OUTDIR)$(ADDOUTDIR)
+
 !else
 .PHONY: clean
 clean:

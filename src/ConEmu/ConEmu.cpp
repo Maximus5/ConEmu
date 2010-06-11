@@ -531,6 +531,7 @@ BOOL CConEmuMain::CreateMainWindow()
 	*pszSlash = 0;
 	lstrcpy(ceInfo.sConEmuDir, ms_ConEmuExe); // SetEnvironmentVariable(L"ConEmuDir", ceInfo.sConEmuDir);
 	*pszSlash = L'\\';
+	lstrcpy(ceInfo.sConEmuArgs, ms_ConEmuArgs);
 	// sConEmuArgs уже заполнен в PrepareCommandLine
 	m_GuiInfoMapping.InitName(CEGUIINFOMAPNAME, GetCurrentProcessId());
 	if (m_GuiInfoMapping.Create()) {
@@ -2021,8 +2022,10 @@ wrap:
 	dwStyle = GetWindowLongPtr(ghWnd, GWL_STYLE);
 	#endif
 
-	SetCursor(LoadCursor(NULL,IDC_ARROW));
     change2WindowMode = -1;
+    TODO("Что-то курсор иногда остается APPSTARTING...");
+	SetCursor(LoadCursor(NULL,IDC_ARROW));
+    //PostMessage(ghWnd, WM_SETCURSOR, -1, -1);
     return lbRc;
 }
 
@@ -2673,7 +2676,7 @@ BOOL CConEmuMain::AttachRequested(HWND ahConWnd, CESERVER_REQ_STARTSTOP pStartSt
     }
 
     // Пытаемся подцепить консоль
-    if (!pCon->RCon()->AttachConemuC(ahConWnd, pStartStop.dwPID, pStartStop.sbi, pRet))
+    if (!pCon->RCon()->AttachConemuC(ahConWnd, pStartStop.dwPID, pStartStop, pRet))
         return FALSE;
 
     // OK
@@ -6763,8 +6766,11 @@ LRESULT CConEmuMain::OnMouse_RBtnDown(HWND hWnd, UINT messg, WPARAM wParam, LPAR
 	}
 
 	//if (isFilePanel()) // Maximus5
-	if (!isConSelectMode() && isFilePanel() && mp_VActive &&
-		mp_VActive->RCon()->CoordInPanel(mouse.RClkCon))
+	bool bSelect = false, bPanel = false, bActive = false, bCoord = false;
+	if (!(bSelect = isConSelectMode())
+		&& (bPanel = isFilePanel())
+		&& (bActive = (mp_VActive != NULL))
+		&& (bCoord = mp_VActive->RCon()->CoordInPanel(mouse.RClkCon)))
 	{
 		if (gSet.isDragEnabled & DRAG_R_ALLOWED) {
 			//if (!gSet.nRDragKey || isPressed(gSet.nRDragKey)) {
@@ -6772,9 +6778,11 @@ LRESULT CConEmuMain::OnMouse_RBtnDown(HWND hWnd, UINT messg, WPARAM wParam, LPAR
 			// то есть нажат SHIFT(==nRDragKey), а CTRL & ALT - НЕ нажаты
 			if (gSet.isModifierPressed(gSet.nRDragKey)) {
 				mouse.state = DRAG_R_ALLOWED;
+				if (gSet.isAdvLogging) mp_VActive->RCon()->LogString("RightClick ignored of gSet.nRDragKey pressed");
 				return 0;
 			}
 		}
+		
 		// Если ничего лишнего не нажато!
 		if (gSet.isRClickSendKey && !(wParam&(MK_CONTROL|MK_LBUTTON|MK_MBUTTON|MK_SHIFT|MK_XBUTTON1|MK_XBUTTON2)))
 		{
@@ -6788,7 +6796,22 @@ LRESULT CConEmuMain::OnMouse_RBtnDown(HWND hWnd, UINT messg, WPARAM wParam, LPAR
 
 			mouse.RClkTick = TimeGetTime(); //GetTickCount();
 			return 0;
+		} else {
+			if (gSet.isAdvLogging)
+				mp_VActive->RCon()->LogString(
+					!gSet.isRClickSendKey ? "RightClick ignored of !gSet.isRClickSendKey" :
+					"RightClick ignored of wParam&(MK_CONTROL|MK_LBUTTON|MK_MBUTTON|MK_SHIFT|MK_XBUTTON1|MK_XBUTTON2)"
+				);
 		}
+	} else {
+		if (gSet.isAdvLogging)
+			mp_VActive->RCon()->LogString(
+				bSelect ? "RightClick ignored of isConSelectMode" :
+				!bPanel ? "RightClick ignored of NOT isFilePanel" :
+				!bActive ? "RightClick ignored of NOT isFilePanel" :
+				!bCoord ? "RightClick ignored of NOT isFilePanel" :
+				"RightClick ignored, unknown cause"
+			);
 	}
 
 	return TRUE; // переслать в консоль
@@ -6843,7 +6866,10 @@ LRESULT CConEmuMain::OnMouse_RBtnUp(HWND hWnd, UINT messg, WPARAM wParam, LPARAM
 					//    PostMacro(gSet.sRClickMacro);
 					//} else {
 
-					COORD crMouse = mp_VActive->ClientToConsole(mouse.RClkDC.X, mouse.RClkDC.Y);
+					COORD crMouse = mp_VActive->RCon()->ScreenToBuffer(
+							mp_VActive->ClientToConsole(mouse.RClkDC.X, mouse.RClkDC.Y)
+						);
+					
 
 					CConEmuPipe pipe(GetFarPID(), CONEMUREADYTIMEOUT);
 					if (pipe.Init(_T("CConEmuMain::EMenu"), TRUE))
@@ -6867,6 +6893,19 @@ LRESULT CConEmuMain::OnMouse_RBtnUp(HWND hWnd, UINT messg, WPARAM wParam, LPARAM
 
 						if (!pipe.Execute(CMD_EMENU, pcbData, nSize)) {
 							mp_VActive->RCon()->LogString("RightClicked, but pipe.Execute(CMD_EMENU) failed");
+						} else {
+							// OK
+							if (gSet.isAdvLogging) {
+								char szInfo[255] = {0};
+								lstrcpyA(szInfo, "RightClicked, pipe.Execute(CMD_EMENU) OK");
+								if (gSet.sRClickMacro && *gSet.sRClickMacro) {
+									lstrcatA(szInfo, ", Macro: "); int nLen = lstrlenA(szInfo);
+									WideCharToMultiByte(CP_ACP,0, gSet.sRClickMacro,-1, szInfo+nLen, countof(szInfo)-nLen-1, 0,0);
+								} else {
+									lstrcatA(szInfo, ", NoMacro");
+								}
+								mp_VActive->RCon()->LogString(szInfo);
+							}
 						}
 						DebugStep(NULL);
 

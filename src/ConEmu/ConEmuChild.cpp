@@ -53,6 +53,7 @@ CConEmuChild::CConEmuChild()
 	mb_IsPendingRedraw = FALSE;
 	mb_RedrawPosted = FALSE;
 	memset(&Caret, 0, sizeof(Caret));
+	mb_DisableRedraw = FALSE;
 }
 
 CConEmuChild::~CConEmuChild()

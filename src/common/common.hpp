@@ -245,7 +245,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define CECMD_SETWINDOWRGN  33 // CESERVER_REQ_SETWINDOWRGN.
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    43
+#define CESERVER_REQ_VER    44
 
 #define PIPEBUFSIZE 4096
 #define DATAPIPEBUFSIZE 40000
@@ -431,6 +431,8 @@ typedef struct tag_ConEmuInfo {
 	HWND2    hGuiWnd; // основное (корневое) окно ConEmu
 	wchar_t  sConEmuDir[MAX_PATH+1];
 	wchar_t  sConEmuArgs[MAX_PATH*2];
+	DWORD    bUseInjects; // 0-off, 1-on. Далее могут быть доп.флаги (битмаск)? chcp, Hook HKCU\FAR[2] & HKLM\FAR and translate them to hive, ...
+	wchar_t  sInjectsDir[MAX_PATH+1]; // path to "conemu.dll" & "conemu.x64.dll"
 } ConEmuInfo;
 
 
@@ -550,6 +552,11 @@ typedef struct tag_CEFAR_SHORT_PANEL_INFO {
 	DWORD Flags;
 } CEFAR_SHORT_PANEL_INFO;
 
+typedef struct tag_CEFAR_PANELTABS {
+	int   SeparateTabs; // если -1 - то умолчание
+	int   ButtonColor;  // если -1 - то умолчание
+} CEFAR_PANELTABS;
+
 typedef struct tag_CEFAR_INFO {
 	DWORD cbSize;
 	DWORD nFarInfoIdx;
@@ -567,6 +574,7 @@ typedef struct tag_CEFAR_INFO {
 	CEFAR_SHORT_PANEL_INFO FarLeftPanel, FarRightPanel; // FCTL_GETPANELSHORTINFO,...
 	DWORD nFarConsoleMode;
 	BOOL bBufferSupport; // FAR2 с ключом /w ?
+	CEFAR_PANELTABS PanelTabs; // Настройки плагина PanelTabs
 	//DWORD nFarReadIdx;    // index, +1, когда фар в последний раз позвал (Read|Peek)ConsoleInput или GetConsoleInputCount
 	// Далее идут строковые ресурсы, на которые в некоторых случаях ориентируется GUI
 	wchar_t sLngEdit[64]; // "edit"
@@ -590,6 +598,10 @@ typedef struct tag_CESERVER_REQ_CONINFO_HDR {
 	DWORD nProtocolVersion; // == CESERVER_REQ_VER
 	//
 	DWORD nFarPID; // PID последнего активного фара
+	//
+	DWORD    bUseInjects; // 0-off, 1-on. Далее могут быть доп.флаги (битмаск)? chcp, Hook HKCU\FAR[2] & HKLM\FAR and translate them to hive, ...
+	wchar_t  sConEmuDir[MAX_PATH+1];  // здесь будет лежать собственно hive
+	wchar_t  sInjectsDir[MAX_PATH+1]; // path to "conemu.dll" & "conemu.x64.dll"
 } CESERVER_REQ_CONINFO_HDR;
 
 typedef struct tag_CESERVER_REQ_CONINFO_INFO {

@@ -374,7 +374,7 @@ bool CVirtualConsole::PointersAlloc()
     
     AllocArray(ConCharX, DWORD, nWidthHeight);
     
-    AllocArray(ConCharDX, DWORD, nMaxTextWidth);
+    AllocArray(ConCharDX, DWORD, nMaxTextWidth); // задел для TEXTPARTS
     
     AllocArray(tmpOem, char, nMaxTextWidth);
     
@@ -395,16 +395,18 @@ bool CVirtualConsole::PointersAlloc()
 void CVirtualConsole::PointersZero()
 {
 	uint nWidthHeight = (nMaxTextWidth * nMaxTextHeight);
+
+	//100607: Сбрасывать ВСЕ не будем. Эти массивы могут использоваться и в других нитях!
 	
     HEAPVAL;
-    ZeroMemory(mpsz_ConChar, nWidthHeight*sizeof(*mpsz_ConChar));
+    //ZeroMemory(mpsz_ConChar, nWidthHeight*sizeof(*mpsz_ConChar));
     ZeroMemory(mpsz_ConCharSave, nWidthHeight*sizeof(*mpsz_ConChar));
     HEAPVAL;
-    ZeroMemory(mpn_ConAttrEx, nWidthHeight*sizeof(*mpn_ConAttrEx));
+    //ZeroMemory(mpn_ConAttrEx, nWidthHeight*sizeof(*mpn_ConAttrEx));
     ZeroMemory(mpn_ConAttrExSave, nWidthHeight*sizeof(*mpn_ConAttrExSave));
     HEAPVAL;
-    ZeroMemory(ConCharX, nWidthHeight*sizeof(*ConCharX));
-    ZeroMemory(ConCharDX, nMaxTextWidth*sizeof(*ConCharDX));
+    //ZeroMemory(ConCharX, nWidthHeight*sizeof(*ConCharX));
+    ZeroMemory(ConCharDX, nMaxTextWidth*sizeof(*ConCharDX)); // задел для TEXTPARTS
     HEAPVAL;
     ZeroMemory(tmpOem, nMaxTextWidth*sizeof(*tmpOem));
     HEAPVAL;
@@ -1958,7 +1960,8 @@ void CVirtualConsole::UpdateText()
 
                     if (gbNoDblBuffer) GdiFlush();
                     // Если не отрисовка фона картинкой
-                    if (! (drawImage && ISBGIMGCOLOR(attr.nBackIdx))) {
+                    if (! (drawImage && ISBGIMGCOLOR(attr.nBackIdx)))
+					{
 
 						//BYTE PrevAttrFore = attrFore, PrevAttrBack = attrBack;
 						const CharAttr PrevAttr = ConAttrLine[j-1];
@@ -2059,6 +2062,7 @@ void CVirtualConsole::UpdateText()
                 }
 
                 HEAPVAL
+				BOOL lbImgDrawn = FALSE;
                 if (! (drawImage && ISBGIMGCOLOR(attr.nBackIdx))) {
                     //SetBkColor(hDC, pColors[attrBack]);
                     SetBkColor(hDC, attr.crBackColor);
@@ -2070,6 +2074,7 @@ void CVirtualConsole::UpdateText()
 					}
                 } else if (drawImage) {
                     BlitPictureTo(rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top);
+					lbImgDrawn = TRUE;
                 }
 
                 if (nShift>0) {
@@ -2080,9 +2085,17 @@ void CVirtualConsole::UpdateText()
                 }
 
                 if (gbNoDblBuffer) GdiFlush();
-				if (isSpace || (isProgress && bEnhanceGraphics)) {
+				if (/*isSpace ||*/ (isProgress && bEnhanceGraphics)) {
 					HBRUSH hbr = PartBrush(c, attr.crBackColor, attr.crForeColor);
 					FillRect(hDC, &rect, hbr);
+				} else if (/*gSet.isProportional &&*/ isSpace/*c == ' '*/) {
+					//int nCnt = ((rect.right - rect.left) / CharWidth(L' '))+1;
+					//Ext Text Out(hDC, rect.left, rect.top, nFlags, &rect, Spaces, nCnt, 0);
+					TODO("Проверить, что будет если картинка МЕНЬШЕ по ширине чем область отрисовки");
+					if (!lbImgDrawn) {
+						HBRUSH hbr = PartBrush(L' ', attr.crBackColor, attr.crForeColor);
+						FillRect(hDC, &rect, hbr);
+					}
 				} else {
 					// Это режим Force monospace
 					if (nFontCharSet == OEM_CHARSET && !isUnicode) {
@@ -2894,8 +2907,17 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
 		#ifdef DEBUGDRAW_DIALOGS
 		if (GetKeyState(DEBUGDRAW_DIALOGS) & 1) {
 			// Прямоугольники найденных диалогов
-			SMALL_RECT rcFound[MAX_DETECTED_DIALOGS]; DWORD nDlgFlags[MAX_DETECTED_DIALOGS];
-			int nFound = mp_RCon->GetDetectedDialogs(MAX_DETECTED_DIALOGS, rcFound, nDlgFlags);
+			//SMALL_RECT rcFound[MAX_DETECTED_DIALOGS]; DWORD nDlgFlags[MAX_DETECTED_DIALOGS];
+			//int nFound = mp_RCon->GetDetectedDialogs(MAX_DETECTED_DIALOGS, rcFound, nDlgFlags);
+			MFileMapping<DetectedDialogs> pvMap;
+			const DetectedDialogs* pDlg = NULL;
+			// Если включены PanelView - попробовать взять диалоги у него
+			if (m_LeftPanelView.bRegister || m_RightPanelView.bRegister) {
+				pvMap.InitName(CEPANELDLGMAPNAME, mp_RCon->GetFarPID(TRUE));
+				pDlg = pvMap.Open();
+			}
+			if (!pDlg) pDlg = mp_RCon->GetDetector()->GetDetectedDialogsPtr();
+			// Поехали
 			HPEN hFrame = CreatePen(PS_SOLID, 1, RGB(255,0,255));
 			HPEN hPanel = CreatePen(PS_SOLID, 2, RGB(255,255,0));
 			HPEN hQSearch = CreatePen(PS_SOLID, 1, RGB(255,255,0));
@@ -2909,9 +2931,9 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
 			HFONT hOldFont = (HFONT)SelectObject(hPaintDc, hSmall);
 			SetTextColor(hPaintDc, 0xFFFFFF);
 			SetBkColor(hPaintDc, 0);
-			for (int i = 0; i < nFound; i++) {
+			for (int i = 0; i < pDlg->Count; i++) {
 				int n = 1;
-				DWORD nFlags = nDlgFlags[i];
+				DWORD nFlags = pDlg->DlgFlags[i];
 				if (i == (DEBUGDRAW_DIALOGS-1))
 					SelectObject(hPaintDc, hRed);
 				else if ((nFlags & FR_ACTIVEMENUBAR) == FR_ACTIVEMENUBAR)
@@ -2930,12 +2952,12 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
 				}
 				//
 				POINT pt[2];
-				pt[0] = ConsoleToClient(rcFound[i].Left, rcFound[i].Top);
-				pt[1] = ConsoleToClient(rcFound[i].Right+1, rcFound[i].Bottom+1);
+				pt[0] = ConsoleToClient(pDlg->Rects[i].Left, pDlg->Rects[i].Top);
+				pt[1] = ConsoleToClient(pDlg->Rects[i].Right+1, pDlg->Rects[i].Bottom+1);
 				MapWindowPoints(ghWndDC, ghWnd, pt, 2);
 				
 				Rectangle(hPaintDc, pt[0].x+n, pt[0].y+n, pt[1].x-n, pt[1].y-n);
-				wchar_t szCoord[32]; wsprintf(szCoord, L"%ix%i", rcFound[i].Left, rcFound[i].Top);
+				wchar_t szCoord[32]; wsprintf(szCoord, L"%ix%i", pDlg->Rects[i].Left, pDlg->Rects[i].Top);
 				TextOut(hPaintDc, pt[0].x+1, pt[0].y+1, szCoord, wcslen(szCoord));
 			}
 			SelectObject(hPaintDc, hOldBr);
@@ -3060,7 +3082,19 @@ POINT CVirtualConsole::ConsoleToClient(LONG x, LONG y)
 	if (x>0) {
 		if (ConCharX && y >= 0 && y < (int)TextHeight && x < (int)TextWidth) {
 			pt.x = ConCharX[y*TextWidth + x-1];
-			_ASSERTE(pt.x || x==0);
+			if (x && !pt.x) {
+				TODO("При вызове не из основной нити - ConCharX может быть обнулен");
+				//2010-06-07
+				// 	CRealConsole::RConServerThread -->
+				//  CRealConsole::ServerThreadCommand -->
+				//  CVirtualConsole::RegisterPanelView -->
+				//  CVirtualConsole::UpdatePanelView(int abLeftPanel=1, int abOnRegister=1) -->
+				//  CVirtualConsole::UpdatePanelRgn(int abLeftPanel=1, int abTestOnly=0, int abOnRegister=1) -->
+				//  и вот тут она обломалась. ConCharX оказался обнулен?
+				Sleep(1);
+				pt.x = ConCharX[y*TextWidth + x-1];
+				_ASSERTE(pt.x || x==0);
+			}
 		} else {
 			pt.x = x*nFontWidth;
 		}
@@ -3629,6 +3663,8 @@ BOOL CVirtualConsole::UpdatePanelRgn(BOOL abLeftPanel, BOOL abTestOnly, BOOL abO
 					//}
 				} else
 				if (lbChanged) {
+					// А вот тут уже важно точное попадание в ячейки, поэтому через функцию, а не примерно...
+					MSectionLock SCON; SCON.Lock(&csCON);
 					POINT ptShift = ConsoleToClient(pp->WorkRect.left, pp->WorkRect.top);
 					POINT pt[2];
 					RECT  rc[MAX_DETECTED_DIALOGS];
@@ -3770,9 +3806,15 @@ void CVirtualConsole::PolishPanelViews()
 
 		/* Так, панель видима, нужно "поправить" заголовки и разделитель перед статусом */
 		RECT rc = pp->PanelRect;
-		if (rc.right > (LONG)TextWidth || rc.bottom > (LONG)TextHeight) {
-			_ASSERTE(rc.right<=(LONG)TextWidth && rc.bottom<=(LONG)TextHeight);
-			continue;
+		if (rc.right >= (LONG)TextWidth || rc.bottom >= (LONG)TextHeight) {
+			if (rc.left >= (LONG)TextWidth || rc.top >= (LONG)TextHeight) {
+				_ASSERTE(rc.right<(LONG)TextWidth && rc.bottom<(LONG)TextHeight);
+				continue;
+			}
+			if (pp->PanelRect.right >= (LONG)TextWidth) pp->PanelRect.right = (LONG)TextWidth-1;
+			if (pp->PanelRect.bottom >= (LONG)TextHeight) pp->PanelRect.bottom = (LONG)TextHeight-1;
+			MBoxAssert(rc.right<(LONG)TextWidth && rc.bottom<(LONG)TextHeight);
+			rc = pp->PanelRect;
 		}
 
 		// Цвета фара

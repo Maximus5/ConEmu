@@ -141,7 +141,9 @@ int CDragDropData::RetrieveDragFromInfo(BOOL abClickNeed, COORD crMouseDC, wchar
 			COORD crMouse;
 		} DragArg;
 		DragArg.bClickNeed = abClickNeed;
-		DragArg.crMouse = gConEmu.ActiveCon()->ClientToConsole(crMouseDC.X, crMouseDC.Y);
+		DragArg.crMouse = gConEmu.ActiveCon()->RCon()->ScreenToBuffer(
+				gConEmu.ActiveCon()->ClientToConsole(crMouseDC.X, crMouseDC.Y)
+			);
 
 		if (pipe.Execute(CMD_DRAGFROM, &DragArg, sizeof(DragArg)))
 		{

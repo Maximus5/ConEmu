@@ -198,6 +198,8 @@ void CDragDrop::Drag(BOOL abClickNeed, COORD crMouseDC)
 	//gConEmu.mouse.state |= (gConEmu.mouse.state & DRAG_R_ALLOWED) ? DRAG_R_STARTED : DRAG_L_STARTED;
 
 	MCHKHEAP
+
+	//crMouseDC = gConEmu.ActiveCon()->RCon()->ScreenToBuffer(crMouseDC);
 	
 	//if (m_pfpi) {free(m_pfpi); m_pfpi=NULL;}
 

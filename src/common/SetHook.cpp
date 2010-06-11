@@ -38,6 +38,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Tlhelp32.h>
 #include "SetHook.h"
 
+#include <WinInet.h>
+#pragma comment(lib, "wininet.lib")
+
 #define DebugString(x) // OutputDebugString(x)
 
 static HMODULE hOurModule = NULL; // Хэндл нашей dll'ки (здесь хуки не ставятся)
@@ -53,6 +56,8 @@ extern DWORD gdwServerPID;
 static const wchar_t kernel32[] = L"kernel32.dll";
 static const wchar_t user32[]   = L"user32.dll";
 static const wchar_t shell32[]  = L"shell32.dll";
+
+static BOOL gbTemporaryDisabled = FALSE;
 
 // Forward declarations of the hooks
 static HMODULE WINAPI OnLoadLibraryW( const WCHAR* lpFileName );
@@ -928,6 +933,9 @@ static HMODULE WINAPI OnLoadLibraryA( const char* lpFileName )
 
     HMODULE module = F(LoadLibraryA)( lpFileName );
     
+	if (gbTemporaryDisabled)
+		return module;
+
     PrepareNewModule ( module );
     
     if (ph && ph->PostCallBack) {
@@ -946,6 +954,9 @@ static HMODULE WINAPI OnLoadLibraryW( const wchar_t* lpFileName )
 
 	HMODULE module = F(LoadLibraryW)( lpFileName );
     
+	if (gbTemporaryDisabled)
+		return module;
+
     PrepareNewModule ( module );
     
     if (ph && ph->PostCallBack) {
@@ -964,6 +975,9 @@ static HMODULE WINAPI OnLoadLibraryExA( const char* lpFileName, HANDLE hFile, DW
 
 	HMODULE module = F(LoadLibraryExA)( lpFileName, hFile, dwFlags );
     
+	if (gbTemporaryDisabled)
+		return module;
+
     PrepareNewModule ( module );
     
     if (ph && ph->PostCallBack) {
@@ -982,6 +996,9 @@ static HMODULE WINAPI OnLoadLibraryExW( const wchar_t* lpFileName, HANDLE hFile,
 
     HMODULE module = F(LoadLibraryExW)( lpFileName, hFile, dwFlags );
     
+	if (gbTemporaryDisabled)
+		return module;
+
     PrepareNewModule ( module );
     
     if (ph && ph->PostCallBack) {
@@ -1000,7 +1017,10 @@ static FARPROC WINAPI OnGetProcAddress(HMODULE hModule, LPCSTR lpProcName)
 	FARPROC lpfn = NULL;
 
 	
-	if (((DWORD_PTR)lpProcName) <= 0xFFFF) {
+	if (gbTemporaryDisabled) {
+		TODO("!!!");
+
+	} if (((DWORD_PTR)lpProcName) <= 0xFFFF) {
 		TODO("!!! Обрабатывать и ORDINAL values !!!");
 
 	} else {
@@ -1557,5 +1577,70 @@ static BOOL WINAPI OnWriteConsoleOutputW(HANDLE hConsoleOutput,const CHAR_INFO *
 		ph->PostCallBack(&args);
 	}
 
+	return lbRc;
+}
+
+
+
+// WinInet.dll
+typedef BOOL (WINAPI* OnHttpSendRequestA_t)(LPVOID hRequest, LPCSTR lpszHeaders, DWORD dwHeadersLength, LPVOID lpOptional, DWORD dwOptionalLength);
+typedef BOOL (WINAPI* OnHttpSendRequestW_t)(LPVOID hRequest, LPCWSTR lpszHeaders, DWORD dwHeadersLength, LPVOID lpOptional, DWORD dwOptionalLength);
+// смысла нет - __try не помогает
+//static BOOL OnHttpSendRequestA_SEH(OnHttpSendRequestA_t f, LPVOID hRequest, LPCSTR lpszHeaders, DWORD dwHeadersLength, LPVOID lpOptional, DWORD dwOptionalLength, BOOL* pbRc)
+//{
+//	BOOL lbOk = FALSE;
+//	SAFETRY {
+//		*pbRc = f(hRequest, lpszHeaders, dwHeadersLength, lpOptional, dwOptionalLength);
+//		lbOk = TRUE;
+//	} SAFECATCH {
+//		lbOk = FALSE;
+//	}
+//	return lbOk;
+//}
+//static BOOL OnHttpSendRequestW_SEH(OnHttpSendRequestW_t f, LPVOID hRequest, LPCWSTR lpszHeaders, DWORD dwHeadersLength, LPVOID lpOptional, DWORD dwOptionalLength, BOOL* pbRc)
+//{
+//	BOOL lbOk = FALSE;
+//	SAFETRY {
+//		*pbRc = f(hRequest, lpszHeaders, dwHeadersLength, lpOptional, dwOptionalLength);
+//		lbOk = TRUE;
+//	} SAFECATCH {
+//		lbOk = FALSE;
+//	}
+//	return lbOk;
+//}
+BOOL WINAPI OnHttpSendRequestA(LPVOID hRequest, LPCSTR lpszHeaders, DWORD dwHeadersLength, LPVOID lpOptional, DWORD dwOptionalLength)
+{
+	//MessageBoxW(NULL, L"HttpSendRequestA (1)", L"ConEmu plugin", MB_SETFOREGROUND|MB_SYSTEMMODAL|MB_ICONEXCLAMATION);
+	ORIGINALFAST(HttpSendRequestA);
+	
+	BOOL lbRc;
+	
+	gbTemporaryDisabled = TRUE;
+	//MessageBoxW(NULL, L"HttpSendRequestA (2)", L"ConEmu plugin", MB_SETFOREGROUND|MB_SYSTEMMODAL|MB_ICONEXCLAMATION);
+	lbRc = F(HttpSendRequestA)(hRequest, lpszHeaders, dwHeadersLength, lpOptional, dwOptionalLength);
+	//if (!OnHttpSendRequestA_SEH(F(HttpSendRequestA), hRequest, lpszHeaders, dwHeadersLength, lpOptional, dwOptionalLength)) {
+	//	MessageBoxW(NULL, L"Exception in HttpSendRequestA", L"ConEmu plugin", MB_SETFOREGROUND|MB_SYSTEMMODAL|MB_ICONSTOP);
+	//}
+	gbTemporaryDisabled = FALSE;
+	//MessageBoxW(NULL, L"HttpSendRequestA (3)", L"ConEmu plugin", MB_SETFOREGROUND|MB_SYSTEMMODAL|MB_ICONEXCLAMATION);
+	
+	return lbRc;
+}
+BOOL WINAPI OnHttpSendRequestW(LPVOID hRequest, LPCWSTR lpszHeaders, DWORD dwHeadersLength, LPVOID lpOptional, DWORD dwOptionalLength)
+{
+	//MessageBoxW(NULL, L"HttpSendRequestW (1)", L"ConEmu plugin", MB_SETFOREGROUND|MB_SYSTEMMODAL|MB_ICONEXCLAMATION);
+	ORIGINALFAST(HttpSendRequestW);
+	
+	BOOL lbRc;
+	
+	gbTemporaryDisabled = TRUE;
+	//MessageBoxW(NULL, L"HttpSendRequestW (2)", L"ConEmu plugin", MB_SETFOREGROUND|MB_SYSTEMMODAL|MB_ICONEXCLAMATION);
+	lbRc = F(HttpSendRequestW)(hRequest, lpszHeaders, dwHeadersLength, lpOptional, dwOptionalLength);
+	//if (!OnHttpSendRequestW_SEH(F(HttpSendRequestW), hRequest, lpszHeaders, dwHeadersLength, lpOptional, dwOptionalLength, &lbRc)) {
+	//	MessageBoxW(NULL, L"Exception in HttpSendRequestW", L"ConEmu plugin", MB_SETFOREGROUND|MB_SYSTEMMODAL|MB_ICONSTOP);
+	//}
+	gbTemporaryDisabled = FALSE;
+	//MessageBoxW(NULL, L"HttpSendRequestW (3)", L"ConEmu plugin", MB_SETFOREGROUND|MB_SYSTEMMODAL|MB_ICONEXCLAMATION);
+	
 	return lbRc;
 }

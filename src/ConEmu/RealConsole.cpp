@@ -102,6 +102,8 @@ WARNING("Часто после разблокирования компьютера размер консоли изменяется (OK), 
 #define INPUTLANGCHANGE_SYSCHARSET 0x0001
 #endif
 
+static BOOL gbInSendConEvent = FALSE;
+
 
 const wchar_t gszAnalogues[32] = {
 	32, 9786, 9787, 9829, 9830, 9827, 9824, 8226, 9688, 9675, 9689, 9794, 9792, 9834, 9835, 9788,
@@ -250,6 +252,15 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
 CRealConsole::~CRealConsole()
 {
 	DEBUGSTRCON(L"CRealConsole::~CRealConsole()\n");
+
+	if (gbInSendConEvent) {
+		#ifdef _DEBUG
+		_ASSERTE(gbInSendConEvent==FALSE);
+		#endif
+		Sleep(100);
+	}
+
+
     StopThread();
     
     MCHKHEAP
@@ -754,7 +765,7 @@ void CRealConsole::SyncConsole2Window()
 
 // Вызывается при аттаче (после детача), или после RunAs?
 // sbi передавать не ссылкой, а копией, ибо та же память
-BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, CONSOLE_SCREEN_BUFFER_INFO sbi, CESERVER_REQ_STARTSTOPRET* pRet)
+BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, CESERVER_REQ_STARTSTOP rStartStop, CESERVER_REQ_STARTSTOPRET* pRet)
 {
     DWORD dwErr = 0;
     HANDLE hProcess = NULL;
@@ -789,7 +800,9 @@ BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, CONSOLE_SCR
 	//2010-03-03 переделано для аттача через пайп
 	int nCurWidth = 0, nCurHeight = 0;
 	BOOL bCurBufHeight = FALSE;
-	GetConWindowSize(sbi, nCurWidth, nCurHeight, &bCurBufHeight);
+	GetConWindowSize(rStartStop.sbi, nCurWidth, nCurHeight, &bCurBufHeight);
+	if (rStartStop.bRootIsCmdExe)
+		bCurBufHeight = TRUE; //2010-06-09
 	if (con.bBufferHeight != bCurBufHeight) {
 		_ASSERTE(mb_BuferModeChangeLocked==FALSE);
 		SetBufferHeightMode(bCurBufHeight, FALSE);
@@ -799,17 +812,17 @@ BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, CONSOLE_SCR
 	RECT rcCon = gConEmu.CalcRect(CER_CONSOLE, rcWnd, CER_MAINCLIENT);
 
 	// Скорректировать sbi на новый, который БУДЕТ установлен после отработки сервером аттача
-	sbi.dwSize.X = rcCon.right;
-	sbi.srWindow.Left = 0; sbi.srWindow.Right = rcCon.right-1;
+	rStartStop.sbi.dwSize.X = rcCon.right;
+	rStartStop.sbi.srWindow.Left = 0; rStartStop.sbi.srWindow.Right = rcCon.right-1;
 	if (bCurBufHeight) {
 		// sbi.dwSize.Y не трогаем
-		sbi.srWindow.Bottom = sbi.srWindow.Top + rcCon.bottom - 1;
+		rStartStop.sbi.srWindow.Bottom = rStartStop.sbi.srWindow.Top + rcCon.bottom - 1;
 	} else {
-		sbi.dwSize.Y = rcCon.bottom;
-		sbi.srWindow.Top = 0; sbi.srWindow.Bottom = rcCon.bottom - 1;
+		rStartStop.sbi.dwSize.Y = rcCon.bottom;
+		rStartStop.sbi.srWindow.Top = 0; rStartStop.sbi.srWindow.Bottom = rcCon.bottom - 1;
 	}	
 
-	con.m_sbi = sbi;
+	con.m_sbi = rStartStop.sbi;
 
     //// Событие "изменения" консоли //2009-05-14 Теперь события обрабатываются в GUI, но прийти из консоли может изменение размера курсора
     //wsprintfW(ms_ConEmuC_Pipe, CE_CURSORUPDATE, mn_ConEmuC_PID);
@@ -846,7 +859,7 @@ BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, CONSOLE_SCR
 	pRet->hWnd = ghWnd;
 	pRet->hWndDC = ghWndDC;
 	pRet->dwPID = GetCurrentProcessId();
-	pRet->nBufferHeight = bCurBufHeight ? sbi.dwSize.Y : 0;
+	pRet->nBufferHeight = bCurBufHeight ? rStartStop.sbi.dwSize.Y : 0;
 	pRet->nWidth = rcCon.right;
 	pRet->nHeight = rcCon.bottom;
 	pRet->dwSrvPID = anConemuC_PID;
@@ -1060,6 +1073,11 @@ void CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec)
     	_ASSERTE(msg.message!=0);
 		//if (mb_UseOnlyPipeInput) {
 		PostConsoleEventPipe(&msg);
+		#ifdef _DEBUG
+		if (gbInSendConEvent) {
+			_ASSERTE(!gbInSendConEvent);
+		}
+		#endif
 		//} else
 		//// ERROR_INVALID_THREAD_ID == 1444 (0x5A4)
 		//// On Vista PostThreadMessage failed with code 5, if target process created 'As administrator'
@@ -1286,9 +1304,11 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 				if (pRCon->isActive()) {
 					WARNING("Тут нужно бы сравнивать с переменной, хранящейся в gConEmu, а не в этом instance RCon!");
 					#ifdef _DEBUG
-					bool lbIsAliveDbg = pRCon->isAlive();
-					if (lbIsAliveDbg != bAlive) {
-						_ASSERTE(lbIsAliveDbg == bAlive);
+					if (!IsDebuggerPresent()) {
+						bool lbIsAliveDbg = pRCon->isAlive();
+						if (lbIsAliveDbg != bAlive) {
+							_ASSERTE(lbIsAliveDbg == bAlive);
+						}
 					}
 					#endif
 					if (bLastAlive != bAlive || !bLastAliveActive) {
@@ -1909,6 +1929,18 @@ void CRealConsole::InitNames()
 	m_GetDataPipe.InitName(L"ConEmu", CESERVERREADNAME, L".", mn_ConEmuC_PID);
 }
 
+// Если включена прокрутка - скорректировать индекс ячейки из экранных в буферные
+COORD CRealConsole::ScreenToBuffer(COORD crMouse)
+{
+	if (!this)
+		return crMouse;
+	if (isBufferHeight()) {
+		crMouse.X += con.m_sbi.srWindow.Left;
+		crMouse.Y += con.m_sbi.srWindow.Top;
+	}
+	return crMouse;
+}
+
 
 // x,y - экранные координаты
 void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y)
@@ -1984,11 +2016,11 @@ void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y)
     	
 
 	// Получить известные координаты символов
-	COORD crMouse = mp_VCon->ClientToConsole(x,y);
-	if (isBufferHeight()) {
-		crMouse.X += con.m_sbi.srWindow.Left;
-		crMouse.Y += con.m_sbi.srWindow.Top;
-	}
+	COORD crMouse = ScreenToBuffer(mp_VCon->ClientToConsole(x,y));
+	//if (isBufferHeight()) {
+	//	crMouse.X += con.m_sbi.srWindow.Left;
+	//	crMouse.Y += con.m_sbi.srWindow.Top;
+	//}
 
 	if (messg == WM_MOUSEMOVE /*&& mb_MouseButtonDown*/) {
 		// Issue 172: ConEmu10020304: проблема с правым кликом на PanelTabs
@@ -2534,6 +2566,12 @@ void CRealConsole::PostConsoleEventPipe(MSG *pMsg)
     DWORD dwErr = 0, dwMode = 0;
     BOOL fSuccess = FALSE;
 
+#ifdef _DEBUG
+	if (gbInSendConEvent) {
+		_ASSERTE(!gbInSendConEvent);
+	}
+#endif
+
     // Пайп есть. Проверим, что ConEmuC жив
     DWORD dwExitCode = 0;
     fSuccess = GetExitCodeProcess(mh_ConEmuC, &dwExitCode);
@@ -2631,21 +2669,33 @@ void CRealConsole::PostConsoleEventPipe(MSG *pMsg)
 			DEBUGSTRINPUTPIPE(L"ConEmu: Sending input\n");
 	}
 #endif
-    
+
+	gbInSendConEvent = TRUE;
+
     DWORD dwSize = sizeof(MSG), dwWritten;
     fSuccess = WriteFile ( mh_ConEmuCInput, pMsg, dwSize, &dwWritten, NULL);
     if (!fSuccess) {
     	dwErr = GetLastError();
     	if (dwErr == 0x000000E8/*The pipe is being closed.*/) {
+			fSuccess = GetExitCodeProcess(mh_ConEmuC, &dwExitCode);
+			if (fSuccess && dwExitCode!=STILL_ACTIVE)
+				goto wrap;
     		if (OpenConsoleEventPipe()) {
     			fSuccess = WriteFile ( mh_ConEmuCInput, pMsg, dwSize, &dwWritten, NULL);
     			if (fSuccess)
-    				return; // таки ОК
+    				goto wrap; // таки ОК
     		}
     	}
-        DisplayLastError(L"Can't send console event (pipe)", dwErr);
-        return;
+		#ifdef _DEBUG
+        //DisplayLastError(L"Can't send console event (pipe)", dwErr);
+		wchar_t szDbg[128];
+		wsprintf(szDbg, L"Can't send console event (pipe)", dwErr);
+		gConEmu.DebugStep(szDbg);
+		#endif
+        goto wrap;
     }
+wrap:
+	gbInSendConEvent = FALSE;
 }
 
 LRESULT CRealConsole::PostConsoleMessage(HWND hWnd, UINT nMsg, WPARAM wParam, LPARAM lParam)
@@ -3017,24 +3067,24 @@ void CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 			}
         }
         else if (messg == WM_KEYUP && wParam == VK_MENU && isSkipNextAltUp) isSkipNextAltUp = false;
-        else if (messg == WM_SYSKEYDOWN && wParam == VK_F9 && lParam & (1<<29)/*Бред. это 29-й бит, а не число 29*/
+        else if (messg == WM_SYSKEYDOWN && wParam == VK_F9 && lParam & (1<<29)
 			&& !isPressed(VK_SHIFT))
         {
 			// AltF9
 			// Чтобы у консоли не сносило крышу (FAR может выполнить макрос на Alt)
+			if (gSet.isFixAltOnAltTab)
+				PostKeyPress(VK_CONTROL, LEFT_ALT_PRESSED, 0);
 			
-			TODO("Вынести в отдельную функцию типа SendKeyPress(VK_CONTROL,0x22)");
-			
-			INPUT_RECORD r = {KEY_EVENT};
-			r.Event.KeyEvent.bKeyDown = TRUE;
-            r.Event.KeyEvent.wVirtualKeyCode = VK_CONTROL;
-			r.Event.KeyEvent.wVirtualScanCode = MapVirtualKey(VK_CONTROL, 0/*MAPVK_VK_TO_VSC*/);
-			r.Event.KeyEvent.dwControlKeyState = 0x2A;
-			r.Event.KeyEvent.wRepeatCount = 1;
-			PostConsoleEvent(&r);
-			r.Event.KeyEvent.bKeyDown = FALSE;
-			r.Event.KeyEvent.dwControlKeyState = 0x22;
-			PostConsoleEvent(&r);
+			//INPUT_RECORD r = {KEY_EVENT};
+			//r.Event.KeyEvent.bKeyDown = TRUE;
+            //r.Event.KeyEvent.wVirtualKeyCode = VK_CONTROL;
+			//r.Event.KeyEvent.wVirtualScanCode = MapVirtualKey(VK_CONTROL, 0/*MAPVK_VK_TO_VSC*/);
+			//r.Event.KeyEvent.dwControlKeyState = 0x2A;
+			//r.Event.KeyEvent.wRepeatCount = 1;
+			//PostConsoleEvent(&r);
+			//r.Event.KeyEvent.bKeyDown = FALSE;
+			//r.Event.KeyEvent.dwControlKeyState = 0x22;
+			//PostConsoleEvent(&r);
 			
             //gConEmu.SetWindowMode((gConEmu.isZoomed()||(gSet.isFullScreen&&gConEmu.isWndNotFSMaximized)) ? rNormal : rMaximized);
             gConEmu.OnAltF9(TRUE);
@@ -4918,11 +4968,13 @@ void CRealConsole::OnFocus(BOOL abFocused)
             DEBUGSTRINPUT(L"--Loose focus\n")
         }
 #endif
+		// Сразу, иначе по окончании PostConsoleEvent RCon может разрушиться?
+		mn_Focused = abFocused ? 1 : 0;
+
         INPUT_RECORD r = {FOCUS_EVENT};
         r.Event.FocusEvent.bSetFocus = abFocused;
         PostConsoleEvent(&r);
 
-        mn_Focused = abFocused ? 1 : 0;
     }
 }
 
@@ -6787,7 +6839,7 @@ BOOL CRealConsole::ShowOtherWindow(HWND hWnd, int swShow)
 			in.Msg.bPost = TRUE;
 			in.Msg.hWnd = hWnd;
 			in.Msg.nMsg = WM_SHOWWINDOW;
-			in.Msg.wParam = SW_SHOWNA;
+			in.Msg.wParam = swShow; //SW_SHOWNA;
 			in.Msg.lParam = 0;
 
 			CESERVER_REQ *pOut = ExecuteSrvCmd(GetServerPID(), &in, ghWnd);

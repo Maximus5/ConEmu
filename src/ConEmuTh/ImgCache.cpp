@@ -180,7 +180,7 @@ void CImgCache::FreeModules()
 			struct CET_Init InitArg = {sizeof(struct CET_Init)};
 			InitArg.hModule = Modules[i].hModule;
 			InitArg.pContext = Modules[i].pContext;
-			 SAFETRY  {
+			SAFETRY  {
 				Modules[i].Done(&InitArg);
 			} SAFECATCH  {
 			}

@@ -1060,7 +1060,7 @@ BOOL CSettings::SaveSettings()
 			reg->Save(L"HideCaptionAlwaysDisappear", nHideCaptionAlwaysDisappear);
             
 			reg->Save(L"ConsoleFontName", ConsoleFont.lfFaceName);
-			reg->Save(L"ConsoleCharWidth", ConsoleFont.lfWidth);
+			reg->Save(L"ConsoleFontWidth", ConsoleFont.lfWidth);
 			reg->Save(L"ConsoleFontHeight", ConsoleFont.lfHeight);
 
 			reg->Save(L"DefaultBufferHeight", DefaultBufferHeight);

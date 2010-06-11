@@ -53,6 +53,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 static TCHAR kernel32[] = _T("kernel32.dll");
 //static TCHAR user32[]   = _T("user32.dll");
 static TCHAR shell32[]  = _T("shell32.dll");
+static TCHAR wininet[]  = _T("wininet.dll");
 
 //static BOOL bHooksWin2k3R2Only = FALSE;
 //static HookItem HooksWin2k3R2Only[] = {
@@ -63,10 +64,16 @@ static TCHAR shell32[]  = _T("shell32.dll");
 //};
 
 extern int WINAPI OnCompareStringW(LCID Locale, DWORD dwCmpFlags, LPCWSTR lpString1, int cchCount1, LPCWSTR lpString2, int cchCount2);
+//
+extern BOOL WINAPI OnHttpSendRequestA(LPVOID hRequest, LPCSTR lpszHeaders, DWORD dwHeadersLength, LPVOID lpOptional, DWORD dwOptionalLength);
+extern BOOL WINAPI OnHttpSendRequestW(LPVOID hRequest, LPCWSTR lpszHeaders, DWORD dwHeadersLength, LPVOID lpOptional, DWORD dwOptionalLength);
 
 static HookItem HooksFarOnly[] = {
 //	{OnlstrcmpiA,      "lstrcmpiA",      kernel32, 0},
 	{(void*)OnCompareStringW, "CompareStringW", kernel32, 0},
+	/* ************************ */
+	{(void*)OnHttpSendRequestA, "HttpSendRequestA", wininet, 0},
+	{(void*)OnHttpSendRequestW, "HttpSendRequestW", wininet, 0},
 	/* ************************ */
 	{0, 0, 0}
 };
@@ -113,7 +120,6 @@ extern BOOL WINAPI OnWriteConsoleOutput(HookCallbackArg* pArgs);
 //extern VOID WINAPI OnWasWriteConsoleOutputW(HookCallbackArg* pArgs);
 extern VOID WINAPI OnGetNumberOfConsoleInputEventsPost(HookCallbackArg* pArgs);
 extern VOID WINAPI OnShellExecuteExW_Except(HookCallbackArg* pArgs);
-
 
 
 // Эту функцию нужно позвать из DllMain плагина

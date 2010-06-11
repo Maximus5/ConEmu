@@ -361,7 +361,7 @@ BEGIN
     CONTROL         "Auto register fonts",cbAutoRegFonts,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,132,121,89,8
     CONTROL         "Monitor console lang",cbMonitorConsoleLang,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,132,132,86,8
     CONTROL         "Auto minimize to tray",cbMinToTray,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,132,144,81,8
-    CONTROL         "Fix Alt on AltTab",cbFixAltOnAltTab,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,227,110,76,8
+    CONTROL         "Fix Alt on AltTab/AltF9",cbFixAltOnAltTab,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,227,110,91,8
     CONTROL         "Show real console",cbVisible,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,227,121,74,8
     PUSHBUTTON      "...",bRealConsoleSettings,306,120,13,11,WS_DISABLED
     CONTROL         "Debug steps in caption",cbDebugSteps,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,227,132,91,8
@@ -806,7 +806,7 @@ BEGIN
     lbCmdOutputCP           "Windows command processor (cmd.exe) may cause then output of internal commands to be OEM or Unicode.\nYou may force this selection, or use automatic selection (FAR2 -> Unicode)."
     lbNtvdmHeight           "Old DOS programs may be runned under console sizes: 80x25, 80x28, 80x43 or 80x50. You may force window size selection, or left the automatic selection.\nThis feature is not available in x64 OS."
     cbFARuseASCIIsort       "Hook FAR string sort functions.\n!!!HIGHLY EXPERIMENTAL!!!"
-    cbFixAltOnAltTab        "When You set a macro on Alt (RAlt) it can unexpectedly activates on AltTab. This issue can be fixed by sending to console AltTab instead of Alt"
+    cbFixAltOnAltTab        "When You set a macro on Alt (RAlt) it can unexpectedly activates on AltTab or AltF9. This issue can be fixed by sending to console Control depress before Alt release."
     cbFarHourglass          "Show AppStarting cursor (arrow with a small hourglass) when FAR is not responding (during long operations)"
     slTransparent           "Transparency of the main ConEmu window"
     cbHideCaption           "Hide main window caption, when maximized (Alt-F9)"

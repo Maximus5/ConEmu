@@ -36,7 +36,7 @@ CRgnDetect::CRgnDetect()
 	//
 	nUserBackIdx = nMenuBackIdx = 0;
 	crUserBack = crMenuTitleBack = 0;
-	nPanelTextBackIdx = nPanelTextForeIdx = 0;
+	nPanelTabsBackIdx = nPanelTabsForeIdx = 0; bPanelTabsSeparate = TRUE;
 	bShowKeyBar = true; nBottomLines = 2;
 	bAlwaysShowMenuBar = false; nTopLines = 0;
 }
@@ -55,7 +55,7 @@ CRgnDetect::~CRgnDetect()
 }
 
 #ifdef _DEBUG
-const DetectedDialogs* CRgnDetect::GetDetectedDialogsPtr()
+const DetectedDialogs* CRgnDetect::GetDetectedDialogsPtr() const
 {
 	return &m_DetectedDialogs;
 }
@@ -1250,11 +1250,23 @@ int CRgnDetect::MarkDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHei
 
 	if ((DlgFlags & (FR_LEFTPANEL|FR_RIGHTPANEL|FR_FULLPANEL)) != 0) {
 		// ƒл€ детекта наличи€ PanelTabs
+		if (r.left && mp_FarInfo->PanelTabs.SeparateTabs == 0
+			&& (m_DetectedDialogs.AllFlags & FR_LEFTPANEL))
+		{
+			if (mrc_LeftPanel.Bottom > r.bottom
+				&& nHeight > (nBottomLines+mrc_LeftPanel.Bottom+1))
+			{
+				r.bottom = mrc_LeftPanel.Bottom;
+				r.left = 0;
+			} else if (nHeight > (nBottomLines+mrc_LeftPanel.Bottom+1)) {
+				r.left = 0;
+			}
+		}
 		if (nHeight > (nBottomLines+r.bottom+1)) {
 			int nIdx = nWidth*(r.bottom+1)+r.right-1;
 			if (pChar[nIdx-1] == 9616 && pChar[nIdx] == L'+' && pChar[nIdx+1] == 9616
-				&& pAttr[nIdx].nBackIdx == nPanelTextBackIdx
-				&& pAttr[nIdx].nForeIdx == nPanelTextForeIdx)
+				&& pAttr[nIdx].nBackIdx == nPanelTabsBackIdx
+				&& pAttr[nIdx].nForeIdx == nPanelTabsForeIdx)
 			{
 				MarkDialog(pChar, pAttr, nWidth, nHeight, r.left, r.bottom+1, r.right, r.bottom+1,
 					false, false, FR_PANELTABS|(DlgFlags & (FR_LEFTPANEL|FR_RIGHTPANEL|FR_FULLPANEL)));
@@ -1420,12 +1432,12 @@ BOOL CRgnDetect::InitializeSBI(const COLORREF *apColors)
 	if (!mpsz_Chars || !mp_Attrs || !mp_AttrsWork || (nTextWidth * nTextHeight) > mn_MaxCells) {
 		if (mpsz_Chars) free(mpsz_Chars);
 		mn_MaxCells = (nTextWidth * nTextHeight);
-		mn_CurWidth = nTextWidth;
-		mn_CurHeight = nTextHeight;
 		mpsz_Chars = (wchar_t*)calloc(mn_MaxCells, sizeof(wchar_t));
 		mp_Attrs = (CharAttr*)calloc(mn_MaxCells, sizeof(CharAttr));
 		mp_AttrsWork = (CharAttr*)calloc(mn_MaxCells, sizeof(CharAttr));
 	}
+	mn_CurWidth = nTextWidth;
+	mn_CurHeight = nTextHeight;
 	if (!mpsz_Chars || !mp_Attrs || !mp_AttrsWork) {
 		_ASSERTE(mpsz_Chars && mp_Attrs && mp_AttrsWork);
 		return FALSE;
@@ -1584,8 +1596,14 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO *apFarInfo, const COLORREF 
 	crMenuTitleBack = mp_Colors[nMenuBackIdx];
 	
 	// ƒл€ детекта наличи€ PanelTabs
-	nPanelTextBackIdx = (mp_FarInfo->nFarColors[COL_PANELTEXT] & 0xF0) >> 4;
-	nPanelTextForeIdx = mp_FarInfo->nFarColors[COL_PANELTEXT] & 0xF;
+	bPanelTabsSeparate = (mp_FarInfo->PanelTabs.SeparateTabs != 0);
+	if (mp_FarInfo->PanelTabs.ButtonColor != -1) {
+		nPanelTabsBackIdx = (mp_FarInfo->PanelTabs.ButtonColor & 0xF0) >> 4;
+		nPanelTabsForeIdx = mp_FarInfo->PanelTabs.ButtonColor & 0xF;
+	} else {
+		nPanelTabsBackIdx = (mp_FarInfo->nFarColors[COL_PANELTEXT] & 0xF0) >> 4;
+		nPanelTabsForeIdx = mp_FarInfo->nFarColors[COL_PANELTEXT] & 0xF;
+	}
 	
 	// ѕри bUseColorKey ≈сли панель погашена (или панели) то 
 	// 1. UserScreen под ним замен€етс€ на crColorKey
@@ -1597,6 +1615,8 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO *apFarInfo, const COLORREF 
 	// »ли может быть меню сейчас показано?
 	// 1 - при видимом сейчас или посто€нно меню
 	bAlwaysShowMenuBar = (mp_FarInfo->nFarInterfaceSettings & 0x10/*FIS_ALWAYSSHOWMENUBAR*/) != 0;
+	if (bAlwaysShowMenuBar)
+		m_DetectedDialogs.AllFlags |= FR_MENUBAR; // ставим сразу, чтобы детектор панелей не запуталс€
 	nTopLines = bAlwaysShowMenuBar ? 1 : 0;
 
 
@@ -1638,6 +1658,9 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO *apFarInfo, const COLORREF 
 		// ¬ "буферном" режиме размер панелей намного больше экрана
 		lbLeftVisible = ConsoleRect2ScreenRect(mp_FarInfo->FarLeftPanel.PanelRect, &r);
 	}
+
+	RECT rLeft = {0}, rRight = {0};
+
 	if (lbLeftVisible) {
 		if (r.right == (nWidth-1))
 			lbFullPanel = true; // значит правой быть не может
@@ -1647,8 +1670,8 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO *apFarInfo, const COLORREF 
 		//if (nHeight > (nBottomLines+r.bottom+1)) {
 		//	int nIdx = nWidth*(r.bottom+1)+r.right-1;
 		//	if (pChar[nIdx-1] == 9616 && pChar[nIdx] == L'+' && pChar[nIdx+1] == 9616
-		//		&& pAttr[nIdx].nBackIdx == nPanelTextBackIdx
-		//		&& pAttr[nIdx].nForeIdx == nPanelTextForeIdx)
+		//		&& pAttr[nIdx].nBackIdx == nPanelTabsBackIdx
+		//		&& pAttr[nIdx].nForeIdx == nPanelTabsForeIdx)
 		//	{
 		//		MarkDialog(pChar, pAttr, nWidth, nHeight, r.left, r.bottom+1, r.right, r.bottom+1, false, false, FR_PANELTABS|FR_LEFTPANEL);
 		//	}
@@ -1673,8 +1696,8 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO *apFarInfo, const COLORREF 
 			//if (nHeight > (nBottomLines+r.bottom+1)) {
 			//	int nIdx = nWidth*(r.bottom+1)+r.right-1;
 			//	if (pChar[nIdx-1] == 9616 && pChar[nIdx] == L'+' && pChar[nIdx+1] == 9616
-			//		&& pAttr[nIdx].nBackIdx == nPanelTextBackIdx
-			//		&& pAttr[nIdx].nForeIdx == nPanelTextForeIdx)
+			//		&& pAttr[nIdx].nBackIdx == nPanelTabsBackIdx
+			//		&& pAttr[nIdx].nForeIdx == nPanelTabsForeIdx)
 			//	{
 			//		MarkDialog(pChar, pAttr, nWidth, nHeight, r.left, r.bottom+1, r.right, r.bottom+1, false, false, FR_PANELTABS|FR_RIGHTPANEL);
 			//	}

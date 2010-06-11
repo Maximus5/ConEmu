@@ -100,6 +100,9 @@ int ServerInit()
 	wchar_t* pszSelf = szSelf+1;
 	//HWND hDcWnd = NULL;
 	//HMODULE hKernel = GetModuleHandleW (L"kernel32.dll");
+
+	// Сразу попытаемся поставить консоли флаг "OnTop"
+	SetWindowPos(ghConWnd, HWND_TOPMOST, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
 	
 	srv.osv.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
 	GetVersionEx(&srv.osv);
@@ -1048,7 +1051,7 @@ HWND Attach2Gui(DWORD nTimeout)
 	In.StartStop.dwPID = gnSelfPID;
 	//In.StartStop.dwInputTID = srv.dwInputPipeThreadId;
 	In.StartStop.nSubSystem = gnImageSubsystem;
-	In.StartStop.bRootIsCmdExe = gbRootIsCmdExe;
+	In.StartStop.bRootIsCmdExe = gbRootIsCmdExe || (gbAttachMode && !gbNoCreateProcess);
 	In.StartStop.bUserIsAdmin = IsUserAdmin();
 	HANDLE hOut = (HANDLE)ghConOut;
 	if (!GetConsoleScreenBufferInfo(hOut, &In.StartStop.sbi)) {
@@ -2355,12 +2358,14 @@ DWORD WINAPI InputPipeThread(LPVOID lpvParam)
 					#endif
 
 					INPUT_RECORD r;
-					ProcessInputMessage(imsg, r);
-					//SendConsoleEvent(&r, 1);
-					if (!WriteInputQueue(&r)) {
-						WARNING("Если буфер переполнен - ждать? Хотя если будем ждать здесь - может повиснуть GUI на записи в pipe...");
+					// Некорректные события - отсеиваются,
+					// некоторые события (CtrlC/CtrlBreak) не пишутся в буферном режиме
+					if (ProcessInputMessage(imsg, r)) {
+						//SendConsoleEvent(&r, 1);
+						if (!WriteInputQueue(&r)) {
+							WARNING("Если буфер переполнен - ждать? Хотя если будем ждать здесь - может повиснуть GUI на записи в pipe...");
+						}
 					}
-
 					MCHKHEAP;
 				}
 				// next
@@ -2495,6 +2500,13 @@ BOOL ProcessInputMessage(MSG &msg, INPUT_RECORD &r)
 
 		#define ALL_MODIFIERS (LEFT_ALT_PRESSED|RIGHT_ALT_PRESSED|LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED|SHIFT_PRESSED)
 		#define CTRL_MODIFIERS (LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED)
+
+		#ifdef _DEBUG
+		if (r.EventType == KEY_EVENT && r.Event.KeyEvent.wVirtualKeyCode == 'C')
+		{
+			DEBUGSTR(L"  ---  F11 recieved\n");
+		}
+		#endif
 
 		bool lbProcessEvent = false;
 		bool lbIngoreKey = false;
@@ -2752,6 +2764,9 @@ int MySetWindowRgn(CESERVER_REQ_SETWINDOWRGN* pRgn)
 int InjectHooks(HANDLE hProcess, DWORD nPID)
 {
 	int iRc = 0;
+
+#ifdef _DEBUG
+
 	DWORD dwErr = 0, dwWait = 0;
 	wchar_t szPluginPath[MAX_PATH*2], *pszSlash;
 	HANDLE hFile = NULL;
@@ -2760,7 +2775,6 @@ int InjectHooks(HANDLE hProcess, DWORD nPID)
 	HANDLE hThread = NULL; DWORD nThreadID = 0;
 	LPTHREAD_START_ROUTINE ptrLoadLibrary = NULL;
 
-#ifdef _DEBUG
 	
 
 	if (!GetModuleFileName(NULL, szPluginPath, MAX_PATH)) {
@@ -2783,6 +2797,8 @@ int InjectHooks(HANDLE hProcess, DWORD nPID)
 
 	WARNING("The process handle must have the PROCESS_VM_OPERATION access right!");
 	size = (lstrlen(szPluginPath)+1)*2;
+	TODO("Будет облом на DOS (16бит) приложениях");
+	TODO("Проверить, сможет ли ConEmu.x64 инжектиться в 32битные приложения?");
 	pszPathInProcess = (wchar_t*)VirtualAllocEx(hProcess, 0, size, MEM_COMMIT, PAGE_READWRITE);
 	if (!pszPathInProcess) {
 		dwErr = GetLastError();
@@ -2796,6 +2812,12 @@ int InjectHooks(HANDLE hProcess, DWORD nPID)
 	}
 
 	TODO("Получить адрес LoadLibraryW в адресном пространстве запущенного процесса!");
+	ptrLoadLibrary = (LPTHREAD_START_ROUTINE)::GetProcAddress(::GetModuleHandle(L"Kernel32.dll"), "LoadLibraryW");
+	if (ptrLoadLibrary == NULL) {
+		dwErr = GetLastError();
+		_printf("GetProcAddress(kernel32, LoadLibraryW) failed! ErrCode=0x%08X\n", dwErr);
+		goto wrap;
+	}
 
 	if (ptrLoadLibrary) {
 		hThread = CreateRemoteThread(hProcess, NULL, 0, ptrLoadLibrary, pszPathInProcess, 0, &nThreadID);
@@ -2805,7 +2827,13 @@ int InjectHooks(HANDLE hProcess, DWORD nPID)
 			goto wrap;
 		}
 		// Дождаться, пока отработает
-		dwWait = WaitForSingleObject(hThread, 5000);
+		dwWait = WaitForSingleObject(hThread, 
+			#ifdef _DEBUG
+						INFINITE
+			#else
+						10000
+			#endif
+			);
 		if (dwWait != WAIT_OBJECT_0) {
 			dwErr = GetLastError();
 			_printf("Inject tread timeout!");
@@ -2814,8 +2842,9 @@ int InjectHooks(HANDLE hProcess, DWORD nPID)
 	}
 	
 
-#endif
 
 wrap:
+
+#endif
 	return iRc;
 }

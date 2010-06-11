@@ -525,7 +525,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="version.lib"
-				OutputFile="C:\Program Files\far\Plugins\ConEmu\Thumbs\pe.t32"
+				OutputFile="\\WIN7X64\FAR\far-update\Plugins\ConEmu\Thumbs\pe.t32"
 				LinkIncremental="2"
 				ModuleDefinitionFile="pe.def"
 				GenerateDebugInformation="true"

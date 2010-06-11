@@ -103,7 +103,7 @@ public:
 	int TextHeight();
 
 	#ifdef _DEBUG
-	const DetectedDialogs *GetDetectedDialogsPtr();
+	const DetectedDialogs *GetDetectedDialogsPtr() const;
 	#endif	
 	
 protected:
@@ -171,9 +171,10 @@ protected:
 	COLORREF crUserBack;
 	int nMenuBackIdx;
 	COLORREF crMenuTitleBack;
-	// Для детекта наличия PanelTabs
-	int nPanelTextBackIdx;
-	int nPanelTextForeIdx;
+	// Для детекта наличия PanelTabs (цвет кнопки [+])
+	int nPanelTabsBackIdx;
+	int nPanelTabsForeIdx;
+	BOOL bPanelTabsSeparate;
 	// При bUseColorKey Если панель погашена (или панели) то 
 	// 1. UserScreen под ним заменяется на crColorKey
 	// 2. а текст - на пробелы

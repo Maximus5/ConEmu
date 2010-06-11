@@ -748,7 +748,7 @@ BOOL WINAPI CET_Init(struct CET_Init* pInit)
 	if (!pDecoder->Init(pInit)) {
 		pInit->nErrNumber = pDecoder->nErrNumber;
 		pDecoder->Close();
-		FREE(pDecoder);
+		//FREE(pDecoder);
 		return FALSE;
 	}
 
@@ -764,7 +764,7 @@ VOID WINAPI CET_Done(struct CET_Init* pInit)
 			_ASSERTE(pDecoder->nMagic == eGdiStr_Decoder);
 			if (pDecoder->nMagic == eGdiStr_Decoder) {
 				pDecoder->Close();
-				FREE(pDecoder);
+				//FREE(pDecoder);
 			}
 		}
 	}

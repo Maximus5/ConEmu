@@ -212,6 +212,7 @@ private:
     //void SendConsoleEvent(INPUT_RECORD* piRec);
     DWORD mn_FlushIn, mn_FlushOut;
 public:
+	COORD ScreenToBuffer(COORD crMouse);
     void PostConsoleEvent(INPUT_RECORD* piRec);
 	void PostKeyPress(WORD vkKey, DWORD dwControlState, wchar_t wch, int ScanCode = -1);
 	void PostKeyUp(WORD vkKey, DWORD dwControlState, wchar_t wch, int ScanCode = -1);
@@ -259,7 +260,7 @@ public:
     BOOL isFar(BOOL abPluginRequired=FALSE);
     void ShowConsole(int nMode); // -1 Toggle, 0 - Hide, 1 - Show
     BOOL isDetached();
-    BOOL AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, CONSOLE_SCREEN_BUFFER_INFO sbi, CESERVER_REQ_STARTSTOPRET* pRet);
+    BOOL AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, CESERVER_REQ_STARTSTOP rStartStop, CESERVER_REQ_STARTSTOPRET* pRet);
     BOOL RecreateProcess(RConStartArgs *args);
     void GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight);
 	BOOL IsConsoleDataChanged();

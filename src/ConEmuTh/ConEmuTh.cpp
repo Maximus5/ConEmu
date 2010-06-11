@@ -1598,6 +1598,28 @@ void CheckVarsInitialized()
 		gFarInfo.nFarPID = GetCurrentProcessId();
 		gFarInfo.nFarTID = GetCurrentThreadId();
 		gFarInfo.bFarPanelAllowed = TRUE;
+		// Загрузить из реестра настройки PanelTabs
+		gFarInfo.PanelTabs.SeparateTabs = gFarInfo.PanelTabs.ButtonColor = -1;
+		if (gszRootKey && *gszRootKey) {
+			int nLen = lstrlenW(gszRootKey);
+			wchar_t* pszTabsKey = (wchar_t*)malloc((nLen+32)*2);
+			lstrcpyW(pszTabsKey, gszRootKey);
+			pszTabsKey[nLen-1] = 0;
+			wchar_t* pszSlash = wcsrchr(pszTabsKey, L'\\');
+			if (pszSlash) {
+				lstrcpyW(pszSlash, L"\\Plugins\\PanelTabs");
+				HKEY hk;
+				if (0 == RegOpenKeyExW(HKEY_CURRENT_USER, pszTabsKey, 0, KEY_READ, &hk)) {
+					DWORD dwVal, dwSize;
+					if (!RegQueryValueExW(hk, L"SeparateTabs", NULL, NULL, (LPBYTE)&dwVal, &(dwSize = 4)))
+						gFarInfo.PanelTabs.SeparateTabs = dwVal ? 1 : 0;
+					if (!RegQueryValueExW(hk, L"ButtonColor", NULL, NULL, (LPBYTE)&dwVal, &(dwSize = 4)))
+						gFarInfo.PanelTabs.ButtonColor = dwVal & 0xFF;
+					RegCloseKey(hk);
+				}
+			}
+			free(pszTabsKey);
+		}
 	}
 
 	if (!pviLeft.pSection) {

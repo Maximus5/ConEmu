@@ -308,10 +308,11 @@ CLEAN:
 	@move "$(OUTDIR)\$(NAME).exe" ..\..\$(RELEASEDIR)
 	@move "$(OUTDIR)\$(NAME).pdb" ..\..\$(RELEASEDIR)
 	@move "$(OUTDIR)\$(NAME).map" ..\..\$(RELEASEDIR)
-	@echo final cleaning
-	@del /Q $(CODDIR)\*.*
-	@del /Q $(INTDIR)\*.*
-	@del /Q $(OUTDIR)\*.*
-	@rd $(CODDIR)
-	@rd $(INTDIR)
-	@rd $(OUTDIR)
+
+#	@echo final cleaning
+#	@del /Q $(CODDIR)\*.*
+#	@del /Q $(INTDIR)\*.*
+#	@del /Q $(OUTDIR)\*.*
+#	@rd $(CODDIR)
+#	@rd $(INTDIR)
+#	@rd $(OUTDIR)

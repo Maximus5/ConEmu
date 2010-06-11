@@ -31,6 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //  Раскомментировать, чтобы сразу после запуска процесса (conemuc.exe) показать MessageBox, чтобы прицепиться дебаггером
 //  #define SHOW_STARTED_MSGBOX
 //  #define SHOW_COMSPEC_STARTED_MSGBOX
+//  #define SHOW_SERVER_STARTED_MSGBOX
 //  #define SHOW_STARTED_ASSERT
 #elif defined(__GNUC__)
 //  Раскомментировать, чтобы сразу после запуска процесса (conemuc.exe) показать MessageBox, чтобы прицепиться дебаггером
@@ -209,6 +210,14 @@ int __cdecl main()
 	//#ifdef _DEBUG
 	//CreateLogSizeFile();
 	//#endif
+
+#ifdef SHOW_SERVER_STARTED_MSGBOX
+	if ((gnRunMode == RM_SERVER) && !IsDebuggerPresent()) {
+		wchar_t szTitle[100]; wsprintf(szTitle, L"ConEmuC [Server] started (PID=%i)", gnSelfPID);
+		const wchar_t* pszCmdLine = GetCommandLineW();
+		MessageBox(NULL,pszCmdLine,szTitle,0);
+	}
+#endif
 	
 	/* ***************************** */
 	/* *** "Общая" инициализация *** */
@@ -310,7 +319,10 @@ int __cdecl main()
 		if (lbRc && (gnRunMode == RM_SERVER)) {
 			TODO("Не только в сервере, но и в ComSpec, чтобы дочерние КОНСОЛЬНЫЕ процессы могли пользоваться редиректами");
 
-			InjectHooks(pi.hProcess, pi.dwProcessId);
+			//""F:\VCProject\FarPlugin\ConEmu\Bugs\DOS\TURBO.EXE ""
+			TODO("При выполнении DOS приложений - VirtualAllocEx(hProcess, обламывается!");
+			TODO("В принципе - завелось, но в сочетании с Anamorphosis получается странное зацикливание far->conemu->anamorph->conemu");
+			//InjectHooks(pi.hProcess, pi.dwProcessId);
 		
 			// Отпустить процесс
 			ResumeThread(pi.hThread);
@@ -1043,6 +1055,10 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 			size_t nNewLen = wcslen(pwszStartCmdLine) + 200;
 			//
 			BOOL lbIsNeedCmd = IsNeedCmd(asCmdLine, &lbNeedCutStartEndQuot);
+
+			//Warning. ParseCommandLine вызывается ДО ComSpecInit, в котором зовется
+			//         CECMD_CMDSTARTSTOP, поэтому высота буфера еще не была установлена.
+			SendStarted();
 			
 			// Font, size, etc.
 			

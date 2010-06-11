@@ -300,11 +300,16 @@ clean:
 	move $(DLLFULLNAME) ..\..\$(RELEASEDIRx86)
 	move $(PDBNAME) ..\..\$(RELEASEDIR)
 	move $(MAP) ..\..\$(RELEASEDIR)
-	echo final cleaning
-	del /Q $(OBJDIR)\*.*
-	rd $(OBJDIR)
-	del /Q $(OUTDIR)$(ADDOUTDIR)\*.*
-	rd $(OUTDIR)$(ADDOUTDIR)
+
+#	echo final cleaning
+#	echo del /Q $(OBJDIR)\*.*
+#	del /Q $(OBJDIR)\*.*
+#	echo rd $(OBJDIR)
+#	rd $(OBJDIR)
+#	echo del /Q $(OUTDIR)$(ADDOUTDIR)\*.*
+#	del /Q $(OUTDIR)$(ADDOUTDIR)\*.*
+#	echo rd $(OUTDIR)$(ADDOUTDIR)
+#	rd $(OUTDIR)$(ADDOUTDIR)
 
 $(OBJDIR)\ConEmuTh.obj: ConEmuTh.cpp
 
