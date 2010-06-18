@@ -120,7 +120,7 @@ public:
 	wchar_t ms_ConEmuCurDir[MAX_PATH+1];
 	wchar_t ms_ConEmuArgs[MAX_PATH*2];
 private:
-	MFileMapping<ConEmuInfo> m_GuiInfoMapping;
+	MFileMapping<ConEmuGuiInfo> m_GuiInfoMapping;
 public:
 	CConEmuChild *m_Child;
 	CConEmuBack  *m_Back;

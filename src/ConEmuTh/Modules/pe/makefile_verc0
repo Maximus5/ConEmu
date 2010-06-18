@@ -59,33 +59,28 @@
 !include ../make_vc_defs
 !endif
 
-SUBMODULES = gdip pe
-
-DEF_NAME = export
+DEF_NAME = ver_c0
 
 NEEDENTRY = 1
 
 !if defined(AMD64) || "$(CPU)" == "AMD64"
-OUTNAME = ConEmuTh.x64
+OUTNAME = ver_c0_x64
 RCWIN64=/D_WIN64 /DWIN64
 !else
-OUTNAME = ConEmuTh
+OUTNAME = ver_c0
 RCWIN64=
-!endif                   
+!endif
 
-NAME = ConEmuTh
+!ifdef DEBUG
+OUTNAME = ver_c0
+!endif
+
+NAME = ver_c0
 
 LINK_OBJS = \
-$(OBJDIR)\ConEmuTh.obj \
-$(OBJDIR)\ConEmuTh995.obj \
-$(OBJDIR)\ConEmuThA.obj \
-$(OBJDIR)\Display.obj \
-$(OBJDIR)\ImgCache.obj \
-$(OBJDIR)\RgnDetect.obj \
-$(OBJDIR)\Common.obj \
-$(OBJDIR)\WinObjects.obj
+$(OBJDIR)\pe.obj
 
-#$(OBJDIR)\LogBrowser.obj
+USERLIBS = 
 
 
 !if defined(AMD64) || "$(CPU)" == "AMD64"
@@ -119,8 +114,8 @@ DIRSUFF = W
 !endif
 
 
-RELEASEDIRx86=plugins\ConEmu\Thumbs
-RELEASEDIRx64=Release.x64\plugins\ConEmu\Thumbs
+RELEASEDIRx86=
+RELEASEDIRx64=
 
 !ifdef AMD64
 DIRBIT = 64
@@ -130,17 +125,19 @@ DIRBIT = 32
 RELEASEDIR = $(RELEASEDIRx86)
 !endif
 WORKDIR = $(DIRNAME).$(DIRBIT)$(DIRSUFF).vc
+!ifndef OUTDIR
 !ifdef INSTALL
 OUTDIR=$(INSTALL)
 !else
 OUTDIR=$(WORKDIR)
+!endif
 !endif
 
 
 OBJDIR = $(WORKDIR)\obj$(ADDOBJDIR)
 #COMMON = ..
 COMINC = ..
-CPP_WIDE = /DUNICODE /D_UNICODE /DUSE_SEH
+CPP_WIDE = /DUNICODE /D_UNICODE /Dverc0_EXPORTS /DCRTSTARTUP
 RC_WIDE = /dUNICODE
 EXT = dll
 DLLNAME = $(OUTNAME).$(EXT)
@@ -156,28 +153,29 @@ NOWIN98=/OPT:NOWIN98
 
 PDBNAME="$(OUTDIR)$(ADDOUTDIR)\$(OUTNAME).pdb"
 !ifndef DEBUG
-CPP_OPT=/DNDEBUG /O1i /Zi /Fd$(PDBNAME) /DHIDE_TODO 
-#/DCRTSTARTUP
+CPP_OPT=/DNDEBUG /O1i /Zi /Fd$(PDBNAME) /DHIDE_TODO /DCRTSTARTUP
 !else
-CPP_OPT=/DDEBUG /Od /Fd$(PDBNAME) 
-#/DCRTSTARTUP
+CPP_OPT=/DDEBUG /Od /Fd$(PDBNAME) /DCRTSTARTUP
 !endif
 
 !ifdef AMD64
-CPP_PROJ_NO=/nologo /c /MT /W3 /Gy /GF /Zp8 /J $(COMPAT64) /GS- /Gr /GR- /EHs-c- /LD /I"$(COMINC)" $(ENV_INC_OPT) $(CPP_WIDE) /D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS /D_CRT_NON_CONFORMING_SWPRINTFS /D_WIN32_WINNT=0x0500 $(USERCPP)
+COMMONLIB = ../../../common/libCRT64.lib
+CPP_PROJ_NO=/nologo /c /W3 /Gy /GF /Zp8 /J $(COMPAT64) /GS- /Gr /GR- /EHs-c- /LD /I"$(COMINC)" $(ENV_INC_OPT) $(CPP_WIDE) /D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS /D_CRT_NON_CONFORMING_SWPRINTFS /D_WIN32_WINNT=0x0500 $(USERCPP)
 ULOUT=-Tpd+
 LINK_MACHINE = /MACHINE:X64
 !elseif defined(IA64)
-CPP_PROJ_NO=/nologo /c /MT /W3 /Gy /GF /Zp8 /J $(COMPAT64) /GS- /Gr /GR- /EHs-c- /LD /I"$(COMINC)" $(ENV_INC_OPT) $(CPP_WIDE) /D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS /D_CRT_NON_CONFORMING_SWPRINTFS /D_WIN32_WINNT=0x0500 $(USERCPP)
+COMMONLIB = ../../../common/libCRTIA64.lib
+CPP_PROJ_NO=/nologo /c /W3 /Gy /GF /Zp8 /J $(COMPAT64) /GS- /Gr /GR- /EHs-c- /LD /I"$(COMINC)" $(ENV_INC_OPT) $(CPP_WIDE) /D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS /D_CRT_NON_CONFORMING_SWPRINTFS /D_WIN32_WINNT=0x0500 $(USERCPP)
 ULOUT=-Tpd+
 LINK_MACHINE = /MACHINE:X64
 !else
+COMMONLIB = ../../../common/libCRT.lib
 #../pvdCRT.lib
 !ifdef CPP_UNALIGN
 CPP_ALIGN=/Zp1
 !endif
 # /I"$(COMMON)"
-CPP_PROJ_NO=/nologo /c /MT /W3 /Gy /GF $(CPP_ALIGN) /J /Gr /GS- /GR- /EHs-c- /LD /I"$(COMINC)" $(ENV_INC_OPT) $(CPP_WIDE) /D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS /D_CRT_NON_CONFORMING_SWPRINTFS /D_WIN32_WINNT=0x0500 /D_WINDLL $(USERCPP)
+CPP_PROJ_NO=/nologo /c /W3 /Gy /GF $(CPP_ALIGN) /J /Gr /GS- /GR- /EHs-c- /LD /I"$(COMINC)" $(ENV_INC_OPT) $(CPP_WIDE) /D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS /D_CRT_NON_CONFORMING_SWPRINTFS /D_WIN32_WINNT=0x0500 $(USERCPP)
 ULOUT=-Tpd -Re
 LINK_MACHINE = /MACHINE:X86
 !endif
@@ -186,9 +184,7 @@ CPP_PROJ=$(CPP_PROJ_NO) /Fo"$(OBJDIR)\\"
 #!ifdef EXCLUDECRT
 #!undef COMMONLIB
 #!endif
-#LIBS = kernel32.lib user32.lib gdi32.lib version.lib shell32.lib Ole32.lib libcmt.lib
-
-LIBS = version.lib libcmt.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib
+LIBS = $(COMMONLIB) chkstk.obj kernel32.lib user32.lib gdi32.lib advapi32.lib shell32.lib ole32.lib uuid.lib mpr.lib version.lib oleaut32.lib wbemuuid.lib $(USERLIBS)
 
 !ifdef _BIN_PATH_
 !ifndef _CL_PATH_
@@ -203,13 +199,29 @@ _LINK_PATH_=$(_BIN_PATH_)
 !endif
 
 
+!ifndef ULINK
 LNK=$(_LINK_PATH_)link.exe
-#LINK_DEBUG=/debug /pdb:$(PDBNAME)
+LINK_DEBUG=/debug /pdb:$(PDBNAME)
 CPP_DEBUG=/Zi
-LINK_FLAGS=/nologo /SUBSYSTEM:WINDOWS /DYNAMICBASE /dll /release $(LINK_MACHINE) $(NOWIN98) $(ENV_LIB_OPT) /def:"$(DEF)" /map:"$(MAP)" /out:"$(DLLFULLNAME)"
-#LINK_FLAGS=/DEBUG /DEF:"export.def" /DLL /DYNAMICBASE /INCREMENTAL:NO /LTCG /MACHINE:X86 /MAP /NODEFAULTLIB /SUBSYSTEM:WINDOWS /OUT:"$(DLLFULLNAME)"
-
-
+!ifndef NEEDENTRY
+NOENTRY = /noentry
+!endif
+!ifndef NEEDDEFLIB
+NODEFLIB = /nodefaultlib
+!endif
+LINK_FLAGS=/nologo /dll /release /merge:.rdata=.text $(LINK_MACHINE) $(NOWIN98) $(NOENTRY) $(NODEFLIB) $(ENV_LIB_OPT) /def:"$(DEF)" /map:"$(MAP)" /out:"$(DLLFULLNAME)"
+!else
+LINK_DEBUG=-v
+CPP_DEBUG=/Z7
+LNK=$(_ULINK_PATH_)ulink.exe +-
+!ifndef NEEDENTRY
+NOENTRY = -e-
+!endif
+!ifndef NEEDDEFLIB
+NODEFLIB = -n
+!endif
+LINK_FLAGS=-q $(ULOUT) -Gz -m- -Gh -Gh- $(LINK_MACHINE) $(NOENTRY) $(NODEFLIB) /ZD:"$(DEF)" /ZM:"$(MAP)" /ZO:"$(DLLFULLNAME)" $(ENV_LIB_OPT)
+!endif
 
 !ifndef DEBUG
 !undef LINK_DEBUG
@@ -241,15 +253,15 @@ SRC_PATHS=.;..\common
 .path.def=$(SRC_PATHS)
 !endif
 
-ALL: dirs $(INSTALL) $(DLLFULLNAME) clean $(SUBMODULES)
+ALL: dirs $(INSTALL) $(DLLFULLNAME) clean
 
-$(DLLFULLNAME) : $(LINK_OBJS) $(RES) $(LINK_DEP)
+$(DLLFULLNAME) : $(LINK_OBJS) $(LINK_DEP)
 !ifndef __MAKE__
 	@$(LNK) @<<
-	$(LINK_FLAGS) $(LINK_DEBUG) $(LIBS) $(LINK_OBJS) $(RES)
+	$(LINK_FLAGS) $(LINK_DEBUG) $(LIBS) $(LINK_OBJS)
 <<
 !else
-	@$(LNK) $(LINK_FLAGS) $(LINK_DEBUG) $(LIBS) $(LINK_OBJS) $(RES)
+	@$(LNK) $(LINK_FLAGS) $(LINK_DEBUG) $(LIBS) $(LINK_OBJS)
 !endif
 !ifdef DOCS
 !ifndef WIDE
@@ -278,12 +290,11 @@ $(DLLFULLNAME) : $(LINK_OBJS) $(RES) $(LINK_DEP)
 
 {../common/}.cpp{$(OBJDIR)}.obj:
 	@$(CC) $(CFLAGS) { $< } 
-
 !endif
 
-$(RES): $(RC_NAME).rc
-	@$(RC) /I"$(COMINC)" $(ENV_INC_OPT) $(RCWIN64) $(RC_WIDE) /fo"$(RES)" $(RC_NAME).rc
-
+#$(RES): $(RC_NAME).rc
+#	@$(RC) /I"$(COMINC)" $(ENV_INC_OPT) $(RCWIN64) $(RC_WIDE) /fo"$(RES)" $(RC_NAME).rc
+ 
 .PHONY: dirs
 dirs:
 !ifdef INSTALL
@@ -293,47 +304,24 @@ dirs:
 	@if not exist "$(OUTDIR)\$(NULL)" mkdir "$(OUTDIR)"
 	@if not exist "$(OUTDIR)$(ADDOUTDIR)\$(NULL)" mkdir "$(OUTDIR)$(ADDOUTDIR)"
 
+!ifndef DEBUG
 .PHONY: clean
 clean:
-	echo copying release files
-	copy $(DLLFULLNAME) ..\..\$(RELEASEDIRx64)
-	move $(DLLFULLNAME) ..\..\$(RELEASEDIRx86)
-	move $(PDBNAME) ..\..\$(RELEASEDIR)
-	move $(MAP) ..\..\$(RELEASEDIR)
+	@echo copying release files
+	@move $(DLLFULLNAME) $(OUTNAME).dll
+	@move $(PDBNAME) $(OUTNAME).pdb
+	@move $(MAP) $(OUTNAME).map
 
-#	echo final cleaning
-#	echo del /Q $(OBJDIR)\*.*
-#	del /Q $(OBJDIR)\*.*
-#	echo rd $(OBJDIR)
-#	rd $(OBJDIR)
-#	echo del /Q $(OUTDIR)$(ADDOUTDIR)\*.*
-#	del /Q $(OUTDIR)$(ADDOUTDIR)\*.*
-#	echo rd $(OUTDIR)$(ADDOUTDIR)
-#	rd $(OUTDIR)$(ADDOUTDIR)
+#	@echo final cleaning
+#	@del /Q $(OBJDIR)\*.*
+#	@rd $(OBJDIR)
+#	@del /Q $(OUTDIR)$(ADDOUTDIR)\*.*
+#	@rd $(OUTDIR)$(ADDOUTDIR)
 
-$(OBJDIR)\ConEmuTh.obj: ConEmuTh.cpp
+!else
+.PHONY: clean
+clean:
+	@echo ConEmuHk done
+!endif
 
-$(OBJDIR)\ConEmuTh995.obj: ConEmuTh995.cpp
-
-$(OBJDIR)\ConEmuThA.obj: ConEmuThA.cpp
-
-$(OBJDIR)\Display.obj: Display.cpp
-
-$(OBJDIR)\ImgCache.obj: ImgCache.cpp
-
-$(OBJDIR)\RgnDetect.obj: ..\common\RgnDetect.cpp
-
-$(OBJDIR)\common.obj: ..\common\common.cpp
-
-$(OBJDIR)\WinObjects.obj: ..\common\WinObjects.cpp
-
-
-
-FICTIVE=_fictive_
-$(FICTIVE):
-
-$(SUBMODULES): $(FICTIVE)
-	@echo ===========$@.$(BUILD_SUFFUX)
-	@cd Modules\$@
-	@$(MAKE) -s -f makefile_vc $(_MDEFS)
-	@cd ..\..
+$(OBJDIR)\pe.obj: pe.cpp

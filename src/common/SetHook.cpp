@@ -52,6 +52,7 @@ extern HWND ConEmuHwnd; // Содержит хэндл окна отрисовки. Это ДОЧЕРНЕЕ окно.
 extern HWND FarHwnd;
 extern BOOL gbFARuseASCIIsort;
 extern DWORD gdwServerPID;
+extern BOOL gbShellNoZoneCheck;
 
 static const wchar_t kernel32[] = L"kernel32.dll";
 static const wchar_t user32[]   = L"user32.dll";
@@ -1090,11 +1091,15 @@ static BOOL WINAPI OnTrackPopupMenuEx(HMENU hmenu, UINT fuFlags, int x, int y, H
 	return lbRc;
 }
 
+#ifndef SEE_MASK_NOZONECHECKS
+#define SEE_MASK_NOZONECHECKS      0x00800000
+#endif
+
 typedef BOOL (WINAPI* OnShellExecuteExA_t)(LPSHELLEXECUTEINFOA lpExecInfo);
 static BOOL WINAPI OnShellExecuteExA(LPSHELLEXECUTEINFOA lpExecInfo)
 {
 	ORIGINALFAST(ShellExecuteExA);
-	
+
 	if (ConEmuHwnd) {
 		if (!lpExecInfo->hwnd || lpExecInfo->hwnd == GetConsoleWindow())
 			lpExecInfo->hwnd = GetParent(ConEmuHwnd);
@@ -1102,6 +1107,9 @@ static BOOL WINAPI OnShellExecuteExA(LPSHELLEXECUTEINFOA lpExecInfo)
 	
 	BOOL lbRc;
 	
+	if (gbShellNoZoneCheck)
+		lpExecInfo->fMask |= SEE_MASK_NOZONECHECKS;
+
 	lbRc = F(ShellExecuteExA)(lpExecInfo);
 	
 	return lbRc;
@@ -1128,6 +1136,9 @@ static BOOL WINAPI OnShellExecuteExW(LPSHELLEXECUTEINFOW lpExecInfo)
 	}
 
 	BOOL lbRc;
+
+	if (gbShellNoZoneCheck)
+		lpExecInfo->fMask |= SEE_MASK_NOZONECHECKS;
 
 	//BUGBUG: FAR периодически валится на этой функции
 	//должно быть: lpExecInfo->cbSize==0x03C; lpExecInfo->fMask==0x00800540;

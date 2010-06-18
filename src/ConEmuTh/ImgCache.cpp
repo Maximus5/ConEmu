@@ -413,6 +413,19 @@ BOOL CImgCache::PaintItem(HDC hdc, int x, int y, int nImgSize, CePluginPanelItem
 	int nIndex = -1;
 	if (!CheckDibCreated())
 		return FALSE;
+
+	if (!pItem || !pItem->pszFullName) {
+		#ifdef _DEBUG
+		_ASSERTE(pItem!=NULL);
+		if (pItem) _ASSERTE(pItem->pszFullName != NULL);
+		#endif
+
+		// Очистить
+		RECT rc = {x,y,x+nImgSize,y+nImgSize};
+		FillRect(hdc, &rc, hbrBack);
+
+		return TRUE;
+	}
 	
 	BOOL lbWasDraw = FALSE;
 	//BOOL lbWasPreview = FALSE;
@@ -463,8 +476,12 @@ BOOL CImgCache::PaintItem(HDC hdc, int x, int y, int nImgSize, CePluginPanelItem
 		*pbIgnoreFileDescription = CacheInfo[nIndex].bIgnoreFileDescription;
 	
 	// Скинуть биты в MemDC
-	CopyBits(CacheInfo[nIndex].crSize, (LPBYTE)(CacheInfo[nIndex].Pixels), CacheInfo[nIndex].cbStride,
-		mcr_DibSize, mp_DibBytes);
+	if (CacheInfo[nIndex].cbStride) {
+		CopyBits(CacheInfo[nIndex].crSize, (LPBYTE)(CacheInfo[nIndex].Pixels), CacheInfo[nIndex].cbStride,
+			mcr_DibSize, mp_DibBytes);
+	} else {
+		_ASSERTE(CacheInfo[nIndex].cbStride!=0);
+	}
 	//int nMaxY = min(nPreviewSize,CacheInfo[nIndex].crSize.Y);
 	//LPBYTE lpSrc = (LPBYTE)(CacheInfo[nIndex].Pixels);
 	//_ASSERTE(lpSrc);
@@ -715,6 +732,11 @@ BOOL CImgCache::LoadShellIcon(struct tag_CacheInfo* pItem)
 	if (!CheckDibCreated())
 		return FALSE;
 
+	if (!pItem->lpwszFileName) {
+		_ASSERTE(pItem->lpwszFileName);
+		return FALSE;
+	}
+
 	if (pItem->Pixels && pItem->cbPixelsSize) {
 		memset(pItem->Pixels, 0, pItem->cbPixelsSize);
 	}
@@ -797,6 +819,11 @@ BOOL CImgCache::LoadThumbnail(struct tag_CacheInfo* pItem)
 	if (!CheckDibCreated())
 		return FALSE;
 
+	if (!pItem->lpwszFileName) {
+		_ASSERTE(pItem->lpwszFileName);
+		return FALSE;
+	}
+
 	BOOL lbThumbRc = FALSE;
 	struct CET_LoadInfo PV = {sizeof(struct CET_LoadInfo)};
 
@@ -867,7 +894,7 @@ BOOL CImgCache::LoadThumbnail(struct tag_CacheInfo* pItem)
 			}
 
 			TODO("Потом может быть не только Pixels, например только информация о версии dll");	
-			if (!lbLoadRc || !PV.Pixels || !PV.cbPixelsSize) {
+			if (!lbLoadRc || ((!PV.Pixels || !PV.cbPixelsSize) && !PV.pszComments)) {
 				if (PV.pFileContext) {
 					 SAFETRY  {
 						Modules[i].FreeInfo(&PV);
@@ -877,22 +904,31 @@ BOOL CImgCache::LoadThumbnail(struct tag_CacheInfo* pItem)
 				continue;
 			}
 
-			if (pItem->Pixels && pItem->cbPixelsSize < PV.cbPixelsSize) {
+			if (PV.Pixels && pItem->Pixels && pItem->cbPixelsSize < PV.cbPixelsSize) {
 				free(pItem->Pixels); pItem->Pixels = NULL;
 			}
-			if (!pItem->Pixels) {
-				pItem->Pixels = (LPDWORD)malloc(PV.cbPixelsSize);
-				if (!pItem->Pixels) {
-					_ASSERTE(pItem->Pixels);
-					 SAFETRY  {
-						Modules[i].FreeInfo(&PV);
-					} SAFECATCH  {
+			if (PV.Pixels)
+			{
+				if (!pItem->Pixels)
+				{
+					pItem->Pixels = (LPDWORD)malloc(PV.cbPixelsSize);
+					if (!pItem->Pixels) {
+						_ASSERTE(pItem->Pixels);
+						 SAFETRY  {
+							Modules[i].FreeInfo(&PV);
+						} SAFECATCH  {
+						}
+						continue;
 					}
-					continue;
+					pItem->cbPixelsSize = PV.cbPixelsSize;
 				}
-				pItem->cbPixelsSize = PV.cbPixelsSize;
+				memmove(pItem->Pixels, PV.Pixels, PV.cbPixelsSize);
+
+				pItem->crSize = PV.crSize; // Предпочтительно, должен совпадать с crLoadSize
+				pItem->cbStride = PV.cbStride; // Bytes per line
+				pItem->nBits = PV.nBits; // 32 bit required!
+				pItem->ColorModel = PV.ColorModel; // One of CET_CM_xxx
 			}
-			memmove(pItem->Pixels, PV.Pixels, PV.cbPixelsSize);
 			pItem->bPreviewExists = (PV.Pixels!=NULL);
 			
 			if (PV.pszComments && !lbIgnoreComments) {
@@ -917,10 +953,6 @@ BOOL CImgCache::LoadThumbnail(struct tag_CacheInfo* pItem)
 			//	LocalFree(pItem->pszInfo);
 			//pItem->pszInfo = PV.pszInfo;
 
-			pItem->crSize = PV.crSize; // Предпочтительно, должен совпадать с crLoadSize
-			pItem->cbStride = PV.cbStride; // Bytes per line
-			pItem->nBits = PV.nBits; // 32 bit required!
-			pItem->ColorModel = PV.ColorModel; // One of CET_CM_xxx
 			
 			 SAFETRY  {
 				Modules[i].FreeInfo(&PV);

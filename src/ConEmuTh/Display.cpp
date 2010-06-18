@@ -438,6 +438,14 @@ BOOL CeFullPanelInfo::PaintItem(
 	if (gbCancelAll)
 		return FALSE;
 
+	if (!pItem || !pItem->pszFullName) {
+		#ifdef _DEBUG
+		_ASSERTE(pItem!=NULL);
+		if (pItem) _ASSERTE(pItem->pszFullName != NULL);
+		#endif
+		return FALSE;
+	}
+
 	RECT rcFull = {x, y, x+nWholeW, y+nWholeH};
 	FillRect(hdc, &rcFull, hPanelBrush); //hBack[0]);
 

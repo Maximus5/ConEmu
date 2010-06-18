@@ -2474,7 +2474,19 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 				if (in.hdr.nCmd == CECMD_SETSIZESYNC) {
 					CESERVER_REQ *pPlgIn = NULL, *pPlgOut = NULL;
 					//TODO("Пока закомментарим, чтобы GUI реагировало побыстрее");
-					if (in.SetSize.dwFarPID && !nBufferHeight) {
+					if (in.SetSize.dwFarPID /*&& !nBufferHeight*/) {
+						// Во избежание каких-то накладок FAR (по крайней мере с /w)
+						// стал ресайзить панели только после дерганья мышкой над консолью
+						CONSOLE_SCREEN_BUFFER_INFO sc = {{0,0}};
+						GetConsoleScreenBufferInfo(ghConOut, &sc);
+						HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE);
+						INPUT_RECORD r = {MOUSE_EVENT};
+						r.Event.MouseEvent.dwMousePosition.X = sc.srWindow.Right-1;
+						r.Event.MouseEvent.dwMousePosition.Y = sc.srWindow.Bottom-1;
+						r.Event.MouseEvent.dwEventFlags = MOUSE_MOVED;
+						DWORD cbWritten = 0;
+						WriteConsoleInput(hIn, &r, 1, &cbWritten);
+
 						// Команду можно выполнить через плагин FARа
 						wchar_t szPipeName[128];
 						wsprintf(szPipeName, CEPLUGINPIPENAME, L".", in.SetSize.dwFarPID);
@@ -2488,6 +2500,9 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 
 					SetEvent(srv.hAllowInputEvent);
 					srv.bInSyncResize = FALSE;
+
+					// Передернуть RefreshThread - перечитать консоль
+					ReloadFullConsoleInfo(FALSE); // вызовет Refresh в нити Refresh
 				}
 
 				MCHKHEAP;
@@ -3021,9 +3036,10 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 		if (crNewSize.X <= (csbi.srWindow.Right-csbi.srWindow.Left) || crNewSize.Y <= (csbi.srWindow.Bottom-csbi.srWindow.Top))
 		{
 			//MoveWindow(ghConWnd, rcConPos.left, rcConPos.top, 1, 1, 1);
-			rNewRect.Left = 0; rNewRect.Top = 0;
+			rNewRect.Left = 0;
+			rNewRect.Top = max(0,(csbi.srWindow.Bottom-crNewSize.Y+1));
 			rNewRect.Right = min((crNewSize.X - 1),(csbi.srWindow.Right-csbi.srWindow.Left));
-			rNewRect.Bottom = min((crNewSize.Y - 1),(csbi.srWindow.Bottom-csbi.srWindow.Top));
+			rNewRect.Bottom = min((BufferHeight - 1),(rNewRect.Top+crNewSize.Y-1));//(csbi.srWindow.Bottom-csbi.srWindow.Top));
 			if (!SetConsoleWindowInfo(ghConOut, TRUE, &rNewRect))
 				MoveWindow(ghConWnd, rcConPos.left, rcConPos.top, 1, 1, 1);
 		}

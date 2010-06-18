@@ -447,7 +447,7 @@ BOOL CRealConsole::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuff
 	lIn.SetSize.size.Y = sizeY;
     lIn.SetSize.nSendTopLine = (gSet.AutoScroll || !con.bBufferHeight) ? -1 : con.nTopVisibleLine;
     lIn.SetSize.rcWindow = rect;
-	lIn.SetSize.dwFarPID = con.bBufferHeight ? 0 : GetFarPID();
+	lIn.SetSize.dwFarPID = (con.bBufferHeight && !isFarBufferSupported()) ? 0 : GetFarPID();
 
 	// Если размер менять не нужно - то и CallNamedPipe не делать
 	//if (mp_ConsoleInfo) {
@@ -543,12 +543,17 @@ BOOL CRealConsole::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuff
 
 					nWait = WaitForSingleObject(mh_ApplyFinished, SETSYNCSIZEAPPLYTIMEOUT);
 
-					#ifdef _DEBUG
 					COORD crDebugCurSize = con.m_sbi.dwSize;
 					if (crDebugCurSize.X != sizeX) {
-						_ASSERTE(crDebugCurSize.X == sizeX);
+						if (gSet.isAdvLogging) {
+							char szInfo[128]; wsprintfA(szInfo, "SetConsoleSize FAILED!!! ReqSize={%ix%i}, OutSize={%ix%i}", sizeX, (sizeBuffer ? sizeBuffer : sizeY), crDebugCurSize.X, crDebugCurSize.Y);
+							LogString(szInfo);
+						}
+						#ifdef _DEBUG
+						//_ASSERTE(crDebugCurSize.X == sizeX);
+						crDebugCurSize.X != sizeX;
+						#endif
 					}
-					#endif
 				}
 
 				if (gSet.isAdvLogging){
@@ -754,6 +759,11 @@ void CRealConsole::SyncConsole2Window()
 			newCon.right = newCon.right;
 		}
 #endif
+
+		// Сразу поставим, чтобы в основной нити при синхронизации размер не слетел
+		PRAGMA_ERROR("Необходимо заблокировать RefreshThread, чтобы не вызывался ApplyConsoleInfo ДО ЗАВЕРШЕНИЯ SetConsoleSize");
+		con.nChange2TextWidth = newCon.right; con.nChange2TextHeight = newCon.bottom;
+
 		SetConsoleSize(newCon.right, newCon.bottom, 0/*Auto*/);
 
 		if (isActive() && gConEmu.isMainThread()) {
@@ -2909,7 +2919,7 @@ LRESULT CRealConsole::OnSetScrollPos(WPARAM wParam)
 {
 	if (!this) return 0;
 	// SB_LINEDOWN / SB_LINEUP / SB_PAGEDOWN / SB_PAGEUP
-	WARNING("Переделать в команду пайпа");
+	TODO("Переделать в команду пайпа"); // не критично. если консоль под админом - сообщение посылается через пайп в сервер, а он уже пересылает в консоль
 	PostConsoleMessage(hConWnd, WM_VSCROLL, wParam, NULL);
 	return 0;
 }
@@ -3736,8 +3746,9 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 					mb_IgnoreCmdStop = FALSE; // наверное сразу сбросим, две подряд прийти не могут
 					
     				DEBUGSTRCMD(L"16 bit application TERMINATED (aquired from CECMD_CMDFINISHED)\n");
-                    mn_ProgramStatus &= ~CES_NTVDM;
+                    //mn_ProgramStatus &= ~CES_NTVDM; -- сбросим после синхронизации размера консоли, чтобы не слетел
     				SyncConsole2Window(); // После выхода из 16bit режима хорошо бы отресайзить консоль по размеру GUI
+					mn_ProgramStatus &= ~CES_NTVDM;
 					lbNeedResizeWnd = FALSE;
 					crNewSize.X = TextWidth();
 					crNewSize.Y = TextHeight();
@@ -8553,6 +8564,7 @@ void CRealConsole::UpdateFarSettings(DWORD anFarPID/*=0*/)
     wchar_t *szData = pSetEnvVar->szEnv;
     
     pSetEnvVar->bFARuseASCIIsort = gSet.isFARuseASCIIsort;
+    pSetEnvVar->bShellNoZoneCheck = gSet.isShellNoZoneCheck;
 
     BOOL lbNeedQuot = (wcschr(gConEmu.ms_ConEmuCExe, L' ') != NULL);
     wchar_t* pszName = szData;
@@ -9435,6 +9447,8 @@ void CRealConsole::ApplyConsoleInfo()
     BOOL bBufRecreated = FALSE;
 	BOOL lbChanged = FALSE;
 
+	PRAGMA_ERROR("Нельзя выполнять эту функцию пока выполяется SetConsoleSizeSrv в другой нити");
+
 #ifdef _DEBUG
 	if (con.bDebugLocked)
 		return;
@@ -9597,6 +9611,7 @@ void CRealConsole::ApplyConsoleInfo()
 		TODO("Во время ресайза консоль может подглючивать - отдает не то что нужно...");
 		//_ASSERTE(*con.pConChar!=ucBoxDblVert);
 	    
+		PRAGMA_ERROR("Нельзя сбрасывать эти переменные пока выполяется SetConsoleSizeSrv в другой нити");
 		con.nChange2TextWidth = -1;
 		con.nChange2TextHeight = -1;
 

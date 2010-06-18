@@ -173,6 +173,8 @@ PanelViewRegInfo gPanelRegRight = {NULL};
 HANDLE ghConEmuCtrlPressed = NULL, ghConEmuShiftPressed = NULL;
 BOOL gbWaitConsoleInputEmpty = FALSE, gbWaitConsoleWrite = FALSE; //, gbWaitConsoleInputPeek = FALSE;
 HANDLE ghConsoleInputEmpty = NULL, ghConsoleWrite = NULL; //, ghConsoleInputWasPeek = NULL;
+// SEE_MASK_NOZONECHECKS
+BOOL gbShellNoZoneCheck = FALSE;
 
 
 //std::vector<HANDLE> ghCommandThreads;
@@ -3556,6 +3558,7 @@ DWORD WINAPI PlugServerThreadCommand(LPVOID ahPipe)
 	    wchar_t *pszName = pSetEnvVar->szEnv;
 	    
 	    gbFARuseASCIIsort = pSetEnvVar->bFARuseASCIIsort;
+		gbShellNoZoneCheck = pSetEnvVar->bShellNoZoneCheck;
 		
 
 		_ASSERTE(nDataSize<sizeof(gsMonitorEnvVar));

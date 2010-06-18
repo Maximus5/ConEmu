@@ -528,6 +528,12 @@ int ServerInit()
 		_printf("CreateEvent(hRefreshEvent) failed, ErrCode=0x%08X\n", dwErr); 
 		iRc = CERR_REFRESHEVENT; goto wrap;
 	}
+	srv.hRefreshDoneEvent = CreateEvent(NULL,FALSE,FALSE,NULL);
+	if (!srv.hRefreshDoneEvent) {
+		dwErr = GetLastError();
+		_printf("CreateEvent(hRefreshDoneEvent) failed, ErrCode=0x%08X\n", dwErr); 
+		iRc = CERR_REFRESHEVENT; goto wrap;
+	}
 	srv.hDataReadyEvent = CreateEvent(gpNullSecurity,FALSE,FALSE,srv.szDataReadyEvent);
 	if (!srv.hDataReadyEvent) {
 		dwErr = GetLastError();
@@ -612,14 +618,14 @@ int ServerInit()
 	// Обновить переменные окружения
 	{
 		DWORD dwGuiThreadId, dwGuiProcessId;
-		MFileMapping<ConEmuInfo> GuiInfoMapping;
+		MFileMapping<ConEmuGuiInfo> GuiInfoMapping;
 		dwGuiThreadId = GetWindowThreadProcessId(ghConEmuWnd, &dwGuiProcessId);
 		if (!dwGuiThreadId) {
 			_ASSERTE(dwGuiProcessId);
 		} else {
 			GuiInfoMapping.InitName(CEGUIINFOMAPNAME, dwGuiProcessId);
-			const ConEmuInfo* pInfo = GuiInfoMapping.Open();
-			if (pInfo && pInfo->cbSize == sizeof(ConEmuInfo)) {
+			const ConEmuGuiInfo* pInfo = GuiInfoMapping.Open();
+			if (pInfo && pInfo->cbSize == sizeof(ConEmuGuiInfo)) {
 				SetEnvironmentVariableW(L"ConEmuDir", pInfo->sConEmuDir);
 				SetEnvironmentVariableW(L"ConEmuArgs", pInfo->sConEmuArgs);
 				wchar_t szHWND[16]; wsprintf(szHWND, L"0x%08X", pInfo->hGuiWnd.u);
@@ -750,6 +756,9 @@ void ServerDone(int aiRc)
 	
 	if (srv.hRefreshEvent) {
 		SafeCloseHandle(srv.hRefreshEvent);
+	}
+	if (srv.hRefreshDoneEvent) {
+		SafeCloseHandle(srv.hRefreshDoneEvent);
 	}
 	if (srv.hDataReadyEvent) {
 		SafeCloseHandle(srv.hDataReadyEvent);
@@ -1668,9 +1677,10 @@ BOOL ReloadFullConsoleInfo(BOOL abForceSend)
 	if (srv.dwRefreshThread && dwCurThId != srv.dwRefreshThread) {
 		//ResetEvent(srv.hDataReadyEvent);
 		
+		ResetEvent(srv.hRefreshDoneEvent);
 		SetEvent(srv.hRefreshEvent);
 		// Ожидание, пока сработает RefreshThread
-		HANDLE hEvents[2] = {ghQuitEvent, srv.hRefreshEvent};
+		HANDLE hEvents[2] = {ghQuitEvent, srv.hRefreshDoneEvent};
 		DWORD nWait = WaitForMultipleObjects ( 2, hEvents, FALSE, RELOAD_INFO_TIMEOUT );
 		lbChanged = (nWait == (WAIT_OBJECT_0+1));
 		
@@ -1940,6 +1950,7 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 	DWORD nLastConHandleTick = GetTickCount();
 	BOOL  /*lbEventualChange = FALSE,*/ lbForceSend = FALSE, lbChanged = FALSE; //, lbProcessChanged = FALSE;
 	DWORD dwTimeout = 10; // периодичность чтения информации об окне (размеров, курсора,...)
+	//BOOL  bForceRefreshSetSize = FALSE; // После изменения размера нужно сразу перечитать консоль без задержек
 
 	while (TRUE)
 	{
@@ -2032,7 +2043,7 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 
 		// Чтобы не грузить процессор неактивными консолями
 		//if (!lbForceSend) {
-		if (!srv.pConsole->hdr.bConsoleActive) {
+		if (!srv.pConsole->hdr.bConsoleActive && (nWait != (WAIT_OBJECT_0+1))) {
 			DWORD nCurTick = GetTickCount();
 			nDelta = nCurTick - nLastUpdateTick;
 			// #define MAX_FORCEREFRESH_INTERVAL 1000
@@ -2084,7 +2095,8 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 		/* Перечитать консоль */
 		/* ****************** */
 		lbChanged = ReloadFullConsoleInfo(FALSE/*lbForceSend*/);
-
+		if (nWait == (WAIT_OBJECT_0+1))
+			SetEvent(srv.hRefreshDoneEvent);
 		
 		// При изменениях - запомнить последний tick
 		if (lbChanged)

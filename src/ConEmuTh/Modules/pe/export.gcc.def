@@ -1,0 +1,6 @@
+EXPORTS
+	GetMinFarVersionW=GetMinFarVersionW@0
+	GetPluginInfoW=GetPluginInfoW@4
+	SetStartupInfoW=SetStartupInfoW@4
+	GetCustomDataW=GetCustomDataW@8
+	FreeCustomDataW=FreeCustomDataW@4

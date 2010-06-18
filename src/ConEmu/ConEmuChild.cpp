@@ -387,6 +387,8 @@ void CConEmuChild::Validate()
 WARNING("!!! На время скроллирования необходимо установить AutoScroll в TRUE, а при отпускании ползунка - вернуть старое значение!");
 TODO("И вообще, скроллинг нужно передавать через pipe");
 
+#define SCROLLHIDE_TIMER_ID 1726
+
 CConEmuBack::CConEmuBack()
 {
 	mh_WndBack = NULL;
@@ -535,6 +537,11 @@ LRESULT CALLBACK CConEmuBack::BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, 
 			// -- не должно вызываться вообще
 			_ASSERTE(messg!=WM_VSCROLL);
 	        break;
+		case WM_TIMER:
+			if (wParam == SCROLLHIDE_TIMER_ID) {
+				gConEmu.m_Back->TrackMouse();
+			}
+			break;
 		case WM_PAINT:
 			{
 				PAINTSTRUCT ps; memset(&ps, 0, sizeof(ps));
@@ -714,6 +721,7 @@ BOOL CConEmuBack::TrackMouse()
 				mb_ScrollVisible = TRUE;
 				apiShowWindow(mh_WndScroll, SW_SHOWNOACTIVATE);
 				SetWindowPos(mh_WndScroll, HWND_TOP, 0,0,0,0, SWP_NOSIZE|SWP_NOMOVE|SWP_SHOWWINDOW);
+				SetTimer(mh_WndBack, SCROLLHIDE_TIMER_ID, 500, NULL);
 			}
 			lbRc = TRUE;
 		} else if (mb_ScrollVisible) {
@@ -729,6 +737,7 @@ BOOL CConEmuBack::TrackMouse()
 	
 	if (lbHided)
 	{
+		KillTimer(mh_WndBack, SCROLLHIDE_TIMER_ID);
 		RECT rcScroll; GetWindowRect(mh_WndScroll, &rcScroll);
 		if (IsWindowVisible(ghWndDC)) {
 			MapWindowPoints(NULL, ghWndDC, (LPPOINT)&rcScroll, 2);

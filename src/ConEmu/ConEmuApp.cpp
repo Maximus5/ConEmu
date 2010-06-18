@@ -36,6 +36,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define DEBUGSTRMOVE(s) //DEBUGSTR(s)
 
+WARNING("Заменить все MBoxAssert, _ASSERT, _ASSERTE на WaitForSingleObject(CreateThread(out,Title,dwMsgFlags),INFINITE);");
+
 
 #ifdef MSGLOGGER
 BOOL bBlockDebugLog=false, bSendToDebugger=true, bSendToFile=false;
@@ -473,6 +475,9 @@ int DisplayLastError(LPCTSTR asLabel, DWORD dwError /* =0 */, DWORD dwMsgFlags /
 	wsprintf(out, _T("%s\nLastError=0x%08X\n%s"), asLabel, dw, lpMsgBuf);
 	if (gbMessagingStarted) apiSetForegroundWindow(ghWnd);
 	if (!dwMsgFlags) dwMsgFlags = MB_SYSTEMMODAL | MB_ICONERROR;
+
+	WARNING("!!! Заменить MessageBox на WaitForSingleObject(CreateThread(out,Title,dwMsgFlags),INFINITE);");
+
 	nBtn = MessageBox(gbMessagingStarted ? ghWnd : NULL, out, gConEmu.GetTitle(), dwMsgFlags);
 	MCHKHEAP
 		LocalFree(lpMsgBuf);

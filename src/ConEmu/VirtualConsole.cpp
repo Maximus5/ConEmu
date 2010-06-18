@@ -1320,7 +1320,13 @@ bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC)
     }
 
     // Первая инициализация, или смена размера
-    if (isForce || !mb_PointersAllocated || TextWidth != (uint)winSize.X || TextHeight != (uint)winSize.Y) {
+	BOOL lbSizeChanged = (TextWidth != (uint)winSize.X || TextHeight != (uint)winSize.Y);
+	#ifdef _DEBUG
+	COORD dbgWinSize = winSize;
+	COORD dbgTxtSize = {TextWidth,TextHeight};
+	#endif
+    if (isForce || !mb_PointersAllocated || lbSizeChanged) {
+
         if (pSDC && !pSDC->isLocked()) // Если секция еще не заблокирована (отпускает - вызывающая функция)
             pSDC->Lock(&csDC, TRUE, 200); // но по таймауту, чтобы не повисли ненароком
         if (!InitDC(ahDc!=NULL && !isForce/*abNoDc*/, false/*abNoWndResize*/))
@@ -1333,7 +1339,9 @@ bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC)
 			TextWidth = TextWidth;
 		}
 		#endif
-        gConEmu.OnConsoleResize();
+
+		if (lbSizeChanged)
+			gConEmu.OnConsoleResize();
     }
     
     // Требуется полная перерисовка!

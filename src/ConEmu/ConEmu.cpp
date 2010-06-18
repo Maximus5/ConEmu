@@ -525,7 +525,7 @@ BOOL CConEmuMain::CreateMainWindow()
 	//if (gConEmu.WindowMode == rFullScreen || gConEmu.WindowMode == rMaximized)
 	//	gConEmu.SetWindowMode(gConEmu.WindowMode);
 
-	ConEmuInfo ceInfo = {sizeof(ConEmuInfo)};
+	ConEmuGuiInfo ceInfo = {sizeof(ConEmuGuiInfo)};
 	ceInfo.hGuiWnd = ghWnd;
 	wchar_t *pszSlash = wcsrchr(ms_ConEmuExe, L'\\');
 	*pszSlash = 0;

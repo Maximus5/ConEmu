@@ -248,7 +248,7 @@ void CSettings::InitSettings()
     isMulti = true; icMultiNew = 'W'; icMultiNext = 'Q'; icMultiRecreate = 192/*VK_тильда*/; icMultiBuffer = 'A'; 
     isMultiNewConfirm = true; isUseWinNumber = true; nMultiHotkeyModifier = VK_LWIN; TestHostkeyModifiers();
     m_isKeyboardHooks = 0;
-    isFARuseASCIIsort = false; isFixAltOnAltTab = false;
+    isFARuseASCIIsort = false; isFixAltOnAltTab = false; isShellNoZoneCheck = false;
     isFadeInactive = true; mn_FadeLow = DEFAULT_FADE_LOW; mn_FadeHigh = DEFAULT_FADE_HIGH; mb_FadeInitialized = false;
 	//nFadeInactiveMask = 0xD0D0D0;
     // Logging
@@ -643,6 +643,8 @@ void CSettings::LoadSettings()
         reg->Load(L"Min2Tray", isMinToTray);
         
         reg->Load(L"FARuseASCIIsort", isFARuseASCIIsort);
+        reg->Load(L"ShellNoZoneCheck", isShellNoZoneCheck);
+
         reg->Load(L"FixAltOnAltTab", isFixAltOnAltTab);
 
         reg->Load(L"BackGround Image show", isShowBgImage);
@@ -1094,6 +1096,8 @@ BOOL CSettings::SaveSettings()
             reg->Save(L"Min2Tray", isMinToTray);
             
 	        reg->Save(L"FARuseASCIIsort", isFARuseASCIIsort);
+	        reg->Save(L"ShellNoZoneCheck", isShellNoZoneCheck);
+
 	        reg->Save(L"FixAltOnAltTab", isFixAltOnAltTab);
             
             reg->Save(L"RSelectionFix", isRSelFix);
@@ -1666,6 +1670,7 @@ LRESULT CSettings::OnInitDialog_Ext()
 	if (isEnhanceGraphics) CheckDlgButton(hExt, cbEnhanceGraphics, BST_CHECKED);
 	
 	if (isFARuseASCIIsort) CheckDlgButton(hExt, cbFARuseASCIIsort, BST_CHECKED);
+	if (isShellNoZoneCheck) CheckDlgButton(hExt, cbShellNoZoneCheck, BST_CHECKED);
 	if (isFixAltOnAltTab) CheckDlgButton(hExt, cbFixAltOnAltTab, BST_CHECKED);
 
 	if (isFarHourglass) CheckDlgButton(hExt, cbFarHourglass, BST_CHECKED);
@@ -2203,6 +2208,11 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
 
     case cbFARuseASCIIsort:
     	isFARuseASCIIsort = IsChecked(hExt, cbFARuseASCIIsort);
+    	gConEmu.UpdateFarSettings();
+    	break;
+
+    case cbShellNoZoneCheck:
+    	isShellNoZoneCheck = IsChecked(hExt, cbShellNoZoneCheck);
     	gConEmu.UpdateFarSettings();
     	break;
 

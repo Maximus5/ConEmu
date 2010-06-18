@@ -245,7 +245,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define CECMD_SETWINDOWRGN  33 // CESERVER_REQ_SETWINDOWRGN.
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    44
+#define CESERVER_REQ_VER    45
 
 #define PIPEBUFSIZE 4096
 #define DATAPIPEBUFSIZE 40000
@@ -426,14 +426,22 @@ typedef struct tag_PanelViewInit {
 } PanelViewInit;
 
 
-typedef struct tag_ConEmuInfo {
+typedef struct tag_ConEmuGuiInfo {
 	DWORD    cbSize;
 	HWND2    hGuiWnd; // основное (корневое) окно ConEmu
 	wchar_t  sConEmuDir[MAX_PATH+1];
 	wchar_t  sConEmuArgs[MAX_PATH*2];
 	DWORD    bUseInjects; // 0-off, 1-on. Далее могут быть доп.флаги (битмаск)? chcp, Hook HKCU\FAR[2] & HKLM\FAR and translate them to hive, ...
 	wchar_t  sInjectsDir[MAX_PATH+1]; // path to "conemu.dll" & "conemu.x64.dll"
-} ConEmuInfo;
+	// Для облегчения Inject-ов наверное можно сразу пути в конкретным файлам заполнить.
+	wchar_t  sInjects32[MAX_PATH+16], sInjects64[MAX_PATH+16];
+	// Kernel32 загружается по фиксированному адресу, НО
+	// для 64-битной программы он один, а для 32-битной ест-но другой.
+	// Поэтому в 64-битных системых НЕОБХОДИМО пользоваться 64-битной версией ConEmu.exe
+	// которая сможет корректно определить адрес для 64-битного kernel,
+	// а адрес 32-битного kernel сможет вытащить через его экспорты.
+	ULONGLONG ptrLoadLib32, ptrLoadLib64;
+} ConEmuGuiInfo;
 
 
 TODO("Restrict CONEMUTABMAX to 128 chars. Only filename, and may be ellipsed...");
@@ -729,6 +737,7 @@ typedef struct tag_CESERVER_REQ_FLASHWINFO {
 // CMD_SETENVVAR - FAR plugin
 typedef struct tag_FAR_REQ_SETENVVAR {
 	BOOL    bFARuseASCIIsort;
+	BOOL    bShellNoZoneCheck; // Затычка для SEE_MASK_NOZONECHECKS
 	wchar_t szEnv[1]; // Variable length: <Name>\0<Value>\0<Name2>\0<Value2>\0\0
 } FAR_REQ_SETENVVAR;
 

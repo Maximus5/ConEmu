@@ -211,7 +211,7 @@ public:
 	bool IsHostkeyPressed();
 	WORD GetPressedHostkey();
     bool isMultiNewConfirm, isUseWinNumber;
-    bool isFARuseASCIIsort, isFixAltOnAltTab;
+    bool isFARuseASCIIsort, isFixAltOnAltTab, isShellNoZoneCheck;
 
     // Заголовки табов
     WCHAR szTabConsole[32];

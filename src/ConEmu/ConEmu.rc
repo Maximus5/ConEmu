@@ -349,7 +349,7 @@ BEGIN
     CONTROL         "ASCII sort function in FAR",cbFARuseASCIIsort,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,131,69,109,8
     CONTROL         "Hook FAR registry",cbHookFarRegistry,"Button",BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,131,81,109,8
     CONTROL         "Right selection fix",cbRSelectionFix,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,241,57,76,8
-    CONTROL         "Safe FAR close",cbSafeFarClose,"Button",BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,241,69,76,8
+    CONTROL         "No zone check",cbShellNoZoneCheck,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,241,69,76,8
     CONTROL         "Disable FAR flashing",cbDisableFarFlashing,"Button",BS_AUTO3STATE | WS_TABSTOP,241,81,76,8
     GROUPBOX        "Miscellaneous options",IDC_STATIC,4,98,319,60
     CONTROL         "Skip mouse click on activation",cbSkipActivation,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,110,117,8
@@ -379,6 +379,7 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,222,170,95,8
     CONTROL         "Sleep in background",cbSleepInBackground,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,222,182,95,8
     CONTROL         "Disable all flashing",cbDisableAllFlashing,"Button",BS_AUTO3STATE | WS_TABSTOP,222,194,95,8
+    CONTROL         "Safe FAR close",cbSafeFarClose,"Button",BS_AUTOCHECKBOX | NOT WS_VISIBLE | WS_DISABLED | WS_TABSTOP,9,213,76,8
 END
 
 IDD_RESTART DIALOG  0, 0, 310, 167
@@ -888,6 +889,7 @@ BEGIN
     cbThumbRestoreOnStartup "Restore panel views on FAR startup"
     cbSleepInBackground     "Reduce FPS when ConEmu loose focus"
     cbExtendUCharMap        "Show glyphs from selected font in «Unicode CharMap» plugin (FAR2 only)"
+    cbShellNoZoneCheck      "SEE_MASK_NOZONECHECKS. Same as appeared in Far 2 build 771 and disappeared after 1464."
 END
 
 STRINGTABLE 

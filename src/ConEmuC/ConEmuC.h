@@ -349,6 +349,7 @@ typedef struct tag_SrvInfo {
 	DWORD nMainTimerElapse;
 	//BOOL  bConsoleActive;
 	HANDLE hRefreshEvent; // ServerMode, перечитать консоль, и если есть изменения - отослать в GUI
+	HANDLE hRefreshDoneEvent; // ServerMode, выставляется после hRefreshEvent
 	HANDLE hDataReadyEvent; // Флаг, что в сервере есть изменения (GUI должен перечитать данные)
 	// Смена размера консоли через RefreshThread
 	int nRequestChangeSize;
