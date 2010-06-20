@@ -238,6 +238,9 @@ void ExecuteQuitFarA();
 void FUNC_Y(ExecuteQuitFar)();
 void FUNC_X(ExecuteQuitFar)();
 
+BOOL FUNC_Y(CheckBufferEnabled)();
+BOOL FUNC_X(CheckBufferEnabled)();
+
 #ifdef _DEBUG
 	#define SHOWDBGINFO(x) OutputDebugStringW(x)
 #else

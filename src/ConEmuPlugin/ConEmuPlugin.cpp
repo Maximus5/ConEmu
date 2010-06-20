@@ -1624,6 +1624,8 @@ BOOL FarSetConsoleSize(SHORT nNewWidth, SHORT nNewHeight)
 		ExecutePrepareCmd((CESERVER_REQ*)&In, CECMD_SETSIZENOSYNC, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_SETSIZE));
 		memset(&In.SetSize, 0, sizeof(In.SetSize));
 
+		// Для 'far /w' нужно оставить высоту буфера!
+		In.SetSize.nBufferHeight = gpFarInfo->bBufferSupport ? -1 : 0;
 		In.SetSize.size.X = nNewWidth; In.SetSize.size.Y = nNewHeight;
 
 		CESERVER_REQ* pOut = ExecuteSrvCmd(gdwServerPID, &In, GetConsoleWindow());
@@ -2576,7 +2578,15 @@ BOOL ReloadFarInfo(BOOL abFull)
 		gpFarInfo->nFarPID = gnSelfPID;
 		gpFarInfo->nFarTID = gnMainThreadId;
 		gpFarInfo->nProtocolVersion = CESERVER_REQ_VER;
-		gpFarInfo->bBufferSupport = ((gFarVersion.dwVerMajor == 2 && gFarVersion.dwBuild >= 1564) || gFarVersion.dwVerMajor > 2);
+		if (gFarVersion.dwVerMajor < 2 || (gFarVersion.dwVerMajor == 2 && gFarVersion.dwBuild < 1564)) {
+			gpFarInfo->bBufferSupport = FALSE;
+		} else {
+			// Нужно проверить
+			if (gFarVersion.dwBuild>=FAR_Y_VER)
+				gpFarInfo->bBufferSupport = FUNC_Y(CheckBufferEnabled)();
+			else
+				gpFarInfo->bBufferSupport = FUNC_X(CheckBufferEnabled)();
+		}
 		
 		// Загрузить из реестра настройки PanelTabs
 		gpFarInfo->PanelTabs.SeparateTabs = gpFarInfo->PanelTabs.ButtonColor = -1;

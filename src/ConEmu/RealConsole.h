@@ -383,6 +383,7 @@ private:
 		//CESERVER_REQ_CONINFO_DATA *pCopy, *pCmp;
 		CHAR_INFO *pDataCmp;
         int nTextWidth, nTextHeight, nBufferHeight;
+		BOOL bLockChange2Text;
         int nChange2TextWidth, nChange2TextHeight;
         BOOL bBufferHeight; // TRUE, если есть прокрутка
         //DWORD nPacketIdx;

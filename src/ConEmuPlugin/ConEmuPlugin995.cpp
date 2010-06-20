@@ -921,3 +921,17 @@ void ExecuteQuitFar995()
 	
 	InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_QUIT, NULL);
 }
+
+BOOL CheckBufferEnabled995()
+{
+	if (!InfoW995 || !InfoW995->AdvControl)
+		return FALSE;
+
+	SMALL_RECT rcFar = {0};
+	if (InfoW995->AdvControl(InfoW995->ModuleNumber, 32/*ACTL_GETFARRECT*/, &rcFar)) {
+		if (rcFar.Top > 0 && rcFar.Bottom > rcFar.Top)
+			return TRUE;
+	}
+
+	return FALSE;
+}

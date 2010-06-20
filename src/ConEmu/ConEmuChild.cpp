@@ -399,6 +399,7 @@ CConEmuBack::CConEmuBack()
 	mb_ScrollVisible = FALSE;
 	memset(&mrc_LastClient, 0, sizeof(mrc_LastClient));
 	mb_LastTabVisible = false;
+	mb_VTracking = false;
 #ifdef _DEBUG
 	mn_ColorIdx = 1;
 #else
@@ -593,6 +594,8 @@ LRESULT CALLBACK CConEmuBack::ScrollWndProc(HWND hWnd, UINT messg, WPARAM wParam
 			break;
 		case WM_VSCROLL:
 			//POSTMESSAGE(ghConWnd, messg, wParam, lParam, FALSE);
+			if (LOWORD(wParam) == SB_THUMBTRACK)
+				gConEmu.m_Back->mb_VTracking = true;
 			gConEmu.ActiveCon()->RCon()->OnSetScrollPos(wParam);
 			break;
 		case WM_SETFOCUS:
@@ -713,10 +716,22 @@ BOOL CConEmuBack::TrackMouse()
 	BOOL lbBufferMode = gConEmu.ActiveCon()->RCon()->isBufferHeight();
 	if (/*!mb_ScrollVisible &&*/ lbBufferMode) {
 		// Если мышь в над скроллбаром - показать его
-		POINT ptCur; RECT rcScroll;
-		GetCursorPos(&ptCur);
-		GetWindowRect(mh_WndScroll, &rcScroll);
-		if (PtInRect(&rcScroll, ptCur)) {
+		BOOL lbOverVScroll = FALSE;
+		if (mb_VTracking) { // устанавливается в true при перетаскивании прокрутки мышкой
+			if (!isPressed(VK_LBUTTON))
+				mb_VTracking = false;
+		}
+		if (mb_VTracking) { // чтобы полоса не скрылась, когда ее тащат мышкой
+			lbOverVScroll = TRUE;
+		} else {
+			POINT ptCur; RECT rcScroll;
+			GetCursorPos(&ptCur);
+			GetWindowRect(mh_WndScroll, &rcScroll);
+			if (PtInRect(&rcScroll, ptCur)) {
+				lbOverVScroll = TRUE;
+			}
+		}
+		if (lbOverVScroll) {
 			if (!mb_ScrollVisible) {
 				mb_ScrollVisible = TRUE;
 				apiShowWindow(mh_WndScroll, SW_SHOWNOACTIVATE);

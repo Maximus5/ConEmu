@@ -445,6 +445,7 @@ BOOL CRealConsole::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuff
     lIn.SetSize.nBufferHeight = sizeBuffer; //con.bBufferHeight ? gSet.Default BufferHeight : 0;
     lIn.SetSize.size.X = sizeX;
 	lIn.SetSize.size.Y = sizeY;
+	TODO("nTopVisibleLine должен передаваться при скролле, а не при ресайзе!");
     lIn.SetSize.nSendTopLine = (gSet.AutoScroll || !con.bBufferHeight) ? -1 : con.nTopVisibleLine;
     lIn.SetSize.rcWindow = rect;
 	lIn.SetSize.dwFarPID = (con.bBufferHeight && !isFarBufferSupported()) ? 0 : GetFarPID();
@@ -550,8 +551,7 @@ BOOL CRealConsole::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuff
 							LogString(szInfo);
 						}
 						#ifdef _DEBUG
-						//_ASSERTE(crDebugCurSize.X == sizeX);
-						crDebugCurSize.X != sizeX;
+						_ASSERTE(crDebugCurSize.X == sizeX);
 						#endif
 					}
 				}
@@ -761,10 +761,13 @@ void CRealConsole::SyncConsole2Window()
 #endif
 
 		// Сразу поставим, чтобы в основной нити при синхронизации размер не слетел
-		PRAGMA_ERROR("Необходимо заблокировать RefreshThread, чтобы не вызывался ApplyConsoleInfo ДО ЗАВЕРШЕНИЯ SetConsoleSize");
+		// Необходимо заблокировать RefreshThread, чтобы не вызывался ApplyConsoleInfo ДО ЗАВЕРШЕНИЯ SetConsoleSize
+		con.bLockChange2Text = TRUE;
 		con.nChange2TextWidth = newCon.right; con.nChange2TextHeight = newCon.bottom;
 
 		SetConsoleSize(newCon.right, newCon.bottom, 0/*Auto*/);
+
+		con.bLockChange2Text = FALSE;
 
 		if (isActive() && gConEmu.isMainThread()) {
 			// Сразу обновить DC чтобы скорректировать Width & Height
@@ -9447,8 +9450,6 @@ void CRealConsole::ApplyConsoleInfo()
     BOOL bBufRecreated = FALSE;
 	BOOL lbChanged = FALSE;
 
-	PRAGMA_ERROR("Нельзя выполнять эту функцию пока выполяется SetConsoleSizeSrv в другой нити");
-
 #ifdef _DEBUG
 	if (con.bDebugLocked)
 		return;
@@ -9611,9 +9612,12 @@ void CRealConsole::ApplyConsoleInfo()
 		TODO("Во время ресайза консоль может подглючивать - отдает не то что нужно...");
 		//_ASSERTE(*con.pConChar!=ucBoxDblVert);
 	    
-		PRAGMA_ERROR("Нельзя сбрасывать эти переменные пока выполяется SetConsoleSizeSrv в другой нити");
-		con.nChange2TextWidth = -1;
-		con.nChange2TextHeight = -1;
+		// пока выполяется SetConsoleSizeSrv в другой нити Нельзя сбрасывать эти переменные!
+		if (!con.bLockChange2Text)
+		{
+			con.nChange2TextWidth = -1;
+			con.nChange2TextHeight = -1;
+		}
 
 		#ifdef _DEBUG
 		wchar_t szCursorInfo[60];
@@ -9650,6 +9654,7 @@ void CRealConsole::ApplyConsoleInfo()
 
 		sc.Unlock();
 	}
+
 
 	SetEvent(mh_ApplyFinished);
 

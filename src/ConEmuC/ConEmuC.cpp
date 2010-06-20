@@ -951,11 +951,12 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 			// и команда начинается сразу после /c (может быть "cmd /cecho xxx")
 			if (gnRunMode == RM_UNDEFINED) {
 				gnRunMode = RM_COMSPEC;
-				cmd.bK = (szArg[1] & ~0x20) == L'K';
 				// Поддержка дебильной возможности "cmd /cecho xxx"
 				asCmdLine = pszArgStarts + 2;
 				while (*asCmdLine==L' ' || *asCmdLine==L'\t') asCmdLine++;
 			}
+			if (gnRunMode == RM_COMSPEC)
+				cmd.bK = (szArg[1] & ~0x20) == L'K';
 			break; // asCmdLine уже указывает на запускаемую программу
 		}
 	}
@@ -2422,6 +2423,16 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 				SHORT  nNewTopVisible = -1;
 				//memmove(&nBufferHeight, in.Data, sizeof(USHORT));
 				nBufferHeight = in.SetSize.nBufferHeight;
+				if (nBufferHeight == -1) {
+					// Для 'far /w' нужно оставить высоту буфера!
+					if (in.SetSize.size.Y < srv.sbi.dwSize.Y
+						&& srv.sbi.dwSize.Y > (srv.sbi.srWindow.Bottom - srv.sbi.srWindow.Top + 1))
+					{
+						nBufferHeight = srv.sbi.dwSize.Y;
+					} else {
+						nBufferHeight = 0;
+					}
+				}
 				//memmove(&crNewSize, in.Data+sizeof(USHORT), sizeof(COORD));
 				crNewSize = in.SetSize.size;
 				//memmove(&nNewTopVisible, in.Data+sizeof(USHORT)+sizeof(COORD), sizeof(SHORT));
@@ -2838,8 +2849,9 @@ BOOL MyGetConsoleScreenBufferInfo(HANDLE ahConOut, PCONSOLE_SCREEN_BUFFER_INFO a
 				lbNeedCorrect = TRUE; csbi.srWindow.Bottom = (csbi.dwSize.Y - 1);
 			}
 		}
-		if (CorrectVisibleRect(&csbi))
-			lbNeedCorrect = TRUE;
+		WARNING("CorrectVisibleRect пока закомментарен, ибо все равно нифига не делает");
+		//if (CorrectVisibleRect(&csbi))
+		//	lbNeedCorrect = TRUE;
 		if (lbNeedCorrect) {
 			lbRc = SetConsoleWindowInfo(ghConOut, TRUE, &csbi.srWindow);
 			lbRc = GetConsoleScreenBufferInfo(ahConOut, &csbi);

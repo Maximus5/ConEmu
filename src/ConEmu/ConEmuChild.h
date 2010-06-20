@@ -94,6 +94,7 @@ protected:
 	RECT mrc_LastClient;
 	bool mb_LastTabVisible;
 	int mn_ColorIdx;
+	bool mb_VTracking;
 	//WNDPROC mpfn_ScrollProc;
 //protected:
 //	// Theming

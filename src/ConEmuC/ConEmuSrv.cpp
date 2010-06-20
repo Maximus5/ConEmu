@@ -163,6 +163,9 @@ int ServerInit()
 	
 	srv.csProc = new MSection();
 
+	srv.nMainTimerElapse = 10;
+	srv.nTopVisibleLine = -1; // блокировка прокрутки не включена
+
 	// Инициализация имен пайпов
 	wsprintfW(srv.szPipename, CESERVERPIPENAME, L".", gnSelfPID);
 	wsprintfW(srv.szInputname, CESERVERINPUTNAME, L".", gnSelfPID);
@@ -444,11 +447,12 @@ int ServerInit()
 		}
 	}
 
-	//srv.bContentsChanged = TRUE;
-	srv.nMainTimerElapse = 10;
-	//srv.bConsoleActive = TRUE; TODO("Обрабатывать консольные события Activate/Deactivate");
-	//srv.bNeedFullReload = FALSE; srv.bForceFullSend = TRUE;
-	srv.nTopVisibleLine = -1; // блокировка прокрутки не включена
+	// -- перенесено вверх
+	////srv.bContentsChanged = TRUE;
+	//srv.nMainTimerElapse = 10;
+	////srv.bConsoleActive = TRUE; TODO("Обрабатывать консольные события Activate/Deactivate");
+	////srv.bNeedFullReload = FALSE; srv.bForceFullSend = TRUE;
+	//srv.nTopVisibleLine = -1; // блокировка прокрутки не включена
 
 	_ASSERTE(srv.pConsole!=NULL);
 	srv.pConsole->hdr.bConsoleActive = TRUE; TODO("Обрабатывать консольные события Activate/Deactivate");
@@ -1452,6 +1456,7 @@ static BOOL ReadConsoleInfo()
 
 	MCHKHEAP;
 
+
 	if (!MyGetConsoleScreenBufferInfo(hOut, &lsbi)) {
 		srv.dwSbiRc = GetLastError(); if (!srv.dwSbiRc) srv.dwSbiRc = -1;
 		lbRc = FALSE;
@@ -1497,6 +1502,7 @@ static BOOL ReadConsoleInfo()
 			lbChanged = TRUE;
 		}
 	}
+
 
 	if (!gnBufferHeight && srv.sbi.dwSize.Y > 200) {
 		_ASSERTE(srv.sbi.dwSize.Y <= 200);
