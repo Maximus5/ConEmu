@@ -2351,7 +2351,8 @@ VOID WINAPI CET_Cancel(LPVOID pContext)
 
 #else // #ifndef verc0_EXPORTS
 
-#include "../../../common/pluginW1007.hpp"
+// для унификации col0host & PanelView
+#include "../farplugin.h"
 
 /* FAR */
 PluginStartupInfo psi;

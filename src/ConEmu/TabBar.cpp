@@ -1220,7 +1220,7 @@ void TabBarClass::OnConsoleActivated(int nConNumber/*, BOOL bAlternative*/)
     BOOL bPresent[MAX_CONSOLE_COUNT]; memset(bPresent, 0, sizeof(bPresent));
     MCHKHEAP
     for (int i=1; i<=MAX_CONSOLE_COUNT; i++) {
-        bPresent[i-1] = gConEmu.GetTitle(i-1) != NULL;
+        bPresent[i-1] = gConEmu.GetVConTitle(i-1) != NULL;
     }
 
     SendMessage(mh_Toolbar, WM_SETREDRAW, 0, 0);
@@ -1279,7 +1279,7 @@ HWND TabBarClass::CreateToolbar()
 	   btn.iBitmap = nFirst + i-1;
 	   btn.idCommand = i;
 	   btn.fsState = TBSTATE_ENABLED
-		   | ((gConEmu.GetTitle(i-1) == NULL) ? TBSTATE_HIDDEN : 0)
+		   | ((gConEmu.GetVConTitle(i-1) == NULL) ? TBSTATE_HIDDEN : 0)
 		   | ((i == nActiveCon) ? TBSTATE_CHECKED : 0);
 	   SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&btn);
 	}
@@ -1419,7 +1419,7 @@ HWND TabBarClass::CreateTabbar()
 
     // ƒобавл€ет закладку, или мен€ет (при необходимости) заголовок существующей
     //AddTab(gConEmu.isFar() ? gSet.szTabPanels : gSet.pszTabConsole, 0);
-    AddTab(gConEmu.GetTitle(), 0, false);
+    AddTab(gConEmu.GetLastTitle(), 0, false);
 
 	GetClientRect(ghWnd, &rcClient); 
 	TabCtrl_AdjustRect(mh_Tabbar, FALSE, &rcClient);
@@ -1563,7 +1563,7 @@ void TabBarClass::PrepareTab(ConEmuTab* pTab)
                 nTabCount = nTabCount;
             }
             #endif
-            _tcscpy(pTab->Name, gConEmu.GetTitle()); //isFar() ? gSet.szTabPanels : gSet.pszTabConsole);
+            _tcscpy(pTab->Name, gConEmu.GetLastTitle()); //isFar() ? gSet.szTabPanels : gSet.pszTabConsole);
         }
         tFileName = pTab->Name;
         origLength = _tcslen(tFileName);

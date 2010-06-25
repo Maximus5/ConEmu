@@ -468,9 +468,13 @@ wait:
 		// По крайней мере один процесс в консоли запустился. Ждем пока в консоли не останется никого кроме нас
 		nWait = WAIT_TIMEOUT;
 		if (!srv.bDebuggerActive) {
+			#ifdef _DEBUG
 			while (nWait == WAIT_TIMEOUT) {
-				nWait = WaitForSingleObject(ghExitQueryEvent, 10);
+				nWait = WaitForSingleObject(ghExitQueryEvent, 100);
 			}
+			#else
+			nWait = WaitForSingleObject(ghExitQueryEvent, INFINITE);
+			#endif
 		} else {
 			while (nWait == WAIT_TIMEOUT) {
 				ProcessDebugEvent();
@@ -2729,6 +2733,7 @@ BOOL GetAnswerToRequest(CESERVER_REQ& in, CESERVER_REQ** out)
 		{
 			if (srv.pConsole) {
 				srv.pConsole->hdr.bConsoleActive = in.dwData[0];
+				srv.pConsole->hdr.bThawRefreshThread = in.dwData[1];
 				srv.pConsoleMap->SetFrom(&(srv.pConsole->hdr));
 			}
 		} break;
@@ -3229,6 +3234,8 @@ void _printf(LPCSTR asBuffer)
 	WriteFile(hOut, asBuffer, nAllLen, &dwWritten, 0);
 }
 
+#endif
+
 void _wprintf(LPCWSTR asBuffer)
 {
 	if (!asBuffer) return;
@@ -3246,7 +3253,6 @@ void _wprintf(LPCWSTR asBuffer)
 		WriteFile(hOut, asBuffer, nAllLen*2, &dwWritten, 0);
 	}
 }
-#endif
 
 void DisableAutoConfirmExit()
 {

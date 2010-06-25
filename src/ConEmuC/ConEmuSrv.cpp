@@ -450,12 +450,13 @@ int ServerInit()
 	// -- перенесено вверх
 	////srv.bContentsChanged = TRUE;
 	//srv.nMainTimerElapse = 10;
-	////srv.bConsoleActive = TRUE; TODO("Обрабатывать консольные события Activate/Deactivate");
+	////srv.b ConsoleActive = TRUE; TODO("Обрабатывать консольные события Activate/Deactivate");
 	////srv.bNeedFullReload = FALSE; srv.bForceFullSend = TRUE;
 	//srv.nTopVisibleLine = -1; // блокировка прокрутки не включена
 
 	_ASSERTE(srv.pConsole!=NULL);
-	srv.pConsole->hdr.bConsoleActive = TRUE; TODO("Обрабатывать консольные события Activate/Deactivate");
+	srv.pConsole->hdr.bConsoleActive = TRUE;
+	srv.pConsole->hdr.bThawRefreshThread = TRUE;
 
 
 	//// Размер шрифта и Lucida. Обязательно для серверного режима.
@@ -1219,6 +1220,7 @@ int CreateMapHeader()
 	srv.pConsole->hdr.nServerPID = GetCurrentProcessId();
 	srv.pConsole->hdr.nGuiPID = srv.dwGuiPID;
 	srv.pConsole->hdr.bConsoleActive = TRUE; // пока - TRUE (это на старте сервера)
+	srv.pConsole->hdr.bThawRefreshThread = TRUE; // пока - TRUE (это на старте сервера)
 	srv.pConsole->hdr.nProtocolVersion = CESERVER_REQ_VER;
 	srv.pConsole->hdr.nFarPID; // PID последнего активного фара
 
@@ -1952,16 +1954,16 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 	DWORD nWait = 0, dwConWait = 0;
 	HANDLE hEvents[2] = {ghQuitEvent, srv.hRefreshEvent};
 	DWORD nDelta = 0;
-	DWORD nLastUpdateTick = 0; //GetTickCount();
+	DWORD nLastReadTick = 0; //GetTickCount();
 	DWORD nLastConHandleTick = GetTickCount();
-	BOOL  /*lbEventualChange = FALSE,*/ lbForceSend = FALSE, lbChanged = FALSE; //, lbProcessChanged = FALSE;
+	BOOL  /*lbEventualChange = FALSE,*/ /*lbForceSend = FALSE,*/ lbChanged = FALSE; //, lbProcessChanged = FALSE;
 	DWORD dwTimeout = 10; // периодичность чтения информации об окне (размеров, курсора,...)
 	//BOOL  bForceRefreshSetSize = FALSE; // После изменения размера нужно сразу перечитать консоль без задержек
 
 	while (TRUE)
 	{
 		nWait = WAIT_TIMEOUT;
-		lbForceSend = FALSE;
+		//lbForceSend = FALSE;
 		MCHKHEAP;
 
 		// Alwas update con handle, мягкий вариант
@@ -2049,13 +2051,14 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 
 		// Чтобы не грузить процессор неактивными консолями
 		//if (!lbForceSend) {
-		if (!srv.pConsole->hdr.bConsoleActive && (nWait != (WAIT_OBJECT_0+1))) {
+		if ((!srv.pConsole->hdr.bConsoleActive 
+			|| (srv.pConsole->hdr.bConsoleActive && !srv.pConsole->hdr.bThawRefreshThread))
+			&& (nWait != (WAIT_OBJECT_0+1)))
+		{
 			DWORD nCurTick = GetTickCount();
-			nDelta = nCurTick - nLastUpdateTick;
-			// #define MAX_FORCEREFRESH_INTERVAL 1000
-			if (nDelta > MAX_FORCEREFRESH_INTERVAL) {
-				lbForceSend = TRUE;
-			} else {
+			nDelta = nCurTick - nLastReadTick;
+			// #define MAX_FORCEREFRESH_INTERVAL 500
+			if (nDelta <= MAX_FORCEREFRESH_INTERVAL) {
 				// Чтобы не грузить процессор
 				continue;
 			}
@@ -2104,9 +2107,9 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 		if (nWait == (WAIT_OBJECT_0+1))
 			SetEvent(srv.hRefreshDoneEvent);
 		
-		// При изменениях - запомнить последний tick
-		if (lbChanged)
-			nLastUpdateTick = GetTickCount();
+		// запомнить последний tick
+		//if (lbChanged)
+		nLastReadTick = GetTickCount();
 
 
 		MCHKHEAP
@@ -2480,7 +2483,7 @@ DWORD WINAPI GetDataThread(LPVOID lpvParam)
 						cbWrite = (srv.pConsole->info.crMaxSize.X * srv.pConsole->info.crMaxSize.Y);
 					}
 
-					srv.pConsole->info.nDataShift = ((LPBYTE)srv.pConsole->data) - ((LPBYTE)&(srv.pConsole->info));
+					srv.pConsole->info.nDataShift = (DWORD)(((LPBYTE)srv.pConsole->data) - ((LPBYTE)&(srv.pConsole->info)));
 					srv.pConsole->info.nDataCount = cbWrite;
 
 					DWORD nHdrSize = sizeof(srv.pConsole->info);

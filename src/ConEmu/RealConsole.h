@@ -268,6 +268,7 @@ public:
     void OnDeactivate(int nNewNum);
 	void ShowHideViews(BOOL abShow);
 	void OnGuiFocused(BOOL abFocus);
+	void UpdateServerActive(BOOL abThaw);
     BOOL CheckBufferSize();
     //LRESULT OnConEmuCmd(BOOL abStarted, DWORD anConEmuC_PID);
     BOOL BufferHeightTurnedOn(CONSOLE_SCREEN_BUFFER_INFO* psbi);
@@ -340,9 +341,12 @@ protected:
     // «десь сохран€етс€ заголовок окна (с панел€ми), когда FAR фокус с панелей уходит (переходит в редактор...).
     WCHAR ms_PanelTitle[CONEMUTABMAX];
     // ѕроцентики
-    short mn_Progress, mn_PreWarningProgress, mn_ConsoleProgress;
+    short mn_Progress, mn_LastShownProgress;
+	short mn_PreWarningProgress; DWORD mn_LastWarnCheckTick;
+	short mn_ConsoleProgress, mn_LastConsoleProgress; DWORD mn_LastConProgrTick;
     short CheckProgressInTitle();
     short CheckProgressInConsole(const wchar_t* pszCurLine);
+	//void SetProgress(short anProgress); // установить переменную mn_Progress и mn_LastProgressTick
 
     BOOL AttachPID(DWORD dwPID);
     BOOL StartProcess();
@@ -393,6 +397,7 @@ private:
 		BOOL bInSetSize; HANDLE hInSetSize;
 		int DefaultBufferHeight;
 		BOOL bConsoleDataChanged;
+		DWORD nLastInactiveRgnCheck;
 
 		#ifdef _DEBUG
 		BOOL bDebugLocked;

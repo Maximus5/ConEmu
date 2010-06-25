@@ -111,7 +111,7 @@ extern wchar_t gszDbgModLabel[6];
 #define CHECK_ANTIVIRUS_TIMEOUT 6*1000
 #define CHECK_ROOTSTART_TIMEOUT 10*1000
 #define CHECK_ROOTOK_TIMEOUT 10*1000
-#define MAX_FORCEREFRESH_INTERVAL 1000
+#define MAX_FORCEREFRESH_INTERVAL 500
 #define MAX_SYNCSETSIZE_WAIT 1000
 #define GUI_PIPE_TIMEOUT 300
 #define MAX_CONREAD_SIZE 30000 // в байтах
@@ -223,15 +223,15 @@ typedef BOOL (WINAPI *FDebugSetProcessKillOnExit)(BOOL KillOnExit);
 extern FDebugSetProcessKillOnExit pfnDebugSetProcessKillOnExit;
 void ProcessDebugEvent();
 BOOL IsUserAdmin();
-#ifdef CRTPRINTF
 void _wprintf(LPCWSTR asBuffer);
+#ifdef CRTPRINTF
 void _printf(LPCSTR asBuffer);
 void _printf(LPCSTR asFormat, DWORD dwErr);
 void _printf(LPCSTR asFormat, DWORD dwErr, LPCWSTR asAddLine);
 void _printf(LPCSTR asFormat, DWORD dw1, DWORD dw2, LPCWSTR asAddLine=NULL);
 #else
 #define _printf printf
-#define _wprintf(s) wprintf(L"%s",s)
+//#define _wprintf(s) wprintf(L"%s",s)
 #endif
 const wchar_t* PointToName(const wchar_t* asFullPath);
 HWND Attach2Gui(DWORD nTimeout);

@@ -478,7 +478,7 @@ int DisplayLastError(LPCTSTR asLabel, DWORD dwError /* =0 */, DWORD dwMsgFlags /
 
 	WARNING("!!! Заменить MessageBox на WaitForSingleObject(CreateThread(out,Title,dwMsgFlags),INFINITE);");
 
-	nBtn = MessageBox(gbMessagingStarted ? ghWnd : NULL, out, gConEmu.GetTitle(), dwMsgFlags);
+	nBtn = MessageBox(gbMessagingStarted ? ghWnd : NULL, out, gConEmu.GetLastTitle(), dwMsgFlags);
 	MCHKHEAP
 		LocalFree(lpMsgBuf);
 	delete [] out;

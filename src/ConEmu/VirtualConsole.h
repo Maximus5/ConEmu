@@ -49,6 +49,7 @@ public:
     WARNING("Сделать protected!");
 	uint TextWidth, TextHeight; // размер в символах
 	uint Width, Height; // размер в пикселях
+	void LoadConsoleData();
 private:
 	uint nMaxTextWidth, nMaxTextHeight; // размер в символах
 private:

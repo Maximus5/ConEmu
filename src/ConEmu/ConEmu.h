@@ -266,8 +266,8 @@ public:
 	DWORD GetFarPID();
 	
 public:
-	LPCTSTR GetTitle(bool abUseDefault=true);
-	LPCTSTR GetTitle(int nIdx);
+	LPCTSTR GetLastTitle(bool abUseDefault=true);
+	LPCTSTR GetVConTitle(int nIdx);
 	CVirtualConsole* GetVCon(int nIdx);
 	CVirtualConsole* GetVConFromPoint(POINT ptScreen);
 	void UpdateCursorInfo(COORD crCursor);
@@ -366,8 +366,8 @@ public:
 	void Update(bool isForce = false);
 	void UpdateFarSettings();
 	void UpdateIdealRect(BOOL abAllowUseConSize=FALSE);
-	void UpdateTitle(LPCTSTR asNewTitle);
-	void UpdateProgress(BOOL abUpdateTitle);
+	void UpdateTitle(/*LPCTSTR asNewTitle*/);
+	void UpdateProgress(/*BOOL abUpdateTitle*/);
 	void UpdateWindowRgn(int anX=-1, int anY=-1, int anWndWidth=-1, int anWndHeight=-1);
 	static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 	LRESULT WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);

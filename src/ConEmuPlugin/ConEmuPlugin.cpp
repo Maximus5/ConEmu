@@ -894,6 +894,7 @@ BOOL WINAPI DllMain( HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserve
 				ghCommandThreads = new CommandThreads();
 				
 				HWND hConWnd = GetConsoleWindow();
+				WARNING("Ёто - неправильно. “екуща€ нить не об€зана быть главной!");
 				gnMainThreadId = GetCurrentThreadId();
 				InitHWND(hConWnd);
 				

@@ -1151,10 +1151,16 @@ DWORD CDragDrop::ShellOpThreadProc(LPVOID lpParameter)
 		hr = E_UNEXPECTED;
 	}
 	if (hr != S_OK || sfop->fop.fAnyOperationsAborted) {
-		if (hr == 7 || hr == ERROR_CANCELLED || hr == 0)
+		if (hr == 0x402) {
+			// 0x402 Ошибка возникает если нет доступа к сетевому диску, а тащат "снаружи".
+			// Shell уже ругнулся по этому поводу, так что свою ошибку вроде показывать лишнее.
+			// An unknown error occurred. This is typically due to an invalid path in the source or destination. 
+			// This error does not occur on Windows Vista and later.
+		} else if (hr == 7 || hr == ERROR_CANCELLED || hr == 0) {
 			MBoxA(_T("Shell operation was cancelled"))
-		else
+		} else {
 			DisplayLastError(_T("Shell operation failed"), hr);
+		}
 	}
 	
 	if (sfop->fop.pTo) delete sfop->fop.pTo;

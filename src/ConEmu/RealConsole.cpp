@@ -96,7 +96,9 @@ WARNING("Часто после разблокирования компьютера размер консоли изменяется (OK), 
 #endif
 #define SETSYNCSIZEAPPLYTIMEOUT 500
 #define SETSYNCSIZEMAPPINGTIMEOUT 300
-
+#define CONSOLEPROGRESSTIMEOUT 300
+#define CONSOLEPROGRESSWARNTIMEOUT 1000
+#define CONSOLEINACTIVERGNTIMEOUT 500
 
 #ifndef INPUTLANGCHANGE_SYSCHARSET
 #define INPUTLANGCHANGE_SYSCHARSET 0x0001
@@ -147,7 +149,9 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
     wcscpy(TitleFull, Title);
     wcscpy(ms_PanelTitle, Title);
 	mb_ForceTitleChanged = FALSE;
-    mn_Progress = -1; mn_PreWarningProgress = -1; mn_ConsoleProgress = -1; // Процентов нет
+    mn_Progress = mn_PreWarningProgress = mn_LastShownProgress = -1; // Процентов нет
+    mn_ConsoleProgress = mn_LastConsoleProgress = -1;
+	mn_LastConProgrTick = mn_LastWarnCheckTick = 0;
 
     hPictureView = NULL; mb_PicViewWasHidden = FALSE;
 
@@ -1346,8 +1350,21 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
             	}
         	}
             
+			bool bCheckStatesFindPanels = false, lbForceUpdateProgress = false;
+
+			// Если консоль неактивна - CVirtualConsole::Update не вызывается и диалоги не детектятся. А это требуется.
+			if (!bActive && pRCon->con.bConsoleDataChanged) {
+				DWORD nCurTick = GetTickCount();
+				DWORD nDelta = nCurTick - pRCon->con.nLastInactiveRgnCheck;
+				if (nDelta > CONSOLEINACTIVERGNTIMEOUT) {
+					pRCon->con.nLastInactiveRgnCheck = nCurTick;
+					pRCon->mp_VCon->LoadConsoleData();
+					bCheckStatesFindPanels = true;
+				}
+			}
+
+
 			// обновить статусы, найти панели, и т.п.
-			bool bCheckStatesFindPanels = false;
 			if (pRCon->mb_DataChanged || pRCon->mb_TabsWasChanged) {
 				lbForceUpdate = true; // чтобы если консоль неактивна - не забыть при ее активации передернуть что нужно...
 				pRCon->mb_TabsWasChanged = FALSE;
@@ -1363,7 +1380,7 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 				// Это может также произойти при извлечении файла из архива через MA.
 				// Проценты бегут (панелей нет), проценты исчезают, панели появляются, но
 				// пока не произойдет хоть каких-нибудь изменений в консоли - статус не обновлялся.
-				if (pRCon->mn_FarStatus & (CES_WASPROGRESS|CES_OPER_ERROR))
+				if (pRCon->mn_LastWarnCheckTick || pRCon->mn_FarStatus & (CES_WASPROGRESS|CES_OPER_ERROR))
 					bCheckStatesFindPanels = true;
 			}
 			if (bCheckStatesFindPanels) {
@@ -1373,23 +1390,47 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 				// заодно оттуда позовется CheckProgressInConsole
 				pRCon->FindPanels();
 			}
+			if (pRCon->mn_ConsoleProgress == -1 && pRCon->mn_LastConsoleProgress >= 0) {
+				// Пока бежит запаковка 7z - иногда попадаем в момент, когда на новой строке процентов еще нет
+				DWORD nDelta = GetTickCount() - pRCon->mn_LastConProgrTick;
+				if (nDelta >= CONSOLEPROGRESSTIMEOUT) {
+					pRCon->mn_LastConsoleProgress = -1; pRCon->mn_LastConProgrTick = 0;
+					lbForceUpdateProgress = true;
+				}
+			}
 
 
             if (pRCon->hConWnd) // Если знаем хэндл окна - 
                 GetWindowText(pRCon->hConWnd, pRCon->TitleCmp, countof(pRCon->TitleCmp)-2);
+
+			// возможно, требуется сбросить прогресс
+			//bool lbCheckProgress = (pRCon->mn_PreWarningProgress != -1);
 
 			if (pRCon->mb_ForceTitleChanged
                 || wcscmp(pRCon->Title, pRCon->TitleCmp))
             {
 				pRCon->mb_ForceTitleChanged = FALSE;
                 pRCon->OnTitleChanged();
+				lbForceUpdateProgress = false; // прогресс обновлен
 
             } else if (bActive) {
 				// Если в консоли заголовок не менялся, но он отличается от заголовка в ConEmu
-                if (wcscmp(pRCon->TitleFull, gConEmu.GetTitle(false)))
-                    gConEmu.UpdateTitle(pRCon->TitleFull);
+                if (wcscmp(pRCon->TitleFull, gConEmu.GetLastTitle(false)))
+                    gConEmu.UpdateTitle(/*pRCon->TitleFull*/); // 100624 - заголовок сам перечитает
             }
 
+            if (lbForceUpdateProgress) {
+            	gConEmu.UpdateProgress();
+            }
+            
+			//if (lbCheckProgress && pRCon->mn_LastShownProgress >= 0) {
+			//	if (pRCon->GetProgress(NULL) != -1) {
+			//		pRCon->OnTitleChanged();
+			//	}
+			//	//DWORD nDelta = GetTickCount() - pRCon->mn_LastProgressTick;
+			//	//if (nDelta >= 500) {
+			//	//}
+			//}
 
 			bool lbIsActive = pRCon->isActive();
 			#ifdef _DEBUG
@@ -6983,7 +7024,7 @@ void CRealConsole::OnActivate(int nNewNum, int nOldNum)
         gConEmu.SwitchKeyboardLayout(con.dwKeybLayout);
 
     WARNING("Не работало обновление заголовка");
-    gConEmu.UpdateTitle(TitleFull);
+    gConEmu.UpdateTitle(/*TitleFull*/); //100624 - сам перечитает
 
     UpdateScrollInfo();
 
@@ -7047,22 +7088,34 @@ void CRealConsole::OnGuiFocused(BOOL abFocus)
 {
 	if (!this) return;
 
+	// Если FALSE - сервер увеличивает интервал опроса консоли (GUI теряет фокус)
+	BOOL lbThaw = abFocus || !gSet.isSleepInBackground;
+
+	// Разрешит "заморозку" серверной нити и обновит hdr.bConsoleActive в мэппинге
+	UpdateServerActive(lbThaw);
+}
+
+void CRealConsole::UpdateServerActive(BOOL abThaw)
+{
+	if (!this) return;
+
 	BOOL fSuccess = FALSE;
 
 	if (m_ConsoleMap.IsValid() && ms_ConEmuC_Pipe[0]) {
 		BOOL lbNeedChange = FALSE;
-		if (m_ConsoleMap.Ptr()->bConsoleActive) {
-			if (!abFocus && gSet.isSleepInBackground)
-				lbNeedChange = TRUE;
-		} else if (abFocus) {
+		BOOL lbActive = isActive();
+
+		if (m_ConsoleMap.Ptr()->bConsoleActive == lbActive && m_ConsoleMap.Ptr()->bThawRefreshThread == abThaw)
+			lbNeedChange = FALSE;
+		else
 			lbNeedChange = TRUE;
-		}
 
 		if (lbNeedChange) {
-			int nInSize = sizeof(CESERVER_REQ_HDR)+sizeof(DWORD);
+			int nInSize = sizeof(CESERVER_REQ_HDR)+sizeof(DWORD)*2;
 			DWORD dwRead = 0;
 			CESERVER_REQ lIn = {{nInSize}};
-			lIn.dwData[0] = abFocus ? 1 : 0;
+			lIn.dwData[0] = lbActive;
+			lIn.dwData[1] = abThaw;
 			
 			ExecutePrepareCmd(&lIn, CECMD_ONACTIVATION, lIn.hdr.cbSize);
 
@@ -8156,17 +8209,30 @@ void CRealConsole::CheckFarStates()
 		} else if ((nNewState & (CES_WASPROGRESS|CES_MAYBEPANEL)) == (CES_WASPROGRESS|CES_MAYBEPANEL)
 			&& mn_PreWarningProgress != -1)
 		{
-			nNewState |= CES_OPER_ERROR;
+			if (mn_LastWarnCheckTick == 0) {
+				mn_LastWarnCheckTick = GetTickCount();
+			} else if ((mn_FarStatus & CES_OPER_ERROR) == CES_OPER_ERROR) {
+				// для удобства отладки - флаг ошибки уже установлен
+				nNewState |= CES_OPER_ERROR;
+			} else {
+				DWORD nDelta = GetTickCount() - mn_LastWarnCheckTick;
+				if (nDelta > CONSOLEPROGRESSWARNTIMEOUT) {
+					nNewState |= CES_OPER_ERROR;
+					//mn_LastWarnCheckTick = 0;
+				}
+			}
 		}
 	}
 
-	if ((nNewState & CES_WASPROGRESS) == 0 && mn_Progress == -1)
-		mn_PreWarningProgress = -1;
-
 	if (mn_Progress == -1 && mn_PreWarningProgress != -1) {
+		if ((nNewState & CES_WASPROGRESS) == 0) {
+			mn_PreWarningProgress = -1; mn_LastWarnCheckTick = 0;
+			gConEmu.UpdateProgress();
+		} else
 		if (isFilePanel(true)) {
 			nNewState &= ~(CES_OPER_ERROR|CES_WASPROGRESS);
-			mn_PreWarningProgress = -1;
+			mn_PreWarningProgress = -1; mn_LastWarnCheckTick = 0;
+			gConEmu.UpdateProgress();
 		}
 	}
 
@@ -8268,6 +8334,11 @@ short CRealConsole::CheckProgressInConsole(const wchar_t* pszCurLine)
 			nProgress = (pszCurLine[nIdx] - L'0');
 		}
 	}
+	
+	if (nProgress != -1) {
+		mn_LastConsoleProgress = nProgress;
+		mn_LastConProgrTick = GetTickCount();
+	}
 
 	return nProgress;
 }
@@ -8339,7 +8410,7 @@ void CRealConsole::OnTitleChanged()
     wcscpy(Title, TitleCmp);
 
     // Обработка прогресса операций
-    short nLastProgress = mn_Progress;
+    //short nLastProgress = mn_Progress;
 	short nNewProgress;
 
 	TitleFull[0] = 0;
@@ -8366,6 +8437,9 @@ void CRealConsole::OnTitleChanged()
 	wcscat(TitleFull, TitleCmp);
 	// Обновляем на что нашли
 	mn_Progress = nNewProgress;
+	if (nNewProgress >= 0 && nNewProgress <= 100)
+		mn_PreWarningProgress = nNewProgress;
+	//SetProgress(nNewProgress);
 
 	if (isAdministrator() && (gSet.bAdminShield || gSet.szAdminTitleSuffix)) {
 		if (!gSet.bAdminShield)
@@ -8380,13 +8454,17 @@ void CRealConsole::OnTitleChanged()
     if (Title[0] == L'{' || Title[0] == L'(')
         CheckPanelTitle();
 
-    if (gConEmu.isActive(mp_VCon)) {
+	// заменил на GetProgress, т.к. он еще учитывает mn_PreWarningProgress
+	nNewProgress = GetProgress(NULL);
+
+    if (gConEmu.isActive(mp_VCon) && wcscmp(TitleFull, gConEmu.GetLastTitle(false))) {
         // Для активной консоли - обновляем заголовок. Прогресс обновится там же
-		if (wcscmp(TitleFull, gConEmu.GetTitle(false)))
-			gConEmu.UpdateTitle(TitleFull); // 20.09.2009 Maks - было TitleCmd
-    } else if (nLastProgress != mn_Progress) {
+		mn_LastShownProgress = nNewProgress;
+		gConEmu.UpdateTitle(/*TitleFull*/); //100624 - сам перечитает // 20.09.2009 Maks - было TitleCmd
+    } else if (mn_LastShownProgress != nNewProgress) {
         // Для НЕ активной консоли - уведомить главное окно, что у нас сменились проценты
-        gConEmu.UpdateProgress(TRUE/*abUpdateTitle*/);
+		mn_LastShownProgress = nNewProgress;
+        gConEmu.UpdateProgress();
     }
     gConEmu.mp_TabBar->Update(); // сменить заголовок закладки?
 }
@@ -8517,11 +8595,34 @@ short CRealConsole::GetProgress(BOOL *rpbError)
 	if (mn_Progress >= 0)
 		return mn_Progress;
 	if (mn_PreWarningProgress >= 0) {
-		if (rpbError) *rpbError = TRUE;
+		// mn_PreWarningProgress - это последнее значение прогресса (0..100)
+		// по после завершения процесса - он может еще быть не сброшен
+		if (rpbError) {
+			//*rpbError = TRUE; --
+			*rpbError = (mn_FarStatus & CES_OPER_ERROR) == CES_OPER_ERROR;
+		}
+		//if (mn_LastProgressTick != 0 && rpbError) {
+		//	DWORD nDelta = GetTickCount() - mn_LastProgressTick;
+		//	if (nDelta >= 1000) {
+		//		if (rpbError) *rpbError = TRUE;
+		//	}
+		//}
 		return mn_PreWarningProgress;
 	}
 	return -1;
 }
+
+//// установить переменную mn_Progress и mn_LastProgressTick
+//void CRealConsole::SetProgress(short anProgress)
+//{
+//	mn_Progress = anProgress;
+//	if (anProgress >= 0 && anProgress <= 100) {
+//		mn_PreWarningProgress = anProgress;
+//		mn_LastProgressTick = GetTickCount();
+//	} else {
+//		mn_LastProgressTick = 0;
+//	}
+//}
 
 void CRealConsole::UpdateFarSettings(DWORD anFarPID/*=0*/)
 {

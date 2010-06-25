@@ -581,7 +581,7 @@ BOOL CVirtualConsole::Dump(LPCWSTR asFile)
         return FALSE;
     }
     DWORD dw;
-    LPCTSTR pszTitle = gConEmu.GetTitle();
+    LPCTSTR pszTitle = gConEmu.GetLastTitle();
     WriteFile(hFile, pszTitle, _tcslen(pszTitle)*sizeof(*pszTitle), &dw, NULL);
     wchar_t temp[100];
 	swprintf(temp, _T("\r\nSize: %ix%i   Cursor: %ix%i\r\n"), TextWidth, TextHeight, Cursor.x, Cursor.y);
@@ -1255,6 +1255,61 @@ BOOL CVirtualConsole::CheckTransparentRgn()
 	return lbRgnChanged;
 }
 
+void CVirtualConsole::LoadConsoleData()
+{
+	gSet.Performance(tPerfData, FALSE);
+
+	{
+#ifdef SHOWDEBUGSTEPS
+		gConEmu.DebugStep(L"mp_RCon->GetConsoleData");
+#endif
+
+		mp_RCon->GetConsoleData(mpsz_ConChar, mpn_ConAttrEx, TextWidth, TextHeight); //TextLen*2);
+
+#ifdef SHOWDEBUGSTEPS
+		gConEmu.DebugStep(NULL);
+#endif
+	}
+
+	SMALL_RECT rcFull, rcGlyph = {0,0,-1,-1};
+	if (gSet.isExtendUCharMap)
+	{
+		const CRgnDetect* pRgn = mp_RCon->GetDetector();
+		if (pRgn && (pRgn->GetFlags() & (FR_UCHARMAP|FR_UCHARMAPGLYPH)) == (FR_UCHARMAP|FR_UCHARMAPGLYPH)) {
+
+			if (pRgn->GetDetectedDialogs(1, &rcFull, NULL, FR_UCHARMAP, FR_UCHARMAP) 
+				&& pRgn->GetDetectedDialogs(1, &rcGlyph, NULL, FR_UCHARMAPGLYPH, FR_UCHARMAPGLYPH))
+			{
+				wchar_t szFontName[32], *pszStart, *pszEnd;
+				pszStart = mpsz_ConChar + TextWidth*(rcFull.Top+1) + rcFull.Left + 1;
+				pszEnd = pszStart + 31;
+				while (*pszEnd == L' ' && pszEnd >= pszStart) pszEnd--;
+				if (pszEnd > pszStart) {
+					wmemcpy(szFontName, pszStart, pszEnd-pszStart+1);
+					szFontName[pszEnd-pszStart+1] = 0;
+					if (!mh_UCharMapFont || lstrcmp(ms_LastUCharMapFont, szFontName)) {
+						lstrcpy(ms_LastUCharMapFont, szFontName);
+						if (mh_UCharMapFont) DeleteObject(mh_UCharMapFont);
+						mh_UCharMapFont = gSet.CreateOtherFont(ms_LastUCharMapFont);
+					}
+				}
+				// Шрифт создали, теперь - пометить соответсвующий регион для использования этого шрифта
+				if (mh_UCharMapFont) {
+					for (int Y = rcGlyph.Top; Y <= rcGlyph.Bottom; Y++) {
+						CharAttr *pAtr = mpn_ConAttrEx + (TextWidth*Y + rcGlyph.Left);
+						for (int X = rcGlyph.Left; X <= rcGlyph.Right; X++, pAtr++) {
+							pAtr->nFontIndex = MAX_FONT_STYLES;
+						}
+					}
+				}
+			}
+		}
+	}
+	mrc_UCharMap = rcGlyph;
+
+	gSet.Performance(tPerfData, TRUE);
+}
+
 bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC)
 {
     MSectionLock SCON; SCON.Lock(&csCON);
@@ -1326,6 +1381,8 @@ bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC)
 	COORD dbgTxtSize = {TextWidth,TextHeight};
 	#endif
     if (isForce || !mb_PointersAllocated || lbSizeChanged) {
+		if (lbSizeChanged)
+			gConEmu.OnConsoleResize(TRUE);
 
         if (pSDC && !pSDC->isLocked()) // Если секция еще не заблокирована (отпускает - вызывающая функция)
             pSDC->Lock(&csDC, TRUE, 200); // но по таймауту, чтобы не повисли ненароком
@@ -1340,8 +1397,8 @@ bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC)
 		}
 		#endif
 
-		if (lbSizeChanged)
-			gConEmu.OnConsoleResize();
+		//if (lbSizeChanged) -- попробуем вверх перенести
+		//	gConEmu.OnConsoleResize();
     }
     
     // Требуется полная перерисовка!
@@ -1373,58 +1430,9 @@ bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC)
 	BOOL bConDataChanged = isForce || mp_RCon->IsConsoleDataChanged();
 	if (bConDataChanged) {
 		mb_ConDataChanged = TRUE; // В FALSE - НЕ сбрасывать
-		
-		gSet.Performance(tPerfData, FALSE);
 
-		{
-			#ifdef SHOWDEBUGSTEPS
-			gConEmu.DebugStep(L"mp_RCon->GetConsoleData");
-			#endif
-
-			mp_RCon->GetConsoleData(mpsz_ConChar, mpn_ConAttrEx, TextWidth, TextHeight); //TextLen*2);
-
-			#ifdef SHOWDEBUGSTEPS
-			gConEmu.DebugStep(NULL);
-			#endif
-		}
-		
-		SMALL_RECT rcFull, rcGlyph = {0,0,-1,-1};
-		if (gSet.isExtendUCharMap)
-		{
-			const CRgnDetect* pRgn = mp_RCon->GetDetector();
-			if (pRgn && (pRgn->GetFlags() & (FR_UCHARMAP|FR_UCHARMAPGLYPH)) == (FR_UCHARMAP|FR_UCHARMAPGLYPH)) {
-				
-				if (pRgn->GetDetectedDialogs(1, &rcFull, NULL, FR_UCHARMAP, FR_UCHARMAP) 
-					&& pRgn->GetDetectedDialogs(1, &rcGlyph, NULL, FR_UCHARMAPGLYPH, FR_UCHARMAPGLYPH))
-				{
-					wchar_t szFontName[32], *pszStart, *pszEnd;
-					pszStart = mpsz_ConChar + TextWidth*(rcFull.Top+1) + rcFull.Left + 1;
-					pszEnd = pszStart + 31;
-					while (*pszEnd == L' ' && pszEnd >= pszStart) pszEnd--;
-					if (pszEnd > pszStart) {
-						wmemcpy(szFontName, pszStart, pszEnd-pszStart+1);
-						szFontName[pszEnd-pszStart+1] = 0;
-						if (!mh_UCharMapFont || lstrcmp(ms_LastUCharMapFont, szFontName)) {
-							lstrcpy(ms_LastUCharMapFont, szFontName);
-							if (mh_UCharMapFont) DeleteObject(mh_UCharMapFont);
-							mh_UCharMapFont = gSet.CreateOtherFont(ms_LastUCharMapFont);
-						}
-					}
-					// Шрифт создали, теперь - пометить соответсвующий регион для использования этого шрифта
-					if (mh_UCharMapFont) {
-						for (int Y = rcGlyph.Top; Y <= rcGlyph.Bottom; Y++) {
-							CharAttr *pAtr = mpn_ConAttrEx + (TextWidth*Y + rcGlyph.Left);
-							for (int X = rcGlyph.Left; X <= rcGlyph.Right; X++, pAtr++) {
-								pAtr->nFontIndex = MAX_FONT_STYLES;
-							}
-						}
-					}
-				}
-			}
-		}
-		mrc_UCharMap = rcGlyph;
-
-		gSet.Performance(tPerfData, TRUE);
+		// Вынес в функцию, т.к. только так RealConsole может вызвать обновление детектора диалогов
+		LoadConsoleData();
 	}
 
     HEAPVAL

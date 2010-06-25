@@ -2060,7 +2060,7 @@ void CConEmuMain::ForceShowTabs(BOOL abShow)
 	UpdateWindowRgn();
 
     // При отключенных табах нужно показать "[n/n] " а при выключенных - спрятать
-    UpdateTitle(NULL); // сам перечитает
+    UpdateTitle(); // сам перечитает
 
 	// 2009-07-04 Resize выполняет сам TabBar
     //if (gbPostUpdateWindowSize) { // значит мы что-то поменяли
@@ -2156,12 +2156,17 @@ void CConEmuMain::OnConsoleResize(BOOL abPosted/*=FALSE*/)
 {
 	// Выполняться должно в нити окна, иначе можем повиснуть
 	static bool lbPosted = false;
+	abPosted = (mn_MainThreadId == GetCurrentThreadId());
 	if (!abPosted) {
 		if (gSet.isAdvLogging)
 			mp_VActive->RCon()->LogString("OnConsoleResize(abPosted==false)", TRUE);
 	
 		if (!lbPosted) {
 			lbPosted = true; // чтобы post не накапливались
+			#ifdef _DEBUG
+			int nCurConWidth = (int)mp_VActive->RCon()->TextWidth();
+			int nCurConHeight = (int)mp_VActive->RCon()->TextHeight();
+			#endif
 			PostMessage(ghWnd, mn_PostConsoleResize, 0,0);
 		}
 		return;
@@ -3822,7 +3827,7 @@ void CConEmuMain::UpdateSizes()
 }
 
 // !!!Warning!!! Никаких return. в конце функции вызывается необходимый CheckProcesses
-void CConEmuMain::UpdateTitle(LPCTSTR asNewTitle)
+void CConEmuMain::UpdateTitle(/*LPCTSTR asNewTitle*/)
 {
     if (GetCurrentThreadId() != mn_MainThreadId) {
         /*if (TitleCmp != asNewTitle) -- можем наколоться на многопоточности. Лучше получим повторно
@@ -3831,15 +3836,17 @@ void CConEmuMain::UpdateTitle(LPCTSTR asNewTitle)
         return;
     }
 
-    if (!asNewTitle)
-    	if ((asNewTitle = mp_VActive->RCon()->GetTitle()) == NULL)
+	LPCTSTR asNewTitle = mp_VActive->RCon()->GetTitle();
+	if (!asNewTitle) {
+    	//if ((asNewTitle = mp_VActive->RCon()->GetTitle()) == NULL)
     		return;
+	}
     
     wcscpy(Title, asNewTitle);
 
 	// SetWindowText(ghWnd, psTitle) вызывается здесь
     // Там же обновится L"[%i/%i] " если несколько консолей а табы отключены
-    UpdateProgress(TRUE);
+    UpdateProgress(/*TRUE*/);
 
     Icon.UpdateTitle();
 
@@ -3849,10 +3856,10 @@ void CConEmuMain::UpdateTitle(LPCTSTR asNewTitle)
 
 // Если в текущей консоли есть проценты - отображаются они
 // Иначе - отображается максимальное значение процентов из всех консолей
-void CConEmuMain::UpdateProgress(BOOL abUpdateTitle)
+void CConEmuMain::UpdateProgress(/*BOOL abUpdateTitle*/)
 {
     LPCWSTR psTitle = NULL;
-	LPCWSTR pszFixTitle = GetTitle(true);
+	LPCWSTR pszFixTitle = GetLastTitle(true);
     MultiTitle[0] = 0;
     
     short nProgress = -1, n;
@@ -4367,14 +4374,14 @@ DWORD CConEmuMain::GetFarPID()
     return dwPID;
 }
 
-LPCTSTR CConEmuMain::GetTitle(bool abUseDefault/*=true*/)
+LPCTSTR CConEmuMain::GetLastTitle(bool abUseDefault/*=true*/)
 {
     if (!Title[0] && abUseDefault)
         return _T("ConEmu");
     return Title;
 }
 
-LPCTSTR CConEmuMain::GetTitle(int nIdx)
+LPCTSTR CConEmuMain::GetVConTitle(int nIdx)
 {
     if (nIdx<0 || nIdx>=MAX_CONSOLE_COUNT)
         return NULL;
@@ -8154,7 +8161,7 @@ LRESULT CConEmuMain::OnVConTerminated(CVirtualConsole* apVCon, BOOL abPosted /*=
         }
     }
     // Теперь перетряхнуть заголовок (табы могут быть отключены и в заголовке отображается количество консолей)
-    UpdateTitle(NULL); // сам перечитает
+    UpdateTitle(); // сам перечитает
     //
     gConEmu.mp_TabBar->Update(); // Иначе не будет обновлены закладки
 	// А теперь можно обновить активную закладку
@@ -8798,7 +8805,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
             return 0;
         } else if (messg == gConEmu.mn_MsgUpdateTitle) {
             //gConEmu.UpdateTitle(TitleCmp);
-            gConEmu.UpdateTitle(mp_VActive->RCon()->GetTitle());
+            gConEmu.UpdateTitle(/*mp_VActive->RCon()->GetTitle()*/);
             return 0;
         //} else if (messg == gConEmu.mn_MsgAttach) {
         //    return gConEmu.AttachRequested ( (HWND)wParam, (DWORD)lParam );

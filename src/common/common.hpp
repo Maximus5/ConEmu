@@ -245,7 +245,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define CECMD_SETWINDOWRGN  33 // CESERVER_REQ_SETWINDOWRGN.
 
 // ¬ерси€ интерфейса
-#define CESERVER_REQ_VER    45
+#define CESERVER_REQ_VER    46
 
 #define PIPEBUFSIZE 4096
 #define DATAPIPEBUFSIZE 40000
@@ -604,6 +604,7 @@ typedef struct tag_CESERVER_REQ_CONINFO_HDR {
 	//
 	DWORD bConsoleActive;
 	DWORD nProtocolVersion; // == CESERVER_REQ_VER
+	DWORD bThawRefreshThread; // FALSE - увеличивает интервал опроса консоли (GUI тер€ет фокус)
 	//
 	DWORD nFarPID; // PID последнего активного фара
 	//
