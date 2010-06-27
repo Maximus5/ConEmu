@@ -31,11 +31,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <windows.h>
 #include <wchar.h>
-#if !defined(__GNUC__)
-#include <crtdbg.h>
-#else
-#define _ASSERTE(f)
-#endif
+//#if !defined(__GNUC__)
+//#include <crtdbg.h>
+//#else
+//#define _ASSERTE(f)
+//#endif
 
 #include "usetodo.hpp"
 
@@ -71,9 +71,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     #endif
     #define PRAGMA_ERROR(s) __pragma(message (FILE_LINE "error: " s))
 
-    #ifdef _DEBUG
-    #include <crtdbg.h>
-    #endif
+    //#ifdef _DEBUG
+    //#include <crtdbg.h>
+    //#endif
 
 #endif
 

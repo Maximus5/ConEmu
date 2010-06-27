@@ -41,13 +41,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "..\common\ConEmuCheck.h"
 #include "..\common\SetHook.h"
 
-#ifdef _DEBUG
-	#include <crtdbg.h>
-#else
-	#ifndef _ASSERTE
-		#define _ASSERTE(x)
-	#endif
-#endif
+//#ifdef _DEBUG
+//	#include <crtdbg.h>
+//#else
+//	#ifndef _ASSERTE
+//		#define _ASSERTE(x)
+//	#endif
+//#endif
 
 
 static TCHAR kernel32[] = _T("kernel32.dll");

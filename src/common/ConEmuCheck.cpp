@@ -33,17 +33,17 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 SECURITY_ATTRIBUTES* gpNullSecurity = NULL;
 
-#ifdef _DEBUG
-	#include <crtdbg.h>
-#else
-	#ifndef _ASSERT
-	#define _ASSERT()
-	#endif
-	
-	#ifndef _ASSERTE
-	#define _ASSERTE(f)
-	#endif
-#endif
+//#ifdef _DEBUG
+//	#include <crtdbg.h>
+//#else
+//	#ifndef _ASSERT
+//	#define _ASSERT()
+//	#endif
+//	
+//	#ifndef _ASSERTE
+//	#define _ASSERTE(f)
+//	#endif
+//#endif
 
 extern LPVOID _calloc(size_t,size_t);
 extern LPVOID _malloc(size_t);

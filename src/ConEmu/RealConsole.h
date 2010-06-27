@@ -240,7 +240,7 @@ public:
     DWORD GetConsoleCP() { return con.m_dwConsoleCP; };
     DWORD GetConsoleOutputCP() { return con.m_dwConsoleOutputCP; };
     DWORD GetConsoleMode() { return con.m_dwConsoleMode; };
-    void SyncConsole2Window();
+    void SyncConsole2Window(BOOL abNtvdmOff=FALSE);
     void OnWinEvent(DWORD anEvent, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime);
     int  GetProcesses(ConProcess** ppPrc);
     DWORD GetFarPID(BOOL abPluginRequired=FALSE);
@@ -422,6 +422,7 @@ private:
     void ProcessUpdateFlags(BOOL abProcessChanged);
     void ProcessCheckName(struct ConProcess &ConPrc, LPWSTR asFullFileName);
     DWORD mn_ProgramStatus, mn_FarStatus;
+	DWORD mn_Comspec4Ntvdm;
 	BOOL mb_IgnoreCmdStop; // При запуске 16bit приложения не возвращать размер консоли! Это сделает OnWinEvent
     BOOL isShowConsole;
     BOOL mb_FarGrabberActive; // бывший mb_ConsoleSelectMode

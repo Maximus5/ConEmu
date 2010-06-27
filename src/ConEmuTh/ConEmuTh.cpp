@@ -36,12 +36,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define TRUE_COLORER_OLD_SUPPORT
 
 #define SHOWDEBUGSTR
-#define MCHKHEAP
+//#define MCHKHEAP
 #define DEBUGSTRMENU(s) DEBUGSTR(s)
 
 
 //#include <stdio.h>
 #include <windows.h>
+#include <Tlhelp32.h>
 //#include <windowsx.h>
 //#include <string.h>
 //#include <tchar.h>
@@ -239,6 +240,37 @@ HANDLE WINAPI _export OpenPluginW(int OpenFrom,INT_PTR Item)
 	return INVALID_HANDLE_VALUE;
 }
 
+// Плагин может быть вызван в первый раз из фоновой нити.
+// Поэтому простой "gnMainThreadId = GetCurrentThreadId();" не прокатит. Нужно искать первую нить процесса!
+DWORD GetMainThreadId()
+{
+	DWORD nThreadID = 0;
+	DWORD nProcID = GetCurrentProcessId();
+	HANDLE h = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0);
+	if (h != INVALID_HANDLE_VALUE)
+	{
+		THREADENTRY32 ti = {sizeof(THREADENTRY32)};
+		if (Thread32First(h, &ti))
+		{
+			do {
+				// Нужно найти ПЕРВУЮ нить процесса
+				if (ti.th32OwnerProcessID == nProcID) {
+					nThreadID = ti.th32ThreadID;
+					break;
+				}
+			} while (Thread32Next(h, &ti));
+		}
+		CloseHandle(h);
+	}
+
+	// Нехорошо. Должна быть найдена. Вернем хоть что-то (текущую нить)
+	if (!nThreadID) {
+		_ASSERTE(nThreadID!=0);
+		nThreadID = GetCurrentThreadId();
+	}
+	return nThreadID;
+}
+
 
 
 BOOL WINAPI DllMain( HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved )
@@ -248,7 +280,7 @@ BOOL WINAPI DllMain( HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserve
 			{
 				ghPluginModule = (HMODULE)hModule;
 				gnSelfPID = GetCurrentProcessId();
-				gnMainThreadId = GetCurrentThreadId();
+				gnMainThreadId = GetMainThreadId();
 
 				gpNullSecurity = NullSecurity();
 				

@@ -52,11 +52,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifdef _DEBUG
 //CRITICAL_ SECTION gcsHeap;
 //#define MCHKHEAP { Enter CriticalSection(&gcsHeap); int MDEBUG_CHK=_CrtCheckMemory(); _ASSERTE(MDEBUG_CHK); LeaveCriticalSection(&gcsHeap); }
-#define MCHKHEAP HeapValidate(ghHeap, 0, NULL);
+//#define MCHKHEAP HeapValidate(ghHeap, 0, NULL);
 //#define MCHKHEAP { int MDEBUG_CHK=_CrtCheckMemory(); _ASSERTE(MDEBUG_CHK); }
 //#define HEAP_LOGGING
 #else
-#define MCHKHEAP
+//#define MCHKHEAP
 #endif
 
 
@@ -141,17 +141,17 @@ extern wchar_t gszDbgModLabel[6];
 #endif
 
 
-#if defined(__GNUC__)
-	//#include "assert.h"
-	#ifndef _ASSERTE
-		#define _ASSERTE(x)
-	#endif
-	#ifndef _ASSERT
-		#define _ASSERT(x)
-	#endif
-#else
-	#include <crtdbg.h>
-#endif
+//#if defined(__GNUC__)
+//	//#include "assert.h"
+//	#ifndef _ASSERTE
+//		#define _ASSERTE(x)
+//	#endif
+//	#ifndef _ASSERT
+//		#define _ASSERT(x)
+//	#endif
+//#else
+//	#include <crtdbg.h>
+//#endif
 
 #ifndef EVENT_CONSOLE_CARET
 	#define EVENT_CONSOLE_CARET             0x4001

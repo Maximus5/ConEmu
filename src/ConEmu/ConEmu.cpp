@@ -930,10 +930,13 @@ RECT CConEmuMain::CalcMargins(enum ConEmuMargins mg, CVirtualConsole* apVCon)
 // Для точного расчета размеров - требуется (размер главного окна) и (размер окна отрисовки) для корректировки
 // на x64 возникают какие-то глюки с ",RECT rFrom,". Отладчик показывает мусор в rFrom,
 // но тем не менее, после "RECT rc = rFrom;", rc получает правильные значения >:|
-RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmuRect tFrom, RECT* prDC/*=NULL*/, enum ConEmuMargins tTabAction/*=CEM_TAB*/)
+RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmuRect tFrom, CVirtualConsole* pVCon, RECT* prDC/*=NULL*/, enum ConEmuMargins tTabAction/*=CEM_TAB*/)
 {
     RECT rc = rFrom; // инициализация, если уж не получится...
     RECT rcShift = MakeRect(0,0);
+
+	if (!pVCon)
+		pVCon = gConEmu.mp_VActive;
     
 	if (rFrom.left || rFrom.top) {
 		if (rFrom.left >= rFrom.right || rFrom.top >= rFrom.bottom) {
@@ -1002,7 +1005,7 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
             }
             return rc;
         case CER_CONSOLE:
-            {   // Размер консоли в символах!
+		    {   // Размер консоли в символах!
                 //MBoxAssert(!(rFrom.left || rFrom.top));
                 MBoxAssert(tWhat!=CER_CONSOLE);
                 
@@ -1064,6 +1067,7 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
         } break;
         case CER_DC:
         case CER_CONSOLE:
+		case CER_CONSOLE_NTVDMOFF:
         {
 			// Учесть высоту закладок (табов)
             rcShift = CalcMargins(tTabAction);
@@ -1079,7 +1083,7 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 			//if (rcShift.top || rcShift.bottom || )
 			//nShift = (gSet.FontWidth() - 1) / 2; if (nShift < 1) nShift = 1;
 
-            if (gConEmu.isNtvdm()) {
+            if (tWhat != CER_CONSOLE_NTVDMOFF && pVCon->RCon()->isNtvdm()) {
                 // NTVDM устанавливает ВЫСОТУ экранного буфера... в 25/28/43/50 строк
                 // путем округления текущей высоты (то есть если до запуска 16bit
                 // было 27 строк, то скорее всего будет установлена высота в 28 строк)
@@ -1108,7 +1112,7 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
             }
                 
             // Если нужен размер консоли в символах сразу делим и выходим
-            if (tWhat == CER_CONSOLE) {
+            if (tWhat == CER_CONSOLE || tWhat == CER_CONSOLE_NTVDMOFF) {
 				//2009-07-09 - ClientToConsole использовать нельзя, т.к. после его
 				//  приближений высота может получиться больше Ideal, а ширина - меньше
 				rc.right = (rc.right - rc.left + 1) / gSet.FontWidth();
@@ -2325,7 +2329,7 @@ LRESULT CConEmuMain::OnSize(WPARAM wParam, WORD newClientWidth, WORD newClientHe
 
 	RECT dcSize = CalcRect(CER_DC, mainClient, CER_MAINCLIENT);
 
-	RECT client = CalcRect(CER_DC, mainClient, CER_MAINCLIENT, &dcSize);
+	RECT client = CalcRect(CER_DC, mainClient, CER_MAINCLIENT, NULL, &dcSize);
 
     RECT rcNewCon; memset(&rcNewCon,0,sizeof(rcNewCon));
     if (mp_VActive && mp_VActive->Width && mp_VActive->Height) {

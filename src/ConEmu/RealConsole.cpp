@@ -183,7 +183,7 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
     memset(&m_LastMouse, 0, sizeof(m_LastMouse));
     mb_DataChanged = FALSE;
 
-    mn_ProgramStatus = 0; mn_FarStatus = 0;
+    mn_ProgramStatus = 0; mn_FarStatus = 0; mn_Comspec4Ntvdm = 0;
     isShowConsole = false;
     //mb_ConsoleSelectMode = false;
     mn_SelectModeSkipVk = 0;
@@ -700,7 +700,8 @@ BOOL CRealConsole::SetConsoleSize(USHORT sizeX, USHORT sizeY, USHORT sizeBuffer,
 
 
 	HEAPVAL;
-    if (lbRc && isActive()) {
+    if (lbRc && isActive() && !isNtvdm())
+	{
         // update size info
         //if (!gSet.isFullScreen && !gConEmu.isZoomed() && !gConEmu.isIconic())
         if (gConEmu.isWindowNormal())
@@ -718,7 +719,7 @@ BOOL CRealConsole::SetConsoleSize(USHORT sizeX, USHORT sizeY, USHORT sizeBuffer,
 }
 
 // Изменить размер консоли по размеру окна (главного)
-void CRealConsole::SyncConsole2Window()
+void CRealConsole::SyncConsole2Window(BOOL abNtvdmOff/*=FALSE*/)
 {
     if (!this)
         return;
@@ -747,7 +748,7 @@ void CRealConsole::SyncConsole2Window()
 
     // Посчитать нужный размер консоли
 	gConEmu.AutoSizeFont(rcClient, CER_MAINCLIENT);
-    RECT newCon = gConEmu.CalcRect(CER_CONSOLE, rcClient, CER_MAINCLIENT);
+	RECT newCon = gConEmu.CalcRect(abNtvdmOff ? CER_CONSOLE_NTVDMOFF : CER_CONSOLE, rcClient, CER_MAINCLIENT, mp_VCon);
     _ASSERTE(newCon.right>20 && newCon.bottom>6);
 
 	// Во избежание лишних движений да и зацикливания...
@@ -3313,7 +3314,12 @@ void CRealConsole::OnWinEvent(DWORD anEvent, HWND hwnd, LONG idObject, LONG idCh
             _ASSERTE(CONSOLE_APPLICATION_16BIT==1);
             if (idChild == CONSOLE_APPLICATION_16BIT) {
 				DEBUGSTRPROC(L"16 bit application STARTED\n");
-                mn_ProgramStatus |= CES_NTVDM;
+				if (mn_Comspec4Ntvdm == 0) {
+					// mn_Comspec4Ntvdm может быть еще не заполнен, если 16бит вызван из батника
+					_ASSERTE(mn_Comspec4Ntvdm != 0);
+				}
+				if (!(mn_ProgramStatus & CES_NTVDM))
+					mn_ProgramStatus |= CES_NTVDM;
 				if (gOSVer.dwMajorVersion>5 || (gOSVer.dwMajorVersion==5 && gOSVer.dwMinorVersion>=1))
 					mb_IgnoreCmdStop = TRUE;
                 SetPriorityClass(GetCurrentProcess(), HIGH_PRIORITY_CLASS);
@@ -3332,7 +3338,10 @@ void CRealConsole::OnWinEvent(DWORD anEvent, HWND hwnd, LONG idObject, LONG idCh
             if (idChild == CONSOLE_APPLICATION_16BIT) {
                 //gConEmu.gbPostUpdateWindowSize = true;
 				DEBUGSTRPROC(L"16 bit application TERMINATED\n");
-                mn_ProgramStatus &= ~CES_NTVDM;
+				WARNING("Не сбрасывать CES_NTVDM сразу. Еще не отработал возврат размера консоли!");
+				if (mn_Comspec4Ntvdm == 0) {
+					mn_ProgramStatus &= ~CES_NTVDM;
+				}
 				//2010-02-26 убрал. может прийти с задержкой и только создать проблемы
 				//SyncConsole2Window(); // После выхода из 16bit режима хорошо бы отресайзить консоль по размеру GUI
                 TODO("Вообще-то хорошо бы проверить, что 16бит не осталось в других консолях");
@@ -3631,7 +3640,36 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
         
         if (nStarted == 0 || nStarted == 2) {
             // Сразу заполним результат
-            pIn->StartStopRet.bWasBufferHeight = isBufferHeight(); // чтобы comspec знал, что буфер нужно будет отключить
+            //pIn->StartStopRet.bWasBufferHeight = isBufferHeight(); // чтобы comspec знал, что буфер нужно будет отключить
+			
+			DWORD nParentPID = 0;
+			if (nStarted == 2)
+			{
+				ConProcess* pPrc = NULL;
+				int i, nProcCount = GetProcesses(&pPrc);
+				if (pPrc != NULL)
+				{ 				
+					for (i = 0; i < nProcCount; i++) {
+						if (pPrc[i].ProcessID == nPID) {
+							nParentPID = pPrc[i].ParentPID; break;
+						}
+					}
+					if (nParentPID == 0) {
+						_ASSERTE(nParentPID != 0);
+					} else {
+						BOOL lbFar = FALSE;
+						for (i = 0; i < nProcCount; i++) {
+							if (pPrc[i].ProcessID == nParentPID) {
+								lbFar = pPrc[i].IsFar; break;
+							}
+						}
+						if (!lbFar)
+							nParentPID = 0;
+					}
+					free(pPrc);
+				}
+			}
+			pIn->StartStopRet.bWasBufferHeight = (nStarted == 2) && (nParentPID == 0); // comspec должен уведомить о завершении
 			pIn->StartStopRet.hWnd = ghWnd;
 			pIn->StartStopRet.hWndDC = ghWndDC;
 			pIn->StartStopRet.dwPID = GetCurrentProcessId();
@@ -3665,7 +3703,8 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 
             AllowSetForegroundWindow(nPID);
             
-            COORD cr16bit = {80,con.m_sbi.dwSize.Y};
+			// 100627 - con.m_sbi.dwSize.Y более использовать некорректно ввиду "far/w"
+            COORD cr16bit = {80,con.m_sbi.srWindow.Bottom-con.m_sbi.srWindow.Top+1};
 			if (nSubSystem == 255) {
 				if (gSet.ntvdmHeight && cr16bit.Y >= (int)gSet.ntvdmHeight) cr16bit.Y = gSet.ntvdmHeight;
 				else if (cr16bit.Y>=50) cr16bit.Y = 50;
@@ -3679,7 +3718,9 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 				// Устанавливается в TRUE если будет запущено 16битное приложение
 				if (nSubSystem == 255) {
 					DEBUGSTRCMD(L"16 bit application STARTED, aquired from CECMD_CMDSTARTSTOP\n");
-					mn_ProgramStatus |= CES_NTVDM;
+					if (!(mn_ProgramStatus & CES_NTVDM))
+						mn_ProgramStatus |= CES_NTVDM;
+					mn_Comspec4Ntvdm = nPID;
 					mb_IgnoreCmdStop = TRUE;
 					
 					SetConsoleSize(cr16bit.X, cr16bit.Y, 0, CECMD_CMDSTARTED);
@@ -3791,7 +3832,10 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 					
     				DEBUGSTRCMD(L"16 bit application TERMINATED (aquired from CECMD_CMDFINISHED)\n");
                     //mn_ProgramStatus &= ~CES_NTVDM; -- сбросим после синхронизации размера консоли, чтобы не слетел
-    				SyncConsole2Window(); // После выхода из 16bit режима хорошо бы отресайзить консоль по размеру GUI
+    				SyncConsole2Window(TRUE); // После выхода из 16bit режима хорошо бы отресайзить консоль по размеру GUI
+					if (mn_Comspec4Ntvdm && mn_Comspec4Ntvdm != nPID) {
+						_ASSERTE(mn_Comspec4Ntvdm == nPID);
+					}
 					mn_ProgramStatus &= ~CES_NTVDM;
 					lbNeedResizeWnd = FALSE;
 					crNewSize.X = TextWidth();
@@ -3908,7 +3952,7 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 
 				if (lbCurrentActive != lbNewActive) {
 					enum ConEmuMargins tTabAction = lbNewActive ? CEM_TABACTIVATE : CEM_TABDEACTIVATE;
-					RECT rcConsole = gConEmu.CalcRect(CER_CONSOLE, gConEmu.GetIdealRect(), CER_MAIN, NULL, tTabAction);
+					RECT rcConsole = gConEmu.CalcRect(CER_CONSOLE, gConEmu.GetIdealRect(), CER_MAIN, NULL, NULL, tTabAction);
 
 					con.nChange2TextWidth = rcConsole.right;
 					con.nChange2TextHeight = rcConsole.bottom;
@@ -4254,17 +4298,22 @@ void CRealConsole::ProcessUpdateFlags(BOOL abProcessChanged)
         bIsFar = false; dwPID = 0;
     }
         
-    mn_ProgramStatus = 0;
-    if (bIsFar)
-		mn_ProgramStatus |= CES_FARACTIVE;
-	#ifdef _DEBUG
-	else
-		mn_ProgramStatus = mn_ProgramStatus;
-	#endif
+    DWORD nNewProgramStatus = 0;
+	if (bIsFar)
+		nNewProgramStatus |= CES_FARACTIVE;
+	if (bIsFar && bIsNtvdm)
+		// 100627 -- считаем, что фар не запускает 16бит программные без cmd (%comspec%)
+		bIsNtvdm = false;
+	//#ifdef _DEBUG
+	//else
+	//	nNewProgramStatus = nNewProgramStatus;
+	//#endif
     if (bIsTelnet)
-		mn_ProgramStatus |= CES_TELNETACTIVE;
-    if (bIsNtvdm)
-        mn_ProgramStatus |= CES_NTVDM;
+		nNewProgramStatus |= CES_TELNETACTIVE;
+    if (bIsNtvdm) // определяется выше как "(mn_ProgramStatus & CES_NTVDM) == CES_NTVDM"
+        nNewProgramStatus |= CES_NTVDM;
+	if (mn_ProgramStatus != nNewProgramStatus)
+		mn_ProgramStatus = nNewProgramStatus;
 
     mn_ProcessCount = m_Processes.size();
     if (mn_FarPID != dwPID)
@@ -6287,6 +6336,12 @@ void CRealConsole::PrepareTransparent(wchar_t* pChar, CharAttr* pAttr, int nWidt
 		FI.FarRightPanel.PanelRect = mr_RightPanelFull;
 	} else {
 		FI.bFarRightPanel = false;
+	}
+
+	FI.bViewerOrEditor = FALSE;
+	if (!FI.bFarLeftPanel && !FI.bFarRightPanel) {
+		// Если нет панелей - это может быть вьювер/редактор
+		FI.bViewerOrEditor = (isViewer() || isEditor());
 	}
 
 	mp_Rgn->PrepareTransparent(&FI, mp_VCon->mp_Colors, &con.m_sbi, pChar, pAttr, nWidth, nHeight);

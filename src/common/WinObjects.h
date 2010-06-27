@@ -699,3 +699,28 @@ public:
 	};
 };
 
+
+class MSetter {
+protected:
+	enum tag_MSETTERTYPE {
+		st_BOOL,
+		st_DWORD,
+	} type;
+
+	union {
+		struct {
+			// st_BOOL
+			BOOL *mp_BoolVal;
+		};
+		struct {
+			// st_DWORD
+			DWORD *mdw_DwordVal; DWORD mdw_OldDwordValue, mdw_NewDwordValue;
+		};
+	};
+public:
+	MSetter(BOOL* st);
+	MSetter(DWORD* st, DWORD setValue);
+	~MSetter();
+
+	void Unlock();
+};

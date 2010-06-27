@@ -2484,7 +2484,7 @@ int WINAPI GetCustomDataW(const wchar_t *FilePath, wchar_t **CustomData)
 
 	UnmapViewOfFile(pFileData); CloseHandle(hFileMapping); CloseHandle(hFile);
 
-	if (!lbDump || Ver.szVersion[0] == 0) {
+	if (!lbDump || (Ver.szVersion[0] == 0 && Ver.nBits == 0)) {
 		 return FALSE;
 	}
 
@@ -2492,7 +2492,7 @@ int WINAPI GetCustomDataW(const wchar_t *FilePath, wchar_t **CustomData)
 	nLen = lstrlen(Ver.szVersion)+10;
 	if (nLen < 2) return FALSE;
 	*CustomData = (wchar_t*)malloc(nLen*2);
-	wsprintfW(*CustomData, L"[x%i] %s", Ver.nBits, Ver.szVersion);
+	wsprintfW(*CustomData, L"[x%i]%s%s", Ver.nBits, Ver.szVersion[0] ? L" " : L"", Ver.szVersion);
 
 	return TRUE;
 }

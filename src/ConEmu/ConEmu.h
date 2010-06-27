@@ -96,6 +96,7 @@ enum ConEmuRect {
 	CER_BACK,       // положение окна с фоном
 	CER_DC,         // положение окна отрисовки
 	CER_CONSOLE,    // !!! _ размер в символах _ !!!
+	CER_CONSOLE_NTVDMOFF, // same as CER_CONSOLE, но во время отключения режима 16бит
 	CER_FULLSCREEN, // полный размер в pix текущего монитора (содержащего ghWnd)
 	CER_MAXIMIZED,  // размер максимизированного окна на текущем мониторе (содержащего ghWnd)
 //	CER_CORRECTED   // скорректированное положение (чтобы окно было видно на текущем мониторе)
@@ -287,7 +288,7 @@ public:
 	BOOL AttachRequested(HWND ahConWnd, CESERVER_REQ_STARTSTOP pStartStop, CESERVER_REQ_STARTSTOPRET* pRet);
 	void AutoSizeFont(const RECT &rFrom, enum ConEmuRect tFrom);
 	static RECT CalcMargins(enum ConEmuMargins mg, CVirtualConsole* apVCon=NULL);
-	static RECT CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmuRect tFrom, RECT* prDC=NULL, enum ConEmuMargins tTabAction=CEM_TAB);
+	static RECT CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmuRect tFrom, CVirtualConsole* pVCon=NULL, RECT* prDC=NULL, enum ConEmuMargins tTabAction=CEM_TAB);
 	void CheckFocus(LPCWSTR asFrom);
 	enum DragPanelBorder CheckPanelDrag(COORD crCon);
 	bool ConActivate(int nCon);

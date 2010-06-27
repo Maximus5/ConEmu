@@ -1070,3 +1070,32 @@ HANDLE MEvent::GetHandle()
 //	SetConsoleInfo(inConWnd, gpConsoleInfoStr);
 //}
 //*/
+
+
+
+
+
+MSetter::MSetter(BOOL* st) :
+	mp_BoolVal(NULL), mdw_DwordVal(NULL)
+{
+	type = st_BOOL;
+	mp_BoolVal = st;
+	if (mp_BoolVal) *mp_BoolVal = TRUE;
+}
+MSetter::MSetter(DWORD* st, DWORD setValue) :
+	mp_BoolVal(NULL), mdw_DwordVal(NULL)
+{
+	type = st_DWORD; mdw_OldDwordValue = *st; *st = setValue;
+	mdw_DwordVal = st;
+}
+MSetter::~MSetter() {
+	Unlock();
+}
+void MSetter::Unlock() {
+	if (type==st_BOOL) {
+		if (mp_BoolVal) *mp_BoolVal = FALSE;
+	} else
+	if (type==st_DWORD) {
+		if (mdw_DwordVal) *mdw_DwordVal = mdw_OldDwordValue;
+	}
+}

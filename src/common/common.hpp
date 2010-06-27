@@ -444,7 +444,7 @@ typedef struct tag_ConEmuGuiInfo {
 } ConEmuGuiInfo;
 
 
-TODO("Restrict CONEMUTABMAX to 128 chars. Only filename, and may be ellipsed...");
+//TODO("Restrict CONEMUTABMAX to 128 chars. Only filename, and may be ellipsed...");
 #define CONEMUTABMAX 0x400
 typedef struct tag_ConEmuTab {
 	int  Pos;
@@ -580,6 +580,7 @@ typedef struct tag_CEFAR_INFO {
 	BOOL bFarPanelInfoFilled;
 	BOOL bFarLeftPanel, bFarRightPanel;   
 	CEFAR_SHORT_PANEL_INFO FarLeftPanel, FarRightPanel; // FCTL_GETPANELSHORTINFO,...
+	BOOL bViewerOrEditor; // для облегчения жизни RgnDetect
 	DWORD nFarConsoleMode;
 	BOOL bBufferSupport; // FAR2 с ключом /w ?
 	CEFAR_PANELTABS PanelTabs; // Настройки плагина PanelTabs
@@ -861,6 +862,42 @@ SECURITY_ATTRIBUTES* NullSecurity();
 void CommonShutdown();
 
 
+#ifndef _CRT_WIDE
+#define __CRT_WIDE(_String) L ## _String
+#define _CRT_WIDE(_String) __CRT_WIDE(_String)
+#endif
+
+#ifdef _DEBUG
+	#include <crtdbg.h>
+
+	int MyAssertProc(const wchar_t* pszFile, int nLine, const wchar_t* pszTest);
+	void MyAssertTrap();
+
+	#define MY_ASSERT_EXPR(expr, msg) \
+		if (!(expr)) { \
+			if (1 != MyAssertProc(_CRT_WIDE(__FILE__), __LINE__, msg)) \
+				MyAssertTrap(); \
+		}
+
+	//extern int MDEBUG_CHK;
+	//extern char gsz_MDEBUG_TRAP_MSG_APPEND[2000];
+	//#define MDEBUG_TRAP1(S1) {strcpy(gsz_MDEBUG_TRAP_MSG_APPEND,(S1));_MDEBUG_TRAP(__FILE__,__LINE__);}
+	#define MCHKHEAP MY_ASSERT_EXPR(_CrtCheckMemory(),L"_CrtCheckMemory failed");
+
+	#define ASSERT(expr)   MY_ASSERT_EXPR((expr), _CRT_WIDE(#expr))
+	#define ASSERTE(expr)  MY_ASSERT_EXPR((expr), _CRT_WIDE(#expr))
+
+#else
+	#define MY_ASSERT_EXPR(expr, msg)
+	#define ASSERT(expr)
+	#define ASSERTE(expr)
+	#define MCHKHEAP
+#endif
+
+#undef _ASSERT
+#define _ASSERT ASSERT
+#undef _ASSERTE
+#define _ASSERTE ASSERTE
 
 
 #endif // __cplusplus

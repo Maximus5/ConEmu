@@ -35,9 +35,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <windows.h>
 #include <Shlwapi.h>
 #include <vector>
-#if !defined(__GNUC__)
-#include <crtdbg.h>
-#endif
+//#if !defined(__GNUC__)
+//#include <crtdbg.h>
+//#endif
 
 #ifdef __GNUC__
 #define TimeGetTime GetTickCount

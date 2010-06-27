@@ -607,3 +607,38 @@ void SetConsoleBufferSize(HWND inConWnd, int anWidth, int anHeight, int anBuffer
 	SetConsoleInfo(inConWnd, gpConsoleInfoStr);
 }
 */
+
+#ifdef _DEBUG
+#include <Strsafe.h>
+typedef struct tag_MyAssertInfo {
+	wchar_t szTitle[255];
+	wchar_t szDebugInfo[4096];
+} MyAssertInfo;
+DWORD WINAPI MyAssertThread(LPVOID p)
+{
+	MyAssertInfo* pa = (MyAssertInfo*)p;
+	return MessageBoxW(NULL, pa->szDebugInfo, pa->szTitle, MB_SETFOREGROUND|MB_SYSTEMMODAL|MB_RETRYCANCEL);
+}
+void MyAssertTrap()
+{
+	_asm int 3;
+}
+int MyAssertProc(const wchar_t* pszFile, int nLine, const wchar_t* pszTest)
+{
+	MyAssertInfo a;
+	StringCbPrintfW(a.szTitle, countof(a.szTitle), L"CEAssert PID=%u TID=%u", GetCurrentProcessId(), GetCurrentThreadId());
+	StringCbPrintfW(a.szDebugInfo, countof(a.szDebugInfo), L"Assertion\n%s\nat\n%s: %i\n\nPress 'Retry' to trap.",
+		pszTest ? pszTest : L"", pszFile, nLine);
+	DWORD dwTID, dwCode = 0;
+	HANDLE hThread = CreateThread(NULL, 0, MyAssertThread, &a, 0, &dwTID);
+	if (hThread == NULL) {
+		return -1;
+	}
+
+	WaitForSingleObject(hThread, INFINITE);
+	GetExitCodeThread(hThread, &dwCode);
+	CloseHandle(hThread);
+	
+	return (dwCode == IDRETRY) ? -1 : 1;
+}
+#endif

@@ -56,6 +56,7 @@ inline bool operator==(const CharAttr& s1, const CharAttr& s2)
 #define FR_ACTIVEMENUBAR  0x00000018 // Если MenuBar виден не всегда, или он активирован (т.е. панели недоступны)
 #define FR_PANELTABS      0x00000020 // Строка под панелями (плагин PanelTabs)
 #define FR_QSEARCH        0x00000040 // QSearch в панелях
+#define FR_VIEWEREDITOR   0x00000080 // Редактор или просмотрщик
 // ИД для свободных диалогов/меню/и пр.
 #define FR_FIRSTDLGID     0x00000100
 #define FR_LASTDLGID      0x0000FF00
@@ -152,6 +153,7 @@ protected:
 	//	DWORD DlgFlags[MAX_DETECTED_DIALOGS];
 	//} 
 	DetectedDialogs m_DetectedDialogs;
+	DWORD mn_AllFlagsSaved; // чтобы не драться с другими нитями во время детекта
 	
 protected:
 	// Используется для собственноручного формирования буферов
@@ -171,6 +173,8 @@ protected:
 	COLORREF crUserBack;
 	int nMenuBackIdx;
 	COLORREF crMenuTitleBack;
+	int nDlgBorderBackIdx, nDlgBorderForeIdx;
+	int nErrBorderBackIdx, nErrBorderForeIdx;
 	// Для детекта наличия PanelTabs (цвет кнопки [+])
 	int nPanelTabsBackIdx;
 	int nPanelTabsForeIdx;

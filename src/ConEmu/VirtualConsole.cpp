@@ -185,6 +185,7 @@ CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
     hSelectedFont = NULL; hOldFont = NULL;
     PointersInit();
     mb_IsForceUpdate = false;
+	mb_InUpdate = FALSE;
     hBrush0 = NULL; hSelectedBrush = NULL; hOldBrush = NULL;
     isEditor = false;
     memset(&csbi, 0, sizeof(csbi)); mdw_LastError = 0;
@@ -953,6 +954,15 @@ bool CVirtualConsole::Update(bool abForce, HDC *ahDc)
     }
 	*/
 
+
+	if (mb_InUpdate) {
+		// Не должен вызываться по рекурсии
+		_ASSERTE(!mb_InUpdate);
+		return false;
+	}
+	MSetter inUpdate(&mb_InUpdate);
+
+
     // Рисуем актуальную информацию из CRealConsole. ЗДЕСЬ запросы в консоль не делаются.
     //RetrieveConsoleInfo();
 
@@ -1381,13 +1391,17 @@ bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC)
 	COORD dbgTxtSize = {TextWidth,TextHeight};
 	#endif
     if (isForce || !mb_PointersAllocated || lbSizeChanged) {
-		if (lbSizeChanged)
-			gConEmu.OnConsoleResize(TRUE);
+		// 100627 перенес после InitDC, т.к. циклилось
+		//if (lbSizeChanged)
+		//	gConEmu.OnConsoleResize(TRUE);
 
         if (pSDC && !pSDC->isLocked()) // Если секция еще не заблокирована (отпускает - вызывающая функция)
             pSDC->Lock(&csDC, TRUE, 200); // но по таймауту, чтобы не повисли ненароком
         if (!InitDC(ahDc!=NULL && !isForce/*abNoDc*/, false/*abNoWndResize*/))
             return false;
+
+		if (lbSizeChanged)
+			gConEmu.OnConsoleResize(TRUE);
 
 		isForce = true; // После сброса буферов и DC - необходим полный refresh...
 

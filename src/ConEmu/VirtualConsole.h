@@ -74,6 +74,7 @@ private:
 	bool    mb_RequiredForceUpdate; // Сменился шрифт, например...
 	bool    isForce; // а это - сейчас (устанавливается по аргументу в Update)
 private:
+	BOOL    mb_InUpdate;
 	HDC     hDC;
 	HBITMAP hBitmap;
 	HBRUSH  hBrush0, hOldBrush, hSelectedBrush;

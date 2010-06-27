@@ -35,7 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define TRUE_COLORER_OLD_SUPPORT
 
 #define SHOWDEBUGSTR
-#define MCHKHEAP
+//#define MCHKHEAP
 #define DEBUGSTRMENU(s) DEBUGSTR(s)
 #define DEBUGSTRINPUT(s) DEBUGSTR(s)
 
@@ -175,6 +175,7 @@ BOOL gbWaitConsoleInputEmpty = FALSE, gbWaitConsoleWrite = FALSE; //, gbWaitCons
 HANDLE ghConsoleInputEmpty = NULL, ghConsoleWrite = NULL; //, ghConsoleInputWasPeek = NULL;
 // SEE_MASK_NOZONECHECKS
 BOOL gbShellNoZoneCheck = FALSE;
+DWORD GetMainThreadId();
 
 
 //std::vector<HANDLE> ghCommandThreads;
@@ -710,47 +711,47 @@ VOID WINAPI OnConsoleReadInputPost(HookCallbackArg* pArgs)
 	if (!pArgs->bMainThread) return; // обработку делаем только в основной нити
 
 #ifdef _DEBUG
-	wchar_t szDbg[255]; 
-	PINPUT_RECORD p = (PINPUT_RECORD)(pArgs->lArguments[1]);
-	LPDWORD pCount = (LPDWORD)(pArgs->lArguments[3]);
-	DWORD nLeft = 0; GetNumberOfConsoleInputEvents(GetStdHandle(STD_INPUT_HANDLE), &nLeft);
-	wsprintfW(szDbg, L"*** OnConsoleReadInputPost(Events=%i, KeyCount=%i, LeftInConBuffer=%i)\n", 
-		*pCount, (p->EventType==KEY_EVENT) ? p->Event.KeyEvent.wRepeatCount : 0, nLeft);
-	//if (*pCount) {
-	//	wsprintfW(szDbg+lstrlen(szDbg), L", type=%i", p->EventType);
-	//	if (p->EventType == MOUSE_EVENT) {
-	//		wsprintfW(L", {%ix%i} BtnState:0x%08X, CtrlState:0x%08X, Flags:0x%08X",
-	//			p->Event.MouseEvent.dwMousePosition.X, p->Event.MouseEvent.dwMousePosition.Y,
-	//			p->Event.MouseEvent.dwButtonState, p->Event.MouseEvent.dwControlKeyState,
-	//			p->Event.MouseEvent.dwEventFlags);
-	//	} else if (p->EventType == KEY_EVENT) {
-	//		wsprintfW(L", '%c' %s count=%i, VK=%i, SC=%i, CH=\\x%X, State=0x%08x %s",
-	//			(p->Event.KeyEvent.uChar.UnicodeChar > 0x100) ? L'?' :
-	//			(p->Event.KeyEvent.uChar.UnicodeChar 
-	//			? p->Event.KeyEvent.uChar.UnicodeChar : L' '),
-	//			p->Event.KeyEvent.bKeyDown ? L"Down," : L"Up,  ",
-	//			p->Event.KeyEvent.wRepeatCount,
-	//			p->Event.KeyEvent.wVirtualKeyCode,
-	//			p->Event.KeyEvent.wVirtualScanCode,
-	//			p->Event.KeyEvent.uChar.UnicodeChar,
-	//			p->Event.KeyEvent.dwControlKeyState,
-	//			(p->Event.KeyEvent.dwControlKeyState & ENHANCED_KEY) ?
-	//			L"<Enhanced>" : L"");
-	//	}
-	//}
-	//lstrcatW(szDbg, L")\n");
-	DEBUGSTRINPUT(szDbg);
-	// Если под дебагом включен ScrollLock - вывести информацию о считанных событиях
-	#ifdef _DEBUG
-	if (GetKeyState(VK_SCROLL) & 1) {
+	{
+		wchar_t szDbg[255]; 
 		PINPUT_RECORD p = (PINPUT_RECORD)(pArgs->lArguments[1]);
 		LPDWORD pCount = (LPDWORD)(pArgs->lArguments[3]);
-		_ASSERTE(*pCount <= pArgs->lArguments[2]);
-		UINT nCount = *pCount;
-		for (UINT i = 0; i < nCount; i++)
-			DebugInputPrint(p[i]);
+		DWORD nLeft = 0; GetNumberOfConsoleInputEvents(GetStdHandle(STD_INPUT_HANDLE), &nLeft);
+		wsprintfW(szDbg, L"*** OnConsoleReadInputPost(Events=%i, KeyCount=%i, LeftInConBuffer=%i)\n", 
+			*pCount, (p->EventType==KEY_EVENT) ? p->Event.KeyEvent.wRepeatCount : 0, nLeft);
+		//if (*pCount) {
+		//	wsprintfW(szDbg+lstrlen(szDbg), L", type=%i", p->EventType);
+		//	if (p->EventType == MOUSE_EVENT) {
+		//		wsprintfW(L", {%ix%i} BtnState:0x%08X, CtrlState:0x%08X, Flags:0x%08X",
+		//			p->Event.MouseEvent.dwMousePosition.X, p->Event.MouseEvent.dwMousePosition.Y,
+		//			p->Event.MouseEvent.dwButtonState, p->Event.MouseEvent.dwControlKeyState,
+		//			p->Event.MouseEvent.dwEventFlags);
+		//	} else if (p->EventType == KEY_EVENT) {
+		//		wsprintfW(L", '%c' %s count=%i, VK=%i, SC=%i, CH=\\x%X, State=0x%08x %s",
+		//			(p->Event.KeyEvent.uChar.UnicodeChar > 0x100) ? L'?' :
+		//			(p->Event.KeyEvent.uChar.UnicodeChar 
+		//			? p->Event.KeyEvent.uChar.UnicodeChar : L' '),
+		//			p->Event.KeyEvent.bKeyDown ? L"Down," : L"Up,  ",
+		//			p->Event.KeyEvent.wRepeatCount,
+		//			p->Event.KeyEvent.wVirtualKeyCode,
+		//			p->Event.KeyEvent.wVirtualScanCode,
+		//			p->Event.KeyEvent.uChar.UnicodeChar,
+		//			p->Event.KeyEvent.dwControlKeyState,
+		//			(p->Event.KeyEvent.dwControlKeyState & ENHANCED_KEY) ?
+		//			L"<Enhanced>" : L"");
+		//	}
+		//}
+		//lstrcatW(szDbg, L")\n");
+		DEBUGSTRINPUT(szDbg);
+		// Если под дебагом включен ScrollLock - вывести информацию о считанных событиях
+		if (GetKeyState(VK_SCROLL) & 1) {
+			PINPUT_RECORD p = (PINPUT_RECORD)(pArgs->lArguments[1]);
+			LPDWORD pCount = (LPDWORD)(pArgs->lArguments[3]);
+			_ASSERTE(*pCount <= pArgs->lArguments[2]);
+			UINT nCount = *pCount;
+			for (UINT i = 0; i < nCount; i++)
+				DebugInputPrint(p[i]);
+		}
 	}
-	#endif
 #endif
 
 	// Если зарегистрирован callback для графической панели
@@ -758,6 +759,35 @@ VOID WINAPI OnConsoleReadInputPost(HookCallbackArg* pArgs)
 		// Если функция возвращает FALSE - реальное чтение не будет вызвано
 		if (!OnPanelViewCallbacks(pArgs, gPanelRegLeft.pfnReadPostCall, gPanelRegRight.pfnReadPostCall))
 			return;
+	}
+
+	// Чтобы ФАР сразу прекратил ходить по каталогам при отпускании Enter
+	{
+		HANDLE h = (HANDLE)(pArgs->lArguments[0]);
+		PINPUT_RECORD p = (PINPUT_RECORD)(pArgs->lArguments[1]);
+		LPDWORD pCount = (LPDWORD)(pArgs->lArguments[3]);
+		if (*pCount == 1 && p->EventType == KEY_EVENT && p->Event.KeyEvent.bKeyDown
+			&& p->Event.KeyEvent.wVirtualKeyCode == VK_RETURN)
+		{
+			INPUT_RECORD ir[10]; DWORD nRead = 0, nInc = 0;
+			if (PeekConsoleInputW(h, ir, countof(ir), &nRead) && nRead) {
+				for (DWORD n = 0; n < nRead; n++) {
+					if (ir[n].EventType == KEY_EVENT && ir[n].Event.KeyEvent.bKeyDown
+						&& ir[n].Event.KeyEvent.wVirtualKeyCode == p->Event.KeyEvent.wVirtualKeyCode
+						&& ir[n].Event.KeyEvent.dwControlKeyState == p->Event.KeyEvent.dwControlKeyState)
+					{
+						nInc++;
+					} else {
+						break; // дубли в буфере кончились
+					}
+				}
+				if (nInc > 0) {
+					if (ReadConsoleInputW(h, ir, nInc, &nRead) && nRead) {
+						p->Event.KeyEvent.wRepeatCount += (WORD)nRead;
+					}
+				}
+			}
+		}
 	}
 }
 
@@ -894,8 +924,8 @@ BOOL WINAPI DllMain( HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserve
 				ghCommandThreads = new CommandThreads();
 				
 				HWND hConWnd = GetConsoleWindow();
-				WARNING("Это - неправильно. Текущая нить не обязана быть главной!");
-				gnMainThreadId = GetCurrentThreadId();
+				// Текущая нить не обязана быть главной! Поэтому ищем первую нить процесса!
+				gnMainThreadId = GetMainThreadId();
 				InitHWND(hConWnd);
 				
 				TODO("перенести инициализацию фаровских callback'ов в SetStartupInfo, т.к. будет грузиться как Inject!");
@@ -4042,6 +4072,38 @@ void UpdateEnvVar(const wchar_t* pszList)
 		pszValue = pszName + lstrlenW(pszName) + 1;
 	}
 }
+
+// Плагин может быть вызван в первый раз из фоновой нити.
+// Поэтому простой "gnMainThreadId = GetCurrentThreadId();" не прокатит. Нужно искать первую нить процесса!
+DWORD GetMainThreadId()
+{
+	DWORD nThreadID = 0;
+	DWORD nProcID = GetCurrentProcessId();
+	HANDLE h = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0);
+	if (h != INVALID_HANDLE_VALUE)
+	{
+		THREADENTRY32 ti = {sizeof(THREADENTRY32)};
+		if (Thread32First(h, &ti))
+		{
+			do {
+				// Нужно найти ПЕРВУЮ нить процесса
+				if (ti.th32OwnerProcessID == nProcID) {
+					nThreadID = ti.th32ThreadID;
+					break;
+				}
+			} while (Thread32Next(h, &ti));
+		}
+		CloseHandle(h);
+	}
+
+	// Нехорошо. Должна быть найдена. Вернем хоть что-то (текущую нить)
+	if (!nThreadID) {
+		_ASSERTE(nThreadID!=0);
+		nThreadID = GetCurrentThreadId();
+	}
+	return nThreadID;
+}
+
 
 /* Используются как extern в ConEmuCheck.cpp */
 LPVOID _calloc(size_t nCount,size_t nSize) {

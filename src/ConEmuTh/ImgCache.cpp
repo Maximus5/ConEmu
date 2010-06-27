@@ -1,7 +1,7 @@
 
 #include <stdio.h>
 #include <windows.h>
-#include <crtdbg.h>
+//#include <crtdbg.h>
 //#include <ole2.h>
 //#include <ShlObj.h>
 #include "ConEmuTh.h"

@@ -119,7 +119,10 @@ DWORD CRgnDetect::GetDialog(DWORD nDlgID, SMALL_RECT* rc) const
 
 DWORD CRgnDetect::GetFlags() const
 {
-	return m_DetectedDialogs.AllFlags;
+	// чтобы не драться с другими нитями во время детекта возвращаем сохраненную mn_AllFlagsSaved
+	// а не то что лежит в m_DetectedDialogs.AllFlags (оно может сейчас меняться)
+	//return m_DetectedDialogs.AllFlags;
+	return mn_AllFlagsSaved;
 }
 
 
@@ -835,6 +838,8 @@ bool CRgnDetect::FindByBackground(wchar_t* pChar, CharAttr* pAttr, int nWidth, i
 	nMostRight--;
 	_ASSERTE(nMostRight<nWidth);
 
+	//2010-06-27 все-таки лишнее. Если уж пошли "по фону" то не нужно на рамки ориентироваться, иначе зациклимся
+#if 0
 	wchar_t wc = pChar[nFromY*nWidth+nMostRight];
 	if (wc >= ucBoxSinglHorz && wc <= ucBoxDblVertHorz)
 	{
@@ -858,6 +863,7 @@ bool CRgnDetect::FindByBackground(wchar_t* pChar, CharAttr* pAttr, int nWidth, i
 			return false;
 		}
 	}
+#endif
 
 	// Найти нижнюю границу
 	nMostBottom = nFromY;
@@ -896,7 +902,7 @@ void CRgnDetect::DetectDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int n
 	}
 
 #ifdef _DEBUG
-	if (nFromX == 79 && nFromY == 1) {
+	if (nFromX == 69 && nFromY == 12) {
 		nFromX = nFromX;
 	}
 #endif
@@ -1008,9 +1014,11 @@ void CRgnDetect::DetectDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int n
 	// Придется идти просто по цвету фона
 	// Это может быть диалог, рамка которого закрыта другим диалогом, 
 	// или вообще кусок диалога, у которого видна только часть рамки
+	// 100627 - но только если это не вьювер/редактор. там слишком много мусора будет
+	if ((m_DetectedDialogs.AllFlags & FR_VIEWEREDITOR))
+		goto fin;
 	if (!FindByBackground(pChar, pAttr, nWidth, nHeight, nFromX, nFromY, nMostRight, nMostBottom, bMarkBorder))
-		goto fin; // значит уже все пометили, или диалога нет
-
+			goto fin; // значит уже все пометили, или диалога нет
 
 
 done:
@@ -1568,22 +1576,23 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO *apFarInfo, const COLORREF 
 	m_DetectedDialogs.AllFlags = 0; mn_NextDlgId = 0; mb_NeedPanelDetect = TRUE;
 	memset(&mrc_LeftPanel,0,sizeof(mrc_LeftPanel));
 	memset(&mrc_RightPanel,0,sizeof(mrc_RightPanel));
+	// !!! После "m_DetectedDialogs.AllFlags = 0" - никаких return !!!
 
 
 
 	m_DetectedDialogs.Count = 0;
 
 	//if (!mp_ConsoleInfo || !gSet.NeedDialogDetect())
-	//	return;
+	//	goto wrap;
 
 	// !!! в буферном режиме - никакой прозрачности, но диалоги - детектим, пригодится при отрисовке
 
 	// В редакторах-вьюверах тоже нужен детект
 	//if (!mp_FarInfo->bFarPanelAllowed)
-	//	return;
+	//	goto wrap;
 	//if (nCurFarPID && pRCon->mn_LastFarReadIdx != pRCon->mp_ConsoleInfo->nFarReadIdx) {
 	//if (isPressed(VK_CONTROL) && isPressed(VK_SHIFT) && isPressed(VK_MENU))
-	//	return;
+	//	goto wrap;
 
 	WARNING("Если информация в FarInfo не заполнена - брать умолчания!");
 	WARNING("Учитывать возможность наличия номеров окон, символа записи 'R', и по хорошему, ч/б режима");
@@ -1594,6 +1603,11 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO *apFarInfo, const COLORREF 
 	crUserBack = mp_Colors[nUserBackIdx];
 	nMenuBackIdx = (mp_FarInfo->nFarColors[COL_HMENUTEXT] & 0xF0) >> 4;
 	crMenuTitleBack = mp_Colors[nMenuBackIdx];
+	// Цвета диалогов
+	nDlgBorderBackIdx = (mp_FarInfo->nFarColors[COL_DIALOGBOX] & 0xF0) >> 4;
+	nDlgBorderForeIdx = (mp_FarInfo->nFarColors[COL_DIALOGBOX] & 0xF);
+	nErrBorderBackIdx = (mp_FarInfo->nFarColors[COL_WARNDIALOGBOX] & 0xF0) >> 4;
+	nErrBorderForeIdx = (mp_FarInfo->nFarColors[COL_WARNDIALOGBOX] & 0xF);
 	
 	// Для детекта наличия PanelTabs
 	bPanelTabsSeparate = (mp_FarInfo->PanelTabs.SeparateTabs != 0);
@@ -1625,13 +1639,13 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO *apFarInfo, const COLORREF 
 	//if (bShowKeyBar) {
 	//	// в левом-нижнем углу должна быть цифра 1
 	//	if (pChar[nWidth*(nHeight-1)] != L'1')
-	//		return;
+	//		goto wrap;
 	//	// соответствующего цвета
 	//	BYTE KeyBarNoColor = mp_FarInfo->nFarColors[COL_KEYBARNUM];
 	//	if (pAttr[nWidth*(nHeight-1)].nBackIdx != ((KeyBarNoColor & 0xF0)>>4))
-	//		return;
+	//		goto wrap;
 	//	if (pAttr[nWidth*(nHeight-1)].nForeIdx != (KeyBarNoColor & 0xF))
-	//		return;
+	//		goto wrap;
 	//}
 
 	// Теперь информация о панелях хронически обновляется плагином
@@ -1717,6 +1731,13 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO *apFarInfo, const COLORREF 
 		MarkDialog(pChar, pAttr, nWidth, nHeight, 0, 0, nWidth-1, 0);
 	}
 
+	// Редактор/вьювер
+	if (mp_FarInfo->bViewerOrEditor
+		&& 0 == (m_DetectedDialogs.AllFlags & (FR_LEFTPANEL|FR_RIGHTPANEL|FR_FULLPANEL)))
+	{
+		// Покроем полностью, включая меню и кейбар
+		MarkDialog(pChar, pAttr, nWidth, nHeight, 0, 0, nWidth-1, nHeight-1, false, false, FR_VIEWEREDITOR);
+	}
 
 
 	if (mn_DetectCallCount != 0) {
@@ -1805,7 +1826,12 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO *apFarInfo, const COLORREF 
 						case ucBoxDblUpLeft:
 							// Это правый кусок диалога, который не полностью влез на экран
 							// Пометить "рамкой" до его низа
-							DetectDialog(pChar, pAttr, nWidth, nHeight, nX, nY);
+							// 100627 - во вьювере(?) будем обрабатывать только цвета диалога, во избежание замусоривания
+							if (!(m_DetectedDialogs.AllFlags & FR_VIEWEREDITOR) || 
+								(pnDst[nX].nBackIdx == nDlgBorderBackIdx && pnDst[nX].nForeIdx == nDlgBorderForeIdx) ||
+								(pnDst[nX].nBackIdx == nErrBorderBackIdx && pnDst[nX].nForeIdx == nErrBorderForeIdx)
+								)
+								DetectDialog(pChar, pAttr, nWidth, nHeight, nX, nY);
 					}
 				}
 				nX++; nShift++;
@@ -1820,12 +1846,12 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO *apFarInfo, const COLORREF 
 	}
 
 
-	if (mb_BufferHeight)
-		return; // в буферном режиме - никакой прозрачности
+	if (mb_BufferHeight) // при "far /w" mb_BufferHeight==false
+		goto wrap; // в буферном режиме - никакой прозрачности
 
 	if (!lbLeftVisible && !lbRightVisible) {
 		if (isPressed(VK_CONTROL) && isPressed(VK_SHIFT) && isPressed(VK_MENU))
-			return; // По CtrlAltShift - показать UserScreen (не делать его прозрачным)
+			goto wrap; // По CtrlAltShift - показать UserScreen (не делать его прозрачным)
 	}
 
 
@@ -1880,6 +1906,8 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO *apFarInfo, const COLORREF 
 	// Некрасиво...
 	//// 0x0 должен быть непрозрачным
 	//pAttr[0].bTransparent = FALSE;
+wrap:
+	mn_AllFlagsSaved = m_DetectedDialogs.AllFlags;
 }
 
 // Преобразовать абсолютные координаты консоли в координаты нашего буфера
