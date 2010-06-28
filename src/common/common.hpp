@@ -703,8 +703,10 @@ typedef struct tag_CESERVER_REQ_STARTSTOP {
 	BOOL  bUserIsAdmin;
 	// А это приходит из консоли, вдруго консольная программа успела поменять размер буфера
 	CONSOLE_SCREEN_BUFFER_INFO sbi;
+	// Только ComSpec
+	BOOL  bWasBufferHeight;
 	// Reserved
-	DWORD nReserved0, nReserved1;
+	DWORD nReserved0;
 } CESERVER_REQ_STARTSTOP;
 
 // _ASSERTE(sizeof(CESERVER_REQ_STARTSTOPRET) <= sizeof(CESERVER_REQ_STARTSTOP));

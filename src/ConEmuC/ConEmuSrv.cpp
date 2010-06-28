@@ -1488,13 +1488,19 @@ static BOOL ReadConsoleInfo()
 
 
 			#ifdef ASSERT_UNWANTED_SIZE
-			if (srv.crReqSizeNewSize.X != lsbi.dwSize.X && !srv.dwDisplayMode && !IsZoomed(ghConWnd)) {
-				LogSize(NULL, ":ReadConsoleInfo(AssertWidth)");
-				wchar_t szTitle[64], szInfo[128];
-				wsprintf(szTitle, L"ConEmuC, PID=%i", GetCurrentProcessId());
-				wsprintf(szInfo, L"Size set by server: {%ix%i}\nCurrent size: {%ix%i}",
-					srv.crReqSizeNewSize.X, srv.crReqSizeNewSize.Y, lsbi.dwSize.X, lsbi.dwSize.Y);
-				MessageBox(NULL, szInfo, szTitle, MB_OK|MB_SETFOREGROUND|MB_SYSTEMMODAL);
+			COORD crReq = srv.crReqSizeNewSize;
+			COORD crSize = lsbi.dwSize;
+			if (crReq.X != crSize.X && !srv.dwDisplayMode && !IsZoomed(ghConWnd)) {
+				// Только если не было запрошено изменение размера консоли!
+				if (!srv.nRequestChangeSize) {
+					LogSize(NULL, ":ReadConsoleInfo(AssertWidth)");
+					wchar_t /*szTitle[64],*/ szInfo[128];
+					//wsprintf(szTitle, L"ConEmuC, PID=%i", GetCurrentProcessId());
+					wsprintf(szInfo, L"Size req by server: {%ix%i},  Current size: {%ix%i}",
+						crReq.X, crReq.Y, crSize.X, crSize.Y);
+					//MessageBox(NULL, szInfo, szTitle, MB_OK|MB_SETFOREGROUND|MB_SYSTEMMODAL);
+					MY_ASSERT_EXPR(FALSE, szInfo);
+				}
 			}
 			#endif
 
@@ -1506,9 +1512,18 @@ static BOOL ReadConsoleInfo()
 	}
 
 
-	if (!gnBufferHeight && srv.sbi.dwSize.Y > 200) {
-		_ASSERTE(srv.sbi.dwSize.Y <= 200);
-		DEBUGLOGSIZE(L"!!! srv.sbi.dwSize.Y > 200 !!! in ConEmuC.ReloadConsoleInfo");
+	if (!gnBufferHeight) {
+		int nWndHeight = (srv.sbi.srWindow.Bottom - srv.sbi.srWindow.Top + 1);
+		if (srv.sbi.dwSize.Y > (max(gcrBufferSize.Y,nWndHeight)+200)
+			|| (srv.nRequestChangeSize && srv.nReqSizeBufferHeight))
+		{
+			// Приложение изменило размер буфера
+			gnBufferHeight = srv.nReqSizeBufferHeight;
+		}
+		if (!gnBufferHeight) {
+			_ASSERTE(srv.sbi.dwSize.Y <= 200);
+			DEBUGLOGSIZE(L"!!! srv.sbi.dwSize.Y > 200 !!! in ConEmuC.ReloadConsoleInfo");
+		}
 		//	Sleep(10);
 		//} else {
 		//	break; // OK
@@ -1959,6 +1974,7 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 	BOOL  /*lbEventualChange = FALSE,*/ /*lbForceSend = FALSE,*/ lbChanged = FALSE; //, lbProcessChanged = FALSE;
 	DWORD dwTimeout = 10; // периодичность чтения информации об окне (размеров, курсора,...)
 	//BOOL  bForceRefreshSetSize = FALSE; // После изменения размера нужно сразу перечитать консоль без задержек
+	BOOL lbWasSizeChange = FALSE;
 
 	while (TRUE)
 	{
@@ -2004,7 +2020,9 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 			//	ResumeThread(srv.hRootThread);
 			//}
 			
-			SetEvent(srv.hReqSizeChanged);
+			// Событие выставим ПОСЛЕ окончания перечитывания консоли
+			lbWasSizeChange = TRUE;
+			//SetEvent(srv.hReqSizeChanged);
 		}
 		
 		
@@ -2039,7 +2057,10 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 			//		}
 			//#endif
 			//		
-		nWait = WaitForMultipleObjects ( 2, hEvents, FALSE, dwTimeout/*dwTimeout*/ );
+		if (lbWasSizeChange)
+			nWait = (WAIT_OBJECT_0+1); // требуется перечитать консоль после изменения размера!
+		else
+			nWait = WaitForMultipleObjects ( 2, hEvents, FALSE, dwTimeout/*dwTimeout*/ );
 		if (nWait == WAIT_OBJECT_0) {
 			break; // затребовано завершение нити
 		}// else if (nWait == WAIT_TIMEOUT && dwConWait == WAIT_OBJECT_0) {
@@ -2051,8 +2072,9 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 
 		// Чтобы не грузить процессор неактивными консолями
 		//if (!lbForceSend) {
-		if ((!srv.pConsole->hdr.bConsoleActive 
-			|| (srv.pConsole->hdr.bConsoleActive && !srv.pConsole->hdr.bThawRefreshThread))
+		if (!lbWasSizeChange
+			&& (!srv.pConsole->hdr.bConsoleActive 
+				|| (srv.pConsole->hdr.bConsoleActive && !srv.pConsole->hdr.bThawRefreshThread))
 			&& (nWait != (WAIT_OBJECT_0+1)))
 		{
 			DWORD nCurTick = GetTickCount();
@@ -2104,9 +2126,16 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 		/* Перечитать консоль */
 		/* ****************** */
 		lbChanged = ReloadFullConsoleInfo(FALSE/*lbForceSend*/);
+
+		// Событие выставим ПОСЛЕ окончания перечитывания консоли
+		if (lbWasSizeChange) {
+			SetEvent(srv.hReqSizeChanged);
+			lbWasSizeChange = FALSE;
+		}
+
 		if (nWait == (WAIT_OBJECT_0+1))
 			SetEvent(srv.hRefreshDoneEvent);
-		
+
 		// запомнить последний tick
 		//if (lbChanged)
 		nLastReadTick = GetTickCount();

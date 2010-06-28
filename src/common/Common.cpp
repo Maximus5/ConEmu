@@ -627,7 +627,7 @@ int MyAssertProc(const wchar_t* pszFile, int nLine, const wchar_t* pszTest)
 {
 	MyAssertInfo a;
 	StringCbPrintfW(a.szTitle, countof(a.szTitle), L"CEAssert PID=%u TID=%u", GetCurrentProcessId(), GetCurrentThreadId());
-	StringCbPrintfW(a.szDebugInfo, countof(a.szDebugInfo), L"Assertion\n%s\nat\n%s: %i\n\nPress 'Retry' to trap.",
+	StringCbPrintfW(a.szDebugInfo, countof(a.szDebugInfo), L"Assertion\n%s\n\n%s: %i\n\nPress 'Retry' to trap.",
 		pszTest ? pszTest : L"", pszFile, nLine);
 	DWORD dwTID, dwCode = 0;
 	HANDLE hThread = CreateThread(NULL, 0, MyAssertThread, &a, 0, &dwTID);

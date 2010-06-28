@@ -837,6 +837,8 @@ BOOL CImgCache::LoadThumbnail(struct tag_CacheInfo* pItem)
 	_ASSERTE(gThSet.nMaxZoom>0 && gThSet.nMaxZoom < 1000);
 	//PV.nMaxZoom = gThSet.nMaxZoom;
 	BOOL lbLoadRc;
+
+	LPVOID lptrLocal = NULL;
 	
 	BOOL lbIgnoreFileDescription = FALSE, lbIgnoreComments = FALSE;
 	HANDLE hFile = INVALID_HANDLE_VALUE, hMapping = NULL;
@@ -865,6 +867,35 @@ BOOL CImgCache::LoadThumbnail(struct tag_CacheInfo* pItem)
 					// ImpEx показывает в описании размер изображения, получается некрасивое дублирование
 					//lbIgnoreFileDescription = TRUE;
 					lbIgnoreComments = TRUE;
+				}
+			}
+		}
+		// PBFar
+		//int _GetFileData(CPBPlugin* pPlugin, LPCWSTR asFile, LPVOID* ppData, DWORD* pDataSize)
+		if (!PV.pFileData && !IsBadReadPtr((void*)pItem->UserData, sizeof(PbFarPanelItem))) {
+			PbFarPanelItem *pPbFar = (PbFarPanelItem*)pItem->UserData;
+			if (pPbFar->nMagic == PBFAR_MAGIC && pPbFar->cbSizeOfStruct == sizeof(PbFarPanelItem)
+				&& pPbFar->pPlugin)
+			{
+				const wchar_t* pszExt = wcsrchr(pItem->lpwszFileName, L'.');
+				if (pszExt)
+				{
+					if (!lstrcmpi(pszExt, L".bmp") || !lstrcmpi(pszExt, L".gif") || !lstrcmpi(pszExt, L".ico") || !lstrcmpi(pszExt, L".png") || !lstrcmpi(pszExt, L".wmf"))
+					{
+						HMODULE hPbFar = GetModuleHandle(L"PBFar.dll");
+						if (hPbFar) {
+							GetPbFarFileData_t GetPbFarFileData = (GetPbFarFileData_t)GetProcAddress(hPbFar, "_GetFileData");
+							if (GetPbFarFileData) {
+								DWORD nSize = 0; LPVOID lptr = NULL;
+								if (GetPbFarFileData(pPbFar->pPlugin, pItem->lpwszFileName, &lptr, &nSize) && lptr) {
+									lptrLocal = lptr;
+									PV.nFileSize = nSize;
+									PV.pFileData = (const BYTE*)lptr;
+									lbIgnoreComments = TRUE;
+								}
+							}
+						}
+					}
 				}
 			}
 		}
@@ -962,6 +993,10 @@ BOOL CImgCache::LoadThumbnail(struct tag_CacheInfo* pItem)
 			lbThumbRc = TRUE;
 			break;
 		}
+	}
+
+	if (lptrLocal) {
+		LocalFree(lptrLocal); // PBFAR
 	}
 	
 	if (hFile != INVALID_HANDLE_VALUE) {

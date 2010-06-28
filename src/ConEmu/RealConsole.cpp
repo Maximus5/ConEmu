@@ -3633,6 +3633,7 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 		DWORD nSubSystem = pIn->StartStop.nSubSystem;
 		BOOL bRunViaCmdExe = pIn->StartStop.bRootIsCmdExe;
 		BOOL bUserIsAdmin = pIn->StartStop.bUserIsAdmin;
+		BOOL lbWasBuffer = pIn->StartStop.bWasBufferHeight;
 		//DWORD nInputTID = pIn->StartStop.dwInputTID;
 
 		_ASSERTE(sizeof(CESERVER_REQ_STARTSTOPRET) <= sizeof(CESERVER_REQ_STARTSTOP));
@@ -3640,36 +3641,38 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
         
         if (nStarted == 0 || nStarted == 2) {
             // Сразу заполним результат
-            //pIn->StartStopRet.bWasBufferHeight = isBufferHeight(); // чтобы comspec знал, что буфер нужно будет отключить
+            pIn->StartStopRet.bWasBufferHeight = isBufferHeight(); // чтобы comspec знал, что буфер нужно будет отключить
 			
-			DWORD nParentPID = 0;
-			if (nStarted == 2)
-			{
-				ConProcess* pPrc = NULL;
-				int i, nProcCount = GetProcesses(&pPrc);
-				if (pPrc != NULL)
-				{ 				
-					for (i = 0; i < nProcCount; i++) {
-						if (pPrc[i].ProcessID == nPID) {
-							nParentPID = pPrc[i].ParentPID; break;
-						}
-					}
-					if (nParentPID == 0) {
-						_ASSERTE(nParentPID != 0);
-					} else {
-						BOOL lbFar = FALSE;
-						for (i = 0; i < nProcCount; i++) {
-							if (pPrc[i].ProcessID == nParentPID) {
-								lbFar = pPrc[i].IsFar; break;
-							}
-						}
-						if (!lbFar)
-							nParentPID = 0;
-					}
-					free(pPrc);
-				}
-			}
-			pIn->StartStopRet.bWasBufferHeight = (nStarted == 2) && (nParentPID == 0); // comspec должен уведомить о завершении
+			//DWORD nParentPID = 0;
+			//if (nStarted == 2)
+			//{
+			//	ConProcess* pPrc = NULL;
+			//	int i, nProcCount = GetProcesses(&pPrc);
+			//	if (pPrc != NULL)
+			//	{ 				
+			//		for (i = 0; i < nProcCount; i++) {
+			//			if (pPrc[i].ProcessID == nPID) {
+			//				nParentPID = pPrc[i].ParentPID; break;
+			//			}
+			//		}
+			//		if (nParentPID == 0) {
+			//			_ASSERTE(nParentPID != 0);
+			//		} else {
+			//			BOOL lbFar = FALSE;
+			//			for (i = 0; i < nProcCount; i++) {
+			//				if (pPrc[i].ProcessID == nParentPID) {
+			//					lbFar = pPrc[i].IsFar; break;
+			//				}
+			//			}
+			//			if (!lbFar) {
+			//				_ASSERTE(lbFar);
+			//				nParentPID = 0;
+			//			}
+			//		}
+			//		free(pPrc);
+			//	}
+			//}
+			//pIn->StartStopRet.bWasBufferHeight = FALSE;// (nStarted == 2) && (nParentPID == 0); // comspec должен уведомить о завершении
 			pIn->StartStopRet.hWnd = ghWnd;
 			pIn->StartStopRet.hWndDC = ghWndDC;
 			pIn->StartStopRet.dwPID = GetCurrentProcessId();
@@ -3832,6 +3835,9 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 					
     				DEBUGSTRCMD(L"16 bit application TERMINATED (aquired from CECMD_CMDFINISHED)\n");
                     //mn_ProgramStatus &= ~CES_NTVDM; -- сбросим после синхронизации размера консоли, чтобы не слетел
+					if (lbWasBuffer) {
+						SetBufferHeightMode(TRUE, TRUE); // Сразу выключаем, иначе команда неправильно сформируется
+					}
     				SyncConsole2Window(TRUE); // После выхода из 16bit режима хорошо бы отресайзить консоль по размеру GUI
 					if (mn_Comspec4Ntvdm && mn_Comspec4Ntvdm != nPID) {
 						_ASSERTE(mn_Comspec4Ntvdm == nPID);
@@ -3844,7 +3850,9 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 				// Восстановить размер через серверный ConEmuC
 				mb_BuferModeChangeLocked = TRUE;
 				con.m_sbi.dwSize.Y = crNewSize.Y;
-				SetBufferHeightMode(FALSE, TRUE); // Сразу выключаем, иначе команда неправильно сформируется
+				if (!lbWasBuffer) {
+					SetBufferHeightMode(FALSE, TRUE); // Сразу выключаем, иначе команда неправильно сформируется
+				}
 
 				#ifdef _DEBUG
 				wsprintf(szDbg, L"Returns normal window size begin at %i\n", GetTickCount());

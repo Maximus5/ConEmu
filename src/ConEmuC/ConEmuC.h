@@ -419,6 +419,8 @@ typedef struct tag_CmdInfo {
 	wchar_t szSelfName[32];
 	wchar_t *pszPreAliases;
 	DWORD nPreAliasSize;
+	// По завершении ComSpec не отключать буфер
+	BOOL  bWasBufferHeight;
 } CmdInfo;
 
 extern CmdInfo cmd;

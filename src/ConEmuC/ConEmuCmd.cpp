@@ -270,6 +270,7 @@ void ComspecDone(int aiRc)
 			pIn->StartStop.hWnd = ghConWnd;
 			pIn->StartStop.dwPID = gnSelfPID;
 			pIn->StartStop.nSubSystem = gnImageSubsystem;
+			pIn->StartStop.bWasBufferHeight = cmd.bWasBufferHeight;
 			// НЕ MyGet..., а то можем заблокироваться...
 			// ghConOut может быть NULL, если ошибка произошла во время разбора аргументов
 			lbRc2 = GetConsoleScreenBufferInfo(hOut2 = GetStdHandle(STD_OUTPUT_HANDLE), &pIn->StartStop.sbi);
@@ -291,27 +292,31 @@ void ComspecDone(int aiRc)
 			ExecuteFreeResult(pIn); pIn = NULL; // не освобождалось
 		}
 
-		lbRc2 = GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &sbi2);
-		#ifdef _DEBUG
-		if (sbi2.dwSize.Y > 200) {
-			wchar_t szTitle[128]; wsprintfW(szTitle, L"ConEmuC (PID=%i)", GetCurrentProcessId());
-			MessageBox(NULL, L"BufferHeight was not turned OFF", szTitle, MB_SETFOREGROUND|MB_SYSTEMMODAL);
-		}
-		#endif
-		if (lbRc1 && lbRc2 && sbi2.dwSize.Y == sbi1.dwSize.Y) {
-			// GUI не смог вернуть высоту буфера... 
-			// Это плохо, т.к. фар высоту буфера не меняет и будет сильно глючить на N сотнях строк...
-			int nNeedHeight = cmd.sbi.dwSize.Y;
-			if (nNeedHeight < 10) {
-				nNeedHeight = (sbi2.srWindow.Bottom-sbi2.srWindow.Top+1);
+		if (!cmd.bWasBufferHeight)
+		{
+			lbRc2 = GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &sbi2);
+			#ifdef _DEBUG
+			if (sbi2.dwSize.Y > 200) {
+				wchar_t szTitle[128]; wsprintfW(szTitle, L"ConEmuC (PID=%i)", GetCurrentProcessId());
+				MessageBox(NULL, L"BufferHeight was not turned OFF", szTitle, MB_SETFOREGROUND|MB_SYSTEMMODAL);
 			}
-			if (sbi2.dwSize.Y != nNeedHeight) {
-				PRINT_COMSPEC(L"Error: BufferHeight was not changed from %i\n", sbi2.dwSize.Y);
-				SMALL_RECT rc = {0};
-				sbi2.dwSize.Y = nNeedHeight;
-				if (ghLogSize) LogSize(&sbi2.dwSize, ":ComspecDone.RetSize.before");
-				SetConsoleSize(0, sbi2.dwSize, rc, "ComspecDone.Force");
-				if (ghLogSize) LogSize(NULL, ":ComspecDone.RetSize.after");
+			#endif
+			if (lbRc1 && lbRc2 && sbi2.dwSize.Y == sbi1.dwSize.Y) {
+				// GUI не смог вернуть высоту буфера... 
+				// Это плохо, т.к. фар высоту буфера не меняет и будет сильно глючить на N сотнях строк...
+				int nNeedHeight = cmd.sbi.dwSize.Y;
+				if (nNeedHeight < 10) {
+					nNeedHeight = (sbi2.srWindow.Bottom-sbi2.srWindow.Top+1);
+				}
+				if (sbi2.dwSize.Y != nNeedHeight) {
+					_ASSERTE(sbi2.dwSize.Y == nNeedHeight);
+					PRINT_COMSPEC(L"Error: BufferHeight was not changed from %i\n", sbi2.dwSize.Y);
+					SMALL_RECT rc = {0};
+					sbi2.dwSize.Y = nNeedHeight;
+					if (ghLogSize) LogSize(&sbi2.dwSize, ":ComspecDone.RetSize.before");
+					SetConsoleSize(0, sbi2.dwSize, rc, "ComspecDone.Force");
+					if (ghLogSize) LogSize(NULL, ":ComspecDone.RetSize.after");
+				}
 			}
 		}
 	}

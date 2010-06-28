@@ -959,8 +959,9 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 				asCmdLine = pszArgStarts + 2;
 				while (*asCmdLine==L' ' || *asCmdLine==L'\t') asCmdLine++;
 			}
-			if (gnRunMode == RM_COMSPEC)
+			if (gnRunMode == RM_COMSPEC) {
 				cmd.bK = (szArg[1] & ~0x20) == L'K';
+			}
 			break; // asCmdLine уже указывает на запускаемую программу
 		}
 	}
@@ -1192,14 +1193,18 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 	}
 
 	if (gnRunMode == RM_COMSPEC && (!asCmdLine || !*asCmdLine)) {
-		// ¬ фаре могут повесить пустую ассоциацию на маску
-		// *.ini -> "@" - тогда фар как бы ничего не делает при запуске этого файла, но ComSpec зовет...
-		cmd.bNonGuiMode = TRUE;
-		DisableAutoConfirmExit();
-		return CERR_EMPTY_COMSPEC_CMDLINE;
+		if (cmd.bK) {
+			bViaCmdExe = TRUE;
+		} else {
+			// ¬ фаре могут повесить пустую ассоциацию на маску
+			// *.ini -> "@" - тогда фар как бы ничего не делает при запуске этого файла, но ComSpec зовет...
+			cmd.bNonGuiMode = TRUE;
+			DisableAutoConfirmExit();
+			return CERR_EMPTY_COMSPEC_CMDLINE;
+		}
+	} else {
+		bViaCmdExe = IsNeedCmd(asCmdLine, &lbNeedCutStartEndQuot);
 	}
-
-	bViaCmdExe = IsNeedCmd(asCmdLine, &lbNeedCutStartEndQuot);
 	
 	nCmdLine = lstrlenW(asCmdLine);
 
@@ -1626,10 +1631,13 @@ void SendStarted()
 					LPARAM lParam = (LPARAM)(DWORD_PTR)pOut->StartStopRet.NewConsoleLang;
 					SendMessage(ghConWnd, WM_INPUTLANGCHANGEREQUEST, wParam, lParam);
 				}
-			} else
-			// ћожет так получитьс€, что один COMSPEC запущен из другого.
-			if (bAlreadyBufferHeight)
-				cmd.bNonGuiMode = TRUE; // Ќе посылать ExecuteGuiCmd при выходе - прокрутка должна остатьс€
+			} else {
+				// ћожет так получитьс€, что один COMSPEC запущен из другого.
+				// 100628 - неактуально. COMSPEC сбрасываетс€ в cmd.exe
+				//if (bAlreadyBufferHeight)
+				//	cmd.bNonGuiMode = TRUE; // Ќе посылать ExecuteGuiCmd при выходе - прокрутка должна остатьс€
+				cmd.bWasBufferHeight = bAlreadyBufferHeight;
+			}
 
 			//nNewBufferHeight = ((DWORD*)(pOut->Data))[0];
 			//crNewSize.X = (SHORT)((DWORD*)(pOut->Data))[1];

@@ -458,3 +458,12 @@ struct ImpExPanelItem
 	LPBYTE pBinaryData;		// и собственно бинарные данные
 	// Остальные поля не интересуют
 };
+#define PBFAR_MAGIC 0x50624672 // 'PbFr'
+struct PbFarPanelItem
+{
+	DWORD nMagic;			// PBFAR_MAGIC
+	DWORD cbSizeOfStruct;	// 
+	DWORD_PTR pPlugin;      // CPBPlugin*
+};
+typedef int (WINAPI* GetPbFarFileData_t)(DWORD_PTR pPlugin, LPCWSTR asFile, LPVOID* ppData, DWORD* pDataSize);
+
