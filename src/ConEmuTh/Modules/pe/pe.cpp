@@ -1,5 +1,6 @@
 
 #include <windows.h>
+#include <wintrust.h>
 
 #ifdef _DEBUG
 	#if !defined(__GNUC__)
@@ -73,6 +74,7 @@ enum tag_PeStrFlags {
 	PE_UPX          = 0x008,
 	PE_VER_EXISTS   = 0x010,
 	PE_ICON_EXISTS  = 0x020,
+	PE_SIGNED       = 0x040,
 };
 
 
@@ -1739,6 +1741,97 @@ template <class T> void DumpCOR20Header( PEData *pData, PBYTE pImageBase, T* pNT
 	//pRoot->printf( "\n" );
 }
 
+template <class T> void DumpCertificates(PEData *pData, PBYTE pImageBase, T* pNTHeader)
+{
+	// Note that the this DataDirectory entry gives a >>> FILE OFFSET <<< rather than
+	// an RVA.
+    DWORD certOffset;
+
+    certOffset = GetImgDirEntryRVA(pNTHeader, IMAGE_DIRECTORY_ENTRY_SECURITY );
+    if ( !certOffset )
+        return;
+	
+	__int64 dwTotalSize = GetImgDirEntrySize( pNTHeader, IMAGE_DIRECTORY_ENTRY_SECURITY );
+
+	//TCHAR szCertName[MAX_PATH], szCertType[64], szRev[8];
+	//int nCertNo = 0;
+	//MPanelItem* pChild = pRoot->AddFolder(_T("Certificates"));
+	//pChild->printf( "<Certificates>:\n" );
+	//
+	//pChild->SetColumnsTitles(cszCertRevTitle, 6, cszCertTypeTitle, 16);
+
+	//LPWIN_CERTIFICATE pCert = (LPWIN_CERTIFICATE)GetPtrFromRVA( certOffset, pNTHeader, pImageBase );
+	LPWIN_CERTIFICATE pCert = MakePtr( LPWIN_CERTIFICATE, pImageBase, certOffset );
+
+	while ( dwTotalSize > 0 )	// As long as there is unprocessed certificate data...
+	{
+		//LPWIN_CERTIFICATE pCert = MakePtr( LPWIN_CERTIFICATE, pImageBase, certOffset );
+
+		if (!pCert || IsBadReadPtr(pCert, sizeof(*pCert))) {
+			//pChild->printf(_T("\n!!! Failed to read LPWIN_CERTIFICATE at offset: 0x%08X !!!\n"), certOffset);
+			break;
+		}
+
+		if (!pCert->dwLength) {
+			break; // кончились
+		}
+
+		size_t nAllLen = pCert->dwLength;
+
+		switch( pCert->wCertificateType )
+		{
+		case WIN_CERT_TYPE_X509: //lstrcpy(szCertType, _T("X509")); break;
+		case WIN_CERT_TYPE_PKCS_SIGNED_DATA: //lstrcpy(szCertType, _T("PKCS_SIGNED_DATA")); break;
+		case WIN_CERT_TYPE_TS_STACK_SIGNED: //lstrcpy(szCertType, _T("TS_STACK_SIGNED")); break;
+			// OK, поддерживаемый тип
+			break;
+		default: //wsprintf(szCertType, _T("0x%04X"), pCert->wCertificateType);
+			continue;
+		}
+		
+		//nCertNo++;
+
+		if (IsBadReadPtr(pCert, nAllLen)) {
+			//wsprintf(szCertName, _T("#%i.INVALID_CERTIFICATE"), nCertNo);
+			//MPanelItem* pCertFile = pChild->AddFile(szCertName, pCert->dwLength);
+			//pCertFile->SetData((LPBYTE)pCert, pCert->dwLength);
+			//wsprintf(szRev, _T("0x%04X"), pCert->wRevision);
+			//pCertFile->SetColumns(szRev, szCertType);
+			//
+			//pChild->printf(_T("\n!!! Can't access %u bytes of LPWIN_CERTIFICATE at offset: 0x%08X !!!\n"), (DWORD)nAllLen, certOffset);
+			break;
+		}
+		
+		pData->nFlags |= PE_SIGNED;
+		return;
+
+		//pChild->printf( "  Certificate #%i\n", nCertNo );
+		//
+		//pChild->printf( "    Length:   %i bytes\n", pCert->dwLength );
+		//pChild->printf( "    Revision: 0x%04X\n", pCert->wRevision );
+		//pChild->printf( "    Type:     0x%04X", pCert->wCertificateType );
+		//
+		//if (szCertType[0] != _T('0'))
+		//	pChild->printf(_T(" (%s)"), szCertType);
+		//
+		//wsprintf(szCertName, _T("#%i.%s"), nCertNo, szCertType);
+		////int nLen = pCert->dwLength - sizeof(WIN_CERTIFICATE) + 1;
+		//MPanelItem* pCertFile = pChild->AddFile(szCertName, pCert->dwLength);
+		//pCertFile->SetData((LPBYTE)pCert, pCert->dwLength);
+		//wsprintf(szRev, _T("0x%04X"), pCert->wRevision);
+		//pCertFile->SetColumns(szRev, szCertType);
+		//
+		//pChild->printf( "\n" );
+		//
+		//dwTotalSize -= nAllLen; //pCert->dwLength;
+		////certOffset += pCert->dwLength;		// Get offset to next certificate
+		//
+		//pCert = (LPWIN_CERTIFICATE)(((LPBYTE)pCert) + nAllLen);
+	}
+
+	//pChild->printf( "\n" );
+}
+
 
 //
 // top level routine called from PEDUMP.CPP to dump the components of a PE file
@@ -2100,11 +2193,11 @@ bool DumpExeFilePE( PEData *pData, PIMAGE_DOS_HEADER dosHeader, PIMAGE_NT_HEADER
 	//bIs64Bit
 	//	? DumpLoadConfigDirectory( pRoot, pImageBase, pNTHeader64, (PIMAGE_LOAD_CONFIG_DIRECTORY64)0 )	// Passing NULL ptr is a clever hack
 	//	: DumpLoadConfigDirectory( pRoot, pImageBase, pNTHeader, (PIMAGE_LOAD_CONFIG_DIRECTORY32)0 );	// See if you can figure it out! :-)
-	//
-	//bIs64Bit
-	//	? DumpCertificates( pRoot, pImageBase, pNTHeader64 )
-	//	: DumpCertificates( pRoot, pImageBase, pNTHeader );
-	//
+
+	bIs64Bit
+		? DumpCertificates( pData, pImageBase, pNTHeader64 )
+		: DumpCertificates( pData, pImageBase, pNTHeader );
+
 	////=========================================================================
 	////
 	//// If we have COFF symbols, create a symbol table now
@@ -2292,7 +2385,8 @@ BOOL WINAPI CET_Load(struct CET_LoadInfo* pLoadPreview)
 
 		// [x64/x86] [FAR1/FAR2] [FileVersion]
 		//wchar_t szInfo[512];
-		lstrcpy(pData->szInfo, (pData->nBits == 64) ? L"x64 " : (pData->nBits == 16) ? L"x16 " : L"x32 ");
+		pData->szInfo[0] = (pData->nFlags & PE_SIGNED) ? L's' : L'x';
+		lstrcpy(pData->szInfo+1, (pData->nBits == 64) ? L"64 " : (pData->nBits == 16) ? L"16 " : L"32 ");
 		if ((pData->nFlags & (PE_Far1|PE_Far2)) == (PE_Far1|PE_Far2))
 			lstrcat(pData->szInfo, L"Far1&2 ");
 		else if ((pData->nFlags & PE_Far1))
@@ -2492,7 +2586,10 @@ int WINAPI GetCustomDataW(const wchar_t *FilePath, wchar_t **CustomData)
 	nLen = lstrlen(Ver.szVersion)+10;
 	if (nLen < 2) return FALSE;
 	*CustomData = (wchar_t*)malloc(nLen*2);
-	wsprintfW(*CustomData, L"[x%i]%s%s", Ver.nBits, Ver.szVersion[0] ? L" " : L"", Ver.szVersion);
+	wsprintfW(*CustomData, L"[%c%i]%s%s", 
+		(Ver.nFlags & PE_SIGNED) ? L's' : L'x',
+		Ver.nBits, 
+		Ver.szVersion[0] ? L" " : L"", Ver.szVersion);
 
 	return TRUE;
 }

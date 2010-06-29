@@ -10,6 +10,8 @@
 
 typedef struct tag_CePluginPanelItem CePluginPanelItem;
 
+typedef BOOL (WINAPI* AlphaBlend_t)(HDC hdcDest, int xoriginDest, int yoriginDest, int wDest, int hDest, HDC hdcSrc, int xoriginSrc, int yoriginSrc, int wSrc, int hSrc, BLENDFUNCTION ftn);
+
 class CImgCache
 {
 protected:
@@ -81,6 +83,9 @@ protected:
 	void LoadModules();
 	void FreeModules();
 	wchar_t ms_ModulePath[MAX_PATH], *mpsz_ModuleSlash;
+	// Alpha blending
+	HMODULE mh_MsImg32;
+	AlphaBlend_t fAlphaBlend;
 
 public:
 	CImgCache(HMODULE hSelf);

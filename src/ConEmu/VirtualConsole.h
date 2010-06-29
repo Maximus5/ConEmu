@@ -73,6 +73,7 @@ private:
 	bool    mb_IsForceUpdate; // Это устанавливается в InitDC, чтобы случайно isForce не потерялся
 	bool    mb_RequiredForceUpdate; // Сменился шрифт, например...
 	bool    isForce; // а это - сейчас (устанавливается по аргументу в Update)
+	int     mn_LastBitsPixel;
 private:
 	BOOL    mb_InUpdate;
 	HDC     hDC;

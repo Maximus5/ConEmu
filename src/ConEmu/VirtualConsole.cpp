@@ -138,6 +138,7 @@ CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
     TextLen = 0;
 	mb_RequiredForceUpdate = true;
 	mb_LastFadeFlag = false;
+	mn_LastBitsPixel = 0;
 
 	_ASSERTE(sizeof(mh_FontByIndex) == (sizeof(gSet.mh_Font)+sizeof(mh_FontByIndex[0])));
 	memmove(mh_FontByIndex, gSet.mh_Font, MAX_FONT_STYLES*sizeof(mh_FontByIndex[0]));
@@ -2687,7 +2688,7 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
         return;
 	_ASSERTE(hPaintDc);
 	_ASSERTE(rcClient.left!=rcClient.right && rcClient.top!=rcClient.bottom);
-
+	
 //#ifdef _DEBUG
 //    if (this) {
 //        if (!mp_RCon || !mp_RCon->isPackets()) {
@@ -2741,6 +2742,14 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
     
     if (gConEmu.isActive(this))
     	gSet.Performance(tPerfFPS, TRUE); // считаетс€ по своему
+
+
+	// ѕроверить, не сменилась ли битность с последнего раза
+	DWORD nBits = GetDeviceCaps(hPaintDc, BITSPIXEL);
+	if (mn_LastBitsPixel != nBits) {
+		mb_RequiredForceUpdate = true;
+	}
+
 
 	mb_InPaintCall = TRUE;
 	Update(mb_RequiredForceUpdate);
@@ -2873,6 +2882,9 @@ void CVirtualConsole::Paint(HDC hPaintDc, RECT rcClient)
 		_ASSERTE(gSet.isTabs == 0);
         Update(true, &hPaintDc);
     }
+    
+    // «апомнить последнюю битность диспле€
+    mn_LastBitsPixel = nBits;
     
     //mb_LastFadeFlag = bFading;
 

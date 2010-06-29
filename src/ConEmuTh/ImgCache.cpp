@@ -65,6 +65,14 @@ CImgCache::CImgCache(HMODULE hSelf)
 
 	// Initialize Com
 	CoInitialize(NULL);
+
+	// Alpha blending
+	mh_MsImg32 = LoadLibrary(L"Msimg32.dll");
+	if (mh_MsImg32) {
+		fAlphaBlend = (AlphaBlend_t)GetProcAddress(mh_MsImg32, "AlphaBlend");
+	} else {
+		fAlphaBlend = NULL;
+	}
 }
 
 CImgCache::~CImgCache(void)
@@ -90,6 +98,11 @@ CImgCache::~CImgCache(void)
 	}
 	////
 	//SafeRelease(gpDesktopFolder);
+
+	if (mh_MsImg32) {
+		fAlphaBlend = NULL;
+		FreeLibrary(mh_MsImg32);
+	}
 	
 	// Done Com
 	CoUninitialize();
@@ -530,12 +543,22 @@ BOOL CImgCache::PaintItem(HDC hdc, int x, int y, int nImgSize, CePluginPanelItem
 		
 		WARNING("¬ MSDN какие-то предупреждени€ про MultiMonitor... возможно стоит StretchDIBits");
 		SetStretchBltMode(hdc, COLORONCOLOR);
-		lbWasDraw = StretchBlt(
-			hdc, 
-			x+nXSpace,y+nYSpace,nShowWidth,nShowHeight,
-			mh_CompDC,
-			0,0,CacheInfo[nIndex].crSize.X,CacheInfo[nIndex].crSize.Y,
-			SRCCOPY);
+		if (CacheInfo[nIndex].ColorModel == CET_CM_BGRA && fAlphaBlend) {
+			BLENDFUNCTION bf = {AC_SRC_OVER, 0, 255, AC_SRC_ALPHA};
+			lbWasDraw = fAlphaBlend(
+				hdc,
+				x+nXSpace,y+nYSpace,nShowWidth,nShowHeight,
+				mh_CompDC,
+				0,0,CacheInfo[nIndex].crSize.X,CacheInfo[nIndex].crSize.Y,
+				bf);
+		} else {
+			lbWasDraw = StretchBlt(
+				hdc,
+				x+nXSpace,y+nYSpace,nShowWidth,nShowHeight,
+				mh_CompDC,
+				0,0,CacheInfo[nIndex].crSize.X,CacheInfo[nIndex].crSize.Y,
+				SRCCOPY);
+		}
 	}
 	else if (CacheInfo[nIndex].bPreviewExists && gThSet.nMaxZoom>100 
 		&& (nImgSize >= 2*CacheInfo[nIndex].crSize.X && nImgSize >= 2*CacheInfo[nIndex].crSize.Y))
@@ -561,13 +584,22 @@ BOOL CImgCache::PaintItem(HDC hdc, int x, int y, int nImgSize, CePluginPanelItem
 
 		WARNING("¬ MSDN какие-то предупреждени€ про MultiMonitor... возможно стоит StretchDIBits");
 		SetStretchBltMode(hdc, COLORONCOLOR);
-		lbWasDraw = StretchBlt(
-			hdc, 
-			x+nXSpace,y+nYSpace,nShowWidth,nShowHeight,
-			mh_CompDC,
-			0,0,CacheInfo[nIndex].crSize.X,CacheInfo[nIndex].crSize.Y,
-			SRCCOPY);
-
+		if (CacheInfo[nIndex].ColorModel == CET_CM_BGRA && fAlphaBlend) {
+			BLENDFUNCTION bf = {AC_SRC_OVER, 0, 255, AC_SRC_ALPHA};
+			lbWasDraw = fAlphaBlend(
+				hdc, 
+				x+nXSpace,y+nYSpace,nShowWidth,nShowHeight,
+				mh_CompDC,
+				0,0,CacheInfo[nIndex].crSize.X,CacheInfo[nIndex].crSize.Y,
+				bf);
+		} else {
+			lbWasDraw = StretchBlt(
+				hdc, 
+				x+nXSpace,y+nYSpace,nShowWidth,nShowHeight,
+				mh_CompDC,
+				0,0,CacheInfo[nIndex].crSize.X,CacheInfo[nIndex].crSize.Y,
+				SRCCOPY);
+		}
 	}
 	else if (nImgSize > CacheInfo[nIndex].crSize.X || nImgSize > CacheInfo[nIndex].crSize.Y)
 	{

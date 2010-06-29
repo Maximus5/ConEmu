@@ -805,7 +805,7 @@ BOOL WINAPI CET_Load(struct CET_LoadInfo* pLoadPreview)
 		const WORD  *pw  = (const WORD*)pLoadPreview->pFileData;
 		const DWORD *pdw = (const DWORD*)pLoadPreview->pFileData;
 		
-		TODO("ICO - убрать. пусть специализированный занимаетс€")
+		//TODO("ICO - убрать. пусть специализированный занимаетс€")
 		
 		if (*pdw==0x474E5089 /* ЙPNG */)
 			lbKnown = TRUE;
@@ -816,7 +816,7 @@ BOOL WINAPI CET_Load(struct CET_LoadInfo* pLoadPreview)
 		else if (pw[0]==0x4949) // TIFF?
 			lbKnown = TRUE;
 		else if (pw[0]==0 && (pw[1]==1/*ICON*/ || pw[1]==2/*CURSOR*/) && (pw[2]>0 && pw[2]<=64/*IMG COUNT*/)) // .ico, .cur
-			lbKnown = TRUE;
+			lbKnown = FALSE; // -> ico.t32
 		else if (*pdw == 0x38464947 /*GIF8*/)
 			lbKnown = TRUE;
 		else
