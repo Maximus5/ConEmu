@@ -4931,6 +4931,12 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
 			gSet.szFontError[0] = 0;
 		}
 
+		if (!gSet.CheckConsoleFontFast()) {
+			gbDontEnable = TRUE;
+			gSet.EditConsoleFont(ghWnd);
+			gbDontEnable = FALSE;
+		}
+
         if (mp_VActive == NULL || !gConEmu.mb_StartDetached) { //  онсоль уже может быть создана, если пришел Attach из ConEmuC
         	BOOL lbCreated = FALSE;
         	LPCWSTR pszCmd = gSet.GetCmd();

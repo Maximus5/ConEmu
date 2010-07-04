@@ -67,18 +67,18 @@ void ServerInitFont()
 	}
 	if (srv.szConsoleFont[0] == 0) {
 		lstrcpyW(srv.szConsoleFont, L"Lucida Console");
-		srv.nConFontWidth = 4; srv.nConFontHeight = 6;
+		srv.nConFontWidth = 3; srv.nConFontHeight = 5;
 	}
-	if (srv.nConFontHeight<6) srv.nConFontHeight = 6;
+	if (srv.nConFontHeight<5) srv.nConFontHeight = 5;
 	if (srv.nConFontWidth==0 && srv.nConFontHeight==0) {
-		srv.nConFontWidth = 4; srv.nConFontHeight = 6;
+		srv.nConFontWidth = 3; srv.nConFontHeight = 5;
 	} else if (srv.nConFontWidth==0) {
 		srv.nConFontWidth = srv.nConFontHeight * 2 / 3;
 	} else if (srv.nConFontHeight==0) {
 		srv.nConFontHeight = srv.nConFontWidth * 3 / 2;
 	}
-	if (srv.nConFontHeight<6 || srv.nConFontWidth <4) {
-		srv.nConFontWidth = 4; srv.nConFontHeight = 6;
+	if (srv.nConFontHeight<5 || srv.nConFontWidth <3) {
+		srv.nConFontWidth = 3; srv.nConFontHeight = 5;
 	}
 
 	//if (!srv.bDebuggerActive || gbAttachMode) {

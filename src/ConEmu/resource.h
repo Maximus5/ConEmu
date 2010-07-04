@@ -25,6 +25,7 @@
 #define IDR_TABMENU                     205
 #define IDD_SPG_TABS                    206
 #define IDD_SPG_VIEWS                   208
+#define IDD_MORE_CONFONT                209
 #define c0                              1000
 #define c1                              1001
 #define c2                              1002
@@ -340,6 +341,7 @@
 #define tTilesPadding                   1714
 #define IDC_BUTTON1                     1717
 #define bApplyViewSettings              1717
+#define bConFontOK                      1717
 #define cbDisableFarFlashing            1718
 #define cbDisableAllFlashing            1719
 #define cbThumbRestoreOnStartup         1720
@@ -347,6 +349,14 @@
 #define cbExtendUCharMap                1722
 #define cbAutoSaveSizePos               1723
 #define cbShellNoZoneCheck              1725
+#define bConFontCancel                  1726
+#define tConsoleFontFace                1727
+#define tConsoleFontSizeY               1728
+#define tConsoleFontSizeX               1729
+#define bConFontAdd2HKLM                1730
+#define tConsoleFontHklmNote            1731
+#define tConsoleFontConsoleNote         1732
+#define cbLockRealConsolePos            1733
 #define IDM_CLOSE                       40001
 #define IDM_RESTART                     40002
 #define IDM_RESTARTAS                   40003
@@ -361,9 +371,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        209
+#define _APS_NEXT_RESOURCE_VALUE        210
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         1726
+#define _APS_NEXT_CONTROL_VALUE         1734
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

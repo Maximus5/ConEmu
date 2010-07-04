@@ -467,3 +467,4 @@ struct PbFarPanelItem
 };
 typedef int (WINAPI* GetPbFarFileData_t)(DWORD_PTR pPlugin, LPCWSTR asFile, LPVOID* ppData, DWORD* pDataSize);
 
+#define REGEDIT_MAGIC 0x52674564 // 'RgEd'

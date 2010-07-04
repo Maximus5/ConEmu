@@ -667,7 +667,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="\\WIN7X64\FAR\far-update\ConEmuC.exe"
+				OutputFile="\\WIN7X64\FAR\FAR2x86\ConEmuC.exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
 				SubSystem="1"

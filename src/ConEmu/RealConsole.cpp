@@ -1834,7 +1834,7 @@ BOOL CRealConsole::StartProcess()
 				mp_sei = (SHELLEXECUTEINFO*)GlobalAlloc(GPTR, nWholeSize);
 				mp_sei->hwnd = ghWnd;
 				mp_sei->cbSize = sizeof(SHELLEXECUTEINFO);
-				mp_sei->hwnd = /*NULL; */ ghWnd; // почему я тут NULL ставил?
+				//mp_sei->hwnd = /*NULL; */ ghWnd; // почему я тут NULL ставил?
 				mp_sei->fMask = SEE_MASK_NO_CONSOLE|SEE_MASK_NOCLOSEPROCESS;
 				mp_sei->lpVerb = (wchar_t*)(mp_sei+1);
 					wcscpy((wchar_t*)mp_sei->lpVerb, L"runas");
@@ -4716,6 +4716,8 @@ BOOL CRealConsole::WaitConsoleSize(UINT anWaitSize, DWORD nTimeout)
 void CRealConsole::RemoveFromCursor()
 {
 	if (!this) return;
+	// 
+	if (gSet.isLockRealConsolePos) return;
 	// Сделано (пока) только чтобы текстовое EMenu активировалось по центру консоли,
 	// а не в положении мыши (что смотрится отвратно - оно может сплющиться до 2-3 строк).
 	// Только при скрытой консоли.

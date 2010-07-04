@@ -568,7 +568,7 @@ wrap:
 	if (gnRunMode == RM_SERVER) {
 		ServerDone(iRc);
 		//MessageBox(0,L"Server done...",L"ConEmuC",0);
-	} else {
+	} else if (gnRunMode == RM_COMSPEC) {
 		ComspecDone(iRc);
 		//MessageBox(0,L"Comspec done...",L"ConEmuC",0);
 	}
@@ -796,6 +796,30 @@ void CheckUnicodeMode()
 	}
 }
 
+void RegisterConsoleFontHKLM(LPCWSTR pszFontFace)
+{
+	if (!pszFontFace || !*pszFontFace)
+		return;
+
+	HKEY hk;
+	if (!RegOpenKeyExW(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Console\\TrueTypeFont",
+		0, KEY_ALL_ACCESS, &hk))
+	{
+		wchar_t szId[32] = {0}, szFont[255]; DWORD dwLen, dwType;
+		for (DWORD i = 0; i <20; i++) {
+			szId[i] = L'0'; szId[i+1] = 0; wmemset(szFont, 0, 255);
+			if (RegQueryValueExW(hk, szId, NULL, &dwType, (LPBYTE)szFont, &(dwLen = 255*2))) {
+				RegSetValueExW(hk, szId, 0, REG_SZ, (LPBYTE)pszFontFace, (lstrlen(pszFontFace)+1)*2);
+				break;
+			}
+			if (lstrcmpi(szFont, pszFontFace) == 0) {
+				break; // он уже добавлен
+			}
+		}
+		RegCloseKey(hk);
+	}
+}
+
 // Разбор параметров командной строки
 int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 {
@@ -834,7 +858,11 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 		// Далее - требуется чтобы у аргумента был "/"
 		if (szArg[0] != L'/')
 			continue;
-		
+
+		if (wcsncmp(szArg, L"/REGCONFONT=", 12)==0) {
+			RegisterConsoleFontHKLM(szArg+12);
+			return CERR_EMPTY_COMSPEC_CMDLINE;
+		} else
 		if (wcscmp(szArg, L"/CONFIRM")==0) {
 			TODO("уточнить, что нужно в gbAutoDisableConfirmExit");
 			gnConfirmExitParm = 1;

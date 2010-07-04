@@ -244,7 +244,7 @@ public:
 	BYTE isAdvLogging;
 	//wchar_t szDumpPackets[MAX_PATH];
 	// Debugging
-	bool isConVisible;
+	bool isConVisible, isLockRealConsolePos;
 	
 	// Thumbnails and Tiles
 	PanelViewSettings ThSet;
@@ -280,6 +280,7 @@ public:
     void InitSettings();
     BOOL SaveSettings();
 	void SaveSizePosOnExit();
+	void SaveConsoleFont();
     bool ShowColorDialog(HWND HWndOwner, COLORREF *inColor);
     static int CALLBACK EnumFamCallBack(LPLOGFONT lplf, LPNEWTEXTMETRIC lpntm, DWORD FontType, LPVOID aFontCount);
     static int CALLBACK EnumFontCallBackEx(ENUMLOGFONTEX *lpelfe, NEWTEXTMETRICEX *lpntme, DWORD FontType, LPARAM lParam);
@@ -305,6 +306,29 @@ public:
 	bool AutoRecreateFont(int nFontW, int nFontH);
 	bool CheckTheming();
 	void OnPanelViewAppeared(BOOL abAppear);
+	bool EditConsoleFont(HWND hParent);
+	static INT_PTR CALLBACK EditConsoleFontProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
+	static int CALLBACK EnumConFamCallBack(LPLOGFONT lplf, LPNEWTEXTMETRIC lpntm, DWORD FontType, LPVOID aFontCount);
+	bool CheckConsoleFontFast();
+	enum {
+		ConFontErr_NonSystem   = 0x01,
+		ConFontErr_NonRegistry = 0x02,
+		ConFontErr_InvalidName = 0x04,
+	};
+protected:
+	BOOL bShowConFontError, bConsoleFontChecked;
+	wchar_t sConFontError[512];
+	wchar_t sDefaultConFontName[32]; // "последний шанс", если юзер отказался выбрать нормальный шрифт
+	HWND hConFontDlg;
+	DWORD nConFontError; // 0x01 - шрифт не зарегистрирован в системе, 0x02 - не указан в реестре для консоли
+	HWND hwndConFontBalloon;
+	static bool CheckConsoleFontRegistry(LPCWSTR asFaceName);
+	static bool CheckConsoleFont(HWND ahDlg);
+	static void ShowConFontErrorTip(LPCTSTR asInfo);
+	LPCWSTR CreateConFontError(LPCWSTR asReqFont=NULL, LPCWSTR asGotFont=NULL);
+	TOOLINFO tiConFontBalloon;
+private:
+	static void ShowErrorTip(LPCTSTR asInfo, HWND hDlg, int nCtrlID, wchar_t* pszBuffer, int nBufferSize, HWND hBall, TOOLINFO *pti, HWND hTip, DWORD nTimeout);
 protected:
     LRESULT OnInitDialog();
 	LRESULT OnInitDialog_Main();
@@ -339,7 +363,7 @@ private:
     i64 mn_CounterMax[tPerfInterval-gbPerformance];
     DWORD mn_CounterTick[tPerfInterval-gbPerformance];
     HWND hwndTip, hwndBalloon;
-	void ShowFontErrorTip(LPCTSTR asInfo);
+	static void ShowFontErrorTip(LPCTSTR asInfo);
 	TOOLINFO tiBalloon;
     void RegisterTipsFor(HWND hChildDlg);
     HFONT CreateFontIndirectMy(LOGFONT *inFont);
@@ -356,8 +380,8 @@ private:
 	UINT mn_MsgLoadFontFromMain;
 	static int IsChecked(HWND hParent, WORD nCtrlId);
 	static int GetNumber(HWND hParent, WORD nCtrlId);
-	int SelectString(HWND hParent, WORD nCtrlId, LPCWSTR asText);
-	int SelectStringExact(HWND hParent, WORD nCtrlId, LPCWSTR asText);
+	static int SelectString(HWND hParent, WORD nCtrlId, LPCWSTR asText);
+	static int SelectStringExact(HWND hParent, WORD nCtrlId, LPCWSTR asText);
 	BOOL mb_TabHotKeyRegistered;
 	void RegisterTabs();
 	void UnregisterTabs();
@@ -371,6 +395,7 @@ private:
 		wchar_t szFontName[32];       // Font Family
 		BOOL    bUnicode;             // Юникодный?
 		BOOL    bHasBorders;          // Имеет ли данный шрифт символы рамок
+		BOOL    bAlreadyInSystem;     // Шрифт с таким именем уже был зарегистрирован в системе
 	} RegFont;
 	std::vector<RegFont> m_RegFonts;
 	BOOL mb_StopRegisterFonts;
@@ -399,5 +424,5 @@ private:
 	static void FillListBoxItems(HWND hList, uint nItems, const WCHAR** pszItems, const DWORD* pnValues, DWORD& nValue);
 	static void GetListBoxItem(HWND hList, uint nItems, const WCHAR** pszItems, const DWORD* pnValues, DWORD& nValue);
 	static void CenterMoreDlg(HWND hWnd2);
-	static bool IsAlmostMonospace(int tmMaxCharWidth, int tmAveCharWidth, int tmHeight);
+	static bool IsAlmostMonospace(LPCWSTR asFaceName, int tmMaxCharWidth, int tmAveCharWidth, int tmHeight);
 };

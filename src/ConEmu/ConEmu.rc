@@ -414,7 +414,7 @@ END
 IDD_SPG_FEATURE DIALOGEX 0, 0, 328, 235
 STYLE DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
-FONT 8, "MS Shell Dlg", 0, 0, 0x1
+FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        "Shell style Drag and Drop (Far Manager only)",
                     IDC_STATIC,4,1,319,42
@@ -448,18 +448,18 @@ BEGIN
     CONTROL         "Extend Unicode CharMap",cbExtendUCharMap,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,9,81,117,8
     CONTROL         "Resize panels by mouse",cbDragPanel,"Button",
-                    BS_AUTO3STATE | WS_TABSTOP,131,57,93,8
+                    BS_AUTO3STATE | WS_TABSTOP,131,57,104,8
     CONTROL         "ASCII sort function in FAR",cbFARuseASCIIsort,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,131,69,109,8
+                    BS_AUTOCHECKBOX | WS_TABSTOP,131,69,104,8
     CONTROL         "Hook FAR registry",cbHookFarRegistry,"Button",
-                    BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,131,81,109,8
+                    BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,131,81,104,8
     CONTROL         "Right selection fix",cbRSelectionFix,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,241,57,76,8
+                    BS_AUTOCHECKBOX | WS_TABSTOP,238,57,81,8
     CONTROL         "No zone check",cbShellNoZoneCheck,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,241,69,76,8
+                    BS_AUTOCHECKBOX | WS_TABSTOP,238,69,81,8
     CONTROL         "Disable FAR flashing",cbDisableFarFlashing,"Button",
-                    BS_AUTO3STATE | WS_TABSTOP,241,81,76,8
-    GROUPBOX        "Miscellaneous options",IDC_STATIC,4,98,319,60
+                    BS_AUTO3STATE | WS_TABSTOP,238,81,81,8
+    GROUPBOX        "Miscellaneous options",IDC_STATIC,4,98,319,72
     CONTROL         "Skip mouse click on activation",cbSkipActivation,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,10,110,117,8
     CONTROL         "Skip mouse in background",cbSkipMove,"Button",
@@ -470,44 +470,46 @@ BEGIN
                     BS_AUTO3STATE | WS_TABSTOP,10,144,101,8
     PUSHBUTTON      "...",bCTSSettings,114,143,13,11
     CONTROL         "Skip focus events",cbSkipFocusEvents,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,132,110,76,8
+                    BS_AUTOCHECKBOX | WS_TABSTOP,132,110,89,8
     CONTROL         "Auto register fonts",cbAutoRegFonts,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,132,121,89,8
     CONTROL         "Monitor console lang",cbMonitorConsoleLang,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,132,132,86,8
+                    BS_AUTOCHECKBOX | WS_TABSTOP,132,132,89,8
     CONTROL         "Auto minimize to tray",cbMinToTray,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,132,144,81,8
+                    BS_AUTOCHECKBOX | WS_TABSTOP,132,144,89,8
     CONTROL         "Fix Alt on AltTab/AltF9",cbFixAltOnAltTab,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,227,110,91,8
     CONTROL         "Show real console",cbVisible,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,227,121,74,8
-    PUSHBUTTON      "...",bRealConsoleSettings,306,120,13,11,WS_DISABLED
+    PUSHBUTTON      "...",bRealConsoleSettings,306,120,13,11
     CONTROL         "Debug steps in caption",cbDebugSteps,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,227,132,91,8
+                    BS_AUTOCHECKBOX | WS_TABSTOP,10,156,117,8
     CONTROL         "Write debug log-files",cbLogs,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,227,144,91,8
-    GROUPBOX        "Appearence",IDC_STATIC,4,160,319,47
+                    WS_TABSTOP,132,156,89,8
+    GROUPBOX        "Appearence",IDC_STATIC,4,172,319,47
     CONTROL         "Enhance progressbars and scrollbars",cbEnhanceGraphics,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,170,134,8
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,182,134,8
     CONTROL         "Hide caption when maximized",cbHideCaption,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,10,182,117,8
+                    BS_AUTOCHECKBOX | WS_TABSTOP,10,194,117,8
     CONTROL         "Hide caption always",cbHideCaptionAlways,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,10,194,100,8
-    PUSHBUTTON      "...",bHideCaptionSettings,114,193,13,11
+                    BS_AUTOCHECKBOX | WS_TABSTOP,10,206,100,8
+    PUSHBUTTON      "...",bHideCaptionSettings,114,205,13,11
     CONTROL         "Desktop mode",cbDesktopMode,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,148,170,70,8
-    CONTROL         "Center console",cbTryToCenter,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,148,182,70,8
-    CONTROL         "Always on top",cbAlwaysOnTop,"Button",BS_AUTOCHECKBOX | 
+    CONTROL         "Center console",cbTryToCenter,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,148,194,70,8
+    CONTROL         "Always on top",cbAlwaysOnTop,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,148,206,70,8
     CONTROL         "Ignore telnet cursor size",cbIgnoreTelnetCursorSize,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,222,170,95,8
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,222,182,95,8
     CONTROL         "Sleep in background",cbSleepInBackground,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,222,182,95,8
+                    BS_AUTOCHECKBOX | WS_TABSTOP,222,194,95,8
     CONTROL         "Disable all flashing",cbDisableAllFlashing,"Button",
-                    BS_AUTO3STATE | WS_TABSTOP,222,194,95,8
+                    BS_AUTO3STATE | WS_TABSTOP,222,206,95,8
     CONTROL         "Safe FAR close",cbSafeFarClose,"Button",BS_AUTOCHECKBOX | 
-                    NOT WS_VISIBLE | WS_DISABLED | WS_TABSTOP,9,213,76,8
+                    NOT WS_VISIBLE | WS_DISABLED | WS_TABSTOP,9,225,76,8
+    CONTROL         "Lock real console pos",cbLockRealConsolePos,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,227,132,92,8
 END
 
 IDD_RESTART DIALOG DISCARDABLE  0, 0, 310, 167
@@ -804,6 +806,41 @@ BEGIN
                     BS_AUTOCHECKBOX | WS_TABSTOP,214,134,101,10
 END
 
+IDD_MORE_CONFONT DIALOG DISCARDABLE  0, 0, 236, 156
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Real console font"
+FONT 8, "MS Sans Serif"
+BEGIN
+    DEFPUSHBUTTON   "OK&",bConFontOK,127,138,50,14,WS_DISABLED
+    PUSHBUTTON      "Cancel",bConFontCancel,182,138,50,14
+    CTEXT           "Font must be Unicode and must be smaller than main font!!!",
+                    IDC_STATIC,4,28,228,8
+    COMBOBOX        tConsoleFontFace,12,65,123,72,CBS_DROPDOWN | 
+                    CBS_AUTOHSCROLL | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        tConsoleFontSizeY,157,65,24,66,CBS_DROPDOWN | 
+                    CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        tConsoleFontSizeX,201,65,24,66,CBS_DROPDOWN | WS_VSCROLL | 
+                    WS_TABSTOP
+    RTEXT           "H:",IDC_STATIC,140,68,12,8
+    RTEXT           "W:",IDC_STATIC,184,68,11,8
+    CTEXT           "WARNING!!!",IDC_STATIC,4,4,228,8
+    CTEXT           "Change these settings very carefully!!!",IDC_STATIC,4,
+                    16,228,8
+    CTEXT           "For example: True Type font «Lucida Console» 5x3",
+                    IDC_STATIC,4,40,228,8
+    GROUPBOX        "",IDC_STATIC,4,54,228,79
+    LTEXT           "Font must be declared in: HKEY_LOCAL_MACHINE\\Software\\",
+                    IDC_STATIC,12,82,214,8
+    LTEXT           "Microsoft\\Windows NT\\CurrentVersion\\Console\\TrueTypeFont",
+                    IDC_STATIC,12,91,214,8
+    PUSHBUTTON      "Add font to «...\\Console\\TrueTypeFont»",
+                    bConFontAdd2HKLM,11,102,214,14,WS_DISABLED
+    LTEXT           "Console restart required",tConsoleFontConsoleNote,12,
+                    141,110,8,WS_DISABLED
+    LTEXT           "NOTE!!! You must restart computer to apply registry changes",
+                    tConsoleFontHklmNote,12,120,213,8,WS_DISABLED
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -845,6 +882,14 @@ BEGIN
     IDD_SPG_VIEWS, DIALOG
     BEGIN
         BOTTOMMARGIN, 236
+    END
+
+    IDD_MORE_CONFONT, DIALOG
+    BEGIN
+        LEFTMARGIN, 4
+        RIGHTMARGIN, 232
+        TOPMARGIN, 4
+        BOTTOMMARGIN, 152
     END
 END
 #endif    // APSTUDIO_INVOKED
@@ -981,6 +1026,7 @@ END
 STRINGTABLE DISCARDABLE 
 BEGIN
     hkCloseConsole          "Hotkey for recreating (or closing)\nactive console"
+    bRealConsoleSettings    "You may change font face and size in the Real console. Console restart required."
 END
 
 STRINGTABLE DISCARDABLE 
@@ -1113,6 +1159,11 @@ BEGIN
     tTabViewer              "Tab template for Far internal viewers\n%s - Title, %i - Window number (same as F12 shows),\n%% - '%' sign"
     tTabEditorMod           "Tab template for Far internal modified editors\n%s - Title, %i - Window number (same as F12 shows),\n%% - '%' sign"
     cbAdminShield           "When this is checked - «Shield» icon will be shown in tabs, started «As administrator».\nWhen unchecked - suffix will be appended for that tabs. You may clear suffix edit-field."
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    cbLockRealConsolePos      "Don't move invisible real console.\nThis affects GUI eMenu."
 END
 
 #endif    // English (U.S.) resources

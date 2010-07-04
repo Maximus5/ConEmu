@@ -56,6 +56,7 @@ const wchar_t szRasterAutoError[] = L"Font auto size is not allowed for a fixed 
 
 #define FAILED_FONT_TIMERID 101
 #define FAILED_FONT_TIMEOUT 3000
+#define FAILED_CONFONT_TIMEOUT 30000
 
 const u8 chSetsNums[] = {0, 178, 186, 136, 1, 238, 134, 161, 177, 129, 130, 77, 255, 204, 128, 2, 222, 162, 163};
 const char *ChSets[] = {"ANSI", "Arabic", "Baltic", "Chinese Big 5", "Default", "East Europe",
@@ -175,6 +176,7 @@ CSettings::CSettings()
 	mb_CharSetWasSet = FALSE;
 	mb_TabHotKeyRegistered = FALSE;
 	hMain = NULL; hExt = NULL; hTabs = NULL; hColors = NULL; hViews = NULL; hInfo = NULL; hwndTip = NULL; hwndBalloon = NULL;
+	hConFontDlg = NULL; hwndConFontBalloon = NULL; bShowConFontError = FALSE; sConFontError[0] = sDefaultConFontName[0] = 0; bConsoleFontChecked = FALSE;
     QueryPerformanceFrequency((LARGE_INTEGER *)&mn_Freq);
     memset(mn_Counter, 0, sizeof(*mn_Counter)*(tPerfInterval-gbPerformance));
     memset(mn_CounterMax, 0, sizeof(*mn_CounterMax)*(tPerfInterval-gbPerformance));
@@ -287,8 +289,8 @@ void CSettings::InitSettings()
 	memset(&rcTabMargins, 0, sizeof(rcTabMargins));
 
 	isFontAutoSize = false; mn_AutoFontWidth = mn_AutoFontHeight = -1;
-	ConsoleFont.lfHeight = 6;
-	ConsoleFont.lfWidth = 4;
+	ConsoleFont.lfHeight = 5;
+	ConsoleFont.lfWidth = 3;
 	_tcscpy(ConsoleFont.lfFaceName, L"Lucida Console");
 
 	{
@@ -364,7 +366,7 @@ void CSettings::InitSettings()
     isAlwaysOnTop = false;
 	isSleepInBackground = false; // по умолчанию - не включать "засыпание в фоне".
     wndX = 0; wndY = 0; wndCascade = true; isAutoSaveSizePos = false;
-    isConVisible = false;
+    isConVisible = false; isLockRealConsolePos = false;
     nSlideShowElapse = 2500;
     nIconID = IDI_ICON1;
     isRClickSendKey = 2;
@@ -516,6 +518,9 @@ void CSettings::LoadSettings()
 
 		// Debugging
 		reg->Load(L"ConVisible", isConVisible);
+		// Don't move invisible real console. This affects GUI eMenu.
+		reg->Load(L"LockRealConsolePos", isLockRealConsolePos);
+		
 		//reg->Load(L"DumpPackets", szDumpPackets);
 		
 		reg->Load(L"AutoRegisterFonts", isAutoRegisterFonts);
@@ -970,6 +975,22 @@ void CSettings::SaveSizePosOnExit()
 	delete reg;
 }
 
+void CSettings::SaveConsoleFont()
+{
+	if (!this)
+		return;
+
+	SettingsBase* reg = CreateSettings();
+	if (reg->OpenKey(Config, KEY_WRITE))
+	{
+		reg->Save(L"ConsoleFontName", ConsoleFont.lfFaceName);
+		reg->Save(L"ConsoleFontWidth", ConsoleFont.lfWidth);
+		reg->Save(L"ConsoleFontHeight", ConsoleFont.lfHeight);
+		reg->CloseKey();
+	}
+	delete reg;
+}
+
 BOOL CSettings::SaveSettings()
 {
     SettingsBase* reg = CreateSettings();
@@ -1017,6 +1038,7 @@ BOOL CSettings::SaveSettings()
             }*/
 
 			reg->Save(L"ConVisible", isConVisible);
+			reg->Save(L"LockRealConsolePos", isLockRealConsolePos);
             reg->Save(L"CmdLine", psCmd);
             if (psCmdHistory)
             	reg->SaveMSZ(L"CmdLineHistory", psCmdHistory, nCmdHistorySize);
@@ -1252,7 +1274,7 @@ int CSettings::EnumFamCallBack(LPLOGFONT lplf, LPNEWTEXTMETRIC lpntm, DWORD Font
         aiFontCount[1]++;
 	}
 
-	DWORD bAlmostMonospace = IsAlmostMonospace(lpntm->tmMaxCharWidth, lpntm->tmAveCharWidth, lpntm->tmHeight) ? 1 : 0;
+	DWORD bAlmostMonospace = IsAlmostMonospace(lplf->lfFaceName, lpntm->tmMaxCharWidth, lpntm->tmAveCharWidth, lpntm->tmHeight) ? 1 : 0;
 
 	if (SendDlgItemMessage(gSet.hMain, tFontFace, CB_FINDSTRINGEXACT, -1, (LPARAM) lplf->lfFaceName)==-1) {
 		int nIdx;
@@ -1746,6 +1768,7 @@ LRESULT CSettings::OnInitDialog_Ext()
 
 	if (isConVisible)
 		CheckDlgButton(hExt, cbVisible, BST_CHECKED);
+	if (isLockRealConsolePos) CheckDlgButton(hExt, cbLockRealConsolePos, BST_CHECKED);
 
 	RegisterTipsFor(hExt);
 
@@ -2385,6 +2408,14 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
 			}
 		}
 		apiSetForegroundWindow(ghOpWnd);
+		break;
+
+	case cbLockRealConsolePos:
+		isLockRealConsolePos = IsChecked(hExt, cbLockRealConsolePos);
+		break;
+
+	case bRealConsoleSettings:
+		EditConsoleFont(ghOpWnd);
 		break;
 		
 	case cbDesktopMode:
@@ -4187,86 +4218,113 @@ void CSettings::Performance(UINT nID, BOOL bEnd)
 
 void CSettings::RegisterTipsFor(HWND hChildDlg)
 {
-	if (!hwndBalloon || !IsWindow(hwndBalloon)) {
-		hwndBalloon = CreateWindowEx(WS_EX_TOPMOST, TOOLTIPS_CLASS, NULL,
-			WS_POPUP | TTS_ALWAYSTIP | TTS_BALLOON | TTS_NOPREFIX,
-			CW_USEDEFAULT, CW_USEDEFAULT,
-			CW_USEDEFAULT, CW_USEDEFAULT,
-			ghOpWnd, NULL, 
-			g_hInstance, NULL);
-		SetWindowPos(hwndBalloon, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE);
+	if (gSet.hConFontDlg == hChildDlg) {
+		if (!hwndConFontBalloon || !IsWindow(hwndConFontBalloon)) {
+			hwndConFontBalloon = CreateWindowEx(WS_EX_TOPMOST, TOOLTIPS_CLASS, NULL,
+				WS_POPUP | TTS_ALWAYSTIP | TTS_BALLOON | TTS_NOPREFIX | TTS_CLOSE,
+				CW_USEDEFAULT, CW_USEDEFAULT,
+				CW_USEDEFAULT, CW_USEDEFAULT,
+				ghOpWnd, NULL, 
+				g_hInstance, NULL);
+			SetWindowPos(hwndConFontBalloon, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE);
 
-		// Set up tool information.
-		// In this case, the "tool" is the entire parent window.
-		tiBalloon.cbSize = 44; // был sizeof(TOOLINFO);
-		tiBalloon.uFlags = TTF_IDISHWND | TTF_TRACK | TTF_ABSOLUTE;
-		tiBalloon.hwnd = hMain;
-		tiBalloon.hinst = g_hInstance;
-		static wchar_t szAsterisk[] = L"*"; // eliminate GCC warning
-		tiBalloon.lpszText = szAsterisk;
-		tiBalloon.uId = (UINT_PTR)hMain;
-		GetClientRect (ghOpWnd, &tiBalloon.rect);
-		// Associate the ToolTip with the tool window.
-		SendMessage(hwndBalloon, TTM_ADDTOOL, 0, (LPARAM) (LPTOOLINFO) &tiBalloon);
-		// Allow multiline
-		SendMessage(hwndBalloon, TTM_SETMAXTIPWIDTH, 0, (LPARAM)300);
-	}
-    // Create the ToolTip.
-    if (!hwndTip || !IsWindow(hwndTip)) {
-        hwndTip = CreateWindowEx(WS_EX_TOPMOST, TOOLTIPS_CLASS, NULL,
-                              WS_POPUP | TTS_ALWAYSTIP | TTS_BALLOON | TTS_NOPREFIX,
-                              CW_USEDEFAULT, CW_USEDEFAULT,
-                              CW_USEDEFAULT, CW_USEDEFAULT,
-                              ghOpWnd, NULL, 
-                              g_hInstance, NULL);
-        SetWindowPos(hwndTip, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE);
-        SendMessage(hwndTip, TTM_SETDELAYTIME, TTDT_AUTOPOP, 30000);
-    }
-    if (!hwndTip) return; // не смогли создать
+			// Set up tool information.
+			// In this case, the "tool" is the entire parent window.
+			tiConFontBalloon.cbSize = 44; // был sizeof(TOOLINFO);
+			tiConFontBalloon.uFlags = TTF_IDISHWND | TTF_TRACK | TTF_ABSOLUTE;
+			tiConFontBalloon.hwnd = hChildDlg;
+			tiConFontBalloon.hinst = g_hInstance;
+			static wchar_t szAsterisk[] = L"*"; // eliminate GCC warning
+			tiConFontBalloon.lpszText = szAsterisk;
+			tiConFontBalloon.uId = (UINT_PTR)hChildDlg;
+			GetClientRect (ghOpWnd, &tiConFontBalloon.rect);
+			// Associate the ToolTip with the tool window.
+			SendMessage(hwndConFontBalloon, TTM_ADDTOOL, 0, (LPARAM) (LPTOOLINFO) &tiConFontBalloon);
+			// Allow multiline
+			SendMessage(hwndConFontBalloon, TTM_SETMAXTIPWIDTH, 0, (LPARAM)300);
+		}
+	} else {
+		if (!hwndBalloon || !IsWindow(hwndBalloon)) {
+			hwndBalloon = CreateWindowEx(WS_EX_TOPMOST, TOOLTIPS_CLASS, NULL,
+				WS_POPUP | TTS_ALWAYSTIP | TTS_BALLOON | TTS_NOPREFIX,
+				CW_USEDEFAULT, CW_USEDEFAULT,
+				CW_USEDEFAULT, CW_USEDEFAULT,
+				ghOpWnd, NULL, 
+				g_hInstance, NULL);
+			SetWindowPos(hwndBalloon, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE);
 
-    HWND hChild = NULL, hEdit = NULL;
-    
-    BOOL lbRc = FALSE;
-    TCHAR szText[0x200];
-    while ((hChild = FindWindowEx(hChildDlg, hChild, NULL, NULL)) != NULL)
-    {
-        LONG wID = GetWindowLong(hChild, GWL_ID);
-        if (wID == -1) continue;
-        
-        if (LoadString(g_hInstance, wID, szText, 0x200)) {
-            // Associate the ToolTip with the tool.
-            TOOLINFO toolInfo = { 0 };
-            toolInfo.cbSize = 44; //sizeof(toolInfo);
-            //GetWindowRect(hChild, &toolInfo.rect); MapWindowPoints(NULL, hChildDlg, (LPPOINT)&toolInfo.rect, 2);
-            GetClientRect(hChild, &toolInfo.rect);
-            toolInfo.hwnd = hChild; //hChildDlg;
-            toolInfo.uFlags = TTF_IDISHWND | TTF_SUBCLASS;
-            toolInfo.uId = (UINT_PTR)hChild;
-            toolInfo.lpszText = szText;
-            //toolInfo.hinst = g_hInstance;
-            //toolInfo.lpszText = (LPTSTR)wID;
-            lbRc = SendMessage(hwndTip, TTM_ADDTOOL, 0, (LPARAM)&toolInfo);
+			// Set up tool information.
+			// In this case, the "tool" is the entire parent window.
+			tiBalloon.cbSize = 44; // был sizeof(TOOLINFO);
+			tiBalloon.uFlags = TTF_IDISHWND | TTF_TRACK | TTF_ABSOLUTE;
+			tiBalloon.hwnd = hMain;
+			tiBalloon.hinst = g_hInstance;
+			static wchar_t szAsterisk[] = L"*"; // eliminate GCC warning
+			tiBalloon.lpszText = szAsterisk;
+			tiBalloon.uId = (UINT_PTR)hMain;
+			GetClientRect (ghOpWnd, &tiBalloon.rect);
+			// Associate the ToolTip with the tool window.
+			SendMessage(hwndBalloon, TTM_ADDTOOL, 0, (LPARAM) (LPTOOLINFO) &tiBalloon);
+			// Allow multiline
+			SendMessage(hwndBalloon, TTM_SETMAXTIPWIDTH, 0, (LPARAM)300);
+		}
+		// Create the ToolTip.
+		if (!hwndTip || !IsWindow(hwndTip)) {
+			hwndTip = CreateWindowEx(WS_EX_TOPMOST, TOOLTIPS_CLASS, NULL,
+								  WS_POPUP | TTS_ALWAYSTIP | TTS_BALLOON | TTS_NOPREFIX,
+								  CW_USEDEFAULT, CW_USEDEFAULT,
+								  CW_USEDEFAULT, CW_USEDEFAULT,
+								  ghOpWnd, NULL, 
+								  g_hInstance, NULL);
+			SetWindowPos(hwndTip, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE);
+			SendMessage(hwndTip, TTM_SETDELAYTIME, TTDT_AUTOPOP, 30000);
+		}
+		if (!hwndTip) return; // не смогли создать
 
-			hEdit = FindWindowEx(hChild, NULL, L"Edit", NULL);
-			if (hEdit) {
-				toolInfo.uId = (UINT_PTR)hEdit;
+		HWND hChild = NULL, hEdit = NULL;
+	    
+		BOOL lbRc = FALSE;
+		TCHAR szText[0x200];
+		while ((hChild = FindWindowEx(hChildDlg, hChild, NULL, NULL)) != NULL)
+		{
+			LONG wID = GetWindowLong(hChild, GWL_ID);
+			if (wID == -1) continue;
+	        
+			if (LoadString(g_hInstance, wID, szText, 0x200)) {
+				// Associate the ToolTip with the tool.
+				TOOLINFO toolInfo = { 0 };
+				toolInfo.cbSize = 44; //sizeof(toolInfo);
+				//GetWindowRect(hChild, &toolInfo.rect); MapWindowPoints(NULL, hChildDlg, (LPPOINT)&toolInfo.rect, 2);
+				GetClientRect(hChild, &toolInfo.rect);
+				toolInfo.hwnd = hChild; //hChildDlg;
+				toolInfo.uFlags = TTF_IDISHWND | TTF_SUBCLASS;
+				toolInfo.uId = (UINT_PTR)hChild;
+				toolInfo.lpszText = szText;
+				//toolInfo.hinst = g_hInstance;
+				//toolInfo.lpszText = (LPTSTR)wID;
 				lbRc = SendMessage(hwndTip, TTM_ADDTOOL, 0, (LPARAM)&toolInfo);
+
+				hEdit = FindWindowEx(hChild, NULL, L"Edit", NULL);
+				if (hEdit) {
+					toolInfo.uId = (UINT_PTR)hEdit;
+					lbRc = SendMessage(hwndTip, TTM_ADDTOOL, 0, (LPARAM)&toolInfo);
+				}
+
+				/*if (wID == tFontFace) {
+					toolInfo.uFlags = TTF_IDISHWND | TTF_TRACK | TTF_ABSOLUTE;
+					toolInfo.hwnd = hMain;
+					toolInfo.hinst = g_hInstance;
+					toolInfo.lpszText = L"*";
+					toolInfo.uId = (UINT_PTR)hMain;
+					GetClientRect (ghOpWnd, &toolInfo.rect);
+					// Associate the ToolTip with the tool window.
+					SendMessage(hwndBalloon, TTM_ADDTOOL, 0, (LPARAM) (LPTOOLINFO) &toolInfo);
+				}*/
 			}
+		}
 
-			/*if (wID == tFontFace) {
-				toolInfo.uFlags = TTF_IDISHWND | TTF_TRACK | TTF_ABSOLUTE;
-				toolInfo.hwnd = hMain;
-				toolInfo.hinst = g_hInstance;
-				toolInfo.lpszText = L"*";
-				toolInfo.uId = (UINT_PTR)hMain;
-				GetClientRect (ghOpWnd, &toolInfo.rect);
-				// Associate the ToolTip with the tool window.
-				SendMessage(hwndBalloon, TTM_ADDTOOL, 0, (LPARAM) (LPTOOLINFO) &toolInfo);
-			}*/
-        }
-    }
-
-    SendMessage(hwndTip, TTM_SETMAXTIPWIDTH, 0, (LPARAM)300);
+		SendMessage(hwndTip, TTM_SETMAXTIPWIDTH, 0, (LPARAM)300);
+	}
 }
 
 void CSettings::RecreateFont(WORD wFromID)
@@ -4373,25 +4431,26 @@ void CSettings::RecreateFont(WORD wFromID)
 
 void CSettings::ShowFontErrorTip(LPCTSTR asInfo)
 {
-	if (!asInfo)
-		gSet.szFontError[0] = 0;
-	else if (asInfo != gSet.szFontError)
-		lstrcpyn(gSet.szFontError, asInfo, countof(gSet.szFontError));
-
-	tiBalloon.lpszText = gSet.szFontError;
-	if (gSet.szFontError[0]) {
-		SendMessage(hwndTip, TTM_ACTIVATE, FALSE, 0);
-		SendMessage(hwndBalloon, TTM_UPDATETIPTEXT, 0, (LPARAM)&tiBalloon);
-		RECT rcControl; GetWindowRect(GetDlgItem(hMain, tFontFace), &rcControl);
-		int ptx = rcControl.right - 10;
-		int pty = (rcControl.top + rcControl.bottom) / 2;
-		SendMessage(hwndBalloon, TTM_TRACKPOSITION, 0, MAKELONG(ptx,pty));
-		SendMessage(hwndBalloon, TTM_TRACKACTIVATE, TRUE, (LPARAM)&tiBalloon);
-		SetTimer(hMain, FAILED_FONT_TIMERID, FAILED_FONT_TIMEOUT, 0);
-	} else {
-		SendMessage(hwndBalloon, TTM_TRACKACTIVATE, FALSE, (LPARAM)&tiBalloon);
-		SendMessage(hwndTip, TTM_ACTIVATE, TRUE, 0);
-	}
+	ShowErrorTip(asInfo, gSet.hMain, tFontFace, gSet.szFontError, countof(gSet.szFontError),
+		gSet.hwndBalloon, &gSet.tiBalloon, gSet.hwndTip, FAILED_FONT_TIMEOUT);
+	//if (!asInfo)
+	//	gSet.szFontError[0] = 0;
+	//else if (asInfo != gSet.szFontError)
+	//	lstrcpyn(gSet.szFontError, asInfo, countof(gSet.szFontError));
+	//tiBalloon.lpszText = gSet.szFontError;
+	//if (gSet.szFontError[0]) {
+	//	SendMessage(hwndTip, TTM_ACTIVATE, FALSE, 0);
+	//	SendMessage(hwndBalloon, TTM_UPDATETIPTEXT, 0, (LPARAM)&tiBalloon);
+	//	RECT rcControl; GetWindowRect(GetDlgItem(hMain, tFontFace), &rcControl);
+	//	int ptx = rcControl.right - 10;
+	//	int pty = (rcControl.top + rcControl.bottom) / 2;
+	//	SendMessage(hwndBalloon, TTM_TRACKPOSITION, 0, MAKELONG(ptx,pty));
+	//	SendMessage(hwndBalloon, TTM_TRACKACTIVATE, TRUE, (LPARAM)&tiBalloon);
+	//	SetTimer(hMain, FAILED_FONT_TIMERID, FAILED_FONT_TIMEOUT, 0);
+	//} else {
+	//	SendMessage(hwndBalloon, TTM_TRACKACTIVATE, FALSE, (LPARAM)&tiBalloon);
+	//	SendMessage(hwndTip, TTM_ACTIVATE, TRUE, 0);
+	//}
 }
 
 void CSettings::SaveFontSizes(LOGFONT *pCreated, bool bAuto)
@@ -4441,15 +4500,21 @@ bool CSettings::AutoRecreateFont(int nFontW, int nFontH)
 	return false;
 }
 
-bool CSettings::IsAlmostMonospace(int tmMaxCharWidth, int tmAveCharWidth, int tmHeight)
+bool CSettings::IsAlmostMonospace(LPCWSTR asFaceName, int tmMaxCharWidth, int tmAveCharWidth, int tmHeight)
 {
+	// Некоторые шрифты (Consolas) достаточно странные. Заявлены как моноширные (PAN_PROP_MONOSPACED),
+	// похожи на моноширные, но tmMaxCharWidth у них очень широкий (иероглифы что-ли?)
+	if (lstrcmp(asFaceName, L"Consolas") == 0)
+		return true;
+
 	// у Arial'а например MaxWidth слишком большой (в два и более раз больше ВЫСОТЫ шрифта)
 	bool bAlmostMonospace = false;
 	if (tmMaxCharWidth && tmAveCharWidth && tmHeight)
 	{
 		int nRelativeDelta = (tmMaxCharWidth - tmAveCharWidth) * 100 / tmHeight;
-		// Если расхождение менее 15% высоты - считаем шрифт моноширным
-		if (nRelativeDelta < 15)
+		// Если расхождение менее 16% высоты - считаем шрифт моноширным
+		// Увеличил до 16%. Win7, Courier New, 6x4
+		if (nRelativeDelta <= 16)
 			bAlmostMonospace = true;			
 
 		//if (abs(tm->tmMaxCharWidth - tm->tmAveCharWidth)<=2)
@@ -4572,7 +4637,7 @@ HFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 		}
 
 		// у Arial'а например MaxWidth слишком большой (в два и более раз больше ВЫСОТЫ шрифта)
-		bool bAlmostMonospace = IsAlmostMonospace(tm->tmMaxCharWidth, tm->tmAveCharWidth, tm->tmHeight);
+		bool bAlmostMonospace = IsAlmostMonospace(inFont->lfFaceName, tm->tmMaxCharWidth, tm->tmAveCharWidth, tm->tmHeight);
 		//if (tm->tmMaxCharWidth && tm->tmAveCharWidth && tm->tmHeight)
 		//{
 		//	int nRelativeDelta = (tm->tmMaxCharWidth - tm->tmAveCharWidth) * 100 / tm->tmHeight;
@@ -4723,7 +4788,16 @@ HFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 
 LPOUTLINETEXTMETRIC CSettings::LoadOutline(HDC hDC, HFONT hFont)
 {
-	SelectObject(hDC, hFont);
+	BOOL lbSelfDC = FALSE;
+
+	if (!hDC) {
+		HDC hScreenDC = GetDC(0);
+		hDC = CreateCompatibleDC(hScreenDC);
+		lbSelfDC = TRUE;
+		ReleaseDC(0, hScreenDC);
+	}
+
+	HFONT hOldF = (HFONT)SelectObject(hDC, hFont);
 
 	LPOUTLINETEXTMETRIC pOut = NULL;
 	UINT nSize = GetOutlineTextMetrics(hDC, 0, NULL);
@@ -4731,7 +4805,7 @@ LPOUTLINETEXTMETRIC CSettings::LoadOutline(HDC hDC, HFONT hFont)
 		pOut = (LPOUTLINETEXTMETRIC)calloc(nSize,1);
 		if (pOut) {
 			pOut->otmSize = nSize;
-			if (!GetOutlineTextMetrics(hDC, nSize, pOut)) {
+			if (!GetOutlineTextMetricsW(hDC, nSize, pOut)) {
 				free(pOut); pOut = NULL;
 			} else {
 				pOut->otmpFamilyName = (PSTR)(((LPBYTE)pOut) + (DWORD_PTR)pOut->otmpFamilyName);
@@ -4740,6 +4814,11 @@ LPOUTLINETEXTMETRIC CSettings::LoadOutline(HDC hDC, HFONT hFont)
 				pOut->otmpFullName = (PSTR)(((LPBYTE)pOut) + (DWORD_PTR)pOut->otmpFullName);
 			}
 		}
+	}
+
+	SelectObject(hDC, hOldF);
+	if (lbSelfDC) {
+		DeleteDC(hDC);
 	}
 
 	return pOut;
@@ -4797,7 +4876,7 @@ int CSettings::GetNumber(HWND hParent, WORD nCtrlId)
 
 int CSettings::SelectString(HWND hParent, WORD nCtrlId, LPCWSTR asText)
 {
-	if (!ghOpWnd)
+	if (!hParent) // был ghOpWnd. теперь может быть вызван и для других диалогов!
     	return -1;
 
 	#ifdef _DEBUG
@@ -4811,6 +4890,9 @@ int CSettings::SelectString(HWND hParent, WORD nCtrlId, LPCWSTR asText)
 
 int CSettings::SelectStringExact(HWND hParent, WORD nCtrlId, LPCWSTR asText)
 {
+	if (!hParent) // был ghOpWnd. теперь может быть вызван и для других диалогов!
+		return -1;
+
 	#ifdef _DEBUG
 	HWND hChild = GetDlgItem(hParent, nCtrlId);
 	_ASSERTE(hChild!=NULL);
@@ -4970,6 +5052,35 @@ BOOL CSettings::RegisterFont(LPCWSTR asFontFile, BOOL abDefault)
 		}
 		return TRUE; // продолжить со следующим файлом
 	}
+
+	// Проверить, может такой шрифт уже зарегистрирован в системе
+	BOOL lbRegistered = FALSE, lbOneOfFam = FALSE;
+	for (std::vector<RegFont>::iterator iter = m_RegFonts.begin(); iter != m_RegFonts.end(); iter++)
+	{
+		// Это может быть другой тип шрифта (Liberation Mono Bold, Liberation Mono Regular, ...)
+		if (lstrcmpi(iter->szFontName, rf.szFontName) == 0) {
+			lbRegistered = iter->bAlreadyInSystem; lbOneOfFam = TRUE; break;
+		}
+	}
+	if (!lbOneOfFam)
+	{
+		// Проверяем, может в системе уже зарегистрирован такой шрифт?
+		LOGFONT LF = {0};
+		LF.lfOutPrecision = OUT_TT_PRECIS; LF.lfClipPrecision = CLIP_DEFAULT_PRECIS; LF.lfPitchAndFamily = FIXED_PITCH | FF_MODERN;
+		lstrcpy(LF.lfFaceName, rf.szFontName); LF.lfHeight = 10; LF.lfWeight = FW_NORMAL;
+		HFONT hf = CreateFontIndirect(&LF);
+		if (hf) {
+			LPOUTLINETEXTMETRICW lpOutl = gSet.LoadOutline(NULL, hf);
+			if (lpOutl) {
+				if (lstrcmpi((wchar_t*)lpOutl->otmpFamilyName, rf.szFontName) == 0)
+					lbRegistered = TRUE;
+				free(lpOutl);
+			}
+			DeleteObject(hf);
+		}
+	}
+	// Запомним, что такое имя шрифта в системе уже есть, но зарегистрируем. Может в этом файле какие-то модификации...
+	rf.bAlreadyInSystem = lbRegistered;
 
 	if (!AddFontResourceEx(asFontFile, FR_PRIVATE, NULL)) //ADD fontname; by Mors
 	{
@@ -5630,7 +5741,7 @@ void CSettings::GetListBoxItem(HWND hList, uint nItems, const WCHAR** pszItems, 
 void CSettings::CenterMoreDlg(HWND hWnd2)
 {
 	RECT rcParent, rc;
-	GetWindowRect(ghOpWnd, &rcParent);
+	GetWindowRect(ghOpWnd ? ghOpWnd : ghWnd, &rcParent);
 	GetWindowRect(hWnd2, &rc);
 	MoveWindow(hWnd2, 
 		(rcParent.left+rcParent.right-rc.right+rc.left)/2,
@@ -5809,4 +5920,512 @@ bool CSettings::LoadImageFrom(TCHAR *inPath, bool abShowErrors)
     }
 
     return lRes;
+}
+
+// общая функция
+void CSettings::ShowErrorTip(LPCTSTR asInfo, HWND hDlg, int nCtrlID, wchar_t* pszBuffer, int nBufferSize, HWND hBall, TOOLINFO *pti, HWND hTip, DWORD nTimeout)
+{
+	if (!asInfo)
+		pszBuffer[0] = 0;
+	else if (asInfo != pszBuffer)
+		lstrcpyn(pszBuffer, asInfo, nBufferSize);
+
+	pti->lpszText = pszBuffer;
+	if (pszBuffer[0]) {
+		if (hTip) SendMessage(hTip, TTM_ACTIVATE, FALSE, 0);
+		SendMessage(hBall, TTM_UPDATETIPTEXT, 0, (LPARAM)pti);
+		RECT rcControl; GetWindowRect(GetDlgItem(hDlg, nCtrlID), &rcControl);
+		int ptx = rcControl.right - 10;
+		int pty = (rcControl.top + rcControl.bottom) / 2;
+		SendMessage(hBall, TTM_TRACKPOSITION, 0, MAKELONG(ptx,pty));
+		SendMessage(hBall, TTM_TRACKACTIVATE, TRUE, (LPARAM)pti);
+		SetTimer(hDlg, FAILED_FONT_TIMERID, nTimeout/*FAILED_FONT_TIMEOUT*/, 0);
+	} else {
+		SendMessage(hBall, TTM_TRACKACTIVATE, FALSE, (LPARAM)pti);
+		if (hTip) SendMessage(hTip, TTM_ACTIVATE, TRUE, 0);
+	}
+}
+
+
+
+/* ********************************************** */
+/*         обработка шрифта в RealConsole         */
+/* ********************************************** */
+
+bool CSettings::EditConsoleFont(HWND hParent)
+{
+	hConFontDlg = NULL; nConFontError = 0;
+	int nRc = DialogBox(g_hInstance, MAKEINTRESOURCE(IDD_MORE_CONFONT), hParent, EditConsoleFontProc);
+	hConFontDlg = NULL;
+	return (nRc == IDOK);
+}
+
+bool CSettings::CheckConsoleFontRegistry(LPCWSTR asFaceName)
+{
+	bool lbFound = false;
+	HKEY hk;
+	if (!RegOpenKeyExW(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Console\\TrueTypeFont",
+			0, KEY_READ, &hk))
+	{
+		wchar_t szId[32] = {0}, szFont[255]; DWORD dwLen, dwType;
+		for (DWORD i = 0; i <20; i++) {
+			szId[i] = L'0'; szId[i+1] = 0; wmemset(szFont, 0, 255);
+			if (RegQueryValueExW(hk, szId, NULL, &dwType, (LPBYTE)szFont, &(dwLen = 255*2)))
+				break;
+			if (lstrcmpi(szFont, asFaceName) == 0) {
+				lbFound = true; break;
+			}
+		}
+		RegCloseKey(hk);
+	}
+	return lbFound;
+}
+
+// Вызывается при запуске ConEmu для быстрой проверки шрифта
+// EnumFontFamilies не вызывается, т.к. занимает время
+bool CSettings::CheckConsoleFontFast()
+{
+	wchar_t szCreatedFaceName[32] = {0};
+	LOGFONT LF = ConsoleFont;
+	gSet.nConFontError = 0; //ConFontErr_NonSystem|ConFontErr_NonRegistry|ConFontErr_InvalidName;
+	HFONT hf = CreateFontIndirect(&LF);
+	if (!hf) {
+		gSet.nConFontError = ConFontErr_InvalidName;
+	} else {
+		LPOUTLINETEXTMETRICW lpOutl = gSet.LoadOutline(NULL, hf);
+		if (!lpOutl) {
+			gSet.nConFontError = ConFontErr_InvalidName;
+		} else {
+			LPCWSTR pszFamilyName = (LPCWSTR)lpOutl->otmpFamilyName;
+			// Интересуют только TrueType (вроде только для TTF доступен lpOutl - проверить
+			if (pszFamilyName[0] != L'@'
+				&& IsAlmostMonospace(pszFamilyName, lpOutl->otmTextMetrics.tmMaxCharWidth, lpOutl->otmTextMetrics.tmAveCharWidth, lpOutl->otmTextMetrics.tmHeight)
+				&& lpOutl->otmPanoseNumber.bProportion == PAN_PROP_MONOSPACED
+				&& lstrcmpi(pszFamilyName, ConsoleFont.lfFaceName) == 0
+				)
+			{
+				BOOL lbNonSystem = FALSE;
+				// Нельзя использовать шрифты, которые зарегистрированы нами (для ConEmu). Они должны быть системными
+				for (std::vector<RegFont>::iterator iter = gSet.m_RegFonts.begin(); !lbNonSystem && iter != gSet.m_RegFonts.end(); iter++)
+				{
+					if (!iter->bAlreadyInSystem &&
+						lstrcmpi(iter->szFontName, ConsoleFont.lfFaceName) == 0)
+						lbNonSystem = TRUE;
+				}
+				if (lbNonSystem)
+					gSet.nConFontError = ConFontErr_NonSystem;
+			} else {
+				gSet.nConFontError = ConFontErr_NonSystem;
+			}
+			free(lpOutl);
+		}
+	}
+	// Если успешно - проверить зарегистрированность в реестре
+	if (gSet.nConFontError == 0) {
+		if (!CheckConsoleFontRegistry(gSet.ConsoleFont.lfFaceName))
+			gSet.nConFontError |= ConFontErr_NonRegistry;
+	}
+
+	bConsoleFontChecked = (gSet.nConFontError == 0);
+	return bConsoleFontChecked;
+}
+
+bool CSettings::CheckConsoleFont(HWND ahDlg)
+{
+	gSet.nConFontError = ConFontErr_NonSystem|ConFontErr_NonRegistry;
+
+	// Сначала загрузить имена шрифтов, установленных в систему
+	HDC hdc = GetDC(NULL);
+	EnumFontFamilies(hdc, (LPCTSTR) NULL, (FONTENUMPROC) EnumConFamCallBack, (LPARAM) ahDlg);
+	DeleteDC(hdc);
+
+	// Показать текущий шрифт
+	if (ahDlg) {
+		if (SelectString(ahDlg, tConsoleFontFace, gSet.ConsoleFont.lfFaceName)<0)
+			SetDlgItemText(ahDlg, tConsoleFontFace, gSet.ConsoleFont.lfFaceName);
+	}
+
+	// Проверить реестр
+	if (CheckConsoleFontRegistry(gSet.ConsoleFont.lfFaceName))
+		gSet.nConFontError &= ~(DWORD)ConFontErr_NonRegistry;
+
+	return (gSet.nConFontError == 0);
+}
+
+INT_PTR CSettings::EditConsoleFontProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
+{
+	switch (messg)
+	{
+	case WM_INITDIALOG:
+		{
+			gSet.hConFontDlg = NULL; // пока не выставим - на смену в контролах не реагировать
+
+			wchar_t temp[10];
+			for (uint i=0; i < countof(Settings::FSizesSmall); i++) {
+				wsprintf(temp, L"%i", Settings::FSizesSmall[i]);
+				SendDlgItemMessage(hWnd2, tConsoleFontSizeY, CB_ADDSTRING, 0, (LPARAM) temp);
+				wsprintf(temp, L"%i", (int)(Settings::FSizesSmall[i]*3/2));
+				SendDlgItemMessage(hWnd2, tConsoleFontSizeX, CB_ADDSTRING, 0, (LPARAM) temp);
+				if (Settings::FSizesSmall[i] >= gSet.LogFont.lfHeight)
+					break; // не допускаются шрифты больше, чем выбрано для основного шрифта!
+			}
+			wsprintf(temp, L"%i", gSet.ConsoleFont.lfHeight);
+			SelectStringExact(hWnd2, tConsoleFontSizeY, temp);
+			wsprintf(temp, L"%i", gSet.ConsoleFont.lfWidth);
+			SelectStringExact(hWnd2, tConsoleFontSizeX, temp);
+
+			// Показать текущий шрифт и проверить его
+			if (CheckConsoleFont(hWnd2)) {
+				EnableWindow(GetDlgItem(hWnd2, bConFontOK), TRUE);
+				EnableWindow(GetDlgItem(hWnd2, bConFontAdd2HKLM), FALSE);
+			} else {
+				EnableWindow(GetDlgItem(hWnd2, bConFontOK), FALSE);
+				EnableWindow(GetDlgItem(hWnd2, bConFontAdd2HKLM), (gSet.nConFontError&ConFontErr_NonRegistry)!=0);
+			}
+
+
+			// BCM_SETSHIELD = 5644
+			if (gOSVer.dwMajorVersion >= 6)
+				SendDlgItemMessage(hWnd2, bConFontAdd2HKLM, 5644/*BCM_SETSHIELD*/, 0, TRUE);
+
+			// запускаем user-mode
+			gSet.hConFontDlg = hWnd2;
+
+			gSet.RegisterTipsFor(hWnd2);
+			CenterMoreDlg(hWnd2);
+
+			if (gConEmu.ActiveCon())
+				EnableWindow(GetDlgItem(hWnd2, tConsoleFontConsoleNote), TRUE);
+
+			// Если есть ошибка - показать
+			gSet.bShowConFontError = (gSet.nConFontError != 0);
+		}
+		break;
+	case WM_DESTROY:
+		if (gSet.hwndConFontBalloon) {DestroyWindow(gSet.hwndConFontBalloon); gSet.hwndConFontBalloon = NULL;}
+		gSet.hConFontDlg = NULL;
+		break;
+	case WM_TIMER:
+		if (wParam == FAILED_FONT_TIMERID) {
+			KillTimer(hWnd2, FAILED_FONT_TIMERID);
+			SendMessage(gSet.hwndConFontBalloon, TTM_TRACKACTIVATE, FALSE, (LPARAM)&gSet.tiConFontBalloon);
+		}
+		break;
+
+	case WM_GETICON:
+		if (wParam==ICON_BIG) {
+			/*SetWindowLong(hWnd2, DWL_MSGRESULT, (LRESULT)hClassIcon);
+			return 1;*/
+		} else {
+			SetWindowLongPtr(hWnd2, DWLP_MSGRESULT, (LRESULT)hClassIconSm);
+			return 1;
+		}
+		return 0;
+
+	case WM_COMMAND:
+		if (HIWORD(wParam) == BN_CLICKED)
+		{
+			WORD TB = LOWORD(wParam);
+			if (TB == IDOK)
+				return 0;
+			else if (TB == bConFontOK) {
+				// На всякий случай, повторно считаем поля диалога
+				GetDlgItemText(hWnd2, tConsoleFontFace, gSet.ConsoleFont.lfFaceName, countof(gSet.ConsoleFont.lfFaceName));
+				gSet.ConsoleFont.lfHeight = GetNumber(hWnd2, tConsoleFontSizeY);
+				gSet.ConsoleFont.lfWidth = GetNumber(hWnd2, tConsoleFontSizeX);
+				// Проверка валидности
+				if (gSet.nConFontError == ConFontErr_NonRegistry && gSet.CheckConsoleFontRegistry(gSet.ConsoleFont.lfFaceName)) {
+					gSet.nConFontError &= ~(DWORD)ConFontErr_NonRegistry;
+				}
+				if (gSet.nConFontError) {
+					_ASSERTE(gSet.nConFontError==0);
+					MessageBox(hWnd2, gSet.sConFontError[0] ? gSet.sConFontError : gSet.CreateConFontError(NULL,NULL), L"ConEmu", MB_OK|MB_ICONSTOP);
+					return 0;
+				}
+				gSet.SaveConsoleFont(); // Сохранить шрифт в настройке
+				EndDialog(hWnd2, IDOK);
+			} else if (TB == IDCANCEL || TB == bConFontCancel) {
+				if (!gSet.bConsoleFontChecked) {
+					lstrcpy(gSet.ConsoleFont.lfFaceName, gSet.sDefaultConFontName[0] ? gSet.sDefaultConFontName : L"Lucida Console");
+					gSet.ConsoleFont.lfHeight = 5; gSet.ConsoleFont.lfWidth = 3;
+				}
+				EndDialog(hWnd2, IDCANCEL);
+			} else if (TB == bConFontAdd2HKLM) {
+				// Добавить шрифт в HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Console\TrueTypeFont
+				gSet.ShowConFontErrorTip(NULL);
+				EnableWindow(GetDlgItem(hWnd2, tConsoleFontHklmNote), TRUE);
+				wchar_t szFaceName[32] = {0};
+				bool lbFontJustRegistered = false;
+				bool lbFound = false;
+				GetDlgItemText(hWnd2, tConsoleFontFace, szFaceName, countof(szFaceName));
+				HKEY hk;
+				if (!RegOpenKeyExW(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Console\\TrueTypeFont",
+					0, KEY_ALL_ACCESS, &hk))
+				{
+					wchar_t szId[32] = {0}, szFont[255]; DWORD dwLen, dwType;
+					for (DWORD i = 0; i <20; i++) {
+						szId[i] = L'0'; szId[i+1] = 0; wmemset(szFont, 0, 255);
+						if (RegQueryValueExW(hk, szId, NULL, &dwType, (LPBYTE)szFont, &(dwLen = 255*2))) {
+							if (!RegSetValueExW(hk, szId, 0, REG_SZ, (LPBYTE)szFaceName, (lstrlen(szFaceName)+1)*2))
+							{
+								lbFontJustRegistered = lbFound = true; // OK, добавили
+							}
+							break;
+						}
+						if (lstrcmpi(szFont, szFaceName) == 0) {
+							lbFound = true; break; // он уже добавлен
+						}
+					}
+					RegCloseKey(hk);
+				}
+
+				// Если не удалось (нет прав) то попробовать запустить ConEmuC.exe под админом (Vista+)
+				if (!lbFound && gOSVer.dwMajorVersion >= 6) {
+					wchar_t szCommandLine[MAX_PATH];
+					SHELLEXECUTEINFO sei = {sizeof(SHELLEXECUTEINFO)};
+					sei.hwnd = hWnd2;
+					sei.fMask = SEE_MASK_NO_CONSOLE|SEE_MASK_NOCLOSEPROCESS;
+					sei.lpVerb = L"runas";
+					sei.lpFile = gConEmu.ms_ConEmuCExe;
+					wsprintf(szCommandLine, L" \"/REGCONFONT=%s\"", szFaceName);
+					sei.lpParameters = szCommandLine;
+					sei.lpDirectory = gConEmu.ms_ConEmuCurDir;
+					sei.nShow = SW_SHOWMINIMIZED;
+					BOOL lbRunAsRc = ::ShellExecuteEx(&sei);
+					if (!lbRunAsRc) {
+						DisplayLastError(L"Can't start ConEmuC.exe, console font registration failed!");
+					} else {
+						DWORD nWait = WaitForSingleObject(sei.hProcess, 30000);
+						CloseHandle(sei.hProcess);
+						if (gSet.CheckConsoleFontRegistry(gSet.ConsoleFont.lfFaceName)) {
+							lbFontJustRegistered = lbFound = true; // OK, добавили
+						}
+					}
+				}
+
+				if (lbFound) {
+					SetFocus(GetDlgItem(hWnd2, tConsoleFontFace));
+					EnableWindow(GetDlgItem(hWnd2, bConFontAdd2HKLM), FALSE);
+					gSet.nConFontError &= ~(DWORD)ConFontErr_NonRegistry;
+					if (lbFontJustRegistered) {
+						// Если шрифт только что зарегистрировали - его нельзя использовать до перезагрузки компьютера
+						if (lbFontJustRegistered && gSet.sDefaultConFontName[0]) {
+							lstrcpy(gSet.ConsoleFont.lfFaceName, gSet.sDefaultConFontName);
+							if (SelectString(hWnd2, tConsoleFontFace, gSet.ConsoleFont.lfFaceName)<0)
+								SetDlgItemText(hWnd2, tConsoleFontFace, gSet.ConsoleFont.lfFaceName);
+							EnableWindow(GetDlgItem(hWnd2, bConFontOK), TRUE);
+							SetFocus(GetDlgItem(hWnd2, bConFontOK));
+						}
+					} else {
+						EnableWindow(GetDlgItem(hWnd2, bConFontOK), TRUE);
+						SetFocus(GetDlgItem(hWnd2, bConFontOK));
+					}
+				}
+			}
+			return 0;
+		}
+		else if (HIWORD(wParam) == CBN_EDITCHANGE || HIWORD(wParam) == CBN_SELCHANGE)
+		{
+			PostMessage(hWnd2, (WM_APP+47), wParam, lParam);
+		}
+		break;
+	case (WM_APP+47):
+		if (HIWORD(wParam) == CBN_EDITCHANGE || HIWORD(wParam) == CBN_SELCHANGE)
+		{
+			wchar_t szCreatedFaceName[32] = {0};
+			WORD TB = LOWORD(wParam);
+			LOGFONT LF = {0};
+			LF.lfOutPrecision = OUT_TT_PRECIS;
+			LF.lfClipPrecision = CLIP_DEFAULT_PRECIS;
+			LF.lfPitchAndFamily = FIXED_PITCH | FF_MODERN;
+			GetDlgItemText(hWnd2, tConsoleFontFace, LF.lfFaceName, countof(LF.lfFaceName));
+			LF.lfHeight = GetNumber(hWnd2, tConsoleFontSizeY);
+			if (TB != tConsoleFontSizeY)
+				LF.lfWidth = GetNumber(hWnd2, tConsoleFontSizeX);
+			LF.lfWeight = FW_NORMAL;
+
+			gSet.nConFontError = 0; //ConFontErr_NonSystem|ConFontErr_NonRegistry|ConFontErr_InvalidName;
+
+			int nIdx = SendDlgItemMessage(hWnd2, tConsoleFontFace, CB_FINDSTRINGEXACT, -1, (LPARAM)LF.lfFaceName);
+			if (nIdx < 0) {
+				gSet.nConFontError = ConFontErr_NonSystem;
+			} else {
+				HFONT hf = CreateFontIndirect(&LF);
+				if (!hf) {
+					EnableWindow(GetDlgItem(hWnd2, bConFontOK), FALSE);
+					gSet.nConFontError = ConFontErr_InvalidName;
+				} else {
+					LPOUTLINETEXTMETRICW lpOutl = gSet.LoadOutline(NULL, hf);
+					if (!lpOutl) {
+						// Ошибка
+						gSet.nConFontError = ConFontErr_InvalidName;
+					} else {
+						lstrcpy(szCreatedFaceName, (wchar_t*)lpOutl->otmpFamilyName);
+						wchar_t temp[10];
+						if (TB != tConsoleFontSizeX) {						
+							wsprintf(temp, L"%i", lpOutl->otmTextMetrics.tmAveCharWidth);
+							SelectStringExact(hWnd2, tConsoleFontSizeX, temp);
+						}
+						if (lpOutl->otmTextMetrics.tmHeight != LF.lfHeight) {
+							wsprintf(temp, L"%i", lpOutl->otmTextMetrics.tmHeight);
+							SelectStringExact(hWnd2, tConsoleFontSizeY, temp);
+						}
+						free(lpOutl); lpOutl = NULL;
+						if (lstrcmpi(szCreatedFaceName, LF.lfFaceName))
+							gSet.nConFontError |= ConFontErr_InvalidName;
+					}
+					DeleteObject(hf);
+				}
+			}
+
+			if (gSet.nConFontError == 0) {
+				// Осталось проверить регистрацию в реестре
+				lstrcpy(gSet.ConsoleFont.lfFaceName, LF.lfFaceName);
+				gSet.ConsoleFont.lfHeight = LF.lfHeight;
+				gSet.ConsoleFont.lfWidth = LF.lfWidth;
+				bool lbRegChecked = CheckConsoleFontRegistry(gSet.ConsoleFont.lfFaceName);
+				if (!lbRegChecked) gSet.nConFontError |= ConFontErr_NonRegistry;
+				EnableWindow(GetDlgItem(hWnd2, bConFontOK), lbRegChecked);
+				EnableWindow(GetDlgItem(hWnd2, bConFontAdd2HKLM), !lbRegChecked);
+			} else {
+				EnableWindow(GetDlgItem(hWnd2, bConFontOK), FALSE);
+				EnableWindow(GetDlgItem(hWnd2, bConFontAdd2HKLM), FALSE);
+			}
+			ShowConFontErrorTip(gSet.CreateConFontError(LF.lfFaceName, szCreatedFaceName));
+		}
+		break;
+
+	case WM_ACTIVATE:
+		if (LOWORD(wParam) == WA_INACTIVE)
+			ShowConFontErrorTip(NULL);
+		else if (gSet.bShowConFontError) {
+			gSet.bShowConFontError = FALSE;
+			ShowConFontErrorTip(gSet.CreateConFontError(NULL,NULL));
+		}
+		break;
+	}
+	return 0;
+}
+
+void CSettings::ShowConFontErrorTip(LPCTSTR asInfo)
+{
+	ShowErrorTip(asInfo, gSet.hConFontDlg, tConsoleFontFace, gSet.sConFontError, countof(gSet.sConFontError),
+		gSet.hwndConFontBalloon, &gSet.tiConFontBalloon, NULL, FAILED_CONFONT_TIMEOUT);
+	//if (!asInfo)
+	//	gSet.sConFontError[0] = 0;
+	//else if (asInfo != gSet.sConFontError)
+	//	lstrcpyn(gSet.sConFontError, asInfo, countof(gSet.sConFontError));
+	//tiConFontBalloon.lpszText = gSet.sConFontError;
+	//if (gSet.sConFontError[0]) {
+	//	SendMessage(hwndConFontBalloon, TTM_UPDATETIPTEXT, 0, (LPARAM)&tiConFontBalloon);
+	//	RECT rcControl; GetWindowRect(GetDlgItem(hConFontDlg, tConsoleFontFace), &rcControl);
+	//	int ptx = rcControl.right - 10;
+	//	int pty = (rcControl.top + rcControl.bottom) / 2;
+	//	SendMessage(hwndConFontBalloon, TTM_TRACKPOSITION, 0, MAKELONG(ptx,pty));
+	//	SendMessage(hwndConFontBalloon, TTM_TRACKACTIVATE, TRUE, (LPARAM)&tiConFontBalloon);
+	//	SetTimer(hConFontDlg, FAILED_FONT_TIMERID, FAILED_FONT_TIMEOUT, 0);
+	//} else {
+	//	SendMessage(hwndConFontBalloon, TTM_TRACKACTIVATE, FALSE, (LPARAM)&tiConFontBalloon);
+	//}
+}
+
+LPCWSTR CSettings::CreateConFontError(LPCWSTR asReqFont/*=NULL*/, LPCWSTR asGotFont/*=NULL*/)
+{
+	sConFontError[0] = 0;
+	if (!nConFontError)
+		return NULL;
+
+	SendMessage(gSet.hwndConFontBalloon, TTM_SETTITLE, TTI_WARNING, (LPARAM)(asReqFont ? asReqFont : ConsoleFont.lfFaceName));
+
+	lstrcpy(sConFontError, L"Console font test failed!\n");
+	//lstrcat(sConFontError, asReqFont ? asReqFont : ConsoleFont.lfFaceName);
+	//lstrcat(sConFontError, L"\n");
+
+	if ((nConFontError & ConFontErr_InvalidName)) {
+		if (asReqFont && asGotFont) {
+			wsprintf(sConFontError+lstrlen(sConFontError),
+				L"Requested: %s\nCreated: %s\n", asReqFont , asGotFont);
+		} else {
+			lstrcat(sConFontError, L"Invalid font face name!\n");
+		}
+	}
+
+	if ((nConFontError & ConFontErr_NonSystem))
+		lstrcat(sConFontError, L"Font is non public or non Unicode\n");
+
+	if ((nConFontError & ConFontErr_NonRegistry))
+		lstrcat(sConFontError, L"Font is not registered for use in console\n");
+
+	sConFontError[lstrlen(sConFontError)-1] = 0;
+
+	return sConFontError;
+}
+
+int CSettings::EnumConFamCallBack(LPLOGFONT lplf, LPNEWTEXTMETRIC lpntm, DWORD FontType, LPVOID aFontCount)
+{
+	MCHKHEAP
+	HWND hWnd2 = (HWND)aFontCount;
+
+	// Интересуют только TrueType
+	if ((FontType & TRUETYPE_FONTTYPE) == 0)
+		return TRUE;
+
+	if (lplf->lfFaceName[0] == L'@')
+		return TRUE; // Alias?
+
+	// Нельзя использовать шрифты, которые зарегистрированы нами (для ConEmu). Они должны быть системными
+	for (std::vector<RegFont>::iterator iter = gSet.m_RegFonts.begin(); iter != gSet.m_RegFonts.end(); iter++)
+	{
+		if (!iter->bAlreadyInSystem &&
+			lstrcmpi(iter->szFontName, lplf->lfFaceName) == 0)
+			return TRUE;
+	}
+
+	// PAN_PROP_MONOSPACED - не дает правильного результата. Например 'MS Mincho' заявлен как моноширный,
+	// но совсем таковым не является. Кириллица у него дофига какая...
+
+	// И только моноширные!
+	DWORD bAlmostMonospace = IsAlmostMonospace(lplf->lfFaceName, lpntm->tmMaxCharWidth, lpntm->tmAveCharWidth, lpntm->tmHeight) ? 1 : 0;
+	if (!bAlmostMonospace)
+		return TRUE;
+
+	// Проверяем, реальное ли это имя. Или просто алиас?
+	LOGFONT LF = {0};
+	LF.lfHeight = 10; LF.lfWidth = 0; LF.lfWeight = 0; LF.lfItalic = 0;
+	LF.lfOutPrecision = OUT_TT_PRECIS;
+	LF.lfClipPrecision = CLIP_DEFAULT_PRECIS;
+	LF.lfPitchAndFamily = FIXED_PITCH | FF_MODERN;
+	lstrcpy(LF.lfFaceName, lplf->lfFaceName);
+	HFONT hf = CreateFontIndirect(&LF);
+	if (!hf) return TRUE; // не получилось создать
+	LPOUTLINETEXTMETRICW lpOutl = gSet.LoadOutline(NULL, hf);
+	if (!lpOutl) return TRUE; // Ошибка получения параметров шрифта
+	if (lpOutl->otmPanoseNumber.bProportion != PAN_PROP_MONOSPACED // шрифт не заявлен как моноширный
+		|| lstrcmpi((wchar_t*)lpOutl->otmpFamilyName, LF.lfFaceName)) // или алиас
+	{
+		free(lpOutl);
+		return TRUE; // следущий шрифт
+	}
+	free(lpOutl); lpOutl = NULL;
+
+	// Сравниваем с текущим, выбранным в настройке
+	if (lstrcmpi(LF.lfFaceName, gSet.ConsoleFont.lfFaceName) == 0)
+		gSet.nConFontError &= ~(DWORD)ConFontErr_NonSystem;
+
+	if (hWnd2) {
+		if (SendDlgItemMessage(hWnd2, tConsoleFontFace, CB_FINDSTRINGEXACT, -1, (LPARAM) LF.lfFaceName)==-1) {
+			int nIdx;
+			nIdx = SendDlgItemMessage(hWnd2, tConsoleFontFace, CB_ADDSTRING, 0, (LPARAM) LF.lfFaceName);
+		}
+	}
+
+	if (gSet.sDefaultConFontName[0] == 0) {
+		if (CheckConsoleFontRegistry(LF.lfFaceName))
+			lstrcpy(gSet.sDefaultConFontName, LF.lfFaceName);
+	}
+
+	MCHKHEAP
+	return TRUE;
+
+	UNREFERENCED_PARAMETER( lpntm );
 }

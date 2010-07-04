@@ -59,7 +59,7 @@
 !include ../make_vc_defs
 !endif
 
-SUBMODULES = gdip pe
+SUBMODULES = gdip pe ico
 
 DEF_NAME = export
 

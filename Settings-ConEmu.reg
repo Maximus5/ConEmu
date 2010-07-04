@@ -336,6 +336,8 @@ REGEDIT4
 ;"ConsoleFontName"="Lucida Console"
 ;"ConsoleFontWidth"=dword:4
 ;"ConsoleFontHeight"=dword:6
+;; Don't move invisible real console. This affects GUI eMenu.
+;"LockRealConsolePos"=hex:00
 
 ;; 'Save All Editors' macro. Use this from Tab context menu.
 ;"SaveAllEditors"="@F2 $If (!Editor) $Exit $End %i0=-1; F12 %cur = CurPos; Home Down %s = Menu.Select(\" * \",3,2); $While (%s > 0) $If (%s == %i0) MsgBox(\"FAR SaveAll\",\"Asterisk in menuitem for already processed window\",0x10001) $Exit $End Enter $If (Editor) F2 $If (!Editor) $Exit $End $Else $If (!Viewer) $Exit $End $End %i0 = %s; F12 %s = Menu.Select(\" * \",3,2); $End $If (Menu && Title==\"Screens\") Home $Rep (%cur-1) Down $End Enter $End $Exit"
