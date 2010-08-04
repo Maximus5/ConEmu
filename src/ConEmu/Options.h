@@ -173,6 +173,8 @@ public:
 	bool isCursorBlockInactive;
     char isRClickSendKey;
     wchar_t *sRClickMacro;
+	bool isSafeFarClose;
+	wchar_t *sSafeFarCloseMacro;
     bool isSentAltEnter;
     bool isMinToTray;
     //bool isForceMonospace, isProportional;

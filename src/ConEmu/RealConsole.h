@@ -497,6 +497,8 @@ private:
     HANDLE PrepareOutputFileCreate(wchar_t* pszFilePathName);
     // фикс для dblclick в редакторе
     MOUSE_EVENT_RECORD m_LastMouse;
+	POINT m_LastMouseGuiPos; // в пикселах пикселах
+	BOOL mb_BtnClicked; COORD mrc_BtnClickPos;
 	//
 	wchar_t ms_Editor[32], ms_EditorRus[32], ms_Viewer[32], ms_ViewerRus[32];
 	wchar_t ms_TempPanel[32], ms_TempPanelRus[32];

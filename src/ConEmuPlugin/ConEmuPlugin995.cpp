@@ -926,12 +926,22 @@ BOOL CheckBufferEnabled995()
 {
 	if (!InfoW995 || !InfoW995->AdvControl)
 		return FALSE;
+	static int siEnabled = 0;
+	
+	// Чтобы проверку выполнять только один раз.
+	// Т.к. буфер может быть реально сброшен, а фар его все-еще умеет.
+	if (siEnabled) {
+		return (siEnabled == 1);
+	}
 
 	SMALL_RECT rcFar = {0};
 	if (InfoW995->AdvControl(InfoW995->ModuleNumber, 32/*ACTL_GETFARRECT*/, &rcFar)) {
-		if (rcFar.Top > 0 && rcFar.Bottom > rcFar.Top)
+		if (rcFar.Top > 0 && rcFar.Bottom > rcFar.Top) {
+			siEnabled = 1;
 			return TRUE;
+		}
 	}
+	siEnabled = -1;
 
 	return FALSE;
 }

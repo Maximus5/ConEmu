@@ -214,7 +214,8 @@ public:
 #define SETARGS5(r,a1,a2,a3,a4,a5) SETARGS4(r,a1,a2,a3,a4); args.lArguments[4] = (DWORD_PTR)(a5)
 #define SETARGS6(r,a1,a2,a3,a4,a5,a6) SETARGS5(r,a1,a2,a3,a4,a5); args.lArguments[5] = (DWORD_PTR)(a6)
 #define SETARGS7(r,a1,a2,a3,a4,a5,a6,a7) SETARGS6(r,a1,a2,a3,a4,a5,a6); args.lArguments[6] = (DWORD_PTR)(a7)
-	
+
+extern HANDLE ghHookMutex;
 
 // Заполнить поле HookItem.OldAddress (реальные процедуры из внешних библиотек)
 // apHooks->Name && apHooks->DllName MUST be static for a lifetime
@@ -222,6 +223,13 @@ bool __stdcall InitHooks( HookItem* apHooks )
 {
 	int i, j;
 	bool skip;
+
+	if (!ghHookMutex) {
+		wchar_t szMutexName[MAX_PATH];
+		wsprintfW(szMutexName, CEHOOKLOCKMUTEX, GetCurrentProcessId());
+		ghHookMutex = CreateMutexW(NULL, FALSE, szMutexName);
+		_ASSERTE(ghHookMutex != NULL);
+	}
 	
     if( apHooks )
     {
@@ -274,6 +282,7 @@ bool __stdcall InitHooks( HookItem* apHooks )
             HMODULE mod = GetModuleHandle( Hooks[i].DllName );
             if( mod ) {
                 Hooks[i].OldAddress = (void*)GetProcAddress( mod, Hooks[i].Name );
+				_ASSERTE(Hooks[i].OldAddress != NULL);
                 Hooks[i].hDll = mod;
             }
         }
@@ -317,6 +326,8 @@ static bool IsModuleExcluded( HMODULE module )
 
 
 #define GetPtrFromRVA(rva,pNTHeader,imageBase) (PVOID)((imageBase)+(rva))
+
+extern BOOL gbInCommonShutdown;
 
 // Подменить Импортируемые функции в модуле
 static bool SetHook( HMODULE Module, BOOL abExecutable )
@@ -367,6 +378,33 @@ static bool SetHook( HMODULE Module, BOOL abExecutable )
 		#define TOP_SHIFT 28
 	#endif
 
+
+	DWORD nHookMutexWait = WaitForSingleObject(ghHookMutex, 10000);
+	while (nHookMutexWait != WAIT_OBJECT_0)
+	{
+		#ifdef _DEBUG
+		if (!IsDebuggerPresent()) {
+			_ASSERTE(nHookMutexWait == WAIT_OBJECT_0);
+		}
+		#endif
+
+		if (gbInCommonShutdown)
+			return false;
+
+		wchar_t szTrapMsg[1024], szName[MAX_PATH+1]; szName[0] = 0;
+		if (!GetModuleFileNameW(Module, szName, MAX_PATH+1)) szName[0] = 0;
+
+		DWORD nTID = GetCurrentThreadId(); DWORD nPID = GetCurrentProcessId();
+			wsprintfW(szTrapMsg, L"Can't install hooks in module '%s'\nCurrent PID=%u, TID=%i\nCan't lock hook mutex\nPress 'Retry' to repeat locking",
+				szName, nPID, nTID);
+		if (MessageBoxW(NULL, szTrapMsg, L"ConEmu", MB_RETRYCANCEL|MB_ICONSTOP|MB_SYSTEMMODAL) != IDRETRY)
+			return false;
+
+		nHookMutexWait = WaitForSingleObject(ghHookMutex, 10000);
+		continue;
+	}
+
+
 	TODO("!!! Сохранять ORDINAL процедур !!!");
 
     bool res = false, bHooked = false;
@@ -411,10 +449,11 @@ static bool SetHook( HMODULE Module, BOOL abExecutable )
 			const char* pszFuncName = NULL;
 			ULONGLONG ordinalO = -1;
 
-			if (thunk->u1.Function!=thunkO->u1.Function)
+			if (thunk->u1.Function != thunkO->u1.Function)
 			{
 				// Ordinal у нас пока не используется
 				if ( IMAGE_SNAP_BY_ORDINAL(thunkO->u1.Ordinal) ) {
+					WARNING("Это НЕ ORDINAL, это Hint!!!");
 					ordinalO = IMAGE_ORDINAL(thunkO->u1.Ordinal);
 					pOrdinalNameO = NULL;
 				}
@@ -437,16 +476,29 @@ static bool SetHook( HMODULE Module, BOOL abExecutable )
 			int j;
             for( j = 0; Hooks[j].Name; j++ )
 			{
+				#ifdef _DEBUG
+				const void* ptrNewAddress = Hooks[j].NewAddress;
+				const void* ptrOldAddress = (void*)thunk->u1.Function;
+				#endif
+				
+				// Если адрес импорта в модуле уже совпадает с адресом одной из наших функций
 				if (Hooks[j].NewAddress == (void*)thunk->u1.Function) {
 					res = true; // это уже захучено
 					break;
 				}
 			
-				WARNING("??? сомнение в этом условии");
-                if( !Hooks[j].OldAddress || (void*)thunk->u1.Function != Hooks[j].OldAddress )
+				// Если не удалось определить оригинальный адрес процедуры (kernel32/WriteConsoleOutputW, и т.п.)
+				if (Hooks[j].OldAddress == NULL)
+				{
+					continue;
+				}
+				
+				// Если адрес импорта в модуле не совпадает с одной из наших функций,
+				// возможно будет совпадение по имени функции?
+                if ((void*)thunk->u1.Function != Hooks[j].OldAddress)
                 {
 					if (!pszFuncName || !bExecutable) {
-						continue;
+						continue; // Если имя импорта определить не удалось - пропускаем
 					} else {
 						if (strcmp(pszFuncName, Hooks[j].Name))
 							continue;
@@ -455,21 +507,33 @@ static bool SetHook( HMODULE Module, BOOL abExecutable )
 					// Это происходит например с PeekConsoleIntputW при наличии плагина Anamorphosis
 					Hooks[j].ExeOldAddress = (void*)thunk->u1.Function;
 				}
+
+				WARNING("Это НЕ ORDINAL, это Hint!!!");
 				if (Hooks[j].nOrdinal == 0 && ordinalO != (ULONGLONG)-1)
 					Hooks[j].nOrdinal = (DWORD)ordinalO;
 
 				bHooked = true;
-				DWORD old_protect = 0;
-				VirtualProtect( &thunk->u1.Function, sizeof( thunk->u1.Function ),
-					PAGE_READWRITE, &old_protect );
-				thunk->u1.Function = (DWORD_PTR)Hooks[j].NewAddress;
-				VirtualProtect( &thunk->u1.Function, sizeof( DWORD ), old_protect, &old_protect );
-				#ifdef _DEBUG
-				if (bExecutable)
-					Hooks[j].ReplacedInExe = TRUE;
-				#endif
-				//DebugString( ToTchar( Hooks[j].Name ) );
-				res = true;
+				DWORD old_protect = 0; DWORD dwErr = 0;
+				if (!VirtualProtect( &thunk->u1.Function, sizeof( thunk->u1.Function ),
+					PAGE_READWRITE, &old_protect ))
+				{
+					dwErr = GetLastError();
+					_ASSERTE(FALSE);
+				} else {
+					if (thunk->u1.Function == (DWORD_PTR)Hooks[j].NewAddress) {
+						// оказалось захучено в другой нити? такого быть не должно, блокируется мутексом
+						_ASSERTE(thunk->u1.Function != (DWORD_PTR)Hooks[j].NewAddress);
+					} else {
+						thunk->u1.Function = (DWORD_PTR)Hooks[j].NewAddress;
+					}
+					VirtualProtect( &thunk->u1.Function, sizeof( DWORD ), old_protect, &old_protect );
+					#ifdef _DEBUG
+					if (bExecutable)
+						Hooks[j].ReplacedInExe = TRUE;
+					#endif
+					//DebugString( ToTchar( Hooks[j].Name ) );
+					res = true;
+				}
 				break;
 			}
         }
@@ -485,6 +549,8 @@ static bool SetHook( HMODULE Module, BOOL abExecutable )
 		OutputDebugStringW(szDbg);
 	}
 #endif
+
+	ReleaseMutex(ghHookMutex);
 
     return res;
 }

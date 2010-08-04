@@ -377,6 +377,8 @@ void CSettings::InitSettings()
     _tcscpy(szTabEditorModified, L"[%s] *");
     /* */ _tcscpy(szTabViewer, L"{%s}");
     nTabLenMax = 20;
+	isSafeFarClose = true;
+	sSafeFarCloseMacro = NULL; // если NULL - то используется макрос по умолчанию
     
     isCursorV = true;
 	isCursorBlink = true;
@@ -646,6 +648,9 @@ void CSettings::LoadSettings()
         	reg->Load(L"RightClickMacro2", &sRClickMacro);
         reg->Load(L"AltEnter", isSentAltEnter);
         reg->Load(L"Min2Tray", isMinToTray);
+
+		reg->Load(L"SafeFarClose", isSafeFarClose);
+			reg->Load(L"SafeFarCloseMacro", &sSafeFarCloseMacro);
         
         reg->Load(L"FARuseASCIIsort", isFARuseASCIIsort);
         reg->Load(L"ShellNoZoneCheck", isShellNoZoneCheck);
@@ -1116,6 +1121,9 @@ BOOL CSettings::SaveSettings()
             	reg->Save(L"RightClickMacro2", sRClickMacro);
             reg->Save(L"AltEnter", isSentAltEnter);
             reg->Save(L"Min2Tray", isMinToTray);
+
+			reg->Save(L"SafeFarClose", isSafeFarClose);
+				reg->Save(L"SafeFarCloseMacro", sSafeFarCloseMacro);
             
 	        reg->Save(L"FARuseASCIIsort", isFARuseASCIIsort);
 	        reg->Save(L"ShellNoZoneCheck", isShellNoZoneCheck);
@@ -1690,6 +1698,8 @@ LRESULT CSettings::OnInitDialog_Ext()
 	if (isHideCaption) CheckDlgButton(hExt, cbHideCaption, BST_CHECKED);
 	if (isHideCaptionAlways()) CheckDlgButton(hExt, cbHideCaptionAlways, BST_CHECKED);
 	if (isEnhanceGraphics) CheckDlgButton(hExt, cbEnhanceGraphics, BST_CHECKED);
+
+	if (isSafeFarClose) CheckDlgButton(hExt, cbSafeFarClose, BST_CHECKED);
 	
 	if (isFARuseASCIIsort) CheckDlgButton(hExt, cbFARuseASCIIsort, BST_CHECKED);
 	if (isShellNoZoneCheck) CheckDlgButton(hExt, cbShellNoZoneCheck, BST_CHECKED);
@@ -2195,6 +2205,10 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
     case cbRClick:
 		isRClickSendKey = IsChecked(hExt, cbRClick); //0-1-2
         break;
+
+	case cbSafeFarClose:
+		isSafeFarClose = IsChecked(hExt, cbSafeFarClose);
+		break;
 
     case cbSendAE:
         isSentAltEnter = IsChecked(hExt, cbSendAE);

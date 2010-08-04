@@ -451,8 +451,8 @@ BEGIN
                     BS_AUTO3STATE | WS_TABSTOP,131,57,104,8
     CONTROL         "ASCII sort function in FAR",cbFARuseASCIIsort,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,131,69,104,8
-    CONTROL         "Hook FAR registry",cbHookFarRegistry,"Button",
-                    BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,131,81,104,8
+    CONTROL         "Safe Far close",cbSafeFarClose,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,131,81,104,8
     CONTROL         "Right selection fix",cbRSelectionFix,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,238,57,81,8
     CONTROL         "No zone check",cbShellNoZoneCheck,"Button",
@@ -506,8 +506,6 @@ BEGIN
                     BS_AUTOCHECKBOX | WS_TABSTOP,222,194,95,8
     CONTROL         "Disable all flashing",cbDisableAllFlashing,"Button",
                     BS_AUTO3STATE | WS_TABSTOP,222,206,95,8
-    CONTROL         "Safe FAR close",cbSafeFarClose,"Button",BS_AUTOCHECKBOX | 
-                    NOT WS_VISIBLE | WS_DISABLED | WS_TABSTOP,9,225,76,8
     CONTROL         "Lock real console pos",cbLockRealConsolePos,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,227,132,92,8
 END

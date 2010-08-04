@@ -32,7 +32,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 
-
 // Undocumented console message
 #define WM_SETCONSOLEINFO			(WM_USER+201)
 
@@ -342,8 +341,12 @@ SECURITY_ATTRIBUTES* NullSecurity()
 	return gNullDesc->NullSecurity();
 }
 
+BOOL gbInCommonShutdown = FALSE;
+HANDLE ghHookMutex = NULL;
+
 void CommonShutdown()
 {
+	gbInCommonShutdown = TRUE;
 	if (gNullDesc) {
 		delete gNullDesc;
 		gNullDesc = NULL;
@@ -355,8 +358,12 @@ void CommonShutdown()
 		ghConsoleSection = NULL;
 	}
 	if (gpConsoleInfoStr) {
-		free(gpConsoleInfoStr);
+		LocalFree(gpConsoleInfoStr);
 		gpConsoleInfoStr = NULL;
+	}
+	if (ghHookMutex) {
+		CloseHandle(ghHookMutex);
+		ghHookMutex = NULL;
 	}
 }
 
@@ -543,7 +550,7 @@ void SetConsoleFontSizeTo(HWND inConWnd, int inSizeY, int inSizeX, const wchar_t
 		};
 
 		if (!gpConsoleInfoStr) {
-			gpConsoleInfoStr = (CONSOLE_INFO*)calloc(sizeof(CONSOLE_INFO),1);
+			gpConsoleInfoStr = (CONSOLE_INFO*)LocalAlloc(LPTR, sizeof(CONSOLE_INFO));
 			if (!gpConsoleInfoStr) {
 				_ASSERTE(gpConsoleInfoStr!=NULL);
 				return; // memory allocation failed

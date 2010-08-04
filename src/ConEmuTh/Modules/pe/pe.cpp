@@ -95,10 +95,11 @@ struct PEData
 	PIMAGE_NT_HEADERS32 pNTHeader32;
 	PIMAGE_NT_HEADERS64 pNTHeader64;
 	bool bIs64Bit;
+	WORD Machine;
 
 	
 	PEData() {
-		nMagic = ePeStr_Info; nBits = 0; nFlags = 0; bValidateFailed = FALSE;
+		nMagic = ePeStr_Info; nBits = 0; nFlags = 0; bValidateFailed = FALSE; Machine = 0;
 		szInfo[0] = szVersion[0] = szVersionN[0] = szProduct[0] = szCompany[0] = 0;
 		pMappedFileBase = NULL; FileSize.QuadPart = 0; pNTHeader32 = NULL; pNTHeader64 = NULL; bIs64Bit = false;
 	};
@@ -2133,6 +2134,9 @@ bool DumpExeFilePE( PEData *pData, PIMAGE_DOS_HEADER dosHeader, PIMAGE_NT_HEADER
 
 	pNTHeader64 = (PIMAGE_NT_HEADERS64)pNTHeader;
 
+	// Тут пока не важно 64/32 - положение одинаковое
+	pData->Machine = pNTHeader->FileHeader.Machine;
+
 	bool bIs64Bit = ( pNTHeader->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC );
 	pData->bIs64Bit = bIs64Bit;
 	pData->nBits = (bIs64Bit) ? 64 : 32;
@@ -2298,9 +2302,8 @@ bool DumpFile(PEData *pData, LPBYTE pFileData, __int64 nFileSize)
 
 	pData->FileSize.QuadPart = nFileSize;
     pData->pMappedFileBase = pFileData;
-    
-    dosHeader = (PIMAGE_DOS_HEADER)pData->pMappedFileBase;
-	//PIMAGE_FILE_HEADER pImgFileHdr = (PIMAGE_FILE_HEADER)pData->pMappedFileBase;
+
+	dosHeader = (PIMAGE_DOS_HEADER)pData->pMappedFileBase;
 
 	if ( dosHeader->e_magic == IMAGE_DOS_SIGNATURE )
 	{
@@ -2385,8 +2388,14 @@ BOOL WINAPI CET_Load(struct CET_LoadInfo* pLoadPreview)
 
 		// [x64/x86] [FAR1/FAR2] [FileVersion]
 		//wchar_t szInfo[512];
-		pData->szInfo[0] = (pData->nFlags & PE_SIGNED) ? L's' : L'x';
-		lstrcpy(pData->szInfo+1, (pData->nBits == 64) ? L"64 " : (pData->nBits == 16) ? L"16 " : L"32 ");
+		wchar_t* pszInfo = pData->szInfo;
+		if (pData->Machine == IMAGE_FILE_MACHINE_IA64) {
+			if (pData->nFlags & PE_SIGNED) *(pszInfo++) = L's';
+			*(pszInfo++) = L'I'; *(pszInfo++) = L'A';
+		} else {
+			*(pszInfo++) = (pData->nFlags & PE_SIGNED) ? L's' : L'x';
+		}
+		lstrcpy(pszInfo, (pData->nBits == 64) ? L"64 " : (pData->nBits == 16) ? L"16 " : L"32 ");
 		if ((pData->nFlags & (PE_Far1|PE_Far2)) == (PE_Far1|PE_Far2))
 			lstrcat(pData->szInfo, L"Far1&2 ");
 		else if ((pData->nFlags & PE_Far1))
@@ -2536,9 +2545,22 @@ int WINAPI GetCustomDataW(const wchar_t *FilePath, wchar_t **CustomData)
 	if (pszSlash) pszDot = wcsrchr(pszSlash, L'.');
 	if (!pszDot) return FALSE;
 
-	if (lstrcmpiW(FilePath+nLen-4, L".exe") && lstrcmpiW(FilePath+nLen-4, L".dll")) return FALSE;
+	if (lstrcmpiW(FilePath+nLen-4, L".exe") && lstrcmpiW(FilePath+nLen-4, L".dll")
+		&& lstrcmpiW(FilePath+nLen-4, L".com") && lstrcmpiW(FilePath+nLen-4, L".pvd")
+		&& lstrcmpiW(FilePath+nLen-4, L".dl_"))
+	{
+		return FALSE;
+	}
 
 	HANDLE hFile = CreateFileW(FilePath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0,0);
+	if (hFile == INVALID_HANDLE_VALUE) {
+		DWORD dwErr = GetLastError();
+		if (dwErr == ERROR_SHARING_VIOLATION) {
+			hFile = CreateFileW(FilePath, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0,0);
+			//if (hFile == INVALID_HANDLE_VALUE)
+			//	hFile = CreateFileW(FilePath, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0,0);
+		}
+	}
 	if (hFile == INVALID_HANDLE_VALUE) return FALSE;
 
 	LARGE_INTEGER nSize = {{0}};
@@ -2586,10 +2608,12 @@ int WINAPI GetCustomDataW(const wchar_t *FilePath, wchar_t **CustomData)
 	nLen = lstrlen(Ver.szVersion)+10;
 	if (nLen < 2) return FALSE;
 	*CustomData = (wchar_t*)malloc(nLen*2);
-	wsprintfW(*CustomData, L"[%c%i]%s%s", 
-		(Ver.nFlags & PE_SIGNED) ? L's' : L'x',
+	wsprintfW(*CustomData, L"[%s%s%i]%s%s", 
+		(Ver.nFlags & PE_SIGNED) ? L"s" : ((Ver.Machine!=IMAGE_FILE_MACHINE_IA64) ? L"x" : L""),
+		(Ver.Machine==IMAGE_FILE_MACHINE_IA64) ? L"IA" : L"",
 		Ver.nBits, 
 		Ver.szVersion[0] ? L" " : L"", Ver.szVersion);
+
 
 	return TRUE;
 }

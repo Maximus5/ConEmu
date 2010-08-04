@@ -181,6 +181,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define CEGUI_ALIVE_EVENT   L"ConEmuGuiStarted"
 #define CEKEYEVENT_CTRL     L"ConEmuCtrlPressed.%u"
 #define CEKEYEVENT_SHIFT    L"ConEmuShiftPressed.%u"
+#define CEHOOKLOCKMUTEX     L"ConEmuHookMutex.%u"
 
 
 //#define CONEMUMSG_ATTACH L"ConEmuMain::Attach"            // wParam == hConWnd, lParam == ConEmuC_PID

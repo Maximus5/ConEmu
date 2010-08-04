@@ -575,6 +575,7 @@ public:
 			cbReadBuf = mn_MaxOutSize;
 			*rpOut = mp_Out;
 		}
+		WARNING("БЛОКИРОВКА! Иногда зависает при закрытии консоли");
 		fSuccess = TransactNamedPipe( mh_Pipe, (LPVOID)apIn, anInSize, ptrOut, cbReadBuf, &cbRead, NULL);
 		dwErr = fSuccess ? 0 : GetLastError();
 

@@ -293,6 +293,10 @@ REGEDIT4
 ;; hex:01 - will show tabs of active console only
 ;"HideInactiveConsoleTabs"=hex:00
 
+;; Close Far with Macro instead of sending WM_CLOSE to console window
+"SafeFarClose"=hex:01
+;"SafeFarCloseMacro"="@$while (Dialog||Editor||Viewer||Menu||Disks||MainMenu||UserMenu||Other||Help) $if (Editor) ShiftF10 $else Esc $end $end  Esc  $if (Shell) F10 $if (Dialog) Enter $end $Exit $end  F10"
+
 
 ;; Debug. 1 - Create 'app' window on taskbar
 ;"CreateAppWindow"=hex:00 - does not working still

@@ -53,7 +53,7 @@ typedef struct HookItem
     const char*    Name;
     const wchar_t* DllName;
 	//
-	DWORD   nOrdinal;      // Ordinal of the procedure
+	DWORD   nOrdinal;      // Ordinal of the procedure // !!! Это не Ordinal, а Hint !
     
     
 	// Next fields are for internal use only!

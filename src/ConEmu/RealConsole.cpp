@@ -50,7 +50,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRPROC(s) //DEBUGSTR(s)
 #define DEBUGSTRCMD(s) //DEBUGSTR(s)
 #define DEBUGSTRPKT(s) //DEBUGSTR(s)
-#define DEBUGSTRCON(s) //DEBUGSTR(s)
+#define DEBUGSTRCON(s) DEBUGSTR(s)
 #define DEBUGSTRLANG(s) //DEBUGSTR(s)// ; Sleep(2000)
 #define DEBUGSTRLOG(s) //OutputDebugStringA(s)
 #define DEBUGSTRALIVE(s) //DEBUGSTR(s)
@@ -139,6 +139,7 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
 	mb_LeftPanel = mb_RightPanel = FALSE;
 
 	mb_MouseButtonDown = FALSE;
+	mb_BtnClicked = FALSE; mrc_BtnClickPos = MakeCoord(-1,-1);
 
 	mcr_LastMouseEventPos = MakeCoord(-1,-1);
 
@@ -181,6 +182,7 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
     //m_Args.pszSpecialCmd = NULL; -- не требуется
     mb_FullRetrieveNeeded = FALSE;
     memset(&m_LastMouse, 0, sizeof(m_LastMouse));
+	memset(&m_LastMouseGuiPos, 0, sizeof(m_LastMouseGuiPos));
     mb_DataChanged = FALSE;
 
     mn_ProgramStatus = 0; mn_FarStatus = 0; mn_Comspec4Ntvdm = 0;
@@ -1047,26 +1049,46 @@ void CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec)
 	//}
 	
     if (piRec->EventType == MOUSE_EVENT) {
-        if (piRec->Event.MouseEvent.dwEventFlags == MOUSE_MOVED) {
-            if (m_LastMouse.dwEventFlags != 0
-             && m_LastMouse.dwButtonState     == piRec->Event.MouseEvent.dwButtonState 
-             && m_LastMouse.dwControlKeyState == piRec->Event.MouseEvent.dwControlKeyState
-             && m_LastMouse.dwMousePosition.X == piRec->Event.MouseEvent.dwMousePosition.X
-             && m_LastMouse.dwMousePosition.Y == piRec->Event.MouseEvent.dwMousePosition.Y)
-            {
-                //#ifdef _DEBUG
-                //wchar_t szDbg[60];
-                //wsprintf(szDbg, L"!!! Skipping ConEmu.Mouse event at: {%ix%i}\n", m_LastMouse.dwMousePosition.X, m_LastMouse.dwMousePosition.Y);
-                //DEBUGSTRINPUT(szDbg);
-                //#endif
-                return; // Это событие лишнее. Движения мышки реально не было, кнопки не менялись
-            }
-        }
+        #ifdef _DEBUG
+        static DWORD nLastBtnState;
+        #endif
+        
+        //WARNING!!! Тут проблема следующая.
+        // Фаровский AltIns требует получения MOUSE_MOVE в той же координате, где прошел клик.
+        //  Иначе граббинг начинается не с "кликнутой" а со следующей позиции.
+        // В других случаях наблюдаются проблемы с кликами. Например, в диалоге
+        //  UCharMap. При его минимизации, если кликнуть по кнопке минимизации
+        //  и фар получит MOUSE_MOVE - то диалог закроется при отпускании кнопки мышки.
+        
+		//2010-07-12 обработка вынесена в CRealConsole::OnMouse с учетом GUI курсора по пикселам
+        //if (piRec->Event.MouseEvent.dwEventFlags == MOUSE_MOVED)
+        //{
+        //    if (m_LastMouse.dwButtonState     == piRec->Event.MouseEvent.dwButtonState 
+        //     && m_LastMouse.dwControlKeyState == piRec->Event.MouseEvent.dwControlKeyState
+        //     && m_LastMouse.dwMousePosition.X == piRec->Event.MouseEvent.dwMousePosition.X
+        //     && m_LastMouse.dwMousePosition.Y == piRec->Event.MouseEvent.dwMousePosition.Y)
+        //    {
+        //        //#ifdef _DEBUG
+        //        //wchar_t szDbg[60];
+        //        //wsprintf(szDbg, L"!!! Skipping ConEmu.Mouse event at: {%ix%i}\n", m_LastMouse.dwMousePosition.X, m_LastMouse.dwMousePosition.Y);
+        //        //DEBUGSTRINPUT(szDbg);
+        //        //#endif
+        //        return; // Это событие лишнее. Движения мышки реально не было, кнопки не менялись
+        //    }
+        //    #ifdef _DEBUG
+        //    if ((nLastBtnState&FROM_LEFT_1ST_BUTTON_PRESSED)) {
+        //    	nLastBtnState = nLastBtnState;
+        //    }
+        //    #endif
+        //}
         // Запомним
         m_LastMouse.dwMousePosition   = piRec->Event.MouseEvent.dwMousePosition;
         m_LastMouse.dwEventFlags      = piRec->Event.MouseEvent.dwEventFlags;
         m_LastMouse.dwButtonState     = piRec->Event.MouseEvent.dwButtonState;
         m_LastMouse.dwControlKeyState = piRec->Event.MouseEvent.dwControlKeyState;
+        #ifdef _DEBUG
+        nLastBtnState = piRec->Event.MouseEvent.dwButtonState;
+        #endif
 
         //#ifdef _DEBUG
         //wchar_t szDbg[60];
@@ -1501,42 +1523,46 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
         //if (bActive)
         //	gSet.Performance(tPerfInterval, FALSE);
     }
-   
-    // Завершение серверных нитей этой консоли
-    DEBUGSTRPROC(L"About to terminate main server thread (MonitorThread)\n");
-    if (pRCon->ms_VConServer_Pipe[0]) // значит хотя бы одна нить была запущена
-    {   
-        pRCon->StopSignal(); // уже должен быть выставлен, но на всякий случай
-        //
-        HANDLE hPipe = INVALID_HANDLE_VALUE;
-        DWORD dwWait = 0;
-        // Передернуть пайпы, чтобы нити сервера завершились
-        for (int i=0; i<MAX_SERVER_THREADS; i++) {
-            DEBUGSTRPROC(L"Touching our server pipe\n");
-            HANDLE hServer = pRCon->mh_ActiveRConServerThread;
-            hPipe = CreateFile(pRCon->ms_VConServer_Pipe,GENERIC_WRITE,0,NULL,OPEN_EXISTING,0,NULL);
-            if (hPipe == INVALID_HANDLE_VALUE) {
-                DEBUGSTRPROC(L"All pipe instances closed?\n");
-                break;
-            }
-            DEBUGSTRPROC(L"Waiting server pipe thread\n");
-            dwWait = WaitForSingleObject(hServer, 200); // пытаемся дождаться, пока нить завершится
-            // Просто закроем пайп - его нужно было передернуть
-            CloseHandle(hPipe);
-            hPipe = INVALID_HANDLE_VALUE;
-        }
-        // Немного подождем, пока ВСЕ нити завершатся
-        DEBUGSTRPROC(L"Checking server pipe threads are closed\n");
-        WaitForMultipleObjects(MAX_SERVER_THREADS, pRCon->mh_RConServerThreads, TRUE, 500);
-        for (int i=0; i<MAX_SERVER_THREADS; i++) {
-            if (WaitForSingleObject(pRCon->mh_RConServerThreads[i],0) != WAIT_OBJECT_0) {
-                DEBUGSTRPROC(L"### Terminating mh_RConServerThreads\n");
-                TerminateThread(pRCon->mh_RConServerThreads[i],0);
-            }
-            CloseHandle(pRCon->mh_RConServerThreads[i]);
-            pRCon->mh_RConServerThreads[i] = NULL;
-        }
-    }
+
+	pRCon->StopSignal();
+
+	// 2010-08-03 - перенес в StopThread, чтобы не задерживать закрытие ЭТОЙ нити
+	//// Завершение серверных нитей этой консоли
+	//DEBUGSTRPROC(L"About to terminate main server thread (MonitorThread)\n");
+	//if (pRCon->ms_VConServer_Pipe[0]) // значит хотя бы одна нить была запущена
+	//{   
+	//    pRCon->StopSignal(); // уже должен быть выставлен, но на всякий случай
+	//    //
+	//    HANDLE hPipe = INVALID_HANDLE_VALUE;
+	//    DWORD dwWait = 0;
+	//    // Передернуть пайпы, чтобы нити сервера завершились
+	//    for (int i=0; i<MAX_SERVER_THREADS; i++) {
+	//        DEBUGSTRPROC(L"Touching our server pipe\n");
+	//        HANDLE hServer = pRCon->mh_ActiveRConServerThread;
+	//        hPipe = CreateFile(pRCon->ms_VConServer_Pipe,GENERIC_WRITE,0,NULL,OPEN_EXISTING,0,NULL);
+	//        if (hPipe == INVALID_HANDLE_VALUE) {
+	//            DEBUGSTRPROC(L"All pipe instances closed?\n");
+	//            break;
+	//        }
+	//        DEBUGSTRPROC(L"Waiting server pipe thread\n");
+	//        dwWait = WaitForSingleObject(hServer, 200); // пытаемся дождаться, пока нить завершится
+	//        // Просто закроем пайп - его нужно было передернуть
+	//        CloseHandle(hPipe);
+	//        hPipe = INVALID_HANDLE_VALUE;
+	//    }
+	//    // Немного подождем, пока ВСЕ нити завершатся
+	//    DEBUGSTRPROC(L"Checking server pipe threads are closed\n");
+	//    WaitForMultipleObjects(MAX_SERVER_THREADS, pRCon->mh_RConServerThreads, TRUE, 500);
+	//    for (int i=0; i<MAX_SERVER_THREADS; i++) {
+	//        if (WaitForSingleObject(pRCon->mh_RConServerThreads[i],0) != WAIT_OBJECT_0) {
+	//            DEBUGSTRPROC(L"### Terminating mh_RConServerThreads\n");
+	//            TerminateThread(pRCon->mh_RConServerThreads[i],0);
+	//        }
+	//        CloseHandle(pRCon->mh_RConServerThreads[i]);
+	//        pRCon->mh_RConServerThreads[i] = NULL;
+	//    }
+	//	pRCon->ms_VConServer_Pipe[0] = 0;
+	//}
     
     // Finalize
     //SafeCloseHandle(pRCon->mh_MonitorThread);
@@ -2077,12 +2103,13 @@ void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y)
 	//	crMouse.Y += con.m_sbi.srWindow.Top;
 	//}
 
-	if (messg == WM_MOUSEMOVE /*&& mb_MouseButtonDown*/) {
-		// Issue 172: ConEmu10020304: проблема с правым кликом на PanelTabs
-		if (mcr_LastMouseEventPos.X == crMouse.X && mcr_LastMouseEventPos.Y == crMouse.Y)
-			return; // не посылать в консоль MouseMove на том же месте
-		mcr_LastMouseEventPos.X = crMouse.X; mcr_LastMouseEventPos.Y = crMouse.Y;
-	}
+	//2010-07-12 - перенес вниз
+	//if (messg == WM_MOUSEMOVE /*&& mb_MouseButtonDown*/) {
+	//	// Issue 172: ConEmu10020304: проблема с правым кликом на PanelTabs
+	//	if (mcr_LastMouseEventPos.X == crMouse.X && mcr_LastMouseEventPos.Y == crMouse.Y)
+	//		return; // не посылать в консоль MouseMove на том же месте
+	//	mcr_LastMouseEventPos.X = crMouse.X; mcr_LastMouseEventPos.Y = crMouse.Y;
+	//}
 
 	INPUT_RECORD r; memset(&r, 0, sizeof(r));
     r.EventType = MOUSE_EVENT;
@@ -2154,6 +2181,38 @@ void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y)
         	nScroll = ((SHORT)(nScroll / 120)) * 120;
         r.Event.MouseEvent.dwButtonState |= ((DWORD)(WORD)nScroll) << 16;
     }
+
+	if (messg == WM_LBUTTONDOWN || messg == WM_RBUTTONDOWN || messg == WM_MBUTTONDOWN)
+	{
+		mb_BtnClicked = TRUE; mrc_BtnClickPos = crMouse;
+	}
+
+	if (messg == WM_MOUSEMOVE /*&& mb_MouseButtonDown*/)
+	{
+		// Issue 172: проблема с правым кликом на PanelTabs
+		//if (mcr_LastMouseEventPos.X == crMouse.X && mcr_LastMouseEventPos.Y == crMouse.Y)
+		//	return; // не посылать в консоль MouseMove на том же месте
+		//mcr_LastMouseEventPos.X = crMouse.X; mcr_LastMouseEventPos.Y = crMouse.Y;
+		// Проверять будем по пикселам, иначе AltIns начинает выделять со следующей позиции
+		int nDeltaX = (m_LastMouseGuiPos.x > x) ? (m_LastMouseGuiPos.x - x) : (x - m_LastMouseGuiPos.x);
+		int nDeltaY = (m_LastMouseGuiPos.y > y) ? (m_LastMouseGuiPos.y - y) : (y - m_LastMouseGuiPos.y);
+		if (m_LastMouse.dwButtonState     == r.Event.MouseEvent.dwButtonState 
+			&& m_LastMouse.dwControlKeyState == r.Event.MouseEvent.dwControlKeyState
+			&& (nDeltaX <= 1 && nDeltaY <= 1))
+			return; // не посылать в консоль MouseMove на том же месте
+		if (mb_BtnClicked)
+		{
+			// Если после LBtnDown в ЭТУ же позицию не был послан MOUSE_MOVE - дослать в mrc_BtnClickPos
+			if (mb_MouseButtonDown && (mrc_BtnClickPos.X != crMouse.X || mrc_BtnClickPos.Y != crMouse.Y))
+			{
+				r.Event.MouseEvent.dwMousePosition = mrc_BtnClickPos;
+				PostConsoleEvent ( &r );
+			}
+			mb_BtnClicked = FALSE;
+		}
+		m_LastMouseGuiPos.x = x; m_LastMouseGuiPos.y = y;
+		mcr_LastMouseEventPos.X = crMouse.X; mcr_LastMouseEventPos.Y = crMouse.Y;
+	}
 
 
 
@@ -2847,6 +2906,45 @@ void CRealConsole::StopThread(BOOL abRecreating)
         }
         SafeCloseHandle(mh_MonitorThread);
     }
+
+
+	// Завершение серверных нитей этой консоли
+	DEBUGSTRPROC(L"About to terminate main server thread (MonitorThread)\n");
+	if (ms_VConServer_Pipe[0]) // значит хотя бы одна нить была запущена
+	{   
+		StopSignal(); // уже должен быть выставлен, но на всякий случай
+		//
+		HANDLE hPipe = INVALID_HANDLE_VALUE;
+		DWORD dwWait = 0;
+		// Передернуть пайпы, чтобы нити сервера завершились
+		for (int i=0; i<MAX_SERVER_THREADS; i++) {
+			DEBUGSTRPROC(L"Touching our server pipe\n");
+			HANDLE hServer = mh_ActiveRConServerThread;
+			hPipe = CreateFile(ms_VConServer_Pipe,GENERIC_WRITE,0,NULL,OPEN_EXISTING,0,NULL);
+			if (hPipe == INVALID_HANDLE_VALUE) {
+				DEBUGSTRPROC(L"All pipe instances closed?\n");
+				break;
+			}
+			DEBUGSTRPROC(L"Waiting server pipe thread\n");
+			dwWait = WaitForSingleObject(hServer, 200); // пытаемся дождаться, пока нить завершится
+			// Просто закроем пайп - его нужно было передернуть
+			CloseHandle(hPipe);
+			hPipe = INVALID_HANDLE_VALUE;
+		}
+		// Немного подождем, пока ВСЕ нити завершатся
+		DEBUGSTRPROC(L"Checking server pipe threads are closed\n");
+		WaitForMultipleObjects(MAX_SERVER_THREADS, mh_RConServerThreads, TRUE, 500);
+		for (int i=0; i<MAX_SERVER_THREADS; i++) {
+			if (WaitForSingleObject(mh_RConServerThreads[i],0) != WAIT_OBJECT_0) {
+				DEBUGSTRPROC(L"### Terminating mh_RConServerThreads\n");
+				TerminateThread(mh_RConServerThreads[i],0);
+			}
+			CloseHandle(mh_RConServerThreads[i]);
+			mh_RConServerThreads[i] = NULL;
+		}
+		ms_VConServer_Pipe[0] = 0;
+	}
+
     
     //if (mh_InputThread) {
     //    if (WaitForSingleObject(mh_InputThread, 300) != WAIT_OBJECT_0) {
@@ -4136,6 +4234,10 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
             //    }
             //}
         }
+
+		UpdateFarSettings(mn_FarPID_PluginDetected);
+
+
 	} else if (pIn->hdr.nCmd == CECMD_SETFOREGROUND) {
 		AllowSetForegroundWindow(pIn->hdr.nSrcPID);
 		apiSetForegroundWindow((HWND)pIn->qwData[0]);
@@ -8125,22 +8227,34 @@ void CRealConsole::CloseConsole()
     if (!this) return;
     _ASSERTE(!mb_ProcessRestarted);
 	if (hConWnd) {
-		//BOOL lbExecuted = FALSE;
-		//DWORD nFarPID = GetFarPID(TRUE/*abPluginRequired*/);
-		//if (nFarPID) {
-		//    CConEmuPipe pipe(nFarPID, CONEMUREADYTIMEOUT);
-		//    if (pipe.Init(_T("CRealConsole::CloseConsole"), TRUE))
-		//    {
-		//        //DWORD cbWritten=0;
-		//        gConEmu.DebugStep(_T("ConEmu: ACTL_QUIT"));
-		//        lbExecuted = pipe.Execute(CMD_QUITFAR);
-		//        gConEmu.DebugStep(NULL);
-		//    }
-		//    
-		//    if (lbExecuted)
-		//    	return;
-		//}
-		
+		if (gSet.isSafeFarClose)
+		{
+			BOOL lbExecuted = FALSE;
+			DWORD nFarPID = GetFarPID(TRUE/*abPluginRequired*/);
+			if (nFarPID) {
+				CConEmuPipe pipe(nFarPID, CONEMUREADYTIMEOUT);
+				if (pipe.Init(_T("CRealConsole::CloseConsole"), TRUE))
+				{
+					//DWORD cbWritten=0;
+					gConEmu.DebugStep(_T("ConEmu: ACTL_QUIT"));
+					//lbExecuted = pipe.Execute(CMD_QUITFAR);
+
+					LPCWSTR pszMacro = gSet.sSafeFarCloseMacro;
+					if (!pszMacro || !*pszMacro)
+					{
+						pszMacro = L"@$while (Dialog||Editor||Viewer||Menu||Disks||MainMenu||UserMenu||Other||Help) $if (Editor) ShiftF10 $else Esc $end $end  Esc  $if (Shell) F10 $if (Dialog) Enter $end $Exit $end  F10";
+					}
+
+					lbExecuted = pipe.Execute(CMD_POSTMACRO, pszMacro, (wcslen(pszMacro)+1)*2);
+
+					gConEmu.DebugStep(NULL);
+				}
+			    
+				if (lbExecuted)
+		    		return;
+			}
+		}
+
         PostConsoleMessage(hConWnd, WM_CLOSE, 0, 0);
         
 	} else {

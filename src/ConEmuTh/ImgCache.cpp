@@ -877,6 +877,12 @@ BOOL CImgCache::LoadThumbnail(struct tag_CacheInfo* pItem)
 	LPVOID pFileMap = NULL;
 	if (!PV.bVirtualItem) {
 		hFile = CreateFileW(PV.sFileName, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
+		if (hFile == INVALID_HANDLE_VALUE) {
+			DWORD dwErr = GetLastError();
+			if (dwErr == ERROR_SHARING_VIOLATION) {
+				hFile = CreateFileW(PV.sFileName, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
+			}
+		}
 		if (hFile != INVALID_HANDLE_VALUE) {
 			hMapping = CreateFileMapping(hFile, NULL, PAGE_READONLY, 0, 0, NULL);
 			if (hMapping) {

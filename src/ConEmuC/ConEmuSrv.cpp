@@ -791,6 +791,8 @@ void ServerDone(int aiRc)
 
 
 	if (srv.csProc) {
+		//WARNING("БЛОКИРОВКА! Иногда зависает при закрытии консоли");
+		//Перекрыл new & delete, посмотрим
 		delete srv.csProc;
 		srv.csProc = NULL;
 	}

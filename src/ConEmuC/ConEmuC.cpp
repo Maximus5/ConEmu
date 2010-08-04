@@ -1006,12 +1006,12 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 			if (pfnDebugSetProcessKillOnExit) pfnDebugSetProcessKillOnExit(FALSE/*KillOnExit*/);
 			srv.bDebuggerActive = TRUE;
 		
-			wchar_t* pszNewCmd = new wchar_t[1];
-			if (!pszNewCmd) {
+			*psNewCmd = (wchar_t*)Alloc(1,2);
+			if (!*psNewCmd) {
 				_printf ("Can't allocate 1 wchar!\n");
 				return CERR_NOTENOUGHMEM1;
 			}
-			pszNewCmd[0] = 0;
+			(*psNewCmd)[0] = 0;
 			return 0;
 		} else
 		if (gbNoCreateProcess && gbAttachMode) {
@@ -1043,12 +1043,12 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 				return CERR_CARGUMENT;
 			}
 
-			wchar_t* pszNewCmd = new wchar_t[1];
-			if (!pszNewCmd) {
+			*psNewCmd = (wchar_t*)Alloc(1,2);
+			if (!*psNewCmd) {
 				_printf ("Can't allocate 1 wchar!\n");
 				return CERR_NOTENOUGHMEM1;
 			}
-			pszNewCmd[0] = 0;
+			(*psNewCmd)[0] = 0;
 			return 0;
 		}
 	}
@@ -1118,7 +1118,7 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 				ExecuteFreeResult(pIn); pIn = NULL;
 			}
 			//
-			wchar_t* pszNewCmd = new wchar_t[nNewLen];
+			wchar_t* pszNewCmd = (wchar_t*)Alloc(nNewLen+1,2);
 			if (!pszNewCmd) {
 				_printf ("Can't allocate %i wchars!\n", (DWORD)nNewLen);
 				return CERR_NOTENOUGHMEM1;
@@ -1266,7 +1266,7 @@ int ParseCommandLine(LPCWSTR asCmdLine, wchar_t** psNewCmd)
 		nCmdLine += lstrlenW(szComSpec)+15; // "/C", кавычки и возможный "/U"
 	}
 
-	*psNewCmd = new wchar_t[nCmdLine];
+	*psNewCmd = (wchar_t*)Alloc(nCmdLine+1,2);
 	if (!(*psNewCmd))
 	{
 		_printf ("Can't allocate %i wchars!\n", (DWORD)nCmdLine);
@@ -3427,4 +3427,15 @@ LPVOID _malloc(size_t nCount) {
 }
 void   _free(LPVOID ptr) {
 	Free(ptr);
+}
+
+void * __cdecl operator new(size_t _Size)
+{
+	void * p = Alloc(_Size,1);
+	return p;
+}
+
+void __cdecl operator delete(void *p)
+{
+	Free(p);
 }
