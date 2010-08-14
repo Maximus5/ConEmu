@@ -43,6 +43,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	#undef ASSERT_UNWANTED_SIZE
 #endif
 
+extern BOOL gbTerminateOnExit;
+
 BOOL ProcessInputMessage(MSG &msg, INPUT_RECORD &r);
 BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount);
 BOOL ReadInputQueue(INPUT_RECORD *prs, DWORD *pCount);
@@ -647,6 +649,7 @@ wrap:
 void ServerDone(int aiRc)
 {
 	gbQuit = true;
+	gbTerminateOnExit = FALSE;
 	// На всякий случай - выставим событие
 	if (ghExitQueryEvent) SetEvent(ghExitQueryEvent);
 	if (ghQuitEvent) SetEvent(ghQuitEvent);
@@ -686,38 +689,41 @@ void ServerDone(int aiRc)
 
 
 	// Закрываем дескрипторы и выходим
-	if (srv.dwWinEventThread && srv.hWinEventThread) {
+	if (/*srv.dwWinEventThread &&*/ srv.hWinEventThread) {
 		// Подождем немножко, пока нить сама завершится
 		if (WaitForSingleObject(srv.hWinEventThread, 500) != WAIT_OBJECT_0) {
+			gbTerminateOnExit = srv.bWinEventTermination = TRUE;
 			#pragma warning( push )
 			#pragma warning( disable : 6258 )
 			TerminateThread ( srv.hWinEventThread, 100 ); // раз корректно не хочет...
 			#pragma warning( pop )
 		}
 		SafeCloseHandle(srv.hWinEventThread);
-		srv.dwWinEventThread = 0;
+		//srv.dwWinEventThread = 0; -- не будем чистить ИД, Для истории
 	}
 	if (srv.hInputThread) {
 		// Подождем немножко, пока нить сама завершится
 		if (WaitForSingleObject(srv.hInputThread, 500) != WAIT_OBJECT_0) {
+			gbTerminateOnExit = srv.bInputTermination = TRUE;
 			#pragma warning( push )
 			#pragma warning( disable : 6258 )
 			TerminateThread ( srv.hInputThread, 100 ); // раз корректно не хочет...
 			#pragma warning( pop )
 		}
 		SafeCloseHandle(srv.hInputThread);
-		srv.dwInputThread = 0;
+		//srv.dwInputThread = 0; -- не будем чистить ИД, Для истории
 	}
 	if (srv.hInputPipeThread) {
 		// Подождем немножко, пока нить сама завершится
 		if (WaitForSingleObject(srv.hInputPipeThread, 50) != WAIT_OBJECT_0) {
+			gbTerminateOnExit = srv.bInputPipeTermination = TRUE;
 			#pragma warning( push )
 			#pragma warning( disable : 6258 )
 			TerminateThread ( srv.hInputPipeThread, 100 ); // раз корректно не хочет...
 			#pragma warning( pop )
 		}
 		SafeCloseHandle(srv.hInputPipeThread);
-		srv.dwInputPipeThreadId = 0;
+		//srv.dwInputPipeThreadId = 0; -- не будем чистить ИД, Для истории
 	}
 	SafeCloseHandle(srv.hInputPipe);
 	SafeCloseHandle(srv.hInputEvent);
@@ -727,6 +733,7 @@ void ServerDone(int aiRc)
 		TODO("Сама нить не завершится. Нужно либо делать overlapped, либо что-то пихать в нить");
 		//if (WaitForSingleObject(srv.hGetDataPipeThread, 50) != WAIT_OBJECT_0)
 		{
+			gbTerminateOnExit = srv.bGetDataPipeTermination = TRUE;
 			#pragma warning( push )
 			#pragma warning( disable : 6258 )
 			TerminateThread ( srv.hGetDataPipeThread, 100 ); // раз корректно не хочет...
@@ -740,6 +747,7 @@ void ServerDone(int aiRc)
 	if (srv.hServerThread) {
 		// Подождем немножко, пока нить сама завершится
 		if (WaitForSingleObject(srv.hServerThread, 500) != WAIT_OBJECT_0) {
+			gbTerminateOnExit = srv.bServerTermination = TRUE;
 			#pragma warning( push )
 			#pragma warning( disable : 6258 )
 			TerminateThread ( srv.hServerThread, 100 ); // раз корректно не хочет...
@@ -751,6 +759,7 @@ void ServerDone(int aiRc)
 	if (srv.hRefreshThread) {
 		if (WaitForSingleObject(srv.hRefreshThread, 100)!=WAIT_OBJECT_0) {
 			_ASSERT(FALSE);
+			gbTerminateOnExit = srv.bRefreshTermination = TRUE;
 			#pragma warning( push )
 			#pragma warning( disable : 6258 )
 			TerminateThread(srv.hRefreshThread, 100);

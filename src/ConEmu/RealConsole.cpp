@@ -8226,12 +8226,14 @@ void CRealConsole::CloseConsole()
 {
     if (!this) return;
     _ASSERTE(!mb_ProcessRestarted);
-	if (hConWnd) {
+	if (hConWnd)
+	{
 		if (gSet.isSafeFarClose)
 		{
 			BOOL lbExecuted = FALSE;
 			DWORD nFarPID = GetFarPID(TRUE/*abPluginRequired*/);
-			if (nFarPID) {
+			if (nFarPID && isAlive())
+			{
 				CConEmuPipe pipe(nFarPID, CONEMUREADYTIMEOUT);
 				if (pipe.Init(_T("CRealConsole::CloseConsole"), TRUE))
 				{

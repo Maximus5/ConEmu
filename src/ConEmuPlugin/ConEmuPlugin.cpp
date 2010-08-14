@@ -37,7 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SHOWDEBUGSTR
 //#define MCHKHEAP
 #define DEBUGSTRMENU(s) DEBUGSTR(s)
-#define DEBUGSTRINPUT(s) DEBUGSTR(s)
+#define DEBUGSTRINPUT(s) //DEBUGSTR(s)
 
 
 //#include <stdio.h>
@@ -767,7 +767,10 @@ VOID WINAPI OnConsoleReadInputPost(HookCallbackArg* pArgs)
 		PINPUT_RECORD p = (PINPUT_RECORD)(pArgs->lArguments[1]);
 		LPDWORD pCount = (LPDWORD)(pArgs->lArguments[3]);
 		if (*pCount == 1 && p->EventType == KEY_EVENT && p->Event.KeyEvent.bKeyDown
-			&& p->Event.KeyEvent.wVirtualKeyCode == VK_RETURN)
+			&& (p->Event.KeyEvent.wVirtualKeyCode == VK_RETURN
+				|| p->Event.KeyEvent.wVirtualKeyCode == VK_NEXT
+				|| p->Event.KeyEvent.wVirtualKeyCode == VK_PRIOR)
+			)
 		{
 			INPUT_RECORD ir[10]; DWORD nRead = 0, nInc = 0;
 			if (PeekConsoleInputW(h, ir, countof(ir), &nRead) && nRead) {

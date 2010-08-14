@@ -283,12 +283,12 @@ typedef struct tag_SrvInfo {
 	HANDLE hRootProcess, hRootThread; DWORD dwRootProcess, dwRootThread; DWORD dwRootStartTime; BOOL bDebuggerActive;
 	DWORD  dwGuiPID; // GUI PID (ИД процесса графической части ConEmu)
 	//
-	HANDLE hServerThread;   DWORD dwServerThreadId;
-	HANDLE hRefreshThread;  DWORD dwRefreshThread;
-	HANDLE hWinEventThread; DWORD dwWinEventThread;
+	HANDLE hServerThread;   DWORD dwServerThreadId; BOOL bServerTermination;
+	HANDLE hRefreshThread;  DWORD dwRefreshThread;  BOOL bRefreshTermination;
+	HANDLE hWinEventThread; DWORD dwWinEventThread; BOOL bWinEventTermination;
 	//HANDLE hInputThread;    DWORD dwInputThreadId;
-	HANDLE hInputPipeThread;DWORD dwInputPipeThreadId; // Needed in Vista & administrator
-	HANDLE hGetDataPipeThread; DWORD dwGetDataPipeThreadId;
+	HANDLE hInputPipeThread;DWORD dwInputPipeThreadId; BOOL bInputPipeTermination; // Needed in Vista & administrator
+	HANDLE hGetDataPipeThread; DWORD dwGetDataPipeThreadId; BOOL bGetDataPipeTermination;
 	//
 	OSVERSIONINFO osv;
 	BOOL bReopenHandleAllowed;
@@ -321,7 +321,7 @@ typedef struct tag_SrvInfo {
 	//DWORD nConsoleDataSize;
 //	DWORD nFarInfoLastIdx;
 	// Input
-	HANDLE hInputThread, hInputEvent; DWORD dwInputThread;
+	HANDLE hInputThread, hInputEvent; DWORD dwInputThread; BOOL bInputTermination;
 	int nInputQueue, nMaxInputQueue;
 	INPUT_RECORD* pInputQueue;
 	INPUT_RECORD* pInputQueueEnd;

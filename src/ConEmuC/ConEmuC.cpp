@@ -83,6 +83,7 @@ MConHandle ghConOut ( L"CONOUT$" );
 
 /*  Global  */
 DWORD   gnSelfPID = 0;
+BOOL    gbTerminateOnExit = FALSE;
 //HANDLE  ghConIn = NULL, ghConOut = NULL;
 HWND    ghConWnd = NULL;
 HWND    ghConEmuWnd = NULL; // Root! window
