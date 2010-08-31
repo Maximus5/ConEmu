@@ -13,7 +13,7 @@ public:
 	~CBackground();
 	
 	bool CreateField(int anWidth, int anHeight);
-	bool FillBackground(const BITMAPFILEHEADER* apBkImgData, int X, int Y, int Width, int Height, BackgroundOp Operation);
+	bool FillBackground(const BITMAPFILEHEADER* apBkImgData, LONG X, LONG Y, LONG Width, LONG Height, BackgroundOp Operation);
 	
 private:
 	HBITMAP  hBgBitmap, hOldBitmap;

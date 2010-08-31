@@ -261,15 +261,19 @@ public:
     
     // Working variables...
 private:
-    HBITMAP  hBgBitmap;
-    COORD    bgBmp;
-    HDC      hBgDc;
+    //HBITMAP  hBgBitmap;
+    //COORD    bgBmp;
+    //HDC      hBgDc;
+	CBackground* mp_Bg;
+	BITMAPFILEHEADER* mp_BgImgData;
+	BOOL mb_NeedBkUpdate;
     FILETIME ftBgModified;
 public:
 	bool PrepareBackground(HDC* phBgDc, COORD* pbgBmpSize);
 	bool /*LoadImageFrom*/LoadBackgroundFile(TCHAR *inPath, bool abShowErrors=false);
 	bool IsBackgroundEnabled(CVirtualConsole* apVCon);
-	CBackground* CreateBackgroundImage(const BITMAPFILEHEADER* apBkImgData);
+	void NeedBackgroundUpdate();
+	//CBackground* CreateBackgroundImage(const BITMAPFILEHEADER* apBkImgData);
 public:
     HFONT   mh_Font[MAX_FONT_STYLES], mh_Font2;
     TODO("По хорошему, CharWidth & CharABC нужно разделять по шрифтам - у Bold ширина может быть больше");

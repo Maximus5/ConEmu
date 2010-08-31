@@ -1,5 +1,33 @@
 
-#include "headers.h"
+/*
+Copyright (c) 2009-2010 Maximus5
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+1. Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+notice, this list of conditions and the following disclaimer in the
+documentation and/or other materials provided with the distribution.
+3. The name of the authors may not be used to endorse or promote products
+derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
+
+#include "header.h"
 #include "Options.h"
 #include "Background.h"
 
@@ -59,7 +87,6 @@ bool CBackground::CreateField(int anWidth, int anHeight)
 	}
 	else
 	{
-		TODO("Залить черным не нужно?");
 		return true; // уже создано
 	}
 	
@@ -71,8 +98,8 @@ bool CBackground::CreateField(int anWidth, int anHeight)
 
     if (hBgDc)
     {
-	    bgSize.X = Min(32767,anWidth);
-	    bgSize.Y = Min(32767,anHeight);
+	    bgSize.X = klMin(32767,anWidth);
+	    bgSize.Y = klMin(32767,anHeight);
 		
 	    hBgBitmap = CreateCompatibleBitmap(hScreenDC, bgSize.X, bgSize.Y);
 	    if (hBgBitmap)
@@ -89,14 +116,14 @@ bool CBackground::CreateField(int anWidth, int anHeight)
 	    }
     }
     
-    ReleaseDC(ghWnd, hScreenDC); hScreenDC = NULL;
+    ReleaseDC(ghWnd, hScreenDC);
     
     return lbRc;
 }
 
 bool CBackground::FillBackground(
 	const BITMAPFILEHEADER* apBkImgData, // Содержимое *.bmp файла
-	int X, int Y, int Width, int Height, // Куда нужно положить картинку
+	LONG X, LONG Y, LONG Width, LONG Height, // Куда нужно положить картинку
 	BackgroundOp Operation)              // {eUpLeft = 0, eStretch = 1, eTile = 2}
 {
 	if (!hBgDc)
@@ -107,7 +134,7 @@ bool CBackground::FillBackground(
     FillRect(hBgDc, &rcFull, (HBRUSH)GetStockObject(BLACK_BRUSH));
     
     if (apBkImgData == NULL ||
-    	apBkImgData->fbType != 0x4D42/*BM*/ ||
+    	apBkImgData->bfType != 0x4D42/*BM*/ ||
     	IsBadReadPtr(apBkImgData, apBkImgData->bfSize))
 	{
     	return false;
@@ -129,7 +156,7 @@ bool CBackground::FillBackground(
     
     DWORD       nBitSize = apBkImgData->bfSize - apBkImgData->bfOffBits;
     TODO("Stride?");
-    DWORD       nCalcSize = (pHdr->biWidth * pHdr->biHeight * pHdr->biBitCount) << 3;
+    DWORD       nCalcSize = (pHdr->biWidth * pHdr->biHeight * pHdr->biBitCount) >> 3;
     if (nBitSize > nCalcSize)
     	nBitSize = nCalcSize;
     
@@ -156,7 +183,7 @@ bool CBackground::FillBackground(
 		    	BLENDFUNCTION bf = {AC_SRC_OVER, 0, gSet.bgImageDarker, 0};
 		    	if (Operation == eUpLeft)
 		    	{
-		    		int W = Min(Width,pHdr->biWidth); int H = Min(Height,pHdr->biHeight);
+		    		int W = klMin(Width,pHdr->biWidth); int H = klMin(Height,pHdr->biHeight);
 		    		if (GdiAlphaBlend(hBgDc, X, Y, W, H, hLoadDC, 0, 0, W, H, bf))
 		    			lbRc = true;
 		    	}
@@ -171,8 +198,8 @@ bool CBackground::FillBackground(
 		    		{
 			    		for (int DX = X; DX < (X+Width); DX += pHdr->biWidth)
 			    		{
-				    		int W = Min((Width-DX),pHdr->biWidth);
-				    		int H = Min((Height-DY),pHdr->biHeight);
+				    		int W = klMin((Width-DX),pHdr->biWidth);
+				    		int H = klMin((Height-DY),pHdr->biHeight);
 				    		if (GdiAlphaBlend(hBgDc, DX, DY, W, H, hLoadDC, 0, 0, W, H, bf))
 				    			lbRc = true;
 			    		}

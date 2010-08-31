@@ -4294,9 +4294,7 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 	}
 	else if (pIn->hdr.nCmd == CECMD_SETBACKGROUND)
 	{
-		mp_VCon->SetBackgroundImageData(pIn->bEnabled ? (&pIn->Background) : NULL);
-		if (isVisible())
-			mp_VCon->Update(true/*bForce*/);
+		mp_VCon->SetBackgroundImageData(pIn->Background.bEnabled ? (&pIn->Background.bmp) : NULL);
 	}
 
     // Освободить память

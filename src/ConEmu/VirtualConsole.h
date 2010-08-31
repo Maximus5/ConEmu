@@ -181,14 +181,14 @@ public:
 
 public:
 	// ѕлагин к фару может установить свою "картинку" дл€ панелей (например, нарисовать в фоне букву диска)
-	CBackground* GetBackgroundImage(); // —оздает (или возвращает уже созданный) CBackground дл€ mp_BkImgData
-	void FreeBackgroundImage(); // ќсвободить (если создан) HBITMAP дл€ mp_BkImgData
+	bool PutBackgroundImage(CBackground* pBack, LONG X, LONG Y, LONG Width, LONG Height); // ѕоложить в pBack свою картинку
+	//void FreeBackgroundImage(); // ќсвободить (если создан) HBITMAP дл€ mp_BkImgData
 	void SetBackgroundImageData(const BITMAPFILEHEADER* apImgData); // функци€ создает копию apImgData в mp_BkImgData
-	bool HasBackgroundImage();
+	bool HasBackgroundImage(LONG* pnBgWidth, LONG* pnBgHeight);
 protected:
 	BITMAPFILEHEADER* mp_BkImgData; // followed by image data
 	BOOL mb_BkImgChanged; // ƒанные в mp_BkImgData были изменены плагином, требуетс€ отрисовка
-	CBackground* mp_BkImage;
+public:
 	MSection csBkImgData;
 	
 public:
@@ -252,7 +252,7 @@ protected:
 	//CONSOLE_SELECTION_INFO select1, select2;
 	uint TextLen;
 	bool isCursorValid, drawImage, textChanged, attrChanged;
-    COORD bgBmp; HDC hBgDc;
+    COORD bgBmpSize; HDC hBgDc;
 	void UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, UINT dwSize);
 	bool UpdatePrepare(HDC *ahDc, MSectionLock *pSDC);
 	void UpdateText(); //, bool updateText, bool updateCursor);

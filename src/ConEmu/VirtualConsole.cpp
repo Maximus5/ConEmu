@@ -141,7 +141,7 @@ CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
 	mb_LastFadeFlag = false;
 	mn_LastBitsPixel = 0;
 	
-	mp_BkImgData = NULL; mp_BkImage = NULL; mb_BkImgChanged = FALSE;
+	mp_BkImgData = NULL; mb_BkImgChanged = FALSE;
 
 	_ASSERTE(sizeof(mh_FontByIndex) == (sizeof(gSet.mh_Font)+sizeof(mh_FontByIndex[0])));
 	memmove(mh_FontByIndex, gSet.mh_Font, MAX_FONT_STYLES*sizeof(mh_FontByIndex[0]));
@@ -185,7 +185,7 @@ CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
     Cursor.nBlinkTime = GetCaretBlinkTime();
 
     TextWidth = TextHeight = Width = Height = nMaxTextWidth = nMaxTextHeight = 0;
-    hDC = NULL; hBitmap = NULL; hBgDc = NULL; bgBmp.X = bgBmp.Y = 0;
+    hDC = NULL; hBitmap = NULL; hBgDc = NULL; bgBmpSize.X = bgBmpSize.Y = 0;
     hSelectedFont = NULL; hOldFont = NULL;
     PointersInit();
     mb_IsForceUpdate = false;
@@ -218,7 +218,7 @@ CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
 	#endif
 
     if (gSet.isShowBgImage)
-        gSet.LoadImageFrom(gSet.sBgImage);
+        gSet.LoadBackgroundFile(gSet.sBgImage);
 
     if (gSet.isAdvLogging != 3) {
         mpsz_LogScreen = NULL;
@@ -314,7 +314,7 @@ CVirtualConsole::~CVirtualConsole()
     	mp_BkImgData = NULL;
     }
 
-	FreeBackgroundImage();
+	//FreeBackgroundImage();
 }
 
 HWND CVirtualConsole::GetView()
@@ -687,26 +687,26 @@ void CVirtualConsole::BlitPictureTo(int inX, int inY, int inWidth, int inHeight)
 {
 	#ifdef _DEBUG
 		BOOL lbDump = FALSE;
-		if (lbDump) DumpImage(hBgDc, bgBmp.X, bgBmp.Y, L"F:\\bgtemp.png");
+		if (lbDump) DumpImage(hBgDc, bgBmpSize.X, bgBmpSize.Y, L"F:\\bgtemp.png");
 	#endif
 	
-    if (bgBmp.X>inX && bgBmp.Y>inY)
+    if (bgBmpSize.X>inX && bgBmpSize.Y>inY)
         BitBlt(hDC, inX, inY, inWidth, inHeight, hBgDc, inX, inY, SRCCOPY);
-    if (bgBmp.X<(inX+inWidth) || bgBmp.Y<(inY+inHeight))
+    if (bgBmpSize.X<(inX+inWidth) || bgBmpSize.Y<(inY+inHeight))
     {
         if (hBrush0 == NULL) {
             hBrush0 = CreateSolidBrush(mp_Colors[0]);
             SelectBrush(hBrush0);
         }
 
-        RECT rect = {max(inX,bgBmp.X), inY, inX+inWidth, inY+inHeight};
+        RECT rect = {max(inX,bgBmpSize.X), inY, inX+inWidth, inY+inHeight};
         #ifndef SKIP_ALL_FILLRECT
         if (!IsRectEmpty(&rect))
             FillRect(hDC, &rect, hBrush0);
         #endif
 
-        if (bgBmp.X>inX) {
-            rect.left = inX; rect.top = max(inY,bgBmp.Y); rect.right = bgBmp.X;
+        if (bgBmpSize.X>inX) {
+            rect.left = inX; rect.top = max(inY,bgBmpSize.Y); rect.right = bgBmpSize.X;
             #ifndef SKIP_ALL_FILLRECT
             if (!IsRectEmpty(&rect))
                 FillRect(hDC, &rect, hBrush0);
@@ -1449,7 +1449,7 @@ bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC)
     if (drawImage)
     {
     	// Она заодно проверит, не изменился ли файл?
-    	if (gSet.PrepareBackground(&hBgDc, &bgBmp)) {
+    	if (gSet.PrepareBackground(&hBgDc, &bgBmpSize)) {
     		isForce = true;
     	} else {
     		drawImage = (hBgDc!=NULL);
@@ -3954,29 +3954,31 @@ void CVirtualConsole::CharAttrFromConAttr(WORD conAttr, CharAttr* pAttr)
 
 
 // Создает (или возвращает уже созданный) HDC (CompatibleDC) для mp_BkImgData
-CBackground* CVirtualConsole::GetBackgroundImage()
+bool CVirtualConsole::PutBackgroundImage(CBackground* pBack, LONG X, LONG Y, LONG Width, LONG Height)
 {
 	if (!this) return NULL;
-	if (mp_BkImage && !mb_BkImgChanged)
-		return mp_BkImage; // уже создан
+	if (!mp_BkImgData || !mb_BkImgChanged)
+		return false;
 
 	MSectionLock SBK; SBK.Lock(&csBkImgData);
 
-	mp_BkImage = gSet.CreateBackgroundImage(mp_BkImgData);
+	bool lbRc = pBack->FillBackground(mp_BkImgData, X, Y, Width, Height, eUpLeft);
+
+	mb_BkImgChanged = FALSE;
 	
-	return mp_BkImage;
+	return lbRc;
 }
 
-// Освободить (если создан) HBITMAP для mp_BkImgData
-void CVirtualConsole::FreeBackgroundImage()
-{
-	if (!this) return;
-    if (mp_BkImage)
-    {
-    	delete mp_BkImage;
-    	mp_BkImage = NULL;
-    }
-}
+//// Освободить (если создан) HBITMAP для mp_BkImgData
+//void CVirtualConsole::FreeBackgroundImage()
+//{
+//	if (!this) return;
+//    if (mp_BkImage)
+//    {
+//    	delete mp_BkImage;
+//    	mp_BkImage = NULL;
+//    }
+//}
 
 // функция создает копию apImgData в mp_BkImgData
 void CVirtualConsole::SetBackgroundImageData(const BITMAPFILEHEADER* apImgData)
@@ -3989,21 +3991,39 @@ void CVirtualConsole::SetBackgroundImageData(const BITMAPFILEHEADER* apImgData)
 		mb_BkImgChanged = TRUE;
 	}
 	
-	if (apImgData && apImgData->fbType == 0x4D42/*BM*/ && apImgData->bfSize)
+	if (apImgData && apImgData->bfType == 0x4D42/*BM*/ && apImgData->bfSize)
 	{
 		if (IsBadReadPtr(apImgData, apImgData->bfSize))
 		{
 			_ASSERTE(!IsBadReadPtr(apImgData, apImgData->bfSize));
 			return;
 		}
-		mp_BkImgData = (BITMAPFILEHEADER*)malloc(apImgData->bfSize);
-		memmove(mp_BkImgData, apImgData, apImgData->bfSize);
-		mb_BkImgChanged = TRUE;
+
+		LPBYTE pBuf = (LPBYTE)apImgData;
+		if (*(u32*)(pBuf + 0x0A) >= 0x36 && *(u32*)(pBuf + 0x0A) <= 0x436 && *(u32*)(pBuf + 0x0E) == 0x28 && !pBuf[0x1D] && !*(u32*)(pBuf + 0x1E))
+		{
+			mp_BkImgData = (BITMAPFILEHEADER*)malloc(apImgData->bfSize);
+			memmove(mp_BkImgData, apImgData, apImgData->bfSize);
+			mb_BkImgChanged = TRUE;
+			gSet.NeedBackgroundUpdate();
+		}
 	}
+
+	if (gConEmu.isVisible(this))
+		Update(true/*bForce*/);
 }
 
-bool CVirtualConsole::HasBackgroundImage()
+bool CVirtualConsole::HasBackgroundImage(LONG* pnBgWidth, LONG* pnBgHeight)
 {
 	if (!this) return FALSE;
+	MSectionLock SBK; SBK.Lock(&csBkImgData);
+	if (mp_BkImgData)
+	{
+		BITMAPINFOHEADER* pBmp = (BITMAPINFOHEADER*)(mp_BkImgData+1);
+		if (pnBgWidth)
+			*pnBgWidth = pBmp->biWidth;
+		if (pnBgHeight)
+			*pnBgHeight = pBmp->biHeight;
+	}
 	return mp_BkImgData;
 }
