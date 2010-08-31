@@ -50,7 +50,14 @@ typedef struct tagMYRGB {
 } MYRGB, MYCOLORREF;
 #include <poppack.h>
 
+class CBackground;
 
+enum BackgroundOp
+{
+	eUpLeft = 0,
+	eStretch = 1,
+	eTile = 2,
+};
 
 class CSettings
 {
@@ -108,7 +115,7 @@ public:
 	bool isBackgroundImageValid;
 	u8 bgImageDarker;
 	DWORD nBgImageColors;
-	bool PrepareBackground(HDC* phBgDc, COORD* pbgBmp);
+	char bgOperation; // BackgroundOp {eUpLeft = 0, eStretch = 1, eTile = 2}
 
     /* Transparency */
     u8 nTransparent;
@@ -259,6 +266,11 @@ private:
     HDC      hBgDc;
     FILETIME ftBgModified;
 public:
+	bool PrepareBackground(HDC* phBgDc, COORD* pbgBmpSize);
+	bool /*LoadImageFrom*/LoadBackgroundFile(TCHAR *inPath, bool abShowErrors=false);
+	bool IsBackgroundEnabled(CVirtualConsole* apVCon);
+	CBackground* CreateBackgroundImage(const BITMAPFILEHEADER* apBkImgData);
+public:
     HFONT   mh_Font[MAX_FONT_STYLES], mh_Font2;
     TODO("По хорошему, CharWidth & CharABC нужно разделять по шрифтам - у Bold ширина может быть больше");
     WORD    CharWidth[0x10000]; //, Font2Width[0x10000];
@@ -266,7 +278,6 @@ public:
 
     HWND hMain, hExt, hTabs, hColors, hViews, hInfo;
 
-    bool LoadImageFrom(TCHAR *inPath, bool abShowErrors=false);
 	//static void CenterDialog(HWND hWnd2);
     static INT_PTR CALLBACK wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
     static INT_PTR CALLBACK mainOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);

@@ -40,6 +40,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "RealConsole.h"
 #include "ConEmu.h"
 #include "Options.h"
+#include "Background.h"
 
 
 #ifdef _DEBUG
@@ -139,6 +140,8 @@ CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
 	mb_RequiredForceUpdate = true;
 	mb_LastFadeFlag = false;
 	mn_LastBitsPixel = 0;
+	
+	mp_BkImgData = NULL; mp_BkImage = NULL; mb_BkImgChanged = FALSE;
 
 	_ASSERTE(sizeof(mh_FontByIndex) == (sizeof(gSet.mh_Font)+sizeof(mh_FontByIndex[0])));
 	memmove(mh_FontByIndex, gSet.mh_Font, MAX_FONT_STYLES*sizeof(mh_FontByIndex[0]));
@@ -240,6 +243,8 @@ CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
 
 CVirtualConsole::~CVirtualConsole()
 {
+	_ASSERTE(gConEmu.isMainThread());
+
     if (mp_RCon)
         mp_RCon->StopThread();
 
@@ -302,6 +307,14 @@ CVirtualConsole::~CVirtualConsole()
     //if (mh_PopupMenu) { -- static на все экземпляры
     //	DestroyMenu(mh_PopupMenu); mh_PopupMenu = NULL;
     //}
+    
+    if (mp_BkImgData)
+    {
+    	free(mp_BkImgData);
+    	mp_BkImgData = NULL;
+    }
+
+	FreeBackgroundImage();
 }
 
 HWND CVirtualConsole::GetView()
@@ -1427,12 +1440,14 @@ bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC)
         isForce = true;
 
 
-    drawImage = (gSet.isShowBgImage == 1 || (gSet.isShowBgImage == 2 && !(isEditor || isViewer)) )
-		&& gSet.isBackgroundImageValid;
+    //drawImage = (gSet.isShowBgImage == 1 || (gSet.isShowBgImage == 2 && !(isEditor || isViewer)) )
+	//	&& gSet.isBackgroundImageValid;
+	drawImage = gSet.IsBackgroundEnabled(this);
     TextLen = TextWidth * TextHeight;
     coord.X = csbi.srWindow.Left; coord.Y = csbi.srWindow.Top;
     
-    if (drawImage) {
+    if (drawImage)
+    {
     	// Она заодно проверит, не изменился ли файл?
     	if (gSet.PrepareBackground(&hBgDc, &bgBmp)) {
     		isForce = true;
@@ -3935,4 +3950,60 @@ void CVirtualConsole::CharAttrFromConAttr(WORD conAttr, CharAttr* pAttr)
 	pAttr->nBackIdx = (conAttr & 0xF0) >> 4;
 	pAttr->crForeColor = pAttr->crOrigForeColor = mp_Colors[pAttr->nForeIdx];
 	pAttr->crBackColor = pAttr->crOrigBackColor = mp_Colors[pAttr->nBackIdx];
+}
+
+
+// Создает (или возвращает уже созданный) HDC (CompatibleDC) для mp_BkImgData
+CBackground* CVirtualConsole::GetBackgroundImage()
+{
+	if (!this) return NULL;
+	if (mp_BkImage && !mb_BkImgChanged)
+		return mp_BkImage; // уже создан
+
+	MSectionLock SBK; SBK.Lock(&csBkImgData);
+
+	mp_BkImage = gSet.CreateBackgroundImage(mp_BkImgData);
+	
+	return mp_BkImage;
+}
+
+// Освободить (если создан) HBITMAP для mp_BkImgData
+void CVirtualConsole::FreeBackgroundImage()
+{
+	if (!this) return;
+    if (mp_BkImage)
+    {
+    	delete mp_BkImage;
+    	mp_BkImage = NULL;
+    }
+}
+
+// функция создает копию apImgData в mp_BkImgData
+void CVirtualConsole::SetBackgroundImageData(const BITMAPFILEHEADER* apImgData)
+{
+	if (!this) return;
+	MSectionLock SBK; SBK.Lock(&csBkImgData);
+	if (mp_BkImgData)
+	{
+		free(mp_BkImgData); mp_BkImgData = NULL;
+		mb_BkImgChanged = TRUE;
+	}
+	
+	if (apImgData && apImgData->fbType == 0x4D42/*BM*/ && apImgData->bfSize)
+	{
+		if (IsBadReadPtr(apImgData, apImgData->bfSize))
+		{
+			_ASSERTE(!IsBadReadPtr(apImgData, apImgData->bfSize));
+			return;
+		}
+		mp_BkImgData = (BITMAPFILEHEADER*)malloc(apImgData->bfSize);
+		memmove(mp_BkImgData, apImgData, apImgData->bfSize);
+		mb_BkImgChanged = TRUE;
+	}
+}
+
+bool CVirtualConsole::HasBackgroundImage()
+{
+	if (!this) return FALSE;
+	return mp_BkImgData;
 }

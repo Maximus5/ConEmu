@@ -111,6 +111,7 @@ $(INTDIR)\ConEmuPipe.obj \
 $(INTDIR)\DragDrop.obj \
 $(INTDIR)\DragDropData.obj \
 $(INTDIR)\Options.obj \
+$(INTDIR)\Background.obj \
 $(INTDIR)\RealConsole.obj \
 $(INTDIR)\Registry.obj \
 $(INTDIR)\ScreenDump.obj \
@@ -280,7 +281,9 @@ $(INTDIR)\DragDrop.obj: DragDrop.cpp BaseDragDrops.h DragDrop.h DragDropData.h
 
 $(INTDIR)\DragDropData.obj: DragDropData.cpp BaseDragDrops.h DragDrop.h DragDropData.h
 
-$(INTDIR)\Options.obj: Options.cpp
+$(INTDIR)\Options.obj: Options.cpp Options.h Background.h
+
+$(INTDIR)\Background.obj: Background.cpp Background.h
 
 $(INTDIR)\RealConsole.obj: RealConsole.cpp RealConsole.h  ..\common\Common.hpp
 

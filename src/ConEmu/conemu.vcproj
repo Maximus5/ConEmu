@@ -875,6 +875,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Background.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\RealConsole.cpp"
 				>
 			</File>
@@ -970,6 +974,10 @@
 			</File>
 			<File
 				RelativePath=".\Options.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Background.h"
 				>
 			</File>
 			<File

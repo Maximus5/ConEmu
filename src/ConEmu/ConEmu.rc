@@ -135,20 +135,17 @@ BEGIN
                     WS_TABSTOP
     CTEXT           "x",IDC_STATIC,101,108,8,8
     PUSHBUTTON      "...",bBgImage,299,142,16,12
-    CONTROL         "Stretch",rBgStretch,"Button",BS_AUTORADIOBUTTON | 
-                    WS_DISABLED,243,182,39,10
-    CONTROL         "Tile",rBgTile,"Button",BS_AUTORADIOBUTTON | WS_DISABLED,
-                    285,182,28,10
-    CONTROL         "UpLeft",rBgSimple,"Button",BS_AUTORADIOBUTTON,201,182,
-                    36,10
+    CONTROL         "UpLeft",rBgUpLeft,"Button",BS_AUTORADIOBUTTON | WS_GROUP,201,182,36,10
+    CONTROL         "Stretch",rBgStretch,"Button",BS_AUTORADIOBUTTON,243,182,39,10
+    CONTROL         "Tile",rBgTile,"Button",BS_AUTORADIOBUTTON,285,182,28,10
+    GROUPBOX        "Command Line",IDC_STATIC,4,200,319,30
+    EDITTEXT        tCmdLine,9,211,307,12,ES_AUTOHSCROLL
     CONTROL         "Cascade",rCascade,"Button",BS_AUTORADIOBUTTON,268,104,
                     44,10
     CONTROL         "Fixed",rFixed,"Button",BS_AUTORADIOBUTTON,268,92,33,10
     EDITTEXT        tWndX,268,79,20,12,ES_AUTOHSCROLL | ES_NUMBER
     EDITTEXT        tWndY,297,79,20,12,ES_AUTOHSCROLL | ES_NUMBER
     CTEXT           "x",IDC_STATIC,289,80,8,8
-    GROUPBOX        "Command Line",IDC_STATIC,4,200,319,30
-    EDITTEXT        tCmdLine,9,211,307,12,ES_AUTOHSCROLL
     PUSHBUTTON      "Apply",cbApplyPos,214,99,36,12
     CONTROL         "Blinking",cbCursorBlink,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,188,27,40,8

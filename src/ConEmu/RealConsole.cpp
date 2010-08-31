@@ -3711,7 +3711,8 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 
 	//  } else 
 
-	if (pIn->hdr.nCmd == CECMD_CMDSTARTSTOP) {
+	if (pIn->hdr.nCmd == CECMD_CMDSTARTSTOP)
+	{
         //
 		DWORD nStarted = pIn->StartStop.nStarted;
 
@@ -3997,7 +3998,9 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
             &cbWritten,   // number of bytes written 
             NULL);        // not overlapped I/O 
 
-    } else if (pIn->hdr.nCmd == CECMD_GETGUIHWND) {
+    }
+    else if (pIn->hdr.nCmd == CECMD_GETGUIHWND)
+    {
         DEBUGSTRCMD(L"GUI recieved CECMD_GETGUIHWND\n");
         CESERVER_REQ *pRet = ExecuteNewCmd(pIn->hdr.nCmd, sizeof(CESERVER_REQ_HDR) + 2*sizeof(DWORD));
         pRet->dwData[0] = (DWORD)ghWnd;
@@ -4011,7 +4014,9 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
             NULL);        // not overlapped I/O 
         ExecuteFreeResult(pRet);
 
-    } else if (pIn->hdr.nCmd == CECMD_TABSCHANGED) {
+    }
+    else if (pIn->hdr.nCmd == CECMD_TABSCHANGED)
+    {
         DEBUGSTRCMD(L"GUI recieved CECMD_TABSCHANGED\n");
         if (nDataSize == 0) {
             // ФАР закрывается
@@ -4100,7 +4105,9 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 			}
         }
 
-    } else if (pIn->hdr.nCmd == CECMD_GETOUTPUTFILE) {
+    }
+    else if (pIn->hdr.nCmd == CECMD_GETOUTPUTFILE)
+    {
         DEBUGSTRCMD(L"GUI recieved CECMD_GETOUTPUTFILE\n");
         _ASSERTE(nDataSize>=4);
         BOOL lbUnicode = pIn->OutputFile.bUnicode;
@@ -4126,7 +4133,9 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
             NULL);        // not overlapped I/O 
         free(pRet);
 
-    } else if (pIn->hdr.nCmd == CECMD_LANGCHANGE) {
+    }
+    else if (pIn->hdr.nCmd == CECMD_LANGCHANGE)
+    {
         DEBUGSTRLANG(L"GUI recieved CECMD_LANGCHANGE\n");
         _ASSERTE(nDataSize>=4);
 		// LayoutName: "00000409", "00010409", ...
@@ -4177,14 +4186,18 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
         //    }
         //}
 
-    } else if (pIn->hdr.nCmd == CECMD_TABSCMD) {
+    }
+    else if (pIn->hdr.nCmd == CECMD_TABSCMD)
+    {
         // 0: спрятать/показать табы, 1: перейти на следующую, 2: перейти на предыдущую, 3: commit switch
         DEBUGSTRCMD(L"GUI recieved CECMD_TABSCMD\n");
         _ASSERTE(nDataSize>=1);
         DWORD nTabCmd = pIn->Data[0];
         gConEmu.TabCommand(nTabCmd);
 
-    } else if (pIn->hdr.nCmd == CECMD_RESOURCES) {
+    }
+    else if (pIn->hdr.nCmd == CECMD_RESOURCES)
+    {
         DEBUGSTRCMD(L"GUI recieved CECMD_RESOURCES\n");
         _ASSERTE(nDataSize>=6);
         mb_PluginDetected = TRUE; // Запомним, что в фаре есть плагин (хотя фар может быть закрыт)
@@ -4238,11 +4251,15 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 		UpdateFarSettings(mn_FarPID_PluginDetected);
 
 
-	} else if (pIn->hdr.nCmd == CECMD_SETFOREGROUND) {
+	}
+	else if (pIn->hdr.nCmd == CECMD_SETFOREGROUND)
+	{
 		AllowSetForegroundWindow(pIn->hdr.nSrcPID);
 		apiSetForegroundWindow((HWND)pIn->qwData[0]);
 
-	} else if (pIn->hdr.nCmd == CECMD_FLASHWINDOW) {
+	}
+	else if (pIn->hdr.nCmd == CECMD_FLASHWINDOW)
+	{
 		UINT nFlash = RegisterWindowMessage(CONEMUMSG_FLASHWINDOW);
 		WPARAM wParam = 0;
 		if (pIn->Flash.bSimple) {
@@ -4252,7 +4269,9 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 		}
 		PostMessage(ghWnd, nFlash, wParam, (LPARAM)pIn->Flash.hWnd.u);
 
-	} else if (pIn->hdr.nCmd == CECMD_REGPANELVIEW) {
+	}
+	else if (pIn->hdr.nCmd == CECMD_REGPANELVIEW)
+	{
 		CESERVER_REQ Out;
 		ExecutePrepareCmd(&Out, pIn->hdr.nCmd, sizeof(CESERVER_REQ_HDR)+sizeof(pIn->PVI));
 		Out.PVI = pIn->PVI;
@@ -4272,6 +4291,12 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
             &cbWritten,   // number of bytes written 
             NULL);        // not overlapped I/O 
 	
+	}
+	else if (pIn->hdr.nCmd == CECMD_SETBACKGROUND)
+	{
+		mp_VCon->SetBackgroundImageData(pIn->bEnabled ? (&pIn->Background) : NULL);
+		if (isVisible())
+			mp_VCon->Update(true/*bForce*/);
 	}
 
     // Освободить память
@@ -8434,6 +8459,8 @@ short CRealConsole::CheckProgressInConsole(const wchar_t* pszCurLine)
     //"012% ########.................................................................."
     //ChkDsk
     //"Completed: 25%"
+    //Rar
+    // ...       Vista x86\Vista x86.7z         6%
 	
 	int nIdx = 0;
 	bool bAllowDot = false;
@@ -8441,11 +8468,14 @@ short CRealConsole::CheckProgressInConsole(const wchar_t* pszCurLine)
 	
 	TODO("Хорошо бы и русские названия обрабатывать?");
 	
+	// Сначала проверим, может цифры идут в начале строки?
 	if (pszCurLine[nIdx] == L' ' && isDigit(pszCurLine[nIdx+1]))
-		nIdx++;
+		nIdx++; // один лидирующий пробел перед цифрой
 	else if (pszCurLine[nIdx] == L' ' && pszCurLine[nIdx+1] == L' ' && isDigit(pszCurLine[nIdx+2]))
-		nIdx += 2;
-	else if (!isDigit(pszCurLine[nIdx])) {
+		nIdx += 2; // два лидирующих пробела перед цифрой
+	else if (!isDigit(pszCurLine[nIdx]))
+	{
+		// Строка начинается НЕ с цифры. Может начинается одним из известных префиксов (ChkDsk)?
 		static int nRusLen = 0;
 		static wchar_t szComplRus[32] = {0};
 		if (!szComplRus[0]) {
@@ -8466,25 +8496,41 @@ short CRealConsole::CheckProgressInConsole(const wchar_t* pszCurLine)
 			bAllowDot = true;
 		}
 
-		if (!nIdx) {
+		// Известных префиксов не найдено, проверяем, может процент есть в конце строки?
+		if (!nIdx)
+		{
+			//TODO("Не работает с одной цифрой");
+			// Creating archive T:\From_Work\VMWare\VMWare.part006.rar                                                       
+			// ...       Vista x86\Vista x86.7z         6%
+			
 			int i = con.nTextWidth - 1;
+			// Откусить trailing spaces
 			while (i>3 && pszCurLine[i] == L' ')
 				i--;
-			if (pszCurLine[i] == L'%' && isDigit(pszCurLine[i-1])) {
-				i -= 2;
+			// Теперь, если дошли до '%' и перед ним - цифра
+			if (i >= 3 && pszCurLine[i] == L'%' && isDigit(pszCurLine[i-1]))
+			{
+				//i -= 2;
+				i--;
+				// Две цифры перед '%'?
 				if (isDigit(pszCurLine[i-1]))
 					i--;
-				if (pszCurLine[i-1] == L'1' && !isDigit(pszCurLine[i-2])) {
+				// Три цифры допускается только для '100%'
+				if (pszCurLine[i-1] == L'1' && !isDigit(pszCurLine[i-2]))
+				{
 					nIdx = i - 1;
-				} else
-				if (!isDigit(pszCurLine[i-1]))
+				}
+				// final check
+				else if (!isDigit(pszCurLine[i-1]))
 				{
 					nIdx = i;
                 }
 				// Может ошибочно детектировать прогресс, если его ввести в строке запуска при погашенных панелях
 				// Если в строке есть символ '>' - не прогресс
-                while (i>=0) {
-                	if (pszCurLine[i] == L'>') {
+                while (i>=0)
+                {
+                	if (pszCurLine[i] == L'>')
+                	{
                 		nIdx = 0;
                 		break;
                 	}
@@ -8516,7 +8562,8 @@ short CRealConsole::CheckProgressInConsole(const wchar_t* pszCurLine)
 		}
 	}
 	
-	if (nProgress != -1) {
+	if (nProgress != -1)
+	{
 		mn_LastConsoleProgress = nProgress;
 		mn_LastConProgrTick = GetTickCount();
 	}
@@ -8541,30 +8588,35 @@ short CRealConsole::CheckProgressInTitle()
 		i++;
 
     //if (Title[0] == L'{' || Title[0] == L'(' || Title[0] == L'[') {
-	if (Title[i]) {
+	if (Title[i])
+	{
     	
 		// Некоторые плагины/программы форматируют проценты по двум пробелам
-    	if (Title[i] == L' ') {
+    	if (Title[i] == L' ')
+    	{
     		i++;
     		if (Title[i] == L' ')
     			i++;
     	}
     	
 		// Теперь, если цифра - считываем проценты
-        if (isDigit(Title[i])) {
+        if (isDigit(Title[i]))
+        {
             if (isDigit(Title[i+1]) && isDigit(Title[i+2]) 
                 && (Title[i+3] == L'%' || (Title[i+3] == L'.' && isDigit(Title[i+4]) && Title[i+7] == L'%'))
                 )
             {
                 // По идее больше 100% быть не должно :)
                 nNewProgress = 100*(Title[i] - L'0') + 10*(Title[i+1] - L'0') + (Title[i+2] - L'0');
-            } else if (isDigit(Title[i+1]) 
+            }
+            else if (isDigit(Title[i+1]) 
                 && (Title[i+2] == L'%' || (Title[i+2] == L'.' && isDigit(Title[i+3]) && Title[i+4] == L'%') )
                 )
             {
                 // 10 .. 99 %
                 nNewProgress = 10*(Title[i] - L'0') + (Title[i+1] - L'0');
-            } else if (Title[i+1] == L'%' || (Title[i+1] == L'.' && isDigit(Title[i+2]) && Title[i+3] == L'%'))
+            }
+            else if (Title[i+1] == L'%' || (Title[i+1] == L'.' && isDigit(Title[i+2]) && Title[i+3] == L'%'))
             {
                 // 0 .. 9 %
                 nNewProgress = (Title[i] - L'0');
@@ -8596,9 +8648,11 @@ void CRealConsole::OnTitleChanged()
 
 	TitleFull[0] = 0;
 	nNewProgress = CheckProgressInTitle();
-	if (nNewProgress == -1) {
+	if (nNewProgress == -1)
+	{
 		// mn_ConsoleProgress обновляется в FindPanels, должен быть уже вызван
-		if (mn_ConsoleProgress != -1) {
+		if (mn_ConsoleProgress != -1)
+		{
     		// Обработка прогресса NeroCMD и пр. консольных программ
 			// Если курсор находится в видимой области
     		nNewProgress = mn_ConsoleProgress;
@@ -8608,7 +8662,8 @@ void CRealConsole::OnTitleChanged()
 			wchar_t szPercents[5];
 			_ltow(nNewProgress, szPercents, 10);
 			lstrcatW(szPercents, L"%");
-			if (!wcsstr(TitleCmp, szPercents)) {
+			if (!wcsstr(TitleCmp, szPercents))
+			{
 				TitleFull[0] = L'{';
 				_ltow(nNewProgress, TitleFull+1, 10);
 				lstrcatW(TitleFull, L"%} ");
@@ -8622,7 +8677,8 @@ void CRealConsole::OnTitleChanged()
 		mn_PreWarningProgress = nNewProgress;
 	//SetProgress(nNewProgress);
 
-	if (isAdministrator() && (gSet.bAdminShield || gSet.szAdminTitleSuffix)) {
+	if (isAdministrator() && (gSet.bAdminShield || gSet.szAdminTitleSuffix))
+	{
 		if (!gSet.bAdminShield)
     		wcscat(TitleFull, gSet.szAdminTitleSuffix);
 	}
@@ -8638,11 +8694,14 @@ void CRealConsole::OnTitleChanged()
 	// заменил на GetProgress, т.к. он еще учитывает mn_PreWarningProgress
 	nNewProgress = GetProgress(NULL);
 
-    if (gConEmu.isActive(mp_VCon) && wcscmp(TitleFull, gConEmu.GetLastTitle(false))) {
+    if (gConEmu.isActive(mp_VCon) && wcscmp(TitleFull, gConEmu.GetLastTitle(false)))
+    {
         // Для активной консоли - обновляем заголовок. Прогресс обновится там же
 		mn_LastShownProgress = nNewProgress;
 		gConEmu.UpdateTitle(/*TitleFull*/); //100624 - сам перечитает // 20.09.2009 Maks - было TitleCmd
-    } else if (mn_LastShownProgress != nNewProgress) {
+    }
+    else if (mn_LastShownProgress != nNewProgress)
+    {
         // Для НЕ активной консоли - уведомить главное окно, что у нас сменились проценты
 		mn_LastShownProgress = nNewProgress;
         gConEmu.UpdateProgress();

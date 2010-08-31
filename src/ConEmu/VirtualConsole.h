@@ -37,6 +37,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define MAX_COUNT_PART_BRUSHES 16*16*4
 #define MAX_SPACES 0x400
 
+class CBackground;
+
 class CVirtualConsole
 {
 private:
@@ -176,12 +178,24 @@ private:
 	void CharAttrFromConAttr(WORD conAttr, CharAttr* pAttr);
 public:
 	const PanelViewInit* GetPanelView(BOOL abLeftPanel);
+
+public:
+	// Плагин к фару может установить свою "картинку" для панелей (например, нарисовать в фоне букву диска)
+	CBackground* GetBackgroundImage(); // Создает (или возвращает уже созданный) CBackground для mp_BkImgData
+	void FreeBackgroundImage(); // Освободить (если создан) HBITMAP для mp_BkImgData
+	void SetBackgroundImageData(const BITMAPFILEHEADER* apImgData); // функция создает копию apImgData в mp_BkImgData
+	bool HasBackgroundImage();
+protected:
+	BITMAPFILEHEADER* mp_BkImgData; // followed by image data
+	BOOL mb_BkImgChanged; // Данные в mp_BkImgData были изменены плагином, требуется отрисовка
+	CBackground* mp_BkImage;
+	MSection csBkImgData;
 	
 public:
 	bool isEditor, isViewer, isFilePanel, isFade, isForeground;
 	BYTE attrBackLast;
 	COLORREF *mp_Colors;
-
+	
 	//TCHAR *Spaces; WORD nSpaceCount;
 	static wchar_t ms_Spaces[MAX_SPACES], ms_HorzDbl[MAX_SPACES], ms_HorzSingl[MAX_SPACES];
 	// Для ускорения получения индексов цвета

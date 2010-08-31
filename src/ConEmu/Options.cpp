@@ -40,6 +40,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "VirtualConsole.h"
 #include "RealConsole.h"
 #include "TabBar.h"
+#include "Background.h"
 
 
 #define DEBUGSTRFONT(s) DEBUGSTR(s)
@@ -183,7 +184,7 @@ CSettings::CSettings()
     memset(mn_FPS, 0, sizeof(mn_FPS)); mn_FPS_CUR_FRAME = 0;
     memset(mn_RFPS, 0, sizeof(mn_RFPS)); mn_RFPS_CUR_FRAME = 0;
     memset(mn_CounterTick, 0, sizeof(*mn_CounterTick)*(tPerfInterval-gbPerformance));
-    hBgBitmap = NULL; bgBmp = MakeCoord(0,0); hBgDc = NULL;
+    hBgBitmap = NULL; bgBmp = MakeCoord(0,0); hBgDc = NULL; isBackgroundImageValid = false;
     ZeroStruct(mh_Font);
 	mh_Font2 = NULL;
 	ZeroStruct(tm);
@@ -342,6 +343,7 @@ void CSettings::InitSettings()
     _tcscpy(sBgImage, L"c:\\back.bmp");
 	bgImageDarker = 0x46;
 	nBgImageColors = 1|2;
+	bgOperation = eUpLeft;
 
 	nTransparent = 255;
 	//isColorKey = false;
@@ -663,6 +665,8 @@ void CSettings::LoadSettings()
 		reg->Load(L"bgImageDarker", bgImageDarker);
 		reg->Load(L"bgImageColors", nBgImageColors);
 			if (!nBgImageColors) nBgImageColors = 1|2;
+		reg->Load(L"bgOperation", bgOperation);
+			if (bgOperation!=eUpLeft && bgOperation!=eStretch && bgOperation!=eTile) bgOperation = 0;
 
 		reg->Load(L"AlphaValue", nTransparent);
 			if (nTransparent < MIN_ALPHA_VALUE) nTransparent = MIN_ALPHA_VALUE;
@@ -1067,6 +1071,7 @@ BOOL CSettings::SaveSettings()
             reg->Save(L"BackGround Image", sBgImage);
             reg->Save(L"bgImageDarker", bgImageDarker);
 			reg->Save(L"bgImageColors", nBgImageColors);
+			reg->Save(L"bgOperation", bgOperation);
 
 			reg->Save(L"AlphaValue", nTransparent);
 			//reg->Save(L"UseColorKey", isColorKey);
@@ -1592,15 +1597,22 @@ LRESULT CSettings::OnInitDialog_Main()
 
 	SendDlgItemMessage(hMain, slDarker, TBM_SETRANGE, (WPARAM) true, (LPARAM) MAKELONG(0, 255));
 	SendDlgItemMessage(hMain, slDarker, TBM_SETPOS  , (WPARAM) true, (LPARAM) bgImageDarker);
+	
+	CheckDlgButton(hMain, rBgUpLeft+(UINT)bgOperation, BST_CHECKED);
 
 	if (isShowBgImage)
+	{
 		CheckDlgButton(hMain, cbBgImage, (isShowBgImage == 1) ? BST_CHECKED : BST_INDETERMINATE);
+	}
 	else
 	{
 		EnableWindow(GetDlgItem(hMain, tBgImage), false);
 		EnableWindow(GetDlgItem(hMain, tDarker), false);
 		EnableWindow(GetDlgItem(hMain, slDarker), false);
 		EnableWindow(GetDlgItem(hMain, bBgImage), false);
+		EnableWindow(GetDlgItem(hMain, rBgUpLeft), false);
+		EnableWindow(GetDlgItem(hMain, rBgStretch), false);
+		EnableWindow(GetDlgItem(hMain, rBgTile), false);
 	}
 
 	switch(LogFont.lfQuality)
@@ -2173,35 +2185,51 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
 
     case cbBgImage:
 		{
-        isShowBgImage = IsChecked(hMain, cbBgImage);
-        EnableWindow(GetDlgItem(hMain, tBgImage), isShowBgImage);
-        EnableWindow(GetDlgItem(hMain, tDarker), isShowBgImage);
-        EnableWindow(GetDlgItem(hMain, slDarker), isShowBgImage);
-        EnableWindow(GetDlgItem(hMain, bBgImage), isShowBgImage);
+	        isShowBgImage = IsChecked(hMain, cbBgImage);
+	        EnableWindow(GetDlgItem(hMain, tBgImage), isShowBgImage);
+	        EnableWindow(GetDlgItem(hMain, tDarker), isShowBgImage);
+	        EnableWindow(GetDlgItem(hMain, slDarker), isShowBgImage);
+	        EnableWindow(GetDlgItem(hMain, bBgImage), isShowBgImage);
+			EnableWindow(GetDlgItem(hMain, rBgUpLeft), isShowBgImage);
+			EnableWindow(GetDlgItem(hMain, rBgStretch), isShowBgImage);
+			EnableWindow(GetDlgItem(hMain, rBgTile), isShowBgImage);
 
-		BOOL lbNeedLoad = (hBgBitmap == NULL);
-		if (isShowBgImage && bgImageDarker == 0) {
-			if (MessageBox(ghOpWnd, 
-				    L"Background image will NOT be visible\n"
-					L"while 'Darkening' is 0. Increase it?",
-					L"ConEmu", MB_YESNO|MB_ICONEXCLAMATION)!=IDNO)
-			{
-				bgImageDarker = 0x46;
-				SendDlgItemMessage(hMain, slDarker, TBM_SETPOS  , (WPARAM) true, (LPARAM) bgImageDarker);
-				TCHAR tmp[10];
-				wsprintf(tmp, L"%i", gSet.bgImageDarker);
-				SetDlgItemText(hMain, tDarker, tmp);
-				lbNeedLoad = TRUE;
+			BOOL lbNeedLoad = (hBgBitmap == NULL);
+			if (isShowBgImage && bgImageDarker == 0) {
+				if (MessageBox(ghOpWnd, 
+					    L"Background image will NOT be visible\n"
+						L"while 'Darkening' is 0. Increase it?",
+						L"ConEmu", MB_YESNO|MB_ICONEXCLAMATION)!=IDNO)
+				{
+					bgImageDarker = 0x46;
+					SendDlgItemMessage(hMain, slDarker, TBM_SETPOS  , (WPARAM) true, (LPARAM) bgImageDarker);
+					TCHAR tmp[10];
+					wsprintf(tmp, L"%i", gSet.bgImageDarker);
+					SetDlgItemText(hMain, tDarker, tmp);
+					lbNeedLoad = TRUE;
+				}
 			}
-		}
-		if (lbNeedLoad) {
-			gSet.LoadImageFrom(gSet.sBgImage);
-		}
+			if (lbNeedLoad)
+			{
+				gSet.LoadImageFrom(gSet.sBgImage);
+			}
 
-        gConEmu.Update(true);
+	        gConEmu.Update(true);
 		}
         break;
 
+	case rBgUpLeft:
+	case rBgStretch:
+	case rBgTile:
+		{
+			bgOperation = (char)(CB - rBgUpLeft);
+			
+			WARNING("Recreate background!");
+			
+			gConEmu.Update(true);
+		}
+		break;
+        
     case cbRClick:
 		isRClickSendKey = IsChecked(hExt, cbRClick); //0-1-2
         break;
@@ -4564,7 +4592,7 @@ HFONT CSettings::CreateOtherFont(const wchar_t* asFontName)
 
 HFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 {
-    ResetFontWidth();
+    //ResetFontWidth(); -- перенесено вниз, после того, как убедимся в валидности шрифта
 
 	//lfOutPrecision = OUT_RASTER_PRECIS, 
 
@@ -4613,29 +4641,52 @@ HFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 	hFont = CreateFontIndirect(&tmpFont);
 
 	wchar_t szFontFace[32];
-	HDC hScreenDC = GetDC(0);
+	// лучше для ghWnd, может разные мониторы имеют разные параметры...
+	HDC hScreenDC = GetDC(ghWnd); // GetDC(0);
 	HDC hDC = CreateCompatibleDC(hScreenDC);
-	ReleaseDC(0, hScreenDC);
+	ReleaseDC(ghWnd, hScreenDC);
 	hScreenDC = NULL;
 	MBoxAssert(hDC);
 
     if (hFont) {
+		DWORD dwFontErr = 0;
+		SetLastError(0);
         HFONT hOldF = (HFONT)SelectObject(hDC, hFont);
+		dwFontErr = GetLastError();
         // Для пропорциональных шрифтов имеет смысл сохранять в реестре оптимальный lfWidth (это FontSizeX3)
         ZeroStruct(tm);
+		BOOL lbTM = GetTextMetrics(hDC, tm);
+		if (!lbTM && !bRasterFont)
+		{
+			// Считаем, что шрифт НЕ валиден!!!
+			dwFontErr = GetLastError();
+			SelectObject(hDC, hOldF);
+			DeleteDC(hDC);
+			wsprintf(gSet.szFontError, L"GetTextMetrics failed for non Raster font '%s'", inFont->lfFaceName);
+			if (dwFontErr) wsprintf(gSet.szFontError+lstrlen(gSet.szFontError), L"\r\nErrorCode = 0x%08X", dwFontErr);
+			return NULL;
+		}
+
+		// Теперь - можно и reset сделать
+		ResetFontWidth();
+
 		for (int i=0; i<MAX_FONT_STYLES; i++) {
 			if (otm[i]) {free(otm[i]); otm[i] = NULL;}
 		}
 
-        BOOL lbTM = GetTextMetrics(hDC, tm);
-		_ASSERTE(lbTM);
+		if (!lbTM)
+		{
+			_ASSERTE(lbTM);
+		}
 		if (bRasterFont) {
 			tm->tmHeight = nRastHeight;
 			tm->tmAveCharWidth = tm->tmMaxCharWidth = nRastWidth;
 		}
-		lpOutl = LoadOutline(hDC, hFont);
+		lpOutl = LoadOutline(hDC, NULL/*hFont*/); // шрифт УЖЕ выбран в DC
 		if (lpOutl) {
 			otm[0] = lpOutl; lpOutl = NULL;
+		} else {
+			dwFontErr = GetLastError();
 		}
 		
 		if (GetTextFace(hDC, 32, szFontFace)) {
@@ -4732,7 +4783,7 @@ HFONT CSettings::CreateFontIndirectMy(LOGFONT *inFont)
 			mh_Font[s] = CreateFontIndirect(&tmpFont);
 			SelectObject(hDC, mh_Font[s]);
 			lbTM = GetTextMetrics(hDC, tm+s);
-			_ASSERTE(lbTM);
+			//_ASSERTE(lbTM);
 			lpOutl = LoadOutline(hDC, mh_Font[s]);
 			if (lpOutl) {
 				if (otm[s]) free(otm[s]);
@@ -4804,14 +4855,19 @@ LPOUTLINETEXTMETRIC CSettings::LoadOutline(HDC hDC, HFONT hFont)
 {
 	BOOL lbSelfDC = FALSE;
 
-	if (!hDC) {
+	if (!hDC)
+	{
 		HDC hScreenDC = GetDC(0);
 		hDC = CreateCompatibleDC(hScreenDC);
 		lbSelfDC = TRUE;
 		ReleaseDC(0, hScreenDC);
 	}
 
-	HFONT hOldF = (HFONT)SelectObject(hDC, hFont);
+	HFONT hOldF = NULL;
+	if (hFont)
+	{
+		hOldF = (HFONT)SelectObject(hDC, hFont);
+	}
 
 	LPOUTLINETEXTMETRIC pOut = NULL;
 	UINT nSize = GetOutlineTextMetrics(hDC, 0, NULL);
@@ -4830,8 +4886,12 @@ LPOUTLINETEXTMETRIC CSettings::LoadOutline(HDC hDC, HFONT hFont)
 		}
 	}
 
-	SelectObject(hDC, hOldF);
-	if (lbSelfDC) {
+	if (hFont)
+	{
+		SelectObject(hDC, hOldF);
+	}
+	if (lbSelfDC)
+	{
 		DeleteDC(hDC);
 	}
 
@@ -4970,7 +5030,7 @@ LPCTSTR CSettings::GetCmd()
 LONG CSettings::FontWidth()
 {
 	if (!LogFont.lfWidth) {
-		MBoxAssert(LogFont.lfWidth!=0);
+		_ASSERTE(LogFont.lfWidth!=0);
 		return 8;
 	}
 	_ASSERTE(mn_FontWidth==LogFont.lfWidth);
@@ -4980,7 +5040,7 @@ LONG CSettings::FontWidth()
 LONG CSettings::FontHeight()
 {
 	if (!LogFont.lfHeight) {
-		MBoxAssert(LogFont.lfHeight!=0);
+		_ASSERTE(LogFont.lfHeight!=0);
 		return 12;
 	}
 	_ASSERTE(mn_FontHeight==LogFont.lfHeight);
@@ -5798,7 +5858,7 @@ void CSettings::OnPanelViewAppeared(BOOL abAppear)
 }
 
 // Должна вернуть true, если файл изменился
-bool CSettings::PrepareBackground(HDC* phBgDc, COORD* pbgBmp)
+bool CSettings::PrepareBackground(HDC* phBgDc, COORD* pbgBmpSize)
 {
 /*
     HBITMAP  hBgBitmap;
@@ -5812,12 +5872,32 @@ bool CSettings::PrepareBackground(HDC* phBgDc, COORD* pbgBmp)
 	DWORD nBgImageColors;
 */
 	*phBgDc = hBgDc;
-	*pbgBmp = bgBmp;
+	*pbgBmpSize = bgBmp;
 	return false;
 }
 
+bool CSettings::IsBackgroundEnabled(CVirtualConsole* apVCon)
+{
+	// Если плагин фара установил свой фон
+	if (apVCon && apVCon->HasBackgroundImage())
+		return true;
+
+	// Иначе - по настрокам ConEmu
+	if (!isBackgroundImageValid)
+		return false;
+
+	if (apVCon && (apVCon->isEditor || apVCon->isViewer))
+	{
+		return (gSet.isShowBgImage == 1);
+	}
+	else
+	{
+		return (gSet.isShowBgImage != 0);
+	}
+}
+
 TODO("LoadImage может загрузить и jpg, а ручное преобразование лучше заменить на AlphaBlend");
-bool CSettings::LoadImageFrom(TCHAR *inPath, bool abShowErrors)
+bool CSettings::/*LoadImageFrom*/LoadBackgroundFile(TCHAR *inPath, bool abShowErrors)
 {
     if (!inPath || _tcslen(inPath)>=MAX_PATH) {
         if (abShowErrors)
@@ -5847,6 +5927,9 @@ bool CSettings::LoadImageFrom(TCHAR *inPath, bool abShowErrors)
         if (pBuf[0] == 'B' && pBuf[1] == 'M' && *(u32*)(pBuf + 0x0A) >= 0x36 && *(u32*)(pBuf + 0x0A) <= 0x436 && *(u32*)(pBuf + 0x0E) == 0x28 && !pBuf[0x1D] && !*(u32*)(pBuf + 0x1E))
             //if (*(u16*)pBuf == 'MB' && *(u32*)(pBuf + 0x0A) >= 0x36)
         {
+        	
+        	PRAGMA_ERROR("Перенести код в CSettings::CreateBackgroundImage и переделать на AlphaBlend");
+        	
             const HDC hScreenDC = GetDC(0);
             HDC hNewBgDc = CreateCompatibleDC(hScreenDC);
             HBITMAP hNewBgBitmap;
@@ -5934,6 +6017,11 @@ bool CSettings::LoadImageFrom(TCHAR *inPath, bool abShowErrors)
     }
 
     return lRes;
+}
+
+CBackground* CSettings::CreateBackgroundImage(const BITMAPFILEHEADER* apBkImgData)
+{
+	PRAGMA_ERROR("Доделать CSettings::CreateBackgroundImage");
 }
 
 // общая функция

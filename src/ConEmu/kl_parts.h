@@ -44,36 +44,36 @@ template <class T>__forceinline const T& klMax(const T &a, const T &b) {return a
 //#define klInit()
 
 
-struct klFile
-	// define KL_File_no_init to skip generation of constructors and destructors
-{
-	HANDLE hHandle;
-	u32 iCount;
-	//i64 lSize;
-	ULARGE_INTEGER lSize;
-	TCHAR Name[MAX_PATH];
-
-	void Close() {if (hHandle != INVALID_HANDLE_VALUE) {CloseHandle(hHandle); hHandle = INVALID_HANDLE_VALUE;}}
-	bool Open(const void *pName = NULL, u32 Access = GENERIC_READ, u32 CreationDisposition = OPEN_EXISTING, u32 ShareMode = FILE_SHARE_READ | FILE_SHARE_WRITE, u32 FlagsAndAttributes = FILE_ATTRIBUTE_NORMAL)
-	{
-		if (pName == NULL)
-			pName = Name;
-		hHandle = CreateFile((LPCTSTR)pName, Access, ShareMode, NULL, CreationDisposition, FlagsAndAttributes, NULL);
-		if (hHandle != INVALID_HANDLE_VALUE)
-		{
-			if (pName != Name)
-				klstrncpy(Name, pName, MAX_PATH);
-			lSize.LowPart = ::GetFileSize(hHandle, &lSize.HighPart);
-			if (lSize.LowPart == INVALID_FILE_SIZE && GetLastError() != NO_ERROR)
-				lSize.QuadPart = 0;
-			return true;
-		}
-		else
-			return false;
-	}
-	bool Read(void *buffer, u32 lSize) {return ReadFile(hHandle, buffer, lSize, &iCount, NULL) != 0 ? iCount == lSize : false;}
-	bool Write(const void *buffer, u32 lSize) {return WriteFile(hHandle, buffer, lSize, &iCount, NULL) != 0;}
-};
+//struct klFile
+//	// define KL_File_no_init to skip generation of constructors and destructors
+//{
+//	HANDLE hHandle;
+//	u32 iCount;
+//	//i64 lSize;
+//	ULARGE_INTEGER lSize;
+//	TCHAR Name[MAX_PATH];
+//
+//	void Close() {if (hHandle != INVALID_HANDLE_VALUE) {CloseHandle(hHandle); hHandle = INVALID_HANDLE_VALUE;}}
+//	bool Open(const void *pName = NULL, u32 Access = GENERIC_READ, u32 CreationDisposition = OPEN_EXISTING, u32 ShareMode = FILE_SHARE_READ | FILE_SHARE_WRITE, u32 FlagsAndAttributes = FILE_ATTRIBUTE_NORMAL)
+//	{
+//		if (pName == NULL)
+//			pName = Name;
+//		hHandle = CreateFile((LPCTSTR)pName, Access, ShareMode, NULL, CreationDisposition, FlagsAndAttributes, NULL);
+//		if (hHandle != INVALID_HANDLE_VALUE)
+//		{
+//			if (pName != Name)
+//				klstrncpy(Name, pName, MAX_PATH);
+//			lSize.LowPart = ::GetFileSize(hHandle, &lSize.HighPart);
+//			if (lSize.LowPart == INVALID_FILE_SIZE && GetLastError() != NO_ERROR)
+//				lSize.QuadPart = 0;
+//			return true;
+//		}
+//		else
+//			return false;
+//	}
+//	bool Read(void *buffer, u32 lSize) {return ReadFile(hHandle, buffer, lSize, &iCount, NULL) != 0 ? iCount == lSize : false;}
+//	bool Write(const void *buffer, u32 lSize) {return WriteFile(hHandle, buffer, lSize, &iCount, NULL) != 0;}
+//};
 
 
 

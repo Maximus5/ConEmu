@@ -75,9 +75,9 @@
 #define cbEnhanceGraphics               1055
 #define tFontSizeX3                     1056
 #define bBgImage                        1057
-#define rBgStretch                      1058
-#define rBgTile                         1059
-#define rBgSimple                       1060
+#define rBgUpLeft                       1058
+#define rBgStretch                      1059
+#define rBgTile                         1060
 #define tWndX                           1061
 #define tWndY                           1062
 #define cbPosFixed                      1064

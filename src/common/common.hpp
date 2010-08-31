@@ -244,9 +244,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define CECMD_ONACTIVATION  31 // Для установки флажка ConsoleInfo->bConsoleActive
 #define CECMD_SETWINDOWPOS  32 // CESERVER_REQ_SETWINDOWPOS.
 #define CECMD_SETWINDOWRGN  33 // CESERVER_REQ_SETWINDOWRGN.
+#define CECMD_SETBACKGROUND 34 // CESERVER_REQ_SETBACKGROUND
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    46
+#define CESERVER_REQ_VER    47
 
 #define PIPEBUFSIZE 4096
 #define DATAPIPEBUFSIZE 40000
@@ -768,6 +769,16 @@ typedef struct tag_CESERVER_REQ_SETWINDOWRGN {
 	RECT  rcRects[20]; // [0] - основной окна, [
 } CESERVER_REQ_SETWINDOWRGN;
 
+// Warning! Structure has variable length. "bmp" field must be followed by bitmap data (same as in *.bmp files)
+typedef struct tag_CESERVER_REQ_SETBACKGROUND {
+	int               nType;    // Reserved. Must be 1
+	BOOL              bEnabled; // TRUE - ConEmu use this image, FALSE - ConEmu use self background settings
+	int               nReserved1; // reserved for alpha
+	DWORD             nReserved2; // reserved for replaced colors
+	int               nReserved3; // reserved for background op
+	BITMAPFILEHEADER  bmp;
+} CESERVER_REQ_SETBACKGROUND;
+
 typedef struct tag_CESERVER_REQ {
     CESERVER_REQ_HDR hdr;
 	union {
@@ -790,6 +801,7 @@ typedef struct tag_CESERVER_REQ {
 		CESERVER_REQ_SETCONCP SetConCP;
 		CESERVER_REQ_SETWINDOWPOS SetWndPos;
 		CESERVER_REQ_SETWINDOWRGN SetWndRgn;
+		CESERVER_REQ_SETBACKGROUND Background;
 		PanelViewInit PVI;
 	};
 } CESERVER_REQ;
