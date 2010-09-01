@@ -141,7 +141,7 @@ CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
 	mb_LastFadeFlag = false;
 	mn_LastBitsPixel = 0;
 	
-	mp_BkImgData = NULL; mb_BkImgChanged = FALSE;
+	mp_BkImgData = NULL; mb_BkImgChanged = FALSE; mb_BkImgExist = FALSE; mn_BkImgWidth = mn_BkImgHeight = 0;
 
 	_ASSERTE(sizeof(mh_FontByIndex) == (sizeof(gSet.mh_Font)+sizeof(mh_FontByIndex[0])));
 	memmove(mh_FontByIndex, gSet.mh_Font, MAX_FONT_STYLES*sizeof(mh_FontByIndex[0]));
@@ -3957,11 +3957,14 @@ void CVirtualConsole::CharAttrFromConAttr(WORD conAttr, CharAttr* pAttr)
 bool CVirtualConsole::PutBackgroundImage(CBackground* pBack, LONG X, LONG Y, LONG Width, LONG Height)
 {
 	if (!this) return NULL;
-	if (!mp_BkImgData || !mb_BkImgChanged)
+	if (!mb_BkImgExist)
 		return false;
 
 	MSectionLock SBK; SBK.Lock(&csBkImgData);
 
+	if (!mp_BkImgData)
+		return false;
+	
 	bool lbRc = pBack->FillBackground(mp_BkImgData, X, Y, Width, Height, eUpLeft);
 
 	mb_BkImgChanged = FALSE;
@@ -3989,6 +3992,8 @@ void CVirtualConsole::SetBackgroundImageData(const BITMAPFILEHEADER* apImgData)
 	{
 		free(mp_BkImgData); mp_BkImgData = NULL;
 		mb_BkImgChanged = TRUE;
+		mb_BkImgExist = FALSE;
+		mn_BkImgWidth = mn_BkImgHeight = 0;
 	}
 	
 	if (apImgData && apImgData->bfType == 0x4D42/*BM*/ && apImgData->bfSize)
@@ -4005,25 +4010,42 @@ void CVirtualConsole::SetBackgroundImageData(const BITMAPFILEHEADER* apImgData)
 			mp_BkImgData = (BITMAPFILEHEADER*)malloc(apImgData->bfSize);
 			memmove(mp_BkImgData, apImgData, apImgData->bfSize);
 			mb_BkImgChanged = TRUE;
+			mb_BkImgExist = TRUE;
+			BITMAPINFOHEADER* pBmp = (BITMAPINFOHEADER*)(mp_BkImgData+1);
+			mn_BkImgWidth = pBmp->biWidth;
+			mn_BkImgHeight = pBmp->biHeight;
 			gSet.NeedBackgroundUpdate();
 		}
 	}
 
-	if (gConEmu.isVisible(this))
+	if (gConEmu.isVisible(this) && gSet.isBgPluginAllowed)
+	{
 		Update(true/*bForce*/);
+	}
 }
 
 bool CVirtualConsole::HasBackgroundImage(LONG* pnBgWidth, LONG* pnBgHeight)
 {
-	if (!this) return FALSE;
-	MSectionLock SBK; SBK.Lock(&csBkImgData);
-	if (mp_BkImgData)
-	{
-		BITMAPINFOHEADER* pBmp = (BITMAPINFOHEADER*)(mp_BkImgData+1);
-		if (pnBgWidth)
-			*pnBgWidth = pBmp->biWidth;
-		if (pnBgHeight)
-			*pnBgHeight = pBmp->biHeight;
-	}
-	return mp_BkImgData;
+	if (!this) return false;
+	if (!mb_BkImgExist) return false;
+	
+	// ¬озвращаем mn_BkImgXXX чтобы не беспокоитьс€ об указателе mp_BkImgData
+	
+	if (pnBgWidth)
+		*pnBgWidth = mn_BkImgWidth;
+	if (pnBgHeight)
+		*pnBgHeight = mn_BkImgHeight;
+	
+	return (mn_BkImgWidth != 0 && mn_BkImgHeight != 0);
+	
+	//MSectionLock SBK; SBK.Lock(&csBkImgData);
+	//if (mp_BkImgData)
+	//{
+	//	BITMAPINFOHEADER* pBmp = (BITMAPINFOHEADER*)(mp_BkImgData+1);
+	//	if (pnBgWidth)
+	//		*pnBgWidth = pBmp->biWidth;
+	//	if (pnBgHeight)
+	//		*pnBgHeight = pBmp->biHeight;
+	//}
+	//return mp_BkImgData;
 }

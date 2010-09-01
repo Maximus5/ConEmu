@@ -91,9 +91,10 @@ enum ConEmuMargins {
 enum ConEmuRect {
 	CER_MAIN = 0,   // ѕолный размер окна
 	// ƒалее все координаты считаютс€ относительно клиенсткой области {0,0}
-	CER_MAINCLIENT, // клиентска€ область главного окна
+	CER_MAINCLIENT, // клиентска€ область главного окна (Ѕ≈« отрезани€ табом, прокруток, DoubleView и прочего. ÷еликом)
 	CER_TAB,        // положение контрола с закладками (всего)
 	CER_BACK,       // положение окна с фоном
+	CER_WORKSPACE,  // пока - то же что и CER_BACK, но при DoubleView CER_MAINCLIENT может быть меньше
 	CER_DC,         // положение окна отрисовки
 	CER_CONSOLE,    // !!! _ размер в символах _ !!!
 	CER_CONSOLE_NTVDMOFF, // same as CER_CONSOLE, но во врем€ отключени€ режима 16бит

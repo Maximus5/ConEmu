@@ -968,6 +968,7 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
         case CER_DC:
             {   // Размер окна отрисовки в пикселах!
                 //MBoxAssert(!(rFrom.left || rFrom.top));
+				TODO("DoubleView");
                 
                 switch (tWhat)
                 {
@@ -994,6 +995,9 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
                         rcShift = CalcMargins(tTabAction);
                         AddMargins(rc, rcShift, TRUE/*abExpand*/);
                     } break;
+					case CER_WORKSPACE:
+					{
+					} break;
                     case CER_BACK:
                     {
                         //rcShift = CalcMargins(CEM_BACK);
@@ -1031,7 +1035,8 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 
     RECT rcAddShift = MakeRect(0,0);
         
-    if (prDC) {
+    if (prDC)
+	{
         // Если передали реальный размер окна отрисовки - нужно посчитать дополнительные сдвиги
         RECT rcCalcDC = CalcRect(CER_DC, rFrom, CER_MAINCLIENT, NULL /*prDC*/);
         // расчетный НЕ ДОЛЖЕН быть меньше переданного
@@ -1060,8 +1065,14 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
         {
             // Отступы ДО таба могут появиться только от корректировки
         } break;
+		case CER_WORKSPACE:
+		{
+			rcShift = CalcMargins(tTabAction);
+			AddMargins(rc, rcShift);
+		} break;
         case CER_BACK:
         {
+			TODO("DoubleView");
             rcShift = CalcMargins(tTabAction);
             AddMargins(rc, rcShift);
         } break;
@@ -8025,6 +8036,12 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 
 			if (mh_ConEmuAliveEvent && !mb_ConEmuAliveOwned)
 				isFirstInstance(); // Заодно и проверит...
+
+			// Если был изменен файл background
+			if (gSet.PollBackgroundFile())
+			{
+				gConEmu.Update(true);
+			}
 
 			CheckFocus(L"TIMER_MAIN_ID");
 

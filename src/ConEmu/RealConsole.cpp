@@ -4295,6 +4295,10 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 	else if (pIn->hdr.nCmd == CECMD_SETBACKGROUND)
 	{
 		mp_VCon->SetBackgroundImageData(pIn->Background.bEnabled ? (&pIn->Background.bmp) : NULL);
+		// Sending dummy response for ExecuteCmd command in client to be happy
+		CESERVER_REQ Out;
+		ExecutePrepareCmd(&Out, pIn->hdr.nCmd, sizeof(CESERVER_REQ_HDR));
+		fSuccess = WriteFile(hPipe, &Out, Out.hdr.cbSize, &cbWritten, NULL);
 	}
 
     // Освободить память

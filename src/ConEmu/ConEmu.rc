@@ -70,7 +70,7 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 IDD_SPG_MAIN DIALOGEX 0, 0, 328, 235
 STYLE DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
-FONT 8, "MS Shell Dlg", 0, 0, 0x1
+FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        "Anti-aliasing",IDC_STATIC,147,40,176,22,WS_GROUP
     CONTROL         "&None",rNoneAA,"Button",BS_AUTORADIOBUTTON | WS_GROUP,
@@ -135,9 +135,11 @@ BEGIN
                     WS_TABSTOP
     CTEXT           "x",IDC_STATIC,101,108,8,8
     PUSHBUTTON      "...",bBgImage,299,142,16,12
-    CONTROL         "UpLeft",rBgUpLeft,"Button",BS_AUTORADIOBUTTON | WS_GROUP,201,182,36,10
-    CONTROL         "Stretch",rBgStretch,"Button",BS_AUTORADIOBUTTON,243,182,39,10
-    CONTROL         "Tile",rBgTile,"Button",BS_AUTORADIOBUTTON,285,182,28,10
+    CONTROL         "UpLeft",rBgUpLeft,"Button",BS_AUTORADIOBUTTON | 
+                    WS_GROUP,210,182,36,10
+    CONTROL         "Stretch",rBgStretch,"Button",BS_AUTORADIOBUTTON,249,182,
+                    39,10
+    CONTROL         "Tile",rBgTile,"Button",BS_AUTORADIOBUTTON,291,182,26,10
     GROUPBOX        "Command Line",IDC_STATIC,4,200,319,30
     EDITTEXT        tCmdLine,9,211,307,12,ES_AUTOHSCROLL
     CONTROL         "Cascade",rCascade,"Button",BS_AUTORADIOBUTTON,268,104,
@@ -151,9 +153,9 @@ BEGIN
                     WS_TABSTOP,188,27,40,8
     CONTROL         "Auto",cbFontAuto,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
                     10,36,39,9
-    LTEXT           "Replace color indexes:",IDC_STATIC,10,180,78,8
-    EDITTEXT        tBgImageColors,91,179,50,12,ES_AUTOHSCROLL | WS_DISABLED
-    GROUPBOX        "Placement",IDC_STATIC,193,173,130,24
+    LTEXT           "Replace color indexes:",IDC_STATIC,10,181,77,8
+    EDITTEXT        tBgImageColors,88,179,43,12,ES_AUTOHSCROLL
+    GROUPBOX        "Placement",IDC_STATIC,204,173,119,24
     CONTROL         "Extend",cbExtendFonts,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,10,80,38,10
     COMBOBOX        lbExtendFontBoldIdx,51,79,24,30,CBS_DROPDOWNLIST | 
@@ -170,6 +172,8 @@ BEGIN
     CONTROL         "Save window size and position on exit",
                     cbAutoSaveSizePos,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
                     152,113,166,10
+    CONTROL         "Allow plugins",cbBgAllowPlugin,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,141,181,57,10
 END
 
 IDD_SPG_COLORS DIALOGEX 0, 0, 328, 235
@@ -411,7 +415,7 @@ END
 IDD_SPG_FEATURE DIALOGEX 0, 0, 328, 235
 STYLE DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
-FONT 8, "MS Shell Dlg"
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     GROUPBOX        "Shell style Drag and Drop (Far Manager only)",
                     IDC_STATIC,4,1,319,42
@@ -448,8 +452,8 @@ BEGIN
                     BS_AUTO3STATE | WS_TABSTOP,131,57,104,8
     CONTROL         "ASCII sort function in FAR",cbFARuseASCIIsort,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,131,69,104,8
-    CONTROL         "Safe Far close",cbSafeFarClose,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,131,81,104,8
+    CONTROL         "Safe Far close",cbSafeFarClose,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,131,81,104,8
     CONTROL         "Right selection fix",cbRSelectionFix,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,238,57,81,8
     CONTROL         "No zone check",cbShellNoZoneCheck,"Button",
@@ -1158,7 +1162,7 @@ END
 
 STRINGTABLE DISCARDABLE 
 BEGIN
-    cbLockRealConsolePos      "Don't move invisible real console.\nThis affects GUI eMenu."
+    cbLockRealConsolePos    "Don't move invisible real console.\nThis affects GUI eMenu."
 END
 
 #endif    // English (U.S.) resources

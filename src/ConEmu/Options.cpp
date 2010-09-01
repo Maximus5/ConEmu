@@ -47,6 +47,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define COUNTER_REFRESH 5000
 #define MAX_CMD_HISTORY 100
+#define BACKGROUND_FILE_POLL 5000
 
 #define RASTER_FONTS_NAME L"Raster Fonts"
 SIZE szRasterSizes[100] = {{0,0}}; // {{16,8},{6,9},{8,9},{5,12},{7,12},{8,12},{16,12},{12,16},{10,18}};
@@ -186,6 +187,8 @@ CSettings::CSettings()
     memset(mn_CounterTick, 0, sizeof(*mn_CounterTick)*(tPerfInterval-gbPerformance));
     //hBgBitmap = NULL; bgBmp = MakeCoord(0,0); hBgDc = NULL; 
 	isBackgroundImageValid = false;
+	mb_NeedBgUpdate = FALSE; mb_WasVConBgImage = FALSE;
+	ftBgModified.dwHighDateTime = ftBgModified.dwLowDateTime = nBgModifiedTick = 0;
 	mp_Bg = NULL; mp_BgImgData = NULL;
     ZeroStruct(mh_Font);
 	mh_Font2 = NULL;
@@ -348,6 +351,7 @@ void CSettings::InitSettings()
 	bgImageDarker = 0x46;
 	nBgImageColors = 1|2;
 	bgOperation = eUpLeft;
+	isBgPluginAllowed = true;
 
 	nTransparent = 255;
 	//isColorKey = false;
@@ -671,6 +675,7 @@ void CSettings::LoadSettings()
 			if (!nBgImageColors) nBgImageColors = 1|2;
 		reg->Load(L"bgOperation", bgOperation);
 			if (bgOperation!=eUpLeft && bgOperation!=eStretch && bgOperation!=eTile) bgOperation = 0;
+		reg->Load(L"bgPluginAllowed", isBgPluginAllowed);
 
 		reg->Load(L"AlphaValue", nTransparent);
 			if (nTransparent < MIN_ALPHA_VALUE) nTransparent = MIN_ALPHA_VALUE;
@@ -1076,6 +1081,7 @@ BOOL CSettings::SaveSettings()
             reg->Save(L"bgImageDarker", bgImageDarker);
 			reg->Save(L"bgImageColors", nBgImageColors);
 			reg->Save(L"bgOperation", bgOperation);
+			reg->Save(L"bgPluginAllowed", isBgPluginAllowed);
 
 			reg->Save(L"AlphaValue", nTransparent);
 			//reg->Save(L"UseColorKey", isColorKey);
@@ -1603,6 +1609,8 @@ LRESULT CSettings::OnInitDialog_Main()
 	SendDlgItemMessage(hMain, slDarker, TBM_SETPOS  , (WPARAM) true, (LPARAM) bgImageDarker);
 	
 	CheckDlgButton(hMain, rBgUpLeft+(UINT)bgOperation, BST_CHECKED);
+	
+	if (isBgPluginAllowed) CheckDlgButton(hMain, cbBgAllowPlugin, BST_CHECKED);
 
 	if (isShowBgImage)
 	{
@@ -1611,12 +1619,12 @@ LRESULT CSettings::OnInitDialog_Main()
 	else
 	{
 		EnableWindow(GetDlgItem(hMain, tBgImage), false);
-		EnableWindow(GetDlgItem(hMain, tDarker), false);
-		EnableWindow(GetDlgItem(hMain, slDarker), false);
+		//EnableWindow(GetDlgItem(hMain, tDarker), false);
+		//EnableWindow(GetDlgItem(hMain, slDarker), false);
 		EnableWindow(GetDlgItem(hMain, bBgImage), false);
-		EnableWindow(GetDlgItem(hMain, rBgUpLeft), false);
-		EnableWindow(GetDlgItem(hMain, rBgStretch), false);
-		EnableWindow(GetDlgItem(hMain, rBgTile), false);
+		//EnableWindow(GetDlgItem(hMain, rBgUpLeft), false);
+		//EnableWindow(GetDlgItem(hMain, rBgStretch), false);
+		//EnableWindow(GetDlgItem(hMain, rBgTile), false);
 	}
 
 	switch(LogFont.lfQuality)
@@ -2191,12 +2199,12 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
 		{
 	        isShowBgImage = IsChecked(hMain, cbBgImage);
 	        EnableWindow(GetDlgItem(hMain, tBgImage), isShowBgImage);
-	        EnableWindow(GetDlgItem(hMain, tDarker), isShowBgImage);
-	        EnableWindow(GetDlgItem(hMain, slDarker), isShowBgImage);
+	        //EnableWindow(GetDlgItem(hMain, tDarker), isShowBgImage);
+	        //EnableWindow(GetDlgItem(hMain, slDarker), isShowBgImage);
 	        EnableWindow(GetDlgItem(hMain, bBgImage), isShowBgImage);
-			EnableWindow(GetDlgItem(hMain, rBgUpLeft), isShowBgImage);
-			EnableWindow(GetDlgItem(hMain, rBgStretch), isShowBgImage);
-			EnableWindow(GetDlgItem(hMain, rBgTile), isShowBgImage);
+			//EnableWindow(GetDlgItem(hMain, rBgUpLeft), isShowBgImage);
+			//EnableWindow(GetDlgItem(hMain, rBgStretch), isShowBgImage);
+			//EnableWindow(GetDlgItem(hMain, rBgTile), isShowBgImage);
 
 			BOOL lbNeedLoad = (mp_Bg == NULL);
 			if (isShowBgImage && bgImageDarker == 0) {
@@ -2230,6 +2238,14 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
 			
 			gSet.LoadBackgroundFile(gSet.sBgImage, true);
 			
+			gConEmu.Update(true);
+		}
+		break;
+		
+	case cbBgAllowPlugin:
+		{
+			isBgPluginAllowed = IsChecked(hMain, cbBgAllowPlugin);
+			NeedBackgroundUpdate();
 			gConEmu.Update(true);
 		}
 		break;
@@ -2437,7 +2453,14 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
             ofn.Flags = OFN_ENABLESIZING|OFN_NOCHANGEDIR
                     | OFN_PATHMUSTEXIST|OFN_EXPLORER|OFN_HIDEREADONLY|OFN_FILEMUSTEXIST;
             if (GetOpenFileName(&ofn))
-                SetDlgItemText(hMain, tBgImage, temp);
+			{
+				if( LoadBackgroundFile(temp, true) )
+				{
+					lstrcpy(sBgImage, temp);
+					SetDlgItemText(hMain, tBgImage, temp);
+					gConEmu.Update(true);
+				}                
+			}
         }
         break;
 
@@ -2668,9 +2691,43 @@ LRESULT CSettings::OnEditChanged(WPARAM wParam, LPARAM lParam)
 		if (wcscmp(temp, sBgImage)) {
 			if( LoadBackgroundFile(temp, true) )
 			{
+				lstrcpy(sBgImage, temp);
 				gConEmu.Update(true);
 			}
         }
+    }
+    else if (TB == tBgImageColors)
+    {
+		wchar_t temp[128] = {0};
+		GetDlgItemText(hMain, tBgImageColors, temp, countof(temp)-1);
+		DWORD newBgColors = 0;
+		for (wchar_t* pc = temp; *pc; pc++)
+		{
+			if (*pc == L'#')
+			{
+				if (isDigit(pc[1]))
+				{
+					pc++;
+					// ѕолучить индекс цвета (0..15)
+					int nIdx = *pc - L'0';
+					if (nIdx == 1 && isDigit(pc[1]))
+					{
+						pc++;
+						nIdx = nIdx*10 + (*pc - L'0');
+					}
+					if (nIdx >= 0 && nIdx <= 15)
+					{
+						newBgColors |= (1 << nIdx);
+					}
+				}
+			}
+		}
+		// ≈сли таки изменлс€ - обновим
+		if (newBgColors && nBgImageColors != newBgColors)
+		{
+			nBgImageColors = newBgColors;
+			gConEmu.Update(true);
+		}
     }
     else if ( (TB == tWndWidth || TB == tWndHeight) && IsChecked(hMain, rNormal) == BST_CHECKED )
     {
@@ -2686,7 +2743,11 @@ LRESULT CSettings::OnEditChanged(WPARAM wParam, LPARAM lParam)
         {
             bgImageDarker = newV;
             SendDlgItemMessage(hMain, slDarker, TBM_SETPOS, (WPARAM) true, (LPARAM) bgImageDarker);
-            LoadBackgroundFile(sBgImage);
+			//  артинку может установить и плагин
+			if (isShowBgImage && sBgImage[0])
+				LoadBackgroundFile(sBgImage);
+			else
+				NeedBackgroundUpdate();
             gConEmu.Update(true);
         }
     }
@@ -3085,7 +3146,11 @@ INT_PTR CSettings::mainOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 					TCHAR tmp[10];
 					wsprintf(tmp, L"%i", gSet.bgImageDarker);
 					SetDlgItemText(hWnd2, tDarker, tmp);
-					gSet.LoadBackgroundFile(gSet.sBgImage);
+					//  артинку может установить и плагин
+					if (gSet.isShowBgImage && gSet.sBgImage[0])
+						gSet.LoadBackgroundFile(gSet.sBgImage);
+					else
+						gSet.NeedBackgroundUpdate();
 					gConEmu.Update(true);
 				}
 			}
@@ -5861,6 +5926,30 @@ void CSettings::OnPanelViewAppeared(BOOL abAppear)
 	}
 }
 
+bool CSettings::PollBackgroundFile()
+{
+	bool lbChanged = false;
+
+	if (isShowBgImage && sBgImage[0] && (GetTickCount() - nBgModifiedTick) > BACKGROUND_FILE_POLL)
+	{
+		WIN32_FIND_DATA fnd = {0};
+		HANDLE hFind = FindFirstFile(sBgImage, &fnd);
+		if (hFind != INVALID_HANDLE_VALUE)
+		{
+			if (fnd.ftLastWriteTime.dwHighDateTime != ftBgModified.dwHighDateTime
+				|| fnd.ftLastWriteTime.dwLowDateTime != ftBgModified.dwLowDateTime)
+			{
+				//mb_NeedBgUpdate = TRUE; -- поставит LoadBackgroundFile, если у него получитс€ файл открыть
+				lbChanged = LoadBackgroundFile(sBgImage, false);
+				nBgModifiedTick = GetTickCount();
+			}
+			FindClose(hFind);
+		}
+	}
+
+	return lbChanged;
+}
+
 // ƒолжна вернуть true, если файл изменилс€
 bool CSettings::PrepareBackground(HDC* phBgDc, COORD* pbgBmpSize)
 {
@@ -5876,10 +5965,56 @@ bool CSettings::PrepareBackground(HDC* phBgDc, COORD* pbgBmpSize)
 	DWORD nBgImageColors;
 */
 	bool lbForceUpdate = false;
-	if (mb_NeedBkUpdate)
+	LONG lMaxBgWidth = 0, lMaxBgHeight = 0;
+
+	PollBackgroundFile();
+
+	if (mp_Bg == NULL)
 	{
-		mb_NeedBkUpdate = FALSE;
+		mb_NeedBgUpdate = TRUE;
+	}
+	// ћожет изменилс€ размер окна?
+	else if (!mb_NeedBgUpdate && !mb_WasVConBgImage)
+	{
+		if (bgOperation == eUpLeft)
+		{
+			// MemoryDC создаетс€ всегда по размеру картинки, т.е. изменение размера окна - игнорируетс€
+		}
+		else
+		{
+			RECT rcWnd, rcWork; GetClientRect(ghWnd, &rcWnd);
+			rcWork = gConEmu.CalcRect(CER_WORKSPACE, rcWnd, CER_MAINCLIENT);
+
+			// —мотрим дальше
+			if (bgOperation == eStretch)
+			{
+				// —трого по размеру клиентской (точнее Workspace) области окна
+				lMaxBgWidth = rcWork.right - rcWork.left;
+				lMaxBgHeight = rcWork.bottom - rcWork.top;
+			}
+			else if (bgOperation == eTile)
+			{
+				// Max между клиентской (точнее Workspace) областью окна и размером текущего монитора
+				// ќкно может быть раст€нуто на несколько мониторов, т.е. размер клиентской области может быть больше
+				HMONITOR hMon = MonitorFromWindow(ghWnd, MONITOR_DEFAULTTONEAREST);
+				MONITORINFO mon = {sizeof(MONITORINFO)};
+				GetMonitorInfo(hMon, &mon);
+				// 
+				lMaxBgWidth = klMax(rcWork.right - rcWork.left,mon.rcMonitor.right - mon.rcMonitor.left);
+				lMaxBgHeight = klMax(rcWork.bottom - rcWork.top,mon.rcMonitor.bottom - mon.rcMonitor.top);
+			}
+
+			if (mp_Bg->bgSize.X != lMaxBgWidth || mp_Bg->bgSize.Y != lMaxBgHeight)
+				mb_NeedBgUpdate = TRUE;
+		}
+	}
+
+	if (mb_NeedBgUpdate)
+	{
+		mb_NeedBgUpdate = FALSE;
 		lbForceUpdate = true;
+
+		MSectionLock SBG; SBG.Lock(&mcs_BgImgData);
 
 		//BITMAPFILEHEADER* pImgData = mp_BgImgData;
 		BackgroundOp op = (BackgroundOp)bgOperation;
@@ -5888,16 +6023,18 @@ bool CSettings::PrepareBackground(HDC* phBgDc, COORD* pbgBmpSize)
 
 		LONG lBgWidth = 0, lBgHeight = 0;
 		CVirtualConsole* pVCon = gConEmu.ActiveCon();
-		MSectionLock SBK;
-		if (pVCon)
+		//MSectionLock SBK;
+		if (pVCon && isBgPluginAllowed)
 		{
-			SBK.Lock(&pVCon->csBkImgData);
+			//SBK.Lock(&pVCon->csBkImgData);
 			if (pVCon->HasBackgroundImage(&lBgWidth, &lBgHeight)
 				&& lBgWidth && lBgHeight)
 			{
 				lbVConImage = lbImageExist = TRUE;
 			}
 		}
+
+		mb_WasVConBgImage = lbVConImage;
 
 		if (lbImageExist)
 		{
@@ -5908,6 +6045,11 @@ bool CSettings::PrepareBackground(HDC* phBgDc, COORD* pbgBmpSize)
 			TODO("DoubleView - скорректировать X,Y");
 			if (lbVConImage)
 			{
+				if (lMaxBgWidth && lMaxBgHeight)
+				{
+					lBgWidth = lMaxBgWidth;
+					lBgHeight = lMaxBgHeight;
+				}
 				if (!mp_Bg->CreateField(lBgWidth, lBgHeight) ||
 					!pVCon->PutBackgroundImage(mp_Bg, 0,0, lBgWidth, lBgHeight))
 				{
@@ -5918,8 +6060,14 @@ bool CSettings::PrepareBackground(HDC* phBgDc, COORD* pbgBmpSize)
 			else
 			{
 				BITMAPINFOHEADER* pBmp = (BITMAPINFOHEADER*)(mp_BgImgData+1);
-				if (!mp_Bg->CreateField(pBmp->biWidth, pBmp->biHeight) ||
-					!mp_Bg->FillBackground(mp_BgImgData, 0,0, pBmp->biWidth, pBmp->biHeight, op))
+				if (!lMaxBgWidth || !lMaxBgHeight)
+				{
+					// —юда мы можем попасть только в случае eUpLeft
+					lMaxBgWidth = pBmp->biWidth;
+					lMaxBgHeight = pBmp->biHeight;
+				}
+				if (!mp_Bg->CreateField(lMaxBgWidth, lMaxBgHeight) ||
+					!mp_Bg->FillBackground(mp_BgImgData, 0,0, lMaxBgWidth, lMaxBgHeight, op))
 				{
 					delete mp_Bg;
 					mp_Bg = NULL;
@@ -5950,7 +6098,7 @@ bool CSettings::PrepareBackground(HDC* phBgDc, COORD* pbgBmpSize)
 bool CSettings::IsBackgroundEnabled(CVirtualConsole* apVCon)
 {
 	// ≈сли плагин фара установил свой фон
-	if (apVCon && apVCon->HasBackgroundImage(NULL,NULL))
+	if (isBgPluginAllowed && apVCon && apVCon->HasBackgroundImage(NULL,NULL))
 		return true;
 
 	// »наче - по настрокам ConEmu
@@ -5970,7 +6118,7 @@ bool CSettings::IsBackgroundEnabled(CVirtualConsole* apVCon)
 TODO("LoadImage может загрузить и jpg, а ручное преобразование лучше заменить на AlphaBlend");
 bool CSettings::LoadBackgroundFile(TCHAR *inPath, bool abShowErrors)
 {
-	_ASSERTE(gConEmu.isMainThread());
+	//_ASSERTE(gConEmu.isMainThread());
 
     if (!inPath || _tcslen(inPath)>=MAX_PATH) {
         if (abShowErrors)
@@ -5995,17 +6143,22 @@ bool CSettings::LoadBackgroundFile(TCHAR *inPath, bool abShowErrors)
 	HANDLE hFile = CreateFile(exPath, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, NULL);
 	if (hFile != INVALID_HANDLE_VALUE)
 	{
-		LARGE_INTEGER nFileSize;
-		if (GetFileSizeEx(hFile, &nFileSize) && nFileSize.HighPart == 0
-			&& nFileSize.LowPart >= (sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFO)))
+		BY_HANDLE_FILE_INFORMATION inf = {0};
+		//LARGE_INTEGER nFileSize;
+		//if (GetFileSizeEx(hFile, &nFileSize) && nFileSize.HighPart == 0
+		if (GetFileInformationByHandle(hFile, &inf) && inf.nFileSizeHigh == 0
+			&& inf.nFileSizeLow >= (sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFO)))
 		{
-			pBkImgData = (BITMAPFILEHEADER*)malloc(nFileSize.LowPart);
-			if (pBkImgData && ReadFile(hFile, pBkImgData, nFileSize.LowPart, &nFileSize.LowPart, NULL))
+			pBkImgData = (BITMAPFILEHEADER*)malloc(inf.nFileSizeLow);
+			if (pBkImgData && ReadFile(hFile, pBkImgData, inf.nFileSizeLow, &inf.nFileSizeLow, NULL))
 			{
 				char *pBuf = (char*)pBkImgData;
 				if (pBuf[0] == 'B' && pBuf[1] == 'M' && *(u32*)(pBuf + 0x0A) >= 0x36 && *(u32*)(pBuf + 0x0A) <= 0x436 && *(u32*)(pBuf + 0x0E) == 0x28 && !pBuf[0x1D] && !*(u32*)(pBuf + 0x1E))
 				{
+					ftBgModified = inf.ftLastWriteTime;
+					nBgModifiedTick = GetTickCount();
 					NeedBackgroundUpdate();
+					MSectionLock SBG; SBG.Lock(&mcs_BgImgData);
 					SafeFree(mp_BgImgData);
 					isBackgroundImageValid = true;
 					mp_BgImgData = pBkImgData;
@@ -6120,7 +6273,7 @@ bool CSettings::LoadBackgroundFile(TCHAR *inPath, bool abShowErrors)
 
 void CSettings::NeedBackgroundUpdate()
 {
-	mb_NeedBkUpdate = true;
+	mb_NeedBgUpdate = true;
 }
 
 //CBackground* CSettings::CreateBackgroundImage(const BITMAPFILEHEADER* apBkImgData)

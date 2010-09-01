@@ -116,6 +116,7 @@ public:
 	u8 bgImageDarker;
 	DWORD nBgImageColors;
 	char bgOperation; // BackgroundOp {eUpLeft = 0, eStretch = 1, eTile = 2}
+	bool isBgPluginAllowed;
 
     /* Transparency */
     u8 nTransparent;
@@ -265,11 +266,14 @@ private:
     //COORD    bgBmp;
     //HDC      hBgDc;
 	CBackground* mp_Bg;
+	MSection mcs_BgImgData;
 	BITMAPFILEHEADER* mp_BgImgData;
-	BOOL mb_NeedBkUpdate;
+	BOOL mb_NeedBgUpdate, mb_WasVConBgImage;
     FILETIME ftBgModified;
+	DWORD nBgModifiedTick;
 public:
 	bool PrepareBackground(HDC* phBgDc, COORD* pbgBmpSize);
+	bool PollBackgroundFile(); // true, если файл изменен
 	bool /*LoadImageFrom*/LoadBackgroundFile(TCHAR *inPath, bool abShowErrors=false);
 	bool IsBackgroundEnabled(CVirtualConsole* apVCon);
 	void NeedBackgroundUpdate();

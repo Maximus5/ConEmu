@@ -188,6 +188,8 @@ public:
 protected:
 	BITMAPFILEHEADER* mp_BkImgData; // followed by image data
 	BOOL mb_BkImgChanged; // Данные в mp_BkImgData были изменены плагином, требуется отрисовка
+	BOOL mb_BkImgExist;
+	LONG mn_BkImgWidth, mn_BkImgHeight;
 public:
 	MSection csBkImgData;
 	
