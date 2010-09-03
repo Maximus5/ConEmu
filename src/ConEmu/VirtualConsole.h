@@ -183,15 +183,18 @@ public:
 	// Плагин к фару может установить свою "картинку" для панелей (например, нарисовать в фоне букву диска)
 	bool PutBackgroundImage(CBackground* pBack, LONG X, LONG Y, LONG Width, LONG Height); // Положить в pBack свою картинку
 	//void FreeBackgroundImage(); // Освободить (если создан) HBITMAP для mp_BkImgData
-	void SetBackgroundImageData(const BITMAPFILEHEADER* apImgData); // функция создает копию apImgData в mp_BkImgData
+	enum SetBackgroundResult SetBackgroundImageData(CESERVER_REQ_SETBACKGROUND* apImgData); // вызывается при получении нового Background
 	bool HasBackgroundImage(LONG* pnBgWidth, LONG* pnBgHeight);
 protected:
-	BITMAPFILEHEADER* mp_BkImgData; // followed by image data
+	CESERVER_REQ_SETBACKGROUND* mp_BkImgData; // followed by image data
 	BOOL mb_BkImgChanged; // Данные в mp_BkImgData были изменены плагином, требуется отрисовка
-	BOOL mb_BkImgExist;
+	BOOL mb_BkImgExist, mb_BkImgDelete;
 	LONG mn_BkImgWidth, mn_BkImgHeight;
-public:
-	MSection csBkImgData;
+	// Для проверки, что пришедшая в основную нить картинка является актуальной
+	const CESERVER_REQ_SETBACKGROUND* mp_LastImgData;
+	UINT IsBackgroundValid(CESERVER_REQ_SETBACKGROUND* apImgData) const; // возвращает размер данных, или 0 при ошибке
+//public:
+	//MSection csBkImgData;
 	
 public:
 	bool isEditor, isViewer, isFilePanel, isFade, isForeground;

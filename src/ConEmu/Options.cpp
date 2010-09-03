@@ -358,7 +358,9 @@ void CSettings::InitSettings()
 	//ColorKey = RGB(1,1,1);
 	isUserScreenTransparent = false;
 
-    isFixFarBorders = 1; isEnhanceGraphics = true; isPartBrush75 = 0xC8; isPartBrush50 = 0x96; isPartBrush25 = 0x5A;
+    isFixFarBorders = 1; isEnhanceGraphics = true;
+	isPartBrush75 = 0xC8; isPartBrush50 = 0x96; isPartBrush25 = 0x5A;
+	isPartBrushBlack = 32;
     isExtendUCharMap = true;
 	memset(icFixFarBorderRanges, 0, sizeof(icFixFarBorderRanges));
 	wcscpy(mszCharRanges, L"2013-25C4");
@@ -644,6 +646,7 @@ void CSettings::LoadSettings()
         reg->Load(L"PartBrush75", isPartBrush75); if (isPartBrush75<5) isPartBrush75=5; else if (isPartBrush75>250) isPartBrush75=250;
         reg->Load(L"PartBrush50", isPartBrush50); if (isPartBrush50<5) isPartBrush50=5; else if (isPartBrush50>250) isPartBrush50=250;
         reg->Load(L"PartBrush25", isPartBrush25); if (isPartBrush25<5) isPartBrush25=5; else if (isPartBrush25>250) isPartBrush25=250;
+		reg->Load(L"PartBrushBlack", isPartBrushBlack);
         if (isPartBrush50>=isPartBrush75) isPartBrush50=isPartBrush75-10;
         if (isPartBrush25>=isPartBrush50) isPartBrush25=isPartBrush50-10;
 
@@ -1132,6 +1135,7 @@ BOOL CSettings::SaveSettings()
 	        reg->Save(L"PartBrush75", isPartBrush75);
 	        reg->Save(L"PartBrush50", isPartBrush50);
 	        reg->Save(L"PartBrush25", isPartBrush25);
+			reg->Save(L"PartBrushBlack", isPartBrushBlack);
             reg->Save(L"RightClick opens context menu", isRClickSendKey);
             	reg->Save(L"RightClickMacro2", sRClickMacro);
             reg->Save(L"AltEnter", isSentAltEnter);
@@ -6014,7 +6018,8 @@ bool CSettings::PrepareBackground(HDC* phBgDc, COORD* pbgBmpSize)
 		mb_NeedBgUpdate = FALSE;
 		lbForceUpdate = true;
 
-		MSectionLock SBG; SBG.Lock(&mcs_BgImgData);
+		_ASSERTE(gConEmu.isMainThread());
+		//MSectionLock SBG; SBG.Lock(&mcs_BgImgData);
 
 		//BITMAPFILEHEADER* pImgData = mp_BgImgData;
 		BackgroundOp op = (BackgroundOp)bgOperation;
@@ -6158,7 +6163,8 @@ bool CSettings::LoadBackgroundFile(TCHAR *inPath, bool abShowErrors)
 					ftBgModified = inf.ftLastWriteTime;
 					nBgModifiedTick = GetTickCount();
 					NeedBackgroundUpdate();
-					MSectionLock SBG; SBG.Lock(&mcs_BgImgData);
+					_ASSERTE(gConEmu.isMainThread());
+					//MSectionLock SBG; SBG.Lock(&mcs_BgImgData);
 					SafeFree(mp_BgImgData);
 					isBackgroundImageValid = true;
 					mp_BgImgData = pBkImgData;

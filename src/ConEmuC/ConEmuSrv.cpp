@@ -252,8 +252,9 @@ int ServerInit()
 		    wchar_t szServerPipe[MAX_PATH];
 		    wsprintf(szServerPipe, CEGUIPIPENAME, L".", (DWORD)hConEmuWnd);
 		    CESERVER_REQ In, Out;
-		    ExecutePrepareCmd(&In, CECMD_CMDSTARTSTOP, sizeof(CESERVER_REQ_HDR)+sizeof(DWORD));
-		    In.dwData[0] = (DWORD)ghConWnd;
+		    ExecutePrepareCmd(&In, CECMD_CMDSTARTSTOP, sizeof(CESERVER_REQ_HDR)+sizeof(DWORD)*2);
+			In.dwData[0] = 1; // запущен сервер
+		    In.dwData[1] = (DWORD)ghConWnd;
 		    
 		    lbCallRc = CallNamedPipe(szServerPipe, &In, In.hdr.cbSize, &Out, sizeof(Out), &dwRead, 1000);
 		    if (!lbCallRc) {
@@ -646,13 +647,25 @@ wrap:
 }
 
 // Завершить все нити и закрыть дескрипторы
-void ServerDone(int aiRc)
+void ServerDone(int aiRc, bool abReportShutdown /*= false*/)
 {
 	gbQuit = true;
 	gbTerminateOnExit = FALSE;
 	// На всякий случай - выставим событие
 	if (ghExitQueryEvent) SetEvent(ghExitQueryEvent);
 	if (ghQuitEvent) SetEvent(ghQuitEvent);
+
+	if (ghConEmuWnd && IsWindow(ghConEmuWnd))
+	{
+		wchar_t szServerPipe[MAX_PATH];
+		wsprintf(szServerPipe, CEGUIPIPENAME, L".", (DWORD)ghConEmuWnd);
+		CESERVER_REQ In, Out; DWORD dwRead = 0;
+		ExecutePrepareCmd(&In, CECMD_CMDSTARTSTOP, sizeof(CESERVER_REQ_HDR)+sizeof(DWORD)*2);
+		In.dwData[0] = 100;
+		In.dwData[1] = (DWORD)ghConWnd;
+		// Послать в GUI уведомление, что сервер закрывается
+		CallNamedPipe(szServerPipe, &In, In.hdr.cbSize, &Out, sizeof(Out), &dwRead, 1000);
+	}
 
 	// Остановить отладчик, иначе отлаживаемый процесс тоже схлопнется	
 	if (srv.bDebuggerActive) {

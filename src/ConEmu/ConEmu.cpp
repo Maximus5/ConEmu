@@ -250,6 +250,7 @@ CConEmuMain::CConEmuMain()
 	//mn_MsgSetForeground = RegisterWindowMessage(CONEMUMSG_SETFOREGROUND);
 	mn_MsgFlashWindow = RegisterWindowMessage(CONEMUMSG_FLASHWINDOW);
 	mn_MsgPostAltF9 = ++nAppMsg;
+	mn_MsgPostSetBackground = ++nAppMsg;
 	mn_MsgLLKeyHook = RegisterWindowMessage(CONEMUMSG_LLKEYHOOK);
 }
 
@@ -4948,6 +4949,9 @@ void CConEmuMain::PostCreate(BOOL abRecieved/*=FALSE*/)
 			gbDontEnable = FALSE;
 		}
 
+		if (gSet.isShowBgImage)
+		    gSet.LoadBackgroundFile(gSet.sBgImage);
+
         if (mp_VActive == NULL || !gConEmu.mb_StartDetached) { // Консоль уже может быть создана, если пришел Attach из ConEmuC
         	BOOL lbCreated = FALSE;
         	LPCWSTR pszCmd = gSet.GetCmd();
@@ -8398,18 +8402,43 @@ void CConEmuMain::GuiServerThreadCommand(HANDLE hPipe)
 		}
 
 	} else if (pIn->hdr.nCmd == CECMD_CMDSTARTSTOP) {
-		// Запущен процесс сервера
-		HWND hConWnd = (HWND)pIn->dwData[0];
-		_ASSERTE(hConWnd && IsWindow(hConWnd));
-		LRESULT l = 0;
-		DWORD_PTR dwRc = 0;
-		
-		//2010-05-21 Поскольку это критично - лучше ждать до упора, хотя может быть DeadLock?
-		//l = SendMessageTimeout(ghWnd, gConEmu.mn_MsgSrvStarted, (WPARAM)hConWnd, pIn->hdr.nSrcPID,
-		//	SMTO_BLOCK, 5000, &dwRc);
-		dwRc = SendMessage(ghWnd, gConEmu.mn_MsgSrvStarted, (WPARAM)hConWnd, pIn->hdr.nSrcPID);
-		
-		pIn->dwData[0] = (l == 0) ? 0 : 1;
+		if (pIn->dwData[0] == 1)
+		{
+			// Запущен процесс сервера
+			HWND hConWnd = (HWND)pIn->dwData[1];
+			_ASSERTE(hConWnd && IsWindow(hConWnd));
+			//LRESULT l = 0;
+			DWORD_PTR dwRc = 0;
+			
+			//2010-05-21 Поскольку это критично - лучше ждать до упора, хотя может быть DeadLock?
+			//l = SendMessageTimeout(ghWnd, gConEmu.mn_MsgSrvStarted, (WPARAM)hConWnd, pIn->hdr.nSrcPID,
+			//	SMTO_BLOCK, 5000, &dwRc);
+			dwRc = SendMessage(ghWnd, gConEmu.mn_MsgSrvStarted, (WPARAM)hConWnd, pIn->hdr.nSrcPID);
+
+			pIn->dwData[0] = 1;
+			
+			//pIn->dwData[0] = (l == 0) ? 0 : 1;
+		}
+		else if (pIn->dwData[0] == 100)
+		{
+			// Процесс сервера завершается
+			CRealConsole* pRCon = NULL;
+			for (int i = 0; i < MAX_CONSOLE_COUNT; i++)
+			{
+				if (mp_VCon[i] && mp_VCon[i]->RCon() && mp_VCon[i]->RCon()->GetServerPID() == pIn->hdr.nSrcPID)
+				{
+					pRCon = mp_VCon[i]->RCon();
+					break;
+				}
+			}
+			if (pRCon)
+				pRCon->OnServerClosing(pIn->hdr.nSrcPID);
+			pIn->dwData[0] = 1;
+		}
+		else
+		{
+			pIn->dwData[0] = 0;
+		}
 		pIn->hdr.cbSize = sizeof(CESERVER_REQ_HDR) + sizeof(DWORD);
         // Отправляем
         fSuccess = WriteFile( 
@@ -8427,6 +8456,11 @@ void CConEmuMain::GuiServerThreadCommand(HANDLE hPipe)
     }
 
     return;
+}
+
+void CConEmuMain::PostSetBackground(CVirtualConsole* apVCon, CESERVER_REQ_SETBACKGROUND* apImgData)
+{
+	PostMessage(ghWnd, mn_MsgPostSetBackground, (WPARAM)apVCon, (LPARAM)apImgData);
 }
 
 LRESULT CConEmuMain::MainWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
@@ -8898,7 +8932,17 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 				return gConEmu.LowLevelKeyHook((UINT)wParam, (UINT)lParam);				
 			}
 			return 0;
+		} else if (messg == gConEmu.mn_MsgPostSetBackground) {
+			if (isValid((CVirtualConsole*)wParam))
+			{
+				((CVirtualConsole*)wParam)->SetBackgroundImageData((CESERVER_REQ_SETBACKGROUND*)lParam);
+			} else {
+				// Поскольку консоль уже была закрыта - нужно просто освободить данные
+				CESERVER_REQ_SETBACKGROUND* p = (CESERVER_REQ_SETBACKGROUND*)lParam;
+				free(p);
+			}
 		}
+
         //else if (messg == gConEmu.mn_MsgCmdStarted || messg == gConEmu.mn_MsgCmdStopped) {
         //  return gConEmu.OnConEmuCmd( (messg == gConEmu.mn_MsgCmdStarted), (HWND)wParam, (DWORD)lParam);
         //}

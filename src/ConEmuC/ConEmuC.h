@@ -184,7 +184,7 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam); // Нить, перечитывающая содержимое 
 //BOOL ReadConsoleData(CESERVER_CHAR* pCheck = NULL); //((LPRECT)1) или реальный LPRECT
 void SetConsoleFontSizeTo(HWND inConWnd, int inSizeY, int inSizeX, const wchar_t *asFontName);
 int ServerInit(); // Создать необходимые события и нити
-void ServerDone(int aiRc);
+void ServerDone(int aiRc, bool abReportShutdown = false);
 int ComspecInit();
 void ComspecDone(int aiRc);
 BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, LPCSTR asLabel = NULL);

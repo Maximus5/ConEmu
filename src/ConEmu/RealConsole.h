@@ -281,6 +281,8 @@ public:
     DWORD CanActivateFarWindow(int anWndIndex);
     void SwitchKeyboardLayout(WPARAM wParam,DWORD_PTR dwNewKeybLayout);
     void CloseConsole();
+    bool isConsoleClosing();
+	void OnServerClosing(DWORD anSrvPID);
     void Paste();
     void LogString(LPCSTR asText, BOOL abShowTime = FALSE);
 	bool isActive();
@@ -403,6 +405,11 @@ private:
 		BOOL bDebugLocked;
 		#endif
     } con;
+	struct {
+		DWORD  nServerPID;     // PID закрывающегося сервера
+		DWORD  nRecieveTick;   // Tick, когда получено сообщение о закрытии
+		HANDLE hServerProcess; // Handle процесса сервера
+	} m_ServerClosing;
     // 
     MSection csPRC; //DWORD ncsTPRC;
     std::vector<ConProcess> m_Processes;
@@ -444,6 +451,7 @@ private:
     int mn_Focused; //-1 после запуска, 1 - в фокусе, 0 - не в фокусе
     DWORD mn_InRecreate; // Tick, когда начали пересоздание
     BOOL mb_ProcessRestarted;
+    BOOL mb_InCloseConsole;
     // Логи
     BYTE m_UseLogs;
     HANDLE mh_LogInput; wchar_t *mpsz_LogInputFile/*, *mpsz_LogPackets*/; //UINT mn_LogPackets;

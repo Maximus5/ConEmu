@@ -1,9 +1,12 @@
+2010.09.03
 [%] В консоли не детектился 'одноциферный' прогресс операции.
+[%] При отключенном 'Fix FAR borders' не всегда срабатывал 'Enhance progressbars and scrollbars'.
 [+] CECMD_SETBACKGROUND.
 [+] Background image: автоматическое перечитывание измененной картинки.
-[+] Background image: режимы Stretch & Tile. Для примера использования 'Tile' добавлен файл 'ConEmu.Addons\Lines.bmp'. Для 'Lines.bmp' рекомендуется оставить в 'Replace color indexes' только цвет панелей ('#1' в стандартной цветовой схеме фара).
+[+] Background image: режимы Stretch & Tile. Для примера использования 'Tile' добавлен файл 'ConEmu.Addons\Lines*.bmp' для высоты шрифта 16 и 18. Для 'Lines*.bmp' рекомендуется оставить в 'Replace color indexes' только цвет панелей ('#1' в стандартной цветовой схеме фара).
 [+] Background image: в окне настройки разрешено редактирование поля 'Replace color indexes'.
 [*] Обработка невозможности создания шрифтов.
+[*] Enhance progressbars: В некоторых случаях на "темных" мониторах 25% серый не отличался от черного. Добавлен параметр "PartBrushBlack", правка только через реестр/xml.
 
 
 2010.08.14

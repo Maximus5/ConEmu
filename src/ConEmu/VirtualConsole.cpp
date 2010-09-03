@@ -141,7 +141,8 @@ CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
 	mb_LastFadeFlag = false;
 	mn_LastBitsPixel = 0;
 	
-	mp_BkImgData = NULL; mb_BkImgChanged = FALSE; mb_BkImgExist = FALSE; mn_BkImgWidth = mn_BkImgHeight = 0;
+	mp_BkImgData = NULL; mb_BkImgChanged = FALSE; mb_BkImgExist = mb_BkImgDelete = FALSE;
+	mn_BkImgWidth = mn_BkImgHeight = 0;
 
 	_ASSERTE(sizeof(mh_FontByIndex) == (sizeof(gSet.mh_Font)+sizeof(mh_FontByIndex[0])));
 	memmove(mh_FontByIndex, gSet.mh_Font, MAX_FONT_STYLES*sizeof(mh_FontByIndex[0]));
@@ -217,8 +218,8 @@ CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
 	mb_DebugDumpDC = FALSE;
 	#endif
 
-    if (gSet.isShowBgImage)
-        gSet.LoadBackgroundFile(gSet.sBgImage);
+    //if (gSet.isShowBgImage)
+    //    gSet.LoadBackgroundFile(gSet.sBgImage);
 
     if (gSet.isAdvLogging != 3) {
         mpsz_LogScreen = NULL;
@@ -616,8 +617,9 @@ BOOL CVirtualConsole::Dump(LPCWSTR asFile)
 //#define isCharBorder(inChar) (inChar>=0x2013 && inChar<=0x266B)
 bool CVirtualConsole::isCharBorder(WCHAR inChar)
 {
-	if (!gSet.isFixFarBorders)
-		return false;
+	// Низя - нужно учитывать gSet.isFixFarBorders там где это требуется, иначе пролетает gSet.isEnhanceGraphics
+	//if (!gSet.isFixFarBorders)
+	//	return false;
 	return gSet.isCharBorder(inChar);
 
 	//CSettings::CharRanges *pcr = gSet.icFixFarBorderRanges;
@@ -819,7 +821,7 @@ void CVirtualConsole::CharABC(TCHAR ch, ABC *abc)
 	BOOL lbCharABCOk;
 
 	if (!gSet.CharABC[ch].abcB) {
-		if (gSet.mh_Font2 && isCharBorder(ch)) {
+		if (gSet.mh_Font2 && gSet.isFixFarBorders && isCharBorder(ch)) {
 			SelectFont(gSet.mh_Font2);
 		} else {
 			TODO("Тут надо бы деление по стилям сделать");
@@ -864,7 +866,7 @@ WORD CVirtualConsole::CharWidth(TCHAR ch)
 
 
 	// Наверное все же нужно считать именно в том шрифте, которым будет идти отображение
-	if (gSet.mh_Font2 && isCharBorder(ch)) {
+	if (gSet.mh_Font2 && gSet.isFixFarBorders && isCharBorder(ch)) {
 		SelectFont(gSet.mh_Font2);
 	} else {
 		TODO("Тут надо бы деление по стилям сделать");
@@ -1715,6 +1717,7 @@ bool CVirtualConsole::Update_ParseTextParts(uint row, const wchar_t* ConCharLine
 		const CharAttr* attr = ConAttrLine+j;
 		nForeFont = attr->ForeFont;
 		c = ConCharLine[j];
+		TODO("Учесть gSet.isFixFarBorders && gSet.isEnhanceGraphics");
 		isUnicode = isCharBorder(c);
         bool isProgress = false, isSpace = false, isUnicodeOrProgress = false;
         if (isUnicode || bEnhanceGraphics)
@@ -1899,7 +1902,7 @@ void CVirtualConsole::UpdateText()
             WCHAR c = ConCharLine[j];
             //BYTE attrForeIdx, attrBackIdx;
             //COLORREF attrForeClr, attrBackClr;
-            bool isUnicode = isCharBorder(c/*ConCharLine[j]*/);
+            bool isUnicode = gSet.isFixFarBorders && isCharBorder(c/*ConCharLine[j]*/);
             bool isProgress = false, isSpace = false, isUnicodeOrProgress = false;
             bool lbS1 = false, lbS2 = false;
             int nS11 = 0, nS12 = 0, nS21 = 0, nS22 = 0;
@@ -2416,16 +2419,42 @@ HBRUSH CVirtualConsole::PartBrush(wchar_t ch, COLORREF nBackCol, COLORREF nForeC
 
     clrMy.color = clrFore.color; // 100 %
 
-    //#define   PART_75(f,b) ((((int)f) + ((int)b)*3) / 4)
-    //#define   PART_50(f,b) ((((int)f) + ((int)b)) / 2)
-    //#define   PART_25(f,b) (((3*(int)f) + ((int)b)) / 4)
-    //#define   PART_75(f,b) (b + 0.80*(f-b))
-    //#define   PART_50(f,b) (b + 0.75*(f-b))
-    //#define   PART_25(f,b) (b + 0.50*(f-b))
-    #define PART_75(f,b) (b + ((gSet.isPartBrush75*(f-b))>>8))
-    #define PART_50(f,b) (b + ((gSet.isPartBrush50*(f-b))>>8))
-    #define PART_25(f,b) (b + ((gSet.isPartBrush25*(f-b))>>8))
+    ////#define   PART_75(f,b) ((((int)f) + ((int)b)*3) / 4)
+    ////#define   PART_50(f,b) ((((int)f) + ((int)b)) / 2)
+    ////#define   PART_25(f,b) (((3*(int)f) + ((int)b)) / 4)
+    ////#define   PART_75(f,b) (b + 0.80*(f-b))
+    ////#define   PART_50(f,b) (b + 0.75*(f-b))
+    ////#define   PART_25(f,b) (b + 0.50*(f-b))
+	// (gSet.isPartBrushXX >> 8) дает как бы дробь (0 .. 1), например, 0.80
+	#define PART_XX(f,b,p) ((f==b) ? f : ( (b + ((p*(f-b))>>8))))
+	#define PART_75(f,b) ((f>b) ? PART_XX(f,b,gSet.isPartBrush75) : PART_XX(b,f,gSet.isPartBrush25))
+	#define PART_50(f,b) ((f>b) ? PART_XX(f,b,gSet.isPartBrush50) : PART_XX(b,f,gSet.isPartBrush50))
+	#define PART_25(f,b) ((f>b) ? PART_XX(f,b,gSet.isPartBrush25) : PART_XX(b,f,gSet.isPartBrush75))
 
+	if (ch == ucBox75 || ch == ucBox50 || ch == ucBox25)
+	{
+		// Для темных мониторов. Бокс 25% нифига не отличается от заполненного 100% (видится черным)
+		if (clrBack.color == 0)
+		{
+			if (gSet.isPartBrushBlack
+				&& clrFore.rgbRed > gSet.isPartBrushBlack
+				&& clrFore.rgbGreen > gSet.isPartBrushBlack
+				&& clrFore.rgbBlue > gSet.isPartBrushBlack)
+			{
+				clrBack.rgbBlue = clrBack.rgbGreen = clrBack.rgbRed = gSet.isPartBrushBlack;
+			}
+		}
+		else if (clrFore.color == 0)
+		{
+			if (gSet.isPartBrushBlack
+				&& clrBack.rgbRed > gSet.isPartBrushBlack
+				&& clrBack.rgbGreen > gSet.isPartBrushBlack
+				&& clrBack.rgbBlue > gSet.isPartBrushBlack)
+			{
+				clrFore.rgbBlue = clrFore.rgbGreen = clrFore.rgbRed = gSet.isPartBrushBlack;
+			}
+		}
+	}
     if (ch == ucBox75 /* 75% */) {
         clrMy.rgbRed = PART_75(clrFore.rgbRed,clrBack.rgbRed);
         clrMy.rgbGreen = PART_75(clrFore.rgbGreen,clrBack.rgbGreen);
@@ -3957,15 +3986,19 @@ void CVirtualConsole::CharAttrFromConAttr(WORD conAttr, CharAttr* pAttr)
 bool CVirtualConsole::PutBackgroundImage(CBackground* pBack, LONG X, LONG Y, LONG Width, LONG Height)
 {
 	if (!this) return NULL;
+	_ASSERTE(gConEmu.isMainThread());
+	if (mb_BkImgDelete && mp_BkImgData)
+	{
+		free(mp_BkImgData); mp_BkImgData = NULL;
+		mb_BkImgExist = FALSE;
+		return false;
+	}
 	if (!mb_BkImgExist)
 		return false;
-
-	MSectionLock SBK; SBK.Lock(&csBkImgData);
-
 	if (!mp_BkImgData)
 		return false;
 	
-	bool lbRc = pBack->FillBackground(mp_BkImgData, X, Y, Width, Height, eUpLeft);
+	bool lbRc = pBack->FillBackground(&mp_BkImgData->bmp, X, Y, Width, Height, eUpLeft);
 
 	mb_BkImgChanged = FALSE;
 	
@@ -3983,11 +4016,111 @@ bool CVirtualConsole::PutBackgroundImage(CBackground* pBack, LONG X, LONG Y, LON
 //    }
 //}
 
-// функция создает копию apImgData в mp_BkImgData
-void CVirtualConsole::SetBackgroundImageData(const BITMAPFILEHEADER* apImgData)
+UINT CVirtualConsole::IsBackgroundValid(CESERVER_REQ_SETBACKGROUND* apImgData) const
 {
-	if (!this) return;
-	MSectionLock SBK; SBK.Lock(&csBkImgData);
+	if (!apImgData)
+		return 0;
+	if (IsBadReadPtr(apImgData, sizeof(CESERVER_REQ_SETBACKGROUND)))
+		return 0;
+	if (!apImgData->bEnabled)
+		return (UINT)sizeof(CESERVER_REQ_SETBACKGROUND);
+	
+	if (apImgData->bmp.bfType == 0x4D42/*BM*/ && apImgData->bmp.bfSize)
+	{
+		if (IsBadReadPtr(&apImgData->bmp, apImgData->bmp.bfSize))
+		{
+			_ASSERTE(!IsBadReadPtr(&apImgData->bmp, apImgData->bmp.bfSize));
+			return 0;
+		}
+
+		LPBYTE pBuf = (LPBYTE)&apImgData->bmp;
+		if (*(u32*)(pBuf + 0x0A) >= 0x36 && *(u32*)(pBuf + 0x0A) <= 0x436 && *(u32*)(pBuf + 0x0E) == 0x28 && !pBuf[0x1D] && !*(u32*)(pBuf + 0x1E))
+		{
+			UINT nSize = (UINT)sizeof(CESERVER_REQ_SETBACKGROUND) - (UINT)sizeof(apImgData->bmp)
+			           + apImgData->bmp.bfSize;
+			return nSize;
+		}
+	}
+	return 0;
+}
+
+// вызывается при получении нового Background
+enum SetBackgroundResult CVirtualConsole::SetBackgroundImageData(CESERVER_REQ_SETBACKGROUND* apImgData)
+{
+	if (!this) return esbr_Unexpected;
+	
+	if (!gConEmu.isMainThread())
+	{
+		// При вызове из серверной нити (только что пришло из плагина)
+		if (mp_RCon->isConsoleClosing())
+			return esbr_ConEmuInShutdown;
+		UINT nSize = IsBackgroundValid(apImgData);
+		if (!nSize)
+			return esbr_InvalidArg;
+		if (!apImgData->bEnabled)
+		{
+			mb_BkImgDelete = TRUE;
+			gSet.NeedBackgroundUpdate();
+			Update(true/*bForce*/);
+			return gSet.isBgPluginAllowed ? esbr_OK : esbr_PluginForbidden;
+		}
+		#ifdef _DEBUG
+		if ((GetKeyState(VK_SCROLL) & 1))
+		{
+			static UINT nBackIdx = 0;
+			wchar_t szFileName[32];
+			wsprintf(szFileName, L"PluginBack_%04u.bmp", nBackIdx++);
+			char szAdvInfo[512];
+			BITMAPINFOHEADER* pBmp = (BITMAPINFOHEADER*)((&apImgData->bmp)+1);
+			wsprintfA(szAdvInfo, "\r\nnType=%i, bEnabled=%i,\r\nWidth=%i, Height=%i, Bits=%i, Encoding=%i\r\n",
+				apImgData->nType, apImgData->bEnabled,
+				pBmp->biWidth, pBmp->biHeight, pBmp->biBitCount, pBmp->biCompression);
+			HANDLE hFile = CreateFile(szFileName, GENERIC_WRITE, FILE_SHARE_READ, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
+			if (hFile != INVALID_HANDLE_VALUE)
+			{
+				DWORD cbWrite;
+				WriteFile(hFile, &apImgData->bmp, apImgData->bmp.bfSize, &cbWrite, 0);
+				WriteFile(hFile, szAdvInfo, lstrlenA(szAdvInfo), &cbWrite, 0);
+				CloseHandle(hFile);
+			}
+		}
+		#endif
+		// Поскольку вызов асинхронный (сразу возвращаем в плагин), то нужно сделать копию данных
+		CESERVER_REQ_SETBACKGROUND* pCopy = (CESERVER_REQ_SETBACKGROUND*)malloc(nSize);
+		if (!pCopy)
+			return esbr_Unexpected;
+		memmove(pCopy, apImgData, nSize);
+		// Запомнить последний актуальный, и послать в главную нить
+		mp_LastImgData = pCopy;
+		mb_BkImgDelete = FALSE;
+		gConEmu.PostSetBackground(this, pCopy);
+		return gSet.isBgPluginAllowed ? esbr_OK : esbr_PluginForbidden;
+	}
+	
+	// Если вызов пришел во время закрытия консоли - игнорировать
+	if (mp_RCon->isConsoleClosing()
+	// Этот apImgData уже не актуален. Во время обработки сообщения пришел новый Background.
+		|| (mp_LastImgData && mp_LastImgData != apImgData))
+	{
+		free(apImgData);
+		return esbr_Unexpected;
+	}
+	
+	// Ссылку на актуальный - не сбрасываем. Она просто информационная, и есть возможность наколоться с многопоточностью
+	//mp_LastImgData = NULL;
+	
+	UINT nSize = IsBackgroundValid(apImgData);
+	if (!nSize)
+	{
+		// Не допустимый apImgData. Вроде такого быть не должно - все уже проверено
+		_ASSERTE(IsBackgroundValid(apImgData) != 0);
+		free(apImgData);
+		return esbr_InvalidArg;
+	}
+	
+	//MSectionLock SBK; SBK.Lock(&csBkImgData);
+	_ASSERTE(gConEmu.isMainThread());
+
 	if (mp_BkImgData)
 	{
 		free(mp_BkImgData); mp_BkImgData = NULL;
@@ -3996,38 +4129,30 @@ void CVirtualConsole::SetBackgroundImageData(const BITMAPFILEHEADER* apImgData)
 		mn_BkImgWidth = mn_BkImgHeight = 0;
 	}
 	
-	if (apImgData && apImgData->bfType == 0x4D42/*BM*/ && apImgData->bfSize)
-	{
-		if (IsBadReadPtr(apImgData, apImgData->bfSize))
-		{
-			_ASSERTE(!IsBadReadPtr(apImgData, apImgData->bfSize));
-			return;
-		}
+	mp_BkImgData = (CESERVER_REQ_SETBACKGROUND*)malloc(nSize);
+	memmove(mp_BkImgData, apImgData, nSize);
+	mb_BkImgChanged = TRUE;
+	mb_BkImgExist = TRUE;
+	BITMAPINFOHEADER* pBmp = (BITMAPINFOHEADER*)((&mp_BkImgData->bmp)+1);
+	mn_BkImgWidth = pBmp->biWidth;
+	mn_BkImgHeight = pBmp->biHeight;
+	gSet.NeedBackgroundUpdate();
 
-		LPBYTE pBuf = (LPBYTE)apImgData;
-		if (*(u32*)(pBuf + 0x0A) >= 0x36 && *(u32*)(pBuf + 0x0A) <= 0x436 && *(u32*)(pBuf + 0x0E) == 0x28 && !pBuf[0x1D] && !*(u32*)(pBuf + 0x1E))
-		{
-			mp_BkImgData = (BITMAPFILEHEADER*)malloc(apImgData->bfSize);
-			memmove(mp_BkImgData, apImgData, apImgData->bfSize);
-			mb_BkImgChanged = TRUE;
-			mb_BkImgExist = TRUE;
-			BITMAPINFOHEADER* pBmp = (BITMAPINFOHEADER*)(mp_BkImgData+1);
-			mn_BkImgWidth = pBmp->biWidth;
-			mn_BkImgHeight = pBmp->biHeight;
-			gSet.NeedBackgroundUpdate();
-		}
-	}
+	// Это была копия данных - нужно освободить	
+	free(apImgData); apImgData = NULL;
 
 	if (gConEmu.isVisible(this) && gSet.isBgPluginAllowed)
 	{
 		Update(true/*bForce*/);
 	}
+	
+	return esbr_OK;
 }
 
 bool CVirtualConsole::HasBackgroundImage(LONG* pnBgWidth, LONG* pnBgHeight)
 {
 	if (!this) return false;
-	if (!mb_BkImgExist) return false;
+	if (!mb_BkImgExist || mb_BkImgDelete) return false;
 	
 	// Возвращаем mn_BkImgXXX чтобы не беспокоиться об указателе mp_BkImgData
 	

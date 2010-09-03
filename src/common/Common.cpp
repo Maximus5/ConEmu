@@ -628,7 +628,11 @@ DWORD WINAPI MyAssertThread(LPVOID p)
 }
 void MyAssertTrap()
 {
+#ifdef WIN64
+	_CrtDbgBreak();
+#else
 	_asm int 3;
+#endif
 }
 int MyAssertProc(const wchar_t* pszFile, int nLine, const wchar_t* pszTest)
 {

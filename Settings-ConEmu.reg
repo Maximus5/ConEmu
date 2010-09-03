@@ -84,6 +84,7 @@ REGEDIT4
 ;"PartBrush75"=hex:C8
 ;"PartBrush50"=hex:96
 ;"PartBrush25"=hex:5A
+;"PartBrushBlack"=hex:20 ; somth. like gamma for dark monitors
 
 ;; 1 - Vertical cursor
 "CursorType"=hex:01

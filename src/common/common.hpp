@@ -245,9 +245,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define CECMD_SETWINDOWPOS  32 // CESERVER_REQ_SETWINDOWPOS.
 #define CECMD_SETWINDOWRGN  33 // CESERVER_REQ_SETWINDOWRGN.
 #define CECMD_SETBACKGROUND 34 // CESERVER_REQ_SETBACKGROUND
+//#define CECMD_ONSERVERCLOSE 35 // Посылается из ConEmuC.exe перед закрытием в режиме сервера
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    47
+#define CESERVER_REQ_VER    48
 
 #define PIPEBUFSIZE 4096
 #define DATAPIPEBUFSIZE 40000
@@ -769,15 +770,33 @@ typedef struct tag_CESERVER_REQ_SETWINDOWRGN {
 	RECT  rcRects[20]; // [0] - основной окна, [
 } CESERVER_REQ_SETWINDOWRGN;
 
+// CECMD_SETBACKGROUND - приходит из плагина "PanelColorer.dll"
 // Warning! Structure has variable length. "bmp" field must be followed by bitmap data (same as in *.bmp files)
 typedef struct tag_CESERVER_REQ_SETBACKGROUND {
-	int               nType;    // Reserved. Must be 1
+	int               nType;    // Reserved for future use. Must be 1
 	BOOL              bEnabled; // TRUE - ConEmu use this image, FALSE - ConEmu use self background settings
-	int               nReserved1; // reserved for alpha
-	DWORD             nReserved2; // reserved for replaced colors
-	int               nReserved3; // reserved for background op
+	int               nReserved1; // Must by 0. reserved for alpha
+	DWORD             nReserved2; // Must by 0. reserved for replaced colors
+	int               nReserved3; // Must by 0. reserved for background op
+	
+	DWORD nReserved4; // Must by 0. reserved for flags (BmpIsTransparent, RectangleSpecified)
+	DWORD nReserved5; // Must by 0. reserved for level (Some plugins may want to draw small parts over common background)
+	RECT  rcReserved5; // Must by 0. reserved for filled rect (plugin may cover only one panel, or part of it)
+	
 	BITMAPFILEHEADER  bmp;
 } CESERVER_REQ_SETBACKGROUND;
+
+// ConEmu respond for CESERVER_REQ_SETBACKGROUND
+enum SetBackgroundResult {
+	esbr_OK = 0,               // All OK
+	esbr_InvalidArg = 1,       // Invalid CESERVER_REQ_SETBACKGROUND.bmp, or CESERVER_REQ_SETBACKGROUND
+	esbr_PluginForbidden = 2,  // "Allow plugins" unchecked in ConEmu settings ("Main" page)
+	esbr_ConEmuInShutdown = 3, // Console is closing. This is not an error, just information
+	esbr_Unexpected = 4,       // Unexpected error in ConEmu
+};
+typedef struct tag_CESERVER_REQ_SETBACKGROUNDRET {
+	int  nResult; // enum SetBackgroundResult
+} CESERVER_REQ_SETBACKGROUNDRET;
 
 typedef struct tag_CESERVER_REQ {
     CESERVER_REQ_HDR hdr;
@@ -802,6 +821,7 @@ typedef struct tag_CESERVER_REQ {
 		CESERVER_REQ_SETWINDOWPOS SetWndPos;
 		CESERVER_REQ_SETWINDOWRGN SetWndRgn;
 		CESERVER_REQ_SETBACKGROUND Background;
+		CESERVER_REQ_SETBACKGROUNDRET BackgroundRet;
 		PanelViewInit PVI;
 	};
 } CESERVER_REQ;

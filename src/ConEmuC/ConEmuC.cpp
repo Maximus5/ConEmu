@@ -567,7 +567,7 @@ wrap:
 	/* ***************************** */
 	
 	if (gnRunMode == RM_SERVER) {
-		ServerDone(iRc);
+		ServerDone(iRc, true);
 		//MessageBox(0,L"Server done...",L"ConEmuC",0);
 	} else if (gnRunMode == RM_COMSPEC) {
 		ComspecDone(iRc);

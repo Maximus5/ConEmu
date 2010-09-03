@@ -99,6 +99,7 @@ WARNING("Часто после разблокирования компьютера размер консоли изменяется (OK), 
 #define CONSOLEPROGRESSTIMEOUT 300
 #define CONSOLEPROGRESSWARNTIMEOUT 1000
 #define CONSOLEINACTIVERGNTIMEOUT 500
+#define SERVERCLOSETIMEOUT 500
 
 #ifndef INPUTLANGCHANGE_SYSCHARSET
 #define INPUTLANGCHANGE_SYSCHARSET 0x0001
@@ -191,7 +192,7 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
     mn_SelectModeSkipVk = 0;
     mn_ProcessCount = 0; 
 	mn_FarPID = 0; //mn_FarInputTID = 0;
-	mn_InRecreate = 0; mb_ProcessRestarted = FALSE;
+	mn_InRecreate = 0; mb_ProcessRestarted = FALSE; mb_InCloseConsole = FALSE;
     mn_LastSetForegroundPID = 0;
     mh_ServerSemaphore = NULL;
     memset(mh_RConServerThreads, 0, sizeof(mh_RConServerThreads));
@@ -202,6 +203,8 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
 	con.hInSetSize = CreateEvent(0,TRUE,TRUE,0);
     mb_BuferModeChangeLocked = FALSE;
 	con.DefaultBufferHeight = gSet.bForceBufferHeight ? gSet.nForceBufferHeight : gSet.DefaultBufferHeight;
+
+	ZeroStruct(m_ServerClosing);
 
 	ZeroStruct(m_Args);
 
@@ -1522,6 +1525,14 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 
         //if (bActive)
         //	gSet.Performance(tPerfInterval, FALSE);
+
+		if (pRCon->m_ServerClosing.nServerPID
+			&& pRCon->m_ServerClosing.nServerPID == pRCon->mn_ConEmuC_PID
+			&& (GetTickCount() - pRCon->m_ServerClosing.nRecieveTick) >= SERVERCLOSETIMEOUT)
+		{
+			// Видимо, сервер повис во время выхода?
+			pRCon->isConsoleClosing(); // функция позовет TerminateProcess(mh_ConEmuC)
+		}
     }
 
 	pRCon->StopSignal();
@@ -1666,6 +1677,8 @@ BOOL CRealConsole::StartProcess()
 
 	//ResetEvent(mh_CreateRootEvent);
 	mb_InCreateRoot = TRUE;
+	mb_InCloseConsole = FALSE;
+	ZeroStruct(m_ServerClosing);
 
     STARTUPINFO si;
     PROCESS_INFORMATION pi;
@@ -2627,7 +2640,8 @@ BOOL CRealConsole::OpenConsoleEventPipe()
 				DWORD dwErr = GetLastError();
 				SafeCloseHandle(mh_ConEmuCInput);
 				//if (!IsDebuggerPresent())
-				DisplayLastError(L"SetNamedPipeHandleState failed", dwErr);
+				if (!isConsoleClosing())
+					DisplayLastError(L"SetNamedPipeHandleState failed", dwErr);
 				return FALSE;
 			}
 			return TRUE; 
@@ -2639,10 +2653,13 @@ BOOL CRealConsole::OpenConsoleEventPipe()
 		{
 			TODO("Подождать, пока появится пайп с таким именем, но только пока жив mh_ConEmuC");
 			dwErr = WaitForSingleObject(mh_ConEmuC, 100);
-			if (dwErr == WAIT_OBJECT_0) {
+			if (dwErr == WAIT_OBJECT_0)
+			{
 				DEBUGSTRINPUT(L"ConEmuC was closed. OpenPipe FAILED!\n");
 				return FALSE;
 			}
+			if (!isConsoleClosing())
+				break;
 			continue;
 			//DisplayLastError(L"Could not open pipe", dwErr);
 			//return 0;
@@ -2659,7 +2676,8 @@ BOOL CRealConsole::OpenConsoleEventPipe()
 				return FALSE;
 			}
 
-			DisplayLastError(L"WaitNamedPipe failed", dwErr); 
+			if (!isConsoleClosing())
+				DisplayLastError(L"WaitNamedPipe failed", dwErr); 
 			return FALSE;
 		}
 	}
@@ -2667,7 +2685,8 @@ BOOL CRealConsole::OpenConsoleEventPipe()
 	if (mh_ConEmuCInput == NULL || mh_ConEmuCInput == INVALID_HANDLE_VALUE) {
 		// Не дождались появления пайпа. Возможно, ConEmuC еще не запустился
 		//DEBUGSTRINPUT(L" - mh_ConEmuCInput not found!\n");
-		DisplayLastError(L"mh_ConEmuCInput not found", dwErr);
+		if (!isConsoleClosing())
+			DisplayLastError(L"mh_ConEmuCInput not found", dwErr);
 		return FALSE;
 	}
 
@@ -2695,7 +2714,8 @@ void CRealConsole::PostConsoleEventPipe(MSG *pMsg)
     }
 
     TODO("Если пайп с таким именем не появится в течении 10 секунд (минуты?) - закрыть VirtualConsole показав ошибку");
-    if (mh_ConEmuCInput==NULL || mh_ConEmuCInput==INVALID_HANDLE_VALUE) {
+    if (mh_ConEmuCInput==NULL || mh_ConEmuCInput==INVALID_HANDLE_VALUE)
+	{
         // Try to open a named pipe; wait for it, if necessary. 
         if (!OpenConsoleEventPipe())
         	return;
@@ -2788,25 +2808,30 @@ void CRealConsole::PostConsoleEventPipe(MSG *pMsg)
 
     DWORD dwSize = sizeof(MSG), dwWritten;
     fSuccess = WriteFile ( mh_ConEmuCInput, pMsg, dwSize, &dwWritten, NULL);
-    if (!fSuccess) {
+    if (!fSuccess)
+	{
     	dwErr = GetLastError();
-    	if (dwErr == 0x000000E8/*The pipe is being closed.*/) {
-			fSuccess = GetExitCodeProcess(mh_ConEmuC, &dwExitCode);
-			if (fSuccess && dwExitCode!=STILL_ACTIVE)
-				goto wrap;
-    		if (OpenConsoleEventPipe()) {
-    			fSuccess = WriteFile ( mh_ConEmuCInput, pMsg, dwSize, &dwWritten, NULL);
-    			if (fSuccess)
-    				goto wrap; // таки ОК
+		if (!isConsoleClosing())
+		{
+    		if (dwErr == 0x000000E8/*The pipe is being closed.*/)
+			{
+				fSuccess = GetExitCodeProcess(mh_ConEmuC, &dwExitCode);
+				if (fSuccess && dwExitCode!=STILL_ACTIVE)
+					goto wrap;
+    			if (OpenConsoleEventPipe()) {
+    				fSuccess = WriteFile ( mh_ConEmuCInput, pMsg, dwSize, &dwWritten, NULL);
+    				if (fSuccess)
+    					goto wrap; // таки ОК
+    			}
     		}
-    	}
-		#ifdef _DEBUG
-        //DisplayLastError(L"Can't send console event (pipe)", dwErr);
-		wchar_t szDbg[128];
-		wsprintf(szDbg, L"Can't send console event (pipe)", dwErr);
-		gConEmu.DebugStep(szDbg);
-		#endif
-        goto wrap;
+			#ifdef _DEBUG
+			//DisplayLastError(L"Can't send console event (pipe)", dwErr);
+			wchar_t szDbg[128];
+			wsprintf(szDbg, L"Can't send console event (pipe)", dwErr);
+			gConEmu.DebugStep(szDbg);
+			#endif
+		}
+		goto wrap;
     }
 wrap:
 	gbInSendConEvent = FALSE;
@@ -4294,10 +4319,11 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 	}
 	else if (pIn->hdr.nCmd == CECMD_SETBACKGROUND)
 	{
-		mp_VCon->SetBackgroundImageData(pIn->Background.bEnabled ? (&pIn->Background.bmp) : NULL);
-		// Sending dummy response for ExecuteCmd command in client to be happy
 		CESERVER_REQ Out;
-		ExecutePrepareCmd(&Out, pIn->hdr.nCmd, sizeof(CESERVER_REQ_HDR));
+		ExecutePrepareCmd(&Out, pIn->hdr.nCmd, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_SETBACKGROUNDRET));
+		// Set background Image
+		Out.BackgroundRet.nResult = mp_VCon->SetBackgroundImageData(&pIn->Background);
+		//(pIn->Background.bEnabled ? (&pIn->Background.bmp) : NULL);
 		fSuccess = WriteFile(hPipe, &Out, Out.hdr.cbSize, &cbWritten, NULL);
 	}
 
@@ -4310,6 +4336,16 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 
     //CloseHandle(hPipe);
     return;
+}
+
+void CRealConsole::OnServerClosing(DWORD anSrvPID)
+{
+	if (anSrvPID == mn_ConEmuC_PID && mh_ConEmuC)
+	{
+		m_ServerClosing.nRecieveTick = GetTickCount();
+		m_ServerClosing.hServerProcess = mh_ConEmuC;
+		m_ServerClosing.nServerPID = anSrvPID;
+	}
 }
 
 int CRealConsole::GetProcesses(ConProcess** ppPrc)
@@ -5144,6 +5180,8 @@ void CRealConsole::SetHwnd(HWND ahConWnd)
     //OpenColorMapping();
         
     mb_ProcessRestarted = FALSE; // Консоль запущена
+    mb_InCloseConsole = FALSE;
+	ZeroStruct(m_ServerClosing);
 
     if (ms_VConServer_Pipe[0] == 0) {
         wchar_t szEvent[64];
@@ -5439,6 +5477,9 @@ BOOL CRealConsole::RecreateProcess(RConStartArgs *args)
 
     CloseConsole();
 
+    // mb_InCloseConsole сбросим после того, как появится новое окно!
+    //mb_InCloseConsole = FALSE;
+    
 	SetConStatus(L"Restarting process...");
 
     return true;
@@ -8249,6 +8290,24 @@ void CRealConsole::Paste()
 #endif
 }
 
+bool CRealConsole::isConsoleClosing()
+{
+	if (!this) return true;
+
+	if (m_ServerClosing.nServerPID
+		&& m_ServerClosing.nServerPID == mn_ConEmuC_PID
+		&& (GetTickCount() - m_ServerClosing.nRecieveTick) >= SERVERCLOSETIMEOUT)
+	{
+		// Видимо, сервер повис во время выхода?
+		_ASSERTE(m_ServerClosing.nServerPID==0);
+		TerminateProcess(mh_ConEmuC, 100);
+	}
+
+	if ((hConWnd == NULL) || mb_InCloseConsole)
+		return true;
+	return false;
+}
+
 void CRealConsole::CloseConsole()
 {
     if (!this) return;
@@ -8264,6 +8323,8 @@ void CRealConsole::CloseConsole()
 				CConEmuPipe pipe(nFarPID, CONEMUREADYTIMEOUT);
 				if (pipe.Init(_T("CRealConsole::CloseConsole"), TRUE))
 				{
+					mb_InCloseConsole = TRUE;
+					
 					//DWORD cbWritten=0;
 					gConEmu.DebugStep(_T("ConEmu: ACTL_QUIT"));
 					//lbExecuted = pipe.Execute(CMD_QUITFAR);
@@ -8284,6 +8345,7 @@ void CRealConsole::CloseConsole()
 			}
 		}
 
+		mb_InCloseConsole = TRUE;
         PostConsoleMessage(hConWnd, WM_CLOSE, 0, 0);
         
 	} else {

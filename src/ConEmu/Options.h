@@ -174,7 +174,7 @@ protected:
 public:
 	bool isKeyboardHooks();
 	bool isCharBorder(wchar_t inChar);
-    BYTE isPartBrush75, isPartBrush50, isPartBrush25;
+    BYTE isPartBrush75, isPartBrush50, isPartBrush25, isPartBrushBlack;
     bool isCursorV;
 	bool isCursorBlink;
     bool isCursorColor;
@@ -266,7 +266,7 @@ private:
     //COORD    bgBmp;
     //HDC      hBgDc;
 	CBackground* mp_Bg;
-	MSection mcs_BgImgData;
+	//MSection mcs_BgImgData;
 	BITMAPFILEHEADER* mp_BgImgData;
 	BOOL mb_NeedBgUpdate, mb_WasVConBgImage;
     FILETIME ftBgModified;
