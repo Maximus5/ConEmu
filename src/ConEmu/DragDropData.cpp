@@ -1402,6 +1402,8 @@ void CDragDropData::DragFeedBack(DWORD dwEffect)
 
 BOOL CDragDropData::IsDragStarting()
 {
+	if (!this)
+		return FALSE;
 	if (!mb_DragStarting)
 		return FALSE;
 
@@ -1422,6 +1424,8 @@ BOOL CDragDropData::IsDragStarting()
 
 BOOL CDragDropData::ForwardMessage(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 {
+	if (!this)
+		return FALSE;
 	if (!mb_DragStarting)
 		return FALSE;
 

@@ -187,7 +187,7 @@ CSettings::CSettings()
     memset(mn_CounterTick, 0, sizeof(*mn_CounterTick)*(tPerfInterval-gbPerformance));
     //hBgBitmap = NULL; bgBmp = MakeCoord(0,0); hBgDc = NULL; 
 	isBackgroundImageValid = false;
-	mb_NeedBgUpdate = FALSE; mb_WasVConBgImage = FALSE;
+	mb_NeedBgUpdate = FALSE; mb_WasVConBgImage = FALSE; mb_BgLastFade = false;
 	ftBgModified.dwHighDateTime = ftBgModified.dwLowDateTime = nBgModifiedTick = 0;
 	mp_Bg = NULL; mp_BgImgData = NULL;
     ZeroStruct(mh_Font);
@@ -351,7 +351,7 @@ void CSettings::InitSettings()
 	bgImageDarker = 0x46;
 	nBgImageColors = 1|2;
 	bgOperation = eUpLeft;
-	isBgPluginAllowed = true;
+	isBgPluginAllowed = 1;
 
 	nTransparent = 255;
 	//isColorKey = false;
@@ -679,6 +679,7 @@ void CSettings::LoadSettings()
 		reg->Load(L"bgOperation", bgOperation);
 			if (bgOperation!=eUpLeft && bgOperation!=eStretch && bgOperation!=eTile) bgOperation = 0;
 		reg->Load(L"bgPluginAllowed", isBgPluginAllowed);
+			if (isBgPluginAllowed!=0 && isBgPluginAllowed!=1 && isBgPluginAllowed!=2) isBgPluginAllowed = 1;
 
 		reg->Load(L"AlphaValue", nTransparent);
 			if (nTransparent < MIN_ALPHA_VALUE) nTransparent = MIN_ALPHA_VALUE;
@@ -1614,7 +1615,7 @@ LRESULT CSettings::OnInitDialog_Main()
 	
 	CheckDlgButton(hMain, rBgUpLeft+(UINT)bgOperation, BST_CHECKED);
 	
-	if (isBgPluginAllowed) CheckDlgButton(hMain, cbBgAllowPlugin, BST_CHECKED);
+	if (isBgPluginAllowed) CheckDlgButton(hMain, cbBgAllowPlugin, (isBgPluginAllowed == 1) ? BST_CHECKED : BST_INDETERMINATE);
 
 	if (isShowBgImage)
 	{
@@ -5847,7 +5848,11 @@ BYTE CSettings::GetFadeColorItem(BYTE c)
 			return mn_FadeHigh;
 		default:
 			nRc = ((((DWORD)c) + mn_FadeLow) * mn_FadeHigh) >> 8;
-			_ASSERTE(nRc < 255);
+			if (nRc >= 255)
+			{
+				//_ASSERTE(nRc <= 255); -- такие (mn_FadeLow&mn_FadeHigh) пользователь в настройке мог задать
+				return 255;
+			}
 			return (BYTE)nRc;
 	}
 }
@@ -5970,6 +5975,16 @@ bool CSettings::PrepareBackground(HDC* phBgDc, COORD* pbgBmpSize)
 */
 	bool lbForceUpdate = false;
 	LONG lMaxBgWidth = 0, lMaxBgHeight = 0;
+	bool bIsForeground = gConEmu.isMeForeground(false);
+
+	if (!mb_NeedBgUpdate)
+	{
+		if ((mb_BgLastFade == bIsForeground && gSet.isFadeInactive)
+			|| (!gSet.isFadeInactive && mb_BgLastFade))
+		{
+			mb_NeedBgUpdate = TRUE;
+		}
+	}
 
 	PollBackgroundFile();
 
@@ -5977,8 +5992,10 @@ bool CSettings::PrepareBackground(HDC* phBgDc, COORD* pbgBmpSize)
 	{
 		mb_NeedBgUpdate = TRUE;
 	}
-	// Может изменился размер окна?
-	else if (!mb_NeedBgUpdate && !mb_WasVConBgImage)
+
+
+	// Если это НЕ плагиновая подложка - необходимо проверить размер требуемой картинки
+	if (!mb_WasVConBgImage)
 	{
 		if (bgOperation == eUpLeft)
 		{
@@ -6008,8 +6025,13 @@ bool CSettings::PrepareBackground(HDC* phBgDc, COORD* pbgBmpSize)
 				lMaxBgHeight = klMax(rcWork.bottom - rcWork.top,mon.rcMonitor.bottom - mon.rcMonitor.top);
 			}
 
-			if (mp_Bg->bgSize.X != lMaxBgWidth || mp_Bg->bgSize.Y != lMaxBgHeight)
+			if (mp_Bg)
+			{
+				if (mp_Bg->bgSize.X != lMaxBgWidth || mp_Bg->bgSize.Y != lMaxBgHeight)
+					mb_NeedBgUpdate = TRUE;
+			} else {
 				mb_NeedBgUpdate = TRUE;
+			}
 		}
 	}
 
@@ -6046,6 +6068,8 @@ bool CSettings::PrepareBackground(HDC* phBgDc, COORD* pbgBmpSize)
 			if (!mp_Bg)
 				mp_Bg = new CBackground;
 
+			mb_BgLastFade = (!bIsForeground && gSet.isFadeInactive);
+
 			TODO("Переделать, ориентироваться только на размер картинки - неправильно");
 			TODO("DoubleView - скорректировать X,Y");
 			if (lbVConImage)
@@ -6072,7 +6096,7 @@ bool CSettings::PrepareBackground(HDC* phBgDc, COORD* pbgBmpSize)
 					lMaxBgHeight = pBmp->biHeight;
 				}
 				if (!mp_Bg->CreateField(lMaxBgWidth, lMaxBgHeight) ||
-					!mp_Bg->FillBackground(mp_BgImgData, 0,0, lMaxBgWidth, lMaxBgHeight, op))
+					!mp_Bg->FillBackground(mp_BgImgData, 0,0, lMaxBgWidth, lMaxBgHeight, op, mb_BgLastFade))
 				{
 					delete mp_Bg;
 					mp_Bg = NULL;
@@ -6104,7 +6128,11 @@ bool CSettings::IsBackgroundEnabled(CVirtualConsole* apVCon)
 {
 	// Если плагин фара установил свой фон
 	if (isBgPluginAllowed && apVCon && apVCon->HasBackgroundImage(NULL,NULL))
+	{
+		if (apVCon->isEditor || apVCon->isViewer)
+			return (isBgPluginAllowed == 1);
 		return true;
+	}
 
 	// Иначе - по настрокам ConEmu
 	if (!isBackgroundImageValid)

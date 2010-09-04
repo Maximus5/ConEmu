@@ -251,6 +251,7 @@ CConEmuMain::CConEmuMain()
 	mn_MsgFlashWindow = RegisterWindowMessage(CONEMUMSG_FLASHWINDOW);
 	mn_MsgPostAltF9 = ++nAppMsg;
 	mn_MsgPostSetBackground = ++nAppMsg;
+	mn_MsgInitInactiveDC = ++nAppMsg;
 	mn_MsgLLKeyHook = RegisterWindowMessage(CONEMUMSG_LLKEYHOOK);
 }
 
@@ -4197,6 +4198,11 @@ VOID CConEmuMain::WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD anEvent, HWND 
     }
 #endif
 
+void CConEmuMain::InitInactiveDC(CVirtualConsole* apVCon)
+{
+	PostMessage(ghWnd, mn_MsgInitInactiveDC, 0, (LPARAM)apVCon);
+}
+
 void CConEmuMain::Invalidate(CVirtualConsole* apVCon)
 {
 	if (!this || !apVCon) return;
@@ -6361,7 +6367,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
     }
 
 	// Forwarding сообщений в нить драга
-	if (mp_DragDrop->IsDragStarting()) {
+	if (mp_DragDrop && mp_DragDrop->IsDragStarting()) {
 		if (mp_DragDrop->ForwardMessage(hWnd, messg, wParam, lParam))
 			return 0;
 	}
@@ -8940,6 +8946,13 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 				// Поскольку консоль уже была закрыта - нужно просто освободить данные
 				CESERVER_REQ_SETBACKGROUND* p = (CESERVER_REQ_SETBACKGROUND*)lParam;
 				free(p);
+			}
+		} else if (messg == gConEmu.mn_MsgInitInactiveDC) {
+			if (isValid((CVirtualConsole*)lParam)
+				&& !isActive((CVirtualConsole*)lParam))
+			{
+				((CVirtualConsole*)lParam)->InitDC(true, true);
+				((CVirtualConsole*)lParam)->LoadConsoleData();
 			}
 		}
 

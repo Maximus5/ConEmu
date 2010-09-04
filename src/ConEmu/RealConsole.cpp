@@ -1379,13 +1379,18 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 			bool bCheckStatesFindPanels = false, lbForceUpdateProgress = false;
 
 			// ≈сли консоль неактивна - CVirtualConsole::Update не вызываетс€ и диалоги не детект€тс€. ј это требуетс€.
-			if (!bActive && pRCon->con.bConsoleDataChanged) {
+			if (!bActive && pRCon->con.bConsoleDataChanged)
+			{
 				DWORD nCurTick = GetTickCount();
 				DWORD nDelta = nCurTick - pRCon->con.nLastInactiveRgnCheck;
-				if (nDelta > CONSOLEINACTIVERGNTIMEOUT) {
+				if (nDelta > CONSOLEINACTIVERGNTIMEOUT)
+				{
 					pRCon->con.nLastInactiveRgnCheck = nCurTick;
-					pRCon->mp_VCon->LoadConsoleData();
-					bCheckStatesFindPanels = true;
+					// ≈сли при старте ConEmu создано несколько консолей через '@'
+					// то все кроме активной - не инициализированы (InitDC не вызывалс€),
+					// что нужно делать в главной нити, LoadConsoleData об этом позаботитс€
+					if (pRCon->mp_VCon->LoadConsoleData())
+						bCheckStatesFindPanels = true;
 				}
 			}
 
@@ -1532,6 +1537,8 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 		{
 			// ¬идимо, сервер повис во врем€ выхода?
 			pRCon->isConsoleClosing(); // функци€ позовет TerminateProcess(mh_ConEmuC)
+			nWait = IDEVENT_CONCLOSED;
+			break;
 		}
     }
 
@@ -8298,9 +8305,13 @@ bool CRealConsole::isConsoleClosing()
 		&& m_ServerClosing.nServerPID == mn_ConEmuC_PID
 		&& (GetTickCount() - m_ServerClosing.nRecieveTick) >= SERVERCLOSETIMEOUT)
 	{
-		// ¬идимо, сервер повис во врем€ выхода?
-		_ASSERTE(m_ServerClosing.nServerPID==0);
-		TerminateProcess(mh_ConEmuC, 100);
+		// ¬идимо, сервер повис во врем€ выхода? Ќо проверим, вдруг он все-таки успел завершитьс€?
+		if (WaitForSingleObject(mh_ConEmuC, 0))
+		{
+			_ASSERTE(m_ServerClosing.nServerPID==0);
+			TerminateProcess(mh_ConEmuC, 100);
+		}
+		return true;
 	}
 
 	if ((hConWnd == NULL) || mb_InCloseConsole)
@@ -9859,6 +9870,13 @@ void CRealConsole::ApplyConsoleInfo()
 	if (con.bDebugLocked)
 		return;
 #endif
+
+	if (m_ServerClosing.nServerPID && m_ServerClosing.nServerPID == mn_ConEmuC_PID)
+	{
+		// —ервер уже закрываетс€. попытка считать данные из консоли может привести к зависанию!
+		SetEvent(mh_ApplyFinished);
+		return;
+	}
 
 	ResetEvent(mh_ApplyFinished);
     

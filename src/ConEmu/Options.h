@@ -116,7 +116,7 @@ public:
 	u8 bgImageDarker;
 	DWORD nBgImageColors;
 	char bgOperation; // BackgroundOp {eUpLeft = 0, eStretch = 1, eTile = 2}
-	bool isBgPluginAllowed;
+	char isBgPluginAllowed;
 
     /* Transparency */
     u8 nTransparent;
@@ -269,6 +269,7 @@ private:
 	//MSection mcs_BgImgData;
 	BITMAPFILEHEADER* mp_BgImgData;
 	BOOL mb_NeedBgUpdate, mb_WasVConBgImage;
+	bool mb_BgLastFade;
     FILETIME ftBgModified;
 	DWORD nBgModifiedTick;
 public:

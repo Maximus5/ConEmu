@@ -5,9 +5,10 @@ SRCS = ConEmuPlugin.cpp \
        ConEmuInjects.cpp \
        ../common/SetHook.cpp \
        ../common/Common.cpp \
-       ../common/ConEmuCheck.cpp
+       ../common/ConEmuCheck.cpp \
+       ../common/WinObjects.cpp
 
-USERLIBS = -lversion
+USERLIBS = -lversion -lwininet
 
 
 

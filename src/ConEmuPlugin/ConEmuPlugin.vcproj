@@ -1281,7 +1281,7 @@
 				>
 				<Tool
 					Name="VCCustomBuildTool"
-					CommandLine="$(InputDir)lang.cmd &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
+					CommandLine="if exist &quot;$(InputDir)lang.cmd&quot; $(InputDir)lang.cmd &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
 					Outputs="ConEmu_Lang.h"
 				/>
 			</FileConfiguration>
@@ -1290,7 +1290,7 @@
 				>
 				<Tool
 					Name="VCCustomBuildTool"
-					CommandLine="$(InputDir)lang.cmd &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
+					CommandLine="if exist &quot;$(InputDir)lang.cmd&quot; $(InputDir)lang.cmd &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
 					Outputs="ConEmu_Lang.h"
 				/>
 			</FileConfiguration>
@@ -1299,7 +1299,7 @@
 				>
 				<Tool
 					Name="VCCustomBuildTool"
-					CommandLine="$(InputDir)lang.cmd&#x0D;&#x0A;"
+					CommandLine="if exist &quot;$(InputDir)lang.cmd&quot; $(InputDir)lang.cmd&#x0D;&#x0A;"
 					Outputs="ConEmu_Lang.h"
 				/>
 			</FileConfiguration>
@@ -1308,7 +1308,7 @@
 				>
 				<Tool
 					Name="VCCustomBuildTool"
-					CommandLine="$(InputDir)lang.cmd&#x0D;&#x0A;"
+					CommandLine="if exist &quot;$(InputDir)lang.cmd&quot; $(InputDir)lang.cmd&#x0D;&#x0A;"
 					Outputs="ConEmu_Lang.h"
 				/>
 			</FileConfiguration>
@@ -1318,7 +1318,7 @@
 				>
 				<Tool
 					Name="VCCustomBuildTool"
-					CommandLine="$(InputDir)lang.cmd &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
+					CommandLine="if exist &quot;$(InputDir)lang.cmd&quot; $(InputDir)lang.cmd &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
 					Outputs="ConEmu_Lang.h"
 				/>
 			</FileConfiguration>
@@ -1328,7 +1328,7 @@
 				>
 				<Tool
 					Name="VCCustomBuildTool"
-					CommandLine="$(InputDir)lang.cmd &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
+					CommandLine="if exist &quot;$(InputDir)lang.cmd&quot; $(InputDir)lang.cmd &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
 					Outputs="ConEmu_Lang.h"
 				/>
 			</FileConfiguration>
@@ -1337,7 +1337,7 @@
 				>
 				<Tool
 					Name="VCCustomBuildTool"
-					CommandLine="$(InputDir)lang.cmd &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
+					CommandLine="if exist &quot;$(InputDir)lang.cmd&quot; $(InputDir)lang.cmd &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
 					Outputs="ConEmu_Lang.h"
 				/>
 			</FileConfiguration>
@@ -1346,7 +1346,7 @@
 				>
 				<Tool
 					Name="VCCustomBuildTool"
-					CommandLine="$(InputDir)lang.cmd &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
+					CommandLine="if exist &quot;$(InputDir)lang.cmd&quot; $(InputDir)lang.cmd &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
 					Outputs="ConEmu_Lang.h"
 				/>
 			</FileConfiguration>
@@ -1356,7 +1356,7 @@
 				>
 				<Tool
 					Name="VCCustomBuildTool"
-					CommandLine="$(InputDir)lang.cmd &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
+					CommandLine="if exist &quot;$(InputDir)lang.cmd&quot; $(InputDir)lang.cmd &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
 					Outputs="ConEmu_Lang.h"
 				/>
 			</FileConfiguration>
@@ -1366,7 +1366,7 @@
 				>
 				<Tool
 					Name="VCCustomBuildTool"
-					CommandLine="$(InputDir)lang.cmd &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
+					CommandLine="if exist &quot;$(InputDir)lang.cmd&quot; $(InputDir)lang.cmd &quot;$(TargetDir)&quot;&#x0D;&#x0A;"
 					Outputs="ConEmu_Lang.h"
 				/>
 			</FileConfiguration>

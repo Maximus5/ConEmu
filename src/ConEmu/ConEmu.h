@@ -255,6 +255,7 @@ protected:
 	UINT mn_MsgPostOnBufferHeight;
 	UINT mn_MsgPostAltF9;
 	UINT mn_MsgPostSetBackground;
+	UINT mn_MsgInitInactiveDC;
 	//UINT mn_MsgSetForeground;
 	UINT mn_MsgFlashWindow;
 	UINT mn_MsgLLKeyHook;
@@ -312,6 +313,7 @@ public:
 	static DWORD GetWindowStyleEx();
 	LRESULT GuiShellExecuteEx(SHELLEXECUTEINFO* lpShellExecute, BOOL abAllowAsync);
 	BOOL Init();
+	void InitInactiveDC(CVirtualConsole* apVCon);
 	void Invalidate(CVirtualConsole* apVCon);
 	void InvalidateAll();
 	bool isActive(CVirtualConsole* apVCon);

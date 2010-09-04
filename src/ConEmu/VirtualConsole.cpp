@@ -440,6 +440,12 @@ void CVirtualConsole::PointersZero()
 // InitDC вызывается только при критических изменениях (размеры, шрифт, и т.п.) когда нужно пересоздать DC и Bitmap
 bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize)
 {
+	if (!this || !mp_RCon)
+	{
+		_ASSERTE(mp_RCon != NULL);
+		return false;
+	}
+
     MSectionLock SCON; SCON.Lock(&csCON);
     BOOL lbNeedCreateBuffers = FALSE;
     
@@ -453,11 +459,13 @@ bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize)
 
 
 #ifdef _DEBUG
-    if (mp_RCon->IsConsoleThread()) {
-        //_ASSERTE(!mp_RCon->IsConsoleThread());
-    }
-    if (TextHeight == 24)
-        TextHeight = 24;
+	// Теперь - выполняется в главной нити
+	//if (mp_RCon->IsConsoleThread())
+	//{
+	//    //_ASSERTE(!mp_RCon->IsConsoleThread());
+	//}
+	//if (TextHeight == 24)
+	//    TextHeight = 24;
     _ASSERT(TextHeight >= 5);
 #endif
 
@@ -547,7 +555,8 @@ bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize)
                 gConEmu.UpdateSizes();
 
             //if (!lbWasInitialized) // если зовется InitDC значит размер консоли изменился
-            if (!abNoWndResize) {
+            if (!abNoWndResize)
+			{
                 if (gConEmu.isVisible(this))
                     gConEmu.OnSize(-1);
             }
@@ -1281,8 +1290,24 @@ BOOL CVirtualConsole::CheckTransparentRgn()
 	return lbRgnChanged;
 }
 
-void CVirtualConsole::LoadConsoleData()
+bool CVirtualConsole::LoadConsoleData()
 {
+	if (!this)
+	{
+		_ASSERTE(this!=NULL);
+		return false;
+	}
+
+	// Может быть, если консоль неактивна, т.к. CVirtualConsole::Update не вызывается и диалоги не детектятся. А это требуется.
+	if (!mpsz_ConChar || !mpn_ConAttrEx)
+	{
+		// Если при старте ConEmu создано несколько консолей через '@'
+		// то все кроме активной - не инициализированы (InitDC не вызывался),
+		// что нужно делать в главной нити, LoadConsoleData об этом позаботится
+		gConEmu.InitInactiveDC(this);
+		return false;
+	}
+
 	gSet.Performance(tPerfData, FALSE);
 
 	{
@@ -1334,6 +1359,8 @@ void CVirtualConsole::LoadConsoleData()
 	mrc_UCharMap = rcGlyph;
 
 	gSet.Performance(tPerfData, TRUE);
+
+	return true;
 }
 
 bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC)
@@ -1413,7 +1440,7 @@ bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC)
 
         if (pSDC && !pSDC->isLocked()) // Если секция еще не заблокирована (отпускает - вызывающая функция)
             pSDC->Lock(&csDC, TRUE, 200); // но по таймауту, чтобы не повисли ненароком
-        if (!InitDC(ahDc!=NULL && !isForce/*abNoDc*/, false/*abNoWndResize*/))
+        if (!InitDC(ahDc!=NULL && !isForce/*abNoDc*/ , false/*abNoWndResize*/))
             return false;
 
 		if (lbSizeChanged)
@@ -3997,8 +4024,12 @@ bool CVirtualConsole::PutBackgroundImage(CBackground* pBack, LONG X, LONG Y, LON
 		return false;
 	if (!mp_BkImgData)
 		return false;
+
+	bool lbFade = false;
+	if (gSet.isFadeInactive && !gConEmu.isMeForeground(false))
+		lbFade = true;
 	
-	bool lbRc = pBack->FillBackground(&mp_BkImgData->bmp, X, Y, Width, Height, eUpLeft);
+	bool lbRc = pBack->FillBackground(&mp_BkImgData->bmp, X, Y, Width, Height, eUpLeft, lbFade);
 
 	mb_BkImgChanged = FALSE;
 	

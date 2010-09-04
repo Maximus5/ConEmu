@@ -124,7 +124,8 @@ bool CBackground::CreateField(int anWidth, int anHeight)
 bool CBackground::FillBackground(
 	const BITMAPFILEHEADER* apBkImgData, // Содержимое *.bmp файла
 	LONG X, LONG Y, LONG Width, LONG Height, // Куда нужно положить картинку
-	BackgroundOp Operation)              // {eUpLeft = 0, eStretch = 1, eTile = 2}
+	BackgroundOp Operation,              // {eUpLeft = 0, eStretch = 1, eTile = 2}
+	bool abFade)                         // затемнение картинки, когда ConEmu НЕ в фокусе
 {
 	if (!hBgDc)
 		return false;
@@ -160,6 +161,8 @@ bool CBackground::FillBackground(
     if (nBitSize > nCalcSize)
     	nBitSize = nCalcSize;
     
+	if (!gSet.isFadeInactive)
+		abFade = false;
     
 
 	// Создать MemoryDC
@@ -181,6 +184,34 @@ bool CBackground::FillBackground(
 		    	
 		    	// Теперь - скопировать биты из hLoadDC в hBgDc с учетом положения и Operation
 		    	BLENDFUNCTION bf = {AC_SRC_OVER, 0, gSet.bgImageDarker, 0};
+				if (abFade)
+				{
+					// GetFadeColor возвращает ColorRef, поэтому при вызове для (0..255)
+					// он должен вернуть "коэффициент" затемнения или осветления
+					DWORD nHigh = (gSet.GetFadeColor(255) & 0xFF);
+					if (nHigh < 255)
+					{
+						// Затемнение фона
+						bf.SourceConstantAlpha = nHigh * bf.SourceConstantAlpha / 255;
+					}
+					//// "коэффициент" вернется в виде RGB (R==G==B)
+					//DWORD nLow = gSet.GetFadeColor(0);
+					//if (nLow > 0 && ((nLow & 0xFF) < nHigh))
+					//{
+					//	// Осветление фона
+					//	RECT r = {X,Y,X+Width,Y+Height};
+					//	HBRUSH h = CreateSolidBrush(nLow);
+					//	FillRect(hBgDc, &r, h);
+					//	DeleteObject(h);
+					//	// еще нужно убедиться, что сама картинка будет немного прозрачной,
+					//	// чтобы это осветление было заметно
+					//	if ((nLow & 0xFF) < 200)
+					//		bf.SourceConstantAlpha = klMin((int)bf.SourceConstantAlpha, (int)(255 - (nLow & 0xFF)));
+					//	else if (bf.SourceConstantAlpha >= 240)
+					//		bf.SourceConstantAlpha = 240;
+					//}
+				}
+
 		    	if (Operation == eUpLeft)
 		    	{
 		    		int W = klMin(Width,pHdr->biWidth); int H = klMin(Height,pHdr->biHeight);
@@ -205,6 +236,22 @@ bool CBackground::FillBackground(
 			    		}
 		    		}
 		    	}
+
+				TODO("Осветление картинки в Fade, когда gSet.mn_FadeLow>0");
+				//if (abFade)
+				//{
+				//	// "коэффициент" вернется в виде RGB (R==G==B)
+				//	DWORD nLow = gSet.GetFadeColor(0);
+				//	if (nLow)
+				//	{
+				//		// Осветление фона
+				//		RECT r = {X,Y,X+Width,Y+Height};
+				//		HBRUSH h = CreateSolidBrush(nLow);
+				//		// Осветлить картинку
+				//		//FillRect(hBgDc, &r, h);
+				//		DeleteObject(h);
+				//	}
+				//}
 		    	
 		    	SelectObject(hLoadDC, hOldLoadBmp);
 			}

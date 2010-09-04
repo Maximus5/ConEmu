@@ -1,3 +1,9 @@
+2010.09.04
+[%] Issue 290: Exception triggered in CRealConsole::MonitorThread.
+[*] Background image: картинка затемняется в соответсвии с "Fade contents when inactive".
+[*] Background image: флажок 'Allow plugins' в третьем состоянии разрешает отрисовку фона плагинами только в панелях.
+
+
 2010.09.03
 [%] В консоли не детектился 'одноциферный' прогресс операции.
 [%] При отключенном 'Fix FAR borders' не всегда срабатывал 'Enhance progressbars and scrollbars'.

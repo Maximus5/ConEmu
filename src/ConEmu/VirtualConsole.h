@@ -51,7 +51,7 @@ public:
     WARNING("Сделать protected!");
 	uint TextWidth, TextHeight; // размер в символах
 	uint Width, Height; // размер в пикселях
-	void LoadConsoleData();
+	bool LoadConsoleData();
 private:
 	uint nMaxTextWidth, nMaxTextHeight; // размер в символах
 private:
@@ -91,6 +91,7 @@ private:
 	BOOL    mb_ConDataChanged;
 	HRGN    mh_TransparentRgn;
 	//
+public:
 	bool InitDC(bool abNoDc, bool abNoWndResize);
 private:
 	enum _PartType{

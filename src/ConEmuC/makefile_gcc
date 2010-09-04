@@ -4,7 +4,8 @@ SRCS = ConEmuC.cpp \
        ConEmuSrv.cpp \
        execute.cpp \
        ../common/Common.cpp \
-       ../Common/ConEmuCheck.cpp
+       ../Common/ConEmuCheck.cpp \
+       ../Common/WinObjects.cpp
 
 USERLIBS = -lkernel32
 #-lversion
