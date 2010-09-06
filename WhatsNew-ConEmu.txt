@@ -1,3 +1,7 @@
+2010.09.06
+[%] Фон, заданный плагином отображался не только в Far.
+
+
 2010.09.04
 [%] Issue 290: Exception triggered in CRealConsole::MonitorThread.
 [*] Background image: картинка затемняется в соответсвии с "Fade contents when inactive".

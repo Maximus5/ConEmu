@@ -4183,6 +4183,7 @@ enum SetBackgroundResult CVirtualConsole::SetBackgroundImageData(CESERVER_REQ_SE
 bool CVirtualConsole::HasBackgroundImage(LONG* pnBgWidth, LONG* pnBgHeight)
 {
 	if (!this) return false;
+	if (!mp_RCon || !mp_RCon->isFar()) return false;
 	if (!mb_BkImgExist || mb_BkImgDelete) return false;
 	
 	// ¬озвращаем mn_BkImgXXX чтобы не беспокоитьс€ об указателе mp_BkImgData
