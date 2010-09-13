@@ -95,7 +95,7 @@ protected:
 	BOOL mb_DragDropRegistered;
 protected:
 	ITEMIDLIST m_DesktopID;
-	void EnumDragFormats(IDataObject * pDataObject);
+	void EnumDragFormats(IDataObject * pDataObject, HANDLE hDumpFile = NULL);
 	//DragImageBits m_BitsInfo;
 	HWND mh_Overlapped;
 	HDC mh_BitsDC;

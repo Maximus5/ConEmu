@@ -2851,8 +2851,19 @@ void CConEmuMain::UpdateIdealRect(BOOL abAllowUseConSize/*=FALSE*/)
 
 void CConEmuMain::DebugStep(LPCTSTR asMsg)
 {
-    if ((gSet.isDebugSteps && ghWnd) || !asMsg)
-        SetWindowText(ghWnd, asMsg ? asMsg : Title);
+    if (gSet.isDebugSteps && ghWnd)
+	{
+		if (asMsg && *asMsg)
+		{
+			SetWindowText(ghWnd, asMsg);
+		}
+		else
+		{
+			// Обновит заголовок в соответствии с возможными процентами в неактивной консоли
+			// и выполнит это в главной нити, если необходимо
+			UpdateTitle();
+		}
+	}
 }
 
 DWORD_PTR CConEmuMain::GetActiveKeyboardLayout()
@@ -3882,31 +3893,44 @@ void CConEmuMain::UpdateProgress(/*BOOL abUpdateTitle*/)
     short nProgress = -1, n;
     BOOL bActiveHasProgress = FALSE;
 	BOOL bWasError = FALSE;
-    if ((nProgress = mp_VActive->RCon()->GetProgress(&bWasError)) >= 0) {
+    if ((nProgress = mp_VActive->RCon()->GetProgress(&bWasError)) >= 0)
+	{
         mn_Progress = nProgress;
         bActiveHasProgress = TRUE;
     }
 	// нас интересует возможное наличие ошибки во всех остальных консолях
-    for (UINT i = 0; i < MAX_CONSOLE_COUNT; i++) {
-        if (mp_VCon[i]) {
-            n = mp_VCon[i]->RCon()->GetProgress(&bWasError);
-            if (!bActiveHasProgress && n > nProgress) nProgress = n;
+    for (UINT i = 0; i < MAX_CONSOLE_COUNT; i++)
+	{
+        if (mp_VCon[i])
+		{
+			BOOL bCurError = FALSE;
+            n = mp_VCon[i]->RCon()->GetProgress(&bCurError);
+			if (bCurError)
+				bWasError = TRUE;
+            if (!bActiveHasProgress && n > nProgress)
+				nProgress = n;
         }
     }
-	if (!bActiveHasProgress) {
+	if (!bActiveHasProgress) 
+	{
         mn_Progress = min(nProgress,100);
     }
 
     static short nLastProgress = -1;
 	static BOOL  bLastProgressError = FALSE;
-    if (nLastProgress != mn_Progress  || bLastProgressError != bWasError) {
+    if (nLastProgress != mn_Progress  || bLastProgressError != bWasError)
+	{
         HRESULT hr = S_OK;
-        if (mp_TaskBar3) {
-            if (mn_Progress >= 0) {
+        if (mp_TaskBar3)
+		{
+            if (mn_Progress >= 0)
+			{
                 hr = mp_TaskBar3->SetProgressValue(ghWnd, mn_Progress, 100);
                 if (nLastProgress == -1 || bLastProgressError != bWasError)
 					hr = mp_TaskBar3->SetProgressState(ghWnd, bWasError ? TBPF_ERROR : TBPF_NORMAL);
-            } else {
+            }
+			else
+			{
                 hr = mp_TaskBar3->SetProgressState(ghWnd, TBPF_NOPROGRESS);
             }
         }
@@ -3914,21 +3938,26 @@ void CConEmuMain::UpdateProgress(/*BOOL abUpdateTitle*/)
         nLastProgress = mn_Progress;
 		bLastProgressError = bWasError;
     }
-    if (mn_Progress >= 0 && !bActiveHasProgress) {
+    if (mn_Progress >= 0 && !bActiveHasProgress)
+	{
         psTitle = MultiTitle;
         wsprintf(MultiTitle+lstrlen(MultiTitle), L"{*%i%%} ", mn_Progress);
     }
 
-    if (gSet.isMulti && !gConEmu.mp_TabBar->IsShown()) {
+    if (gSet.isMulti && !gConEmu.mp_TabBar->IsShown())
+	{
         int nCur = 1, nCount = 0;
-        for (int n=0; n<MAX_CONSOLE_COUNT; n++) {
-            if (mp_VCon[n]) {
+        for (int n=0; n<MAX_CONSOLE_COUNT; n++)
+		{
+            if (mp_VCon[n])
+			{
                 nCount ++;
                 if (mp_VActive == mp_VCon[n])
                     nCur = n+1;
             }
         }
-        if (nCount > 1) {
+        if (nCount > 1)
+		{
             psTitle = MultiTitle;
             wsprintf(MultiTitle+lstrlen(MultiTitle), L"[%i/%i] ", nCur, nCount);
         }

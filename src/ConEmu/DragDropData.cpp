@@ -520,7 +520,7 @@ template <class T> LPITEMIDLIST PidlGetNextItem(
 		return NULL;
 };
 template <class T> void PidlDump(
-	__in T pidl
+	__in T pidl, HANDLE hDumpFile = NULL
 	)
 {
 	LPITEMIDLIST p = (LPITEMIDLIST)(pidl);
@@ -545,14 +545,24 @@ template <class T> void PidlDump(
 		}
 		szDump[i++] = '\n';
 		szDump[i++] = 0;
-		OutputDebugStringA(szDump);
+		if (hDumpFile)
+		{
+			wchar_t szDumpW[512]; DWORD nWritten;
+			MultiByteToWideChar(CP_ACP, 0, szDump, -1, szDumpW, 512);
+			WriteFile(hDumpFile, szDumpW, lstrlen(szDumpW)*2, &nWritten, NULL);
+		}
+		else
+		{
+			OutputDebugStringA(szDump);
+		}
 
 		p = (LPITEMIDLIST)(LPBYTE)(((LPBYTE)p) + p->mkid.cb);
 		nLevel++;
 	}
 }
 
-void CDragDropData::EnumDragFormats(IDataObject * pDataObject)
+// Если передан hDumpFile - запись полной информации в текстовый файл
+void CDragDropData::EnumDragFormats(IDataObject * pDataObject, HANDLE hDumpFile /*= NULL*/)
 {
 	//BOOL lbDoEnum = FALSE;
 	//if (!lbDoEnum) return;
@@ -563,19 +573,30 @@ void CDragDropData::EnumDragFormats(IDataObject * pDataObject)
 	STGMEDIUM stg[20];
 	LPCWSTR psz[20];
 	SIZE_T memsize[20];
-	TCHAR szName[20][MAX_PATH*2];
-	ULONG nCnt = sizeof(fmt)/sizeof(*fmt);
+	wchar_t szName[20][MAX_PATH*2];
+	LPWSTR pszData[20];
+	ULONG nCnt = countof(fmt);
 	UINT i;
+	DWORD nWritten;
 
 		memset(fmt, 0, sizeof(fmt));
 		memset(stg, 0, sizeof(stg));
 		memset(psz, 0, sizeof(psz));
+		memset(pszData, 0, sizeof(pszData));
+		
+	if (hDumpFile) WriteFile(hDumpFile, "\xFF\xFE", 2, &nWritten, NULL);
 
 	hr = pDataObject->EnumFormatEtc(DATADIR_GET,&pEnum);
-	if (hr==S_OK) {
-		
-		
+	if (hr==S_OK)
+	{
 		hr = pEnum->Next(nCnt, fmt, &nCnt);
+		_ASSERTE(nCnt <= countof(fmt));
+		
+		if (hDumpFile)
+		{
+			wsprintf(szName[0], L"Drag object contains %i formats\n\n", nCnt);
+			WriteFile(hDumpFile, szName[0], lstrlen(szName[0])*2, &nWritten, NULL);
+		}
 
 		pEnum->Release();
 		
@@ -584,11 +605,13 @@ void CDragDropData::EnumDragFormats(IDataObject * pDataObject)
 		/*
 		CFSTR_PREFERREDDROPEFFECT ?
 		*/
-		for (i=0; i<nCnt; i++) {
+		for (i=0; i<nCnt; i++)
+		{
 			szName[i][0] = 0;
 			if (!GetClipboardFormatName(fmt[i].cfFormat, szName[i], MAX_PATH))
 			{
-				switch (fmt[i].cfFormat) {
+				switch (fmt[i].cfFormat)
+				{
 				case 1: lstrcpy(szName[i], L"CF_TEXT"); break;
 				case 2: lstrcpy(szName[i], L"CF_BITMAP"); break;
 				case 3: lstrcpy(szName[i], L"CF_METAFILEPICT"); break;
@@ -615,68 +638,165 @@ void CDragDropData::EnumDragFormats(IDataObject * pDataObject)
 				}
 			}
 			
+			wsprintf(szName[i]+lstrlen(szName[i]), L", tymed=0x%02X", fmt[i].tymed);
 				
-			stg[i].tymed = TYMED_HGLOBAL;
+			fmt[i].tymed = TYMED_HGLOBAL;
+			stg[i].tymed = 0; //TYMED_HGLOBAL;
+			
+			size_t nDataSize = 0;
 			
 			// !! The caller then assumes responsibility for releasing the STGMEDIUM structure.
 			hr = pDataObject->GetData(fmt+i, stg+i);
-			if (hr == S_OK && stg[i].hGlobal) {
-				psz[i] = (LPCWSTR)GlobalLock(stg[i].hGlobal);
-				if (psz[i]) {
-					memsize[i] = GlobalSize(stg[i].hGlobal);
-					wsprintf(szName[i]+lstrlen(szName[i]), L", DataSize=%i", memsize[i]);
-					if (memsize[i] == 1) {
-						wsprintf(szName[i]+lstrlen(szName[i]), L", Data=0x%02X", (DWORD)*((LPBYTE)(psz[i])));
-					} if (memsize[i] == 4) {
-						wsprintf(szName[i]+lstrlen(szName[i]), L", Data=0x%08X", (DWORD)*((LPDWORD)(psz[i])));
-					} else if (memsize[i] == 8) {
-						wsprintf(szName[i]+lstrlen(szName[i]), L", Data=0x%08X%08X", (DWORD)((LPDWORD)(psz[i]))[0], (DWORD)((LPDWORD)psz[i])[1]);
-					} else {
-						lstrcat(szName[i], L", ");
-						const wchar_t* pwsz = (const wchar_t*)(psz[i]);
-						const char* pasz = (const char*)(psz[i]);
-						if (pasz[0] && pasz[1]) {
-							int nMaxLen = min(200,memsize[i]);
-							wchar_t* pwszDst = szName[i]+lstrlen(szName[i]);
-							MultiByteToWideChar(CP_ACP, 0, pasz, nMaxLen, pwszDst, nMaxLen);
-							pwszDst[nMaxLen] = 0;
+			if (hr == S_OK && stg[i].hGlobal)
+			{
+				if (stg[i].tymed == TYMED_HGLOBAL)
+				{
+					psz[i] = (LPCWSTR)GlobalLock(stg[i].hGlobal);
+					if (psz[i])
+					{
+						memsize[i] = GlobalSize(stg[i].hGlobal);
+						wsprintf(szName[i]+lstrlen(szName[i]), L", DataSize=%i", memsize[i]);
+						if (memsize[i] == 1) {
+							wsprintf(szName[i]+lstrlen(szName[i]), L", Data=0x%02X", (DWORD)*((LPBYTE)(psz[i])));
+						} if (memsize[i] == 4) {
+							wsprintf(szName[i]+lstrlen(szName[i]), L", Data=0x%08X", (DWORD)*((LPDWORD)(psz[i])));
+						} else if (memsize[i] == 8) {
+							wsprintf(szName[i]+lstrlen(szName[i]), L", Data=0x%08X%08X", (DWORD)((LPDWORD)(psz[i]))[0], (DWORD)((LPDWORD)psz[i])[1]);
 						} else {
-							int nMaxLen = min(200,memsize[i]/2);
-							lstrcpyn(szName[i]+lstrlen(szName[i]), pwsz, nMaxLen);
+							lstrcat(szName[i], L", ");
+							const wchar_t* pwsz = (const wchar_t*)(psz[i]);
+							const char* pasz = (const char*)(psz[i]);
+							nDataSize = (memsize[i]+1)*2;
+							pszData[i] = (wchar_t*)calloc(nDataSize,1);
+							// тупая проверка на юникод. первый символ - обычно из English char set
+							if (pasz[0] && pasz[1])
+							{
+								//if (hDumpFile)
+								//{
+								MultiByteToWideChar(CP_ACP, 0, pasz, memsize[i], pszData[i], memsize[i]);
+								//} else {
+								//	int nMaxLen = min(200,memsize[i]);
+								//	wchar_t* pwszDst = szName[i]+lstrlen(szName[i]);
+								//	MultiByteToWideChar(CP_ACP, 0, pasz, nMaxLen, pwszDst, nMaxLen);
+								//	pwszDst[nMaxLen] = 0;
+								//}
+							} else {
+								//if (hDumpFile)
+								//{
+								lstrcpy(pszData[i], pwsz);
+								nDataSize = ((memsize[i]>>1)+1)<<1; // было больше, с учетом возможного MultiByteToWideChar
+								//} else {
+								//	int nMaxLen = min(200,memsize[i]/2);
+								//	lstrcpyn(szName[i]+lstrlen(szName[i]), pwsz, nMaxLen);
+								//}
+							}
 						}
+					} else {
+						lstrcat(szName[i], L", hGlobal not available");
+						stg[i].hGlobal = NULL;
 					}
 				} else {
 					lstrcat(szName[i], L", hGlobal not available");
 					stg[i].hGlobal = NULL;
 				}
-			} else {
-				lstrcat(szName[i], L", hGlobal not available");
+			}
+			else if (stg[i].tymed == TYMED_FILE)
+			{
+				lstrcat(szName[i], L", Error in source! TYMED_HGLOBAL was requested, but got TYMED_FILE");
+				ReleaseStgMedium(stg+i);
+				stg[i].hGlobal = NULL;
+			}
+			else if (stg[i].tymed == TYMED_ISTREAM)
+			{
+				lstrcat(szName[i], L", Error in source! TYMED_HGLOBAL was requested, but got TYMED_ISTREAM");
+				ReleaseStgMedium(stg+i);
+				stg[i].hGlobal = NULL;
+			}
+			else if (stg[i].tymed == TYMED_ISTORAGE)
+			{
+				lstrcat(szName[i], L", Error in source! TYMED_HGLOBAL was requested, but got TYMED_ISTORAGE");
+				ReleaseStgMedium(stg+i);
+				stg[i].hGlobal = NULL;
+			}
+			else if (stg[i].tymed == TYMED_GDI)
+			{
+				lstrcat(szName[i], L", Error in source! TYMED_HGLOBAL was requested, but got TYMED_GDI");
+				ReleaseStgMedium(stg+i);
+				stg[i].hGlobal = NULL;
+			}
+			else if (stg[i].tymed == TYMED_MFPICT)
+			{
+				lstrcat(szName[i], L", Error in source! TYMED_HGLOBAL was requested, but got TYMED_MFPICT");
+				ReleaseStgMedium(stg+i);
+				stg[i].hGlobal = NULL;
+			}
+			else if (stg[i].tymed == TYMED_ENHMF)
+			{
+				lstrcat(szName[i], L", Error in source! TYMED_HGLOBAL was requested, but got TYMED_ENHMF");
+				ReleaseStgMedium(stg+i);
+				stg[i].hGlobal = NULL;
+			}
+			else
+			{
+				wsprintf(szName[i], L", Error in source! TYMED_HGLOBAL was requested, but got (%i)", stg[i].tymed);
+				ReleaseStgMedium(stg+i);
 				stg[i].hGlobal = NULL;
 			}
 
-			#ifdef _DEBUG
-			if (wcscmp(szName[i], L"DragImageBits") == 0) {
-				stg[i].tymed = TYMED_HGLOBAL;
-			}
-			#endif
+			//#ifdef _DEBUG
+			//if (wcscmp(szName[i], L"DragImageBits") == 0)
+			//{
+			//	stg[i].tymed = TYMED_HGLOBAL;
+			//}
+			//#endif
 
 			lstrcat(szName[i], L"\n");
-			OutputDebugStringW(szName[i]);
-			if (fmt[i].cfFormat == cfShlPidl && psz[i]) {
+			
+			if (hDumpFile)
+			{
+				WriteFile(hDumpFile, szName[i], 2*lstrlen(szName[i]), &nWritten, NULL);
+				if (nDataSize && pszData[i])
+				{
+					WriteFile(hDumpFile, pszData[i], nDataSize, &nWritten, NULL);
+					WriteFile(hDumpFile, L"\n", 2, &nWritten, NULL);
+				}
+				WriteFile(hDumpFile, L"\n", 2, &nWritten, NULL);
+			}
+			else
+			{
+				// Послать в отладчик
+				OutputDebugStringW(szName[i]);
+				if (nDataSize && pszData[i])
+				{
+					OutputDebugStringW(pszData[i]);
+					OutputDebugStringW(L"\n");
+				}
+			}
+			
+			if (fmt[i].cfFormat == cfShlPidl && psz[i])
+			{
 				CIDA *pcida = (CIDA*)(psz[i]);
 				LPCITEMIDLIST pidlRoot = HIDA_GetPIDLFolder(pcida);
-				PidlDump(pidlRoot);
-				for (UINT i = 0; i < pcida->cidl; i++) {
+				PidlDump(pidlRoot, hDumpFile);
+				for (UINT i = 0; i < pcida->cidl; i++)
+				{
 					LPCITEMIDLIST pidl = HIDA_GetPIDLItem(pcida, i);
-					PidlDump(pidl);
+					PidlDump(pidl, hDumpFile);
 				}
 			}
 		}
 		
-		for (i=0; i<nCnt; i++) {
-			if (psz[i] && stg[i].hGlobal) {
+		for (i=0; i<nCnt; i++)
+		{
+			if (psz[i] && stg[i].hGlobal)
+			{
 				GlobalUnlock(stg[i].hGlobal);
-				GlobalFree(stg[i].hGlobal);
+				//GlobalFree(stg[i].hGlobal);
+				ReleaseStgMedium(stg+i);
+			}
+			if (pszData[i])
+			{
+				free(pszData[i]);
 			}
 		}
 	}
@@ -1053,12 +1173,14 @@ BOOL CDragDropData::LoadDragImageBits(IDataObject * pDataObject)
 
 	SIZE_T nInfoSize = GlobalSize(stgMedium.hGlobal);
 	if (!nInfoSize) {
-		GlobalFree(stgMedium.hGlobal);
+		//GlobalFree(stgMedium.hGlobal);
+		ReleaseStgMedium(&stgMedium);
 		return FALSE; // пусто
 	}
 	DragImageBits* pInfo = (DragImageBits*)GlobalLock(stgMedium.hGlobal);
 	if (!pInfo) {
-		GlobalFree(stgMedium.hGlobal);
+		//GlobalFree(stgMedium.hGlobal);
+		ReleaseStgMedium(&stgMedium);
 		return FALSE; // Не удалось получить данные
 	}
 	_ASSERTE(pInfo->nWidth>0 && pInfo->nWidth<=400);
@@ -1066,7 +1188,8 @@ BOOL CDragDropData::LoadDragImageBits(IDataObject * pDataObject)
 	int nReqSize = (sizeof(DragImageBits)+(pInfo->nWidth * pInfo->nHeight - 1)*4);
 	if (nInfoSize != nReqSize /*|| (nInfoSize - nReqSize) > 32*/ ) {
 		_ASSERT(nInfoSize == nReqSize); // Неизвестный формат?
-		GlobalFree(stgMedium.hGlobal);
+		//GlobalFree(stgMedium.hGlobal);
+		ReleaseStgMedium(&stgMedium);
 		return FALSE;
 	}
 
@@ -1115,7 +1238,8 @@ BOOL CDragDropData::LoadDragImageBits(IDataObject * pDataObject)
 
 	// Освободим данные
 	GlobalUnlock(stgMedium.hGlobal);
-	GlobalFree(stgMedium.hGlobal);
+	//GlobalFree(stgMedium.hGlobal);
+	ReleaseStgMedium(&stgMedium);
 
 	if (!lbRc)
 		DestroyDragImageBits();

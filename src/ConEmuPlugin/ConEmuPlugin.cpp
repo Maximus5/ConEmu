@@ -112,13 +112,15 @@ LPBYTE gpData = NULL, gpCursor = NULL;
 CESERVER_REQ* gpCmdRet = NULL;
 DWORD  gnDataSize=0;
 //HANDLE ghMapping = NULL;
-DWORD gnReqCommand = -1;
+
 int gnPluginOpenFrom = -1;
-HANDLE ghInputSynchroExecuted = NULL;
+DWORD gnReqCommand = -1;
+//HANDLE ghInputSynchroExecuted = NULL;
 //BOOL gbCmdCallObsolete = FALSE;
 LPVOID gpReqCommandData = NULL;
-HANDLE ghReqCommandEvent = NULL;
-BOOL   gbReqCommandWaiting = FALSE;
+static HANDLE ghReqCommandEvent = NULL;
+static BOOL   gbReqCommandWaiting = FALSE;
+
 UINT gnMsgTabChanged = 0;
 CRITICAL_SECTION csData;
 MSection *csTabs = NULL;
@@ -140,6 +142,7 @@ BOOL FindServerCmd(DWORD nServerCmd, DWORD &dwServerPID);
 BOOL gbNeedPostTabSend = FALSE;
 BOOL gbNeedPostEditCheck = FALSE; // проверить, может в активном редакторе изменился статус
 int lastModifiedStateW = -1;
+BOOL gbNeedPostReloadFarInfo = FALSE;
 DWORD gnNeedPostTabSendTick = 0;
 #define NEEDPOSTTABSENDDELTA 100
 wchar_t gsMonitorEnvVar[0x1000];
@@ -271,10 +274,13 @@ HANDLE WINAPI _export OpenPluginW(int OpenFrom,INT_PTR Item)
 		return INVALID_HANDLE_VALUE;
 	}
 
-	if (gnReqCommand != (DWORD)-1) {
+	if (gnReqCommand != (DWORD)-1)
+	{
 		gnPluginOpenFrom = (OpenFrom && 0xFFFF);
 		ProcessCommand(gnReqCommand, FALSE/*bReqMainThread*/, gpReqCommandData);
-	} else {
+	}
+	else
+	{
 		//if (!gbCmdCallObsolete) {
 			INT_PTR nID = -1; // выбор из меню
 			if ((OpenFrom & OPEN_FROMMACRO) == OPEN_FROMMACRO)
@@ -283,14 +289,18 @@ HANDLE WINAPI _export OpenPluginW(int OpenFrom,INT_PTR Item)
 				{
 					nID = Item - 1; // Будет сразу выполнена команда
 					
-				} else if (Item >= SETWND_CALLPLUGIN_BASE) {
+				}
+				else if (Item >= SETWND_CALLPLUGIN_BASE)
+				{
 					gnPluginOpenFrom = OPEN_PLUGINSMENU;
 					DWORD nTab = (DWORD)(Item - SETWND_CALLPLUGIN_BASE);
 					ProcessCommand(CMD_SETWINDOW, FALSE, &nTab);
 					SetEvent(ghSetWndSendTabsEvent);
 					return INVALID_HANDLE_VALUE;
 					
-				} else if (Item == SETWND_CALLPLUGIN_SENDTABS) {
+				}
+				else if (Item == SETWND_CALLPLUGIN_SENDTABS)
+				{
 					// Force Send tabs to ConEmu
 					//MSectionLock SC; SC.Lock(csTabs, TRUE);
 					//SendTabs(gnCurTabCount, TRUE);
@@ -358,80 +368,77 @@ void TouchReadPeekConsoleInputs(int Peek = -1)
 #endif
 }
 
-
-// Вызывается только в основной нити
-BOOL OnConsolePeekReadInput(BOOL abPeek)
+// Вызывается из ACTL_SYNCHRO для FAR2
+// или при ConsoleReadInput(1) в FAR1
+void OnMainThreadActivated()
 {
-#ifdef _DEBUG
-	_ASSERTE(GetCurrentThreadId() == gnMainThreadId);
-#endif
+	// Теоретически, в FAR2 мы сюда можем попасть и не из основной нити,
+	// если таки будет переделана "thread-safe" активация.
 
-	if (gbNeedPostEditCheck) {
+	if (gbNeedPostEditCheck)
+	{
 		DWORD currentModifiedState = GetEditorModifiedState();
 		if (lastModifiedStateW != (int)currentModifiedState)
 		{
 			lastModifiedStateW = (int)currentModifiedState;
 			gbRequestUpdateTabs = TRUE;
 		}
+		// 100909 - не было
+		gbNeedPostEditCheck = FALSE;
 	}
-	if (!gbRequestUpdateTabs && gbNeedPostTabSend) {
-		if (!IsMacroActive()) {
+	if (!gbRequestUpdateTabs && gbNeedPostTabSend)
+	{
+		if (!IsMacroActive())
+		{
 			gbRequestUpdateTabs = TRUE; gbNeedPostTabSend = FALSE;
 		}
 	}
-	if (gbRequestUpdateTabs && !IsMacroActive()) {
+	if (gbRequestUpdateTabs && !IsMacroActive())
+	{
 		gbRequestUpdateTabs = gbNeedPostTabSend = FALSE;
 		if (gFarVersion.dwVerMajor==1)
 			UpdateConEmuTabsA(0,false,false);
 		else
 			UpdateConEmuTabsW(0,false,false);
-		if (gbClosingModalViewerEditor) {
+		if (gbClosingModalViewerEditor)
+		{
 			gbClosingModalViewerEditor = FALSE;
 			gbRequestUpdateTabs = TRUE;
 		}
 	}
 
 
-	if (gpConsoleInfo && gpFarInfo && gpFarInfoMapping)
-		TouchReadPeekConsoleInputs(abPeek ? 1 : 0);
+	// !!! Это только чисто в OnConsolePeekReadInput, т.к. FAR Api тут не используется
+	//if (gpConsoleInfo && gpFarInfo && gpFarInfoMapping)
+	//	TouchReadPeekConsoleInputs(abPeek ? 1 : 0);
 
-	if (/*gbNeedReloadFarInfo &&*/ abPeek == FALSE) {
-		//gbNeedReloadFarInfo = FALSE;
-		bool bNeedReload = false;
-		if (gpConsoleInfo) {
-			DWORD nMapPID = gpConsoleInfo->nFarPID;
-			static DWORD dwLastTickCount = 0;
-			if (nMapPID == 0 || nMapPID != gnSelfPID) {
-				bNeedReload = true;
-				dwLastTickCount = GetTickCount();
-			} else {
-				DWORD dwCurTick = GetTickCount();
-				if ((dwCurTick - dwLastTickCount) >= CHECK_FARINFO_INTERVAL) {
-					bNeedReload = true;
-					dwLastTickCount = dwCurTick;
-				}
-			}
-		}
-		if (bNeedReload)
-			ReloadFarInfo(FALSE);
-	}
-	
-	// В некоторых случаях нужно дождаться, пока очередь опустеет
-	if (gbWaitConsoleInputEmpty) {
-		DWORD nTestEvents = 0;
-		HANDLE h = GetStdHandle(STD_INPUT_HANDLE);
-		if (GetNumberOfConsoleInputEvents(h, &nTestEvents)) {
-			if (nTestEvents == 0) {
-				gbWaitConsoleInputEmpty = FALSE;
-				SetEvent(ghConsoleInputEmpty);
-			}
-		}
+	if (gbNeedPostReloadFarInfo)
+	{
+		gbNeedPostReloadFarInfo = FALSE;
+		ReloadFarInfo(FALSE);
 	}
 
 
-	//
+	// !!! Это только чисто в OnConsolePeekReadInput, т.к. FAR Api тут не используется
+	//// В некоторых случаях (CMD_LEFTCLKSYNC,CMD_CLOSEQSEARCH,...) нужно дождаться, пока очередь опустеет
+	//if (gbWaitConsoleInputEmpty)
+	//{
+	//	DWORD nTestEvents = 0;
+	//	HANDLE h = GetStdHandle(STD_INPUT_HANDLE);
+	//	if (GetNumberOfConsoleInputEvents(h, &nTestEvents))
+	//	{
+	//		if (nTestEvents == 0)
+	//		{
+	//			gbWaitConsoleInputEmpty = FALSE;
+	//			SetEvent(ghConsoleInputEmpty);
+	//		}
+	//	}
+	//}
+
+
+	// Проверяем, надо ли "активировать" плагин?
 	if (!gbReqCommandWaiting || gnReqCommand == (DWORD)-1)
-		return TRUE; // активация в данный момент не требуется
+		return; // активация в данный момент не требуется
 	
 	gbReqCommandWaiting = FALSE; // чтобы ожидающая нить случайно не удалила параметры, когда мы работаем
 
@@ -440,10 +447,13 @@ BOOL OnConsolePeekReadInput(BOOL abPeek)
 	
 	// заглушка для Ansi
 	if (gnReqCommand == CMD_SETWINDOW && (gFarVersion.dwVerMajor==1))
+	{
 		gnPluginOpenFrom = OPEN_PLUGINSMENU;
+	}
 
 	//
-	if ((gnReqCommand == CMD_SETWINDOW) && (gFarVersion.dwVerMajor==2)) {
+	if ((gnReqCommand == CMD_SETWINDOW) && (gFarVersion.dwVerMajor==2))
+	{
 		// Необходимо быть в panel/editor/viewer
 		wchar_t szMacro[255];
 		DWORD nTabShift = SETWND_CALLPLUGIN_BASE + *((DWORD*)gpReqCommandData);
@@ -456,14 +466,169 @@ BOOL OnConsolePeekReadInput(BOOL abPeek)
 		gpReqCommandData = NULL;
 		PostMacro(szMacro);
 		// Done
-	} else {
+	}
+	else
+	{
 		ProcessCommand(gnReqCommand, FALSE/*bReqMainThread*/, gpReqCommandData);
 	}
 	
 	// Мы закончили
 	SetEvent(ghReqCommandEvent);
+}
+
+// Вызывается только в основной нити
+// и ТОЛЬКО если фар считывает один (1) INPUT_RECORD
+void OnConsolePeekReadInput(BOOL abPeek)
+{
+#ifdef _DEBUG
+	_ASSERTE(GetCurrentThreadId() == gnMainThreadId);
+#endif
+
+	bool lbNeedSynchro = false;
+
+	//if (gbNeedPostEditCheck)
+	//{
+	//	DWORD currentModifiedState = GetEditorModifiedState();
+	//	if (lastModifiedStateW != (int)currentModifiedState)
+	//	{
+	//		lastModifiedStateW = (int)currentModifiedState;
+	//		gbRequestUpdateTabs = TRUE;
+	//	}
+	//}
+	//if (!gbRequestUpdateTabs && gbNeedPostTabSend)
+	//{
+	//	if (!IsMacroActive())
+	//	{
+	//		gbRequestUpdateTabs = TRUE; gbNeedPostTabSend = FALSE;
+	//	}
+	//}
+	//if (gbRequestUpdateTabs && !IsMacroActive())
+	//{
+	//	gbRequestUpdateTabs = gbNeedPostTabSend = FALSE;
+	//	if (gFarVersion.dwVerMajor==1)
+	//		UpdateConEmuTabsA(0,false,false);
+	//	else
+	//		UpdateConEmuTabsW(0,false,false);
+	//	if (gbClosingModalViewerEditor)
+	//	{
+	//		gbClosingModalViewerEditor = FALSE;
+	//		gbRequestUpdateTabs = TRUE;
+	//	}
+	//}
+
+
+	if (gpConsoleInfo && gpFarInfo && gpFarInfoMapping)
+		TouchReadPeekConsoleInputs(abPeek ? 1 : 0);
+
+	if (/*gbNeedReloadFarInfo &&*/ abPeek == FALSE)
+	{
+		//gbNeedReloadFarInfo = FALSE;
+		bool bNeedReload = false;
+		if (gpConsoleInfo)
+		{
+			DWORD nMapPID = gpConsoleInfo->nFarPID;
+			static DWORD dwLastTickCount = 0;
+			if (nMapPID == 0 || nMapPID != gnSelfPID)
+			{
+				bNeedReload = true;
+				dwLastTickCount = GetTickCount();
+			}
+			else
+			{
+				DWORD dwCurTick = GetTickCount();
+				if ((dwCurTick - dwLastTickCount) >= CHECK_FARINFO_INTERVAL)
+				{
+					bNeedReload = true;
+					dwLastTickCount = dwCurTick;
+				}
+			}
+		}
+		if (bNeedReload)
+		{
+			//ReloadFarInfo(FALSE);
+			gbNeedPostReloadFarInfo = TRUE;
+		}
+	}
+
+
+	if (gbNeedPostReloadFarInfo || gbNeedPostEditCheck || gbRequestUpdateTabs || gbNeedPostTabSend)
+	{
+		lbNeedSynchro = true;
+	}
 	
-	return TRUE; // продолжить
+	
+
+	// В некоторых случаях (CMD_LEFTCLKSYNC,CMD_CLOSEQSEARCH,...) нужно дождаться, пока очередь опустеет
+	if (gbWaitConsoleInputEmpty)
+	{
+		DWORD nTestEvents = 0;
+		HANDLE h = GetStdHandle(STD_INPUT_HANDLE);
+		if (GetNumberOfConsoleInputEvents(h, &nTestEvents))
+		{
+			if (nTestEvents == 0)
+			{
+				gbWaitConsoleInputEmpty = FALSE;
+				SetEvent(ghConsoleInputEmpty);
+			}
+		}
+	}
+
+	if (IS_SYNCHRO_ALLOWED)
+	{
+		// Требуется дернуть Synchro, чтобы корректно активироваться
+		WARNING("Проверить, как реагирует FAR на вызов ACTL_SYNCHRO из главной нити");
+		if (lbNeedSynchro)
+		{
+			ExecuteSynchro();
+		}
+	}
+	else
+	{
+		// Для Far1 зовем сразу
+		_ASSERTE(gFarVersion.dwVerMajor == 1);
+		OnMainThreadActivated();
+	}
+
+	//// Проверяем, надо ли "активировать" плагин?
+	//if (!gbReqCommandWaiting || gnReqCommand == (DWORD)-1)
+	//	return; // активация в данный момент не требуется
+	//// Если есть ACTL_SYNCHRO - работаем только через него
+	//if (IS_SYNCHRO_ALLOWED)
+	//	return;
+	//
+	//gbReqCommandWaiting = FALSE; // чтобы ожидающая нить случайно не удалила параметры, когда мы работаем
+	//
+	//TODO("Определить текущую область... (panel/editor/viewer/menu/...");
+	//gnPluginOpenFrom = 0;
+	//
+	//// заглушка для Ansi
+	//if (gnReqCommand == CMD_SETWINDOW && (gFarVersion.dwVerMajor==1))
+	//{
+	//	gnPluginOpenFrom = OPEN_PLUGINSMENU;
+	//}
+	//
+	////
+	//if ((gnReqCommand == CMD_SETWINDOW) && (gFarVersion.dwVerMajor==2)) {
+	//	// Необходимо быть в panel/editor/viewer
+	//	wchar_t szMacro[255];
+	//	DWORD nTabShift = SETWND_CALLPLUGIN_BASE + *((DWORD*)gpReqCommandData);
+	//	
+	//	// Если панели-редактор-вьювер - сменить окно. Иначе - отослать в GUI табы
+	//	wsprintf(szMacro, L"$if (Search) Esc $end $if (Shell||Viewer||Editor) callplugin(0x%08X,%i) $else callplugin(0x%08X,%i) $end",
+	//		ConEmu_SysID, nTabShift, ConEmu_SysID, SETWND_CALLPLUGIN_SENDTABS);
+	//		
+	//	gnReqCommand = -1;
+	//	gpReqCommandData = NULL;
+	//	PostMacro(szMacro);
+	//	// Done
+	//} else {
+	//	ProcessCommand(gnReqCommand, FALSE/*bReqMainThread*/, gpReqCommandData);
+	//}
+	//
+	//// Мы закончили
+	//SetEvent(ghReqCommandEvent);
+	//
+	//return; // продолжить
 }
 
 #ifdef _DEBUG
@@ -646,7 +811,8 @@ BOOL WINAPI OnConsolePeekInput(HookCallbackArg* pArgs)
 {
 	if (!pArgs->bMainThread) return TRUE; // обработку делаем только в основной нити
 	
-	if (pArgs->lArguments[2] == 1) {
+	if (pArgs->lArguments[2] == 1)
+	{
 		OnConsolePeekReadInput(TRUE/*abPeek*/);
 	}
 
@@ -678,19 +844,22 @@ BOOL WINAPI OnConsoleReadInput(HookCallbackArg* pArgs)
 {
 	if (!pArgs->bMainThread) return TRUE; // обработку делаем только в основной нити
 	
-	if (pArgs->lArguments[2] == 1) {
+	if (pArgs->lArguments[2] == 1)
+	{
 		OnConsolePeekReadInput(FALSE/*abPeek*/);
 	}
 
 	// Если зарегистрирован callback для графической панели
-	if (gPanelRegLeft.pfnReadPreCall || gPanelRegRight.pfnReadPreCall) {
+	if (gPanelRegLeft.pfnReadPreCall || gPanelRegRight.pfnReadPreCall)
+	{
 		// Если функция возвращает FALSE - реальное чтение не будет вызвано
 		if (!OnPanelViewCallbacks(pArgs, gPanelRegLeft.pfnReadPreCall, gPanelRegRight.pfnReadPreCall))
 		{
 			// это вызвается перед реальным чтением - информация может быть разве что от "PanelViews"
 			// Если под дебагом включен ScrollLock - вывести информацию о считанных событиях
 			#ifdef _DEBUG
-			if (GetKeyState(VK_SCROLL) & 1) {
+			if (GetKeyState(VK_SCROLL) & 1)
+			{
 				PINPUT_RECORD p = (PINPUT_RECORD)(pArgs->lArguments[1]);
 				LPDWORD pCount = (LPDWORD)(pArgs->lArguments[3]);
 				_ASSERTE(*pCount <= pArgs->lArguments[2]);
@@ -828,9 +997,14 @@ BOOL WINAPI OnWriteConsoleOutput(HookCallbackArg* pArgs)
 }
 
 
-//int WINAPI _export ProcessSynchroEventW(int Event,void *Param)
-//{
-//	if (Event == SE_COMMONSYNCHRO) {
+int WINAPI _export ProcessSynchroEventW(int Event,void *Param)
+{
+	if (Event == SE_COMMONSYNCHRO)
+	{
+		OnMainThreadActivated();
+	}
+	return 0;
+}
 //    	if (!gbInfoW_OK) {
 //    		if (Param) free(Param);
 //    		return 0;
@@ -1249,7 +1423,25 @@ int WINAPI RegisterPanelView(PanelViewInit *ppvi)
 //	return lbRc;
 //}
 
-BOOL ActivatePlugin(DWORD nCmd, LPVOID pCommandData, DWORD nTimeout = CONEMUFARTIMEOUT)
+// Внимание! Теоретически, из этой функции Far2 может сразу вызвать ProcessSynchroEventW.
+// Но в текущей версии Far2 она работает асинхронно и сразу выходит, а сама
+// ProcessSynchroEventW зовется потом в главной нити (где-то при чтении буфера консоли)
+void ExecuteSynchro()
+{
+	if (IS_SYNCHRO_ALLOWED)
+	{
+		//psi.AdvControl(psi.ModuleNumber,ACTL_SYNCHRO,NULL);
+		if (gFarVersion.dwBuild>=FAR_Y_VER)
+			FUNC_Y(ExecuteSynchro)();
+		else
+			FUNC_X(ExecuteSynchro)();
+	}
+}
+
+BOOL ActivatePlugin	(
+		DWORD nCmd, LPVOID pCommandData,
+		DWORD nTimeout = CONEMUFARTIMEOUT // Release=10сек, Debug=2мин.
+	)
 {
 	BOOL lbRc = FALSE;
 	ResetEvent(ghReqCommandEvent);
@@ -1261,22 +1453,34 @@ BOOL ActivatePlugin(DWORD nCmd, LPVOID pCommandData, DWORD nTimeout = CONEMUFART
 	// Нужен вызов плагина в остновной нити
 	gbReqCommandWaiting = TRUE;
 
-	HANDLE hEvents[2] = {ghServerTerminateEvent, ghReqCommandEvent};
-	int nCount = 2;
+	DWORD nWait = 100; // если тут останется (!=0) - функция вернут ошибку
+	HANDLE hEvents[] = {ghServerTerminateEvent, ghReqCommandEvent};
+	int nCount = countof(hEvents);
 
 	DEBUGSTRMENU(L"*** Waiting for plugin activation\n");
+	
+	// Если есть ACTL_SYNCHRO - позвать его, иначе - "активация" в главной нити
+	// выполняется тогда, когда фар зовет ReadConsoleInput(1).
+	//if (gFarVersion.dwVerMajor = 2 && gFarVersion.dwBuild >= 1006)
+	if (IS_SYNCHRO_ALLOWED)
+	{
+		ExecuteSynchro();
+	}
 
-	DWORD nWait = 100;
+	// Подождать активации. Сколько ждать - может указать вызывающая функция
 	nWait = WaitForMultipleObjects(nCount, hEvents, FALSE, nTimeout);
-	if (nWait != WAIT_OBJECT_0 && nWait != (WAIT_OBJECT_0+1)) {
+	if (nWait != WAIT_OBJECT_0 && nWait != (WAIT_OBJECT_0+1))
+	{
 		_ASSERTE(nWait==WAIT_OBJECT_0);
-		if (nWait == (WAIT_OBJECT_0+1)) {
-			if (!gbReqCommandWaiting) {
+		if (nWait == (WAIT_OBJECT_0+1))
+		{
+			if (!gbReqCommandWaiting)
+			{
 				// Значит плагин в основной нити все-таки активировался, подождем еще?
 				OutputDebugString(L"!!! Plugin execute timeout !!!\n");
 				nWait = WaitForMultipleObjects(nCount, hEvents, FALSE, nTimeout);
 			}
-		
+
 			//// Таймаут, эту команду плагин должен пропустить, когда фар таки соберется ее выполнить
 			//Param->Obsolete = TRUE;
 		}
@@ -1286,7 +1490,8 @@ BOOL ActivatePlugin(DWORD nCmd, LPVOID pCommandData, DWORD nTimeout = CONEMUFART
 
 	lbRc = (nWait == 0);
 	
-	if (!lbRc) {
+	if (!lbRc)
+	{
 		// Сразу сбросим, вдруг не дождались?
 		gbReqCommandWaiting = FALSE;
 		ResetEvent(ghReqCommandEvent);
@@ -2849,8 +3054,10 @@ int WINAPI _export ProcessEditorInputW(void* Rec)
 int WINAPI _export ProcessEditorEventW(int Event, void *Param)
 {
 #if 1
-	if (!gbRequestUpdateTabs) {
-		if (Event == EE_READ || Event == EE_CLOSE || Event == EE_GOTFOCUS || Event == EE_KILLFOCUS || Event == EE_SAVE) {
+	if (!gbRequestUpdateTabs)
+	{
+		if (Event == EE_READ || Event == EE_CLOSE || Event == EE_GOTFOCUS || Event == EE_KILLFOCUS || Event == EE_SAVE)
+		{
 			gbRequestUpdateTabs = TRUE;
 		//} else if (Event == EE_REDRAW && gbHandleOneRedraw) {
 		//	gbHandleOneRedraw = false; gbRequestUpdateTabs = TRUE;
@@ -2918,11 +3125,15 @@ int WINAPI _export ProcessViewerEventW(int Event, void *Param)
 #if 1
 	if (!gbRequestUpdateTabs &&
 		(Event == VE_CLOSE || Event == VE_GOTFOCUS || Event == VE_KILLFOCUS))
+	{
 		gbRequestUpdateTabs = TRUE;
+	}
 
 	if (gpTabs && Event == VE_CLOSE && gpTabs->Tabs.nTabCount
 		&& gpTabs->Tabs.tabs[0].Type != WTYPE_PANELS)
+	{
 		gbClosingModalViewerEditor = TRUE;
+	}
 
 #else
 	// Даже если мы не под эмулятором - просто запомним текущее состояние
@@ -3047,7 +3258,7 @@ void StopThread(void)
 	SafeCloseHandle(ghServerTerminateEvent);
 	//WARNING("Убрать, заменить ghConIn на GetStdHandle()"); // Иначе в Win7 будет буфер разрушаться
 	//SafeCloseHandle(ghConIn);
-	SafeCloseHandle(ghInputSynchroExecuted);
+	//SafeCloseHandle(ghInputSynchroExecuted);
 	SafeCloseHandle(ghSetWndSendTabsEvent);
 	SafeCloseHandle(ghConsoleInputEmpty);
 	SafeCloseHandle(ghConsoleWrite);

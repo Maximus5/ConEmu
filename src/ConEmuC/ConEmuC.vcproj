@@ -698,8 +698,8 @@
 		</Configuration>
 		<Configuration
 			Name="Debug_R|x64"
-			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			OutputDirectory="C:\Temp\CE\$(ProjectName).$(PlatformName).$(ConfigurationName)"
+			IntermediateDirectory="C:\Temp\CE\$(ProjectName).$(PlatformName).$(ConfigurationName)"
 			ConfigurationType="1"
 			CharacterSet="1"
 			>

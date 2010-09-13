@@ -241,6 +241,16 @@ void FUNC_X(ExecuteQuitFar)();
 BOOL FUNC_Y(CheckBufferEnabled)();
 BOOL FUNC_X(CheckBufferEnabled)();
 
+#define IS_SYNCHRO_ALLOWED \
+	( \
+		gFarVersion.dwVerMajor > 2 || \
+		(gFarVersion.dwVerMajor == 2 && (gFarVersion.dwVerMinor>0 || gFarVersion.dwBuild>=1006)) \
+	)
+
+void ExecuteSynchro(); // если доступен - позовет ACTL_SYNCHRO (FAR2 only)
+BOOL FUNC_Y(ExecuteSynchro)();
+BOOL FUNC_X(ExecuteSynchro)();
+
 #ifdef _DEBUG
 	#define SHOWDBGINFO(x) OutputDebugStringW(x)
 #else

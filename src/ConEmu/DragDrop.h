@@ -63,6 +63,7 @@ protected:
 	wchar_t* FileCreateName(BOOL abActive, BOOL abWide, LPVOID asFileName);
 	HRESULT FileWrite(HANDLE ahFile, DWORD anSize, LPVOID apData);
 	//void EnumDragFormats(IDataObject * pDataObject);
+	void ReportUnknownData(IDataObject * pDataObject, LPCWSTR sUnknownError);
 	HRESULT DropFromStream(IDataObject * pDataObject, BOOL abActive);
 	HRESULT DropLinks(HDROP hDrop, int iQuantity, BOOL abActive);
 	HRESULT DropNames(HDROP hDrop, int iQuantity, BOOL abActive);

@@ -551,7 +551,8 @@ wchar_t* CDragDrop::FileCreateName(BOOL abActive, BOOL abWide, LPVOID asFileName
 	if (abActive) nSize = wcslen(m_pfpi->pszActivePath)+1; else nSize = wcslen(m_pfpi->pszPassivePath)+1;
 	int nPathLen = nSize;
 
-	if (abWide) {
+	if (abWide)
+	{
 		wchar_t* pszSlash = wcsrchr(pszNameW, L'\\');
 		if (pszSlash) pszNameW = pszSlash+1;
 		if (!*pszNameW) {
@@ -559,7 +560,9 @@ wchar_t* CDragDrop::FileCreateName(BOOL abActive, BOOL abWide, LPVOID asFileName
 			return NULL;
 		}
 		nSize += wcslen(pszNameW)+1;
-	} else {
+	}
+	else
+	{
 		char* pszSlash = strrchr(pszNameA, '\\');
 		if (pszSlash) pszNameA = pszSlash+1;
 		if (!*pszNameA) {
@@ -571,20 +574,25 @@ wchar_t* CDragDrop::FileCreateName(BOOL abActive, BOOL abWide, LPVOID asFileName
 	pszFullName = (wchar_t*)calloc(nSize, 2);
 	wcscpy(pszFullName, abActive ? m_pfpi->pszActivePath : m_pfpi->pszPassivePath);
 	wcscat(pszFullName, L"\\");
-	if (abWide) {
+	if (abWide)
+	{
 		wcscpy(pszFullName+nPathLen, pszNameW);
-	} else {
+	}
+	else
+	{
 		MultiByteToWideChar(CP_ACP, 0, pszNameA, -1, pszFullName+nPathLen, nSize - nPathLen);
 	}
 
 	// Путь готов, проверяем наличие файла?
 	WIN32_FIND_DATAW fnd = {0};
 	HANDLE hFind = FindFirstFile(pszFullName, &fnd);
-	if (hFind != INVALID_HANDLE_VALUE) {
+	if (hFind != INVALID_HANDLE_VALUE)
+	{
 		FindClose(hFind);
 
 		wchar_t* pszMsg = NULL;
-		if (fnd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+		if (fnd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+		{
 			pszMsg = (wchar_t*)calloc(nSize + 100,2);
 			wcscpy(pszMsg, L"Can't create file! Same name folder exists!\n");
 			wcscat(pszMsg, pszFullName);
@@ -592,7 +600,9 @@ wchar_t* CDragDrop::FileCreateName(BOOL abActive, BOOL abWide, LPVOID asFileName
 			free(pszMsg);
 			free(pszFullName);
 			return NULL;
-		} else {
+		}
+		else
+		{
 			pszMsg = (wchar_t*)calloc(nSize + 255,2);
 			LARGE_INTEGER liSize;
 			liSize.LowPart = fnd.nFileSizeLow; liSize.HighPart = fnd.nFileSizeHigh;
@@ -604,7 +614,8 @@ wchar_t* CDragDrop::FileCreateName(BOOL abActive, BOOL abWide, LPVOID asFileName
 			int nRc = MessageBox(ghWnd, pszMsg, L"ConEmu", MB_ICONEXCLAMATION|MB_YESNO);
 			free(pszMsg);
 
-			if (nRc != IDYES) {
+			if (nRc != IDYES)
+			{
 				free(pszFullName);
 				return NULL;
 			}
@@ -670,7 +681,7 @@ HRESULT CDragDrop::FileWrite(HANDLE ahFile, DWORD anSize, LPVOID apData)
 
 HRESULT CDragDrop::DropFromStream(IDataObject * pDataObject, BOOL abActive)
 {
-	STGMEDIUM stgMedium = { 0 };
+	STGMEDIUM stgDescr = { 0 };
 	FORMATETC fmtetc = { CF_HDROP, 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
 	
 	HANDLE hFile = NULL;
@@ -682,146 +693,262 @@ HRESULT CDragDrop::DropFromStream(IDataObject * pDataObject, BOOL abActive)
 	HRESULT hrStg = S_OK;
 
 	// CF_HDROP в структуре отсутсвует!
-	fmtetc.cfFormat = RegisterClipboardFormat(CFSTR_FILEDESCRIPTORW);
+	//fmtetc.cfFormat = RegisterClipboardFormat(CFSTR_FILEDESCRIPTORW);
 	
-	TODO("Опитизировать. Можно объединить юникодную и ансишную ветки");
+	// Опитизировано. объединены юникодная и ансишная ветки
 	
-	// !! The caller then assumes responsibility for releasing the STGMEDIUM structure.
-	if (S_OK == pDataObject->GetData(&fmtetc, &stgMedium)) {
-		lbWide = TRUE;
-		HGLOBAL hDesc = stgMedium.hGlobal;
-		FILEGROUPDESCRIPTORW *pDesc = (FILEGROUPDESCRIPTORW*)GlobalLock(hDesc);
-		fmtetc.cfFormat = RegisterClipboardFormat(CFSTR_FILECONTENTS);
-
-		mn_AllFiles = pDesc->cItems;
-		
-		for (mn_CurFile = 0; mn_CurFile<mn_AllFiles; mn_CurFile++) {
-			fmtetc.lindex = mn_CurFile;
-
-
-			wchar_t* pszNewFileName = FileCreateName(abActive, lbWide, pDesc->fgd[mn_CurFile].cFileName);
-			if (pszNewFileName)
-			{
-				// !! The caller then assumes responsibility for releasing the STGMEDIUM structure.
-				//было if (S_OK == pDataObject->GetData(&fmtetc, &stgMedium) || !stgMedium.pstm)
-
-				fmtetc.tymed = TYMED_FILE; // Сначала пробуем IStream
-				stgMedium.tymed = TYMED_FILE;
-				stgMedium.pstm = NULL;
-				stgMedium.lpszFileName = ::SysAllocString(pszNewFileName);
-
-				// Попробуем? Но пока не встречал. Возвращают E_NOTIMPL
-				hrStg = pDataObject->GetDataHere(&fmtetc, &stgMedium);
-				::SysFreeString(stgMedium.lpszFileName);
-				if (hrStg == S_OK) {
-					free(pszNewFileName); pszNewFileName = NULL;
-					continue;
-				}
-
-
-				fmtetc.tymed = TYMED_ISTREAM; // Сначала пробуем IStream
-				stgMedium.tymed = TYMED_ISTREAM;
-				stgMedium.pstm = NULL;
-
-				hrStg = pDataObject->GetData(&fmtetc, &stgMedium);
-				if (S_OK == hrStg && stgMedium.pstm) {
-					IStream* pFile = stgMedium.pstm;
-
-					if (!pszNewFileName)
-						hFile = INVALID_HANDLE_VALUE;
-					else {
-						hFile = FileStart(pszNewFileName);
-						free(pszNewFileName); pszNewFileName = NULL;
-					}
-					if (hFile != INVALID_HANDLE_VALUE) {
-						// Может возвращать и S_FALSE (конец файла?)
-						while (SUCCEEDED(hr = pFile->Read(cBuffer, BufferSize, &dwRead)) && dwRead) {
-							if (FileWrite(hFile, dwRead, cBuffer) != S_OK)
-								break;
-						}
-						SafeCloseHandle(hFile);
-						if (FAILED(hr))
-							DisplayLastError(_T("Can't read medium!"), hr);
-					}
-					
-					pFile->Release();
-					
-					continue;
-				}
-				if (pszNewFileName) free(pszNewFileName); pszNewFileName = NULL;
-			}
-			MBoxA(_T("Drag object does not contains known medium!"));
+	for (int iu = 0; iu <= 1; iu++)
+	{
+		if (iu == 0)
+		{
+			fmtetc.cfFormat = RegisterClipboardFormat(CFSTR_FILEDESCRIPTORW);
 		}
-		GlobalUnlock(hDesc);
-		GlobalFree(hDesc);
-		gConEmu.DebugStep(NULL);
-		return S_OK;
+		else
+		{
+			// Outlook 2k передает ANSI!
+			fmtetc.cfFormat = RegisterClipboardFormat(CFSTR_FILEDESCRIPTORA);
+		}
+
+		// !! The caller then assumes responsibility for releasing the STGMEDIUM structure.
+		if (S_OK == pDataObject->GetData(&fmtetc, &stgDescr))
+		{
+			lbWide = (iu == 0);
+			wchar_t sUnknownError[512]; sUnknownError[0] = 0;
+			//HGLOBAL hDesc = stgDescr.hGlobal;
+			FILEGROUPDESCRIPTORA *pDescA = NULL;
+			FILEGROUPDESCRIPTORW *pDescW = NULL;
+			LPVOID ptrFileName = NULL;
+			if (lbWide)
+			{
+				pDescW = (FILEGROUPDESCRIPTORW*)GlobalLock(stgDescr.hGlobal);
+				mn_AllFiles = pDescW->cItems;
+			}
+			else
+			{
+				pDescA = (FILEGROUPDESCRIPTORA*)GlobalLock(stgDescr.hGlobal);
+				mn_AllFiles = pDescA->cItems;
+			}
+
+
+			// Имена файлов теперь лежат в stgMedium, а для получения содержимого
+			fmtetc.cfFormat = RegisterClipboardFormat(CFSTR_FILECONTENTS);
+
+
+			for (mn_CurFile = 0; mn_CurFile<mn_AllFiles; mn_CurFile++)
+			{
+				fmtetc.lindex = mn_CurFile;
+				
+				if (lbWide)
+					ptrFileName = (LPVOID)(pDescW->fgd[mn_CurFile].cFileName);
+				else
+					ptrFileName = (LPVOID)(pDescA->fgd[mn_CurFile].cFileName);
+
+
+				wchar_t* pszNewFileName = FileCreateName(abActive, lbWide, ptrFileName);
+				if (pszNewFileName)
+				{
+					// !! The caller then assumes responsibility for releasing the STGMEDIUM structure.
+					STGMEDIUM stgMedium = { 0 };
+
+					//было if (S_OK == pDataObject->GetData(&fmtetc, &stgMedium) || !stgMedium.pstm)
+
+					fmtetc.tymed = TYMED_FILE; // Сначала пробуем "попросить записать в файл"
+					stgMedium.tymed = TYMED_FILE;
+					stgMedium.pstm = NULL;
+					stgMedium.lpszFileName = ::SysAllocString(pszNewFileName);
+
+					// Попробуем? Но пока не встречал. Возвращают E_NOTIMPL
+					hrStg = pDataObject->GetDataHere(&fmtetc, &stgMedium);
+					::SysFreeString(stgMedium.lpszFileName);
+					if (hrStg == S_OK)
+					{
+						free(pszNewFileName); pszNewFileName = NULL;
+						continue;
+					}
+
+
+					// Теперь - пробуем IStream
+					fmtetc.tymed = TYMED_ISTREAM|TYMED_HGLOBAL;
+					stgMedium.tymed = 0; //TYMED_ISTREAM;
+					stgMedium.pstm = NULL;
+
+					hrStg = pDataObject->GetData(&fmtetc, &stgMedium);
+					if (hrStg == S_OK)
+					{
+						if (stgMedium.tymed = TYMED_ISTREAM && stgMedium.pstm)
+						{
+							IStream* pFile = stgMedium.pstm;
+
+							if (!pszNewFileName)
+								hFile = INVALID_HANDLE_VALUE;
+							else
+							{
+								hFile = FileStart(pszNewFileName);
+								free(pszNewFileName); pszNewFileName = NULL;
+							}
+							if (hFile != INVALID_HANDLE_VALUE)
+							{
+								// Может возвращать и S_FALSE (конец файла?)
+								while (SUCCEEDED(hr = pFile->Read(cBuffer, BufferSize, &dwRead)) && dwRead)
+								{
+									TODO("Сюда прогресс с градусником прицепить можно");
+									if (FileWrite(hFile, dwRead, cBuffer) != S_OK)
+										break;
+								}
+								SafeCloseHandle(hFile);
+								if (FAILED(hr))
+								{
+									_ASSERTE(SUCCEEDED(hr));
+									DisplayLastError(_T("Can't read medium!"), hr);
+								}
+							}
+							
+							//pFile->Release();
+							ReleaseStgMedium(&stgMedium);
+
+							// OK!
+							break;
+						}
+						else if (stgMedium.tymed = TYMED_HGLOBAL && stgMedium.hGlobal)
+						{
+							SIZE_T nFileSize = GlobalSize(stgMedium.hGlobal);
+							LPBYTE ptrFileData = (LPBYTE)GlobalLock(stgMedium.hGlobal);
+
+							if (!pszNewFileName)
+								hFile = INVALID_HANDLE_VALUE;
+							else
+							{
+								hFile = FileStart(pszNewFileName);
+								free(pszNewFileName); pszNewFileName = NULL;
+							}
+							if (hFile != INVALID_HANDLE_VALUE)
+							{
+								if (ptrFileData)
+								{
+									LPBYTE ptrCur = ptrFileData;
+									while (nFileSize > 0)
+									{
+										dwRead = min(nFileSize,65536);
+										TODO("Сюда прогресс с градусником прицепить можно");
+										if (FileWrite(hFile, dwRead, ptrCur) != S_OK)
+											break;
+										ptrCur += dwRead;
+										nFileSize -= dwRead;
+									}
+								}
+								SafeCloseHandle(hFile);
+							}
+
+							GlobalUnlock(stgMedium.hGlobal);
+							//GlobalFree(stgMedium.hGlobal);
+							ReleaseStgMedium(&stgMedium);
+
+							// OK!
+							break;
+						}
+						else
+						{
+							_ASSERTE(stgMedium.tymed == TYMED_ISTREAM || stgMedium.tymed == TYMED_HGLOBAL);
+							ReleaseStgMedium(&stgMedium);
+						}
+
+						continue;
+					}
+					if (pszNewFileName) free(pszNewFileName); pszNewFileName = NULL;
+				}
+				// Ошибку показать один раз на дроп (чтобы не ругаться на КАЖДЫЙ бросаемый файл)
+				//MBoxA(_T("Drag object does not contains known medium!"));
+				if (sUnknownError[0] == 0)
+					wsprintf(sUnknownError, L"Drag item #%i does not contains known medium!", mn_CurFile+1);
+			}
+
+			// CFSTR_FILEDESCRIPTORx
+			GlobalUnlock(stgDescr.hGlobal);
+			//GlobalFree(hDesc);
+			ReleaseStgMedium(&stgDescr);
+
+
+			// Если был обнаружен элемент, в котором ни один формат не известен - ругаемся
+			if (sUnknownError[0])
+			{
+				ReportUnknownData(pDataObject, sUnknownError);
+			}
+			gConEmu.DebugStep(NULL);
+			return S_OK;
+		} // если удалось получить "pDataObject->GetData(&fmtetc, &stgMedium)" - уже вышли из функции
 	}
 	
-	// Outlook 2k передает ANSI!
-	fmtetc.cfFormat = RegisterClipboardFormat(CFSTR_FILEDESCRIPTORA);
-	
-	// !! The caller then assumes responsibility for releasing the STGMEDIUM structure.
-	if (S_OK == pDataObject->GetData(&fmtetc, &stgMedium)) {
-		lbWide = FALSE;
-		HGLOBAL hDesc = stgMedium.hGlobal;
-		FILEGROUPDESCRIPTORA *pDesc = (FILEGROUPDESCRIPTORA*)GlobalLock(hDesc);
-		fmtetc.cfFormat = RegisterClipboardFormat(CFSTR_FILECONTENTS);
+	//// Outlook 2k передает ANSI!
+	//fmtetc.cfFormat = RegisterClipboardFormat(CFSTR_FILEDESCRIPTORA);
+	//
+	//// !! The caller then assumes responsibility for releasing the STGMEDIUM structure.
+	//if (S_OK == pDataObject->GetData(&fmtetc, &stgMedium))
+	//{
+	//	lbWide = FALSE;
+	//	HGLOBAL hDesc = stgMedium.hGlobal;
+	//	FILEGROUPDESCRIPTORA *pDesc = (FILEGROUPDESCRIPTORA*)GlobalLock(hDesc);
+	//	fmtetc.cfFormat = RegisterClipboardFormat(CFSTR_FILECONTENTS);
+	//
+	//	mn_AllFiles = pDesc->cItems;
+	//	
+	//	for (mn_CurFile = 0; mn_CurFile<mn_AllFiles; mn_CurFile++)
+	//	{
+	//		fmtetc.lindex = mn_CurFile;
+	//
+	//		
+	//		wchar_t* pszNewFileName = FileCreateName(abActive, lbWide, pDesc->fgd[mn_CurFile].cFileName);
+	//		if (pszNewFileName)
+	//		{
+	//			// !! The caller then assumes responsibility for releasing the STGMEDIUM structure.
+	//			//было if (S_OK == pDataObject->GetData(&fmtetc, &stgMedium) || !stgMedium.pstm)
+	//
+	//
+	//			fmtetc.tymed = TYMED_ISTREAM; // Сначала пробуем IStream
+	//			stgMedium.tymed = TYMED_ISTREAM;
+	//			stgMedium.pstm = NULL;
+	//
+	//			hrStg = pDataObject->GetData(&fmtetc, &stgMedium);
+	//			if (S_OK == hrStg && stgMedium.pstm)
+	//			{
+	//				IStream* pFile = stgMedium.pstm;
+	//
+	//				//hFile = FileStart(abActive, lbWide, pDesc->fgd[mn_CurFile].cFileName);
+	//				if (!pszNewFileName)
+	//					hFile = INVALID_HANDLE_VALUE;
+	//				else
+	//				{
+	//					hFile = FileStart(pszNewFileName);
+	//					free(pszNewFileName); pszNewFileName = NULL;
+	//				}
+	//				if (hFile != INVALID_HANDLE_VALUE)
+	//				{
+	//					// Может возвращать и S_FALSE (конец файла?)
+	//					while (SUCCEEDED(hr = pFile->Read(cBuffer, BufferSize, &dwRead)) && dwRead)
+	//					{
+	//						if (FileWrite(hFile, dwRead, cBuffer) != S_OK)
+	//							break;
+	//					}
+	//					SafeCloseHandle(hFile);
+	//					if (FAILED(hr))
+	//						DisplayLastError(_T("Can't read medium!"), hr);
+	//				}
+	//				
+	//				pFile->Release();
+	//				
+	//				continue;
+	//			}
+	//			if (pszNewFileName) free(pszNewFileName); pszNewFileName = NULL;
+	//		}
+	//		MBoxA(_T("Drag object does not contains known medium!"));
+	//	}
+	//	GlobalUnlock(hDesc);
+	//	GlobalFree(hDesc);
+	//	gConEmu.DebugStep(NULL);
+	//	return S_OK;
+	//}
 
-		mn_AllFiles = pDesc->cItems;
-		
-		for (mn_CurFile = 0; mn_CurFile<mn_AllFiles; mn_CurFile++) {
-			fmtetc.lindex = mn_CurFile;
-
-			
-			wchar_t* pszNewFileName = FileCreateName(abActive, lbWide, pDesc->fgd[mn_CurFile].cFileName);
-			if (pszNewFileName)
-			{
-				// !! The caller then assumes responsibility for releasing the STGMEDIUM structure.
-				//было if (S_OK == pDataObject->GetData(&fmtetc, &stgMedium) || !stgMedium.pstm)
-
-
-				fmtetc.tymed = TYMED_ISTREAM; // Сначала пробуем IStream
-				stgMedium.tymed = TYMED_ISTREAM;
-				stgMedium.pstm = NULL;
-
-				hrStg = pDataObject->GetData(&fmtetc, &stgMedium);
-				if (S_OK == hrStg && stgMedium.pstm) {
-					IStream* pFile = stgMedium.pstm;
-
-					//hFile = FileStart(abActive, lbWide, pDesc->fgd[mn_CurFile].cFileName);
-					if (!pszNewFileName)
-						hFile = INVALID_HANDLE_VALUE;
-					else {
-						hFile = FileStart(pszNewFileName);
-						free(pszNewFileName); pszNewFileName = NULL;
-					}
-					if (hFile != INVALID_HANDLE_VALUE) {
-						// Может возвращать и S_FALSE (конец файла?)
-						while (SUCCEEDED(hr = pFile->Read(cBuffer, BufferSize, &dwRead)) && dwRead) {
-							if (FileWrite(hFile, dwRead, cBuffer) != S_OK)
-								break;
-						}
-						SafeCloseHandle(hFile);
-						if (FAILED(hr))
-							DisplayLastError(_T("Can't read medium!"), hr);
-					}
-					
-					pFile->Release();
-					
-					continue;
-				}
-				if (pszNewFileName) free(pszNewFileName); pszNewFileName = NULL;
-			}
-			MBoxA(_T("Drag object does not contains known medium!"));
-		}
-		GlobalUnlock(hDesc);
-		GlobalFree(hDesc);
-		gConEmu.DebugStep(NULL);
-		return S_OK;
-	}
-
-	MBoxA(_T("Drag object does not contains known formats!"));
+	//MBoxA(_T("Drag object does not contains known formats!"));
+	ReportUnknownData(pDataObject, L"Drag object does not contains known formats!");
 	return S_OK;
 }
 
@@ -894,7 +1021,7 @@ HRESULT CDragDrop::DropNames(HDROP hDrop, int iQuantity, BOOL abActive)
 		}
 	}
 	
-	GlobalFree(hDrop);
+	//GlobalFree(hDrop);
 	
 	return S_OK;
 }
@@ -933,7 +1060,7 @@ HRESULT CDragDrop::DropLinks(HDROP hDrop, int iQuantity, BOOL abActive)
 		delete szLnkPath;
 	}
 	
-	GlobalFree(hDrop);
+	//GlobalFree(hDrop);
 	
 	return S_OK;
 }
@@ -1023,23 +1150,26 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop (IDataObject * pDataObject,DWORD grfKe
 	hDrop = (HDROP)stgMedium.hGlobal;
 
 	int iQuantity = DragQueryFile(hDrop,0xFFFFFFFF,NULL,NULL);
-	if (iQuantity < 1) {
-		GlobalFree(stgMedium.hGlobal);
+	if (iQuantity < 1)
+	{
+		//GlobalFree(stgMedium.hGlobal);
+		ReleaseStgMedium(&stgMedium);
 		return S_OK; // ничего нет, выходим
 	}
 
 	gConEmu.DebugStep(_T("DnD: Drop starting"));
 
-	if (lbDropFileNamesOnly) {
-		// GlobalFree выполнит функция
+	if (lbDropFileNamesOnly)
+	{
 		hr = DropNames(hDrop, iQuantity, lbActive);
+		ReleaseStgMedium(&stgMedium);
 		return hr;
 	}
 	
 	// Если создавать линки - делаем сразу и выходим
 	if (*pdwEffect == DROPEFFECT_LINK) {
-		// GlobalFree выполнит функция
 		hr = DropLinks(hDrop, iQuantity, lbActive);
+		ReleaseStgMedium(&stgMedium);
 		return hr;
 	}
 
@@ -1102,10 +1232,14 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop (IDataObject * pDataObject,DWORD grfKe
 
 		MCHKHEAP;
 		
-		GlobalFree(stgMedium.hGlobal); hDrop = NULL;
-		if (stgMediumMap.hGlobal) {
+		//GlobalFree(stgMedium.hGlobal);
+		ReleaseStgMedium(&stgMedium);
+		hDrop = NULL;
+		if (stgMediumMap.hGlobal)
+		{
 			if (pszFileMap) GlobalUnlock(stgMediumMap.hGlobal);
-			GlobalFree(stgMediumMap.hGlobal);
+			//GlobalFree(stgMediumMap.hGlobal);
+			ReleaseStgMedium(&stgMediumMap);
 			stgMediumMap.hGlobal = NULL;
 		}
 		
@@ -2061,3 +2195,46 @@ HRESULT CDragDrop::CreateLink(LPCTSTR lpszPathObj, LPCTSTR lpszPathLink, LPCTSTR
 //	//	DispatchMessage(&Msg);
 //	//}
 //}
+
+void CDragDrop::ReportUnknownData(IDataObject * pDataObject, LPCWSTR sUnknownError)
+{
+	HANDLE hFile = NULL;
+	size_t nLen = lstrlen(sUnknownError);
+	wchar_t* pszMsg = (wchar_t*)calloc((nLen+256),sizeof(wchar_t));
+	lstrcpy(pszMsg, sUnknownError);
+	lstrcpy(pszMsg+nLen, L"\n\nPress 'Retry' to create report for developer");
+
+	BOOL b = gbDontEnable; gbDontEnable = TRUE; 
+	int nBtn = (int)MessageBox(ghWnd, pszMsg, L"ConEmu",
+			MB_SYSTEMMODAL|MB_ICONINFORMATION|MB_RETRYCANCEL|MB_DEFBUTTON2);
+	gbDontEnable = b;
+
+	free(pszMsg);
+
+	if (nBtn != IDRETRY)
+		return;
+
+	// Дать пользователю выбрать файл
+    OPENFILENAME ofn; memset(&ofn,0,sizeof(ofn));
+    WCHAR temp[MAX_PATH+5];
+    ofn.lStructSize=sizeof(ofn);
+    ofn.hwndOwner = ghWnd;
+    ofn.lpstrFilter = _T("Reports (*.txt)\0*.txt\0\0");
+    ofn.nFilterIndex = 1;
+    ofn.lpstrFile = temp; temp[0] = 0;
+    ofn.nMaxFile = MAX_PATH;
+    ofn.lpstrTitle = L"Create Drag and Drop report";
+    ofn.lpstrDefExt = L"txt";
+    ofn.Flags = OFN_ENABLESIZING|OFN_NOCHANGEDIR
+            | OFN_PATHMUSTEXIST|OFN_EXPLORER|OFN_HIDEREADONLY|OFN_OVERWRITEPROMPT;
+    if (!GetSaveFileName(&ofn))
+        return;
+
+    hFile = CreateFile(temp, GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+
+	if (hFile && hFile != INVALID_HANDLE_VALUE)
+	{
+		EnumDragFormats(pDataObject, hFile);
+		CloseHandle(hFile);
+	}
+}

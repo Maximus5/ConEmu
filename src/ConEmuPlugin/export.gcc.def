@@ -20,3 +20,4 @@ EXPORTS
 	GetFarHWND2=GetFarHWND2@4
 	IsConsoleActive=IsConsoleActive@0
 	RegisterPanelView=RegisterPanelView@4
+	ProcessSynchroEventW=ProcessSynchroEventW@8

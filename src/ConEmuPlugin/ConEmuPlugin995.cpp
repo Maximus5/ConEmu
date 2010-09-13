@@ -694,6 +694,20 @@ BOOL EditOutput995(LPCWSTR asFileName, BOOL abView)
 	return lbRc;
 }
 
+BOOL ExecuteSynchro995()
+{
+	if (!InfoW995)
+		return FALSE;
+
+	if (IS_SYNCHRO_ALLOWED)
+	{
+		InfoW995->AdvControl ( InfoW995->ModuleNumber, ACTL_SYNCHRO, NULL);
+		return TRUE;
+	}
+	
+	return FALSE;
+}
+
 // Param должен быть выделен в куче. Память освобождается в ProcessSynchroEventW.
 //BOOL CallSynchro995(SynchroArg *Param, DWORD nTimeout /*= 10000*/)
 //{

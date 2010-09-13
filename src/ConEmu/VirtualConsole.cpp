@@ -1994,7 +1994,8 @@ void CVirtualConsole::UpdateText()
 				bool bBord = isCharBorderVertical(c);
 				TODO("Пока не будет учтено, что поверх рамок может быть другой диалог!");
 				bool bFrame = false; // mpn_ConAttrEx[row*TextWidth+j].bDialogVBorder;
-                if (bFrame || bBord || isCharScroll(c) || (isFilePanel && c==L'}')) {
+                if (bFrame || bBord || isCharScroll(c) || (isFilePanel && c==L'}'))
+				{
                     //2009-04-21 было (j-1) * nFontWidth;
                     //ConCharXLine[j-1] = j * nFontWidth;
 					bool bMayBeFrame = true;
@@ -2002,12 +2003,14 @@ void CVirtualConsole::UpdateText()
 					{
 						int R;
 						wchar_t prevC;
-						for (R = (row-1); bMayBeFrame && !bBord && R>=0; R--) {
+						for (R = (row-1); bMayBeFrame && !bBord && R>=0; R--)
+						{
 							prevC = mpsz_ConChar[R*TextWidth+j];
 							bBord = isCharBorderVertical(prevC);
 							bMayBeFrame = (bBord || isCharScroll(prevC) || (isFilePanel && prevC==L'}'));
 						}
-						for (R = (row+1); bMayBeFrame && !bBord && R < (int)TextHeight; R++) {
+						for (R = (row+1); bMayBeFrame && !bBord && R < (int)TextHeight; R++)
+						{
 							prevC = mpsz_ConChar[R*TextWidth+j];
 							bBord = isCharBorderVertical(prevC);
 							bMayBeFrame = (bBord || isCharScroll(prevC) || (isFilePanel && prevC==L'}'));
@@ -2025,7 +2028,8 @@ void CVirtualConsole::UpdateText()
 				//}
 				HEAPVAL;
 
-                if (nPrevX < ConCharXLine[j-1]) {
+                if (nPrevX < ConCharXLine[j-1])
+				{
                     // Требуется зарисовать пропущенную область. пробелами что-ли?
 
                     RECT rect;
@@ -2050,14 +2054,16 @@ void CVirtualConsole::UpdateText()
 
 						// Если текущий символ - вертикальная рамка, а предыдущий символ - рамка
 						// нужно продлить рамку до текущего символа
-						if (isCharBorderVertical(c) && isCharBorder(PrevC)) {
+						if (isCharBorderVertical(c) && isCharBorder(PrevC))
+						{
 							//SetBkColor(hDC, pColors[attrBack]);
 							SetBkColor(hDC, attr.crBackColor);
 							wchar_t *pchBorder = (c == ucBoxDblDownLeft || c == ucBoxDblUpLeft 
 								|| c == ucBoxSinglDownDblHorz || c == ucBoxSinglUpDblHorz || c == ucBoxDblVertLeft
 								|| c == ucBoxDblVertHorz) ? ms_HorzDbl : ms_HorzSingl;
 							int nCnt = ((rect.right - rect.left) / CharWidth(pchBorder[0]))+1;
-							if (nCnt > MAX_SPACES) {
+							if (nCnt > MAX_SPACES)
+							{
 								_ASSERTE(nCnt<=MAX_SPACES);
 								nCnt = MAX_SPACES;
 							}
@@ -2075,7 +2081,9 @@ void CVirtualConsole::UpdateText()
 							ExtTextOut(hDC, rect.left, rect.top, nFlags, &rect, pchBorder, nCnt, 0);
 							SetTextColor(hDC, attr.crForeColor); // Вернуть
 
-						} else {
+						}
+						else
+						{
 							HBRUSH hbr = PartBrush(L' ', attr.crBackColor, attr.crForeColor);
 							FillRect(hDC, &rect, hbr);
 
@@ -2224,11 +2232,17 @@ void CVirtualConsole::UpdateText()
 					SelectFont(hFont);
 					HEAPVAL
 				}
-				else //Border and specials
+				else
 				{
+					// Сюда мы попадаем для символов, которые отрисовываются "рамочным" шрифтом
+					// Однако, это могут быть не только рамки, но и много чего еще, что попросил
+					// пользователь (настройка диапазонов -> gSet.icFixFarBorderRanges)
+
 					j2 = j + 1; HEAPVAL
 
-					if (bEnhanceGraphics && isProgress) {
+					// блоки 25%, 50%, 75%, 100%
+					if (bEnhanceGraphics && isProgress)
+					{
 						TCHAR ch;
 						ch = c; // Графическая отрисовка прокрутки и прогресса
 						while(j2 < end && ConAttrLine[j2] == attr && ch == ConCharLine[j2+1])
@@ -2236,9 +2250,13 @@ void CVirtualConsole::UpdateText()
 							ConCharXLine[j2] = (j2 ? ConCharXLine[j2-1] : 0)+CharWidth(ch);
 							j2++;
 						}
-					} else
-					if (!bFixFarBorders)
+					}
+					else if (!bFixFarBorders)
 					{
+						// Сюда вроде попадать не должны - тогда isUnicodeOrProgress должен быть false
+						// т.к. в настройке отключено gSet.isFixFarBorders
+						_ASSERTE(bFixFarBorders);
+						_ASSERTE(!isUnicodeOrProgress);
 						TCHAR ch;
 						while(j2 < end && ConAttrLine[j2] == attr && isCharBorder(ch = ConCharLine[j2]))
 						{
@@ -2252,7 +2270,8 @@ void CVirtualConsole::UpdateText()
 						//WARNING("Тут обламывается на ucBoxDblVert в первой позиции. Ее ширину ставит в ...");
 
 						// Для отрисовки рамок (ucBoxDblHorz) за один проход
-						if (c == ucBoxDblHorz || c == ucBoxSinglHorz)
+						bool bIsHorzBorder = (c == ucBoxDblHorz || c == ucBoxSinglHorz);
+						if (bIsHorzBorder)
 						{
 							while(j2 < end && ConAttrLine[j2] == attr && c == ConCharLine[j2])
 								j2++;
@@ -2269,14 +2288,16 @@ void CVirtualConsole::UpdateText()
 								bDrawReplaced = true;
 								nDrawLen = nCnt;
 								pszDraw = (c==ucBoxDblHorz) ? ms_HorzDbl : ms_HorzSingl;
-							} else {
-								#ifdef _DEBUG
-								static bool bShowAssert = true;
-								if (bShowAssert) {
-									_ASSERTE(c==ucBoxDblHorz || c==ucBoxSinglHorz);
-								}
-								#endif
 							}
+							#ifdef _DEBUG
+							else
+							{								
+								//static bool bShowAssert = true;
+								//if (bShowAssert) {
+								_ASSERTE(!bIsHorzBorder || (c==ucBoxDblHorz || c==ucBoxSinglHorz));
+								//}
+							}
+							#endif
 						}
 						//while(j2 < end && ConAttrLine[j2] == attr && 
 						//    isCharBorder(ch = ConCharLine[j2]) && ch == ConCharLine[j2+1])

@@ -81,11 +81,14 @@ HANDLE WINAPI _export OpenPlugin(int OpenFrom,INT_PTR Item)
 		return INVALID_HANDLE_VALUE;
 	}
 
-	if (gnReqCommand != (DWORD)-1) {
+	if (gnReqCommand != (DWORD)-1)
+	{
 		gnPluginOpenFrom = OpenFrom;
 		SHOWDBGINFO(L"*** Calling ProcessCommand\n");
 		ProcessCommand(gnReqCommand, FALSE/*bReqMainThread*/, gpReqCommandData);
-	} else {
+	}
+	else
+	{
 		//if (!gbCmdCallObsolete) {
 			SHOWDBGINFO(L"*** Calling ShowPluginMenu\n");
 			ShowPluginMenu();
