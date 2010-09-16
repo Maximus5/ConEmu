@@ -1379,9 +1379,39 @@ void CRgnDetect::OnWriteConsoleOutput(const CHAR_INFO *lpBuffer,COORD dwBufferSi
 
 void CRgnDetect::SetFarRect(SMALL_RECT *prcFarRect)
 {
-	if (prcFarRect) {
+	if (prcFarRect)
+	{
 		mrc_FarRect = *prcFarRect;
-	} else {
+		// Скопировать в m_sbi.srWindow
+		if (mrc_FarRect.Bottom)
+		{
+			// Сначала подправим вертикаль			
+			if (mrc_FarRect.Bottom == m_sbi.srWindow.Bottom)
+			{
+				if (mrc_FarRect.Top != m_sbi.srWindow.Top)
+					m_sbi.srWindow.Top = mrc_FarRect.Top;
+			}
+			else if (mrc_FarRect.Top == m_sbi.srWindow.Top)
+			{
+				if (mrc_FarRect.Bottom != m_sbi.srWindow.Bottom)
+					m_sbi.srWindow.Bottom = mrc_FarRect.Bottom;
+			}
+			// Теперь - горизонталь
+			if (mrc_FarRect.Left == m_sbi.srWindow.Left)
+			{
+				if (mrc_FarRect.Right != m_sbi.srWindow.Right)
+					m_sbi.srWindow.Right = mrc_FarRect.Right;
+			}
+			else if (mrc_FarRect.Right == m_sbi.srWindow.Right)
+			{
+				if (mrc_FarRect.Left != m_sbi.srWindow.Left)
+					m_sbi.srWindow.Left = mrc_FarRect.Left;
+			}
+			// Иначе - считаем что фар выбился из окна, и панели будут скрыты
+		}
+	}
+	else
+	{
 		memset(&mrc_FarRect, 0, sizeof(mrc_FarRect));
 	}
 }
@@ -1418,10 +1448,13 @@ BOOL CRgnDetect::InitializeSBI(const COLORREF *apColors)
 	if (!mb_SBI_Loaded)
 		return FALSE;
 
-	if (mrc_FarRect.Right && mrc_FarRect.Bottom) {
+	if (mrc_FarRect.Right && mrc_FarRect.Bottom)
+	{
 		// FAR2 /w - рисует в видимой части буфера
 		TODO("Возможно, нужно в srWindow копировать mrc_FarRect?");
-	} else {
+	}
+	else
+	{
 		// Нужно скорректировать srWindow, т.к. ФАР в любом случае забивает на видимый регион и рисует на весь буфер.
 		if (m_sbi.srWindow.Left)
 			m_sbi.srWindow.Left = 0;
@@ -1500,10 +1533,13 @@ BOOL CRgnDetect::InitializeSBI(const COLORREF *apColors)
 int CRgnDetect::TextWidth()
 {
 	int nWidth = 0;
-	if (mrc_FarRect.Right && mrc_FarRect.Bottom) {
+	if (mrc_FarRect.Right && mrc_FarRect.Bottom)
+	{
 		// FAR2 /w - рисует в видимой части буфера
 		nWidth = m_sbi.srWindow.Right - m_sbi.srWindow.Left + 1;
-	} else {
+	}
+	else
+	{
 		nWidth = m_sbi.dwSize.X;
 	}
 	return nWidth;
@@ -1512,10 +1548,13 @@ int CRgnDetect::TextWidth()
 int CRgnDetect::TextHeight()
 {
 	int nHeight = 0;
-	if (mrc_FarRect.Right && mrc_FarRect.Bottom) {
+	if (mrc_FarRect.Right && mrc_FarRect.Bottom)
+	{
 		// FAR2 /w - рисует в видимой части буфера
 		nHeight = m_sbi.srWindow.Bottom - m_sbi.srWindow.Top + 1;
-	} else {
+	}
+	else
+	{
 		nHeight = m_sbi.dwSize.Y;
 	}
 	return nHeight;

@@ -188,7 +188,7 @@ public:
 	CDragDrop *mp_DragDrop;
 protected:
 	//CProgressBars *ProgressBars;
-	TCHAR Title[MAX_TITLE_SIZE], TitleCmp[MAX_TITLE_SIZE], MultiTitle[MAX_TITLE_SIZE+30];
+	TCHAR Title[MAX_TITLE_SIZE], TitleCmp[MAX_TITLE_SIZE]; //, MultiTitle[MAX_TITLE_SIZE+30];
 	short mn_Progress;
 	LPTSTR GetTitleStart();
 	BOOL mb_InTimer;

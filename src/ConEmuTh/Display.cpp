@@ -869,6 +869,73 @@ HBRUSH CeFullPanelInfo::GetItemColors(int nIndex, CePluginPanelItem* pItem, BOOL
 	return hLastBackBrush;
 }
 
+int CeFullPanelInfo::CalcTopPanelItem(int anCurrentItem, int anTopItem)
+{
+	int nTopItem = anTopItem;
+	int nItemCount = this->ItemsNumber;
+	int nCurrentItem = anCurrentItem;
+	//CePluginPanelItem** ppItems = this->ppItems;
+
+	if ((nTopItem + nXCountFull*(nYCountFull)) <= nCurrentItem)
+	{
+		TODO("Выравнивание на границу nXCount");
+		nTopItem = nCurrentItem - (nXCountFull*(nYCountFull)) + 1;
+		//
+		if (PVM == pvm_Thumbnails)
+		{
+			int n = (nTopItem + (nXCount-1)) / nXCount;
+			int nNewTop = n * nXCount;
+			nTopItem = min(nNewTop, (nItemCount-1));
+			//int nMod = nTopItem % nXCount;
+			//if (nMod) {
+			//	nTopItem = max(0,nTopItem-nMod);
+			//	//if (nTopItem > nCurrentItem)
+			//	//	nTopItem = max(nCurrentItem,(nTopItem-nXCount));
+			//}
+		}
+		else
+		{
+			int n = (nTopItem + (nYCountFull-1)) / nYCountFull;
+			int nNewTop = n * nYCountFull;
+			nTopItem = min(nNewTop, (nItemCount-1));
+			//if (nTopItem > nCurrentItem)
+			//	nTopItem = max(0,min((nTopItem-nYCountFull),nCurrentItem
+		}
+	}
+	else
+	{
+		if (nTopItem > nCurrentItem)
+			nTopItem = nCurrentItem;
+		//
+		if (PVM == pvm_Thumbnails)
+		{
+			int nMod = nTopItem % nXCount;
+			if (nMod)
+			{
+				nTopItem = max(0,nTopItem-nMod);
+			}
+			while ((nTopItem + nXCountFull*(nYCountFull)) <= nCurrentItem)
+			{
+				nTopItem += nXCountFull;
+			}
+		}
+		else
+		{
+			int nMod = nTopItem % nYCountFull;
+			if (nMod)
+			{
+				nTopItem = max(0,nTopItem-nMod);
+			}
+			while ((nTopItem + nXCountFull*(nYCountFull)) <= nCurrentItem)
+			{
+				nTopItem += nYCountFull;
+			}
+		}
+	}
+	
+	return nTopItem;
+}
+
 void CeFullPanelInfo::Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc)
 {
 	gbCancelAll = FALSE;
@@ -947,55 +1014,71 @@ void CeFullPanelInfo::Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc)
 
 	//this->nXCount = nXCount; this->nYCountFull = nYCountFull; this->nYCount = nYCount;
 	
-	int nTopItem = this->TopPanelItem;
+	//int nTopItem = this->TopPanelItem;
 	int nItemCount = this->ItemsNumber;
 	int nCurrentItem = this->CurrentItem;
-	//CePluginPanelItem** ppItems = this->ppItems;
-
-	if ((nTopItem + nXCountFull*(nYCountFull)) <= nCurrentItem) {
-		TODO("Выравнивание на границу nXCount");
-		nTopItem = nCurrentItem - (nXCountFull*(nYCountFull)) + 1;
-		//
-		if (PVM == pvm_Thumbnails)
-		{
-			int n = (nTopItem + (nXCount-1)) / nXCount;
-			int nNewTop = n * nXCount;
-			nTopItem = min(nNewTop, (nItemCount-1));
-			//int nMod = nTopItem % nXCount;
-			//if (nMod) {
-			//	nTopItem = max(0,nTopItem-nMod);
-			//	//if (nTopItem > nCurrentItem)
-			//	//	nTopItem = max(nCurrentItem,(nTopItem-nXCount));
-			//}
-		} else {
-			int n = (nTopItem + (nYCountFull-1)) / nYCountFull;
-			int nNewTop = n * nYCountFull;
-			nTopItem = min(nNewTop, (nItemCount-1));
-			//if (nTopItem > nCurrentItem)
-			//	nTopItem = max(0,min((nTopItem-nYCountFull),nCurrentItem
-		}
-	} else {
-		//
-		if (PVM == pvm_Thumbnails)
-		{
-			int nMod = nTopItem % nXCount;
-			if (nMod) {
-				nTopItem = max(0,nTopItem-nMod);
-			}
-			while ((nTopItem + nXCountFull*(nYCountFull)) <= nCurrentItem) {
-				nTopItem += nXCountFull;
-			}
-		} else {
-			int nMod = nTopItem % nYCountFull;
-			if (nMod) {
-				nTopItem = max(0,nTopItem-nMod);
-			}
-			while ((nTopItem + nXCountFull*(nYCountFull)) <= nCurrentItem) {
-				nTopItem += nYCountFull;
-			}
-		}
-	}
+	int nTopItem = this->TopPanelItem;
+	if (nCurrentItem == this->ReqCurrentItem && nTopItem < this->ReqTopPanelItem)
+		nTopItem = this->ReqTopPanelItem;
+	nTopItem = CalcTopPanelItem(nCurrentItem, nTopItem);
 	this->OurTopPanelItem = nTopItem;
+	
+	////CePluginPanelItem** ppItems = this->ppItems;
+	//if ((nTopItem + nXCountFull*(nYCountFull)) <= nCurrentItem)
+	//{
+	//	TODO("Выравнивание на границу nXCount");
+	//	nTopItem = nCurrentItem - (nXCountFull*(nYCountFull)) + 1;
+	//	//
+	//	if (PVM == pvm_Thumbnails)
+	//	{
+	//		int n = (nTopItem + (nXCount-1)) / nXCount;
+	//		int nNewTop = n * nXCount;
+	//		nTopItem = min(nNewTop, (nItemCount-1));
+	//		//int nMod = nTopItem % nXCount;
+	//		//if (nMod) {
+	//		//	nTopItem = max(0,nTopItem-nMod);
+	//		//	//if (nTopItem > nCurrentItem)
+	//		//	//	nTopItem = max(nCurrentItem,(nTopItem-nXCount));
+	//		//}
+	//	}
+	//	else
+	//	{
+	//		int n = (nTopItem + (nYCountFull-1)) / nYCountFull;
+	//		int nNewTop = n * nYCountFull;
+	//		nTopItem = min(nNewTop, (nItemCount-1));
+	//		//if (nTopItem > nCurrentItem)
+	//		//	nTopItem = max(0,min((nTopItem-nYCountFull),nCurrentItem
+	//	}
+	//}
+	//else
+	//{
+	//	//
+	//	if (PVM == pvm_Thumbnails)
+	//	{
+	//		int nMod = nTopItem % nXCount;
+	//		if (nMod)
+	//		{
+	//			nTopItem = max(0,nTopItem-nMod);
+	//		}
+	//		while ((nTopItem + nXCountFull*(nYCountFull)) <= nCurrentItem)
+	//		{
+	//			nTopItem += nXCountFull;
+	//		}
+	//	}
+	//	else
+	//	{
+	//		int nMod = nTopItem % nYCountFull;
+	//		if (nMod)
+	//		{
+	//			nTopItem = max(0,nTopItem-nMod);
+	//		}
+	//		while ((nTopItem + nXCountFull*(nYCountFull)) <= nCurrentItem)
+	//		{
+	//			nTopItem += nYCountFull;
+	//		}
+	//	}
+	//}
+	//this->OurTopPanelItem = nTopItem;
 
 	
 	int nMaxLen = (this->pszPanelDir ? lstrlen(this->pszPanelDir) : 0) + MAX_PATH+3;
@@ -1282,7 +1365,8 @@ int CeFullPanelInfo::RegisterPanelView()
 	gnCreateViewError = 0;
 
 	// Если пока все ОК
-	if (nRc == 0) {
+	if (nRc == 0)
+	{
 		LoadThSet();
 
 		// Настройки отображения уже должны быть загружены!
@@ -1312,7 +1396,8 @@ int CeFullPanelInfo::RegisterPanelView()
 			_ASSERTE(gpRgnDetect!=NULL);
 			SMALL_RECT rcFarRect; GetFarRect(&rcFarRect);
 			gpRgnDetect->SetFarRect(&rcFarRect);
-			if (gpRgnDetect->InitializeSBI(gcrCurColors)) {
+			if (gpRgnDetect->InitializeSBI(gcrCurColors))
+			{
 				gpRgnDetect->PrepareTransparent(&gFarInfo, gcrCurColors);
 			}
 			
@@ -1336,14 +1421,17 @@ int CeFullPanelInfo::RegisterPanelView()
 	}
 
 	// Если можно продолжать - продолжаем
-	if (nRc == 0) {
+	if (nRc == 0)
+	{
 		gnRgnDetectFlags = gpRgnDetect->GetFlags();
 		//gbLastCheckWindow = true;
 
 		UpdateEnvVar(FALSE/*abForceRedraw*/);
 
-		if (pvi.bVisible) {
-			if (!IsWindowVisible(this->hView)) {
+		if (pvi.bVisible)
+		{
+			if (!IsWindowVisible(this->hView))
+			{
 				lbRc = apiShowWindow(this->hView, SW_SHOWNORMAL);
 				if (!lbRc)
 					dwErr = GetLastError();
@@ -1356,12 +1444,14 @@ int CeFullPanelInfo::RegisterPanelView()
 
 	
 	// Если GUI отказался от панели (или уже здесь произошла ошибка) - нужно ее закрыть
-	if (nRc != 0) {
+	if (nRc != 0)
+	{
 		// Закрыть окно (по WM_CLOSE окно само должно послать WM_QUIT если оно единственное)
 		_ASSERTE(nRc == 0);
 
 		// Если эта панель единственная - сразу сбрасываем переменные
-		if (!pviLeft.hView || !pviRight.hView) {
+		if (!pviLeft.hView || !pviRight.hView)
+		{
 			ResetUngetBuffer();
 			SetEnvironmentVariable(TH_ENVVAR_NAME, NULL);
 		}
@@ -1371,7 +1461,8 @@ int CeFullPanelInfo::RegisterPanelView()
 			gnCreateViewError = CEGuiDontAcceptPanel;
 		gnWin32Error = nRc;
 
-		if (GetCurrentThreadId() == gnMainThreadId) {
+		if (GetCurrentThreadId() == gnMainThreadId)
+		{
 			ShowLastError();
 		}
 	}	
@@ -1384,7 +1475,8 @@ int CeFullPanelInfo::RegisterPanelView()
 int CeFullPanelInfo::UnregisterPanelView()
 {
 	// Страховка от того, что conemu.dll могли выгрузить (unload:...)
-	if (!CheckConEmu() || !gfRegisterPanelView) {
+	if (!CheckConEmu() || !gfRegisterPanelView)
+	{
 
 		// Закрыть окно (по WM_CLOSE окно само должно послать WM_QUIT если оно единственное)
 		if (this->hView)
@@ -1394,7 +1486,8 @@ int CeFullPanelInfo::UnregisterPanelView()
 	}
 
 	// Если эта панель единственная - сразу сбрасываем переменные
-	if (!pviLeft.hView || !pviRight.hView) {
+	if (!pviLeft.hView || !pviRight.hView)
+	{
 		ResetUngetBuffer();
 		SetEnvironmentVariable(TH_ENVVAR_NAME, NULL);
 	}

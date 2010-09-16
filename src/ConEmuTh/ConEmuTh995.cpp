@@ -366,6 +366,39 @@ void ReloadPanelsInfo995()
 	LoadPanelInfo995(FALSE);
 }
 
+void SetCurrentPanelItem995(BOOL abLeftPanel, UINT anTopItem, UINT anCurItem)
+{
+	if (!InfoW995) return;
+	
+	// В Far2 можно быстро проверить валидность индексов
+	HANDLE hPanel = NULL;
+	PanelInfo piActive = {0}, piPassive = {0}, *pi = NULL;
+	TODO("Проверять текущую видимость панелей?");
+	InfoW995->Control(PANEL_ACTIVE,  FCTL_GETPANELINFO, 0, (LONG_PTR)&piActive);
+	if (abLeftPanel && (piActive.Flags & PFLAGS_PANELLEFT) == PFLAGS_PANELLEFT)
+	{
+		pi = &piActive; hPanel = PANEL_ACTIVE;
+	}
+	else
+	{
+		InfoW995->Control(PANEL_PASSIVE, FCTL_GETPANELINFO, 0, (LONG_PTR)&piPassive);
+		pi = &piPassive; hPanel = PANEL_PASSIVE;
+	}
+
+	// Проверяем индексы
+	if (pi->ItemsNumber < 1)
+		return;
+	if ((int)anTopItem >= pi->ItemsNumber)
+		anTopItem = pi->ItemsNumber - 1;
+	if ((int)anCurItem >= pi->ItemsNumber)
+		anCurItem = pi->ItemsNumber - 1;
+	if (anCurItem < anTopItem)
+		anCurItem = anTopItem;
+	// Обновляем панель
+	PanelRedrawInfo pri = {anCurItem, anTopItem};
+	InfoW995->Control(hPanel, FCTL_REDRAWPANEL, 0, (LONG_PTR)&pri);
+}
+
 //BOOL IsLeftPanelActive995()
 //{
 //	WARNING("TODO: IsLeftPanelActive995");

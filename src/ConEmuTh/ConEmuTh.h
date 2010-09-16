@@ -58,7 +58,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 
-#define EVENT_TYPE_REDRAW 250
+//#define EVENT_TYPE_REDRAW 250
 #define TH_ENVVAR_NAME L"FarThumbnails"
 #define TH_ENVVAR_ACTIVE L"Active"
 #define TH_ENVVAR_SCROLL L"Scrolling"
@@ -152,8 +152,14 @@ typedef struct tag_CeFullPanelInfo
 	RECT  PanelRect;
 	RECT  WorkRect; // "рабочий" пр€моугольник. где собственно файлы лежат
 	int ItemsNumber;
+	// 
 	int CurrentItem;
 	int TopPanelItem;
+	// Ёто мы хотим выставить при следующем Synchro
+	bool bRequestItemSet;
+	int ReqCurrentItem;
+	int ReqTopPanelItem;
+	//
 	int OurTopPanelItem; // он может Ќ≈ совпадать с фаровским, чтобы CurrentItem был таки видим
 	BOOL IsFilePanel;
 	int PanelMode; // 0..9 - текущий режим панели.
@@ -189,6 +195,7 @@ typedef struct tag_CeFullPanelInfo
 	
 	static LRESULT CALLBACK DisplayWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 	static DWORD WINAPI DisplayThread(LPVOID lpvParam);
+	int CalcTopPanelItem(int anCurrentItem, int anTopItem);
 	void Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc);
 	BOOL PaintItem(HDC hdc, int nIndex, int x, int y, CePluginPanelItem* pItem, BOOL abCurrentItem, BOOL abSelectedItem,
 			   /*COLORREF *nBackColor, COLORREF *nForeColor, HBRUSH *hBack,*/
@@ -431,6 +438,13 @@ void ExecuteInMainThread(ConEmuThSynchroArg* pCmd);
 void FUNC_X(ExecuteInMainThread)(ConEmuThSynchroArg* pCmd);
 void FUNC_Y(ExecuteInMainThread)(ConEmuThSynchroArg* pCmd);
 int WINAPI ProcessSynchroEventW(int Event, void *Param);
+
+#define SYNCHRO_REDRAW_PANEL ((ConEmuThSynchroArg*)1)
+void SetCurrentPanelItemA(BOOL abLeftPanel, UINT anTopItem, UINT anCurItem);
+void FUNC_X(SetCurrentPanelItem)(BOOL bLeftPanel, UINT anTopItem, UINT anCurItem);
+void FUNC_Y(SetCurrentPanelItem)(BOOL bLeftPanel, UINT anTopItem, UINT anCurItem);
+
+#define SYNCHRO_RELOAD_PANELS ((ConEmuThSynchroArg*)2)
 
 
 // ConEmu.dll

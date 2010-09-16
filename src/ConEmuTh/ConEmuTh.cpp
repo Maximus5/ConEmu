@@ -102,20 +102,23 @@ DWORD gnFarPanelSettings = 0, gnFarInterfaceSettings = 0;
 
 bool gbWaitForKeySequenceEnd = false;
 DWORD gnWaitForKeySeqTick = 0;
-int gnUngetCount = 0;
-INPUT_RECORD girUnget[100];
+//int gnUngetCount = 0;
+//INPUT_RECORD girUnget[100];
 WORD wScanCodeUp=0, wScanCodeDown=0; //p->Event.KeyEvent.wVirtualScanCode = MapVirtualKey(vk, 0/*MAPVK_VK_TO_VSC*/);
 #ifdef _DEBUG
 WORD wScanCodeLeft=0, wScanCodeRight=0, wScanCodePgUp=0, wScanCodePgDn=0;
 #endif
-BOOL GetBufferInput(BOOL abRemove, PINPUT_RECORD lpBuffer, DWORD nBufSize, LPDWORD lpNumberOfEventsRead);
-BOOL UngetBufferInput(WORD nCount, PINPUT_RECORD lpOneInput);
+//BOOL GetBufferInput(BOOL abRemove, PINPUT_RECORD lpBuffer, DWORD nBufSize, LPDWORD lpNumberOfEventsRead);
+//BOOL UngetBufferInput(WORD nCount, PINPUT_RECORD lpOneInput);
 void ResetUngetBuffer();
-BOOL ProcessConsoleInput(BOOL abUseUngetBuffer, PINPUT_RECORD lpBuffer, DWORD nBufSize, LPDWORD lpNumberOfEventsRead);
+BOOL ProcessConsoleInput(BOOL abReadMode, PINPUT_RECORD lpBuffer, DWORD nBufSize, LPDWORD lpNumberOfEventsRead);
 DWORD gnConsoleChanges = 0; // bitmask: 1-left, 2-right
-void OnMainThreadActived();
+bool  gbConsoleChangesSyncho = false;
+void OnReadyForPanelsReload();
 void ReloadResourcesW();
+
 ConEmuThSynchroArg* gpLastSynchroArg = NULL;
+bool gbSynchoRedrawPanelRequested = false;
 
 #ifdef _DEBUG
 MFileMapping<DetectedDialogs> *gpDbgDlg = NULL;
@@ -501,16 +504,18 @@ void WINAPI _export SetStartupInfoW(void *aInfo)
 
 void StartPlugin(BOOL abManual)
 {
-	if (!CheckConEmu(!abManual))
-		return;
-
 	// Это делаем всегда, потому как это общая точка входа в плагин
-	if (!gpImgCache) {
+	if (!gpImgCache)
+	{
 		gpImgCache = new CImgCache(ghPluginModule);
 	}
 
+	if (!CheckConEmu(!abManual))
+		return;
+
 	HKEY hk = NULL;
-	if (!RegOpenKeyExW(HKEY_CURRENT_USER, gszRootKey, 0, KEY_READ, &hk)) {
+	if (!RegOpenKeyExW(HKEY_CURRENT_USER, gszRootKey, 0, KEY_READ, &hk))
+	{
 		DWORD dwModes[2], dwSize = 4;
 		if (RegQueryValueEx(hk, L"LeftPanelView", NULL, NULL, (LPBYTE)dwModes, &(dwSize=4)))
 			dwModes[0] = 0;
@@ -519,16 +524,19 @@ void StartPlugin(BOOL abManual)
 		RegCloseKey(hk);
 
 
-		if (ghDisplayThread && gnDisplayThreadId == 0) {
+		if (ghDisplayThread && gnDisplayThreadId == 0)
+		{
 			CloseHandle(ghDisplayThread); ghDisplayThread = NULL;
 		}
 
-		if (dwModes[0] || dwModes[1]) {
+		if (dwModes[0] || dwModes[1])
+		{
 			if (gThSet.bRestoreOnStartup)
 			{
 				// Для корректного определения положения колонок необходим один из флажков в настройке панели:
 				// [x] Показывать заголовки колонок [x] Показывать суммарную информацию
-				if (!CheckPanelSettings(!abManual)) {
+				if (!CheckPanelSettings(!abManual))
+				{
 					return;
 				}
 
@@ -541,14 +549,18 @@ void StartPlugin(BOOL abManual)
 					if (!pi[i]->hView && dwModes[i]) {
 						pi[i]->PVM = (PanelViewMode)dwModes[i];
 						pi[i]->DisplayReloadPanel();
-						if (pi[i]->hView == NULL) {
+						if (pi[i]->hView == NULL)
+						{
 							// Нужно создать View
 							pi[i]->hView = pi[i]->CreateView();
 						}
-						if (pi[i]->hView == NULL) {
+						if (pi[i]->hView == NULL)
+						{
 							// Показать ошибку
 							ShowLastError();
-						} else {
+						}
+						else
+						{
 							pi[i]->RegisterPanelView();
 						}
 					}
@@ -932,165 +944,175 @@ void ReloadPanelsInfo()
 //	return lbLeftActive;
 //}
 
-WORD PopUngetBuffer(BOOL abRemove, PINPUT_RECORD lpDst)
-{
-	if (gnUngetCount<1) {
-		lpDst->EventType = 0;
-	} else {
-		*lpDst = girUnget[0];
-		BOOL lbNeedPop = FALSE;
-		if (girUnget[0].EventType == EVENT_TYPE_REDRAW)
-			abRemove = TRUE; // Это - сразу удаляем из буфера
+//WORD PopUngetBuffer(BOOL abRemove, PINPUT_RECORD lpDst)
+//{
+//	if (gnUngetCount<1) {
+//		lpDst->EventType = 0;
+//	} else {
+//		*lpDst = girUnget[0];
+//		BOOL lbNeedPop = FALSE;
+//		if (girUnget[0].EventType == EVENT_TYPE_REDRAW)
+//			abRemove = TRUE; // Это - сразу удаляем из буфера
+//
+//		if (girUnget[0].EventType == KEY_EVENT) {
+//			_ASSERTE(((short)girUnget[0].Event.KeyEvent.wRepeatCount) > 0);
+//			lpDst->Event.KeyEvent.wRepeatCount = 1;
+//
+//			if (girUnget[0].Event.KeyEvent.wRepeatCount == 1) {
+//				lbNeedPop = abRemove;
+//			} else if (abRemove) {
+//				girUnget[0].Event.KeyEvent.wRepeatCount --;
+//			}
+//		} else {
+//			lbNeedPop = abRemove;
+//		}
+//
+//		if (lbNeedPop) {
+//			_ASSERTE(abRemove);
+//			gnUngetCount --;
+//			_ASSERTE(gnUngetCount >= 0);
+//			if (gnUngetCount > 0) {
+//				// Подвинуть в буфере то что осталось к началу
+//				memmove(girUnget, girUnget+1, sizeof(girUnget[0])*gnUngetCount);
+//			}
+//			girUnget[gnUngetCount].EventType = 0;
+//		}
+//	}
+//
+//	return lpDst->EventType;
+//}
 
-		if (girUnget[0].EventType == KEY_EVENT) {
-			_ASSERTE(((short)girUnget[0].Event.KeyEvent.wRepeatCount) > 0);
-			lpDst->Event.KeyEvent.wRepeatCount = 1;
+//BOOL GetBufferInput(BOOL abRemove, PINPUT_RECORD lpBuffer, DWORD nBufSize, LPDWORD lpNumberOfEventsRead)
+//{
+//	if (gnUngetCount<0)
+//	{
+//		_ASSERTE(gnUngetCount>=0);
+//		gnUngetCount = 0;
+//		*lpNumberOfEventsRead = 0;
+//		return FALSE;
+//	}
+//	if (nBufSize < 1)
+//	{
+//		_ASSERTE(nBufSize>=1);
+//		*lpNumberOfEventsRead = 0;
+//		return FALSE;
+//	}
+//
+//	BOOL lbRedraw = FALSE, lbSetEnvVar = FALSE;
+//	WORD wType = 0;
+//	PINPUT_RECORD p = lpBuffer;
+//
+//	while (nBufSize && gnUngetCount)
+//	{
+//		if ((wType = PopUngetBuffer(abRemove, p)) == 0)
+//			break; // буфер кончился
+//		if (wType == EVENT_TYPE_REDRAW)
+//		{
+//			lbRedraw = TRUE;
+//		}
+//		else
+//		{
+//			if (abRemove && gnUngetCount && girUnget[0].EventType == EVENT_TYPE_REDRAW)
+//			{
+//				lbSetEnvVar = TRUE;
+//			}
+//			nBufSize--; p++;
+//			if (!abRemove) break; // В режиме Peek - возвращаем не более одного нажатияs
+//		}
+//	}
+//
+//	//// Если натыкаемся на событие EVENT_TYPE_REDRAW - сбрасывать переменную EnvVar
+//	//// SetEnvironmentVariable(TH_ENVVAR_NAME, TH_ENVVAR_ACTIVE);
+//	//if (girUnget[0].EventType == EVENT_TYPE_REDRAW)
+//	//{
+//	//	lbRedraw = TRUE;
+//	//	gnUngetCount --;
+//	//	_ASSERTE(gnUngetCount >= 0);
+//	//	if (gnUngetCount > 0) {
+//	//		// Подвинуть в буфере то что осталось к началу
+//	//		memmove(girUnget, girUnget+1, sizeof(girUnget[0])*gnUngetCount);
+//	//	}
+//	//	girUnget[gnUngetCount].EventType = 0;
+//	//}
+//
+//	//int nMax = countof(girUnget);
+//	//if (gnUngetCount>=nMax) {
+//	//	_ASSERTE(gnUngetCount==nMax);
+//	//	if (gnUngetCount>nMax) gnUngetCount = nMax;
+//	//}
+//
+//	//nMax = min(gnUngetCount,(int)nBufSize);
+//
+//	//int i = 0, j = 0;
+//	//while (i < nMax && j < gnUngetCount) {
+//	//	if (girUnget[j].EventType == EVENT_TYPE_REDRAW) {
+//	//		j++; lbRedraw = TRUE; continue;
+//	//	}
+//
+//	//	lpBuffer[i++] = girUnget[j++];
+//	//}
+//	//nMax = i;
+//
+//	//if (abRemove) {
+//	//	gnUngetCount -= j;
+//	//	_ASSERTE(gnUngetCount >= 0);
+//	//	if (gnUngetCount > 0) {
+//	//		// Подвинуть в буфере то что осталось к началу
+//	//		memmove(girUnget, girUnget+nMax, sizeof(girUnget[0])*gnUngetCount);
+//	//		girUnget[gnUngetCount].EventType = 0;
+//	//	}
+//	//}
+//
+//	if (lbRedraw || lbSetEnvVar)
+//	{
+//		gbWaitForKeySequenceEnd = (gnUngetCount > 0) && !lbSetEnvVar;
+//		UpdateEnvVar(TRUE);
+//
+//		if (IsThumbnailsActive(FALSE))
+//		{
+//			if (lbRedraw && !gbWaitForKeySequenceEnd)
+//				OnReadyForPanelsReload();
+//		}
+//	}
+//
+//	*lpNumberOfEventsRead = (DWORD)(p - lpBuffer);
+//
+//	return TRUE;
+//}
 
-			if (girUnget[0].Event.KeyEvent.wRepeatCount == 1) {
-				lbNeedPop = abRemove;
-			} else if (abRemove) {
-				girUnget[0].Event.KeyEvent.wRepeatCount --;
-			}
-		} else {
-			lbNeedPop = abRemove;
-		}
-
-		if (lbNeedPop) {
-			_ASSERTE(abRemove);
-			gnUngetCount --;
-			_ASSERTE(gnUngetCount >= 0);
-			if (gnUngetCount > 0) {
-				// Подвинуть в буфере то что осталось к началу
-				memmove(girUnget, girUnget+1, sizeof(girUnget[0])*gnUngetCount);
-			}
-			girUnget[gnUngetCount].EventType = 0;
-		}
-	}
-
-	return lpDst->EventType;
-}
-
-BOOL GetBufferInput(BOOL abRemove, PINPUT_RECORD lpBuffer, DWORD nBufSize, LPDWORD lpNumberOfEventsRead)
-{
-	if (gnUngetCount<0) {
-		_ASSERTE(gnUngetCount>=0);
-		gnUngetCount = 0;
-		*lpNumberOfEventsRead = 0;
-		return FALSE;
-	}
-	if (nBufSize < 1) {
-		_ASSERTE(nBufSize>=1);
-		*lpNumberOfEventsRead = 0;
-		return FALSE;
-	}
-
-	BOOL lbRedraw = FALSE, lbSetEnvVar = FALSE;
-	WORD wType = 0;
-	PINPUT_RECORD p = lpBuffer;
-
-	while (nBufSize && gnUngetCount) {
-		if ((wType = PopUngetBuffer(abRemove, p)) == 0)
-			break; // буфер кончился
-		if (wType == EVENT_TYPE_REDRAW) {
-			lbRedraw = TRUE;
-		} else {
-			if (abRemove && gnUngetCount && girUnget[0].EventType == EVENT_TYPE_REDRAW) {
-				lbSetEnvVar = TRUE;
-			}
-			nBufSize--; p++;
-			if (!abRemove) break; // В режиме Peek - возвращаем не более одного нажатияs
-		}
-	}
-
-	//// Если натыкаемся на событие EVENT_TYPE_REDRAW - сбрасывать переменную EnvVar
-	//// SetEnvironmentVariable(TH_ENVVAR_NAME, TH_ENVVAR_ACTIVE);
-	//if (girUnget[0].EventType == EVENT_TYPE_REDRAW)
-	//{
-	//	lbRedraw = TRUE;
-	//	gnUngetCount --;
-	//	_ASSERTE(gnUngetCount >= 0);
-	//	if (gnUngetCount > 0) {
-	//		// Подвинуть в буфере то что осталось к началу
-	//		memmove(girUnget, girUnget+1, sizeof(girUnget[0])*gnUngetCount);
-	//	}
-	//	girUnget[gnUngetCount].EventType = 0;
-	//}
-
-	//int nMax = countof(girUnget);
-	//if (gnUngetCount>=nMax) {
-	//	_ASSERTE(gnUngetCount==nMax);
-	//	if (gnUngetCount>nMax) gnUngetCount = nMax;
-	//}
-
-	//nMax = min(gnUngetCount,(int)nBufSize);
-
-	//int i = 0, j = 0;
-	//while (i < nMax && j < gnUngetCount) {
-	//	if (girUnget[j].EventType == EVENT_TYPE_REDRAW) {
-	//		j++; lbRedraw = TRUE; continue;
-	//	}
-
-	//	lpBuffer[i++] = girUnget[j++];
-	//}
-	//nMax = i;
-
-	//if (abRemove) {
-	//	gnUngetCount -= j;
-	//	_ASSERTE(gnUngetCount >= 0);
-	//	if (gnUngetCount > 0) {
-	//		// Подвинуть в буфере то что осталось к началу
-	//		memmove(girUnget, girUnget+nMax, sizeof(girUnget[0])*gnUngetCount);
-	//		girUnget[gnUngetCount].EventType = 0;
-	//	}
-	//}
-
-	if (lbRedraw || lbSetEnvVar) {
-		gbWaitForKeySequenceEnd = (gnUngetCount > 0) && !lbSetEnvVar;
-		UpdateEnvVar(TRUE);
-
-		if (IsThumbnailsActive(FALSE)) {
-			if (lbRedraw && !gbWaitForKeySequenceEnd)
-				OnMainThreadActived();
-		}
-	}
-
-	*lpNumberOfEventsRead = (DWORD)(p - lpBuffer);
-
-	return TRUE;
-}
-
-BOOL UngetBufferInput(WORD nCount, PINPUT_RECORD lpOneInput)
-{
-	_ASSERTE(nCount);
-	if (gnUngetCount<0) {
-		_ASSERTE(gnUngetCount>=0);
-		gnUngetCount = 0;
-	}
-	int nMax = countof(girUnget);
-	if (gnUngetCount>=nMax) {
-		_ASSERTE(gnUngetCount==nMax);
-		if (gnUngetCount>nMax) gnUngetCount = nMax;
-		return FALSE;
-	}
-
-	girUnget[gnUngetCount] = *lpOneInput;
-	if (lpOneInput->EventType == KEY_EVENT) {
-		girUnget[gnUngetCount].Event.KeyEvent.wRepeatCount = nCount;
-	}
-	gnUngetCount ++;	
-
-	return TRUE;
-}
+//BOOL UngetBufferInput(WORD nCount, PINPUT_RECORD lpOneInput)
+//{
+//	_ASSERTE(nCount);
+//	if (gnUngetCount<0) {
+//		_ASSERTE(gnUngetCount>=0);
+//		gnUngetCount = 0;
+//	}
+//	int nMax = countof(girUnget);
+//	if (gnUngetCount>=nMax) {
+//		_ASSERTE(gnUngetCount==nMax);
+//		if (gnUngetCount>nMax) gnUngetCount = nMax;
+//		return FALSE;
+//	}
+//
+//	girUnget[gnUngetCount] = *lpOneInput;
+//	if (lpOneInput->EventType == KEY_EVENT) {
+//		girUnget[gnUngetCount].Event.KeyEvent.wRepeatCount = nCount;
+//	}
+//	gnUngetCount ++;	
+//
+//	return TRUE;
+//}
 
 void ResetUngetBuffer()
 {
 	gnConsoleChanges = 0;
-	gnUngetCount = 0;
+	gbConsoleChangesSyncho = false;
+	//gnUngetCount = 0;
 	gbWaitForKeySequenceEnd = false;
 }
 
 // Должен активироваться или через Synchro или через PeekConsoleInput в FAR1
-void OnMainThreadActived()
+void OnReadyForPanelsReload()
 {
 	if (!gnConsoleChanges)
 		return;
@@ -1103,7 +1125,8 @@ void OnMainThreadActived()
 	gnRgnDetectFlags = gpRgnDetect->GetFlags();
 
 #ifdef _DEBUG
-	if (!gpDbgDlg) {
+	if (!gpDbgDlg)
+	{
 		gpDbgDlg = new MFileMapping<DetectedDialogs>();
 		gpDbgDlg->InitName(CEPANELDLGMAPNAME, GetCurrentProcessId());
 		gpDbgDlg->Create();
@@ -1113,9 +1136,12 @@ void OnMainThreadActived()
 
 	WARNING("Если панели скрыты (активен редактор/вьювер) - не пытаться считывать панели");
 
-	if (!CheckWindows()) {
+	if (!CheckWindows())
+	{
 		// Спрятать/разрегистрировать?
-	} else {
+	}
+	else
+	{
 		//if (pviLeft.hView || pviRight.hView) {
 		//	ReloadPanelsInfo();
 
@@ -1129,18 +1155,21 @@ void OnMainThreadActived()
 
 		//	gpRgnDetect->PrepareTransparent(&gFarInfo, gcrColors);
 		//}
-
-		if (!gbWaitForKeySequenceEnd 
-			|| girUnget[0].EventType == EVENT_TYPE_REDRAW)
+		
+		if (!gbWaitForKeySequenceEnd)
+			//|| girUnget[0].EventType == EVENT_TYPE_REDRAW)
 		{
-			if (pviLeft.hView || pviRight.hView) {
+			if (pviLeft.hView || pviRight.hView)
+			{
 				ReloadPanelsInfo();
 			}
-			if (pviLeft.hView) {
+			if (pviLeft.hView)
+			{
 				pviLeft.DisplayReloadPanel();
 				InvalidateRect(pviLeft.hView, NULL, FALSE);
 			}
-			if (pviRight.hView) {
+			if (pviRight.hView)
+			{
 				pviRight.DisplayReloadPanel();
 				InvalidateRect(pviRight.hView, NULL, FALSE);
 			}
@@ -1161,27 +1190,42 @@ void OnMainThreadActived()
 
 BOOL WINAPI OnPrePeekConsole(HANDLE hInput, PINPUT_RECORD lpBuffer, DWORD nBufSize, LPDWORD lpNumberOfEventsRead, BOOL* pbResult)
 {
-	if (gnConsoleChanges) {
-		OnMainThreadActived();
+	if (gnConsoleChanges)
+	{
+		// Только для FAR1, в FAR2 - через Synchro!
+		if (gFarVersion.dwVerMajor == 1)
+		{
+			OnReadyForPanelsReload();
+		}
+		else if (!gbConsoleChangesSyncho)
+		{
+			gbConsoleChangesSyncho = true;
+			ExecuteInMainThread(SYNCHRO_RELOAD_PANELS);
+		}
 	}
 
-	if (!lpBuffer || !lpNumberOfEventsRead) {
+	if (!lpBuffer || !lpNumberOfEventsRead)
+	{
 		*pbResult = FALSE;
 		return FALSE; // ошибка в параметрах
 	}
 
-	// если в girUnget что-то есть вернуть из него и FALSE (тогда OnPostPeekConsole не будет вызван)");
-	if (gnUngetCount) {
-		if (GetBufferInput(FALSE/*abRemove*/, lpBuffer, nBufSize, lpNumberOfEventsRead))
-			return FALSE; // PeekConsoleInput & OnPostPeekConsole не будет вызван
-	}
+	//// если в girUnget что-то есть вернуть из него и FALSE (тогда OnPostPeekConsole не будет вызван)");
+	//if (gnUngetCount)
+	//{
+	//	if (GetBufferInput(FALSE/*abRemove*/, lpBuffer, nBufSize, lpNumberOfEventsRead))
+	//		return FALSE; // PeekConsoleInput & OnPostPeekConsole не будет вызван
+	//}
 
 	// Для FAR1 - эмуляция ACTL_SYNCHRO
-	if (gpLastSynchroArg  // ожидает команда
+	if ((gpLastSynchroArg || gbSynchoRedrawPanelRequested) // ожидает команда
 		&& nBufSize == 1  // только когда размер буфера == 1 - считается что ФАР готов
 		&& gFarVersion.dwVerMajor==1) // FAR1
 	{
-		ProcessSynchroEventW(SE_COMMONSYNCHRO, gpLastSynchroArg);
+		if (gbSynchoRedrawPanelRequested)
+			ProcessSynchroEventW(SE_COMMONSYNCHRO, SYNCHRO_REDRAW_PANEL);
+		if (gpLastSynchroArg)
+			ProcessSynchroEventW(SE_COMMONSYNCHRO, gpLastSynchroArg);
 	}
 
 	return TRUE; // продолжить без изменений
@@ -1189,15 +1233,19 @@ BOOL WINAPI OnPrePeekConsole(HANDLE hInput, PINPUT_RECORD lpBuffer, DWORD nBufSi
 
 BOOL WINAPI OnPostPeekConsole(HANDLE hInput, PINPUT_RECORD lpBuffer, DWORD nBufSize, LPDWORD lpNumberOfEventsRead, BOOL* pbResult)
 {
-	if (!lpBuffer || !lpNumberOfEventsRead) {
+	if (!lpBuffer || !lpNumberOfEventsRead)
+	{
 		*pbResult = FALSE;
 		return FALSE; // ошибка в параметрах
 	}
 
 	// заменить обработку стрелок, но girUnget не трогать
-	if (*lpNumberOfEventsRead) {
-		if (!ProcessConsoleInput(FALSE/*abUseUngetBuffer*/, lpBuffer, nBufSize, lpNumberOfEventsRead)) {
-			if (*lpNumberOfEventsRead == 0) {
+	if (*lpNumberOfEventsRead)
+	{
+		if (ProcessConsoleInput(FALSE/*abReadMode*/, lpBuffer, nBufSize, lpNumberOfEventsRead))
+		{
+			if (*lpNumberOfEventsRead == 0)
+			{
 				*pbResult = FALSE;
 			}
 			return FALSE; // вернуться в вызывающую функцию
@@ -1209,31 +1257,37 @@ BOOL WINAPI OnPostPeekConsole(HANDLE hInput, PINPUT_RECORD lpBuffer, DWORD nBufS
 
 BOOL WINAPI OnPreReadConsole(HANDLE hInput, PINPUT_RECORD lpBuffer, DWORD nBufSize, LPDWORD lpNumberOfEventsRead, BOOL* pbResult)
 {
-	if (!lpBuffer || !lpNumberOfEventsRead) {
+	if (!lpBuffer || !lpNumberOfEventsRead)
+	{
 		*pbResult = FALSE;
 		return FALSE; // ошибка в параметрах
 	}
 
-	// если в girUnget что-то есть вернуть из него и FALSE (тогда OnPostPeekConsole не будет вызван)");
-	if (gnUngetCount) {
-		if (GetBufferInput(TRUE/*abRemove*/, lpBuffer, nBufSize, lpNumberOfEventsRead))
-			return FALSE; // ReadConsoleInput & OnPostReadConsole не будет вызван
-	}
+	//// если в girUnget что-то есть вернуть из него и FALSE (тогда OnPostPeekConsole не будет вызван)");
+	//if (gnUngetCount)
+	//{
+	//	if (GetBufferInput(TRUE/*abRemove*/, lpBuffer, nBufSize, lpNumberOfEventsRead))
+	//		return FALSE; // ReadConsoleInput & OnPostReadConsole не будет вызван
+	//}
 
 	return TRUE; // продолжить без изменений
 }
 
 BOOL WINAPI OnPostReadConsole(HANDLE hInput, PINPUT_RECORD lpBuffer, DWORD nBufSize, LPDWORD lpNumberOfEventsRead, BOOL* pbResult)
 {
-	if (!lpBuffer || !lpNumberOfEventsRead) {
+	if (!lpBuffer || !lpNumberOfEventsRead)
+	{
 		*pbResult = FALSE;
 		return FALSE; // ошибка в параметрах
 	}
 
 	// заменить обработку стрелок, если надо - поместить серию нажатий в girUnget
-	if (*lpNumberOfEventsRead) {
-		if (!ProcessConsoleInput(TRUE/*abUseUngetBuffer*/, lpBuffer, nBufSize, lpNumberOfEventsRead)) {
-			if (*lpNumberOfEventsRead == 0) {
+	if (*lpNumberOfEventsRead)
+	{
+		if (ProcessConsoleInput(TRUE/*abReadMode*/, lpBuffer, nBufSize, lpNumberOfEventsRead))
+		{
+			if (*lpNumberOfEventsRead == 0)
+			{
 				*pbResult = FALSE;
 			}
 			return FALSE; // вернуться в вызывающую функцию
@@ -1266,9 +1320,11 @@ BOOL WINAPI OnPostReadConsole(HANDLE hInput, PINPUT_RECORD lpBuffer, DWORD nBufS
 BOOL WINAPI OnPreWriteConsoleOutput(HANDLE hOutput,const CHAR_INFO *lpBuffer,COORD dwBufferSize,COORD dwBufferCoord,PSMALL_RECT lpWriteRegion)
 {
 	WARNING("После повторного отображения view - хорошо бы сначала полностью считать gpRgnDetect из консоли");
-	if (gpRgnDetect && lpBuffer && lpWriteRegion) {
+	if (gpRgnDetect && lpBuffer && lpWriteRegion)
+	{
 #ifdef SHOW_WRITING_RECTS
-		if (IsDebuggerPresent()) {
+		if (IsDebuggerPresent())
+		{
 			wchar_t szDbg[80]; wsprintf(szDbg, L"ConEmuTh.OnPreWriteConsoleOutput( {%ix%i} - {%ix%i} )\n", 
 				lpWriteRegion->Left, lpWriteRegion->Top, lpWriteRegion->Right, lpWriteRegion->Bottom);
 			OutputDebugStringW(szDbg);
@@ -1281,8 +1337,15 @@ BOOL WINAPI OnPreWriteConsoleOutput(HANDLE hOutput,const CHAR_INFO *lpBuffer,COO
 		gpRgnDetect->OnWriteConsoleOutput(lpBuffer, dwBufferSize, dwBufferCoord, lpWriteRegion, gcrCurColors);
 
 		WARNING("Перед установкой флагов измененности - сначала хорошо бы проверить, а менялась ли сама панель?");
-		if (pviLeft.hView || pviRight.hView) {
-			gnConsoleChanges |= 3; // 1-left, 2-right. Но пока - ставим все, т.к. еще не проверяется что собственно изменилось!
+		if (pviLeft.hView || pviRight.hView)
+		{
+			//bool lbNeedSynchro = (gn ConsoleChanges == 0 && gFarVersion.dwVerMajor >= 2);
+			// 1-left, 2-right. Но пока - ставим все, т.к. еще не проверяется что собственно изменилось!
+			gnConsoleChanges |= 3;
+			//if (lbNeedSynchro)
+			//{
+			//	ExecuteInMainThread(SYNCHRO_RELOAD_PANELS);
+			//}
 		}
 	}
 
@@ -1291,7 +1354,7 @@ BOOL WINAPI OnPreWriteConsoleOutput(HANDLE hOutput,const CHAR_INFO *lpBuffer,COO
 
 
 //// Вернуть TRUE, если был Unget
-//BOOL ProcessKeyPress(CeFullPanelInfo* pi, BOOL abUseUngetBuffer, PINPUT_RECORD lpBuffer)
+//BOOL ProcessKeyPress(CeFullPanelInfo* pi, BOOL abReadMode, PINPUT_RECORD lpBuffer)
 //{
 //	_ASSERTE(lpBuffer->EventType == KEY_EVENT);
 //	
@@ -1334,18 +1397,35 @@ BOOL WINAPI OnPreWriteConsoleOutput(HANDLE hOutput,const CHAR_INFO *lpBuffer,COO
 //	return lbWasUnget;
 //}
 
-// Выполнить замену клавиш и поместить в буфер (Unget) непоместившиеся в lpBuffer клавиши
-// Вернуть FALSE, если замены были произведены
-BOOL ProcessConsoleInput(BOOL abUseUngetBuffer, PINPUT_RECORD lpBuffer, DWORD nBufSize, LPDWORD lpNumberOfEventsRead)
+// Выполнить замену клавиш и при необходимости запросить SYNCHRO_REDRAW_PANEL
+// Перехватываются ВСЕ VK_LEFT/RIGHT/UP/DOWN/PgUp/PgDn/WHEEL_UP/WHEEL_DOWN
+// иначе, если их обработает сам Фар - то собъется TopPanelItem!
+// Вернуть TRUE, если замены были произведены
+BOOL ProcessConsoleInput(BOOL abReadMode, PINPUT_RECORD lpBuffer, DWORD nBufSize, LPDWORD lpNumberOfEventsRead)
 {
+	static bool sbInClearing = false;
+	if (sbInClearing)
+	{
+		// Если это наше считывание буфера, чтобы убрать из него обработанные нажатия
+		return FALSE;
+	}
+
+	// Обрабатываем только одиночные нажатия (фар дергает по одному событию из буфера ввода!)
+	if (nBufSize != 1 || !lpNumberOfEventsRead || *lpNumberOfEventsRead != 1)
+	{
+		return FALSE;
+	}
+
 	// Перехват управления курсором
 	CeFullPanelInfo* pi = IsThumbnailsActive(TRUE/*abFocusRequired*/);
-	if (!pi) {
-		return TRUE; // панель создана, но она не активна или скрыта диалогом или погашена фаровская панель
+	if (!pi)
+	{
+		return FALSE; // панель создана, но она не активна или скрыта диалогом или погашена фаровская панель
 	}
 
 
-	if (!wScanCodeUp) {
+	if (!wScanCodeUp)
+	{
 		wScanCodeUp = MapVirtualKey(VK_UP, 0/*MAPVK_VK_TO_VSC*/);
 		wScanCodeDown = MapVirtualKey(VK_DOWN, 0/*MAPVK_VK_TO_VSC*/);
 #ifdef _DEBUG
@@ -1362,17 +1442,32 @@ BOOL ProcessConsoleInput(BOOL abUseUngetBuffer, PINPUT_RECORD lpBuffer, DWORD nB
 
 	PanelViewMode PVM = pi->PVM;
 
+	BOOL lbWasChanges = FALSE;
+	int iCurItem, iTopItem, iShift = 0;
+	if (pi->bRequestItemSet)
+	{
+		iCurItem = pi->ReqCurrentItem; iTopItem = pi->ReqTopPanelItem;
+	}
+	else
+	{
+		iCurItem = pi->CurrentItem; iTopItem = pi->TopPanelItem;
+	}
+
 	// Пойдем в два прохода. В первом - обработка замен, и помещение в буфер Unget.
 	PINPUT_RECORD p = lpBuffer;
-	PINPUT_RECORD pEnd = lpBuffer+*lpNumberOfEventsRead;
-	PINPUT_RECORD pFirstReplace = NULL;
-	while (p != pEnd)
+	//PINPUT_RECORD pEnd = lpBuffer+*lpNumberOfEventsRead;
+	//PINPUT_RECORD pReplace = lpBuffer;
+	//while (p != pEnd)
 	{
+		bool bEraseEvent = false;
+		
 		if (p->EventType == KEY_EVENT)
 		{
+			int iCurKeyShift = 0;
 			// Перехватываемые клавиши
 			WORD vk = p->Event.KeyEvent.wVirtualKeyCode;
-			if (vk == VK_UP || vk == VK_DOWN || vk == VK_LEFT || vk == VK_RIGHT || vk == VK_PRIOR || vk == VK_NEXT)
+			if (vk == VK_UP || vk == VK_DOWN || vk == VK_LEFT || vk == VK_RIGHT
+				|| vk == VK_PRIOR || vk == VK_NEXT)
 			{
 				if (!(p->Event.KeyEvent.dwControlKeyState 
 					& (LEFT_ALT_PRESSED|RIGHT_ALT_PRESSED|LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED|SHIFT_PRESSED)) )
@@ -1382,100 +1477,200 @@ BOOL ProcessConsoleInput(BOOL abUseUngetBuffer, PINPUT_RECORD lpBuffer, DWORD nB
 					switch (vk) {
 						case VK_UP:
 						{
+							//if (PVM == pvm_Thumbnails)
+							//	n = min(pi->CurrentItem,pi->nXCountFull);
 							if (PVM == pvm_Thumbnails)
-								n = min(pi->CurrentItem,pi->nXCountFull);
+								iCurKeyShift = -pi->nXCountFull;
+							else
+								iCurKeyShift = -1;
 						} break;
 						case VK_DOWN:
 						{
+							//if (PVM == pvm_Thumbnails)
+							//	n = min((pi->ItemsNumber-pi->CurrentItem-1),pi->nXCountFull);
 							if (PVM == pvm_Thumbnails)
-								n = min((pi->ItemsNumber-pi->CurrentItem-1),pi->nXCountFull);
+								iCurKeyShift = pi->nXCountFull;
+							else
+								iCurKeyShift = 1;
 						} break;
 						case VK_LEFT:
 						{
-							p->Event.KeyEvent.wVirtualKeyCode = VK_UP;
-							p->Event.KeyEvent.wVirtualScanCode = wScanCodeUp;
+							//p->Event.KeyEvent.wVirtualKeyCode = VK_UP;
+							//p->Event.KeyEvent.wVirtualScanCode = wScanCodeUp;
+							//if (PVM != pvm_Thumbnails)
+							//	n = min(pi->CurrentItem,pi->nYCountFull);
 							if (PVM != pvm_Thumbnails)
-								n = min(pi->CurrentItem,pi->nYCountFull);
+								iCurKeyShift = -pi->nYCountFull;
+							else
+								iCurKeyShift = -1;
 						} break;
 						case VK_RIGHT:
 						{
-							p->Event.KeyEvent.wVirtualKeyCode = VK_DOWN;
-							p->Event.KeyEvent.wVirtualScanCode = wScanCodeDown;
+							//p->Event.KeyEvent.wVirtualKeyCode = VK_DOWN;
+							//p->Event.KeyEvent.wVirtualScanCode = wScanCodeDown;
+							//if (PVM != pvm_Thumbnails)
+							//	n = min((pi->ItemsNumber-pi->CurrentItem-1),pi->nYCountFull);
 							if (PVM != pvm_Thumbnails)
-								n = min((pi->ItemsNumber-pi->CurrentItem-1),pi->nYCountFull);
+								iCurKeyShift = pi->nYCountFull;
+							else
+								iCurKeyShift = 1;
 						} break;
 						case VK_PRIOR:
 						{
-							p->Event.KeyEvent.wVirtualKeyCode = VK_UP;
-							p->Event.KeyEvent.wVirtualScanCode = wScanCodeUp;
-							n = min(pi->CurrentItem,pi->nXCountFull*pi->nYCountFull);
+							//p->Event.KeyEvent.wVirtualKeyCode = VK_UP;
+							//p->Event.KeyEvent.wVirtualScanCode = wScanCodeUp;
+							//n = min(pi->CurrentItem,pi->nXCountFull*pi->nYCountFull);
+							iCurKeyShift = -(pi->nXCountFull*pi->nYCountFull);
 						} break;
 						case VK_NEXT:
 						{
-							p->Event.KeyEvent.wVirtualKeyCode = VK_DOWN;
-							p->Event.KeyEvent.wVirtualScanCode = wScanCodeUp;
-							n = min((pi->ItemsNumber-pi->CurrentItem-1),pi->nXCountFull*pi->nYCountFull);
+							//p->Event.KeyEvent.wVirtualKeyCode = VK_DOWN;
+							//p->Event.KeyEvent.wVirtualScanCode = wScanCodeUp;
+							//n = min((pi->ItemsNumber-pi->CurrentItem-1),pi->nXCountFull*pi->nYCountFull);
+							iCurKeyShift = (pi->nXCountFull*pi->nYCountFull);
 						} break;
 					}
 
 					// Если это нажатие - то дополнительные нужно поместить в Unget буфер
-					if (p->Event.KeyEvent.bKeyDown) {
-						if (abUseUngetBuffer && n > 1) {
-							pFirstReplace = p+1;
-							UngetBufferInput(n-1, p);
+					if (iCurKeyShift)
+					{
+						// Это событие из буфера нужно убрать
+						bEraseEvent = true;
+						// Плюсовать к общему сдвигу
+						if (p->Event.KeyEvent.bKeyDown)
+						{
+							iShift += iCurKeyShift;
 						}
+						//if (abReadMode && n > 1)
+						//{
+						//	pFirstReplace = p+1;
+						//	UngetBufferInput(n-1, p);
+						//}
 					}
 
 					//end: if (vk == VK_UP || vk == VK_DOWN || vk == VK_LEFT || vk == VK_RIGHT)
-					p++; continue;
+					
+					//PRAGMA_ERROR("!!!");
+					//p++; continue;
 				}
 			}
 			//end: if (p->EventType == KEY_EVENT)
-		} else
+		}
+		
+		// Колесо мышки тоже перехватывать нужно
+		else if (p->EventType == MOUSE_EVENT)
+		{
+			WARNING("Перехвать Wheel, чтобы не сбился TopPanelItem");
+		}
 		
 		// При смене размера окна - нужно передернуть детектор
-		if (p->EventType == WINDOW_BUFFER_SIZE_EVENT) {
+		else if (p->EventType == WINDOW_BUFFER_SIZE_EVENT)
+		{
 			if (gpRgnDetect)
 				gpRgnDetect->OnWindowSizeChanged();
 		}
 
-		// Если были помещены события в буфер Unget - требуется поместить в буфер и все что идут за ним,
-		// т.к. между ними будет "виртуальная" вставка событий
-		if (pFirstReplace && abUseUngetBuffer) {
-			UngetBufferInput(1,p);
+		//// Если были помещены события в буфер Unget - требуется поместить в буфер и все что идут за ним,
+		//// т.к. между ними будет "виртуальная" вставка событий
+		//if (pFirstReplace && abReadMode)
+		//{
+		//	UngetBufferInput(1,p);
+		//}
+		
+		//p++;
+		if (bEraseEvent)
+		{
+			lbWasChanges = TRUE;
+			// Если в буфере больше одного события - сдвинуть хвост
+			//if (p < pEnd)
+			//{
+			//	memmove(pReplace, p, pEnd-p);
+			//	pReplace++;
+			//}
+			
+			// Нужно убрать это событие из буфера
+			DWORD nRead = 0;
+			INPUT_RECORD rr[2];
+			if (!abReadMode)
+			{
+				sbInClearing = true;
+				ReadConsoleInputW(GetStdHandle(STD_INPUT_HANDLE), rr, 1, &nRead);
+				sbInClearing = false;
+			}
+
+			
+			if ((*lpNumberOfEventsRead) >= 1)
+				*lpNumberOfEventsRead = (*lpNumberOfEventsRead) - 1;
+			bEraseEvent = false;
 		}
-		p++; continue;
 	}
-	// Скорректировать количество "считанных" событий
-	if (pFirstReplace && abUseUngetBuffer)
-	{
-		DWORD nReady = (int)(pFirstReplace - lpBuffer);
-		if (nReady != *lpNumberOfEventsRead) {
-			_ASSERTE(nReady <= nBufSize);
-			_ASSERTE(nReady < *lpNumberOfEventsRead);
-			*lpNumberOfEventsRead = nReady;
-		}
-	}
+	//// Скорректировать количество "считанных" событий
+	//if (pFirstReplace && abReadMode)
+	//{
+	//	DWORD nReady = (int)(pFirstReplace - lpBuffer);
+	//	if (nReady != *lpNumberOfEventsRead)
+	//	{
+	//		_ASSERTE(nReady <= nBufSize);
+	//		_ASSERTE(nReady < *lpNumberOfEventsRead);
+	//		*lpNumberOfEventsRead = nReady;
+	//	}
+	//}
 
 	// Если в буфере есть "отложенные" события - возможно потребуется установка переменной окружения
-	if (pFirstReplace && abUseUngetBuffer && gnUngetCount) {
-		_ASSERTE(gnUngetCount>0);
-		INPUT_RECORD r = {EVENT_TYPE_REDRAW};
-		UngetBufferInput(1,&r);
-		//SetEnvironmentVariable(TH_ENVVAR_NAME, TH_ENVVAR_SCROLL);
-		gbWaitForKeySequenceEnd = true;
-		UpdateEnvVar(FALSE);
-	}
-
-	// Второй проход - если буфер достаточно большой - добавить в него события из Unget буфера
-	if (gnUngetCount && nBufSize > *lpNumberOfEventsRead)
+	//if (pFirstReplace && abReadMode && gnUngetCount)
+	if (iShift != 0)
 	{
-		DWORD nAdd = 0;
-		if (GetBufferInput(abUseUngetBuffer/*abRemove*/, pFirstReplace, nBufSize-(*lpNumberOfEventsRead), &nAdd))
-			*lpNumberOfEventsRead += nAdd;
+		_ASSERTE(lbWasChanges); lbWasChanges = TRUE;
+		// Посчитать новые CurItem & TopItem оптимально для PanelViews
+		iCurItem += iShift;
+		if (iCurItem >= pi->ItemsNumber) iCurItem = pi->ItemsNumber-1;
+		if (iCurItem < 0) iCurItem = 0;
+		// Прикинуть идеальный TopItem для текущего направления движения курсора
+		iTopItem = pi->CalcTopPanelItem(iCurItem, iTopItem);
+		//int iViewable = pi->nXCountFull*pi->nYCountFull;
+		//// Ветвимся по направлению движения курсора
+		//if (iShift > 0)
+		//{
+		//	// При движении вниз - выделенный прижимаем к нижнему краю
+		//	if (iCurItem >= (iTopItem + iViewable))
+		//	{
+		//		iTopItem = 
+		//	}
+		//}
+		//else
+		//{
+		//	// При движении вверх - выделенный прижимаем к верхнему краю
+		//}
+		
+		// Вызвать обновление панели с новой позицией
+		pi->ReqCurrentItem = iCurItem; pi->ReqTopPanelItem = iTopItem;
+		pi->bRequestItemSet = true;
+		if (!gbSynchoRedrawPanelRequested)
+		{
+			gbWaitForKeySequenceEnd = true;
+			UpdateEnvVar(FALSE);
+
+			gbSynchoRedrawPanelRequested = true;
+			ExecuteInMainThread(SYNCHRO_REDRAW_PANEL);
+		}
+
+		//_ASSERTE(gnUngetCount>0);
+		//INPUT_RECORD r = {EVENT_TYPE_REDRAW};
+		//UngetBufferInput(1,&r);
+		////SetEnvironmentVariable(TH_ENVVAR_NAME, TH_ENVVAR_SCROLL);
+		//gbWaitForKeySequenceEnd = true;
+		//UpdateEnvVar(FALSE);
 	}
 
-	return TRUE;
+	//// Второй проход - если буфер достаточно большой - добавить в него события из Unget буфера
+	//if (gnUngetCount && nBufSize > *lpNumberOfEventsRead)
+	//{
+	//	DWORD nAdd = 0;
+	//	if (GetBufferInput(abReadMode/*abRemove*/, pFirstReplace, nBufSize-(*lpNumberOfEventsRead), &nAdd))
+	//		*lpNumberOfEventsRead += nAdd;
+	//}
+
+	return lbWasChanges;
 }
 
 int ShowLastError()
@@ -1497,16 +1692,22 @@ int ShowLastError()
 void UpdateEnvVar(BOOL abForceRedraw)
 {
 	WARNING("сбрасывать скролл нужно ПЕРЕД возвратом последней клавиши ДО REDRAW");
-	if (gbWaitForKeySequenceEnd) {
+	if (gbWaitForKeySequenceEnd)
+	{
 		SetEnvironmentVariable(TH_ENVVAR_NAME, TH_ENVVAR_SCROLL);
-	} else if (IsThumbnailsActive(FALSE/*abFocusRequired*/)) {
+	}
+	else if (IsThumbnailsActive(FALSE/*abFocusRequired*/))
+	{
 		SetEnvironmentVariable(TH_ENVVAR_NAME, TH_ENVVAR_ACTIVE);
 		abForceRedraw = TRUE;
-	} else {
+	}
+	else
+	{
 		SetEnvironmentVariable(TH_ENVVAR_NAME, NULL);
 	}
 
-	if (abForceRedraw) {
+	if (abForceRedraw)
+	{
 		if (pviLeft.hView && IsWindowVisible(pviLeft.hView))
 			InvalidateRect(pviLeft.hView, NULL, FALSE);
 		if (pviRight.hView && IsWindowVisible(pviRight.hView))
@@ -1666,19 +1867,30 @@ void ExecuteInMainThread(ConEmuThSynchroArg* pCmd)
 {
 	if (!pCmd) return;
 
-	if (gpLastSynchroArg && gpLastSynchroArg != pCmd) {
-		LocalFree(gpLastSynchroArg); gpLastSynchroArg = NULL;
+	if (pCmd != SYNCHRO_REDRAW_PANEL && pCmd != SYNCHRO_RELOAD_PANELS)
+	{
+		if (gpLastSynchroArg && gpLastSynchroArg != pCmd) {
+			LocalFree(gpLastSynchroArg); gpLastSynchroArg = NULL;
+		}
+		gpLastSynchroArg = pCmd;
+		_ASSERTE(gpLastSynchroArg->bValid==1 && gpLastSynchroArg->bExpired==0);
 	}
-	gpLastSynchroArg = pCmd;
-	_ASSERTE(gpLastSynchroArg->bValid==1 && gpLastSynchroArg->bExpired==0);
 
+	if (pCmd == SYNCHRO_REDRAW_PANEL)
+		gbSynchoRedrawPanelRequested = true;
+	
 	BOOL lbLeftActive = FALSE;
-	if (gFarVersion.dwVerMajor==1) {
-		; // в 1.75 такой функции нет, придется хаком
-	} else if (gFarVersion.dwBuild>=FAR_Y_VER) {
+	if (gFarVersion.dwVerMajor == 1)
+	{
+		// в 1.75 такой функции нет, придется хаком
+	}
+	else if (gFarVersion.dwBuild>=FAR_Y_VER)
+	{
 		FUNC_Y(ExecuteInMainThread)(pCmd);
-	} else {
-		FUNC_Y(ExecuteInMainThread)(pCmd);
+	}
+	else
+	{
+		FUNC_X(ExecuteInMainThread)(pCmd);
 	}
 }
 
@@ -1686,7 +1898,40 @@ int WINAPI ProcessSynchroEventW(int Event, void *Param)
 {
 	if (Event != SE_COMMONSYNCHRO) return 0;
 
-	if (Param) {
+	if (Param == SYNCHRO_REDRAW_PANEL)
+	{
+		gbSynchoRedrawPanelRequested = false;
+		for (int i = 0; i <= 1; i++)
+		{
+			CeFullPanelInfo* pp = (i==0) ? &pviLeft : &pviRight;
+			if (pp->hView && pp->Visible && pp->bRequestItemSet)
+			{
+				if (gFarVersion.dwVerMajor==1)
+					SetCurrentPanelItemA((i==0), pp->ReqTopPanelItem, pp->ReqCurrentItem);
+				else if (gFarVersion.dwBuild>=FAR_Y_VER)
+					FUNC_Y(SetCurrentPanelItem)((i==0), pp->ReqTopPanelItem, pp->ReqCurrentItem);
+				else
+					FUNC_X(SetCurrentPanelItem)((i==0), pp->ReqTopPanelItem, pp->ReqCurrentItem);
+			}
+		}
+		// Если отрисовка была отложена до окончания обработки клавиатуры - передернуть
+		if (gbWaitForKeySequenceEnd && !gbConsoleChangesSyncho)
+		{
+			gbWaitForKeySequenceEnd = false;
+			UpdateEnvVar(FALSE);
+
+			gbConsoleChangesSyncho = true;
+			ExecuteInMainThread(SYNCHRO_RELOAD_PANELS);
+		}
+	}
+	else if (Param == SYNCHRO_RELOAD_PANELS)
+	{
+		_ASSERTE(gbConsoleChangesSyncho);
+		gbConsoleChangesSyncho = false;
+		OnReadyForPanelsReload();
+	}
+	else if (Param != NULL)
+	{
 		ConEmuThSynchroArg* pCmd = (ConEmuThSynchroArg*)Param;
 		if (gpLastSynchroArg == pCmd) gpLastSynchroArg = NULL;
 

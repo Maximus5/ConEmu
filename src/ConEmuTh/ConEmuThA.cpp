@@ -258,6 +258,11 @@ void ReloadPanelsInfoA()
 	TODO("void ReloadPanelsInfoA()");
 }
 
+void SetCurrentPanelItemA(BOOL abLeftPanel, UINT anTopItem, UINT anCurItem)
+{
+	TODO("void SetCurrentPanelItemA()");
+}
+
 //BOOL IsLeftPanelActiveA()
 //{
 //	TODO("IsLeftPanelActiveA");
