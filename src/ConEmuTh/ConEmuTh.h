@@ -193,9 +193,13 @@ typedef struct tag_CeFullPanelInfo
 	// Эта "дисплейная" функция вызывается из основной нити, там можно дергать FAR Api
 	void DisplayReloadPanel();
 	
+	// Эта функция Safe-thread - ее можно дергать из любой нити
+	void RequestSetPos(int anCurrentItem, int anTopItem);
+	
 	static LRESULT CALLBACK DisplayWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 	static DWORD WINAPI DisplayThread(LPVOID lpvParam);
 	int CalcTopPanelItem(int anCurrentItem, int anTopItem);
+	void Invalidate();
 	void Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc);
 	BOOL PaintItem(HDC hdc, int nIndex, int x, int y, CePluginPanelItem* pItem, BOOL abCurrentItem, BOOL abSelectedItem,
 			   /*COLORREF *nBackColor, COLORREF *nForeColor, HBRUSH *hBack,*/
@@ -433,6 +437,7 @@ typedef struct {
 	} nCommand;
 	WORD Data[1]; // variable array
 } ConEmuThSynchroArg;
+extern bool gbSynchoRedrawPanelRequested;
 extern ConEmuThSynchroArg* gpLastSynchroArg;
 void ExecuteInMainThread(ConEmuThSynchroArg* pCmd);
 void FUNC_X(ExecuteInMainThread)(ConEmuThSynchroArg* pCmd);

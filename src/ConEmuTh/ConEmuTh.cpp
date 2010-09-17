@@ -38,6 +38,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SHOWDEBUGSTR
 //#define MCHKHEAP
 #define DEBUGSTRMENU(s) DEBUGSTR(s)
+#define DEBUGSTRCTRL(s) DEBUGSTR(s)
 
 
 //#include <stdio.h>
@@ -1166,12 +1167,14 @@ void OnReadyForPanelsReload()
 			if (pviLeft.hView)
 			{
 				pviLeft.DisplayReloadPanel();
-				InvalidateRect(pviLeft.hView, NULL, FALSE);
+				//Inva lidateRect(pviLeft.hView, NULL, FALSE);
+				pviLeft.Invalidate();
 			}
 			if (pviRight.hView)
 			{
 				pviRight.DisplayReloadPanel();
-				InvalidateRect(pviRight.hView, NULL, FALSE);
+				//Inva lidateRect(pviRight.hView, NULL, FALSE);
+				pviRight.Invalidate();
 			}
 		}
 	}
@@ -1450,7 +1453,7 @@ BOOL ProcessConsoleInput(BOOL abReadMode, PINPUT_RECORD lpBuffer, DWORD nBufSize
 	}
 	else
 	{
-		iCurItem = pi->CurrentItem; iTopItem = pi->TopPanelItem;
+		iCurItem = pi->CurrentItem; iTopItem = max(pi->TopPanelItem,pi->ReqTopPanelItem);
 	}
 
 	// Пойдем в два прохода. В первом - обработка замен, и помещение в буфер Unget.
@@ -1479,6 +1482,7 @@ BOOL ProcessConsoleInput(BOOL abReadMode, PINPUT_RECORD lpBuffer, DWORD nBufSize
 						{
 							//if (PVM == pvm_Thumbnails)
 							//	n = min(pi->CurrentItem,pi->nXCountFull);
+							DEBUGSTRCTRL(L"ProcessConsoleInput(VK_UP)\n");
 							if (PVM == pvm_Thumbnails)
 								iCurKeyShift = -pi->nXCountFull;
 							else
@@ -1488,6 +1492,7 @@ BOOL ProcessConsoleInput(BOOL abReadMode, PINPUT_RECORD lpBuffer, DWORD nBufSize
 						{
 							//if (PVM == pvm_Thumbnails)
 							//	n = min((pi->ItemsNumber-pi->CurrentItem-1),pi->nXCountFull);
+							DEBUGSTRCTRL(L"ProcessConsoleInput(VK_DOWN)\n");
 							if (PVM == pvm_Thumbnails)
 								iCurKeyShift = pi->nXCountFull;
 							else
@@ -1499,6 +1504,7 @@ BOOL ProcessConsoleInput(BOOL abReadMode, PINPUT_RECORD lpBuffer, DWORD nBufSize
 							//p->Event.KeyEvent.wVirtualScanCode = wScanCodeUp;
 							//if (PVM != pvm_Thumbnails)
 							//	n = min(pi->CurrentItem,pi->nYCountFull);
+							DEBUGSTRCTRL(L"ProcessConsoleInput(VK_LEFT)\n");
 							if (PVM != pvm_Thumbnails)
 								iCurKeyShift = -pi->nYCountFull;
 							else
@@ -1510,6 +1516,7 @@ BOOL ProcessConsoleInput(BOOL abReadMode, PINPUT_RECORD lpBuffer, DWORD nBufSize
 							//p->Event.KeyEvent.wVirtualScanCode = wScanCodeDown;
 							//if (PVM != pvm_Thumbnails)
 							//	n = min((pi->ItemsNumber-pi->CurrentItem-1),pi->nYCountFull);
+							DEBUGSTRCTRL(L"ProcessConsoleInput(VK_RIGHT)\n");
 							if (PVM != pvm_Thumbnails)
 								iCurKeyShift = pi->nYCountFull;
 							else
@@ -1520,6 +1527,7 @@ BOOL ProcessConsoleInput(BOOL abReadMode, PINPUT_RECORD lpBuffer, DWORD nBufSize
 							//p->Event.KeyEvent.wVirtualKeyCode = VK_UP;
 							//p->Event.KeyEvent.wVirtualScanCode = wScanCodeUp;
 							//n = min(pi->CurrentItem,pi->nXCountFull*pi->nYCountFull);
+							DEBUGSTRCTRL(L"ProcessConsoleInput(VK_PRIOR)\n");
 							iCurKeyShift = -(pi->nXCountFull*pi->nYCountFull);
 						} break;
 						case VK_NEXT:
@@ -1527,6 +1535,7 @@ BOOL ProcessConsoleInput(BOOL abReadMode, PINPUT_RECORD lpBuffer, DWORD nBufSize
 							//p->Event.KeyEvent.wVirtualKeyCode = VK_DOWN;
 							//p->Event.KeyEvent.wVirtualScanCode = wScanCodeUp;
 							//n = min((pi->ItemsNumber-pi->CurrentItem-1),pi->nXCountFull*pi->nYCountFull);
+							DEBUGSTRCTRL(L"ProcessConsoleInput(VK_NEXT)\n");
 							iCurKeyShift = (pi->nXCountFull*pi->nYCountFull);
 						} break;
 					}
@@ -1594,13 +1603,17 @@ BOOL ProcessConsoleInput(BOOL abReadMode, PINPUT_RECORD lpBuffer, DWORD nBufSize
 			if (!abReadMode)
 			{
 				sbInClearing = true;
+				DEBUGSTRCTRL(L"-- removing processed event from input queue\n");
 				ReadConsoleInputW(GetStdHandle(STD_INPUT_HANDLE), rr, 1, &nRead);
+				DEBUGSTRCTRL(nRead ? L"-- removing succeeded\n" : L"-- removing failed\n");
 				sbInClearing = false;
 			}
 
 			
 			if ((*lpNumberOfEventsRead) >= 1)
+			{
 				*lpNumberOfEventsRead = (*lpNumberOfEventsRead) - 1;
+			}
 			bEraseEvent = false;
 		}
 	}
@@ -1627,32 +1640,31 @@ BOOL ProcessConsoleInput(BOOL abReadMode, PINPUT_RECORD lpBuffer, DWORD nBufSize
 		if (iCurItem < 0) iCurItem = 0;
 		// Прикинуть идеальный TopItem для текущего направления движения курсора
 		iTopItem = pi->CalcTopPanelItem(iCurItem, iTopItem);
-		//int iViewable = pi->nXCountFull*pi->nYCountFull;
-		//// Ветвимся по направлению движения курсора
-		//if (iShift > 0)
-		//{
-		//	// При движении вниз - выделенный прижимаем к нижнему краю
-		//	if (iCurItem >= (iTopItem + iViewable))
-		//	{
-		//		iTopItem = 
-		//	}
-		//}
-		//else
-		//{
-		//	// При движении вверх - выделенный прижимаем к верхнему краю
-		//}
+		
+		#ifdef _DEBUG
+		wchar_t szDbg[512];
+		wsprintfW(szDbg,
+				L"Requesting panel redraw: {Cur:%i, Top:%i}.\n"
+				L"  Current state: {Cur:%i, Top:%i, Count:%i, OurTop:%i}\n"
+				L"  Current request: {%s, Cur:%i, Top=%i}\n",
+			iCurItem, iTopItem,
+			pi->CurrentItem, pi->TopPanelItem, pi->ItemsNumber, pi->OurTopPanelItem,
+			pi->bRequestItemSet ? L"YES" : L"No", pi->ReqCurrentItem, pi->ReqTopPanelItem);
+		DEBUGSTRCTRL(szDbg);
+		#endif
 		
 		// Вызвать обновление панели с новой позицией
-		pi->ReqCurrentItem = iCurItem; pi->ReqTopPanelItem = iTopItem;
-		pi->bRequestItemSet = true;
-		if (!gbSynchoRedrawPanelRequested)
-		{
-			gbWaitForKeySequenceEnd = true;
-			UpdateEnvVar(FALSE);
-
-			gbSynchoRedrawPanelRequested = true;
-			ExecuteInMainThread(SYNCHRO_REDRAW_PANEL);
-		}
+		pi->RequestSetPos(iCurItem, iTopItem);
+		//pi->ReqCurrentItem = iCurItem; pi->ReqTopPanelItem = iTopItem;
+		//pi->bRequestItemSet = true;
+		//if (!gbSynchoRedrawPanelRequested)
+		//{
+		//	gbWaitForKeySequenceEnd = true;
+		//	UpdateEnvVar(FALSE);
+		//
+		//	gbSynchoRedrawPanelRequested = true;
+		//	ExecuteInMainThread(SYNCHRO_REDRAW_PANEL);
+		//}
 
 		//_ASSERTE(gnUngetCount>0);
 		//INPUT_RECORD r = {EVENT_TYPE_REDRAW};
@@ -1691,28 +1703,29 @@ int ShowLastError()
 
 void UpdateEnvVar(BOOL abForceRedraw)
 {
-	WARNING("сбрасывать скролл нужно ПЕРЕД возвратом последней клавиши ДО REDRAW");
-	if (gbWaitForKeySequenceEnd)
-	{
-		SetEnvironmentVariable(TH_ENVVAR_NAME, TH_ENVVAR_SCROLL);
-	}
-	else if (IsThumbnailsActive(FALSE/*abFocusRequired*/))
+	//WARNING("сбрасывать скролл нужно ПЕРЕД возвратом последней клавиши ДО REDRAW");
+	//if (gbWaitForKeySequenceEnd)
+	//{
+	//	SetEnvironmentVariable(TH_ENVVAR_NAME, TH_ENVVAR_SCROLL);
+	//}
+	//else 
+	if (IsThumbnailsActive(FALSE/*abFocusRequired*/))
 	{
 		SetEnvironmentVariable(TH_ENVVAR_NAME, TH_ENVVAR_ACTIVE);
-		abForceRedraw = TRUE;
+		//abForceRedraw = TRUE;
 	}
 	else
 	{
 		SetEnvironmentVariable(TH_ENVVAR_NAME, NULL);
 	}
 
-	if (abForceRedraw)
-	{
-		if (pviLeft.hView && IsWindowVisible(pviLeft.hView))
-			InvalidateRect(pviLeft.hView, NULL, FALSE);
-		if (pviRight.hView && IsWindowVisible(pviRight.hView))
-			InvalidateRect(pviRight.hView, NULL, FALSE);
-	}
+	//if (abForceRedraw)
+	//{
+	//	if (pviLeft.hView && IsWindowVisible(pviLeft.hView))
+	//		Inva lidateRect(pviLeft.hView, NULL, FALSE);
+	//	if (pviRight.hView && IsWindowVisible(pviRight.hView))
+	//		Inva lidateRect(pviRight.hView, NULL, FALSE);
+	//}
 }
 
 CeFullPanelInfo* IsThumbnailsActive(BOOL abFocusRequired)
@@ -1879,6 +1892,12 @@ void ExecuteInMainThread(ConEmuThSynchroArg* pCmd)
 	if (pCmd == SYNCHRO_REDRAW_PANEL)
 		gbSynchoRedrawPanelRequested = true;
 	
+	DEBUGSTRCTRL(
+		(pCmd == SYNCHRO_REDRAW_PANEL) ? L"ExecuteInMainThread(SYNCHRO_REDRAW_PANEL)\n" :
+		(pCmd == SYNCHRO_RELOAD_PANELS) ? L"ExecuteInMainThread(SYNCHRO_RELOAD_PANELS)\n" :
+		L"ExecuteInMainThread(...)\n"
+		);
+	
 	BOOL lbLeftActive = FALSE;
 	if (gFarVersion.dwVerMajor == 1)
 	{
@@ -1900,12 +1919,17 @@ int WINAPI ProcessSynchroEventW(int Event, void *Param)
 
 	if (Param == SYNCHRO_REDRAW_PANEL)
 	{
+		DEBUGSTRCTRL(L"ProcessSynchroEventW(SYNCHRO_REDRAW_PANEL)\n");
+		
 		gbSynchoRedrawPanelRequested = false;
 		for (int i = 0; i <= 1; i++)
 		{
 			CeFullPanelInfo* pp = (i==0) ? &pviLeft : &pviRight;
 			if (pp->hView && pp->Visible && pp->bRequestItemSet)
 			{
+				// СРАЗУ сбросить флаг, чтобы потом не накалываться
+				pp->bRequestItemSet = false;
+				// а теперь - собственно курсор
 				if (gFarVersion.dwVerMajor==1)
 					SetCurrentPanelItemA((i==0), pp->ReqTopPanelItem, pp->ReqCurrentItem);
 				else if (gFarVersion.dwBuild>=FAR_Y_VER)
@@ -1926,12 +1950,16 @@ int WINAPI ProcessSynchroEventW(int Event, void *Param)
 	}
 	else if (Param == SYNCHRO_RELOAD_PANELS)
 	{
+		DEBUGSTRCTRL(L"ProcessSynchroEventW(SYNCHRO_RELOAD_PANELS)\n");
+		
 		_ASSERTE(gbConsoleChangesSyncho);
 		gbConsoleChangesSyncho = false;
 		OnReadyForPanelsReload();
 	}
 	else if (Param != NULL)
 	{
+		DEBUGSTRCTRL(L"ProcessSynchroEventW(...)\n");
+		
 		ConEmuThSynchroArg* pCmd = (ConEmuThSynchroArg*)Param;
 		if (gpLastSynchroArg == pCmd) gpLastSynchroArg = NULL;
 
