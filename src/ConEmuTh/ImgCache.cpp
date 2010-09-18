@@ -652,7 +652,7 @@ void CImgCache::CopyBits(COORD crSrcSize, LPBYTE lpSrc, DWORD nSrcStride, COORD 
 		lpDst += nDstStride;
 	}
 }
-void CImgCache::UpdateCell(struct tag_CacheInfo* pInfo, BOOL abLoadPreview)
+void CImgCache::UpdateCell(struct IMAGE_CACHE_INFO* pInfo, BOOL abLoadPreview)
 {
 	if (pInfo->bPreviewLoaded)
 		return; // Óæå
@@ -749,7 +749,7 @@ void CImgCache::UpdateCell(struct tag_CacheInfo* pInfo, BOOL abLoadPreview)
 //		sfi.hIcon = NULL;
 //	}
 }
-BOOL CImgCache::LoadShellIcon(struct tag_CacheInfo* pItem)
+BOOL CImgCache::LoadShellIcon(struct IMAGE_CACHE_INFO* pItem)
 {
 	HICON hIcon = NULL;
 	HBITMAP hBmp = NULL;
@@ -846,7 +846,7 @@ BOOL CImgCache::LoadShellIcon(struct tag_CacheInfo* pItem)
 
 	return TRUE;
 }
-BOOL CImgCache::LoadThumbnail(struct tag_CacheInfo* pItem)
+BOOL CImgCache::LoadThumbnail(struct IMAGE_CACHE_INFO* pItem)
 {
 	if (!CheckDibCreated())
 		return FALSE;

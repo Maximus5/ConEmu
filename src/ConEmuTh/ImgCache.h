@@ -4,6 +4,7 @@
 //#include <Objbase.h>
 //#include <Objidl.h>
 #include "Modules/ThumbSDK.h"
+#include "QueueProcessor.h"
 
 #define ImgCacheFileName L"ConEmuTh.cache"
 #define ImgCacheListName L"#LFN"
@@ -12,7 +13,42 @@ typedef struct tag_CePluginPanelItem CePluginPanelItem;
 
 typedef BOOL (WINAPI* AlphaBlend_t)(HDC hdcDest, int xoriginDest, int yoriginDest, int wDest, int hDest, HDC hdcSrc, int xoriginSrc, int yoriginSrc, int wSrc, int hSrc, BLENDFUNCTION ftn);
 
-class CImgCache
+struct IMAGE_CACHE_INFO
+{
+	DWORD nAccessTick;
+	union {
+		struct {
+			DWORD nFileSizeHigh;
+			DWORD nFileSizeLow;
+		};
+		unsigned __int64 nFileSize;
+	};
+	FILETIME ftLastWriteTime;
+	DWORD dwFileAttributes;
+	wchar_t *lpwszFileName;
+	BOOL bVirtualItem;
+	DWORD_PTR UserData;
+	BOOL bPreviewLoaded; // пытались ли уже загружать превьюшку
+	BOOL bPreviewExists; // и получилось ли ее загрузить реально, или в кеше только ShellIcon?
+	BOOL bIgnoreFileDescription; // ImpEx показывает в описании размер изображени€, получаетс€ некрасивое дублирование
+	//int N,X,Y;
+	COORD crSize; // ѕредпочтительно, должен совпадать с crLoadSize
+	DWORD cbStride; // Bytes per line
+	DWORD nBits; // 32 bit required!
+	// [Out] Next fields MUST be LocalAlloc(LPTR)
+	DWORD ColorModel; // One of CET_CM_xxx
+	LPDWORD Pixels; // Alpha channel (highest byte) allowed.
+	DWORD cbPixelsSize; // size in BYTES
+	wchar_t *pszComments; // This may be "512 x 232 x 32bpp"
+	DWORD wcCommentsSize; // size in WORDS
+	// Module can place here information about original image (dimension, format, etc.)
+	// This must be double zero terminated string
+	wchar_t *pszInfo;
+	DWORD wcInfoSize; // size in WORDS
+};
+
+
+class CImgCache : public CQueueProcessor<IMAGE_CACHE_INFO>
 {
 protected:
 	wchar_t ms_CachePath[MAX_PATH];
@@ -26,46 +62,15 @@ protected:
 	//#define ITEMS_IN_FIELD 10 // количество в "строке"
 	//int nFieldX, nFieldY; // реальное количество в "строке"/"столбце" (не больше ITEMS_IN_FIELD)
 	//HDC hField[FIELD_MAX_COUNT]; HBITMAP hFieldBmp[FIELD_MAX_COUNT], hOldBmp[FIELD_MAX_COUNT];
-	struct tag_CacheInfo {
-		DWORD nAccessTick;
-		union {
-			struct {
-				DWORD nFileSizeHigh;
-				DWORD nFileSizeLow;
-			};
-			unsigned __int64 nFileSize;
-		};
-		FILETIME ftLastWriteTime;
-		DWORD dwFileAttributes;
-		wchar_t *lpwszFileName;
-		BOOL bVirtualItem;
-		DWORD_PTR UserData;
-		BOOL bPreviewLoaded; // пытались ли уже загружать превьюшку
-		BOOL bPreviewExists; // и получилось ли ее загрузить реально, или в кеше только ShellIcon?
-		BOOL bIgnoreFileDescription; // ImpEx показывает в описании размер изображени€, получаетс€ некрасивое дублирование
-		//int N,X,Y;
-		COORD crSize; // ѕредпочтительно, должен совпадать с crLoadSize
-		DWORD cbStride; // Bytes per line
-		DWORD nBits; // 32 bit required!
-		// [Out] Next fields MUST be LocalAlloc(LPTR)
-		DWORD ColorModel; // One of CET_CM_xxx
-		LPDWORD Pixels; // Alpha channel (highest byte) allowed.
-		DWORD cbPixelsSize; // size in BYTES
-		wchar_t *pszComments; // This may be "512 x 232 x 32bpp"
-		DWORD wcCommentsSize; // size in WORDS
-		// Module can place here information about original image (dimension, format, etc.)
-		// This must be double zero terminated string
-		wchar_t *pszInfo;
-		DWORD wcInfoSize; // size in WORDS
-	} CacheInfo[FIELD_MAX_COUNT];
+	IMAGE_CACHE_INFO CacheInfo[FIELD_MAX_COUNT];
 	HDC mh_CompDC;
 	HBITMAP mh_OldBmp, mh_DibSection;
 	COORD mcr_DibSize;
 	LPBYTE  mp_DibBytes; DWORD mn_DibBytes;
 	BOOL CheckDibCreated();
-	void UpdateCell(struct tag_CacheInfo* pInfo, BOOL abLoadPreview);
-	BOOL LoadThumbnail(struct tag_CacheInfo* pItem);
-	BOOL LoadShellIcon(struct tag_CacheInfo* pItem);
+	void UpdateCell(struct IMAGE_CACHE_INFO* pInfo, BOOL abLoadPreview);
+	BOOL LoadThumbnail(struct IMAGE_CACHE_INFO* pItem);
+	BOOL LoadShellIcon(struct IMAGE_CACHE_INFO* pItem);
 	BOOL FindInCache(CePluginPanelItem* pItem, int* pnIndex);
 	void CopyBits(COORD crSrcSize, LPBYTE lpSrc, DWORD nSrcStride, COORD crDstSize, LPBYTE lpDst);
 

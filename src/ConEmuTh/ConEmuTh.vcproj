@@ -919,6 +919,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Display.h"
+				>
+			</File>
+			<File
 				RelativePath=".\ImgCache.h"
 				>
 			</File>
@@ -928,6 +932,10 @@
 			</File>
 			<File
 				RelativePath="..\common\pluginW1007.hpp"
+				>
+			</File>
+			<File
+				RelativePath=".\QueueProcessor.h"
 				>
 			</File>
 			<File
