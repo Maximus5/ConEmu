@@ -424,7 +424,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(ProjectDir)..\..\plugins\ConEmu\Thumbs\ConEmuTh_*.lng&quot; &quot;$(TargetDir)&quot;"
+				CommandLine="copy &quot;$(ProjectDir)..\..\plugins\ConEmu\Thumbs\ConEmuTh_*.lng&quot; &quot;$(TargetDir)&quot;&#x0D;&#x0A;if exist C:\Utils\FAR170\Plugins\ConEmu\Thumbs\ConEmuTh.dll copy &quot;$(TargetDir)ConEmuTh.*&quot; C:\Utils\FAR170\Plugins\ConEmu\Thumbs\"
 			/>
 		</Configuration>
 		<Configuration

@@ -101,7 +101,7 @@ wchar_t gsFolder[64], gsHardLink[64], gsSymLink[64], gsJunction[64], gsTitleThum
 // *** lng resources end ***
 DWORD gnFarPanelSettings = 0, gnFarInterfaceSettings = 0;
 
-bool gbWaitForKeySequenceEnd = false;
+//bool gbWaitForKeySequenceEnd = false;
 DWORD gnWaitForKeySeqTick = 0;
 //int gnUngetCount = 0;
 //INPUT_RECORD girUnget[100];
@@ -157,14 +157,25 @@ void WINAPI _export GetPluginInfoW(struct PluginInfo *pi)
 BOOL gbInfoW_OK = FALSE;
 HANDLE WINAPI _export OpenPluginW(int OpenFrom,INT_PTR Item)
 {
-	if (!gbInfoW_OK || !CheckConEmu())
+	if (!gbInfoW_OK)
 		return INVALID_HANDLE_VALUE;
+
+	ReloadResourcesW();
+
+	StartPlugin(OpenFrom, Item);
+
+	return INVALID_HANDLE_VALUE;
+}
+
+// !!! WARNING !!! Version independent !!!
+void StartPlugin(int OpenFrom,INT_PTR Item)
+{
+	if (!CheckConEmu())
+		return;
 
 	if (ghDisplayThread && gnDisplayThreadId == 0) {
 		CloseHandle(ghDisplayThread); ghDisplayThread = NULL;
 	}
-
-	ReloadResourcesW();
 
 	//gThSet.Load();
 	// При открытии плагина - загрузить информацию об обеих панелях. Нужно для определения регионов!
@@ -172,20 +183,30 @@ HANDLE WINAPI _export OpenPluginW(int OpenFrom,INT_PTR Item)
 
 	// Получить активную
 	CeFullPanelInfo* pi = GetActivePanel();
-	if (!pi) {
-		return INVALID_HANDLE_VALUE;
+	if (!pi)
+	{
+		return;
 	}
 	pi->OurTopPanelItem = pi->TopPanelItem;
 	HWND hView = (pi->bLeftPanel) ? ghLeftView : ghRightView;
 
 	PanelViewMode PVM = pvm_None;
-	if ((OpenFrom & OPEN_FROMMACRO) == OPEN_FROMMACRO) {
-		if (Item == pvm_Thumbnails || Item == pvm_Tiles)
-			PVM = (PanelViewMode)Item;
+
+	// В Far2 плагин можно позвать через callplugin(...)
+	if (gFarVersion.dwVerMajor >= 2)
+	{
+		if ((OpenFrom & OPEN_FROMMACRO) == OPEN_FROMMACRO)
+		{
+			if (Item == pvm_Thumbnails || Item == pvm_Tiles)
+				PVM = (PanelViewMode)Item;
+		}
 	}
 
-	if (PVM == pvm_None) {
-		switch (ShowPluginMenu()) {
+	// Вызов плагина из меню - нужно выбрать режим
+	if (PVM == pvm_None)
+	{
+		switch (ShowPluginMenu())
+		{
 			case 0:
 				PVM = pvm_Thumbnails;
 				break;
@@ -193,7 +214,8 @@ HANDLE WINAPI _export OpenPluginW(int OpenFrom,INT_PTR Item)
 				PVM = pvm_Tiles;
 				break;
 			default:
-				return INVALID_HANDLE_VALUE;
+				// Отмена
+				return;
 		}
 	}
 
@@ -203,24 +225,30 @@ HANDLE WINAPI _export OpenPluginW(int OpenFrom,INT_PTR Item)
 	DWORD dwMode = pvm_None; //PanelViewMode
 
 	// Если View не создан, или смена режима
-	if ((hView == NULL) || (PVM != pi->PVM)) {
+	if ((hView == NULL) || (PVM != pi->PVM))
+	{
 
 		// Для корректного определения положения колонок необходим один из флажков в настройке панели:
 		// [x] Показывать заголовки колонок [x] Показывать суммарную информацию
-		if (!CheckPanelSettings(FALSE)) {
-			return INVALID_HANDLE_VALUE;
+		if (!CheckPanelSettings(FALSE))
+		{
+			return;
 		}
 
 		pi->PVM = PVM;
 		pi->DisplayReloadPanel();
-		if (hView == NULL) {
+		if (hView == NULL)
+		{
 			// Нужно создать View
 			hView = pi->CreateView();
 		}
-		if (hView == NULL) {
+		if (hView == NULL)
+		{
 			// Показать ошибку
 			ShowLastError();
-		} else {
+		}
+		else
+		{
 			// Зарегистрироваться
 			_ASSERTE(pi->PVM==PVM);
 			pi->RegisterPanelView();
@@ -228,20 +256,23 @@ HANDLE WINAPI _export OpenPluginW(int OpenFrom,INT_PTR Item)
 		}
 		if (pi->hView)
 			dwMode = pi->PVM;
-	} else {
+	}
+	else
+	{
 		// Отрегистрироваться
 		pi->UnregisterPanelView();
 		dwMode = pvm_None;
 	}
 
 	HKEY hk = NULL;
-	if (!RegCreateKeyExW(HKEY_CURRENT_USER, gszRootKey, 0, NULL, 0, KEY_WRITE, NULL, &hk, NULL)) {
+	if (!RegCreateKeyExW(HKEY_CURRENT_USER, gszRootKey, 0, NULL, 0, KEY_WRITE, NULL, &hk, NULL))
+	{
 		RegSetValueEx(hk, pi->bLeftPanel ? L"LeftPanelView" : L"RightPanelView", 0,
 			REG_DWORD, (LPBYTE)&dwMode, sizeof(dwMode));
 		RegCloseKey(hk);
 	}
 
-	return INVALID_HANDLE_VALUE;
+	return;
 }
 
 // Плагин может быть вызван в первый раз из фоновой нити.
@@ -918,14 +949,18 @@ void ReloadPanelsInfo()
 	gFarInfo.FarRightPanel.PanelRect = pviRight.PanelRect;
 
 
-	if (pviLeft.hView) {
-		if (bLeftVisible && pviLeft.Visible) {
+	if (pviLeft.hView)
+	{
+		if (bLeftVisible && pviLeft.Visible)
+		{
 			if (memcmp(&rcLeft, &pviLeft.PanelRect, sizeof(RECT)))
 				pviLeft.RegisterPanelView();
 		}
 	}
-	if (pviRight.hView) {
-		if (bRightVisible && pviRight.Visible) {
+	if (pviRight.hView)
+	{
+		if (bRightVisible && pviRight.Visible)
+		{
 			if (memcmp(&rcRight, &pviRight.PanelRect, sizeof(RECT)))
 				pviRight.RegisterPanelView();
 		}
@@ -1109,7 +1144,7 @@ void ResetUngetBuffer()
 	gnConsoleChanges = 0;
 	gbConsoleChangesSyncho = false;
 	//gnUngetCount = 0;
-	gbWaitForKeySequenceEnd = false;
+	//gbWaitForKeySequenceEnd = false;
 }
 
 // Должен активироваться или через Synchro или через PeekConsoleInput в FAR1
@@ -1117,6 +1152,7 @@ void OnReadyForPanelsReload()
 {
 	if (!gnConsoleChanges)
 		return;
+	gbConsoleChangesSyncho = false;
 	DWORD nCurChanges = gnConsoleChanges; gnConsoleChanges = 0;
 
 	// Сбросим, чтобы RgnDetect попытался сам найти панели и диалоги.
@@ -1157,7 +1193,7 @@ void OnReadyForPanelsReload()
 		//	gpRgnDetect->PrepareTransparent(&gFarInfo, gcrColors);
 		//}
 		
-		if (!gbWaitForKeySequenceEnd)
+		//if (!gbWaitForKeySequenceEnd)
 			//|| girUnget[0].EventType == EVENT_TYPE_REDRAW)
 		{
 			if (pviLeft.hView || pviRight.hView)
@@ -1193,14 +1229,35 @@ void OnReadyForPanelsReload()
 
 BOOL WINAPI OnPrePeekConsole(HANDLE hInput, PINPUT_RECORD lpBuffer, DWORD nBufSize, LPDWORD lpNumberOfEventsRead, BOOL* pbResult)
 {
-	if (gnConsoleChanges)
+	// Только для FAR1, в FAR2 - через Synchro!
+	if (gFarVersion.dwVerMajor == 1)
 	{
-		// Только для FAR1, в FAR2 - через Synchro!
-		if (gFarVersion.dwVerMajor == 1)
+		// Выполняем только если фар считывает единственное событие (аналог Synchro в Far2)
+		if (nBufSize == 1)
 		{
-			OnReadyForPanelsReload();
+			if (gbSynchoRedrawPanelRequested)
+			{
+				ProcessSynchroEventW(SE_COMMONSYNCHRO, SYNCHRO_REDRAW_PANEL);
+			}
+			else if (gnConsoleChanges && !gbConsoleChangesSyncho)
+			{
+				gbConsoleChangesSyncho = true;				
+			}
+			else if (gbConsoleChangesSyncho)
+			{
+				OnReadyForPanelsReload();
+			}
+
+			// Отдельно стоящая - выполнение макроса
+			if (gpLastSynchroArg)
+			{
+				ProcessSynchroEventW(SE_COMMONSYNCHRO, gpLastSynchroArg);
+			}
 		}
-		else if (!gbConsoleChangesSyncho)
+	}
+	else
+	{
+		if (gnConsoleChanges && !gbConsoleChangesSyncho)
 		{
 			gbConsoleChangesSyncho = true;
 			ExecuteInMainThread(SYNCHRO_RELOAD_PANELS);
@@ -1220,16 +1277,16 @@ BOOL WINAPI OnPrePeekConsole(HANDLE hInput, PINPUT_RECORD lpBuffer, DWORD nBufSi
 	//		return FALSE; // PeekConsoleInput & OnPostPeekConsole не будет вызван
 	//}
 
-	// Для FAR1 - эмуляция ACTL_SYNCHRO
-	if ((gpLastSynchroArg || gbSynchoRedrawPanelRequested) // ожидает команда
-		&& nBufSize == 1  // только когда размер буфера == 1 - считается что ФАР готов
-		&& gFarVersion.dwVerMajor==1) // FAR1
-	{
-		if (gbSynchoRedrawPanelRequested)
-			ProcessSynchroEventW(SE_COMMONSYNCHRO, SYNCHRO_REDRAW_PANEL);
-		if (gpLastSynchroArg)
-			ProcessSynchroEventW(SE_COMMONSYNCHRO, gpLastSynchroArg);
-	}
+	//// Для FAR1 - эмуляция ACTL_SYNCHRO
+	//if ((gpLastSynchroArg || gbSynchoRedrawPanelRequested) // ожидает команда
+	//	&& nBufSize == 1  // только когда размер буфера == 1 - считается что ФАР готов
+	//	&& gFarVersion.dwVerMajor==1) // FAR1
+	//{
+	//	if (gbSynchoRedrawPanelRequested)
+	//		ProcessSynchroEventW(SE_COMMONSYNCHRO, SYNCHRO_REDRAW_PANEL);
+	//	if (gpLastSynchroArg)
+	//		ProcessSynchroEventW(SE_COMMONSYNCHRO, gpLastSynchroArg);
+	//}
 
 	return TRUE; // продолжить без изменений
 }
@@ -1939,9 +1996,9 @@ int WINAPI ProcessSynchroEventW(int Event, void *Param)
 			}
 		}
 		// Если отрисовка была отложена до окончания обработки клавиатуры - передернуть
-		if (gbWaitForKeySequenceEnd && !gbConsoleChangesSyncho)
+		if (/*gbWaitForKeySequenceEnd &&*/ !gbConsoleChangesSyncho)
 		{
-			gbWaitForKeySequenceEnd = false;
+			//gbWaitForKeySequenceEnd = false;
 			UpdateEnvVar(FALSE);
 
 			gbConsoleChangesSyncho = true;

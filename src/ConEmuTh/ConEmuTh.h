@@ -221,7 +221,7 @@ extern FarVersion gFarVersion;
 extern CeFullPanelInfo pviLeft, pviRight;
 extern HANDLE ghDisplayThread; extern DWORD gnDisplayThreadId;
 extern HWND ghLeftView, ghRightView;
-extern bool gbWaitForKeySequenceEnd;
+//extern bool gbWaitForKeySequenceEnd;
 extern DWORD gnWaitForKeySeqTick;
 extern DWORD gnFarPanelSettings, gnFarInterfaceSettings;
 //class CRgnDetect;
@@ -244,6 +244,7 @@ extern wchar_t gsFolder[64], /*gsHardLink[64],*/ gsSymLink[64], gsJunction[64], 
 //	//BOOL Processed;
 //} SynchroArg;
 
+void StartPlugin(int OpenFrom,INT_PTR Item);
 BOOL LoadFarVersion();
 void StartPlugin(BOOL abManual);
 void ExitPlugin(void);

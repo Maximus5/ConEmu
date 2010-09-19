@@ -7,8 +7,8 @@ EXPORTS
 	OpenPluginW          @5
 	ProcessSynchroEventW @6
 ;
-;	SetStartupInfo       @21
-;	GetPluginInfo        @22
-;	GetMinFarVersion     @23
-;	ExitFAR              @24
-;	OpenPlugin           @25
+	SetStartupInfo       @21
+	GetPluginInfo        @22
+	GetMinFarVersion     @23
+	ExitFAR              @24
+	OpenPlugin           @25

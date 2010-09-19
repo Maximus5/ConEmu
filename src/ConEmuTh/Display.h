@@ -32,7 +32,7 @@ struct CeFullPanelInfo
 {
 	DWORD cbSize;
 	HWND  hView;
-	HANDLE hPanel;
+	//HANDLE hPanel;
 	PanelViewMode PVM;
 	ThumbSizes Spaces;
 	wchar_t sFontName[32]; // Tahoma
@@ -47,6 +47,11 @@ struct CeFullPanelInfo
 	DWORD nFarInterfaceSettings;
 	DWORD nFarPanelSettings;
 	BOOL  bLeftPanel, bPlugin;
+	BOOL IsFilePanel;
+	int PanelMode; // 0..9 - текущий режим панели.
+	BOOL Visible;
+	BOOL ShortNames;
+	BOOL Focus;
 	RECT  PanelRect;
 	RECT  WorkRect; // "рабочий" прямоугольник. где собственно файлы лежат
 	int ItemsNumber;
@@ -59,11 +64,6 @@ struct CeFullPanelInfo
 	int ReqTopPanelItem;
 	//
 	int OurTopPanelItem; // он может НЕ совпадать с фаровским, чтобы CurrentItem был таки видим
-	BOOL IsFilePanel;
-	int PanelMode; // 0..9 - текущий режим панели.
-	BOOL Visible;
-	BOOL ShortNames;
-	BOOL Focus;
 	DWORD Flags; // CEPANELINFOFLAGS
 	// ************************
 	int nMaxFarColors;

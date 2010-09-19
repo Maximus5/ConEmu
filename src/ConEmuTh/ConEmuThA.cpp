@@ -126,6 +126,8 @@ HANDLE WINAPI _export OpenPlugin(int OpenFrom,INT_PTR Item)
 
 	ReloadResourcesA();
 
+	StartPlugin(OpenFrom, Item);
+
 	return INVALID_HANDLE_VALUE;
 }
 
@@ -162,12 +164,14 @@ int ShowMessageA(int aiMsg, int aiButtons)
 // Warning, напрямую НЕ вызывать. Пользоваться "общей" PostMacro
 void PostMacroA(char* asMacro)
 {
-	if (!InfoA || !InfoA->AdvControl) return;
+	if (!InfoA || !InfoA->AdvControl)
+		return;
 
 	ActlKeyMacro mcr;
 	mcr.Command = MCMD_POSTMACROSTRING;
 	mcr.Param.PlainText.Flags = 0; // По умолчанию - вывод на экран разрешен
-	if (*asMacro == '@' && asMacro[1] && asMacro[1] != ' ') {
+	if (*asMacro == '@' && asMacro[1] && asMacro[1] != ' ')
+	{
 		mcr.Param.PlainText.Flags |= KSFLAGS_DISABLEOUTPUT;
 		asMacro ++;
 	}
@@ -180,38 +184,41 @@ int ShowPluginMenuA()
 	if (!InfoA)
 		return -1;
 
-	return -1;
+	FarMenuItemEx items[] = {
+		{MIF_USETEXTPTR | (ghConEmuRoot ? 0 : MIF_DISABLE)},
+		{MIF_USETEXTPTR | (ghConEmuRoot ? 0 : MIF_DISABLE)},
+	};
+	items[0].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,CEMenuThumbnails);
+	items[1].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,CEMenuTiles);
+	int nCount = sizeof(items)/sizeof(items[0]);
 
-	//FarMenuItemEx items[] = {
-	//	{MIF_USETEXTPTR|(ConEmuHwnd ? MIF_SELECTED : MIF_DISABLE)},
-	//	{MIF_USETEXTPTR|(ConEmuHwnd ? 0 : MIF_DISABLE)},
-	//	{MIF_SEPARATOR},
-	//	{MIF_USETEXTPTR|(ConEmuHwnd ? 0 : MIF_DISABLE)},
-	//	{MIF_USETEXTPTR|(ConEmuHwnd ? 0 : MIF_DISABLE)},
-	//	{MIF_USETEXTPTR|(ConEmuHwnd ? 0 : MIF_DISABLE)},
-	//	{MIF_USETEXTPTR|(ConEmuHwnd ? 0 : MIF_DISABLE)},
-	//	{MIF_SEPARATOR},
-	//	{MIF_USETEXTPTR|(ConEmuHwnd||IsTerminalMode() ? MIF_DISABLE : MIF_SELECTED)},
-	//	{MIF_SEPARATOR},
-	//	{MIF_USETEXTPTR|(IsDebuggerPresent()||IsTerminalMode() ? MIF_DISABLE : 0)}
-	//};
-	//items[0].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,3);
-	//items[1].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,4);
-	//items[3].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,6);
-	//items[4].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,7);
-	//items[5].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,8);
-	//items[6].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,9);
-	//items[8].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,13);
-	//items[10].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,14);
+	CeFullPanelInfo* pi = IsThumbnailsActive(TRUE);
+	if (!pi)
+	{
+		items[0].Flags |= MIF_SELECTED;
+	}
+	else
+	{
+		if (pi->PVM == pvm_Thumbnails)
+		{
+			items[0].Flags |= MIF_SELECTED|MIF_CHECKED;
+		}
+		else if (pi->PVM == pvm_Tiles)
+		{
+			items[1].Flags |= MIF_SELECTED|MIF_CHECKED;
+		}
+		else
+		{
+			items[0].Flags |= MIF_SELECTED;
+		}
+	}
 
-	//int nCount = sizeof(items)/sizeof(items[0]);
+	int nRc = InfoA->Menu(InfoA->ModuleNumber, -1,-1, 0, 
+		FMENU_USEEXT|FMENU_AUTOHIGHLIGHT|FMENU_CHANGECONSOLETITLE|FMENU_WRAPMODE,
+		InfoA->GetMsg(InfoA->ModuleNumber,2),
+		NULL, NULL, NULL, NULL, (FarMenuItem*)items, nCount);
 
-	//int nRc = InfoA->Menu(InfoA->ModuleNumber, -1,-1, 0, 
-	//	FMENU_USEEXT|FMENU_AUTOHIGHLIGHT|FMENU_CHANGECONSOLETITLE|FMENU_WRAPMODE,
-	//	InfoA->GetMsg(InfoA->ModuleNumber,2),
-	//	NULL, NULL, NULL, NULL, (FarMenuItem*)items, nCount);
-
-	//return nRc;
+	return nRc;
 }
 
 const wchar_t* GetMsgA(int aiMsg, wchar_t* rsMsg/*MAX_PATH*/)
@@ -249,18 +256,158 @@ void LoadPanelItemInfoA(CeFullPanelInfo* pi, int nItem)
 
 BOOL LoadPanelInfoA(BOOL abActive)
 {
-	TODO("BOOL LoadPanelInfoA()");
-	return FALSE;
+	if (!InfoA) return FALSE;
+
+
+	CeFullPanelInfo* pcefpi = NULL;
+	PanelInfo pi = {0};
+	int nCmd = abActive ? FCTL_GETPANELINFO : FCTL_GETANOTHERPANELINFO;
+	int nRc = InfoA->Control(INVALID_HANDLE_VALUE, nCmd, &pi);
+	if (!nRc)
+	{
+		TODO("Показать информацию об ошибке");
+		return FALSE;
+	}
+	// Даже если невидима - обновить информацию!
+	//// Проверим, что панель видима. Иначе - сразу выходим.
+	//if (!pi.Visible) {
+	//	TODO("Показать информацию об ошибке");
+	//	return NULL;
+	//}
+
+
+	if (pi.Flags & PFLAGS_PANELLEFT)
+		pcefpi = &pviLeft;
+	else
+		pcefpi = &pviRight;
+	pcefpi->cbSize = sizeof(*pcefpi);
+	//pcefpi->hPanel = hPanel;
+
+
+	// Если элементов на панели стало больше, чем выделено в (pviLeft/pviRight)
+	if (pcefpi->ItemsNumber < pi.ItemsNumber) {
+		if (!pcefpi->ReallocItems(pi.ItemsNumber))
+			return FALSE;
+	}
+
+	// Копируем что нужно
+	pcefpi->bLeftPanel = (pi.Flags & PFLAGS_PANELLEFT) == PFLAGS_PANELLEFT;
+	pcefpi->bPlugin = pi.Plugin;
+	pcefpi->PanelRect = pi.PanelRect;
+	pcefpi->ItemsNumber = pi.ItemsNumber;
+	pcefpi->CurrentItem = pi.CurrentItem;
+	pcefpi->TopPanelItem = pi.TopPanelItem;
+	pcefpi->Visible = pi.Visible;
+	pcefpi->ShortNames = pi.ShortNames;
+	pcefpi->Focus = pi.Focus;
+	pcefpi->Flags = pi.Flags; // CEPANELINFOFLAGS
+	pcefpi->PanelMode = pi.ViewMode;
+	pcefpi->IsFilePanel = (pi.PanelType == PTYPE_FILEPANEL);
+
+
+	// Настройки интерфейса
+	pcefpi->nFarInterfaceSettings = gnFarInterfaceSettings =
+		(DWORD)InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETINTERFACESETTINGS, 0);
+	pcefpi->nFarPanelSettings = gnFarPanelSettings =
+		(DWORD)InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETPANELSETTINGS, 0);
+
+
+	// Цвета фара
+	int nColorSize = (int)InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETARRAYCOLOR, NULL);
+	if ((pcefpi->nFarColors == NULL) || (nColorSize > pcefpi->nMaxFarColors)) {
+		if (pcefpi->nFarColors) free(pcefpi->nFarColors);
+		pcefpi->nFarColors = (BYTE*)calloc(nColorSize,1);
+		pcefpi->nMaxFarColors = nColorSize;
+	}
+	nColorSize = (int)InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETARRAYCOLOR, pcefpi->nFarColors);
+
+
+	// Текущая папка панели
+	int nSize = lstrlenA(pi.CurDir);
+	pcefpi->nMaxPanelDir = nSize + MAX_PATH; // + выделим немножко заранее
+	pcefpi->pszPanelDir = (wchar_t*)calloc(pcefpi->nMaxPanelDir,2);
+	MultiByteToWideChar(CP_OEMCP, 0, pi.CurDir, nSize+1, pcefpi->pszPanelDir, nSize + MAX_PATH);
+
+
+	// Готовим буфер для информации об элементах
+	if ((pcefpi->ppItems == NULL) || (pcefpi->nMaxItemsNumber < pcefpi->ItemsNumber))
+	{
+		if (pcefpi->ppItems) free(pcefpi->ppItems);
+		pcefpi->nMaxItemsNumber = pcefpi->ItemsNumber+32; // + немножно про запас
+		pcefpi->ppItems = (CePluginPanelItem**)calloc(pcefpi->nMaxItemsNumber, sizeof(LPVOID));
+	}
+
+	// Копирование элементов панели в нашу внутреннюю структуру
+	wchar_t szName[MAX_PATH+1], szDescription[255];
+	LARGE_INTEGER liFileSize;
+	PluginPanelItem *ppi = pi.PanelItems;
+	for (int i = 0; i < pi.ItemsNumber; i++, ppi++)
+	{
+		liFileSize.LowPart = ppi->FindData.nFileSizeLow; liFileSize.HighPart = ppi->FindData.nFileSizeHigh;
+
+		MultiByteToWideChar(CP_OEMCP, 0, ppi->FindData.cFileName, -1, szName, countof(szName));
+
+		if (ppi->Description)
+			MultiByteToWideChar(CP_OEMCP, 0, ppi->Description, -1, szDescription, countof(szDescription));
+		else
+			szDescription[0] = 0;
+
+		pcefpi->FarItem2CeItem(i,
+			szName,
+			szDescription[0] ? szDescription : NULL,
+			ppi->FindData.dwFileAttributes,
+			ppi->FindData.ftLastWriteTime,
+			liFileSize.QuadPart,
+			(pcefpi->bPlugin && (pi.Flags & CEPFLAGS_REALNAMES) == 0) /*abVirtualItem*/,
+			ppi->UserData,
+			ppi->Flags,
+			ppi->NumberOfLinks);
+	}
+
+	return TRUE;
 }
 
 void ReloadPanelsInfoA()
 {
-	TODO("void ReloadPanelsInfoA()");
+	if (!InfoA) return;
+
+	// возможно будет подтормаживать?
+	LoadPanelInfoA(TRUE);
+	LoadPanelInfoA(FALSE);
 }
 
 void SetCurrentPanelItemA(BOOL abLeftPanel, UINT anTopItem, UINT anCurItem)
 {
-	TODO("void SetCurrentPanelItemA()");
+	if (!InfoA) return;
+
+	// В Far2 можно быстро проверить валидность индексов
+	//HANDLE hPanel = NULL;
+	int nCmd = 0;
+	PanelInfo piActive = {0}, piPassive = {0}, *pi = NULL;
+	TODO("Проверять текущую видимость панелей?");
+	InfoA->Control(INVALID_HANDLE_VALUE,  FCTL_GETPANELSHORTINFO, &piActive);
+	if ((piActive.Flags & PFLAGS_PANELLEFT) == (abLeftPanel ? PFLAGS_PANELLEFT : 0))
+	{
+		pi = &piActive; nCmd = FCTL_REDRAWPANEL;
+	}
+	else
+	{
+		InfoA->Control(INVALID_HANDLE_VALUE, FCTL_GETANOTHERPANELSHORTINFO, &piPassive);
+		pi = &piPassive; nCmd = FCTL_REDRAWANOTHERPANEL;
+	}
+
+	// Проверяем индексы (может фар в процессе обновления панели, и количество элементов изменено?)
+	if (pi->ItemsNumber < 1)
+		return;
+	if ((int)anTopItem >= pi->ItemsNumber)
+		anTopItem = pi->ItemsNumber - 1;
+	if ((int)anCurItem >= pi->ItemsNumber)
+		anCurItem = pi->ItemsNumber - 1;
+	if (anCurItem < anTopItem)
+		anCurItem = anTopItem;
+	// Обновляем панель
+	PanelRedrawInfo pri = {anCurItem, anTopItem};
+	InfoA->Control(INVALID_HANDLE_VALUE, nCmd, &pri);
 }
 
 //BOOL IsLeftPanelActiveA()

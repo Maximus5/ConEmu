@@ -105,7 +105,8 @@ void PostMacro995(wchar_t* asMacro)
 	ActlKeyMacro mcr;
 	mcr.Command = MCMD_POSTMACROSTRING;
 	mcr.Param.PlainText.Flags = 0; // По умолчанию - вывод на экран разрешен
-	if (*asMacro == L'@' && asMacro[1] && asMacro[1] != L' ') {
+	if (*asMacro == L'@' && asMacro[1] && asMacro[1] != L' ')
+	{
 		mcr.Param.PlainText.Flags |= KSFLAGS_DISABLEOUTPUT;
 		asMacro ++;
 	}
@@ -125,14 +126,22 @@ int ShowPluginMenu995()
 	int nCount = sizeof(items)/sizeof(items[0]);
 
 	CeFullPanelInfo* pi = IsThumbnailsActive(TRUE);
-	if (!pi) {
+	if (!pi)
+	{
 		items[0].Flags |= MIF_SELECTED;
-	} else {
-		if (pi->PVM == pvm_Thumbnails) {
+	}
+	else
+	{
+		if (pi->PVM == pvm_Thumbnails)
+		{
 			items[0].Flags |= MIF_SELECTED|MIF_CHECKED;
-		} else if (pi->PVM == pvm_Tiles) {
+		}
+		else if (pi->PVM == pvm_Tiles)
+		{
 			items[1].Flags |= MIF_SELECTED|MIF_CHECKED;
-		} else {
+		}
+		else
+		{
 			items[0].Flags |= MIF_SELECTED;
 		}
 	}
@@ -159,25 +168,31 @@ BOOL IsMacroActive995()
 
 void LoadPanelItemInfo995(CeFullPanelInfo* pi, int nItem)
 {
-	HANDLE hPanel = pi->hPanel;
+	//HANDLE hPanel = pi->hPanel;
+	HANDLE hPanel = pi->Focus ? PANEL_ACTIVE : PANEL_PASSIVE;
 	INT_PTR nSize = InfoW995->Control(hPanel, FCTL_GETPANELITEM, nItem, NULL);
 	//PluginPanelItem *ppi = (PluginPanelItem*)malloc(nMaxSize);
 	//if (!ppi)
 	//	return;
 	
-	if ((pi->pFarTmpBuf == NULL) || (pi->nFarTmpBuf < nSize)) {
+	if ((pi->pFarTmpBuf == NULL) || (pi->nFarTmpBuf < nSize))
+	{
 		if (pi->pFarTmpBuf) free(pi->pFarTmpBuf);
 		pi->nFarTmpBuf = (int)(nSize+MAX_PATH); // + про запас немножко
 		pi->pFarTmpBuf = malloc(pi->nFarTmpBuf);
 	}
 	PluginPanelItem *ppi = (PluginPanelItem*)pi->pFarTmpBuf;
-	if (ppi) {
+	if (ppi)
+	{
 		nSize = InfoW995->Control(hPanel, FCTL_GETPANELITEM, nItem, (LONG_PTR)ppi);
-	} else {
+	}
+	else
+	{
 		return;
 	}
 	
-	if (!nSize) { // ошибка?
+	if (!nSize) // ошибка?
+	{
 		// FAR не смог заполнить ppi данными, поэтому накидаем туда нулей, чтобы мусор не рисовать
 		ppi->FindData.lpwszFileName = L"???";
 		ppi->Flags = 0;
@@ -265,7 +280,8 @@ BOOL LoadPanelInfo995(BOOL abActive)
 	PanelInfo pi = {0};
 	HANDLE hPanel = abActive ? PANEL_ACTIVE : PANEL_PASSIVE;
 	int nRc = InfoW995->Control(hPanel, FCTL_GETPANELINFO, 0, (LONG_PTR)&pi);
-	if (!nRc) {
+	if (!nRc)
+	{
 		TODO("Показать информацию об ошибке");
 		return FALSE;
 	}
@@ -282,11 +298,12 @@ BOOL LoadPanelInfo995(BOOL abActive)
 	else
 		pcefpi = &pviRight;
 	pcefpi->cbSize = sizeof(*pcefpi);
-	pcefpi->hPanel = hPanel;
+	//pcefpi->hPanel = hPanel;
 	
 
 	// Если элементов на панели стало больше, чем выделено в (pviLeft/pviRight)
-	if (pcefpi->ItemsNumber < pi.ItemsNumber) {
+	if (pcefpi->ItemsNumber < pi.ItemsNumber)
+	{
 		if (!pcefpi->ReallocItems(pi.ItemsNumber))
 			return FALSE;
 	}
@@ -315,7 +332,8 @@ BOOL LoadPanelInfo995(BOOL abActive)
 	
 	// Цвета фара
 	int nColorSize = (int)InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETARRAYCOLOR, NULL);
-	if ((pcefpi->nFarColors == NULL) || (nColorSize > pcefpi->nMaxFarColors)) {
+	if ((pcefpi->nFarColors == NULL) || (nColorSize > pcefpi->nMaxFarColors))
+	{
 		if (pcefpi->nFarColors) free(pcefpi->nFarColors);
 		pcefpi->nFarColors = (BYTE*)calloc(nColorSize,1);
 		pcefpi->nMaxFarColors = nColorSize;
@@ -325,30 +343,37 @@ BOOL LoadPanelInfo995(BOOL abActive)
 	
 	// Текущая папка панели
 	int nSize = (int)InfoW995->Control(hPanel, FCTL_GETPANELDIR, 0, 0);
-	if (nSize) {
-		if ((pcefpi->nMaxPanelDir == NULL) || (nSize > pcefpi->nMaxPanelDir)) {
+	if (nSize)
+	{
+		if ((pcefpi->nMaxPanelDir == NULL) || (nSize > pcefpi->nMaxPanelDir))
+		{
 			pcefpi->nMaxPanelDir = nSize + MAX_PATH; // + выделим немножко заранее
 			pcefpi->pszPanelDir = (wchar_t*)calloc(pcefpi->nMaxPanelDir,2);
 		}
 		nSize = InfoW995->Control(hPanel, FCTL_GETPANELDIR, nSize, (LONG_PTR)pcefpi->pszPanelDir);
-		if (!nSize) {
+		if (!nSize)
+		{
 			free(pcefpi->pszPanelDir); pcefpi->pszPanelDir = NULL;
 			pcefpi->nMaxPanelDir = 0;
 		}
-	} else {
+	}
+	else
+	{
 		if (pcefpi->pszPanelDir) { free(pcefpi->pszPanelDir); pcefpi->pszPanelDir = NULL; }
 	}
 	
 
 	// Готовим буфер для информации об элементах
-	if ((pcefpi->ppItems == NULL) || (pcefpi->nMaxItemsNumber < pcefpi->ItemsNumber)) {
+	if ((pcefpi->ppItems == NULL) || (pcefpi->nMaxItemsNumber < pcefpi->ItemsNumber))
+	{
 		if (pcefpi->ppItems) free(pcefpi->ppItems);
 		pcefpi->nMaxItemsNumber = pcefpi->ItemsNumber+32; // + немножно про запас
 		pcefpi->ppItems = (CePluginPanelItem**)calloc(pcefpi->nMaxItemsNumber, sizeof(LPVOID));
 	}
 	// и буфер для загрузки элемента из FAR
 	nSize = sizeof(PluginPanelItem)+6*MAX_PATH;
-	if ((pcefpi->pFarTmpBuf == NULL) || (pcefpi->nFarTmpBuf < nSize)) {
+	if ((pcefpi->pFarTmpBuf == NULL) || (pcefpi->nFarTmpBuf < nSize))
+	{
 		if (pcefpi->pFarTmpBuf) free(pcefpi->pFarTmpBuf);
 		pcefpi->nFarTmpBuf = nSize;
 		pcefpi->pFarTmpBuf = malloc(pcefpi->nFarTmpBuf);
@@ -375,7 +400,7 @@ void SetCurrentPanelItem995(BOOL abLeftPanel, UINT anTopItem, UINT anCurItem)
 	PanelInfo piActive = {0}, piPassive = {0}, *pi = NULL;
 	TODO("Проверять текущую видимость панелей?");
 	InfoW995->Control(PANEL_ACTIVE,  FCTL_GETPANELINFO, 0, (LONG_PTR)&piActive);
-	if (abLeftPanel && (piActive.Flags & PFLAGS_PANELLEFT) == PFLAGS_PANELLEFT)
+	if ((piActive.Flags & PFLAGS_PANELLEFT) == (abLeftPanel ? PFLAGS_PANELLEFT : 0))
 	{
 		pi = &piActive; hPanel = PANEL_ACTIVE;
 	}
@@ -385,7 +410,7 @@ void SetCurrentPanelItem995(BOOL abLeftPanel, UINT anTopItem, UINT anCurItem)
 		pi = &piPassive; hPanel = PANEL_PASSIVE;
 	}
 
-	// Проверяем индексы
+	// Проверяем индексы (может фар в процессе обновления панели, и количество элементов изменено?)
 	if (pi->ItemsNumber < 1)
 		return;
 	if ((int)anTopItem >= pi->ItemsNumber)

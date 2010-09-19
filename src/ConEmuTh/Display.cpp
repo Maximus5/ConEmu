@@ -1263,12 +1263,12 @@ void CeFullPanelInfo::Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc)
 				if (PVM == pvm_Thumbnails)
 				{
 					nXCoord = 0; Y++; X = -1;
-					nYCoord = Y * nWholeH;
+					//nYCoord = Y * nWholeH;
 				}
 				else
 				{
 					nYCoord = 0; X++; Y = -1;
-					nXCoord = X * nWholeW;
+					//nXCoord = X * nWholeW;
 				}
 					
 				for (int j = 0; !gbCancelAll && j < jCount && nItem < nItemCount; j++, nItem++)
@@ -1326,9 +1326,12 @@ void CeFullPanelInfo::Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc)
 						}
 					}
 
-					if (PVM == pvm_Thumbnails) {
+					if (PVM == pvm_Thumbnails)
+					{
 						nXCoord += nWholeW;
-					} else {
+					}
+					else
+					{
 						nYCoord += nWholeH;
 					}
 
@@ -1336,7 +1339,7 @@ void CeFullPanelInfo::Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc)
 					DEBUG_SLEEP(300);
 					OutputDebugStringW(L"Done\n");
 					#endif
-				}
+				} // for (int j = 0; !gbCancelAll && j < jCount && nItem < nItemCount; j++, nItem++)
 
 
 				// заливка незанятых частей
@@ -1369,16 +1372,35 @@ void CeFullPanelInfo::Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc)
 						// На шаге 1 - залить незанятые части цветом фона
 						if (nStep == 1 && nYCoord < rc.bottom) {
 							RECT rcComp = {nXCoord,nYCoord,rc.right,rc.bottom};
+
+							#ifdef DEBUG_PAINT
+							wsprintf(szDbg, L"  -- FillRect({%ix%i}-{%ix%i})...",rcComp.left,rcComp.top,rcComp.right,rcComp.bottom);
+							DEBUGSTR(szDbg);
+							#endif
+
 							FillRect(hdc, &rcComp, hPanelBrush); //hBack[0]);
+
 							#ifdef DEBUG_PAINT
 							GdiFlush();
 							DEBUG_SLEEP(300);
+							OutputDebugStringW(L" Done\n");
 							#endif
 						}
 
 						//nXCoord += nWholeW;
 					}
 				}
+
+
+				if (PVM == pvm_Thumbnails)
+				{
+					nYCoord += nWholeH;
+				}
+				else
+				{
+					nXCoord += nWholeW;
+				}
+
 			} // for (int i = 0; !gbCancelAll && i < iCount && nItem < nItemCount; i++)
 
 
@@ -1730,7 +1752,7 @@ void CeFullPanelInfo::RequestSetPos(int anCurrentItem, int anTopItem)
 	
 	if (!gbSynchoRedrawPanelRequested)
 	{
-		gbWaitForKeySequenceEnd = true;
+		//gbWaitForKeySequenceEnd = true;
 		UpdateEnvVar(FALSE);
 
 		gbSynchoRedrawPanelRequested = true;
