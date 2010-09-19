@@ -4809,6 +4809,19 @@ bool CConEmuMain::isNtvdm()
     return mp_VActive->RCon()->isNtvdm();
 }
 
+bool CConEmuMain::isValid(CRealConsole* apRCon)
+{
+	if (!apRCon)
+		return false;
+
+	for (int i=0; i<MAX_CONSOLE_COUNT; i++) {
+		if (mp_VCon[i] && apRCon == mp_VCon[i]->RCon())
+			return true;
+	}
+
+	return false;
+}
+
 bool CConEmuMain::isValid(CVirtualConsole* apVCon)
 {
     if (!apVCon)
@@ -6598,24 +6611,26 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			return 0;
 	}
 
-    ///*&& isPressed(VK_LBUTTON)*/) && // Если этого не делать - при выделении мышкой консоль может самопроизвольно прокрутиться
-    CRealConsole* pRCon = mp_VActive->RCon();
-    // Только при скрытой консоли. Иначе мы ConEmu видеть вообще не будем
-    if (pRCon && (/*pRCon->isBufferHeight() ||*/ !pRCon->isWindowVisible())
-        && (messg == WM_LBUTTONDOWN || messg == WM_RBUTTONDOWN || messg == WM_LBUTTONDBLCLK || messg == WM_RBUTTONDBLCLK
-            || (messg == WM_MOUSEMOVE && isPressed(VK_LBUTTON)))
-        )
-    {
-       // buffer mode: cheat the console window: adjust its position exactly to the cursor
-       RECT win;
-       GetWindowRect(ghWnd, &win);
-       short x = win.left + ptCur.x - MulDiv(ptCur.x, conRect.right, klMax<uint>(1, mp_VActive->Width));
-       short y = win.top + ptCur.y - MulDiv(ptCur.y, conRect.bottom, klMax<uint>(1, mp_VActive->Height));
-       RECT con;
-       GetWindowRect(ghConWnd, &con);
-       if (con.left != x || con.top != y)
-           MOVEWINDOW(ghConWnd, x, y, con.right - con.left + 1, con.bottom - con.top + 1, TRUE);
-    }
+	// -- поскольку выделялка у нас теперь своя - этого похоже не требуется. лишние движения окна 
+	// -- вызывают side-effects на некоторых системах. Issue 274: Окно реальной консоли позиционируется в неудобном месте
+    /////*&& isPressed(VK_LBUTTON)*/) && // Если этого не делать - при выделении мышкой консоль может самопроизвольно прокрутиться
+    //CRealConsole* pRCon = mp_VActive->RCon();
+    //// Только при скрытой консоли. Иначе мы ConEmu видеть вообще не будем
+    //if (pRCon && (/*pRCon->isBufferHeight() ||*/ !pRCon->isWindowVisible())
+    //    && (messg == WM_LBUTTONDOWN || messg == WM_RBUTTONDOWN || messg == WM_LBUTTONDBLCLK || messg == WM_RBUTTONDBLCLK
+    //        || (messg == WM_MOUSEMOVE && isPressed(VK_LBUTTON)))
+    //    )
+    //{
+    //   // buffer mode: cheat the console window: adjust its position exactly to the cursor
+    //   RECT win;
+    //   GetWindowRect(ghWnd, &win);
+    //   short x = win.left + ptCur.x - MulDiv(ptCur.x, conRect.right, klMax<uint>(1, mp_VActive->Width));
+    //   short y = win.top + ptCur.y - MulDiv(ptCur.y, conRect.bottom, klMax<uint>(1, mp_VActive->Height));
+    //   RECT con;
+    //   GetWindowRect(ghConWnd, &con);
+    //   if (con.left != x || con.top != y)
+    //       MOVEWINDOW(ghConWnd, x, y, con.right - con.left + 1, con.bottom - con.top + 1, TRUE);
+    //}
     
     if (!isFar()) {
         if (messg != WM_MOUSEMOVE) { DEBUGLOGFILE("FAR not active, all clicks forced to console"); }
@@ -7146,7 +7161,8 @@ LRESULT CConEmuMain::OnMouse_RBtnUp(HWND hWnd, UINT messg, WPARAM wParam, LPARAM
 						if (gSet.sRClickMacro && *gSet.sRClickMacro) {
 							nLen = lstrlen(gSet.sRClickMacro);
 							nSize += nLen*2;
-							mp_VActive->RCon()->RemoveFromCursor();
+							// -- заменено на перехват функции ScreenToClient
+							//mp_VActive->RCon()->RemoveFromCursor();
 						}
 						LPBYTE pcbData = (LPBYTE)calloc(nSize,1);
 						_ASSERTE(pcbData);

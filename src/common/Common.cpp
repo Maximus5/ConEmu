@@ -378,7 +378,19 @@ void CommonShutdown()
 
 
 
-
+static BOOL CALLBACK MyEnumMonitors(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData)
+{
+	LPRECT lprc = (LPRECT)dwData;
+	if (lprcMonitor->left < lprc->left)
+		lprc->left = lprcMonitor->left;
+	if (lprcMonitor->top < lprc->top)
+		lprc->top = lprcMonitor->top;
+	if (lprcMonitor->right > lprc->right)
+		lprc->right = lprcMonitor->right;
+	if (lprcMonitor->bottom > lprc->bottom)
+		lprc->bottom = lprcMonitor->bottom;
+	return TRUE;
+}
 
 
 //
@@ -444,6 +456,22 @@ BOOL SetConsoleInfo(HWND hwndConsole, CONSOLE_INFO *pci)
 
 	} else {
 		_ASSERTE(pci->Length==sizeof(CONSOLE_INFO));
+
+		//2010-09-19 что-то на XP стало окошко мелькать.
+		// при отсылке WM_SETCONSOLEINFO консоль отображается :(
+		BOOL lbWasVisible = IsWindowVisible(hwndConsole);
+		RECT rcOldPos = {0}, rcAllMonRect = {0};
+		if (!lbWasVisible)
+		{
+			GetWindowRect(hwndConsole, &rcOldPos);
+			// В много-мониторных конфигурациях координаты на некоторых могут быть отрицательными!
+			EnumDisplayMonitors(NULL, NULL, MyEnumMonitors, (LPARAM)&rcAllMonRect);
+			pci->AutoPosition = FALSE;
+			pci->WindowPosX = rcAllMonRect.left - 1280;
+			pci->WindowPosY = rcAllMonRect.top - 1024;
+			
+		}
+
 		memcpy(ptrView, pci, pci->Length);
 
 		UnmapViewOfFile(ptrView);
@@ -454,6 +482,18 @@ BOOL SetConsoleInfo(HWND hwndConsole, CONSOLE_INFO *pci)
 
 		dwConInfoRc = SendMessage(hwndConsole, WM_SETCONSOLEINFO, (WPARAM)ghConsoleSection, 0);
 		dwConInfoErr = GetLastError();
+
+		if (!lbWasVisible && IsWindowVisible(hwndConsole))
+		{
+#ifdef _DEBUG
+			//Sleep(10);
+#endif
+			ShowWindow(hwndConsole, SW_HIDE);
+			//SetWindowPos(hwndConsole, NULL, rcOldPos.left, rcOldPos.top, 0,0, SWP_NOSIZE|SWP_NOZORDER);
+			// -- чтобы на некоторых системах не возникала проблема с позиционированием -> {0,0}
+			// Issue 274: Окно реальной консоли позиционируется в неудобном месте
+			SetWindowPos(hwndConsole, NULL, 0, 0, 0,0, SWP_NOSIZE|SWP_NOZORDER);
+		}
 	}
 
 	return TRUE;
@@ -572,7 +612,11 @@ void SetConsoleFontSizeTo(HWND inConWnd, int inSizeY, int inSizeX, const wchar_t
 		gpConsoleInfoStr->CursorSize				= 25;
 		gpConsoleInfoStr->FullScreen				= FALSE;
 		gpConsoleInfoStr->QuickEdit					= FALSE;
-		gpConsoleInfoStr->AutoPosition				= 0x10000;
+		//gpConsoleInfoStr->AutoPosition			= 0x10000;
+		gpConsoleInfoStr->AutoPosition				= FALSE;
+		RECT rcCon; GetWindowRect(inConWnd, &rcCon);
+		gpConsoleInfoStr->WindowPosX = rcCon.left;
+		gpConsoleInfoStr->WindowPosY = rcCon.top;
 		gpConsoleInfoStr->InsertMode				= TRUE;
 		gpConsoleInfoStr->ScreenColors				= MAKEWORD(0x7, 0x0);
 		gpConsoleInfoStr->PopupColors				= MAKEWORD(0x5, 0xf);

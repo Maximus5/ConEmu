@@ -261,6 +261,12 @@ CRealConsole::CRealConsole(CVirtualConsole* apVCon)
 CRealConsole::~CRealConsole()
 {
 	DEBUGSTRCON(L"CRealConsole::~CRealConsole()\n");
+#ifdef _DEBUG
+	if (!gConEmu.isMainThread())
+	{
+		_ASSERTE(gConEmu.isMainThread());
+	}
+#endif
 
 	if (gbInSendConEvent) {
 		#ifdef _DEBUG
@@ -1274,7 +1280,12 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
         {
             /*if (foreWnd == hConWnd)
                 apiSetForegroundWindow(ghWnd);*/
-            if (IsWindowVisible(pRCon->hConWnd))
+			bool bMonitorVisibility = true;
+			#ifdef _DEBUG
+			if ((GetKeyState(VK_SCROLL) & 1))
+				bMonitorVisibility = false;
+			#endif
+            if (bMonitorVisibility && IsWindowVisible(pRCon->hConWnd))
                 apiShowWindow(pRCon->hConWnd, SW_HIDE);
         }
 
@@ -3474,10 +3485,11 @@ void CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
             #endif
 
 
-			// —делано (пока) только чтобы текстовое EMenu активировалось по центру консоли,
-		    // а не в положении мыши (что смотритс€ отвратно - оно может сплющитьс€ до 2-3 строк).
-		    // “олько при скрытой консоли.
-			RemoveFromCursor();
+			// -- заменено на перехват функции ScreenToClient
+			//// —делано (пока) только чтобы текстовое EMenu активировалось по центру консоли,
+			//// а не в положении мыши (что смотритс€ отвратно - оно может сплющитьс€ до 2-3 строк).
+			//// “олько при скрытой консоли.
+			//RemoveFromCursor();
 
             
             if (mn_FarPID && mn_FarPID != mn_LastSetForegroundPID) {
@@ -5004,25 +5016,26 @@ BOOL CRealConsole::WaitConsoleSize(UINT anWaitSize, DWORD nTimeout)
 	return lbRc;
 }
 
-void CRealConsole::RemoveFromCursor()
-{
-	if (!this) return;
-	// 
-	if (gSet.isLockRealConsolePos) return;
-	// —делано (пока) только чтобы текстовое EMenu активировалось по центру консоли,
-	// а не в положении мыши (что смотритс€ отвратно - оно может сплющитьс€ до 2-3 строк).
-	// “олько при скрытой консоли.
-	if (!isWindowVisible())
-	{  // просто подвинем скрытое окно консоли так, чтобы курсор был ¬Ќ≈ него
-		RECT con; POINT ptCur;
-		GetWindowRect(hConWnd, &con);
-		GetCursorPos(&ptCur);
-		short x = ptCur.x + 1;
-		short y = ptCur.y + 1;
-		if (con.left != x || con.top != y)
-			MOVEWINDOW(hConWnd, x, y, con.right - con.left + 1, con.bottom - con.top + 1, TRUE);
-	}
-}
+// -- заменено на перехват функции ScreenToClient
+//void CRealConsole::RemoveFromCursor()
+//{
+//	if (!this) return;
+//	// 
+//	if (gSet.isLockRealConsolePos) return;
+//	// —делано (пока) только чтобы текстовое EMenu активировалось по центру консоли,
+//	// а не в положении мыши (что смотритс€ отвратно - оно может сплющитьс€ до 2-3 строк).
+//	// “олько при скрытой консоли.
+//	if (!isWindowVisible())
+//	{  // просто подвинем скрытое окно консоли так, чтобы курсор был ¬Ќ≈ него
+//		RECT con; POINT ptCur;
+//		GetWindowRect(hConWnd, &con);
+//		GetCursorPos(&ptCur);
+//		short x = ptCur.x + 1;
+//		short y = ptCur.y + 1;
+//		if (con.left != x || con.top != y)
+//			MOVEWINDOW(hConWnd, x, y, con.right - con.left + 1, con.bottom - con.top + 1, TRUE);
+//	}
+//}
 
 BOOL CRealConsole::GetConWindowSize(const CONSOLE_SCREEN_BUFFER_INFO& sbi, int& nNewWidth, int& nNewHeight, BOOL* pbBufferHeight/*=NULL*/)
 {
@@ -8418,7 +8431,8 @@ void CRealConsole::Paste()
 
 bool CRealConsole::isConsoleClosing()
 {
-	if (!this) return true;
+	if (!gConEmu.isValid(this))
+		return true;
 
 	if (m_ServerClosing.nServerPID
 		&& m_ServerClosing.nServerPID == mn_ConEmuC_PID

@@ -88,6 +88,8 @@ static BOOL WINAPI OnFreeConsole(void);
 static HWND WINAPI OnGetConsoleWindow(void); // в фаре дофига и больше вызовов этой функции
 static BOOL WINAPI OnWriteConsoleOutputA(HANDLE hConsoleOutput,const CHAR_INFO *lpBuffer,COORD dwBufferSize,COORD dwBufferCoord,PSMALL_RECT lpWriteRegion);
 static BOOL WINAPI OnWriteConsoleOutputW(HANDLE hConsoleOutput,const CHAR_INFO *lpBuffer,COORD dwBufferSize,COORD dwBufferCoord,PSMALL_RECT lpWriteRegion);
+static BOOL WINAPI OnGetWindowRect(HWND hWnd, LPRECT lpRect);
+static BOOL WINAPI OnScreenToClient(HWND hWnd, LPPOINT lpPoint);
 
 
 
@@ -123,6 +125,8 @@ static HookItem Hooks[MAX_HOOKED_PROCS] = {
 	{(void*)OnFlashWindow,         "FlashWindow",			user32},
 	{(void*)OnFlashWindowEx,       "FlashWindowEx",			user32},
 	{(void*)OnSetForegroundWindow, "SetForegroundWindow",	user32},
+	{(void*)OnGetWindowRect,       "GetWindowRect",			user32},
+	{(void*)OnScreenToClient,      "ScreenToClient",		user32},
 	/* ************************ */
 	{(void*)OnShellExecuteExA,     "ShellExecuteExA",		shell32},
 	{(void*)OnShellExecuteExW,     "ShellExecuteExW",		shell32},
@@ -1299,6 +1303,53 @@ static BOOL WINAPI OnSetForegroundWindow(HWND hWnd)
 	
 	lbRc = F(SetForegroundWindow)(hWnd);
 	
+	return lbRc;
+}
+
+typedef BOOL (WINAPI* OnGetWindowRect_t)(HWND hWnd, LPRECT lpRect);
+static BOOL WINAPI OnGetWindowRect(HWND hWnd, LPRECT lpRect)
+{
+	ORIGINALFAST(GetWindowRect);
+
+	BOOL lbRc;
+
+	if (hWnd == FarHwnd && ConEmuHwnd)
+	{
+		//EMenu gui mode issues (center in window). "Remove" Far window from mouse cursor.
+		hWnd = ConEmuHwnd;
+	}
+
+	lbRc = F(GetWindowRect)(hWnd, lpRect);
+
+	//if (ConEmuHwnd && lpRect)
+	//{
+	//	//EMenu text mode issues. "Remove" Far window from mouse cursor.
+	//	POINT ptCur = {0};
+	//	GetCursorPos(&ptCur);
+	//	lpRect->left += ptCur.x;
+	//	lpRect->right += ptCur.x;
+	//	lpRect->top += ptCur.y;
+	//	lpRect->bottom += ptCur.y;
+	//}
+
+	return lbRc;
+}
+
+typedef BOOL (WINAPI* OnScreenToClient_t)(HWND hWnd, LPPOINT lpPoint);
+static BOOL WINAPI OnScreenToClient(HWND hWnd, LPPOINT lpPoint)
+{
+	ORIGINALFAST(ScreenToClient);
+
+	BOOL lbRc;
+
+	lbRc = F(ScreenToClient)(hWnd, lpPoint);
+
+	if (ConEmuHwnd && lpPoint && hWnd == FarHwnd)
+	{
+		//EMenu text mode issues. "Remove" Far window from mouse cursor.
+		lpPoint->x = lpPoint->y = -1;
+	}
+
 	return lbRc;
 }
 

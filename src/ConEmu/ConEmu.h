@@ -331,6 +331,7 @@ public:
 	bool isNtvdm();
 	bool isPictureView();
 	bool isSizing();
+	bool isValid(CRealConsole* apRCon);
 	bool isValid(CVirtualConsole* apVCon);
 	bool isViewer();
 	bool isVisible(CVirtualConsole* apVCon);

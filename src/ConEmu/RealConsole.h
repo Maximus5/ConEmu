@@ -305,7 +305,7 @@ public:
 	void OnConsoleLangChange(DWORD_PTR dwNewKeybLayout);
 	DWORD GetConsoleStates();
     void ChangeBufferHeightMode(BOOL abBufferHeight); // Вызывается из TabBar->ConEmu
-	void RemoveFromCursor();
+	//void RemoveFromCursor(); // -- заменено на перехват функции ScreenToClient
 	bool isAlive();
 	bool GetMaxConSize(COORD* pcrMaxConSize);
 	int GetDetectedDialogs(int anMaxCount, SMALL_RECT* rc, DWORD* rf);

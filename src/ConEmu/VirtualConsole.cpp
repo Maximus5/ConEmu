@@ -44,7 +44,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #ifdef _DEBUG
-	//#define DEBUGDRAW_RCONPOS VK_SCROLL // -- при включенном ScrollLock отрисовать пр€моугольник, соответствующий положению окна RealConsole
+	#define DEBUGDRAW_RCONPOS VK_SCROLL // -- при включенном ScrollLock отрисовать пр€моугольник, соответствующий положению окна RealConsole
 	#define DEBUGDRAW_DIALOGS VK_CAPITAL // -- при включенном Caps отрисовать пр€моугольники, соответствующие найденным диалогам
 	#define DEBUGDRAW_VERTICALS VK_SCROLL // -- при включенном ScrollLock отрисовать пр€моугольники, соответсвующие гран€м диалогов (которые строго выравниваютс€ по €чейкам)
 #endif

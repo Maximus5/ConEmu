@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmuC.h"
 #include "..\common\ConsoleAnnotation.h"
 
-#define DEBUGSTRINPUTPIPE(s) //DEBUGSTR(s)
+#define DEBUGSTRINPUTPIPE(s) DEBUGSTR(s)
 #define DEBUGSTRINPUTWRITE(s) DEBUGSTR(s)
 #define DEBUGSTRCHANGES(s) DEBUGSTR(s)
 
@@ -44,6 +44,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 extern BOOL gbTerminateOnExit;
+
+#define ALL_MODIFIERS (LEFT_ALT_PRESSED|RIGHT_ALT_PRESSED|LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED|SHIFT_PRESSED)
+#define CTRL_MODIFIERS (LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED)
 
 BOOL ProcessInputMessage(MSG &msg, INPUT_RECORD &r);
 BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount);
@@ -85,6 +88,10 @@ void ServerInitFont()
 
 	//if (!srv.bDebuggerActive || gbAttachMode) {
 
+	#ifdef _DEBUG
+	//apiShowWindow(ghConWnd, SW_SHOWNORMAL);
+	#endif
+
 	if (ghLogSize) LogSize(NULL, ":SetConsoleFontSizeTo.before");
 	SetConsoleFontSizeTo(ghConWnd, srv.nConFontHeight, srv.nConFontWidth, srv.szConsoleFont);
 	if (ghLogSize) LogSize(NULL, ":SetConsoleFontSizeTo.after");
@@ -120,7 +127,12 @@ int ServerInit()
 
 	// Шрифт в консоли нужно менять в самом начале, иначе могут быть проблемы с установкой размера консоли
 	if (!gbNoCreateProcess && !srv.bDebuggerActive)
+	{
 		ServerInitFont();
+		// -- чтобы на некоторых системах не возникала проблема с позиционированием -> {0,0}
+		// Issue 274: Окно реальной консоли позиционируется в неудобном месте
+		SetWindowPos(ghConWnd, NULL, 0, 0, 0,0, SWP_NOSIZE|SWP_NOZORDER);
+	}
 
 	// Включить по умолчанию выделение мышью
 	if (!gbNoCreateProcess /*&& !(gbParmBufferSize && gnBufferHeight == 0)*/) {
@@ -716,6 +728,7 @@ void ServerDone(int aiRc, bool abReportShutdown /*= false*/)
 	}
 	if (srv.hInputThread) {
 		// Подождем немножко, пока нить сама завершится
+		WARNING("Не завершается");
 		if (WaitForSingleObject(srv.hInputThread, 500) != WAIT_OBJECT_0) {
 			gbTerminateOnExit = srv.bInputTermination = TRUE;
 			#pragma warning( push )
@@ -1536,17 +1549,19 @@ static BOOL ReadConsoleInfo()
 	}
 
 
-	if (!gnBufferHeight) {
+	if (!gnBufferHeight)
+	{
 		int nWndHeight = (srv.sbi.srWindow.Bottom - srv.sbi.srWindow.Top + 1);
 		if (srv.sbi.dwSize.Y > (max(gcrBufferSize.Y,nWndHeight)+200)
 			|| (srv.nRequestChangeSize && srv.nReqSizeBufferHeight))
 		{
 			// Приложение изменило размер буфера
 			gnBufferHeight = srv.nReqSizeBufferHeight;
-		}
-		if (!gnBufferHeight) {
-			_ASSERTE(srv.sbi.dwSize.Y <= 200);
-			DEBUGLOGSIZE(L"!!! srv.sbi.dwSize.Y > 200 !!! in ConEmuC.ReloadConsoleInfo");
+			if (!gnBufferHeight)
+			{
+				_ASSERTE(srv.sbi.dwSize.Y <= 200);
+				DEBUGLOGSIZE(L"!!! srv.sbi.dwSize.Y > 200 !!! in ConEmuC.ReloadConsoleInfo\n");
+			}
 		}
 		//	Sleep(10);
 		//} else {
@@ -2344,8 +2359,22 @@ DWORD WINAPI InputThread(LPVOID lpvParam)
 
 		// Читаем и пишем
 		DWORD nInputCount = sizeof(ir)/sizeof(ir[0]);
-		if (ReadInputQueue(ir, &nInputCount)) {
+		if (ReadInputQueue(ir, &nInputCount))
+		{
 			_ASSERTE(nInputCount>0);
+			#ifdef _DEBUG
+			for (DWORD j = 0; j < nInputCount; j++)
+			{
+				if (ir[j].EventType == KEY_EVENT 
+					&& (ir[j].Event.KeyEvent.wVirtualKeyCode == 'C' || ir[j].Event.KeyEvent.wVirtualKeyCode == VK_CANCEL)
+						&&      ( // Удерживается ТОЛЬКО Ctrl
+						(ir[j].Event.KeyEvent.dwControlKeyState & CTRL_MODIFIERS) &&
+						((ir[j].Event.KeyEvent.dwControlKeyState & ALL_MODIFIERS) 
+						== (ir[j].Event.KeyEvent.dwControlKeyState & CTRL_MODIFIERS)))
+					)
+					DEBUGSTR(L"  ---  CtrlC/CtrlBreak recieved\n");
+			}
+			#endif
 			//DEBUGSTRINPUTPIPE(L"SendConsoleEvent\n");
 			SendConsoleEvent(ir, nInputCount);
 		}
@@ -2434,9 +2463,11 @@ DWORD WINAPI InputPipeThread(LPVOID lpvParam)
 					INPUT_RECORD r;
 					// Некорректные события - отсеиваются,
 					// некоторые события (CtrlC/CtrlBreak) не пишутся в буферном режиме
-					if (ProcessInputMessage(imsg, r)) {
+					if (ProcessInputMessage(imsg, r))
+					{
 						//SendConsoleEvent(&r, 1);
-						if (!WriteInputQueue(&r)) {
+						if (!WriteInputQueue(&r))
+						{
 							WARNING("Если буфер переполнен - ждать? Хотя если будем ждать здесь - может повиснуть GUI на записи в pipe...");
 						}
 					}
@@ -2566,21 +2597,22 @@ BOOL ProcessInputMessage(MSG &msg, INPUT_RECORD &r)
 	memset(&r, 0, sizeof(r));
 	BOOL lbOk = FALSE;
 
-	if (!UnpackInputRecord(&msg, &r)) {
+	if (!UnpackInputRecord(&msg, &r))
+	{
 		_ASSERT(FALSE);
 		
-	} else {
+	}
+	else
+	{
 		TODO("Сделать обработку пачки сообщений, вдруг они накопились в очереди?");
 
-		#define ALL_MODIFIERS (LEFT_ALT_PRESSED|RIGHT_ALT_PRESSED|LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED|SHIFT_PRESSED)
-		#define CTRL_MODIFIERS (LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED)
 
-		#ifdef _DEBUG
-		if (r.EventType == KEY_EVENT && r.Event.KeyEvent.wVirtualKeyCode == 'C')
-		{
-			DEBUGSTR(L"  ---  F11 recieved\n");
-		}
-		#endif
+		//#ifdef _DEBUG
+		//if (r.EventType == KEY_EVENT && (r.Event.KeyEvent.wVirtualKeyCode == 'C' || r.Event.KeyEvent.wVirtualKeyCode == VK_CANCEL))
+		//{
+		//	DEBUGSTR(L"  ---  CtrlC/CtrlBreak recieved\n");
+		//}
+		//#endif
 
 		bool lbProcessEvent = false;
 		bool lbIngoreKey = false;
@@ -2595,6 +2627,8 @@ BOOL ProcessInputMessage(MSG &msg, INPUT_RECORD &r)
 		{
 			lbProcessEvent = true;
 
+			DEBUGSTR(L"  ---  CtrlC/CtrlBreak recieved\n");
+
 			DWORD dwMode = 0;
 			GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), &dwMode);
 
@@ -2605,7 +2639,8 @@ BOOL ProcessInputMessage(MSG &msg, INPUT_RECORD &r)
 				lbProcessEvent = false;
 
 
-			if (lbProcessEvent) {
+			if (lbProcessEvent)
+			{
 
 				BOOL lbRc = FALSE;
 				DWORD dwEvent = (r.Event.KeyEvent.wVirtualKeyCode == 'C') ? CTRL_C_EVENT : CTRL_BREAK_EVENT;
@@ -2631,6 +2666,16 @@ BOOL ProcessInputMessage(MSG &msg, INPUT_RECORD &r)
 
 			if (lbIngoreKey)
 				return FALSE;
+			// CtrlBreak отсылаем СРАЗУ, мимо очереди, иначе макросы FAR нельзя стопнуть
+			if (r.Event.KeyEvent.wVirtualKeyCode == VK_CANCEL)
+			{
+				// При получении CtrlBreak в реальной консоли - буфер ввода очищается
+				// иначе фар, при попытке считать ввод получит старые,
+				// еще не обработанные нажатия, и CtrlBreak проигнорирует
+				FlushConsoleInputBuffer(GetStdHandle(STD_INPUT_HANDLE));
+				SendConsoleEvent(&r, 1);
+				return FALSE;
+			}
 		}
 
 		#ifdef _DEBUG
@@ -2733,31 +2778,42 @@ BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount)
 
 	INPUT_RECORD* prNew = NULL;
 	int nAllCount = 0;
-	for (UINT n = 0; n < nCount; n++) {
-		if (pr[n].EventType != KEY_EVENT) {
+	for (UINT n = 0; n < nCount; n++)
+	{
+		if (pr[n].EventType != KEY_EVENT)
+		{
 			nAllCount++;
-		} else {
-			if (!pr[n].Event.KeyEvent.wRepeatCount) {
+		}
+		else
+		{
+			if (!pr[n].Event.KeyEvent.wRepeatCount)
+			{
 				_ASSERTE(pr[n].Event.KeyEvent.wRepeatCount!=0);
 				pr[n].Event.KeyEvent.wRepeatCount = 1;
 			}
 			nAllCount += pr[n].Event.KeyEvent.wRepeatCount;
 		}
 	}
-	if (nAllCount > (int)nCount) {
+	if (nAllCount > (int)nCount)
+	{
 		prNew = (INPUT_RECORD*)malloc(sizeof(INPUT_RECORD)*nAllCount);
-		if (prNew) {
+		if (prNew)
+		{
 			INPUT_RECORD* ppr = prNew;
 			INPUT_RECORD* pprMod = NULL;
-			for (UINT n = 0; n < nCount; n++) {
+			for (UINT n = 0; n < nCount; n++)
+			{
 				*(ppr++) = pr[n];
-				if (pr[n].EventType == KEY_EVENT) {
+				if (pr[n].EventType == KEY_EVENT)
+				{
 					UINT nCurCount = pr[n].Event.KeyEvent.wRepeatCount;
 					
-					if (nCurCount > 1) {
+					if (nCurCount > 1)
+					{
 						pprMod = (ppr-1);
 						pprMod->Event.KeyEvent.wRepeatCount = 1;
-						for (UINT i = 1; i < nCurCount; i++) {
+						for (UINT i = 1; i < nCurCount; i++)
+						{
 							*(ppr++) = *pprMod;
 						}
 					}

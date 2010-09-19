@@ -380,7 +380,7 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,222,182,95,8
     CONTROL         "Sleep in background",cbSleepInBackground,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,222,194,95,8
     CONTROL         "Disable all flashing",cbDisableAllFlashing,"Button",BS_AUTO3STATE | WS_TABSTOP,222,206,95,8
-    CONTROL         "Lock real console pos",cbLockRealConsolePos,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,227,132,92,8
+    CONTROL         "Lock real console pos",cbLockRealConsolePos,"Button",BS_AUTOCHECKBOX | NOT WS_VISIBLE | WS_TABSTOP,227,132,92,8
 END
 
 IDD_RESTART DIALOG  0, 0, 310, 167

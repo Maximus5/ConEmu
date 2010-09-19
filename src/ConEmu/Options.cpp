@@ -378,7 +378,7 @@ void CSettings::InitSettings()
     isAlwaysOnTop = false;
 	isSleepInBackground = false; // по умолчанию - не включать "засыпание в фоне".
     wndX = 0; wndY = 0; wndCascade = true; isAutoSaveSizePos = false;
-    isConVisible = false; isLockRealConsolePos = false;
+    isConVisible = false; //isLockRealConsolePos = false;
     nSlideShowElapse = 2500;
     nIconID = IDI_ICON1;
     isRClickSendKey = 2;
@@ -533,7 +533,7 @@ void CSettings::LoadSettings()
 		// Debugging
 		reg->Load(L"ConVisible", isConVisible);
 		// Don't move invisible real console. This affects GUI eMenu.
-		reg->Load(L"LockRealConsolePos", isLockRealConsolePos);
+		//reg->Load(L"LockRealConsolePos", isLockRealConsolePos);
 		
 		//reg->Load(L"DumpPackets", szDumpPackets);
 		
@@ -1060,7 +1060,7 @@ BOOL CSettings::SaveSettings()
             }*/
 
 			reg->Save(L"ConVisible", isConVisible);
-			reg->Save(L"LockRealConsolePos", isLockRealConsolePos);
+			//reg->Save(L"LockRealConsolePos", isLockRealConsolePos);
             reg->Save(L"CmdLine", psCmd);
             if (psCmdHistory)
             	reg->SaveMSZ(L"CmdLineHistory", psCmdHistory, nCmdHistorySize);
@@ -1807,7 +1807,7 @@ LRESULT CSettings::OnInitDialog_Ext()
 
 	if (isConVisible)
 		CheckDlgButton(hExt, cbVisible, BST_CHECKED);
-	if (isLockRealConsolePos) CheckDlgButton(hExt, cbLockRealConsolePos, BST_CHECKED);
+	//if (isLockRealConsolePos) CheckDlgButton(hExt, cbLockRealConsolePos, BST_CHECKED);
 
 	RegisterTipsFor(hExt);
 
@@ -2484,9 +2484,9 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
 		apiSetForegroundWindow(ghOpWnd);
 		break;
 
-	case cbLockRealConsolePos:
-		isLockRealConsolePos = IsChecked(hExt, cbLockRealConsolePos);
-		break;
+	//case cbLockRealConsolePos:
+	//	isLockRealConsolePos = IsChecked(hExt, cbLockRealConsolePos);
+	//	break;
 
 	case bRealConsoleSettings:
 		EditConsoleFont(ghOpWnd);

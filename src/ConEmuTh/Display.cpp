@@ -26,6 +26,15 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#ifdef _DEBUG
+	// Отладка отрисовки. Небольшие задержки, заливка серым перед отрисовкой, ...
+	//#define DEBUG_PAINT
+#endif
+#ifdef DEBUG_PAINT
+	#define DEBUG_SLEEP(n) Sleep(n)
+#else
+	#define DEBUG_SLEEP(n)
+#endif
 
 #define SHOWDEBUGSTR
 //#define MCHKHEAP
@@ -265,11 +274,30 @@ LRESULT CALLBACK CeFullPanelInfo::DisplayWndProc(HWND hwnd, UINT uMsg, WPARAM wP
 			_ASSERTE(pi == (&pviLeft) || pi == (&pviRight));
 
 			int nIndex; COORD crCon;
-			if (pi->GetIndexFromWndCoord(LOWORD(lParam), HIWORD(lParam), nIndex))
+			if (!pi->GetIndexFromWndCoord(LOWORD(lParam), HIWORD(lParam), nIndex))
+			{
+				if ((uMsg == WM_LBUTTONDOWN || uMsg == WM_RBUTTONDOWN) && (!pi->Focus))
+				{
+					ConEmuThSynchroArg *pCmd = (ConEmuThSynchroArg*)LocalAlloc(LPTR, sizeof(ConEmuThSynchroArg)+128);
+					pCmd->bValid = 1; pCmd->bExpired = 0; pCmd->nCommand = ConEmuThSynchroArg::eExecuteMacro;
+					wsprintfW((wchar_t*)pCmd->Data, L"$If (%cPanel.Left) Tab $End",
+						pi->bLeftPanel ? L'P' : L'A');
+					ExecuteInMainThread(pCmd);
+				}
+			}
+			else
 			{
 				if (uMsg == WM_LBUTTONDOWN || uMsg == WM_RBUTTONDOWN)
 				{
 					pi->RequestSetPos(nIndex, pi->OurTopPanelItem);
+					if (!pi->Focus)
+					{
+						ConEmuThSynchroArg *pCmd = (ConEmuThSynchroArg*)LocalAlloc(LPTR, sizeof(ConEmuThSynchroArg)+128);
+						pCmd->bValid = 1; pCmd->bExpired = 0; pCmd->nCommand = ConEmuThSynchroArg::eExecuteMacro;
+						wsprintfW((wchar_t*)pCmd->Data, L"$If (%cPanel.Left) Tab $End",
+							pi->bLeftPanel ? L'P' : L'A');
+						ExecuteInMainThread(pCmd);
+					}
 					return 0;
 				}
 				else if (uMsg == WM_LBUTTONUP || uMsg == WM_RBUTTONUP)
@@ -800,13 +828,14 @@ BOOL CeFullPanelInfo::GetConCoordFromIndex(int nIndex, COORD& rCoord)
 	return lbRc;
 }
 
-void CeFullPanelInfo::LoadItemColors(int nIndex, CePluginPanelItem* pItem, BOOL abCurrentItem)
+void CeFullPanelInfo::LoadItemColors(int nIndex, CePluginPanelItem* pItem, BOOL abCurrentItem, BOOL abStrictConsole)
 {
 	COORD crItem;
 	if (GetConCoordFromIndex(nIndex, crItem))
 	{
 		wchar_t c; CharAttr a;
 		//if (gpRgnDetect->GetCharAttr(WorkRect.left, WorkRect.top+nCol0Index, c, a)) {
+		WARNING("Если в этой позиции - диалог, то получение цвета будет некорректным!");
 		if (gpRgnDetect->GetCharAttr(crItem.X, crItem.Y, c, a)) {
 			pItem->crBack = gcrCurColors[a.nBackIdx];
 			pItem->crFore = gcrCurColors[a.nForeIdx];
@@ -1012,8 +1041,6 @@ void CeFullPanelInfo::Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc)
 {
 	gbCancelAll = FALSE;
 
-	DEBUGSTRCTRL(L"CeFullPanelInfo::Paint()\n");
-
 	HDC hdc = ps.hdc;
 
 	//for (int i=0; i<16; i++)
@@ -1102,7 +1129,19 @@ void CeFullPanelInfo::Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc)
 		ReqTopPanelItem = OurTopPanelItem;
 		ReqCurrentItem = CurrentItem;
 	}
-	
+
+#ifdef _DEBUG
+	wchar_t szDbg[512];
+	wsprintf(szDbg, L"CeFullPanelInfo::Paint(%s, Items=%i, Top=%i, Current=%i)\n",
+		this->bLeftPanel ? L"Left" : L"Right", ItemsNumber, OurTopPanelItem, CurrentItem);
+	DEBUGSTRCTRL(szDbg);
+
+	#ifdef DEBUG_PAINT
+	FillRect(hdc, &rc, (HBRUSH)GetStockObject(GRAY_BRUSH));
+	#endif
+#endif
+
+
 	////CePluginPanelItem** ppItems = this->ppItems;
 	//if ((nTopItem + nXCountFull*(nYCountFull)) <= nCurrentItem)
 	//{
@@ -1221,10 +1260,15 @@ void CeFullPanelInfo::Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc)
 
 			for (int i = 0; !gbCancelAll && i < iCount && nItem < nItemCount; i++)
 			{
-				if (PVM == pvm_Thumbnails) {
+				if (PVM == pvm_Thumbnails)
+				{
 					nXCoord = 0; Y++; X = -1;
-				} else {
+					nYCoord = Y * nWholeH;
+				}
+				else
+				{
 					nYCoord = 0; X++; Y = -1;
+					nXCoord = X * nWholeW;
 				}
 					
 				for (int j = 0; !gbCancelAll && j < jCount && nItem < nItemCount; j++, nItem++)
@@ -1236,6 +1280,11 @@ void CeFullPanelInfo::Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc)
 						Y++;
 					}
 
+					#ifdef DEBUG_PAINT
+					wsprintf(szDbg, L"  -- Step:%i, Item:%2i, Row:%i, Col:%i...", nStep, nItem, Y, X);
+					DEBUGSTR(szDbg);
+					#endif
+
 					_ASSERTE(this->ppItems!=NULL);
 
 					CePluginPanelItem* pItem = this->ppItems[nItem];
@@ -1245,13 +1294,13 @@ void CeFullPanelInfo::Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc)
 						continue; // Ошибка?
 					}
 
-					if (nStep == 0 || !pItem->bItemColorLoaded)
+					if (nStep == 0 || (!pItem->bItemColorLoaded && nStep == 1))
 					{
 						// Только извлечение цвета из консоли
-						LoadItemColors(nItem, pItem, (Focus && nItem==nCurrentItem));
+						LoadItemColors(nItem, pItem, (Focus && nItem==nCurrentItem), (nStep == 0));
 					}
 
-					if (nStep == 1 || !pItem->bPreviewLoaded)
+					if (nStep == 1 || (nStep == 2 && !pItem->bPreviewLoaded))
 					{
 						// поехали
 						const wchar_t* pszName = pItem->FindData.lpwszFileName;
@@ -1270,8 +1319,9 @@ void CeFullPanelInfo::Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc)
 							/*nBackColor, nForeColor, hBack,*/ (nStep == 2), hBackBrush, hPanelBrush, crPanel))
 						{
 							BitBlt(hdc, nXCoord, nYCoord, nWholeW, nWholeH, hCompDC, 0,0, SRCCOPY);
-							#ifdef _DEBUG
+							#ifdef DEBUG_PAINT
 							GdiFlush();
+							DEBUG_SLEEP(300);
 							#endif
 						}
 					}
@@ -1281,28 +1331,52 @@ void CeFullPanelInfo::Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc)
 					} else {
 						nYCoord += nWholeH;
 					}
+
+					#ifdef DEBUG_PAINT
+					DEBUG_SLEEP(300);
+					OutputDebugStringW(L"Done\n");
+					#endif
 				}
 
 
 				// заливка незанятых частей
-				if (nStep)
+				if (nStep == 1)
 				{
-					if (PVM == pvm_Thumbnails) {
+					if (PVM == pvm_Thumbnails)
+					{
 						// На шаге 1 - залить незанятые части цветом фона
 						if (nStep == 1 && nXCoord < rc.right) {
 							RECT rcComp = {nXCoord,nYCoord,rc.right,nYCoord+nWholeH};
+
+							#ifdef DEBUG_PAINT
+							wsprintf(szDbg, L"  -- FillRect({%ix%i}-{%ix%i})...",rcComp.left,rcComp.top,rcComp.right,rcComp.bottom);
+							DEBUGSTR(szDbg);
+							#endif
+
 							FillRect(hdc, &rcComp, hPanelBrush); //hBack[0]);
+
+							#ifdef DEBUG_PAINT
+							GdiFlush();
+							DEBUG_SLEEP(300);
+							OutputDebugStringW(L" Done\n");
+							#endif
 						}
 
-						nYCoord += nWholeH;
-					} else {
+						//nYCoord += nWholeH;
+					}
+					else
+					{
 						// На шаге 1 - залить незанятые части цветом фона
 						if (nStep == 1 && nYCoord < rc.bottom) {
 							RECT rcComp = {nXCoord,nYCoord,rc.right,rc.bottom};
 							FillRect(hdc, &rcComp, hPanelBrush); //hBack[0]);
+							#ifdef DEBUG_PAINT
+							GdiFlush();
+							DEBUG_SLEEP(300);
+							#endif
 						}
 
-						nXCoord += nWholeW;
+						//nXCoord += nWholeW;
 					}
 				}
 			} // for (int i = 0; !gbCancelAll && i < iCount && nItem < nItemCount; i++)
@@ -1364,8 +1438,17 @@ void CeFullPanelInfo::Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc)
 				{
 					if (nYCoord < rc.bottom)
 					{
-						RECT rcComp = {0,nYCoord,rc.right,rc.bottom};
+						RECT rcComp = {0,(Y+1)*nWholeH,rc.right,rc.bottom};
+						#ifdef DEBUG_PAINT
+						wsprintf(szDbg, L"  -- FillRect({%ix%i}-{%ix%i})...",rcComp.left,rcComp.top,rcComp.right,rcComp.bottom);
+						DEBUGSTR(szDbg);
+						#endif
 						FillRect(hdc, &rcComp, hPanelBrush); //hBack[0]);
+						#ifdef DEBUG_PAINT
+						GdiFlush();
+						DEBUG_SLEEP(300);
+						OutputDebugStringW(L" Done\n");
+						#endif
 					}
 				}
 				else
@@ -1376,8 +1459,14 @@ void CeFullPanelInfo::Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc)
 						FillRect(hdc, &rcComp, hPanelBrush); //hBack[0]);
 					}
 				}
-			}
-		}
+			} // if (nStep == 1) // На шаге 1 - залить незанятые части цветом фона
+
+			#ifdef DEBUG_PAINT
+			GdiFlush();
+			wsprintf(szDbg, L"-- Step:%i finished\n");
+			DEBUG_SLEEP(300);
+			#endif
+		} // for (int nStep = 0; !gbCancelAll && nStep <= 2; nStep++)
 	}
 
 	free(pszFull);

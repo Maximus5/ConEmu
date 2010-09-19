@@ -262,7 +262,7 @@ void __INPUT_RECORD_Dump(INPUT_RECORD *rec, wchar_t* pszRecord)
 	}
 
 	wsprintfW(pszRecord+wcslen(pszRecord),
-		L" (%s)",IsFullscreen()?L"Fullscreen":L"Widowed");
+		L" (%s)",IsFullscreen()?L"Fullscreen":L"Windowed");
 }
 
 

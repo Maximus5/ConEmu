@@ -107,7 +107,7 @@ struct CeFullPanelInfo
 	BOOL GetIndexFromWndCoord(int x, int y, int &rnIndex);
 	BOOL GetConCoordFromIndex(int nIndex, COORD& rCoord);
 	HBRUSH GetItemColors(int nIndex, CePluginPanelItem* pItem, BOOL abCurrentItem, COLORREF &crFore, COLORREF &crBack);
-	void LoadItemColors(int nIndex, CePluginPanelItem* pItem, BOOL abCurrentItem);
+	void LoadItemColors(int nIndex, CePluginPanelItem* pItem, BOOL abCurrentItem, BOOL abStrictConsole);
 	// Conversions
 	BOOL FarItem2CeItem(int anIndex,
 		const wchar_t*   asName,

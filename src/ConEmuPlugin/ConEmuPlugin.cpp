@@ -37,7 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SHOWDEBUGSTR
 //#define MCHKHEAP
 #define DEBUGSTRMENU(s) DEBUGSTR(s)
-#define DEBUGSTRINPUT(s) //DEBUGSTR(s)
+#define DEBUGSTRINPUT(s) DEBUGSTR(s)
 
 
 //#include <stdio.h>
@@ -829,6 +829,28 @@ BOOL WINAPI OnConsolePeekInput(HookCallbackArg* pArgs)
 VOID WINAPI OnConsolePeekInputPost(HookCallbackArg* pArgs)
 {
 	if (!pArgs->bMainThread) return; // обработку делаем только в основной нити
+
+#ifdef _DEBUG
+	if (*(LPDWORD)(pArgs->lArguments[3]))
+	{
+		wchar_t szDbg[255]; 
+		PINPUT_RECORD p = (PINPUT_RECORD)(pArgs->lArguments[1]);
+		LPDWORD pCount = (LPDWORD)(pArgs->lArguments[3]);
+		DWORD nLeft = 0; GetNumberOfConsoleInputEvents(GetStdHandle(STD_INPUT_HANDLE), &nLeft);
+		wsprintfW(szDbg, L"*** OnConsolePeekInputPost(Events=%i, KeyCount=%i, LeftInConBuffer=%i)\n", 
+			*pCount, (p->EventType==KEY_EVENT) ? p->Event.KeyEvent.wRepeatCount : 0, nLeft);
+		DEBUGSTRINPUT(szDbg);
+		// Если под дебагом включен ScrollLock - вывести информацию о считанных событиях
+		if (GetKeyState(VK_SCROLL) & 1) {
+			PINPUT_RECORD p = (PINPUT_RECORD)(pArgs->lArguments[1]);
+			LPDWORD pCount = (LPDWORD)(pArgs->lArguments[3]);
+			_ASSERTE(*pCount <= pArgs->lArguments[2]);
+			UINT nCount = *pCount;
+			for (UINT i = 0; i < nCount; i++)
+				DebugInputPrint(p[i]);
+		}
+	}
+#endif
 
 	// Если зарегистрирован callback для графической панели
 	if (gPanelRegLeft.pfnPeekPostCall || gPanelRegRight.pfnPeekPostCall) {
@@ -3124,7 +3146,7 @@ int WINAPI _export ProcessViewerEventW(int Event, void *Param)
 {
 #if 1
 	if (!gbRequestUpdateTabs &&
-		(Event == VE_CLOSE || Event == VE_GOTFOCUS || Event == VE_KILLFOCUS))
+		(Event == VE_CLOSE || Event == VE_GOTFOCUS || Event == VE_KILLFOCUS || Event == VE_READ))
 	{
 		gbRequestUpdateTabs = TRUE;
 	}

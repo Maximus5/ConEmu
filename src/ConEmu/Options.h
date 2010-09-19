@@ -254,7 +254,7 @@ public:
 	BYTE isAdvLogging;
 	//wchar_t szDumpPackets[MAX_PATH];
 	// Debugging
-	bool isConVisible, isLockRealConsolePos;
+	bool isConVisible; // isLockRealConsolePos;
 	
 	// Thumbnails and Tiles
 	PanelViewSettings ThSet;
