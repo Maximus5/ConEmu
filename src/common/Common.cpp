@@ -665,10 +665,20 @@ typedef struct tag_MyAssertInfo {
 	wchar_t szTitle[255];
 	wchar_t szDebugInfo[4096];
 } MyAssertInfo;
+bool gbInMyAssertTrap = false;
 DWORD WINAPI MyAssertThread(LPVOID p)
 {
+	if (gbInMyAssertTrap)
+	{
+		// ≈сли уже в трапе - то повторно не вызывать, иначе может вывалитьс€ сери€ окон, что затруднит отладку
+		return IDCANCEL;
+	}
+
 	MyAssertInfo* pa = (MyAssertInfo*)p;
-	return MessageBoxW(NULL, pa->szDebugInfo, pa->szTitle, MB_SETFOREGROUND|MB_SYSTEMMODAL|MB_RETRYCANCEL);
+	gbInMyAssertTrap = true;
+	DWORD nRc = MessageBoxW(NULL, pa->szDebugInfo, pa->szTitle, MB_SETFOREGROUND|MB_SYSTEMMODAL|MB_RETRYCANCEL);
+	gbInMyAssertTrap = false;
+	return nRc;
 }
 void MyAssertTrap()
 {

@@ -874,9 +874,11 @@ void ResetConman()
 {
 	HKEY hk = 0;
 	DWORD dw = 0;
+	// 24.09.2010 Maks - Только если ключ конмана уже создан!
     // сбрость CreateInNewEnvironment для ConMan
-    if (0 == RegCreateKeyEx(HKEY_CURRENT_USER, _T("Software\\HoopoePG_2x"),
-	        NULL, NULL, NULL, KEY_ALL_ACCESS, NULL, &hk, &dw))
+    //if (0 == RegCreateKeyEx(HKEY_CURRENT_USER, _T("Software\\HoopoePG_2x"),
+	//        NULL, NULL, NULL, KEY_ALL_ACCESS, NULL, &hk, &dw))
+	if (0 == RegOpenKeyEx(HKEY_CURRENT_USER, _T("Software\\HoopoePG_2x"), 0, KEY_ALL_ACCESS, &hk))
 	{
 		RegSetValueEx(hk, _T("CreateInNewEnvironment"), NULL, REG_DWORD,
 			(LPBYTE)&(dw=0), 4);

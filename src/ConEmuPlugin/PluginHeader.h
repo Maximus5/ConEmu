@@ -171,7 +171,7 @@ extern int gnPluginOpenFrom;
 //extern HANDLE ghInputSynchroExecuted;
 //extern BOOL gbCmdCallObsolete;
 extern LPVOID gpReqCommandData;
-CESERVER_REQ* ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData);
+BOOL ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERVER_REQ** ppResult = NULL);
 BOOL CheckPlugKey();
 void NotifyChangeKey();
 

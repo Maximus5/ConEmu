@@ -220,7 +220,7 @@ extern FarVersion gFarVersion;
 //extern DWORD gnSelfPID;
 extern CeFullPanelInfo pviLeft, pviRight;
 extern HANDLE ghDisplayThread; extern DWORD gnDisplayThreadId;
-extern HWND ghLeftView, ghRightView;
+//extern HWND ghLeftView, ghRightView;
 //extern bool gbWaitForKeySequenceEnd;
 extern DWORD gnWaitForKeySeqTick;
 extern DWORD gnFarPanelSettings, gnFarInterfaceSettings;
@@ -230,6 +230,15 @@ extern DWORD gnFarPanelSettings, gnFarInterfaceSettings;
 // *** lng resources begin ***
 extern wchar_t gsFolder[64], /*gsHardLink[64],*/ gsSymLink[64], gsJunction[64], gsTitleThumbs[64], gsTitleTiles[64];
 // *** lng resources end ***
+
+extern COLORREF /*gcrActiveColors[16], gcrFadeColors[16],*/ *gcrCurColors;
+extern bool gbFadeColors;
+extern bool gbFarPanelsReady;
+
+class CRgnDetect;
+extern CRgnDetect *gpRgnDetect;
+extern CEFAR_INFO gFarInfo;
+extern DWORD gnRgnDetectFlags;
 
 
 //typedef struct tag_SynchroArg {
@@ -244,7 +253,7 @@ extern wchar_t gsFolder[64], /*gsHardLink[64],*/ gsSymLink[64], gsJunction[64], 
 //	//BOOL Processed;
 //} SynchroArg;
 
-void StartPlugin(int OpenFrom,INT_PTR Item);
+void EntryPoint(int OpenFrom,INT_PTR Item);
 BOOL LoadFarVersion();
 void StartPlugin(BOOL abManual);
 void ExitPlugin(void);
@@ -296,6 +305,9 @@ bool CheckWindows();
 //bool CheckWindowsA();
 //bool FUNC_X(CheckWindows)();
 //bool FUNC_Y(CheckWindows)();
+bool CheckFarPanelsA();
+bool FUNC_X(CheckFarPanels)();
+bool FUNC_Y(CheckFarPanels)();
 
 // Эта "дисплейная" функция вызывается из основной нити, там можно дергать FAR Api
 //void DisplayReloadPanel(CeFullPanelInfo* pi);

@@ -168,6 +168,7 @@ CVirtualConsole::CVirtualConsole(/*HANDLE hConsoleOutput*/)
     //InitializeCriticalSection(&csCON); ncsTCON = 0;
 
 	mb_InPaintCall = FALSE;
+	mb_InConsoleResize = FALSE;
 
 	nFontHeight = gSet.FontHeight();
 	nFontWidth = gSet.FontWidth();
@@ -980,9 +981,13 @@ bool CVirtualConsole::Update(bool abForce, HDC *ahDc)
 	*/
 
 
-	if (mb_InUpdate) {
+	if (mb_InUpdate)
+	{
 		// Не должен вызываться по рекурсии
-		_ASSERTE(!mb_InUpdate);
+		if (!mb_InConsoleResize)
+		{
+			_ASSERTE(!mb_InUpdate);
+		}
 		return false;
 	}
 	MSetter inUpdate(&mb_InUpdate);
@@ -1444,7 +1449,10 @@ bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC)
             return false;
 
 		if (lbSizeChanged)
+		{
+			MSetter lInConsoleResize(&mb_InConsoleResize);
 			gConEmu.OnConsoleResize(TRUE);
+		}
 
 		isForce = true; // После сброса буферов и DC - необходим полный refresh...
 

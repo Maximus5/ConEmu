@@ -126,7 +126,7 @@ HANDLE WINAPI _export OpenPlugin(int OpenFrom,INT_PTR Item)
 
 	ReloadResourcesA();
 
-	StartPlugin(OpenFrom, Item);
+	EntryPoint(OpenFrom, Item);
 
 	return INVALID_HANDLE_VALUE;
 }
@@ -438,6 +438,20 @@ BOOL CheckPanelSettingsA(BOOL abSilence)
 		return FALSE;
 	}
 	return TRUE;
+}
+
+// Использовать только ACTL_GETSHORTWINDOWINFO. С ней проблем с синхронизацией быть не должно
+bool CheckFarPanelsA()
+{
+	if (!InfoA || !InfoA->AdvControl) return false;
+	
+	WindowInfo wi = {-1};
+	bool lbPanelsActive = false;
+	
+	INT_PTR iRc = InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETSHORTWINDOWINFO, (LPVOID)&wi);
+	lbPanelsActive = (iRc != 0) && (wi.Type == WTYPE_PANELS);
+
+	return lbPanelsActive;
 }
 
 // Возникали проблемы с синхронизацией в FAR2 -> FindFile

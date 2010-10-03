@@ -121,6 +121,7 @@ CConEmuMain::CConEmuMain()
     cursor.x=0; cursor.y=0; Rcursor=cursor;
     m_LastConSize = MakeCoord(0,0);
     mp_DragDrop = NULL;
+	//mb_InConsoleResize = FALSE;
     //ProgressBars = NULL;
     //cBlinkShift=0;
     Title[0] = 0; TitleCmp[0] = 0; /*MultiTitle[0] = 0;*/ mn_Progress = -1;
@@ -2180,6 +2181,8 @@ void CConEmuMain::ReSize(BOOL abCorrect2Ideal /*= FALSE*/)
 
 void CConEmuMain::OnConsoleResize(BOOL abPosted/*=FALSE*/)
 {
+	//MSetter lInConsoleResize(&mb_InConsoleResize);
+
 	// ¬ыполн€тьс€ должно в нити окна, иначе можем повиснуть
 	static bool lbPosted = false;
 	abPosted = (mn_MainThreadId == GetCurrentThreadId());
@@ -2304,6 +2307,14 @@ LRESULT CConEmuMain::OnSize(WPARAM wParam, WORD newClientWidth, WORD newClientHe
 {
     LRESULT result = 0;
     
+	#ifdef _DEBUG
+	RECT rcDbgSize; GetWindowRect(ghWnd, &rcDbgSize);
+	wchar_t szSize[255]; swprintf_s(szSize, L"OnSize(%i, %ix%i) Current window size (X=%i, Y=%i, W=%i, H=%i)\n",
+		wParam, (int)(short)newClientWidth, (int)(short)newClientHeight,
+		rcDbgSize.left, rcDbgSize.top, (rcDbgSize.right-rcDbgSize.left), (rcDbgSize.bottom-rcDbgSize.top));
+	DEBUGSTRSIZE(szSize);
+	#endif
+
     if (wParam == SIZE_MINIMIZED || isIconic())
     {
         return 0;
@@ -2453,6 +2464,8 @@ LRESULT CConEmuMain::OnSizing(WPARAM wParam, LPARAM lParam)
         RECT wndSizeRect, restrictRect;
         RECT *pRect = (RECT*)lParam; // с рамкой
 
+		RECT rcCurrent; GetWindowRect(ghWnd, &rcCurrent);
+
         if ((mouse.state & (MOUSE_SIZING_BEGIN|MOUSE_SIZING_TODO))==MOUSE_SIZING_BEGIN 
             && isPressed(VK_LBUTTON))
         {
@@ -2519,6 +2532,20 @@ LRESULT CConEmuMain::OnSizing(WPARAM wParam, LPARAM lParam)
             pRect->bottom = restrictRect.bottom;
             break;
         }
+
+		if ((pRect->right - pRect->left) != (rcCurrent.right - rcCurrent.left)
+			|| (pRect->bottom - pRect->top) != (rcCurrent.bottom - rcCurrent.top))
+		{
+			// —разу подресайзить консоль, чтобы при WM_PAINT можно было отрисовать уже готовые данные
+			TODO("DoubleView");
+			//ActiveCon()->RCon()->SyncConsole2Window(FALSE, pRect);
+			#ifdef _DEBUG
+			wchar_t szSize[255]; swprintf_s(szSize, L"New window size (X=%i, Y=%i, W=%i, H=%i); Current size (X=%i, Y=%i, W=%i, H=%i)\n",
+				pRect->left, pRect->top, (pRect->right-pRect->left), (pRect->bottom-pRect->top),
+				rcCurrent.left, rcCurrent.top, (rcCurrent.right-rcCurrent.left), (rcCurrent.bottom-rcCurrent.top));
+			DEBUGSTRSIZE(szSize);
+			#endif
+		}
     }
 
     return result;
@@ -2938,19 +2965,34 @@ void CConEmuMain::UpdateIdealRect(BOOL abAllowUseConSize/*=FALSE*/)
 	}
 }
 
-void CConEmuMain::DebugStep(LPCTSTR asMsg)
+void CConEmuMain::DebugStep(LPCTSTR asMsg, BOOL abErrorSeverity/*=FALSE*/)
 {
-    if (gSet.isDebugSteps && ghWnd)
+    if (ghWnd)
 	{
+		static bool bWasDbgStep, bWasDbgError;
 		if (asMsg && *asMsg)
 		{
-			SetWindowText(ghWnd, asMsg);
+			if (gSet.isDebugSteps || abErrorSeverity)
+			{
+				bWasDbgStep = true;
+				if (abErrorSeverity) bWasDbgError = true;
+				SetWindowText(ghWnd, asMsg);
+			}
 		}
 		else
 		{
 			// ќбновит заголовок в соответствии с возможными процентами в неактивной консоли
 			// и выполнит это в главной нити, если необходимо
-			UpdateTitle();
+			if (bWasDbgStep)
+			{
+				bWasDbgStep = false;
+				if (bWasDbgError)
+				{
+					bWasDbgError = false;
+					return;
+				}
+				UpdateTitle();
+			}
 		}
 	}
 }
@@ -4447,6 +4489,18 @@ void CConEmuMain::InvalidateAll()
 LRESULT CConEmuMain::OnPaint(WPARAM wParam, LPARAM lParam)
 {
     LRESULT result = 0;
+
+	#ifdef _DEBUG
+	RECT rcDbgSize; GetWindowRect(ghWnd, &rcDbgSize);
+	wchar_t szSize[255]; swprintf_s(szSize, L"WM_PAINT -> Window size (X=%i, Y=%i, W=%i, H=%i)\n",
+		rcDbgSize.left, rcDbgSize.top, (rcDbgSize.right-rcDbgSize.left), (rcDbgSize.bottom-rcDbgSize.top));
+	DEBUGSTRSIZE(szSize);
+	static RECT rcDbgSize1;
+	if (memcmp(&rcDbgSize1, &rcDbgSize, sizeof(rcDbgSize1)))
+	{
+		rcDbgSize1 = rcDbgSize;
+	}
+	#endif
 
     PAINTSTRUCT ps;
     #ifdef _DEBUG
@@ -6079,7 +6133,7 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
         ))
     {
 		//2010-01-19 почему-то был закоментарен !isPressed(VK_MENU), в итоге в FAR не проваливалось кнопкосочетание дл€ детача
-        if (isPressed(VK_CONTROL) && !isPressed(VK_MENU) && !isPressed(VK_LWIN) && !isPressed(VK_LWIN))
+        if (isPressed(VK_CONTROL) && !isPressed(VK_MENU) && !isPressed(VK_LWIN) && !isPressed(VK_RWIN))
         {
             if (gConEmu.mp_TabBar->OnKeyboard(messg, wParam, lParam))
                 return 0;
@@ -8386,13 +8440,16 @@ LRESULT CConEmuMain::OnVConTerminated(CVirtualConsole* apVCon, BOOL abPosted /*=
     if (!apVCon)
         return 0;
 
-    if (!abPosted) {
+    if (!abPosted)
+    {
         PostMessage(ghWnd, mn_MsgVConTerminated, 0, (LPARAM)apVCon);
         return 0;
     }
 
-    for (int i=0; i<MAX_CONSOLE_COUNT; i++) {
-        if (mp_VCon[i] == apVCon) {
+    for (int i=0; i<MAX_CONSOLE_COUNT; i++)
+    {
+        if (mp_VCon[i] == apVCon)
+        {
 
 			// —начала нужно обновить закладки, иначе в закрываемой консоли
 			// может быть несколько вкладок и вместо активации другой консоли
@@ -8400,7 +8457,8 @@ LRESULT CConEmuMain::OnVConTerminated(CVirtualConsole* apVCon, BOOL abPosted /*=
 			//gConEmu.mp_TabBar->Update(TRUE); -- а и не сможет он другую активировать, т.к. RCon вернет FALSE
 
 			// Ёта комбинаци€ должна активировать предыдущую консоль (если активна текуща€)
-			if (gSet.isTabRecent && apVCon == mp_VActive) {
+			if (gSet.isTabRecent && apVCon == mp_VActive)
+			{
 				if (gConEmu.GetVCon(1)) {
 					gConEmu.mp_TabBar->SwitchRollback();
 					gConEmu.mp_TabBar->SwitchNext();
@@ -8413,23 +8471,30 @@ LRESULT CConEmuMain::OnVConTerminated(CVirtualConsole* apVCon, BOOL abPosted /*=
 
 
             WARNING("¬ообще-то это нужно бы в CriticalSection закрыть. Ќесколько консолей может одновременно закрытьс€");
-            if (mp_VActive == apVCon) {
-                for (int j=(i-1); j>=0; j--) {
-                    if (mp_VCon[j]) {
+            if (mp_VActive == apVCon)
+            {
+                for (int j=(i-1); j>=0; j--)
+                {
+                    if (mp_VCon[j])
+                    {
                         ConActivate(j);
                         break;
                     }
                 }
-                if (mp_VActive == apVCon) {
-                    for (int j=(i+1); j<MAX_CONSOLE_COUNT; j++) {
-                        if (mp_VCon[j]) {
+                if (mp_VActive == apVCon)
+                {
+                    for (int j=(i+1); j<MAX_CONSOLE_COUNT; j++)
+                    {
+                        if (mp_VCon[j])
+                        {
                             ConActivate(j);
                             break;
                         }
                     }
                 }
             }
-            for (int j=(i+1); j<MAX_CONSOLE_COUNT; j++) {
+            for (int j=(i+1); j<MAX_CONSOLE_COUNT; j++)
+            {
                 mp_VCon[j-1] = mp_VCon[j];
             }
 			mp_VCon[MAX_CONSOLE_COUNT-1] = NULL;
@@ -8667,7 +8732,7 @@ void CConEmuMain::GuiServerThreadCommand(HANDLE hPipe)
 			
 			//pIn->dwData[0] = (l == 0) ? 0 : 1;
 		}
-		else if (pIn->dwData[0] == 100)
+		else if (pIn->dwData[0] == 101)
 		{
 			// ѕроцесс сервера завершаетс€
 			CRealConsole* pRCon = NULL;
@@ -8835,7 +8900,14 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			#ifdef _DEBUG
 			wchar_t szDbg[128]; wsprintf(szDbg, L"WM_WINDOWPOSCHANGING ({%i-%i}x{%i-%i} Flags=0x%08X) style=0x%08X\n", p->x, p->y, p->cx, p->cy, p->flags, dwStyle);
 			DEBUGSTRSIZE(szDbg);
+
+			static int cx, cy;
+			if (!(p->flags & SWP_NOSIZE) && (cx != p->cx || cy != p->cy))
+			{
+				cx = p->cx; cy = p->cy;
+			}
 			#endif
+
 			//if (gSet.isDontMinimize) {
 			//	if ((p->flags & (0x8000|SWP_NOACTIVATE)) == (0x8000|SWP_NOACTIVATE)
 			//		|| ((p->flags & (SWP_NOMOVE|SWP_NOSIZE)) == 0 && p->x < -30000 && p->y < -30000 )
@@ -8852,6 +8924,18 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			//		break;
 			//	}
 			//}
+
+			if (!(p->flags & SWP_NOSIZE)
+				&& (hWnd == ghWnd) && !gConEmu.mb_IgnoreSizeChange 
+				&& !gSet.isFullScreen && !isZoomed() && !isIconic())
+			{
+				if (!hPictureView)
+				{
+					TODO("ƒоработать, когда будет ресайз PicView на лету");
+					RECT rcWnd = {0,0,p->cx,p->cy};
+					ActiveCon()->RCon()->SyncConsole2Window(FALSE, &rcWnd);
+				}
+			}
 			
 			// »наче не вызвутс€ событи€ WM_SIZE/WM_MOVE
 			result = DefWindowProc(hWnd, messg, wParam, lParam);
@@ -8863,6 +8947,15 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			static int WindowPosStackCount = 0;
 			WINDOWPOS *p = (WINDOWPOS*)lParam;
 			DWORD dwStyle = GetWindowLong(ghWnd, GWL_STYLE);
+
+			#ifdef _DEBUG
+			static int cx, cy;
+			if (!(p->flags & SWP_NOSIZE) && (cx != p->cx || cy != p->cy))
+			{
+				cx = p->cx; cy = p->cy;
+			}
+			#endif
+
 			wchar_t szDbg[128]; wsprintf(szDbg, L"WM_WINDOWPOSCHANGED ({%i-%i}x{%i-%i} Flags=0x%08X), style=0x%08X\n", p->x, p->y, p->cx, p->cy, p->flags, dwStyle);
 			DEBUGSTRSIZE(szDbg);
 			WindowPosStackCount++;
@@ -8877,13 +8970,25 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			result = DefWindowProc(hWnd, messg, wParam, lParam);
 			WindowPosStackCount--;
 
-			if (hWnd == ghWnd /*&& ghOpWnd*/) { //2009-05-08 запоминать wndX/wndY всегда, а не только если окно настроек открыто
+			if (hWnd == ghWnd /*&& ghOpWnd*/) //2009-05-08 запоминать wndX/wndY всегда, а не только если окно настроек открыто
+			{
 				if (!gConEmu.mb_IgnoreSizeChange && !gSet.isFullScreen && !isZoomed() && !isIconic())
 				{
 					RECT rc; GetWindowRect(ghWnd, &rc);
 					gSet.UpdatePos(rc.left, rc.top);
 					if (hPictureView)
+					{
 						mrc_WndPosOnPicView = rc;
+					}
+					//else
+					//{
+					//	TODO("ƒоработать, когда будет ресайз PicView на лету");
+					//	if (!(p->flags & SWP_NOSIZE))
+					//	{
+					//		RECT rcWnd = {0,0,p->cx,p->cy};
+					//		ActiveCon()->RCon()->SyncConsole2Window(FALSE, &rcWnd);
+					//	}
+					//}
 				}
 			} else if (hPictureView) {
 				GetWindowRect(ghWnd, &mrc_WndPosOnPicView);

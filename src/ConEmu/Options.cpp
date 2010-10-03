@@ -2077,17 +2077,12 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
     case IDOK:
     case IDCANCEL:
     case IDCLOSE:
-        if (isTabs==1) gConEmu.ForceShowTabs(TRUE); else
-        if (isTabs==0) gConEmu.ForceShowTabs(FALSE); else
-			gConEmu.mp_TabBar->Update();
-		gConEmu.OnPanelViewSettingsChanged();
+    	// -- перенесено в WM_CLOSE
+        //if (isTabs==1) gConEmu.ForceShowTabs(TRUE); else
+        //if (isTabs==0) gConEmu.ForceShowTabs(FALSE); else
+		//	gConEmu.mp_TabBar->Update();
+		//gConEmu.OnPanelViewSettingsChanged();
         SendMessage(ghOpWnd, WM_CLOSE, 0, 0);
-        break;
-
-    case rNoneAA:
-    case rStandardAA:
-    case rCTAA:
-		PostMessage(hMain, gSet.mn_MsgRecreateFont, wParam, 0);
         break;
 
     case bSaveSettings:
@@ -2095,6 +2090,12 @@ LRESULT CSettings::OnButtonClicked(WPARAM wParam, LPARAM lParam)
 			OnButtonClicked(cbApplyPos, 0);
         if (SaveSettings())
             SendMessage(ghOpWnd,WM_COMMAND,IDOK,0);
+        break;
+
+    case rNoneAA:
+    case rStandardAA:
+    case rCTAA:
+		PostMessage(hMain, gSet.mn_MsgRecreateFont, wParam, 0);
         break;
 
     case rNormal:
@@ -3037,6 +3038,12 @@ INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPara
                 gSet.OnTab(phdr);
         } break;
     case WM_CLOSE:
+    
+        if (gSet.isTabs==1) gConEmu.ForceShowTabs(TRUE); else
+        if (gSet.isTabs==0) gConEmu.ForceShowTabs(FALSE); else
+			gConEmu.mp_TabBar->Update();
+		gConEmu.OnPanelViewSettingsChanged();
+    
         //if (gSet.hwndTip) {DestroyWindow(gSet.hwndTip); gSet.hwndTip = NULL;}
 		DestroyWindow(hWnd2);
 		break;
@@ -3896,19 +3903,29 @@ WORD CSettings::GetPressedHostkey()
 
 bool CSettings::IsHostkeyPressed()
 {
-	if (mn_HostModOk[0] == 0) {
+	if (mn_HostModOk[0] == 0)
+	{
 		_ASSERTE(mn_HostModOk[0]!=0);
 		mn_HostModOk[0] = VK_LWIN;
 		return isPressed(VK_LWIN) || isPressed(VK_RWIN);
 	}
 
 	_ASSERTE(mn_HostModOk[4] == 0);
-	for (int i = 0; i < 4 && mn_HostModOk[i]; i++) {
-		if (!isPressed(mn_HostModOk[i]))
+	for (int i = 0; i < 4 && mn_HostModOk[i]; i++)
+	{
+		if (mn_HostModOk[i] == VK_LWIN)
+		{
+			if (!(isPressed(VK_LWIN) || isPressed(VK_RWIN)))
+				return false;
+		}
+		else if (!isPressed(mn_HostModOk[i]))
+		{
 			return false;
+		}
 	}
 
-	for (int j = 0; j < 4 && mn_HostModSkip[j]; j++) {
+	for (int j = 0; j < 4 && mn_HostModSkip[j]; j++)
+	{
 		if (isPressed(mn_HostModSkip[j]))
 			return false;
 	}

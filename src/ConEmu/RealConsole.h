@@ -240,7 +240,7 @@ public:
     DWORD GetConsoleCP() { return con.m_dwConsoleCP; };
     DWORD GetConsoleOutputCP() { return con.m_dwConsoleOutputCP; };
     DWORD GetConsoleMode() { return con.m_dwConsoleMode; };
-    void SyncConsole2Window(BOOL abNtvdmOff=FALSE);
+    void SyncConsole2Window(BOOL abNtvdmOff=FALSE, LPRECT prcNewWnd=NULL);
     void OnWinEvent(DWORD anEvent, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime);
     int  GetProcesses(ConProcess** ppPrc);
     DWORD GetFarPID(BOOL abPluginRequired=FALSE);

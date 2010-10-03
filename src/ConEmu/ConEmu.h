@@ -303,7 +303,7 @@ public:
 	HRGN CreateWindowRgn(bool abTestOnly=false);
 	HRGN CreateWindowRgn(bool abTestOnly,bool abRoundTitle,int anX, int anY, int anWndWidth, int anWndHeight);
 	void Destroy();
-	void DebugStep(LPCTSTR asMsg);
+	void DebugStep(LPCTSTR asMsg, BOOL abErrorSeverity=FALSE);
 	void ForceShowTabs(BOOL abShow);
 	DWORD_PTR GetActiveKeyboardLayout();
 	RECT GetDefaultRect();
@@ -385,6 +385,7 @@ public:
 	void OnBufferHeight(); //BOOL abBufferHeight);
 	LRESULT OnClose(HWND hWnd);
 	BOOL OnCloseQuery();
+	//BOOL mb_InConsoleResize;
 	void OnConsoleResize(BOOL abPosted=FALSE);
 	LRESULT OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate);
 	void OnDesktopMode();

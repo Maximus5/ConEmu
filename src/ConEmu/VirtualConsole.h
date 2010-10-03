@@ -288,6 +288,7 @@ protected:
 	//static HBRUSH PartBrush(wchar_t ch, SHORT nBackIdx, SHORT nForeIdx);
 	static HBRUSH PartBrush(wchar_t ch, COLORREF nBackCol, COLORREF nForeCol);
 	BOOL mb_InPaintCall;
+	BOOL mb_InConsoleResize;
 	//
 	BOOL FindChanges(int row, int &j, int &end, const wchar_t* ConCharLine, const CharAttr* ConAttrLine, const wchar_t* ConCharLine2, const CharAttr* ConAttrLine2);
 	LONG nFontHeight, nFontWidth;

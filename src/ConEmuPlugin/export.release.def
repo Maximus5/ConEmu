@@ -1,4 +1,5 @@
 EXPORTS
+;  Unicode
 	SetStartupInfoW      @1
 	GetPluginInfoW       @2
 	ProcessEditorInputW  @3
@@ -8,6 +9,7 @@ EXPORTS
 	ExitFARW             @7
 	OpenPluginW          @8
 	ProcessSynchroEventW @10
+;  Ansi
 	SetStartupInfo       @21
 	GetPluginInfo        @22
 	ProcessEditorInput   @23
@@ -16,8 +18,12 @@ EXPORTS
 	GetMinFarVersion     @26
 	ExitFAR              @27
 	OpenPlugin           @28
+;  ConEmu API (Far independent)
 	GetFarVersion        @98
 	GetFarHWND           @99
 	GetFarHWND2          @97
 	IsConsoleActive      @96
 	RegisterPanelView    @95
+	RegisterBackground   @94
+	ActivateConsole      @93
+	SyncExecute          @90

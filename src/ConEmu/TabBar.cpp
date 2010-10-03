@@ -538,9 +538,11 @@ LRESULT CALLBACK TabBarClass::ToolProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPAR
         {
         	LPWINDOWPOS pos = (LPWINDOWPOS)lParam;
             pos->y = (gConEmu.mp_TabBar->mn_ThemeHeightDiff == 0) ? 2 : 1;
-            if (gSet.isHideCaptionAlways() && gSet.nToolbarAddSpace > 0) {
+            if (gSet.isHideCaptionAlways() && gSet.nToolbarAddSpace > 0)
+            {
             	SIZE sz;
-            	if (CallWindowProc(_defaultToolProc, hwnd, TB_GETIDEALSIZE, 0, (LPARAM)&sz)) {
+            	if (CallWindowProc(_defaultToolProc, hwnd, TB_GETIDEALSIZE, 0, (LPARAM)&sz))
+            	{
             		pos->cx = sz.cx + gSet.nToolbarAddSpace;
             		RECT rcParent; GetClientRect(GetParent(hwnd), &rcParent);
             		pos->x = rcParent.right - pos->cx;
@@ -553,7 +555,8 @@ LRESULT CALLBACK TabBarClass::ToolProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPAR
 		{
 			SIZE *psz = (SIZE*)lParam;
 			if (!lParam) return 0;
-			if (CallWindowProc(_defaultToolProc, hwnd, uMsg, wParam, lParam)) {
+			if (CallWindowProc(_defaultToolProc, hwnd, uMsg, wParam, lParam))
+			{
 				psz->cx += (gSet.isHideCaptionAlways() ? gSet.nToolbarAddSpace : 0);
 				return 1;
 			}
@@ -564,12 +567,16 @@ LRESULT CALLBACK TabBarClass::ToolProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPAR
 			int nIdx = SendMessage(hwnd, TB_HITTEST, 0, (LPARAM)&pt);
 			// If the return value is zero or a positive value, it is 
 			// the zero-based index of the nonseparator item in which the point lies.
-			if (nIdx >= 0 && nIdx < MAX_CONSOLE_COUNT) {
+			if (nIdx >= 0 && nIdx < MAX_CONSOLE_COUNT)
+			{
 				// Пока кнопки не настраиваются - это будет строго номер консоли
 				CVirtualConsole* pVCon = gConEmu.GetVCon(nIdx);
-				if (!gConEmu.isActive(pVCon)) {
-					if (!gConEmu.ConActivate(nIdx)) {
-						if (!gConEmu.isActive(pVCon)) {
+				if (!gConEmu.isActive(pVCon))
+				{
+					if (!gConEmu.ConActivate(nIdx))
+					{
+						if (!gConEmu.isActive(pVCon))
+						{
 							return 0;
 						}
 					}
@@ -1554,16 +1561,20 @@ void TabBarClass::PrepareTab(ConEmuTab* pTab)
 	    _tcscpy(szFormat, gSet.szTabConsole);
 	    nMaxLen = gSet.nTabLenMax - _tcslen(szFormat) + 2/* %s */;
 	    
-        if (pTab->Name[0] == 0) {
+        if (pTab->Name[0] == 0)
+		{
             #ifdef _DEBUG
             // Это должно случаться ТОЛЬКО при инициализации GUI
             int nTabCount = GetItemCount();
-            if (nTabCount>0 && gConEmu.ActiveCon()!=NULL) {
+            if (nTabCount>0 && gConEmu.ActiveCon()!=NULL)
+			{
                 //_ASSERTE(pTab->Name[0] != 0);
                 nTabCount = nTabCount;
             }
             #endif
-            _tcscpy(pTab->Name, gConEmu.GetLastTitle()); //isFar() ? gSet.szTabPanels : gSet.pszTabConsole);
+			//100930 - нельзя. GetLastTitle() вернет текущую консоль, а pTab может быть из любой консоли!
+            // -- _tcscpy(pTab->Name, gConEmu.GetLastTitle()); //isFar() ? gSet.szTabPanels : gSet.pszTabConsole);
+			_tcscpy(pTab->Name, _T("ConEmu"));
         }
         tFileName = pTab->Name;
         origLength = _tcslen(tFileName);
@@ -1575,12 +1586,15 @@ void TabBarClass::PrepareTab(ConEmuTab* pTab)
 		//        nSplit = nMaxLen - 6;
 	    //}
 	        
-    } else {
+    }
+	else
+	{
         GetFullPathName(pTab->Name, MAX_PATH*2, dummy, &tFileName);
         if (!tFileName)
             tFileName = pTab->Name;
 
-        if ((pTab->Type & 0xFF) == 3/*WTYPE_EDITOR*/) {
+        if ((pTab->Type & 0xFF) == 3/*WTYPE_EDITOR*/)
+		{
             if (pTab->Modified)
                 _tcscpy(szFormat, gSet.szTabEditorModified);
             else

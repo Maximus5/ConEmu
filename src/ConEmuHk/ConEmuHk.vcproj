@@ -63,7 +63,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="C:\Program Files\FAR\ConEmuHk.dll"
+				OutputFile="C:\Utils\Far180\ConEmu\ConEmuHk.dll"
 				LinkIncremental="2"
 				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"
@@ -137,7 +137,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="\\WIN7X64\FAR\FAR2x64\ConEmuHk.dll"
+				OutputFile="C:\FAR\ConEmu64\ConEmuHk.dll"
 				LinkIncremental="2"
 				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"
@@ -437,6 +437,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				OutputFile="C:\FAR\ConEmu64\ConEmuHk.dll"
 				LinkIncremental="2"
 				ModuleDefinitionFile="export.def"
 				GenerateDebugInformation="true"

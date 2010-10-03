@@ -65,6 +65,7 @@ private:
 		int      Status;  // enum ProcessingStatus
 		int      Priority;// enum ProcessingPriority
 		HRESULT  Result;  // результат из ProcessItem
+		bool     Synch;   // Устанавливается в true при синхронной обработке
 		//HANDLE Ready;   // Event, может использоваться для ожидания завершения
 		DWORD    Start;   // Tick старта обработки
 		// Если требуется останов обработки только активного элемента - 
@@ -90,6 +91,7 @@ private:
 	// Запрос на Terminate нити обработки
 	bool mb_TerminateRequested;
 
+private:
 	// Выделить память на элементы очереди. Если элементы уже выделены -
 	// очистка существующих не производится. Добавляются новые (пустые)
 	// ячейки, если anInitialCount превышает mn_MaxCount
@@ -117,6 +119,7 @@ private:
 		mn_MaxCount = anInitialCount;
 		// Done
 	};
+private:
 	// Полная очистка очереди. НЕ допускается во время жизни нити!
 	void ClearQueue()
 	{
@@ -140,8 +143,9 @@ private:
 			mpp_Queue = NULL;
 		}
 	};
+private:
 	// Найти в очереди элемент (если его уже запросили) или добавить в очередь новый
-	ProcessingItem* FindOrCreate(const T* pItem, ProcessingPriority Priority, LONG_PTR lParam)
+	ProcessingItem* FindOrCreate(const T* pItem, bool Synch, ProcessingPriority Priority, LONG_PTR lParam)
 	{
 		if (GetCurrentThreadId() == mn_QueueId)
 		{
@@ -168,6 +172,7 @@ private:
 						// Можно чуть подправить параметры
 						mpp_Queue[i]->Priority = Priority;
 						mpp_Queue[i]->lParam = lParam;
+						mpp_Queue[i]->Synch = Synch;
 						ApplyChanges(&(mpp_Queue[i]->Item), pItem);
 						LeaveCriticalSection(&mcs_Queue);
 						//if (mpp_Queue[i]->Status == eItemRequest) -- Теоретически может быть уже выполнен, но здесь - не волнует
@@ -203,6 +208,7 @@ private:
 			p->Result = S_OK;
 			p->Start = 0;
 			p->StopRequested = false;
+			p->Synch = Synch;
 			CopyItem(pItem, &p->Item);
 			// Отпускаем
 			_ASSERTE(p->Status = eItemEmpty);
@@ -238,10 +244,15 @@ public:
 		ClearQueue();
 	};
 
+public:
+	// Запрос на завершение очереди
 	void RequestTerminate()
 	{
 		mb_TerminateRequested = true;
 	};
+
+public:
+	// Немедленное завершение очереди. Очереди дается nTimeout на корректный останов.
 	void Terminate(DWORD nTimeout = INFINITE)
 	{
 		if (!mh_Queue)
@@ -265,7 +276,7 @@ public:
 			TerminateThread(mh_Queue, 100);
 		}
 	};
-
+public:
 	// Если понадобится определить "живость" нити обработки
 	bool IsAlive()
 	{
@@ -280,7 +291,7 @@ public:
 			return true;
 		return false;
 	}
-
+public:
 	// ВНИМАНИЕ!!! Содержимое pItem КОПИРУЕТСЯ во внутренний буфер.
 	// При вызове ProcessItem приходит указатель на новый элемент из внутреннего буфера.
 	// Если нужно передать дополнительный указатель - пользоватся lParam
@@ -294,7 +305,7 @@ public:
 		if (FAILED(hr))
 			return hr;
 
-		ProcessingItem* p = FindOrCreate(pItem, Synch ? ePriorityHighest : Priority, lParam);
+		ProcessingItem* p = FindOrCreate(pItem, Synch, Synch ? ePriorityHighest : Priority, lParam);
 		if (!p)
 		{
 			_ASSERTE(p!=NULL);
@@ -358,45 +369,90 @@ public:
 			return E_ABORT;
 		}
 
-		if (p->Status == eItemRequest || p->Status == eItemProcessing)
-			return S_FALSE; // в процессе
+        // При готовности - результат возвращается через OnItemReady / OnItemFailed
 
-		if (p->Status != eItemFailed && p->Status != eItemReady)
-		{
-			_ASSERTE(p->Status == eItemFailed || p->Status == eItemReady);
-			return E_UNEXPECTED;
-		}
-		// Вернуть результат обработки (данные)
-		CopyItem(&p->Item, pItem);
-		// И сброс нашей внутренней ячейки
-		memset(&p->Item, 0, sizeof(p->Item));
-		p->Status = eItemEmpty;
-		// Возврат значения
-		return p->Result;
+		return S_FALSE;
+
+		//if (p->Status == eItemRequest || p->Status == eItemProcessing)
+		//	return S_FALSE; // в процессе
+		//
+		//if (p->Status != eItemFailed && p->Status != eItemReady)
+		//{
+		//	_ASSERTE(p->Status == eItemFailed || p->Status == eItemReady);
+		//	return E_UNEXPECTED;
+		//}
+		//// Вернуть результат обработки (данные)
+		//CopyItem(&p->Item, pItem);
+		//// И сброс нашей внутренней ячейки
+		//memset(&p->Item, 0, sizeof(p->Item));
+		//p->Status = eItemEmpty;
+		//// Возврат значения
+		//return p->Result;
 	};
 
-	// Остановить нить обработки и удалить все запросы
-	void ResetQueue()
+	// Перед помещением более актуальных элементов в очередь можно
+    // уменьшить приоритет текущих элементов на количество ступеней
+    // альтернатива функции ResetQueue
+	void DiscountPriority(UINT nSteps = 1)
 	{
-		// Сначала - останов
-		Terminate();
-		// Потом - сброс всех ячеек
 		if (mpp_Queue)
 		{
 			_ASSERTE(eItemEmpty == 0);
+
+			// Для получения элемента - нужно заблокировать секцию
+			EnterCriticalSection(&mcs_Queue);
+
 			for (int i = 0; i < mn_MaxCount; i++)
 			{
 				if (mpp_Queue[i])
 				{
 					if (mpp_Queue[i]->Status != eItemEmpty)
 					{
+						int nNew = min(ePriorityLowest, (mpp_Queue[i]->Priority+nSteps));
+						mpp_Queue[i]->Priority = nNew;
+					}
+				}
+			}
+
+			// Больше не требуется
+			LeaveCriticalSection(&mcs_Queue);
+		}
+	};
+
+	// Очищаются все ячейки, с приоритетом равным или ниже указанного
+	// альтернатива функции DiscountPriority
+	void ResetQueue(ProcessingPriority priority = ePriorityHighest)
+	{
+		// -- Сначала - останов -- не будем
+		//Terminate();
+
+		// сброс ячеек, удовлетворяющих условию
+		if (mpp_Queue)
+		{
+			_ASSERTE(eItemEmpty == 0);
+
+			// Для получения следующего элемента - нужно заблокировать секцию
+			EnterCriticalSection(&mcs_Queue);
+
+			for (int i = 0; i < mn_MaxCount; i++)
+			{
+				if (mpp_Queue[i])
+				{
+					if (mpp_Queue[i]->Status != eItemEmpty
+						&& mpp_Queue[i]->Status != eItemProcessing
+						&& mpp_Queue[i]->Priority >= priority
+					   )
+					{
 						FreeItem(&mpp_Queue[i]->Item);
 					}
 					memset(mpp_Queue[i], 0, sizeof(ProcessingItem));
 				}
 			}
+
+			// Больше не требуется
+			LeaveCriticalSection(&mcs_Queue);
 		}
-		mn_Count = 0;
+		//mn_Count = 0; -- !!! нельзя !!!
 	};
 
 	// Если требуется останов обработки только активного элемента - 
@@ -423,6 +479,22 @@ protected:
 	{
 		return S_OK;
 	};
+
+protected:
+	/* *** Можно переопределить в потомках *** */
+
+	// Вызывается при успешном завершении обработки элемента при асинхронной обработке.
+    // Если элемент обработан успешно (Status == eItemReady), вызывается OnItemReady
+	virtual void OnItemReady(T* pItem, LONG_PTR lParam)
+	{
+		return;
+	};
+    // Иначе (Status == eItemFailed) - OnItemFailed
+	virtual void OnItemFailed(T* pItem, LONG_PTR lParam)
+	{
+		return;
+	};
+	// После завершения этих функций ячейка стирается!
 
 protected:
 	/* *** Можно переопределить в потомках *** */
@@ -481,11 +553,13 @@ protected:
 		SetEvent(mh_Alive);
 		// Кого будем обрабатывать
 		ProcessingItem* p = NULL;
+
+		// Для получения следующего элемента - нужно заблокировать секцию
+		EnterCriticalSection(&mcs_Queue);
+
 		// Следующий?
 		if (mp_SynchRequest == NULL)
 		{
-			// Для получения следующего элемента - нужно заблокировать секцию
-			EnterCriticalSection(&mcs_Queue);
 			// Найти требующуюся ячейку
 			for (int piority = ePriorityHighest; piority <= ePriorityLowest; piority++)
 			{
@@ -511,8 +585,6 @@ protected:
 				// Если нашли - сразу выйдем
 				if (p) break;
 			}
-			// Секция больше не нужна
-			LeaveCriticalSection(&mcs_Queue);
 			// Может этот элемент уже попросили пропустить?
 			if (p && p->StopRequested)
 			{
@@ -527,6 +599,14 @@ protected:
 			p = mp_SynchRequest;
 			mp_SynchRequest = NULL; // сразу сбросить, больше не нужен
 		}
+
+		if (p) // Сразу установим статус, до вызода из секции
+		{
+			p->Status = eItemProcessing;
+		}
+
+		// Секция больше не нужна
+		LeaveCriticalSection(&mcs_Queue);
 
 		// Может уже был запрос на Terminate?
 		if (IsTerminationRequested())
@@ -553,12 +633,31 @@ protected:
 				hr = E_UNEXPECTED;
 			}
 			p->Result = hr;
+
+
 			p->Status = (hr == S_OK) ? eItemReady : eItemFailed;
-			if (FAILED(hr))
+
+
+			// Сигнализация о "готовности", если запрос был асинхронный
+			if (!p->Synch)
 			{
-				RequestTerminate();
-				return true;
+				// Вернуть результат обработки (данные)
+				if (hr == S_OK)
+					OnItemReady(&p->Item, p->lParam);
+				else
+					OnItemFailed(&p->Item, p->lParam);
+				// И сброс нашей внутренней ячейки
+				memset(&p->Item, 0, sizeof(p->Item));
+				p->Status = eItemEmpty;
 			}
+
+
+			//if (FAILED(hr)) -- не будем так жестоко. Если нужно - позовут RequestTerminate.
+			//{
+			//	_ASSERTE(SUCCEEDED(hr));
+			//	RequestTerminate();
+			//	return true;
+			//}
 		}
 
 		return IsTerminationRequested();

@@ -669,11 +669,12 @@ void ServerDone(int aiRc, bool abReportShutdown /*= false*/)
 
 	if (ghConEmuWnd && IsWindow(ghConEmuWnd))
 	{
+		_ASSERTE(srv.nProcessCount <= 1);
 		wchar_t szServerPipe[MAX_PATH];
 		wsprintf(szServerPipe, CEGUIPIPENAME, L".", (DWORD)ghConEmuWnd);
 		CESERVER_REQ In, Out; DWORD dwRead = 0;
 		ExecutePrepareCmd(&In, CECMD_CMDSTARTSTOP, sizeof(CESERVER_REQ_HDR)+sizeof(DWORD)*2);
-		In.dwData[0] = 100;
+		In.dwData[0] = 101;
 		In.dwData[1] = (DWORD)ghConWnd;
 		// ѕослать в GUI уведомление, что сервер закрываетс€
 		CallNamedPipe(szServerPipe, &In, In.hdr.cbSize, &Out, sizeof(Out), &dwRead, 1000);

@@ -471,6 +471,20 @@ void GetFarRect995(SMALL_RECT* prcFarRect)
 	}
 }
 
+// Использовать только ACTL_GETSHORTWINDOWINFO. С ней проблем с синхронизацией быть не должно
+bool CheckFarPanels995()
+{
+	if (!InfoW995 || !InfoW995->AdvControl) return false;
+	
+	WindowInfo wi = {-1};
+	bool lbPanelsActive = false;
+	
+	INT_PTR iRc = InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETSHORTWINDOWINFO, (LPVOID)&wi);
+	lbPanelsActive = (iRc != 0) && (wi.Type == WTYPE_PANELS);
+
+	return lbPanelsActive;
+}
+
 // Возникали проблемы с синхронизацией в FAR2 -> FindFile
 //bool CheckWindows995()
 //{

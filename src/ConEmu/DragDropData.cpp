@@ -163,7 +163,7 @@ int CDragDropData::RetrieveDragFromInfo(BOOL abClickNeed, COORD crMouseDC, wchar
 			MCHKHEAP
 
 			if (nWholeSize<=0) {
-				gConEmu.DebugStep(_T("DnD: Data is empty"));
+				gConEmu.DebugStep(_T("DnD: Data is empty"), TRUE);
 			}
 			else
 			{
@@ -258,7 +258,7 @@ BOOL CDragDropData::AddFmt_SHELLIDLIST(wchar_t* pszDraggedPath, UINT nFilesCount
 	size_t nCurSize = sizeof(CIDA)+nFilesCount*sizeof(UINT);
 	file_PIDLs = (CIDA*)GlobalAlloc(GPTR, nMaxSize);
 	if (!file_PIDLs) {
-		gConEmu.DebugStep(_T("DnD: Can't allocate CIDA*"));
+		gConEmu.DebugStep(_T("DnD: Can't allocate CIDA*"), TRUE);
 		goto wrap;
 	}
 	// First - root folder PIDL (Desktop)
@@ -329,12 +329,12 @@ BOOL CDragDropData::AddFmt_SHELLIDLIST(wchar_t* pszDraggedPath, UINT nFilesCount
 
 	if (hr == -1) {
 		// file_PIDLs освободитс€ после wrap;
-		gConEmu.DebugStep(_T("DnD: Exception in shell"));
+		gConEmu.DebugStep(_T("DnD: Exception in shell"), TRUE);
 		goto wrap;
 	}
 
 	if (file_PIDLs->cidl == 0) {
-		gConEmu.DebugStep(_T("DnD: Failed to create ShellIdList"));
+		gConEmu.DebugStep(_T("DnD: Failed to create ShellIdList"), TRUE);
 		goto wrap;
 	}
 
@@ -398,7 +398,7 @@ BOOL CDragDropData::AddFmt_HDROP(wchar_t* pszDraggedPath, UINT nFilesCount, int 
 	HGLOBAL drop_data = GlobalAlloc(GPTR, cbSize+sizeof(drop_struct));
 	_ASSERTE(drop_data);
 	if (!drop_data) {
-		gConEmu.DebugStep(_T("DnD: Memory allocation failed!"));
+		gConEmu.DebugStep(_T("DnD: Memory allocation failed!"), TRUE);
 		goto wrap;
 	}
 	memcpy(drop_data, &drop_struct, sizeof(drop_struct));
@@ -442,8 +442,9 @@ BOOL CDragDropData::PrepareDrag(BOOL abClickNeed, COORD crMouseDC, DWORD* pdwAll
 	wchar_t *szDraggedPath = NULL; // ASCIIZZ
 	UINT nFilesCount = 0;
 
-	if (!gSet.isDragEnabled /*|| isInDrag */|| gConEmu.isDragging()) {
-		gConEmu.DebugStep(_T("DnD: Drag disabled"));
+	if (!gSet.isDragEnabled /*|| isInDrag */|| gConEmu.isDragging())
+	{
+		gConEmu.DebugStep(_T("DnD: Drag disabled"), TRUE);
 		goto wrap;
 	}
 
@@ -457,14 +458,19 @@ BOOL CDragDropData::PrepareDrag(BOOL abClickNeed, COORD crMouseDC, DWORD* pdwAll
 	size = RetrieveDragFromInfo(abClickNeed, crMouseDC, &szDraggedPath, &nFilesCount);
 	MCHKHEAP;
 	if (size <= 0 || nFilesCount == 0)
+	{
+		wchar_t szInfo[128]; wsprintfW(szInfo, L"DnD: RetrieveDragFromInfo, Code=%i, nFilesCount=%i!", size, nFilesCount);
+		gConEmu.DebugStep(szInfo, TRUE);
 		goto wrap;
+	}
 
 	*pdwAllowedEffects = DROPEFFECT_COPY|DROPEFFECT_MOVE;
 
 	// —оздать IDataObject (пока пустой)
 	CreateDataObject(NULL, NULL, 0, &mp_DataObject) ;
-	if (!mp_DataObject) {
-		gConEmu.DebugStep(_T("DnD: CreateDataObject failed!"));
+	if (!mp_DataObject)
+	{
+		gConEmu.DebugStep(_T("DnD: CreateDataObject failed!"), TRUE);
 		goto wrap;
 	}
 	
@@ -489,7 +495,8 @@ BOOL CDragDropData::PrepareDrag(BOOL abClickNeed, COORD crMouseDC, DWORD* pdwAll
 	if (!m_pfpi) // если это уже не сделали
 		RetrieveDragToInfo();
 	
-	if (LoadDragImageBits(mp_DataObject)) {
+	if (LoadDragImageBits(mp_DataObject))
+	{
 		mb_DragWithinNow = TRUE;
 		#ifdef UNLOCKED_DRAG
 		// должно быть создано при запуске ConEmu
@@ -526,15 +533,18 @@ template <class T> void PidlDump(
 	LPITEMIDLIST p = (LPITEMIDLIST)(pidl);
 	char szDump[512];
 	int nLevel = 0, nLen;
-	while (p && p->mkid.cb) {
+	while (p && p->mkid.cb)
+	{
 		wsprintfA(szDump, "%i: ", nLevel+1);
 		int i = lstrlenA(szDump);
 		//for (int j=0; j < nLevel; j++) { szDump[i++] = ' '; szDump[i++] = ' '; }
 		//szDump[i] = 0;
 
 		nLen = min(255,p->mkid.cb);
-		for (int j = 0; j < nLen; j++) {
-			switch (p->mkid.abID[j]) {
+		for (int j = 0; j < nLen; j++)
+		{
+			switch (p->mkid.abID[j])
+			{
 				case 0: szDump[i++] = '.'; break;
 				case '\n': szDump[i++] = '\\'; szDump[i++] = 'n'; break;
 				case '\r': szDump[i++] = '\\'; szDump[i++] = 'r'; break;
@@ -656,13 +666,20 @@ void CDragDropData::EnumDragFormats(IDataObject * pDataObject, HANDLE hDumpFile 
 					{
 						memsize[i] = GlobalSize(stg[i].hGlobal);
 						wsprintf(szName[i]+lstrlen(szName[i]), L", DataSize=%i", memsize[i]);
-						if (memsize[i] == 1) {
+						if (memsize[i] == 1)
+						{
 							wsprintf(szName[i]+lstrlen(szName[i]), L", Data=0x%02X", (DWORD)*((LPBYTE)(psz[i])));
-						} if (memsize[i] == 4) {
+						}
+						else if (memsize[i] == 4)
+						{
 							wsprintf(szName[i]+lstrlen(szName[i]), L", Data=0x%08X", (DWORD)*((LPDWORD)(psz[i])));
-						} else if (memsize[i] == 8) {
+						}
+						else if (memsize[i] == 8)
+						{
 							wsprintf(szName[i]+lstrlen(szName[i]), L", Data=0x%08X%08X", (DWORD)((LPDWORD)(psz[i]))[0], (DWORD)((LPDWORD)psz[i])[1]);
-						} else {
+						}
+						else
+						{
 							lstrcat(szName[i], L", ");
 							const wchar_t* pwsz = (const wchar_t*)(psz[i]);
 							const char* pasz = (const char*)(psz[i]);
@@ -680,7 +697,9 @@ void CDragDropData::EnumDragFormats(IDataObject * pDataObject, HANDLE hDumpFile 
 								//	MultiByteToWideChar(CP_ACP, 0, pasz, nMaxLen, pwszDst, nMaxLen);
 								//	pwszDst[nMaxLen] = 0;
 								//}
-							} else {
+							}
+							else
+							{
 								//if (hDumpFile)
 								//{
 								lstrcpy(pszData[i], pwsz);
@@ -691,11 +710,15 @@ void CDragDropData::EnumDragFormats(IDataObject * pDataObject, HANDLE hDumpFile 
 								//}
 							}
 						}
-					} else {
+					}
+					else
+					{
 						lstrcat(szName[i], L", hGlobal not available");
 						stg[i].hGlobal = NULL;
 					}
-				} else {
+				}
+				else
+				{
 					lstrcat(szName[i], L", hGlobal not available");
 					stg[i].hGlobal = NULL;
 				}
@@ -820,7 +843,8 @@ void CDragDropData::RetrieveDragToInfo()
 			if (m_pfpi) {free(m_pfpi); m_pfpi=NULL;}
 			if (pipe.Read(&cbStructSize, sizeof(int), &cbBytesRead))
 			{
-				if ((DWORD)cbStructSize>sizeof(ForwardedPanelInfo)) {
+				if ((DWORD)cbStructSize>sizeof(ForwardedPanelInfo))
+				{
 					m_pfpi = (ForwardedPanelInfo*)calloc(cbStructSize, 1);
 
 					pipe.Read(m_pfpi, cbStructSize, &cbBytesRead);
@@ -866,7 +890,8 @@ typedef struct tag_MyRgbQuad {
 // Result Must be GlobalAlloc'ed
 DragImageBits* CDragDropData::CreateDragImageBits(wchar_t* pszFiles)
 {
-	if (!pszFiles) {
+	if (!pszFiles)
+	{
 		DEBUGSTROVL(L"CreateDragImageBits failed, pszFiles is NULL\n");
 		_ASSERTE(pszFiles!=NULL);
 		return NULL;
@@ -887,14 +912,16 @@ DragImageBits* CDragDropData::CreateDragImageBits(wchar_t* pszFiles)
 	HDC hDrawDC = CreateCompatibleDC(hScreenDC);
 	HBITMAP hBitmap = CreateCompatibleBitmap(hScreenDC, MAX_OVERLAY_WIDTH, MAX_OVERLAY_HEIGHT);
 
-	if (hDrawDC && hBitmap) {
+	if (hDrawDC && hBitmap)
+	{
 		HFONT hOldF = NULL, hf = CreateFont(14, 0, 0, 0, 400, 0, 0, 0, CP_ACP, 0, 0, 0, 0, L"Tahoma");
 		if (hf) hOldF = (HFONT)SelectObject ( hDrawDC, hf );
 
 		int nMaxX = 0, nMaxY = 0, nX = 0;
 		// GetTextExtentPoint32 почему-то портит DC, поэтому ширину получим сначала
 		wchar_t *psz = pszFiles; int nFilesCol = 0;
-		while (*psz) {
+		while (*psz)
+		{
 			SIZE sz = {0};
 			LPCWSTR pszText = wcsrchr(psz, L'\\');
 			if (!pszText) pszText = psz; else psz++;
@@ -910,12 +937,17 @@ DragImageBits* CDragDropData::CreateDragImageBits(wchar_t* pszFiles)
 
 		// ≈сли тащат много файлов/папок - можно попробовать разместить их в несколько колонок
 		int nColCount = 1;
-		if (nFilesCol > 3) {
+		if (nFilesCol > 3)
+		{
 			if (nFilesCol > 21 && (nMaxX * 3 + 32) <= MAX_OVERLAY_WIDTH) {
 				nFilesCol = (nFilesCol+3) / (nColCount = 4);
-			} else if (nFilesCol > 12 && (nMaxX * 2 + 32) <= MAX_OVERLAY_WIDTH) {
+			}
+			else if (nFilesCol > 12 && (nMaxX * 2 + 32) <= MAX_OVERLAY_WIDTH)
+			{
 				nFilesCol = (nFilesCol+2) / (nColCount = 3);
-			} else if ((nMaxX + 32) <= MAX_OVERLAY_WIDTH) {
+			}
+			else if ((nMaxX + 32) <= MAX_OVERLAY_WIDTH)
+			{
 				nFilesCol = (nFilesCol+1) / (nColCount = 2);
 			}
 		}
@@ -946,13 +978,15 @@ DragImageBits* CDragDropData::CreateDragImageBits(wchar_t* pszFiles)
 		int nFileIdx = 0, nColMaxY = 0, nAllFiles = 0;
 		nMaxX = 0;
 		int nFirstColWidth = 0;
-		while (*psz) {
+		while (*psz)
+		{
 			if (!DrawImageBits ( hDrawDC, psz, &nMaxX, nX, &nColMaxY ))
 				break; // вышли за пределы MAX_OVERLAY_WIDTH x MAX_OVERLAY_HEIGHT (по высоте)
 			psz += lstrlen(psz)+1;
 			if (!*psz) break;
 			nFileIdx ++; nAllFiles ++;
-			if (nFileIdx >= nFilesCol) {
+			if (nFileIdx >= nFilesCol)
+			{
 				if (!nFirstColWidth)
 					nFirstColWidth = nMaxX + OVERLAY_TEXT_SHIFT;
 				if ((nX + nMaxX + 32) >= MAX_OVERLAY_WIDTH)
@@ -975,9 +1009,11 @@ DragImageBits* CDragDropData::CreateDragImageBits(wchar_t* pszFiles)
 		DumpImage(hDrawDC, MAX_OVERLAY_WIDTH, nMaxY, L"F:\\Dump.bmp");
 		#endif
 
-		if (nLineX>2 && nMaxY>2) {
+		if (nLineX>2 && nMaxY>2)
+		{
 			HDC hBitsDC = CreateCompatibleDC(hScreenDC);
-			if (hBitsDC && hDrawDC) {
+			if (hBitsDC && hDrawDC)
+			{
 				SetLayout(hBitsDC, LAYOUT_BITMAPORIENTATIONPRESERVED);
 
 				BITMAPINFOHEADER bih = {sizeof(BITMAPINFOHEADER)};
@@ -988,7 +1024,8 @@ DragImageBits* CDragDropData::CreateDragImageBits(wchar_t* pszFiles)
 				bih.biCompression = BI_RGB;
 				LPBYTE pSrc = NULL;
 				HBITMAP hBitsBitmap = CreateDIBSection(hScreenDC, (BITMAPINFO*)&bih, DIB_RGB_COLORS, (void**)&pSrc, NULL, 0);
-				if (hBitsBitmap) {
+				if (hBitsBitmap)
+				{
 					HBITMAP hOldBitsBitmap = (HBITMAP)SelectObject(hBitsDC, hBitsBitmap);
 
 					BitBlt(hBitsDC, 0,0,nLineX,nMaxY, hDrawDC,0,0, SRCCOPY);
@@ -996,7 +1033,8 @@ DragImageBits* CDragDropData::CreateDragImageBits(wchar_t* pszFiles)
 
 					DragImageBits* pDst = (DragImageBits*)GlobalAlloc(GPTR, sizeof(DragImageBits) + (nLineX*nMaxY - 1)*4);
 
-					if (pDst) {
+					if (pDst)
+					{
 						pDst->nWidth = nLineX;
 						pDst->nHeight = nMaxY;
 						if (nColCount == 1)
@@ -1016,16 +1054,22 @@ DragImageBits* CDragDropData::CreateDragImageBits(wchar_t* pszFiles)
 						u32 nCurBlend = 0xAA, nAllBlend = 0xAA;
 						#endif
 						
-						for (int y = 0; y < nMaxY; y++) {
-							for (int x = 0; x < nLineX; x++) {
+						for (int y = 0; y < nMaxY; y++)
+						{
+							for (int x = 0; x < nLineX; x++)
+							{
 								pRGB->rgbBlue = *(pSrc++);
 								pRGB->rgbGreen = *(pSrc++);
 								pRGB->rgbRed = *(pSrc++);
-								if ( pRGB->dwValue ) {
+								if ( pRGB->dwValue )
+								{
 								#ifdef PERSIST_OVL
-									if (pRGB->dwValue == OVERLAY_COLOR) {
+									if (pRGB->dwValue == OVERLAY_COLOR)
+									{
 										pRGB->dwValue = 0;
-									} else {
+									}
+									else
+									{
 								#endif
 									pRGB->rgbBlue = klMulDivU32(pRGB->rgbBlue, nCurBlend, 0xFF);
 									pRGB->rgbGreen = klMulDivU32(pRGB->rgbGreen, nCurBlend, 0xFF);
@@ -1040,40 +1084,50 @@ DragImageBits* CDragDropData::CreateDragImageBits(wchar_t* pszFiles)
 						}
 
 						mp_Bits = (DragImageBits*)calloc(sizeof(DragImageBits)/*+(nCount-1)*4*/,1);
-						if (mp_Bits) {
+						if (mp_Bits)
+						{
 							*mp_Bits = *pDst;
 							pBits = pDst; pDst = NULL; //OK
 							mh_BitsDC = hBitsDC; hBitsDC = NULL;
 							mh_BitsBMP = hBitsBitmap; hBitsBitmap = NULL;
-						} else {
+						}
+						else
+						{
 							if (pDst) GlobalFree(pDst); pDst = NULL; // ќшибка
 						}
 
-					} else {
+					}
+					else
+					{
 						if (pDst) GlobalFree(pDst); pDst = NULL;
 					}
 
 					if (hBitsDC)
 						SelectObject(hBitsDC, hOldBitsBitmap);
-					if (hBitsBitmap) {
+					if (hBitsBitmap)
+					{
 						DeleteObject(hBitsBitmap); hBitsBitmap = NULL;
 					}
 				}
 			}
-			if (hBitsDC) {
+			if (hBitsDC)
+			{
 				DeleteDC(hBitsDC); hBitsDC = NULL;
 			}
 		}
 
 		SelectObject(hDrawDC, hOldBitmap);
 	}
-	if (hDrawDC) {
+	if (hDrawDC)
+	{
 		DeleteDC(hDrawDC); hDrawDC = NULL;
 	}
-	if (hBitmap) {
+	if (hBitmap)
+	{
 		DeleteObject(hBitmap); hBitmap = NULL;
 	}
-	if (hScreenDC) {
+	if (hScreenDC)
+	{
 		::ReleaseDC(0, hScreenDC);
 		hScreenDC = NULL;
 	}
@@ -1104,9 +1158,12 @@ BOOL CDragDropData::DrawImageBits ( HDC hDrawDC, wchar_t* pszFile, int *nMaxX, i
 		DWORD_PTR shRc = SHGetFileInfo ( pszFile, 0, &sfi, cbSize, 
 			SHGFI_ATTRIBUTES|SHGFI_ICON/*|SHGFI_SELECTED*/|SHGFI_SMALLICON|SHGFI_TYPENAME);
 
-		if (shRc) {
+		if (shRc)
+		{
 			nDrawRC = DrawIconEx(hDrawDC, nX, *nMaxY, sfi.hIcon, 16, 16, 0, NULL, DI_NORMAL);
-		} else {
+		}
+		else
+		{
 			// Ќарисовать стандартную иконку?
 		}
 	}
@@ -1122,7 +1179,8 @@ BOOL CDragDropData::DrawImageBits ( HDC hDrawDC, wchar_t* pszFile, int *nMaxX, i
 	if (*nMaxY < (rcText.bottom+1))
 		*nMaxY = min(rcText.bottom+1,300);
 
-	if (sfi.hIcon) {
+	if (sfi.hIcon)
+	{
 		DestroyIcon(sfi.hIcon); sfi.hIcon = NULL;
 	}
 	return TRUE;
@@ -1708,11 +1766,13 @@ CDragDropData::CEDragSource* CDragDropData::GetFreeSource()
 	if (!pds)
 		pds = InitialCreateSource();
 
-	if (pds) {
+	if (pds)
+	{
 		gConEmu.DebugStep(L"Drag: waiting for drag thread initialization");
 		DWORD nWait = WaitForSingleObject(pds->hReady, 10000);
 		gConEmu.DebugStep(NULL);
-		if (nWait != WAIT_OBJECT_0) {
+		if (nWait != WAIT_OBJECT_0)
+		{
 			MBoxA(L"Drag thread initialization failed!");
 			pds = NULL;
 		}

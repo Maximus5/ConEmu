@@ -9,6 +9,8 @@
 #define ImgCacheFileName L"ConEmuTh.cache"
 #define ImgCacheListName L"#LFN"
 
+extern HICON ghUpIcon;
+
 typedef struct tag_CePluginPanelItem CePluginPanelItem;
 
 typedef BOOL (WINAPI* AlphaBlend_t)(HDC hdcDest, int xoriginDest, int yoriginDest, int wDest, int hDest, HDC hdcSrc, int xoriginSrc, int yoriginSrc, int wSrc, int hSrc, BLENDFUNCTION ftn);
@@ -47,8 +49,11 @@ struct IMAGE_CACHE_INFO
 	DWORD wcInfoSize; // size in WORDS
 };
 
+class CImgLoader : public CQueueProcessor<IMAGE_CACHE_INFO>
+{
+};
 
-class CImgCache : public CQueueProcessor<IMAGE_CACHE_INFO>
+class CImgCache
 {
 protected:
 	wchar_t ms_CachePath[MAX_PATH];
@@ -74,6 +79,8 @@ protected:
 	BOOL FindInCache(CePluginPanelItem* pItem, int* pnIndex);
 	void CopyBits(COORD crSrcSize, LPBYTE lpSrc, DWORD nSrcStride, COORD crDstSize, LPBYTE lpDst);
 
+	CImgLoader m_ShellLoader;
+
 	#define MAX_MODULES 20
 	struct tag_Module {
 		HMODULE hModule;
@@ -88,9 +95,9 @@ protected:
 	void LoadModules();
 	void FreeModules();
 	wchar_t ms_ModulePath[MAX_PATH], *mpsz_ModuleSlash;
-	// Alpha blending
-	HMODULE mh_MsImg32;
-	AlphaBlend_t fAlphaBlend;
+	//// Alpha blending
+	//HMODULE mh_MsImg32;
+	//AlphaBlend_t fAlphaBlend;
 
 public:
 	CImgCache(HMODULE hSelf);

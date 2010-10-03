@@ -245,10 +245,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define CECMD_SETWINDOWPOS  32 // CESERVER_REQ_SETWINDOWPOS.
 #define CECMD_SETWINDOWRGN  33 // CESERVER_REQ_SETWINDOWRGN.
 #define CECMD_SETBACKGROUND 34 // CESERVER_REQ_SETBACKGROUND
+#define CECMD_ACTIVATECON   35 // CESERVER_REQ_ACTIVATECONSOLE
 //#define CECMD_ONSERVERCLOSE 35 // Посылается из ConEmuC.exe перед закрытием в режиме сервера
 
 // Версия интерфейса
-#define CESERVER_REQ_VER    48
+#define CESERVER_REQ_VER    49
 
 #define PIPEBUFSIZE 4096
 #define DATAPIPEBUFSIZE 40000
@@ -280,7 +281,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#pragma pack(push, 1)
 #include <pshpack1.h>
 
-#define u64 unsigned __int64
+typedef unsigned __int64 u64;
+
 typedef struct tag_HWND2 {
 	DWORD u;
 	operator HWND() const {
@@ -381,7 +383,17 @@ typedef struct tag_PanelViewSettings {
 
 
 typedef BOOL (WINAPI* PanelViewInputCallback)(HANDLE hInput, PINPUT_RECORD lpBuffer, DWORD nBufSize, LPDWORD lpNumberOfEventsRead, BOOL* pbResult);
+typedef union uPanelViewInputCallback
+{
+	u64 Reserved; // необходимо для выравнивания структур при x64 <--> x86
+	PanelViewInputCallback f;
+} PanelViewInputCallback_t;
 typedef BOOL (WINAPI* PanelViewOutputCallback)(HANDLE hOutput,const CHAR_INFO *lpBuffer,COORD dwBufferSize,COORD dwBufferCoord,PSMALL_RECT lpWriteRegion);
+typedef union uPanelViewOutputCallback
+{
+	u64 Reserved; // необходимо для выравнивания структур при x64 <--> x86
+	PanelViewOutputCallback f;
+} PanelViewOutputCallback_t;
 typedef struct tag_PanelViewText {
 	// Флаг используемости, выравнивание текста, и др.
 	#define PVI_TEXT_NOTUSED 0
@@ -421,12 +433,19 @@ typedef struct tag_PanelViewInit {
 	// Координаты определяются в GUI. Единицы - консольные.
 	RECT  WorkRect;
 	// Callbacks, используются только в плагинах
-	PanelViewInputCallback pfnPeekPreCall, pfnPeekPostCall, pfnReadPreCall, pfnReadPostCall;
-	PanelViewOutputCallback pfnWriteCall;
+	PanelViewInputCallback_t pfnPeekPreCall, pfnPeekPostCall, pfnReadPreCall, pfnReadPostCall;
+	PanelViewOutputCallback_t pfnWriteCall;
 	/* out */
 	//PanelViewSettings ThSet;
 	BOOL bFadeColors;
 } PanelViewInit;
+
+// Аргумент для функции: int WINAPI RegisterBackground(BackgroundInfo *pbk)
+struct BackgroundInfo
+{
+	DWORD cbSize;
+	BOOL  bRegister, bVisible;
+};
 
 
 typedef struct tag_ConEmuGuiInfo {
@@ -798,6 +817,11 @@ typedef struct tag_CESERVER_REQ_SETBACKGROUNDRET {
 	int  nResult; // enum SetBackgroundResult
 } CESERVER_REQ_SETBACKGROUNDRET;
 
+// CECMD_ACTIVATECON.
+typedef struct tag_CESERVER_REQ_ACTIVATECONSOLE {
+	HWND2 hConWnd;
+} CESERVER_REQ_ACTIVATECONSOLE;
+
 typedef struct tag_CESERVER_REQ {
     CESERVER_REQ_HDR hdr;
 	union {
@@ -822,6 +846,7 @@ typedef struct tag_CESERVER_REQ {
 		CESERVER_REQ_SETWINDOWRGN SetWndRgn;
 		CESERVER_REQ_SETBACKGROUND Background;
 		CESERVER_REQ_SETBACKGROUNDRET BackgroundRet;
+		CESERVER_REQ_ACTIVATECONSOLE ActivateCon;
 		PanelViewInit PVI;
 	};
 } CESERVER_REQ;
@@ -907,6 +932,7 @@ void CommonShutdown();
 
 	int MyAssertProc(const wchar_t* pszFile, int nLine, const wchar_t* pszTest);
 	void MyAssertTrap();
+	extern bool gbInMyAssertTrap;
 
 	#define MY_ASSERT_EXPR(expr, msg) \
 		if (!(expr)) { \

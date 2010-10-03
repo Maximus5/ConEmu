@@ -76,7 +76,8 @@ HANDLE WINAPI _export OpenPlugin(int OpenFrom,INT_PTR Item)
 	}
 #endif
 
-	if (OpenFrom == OPEN_COMMANDLINE && Item) {
+	if (OpenFrom == OPEN_COMMANDLINE && Item)
+	{
 		ProcessCommandLineA((char*)Item);
 		return INVALID_HANDLE_VALUE;
 	}
@@ -133,7 +134,7 @@ void ProcessDragFromA()
 
 	WindowInfo WInfo;
     WInfo.Pos=0;
-	InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETWINDOWINFO, (void*)&WInfo);
+	InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETSHORTWINDOWINFO, (void*)&WInfo);
 	if (!WInfo.Current)
 	{
 		int ItemsCount=0;
@@ -268,7 +269,7 @@ void ProcessDragToA()
 
 	WindowInfo WInfo;				
     WInfo.Pos=0;
-	InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETWINDOWINFO, (void*)&WInfo);
+	InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETSHORTWINDOWINFO, (void*)&WInfo);
 	if (!WInfo.Current)
 	{
 		int ItemsCount=0;
@@ -626,20 +627,25 @@ void UpdateConEmuTabsA(int anEvent, bool losingFocus, bool editorSave, void *Par
 	for (int i = 0; i < windowCount; i++)
 	{
 		WInfo.Pos = i;
-		InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETWINDOWINFO, (void*)&WInfo);
+		InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETSHORTWINDOWINFO, (void*)&WInfo);
 		if (WInfo.Type == WTYPE_EDITOR || WInfo.Type == WTYPE_VIEWER || WInfo.Type == WTYPE_PANELS)
 		{
-#ifdef SHOW_DEBUG_EVENTS
-			char szDbg[255]; wsprintfA(szDbg, "Window %i (Type=%i, Modified=%i)\n", i, WInfo.Type, WInfo.Modified);
-			OutputDebugStringA(szDbg);
-#endif
-			if (WInfo.Current) lbActiveFound = TRUE;
-			MultiByteToWideChar(CP_OEMCP, 0, WInfo.Name, lstrlenA(WInfo.Name)+1, pszName, CONEMUTABMAX);
-			lbCh |= AddTab(tabCount, losingFocus, editorSave, 
-				WInfo.Type, pszName, /*editorSave ? pszFileName :*/ NULL, 
-				WInfo.Current, WInfo.Modified);
-			//if (WInfo.Type == WTYPE_EDITOR && WInfo.Current) //2009-08-17
-			//	lastModifiedStateW = WInfo.Modified;
+			InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETWINDOWINFO, (void*)&WInfo);
+			if (WInfo.Type == WTYPE_EDITOR || WInfo.Type == WTYPE_VIEWER || WInfo.Type == WTYPE_PANELS)
+			{
+				#ifdef SHOW_DEBUG_EVENTS
+				char szDbg[255]; wsprintfA(szDbg, "Window %i (Type=%i, Modified=%i)\n", i, WInfo.Type, WInfo.Modified);
+				OutputDebugStringA(szDbg);
+				#endif
+				
+				if (WInfo.Current) lbActiveFound = TRUE;
+				MultiByteToWideChar(CP_OEMCP, 0, WInfo.Name, lstrlenA(WInfo.Name)+1, pszName, CONEMUTABMAX);
+				lbCh |= AddTab(tabCount, losingFocus, editorSave, 
+					WInfo.Type, pszName, /*editorSave ? pszFileName :*/ NULL, 
+					WInfo.Current, WInfo.Modified);
+				//if (WInfo.Type == WTYPE_EDITOR && WInfo.Current) //2009-08-17
+				//	lastModifiedStateW = WInfo.Modified;
+			}
 		}
 	}
 
@@ -660,13 +666,18 @@ void UpdateConEmuTabsA(int anEvent, bool losingFocus, bool editorSave, void *Par
 	// Скорее всего это модальный редактор (или вьювер?)
 	if (!lbActiveFound && !losingFocus) {
 		WInfo.Pos = -1;
-		// теоретически, это может привести к блокировке некоторых диалогов ФАР?
-		InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETWINDOWINFO, (void*)&WInfo);
-		if (WInfo.Type == WTYPE_EDITOR || WInfo.Type == WTYPE_VIEWER) {
-			MultiByteToWideChar(CP_OEMCP, 0, WInfo.Name, lstrlenA(WInfo.Name)+1, pszName, CONEMUTABMAX);
-			lbCh |= AddTab(tabCount, losingFocus, editorSave, 
-				WInfo.Type, pszName, /*editorSave ? pszFileName :*/ NULL, 
-				WInfo.Current, WInfo.Modified);
+		InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETSHORTWINDOWINFO, (void*)&WInfo);
+		if (WInfo.Type == WTYPE_EDITOR || WInfo.Type == WTYPE_VIEWER)
+		{
+			WInfo.Pos = -1;
+			InfoA->AdvControl(InfoA->ModuleNumber, ACTL_GETWINDOWINFO, (void*)&WInfo);
+			if (WInfo.Type == WTYPE_EDITOR || WInfo.Type == WTYPE_VIEWER)
+			{
+				MultiByteToWideChar(CP_OEMCP, 0, WInfo.Name, lstrlenA(WInfo.Name)+1, pszName, CONEMUTABMAX);
+				lbCh |= AddTab(tabCount, losingFocus, editorSave, 
+					WInfo.Type, pszName, /*editorSave ? pszFileName :*/ NULL, 
+					WInfo.Current, WInfo.Modified);
+			}
 		}
 
 		//if (!bEditorRetrieved) { // Если информацию о редакторе еще не получили

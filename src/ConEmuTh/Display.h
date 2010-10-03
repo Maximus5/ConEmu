@@ -84,6 +84,7 @@ struct CeFullPanelInfo
 
 	int RegisterPanelView();
 	int UnregisterPanelView();
+	void Close();
 	HWND CreateView();
 	BOOL ReallocItems(int anCount);
 	void FinalRelease();
@@ -92,7 +93,7 @@ struct CeFullPanelInfo
 	void DisplayReloadPanel();
 
 	// Эта функция Safe-thread - ее можно дергать из любой нити
-	void RequestSetPos(int anCurrentItem, int anTopItem);
+	void RequestSetPos(int anCurrentItem, int anTopItem, BOOL abSetFocus = FALSE);
 
 	static LRESULT CALLBACK DisplayWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 	static DWORD WINAPI DisplayThread(LPVOID lpvParam);

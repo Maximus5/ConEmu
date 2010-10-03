@@ -66,13 +66,13 @@ CImgCache::CImgCache(HMODULE hSelf)
 	// Initialize Com
 	CoInitialize(NULL);
 
-	// Alpha blending
-	mh_MsImg32 = LoadLibrary(L"Msimg32.dll");
-	if (mh_MsImg32) {
-		fAlphaBlend = (AlphaBlend_t)GetProcAddress(mh_MsImg32, "AlphaBlend");
-	} else {
-		fAlphaBlend = NULL;
-	}
+	//// Alpha blending
+	//mh_MsImg32 = LoadLibrary(L"Msimg32.dll");
+	//if (mh_MsImg32) {
+	//	fAlphaBlend = (AlphaBlend_t)GetProcAddress(mh_MsImg32, "AlphaBlend");
+	//} else {
+	//	fAlphaBlend = NULL;
+	//}
 }
 
 CImgCache::~CImgCache(void)
@@ -82,16 +82,19 @@ CImgCache::~CImgCache(void)
 	Reset();
 	FreeModules();
 
-	if (hbrBack) {
+	if (hbrBack)
+	{
 		DeleteObject(hbrBack); hbrBack = NULL;
 	}
 
-	if (mp_CurrentStorage) {
+	if (mp_CurrentStorage)
+	{
 		hr = mp_CurrentStorage->Commit(STGC_DEFAULT);
 		_ASSERTE(SUCCEEDED(hr));
 		SafeRelease(mp_CurrentStorage);
 	}
-	if (mp_RootStorage) {
+	if (mp_RootStorage)
+	{
 		hr = mp_RootStorage->Commit(STGC_DEFAULT);
 		_ASSERTE(SUCCEEDED(hr));
 		SafeRelease(mp_RootStorage);
@@ -99,10 +102,10 @@ CImgCache::~CImgCache(void)
 	////
 	//SafeRelease(gpDesktopFolder);
 
-	if (mh_MsImg32) {
-		fAlphaBlend = NULL;
-		FreeLibrary(mh_MsImg32);
-	}
+	//if (mh_MsImg32) {
+	//	fAlphaBlend = NULL;
+	//	FreeLibrary(mh_MsImg32);
+	//}
 	
 	// Done Com
 	CoUninitialize();
@@ -285,6 +288,9 @@ BOOL CImgCache::CheckDibCreated()
 
 void CImgCache::Reset()
 {
+	// Сначала остановим фоновые декодеры
+	m_ShellLoader.Terminate();
+
 	int i;
 	//for (i=0; i<FIELD_MAX_COUNT; i++) {
 	//	if (hField[i]) {
@@ -293,22 +299,27 @@ void CImgCache::Reset()
 	//		DeleteDC(hField[i]); hField[i] = NULL;
 	//	}
 	//}
-	for (i=0; i<countof(CacheInfo); i++) {
-		if (CacheInfo[i].lpwszFileName) {
+	for (i=0; i<countof(CacheInfo); i++)
+	{
+		if (CacheInfo[i].lpwszFileName)
+		{
 			free(CacheInfo[i].lpwszFileName);
 			CacheInfo[i].lpwszFileName = NULL;
 		}
-		if (CacheInfo[i].Pixels) {
+		if (CacheInfo[i].Pixels)
+		{
 			free(CacheInfo[i].Pixels);
 			CacheInfo[i].Pixels = NULL;
 			CacheInfo[i].cbPixelsSize = 0;
 		}
-		if (CacheInfo[i].pszComments) {
+		if (CacheInfo[i].pszComments)
+		{
 			free(CacheInfo[i].pszComments);
 			CacheInfo[i].pszComments = NULL;
 			CacheInfo[i].wcCommentsSize = 0;
 		}
-		if (CacheInfo[i].pszInfo) {
+		if (CacheInfo[i].pszInfo)
+		{
 			free(CacheInfo[i].pszInfo);
 			CacheInfo[i].pszInfo = NULL;
 			CacheInfo[i].wcInfoSize = 0;
@@ -316,15 +327,18 @@ void CImgCache::Reset()
 	}
 	memset(CacheInfo, 0, sizeof(CacheInfo));
 	//
-	if (mh_CompDC || mh_OldBmp) {
+	if (mh_CompDC || mh_OldBmp)
+	{
 		if (mh_CompDC) SelectObject(mh_CompDC, mh_OldBmp);
 		mh_OldBmp = NULL;
 	}
-	if (mh_DibSection) {
+	if (mh_DibSection)
+	{
 		DeleteObject(mh_DibSection); mh_DibSection = NULL;
 	}
 	mp_DibBytes = NULL;
-	if (mh_CompDC) {
+	if (mh_CompDC)
+	{
 		DeleteDC(mh_CompDC); mh_CompDC = NULL;
 	}
 	nPreviewSize = 0;
@@ -367,8 +381,10 @@ BOOL CImgCache::FindInCache(CePluginPanelItem* pItem, int* pnIndex)
 		&& pItem->FindData.lpwszFileNamePart[2] == 0)
 		pszName = L".."; //pItem->FindData.lpwszFileNamePart;
 
-	for (i=0; i<countof(CacheInfo); i++) {
-		if (!CacheInfo[i].lpwszFileName) {
+	for (i=0; i<countof(CacheInfo); i++)
+	{
+		if (!CacheInfo[i].lpwszFileName)
+		{
 			if (nFree == -1) nFree = i;
 			continue;
 		}
@@ -391,26 +407,38 @@ BOOL CImgCache::FindInCache(CePluginPanelItem* pItem, int* pnIndex)
 		}
 
 		nDelta = nCurTick - CacheInfo[i].nAccessTick;
-		if (nDelta > nMaxDelta) {
+		if (nDelta > nMaxDelta)
+		{
 			nOldest = i; nMaxDelta = nDelta;
 		}
 	}
-	if (!lbFound) {
-		if (nFree != -1) {
+	if (!lbFound)
+	{
+		if (nFree != -1)
+		{
 			*pnIndex = nFree;
-		} else {
+		}
+		else
+		{
 			_ASSERTE(nOldest!=-1);
 			if (nOldest == -1) nOldest = 0;
-			if (CacheInfo[nOldest].lpwszFileName) { free(CacheInfo[nOldest].lpwszFileName); CacheInfo[nOldest].lpwszFileName = NULL; }
+			if (CacheInfo[nOldest].lpwszFileName)
+			{
+				WARNING("В этом месте мы можем теоретически подраться с m_ShellLoader");
+				free(CacheInfo[nOldest].lpwszFileName);
+				CacheInfo[nOldest].lpwszFileName = NULL;
+			}
 			*pnIndex = nOldest;
 		}
 	}
 	i = *pnIndex;
-	if (CacheInfo[i].lpwszFileName == NULL) {
+	if (CacheInfo[i].lpwszFileName == NULL)
+	{
 		CacheInfo[i].lpwszFileName = _wcsdup(pszName);
 		lbReady = FALSE;
 	}
-	if (!lbReady) {
+	if (!lbReady)
+	{
 		CacheInfo[i].bPreviewLoaded = FALSE;
 		CacheInfo[i].nAccessTick = GetTickCount();
 		CacheInfo[i].dwFileAttributes = pItem->FindData.dwFileAttributes;
@@ -427,7 +455,8 @@ BOOL CImgCache::PaintItem(HDC hdc, int x, int y, int nImgSize, CePluginPanelItem
 	if (!CheckDibCreated())
 		return FALSE;
 
-	if (!pItem || !pItem->pszFullName) {
+	if (!pItem || !pItem->pszFullName)
+	{
 		#ifdef _DEBUG
 		_ASSERTE(pItem!=NULL);
 		if (pItem) _ASSERTE(pItem->pszFullName != NULL);
@@ -478,7 +507,8 @@ BOOL CImgCache::PaintItem(HDC hdc, int x, int y, int nImgSize, CePluginPanelItem
 		lbReady = FALSE;
 
 	// Если нужно загрузить иконку или превьюшку (или обновить их)
-	if (!lbReady) {
+	if (!lbReady)
+	{
 		UpdateCell(CacheInfo+nIndex, abLoadPreview);
 	}
 	pItem->bPreviewLoaded = CacheInfo[nIndex].bPreviewLoaded;
@@ -489,10 +519,13 @@ BOOL CImgCache::PaintItem(HDC hdc, int x, int y, int nImgSize, CePluginPanelItem
 		*pbIgnoreFileDescription = CacheInfo[nIndex].bIgnoreFileDescription;
 	
 	// Скинуть биты в MemDC
-	if (CacheInfo[nIndex].cbStride) {
+	if (CacheInfo[nIndex].cbStride)
+	{
 		CopyBits(CacheInfo[nIndex].crSize, (LPBYTE)(CacheInfo[nIndex].Pixels), CacheInfo[nIndex].cbStride,
 			mcr_DibSize, mp_DibBytes);
-	} else {
+	}
+	else
+	{
 		_ASSERTE(CacheInfo[nIndex].cbStride!=0);
 	}
 	//int nMaxY = min(nPreviewSize,CacheInfo[nIndex].crSize.Y);
@@ -543,15 +576,19 @@ BOOL CImgCache::PaintItem(HDC hdc, int x, int y, int nImgSize, CePluginPanelItem
 		
 		WARNING("В MSDN какие-то предупреждения про MultiMonitor... возможно стоит StretchDIBits");
 		SetStretchBltMode(hdc, COLORONCOLOR);
-		if (CacheInfo[nIndex].ColorModel == CET_CM_BGRA && fAlphaBlend) {
+		if (CacheInfo[nIndex].ColorModel == CET_CM_BGRA /*&& fAlphaBlend*/)
+		{
 			BLENDFUNCTION bf = {AC_SRC_OVER, 0, 255, AC_SRC_ALPHA};
-			lbWasDraw = fAlphaBlend(
+			//lbWasDraw = fAlphaBlend(
+			lbWasDraw = GdiAlphaBlend(
 				hdc,
 				x+nXSpace,y+nYSpace,nShowWidth,nShowHeight,
 				mh_CompDC,
 				0,0,CacheInfo[nIndex].crSize.X,CacheInfo[nIndex].crSize.Y,
 				bf);
-		} else {
+		}
+		else
+		{
 			lbWasDraw = StretchBlt(
 				hdc,
 				x+nXSpace,y+nYSpace,nShowWidth,nShowHeight,
@@ -584,15 +621,19 @@ BOOL CImgCache::PaintItem(HDC hdc, int x, int y, int nImgSize, CePluginPanelItem
 
 		WARNING("В MSDN какие-то предупреждения про MultiMonitor... возможно стоит StretchDIBits");
 		SetStretchBltMode(hdc, COLORONCOLOR);
-		if (CacheInfo[nIndex].ColorModel == CET_CM_BGRA && fAlphaBlend) {
+		if (CacheInfo[nIndex].ColorModel == CET_CM_BGRA /*&& fAlphaBlend*/)
+		{
 			BLENDFUNCTION bf = {AC_SRC_OVER, 0, 255, AC_SRC_ALPHA};
-			lbWasDraw = fAlphaBlend(
+			//lbWasDraw = fAlphaBlend(
+			lbWasDraw = GdiAlphaBlend(
 				hdc, 
 				x+nXSpace,y+nYSpace,nShowWidth,nShowHeight,
 				mh_CompDC,
 				0,0,CacheInfo[nIndex].crSize.X,CacheInfo[nIndex].crSize.Y,
 				bf);
-		} else {
+		}
+		else
+		{
 			lbWasDraw = StretchBlt(
 				hdc, 
 				x+nXSpace,y+nYSpace,nShowWidth,nShowHeight,
@@ -764,46 +805,73 @@ BOOL CImgCache::LoadShellIcon(struct IMAGE_CACHE_INFO* pItem)
 	if (!CheckDibCreated())
 		return FALSE;
 
-	if (!pItem->lpwszFileName) {
+	if (!pItem->lpwszFileName)
+	{
 		_ASSERTE(pItem->lpwszFileName);
 		return FALSE;
 	}
 
-	if (pItem->Pixels && pItem->cbPixelsSize) {
+	if (pItem->Pixels && pItem->cbPixelsSize)
+	{
 		memset(pItem->Pixels, 0, pItem->cbPixelsSize);
 	}
-	if (pItem->pszComments) {
+	if (pItem->pszComments)
+	{
 		pItem->pszComments[0] = 0;
 	}
 
 
-	if (pszName[0] == L'.' && pszName[1] == L'.' && pszName[2] == 0) {
+	if (pszName[0] == L'.' && pszName[1] == L'.' && pszName[2] == 0)
+	{
 		if (!ghUpIcon)
 			ghUpIcon = LoadIcon(ghPluginModule, MAKEINTRESOURCE(IDI_UP));
-		if (ghUpIcon) {
+		if (ghUpIcon)
+		{
 			hIcon = ghUpIcon;
 		}
-	} else {
+	}
+	else
+	{
+		LPCWSTR pszFileName = pItem->lpwszFileName;
+		DWORD uFlags = SHGFI_ICON|SHGFI_SHELLICONSIZE|SHGFI_LARGEICON|SHGFI_USEFILEATTRIBUTES;
+		if (pszFileName && pItem->bVirtualItem)
+		{
+			LPCWSTR pszSlash = wcsrchr(pszFileName, L'\\');
+			if (pszSlash)
+				pszFileName = pszSlash+1;
+			else
+				pszFileName = L"";
+		}
+		else
+		{
+			uFlags |= SHGFI_ADDOVERLAYS|SHGFI_ATTRIBUTES;
+		}
 		// ассоциированная иконка
-		shRc = SHGetFileInfo ( pItem->lpwszFileName, pItem->dwFileAttributes, &sfi, cbSize, 
-			SHGFI_ICON|SHGFI_SHELLICONSIZE|SHGFI_LARGEICON|SHGFI_USEFILEATTRIBUTES|SHGFI_ADDOVERLAYS|SHGFI_ATTRIBUTES);
-		if (shRc && sfi.hIcon) {
+		shRc = SHGetFileInfo (pszFileName, pItem->dwFileAttributes, &sfi, cbSize, uFlags);
+		if (shRc && sfi.hIcon)
+		{
 			hIcon = sfi.hIcon;
 		}
 		TODO("Обработать (sfi.dwAttributes & SFGAO_SHARE (0x00020000)) - The specified objects are shared.");
 	}
 
-	if (hIcon) {
+	if (hIcon)
+	{
 		ICONINFO ii = {0};
-		if (GetIconInfo(hIcon, &ii)) {
+		if (GetIconInfo(hIcon, &ii))
+		{
 			BITMAP bi;
 			if (ii.hbmColor) {
-				if (GetObject(ii.hbmColor, sizeof(bi), &bi)) {
+				if (GetObject(ii.hbmColor, sizeof(bi), &bi))
+				{
 					rc.right = bi.bmWidth;
 					rc.bottom = bi.bmHeight ? bi.bmHeight : -bi.bmHeight;
 				}
-			} else if (ii.hbmMask) {
-				if (GetObject(ii.hbmMask, sizeof(bi), &bi)) {
+			}
+			else if (ii.hbmMask)
+			{
+				if (GetObject(ii.hbmMask, sizeof(bi), &bi))
+				{
 					rc.right = bi.bmWidth;
 					rc.bottom = bi.bmHeight ? bi.bmHeight : -bi.bmHeight;
 				}
@@ -876,6 +944,7 @@ BOOL CImgCache::LoadThumbnail(struct IMAGE_CACHE_INFO* pItem)
 	HANDLE hFile = INVALID_HANDLE_VALUE, hMapping = NULL;
 	LPVOID pFileMap = NULL;
 	if (!PV.bVirtualItem) {
+		WARNING("Переделать на UNC!"); // Не работает на "PictureView.img\Bad Names"
 		hFile = CreateFileW(PV.sFileName, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
 		if (hFile == INVALID_HANDLE_VALUE) {
 			DWORD dwErr = GetLastError();

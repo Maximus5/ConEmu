@@ -828,8 +828,12 @@ BOOL WINAPI CET_Load(struct CET_LoadInfo* pLoadPreview)
 				pszFile = wcsrchr(pszFile, L'.');
 				if (pszFile) {
 					int nLen = lstrlenW(pszFile);
-					if (nLen && nLen<5) {
-						lstrcpyW(szExt, pszFile+1);
+					while (nLen > 0 && pszFile[nLen-1] == L' ')
+						nLen --;
+					if (nLen && nLen<5)
+					{
+						lstrcpynW(szExt, pszFile+1, nLen+1);
+						szExt[nLen+1] = 0;
 						CharLowerBuffW(szExt, nLen-1);
 					}
 				}

@@ -393,7 +393,8 @@ void UpdateConEmuTabsW789(int anEvent, bool losingFocus, bool editorSave, void* 
 	}
 
 	ViewerInfo vi = {sizeof(ViewerInfo)};
-	if (anEvent == 206) {
+	if (anEvent == 206)
+	{
 		if (Param)
 			vi.ViewerID = *(int*)Param;
 		InfoW789->ViewerControl(VCTL_GETINFO, &vi);
@@ -404,32 +405,41 @@ void UpdateConEmuTabsW789(int anEvent, bool losingFocus, bool editorSave, void* 
 	for (int i = 0; i < windowCount; i++)
 	{
 		WInfo.Pos = i;
-		InfoW789->AdvControl(InfoW789->ModuleNumber, ACTL_GETWINDOWINFO, (void*)&WInfo);
-		if (WInfo.Type == WTYPE_EDITOR || WInfo.Type == WTYPE_VIEWER || WInfo.Type == WTYPE_PANELS) {
-			if (WInfo.Current) lbActiveFound = TRUE;
-			lbCh |= AddTab(tabCount, losingFocus, editorSave, 
-				WInfo.Type, WInfo.Name, editorSave ? ei.FileName : NULL, 
-				WInfo.Current, WInfo.Modified);
-			//if (WInfo.Type == WTYPE_EDITOR && WInfo.Current) //2009-08-17
-			//	lastModifiedStateW = WInfo.Modified;
+		InfoW789->AdvControl(InfoW789->ModuleNumber, ACTL_GETSHORTWINDOWINFO, (void*)&WInfo);
+		if (WInfo.Type == WTYPE_EDITOR || WInfo.Type == WTYPE_VIEWER || WInfo.Type == WTYPE_PANELS)
+		{
+			InfoW789->AdvControl(InfoW789->ModuleNumber, ACTL_GETWINDOWINFO, (void*)&WInfo);
+			if (WInfo.Type == WTYPE_EDITOR || WInfo.Type == WTYPE_VIEWER || WInfo.Type == WTYPE_PANELS)
+			{
+				if (WInfo.Current) lbActiveFound = TRUE;
+				lbCh |= AddTab(tabCount, losingFocus, editorSave, 
+					WInfo.Type, WInfo.Name, editorSave ? ei.FileName : NULL, 
+					WInfo.Current, WInfo.Modified);
+				//if (WInfo.Type == WTYPE_EDITOR && WInfo.Current) //2009-08-17
+				//	lastModifiedStateW = WInfo.Modified;
+			}
+			InfoW789->AdvControl(InfoW789->ModuleNumber, ACTL_FREEWINDOWINFO, (void*)&WInfo);
 		}
-		InfoW789->AdvControl(InfoW789->ModuleNumber, ACTL_FREEWINDOWINFO, (void*)&WInfo);
 	}
 	
 	// Viewer в FAR 2 build 9xx не попадает в список окон при событии VE_GOTFOCUS
-	if (!losingFocus && !editorSave && tabCount == 0 && anEvent == 206) {
+	if (!losingFocus && !editorSave && tabCount == 0 && anEvent == 206)
+	{
 		lbCh |= AddTab(tabCount, losingFocus, editorSave, 
 			WTYPE_VIEWER, vi.FileName, NULL, 
 			1, 0);
 	}
 
 	// Скорее всего это модальный редактор (или вьювер?)
-	if (!lbActiveFound && !losingFocus) {
-		if (!bEditorRetrieved) { // Если информацию о редакторе еще не получили
+	if (!lbActiveFound && !losingFocus)
+	{
+		if (!bEditorRetrieved) // Если информацию о редакторе еще не получили
+		{
 			InfoW789->EditorControl(ECTL_GETINFO, &ei);
 			bEditorRetrieved = TRUE;
 		}
-		if (ei.CurState) {
+		if (ei.CurState)
+		{
 			tabCount = 0;
 			lbCh |= AddTab(tabCount, losingFocus, editorSave, 
 				WTYPE_EDITOR, ei.FileName, NULL, 

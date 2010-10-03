@@ -50,7 +50,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRPROC(s) //DEBUGSTR(s)
 #define DEBUGSTRCMD(s) //DEBUGSTR(s)
 #define DEBUGSTRPKT(s) //DEBUGSTR(s)
-#define DEBUGSTRCON(s) DEBUGSTR(s)
+#define DEBUGSTRCON(s) //DEBUGSTR(s)
 #define DEBUGSTRLANG(s) //DEBUGSTR(s)// ; Sleep(2000)
 #define DEBUGSTRLOG(s) //OutputDebugStringA(s)
 #define DEBUGSTRALIVE(s) //DEBUGSTR(s)
@@ -730,7 +730,9 @@ BOOL CRealConsole::SetConsoleSize(USHORT sizeX, USHORT sizeY, USHORT sizeBuffer,
 }
 
 // Изменить размер консоли по размеру окна (главного)
-void CRealConsole::SyncConsole2Window(BOOL abNtvdmOff/*=FALSE*/)
+// prcNewWnd передается из CConEmuMain::OnSizing(WPARAM wParam, LPARAM lParam)
+// для опережающего ресайза консоли (во избежание мелькания отрисовки панелей)
+void CRealConsole::SyncConsole2Window(BOOL abNtvdmOff/*=FALSE*/, LPRECT prcNewWnd/*=NULL*/)
 {
     if (!this)
         return;
@@ -754,7 +756,15 @@ void CRealConsole::SyncConsole2Window(BOOL abNtvdmOff/*=FALSE*/)
 
     DEBUGLOGFILE("SyncConsoleToWindow\n");
 
-    RECT rcClient; GetClientRect(ghWnd, &rcClient);
+    RECT rcClient;
+	if (prcNewWnd == NULL)
+	{
+		GetClientRect(ghWnd, &rcClient);
+	}
+	else
+	{
+		rcClient = gConEmu.CalcRect(CER_MAINCLIENT, *prcNewWnd, CER_MAIN);
+	}
     //_ASSERTE(rcClient.right>140 && rcClient.bottom>100);
 
     // Посчитать нужный размер консоли
@@ -2823,7 +2833,16 @@ BOOL CRealConsole::OpenConsoleEventPipe()
 		// Не дождались появления пайпа. Возможно, ConEmuC еще не запустился
 		//DEBUGSTRINPUT(L" - mh_ConEmuCInput not found!\n");
 		if (!isConsoleClosing())
+		{
+			#ifdef _DEBUG
+			if (dwErr == 0x102)
+			{
+				TODO("Иногда трапится. Проверить m_ServerClosing.nServerPID. Может его выставлять при щелчке по крестику?");
+				MyAssertTrap();				
+			}
+			#endif
 			DisplayLastError(L"mh_ConEmuCInput not found", dwErr);
+		}
 		return FALSE;
 	}
 
@@ -4464,6 +4483,18 @@ void CRealConsole::ServerThreadCommand(HANDLE hPipe)
 		//(pIn->Background.bEnabled ? (&pIn->Background.bmp) : NULL);
 		fSuccess = WriteFile(hPipe, &Out, Out.hdr.cbSize, &cbWritten, NULL);
 	}
+	else if (pIn->hdr.nCmd == CECMD_ACTIVATECON)
+	{
+		CESERVER_REQ Out;
+		ExecutePrepareCmd(&Out, pIn->hdr.nCmd, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_ACTIVATECONSOLE));
+		// Activate current console
+		_ASSERTE(hConWnd == (HWND)pIn->ActivateCon.hConWnd);
+		if (gConEmu.Activate(mp_VCon))
+			Out.ActivateCon.hConWnd = hConWnd;
+		else
+			Out.ActivateCon.hConWnd = NULL;
+		fSuccess = WriteFile(hPipe, &Out, Out.hdr.cbSize, &cbWritten, NULL);
+	}
 
     // Освободить память
     if (pIn && (LPVOID)pIn != (LPVOID)&in) {
@@ -4480,9 +4511,15 @@ void CRealConsole::OnServerClosing(DWORD anSrvPID)
 {
 	if (anSrvPID == mn_ConEmuC_PID && mh_ConEmuC)
 	{
+		//int nCurProcessCount = m_Processes.size();
+		//_ASSERTE(nCurProcessCount <= 1);
 		m_ServerClosing.nRecieveTick = GetTickCount();
 		m_ServerClosing.hServerProcess = mh_ConEmuC;
 		m_ServerClosing.nServerPID = anSrvPID;
+	}
+	else
+	{
+		_ASSERTE(anSrvPID == mn_ConEmuC_PID);
 	}
 }
 

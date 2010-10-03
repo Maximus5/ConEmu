@@ -173,6 +173,8 @@ protected:
 	COLORREF crUserBack;
 	int nMenuBackIdx;
 	COLORREF crMenuTitleBack;
+	COLORREF crPanelsBorderBack, crPanelsBorderFore;
+	COLORREF crPanelsNumberBack, crPanelsNumberFore;
 	int nDlgBorderBackIdx, nDlgBorderForeIdx;
 	int nErrBorderBackIdx, nErrBorderForeIdx;
 	// Для детекта наличия PanelTabs (цвет кнопки [+])

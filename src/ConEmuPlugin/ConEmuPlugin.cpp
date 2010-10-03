@@ -49,6 +49,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "..\common\SetHook.h"
 #include "..\common\pluginW1007.hpp"
 #include "..\common\ConsoleAnnotation.h"
+#include "..\common\WinObjects.h"
 #include "PluginHeader.h"
 #include <Tlhelp32.h>
 //#include <vector>
@@ -68,6 +69,15 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define CHECK_RESOURCES_INTERVAL 5000
 #define CHECK_FARINFO_INTERVAL 2000
 
+#define CMD__EXTERNAL_CALLBACK 0x80001
+typedef void (WINAPI* SyncExecuteCallback_t)(LONG_PTR lParam);
+struct SyncExecuteArg
+{
+	DWORD nCmd;
+	SyncExecuteCallback_t CallBack;
+	LONG_PTR lParam;
+};
+
 #ifdef _DEBUG
 wchar_t gszDbgModLabel[6] = {0};
 #endif
@@ -83,7 +93,10 @@ extern "C"{
   int  WINAPI ProcessSynchroEventW(int Event,void *Param);
   BOOL WINAPI IsTerminalMode();
   BOOL WINAPI IsConsoleActive();
-  int  WINAPI RegisterPanelView(PanelViewInit *ppvi)
+  int  WINAPI RegisterPanelView(PanelViewInit *ppvi);
+  int  WINAPI RegisterBackground(BackgroundInfo *pbk);
+  int  WINAPI ActivateConsole();
+  int  WINAPI SyncExecute(SyncExecuteCallback_t CallBack, LONG_PTR lParam);
 };
 #endif
 
@@ -108,21 +121,24 @@ CESERVER_REQ* gpTabs = NULL; //(ConEmuTab*) Alloc(maxTabCount, sizeof(ConEmuTab)
 BOOL gbIgnoreUpdateTabs = FALSE; // выставляется на время CMD_SETWINDOW
 BOOL gbRequestUpdateTabs = FALSE; // выставляется при получении события FOCUS/KILLFOCUS
 BOOL gbClosingModalViewerEditor = FALSE; // выставляется при закрытии модального редактора/вьювера
-LPBYTE gpData = NULL, gpCursor = NULL;
+
+
+//CRITICAL_SECTION csData;
+MSection *csData = NULL;
+// результат выполнения команды (пишется функциями OutDataAlloc/OutDataWrite)
 CESERVER_REQ* gpCmdRet = NULL;
+// инициализируется как "gpData = gpCmdRet->Data;"
+LPBYTE gpData = NULL, gpCursor = NULL; 
 DWORD  gnDataSize=0;
-//HANDLE ghMapping = NULL;
 
 int gnPluginOpenFrom = -1;
 DWORD gnReqCommand = -1;
-//HANDLE ghInputSynchroExecuted = NULL;
-//BOOL gbCmdCallObsolete = FALSE;
 LPVOID gpReqCommandData = NULL;
 static HANDLE ghReqCommandEvent = NULL;
 static BOOL   gbReqCommandWaiting = FALSE;
 
+
 UINT gnMsgTabChanged = 0;
-CRITICAL_SECTION csData;
 MSection *csTabs = NULL;
 //WCHAR gcPlugKey=0;
 BOOL  gbPlugKeyChanged=FALSE;
@@ -469,7 +485,12 @@ void OnMainThreadActivated()
 	}
 	else
 	{
-		ProcessCommand(gnReqCommand, FALSE/*bReqMainThread*/, gpReqCommandData);
+		// Результата ожидает вызывающая нить, поэтому передаем параметр
+		CESERVER_REQ* pCmdRet = NULL;
+		ProcessCommand(gnReqCommand, FALSE/*bReqMainThread*/, gpReqCommandData, &pCmdRet);
+		// Но не освобождаем его (pCmdRet) - это сделает ожидающая нить
+		_ASSERTE(gpCmdRet == NULL);
+		gpCmdRet = pCmdRet;
 	}
 	
 	// Мы закончили
@@ -576,7 +597,6 @@ void OnConsolePeekReadInput(BOOL abPeek)
 	if (IS_SYNCHRO_ALLOWED)
 	{
 		// Требуется дернуть Synchro, чтобы корректно активироваться
-		WARNING("Проверить, как реагирует FAR на вызов ACTL_SYNCHRO из главной нити");
 		if (lbNeedSynchro)
 		{
 			ExecuteSynchro();
@@ -1120,6 +1140,7 @@ BOOL WINAPI DllMain( HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserve
 				gpNullSecurity = NullSecurity();
 				
 				csTabs = new MSection();
+				csData = new MSection();
 				ghCommandThreads = new CommandThreads();
 				
 				HWND hConWnd = GetConsoleWindow();
@@ -1157,11 +1178,18 @@ BOOL WINAPI DllMain( HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserve
 			//	FreeLibrary(ghFarHintsFix);
 			//	ghFarHintsFix = NULL;
 			//}
-			if (csTabs) {
+			if (csTabs)
+			{
 				delete csTabs;
 				csTabs = NULL;
 			}
-			if (ghCommandThreads) {
+			if (csData)
+			{
+				delete csData;
+				csData = NULL;
+			}
+			if (ghCommandThreads)
+			{
 				delete ghCommandThreads;
 				ghCommandThreads = NULL;
 			}
@@ -1292,11 +1320,11 @@ int WINAPI RegisterPanelView(PanelViewInit *ppvi)
 	PanelViewRegInfo *pp = (ppvi->bLeftPanel) ? &gPanelRegLeft : &gPanelRegRight;
 	
 	if (ppvi->bRegister) {
-		pp->pfnPeekPreCall = ppvi->pfnPeekPreCall;
-		pp->pfnPeekPostCall = ppvi->pfnPeekPostCall;
-		pp->pfnReadPreCall = ppvi->pfnReadPreCall;
-		pp->pfnReadPostCall = ppvi->pfnReadPostCall;
-		pp->pfnWriteCall = ppvi->pfnWriteCall;
+		pp->pfnPeekPreCall = ppvi->pfnPeekPreCall.f;
+		pp->pfnPeekPostCall = ppvi->pfnPeekPostCall.f;
+		pp->pfnReadPreCall = ppvi->pfnReadPreCall.f;
+		pp->pfnReadPostCall = ppvi->pfnReadPostCall.f;
+		pp->pfnWriteCall = ppvi->pfnWriteCall.f;
 	} else {
 		pp->pfnPeekPreCall = pp->pfnPeekPostCall = pp->pfnReadPreCall = pp->pfnReadPostCall = NULL;
 		pp->pfnWriteCall = NULL;
@@ -1325,6 +1353,41 @@ int WINAPI RegisterPanelView(PanelViewInit *ppvi)
 	}
 
 	return 0;
+}
+
+int WINAPI RegisterBackground(BackgroundInfo *pbk)
+{
+	return 0;
+}
+
+// Возвращает TRUE в случае успешного выполнения 
+// (удалось активировать главную нить и выполнить в ней функцию CallBack)
+// FALSE - в случае ошибки.
+int WINAPI SyncExecute(SyncExecuteCallback_t CallBack, LONG_PTR lParam)
+{
+	BOOL bResult = FALSE;
+	SyncExecuteArg args = {CMD__EXTERNAL_CALLBACK, CallBack, lParam};
+	bResult = ProcessCommand(CMD__EXTERNAL_CALLBACK, TRUE/*bReqMainThread*/, &args);
+	return bResult;
+}
+
+// Активировать текущую консоль в ConEmu
+int WINAPI ActivateConsole()
+{
+	CESERVER_REQ In;
+	int nSize = sizeof(CESERVER_REQ_HDR) + sizeof(In.ActivateCon);
+	ExecutePrepareCmd(&In, CECMD_ACTIVATECON, nSize);
+	In.ActivateCon.hConWnd = FarHwnd;
+	
+	CESERVER_REQ* pOut = ExecuteGuiCmd(FarHwnd, &In, FarHwnd);
+	if (!pOut)
+	{
+		return FALSE;
+	}
+	BOOL lbSucceeded = (pOut->ActivateCon.hConWnd == FarHwnd);
+	ExecuteFreeResult(pOut);
+
+	return lbSucceeded;
 }
 
 //BOOL IsKeyChanged(BOOL abAllowReload)
@@ -1460,7 +1523,8 @@ void ExecuteSynchro()
 	}
 }
 
-BOOL ActivatePlugin	(
+// Должна вызываться ТОЛЬКО из нитей уже заблокированных семафором ghPluginSemaphore
+static BOOL ActivatePlugin (
 		DWORD nCmd, LPVOID pCommandData,
 		DWORD nTimeout = CONEMUFARTIMEOUT // Release=10сек, Debug=2мин.
 	)
@@ -1506,11 +1570,13 @@ BOOL ActivatePlugin	(
 			//// Таймаут, эту команду плагин должен пропустить, когда фар таки соберется ее выполнить
 			//Param->Obsolete = TRUE;
 		}
-	} else {
+	}
+	else
+	{
 		DEBUGSTRMENU(L"*** DONE\n");
 	}
 
-	lbRc = (nWait == 0);
+	lbRc = (nWait == (WAIT_OBJECT_0+1));
 	
 	if (!lbRc)
 	{
@@ -1530,27 +1596,38 @@ typedef HANDLE (WINAPI *OpenPlugin_t)(int OpenFrom,INT_PTR Item);
 WARNING("Обязательно сделать возможность отваливаться по таймауту, если плагин не удалось активировать");
 // Проверку можно сделать чтением буфера ввода - если там еще есть событие отпускания F11 - значит
 // меню плагинов еще загружается. Иначе можно еще чуть-чуть подождать, и отваливаться - активироваться не получится
-CESERVER_REQ* ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData)
+BOOL ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERVER_REQ** ppResult /*= NULL*/)
 {
+	BOOL lbSucceeded = FALSE;
 	CESERVER_REQ* pCmdRet = NULL;
-	if (gpCmdRet) Free(gpCmdRet);
-	gpCmdRet = NULL; gpData = NULL; gpCursor = NULL;
+	
+	if (ppResult) // сначала - сбросить
+		*ppResult = NULL;
+
+	//PRAGMA_ERROR("Это нужно делать только тогда, когда семафор уже заблокирован!");
+	//if (gpCmdRet) { Free(gpCmdRet); gpCmdRet = NULL; }
+	//gpData = NULL; gpCursor = NULL;
 
 	WARNING("Тут нужно сделать проверку содержимого консоли");
 	// Если отображено меню - плагин не запустится
 	// Не перепутать меню с пустым экраном (Ctrl-O)
 
-	if (bReqMainThread && (gnMainThreadId != GetCurrentThreadId())) {
+	if (bReqMainThread && (gnMainThreadId != GetCurrentThreadId()))
+	{
 		_ASSERTE(ghPluginSemaphore!=NULL);
 		_ASSERTE(ghServerTerminateEvent!=NULL);
-
+		
 		// Issue 198: Redraw вызывает отрисовку фаром (1.7x) UserScreen-a (причем без кейбара)
-		if (gFarVersion.dwVerMajor < 2 && nCmd == CMD_REDRAWFAR) {
-			return NULL; // лучше его просто пропустить
+		if (gFarVersion.dwVerMajor < 2 && nCmd == CMD_REDRAWFAR)
+		{
+			return FALSE; // лучше его просто пропустить
 		}
 		
 		if (nCmd == CMD_FARPOST)
-			return NULL; // Это просто проверка, что фар отработал цикл
+			return FALSE; // Это просто проверка, что фар отработал цикл
+			
+		// Запомним, чтобы знать, были ли созданы данные?
+		CESERVER_REQ* pOldCmdRet = gpCmdRet;
 
 		//// Некоторые команды можно выполнить сразу
 		//if (nCmd == CMD_SETSIZE) {
@@ -1582,11 +1659,17 @@ CESERVER_REQ* ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandDat
 		{
 			HANDLE hEvents[2] = {ghServerTerminateEvent, ghPluginSemaphore};
 			DWORD dwWait = WaitForMultipleObjects(2, hEvents, FALSE, INFINITE);
-			if (dwWait == WAIT_OBJECT_0) {
+			if (dwWait == WAIT_OBJECT_0)
+			{
 				// Плагин завершается
-				return NULL;
+				return FALSE;
 			}
-			ActivatePlugin(nCmd, pCommandData);
+			lbSucceeded = ActivatePlugin(nCmd, pCommandData);
+			if (lbSucceeded && /*pOldCmdRet !=*/ gpCmdRet)
+			{
+				pCmdRet = gpCmdRet; // запомнить результат!
+				gpCmdRet = NULL;
+			}
 			ReleaseSemaphore(ghPluginSemaphore, 1, NULL);
 		}
 		// конец семафора
@@ -1597,16 +1680,22 @@ CESERVER_REQ* ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandDat
 			ResetEvent(ghConsoleInputEmpty);
 			gbWaitConsoleInputEmpty = TRUE;
 			DWORD nWait = WaitForSingleObject(ghConsoleInputEmpty, 2000);
-			if (nWait == WAIT_OBJECT_0) {
-				if (nCmd == CMD_CLOSEQSEARCH) {
+			if (nWait == WAIT_OBJECT_0)
+			{
+				if (nCmd == CMD_CLOSEQSEARCH)
+				{
 					// И подождать, пока Фар обработает это событие (то есть до следующего чтения [Peek])
 					nWait = WaitForSingleObject(ghConsoleWrite, 1000);
+					lbSucceeded = (nWait == WAIT_OBJECT_0);
 				}
-			} else {
+			}
+			else
+			{
 				#ifdef _DEBUG
 				DEBUGSTRMENU((nWait != 0) ? L"*** QUEUE IS NOT EMPTY\n" : L"*** QUEUE IS EMPTY\n");
 				#endif
 				gbWaitConsoleInputEmpty = FALSE;
+				lbSucceeded = (nWait == WAIT_OBJECT_0);
 			}
 			//DWORD nTestEvents = 0, dwTicks = GetTickCount();
 			//DEBUGSTRMENU(L"*** waiting for queue empty\n");
@@ -1623,20 +1712,40 @@ CESERVER_REQ* ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandDat
 		
 		// Собственно Redraw фар выполнит не тогда, когда его функцию позвали,
 		// а когда к нему управление вернется
-		if (nCmd == CMD_REDRAWFAR) {
+		if (nCmd == CMD_REDRAWFAR)
+		{
 			HANDLE hEvents[2] = {ghServerTerminateEvent, ghPluginSemaphore};
 			DWORD dwWait = WaitForMultipleObjects(2, hEvents, FALSE, INFINITE);
 			if (dwWait == WAIT_OBJECT_0) {
 				// Плагин завершается
-				return NULL;
+				return FALSE;
 			}
-			ActivatePlugin(CMD_FARPOST, NULL);
+			WARNING("После перехода на Synchro для FAR2 есть опасение, что следующий вызов может произойти до окончания предыдущего цикла обработки Synchro в Far");
+			lbSucceeded = ActivatePlugin(CMD_FARPOST, NULL);
+			if (lbSucceeded && /*pOldCmdRet !=*/ gpCmdRet)
+			{
+				pCmdRet = gpCmdRet; // запомнить результат!
+				gpCmdRet = NULL;
+			}
 			ReleaseSemaphore(ghPluginSemaphore, 1, NULL);
 		}
+		
+		if (ppResult)
+		{
+			*ppResult = pCmdRet;
+		}
+		else
+		{
+			if (pCmdRet)
+			{
+				Free(pCmdRet);
+			}
+		}
+		
 
 		//gpReqCommandData = NULL;
 		//gnReqCommand = -1; gnPluginOpenFrom = -1;
-		return gpCmdRet; // Результат выполнения команды
+		return lbSucceeded; // Результат выполнения команды
 	}
 	
 	/*if (gbPlugKeyChanged) {
@@ -1644,7 +1753,6 @@ CESERVER_REQ* ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandDat
 		CheckMacro(TRUE);
 		gbPlugKeyChanged = FALSE;
 	}*/
-	
 	
 	// Некоторые команды "асинхронные", блокировки не нужны
 	if (nCmd == CMD_QUITFAR)
@@ -1654,13 +1762,33 @@ CESERVER_REQ* ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandDat
 			SetEvent(ghReqCommandEvent);
 		// т.к. фар может запросить подтверждения...
 		ExecuteQuitFar();
-		return NULL;
+		return TRUE;
 	}
 
-	EnterCriticalSection(&csData);
+	//EnterCriticalSection(&csData);
+	MSectionLock CSD; CSD.Lock(csData, TRUE);
 
+	//if (gpCmdRet) { Free(gpCmdRet); gpCmdRet = NULL; } // !!! Освобождается ТОЛЬКО вызывающей функцией!
+	gpCmdRet = NULL; gpData = NULL; gpCursor = NULL;
+	
+	// Раз дошли сюда - считаем что OK
+	lbSucceeded = TRUE;
+	
 	switch (nCmd)
 	{
+		case (CMD__EXTERNAL_CALLBACK):
+		{
+			lbSucceeded = FALSE;
+			if (pCommandData 
+				&& ((SyncExecuteArg*)pCommandData)->nCmd == CMD__EXTERNAL_CALLBACK
+				&& ((SyncExecuteArg*)pCommandData)->CallBack != NULL)
+			{
+				SyncExecuteArg* pExec = (SyncExecuteArg*)pCommandData;
+				pExec->CallBack(pExec->lParam);
+				lbSucceeded = TRUE;
+			}
+			break;
+		}
 		case (CMD_DRAGFROM):
 		{
 			//BOOL  *pbClickNeed = (BOOL*)pCommandData;
@@ -1789,7 +1917,7 @@ CESERVER_REQ* ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandDat
 			PostMacro((wchar_t*)pszMacro);
 			
 			//// Чтобы GUI не дожидался окончания всплытия EMenu
-			//LeaveCriticalSection(&csData);
+			//LeaveCriticalSection(&cs Data);
 			//SetEvent(ghReqCommandEvent);
 			////
 			//HMODULE hEMenu = GetModuleHandle(L"emenu.dll");
@@ -1857,9 +1985,39 @@ CESERVER_REQ* ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandDat
 
 		//	//REDRAWALL
 		//}
+		case CMD_FARPOST:
+		{
+			// просто сигнализация о том, что фар получил управление.
+			lbSucceeded = TRUE;
+			break;
+		}
+		default:
+			// Неизвестная команда!
+			_ASSERTE(nCmd == 1);
+			lbSucceeded = FALSE;
 	}
 
-	LeaveCriticalSection(&csData);
+	// Функция выполняется в том время, пока заблокирован ghPluginSemaphore,
+	// поэтому gpCmdRet можно пользовать
+	if (lbSucceeded && !pCmdRet) // pCmdRet может уже содержать gpTabs
+	{
+		pCmdRet = gpCmdRet;
+		gpCmdRet = NULL;
+	}
+	
+	if (ppResult)
+	{
+		*ppResult = pCmdRet;
+	}
+	else if (pCmdRet && pCmdRet != gpTabs)
+	{
+		Free(pCmdRet);
+	}
+	
+		
+	//LeaveCriticalSection(&csData);
+	CSD.Unlock();
+	
 
 #ifdef _DEBUG
 	_ASSERTE(_CrtCheckMemory());
@@ -1868,10 +2026,7 @@ CESERVER_REQ* ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandDat
 	if (ghReqCommandEvent)
 		SetEvent(ghReqCommandEvent);
 
-	if (!pCmdRet)
-		pCmdRet = gpCmdRet;
-
-	return pCmdRet;
+	return lbSucceeded;
 }
 
 // Изменить размер консоли. Собственно сам ресайз - выполняется сервером!
@@ -2177,42 +2332,51 @@ DWORD WINAPI MonitorThreadProcW(LPVOID lpParameter)
 
 		// Если FAR запущен в "невидимом" режиме и по истечении таймаута
 		// так и не подцепились к ConEmu - всплыть окошко консоли
-		if (lbStartedNoConEmu && ConEmuHwnd == NULL && FarHwnd != NULL) {
+		if (lbStartedNoConEmu && ConEmuHwnd == NULL && FarHwnd != NULL)
+		{
 			DWORD dwCurTick = GetTickCount();
 			DWORD dwDelta = dwCurTick - dwStartTick;
-			if (dwDelta > GUI_ATTACH_TIMEOUT) {
+			if (dwDelta > GUI_ATTACH_TIMEOUT)
+			{
 				lbStartedNoConEmu = FALSE;
-				if (!TerminalMode && !IsWindowVisible(FarHwnd)) {
+				if (!TerminalMode && !IsWindowVisible(FarHwnd))
+				{
 					EmergencyShow();
 				}
 			}
 		}
 
 		// Теоретически, нить обработки может запуститься и без ConEmuHwnd (под телнетом)
-	    if (ConEmuHwnd && FarHwnd && (dwWait>=(WAIT_OBJECT_0+MAXCMDCOUNT))) {
+	    if (ConEmuHwnd && FarHwnd && (dwWait>=(WAIT_OBJECT_0+MAXCMDCOUNT)))
+	    {
 	    
 	    	// Может быть ConEmu свалилось
-	    	if (!IsWindow(ConEmuHwnd) && ConEmuHwnd) {
+	    	if (!IsWindow(ConEmuHwnd) && ConEmuHwnd)
+	    	{
 	    		HWND hConWnd = GetConsoleWindow();
-	    		if (hConWnd && !IsWindow(hConWnd)) {
+	    		if (hConWnd && !IsWindow(hConWnd))
+	    		{
 					// hConWnd не валидно
 					MessageBox(0, L"ConEmu was abnormally termintated!\r\nExiting from FAR", L"ConEmu plugin", MB_OK|MB_ICONSTOP|MB_SETFOREGROUND);
 					TerminateProcess(GetCurrentProcess(), 100);
 					return 0;
 	    		}
 
-	    		if (!TerminalMode && !IsWindowVisible(FarHwnd)) {
+	    		if (!TerminalMode && !IsWindowVisible(FarHwnd))
+	    		{
 					EmergencyShow();
 				}
 		    }
 	    }
 
 
-		if (!gbWasDetached && !ConEmuHwnd) {
+		if (!gbWasDetached && !ConEmuHwnd)
+		{
 			// ConEmu могло подцепиться
 			TODO("Переделать функцию на получение HWND из Map");
 			ConEmuHwnd = GetConEmuHWND ( FALSE/*abRoot*/  /*, &nChk*/ );
-			if (ConEmuHwnd) {
+			if (ConEmuHwnd)
+			{
                 SetConEmuEnvVar(ConEmuHwnd);
 			
 				InitResources();
@@ -2231,12 +2395,17 @@ DWORD WINAPI MonitorThreadProcW(LPVOID lpParameter)
 			dwMonitorTick = GetTickCount();
 		}
 
-		if (gbNeedPostTabSend) {
+		if (gbNeedPostTabSend)
+		{
 			DWORD nDelta = GetTickCount() - gnNeedPostTabSendTick;
-			if (nDelta > NEEDPOSTTABSENDDELTA) {
-				if (IsMacroActive()) {
+			if (nDelta > NEEDPOSTTABSENDDELTA)
+			{
+				if (IsMacroActive())
+				{
 					gnNeedPostTabSendTick = GetTickCount();
-				} else {
+				}
+				else
+				{
 					// Force Send tabs to ConEmu
 					MSectionLock SC; SC.Lock(csTabs, TRUE);
 					SendTabs(gnCurTabCount, TRUE);
@@ -2245,19 +2414,25 @@ DWORD WINAPI MonitorThreadProcW(LPVOID lpParameter)
 			}
 		}
 
-		if (/*ConEmuHwnd &&*/ gbTryOpenMapHeader) {
-			if (gpConsoleInfo) {
+		if (/*ConEmuHwnd &&*/ gbTryOpenMapHeader)
+		{
+			if (gpConsoleInfo)
+			{
 				_ASSERTE(gpConsoleInfo == NULL);
 				gbTryOpenMapHeader = FALSE;
-			} else
-			if (OpenMapHeader() == 0) {
+			}
+			else if (OpenMapHeader() == 0)
+			{
 				// OK, переподцепились
 				gbTryOpenMapHeader = FALSE;
 			}
-			if (gpConsoleInfo) {
+			if (gpConsoleInfo)
+			{
 				// 04.03.2010 Maks - Если мэппинг открыли - принудительно передернуть ресурсы и информацию
 				//CheckResources(TRUE); -- должен выполняться в основной нити, поэтому - через Activate
-				ActivatePlugin(CMD_CHKRESOURCES, NULL);
+				// 22.09.2010 Maks - вызывать ActivatePlugin - некорректно!
+				//ActivatePlugin(CMD_CHKRESOURCES, NULL);
+				ProcessCommand(CMD_CHKRESOURCES, TRUE/*bReqMainThread*/, NULL);
 			}
 		}
 
@@ -2484,7 +2659,7 @@ void InitHWND(HWND ahFarHwnd)
 {
 	gsFarLang[0] = 0;
 	//InitializeCriticalSection(csTabs);
-	InitializeCriticalSection(&csData);
+	//InitializeCriticalSection(&csData);
 	if (!gFarVersion.dwVerMajor) LoadFarVersion(); // пригодится уже здесь!
 
 	// начальная инициализация. в SetStartupInfo поправим
@@ -3273,7 +3448,7 @@ void StopThread(void)
 	}
 
 	//DeleteCriticalSection(csTabs); memset(csTabs,0,sizeof(csTabs));
-	DeleteCriticalSection(&csData); memset(&csData,0,sizeof(csData));
+	//DeleteCriticalSection(&csData); memset(&csData,0,sizeof(csData));
 	
 	if (ghRegMonitorKey) { RegCloseKey(ghRegMonitorKey); ghRegMonitorKey = NULL; }
 	SafeCloseHandle(ghRegMonitorEvt);
@@ -3796,11 +3971,13 @@ DWORD WINAPI PlugServerThreadCommand(LPVOID ahPipe)
 	} else if (pIn->hdr.nCmd == CMD_REQTABS || pIn->hdr.nCmd == CMD_SETWINDOW) {
 		MSectionLock SC; SC.Lock(csTabs, FALSE, 1000);
 
-		if (pIn->hdr.nCmd == CMD_SETWINDOW) {
+		if (pIn->hdr.nCmd == CMD_SETWINDOW)
+		{
 			ResetEvent(ghSetWndSendTabsEvent);
 
 			// Для FAR2 - сброс QSearch выполняется в том же макро, в котором актирируется окно
-			if (gFarVersion.dwVerMajor == 1 && pIn->dwData[1]) {
+			if (gFarVersion.dwVerMajor == 1 && pIn->dwData[1])
+			{
 				// А вот для FAR1 - нужно шаманить
 				ProcessCommand(CMD_CLOSEQSEARCH, TRUE/*bReqMainThread*/, pIn->dwData/*хоть и не нужно?*/);
 			}
@@ -3876,15 +4053,19 @@ DWORD WINAPI PlugServerThreadCommand(LPVOID ahPipe)
 		
 		ProcessCommand(CMD_LEFTCLKSYNC, TRUE/*bReqMainThread*/, pIn->Data);
 
-		CESERVER_REQ* pCmdRet = ProcessCommand(pIn->hdr.nCmd, TRUE/*bReqMainThread*/, pIn->Data);
+		CESERVER_REQ* pCmdRet = NULL;
+		ProcessCommand(pIn->hdr.nCmd, TRUE/*bReqMainThread*/, pIn->Data, &pCmdRet);
 
-		if (pCmdRet) {
+		if (pCmdRet)
+		{
 			fSuccess = WriteFile( hPipe, pCmdRet, pCmdRet->hdr.cbSize, &cbWritten, NULL);
+			Free(pCmdRet);
 		}
-		if (gpCmdRet && gpCmdRet == pCmdRet) {
-			Free(gpCmdRet);
-			gpCmdRet = NULL; gpData = NULL; gpCursor = NULL;
-		}
+		//if (gpCmdRet && gpCmdRet == pCmdRet)
+		//{
+		//	Free(gpCmdRet);
+		//	gpCmdRet = NULL; gpData = NULL; gpCursor = NULL;
+		//}
 		
 	} else if (pIn->hdr.nCmd == CMD_EMENU) {
 		COORD *crMouse = (COORD *)pIn->Data;
@@ -3911,16 +4092,21 @@ DWORD WINAPI PlugServerThreadCommand(LPVOID ahPipe)
 		DEBUGSTRMENU(L"\n*** ServerThreadCommand->ProcessCommand(CMD_EMENU) done\n");
 
 
-	} else {
-		CESERVER_REQ* pCmdRet = ProcessCommand(pIn->hdr.nCmd, TRUE/*bReqMainThread*/, pIn->Data);
+	}
+	else
+	{
+		CESERVER_REQ* pCmdRet = NULL;
+		ProcessCommand(pIn->hdr.nCmd, TRUE/*bReqMainThread*/, pIn->Data, &pCmdRet);
 
-		if (pCmdRet) {
+		if (pCmdRet)
+		{
 			fSuccess = WriteFile( hPipe, pCmdRet, pCmdRet->hdr.cbSize, &cbWritten, NULL);
+			Free(pCmdRet);
 		}
-		if (gpCmdRet && gpCmdRet == pCmdRet) {
-			Free(gpCmdRet);
-			gpCmdRet = NULL; gpData = NULL; gpCursor = NULL;
-		}
+		//if (gpCmdRet && gpCmdRet == pCmdRet) {
+		//	Free(gpCmdRet);
+		//	gpCmdRet = NULL; gpData = NULL; gpCursor = NULL;
+		//}
 	}
 
 

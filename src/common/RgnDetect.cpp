@@ -1642,6 +1642,16 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO *apFarInfo, const COLORREF 
 	crUserBack = mp_Colors[nUserBackIdx];
 	nMenuBackIdx = (mp_FarInfo->nFarColors[COL_HMENUTEXT] & 0xF0) >> 4;
 	crMenuTitleBack = mp_Colors[nMenuBackIdx];
+	// COL_PANELBOX
+	int nPanelBox = (mp_FarInfo->nFarColors[COL_PANELBOX] & 0xF0) >> 4;
+	crPanelsBorderBack = mp_Colors[nPanelBox];
+	nPanelBox = (mp_FarInfo->nFarColors[COL_PANELBOX] & 0xF);
+	crPanelsBorderFore = mp_Colors[nPanelBox];
+	// COL_PANELSCREENSNUMBER
+	int nPanelNum = (mp_FarInfo->nFarColors[COL_PANELSCREENSNUMBER] & 0xF0) >> 4;
+	crPanelsNumberBack = mp_Colors[nPanelNum];
+	nPanelNum = (mp_FarInfo->nFarColors[COL_PANELSCREENSNUMBER] & 0xF);
+	crPanelsNumberFore = mp_Colors[nPanelNum];
 	// ÷вета диалогов
 	nDlgBorderBackIdx = (mp_FarInfo->nFarColors[COL_DIALOGBOX] & 0xF0) >> 4;
 	nDlgBorderForeIdx = (mp_FarInfo->nFarColors[COL_DIALOGBOX] & 0xF);
@@ -1794,19 +1804,25 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO *apFarInfo, const COLORREF 
 			int nX2 = nWidth-1; // по умолчанию - на всю ширину
 
 			//if (!mb_LeftPanel && mb_RightPanel) {
-			if (!mp_FarInfo->bFarLeftPanel && mp_FarInfo->bFarRightPanel) {
+			if (!mp_FarInfo->bFarLeftPanel && mp_FarInfo->bFarRightPanel)
+			{
 				// ѕогашена только лева€ панель
 				nX2 = /*mr_RightPanelFull*/ mp_FarInfo->FarRightPanel.PanelRect.left-1;
 			//} else if (mb_LeftPanel && !mb_RightPanel) {
-			} else if (mp_FarInfo->bFarLeftPanel && !mp_FarInfo->bFarRightPanel) {
+			}
+			else if (mp_FarInfo->bFarLeftPanel && !mp_FarInfo->bFarRightPanel)
+			{
 				// ѕогашена только права€ панель
 				nX1 = /*mr_LeftPanelFull*/ mp_FarInfo->FarLeftPanel.PanelRect.right+1;
-			} else {
+			}
+			else
+			{
 				//¬нимание! ѕанели могут быть, но они могут быть перекрыты PlugMenu!
 			}
 
 #ifdef _DEBUG
-			if (nY == 16) {
+			if (nY == 16)
+			{
 				nY = nY;
 			}
 #endif
@@ -1842,19 +1858,33 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO *apFarInfo, const COLORREF 
 					}
 				}*/
 #ifdef _DEBUG
-				if (nX == 18 && nY == 6 && pszDst[nX] == ucBoxDblDownRight) {
+				if (nX == 18 && nY == 6 && pszDst[nX] == ucBoxDblDownRight)
+				{
 					nX = nX;
 				}
 #endif
 
 				//PRAGMA_ERROR("тут ошибаетс€: пол€ bDialog и bDialogCorner не зачищаютс€, поэтому возникают проблемы в ConEmuTh");
 
-				if (!pnDst[nX].bDialog) {
-					if (pnDst[nX].crBackColor != crUserBack) {
+				if (m_DetectedDialogs.AllFlags == 0 && nX == 0 && nY == nTopLines
+					&& (pszDst[nX] == L'[' && pnDst[nX].crBackColor == crPanelsNumberBack && pnDst[nX].crForeColor == crPanelsNumberFore)
+					&& (pszDst[nX+nWidth] == ucBoxDblVert && pnDst[nX+nWidth].crBackColor == crPanelsBorderBack && pnDst[nX+nWidth].crForeColor == crPanelsBorderFore)
+				   )
+				{
+					// ѕринудительно сдетектить, как панель
+					DetectDialog(pChar, pAttr, nWidth, nHeight, nX, nY+1);
+				}
+				else if (!pnDst[nX].bDialog)
+				{
+					if (pnDst[nX].crBackColor != crUserBack)
+					{
 						DetectDialog(pChar, pAttr, nWidth, nHeight, nX, nY);
 					}
-				} else if (!pnDst[nX].bDialogCorner) {
-					switch (pszDst[nX]) {
+				}
+				else if (!pnDst[nX].bDialogCorner)
+				{
+					switch (pszDst[nX])
+					{
 						case ucBoxSinglDownRight:
 						case ucBoxSinglDownLeft:
 						case ucBoxSinglUpRight:
@@ -1880,7 +1910,8 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO *apFarInfo, const COLORREF 
 		pnDst += nWidth;
 	}
 
-	if (mn_DetectCallCount != 0) {
+	if (mn_DetectCallCount != 0)
+	{
 		_ASSERT(mn_DetectCallCount == 0);
 	}
 
@@ -1888,7 +1919,8 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO *apFarInfo, const COLORREF 
 	if (mb_BufferHeight) // при "far /w" mb_BufferHeight==false
 		goto wrap; // в буферном режиме - никакой прозрачности
 
-	if (!lbLeftVisible && !lbRightVisible) {
+	if (!lbLeftVisible && !lbRightVisible)
+	{
 		if (isPressed(VK_CONTROL) && isPressed(VK_SHIFT) && isPressed(VK_MENU))
 			goto wrap; // ѕо CtrlAltShift - показать UserScreen (не делать его прозрачным)
 	}
@@ -1927,8 +1959,10 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO *apFarInfo, const COLORREF 
 			while (nX <= nX2)
 			{
 				// ≈сли еще не определен как поле диалога
-				if (!pnDst[nX].bDialog) {
-					if (pnDst[nX].crBackColor == crUserBack) {
+				if (!pnDst[nX].bDialog)
+				{
+					if (pnDst[nX].crBackColor == crUserBack)
+					{
 						// помечаем прозрачным
 						pnDst[nX].bTransparent = TRUE;
 						//pnDst[nX].crBackColor = crColorKey;

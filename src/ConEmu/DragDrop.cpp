@@ -183,7 +183,9 @@ void CDragDrop::Drag(BOOL abClickNeed, COORD crMouseDC)
 	//CConEmuPipe pipe(gConEmu.GetFarPID(), CONEMUREADYTIMEOUT);
 
 	if (!gSet.isDragEnabled /*|| isInDrag */|| gConEmu.isDragging()) {
-		gConEmu.DebugStep(_T("DnD: Drag disabled"));
+		gConEmu.DebugStep(gSet.isDragEnabled
+			? _T("DnD: Already in Drag loop") : _T("DnD: Drag disabled"),
+			gSet.isDragEnabled);
 		goto wrap;
 	}
 
@@ -463,7 +465,12 @@ void CDragDrop::Drag(BOOL abClickNeed, COORD crMouseDC)
 	//					//	mh_DragThread = CreateThread(NULL, 0, CDragDrop::DragOpThreadProc, pArg, 0, &mn_DragThreadId);
 	//					//}
 	
-	if (PrepareDrag(abClickNeed, crMouseDC, &dwAllowedEffects)) {
+	if (!PrepareDrag(abClickNeed, crMouseDC, &dwAllowedEffects))
+	{
+		//gConEmu.DebugStep(_T("DnD: PrepareDrag failed!")); -- уже показана
+	}
+	else
+	{
 	
 		#ifdef UNLOCKED_DRAG
 		CEDragSource *pds = GetFreeSource();

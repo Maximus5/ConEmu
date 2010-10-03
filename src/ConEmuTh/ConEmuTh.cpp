@@ -79,7 +79,7 @@ BOOL TerminalMode = FALSE;
 DWORD gnSelfPID = 0;
 DWORD gnMainThreadId = 0;
 HANDLE ghDisplayThread = NULL; DWORD gnDisplayThreadId = 0;
-HWND ghLeftView = NULL, ghRightView = NULL;
+//HWND ghLeftView = NULL, ghRightView = NULL;
 wchar_t* gszRootKey = NULL;
 FarVersion gFarVersion;
 //HMODULE ghConEmuDll = NULL;
@@ -93,6 +93,7 @@ CEFAR_INFO gFarInfo = {0};
 COLORREF /*gcrActiveColors[16], gcrFadeColors[16],*/ *gcrCurColors = gThSet.crPalette;
 bool gbFadeColors = false;
 //bool gbLastCheckWindow = false;
+bool gbFarPanelsReady = false;
 DWORD gnRgnDetectFlags = 0;
 void CheckVarsInitialized();
 SECURITY_ATTRIBUTES* gpNullSecurity = NULL;
@@ -162,13 +163,13 @@ HANDLE WINAPI _export OpenPluginW(int OpenFrom,INT_PTR Item)
 
 	ReloadResourcesW();
 
-	StartPlugin(OpenFrom, Item);
+	EntryPoint(OpenFrom, Item);
 
 	return INVALID_HANDLE_VALUE;
 }
 
 // !!! WARNING !!! Version independent !!!
-void StartPlugin(int OpenFrom,INT_PTR Item)
+void EntryPoint(int OpenFrom,INT_PTR Item)
 {
 	if (!CheckConEmu())
 		return;
@@ -188,7 +189,7 @@ void StartPlugin(int OpenFrom,INT_PTR Item)
 		return;
 	}
 	pi->OurTopPanelItem = pi->TopPanelItem;
-	HWND hView = (pi->bLeftPanel) ? ghLeftView : ghRightView;
+	HWND lhView = pi->hView; // (pi->bLeftPanel) ? ghLeftView : ghRightView;
 
 	PanelViewMode PVM = pvm_None;
 
@@ -225,7 +226,7 @@ void StartPlugin(int OpenFrom,INT_PTR Item)
 	DWORD dwMode = pvm_None; //PanelViewMode
 
 	// Если View не создан, или смена режима
-	if ((hView == NULL) || (PVM != pi->PVM))
+	if ((lhView == NULL) || (PVM != pi->PVM))
 	{
 
 		// Для корректного определения положения колонок необходим один из флажков в настройке панели:
@@ -237,12 +238,12 @@ void StartPlugin(int OpenFrom,INT_PTR Item)
 
 		pi->PVM = PVM;
 		pi->DisplayReloadPanel();
-		if (hView == NULL)
+		if (lhView == NULL)
 		{
 			// Нужно создать View
-			hView = pi->CreateView();
+			lhView = pi->CreateView();
 		}
-		if (hView == NULL)
+		if (lhView == NULL)
 		{
 			// Показать ошибку
 			ShowLastError();
@@ -604,10 +605,12 @@ void StartPlugin(BOOL abManual)
 
 void ExitPlugin(void)
 {
-	if (ghLeftView)
+	//if (ghLeftView)
+	if (pviLeft.hView)
 		pviLeft.UnregisterPanelView();
 		//PostMessage(ghLeftView, WM_CLOSE,0,0);
-	if (ghRightView)
+	//if (ghRightView)
+	if (pviRight.hView)
 		pviRight.UnregisterPanelView();
 		//PostMessage(ghRightView, WM_CLOSE,0,0);
 
@@ -1585,7 +1588,19 @@ BOOL ProcessConsoleInput(BOOL abReadMode, PINPUT_RECORD lpBuffer, DWORD nBufSize
 							//p->Event.KeyEvent.wVirtualScanCode = wScanCodeUp;
 							//n = min(pi->CurrentItem,pi->nXCountFull*pi->nYCountFull);
 							DEBUGSTRCTRL(L"ProcessConsoleInput(VK_PRIOR)\n");
-							iCurKeyShift = -(pi->nXCountFull*pi->nYCountFull);
+							int nRowCol = (PVM == pvm_Thumbnails) ? pi->nXCountFull : pi->nYCountFull;
+							if (iCurItem >= (iTopItem + nRowCol))
+							{
+								int nCorrection = (PVM == pvm_Thumbnails)
+										? (iCurItem % nRowCol)
+										: 0;
+								// Если PgUp нажат когда текущий элемент НЕ на верхней строке
+								iCurKeyShift = (iTopItem - iCurItem);
+							}
+							else
+							{
+								iCurKeyShift = -(pi->nXCountFull*pi->nYCountFull);
+							}
 						} break;
 						case VK_NEXT:
 						{
@@ -1593,7 +1608,20 @@ BOOL ProcessConsoleInput(BOOL abReadMode, PINPUT_RECORD lpBuffer, DWORD nBufSize
 							//p->Event.KeyEvent.wVirtualScanCode = wScanCodeUp;
 							//n = min((pi->ItemsNumber-pi->CurrentItem-1),pi->nXCountFull*pi->nYCountFull);
 							DEBUGSTRCTRL(L"ProcessConsoleInput(VK_NEXT)\n");
-							iCurKeyShift = (pi->nXCountFull*pi->nYCountFull);
+							int nRowCol = (PVM == pvm_Thumbnails) ? pi->nXCountFull : pi->nYCountFull;
+							int nFull = (pi->nXCountFull*pi->nYCountFull);
+							if (iCurItem >= iTopItem && iCurItem < (iTopItem + nFull - nRowCol))
+							{
+								// Если PgDn нажат когда текущий элемент НЕ на последней строке
+								int nCorrection = (PVM == pvm_Thumbnails)
+										? (iCurItem % nRowCol)
+										: (nRowCol - 1);
+								iCurKeyShift = (iTopItem + nFull - nRowCol - iCurItem) + nCorrection;
+							}
+							else
+							{
+								iCurKeyShift = nFull;
+							}
 						} break;
 					}
 
@@ -1853,6 +1881,10 @@ CeFullPanelInfo* IsThumbnailsActive(BOOL abFocusRequired)
 // Должен вернуть true, если активны только панели (нет диалогов или еще каких меню)
 bool CheckWindows()
 {
+	bool lbRc = false;
+	
+	// Попробуем частично вернуть проверку окон через Far, но только ACTL_GETSHORTWINDOWINFO
+	bool lbFarPanels = false;
 	//if (gFarVersion.dwVerMajor==1)
 	//	gbLastCheckWindow = CheckWindowsA();
 	//else if (gFarVersion.dwBuild>=FAR_Y_VER)
@@ -1860,18 +1892,32 @@ bool CheckWindows()
 	//else
 	//	gbLastCheckWindow = FUNC_X(CheckWindows)();
 	//return gbLastCheckWindow;
-	bool lbRc = false;
-	if (gpRgnDetect) {
+	if (gFarVersion.dwVerMajor==1)
+		lbFarPanels = CheckFarPanelsA();
+	else if (gFarVersion.dwBuild>=FAR_Y_VER)
+		lbFarPanels = FUNC_Y(CheckFarPanels)();
+	else
+		lbFarPanels = FUNC_X(CheckFarPanels)();
+	// Запомнить активность панелей.
+	if (gbFarPanelsReady != lbFarPanels)
+		gbFarPanelsReady = lbFarPanels;
+
+	// Теперь, если API сказало, что панели есть и активны
+	if (lbFarPanels && gpRgnDetect)
+	{
 		//WARNING: Диалоги уже должны быть "обнаружены"
 		// используем gnRgnDetectFlags, т.к. gpRgnDetect может оказаться в процессе распознавания
 		DWORD dwFlags = gnRgnDetectFlags; // gpRgnDetect->GetFlags();
 
 		// вдруг панелей вообще не обнаружено?
-		if ((dwFlags & (FR_LEFTPANEL|FR_RIGHTPANEL|FR_FULLPANEL)) != 0) {
+		if ((dwFlags & (FR_LEFTPANEL|FR_RIGHTPANEL|FR_FULLPANEL)) != 0)
+		{
 			// нет диалогов
-			if ((dwFlags & FR_FREEDLG_MASK) == 0) {
+			if ((dwFlags & FR_FREEDLG_MASK) == 0)
+			{
 				// и нет активированного меню
-				if ((dwFlags & FR_ACTIVEMENUBAR) != FR_ACTIVEMENUBAR) {
+				if ((dwFlags & FR_ACTIVEMENUBAR) != FR_ACTIVEMENUBAR)
+				{
 					lbRc = true;
 				}
 			}
@@ -2079,141 +2125,3 @@ BOOL GetFarRect(SMALL_RECT* prcFarRect)
 
 
 
-void CeFullPanelInfo::FinalRelease()
-{
-	if (ppItems) {
-		for (int i=0; i<ItemsNumber; i++)
-			if (ppItems[i]) free(ppItems[i]);
-		free(ppItems);
-		ppItems = NULL;
-	}
-	nMaxItemsNumber = 0;
-	if (pszPanelDir) {
-		free(pszPanelDir);
-		pszPanelDir = NULL;
-	}
-	nMaxPanelDir = 0;
-	if (nFarColors) {
-		free(nFarColors);
-		nFarColors = NULL;
-	}
-	nMaxFarColors = 0;
-	if (pFarTmpBuf) {
-		free(pFarTmpBuf);
-		pFarTmpBuf = NULL;
-	}
-	nFarTmpBuf = 0;
-
-	if (hView) {
-		BOOL bValid = IsWindow(hView);
-		_ASSERTE(bValid==FALSE);
-		hView = NULL;
-	}
-
-	if (pSection) {
-		delete pSection; pSection = NULL;
-	}
-}
-
-BOOL CeFullPanelInfo::ReallocItems(int anCount)
-{
-	CePluginPanelItem** ppNew = NULL;
-
-	if ((ppItems == NULL) || (nMaxItemsNumber < anCount)) {
-		MSectionLock CS;
-		if (!CS.Lock(pSection, TRUE, 5000))
-			return FALSE;
-
-		int nNewMax = anCount+255; // + немножно про запас
-		ppNew = (CePluginPanelItem**)calloc(nNewMax, sizeof(LPVOID));
-		if (!ppNew) {
-			_ASSERTE(ppNew!=NULL);
-			return FALSE;
-		}
-
-		if (ppItems) {
-			if (nMaxItemsNumber) {
-				memmove(ppNew, ppItems, nMaxItemsNumber*sizeof(LPVOID));
-			}
-			free(ppItems);
-		}
-		nMaxItemsNumber = nNewMax;
-		ppItems = ppNew;
-	}
-
-	return TRUE;
-}
-
-BOOL CeFullPanelInfo::FarItem2CeItem(int anIndex,
-	const wchar_t*   asName,
-	const wchar_t*   asDesc,
-	DWORD            dwFileAttributes,
-	FILETIME         ftLastWriteTime,
-	unsigned __int64 anFileSize,
-	BOOL             abVirtualItem,
-	DWORD_PTR        apUserData,
-	DWORD            anFlags,
-	DWORD            anNumberOfLinks)
-{
-	// Необходимый размер буфера для хранения элемента
-	size_t nSize = sizeof(CePluginPanelItem)
-		+(wcslen(asName)+1)*2
-		+((asDesc ? wcslen(asDesc) : 0)+1)*2;
-	
-	// Уже может быть выделено достаточно памяти под этот элемент
-	if ((ppItems[anIndex] == NULL) || (ppItems[anIndex]->cbSize < (DWORD_PTR)nSize)) {
-		if (ppItems[anIndex]) free(ppItems[anIndex]);
-		nSize += 32;
-		ppItems[anIndex] = (CePluginPanelItem*)calloc(nSize, 1);
-		if (ppItems[anIndex] == NULL) {
-			_ASSERTE(ppItems[anIndex] != NULL);
-			return FALSE;
-		}
-		ppItems[anIndex]->cbSize = (int)nSize;
-	}
-	
-	// Указатель на буфер для имени файла (он идет сразу за структурой, память выделена)
-	wchar_t* psz = (wchar_t*)(ppItems[anIndex]+1);
-
-	
-	if (ppItems[anIndex]->bIsCurrent != (CurrentItem == anIndex) ||
-		ppItems[anIndex]->bVirtualItem != abVirtualItem ||
-		ppItems[anIndex]->UserData != apUserData ||
-		ppItems[anIndex]->Flags != anFlags ||
-		ppItems[anIndex]->NumberOfLinks != anNumberOfLinks ||
-		ppItems[anIndex]->FindData.dwFileAttributes != dwFileAttributes ||
-		ppItems[anIndex]->FindData.ftLastWriteTime.dwLowDateTime != ftLastWriteTime.dwLowDateTime ||
-		ppItems[anIndex]->FindData.ftLastWriteTime.dwHighDateTime != ftLastWriteTime.dwHighDateTime ||
-		ppItems[anIndex]->FindData.nFileSize != anFileSize ||
-		lstrcmp(psz, asName))
-	{
-		// Лучше сбросить, чтобы мусор не оставался, да и поля в стуктуру могут добавляться, чтобы не забылось...	
-		memset(((LPBYTE)ppItems[anIndex])+sizeof(ppItems[anIndex]->cbSize), 0, ppItems[anIndex]->cbSize-sizeof(ppItems[anIndex]->cbSize));
-	}
-
-	
-	// Копируем
-	ppItems[anIndex]->bIsCurrent = (CurrentItem == anIndex);
-	ppItems[anIndex]->bVirtualItem = abVirtualItem;
-	ppItems[anIndex]->UserData = apUserData;
-	ppItems[anIndex]->Flags = anFlags;
-	ppItems[anIndex]->NumberOfLinks = anNumberOfLinks;
-	ppItems[anIndex]->FindData.dwFileAttributes = dwFileAttributes;
-	ppItems[anIndex]->FindData.ftLastWriteTime = ftLastWriteTime;
-	ppItems[anIndex]->FindData.nFileSize = anFileSize;
-	lstrcpy(psz, asName);
-	ppItems[anIndex]->FindData.lpwszFileName = psz;
-	ppItems[anIndex]->FindData.lpwszFileNamePart = wcsrchr(psz, L'\\');
-	if (ppItems[anIndex]->FindData.lpwszFileNamePart == NULL)
-		ppItems[anIndex]->FindData.lpwszFileNamePart = psz;
-	ppItems[anIndex]->FindData.lpwszFileExt = wcsrchr(ppItems[anIndex]->FindData.lpwszFileNamePart, L'.');
-	// Description
-	psz += wcslen(psz)+1;
-	if (asDesc)
-		lstrcpy(psz, asDesc);
-	else
-		psz[0] = 0;
-	ppItems[anIndex]->pszDescription = psz;
-
-	return TRUE;
-}

@@ -62,18 +62,19 @@ static ATOM hClass = NULL;
 //void Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc, CeFullPanelInfo* pi);
 const wchar_t gsDisplayClassName[] = L"ConEmuPanelView";
 HANDLE ghCreateEvent = NULL;
-extern HICON ghUpIcon;
+//extern HICON ghUpIcon;
 int gnCreateViewError = 0;
 DWORD gnWin32Error = 0;
 //ITEMIDLIST DesktopID = {{0}};
 //IShellFolder *gpDesktopFolder = NULL;
 BOOL gbCancelAll = FALSE;
-extern COLORREF /*gcrActiveColors[16], gcrFadeColors[16],*/ *gcrCurColors;
-extern bool gbFadeColors;
+//extern COLORREF /*gcrActiveColors[16], gcrFadeColors[16],*/ *gcrCurColors;
+//extern bool gbFadeColors;
+//extern bool gbFarPanelsReady;
 UINT gnConEmuFadeMsg = 0, gnConEmuSettingsMsg = 0;
-extern CRgnDetect *gpRgnDetect;
-extern CEFAR_INFO gFarInfo;
-extern DWORD gnRgnDetectFlags;
+//extern CRgnDetect *gpRgnDetect;
+//extern CEFAR_INFO gFarInfo;
+//extern DWORD gnRgnDetectFlags;
 
 
 void ResetUngetBuffer();
@@ -88,26 +89,32 @@ HWND CeFullPanelInfo::CreateView()
 	gnCreateViewError = 0;
 	gnWin32Error = 0;
 
-	HWND hView = (this->bLeftPanel) ? ghLeftView : ghRightView;
-	if (hView) {
-		_ASSERTE(hView==NULL);
-		if (IsWindow(hView)) {
-			return hView;
+	HWND lhView = this->hView; // (this->bLeftPanel) ? ghLeftView : ghRightView;
+	if (lhView)
+	{
+		_ASSERTE(lhView==NULL);
+		if (IsWindow(lhView))
+		{
+			_ASSERTE(lhView == this->hView);
+			return lhView;
 		}
-		hView = NULL;
+		lhView = NULL;
 	}
 	this->hView = NULL;
 	this->cbSize = sizeof(*this);
 	
-	if (!gnDisplayThreadId || !ghDisplayThread) {
-		if (ghDisplayThread) {
+	if (!gnDisplayThreadId || !ghDisplayThread)
+	{
+		if (ghDisplayThread)
+		{
 			CloseHandle(ghDisplayThread); ghDisplayThread = NULL;
 		}
 
 		// Сначала нужно запустить нить (ее еще не создавали)
 		HANDLE hReady = CreateEvent(NULL,FALSE,FALSE,NULL);
 		ghDisplayThread = CreateThread(NULL,0,DisplayThread,(LPVOID)hReady,0,&gnDisplayThreadId);
-		if (!ghDisplayThread) {
+		if (!ghDisplayThread)
+		{
 			gnWin32Error = GetLastError();
 			gnCreateViewError = CECreateThreadFailed;
 			return NULL;
@@ -122,7 +129,8 @@ HWND CeFullPanelInfo::CreateView()
 		HANDLE hEvents[2] = {ghDisplayThread,hReady};
 		DWORD dwWait = WaitForMultipleObjects(2, hEvents, FALSE, nTimeout);
 		CloseHandle(hReady); hReady = NULL;
-		if (dwWait != (WAIT_OBJECT_0+1)) {
+		if (dwWait != (WAIT_OBJECT_0+1))
+		{
 			gnWin32Error = GetLastError();
 			gnCreateViewError = CEThreadActivationFailed;
 			return NULL;
@@ -132,14 +140,18 @@ HWND CeFullPanelInfo::CreateView()
 		Sleep(50);
 	}
 	
-	if (GetCurrentThreadId() != gnDisplayThreadId) {
+	if (GetCurrentThreadId() != gnDisplayThreadId)
+	{
 		ghCreateEvent = CreateEvent(NULL,FALSE,FALSE,NULL);
 		BOOL lbRc = PostThreadMessage(gnDisplayThreadId, MSG_CREATE_VIEW, (WPARAM)ghCreateEvent, (LPARAM)this);
-		if (!lbRc) {
+		if (!lbRc)
+		{
 			gnWin32Error = GetLastError();
 			gnCreateViewError = CEPostThreadMessageFailed;
 			CloseHandle(ghCreateEvent); ghCreateEvent = NULL;
-		} else {
+		}
+		else
+		{
 			DWORD nTimeout = CREATE_WND_TIMEOUT;
 			#ifdef _DEBUG
 					if (IsDebuggerPresent())
@@ -148,18 +160,22 @@ HWND CeFullPanelInfo::CreateView()
 			HANDLE hEvents[2] = {ghDisplayThread,ghCreateEvent};
 			DWORD dwWait = WaitForMultipleObjects(2, hEvents, FALSE, nTimeout);
 			CloseHandle(ghCreateEvent); ghCreateEvent = NULL;
-			if (dwWait == (WAIT_OBJECT_0)) {
+			if (dwWait == (WAIT_OBJECT_0))
+			{
 				// Нить завершилась
 				gnCreateViewError = CEDisplayThreadTerminated;
 				GetExitCodeThread(ghDisplayThread, &gnWin32Error);
-			} else if (dwWait == (WAIT_OBJECT_0+1)) {
-				hView = this->hView;
+			}
+			else if (dwWait == (WAIT_OBJECT_0+1))
+			{
+				lhView = this->hView;
 			}
 		}
-		return hView;
+		return lhView;
 	}
 	
-	if (!hClass) {
+	if (!hClass)
+	{
 		WNDCLASS wc = {0};
 		wc.style = CS_OWNDC|CS_DBLCLKS|CS_HREDRAW|CS_VREDRAW;
 		wc.lpfnWndProc = DisplayWndProc;
@@ -182,23 +198,26 @@ HWND CeFullPanelInfo::CreateView()
 	
 	wchar_t szTitle[128];
 	wsprintf(szTitle, L"ConEmu.%sPanelView.%i", (this->bLeftPanel) ? L"Left" : L"Right", gnSelfPID);
-	hView = CreateWindow(gsDisplayClassName, szTitle, WS_CHILD|WS_CLIPSIBLINGS, 0,0,0,0, 
+	lhView = CreateWindow(gsDisplayClassName, szTitle, WS_CHILD|WS_CLIPSIBLINGS, 0,0,0,0, 
 		ghConEmuRoot, NULL, (HINSTANCE)ghPluginModule, (LPVOID)this);
 #ifdef _DEBUG
-	HWND hParent = GetParent(hView);
+	HWND hParent = GetParent(lhView);
 #endif
-	this->hView = hView;
-	if (!hView) {
+	this->hView = lhView;
+	if (!lhView)
+	{
 		gnWin32Error = GetLastError();
 		gnCreateViewError = CECreateWindowFailed;
-	} else {
-		if (this->bLeftPanel)
-			ghLeftView = hView;
-		else
-			ghRightView = hView;
 	}
+	//else
+	//{
+	//	if (this->bLeftPanel)
+	//		ghLeftView = lhView;
+	//	else
+	//		ghRightView = lhView;
+	//}
 	
-	return hView;
+	return lhView;
 }
 
 LRESULT CALLBACK CeFullPanelInfo::DisplayWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -269,6 +288,15 @@ LRESULT CALLBACK CeFullPanelInfo::DisplayWndProc(HWND hwnd, UINT uMsg, WPARAM wP
 	case WM_MOUSEWHEEL:
 	case WM_MOUSEHWHEEL:
 		{
+			if (!gbFarPanelsReady)
+			{
+				POINT pt = {LOWORD(lParam),HIWORD(lParam)};
+				if (uMsg != WM_MOUSEWHEEL && uMsg != WM_MOUSEHWHEEL)
+					MapWindowPoints(hwnd, ghConEmuRoot, &pt, 1);
+				PostMessage(ghConEmuRoot, uMsg, wParam, MAKELPARAM(pt.x,pt.y));
+				return 0;
+			}
+
 			CeFullPanelInfo* pi = (CeFullPanelInfo*)GetWindowLongPtr(hwnd, GWLP_USERDATA);
 			_ASSERTE(pi && pi->cbSize==sizeof(CeFullPanelInfo));
 			_ASSERTE(pi == (&pviLeft) || pi == (&pviRight));
@@ -278,34 +306,40 @@ LRESULT CALLBACK CeFullPanelInfo::DisplayWndProc(HWND hwnd, UINT uMsg, WPARAM wP
 			{
 				if ((uMsg == WM_LBUTTONDOWN || uMsg == WM_RBUTTONDOWN) && (!pi->Focus))
 				{
-					ConEmuThSynchroArg *pCmd = (ConEmuThSynchroArg*)LocalAlloc(LPTR, sizeof(ConEmuThSynchroArg)+128);
-					pCmd->bValid = 1; pCmd->bExpired = 0; pCmd->nCommand = ConEmuThSynchroArg::eExecuteMacro;
-					wsprintfW((wchar_t*)pCmd->Data, L"$If (%cPanel.Left) Tab $End",
-						pi->bLeftPanel ? L'P' : L'A');
-					ExecuteInMainThread(pCmd);
+					pi->RequestSetPos(-1, -1, TRUE/*abSetFocus*/);
+					//ConEmuThSynchroArg *pCmd = (ConEmuThSynchroArg*)LocalAlloc(LPTR, sizeof(ConEmuThSynchroArg)+128);
+					//pCmd->bValid = 1; pCmd->bExpired = 0; pCmd->nCommand = ConEmuThSynchroArg::eExecuteMacro;
+					//wsprintfW((wchar_t*)pCmd->Data, L"$If (%cPanel.Left) Tab $End",
+					//	pi->bLeftPanel ? L'P' : L'A');
+					//ExecuteInMainThread(pCmd);
 				}
 			}
 			else
 			{
 				if (uMsg == WM_LBUTTONDOWN || uMsg == WM_RBUTTONDOWN)
 				{
-					pi->RequestSetPos(nIndex, pi->OurTopPanelItem);
-					if (!pi->Focus)
+					pi->RequestSetPos(nIndex, pi->OurTopPanelItem, TRUE/*abSetFocus*/);
+					//if (!pi->Focus)
+					//{
+					//	ConEmuThSynchroArg *pCmd = (ConEmuThSynchroArg*)LocalAlloc(LPTR, sizeof(ConEmuThSynchroArg)+128);
+					//	pCmd->bValid = 1; pCmd->bExpired = 0; pCmd->nCommand = ConEmuThSynchroArg::eExecuteMacro;
+					//	wsprintfW((wchar_t*)pCmd->Data, L"$If (%cPanel.Left) Tab $End",
+					//		pi->bLeftPanel ? L'P' : L'A');
+					//	ExecuteInMainThread(pCmd);
+					//}
+
+					// RClick пропустить дальше
+					if (uMsg != WM_RBUTTONDOWN)
 					{
-						ConEmuThSynchroArg *pCmd = (ConEmuThSynchroArg*)LocalAlloc(LPTR, sizeof(ConEmuThSynchroArg)+128);
-						pCmd->bValid = 1; pCmd->bExpired = 0; pCmd->nCommand = ConEmuThSynchroArg::eExecuteMacro;
-						wsprintfW((wchar_t*)pCmd->Data, L"$If (%cPanel.Left) Tab $End",
-							pi->bLeftPanel ? L'P' : L'A');
-						ExecuteInMainThread(pCmd);
+						return 0;
 					}
-					return 0;
 				}
-				else if (uMsg == WM_LBUTTONUP || uMsg == WM_RBUTTONUP)
-				{
-					//if (nIndex != pi->CurrentItem)
-					//	pi->RequestSetPos(nIndex, pi->OurTopPanelItem);
-					return 0;
-				}
+				//else if (uMsg == WM_LBUTTONUP || uMsg == WM_RBUTTONUP)
+				//{
+				//	//if (nIndex != pi->CurrentItem)
+				//	//	pi->RequestSetPos(nIndex, pi->OurTopPanelItem);
+				//	return 0;
+				//}
 
 
 				if (!pi->GetConCoordFromIndex(nIndex, crCon))
@@ -340,20 +374,20 @@ LRESULT CALLBACK CeFullPanelInfo::DisplayWndProc(HWND hwnd, UINT uMsg, WPARAM wP
 
 	case WM_CLOSE:
 		{
-			if (ghLeftView == hwnd)
-				ghLeftView = NULL;
-			else if (ghRightView == hwnd)
-				ghRightView = NULL;
+			if (pviLeft.hView == hwnd)
+				pviLeft.hView = NULL;
+			else if (pviRight.hView == hwnd)
+				pviRight.hView = NULL;
 
 			DestroyWindow(hwnd);
 
-			if (!ghLeftView && !ghRightView)
+			if (!pviLeft.hView && !pviRight.hView)
 				PostThreadMessage(gnDisplayThreadId, WM_QUIT, 0, 0);
 			return 0;
 		}
 	case WM_DESTROY:
 		{
-			if (!ghLeftView && !ghRightView)
+			if (!pviLeft.hView && !pviRight.hView)
 				PostThreadMessage(gnDisplayThreadId, WM_QUIT, 0, 0);
 			return 0;
 		}
@@ -419,17 +453,22 @@ DWORD WINAPI CeFullPanelInfo::DisplayThread(LPVOID lpvParam)
 		_ASSERTE(hReady!=NULL);
 	}
 
-	while (GetMessage(&msg,0,0,0)) {
+	while (GetMessage(&msg,0,0,0))
+	{
 
-		if (msg.message == MSG_CREATE_VIEW) {
+		if (msg.message == MSG_CREATE_VIEW)
+		{
 			HANDLE hEvent = (HANDLE)msg.wParam;
 			CeFullPanelInfo* pi = (CeFullPanelInfo*)msg.lParam;
-			if (hEvent != ghCreateEvent) {
+			if (hEvent != ghCreateEvent)
+			{
 				_ASSERTE(hEvent == ghCreateEvent);
-			} else {
-				HWND hView = pi->CreateView();
-				_ASSERTE(pi->hView == hView);
-				pi->hView = hView;
+			}
+			else
+			{
+				HWND lhView = pi->CreateView();
+				_ASSERTE(pi->hView == lhView);
+				pi->hView = lhView;
 				SetEvent(hEvent);
 			}
 			continue;
@@ -830,17 +869,21 @@ BOOL CeFullPanelInfo::GetConCoordFromIndex(int nIndex, COORD& rCoord)
 
 void CeFullPanelInfo::LoadItemColors(int nIndex, CePluginPanelItem* pItem, BOOL abCurrentItem, BOOL abStrictConsole)
 {
-	COORD crItem;
-	if (GetConCoordFromIndex(nIndex, crItem))
+	// Только если активны "Панели". Над элементом может висеть диалог, и цвет будет "левым".
+	if (gbFarPanelsReady)
 	{
-		wchar_t c; CharAttr a;
-		//if (gpRgnDetect->GetCharAttr(WorkRect.left, WorkRect.top+nCol0Index, c, a)) {
-		WARNING("Если в этой позиции - диалог, то получение цвета будет некорректным!");
-		if (gpRgnDetect->GetCharAttr(crItem.X, crItem.Y, c, a)) {
-			pItem->crBack = gcrCurColors[a.nBackIdx];
-			pItem->crFore = gcrCurColors[a.nForeIdx];
-			pItem->bItemColorLoaded = TRUE;
-			return;
+		COORD crItem;
+		if (GetConCoordFromIndex(nIndex, crItem))
+		{
+			wchar_t c; CharAttr a;
+			//if (gpRgnDetect->GetCharAttr(WorkRect.left, WorkRect.top+nCol0Index, c, a)) {
+			WARNING("Если в этой позиции - диалог, то получение цвета будет некорректным!");
+			if (gpRgnDetect->GetCharAttr(crItem.X, crItem.Y, c, a)) {
+				pItem->crBack = gcrCurColors[a.nBackIdx];
+				pItem->crFore = gcrCurColors[a.nForeIdx];
+				pItem->bItemColorLoaded = TRUE;
+				return;
+			}
 		}
 	}
 
@@ -1029,6 +1072,10 @@ void CeFullPanelInfo::Invalidate()
 	if (!this->hView || !IsWindow(this->hView))
 	{
 		_ASSERTE(IsWindow(this->hView));
+		if (this->hView)
+		{
+			this->Close();
+		}
 		return;
 	}
 	if (!IsWindowVisible(this->hView))
@@ -1550,11 +1597,11 @@ int CeFullPanelInfo::RegisterPanelView()
 	pvi.nFarInterfaceSettings = this->nFarInterfaceSettings;
 	pvi.nFarPanelSettings = this->nFarPanelSettings;
 	pvi.PanelRect = this->PanelRect;
-	pvi.pfnPeekPreCall = OnPrePeekConsole;
-	pvi.pfnPeekPostCall = OnPostPeekConsole;
-	pvi.pfnReadPreCall = OnPreReadConsole;
-	pvi.pfnReadPostCall = OnPostReadConsole;
-	pvi.pfnWriteCall = OnPreWriteConsoleOutput;
+	pvi.pfnPeekPreCall.f = OnPrePeekConsole;
+	pvi.pfnPeekPostCall.f = OnPostPeekConsole;
+	pvi.pfnReadPreCall.f = OnPreReadConsole;
+	pvi.pfnReadPostCall.f = OnPostReadConsole;
+	pvi.pfnWriteCall.f = OnPreWriteConsoleOutput;
 
 	// Зарегистрироваться (или обновить положение)
 	pvi.bRegister = TRUE;
@@ -1673,8 +1720,26 @@ int CeFullPanelInfo::RegisterPanelView()
 	return nRc;
 }
 
+void CeFullPanelInfo::Close()
+{
+	// Отрегистрироваться
+	UnregisterPanelView();
+	_ASSERTE(hView == NULL);
+	hView = NULL;
 
-// Эта "дисплейная" функция вызывается из основной нити, там можно дергать FAR Api
+	// Запомнить состояние
+	DWORD dwMode = pvm_None;
+	HKEY hk = NULL;
+	if (!RegCreateKeyExW(HKEY_CURRENT_USER, gszRootKey, 0, NULL, 0, KEY_WRITE, NULL, &hk, NULL))
+	{
+		RegSetValueEx(hk, bLeftPanel ? L"LeftPanelView" : L"RightPanelView", 0,
+			REG_DWORD, (LPBYTE)&dwMode, sizeof(dwMode));
+		RegCloseKey(hk);
+	}
+}
+
+// может вызываться из любой нити
+// --- // Эта "дисплейная" функция вызывается из основной нити, там можно дергать FAR Api
 int CeFullPanelInfo::UnregisterPanelView()
 {
 	// Страховка от того, что conemu.dll могли выгрузить (unload:...)
@@ -1741,21 +1806,180 @@ BOOL CeFullPanelInfo::OnSettingsChanged(BOOL bInvalidate)
 	return lbRc;
 }
 
-void CeFullPanelInfo::RequestSetPos(int anCurrentItem, int anTopItem)
+void CeFullPanelInfo::RequestSetPos(int anCurrentItem, int anTopItem, BOOL abSetFocus /*= FALSE*/)
 {
 	if (!this)
 		return;
 
-	// Вызвать обновление панели с новой позицией
-	this->ReqCurrentItem = anCurrentItem; this->ReqTopPanelItem = anTopItem;
-	this->bRequestItemSet = true;
-	
-	if (!gbSynchoRedrawPanelRequested)
+	if (anCurrentItem != -1 && anTopItem != -1)
 	{
-		//gbWaitForKeySequenceEnd = true;
-		UpdateEnvVar(FALSE);
+		// Вызвать обновление панели с новой позицией
+		this->ReqCurrentItem = anCurrentItem; this->ReqTopPanelItem = anTopItem;
+		this->bRequestItemSet = true;
+		
+		if (!gbSynchoRedrawPanelRequested)
+		{
+			//gbWaitForKeySequenceEnd = true;
+			UpdateEnvVar(FALSE);
 
-		gbSynchoRedrawPanelRequested = true;
-		ExecuteInMainThread(SYNCHRO_REDRAW_PANEL);
+			gbSynchoRedrawPanelRequested = true;
+			ExecuteInMainThread(SYNCHRO_REDRAW_PANEL);
+		}
 	}
+
+	if (abSetFocus)
+	{
+		ConEmuThSynchroArg *pCmd = (ConEmuThSynchroArg*)LocalAlloc(LPTR, sizeof(ConEmuThSynchroArg)+128);
+		pCmd->bValid = 1; pCmd->bExpired = 0; pCmd->nCommand = ConEmuThSynchroArg::eExecuteMacro;
+		wsprintfW((wchar_t*)pCmd->Data, L"$If (%cPanel.Left) Tab $End",
+			this->bLeftPanel ? L'P' : L'A');
+		ExecuteInMainThread(pCmd);
+	}
+}
+
+
+
+void CeFullPanelInfo::FinalRelease()
+{
+	if (ppItems)
+	{
+		for (int i=0; i<ItemsNumber; i++)
+			if (ppItems[i]) free(ppItems[i]);
+		free(ppItems);
+		ppItems = NULL;
+	}
+	nMaxItemsNumber = 0;
+	if (pszPanelDir)
+	{
+		free(pszPanelDir);
+		pszPanelDir = NULL;
+	}
+	nMaxPanelDir = 0;
+	if (nFarColors)
+	{
+		free(nFarColors);
+		nFarColors = NULL;
+	}
+	nMaxFarColors = 0;
+	if (pFarTmpBuf)
+	{
+		free(pFarTmpBuf);
+		pFarTmpBuf = NULL;
+	}
+	nFarTmpBuf = 0;
+
+	if (hView)
+	{
+		BOOL bValid = IsWindow(hView);
+		_ASSERTE(bValid==FALSE);
+		hView = NULL;
+	}
+
+	if (pSection)
+	{
+		delete pSection; pSection = NULL;
+	}
+}
+
+BOOL CeFullPanelInfo::ReallocItems(int anCount)
+{
+	CePluginPanelItem** ppNew = NULL;
+
+	if ((ppItems == NULL) || (nMaxItemsNumber < anCount)) {
+		MSectionLock CS;
+		if (!CS.Lock(pSection, TRUE, 5000))
+			return FALSE;
+
+		int nNewMax = anCount+255; // + немножно про запас
+		ppNew = (CePluginPanelItem**)calloc(nNewMax, sizeof(LPVOID));
+		if (!ppNew) {
+			_ASSERTE(ppNew!=NULL);
+			return FALSE;
+		}
+
+		if (ppItems) {
+			if (nMaxItemsNumber) {
+				memmove(ppNew, ppItems, nMaxItemsNumber*sizeof(LPVOID));
+			}
+			free(ppItems);
+		}
+		nMaxItemsNumber = nNewMax;
+		ppItems = ppNew;
+	}
+
+	return TRUE;
+}
+
+BOOL CeFullPanelInfo::FarItem2CeItem(int anIndex,
+	const wchar_t*   asName,
+	const wchar_t*   asDesc,
+	DWORD            dwFileAttributes,
+	FILETIME         ftLastWriteTime,
+	unsigned __int64 anFileSize,
+	BOOL             abVirtualItem,
+	DWORD_PTR        apUserData,
+	DWORD            anFlags,
+	DWORD            anNumberOfLinks)
+{
+	// Необходимый размер буфера для хранения элемента
+	size_t nSize = sizeof(CePluginPanelItem)
+		+(wcslen(asName)+1)*2
+		+((asDesc ? wcslen(asDesc) : 0)+1)*2;
+	
+	// Уже может быть выделено достаточно памяти под этот элемент
+	if ((ppItems[anIndex] == NULL) || (ppItems[anIndex]->cbSize < (DWORD_PTR)nSize)) {
+		if (ppItems[anIndex]) free(ppItems[anIndex]);
+		nSize += 32;
+		ppItems[anIndex] = (CePluginPanelItem*)calloc(nSize, 1);
+		if (ppItems[anIndex] == NULL) {
+			_ASSERTE(ppItems[anIndex] != NULL);
+			return FALSE;
+		}
+		ppItems[anIndex]->cbSize = (int)nSize;
+	}
+	
+	// Указатель на буфер для имени файла (он идет сразу за структурой, память выделена)
+	wchar_t* psz = (wchar_t*)(ppItems[anIndex]+1);
+
+	
+	if (ppItems[anIndex]->bIsCurrent != (CurrentItem == anIndex) ||
+		ppItems[anIndex]->bVirtualItem != abVirtualItem ||
+		ppItems[anIndex]->UserData != apUserData ||
+		ppItems[anIndex]->Flags != anFlags ||
+		ppItems[anIndex]->NumberOfLinks != anNumberOfLinks ||
+		ppItems[anIndex]->FindData.dwFileAttributes != dwFileAttributes ||
+		ppItems[anIndex]->FindData.ftLastWriteTime.dwLowDateTime != ftLastWriteTime.dwLowDateTime ||
+		ppItems[anIndex]->FindData.ftLastWriteTime.dwHighDateTime != ftLastWriteTime.dwHighDateTime ||
+		ppItems[anIndex]->FindData.nFileSize != anFileSize ||
+		lstrcmp(psz, asName))
+	{
+		// Лучше сбросить, чтобы мусор не оставался, да и поля в стуктуру могут добавляться, чтобы не забылось...	
+		memset(((LPBYTE)ppItems[anIndex])+sizeof(ppItems[anIndex]->cbSize), 0, ppItems[anIndex]->cbSize-sizeof(ppItems[anIndex]->cbSize));
+	}
+
+	
+	// Копируем
+	ppItems[anIndex]->bIsCurrent = (CurrentItem == anIndex);
+	ppItems[anIndex]->bVirtualItem = abVirtualItem;
+	ppItems[anIndex]->UserData = apUserData;
+	ppItems[anIndex]->Flags = anFlags;
+	ppItems[anIndex]->NumberOfLinks = anNumberOfLinks;
+	ppItems[anIndex]->FindData.dwFileAttributes = dwFileAttributes;
+	ppItems[anIndex]->FindData.ftLastWriteTime = ftLastWriteTime;
+	ppItems[anIndex]->FindData.nFileSize = anFileSize;
+	lstrcpy(psz, asName);
+	ppItems[anIndex]->FindData.lpwszFileName = psz;
+	ppItems[anIndex]->FindData.lpwszFileNamePart = wcsrchr(psz, L'\\');
+	if (ppItems[anIndex]->FindData.lpwszFileNamePart == NULL)
+		ppItems[anIndex]->FindData.lpwszFileNamePart = psz;
+	ppItems[anIndex]->FindData.lpwszFileExt = wcsrchr(ppItems[anIndex]->FindData.lpwszFileNamePart, L'.');
+	// Description
+	psz += wcslen(psz)+1;
+	if (asDesc)
+		lstrcpy(psz, asDesc);
+	else
+		psz[0] = 0;
+	ppItems[anIndex]->pszDescription = psz;
+
+	return TRUE;
 }

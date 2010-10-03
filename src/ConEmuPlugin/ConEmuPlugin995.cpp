@@ -418,8 +418,8 @@ void UpdateConEmuTabsW995(int anEvent, bool losingFocus, bool editorSave, void* 
     BOOL lbCh = FALSE;
 	WindowInfo WInfo = {0};
 	wchar_t szWNameBuffer[CONEMUTABMAX];
-	WInfo.Name = szWNameBuffer;
-	WInfo.NameSize = CONEMUTABMAX;
+	//WInfo.Name = szWNameBuffer;
+	//WInfo.NameSize = CONEMUTABMAX;
 
 	int windowCount = (int)InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETWINDOWCOUNT, NULL);
 	lbCh = (lastWindowCount != windowCount);
@@ -434,7 +434,8 @@ void UpdateConEmuTabsW995(int anEvent, bool losingFocus, bool editorSave, void* 
 	//}
 
 	ViewerInfo vi = {sizeof(ViewerInfo)};
-	if (anEvent == 206) {
+	if (anEvent == 206)
+	{
 		if (Param)
 			vi.ViewerID = *(int*)Param;
 		InfoW995->ViewerControl(VCTL_GETINFO, &vi);
@@ -445,21 +446,34 @@ void UpdateConEmuTabsW995(int anEvent, bool losingFocus, bool editorSave, void* 
 	for (int i = 0; i < windowCount; i++)
 	{
 		WInfo.Pos = i;
-		InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETWINDOWINFO, (void*)&WInfo);
-		WARNING("Для получения имени нужно пользовать ECTL_GETFILENAME");
-		if (WInfo.Type == WTYPE_EDITOR || WInfo.Type == WTYPE_VIEWER || WInfo.Type == WTYPE_PANELS) {
-			if (WInfo.Current) lbActiveFound = TRUE;
-			lbCh |= AddTab(tabCount, losingFocus, editorSave, 
-				WInfo.Type, WInfo.Name, /*editorSave ? ei.FileName :*/ NULL, 
-				WInfo.Current, WInfo.Modified);
-			//if (WInfo.Type == WTYPE_EDITOR && WInfo.Current) //2009-08-17
-			//	lastModifiedStateW = WInfo.Modified;
+
+		InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETSHORTWINDOWINFO, (void*)&WInfo);
+
+		if (WInfo.Type == WTYPE_EDITOR || WInfo.Type == WTYPE_VIEWER || WInfo.Type == WTYPE_PANELS)
+		{
+			WInfo.Pos = i;
+			WInfo.Name = szWNameBuffer;
+			WInfo.NameSize = CONEMUTABMAX;
+
+			InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETWINDOWINFO, (void*)&WInfo);
+
+			WARNING("Для получения имени нужно пользовать ECTL_GETFILENAME");
+			if (WInfo.Type == WTYPE_EDITOR || WInfo.Type == WTYPE_VIEWER || WInfo.Type == WTYPE_PANELS)
+			{
+				if (WInfo.Current) lbActiveFound = TRUE;
+				lbCh |= AddTab(tabCount, losingFocus, editorSave, 
+					WInfo.Type, WInfo.Name, /*editorSave ? ei.FileName :*/ NULL, 
+					WInfo.Current, WInfo.Modified);
+				//if (WInfo.Type == WTYPE_EDITOR && WInfo.Current) //2009-08-17
+				//	lastModifiedStateW = WInfo.Modified;
+			}
+			//InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_FREEWINDOWINFO, (void*)&WInfo);
 		}
-		//InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_FREEWINDOWINFO, (void*)&WInfo);
 	}
 
 	// Viewer в FAR 2 build 9xx не попадает в список окон при событии VE_GOTFOCUS
-	if (!losingFocus && !editorSave && tabCount == 0 && anEvent == 206) {
+	if (!losingFocus && !editorSave && tabCount == 0 && anEvent == 206)
+	{
 		lbActiveFound = TRUE;
 		lbCh |= AddTab(tabCount, losingFocus, editorSave, 
 			WTYPE_VIEWER, vi.FileName, NULL, 
@@ -468,15 +482,26 @@ void UpdateConEmuTabsW995(int anEvent, bool losingFocus, bool editorSave, void* 
 
 
 	// Скорее всего это модальный редактор (или вьювер?)
-	if (!lbActiveFound && !losingFocus) {
+	if (!lbActiveFound && !losingFocus)
+	{
 		WInfo.Pos = -1;
-		// теоретически, это может привести к блокировке некоторых диалогов ФАР?
-		InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETWINDOWINFO, (void*)&WInfo);
-		if (WInfo.Type == WTYPE_EDITOR || WInfo.Type == WTYPE_VIEWER) {
-			tabCount = 0;
-			lbCh |= AddTab(tabCount, losingFocus, editorSave, 
-				WInfo.Type, WInfo.Name, /*editorSave ? ei.FileName :*/ NULL, 
-				WInfo.Current, WInfo.Modified);
+
+		if (InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETSHORTWINDOWINFO, (void*)&WInfo)
+			&& (WInfo.Type == WTYPE_EDITOR || WInfo.Type == WTYPE_VIEWER))
+		{
+			WInfo.Pos = -1;
+			WInfo.Name = szWNameBuffer;
+			WInfo.NameSize = CONEMUTABMAX;
+
+			InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_GETWINDOWINFO, (void*)&WInfo);
+
+			if (WInfo.Type == WTYPE_EDITOR || WInfo.Type == WTYPE_VIEWER)
+			{
+				tabCount = 0;
+				lbCh |= AddTab(tabCount, losingFocus, editorSave, 
+					WInfo.Type, WInfo.Name, /*editorSave ? ei.FileName :*/ NULL, 
+					WInfo.Current, WInfo.Modified);
+			}
 		}
 
 		//wchar_t* pszEditorFileName = NULL;
